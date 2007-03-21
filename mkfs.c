@@ -13,17 +13,73 @@
 #include "radix-tree.h"
 #include "ctree.h"
 #include "disk-io.h"
+#include "transaction.h"
 
 #ifdef __CHECKER__
 #define BLKGETSIZE64 0
 static inline int ioctl(int fd, int define, u64 *size) { return 0; }
 #endif
 
-#if 0
-#if defined(__linux__) && defined(_IOR) && !defined(BLKGETSIZE64)
-#   define BLKGETSIZE64 _IOR(0x12, 114, __u64)
-#endif
-#endif
+static int make_root_dir(int fd) {
+	struct btrfs_root *root;
+	struct btrfs_super_block super;
+	int ret;
+	char buf[8];
+	u64 objectid;
+	struct btrfs_key inode_map;
+	struct btrfs_inode_item inode_item;
+	struct btrfs_trans_handle *trans;
+
+	root = open_ctree_fd(fd, &super);
+
+	if (!root) {
+		fprintf(stderr, "ctree init failed\n");
+		return -1;
+	}
+
+	buf[0] = '.';
+	buf[1] = '.';
+
+	trans = btrfs_start_transaction(root, 1);
+	ret = btrfs_find_free_objectid(trans, root, 1, &objectid);
+	if (ret)
+		goto error;
+
+	inode_map.objectid = objectid;
+	inode_map.flags = 0;
+	inode_map.offset = 0;
+
+	ret = btrfs_insert_inode_map(trans, root, objectid, &inode_map);
+	if (ret)
+		goto error;
+
+	memset(&inode_item, 0, sizeof(inode_item));
+	btrfs_set_inode_generation(&inode_item, root->fs_info->generation);
+	btrfs_set_inode_size(&inode_item, 3);
+	btrfs_set_inode_nlink(&inode_item, 1);
+	btrfs_set_inode_nblocks(&inode_item, 1);
+	btrfs_set_inode_mode(&inode_item, S_IFDIR | 0711);
+
+	btrfs_set_super_root_dir(&super, objectid);
+
+	ret = btrfs_insert_inode(trans, root, objectid, &inode_item);
+	if (ret)
+		goto error;
+	ret = btrfs_insert_dir_item(trans, root, buf, 1, objectid,
+				    objectid, 1);
+	if (ret)
+		goto error;
+	ret = btrfs_insert_dir_item(trans, root, buf, 2, objectid,
+				    objectid, 1);
+	if (ret)
+		goto error;
+	ret = btrfs_commit_transaction(trans, root, &super);
+	if (ret)
+		goto error;
+	ret = close_ctree(root, &super);
+error:
+	return ret;
+}
 
 int mkfs(int fd, u64 num_blocks, u32 blocksize)
 {
@@ -200,6 +256,9 @@ int main(int ac, char **av)
 	int ret;
 	int i;
 	char *buf = malloc(4096);
+
+	radix_tree_init();
+
 	if (ac >= 2) {
 		file = av[1];
 		if (ac == 3) {
@@ -246,6 +305,11 @@ int main(int ac, char **av)
 	ret = mkfs(fd, block_count, 4096);
 	if (ret) {
 		fprintf(stderr, "error during mkfs %d\n", ret);
+		exit(1);
+	}
+	ret = make_root_dir(fd);
+	if (ret) {
+		fprintf(stderr, "failed to setup the root directory\n");
 		exit(1);
 	}
 	printf("fs created on %s blocksize %d blocks %Lu\n",
