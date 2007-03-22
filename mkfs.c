@@ -58,7 +58,7 @@ static int make_root_dir(int fd) {
 	btrfs_set_inode_size(&inode_item, 3);
 	btrfs_set_inode_nlink(&inode_item, 1);
 	btrfs_set_inode_nblocks(&inode_item, 1);
-	btrfs_set_inode_mode(&inode_item, S_IFDIR | 0711);
+	btrfs_set_inode_mode(&inode_item, S_IFDIR | 0755);
 
 	btrfs_set_super_root_dir(&super, objectid);
 

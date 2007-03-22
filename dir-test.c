@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include "kerncompat.h"
 #include "radix-tree.h"
@@ -12,7 +14,7 @@
 
 int keep_running = 1;
 struct btrfs_super_block super;
-static u64 dir_oid = 44556;
+static u64 dir_oid = 0;
 static u64 file_oid = 33778;
 
 static int find_num(struct radix_tree_root *root, unsigned long *num_ret,
@@ -44,6 +46,7 @@ static void initial_inode_init(struct btrfs_root *root,
 {
 	memset(inode_item, 0, sizeof(*inode_item));
 	btrfs_set_inode_generation(inode_item, root->fs_info->generation);
+	btrfs_set_inode_mode(inode_item, S_IFREG | 0700);
 }
 
 static int ins_one(struct btrfs_trans_handle *trans, struct btrfs_root *root,
@@ -425,13 +428,15 @@ int main(int ac, char **av)
 	struct btrfs_trans_handle *trans;
 	radix_tree_init();
 
-	root = open_ctree("dbfile", &super);
+	root = open_ctree(av[ac-1], &super);
 	trans = btrfs_start_transaction(root, 1);
+
+	dir_oid = btrfs_super_root_dir(&super);
 
 	signal(SIGTERM, sigstopper);
 	signal(SIGINT, sigstopper);
 
-	for (i = 1 ; i < ac ; i++) {
+	for (i = 1 ; i < ac - 1; i++) {
 		if (strcmp(av[i], "-i") == 0) {
 			initial_only = 1;
 		} else if (strcmp(av[i], "-c") == 0) {
