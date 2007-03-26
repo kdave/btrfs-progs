@@ -191,7 +191,7 @@ struct btrfs_file_extent_item {
 	__le64 disk_blocknr;
 	__le64 disk_num_blocks;
 	/*
-	 * the logical offset in file bytes (no csums)
+	 * the logical offset in file blocks (no csums)
 	 * this extent record is for.  This allows a file extent to point
 	 * into the middle of an existing extent on disk, sharing it
 	 * between two snapshots (useful if some bytes in the middle of the

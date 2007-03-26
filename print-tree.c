@@ -15,6 +15,7 @@ void btrfs_print_leaf(struct btrfs_root *root, struct btrfs_leaf *l)
 	struct btrfs_dir_item *di;
 	struct btrfs_inode_map_item *mi;
 	struct btrfs_inode_item *ii;
+	struct btrfs_file_extent_item *fi;
 	u32 type;
 
 	printf("leaf %Lu ptrs %d free space %d parent %Lu generation %Lu\n",
@@ -66,6 +67,16 @@ void btrfs_print_leaf(struct btrfs_root *root, struct btrfs_leaf *l)
 			       btrfs_disk_key_objectid(&mi->key),
 			       btrfs_disk_key_flags(&mi->key),
 			       btrfs_disk_key_offset(&mi->key));
+			break;
+		case BTRFS_EXTENT_DATA_KEY:
+			fi = btrfs_item_ptr(l, i,
+					    struct btrfs_file_extent_item);
+			printf("\t\textent data disk block %Lu nr %Lu\n",
+			       btrfs_file_extent_disk_blocknr(fi),
+			       btrfs_file_extent_disk_num_blocks(fi));
+			printf("\t\textent data offset %Lu nr %Lu\n",
+			       btrfs_file_extent_offset(fi),
+			       btrfs_file_extent_num_blocks(fi));
 			break;
 		case BTRFS_STRING_ITEM_KEY:
 			printf("\t\titem data %.*s\n", btrfs_item_size(item),
