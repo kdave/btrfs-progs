@@ -45,6 +45,7 @@ struct btrfs_key {
 struct btrfs_header {
 	u8 fsid[16]; /* FS specific uuid */
 	__le64 blocknr; /* which block this node is supposed to live in */
+	__le64 generation;
 	__le64 parentid; /* objectid of the tree root */
 	__le32 csum;
 	__le32 ham;
@@ -570,6 +571,17 @@ static inline u64 btrfs_header_blocknr(struct btrfs_header *h)
 static inline void btrfs_set_header_blocknr(struct btrfs_header *h, u64 blocknr)
 {
 	h->blocknr = cpu_to_le64(blocknr);
+}
+
+static inline u64 btrfs_header_generation(struct btrfs_header *h)
+{
+	return le64_to_cpu(h->generation);
+}
+
+static inline void btrfs_set_header_generation(struct btrfs_header *h,
+					       u64 val)
+{
+	h->generation = cpu_to_le64(val);
 }
 
 static inline u64 btrfs_header_parentid(struct btrfs_header *h)

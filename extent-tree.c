@@ -459,6 +459,8 @@ struct btrfs_buffer *btrfs_alloc_free_block(struct btrfs_trans_handle *trans,
 	}
 	buf = find_tree_block(root, ins.objectid);
 	dirty_tree_block(trans, root, buf);
+	btrfs_set_header_generation(&buf->node.header,
+				    root->root_key.offset + 1);
 	return buf;
 }
 

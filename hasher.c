@@ -15,6 +15,8 @@ int main() {
 			break;
 		if (strlen(line) == 0)
 			continue;
+		if (line[strlen(line)-1] == '\n')
+			line[strlen(line)-1] = '\0';
 		ret = btrfs_name_hash(line, strlen(line), &result);
 		BUG_ON(ret);
 		printf("hash returns %Lu\n", result);

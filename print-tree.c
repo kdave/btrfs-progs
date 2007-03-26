@@ -17,9 +17,11 @@ void btrfs_print_leaf(struct btrfs_root *root, struct btrfs_leaf *l)
 	struct btrfs_inode_item *ii;
 	u32 type;
 
-	printf("leaf %Lu total ptrs %d free space %d\n",
+	printf("leaf %Lu ptrs %d free space %d parent %Lu generation %Lu\n",
 		btrfs_header_blocknr(&l->header), nr,
-		btrfs_leaf_free_space(root, l));
+		btrfs_leaf_free_space(root, l),
+		btrfs_header_parentid(&l->header),
+		btrfs_header_generation(&l->header));
 	fflush(stdout);
 	for (i = 0 ; i < nr ; i++) {
 		item = l->items + i;
@@ -87,9 +89,12 @@ void btrfs_print_tree(struct btrfs_root *root, struct btrfs_buffer *t)
 		btrfs_print_leaf(root, (struct btrfs_leaf *)c);
 		return;
 	}
-	printf("node %Lu level %d total ptrs %d free spc %u\n", t->blocknr,
+	printf("node %Lu level %d ptrs %d free %u parent %Lu generation %Lu\n",
+	       t->blocknr,
 	        btrfs_header_level(&c->header), nr,
-		(u32)BTRFS_NODEPTRS_PER_BLOCK(root) - nr);
+		(u32)BTRFS_NODEPTRS_PER_BLOCK(root) - nr,
+		btrfs_header_parentid(&c->header),
+		btrfs_header_generation(&c->header));
 	fflush(stdout);
 	for (i = 0; i < nr; i++) {
 		printf("\tkey %d (%Lu %u %Lu) block %Lu\n",

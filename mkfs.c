@@ -114,6 +114,7 @@ int mkfs(int fd, u64 num_blocks, u32 blocksize)
 				  BTRFS_ROOT_TREE_OBJECTID);
 	btrfs_set_header_blocknr(&empty_leaf->header, start_block + 1);
 	btrfs_set_header_nritems(&empty_leaf->header, 3);
+	btrfs_set_header_generation(&empty_leaf->header, 0);
 
 	/* create the items for the root tree */
 	btrfs_set_root_blocknr(&root_item, start_block + 2);
