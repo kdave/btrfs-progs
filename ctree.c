@@ -746,6 +746,7 @@ static int split_node(struct btrfs_trans_handle *trans, struct btrfs_root
 	split_buffer = btrfs_alloc_free_block(trans, root);
 	split = &split_buffer->node;
 	btrfs_set_header_flags(&split->header, btrfs_header_flags(&c->header));
+	btrfs_set_header_level(&split->header, btrfs_header_level(&c->header));
 	btrfs_set_header_blocknr(&split->header, split_buffer->blocknr);
 	btrfs_set_header_parentid(&split->header,
 	                       btrfs_header_parentid(&root->node->node.header));

@@ -52,7 +52,7 @@ struct btrfs_header {
 	__le32 ham;
 	__le16 nritems;
 	__le16 flags;
-	/* generation flags to be added */
+	u8 level;
 } __attribute__ ((__packed__));
 
 #define BTRFS_MAX_LEVEL 8
@@ -185,6 +185,7 @@ struct btrfs_root_item {
 } __attribute__ ((__packed__));
 
 struct btrfs_file_extent_item {
+	__le64 generation;
 	/*
 	 * disk space consumed by the extent, checksum blocks are included
 	 * in these numbers
@@ -618,15 +619,13 @@ static inline void btrfs_set_header_flags(struct btrfs_header *h, u16 val)
 
 static inline int btrfs_header_level(struct btrfs_header *h)
 {
-	return btrfs_header_flags(h) & (BTRFS_MAX_LEVEL - 1);
+	return h->level;
 }
 
 static inline void btrfs_set_header_level(struct btrfs_header *h, int level)
 {
-	u16 flags;
 	BUG_ON(level > BTRFS_MAX_LEVEL);
-	flags = btrfs_header_flags(h) & ~(BTRFS_MAX_LEVEL - 1);
-	btrfs_set_header_flags(h, flags | level);
+	h->level = level;
 }
 
 static inline int btrfs_is_leaf(struct btrfs_node *n)
@@ -734,6 +733,18 @@ static inline void btrfs_set_file_extent_disk_blocknr(struct
 						      *e, u64 val)
 {
 	e->disk_blocknr = cpu_to_le64(val);
+}
+
+static inline u64 btrfs_file_extent_generation(struct btrfs_file_extent_item *e)
+{
+	return le64_to_cpu(e->generation);
+}
+
+static inline void btrfs_set_file_extent_generation(struct
+						    btrfs_file_extent_item *e,
+						    u64 val)
+{
+	e->generation = cpu_to_le64(val);
 }
 
 static inline u64 btrfs_file_extent_disk_num_blocks(struct
