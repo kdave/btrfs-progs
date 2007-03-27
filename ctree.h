@@ -12,6 +12,7 @@ struct btrfs_trans_handle;
 #define BTRFS_EXTENT_TREE_OBJECTID 2
 #define BTRFS_INODE_MAP_OBJECTID 3
 #define BTRFS_FS_TREE_OBJECTID 4
+#define BTRFS_FIRST_FREE_OBJECTID 5
 
 /*
  * the key defines the order in the tree, and so it also defines (optimal)
