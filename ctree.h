@@ -44,11 +44,11 @@ struct btrfs_key {
  * every tree block (leaf or node) starts with this header.
  */
 struct btrfs_header {
+	__le32 csum[8];
 	u8 fsid[16]; /* FS specific uuid */
 	__le64 blocknr; /* which block this node is supposed to live in */
 	__le64 generation;
 	__le64 parentid; /* objectid of the tree root */
-	__le32 csum;
 	__le32 ham;
 	__le16 nritems;
 	__le16 flags;
@@ -68,9 +68,10 @@ struct btrfs_buffer;
  * it currently lacks any block count etc etc
  */
 struct btrfs_super_block {
+	/* the first 3 fields must match struct btrfs_header */
+	__le32 csum[8];
 	u8 fsid[16];    /* FS specific uuid */
 	__le64 blocknr; /* this block number */
-	__le32 csum;
 	__le64 magic;
 	__le32 blocksize;
 	__le64 generation;
