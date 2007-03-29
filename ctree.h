@@ -30,14 +30,14 @@ struct btrfs_trans_handle;
  */
 struct btrfs_disk_key {
 	__le64 objectid;
-	__le32 flags;
 	__le64 offset;
+	__le32 flags;
 } __attribute__ ((__packed__));
 
 struct btrfs_key {
 	u64 objectid;
-	u32 flags;
 	u64 offset;
+	u32 flags;
 } __attribute__ ((__packed__));
 
 /*
@@ -272,27 +272,28 @@ struct btrfs_root {
  * a (hopefully) huge chunk of disk
  */
 #define BTRFS_EXTENT_DATA_KEY	4
+#define BTRFS_CSUM_ITEM_KEY	5
 /*
  * root items point to tree roots.  There are typically in the root
  * tree used by the super block to find all the other trees
  */
-#define BTRFS_ROOT_ITEM_KEY	5
+#define BTRFS_ROOT_ITEM_KEY	6
 /*
  * extent items are in the extent map tree.  These record which blocks
  * are used, and how many references there are to each block
  */
-#define BTRFS_EXTENT_ITEM_KEY	6
+#define BTRFS_EXTENT_ITEM_KEY	7
 
 /*
  * the inode map records which inode numbers are in use and where
  * they actually live on disk
  */
-#define BTRFS_INODE_MAP_ITEM_KEY 7
+#define BTRFS_INODE_MAP_ITEM_KEY 8
 /*
  * string items are for debugging.  They just store a short string of
  * data in the FS
  */
-#define BTRFS_STRING_ITEM_KEY	8
+#define BTRFS_STRING_ITEM_KEY	9
 
 static inline u64 btrfs_inode_generation(struct btrfs_inode_item *i)
 {
