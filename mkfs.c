@@ -296,7 +296,7 @@ int main(int ac, char **av)
 		exit(1);
 	}
 	memset(buf, 0, 4096);
-	for(i = 0; i < 6; i++) {
+	for(i = 0; i < 16; i++) {
 		ret = write(fd, buf, 4096);
 		if (ret != 4096) {
 			fprintf(stderr, "unable to zero fill device\n");

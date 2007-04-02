@@ -14,6 +14,8 @@ struct btrfs_trans_handle;
 #define BTRFS_FS_TREE_OBJECTID 4
 #define BTRFS_FIRST_FREE_OBJECTID 5
 
+#define BTRFS_CSUM_SIZE 32
+
 /*
  * the key defines the order in the tree, and so it also defines (optimal)
  * block layout.  objectid corresonds to the inode number.  The flags
@@ -44,7 +46,7 @@ struct btrfs_key {
  * every tree block (leaf or node) starts with this header.
  */
 struct btrfs_header {
-	__le32 csum[8];
+	u8 csum[BTRFS_CSUM_SIZE];
 	u8 fsid[16]; /* FS specific uuid */
 	__le64 blocknr; /* which block this node is supposed to live in */
 	__le64 generation;
@@ -68,8 +70,8 @@ struct btrfs_buffer;
  * it currently lacks any block count etc etc
  */
 struct btrfs_super_block {
+	u8 csum[BTRFS_CSUM_SIZE];
 	/* the first 3 fields must match struct btrfs_header */
-	__le32 csum[8];
 	u8 fsid[16];    /* FS specific uuid */
 	__le64 blocknr; /* this block number */
 	__le64 magic;
@@ -140,7 +142,7 @@ struct btrfs_extent_item {
 } __attribute__ ((__packed__));
 
 struct btrfs_inode_timespec {
-	__le32 sec;
+	__le64 sec;
 	__le32 nsec;
 } __attribute__ ((__packed__));
 
@@ -207,9 +209,14 @@ struct btrfs_file_extent_item {
 	__le64 num_blocks;
 } __attribute__ ((__packed__));
 
+struct btrfs_csum_item {
+	u8 csum[BTRFS_CSUM_SIZE];
+} __attribute__ ((__packed__));
+
 struct btrfs_inode_map_item {
 	struct btrfs_disk_key key;
 } __attribute__ ((__packed__));
+
 
 struct btrfs_fs_info {
 	struct btrfs_root *fs_root;

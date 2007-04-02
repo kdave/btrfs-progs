@@ -30,7 +30,7 @@ int main(int ac, char **av) {
 
 	radix_tree_init();
 
-	root = open_ctree("dbfile", &super);
+	root = open_ctree(av[1], &super);
 	trans = btrfs_start_transaction(root, 1);
 	srand(55);
 	ins.flags = 0;
@@ -51,9 +51,9 @@ int main(int ac, char **av) {
 		if (i == run_size - 5) {
 			btrfs_commit_transaction(trans, root, &super);
 		}
-
 	}
 	close_ctree(root, &super);
+	exit(1);
 
 	root = open_ctree("dbfile", &super);
 	printf("starting search\n");

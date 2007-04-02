@@ -16,10 +16,13 @@ check=sparse $(CHECKFLAGS)
 	$(check) $<
 	$(CC) $(CFLAGS) -c $<
 
-all: tester debug-tree quick-test dir-test tags mkfs.btrfs
+all: bit-radix-test tester debug-tree quick-test dir-test tags mkfs.btrfs
 
 mkfs.btrfs: $(objects) mkfs.o
 	gcc $(CFLAGS) -o mkfs.btrfs $(objects) mkfs.o
+
+bit-radix-test: $(objects) bit-radix.o
+	gcc $(CFLAGS) -o bit-radix-test $(objects) bit-radix.o
 
 debug-tree: $(objects) debug-tree.o
 	gcc $(CFLAGS) -o debug-tree $(objects) debug-tree.o
