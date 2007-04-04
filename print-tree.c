@@ -16,6 +16,7 @@ void btrfs_print_leaf(struct btrfs_root *root, struct btrfs_leaf *l)
 	struct btrfs_inode_map_item *mi;
 	struct btrfs_inode_item *ii;
 	struct btrfs_file_extent_item *fi;
+	char *p;
 	u32 type;
 
 	printf("leaf %Lu ptrs %d free space %d parent %Lu generation %Lu\n",
@@ -41,6 +42,10 @@ void btrfs_print_leaf(struct btrfs_root *root, struct btrfs_leaf *l)
 			       btrfs_inode_generation(ii),
 			       btrfs_inode_size(ii),
 			       btrfs_inode_mode(ii));
+			break;
+		case BTRFS_INLINE_DATA_KEY:
+			p = btrfs_item_ptr(l, i, char);
+			printf("\t\tinline data %.*s\n", 10, p);
 			break;
 		case BTRFS_DIR_ITEM_KEY:
 			di = btrfs_item_ptr(l, i, struct btrfs_dir_item);

@@ -28,6 +28,9 @@ int main(int ac, char **av) {
 	struct btrfs_root *root;
 	struct btrfs_trans_handle *trans;
 
+	buf = malloc(512);
+	memset(buf, 0, 512);
+
 	radix_tree_init();
 
 	root = open_ctree(av[1], &super);
@@ -36,7 +39,6 @@ int main(int ac, char **av) {
 	ins.flags = 0;
 	btrfs_set_key_type(&ins, BTRFS_STRING_ITEM_KEY);
 	for (i = 0; i < run_size; i++) {
-		buf = malloc(64);
 		num = next_key(i, max_key);
 		// num = i;
 		sprintf(buf, "string-%d", num);
@@ -44,18 +46,15 @@ int main(int ac, char **av) {
 			fprintf(stderr, "insert %d:%d\n", num, i);
 		ins.objectid = num;
 		ins.offset = 0;
-		ret = btrfs_insert_item(trans, root, &ins, buf, strlen(buf));
+		ret = btrfs_insert_item(trans, root, &ins, buf, 512);
 		if (!ret)
 			tree_size++;
-		free(buf);
 		if (i == run_size - 5) {
 			btrfs_commit_transaction(trans, root, &super);
 		}
 	}
 	close_ctree(root, &super);
-	exit(1);
-
-	root = open_ctree("dbfile", &super);
+	root = open_ctree(av[1], &super);
 	printf("starting search\n");
 	srand(55);
 	for (i = 0; i < run_size; i++) {
@@ -73,7 +72,7 @@ int main(int ac, char **av) {
 		btrfs_release_path(root, &path);
 	}
 	close_ctree(root, &super);
-	root = open_ctree("dbfile", &super);
+	root = open_ctree(av[1], &super);
 	printf("node %p level %d total ptrs %d free spc %lu\n", root->node,
 	        btrfs_header_level(&root->node->node.header),
 		btrfs_header_nritems(&root->node->node.header),
@@ -98,22 +97,20 @@ int main(int ac, char **av) {
 		btrfs_release_path(root, &path);
 	}
 	close_ctree(root, &super);
-	root = open_ctree("dbfile", &super);
+	root = open_ctree(av[1], &super);
 	srand(128);
 	for (i = 0; i < run_size; i++) {
-		buf = malloc(64);
 		num = next_key(i, max_key);
 		sprintf(buf, "string-%d", num);
 		ins.objectid = num;
 		if (i % 10000 == 0)
 			fprintf(stderr, "insert %d:%d\n", num, i);
-		ret = btrfs_insert_item(trans, root, &ins, buf, strlen(buf));
+		ret = btrfs_insert_item(trans, root, &ins, buf, 512);
 		if (!ret)
 			tree_size++;
-		free(buf);
 	}
 	close_ctree(root, &super);
-	root = open_ctree("dbfile", &super);
+	root = open_ctree(av[1], &super);
 	srand(128);
 	printf("starting search2\n");
 	for (i = 0; i < run_size; i++) {
