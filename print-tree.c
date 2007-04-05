@@ -56,6 +56,15 @@ void btrfs_print_leaf(struct btrfs_root *root, struct btrfs_leaf *l)
 			printf("\t\tname %.*s\n",
 			       btrfs_dir_name_len(di),(char *)(di + 1));
 			break;
+		case BTRFS_DIR_INDEX_KEY:
+			di = btrfs_item_ptr(l, i, struct btrfs_dir_item);
+			printf("\t\tdir index %Lu flags %u type %u\n",
+				btrfs_dir_objectid(di),
+				btrfs_dir_flags(di),
+				btrfs_dir_type(di));
+			printf("\t\tname %.*s\n",
+			       btrfs_dir_name_len(di),(char *)(di + 1));
+			break;
 		case BTRFS_ROOT_ITEM_KEY:
 			ri = btrfs_item_ptr(l, i, struct btrfs_root_item);
 			printf("\t\troot data blocknr %Lu refs %u\n",

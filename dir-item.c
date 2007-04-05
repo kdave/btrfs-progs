@@ -42,6 +42,25 @@ int btrfs_insert_dir_item(struct btrfs_trans_handle *trans, struct btrfs_root
 	btrfs_set_dir_name_len(dir_item, name_len);
 	name_ptr = (char *)(dir_item + 1);
 	memcpy(name_ptr, name, name_len);
+
+	// FIXME don't be stupid
+	if (key.offset == 2)
+		goto out;
+	btrfs_release_path(root, &path);
+	btrfs_set_key_type(&key, BTRFS_DIR_INDEX_KEY);
+	key.offset = objectid;
+	ret = btrfs_insert_empty_item(trans, root, &path, &key, data_size);
+	if (ret)
+		goto out;
+
+	dir_item = btrfs_item_ptr(&path.nodes[0]->leaf, path.slots[0],
+				  struct btrfs_dir_item);
+	btrfs_set_dir_objectid(dir_item, objectid);
+	btrfs_set_dir_type(dir_item, type);
+	btrfs_set_dir_flags(dir_item, 0);
+	btrfs_set_dir_name_len(dir_item, name_len);
+	name_ptr = (char *)(dir_item + 1);
+	memcpy(name_ptr, name, name_len);
 out:
 	btrfs_release_path(root, &path);
 	return ret;
