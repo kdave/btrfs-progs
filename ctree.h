@@ -8,12 +8,19 @@ struct btrfs_trans_handle;
 
 #define BTRFS_MAGIC "_BtRfS_M"
 
-#define BTRFS_ROOT_TREE_OBJECTID 1
-#define BTRFS_EXTENT_TREE_OBJECTID 2
-#define BTRFS_INODE_MAP_OBJECTID 3
-#define BTRFS_FS_TREE_OBJECTID 4
-#define BTRFS_FIRST_FREE_OBJECTID 5
+#define BTRFS_ROOT_TREE_OBJECTID 1ULL
+#define BTRFS_EXTENT_TREE_OBJECTID 2ULL
+#define BTRFS_INODE_MAP_OBJECTID 3ULL
+#define BTRFS_FS_TREE_OBJECTID 4ULL
+#define BTRFS_FIRST_FREE_OBJECTID 5ULL
 
+/*
+ * we can actually store much bigger names, but lets not confuse the rest
+ * of linux
+ */
+#define BTRFS_NAME_LEN 255
+
+/* 32 bytes in various csum fields */
 #define BTRFS_CSUM_SIZE 32
 
 /*
@@ -258,6 +265,10 @@ struct btrfs_root {
 #define BTRFS_KEY_TYPE_MAX	256
 #define BTRFS_KEY_TYPE_MASK	(BTRFS_KEY_TYPE_MAX - 1)
 
+#define BTRFS_KEY_OVERFLOW_MAX 128
+#define BTRFS_KEY_OVERFLOW_SHIFT 8
+#define BTRFS_KEY_OVERFLOW_MASK (0x7FULL << BTRFS_KEY_OVERFLOW_SHIFT)
+
 /*
  * inode items have the data typically returned from stat and store other
  * info about object characteristics.  There is one for every file and dir in
@@ -280,7 +291,11 @@ struct btrfs_root {
  * a (hopefully) huge chunk of disk
  */
 #define BTRFS_EXTENT_DATA_KEY	5
+/*
+ * csum items have the checksums for data in the extents
+ */
 #define BTRFS_CSUM_ITEM_KEY	6
+
 /*
  * root items point to tree roots.  There are typically in the root
  * tree used by the super block to find all the other trees
@@ -405,6 +420,27 @@ static inline void btrfs_set_inode_compat_flags(struct btrfs_inode_item *i,
 	i->compat_flags = cpu_to_le16(val);
 }
 
+static inline u64 btrfs_timespec_sec(struct btrfs_inode_timespec *ts)
+{
+	return le64_to_cpu(ts->sec);
+}
+
+static inline void btrfs_set_timespec_sec(struct btrfs_inode_timespec *ts,
+					  u64 val)
+{
+	ts->sec = cpu_to_le64(val);
+}
+
+static inline u32 btrfs_timespec_nsec(struct btrfs_inode_timespec *ts)
+{
+	return le32_to_cpu(ts->nsec);
+}
+
+static inline void btrfs_set_timespec_nsec(struct btrfs_inode_timespec *ts,
+					  u32 val)
+{
+	ts->nsec = cpu_to_le32(val);
+}
 
 static inline u64 btrfs_extent_owner(struct btrfs_extent_item *ei)
 {
@@ -551,6 +587,19 @@ static inline void btrfs_set_disk_key_flags(struct btrfs_disk_key *disk,
 	disk->flags = cpu_to_le32(val);
 }
 
+static inline u32 btrfs_key_overflow(struct btrfs_key *key)
+{
+	u32 over = key->flags & BTRFS_KEY_OVERFLOW_MASK;
+	return over >> BTRFS_KEY_OVERFLOW_SHIFT;
+}
+
+static inline void btrfs_set_key_overflow(struct btrfs_key *key, u32 over)
+{
+	BUG_ON(over >= BTRFS_KEY_OVERFLOW_MAX);
+	over = over << BTRFS_KEY_OVERFLOW_SHIFT;
+	key->flags = (key->flags & ~((u64)BTRFS_KEY_OVERFLOW_MASK)) | over;
+}
+
 static inline u32 btrfs_key_type(struct btrfs_key *key)
 {
 	return key->flags & BTRFS_KEY_TYPE_MASK;
@@ -572,6 +621,22 @@ static inline void btrfs_set_disk_key_type(struct btrfs_disk_key *key, u32 type)
 	u32 flags = btrfs_disk_key_flags(key);
 	BUG_ON(type >= BTRFS_KEY_TYPE_MAX);
 	flags = (flags & ~((u64)BTRFS_KEY_TYPE_MASK)) | type;
+	btrfs_set_disk_key_flags(key, flags);
+}
+
+static inline u32 btrfs_disk_key_overflow(struct btrfs_disk_key *key)
+{
+	u32 over = le32_to_cpu(key->flags) & BTRFS_KEY_OVERFLOW_MASK;
+	return over >> BTRFS_KEY_OVERFLOW_SHIFT;
+}
+
+static inline void btrfs_set_disK_key_overflow(struct btrfs_disk_key *key,
+					       u32 over)
+{
+	u32 flags = btrfs_disk_key_flags(key);
+	BUG_ON(over >= BTRFS_KEY_OVERFLOW_MAX);
+	over = over << BTRFS_KEY_OVERFLOW_SHIFT;
+	flags = (flags & ~((u64)BTRFS_KEY_OVERFLOW_MASK)) | over;
 	btrfs_set_disk_key_flags(key, flags);
 }
 

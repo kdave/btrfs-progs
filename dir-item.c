@@ -7,6 +7,26 @@
 #include "hash.h"
 #include "transaction.h"
 
+int insert_with_overflow(struct btrfs_trans_handle *trans, struct btrfs_root
+			    *root, struct btrfs_path *path, struct btrfs_key
+			    *cpu_key, u32 data_size)
+{
+	int overflow;
+	int ret;
+
+	ret = btrfs_insert_empty_item(trans, root, path, cpu_key, data_size);
+	overflow = btrfs_key_overflow(cpu_key);
+
+	while(ret == -EEXIST && overflow < BTRFS_KEY_OVERFLOW_MAX) {
+		overflow++;
+		btrfs_set_key_overflow(cpu_key, overflow);
+		btrfs_release_path(root, path);
+		ret = btrfs_insert_empty_item(trans, root, path, cpu_key,
+					      data_size);
+	}
+	return ret;
+}
+
 int btrfs_insert_dir_item(struct btrfs_trans_handle *trans, struct btrfs_root
 			  *root, char *name, int name_len, u64 dir, u64
 			  objectid, u8 type)
@@ -30,7 +50,7 @@ int btrfs_insert_dir_item(struct btrfs_trans_handle *trans, struct btrfs_root
 	BUG_ON(ret);
 	btrfs_init_path(&path);
 	data_size = sizeof(*dir_item) + name_len;
-	ret = btrfs_insert_empty_item(trans, root, &path, &key, data_size);
+	ret = insert_with_overflow(trans, root, &path, &key, data_size);
 	if (ret)
 		goto out;
 
@@ -43,13 +63,10 @@ int btrfs_insert_dir_item(struct btrfs_trans_handle *trans, struct btrfs_root
 	name_ptr = (char *)(dir_item + 1);
 	memcpy(name_ptr, name, name_len);
 
-	// FIXME don't be stupid
-	if (key.offset == 2)
-		goto out;
 	btrfs_release_path(root, &path);
 	btrfs_set_key_type(&key, BTRFS_DIR_INDEX_KEY);
 	key.offset = objectid;
-	ret = btrfs_insert_empty_item(trans, root, &path, &key, data_size);
+	ret = insert_with_overflow(trans, root, &path, &key, data_size);
 	if (ret)
 		goto out;
 
@@ -78,6 +95,7 @@ int btrfs_lookup_dir_item(struct btrfs_trans_handle *trans, struct btrfs_root
 	key.objectid = dir;
 	key.flags = 0;
 	btrfs_set_key_type(&key, BTRFS_DIR_ITEM_KEY);
+	btrfs_set_key_overflow(&key, BTRFS_KEY_OVERFLOW_MAX);
 	ret = btrfs_name_hash(name, name_len, &key.offset);
 	BUG_ON(ret);
 	ret = btrfs_search_slot(trans, root, &key, path, ins_len, cow);
