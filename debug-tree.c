@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <uuid/uuid.h>
 #include "kerncompat.h"
 #include "radix-tree.h"
 #include "ctree.h"
@@ -10,6 +11,7 @@
 int main(int ac, char **av) {
 	struct btrfs_super_block super;
 	struct btrfs_root *root;
+	char uuidbuf[37];
 
 	if (ac != 2) {
 		fprintf(stderr, "usage: %s device\n", av[0]);
@@ -34,5 +36,8 @@ int main(int ac, char **av) {
 			 root->fs_info->tree_root->node);
 	printf("total blocks %Lu\n", btrfs_super_total_blocks(&super));
 	printf("blocks used %Lu\n", btrfs_super_blocks_used(&super));
+	uuidbuf[36] = '\0';
+	uuid_unparse(super.fsid, uuidbuf);
+	printf("uuid %s\n", uuidbuf);
 	return 0;
 }

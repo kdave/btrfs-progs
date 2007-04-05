@@ -21,6 +21,9 @@ static int check_tree_block(struct btrfs_root *root, struct btrfs_buffer *buf)
 	if (root->node && btrfs_header_parentid(&buf->node.header) !=
 	    btrfs_header_parentid(&root->node->node.header))
 		BUG();
+	if (memcmp(root->fs_info->disk_super->fsid, buf->node.header.fsid,
+		   sizeof(buf->node.header.fsid)))
+		BUG();
 	return 0;
 }
 

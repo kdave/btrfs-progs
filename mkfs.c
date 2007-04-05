@@ -9,6 +9,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <uuid/uuid.h>
 #include "kerncompat.h"
 #include "radix-tree.h"
 #include "ctree.h"
@@ -99,6 +100,7 @@ int mkfs(int fd, u64 num_blocks, u32 blocksize)
 	btrfs_set_super_blocksize(&super, blocksize);
 	btrfs_set_super_total_blocks(&super, num_blocks);
 	btrfs_set_super_blocks_used(&super, start_block + 5);
+	uuid_generate(super.fsid);
 
 	block = malloc(blocksize);
 	memset(block, 0, blocksize);
@@ -115,6 +117,8 @@ int mkfs(int fd, u64 num_blocks, u32 blocksize)
 	btrfs_set_header_blocknr(&empty_leaf->header, start_block + 1);
 	btrfs_set_header_nritems(&empty_leaf->header, 3);
 	btrfs_set_header_generation(&empty_leaf->header, 0);
+	memcpy(empty_leaf->header.fsid, super.fsid,
+	       sizeof(empty_leaf->header.fsid));
 
 	/* create the items for the root tree */
 	btrfs_set_root_blocknr(&root_item, start_block + 2);

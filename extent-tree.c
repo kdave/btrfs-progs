@@ -461,6 +461,8 @@ struct btrfs_buffer *btrfs_alloc_free_block(struct btrfs_trans_handle *trans,
 	dirty_tree_block(trans, root, buf);
 	btrfs_set_header_generation(&buf->node.header,
 				    root->root_key.offset + 1);
+	memcpy(buf->node.header.fsid, root->fs_info->disk_super->fsid,
+	       sizeof(buf->node.header.fsid));
 	return buf;
 }
 
