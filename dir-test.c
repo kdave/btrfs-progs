@@ -69,6 +69,7 @@ static int ins_one(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 
 	inode_map.objectid = objectid;
 	inode_map.flags = 0;
+	btrfs_set_key_type(&inode_map, BTRFS_INODE_ITEM_KEY);
 	inode_map.offset = 0;
 
 	ret = btrfs_insert_inode_map(trans, root, objectid, &inode_map);
@@ -80,7 +81,7 @@ static int ins_one(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 	if (ret)
 		goto error;
 	ret = btrfs_insert_dir_item(trans, root, buf, strlen(buf), dir_oid,
-				    objectid, 1);
+				    &inode_map, 1);
 	if (ret)
 		goto error;
 
@@ -134,14 +135,19 @@ static int insert_dup(struct btrfs_trans_handle *trans, struct btrfs_root
 	int ret;
 	char buf[128];
 	unsigned long oid;
+	struct btrfs_key key;
 
 	ret = find_num(radix, &oid, 1);
 	if (ret < 0)
 		return 0;
 	sprintf(buf, "str-%lu", oid);
 
+	key.objectid = file_oid;
+	key.flags = 0;
+	btrfs_set_key_type(&key, BTRFS_INODE_ITEM_KEY);
+	key.offset = 0;
 	ret = btrfs_insert_dir_item(trans, root, buf, strlen(buf), dir_oid,
-				    file_oid, 1);
+				    &key, 1);
 	if (ret != -EEXIST) {
 		printf("insert on %s gave us %d\n", buf, ret);
 		return 1;
@@ -163,7 +169,7 @@ static int del_dir_item(struct btrfs_trans_handle *trans,
 	/* find the inode number of the file */
 	di = btrfs_item_ptr(&path->nodes[0]->leaf, path->slots[0],
 			    struct btrfs_dir_item);
-	file_objectid = btrfs_dir_objectid(di);
+	file_objectid = btrfs_disk_key_objectid(&di->location);
 
 	/* delete the directory item */
 	ret = btrfs_del_item(trans, root, path);
@@ -254,7 +260,7 @@ static int lookup_item(struct btrfs_trans_handle *trans, struct btrfs_root
 	if (!ret) {
 		di = btrfs_item_ptr(&path.nodes[0]->leaf, path.slots[0],
 				    struct btrfs_dir_item);
-		objectid = btrfs_dir_objectid(di);
+		objectid = btrfs_disk_key_objectid(&di->location);
 		btrfs_release_path(root, &path);
 		btrfs_init_path(&path);
 		ret = btrfs_lookup_inode_map(trans, root, &path, objectid, 0);

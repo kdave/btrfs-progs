@@ -28,11 +28,11 @@ void btrfs_print_leaf(struct btrfs_root *root, struct btrfs_leaf *l)
 	for (i = 0 ; i < nr ; i++) {
 		item = l->items + i;
 		type = btrfs_disk_key_type(&item->key);
-		printf("\titem %d key (%Lu %u %Lu) itemoff %d itemsize %d\n",
+		printf("\titem %d key (%Lu %Lu %u) itemoff %d itemsize %d\n",
 			i,
 			btrfs_disk_key_objectid(&item->key),
-			btrfs_disk_key_flags(&item->key),
 			btrfs_disk_key_offset(&item->key),
+			btrfs_disk_key_flags(&item->key),
 			btrfs_item_offset(item),
 			btrfs_item_size(item));
 		switch (type) {
@@ -50,7 +50,7 @@ void btrfs_print_leaf(struct btrfs_root *root, struct btrfs_leaf *l)
 		case BTRFS_DIR_ITEM_KEY:
 			di = btrfs_item_ptr(l, i, struct btrfs_dir_item);
 			printf("\t\tdir oid %Lu flags %u type %u\n",
-				btrfs_dir_objectid(di),
+				btrfs_disk_key_objectid(&di->location),
 				btrfs_dir_flags(di),
 				btrfs_dir_type(di));
 			printf("\t\tname %.*s\n",
@@ -59,7 +59,7 @@ void btrfs_print_leaf(struct btrfs_root *root, struct btrfs_leaf *l)
 		case BTRFS_DIR_INDEX_KEY:
 			di = btrfs_item_ptr(l, i, struct btrfs_dir_item);
 			printf("\t\tdir index %Lu flags %u type %u\n",
-				btrfs_dir_objectid(di),
+				btrfs_disk_key_objectid(&di->location),
 				btrfs_dir_flags(di),
 				btrfs_dir_type(di));
 			printf("\t\tname %.*s\n",
@@ -67,8 +67,10 @@ void btrfs_print_leaf(struct btrfs_root *root, struct btrfs_leaf *l)
 			break;
 		case BTRFS_ROOT_ITEM_KEY:
 			ri = btrfs_item_ptr(l, i, struct btrfs_root_item);
-			printf("\t\troot data blocknr %Lu refs %u\n",
-				btrfs_root_blocknr(ri), btrfs_root_refs(ri));
+			printf("\t\troot data blocknr %Lu dirid %Lu refs %u\n",
+				btrfs_root_blocknr(ri),
+				btrfs_root_dirid(ri),
+				btrfs_root_refs(ri));
 			break;
 		case BTRFS_EXTENT_ITEM_KEY:
 			ei = btrfs_item_ptr(l, i, struct btrfs_extent_item);
@@ -77,10 +79,10 @@ void btrfs_print_leaf(struct btrfs_root *root, struct btrfs_leaf *l)
 			break;
 		case BTRFS_INODE_MAP_ITEM_KEY:
 			mi = btrfs_item_ptr(l, i, struct btrfs_inode_map_item);
-			printf("\t\tinode map key %Lu %u %Lu\n",
+			printf("\t\tinode map key %Lu %Lu %u\n",
 			       btrfs_disk_key_objectid(&mi->key),
-			       btrfs_disk_key_flags(&mi->key),
-			       btrfs_disk_key_offset(&mi->key));
+			       btrfs_disk_key_offset(&mi->key),
+			       btrfs_disk_key_flags(&mi->key));
 			break;
 		case BTRFS_EXTENT_DATA_KEY:
 			fi = btrfs_item_ptr(l, i,

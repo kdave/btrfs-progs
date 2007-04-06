@@ -21,33 +21,25 @@
 static inline int ioctl(int fd, int define, u64 *size) { return 0; }
 #endif
 
-static int make_root_dir(int fd) {
-	struct btrfs_root *root;
-	struct btrfs_super_block super;
+static int __make_root_dir(struct btrfs_trans_handle *trans,
+			   struct btrfs_root *root)
+{
 	int ret;
 	char buf[8];
 	u64 objectid;
 	struct btrfs_key inode_map;
 	struct btrfs_inode_item inode_item;
-	struct btrfs_trans_handle *trans;
-
-	root = open_ctree_fd(fd, &super);
-
-	if (!root) {
-		fprintf(stderr, "ctree init failed\n");
-		return -1;
-	}
 
 	buf[0] = '.';
 	buf[1] = '.';
 
-	trans = btrfs_start_transaction(root, 1);
 	ret = btrfs_find_free_objectid(trans, root, 1, &objectid);
 	if (ret)
 		goto error;
 
 	inode_map.objectid = objectid;
 	inode_map.flags = 0;
+	btrfs_set_key_type(&inode_map, BTRFS_INODE_ITEM_KEY);
 	inode_map.offset = 0;
 
 	ret = btrfs_insert_inode_map(trans, root, objectid, &inode_map);
@@ -59,26 +51,59 @@ static int make_root_dir(int fd) {
 	btrfs_set_inode_size(&inode_item, 3);
 	btrfs_set_inode_nlink(&inode_item, 1);
 	btrfs_set_inode_nblocks(&inode_item, 1);
-	btrfs_set_inode_mode(&inode_item, S_IFDIR | 0755);
+	btrfs_set_inode_mode(&inode_item, S_IFDIR | 0555);
 
-	btrfs_set_super_root_dir(&super, objectid);
+	if (root->fs_info->tree_root == root)
+		btrfs_set_super_root_dir(root->fs_info->disk_super, objectid);
 
 	ret = btrfs_insert_inode(trans, root, objectid, &inode_item);
 	if (ret)
 		goto error;
 	ret = btrfs_insert_dir_item(trans, root, buf, 1, objectid,
-				    objectid, 1);
+				    &inode_map, 1);
 	if (ret)
 		goto error;
 	ret = btrfs_insert_dir_item(trans, root, buf, 2, objectid,
-				    objectid, 1);
+				    &inode_map, 1);
 	if (ret)
 		goto error;
-	ret = btrfs_commit_transaction(trans, root, &super);
-	if (ret)
-		goto error;
-	ret = close_ctree(root, &super);
+	btrfs_set_root_dirid(&root->root_item, objectid);
+	ret = 0;
 error:
+	return ret;
+}
+
+static int make_root_dir(int fd) {
+	struct btrfs_root *root;
+	struct btrfs_super_block super;
+	struct btrfs_trans_handle *trans;
+	int ret;
+	struct btrfs_key location;
+
+	root = open_ctree_fd(fd, &super);
+
+	if (!root) {
+		fprintf(stderr, "ctree init failed\n");
+		return -1;
+	}
+	trans = btrfs_start_transaction(root, 1);
+	ret = __make_root_dir(trans, root->fs_info->tree_root);
+	if (ret)
+		goto err;
+	ret = __make_root_dir(trans, root);
+	if (ret)
+		goto err;
+	memcpy(&location, &root->fs_info->fs_root->root_key, sizeof(location));
+	location.offset = (u64)-1;
+	ret = btrfs_insert_dir_item(trans, root->fs_info->tree_root,
+			"default", strlen("default"),
+			btrfs_super_root_dir(root->fs_info->disk_super),
+			&location, 1);
+	if (ret)
+		goto err;
+	btrfs_commit_transaction(trans, root, root->fs_info->disk_super);
+	ret = close_ctree(root, &super);
+err:
 	return ret;
 }
 
@@ -89,6 +114,7 @@ int mkfs(int fd, u64 num_blocks, u32 blocksize)
 	struct btrfs_root_item root_item;
 	struct btrfs_item item;
 	struct btrfs_extent_item extent_item;
+	struct btrfs_inode_item *inode_item;
 	char *block;
 	int ret;
 	u32 itemoff;
@@ -121,6 +147,15 @@ int mkfs(int fd, u64 num_blocks, u32 blocksize)
 	       sizeof(empty_leaf->header.fsid));
 
 	/* create the items for the root tree */
+	inode_item = &root_item.inode;
+	memset(inode_item, 0, sizeof(*inode_item));
+	btrfs_set_inode_generation(inode_item, 1);
+	btrfs_set_inode_size(inode_item, 3);
+	btrfs_set_inode_nlink(inode_item, 1);
+	btrfs_set_inode_nblocks(inode_item, 1);
+	btrfs_set_inode_mode(inode_item, S_IFDIR | 0755);
+
+	btrfs_set_root_dirid(&root_item, 0);
 	btrfs_set_root_blocknr(&root_item, start_block + 2);
 	btrfs_set_root_refs(&root_item, 1);
 	itemoff = __BTRFS_LEAF_DATA_SIZE(blocksize) - sizeof(root_item);
