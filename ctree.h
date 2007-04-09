@@ -740,6 +740,17 @@ static inline void btrfs_set_super_blocknr(struct btrfs_super_block *s, u64 val)
 	s->blocknr = cpu_to_le64(val);
 }
 
+static inline u64 btrfs_super_generation(struct btrfs_super_block *s)
+{
+	return le64_to_cpu(s->generation);
+}
+
+static inline void btrfs_set_super_generation(struct btrfs_super_block *s,
+					      u64 val)
+{
+	s->generation = cpu_to_le64(val);
+}
+
 static inline u64 btrfs_super_root(struct btrfs_super_block *s)
 {
 	return le64_to_cpu(s->root);

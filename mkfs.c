@@ -120,6 +120,7 @@ int mkfs(int fd, u64 num_blocks, u32 blocksize)
 	u32 itemoff;
 	u32 start_block = BTRFS_SUPER_INFO_OFFSET / blocksize;
 
+	btrfs_set_super_generation(&super, 1);
 	btrfs_set_super_blocknr(&super, start_block);
 	btrfs_set_super_root(&super, start_block + 1);
 	strcpy((char *)(&super.magic), BTRFS_MAGIC);
