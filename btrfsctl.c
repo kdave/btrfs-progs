@@ -9,6 +9,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <dirent.h>
 #include "kerncompat.h"
 
 #ifdef __CHECKER__
@@ -33,6 +34,8 @@ int main(int ac, char **av)
 	struct btrfs_ioctl_vol_args args;
 	char *name;
 	int i;
+	struct stat st;
+	DIR *dirstream;
 
 	for (i = 1; i < ac - 1; i++) {
 		if (strcmp(av[i], "-s") == 0) {
@@ -49,8 +52,21 @@ int main(int ac, char **av)
 	}
 	fname = av[ac - 1];
 printf("fname is %s\n", fname);
-	fd = open(fname, O_RDWR);
-	if (fd < 0) {
+	ret = stat(fname, &st);
+	if (ret < 0) {
+		perror("stat:");
+		exit(1);
+	}
+	if (S_ISDIR(st.st_mode)) {
+		dirstream = opendir(fname);
+		if (!dirstream) {
+			perror("opendir");
+			exit(1);
+		}
+		fd = dirfd(dirstream);
+	} else {
+		fd = open(fname, O_RDWR);
+	} if (fd < 0) {
 		perror("open");
 		exit(1);
 	}
