@@ -11,7 +11,14 @@
 int main(int ac, char **av) {
 	struct btrfs_super_block super;
 	struct btrfs_root *root;
+	struct btrfs_path path;
+	struct btrfs_key key;
+	struct btrfs_root_item *ri;
+	struct btrfs_leaf *leaf;
+	struct btrfs_key found_key;
 	char uuidbuf[37];
+	int ret;
+	int slot;
 
 	if (ac != 2) {
 		fprintf(stderr, "usage: %s device\n", av[0]);
@@ -23,17 +30,53 @@ int main(int ac, char **av) {
 		fprintf(stderr, "unable to open %s\n", av[1]);
 		exit(1);
 	}
-	printf("fs tree\n");
-	btrfs_print_tree(root, root->node);
-	printf("map tree\n");
-	btrfs_print_tree(root->fs_info->extent_root,
-			 root->fs_info->extent_root->node);
-	printf("inode tree\n");
-	btrfs_print_tree(root->fs_info->inode_root,
-			 root->fs_info->inode_root->node);
 	printf("root tree\n");
 	btrfs_print_tree(root->fs_info->tree_root,
 			 root->fs_info->tree_root->node);
+	btrfs_init_path(&path);
+	key.offset = 0;
+	key.objectid = 0;
+	key.flags = 0;
+	btrfs_set_key_type(&key, BTRFS_ROOT_ITEM_KEY);
+	ret = btrfs_search_slot(NULL, root->fs_info->tree_root,
+					&key, &path, 0, 0);
+	BUG_ON(ret < 0);
+	while(1) {
+		leaf = &path.nodes[0]->leaf;
+		slot = path.slots[0];
+		if (slot >= btrfs_header_nritems(&leaf->header)) {
+			ret = btrfs_next_leaf(root, &path);
+			if (ret != 0)
+				break;
+			leaf = &path.nodes[0]->leaf;
+			slot = path.slots[0];
+		}
+		btrfs_disk_key_to_cpu(&found_key,
+				      &leaf->items[path.slots[0]].key);
+		if (btrfs_key_type(&found_key) == BTRFS_ROOT_ITEM_KEY) {
+			struct btrfs_buffer *buf;
+			ri = btrfs_item_ptr(leaf, path.slots[0],
+					    struct btrfs_root_item);
+			buf = read_tree_block(root->fs_info->tree_root,
+					      btrfs_root_blocknr(ri));
+			switch(found_key.objectid) {
+			case BTRFS_ROOT_TREE_OBJECTID:
+				printf("root ");
+				break;
+			case BTRFS_EXTENT_TREE_OBJECTID:
+				printf("extent tree ");
+				break;
+			case BTRFS_INODE_MAP_OBJECTID:
+				printf("inode map");
+				break;
+			}
+			printf("tree %Lu %Lu %u\n", found_key.objectid,
+			       found_key.offset, found_key.flags);
+			btrfs_print_tree(root, buf);
+		}
+		path.slots[0]++;
+	}
+	btrfs_release_path(root, &path);
 	printf("total blocks %Lu\n", btrfs_super_total_blocks(&super));
 	printf("blocks used %Lu\n", btrfs_super_blocks_used(&super));
 	uuidbuf[36] = '\0';
