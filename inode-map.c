@@ -10,7 +10,7 @@
  * walks the btree of allocated inodes and find a hole.
  */
 int btrfs_find_free_objectid(struct btrfs_trans_handle *trans,
-			     struct btrfs_root *fs_root,
+			     struct btrfs_root *root,
 			     u64 dirid, u64 *objectid)
 {
 	struct btrfs_path path;
@@ -21,18 +21,16 @@ int btrfs_find_free_objectid(struct btrfs_trans_handle *trans,
 	u64 last_ino;
 	int start_found;
 	struct btrfs_leaf *l;
-	struct btrfs_root *root = fs_root->fs_info->inode_root;
 	struct btrfs_key search_key;
 	u64 search_start = dirid;
 
-	if (fs_root->fs_info->last_inode_alloc_dirid == dirid)
-		search_start = fs_root->fs_info->last_inode_alloc;
+	if (root->fs_info->last_inode_alloc_dirid == dirid)
+		search_start = root->fs_info->last_inode_alloc;
 
 	if (search_start < BTRFS_FIRST_FREE_OBJECTID)
 		search_start = BTRFS_FIRST_FREE_OBJECTID;
 	search_key.objectid = search_start;
 	search_key.flags = 0;
-	btrfs_set_key_type(&search_key, BTRFS_INODE_MAP_ITEM_KEY);
 	search_key.offset = 0;
 
 	btrfs_init_path(&path);
@@ -89,50 +87,3 @@ error:
 	btrfs_release_path(root, &path);
 	return ret;
 }
-
-int btrfs_insert_inode_map(struct btrfs_trans_handle *trans,
-			   struct btrfs_root *fs_root,
-			   u64 objectid, struct btrfs_key *location)
-{
-	int ret = 0;
-	struct btrfs_path path;
-	struct btrfs_inode_map_item *inode_item;
-	struct btrfs_key key;
-	struct btrfs_root *inode_root = fs_root->fs_info->inode_root;
-
-	key.objectid = objectid;
-	key.flags = 0;
-	btrfs_set_key_type(&key, BTRFS_INODE_MAP_ITEM_KEY);
-	key.offset = 0;
-	btrfs_init_path(&path);
-	ret = btrfs_insert_empty_item(trans, inode_root, &path, &key,
-				      sizeof(struct btrfs_inode_map_item));
-	if (ret)
-		goto out;
-
-	inode_item = btrfs_item_ptr(&path.nodes[0]->leaf, path.slots[0],
-				  struct btrfs_inode_map_item);
-	btrfs_cpu_key_to_disk(&inode_item->key, location);
-out:
-	btrfs_release_path(inode_root, &path);
-	return ret;
-}
-
-int btrfs_lookup_inode_map(struct btrfs_trans_handle *trans,
-			   struct btrfs_root *fs_root, struct btrfs_path *path,
-			   u64 objectid, int mod)
-{
-	int ret;
-	struct btrfs_key key;
-	int ins_len = mod < 0 ? -1 : 0;
-	int cow = mod != 0;
-	struct btrfs_root *inode_root = fs_root->fs_info->inode_root;
-
-	key.objectid = objectid;
-	key.flags = 0;
-	key.offset = 0;
-	btrfs_set_key_type(&key, BTRFS_INODE_MAP_ITEM_KEY);
-	ret = btrfs_search_slot(trans, inode_root, &key, path, ins_len, cow);
-	return ret;
-}
-

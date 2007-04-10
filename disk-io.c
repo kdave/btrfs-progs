@@ -89,7 +89,6 @@ struct btrfs_buffer *read_tree_block(struct btrfs_root *root, u64 blocknr)
 	loff_t offset = blocknr * root->blocksize;
 	struct btrfs_buffer *buf;
 	int ret;
-
 	buf = radix_tree_lookup(&root->fs_info->cache_radix, blocknr);
 	if (buf) {
 		buf->count++;
@@ -169,14 +168,7 @@ static int commit_tree_roots(struct btrfs_trans_handle *trans,
 	u64 old_extent_block;
 	struct btrfs_root *tree_root = fs_info->tree_root;
 	struct btrfs_root *extent_root = fs_info->extent_root;
-	struct btrfs_root *inode_root = fs_info->inode_root;
 
-	btrfs_set_root_blocknr(&inode_root->root_item,
-			       inode_root->node->blocknr);
-	ret = btrfs_update_root(trans, tree_root,
-				&inode_root->root_key,
-				&inode_root->root_item);
-	BUG_ON(ret);
 	while(1) {
 		old_extent_block = btrfs_root_blocknr(&extent_root->root_item);
 		if (old_extent_block == extent_root->node->blocknr)
@@ -281,7 +273,6 @@ struct btrfs_root *open_ctree_fd(int fp, struct btrfs_super_block *super)
 	struct btrfs_root *root = malloc(sizeof(struct btrfs_root));
 	struct btrfs_root *extent_root = malloc(sizeof(struct btrfs_root));
 	struct btrfs_root *tree_root = malloc(sizeof(struct btrfs_root));
-	struct btrfs_root *inode_root = malloc(sizeof(struct btrfs_root));
 	struct btrfs_fs_info *fs_info = malloc(sizeof(*fs_info));
 	int ret;
 
@@ -295,7 +286,6 @@ struct btrfs_root *open_ctree_fd(int fp, struct btrfs_super_block *super)
 	fs_info->fs_root = root;
 	fs_info->tree_root = tree_root;
 	fs_info->extent_root = extent_root;
-	fs_info->inode_root = inode_root;
 	fs_info->last_inode_alloc = 0;
 	fs_info->last_inode_alloc_dirid = 0;
 	fs_info->disk_super = super;
@@ -309,17 +299,12 @@ struct btrfs_root *open_ctree_fd(int fp, struct btrfs_super_block *super)
 		return NULL;
 	}
 	BUG_ON(ret < 0);
-
 	__setup_root(super, tree_root, fs_info, BTRFS_ROOT_TREE_OBJECTID, fp);
 	tree_root->node = read_tree_block(tree_root, btrfs_super_root(super));
 	BUG_ON(!tree_root->node);
 
 	ret = find_and_setup_root(super, tree_root, fs_info,
 				  BTRFS_EXTENT_TREE_OBJECTID, extent_root, fp);
-	BUG_ON(ret);
-
-	ret = find_and_setup_root(super, tree_root, fs_info,
-				  BTRFS_INODE_MAP_OBJECTID, inode_root, fp);
 	BUG_ON(ret);
 
 	ret = find_and_setup_root(super, tree_root, fs_info,
@@ -379,9 +364,6 @@ int close_ctree(struct btrfs_root *root, struct btrfs_super_block *s)
 	if (root->fs_info->extent_root->node)
 		btrfs_block_release(root->fs_info->extent_root,
 				    root->fs_info->extent_root->node);
-	if (root->fs_info->inode_root->node)
-		btrfs_block_release(root->fs_info->inode_root,
-				    root->fs_info->inode_root->node);
 	if (root->fs_info->tree_root->node)
 		btrfs_block_release(root->fs_info->tree_root,
 				    root->fs_info->tree_root->node);

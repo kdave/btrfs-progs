@@ -66,9 +66,6 @@ int main(int ac, char **av) {
 			case BTRFS_EXTENT_TREE_OBJECTID:
 				printf("extent tree ");
 				break;
-			case BTRFS_INODE_MAP_OBJECTID:
-				printf("inode map");
-				break;
 			}
 			printf("tree %Lu %Lu %u\n", found_key.objectid,
 			       found_key.offset, found_key.flags);

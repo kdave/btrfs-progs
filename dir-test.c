@@ -72,10 +72,6 @@ static int ins_one(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 	btrfs_set_key_type(&inode_map, BTRFS_INODE_ITEM_KEY);
 	inode_map.offset = 0;
 
-	ret = btrfs_insert_inode_map(trans, root, objectid, &inode_map);
-	if (ret)
-		goto error;
-
 	initial_inode_init(root, &inode_item);
 	ret = btrfs_insert_inode(trans, root, objectid, &inode_item);
 	if (ret)
@@ -187,18 +183,8 @@ static int del_dir_item(struct btrfs_trans_handle *trans,
 		goto out_release;
 	btrfs_release_path(root, path);
 
-	/* delete the inode mapping */
-	btrfs_init_path(path);
-	ret = btrfs_lookup_inode_map(trans, root, path, file_objectid, -1);
-	if (ret)
-		goto out_release;
-	ret = btrfs_del_item(trans, root->fs_info->inode_root, path);
-	if (ret)
-		goto out_release;
-
 	if (root->fs_info->last_inode_alloc > file_objectid)
 		root->fs_info->last_inode_alloc = file_objectid;
-	btrfs_release_path(root, path);
 	ptr = radix_tree_delete(radix, radix_index);
 	if (!ptr) {
 		ret = -5555;
@@ -261,9 +247,6 @@ static int lookup_item(struct btrfs_trans_handle *trans, struct btrfs_root
 		di = btrfs_item_ptr(&path.nodes[0]->leaf, path.slots[0],
 				    struct btrfs_dir_item);
 		objectid = btrfs_disk_key_objectid(&di->location);
-		btrfs_release_path(root, &path);
-		btrfs_init_path(&path);
-		ret = btrfs_lookup_inode_map(trans, root, &path, objectid, 0);
 	}
 	btrfs_release_path(root, &path);
 	if (ret) {

@@ -13,7 +13,6 @@ void btrfs_print_leaf(struct btrfs_root *root, struct btrfs_leaf *l)
 	struct btrfs_extent_item *ei;
 	struct btrfs_root_item *ri;
 	struct btrfs_dir_item *di;
-	struct btrfs_inode_map_item *mi;
 	struct btrfs_inode_item *ii;
 	struct btrfs_file_extent_item *fi;
 	char *p;
@@ -76,13 +75,6 @@ void btrfs_print_leaf(struct btrfs_root *root, struct btrfs_leaf *l)
 			ei = btrfs_item_ptr(l, i, struct btrfs_extent_item);
 			printf("\t\textent data refs %u owner %Lu\n",
 				btrfs_extent_refs(ei), btrfs_extent_owner(ei));
-			break;
-		case BTRFS_INODE_MAP_ITEM_KEY:
-			mi = btrfs_item_ptr(l, i, struct btrfs_inode_map_item);
-			printf("\t\tinode map key %Lu %Lu %u\n",
-			       btrfs_disk_key_objectid(&mi->key),
-			       btrfs_disk_key_offset(&mi->key),
-			       btrfs_disk_key_flags(&mi->key));
 			break;
 		case BTRFS_EXTENT_DATA_KEY:
 			fi = btrfs_item_ptr(l, i,

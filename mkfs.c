@@ -42,10 +42,6 @@ static int __make_root_dir(struct btrfs_trans_handle *trans,
 	btrfs_set_key_type(&inode_map, BTRFS_INODE_ITEM_KEY);
 	inode_map.offset = 0;
 
-	ret = btrfs_insert_inode_map(trans, root, objectid, &inode_map);
-	if (ret)
-		goto error;
-
 	memset(&inode_item, 0, sizeof(inode_item));
 	btrfs_set_inode_generation(&inode_item, root->fs_info->generation);
 	btrfs_set_inode_size(&inode_item, 3);
@@ -119,14 +115,13 @@ int mkfs(int fd, u64 num_blocks, u32 blocksize)
 	int ret;
 	u32 itemoff;
 	u32 start_block = BTRFS_SUPER_INFO_OFFSET / blocksize;
-
 	btrfs_set_super_generation(&super, 1);
 	btrfs_set_super_blocknr(&super, start_block);
 	btrfs_set_super_root(&super, start_block + 1);
 	strcpy((char *)(&super.magic), BTRFS_MAGIC);
 	btrfs_set_super_blocksize(&super, blocksize);
 	btrfs_set_super_total_blocks(&super, num_blocks);
-	btrfs_set_super_blocks_used(&super, start_block + 5);
+	btrfs_set_super_blocks_used(&super, start_block + 4);
 	uuid_generate(super.fsid);
 
 	block = malloc(blocksize);
@@ -142,7 +137,7 @@ int mkfs(int fd, u64 num_blocks, u32 blocksize)
 	btrfs_set_header_parentid(&empty_leaf->header,
 				  BTRFS_ROOT_TREE_OBJECTID);
 	btrfs_set_header_blocknr(&empty_leaf->header, start_block + 1);
-	btrfs_set_header_nritems(&empty_leaf->header, 3);
+	btrfs_set_header_nritems(&empty_leaf->header, 2);
 	btrfs_set_header_generation(&empty_leaf->header, 0);
 	memcpy(empty_leaf->header.fsid, super.fsid,
 	       sizeof(empty_leaf->header.fsid));
@@ -173,16 +168,8 @@ int mkfs(int fd, u64 num_blocks, u32 blocksize)
 	btrfs_set_root_blocknr(&root_item, start_block + 3);
 	itemoff = itemoff - sizeof(root_item);
 	btrfs_set_item_offset(&item, itemoff);
-	btrfs_set_disk_key_objectid(&item.key, BTRFS_INODE_MAP_OBJECTID);
-	memcpy(empty_leaf->items + 1, &item, sizeof(item));
-	memcpy(btrfs_leaf_data(empty_leaf) + itemoff,
-		&root_item, sizeof(root_item));
-
-	btrfs_set_root_blocknr(&root_item, start_block + 4);
-	itemoff = itemoff - sizeof(root_item);
-	btrfs_set_item_offset(&item, itemoff);
 	btrfs_set_disk_key_objectid(&item.key, BTRFS_FS_TREE_OBJECTID);
-	memcpy(empty_leaf->items + 2, &item, sizeof(item));
+	memcpy(empty_leaf->items + 1, &item, sizeof(item));
 	memcpy(btrfs_leaf_data(empty_leaf) + itemoff,
 		&root_item, sizeof(root_item));
 	ret = pwrite(fd, empty_leaf, blocksize, (start_block + 1) * blocksize);
@@ -191,7 +178,7 @@ int mkfs(int fd, u64 num_blocks, u32 blocksize)
 	btrfs_set_header_parentid(&empty_leaf->header,
 				  BTRFS_EXTENT_TREE_OBJECTID);
 	btrfs_set_header_blocknr(&empty_leaf->header, start_block + 2);
-	btrfs_set_header_nritems(&empty_leaf->header, 5);
+	btrfs_set_header_nritems(&empty_leaf->header, 4);
 
 	/* item1, reserve blocks 0-16 */
 	btrfs_set_disk_key_objectid(&item.key, 0);
@@ -228,12 +215,12 @@ int mkfs(int fd, u64 num_blocks, u32 blocksize)
 	memcpy(btrfs_leaf_data(empty_leaf) + btrfs_item_offset(&item),
 		&extent_item, btrfs_item_size(&item));
 
-	/* item4, give block 19 to the inode map */
+	/* item5, give block 19 to the FS root */
 	btrfs_set_disk_key_objectid(&item.key, start_block + 3);
 	btrfs_set_disk_key_offset(&item.key, 1);
 	itemoff = itemoff - sizeof(struct btrfs_extent_item);
 	btrfs_set_item_offset(&item, itemoff);
-	btrfs_set_extent_owner(&extent_item, BTRFS_INODE_MAP_OBJECTID);
+	btrfs_set_extent_owner(&extent_item, BTRFS_FS_TREE_OBJECTID);
 	memcpy(empty_leaf->items + 3, &item, sizeof(item));
 	memcpy(btrfs_leaf_data(empty_leaf) + btrfs_item_offset(&item),
 		&extent_item, btrfs_item_size(&item));
@@ -241,33 +228,11 @@ int mkfs(int fd, u64 num_blocks, u32 blocksize)
 	if (ret != blocksize)
 		return -1;
 
-	/* item5, give block 20 to the FS root */
-	btrfs_set_disk_key_objectid(&item.key, start_block + 4);
-	btrfs_set_disk_key_offset(&item.key, 1);
-	itemoff = itemoff - sizeof(struct btrfs_extent_item);
-	btrfs_set_item_offset(&item, itemoff);
-	btrfs_set_extent_owner(&extent_item, BTRFS_FS_TREE_OBJECTID);
-	memcpy(empty_leaf->items + 4, &item, sizeof(item));
-	memcpy(btrfs_leaf_data(empty_leaf) + btrfs_item_offset(&item),
-		&extent_item, btrfs_item_size(&item));
-	ret = pwrite(fd, empty_leaf, blocksize, (start_block + 2) * blocksize);
-	if (ret != blocksize)
-		return -1;
-
-	/* create the inode map */
-	btrfs_set_header_parentid(&empty_leaf->header,
-				  BTRFS_INODE_MAP_OBJECTID);
+	/* finally create the FS root */
+	btrfs_set_header_parentid(&empty_leaf->header, BTRFS_FS_TREE_OBJECTID);
 	btrfs_set_header_blocknr(&empty_leaf->header, start_block + 3);
 	btrfs_set_header_nritems(&empty_leaf->header, 0);
 	ret = pwrite(fd, empty_leaf, blocksize, (start_block + 3) * blocksize);
-	if (ret != blocksize)
-		return -1;
-
-	/* finally create the FS root */
-	btrfs_set_header_parentid(&empty_leaf->header, BTRFS_FS_TREE_OBJECTID);
-	btrfs_set_header_blocknr(&empty_leaf->header, start_block + 4);
-	btrfs_set_header_nritems(&empty_leaf->header, 0);
-	ret = pwrite(fd, empty_leaf, blocksize, (start_block + 4) * blocksize);
 	if (ret != blocksize)
 		return -1;
 	return 0;
@@ -285,8 +250,7 @@ u64 device_size(int fd, struct stat *st)
 	if (ioctl(fd, BLKGETSIZE64, &size) >= 0) {
 		return size;
 	}
-	return 0;
-}
+	return 0; }
 
 int main(int ac, char **av)
 {
