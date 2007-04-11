@@ -11,7 +11,8 @@ struct btrfs_trans_handle;
 #define BTRFS_ROOT_TREE_OBJECTID 1ULL
 #define BTRFS_EXTENT_TREE_OBJECTID 2ULL
 #define BTRFS_FS_TREE_OBJECTID 3ULL
-#define BTRFS_FIRST_FREE_OBJECTID 4ULL
+#define BTRFS_ROOT_TREE_DIR_OBJECTID 4ULL
+#define BTRFS_FIRST_FREE_OBJECTID 5ULL
 
 /*
  * we can actually store much bigger names, but lets not confuse the rest

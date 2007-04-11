@@ -22,20 +22,15 @@ static inline int ioctl(int fd, int define, u64 *size) { return 0; }
 #endif
 
 static int __make_root_dir(struct btrfs_trans_handle *trans,
-			   struct btrfs_root *root)
+			   struct btrfs_root *root, u64 objectid)
 {
 	int ret;
 	char buf[8];
-	u64 objectid;
 	struct btrfs_key inode_map;
 	struct btrfs_inode_item inode_item;
 
 	buf[0] = '.';
 	buf[1] = '.';
-
-	ret = btrfs_find_free_objectid(trans, root, 1, &objectid);
-	if (ret)
-		goto error;
 
 	inode_map.objectid = objectid;
 	inode_map.flags = 0;
@@ -44,7 +39,7 @@ static int __make_root_dir(struct btrfs_trans_handle *trans,
 
 	memset(&inode_item, 0, sizeof(inode_item));
 	btrfs_set_inode_generation(&inode_item, root->fs_info->generation);
-	btrfs_set_inode_size(&inode_item, 3);
+	btrfs_set_inode_size(&inode_item, 6);
 	btrfs_set_inode_nlink(&inode_item, 1);
 	btrfs_set_inode_nblocks(&inode_item, 1);
 	btrfs_set_inode_mode(&inode_item, S_IFDIR | 0555);
@@ -83,10 +78,11 @@ static int make_root_dir(int fd) {
 		return -1;
 	}
 	trans = btrfs_start_transaction(root, 1);
-	ret = __make_root_dir(trans, root->fs_info->tree_root);
+	ret = __make_root_dir(trans, root->fs_info->tree_root,
+			      BTRFS_ROOT_TREE_DIR_OBJECTID);
 	if (ret)
 		goto err;
-	ret = __make_root_dir(trans, root);
+	ret = __make_root_dir(trans, root, BTRFS_FIRST_FREE_OBJECTID);
 	if (ret)
 		goto err;
 	memcpy(&location, &root->fs_info->fs_root->root_key, sizeof(location));
