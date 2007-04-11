@@ -42,6 +42,6 @@ quick-test: $(objects) quick-test.o
 $(objects): $(headers)
 
 clean :
-	rm debug-tree tester *.o
+	rm debug-tree mkfs.btrfs btrfsctl *.o
 
 

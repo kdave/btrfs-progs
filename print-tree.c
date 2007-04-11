@@ -13,6 +13,7 @@ void btrfs_print_leaf(struct btrfs_root *root, struct btrfs_leaf *l)
 	struct btrfs_extent_item *ei;
 	struct btrfs_root_item *ri;
 	struct btrfs_dir_item *di;
+	struct btrfs_device_item *devi;
 	struct btrfs_inode_item *ii;
 	struct btrfs_file_extent_item *fi;
 	char *p;
@@ -84,6 +85,13 @@ void btrfs_print_leaf(struct btrfs_root *root, struct btrfs_leaf *l)
 			printf("\t\textent data offset %Lu nr %Lu\n",
 			       btrfs_file_extent_offset(fi),
 			       btrfs_file_extent_num_blocks(fi));
+			break;
+		case BTRFS_DEV_ITEM_KEY:
+			devi = btrfs_item_ptr(l, i, struct btrfs_device_item);
+			printf("\t\tdev namelen %u name %.*s\n",
+				btrfs_device_pathlen(devi),
+				btrfs_device_pathlen(devi),
+				(char *)(devi + 1));
 			break;
 		case BTRFS_STRING_ITEM_KEY:
 			printf("\t\titem data %.*s\n", btrfs_item_size(item),

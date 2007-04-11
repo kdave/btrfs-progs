@@ -273,6 +273,7 @@ struct btrfs_root *open_ctree_fd(int fp, struct btrfs_super_block *super)
 	struct btrfs_root *root = malloc(sizeof(struct btrfs_root));
 	struct btrfs_root *extent_root = malloc(sizeof(struct btrfs_root));
 	struct btrfs_root *tree_root = malloc(sizeof(struct btrfs_root));
+	struct btrfs_root *dev_root = malloc(sizeof(struct btrfs_root));
 	struct btrfs_fs_info *fs_info = malloc(sizeof(*fs_info));
 	int ret;
 
@@ -286,6 +287,7 @@ struct btrfs_root *open_ctree_fd(int fp, struct btrfs_super_block *super)
 	fs_info->fs_root = root;
 	fs_info->tree_root = tree_root;
 	fs_info->extent_root = extent_root;
+	fs_info->dev_root = dev_root;
 	fs_info->last_inode_alloc = 0;
 	fs_info->last_inode_alloc_dirid = 0;
 	fs_info->disk_super = super;
@@ -299,6 +301,10 @@ struct btrfs_root *open_ctree_fd(int fp, struct btrfs_super_block *super)
 		return NULL;
 	}
 	BUG_ON(ret < 0);
+	__setup_root(super, dev_root, fs_info, BTRFS_DEV_TREE_OBJECTID, fp);
+	dev_root->node = read_tree_block(dev_root,
+					 btrfs_super_device_root(super));
+
 	__setup_root(super, tree_root, fs_info, BTRFS_ROOT_TREE_OBJECTID, fp);
 	tree_root->node = read_tree_block(tree_root, btrfs_super_root(super));
 	BUG_ON(!tree_root->node);
