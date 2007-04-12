@@ -87,10 +87,12 @@ struct btrfs_super_block {
 	__le64 total_blocks;
 	__le64 blocks_used;
 	__le64 root_dir_objectid;
+	__le64 last_device_id;
 	/* fields below here vary with the underlying disk */
 	__le64 device_block_start;
 	__le64 device_num_blocks;
 	__le64 device_root;
+	__le64 device_id;
 } __attribute__ ((__packed__));
 
 /*
@@ -226,6 +228,7 @@ struct btrfs_csum_item {
 
 struct btrfs_device_item {
 	__le16 pathlen;
+	__le64 device_id;
 } __attribute__ ((__packed__));
 
 struct btrfs_fs_info {
@@ -237,6 +240,7 @@ struct btrfs_fs_info {
 	struct btrfs_key last_insert;
 	struct radix_tree_root cache_radix;
 	struct radix_tree_root pinned_radix;
+	struct radix_tree_root dev_radix;
 	struct list_head trans;
 	struct list_head cache;
 	u64 last_inode_alloc;
@@ -785,6 +789,28 @@ static inline void btrfs_set_super_root_dir(struct btrfs_super_block *s, u64
 	s->root_dir_objectid = cpu_to_le64(val);
 }
 
+static inline u64 btrfs_super_last_device_id(struct btrfs_super_block *s)
+{
+	return le64_to_cpu(s->last_device_id);
+}
+
+static inline void btrfs_set_super_last_device_id(struct btrfs_super_block *s,
+						  u64 val)
+{
+	s->last_device_id = cpu_to_le64(val);
+}
+
+static inline u64 btrfs_super_device_id(struct btrfs_super_block *s)
+{
+	return le64_to_cpu(s->device_id);
+}
+
+static inline void btrfs_set_super_device_id(struct btrfs_super_block *s,
+						  u64 val)
+{
+	s->device_id = cpu_to_le64(val);
+}
+
 static inline u64 btrfs_super_device_block_start(struct btrfs_super_block *s)
 {
 	return le64_to_cpu(s->device_block_start);
@@ -894,6 +920,17 @@ static inline void btrfs_set_device_pathlen(struct btrfs_device_item *d,
 						u16 val)
 {
 	d->pathlen = cpu_to_le16(val);
+}
+
+static inline u64 btrfs_device_id(struct btrfs_device_item *d)
+{
+	return le64_to_cpu(d->device_id);
+}
+
+static inline void btrfs_set_device_id(struct btrfs_device_item *d,
+						u64 val)
+{
+	d->device_id = cpu_to_le64(val);
 }
 
 /* helper function to cast into the data area of the leaf. */

@@ -120,10 +120,12 @@ int mkfs(int fd, char *pathname, u64 num_blocks, u32 blocksize)
 	strcpy((char *)(&super.magic), BTRFS_MAGIC);
 	btrfs_set_super_blocksize(&super, blocksize);
 	btrfs_set_super_total_blocks(&super, num_blocks);
-	btrfs_set_super_blocks_used(&super, start_block + 4);
+	btrfs_set_super_blocks_used(&super, start_block + 5);
 	btrfs_set_super_device_block_start(&super, 0);
 	btrfs_set_super_device_num_blocks(&super, num_blocks);
 	btrfs_set_super_device_root(&super, start_block + 2);
+	btrfs_set_super_device_id(&super, 1);
+	btrfs_set_super_last_device_id(&super, 1);
 	uuid_generate(super.fsid);
 
 	block = malloc(blocksize);
@@ -188,6 +190,7 @@ int mkfs(int fd, char *pathname, u64 num_blocks, u32 blocksize)
 	btrfs_set_item_offset(&item, itemoff);
 	btrfs_set_item_size(&item, item_size);
 	btrfs_set_device_pathlen(&dev_item, strlen(pathname));
+	btrfs_set_device_id(&dev_item, 1);
 	memcpy(empty_leaf->items, &item, sizeof(item));
 	memcpy(btrfs_leaf_data(empty_leaf) + itemoff, &dev_item,
 	       sizeof(dev_item));

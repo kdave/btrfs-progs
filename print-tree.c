@@ -88,7 +88,8 @@ void btrfs_print_leaf(struct btrfs_root *root, struct btrfs_leaf *l)
 			break;
 		case BTRFS_DEV_ITEM_KEY:
 			devi = btrfs_item_ptr(l, i, struct btrfs_device_item);
-			printf("\t\tdev namelen %u name %.*s\n",
+			printf("\t\tdev id %Lu namelen %u name %.*s\n",
+			       btrfs_device_id(devi),
 				btrfs_device_pathlen(devi),
 				btrfs_device_pathlen(devi),
 				(char *)(devi + 1));

@@ -4,7 +4,9 @@
 
 struct btrfs_buffer {
 	u64 blocknr;
+	u64 dev_blocknr;
 	int count;
+	int fd;
 	struct list_head dirty;
 	struct list_head cache;
 	union {
