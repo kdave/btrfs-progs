@@ -15,6 +15,7 @@
 #ifdef __CHECKER__
 #define BLKGETSIZE64 0
 #define BTRFS_IOC_SNAP_CREATE 0
+#define BTRFS_IOC_ADD_DISK 0
 #define BTRFS_VOL_NAME_MAX 255
 struct btrfs_ioctl_vol_args { char name[BTRFS_VOL_NAME_MAX]; };
 static inline int ioctl(int fd, int define, void *arg) { return 0; }
@@ -36,6 +37,7 @@ int main(int ac, char **av)
 	int i;
 	struct stat st;
 	DIR *dirstream;
+	unsigned long command;
 
 	for (i = 1; i < ac - 1; i++) {
 		if (strcmp(av[i], "-s") == 0) {
@@ -48,6 +50,19 @@ int main(int ac, char **av)
 				fprintf(stderr, "snapshot name is too long\n");
 				exit(1);
 			}
+			command = BTRFS_IOC_SNAP_CREATE;
+		}
+		if (strcmp(av[i], "-a") == 0) {
+			if (i + 1 >= ac - 1) {
+				fprintf(stderr, "-a requires an arg");
+				print_usage();
+			}
+			name = av[i + 1];
+			if (strlen(name) >= BTRFS_VOL_NAME_MAX) {
+				fprintf(stderr, "device name is too long\n");
+				exit(1);
+			}
+			command = BTRFS_IOC_ADD_DISK;
 		}
 	}
 	fname = av[ac - 1];
@@ -71,7 +86,7 @@ printf("fname is %s\n", fname);
 		exit(1);
 	}
 	strcpy(args.name, name);
-	ret = ioctl(fd, BTRFS_IOC_SNAP_CREATE, &args);
+	ret = ioctl(fd, command, &args);
 	printf("ioctl returns %d\n", ret);
 	return 0;
 }
