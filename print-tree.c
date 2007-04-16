@@ -16,6 +16,7 @@ void btrfs_print_leaf(struct btrfs_root *root, struct btrfs_leaf *l)
 	struct btrfs_device_item *devi;
 	struct btrfs_inode_item *ii;
 	struct btrfs_file_extent_item *fi;
+	struct btrfs_csum_item *ci;
 	char *p;
 	u32 type;
 
@@ -75,6 +76,11 @@ void btrfs_print_leaf(struct btrfs_root *root, struct btrfs_leaf *l)
 			ei = btrfs_item_ptr(l, i, struct btrfs_extent_item);
 			printf("\t\textent data refs %u\n",
 				btrfs_extent_refs(ei));
+			break;
+		case BTRFS_CSUM_ITEM_KEY:
+			ci = btrfs_item_ptr(l, i,
+					    struct btrfs_csum_item);
+			printf("\t\tcsum item\n");
 			break;
 		case BTRFS_EXTENT_DATA_KEY:
 			fi = btrfs_item_ptr(l, i,
