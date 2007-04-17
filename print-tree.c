@@ -28,11 +28,11 @@ void btrfs_print_leaf(struct btrfs_root *root, struct btrfs_leaf *l)
 	for (i = 0 ; i < nr ; i++) {
 		item = l->items + i;
 		type = btrfs_disk_key_type(&item->key);
-		printf("\titem %d key (%Lu %Lu %u) itemoff %d itemsize %d\n",
+		printf("\titem %d key (%Lu %u %Lu) itemoff %d itemsize %d\n",
 			i,
 			btrfs_disk_key_objectid(&item->key),
-			btrfs_disk_key_offset(&item->key),
 			btrfs_disk_key_flags(&item->key),
+			btrfs_disk_key_offset(&item->key),
 			btrfs_item_offset(item),
 			btrfs_item_size(item));
 		switch (type) {

@@ -40,14 +40,14 @@ struct btrfs_trans_handle;
  */
 struct btrfs_disk_key {
 	__le64 objectid;
-	__le64 offset;
 	__le32 flags;
+	__le64 offset;
 } __attribute__ ((__packed__));
 
 struct btrfs_key {
 	u64 objectid;
-	u64 offset;
 	u32 flags;
+	u64 offset;
 } __attribute__ ((__packed__));
 
 /*
@@ -223,7 +223,6 @@ struct btrfs_file_extent_item {
 } __attribute__ ((__packed__));
 
 struct btrfs_csum_item {
-	__le64 extent_offset;
 	u8 csum[BTRFS_CSUM_SIZE];
 } __attribute__ ((__packed__));
 
@@ -910,17 +909,6 @@ static inline void btrfs_set_file_extent_num_blocks(struct
 						    u64 val)
 {
 	e->num_blocks = cpu_to_le64(val);
-}
-
-static inline u64 btrfs_csum_extent_offset(struct btrfs_csum_item *c)
-{
-	return le64_to_cpu(c->extent_offset);
-}
-
-static inline void btrfs_set_csum_extent_offset(struct btrfs_csum_item *c,
-						u64 val)
-{
-	c->extent_offset = cpu_to_le64(val);
 }
 
 static inline u16 btrfs_device_pathlen(struct btrfs_device_item *d)
