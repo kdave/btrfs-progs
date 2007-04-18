@@ -62,26 +62,6 @@ int btrfs_insert_dir_item(struct btrfs_trans_handle *trans, struct btrfs_root
 	btrfs_set_dir_name_len(dir_item, name_len);
 	name_ptr = (char *)(dir_item + 1);
 	memcpy(name_ptr, name, name_len);
-
-	/* FIXME, use some real flag for selecting the extra index */
-	if (root == root->fs_info->tree_root)
-		goto out;
-
-	btrfs_release_path(root, &path);
-	btrfs_set_key_type(&key, BTRFS_DIR_INDEX_KEY);
-	key.offset = location->objectid;
-	ret = insert_with_overflow(trans, root, &path, &key, data_size);
-	if (ret)
-		goto out;
-
-	dir_item = btrfs_item_ptr(&path.nodes[0]->leaf, path.slots[0],
-				  struct btrfs_dir_item);
-	btrfs_cpu_key_to_disk(&dir_item->location, location);
-	btrfs_set_dir_type(dir_item, type);
-	btrfs_set_dir_flags(dir_item, 0);
-	btrfs_set_dir_name_len(dir_item, name_len);
-	name_ptr = (char *)(dir_item + 1);
-	memcpy(name_ptr, name, name_len);
 out:
 	btrfs_release_path(root, &path);
 	return ret;
@@ -99,7 +79,6 @@ int btrfs_lookup_dir_item(struct btrfs_trans_handle *trans, struct btrfs_root
 	key.objectid = dir;
 	key.flags = 0;
 	btrfs_set_key_type(&key, BTRFS_DIR_ITEM_KEY);
-	btrfs_set_key_overflow(&key, BTRFS_KEY_OVERFLOW_MAX);
 	ret = btrfs_name_hash(name, name_len, &key.offset);
 	BUG_ON(ret);
 	ret = btrfs_search_slot(trans, root, &key, path, ins_len, cow);

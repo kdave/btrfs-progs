@@ -28,7 +28,7 @@ void btrfs_print_leaf(struct btrfs_root *root, struct btrfs_leaf *l)
 	for (i = 0 ; i < nr ; i++) {
 		item = l->items + i;
 		type = btrfs_disk_key_type(&item->key);
-		printf("\titem %d key (%Lu %u %Lu) itemoff %d itemsize %d\n",
+		printf("\titem %d key (%Lu %x %Lu) itemoff %d itemsize %d\n",
 			i,
 			btrfs_disk_key_objectid(&item->key),
 			btrfs_disk_key_flags(&item->key),
@@ -129,7 +129,7 @@ void btrfs_print_tree(struct btrfs_root *root, struct btrfs_buffer *t)
 		btrfs_header_generation(&c->header));
 	fflush(stdout);
 	for (i = 0; i < nr; i++) {
-		printf("\tkey %d (%Lu %u %Lu) block %Lu\n",
+		printf("\tkey %d (%Lu %x %Lu) block %Lu\n",
 		       i,
 		       c->ptrs[i].key.objectid,
 		       c->ptrs[i].key.flags,
