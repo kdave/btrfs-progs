@@ -7,24 +7,32 @@
 #include "hash.h"
 #include "transaction.h"
 
-int insert_with_overflow(struct btrfs_trans_handle *trans, struct btrfs_root
-			    *root, struct btrfs_path *path, struct btrfs_key
-			    *cpu_key, u32 data_size)
+static struct btrfs_dir_item *insert_with_overflow(struct
+						   btrfs_trans_handle *trans,
+						   struct btrfs_root *root,
+						   struct btrfs_path *path,
+						   struct btrfs_key *cpu_key,
+						   u32 data_size)
 {
-	int overflow;
 	int ret;
+	char *ptr;
+	struct btrfs_item *item;
+	struct btrfs_leaf *leaf;
 
 	ret = btrfs_insert_empty_item(trans, root, path, cpu_key, data_size);
-	overflow = btrfs_key_overflow(cpu_key);
-
-	while(ret == -EEXIST && overflow < BTRFS_KEY_OVERFLOW_MAX) {
-		overflow++;
-		btrfs_set_key_overflow(cpu_key, overflow);
-		btrfs_release_path(root, path);
-		ret = btrfs_insert_empty_item(trans, root, path, cpu_key,
-					      data_size);
+	if (ret == -EEXIST) {
+		ret = btrfs_extend_item(trans, root, path, data_size);
+		BUG_ON(ret > 0);
+		if (ret)
+			return NULL;
 	}
-	return ret;
+	BUG_ON(ret > 0);
+	leaf = &path->nodes[0]->leaf;
+	item = leaf->items + path->slots[0];
+	ptr = btrfs_item_ptr(leaf, path->slots[0], char);
+	BUG_ON(data_size > btrfs_item_size(item));
+	ptr += btrfs_item_size(item) - data_size;
+	return (struct btrfs_dir_item *)ptr;
 }
 
 int btrfs_insert_dir_item(struct btrfs_trans_handle *trans, struct btrfs_root
@@ -50,12 +58,30 @@ int btrfs_insert_dir_item(struct btrfs_trans_handle *trans, struct btrfs_root
 	BUG_ON(ret);
 	btrfs_init_path(&path);
 	data_size = sizeof(*dir_item) + name_len;
-	ret = insert_with_overflow(trans, root, &path, &key, data_size);
-	if (ret)
+	dir_item = insert_with_overflow(trans, root, &path, &key, data_size);
+	if (!dir_item) {
+		ret = -1;
+		goto out;
+	}
+	btrfs_cpu_key_to_disk(&dir_item->location, location);
+	btrfs_set_dir_type(dir_item, type);
+	btrfs_set_dir_flags(dir_item, 0);
+	btrfs_set_dir_name_len(dir_item, name_len);
+	name_ptr = (char *)(dir_item + 1);
+	memcpy(name_ptr, name, name_len);
+
+	/* FIXME, use some real flag for selecting the extra index */
+	if (root == root->fs_info->tree_root)
 		goto out;
 
-	dir_item = btrfs_item_ptr(&path.nodes[0]->leaf, path.slots[0],
-				  struct btrfs_dir_item);
+	btrfs_release_path(root, &path);
+	btrfs_set_key_type(&key, BTRFS_DIR_INDEX_KEY);
+	key.offset = location->objectid;
+	dir_item = insert_with_overflow(trans, root, &path, &key, data_size);
+	if (!dir_item) {
+		ret = -1;
+		goto out;
+	}
 	btrfs_cpu_key_to_disk(&dir_item->location, location);
 	btrfs_set_dir_type(dir_item, type);
 	btrfs_set_dir_flags(dir_item, 0);

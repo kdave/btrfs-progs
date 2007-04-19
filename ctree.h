@@ -278,9 +278,6 @@ struct btrfs_root {
 #define BTRFS_KEY_TYPE_MASK	(((u32)BTRFS_KEY_TYPE_MAX - 1) << \
 				  BTRFS_KEY_TYPE_SHIFT)
 
-#define BTRFS_KEY_OVERFLOW_MAX 128
-#define BTRFS_KEY_OVERFLOW_MASK ((u32)BTRFS_KEY_OVERFLOW_MAX - 1)
-
 /*
  * inode items have the data typically returned from stat and store other
  * info about object characteristics.  There is one for every file and dir in
@@ -604,31 +601,6 @@ static inline void btrfs_set_key_type(struct btrfs_key *key, u32 val)
 	BUG_ON(val >= BTRFS_KEY_TYPE_MAX);
 	val = val << BTRFS_KEY_TYPE_SHIFT;
 	key->flags = (key->flags & ~(BTRFS_KEY_TYPE_MASK)) | val;
-}
-
-static inline u32 btrfs_key_overflow(struct btrfs_key *key)
-{
-	return key->flags & BTRFS_KEY_OVERFLOW_MASK;
-}
-
-static inline void btrfs_set_key_overflow(struct btrfs_key *key, u32 over)
-{
-	BUG_ON(over >= BTRFS_KEY_OVERFLOW_MAX);
-	key->flags = (key->flags & ~BTRFS_KEY_OVERFLOW_MASK) | over;
-}
-
-static inline u32 btrfs_disk_key_overflow(struct btrfs_disk_key *key)
-{
-	return le32_to_cpu(key->flags) & BTRFS_KEY_OVERFLOW_MASK;
-}
-
-static inline void btrfs_set_disk_key_overflow(struct btrfs_disk_key *key,
-					       u32 over)
-{
-	u32 flags = btrfs_disk_key_flags(key);
-	BUG_ON(over >= BTRFS_KEY_OVERFLOW_MAX);
-	flags = (flags & ~BTRFS_KEY_OVERFLOW_MASK) | over;
-	btrfs_set_disk_key_flags(key, flags);
 }
 
 static inline u64 btrfs_header_blocknr(struct btrfs_header *h)
@@ -970,6 +942,8 @@ static inline void btrfs_set_device_id(struct btrfs_device_item *d,
 	((type *)(btrfs_leaf_data(leaf) + \
 	btrfs_item_offset((leaf)->items + (slot))))
 
+int btrfs_extend_item(struct btrfs_trans_handle *trans, struct btrfs_root
+		      *root, struct btrfs_path *path, u32 data_size);
 struct btrfs_buffer *btrfs_alloc_free_block(struct btrfs_trans_handle *trans,
 					    struct btrfs_root *root);
 int btrfs_inc_ref(struct btrfs_trans_handle *trans, struct btrfs_root *root,

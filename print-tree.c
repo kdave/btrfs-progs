@@ -5,6 +5,26 @@
 #include "ctree.h"
 #include "disk-io.h"
 
+static int print_dir_item(struct btrfs_item *item,
+			  struct btrfs_dir_item *di)
+{
+	u32 total;
+	u32 cur = 0;
+	u32 len;
+	total = btrfs_item_size(item);
+	while(cur < total) {
+		printf("\t\tdir index %Lu flags %u type %u\n",
+			btrfs_disk_key_objectid(&di->location),
+			btrfs_dir_flags(di),
+			btrfs_dir_type(di));
+		printf("\t\tname %.*s\n",
+		       btrfs_dir_name_len(di),(char *)(di + 1));
+		len = sizeof(*di) + btrfs_dir_name_len(di);
+		di = (struct btrfs_dir_item *)((char *)di + len);
+		cur += len;
+	}
+	return 0;
+}
 void btrfs_print_leaf(struct btrfs_root *root, struct btrfs_leaf *l)
 {
 	int i;
@@ -49,21 +69,11 @@ void btrfs_print_leaf(struct btrfs_root *root, struct btrfs_leaf *l)
 			break;
 		case BTRFS_DIR_ITEM_KEY:
 			di = btrfs_item_ptr(l, i, struct btrfs_dir_item);
-			printf("\t\tdir oid %Lu flags %u type %u\n",
-				btrfs_disk_key_objectid(&di->location),
-				btrfs_dir_flags(di),
-				btrfs_dir_type(di));
-			printf("\t\tname %.*s\n",
-			       btrfs_dir_name_len(di),(char *)(di + 1));
+			print_dir_item(l->items + i, di);
 			break;
 		case BTRFS_DIR_INDEX_KEY:
 			di = btrfs_item_ptr(l, i, struct btrfs_dir_item);
-			printf("\t\tdir index %Lu flags %u type %u\n",
-				btrfs_disk_key_objectid(&di->location),
-				btrfs_dir_flags(di),
-				btrfs_dir_type(di));
-			printf("\t\tname %.*s\n",
-			       btrfs_dir_name_len(di),(char *)(di + 1));
+			print_dir_item(l->items + i, di);
 			break;
 		case BTRFS_ROOT_ITEM_KEY:
 			ri = btrfs_item_ptr(l, i, struct btrfs_root_item);

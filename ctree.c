@@ -1147,7 +1147,6 @@ int btrfs_insert_empty_item(struct btrfs_trans_handle *trans, struct btrfs_root
 		BUG();
 	ret = btrfs_search_slot(trans, root, cpu_key, path, data_size, 1);
 	if (ret == 0) {
-		btrfs_release_path(root, path);
 		return -EEXIST;
 	}
 	if (ret < 0)
@@ -1366,6 +1365,58 @@ int btrfs_del_item(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 			}
 		}
 	}
+	return ret;
+}
+
+int btrfs_extend_item(struct btrfs_trans_handle *trans, struct btrfs_root
+		      *root, struct btrfs_path *path, u32 data_size)
+{
+	int ret = 0;
+	int slot;
+	int slot_orig;
+	struct btrfs_leaf *leaf;
+	struct btrfs_buffer *leaf_buf;
+	u32 nritems;
+	unsigned int data_end;
+	unsigned int old_data;
+	unsigned int old_size;
+	int i;
+
+	slot_orig = path->slots[0];
+	leaf_buf = path->nodes[0];
+	leaf = &leaf_buf->leaf;
+
+	nritems = btrfs_header_nritems(&leaf->header);
+	data_end = leaf_data_end(root, leaf);
+
+	if (btrfs_leaf_free_space(root, leaf) < data_size)
+		BUG();
+	slot = path->slots[0];
+	old_data = btrfs_item_end(leaf->items + slot);
+
+	BUG_ON(slot < 0);
+	BUG_ON(slot >= nritems);
+
+	/*
+	 * item0..itemN ... dataN.offset..dataN.size .. data0.size
+	 */
+	/* first correct the data pointers */
+	for (i = slot; i < nritems; i++) {
+		u32 ioff = btrfs_item_offset(leaf->items + i);
+		btrfs_set_item_offset(leaf->items + i,
+				      ioff - data_size);
+	}
+	/* shift the data */
+	memmove(btrfs_leaf_data(leaf) + data_end - data_size,
+		btrfs_leaf_data(leaf) + data_end, old_data - data_end);
+	data_end = old_data;
+	old_size = btrfs_item_size(leaf->items + slot);
+	btrfs_set_item_size(leaf->items + slot, old_size + data_size);
+
+	ret = 0;
+	if (btrfs_leaf_free_space(root, leaf) < 0)
+		BUG();
+	check_leaf(root, path, 0);
 	return ret;
 }
 
