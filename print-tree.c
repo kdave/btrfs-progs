@@ -85,6 +85,12 @@ void btrfs_print_leaf(struct btrfs_root *root, struct btrfs_leaf *l)
 		case BTRFS_EXTENT_DATA_KEY:
 			fi = btrfs_item_ptr(l, i,
 					    struct btrfs_file_extent_item);
+			if (btrfs_file_extent_type(fi) ==
+			    BTRFS_FILE_EXTENT_INLINE) {
+				printf("\t\tinline extent data size %u\n",
+			           btrfs_file_extent_inline_len(l->items + i));
+				break;
+			}
 			printf("\t\textent data disk block %Lu nr %Lu\n",
 			       btrfs_file_extent_disk_blocknr(fi),
 			       btrfs_file_extent_disk_num_blocks(fi));
