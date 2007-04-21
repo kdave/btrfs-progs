@@ -48,23 +48,44 @@ struct page {
 static inline void preempt_enable(void) { do {; } while(0);}
 static inline void preempt_disable(void) { do {; } while(0);}
 
-static inline void __set_bit(int bit, unsigned long *map) {
-	unsigned long *p = map + bit / BITS_PER_LONG;
-	bit = bit & (BITS_PER_LONG -1);
-	*p |= 1UL << bit;
+#define BITOP_MASK(nr)		(1UL << ((nr) % BITS_PER_LONG))
+#define BITOP_WORD(nr)		((nr) / BITS_PER_LONG)
+
+/**
+ * __set_bit - Set a bit in memory
+ * @nr: the bit to set
+ * @addr: the address to start counting from
+ *
+ * Unlike set_bit(), this function is non-atomic and may be reordered.
+ * If it's called on the same region of memory simultaneously, the effect
+ * may be that only one operation succeeds.
+ */
+static inline void __set_bit(int nr, volatile unsigned long *addr)
+{
+	unsigned long mask = BITOP_MASK(nr);
+	unsigned long *p = ((unsigned long *)addr) + BITOP_WORD(nr);
+
+	*p  |= mask;
 }
 
-static inline int test_bit(int bit, unsigned long *map) {
-	unsigned long *p = map + bit / BITS_PER_LONG;
-	bit = bit & (BITS_PER_LONG -1);
-	return *p & (1UL << bit) ? 1 : 0;
+static inline void __clear_bit(int nr, volatile unsigned long *addr)
+{
+	unsigned long mask = BITOP_MASK(nr);
+	unsigned long *p = ((unsigned long *)addr) + BITOP_WORD(nr);
+
+	*p &= ~mask;
 }
 
-static inline void __clear_bit(int bit, unsigned long *map) {
-	unsigned long *p = map + bit / BITS_PER_LONG;
-	bit = bit & (BITS_PER_LONG -1);
-	*p &= ~(1UL << bit);
+/**
+ * test_bit - Determine whether a bit is set
+ * @nr: bit number to test
+ * @addr: Address to start counting from
+ */
+static inline int test_bit(int nr, const volatile unsigned long *addr)
+{
+	return 1UL & (addr[BITOP_WORD(nr)] >> (nr & (BITS_PER_LONG-1)));
 }
+
 #define BUG_ON(c) do { if (c) abort(); } while (0)
 
 #define container_of(ptr, type, member) ({                      \

@@ -40,10 +40,11 @@ void btrfs_print_leaf(struct btrfs_root *root, struct btrfs_leaf *l)
 	char *p;
 	u32 type;
 
-	printf("leaf %Lu ptrs %d free space %d generation %Lu\n",
+	printf("leaf %Lu ptrs %d free space %d generation %Lu owner %Lu\n",
 		btrfs_header_blocknr(&l->header), nr,
 		btrfs_leaf_free_space(root, l),
-		btrfs_header_generation(&l->header));
+		btrfs_header_generation(&l->header),
+		btrfs_header_owner(&l->header));
 	fflush(stdout);
 	for (i = 0 ; i < nr ; i++) {
 		item = l->items + i;
@@ -84,8 +85,10 @@ void btrfs_print_leaf(struct btrfs_root *root, struct btrfs_leaf *l)
 			break;
 		case BTRFS_EXTENT_ITEM_KEY:
 			ei = btrfs_item_ptr(l, i, struct btrfs_extent_item);
-			printf("\t\textent data refs %u\n",
-				btrfs_extent_refs(ei));
+			printf("\t\textent data refs %u type %d owner %Lu\n",
+				btrfs_extent_refs(ei),
+				btrfs_extent_type(ei),
+				btrfs_extent_owner(ei));
 			break;
 		case BTRFS_CSUM_ITEM_KEY:
 			ci = btrfs_item_ptr(l, i,
@@ -138,11 +141,12 @@ void btrfs_print_tree(struct btrfs_root *root, struct btrfs_buffer *t)
 		btrfs_print_leaf(root, (struct btrfs_leaf *)c);
 		return;
 	}
-	printf("node %Lu level %d ptrs %d free %u generation %Lu\n",
+	printf("node %Lu level %d ptrs %d free %u generation %Lu owner %Lu\n",
 	       t->blocknr,
 	        btrfs_header_level(&c->header), nr,
 		(u32)BTRFS_NODEPTRS_PER_BLOCK(root) - nr,
-		btrfs_header_generation(&c->header));
+		btrfs_header_generation(&c->header),
+		btrfs_header_owner(&c->header));
 	fflush(stdout);
 	for (i = 0; i < nr; i++) {
 		printf("\tkey %d (%Lu %x %Lu) block %Lu\n",

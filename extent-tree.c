@@ -394,7 +394,8 @@ error:
  * returns 0 if everything worked, non-zero otherwise.
  */
 static int alloc_extent(struct btrfs_trans_handle *trans, struct btrfs_root
-			*root, u64 num_blocks, u64 search_start, u64
+			*root, u64 owner, u8 type, u64 num_blocks,
+			u64 search_start, u64
 			search_end, struct btrfs_key *ins)
 {
 	int ret;
@@ -405,6 +406,8 @@ static int alloc_extent(struct btrfs_trans_handle *trans, struct btrfs_root
 	struct btrfs_extent_item extent_item;
 
 	btrfs_set_extent_refs(&extent_item, 1);
+	btrfs_set_extent_owner(&extent_item, owner);
+	btrfs_set_extent_type(&extent_item, type);
 
 	if (root == extent_root) {
 		BUG_ON(extent_root->fs_info->current_insert.offset == 0);
@@ -447,7 +450,8 @@ struct btrfs_buffer *btrfs_alloc_free_block(struct btrfs_trans_handle *trans,
 	int ret;
 	struct btrfs_buffer *buf;
 
-	ret = alloc_extent(trans, root, 1, 0, (unsigned long)-1, &ins);
+	ret = alloc_extent(trans, root, root->root_key.objectid,
+			   BTRFS_EXTENT_TREE, 1, 0, (unsigned long)-1, &ins);
 	if (ret) {
 		BUG();
 		return NULL;

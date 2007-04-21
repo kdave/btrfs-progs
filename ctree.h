@@ -58,6 +58,7 @@ struct btrfs_header {
 	u8 fsid[16]; /* FS specific uuid */
 	__le64 blocknr; /* which block this node is supposed to live in */
 	__le64 generation;
+	__le64 owner;
 	__le16 nritems;
 	__le16 flags;
 	u8 level;
@@ -144,12 +145,17 @@ struct btrfs_path {
 	int slots[BTRFS_MAX_LEVEL];
 };
 
+/* values for the type field in btrfs_extent_item */
+#define BTRFS_EXTENT_TREE 1
+#define BTRFS_EXTENT_FILE 2
 /*
  * items in the extent btree are used to record the objectid of the
  * owner of the block and the number of references
  */
 struct btrfs_extent_item {
 	__le32 refs;
+	__le64 owner;
+	u8 type;
 } __attribute__ ((__packed__));
 
 struct btrfs_inode_timespec {
@@ -461,10 +467,31 @@ static inline void btrfs_set_extent_refs(struct btrfs_extent_item *ei, u32 val)
 	ei->refs = cpu_to_le32(val);
 }
 
+static inline u64 btrfs_extent_owner(struct btrfs_extent_item *ei)
+{
+	return le64_to_cpu(ei->owner);
+}
+
+static inline void btrfs_set_extent_owner(struct btrfs_extent_item *ei, u64 val)
+{
+	ei->owner = cpu_to_le64(val);
+}
+
+static inline u8 btrfs_extent_type(struct btrfs_extent_item *ei)
+{
+	return ei->type;
+}
+
+static inline void btrfs_set_extent_type(struct btrfs_extent_item *ei, u8 val)
+{
+	ei->type = val;
+}
+
 static inline u64 btrfs_node_blockptr(struct btrfs_node *n, int nr)
 {
 	return le64_to_cpu(n->ptrs[nr].blockptr);
 }
+
 
 static inline void btrfs_set_node_blockptr(struct btrfs_node *n, int nr,
 					   u64 val)
@@ -622,6 +649,17 @@ static inline void btrfs_set_header_generation(struct btrfs_header *h,
 					       u64 val)
 {
 	h->generation = cpu_to_le64(val);
+}
+
+static inline u64 btrfs_header_owner(struct btrfs_header *h)
+{
+	return le64_to_cpu(h->owner);
+}
+
+static inline void btrfs_set_header_owner(struct btrfs_header *h,
+					       u64 val)
+{
+	h->owner = cpu_to_le64(val);
 }
 
 static inline u16 btrfs_header_nritems(struct btrfs_header *h)

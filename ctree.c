@@ -49,6 +49,7 @@ static int btrfs_cow_block(struct btrfs_trans_handle *trans, struct btrfs_root
 	cow = btrfs_alloc_free_block(trans, root);
 	memcpy(&cow->node, &buf->node, root->blocksize);
 	btrfs_set_header_blocknr(&cow->node.header, cow->blocknr);
+	btrfs_set_header_owner(&cow->node.header, root->root_key.objectid);
 	*cow_ret = cow;
 	btrfs_inc_ref(trans, root, buf);
 	if (buf == root->node) {
@@ -661,6 +662,7 @@ static int insert_new_root(struct btrfs_trans_handle *trans, struct btrfs_root
 	btrfs_set_header_nritems(&c->header, 1);
 	btrfs_set_header_level(&c->header, level);
 	btrfs_set_header_blocknr(&c->header, t->blocknr);
+	btrfs_set_header_owner(&c->header, root->root_key.objectid);
 	lower = &path->nodes[level-1]->node;
 	if (btrfs_is_leaf(lower))
 		lower_key = &((struct btrfs_leaf *)lower)->items[0].key;
@@ -746,6 +748,7 @@ static int split_node(struct btrfs_trans_handle *trans, struct btrfs_root
 	btrfs_set_header_flags(&split->header, btrfs_header_flags(&c->header));
 	btrfs_set_header_level(&split->header, btrfs_header_level(&c->header));
 	btrfs_set_header_blocknr(&split->header, split_buffer->blocknr);
+	btrfs_set_header_owner(&split->header, root->root_key.objectid);
 	mid = (c_nritems + 1) / 2;
 	memcpy(split->ptrs, c->ptrs + mid,
 		(c_nritems - mid) * sizeof(struct btrfs_key_ptr));
@@ -1088,6 +1091,7 @@ static int split_leaf(struct btrfs_trans_handle *trans, struct btrfs_root
 	btrfs_set_header_nritems(&right->header, nritems - mid);
 	btrfs_set_header_blocknr(&right->header, right_buffer->blocknr);
 	btrfs_set_header_level(&right->header, 0);
+	btrfs_set_header_owner(&right->header, root->root_key.objectid);
 	data_copy_size = btrfs_item_end(l->items + mid) -
 			 leaf_data_end(root, l);
 	memcpy(right->items, l->items + mid,

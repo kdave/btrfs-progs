@@ -8,7 +8,7 @@ objects = ctree.o disk-io.o radix-tree.o extent-tree.o print-tree.o \
 #
 # if you don't have sparse installed, use ls instead
 CHECKFLAGS=-D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ -Wbitwise \
-		-Wcontext -Wcast-truncate -Wuninitialized -Wshadow -Wundef
+		-Wuninitialized -Wshadow -Wundef
 check=sparse $(CHECKFLAGS)
 #check=ls
 
@@ -16,32 +16,33 @@ check=sparse $(CHECKFLAGS)
 	$(check) $<
 	$(CC) $(CFLAGS) -c $<
 
-all: bit-radix-test tester debug-tree quick-test dir-test tags mkfs.btrfs \
-	btrfsctl
+all: tester debug-tree quick-test dir-test mkfs.btrfs \
+	btrfsctl btrfsck
 
-btrfsctl: ioctl.h btrfsctl.o
+btrfsctl: ioctl.h btrfsctl.o $(headers)
 	gcc $(CFLAGS) -o btrfsctl btrfsctl.o
 
-mkfs.btrfs: $(objects) mkfs.o
+btrfsck: btrfsck.o $(headers) bit-radix.o
+	gcc $(CFLAGS) -o btrfsck btrfsck.o $(objects) bit-radix.o
+
+mkfs.btrfs: $(objects) mkfs.o $(headers)
 	gcc $(CFLAGS) -o mkfs.btrfs $(objects) mkfs.o -luuid
 
-bit-radix-test: $(objects) bit-radix.o
+bit-radix-test: $(objects) bit-radix.o $(headers)
 	gcc $(CFLAGS) -o bit-radix-test $(objects) bit-radix.o
 
-debug-tree: $(objects) debug-tree.o
+debug-tree: $(objects) debug-tree.o $(headers)
 	gcc $(CFLAGS) -o debug-tree $(objects) debug-tree.o -luuid
 
-tester: $(objects) random-test.o
+tester: $(objects) random-test.o $(headers)
 	gcc $(CFLAGS) -o tester $(objects) random-test.o
 
-dir-test: $(objects) dir-test.o
+dir-test: $(objects) dir-test.o $(headers)
 	gcc $(CFLAGS) -o dir-test $(objects) dir-test.o
-quick-test: $(objects) quick-test.o
+quick-test: $(objects) quick-test.o $(headers)
 	gcc $(CFLAGS) -o quick-test $(objects) quick-test.o
 
-$(objects): $(headers)
-
 clean :
-	rm debug-tree mkfs.btrfs btrfsctl *.o
+	rm debug-tree mkfs.btrfs btrfsctl btrfsck *.o
 
 

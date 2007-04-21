@@ -141,6 +141,7 @@ int mkfs(int fd, char *pathname, u64 num_blocks, u32 blocksize)
 	btrfs_set_header_blocknr(&empty_leaf->header, start_block + 1);
 	btrfs_set_header_nritems(&empty_leaf->header, 2);
 	btrfs_set_header_generation(&empty_leaf->header, 0);
+	btrfs_set_header_owner(&empty_leaf->header, BTRFS_ROOT_TREE_OBJECTID);
 	memcpy(empty_leaf->header.fsid, super.fsid,
 	       sizeof(empty_leaf->header.fsid));
 
