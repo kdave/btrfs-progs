@@ -980,6 +980,7 @@ static inline void btrfs_set_device_id(struct btrfs_device_item *d,
 	((type *)(btrfs_leaf_data(leaf) + \
 	btrfs_item_offset((leaf)->items + (slot))))
 
+int btrfs_comp_keys(struct btrfs_disk_key *disk, struct btrfs_key *k2);
 int btrfs_extend_item(struct btrfs_trans_handle *trans, struct btrfs_root
 		      *root, struct btrfs_path *path, u32 data_size);
 struct btrfs_buffer *btrfs_alloc_free_block(struct btrfs_trans_handle *trans,

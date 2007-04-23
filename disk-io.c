@@ -1,4 +1,5 @@
-#define _XOPEN_SOURCE 500
+#define _XOPEN_SOURCE 600
+#define __USE_XOPEN2K
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -336,6 +337,9 @@ int btrfs_open_disk(struct btrfs_root *root, u64 device_id,
 		ret = -1;
 		goto out;
 	}
+
+	posix_fadvise(fd, 0, 0, POSIX_FADV_RANDOM);
+	posix_fadvise(fd, 0, 0, POSIX_FADV_NOREUSE);
 	ret = btrfs_insert_dev_radix(root, fd, device_id,
 				     block_start, num_blocks);
 	BUG_ON(ret);

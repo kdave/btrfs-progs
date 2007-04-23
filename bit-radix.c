@@ -172,8 +172,8 @@ int find_first_radix_bit(struct radix_tree_root *radix, unsigned long *retbits,
 	slot = start / BIT_RADIX_BITS_PER_ARRAY;
 	ret = radix_tree_gang_lookup(radix, (void **)gang, slot,
 				     ARRAY_SIZE(gang));
+	found = start % BIT_RADIX_BITS_PER_ARRAY;
 	for (i = 0; i < ret && nr > 0; i++) {
-		found = 0;
 		bits = gang[i];
 		while(nr > 0) {
 			found = find_next_bit(bits + 1,
@@ -189,6 +189,7 @@ int find_first_radix_bit(struct radix_tree_root *radix, unsigned long *retbits,
 			} else
 				break;
 		}
+		found = 0;
 	}
 	return total_found;
 }

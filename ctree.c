@@ -83,22 +83,44 @@ static inline unsigned int leaf_data_end(struct btrfs_root *root,
 }
 
 /*
+ * how many bytes are required to store the items in a leaf.  start
+ * and nr indicate which items in the leaf to check.  This totals up the
+ * space used both by the item structs and the item data
+ */
+static int leaf_space_used(struct btrfs_leaf *l, int start, int nr)
+{
+	int data_len;
+	int nritems = btrfs_header_nritems(&l->header);
+	int end;
+
+	if (nritems < start + nr)
+		end = nritems - 1;
+	else
+		end = start + nr - 1;
+
+	if (!nr)
+		return 0;
+	data_len = btrfs_item_end(l->items + start);
+	data_len = data_len - btrfs_item_offset(l->items + end);
+	data_len += sizeof(struct btrfs_item) * nr;
+	return data_len;
+}
+
+/*
  * The space between the end of the leaf items and
  * the start of the leaf data.  IOW, how much room
  * the leaf has left for both items and data
  */
 int btrfs_leaf_free_space(struct btrfs_root *root, struct btrfs_leaf *leaf)
 {
-	int data_end = leaf_data_end(root, leaf);
 	int nritems = btrfs_header_nritems(&leaf->header);
-	char *items_end = (char *)(leaf->items + nritems + 1);
-	return (char *)(btrfs_leaf_data(leaf) + data_end) - (char *)items_end;
+	return BTRFS_LEAF_DATA_SIZE(root) - leaf_space_used(leaf, 0, nritems);
 }
 
 /*
  * compare two keys in a memcmp fashion
  */
-static int comp_keys(struct btrfs_disk_key *disk, struct btrfs_key *k2)
+int btrfs_comp_keys(struct btrfs_disk_key *disk, struct btrfs_key *k2)
 {
 	struct btrfs_key k1;
 
@@ -144,7 +166,7 @@ static int check_node(struct btrfs_root *root, struct btrfs_path *path,
 	for (i = 0; nritems > 1 && i < nritems - 2; i++) {
 		struct btrfs_key cpukey;
 		btrfs_disk_key_to_cpu(&cpukey, &node->ptrs[i + 1].key);
-		BUG_ON(comp_keys(&node->ptrs[i].key, &cpukey) >= 0);
+		BUG_ON(btrfs_comp_keys(&node->ptrs[i].key, &cpukey) >= 0);
 	}
 	return 0;
 }
@@ -177,7 +199,7 @@ static int check_leaf(struct btrfs_root *root, struct btrfs_path *path,
 	for (i = 0; nritems > 1 && i < nritems - 2; i++) {
 		struct btrfs_key cpukey;
 		btrfs_disk_key_to_cpu(&cpukey, &leaf->items[i + 1].key);
-		BUG_ON(comp_keys(&leaf->items[i].key,
+		BUG_ON(btrfs_comp_keys(&leaf->items[i].key,
 		                 &cpukey) >= 0);
 		BUG_ON(btrfs_item_offset(leaf->items + i) !=
 			btrfs_item_end(leaf->items + i + 1));
@@ -219,7 +241,7 @@ static int generic_bin_search(char *p, int item_size, struct btrfs_key *key,
 	while(low < high) {
 		mid = (low + high) / 2;
 		tmp = (struct btrfs_disk_key *)(p + mid * item_size);
-		ret = comp_keys(tmp, key);
+		ret = btrfs_comp_keys(tmp, key);
 
 		if (ret < 0)
 			low = mid + 1;
@@ -772,24 +794,6 @@ static int split_node(struct btrfs_trans_handle *trans, struct btrfs_root
 		btrfs_block_release(root, split_buffer);
 	}
 	return ret;
-}
-
-/*
- * how many bytes are required to store the items in a leaf.  start
- * and nr indicate which items in the leaf to check.  This totals up the
- * space used both by the item structs and the item data
- */
-static int leaf_space_used(struct btrfs_leaf *l, int start, int nr)
-{
-	int data_len;
-	int end = start + nr - 1;
-
-	if (!nr)
-		return 0;
-	data_len = btrfs_item_end(l->items + start);
-	data_len = data_len - btrfs_item_offset(l->items + end);
-	data_len += sizeof(struct btrfs_item) * nr;
-	return data_len;
 }
 
 /*

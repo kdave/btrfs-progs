@@ -31,6 +31,8 @@ int close_ctree(struct btrfs_root *root, struct btrfs_super_block *s);
 void btrfs_block_release(struct btrfs_root *root, struct btrfs_buffer *buf);
 int write_ctree_super(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 		      struct btrfs_super_block *s);
+int btrfs_map_bh_to_logical(struct btrfs_root *root, struct btrfs_buffer *bh,
+			     u64 logical);
 #define BTRFS_SUPER_INFO_OFFSET (16 * 1024)
 
 #endif
