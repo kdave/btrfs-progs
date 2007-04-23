@@ -18,7 +18,7 @@ struct extent_record {
 	u64 nr;
 	u64 owner;
 	u32 refs;
-	u32 extent_tree_refs;
+	u32 extent_item_refs;
 	u8 type;
 };
 
@@ -114,7 +114,7 @@ static int check_block(struct btrfs_root *root,
 static int add_extent_rec(struct radix_tree_root *extent_radix,
 			  struct btrfs_disk_key *parent_key,
 			  u64 ref, u64 start, u64 nr, u64 owner, u8 type,
-			  int inc_ref)
+			  u32 extent_item_refs, int inc_ref)
 {
 	struct extent_record *rec;
 	int ret = 0;
@@ -123,7 +123,8 @@ static int add_extent_rec(struct radix_tree_root *extent_radix,
 		if (inc_ref)
 			rec->refs++;
 		if (owner != rec->owner) {
-			fprintf(stderr, "warning, owner mismatch %Lu\n", start);
+			fprintf(stderr, "warning, owner mismatch %Lu %Lu %Lu\n",
+				start, owner, rec->owner);
 			ret = 1;
 		}
 		if (start != rec->start) {
@@ -133,20 +134,36 @@ static int add_extent_rec(struct radix_tree_root *extent_radix,
 		}
 		if (type != rec->type) {
 			fprintf(stderr, "type mismatch block %Lu %d %d\n",
-				start, type, type);
+				start, type, rec->type);
 			ret = 1;
 		}
+		if (extent_item_refs)
+			rec->extent_item_refs = extent_item_refs;
 		return ret;
 	}
 	rec = malloc(sizeof(*rec));
+	if (start == 0)
+		extent_item_refs = 0;
 	rec->start = start;
 	rec->nr = nr;
 	rec->owner = owner;
 	rec->type = type;
+
+	if (inc_ref)
+		rec->refs = 1;
+	else
+		rec->refs = 0;
+
+	if (extent_item_refs)
+		rec->extent_item_refs = extent_item_refs;
+	else
+		rec->extent_item_refs = 0;
+
 	if (parent_key)
 		memcpy(&rec->parent_key, parent_key, sizeof(*parent_key));
 	else
 		memset(&rec->parent_key, 0, sizeof(*parent_key));
+
 	ret = radix_tree_insert(extent_radix, start, rec);
 	BUG_ON(ret);
 	blocks_used += nr;
@@ -234,6 +251,22 @@ static int run_next_block(struct btrfs_root *root,
 		leaf = &buf->leaf;
 		for (i = 0; i < nritems; i++) {
 			struct btrfs_file_extent_item *fi;
+			if (btrfs_disk_key_type(&leaf->items[i].key) ==
+			    BTRFS_EXTENT_ITEM_KEY) {
+				struct btrfs_key found;
+				struct btrfs_extent_item *ei;
+				btrfs_disk_key_to_cpu(&found,
+						      &leaf->items[i].key);
+				ei = btrfs_item_ptr(leaf, i,
+						    struct btrfs_extent_item);
+				add_extent_rec(extent_radix, NULL, 0,
+					       found.objectid,
+					       found.offset,
+					       btrfs_extent_owner(ei),
+					       btrfs_extent_type(ei),
+					       btrfs_extent_refs(ei), 0);
+				continue;
+			}
 			if (btrfs_disk_key_type(&leaf->items[i].key) !=
 			    BTRFS_EXTENT_DATA_KEY)
 				continue;
@@ -246,7 +279,7 @@ static int run_next_block(struct btrfs_root *root,
 				   btrfs_file_extent_disk_blocknr(fi),
 				   btrfs_file_extent_disk_num_blocks(fi),
 			           btrfs_disk_key_objectid(&leaf->items[i].key),
-				   BTRFS_EXTENT_FILE, 1);
+				   BTRFS_EXTENT_FILE, 0, 1);
 			BUG_ON(ret);
 		}
 	} else {
@@ -259,7 +292,7 @@ static int run_next_block(struct btrfs_root *root,
 					     &node->ptrs[i].key,
 					     blocknr, ptr, 1,
 					     btrfs_header_owner(&node->header),
-					     BTRFS_EXTENT_TREE, 1);
+					     BTRFS_EXTENT_TREE, 0, 1);
 			BUG_ON(ret);
 			if (level > 1) {
 				add_pending(nodes, seen, ptr);
@@ -284,8 +317,37 @@ static int add_root_to_pending(struct btrfs_root *root,
 	add_pending(pending, seen, root->node->blocknr);
 	add_extent_rec(extent_radix, NULL, 0, root->node->blocknr, 1,
 		       btrfs_header_owner(&root->node->node.header),
-		       BTRFS_EXTENT_TREE, 1);
+		       BTRFS_EXTENT_TREE, 0, 1);
 	return 0;
+}
+
+int check_extent_refs(struct btrfs_root *root,
+		      struct radix_tree_root *extent_radix)
+{
+	struct extent_record *rec[64];
+	int i;
+	int ret;
+	int err = 0;
+
+	while(1) {
+		ret = radix_tree_gang_lookup(extent_radix, (void **)rec, 0,
+					     ARRAY_SIZE(rec));
+		if (!ret)
+			break;
+		for (i = 0; i < ret; i++) {
+			if (rec[i]->refs != rec[i]->extent_item_refs) {
+				fprintf(stderr, "ref mismatch on [%Lu %Lu] ",
+					rec[i]->start, rec[i]->nr);
+				fprintf(stderr, "extent item %u, found %u\n",
+					rec[i]->extent_item_refs,
+					rec[i]->refs);
+				err = 1;
+			}
+			radix_tree_delete(extent_radix, rec[i]->start);
+			free(rec[i]);
+		}
+	}
+	return err;
 }
 
 int main(int ac, char **av) {
@@ -333,7 +395,8 @@ int main(int ac, char **av) {
 		if (ret != 0)
 			break;
 	}
+	ret = check_extent_refs(root, &extent_radix);
 	close_ctree(root, &super);
-	printf("found %Lu blocks used\n", blocks_used);
-	return 0;
+	printf("found %Lu blocks used err is %d\n", blocks_used, ret);
+	return ret;
 }

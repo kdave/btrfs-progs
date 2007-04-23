@@ -138,6 +138,8 @@ static int finish_current_insert(struct btrfs_trans_handle *trans, struct
 	struct btrfs_fs_info *info = extent_root->fs_info;
 
 	btrfs_set_extent_refs(&extent_item, 1);
+	btrfs_set_extent_type(&extent_item, BTRFS_EXTENT_TREE);
+	btrfs_set_extent_owner(&extent_item, extent_root->root_key.objectid);
 	ins.offset = 1;
 	ins.flags = 0;
 	btrfs_set_key_type(&ins, BTRFS_EXTENT_ITEM_KEY);
