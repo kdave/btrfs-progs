@@ -85,9 +85,8 @@ void btrfs_print_leaf(struct btrfs_root *root, struct btrfs_leaf *l)
 			break;
 		case BTRFS_EXTENT_ITEM_KEY:
 			ei = btrfs_item_ptr(l, i, struct btrfs_extent_item);
-			printf("\t\textent data refs %u type %d owner %Lu\n",
+			printf("\t\textent data refs %u owner %Lu\n",
 				btrfs_extent_refs(ei),
-				btrfs_extent_type(ei),
 				btrfs_extent_owner(ei));
 			break;
 		case BTRFS_CSUM_ITEM_KEY:

@@ -19,7 +19,6 @@ struct extent_record {
 	u64 owner;
 	u32 refs;
 	u32 extent_item_refs;
-	u8 type;
 };
 
 static int check_node(struct btrfs_root *root,
@@ -113,7 +112,7 @@ static int check_block(struct btrfs_root *root,
 
 static int add_extent_rec(struct radix_tree_root *extent_radix,
 			  struct btrfs_disk_key *parent_key,
-			  u64 ref, u64 start, u64 nr, u64 owner, u8 type,
+			  u64 ref, u64 start, u64 nr, u64 owner,
 			  u32 extent_item_refs, int inc_ref)
 {
 	struct extent_record *rec;
@@ -132,11 +131,6 @@ static int add_extent_rec(struct radix_tree_root *extent_radix,
 				rec->start, start);
 			ret = 1;
 		}
-		if (type != rec->type) {
-			fprintf(stderr, "type mismatch block %Lu %d %d\n",
-				start, type, rec->type);
-			ret = 1;
-		}
 		if (extent_item_refs)
 			rec->extent_item_refs = extent_item_refs;
 		return ret;
@@ -147,7 +141,6 @@ static int add_extent_rec(struct radix_tree_root *extent_radix,
 	rec->start = start;
 	rec->nr = nr;
 	rec->owner = owner;
-	rec->type = type;
 
 	if (inc_ref)
 		rec->refs = 1;
@@ -263,7 +256,6 @@ static int run_next_block(struct btrfs_root *root,
 					       found.objectid,
 					       found.offset,
 					       btrfs_extent_owner(ei),
-					       btrfs_extent_type(ei),
 					       btrfs_extent_refs(ei), 0);
 				continue;
 			}
@@ -279,7 +271,7 @@ static int run_next_block(struct btrfs_root *root,
 				   btrfs_file_extent_disk_blocknr(fi),
 				   btrfs_file_extent_disk_num_blocks(fi),
 			           btrfs_disk_key_objectid(&leaf->items[i].key),
-				   BTRFS_EXTENT_FILE, 0, 1);
+				   0, 1);
 			BUG_ON(ret);
 		}
 	} else {
@@ -292,7 +284,7 @@ static int run_next_block(struct btrfs_root *root,
 					     &node->ptrs[i].key,
 					     blocknr, ptr, 1,
 					     btrfs_header_owner(&node->header),
-					     BTRFS_EXTENT_TREE, 0, 1);
+					     0, 1);
 			BUG_ON(ret);
 			if (level > 1) {
 				add_pending(nodes, seen, ptr);
@@ -316,8 +308,7 @@ static int add_root_to_pending(struct btrfs_root *root,
 {
 	add_pending(pending, seen, root->node->blocknr);
 	add_extent_rec(extent_radix, NULL, 0, root->node->blocknr, 1,
-		       btrfs_header_owner(&root->node->node.header),
-		       BTRFS_EXTENT_TREE, 0, 1);
+		       btrfs_header_owner(&root->node->node.header), 0, 1);
 	return 0;
 }
 
