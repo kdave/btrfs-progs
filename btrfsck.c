@@ -121,11 +121,6 @@ static int add_extent_rec(struct radix_tree_root *extent_radix,
 	if (rec) {
 		if (inc_ref)
 			rec->refs++;
-		if (owner != rec->owner) {
-			fprintf(stderr, "warning, owner mismatch %Lu %Lu %Lu\n",
-				start, owner, rec->owner);
-			ret = 1;
-		}
 		if (start != rec->start) {
 			fprintf(stderr, "warning, start mismatch %Lu %Lu\n",
 				rec->start, start);
@@ -297,7 +292,7 @@ static int run_next_block(struct btrfs_root *root,
 	return 0;
 }
 
-static int add_root_to_pending(struct btrfs_root *root,
+static int add_root_to_pending(struct btrfs_buffer *buf,
 			       unsigned long *bits,
 			       int bits_nr,
 			       struct radix_tree_root *extent_radix,
@@ -306,9 +301,9 @@ static int add_root_to_pending(struct btrfs_root *root,
 			       struct radix_tree_root *reada,
 			       struct radix_tree_root *nodes)
 {
-	add_pending(pending, seen, root->node->blocknr);
-	add_extent_rec(extent_radix, NULL, 0, root->node->blocknr, 1,
-		       btrfs_header_owner(&root->node->node.header), 0, 1);
+	add_pending(pending, seen, buf->blocknr);
+	add_extent_rec(extent_radix, NULL, 0, buf->blocknr, 1,
+		       btrfs_header_owner(&buf->node.header), 0, 1);
 	return 0;
 }
 
@@ -349,10 +344,16 @@ int main(int ac, char **av) {
 	struct radix_tree_root pending;
 	struct radix_tree_root reada;
 	struct radix_tree_root nodes;
+	struct btrfs_path path;
+	struct btrfs_key key;
+	struct btrfs_key found_key;
 	int ret;
 	u64 last = 0;
 	unsigned long *bits;
 	int bits_nr;
+	struct btrfs_leaf *leaf;
+	int slot;
+	struct btrfs_root_item *ri;
 
 	radix_tree_init();
 
@@ -372,14 +373,44 @@ int main(int ac, char **av) {
 		exit(1);
 	}
 
-	add_root_to_pending(root, bits, bits_nr, &extent_radix,
-			    &pending, &seen, &reada, &nodes);
-	add_root_to_pending(root->fs_info->tree_root, bits, bits_nr,
+	add_root_to_pending(root->fs_info->tree_root->node, bits, bits_nr,
 			    &extent_radix, &pending, &seen, &reada, &nodes);
-	add_root_to_pending(root->fs_info->dev_root, bits, bits_nr,
+	add_root_to_pending(root->fs_info->dev_root->node, bits, bits_nr,
 			    &extent_radix, &pending, &seen, &reada, &nodes);
-	add_root_to_pending(root->fs_info->extent_root, bits, bits_nr,
-			    &extent_radix, &pending, &seen, &reada, &nodes);
+
+	btrfs_init_path(&path);
+	key.offset = 0;
+	key.objectid = 0;
+	key.flags = 0;
+	btrfs_set_key_type(&key, BTRFS_ROOT_ITEM_KEY);
+	ret = btrfs_search_slot(NULL, root->fs_info->tree_root,
+					&key, &path, 0, 0);
+	BUG_ON(ret < 0);
+	while(1) {
+		leaf = &path.nodes[0]->leaf;
+		slot = path.slots[0];
+		if (slot >= btrfs_header_nritems(&leaf->header)) {
+			ret = btrfs_next_leaf(root, &path);
+			if (ret != 0)
+				break;
+			leaf = &path.nodes[0]->leaf;
+			slot = path.slots[0];
+		}
+		btrfs_disk_key_to_cpu(&found_key,
+				      &leaf->items[path.slots[0]].key);
+		if (btrfs_key_type(&found_key) == BTRFS_ROOT_ITEM_KEY) {
+			struct btrfs_buffer *buf;
+			ri = btrfs_item_ptr(leaf, path.slots[0],
+					    struct btrfs_root_item);
+			buf = read_tree_block(root->fs_info->tree_root,
+					      btrfs_root_blocknr(ri));
+			add_root_to_pending(buf, bits, bits_nr, &extent_radix,
+					    &pending, &seen, &reada, &nodes);
+			btrfs_block_release(root->fs_info->tree_root, buf);
+		}
+		path.slots[0]++;
+	}
+	btrfs_release_path(root, &path);
 	while(1) {
 		ret = run_next_block(root, bits, bits_nr, &last, &pending,
 				     &seen, &reada, &nodes, &extent_radix);
