@@ -167,7 +167,6 @@ static int add_pending(struct radix_tree_root *pending,
 	set_radix_bit(seen, blocknr);
 	return 0;
 }
-
 static int pick_next_pending(struct radix_tree_root *pending,
 			struct radix_tree_root *reada,
 			struct radix_tree_root *nodes,
@@ -176,7 +175,7 @@ static int pick_next_pending(struct radix_tree_root *pending,
 	unsigned long node_start = last;
 	int ret;
 	ret = find_first_radix_bit(reada, bits, 0, 1);
-	if (ret)
+	if (ret && ret > 16) 
 		return ret;
 	if (node_start > 8)
 		node_start -= 8;
@@ -187,7 +186,6 @@ static int pick_next_pending(struct radix_tree_root *pending,
 		return ret;
 	return find_first_radix_bit(pending, bits, 0, bits_nr);
 }
-
 static struct btrfs_buffer reada_buf;
 
 static int run_next_block(struct btrfs_root *root,
@@ -208,7 +206,6 @@ static int run_next_block(struct btrfs_root *root,
 	struct btrfs_leaf *leaf;
 	struct btrfs_node *node;
 	u64 last_block = 0;
-
 	ret = pick_next_pending(pending, reada, nodes, *last, bits, bits_nr);
 	if (ret == 0) {
 		return 1;
@@ -223,7 +220,6 @@ static int run_next_block(struct btrfs_root *root,
 		last_block = bits[i];
 		readahead(reada_buf.fd, offset, root->blocksize);
 	}
-
 	*last = bits[0];
 	blocknr = bits[0];
 	clear_radix_bit(pending, blocknr);
@@ -301,7 +297,10 @@ static int add_root_to_pending(struct btrfs_buffer *buf,
 			       struct radix_tree_root *reada,
 			       struct radix_tree_root *nodes)
 {
-	add_pending(pending, seen, buf->blocknr);
+	if (btrfs_header_level(&buf->node.header) > 0)
+		add_pending(nodes, seen, buf->blocknr);
+	else
+		add_pending(pending, seen, buf->blocknr);
 	add_extent_rec(extent_radix, NULL, 0, buf->blocknr, 1,
 		       btrfs_header_owner(&buf->node.header), 0, 1);
 	return 0;
