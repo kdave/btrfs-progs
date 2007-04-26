@@ -37,7 +37,7 @@ void btrfs_print_leaf(struct btrfs_root *root, struct btrfs_leaf *l)
 	struct btrfs_inode_item *ii;
 	struct btrfs_file_extent_item *fi;
 	struct btrfs_csum_item *ci;
-	char *p;
+	struct btrfs_block_group_item *bi;
 	u32 type;
 
 	printf("leaf %Lu ptrs %d free space %d generation %Lu owner %Lu\n",
@@ -63,10 +63,6 @@ void btrfs_print_leaf(struct btrfs_root *root, struct btrfs_leaf *l)
 			       btrfs_inode_generation(ii),
 			       btrfs_inode_size(ii),
 			       btrfs_inode_mode(ii));
-			break;
-		case BTRFS_INLINE_DATA_KEY:
-			p = btrfs_item_ptr(l, i, char);
-			printf("\t\tinline data %.*s\n", 10, p);
 			break;
 		case BTRFS_DIR_ITEM_KEY:
 			di = btrfs_item_ptr(l, i, struct btrfs_dir_item);
@@ -109,6 +105,12 @@ void btrfs_print_leaf(struct btrfs_root *root, struct btrfs_leaf *l)
 			printf("\t\textent data offset %Lu nr %Lu\n",
 			       btrfs_file_extent_offset(fi),
 			       btrfs_file_extent_num_blocks(fi));
+			break;
+		case BTRFS_BLOCK_GROUP_ITEM_KEY:
+			bi = btrfs_item_ptr(l, i,
+					    struct btrfs_block_group_item);
+			printf("\t\tblock group used %Lu\n",
+			       btrfs_block_group_used(bi));
 			break;
 		case BTRFS_DEV_ITEM_KEY:
 			devi = btrfs_item_ptr(l, i, struct btrfs_device_item);

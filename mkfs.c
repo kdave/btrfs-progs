@@ -64,6 +64,59 @@ error:
 	return ret;
 }
 
+static int make_block_groups(struct btrfs_trans_handle *trans,
+			     struct btrfs_root *root)
+{
+	u64 group_size_blocks;
+	u64 total_blocks;
+	u64 cur_start;
+	int ret;
+	struct btrfs_block_group_cache *cache;
+
+	root = root->fs_info->extent_root;
+	/* first we bootstrap the things into cache */
+	group_size_blocks = BTRFS_BLOCK_GROUP_SIZE / root->blocksize;
+	cache = malloc(sizeof(*cache));
+	cache->key.objectid = 0;
+	cache->key.offset = group_size_blocks;
+	cache->key.flags = 0;
+	btrfs_set_key_type(&cache->key, BTRFS_BLOCK_GROUP_ITEM_KEY);
+	memset(&cache->item, 0, sizeof(cache->item));
+	btrfs_set_block_group_used(&cache->item,
+			   btrfs_super_blocks_used(root->fs_info->disk_super));
+	ret = radix_tree_insert(&root->fs_info->block_group_radix,
+				group_size_blocks - 1, (void *)cache);
+	BUG_ON(ret);
+
+	total_blocks = btrfs_super_total_blocks(root->fs_info->disk_super);
+	cur_start = group_size_blocks;
+	while(cur_start < total_blocks) {
+		cache = malloc(sizeof(*cache));
+		cache->key.objectid = cur_start;
+		cache->key.offset = group_size_blocks;
+		cache->key.flags = 0;
+		btrfs_set_key_type(&cache->key, BTRFS_BLOCK_GROUP_ITEM_KEY);
+		memset(&cache->item, 0, sizeof(cache->item));
+		ret = radix_tree_insert(&root->fs_info->block_group_radix,
+					cur_start + group_size_blocks - 1,
+					(void *)cache);
+		BUG_ON(ret);
+		cur_start += group_size_blocks;
+	}
+	/* then insert all the items */
+	cur_start = 0;
+	while(cur_start < total_blocks) {
+		cache = radix_tree_lookup(&root->fs_info->block_group_radix,
+					  cur_start + group_size_blocks - 1);
+		BUG_ON(!cache);
+		ret = btrfs_insert_block_group(trans, root, &cache->key,
+					       &cache->item);
+		BUG_ON(ret);
+		cur_start += group_size_blocks;
+	}
+	return 0;
+}
+
 static int make_root_dir(int fd) {
 	struct btrfs_root *root;
 	struct btrfs_super_block super;
@@ -78,6 +131,7 @@ static int make_root_dir(int fd) {
 		return -1;
 	}
 	trans = btrfs_start_transaction(root, 1);
+	ret = make_block_groups(trans, root);
 	ret = __make_root_dir(trans, root->fs_info->tree_root,
 			      BTRFS_ROOT_TREE_DIR_OBJECTID);
 	if (ret)

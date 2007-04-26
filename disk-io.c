@@ -146,6 +146,8 @@ struct btrfs_buffer *read_tree_block(struct btrfs_root *root, u64 blocknr)
 	buf = radix_tree_lookup(&root->fs_info->cache_radix, blocknr);
 	if (buf) {
 		buf->count++;
+		if (check_tree_block(root, buf))
+			BUG();
 	} else {
 		buf = alloc_tree_block(root, blocknr);
 		if (!buf)
@@ -157,9 +159,9 @@ struct btrfs_buffer *read_tree_block(struct btrfs_root *root, u64 blocknr)
 			free(buf);
 			return NULL;
 		}
+		if (check_tree_block(root, buf))
+			BUG();
 	}
-	if (check_tree_block(root, buf))
-		BUG();
 	return buf;
 }
 
@@ -170,6 +172,8 @@ int dirty_tree_block(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 		return 0;
 	list_add_tail(&buf->dirty, &root->fs_info->trans);
 	buf->count++;
+	if (check_tree_block(root, buf))
+		BUG();
 	return 0;
 }
 
@@ -191,6 +195,8 @@ int write_tree_block(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 	if (buf->blocknr != btrfs_header_blocknr(&buf->node.header))
 		BUG();
 	btrfs_map_bh_to_logical(root, buf, buf->blocknr);
+	if (check_tree_block(root, buf))
+		BUG();
 	ret = pwrite(buf->fd, &buf->node, root->blocksize,
 		     buf->dev_blocknr * root->blocksize);
 	if (ret != root->blocksize)
@@ -229,6 +235,7 @@ static int commit_tree_roots(struct btrfs_trans_handle *trans,
 		btrfs_set_super_device_root(fs_info->disk_super,
 					    fs_info->dev_root->node->blocknr);
 	}
+	btrfs_write_dirty_block_groups(trans, fs_info->extent_root);
 	while(1) {
 		old_extent_block = btrfs_root_blocknr(&extent_root->root_item);
 		if (old_extent_block == extent_root->node->blocknr)
@@ -239,6 +246,7 @@ static int commit_tree_roots(struct btrfs_trans_handle *trans,
 					&extent_root->root_key,
 					&extent_root->root_item);
 		BUG_ON(ret);
+		btrfs_write_dirty_block_groups(trans, fs_info->extent_root);
 	}
 	return 0;
 }
@@ -425,6 +433,7 @@ struct btrfs_root *open_ctree_fd(int fp, struct btrfs_super_block *super)
 	INIT_RADIX_TREE(&fs_info->cache_radix, GFP_KERNEL);
 	INIT_RADIX_TREE(&fs_info->pinned_radix, GFP_KERNEL);
 	INIT_RADIX_TREE(&fs_info->dev_radix, GFP_KERNEL);
+	INIT_RADIX_TREE(&fs_info->block_group_radix, GFP_KERNEL);
 	INIT_LIST_HEAD(&fs_info->trans);
 	INIT_LIST_HEAD(&fs_info->cache);
 	fs_info->cache_size = 0;
@@ -481,6 +490,7 @@ struct btrfs_root *open_ctree_fd(int fp, struct btrfs_super_block *super)
 	root->node->count++;
 	root->ref_cows = 1;
 	root->fs_info->generation = root->root_key.offset + 1;
+	btrfs_read_block_groups(root);
 	return root;
 }
 
@@ -550,6 +560,7 @@ int close_ctree(struct btrfs_root *root, struct btrfs_super_block *s)
 	BUG_ON(!list_empty(&root->fs_info->trans));
 
 	free_dev_radix(root->fs_info);
+	btrfs_free_block_groups(root->fs_info);
 	close(root->fs_info->fp);
 	if (root->node)
 		btrfs_block_release(root, root->node);

@@ -42,7 +42,8 @@ dir-test: $(objects) dir-test.o $(headers)
 quick-test: $(objects) quick-test.o $(headers)
 	gcc $(CFLAGS) -o quick-test $(objects) quick-test.o
 
+$(objects): $(headers)
+
 clean :
 	rm debug-tree mkfs.btrfs btrfsctl btrfsck *.o
-
 
