@@ -167,6 +167,7 @@ struct btrfs_inode_item {
 	__le64 generation;
 	__le64 size;
 	__le64 nblocks;
+	__le64 block_group;
 	__le32 nlink;
 	__le32 uid;
 	__le32 gid;
@@ -390,6 +391,17 @@ static inline u64 btrfs_inode_nblocks(struct btrfs_inode_item *i)
 static inline void btrfs_set_inode_nblocks(struct btrfs_inode_item *i, u64 val)
 {
 	i->nblocks = cpu_to_le64(val);
+}
+
+static inline u64 btrfs_inode_block_group(struct btrfs_inode_item *i)
+{
+	return le64_to_cpu(i->block_group);
+}
+
+static inline void btrfs_set_inode_block_group(struct btrfs_inode_item *i,
+						u64 val)
+{
+	i->block_group = cpu_to_le64(val);
 }
 
 static inline u32 btrfs_inode_nlink(struct btrfs_inode_item *i)
