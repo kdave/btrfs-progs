@@ -1,6 +1,7 @@
 #define _XOPEN_SOURCE 500
 #include <stdio.h>
 #include <stdlib.h>
+#define __USE_GNU
 #include <fcntl.h>
 #include "kerncompat.h"
 #include "radix-tree.h"
