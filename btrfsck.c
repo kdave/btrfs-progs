@@ -11,7 +11,11 @@
 #include "transaction.h"
 #include "bit-radix.h"
 
-u64 blocks_used = 0;
+static u64 blocks_used = 0;
+static u64 total_csum_bytes = 0;
+static u64 total_btree_blocks = 0;
+static u64 btree_space_waste = 0;
+
 struct extent_record {
 	struct btrfs_disk_key parent_key;
 	struct btrfs_disk_key node_key;
@@ -234,6 +238,7 @@ static int run_next_block(struct btrfs_root *root,
 	}
 	if (btrfs_is_leaf(&buf->node)) {
 		leaf = &buf->leaf;
+		btree_space_waste += btrfs_leaf_free_space(root, leaf);
 		for (i = 0; i < nritems; i++) {
 			struct btrfs_file_extent_item *fi;
 			if (btrfs_disk_key_type(&leaf->items[i].key) ==
@@ -249,6 +254,12 @@ static int run_next_block(struct btrfs_root *root,
 					       found.offset,
 					       btrfs_extent_owner(ei),
 					       btrfs_extent_refs(ei), 0);
+				continue;
+			}
+			if (btrfs_disk_key_type(&leaf->items[i].key) ==
+			    BTRFS_CSUM_ITEM_KEY) {
+				total_csum_bytes +=
+					btrfs_item_size(leaf->items + i);
 				continue;
 			}
 			if (btrfs_disk_key_type(&leaf->items[i].key) !=
@@ -284,8 +295,11 @@ static int run_next_block(struct btrfs_root *root,
 				add_pending(pending, seen, ptr);
 			}
 		}
+		btree_space_waste += (BTRFS_NODEPTRS_PER_BLOCK(root) -
+				      nritems) * sizeof(struct btrfs_key_ptr);
 	}
 	btrfs_block_release(root, buf);
+	total_btree_blocks++;
 	return 0;
 }
 
@@ -420,5 +434,8 @@ int main(int ac, char **av) {
 	ret = check_extent_refs(root, &extent_radix);
 	close_ctree(root, &super);
 	printf("found %Lu blocks used err is %d\n", blocks_used, ret);
+	printf("total csum bytes: %Lu\n", total_csum_bytes);
+	printf("total tree blocks: %Lu\n", total_btree_blocks);
+	printf("btree space waste bytes: %Lu\n", btree_space_waste);
 	return ret;
 }
