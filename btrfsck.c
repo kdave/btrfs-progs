@@ -180,15 +180,31 @@ static int pick_next_pending(struct radix_tree_root *pending,
 	unsigned long node_start = last;
 	int ret;
 	ret = find_first_radix_bit(reada, bits, 0, 1);
-	if (ret && ret > 16) 
+	if (ret && ret > 16) {
 		return ret;
+	}
 	if (node_start > 8)
 		node_start -= 8;
 	ret = find_first_radix_bit(nodes, bits, node_start, bits_nr);
 	if (!ret)
 		ret = find_first_radix_bit(nodes, bits, 0, bits_nr);
-	if (ret)
+	if (ret) {
+		if (bits_nr - ret > 8) {
+			int ret2;
+			u64 sequential;
+			ret2 = find_first_radix_bit(pending, bits + ret,
+						    bits[0], bits_nr - ret);
+			sequential = bits[0];
+			while(ret2 > 0) {
+				if (bits[ret] - sequential > 8)
+					break;
+				sequential = bits[ret];
+				ret++;
+				ret2--;
+			}
+		}
 		return ret;
+	}
 	return find_first_radix_bit(pending, bits, 0, bits_nr);
 }
 static struct btrfs_buffer reada_buf;
@@ -210,6 +226,8 @@ static int run_next_block(struct btrfs_root *root,
 	int nritems;
 	struct btrfs_leaf *leaf;
 	struct btrfs_node *node;
+	struct btrfs_disk_key *disk_key;
+
 	u64 last_block = 0;
 	ret = pick_next_pending(pending, reada, nodes, *last, bits, bits_nr);
 	if (ret == 0) {
@@ -241,7 +259,8 @@ static int run_next_block(struct btrfs_root *root,
 		btree_space_waste += btrfs_leaf_free_space(root, leaf);
 		for (i = 0; i < nritems; i++) {
 			struct btrfs_file_extent_item *fi;
-			if (btrfs_disk_key_type(&leaf->items[i].key) ==
+			disk_key = &leaf->items[i].key;
+			if (btrfs_disk_key_type(disk_key) ==
 			    BTRFS_EXTENT_ITEM_KEY) {
 				struct btrfs_key found;
 				struct btrfs_extent_item *ei;
@@ -256,10 +275,21 @@ static int run_next_block(struct btrfs_root *root,
 					       btrfs_extent_refs(ei), 0);
 				continue;
 			}
-			if (btrfs_disk_key_type(&leaf->items[i].key) ==
+			if (btrfs_disk_key_type(disk_key) ==
 			    BTRFS_CSUM_ITEM_KEY) {
 				total_csum_bytes +=
 					btrfs_item_size(leaf->items + i);
+				continue;
+			}
+			if (btrfs_disk_key_type(disk_key) ==
+			    BTRFS_BLOCK_GROUP_ITEM_KEY) {
+				struct btrfs_block_group_item *bi;
+				bi = btrfs_item_ptr(leaf, i,
+					    struct btrfs_block_group_item);
+				fprintf(stderr,"block group %Lu %Lu used %Lu\n",
+					btrfs_disk_key_objectid(disk_key),
+					btrfs_disk_key_offset(disk_key),
+					btrfs_block_group_used(bi));
 				continue;
 			}
 			if (btrfs_disk_key_type(&leaf->items[i].key) !=
