@@ -18,7 +18,7 @@ int btrfs_find_free_objectid(struct btrfs_trans_handle *trans,
 	int ret;
 	u64 hole_size = 0;
 	int slot = 0;
-	u64 last_ino;
+	u64 last_ino = 0;
 	int start_found;
 	struct btrfs_leaf *l;
 	struct btrfs_key search_key;

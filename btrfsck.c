@@ -18,12 +18,12 @@ static u64 btree_space_waste = 0;
 
 struct extent_record {
 	struct btrfs_disk_key parent_key;
-	struct btrfs_disk_key node_key;
 	u64 start;
 	u64 nr;
 	u64 owner;
 	u32 refs;
 	u32 extent_item_refs;
+	int checked;
 };
 
 static int check_node(struct btrfs_root *root,
@@ -98,6 +98,17 @@ static int check_leaf(struct btrfs_root *root,
 	return 0;
 }
 
+static int maybe_free_extent_rec(struct radix_tree_root *extent_radix,
+				 struct extent_record *rec)
+{
+	if (rec->checked && rec->extent_item_refs == rec->refs &&
+	    rec->refs > 0) {
+		radix_tree_delete(extent_radix, rec->start);
+		free(rec);
+	}
+	return 0;
+}
+
 static int check_block(struct btrfs_root *root,
 		       struct radix_tree_root *extent_radix,
 		       struct btrfs_buffer *buf)
@@ -113,18 +124,16 @@ static int check_block(struct btrfs_root *root,
 	} else {
 		ret = check_node(root, &rec->parent_key, &buf->node);
 	}
-	if (!ret && rec->extent_item_refs == rec->refs && rec->refs > 0) {
-		radix_tree_delete(extent_radix, rec->start);
-		free(rec);
-		return ret;
-	}
+	rec->checked = 1;
+	if (!ret)
+		maybe_free_extent_rec(extent_radix, rec);
 	return ret;
 }
 
 static int add_extent_rec(struct radix_tree_root *extent_radix,
 			  struct btrfs_disk_key *parent_key,
 			  u64 ref, u64 start, u64 nr, u64 owner,
-			  u32 extent_item_refs, int inc_ref)
+			  u32 extent_item_refs, int inc_ref, int set_checked)
 {
 	struct extent_record *rec;
 	int ret = 0;
@@ -143,6 +152,9 @@ static int add_extent_rec(struct radix_tree_root *extent_radix,
 			}
 			rec->extent_item_refs = extent_item_refs;
 		}
+		if (set_checked)
+			rec->checked = 1;
+		maybe_free_extent_rec(extent_radix, rec);
 		return ret;
 	}
 	rec = malloc(sizeof(*rec));
@@ -151,6 +163,7 @@ static int add_extent_rec(struct radix_tree_root *extent_radix,
 	rec->start = start;
 	rec->nr = nr;
 	rec->owner = owner;
+	rec->checked = 0;
 
 	if (inc_ref)
 		rec->refs = 1;
@@ -170,6 +183,8 @@ static int add_extent_rec(struct radix_tree_root *extent_radix,
 	ret = radix_tree_insert(extent_radix, start, rec);
 	BUG_ON(ret);
 	blocks_used += nr;
+	if (set_checked)
+		rec->checked = 1;
 	return ret;
 }
 
@@ -185,14 +200,17 @@ static int add_pending(struct radix_tree_root *pending,
 static int pick_next_pending(struct radix_tree_root *pending,
 			struct radix_tree_root *reada,
 			struct radix_tree_root *nodes,
-			u64 last, unsigned long *bits, int bits_nr)
+			u64 last, unsigned long *bits, int bits_nr,
+			int *reada_bits)
 {
 	unsigned long node_start = last;
 	int ret;
 	ret = find_first_radix_bit(reada, bits, 0, 1);
-	if (ret && ret > 16) {
+	if (ret) {
+		*reada_bits = 1;
 		return ret;
 	}
+	*reada_bits = 0;
 	if (node_start > 8)
 		node_start -= 8;
 	ret = find_first_radix_bit(nodes, bits, node_start, bits_nr);
@@ -237,21 +255,23 @@ static int run_next_block(struct btrfs_root *root,
 	struct btrfs_leaf *leaf;
 	struct btrfs_node *node;
 	struct btrfs_disk_key *disk_key;
+	int reada_bits;
 
 	u64 last_block = 0;
-	ret = pick_next_pending(pending, reada, nodes, *last, bits, bits_nr);
+	ret = pick_next_pending(pending, reada, nodes, *last, bits,
+				bits_nr, &reada_bits);
 	if (ret == 0) {
 		return 1;
 	}
-	for(i = 0; i < ret; i++) {
-		u64 offset;
-		if (test_radix_bit(reada, bits[i]))
-			continue;
-		set_radix_bit(reada, bits[i]);
-		btrfs_map_bh_to_logical(root, &reada_buf, bits[i]);
-		offset = reada_buf.dev_blocknr * root->blocksize;
-		last_block = bits[i];
-		readahead(reada_buf.fd, offset, root->blocksize);
+	if (!reada_bits) {
+		for(i = 0; i < ret; i++) {
+			u64 offset;
+			set_radix_bit(reada, bits[i]);
+			btrfs_map_bh_to_logical(root, &reada_buf, bits[i]);
+			offset = reada_buf.dev_blocknr * root->blocksize;
+			last_block = bits[i];
+			readahead(reada_buf.fd, offset, root->blocksize);
+		}
 	}
 	*last = bits[0];
 	blocknr = bits[0];
@@ -282,7 +302,7 @@ static int run_next_block(struct btrfs_root *root,
 					       found.objectid,
 					       found.offset,
 					       btrfs_extent_owner(ei),
-					       btrfs_extent_refs(ei), 0);
+					       btrfs_extent_refs(ei), 0, 0);
 				continue;
 			}
 			if (btrfs_disk_key_type(disk_key) ==
@@ -314,7 +334,7 @@ static int run_next_block(struct btrfs_root *root,
 				   btrfs_file_extent_disk_blocknr(fi),
 				   btrfs_file_extent_disk_num_blocks(fi),
 			           btrfs_disk_key_objectid(&leaf->items[i].key),
-				   0, 1);
+				   0, 1, 1);
 			BUG_ON(ret);
 		}
 	} else {
@@ -327,7 +347,7 @@ static int run_next_block(struct btrfs_root *root,
 					     &node->ptrs[i].key,
 					     blocknr, ptr, 1,
 					     btrfs_header_owner(&node->header),
-					     0, 1);
+					     0, 1, 0);
 			BUG_ON(ret);
 			if (level > 1) {
 				add_pending(nodes, seen, ptr);
@@ -357,7 +377,7 @@ static int add_root_to_pending(struct btrfs_buffer *buf,
 	else
 		add_pending(pending, seen, buf->blocknr);
 	add_extent_rec(extent_radix, NULL, 0, buf->blocknr, 1,
-		       btrfs_header_owner(&buf->node.header), 0, 1);
+		       btrfs_header_owner(&buf->node.header), 0, 1, 0);
 	return 0;
 }
 

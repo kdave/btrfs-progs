@@ -33,11 +33,11 @@ int main(int ac, char **av)
 	int fd;
 	int ret;
 	struct btrfs_ioctl_vol_args args;
-	char *name;
+	char *name = NULL;
 	int i;
 	struct stat st;
 	DIR *dirstream;
-	unsigned long command;
+	unsigned long command = 0;
 
 	for (i = 1; i < ac - 1; i++) {
 		if (strcmp(av[i], "-s") == 0) {
@@ -64,6 +64,10 @@ int main(int ac, char **av)
 			}
 			command = BTRFS_IOC_ADD_DISK;
 		}
+	}
+	if (command == 0) {
+		fprintf(stderr, "no valid commands given\n");
+		exit(1);
 	}
 	fname = av[ac - 1];
 printf("fname is %s\n", fname);

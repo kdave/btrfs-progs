@@ -261,7 +261,7 @@ static int fill_radix(struct btrfs_root *root, struct radix_tree_root *radix)
 {
 	struct btrfs_path path;
 	struct btrfs_key key;
-	unsigned long found;
+	unsigned long found = 0;
 	int ret;
 	int slot;
 	int i;

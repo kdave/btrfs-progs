@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS = -g -Wall -Werror
+CFLAGS = -O2 -g -Wall -fno-strict-aliasing -Werror
 headers = radix-tree.h ctree.h disk-io.h kerncompat.h print-tree.h list.h \
 	  transaction.h ioctl.h
 objects = ctree.o disk-io.o radix-tree.o extent-tree.o print-tree.o \

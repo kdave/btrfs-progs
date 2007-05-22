@@ -402,7 +402,7 @@ static int find_free_extent(struct btrfs_trans_handle *trans, struct btrfs_root
 	int ret;
 	u64 hole_size = 0;
 	int slot = 0;
-	u64 last_block;
+	u64 last_block = 0;
 	u64 test_block;
 	int start_found;
 	struct btrfs_leaf *l;
