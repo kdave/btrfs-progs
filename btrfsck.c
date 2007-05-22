@@ -103,16 +103,22 @@ static int check_block(struct btrfs_root *root,
 		       struct btrfs_buffer *buf)
 {
 	struct extent_record *rec;
+	int ret = 1;
 
 	rec = radix_tree_lookup(extent_radix, buf->blocknr);
 	if (!rec)
 		return 1;
 	if (btrfs_is_leaf(&buf->node)) {
-		return check_leaf(root, &rec->parent_key, &buf->leaf);
+		ret = check_leaf(root, &rec->parent_key, &buf->leaf);
 	} else {
-		return check_node(root, &rec->parent_key, &buf->node);
+		ret = check_node(root, &rec->parent_key, &buf->node);
 	}
-	return 1;
+	if (!ret && rec->extent_item_refs == rec->refs && rec->refs > 0) {
+		radix_tree_delete(extent_radix, rec->start);
+		free(rec);
+		return ret;
+	}
+	return ret;
 }
 
 static int add_extent_rec(struct radix_tree_root *extent_radix,
@@ -131,8 +137,12 @@ static int add_extent_rec(struct radix_tree_root *extent_radix,
 				rec->start, start);
 			ret = 1;
 		}
-		if (extent_item_refs)
+		if (extent_item_refs) {
+			if (rec->extent_item_refs) {
+				fprintf(stderr, "block %Lu rec extent_item_refs %u, passed %u\n", start, rec->extent_item_refs, extent_item_refs);
+			}
 			rec->extent_item_refs = extent_item_refs;
+		}
 		return ret;
 	}
 	rec = malloc(sizeof(*rec));
