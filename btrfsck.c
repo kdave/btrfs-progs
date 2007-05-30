@@ -316,10 +316,11 @@ static int run_next_block(struct btrfs_root *root,
 				struct btrfs_block_group_item *bi;
 				bi = btrfs_item_ptr(leaf, i,
 					    struct btrfs_block_group_item);
-				fprintf(stderr,"block group %Lu %Lu used %Lu\n",
+				fprintf(stderr,"block group %Lu %Lu used %Lu ",
 					btrfs_disk_key_objectid(disk_key),
 					btrfs_disk_key_offset(disk_key),
 					btrfs_block_group_used(bi));
+				fprintf(stderr, "flags %x\n", bi->flags);
 				continue;
 			}
 			if (btrfs_disk_key_type(&leaf->items[i].key) !=
@@ -329,6 +330,8 @@ static int run_next_block(struct btrfs_root *root,
 					    struct btrfs_file_extent_item);
 			if (btrfs_file_extent_type(fi) !=
 			    BTRFS_FILE_EXTENT_REG)
+				continue;
+			if (btrfs_file_extent_disk_blocknr(fi) == 0)
 				continue;
 			ret = add_extent_rec(extent_radix, NULL, blocknr,
 				   btrfs_file_extent_disk_blocknr(fi),

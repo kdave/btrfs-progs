@@ -71,6 +71,7 @@ static int make_block_groups(struct btrfs_trans_handle *trans,
 	u64 total_blocks;
 	u64 cur_start;
 	int ret;
+	u64 nr = 0;
 	struct btrfs_block_group_cache *cache;
 
 	root = root->fs_info->extent_root;
@@ -97,11 +98,15 @@ static int make_block_groups(struct btrfs_trans_handle *trans,
 		cache->key.flags = 0;
 		btrfs_set_key_type(&cache->key, BTRFS_BLOCK_GROUP_ITEM_KEY);
 		memset(&cache->item, 0, sizeof(cache->item));
+		if (nr % 3)
+			cache->item.flags |= BTRFS_BLOCK_GROUP_DATA;
+
 		ret = radix_tree_insert(&root->fs_info->block_group_radix,
 					cur_start + group_size_blocks - 1,
 					(void *)cache);
 		BUG_ON(ret);
 		cur_start += group_size_blocks;
+		nr++;
 	}
 	/* then insert all the items */
 	cur_start = 0;
@@ -378,8 +383,8 @@ int main(int ac, char **av)
 			fprintf(stderr, "unable to find %s size\n", file);
 			exit(1);
 		}
+		block_count /= 4096;
 	}
-	block_count /= 4096;
 	if (block_count < 256) {
 		fprintf(stderr, "device %s is too small\n", file);
 		exit(1);

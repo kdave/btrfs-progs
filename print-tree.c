@@ -110,8 +110,8 @@ void btrfs_print_leaf(struct btrfs_root *root, struct btrfs_leaf *l)
 		case BTRFS_BLOCK_GROUP_ITEM_KEY:
 			bi = btrfs_item_ptr(l, i,
 					    struct btrfs_block_group_item);
-			printf("\t\tblock group used %Lu\n",
-			       btrfs_block_group_used(bi));
+			printf("\t\tblock group used %Lu flags %x\n",
+			       btrfs_block_group_used(bi), bi->flags);
 			break;
 		case BTRFS_DEV_ITEM_KEY:
 			devi = btrfs_item_ptr(l, i, struct btrfs_device_item);
