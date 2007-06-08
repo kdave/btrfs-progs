@@ -1,16 +1,22 @@
 #ifndef __KERNCOMPAT
 #define __KERNCOMPAT
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <endian.h>
+#include <byteswap.h>
+
 #define gfp_t int
 #define get_cpu_var(p) (p)
 #define __get_cpu_var(p) (p)
-#define BITS_PER_LONG 64
+#define BITS_PER_LONG (sizeof(long) * 8)
 #define __GFP_BITS_SHIFT 20
 #define __GFP_BITS_MASK ((int)((1 << __GFP_BITS_SHIFT) - 1))
 #define GFP_KERNEL 0
 #define GFP_NOFS 0
 #define __read_mostly
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
-#define PAGE_SHIFT 12
 #define ULONG_MAX       (~0UL)
 #define BUG() abort()
 #ifdef __CHECKER__
@@ -21,17 +27,20 @@
 #define __bitwise__
 #endif
 
+#ifndef __CHECKER__
+#include <asm/types.h>
+typedef __u32 u32;
+typedef __u64 u64;
+typedef __u16 u16;
+typedef __u8 u8;
+#else
 typedef unsigned int u32;
-typedef u32 __u32;
+typedef unsigned int __u32;
 typedef unsigned long long u64;
 typedef unsigned char u8;
 typedef unsigned short u16;
+#endif
 
-typedef unsigned long pgoff_t;
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 struct vma_shared { int prio_tree_node; };
 struct vm_area_struct {
@@ -40,7 +49,6 @@ struct vm_area_struct {
 	unsigned long vm_end;
 	struct vma_shared shared;
 };
-
 struct page {
 	unsigned long index;
 };
@@ -95,8 +103,8 @@ static inline int test_bit(int nr, const volatile unsigned long *addr)
 #define ENOMEM 5
 #define EEXIST 6
 
+#ifdef __CHECKER__
 #define __CHECK_ENDIAN__
-#ifdef __CHECK_ENDIAN__
 #define __bitwise __bitwise__
 #else
 #define __bitwise
@@ -109,10 +117,19 @@ typedef u32 __bitwise __be32;
 typedef u64 __bitwise __le64;
 typedef u64 __bitwise __be64;
 
+#if __BYTE_ORDER == __BIG_ENDIAN
+#define cpu_to_le64(x) ((__force __le64)(u64)(bswap_64(x)))
+#define le64_to_cpu(x) ((__force u64)(__le64)(bswap_64(x)))
+#define cpu_to_le32(x) ((__force __le32)(u32)(bswap_32(x)))
+#define le32_to_cpu(x) ((__force u32)(__le32)(bswap_32(x)))
+#define cpu_to_le16(x) ((__force __le16)(u16)(bswap_16(x)))
+#define le16_to_cpu(x) ((__force u16)(__le16)(bswap_16(x)))
+#else
 #define cpu_to_le64(x) ((__force __le64)(u64)(x))
 #define le64_to_cpu(x) ((__force u64)(__le64)(x))
 #define cpu_to_le32(x) ((__force __le32)(u32)(x))
 #define le32_to_cpu(x) ((__force u32)(__le32)(x))
 #define cpu_to_le16(x) ((__force __le16)(u16)(x))
 #define le16_to_cpu(x) ((__force u16)(__le16)(x))
+#endif
 #endif

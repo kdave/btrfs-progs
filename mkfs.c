@@ -51,11 +51,11 @@ static int __make_root_dir(struct btrfs_trans_handle *trans,
 	if (ret)
 		goto error;
 	ret = btrfs_insert_dir_item(trans, root, buf, 1, objectid,
-				    &inode_map, 1);
+				    &inode_map, BTRFS_FT_DIR);
 	if (ret)
 		goto error;
 	ret = btrfs_insert_dir_item(trans, root, buf, 2, objectid,
-				    &inode_map, 1);
+				    &inode_map, BTRFS_FT_DIR);
 	if (ret)
 		goto error;
 	btrfs_set_root_dirid(&root->root_item, objectid);
@@ -149,7 +149,7 @@ static int make_root_dir(int fd) {
 	ret = btrfs_insert_dir_item(trans, root->fs_info->tree_root,
 			"default", strlen("default"),
 			btrfs_super_root_dir(root->fs_info->disk_super),
-			&location, 1);
+			&location, BTRFS_FT_DIR);
 	if (ret)
 		goto err;
 	btrfs_commit_transaction(trans, root, root->fs_info->disk_super);

@@ -77,7 +77,7 @@ static int ins_one(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 	if (ret)
 		goto error;
 	ret = btrfs_insert_dir_item(trans, root, buf, strlen(buf), dir_oid,
-				    &inode_map, 1);
+				    &inode_map, BTRFS_FT_UNKNOWN);
 	if (ret)
 		goto error;
 
@@ -143,7 +143,7 @@ static int insert_dup(struct btrfs_trans_handle *trans, struct btrfs_root
 	btrfs_set_key_type(&key, BTRFS_INODE_ITEM_KEY);
 	key.offset = 0;
 	ret = btrfs_insert_dir_item(trans, root, buf, strlen(buf), dir_oid,
-				    &key, 1);
+				    &key, BTRFS_FT_UNKNOWN);
 	if (ret != -EEXIST) {
 		printf("insert on %s gave us %d\n", buf, ret);
 		return 1;
