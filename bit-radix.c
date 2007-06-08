@@ -88,7 +88,7 @@ static unsigned long __ffs(unsigned long word)
 
 	if (sizeof(long) == 8 && (word & 0xffffffff) == 0) {
 		num += 32;
-		word >>= 32;
+		word >>= sizeof(long) * 4;
 	}
 	if ((word & 0xffff) == 0) {
 		num += 16;

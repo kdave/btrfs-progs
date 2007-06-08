@@ -299,9 +299,10 @@ static int __free_extent(struct btrfs_trans_handle *trans, struct btrfs_root
 		u64 super_blocks_used;
 		if (pin) {
 			int err;
+			unsigned long bl = blocknr;
 			radix_tree_preload(GFP_KERNEL);
 			err = radix_tree_insert(&info->pinned_radix,
-						blocknr, (void *)blocknr);
+						blocknr, (void *)bl);
 			BUG_ON(err);
 			radix_tree_preload_end();
 		}
