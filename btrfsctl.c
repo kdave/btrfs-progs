@@ -52,18 +52,6 @@ int main(int ac, char **av)
 			}
 			command = BTRFS_IOC_SNAP_CREATE;
 		}
-		if (strcmp(av[i], "-a") == 0) {
-			if (i + 1 >= ac - 1) {
-				fprintf(stderr, "-a requires an arg");
-				print_usage();
-			}
-			name = av[i + 1];
-			if (strlen(name) >= BTRFS_VOL_NAME_MAX) {
-				fprintf(stderr, "device name is too long\n");
-				exit(1);
-			}
-			command = BTRFS_IOC_ADD_DISK;
-		}
 	}
 	if (command == 0) {
 		fprintf(stderr, "no valid commands given\n");

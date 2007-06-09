@@ -9,11 +9,10 @@ struct btrfs_trans_handle;
 #define BTRFS_MAGIC "_BtRfS_M"
 
 #define BTRFS_ROOT_TREE_OBJECTID 1ULL
-#define BTRFS_DEV_TREE_OBJECTID 2ULL
-#define BTRFS_EXTENT_TREE_OBJECTID 3ULL
-#define BTRFS_FS_TREE_OBJECTID 4ULL
-#define BTRFS_ROOT_TREE_DIR_OBJECTID 5ULL
-#define BTRFS_FIRST_FREE_OBJECTID 6ULL
+#define BTRFS_EXTENT_TREE_OBJECTID 2ULL
+#define BTRFS_FS_TREE_OBJECTID 3ULL
+#define BTRFS_ROOT_TREE_DIR_OBJECTID 4ULL
+#define BTRFS_FIRST_FREE_OBJECTID 5ULL
 
 /*
  * we can actually store much bigger names, but lets not confuse the rest
@@ -98,12 +97,6 @@ struct btrfs_super_block {
 	__le64 total_blocks;
 	__le64 blocks_used;
 	__le64 root_dir_objectid;
-	__le64 last_device_id;
-	/* fields below here vary with the underlying disk */
-	__le64 device_block_start;
-	__le64 device_num_blocks;
-	__le64 device_root;
-	__le64 device_id;
 } __attribute__ ((__packed__));
 
 /*
@@ -243,11 +236,6 @@ struct btrfs_csum_item {
 	u8 csum[BTRFS_CSUM_SIZE];
 } __attribute__ ((__packed__));
 
-struct btrfs_device_item {
-	__le16 pathlen;
-	__le64 device_id;
-} __attribute__ ((__packed__));
-
 /* tag for the radix tree of block groups in ram */
 #define BTRFS_BLOCK_GROUP_DIRTY 0
 #define BTRFS_BLOCK_GROUP_SIZE (256 * 1024 * 1024)
@@ -268,12 +256,10 @@ struct btrfs_fs_info {
 	struct btrfs_root *fs_root;
 	struct btrfs_root *extent_root;
 	struct btrfs_root *tree_root;
-	struct btrfs_root *dev_root;
 	struct btrfs_key current_insert;
 	struct btrfs_key last_insert;
 	struct radix_tree_root cache_radix;
 	struct radix_tree_root pinned_radix;
-	struct radix_tree_root dev_radix;
 	struct radix_tree_root block_group_radix;
 	struct list_head trans;
 	struct list_head cache;
@@ -350,11 +336,6 @@ struct btrfs_root {
  * blocks are free etc etc
  */
 #define BTRFS_BLOCK_GROUP_ITEM_KEY 34
-
-/*
- * dev items list the devices that make up the FS
- */
-#define BTRFS_DEV_ITEM_KEY	35
 
 /*
  * string items are for debugging.  They just store a short string of
@@ -846,61 +827,6 @@ static inline void btrfs_set_super_root_dir(struct btrfs_super_block *s, u64
 	s->root_dir_objectid = cpu_to_le64(val);
 }
 
-static inline u64 btrfs_super_last_device_id(struct btrfs_super_block *s)
-{
-	return le64_to_cpu(s->last_device_id);
-}
-
-static inline void btrfs_set_super_last_device_id(struct btrfs_super_block *s,
-						  u64 val)
-{
-	s->last_device_id = cpu_to_le64(val);
-}
-
-static inline u64 btrfs_super_device_id(struct btrfs_super_block *s)
-{
-	return le64_to_cpu(s->device_id);
-}
-
-static inline void btrfs_set_super_device_id(struct btrfs_super_block *s,
-						  u64 val)
-{
-	s->device_id = cpu_to_le64(val);
-}
-
-static inline u64 btrfs_super_device_block_start(struct btrfs_super_block *s)
-{
-	return le64_to_cpu(s->device_block_start);
-}
-
-static inline void btrfs_set_super_device_block_start(struct btrfs_super_block
-						      *s, u64 val)
-{
-	s->device_block_start = cpu_to_le64(val);
-}
-
-static inline u64 btrfs_super_device_num_blocks(struct btrfs_super_block *s)
-{
-	return le64_to_cpu(s->device_num_blocks);
-}
-
-static inline void btrfs_set_super_device_num_blocks(struct btrfs_super_block
-						     *s, u64 val)
-{
-	s->device_num_blocks = cpu_to_le64(val);
-}
-
-static inline u64 btrfs_super_device_root(struct btrfs_super_block *s)
-{
-	return le64_to_cpu(s->device_root);
-}
-
-static inline void btrfs_set_super_device_root(struct btrfs_super_block
-						      *s, u64 val)
-{
-	s->device_root = cpu_to_le64(val);
-}
-
 static inline u8 *btrfs_leaf_data(struct btrfs_leaf *l)
 {
 	return (u8 *)l->items;
@@ -994,28 +920,6 @@ static inline void btrfs_set_file_extent_num_blocks(struct
 						    u64 val)
 {
 	e->num_blocks = cpu_to_le64(val);
-}
-
-static inline u16 btrfs_device_pathlen(struct btrfs_device_item *d)
-{
-	return le16_to_cpu(d->pathlen);
-}
-
-static inline void btrfs_set_device_pathlen(struct btrfs_device_item *d,
-						u16 val)
-{
-	d->pathlen = cpu_to_le16(val);
-}
-
-static inline u64 btrfs_device_id(struct btrfs_device_item *d)
-{
-	return le64_to_cpu(d->device_id);
-}
-
-static inline void btrfs_set_device_id(struct btrfs_device_item *d,
-						u64 val)
-{
-	d->device_id = cpu_to_le64(val);
 }
 
 /* helper function to cast into the data area of the leaf. */

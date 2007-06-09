@@ -1,11 +1,15 @@
 CC=gcc
-CFLAGS = -O2 -g -Wall -fno-strict-aliasing -Werror
+CFLAGS = -g -Wall -fno-strict-aliasing -Werror
 objects = ctree.o disk-io.o radix-tree.o extent-tree.o print-tree.o \
 	  root-tree.o dir-item.o hash.o file-item.o inode-item.o \
 	  inode-map.o \
 #
 CHECKFLAGS=-D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ -Wbitwise \
 		-Wuninitialized -Wshadow -Wundef
+
+INSTALL= install
+prefix = /usr/local
+bindir = $(prefix)/bin
 
 progs = btrfsctl btrfsck mkfs.btrfs debug-tree
 
@@ -48,6 +52,10 @@ quick-test: $(objects) quick-test.o
 
 clean :
 	rm -f $(progs) cscope.out *.o .depend
+
+install: $(progs)
+	$(INSTALL) -m755 -d $(DESTDIR)$(bindir)
+	$(INSTALL) $(progs) $(DESTDIR)$(bindir)
 
 ifneq ($(wildcard .depend),)
 include .depend

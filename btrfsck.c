@@ -316,11 +316,13 @@ static int run_next_block(struct btrfs_root *root,
 				struct btrfs_block_group_item *bi;
 				bi = btrfs_item_ptr(leaf, i,
 					    struct btrfs_block_group_item);
+#if 0
 				fprintf(stderr,"block group %Lu %Lu used %Lu ",
 					btrfs_disk_key_objectid(disk_key),
 					btrfs_disk_key_offset(disk_key),
 					btrfs_block_group_used(bi));
 				fprintf(stderr, "flags %x\n", bi->flags);
+#endif
 				continue;
 			}
 			if (btrfs_disk_key_type(&leaf->items[i].key) !=
@@ -451,8 +453,6 @@ int main(int ac, char **av) {
 	}
 
 	add_root_to_pending(root->fs_info->tree_root->node, bits, bits_nr,
-			    &extent_radix, &pending, &seen, &reada, &nodes);
-	add_root_to_pending(root->fs_info->dev_root->node, bits, bits_nr,
 			    &extent_radix, &pending, &seen, &reada, &nodes);
 
 	btrfs_init_path(&path);

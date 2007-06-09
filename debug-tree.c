@@ -33,9 +33,6 @@ int main(int ac, char **av) {
 	printf("root tree\n");
 	btrfs_print_tree(root->fs_info->tree_root,
 			 root->fs_info->tree_root->node);
-	printf("dev tree\n");
-	btrfs_print_tree(root->fs_info->dev_root,
-			 root->fs_info->dev_root->node);
 	btrfs_init_path(&path);
 	key.offset = 0;
 	key.objectid = 0;
@@ -65,9 +62,6 @@ int main(int ac, char **av) {
 			switch(found_key.objectid) {
 			case BTRFS_ROOT_TREE_OBJECTID:
 				printf("root ");
-				break;
-			case BTRFS_DEV_TREE_OBJECTID:
-				printf("dev tree ");
 				break;
 			case BTRFS_EXTENT_TREE_OBJECTID:
 				printf("extent tree ");
