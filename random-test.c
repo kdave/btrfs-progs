@@ -48,7 +48,7 @@ static int ins_one(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 	unsigned long oid;
 	btrfs_init_path(&path);
 	ret = setup_key(radix, &key, 0);
-	sprintf(buf, "str-%Lu\n", key.objectid);
+	sprintf(buf, "str-%llu\n", (unsigned long long)key.objectid);
 	ret = btrfs_insert_item(trans, root, &key, buf, strlen(buf));
 	if (ret)
 		goto error;
@@ -60,7 +60,7 @@ static int ins_one(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 		goto error;
 	return ret;
 error:
-	printf("failed to insert %Lu\n", key.objectid);
+	printf("failed to insert %llu\n", (unsigned long long)key.objectid);
 	return -1;
 }
 
@@ -75,10 +75,11 @@ static int insert_dup(struct btrfs_trans_handle *trans, struct btrfs_root
 	ret = setup_key(radix, &key, 1);
 	if (ret < 0)
 		return 0;
-	sprintf(buf, "str-%Lu\n", key.objectid);
+	sprintf(buf, "str-%llu\n", (unsigned long long)key.objectid);
 	ret = btrfs_insert_item(trans, root, &key, buf, strlen(buf));
 	if (ret != -EEXIST) {
-		printf("insert on %Lu gave us %d\n", key.objectid, ret);
+		printf("insert on %llu gave us %d\n",
+		       (unsigned long long)key.objectid, ret);
 		return 1;
 	}
 	return 0;
@@ -107,7 +108,7 @@ static int del_one(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 		goto error;
 	return 0;
 error:
-	printf("failed to delete %Lu\n", key.objectid);
+	printf("failed to delete %llu\n", (unsigned long long)key.objectid);
 	return -1;
 }
 
@@ -127,7 +128,7 @@ static int lookup_item(struct btrfs_trans_handle *trans, struct btrfs_root
 		goto error;
 	return 0;
 error:
-	printf("unable to find key %Lu\n", key.objectid);
+	printf("unable to find key %llu\n", (unsigned long long)key.objectid);
 	return -1;
 }
 
@@ -147,7 +148,8 @@ static int lookup_enoent(struct btrfs_trans_handle *trans, struct btrfs_root
 		goto error;
 	return 0;
 error:
-	printf("able to find key that should not exist %Lu\n", key.objectid);
+	printf("able to find key that should not exist %llu\n",
+	       (unsigned long long)key.objectid);
 	return -1;
 }
 

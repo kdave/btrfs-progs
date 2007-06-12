@@ -19,7 +19,7 @@ int main() {
 			line[strlen(line)-1] = '\0';
 		ret = btrfs_name_hash(line, strlen(line), &result);
 		BUG_ON(ret);
-		printf("hash returns %Lu\n", result);
+		printf("hash returns %llu\n", (unsigned long long)result);
 	}
 	return 0;
 }

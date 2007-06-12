@@ -285,9 +285,9 @@ static int __free_extent(struct btrfs_trans_handle *trans, struct btrfs_root
 	btrfs_init_path(&path);
 	ret = btrfs_search_slot(trans, extent_root, &key, &path, -1, 1);
 	if (ret) {
-		printf("failed to find %Lu\n", key.objectid);
 		btrfs_print_tree(extent_root, extent_root->node);
-		printf("failed to find %Lu\n", key.objectid);
+		printf("failed to find %llu\n",
+		       (unsigned long long)key.objectid);
 		BUG();
 	}
 	ei = btrfs_item_ptr(&path.nodes[0]->leaf, path.slots[0],

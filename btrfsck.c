@@ -57,13 +57,13 @@ static int check_leaf(struct btrfs_root *root,
 	u32 nritems = btrfs_header_nritems(&leaf->header);
 
 	if (btrfs_header_level(&leaf->header) != 0) {
-		fprintf(stderr, "leaf is not a leaf %Lu\n",
-			btrfs_header_blocknr(&leaf->header));
+		fprintf(stderr, "leaf is not a leaf %llu\n",
+		       (unsigned long long)btrfs_header_blocknr(&leaf->header));
 		return 1;
 	}
 	if (btrfs_leaf_free_space(root, leaf) < 0) {
-		fprintf(stderr, "leaf free space incorrect %Lu %d\n",
-			btrfs_header_blocknr(&leaf->header),
+		fprintf(stderr, "leaf free space incorrect %llu %d\n",
+			(unsigned long long)btrfs_header_blocknr(&leaf->header),
 			btrfs_leaf_free_space(root, leaf));
 		return 1;
 	}
@@ -71,13 +71,11 @@ static int check_leaf(struct btrfs_root *root,
 	if (nritems == 0)
 		return 0;
 
-	if (parent_key->flags) {
-		if (memcmp(parent_key, &leaf->items[0].key,
-		       sizeof(struct btrfs_disk_key))) {
-			fprintf(stderr, "leaf parent key incorrect %Lu\n",
-				btrfs_header_blocknr(&leaf->header));
-			return 1;
-		}
+	if (parent_key->flags && memcmp(parent_key, &leaf->items[0].key,
+					sizeof(struct btrfs_disk_key))) {
+		fprintf(stderr, "leaf parent key incorrect %llu\n",
+		       (unsigned long long)btrfs_header_blocknr(&leaf->header));
+		return 1;
 	}
 	for (i = 0; nritems > 1 && i < nritems - 2; i++) {
 		struct btrfs_key cpukey;
@@ -142,13 +140,14 @@ static int add_extent_rec(struct radix_tree_root *extent_radix,
 		if (inc_ref)
 			rec->refs++;
 		if (start != rec->start) {
-			fprintf(stderr, "warning, start mismatch %Lu %Lu\n",
-				rec->start, start);
+			fprintf(stderr, "warning, start mismatch %llu %llu\n",
+				(unsigned long long)rec->start,
+				(unsigned long long)start);
 			ret = 1;
 		}
 		if (extent_item_refs) {
 			if (rec->extent_item_refs) {
-				fprintf(stderr, "block %Lu rec extent_item_refs %u, passed %u\n", start, rec->extent_item_refs, extent_item_refs);
+				fprintf(stderr, "block %llu rec extent_item_refs %u, passed %u\n", (unsigned long long)start, rec->extent_item_refs, extent_item_refs);
 			}
 			rec->extent_item_refs = extent_item_refs;
 		}
@@ -282,7 +281,8 @@ static int run_next_block(struct btrfs_root *root,
 	nritems = btrfs_header_nritems(&buf->node.header);
 	ret = check_block(root, extent_radix, buf);
 	if (ret) {
-		fprintf(stderr, "bad block %Lu\n", blocknr);
+		fprintf(stderr, "bad block %llu\n",
+			(unsigned long long)blocknr);
 	}
 	if (btrfs_is_leaf(&buf->node)) {
 		leaf = &buf->leaf;
@@ -401,8 +401,9 @@ int check_extent_refs(struct btrfs_root *root,
 			break;
 		for (i = 0; i < ret; i++) {
 			if (rec[i]->refs != rec[i]->extent_item_refs) {
-				fprintf(stderr, "ref mismatch on [%Lu %Lu] ",
-					rec[i]->start, rec[i]->nr);
+				fprintf(stderr, "ref mismatch on [%llu %llu] ",
+					(unsigned long long)rec[i]->start,
+					(unsigned long long)rec[i]->nr);
 				fprintf(stderr, "extent item %u, found %u\n",
 					rec[i]->extent_item_refs,
 					rec[i]->refs);
@@ -496,9 +497,12 @@ int main(int ac, char **av) {
 	}
 	ret = check_extent_refs(root, &extent_radix);
 	close_ctree(root, &super);
-	printf("found %Lu blocks used err is %d\n", blocks_used, ret);
-	printf("total csum bytes: %Lu\n", total_csum_bytes);
-	printf("total tree blocks: %Lu\n", total_btree_blocks);
-	printf("btree space waste bytes: %Lu\n", btree_space_waste);
+	printf("found %llu blocks used err is %d\n",
+	       (unsigned long long)blocks_used, ret);
+	printf("total csum bytes: %llu\n",(unsigned long long)total_csum_bytes);
+	printf("total tree blocks: %llu\n",
+	       (unsigned long long)total_btree_blocks);
+	printf("btree space waste bytes: %llu\n",
+	       (unsigned long long)btree_space_waste);
 	return ret;
 }

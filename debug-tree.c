@@ -67,15 +67,19 @@ int main(int ac, char **av) {
 				printf("extent tree ");
 				break;
 			}
-			printf("tree %Lu %Lu %u\n", found_key.objectid,
-			       found_key.offset, found_key.flags);
+			printf("tree %llu %u %llu\n",
+			       (unsigned long long)found_key.objectid,
+			       found_key.flags,
+			       (unsigned long long)found_key.offset);
 			btrfs_print_tree(root, buf);
 		}
 		path.slots[0]++;
 	}
 	btrfs_release_path(root, &path);
-	printf("total blocks %Lu\n", btrfs_super_total_blocks(&super));
-	printf("blocks used %Lu\n", btrfs_super_blocks_used(&super));
+	printf("total blocks %llu\n",
+	       (unsigned long long)btrfs_super_total_blocks(&super));
+	printf("blocks used %llu\n",
+	       (unsigned long long)btrfs_super_blocks_used(&super));
 	uuidbuf[36] = '\0';
 	uuid_unparse(super.fsid, uuidbuf);
 	printf("uuid %s\n", uuidbuf);

@@ -58,7 +58,6 @@ int main(int ac, char **av)
 		exit(1);
 	}
 	fname = av[ac - 1];
-printf("fname is %s\n", fname);
 	ret = stat(fname, &st);
 	if (ret < 0) {
 		perror("stat:");

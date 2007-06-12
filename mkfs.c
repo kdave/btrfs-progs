@@ -369,8 +369,8 @@ int main(int ac, char **av)
 		fprintf(stderr, "failed to setup the root directory\n");
 		exit(1);
 	}
-	printf("fs created on %s blocksize %d blocks %Lu\n",
-	       file, 4096, block_count);
+	printf("fs created on %s blocksize %d blocks %llu\n",
+	       file, 4096, (unsigned long long)block_count);
 	return 0;
 }
 
