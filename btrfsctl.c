@@ -38,6 +38,7 @@ int main(int ac, char **av)
 	struct stat st;
 	DIR *dirstream;
 	unsigned long command = 0;
+	int len;
 
 	for (i = 1; i < ac - 1; i++) {
 		if (strcmp(av[i], "-s") == 0) {
@@ -46,8 +47,15 @@ int main(int ac, char **av)
 				print_usage();
 			}
 			name = av[i + 1];
-			if (strlen(name) >= BTRFS_VOL_NAME_MAX) {
-				fprintf(stderr, "snapshot name is too long\n");
+			len = strlen(name);
+			if (len == 0 || len >= BTRFS_VOL_NAME_MAX) {
+				fprintf(stderr,
+				     "snapshot name zero length or too long\n");
+				exit(1);
+			}
+			if (strchr(name, '/')) {
+				fprintf(stderr,
+					"error: / not allowed in names\n");
 				exit(1);
 			}
 			command = BTRFS_IOC_SNAP_CREATE;
