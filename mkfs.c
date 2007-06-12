@@ -28,8 +28,9 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <uuid/uuid.h>
-#include "kerncompat.h"
 #include "radix-tree.h"
+#include <linux/fs.h>
+#include "kerncompat.h"
 #include "ctree.h"
 #include "disk-io.h"
 #include "transaction.h"

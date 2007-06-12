@@ -71,8 +71,8 @@ struct page {
 	unsigned long index;
 };
 
-static inline void preempt_enable(void) { do {; } while(0);}
-static inline void preempt_disable(void) { do {; } while(0);}
+#define preempt_enable()	do { } while (0)
+#define preempt_disable()	do { } while (0)
 
 #define BITOP_MASK(nr)		(1UL << ((nr) % BITS_PER_LONG))
 #define BITOP_WORD(nr)		((nr) / BITS_PER_LONG)
@@ -114,9 +114,16 @@ static inline int test_bit(int nr, const volatile unsigned long *addr)
 
 #define BUG_ON(c) do { if (c) abort(); } while (0)
 
+#undef offsetof
+#ifdef __compiler_offsetof
+#define offsetof(TYPE,MEMBER) __compiler_offsetof(TYPE,MEMBER)
+#else
+#define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
+#endif
+
 #define container_of(ptr, type, member) ({                      \
         const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
-	        (type *)( (char *)__mptr - __builtin_offsetof(type,member) );})
+	        (type *)( (char *)__mptr - offsetof(type,member) );})
 
 #define ENOMEM 5
 #define EEXIST 6
