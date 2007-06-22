@@ -109,12 +109,12 @@ struct btrfs_super_block {
 	u8 fsid[16];    /* FS specific uuid */
 	__le64 blocknr; /* this block number */
 	__le64 magic;
-	__le32 blocksize;
 	__le64 generation;
 	__le64 root;
 	__le64 total_blocks;
 	__le64 blocks_used;
 	__le64 root_dir_objectid;
+	__le32 blocksize;
 } __attribute__ ((__packed__));
 
 /*
@@ -218,10 +218,12 @@ struct btrfs_root_item {
 	struct btrfs_inode_item inode;
 	__le64 root_dirid;
 	__le64 blocknr;
-	__le32 flags;
 	__le64 block_limit;
 	__le64 blocks_used;
+	__le32 flags;
 	__le32 refs;
+	struct btrfs_disk_key drop_progress;
+	u8 drop_level;
 } __attribute__ ((__packed__));
 
 #define BTRFS_FILE_EXTENT_REG 0
@@ -768,6 +770,16 @@ static inline u32 btrfs_root_refs(struct btrfs_root_item *item)
 static inline void btrfs_set_root_refs(struct btrfs_root_item *item, u32 val)
 {
 	item->refs = cpu_to_le32(val);
+}
+
+static inline u32 btrfs_root_flags(struct btrfs_root_item *item)
+{
+	return le32_to_cpu(item->flags);
+}
+
+static inline void btrfs_set_root_flags(struct btrfs_root_item *item, u32 val)
+{
+	item->flags = cpu_to_le32(val);
 }
 
 static inline u64 btrfs_super_blocknr(struct btrfs_super_block *s)

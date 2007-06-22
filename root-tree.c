@@ -35,7 +35,7 @@ int btrfs_find_last_root(struct btrfs_root *root, u64 objectid,
 
 	search_key.objectid = objectid;
 	search_key.flags = (u32)-1;
-	search_key.offset = (u32)-1;
+	search_key.offset = (u64)-1;
 
 	btrfs_init_path(&path);
 	ret = btrfs_search_slot(NULL, root, &search_key, &path, 0, 0);
