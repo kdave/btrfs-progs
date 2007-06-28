@@ -29,6 +29,7 @@
 #include "ctree.h"
 #include "disk-io.h"
 #include "transaction.h"
+#include "crc32c.h"
 
 static int allocated_blocks = 0;
 int cache_max = 10000;
@@ -159,6 +160,30 @@ int clean_tree_block(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 	return 0;
 }
 
+int btrfs_csum_node(struct btrfs_root *root, struct btrfs_node *node)
+{
+	u32 crc;
+	size_t len = root->blocksize - BTRFS_CSUM_SIZE;
+
+	crc = crc32c(0, (char *)(node) + BTRFS_CSUM_SIZE, len);
+	memcpy(node->header.csum, &crc, BTRFS_CRC32_SIZE);
+	return 0;
+}
+
+int btrfs_csum_super(struct btrfs_root *root, struct btrfs_super_block *super)
+{
+	u32 crc;
+	char block[root->blocksize];
+	size_t len = root->blocksize - BTRFS_CSUM_SIZE;
+
+	memset(block, 0, root->blocksize);
+	memcpy(block, super, sizeof(*super));
+
+	crc = crc32c(0, block + BTRFS_CSUM_SIZE, len);
+	memcpy(super->csum, &crc, BTRFS_CRC32_SIZE);
+	return 0;
+}
+
 int write_tree_block(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 		     struct btrfs_buffer *buf)
 {
@@ -169,6 +194,9 @@ int write_tree_block(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 	btrfs_map_bh_to_logical(root, buf, buf->blocknr);
 	if (check_tree_block(root, buf))
 		BUG();
+
+	btrfs_csum_node(root, &buf->node);
+
 	ret = pwrite(buf->fd, &buf->node, root->blocksize,
 		     buf->dev_blocknr * root->blocksize);
 	if (ret != root->blocksize)
@@ -361,7 +389,10 @@ int write_ctree_super(struct btrfs_trans_handle *trans, struct btrfs_root
 		      *root, struct btrfs_super_block *s)
 {
 	int ret;
+
 	btrfs_set_super_root(s, root->fs_info->tree_root->node->blocknr);
+	btrfs_csum_super(root, s);
+
 	ret = pwrite(root->fs_info->fp, s, sizeof(*s),
 		     BTRFS_SUPER_INFO_OFFSET);
 	if (ret != sizeof(*s)) {

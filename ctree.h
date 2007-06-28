@@ -40,6 +40,8 @@ struct btrfs_trans_handle;
 
 /* 32 bytes in various csum fields */
 #define BTRFS_CSUM_SIZE 32
+/* four bytes for CRC32 */
+#define BTRFS_CRC32_SIZE 4
 
 #define BTRFS_FT_UNKNOWN	0
 #define BTRFS_FT_REG_FILE	1
