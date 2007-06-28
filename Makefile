@@ -8,7 +8,7 @@ CHECKFLAGS=-D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ -Wbitwise \
 		-Wuninitialized -Wshadow -Wundef
 
 INSTALL= install
-prefix = /usr/local
+prefix ?= /usr/local
 bindir = $(prefix)/bin
 
 progs = btrfsctl btrfsck mkfs.btrfs debug-tree
