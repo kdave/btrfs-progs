@@ -96,6 +96,16 @@ void btrfs_print_leaf(struct btrfs_root *root, struct btrfs_leaf *l)
 				(unsigned long long)btrfs_root_blocknr(ri),
 				(unsigned long long)btrfs_root_dirid(ri),
 				btrfs_root_refs(ri));
+			if (1 || btrfs_root_refs(ri) == 0) {
+				struct btrfs_key drop_key;
+				btrfs_disk_key_to_cpu(&drop_key,
+						      &ri->drop_progress);
+				printf("\t\tdrop key %Lu %x %Lu level %d\n",
+				       (unsigned long long)drop_key.objectid,
+				       drop_key.flags,
+				       (unsigned long long)drop_key.offset,
+				       ri->drop_level);
+			}
 			break;
 		case BTRFS_EXTENT_ITEM_KEY:
 			ei = btrfs_item_ptr(l, i, struct btrfs_extent_item);

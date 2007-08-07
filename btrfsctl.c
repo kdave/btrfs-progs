@@ -77,6 +77,12 @@ int main(int ac, char **av)
 				exit(1);
 			}
 			command = BTRFS_IOC_SNAP_CREATE;
+		} else if (strcmp(av[i], "-d") == 0) {
+			if (i >= ac - 1) {
+				fprintf(stderr, "-d requires an arg");
+				print_usage();
+			}
+			command = BTRFS_IOC_DEFRAG;
 		}
 	}
 	if (command == 0) {
@@ -102,7 +108,10 @@ int main(int ac, char **av)
 		perror("open");
 		exit(1);
 	}
-	strcpy(args.name, name);
+	if (name)
+		strcpy(args.name, name);
+	else
+		args.name[0] = '\0';
 	ret = ioctl(fd, command, &args);
 	printf("ioctl returns %d\n", ret);
 	return 0;

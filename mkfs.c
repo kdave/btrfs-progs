@@ -225,6 +225,7 @@ int mkfs(int fd, char *pathname, u64 num_blocks, u32 blocksize)
 	btrfs_set_inode_nblocks(inode_item, 1);
 	btrfs_set_inode_mode(inode_item, S_IFDIR | 0755);
 
+	// memset(&root_item, 0, sizeof(root_item));
 	btrfs_set_root_dirid(&root_item, 0);
 	btrfs_set_root_refs(&root_item, 1);
 	btrfs_set_disk_key_offset(&item.key, 0);
