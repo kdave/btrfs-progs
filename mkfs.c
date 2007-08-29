@@ -166,7 +166,7 @@ static int make_root_dir(int fd) {
 	memcpy(&location, &root->fs_info->fs_root->root_key, sizeof(location));
 	location.offset = (u64)-1;
 	ret = btrfs_insert_dir_item(trans, root->fs_info->tree_root,
-			"default", strlen("default"),
+			"default", 7,
 			btrfs_super_root_dir(root->fs_info->disk_super),
 			&location, BTRFS_FT_DIR);
 	if (ret)
@@ -242,6 +242,7 @@ int mkfs(int fd, char *pathname, u64 num_blocks, u32 blocksize)
 		&root_item, sizeof(root_item));
 
 	btrfs_set_root_blocknr(&root_item, start_block + 3);
+	btrfs_set_root_blocks_used(&root_item, 1);
 	itemoff = itemoff - sizeof(root_item);
 	btrfs_set_item_offset(&item, itemoff);
 	btrfs_set_disk_key_objectid(&item.key, BTRFS_FS_TREE_OBJECTID);

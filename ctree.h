@@ -784,6 +784,17 @@ static inline void btrfs_set_root_flags(struct btrfs_root_item *item, u32 val)
 	item->flags = cpu_to_le32(val);
 }
 
+static inline void btrfs_set_root_blocks_used(struct btrfs_root_item *item,
+					      u64 val)
+{
+	item->blocks_used = cpu_to_le64(val);
+}
+
+static inline u64 btrfs_root_blocks_used(struct btrfs_root_item *item)
+{
+	return le64_to_cpu(item->blocks_used);
+}
+
 static inline u64 btrfs_super_blocknr(struct btrfs_super_block *s)
 {
 	return le64_to_cpu(s->blocknr);
