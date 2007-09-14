@@ -164,7 +164,7 @@ int btrfs_write_dirty_block_groups(struct btrfs_trans_handle *trans,
 	btrfs_init_path(&path);
 
 	while(1) {
-		ret = radix_tree_gang_lookup_tag(radix, (void **)cache,
+		ret = radix_tree_gang_lookup_tag(radix, (void *)cache,
 						 0, ARRAY_SIZE(cache),
 						 BTRFS_BLOCK_GROUP_DIRTY);
 		if (!ret)
@@ -195,7 +195,7 @@ static int update_block_group(struct btrfs_trans_handle *trans,
 
 	while(total) {
 		ret = radix_tree_gang_lookup(&info->block_group_radix,
-					     (void **)&cache, blocknr, 1);
+					     (void *)&cache, blocknr, 1);
 		if (!ret)
 			return -1;
 		radix_tree_tag_set(&info->block_group_radix,
@@ -229,7 +229,7 @@ int btrfs_finish_extent_commit(struct btrfs_trans_handle *trans, struct
 
 	while(1) {
 		ret = radix_tree_gang_lookup(&root->fs_info->pinned_radix,
-					     (void **)gang, 0,
+					     (void *)gang, 0,
 					     ARRAY_SIZE(gang));
 		if (!ret)
 			break;
@@ -362,7 +362,7 @@ static int del_pending_extents(struct btrfs_trans_handle *trans, struct
 	while(1) {
 		ret = radix_tree_gang_lookup_tag(
 					&extent_root->fs_info->cache_radix,
-					(void **)gang, 0,
+					(void *)gang, 0,
 					ARRAY_SIZE(gang),
 					CTREE_EXTENT_PENDING_DEL);
 		if (!ret)
@@ -738,7 +738,7 @@ int btrfs_free_block_groups(struct btrfs_fs_info *info)
 
 	while(1) {
 		ret = radix_tree_gang_lookup(&info->block_group_radix,
-					     (void **)cache, 0,
+					     (void *)cache, 0,
 					     ARRAY_SIZE(cache));
 		if (!ret)
 			break;

@@ -420,7 +420,7 @@ int check_extent_refs(struct btrfs_root *root,
 	int err = 0;
 
 	while(1) {
-		ret = radix_tree_gang_lookup(extent_radix, (void **)rec, 0,
+		ret = radix_tree_gang_lookup(extent_radix, (void *)rec, 0,
 					     ARRAY_SIZE(rec));
 		if (!ret)
 			break;
