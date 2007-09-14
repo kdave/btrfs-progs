@@ -6,6 +6,7 @@ objects = ctree.o disk-io.o radix-tree.o extent-tree.o print-tree.o \
 #
 CHECKFLAGS=-D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ -Wbitwise \
 		-Wuninitialized -Wshadow -Wundef
+DEPFLAGS = -Wp,-MMD,$(@D)/.$(@F).d,-MT,$@
 
 INSTALL= install
 prefix ?= /usr/local
@@ -22,15 +23,10 @@ endif
 
 .c.o:
 	$(check) $<
-	$(CC) $(CFLAGS) -c $<
+	$(CC) $(DEPFLAGS) $(CFLAGS) -c $<
 
 
 all: $(progs)
-
-$(progs): depend
-
-depend:
-	@$(CC) -MM $(ALL_CFLAGS) *.c 1> .depend
 
 btrfsctl: btrfsctl.o
 	gcc $(CFLAGS) -o btrfsctl btrfsctl.o
@@ -51,12 +47,10 @@ quick-test: $(objects) quick-test.o
 	gcc $(CFLAGS) -o quick-test $(objects) quick-test.o
 
 clean :
-	rm -f $(progs) cscope.out *.o .depend
+	rm -f $(progs) cscope.out *.o .*.d
 
 install: $(progs)
 	$(INSTALL) -m755 -d $(DESTDIR)$(bindir)
 	$(INSTALL) $(progs) $(DESTDIR)$(bindir)
 
-ifneq ($(wildcard .depend),)
-include .depend
-endif
+-include .*.d
