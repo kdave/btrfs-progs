@@ -76,11 +76,12 @@ void btrfs_print_leaf(struct btrfs_root *root, struct btrfs_leaf *l)
 		switch (type) {
 		case BTRFS_INODE_ITEM_KEY:
 			ii = btrfs_item_ptr(l, i, struct btrfs_inode_item);
-			printf("\t\tinode generation %llu size %llu block group %llu mode %o\n",
+			printf("\t\tinode generation %llu size %llu block group %llu mode %o links %u\n",
 			       (unsigned long long)btrfs_inode_generation(ii),
 			       (unsigned long long)btrfs_inode_size(ii),
 			       (unsigned long long)btrfs_inode_block_group(ii),
-			       btrfs_inode_mode(ii));
+			       btrfs_inode_mode(ii),
+			       btrfs_inode_nlink(ii));
 			break;
 		case BTRFS_DIR_ITEM_KEY:
 			di = btrfs_item_ptr(l, i, struct btrfs_dir_item);

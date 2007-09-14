@@ -33,6 +33,8 @@ static u64 blocks_used = 0;
 static u64 total_csum_bytes = 0;
 static u64 total_btree_blocks = 0;
 static u64 btree_space_waste = 0;
+static u64 data_blocks_allocated = 0;
+static u64 data_blocks_referenced = 0;
 
 struct extent_record {
 	struct btrfs_disk_key parent_key;
@@ -353,6 +355,11 @@ static int run_next_block(struct btrfs_root *root,
 				continue;
 			if (btrfs_file_extent_disk_blocknr(fi) == 0)
 				continue;
+
+			data_blocks_allocated +=
+				btrfs_file_extent_disk_num_blocks(fi);
+			data_blocks_referenced +=
+				btrfs_file_extent_num_blocks(fi);
 			ret = add_extent_rec(extent_radix, NULL, blocknr,
 				   btrfs_file_extent_disk_blocknr(fi),
 				   btrfs_file_extent_disk_num_blocks(fi),
@@ -522,5 +529,8 @@ int main(int ac, char **av) {
 	       (unsigned long long)total_btree_blocks);
 	printf("btree space waste bytes: %llu\n",
 	       (unsigned long long)btree_space_waste);
+	printf("file data blocks allocated: %llu\n referenced %llu\n",
+		(unsigned long long)data_blocks_allocated,
+		(unsigned long long)data_blocks_referenced);
 	return ret;
 }
