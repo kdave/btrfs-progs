@@ -65,7 +65,7 @@ static int btrfs_cow_block(struct btrfs_trans_handle *trans, struct btrfs_root
 		return 0;
 	}
 	cow = btrfs_alloc_free_block(trans, root);
-	memcpy(&cow->node, &buf->node, root->blocksize);
+	memcpy(&cow->node, &buf->node, root->sectorsize);
 	btrfs_set_header_blocknr(&cow->node.header, cow->blocknr);
 	btrfs_set_header_owner(&cow->node.header, root->root_key.objectid);
 	*cow_ret = cow;
@@ -148,9 +148,9 @@ int btrfs_comp_keys(struct btrfs_disk_key *disk, struct btrfs_key *k2)
 		return 1;
 	if (k1.objectid < k2->objectid)
 		return -1;
-	if (k1.flags > k2->flags)
+	if (k1.type > k2->type)
 		return 1;
-	if (k1.flags < k2->flags)
+	if (k1.type < k2->type)
 		return -1;
 	if (k1.offset > k2->offset)
 		return 1;
@@ -698,7 +698,7 @@ static int insert_new_root(struct btrfs_trans_handle *trans, struct btrfs_root
 
 	t = btrfs_alloc_free_block(trans, root);
 	c = &t->node;
-	memset(c, 0, root->blocksize);
+	memset(c, 0, root->sectorsize);
 	btrfs_set_header_nritems(&c->header, 1);
 	btrfs_set_header_level(&c->header, level);
 	btrfs_set_header_blocknr(&c->header, t->blocknr);

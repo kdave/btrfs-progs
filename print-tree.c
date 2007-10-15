@@ -69,7 +69,7 @@ void btrfs_print_leaf(struct btrfs_root *root, struct btrfs_leaf *l)
 		printf("\titem %d key (%llu %x %llu) itemoff %d itemsize %d\n",
 			i,
 			(unsigned long long)btrfs_disk_key_objectid(&item->key),
-			btrfs_disk_key_flags(&item->key),
+			btrfs_disk_key_type(&item->key),
 			(unsigned long long)btrfs_disk_key_offset(&item->key),
 			btrfs_item_offset(item),
 			btrfs_item_size(item));
@@ -103,7 +103,7 @@ void btrfs_print_leaf(struct btrfs_root *root, struct btrfs_leaf *l)
 						      &ri->drop_progress);
 				printf("\t\tdrop key %Lu %x %Lu level %d\n",
 				       (unsigned long long)drop_key.objectid,
-				       drop_key.flags,
+				       drop_key.type,
 				       (unsigned long long)drop_key.offset,
 				       ri->drop_level);
 			}
@@ -175,7 +175,7 @@ void btrfs_print_tree(struct btrfs_root *root, struct btrfs_buffer *t)
 		printf("\tkey %d (%llu %x %llu) block %llu\n",
 		       i,
 		       (unsigned long long)c->ptrs[i].key.objectid,
-		       c->ptrs[i].key.flags,
+		       c->ptrs[i].key.type,
 		       (unsigned long long)c->ptrs[i].key.offset,
 		       (unsigned long long)btrfs_node_blockptr(c, i));
 		fflush(stdout);

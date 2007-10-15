@@ -65,7 +65,6 @@ int btrfs_insert_dir_item(struct btrfs_trans_handle *trans, struct btrfs_root
 	u32 data_size;
 
 	key.objectid = dir;
-	key.flags = 0;
 	btrfs_set_key_type(&key, BTRFS_DIR_ITEM_KEY);
 	if (name_len == 1 && *name == '.')
 		key.offset = 1;
@@ -121,7 +120,6 @@ int btrfs_lookup_dir_item(struct btrfs_trans_handle *trans, struct btrfs_root
 	int cow = mod != 0;
 
 	key.objectid = dir;
-	key.flags = 0;
 	btrfs_set_key_type(&key, BTRFS_DIR_ITEM_KEY);
 	ret = btrfs_name_hash(name, name_len, &key.offset);
 	BUG_ON(ret);

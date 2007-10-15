@@ -32,7 +32,6 @@ int btrfs_insert_inode(struct btrfs_trans_handle *trans, struct btrfs_root
 	struct btrfs_key key;
 	int ret;
 	key.objectid = objectid;
-	key.flags = 0;
 	btrfs_set_key_type(&key, BTRFS_INODE_ITEM_KEY);
 	key.offset = 0;
 
@@ -51,7 +50,6 @@ int btrfs_lookup_inode(struct btrfs_trans_handle *trans, struct btrfs_root
 	int cow = mod != 0;
 
 	key.objectid = objectid;
-	key.flags = 0;
 	btrfs_set_key_type(&key, BTRFS_INODE_ITEM_KEY);
 	key.offset = 0;
 	return btrfs_search_slot(trans, root, &key, path, ins_len, cow);

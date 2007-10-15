@@ -48,7 +48,7 @@ int btrfs_find_free_objectid(struct btrfs_trans_handle *trans,
 	if (search_start < BTRFS_FIRST_FREE_OBJECTID)
 		search_start = BTRFS_FIRST_FREE_OBJECTID;
 	search_key.objectid = search_start;
-	search_key.flags = 0;
+	search_key.type = 0;
 	search_key.offset = 0;
 
 	btrfs_init_path(&path);

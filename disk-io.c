@@ -76,7 +76,7 @@ struct btrfs_buffer *alloc_tree_block(struct btrfs_root *root, u64 blocknr)
 	struct btrfs_buffer *buf;
 	int ret;
 
-	buf = malloc(sizeof(struct btrfs_buffer) + root->blocksize);
+	buf = malloc(sizeof(struct btrfs_buffer) + root->sectorsize);
 	if (!buf)
 		return buf;
 	allocated_blocks++;
@@ -126,9 +126,9 @@ struct btrfs_buffer *read_tree_block(struct btrfs_root *root, u64 blocknr)
 		if (!buf)
 			return NULL;
 		btrfs_map_bh_to_logical(root, buf, blocknr);
-		ret = pread(buf->fd, &buf->node, root->blocksize,
-			    buf->dev_blocknr * root->blocksize);
-		if (ret != root->blocksize) {
+		ret = pread(buf->fd, &buf->node, root->sectorsize,
+			    buf->dev_blocknr * root->sectorsize);
+		if (ret != root->sectorsize) {
 			free(buf);
 			return NULL;
 		}
@@ -163,7 +163,7 @@ int clean_tree_block(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 int btrfs_csum_node(struct btrfs_root *root, struct btrfs_node *node)
 {
 	u32 crc;
-	size_t len = root->blocksize - BTRFS_CSUM_SIZE;
+	size_t len = root->sectorsize - BTRFS_CSUM_SIZE;
 
 	crc = crc32c(0, (char *)(node) + BTRFS_CSUM_SIZE, len);
 	memcpy(node->header.csum, &crc, BTRFS_CRC32_SIZE);
@@ -173,10 +173,10 @@ int btrfs_csum_node(struct btrfs_root *root, struct btrfs_node *node)
 int btrfs_csum_super(struct btrfs_root *root, struct btrfs_super_block *super)
 {
 	u32 crc;
-	char block[root->blocksize];
-	size_t len = root->blocksize - BTRFS_CSUM_SIZE;
+	char block[root->sectorsize];
+	size_t len = root->sectorsize - BTRFS_CSUM_SIZE;
 
-	memset(block, 0, root->blocksize);
+	memset(block, 0, root->sectorsize);
 	memcpy(block, super, sizeof(*super));
 
 	crc = crc32c(0, block + BTRFS_CSUM_SIZE, len);
@@ -197,9 +197,9 @@ int write_tree_block(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 
 	btrfs_csum_node(root, &buf->node);
 
-	ret = pwrite(buf->fd, &buf->node, root->blocksize,
-		     buf->dev_blocknr * root->blocksize);
-	if (ret != root->blocksize)
+	ret = pwrite(buf->fd, &buf->node, root->sectorsize,
+		     buf->dev_blocknr * root->sectorsize);
+	if (ret != root->sectorsize)
 		return ret;
 	return 0;
 }
@@ -293,7 +293,9 @@ static int __setup_root(struct btrfs_super_block *super,
 {
 	root->node = NULL;
 	root->commit_root = NULL;
-	root->blocksize = btrfs_super_blocksize(super);
+	root->sectorsize = btrfs_super_sectorsize(super);
+	root->nodesize = btrfs_super_nodesize(super);
+	root->leafsize = btrfs_super_leafsize(super);
 	root->ref_cows = 0;
 	root->fs_info = fs_info;
 	memset(&root->root_key, 0, sizeof(root->root_key));

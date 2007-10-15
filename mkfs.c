@@ -52,7 +52,6 @@ static int __make_root_dir(struct btrfs_trans_handle *trans,
 	buf[1] = '.';
 
 	inode_map.objectid = objectid;
-	inode_map.flags = 0;
 	btrfs_set_key_type(&inode_map, BTRFS_INODE_ITEM_KEY);
 	inode_map.offset = 0;
 
@@ -95,11 +94,10 @@ static int make_block_groups(struct btrfs_trans_handle *trans,
 
 	root = root->fs_info->extent_root;
 	/* first we bootstrap the things into cache */
-	group_size_blocks = BTRFS_BLOCK_GROUP_SIZE / root->blocksize;
+	group_size_blocks = BTRFS_BLOCK_GROUP_SIZE / root->sectorsize;
 	cache = malloc(sizeof(*cache));
 	cache->key.objectid = 0;
 	cache->key.offset = group_size_blocks;
-	cache->key.flags = 0;
 	btrfs_set_key_type(&cache->key, BTRFS_BLOCK_GROUP_ITEM_KEY);
 	memset(&cache->item, 0, sizeof(cache->item));
 	btrfs_set_block_group_used(&cache->item,
@@ -114,7 +112,6 @@ static int make_block_groups(struct btrfs_trans_handle *trans,
 		cache = malloc(sizeof(*cache));
 		cache->key.objectid = cur_start;
 		cache->key.offset = group_size_blocks;
-		cache->key.flags = 0;
 		btrfs_set_key_type(&cache->key, BTRFS_BLOCK_GROUP_ITEM_KEY);
 		memset(&cache->item, 0, sizeof(cache->item));
 		if (nr % 3)
@@ -194,7 +191,12 @@ int mkfs(int fd, char *pathname, u64 num_blocks, u32 blocksize)
 	btrfs_set_super_blocknr(&super, start_block);
 	btrfs_set_super_root(&super, start_block + 1);
 	strcpy((char *)(&super.magic), BTRFS_MAGIC);
-	btrfs_set_super_blocksize(&super, blocksize);
+
+printf("blocksize is %d\n", blocksize);
+	btrfs_set_super_sectorsize(&super, blocksize);
+	btrfs_set_super_leafsize(&super, blocksize);
+	btrfs_set_super_nodesize(&super, blocksize);
+
 	btrfs_set_super_total_blocks(&super, num_blocks);
 	btrfs_set_super_blocks_used(&super, start_block + 4);
 	uuid_generate(super.fsid);
@@ -229,7 +231,6 @@ int mkfs(int fd, char *pathname, u64 num_blocks, u32 blocksize)
 	btrfs_set_root_dirid(&root_item, 0);
 	btrfs_set_root_refs(&root_item, 1);
 	btrfs_set_disk_key_offset(&item.key, 0);
-	btrfs_set_disk_key_flags(&item.key, 0);
 	btrfs_set_item_size(&item, sizeof(root_item));
 	btrfs_set_disk_key_type(&item.key, BTRFS_ROOT_ITEM_KEY);
 
@@ -258,7 +259,7 @@ int mkfs(int fd, char *pathname, u64 num_blocks, u32 blocksize)
 	/* item1, reserve blocks 0-16 */
 	btrfs_set_disk_key_objectid(&item.key, 0);
 	btrfs_set_disk_key_offset(&item.key, start_block + 1);
-	btrfs_set_disk_key_flags(&item.key, 0);
+	btrfs_set_disk_key_type(&item.key, 0);
 	btrfs_set_disk_key_type(&item.key, BTRFS_EXTENT_ITEM_KEY);
 	itemoff = __BTRFS_LEAF_DATA_SIZE(blocksize) -
 			sizeof(struct btrfs_extent_item);
@@ -331,7 +332,7 @@ int main(int ac, char **av)
 	struct stat st;
 	int ret;
 	int i;
-	char *buf = malloc(4096);
+	char *buf = malloc(8192);
 	char *realpath_name;
 
 	radix_tree_init();
@@ -365,22 +366,22 @@ int main(int ac, char **av)
 			fprintf(stderr, "unable to find %s size\n", file);
 			exit(1);
 		}
-		block_count /= 4096;
+		block_count /= 8192;
 	}
 	if (block_count < 256) {
 		fprintf(stderr, "device %s is too small\n", file);
 		exit(1);
 	}
-	memset(buf, 0, 4096);
+	memset(buf, 0, 8192);
 	for(i = 0; i < 64; i++) {
-		ret = write(fd, buf, 4096);
-		if (ret != 4096) {
+		ret = write(fd, buf, 8192);
+		if (ret != 8192) {
 			fprintf(stderr, "unable to zero fill device\n");
 			exit(1);
 		}
 	}
 	realpath_name = realpath(file, NULL);
-	ret = mkfs(fd, realpath_name, block_count, 4096);
+	ret = mkfs(fd, realpath_name, block_count, 8192);
 	if (ret) {
 		fprintf(stderr, "error during mkfs %d\n", ret);
 		exit(1);
@@ -391,7 +392,7 @@ int main(int ac, char **av)
 		exit(1);
 	}
 	printf("fs created on %s blocksize %d blocks %llu\n",
-	       file, 4096, (unsigned long long)block_count);
+	       file, 8192, (unsigned long long)block_count);
 	return 0;
 }
 

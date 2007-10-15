@@ -23,6 +23,7 @@
 struct btrfs_buffer {
 	u64 blocknr;
 	u64 dev_blocknr;
+	u32 size;
 	int count;
 	int fd;
 	struct list_head dirty;

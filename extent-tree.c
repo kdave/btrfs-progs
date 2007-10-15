@@ -57,7 +57,6 @@ static int inc_block_ref(struct btrfs_trans_handle *trans, struct btrfs_root
 			 &ins);
 	btrfs_init_path(&path);
 	key.objectid = blocknr;
-	key.flags = 0;
 	btrfs_set_key_type(&key, BTRFS_EXTENT_ITEM_KEY);
 	key.offset = 1;
 	ret = btrfs_search_slot(trans, root->fs_info->extent_root, &key, &path,
@@ -88,7 +87,6 @@ static int lookup_block_ref(struct btrfs_trans_handle *trans, struct btrfs_root
 	btrfs_init_path(&path);
 	key.objectid = blocknr;
 	key.offset = 1;
-	key.flags = 0;
 	btrfs_set_key_type(&key, BTRFS_EXTENT_ITEM_KEY);
 	ret = btrfs_search_slot(trans, root->fs_info->extent_root, &key, &path,
 				0, 0);
@@ -258,10 +256,9 @@ static int finish_current_insert(struct btrfs_trans_handle *trans, struct
 	btrfs_set_extent_refs(&extent_item, 1);
 	btrfs_set_extent_owner(&extent_item, extent_root->root_key.objectid);
 	ins.offset = 1;
-	ins.flags = 0;
 	btrfs_set_key_type(&ins, BTRFS_EXTENT_ITEM_KEY);
 
-	for (i = 0; i < extent_root->fs_info->current_insert.flags; i++) {
+	for (i = 0; i < extent_root->fs_info->current_insert.type; i++) {
 		ins.objectid = extent_root->fs_info->current_insert.objectid +
 				i;
 		super_blocks_used = btrfs_super_blocks_used(info->disk_super);
@@ -298,7 +295,6 @@ static int __free_extent(struct btrfs_trans_handle *trans, struct btrfs_root
 
 	BUG_ON(pin && num_blocks != 1);
 	key.objectid = blocknr;
-	key.flags = 0;
 	btrfs_set_key_type(&key, BTRFS_EXTENT_ITEM_KEY);
 	key.offset = num_blocks;
 
@@ -439,7 +435,6 @@ static int find_free_extent(struct btrfs_trans_handle *trans, struct btrfs_root
 	if (root->fs_info->last_insert.objectid > search_start)
 		search_start = root->fs_info->last_insert.objectid;
 
-	ins->flags = 0;
 	btrfs_set_key_type(ins, BTRFS_EXTENT_ITEM_KEY);
 
 check_failed:
@@ -512,7 +507,7 @@ check_pending:
 	BUG_ON(root->fs_info->current_insert.offset);
 	root->fs_info->current_insert.offset = total_needed - num_blocks;
 	root->fs_info->current_insert.objectid = ins->objectid + num_blocks;
-	root->fs_info->current_insert.flags = 0;
+	root->fs_info->current_insert.type = 0;
 	root->fs_info->last_insert.objectid = ins->objectid;
 	ins->offset = num_blocks;
 	return 0;
@@ -545,11 +540,11 @@ static int alloc_extent(struct btrfs_trans_handle *trans, struct btrfs_root
 	if (root == extent_root) {
 		BUG_ON(extent_root->fs_info->current_insert.offset == 0);
 		BUG_ON(num_blocks != 1);
-		BUG_ON(extent_root->fs_info->current_insert.flags ==
+		BUG_ON(extent_root->fs_info->current_insert.type ==
 		       extent_root->fs_info->current_insert.offset);
 		ins->offset = 1;
 		ins->objectid = extent_root->fs_info->current_insert.objectid +
-				extent_root->fs_info->current_insert.flags++;
+				extent_root->fs_info->current_insert.type++;
 		return 0;
 	}
 	ret = find_free_extent(trans, root, num_blocks, search_start,
@@ -762,12 +757,11 @@ int btrfs_read_block_groups(struct btrfs_root *root)
 	struct btrfs_key key;
 	struct btrfs_key found_key;
 	struct btrfs_leaf *leaf;
-	u64 group_size_blocks = BTRFS_BLOCK_GROUP_SIZE / root->blocksize;
+	u64 group_size_blocks = BTRFS_BLOCK_GROUP_SIZE / root->sectorsize;
 
 	root = root->fs_info->extent_root;
 	key.objectid = 0;
 	key.offset = group_size_blocks;
-	key.flags = 0;
 	btrfs_set_key_type(&key, BTRFS_BLOCK_GROUP_ITEM_KEY);
 	btrfs_init_path(&path);
 

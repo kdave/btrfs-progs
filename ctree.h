@@ -24,7 +24,7 @@
 
 struct btrfs_trans_handle;
 
-#define BTRFS_MAGIC "_BtRfS_M"
+#define BTRFS_MAGIC "_B2RfS_M"
 
 #define BTRFS_ROOT_TREE_OBJECTID 1ULL
 #define BTRFS_EXTENT_TREE_OBJECTID 2ULL
@@ -69,13 +69,13 @@ struct btrfs_trans_handle;
  */
 struct btrfs_disk_key {
 	__le64 objectid;
-	__le32 flags;
+	u8 type;
 	__le64 offset;
 } __attribute__ ((__packed__));
 
 struct btrfs_key {
 	u64 objectid;
-	u32 flags;
+	u8 type;
 	u64 offset;
 } __attribute__ ((__packed__));
 
@@ -88,17 +88,17 @@ struct btrfs_header {
 	__le64 blocknr; /* which block this node is supposed to live in */
 	__le64 generation;
 	__le64 owner;
-	__le16 nritems;
+	__le32 nritems;
 	__le16 flags;
 	u8 level;
 } __attribute__ ((__packed__));
 
 #define BTRFS_MAX_LEVEL 8
-#define BTRFS_NODEPTRS_PER_BLOCK(r) (((r)->blocksize - \
+#define BTRFS_NODEPTRS_PER_BLOCK(r) (((r)->nodesize - \
 			        sizeof(struct btrfs_header)) / \
 			       (sizeof(struct btrfs_disk_key) + sizeof(u64)))
 #define __BTRFS_LEAF_DATA_SIZE(bs) ((bs) - sizeof(struct btrfs_header))
-#define BTRFS_LEAF_DATA_SIZE(r) (__BTRFS_LEAF_DATA_SIZE(r->blocksize))
+#define BTRFS_LEAF_DATA_SIZE(r) (__BTRFS_LEAF_DATA_SIZE(r->leafsize))
 
 struct btrfs_buffer;
 /*
@@ -116,7 +116,9 @@ struct btrfs_super_block {
 	__le64 total_blocks;
 	__le64 blocks_used;
 	__le64 root_dir_objectid;
-	__le32 blocksize;
+	__le32 sectorsize;
+	__le32 nodesize;
+	__le32 leafsize;
 } __attribute__ ((__packed__));
 
 /*
@@ -126,7 +128,7 @@ struct btrfs_super_block {
 struct btrfs_item {
 	struct btrfs_disk_key key;
 	__le32 offset;
-	__le16 size;
+	__le32 size;
 } __attribute__ ((__packed__));
 
 /*
@@ -305,7 +307,16 @@ struct btrfs_root {
 	struct btrfs_root_item root_item;
 	struct btrfs_key root_key;
 	struct btrfs_fs_info *fs_info;
-	u32 blocksize;
+
+	/* data allocations are done in sectorsize units */
+	u32 sectorsize;
+
+	/* node allocations are done in nodesize units */
+	u32 nodesize;
+
+	/* leaf allocations are done in leafsize units */
+	u32 leafsize;
+
 	int ref_cows;
 	u32 type;
 };
@@ -557,17 +568,17 @@ static inline void btrfs_set_item_offset(struct btrfs_item *item, u32 val)
 
 static inline u32 btrfs_item_end(struct btrfs_item *item)
 {
-	return le32_to_cpu(item->offset) + le16_to_cpu(item->size);
+	return le32_to_cpu(item->offset) + le32_to_cpu(item->size);
 }
 
-static inline u16 btrfs_item_size(struct btrfs_item *item)
+static inline u32 btrfs_item_size(struct btrfs_item *item)
 {
-	return le16_to_cpu(item->size);
+	return le32_to_cpu(item->size);
 }
 
-static inline void btrfs_set_item_size(struct btrfs_item *item, u16 val)
+static inline void btrfs_set_item_size(struct btrfs_item *item, u32 val)
 {
-	item->size = cpu_to_le16(val);
+	item->size = cpu_to_le32(val);
 }
 
 static inline u16 btrfs_dir_flags(struct btrfs_dir_item *d)
@@ -604,7 +615,7 @@ static inline void btrfs_disk_key_to_cpu(struct btrfs_key *cpu,
 					 struct btrfs_disk_key *disk)
 {
 	cpu->offset = le64_to_cpu(disk->offset);
-	cpu->flags = le32_to_cpu(disk->flags);
+	cpu->type = le32_to_cpu(disk->type);
 	cpu->objectid = le64_to_cpu(disk->objectid);
 }
 
@@ -612,7 +623,7 @@ static inline void btrfs_cpu_key_to_disk(struct btrfs_disk_key *disk,
 					 struct btrfs_key *cpu)
 {
 	disk->offset = cpu_to_le64(cpu->offset);
-	disk->flags = cpu_to_le32(cpu->flags);
+	disk->type = cpu_to_le32(cpu->type);
 	disk->objectid = cpu_to_le64(cpu->objectid);
 }
 
@@ -638,42 +649,24 @@ static inline void btrfs_set_disk_key_offset(struct btrfs_disk_key *disk,
 	disk->offset = cpu_to_le64(val);
 }
 
-static inline u32 btrfs_disk_key_flags(struct btrfs_disk_key *disk)
+static inline u8 btrfs_disk_key_type(struct btrfs_disk_key *key)
 {
-	return le32_to_cpu(disk->flags);
+	return key->type;
 }
 
-static inline void btrfs_set_disk_key_flags(struct btrfs_disk_key *disk,
-					    u32 val)
+static inline void btrfs_set_disk_key_type(struct btrfs_disk_key *key, u8 val)
 {
-	disk->flags = cpu_to_le32(val);
-}
-
-static inline u32 btrfs_disk_key_type(struct btrfs_disk_key *key)
-{
-	return le32_to_cpu(key->flags) >> BTRFS_KEY_TYPE_SHIFT;
-}
-
-static inline void btrfs_set_disk_key_type(struct btrfs_disk_key *key,
-					       u32 val)
-{
-	u32 flags = btrfs_disk_key_flags(key);
-	BUG_ON(val >= BTRFS_KEY_TYPE_MAX);
-	val = val << BTRFS_KEY_TYPE_SHIFT;
-	flags = (flags & ~BTRFS_KEY_TYPE_MASK) | val;
-	btrfs_set_disk_key_flags(key, flags);
+	key->type = val;
 }
 
 static inline u32 btrfs_key_type(struct btrfs_key *key)
 {
-	return key->flags >> BTRFS_KEY_TYPE_SHIFT;
+	return key->type;
 }
 
 static inline void btrfs_set_key_type(struct btrfs_key *key, u32 val)
 {
-	BUG_ON(val >= BTRFS_KEY_TYPE_MAX);
-	val = val << BTRFS_KEY_TYPE_SHIFT;
-	key->flags = (key->flags & ~(BTRFS_KEY_TYPE_MASK)) | val;
+	key->type = val;
 }
 
 static inline u64 btrfs_header_blocknr(struct btrfs_header *h)
@@ -708,14 +701,14 @@ static inline void btrfs_set_header_owner(struct btrfs_header *h,
 	h->owner = cpu_to_le64(val);
 }
 
-static inline u16 btrfs_header_nritems(struct btrfs_header *h)
+static inline u32 btrfs_header_nritems(struct btrfs_header *h)
 {
-	return le16_to_cpu(h->nritems);
+	return le32_to_cpu(h->nritems);
 }
 
-static inline void btrfs_set_header_nritems(struct btrfs_header *h, u16 val)
+static inline void btrfs_set_header_nritems(struct btrfs_header *h, u32 val)
 {
-	h->nritems = cpu_to_le16(val);
+	h->nritems = cpu_to_le32(val);
 }
 
 static inline u16 btrfs_header_flags(struct btrfs_header *h)
@@ -848,15 +841,37 @@ static inline void btrfs_set_super_blocks_used(struct btrfs_super_block *s,
 	s->blocks_used = cpu_to_le64(val);
 }
 
-static inline u32 btrfs_super_blocksize(struct btrfs_super_block *s)
+static inline u32 btrfs_super_sectorsize(struct btrfs_super_block *s)
 {
-	return le32_to_cpu(s->blocksize);
+	return le32_to_cpu(s->sectorsize);
 }
 
-static inline void btrfs_set_super_blocksize(struct btrfs_super_block *s,
+static inline void btrfs_set_super_sectorsize(struct btrfs_super_block *s,
 						u32 val)
 {
-	s->blocksize = cpu_to_le32(val);
+	s->sectorsize = cpu_to_le32(val);
+}
+
+static inline u32 btrfs_super_nodesize(struct btrfs_super_block *s)
+{
+	return le32_to_cpu(s->nodesize);
+}
+
+static inline void btrfs_set_super_nodesize(struct btrfs_super_block *s,
+						u32 val)
+{
+	s->nodesize = cpu_to_le32(val);
+}
+
+static inline u32 btrfs_super_leafsize(struct btrfs_super_block *s)
+{
+	return le32_to_cpu(s->leafsize);
+}
+
+static inline void btrfs_set_super_leafsize(struct btrfs_super_block *s,
+						u32 val)
+{
+	s->leafsize = cpu_to_le32(val);
 }
 
 static inline u64 btrfs_super_root_dir(struct btrfs_super_block *s)

@@ -54,7 +54,6 @@ int main(int ac, char **av) {
 	btrfs_init_path(&path);
 	key.offset = 0;
 	key.objectid = 0;
-	key.flags = 0;
 	btrfs_set_key_type(&key, BTRFS_ROOT_ITEM_KEY);
 	ret = btrfs_search_slot(NULL, root->fs_info->tree_root,
 					&key, &path, 0, 0);
@@ -87,7 +86,7 @@ int main(int ac, char **av) {
 			}
 			printf("tree %llu %u %llu\n",
 			       (unsigned long long)found_key.objectid,
-			       found_key.flags,
+			       found_key.type,
 			       (unsigned long long)found_key.offset);
 			btrfs_print_tree(root, buf);
 		}

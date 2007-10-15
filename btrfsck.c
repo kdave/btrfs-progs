@@ -55,7 +55,7 @@ static int check_node(struct btrfs_root *root,
 
 	if (nritems == 0 || nritems > BTRFS_NODEPTRS_PER_BLOCK(root))
 		return 1;
-	if (parent_key->flags) {
+	if (parent_key->type) {
 		if (memcmp(parent_key, &node->ptrs[0].key,
 			      sizeof(struct btrfs_disk_key)))
 			return 1;
@@ -91,7 +91,7 @@ static int check_leaf(struct btrfs_root *root,
 	if (nritems == 0)
 		return 0;
 
-	if (parent_key->flags && memcmp(parent_key, &leaf->items[0].key,
+	if (parent_key->type && memcmp(parent_key, &leaf->items[0].key,
 					sizeof(struct btrfs_disk_key))) {
 		fprintf(stderr, "leaf parent key incorrect %llu\n",
 		       (unsigned long long)btrfs_header_blocknr(&leaf->header));
@@ -287,9 +287,9 @@ static int run_next_block(struct btrfs_root *root,
 			u64 offset;
 			set_radix_bit(reada, bits[i]);
 			btrfs_map_bh_to_logical(root, &reada_buf, bits[i]);
-			offset = reada_buf.dev_blocknr * root->blocksize;
+			offset = reada_buf.dev_blocknr * root->sectorsize;
 			last_block = bits[i];
-			readahead(reada_buf.fd, offset, root->blocksize);
+			readahead(reada_buf.fd, offset, root->sectorsize);
 		}
 	}
 	*last = bits[0];
@@ -471,7 +471,7 @@ int main(int ac, char **av) {
 
 	root = open_ctree(av[1], &super);
 
-	bits_nr = 1024 * 1024 / root->blocksize;
+	bits_nr = 1024 * 1024 / root->sectorsize;
 	bits = malloc(bits_nr * sizeof(unsigned long));
 	if (!bits) {
 		perror("malloc");
@@ -484,7 +484,6 @@ int main(int ac, char **av) {
 	btrfs_init_path(&path);
 	key.offset = 0;
 	key.objectid = 0;
-	key.flags = 0;
 	btrfs_set_key_type(&key, BTRFS_ROOT_ITEM_KEY);
 	ret = btrfs_search_slot(NULL, root->fs_info->tree_root,
 					&key, &path, 0, 0);
