@@ -179,25 +179,27 @@ int clean_tree_block(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 
 int btrfs_csum_node(struct btrfs_root *root, struct btrfs_node *node)
 {
-	u32 crc;
+	u32 crc = ~(u32)0;
 	size_t len = btrfs_level_size(root, btrfs_header_level(&node->header)) -
 				      BTRFS_CSUM_SIZE;
 
-	crc = crc32c(0, (char *)(node) + BTRFS_CSUM_SIZE, len);
+	crc = crc32c(crc, (char *)(node) + BTRFS_CSUM_SIZE, len);
+	crc = ~cpu_to_le32(crc);
 	memcpy(node->header.csum, &crc, BTRFS_CRC32_SIZE);
 	return 0;
 }
 
 int btrfs_csum_super(struct btrfs_root *root, struct btrfs_super_block *super)
 {
-	u32 crc;
-	char block[root->sectorsize];
-	size_t len = root->sectorsize - BTRFS_CSUM_SIZE;
+	u32 crc = ~(u32)0;
+	char block[512];
+	size_t len = 512 - BTRFS_CSUM_SIZE;
 
-	memset(block, 0, root->sectorsize);
+	memset(block, 0, 512);
 	memcpy(block, super, sizeof(*super));
 
-	crc = crc32c(0, block + BTRFS_CSUM_SIZE, len);
+	crc = crc32c(crc, block + BTRFS_CSUM_SIZE, len);
+	crc = ~cpu_to_le32(crc);
 	memcpy(super->csum, &crc, BTRFS_CRC32_SIZE);
 	return 0;
 }
