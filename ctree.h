@@ -21,7 +21,8 @@
 
 #include "list.h"
 #include "kerncompat.h"
-#include "pending-extent.h"
+#include "radix-tree.h"
+#include "extent-cache.h"
 
 struct btrfs_trans_handle;
 
@@ -284,11 +285,11 @@ struct btrfs_fs_info {
 	struct btrfs_root *extent_root;
 	struct btrfs_root *tree_root;
 	struct btrfs_key last_insert;
-	struct radix_tree_root cache_radix;
+	struct cache_tree extent_cache;
 	struct radix_tree_root block_group_radix;
-	struct pending_tree pending_tree;
-	struct pending_tree pinned_tree;
-	struct pending_tree del_pending;
+	struct cache_tree pending_tree;
+	struct cache_tree pinned_tree;
+	struct cache_tree del_pending;
 	struct list_head trans;
 	struct list_head cache;
 	u64 last_inode_alloc;
@@ -748,6 +749,16 @@ static inline u64 btrfs_root_bytenr(struct btrfs_root_item *item)
 static inline void btrfs_set_root_bytenr(struct btrfs_root_item *item, u64 val)
 {
 	item->bytenr = cpu_to_le64(val);
+}
+
+static inline u8 btrfs_root_level(struct btrfs_root_item *item)
+{
+	return item->level;
+}
+
+static inline void btrfs_set_root_level(struct btrfs_root_item *item, u8 val)
+{
+	item->level = val;
 }
 
 static inline u64 btrfs_root_dirid(struct btrfs_root_item *item)

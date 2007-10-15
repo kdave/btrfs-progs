@@ -22,21 +22,20 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include "kerncompat.h"
-#include "radix-tree.h"
 #include "ctree.h"
 #include "disk-io.h"
 #include "print-tree.h"
 #include "transaction.h"
-#include "bit-radix.h"
 
-static u64 blocks_used = 0;
+static u64 bytes_used = 0;
 static u64 total_csum_bytes = 0;
-static u64 total_btree_blocks = 0;
+static u64 total_btree_bytes = 0;
 static u64 btree_space_waste = 0;
-static u64 data_blocks_allocated = 0;
-static u64 data_blocks_referenced = 0;
+static u64 data_bytes_allocated = 0;
+static u64 data_bytes_referenced = 0;
 
 struct extent_record {
+	struct cache_extent cache;
 	struct btrfs_disk_key parent_key;
 	u64 start;
 	u64 nr;
@@ -44,6 +43,11 @@ struct extent_record {
 	u32 refs;
 	u32 extent_item_refs;
 	int checked;
+};
+
+struct block_info {
+	u64 start;
+	u32 size;
 };
 
 static int check_node(struct btrfs_root *root,
@@ -116,27 +120,29 @@ static int check_leaf(struct btrfs_root *root,
 	return 0;
 }
 
-static int maybe_free_extent_rec(struct radix_tree_root *extent_radix,
+static int maybe_free_extent_rec(struct cache_tree *extent_cache,
 				 struct extent_record *rec)
 {
 	if (rec->checked && rec->extent_item_refs == rec->refs &&
 	    rec->refs > 0) {
-		radix_tree_delete(extent_radix, rec->start);
+		remove_cache_extent(extent_cache, &rec->cache);
 		free(rec);
 	}
 	return 0;
 }
 
 static int check_block(struct btrfs_root *root,
-		       struct radix_tree_root *extent_radix,
+		       struct cache_tree *extent_cache,
 		       struct btrfs_buffer *buf)
 {
 	struct extent_record *rec;
+	struct cache_extent *cache;
 	int ret = 1;
 
-	rec = radix_tree_lookup(extent_radix, buf->blocknr);
-	if (!rec)
+	cache = find_cache_extent(extent_cache, buf->bytenr, buf->size);
+	if (!cache)
 		return 1;
+	rec = container_of(cache, struct extent_record, cache);
 	if (btrfs_is_leaf(&buf->node)) {
 		ret = check_leaf(root, &rec->parent_key, &buf->leaf);
 	} else {
@@ -144,19 +150,23 @@ static int check_block(struct btrfs_root *root,
 	}
 	rec->checked = 1;
 	if (!ret)
-		maybe_free_extent_rec(extent_radix, rec);
+		maybe_free_extent_rec(extent_cache, rec);
 	return ret;
 }
 
-static int add_extent_rec(struct radix_tree_root *extent_radix,
+static int add_extent_rec(struct cache_tree *extent_cache,
 			  struct btrfs_disk_key *parent_key,
-			  u64 ref, u64 start, u64 nr, u64 owner,
+			  u64 ref, u64 start,
+			  u64 nr, u64 owner,
 			  u32 extent_item_refs, int inc_ref, int set_checked)
 {
 	struct extent_record *rec;
+	struct cache_extent *cache;
 	int ret = 0;
-	rec = radix_tree_lookup(extent_radix, start);
-	if (rec) {
+
+	cache = find_cache_extent(extent_cache, start, nr);
+	if (cache) {
+		rec = container_of(cache, struct extent_record, cache);
 		if (inc_ref)
 			rec->refs++;
 		if (start != rec->start) {
@@ -173,7 +183,7 @@ static int add_extent_rec(struct radix_tree_root *extent_radix,
 		}
 		if (set_checked)
 			rec->checked = 1;
-		maybe_free_extent_rec(extent_radix, rec);
+		maybe_free_extent_rec(extent_cache, rec);
 		return ret;
 	}
 	rec = malloc(sizeof(*rec));
@@ -199,81 +209,115 @@ static int add_extent_rec(struct radix_tree_root *extent_radix,
 	else
 		memset(&rec->parent_key, 0, sizeof(*parent_key));
 
-	ret = radix_tree_insert(extent_radix, start, rec);
+	rec->cache.start = start;
+	rec->cache.size = nr;
+	ret = insert_existing_cache_extent(extent_cache, &rec->cache);
 	BUG_ON(ret);
-	blocks_used += nr;
+	bytes_used += nr;
 	if (set_checked)
 		rec->checked = 1;
 	return ret;
 }
 
-static int add_pending(struct radix_tree_root *pending,
-		       struct radix_tree_root *seen, u64 blocknr)
+static int add_pending(struct cache_tree *pending,
+		       struct cache_tree *seen, u64 bytenr, u32 size)
 {
-	if (test_radix_bit(seen, blocknr))
-		return -EEXIST;
-	set_radix_bit(pending, blocknr);
-	set_radix_bit(seen, blocknr);
+	int ret;
+	ret = insert_cache_extent(seen, bytenr, size);
+	if (ret)
+		return ret;
+	insert_cache_extent(pending, bytenr, size);
 	return 0;
 }
-static int pick_next_pending(struct radix_tree_root *pending,
-			struct radix_tree_root *reada,
-			struct radix_tree_root *nodes,
-			u64 last, unsigned long *bits, int bits_nr,
+static int pick_next_pending(struct cache_tree *pending,
+			struct cache_tree *reada,
+			struct cache_tree *nodes,
+			u64 last, struct block_info *bits, int bits_nr,
 			int *reada_bits)
 {
 	unsigned long node_start = last;
+	struct cache_extent *cache;
 	int ret;
-	ret = find_first_radix_bit(reada, bits, 0, 1);
-	if (ret) {
+
+	cache = find_first_cache_extent(reada, 0);
+	if (cache) {
+		bits[0].start = cache->start;
+		bits[1].size = cache->size;
 		*reada_bits = 1;
-		return ret;
+		return 1;
 	}
 	*reada_bits = 0;
-	if (node_start > 8)
-		node_start -= 8;
-	ret = find_first_radix_bit(nodes, bits, node_start, bits_nr);
-	if (!ret)
-		ret = find_first_radix_bit(nodes, bits, 0, bits_nr);
-	if (ret) {
-		if (bits_nr - ret > 8) {
-			int ret2;
-			u64 sequential;
-			ret2 = find_first_radix_bit(pending, bits + ret,
-						    bits[0], bits_nr - ret);
-			sequential = bits[0];
-			while(ret2 > 0) {
-				if (bits[ret] - sequential > 8)
-					break;
-				sequential = bits[ret];
-				ret++;
-				ret2--;
-			}
-		}
-		return ret;
+	if (node_start > 32768)
+		node_start -= 32768;
+
+	cache = find_first_cache_extent(nodes, node_start);
+	if (!cache)
+		cache = find_first_cache_extent(nodes, 0);
+
+	if (!cache) {
+		 cache = find_first_cache_extent(pending, 0);
+		 if (!cache)
+			 return 0;
+		 ret = 0;
+		 do {
+			 bits[ret].start = cache->start;
+			 bits[ret].size = cache->size;
+			 cache = next_cache_extent(cache);
+			 ret++;
+		 } while (cache && ret < bits_nr);
+		 return ret;
 	}
-	return find_first_radix_bit(pending, bits, 0, bits_nr);
+
+	ret = 0;
+	do {
+		bits[ret].start = cache->start;
+		bits[ret].size = cache->size;
+		cache = next_cache_extent(cache);
+		ret++;
+	} while (cache && ret < bits_nr);
+
+	if (bits_nr - ret > 8) {
+		u64 lookup = bits[0].start + bits[0].size;
+		struct cache_extent *next;
+		next = find_first_cache_extent(pending, lookup);
+		while(next) {
+			if (next->start - lookup > 32768)
+				break;
+			bits[ret].start = next->start;
+			bits[ret].size = next->size;
+			lookup = next->start + next->size;
+			ret++;
+			if (ret == bits_nr)
+				break;
+			next = next_cache_extent(next);
+			if (!next)
+				break;
+		}
+	}
+	return ret;
 }
 static struct btrfs_buffer reada_buf;
 
 static int run_next_block(struct btrfs_root *root,
-			  unsigned long *bits,
+			  struct block_info *bits,
 			  int bits_nr,
 			  u64 *last,
-			  struct radix_tree_root *pending,
-			  struct radix_tree_root *seen,
-			  struct radix_tree_root *reada,
-			  struct radix_tree_root *nodes,
-			  struct radix_tree_root *extent_radix)
+			  struct cache_tree *pending,
+			  struct cache_tree *seen,
+			  struct cache_tree *reada,
+			  struct cache_tree *nodes,
+			  struct cache_tree *extent_cache)
 {
 	struct btrfs_buffer *buf;
-	u64 blocknr;
+	u64 bytenr;
+	u32 size;
 	int ret;
 	int i;
 	int nritems;
 	struct btrfs_leaf *leaf;
 	struct btrfs_node *node;
 	struct btrfs_disk_key *disk_key;
+	struct cache_extent *cache;
 	int reada_bits;
 
 	u64 last_block = 0;
@@ -285,24 +329,41 @@ static int run_next_block(struct btrfs_root *root,
 	if (!reada_bits) {
 		for(i = 0; i < ret; i++) {
 			u64 offset;
-			set_radix_bit(reada, bits[i]);
-			btrfs_map_bh_to_logical(root, &reada_buf, bits[i]);
-			offset = reada_buf.dev_blocknr * root->sectorsize;
-			last_block = bits[i];
-			readahead(reada_buf.fd, offset, root->sectorsize);
+			insert_cache_extent(reada, bits[i].start,
+					    bits[i].size);
+			btrfs_map_bh_to_logical(root, &reada_buf,
+						bits[i].start);
+			offset = reada_buf.dev_bytenr;
+			last_block = bits[i].start;
+			readahead(reada_buf.fd, offset, bits[i].size);
 		}
 	}
-	*last = bits[0];
-	blocknr = bits[0];
-	clear_radix_bit(pending, blocknr);
-	clear_radix_bit(reada, blocknr);
-	clear_radix_bit(nodes, blocknr);
-	buf = read_tree_block(root, blocknr);
+	*last = bits[0].start;
+	bytenr = bits[0].start;
+	size = bits[0].size;
+
+	cache = find_cache_extent(pending, bytenr, size);
+	if (cache) {
+		remove_cache_extent(pending, cache);
+		free(cache);
+	}
+	cache = find_cache_extent(reada, bytenr, size);
+	if (cache) {
+		remove_cache_extent(reada, cache);
+		free(cache);
+	}
+	cache = find_cache_extent(nodes, bytenr, size);
+	if (cache) {
+		remove_cache_extent(nodes, cache);
+		free(cache);
+	}
+
+	buf = read_tree_block(root, bytenr, size);
 	nritems = btrfs_header_nritems(&buf->node.header);
-	ret = check_block(root, extent_radix, buf);
+	ret = check_block(root, extent_cache, buf);
 	if (ret) {
 		fprintf(stderr, "bad block %llu\n",
-			(unsigned long long)blocknr);
+			(unsigned long long)bytenr);
 	}
 	if (btrfs_is_leaf(&buf->node)) {
 		leaf = &buf->leaf;
@@ -318,7 +379,7 @@ static int run_next_block(struct btrfs_root *root,
 						      &leaf->items[i].key);
 				ei = btrfs_item_ptr(leaf, i,
 						    struct btrfs_extent_item);
-				add_extent_rec(extent_radix, NULL, 0,
+				add_extent_rec(extent_cache, NULL, 0,
 					       found.objectid,
 					       found.offset,
 					       btrfs_extent_owner(ei),
@@ -353,16 +414,16 @@ static int run_next_block(struct btrfs_root *root,
 			if (btrfs_file_extent_type(fi) !=
 			    BTRFS_FILE_EXTENT_REG)
 				continue;
-			if (btrfs_file_extent_disk_blocknr(fi) == 0)
+			if (btrfs_file_extent_disk_bytenr(fi) == 0)
 				continue;
 
-			data_blocks_allocated +=
-				btrfs_file_extent_disk_num_blocks(fi);
-			data_blocks_referenced +=
-				btrfs_file_extent_num_blocks(fi);
-			ret = add_extent_rec(extent_radix, NULL, blocknr,
-				   btrfs_file_extent_disk_blocknr(fi),
-				   btrfs_file_extent_disk_num_blocks(fi),
+			data_bytes_allocated +=
+				btrfs_file_extent_disk_num_bytes(fi);
+			data_bytes_referenced +=
+				btrfs_file_extent_num_bytes(fi);
+			ret = add_extent_rec(extent_cache, NULL, bytenr,
+				   btrfs_file_extent_disk_bytenr(fi),
+				   btrfs_file_extent_disk_num_bytes(fi),
 			           btrfs_disk_key_objectid(&leaf->items[i].key),
 				   0, 1, 1);
 			BUG_ON(ret);
@@ -373,70 +434,68 @@ static int run_next_block(struct btrfs_root *root,
 		level = btrfs_header_level(&node->header);
 		for (i = 0; i < nritems; i++) {
 			u64 ptr = btrfs_node_blockptr(node, i);
-			ret = add_extent_rec(extent_radix,
+			u32 size = btrfs_level_size(root, level - 1);
+			ret = add_extent_rec(extent_cache,
 					     &node->ptrs[i].key,
-					     blocknr, ptr, 1,
+					     bytenr, ptr, size,
 					     btrfs_header_owner(&node->header),
 					     0, 1, 0);
 			BUG_ON(ret);
 			if (level > 1) {
-				add_pending(nodes, seen, ptr);
+				add_pending(nodes, seen, ptr, size);
 			} else {
-				add_pending(pending, seen, ptr);
+				add_pending(pending, seen, ptr, size);
 			}
 		}
 		btree_space_waste += (BTRFS_NODEPTRS_PER_BLOCK(root) -
 				      nritems) * sizeof(struct btrfs_key_ptr);
 	}
+	total_btree_bytes += buf->size;
 	btrfs_block_release(root, buf);
-	total_btree_blocks++;
 	return 0;
 }
 
 static int add_root_to_pending(struct btrfs_buffer *buf,
-			       unsigned long *bits,
+			       struct block_info *bits,
 			       int bits_nr,
-			       struct radix_tree_root *extent_radix,
-			       struct radix_tree_root *pending,
-			       struct radix_tree_root *seen,
-			       struct radix_tree_root *reada,
-			       struct radix_tree_root *nodes)
+			       struct cache_tree *extent_cache,
+			       struct cache_tree *pending,
+			       struct cache_tree *seen,
+			       struct cache_tree *reada,
+			       struct cache_tree *nodes)
 {
 	if (btrfs_header_level(&buf->node.header) > 0)
-		add_pending(nodes, seen, buf->blocknr);
+		add_pending(nodes, seen, buf->bytenr, buf->size);
 	else
-		add_pending(pending, seen, buf->blocknr);
-	add_extent_rec(extent_radix, NULL, 0, buf->blocknr, 1,
+		add_pending(pending, seen, buf->bytenr, buf->size);
+	add_extent_rec(extent_cache, NULL, 0, buf->bytenr, buf->size,
 		       btrfs_header_owner(&buf->node.header), 0, 1, 0);
 	return 0;
 }
 
 int check_extent_refs(struct btrfs_root *root,
-		      struct radix_tree_root *extent_radix)
+		      struct cache_tree *extent_cache)
 {
-	struct extent_record *rec[64];
-	int i;
-	int ret;
+	struct extent_record *rec;
+	struct cache_extent *cache;
 	int err = 0;
 
 	while(1) {
-		ret = radix_tree_gang_lookup(extent_radix, (void *)rec, 0,
-					     ARRAY_SIZE(rec));
-		if (!ret)
+		cache = find_first_cache_extent(extent_cache, 0);
+		if (!cache)
 			break;
-		for (i = 0; i < ret; i++) {
-			if (rec[i]->refs != rec[i]->extent_item_refs) {
-				fprintf(stderr, "ref mismatch on [%llu %llu] ",
-					(unsigned long long)rec[i]->start,
-					(unsigned long long)rec[i]->nr);
-				fprintf(stderr, "extent item %u, found %u\n",
-					rec[i]->extent_item_refs,
-					rec[i]->refs);
-				err = 1;
-			}
-			radix_tree_delete(extent_radix, rec[i]->start);
-			free(rec[i]);
+		rec = container_of(cache, struct extent_record, cache);
+		if (rec->refs != rec->extent_item_refs) {
+			fprintf(stderr, "ref mismatch on [%llu %llu] ",
+				(unsigned long long)rec->start,
+				(unsigned long long)rec->nr);
+			fprintf(stderr, "extent item %u, found %u\n",
+				rec->extent_item_refs,
+				rec->refs);
+			err = 1;
 		}
+		remove_cache_extent(extent_cache, cache);
+		free(rec);
 	}
 	return err;
 }
@@ -444,42 +503,40 @@ int check_extent_refs(struct btrfs_root *root,
 int main(int ac, char **av) {
 	struct btrfs_super_block super;
 	struct btrfs_root *root;
-	struct radix_tree_root extent_radix;
-	struct radix_tree_root seen;
-	struct radix_tree_root pending;
-	struct radix_tree_root reada;
-	struct radix_tree_root nodes;
+	struct cache_tree extent_cache;
+	struct cache_tree seen;
+	struct cache_tree pending;
+	struct cache_tree reada;
+	struct cache_tree nodes;
 	struct btrfs_path path;
 	struct btrfs_key key;
 	struct btrfs_key found_key;
 	int ret;
 	u64 last = 0;
-	unsigned long *bits;
+	struct block_info *bits;
 	int bits_nr;
 	struct btrfs_leaf *leaf;
 	int slot;
 	struct btrfs_root_item *ri;
 
 	radix_tree_init();
-
-
-	INIT_RADIX_TREE(&extent_radix, GFP_NOFS);
-	init_bit_radix(&seen);
-	init_bit_radix(&pending);
-	init_bit_radix(&reada);
-	init_bit_radix(&nodes);
+	cache_tree_init(&extent_cache);
+	cache_tree_init(&seen);
+	cache_tree_init(&pending);
+	cache_tree_init(&nodes);
+	cache_tree_init(&reada);
 
 	root = open_ctree(av[1], &super);
 
-	bits_nr = 1024 * 1024 / root->sectorsize;
-	bits = malloc(bits_nr * sizeof(unsigned long));
+	bits_nr = 1024;
+	bits = malloc(bits_nr * sizeof(struct block_info));
 	if (!bits) {
 		perror("malloc");
 		exit(1);
 	}
 
 	add_root_to_pending(root->fs_info->tree_root->node, bits, bits_nr,
-			    &extent_radix, &pending, &seen, &reada, &nodes);
+			    &extent_cache, &pending, &seen, &reada, &nodes);
 
 	btrfs_init_path(&path);
 	key.offset = 0;
@@ -505,8 +562,10 @@ int main(int ac, char **av) {
 			ri = btrfs_item_ptr(leaf, path.slots[0],
 					    struct btrfs_root_item);
 			buf = read_tree_block(root->fs_info->tree_root,
-					      btrfs_root_blocknr(ri));
-			add_root_to_pending(buf, bits, bits_nr, &extent_radix,
+					      btrfs_root_bytenr(ri),
+					      btrfs_level_size(root,
+						       btrfs_root_level(ri)));
+			add_root_to_pending(buf, bits, bits_nr, &extent_cache,
 					    &pending, &seen, &reada, &nodes);
 			btrfs_block_release(root->fs_info->tree_root, buf);
 		}
@@ -515,21 +574,21 @@ int main(int ac, char **av) {
 	btrfs_release_path(root, &path);
 	while(1) {
 		ret = run_next_block(root, bits, bits_nr, &last, &pending,
-				     &seen, &reada, &nodes, &extent_radix);
+				     &seen, &reada, &nodes, &extent_cache);
 		if (ret != 0)
 			break;
 	}
-	ret = check_extent_refs(root, &extent_radix);
+	ret = check_extent_refs(root, &extent_cache);
 	close_ctree(root, &super);
-	printf("found %llu blocks used err is %d\n",
-	       (unsigned long long)blocks_used, ret);
+	printf("found %llu bytes used err is %d\n",
+	       (unsigned long long)bytes_used, ret);
 	printf("total csum bytes: %llu\n",(unsigned long long)total_csum_bytes);
-	printf("total tree blocks: %llu\n",
-	       (unsigned long long)total_btree_blocks);
+	printf("total tree bytes: %llu\n",
+	       (unsigned long long)total_btree_bytes);
 	printf("btree space waste bytes: %llu\n",
 	       (unsigned long long)btree_space_waste);
 	printf("file data blocks allocated: %llu\n referenced %llu\n",
-		(unsigned long long)data_blocks_allocated,
-		(unsigned long long)data_blocks_referenced);
+		(unsigned long long)data_bytes_allocated,
+		(unsigned long long)data_bytes_referenced);
 	return ret;
 }

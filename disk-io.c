@@ -85,12 +85,15 @@ struct btrfs_buffer *alloc_tree_block(struct btrfs_root *root, u64 bytenr,
 	buf->bytenr = bytenr;
 	buf->count = 2;
 	buf->size = blocksize;
+	buf->cache_node.start = bytenr;
+	buf->cache_node.size = blocksize;
 
 	INIT_LIST_HEAD(&buf->dirty);
 	free_some_buffers(root);
-	radix_tree_preload(GFP_KERNEL);
-	ret = radix_tree_insert(&root->fs_info->cache_radix, bytenr, buf);
-	radix_tree_preload_end();
+
+	ret = insert_existing_cache_extent(&root->fs_info->extent_cache,
+					   &buf->cache_node);
+
 	list_add_tail(&buf->cache, &root->fs_info->cache);
 	root->fs_info->cache_size += blocksize;
 	if (ret) {
@@ -104,8 +107,12 @@ struct btrfs_buffer *find_tree_block(struct btrfs_root *root, u64 bytenr,
 				     u32 blocksize)
 {
 	struct btrfs_buffer *buf;
-	buf = radix_tree_lookup(&root->fs_info->cache_radix, bytenr);
-	if (buf) {
+	struct cache_extent *cache;
+
+	cache = find_cache_extent(&root->fs_info->extent_cache,
+				  bytenr, blocksize);
+	if (cache) {
+		buf = container_of(cache, struct btrfs_buffer, cache_node);
 		buf->count++;
 	} else {
 		buf = alloc_tree_block(root, bytenr, blocksize);
@@ -122,8 +129,12 @@ struct btrfs_buffer *read_tree_block(struct btrfs_root *root, u64 bytenr,
 {
 	struct btrfs_buffer *buf;
 	int ret;
-	buf = radix_tree_lookup(&root->fs_info->cache_radix, bytenr);
-	if (buf) {
+	struct cache_extent *cache;
+
+	cache = find_cache_extent(&root->fs_info->extent_cache,
+				  bytenr, blocksize);
+	if (cache) {
+		buf = container_of(cache, struct btrfs_buffer, cache_node);
 		buf->count++;
 		if (check_tree_block(root, buf))
 			BUG();
@@ -364,13 +375,13 @@ struct btrfs_root *open_ctree_fd(int fp, struct btrfs_super_block *super)
 	struct btrfs_fs_info *fs_info = malloc(sizeof(*fs_info));
 	int ret;
 
-	INIT_RADIX_TREE(&fs_info->cache_radix, GFP_KERNEL);
 	INIT_RADIX_TREE(&fs_info->block_group_radix, GFP_KERNEL);
 	INIT_LIST_HEAD(&fs_info->trans);
 	INIT_LIST_HEAD(&fs_info->cache);
-	pending_tree_init(&fs_info->pending_tree);
-	pending_tree_init(&fs_info->pinned_tree);
-	pending_tree_init(&fs_info->del_pending);
+	cache_tree_init(&fs_info->extent_cache);
+	cache_tree_init(&fs_info->pending_tree);
+	cache_tree_init(&fs_info->pinned_tree);
+	cache_tree_init(&fs_info->del_pending);
 	fs_info->cache_size = 0;
 	fs_info->fp = fp;
 	fs_info->running_transaction = NULL;
@@ -482,11 +493,9 @@ void btrfs_block_release(struct btrfs_root *root, struct btrfs_buffer *buf)
 	if (buf->count == 0) {
 		BUG_ON(!list_empty(&buf->cache));
 		BUG_ON(!list_empty(&buf->dirty));
-		if (!radix_tree_lookup(&root->fs_info->cache_radix,
-				       buf->bytenr))
-			BUG();
 
-		radix_tree_delete(&root->fs_info->cache_radix, buf->bytenr);
+		remove_cache_extent(&root->fs_info->extent_cache,
+				    &buf->cache_node);
 		BUG_ON(allocated_bytes == 0);
 		allocated_bytes -= buf->size;
 		BUG_ON(root->fs_info->cache_size == 0);

@@ -21,31 +21,33 @@
 #include "kerncompat.h"
 #include "rbtree.h"
 
-struct pending_tree {
+struct cache_tree {
 	struct rb_root root;
 };
 
-struct pending_extent {
+struct cache_extent {
 	struct rb_node rb_node;
 	u64 start;
 	u64 size;
 };
 
-void pending_tree_init(struct pending_tree *tree);
-void remove_pending_extent(struct pending_tree *tree,
-			  struct pending_extent *pe);
-struct pending_extent *find_first_pending_extent(struct pending_tree *tree,
+void cache_tree_init(struct cache_tree *tree);
+void remove_cache_extent(struct cache_tree *tree,
+			  struct cache_extent *pe);
+struct cache_extent *find_first_cache_extent(struct cache_tree *tree,
 						 u64 start);
-struct pending_extent *next_pending_extent(struct pending_extent *pe);
-struct pending_extent *find_pending_extent(struct pending_tree *tree,
+struct cache_extent *next_cache_extent(struct cache_extent *pe);
+struct cache_extent *find_cache_extent(struct cache_tree *tree,
 					   u64 start, u64 size);
-int insert_pending_extent(struct pending_tree *tree, u64 start, u64 size);
+int insert_cache_extent(struct cache_tree *tree, u64 start, u64 size);
+int insert_existing_cache_extent(struct cache_tree *tree,
+				 struct cache_extent *pe);
 
-static inline void free_pending_extent(struct pending_extent *pe)
+static inline void free_cache_extent(struct cache_extent *pe)
 {
 	free(pe);
 }
 
-struct pending_extent *alloc_pending_extent(u64 start, u64 size);
+struct cache_extent *alloc_pending_extent(u64 start, u64 size);
 
 #endif

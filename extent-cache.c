@@ -18,9 +18,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "kerncompat.h"
-#include "pending-extent.h"
+#include "extent-cache.h"
 
-void pending_tree_init(struct pending_tree *tree)
+void cache_tree_init(struct cache_tree *tree)
 {
 	tree->root.rb_node = NULL;
 }
@@ -30,11 +30,11 @@ static struct rb_node *tree_insert(struct rb_root *root, u64 offset,
 {
 	struct rb_node ** p = &root->rb_node;
 	struct rb_node * parent = NULL;
-	struct pending_extent *entry;
+	struct cache_extent *entry;
 
 	while(*p) {
 		parent = *p;
-		entry = rb_entry(parent, struct pending_extent, rb_node);
+		entry = rb_entry(parent, struct cache_extent, rb_node);
 
 		if (offset + size <= entry->start)
 			p = &(*p)->rb_left;
@@ -44,7 +44,7 @@ static struct rb_node *tree_insert(struct rb_root *root, u64 offset,
 			return parent;
 	}
 
-	entry = rb_entry(parent, struct pending_extent, rb_node);
+	entry = rb_entry(parent, struct cache_extent, rb_node);
 	rb_link_node(node, parent, p);
 	rb_insert_color(node, root);
 	return NULL;
@@ -55,11 +55,11 @@ static struct rb_node *__tree_search(struct rb_root *root, u64 offset,
 {
 	struct rb_node * n = root->rb_node;
 	struct rb_node *prev = NULL;
-	struct pending_extent *entry;
-	struct pending_extent *prev_entry = NULL;
+	struct cache_extent *entry;
+	struct cache_extent *prev_entry = NULL;
 
 	while(n) {
-		entry = rb_entry(n, struct pending_extent, rb_node);
+		entry = rb_entry(n, struct cache_extent, rb_node);
 		prev = n;
 		prev_entry = entry;
 
@@ -75,15 +75,15 @@ static struct rb_node *__tree_search(struct rb_root *root, u64 offset,
 
 	while(prev && offset >= prev_entry->start + prev_entry->size) {
 		prev = rb_next(prev);
-		prev_entry = rb_entry(prev, struct pending_extent, rb_node);
+		prev_entry = rb_entry(prev, struct cache_extent, rb_node);
 	}
 	*prev_ret = prev;
 	return NULL;
 }
 
-struct pending_extent *alloc_pending_extent(u64 start, u64 size)
+struct cache_extent *alloc_cache_extent(u64 start, u64 size)
 {
-	struct pending_extent *pe = malloc(sizeof(*pe));
+	struct cache_extent *pe = malloc(sizeof(*pe));
 
 	if (!pe)
 		return pe;
@@ -92,60 +92,68 @@ struct pending_extent *alloc_pending_extent(u64 start, u64 size)
 	return pe;
 }
 
-int insert_pending_extent(struct pending_tree *tree, u64 start, u64 size)
+int insert_existing_cache_extent(struct cache_tree *tree,
+				 struct cache_extent *pe)
 {
-	struct pending_extent *pe = alloc_pending_extent(start, size);
 	struct rb_node *found;
 
-	found = tree_insert(&tree->root, start, size, &pe->rb_node);
-
+	found = tree_insert(&tree->root, pe->start, pe->size, &pe->rb_node);
 	if (found)
 		return -EEXIST;
 	return 0;
 }
 
-struct pending_extent *find_pending_extent(struct pending_tree *tree,
+int insert_cache_extent(struct cache_tree *tree, u64 start, u64 size)
+{
+	struct cache_extent *pe = alloc_cache_extent(start, size);
+	int ret;
+	ret = insert_existing_cache_extent(tree, pe);
+	if (ret)
+		free(pe);
+	return ret;
+}
+
+struct cache_extent *find_cache_extent(struct cache_tree *tree,
 					   u64 start, u64 size)
 {
 	struct rb_node *prev;
 	struct rb_node *ret;
-	struct pending_extent *entry;
-
+	struct cache_extent *entry;
 	ret = __tree_search(&tree->root, start, size, &prev);
 	if (!ret)
 		return NULL;
 
-	entry = rb_entry(ret, struct pending_extent, rb_node);
+	entry = rb_entry(ret, struct cache_extent, rb_node);
 	return entry;
 }
 
-struct pending_extent *find_first_pending_extent(struct pending_tree *tree,
+struct cache_extent *find_first_cache_extent(struct cache_tree *tree,
 						 u64 start)
 {
 	struct rb_node *prev;
 	struct rb_node *ret;
-	struct pending_extent *entry;
+	struct cache_extent *entry;
 
 	ret = __tree_search(&tree->root, start, 1, &prev);
 	if (!ret)
 		ret = prev;
 	if (!ret)
 		return NULL;
-	entry = rb_entry(ret, struct pending_extent, rb_node);
+	entry = rb_entry(ret, struct cache_extent, rb_node);
 	return entry;
 }
 
-struct pending_extent *next_pending_extent(struct pending_extent *pe)
+struct cache_extent *next_cache_extent(struct cache_extent *pe)
 {
 	struct rb_node *node = rb_next(&pe->rb_node);
 
 	if (!node)
 		return NULL;
-	return rb_entry(node, struct pending_extent, rb_node);
+	return rb_entry(node, struct cache_extent, rb_node);
 }
 
-void remove_pending_extent(struct pending_tree *tree,
-				 struct pending_extent *pe)
+void remove_cache_extent(struct cache_tree *tree,
+				 struct cache_extent *pe)
 {
 	rb_erase(&pe->rb_node, &tree->root);
 }

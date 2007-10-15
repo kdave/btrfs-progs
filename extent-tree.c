@@ -203,16 +203,16 @@ int btrfs_finish_extent_commit(struct btrfs_trans_handle *trans, struct
 			       btrfs_root *root)
 {
 	u64 first = 0;
-	struct pending_extent *pe;
-	struct pending_extent *next;
+	struct cache_extent *pe;
+	struct cache_extent *next;
 
-	pe = find_first_pending_extent(&root->fs_info->pinned_tree, 0);
+	pe = find_first_cache_extent(&root->fs_info->pinned_tree, 0);
 	if (pe)
 		first = pe->start;
 	while(pe) {
-		next = next_pending_extent(pe);
-		remove_pending_extent(&root->fs_info->pinned_tree, pe);
-		free_pending_extent(pe);
+		next = next_cache_extent(pe);
+		remove_cache_extent(&root->fs_info->pinned_tree, pe);
+		free_cache_extent(pe);
 		pe = next;
 	}
 	root->fs_info->last_insert.objectid = first;
@@ -227,25 +227,25 @@ static int finish_current_insert(struct btrfs_trans_handle *trans, struct
 	struct btrfs_extent_item extent_item;
 	int ret;
 	struct btrfs_fs_info *info = extent_root->fs_info;
-	struct pending_extent *pe;
-	struct pending_extent *next;
-	struct pending_tree *pending_tree = &info->pending_tree;
+	struct cache_extent *pe;
+	struct cache_extent *next;
+	struct cache_tree *pending_tree = &info->pending_tree;
 
 	btrfs_set_extent_refs(&extent_item, 1);
 	btrfs_set_extent_owner(&extent_item, extent_root->root_key.objectid);
 	ins.offset = 1;
 	btrfs_set_key_type(&ins, BTRFS_EXTENT_ITEM_KEY);
-	pe = find_first_pending_extent(pending_tree, 0);
+	pe = find_first_cache_extent(pending_tree, 0);
 	while(pe) {
 		ins.offset = pe->size;
 		ins.objectid = pe->start;
 
-		remove_pending_extent(pending_tree, pe);
-		next = next_pending_extent(pe);
+		remove_cache_extent(pending_tree, pe);
+		next = next_cache_extent(pe);
 		if (!next)
-			next = find_first_pending_extent(pending_tree, 0);
+			next = find_first_cache_extent(pending_tree, 0);
 
-		free_pending_extent(pe);
+		free_cache_extent(pe);
 		pe = next;
 
 		ret = btrfs_insert_item(trans, extent_root, &ins, &extent_item,
@@ -293,7 +293,7 @@ static int __free_extent(struct btrfs_trans_handle *trans, struct btrfs_root
 		u64 super_bytes_used, root_bytes_used;
 		if (pin) {
 			int err;
-			err = insert_pending_extent(&info->pinned_tree,
+			err = insert_cache_extent(&info->pinned_tree,
 						    bytenr, num_bytes);
 			BUG_ON(err);
 		}
@@ -326,20 +326,20 @@ static int del_pending_extents(struct btrfs_trans_handle *trans, struct
 			       btrfs_root *extent_root)
 {
 	int ret;
-	struct pending_extent *pe;
-	struct pending_extent *next;
-	struct pending_tree *del_pending = &extent_root->fs_info->del_pending;
+	struct cache_extent *pe;
+	struct cache_extent *next;
+	struct cache_tree *del_pending = &extent_root->fs_info->del_pending;
 
-	pe = find_first_pending_extent(del_pending, 0);
+	pe = find_first_cache_extent(del_pending, 0);
 	while(pe) {
-		remove_pending_extent(del_pending, pe);
+		remove_cache_extent(del_pending, pe);
 		ret = __free_extent(trans, extent_root,
 				    pe->start, pe->size, 1);
 		BUG_ON(ret);
-		next = next_pending_extent(pe);
+		next = next_cache_extent(pe);
 		if (!next)
-			next = find_first_pending_extent(del_pending, 0);
-		free_pending_extent(pe);
+			next = find_first_cache_extent(del_pending, 0);
+		free_cache_extent(pe);
 		pe = next;
 	}
 	return 0;
@@ -364,7 +364,7 @@ int btrfs_free_extent(struct btrfs_trans_handle *trans, struct btrfs_root
 	int ret;
 
 	if (root == extent_root) {
-		ret = insert_pending_extent(&root->fs_info->del_pending,
+		ret = insert_cache_extent(&root->fs_info->del_pending,
 					    bytenr, num_bytes);
 		BUG_ON(ret);
 		return 0;
@@ -460,12 +460,12 @@ check_pending:
 	 */
 	btrfs_release_path(root, &path);
 	BUG_ON(ins->objectid < search_start);
-	if (find_pending_extent(&root->fs_info->pinned_tree,
+	if (find_cache_extent(&root->fs_info->pinned_tree,
 				ins->objectid, total_needed)) {
 		search_start = ins->objectid + total_needed;
 		goto check_failed;
 	}
-	if (find_pending_extent(&root->fs_info->pending_tree,
+	if (find_cache_extent(&root->fs_info->pending_tree,
 				ins->objectid, total_needed)) {
 		search_start = ins->objectid + total_needed;
 		goto check_failed;
@@ -511,7 +511,7 @@ static int alloc_extent(struct btrfs_trans_handle *trans,
 	btrfs_set_root_bytes_used(&root->root_item, root_bytes_used +
 				   num_bytes);
 	if (root == extent_root) {
-		ret = insert_pending_extent(&root->fs_info->pending_tree,
+		ret = insert_cache_extent(&root->fs_info->pending_tree,
 					    ins->objectid, ins->offset);
 		BUG_ON(ret);
 		return 0;

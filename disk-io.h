@@ -18,9 +18,11 @@
 
 #ifndef __DISKIO__
 #define __DISKIO__
+#include "extent-cache.h"
 #include "list.h"
 
 struct btrfs_buffer {
+	struct cache_extent cache_node;
 	u64 bytenr;
 	u64 dev_bytenr;
 	u32 size;
