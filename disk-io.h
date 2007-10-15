@@ -21,8 +21,8 @@
 #include "list.h"
 
 struct btrfs_buffer {
-	u64 blocknr;
-	u64 dev_blocknr;
+	u64 bytenr;
+	u64 dev_bytenr;
 	u32 size;
 	int count;
 	int fd;
@@ -34,8 +34,10 @@ struct btrfs_buffer {
 	};
 };
 
-struct btrfs_buffer *read_tree_block(struct btrfs_root *root, u64 blocknr);
-struct btrfs_buffer *find_tree_block(struct btrfs_root *root, u64 blocknr);
+struct btrfs_buffer *read_tree_block(struct btrfs_root *root, u64 bytenr,
+				     u32 blocksize);
+struct btrfs_buffer *find_tree_block(struct btrfs_root *root, u64 bytenr,
+				     u32 blocksize);
 int write_tree_block(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 		     struct btrfs_buffer *buf);
 int dirty_tree_block(struct btrfs_trans_handle *trans, struct btrfs_root *root,

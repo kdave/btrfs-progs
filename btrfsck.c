@@ -78,12 +78,12 @@ static int check_leaf(struct btrfs_root *root,
 
 	if (btrfs_header_level(&leaf->header) != 0) {
 		fprintf(stderr, "leaf is not a leaf %llu\n",
-		       (unsigned long long)btrfs_header_blocknr(&leaf->header));
+		       (unsigned long long)btrfs_header_bytenr(&leaf->header));
 		return 1;
 	}
 	if (btrfs_leaf_free_space(root, leaf) < 0) {
 		fprintf(stderr, "leaf free space incorrect %llu %d\n",
-			(unsigned long long)btrfs_header_blocknr(&leaf->header),
+			(unsigned long long)btrfs_header_bytenr(&leaf->header),
 			btrfs_leaf_free_space(root, leaf));
 		return 1;
 	}
@@ -94,7 +94,7 @@ static int check_leaf(struct btrfs_root *root,
 	if (parent_key->type && memcmp(parent_key, &leaf->items[0].key,
 					sizeof(struct btrfs_disk_key))) {
 		fprintf(stderr, "leaf parent key incorrect %llu\n",
-		       (unsigned long long)btrfs_header_blocknr(&leaf->header));
+		       (unsigned long long)btrfs_header_bytenr(&leaf->header));
 		return 1;
 	}
 	for (i = 0; nritems > 1 && i < nritems - 2; i++) {

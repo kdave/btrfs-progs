@@ -85,55 +85,57 @@ error:
 static int make_block_groups(struct btrfs_trans_handle *trans,
 			     struct btrfs_root *root)
 {
-	u64 group_size_blocks;
-	u64 total_blocks;
+	u64 group_size;
+	u64 total_bytes;
 	u64 cur_start;
 	int ret;
 	u64 nr = 0;
 	struct btrfs_block_group_cache *cache;
 
 	root = root->fs_info->extent_root;
+
 	/* first we bootstrap the things into cache */
-	group_size_blocks = BTRFS_BLOCK_GROUP_SIZE / root->sectorsize;
+	group_size = BTRFS_BLOCK_GROUP_SIZE;
 	cache = malloc(sizeof(*cache));
 	cache->key.objectid = 0;
-	cache->key.offset = group_size_blocks;
+	cache->key.offset = group_size;
 	btrfs_set_key_type(&cache->key, BTRFS_BLOCK_GROUP_ITEM_KEY);
+
 	memset(&cache->item, 0, sizeof(cache->item));
 	btrfs_set_block_group_used(&cache->item,
-			   btrfs_super_blocks_used(root->fs_info->disk_super));
+			   btrfs_super_bytes_used(root->fs_info->disk_super));
 	ret = radix_tree_insert(&root->fs_info->block_group_radix,
-				group_size_blocks - 1, (void *)cache);
+				group_size - 1, (void *)cache);
 	BUG_ON(ret);
 
-	total_blocks = btrfs_super_total_blocks(root->fs_info->disk_super);
-	cur_start = group_size_blocks;
-	while(cur_start < total_blocks) {
+	total_bytes = btrfs_super_total_bytes(root->fs_info->disk_super);
+	cur_start = group_size;
+	while(cur_start < total_bytes) {
 		cache = malloc(sizeof(*cache));
 		cache->key.objectid = cur_start;
-		cache->key.offset = group_size_blocks;
+		cache->key.offset = group_size;
 		btrfs_set_key_type(&cache->key, BTRFS_BLOCK_GROUP_ITEM_KEY);
 		memset(&cache->item, 0, sizeof(cache->item));
 		if (nr % 3)
 			cache->item.flags |= BTRFS_BLOCK_GROUP_DATA;
 
 		ret = radix_tree_insert(&root->fs_info->block_group_radix,
-					cur_start + group_size_blocks - 1,
+					cur_start + group_size - 1,
 					(void *)cache);
 		BUG_ON(ret);
-		cur_start += group_size_blocks;
+		cur_start += group_size;
 		nr++;
 	}
 	/* then insert all the items */
 	cur_start = 0;
-	while(cur_start < total_blocks) {
+	while(cur_start < total_bytes) {
 		cache = radix_tree_lookup(&root->fs_info->block_group_radix,
-					  cur_start + group_size_blocks - 1);
+					  cur_start + group_size - 1);
 		BUG_ON(!cache);
 		ret = btrfs_insert_block_group(trans, root, &cache->key,
 					       &cache->item);
 		BUG_ON(ret);
-		cur_start += group_size_blocks;
+		cur_start += group_size;
 	}
 	return 0;
 }
@@ -174,7 +176,8 @@ err:
 	return ret;
 }
 
-int mkfs(int fd, char *pathname, u64 num_blocks, u32 blocksize)
+int mkfs(int fd, char *pathname, u64 num_bytes, u32 nodesize, u32 leafsize,
+	 u32 sectorsize)
 {
 	struct btrfs_super_block super;
 	struct btrfs_leaf *empty_leaf;
@@ -185,33 +188,37 @@ int mkfs(int fd, char *pathname, u64 num_blocks, u32 blocksize)
 	char *block;
 	int ret;
 	u32 itemoff;
-	u32 start_block = BTRFS_SUPER_INFO_OFFSET / blocksize;
+	u32 start_block = BTRFS_SUPER_INFO_OFFSET;
+	u32 first_free = BTRFS_SUPER_INFO_OFFSET + sectorsize;
 
 	btrfs_set_super_generation(&super, 1);
-	btrfs_set_super_blocknr(&super, start_block);
-	btrfs_set_super_root(&super, start_block + 1);
+	btrfs_set_super_bytenr(&super, start_block);
+	btrfs_set_super_root_level(&super, 0);
+	btrfs_set_super_root(&super, first_free);
 	strcpy((char *)(&super.magic), BTRFS_MAGIC);
 
-printf("blocksize is %d\n", blocksize);
-	btrfs_set_super_sectorsize(&super, blocksize);
-	btrfs_set_super_leafsize(&super, blocksize);
-	btrfs_set_super_nodesize(&super, blocksize);
+printf("blocksize is %d\n", leafsize);
+	btrfs_set_super_sectorsize(&super, sectorsize);
+	btrfs_set_super_leafsize(&super, leafsize);
+	btrfs_set_super_nodesize(&super, nodesize);
 
-	btrfs_set_super_total_blocks(&super, num_blocks);
-	btrfs_set_super_blocks_used(&super, start_block + 4);
+	num_bytes = (num_bytes / sectorsize) * sectorsize;
+	btrfs_set_super_total_bytes(&super, num_bytes);
+	btrfs_set_super_bytes_used(&super, start_block + 3 * leafsize +
+				   sectorsize);
 	uuid_generate(super.fsid);
 
-	block = malloc(blocksize);
-	memset(block, 0, blocksize);
-	BUG_ON(sizeof(super) > blocksize);
+	block = malloc(sectorsize);
+	memset(block, 0, sectorsize);
+	BUG_ON(sizeof(super) > sectorsize);
 	memcpy(block, &super, sizeof(super));
-	ret = pwrite(fd, block, blocksize, BTRFS_SUPER_INFO_OFFSET);
-	BUG_ON(ret != blocksize);
+	ret = pwrite(fd, block, sectorsize, BTRFS_SUPER_INFO_OFFSET);
+	BUG_ON(ret != sectorsize);
 
 	/* create the tree of root objects */
-	empty_leaf = malloc(blocksize);
-	memset(empty_leaf, 0, blocksize);
-	btrfs_set_header_blocknr(&empty_leaf->header, start_block + 1);
+	empty_leaf = malloc(leafsize);
+	memset(empty_leaf, 0, leafsize);
+	btrfs_set_header_bytenr(&empty_leaf->header, first_free);
 	btrfs_set_header_nritems(&empty_leaf->header, 2);
 	btrfs_set_header_generation(&empty_leaf->header, 0);
 	btrfs_set_header_owner(&empty_leaf->header, BTRFS_ROOT_TREE_OBJECTID);
@@ -234,34 +241,35 @@ printf("blocksize is %d\n", blocksize);
 	btrfs_set_item_size(&item, sizeof(root_item));
 	btrfs_set_disk_key_type(&item.key, BTRFS_ROOT_ITEM_KEY);
 
-	itemoff = __BTRFS_LEAF_DATA_SIZE(blocksize) - sizeof(root_item);
-	btrfs_set_root_blocknr(&root_item, start_block + 2);
+	itemoff = __BTRFS_LEAF_DATA_SIZE(leafsize) - sizeof(root_item);
+	btrfs_set_root_bytenr(&root_item, first_free + leafsize);
+	root_item.level = 0;
 	btrfs_set_item_offset(&item, itemoff);
 	btrfs_set_disk_key_objectid(&item.key, BTRFS_EXTENT_TREE_OBJECTID);
 	memcpy(empty_leaf->items, &item, sizeof(item));
 	memcpy(btrfs_leaf_data(empty_leaf) + itemoff,
 		&root_item, sizeof(root_item));
 
-	btrfs_set_root_blocknr(&root_item, start_block + 3);
-	btrfs_set_root_blocks_used(&root_item, 1);
+	btrfs_set_root_bytenr(&root_item, first_free + leafsize * 2);
+	btrfs_set_root_bytes_used(&root_item, 1);
 	itemoff = itemoff - sizeof(root_item);
 	btrfs_set_item_offset(&item, itemoff);
 	btrfs_set_disk_key_objectid(&item.key, BTRFS_FS_TREE_OBJECTID);
 	memcpy(empty_leaf->items + 1, &item, sizeof(item));
 	memcpy(btrfs_leaf_data(empty_leaf) + itemoff,
 		&root_item, sizeof(root_item));
-	ret = pwrite(fd, empty_leaf, blocksize, (start_block + 1) * blocksize);
+	ret = pwrite(fd, empty_leaf, leafsize, first_free);
 
 	/* create the items for the extent tree */
-	btrfs_set_header_blocknr(&empty_leaf->header, start_block + 2);
+	btrfs_set_header_bytenr(&empty_leaf->header, first_free + leafsize);
 	btrfs_set_header_nritems(&empty_leaf->header, 4);
 
 	/* item1, reserve blocks 0-16 */
 	btrfs_set_disk_key_objectid(&item.key, 0);
-	btrfs_set_disk_key_offset(&item.key, start_block + 1);
+	btrfs_set_disk_key_offset(&item.key, first_free);
 	btrfs_set_disk_key_type(&item.key, 0);
 	btrfs_set_disk_key_type(&item.key, BTRFS_EXTENT_ITEM_KEY);
-	itemoff = __BTRFS_LEAF_DATA_SIZE(blocksize) -
+	itemoff = __BTRFS_LEAF_DATA_SIZE(leafsize) -
 			sizeof(struct btrfs_extent_item);
 	btrfs_set_item_offset(&item, itemoff);
 	btrfs_set_item_size(&item, sizeof(struct btrfs_extent_item));
@@ -272,8 +280,8 @@ printf("blocksize is %d\n", blocksize);
 		&extent_item, btrfs_item_size(&item));
 
 	/* item2, give block 17 to the root */
-	btrfs_set_disk_key_objectid(&item.key, start_block + 1);
-	btrfs_set_disk_key_offset(&item.key, 1);
+	btrfs_set_disk_key_objectid(&item.key, first_free);
+	btrfs_set_disk_key_offset(&item.key, leafsize);
 	itemoff = itemoff - sizeof(struct btrfs_extent_item);
 	btrfs_set_item_offset(&item, itemoff);
 	memcpy(empty_leaf->items + 1, &item, sizeof(item));
@@ -281,8 +289,8 @@ printf("blocksize is %d\n", blocksize);
 		&extent_item, btrfs_item_size(&item));
 
 	/* item3, give block 18 to the extent root */
-	btrfs_set_disk_key_objectid(&item.key, start_block + 2);
-	btrfs_set_disk_key_offset(&item.key, 1);
+	btrfs_set_disk_key_objectid(&item.key, first_free + leafsize);
+	btrfs_set_disk_key_offset(&item.key, leafsize);
 	itemoff = itemoff - sizeof(struct btrfs_extent_item);
 	btrfs_set_item_offset(&item, itemoff);
 	memcpy(empty_leaf->items + 2, &item, sizeof(item));
@@ -290,22 +298,22 @@ printf("blocksize is %d\n", blocksize);
 		&extent_item, btrfs_item_size(&item));
 
 	/* item4, give block 19 to the FS root */
-	btrfs_set_disk_key_objectid(&item.key, start_block + 3);
-	btrfs_set_disk_key_offset(&item.key, 1);
+	btrfs_set_disk_key_objectid(&item.key, first_free + leafsize * 2);
+	btrfs_set_disk_key_offset(&item.key, leafsize);
 	itemoff = itemoff - sizeof(struct btrfs_extent_item);
 	btrfs_set_item_offset(&item, itemoff);
 	memcpy(empty_leaf->items + 3, &item, sizeof(item));
 	memcpy(btrfs_leaf_data(empty_leaf) + btrfs_item_offset(&item),
 		&extent_item, btrfs_item_size(&item));
-	ret = pwrite(fd, empty_leaf, blocksize, (start_block + 2) * blocksize);
-	if (ret != blocksize)
+	ret = pwrite(fd, empty_leaf, leafsize, first_free + leafsize);
+	if (ret != leafsize)
 		return -1;
 
 	/* finally create the FS root */
-	btrfs_set_header_blocknr(&empty_leaf->header, start_block + 3);
+	btrfs_set_header_bytenr(&empty_leaf->header, first_free + leafsize * 2);
 	btrfs_set_header_nritems(&empty_leaf->header, 0);
-	ret = pwrite(fd, empty_leaf, blocksize, (start_block + 3) * blocksize);
-	if (ret != blocksize)
+	ret = pwrite(fd, empty_leaf, leafsize, first_free + leafsize * 2);
+	if (ret != leafsize)
 		return -1;
 	return 0;
 }
@@ -322,7 +330,14 @@ u64 device_size(int fd, struct stat *st)
 	if (ioctl(fd, BLKGETSIZE64, &size) >= 0) {
 		return size;
 	}
-	return 0; }
+	return 0;
+}
+
+static void print_usage(void)
+{
+	fprintf(stderr, "usage: mkfs.btrfs [ -l leafsize ] [ -n nodesize] dev [ blocks ]\n");
+	exit(1);
+}
 
 int main(int ac, char **av)
 {
@@ -332,23 +347,50 @@ int main(int ac, char **av)
 	struct stat st;
 	int ret;
 	int i;
-	char *buf = malloc(8192);
+	u32 leafsize = 8 * 1024;
+	u32 sectorsize = 4096;
+	u32 nodesize = 8 * 1024;
+	char *buf = malloc(sectorsize);
 	char *realpath_name;
 
 	radix_tree_init();
 
-	if (ac >= 2) {
-		file = av[1];
-		if (ac == 3) {
-			block_count = atoi(av[2]);
+	while(1) {
+		int c;
+		c = getopt(ac, av, "l:n:");
+		if (c < 0)
+			break;
+		switch(c) {
+			case 'l':
+				leafsize = atol(optarg);
+				break;
+			case 'n':
+				nodesize = atol(optarg);
+				break;
+			default:
+				print_usage();
+		}
+	}
+	if (leafsize < sectorsize || (leafsize & (sectorsize - 1))) {
+		fprintf(stderr, "Illegal leafsize %u\n", leafsize);
+		exit(1);
+	}
+	if (nodesize < sectorsize || (nodesize & (sectorsize - 1))) {
+		fprintf(stderr, "Illegal nodesize %u\n", nodesize);
+		exit(1);
+	}
+	ac = ac - optind;
+	if (ac >= 1) {
+		file = av[optind];
+		if (ac == 2) {
+			block_count = atol(av[optind + 1]);
 			if (!block_count) {
 				fprintf(stderr, "error finding block count\n");
 				exit(1);
 			}
 		}
 	} else {
-		fprintf(stderr, "usage: mkfs.btrfs file [block count]\n");
-		exit(1);
+		print_usage();
 	}
 	fd = open(file, O_RDWR);
 	if (fd < 0) {
@@ -366,22 +408,24 @@ int main(int ac, char **av)
 			fprintf(stderr, "unable to find %s size\n", file);
 			exit(1);
 		}
-		block_count /= 8192;
+		block_count /= sectorsize;
 	}
 	if (block_count < 256) {
 		fprintf(stderr, "device %s is too small\n", file);
 		exit(1);
 	}
-	memset(buf, 0, 8192);
+	block_count = block_count * sectorsize;
+	memset(buf, 0, sectorsize);
 	for(i = 0; i < 64; i++) {
-		ret = write(fd, buf, 8192);
-		if (ret != 8192) {
+		ret = write(fd, buf, sectorsize);
+		if (ret != sectorsize) {
 			fprintf(stderr, "unable to zero fill device\n");
 			exit(1);
 		}
 	}
 	realpath_name = realpath(file, NULL);
-	ret = mkfs(fd, realpath_name, block_count, 8192);
+	ret = mkfs(fd, realpath_name, block_count, nodesize, leafsize,
+		   sectorsize);
 	if (ret) {
 		fprintf(stderr, "error during mkfs %d\n", ret);
 		exit(1);
@@ -391,8 +435,9 @@ int main(int ac, char **av)
 		fprintf(stderr, "failed to setup the root directory\n");
 		exit(1);
 	}
-	printf("fs created on %s blocksize %d blocks %llu\n",
-	       file, 8192, (unsigned long long)block_count);
+	printf("fs created on %s nodesize %u leafsize %u sectorsize %u bytes %llu\n",
+	       file, nodesize, leafsize, sectorsize,
+	       (unsigned long long)block_count);
 	return 0;
 }
 

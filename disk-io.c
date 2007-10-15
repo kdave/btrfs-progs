@@ -31,20 +31,20 @@
 #include "transaction.h"
 #include "crc32c.h"
 
-static int allocated_blocks = 0;
+static u64 allocated_bytes = 0;
 int cache_max = 10000;
 
 int btrfs_map_bh_to_logical(struct btrfs_root *root, struct btrfs_buffer *bh,
 			     u64 logical)
 {
 	bh->fd = root->fs_info->fp;
-	bh->dev_blocknr = logical;
+	bh->dev_bytenr = logical;
 	return 0;
 }
 
 static int check_tree_block(struct btrfs_root *root, struct btrfs_buffer *buf)
 {
-	if (buf->blocknr != btrfs_header_blocknr(&buf->node.header))
+	if (buf->bytenr != btrfs_header_bytenr(&buf->node.header))
 		BUG();
 	if (memcmp(root->fs_info->disk_super->fsid, buf->node.header.fsid,
 		   sizeof(buf->node.header.fsid)))
@@ -71,24 +71,28 @@ static int free_some_buffers(struct btrfs_root *root)
 	return 0;
 }
 
-struct btrfs_buffer *alloc_tree_block(struct btrfs_root *root, u64 blocknr)
+struct btrfs_buffer *alloc_tree_block(struct btrfs_root *root, u64 bytenr,
+				      u32 blocksize)
 {
 	struct btrfs_buffer *buf;
 	int ret;
 
-	buf = malloc(sizeof(struct btrfs_buffer) + root->sectorsize);
+	buf = malloc(sizeof(struct btrfs_buffer) + blocksize);
 	if (!buf)
 		return buf;
-	allocated_blocks++;
-	buf->blocknr = blocknr;
+	allocated_bytes += blocksize;
+
+	buf->bytenr = bytenr;
 	buf->count = 2;
+	buf->size = blocksize;
+
 	INIT_LIST_HEAD(&buf->dirty);
 	free_some_buffers(root);
 	radix_tree_preload(GFP_KERNEL);
-	ret = radix_tree_insert(&root->fs_info->cache_radix, blocknr, buf);
+	ret = radix_tree_insert(&root->fs_info->cache_radix, bytenr, buf);
 	radix_tree_preload_end();
 	list_add_tail(&buf->cache, &root->fs_info->cache);
-	root->fs_info->cache_size++;
+	root->fs_info->cache_size += blocksize;
 	if (ret) {
 		free(buf);
 		return NULL;
@@ -96,14 +100,15 @@ struct btrfs_buffer *alloc_tree_block(struct btrfs_root *root, u64 blocknr)
 	return buf;
 }
 
-struct btrfs_buffer *find_tree_block(struct btrfs_root *root, u64 blocknr)
+struct btrfs_buffer *find_tree_block(struct btrfs_root *root, u64 bytenr,
+				     u32 blocksize)
 {
 	struct btrfs_buffer *buf;
-	buf = radix_tree_lookup(&root->fs_info->cache_radix, blocknr);
+	buf = radix_tree_lookup(&root->fs_info->cache_radix, bytenr);
 	if (buf) {
 		buf->count++;
 	} else {
-		buf = alloc_tree_block(root, blocknr);
+		buf = alloc_tree_block(root, bytenr, blocksize);
 		if (!buf) {
 			BUG();
 			return NULL;
@@ -112,23 +117,24 @@ struct btrfs_buffer *find_tree_block(struct btrfs_root *root, u64 blocknr)
 	return buf;
 }
 
-struct btrfs_buffer *read_tree_block(struct btrfs_root *root, u64 blocknr)
+struct btrfs_buffer *read_tree_block(struct btrfs_root *root, u64 bytenr,
+				     u32 blocksize)
 {
 	struct btrfs_buffer *buf;
 	int ret;
-	buf = radix_tree_lookup(&root->fs_info->cache_radix, blocknr);
+	buf = radix_tree_lookup(&root->fs_info->cache_radix, bytenr);
 	if (buf) {
 		buf->count++;
 		if (check_tree_block(root, buf))
 			BUG();
 	} else {
-		buf = alloc_tree_block(root, blocknr);
+		buf = alloc_tree_block(root, bytenr, blocksize);
 		if (!buf)
 			return NULL;
-		btrfs_map_bh_to_logical(root, buf, blocknr);
-		ret = pread(buf->fd, &buf->node, root->sectorsize,
-			    buf->dev_blocknr * root->sectorsize);
-		if (ret != root->sectorsize) {
+		btrfs_map_bh_to_logical(root, buf, bytenr);
+		ret = pread(buf->fd, &buf->node, blocksize,
+			    buf->dev_bytenr);
+		if (ret != blocksize) {
 			free(buf);
 			return NULL;
 		}
@@ -163,7 +169,8 @@ int clean_tree_block(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 int btrfs_csum_node(struct btrfs_root *root, struct btrfs_node *node)
 {
 	u32 crc;
-	size_t len = root->sectorsize - BTRFS_CSUM_SIZE;
+	size_t len = btrfs_level_size(root, btrfs_header_level(&node->header)) -
+				      BTRFS_CSUM_SIZE;
 
 	crc = crc32c(0, (char *)(node) + BTRFS_CSUM_SIZE, len);
 	memcpy(node->header.csum, &crc, BTRFS_CRC32_SIZE);
@@ -189,17 +196,17 @@ int write_tree_block(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 {
 	int ret;
 
-	if (buf->blocknr != btrfs_header_blocknr(&buf->node.header))
+	if (buf->bytenr != btrfs_header_bytenr(&buf->node.header))
 		BUG();
-	btrfs_map_bh_to_logical(root, buf, buf->blocknr);
+	btrfs_map_bh_to_logical(root, buf, buf->bytenr);
 	if (check_tree_block(root, buf))
 		BUG();
 
 	btrfs_csum_node(root, &buf->node);
 
-	ret = pwrite(buf->fd, &buf->node, root->sectorsize,
-		     buf->dev_blocknr * root->sectorsize);
-	if (ret != root->sectorsize)
+	ret = pwrite(buf->fd, &buf->node, buf->size,
+		     buf->dev_bytenr);
+	if (ret != buf->size)
 		return ret;
 	return 0;
 }
@@ -226,17 +233,19 @@ static int commit_tree_roots(struct btrfs_trans_handle *trans,
 			     struct btrfs_fs_info *fs_info)
 {
 	int ret;
-	u64 old_extent_block;
+	u64 old_extent_bytenr;
 	struct btrfs_root *tree_root = fs_info->tree_root;
 	struct btrfs_root *extent_root = fs_info->extent_root;
 
 	btrfs_write_dirty_block_groups(trans, fs_info->extent_root);
 	while(1) {
-		old_extent_block = btrfs_root_blocknr(&extent_root->root_item);
-		if (old_extent_block == extent_root->node->blocknr)
+		old_extent_bytenr = btrfs_root_bytenr(&extent_root->root_item);
+		if (old_extent_bytenr == extent_root->node->bytenr)
 			break;
-		btrfs_set_root_blocknr(&extent_root->root_item,
-				       extent_root->node->blocknr);
+		btrfs_set_root_bytenr(&extent_root->root_item,
+				       extent_root->node->bytenr);
+		extent_root->root_item.level =
+			btrfs_header_level(&extent_root->node->node.header);
 		ret = btrfs_update_root(trans, tree_root,
 					&extent_root->root_key,
 					&extent_root->root_item);
@@ -259,7 +268,9 @@ int btrfs_commit_transaction(struct btrfs_trans_handle *trans, struct
 	memcpy(&snap_key, &root->root_key, sizeof(snap_key));
 	root->root_key.offset++;
 
-	btrfs_set_root_blocknr(&root->root_item, root->node->blocknr);
+	btrfs_set_root_bytenr(&root->root_item, root->node->bytenr);
+	root->root_item.level =
+			btrfs_header_level(&root->node->node.header);
 	ret = btrfs_insert_root(trans, root->fs_info->tree_root,
 				&root->root_key, &root->root_item);
 	BUG_ON(ret);
@@ -304,6 +315,17 @@ static int __setup_root(struct btrfs_super_block *super,
 	return 0;
 }
 
+struct btrfs_buffer *read_root_block(struct btrfs_root *root, u64 bytenr,
+					    u8 level)
+{
+	struct btrfs_buffer *node;
+	u32 size = btrfs_level_size(root, level);
+
+	node = read_tree_block(root, bytenr, size);
+	BUG_ON(!node);
+	return node;
+}
+
 static int find_and_setup_root(struct btrfs_super_block *super,
 			       struct btrfs_root *tree_root,
 			       struct btrfs_fs_info *fs_info,
@@ -316,9 +338,9 @@ static int find_and_setup_root(struct btrfs_super_block *super,
 	ret = btrfs_find_last_root(tree_root, objectid,
 				   &root->root_item, &root->root_key);
 	BUG_ON(ret);
-
-	root->node = read_tree_block(root,
-				     btrfs_root_blocknr(&root->root_item));
+	root->node = read_root_block(root,
+				     btrfs_root_bytenr(&root->root_item),
+				     root->root_item.level);
 	BUG_ON(!root->node);
 	return 0;
 }
@@ -369,7 +391,8 @@ struct btrfs_root *open_ctree_fd(int fp, struct btrfs_super_block *super)
 	BUG_ON(ret < 0);
 
 	__setup_root(super, tree_root, fs_info, BTRFS_ROOT_TREE_OBJECTID, fp);
-	tree_root->node = read_tree_block(tree_root, btrfs_super_root(super));
+	tree_root->node = read_root_block(tree_root, btrfs_super_root(super),
+					  btrfs_super_root_level(super));
 	BUG_ON(!tree_root->node);
 
 	ret = find_and_setup_root(super, tree_root, fs_info,
@@ -393,7 +416,9 @@ int write_ctree_super(struct btrfs_trans_handle *trans, struct btrfs_root
 {
 	int ret;
 
-	btrfs_set_super_root(s, root->fs_info->tree_root->node->blocknr);
+	btrfs_set_super_root(s, root->fs_info->tree_root->node->bytenr);
+	btrfs_set_super_root_level(s,
+	      btrfs_header_level(&root->fs_info->tree_root->node->node.header));
 	btrfs_csum_super(root, s);
 
 	ret = pwrite(root->fs_info->fp, s, sizeof(*s),
@@ -444,7 +469,8 @@ int close_ctree(struct btrfs_root *root, struct btrfs_super_block *s)
 				    root->fs_info->tree_root->node);
 	btrfs_block_release(root, root->commit_root);
 	free(root);
-	printf("on close %d blocks are allocated\n", allocated_blocks);
+	printf("on close %llu blocks are allocated\n",
+	       (unsigned long long)allocated_bytes);
 	return 0;
 }
 
@@ -457,15 +483,17 @@ void btrfs_block_release(struct btrfs_root *root, struct btrfs_buffer *buf)
 		BUG_ON(!list_empty(&buf->cache));
 		BUG_ON(!list_empty(&buf->dirty));
 		if (!radix_tree_lookup(&root->fs_info->cache_radix,
-				       buf->blocknr))
+				       buf->bytenr))
 			BUG();
-		radix_tree_delete(&root->fs_info->cache_radix, buf->blocknr);
+
+		radix_tree_delete(&root->fs_info->cache_radix, buf->bytenr);
+		BUG_ON(allocated_bytes == 0);
+		allocated_bytes -= buf->size;
+		BUG_ON(root->fs_info->cache_size == 0);
+		root->fs_info->cache_size -= buf->size;
+
 		memset(buf, 0, sizeof(*buf));
 		free(buf);
-		BUG_ON(allocated_blocks == 0);
-		allocated_blocks--;
-		BUG_ON(root->fs_info->cache_size == 0);
-		root->fs_info->cache_size--;
 	}
 }
 

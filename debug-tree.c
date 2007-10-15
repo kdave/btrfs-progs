@@ -75,7 +75,8 @@ int main(int ac, char **av) {
 			ri = btrfs_item_ptr(leaf, path.slots[0],
 					    struct btrfs_root_item);
 			buf = read_tree_block(root->fs_info->tree_root,
-					      btrfs_root_blocknr(ri));
+					      btrfs_root_bytenr(ri),
+					      root->leafsize);
 			switch(found_key.objectid) {
 			case BTRFS_ROOT_TREE_OBJECTID:
 				printf("root ");
@@ -93,10 +94,10 @@ int main(int ac, char **av) {
 		path.slots[0]++;
 	}
 	btrfs_release_path(root, &path);
-	printf("total blocks %llu\n",
-	       (unsigned long long)btrfs_super_total_blocks(&super));
-	printf("blocks used %llu\n",
-	       (unsigned long long)btrfs_super_blocks_used(&super));
+	printf("total bytes %llu\n",
+	       (unsigned long long)btrfs_super_total_bytes(&super));
+	printf("bytes used %llu\n",
+	       (unsigned long long)btrfs_super_bytes_used(&super));
 	uuidbuf[36] = '\0';
 	uuid_unparse(super.fsid, uuidbuf);
 	printf("uuid %s\n", uuidbuf);

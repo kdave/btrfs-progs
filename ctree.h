@@ -86,7 +86,7 @@ struct btrfs_key {
 struct btrfs_header {
 	u8 csum[BTRFS_CSUM_SIZE];
 	u8 fsid[16]; /* FS specific uuid */
-	__le64 blocknr; /* which block this node is supposed to live in */
+	__le64 bytenr; /* which block this node is supposed to live in */
 	__le64 generation;
 	__le64 owner;
 	__le32 nritems;
@@ -110,16 +110,17 @@ struct btrfs_super_block {
 	u8 csum[BTRFS_CSUM_SIZE];
 	/* the first 3 fields must match struct btrfs_header */
 	u8 fsid[16];    /* FS specific uuid */
-	__le64 blocknr; /* this block number */
+	__le64 bytenr; /* this block number */
 	__le64 magic;
 	__le64 generation;
 	__le64 root;
-	__le64 total_blocks;
-	__le64 blocks_used;
+	__le64 total_bytes;
+	__le64 bytes_used;
 	__le64 root_dir_objectid;
 	__le32 sectorsize;
 	__le32 nodesize;
 	__le32 leafsize;
+	u8 root_level;
 } __attribute__ ((__packed__));
 
 /*
@@ -222,13 +223,14 @@ struct btrfs_dir_item {
 struct btrfs_root_item {
 	struct btrfs_inode_item inode;
 	__le64 root_dirid;
-	__le64 blocknr;
-	__le64 block_limit;
-	__le64 blocks_used;
+	__le64 bytenr;
+	__le64 byte_limit;
+	__le64 bytes_used;
 	__le32 flags;
 	__le32 refs;
 	struct btrfs_disk_key drop_progress;
 	u8 drop_level;
+	u8 level;
 } __attribute__ ((__packed__));
 
 #define BTRFS_FILE_EXTENT_REG 0
@@ -241,8 +243,8 @@ struct btrfs_file_extent_item {
 	 * disk space consumed by the extent, checksum blocks are included
 	 * in these numbers
 	 */
-	__le64 disk_blocknr;
-	__le64 disk_num_blocks;
+	__le64 disk_bytenr;
+	__le64 disk_num_bytes;
 	/*
 	 * the logical offset in file blocks (no csums)
 	 * this extent record is for.  This allows a file extent to point
@@ -254,7 +256,7 @@ struct btrfs_file_extent_item {
 	/*
 	 * the logical number of file blocks (no csums included)
 	 */
-	__le64 num_blocks;
+	__le64 num_bytes;
 } __attribute__ ((__packed__));
 
 struct btrfs_csum_item {
@@ -670,14 +672,14 @@ static inline void btrfs_set_key_type(struct btrfs_key *key, u32 val)
 	key->type = val;
 }
 
-static inline u64 btrfs_header_blocknr(struct btrfs_header *h)
+static inline u64 btrfs_header_bytenr(struct btrfs_header *h)
 {
-	return le64_to_cpu(h->blocknr);
+	return le64_to_cpu(h->bytenr);
 }
 
-static inline void btrfs_set_header_blocknr(struct btrfs_header *h, u64 blocknr)
+static inline void btrfs_set_header_bytenr(struct btrfs_header *h, u64 bytenr)
 {
-	h->blocknr = cpu_to_le64(blocknr);
+	h->bytenr = cpu_to_le64(bytenr);
 }
 
 static inline u64 btrfs_header_generation(struct btrfs_header *h)
@@ -738,14 +740,14 @@ static inline int btrfs_is_leaf(struct btrfs_node *n)
 	return (btrfs_header_level(&n->header) == 0);
 }
 
-static inline u64 btrfs_root_blocknr(struct btrfs_root_item *item)
+static inline u64 btrfs_root_bytenr(struct btrfs_root_item *item)
 {
-	return le64_to_cpu(item->blocknr);
+	return le64_to_cpu(item->bytenr);
 }
 
-static inline void btrfs_set_root_blocknr(struct btrfs_root_item *item, u64 val)
+static inline void btrfs_set_root_bytenr(struct btrfs_root_item *item, u64 val)
 {
-	item->blocknr = cpu_to_le64(val);
+	item->bytenr = cpu_to_le64(val);
 }
 
 static inline u64 btrfs_root_dirid(struct btrfs_root_item *item)
@@ -778,25 +780,25 @@ static inline void btrfs_set_root_flags(struct btrfs_root_item *item, u32 val)
 	item->flags = cpu_to_le32(val);
 }
 
-static inline void btrfs_set_root_blocks_used(struct btrfs_root_item *item,
+static inline void btrfs_set_root_bytes_used(struct btrfs_root_item *item,
 					      u64 val)
 {
-	item->blocks_used = cpu_to_le64(val);
+	item->bytes_used = cpu_to_le64(val);
 }
 
-static inline u64 btrfs_root_blocks_used(struct btrfs_root_item *item)
+static inline u64 btrfs_root_bytes_used(struct btrfs_root_item *item)
 {
-	return le64_to_cpu(item->blocks_used);
+	return le64_to_cpu(item->bytes_used);
 }
 
-static inline u64 btrfs_super_blocknr(struct btrfs_super_block *s)
+static inline u64 btrfs_super_bytenr(struct btrfs_super_block *s)
 {
-	return le64_to_cpu(s->blocknr);
+	return le64_to_cpu(s->bytenr);
 }
 
-static inline void btrfs_set_super_blocknr(struct btrfs_super_block *s, u64 val)
+static inline void btrfs_set_super_bytenr(struct btrfs_super_block *s, u64 val)
 {
-	s->blocknr = cpu_to_le64(val);
+	s->bytenr = cpu_to_le64(val);
 }
 
 static inline u64 btrfs_super_generation(struct btrfs_super_block *s)
@@ -810,6 +812,17 @@ static inline void btrfs_set_super_generation(struct btrfs_super_block *s,
 	s->generation = cpu_to_le64(val);
 }
 
+static inline u8 btrfs_super_root_level(struct btrfs_super_block *s)
+{
+	return s->root_level;
+}
+
+static inline void btrfs_set_super_root_level(struct btrfs_super_block *s,
+					      u8 val)
+{
+	s->root_level = val;
+}
+
 static inline u64 btrfs_super_root(struct btrfs_super_block *s)
 {
 	return le64_to_cpu(s->root);
@@ -820,26 +833,26 @@ static inline void btrfs_set_super_root(struct btrfs_super_block *s, u64 val)
 	s->root = cpu_to_le64(val);
 }
 
-static inline u64 btrfs_super_total_blocks(struct btrfs_super_block *s)
+static inline u64 btrfs_super_total_bytes(struct btrfs_super_block *s)
 {
-	return le64_to_cpu(s->total_blocks);
+	return le64_to_cpu(s->total_bytes);
 }
 
-static inline void btrfs_set_super_total_blocks(struct btrfs_super_block *s,
+static inline void btrfs_set_super_total_bytes(struct btrfs_super_block *s,
 						u64 val)
 {
-	s->total_blocks = cpu_to_le64(val);
+	s->total_bytes = cpu_to_le64(val);
 }
 
-static inline u64 btrfs_super_blocks_used(struct btrfs_super_block *s)
+static inline u64 btrfs_super_bytes_used(struct btrfs_super_block *s)
 {
-	return le64_to_cpu(s->blocks_used);
+	return le64_to_cpu(s->bytes_used);
 }
 
-static inline void btrfs_set_super_blocks_used(struct btrfs_super_block *s,
+static inline void btrfs_set_super_bytes_used(struct btrfs_super_block *s,
 						u64 val)
 {
-	s->blocks_used = cpu_to_le64(val);
+	s->bytes_used = cpu_to_le64(val);
 }
 
 static inline u32 btrfs_super_sectorsize(struct btrfs_super_block *s)
@@ -904,32 +917,32 @@ static inline void btrfs_set_file_extent_type(struct btrfs_file_extent_item *e,
 static inline char *btrfs_file_extent_inline_start(struct
 						   btrfs_file_extent_item *e)
 {
-	return (char *)(&e->disk_blocknr);
+	return (char *)(&e->disk_bytenr);
 }
 
 static inline u32 btrfs_file_extent_calc_inline_size(u32 datasize)
 {
 	return (unsigned long)(&((struct
-		  btrfs_file_extent_item *)NULL)->disk_blocknr) + datasize;
+		  btrfs_file_extent_item *)NULL)->disk_bytenr) + datasize;
 }
 
 static inline u32 btrfs_file_extent_inline_len(struct btrfs_item *e)
 {
 	struct btrfs_file_extent_item *fe = NULL;
-	return btrfs_item_size(e) - (unsigned long)(&fe->disk_blocknr);
+	return btrfs_item_size(e) - (unsigned long)(&fe->disk_bytenr);
 }
 
-static inline u64 btrfs_file_extent_disk_blocknr(struct btrfs_file_extent_item
+static inline u64 btrfs_file_extent_disk_bytenr(struct btrfs_file_extent_item
 						 *e)
 {
-	return le64_to_cpu(e->disk_blocknr);
+	return le64_to_cpu(e->disk_bytenr);
 }
 
-static inline void btrfs_set_file_extent_disk_blocknr(struct
+static inline void btrfs_set_file_extent_disk_bytenr(struct
 						      btrfs_file_extent_item
 						      *e, u64 val)
 {
-	e->disk_blocknr = cpu_to_le64(val);
+	e->disk_bytenr = cpu_to_le64(val);
 }
 
 static inline u64 btrfs_file_extent_generation(struct btrfs_file_extent_item *e)
@@ -944,17 +957,17 @@ static inline void btrfs_set_file_extent_generation(struct
 	e->generation = cpu_to_le64(val);
 }
 
-static inline u64 btrfs_file_extent_disk_num_blocks(struct
+static inline u64 btrfs_file_extent_disk_num_bytes(struct
 						    btrfs_file_extent_item *e)
 {
-	return le64_to_cpu(e->disk_num_blocks);
+	return le64_to_cpu(e->disk_num_bytes);
 }
 
-static inline void btrfs_set_file_extent_disk_num_blocks(struct
+static inline void btrfs_set_file_extent_disk_num_bytes(struct
 							 btrfs_file_extent_item
 							 *e, u64 val)
 {
-	e->disk_num_blocks = cpu_to_le64(val);
+	e->disk_num_bytes = cpu_to_le64(val);
 }
 
 static inline u64 btrfs_file_extent_offset(struct btrfs_file_extent_item *e)
@@ -968,17 +981,17 @@ static inline void btrfs_set_file_extent_offset(struct btrfs_file_extent_item
 	e->offset = cpu_to_le64(val);
 }
 
-static inline u64 btrfs_file_extent_num_blocks(struct btrfs_file_extent_item
+static inline u64 btrfs_file_extent_num_bytes(struct btrfs_file_extent_item
 					       *e)
 {
-	return le64_to_cpu(e->num_blocks);
+	return le64_to_cpu(e->num_bytes);
 }
 
-static inline void btrfs_set_file_extent_num_blocks(struct
+static inline void btrfs_set_file_extent_num_bytes(struct
 						    btrfs_file_extent_item *e,
 						    u64 val)
 {
-	e->num_blocks = cpu_to_le64(val);
+	e->num_bytes = cpu_to_le64(val);
 }
 
 /* helper function to cast into the data area of the leaf. */
@@ -986,15 +999,22 @@ static inline void btrfs_set_file_extent_num_blocks(struct
 	((type *)(btrfs_leaf_data(leaf) + \
 	btrfs_item_offset((leaf)->items + (slot))))
 
+static inline u32 btrfs_level_size(struct btrfs_root *root, int level)
+{
+	if (level == 0)
+		return root->leafsize;
+	return root->nodesize;
+}
 int btrfs_comp_keys(struct btrfs_disk_key *disk, struct btrfs_key *k2);
 int btrfs_extend_item(struct btrfs_trans_handle *trans, struct btrfs_root
 		      *root, struct btrfs_path *path, u32 data_size);
 struct btrfs_buffer *btrfs_alloc_free_block(struct btrfs_trans_handle *trans,
-					    struct btrfs_root *root);
+					    struct btrfs_root *root,
+					    u32 blocksize);
 int btrfs_inc_ref(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 		  struct btrfs_buffer *buf);
 int btrfs_free_extent(struct btrfs_trans_handle *trans, struct btrfs_root
-		      *root, u64 blocknr, u64 num_blocks, int pin);
+		      *root, u64 bytenr, u64 num_bytes, int pin);
 int btrfs_search_slot(struct btrfs_trans_handle *trans, struct btrfs_root
 		      *root, struct btrfs_key *key, struct btrfs_path *p, int
 		      ins_len, int cow);

@@ -12,7 +12,8 @@ INSTALL= install
 prefix ?= /usr/local
 bindir = $(prefix)/bin
 
-progs = btrfsctl btrfsck mkfs.btrfs debug-tree
+#progs = btrfsctl btrfsck mkfs.btrfs debug-tree
+progs = btrfsctl mkfs.btrfs debug-tree
 
 # make C=1 to enable sparse
 ifdef C

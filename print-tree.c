@@ -58,7 +58,7 @@ void btrfs_print_leaf(struct btrfs_root *root, struct btrfs_leaf *l)
 	u32 type;
 
 	printf("leaf %llu ptrs %d free space %d generation %llu owner %llu\n",
-		(unsigned long long)btrfs_header_blocknr(&l->header), nr,
+		(unsigned long long)btrfs_header_bytenr(&l->header), nr,
 		btrfs_leaf_free_space(root, l),
 		(unsigned long long)btrfs_header_generation(&l->header),
 		(unsigned long long)btrfs_header_owner(&l->header));
@@ -93,8 +93,9 @@ void btrfs_print_leaf(struct btrfs_root *root, struct btrfs_leaf *l)
 			break;
 		case BTRFS_ROOT_ITEM_KEY:
 			ri = btrfs_item_ptr(l, i, struct btrfs_root_item);
-			printf("\t\troot data blocknr %llu dirid %llu refs %u\n",
-				(unsigned long long)btrfs_root_blocknr(ri),
+			printf("\t\troot data bytenr %llu level %d dirid %llu refs %u\n",
+				(unsigned long long)btrfs_root_bytenr(ri),
+				ri->level,
 				(unsigned long long)btrfs_root_dirid(ri),
 				btrfs_root_refs(ri));
 			if (1 || btrfs_root_refs(ri) == 0) {
@@ -128,12 +129,12 @@ void btrfs_print_leaf(struct btrfs_root *root, struct btrfs_leaf *l)
 			           btrfs_file_extent_inline_len(l->items + i));
 				break;
 			}
-			printf("\t\textent data disk block %llu nr %llu\n",
-			       (unsigned long long)btrfs_file_extent_disk_blocknr(fi),
-			       (unsigned long long)btrfs_file_extent_disk_num_blocks(fi));
+			printf("\t\textent data disk byte %llu nr %llu\n",
+			       (unsigned long long)btrfs_file_extent_disk_bytenr(fi),
+			       (unsigned long long)btrfs_file_extent_disk_num_bytes(fi));
 			printf("\t\textent data offset %llu nr %llu\n",
 			  (unsigned long long)btrfs_file_extent_offset(fi),
-			  (unsigned long long)btrfs_file_extent_num_blocks(fi));
+			  (unsigned long long)btrfs_file_extent_num_bytes(fi));
 			break;
 		case BTRFS_BLOCK_GROUP_ITEM_KEY:
 			bi = btrfs_item_ptr(l, i,
@@ -155,6 +156,7 @@ void btrfs_print_tree(struct btrfs_root *root, struct btrfs_buffer *t)
 	int i;
 	u32 nr;
 	struct btrfs_node *c;
+	u32 size;
 
 	if (!t)
 		return;
@@ -165,24 +167,28 @@ void btrfs_print_tree(struct btrfs_root *root, struct btrfs_buffer *t)
 		return;
 	}
 	printf("node %llu level %d ptrs %d free %u generation %llu owner %llu\n",
-	       (unsigned long long)t->blocknr,
+	       (unsigned long long)t->bytenr,
 	        btrfs_header_level(&c->header), nr,
 		(u32)BTRFS_NODEPTRS_PER_BLOCK(root) - nr,
 		(unsigned long long)btrfs_header_generation(&c->header),
 		(unsigned long long)btrfs_header_owner(&c->header));
 	fflush(stdout);
+	size = btrfs_level_size(root, btrfs_header_level(&c->header) - 1);
 	for (i = 0; i < nr; i++) {
-		printf("\tkey %d (%llu %x %llu) block %llu\n",
+		u64 blocknr = btrfs_node_blockptr(c, i);
+		printf("\tkey %d (%llu %x %llu) block %llu (%llu)\n",
 		       i,
 		       (unsigned long long)c->ptrs[i].key.objectid,
 		       c->ptrs[i].key.type,
 		       (unsigned long long)c->ptrs[i].key.offset,
-		       (unsigned long long)btrfs_node_blockptr(c, i));
+		       (unsigned long long)blocknr,
+		       (unsigned long long)blocknr / size);
 		fflush(stdout);
 	}
 	for (i = 0; i < nr; i++) {
 		struct btrfs_buffer *next_buf = read_tree_block(root,
-						btrfs_node_blockptr(c, i));
+						btrfs_node_blockptr(c, i),
+						size);
 		struct btrfs_node *next = &next_buf->node;
 		if (btrfs_is_leaf(next) &&
 		    btrfs_header_level(&c->header) != 1)
