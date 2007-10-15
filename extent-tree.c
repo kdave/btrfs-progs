@@ -25,9 +25,6 @@
 #include "print-tree.h"
 #include "transaction.h"
 
-static int find_free_extent(struct btrfs_trans_handle *trans, struct btrfs_root
-			    *orig_root, u64 num_blocks, u64 search_start, u64
-			    search_end, struct btrfs_key *ins);
 static int finish_current_insert(struct btrfs_trans_handle *trans, struct
 				 btrfs_root *extent_root);
 static int run_pending(struct btrfs_trans_handle *trans, struct btrfs_root
@@ -40,7 +37,6 @@ static int run_pending(struct btrfs_trans_handle *trans, struct btrfs_root
  * other allocations are done.  The pending tag is also used in the same
  * manner for deletes.
  */
-#define CTREE_EXTENT_PENDING_DEL 0
 
 static int inc_block_ref(struct btrfs_trans_handle *trans, struct btrfs_root
 			 *root, u64 blocknr)
@@ -50,11 +46,8 @@ static int inc_block_ref(struct btrfs_trans_handle *trans, struct btrfs_root
 	struct btrfs_key key;
 	struct btrfs_leaf *l;
 	struct btrfs_extent_item *item;
-	struct btrfs_key ins;
 	u32 refs;
 
-	find_free_extent(trans, root->fs_info->extent_root, 0, 0, (u64)-1,
-			 &ins);
 	btrfs_init_path(&path);
 	key.objectid = blocknr;
 	btrfs_set_key_type(&key, BTRFS_EXTENT_ITEM_KEY);
@@ -126,11 +119,7 @@ static int write_one_cache_group(struct btrfs_trans_handle *trans,
 	int pending_ret;
 	struct btrfs_root *extent_root = root->fs_info->extent_root;
 	struct btrfs_block_group_item *bi;
-	struct btrfs_key ins;
 
-	ret = find_free_extent(trans, root, 0, 0, (u64)-1, &ins);
-	if (ret)
-		return ret;
 	ret = btrfs_search_slot(trans, root->fs_info->extent_root,
 				&cache->key, path, 0, 1);
 	BUG_ON(ret);
@@ -220,23 +209,18 @@ static int update_block_group(struct btrfs_trans_handle *trans,
 int btrfs_finish_extent_commit(struct btrfs_trans_handle *trans, struct
 			       btrfs_root *root)
 {
-	unsigned long gang[8];
 	u64 first = 0;
-	int ret;
-	int i;
+	struct pending_extent *pe;
+	struct pending_extent *next;
 
-	while(1) {
-		ret = radix_tree_gang_lookup(&root->fs_info->pinned_radix,
-					     (void *)gang, 0,
-					     ARRAY_SIZE(gang));
-		if (!ret)
-			break;
-		if (!first)
-			first = gang[0];
-		for (i = 0; i < ret; i++) {
-			radix_tree_delete(&root->fs_info->pinned_radix,
-					  gang[i]);
-		}
+	pe = find_first_pending_extent(&root->fs_info->pinned_tree, 0);
+	if (pe)
+		first = pe->start;
+	while(pe) {
+		next = next_pending_extent(pe);
+		remove_pending_extent(&root->fs_info->pinned_tree, pe);
+		free_pending_extent(pe);
+		pe = next;
 	}
 	root->fs_info->last_insert.objectid = first;
 	root->fs_info->last_insert.offset = 0;
@@ -248,19 +232,31 @@ static int finish_current_insert(struct btrfs_trans_handle *trans, struct
 {
 	struct btrfs_key ins;
 	struct btrfs_extent_item extent_item;
-	int i;
 	int ret;
 	u64 super_blocks_used, root_blocks_used;
 	struct btrfs_fs_info *info = extent_root->fs_info;
+	struct pending_extent *pe;
+	struct pending_extent *next;
+	struct pending_tree *pending_tree = &info->pending_tree;
 
 	btrfs_set_extent_refs(&extent_item, 1);
 	btrfs_set_extent_owner(&extent_item, extent_root->root_key.objectid);
 	ins.offset = 1;
 	btrfs_set_key_type(&ins, BTRFS_EXTENT_ITEM_KEY);
+	pe = find_first_pending_extent(pending_tree, 0);
+	while(pe) {
+		ins.offset = pe->size;
+		ins.objectid = pe->start;
 
-	for (i = 0; i < extent_root->fs_info->current_insert.type; i++) {
-		ins.objectid = extent_root->fs_info->current_insert.objectid +
-				i;
+		remove_pending_extent(pending_tree, pe);
+		next = next_pending_extent(pe);
+		if (!next)
+			next = find_first_pending_extent(pending_tree, 0);
+
+		free_pending_extent(pe);
+		pe = next;
+
+
 		super_blocks_used = btrfs_super_blocks_used(info->disk_super);
 		btrfs_set_super_blocks_used(info->disk_super,
 					    super_blocks_used + 1);
@@ -274,7 +270,6 @@ static int finish_current_insert(struct btrfs_trans_handle *trans, struct
 		}
 		BUG_ON(ret);
 	}
-	extent_root->fs_info->current_insert.offset = 0;
 	return 0;
 }
 
@@ -290,7 +285,6 @@ static int __free_extent(struct btrfs_trans_handle *trans, struct btrfs_root
 	struct btrfs_root *extent_root = info->extent_root;
 	int ret;
 	struct btrfs_extent_item *ei;
-	struct btrfs_key ins;
 	u32 refs;
 
 	BUG_ON(pin && num_blocks != 1);
@@ -298,7 +292,6 @@ static int __free_extent(struct btrfs_trans_handle *trans, struct btrfs_root
 	btrfs_set_key_type(&key, BTRFS_EXTENT_ITEM_KEY);
 	key.offset = num_blocks;
 
-	find_free_extent(trans, root, 0, 0, (u64)-1, &ins);
 	btrfs_init_path(&path);
 	ret = btrfs_search_slot(trans, extent_root, &key, &path, -1, 1);
 	if (ret) {
@@ -316,12 +309,9 @@ static int __free_extent(struct btrfs_trans_handle *trans, struct btrfs_root
 		u64 super_blocks_used, root_blocks_used;
 		if (pin) {
 			int err;
-			unsigned long bl = blocknr;
-			radix_tree_preload(GFP_KERNEL);
-			err = radix_tree_insert(&info->pinned_radix,
-						blocknr, (void *)bl);
+			err = insert_pending_extent(&info->pinned_tree,
+						    blocknr, 1);
 			BUG_ON(err);
-			radix_tree_preload_end();
 		}
 		super_blocks_used = btrfs_super_blocks_used(info->disk_super);
 		btrfs_set_super_blocks_used(info->disk_super,
@@ -352,25 +342,21 @@ static int del_pending_extents(struct btrfs_trans_handle *trans, struct
 			       btrfs_root *extent_root)
 {
 	int ret;
-	struct btrfs_buffer *gang[4];
-	int i;
+	struct pending_extent *pe;
+	struct pending_extent *next;
+	struct pending_tree *del_pending = &extent_root->fs_info->del_pending;
 
-	while(1) {
-		ret = radix_tree_gang_lookup_tag(
-					&extent_root->fs_info->cache_radix,
-					(void *)gang, 0,
-					ARRAY_SIZE(gang),
-					CTREE_EXTENT_PENDING_DEL);
-		if (!ret)
-			break;
-		for (i = 0; i < ret; i++) {
-			ret = __free_extent(trans, extent_root,
-					    gang[i]->blocknr, 1, 1);
-			radix_tree_tag_clear(&extent_root->fs_info->cache_radix,
-					     gang[i]->blocknr,
-					     CTREE_EXTENT_PENDING_DEL);
-			btrfs_block_release(extent_root, gang[i]);
-		}
+	pe = find_first_pending_extent(del_pending, 0);
+	while(pe) {
+		remove_pending_extent(del_pending, pe);
+		ret = __free_extent(trans, extent_root,
+				    pe->start, 1, 1);
+		BUG_ON(ret);
+		next = next_pending_extent(pe);
+		if (!next)
+			next = find_first_pending_extent(del_pending, 0);
+		free_pending_extent(pe);
+		pe = next;
 	}
 	return 0;
 }
@@ -378,9 +364,7 @@ static int del_pending_extents(struct btrfs_trans_handle *trans, struct
 static int run_pending(struct btrfs_trans_handle *trans, struct btrfs_root
 		       *extent_root)
 {
-	while(radix_tree_tagged(&extent_root->fs_info->cache_radix,
-				CTREE_EXTENT_PENDING_DEL))
-		del_pending_extents(trans, extent_root);
+	del_pending_extents(trans, extent_root);
 	return 0;
 }
 
@@ -392,14 +376,13 @@ int btrfs_free_extent(struct btrfs_trans_handle *trans, struct btrfs_root
 		      *root, u64 blocknr, u64 num_blocks, int pin)
 {
 	struct btrfs_root *extent_root = root->fs_info->extent_root;
-	struct btrfs_buffer *t;
 	int pending_ret;
 	int ret;
 
 	if (root == extent_root) {
-		t = find_tree_block(root, blocknr);
-		radix_tree_tag_set(&root->fs_info->cache_radix, blocknr,
-				   CTREE_EXTENT_PENDING_DEL);
+		ret = insert_pending_extent(&root->fs_info->del_pending,
+					    blocknr, num_blocks);
+		BUG_ON(ret);
 		return 0;
 	}
 	ret = __free_extent(trans, root, blocknr, num_blocks, pin);
@@ -425,13 +408,11 @@ static int find_free_extent(struct btrfs_trans_handle *trans, struct btrfs_root
 	u64 hole_size = 0;
 	int slot = 0;
 	u64 last_block = 0;
-	u64 test_block;
 	int start_found;
 	struct btrfs_leaf *l;
 	struct btrfs_root * root = orig_root->fs_info->extent_root;
 	int total_needed = num_blocks;
 
-	total_needed += (btrfs_header_level(&root->node->node.header) + 1) * 3;
 	if (root->fs_info->last_insert.objectid > search_start)
 		search_start = root->fs_info->last_insert.objectid;
 
@@ -496,18 +477,16 @@ check_pending:
 	 */
 	btrfs_release_path(root, &path);
 	BUG_ON(ins->objectid < search_start);
-	for (test_block = ins->objectid;
-	     test_block < ins->objectid + total_needed; test_block++) {
-		if (radix_tree_lookup(&root->fs_info->pinned_radix,
-				      test_block)) {
-			search_start = test_block + 1;
-			goto check_failed;
-		}
+	if (find_pending_extent(&root->fs_info->pinned_tree,
+				ins->objectid, total_needed)) {
+		search_start = ins->objectid + total_needed;
+		goto check_failed;
 	}
-	BUG_ON(root->fs_info->current_insert.offset);
-	root->fs_info->current_insert.offset = total_needed - num_blocks;
-	root->fs_info->current_insert.objectid = ins->objectid + num_blocks;
-	root->fs_info->current_insert.type = 0;
+	if (find_pending_extent(&root->fs_info->pending_tree,
+				ins->objectid, total_needed)) {
+		search_start = ins->objectid + total_needed;
+		goto check_failed;
+	}
 	root->fs_info->last_insert.objectid = ins->objectid;
 	ins->offset = num_blocks;
 	return 0;
@@ -537,21 +516,17 @@ static int alloc_extent(struct btrfs_trans_handle *trans, struct btrfs_root
 	btrfs_set_extent_refs(&extent_item, 1);
 	btrfs_set_extent_owner(&extent_item, owner);
 
-	if (root == extent_root) {
-		BUG_ON(extent_root->fs_info->current_insert.offset == 0);
-		BUG_ON(num_blocks != 1);
-		BUG_ON(extent_root->fs_info->current_insert.type ==
-		       extent_root->fs_info->current_insert.offset);
-		ins->offset = 1;
-		ins->objectid = extent_root->fs_info->current_insert.objectid +
-				extent_root->fs_info->current_insert.type++;
-		return 0;
-	}
 	ret = find_free_extent(trans, root, num_blocks, search_start,
 			       search_end, ins);
 	if (ret)
 		return ret;
 
+	if (root == extent_root) {
+		ret = insert_pending_extent(&root->fs_info->pending_tree,
+					    ins->objectid, ins->offset);
+		BUG_ON(ret);
+		return 0;
+	}
 	super_blocks_used = btrfs_super_blocks_used(info->disk_super);
 	btrfs_set_super_blocks_used(info->disk_super, super_blocks_used +
 				    num_blocks);
@@ -803,14 +778,10 @@ int btrfs_insert_block_group(struct btrfs_trans_handle *trans,
 			     struct btrfs_key *key,
 			     struct btrfs_block_group_item *bi)
 {
-	struct btrfs_key ins;
 	int ret;
 	int pending_ret;
 
 	root = root->fs_info->extent_root;
-	ret = find_free_extent(trans, root, 0, 0, (u64)-1, &ins);
-	if (ret)
-		return ret;
 	ret = btrfs_insert_item(trans, root, key, bi, sizeof(*bi));
 	finish_current_insert(trans, root);
 	pending_ret = run_pending(trans, root);

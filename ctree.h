@@ -21,6 +21,7 @@
 
 #include "list.h"
 #include "kerncompat.h"
+#include "pending-extent.h"
 
 struct btrfs_trans_handle;
 
@@ -280,11 +281,12 @@ struct btrfs_fs_info {
 	struct btrfs_root *fs_root;
 	struct btrfs_root *extent_root;
 	struct btrfs_root *tree_root;
-	struct btrfs_key current_insert;
 	struct btrfs_key last_insert;
 	struct radix_tree_root cache_radix;
-	struct radix_tree_root pinned_radix;
 	struct radix_tree_root block_group_radix;
+	struct pending_tree pending_tree;
+	struct pending_tree pinned_tree;
+	struct pending_tree del_pending;
 	struct list_head trans;
 	struct list_head cache;
 	u64 last_inode_alloc;
@@ -298,8 +300,7 @@ struct btrfs_fs_info {
 
 /*
  * in ram representation of the tree.  extent_root is used for all allocations
- * and for the extent tree extent_root root.  current_insert is used
- * only for the extent tree.
+ * and for the extent tree extent_root root.
  */
 struct btrfs_root {
 	struct btrfs_buffer *node;

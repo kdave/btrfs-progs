@@ -343,10 +343,12 @@ struct btrfs_root *open_ctree_fd(int fp, struct btrfs_super_block *super)
 	int ret;
 
 	INIT_RADIX_TREE(&fs_info->cache_radix, GFP_KERNEL);
-	INIT_RADIX_TREE(&fs_info->pinned_radix, GFP_KERNEL);
 	INIT_RADIX_TREE(&fs_info->block_group_radix, GFP_KERNEL);
 	INIT_LIST_HEAD(&fs_info->trans);
 	INIT_LIST_HEAD(&fs_info->cache);
+	pending_tree_init(&fs_info->pending_tree);
+	pending_tree_init(&fs_info->pinned_tree);
+	pending_tree_init(&fs_info->del_pending);
 	fs_info->cache_size = 0;
 	fs_info->fp = fp;
 	fs_info->running_transaction = NULL;
@@ -356,7 +358,6 @@ struct btrfs_root *open_ctree_fd(int fp, struct btrfs_super_block *super)
 	fs_info->last_inode_alloc = 0;
 	fs_info->last_inode_alloc_dirid = 0;
 	fs_info->disk_super = super;
-	memset(&fs_info->current_insert, 0, sizeof(fs_info->current_insert));
 	memset(&fs_info->last_insert, 0, sizeof(fs_info->last_insert));
 
 	ret = pread(fp, super, sizeof(struct btrfs_super_block),

@@ -2,7 +2,7 @@ CC=gcc
 CFLAGS = -g -Wall -fno-strict-aliasing -Werror
 objects = ctree.o disk-io.o radix-tree.o extent-tree.o print-tree.o \
 	  root-tree.o dir-item.o hash.o file-item.o inode-item.o \
-	  inode-map.o crc32c.o\
+	  inode-map.o crc32c.o rbtree.o pending-extent.o \
 #
 CHECKFLAGS=-D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ -Wbitwise \
 		-Wuninitialized -Wshadow -Wundef
