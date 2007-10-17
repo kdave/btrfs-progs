@@ -276,8 +276,10 @@ struct btrfs_block_group_item {
 } __attribute__ ((__packed__));
 
 struct btrfs_block_group_cache {
+	struct cache_extent cache;
 	struct btrfs_key key;
 	struct btrfs_block_group_item item;
+	int dirty;
 };
 
 struct btrfs_fs_info {
@@ -286,7 +288,7 @@ struct btrfs_fs_info {
 	struct btrfs_root *tree_root;
 	struct btrfs_key last_insert;
 	struct cache_tree extent_cache;
-	struct radix_tree_root block_group_radix;
+	struct cache_tree block_group_cache;
 	struct cache_tree pending_tree;
 	struct cache_tree pinned_tree;
 	struct cache_tree del_pending;

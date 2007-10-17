@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS = -g -Wall -fno-strict-aliasing -Werror
+CFLAGS = -g -Wall -fno-strict-aliasing -Werror -D_FILE_OFFSET_BITS=64
 objects = ctree.o disk-io.o radix-tree.o extent-tree.o print-tree.o \
 	  root-tree.o dir-item.o hash.o file-item.o inode-item.o \
 	  inode-map.o crc32c.o rbtree.o extent-cache.o \

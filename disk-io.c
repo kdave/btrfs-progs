@@ -377,13 +377,13 @@ struct btrfs_root *open_ctree_fd(int fp, struct btrfs_super_block *super)
 	struct btrfs_fs_info *fs_info = malloc(sizeof(*fs_info));
 	int ret;
 
-	INIT_RADIX_TREE(&fs_info->block_group_radix, GFP_KERNEL);
 	INIT_LIST_HEAD(&fs_info->trans);
 	INIT_LIST_HEAD(&fs_info->cache);
 	cache_tree_init(&fs_info->extent_cache);
 	cache_tree_init(&fs_info->pending_tree);
 	cache_tree_init(&fs_info->pinned_tree);
 	cache_tree_init(&fs_info->del_pending);
+	cache_tree_init(&fs_info->block_group_cache);
 	fs_info->cache_size = 0;
 	fs_info->fp = fp;
 	fs_info->running_transaction = NULL;

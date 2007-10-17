@@ -28,7 +28,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <uuid/uuid.h>
-#include "radix-tree.h"
 #include <linux/fs.h>
 #include "kerncompat.h"
 #include "ctree.h"
@@ -91,6 +90,7 @@ static int make_block_groups(struct btrfs_trans_handle *trans,
 	int ret;
 	u64 nr = 0;
 	struct btrfs_block_group_cache *cache;
+	struct cache_tree *bg_cache = &root->fs_info->block_group_cache;
 
 	root = root->fs_info->extent_root;
 
@@ -99,13 +99,14 @@ static int make_block_groups(struct btrfs_trans_handle *trans,
 	cache = malloc(sizeof(*cache));
 	cache->key.objectid = 0;
 	cache->key.offset = group_size;
+	cache->cache.start = 0;
+	cache->cache.size = group_size;
 	btrfs_set_key_type(&cache->key, BTRFS_BLOCK_GROUP_ITEM_KEY);
 
 	memset(&cache->item, 0, sizeof(cache->item));
 	btrfs_set_block_group_used(&cache->item,
 			   btrfs_super_bytes_used(root->fs_info->disk_super));
-	ret = radix_tree_insert(&root->fs_info->block_group_radix,
-				group_size - 1, (void *)cache);
+	ret = insert_existing_cache_extent(bg_cache, &cache->cache);
 	BUG_ON(ret);
 
 	total_bytes = btrfs_super_total_bytes(root->fs_info->disk_super);
@@ -114,14 +115,14 @@ static int make_block_groups(struct btrfs_trans_handle *trans,
 		cache = malloc(sizeof(*cache));
 		cache->key.objectid = cur_start;
 		cache->key.offset = group_size;
+		cache->cache.start = cur_start;
+		cache->cache.size = group_size;
 		btrfs_set_key_type(&cache->key, BTRFS_BLOCK_GROUP_ITEM_KEY);
 		memset(&cache->item, 0, sizeof(cache->item));
 		if (nr % 3)
 			cache->item.flags |= BTRFS_BLOCK_GROUP_DATA;
 
-		ret = radix_tree_insert(&root->fs_info->block_group_radix,
-					cur_start + group_size - 1,
-					(void *)cache);
+		ret = insert_existing_cache_extent(bg_cache, &cache->cache);
 		BUG_ON(ret);
 		cur_start += group_size;
 		nr++;
@@ -129,9 +130,11 @@ static int make_block_groups(struct btrfs_trans_handle *trans,
 	/* then insert all the items */
 	cur_start = 0;
 	while(cur_start < total_bytes) {
-		cache = radix_tree_lookup(&root->fs_info->block_group_radix,
-					  cur_start + group_size - 1);
-		BUG_ON(!cache);
+		struct cache_extent *ce;
+		ce = find_first_cache_extent(bg_cache, cur_start);
+		BUG_ON(!ce);
+		cache = container_of(ce, struct btrfs_block_group_cache,
+					cache);
 		ret = btrfs_insert_block_group(trans, root, &cache->key,
 					       &cache->item);
 		BUG_ON(ret);
@@ -352,8 +355,6 @@ int main(int ac, char **av)
 	u32 nodesize = 8 * 1024;
 	char *buf = malloc(sectorsize);
 	char *realpath_name;
-
-	radix_tree_init();
 
 	while(1) {
 		int c;

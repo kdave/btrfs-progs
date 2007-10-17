@@ -134,30 +134,29 @@ static int write_one_cache_group(struct btrfs_trans_handle *trans,
 int btrfs_write_dirty_block_groups(struct btrfs_trans_handle *trans,
 				    struct btrfs_root *root)
 {
-	struct btrfs_block_group_cache *cache[8];
-	int ret;
+	struct btrfs_block_group_cache *bg;
+	struct cache_extent *cache;
 	int err = 0;
 	int werr = 0;
-	struct radix_tree_root *radix = &root->fs_info->block_group_radix;
-	int i;
+	struct cache_tree *bg_cache = &root->fs_info->block_group_cache;
 	struct btrfs_path path;
 	btrfs_init_path(&path);
+	u64 start = 0;
 
 	while(1) {
-		ret = radix_tree_gang_lookup_tag(radix, (void *)cache,
-						 0, ARRAY_SIZE(cache),
-						 BTRFS_BLOCK_GROUP_DIRTY);
-		if (!ret)
+		cache = find_first_cache_extent(bg_cache, start);
+		if (!cache)
 			break;
-		for (i = 0; i < ret; i++) {
-			radix_tree_tag_clear(radix, cache[i]->key.objectid +
-					     cache[i]->key.offset -1,
-					     BTRFS_BLOCK_GROUP_DIRTY);
+		bg = container_of(cache, struct btrfs_block_group_cache,
+					cache);
+		start = cache->start + cache->size;
+		if (bg->dirty) {
 			err = write_one_cache_group(trans, root,
-						    &path, cache[i]);
+						    &path, bg);
 			if (err)
 				werr = err;
 		}
+		bg->dirty = 0;
 	}
 	return werr;
 }
@@ -166,26 +165,25 @@ static int update_block_group(struct btrfs_trans_handle *trans,
 			      struct btrfs_root *root,
 			      u64 bytenr, u64 num, int alloc)
 {
-	struct btrfs_block_group_cache *cache;
+	struct btrfs_block_group_cache *bg;
+	struct cache_extent *cache;
 	struct btrfs_fs_info *info = root->fs_info;
 	u64 total = num;
 	u64 old_val;
 	u64 byte_in_group;
-	int ret;
 
 	while(total) {
-		ret = radix_tree_gang_lookup(&info->block_group_radix,
-					     (void *)&cache, bytenr, 1);
-		if (!ret)
+		cache = find_first_cache_extent(&info->block_group_cache,
+						bytenr);
+		if (!cache)
 			return -1;
-		radix_tree_tag_set(&info->block_group_radix,
-				   cache->key.objectid + cache->key.offset - 1,
-				   BTRFS_BLOCK_GROUP_DIRTY);
-
-		byte_in_group = bytenr - cache->key.objectid;
-		old_val = btrfs_block_group_used(&cache->item);
-		if (total > cache->key.offset - byte_in_group)
-			num = cache->key.offset - byte_in_group;
+		bg = container_of(cache, struct btrfs_block_group_cache,
+					cache);
+		bg->dirty = 1;
+		byte_in_group = bytenr - bg->key.objectid;
+		old_val = btrfs_block_group_used(&bg->item);
+		if (total > bg->key.offset - byte_in_group)
+			num = bg->key.offset - byte_in_group;
 		else
 			num = total;
 		total -= num;
@@ -194,7 +192,7 @@ static int update_block_group(struct btrfs_trans_handle *trans,
 			old_val += num;
 		else
 			old_val -= num;
-		btrfs_set_block_group_used(&cache->item, old_val);
+		btrfs_set_block_group_used(&bg->item, old_val);
 	}
 	return 0;
 }
@@ -688,22 +686,17 @@ int btrfs_drop_snapshot(struct btrfs_trans_handle *trans, struct btrfs_root
 
 int btrfs_free_block_groups(struct btrfs_fs_info *info)
 {
-	int ret;
-	struct btrfs_block_group_cache *cache[8];
-	int i;
+	struct btrfs_block_group_cache *bg;
+	struct cache_extent *cache;
 
 	while(1) {
-		ret = radix_tree_gang_lookup(&info->block_group_radix,
-					     (void *)cache, 0,
-					     ARRAY_SIZE(cache));
-		if (!ret)
+		cache = find_first_cache_extent(&info->block_group_cache, 0);
+		if (!cache)
 			break;
-		for (i = 0; i < ret; i++) {
-			radix_tree_delete(&info->block_group_radix,
-					  cache[i]->key.objectid +
-					  cache[i]->key.offset - 1);
-			free(cache[i]);
-		}
+		bg = container_of(cache, struct btrfs_block_group_cache,
+					cache);
+		remove_cache_extent(&info->block_group_cache, cache);
+		free(bg);
 	}
 	return 0;
 }
@@ -714,13 +707,15 @@ int btrfs_read_block_groups(struct btrfs_root *root)
 	int ret;
 	int err = 0;
 	struct btrfs_block_group_item *bi;
-	struct btrfs_block_group_cache *cache;
+	struct btrfs_block_group_cache *bg;
+	struct cache_tree *bg_cache;
 	struct btrfs_key key;
 	struct btrfs_key found_key;
 	struct btrfs_leaf *leaf;
 	u64 group_size = BTRFS_BLOCK_GROUP_SIZE;
 
 	root = root->fs_info->extent_root;
+	bg_cache = &root->fs_info->block_group_cache;
 	key.objectid = 0;
 	key.offset = group_size;
 	btrfs_set_key_type(&key, BTRFS_BLOCK_GROUP_ITEM_KEY);
@@ -736,20 +731,20 @@ int btrfs_read_block_groups(struct btrfs_root *root)
 		leaf = &path.nodes[0]->leaf;
 		btrfs_disk_key_to_cpu(&found_key,
 				      &leaf->items[path.slots[0]].key);
-		cache = malloc(sizeof(*cache));
-		if (!cache) {
+		bg = malloc(sizeof(*bg));
+		if (!bg) {
 			err = -1;
 			break;
 		}
 		bi = btrfs_item_ptr(leaf, path.slots[0],
 				    struct btrfs_block_group_item);
-		memcpy(&cache->item, bi, sizeof(*bi));
-		memcpy(&cache->key, &found_key, sizeof(found_key));
+		memcpy(&bg->item, bi, sizeof(*bi));
+		memcpy(&bg->key, &found_key, sizeof(found_key));
 		key.objectid = found_key.objectid + found_key.offset;
 		btrfs_release_path(root, &path);
-		ret = radix_tree_insert(&root->fs_info->block_group_radix,
-					found_key.objectid +
-					found_key.offset - 1, (void *)cache);
+		bg->cache.start = found_key.objectid;
+		bg->cache.size = found_key.offset;
+		ret = insert_existing_cache_extent(bg_cache, &bg->cache);
 		BUG_ON(ret);
 		if (key.objectid >=
 		    btrfs_super_total_bytes(root->fs_info->disk_super))
