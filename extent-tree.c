@@ -744,6 +744,7 @@ int btrfs_read_block_groups(struct btrfs_root *root)
 		btrfs_release_path(root, &path);
 		bg->cache.start = found_key.objectid;
 		bg->cache.size = found_key.offset;
+		bg->dirty = 0;
 		ret = insert_existing_cache_extent(bg_cache, &bg->cache);
 		BUG_ON(ret);
 		if (key.objectid >=
