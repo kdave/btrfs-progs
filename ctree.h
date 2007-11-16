@@ -53,7 +53,8 @@ struct btrfs_trans_handle;
 #define BTRFS_FT_FIFO		5
 #define BTRFS_FT_SOCK		6
 #define BTRFS_FT_SYMLINK	7
-#define BTRFS_FT_MAX		8
+#define BTRFS_FT_XATTR		8
+#define BTRFS_FT_MAX		9
 
 /*
  * the key defines the order in the tree, and so it also defines (optimal)
@@ -216,7 +217,7 @@ struct btrfs_inline_data_item {
 
 struct btrfs_dir_item {
 	struct btrfs_disk_key location;
-	__le16 flags;
+	__le16 data_len;
 	__le16 name_len;
 	u8 type;
 } __attribute__ ((__packed__));
@@ -339,8 +340,9 @@ struct btrfs_root {
  * the FS
  */
 #define BTRFS_INODE_ITEM_KEY		1
+#define BTRFS_XATTR_ITEM_KEY            2
 
-/* reserve 2-15 close to the inode for later flexibility */
+/* reserve 3-15 close to the inode for later flexibility */
 
 /*
  * dir items are the name -> inode pointers in a directory.  There is one
@@ -587,16 +589,6 @@ static inline void btrfs_set_item_size(struct btrfs_item *item, u32 val)
 	item->size = cpu_to_le32(val);
 }
 
-static inline u16 btrfs_dir_flags(struct btrfs_dir_item *d)
-{
-	return le16_to_cpu(d->flags);
-}
-
-static inline void btrfs_set_dir_flags(struct btrfs_dir_item *d, u16 val)
-{
-	d->flags = cpu_to_le16(val);
-}
-
 static inline u8 btrfs_dir_type(struct btrfs_dir_item *d)
 {
 	return d->type;
@@ -615,6 +607,16 @@ static inline u16 btrfs_dir_name_len(struct btrfs_dir_item *d)
 static inline void btrfs_set_dir_name_len(struct btrfs_dir_item *d, u16 val)
 {
 	d->name_len = cpu_to_le16(val);
+}
+
+static inline u16 btrfs_dir_data_len(struct btrfs_dir_item *d)
+{
+	return le16_to_cpu(d->data_len);
+}
+
+static inline void btrfs_set_dir_data_len(struct btrfs_dir_item *d, u16 val)
+{
+	d->data_len = cpu_to_le16(val);
 }
 
 static inline void btrfs_disk_key_to_cpu(struct btrfs_key *cpu,

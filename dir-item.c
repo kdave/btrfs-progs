@@ -82,8 +82,8 @@ int btrfs_insert_dir_item(struct btrfs_trans_handle *trans, struct btrfs_root
 	}
 	btrfs_cpu_key_to_disk(&dir_item->location, location);
 	btrfs_set_dir_type(dir_item, type);
-	btrfs_set_dir_flags(dir_item, 0);
 	btrfs_set_dir_name_len(dir_item, name_len);
+	btrfs_set_dir_data_len(dir_item, 0);
 	name_ptr = (char *)(dir_item + 1);
 	memcpy(name_ptr, name, name_len);
 
@@ -101,8 +101,8 @@ int btrfs_insert_dir_item(struct btrfs_trans_handle *trans, struct btrfs_root
 	}
 	btrfs_cpu_key_to_disk(&dir_item->location, location);
 	btrfs_set_dir_type(dir_item, type);
-	btrfs_set_dir_flags(dir_item, 0);
 	btrfs_set_dir_name_len(dir_item, name_len);
+	btrfs_set_dir_data_len(dir_item, 0);
 	name_ptr = (char *)(dir_item + 1);
 	memcpy(name_ptr, name, name_len);
 out:
