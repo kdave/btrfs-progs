@@ -180,7 +180,7 @@ err:
 }
 
 int mkfs(int fd, char *pathname, u64 num_bytes, u32 nodesize, u32 leafsize,
-	 u32 sectorsize)
+	 u32 sectorsize, u32 stripesize)
 {
 	struct btrfs_super_block super;
 	struct btrfs_leaf *empty_leaf;
@@ -204,6 +204,7 @@ printf("blocksize is %d\n", leafsize);
 	btrfs_set_super_sectorsize(&super, sectorsize);
 	btrfs_set_super_leafsize(&super, leafsize);
 	btrfs_set_super_nodesize(&super, nodesize);
+	btrfs_set_super_stripesize(&super, stripesize);
 
 	num_bytes = (num_bytes / sectorsize) * sectorsize;
 	btrfs_set_super_total_bytes(&super, num_bytes);
@@ -353,12 +354,13 @@ int main(int ac, char **av)
 	u32 leafsize = 8 * 1024;
 	u32 sectorsize = 4096;
 	u32 nodesize = 8 * 1024;
+	u32 stripesize = 4096;
 	char *buf = malloc(sectorsize);
 	char *realpath_name;
 
 	while(1) {
 		int c;
-		c = getopt(ac, av, "l:n:");
+		c = getopt(ac, av, "l:n:s:");
 		if (c < 0)
 			break;
 		switch(c) {
@@ -367,6 +369,9 @@ int main(int ac, char **av)
 				break;
 			case 'n':
 				nodesize = atol(optarg);
+				break;
+			case 's':
+				stripesize = atol(optarg);
 				break;
 			default:
 				print_usage();
@@ -426,7 +431,7 @@ int main(int ac, char **av)
 	}
 	realpath_name = realpath(file, NULL);
 	ret = mkfs(fd, realpath_name, block_count, nodesize, leafsize,
-		   sectorsize);
+		   sectorsize, stripesize);
 	if (ret) {
 		fprintf(stderr, "error during mkfs %d\n", ret);
 		exit(1);

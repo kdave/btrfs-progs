@@ -122,6 +122,7 @@ struct btrfs_super_block {
 	__le32 sectorsize;
 	__le32 nodesize;
 	__le32 leafsize;
+	__le32 stripesize;
 	u8 root_level;
 } __attribute__ ((__packed__));
 
@@ -323,6 +324,9 @@ struct btrfs_root {
 
 	/* leaf allocations are done in leafsize units */
 	u32 leafsize;
+
+	/* leaf allocations are done in leafsize units */
+	u32 stripesize;
 
 	int ref_cows;
 	u32 type;
@@ -901,6 +905,17 @@ static inline void btrfs_set_super_leafsize(struct btrfs_super_block *s,
 						u32 val)
 {
 	s->leafsize = cpu_to_le32(val);
+}
+
+static inline u32 btrfs_super_stripesize(struct btrfs_super_block *s)
+{
+	return le32_to_cpu(s->stripesize);
+}
+
+static inline void btrfs_set_super_stripesize(struct btrfs_super_block *s,
+						u32 val)
+{
+	s->stripesize = cpu_to_le32(val);
 }
 
 static inline u64 btrfs_super_root_dir(struct btrfs_super_block *s)

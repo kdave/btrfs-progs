@@ -320,6 +320,7 @@ static int __setup_root(struct btrfs_super_block *super,
 	root->sectorsize = btrfs_super_sectorsize(super);
 	root->nodesize = btrfs_super_nodesize(super);
 	root->leafsize = btrfs_super_leafsize(super);
+	root->stripesize = btrfs_super_stripesize(super);
 	root->ref_cows = 0;
 	root->fs_info = fs_info;
 	memset(&root->root_key, 0, sizeof(root->root_key));
