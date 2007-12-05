@@ -28,8 +28,11 @@ struct btrfs_trans_handle {
 static inline struct btrfs_trans_handle *
 btrfs_start_transaction(struct btrfs_root *root, int num_blocks)
 {
+	struct btrfs_fs_info *fs_info = root->fs_info;
 	struct btrfs_trans_handle *h = malloc(sizeof(*h));
-	h->transid = root->root_key.offset;
+	fs_info->running_transaction = h;
+	fs_info->generation++;
+	h->transid = fs_info->generation;
 	h->blocks_reserved = num_blocks;
 	h->blocks_used = 0;
 	return h;

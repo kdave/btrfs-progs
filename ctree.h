@@ -23,9 +23,8 @@
 #include "kerncompat.h"
 #include "radix-tree.h"
 #include "extent-cache.h"
-
+struct btrfs_root;
 struct btrfs_trans_handle;
-
 #define BTRFS_MAGIC "_B2RfS_M"
 
 #define BTRFS_ROOT_TREE_OBJECTID 1ULL
@@ -102,7 +101,9 @@ struct btrfs_header {
 			       (sizeof(struct btrfs_disk_key) + sizeof(u64)))
 #define __BTRFS_LEAF_DATA_SIZE(bs) ((bs) - sizeof(struct btrfs_header))
 #define BTRFS_LEAF_DATA_SIZE(r) (__BTRFS_LEAF_DATA_SIZE(r->leafsize))
-
+#define BTRFS_MAX_INLINE_DATA_SIZE(r) (BTRFS_LEAF_DATA_SIZE(r) - \
+					sizeof(struct btrfs_item) - \
+					sizeof(struct btrfs_file_extent_item))
 struct btrfs_buffer;
 /*
  * the super block basically lists the main trees of the FS
@@ -759,6 +760,17 @@ static inline void btrfs_set_root_bytenr(struct btrfs_root_item *item, u64 val)
 	item->bytenr = cpu_to_le64(val);
 }
 
+static inline u64 btrfs_root_byte_limit(struct btrfs_root_item *item)
+{
+	return le64_to_cpu(item->byte_limit);
+}
+
+static inline void btrfs_set_root_byte_limit(struct btrfs_root_item *item,
+					     u64 val)
+{
+	item->byte_limit = cpu_to_le64(val);
+}
+
 static inline u8 btrfs_root_level(struct btrfs_root_item *item)
 {
 	return item->level;
@@ -1028,6 +1040,9 @@ static inline void btrfs_set_file_extent_num_bytes(struct
 #define btrfs_item_ptr(leaf, slot, type) \
 	((type *)(btrfs_leaf_data(leaf) + \
 	btrfs_item_offset((leaf)->items + (slot))))
+#define btrfs_item_ptr_offset(leaf, slot) \
+	((unsigned long)(btrfs_leaf_data(leaf) + \
+	btrfs_item_offset_nr(leaf, slot)))
 
 static inline u32 btrfs_level_size(struct btrfs_root *root, int level)
 {
@@ -1036,15 +1051,25 @@ static inline u32 btrfs_level_size(struct btrfs_root *root, int level)
 	return root->nodesize;
 }
 int btrfs_comp_keys(struct btrfs_disk_key *disk, struct btrfs_key *k2);
-int btrfs_extend_item(struct btrfs_trans_handle *trans, struct btrfs_root
-		      *root, struct btrfs_path *path, u32 data_size);
 struct btrfs_buffer *btrfs_alloc_free_block(struct btrfs_trans_handle *trans,
 					    struct btrfs_root *root,
 					    u32 blocksize);
 int btrfs_inc_ref(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 		  struct btrfs_buffer *buf);
+int btrfs_inc_root_ref(struct btrfs_trans_handle *trans,
+		       struct btrfs_root *root);
 int btrfs_free_extent(struct btrfs_trans_handle *trans, struct btrfs_root
 		      *root, u64 bytenr, u64 num_bytes, int pin);
+int btrfs_cow_block(struct btrfs_trans_handle *trans,
+		    struct btrfs_root *root, struct btrfs_buffer *buf,
+		    struct btrfs_buffer *parent, int parent_slot,
+		    struct btrfs_buffer **cow_ret);
+int btrfs_extend_item(struct btrfs_trans_handle *trans, struct btrfs_root
+		      *root, struct btrfs_path *path, u32 data_size);
+int btrfs_truncate_item(struct btrfs_trans_handle *trans,
+			struct btrfs_root *root,
+			struct btrfs_path *path,
+			u32 new_size, int from_end);
 int btrfs_search_slot(struct btrfs_trans_handle *trans, struct btrfs_root
 		      *root, struct btrfs_key *key, struct btrfs_path *p, int
 		      ins_len, int cow);
@@ -1076,11 +1101,16 @@ int btrfs_find_last_root(struct btrfs_root *root, u64 objectid, struct
 int btrfs_insert_dir_item(struct btrfs_trans_handle *trans, struct btrfs_root
 			  *root, char *name, int name_len, u64 dir,
 			  struct btrfs_key *location, u8 type);
-int btrfs_lookup_dir_item(struct btrfs_trans_handle *trans, struct btrfs_root
-			  *root, struct btrfs_path *path, u64 dir, char *name,
-			  int name_len, int mod);
-int btrfs_match_dir_item_name(struct btrfs_root *root, struct btrfs_path *path,
-			      char *name, int name_len);
+struct btrfs_dir_item *btrfs_lookup_dir_item(struct btrfs_trans_handle *trans,
+			  struct btrfs_root *root, struct btrfs_path *path,
+			  u64 dir, char *name, int name_len, int mod);
+struct btrfs_dir_item *btrfs_match_dir_item_name(struct btrfs_root *root,
+			      struct btrfs_path *path,
+			      const char *name, int name_len);
+int btrfs_delete_one_dir_name(struct btrfs_trans_handle *trans,
+			      struct btrfs_root *root,
+			      struct btrfs_path *path,
+			      struct btrfs_dir_item *di);
 int btrfs_find_free_objectid(struct btrfs_trans_handle *trans,
 			     struct btrfs_root *fs_root,
 			     u64 dirid, u64 *objectid);
@@ -1097,4 +1127,18 @@ int btrfs_insert_block_group(struct btrfs_trans_handle *trans,
 			     struct btrfs_root *root,
 			     struct btrfs_key *key,
 			     struct btrfs_block_group_item *bi);
+/* file-item.c */
+int btrfs_insert_file_extent(struct btrfs_trans_handle *trans,
+			     struct btrfs_root *root,
+			     u64 objectid, u64 pos, u64 offset,
+			     u64 disk_num_bytes, u64 num_bytes);
+int btrfs_insert_inline_file_extent(struct btrfs_trans_handle *trans,
+				    struct btrfs_root *root, u64 objectid,
+				    u64 offset, char *buffer, size_t size);
+int btrfs_lookup_csum(struct btrfs_trans_handle *trans, struct btrfs_root
+		      *root, struct btrfs_path *path, u64 objectid,
+		      u64 offset, int cow, struct btrfs_csum_item **item_ret);
+int btrfs_csum_file_block(struct btrfs_trans_handle *trans, struct btrfs_root
+			  *root, struct btrfs_inode_item *inode,
+			  u64 objectid, u64 offset, char *data, size_t len);
 #endif

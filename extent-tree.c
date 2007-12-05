@@ -88,19 +88,32 @@ int btrfs_inc_ref(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 		  struct btrfs_buffer *buf)
 {
 	u64 bytenr;
+	u32 blocksize;
 	int i;
+	int level;
 
 	if (!root->ref_cows)
 		return 0;
+
+	level = btrfs_header_level(&buf->node.header) - 1;
+	blocksize = btrfs_level_size(root, level);
 
 	if (btrfs_is_leaf(&buf->node))
 		return 0;
 
 	for (i = 0; i < btrfs_header_nritems(&buf->node.header); i++) {
 		bytenr = btrfs_node_blockptr(&buf->node, i);
-		inc_block_ref(trans, root, bytenr, root->nodesize);
+		inc_block_ref(trans, root, bytenr, blocksize);
 	}
+
 	return 0;
+}
+
+int btrfs_inc_root_ref(struct btrfs_trans_handle *trans,
+		       struct btrfs_root *root)
+{
+	return inc_block_ref(trans, root, root->node->bytenr,
+			     root->node->size);
 }
 
 static int write_one_cache_group(struct btrfs_trans_handle *trans,
@@ -525,9 +538,8 @@ static int alloc_extent(struct btrfs_trans_handle *trans,
 		ret = insert_cache_extent(&root->fs_info->pending_tree,
 					    ins->objectid, ins->offset);
 		BUG_ON(ret);
-		return 0;
+		goto update_block;
 	}
-
 	ret = btrfs_insert_item(trans, extent_root, ins, &extent_item,
 				sizeof(extent_item));
 
@@ -537,9 +549,11 @@ static int alloc_extent(struct btrfs_trans_handle *trans,
 		return ret;
 	if (pending_ret)
 		return pending_ret;
+update_block:
+	ret = update_block_group(trans, root, ins->objectid, ins->offset, 1);
+	BUG_ON(ret);
 	return 0;
 }
-
 /*
  * helper function to allocate a block for a given tree
  * returns the tree buffer or NULL.
@@ -551,14 +565,12 @@ struct btrfs_buffer *btrfs_alloc_free_block(struct btrfs_trans_handle *trans,
 	struct btrfs_key ins;
 	int ret;
 	struct btrfs_buffer *buf;
-
 	ret = alloc_extent(trans, root, root->root_key.objectid,
-			   blocksize, 0, (unsigned long)-1, &ins);
+			   blocksize, 0, (u64)-1, &ins);
 	if (ret) {
 		BUG();
 		return NULL;
 	}
-	ret = update_block_group(trans, root, ins.objectid, ins.offset, 1);
 	buf = find_tree_block(root, ins.objectid, blocksize);
 	btrfs_set_header_generation(&buf->node.header,
 				    root->root_key.offset + 1);

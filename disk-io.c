@@ -302,11 +302,9 @@ int btrfs_commit_transaction(struct btrfs_trans_handle *trans, struct
 	root->node->count++;
 	ret = btrfs_drop_snapshot(trans, root, snap);
 	BUG_ON(ret);
-
 	ret = btrfs_del_root(trans, root->fs_info->tree_root, &snap_key);
 	BUG_ON(ret);
-	root->fs_info->generation = root->root_key.offset + 1;
-
+	btrfs_free_transaction(root, trans);
 	return ret;
 }
 
@@ -420,7 +418,7 @@ struct btrfs_root *open_ctree_fd(int fp, struct btrfs_super_block *super)
 	root->commit_root = root->node;
 	root->node->count++;
 	root->ref_cows = 1;
-	root->fs_info->generation = root->root_key.offset + 1;
+	root->fs_info->generation = btrfs_super_generation(super) + 1;
 	btrfs_read_block_groups(root);
 	return root;
 }
@@ -429,8 +427,8 @@ int write_ctree_super(struct btrfs_trans_handle *trans, struct btrfs_root
 		      *root, struct btrfs_super_block *s)
 {
 	int ret;
-
 	btrfs_set_super_root(s, root->fs_info->tree_root->node->bytenr);
+	btrfs_set_super_generation(s, trans->transid);
 	btrfs_set_super_root_level(s,
 	      btrfs_header_level(&root->fs_info->tree_root->node->node.header));
 	btrfs_csum_super(root, s);
@@ -460,17 +458,17 @@ int close_ctree(struct btrfs_root *root, struct btrfs_super_block *s)
 {
 	int ret;
 	struct btrfs_trans_handle *trans;
-
-	trans = root->fs_info->running_transaction;
+	trans = btrfs_start_transaction(root, 1);
 	btrfs_commit_transaction(trans, root, s);
+	trans = btrfs_start_transaction(root, 1);
 	ret = commit_tree_roots(trans, root->fs_info);
 	BUG_ON(ret);
 	ret = __commit_transaction(trans, root);
 	BUG_ON(ret);
 	write_ctree_super(trans, root, s);
+	btrfs_free_transaction(root, trans);
 	drop_cache(root);
 	BUG_ON(!list_empty(&root->fs_info->trans));
-
 	btrfs_free_block_groups(root->fs_info);
 	close(root->fs_info->fp);
 	if (root->node)

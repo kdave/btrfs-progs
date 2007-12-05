@@ -18,9 +18,9 @@
 
 #ifndef __KERNCOMPAT
 #define __KERNCOMPAT
-
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
 #include <string.h>
 #include <endian.h>
 #include <byteswap.h>
@@ -124,10 +124,6 @@ static inline int test_bit(int nr, const volatile unsigned long *addr)
 #define container_of(ptr, type, member) ({                      \
         const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
 	        (type *)( (char *)__mptr - offsetof(type,member) );})
-
-#define ENOMEM 5
-#define EEXIST 6
-
 #ifdef __CHECKER__
 #define __CHECK_ENDIAN__
 #define __bitwise __bitwise__
