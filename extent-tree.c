@@ -572,8 +572,7 @@ struct btrfs_buffer *btrfs_alloc_free_block(struct btrfs_trans_handle *trans,
 		return NULL;
 	}
 	buf = find_tree_block(root, ins.objectid, blocksize);
-	btrfs_set_header_generation(&buf->node.header,
-				    root->root_key.offset + 1);
+	btrfs_set_header_generation(&buf->node.header, trans->transid);
 	btrfs_set_header_bytenr(&buf->node.header, buf->bytenr);
 	memcpy(buf->node.header.fsid, root->fs_info->disk_super->fsid,
 	       sizeof(buf->node.header.fsid));

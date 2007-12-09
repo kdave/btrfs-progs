@@ -179,13 +179,14 @@ void btrfs_print_tree(struct btrfs_root *root, struct btrfs_buffer *t)
 	size = btrfs_level_size(root, btrfs_header_level(&c->header) - 1);
 	for (i = 0; i < nr; i++) {
 		u64 blocknr = btrfs_node_blockptr(c, i);
-		printf("\tkey %d (%llu %x %llu) block %llu (%llu)\n",
+		printf("\tkey %d (%llu %x %llu) block %llu (%llu) gen %llu\n",
 		       i,
 		       (unsigned long long)c->ptrs[i].key.objectid,
 		       c->ptrs[i].key.type,
 		       (unsigned long long)c->ptrs[i].key.offset,
 		       (unsigned long long)blocknr,
-		       (unsigned long long)blocknr / size);
+		       (unsigned long long)blocknr / size,
+		       (unsigned long long)btrfs_node_ptr_generation(c, i));
 		fflush(stdout);
 	}
 	for (i = 0; i < nr; i++) {

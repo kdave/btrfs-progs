@@ -23,6 +23,7 @@
 #include "disk-io.h"
 #include "transaction.h"
 #include "print-tree.h"
+
 static int split_node(struct btrfs_trans_handle *trans, struct btrfs_root
 		      *root, struct btrfs_path *path, int level);
 static int split_leaf(struct btrfs_trans_handle *trans, struct btrfs_root
@@ -80,6 +81,8 @@ int btrfs_cow_block(struct btrfs_trans_handle *trans, struct btrfs_root
 	} else {
 		btrfs_set_node_blockptr(&parent->node, parent_slot,
 					cow->bytenr);
+		btrfs_set_node_ptr_generation(&parent->node, parent_slot,
+					      trans->transid);
 		BUG_ON(list_empty(&parent->dirty));
 		btrfs_free_extent(trans, root, buf->bytenr, buf->size, 1);
 	}
@@ -849,6 +852,8 @@ static int insert_new_root(struct btrfs_trans_handle *trans, struct btrfs_root
 	memcpy(&c->ptrs[0].key, lower_key, sizeof(struct btrfs_disk_key));
 	btrfs_set_node_blockptr(c, 0, path->nodes[level - 1]->bytenr);
 	BUG_ON(list_empty(&t->dirty));
+	btrfs_set_node_ptr_generation(c, 0,
+	         btrfs_header_generation(&path->nodes[level - 1]->node.header));
 	/* the super has an extra ref to root->node */
 	btrfs_block_release(root, root->node);
 	root->node = t;
@@ -887,6 +892,7 @@ static int insert_ptr(struct btrfs_trans_handle *trans, struct btrfs_root
 	}
 	memcpy(&lower->ptrs[slot].key, key, sizeof(struct btrfs_disk_key));
 	btrfs_set_node_blockptr(lower, slot, bytenr);
+	btrfs_set_node_ptr_generation(lower, slot, trans->transid);
 	btrfs_set_header_nritems(&lower->header, nritems + 1);
 	BUG_ON(list_empty(&path->nodes[level]->dirty));
 	return 0;
@@ -1287,9 +1293,9 @@ again:
 	right = &right_buffer->leaf;
 	memset(&right->header, 0, sizeof(right->header));
 	btrfs_set_header_bytenr(&right->header, right_buffer->bytenr);
-	btrfs_set_header_generation(&right->header, trans->transid);
 	btrfs_set_header_level(&right->header, 0);
 	btrfs_set_header_owner(&right->header, root->root_key.objectid);
+	btrfs_set_header_generation(&right->header, trans->transid);
 	memcpy(right->header.fsid, root->fs_info->disk_super->fsid,
 	       sizeof(right->header.fsid));
 	if (mid <= slot) {

@@ -224,7 +224,7 @@ printf("blocksize is %d\n", leafsize);
 	memset(empty_leaf, 0, leafsize);
 	btrfs_set_header_bytenr(&empty_leaf->header, first_free);
 	btrfs_set_header_nritems(&empty_leaf->header, 2);
-	btrfs_set_header_generation(&empty_leaf->header, 0);
+	btrfs_set_header_generation(&empty_leaf->header, 1);
 	btrfs_set_header_owner(&empty_leaf->header, BTRFS_ROOT_TREE_OBJECTID);
 	memcpy(empty_leaf->header.fsid, super.fsid,
 	       sizeof(empty_leaf->header.fsid));

@@ -98,7 +98,7 @@ struct btrfs_header {
 #define BTRFS_MAX_LEVEL 8
 #define BTRFS_NODEPTRS_PER_BLOCK(r) (((r)->nodesize - \
 			        sizeof(struct btrfs_header)) / \
-			       (sizeof(struct btrfs_disk_key) + sizeof(u64)))
+			       sizeof(struct btrfs_key_ptr))
 #define __BTRFS_LEAF_DATA_SIZE(bs) ((bs) - sizeof(struct btrfs_header))
 #define BTRFS_LEAF_DATA_SIZE(r) (__BTRFS_LEAF_DATA_SIZE(r->leafsize))
 #define BTRFS_MAX_INLINE_DATA_SIZE(r) (BTRFS_LEAF_DATA_SIZE(r) - \
@@ -156,6 +156,7 @@ struct btrfs_leaf {
 struct btrfs_key_ptr {
 	struct btrfs_disk_key key;
 	__le64 blockptr;
+	__le64 generation;
 } __attribute__ ((__packed__));
 
 struct btrfs_node {
@@ -562,11 +563,21 @@ static inline u64 btrfs_node_blockptr(struct btrfs_node *n, int nr)
 	return le64_to_cpu(n->ptrs[nr].blockptr);
 }
 
-
 static inline void btrfs_set_node_blockptr(struct btrfs_node *n, int nr,
 					   u64 val)
 {
 	n->ptrs[nr].blockptr = cpu_to_le64(val);
+}
+
+static inline u64 btrfs_node_ptr_generation(struct btrfs_node *n, int nr)
+{
+	return le64_to_cpu(n->ptrs[nr].generation);
+}
+
+static inline void btrfs_set_node_ptr_generation(struct btrfs_node *n, int nr,
+						 u64 val)
+{
+	n->ptrs[nr].generation = cpu_to_le64(val);
 }
 
 static inline u32 btrfs_item_offset(struct btrfs_item *item)
