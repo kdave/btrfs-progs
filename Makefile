@@ -1,5 +1,6 @@
 CC=gcc
-CFLAGS = -g -Wall -fno-strict-aliasing -Werror -D_FILE_OFFSET_BITS=64
+AM_CFLAGS = -Wall -fno-strict-aliasing -D_FILE_OFFSET_BITS=64
+CFLAGS = -g -Werror
 objects = ctree.o disk-io.o radix-tree.o extent-tree.o print-tree.o \
 	  root-tree.o dir-item.o hash.o file-item.o inode-item.o \
 	  inode-map.o crc32c.o rbtree.o extent-cache.o \
@@ -23,28 +24,28 @@ endif
 
 .c.o:
 	$(check) $<
-	$(CC) $(DEPFLAGS) $(CFLAGS) -c $<
+	$(CC) $(DEPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c $<
 
 
 all: $(progs)
 
 btrfsctl: btrfsctl.o
-	gcc $(CFLAGS) -o btrfsctl btrfsctl.o
+	gcc $(CFLAGS) -o btrfsctl btrfsctl.o $(LDFLAGS)
 
 btrfsck: $(objects) btrfsck.o bit-radix.o
-	gcc $(CFLAGS) -o btrfsck btrfsck.o $(objects) bit-radix.o
+	gcc $(CFLAGS) -o btrfsck btrfsck.o $(objects) bit-radix.o $(LDFLAGS)
 
 mkfs.btrfs: $(objects) mkfs.o
-	gcc $(CFLAGS) -o mkfs.btrfs $(objects) mkfs.o -luuid
+	gcc $(CFLAGS) -o mkfs.btrfs $(objects) mkfs.o -luuid $(LDFLAGS)
 
 debug-tree: $(objects) debug-tree.o
-	gcc $(CFLAGS) -o debug-tree $(objects) debug-tree.o -luuid
+	gcc $(CFLAGS) -o debug-tree $(objects) debug-tree.o -luuid $(LDFLAGS)
 
 dir-test: $(objects) dir-test.o
-	gcc $(CFLAGS) -o dir-test $(objects) dir-test.o
+	gcc $(CFLAGS) -o dir-test $(objects) dir-test.o $(LDFLAGS)
 
 quick-test: $(objects) quick-test.o
-	gcc $(CFLAGS) -o quick-test $(objects) quick-test.o
+	gcc $(CFLAGS) -o quick-test $(objects) quick-test.o $(LDFLAGS)
 
 clean :
 	rm -f $(progs) cscope.out *.o .*.d
