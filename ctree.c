@@ -59,6 +59,7 @@ int btrfs_cow_block(struct btrfs_trans_handle *trans, struct btrfs_root
 			   **cow_ret)
 {
 	struct btrfs_buffer *cow;
+	u64 root_gen;
 
 	if (!list_empty(&buf->dirty)) {
 		*cow_ret = buf;
@@ -72,19 +73,23 @@ int btrfs_cow_block(struct btrfs_trans_handle *trans, struct btrfs_root
 	*cow_ret = cow;
 	btrfs_inc_ref(trans, root, buf);
 	if (buf == root->node) {
+		root_gen = btrfs_header_generation(&buf->node.header);
 		root->node = cow;
 		cow->count++;
 		if (buf != root->commit_root)
 			btrfs_free_extent(trans, root, buf->bytenr,
-					  buf->size, 1);
+					  buf->size, root->root_key.objectid,
+					  root_gen, 0, 0, 1);
 		btrfs_block_release(root, buf);
 	} else {
+		root_gen = btrfs_header_generation(&parent->node.header);
 		btrfs_set_node_blockptr(&parent->node, parent_slot,
 					cow->bytenr);
 		btrfs_set_node_ptr_generation(&parent->node, parent_slot,
 					      trans->transid);
 		BUG_ON(list_empty(&parent->dirty));
-		btrfs_free_extent(trans, root, buf->bytenr, buf->size, 1);
+		btrfs_free_extent(trans, root, buf->bytenr, buf->size,
+				  root->root_key.objectid, root_gen, 0, 0, 1);
 	}
 	btrfs_block_release(root, buf);
 	return 0;
@@ -362,8 +367,10 @@ static int balance_level(struct btrfs_trans_handle *trans, struct btrfs_root
 		/* once for the root ptr */
 		btrfs_block_release(root, mid_buf);
 		clean_tree_block(trans, root, mid_buf);
-		return btrfs_free_extent(trans, root, bytenr,
-					 root->nodesize, 1);
+		return btrfs_free_extent(trans, root, bytenr, root->nodesize,
+					 root->root_key.objectid,
+					 btrfs_header_generation(&mid->header),
+					 0, 0, 1);
 	}
 	parent = &parent_buf->node;
 
@@ -396,7 +403,10 @@ static int balance_level(struct btrfs_trans_handle *trans, struct btrfs_root
 		if (wret < 0)
 			ret = wret;
 		if (btrfs_header_nritems(&right->header) == 0) {
+			u64 generation;
 			u64 bytenr = right_buf->bytenr;
+
+			generation = btrfs_header_generation(&parent->header);
 			btrfs_block_release(root, right_buf);
 			clean_tree_block(trans, root, right_buf);
 			right_buf = NULL;
@@ -406,7 +416,9 @@ static int balance_level(struct btrfs_trans_handle *trans, struct btrfs_root
 			if (wret)
 				ret = wret;
 			wret = btrfs_free_extent(trans, root, bytenr,
-						 root->nodesize, 1);
+						 root->nodesize,
+						 root->root_key.objectid,
+						 generation, 0, 0, 1);
 			if (wret)
 				ret = wret;
 		} else {
@@ -435,6 +447,9 @@ static int balance_level(struct btrfs_trans_handle *trans, struct btrfs_root
 	if (btrfs_header_nritems(&mid->header) == 0) {
 		/* we've managed to empty the middle node, drop it */
 		u64 bytenr = mid_buf->bytenr;
+		u64 generation;
+
+		generation = btrfs_header_generation(&parent->header);
 		btrfs_block_release(root, mid_buf);
 		clean_tree_block(trans, root, mid_buf);
 		mid_buf = NULL;
@@ -442,8 +457,9 @@ static int balance_level(struct btrfs_trans_handle *trans, struct btrfs_root
 		wret = del_ptr(trans, root, path, level + 1, pslot);
 		if (wret)
 			ret = wret;
-		wret = btrfs_free_extent(trans, root, bytenr,
-					 root->nodesize, 1);
+		wret = btrfs_free_extent(trans, root, bytenr, root->nodesize,
+					 root->root_key.objectid,
+					 generation, 0, 0, 1);
 		if (wret)
 			ret = wret;
 	} else {
@@ -1589,13 +1605,17 @@ int btrfs_del_item(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 			btrfs_set_header_level(&leaf->header, 0);
 			BUG_ON(list_empty(&leaf_buf->dirty));
 		} else {
+			u64 generation =
+			  btrfs_header_generation(&path->nodes[1]->node.header);
+
 			clean_tree_block(trans, root, leaf_buf);
 			wret = del_ptr(trans, root, path, 1, path->slots[1]);
 			if (wret)
 				ret = wret;
-			wret = btrfs_free_extent(trans, root,
-						 leaf_buf->bytenr,
-						 leaf_buf->size, 1);
+			wret = btrfs_free_extent(trans, root, leaf_buf->bytenr,
+						 leaf_buf->size,
+						 root->root_key.objectid,
+						 generation, 0, 0, 1);
 			if (wret)
 				ret = wret;
 		}
@@ -1628,12 +1648,18 @@ int btrfs_del_item(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 			}
 			if (btrfs_header_nritems(&leaf->header) == 0) {
 				u64 bytenr = leaf_buf->bytenr;
+				struct btrfs_buffer *parent = path->nodes[1];
+				u64 generation =
+				  btrfs_header_generation(&parent->node.header);
+
 				clean_tree_block(trans, root, leaf_buf);
 				wret = del_ptr(trans, root, path, 1, slot);
 				if (wret)
 					ret = wret;
 				wret = btrfs_free_extent(trans, root, bytenr,
-						 leaf_buf->size, 1);
+						 leaf_buf->size,
+						 root->root_key.objectid,
+						 generation, 0, 0, 1);
 				btrfs_block_release(root, leaf_buf);
 				if (wret)
 					ret = wret;

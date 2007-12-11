@@ -24,14 +24,156 @@
 #include "disk-io.h"
 #include "print-tree.h"
 #include "transaction.h"
+#include "crc32c.h"
 
 static int finish_current_insert(struct btrfs_trans_handle *trans, struct
 				 btrfs_root *extent_root);
 static int run_pending(struct btrfs_trans_handle *trans, struct btrfs_root
 		       *extent_root);
 
+static u64 hash_extent_ref(u64 root_objectid, u64 ref_generation,
+			   u64 owner, u64 owner_offset)
+{
+	u32 high_crc = ~(u32)0;
+	u32 low_crc = ~(u32)0;
+	__le64 lenum;
+
+	lenum = cpu_to_le64(root_objectid);
+	high_crc = crc32c(high_crc, &lenum, sizeof(lenum));
+	lenum = cpu_to_le64(ref_generation);
+	low_crc = crc32c(low_crc, &lenum, sizeof(lenum));
+
+#if 0
+	lenum = cpu_to_le64(owner);
+	low_crc = crc32c(low_crc, &lenum, sizeof(lenum));
+	lenum = cpu_to_le64(owner_offset);
+	low_crc = crc32c(low_crc, &lenum, sizeof(lenum));
+#endif
+	return ((u64)high_crc << 32) | (u64)low_crc;
+}
+
+static int match_extent_ref(struct btrfs_extent_ref *disk_ref,
+			    struct btrfs_extent_ref *cpu_ref)
+{
+	int ret = memcmp(cpu_ref, disk_ref, sizeof(*cpu_ref));
+	return ret == 0;
+}
+
+static int lookup_extent_backref(struct btrfs_trans_handle *trans,
+				 struct btrfs_root *root,
+				 struct btrfs_path *path, u64 bytenr,
+				 u64 root_objectid, u64 ref_generation,
+				 u64 owner, u64 owner_offset, int del)
+{
+	u64 hash;
+	struct btrfs_key key;
+	struct btrfs_key found_key;
+	struct btrfs_extent_ref ref;
+	struct btrfs_buffer *leaf;
+	struct btrfs_extent_ref *disk_ref;
+	int ret;
+	int ret2;
+
+	btrfs_set_ref_root(&ref, root_objectid);
+	btrfs_set_ref_generation(&ref, ref_generation);
+	btrfs_set_ref_objectid(&ref, owner);
+	btrfs_set_ref_offset(&ref, owner_offset);
+
+	hash = hash_extent_ref(root_objectid, ref_generation, owner,
+			       owner_offset);
+	key.offset = hash;
+	key.objectid = bytenr;
+	key.type = BTRFS_EXTENT_REF_KEY;
+
+	while (1) {
+		ret = btrfs_search_slot(trans, root, &key, path,
+					del ? -1 : 0, del);
+		if (ret < 0)
+			goto out;
+		leaf = path->nodes[0];
+		if (ret != 0) {
+			u32 nritems = btrfs_header_nritems(&leaf->node.header);
+			if (path->slots[0] >= nritems) {
+				ret2 = btrfs_next_leaf(root, path);
+				if (ret2)
+					goto out;
+				leaf = path->nodes[0];
+			}
+			btrfs_disk_key_to_cpu(&found_key,
+				         &leaf->leaf.items[path->slots[0]].key);
+			if (found_key.objectid != bytenr ||
+			    found_key.type != BTRFS_EXTENT_REF_KEY)
+				goto out;
+			key.offset = found_key.offset;
+			if (del) {
+				btrfs_release_path(root, path);
+				continue;
+			}
+		}
+		disk_ref = btrfs_item_ptr(&path->nodes[0]->leaf,
+					  path->slots[0],
+					  struct btrfs_extent_ref);
+		if (match_extent_ref(disk_ref, &ref)) {
+			ret = 0;
+			goto out;
+		}
+		btrfs_disk_key_to_cpu(&found_key,
+				      &leaf->leaf.items[path->slots[0]].key);
+		key.offset = found_key.offset + 1;
+		btrfs_release_path(root, path);
+	}
+out:
+	return ret;
+}
+
+static int insert_extent_backref(struct btrfs_trans_handle *trans,
+				 struct btrfs_root *root,
+				 struct btrfs_path *path, u64 bytenr,
+				 u64 root_objectid, u64 ref_generation,
+				 u64 owner, u64 owner_offset)
+{
+	u64 hash;
+	struct btrfs_key key;
+	struct btrfs_extent_ref ref;
+	struct btrfs_extent_ref *disk_ref;
+	int ret;
+
+	btrfs_set_ref_root(&ref, root_objectid);
+	btrfs_set_ref_generation(&ref, ref_generation);
+	btrfs_set_ref_objectid(&ref, owner);
+	btrfs_set_ref_offset(&ref, owner_offset);
+
+	hash = hash_extent_ref(root_objectid, ref_generation, owner,
+			       owner_offset);
+	key.offset = hash;
+	key.objectid = bytenr;
+	key.type = BTRFS_EXTENT_REF_KEY;
+
+	ret = btrfs_insert_empty_item(trans, root, path, &key, sizeof(ref));
+	while (ret == -EEXIST) {
+		disk_ref = btrfs_item_ptr(&path->nodes[0]->leaf, path->slots[0],
+					  struct btrfs_extent_ref);
+		if (match_extent_ref(disk_ref, &ref))
+			goto out;
+		key.offset++;
+		ret = btrfs_insert_empty_item(trans, root, path, &key,
+					      sizeof(ref));
+	}
+	if (ret)
+		goto out;
+	disk_ref = btrfs_item_ptr(&path->nodes[0]->leaf, path->slots[0],
+				  struct btrfs_extent_ref);
+	memcpy(disk_ref, &ref, sizeof(ref));
+	dirty_tree_block(trans, root, path->nodes[0]);
+out:
+	btrfs_release_path(root, path);
+	return ret;
+}
+
 static int inc_block_ref(struct btrfs_trans_handle *trans, struct btrfs_root
-			 *root, u64 bytenr, u32 blocksize)
+			 *root, u64 bytenr, u32 blocksize,
+			 u64 root_objectid, u64 ref_generation,
+			 u64 owner, u64 owner_offset)
 {
 	struct btrfs_path path;
 	int ret;
@@ -56,6 +198,12 @@ static int inc_block_ref(struct btrfs_trans_handle *trans, struct btrfs_root
 
 	BUG_ON(list_empty(&path.nodes[0]->dirty));
 	btrfs_release_path(root->fs_info->extent_root, &path);
+
+	ret = insert_extent_backref(trans, root->fs_info->extent_root, &path,
+				    bytenr, root_objectid, ref_generation,
+				    owner, owner_offset);
+	BUG_ON(ret);
+
 	finish_current_insert(trans, root->fs_info->extent_root);
 	run_pending(trans, root->fs_info->extent_root);
 	return 0;
@@ -69,7 +217,9 @@ static int lookup_block_ref(struct btrfs_trans_handle *trans, struct btrfs_root
 	struct btrfs_key key;
 	struct btrfs_leaf *l;
 	struct btrfs_extent_item *item;
+
 	btrfs_init_path(&path);
+
 	key.objectid = bytenr;
 	key.offset = blocksize;
 	btrfs_set_key_type(&key, BTRFS_EXTENT_ITEM_KEY);
@@ -103,17 +253,19 @@ int btrfs_inc_ref(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 
 	for (i = 0; i < btrfs_header_nritems(&buf->node.header); i++) {
 		bytenr = btrfs_node_blockptr(&buf->node, i);
-		inc_block_ref(trans, root, bytenr, blocksize);
+		inc_block_ref(trans, root, bytenr, blocksize,
+			      root->root_key.objectid, trans->transid, 0, 0);
 	}
 
 	return 0;
 }
 
 int btrfs_inc_root_ref(struct btrfs_trans_handle *trans,
-		       struct btrfs_root *root)
+		       struct btrfs_root *root, u64 owner_objectid)
 {
 	return inc_block_ref(trans, root, root->node->bytenr,
-			     root->node->size);
+			     root->node->size, owner_objectid,
+			     trans->transid, 0, 0);
 }
 
 static int write_one_cache_group(struct btrfs_trans_handle *trans,
@@ -241,9 +393,10 @@ static int finish_current_insert(struct btrfs_trans_handle *trans, struct
 	struct cache_extent *pe;
 	struct cache_extent *next;
 	struct cache_tree *pending_tree = &info->pending_tree;
+	struct btrfs_path path;
 
+	btrfs_init_path(&path);
 	btrfs_set_extent_refs(&extent_item, 1);
-	btrfs_set_extent_owner(&extent_item, extent_root->root_key.objectid);
 	ins.offset = 1;
 	btrfs_set_key_type(&ins, BTRFS_EXTENT_ITEM_KEY);
 	pe = find_first_cache_extent(pending_tree, 0);
@@ -265,6 +418,12 @@ static int finish_current_insert(struct btrfs_trans_handle *trans, struct
 			btrfs_print_tree(extent_root, extent_root->node);
 		}
 		BUG_ON(ret);
+
+		ret = insert_extent_backref(trans, extent_root, &path,
+					    ins.objectid,
+					    extent_root->root_key.objectid,
+					    0, 0, 0);
+		BUG_ON(ret);
 	}
 	return 0;
 }
@@ -273,7 +432,9 @@ static int finish_current_insert(struct btrfs_trans_handle *trans, struct
  * remove an extent from the root, returns 0 on success
  */
 static int __free_extent(struct btrfs_trans_handle *trans, struct btrfs_root
-			 *root, u64 bytenr, u64 num_bytes, int pin)
+			 *root, u64 bytenr, u64 num_bytes,
+			 u64 root_objectid, u64 ref_generation,
+			 u64 owner_objectid, u64 owner_offset, int pin)
 {
 	struct btrfs_path path;
 	struct btrfs_key key;
@@ -288,6 +449,19 @@ static int __free_extent(struct btrfs_trans_handle *trans, struct btrfs_root
 	key.offset = num_bytes;
 
 	btrfs_init_path(&path);
+
+	ret = lookup_extent_backref(trans, extent_root, &path,
+				    bytenr, root_objectid,
+				    ref_generation,
+				    owner_objectid, owner_offset, 1);
+	if (ret == 0) {
+		ret = btrfs_del_item(trans, extent_root, &path);
+	} else {
+		// FIXME deal with missing references here
+	}
+
+	btrfs_release_path(extent_root, &path);
+
 	ret = btrfs_search_slot(trans, extent_root, &key, &path, -1, 1);
 	if (ret) {
 		btrfs_print_tree(extent_root, extent_root->node);
@@ -345,7 +519,9 @@ static int del_pending_extents(struct btrfs_trans_handle *trans, struct
 	while(pe) {
 		remove_cache_extent(del_pending, pe);
 		ret = __free_extent(trans, extent_root,
-				    pe->start, pe->size, 1);
+				    pe->start, pe->size,
+				    extent_root->root_key.objectid,
+				    0, 0, 0, 1);
 		BUG_ON(ret);
 		next = next_cache_extent(pe);
 		if (!next)
@@ -368,11 +544,16 @@ static int run_pending(struct btrfs_trans_handle *trans, struct btrfs_root
  * remove an extent from the root, returns 0 on success
  */
 int btrfs_free_extent(struct btrfs_trans_handle *trans, struct btrfs_root
-		      *root, u64 bytenr, u64 num_bytes, int pin)
+		      *root, u64 bytenr, u64 num_bytes,
+		      u64 root_objectid, u64 root_generation,
+		      u64 owner_objectid, u64 owner_offset, int pin)
 {
 	struct btrfs_root *extent_root = root->fs_info->extent_root;
 	int pending_ret;
 	int ret;
+
+	if (!root->ref_cows)
+		root_generation = 0;
 
 	if (root == extent_root) {
 		ret = insert_cache_extent(&root->fs_info->del_pending,
@@ -380,7 +561,9 @@ int btrfs_free_extent(struct btrfs_trans_handle *trans, struct btrfs_root
 		BUG_ON(ret);
 		return 0;
 	}
-	ret = __free_extent(trans, root, bytenr, num_bytes, pin);
+	ret = __free_extent(trans, root, bytenr, num_bytes,
+			    root_objectid, root_generation, owner_objectid,
+			    owner_offset, pin);
 	pending_ret = run_pending(trans, root->fs_info->extent_root);
 	return ret ? ret : pending_ret;
 }
@@ -509,8 +692,9 @@ error:
  * returns 0 if everything worked, non-zero otherwise.
  */
 static int alloc_extent(struct btrfs_trans_handle *trans,
-			struct btrfs_root *root, u64 owner,
-			u64 num_bytes, u64 search_start,
+			struct btrfs_root *root, u64 num_bytes,
+			u64 root_objectid, u64 ref_generation, u64 owner,
+			u64 owner_offset, u64 search_start,
 			u64 search_end, struct btrfs_key *ins)
 {
 	int ret;
@@ -519,9 +703,11 @@ static int alloc_extent(struct btrfs_trans_handle *trans,
 	struct btrfs_fs_info *info = root->fs_info;
 	struct btrfs_root *extent_root = info->extent_root;
 	struct btrfs_extent_item extent_item;
+	struct btrfs_path path;
+
+	btrfs_init_path(&path);
 
 	btrfs_set_extent_refs(&extent_item, 1);
-	btrfs_set_extent_owner(&extent_item, owner);
 
 	ret = find_free_extent(trans, root, num_bytes, search_start,
 			       search_end, ins);
@@ -543,6 +729,12 @@ static int alloc_extent(struct btrfs_trans_handle *trans,
 	ret = btrfs_insert_item(trans, extent_root, ins, &extent_item,
 				sizeof(extent_item));
 
+	BUG_ON(ret);
+	ret = insert_extent_backref(trans, extent_root, &path, ins->objectid,
+				    root_objectid, ref_generation,
+				    owner, owner_offset);
+	BUG_ON(ret);
+
 	finish_current_insert(trans, extent_root);
 	pending_ret = run_pending(trans, extent_root);
 	if (ret)
@@ -562,11 +754,19 @@ struct btrfs_buffer *btrfs_alloc_free_block(struct btrfs_trans_handle *trans,
 					    struct btrfs_root *root,
 					    u32 blocksize)
 {
+	u64 ref_generation;
 	struct btrfs_key ins;
 	int ret;
 	struct btrfs_buffer *buf;
-	ret = alloc_extent(trans, root, root->root_key.objectid,
-			   blocksize, 0, (u64)-1, &ins);
+
+	if (root->ref_cows)
+		ref_generation = trans->transid;
+	else
+		ref_generation = 0;
+
+	ret = alloc_extent(trans, root, blocksize,
+			   root->root_key.objectid, ref_generation,
+			   0, 0, 0, (u64)-1, &ins);
 	if (ret) {
 		BUG();
 		return NULL;
@@ -590,6 +790,9 @@ static int walk_down_tree(struct btrfs_trans_handle *trans, struct btrfs_root
 {
 	struct btrfs_buffer *next;
 	struct btrfs_buffer *cur;
+	struct btrfs_buffer *parent;
+	u64 root_owner;
+	u64 root_gen;
 	u64 bytenr;
 	int ret;
 	u32 refs;
@@ -612,8 +815,13 @@ static int walk_down_tree(struct btrfs_trans_handle *trans, struct btrfs_root
 		bytenr = btrfs_node_blockptr(&cur->node, path->slots[*level]);
 		ret = lookup_block_ref(trans, root, bytenr, size, &refs);
 		if (refs != 1 || *level == 1) {
+			parent = path->nodes[*level];
+			root_owner = btrfs_header_owner(&parent->node.header);
+			root_gen =
+				btrfs_header_generation(&parent->node.header);
 			path->slots[*level]++;
-			ret = btrfs_free_extent(trans, root, bytenr, size, 1);
+			ret = btrfs_free_extent(trans, root, bytenr, size,
+						root_owner, root_gen, 0, 0, 1);
 			BUG_ON(ret);
 			continue;
 		}
@@ -626,8 +834,16 @@ static int walk_down_tree(struct btrfs_trans_handle *trans, struct btrfs_root
 		path->slots[*level] = 0;
 	}
 out:
+	if (*level == BTRFS_MAX_LEVEL - 1 || !path->nodes[*level + 1])
+		parent = path->nodes[*level];
+	else
+		parent = path->nodes[*level + 1];
+
+	root_owner = btrfs_header_owner(&parent->node.header);
+	root_gen = btrfs_header_generation(&parent->node.header);
 	ret = btrfs_free_extent(trans, root, path->nodes[*level]->bytenr,
-				btrfs_level_size(root, *level), 1);
+				btrfs_level_size(root, *level),
+				root_owner, root_gen, 0, 0, 1);
 	btrfs_block_release(root, path->nodes[*level]);
 	path->nodes[*level] = NULL;
 	*level += 1;
@@ -646,6 +862,9 @@ static int walk_up_tree(struct btrfs_trans_handle *trans, struct btrfs_root
 	int i;
 	int slot;
 	int ret;
+	u64 root_owner;
+	u64 root_gen;
+	struct btrfs_buffer *parent;
 	for(i = *level; i < BTRFS_MAX_LEVEL - 1 && path->nodes[i]; i++) {
 		slot = path->slots[i];
 		if (slot <
@@ -654,9 +873,18 @@ static int walk_up_tree(struct btrfs_trans_handle *trans, struct btrfs_root
 			*level = i;
 			return 0;
 		} else {
+			if (path->nodes[*level] == root->node)
+				parent = path->nodes[*level];
+			else
+				parent = path->nodes[*level + 1];
+
+			root_owner = btrfs_header_owner(&parent->node.header);
+			root_gen =
+				btrfs_header_generation(&parent->node.header);
 			ret = btrfs_free_extent(trans, root,
 					path->nodes[*level]->bytenr,
-					btrfs_level_size(root, *level), 1);
+					btrfs_level_size(root, *level),
+					root_owner, root_gen, 0, 0, 1);
 			btrfs_block_release(root, path->nodes[*level]);
 			path->nodes[*level] = NULL;
 			*level = i + 1;

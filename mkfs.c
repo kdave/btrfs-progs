@@ -278,7 +278,6 @@ printf("blocksize is %d\n", leafsize);
 	btrfs_set_item_offset(&item, itemoff);
 	btrfs_set_item_size(&item, sizeof(struct btrfs_extent_item));
 	btrfs_set_extent_refs(&extent_item, 1);
-	btrfs_set_extent_owner(&extent_item, BTRFS_ROOT_TREE_OBJECTID);
 	memcpy(empty_leaf->items, &item, sizeof(item));
 	memcpy(btrfs_leaf_data(empty_leaf) + btrfs_item_offset(&item),
 		&extent_item, btrfs_item_size(&item));

@@ -57,6 +57,7 @@ void btrfs_print_leaf(struct btrfs_root *root, struct btrfs_leaf *l)
 	struct btrfs_file_extent_item *fi;
 	struct btrfs_csum_item *ci;
 	struct btrfs_block_group_item *bi;
+	struct btrfs_extent_ref *ref;
 	u32 type;
 
 	printf("leaf %llu ptrs %d free space %d generation %llu owner %llu\n",
@@ -114,9 +115,17 @@ void btrfs_print_leaf(struct btrfs_root *root, struct btrfs_leaf *l)
 			break;
 		case BTRFS_EXTENT_ITEM_KEY:
 			ei = btrfs_item_ptr(l, i, struct btrfs_extent_item);
-			printf("\t\textent data refs %u owner %llu\n",
-				btrfs_extent_refs(ei),
-				(unsigned long long)btrfs_extent_owner(ei));
+			printf("\t\textent data refs %u\n",
+				btrfs_extent_refs(ei));
+			break;
+		case BTRFS_EXTENT_REF_KEY:
+			ref = btrfs_item_ptr(l, i, struct btrfs_extent_ref);
+			printf("\t\textent back ref root %llu gen %llu "
+			       "owner %llu offset %llu\n",
+			       (unsigned long long)btrfs_ref_root(ref),
+			       (unsigned long long)btrfs_ref_generation(ref),
+			       (unsigned long long)btrfs_ref_objectid(ref),
+			       (unsigned long long)btrfs_ref_offset(ref));
 			break;
 		case BTRFS_CSUM_ITEM_KEY:
 			ci = btrfs_item_ptr(l, i,

@@ -183,7 +183,13 @@ struct btrfs_path {
  */
 struct btrfs_extent_item {
 	__le32 refs;
-	__le64 owner;
+} __attribute__ ((__packed__));
+
+struct btrfs_extent_ref {
+	__le64 root;
+	__le64 generation;
+	__le64 objectid;
+	__le64 offset;
 } __attribute__ ((__packed__));
 
 struct btrfs_inode_timespec {
@@ -377,12 +383,13 @@ struct btrfs_root {
  * are used, and how many references there are to each block
  */
 #define BTRFS_EXTENT_ITEM_KEY	33
+#define BTRFS_EXTENT_REF_KEY	34
 
 /*
  * block groups give us hints into the extent allocation trees.  Which
  * blocks are free etc etc
  */
-#define BTRFS_BLOCK_GROUP_ITEM_KEY 34
+#define BTRFS_BLOCK_GROUP_ITEM_KEY 50
 
 /*
  * string items are for debugging.  They just store a short string of
@@ -390,6 +397,15 @@ struct btrfs_root {
  */
 #define BTRFS_STRING_ITEM_KEY	253
 
+#define BTRFS_SETGET_STACK_FUNCS(name, type, member, bits)		\
+static inline u##bits btrfs_##name(type *s)				\
+{									\
+	return le##bits##_to_cpu(s->member);				\
+}									\
+static inline void btrfs_set_##name(type *s, u##bits val)		\
+{									\
+	s->member = cpu_to_le##bits(val);				\
+}
 
 static inline u64 btrfs_block_group_used(struct btrfs_block_group_item *bi)
 {
@@ -538,25 +554,13 @@ static inline void btrfs_set_timespec_nsec(struct btrfs_inode_timespec *ts,
 	ts->nsec = cpu_to_le32(val);
 }
 
-static inline u32 btrfs_extent_refs(struct btrfs_extent_item *ei)
-{
-	return le32_to_cpu(ei->refs);
-}
+BTRFS_SETGET_STACK_FUNCS(extent_refs, struct btrfs_extent_item, refs, 32);
 
-static inline void btrfs_set_extent_refs(struct btrfs_extent_item *ei, u32 val)
-{
-	ei->refs = cpu_to_le32(val);
-}
-
-static inline u64 btrfs_extent_owner(struct btrfs_extent_item *ei)
-{
-	return le64_to_cpu(ei->owner);
-}
-
-static inline void btrfs_set_extent_owner(struct btrfs_extent_item *ei, u64 val)
-{
-	ei->owner = cpu_to_le64(val);
-}
+BTRFS_SETGET_STACK_FUNCS(ref_root, struct btrfs_extent_ref, root, 64);
+BTRFS_SETGET_STACK_FUNCS(ref_generation, struct btrfs_extent_ref,
+			 generation, 64);
+BTRFS_SETGET_STACK_FUNCS(ref_objectid, struct btrfs_extent_ref, objectid, 64);
+BTRFS_SETGET_STACK_FUNCS(ref_offset, struct btrfs_extent_ref, offset, 64);
 
 static inline u64 btrfs_node_blockptr(struct btrfs_node *n, int nr)
 {
@@ -1068,9 +1072,11 @@ struct btrfs_buffer *btrfs_alloc_free_block(struct btrfs_trans_handle *trans,
 int btrfs_inc_ref(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 		  struct btrfs_buffer *buf);
 int btrfs_inc_root_ref(struct btrfs_trans_handle *trans,
-		       struct btrfs_root *root);
+		       struct btrfs_root *root, u64 owner_objectid);
 int btrfs_free_extent(struct btrfs_trans_handle *trans, struct btrfs_root
-		      *root, u64 bytenr, u64 num_bytes, int pin);
+		      *root, u64 bytenr, u64 num_bytes,
+		      u64 root_objectid, u64 root_generation,
+		      u64 owner, u64 owner_offset, int pin);
 int btrfs_cow_block(struct btrfs_trans_handle *trans,
 		    struct btrfs_root *root, struct btrfs_buffer *buf,
 		    struct btrfs_buffer *parent, int parent_slot,

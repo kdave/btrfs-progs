@@ -382,7 +382,7 @@ static int run_next_block(struct btrfs_root *root,
 				add_extent_rec(extent_cache, NULL, 0,
 					       found.objectid,
 					       found.offset,
-					       btrfs_extent_owner(ei),
+					       0,
 					       btrfs_extent_refs(ei), 0, 0);
 				continue;
 			}
