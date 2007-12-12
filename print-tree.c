@@ -45,6 +45,24 @@ static int print_dir_item(struct btrfs_item *item,
 	}
 	return 0;
 }
+
+static int print_inode_ref_item(struct btrfs_item *item,
+				struct btrfs_inode_ref *ref)
+{
+	u32 total;
+	u32 cur = 0;
+	u32 len;
+	total = btrfs_item_size(item);
+	while(cur < total) {
+		len = btrfs_inode_ref_name_len(ref);
+		printf("\t\tinode ref name: %.*s\n", len, (char *)(ref + 1));
+		len += sizeof(*ref);
+		ref = (struct btrfs_inode_ref *)((char *)ref + len);
+		cur += len;
+	}
+	return 0;
+}
+
 void btrfs_print_leaf(struct btrfs_root *root, struct btrfs_leaf *l)
 {
 	int i;
@@ -58,6 +76,7 @@ void btrfs_print_leaf(struct btrfs_root *root, struct btrfs_leaf *l)
 	struct btrfs_csum_item *ci;
 	struct btrfs_block_group_item *bi;
 	struct btrfs_extent_ref *ref;
+	struct btrfs_inode_ref *iref;
 	u32 type;
 
 	printf("leaf %llu ptrs %d free space %d generation %llu owner %llu\n",
@@ -85,6 +104,10 @@ void btrfs_print_leaf(struct btrfs_root *root, struct btrfs_leaf *l)
 			       (unsigned long long)btrfs_inode_block_group(ii),
 			       btrfs_inode_mode(ii),
 			       btrfs_inode_nlink(ii));
+			break;
+		case BTRFS_INODE_REF_KEY:
+			iref = btrfs_item_ptr(l, i, struct btrfs_inode_ref);
+			print_inode_ref_item(l->items + i, iref);
 			break;
 		case BTRFS_DIR_ITEM_KEY:
 			di = btrfs_item_ptr(l, i, struct btrfs_dir_item);

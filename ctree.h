@@ -192,6 +192,11 @@ struct btrfs_extent_ref {
 	__le64 offset;
 } __attribute__ ((__packed__));
 
+struct btrfs_inode_ref {
+	__le16 name_len;
+	/* name goes here */
+} __attribute__ ((__packed__));
+
 struct btrfs_inode_timespec {
 	__le64 sec;
 	__le32 nsec;
@@ -352,7 +357,8 @@ struct btrfs_root {
  * the FS
  */
 #define BTRFS_INODE_ITEM_KEY		1
-#define BTRFS_XATTR_ITEM_KEY            2
+#define BTRFS_INODE_REF_KEY		2
+#define BTRFS_XATTR_ITEM_KEY		8
 
 /* reserve 3-15 close to the inode for later flexibility */
 
@@ -555,6 +561,10 @@ static inline void btrfs_set_timespec_nsec(struct btrfs_inode_timespec *ts,
 }
 
 BTRFS_SETGET_STACK_FUNCS(extent_refs, struct btrfs_extent_item, refs, 32);
+
+BTRFS_SETGET_STACK_FUNCS(inode_ref_name_len, struct btrfs_inode_ref,
+			 name_len, 16);
+
 
 BTRFS_SETGET_STACK_FUNCS(ref_root, struct btrfs_extent_ref, root, 64);
 BTRFS_SETGET_STACK_FUNCS(ref_generation, struct btrfs_extent_ref,
