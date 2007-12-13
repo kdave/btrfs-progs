@@ -353,9 +353,9 @@ int main(int ac, char **av)
 	struct stat st;
 	int ret;
 	int i;
-	u32 leafsize = 8 * 1024;
+	u32 leafsize = 16 * 1024;
 	u32 sectorsize = 4096;
-	u32 nodesize = 8 * 1024;
+	u32 nodesize = 16 * 1024;
 	u32 stripesize = 4096;
 	char *buf = malloc(sectorsize);
 	char *realpath_name;
