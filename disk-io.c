@@ -279,7 +279,7 @@ int btrfs_commit_transaction(struct btrfs_trans_handle *trans, struct
 		return 0;
 
 	memcpy(&snap_key, &root->root_key, sizeof(snap_key));
-	root->root_key.offset++;
+	root->root_key.offset = trans->transid;
 
 	btrfs_set_root_bytenr(&root->root_item, root->node->bytenr);
 	root->root_item.level =
