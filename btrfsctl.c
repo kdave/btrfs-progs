@@ -41,7 +41,12 @@ static inline int ioctl(int fd, int define, void *arg) { return 0; }
 
 void print_usage(void)
 {
-	printf("usage: btrfsctl [ -s snapshot_name ] dir\n");
+	printf("usage: btrfsctl [ -s name ] [-d] [-r size] file_or_dir\n");
+	printf("\t-d filename defragments one file\n");
+	printf("\t-d directory defragments the entire Btree\n");
+	printf("\t-s snap_name existing_subvol creates a new snapshot\n");
+	printf("\t-s snap_name tree_root creates a new subvolume\n");
+	printf("\t-r [+-]size[gkm] resize the FS\n");
 	exit(1);
 }
 
@@ -79,10 +84,22 @@ int main(int ac, char **av)
 			command = BTRFS_IOC_SNAP_CREATE;
 		} else if (strcmp(av[i], "-d") == 0) {
 			if (i >= ac - 1) {
-				fprintf(stderr, "-d requires an arg");
+				fprintf(stderr, "-d requires an arg\n");
 				print_usage();
 			}
 			command = BTRFS_IOC_DEFRAG;
+		} else if (strcmp(av[i], "-r") == 0) {
+			if (i >= ac - 1) {
+				fprintf(stderr, "-r requires an arg\n");
+				print_usage();
+			}
+			name = av[i + 1];
+			len = strlen(name);
+			if (len == 0 || len >= BTRFS_VOL_NAME_MAX) {
+				fprintf(stderr, "-r size too long\n");
+				exit(1);
+			}
+			command = BTRFS_IOC_RESIZE;
 		}
 	}
 	if (command == 0) {

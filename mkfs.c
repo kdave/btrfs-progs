@@ -29,6 +29,7 @@
 #include <unistd.h>
 #include <uuid/uuid.h>
 #include <linux/fs.h>
+#include <ctype.h>
 #include "kerncompat.h"
 #include "ctree.h"
 #include "disk-io.h"
@@ -38,6 +39,32 @@
 #define BLKGETSIZE64 0
 static inline int ioctl(int fd, int define, u64 *size) { return 0; }
 #endif
+
+static u64 parse_size(char *s)
+{
+	int len = strlen(s);
+	char c;
+	u64 mult = 1;
+
+	if (!isdigit(s[len - 1])) {
+		c = tolower(s[len - 1]);
+		switch (c) {
+		case 'g':
+			mult *= 1024;
+		case 'm':
+			mult *= 1024;
+		case 'k':
+			mult *= 1024;
+		case 'b':
+			break;
+		default:
+			fprintf(stderr, "Unknown size descriptor %c\n", c);
+			exit(1);
+		}
+		s[len - 1] = '\0';
+	}
+	return atol(s) * mult;
+}
 
 static int __make_root_dir(struct btrfs_trans_handle *trans,
 			   struct btrfs_root *root, u64 objectid)
@@ -367,13 +394,13 @@ int main(int ac, char **av)
 			break;
 		switch(c) {
 			case 'l':
-				leafsize = atol(optarg);
+				leafsize = parse_size(optarg);
 				break;
 			case 'n':
-				nodesize = atol(optarg);
+				nodesize = parse_size(optarg);
 				break;
 			case 's':
-				stripesize = atol(optarg);
+				stripesize = parse_size(optarg);
 				break;
 			default:
 				print_usage();
@@ -391,7 +418,7 @@ int main(int ac, char **av)
 	if (ac >= 1) {
 		file = av[optind];
 		if (ac == 2) {
-			block_count = atol(av[optind + 1]);
+			block_count = parse_size(av[optind + 1]);
 			if (!block_count) {
 				fprintf(stderr, "error finding block count\n");
 				exit(1);
@@ -416,13 +443,14 @@ int main(int ac, char **av)
 			fprintf(stderr, "unable to find %s size\n", file);
 			exit(1);
 		}
-		block_count /= sectorsize;
 	}
-	if (block_count < 256) {
+	block_count /= sectorsize;
+	block_count *= sectorsize;
+
+	if (block_count < 256 * 1024 * 1024) {
 		fprintf(stderr, "device %s is too small\n", file);
 		exit(1);
 	}
-	block_count = block_count * sectorsize;
 	memset(buf, 0, sectorsize);
 	for(i = 0; i < 64; i++) {
 		ret = write(fd, buf, sectorsize);
