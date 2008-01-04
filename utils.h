@@ -16,8 +16,10 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#ifndef __PRINT_TREE_
-#define __PRINT_TREE_
-void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l);
-void btrfs_print_tree(struct btrfs_root *root, struct extent_buffer *t);
+#ifndef __UTILS__
+#define __UTILS__
+int make_btrfs(int fd, u64 new_blocks[4], u64 num_bytes, u32 nodesize,
+		u32 leafsize, u32 sectorsize, u32 stripesize);
+int btrfs_make_root_dir(struct btrfs_trans_handle *trans,
+			struct btrfs_root *root, u64 objectid);
 #endif

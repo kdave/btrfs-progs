@@ -67,10 +67,36 @@ struct vm_area_struct {
 	unsigned long vm_end;
 	struct vma_shared shared;
 };
+
 struct page {
 	unsigned long index;
 };
 
+struct mutex {
+	unsigned long lock;
+};
+
+#define mutex_init(m)						\
+do {								\
+	(m)->lock = 1;						\
+} while (0)
+
+static inline void mutex_lock(struct mutex *m)
+{
+	m->lock--;
+}
+
+static inline void mutex_unlock(struct mutex *m)
+{
+	m->lock++;
+}
+
+static inline int mutex_is_locked(struct mutex *m)
+{
+	return (m->lock != 1);
+}
+
+#define cond_resched()		do { } while (0)
 #define preempt_enable()	do { } while (0)
 #define preempt_disable()	do { } while (0)
 
@@ -112,7 +138,61 @@ static inline int test_bit(int nr, const volatile unsigned long *addr)
 	return 1UL & (addr[BITOP_WORD(nr)] >> (nr & (BITS_PER_LONG-1)));
 }
 
+/*
+ * error pointer
+ */
+#define MAX_ERRNO	4095
+#define IS_ERR_VALUE(x) ((x) >= (unsigned long)-MAX_ERRNO)
+
+static inline void *ERR_PTR(long error)
+{
+	return (void *) error;
+}
+
+static inline long PTR_ERR(const void *ptr)
+{
+	return (long) ptr;
+}
+
+static inline long IS_ERR(const void *ptr)
+{
+	return IS_ERR_VALUE((unsigned long)ptr);
+}
+
+/*
+ * max/min macro
+ */
+#define min(x,y) ({ \
+	typeof(x) _x = (x);	\
+	typeof(y) _y = (y);	\
+	(void) (&_x == &_y);		\
+	_x < _y ? _x : _y; })
+
+#define max(x,y) ({ \
+	typeof(x) _x = (x);	\
+	typeof(y) _y = (y);	\
+	(void) (&_x == &_y);		\
+	_x > _y ? _x : _y; })
+
+#define min_t(type,x,y) \
+	({ type __x = (x); type __y = (y); __x < __y ? __x: __y; })
+#define max_t(type,x,y) \
+	({ type __x = (x); type __y = (y); __x > __y ? __x: __y; })
+
+/*
+ * printk
+ */
+#define printk(fmt, args...) fprintf(stderr, fmt, ##args)
+#define	KERN_CRIT	""
+
+/*
+ * kmalloc/kfree
+ */
+#define kmalloc(x, y) malloc(x)
+#define kfree(x) free(x)
+
 #define BUG_ON(c) do { if (c) abort(); } while (0)
+#define WARN_ON(c) do { if (c) abort(); } while (0)
 
 #undef offsetof
 #ifdef __compiler_offsetof
@@ -161,4 +241,8 @@ typedef u64 __bitwise __be64;
 #define cpu_to_le16(x) ((__force __le16)(u16)(x))
 #define le16_to_cpu(x) ((__force u16)(__le16)(x))
 #endif
+#endif
+
+#ifndef noinline
+#define noinline
 #endif

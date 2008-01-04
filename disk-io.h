@@ -18,46 +18,36 @@
 
 #ifndef __DISKIO__
 #define __DISKIO__
-#include "extent-cache.h"
-#include "list.h"
 
-struct btrfs_buffer {
-	struct cache_extent cache_node;
-	u64 bytenr;
-	u64 dev_bytenr;
-	u32 size;
-	int count;
-	int fd;
-	struct list_head dirty;
-	struct list_head cache;
-	union {
-		struct btrfs_node node;
-		struct btrfs_leaf leaf;
-	};
-};
-
-struct btrfs_buffer *read_tree_block(struct btrfs_root *root, u64 bytenr,
-				     u32 blocksize);
-struct btrfs_buffer *find_tree_block(struct btrfs_root *root, u64 bytenr,
-				     u32 blocksize);
-int write_tree_block(struct btrfs_trans_handle *trans, struct btrfs_root *root,
-		     struct btrfs_buffer *buf);
-int dirty_tree_block(struct btrfs_trans_handle *trans, struct btrfs_root *root,
-		     struct btrfs_buffer *buf);
-int clean_tree_block(struct btrfs_trans_handle *trans,
-		     struct btrfs_root *root, struct btrfs_buffer *buf);
-int btrfs_commit_transaction(struct btrfs_trans_handle *trans, struct btrfs_root
-			     *root, struct btrfs_super_block *s);
-struct btrfs_root *open_ctree(char *filename, struct btrfs_super_block *s);
-struct btrfs_root *open_ctree_fd(int fp, struct btrfs_super_block *super);
-int close_ctree(struct btrfs_root *root, struct btrfs_super_block *s);
-void btrfs_block_release(struct btrfs_root *root, struct btrfs_buffer *buf);
-int write_ctree_super(struct btrfs_trans_handle *trans, struct btrfs_root *root,
-		      struct btrfs_super_block *s);
-int btrfs_map_bh_to_logical(struct btrfs_root *root, struct btrfs_buffer *bh,
-			     u64 logical);
-int btrfs_csum_super(struct btrfs_root *root, struct btrfs_super_block *super);
-int btrfs_csum_node(struct btrfs_root *root, struct btrfs_node *node);
 #define BTRFS_SUPER_INFO_OFFSET (16 * 1024)
 
+struct extent_buffer *read_tree_block(struct btrfs_root *root, u64 bytenr,
+				      u32 blocksize);
+int readahead_tree_block(struct btrfs_root *root, u64 bytenr, u32 blocksize);
+struct extent_buffer *btrfs_find_create_tree_block(struct btrfs_root *root,
+						   u64 bytenr, u32 blocksize);
+int clean_tree_block(struct btrfs_trans_handle *trans,
+		     struct btrfs_root *root, struct extent_buffer *buf);
+struct btrfs_root *open_ctree(char *filename, u64 sb_bytenr);
+struct btrfs_root *open_ctree_fd(int fp, u64 sb_bytenr);
+int close_ctree(struct btrfs_root *root);
+int write_ctree_super(struct btrfs_trans_handle *trans,
+		      struct btrfs_root *root);
+int btrfs_map_bh_to_logical(struct btrfs_root *root, struct extent_buffer *bh,
+			    u64 logical);
+struct extent_buffer *btrfs_find_tree_block(struct btrfs_root *root,
+					    u64 bytenr, u32 blocksize);
+struct btrfs_root *btrfs_read_fs_root(struct btrfs_fs_info *fs_info,
+				      struct btrfs_key *location);
+int btrfs_free_fs_root(struct btrfs_fs_info *fs_info, struct btrfs_root *root);
+void btrfs_mark_buffer_dirty(struct extent_buffer *buf);
+int btrfs_buffer_uptodate(struct extent_buffer *buf);
+int btrfs_set_buffer_uptodate(struct extent_buffer *buf);
+int wait_on_tree_block_writeback(struct btrfs_root *root,
+				 struct extent_buffer *buf);
+u32 btrfs_csum_data(struct btrfs_root *root, char *data, u32 seed, size_t len);
+void btrfs_csum_final(u32 crc, char *result);
+
+int btrfs_commit_transaction(struct btrfs_trans_handle *trans,
+			     struct btrfs_root *root);
 #endif

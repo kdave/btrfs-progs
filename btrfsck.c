@@ -63,22 +63,24 @@ struct block_info {
 
 static int check_node(struct btrfs_root *root,
 		      struct btrfs_disk_key *parent_key,
-		      struct btrfs_node *node)
+		      struct extent_buffer *buf)
 {
 	int i;
-	u32 nritems = btrfs_header_nritems(&node->header);
+	struct btrfs_key cpukey;
+	struct btrfs_disk_key key;
+	u32 nritems = btrfs_header_nritems(buf);
 
 	if (nritems == 0 || nritems > BTRFS_NODEPTRS_PER_BLOCK(root))
 		return 1;
 	if (parent_key->type) {
-		if (memcmp(parent_key, &node->ptrs[0].key,
-			      sizeof(struct btrfs_disk_key)))
+		btrfs_node_key(buf, &key, 0);
+		if (memcmp(parent_key, &key, sizeof(key)))
 			return 1;
 	}
 	for (i = 0; nritems > 1 && i < nritems - 2; i++) {
-		struct btrfs_key cpukey;
-		btrfs_disk_key_to_cpu(&cpukey, &node->ptrs[i + 1].key);
-		if (btrfs_comp_keys(&node->ptrs[i].key, &cpukey) >= 0)
+		btrfs_node_key(buf, &key, i);
+		btrfs_node_key_to_cpu(buf, &cpukey, i + 1);
+		if (btrfs_comp_keys(&key, &cpukey) >= 0)
 			return 1;
 	}
 	return 0;
@@ -86,44 +88,44 @@ static int check_node(struct btrfs_root *root,
 
 static int check_leaf(struct btrfs_root *root,
 		      struct btrfs_disk_key *parent_key,
-		      struct btrfs_leaf *leaf)
+		      struct extent_buffer *buf)
 {
 	int i;
-	u32 nritems = btrfs_header_nritems(&leaf->header);
+	struct btrfs_key cpukey;
+	struct btrfs_disk_key key;
+	u32 nritems = btrfs_header_nritems(buf);
 
-	if (btrfs_header_level(&leaf->header) != 0) {
+	if (btrfs_header_level(buf) != 0) {
 		fprintf(stderr, "leaf is not a leaf %llu\n",
-		       (unsigned long long)btrfs_header_bytenr(&leaf->header));
+		       (unsigned long long)btrfs_header_bytenr(buf));
 		return 1;
 	}
-	if (btrfs_leaf_free_space(root, leaf) < 0) {
+	if (btrfs_leaf_free_space(root, buf) < 0) {
 		fprintf(stderr, "leaf free space incorrect %llu %d\n",
-			(unsigned long long)btrfs_header_bytenr(&leaf->header),
-			btrfs_leaf_free_space(root, leaf));
+			(unsigned long long)btrfs_header_bytenr(buf),
+			btrfs_leaf_free_space(root, buf));
 		return 1;
 	}
 
 	if (nritems == 0)
 		return 0;
 
-	if (parent_key->type && memcmp(parent_key, &leaf->items[0].key,
-					sizeof(struct btrfs_disk_key))) {
+	btrfs_item_key(buf, &key, 0);
+	if (parent_key->type && memcmp(parent_key, &key, sizeof(key))) {
 		fprintf(stderr, "leaf parent key incorrect %llu\n",
-		       (unsigned long long)btrfs_header_bytenr(&leaf->header));
+		       (unsigned long long)btrfs_header_bytenr(buf));
 		return 1;
 	}
 	for (i = 0; nritems > 1 && i < nritems - 2; i++) {
-		struct btrfs_key cpukey;
-		btrfs_disk_key_to_cpu(&cpukey, &leaf->items[i + 1].key);
-		if (btrfs_comp_keys(&leaf->items[i].key,
-		                 &cpukey) >= 0)
+		btrfs_item_key(buf, &key, i);
+		btrfs_item_key_to_cpu(buf, &cpukey, i + 1);
+		if (btrfs_comp_keys(&key, &cpukey) >= 0)
 			return 1;
-		if (btrfs_item_offset(leaf->items + i) !=
-			btrfs_item_end(leaf->items + i + 1))
+		if (btrfs_item_offset_nr(buf, i) !=
+			btrfs_item_end_nr(buf, i + 1))
 			return 1;
 		if (i == 0) {
-			if (btrfs_item_offset(leaf->items + i) +
-			       btrfs_item_size(leaf->items + i) !=
+			if (btrfs_item_end_nr(buf, i) !=
 			       BTRFS_LEAF_DATA_SIZE(root))
 				return 1;
 		}
@@ -206,20 +208,20 @@ static int maybe_free_extent_rec(struct cache_tree *extent_cache,
 
 static int check_block(struct btrfs_root *root,
 		       struct cache_tree *extent_cache,
-		       struct btrfs_buffer *buf)
+		       struct extent_buffer *buf)
 {
 	struct extent_record *rec;
 	struct cache_extent *cache;
 	int ret = 1;
 
-	cache = find_cache_extent(extent_cache, buf->bytenr, buf->size);
+	cache = find_cache_extent(extent_cache, buf->start, buf->len);
 	if (!cache)
 		return 1;
 	rec = container_of(cache, struct extent_record, cache);
-	if (btrfs_is_leaf(&buf->node)) {
-		ret = check_leaf(root, &rec->parent_key, &buf->leaf);
+	if (btrfs_is_leaf(buf)) {
+		ret = check_leaf(root, &rec->parent_key, buf);
 	} else {
-		ret = check_node(root, &rec->parent_key, &buf->node);
+		ret = check_node(root, &rec->parent_key, buf);
 	}
 	rec->checked = 1;
 	if (!ret)
@@ -470,7 +472,7 @@ static int pick_next_pending(struct cache_tree *pending,
 	}
 	return ret;
 }
-static struct btrfs_buffer reada_buf;
+static struct extent_buffer reada_buf;
 
 static int run_next_block(struct btrfs_root *root,
 			  struct block_info *bits,
@@ -482,16 +484,14 @@ static int run_next_block(struct btrfs_root *root,
 			  struct cache_tree *nodes,
 			  struct cache_tree *extent_cache)
 {
-	struct btrfs_buffer *buf;
+	struct extent_buffer *buf;
 	u64 bytenr;
 	u32 size;
 	int ret;
 	int i;
 	int nritems;
 	struct btrfs_extent_ref *ref;
-	struct btrfs_leaf *leaf;
-	struct btrfs_node *node;
-	struct btrfs_disk_key *disk_key;
+	struct btrfs_disk_key disk_key;
 	struct cache_extent *cache;
 	int reada_bits;
 
@@ -534,41 +534,41 @@ static int run_next_block(struct btrfs_root *root,
 	}
 
 	buf = read_tree_block(root, bytenr, size);
-	nritems = btrfs_header_nritems(&buf->node.header);
+	nritems = btrfs_header_nritems(buf);
 	ret = check_block(root, extent_cache, buf);
 	if (ret) {
 		fprintf(stderr, "bad block %llu\n",
 			(unsigned long long)bytenr);
 	}
-	if (btrfs_is_leaf(&buf->node)) {
-		leaf = &buf->leaf;
-		btree_space_waste += btrfs_leaf_free_space(root, leaf);
+	if (btrfs_is_leaf(buf)) {
+		btree_space_waste += btrfs_leaf_free_space(root, buf);
 		for (i = 0; i < nritems; i++) {
 			struct btrfs_file_extent_item *fi;
-			disk_key = &leaf->items[i].key;
-			if (btrfs_disk_key_type(disk_key) ==
+			btrfs_item_key(buf, &disk_key, i);
+			if (btrfs_disk_key_type(&disk_key) ==
 			    BTRFS_EXTENT_ITEM_KEY) {
 				struct btrfs_key found;
 				struct btrfs_extent_item *ei;
-				btrfs_disk_key_to_cpu(&found, disk_key);
-				ei = btrfs_item_ptr(leaf, i,
+				btrfs_disk_key_to_cpu(&found, &disk_key);
+				ei = btrfs_item_ptr(buf, i,
 						    struct btrfs_extent_item);
 				add_extent_rec(extent_cache, NULL, 0,
 					       found.objectid,
 					       found.offset,
-					       btrfs_extent_refs(ei), 0, 0);
+					       btrfs_extent_refs(buf, ei),
+					       0, 0);
 				continue;
 			}
-			if (btrfs_disk_key_type(disk_key) ==
+			if (btrfs_disk_key_type(&disk_key) ==
 			    BTRFS_CSUM_ITEM_KEY) {
 				total_csum_bytes +=
-					btrfs_item_size(leaf->items + i);
+					btrfs_item_size_nr(buf, i);
 				continue;
 			}
-			if (btrfs_disk_key_type(disk_key) ==
+			if (btrfs_disk_key_type(&disk_key) ==
 			    BTRFS_BLOCK_GROUP_ITEM_KEY) {
 				struct btrfs_block_group_item *bi;
-				bi = btrfs_item_ptr(leaf, i,
+				bi = btrfs_item_ptr(buf, i,
 					    struct btrfs_block_group_item);
 #if 0
 				fprintf(stderr,"block group %Lu %Lu used %Lu ",
@@ -579,64 +579,64 @@ static int run_next_block(struct btrfs_root *root,
 #endif
 				continue;
 			}
-			if (btrfs_disk_key_type(disk_key) ==
+			if (btrfs_disk_key_type(&disk_key) ==
 			    BTRFS_EXTENT_REF_KEY) {
-				ref = btrfs_item_ptr(leaf, i,
+				ref = btrfs_item_ptr(buf, i,
 						     struct btrfs_extent_ref);
 
 				add_backref(extent_cache,
-					    btrfs_disk_key_objectid(disk_key),
-					    btrfs_ref_root(ref),
-					    btrfs_ref_generation(ref),
-					    btrfs_ref_objectid(ref),
-					    btrfs_ref_offset(ref), 0);
+					    btrfs_disk_key_objectid(&disk_key),
+					    btrfs_ref_root(buf, ref),
+					    btrfs_ref_generation(buf, ref),
+					    btrfs_ref_objectid(buf, ref),
+					    btrfs_ref_offset(buf, ref), 0);
 				continue;
 			}
-			if (btrfs_disk_key_type(disk_key) !=
+			if (btrfs_disk_key_type(&disk_key) !=
 			    BTRFS_EXTENT_DATA_KEY)
 				continue;
-			fi = btrfs_item_ptr(leaf, i,
+			fi = btrfs_item_ptr(buf, i,
 					    struct btrfs_file_extent_item);
-			if (btrfs_file_extent_type(fi) !=
+			if (btrfs_file_extent_type(buf, fi) !=
 			    BTRFS_FILE_EXTENT_REG)
 				continue;
-			if (btrfs_file_extent_disk_bytenr(fi) == 0)
+			if (btrfs_file_extent_disk_bytenr(buf, fi) == 0)
 				continue;
 
 			data_bytes_allocated +=
-				btrfs_file_extent_disk_num_bytes(fi);
+				btrfs_file_extent_disk_num_bytes(buf, fi);
 			data_bytes_referenced +=
-				btrfs_file_extent_num_bytes(fi);
+				btrfs_file_extent_num_bytes(buf, fi);
 			ret = add_extent_rec(extent_cache, NULL, bytenr,
-				   btrfs_file_extent_disk_bytenr(fi),
-				   btrfs_file_extent_disk_num_bytes(fi),
+				   btrfs_file_extent_disk_bytenr(buf, fi),
+				   btrfs_file_extent_disk_num_bytes(buf, fi),
 				   0, 1, 1);
 			add_backref(extent_cache,
-				    btrfs_file_extent_disk_bytenr(fi),
-				    btrfs_header_owner(&leaf->header),
-				    btrfs_header_generation(&leaf->header),
-				    btrfs_disk_key_objectid(disk_key),
-				    btrfs_disk_key_offset(disk_key), 1);
+				    btrfs_file_extent_disk_bytenr(buf, fi),
+				    btrfs_header_owner(buf),
+				    btrfs_header_generation(buf),
+				    btrfs_disk_key_objectid(&disk_key),
+				    btrfs_disk_key_offset(&disk_key), 1);
 			BUG_ON(ret);
 		}
 	} else {
 		int level;
-		node = &buf->node;
-		level = btrfs_header_level(&node->header);
+		level = btrfs_header_level(buf);
 		for (i = 0; i < nritems; i++) {
-			u64 ptr = btrfs_node_blockptr(node, i);
+			u64 ptr = btrfs_node_blockptr(buf, i);
 			u32 size = btrfs_level_size(root, level - 1);
+			btrfs_node_key(buf, &disk_key, i);
 			ret = add_extent_rec(extent_cache,
-					     &node->ptrs[i].key,
+					     &disk_key,
 					     bytenr, ptr, size,
 					     0, 1, 0);
 			BUG_ON(ret);
 
 			add_backref(extent_cache, ptr,
-				btrfs_header_owner(&node->header),
-				btrfs_header_generation(&node->header),
+				btrfs_header_owner(buf),
+				btrfs_header_generation(buf),
 				level - 1,
-			        btrfs_disk_key_objectid(&node->ptrs[i].key), 1);
+			        btrfs_disk_key_objectid(&disk_key), 1);
 
 			if (level > 1) {
 				add_pending(nodes, seen, ptr, size);
@@ -647,12 +647,12 @@ static int run_next_block(struct btrfs_root *root,
 		btree_space_waste += (BTRFS_NODEPTRS_PER_BLOCK(root) -
 				      nritems) * sizeof(struct btrfs_key_ptr);
 	}
-	total_btree_bytes += buf->size;
-	btrfs_block_release(root, buf);
+	total_btree_bytes += buf->len;
+	free_extent_buffer(buf);
 	return 0;
 }
 
-static int add_root_to_pending(struct btrfs_buffer *buf,
+static int add_root_to_pending(struct extent_buffer *buf,
 			       struct block_info *bits,
 			       int bits_nr,
 			       struct cache_tree *extent_cache,
@@ -661,16 +661,16 @@ static int add_root_to_pending(struct btrfs_buffer *buf,
 			       struct cache_tree *reada,
 			       struct cache_tree *nodes, u64 root_objectid)
 {
-	if (btrfs_header_level(&buf->node.header) > 0)
-		add_pending(nodes, seen, buf->bytenr, buf->size);
+	if (btrfs_header_level(buf) > 0)
+		add_pending(nodes, seen, buf->start, buf->len);
 	else
-		add_pending(pending, seen, buf->bytenr, buf->size);
-	add_extent_rec(extent_cache, NULL, 0, buf->bytenr, buf->size,
+		add_pending(pending, seen, buf->start, buf->len);
+	add_extent_rec(extent_cache, NULL, 0, buf->start, buf->len,
 		       0, 1, 0);
 
-	add_backref(extent_cache, buf->bytenr, root_objectid,
-		    btrfs_header_generation(&buf->node.header),
-		    btrfs_header_level(&buf->node.header), 0, 1);
+	add_backref(extent_cache, buf->start, root_objectid,
+		    btrfs_header_generation(buf),
+		    btrfs_header_level(buf), 0, 1);
 	return 0;
 }
 
@@ -710,7 +710,6 @@ int check_extent_refs(struct btrfs_root *root,
 }
 
 int main(int ac, char **av) {
-	struct btrfs_super_block super;
 	struct btrfs_root *root;
 	struct cache_tree extent_cache;
 	struct cache_tree seen;
@@ -724,9 +723,9 @@ int main(int ac, char **av) {
 	u64 last = 0;
 	struct block_info *bits;
 	int bits_nr;
-	struct btrfs_leaf *leaf;
+	struct extent_buffer *leaf;
 	int slot;
-	struct btrfs_root_item *ri;
+	struct btrfs_root_item ri;
 
 	radix_tree_init();
 	cache_tree_init(&extent_cache);
@@ -735,7 +734,7 @@ int main(int ac, char **av) {
 	cache_tree_init(&nodes);
 	cache_tree_init(&reada);
 
-	root = open_ctree(av[1], &super);
+	root = open_ctree(av[1], 0);
 
 	bits_nr = 1024;
 	bits = malloc(bits_nr * sizeof(struct block_info));
@@ -756,30 +755,30 @@ int main(int ac, char **av) {
 					&key, &path, 0, 0);
 	BUG_ON(ret < 0);
 	while(1) {
-		leaf = &path.nodes[0]->leaf;
+		leaf = path.nodes[0];
 		slot = path.slots[0];
-		if (slot >= btrfs_header_nritems(&leaf->header)) {
+		if (slot >= btrfs_header_nritems(path.nodes[0])) {
 			ret = btrfs_next_leaf(root, &path);
 			if (ret != 0)
 				break;
-			leaf = &path.nodes[0]->leaf;
+			leaf = path.nodes[0];
 			slot = path.slots[0];
 		}
-		btrfs_disk_key_to_cpu(&found_key,
-				      &leaf->items[path.slots[0]].key);
+		btrfs_item_key_to_cpu(leaf, &found_key, path.slots[0]);
 		if (btrfs_key_type(&found_key) == BTRFS_ROOT_ITEM_KEY) {
-			struct btrfs_buffer *buf;
+			unsigned long offset;
+			struct extent_buffer *buf;
 
-			ri = btrfs_item_ptr(leaf, path.slots[0],
-					    struct btrfs_root_item);
+			offset = btrfs_item_ptr_offset(leaf, path.slots[0]);
+			read_extent_buffer(leaf, &ri, offset, sizeof(ri));
 			buf = read_tree_block(root->fs_info->tree_root,
-					      btrfs_root_bytenr(ri),
+					      btrfs_root_bytenr(&ri),
 					      btrfs_level_size(root,
-						       btrfs_root_level(ri)));
+						       btrfs_root_level(&ri)));
 			add_root_to_pending(buf, bits, bits_nr, &extent_cache,
 					    &pending, &seen, &reada, &nodes,
 					    found_key.objectid);
-			btrfs_block_release(root->fs_info->tree_root, buf);
+			free_extent_buffer(buf);
 		}
 		path.slots[0]++;
 	}
@@ -791,7 +790,7 @@ int main(int ac, char **av) {
 			break;
 	}
 	ret = check_extent_refs(root, &extent_cache);
-	close_ctree(root, &super);
+	close_ctree(root);
 	printf("found %llu bytes used err is %d\n",
 	       (unsigned long long)bytes_used, ret);
 	printf("total csum bytes: %llu\n",(unsigned long long)total_csum_bytes);
