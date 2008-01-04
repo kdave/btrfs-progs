@@ -47,8 +47,11 @@ dir-test: $(objects) dir-test.o
 quick-test: $(objects) quick-test.o
 	gcc $(CFLAGS) -o quick-test $(objects) quick-test.o $(LDFLAGS)
 
+convert: $(objects) convert.o utils.o
+	gcc $(CFLAGS) -o btrfs-convert $(objects) convert.o utils.o -luuid -lext2fs $(LDFLAGS)
+
 clean :
-	rm -f $(progs) cscope.out *.o .*.d
+	rm -f $(progs) cscope.out *.o .*.d btrfs-convert
 
 install: $(progs)
 	$(INSTALL) -m755 -d $(DESTDIR)$(bindir)
