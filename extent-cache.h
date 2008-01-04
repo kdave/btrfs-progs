@@ -36,6 +36,7 @@ void remove_cache_extent(struct cache_tree *tree,
 			  struct cache_extent *pe);
 struct cache_extent *find_first_cache_extent(struct cache_tree *tree,
 						 u64 start);
+struct cache_extent *prev_cache_extent(struct cache_extent *pe);
 struct cache_extent *next_cache_extent(struct cache_extent *pe);
 struct cache_extent *find_cache_extent(struct cache_tree *tree,
 					   u64 start, u64 size);

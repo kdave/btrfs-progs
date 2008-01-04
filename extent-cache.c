@@ -143,6 +143,15 @@ struct cache_extent *find_first_cache_extent(struct cache_tree *tree,
 	return entry;
 }
 
+struct cache_extent *prev_cache_extent(struct cache_extent *pe)
+{
+	struct rb_node *node = rb_prev(&pe->rb_node);
+
+	if (!node)
+		return NULL;
+	return rb_entry(node, struct cache_extent, rb_node);
+}
+
 struct cache_extent *next_cache_extent(struct cache_extent *pe)
 {
 	struct rb_node *node = rb_next(&pe->rb_node);
