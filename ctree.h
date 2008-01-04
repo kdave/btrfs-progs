@@ -298,6 +298,12 @@ struct btrfs_block_group_cache {
 	int cached;
 	u64 pinned;
 };
+struct btrfs_extent_ops {
+       int (*alloc_extent)(struct btrfs_root *root, u64 num_bytes,
+		           u64 hint_byte, struct btrfs_key *ins);
+       int (*free_extent)(struct btrfs_root *root, u64 bytenr,
+		          u64 num_bytes);
+};
 
 struct btrfs_fs_info {
 	u8 fsid[BTRFS_FSID_SIZE];
@@ -322,8 +328,10 @@ struct btrfs_fs_info {
 	struct mutex fs_mutex;
 	int fp;
 	u64 total_pinned;
-};
 
+	struct btrfs_extent_ops *extent_ops;
+	void *priv_data;
+};
 /*
  * in ram representation of the tree.  extent_root is used for all allocations
  * and for the extent tree extent_root root.

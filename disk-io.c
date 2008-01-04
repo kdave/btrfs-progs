@@ -396,7 +396,8 @@ struct btrfs_root *open_ctree_fd(int fp, u64 sb_bytenr)
 	fs_info->fs_root = root;
 	fs_info->tree_root = tree_root;
 	fs_info->extent_root = extent_root;
-
+	fs_info->extent_ops = NULL;
+	fs_info->priv_data = NULL;
 	extent_map_tree_init(&fs_info->extent_cache);
 	extent_map_tree_init(&fs_info->free_space_cache);
 	extent_map_tree_init(&fs_info->pending_tree);

@@ -1209,6 +1209,7 @@ static int __free_extent(struct btrfs_trans_handle *trans, struct btrfs_root
 	struct btrfs_path *path;
 	struct btrfs_key key;
 	struct btrfs_fs_info *info = root->fs_info;
+	struct btrfs_extent_ops *ops = info->extent_ops;
 	struct btrfs_root *extent_root = info->extent_root;
 	struct extent_buffer *leaf;
 	int ret;
@@ -1272,11 +1273,13 @@ static int __free_extent(struct btrfs_trans_handle *trans, struct btrfs_root
 		root_used = btrfs_root_used(&root->root_item);
 		btrfs_set_root_used(&root->root_item,
 					   root_used - num_bytes);
-
 		ret = btrfs_del_item(trans, extent_root, path);
-		if (ret) {
+		if (ret)
 			return ret;
-		}
+
+		if (ops && ops->free_extent)
+			ops->free_extent(root, bytenr, num_bytes);
+
 		ret = update_block_group(trans, root, bytenr, num_bytes, 0,
 					 mark_free, 0);
 		BUG_ON(ret);
@@ -1626,6 +1629,7 @@ int btrfs_alloc_extent(struct btrfs_trans_handle *trans,
 	u64 new_hint;
 	*/
 	struct btrfs_fs_info *info = root->fs_info;
+	struct btrfs_extent_ops *ops = info->extent_ops;
 	struct btrfs_root *extent_root = info->extent_root;
 	struct btrfs_extent_item extent_item;
 	struct btrfs_path *path;
@@ -1637,12 +1641,15 @@ int btrfs_alloc_extent(struct btrfs_trans_handle *trans,
 	if (new_hint < btrfs_super_total_bytes(&info->super_copy))
 		hint_byte = new_hint;
 	*/
-
 	WARN_ON(num_bytes < root->sectorsize);
-	ret = find_free_extent(trans, root, num_bytes, empty_size,
-			       search_start, search_end, hint_byte, ins,
-			       trans->alloc_exclude_start,
-			       trans->alloc_exclude_nr, data);
+	if (ops && ops->alloc_extent) {
+		ret = ops->alloc_extent(root, num_bytes, hint_byte, ins);
+	} else {
+		ret = find_free_extent(trans, root, num_bytes, empty_size,
+				        search_start, search_end, hint_byte,
+					ins, trans->alloc_exclude_start,
+					trans->alloc_exclude_nr, data);
+	}
 	BUG_ON(ret);
 	if (ret)
 		return ret;
