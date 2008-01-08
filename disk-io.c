@@ -417,8 +417,13 @@ struct btrfs_root *open_ctree_fd(int fp, u64 sb_bytenr)
 	read_extent_buffer(fs_info->sb_buffer, fs_info->fsid,
 			   (unsigned long)btrfs_super_fsid(fs_info->sb_buffer),
 			   BTRFS_FSID_SIZE);
-	disk_super = &fs_info->super_copy;
 
+	disk_super = &fs_info->super_copy;
+	if (strncmp((char *)(&disk_super->magic), BTRFS_MAGIC,
+		    sizeof(disk_super->magic))) {
+		printk("No valid btrfs found\n");
+		BUG_ON(1);
+	}
 	nodesize = btrfs_super_nodesize(disk_super);
 	leafsize = btrfs_super_leafsize(disk_super);
 	sectorsize = btrfs_super_sectorsize(disk_super);

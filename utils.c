@@ -32,9 +32,7 @@
 #include "transaction.h"
 #include "crc32c.h"
 #include "utils.h"
-
 static u64 reference_root_table[4] = {
-	[0] =	0,
 	[1] =	BTRFS_ROOT_TREE_OBJECTID,
 	[2] =	BTRFS_EXTENT_TREE_OBJECTID,
 	[3] =	BTRFS_FS_TREE_OBJECTID,
@@ -142,12 +140,10 @@ int make_btrfs(int fd, u64 blocks[4], u64 num_bytes, u32 nodesize,
 	extent_item = btrfs_item_ptr(buf, nritems, struct btrfs_extent_item);
 	btrfs_set_extent_refs(buf, extent_item, 1);
 	nritems++;
+	for (i = 1; i < 4; i++) {
+		BUG_ON(blocks[i] < first_free);
+		BUG_ON(blocks[i] < blocks[i - 1]);
 
-	for (i = 0; i < 4; i++) {
-		if (blocks[i] < first_free) {
-			BUG_ON(i > 0);
-			continue;
-		}
 		/* create extent item */
 		itemoff = itemoff - sizeof(struct btrfs_extent_item);
 		btrfs_set_disk_key_objectid(&disk_key, blocks[i]);
