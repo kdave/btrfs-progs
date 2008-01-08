@@ -415,8 +415,11 @@ struct btrfs_root {
  * data in the FS
  */
 #define BTRFS_STRING_ITEM_KEY	253
-
-
+/*
+ * Inode flags
+ */
+#define BTRFS_INODE_NODATASUM 		0x1
+#define BTRFS_INODE_NODATACOW		0x2
 #define read_eb_member(eb, ptr, type, member, result) (			\
 	read_extent_buffer(eb, (char *)(result),			\
 			   ((unsigned long)(ptr)) +			\
