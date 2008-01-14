@@ -418,8 +418,10 @@ struct btrfs_root {
 /*
  * Inode flags
  */
-#define BTRFS_INODE_NODATASUM 		0x1
-#define BTRFS_INODE_NODATACOW		0x2
+#define BTRFS_INODE_NODATASUM		(1 << 0)
+#define BTRFS_INODE_NODATACOW		(1 << 1)
+#define BTRFS_INODE_READONLY		(1 << 2)
+
 #define read_eb_member(eb, ptr, type, member, result) (			\
 	read_extent_buffer(eb, (char *)(result),			\
 			   ((unsigned long)(ptr)) +			\

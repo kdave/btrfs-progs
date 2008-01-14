@@ -1163,7 +1163,8 @@ static int create_ext2_image(struct btrfs_root *root, ext2_filsys ext2_fs,
 	btrfs_set_stack_inode_nlink(&btrfs_inode, 1);
 	btrfs_set_stack_inode_nblocks(&btrfs_inode, 0);
 	btrfs_set_stack_inode_mode(&btrfs_inode, S_IFREG | 0400);
-	btrfs_set_stack_inode_flags(&btrfs_inode, BTRFS_INODE_NODATASUM);
+	btrfs_set_stack_inode_flags(&btrfs_inode, BTRFS_INODE_NODATASUM |
+				    BTRFS_INODE_READONLY);
 	btrfs_init_path(&path);
 	trans = btrfs_start_transaction(root, 1);
 	BUG_ON(!trans);
