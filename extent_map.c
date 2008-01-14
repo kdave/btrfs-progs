@@ -123,7 +123,7 @@ static int merge_state(struct extent_map_tree *tree,
 		if (other->start == state->end + 1 &&
 		    other->state == state->state) {
 			other->start = state->start;
-			update_extent_state(state);
+			update_extent_state(other);
 			remove_cache_extent(&tree->state, &state->cache_node);
 			free_extent_state(state);
 		}
