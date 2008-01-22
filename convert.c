@@ -46,20 +46,8 @@
  */
 static int open_ext2fs(const char *name, ext2_filsys *ret_fs)
 {
-	int mnt_flags;
 	errcode_t ret;
 	ext2_filsys ext2_fs;
-
-	ret = ext2fs_check_if_mounted(name, &mnt_flags);
-	if (ret) {
-		fprintf(stderr, "ext2fs_check_if_mounted: %s\n",
-			error_message(ret));
-		return -1;
-	}
-	if (mnt_flags & EXT2_MF_MOUNTED) {
-		fprintf(stderr, "%s is mounted\n", name);
-		return -1;
-	}
 	ret = ext2fs_open(name, 0, 0, 0, unix_io_manager, &ext2_fs);
 	if (ret) {
 		fprintf(stderr, "ext2fs_open: %s\n", error_message(ret));
@@ -123,13 +111,12 @@ static int custom_alloc_extent(struct btrfs_root *root, u64 num_bytes,
 	while (1) {
 		ret = ext2_alloc_block(fs, block, &block);
 		if (ret)
-			return ret;
+			goto fail;
 		/* all free blocks are pinned */
 		if (first == block)
-			return -ENOSPC;
+			goto fail;
 		if (first == 0)
 			first = block;
-
 		bytenr = block * blocksize;
 		if (!test_range_bit(&root->fs_info->pinned_extents, bytenr,
 				    bytenr + blocksize - 1, EXTENT_DIRTY, 0))
@@ -142,8 +129,10 @@ static int custom_alloc_extent(struct btrfs_root *root, u64 num_bytes,
 	ins->offset = blocksize;
 	btrfs_set_key_type(ins, BTRFS_EXTENT_ITEM_KEY);
 	return 0;
+fail:
+	fprintf(stderr, "not enough free space\n");
+	return -ENOSPC;
 }
-
 static int custom_free_extent(struct btrfs_root *root, u64 bytenr,
 			      u64 num_bytes)
 {
@@ -731,14 +720,14 @@ static int copy_single_xattr(struct btrfs_trans_handle *trans,
 		data = databuf;
 		datalen = bufsize;
 	}
+	strcpy(namebuf, xattr_prefix_table[name_index]);
+	strncat(namebuf, EXT2_EXT_ATTR_NAME(entry), entry->e_name_len);
 	if (name_len + datalen > BTRFS_LEAF_DATA_SIZE(root) -
 	    sizeof(struct btrfs_item) - sizeof(struct btrfs_dir_item)) {
 		fprintf(stderr, "skip large xattr on inode %Lu name %.*s\n",
 			objectid - INO_OFFSET, name_len, namebuf);
 		goto out;
 	}
-	strcpy(namebuf, xattr_prefix_table[name_index]);
-	strncat(namebuf, EXT2_EXT_ATTR_NAME(entry), entry->e_name_len);
 	ret = btrfs_insert_xattr_item(trans, root, namebuf, name_len,
 				      data, datalen, objectid);
 out:
@@ -1135,6 +1124,7 @@ static int create_ext2_image(struct btrfs_root *root, ext2_filsys ext2_fs,
 	struct btrfs_key location;
 	struct btrfs_path path;
 	struct btrfs_inode_item btrfs_inode;
+	struct btrfs_inode_item *inode_item;
 	struct extent_buffer *leaf;
 	struct btrfs_fs_info *fs_info = root->fs_info;
 	struct btrfs_root *extent_root = fs_info->extent_root;
@@ -1203,7 +1193,6 @@ again:
 	key.objectid = last_byte;
 	key.offset = 0;
 	btrfs_set_key_type(&key, BTRFS_EXTENT_ITEM_KEY);
-	btrfs_release_path(extent_root, &path);
 	ret = btrfs_search_slot(trans, fs_info->extent_root,
 				&key, &path, 0, 0);
 	if (ret < 0)
@@ -1278,8 +1267,10 @@ again:
 		if (ret)
 			goto fail;
 		last_byte = bytenr + num_bytes;
+		btrfs_release_path(root, &path);
 		goto again;
 	}
+	btrfs_release_path(root, &path);
 	if (total_bytes > last_byte) {
 		ret = create_image_file_range(trans, root, objectid,
 					      &btrfs_inode, last_byte,
@@ -1312,6 +1303,19 @@ again:
 				     btrfs_root_dirid(&root->root_item));
 	if (ret)
 		goto fail;
+	location.objectid = btrfs_root_dirid(&root->root_item);
+	location.offset = 0;
+	btrfs_set_key_type(&location, BTRFS_INODE_ITEM_KEY);
+	ret = btrfs_lookup_inode(trans, root, &path, &location, 1);
+	if (ret)
+		goto fail;
+	leaf = path.nodes[0];
+	inode_item = btrfs_item_ptr(leaf, path.slots[0],
+				    struct btrfs_inode_item);
+	btrfs_set_inode_size(leaf, inode_item, strlen(name) * 2 +
+			     btrfs_inode_size(leaf, inode_item));
+	btrfs_mark_buffer_dirty(leaf);
+	btrfs_release_path(root, &path);
 	ret = btrfs_commit_transaction(trans, root);
 	BUG_ON(ret);
 fail:
@@ -1569,7 +1573,7 @@ int do_convert(const char *devname, int datacsum, int packing, int noxattr)
 	for (i = 0; i < 4; i++) {
 		ret = ext2_alloc_block(ext2_fs, 0, blocks + i);
 		if (ret) {
-			fprintf(stderr, "free space isn't enough\n");
+			fprintf(stderr, "not enough free space\n");
 			goto fail;
 		}
 		blocks[i] *= blocksize;
@@ -1837,6 +1841,24 @@ fail:
 	fprintf(stderr, "rollback aborted.\n");
 	return -1;
 }
+
+static void check_mounted(const char *name)
+{
+	int mnt_flags;
+	errcode_t ret;
+
+	ret = ext2fs_check_if_mounted(name, &mnt_flags);
+	if (ret) {
+		fprintf(stderr, "ext2fs_check_if_mounted: %s\n",
+			error_message(ret));
+		exit(1);
+	}
+	if (mnt_flags & EXT2_MF_MOUNTED) {
+		fprintf(stderr, "%s is mounted\n", name);
+		exit(1);
+	}
+}
+
 static void print_usage(void)
 {
 	printf("usage: btrfs-convert [-d] [-i] [-n] [-r] device\n");
@@ -1879,6 +1901,7 @@ int main(int argc, char *argv[])
 	argc = argc - optind;
 	if (argc == 1) {
 		file = argv[optind];
+		check_mounted(file);
 	} else {
 		print_usage();
 	}
@@ -1887,5 +1910,7 @@ int main(int argc, char *argv[])
 	} else {
 		ret = do_convert(file, datacsum, packing, noxattr);
 	}
-	return ret;
+	if (ret)
+		return 1;
+	return 0;
 }
