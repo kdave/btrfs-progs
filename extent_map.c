@@ -473,6 +473,11 @@ int test_range_bit(struct extent_map_tree *tree, u64 start, u64 end,
 		if (start > end)
 			break;
 		node = next_cache_extent(node);
+		if (!node) {
+			if (filled)
+				bitset = 0;
+			break;
+		}
 	}
 	return bitset;
 }
