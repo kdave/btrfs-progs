@@ -63,7 +63,7 @@ int make_btrfs(int fd, u64 blocks[4], u64 num_bytes, u32 nodesize,
 	num_bytes = (num_bytes / sectorsize) * sectorsize;
 	uuid_generate(super.fsid);
 	btrfs_set_super_bytenr(&super, blocks[0]);
-	strcpy((char *)(&super.magic), BTRFS_MAGIC);
+	strncpy((char *)&super.magic, BTRFS_MAGIC, sizeof(super.magic));
 	btrfs_set_super_generation(&super, 1);
 	btrfs_set_super_root(&super, blocks[1]);
 	btrfs_set_super_total_bytes(&super, num_bytes);
