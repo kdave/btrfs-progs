@@ -709,6 +709,11 @@ int check_extent_refs(struct btrfs_root *root,
 	return err;
 }
 
+void print_usage(void) {
+	fprintf(stderr, "usage: btrfsck dev\n");
+	exit(1);
+}
+
 int main(int ac, char **av) {
 	struct btrfs_root *root;
 	struct cache_tree extent_cache;
@@ -726,6 +731,9 @@ int main(int ac, char **av) {
 	struct extent_buffer *leaf;
 	int slot;
 	struct btrfs_root_item ri;
+
+	if (ac < 2)
+		print_usage();
 
 	radix_tree_init();
 	cache_tree_init(&extent_cache);
