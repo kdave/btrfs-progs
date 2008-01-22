@@ -1,5 +1,5 @@
 CC=gcc
-AM_CFLAGS = -Wall -fno-strict-aliasing -D_FILE_OFFSET_BITS=64
+AM_CFLAGS = -Wall -fno-strict-aliasing -D_FILE_OFFSET_BITS=64 -D_FORTIFY_SOURCE=2
 CFLAGS = -g -Werror
 objects = ctree.o disk-io.o radix-tree.o extent-tree.o print-tree.o \
 	  root-tree.o dir-item.o hash.o file-item.o inode-item.o \
