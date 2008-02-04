@@ -27,7 +27,7 @@
 
 struct btrfs_root;
 struct btrfs_trans_handle;
-#define BTRFS_MAGIC "_B3RfS_M"
+#define BTRFS_MAGIC "_B4RfS_M"
 
 #define BTRFS_MAX_LEVEL 8
 #define BTRFS_ROOT_TREE_OBJECTID 1ULL
