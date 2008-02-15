@@ -91,13 +91,11 @@ static const u32 crc32c_table[256] = {
  * crc using table.
  */
 
-u32 crc32c_le(u32 seed, unsigned char const *data, size_t length)
+u32 crc32c_le(u32 crc, unsigned char const *data, size_t length)
 {
-	u32 crc = (__force __u32)(cpu_to_le32(seed));
-	
 	while (length--)
 		crc =
 		    crc32c_table[(crc ^ *data++) & 0xFFL] ^ (crc >> 8);
 
-	return le32_to_cpu((__force __le32)crc);
+	return crc;
 }
