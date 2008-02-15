@@ -67,6 +67,43 @@ static u64 parse_size(char *s)
 	return atol(s) * mult;
 }
 
+static int zero_blocks(int fd, off_t start, size_t len)
+{
+	char *buf = malloc(len);
+	int ret = 0;
+	ssize_t written;
+
+	if (!buf)
+		return -ENOMEM;
+	memset(buf, 0, len);
+	written = pwrite(fd, buf, len, start);
+	if (written != len)
+		ret = -EIO;
+	free(buf);
+	return ret;
+}
+
+static int zero_dev_start(int fd)
+{
+	off_t start = 0;
+	size_t len = 2 * 1024 * 1024;
+
+#ifdef __sparc__
+	/* don't overwrite the disk labels on sparc */
+	start = 1024;
+	len -= 1024;
+#endif
+	return zero_blocks(fd, start, len);
+}
+
+static int zero_dev_end(int fd, u64 dev_size)
+{
+	size_t len = 2 * 1024 * 1024;
+	off_t start = dev_size - len;
+
+	return zero_blocks(fd, start, len);
+}
+
 static int make_root_dir(int fd) {
 	struct btrfs_root *root;
 	struct btrfs_trans_handle *trans;
@@ -143,7 +180,7 @@ int main(int ac, char **av)
 	u32 nodesize = 16 * 1024;
 	u32 stripesize = 4096;
 	u64 blocks[4];
-	char *buf = malloc(sectorsize);
+	int zero_end = 0;
 
 	while(1) {
 		int c;
@@ -201,6 +238,7 @@ int main(int ac, char **av)
 			fprintf(stderr, "unable to find %s size\n", file);
 			exit(1);
 		}
+		zero_end = 1;
 	}
 	block_count /= sectorsize;
 	block_count *= sectorsize;
@@ -209,16 +247,23 @@ int main(int ac, char **av)
 		fprintf(stderr, "device %s is too small\n", file);
 		exit(1);
 	}
-	memset(buf, 0, sectorsize);
-	for(i = 0; i < 64; i++) {
-		ret = write(fd, buf, sectorsize);
-		if (ret != sectorsize) {
-			fprintf(stderr, "unable to zero fill device\n");
+	ret = zero_dev_start(fd);
+	if (ret) {
+		fprintf(stderr, "failed to zero device start %d\n", ret);
+		exit(1);
+	}
+
+	if (zero_end) {
+		ret = zero_dev_end(fd, block_count);
+		if (ret) {
+			fprintf(stderr, "failed to zero device end %d\n", ret);
 			exit(1);
 		}
 	}
+
 	for (i = 0; i < 4; i++)
 		blocks[i] = BTRFS_SUPER_INFO_OFFSET + leafsize * i;
+
 	ret = make_btrfs(fd, blocks, block_count, nodesize, leafsize,
 			 sectorsize, stripesize);
 	if (ret) {
