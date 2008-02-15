@@ -129,8 +129,8 @@ error:
 				    struct btrfs_dir_item);
 		found = (char *)(di + 1);
 		found_len = btrfs_dir_name_len(di);
-		btrfs_name_hash(buf, strlen(buf), &myhash);
-		btrfs_name_hash(found, found_len, &foundhash);
+		myhash = btrfs_name_hash(buf, strlen(buf));
+		foundhash = btrfs_name_hash(found, found_len);
 		if (myhash != foundhash)
 			goto fatal_release;
 		btrfs_release_path(root, &path);
