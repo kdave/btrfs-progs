@@ -24,12 +24,12 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include "kerncompat.h"
-#include "extent_map.h"
+#include "extent_io.h"
 #include "list.h"
 
 u64 cache_max = 1024 * 1024 * 32;
 
-void extent_map_tree_init(struct extent_map_tree *tree)
+void extent_io_tree_init(struct extent_io_tree *tree)
 {
 	cache_tree_init(&tree->state);
 	cache_tree_init(&tree->cache);
@@ -58,7 +58,7 @@ static void free_extent_state(struct extent_state *state)
 		free(state);
 }
 
-void extent_map_tree_cleanup(struct extent_map_tree *tree)
+void extent_io_tree_cleanup(struct extent_io_tree *tree)
 {
 	struct extent_state *es;
 	struct extent_buffer *eb;
@@ -95,7 +95,7 @@ static inline void update_extent_state(struct extent_state *state)
  * extent in the tree. Extents with EXTENT_IO in their state field are
  * not merged
  */
-static int merge_state(struct extent_map_tree *tree,
+static int merge_state(struct extent_io_tree *tree,
 		       struct extent_state *state)
 {
 	struct extent_state *other;
@@ -135,7 +135,7 @@ static int merge_state(struct extent_map_tree *tree,
  * insert an extent_state struct into the tree.  'bits' are set on the
  * struct before it is inserted.
  */
-static int insert_state(struct extent_map_tree *tree,
+static int insert_state(struct extent_io_tree *tree,
 			struct extent_state *state, u64 start, u64 end,
 			int bits)
 {
@@ -157,7 +157,7 @@ static int insert_state(struct extent_map_tree *tree,
  * struct 'prealloc' as the newly created second half.  'split' indicates an
  * offset inside 'orig' where it should be split.
  */
-static int split_state(struct extent_map_tree *tree, struct extent_state *orig,
+static int split_state(struct extent_io_tree *tree, struct extent_state *orig,
 		       struct extent_state *prealloc, u64 split)
 {
 	int ret;
@@ -176,7 +176,7 @@ static int split_state(struct extent_map_tree *tree, struct extent_state *orig,
 /*
  * clear some bits on a range in the tree.
  */
-static int clear_state_bit(struct extent_map_tree *tree,
+static int clear_state_bit(struct extent_io_tree *tree,
 			    struct extent_state *state, int bits)
 {
 	int ret = state->state & bits;
@@ -194,7 +194,7 @@ static int clear_state_bit(struct extent_map_tree *tree,
 /*
  * set some bits on a range in the tree.
  */
-int clear_extent_bits(struct extent_map_tree *tree, u64 start,
+int clear_extent_bits(struct extent_io_tree *tree, u64 start,
 		      u64 end, int bits, gfp_t mask)
 {
 	struct extent_state *state;
@@ -280,7 +280,7 @@ search_again:
 /*
  * set some bits on a range in the tree.
  */
-int set_extent_bits(struct extent_map_tree *tree, u64 start,
+int set_extent_bits(struct extent_io_tree *tree, u64 start,
 		    u64 end, int bits, gfp_t mask)
 {
 	struct extent_state *state;
@@ -401,19 +401,19 @@ search_again:
 	goto again;
 }
 
-int set_extent_dirty(struct extent_map_tree *tree, u64 start, u64 end,
+int set_extent_dirty(struct extent_io_tree *tree, u64 start, u64 end,
 		     gfp_t mask)
 {
 	return set_extent_bits(tree, start, end, EXTENT_DIRTY, mask);
 }
 
-int clear_extent_dirty(struct extent_map_tree *tree, u64 start, u64 end,
+int clear_extent_dirty(struct extent_io_tree *tree, u64 start, u64 end,
 		       gfp_t mask)
 {
 	return clear_extent_bits(tree, start, end, EXTENT_DIRTY, mask);
 }
 
-int find_first_extent_bit(struct extent_map_tree *tree, u64 start,
+int find_first_extent_bit(struct extent_io_tree *tree, u64 start,
 			  u64 *start_ret, u64 *end_ret, int bits)
 {
 	struct cache_extent *node;
@@ -444,7 +444,7 @@ out:
 	return ret;
 }
 
-int test_range_bit(struct extent_map_tree *tree, u64 start, u64 end,
+int test_range_bit(struct extent_io_tree *tree, u64 start, u64 end,
 		   int bits, int filled)
 {
 	struct extent_state *state = NULL;
@@ -482,7 +482,7 @@ int test_range_bit(struct extent_map_tree *tree, u64 start, u64 end,
 	return bitset;
 }
 
-int set_state_private(struct extent_map_tree *tree, u64 start, u64 private)
+int set_state_private(struct extent_io_tree *tree, u64 start, u64 private)
 {
 	struct cache_extent *node;
 	struct extent_state *state;
@@ -503,7 +503,7 @@ out:
 	return ret;
 }
 
-int get_state_private(struct extent_map_tree *tree, u64 start, u64 *private)
+int get_state_private(struct extent_io_tree *tree, u64 start, u64 *private)
 {
 	struct cache_extent *node;
 	struct extent_state *state;
@@ -524,7 +524,7 @@ out:
 	return ret;
 }
 
-static int free_some_buffers(struct extent_map_tree *tree)
+static int free_some_buffers(struct extent_io_tree *tree)
 {
 	u32 nrscan = 0;
 	struct extent_buffer *eb;
@@ -545,7 +545,7 @@ static int free_some_buffers(struct extent_map_tree *tree)
 	return 0;
 }
 
-static struct extent_buffer *__alloc_extent_buffer(struct extent_map_tree *tree,
+static struct extent_buffer *__alloc_extent_buffer(struct extent_io_tree *tree,
 						   u64 bytenr, u32 blocksize)
 {
 	struct extent_buffer *eb;
@@ -584,7 +584,7 @@ void free_extent_buffer(struct extent_buffer *eb)
 	eb->refs--;
 	BUG_ON(eb->refs < 0);
 	if (eb->refs == 0) {
-		struct extent_map_tree *tree = eb->tree;
+		struct extent_io_tree *tree = eb->tree;
 		BUG_ON(eb->flags & EXTENT_DIRTY);
 		list_del_init(&eb->lru);
 		remove_cache_extent(&tree->cache, &eb->cache_node);
@@ -594,7 +594,7 @@ void free_extent_buffer(struct extent_buffer *eb)
 	}
 }
 
-struct extent_buffer *find_extent_buffer(struct extent_map_tree *tree,
+struct extent_buffer *find_extent_buffer(struct extent_io_tree *tree,
 					 u64 bytenr, u32 blocksize)
 {
 	struct extent_buffer *eb = NULL;
@@ -609,7 +609,7 @@ struct extent_buffer *find_extent_buffer(struct extent_map_tree *tree,
 	return eb;
 }
 
-struct extent_buffer *find_first_extent_buffer(struct extent_map_tree *tree,
+struct extent_buffer *find_first_extent_buffer(struct extent_io_tree *tree,
 					       u64 start)
 {
 	struct extent_buffer *eb = NULL;
@@ -624,7 +624,7 @@ struct extent_buffer *find_first_extent_buffer(struct extent_map_tree *tree,
 	return eb;
 }
 
-struct extent_buffer *alloc_extent_buffer(struct extent_map_tree *tree,
+struct extent_buffer *alloc_extent_buffer(struct extent_io_tree *tree,
 					  u64 bytenr, u32 blocksize)
 {
 	struct extent_buffer *eb;
@@ -692,7 +692,7 @@ int extent_buffer_uptodate(struct extent_buffer *eb)
 
 int set_extent_buffer_dirty(struct extent_buffer *eb)
 {
-	struct extent_map_tree *tree = eb->tree;
+	struct extent_io_tree *tree = eb->tree;
 	if (!(eb->flags & EXTENT_DIRTY)) {
 		eb->flags |= EXTENT_DIRTY;
 		set_extent_dirty(tree, eb->start, eb->start + eb->len - 1, 0);
@@ -703,7 +703,7 @@ int set_extent_buffer_dirty(struct extent_buffer *eb)
 
 int clear_extent_buffer_dirty(struct extent_buffer *eb)
 {
-	struct extent_map_tree *tree = eb->tree;
+	struct extent_io_tree *tree = eb->tree;
 	if (eb->flags & EXTENT_DIRTY) {
 		eb->flags &= ~EXTENT_DIRTY;
 		clear_extent_dirty(tree, eb->start, eb->start + eb->len - 1, 0);

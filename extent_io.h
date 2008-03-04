@@ -34,7 +34,7 @@
 #define EXTENT_CSUM (1 << 9)
 #define EXTENT_IOBITS (EXTENT_LOCKED | EXTENT_WRITEBACK)
 
-struct extent_map_tree {
+struct extent_io_tree {
 	struct cache_tree state;
 	struct cache_tree cache;
 	struct list_head lru;
@@ -55,7 +55,7 @@ struct extent_buffer {
 	u64 start;
 	u64 dev_bytenr;
 	u32 len;
-	struct extent_map_tree *tree;
+	struct extent_io_tree *tree;
 	struct list_head lru;
 	int refs;
 	int flags;
@@ -68,29 +68,29 @@ static inline void extent_buffer_get(struct extent_buffer *eb)
 	eb->refs++;
 }
 
-void extent_map_tree_init(struct extent_map_tree *tree);
-void extent_map_tree_cleanup(struct extent_map_tree *tree);
-int set_extent_bits(struct extent_map_tree *tree, u64 start,
+void extent_io_tree_init(struct extent_io_tree *tree);
+void extent_io_tree_cleanup(struct extent_io_tree *tree);
+int set_extent_bits(struct extent_io_tree *tree, u64 start,
 		    u64 end, int bits, gfp_t mask);
-int clear_extent_bits(struct extent_map_tree *tree, u64 start,
+int clear_extent_bits(struct extent_io_tree *tree, u64 start,
 		      u64 end, int bits, gfp_t mask);
-int find_first_extent_bit(struct extent_map_tree *tree, u64 start,
+int find_first_extent_bit(struct extent_io_tree *tree, u64 start,
 			  u64 *start_ret, u64 *end_ret, int bits);
-int test_range_bit(struct extent_map_tree *tree, u64 start, u64 end,
+int test_range_bit(struct extent_io_tree *tree, u64 start, u64 end,
 		   int bits, int filled);
-int set_extent_dirty(struct extent_map_tree *tree, u64 start,
+int set_extent_dirty(struct extent_io_tree *tree, u64 start,
 		     u64 end, gfp_t mask);
-int clear_extent_dirty(struct extent_map_tree *tree, u64 start,
+int clear_extent_dirty(struct extent_io_tree *tree, u64 start,
 		       u64 end, gfp_t mask);
 int extent_buffer_uptodate(struct extent_buffer *eb);
 int set_extent_buffer_uptodate(struct extent_buffer *eb);
-int set_state_private(struct extent_map_tree *tree, u64 start, u64 private);
-int get_state_private(struct extent_map_tree *tree, u64 start, u64 *private);
-struct extent_buffer *find_extent_buffer(struct extent_map_tree *tree,
+int set_state_private(struct extent_io_tree *tree, u64 start, u64 private);
+int get_state_private(struct extent_io_tree *tree, u64 start, u64 *private);
+struct extent_buffer *find_extent_buffer(struct extent_io_tree *tree,
 					 u64 bytenr, u32 blocksize);
-struct extent_buffer *find_first_extent_buffer(struct extent_map_tree *tree,
+struct extent_buffer *find_first_extent_buffer(struct extent_io_tree *tree,
 					       u64 start);
-struct extent_buffer *alloc_extent_buffer(struct extent_map_tree *tree,
+struct extent_buffer *alloc_extent_buffer(struct extent_io_tree *tree,
 					  u64 bytenr, u32 blocksize);
 void free_extent_buffer(struct extent_buffer *eb);
 int read_extent_from_disk(struct extent_buffer *eb);

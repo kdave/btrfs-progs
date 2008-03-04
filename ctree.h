@@ -23,7 +23,7 @@
 #include "kerncompat.h"
 #include "radix-tree.h"
 #include "extent-cache.h"
-#include "extent_map.h"
+#include "extent_io.h"
 
 struct btrfs_root;
 struct btrfs_trans_handle;
@@ -311,14 +311,12 @@ struct btrfs_fs_info {
 	struct btrfs_root *extent_root;
 	struct btrfs_root *tree_root;
 
-	struct extent_map_tree extent_cache;
-	struct extent_map_tree free_space_cache;
-	struct extent_map_tree block_group_cache;
-	struct extent_map_tree pending_tree;
-	struct extent_map_tree pinned_extents;
-	struct extent_map_tree del_pending;
-	struct extent_map_tree pending_del;
-	struct extent_map_tree extent_ins;
+	struct extent_io_tree extent_cache;
+	struct extent_io_tree free_space_cache;
+	struct extent_io_tree block_group_cache;
+	struct extent_io_tree pinned_extents;
+	struct extent_io_tree pending_del;
+	struct extent_io_tree extent_ins;
 
 	u64 generation;
 	u64 last_trans_committed;
@@ -910,7 +908,7 @@ u32 btrfs_count_snapshots_in_path(struct btrfs_root *root,
 				  u64 first_extent);
 int btrfs_extent_post_op(struct btrfs_trans_handle *trans,
 			 struct btrfs_root *root);
-int btrfs_copy_pinned(struct btrfs_root *root, struct extent_map_tree *copy);
+int btrfs_copy_pinned(struct btrfs_root *root, struct extent_io_tree *copy);
 struct btrfs_block_group_cache *btrfs_lookup_block_group(struct
 							 btrfs_fs_info *info,
 							 u64 bytenr);
@@ -955,7 +953,7 @@ int btrfs_free_extent(struct btrfs_trans_handle *trans, struct btrfs_root
 		      u64 owner_objectid, u64 owner_offset, int pin);
 int btrfs_finish_extent_commit(struct btrfs_trans_handle *trans,
 			       struct btrfs_root *root,
-			       struct extent_map_tree *unpin);
+			       struct extent_io_tree *unpin);
 int btrfs_inc_extent_ref(struct btrfs_trans_handle *trans,
 				struct btrfs_root *root,
 				u64 bytenr, u64 num_bytes,

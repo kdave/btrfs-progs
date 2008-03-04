@@ -189,7 +189,7 @@ static int __commit_transaction(struct btrfs_trans_handle *trans,
 	u64 start;
 	u64 end;
 	struct extent_buffer *eb;
-	struct extent_map_tree *tree = &root->fs_info->extent_cache;
+	struct extent_io_tree *tree = &root->fs_info->extent_cache;
 	int ret;
 
 	while(1) {
@@ -398,12 +398,12 @@ struct btrfs_root *open_ctree_fd(int fp, u64 sb_bytenr)
 	fs_info->extent_root = extent_root;
 	fs_info->extent_ops = NULL;
 	fs_info->priv_data = NULL;
-	extent_map_tree_init(&fs_info->extent_cache);
-	extent_map_tree_init(&fs_info->free_space_cache);
-	extent_map_tree_init(&fs_info->pending_tree);
-	extent_map_tree_init(&fs_info->pinned_extents);
-	extent_map_tree_init(&fs_info->del_pending);
-	extent_map_tree_init(&fs_info->block_group_cache);
+	extent_io_tree_init(&fs_info->extent_cache);
+	extent_io_tree_init(&fs_info->free_space_cache);
+	extent_io_tree_init(&fs_info->block_group_cache);
+	extent_io_tree_init(&fs_info->pinned_extents);
+	extent_io_tree_init(&fs_info->pending_del);
+	extent_io_tree_init(&fs_info->extent_ins);
 
 	mutex_init(&fs_info->fs_mutex);
 
@@ -497,12 +497,12 @@ int close_ctree(struct btrfs_root *root)
 	free_extent_buffer(root->commit_root);
 	free_extent_buffer(root->fs_info->sb_buffer);
 
-	extent_map_tree_cleanup(&fs_info->extent_cache);
-	extent_map_tree_cleanup(&fs_info->free_space_cache);
-	extent_map_tree_cleanup(&fs_info->pending_tree);
-	extent_map_tree_cleanup(&fs_info->pinned_extents);
-	extent_map_tree_cleanup(&fs_info->del_pending);
-	extent_map_tree_cleanup(&fs_info->block_group_cache);
+	extent_io_tree_cleanup(&fs_info->extent_cache);
+	extent_io_tree_cleanup(&fs_info->free_space_cache);
+	extent_io_tree_cleanup(&fs_info->block_group_cache);
+	extent_io_tree_cleanup(&fs_info->pinned_extents);
+	extent_io_tree_cleanup(&fs_info->pending_del);
+	extent_io_tree_cleanup(&fs_info->extent_ins);
 
 	free(fs_info->tree_root);
 	free(fs_info->extent_root);
