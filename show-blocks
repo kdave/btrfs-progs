@@ -1,0 +1,306 @@
+#!/usr/bin/env python
+#
+# Copyright (C) 2007 Oracle.  All rights reserved.
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public
+# License v2 as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public
+# License along with this program; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+# Boston, MA 021110-1307, USA.
+#
+import sys, os, signal, time, commands, tempfile
+from optparse import OptionParser
+from matplotlib import rcParams
+from matplotlib.font_manager import fontManager, FontProperties
+import numpy
+
+rcParams['numerix'] = 'numpy'
+rcParams['backend'] = 'Agg'
+rcParams['interactive'] = 'False'
+from pylab import *
+
+class AnnoteFinder:
+  """
+  callback for matplotlib to display an annotation when points are clicked on.  The
+  point which is closest to the click and within xtol and ytol is identified.
+    
+  Register this function like this:
+    
+  scatter(xdata, ydata)
+  af = AnnoteFinder(xdata, ydata, annotes)
+  connect('button_press_event', af)
+  """
+
+  def __init__(self, axis=None):
+    if axis is None:
+      self.axis = gca()
+    else:
+      self.axis= axis
+    self.drawnAnnotations = {}
+    self.links = []
+    
+  def clear(self):
+    for k in self.drawnAnnotations.keys():
+        self.drawnAnnotations[k].set_visible(False)
+
+  def __call__(self, event):
+    if event.inaxes:
+      if event.button != 1:
+        self.clear()
+        draw()
+        return
+      clickX = event.xdata
+      clickY = event.ydata
+      if (self.axis is None) or (self.axis==event.inaxes):
+        self.drawAnnote(event.inaxes, clickX, clickY)
+    
+  def drawAnnote(self, axis, x, y):
+    """
+    Draw the annotation on the plot
+    """
+    if self.drawnAnnotations.has_key((x,y)):
+      markers = self.drawnAnnotations[(x,y)]
+      markers.set_visible(not markers.get_visible())
+      draw()
+    else:
+      t = axis.text(x,y, "(%3.2f, %3.2f)"%(x,y), bbox=dict(facecolor='red',
+                    alpha=0.8))
+      self.drawnAnnotations[(x,y)] = t
+      draw()
+
+def loaddata(fh,delimiter=None, converters=None):
+
+    def iter(fh, delimiter, converters):
+        global total_data
+        global total_metadata
+        for i,line in enumerate(fh):
+            line = line.split(' ')
+            start = float(line[0])
+            len = float(line[1])
+            owner = float(line[10])
+            if owner <= 255:
+                total_metadata += int(len)
+            else:
+                total_data += int(len)
+            if start < zoommin or (zoommax != 0 and start > zoommax):
+                continue
+            yield start
+            yield len
+            yield owner
+    X = numpy.fromiter(iter(fh, delimiter, converters), dtype=float)
+    return X
+
+def run_debug_tree(device):
+    p = os.popen('debug-tree -e ' + device)
+    data = loaddata(p)
+    return data
+
+def shapeit(X):
+    lines = len(X) / 3
+    X.shape = (lines, 3)
+
+def line_picker(line, mouseevent):
+    if mouseevent.xdata is None: return False, dict()
+    print "%d %d\n", mouseevent.xdata, mouseevent.ydata
+    return False, dict()
+
+def xycalc(byte):
+    byte = byte / bytes_per_cell
+    yval = floor(byte / num_cells)
+    xval = byte % num_cells
+    return (xval, yval + 1)
+
+def plotone(a, xvals, yvals, owner):
+    global data_lines
+    global meta_lines
+
+    if owner:
+        if options.meta_only:
+            return
+        color = "blue"
+        label = "Data"
+    else:
+        if options.data_only:
+            return
+        color = "green"
+        label = "Metadata"
+
+    lines = a.plot(xvals, yvals, 's', color=color, mfc=color, mec=color,
+           markersize=.23, label=label)
+    if owner and not data_lines:
+        data_lines = lines
+    elif not owner and not meta_lines:
+        meta_lines = lines
+
+
+def parse_zoom():
+    def parse_num(s):
+        mult = 1
+        c = s.lower()[-1]
+        if c == 't':
+            mult = 1024 * 1024 * 1024 * 1024
+        elif c == 'g':
+            mult = 1024 * 1024 * 1024
+        elif c == 'm':
+            mult = 1024 * 1024
+        elif c == 'k':
+            mult = 1024
+        else:
+            c = None
+        if c:
+            num = int(s[:-1]) * mult
+        else:
+            num = int(s)
+        return num
+        
+    if not options.zoom:
+        return (0, 0)
+
+    vals = options.zoom.split(':')
+    if len(vals) != 2:
+        sys.stderr.write("warning: unable to parse zoom %s\n" % options.zoom)
+        return (0, 0)
+    zoommin = parse_num(vals[0])
+    zoommax = parse_num(vals[1])
+    return (zoommin, zoommax)
+
+usage = "usage: %prog [options]"
+parser = OptionParser(usage=usage)
+parser.add_option("-d", "--device", help="Btrfs device", default="")
+parser.add_option("-i", "--input-file", help="debug-tree data", default="")
+parser.add_option("-o", "--output", help="Output file", default="blocks.png")
+parser.add_option("-z", "--zoom", help="Zoom", default=None)
+parser.add_option("", "--data-only", help="Only print data blocks",
+                  default=False, action="store_true")
+parser.add_option("", "--meta-only", help="Only print metadata blocks",
+                  default=False, action="store_true")
+
+(options,args) = parser.parse_args()
+
+if not options.device and not options.input_file:
+    parser.print_help()
+    sys.exit(1)
+
+zoommin, zoommax = parse_zoom()
+total_data = 0
+total_metadata = 0
+data_lines = []
+meta_lines = []
+
+if options.device:
+    data = run_debug_tree(options.device)
+elif options.input_file:
+    data = loaddata(file(options.input_file))
+shapeit(data)
+
+# try to drop out the least common data points by creating
+# a historgram of the sectors seen.
+sectors = data[:,0]
+sizes = data[:,1]
+datalen = len(data)
+sectormax = numpy.max(sectors)
+sectormin = 0
+num_cells = 800
+total_cells = num_cells * num_cells
+byte_range = sectormax - sectormin
+bytes_per_cell = byte_range / total_cells
+
+f = figure(figsize=(8,6))
+
+# Throughput goes at the botoom
+a = subplot(1, 1, 1)
+datai = 0
+xvals = []
+yvals = []
+last = 0
+while datai < datalen:
+    row = data[datai]
+    datai += 1
+    byte = row[0]
+    size = row[1]
+    owner = row[2]
+
+    if owner <= 255:
+        owner = 0
+    else:
+        owner = 1
+
+    if len(xvals) and owner != last:
+        plotone(a, xvals, yvals, last)
+        xvals = []
+        yvals = []
+    cell = 0
+    while cell < size:
+        xy = xycalc(byte)
+        byte += bytes_per_cell
+        cell += bytes_per_cell
+        if xy:
+            xvals.append(xy[0])
+            yvals.append(xy[1])
+    last = owner
+
+if xvals:
+    plotone(a, xvals, yvals, last)
+
+# make sure the final second goes on the x axes
+ticks = []
+a.set_xticks(ticks)
+ticks = a.get_yticks()
+
+first_tick = ticks[1] * bytes_per_cell * num_cells
+if first_tick > 1024 * 1024 * 1024 * 1024:
+    scale = 1024 * 1024 * 1024 * 1024;
+    scalestr = "TB"
+elif first_tick > 1024 * 1024 * 1024:
+    scale = 1024 * 1024 * 1024;
+    scalestr = "GB"
+elif first_tick > 1024 * 1024:
+    scale = 1024 * 1024;
+    scalestr = "MB"
+elif first_tick > 1024:
+    scale = 1024;
+    scalestr = "KB"
+else:
+    scalestr = "Bytes"
+    scale = 1
+
+ylabels = [ str(int((x * bytes_per_cell * num_cells) / scale)) for x in ticks ]
+a.set_yticklabels(ylabels)
+a.set_ylabel('Disk offset (%s)' % scalestr)
+a.set_xlim(0, num_cells)
+a.set_title('Blocks')
+
+lines = []
+labels = []
+if data_lines:
+    lines += data_lines
+    labels += ["Data"]
+if meta_lines:
+    lines += meta_lines
+    labels += ["Metadata"]
+
+a.legend(lines, labels, loc=(.9, 1.02), shadow=True, pad=0.5, numpoints=1,
+              handletextsep = 0.005,
+              labelsep = 0.01,
+              markerscale=10,
+              prop=FontProperties(size='x-small') )
+
+if total_data == 0:
+    percent_meta = 100
+else:
+    percent_meta = (float(total_metadata) / float(total_data)) * 100
+
+print "Total metadata bytes %d data %d ratio %.3f" % (total_metadata,
+                                                    total_data, percent_meta)
+print "saving graph to %s" % options.output
+savefig(options.output, orientation='landscape')
+show()
+
