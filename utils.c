@@ -27,6 +27,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <uuid/uuid.h>
+#include <dirent.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include "kerncompat.h"
@@ -37,6 +38,7 @@
 #include "crc32c.h"
 #include "utils.h"
 #include "volumes.h"
+#include "ioctl.h"
 
 #ifdef __CHECKER__
 #define BLKGETSIZE64 0
@@ -521,4 +523,125 @@ int btrfs_make_root_dir(struct btrfs_trans_handle *trans,
 	ret = 0;
 error:
 	return ret;
+}
+
+struct pending_dir {
+	struct list_head list;
+	char name[256];
+};
+
+int btrfs_register_one_device(char *fname)
+{
+	struct btrfs_ioctl_vol_args args;
+	int fd;
+	int ret;
+
+	fd = open("/dev/btrfs-control", O_RDONLY);
+	if (fd < 0)
+		return -EINVAL;
+	strcpy(args.name, fname);
+	ret = ioctl(fd, BTRFS_IOC_SCAN_DEV, &args);
+	close(fd);
+	return ret;
+}
+
+int btrfs_scan_one_dir(char *dirname, int run_ioctl)
+{
+	DIR *dirp;
+	struct dirent *dirent;
+	struct pending_dir *pending;
+	struct stat st;
+	int ret;
+	int fd;
+	int dirname_len;
+	int pathlen;
+	char *fullpath;
+	struct list_head pending_list;
+	struct btrfs_fs_devices *tmp_devices;
+	u64 num_devices;
+
+	INIT_LIST_HEAD(&pending_list);
+
+	pending = malloc(sizeof(*pending));
+	if (!pending)
+		return -ENOMEM;
+	strcpy(pending->name, dirname);
+
+again:
+	dirname_len = strlen(pending->name);
+	pathlen = 1024;
+	fullpath = malloc(pathlen);
+	dirname = pending->name;
+
+	if (!fullpath) {
+		ret = -ENOMEM;
+		goto fail;
+	}
+	dirp = opendir(dirname);
+	if (!dirp) {
+		fprintf(stderr, "Unable to open /sys/block for scanning\n");
+		return -ENOENT;
+	}
+	while(1) {
+		dirent = readdir(dirp);
+		if (!dirent)
+			break;
+		if (dirent->d_name[0] == '.')
+			continue;
+		if (dirname_len + strlen(dirent->d_name) + 2 > pathlen) {
+			ret = -EFAULT;
+			goto fail;
+		}
+		snprintf(fullpath, pathlen, "%s/%s", dirname, dirent->d_name);
+		ret = lstat(fullpath, &st);
+		if (ret < 0) {
+			fprintf(stderr, "failed to stat %s\n", fullpath);
+			continue;
+		}
+		if (S_ISLNK(st.st_mode))
+			continue;
+		if (S_ISDIR(st.st_mode)) {
+			struct pending_dir *next = malloc(sizeof(*next));
+			if (!next) {
+				ret = -ENOMEM;
+				goto fail;
+			}
+			strcpy(next->name, fullpath);
+			list_add_tail(&next->list, &pending_list);
+		}
+		if (!S_ISBLK(st.st_mode)) {
+			continue;
+		}
+		fd = open(fullpath, O_RDONLY);
+		if (fd < 0) {
+			fprintf(stderr, "failed to read %s\n", fullpath);
+			continue;
+		}
+		ret = btrfs_scan_one_device(fd, fullpath, &tmp_devices,
+					    &num_devices,
+					    BTRFS_SUPER_INFO_OFFSET);
+		if (ret == 0 && run_ioctl > 0) {
+			btrfs_register_one_device(fullpath);
+		}
+		close(fd);
+	}
+	if (!list_empty(&pending_list)) {
+		free(pending);
+		pending = list_entry(pending_list.next, struct pending_dir,
+				     list);
+		list_del(&pending->list);
+		closedir(dirp);
+		goto again;
+	}
+	ret = 0;
+fail:
+	free(pending);
+	closedir(dirp);
+	return ret;
+}
+
+int btrfs_scan_for_fsid(struct btrfs_fs_devices *fs_devices, u64 total_devs,
+			int run_ioctls)
+{
+	return btrfs_scan_one_dir("/dev", run_ioctls);
 }

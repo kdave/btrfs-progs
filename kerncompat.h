@@ -189,6 +189,8 @@ static inline long IS_ERR(const void *ptr)
  * kmalloc/kfree
  */
 #define kmalloc(x, y) malloc(x)
+#define kzalloc(x, y) calloc(1, x)
+#define kstrdup(x, y) strdup(x)
 #define kfree(x) free(x)
 
 #define BUG_ON(c) do { if (c) abort(); } while (0)

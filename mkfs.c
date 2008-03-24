@@ -59,7 +59,7 @@ static u64 parse_size(char *s)
 	return atol(s) * mult;
 }
 
-static int make_root_dir(int fd) {
+static int make_root_dir(int fd, const char *device_name) {
 	struct btrfs_root *root;
 	struct btrfs_trans_handle *trans;
 	struct btrfs_key location;
@@ -68,7 +68,7 @@ static int make_root_dir(int fd) {
 	u64 chunk_size = 0;
 	int ret;
 
-	root = open_ctree_fd(fd, 0);
+	root = open_ctree_fd(fd, device_name, 0);
 
 	if (!root) {
 		fprintf(stderr, "ctree init failed\n");
@@ -217,7 +217,7 @@ int main(int ac, char **av)
 		fprintf(stderr, "error during mkfs %d\n", ret);
 		exit(1);
 	}
-	ret = make_root_dir(fd);
+	ret = make_root_dir(fd, file);
 	if (ret) {
 		fprintf(stderr, "failed to setup the root directory\n");
 		exit(1);
@@ -229,6 +229,7 @@ int main(int ac, char **av)
 	if (ac == 0)
 		goto done;
 
+	btrfs_register_one_device(file);
 	root = open_ctree(file, 0);
 
 	if (!root) {
@@ -255,6 +256,7 @@ int main(int ac, char **av)
 					sectorsize, sectorsize, sectorsize);
 		BUG_ON(ret);
 		close(fd);
+		btrfs_register_one_device(file);
 	}
 	btrfs_commit_transaction(trans, root);
 	ret = close_ctree(root);

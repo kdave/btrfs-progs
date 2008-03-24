@@ -29,6 +29,9 @@
 #include <unistd.h>
 #include <dirent.h>
 #include "kerncompat.h"
+#include "ctree.h"
+#include "transaction.h"
+#include "utils.h"
 
 #ifdef __CHECKER__
 #define BLKGETSIZE64 0
@@ -47,7 +50,8 @@ void print_usage(void)
 	printf("\t-s snap_name existing_subvol creates a new snapshot\n");
 	printf("\t-s snap_name tree_root creates a new subvolume\n");
 	printf("\t-r [+-]size[gkm] resize the FS\n");
-	printf("\t-a device scans the device for a Btrfs filesystem\n");
+	printf("\t-A device scans the device for a Btrfs filesystem\n");
+	printf("\t-a scans all devices for a Btrfs filesystems\n");
 	exit(1);
 }
 
@@ -64,6 +68,11 @@ int main(int ac, char **av)
 	unsigned long command = 0;
 	int len;
 
+	if (ac == 2 && strcmp(av[1], "-a") == 0) {
+		fprintf(stderr, "Scanning for Btrfs filesystems\n");
+		btrfs_scan_one_dir("/dev", 1);
+		exit(0);
+	}
 	for (i = 1; i < ac - 1; i++) {
 		if (strcmp(av[i], "-s") == 0) {
 			if (i + 1 >= ac - 1) {
@@ -89,9 +98,9 @@ int main(int ac, char **av)
 				print_usage();
 			}
 			command = BTRFS_IOC_DEFRAG;
-		} else if (strcmp(av[i], "-a") == 0) {
+		} else if (strcmp(av[i], "-A") == 0) {
 			if (i >= ac - 1) {
-				fprintf(stderr, "-a requires an arg\n");
+				fprintf(stderr, "-A requires an arg\n");
 				print_usage();
 			}
 			command = BTRFS_IOC_SCAN_DEV;

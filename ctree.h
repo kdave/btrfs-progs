@@ -27,7 +27,7 @@
 
 struct btrfs_root;
 struct btrfs_trans_handle;
-#define BTRFS_MAGIC "_B4RfS_M"
+#define BTRFS_MAGIC "_B5RfS_M"
 
 #define BTRFS_MAX_LEVEL 8
 
@@ -437,6 +437,7 @@ struct btrfs_extent_ops {
 };
 
 struct btrfs_device;
+struct btrfs_fs_devices;
 struct btrfs_fs_info {
 	u8 fsid[BTRFS_FSID_SIZE];
 	struct btrfs_root *fs_root;
@@ -466,7 +467,7 @@ struct btrfs_fs_info {
 	struct btrfs_extent_ops *extent_ops;
 	struct list_head dirty_cowonly_roots;
 
-	struct list_head devices;
+	struct btrfs_fs_devices *fs_devices;
 	struct list_head space_info;
 	int fp;
 	int force_system_allocs;

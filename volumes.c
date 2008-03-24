@@ -15,6 +15,15 @@
  * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
  * Boston, MA 021110-1307, USA.
  */
+#define _XOPEN_SOURCE 600
+#define __USE_XOPEN2K
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <uuid/uuid.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include "ctree.h"
 #include "disk-io.h"
 #include "transaction.h"
@@ -26,6 +35,160 @@ struct map_lookup {
 	struct btrfs_device *dev;
 	u64 physical;
 };
+static LIST_HEAD(fs_uuids);
+
+static struct btrfs_device *__find_device(struct list_head *head, u64 devid)
+{
+	struct btrfs_device *dev;
+	struct list_head *cur;
+
+	list_for_each(cur, head) {
+		dev = list_entry(cur, struct btrfs_device, dev_list);
+		if (dev->devid == devid)
+			return dev;
+	}
+	return NULL;
+}
+
+static struct btrfs_fs_devices *find_fsid(u8 *fsid)
+{
+	struct list_head *cur;
+	struct btrfs_fs_devices *fs_devices;
+
+	list_for_each(cur, &fs_uuids) {
+		fs_devices = list_entry(cur, struct btrfs_fs_devices, list);
+		if (memcmp(fsid, fs_devices->fsid, BTRFS_FSID_SIZE) == 0)
+			return fs_devices;
+	}
+	return NULL;
+}
+
+static int device_list_add(const char *path,
+			   struct btrfs_super_block *disk_super,
+			   u64 devid, struct btrfs_fs_devices **fs_devices_ret)
+{
+	struct btrfs_device *device;
+	struct btrfs_fs_devices *fs_devices;
+	u64 found_transid = btrfs_super_generation(disk_super);
+
+	fs_devices = find_fsid(disk_super->fsid);
+	if (!fs_devices) {
+		fs_devices = kmalloc(sizeof(*fs_devices), GFP_NOFS);
+		if (!fs_devices)
+			return -ENOMEM;
+		INIT_LIST_HEAD(&fs_devices->devices);
+		list_add(&fs_devices->list, &fs_uuids);
+		memcpy(fs_devices->fsid, disk_super->fsid, BTRFS_FSID_SIZE);
+		fs_devices->latest_devid = devid;
+		fs_devices->latest_trans = found_transid;
+		fs_devices->lowest_devid = (u64)-1;
+		device = NULL;
+	} else {
+		device = __find_device(&fs_devices->devices, devid);
+	}
+	if (!device) {
+		device = kzalloc(sizeof(*device), GFP_NOFS);
+		if (!device) {
+			/* we can safely leave the fs_devices entry around */
+			return -ENOMEM;
+		}
+		device->devid = devid;
+		device->name = kstrdup(path, GFP_NOFS);
+		if (!device->name) {
+			kfree(device);
+			return -ENOMEM;
+		}
+		list_add(&device->dev_list, &fs_devices->devices);
+	}
+
+	if (found_transid > fs_devices->latest_trans) {
+		fs_devices->latest_devid = devid;
+		fs_devices->latest_trans = found_transid;
+	}
+	if (fs_devices->lowest_devid > devid) {
+		fs_devices->lowest_devid = devid;
+		printk("lowest devid now %Lu\n", devid);
+	}
+	*fs_devices_ret = fs_devices;
+	return 0;
+}
+
+int btrfs_close_devices(struct btrfs_fs_devices *fs_devices)
+{
+	struct list_head *head = &fs_devices->devices;
+	struct list_head *cur;
+	struct btrfs_device *device;
+
+	list_for_each(cur, head) {
+		device = list_entry(cur, struct btrfs_device, dev_list);
+		device->fd = 0;
+	}
+	return 0;
+}
+
+int btrfs_open_devices(struct btrfs_fs_devices *fs_devices, int flags)
+{
+	int fd;
+	struct list_head *head = &fs_devices->devices;
+	struct list_head *cur;
+	struct btrfs_device *device;
+	int ret;
+
+	list_for_each(cur, head) {
+		device = list_entry(cur, struct btrfs_device, dev_list);
+		fd = open(device->name, flags);
+printk("opening %s devid %Lu fd %d\n", device->name, device->devid, fd);
+		if (fd < 0) {
+			ret = -errno;
+			goto fail;
+		}
+		if (device->devid == fs_devices->latest_devid)
+			fs_devices->latest_bdev = fd;
+		if (device->devid == fs_devices->lowest_devid)
+			fs_devices->lowest_bdev = fd;
+		device->fd = fd;
+	}
+	return 0;
+fail:
+	btrfs_close_devices(fs_devices);
+	return ret;
+}
+
+int btrfs_scan_one_device(int fd, const char *path,
+			  struct btrfs_fs_devices **fs_devices_ret,
+			  u64 *total_devs, u64 super_offset)
+{
+	struct btrfs_super_block *disk_super;
+	char *buf;
+	int ret;
+	u64 devid;
+
+	buf = malloc(4096);
+	if (!buf) {
+		ret = -ENOMEM;
+		goto error;
+	}
+	ret = pread(fd, buf, 4096, super_offset);
+	if (ret != 4096) {
+		ret = -EIO;
+		goto error;
+	}
+	disk_super = (struct btrfs_super_block *)buf;
+	if (strncmp((char *)(&disk_super->magic), BTRFS_MAGIC,
+	    sizeof(disk_super->magic))) {
+		ret = -ENOENT;
+		goto error_brelse;
+	}
+	devid = le64_to_cpu(disk_super->dev_item.devid);
+	*total_devs = btrfs_super_num_devices(disk_super);
+	printk("found device %Lu on %s\n", devid, path);
+	ret = device_list_add(path, disk_super, devid, fs_devices_ret);
+
+error_brelse:
+	free(buf);
+error:
+	return ret;
+}
 
 /*
  * this uses a pretty simple search, the expectation is that it is
@@ -301,6 +464,7 @@ out:
 	btrfs_free_path(path);
 	return ret;
 }
+
 int btrfs_update_device(struct btrfs_trans_handle *trans,
 			struct btrfs_device *device)
 {
@@ -381,11 +545,11 @@ int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 	struct btrfs_device *device = NULL;
 	struct btrfs_chunk *chunk;
 	struct list_head private_devs;
-	struct list_head *dev_list = &extent_root->fs_info->devices;
+	struct list_head *dev_list = &extent_root->fs_info->fs_devices->devices;
 	struct list_head *cur;
 	struct map_lookup *map;
 	u64 physical;
-	u64 calc_size = 1024 * 1024 * 1024;
+	u64 calc_size = 128 * 1024 * 1024;
 	u64 avail;
 	u64 max_avail = 0;
 	int num_stripes = 1;
@@ -446,7 +610,7 @@ again:
 					     key.objectid,
 					     calc_size, &dev_offset);
 		BUG_ON(ret);
-
+printk("alloc chunk size %Lu from dev %Lu\n", calc_size, device->devid);
 		device->bytes_used += calc_size;
 		ret = btrfs_update_device(trans, device);
 		BUG_ON(ret);
@@ -523,17 +687,9 @@ int btrfs_map_block(struct btrfs_mapping_tree *map_tree,
 
 struct btrfs_device *btrfs_find_device(struct btrfs_root *root, u64 devid)
 {
-	struct btrfs_device *dev;
-	struct list_head *cur = root->fs_info->devices.next;
-	struct list_head *head = &root->fs_info->devices;
+	struct list_head *head = &root->fs_info->fs_devices->devices;
 
-	while(cur != head) {
-		dev = list_entry(cur, struct btrfs_device, dev_list);
-		if (dev->devid == devid)
-			return dev;
-		cur = cur->next;
-	}
-	return NULL;
+	return __find_device(head, devid);
 }
 
 static int read_one_chunk(struct btrfs_root *root, struct btrfs_key *key,
@@ -565,6 +721,7 @@ static int read_one_chunk(struct btrfs_root *root, struct btrfs_key *key,
 	map->ce.size = length;
 
 	map->physical = btrfs_stripe_offset_nr(leaf, chunk, 0);
+
 	devid = btrfs_stripe_devid_nr(leaf, chunk, 0);
 	map->dev = btrfs_find_device(root, devid);
 
@@ -609,19 +766,16 @@ static int read_one_dev(struct btrfs_root *root,
 	devid = btrfs_device_id(leaf, dev_item);
 	device = btrfs_find_device(root, devid);
 	if (!device) {
+		printk("warning devid %Lu not found already\n", devid);
 		device = kmalloc(sizeof(*device), GFP_NOFS);
 		if (!device)
 			return -ENOMEM;
-		list_add(&device->dev_list, &root->fs_info->devices);
+		list_add(&device->dev_list,
+			 &root->fs_info->fs_devices->devices);
 	}
 
 	fill_device_from_item(leaf, dev_item, device);
 	device->dev_root = root->fs_info->dev_root;
-	device->fd = root->fs_info->fp;
-	ret = btrfs_open_device(device);
-	if (ret) {
-		kfree(device);
-	}
 	return ret;
 }
 

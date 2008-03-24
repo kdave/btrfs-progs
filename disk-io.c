@@ -31,11 +31,7 @@
 #include "volumes.h"
 #include "transaction.h"
 #include "crc32c.h"
-
-int btrfs_open_device(struct btrfs_device *dev)
-{
-	return 0;
-}
+#include "utils.h"
 
 int btrfs_map_bh_to_logical(struct btrfs_root *root, struct extent_buffer *buf,
 			    u64 logical)
@@ -394,7 +390,7 @@ insert:
 	return root;
 }
 
-struct btrfs_root *open_ctree(char *filename, u64 sb_bytenr)
+struct btrfs_root *open_ctree(const char *filename, u64 sb_bytenr)
 {
 	int fp;
 
@@ -402,10 +398,10 @@ struct btrfs_root *open_ctree(char *filename, u64 sb_bytenr)
 	if (fp < 0) {
 		return NULL;
 	}
-	return open_ctree_fd(fp, sb_bytenr);
+	return open_ctree_fd(fp, filename, sb_bytenr);
 }
 
-struct btrfs_root *open_ctree_fd(int fp, u64 sb_bytenr)
+struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr)
 {
 	u32 sectorsize;
 	u32 nodesize;
@@ -420,11 +416,28 @@ struct btrfs_root *open_ctree_fd(int fp, u64 sb_bytenr)
 	struct btrfs_fs_info *fs_info = malloc(sizeof(*fs_info));
 	int ret;
 	struct btrfs_super_block *disk_super;
+	struct btrfs_fs_devices *fs_devices = NULL;
+	u64 total_devs;
 
 	if (sb_bytenr == 0)
 		sb_bytenr = BTRFS_SUPER_INFO_OFFSET;
 
-	fs_info->fp = fp;
+	ret = btrfs_scan_one_device(fp, path, &fs_devices,
+				    &total_devs, sb_bytenr);
+
+	if (ret) {
+		fprintf(stderr, "No valid Btrfs found on %s\n", path);
+		return NULL;
+	}
+	fprintf(stderr, "found Btrfs on %s with %Lu devices\n", path,
+		total_devs);
+
+	if (total_devs != 1) {
+		ret = btrfs_scan_for_fsid(fs_devices, total_devs, 1);
+		BUG_ON(ret);
+	}
+
+	fs_info->fp = fs_devices->lowest_bdev;
 	fs_info->running_transaction = NULL;
 	fs_info->fs_root = root;
 	fs_info->tree_root = tree_root;
@@ -445,17 +458,20 @@ struct btrfs_root *open_ctree_fd(int fp, u64 sb_bytenr)
 	cache_tree_init(&fs_info->mapping_tree.cache_tree);
 
 	mutex_init(&fs_info->fs_mutex);
+	fs_info->fs_devices = fs_devices;
 	INIT_LIST_HEAD(&fs_info->dirty_cowonly_roots);
-	INIT_LIST_HEAD(&fs_info->devices);
 	INIT_LIST_HEAD(&fs_info->space_info);
 
 	__setup_root(4096, 4096, 4096, 4096, tree_root,
 		     fs_info, BTRFS_ROOT_TREE_OBJECTID);
 
+	ret = btrfs_open_devices(fs_devices, O_RDWR);
+	BUG_ON(ret);
+
 	fs_info->sb_buffer = btrfs_find_create_tree_block(tree_root, sb_bytenr,
 							  4096);
 	BUG_ON(!fs_info->sb_buffer);
-	fs_info->sb_buffer->fd = fp;
+	fs_info->sb_buffer->fd = fs_devices->lowest_bdev;
 	fs_info->sb_buffer->dev_bytenr = sb_bytenr;
 	ret = read_extent_from_disk(fs_info->sb_buffer);
 	BUG_ON(ret);
@@ -484,7 +500,6 @@ struct btrfs_root *open_ctree_fd(int fp, u64 sb_bytenr)
 
 	ret = btrfs_read_super_device(tree_root, fs_info->sb_buffer);
 	BUG_ON(ret);
-
 	ret = btrfs_read_sys_array(tree_root);
 	BUG_ON(ret);
 	blocksize = btrfs_level_size(tree_root,
@@ -492,11 +507,13 @@ struct btrfs_root *open_ctree_fd(int fp, u64 sb_bytenr)
 
 	__setup_root(nodesize, leafsize, sectorsize, stripesize,
 		     chunk_root, fs_info, BTRFS_CHUNK_TREE_OBJECTID);
+
 	chunk_root->node = read_tree_block(chunk_root,
 					   btrfs_super_chunk_root(disk_super),
 					   blocksize);
 
 	BUG_ON(!chunk_root->node);
+
 	ret = btrfs_read_chunk_tree(chunk_root);
 	BUG_ON(ret);
 
@@ -557,13 +574,12 @@ static int close_all_devices(struct btrfs_fs_info *fs_info)
 	struct list_head *next;
 	struct btrfs_device *device;
 
-	list = &fs_info->devices;
-	while(!list_empty(list)) {
-		next = list->next;
-		list_del(next);
+	return 0;
+
+	list = &fs_info->fs_devices->devices;
+	list_for_each(next, list) {
 		device = list_entry(next, struct btrfs_device, dev_list);
 		// close(device->fd);
-		kfree(device);
 	}
 	return 0;
 }
