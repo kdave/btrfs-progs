@@ -139,6 +139,10 @@ int main(int ac, char **av)
 		printf("root tree\n");
 		btrfs_print_tree(root->fs_info->tree_root,
 				 root->fs_info->tree_root->node);
+
+		printf("chunk tree\n");
+		btrfs_print_tree(root->fs_info->chunk_root,
+				 root->fs_info->chunk_root->node);
 	}
 	btrfs_init_path(&path);
 	key.offset = 0;
@@ -170,7 +174,13 @@ int main(int ac, char **av)
 					      root->leafsize);
 			switch(found_key.objectid) {
 			case BTRFS_ROOT_TREE_OBJECTID:
-				printf("root ");
+				if (!skip)
+					printf("root ");
+				break;
+			case BTRFS_DEV_TREE_OBJECTID:
+				if (!skip) {
+					printf("device extent tree ");
+				}
 				break;
 			case BTRFS_EXTENT_TREE_OBJECTID:
 				skip = 0;

@@ -75,6 +75,40 @@ static int print_inode_ref_item(struct extent_buffer *eb, struct btrfs_item *ite
 	return 0;
 }
 
+static void print_chunk(struct extent_buffer *eb, struct btrfs_chunk *chunk)
+{
+	int num_stripes = btrfs_chunk_num_stripes(eb, chunk);
+	int i;
+	printf("\t\tchunk owner %llu type %llu num_stripes %d\n",
+	       (unsigned long long)btrfs_chunk_owner(eb, chunk),
+	       (unsigned long long)btrfs_chunk_type(eb, chunk),
+	       num_stripes);
+	for (i = 0 ; i < num_stripes ; i++) {
+		printf("\t\t\tstripe %d devid %llu offset %llu\n", i,
+		      (unsigned long long)btrfs_stripe_devid_nr(eb, chunk, i),
+		      (unsigned long long)btrfs_stripe_offset_nr(eb, chunk, i));
+	}
+}
+static void print_dev_item(struct extent_buffer *eb,
+			   struct btrfs_dev_item *dev_item)
+{
+	char *name;
+	int name_len;
+
+	name_len = btrfs_device_name_len(eb, dev_item);
+	name = kmalloc(name_len, GFP_NOFS);
+	if (name) {
+		read_extent_buffer(eb, name,
+				   (unsigned long)btrfs_device_name(dev_item),
+				   name_len);
+	}
+	printf("\t\tdev item name %.*s devid %llu "
+	       "total_bytes %llu bytes used %Lu\n", name_len, name,
+	       (unsigned long long)btrfs_device_id(eb, dev_item),
+	       (unsigned long long)btrfs_device_total_bytes(eb, dev_item),
+	       (unsigned long long)btrfs_device_bytes_used(eb, dev_item));
+	kfree(name);
+}
 void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 {
 	int i;
@@ -89,6 +123,7 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 	struct btrfs_block_group_item *bi;
 	struct btrfs_extent_ref *ref;
 	struct btrfs_inode_ref *iref;
+	struct btrfs_dev_extent *dev_extent;
 	struct btrfs_disk_key disk_key;
 	struct btrfs_root_item root_item;
 	struct btrfs_block_group_item bg_item;
@@ -190,9 +225,23 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 					    struct btrfs_block_group_item);
 			read_extent_buffer(l, &bg_item, (unsigned long)bi,
 					   sizeof(bg_item));
-			printf("\t\tblock group used %llu flags %x\n",
+			printf("\t\tblock group used %llu flags %llx\n",
 			       (unsigned long long)btrfs_block_group_used(&bg_item),
-			       bg_item.flags);
+			       (unsigned long long)btrfs_block_group_flags(&bg_item));
+			break;
+		case BTRFS_CHUNK_ITEM_KEY:
+			print_chunk(l, btrfs_item_ptr(l, i, struct btrfs_chunk));
+			break;
+		case BTRFS_DEV_ITEM_KEY:
+			print_dev_item(l, btrfs_item_ptr(l, i,
+					struct btrfs_dev_item));
+			break;
+		case BTRFS_DEV_EXTENT_KEY:
+			dev_extent = btrfs_item_ptr(l, i,
+						    struct btrfs_dev_extent);
+			printf("\t\tdev extent owner %llu length %llu\n",
+			       (unsigned long long)btrfs_dev_extent_owner(l, dev_extent),
+			       (unsigned long long)btrfs_dev_extent_length(l, dev_extent));
 			break;
 		case BTRFS_STRING_ITEM_KEY:
 			/* dirty, but it's simple */

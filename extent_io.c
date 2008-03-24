@@ -552,8 +552,10 @@ static struct extent_buffer *__alloc_extent_buffer(struct extent_io_tree *tree,
 	int ret;
 
 	eb = malloc(sizeof(struct extent_buffer) + blocksize);
-	if (!eb)
+	if (!eb) {
+		BUG();
 		return NULL;
+	}
 
 	eb->start = bytenr;
 	eb->len = blocksize;

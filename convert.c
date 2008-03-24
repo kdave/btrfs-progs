@@ -341,7 +341,7 @@ static int record_file_extent(struct btrfs_trans_handle *trans,
 		if (ret)
 			goto fail;
 		ret = btrfs_update_block_group(trans, root, disk_bytenr,
-					       num_bytes, 1, 0, 1);
+					       num_bytes, 1, 0);
 	} else if (ret == -EEXIST) {
 		ret = btrfs_inc_extent_ref(trans, root, disk_bytenr, num_bytes,
 					   root->root_key.objectid,
@@ -1432,7 +1432,7 @@ static int fixup_block_accounting(struct btrfs_trans_handle *trans,
 		if (key.type == BTRFS_EXTENT_ITEM_KEY) {
 			bytes_used += key.offset;
 			ret = btrfs_update_block_group(trans, root,
-				  key.objectid, key.offset, 1, 0, 1);
+				  key.objectid, key.offset, 1, 0);
 			BUG_ON(ret);
 		}
 		path.slots[0]++;
@@ -1547,7 +1547,7 @@ int do_convert(const char *devname, int datacsum, int packing, int noxattr)
 {
 	int i, fd, ret;
 	u32 blocksize;
-	u64 blocks[4];
+	u64 blocks[6];
 	u64 total_bytes;
 	u64 super_bytenr;
 	ext2_filsys ext2_fs;
@@ -1656,7 +1656,7 @@ int do_rollback(const char *devname, int force)
 	struct btrfs_dir_item *dir;
 	struct btrfs_inode_item *inode;
 	struct btrfs_file_extent_item *fi;
-	struct btrfs_inode_timespec *tspec;
+	struct btrfs_timespec *tspec;
 	struct extent_buffer *leaf;
 	struct btrfs_key key;
 	struct btrfs_path path;

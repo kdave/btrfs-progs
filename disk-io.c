@@ -28,14 +28,30 @@
 #include "radix-tree.h"
 #include "ctree.h"
 #include "disk-io.h"
+#include "volumes.h"
 #include "transaction.h"
 #include "crc32c.h"
+
+int btrfs_open_device(struct btrfs_device *dev)
+{
+	dev->fd = open(dev->name, O_RDWR, 0600);
+	BUG_ON(dev->fd < 0);
+	return 0;
+}
 
 int btrfs_map_bh_to_logical(struct btrfs_root *root, struct extent_buffer *buf,
 			    u64 logical)
 {
-	buf->fd = root->fs_info->fp;
-	buf->dev_bytenr = logical;
+	u64 physical;
+	u64 length;
+	struct btrfs_device *device;
+	int ret;
+
+	ret = btrfs_map_block(&root->fs_info->mapping_tree, logical, &physical,
+			      &length, &device);
+	BUG_ON(ret);
+	buf->fd = device->fd;
+	buf->dev_bytenr = physical;
 	return 0;
 }
 
@@ -146,39 +162,56 @@ static int __setup_root(u32 nodesize, u32 leafsize, u32 sectorsize,
 	root->leafsize = leafsize;
 	root->stripesize = stripesize;
 	root->ref_cows = 0;
+	root->track_dirty = 0;
+
 	root->fs_info = fs_info;
 	root->objectid = objectid;
 	root->last_trans = 0;
 	root->highest_inode = 0;
 	root->last_inode_alloc = 0;
+
+	INIT_LIST_HEAD(&root->dirty_list);
 	memset(&root->root_key, 0, sizeof(root->root_key));
 	memset(&root->root_item, 0, sizeof(root->root_item));
 	root->root_key.objectid = objectid;
 	return 0;
 }
 
+static int update_cowonly_root(struct btrfs_trans_handle *trans,
+			       struct btrfs_root *root)
+{
+	int ret;
+	u64 old_root_bytenr;
+	struct btrfs_root *tree_root = root->fs_info->tree_root;
+
+	btrfs_write_dirty_block_groups(trans, root);
+	while(1) {
+		old_root_bytenr = btrfs_root_bytenr(&root->root_item);
+		if (old_root_bytenr == root->node->start)
+			break;
+		btrfs_set_root_bytenr(&root->root_item,
+				       root->node->start);
+		root->root_item.level = btrfs_header_level(root->node);
+		ret = btrfs_update_root(trans, tree_root,
+					&root->root_key,
+					&root->root_item);
+		BUG_ON(ret);
+		btrfs_write_dirty_block_groups(trans, root);
+	}
+	return 0;
+}
+
 static int commit_tree_roots(struct btrfs_trans_handle *trans,
 			     struct btrfs_fs_info *fs_info)
 {
-	int ret;
-	u64 old_extent_bytenr;
-	struct btrfs_root *tree_root = fs_info->tree_root;
-	struct btrfs_root *extent_root = fs_info->extent_root;
+	struct btrfs_root *root;
+	struct list_head *next;
 
-	btrfs_write_dirty_block_groups(trans, fs_info->extent_root);
-	while(1) {
-		old_extent_bytenr = btrfs_root_bytenr(&extent_root->root_item);
-		if (old_extent_bytenr == extent_root->node->start)
-			break;
-		btrfs_set_root_bytenr(&extent_root->root_item,
-				       extent_root->node->start);
-		extent_root->root_item.level =
-			btrfs_header_level(extent_root->node);
-		ret = btrfs_update_root(trans, tree_root,
-					&extent_root->root_key,
-					&extent_root->root_item);
-		BUG_ON(ret);
-		btrfs_write_dirty_block_groups(trans, fs_info->extent_root);
+	while(!list_empty(&fs_info->dirty_cowonly_roots)) {
+		next = fs_info->dirty_cowonly_roots.next;
+		list_del_init(next);
+		root = list_entry(next, struct btrfs_root, dirty_list);
+		update_cowonly_root(trans, root);
 	}
 	return 0;
 }
@@ -384,6 +417,8 @@ struct btrfs_root *open_ctree_fd(int fp, u64 sb_bytenr)
 	struct btrfs_root *root = malloc(sizeof(struct btrfs_root));
 	struct btrfs_root *tree_root = malloc(sizeof(struct btrfs_root));
 	struct btrfs_root *extent_root = malloc(sizeof(struct btrfs_root));
+	struct btrfs_root *chunk_root = malloc(sizeof(struct btrfs_root));
+	struct btrfs_root *dev_root = malloc(sizeof(struct btrfs_root));
 	struct btrfs_fs_info *fs_info = malloc(sizeof(*fs_info));
 	int ret;
 	struct btrfs_super_block *disk_super;
@@ -398,6 +433,10 @@ struct btrfs_root *open_ctree_fd(int fp, u64 sb_bytenr)
 	fs_info->extent_root = extent_root;
 	fs_info->extent_ops = NULL;
 	fs_info->priv_data = NULL;
+	fs_info->chunk_root = chunk_root;
+	fs_info->dev_root = dev_root;
+	fs_info->force_system_allocs = 0;
+
 	extent_io_tree_init(&fs_info->extent_cache);
 	extent_io_tree_init(&fs_info->free_space_cache);
 	extent_io_tree_init(&fs_info->block_group_cache);
@@ -405,13 +444,25 @@ struct btrfs_root *open_ctree_fd(int fp, u64 sb_bytenr)
 	extent_io_tree_init(&fs_info->pending_del);
 	extent_io_tree_init(&fs_info->extent_ins);
 
-	mutex_init(&fs_info->fs_mutex);
+	cache_tree_init(&fs_info->mapping_tree.cache_tree);
 
-	__setup_root(512, 512, 512, 512, tree_root,
+	mutex_init(&fs_info->fs_mutex);
+	INIT_LIST_HEAD(&fs_info->dirty_cowonly_roots);
+	INIT_LIST_HEAD(&fs_info->devices);
+	fs_info->last_device = &fs_info->devices;
+
+	__setup_root(4096, 4096, 4096, 4096, tree_root,
 		     fs_info, BTRFS_ROOT_TREE_OBJECTID);
 
-	fs_info->sb_buffer = read_tree_block(tree_root, sb_bytenr, 512);
+	fs_info->sb_buffer = btrfs_find_create_tree_block(tree_root, sb_bytenr,
+							  4096);
 	BUG_ON(!fs_info->sb_buffer);
+	fs_info->sb_buffer->fd = fp;
+	fs_info->sb_buffer->dev_bytenr = sb_bytenr;
+	ret = read_extent_from_disk(fs_info->sb_buffer);
+	BUG_ON(ret);
+	btrfs_set_buffer_uptodate(fs_info->sb_buffer);
+
 	read_extent_buffer(fs_info->sb_buffer, &fs_info->super_copy, 0,
 			   sizeof(fs_info->super_copy));
 	read_extent_buffer(fs_info->sb_buffer, fs_info->fsid,
@@ -433,8 +484,24 @@ struct btrfs_root *open_ctree_fd(int fp, u64 sb_bytenr)
 	tree_root->sectorsize = sectorsize;
 	tree_root->stripesize = stripesize;
 
+	ret = btrfs_read_sys_array(tree_root);
+	BUG_ON(ret);
+	blocksize = btrfs_level_size(tree_root,
+				     btrfs_super_chunk_root_level(disk_super));
+
+	__setup_root(nodesize, leafsize, sectorsize, stripesize,
+		     chunk_root, fs_info, BTRFS_CHUNK_TREE_OBJECTID);
+	chunk_root->node = read_tree_block(chunk_root,
+					   btrfs_super_chunk_root(disk_super),
+					   blocksize);
+
+	BUG_ON(!chunk_root->node);
+	ret = btrfs_read_chunk_tree(chunk_root);
+	BUG_ON(ret);
+
 	blocksize = btrfs_level_size(tree_root,
 				     btrfs_super_root_level(disk_super));
+
 	tree_root->node = read_tree_block(tree_root,
 					  btrfs_super_root(disk_super),
 					  blocksize);
@@ -442,6 +509,13 @@ struct btrfs_root *open_ctree_fd(int fp, u64 sb_bytenr)
 	ret = find_and_setup_root(tree_root, fs_info,
 				  BTRFS_EXTENT_TREE_OBJECTID, extent_root);
 	BUG_ON(ret);
+	extent_root->track_dirty = 1;
+
+	ret = find_and_setup_root(tree_root, fs_info,
+				  BTRFS_DEV_TREE_OBJECTID, dev_root);
+	BUG_ON(ret);
+	dev_root->track_dirty = 1;
+
 	ret = find_and_setup_root(tree_root, fs_info,
 				  BTRFS_FS_TREE_OBJECTID, root);
 	BUG_ON(ret);
@@ -456,12 +530,17 @@ int write_ctree_super(struct btrfs_trans_handle *trans,
 {
 	int ret;
 	struct btrfs_root *tree_root = root->fs_info->tree_root;
+	struct btrfs_root *chunk_root = root->fs_info->chunk_root;
 	btrfs_set_super_generation(&root->fs_info->super_copy,
 				   trans->transid);
 	btrfs_set_super_root(&root->fs_info->super_copy,
 			     tree_root->node->start);
 	btrfs_set_super_root_level(&root->fs_info->super_copy,
 				   btrfs_header_level(tree_root->node));
+	btrfs_set_super_chunk_root(&root->fs_info->super_copy,
+				   chunk_root->node->start);
+	btrfs_set_super_chunk_root_level(&root->fs_info->super_copy,
+					 btrfs_header_level(chunk_root->node));
 	write_extent_buffer(root->fs_info->sb_buffer,
 			    &root->fs_info->super_copy, 0,
 			    sizeof(root->fs_info->super_copy));
@@ -469,6 +548,24 @@ int write_ctree_super(struct btrfs_trans_handle *trans,
 	if (ret)
 		fprintf(stderr, "failed to write new super block err %d\n", ret);
 	return ret;
+}
+
+static int close_all_devices(struct btrfs_fs_info *fs_info)
+{
+	struct list_head *list;
+	struct list_head *next;
+	struct btrfs_device *device;
+
+	list = &fs_info->devices;
+	while(!list_empty(list)) {
+		next = list->next;
+		list_del(next);
+		device = list_entry(next, struct btrfs_device, dev_list);
+		kfree(device->name);
+		close(device->fd);
+		kfree(device);
+	}
+	return 0;
 }
 
 int close_ctree(struct btrfs_root *root)
@@ -497,6 +594,13 @@ int close_ctree(struct btrfs_root *root)
 	free_extent_buffer(root->commit_root);
 	free_extent_buffer(root->fs_info->sb_buffer);
 
+	if (root->fs_info->chunk_root->node);
+		free_extent_buffer(root->fs_info->chunk_root->node);
+
+	if (root->fs_info->dev_root->node);
+		free_extent_buffer(root->fs_info->dev_root->node);
+
+	close_all_devices(root->fs_info);
 	extent_io_tree_cleanup(&fs_info->extent_cache);
 	extent_io_tree_cleanup(&fs_info->free_space_cache);
 	extent_io_tree_cleanup(&fs_info->block_group_cache);
@@ -507,6 +611,8 @@ int close_ctree(struct btrfs_root *root)
 	free(fs_info->tree_root);
 	free(fs_info->extent_root);
 	free(fs_info->fs_root);
+	free(fs_info->chunk_root);
+	free(fs_info->dev_root);
 	free(fs_info);
 
 	return 0;

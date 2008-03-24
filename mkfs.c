@@ -33,6 +33,7 @@
 #include "kerncompat.h"
 #include "ctree.h"
 #include "disk-io.h"
+#include "volumes.h"
 #include "transaction.h"
 #include "utils.h"
 
@@ -108,6 +109,9 @@ static int make_root_dir(int fd) {
 	struct btrfs_root *root;
 	struct btrfs_trans_handle *trans;
 	struct btrfs_key location;
+	u64 bytes_used;
+	u64 chunk_start = 0;
+	u64 chunk_size = 0;
 	int ret;
 
 	root = open_ctree_fd(fd, 0);
@@ -117,7 +121,40 @@ static int make_root_dir(int fd) {
 		return -1;
 	}
 	trans = btrfs_start_transaction(root, 1);
-	ret = btrfs_make_block_groups(trans, root);
+	bytes_used = btrfs_super_bytes_used(&root->fs_info->super_copy);
+
+	root->fs_info->force_system_allocs = 1;
+	ret = btrfs_make_block_group(trans, root, bytes_used,
+				     BTRFS_BLOCK_GROUP_SYSTEM,
+				     BTRFS_CHUNK_TREE_OBJECTID,
+				     0, BTRFS_MKFS_SYSTEM_GROUP_SIZE);
+	BUG_ON(ret);
+	ret = btrfs_alloc_chunk(trans, root->fs_info->extent_root,
+				&chunk_start, &chunk_size,
+				BTRFS_BLOCK_GROUP_METADATA);
+	BUG_ON(ret);
+	ret = btrfs_make_block_group(trans, root, 0,
+				     BTRFS_BLOCK_GROUP_METADATA,
+				     BTRFS_CHUNK_TREE_OBJECTID,
+				     chunk_start, chunk_size);
+	BUG_ON(ret);
+
+	root->fs_info->force_system_allocs = 0;
+	btrfs_commit_transaction(trans, root);
+	trans = btrfs_start_transaction(root, 1);
+	BUG_ON(!trans);
+
+	ret = btrfs_alloc_chunk(trans, root->fs_info->extent_root,
+				&chunk_start, &chunk_size,
+				BTRFS_BLOCK_GROUP_DATA);
+	BUG_ON(ret);
+	ret = btrfs_make_block_group(trans, root, 0,
+				     BTRFS_BLOCK_GROUP_DATA,
+				     BTRFS_CHUNK_TREE_OBJECTID,
+				     chunk_start, chunk_size);
+	BUG_ON(ret);
+
+	// ret = btrfs_make_block_group(trans, root, 0, 1);
 	ret = btrfs_make_root_dir(trans, root->fs_info->tree_root,
 			      BTRFS_ROOT_TREE_DIR_OBJECTID);
 	if (ret)
@@ -179,7 +216,7 @@ int main(int ac, char **av)
 	u32 sectorsize = 4096;
 	u32 nodesize = 16 * 1024;
 	u32 stripesize = 4096;
-	u64 blocks[4];
+	u64 blocks[6];
 	int zero_end = 0;
 
 	while(1) {
@@ -261,10 +298,10 @@ int main(int ac, char **av)
 		}
 	}
 
-	for (i = 0; i < 4; i++)
+	for (i = 0; i < 6; i++)
 		blocks[i] = BTRFS_SUPER_INFO_OFFSET + leafsize * i;
 
-	ret = make_btrfs(fd, blocks, block_count, nodesize, leafsize,
+	ret = make_btrfs(fd, file, blocks, block_count, nodesize, leafsize,
 			 sectorsize, stripesize);
 	if (ret) {
 		fprintf(stderr, "error during mkfs %d\n", ret);
