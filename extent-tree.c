@@ -37,6 +37,10 @@ static int finish_current_insert(struct btrfs_trans_handle *trans, struct
 				 btrfs_root *extent_root);
 static int del_pending_extents(struct btrfs_trans_handle *trans, struct
 			       btrfs_root *extent_root);
+int btrfs_make_block_group(struct btrfs_trans_handle *trans,
+			   struct btrfs_root *root, u64 bytes_used,
+			   u64 type, u64 chunk_tree, u64 chunk_objectid,
+			   u64 size);
 
 static int cache_block_group(struct btrfs_root *root,
 			     struct btrfs_block_group_cache *block_group)
@@ -168,16 +172,7 @@ struct btrfs_block_group_cache *btrfs_lookup_block_group(struct
 
 static int block_group_bits(struct btrfs_block_group_cache *cache, u64 bits)
 {
-	if ((bits & BLOCK_GROUP_DATA) &&
-	    (cache->flags & BTRFS_BLOCK_GROUP_DATA))
-		return 1;
-	if ((bits & BLOCK_GROUP_METADATA) &&
-	     (cache->flags & BTRFS_BLOCK_GROUP_METADATA))
-		return 1;
-	if ((bits & BLOCK_GROUP_SYSTEM) &&
-	     (cache->flags & BTRFS_BLOCK_GROUP_SYSTEM))
-		return 1;
-	return 0;
+	return (cache->flags & bits);
 }
 
 static int noinline find_search_start(struct btrfs_root *root,
@@ -270,6 +265,18 @@ static u64 div_factor(u64 num, int factor)
 	return num;
 }
 
+static int block_group_state_bits(u64 flags)
+{
+	int bits = 0;
+	if (flags & BTRFS_BLOCK_GROUP_DATA)
+		bits |= BLOCK_GROUP_DATA;
+	if (flags & BTRFS_BLOCK_GROUP_METADATA)
+		bits |= BLOCK_GROUP_METADATA;
+	if (flags & BTRFS_BLOCK_GROUP_SYSTEM)
+		bits |= BLOCK_GROUP_SYSTEM;
+	return bits;
+}
+
 struct btrfs_block_group_cache *btrfs_find_block_group(struct btrfs_root *root,
 						 struct btrfs_block_group_cache
 						 *hint, u64 search_start,
@@ -296,7 +303,7 @@ struct btrfs_block_group_cache *btrfs_find_block_group(struct btrfs_root *root,
 	if (!owner)
 		factor = 8;
 
-	bit = data;
+	bit = block_group_state_bits(data);
 
 	if (search_start) {
 		struct btrfs_block_group_cache *shint;
@@ -344,9 +351,14 @@ again:
 			free_check = cache->key.offset;
 		else
 			free_check = div_factor(cache->key.offset, factor);
+
 		if (used + cache->pinned < free_check) {
 			found_group = cache;
 			goto found;
+		}
+		if (full_search) {
+			printk("failed on cache %Lu used %Lu total %Lu\n",
+			       cache->key.objectid, used, cache->key.offset);
 		}
 		cond_resched();
 	}
@@ -966,6 +978,58 @@ int btrfs_write_dirty_block_groups(struct btrfs_trans_handle *trans,
 	return werr;
 }
 
+static struct btrfs_space_info *__find_space_info(struct btrfs_fs_info *info,
+						  u64 flags)
+{
+	struct list_head *head = &info->space_info;
+	struct list_head *cur;
+	struct btrfs_space_info *found;
+	list_for_each(cur, head) {
+		found = list_entry(cur, struct btrfs_space_info, list);
+		if (found->flags == flags)
+			return found;
+	}
+	return NULL;
+
+}
+
+static int do_chunk_alloc(struct btrfs_trans_handle *trans,
+			  struct btrfs_root *extent_root, u64 alloc_bytes,
+			  u64 flags)
+{
+	struct btrfs_space_info *space_info;
+	u64 thresh;
+	u64 start;
+	u64 num_bytes;
+	int ret;
+
+	space_info = __find_space_info(extent_root->fs_info, flags);
+	BUG_ON(!space_info);
+
+	if (space_info->full)
+		return 0;
+
+	thresh = div_factor(space_info->total_bytes, 7);
+	if ((space_info->bytes_used + space_info->bytes_pinned + alloc_bytes) <
+	    thresh)
+		return 0;
+
+	ret = btrfs_alloc_chunk(trans, extent_root, &start, &num_bytes, flags);
+	if (ret == -ENOSPC) {
+printk("space info full %Lu\n", flags);
+		space_info->full = 1;
+		return 0;
+	}
+
+	BUG_ON(ret);
+
+	ret = btrfs_make_block_group(trans, extent_root, 0, flags,
+		     extent_root->fs_info->chunk_root->root_key.objectid,
+		     start, num_bytes);
+	BUG_ON(ret);
+	return 0;
+}
+
 static int update_block_group(struct btrfs_trans_handle *trans,
 			      struct btrfs_root *root,
 			      u64 bytenr, u64 num_bytes, int alloc,
@@ -995,8 +1059,10 @@ static int update_block_group(struct btrfs_trans_handle *trans,
 		num_bytes = min(total, cache->key.offset - byte_in_group);
 		if (alloc) {
 			old_val += num_bytes;
+			cache->space_info->bytes_used += num_bytes;
 		} else {
 			old_val -= num_bytes;
+			cache->space_info->bytes_used -= num_bytes;
 			if (mark_free) {
 				set_extent_dirty(&info->free_space_cache,
 						 bytenr, bytenr + num_bytes - 1,
@@ -1009,6 +1075,7 @@ static int update_block_group(struct btrfs_trans_handle *trans,
 	}
 	return 0;
 }
+
 static int update_pinned_extents(struct btrfs_root *root,
 				u64 bytenr, u64 num, int pin)
 {
@@ -1030,9 +1097,11 @@ static int update_pinned_extents(struct btrfs_root *root,
 			  (bytenr - cache->key.objectid));
 		if (pin) {
 			cache->pinned += len;
+			cache->space_info->bytes_pinned += len;
 			fs_info->total_pinned += len;
 		} else {
 			cache->pinned -= len;
+			cache->space_info->bytes_pinned -= len;
 			fs_info->total_pinned -= len;
 		}
 		bytenr += len;
@@ -1456,7 +1525,7 @@ check_failed:
 		goto new_group;
 	}
 
-	if (!(data & BLOCK_GROUP_DATA)) {
+	if (!(data & BTRFS_BLOCK_GROUP_DATA)) {
 		block_group = btrfs_lookup_block_group(info, ins->objectid);
 		if (block_group)
 			trans->block_group = block_group;
@@ -1515,12 +1584,26 @@ int btrfs_alloc_extent(struct btrfs_trans_handle *trans,
 	struct btrfs_extent_ref *ref;
 	struct btrfs_key keys[2];
 
-	if (data)
-		data = BLOCK_GROUP_DATA;
-	else if (info->force_system_allocs || root == root->fs_info->chunk_root)
-		data = BLOCK_GROUP_SYSTEM;
-	else
-		data = BLOCK_GROUP_METADATA;
+	if (data) {
+		data = BTRFS_BLOCK_GROUP_DATA;
+	} else if (root == root->fs_info->chunk_root ||
+		   info->force_system_allocs) {
+		data = BTRFS_BLOCK_GROUP_SYSTEM;
+	} else {
+		data = BTRFS_BLOCK_GROUP_METADATA;
+	}
+
+	if (root->ref_cows) {
+		if (data != BTRFS_BLOCK_GROUP_METADATA) {
+			ret = do_chunk_alloc(trans, root->fs_info->extent_root,
+					     num_bytes,
+					     BTRFS_BLOCK_GROUP_METADATA);
+			BUG_ON(ret);
+		}
+		ret = do_chunk_alloc(trans, root->fs_info->extent_root,
+				     num_bytes, data);
+		BUG_ON(ret);
+	}
 
 	WARN_ON(num_bytes < root->sectorsize);
 	if (ops && ops->alloc_extent) {
@@ -2064,6 +2147,34 @@ error:
 	return ret;
 }
 
+static int update_space_info(struct btrfs_fs_info *info, u64 flags,
+			     u64 total_bytes, u64 bytes_used,
+			     struct btrfs_space_info **space_info)
+{
+	struct btrfs_space_info *found;
+
+	found = __find_space_info(info, flags);
+	if (found) {
+		found->total_bytes += total_bytes;
+		found->bytes_used += bytes_used;
+		WARN_ON(found->total_bytes < found->bytes_used);
+		*space_info = found;
+		return 0;
+	}
+	found = kmalloc(sizeof(*found), GFP_NOFS);
+	if (!found)
+		return -ENOMEM;
+
+	list_add(&found->list, &info->space_info);
+	found->flags = flags;
+	found->total_bytes = total_bytes;
+	found->bytes_used = bytes_used;
+	found->bytes_pinned = 0;
+	found->full = 0;
+	*space_info = found;
+	return 0;
+}
+
 int btrfs_read_block_groups(struct btrfs_root *root)
 {
 	struct btrfs_path *path;
@@ -2071,6 +2182,7 @@ int btrfs_read_block_groups(struct btrfs_root *root)
 	int bit;
 	struct btrfs_block_group_cache *cache;
 	struct btrfs_fs_info *info = root->fs_info;
+	struct btrfs_space_info *space_info;
 	struct extent_io_tree *block_group_cache;
 	struct btrfs_key key;
 	struct btrfs_key found_key;
@@ -2121,6 +2233,12 @@ int btrfs_read_block_groups(struct btrfs_root *root)
 			bit = BLOCK_GROUP_METADATA;
 		}
 
+		ret = update_space_info(info, cache->flags, found_key.offset,
+					btrfs_block_group_used(&cache->item),
+					&space_info);
+		BUG_ON(ret);
+		cache->space_info = space_info;
+
 		/* use EXTENT_LOCKED to prevent merging */
 		set_extent_bits(block_group_cache, found_key.objectid,
 				found_key.objectid + found_key.offset - 1,
@@ -2138,33 +2256,13 @@ error:
 	return ret;
 }
 
-static int btrfs_insert_block_group(struct btrfs_trans_handle *trans,
-				    struct btrfs_root *root,
-				    struct btrfs_key *key,
-				    struct btrfs_block_group_item *bi)
-{
-	int ret;
-	int pending_ret;
-	struct btrfs_root *extent_root;
-
-	extent_root = root->fs_info->extent_root;
-	ret = btrfs_insert_item(trans, extent_root, key, bi, sizeof(*bi));
-	finish_current_insert(trans, extent_root);
-	pending_ret = del_pending_extents(trans, extent_root);
-	if (ret)
-		return ret;
-	if (pending_ret)
-		return pending_ret;
-	return 0;
-}
-
 int btrfs_make_block_group(struct btrfs_trans_handle *trans,
 			   struct btrfs_root *root, u64 bytes_used,
 			   u64 type, u64 chunk_tree, u64 chunk_objectid,
 			   u64 size)
 {
 	int ret;
-	int bit;
+	int bit = 0;
 	struct btrfs_root *extent_root;
 	struct btrfs_block_group_cache *cache;
 	struct extent_io_tree *block_group_cache;
@@ -2172,7 +2270,7 @@ int btrfs_make_block_group(struct btrfs_trans_handle *trans,
 	extent_root = root->fs_info->extent_root;
 	block_group_cache = &root->fs_info->block_group_cache;
 
-	cache = malloc(sizeof(*cache));
+	cache = kmalloc(sizeof(*cache), GFP_NOFS);
 	BUG_ON(!cache);
 	cache->key.objectid = chunk_objectid;
 	cache->key.offset = size;
@@ -2184,6 +2282,10 @@ int btrfs_make_block_group(struct btrfs_trans_handle *trans,
 	btrfs_set_block_group_chunk_objectid(&cache->item, chunk_objectid);
 	cache->flags = type;
 	btrfs_set_block_group_flags(&cache->item, type);
+
+	ret = update_space_info(root->fs_info, cache->flags, size, bytes_used,
+				&cache->space_info);
+	BUG_ON(ret);
 
 	if (type & BTRFS_BLOCK_GROUP_DATA) {
 		bit = BLOCK_GROUP_DATA;
@@ -2197,7 +2299,13 @@ int btrfs_make_block_group(struct btrfs_trans_handle *trans,
 			bit | EXTENT_LOCKED, GFP_NOFS);
 	set_state_private(block_group_cache, chunk_objectid,
 			  (unsigned long)cache);
-	ret = btrfs_insert_block_group(trans, root, &cache->key, &cache->item);
+
+	ret = btrfs_insert_item(trans, extent_root, &cache->key, &cache->item,
+				sizeof(cache->item));
+	BUG_ON(ret);
+
+	finish_current_insert(trans, extent_root);
+	ret = del_pending_extents(trans, extent_root);
 	BUG_ON(ret);
 	return 0;
 }

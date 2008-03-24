@@ -71,5 +71,5 @@ int btrfs_read_sys_array(struct btrfs_root *root);
 int btrfs_read_chunk_tree(struct btrfs_root *root);
 int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 		      struct btrfs_root *extent_root, u64 *start,
-		      u64 *num_bytes, u32 type);
+		      u64 *num_bytes, u64 type);
 #endif

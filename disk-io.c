@@ -449,7 +449,7 @@ struct btrfs_root *open_ctree_fd(int fp, u64 sb_bytenr)
 	mutex_init(&fs_info->fs_mutex);
 	INIT_LIST_HEAD(&fs_info->dirty_cowonly_roots);
 	INIT_LIST_HEAD(&fs_info->devices);
-	fs_info->last_device = &fs_info->devices;
+	INIT_LIST_HEAD(&fs_info->space_info);
 
 	__setup_root(4096, 4096, 4096, 4096, tree_root,
 		     fs_info, BTRFS_ROOT_TREE_OBJECTID);
