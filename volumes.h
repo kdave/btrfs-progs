@@ -21,7 +21,6 @@
 struct btrfs_device {
 	struct list_head dev_list;
 	struct btrfs_root *dev_root;
-	struct btrfs_key dev_key;
 
 	int fd;
 
@@ -43,22 +42,11 @@ struct btrfs_device {
 	/* minimal io size for this device */
 	u32 sector_size;
 
-	/* the kernel device number */
-	u64 rdev;
-
 	/* type and info about this device */
 	u64 type;
 
-	/* partition number, 0 for whole dev */
-	int partition;
-
-	/* length of the name data at the end of the item */
-	int name_len;
-
 	/* physical drive uuid (or lvm uuid) */
 	u8 uuid[BTRFS_DEV_UUID_SIZE];
-
-	char *name;
 };
 
 int btrfs_alloc_dev_extent(struct btrfs_trans_handle *trans,
@@ -72,4 +60,5 @@ int btrfs_read_chunk_tree(struct btrfs_root *root);
 int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 		      struct btrfs_root *extent_root, u64 *start,
 		      u64 *num_bytes, u64 type);
+int btrfs_read_super_device(struct btrfs_root *root, struct extent_buffer *buf);
 #endif

@@ -34,8 +34,6 @@
 
 int btrfs_open_device(struct btrfs_device *dev)
 {
-	dev->fd = open(dev->name, O_RDWR, 0600);
-	BUG_ON(dev->fd < 0);
 	return 0;
 }
 
@@ -484,6 +482,9 @@ struct btrfs_root *open_ctree_fd(int fp, u64 sb_bytenr)
 	tree_root->sectorsize = sectorsize;
 	tree_root->stripesize = stripesize;
 
+	ret = btrfs_read_super_device(tree_root, fs_info->sb_buffer);
+	BUG_ON(ret);
+
 	ret = btrfs_read_sys_array(tree_root);
 	BUG_ON(ret);
 	blocksize = btrfs_level_size(tree_root,
@@ -561,8 +562,7 @@ static int close_all_devices(struct btrfs_fs_info *fs_info)
 		next = list->next;
 		list_del(next);
 		device = list_entry(next, struct btrfs_device, dev_list);
-		kfree(device->name);
-		close(device->fd);
+		// close(device->fd);
 		kfree(device);
 	}
 	return 0;

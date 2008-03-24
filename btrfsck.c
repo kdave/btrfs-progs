@@ -119,15 +119,23 @@ static int check_leaf(struct btrfs_root *root,
 	for (i = 0; nritems > 1 && i < nritems - 2; i++) {
 		btrfs_item_key(buf, &key, i);
 		btrfs_item_key_to_cpu(buf, &cpukey, i + 1);
-		if (btrfs_comp_keys(&key, &cpukey) >= 0)
+		if (btrfs_comp_keys(&key, &cpukey) >= 0) {
+			fprintf(stderr, "bad key ordering %d %d\n", i, i+1);
 			return 1;
+		}
 		if (btrfs_item_offset_nr(buf, i) !=
-			btrfs_item_end_nr(buf, i + 1))
+			btrfs_item_end_nr(buf, i + 1)) {
+			fprintf(stderr, "incorrect offsets %u %u\n",
+				btrfs_item_offset_nr(buf, i),
+				btrfs_item_end_nr(buf, i + 1));
 			return 1;
-		if (i == 0) {
-			if (btrfs_item_end_nr(buf, i) !=
-			       BTRFS_LEAF_DATA_SIZE(root))
-				return 1;
+		}
+		if (i == 0 && btrfs_item_end_nr(buf, i) !=
+		    BTRFS_LEAF_DATA_SIZE(root)) {
+			fprintf(stderr, "bad item end %u wanted %lu\n",
+				btrfs_item_end_nr(buf, i),
+				BTRFS_LEAF_DATA_SIZE(root));
+			return 1;
 		}
 	}
 	return 0;
@@ -754,6 +762,10 @@ int main(int ac, char **av) {
 	add_root_to_pending(root->fs_info->tree_root->node, bits, bits_nr,
 			    &extent_cache, &pending, &seen, &reada, &nodes,
 			    root->fs_info->tree_root->root_key.objectid);
+
+	add_root_to_pending(root->fs_info->chunk_root->node, bits, bits_nr,
+			    &extent_cache, &pending, &seen, &reada, &nodes,
+			    root->fs_info->chunk_root->root_key.objectid);
 
 	btrfs_init_path(&path);
 	key.offset = 0;
