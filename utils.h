@@ -26,4 +26,9 @@ int make_btrfs(int fd, char *device_name,
 	       u32 leafsize, u32 sectorsize, u32 stripesize);
 int btrfs_make_root_dir(struct btrfs_trans_handle *trans,
 			struct btrfs_root *root, u64 objectid);
+int btrfs_prepare_device(int fd, char *file, int zero_end,
+			 u64 *block_count_ret);
+int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
+		      struct btrfs_root *root, int fd, u64 block_count,
+		      u32 io_width, u32 io_align, u32 sectorsize);
 #endif

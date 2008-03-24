@@ -283,6 +283,7 @@ int btrfs_add_device(struct btrfs_trans_handle *trans,
 	leaf = path->nodes[0];
 	dev_item = btrfs_item_ptr(leaf, path->slots[0], struct btrfs_dev_item);
 
+	device->devid = free_devid;
 	btrfs_set_device_id(leaf, dev_item, device->devid);
 	btrfs_set_device_type(leaf, dev_item, device->type);
 	btrfs_set_device_io_align(leaf, dev_item, device->io_align);

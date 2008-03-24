@@ -20,6 +20,10 @@
 #define __USE_XOPEN2K
 #include <stdio.h>
 #include <stdlib.h>
+#ifndef __CHECKER__
+#include <sys/ioctl.h>
+#include <sys/mount.h>
+#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <uuid/uuid.h>
@@ -32,6 +36,13 @@
 #include "transaction.h"
 #include "crc32c.h"
 #include "utils.h"
+#include "volumes.h"
+
+#ifdef __CHECKER__
+#define BLKGETSIZE64 0
+static inline int ioctl(int fd, int define, u64 *size) { return 0; }
+#endif
+
 static u64 reference_root_table[6] = {
 	[1] =	BTRFS_ROOT_TREE_OBJECTID,
 	[2] =	BTRFS_EXTENT_TREE_OBJECTID,
@@ -72,6 +83,7 @@ int make_btrfs(int fd, char *device_name,
 	num_bytes = (num_bytes / sectorsize) * sectorsize;
 	uuid_generate(super.fsid);
 	btrfs_set_super_bytenr(&super, blocks[0]);
+	btrfs_set_super_num_devices(&super, 1);
 	strncpy((char *)&super.magic, BTRFS_MAGIC, sizeof(super.magic));
 	btrfs_set_super_generation(&super, 1);
 	btrfs_set_super_root(&super, blocks[1]);
@@ -256,7 +268,7 @@ int make_btrfs(int fd, char *device_name,
 
 	/* then device 1 (there is no device 0) */
 	nritems++;
-	item_size = sizeof(*dev_item) + strlen(device_name);
+	item_size = sizeof(*dev_item);
 	itemoff = itemoff - item_size;
 	btrfs_set_disk_key_objectid(&disk_key, BTRFS_DEV_ITEMS_OBJECTID);
 	btrfs_set_disk_key_offset(&disk_key, 1);
@@ -328,6 +340,156 @@ int make_btrfs(int fd, char *device_name,
 
 
 	free(buf);
+	return 0;
+}
+
+static u64 device_size(int fd, struct stat *st)
+{
+	u64 size;
+	if (S_ISREG(st->st_mode)) {
+		return st->st_size;
+	}
+	if (!S_ISBLK(st->st_mode)) {
+		return 0;
+	}
+	if (ioctl(fd, BLKGETSIZE64, &size) >= 0) {
+		return size;
+	}
+	return 0;
+}
+
+static int zero_blocks(int fd, off_t start, size_t len)
+{
+	char *buf = malloc(len);
+	int ret = 0;
+	ssize_t written;
+
+	if (!buf)
+		return -ENOMEM;
+	memset(buf, 0, len);
+	written = pwrite(fd, buf, len, start);
+	if (written != len)
+		ret = -EIO;
+	free(buf);
+	return ret;
+}
+
+static int zero_dev_start(int fd)
+{
+	off_t start = 0;
+	size_t len = 2 * 1024 * 1024;
+
+#ifdef __sparc__
+	/* don't overwrite the disk labels on sparc */
+	start = 1024;
+	len -= 1024;
+#endif
+	return zero_blocks(fd, start, len);
+}
+
+static int zero_dev_end(int fd, u64 dev_size)
+{
+	size_t len = 2 * 1024 * 1024;
+	off_t start = dev_size - len;
+
+	return zero_blocks(fd, start, len);
+}
+
+int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
+		      struct btrfs_root *root, int fd, u64 block_count,
+		      u32 io_width, u32 io_align, u32 sectorsize)
+{
+	struct btrfs_super_block *disk_super;
+	struct btrfs_super_block *super = &root->fs_info->super_copy;
+	struct btrfs_device device;
+	struct btrfs_dev_item *dev_item;
+	char *buf;
+	u64 total_bytes;
+	u64 num_devs;
+	int ret;
+
+	buf = malloc(sectorsize);
+	BUG_ON(sizeof(*disk_super) > sectorsize);
+	memset(buf, 0, sectorsize);
+
+	disk_super = (struct btrfs_super_block *)buf;
+	dev_item = &disk_super->dev_item;
+
+	uuid_generate(device.uuid);
+	device.devid = 0;
+	device.type = 0;
+	device.io_width = io_width;
+	device.io_align = io_align;
+	device.sector_size = sectorsize;
+	device.fd = 0;
+	device.total_bytes = block_count;
+	device.bytes_used = 0;
+
+	ret = btrfs_add_device(trans, root, &device);
+	BUG_ON(ret);
+
+	total_bytes = btrfs_super_total_bytes(super) + block_count;
+	btrfs_set_super_total_bytes(super, total_bytes);
+
+	num_devs = btrfs_super_num_devices(super) + 1;
+	btrfs_set_super_num_devices(super, num_devs);
+
+	memcpy(disk_super, super, sizeof(*disk_super));
+
+	printf("adding device id %Lu\n", device.devid);
+	btrfs_set_stack_device_id(dev_item, device.devid);
+	btrfs_set_stack_device_type(dev_item, device.type);
+	btrfs_set_stack_device_io_align(dev_item, device.io_align);
+	btrfs_set_stack_device_io_width(dev_item, device.io_width);
+	btrfs_set_stack_device_sector_size(dev_item, device.sector_size);
+	btrfs_set_stack_device_total_bytes(dev_item, device.total_bytes);
+	btrfs_set_stack_device_bytes_used(dev_item, device.bytes_used);
+	memcpy(&dev_item->uuid, device.uuid, BTRFS_DEV_UUID_SIZE);
+
+	ret = pwrite(fd, buf, sectorsize, BTRFS_SUPER_INFO_OFFSET);
+	BUG_ON(ret != sectorsize);
+
+	free(buf);
+	return 0;
+}
+
+int btrfs_prepare_device(int fd, char *file, int zero_end, u64 *block_count_ret)
+{
+	u64 block_count;
+	struct stat st;
+	int ret;
+
+	ret = fstat(fd, &st);
+	if (ret < 0) {
+		fprintf(stderr, "unable to stat %s\n", file);
+		exit(1);
+	}
+
+	block_count = device_size(fd, &st);
+	if (block_count == 0) {
+		fprintf(stderr, "unable to find %s size\n", file);
+		exit(1);
+	}
+	zero_end = 1;
+
+	if (block_count < 256 * 1024 * 1024) {
+		fprintf(stderr, "device %s is too small\n", file);
+		exit(1);
+	}
+	ret = zero_dev_start(fd);
+	if (ret) {
+		fprintf(stderr, "failed to zero device start %d\n", ret);
+		exit(1);
+	}
+
+	if (zero_end) {
+		ret = zero_dev_end(fd, block_count);
+		if (ret) {
+			fprintf(stderr, "failed to zero device end %d\n", ret);
+			exit(1);
+		}
+	}
+	*block_count_ret = block_count;
 	return 0;
 }
 

@@ -17,10 +17,6 @@
  */
 
 #define _XOPEN_SOURCE 500
-#ifndef __CHECKER__
-#include <sys/ioctl.h>
-#include <sys/mount.h>
-#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -36,11 +32,6 @@
 #include "volumes.h"
 #include "transaction.h"
 #include "utils.h"
-
-#ifdef __CHECKER__
-#define BLKGETSIZE64 0
-static inline int ioctl(int fd, int define, u64 *size) { return 0; }
-#endif
 
 static u64 parse_size(char *s)
 {
@@ -66,43 +57,6 @@ static u64 parse_size(char *s)
 		s[len - 1] = '\0';
 	}
 	return atol(s) * mult;
-}
-
-static int zero_blocks(int fd, off_t start, size_t len)
-{
-	char *buf = malloc(len);
-	int ret = 0;
-	ssize_t written;
-
-	if (!buf)
-		return -ENOMEM;
-	memset(buf, 0, len);
-	written = pwrite(fd, buf, len, start);
-	if (written != len)
-		ret = -EIO;
-	free(buf);
-	return ret;
-}
-
-static int zero_dev_start(int fd)
-{
-	off_t start = 0;
-	size_t len = 2 * 1024 * 1024;
-
-#ifdef __sparc__
-	/* don't overwrite the disk labels on sparc */
-	start = 1024;
-	len -= 1024;
-#endif
-	return zero_blocks(fd, start, len);
-}
-
-static int zero_dev_end(int fd, u64 dev_size)
-{
-	size_t len = 2 * 1024 * 1024;
-	off_t start = dev_size - len;
-
-	return zero_blocks(fd, start, len);
 }
 
 static int make_root_dir(int fd) {
@@ -183,21 +137,6 @@ err:
 	return ret;
 }
 
-u64 device_size(int fd, struct stat *st)
-{
-	u64 size;
-	if (S_ISREG(st->st_mode)) {
-		return st->st_size;
-	}
-	if (!S_ISBLK(st->st_mode)) {
-		return 0;
-	}
-	if (ioctl(fd, BLKGETSIZE64, &size) >= 0) {
-		return size;
-	}
-	return 0;
-}
-
 static void print_usage(void)
 {
 	fprintf(stderr, "usage: mkfs.btrfs [ -l leafsize ] [ -n nodesize] dev [ blocks ]\n");
@@ -208,8 +147,9 @@ int main(int ac, char **av)
 {
 	char *file;
 	u64 block_count = 0;
+	u64 dev_block_count = 0;
 	int fd;
-	struct stat st;
+	int first_fd;
 	int ret;
 	int i;
 	u32 leafsize = 16 * 1024;
@@ -217,11 +157,13 @@ int main(int ac, char **av)
 	u32 nodesize = 16 * 1024;
 	u32 stripesize = 4096;
 	u64 blocks[6];
-	int zero_end = 0;
+	int zero_end = 1;
+	struct btrfs_root *root;
+	struct btrfs_trans_handle *trans;
 
 	while(1) {
 		int c;
-		c = getopt(ac, av, "l:n:s:");
+		c = getopt(ac, av, "b:l:n:s:");
 		if (c < 0)
 			break;
 		switch(c) {
@@ -233,6 +175,10 @@ int main(int ac, char **av)
 				break;
 			case 's':
 				stripesize = parse_size(optarg);
+				break;
+			case 'b':
+				block_count = parse_size(optarg);
+				zero_end = 0;
 				break;
 			default:
 				print_usage();
@@ -247,56 +193,20 @@ int main(int ac, char **av)
 		exit(1);
 	}
 	ac = ac - optind;
-	if (ac >= 1) {
-		file = av[optind];
-		if (ac == 2) {
-			block_count = parse_size(av[optind + 1]);
-			if (!block_count) {
-				fprintf(stderr, "error finding block count\n");
-				exit(1);
-			}
-		}
-	} else {
+	if (ac == 0)
 		print_usage();
-	}
+
+	file = av[optind++];
+	ac--;
 	fd = open(file, O_RDWR);
 	if (fd < 0) {
 		fprintf(stderr, "unable to open %s\n", file);
 		exit(1);
 	}
-	ret = fstat(fd, &st);
-	if (ret < 0) {
-		fprintf(stderr, "unable to stat %s\n", file);
-		exit(1);
-	}
-	if (block_count == 0) {
-		block_count = device_size(fd, &st);
-		if (block_count == 0) {
-			fprintf(stderr, "unable to find %s size\n", file);
-			exit(1);
-		}
-		zero_end = 1;
-	}
-	block_count /= sectorsize;
-	block_count *= sectorsize;
-
-	if (block_count < 256 * 1024 * 1024) {
-		fprintf(stderr, "device %s is too small\n", file);
-		exit(1);
-	}
-	ret = zero_dev_start(fd);
-	if (ret) {
-		fprintf(stderr, "failed to zero device start %d\n", ret);
-		exit(1);
-	}
-
-	if (zero_end) {
-		ret = zero_dev_end(fd, block_count);
-		if (ret) {
-			fprintf(stderr, "failed to zero device end %d\n", ret);
-			exit(1);
-		}
-	}
+	first_fd = fd;
+	ret = btrfs_prepare_device(fd, file, zero_end, &dev_block_count);
+	if (block_count == 0)
+		block_count = dev_block_count;
 
 	for (i = 0; i < 6; i++)
 		blocks[i] = BTRFS_SUPER_INFO_OFFSET + leafsize * i;
@@ -315,6 +225,41 @@ int main(int ac, char **av)
 	printf("fs created on %s nodesize %u leafsize %u sectorsize %u bytes %llu\n",
 	       file, nodesize, leafsize, sectorsize,
 	       (unsigned long long)block_count);
+
+	if (ac == 0)
+		goto done;
+
+	root = open_ctree(file, 0);
+
+	if (!root) {
+		fprintf(stderr, "ctree init failed\n");
+		return -1;
+	}
+	trans = btrfs_start_transaction(root, 1);
+
+	zero_end = 1;
+	while(ac-- > 0) {
+		file = av[optind++];
+		fd = open(file, O_RDWR);
+		if (fd < 0) {
+			fprintf(stderr, "unable to open %s\n", file);
+			exit(1);
+		}
+		fprintf(stderr, "adding device %s\n", file);
+		ret = btrfs_prepare_device(fd, file, zero_end,
+					   &dev_block_count);
+
+		BUG_ON(ret);
+
+		ret = btrfs_add_to_fsid(trans, root, fd, dev_block_count,
+					sectorsize, sectorsize, sectorsize);
+		BUG_ON(ret);
+		close(fd);
+	}
+	btrfs_commit_transaction(trans, root);
+	ret = close_ctree(root);
+	BUG_ON(ret);
+done:
 	return 0;
 }
 

@@ -61,4 +61,7 @@ int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 		      struct btrfs_root *extent_root, u64 *start,
 		      u64 *num_bytes, u64 type);
 int btrfs_read_super_device(struct btrfs_root *root, struct extent_buffer *buf);
+int btrfs_add_device(struct btrfs_trans_handle *trans,
+		     struct btrfs_root *root,
+		     struct btrfs_device *device);
 #endif

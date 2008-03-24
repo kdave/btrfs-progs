@@ -47,6 +47,7 @@ void print_usage(void)
 	printf("\t-s snap_name existing_subvol creates a new snapshot\n");
 	printf("\t-s snap_name tree_root creates a new subvolume\n");
 	printf("\t-r [+-]size[gkm] resize the FS\n");
+	printf("\t-a device scans the device for a Btrfs filesystem\n");
 	exit(1);
 }
 
@@ -88,6 +89,12 @@ int main(int ac, char **av)
 				print_usage();
 			}
 			command = BTRFS_IOC_DEFRAG;
+		} else if (strcmp(av[i], "-a") == 0) {
+			if (i >= ac - 1) {
+				fprintf(stderr, "-a requires an arg\n");
+				print_usage();
+			}
+			command = BTRFS_IOC_SCAN_DEV;
 		} else if (strcmp(av[i], "-r") == 0) {
 			if (i >= ac - 1) {
 				fprintf(stderr, "-r requires an arg\n");
@@ -119,9 +126,14 @@ int main(int ac, char **av)
 			exit(1);
 		}
 		fd = dirfd(dirstream);
+	} else if (command == BTRFS_IOC_SCAN_DEV) {
+		fd = open("/dev/btrfs-control", O_RDWR);
+		printf("scanning %s command %lu\n", fname, BTRFS_IOC_SCAN_DEV);
+		name = fname;
 	} else {
 		fd = open(fname, O_RDWR);
-	} if (fd < 0) {
+	}
+	if (fd < 0) {
 		perror("open");
 		exit(1);
 	}
