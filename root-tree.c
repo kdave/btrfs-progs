@@ -183,7 +183,10 @@ int btrfs_del_root(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 		goto out;
 	if (ret) {
 btrfs_print_leaf(root, path->nodes[0]);
-printk("failed to del %Lu %u %Lu\n", key->objectid, key->type, key->offset);
+printk("failed to del %llu %u %llu\n",
+	(unsigned long long)key->objectid,
+	key->type,
+	(unsigned long long)key->offset);
 
 	}
 	BUG_ON(ret != 0);

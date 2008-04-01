@@ -239,8 +239,9 @@ int btrfs_cow_block(struct btrfs_trans_handle *trans,
 	}
 	*/
 	if (trans->transid != root->fs_info->generation) {
-		printk(KERN_CRIT "trans %Lu running %Lu\n", trans->transid,
-		       root->fs_info->generation);
+		printk(KERN_CRIT "trans %llu running %llu\n",
+			(unsigned long long)trans->transid,
+			(unsigned long long)root->fs_info->generation);
 		WARN_ON(1);
 	}
 	if (btrfs_header_generation(buf) == trans->transid) {

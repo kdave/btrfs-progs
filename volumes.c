@@ -121,7 +121,7 @@ static int device_list_add(const char *path,
 	}
 	if (fs_devices->lowest_devid > devid) {
 		fs_devices->lowest_devid = devid;
-		printk("lowest devid now %Lu\n", devid);
+		printk("lowest devid now %llu\n", (unsigned long long)devid);
 	}
 	*fs_devices_ret = fs_devices;
 	return 0;
@@ -151,7 +151,8 @@ int btrfs_open_devices(struct btrfs_fs_devices *fs_devices, int flags)
 	list_for_each(cur, head) {
 		device = list_entry(cur, struct btrfs_device, dev_list);
 		fd = open(device->name, flags);
-printk("opening %s devid %Lu fd %d\n", device->name, device->devid, fd);
+printk("opening %s devid %llu fd %d\n", device->name,
+	(unsigned long long)device->devid, fd);
 		if (fd < 0) {
 			ret = -errno;
 			goto fail;
@@ -195,7 +196,7 @@ int btrfs_scan_one_device(int fd, const char *path,
 	}
 	devid = le64_to_cpu(disk_super->dev_item.devid);
 	*total_devs = btrfs_super_num_devices(disk_super);
-	printk("found device %Lu on %s\n", devid, path);
+	printk("found device %llu on %s\n", (unsigned long long)devid, path);
 	ret = device_list_add(path, disk_super, devid, fs_devices_ret);
 
 error_brelse:
@@ -639,7 +640,9 @@ again:
 					     key.objectid,
 					     calc_size, &dev_offset);
 		BUG_ON(ret);
-printk("alloc chunk size %Lu from dev %Lu\n", calc_size, device->devid);
+printk("alloc chunk size %llu from dev %llu\n",
+	(unsigned long long)calc_size,
+	(unsigned long long)device->devid);
 		device->bytes_used += calc_size;
 		ret = btrfs_update_device(trans, device);
 		BUG_ON(ret);
@@ -838,7 +841,8 @@ static int read_one_dev(struct btrfs_root *root,
 	devid = btrfs_device_id(leaf, dev_item);
 	device = btrfs_find_device(root, devid);
 	if (!device) {
-		printk("warning devid %Lu not found already\n", devid);
+		printk("warning devid %llu not found already\n",
+			(unsigned long long)devid);
 		device = kmalloc(sizeof(*device), GFP_NOFS);
 		if (!device)
 			return -ENOMEM;

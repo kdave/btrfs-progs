@@ -72,7 +72,8 @@ int btrfs_find_free_objectid(struct btrfs_trans_handle *trans,
 	path = btrfs_alloc_path();
 	BUG_ON(!path);
 	search_start = root->last_inode_alloc;
-	search_start = max(search_start, BTRFS_FIRST_FREE_OBJECTID);
+	search_start = max((unsigned long long)search_start,
+				BTRFS_FIRST_FREE_OBJECTID);
 	search_key.objectid = search_start;
 	search_key.offset = 0;
 

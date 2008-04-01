@@ -225,7 +225,8 @@ again:
 out:
 	cache = btrfs_lookup_block_group(root->fs_info, search_start);
 	if (!cache) {
-		printk("Unable to find block group for %Lu\n", search_start);
+		printk("Unable to find block group for %llu\n",
+			(unsigned long long)search_start);
 		WARN_ON(1);
 	}
 	return -ENOSPC;
@@ -680,7 +681,8 @@ static int lookup_extent_ref(struct btrfs_trans_handle *trans,
 		goto out;
 	if (ret != 0) {
 		btrfs_print_leaf(root, path->nodes[0]);
-		printk("failed to find block number %Lu\n", bytenr);
+		printk("failed to find block number %llu\n",
+			(unsigned long long)bytenr);
 		BUG();
 	}
 	l = path->nodes[0];
@@ -1046,7 +1048,7 @@ static int do_chunk_alloc(struct btrfs_trans_handle *trans,
 
 	ret = btrfs_alloc_chunk(trans, extent_root, &start, &num_bytes, flags);
 	if (ret == -ENOSPC) {
-printk("space info full %Lu\n", flags);
+printk("space info full %llu\n", (unsigned long long)flags);
 		space_info->full = 1;
 		return 0;
 	}
@@ -1315,10 +1317,13 @@ static int __free_extent(struct btrfs_trans_handle *trans, struct btrfs_root
 	} else {
 		btrfs_print_leaf(extent_root, path->nodes[0]);
 		WARN_ON(1);
-		printk("Unable to find ref byte nr %Lu root %Lu "
-		       " gen %Lu owner %Lu offset %Lu\n", bytenr,
-		       root_objectid, ref_generation, owner_objectid,
-		       owner_offset);
+		printk("Unable to find ref byte nr %llu root %llu "
+		       " gen %llu owner %llu offset %llu\n",
+		       (unsigned long long)bytenr,
+		       (unsigned long long)root_objectid,
+		       (unsigned long long)ref_generation,
+		       (unsigned long long)owner_objectid,
+		       (unsigned long long)owner_offset);
 	}
 	if (!found_extent) {
 		btrfs_release_path(extent_root, path);
@@ -1720,8 +1725,9 @@ int btrfs_alloc_extent(struct btrfs_trans_handle *trans,
 update_block:
 	ret = update_block_group(trans, root, ins->objectid, ins->offset, 1, 0);
 	if (ret) {
-		printk("update block group failed for %Lu %Lu\n",
-		       ins->objectid, ins->offset);
+		printk("update block group failed for %llu %llu\n",
+		       (unsigned long long)ins->objectid,
+		       (unsigned long long)ins->offset);
 		BUG();
 	}
 	return 0;

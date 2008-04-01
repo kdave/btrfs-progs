@@ -84,7 +84,8 @@ static int csum_tree_block(struct btrfs_root *root, struct extent_buffer *buf,
 
 	if (verify) {
 		if (memcmp_extent_buffer(buf, result, 0, BTRFS_CRC32_SIZE)) {
-			printk("checksum verify failed on %llu\n", buf->start);
+			printk("checksum verify failed on %llu\n",
+				(unsigned long long)buf->start);
 			return 1;
 		}
 	} else {
@@ -431,8 +432,8 @@ struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr)
 		fprintf(stderr, "No valid Btrfs found on %s\n", path);
 		return NULL;
 	}
-	fprintf(stderr, "found Btrfs on %s with %Lu devices\n", path,
-		total_devs);
+	fprintf(stderr, "found Btrfs on %s with %lu devices\n", path,
+		(unsigned long)total_devs);
 
 	if (total_devs != 1) {
 		ret = btrfs_scan_for_fsid(fs_devices, total_devs, 1);

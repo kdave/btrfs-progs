@@ -136,7 +136,8 @@ int btrfs_insert_inline_extent(struct btrfs_trans_handle *trans,
 			err = ret;
 			btrfs_print_leaf(root, leaf);
 			printk("found wasn't inline offset %llu inode %llu\n",
-			       offset, objectid);
+			       (unsigned long long)offset,
+			       (unsigned long long)objectid);
 			goto fail;
 		}
 		found_size = btrfs_file_extent_inline_len(leaf,
@@ -386,8 +387,9 @@ found:
 	csum_result = btrfs_csum_data(root, data, csum_result, len);
 	btrfs_csum_final(csum_result, (char *)&csum_result);
 	if (csum_result == 0) {
-		printk("csum result is 0 for inode %Lu offset %Lu\n",
-		       objectid, offset);
+		printk("csum result is 0 for inode %llu offset %llu\n",
+		       (unsigned long long)objectid,
+		       (unsigned long long)offset);
 	}
 
 	write_extent_buffer(leaf, &csum_result, (unsigned long)item,
