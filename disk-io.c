@@ -140,6 +140,8 @@ int write_tree_block(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 		BUG();
 	if (!btrfs_buffer_uptodate(eb))
 		BUG();
+
+	btrfs_set_header_flag(eb, BTRFS_HEADER_FLAG_WRITTEN);
 	btrfs_map_bh_to_logical(root, eb, eb->start);
 	csum_tree_block(root, eb, 0);
 	return write_extent_to_disk(eb);
