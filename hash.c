@@ -80,7 +80,7 @@ u64 btrfs_name_hash(const char *name, int len)
 	__u32	hash;
 	__u32	minor_hash = 0;
 	const char	*p;
-	__u32		in[8], buf[2];
+	__u32		in[8], buf[4];
 	u64		hash_result;
 
 	/* Initialize the default seed for the hash checksum functions */
