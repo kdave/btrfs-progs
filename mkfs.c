@@ -197,6 +197,15 @@ int main(int ac, char **av)
 		print_usage();
 
 	file = av[optind++];
+	ret = check_mounted(file);
+	if (ret < 0) {
+		fprintf(stderr, "error checking %s mount status\n", file);
+		exit(1);
+	}
+	if (ret == 1) {
+		fprintf(stderr, "%s is mounted\n", file);
+		exit(1);
+	}
 	ac--;
 	fd = open(file, O_RDWR);
 	if (fd < 0) {
@@ -241,6 +250,16 @@ int main(int ac, char **av)
 	zero_end = 1;
 	while(ac-- > 0) {
 		file = av[optind++];
+		ret = check_mounted(file);
+		if (ret < 0) {
+			fprintf(stderr, "error checking %s mount status\n",
+				file);
+			exit(1);
+		}
+		if (ret == 1) {
+			fprintf(stderr, "%s is mounted\n", file);
+			exit(1);
+		}
 		fd = open(file, O_RDWR);
 		if (fd < 0) {
 			fprintf(stderr, "unable to open %s\n", file);

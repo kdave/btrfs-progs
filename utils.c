@@ -30,6 +30,7 @@
 #include <dirent.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <mntent.h>
 #include "kerncompat.h"
 #include "radix-tree.h"
 #include "ctree.h"
@@ -522,6 +523,58 @@ int btrfs_make_root_dir(struct btrfs_trans_handle *trans,
 	btrfs_set_root_dirid(&root->root_item, objectid);
 	ret = 0;
 error:
+	return ret;
+}
+
+/*
+ * returns 1 if the device was mounted, < 0 on error or 0 if everything
+ * is safe to continue.  TODO, this should also scan multi-device filesystems
+ */
+int check_mounted(char *file)
+{
+	struct mntent *mnt;
+	struct stat st_buf;
+	dev_t file_dev = 0;
+	dev_t file_rdev = 0;
+	ino_t file_ino = 0;
+	FILE *f;
+	int ret = 0;
+
+	if ((f = setmntent ("/proc/mounts", "r")) == NULL)
+		return -errno;
+
+	if (stat(file, &st_buf) < 0) {
+		return -errno;
+	} else {
+		if (S_ISBLK(st_buf.st_mode)) {
+			file_rdev = st_buf.st_rdev;
+		} else {
+			file_dev = st_buf.st_dev;
+			file_ino = st_buf.st_ino;
+		}
+	}
+
+	while ((mnt = getmntent (f)) != NULL) {
+		if (strcmp(file, mnt->mnt_fsname) == 0)
+			break;
+
+		if (stat(mnt->mnt_fsname, &st_buf) == 0) {
+			if (S_ISBLK(st_buf.st_mode)) {
+				if (file_rdev && (file_rdev == st_buf.st_rdev))
+					break;
+			} else if (file_dev && ((file_dev == st_buf.st_dev) &&
+						(file_ino == st_buf.st_ino))) {
+					break;
+			}
+		}
+	}
+
+	if (mnt) {
+		/* found an entry in mnt table */
+		ret = 1;
+	}
+
+	endmntent (f);
 	return ret;
 }
 
