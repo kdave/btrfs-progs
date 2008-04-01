@@ -17,12 +17,14 @@
  */
 
 #define _XOPEN_SOURCE 500
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <getopt.h>
 #include <uuid/uuid.h>
 #include <linux/fs.h>
 #include <ctype.h>
@@ -139,9 +141,22 @@ err:
 
 static void print_usage(void)
 {
-	fprintf(stderr, "usage: mkfs.btrfs [ -l leafsize ] [ -n nodesize] dev [ blocks ]\n");
+	fprintf(stderr, "usage: mkfs.btrfs [options] dev [ dev ... ]\n");
+	fprintf(stderr, "options:\n");
+	fprintf(stderr, "\t -b --byte-count total number of bytes in the FS\n");
+	fprintf(stderr, "\t -l --leafsize size of btree leaves\n");
+	fprintf(stderr, "\t -n --nodesize size of btree leaves\n");
+	fprintf(stderr, "\t -s --sectorsize min block allocation\n");
 	exit(1);
 }
+
+static struct option long_options[] = {
+	{ "byte-count", 1, NULL, 'b' },
+	{ "leafsize", 1, NULL, 'l' },
+	{ "nodesize", 1, NULL, 'n' },
+	{ "sectorsize", 1, NULL, 's' },
+	{ 0, 0, 0, 0}
+};
 
 int main(int ac, char **av)
 {
@@ -158,12 +173,14 @@ int main(int ac, char **av)
 	u32 stripesize = 4096;
 	u64 blocks[6];
 	int zero_end = 1;
+	int option_index = 0;
 	struct btrfs_root *root;
 	struct btrfs_trans_handle *trans;
 
 	while(1) {
 		int c;
-		c = getopt(ac, av, "b:l:n:s:");
+		c = getopt_long(ac, av, "b:l:n:s:", long_options,
+				&option_index);
 		if (c < 0)
 			break;
 		switch(c) {
@@ -174,7 +191,7 @@ int main(int ac, char **av)
 				nodesize = parse_size(optarg);
 				break;
 			case 's':
-				stripesize = parse_size(optarg);
+				sectorsize = parse_size(optarg);
 				break;
 			case 'b':
 				block_count = parse_size(optarg);
@@ -184,6 +201,7 @@ int main(int ac, char **av)
 				print_usage();
 		}
 	}
+	sectorsize = max(sectorsize, (u32)getpagesize());
 	if (leafsize < sectorsize || (leafsize & (sectorsize - 1))) {
 		fprintf(stderr, "Illegal leafsize %u\n", leafsize);
 		exit(1);
