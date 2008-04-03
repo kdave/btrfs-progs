@@ -18,6 +18,7 @@
 
 #define _XOPEN_SOURCE 600
 #define __USE_XOPEN2K
+#define _GNU_SOURCE 1
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -32,22 +33,6 @@
 #include "transaction.h"
 #include "crc32c.h"
 #include "utils.h"
-
-int btrfs_map_bh_to_logical(struct btrfs_root *root, struct extent_buffer *buf,
-			    u64 logical)
-{
-	u64 physical;
-	u64 length;
-	struct btrfs_device *device;
-	int ret;
-
-	ret = btrfs_map_block(&root->fs_info->mapping_tree, logical, &physical,
-			      &length, &device);
-	BUG_ON(ret);
-	buf->fd = device->fd;
-	buf->dev_bytenr = physical;
-	return 0;
-}
 
 static int check_tree_block(struct btrfs_root *root, struct extent_buffer *buf)
 {
@@ -110,6 +95,28 @@ struct extent_buffer *btrfs_find_create_tree_block(struct btrfs_root *root,
 
 int readahead_tree_block(struct btrfs_root *root, u64 bytenr, u32 blocksize)
 {
+	int ret;
+	int total_devs = 1;
+	int dev_nr;
+	struct extent_buffer *eb;
+	u64 physical;
+	u64 length;
+	struct btrfs_device *device;
+
+	eb = btrfs_find_tree_block(root, bytenr, blocksize);
+	if (eb && btrfs_buffer_uptodate(eb)) {
+		free_extent_buffer(eb);
+		return 0;
+	}
+
+	dev_nr = 0;
+	ret = btrfs_map_block(&root->fs_info->mapping_tree, READ, dev_nr,
+			      bytenr, &physical, &length, &device,
+			      &total_devs);
+	BUG_ON(ret);
+	device->total_ios++;
+	blocksize = min(blocksize, (u32)(64 * 1024));
+	readahead(device->fd, physical, blocksize);
 	return 0;
 }
 
@@ -117,35 +124,69 @@ struct extent_buffer *read_tree_block(struct btrfs_root *root, u64 bytenr,
 				     u32 blocksize)
 {
 	int ret;
+	int total_devs = 1;
+	int dev_nr;
 	struct extent_buffer *eb;
+	u64 physical;
+	u64 length;
+	struct btrfs_device *device;
 
 	eb = btrfs_find_create_tree_block(root, bytenr, blocksize);
 	if (!eb)
 		return NULL;
-	if (!btrfs_buffer_uptodate(eb)) {
-		btrfs_map_bh_to_logical(root, eb, eb->start);
-		ret = read_extent_from_disk(eb);
-		if (ret) {
-			free_extent_buffer(eb);
-			return NULL;
-		}
-		btrfs_set_buffer_uptodate(eb);
+
+	if (btrfs_buffer_uptodate(eb))
+		return eb;
+
+	dev_nr = 0;
+	ret = btrfs_map_block(&root->fs_info->mapping_tree, READ, dev_nr,
+			      eb->start, &physical, &length, &device,
+			      &total_devs);
+	BUG_ON(ret);
+	eb->fd = device->fd;
+	device->total_ios++;
+	eb->dev_bytenr = physical;
+	ret = read_extent_from_disk(eb);
+	if (ret) {
+		free_extent_buffer(eb);
+		return NULL;
 	}
+	btrfs_set_buffer_uptodate(eb);
 	return eb;
 }
 
 int write_tree_block(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 		     struct extent_buffer *eb)
 {
+	int ret;
+	int total_devs = 1;
+	int dev_nr;
+	u64 physical;
+	u64 length;
+	struct btrfs_device *device;
+
 	if (check_tree_block(root, eb))
 		BUG();
 	if (!btrfs_buffer_uptodate(eb))
 		BUG();
 
 	btrfs_set_header_flag(eb, BTRFS_HEADER_FLAG_WRITTEN);
-	btrfs_map_bh_to_logical(root, eb, eb->start);
 	csum_tree_block(root, eb, 0);
-	return write_extent_to_disk(eb);
+
+	dev_nr = 0;
+	while(dev_nr < total_devs) {
+		ret = btrfs_map_block(&root->fs_info->mapping_tree, WRITE,
+				      dev_nr, eb->start, &physical, &length,
+				      &device, &total_devs);
+		BUG_ON(ret);
+		eb->fd = device->fd;
+		eb->dev_bytenr = physical;
+		dev_nr++;
+		device->total_ios++;
+		ret = write_extent_to_disk(eb);
+		BUG_ON(ret);
+	}
+	return 0;
 }
 
 static int __setup_root(u32 nodesize, u32 leafsize, u32 sectorsize,

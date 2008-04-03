@@ -25,6 +25,12 @@
 #include <endian.h>
 #include <byteswap.h>
 
+#ifndef READ
+#define READ 0
+#define WRITE 1
+#define READA 2
+#endif
+
 #define gfp_t int
 #define get_cpu_var(p) (p)
 #define __get_cpu_var(p) (p)

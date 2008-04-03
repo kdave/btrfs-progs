@@ -1620,8 +1620,12 @@ int btrfs_alloc_extent(struct btrfs_trans_handle *trans,
 	struct btrfs_key keys[2];
 	int extra_alloc_flags = 0;
 
-	if (btrfs_super_num_devices(&info->super_copy) > 1)
-		extra_alloc_flags = BTRFS_BLOCK_GROUP_RAID0;
+	if (0 && btrfs_super_num_devices(&info->super_copy) > 1) {
+		if (data)
+			extra_alloc_flags = BTRFS_BLOCK_GROUP_RAID0;
+		else
+			extra_alloc_flags = BTRFS_BLOCK_GROUP_RAID1;
+	}
 
 	if (data) {
 		data = BTRFS_BLOCK_GROUP_DATA | extra_alloc_flags;

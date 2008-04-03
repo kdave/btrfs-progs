@@ -232,6 +232,10 @@ static int find_free_dev_extent(struct btrfs_trans_handle *trans,
 
 	/* FIXME use last free of some kind */
 
+	/* we don't want to overwrite the superblock on the drive,
+	 * so we make sure to start at an offset of at least 1MB
+	 */
+	search_start = max((u64)1024 * 1024, search_start);
 	key.objectid = device->devid;
 	key.offset = search_start;
 	key.type = BTRFS_DEV_EXTENT_KEY;
@@ -578,12 +582,15 @@ int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 	if (list_empty(dev_list))
 		return -ENOSPC;
 
-	if (type & BTRFS_BLOCK_GROUP_RAID0)
+	if (type & (BTRFS_BLOCK_GROUP_RAID0 | BTRFS_BLOCK_GROUP_RAID1)) {
+		calc_size = 1024 * 1024 * 1024;
+	}
+	if (type & (BTRFS_BLOCK_GROUP_RAID1)) {
+		num_stripes = min_t(u64, 2,
+				  btrfs_super_num_devices(&info->super_copy));
+	}
+	if (type & (BTRFS_BLOCK_GROUP_RAID0))
 		num_stripes = btrfs_super_num_devices(&info->super_copy);
-	if (type & BTRFS_BLOCK_GROUP_DATA)
-		stripe_len = 64 * 1024;
-	if (type & (BTRFS_BLOCK_GROUP_METADATA | BTRFS_BLOCK_GROUP_SYSTEM))
-		stripe_len = 32 * 1024;
 again:
 	INIT_LIST_HEAD(&private_devs);
 	cur = dev_list->next;
@@ -628,7 +635,11 @@ again:
 
 	stripes = &chunk->stripe;
 
-	*num_bytes = calc_size * num_stripes;
+	if (type & BTRFS_BLOCK_GROUP_RAID1)
+		*num_bytes = calc_size;
+	else
+		*num_bytes = calc_size * num_stripes;
+
 	index = 0;
 	while(index < num_stripes) {
 		BUG_ON(list_empty(&private_devs));
@@ -695,9 +706,9 @@ void btrfs_mapping_init(struct btrfs_mapping_tree *tree)
 	cache_tree_init(&tree->cache_tree);
 }
 
-int btrfs_map_block(struct btrfs_mapping_tree *map_tree,
-		    u64 logical, u64 *phys, u64 *length,
-		    struct btrfs_device **dev)
+int btrfs_map_block(struct btrfs_mapping_tree *map_tree, int rw,
+		    int dev_nr, u64 logical, u64 *phys, u64 *length,
+		    struct btrfs_device **dev, int *total_devs)
 {
 	struct cache_extent *ce;
 	struct map_lookup *map;
@@ -725,20 +736,28 @@ int btrfs_map_block(struct btrfs_mapping_tree *map_tree,
 	/* stripe_offset is the offset of this block in its stripe*/
 	stripe_offset = offset - stripe_offset;
 
-	/*
-	 * after this do_div call, stripe_nr is the number of stripes
-	 * on this device we have to walk to find the data, and
-	 * stripe_index is the number of our device in the stripe array
-	 */
-	stripe_index = stripe_nr % map->num_stripes;
-	stripe_nr = stripe_nr / map->num_stripes;
-
+	if (map->type & BTRFS_BLOCK_GROUP_RAID1) {
+		stripe_index = dev_nr;
+		if (rw == WRITE)
+			*total_devs = map->num_stripes;
+		else {
+			stripe_index = stripe_nr % map->num_stripes;
+			*total_devs = 1;
+		}
+	} else {
+		/*
+		 * after this do_div call, stripe_nr is the number of stripes
+		 * on this device we have to walk to find the data, and
+		 * stripe_index is the number of our device in the stripe array
+		 */
+		stripe_index = stripe_nr % map->num_stripes;
+		stripe_nr = stripe_nr / map->num_stripes;
+	}
 	BUG_ON(stripe_index >= map->num_stripes);
-
 	*phys = map->stripes[stripe_index].physical + stripe_offset +
 		stripe_nr * map->stripe_len;
 
-	if (map->type & BTRFS_BLOCK_GROUP_RAID0) {
+	if (map->type & (BTRFS_BLOCK_GROUP_RAID0 | BTRFS_BLOCK_GROUP_RAID1)) {
 		/* we limit the length of each bio to what fits in a stripe */
 		*length = min_t(u64, ce->size - offset,
 			      map->stripe_len - stripe_offset);
@@ -846,6 +865,7 @@ static int read_one_dev(struct btrfs_root *root,
 		device = kmalloc(sizeof(*device), GFP_NOFS);
 		if (!device)
 			return -ENOMEM;
+		device->total_ios = 0;
 		list_add(&device->dev_list,
 			 &root->fs_info->fs_devices->devices);
 	}

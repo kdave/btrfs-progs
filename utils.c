@@ -404,31 +404,40 @@ int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 {
 	struct btrfs_super_block *disk_super;
 	struct btrfs_super_block *super = &root->fs_info->super_copy;
-	struct btrfs_device device;
+	struct btrfs_device *device;
 	struct btrfs_dev_item *dev_item;
 	char *buf;
 	u64 total_bytes;
 	u64 num_devs;
 	int ret;
 
-	buf = malloc(sectorsize);
+	device = kmalloc(sizeof(*device), GFP_NOFS);
+	if (!device)
+		return -ENOMEM;
+	buf = kmalloc(sectorsize, GFP_NOFS);
+	if (!buf) {
+		kfree(device);
+		return -ENOMEM;
+	}
 	BUG_ON(sizeof(*disk_super) > sectorsize);
 	memset(buf, 0, sectorsize);
 
 	disk_super = (struct btrfs_super_block *)buf;
 	dev_item = &disk_super->dev_item;
 
-	uuid_generate(device.uuid);
-	device.devid = 0;
-	device.type = 0;
-	device.io_width = io_width;
-	device.io_align = io_align;
-	device.sector_size = sectorsize;
-	device.fd = 0;
-	device.total_bytes = block_count;
-	device.bytes_used = 0;
+	uuid_generate(device->uuid);
+	device->devid = 0;
+	device->type = 0;
+	device->io_width = io_width;
+	device->io_align = io_align;
+	device->sector_size = sectorsize;
+	device->fd = 0;
+	device->total_bytes = block_count;
+	device->bytes_used = 0;
+	device->total_ios = 0;
+	device->dev_root = root->fs_info->dev_root;
 
-	ret = btrfs_add_device(trans, root, &device);
+	ret = btrfs_add_device(trans, root, device);
 	BUG_ON(ret);
 
 	total_bytes = btrfs_super_total_bytes(super) + block_count;
@@ -439,20 +448,21 @@ int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 
 	memcpy(disk_super, super, sizeof(*disk_super));
 
-	printf("adding device id %llu\n", (unsigned long long)device.devid);
-	btrfs_set_stack_device_id(dev_item, device.devid);
-	btrfs_set_stack_device_type(dev_item, device.type);
-	btrfs_set_stack_device_io_align(dev_item, device.io_align);
-	btrfs_set_stack_device_io_width(dev_item, device.io_width);
-	btrfs_set_stack_device_sector_size(dev_item, device.sector_size);
-	btrfs_set_stack_device_total_bytes(dev_item, device.total_bytes);
-	btrfs_set_stack_device_bytes_used(dev_item, device.bytes_used);
-	memcpy(&dev_item->uuid, device.uuid, BTRFS_DEV_UUID_SIZE);
+	printf("adding device id %llu\n", (unsigned long long)device->devid);
+	btrfs_set_stack_device_id(dev_item, device->devid);
+	btrfs_set_stack_device_type(dev_item, device->type);
+	btrfs_set_stack_device_io_align(dev_item, device->io_align);
+	btrfs_set_stack_device_io_width(dev_item, device->io_width);
+	btrfs_set_stack_device_sector_size(dev_item, device->sector_size);
+	btrfs_set_stack_device_total_bytes(dev_item, device->total_bytes);
+	btrfs_set_stack_device_bytes_used(dev_item, device->bytes_used);
+	memcpy(&dev_item->uuid, device->uuid, BTRFS_DEV_UUID_SIZE);
 
 	ret = pwrite(fd, buf, sectorsize, BTRFS_SUPER_INFO_OFFSET);
 	BUG_ON(ret != sectorsize);
 
-	free(buf);
+	kfree(buf);
+	list_add(&device->dev_list, &root->fs_info->fs_devices->devices);
 	return 0;
 }
 

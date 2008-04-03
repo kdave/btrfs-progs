@@ -480,7 +480,6 @@ static int pick_next_pending(struct cache_tree *pending,
 	}
 	return ret;
 }
-static struct extent_buffer reada_buf;
 
 static int run_next_block(struct btrfs_root *root,
 			  struct block_info *bits,
@@ -503,7 +502,6 @@ static int run_next_block(struct btrfs_root *root,
 	struct cache_extent *cache;
 	int reada_bits;
 
-	u64 last_block = 0;
 	ret = pick_next_pending(pending, reada, nodes, *last, bits,
 				bits_nr, &reada_bits);
 	if (ret == 0) {
@@ -511,14 +509,9 @@ static int run_next_block(struct btrfs_root *root,
 	}
 	if (!reada_bits) {
 		for(i = 0; i < ret; i++) {
-			u64 offset;
 			insert_cache_extent(reada, bits[i].start,
 					    bits[i].size);
-			btrfs_map_bh_to_logical(root, &reada_buf,
-						bits[i].start);
-			offset = reada_buf.dev_bytenr;
-			last_block = bits[i].start;
-			readahead(reada_buf.fd, offset, bits[i].size);
+			readahead_tree_block(root, bits[i].start, bits[i].size);
 		}
 	}
 	*last = bits[0].start;

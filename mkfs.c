@@ -163,6 +163,8 @@ int main(int ac, char **av)
 	char *file;
 	u64 block_count = 0;
 	u64 dev_block_count = 0;
+	u64 chunk_start;
+	u64 chunk_size;
 	int fd;
 	int first_fd;
 	int ret;
@@ -295,6 +297,29 @@ int main(int ac, char **av)
 		close(fd);
 		btrfs_register_one_device(file);
 	}
+
+	ret = btrfs_alloc_chunk(trans, root->fs_info->extent_root,
+				&chunk_start, &chunk_size,
+				BTRFS_BLOCK_GROUP_METADATA |
+				BTRFS_BLOCK_GROUP_RAID1);
+	BUG_ON(ret);
+	ret = btrfs_make_block_group(trans, root->fs_info->extent_root, 0,
+				     BTRFS_BLOCK_GROUP_METADATA |
+				     BTRFS_BLOCK_GROUP_RAID1,
+				     BTRFS_CHUNK_TREE_OBJECTID,
+				     chunk_start, chunk_size);
+	BUG_ON(ret);
+	ret = btrfs_alloc_chunk(trans, root->fs_info->extent_root,
+				&chunk_start, &chunk_size,
+				BTRFS_BLOCK_GROUP_DATA |
+				BTRFS_BLOCK_GROUP_RAID0);
+	BUG_ON(ret);
+	ret = btrfs_make_block_group(trans, root->fs_info->extent_root, 0,
+				     BTRFS_BLOCK_GROUP_DATA |
+				     BTRFS_BLOCK_GROUP_RAID0,
+				     BTRFS_CHUNK_TREE_OBJECTID,
+				     chunk_start, chunk_size);
+	BUG_ON(ret);
 	btrfs_commit_transaction(trans, root);
 	ret = close_ctree(root);
 	BUG_ON(ret);
