@@ -169,11 +169,13 @@ static int create_raid_groups(struct btrfs_trans_handle *trans,
 	else
 		allowed = BTRFS_BLOCK_GROUP_RAID0 | BTRFS_BLOCK_GROUP_RAID1;
 
-	ret = create_one_raid_group(trans, root,
-				    BTRFS_BLOCK_GROUP_METADATA |
-				    (allowed & metadata_profile));
-	BUG_ON(ret);
-	if (num_devices > 1) {
+	if (allowed & metadata_profile) {
+		ret = create_one_raid_group(trans, root,
+					    BTRFS_BLOCK_GROUP_METADATA |
+					    (allowed & metadata_profile));
+		BUG_ON(ret);
+	}
+	if (num_devices > 1 && (allowed & data_profile)) {
 		ret = create_one_raid_group(trans, root,
 					    BTRFS_BLOCK_GROUP_DATA |
 					    (allowed & data_profile));
@@ -193,11 +195,28 @@ static void print_usage(void)
 	exit(1);
 }
 
+static u64 parse_profile(char *s)
+{
+	if (strcmp(s, "raid0") == 0) {
+		return BTRFS_BLOCK_GROUP_RAID0;
+	} else if (strcmp(s, "raid1") == 0) {
+		return BTRFS_BLOCK_GROUP_RAID1 | BTRFS_BLOCK_GROUP_DUP;
+	} else if (strcmp(s, "single") == 0) {
+		return 0;
+	} else {
+		fprintf(stderr, "Unknown option %s\n", s);
+		print_usage();
+	}
+	return 0;
+}
+
 static struct option long_options[] = {
 	{ "byte-count", 1, NULL, 'b' },
 	{ "leafsize", 1, NULL, 'l' },
 	{ "nodesize", 1, NULL, 'n' },
 	{ "sectorsize", 1, NULL, 's' },
+	{ "metadata", 1, NULL, 'm' },
+	{ "data", 1, NULL, 'd' },
 	{ 0, 0, 0, 0}
 };
 
@@ -219,14 +238,22 @@ int main(int ac, char **av)
 	int option_index = 0;
 	struct btrfs_root *root;
 	struct btrfs_trans_handle *trans;
+	u64 metadata_profile = BTRFS_BLOCK_GROUP_RAID1 | BTRFS_BLOCK_GROUP_DUP;
+	u64 data_profile = BTRFS_BLOCK_GROUP_RAID0;
 
 	while(1) {
 		int c;
-		c = getopt_long(ac, av, "b:l:n:s:", long_options,
+		c = getopt_long(ac, av, "b:l:n:s:m:d:", long_options,
 				&option_index);
 		if (c < 0)
 			break;
 		switch(c) {
+			case 'd':
+				data_profile = parse_profile(optarg);
+				break;
+			case 'm':
+				metadata_profile = parse_profile(optarg);
+				break;
 			case 'l':
 				leafsize = parse_size(optarg);
 				break;
@@ -340,9 +367,8 @@ int main(int ac, char **av)
 	}
 
 raid_groups:
-	ret = create_raid_groups(trans, root, BTRFS_BLOCK_GROUP_RAID0,
-				 BTRFS_BLOCK_GROUP_RAID1 |
-				 BTRFS_BLOCK_GROUP_DUP);
+	ret = create_raid_groups(trans, root, data_profile,
+				 metadata_profile);
 	btrfs_commit_transaction(trans, root);
 	ret = close_ctree(root);
 	BUG_ON(ret);
