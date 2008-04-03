@@ -1618,30 +1618,21 @@ int btrfs_alloc_extent(struct btrfs_trans_handle *trans,
 	struct btrfs_extent_item *extent_item;
 	struct btrfs_extent_ref *ref;
 	struct btrfs_key keys[2];
-	int extra_alloc_flags = 0;
-
-	if (0 && btrfs_super_num_devices(&info->super_copy) > 1) {
-		if (data)
-			extra_alloc_flags = BTRFS_BLOCK_GROUP_RAID0;
-		else
-			extra_alloc_flags = BTRFS_BLOCK_GROUP_RAID1;
-	}
 
 	if (data) {
-		data = BTRFS_BLOCK_GROUP_DATA | extra_alloc_flags;
+		data = BTRFS_BLOCK_GROUP_DATA;
 	} else if (root == root->fs_info->chunk_root ||
 		   info->force_system_allocs) {
 		data = BTRFS_BLOCK_GROUP_SYSTEM;
 	} else {
-		data = BTRFS_BLOCK_GROUP_METADATA | extra_alloc_flags;
+		data = BTRFS_BLOCK_GROUP_METADATA;
 	}
 
 	if (root->ref_cows) {
 		if (!(data & BTRFS_BLOCK_GROUP_METADATA)) {
 			ret = do_chunk_alloc(trans, root->fs_info->extent_root,
 					     num_bytes,
-					     BTRFS_BLOCK_GROUP_METADATA |
-					     extra_alloc_flags);
+					     BTRFS_BLOCK_GROUP_METADATA);
 			BUG_ON(ret);
 		}
 		ret = do_chunk_alloc(trans, root->fs_info->extent_root,

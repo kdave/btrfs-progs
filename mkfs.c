@@ -139,6 +139,49 @@ err:
 	return ret;
 }
 
+static int create_one_raid_group(struct btrfs_trans_handle *trans,
+			      struct btrfs_root *root, u64 type)
+{
+	u64 chunk_start;
+	u64 chunk_size;
+	int ret;
+
+	ret = btrfs_alloc_chunk(trans, root->fs_info->extent_root,
+				&chunk_start, &chunk_size, type);
+	BUG_ON(ret);
+	ret = btrfs_make_block_group(trans, root->fs_info->extent_root, 0,
+				     type, BTRFS_CHUNK_TREE_OBJECTID,
+				     chunk_start, chunk_size);
+	BUG_ON(ret);
+	return ret;
+}
+
+static int create_raid_groups(struct btrfs_trans_handle *trans,
+			      struct btrfs_root *root, u64 data_profile,
+			      u64 metadata_profile)
+{
+	u64 num_devices = btrfs_super_num_devices(&root->fs_info->super_copy);
+	u64 allowed;
+	int ret;
+
+	if (num_devices == 1)
+		allowed = BTRFS_BLOCK_GROUP_DUP;
+	else
+		allowed = BTRFS_BLOCK_GROUP_RAID0 | BTRFS_BLOCK_GROUP_RAID1;
+
+	ret = create_one_raid_group(trans, root,
+				    BTRFS_BLOCK_GROUP_METADATA |
+				    (allowed & metadata_profile));
+	BUG_ON(ret);
+	if (num_devices > 1) {
+		ret = create_one_raid_group(trans, root,
+					    BTRFS_BLOCK_GROUP_DATA |
+					    (allowed & data_profile));
+		BUG_ON(ret);
+	}
+	return 0;
+}
+
 static void print_usage(void)
 {
 	fprintf(stderr, "usage: mkfs.btrfs [options] dev [ dev ... ]\n");
@@ -163,8 +206,6 @@ int main(int ac, char **av)
 	char *file;
 	u64 block_count = 0;
 	u64 dev_block_count = 0;
-	u64 chunk_start;
-	u64 chunk_size;
 	int fd;
 	int first_fd;
 	int ret;
@@ -255,17 +296,17 @@ int main(int ac, char **av)
 	       file, nodesize, leafsize, sectorsize,
 	       (unsigned long long)block_count);
 
+	root = open_ctree(file, 0);
+	trans = btrfs_start_transaction(root, 1);
+
 	if (ac == 0)
-		goto done;
+		goto raid_groups;
 
 	btrfs_register_one_device(file);
-	root = open_ctree(file, 0);
-
 	if (!root) {
 		fprintf(stderr, "ctree init failed\n");
 		return -1;
 	}
-	trans = btrfs_start_transaction(root, 1);
 
 	zero_end = 1;
 	while(ac-- > 0) {
@@ -298,32 +339,13 @@ int main(int ac, char **av)
 		btrfs_register_one_device(file);
 	}
 
-	ret = btrfs_alloc_chunk(trans, root->fs_info->extent_root,
-				&chunk_start, &chunk_size,
-				BTRFS_BLOCK_GROUP_METADATA |
-				BTRFS_BLOCK_GROUP_RAID1);
-	BUG_ON(ret);
-	ret = btrfs_make_block_group(trans, root->fs_info->extent_root, 0,
-				     BTRFS_BLOCK_GROUP_METADATA |
-				     BTRFS_BLOCK_GROUP_RAID1,
-				     BTRFS_CHUNK_TREE_OBJECTID,
-				     chunk_start, chunk_size);
-	BUG_ON(ret);
-	ret = btrfs_alloc_chunk(trans, root->fs_info->extent_root,
-				&chunk_start, &chunk_size,
-				BTRFS_BLOCK_GROUP_DATA |
-				BTRFS_BLOCK_GROUP_RAID0);
-	BUG_ON(ret);
-	ret = btrfs_make_block_group(trans, root->fs_info->extent_root, 0,
-				     BTRFS_BLOCK_GROUP_DATA |
-				     BTRFS_BLOCK_GROUP_RAID0,
-				     BTRFS_CHUNK_TREE_OBJECTID,
-				     chunk_start, chunk_size);
-	BUG_ON(ret);
+raid_groups:
+	ret = create_raid_groups(trans, root, BTRFS_BLOCK_GROUP_RAID0,
+				 BTRFS_BLOCK_GROUP_RAID1 |
+				 BTRFS_BLOCK_GROUP_DUP);
 	btrfs_commit_transaction(trans, root);
 	ret = close_ctree(root);
 	BUG_ON(ret);
-done:
 	return 0;
 }
 

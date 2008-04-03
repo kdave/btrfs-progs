@@ -570,6 +570,7 @@ int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 	struct map_lookup *map;
 	u64 physical;
 	u64 calc_size = 8 * 1024 * 1024;
+	u64 min_free = calc_size;
 	u64 avail;
 	u64 max_avail = 0;
 	int num_stripes = 1;
@@ -579,22 +580,30 @@ int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 	int stripe_len = 64 * 1024;
 	struct btrfs_key key;
 
-	if (list_empty(dev_list))
+	if (list_empty(dev_list)) {
 		return -ENOSPC;
+	}
 
-	if (type & (BTRFS_BLOCK_GROUP_RAID0 | BTRFS_BLOCK_GROUP_RAID1)) {
+	if (type & (BTRFS_BLOCK_GROUP_RAID0 | BTRFS_BLOCK_GROUP_RAID1 |
+		    BTRFS_BLOCK_GROUP_DUP)) {
 		calc_size = 1024 * 1024 * 1024;
 	}
-	if (type & (BTRFS_BLOCK_GROUP_RAID1)) {
+	if (type & BTRFS_BLOCK_GROUP_RAID1) {
 		num_stripes = min_t(u64, 2,
 				  btrfs_super_num_devices(&info->super_copy));
 	}
+	if (type & BTRFS_BLOCK_GROUP_DUP)
+		num_stripes = 2;
 	if (type & (BTRFS_BLOCK_GROUP_RAID0))
 		num_stripes = btrfs_super_num_devices(&info->super_copy);
 again:
 	INIT_LIST_HEAD(&private_devs);
 	cur = dev_list->next;
 	index = 0;
+
+	if (type & BTRFS_BLOCK_GROUP_DUP)
+		min_free = calc_size * 2;
+
 	/* build a private list of devices we will allocate from */
 	while(index < num_stripes) {
 		device = list_entry(cur, struct btrfs_device, dev_list);
@@ -602,9 +611,11 @@ again:
 		cur = cur->next;
 		if (avail > max_avail)
 			max_avail = avail;
-		if (avail >= calc_size) {
+		if (avail >= min_free) {
 			list_move_tail(&device->dev_list, &private_devs);
 			index++;
+			if (type & BTRFS_BLOCK_GROUP_DUP)
+				index++;
 		}
 		if (cur == dev_list)
 			break;
@@ -635,23 +646,28 @@ again:
 
 	stripes = &chunk->stripe;
 
-	if (type & BTRFS_BLOCK_GROUP_RAID1)
+	if (type & (BTRFS_BLOCK_GROUP_RAID1 | BTRFS_BLOCK_GROUP_DUP))
 		*num_bytes = calc_size;
 	else
 		*num_bytes = calc_size * num_stripes;
 
 	index = 0;
+printk("new chunk type %Lu start %Lu size %Lu\n", type, key.objectid, *num_bytes);
 	while(index < num_stripes) {
 		BUG_ON(list_empty(&private_devs));
 		cur = private_devs.next;
 		device = list_entry(cur, struct btrfs_device, dev_list);
-		list_move_tail(&device->dev_list, dev_list);
+
+		/* loop over this device again if we're doing a dup group */
+		if (!(type & BTRFS_BLOCK_GROUP_DUP) ||
+		    (index == num_stripes - 1))
+			list_move_tail(&device->dev_list, dev_list);
 
 		ret = btrfs_alloc_dev_extent(trans, device,
 					     key.objectid,
 					     calc_size, &dev_offset);
 		BUG_ON(ret);
-printk("alloc chunk size %llu from dev %llu\n",
+printk("\talloc chunk size %llu from dev %llu\n",
 	(unsigned long long)calc_size,
 	(unsigned long long)device->devid);
 		device->bytes_used += calc_size;
@@ -744,6 +760,14 @@ int btrfs_map_block(struct btrfs_mapping_tree *map_tree, int rw,
 			stripe_index = stripe_nr % map->num_stripes;
 			*total_devs = 1;
 		}
+	} else if (map->type & BTRFS_BLOCK_GROUP_DUP) {
+		if (rw == WRITE) {
+			*total_devs = map->num_stripes;
+			stripe_index = dev_nr;
+		} else {
+			stripe_index = 0;
+			*total_devs = 1;
+		}
 	} else {
 		/*
 		 * after this do_div call, stripe_nr is the number of stripes
@@ -757,7 +781,8 @@ int btrfs_map_block(struct btrfs_mapping_tree *map_tree, int rw,
 	*phys = map->stripes[stripe_index].physical + stripe_offset +
 		stripe_nr * map->stripe_len;
 
-	if (map->type & (BTRFS_BLOCK_GROUP_RAID0 | BTRFS_BLOCK_GROUP_RAID1)) {
+	if (map->type & (BTRFS_BLOCK_GROUP_RAID0 | BTRFS_BLOCK_GROUP_RAID1 |
+			 BTRFS_BLOCK_GROUP_DUP)) {
 		/* we limit the length of each bio to what fits in a stripe */
 		*length = min_t(u64, ce->size - offset,
 			      map->stripe_len - stripe_offset);
