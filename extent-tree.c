@@ -1262,7 +1262,9 @@ static int pin_down_bytes(struct btrfs_root *root, u64 bytenr, u32 num_bytes,
 			if (btrfs_buffer_uptodate(buf)) {
 				u64 transid =
 				    root->fs_info->running_transaction->transid;
-				if (btrfs_header_generation(buf) == transid) {
+				if (btrfs_header_generation(buf) ==
+				    transid && !btrfs_header_flag(buf,
+					       BTRFS_HEADER_FLAG_WRITTEN)) {
 					free_extent_buffer(buf);
 					return 1;
 				}
