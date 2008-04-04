@@ -172,7 +172,7 @@ struct btrfs_block_group_cache *btrfs_lookup_block_group(struct
 
 static int block_group_bits(struct btrfs_block_group_cache *cache, u64 bits)
 {
-	return (cache->flags & bits);
+	return (cache->flags & bits) == bits;
 }
 
 static int noinline find_search_start(struct btrfs_root *root,
@@ -348,14 +348,17 @@ again:
 		last = cache->key.objectid + cache->key.offset;
 		used = btrfs_block_group_used(&cache->item);
 
-		if (full_search)
-			free_check = cache->key.offset;
-		else
-			free_check = div_factor(cache->key.offset, factor);
+		if (block_group_bits(cache, data)) {
+			if (full_search)
+				free_check = cache->key.offset;
+			else
+				free_check = div_factor(cache->key.offset,
+							factor);
 
-		if (used + cache->pinned < free_check) {
-			found_group = cache;
-			goto found;
+			if (used + cache->pinned < free_check) {
+				found_group = cache;
+				goto found;
+			}
 		}
 		cond_resched();
 	}
@@ -1020,6 +1023,21 @@ static int update_space_info(struct btrfs_fs_info *info, u64 flags,
 }
 
 
+static void set_avail_alloc_bits(struct btrfs_fs_info *fs_info, u64 flags)
+{
+	u64 extra_flags = flags & (BTRFS_BLOCK_GROUP_RAID0 |
+				   BTRFS_BLOCK_GROUP_RAID1 |
+				   BTRFS_BLOCK_GROUP_DUP);
+	if (extra_flags) {
+		if (flags & BTRFS_BLOCK_GROUP_DATA)
+			fs_info->avail_data_alloc_bits |= extra_flags;
+		if (flags & BTRFS_BLOCK_GROUP_METADATA)
+			fs_info->avail_metadata_alloc_bits |= extra_flags;
+		if (flags & BTRFS_BLOCK_GROUP_SYSTEM)
+			fs_info->avail_system_alloc_bits |= extra_flags;
+	}
+}
+
 static int do_chunk_alloc(struct btrfs_trans_handle *trans,
 			  struct btrfs_root *extent_root, u64 alloc_bytes,
 			  u64 flags)
@@ -1610,6 +1628,7 @@ int btrfs_alloc_extent(struct btrfs_trans_handle *trans,
 	int pending_ret;
 	u64 super_used, root_used;
 	u64 search_start = 0;
+	u64 alloc_profile;
 	struct btrfs_fs_info *info = root->fs_info;
 	struct btrfs_extent_ops *ops = info->extent_ops;
 	u32 sizes[2];
@@ -1620,12 +1639,17 @@ int btrfs_alloc_extent(struct btrfs_trans_handle *trans,
 	struct btrfs_key keys[2];
 
 	if (data) {
-		data = BTRFS_BLOCK_GROUP_DATA;
-	} else if (root == root->fs_info->chunk_root ||
-		   info->force_system_allocs) {
-		data = BTRFS_BLOCK_GROUP_SYSTEM;
+		alloc_profile = info->avail_data_alloc_bits &
+			        info->data_alloc_profile;
+		data = BTRFS_BLOCK_GROUP_DATA | alloc_profile;
+	} else if (root == info->chunk_root || info->force_system_allocs) {
+		alloc_profile = info->avail_system_alloc_bits &
+			        info->system_alloc_profile;
+		data = BTRFS_BLOCK_GROUP_SYSTEM | alloc_profile;
 	} else {
-		data = BTRFS_BLOCK_GROUP_METADATA;
+		alloc_profile = info->avail_metadata_alloc_bits &
+			        info->metadata_alloc_profile;
+		data = BTRFS_BLOCK_GROUP_METADATA | alloc_profile;
 	}
 
 	if (root->ref_cows) {
@@ -2240,6 +2264,7 @@ int btrfs_read_block_groups(struct btrfs_root *root)
 		} else if (cache->flags & BTRFS_BLOCK_GROUP_METADATA) {
 			bit = BLOCK_GROUP_METADATA;
 		}
+		set_avail_alloc_bits(info, cache->flags);
 
 		ret = update_space_info(info, cache->flags, found_key.offset,
 					btrfs_block_group_used(&cache->item),
@@ -2278,13 +2303,11 @@ int btrfs_make_block_group(struct btrfs_trans_handle *trans,
 	extent_root = root->fs_info->extent_root;
 	block_group_cache = &root->fs_info->block_group_cache;
 
-	cache = kmalloc(sizeof(*cache), GFP_NOFS);
+	cache = kzalloc(sizeof(*cache), GFP_NOFS);
 	BUG_ON(!cache);
 	cache->key.objectid = chunk_objectid;
 	cache->key.offset = size;
-	cache->cached = 0;
 	btrfs_set_key_type(&cache->key, BTRFS_BLOCK_GROUP_ITEM_KEY);
-	memset(&cache->item, 0, sizeof(cache->item));
 	btrfs_set_block_group_used(&cache->item, bytes_used);
 	btrfs_set_block_group_chunk_tree(&cache->item, chunk_tree);
 	btrfs_set_block_group_chunk_objectid(&cache->item, chunk_objectid);
@@ -2295,13 +2318,7 @@ int btrfs_make_block_group(struct btrfs_trans_handle *trans,
 				&cache->space_info);
 	BUG_ON(ret);
 
-	if (type & BTRFS_BLOCK_GROUP_DATA) {
-		bit = BLOCK_GROUP_DATA;
-	} else if (type & BTRFS_BLOCK_GROUP_SYSTEM) {
-		bit = BLOCK_GROUP_SYSTEM;
-	} else if (type & BTRFS_BLOCK_GROUP_METADATA) {
-		bit = BLOCK_GROUP_METADATA;
-	}
+	bit = block_group_state_bits(type);
 	set_extent_bits(block_group_cache, chunk_objectid,
 			chunk_objectid + size - 1,
 			bit | EXTENT_LOCKED, GFP_NOFS);
@@ -2315,6 +2332,7 @@ int btrfs_make_block_group(struct btrfs_trans_handle *trans,
 	finish_current_insert(trans, extent_root);
 	ret = del_pending_extents(trans, extent_root);
 	BUG_ON(ret);
+	set_avail_alloc_bits(extent_root->fs_info, type);
 	return 0;
 }
 

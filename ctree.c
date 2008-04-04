@@ -244,11 +244,8 @@ int btrfs_cow_block(struct btrfs_trans_handle *trans,
 			(unsigned long long)root->fs_info->generation);
 		WARN_ON(1);
 	}
-	if (btrfs_header_generation(buf) == trans->transid) {
-#if 0
-		&&
+	if (btrfs_header_generation(buf) == trans->transid &&
 	    !btrfs_header_flag(buf, BTRFS_HEADER_FLAG_WRITTEN)) {
-#endif
 		*cow_ret = buf;
 		return 0;
 	}

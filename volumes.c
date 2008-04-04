@@ -586,7 +586,10 @@ int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 
 	if (type & (BTRFS_BLOCK_GROUP_RAID0 | BTRFS_BLOCK_GROUP_RAID1 |
 		    BTRFS_BLOCK_GROUP_DUP)) {
-		calc_size = 1024 * 1024 * 1024;
+		if (type & BTRFS_BLOCK_GROUP_SYSTEM)
+			calc_size = 128 * 1024 * 1024;
+		else
+			calc_size = 1024 * 1024 * 1024;
 	}
 	if (type & BTRFS_BLOCK_GROUP_RAID1) {
 		num_stripes = min_t(u64, 2,
@@ -667,9 +670,10 @@ printk("new chunk type %Lu start %Lu size %Lu\n", type, key.objectid, *num_bytes
 					     key.objectid,
 					     calc_size, &dev_offset);
 		BUG_ON(ret);
-printk("\talloc chunk size %llu from dev %llu\n",
+printk("\talloc chunk size %llu from dev %llu phys %llu\n",
 	(unsigned long long)calc_size,
-	(unsigned long long)device->devid);
+	(unsigned long long)device->devid,
+	(unsigned long long)dev_offset);
 		device->bytes_used += calc_size;
 		ret = btrfs_update_device(trans, device);
 		BUG_ON(ret);
@@ -712,6 +716,12 @@ printk("\talloc chunk size %llu from dev %llu\n",
 			   &extent_root->fs_info->mapping_tree.cache_tree,
 			   &map->ce);
 	BUG_ON(ret);
+
+	if (type & BTRFS_BLOCK_GROUP_SYSTEM) {
+		ret = btrfs_add_system_chunk(trans, chunk_root, &key,
+				    chunk, btrfs_chunk_item_size(num_stripes));
+		BUG_ON(ret);
+	}
 
 	kfree(chunk);
 	return ret;
@@ -830,13 +840,13 @@ static int read_one_chunk(struct btrfs_root *root, struct btrfs_key *key,
 
 	map->ce.start = logical;
 	map->ce.size = length;
-
 	map->num_stripes = num_stripes;
 	map->io_width = btrfs_chunk_io_width(leaf, chunk);
 	map->io_align = btrfs_chunk_io_align(leaf, chunk);
 	map->sector_size = btrfs_chunk_sector_size(leaf, chunk);
 	map->stripe_len = btrfs_chunk_stripe_len(leaf, chunk);
 	map->type = btrfs_chunk_type(leaf, chunk);
+
 	for (i = 0; i < num_stripes; i++) {
 		map->stripes[i].physical =
 			btrfs_stripe_offset_nr(leaf, chunk, i);

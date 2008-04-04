@@ -139,6 +139,42 @@ err:
 	return ret;
 }
 
+static int recow_roots(struct btrfs_trans_handle *trans,
+		       struct btrfs_root *root)
+{
+	int ret;
+	struct extent_buffer *tmp;
+	struct btrfs_fs_info *info = root->fs_info;
+
+	ret = __btrfs_cow_block(trans, info->fs_root, info->fs_root->node,
+				NULL, 0, &tmp, 0, 0);
+	BUG_ON(ret);
+	free_extent_buffer(tmp);
+
+	ret = __btrfs_cow_block(trans, info->tree_root, info->tree_root->node,
+				NULL, 0, &tmp, 0, 0);
+	BUG_ON(ret);
+	free_extent_buffer(tmp);
+
+	ret = __btrfs_cow_block(trans, info->extent_root,
+				info->extent_root->node, NULL, 0, &tmp, 0, 0);
+	BUG_ON(ret);
+	free_extent_buffer(tmp);
+
+	ret = __btrfs_cow_block(trans, info->chunk_root, info->chunk_root->node,
+				NULL, 0, &tmp, 0, 0);
+	BUG_ON(ret);
+	free_extent_buffer(tmp);
+
+
+	ret = __btrfs_cow_block(trans, info->dev_root, info->dev_root->node,
+				NULL, 0, &tmp, 0, 0);
+	BUG_ON(ret);
+	free_extent_buffer(tmp);
+
+	return 0;
+}
+
 static int create_one_raid_group(struct btrfs_trans_handle *trans,
 			      struct btrfs_root *root, u64 type)
 {
@@ -171,8 +207,16 @@ static int create_raid_groups(struct btrfs_trans_handle *trans,
 
 	if (allowed & metadata_profile) {
 		ret = create_one_raid_group(trans, root,
+					    BTRFS_BLOCK_GROUP_SYSTEM |
+					    (allowed & metadata_profile));
+		BUG_ON(ret);
+
+		ret = create_one_raid_group(trans, root,
 					    BTRFS_BLOCK_GROUP_METADATA |
 					    (allowed & metadata_profile));
+		BUG_ON(ret);
+
+		ret = recow_roots(trans, root);
 		BUG_ON(ret);
 	}
 	if (num_devices > 1 && (allowed & data_profile)) {
@@ -362,7 +406,6 @@ int main(int ac, char **av)
 		ret = btrfs_add_to_fsid(trans, root, fd, dev_block_count,
 					sectorsize, sectorsize, sectorsize);
 		BUG_ON(ret);
-		close(fd);
 		btrfs_register_one_device(file);
 	}
 

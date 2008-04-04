@@ -464,6 +464,14 @@ struct btrfs_fs_info {
 
 	u64 generation;
 	u64 last_trans_committed;
+
+	u64 avail_data_alloc_bits;
+	u64 avail_metadata_alloc_bits;
+	u64 avail_system_alloc_bits;
+	u64 data_alloc_profile;
+	u64 metadata_alloc_profile;
+	u64 system_alloc_profile;
+
 	struct btrfs_trans_handle *running_transaction;
 	struct btrfs_super_block super_copy;
 	struct extent_buffer *sb_buffer;
@@ -1269,6 +1277,12 @@ int btrfs_cow_block(struct btrfs_trans_handle *trans,
 		    struct btrfs_root *root, struct extent_buffer *buf,
 		    struct extent_buffer *parent, int parent_slot,
 		    struct extent_buffer **cow_ret);
+int __btrfs_cow_block(struct btrfs_trans_handle *trans,
+			     struct btrfs_root *root,
+			     struct extent_buffer *buf,
+			     struct extent_buffer *parent, int parent_slot,
+			     struct extent_buffer **cow_ret,
+			     u64 search_start, u64 empty_size);
 int btrfs_copy_root(struct btrfs_trans_handle *trans,
 		      struct btrfs_root *root,
 		      struct extent_buffer *buf,

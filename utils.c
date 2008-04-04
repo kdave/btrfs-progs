@@ -431,7 +431,7 @@ int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 	device->io_width = io_width;
 	device->io_align = io_align;
 	device->sector_size = sectorsize;
-	device->fd = 0;
+	device->fd = fd;
 	device->total_bytes = block_count;
 	device->bytes_used = 0;
 	device->total_ios = 0;

@@ -33,6 +33,7 @@
 #include "transaction.h"
 #include "crc32c.h"
 #include "utils.h"
+#include "print-tree.h"
 
 static int check_tree_block(struct btrfs_root *root, struct extent_buffer *buf)
 {
@@ -481,16 +482,13 @@ struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr)
 		BUG_ON(ret);
 	}
 
+	memset(fs_info, 0, sizeof(*fs_info));
 	fs_info->fp = fs_devices->lowest_bdev;
-	fs_info->running_transaction = NULL;
 	fs_info->fs_root = root;
 	fs_info->tree_root = tree_root;
 	fs_info->extent_root = extent_root;
-	fs_info->extent_ops = NULL;
-	fs_info->priv_data = NULL;
 	fs_info->chunk_root = chunk_root;
 	fs_info->dev_root = dev_root;
-	fs_info->force_system_allocs = 0;
 
 	extent_io_tree_init(&fs_info->extent_cache);
 	extent_io_tree_init(&fs_info->free_space_cache);
@@ -584,6 +582,11 @@ struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr)
 	root->ref_cows = 1;
 	fs_info->generation = btrfs_super_generation(disk_super) + 1;
 	btrfs_read_block_groups(root);
+
+	fs_info->data_alloc_profile = (u64)-1;
+	fs_info->metadata_alloc_profile = (u64)-1;
+	fs_info->system_alloc_profile = fs_info->metadata_alloc_profile;
+
 	return root;
 }
 
