@@ -273,9 +273,9 @@ int main(int ac, char **av)
 	int first_fd;
 	int ret;
 	int i;
-	u32 leafsize = 16 * 1024;
+	u32 leafsize = getpagesize();
 	u32 sectorsize = 4096;
-	u32 nodesize = 16 * 1024;
+	u32 nodesize = leafsize;
 	u32 stripesize = 4096;
 	u64 blocks[6];
 	int zero_end = 1;
