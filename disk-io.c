@@ -97,11 +97,10 @@ struct extent_buffer *btrfs_find_create_tree_block(struct btrfs_root *root,
 int readahead_tree_block(struct btrfs_root *root, u64 bytenr, u32 blocksize)
 {
 	int ret;
-	int total_devs = 1;
 	int dev_nr;
 	struct extent_buffer *eb;
-	u64 physical;
 	u64 length;
+	struct btrfs_multi_bio *multi = NULL;
 	struct btrfs_device *device;
 
 	eb = btrfs_find_tree_block(root, bytenr, blocksize);
@@ -111,13 +110,15 @@ int readahead_tree_block(struct btrfs_root *root, u64 bytenr, u32 blocksize)
 	}
 
 	dev_nr = 0;
-	ret = btrfs_map_block(&root->fs_info->mapping_tree, READ, dev_nr,
-			      bytenr, &physical, &length, &device,
-			      &total_devs);
+	length = blocksize;
+	ret = btrfs_map_block(&root->fs_info->mapping_tree, READ,
+			      bytenr, &length, &multi);
 	BUG_ON(ret);
+	device = multi->stripes[0].dev;
 	device->total_ios++;
 	blocksize = min(blocksize, (u32)(64 * 1024));
-	readahead(device->fd, physical, blocksize);
+	readahead(device->fd, multi->stripes[0].physical, blocksize);
+	kfree(multi);
 	return 0;
 }
 
@@ -125,11 +126,10 @@ struct extent_buffer *read_tree_block(struct btrfs_root *root, u64 bytenr,
 				     u32 blocksize)
 {
 	int ret;
-	int total_devs = 1;
 	int dev_nr;
 	struct extent_buffer *eb;
-	u64 physical;
 	u64 length;
+	struct btrfs_multi_bio *multi = NULL;
 	struct btrfs_device *device;
 
 	eb = btrfs_find_create_tree_block(root, bytenr, blocksize);
@@ -140,19 +140,21 @@ struct extent_buffer *read_tree_block(struct btrfs_root *root, u64 bytenr,
 		return eb;
 
 	dev_nr = 0;
-	ret = btrfs_map_block(&root->fs_info->mapping_tree, READ, dev_nr,
-			      eb->start, &physical, &length, &device,
-			      &total_devs);
+	length = blocksize;
+	ret = btrfs_map_block(&root->fs_info->mapping_tree, READ,
+			      eb->start, &length, &multi);
 	BUG_ON(ret);
+	device = multi->stripes[0].dev;
 	eb->fd = device->fd;
 	device->total_ios++;
-	eb->dev_bytenr = physical;
+	eb->dev_bytenr = multi->stripes[0].physical;
 	ret = read_extent_from_disk(eb);
 	if (ret) {
 		free_extent_buffer(eb);
 		return NULL;
 	}
 	btrfs_set_buffer_uptodate(eb);
+	kfree(multi);
 	return eb;
 }
 
@@ -160,11 +162,9 @@ int write_tree_block(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 		     struct extent_buffer *eb)
 {
 	int ret;
-	int total_devs = 1;
 	int dev_nr;
-	u64 physical;
 	u64 length;
-	struct btrfs_device *device;
+	struct btrfs_multi_bio *multi = NULL;
 
 	if (check_tree_block(root, eb))
 		BUG();
@@ -175,18 +175,19 @@ int write_tree_block(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 	csum_tree_block(root, eb, 0);
 
 	dev_nr = 0;
-	while(dev_nr < total_devs) {
-		ret = btrfs_map_block(&root->fs_info->mapping_tree, WRITE,
-				      dev_nr, eb->start, &physical, &length,
-				      &device, &total_devs);
+	length = eb->len;
+	ret = btrfs_map_block(&root->fs_info->mapping_tree, WRITE,
+			      eb->start, &length, &multi);
+	while(dev_nr < multi->num_stripes) {
 		BUG_ON(ret);
-		eb->fd = device->fd;
-		eb->dev_bytenr = physical;
+		eb->fd = multi->stripes[dev_nr].dev->fd;
+		eb->dev_bytenr = multi->stripes[dev_nr].physical;
+		multi->stripes[dev_nr].dev->total_ios++;
 		dev_nr++;
-		device->total_ios++;
 		ret = write_extent_to_disk(eb);
 		BUG_ON(ret);
 	}
+	kfree(multi);
 	return 0;
 }
 

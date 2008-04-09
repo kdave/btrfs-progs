@@ -43,11 +43,11 @@ struct map_lookup {
 	int stripe_len;
 	int sector_size;
 	int num_stripes;
-	struct stripe stripes[];
+	struct btrfs_bio_stripe stripes[];
 };
 
 #define map_lookup_size(n) (sizeof(struct map_lookup) + \
-			    (sizeof(struct stripe) * (n)))
+			    (sizeof(struct btrfs_bio_stripe) * (n)))
 
 static LIST_HEAD(fs_uuids);
 
@@ -733,15 +733,29 @@ void btrfs_mapping_init(struct btrfs_mapping_tree *tree)
 }
 
 int btrfs_map_block(struct btrfs_mapping_tree *map_tree, int rw,
-		    int dev_nr, u64 logical, u64 *phys, u64 *length,
-		    struct btrfs_device **dev, int *total_devs)
+		    u64 logical, u64 *length,
+		    struct btrfs_multi_bio **multi_ret)
 {
 	struct cache_extent *ce;
 	struct map_lookup *map;
 	u64 offset;
 	u64 stripe_offset;
 	u64 stripe_nr;
+	int stripes_allocated = 8;
 	int stripe_index;
+	int i;
+	struct btrfs_multi_bio *multi = NULL;
+
+	if (multi_ret && rw == READ) {
+		stripes_allocated = 1;
+	}
+again:
+	if (multi_ret) {
+		multi = kzalloc(btrfs_multi_bio_size(stripes_allocated),
+				GFP_NOFS);
+		if (!multi)
+			return -ENOMEM;
+	}
 
 	ce = find_first_cache_extent(&map_tree->cache_tree, logical);
 	BUG_ON(!ce);
@@ -749,6 +763,15 @@ int btrfs_map_block(struct btrfs_mapping_tree *map_tree, int rw,
 	map = container_of(ce, struct map_lookup, ce);
 	offset = logical - ce->start;
 
+	/* if our multi bio struct is too small, back off and try again */
+	if (multi_ret && (rw == WRITE) &&
+	    stripes_allocated < map->num_stripes &&
+	    ((map->type & BTRFS_BLOCK_GROUP_RAID1) ||
+	     (map->type & BTRFS_BLOCK_GROUP_DUP))) {
+		stripes_allocated = map->num_stripes;
+		kfree(multi);
+		goto again;
+	}
 	stripe_nr = offset;
 	/*
 	 * stripe_nr counts the total number of stripes we have to stride
@@ -762,22 +785,28 @@ int btrfs_map_block(struct btrfs_mapping_tree *map_tree, int rw,
 	/* stripe_offset is the offset of this block in its stripe*/
 	stripe_offset = offset - stripe_offset;
 
+	if (map->type & (BTRFS_BLOCK_GROUP_RAID0 | BTRFS_BLOCK_GROUP_RAID1 |
+			 BTRFS_BLOCK_GROUP_DUP)) {
+		/* we limit the length of each bio to what fits in a stripe */
+		*length = min_t(u64, ce->size - offset,
+			      map->stripe_len - stripe_offset);
+	} else {
+		*length = ce->size - offset;
+	}
+
+	if (!multi_ret)
+		goto out;
+
+	multi->num_stripes = 1;
+	stripe_index = 0;
 	if (map->type & BTRFS_BLOCK_GROUP_RAID1) {
-		stripe_index = dev_nr;
 		if (rw == WRITE)
-			*total_devs = map->num_stripes;
-		else {
+			multi->num_stripes = map->num_stripes;
+		else
 			stripe_index = stripe_nr % map->num_stripes;
-			*total_devs = 1;
-		}
 	} else if (map->type & BTRFS_BLOCK_GROUP_DUP) {
-		if (rw == WRITE) {
-			*total_devs = map->num_stripes;
-			stripe_index = dev_nr;
-		} else {
-			stripe_index = 0;
-			*total_devs = 1;
-		}
+		if (rw == WRITE)
+			multi->num_stripes = map->num_stripes;
 	} else {
 		/*
 		 * after this do_div call, stripe_nr is the number of stripes
@@ -788,18 +817,17 @@ int btrfs_map_block(struct btrfs_mapping_tree *map_tree, int rw,
 		stripe_nr = stripe_nr / map->num_stripes;
 	}
 	BUG_ON(stripe_index >= map->num_stripes);
-	*phys = map->stripes[stripe_index].physical + stripe_offset +
-		stripe_nr * map->stripe_len;
 
-	if (map->type & (BTRFS_BLOCK_GROUP_RAID0 | BTRFS_BLOCK_GROUP_RAID1 |
-			 BTRFS_BLOCK_GROUP_DUP)) {
-		/* we limit the length of each bio to what fits in a stripe */
-		*length = min_t(u64, ce->size - offset,
-			      map->stripe_len - stripe_offset);
-	} else {
-		*length = ce->size - offset;
+	BUG_ON(stripe_index != 0 && multi->num_stripes > 1);
+	for (i = 0; i < multi->num_stripes; i++) {
+		multi->stripes[i].physical =
+			map->stripes[stripe_index].physical + stripe_offset +
+			stripe_nr * map->stripe_len;
+		multi->stripes[i].dev = map->stripes[stripe_index].dev;
+		stripe_index++;
 	}
-	*dev = map->stripes[stripe_index].dev;
+	*multi_ret = multi;
+out:
 	return 0;
 }
 
