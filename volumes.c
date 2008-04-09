@@ -732,9 +732,29 @@ void btrfs_mapping_init(struct btrfs_mapping_tree *tree)
 	cache_tree_init(&tree->cache_tree);
 }
 
+int btrfs_num_copies(struct btrfs_mapping_tree *map_tree, u64 logical, u64 len)
+{
+	struct cache_extent *ce;
+	struct map_lookup *map;
+	int ret;
+	u64 offset;
+
+	ce = find_first_cache_extent(&map_tree->cache_tree, logical);
+	BUG_ON(!ce);
+	BUG_ON(ce->start > logical || ce->start + ce->size < logical);
+	map = container_of(ce, struct map_lookup, ce);
+
+	offset = logical - ce->start;
+	if (map->type & (BTRFS_BLOCK_GROUP_DUP | BTRFS_BLOCK_GROUP_RAID1))
+		ret = map->num_stripes;
+	else
+		ret = 1;
+	return ret;
+}
+
 int btrfs_map_block(struct btrfs_mapping_tree *map_tree, int rw,
 		    u64 logical, u64 *length,
-		    struct btrfs_multi_bio **multi_ret)
+		    struct btrfs_multi_bio **multi_ret, int mirror_num)
 {
 	struct cache_extent *ce;
 	struct map_lookup *map;
@@ -802,11 +822,15 @@ again:
 	if (map->type & BTRFS_BLOCK_GROUP_RAID1) {
 		if (rw == WRITE)
 			multi->num_stripes = map->num_stripes;
+		else if (mirror_num)
+			stripe_index = mirror_num - 1;
 		else
 			stripe_index = stripe_nr % map->num_stripes;
 	} else if (map->type & BTRFS_BLOCK_GROUP_DUP) {
 		if (rw == WRITE)
 			multi->num_stripes = map->num_stripes;
+		else if (mirror_num)
+			stripe_index = mirror_num - 1;
 	} else {
 		/*
 		 * after this do_div call, stripe_nr is the number of stripes

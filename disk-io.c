@@ -38,12 +38,12 @@
 static int check_tree_block(struct btrfs_root *root, struct extent_buffer *buf)
 {
 	if (buf->start != btrfs_header_bytenr(buf))
-		BUG();
+		return 1;
 
 	if (memcmp_extent_buffer(buf, root->fs_info->fsid,
 				 (unsigned long)btrfs_header_fsid(buf),
 				 BTRFS_FSID_SIZE))
-		BUG();
+		return 1;
 	return 0;
 }
 
@@ -57,8 +57,8 @@ void btrfs_csum_final(u32 crc, char *result)
 	*(__le32 *)result = ~cpu_to_le32(crc);
 }
 
-static int csum_tree_block(struct btrfs_root *root, struct extent_buffer *buf,
-			   int verify)
+int csum_tree_block(struct btrfs_root *root, struct extent_buffer *buf,
+		    int verify)
 {
 	char result[BTRFS_CRC32_SIZE];
 	u32 len;
@@ -70,8 +70,9 @@ static int csum_tree_block(struct btrfs_root *root, struct extent_buffer *buf,
 
 	if (verify) {
 		if (memcmp_extent_buffer(buf, result, 0, BTRFS_CRC32_SIZE)) {
-			printk("checksum verify failed on %llu\n",
-				(unsigned long long)buf->start);
+			printk("checksum verify failed on %llu wanted %X "
+			       "found %X\n", (unsigned long long)buf->start,
+			       *((int *)result), *((int *)buf));
 			return 1;
 		}
 	} else {
@@ -112,7 +113,7 @@ int readahead_tree_block(struct btrfs_root *root, u64 bytenr, u32 blocksize)
 	dev_nr = 0;
 	length = blocksize;
 	ret = btrfs_map_block(&root->fs_info->mapping_tree, READ,
-			      bytenr, &length, &multi);
+			      bytenr, &length, &multi, 0);
 	BUG_ON(ret);
 	device = multi->stripes[0].dev;
 	device->total_ios++;
@@ -131,6 +132,8 @@ struct extent_buffer *read_tree_block(struct btrfs_root *root, u64 bytenr,
 	u64 length;
 	struct btrfs_multi_bio *multi = NULL;
 	struct btrfs_device *device;
+	int mirror_num = 0;
+	int num_copies;
 
 	eb = btrfs_find_create_tree_block(root, bytenr, blocksize);
 	if (!eb)
@@ -141,21 +144,35 @@ struct extent_buffer *read_tree_block(struct btrfs_root *root, u64 bytenr,
 
 	dev_nr = 0;
 	length = blocksize;
-	ret = btrfs_map_block(&root->fs_info->mapping_tree, READ,
-			      eb->start, &length, &multi);
-	BUG_ON(ret);
-	device = multi->stripes[0].dev;
-	eb->fd = device->fd;
-	device->total_ios++;
-	eb->dev_bytenr = multi->stripes[0].physical;
-	ret = read_extent_from_disk(eb);
-	if (ret) {
-		free_extent_buffer(eb);
-		return NULL;
+	while (1) {
+		ret = btrfs_map_block(&root->fs_info->mapping_tree, READ,
+				      eb->start, &length, &multi, mirror_num);
+		BUG_ON(ret);
+		device = multi->stripes[0].dev;
+		eb->fd = device->fd;
+		device->total_ios++;
+		eb->dev_bytenr = multi->stripes[0].physical;
+		kfree(multi);
+		ret = read_extent_from_disk(eb);
+		if (ret == 0 && check_tree_block(root, eb) == 0 &&
+		    csum_tree_block(root, eb, 1) == 0) {
+			btrfs_set_buffer_uptodate(eb);
+			return eb;
+		}
+		num_copies = btrfs_num_copies(&root->fs_info->mapping_tree,
+					      eb->start, eb->len);
+		if (num_copies == 1) {
+printk("reading %Lu failed only one copy\n", eb->start);
+			break;
+		}
+		mirror_num++;
+		if (mirror_num > num_copies) {
+printk("bailing at mirror %d of %d\n", mirror_num, num_copies);
+			break;
+		}
 	}
-	btrfs_set_buffer_uptodate(eb);
-	kfree(multi);
-	return eb;
+	free_extent_buffer(eb);
+	return NULL;
 }
 
 int write_tree_block(struct btrfs_trans_handle *trans, struct btrfs_root *root,
@@ -177,7 +194,7 @@ int write_tree_block(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 	dev_nr = 0;
 	length = eb->len;
 	ret = btrfs_map_block(&root->fs_info->mapping_tree, WRITE,
-			      eb->start, &length, &multi);
+			      eb->start, &length, &multi, 0);
 	while(dev_nr < multi->num_stripes) {
 		BUG_ON(ret);
 		eb->fd = multi->stripes[dev_nr].dev->fd;

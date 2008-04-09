@@ -52,4 +52,6 @@ void btrfs_csum_final(u32 crc, char *result);
 int btrfs_commit_transaction(struct btrfs_trans_handle *trans,
 			     struct btrfs_root *root);
 int btrfs_open_device(struct btrfs_device *dev);
+int csum_tree_block(struct btrfs_root *root, struct extent_buffer *buf,
+		    int verify);
 #endif

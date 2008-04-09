@@ -106,6 +106,7 @@ int make_btrfs(int fd, char *device_name,
 
 	/* create the tree of root objects */
 	memset(buf->data, 0, leafsize);
+	buf->len = leafsize;
 	btrfs_set_header_bytenr(buf, blocks[1]);
 	btrfs_set_header_nritems(buf, 3);
 	btrfs_set_header_generation(buf, 1);
@@ -165,6 +166,7 @@ int make_btrfs(int fd, char *device_name,
 	nritems++;
 
 
+	csum_tree_block(NULL, buf, 0);
 	ret = pwrite(fd, buf->data, leafsize, blocks[1]);
 	BUG_ON(ret != leafsize);
 
@@ -229,6 +231,7 @@ int make_btrfs(int fd, char *device_name,
 	btrfs_set_header_bytenr(buf, blocks[2]);
 	btrfs_set_header_owner(buf, BTRFS_EXTENT_TREE_OBJECTID);
 	btrfs_set_header_nritems(buf, nritems);
+	csum_tree_block(NULL, buf, 0);
 	ret = pwrite(fd, buf->data, leafsize, blocks[2]);
 	BUG_ON(ret != leafsize);
 
@@ -302,6 +305,7 @@ int make_btrfs(int fd, char *device_name,
 	btrfs_set_header_bytenr(buf, blocks[3]);
 	btrfs_set_header_owner(buf, BTRFS_CHUNK_TREE_OBJECTID);
 	btrfs_set_header_nritems(buf, nritems);
+	csum_tree_block(NULL, buf, 0);
 	ret = pwrite(fd, buf->data, leafsize, blocks[3]);
 
 	/* create the device tree */
@@ -325,12 +329,14 @@ int make_btrfs(int fd, char *device_name,
 	btrfs_set_header_bytenr(buf, blocks[4]);
 	btrfs_set_header_owner(buf, BTRFS_DEV_TREE_OBJECTID);
 	btrfs_set_header_nritems(buf, nritems);
+	csum_tree_block(NULL, buf, 0);
 	ret = pwrite(fd, buf->data, leafsize, blocks[4]);
 
 	/* finally create the FS root */
 	btrfs_set_header_bytenr(buf, blocks[5]);
 	btrfs_set_header_owner(buf, BTRFS_FS_TREE_OBJECTID);
 	btrfs_set_header_nritems(buf, 0);
+	csum_tree_block(NULL, buf, 0);
 	ret = pwrite(fd, buf->data, leafsize, blocks[5]);
 	BUG_ON(ret != leafsize);
 
@@ -338,6 +344,8 @@ int make_btrfs(int fd, char *device_name,
 	BUG_ON(sizeof(super) > sectorsize);
 	memset(buf->data, 0, sectorsize);
 	memcpy(buf->data, &super, sizeof(super));
+	buf->len = sectorsize;
+	csum_tree_block(NULL, buf, 0);
 	ret = pwrite(fd, buf->data, sectorsize, blocks[0]);
 	BUG_ON(ret != sectorsize);
 
