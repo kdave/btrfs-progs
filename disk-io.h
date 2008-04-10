@@ -20,6 +20,8 @@
 #define __DISKIO__
 
 #define BTRFS_SUPER_INFO_OFFSET (16 * 1024)
+#define BTRFS_SUPER_INFO_SIZE 4096
+
 struct btrfs_device;
 
 struct extent_buffer *read_tree_block(struct btrfs_root *root, u64 bytenr,

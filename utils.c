@@ -471,6 +471,9 @@ int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 
 	kfree(buf);
 	list_add(&device->dev_list, &root->fs_info->fs_devices->devices);
+	ret = btrfs_bootstrap_super_map(&root->fs_info->mapping_tree,
+					root->fs_info->fs_devices);
+	BUG_ON(ret);
 	return 0;
 }
 

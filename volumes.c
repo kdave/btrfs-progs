@@ -862,6 +862,57 @@ struct btrfs_device *btrfs_find_device(struct btrfs_root *root, u64 devid)
 	return __find_device(head, devid);
 }
 
+int btrfs_bootstrap_super_map(struct btrfs_mapping_tree *map_tree,
+			      struct btrfs_fs_devices *fs_devices)
+{
+	struct map_lookup *map;
+	u64 logical = BTRFS_SUPER_INFO_OFFSET;
+	u64 length = BTRFS_SUPER_INFO_SIZE;
+	int num_stripes = 0;
+	int ret;
+	int i;
+	struct list_head *cur;
+
+	list_for_each(cur, &fs_devices->devices) {
+		num_stripes++;
+	}
+	map = kmalloc(map_lookup_size(num_stripes), GFP_NOFS);
+	if (!map)
+		return -ENOMEM;
+
+	map->ce.start = logical;
+	map->ce.size = length;
+	map->num_stripes = num_stripes;
+	map->io_width = length;
+	map->io_align = length;
+	map->sector_size = length;
+	map->stripe_len = length;
+	map->type = BTRFS_BLOCK_GROUP_RAID1;
+
+	i = 0;
+	list_for_each(cur, &fs_devices->devices) {
+		struct btrfs_device *device = list_entry(cur,
+							 struct btrfs_device,
+							 dev_list);
+		map->stripes[i].physical = logical;
+		map->stripes[i].dev = device;
+		i++;
+	}
+	ret = insert_existing_cache_extent(&map_tree->cache_tree, &map->ce);
+	if (ret == -EEXIST) {
+		struct cache_extent *old;
+		struct map_lookup *old_map;
+		old = find_cache_extent(&map_tree->cache_tree, logical, length);
+		old_map = container_of(old, struct map_lookup, ce);
+		remove_cache_extent(&map_tree->cache_tree, old);
+		kfree(old_map);
+		ret = insert_existing_cache_extent(&map_tree->cache_tree,
+						   &map->ce);
+	}
+	BUG_ON(ret);
+	return 0;
+}
+
 static int read_one_chunk(struct btrfs_root *root, struct btrfs_key *key,
 			  struct extent_buffer *leaf,
 			  struct btrfs_chunk *chunk)
@@ -872,12 +923,20 @@ static int read_one_chunk(struct btrfs_root *root, struct btrfs_key *key,
 	u64 logical;
 	u64 length;
 	u64 devid;
+	u64 super_offset_diff = 0;
 	int num_stripes;
 	int ret;
 	int i;
 
 	logical = key->objectid;
 	length = key->offset;
+
+	if (logical < BTRFS_SUPER_INFO_OFFSET + BTRFS_SUPER_INFO_SIZE) {
+		super_offset_diff = BTRFS_SUPER_INFO_OFFSET +
+			BTRFS_SUPER_INFO_SIZE - logical;
+		logical = BTRFS_SUPER_INFO_OFFSET + BTRFS_SUPER_INFO_SIZE;
+	}
+
 	ce = find_first_cache_extent(&map_tree->cache_tree, logical);
 
 	/* already mapped? */
@@ -891,7 +950,7 @@ static int read_one_chunk(struct btrfs_root *root, struct btrfs_key *key,
 		return -ENOMEM;
 
 	map->ce.start = logical;
-	map->ce.size = length;
+	map->ce.size = length - super_offset_diff;
 	map->num_stripes = num_stripes;
 	map->io_width = btrfs_chunk_io_width(leaf, chunk);
 	map->io_align = btrfs_chunk_io_align(leaf, chunk);
@@ -901,7 +960,8 @@ static int read_one_chunk(struct btrfs_root *root, struct btrfs_key *key,
 
 	for (i = 0; i < num_stripes; i++) {
 		map->stripes[i].physical =
-			btrfs_stripe_offset_nr(leaf, chunk, i);
+			btrfs_stripe_offset_nr(leaf, chunk, i) +
+				super_offset_diff;
 		devid = btrfs_stripe_devid_nr(leaf, chunk, i);
 		map->stripes[i].dev = btrfs_find_device(root, devid);
 		if (!map->stripes[i].dev) {

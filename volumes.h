@@ -105,4 +105,6 @@ int btrfs_scan_one_device(int fd, const char *path,
 			  struct btrfs_fs_devices **fs_devices_ret,
 			  u64 *total_devs, u64 super_offset);
 int btrfs_num_copies(struct btrfs_mapping_tree *map_tree, u64 logical, u64 len);
+int btrfs_bootstrap_super_map(struct btrfs_mapping_tree *map_tree,
+			      struct btrfs_fs_devices *fs_devices);
 #endif

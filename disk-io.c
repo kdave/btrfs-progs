@@ -195,6 +195,7 @@ int write_tree_block(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 	length = eb->len;
 	ret = btrfs_map_block(&root->fs_info->mapping_tree, WRITE,
 			      eb->start, &length, &multi, 0);
+
 	while(dev_nr < multi->num_stripes) {
 		BUG_ON(ret);
 		eb->fd = multi->stripes[dev_nr].dev->fd;
@@ -528,10 +529,12 @@ struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr)
 	ret = btrfs_open_devices(fs_devices, O_RDWR);
 	BUG_ON(ret);
 
+	ret = btrfs_bootstrap_super_map(&fs_info->mapping_tree, fs_devices);
+	BUG_ON(ret);
 	fs_info->sb_buffer = btrfs_find_create_tree_block(tree_root, sb_bytenr,
 							  4096);
 	BUG_ON(!fs_info->sb_buffer);
-	fs_info->sb_buffer->fd = fs_devices->lowest_bdev;
+	fs_info->sb_buffer->fd = fs_devices->latest_bdev;
 	fs_info->sb_buffer->dev_bytenr = sb_bytenr;
 	ret = read_extent_from_disk(fs_info->sb_buffer);
 	BUG_ON(ret);
@@ -608,6 +611,40 @@ struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr)
 	return root;
 }
 
+int write_all_supers(struct btrfs_root *root)
+{
+	struct list_head *cur;
+	struct list_head *head = &root->fs_info->fs_devices->devices;
+	struct btrfs_device *dev;
+	struct extent_buffer *sb;
+	struct btrfs_dev_item *dev_item;
+	int ret;
+
+	sb = root->fs_info->sb_buffer;
+	dev_item = (struct btrfs_dev_item *)offsetof(struct btrfs_super_block,
+						      dev_item);
+	list_for_each(cur, head) {
+		dev = list_entry(cur, struct btrfs_device, dev_list);
+		btrfs_set_device_type(sb, dev_item, dev->type);
+		btrfs_set_device_id(sb, dev_item, dev->devid);
+		btrfs_set_device_total_bytes(sb, dev_item, dev->total_bytes);
+		btrfs_set_device_bytes_used(sb, dev_item, dev->bytes_used);
+		btrfs_set_device_io_align(sb, dev_item, dev->io_align);
+		btrfs_set_device_io_width(sb, dev_item, dev->io_width);
+		btrfs_set_device_sector_size(sb, dev_item, dev->sector_size);
+		write_extent_buffer(sb, dev->uuid,
+				    (unsigned long)btrfs_device_uuid(dev_item),
+				    BTRFS_DEV_UUID_SIZE);
+		sb->fd = dev->fd;
+		sb->dev_bytenr = BTRFS_SUPER_INFO_OFFSET;
+		btrfs_set_header_flag(sb, BTRFS_HEADER_FLAG_WRITTEN);
+		csum_tree_block(root, sb, 0);
+		ret = write_extent_to_disk(sb);
+		BUG_ON(ret);
+	}
+	return 0;
+}
+
 int write_ctree_super(struct btrfs_trans_handle *trans,
 		      struct btrfs_root *root)
 {
@@ -627,7 +664,7 @@ int write_ctree_super(struct btrfs_trans_handle *trans,
 	write_extent_buffer(root->fs_info->sb_buffer,
 			    &root->fs_info->super_copy, 0,
 			    sizeof(root->fs_info->super_copy));
-	ret = write_tree_block(trans, root, root->fs_info->sb_buffer);
+	ret = write_all_supers(root);
 	if (ret)
 		fprintf(stderr, "failed to write new super block err %d\n", ret);
 	return ret;
