@@ -132,9 +132,9 @@ static int check_leaf(struct btrfs_root *root,
 		}
 		if (i == 0 && btrfs_item_end_nr(buf, i) !=
 		    BTRFS_LEAF_DATA_SIZE(root)) {
-			fprintf(stderr, "bad item end %u wanted %lu\n",
+			fprintf(stderr, "bad item end %u wanted %u\n",
 				btrfs_item_end_nr(buf, i),
-				BTRFS_LEAF_DATA_SIZE(root));
+				(unsigned)BTRFS_LEAF_DATA_SIZE(root));
 			return 1;
 		}
 	}

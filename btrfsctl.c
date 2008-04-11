@@ -137,7 +137,6 @@ int main(int ac, char **av)
 		fd = dirfd(dirstream);
 	} else if (command == BTRFS_IOC_SCAN_DEV) {
 		fd = open("/dev/btrfs-control", O_RDWR);
-		printf("scanning %s command %lu\n", fname, BTRFS_IOC_SCAN_DEV);
 		name = fname;
 	} else {
 		fd = open(fname, O_RDWR);
