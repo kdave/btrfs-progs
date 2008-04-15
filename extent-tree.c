@@ -37,10 +37,6 @@ static int finish_current_insert(struct btrfs_trans_handle *trans, struct
 				 btrfs_root *extent_root);
 static int del_pending_extents(struct btrfs_trans_handle *trans, struct
 			       btrfs_root *extent_root);
-int btrfs_make_block_group(struct btrfs_trans_handle *trans,
-			   struct btrfs_root *root, u64 bytes_used,
-			   u64 type, u64 chunk_tree, u64 chunk_objectid,
-			   u64 size);
 
 static int cache_block_group(struct btrfs_root *root,
 			     struct btrfs_block_group_cache *block_group)
@@ -959,7 +955,6 @@ int btrfs_write_dirty_block_groups(struct btrfs_trans_handle *trans,
 		ret = get_state_private(block_group_cache, start, &ptr);
 		if (ret)
 			break;
-
 		cache = (struct btrfs_block_group_cache *)(unsigned long)ptr;
 		err = write_one_cache_group(trans, root,
 					    path, cache);
@@ -1066,7 +1061,6 @@ static int do_chunk_alloc(struct btrfs_trans_handle *trans,
 
 	ret = btrfs_alloc_chunk(trans, extent_root, &start, &num_bytes, flags);
 	if (ret == -ENOSPC) {
-printk("space info full %llu\n", (unsigned long long)flags);
 		space_info->full = 1;
 		return 0;
 	}
@@ -1074,8 +1068,7 @@ printk("space info full %llu\n", (unsigned long long)flags);
 	BUG_ON(ret);
 
 	ret = btrfs_make_block_group(trans, extent_root, 0, flags,
-		     extent_root->fs_info->chunk_root->root_key.objectid,
-		     start, num_bytes);
+		     BTRFS_FIRST_CHUNK_TREE_OBJECTID, start, num_bytes);
 	BUG_ON(ret);
 	return 0;
 }
@@ -2293,7 +2286,7 @@ error:
 
 int btrfs_make_block_group(struct btrfs_trans_handle *trans,
 			   struct btrfs_root *root, u64 bytes_used,
-			   u64 type, u64 chunk_tree, u64 chunk_objectid,
+			   u64 type, u64 chunk_objectid, u64 chunk_offset,
 			   u64 size)
 {
 	int ret;
@@ -2307,11 +2300,11 @@ int btrfs_make_block_group(struct btrfs_trans_handle *trans,
 
 	cache = kzalloc(sizeof(*cache), GFP_NOFS);
 	BUG_ON(!cache);
-	cache->key.objectid = chunk_objectid;
+	cache->key.objectid = chunk_offset;
 	cache->key.offset = size;
+
 	btrfs_set_key_type(&cache->key, BTRFS_BLOCK_GROUP_ITEM_KEY);
 	btrfs_set_block_group_used(&cache->item, bytes_used);
-	btrfs_set_block_group_chunk_tree(&cache->item, chunk_tree);
 	btrfs_set_block_group_chunk_objectid(&cache->item, chunk_objectid);
 	cache->flags = type;
 	btrfs_set_block_group_flags(&cache->item, type);
@@ -2321,12 +2314,12 @@ int btrfs_make_block_group(struct btrfs_trans_handle *trans,
 	BUG_ON(ret);
 
 	bit = block_group_state_bits(type);
-	set_extent_bits(block_group_cache, chunk_objectid,
-			chunk_objectid + size - 1,
+	set_extent_bits(block_group_cache, chunk_offset,
+			chunk_offset + size - 1,
 			bit | EXTENT_LOCKED, GFP_NOFS);
-	set_state_private(block_group_cache, chunk_objectid,
-			  (unsigned long)cache);
 
+	set_state_private(block_group_cache, chunk_offset,
+			  (unsigned long)cache);
 	ret = btrfs_insert_item(trans, extent_root, &cache->key, &cache->item,
 				sizeof(cache->item));
 	BUG_ON(ret);

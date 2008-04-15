@@ -82,16 +82,17 @@ static int make_root_dir(int fd, const char *device_name) {
 	root->fs_info->force_system_allocs = 1;
 	ret = btrfs_make_block_group(trans, root, bytes_used,
 				     BTRFS_BLOCK_GROUP_SYSTEM,
-				     BTRFS_CHUNK_TREE_OBJECTID,
+				     BTRFS_FIRST_CHUNK_TREE_OBJECTID,
 				     0, BTRFS_MKFS_SYSTEM_GROUP_SIZE);
 	BUG_ON(ret);
+
 	ret = btrfs_alloc_chunk(trans, root->fs_info->extent_root,
 				&chunk_start, &chunk_size,
 				BTRFS_BLOCK_GROUP_METADATA);
 	BUG_ON(ret);
 	ret = btrfs_make_block_group(trans, root, 0,
 				     BTRFS_BLOCK_GROUP_METADATA,
-				     BTRFS_CHUNK_TREE_OBJECTID,
+				     BTRFS_FIRST_CHUNK_TREE_OBJECTID,
 				     chunk_start, chunk_size);
 	BUG_ON(ret);
 
@@ -106,7 +107,7 @@ static int make_root_dir(int fd, const char *device_name) {
 	BUG_ON(ret);
 	ret = btrfs_make_block_group(trans, root, 0,
 				     BTRFS_BLOCK_GROUP_DATA,
-				     BTRFS_CHUNK_TREE_OBJECTID,
+				     BTRFS_FIRST_CHUNK_TREE_OBJECTID,
 				     chunk_start, chunk_size);
 	BUG_ON(ret);
 
@@ -186,7 +187,7 @@ static int create_one_raid_group(struct btrfs_trans_handle *trans,
 				&chunk_start, &chunk_size, type);
 	BUG_ON(ret);
 	ret = btrfs_make_block_group(trans, root->fs_info->extent_root, 0,
-				     type, BTRFS_CHUNK_TREE_OBJECTID,
+				     type, BTRFS_FIRST_CHUNK_TREE_OBJECTID,
 				     chunk_start, chunk_size);
 	BUG_ON(ret);
 	return ret;

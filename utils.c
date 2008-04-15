@@ -68,6 +68,7 @@ int make_btrfs(int fd, char *device_name,
 	struct btrfs_chunk *chunk;
 	struct btrfs_dev_item *dev_item;
 	struct btrfs_dev_extent *dev_extent;
+	u8 chunk_tree_uuid[BTRFS_UUID_SIZE];
 	u8 *ptr;
 	int i;
 	int ret;
@@ -85,6 +86,10 @@ int make_btrfs(int fd, char *device_name,
 
 	num_bytes = (num_bytes / sectorsize) * sectorsize;
 	uuid_generate(super.fsid);
+	uuid_generate(super.dev_item.uuid);
+
+	uuid_generate(chunk_tree_uuid);
+
 	btrfs_set_super_bytenr(&super, blocks[0]);
 	btrfs_set_super_num_devices(&super, 1);
 	strncpy((char *)&super.magic, BTRFS_MAGIC, sizeof(super.magic));
@@ -113,6 +118,10 @@ int make_btrfs(int fd, char *device_name,
 	btrfs_set_header_owner(buf, BTRFS_ROOT_TREE_OBJECTID);
 	write_extent_buffer(buf, super.fsid, (unsigned long)
 			    btrfs_header_fsid(buf), BTRFS_FSID_SIZE);
+
+	write_extent_buffer(buf, chunk_tree_uuid, (unsigned long)
+			    btrfs_header_chunk_tree_uuid(buf),
+			    BTRFS_UUID_SIZE);
 
 	/* create the items for the root tree */
 	memset(&root_item, 0, sizeof(root_item));
@@ -237,45 +246,10 @@ int make_btrfs(int fd, char *device_name,
 
 	/* create the chunk tree */
 	nritems = 0;
-	item_size = btrfs_chunk_item_size(1);
+	item_size = sizeof(*dev_item);
 	itemoff = __BTRFS_LEAF_DATA_SIZE(leafsize) - item_size;
 
-	/* first we have chunk 0 */
-	btrfs_set_disk_key_objectid(&disk_key, 0);
-	btrfs_set_disk_key_offset(&disk_key, BTRFS_MKFS_SYSTEM_GROUP_SIZE);
-	btrfs_set_disk_key_type(&disk_key, BTRFS_CHUNK_ITEM_KEY);
-	btrfs_set_item_key(buf, &disk_key, nritems);
-	btrfs_set_item_offset(buf, btrfs_item_nr(buf, nritems), itemoff);
-	btrfs_set_item_size(buf, btrfs_item_nr(buf,  nritems), item_size);
-
-	chunk = btrfs_item_ptr(buf, nritems, struct btrfs_chunk);
-	btrfs_set_chunk_owner(buf, chunk, BTRFS_EXTENT_TREE_OBJECTID);
-	btrfs_set_chunk_stripe_len(buf, chunk, 64 * 1024);
-	btrfs_set_chunk_type(buf, chunk, BTRFS_BLOCK_GROUP_SYSTEM);
-	btrfs_set_chunk_io_align(buf, chunk, sectorsize);
-	btrfs_set_chunk_io_width(buf, chunk, sectorsize);
-	btrfs_set_chunk_sector_size(buf, chunk, sectorsize);
-	btrfs_set_chunk_num_stripes(buf, chunk, 1);
-	btrfs_set_stripe_devid_nr(buf, chunk, 0, 1);
-	btrfs_set_stripe_offset_nr(buf, chunk, 0, 0);
-
-	/* copy the key for the chunk to the system array */
-	ptr = super.sys_chunk_array;
-	array_size = sizeof(disk_key);
-
-	memcpy(ptr, &disk_key, sizeof(disk_key));
-	ptr += sizeof(disk_key);
-
-	/* copy the chunk to the system array */
-	read_extent_buffer(buf, ptr, (unsigned long)chunk, item_size);
-	array_size += item_size;
-	ptr += item_size;
-	btrfs_set_super_sys_array_size(&super, array_size);
-
-	/* then device 1 (there is no device 0) */
-	nritems++;
-	item_size = sizeof(*dev_item);
-	itemoff = itemoff - item_size;
+	/* first device 1 (there is no device 0) */
 	btrfs_set_disk_key_objectid(&disk_key, BTRFS_DEV_ITEMS_OBJECTID);
 	btrfs_set_disk_key_offset(&disk_key, 1);
 	btrfs_set_disk_key_type(&disk_key, BTRFS_DEV_ITEM_KEY);
@@ -292,15 +266,54 @@ int make_btrfs(int fd, char *device_name,
 	btrfs_set_device_io_width(buf, dev_item, sectorsize);
 	btrfs_set_device_sector_size(buf, dev_item, sectorsize);
 	btrfs_set_device_type(buf, dev_item, 0);
-	nritems++;
-
-	uuid_generate(super.dev_item.uuid);
 
 	write_extent_buffer(buf, super.dev_item.uuid,
 			    (unsigned long)btrfs_device_uuid(dev_item),
-			    BTRFS_DEV_UUID_SIZE);
+			    BTRFS_UUID_SIZE);
 	read_extent_buffer(buf, &super.dev_item, (unsigned long)dev_item,
 			   sizeof(*dev_item));
+
+	nritems++;
+	item_size = btrfs_chunk_item_size(1);
+	itemoff = itemoff - item_size;
+
+	/* then we have chunk 0 */
+	btrfs_set_disk_key_objectid(&disk_key, BTRFS_FIRST_CHUNK_TREE_OBJECTID);
+	btrfs_set_disk_key_offset(&disk_key, 0);
+	btrfs_set_disk_key_type(&disk_key, BTRFS_CHUNK_ITEM_KEY);
+	btrfs_set_item_key(buf, &disk_key, nritems);
+	btrfs_set_item_offset(buf, btrfs_item_nr(buf, nritems), itemoff);
+	btrfs_set_item_size(buf, btrfs_item_nr(buf,  nritems), item_size);
+
+	chunk = btrfs_item_ptr(buf, nritems, struct btrfs_chunk);
+	btrfs_set_chunk_length(buf, chunk, BTRFS_MKFS_SYSTEM_GROUP_SIZE);
+	btrfs_set_chunk_owner(buf, chunk, BTRFS_EXTENT_TREE_OBJECTID);
+	btrfs_set_chunk_stripe_len(buf, chunk, 64 * 1024);
+	btrfs_set_chunk_type(buf, chunk, BTRFS_BLOCK_GROUP_SYSTEM);
+	btrfs_set_chunk_io_align(buf, chunk, sectorsize);
+	btrfs_set_chunk_io_width(buf, chunk, sectorsize);
+	btrfs_set_chunk_sector_size(buf, chunk, sectorsize);
+	btrfs_set_chunk_num_stripes(buf, chunk, 1);
+	btrfs_set_stripe_devid_nr(buf, chunk, 0, 1);
+	btrfs_set_stripe_offset_nr(buf, chunk, 0, 0);
+	nritems++;
+
+	write_extent_buffer(buf, super.dev_item.uuid,
+			    (unsigned long)btrfs_stripe_dev_uuid(&chunk->stripe),
+			    BTRFS_UUID_SIZE);
+
+	/* copy the key for the chunk to the system array */
+	ptr = super.sys_chunk_array;
+	array_size = sizeof(disk_key);
+
+	memcpy(ptr, &disk_key, sizeof(disk_key));
+	ptr += sizeof(disk_key);
+
+	/* copy the chunk to the system array */
+	read_extent_buffer(buf, ptr, (unsigned long)chunk, item_size);
+	array_size += item_size;
+	ptr += item_size;
+	btrfs_set_super_sys_array_size(&super, array_size);
 
 	btrfs_set_header_bytenr(buf, blocks[3]);
 	btrfs_set_header_owner(buf, BTRFS_CHUNK_TREE_OBJECTID);
@@ -321,7 +334,16 @@ int make_btrfs(int fd, char *device_name,
 	btrfs_set_item_size(buf, btrfs_item_nr(buf,  nritems),
 			    sizeof(struct btrfs_dev_extent));
 	dev_extent = btrfs_item_ptr(buf, nritems, struct btrfs_dev_extent);
-	btrfs_set_dev_extent_owner(buf, dev_extent, 0);
+	btrfs_set_dev_extent_chunk_tree(buf, dev_extent,
+					BTRFS_CHUNK_TREE_OBJECTID);
+	btrfs_set_dev_extent_chunk_objectid(buf, dev_extent,
+					BTRFS_FIRST_CHUNK_TREE_OBJECTID);
+	btrfs_set_dev_extent_chunk_offset(buf, dev_extent, 0);
+
+	write_extent_buffer(buf, chunk_tree_uuid,
+		    (unsigned long)btrfs_dev_extent_chunk_tree_uuid(dev_extent),
+		    BTRFS_UUID_SIZE);
+
 	btrfs_set_dev_extent_length(buf, dev_extent,
 				    BTRFS_MKFS_SYSTEM_GROUP_SIZE);
 	nritems++;
@@ -464,7 +486,7 @@ int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 	btrfs_set_stack_device_sector_size(dev_item, device->sector_size);
 	btrfs_set_stack_device_total_bytes(dev_item, device->total_bytes);
 	btrfs_set_stack_device_bytes_used(dev_item, device->bytes_used);
-	memcpy(&dev_item->uuid, device->uuid, BTRFS_DEV_UUID_SIZE);
+	memcpy(&dev_item->uuid, device->uuid, BTRFS_UUID_SIZE);
 
 	ret = pwrite(fd, buf, sectorsize, BTRFS_SUPER_INFO_OFFSET);
 	BUG_ON(ret != sectorsize);

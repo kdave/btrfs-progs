@@ -1340,6 +1340,11 @@ static int noinline insert_new_root(struct btrfs_trans_handle *trans,
 	write_extent_buffer(c, root->fs_info->fsid,
 			    (unsigned long)btrfs_header_fsid(c),
 			    BTRFS_FSID_SIZE);
+
+	write_extent_buffer(c, root->fs_info->chunk_tree_uuid,
+			    (unsigned long)btrfs_header_chunk_tree_uuid(c),
+			    BTRFS_UUID_SIZE);
+
 	btrfs_set_node_key(c, &lower_key, 0);
 	btrfs_set_node_blockptr(c, 0, lower->start);
 	lower_gen = btrfs_header_generation(lower);
@@ -1471,6 +1476,9 @@ static int split_node(struct btrfs_trans_handle *trans, struct btrfs_root
 	write_extent_buffer(split, root->fs_info->fsid,
 			    (unsigned long)btrfs_header_fsid(split),
 			    BTRFS_FSID_SIZE);
+	write_extent_buffer(split, root->fs_info->chunk_tree_uuid,
+			    (unsigned long)btrfs_header_chunk_tree_uuid(split),
+			    BTRFS_UUID_SIZE);
 
 	mid = (c_nritems + 1) / 2;
 
@@ -1941,6 +1949,10 @@ again:
 	write_extent_buffer(right, root->fs_info->fsid,
 			    (unsigned long)btrfs_header_fsid(right),
 			    BTRFS_FSID_SIZE);
+
+	write_extent_buffer(right, root->fs_info->chunk_tree_uuid,
+			    (unsigned long)btrfs_header_chunk_tree_uuid(right),
+			    BTRFS_UUID_SIZE);
 	if (mid <= slot) {
 		if (nritems == 1 ||
 		    leaf_space_used(l, mid, nritems - mid) + space_needed >

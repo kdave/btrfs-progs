@@ -18,6 +18,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <uuid/uuid.h>
 #include "kerncompat.h"
 #include "radix-tree.h"
 #include "ctree.h"
@@ -79,7 +80,8 @@ static void print_chunk(struct extent_buffer *eb, struct btrfs_chunk *chunk)
 {
 	int num_stripes = btrfs_chunk_num_stripes(eb, chunk);
 	int i;
-	printf("\t\tchunk owner %llu type %llu num_stripes %d\n",
+	printf("\t\tchunk length %llu owner %llu type %llu num_stripes %d\n",
+	       (unsigned long long)btrfs_chunk_length(eb, chunk),
 	       (unsigned long long)btrfs_chunk_owner(eb, chunk),
 	       (unsigned long long)btrfs_chunk_type(eb, chunk),
 	       num_stripes);
@@ -98,6 +100,28 @@ static void print_dev_item(struct extent_buffer *eb,
 	       (unsigned long long)btrfs_device_total_bytes(eb, dev_item),
 	       (unsigned long long)btrfs_device_bytes_used(eb, dev_item));
 }
+
+static void print_uuids(struct extent_buffer *eb)
+{
+	char fs_uuid[37];
+	char chunk_uuid[37];
+	u8 disk_uuid[BTRFS_UUID_SIZE];
+
+	read_extent_buffer(eb, disk_uuid, (unsigned long)btrfs_header_fsid(eb),
+			   BTRFS_FSID_SIZE);
+
+	fs_uuid[36] = '\0';
+	uuid_unparse(disk_uuid, fs_uuid);
+
+	read_extent_buffer(eb, disk_uuid,
+			   (unsigned long)btrfs_header_chunk_tree_uuid(eb),
+			   BTRFS_UUID_SIZE);
+
+	chunk_uuid[36] = '\0';
+	uuid_unparse(disk_uuid, chunk_uuid);
+	printf("fs uuid %s\nchunk uuid %s\n", fs_uuid, chunk_uuid);
+}
+
 void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 {
 	int i;
@@ -124,6 +148,7 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 		btrfs_leaf_free_space(root, l),
 		(unsigned long long)btrfs_header_generation(l),
 		(unsigned long long)btrfs_header_owner(l));
+	print_uuids(l);
 	fflush(stdout);
 	for (i = 0 ; i < nr ; i++) {
 		item = btrfs_item_nr(l, i);
@@ -214,7 +239,7 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 					    struct btrfs_block_group_item);
 			read_extent_buffer(l, &bg_item, (unsigned long)bi,
 					   sizeof(bg_item));
-			printf("\t\tblock group used %llu flags %llx\n",
+			printf("\t\tblock group used %llu flags %llu\n",
 			       (unsigned long long)btrfs_block_group_used(&bg_item),
 			       (unsigned long long)btrfs_block_group_flags(&bg_item));
 			break;
@@ -228,9 +253,17 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 		case BTRFS_DEV_EXTENT_KEY:
 			dev_extent = btrfs_item_ptr(l, i,
 						    struct btrfs_dev_extent);
-			printf("\t\tdev extent owner %llu length %llu\n",
-			       (unsigned long long)btrfs_dev_extent_owner(l, dev_extent),
-			       (unsigned long long)btrfs_dev_extent_length(l, dev_extent));
+			printf("\t\tdev extent chunk_tree %llu\n"
+			       "\t\tchunk objectid %llu chunk offset %llu "
+			       "length %llu\n",
+			       (unsigned long long)
+			       btrfs_dev_extent_chunk_tree(l, dev_extent),
+			       (unsigned long long)
+			       btrfs_dev_extent_chunk_objectid(l, dev_extent),
+			       (unsigned long long)
+			       btrfs_dev_extent_chunk_offset(l, dev_extent),
+			       (unsigned long long)
+			       btrfs_dev_extent_length(l, dev_extent));
 			break;
 		case BTRFS_STRING_ITEM_KEY:
 			/* dirty, but it's simple */
@@ -241,6 +274,7 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 		fflush(stdout);
 	}
 }
+
 void btrfs_print_tree(struct btrfs_root *root, struct extent_buffer *eb)
 {
 	int i;
@@ -261,6 +295,7 @@ void btrfs_print_tree(struct btrfs_root *root, struct extent_buffer *eb)
 		(u32)BTRFS_NODEPTRS_PER_BLOCK(root) - nr,
 		(unsigned long long)btrfs_header_generation(eb),
 		(unsigned long long)btrfs_header_owner(eb));
+	print_uuids(eb);
 	fflush(stdout);
 	size = btrfs_level_size(root, btrfs_header_level(eb) - 1);
 	for (i = 0; i < nr; i++) {

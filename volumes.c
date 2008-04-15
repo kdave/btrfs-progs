@@ -325,7 +325,9 @@ error:
 
 int btrfs_alloc_dev_extent(struct btrfs_trans_handle *trans,
 			   struct btrfs_device *device,
-			   u64 owner, u64 num_bytes, u64 *start)
+			   u64 chunk_tree, u64 chunk_objectid,
+			   u64 chunk_offset,
+			   u64 num_bytes, u64 *start)
 {
 	int ret;
 	struct btrfs_path *path;
@@ -353,7 +355,14 @@ int btrfs_alloc_dev_extent(struct btrfs_trans_handle *trans,
 	leaf = path->nodes[0];
 	extent = btrfs_item_ptr(leaf, path->slots[0],
 				struct btrfs_dev_extent);
-	btrfs_set_dev_extent_owner(leaf, extent, owner);
+	btrfs_set_dev_extent_chunk_tree(leaf, extent, chunk_tree);
+	btrfs_set_dev_extent_chunk_objectid(leaf, extent, chunk_objectid);
+	btrfs_set_dev_extent_chunk_offset(leaf, extent, chunk_offset);
+
+	write_extent_buffer(leaf, root->fs_info->chunk_tree_uuid,
+		    (unsigned long)btrfs_dev_extent_chunk_tree_uuid(extent),
+		    BTRFS_UUID_SIZE);
+
 	btrfs_set_dev_extent_length(leaf, extent, num_bytes);
 	btrfs_mark_buffer_dirty(leaf);
 err:
@@ -361,17 +370,18 @@ err:
 	return ret;
 }
 
-static int find_next_chunk(struct btrfs_root *root, u64 *objectid)
+static int find_next_chunk(struct btrfs_root *root, u64 objectid, u64 *offset)
 {
 	struct btrfs_path *path;
 	int ret;
 	struct btrfs_key key;
+	struct btrfs_chunk *chunk;
 	struct btrfs_key found_key;
 
 	path = btrfs_alloc_path();
 	BUG_ON(!path);
 
-	key.objectid = (u64)-1;
+	key.objectid = objectid;
 	key.offset = (u64)-1;
 	key.type = BTRFS_CHUNK_ITEM_KEY;
 
@@ -383,11 +393,18 @@ static int find_next_chunk(struct btrfs_root *root, u64 *objectid)
 
 	ret = btrfs_previous_item(root, path, 0, BTRFS_CHUNK_ITEM_KEY);
 	if (ret) {
-		*objectid = 0;
+		*offset = 0;
 	} else {
 		btrfs_item_key_to_cpu(path->nodes[0], &found_key,
 				      path->slots[0]);
-		*objectid = found_key.objectid + found_key.offset;
+		if (found_key.objectid != objectid)
+			*offset = 0;
+		else {
+			chunk = btrfs_item_ptr(path->nodes[0], path->slots[0],
+					       struct btrfs_chunk);
+			*offset = found_key.offset +
+				btrfs_chunk_length(path->nodes[0], chunk);
+		}
 	}
 	ret = 0;
 error:
@@ -473,9 +490,12 @@ int btrfs_add_device(struct btrfs_trans_handle *trans,
 	btrfs_set_device_sector_size(leaf, dev_item, device->sector_size);
 	btrfs_set_device_total_bytes(leaf, dev_item, device->total_bytes);
 	btrfs_set_device_bytes_used(leaf, dev_item, device->bytes_used);
+	btrfs_set_device_group(leaf, dev_item, 0);
+	btrfs_set_device_seek_speed(leaf, dev_item, 0);
+	btrfs_set_device_bandwidth(leaf, dev_item, 0);
 
 	ptr = (unsigned long)btrfs_device_uuid(dev_item);
-	write_extent_buffer(leaf, device->uuid, ptr, BTRFS_DEV_UUID_SIZE);
+	write_extent_buffer(leaf, device->uuid, ptr, BTRFS_UUID_SIZE);
 	btrfs_mark_buffer_dirty(leaf);
 	ret = 0;
 
@@ -633,7 +653,10 @@ again:
 		return -ENOSPC;
 	}
 
-	ret = find_next_chunk(chunk_root, &key.objectid);
+	key.objectid = BTRFS_FIRST_CHUNK_TREE_OBJECTID;
+	key.type = BTRFS_CHUNK_ITEM_KEY;
+	ret = find_next_chunk(chunk_root, BTRFS_FIRST_CHUNK_TREE_OBJECTID,
+			      &key.offset);
 	if (ret)
 		return ret;
 
@@ -655,8 +678,9 @@ again:
 		*num_bytes = calc_size * num_stripes;
 
 	index = 0;
-printk("new chunk type %Lu start %Lu size %Lu\n", type, key.objectid, *num_bytes);
+printk("new chunk type %Lu start %Lu size %Lu\n", type, key.offset, *num_bytes);
 	while(index < num_stripes) {
+		struct btrfs_stripe *stripe;
 		BUG_ON(list_empty(&private_devs));
 		cur = private_devs.next;
 		device = list_entry(cur, struct btrfs_device, dev_list);
@@ -667,8 +691,9 @@ printk("new chunk type %Lu start %Lu size %Lu\n", type, key.objectid, *num_bytes
 			list_move_tail(&device->dev_list, dev_list);
 
 		ret = btrfs_alloc_dev_extent(trans, device,
-					     key.objectid,
-					     calc_size, &dev_offset);
+			     info->chunk_root->root_key.objectid,
+			     BTRFS_FIRST_CHUNK_TREE_OBJECTID, key.offset,
+			     calc_size, &dev_offset);
 		BUG_ON(ret);
 printk("\talloc chunk size %llu from dev %llu phys %llu\n",
 	(unsigned long long)calc_size,
@@ -680,16 +705,17 @@ printk("\talloc chunk size %llu from dev %llu phys %llu\n",
 
 		map->stripes[index].dev = device;
 		map->stripes[index].physical = dev_offset;
-		btrfs_set_stack_stripe_devid(stripes + index, device->devid);
-		btrfs_set_stack_stripe_offset(stripes + index, dev_offset);
+		stripe = stripes + index;
+		btrfs_set_stack_stripe_devid(stripe, device->devid);
+		btrfs_set_stack_stripe_offset(stripe, dev_offset);
+		memcpy(stripe->dev_uuid, device->uuid, BTRFS_UUID_SIZE);
 		physical = dev_offset;
 		index++;
 	}
 	BUG_ON(!list_empty(&private_devs));
 
-	/* key.objectid was set above */
-	key.offset = *num_bytes;
-	key.type = BTRFS_CHUNK_ITEM_KEY;
+	/* key was set above */
+	btrfs_set_stack_chunk_length(chunk, *num_bytes);
 	btrfs_set_stack_chunk_owner(chunk, extent_root->root_key.objectid);
 	btrfs_set_stack_chunk_stripe_len(chunk, stripe_len);
 	btrfs_set_stack_chunk_type(chunk, type);
@@ -707,10 +733,10 @@ printk("\talloc chunk size %llu from dev %llu phys %llu\n",
 	ret = btrfs_insert_item(trans, chunk_root, &key, chunk,
 				btrfs_chunk_item_size(num_stripes));
 	BUG_ON(ret);
-	*start = key.objectid;
+	*start = key.offset;;
 
-	map->ce.start = key.objectid;
-	map->ce.size = key.offset;
+	map->ce.start = key.offset;
+	map->ce.size = *num_bytes;
 
 	ret = insert_existing_cache_extent(
 			   &extent_root->fs_info->mapping_tree.cache_tree,
@@ -928,8 +954,8 @@ static int read_one_chunk(struct btrfs_root *root, struct btrfs_key *key,
 	int ret;
 	int i;
 
-	logical = key->objectid;
-	length = key->offset;
+	logical = key->offset;
+	length = btrfs_chunk_length(leaf, chunk);
 
 	if (logical < BTRFS_SUPER_INFO_OFFSET + BTRFS_SUPER_INFO_SIZE) {
 		super_offset_diff = BTRFS_SUPER_INFO_OFFSET +
@@ -991,7 +1017,7 @@ static int fill_device_from_item(struct extent_buffer *leaf,
 	device->sector_size = btrfs_device_sector_size(leaf, dev_item);
 
 	ptr = (unsigned long)btrfs_device_uuid(dev_item);
-	read_extent_buffer(leaf, device->uuid, ptr, BTRFS_DEV_UUID_SIZE);
+	read_extent_buffer(leaf, device->uuid, ptr, BTRFS_UUID_SIZE);
 
 	return 0;
 }
