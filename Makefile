@@ -15,7 +15,7 @@ prefix ?= /usr/local
 bindir = $(prefix)/bin
 LIBS=-luuid
 
-progs = btrfsctl btrfsck mkfs.btrfs debug-tree
+progs = btrfsctl btrfsck mkfs.btrfs debug-tree quick-test
 
 # make C=1 to enable sparse
 ifdef C
