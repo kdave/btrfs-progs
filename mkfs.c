@@ -203,7 +203,10 @@ static int create_raid_groups(struct btrfs_trans_handle *trans,
 
 	if (num_devices == 1)
 		allowed = BTRFS_BLOCK_GROUP_DUP;
-	else
+	else if (num_devices >= 4) {
+		allowed = BTRFS_BLOCK_GROUP_RAID0 | BTRFS_BLOCK_GROUP_RAID1 |
+			BTRFS_BLOCK_GROUP_RAID10;
+	} else
 		allowed = BTRFS_BLOCK_GROUP_RAID0 | BTRFS_BLOCK_GROUP_RAID1;
 
 	if (allowed & metadata_profile) {
@@ -246,6 +249,8 @@ static u64 parse_profile(char *s)
 		return BTRFS_BLOCK_GROUP_RAID0;
 	} else if (strcmp(s, "raid1") == 0) {
 		return BTRFS_BLOCK_GROUP_RAID1 | BTRFS_BLOCK_GROUP_DUP;
+	} else if (strcmp(s, "raid10") == 0) {
+		return BTRFS_BLOCK_GROUP_RAID10 | BTRFS_BLOCK_GROUP_DUP;
 	} else if (strcmp(s, "single") == 0) {
 		return 0;
 	} else {
