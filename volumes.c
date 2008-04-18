@@ -622,7 +622,7 @@ int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 	struct list_head *dev_list = &extent_root->fs_info->fs_devices->devices;
 	struct list_head *cur;
 	struct map_lookup *map;
-	int min_chunk_size = 8 * 1024 * 1024;
+	int min_stripe_size = 1 * 1024 * 1024;
 	u64 physical;
 	u64 calc_size = 8 * 1024 * 1024;
 	u64 min_free;
@@ -631,6 +631,7 @@ int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 	u64 max_avail = 0;
 	u64 percent_max;
 	int num_stripes = 1;
+	int min_stripes = 1;
 	int sub_stripes = 0;
 	int looped = 0;
 	int ret;
@@ -646,17 +647,17 @@ int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 		    BTRFS_BLOCK_GROUP_RAID10 |
 		    BTRFS_BLOCK_GROUP_DUP)) {
 		if (type & BTRFS_BLOCK_GROUP_SYSTEM) {
-			calc_size = 128 * 1024 * 1024;
-			max_chunk_size = 4 * calc_size;
-			min_chunk_size = 32 * 1024 * 1024;
+			calc_size = 8 * 1024 * 1024;
+			max_chunk_size = calc_size * 2;
+			min_stripe_size = 1 * 1024 * 1024;
 		} else if (type & BTRFS_BLOCK_GROUP_DATA) {
 			calc_size = 1024 * 1024 * 1024;
 			max_chunk_size = 10 * calc_size;
-			min_chunk_size = 256 * 1024 * 1024;
+			min_stripe_size = 64 * 1024 * 1024;
 		} else if (type & BTRFS_BLOCK_GROUP_METADATA) {
 			calc_size = 1024 * 1024 * 1024;
 			max_chunk_size = 4 * calc_size;
-			min_chunk_size = 64 * 1024 * 1024;
+			min_stripe_size = 32 * 1024 * 1024;
 		}
 	}
 	if (type & BTRFS_BLOCK_GROUP_RAID1) {
@@ -664,39 +665,42 @@ int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 				  btrfs_super_num_devices(&info->super_copy));
 		if (num_stripes < 2)
 			return -ENOSPC;
+		min_stripes = 2;
 	}
-	if (type & BTRFS_BLOCK_GROUP_DUP)
+	if (type & BTRFS_BLOCK_GROUP_DUP) {
 		num_stripes = 2;
-	if (type & (BTRFS_BLOCK_GROUP_RAID0))
+		min_stripes = 2;
+	}
+	if (type & (BTRFS_BLOCK_GROUP_RAID0)) {
 		num_stripes = btrfs_super_num_devices(&info->super_copy);
+		min_stripes = 2;
+	}
 	if (type & (BTRFS_BLOCK_GROUP_RAID10)) {
 		num_stripes = btrfs_super_num_devices(&info->super_copy);
 		if (num_stripes < 4)
 			return -ENOSPC;
 		num_stripes &= ~(u32)1;
 		sub_stripes = 2;
+		min_stripes = 4;
 	}
 
 	/* we don't want a chunk larger than 10% of the FS */
 	percent_max = div_factor(btrfs_super_total_bytes(&info->super_copy), 1);
 	max_chunk_size = min(percent_max, max_chunk_size);
 
-	if (calc_size * num_stripes > max_chunk_size) {
+again:
+	if (chunk_bytes_by_type(type, calc_size, num_stripes, sub_stripes) >
+	    max_chunk_size) {
 		calc_size = max_chunk_size;
 		calc_size /= num_stripes;
 		calc_size /= stripe_len;
 		calc_size *= stripe_len;
 	}
 	/* we don't want tiny stripes */
-	*num_bytes = chunk_bytes_by_type(type, calc_size,
-					 num_stripes, sub_stripes);
-	calc_size = max_t(u64, chunk_bytes_by_type(type, min_chunk_size,
-		          num_stripes, sub_stripes), calc_size);
+	calc_size = max_t(u64, calc_size, min_stripe_size);
 
-again:
 	calc_size /= stripe_len;
 	calc_size *= stripe_len;
-
 	INIT_LIST_HEAD(&private_devs);
 	cur = dev_list->next;
 	index = 0;
@@ -711,19 +715,27 @@ again:
 		device = list_entry(cur, struct btrfs_device, dev_list);
 		avail = device->total_bytes - device->bytes_used;
 		cur = cur->next;
-		if (avail > max_avail)
-			max_avail = avail;
 		if (avail >= min_free) {
 			list_move_tail(&device->dev_list, &private_devs);
 			index++;
 			if (type & BTRFS_BLOCK_GROUP_DUP)
 				index++;
-		}
+		} else if (avail > max_avail)
+			max_avail = avail;
 		if (cur == dev_list)
 			break;
 	}
 	if (index < num_stripes) {
 		list_splice(&private_devs, dev_list);
+		if (index >= min_stripes) {
+			num_stripes = index;
+			if (type & (BTRFS_BLOCK_GROUP_RAID10)) {
+				num_stripes /= sub_stripes;
+				num_stripes *= sub_stripes;
+			}
+			looped = 1;
+			goto again;
+		}
 		if (!looped && max_avail > 0) {
 			looped = 1;
 			calc_size = max_avail;
@@ -731,7 +743,6 @@ again:
 		}
 		return -ENOSPC;
 	}
-
 	key.objectid = BTRFS_FIRST_CHUNK_TREE_OBJECTID;
 	key.type = BTRFS_CHUNK_ITEM_KEY;
 	ret = find_next_chunk(chunk_root, BTRFS_FIRST_CHUNK_TREE_OBJECTID,
