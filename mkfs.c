@@ -430,6 +430,14 @@ int main(int ac, char **av)
 			fprintf(stderr, "unable to open %s\n", file);
 			exit(1);
 		}
+		ret = btrfs_device_already_in_root(root, fd,
+						   BTRFS_SUPER_INFO_OFFSET);
+		if (ret) {
+			fprintf(stderr, "skipping duplicate device %s in FS\n",
+				file);
+			close(fd);
+			continue;
+		}
 		ret = btrfs_prepare_device(fd, file, zero_end,
 					   &dev_block_count);
 

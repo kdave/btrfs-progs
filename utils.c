@@ -743,3 +743,34 @@ int btrfs_scan_for_fsid(struct btrfs_fs_devices *fs_devices, u64 total_devs,
 {
 	return btrfs_scan_one_dir("/dev", run_ioctls);
 }
+
+int btrfs_device_already_in_root(struct btrfs_root *root, int fd,
+				 int super_offset)
+{
+	struct btrfs_super_block *disk_super;
+	char *buf;
+	int ret = 0;
+
+	buf = malloc(BTRFS_SUPER_INFO_SIZE);
+	if (!buf) {
+		ret = -ENOMEM;
+		goto out;
+	}
+	ret = pread(fd, buf, BTRFS_SUPER_INFO_SIZE, super_offset);
+	if (ret != BTRFS_SUPER_INFO_SIZE)
+		goto brelse;
+
+	ret = 0;
+	disk_super = (struct btrfs_super_block *)buf;
+	if (strncmp((char *)(&disk_super->magic), BTRFS_MAGIC,
+	    sizeof(disk_super->magic)))
+		goto brelse;
+
+	if (!memcmp(disk_super->fsid, root->fs_info->super_copy.fsid,
+		    BTRFS_FSID_SIZE))
+		ret = 1;
+brelse:
+	free(buf);
+out:
+	return ret;
+}
