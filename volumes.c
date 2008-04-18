@@ -588,6 +588,26 @@ int btrfs_add_system_chunk(struct btrfs_trans_handle *trans,
 	return 0;
 }
 
+static u64 div_factor(u64 num, int factor)
+{
+	if (factor == 10)
+		return num;
+	num *= factor;
+	return num / 10;
+}
+
+static u64 chunk_bytes_by_type(u64 type, u64 calc_size, int num_stripes,
+			       int sub_stripes)
+{
+	if (type & (BTRFS_BLOCK_GROUP_RAID1 | BTRFS_BLOCK_GROUP_DUP))
+		return calc_size;
+	else if (type & BTRFS_BLOCK_GROUP_RAID10)
+		return calc_size * (num_stripes / sub_stripes);
+	else
+		return calc_size * num_stripes;
+}
+
+
 int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 		      struct btrfs_root *extent_root, u64 *start,
 		      u64 *num_bytes, u64 type)
@@ -602,11 +622,14 @@ int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 	struct list_head *dev_list = &extent_root->fs_info->fs_devices->devices;
 	struct list_head *cur;
 	struct map_lookup *map;
+	int min_chunk_size = 8 * 1024 * 1024;
 	u64 physical;
 	u64 calc_size = 8 * 1024 * 1024;
-	u64 min_free = calc_size;
+	u64 min_free;
+	u64 max_chunk_size = 4 * calc_size;
 	u64 avail;
 	u64 max_avail = 0;
+	u64 percent_max;
 	int num_stripes = 1;
 	int sub_stripes = 0;
 	int looped = 0;
@@ -622,14 +645,25 @@ int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 	if (type & (BTRFS_BLOCK_GROUP_RAID0 | BTRFS_BLOCK_GROUP_RAID1 |
 		    BTRFS_BLOCK_GROUP_RAID10 |
 		    BTRFS_BLOCK_GROUP_DUP)) {
-		if (type & BTRFS_BLOCK_GROUP_SYSTEM)
+		if (type & BTRFS_BLOCK_GROUP_SYSTEM) {
 			calc_size = 128 * 1024 * 1024;
-		else
+			max_chunk_size = 4 * calc_size;
+			min_chunk_size = 32 * 1024 * 1024;
+		} else if (type & BTRFS_BLOCK_GROUP_DATA) {
 			calc_size = 1024 * 1024 * 1024;
+			max_chunk_size = 10 * calc_size;
+			min_chunk_size = 256 * 1024 * 1024;
+		} else if (type & BTRFS_BLOCK_GROUP_METADATA) {
+			calc_size = 1024 * 1024 * 1024;
+			max_chunk_size = 4 * calc_size;
+			min_chunk_size = 64 * 1024 * 1024;
+		}
 	}
 	if (type & BTRFS_BLOCK_GROUP_RAID1) {
 		num_stripes = min_t(u64, 2,
 				  btrfs_super_num_devices(&info->super_copy));
+		if (num_stripes < 2)
+			return -ENOSPC;
 	}
 	if (type & BTRFS_BLOCK_GROUP_DUP)
 		num_stripes = 2;
@@ -642,13 +676,35 @@ int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 		num_stripes &= ~(u32)1;
 		sub_stripes = 2;
 	}
+
+	/* we don't want a chunk larger than 10% of the FS */
+	percent_max = div_factor(btrfs_super_total_bytes(&info->super_copy), 1);
+	max_chunk_size = min(percent_max, max_chunk_size);
+
+	if (calc_size * num_stripes > max_chunk_size) {
+		calc_size = max_chunk_size;
+		calc_size /= num_stripes;
+		calc_size /= stripe_len;
+		calc_size *= stripe_len;
+	}
+	/* we don't want tiny stripes */
+	*num_bytes = chunk_bytes_by_type(type, calc_size,
+					 num_stripes, sub_stripes);
+	calc_size = max_t(u64, chunk_bytes_by_type(type, min_chunk_size,
+		          num_stripes, sub_stripes), calc_size);
+
 again:
+	calc_size /= stripe_len;
+	calc_size *= stripe_len;
+
 	INIT_LIST_HEAD(&private_devs);
 	cur = dev_list->next;
 	index = 0;
 
 	if (type & BTRFS_BLOCK_GROUP_DUP)
 		min_free = calc_size * 2;
+	else
+		min_free = calc_size;
 
 	/* build a private list of devices we will allocate from */
 	while(index < num_stripes) {
@@ -694,14 +750,8 @@ again:
 	}
 
 	stripes = &chunk->stripe;
-
-	if (type & (BTRFS_BLOCK_GROUP_RAID1 | BTRFS_BLOCK_GROUP_DUP))
-		*num_bytes = calc_size;
-	else if (type & BTRFS_BLOCK_GROUP_RAID10)
-		*num_bytes = calc_size * num_stripes / sub_stripes;
-	else
-		*num_bytes = calc_size * num_stripes;
-
+	*num_bytes = chunk_bytes_by_type(type, calc_size,
+					 num_stripes, sub_stripes);
 	index = 0;
 printk("new chunk type %Lu start %Lu size %Lu\n", type, key.offset, *num_bytes);
 	while(index < num_stripes) {

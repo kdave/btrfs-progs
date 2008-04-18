@@ -322,7 +322,6 @@ int main(int ac, char **av)
 			case 'd':
 				data_profile = parse_profile(optarg);
 				break;
-				break;
 			case 'l':
 				leafsize = parse_size(optarg);
 				break;
@@ -331,6 +330,7 @@ int main(int ac, char **av)
 				break;
 			case 'm':
 				metadata_profile = parse_profile(optarg);
+				break;
 			case 'n':
 				nodesize = parse_size(optarg);
 				break;
