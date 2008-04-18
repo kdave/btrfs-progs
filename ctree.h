@@ -235,6 +235,7 @@ struct btrfs_header {
  * room to translate 14 chunks with 3 stripes each.
  */
 #define BTRFS_SYSTEM_CHUNK_ARRAY_SIZE 2048
+#define BTRFS_LABEL_SIZE 256
 
 /*
  * the super block basically lists the main trees of the FS
@@ -264,6 +265,7 @@ struct btrfs_super_block {
 	u8 root_level;
 	u8 chunk_root_level;
 	struct btrfs_dev_item dev_item;
+	char label[BTRFS_LABEL_SIZE];
 	u8 sys_chunk_array[BTRFS_SYSTEM_CHUNK_ARRAY_SIZE];
 } __attribute__ ((__packed__));
 

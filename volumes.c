@@ -128,7 +128,6 @@ static int device_list_add(const char *path,
 	}
 	if (fs_devices->lowest_devid > devid) {
 		fs_devices->lowest_devid = devid;
-		printk("lowest devid now %llu\n", (unsigned long long)devid);
 	}
 	*fs_devices_ret = fs_devices;
 	return 0;
@@ -184,6 +183,7 @@ int btrfs_scan_one_device(int fd, const char *path,
 	char *buf;
 	int ret;
 	u64 devid;
+	char uuidbuf[37];
 
 	buf = malloc(4096);
 	if (!buf) {
@@ -203,7 +203,14 @@ int btrfs_scan_one_device(int fd, const char *path,
 	}
 	devid = le64_to_cpu(disk_super->dev_item.devid);
 	*total_devs = btrfs_super_num_devices(disk_super);
-	printk("found device %llu on %s\n", (unsigned long long)devid, path);
+	uuid_unparse(disk_super->fsid, uuidbuf);
+
+	printf("device ");
+	if (disk_super->label[0])
+		printf("label %s ", disk_super->label);
+	else
+		printf("fsuuid %s ", uuidbuf);
+	printf("devid %llu %s\n", (unsigned long long)devid, path);
 	ret = device_list_add(path, disk_super, devid, fs_devices_ret);
 
 error_brelse:

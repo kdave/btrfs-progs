@@ -54,7 +54,7 @@ static u64 reference_root_table[6] = {
 	[5] =	BTRFS_FS_TREE_OBJECTID,
 };
 
-int make_btrfs(int fd, char *device_name,
+int make_btrfs(int fd, char *device_name, char *label,
 	       u64 blocks[6], u64 num_bytes, u32 nodesize,
 	       u32 leafsize, u32 sectorsize, u32 stripesize)
 {
@@ -84,10 +84,11 @@ int make_btrfs(int fd, char *device_name,
 	first_free = BTRFS_SUPER_INFO_OFFSET + sectorsize * 2 - 1;
 	first_free &= ~((u64)sectorsize - 1);
 
+	memset(&super, 0, sizeof(super));
+
 	num_bytes = (num_bytes / sectorsize) * sectorsize;
 	uuid_generate(super.fsid);
 	uuid_generate(super.dev_item.uuid);
-
 	uuid_generate(chunk_tree_uuid);
 
 	btrfs_set_super_bytenr(&super, blocks[0]);
@@ -98,14 +99,12 @@ int make_btrfs(int fd, char *device_name,
 	btrfs_set_super_chunk_root(&super, blocks[3]);
 	btrfs_set_super_total_bytes(&super, num_bytes);
 	btrfs_set_super_bytes_used(&super, first_free + 5 * leafsize);
-	btrfs_set_super_root_dir(&super, 0);
 	btrfs_set_super_sectorsize(&super, sectorsize);
 	btrfs_set_super_leafsize(&super, leafsize);
 	btrfs_set_super_nodesize(&super, nodesize);
 	btrfs_set_super_stripesize(&super, stripesize);
-	btrfs_set_super_root_level(&super, 0);
-	btrfs_set_super_chunk_root_level(&super, 0);
-	btrfs_set_super_sys_array_size(&super, 0);
+	if (label)
+		strcpy(super.label, label);
 
 	buf = malloc(sizeof(*buf) + max(sectorsize, leafsize));
 
@@ -429,8 +428,9 @@ static int zero_dev_end(int fd, u64 dev_size)
 }
 
 int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
-		      struct btrfs_root *root, int fd, u64 block_count,
-		      u32 io_width, u32 io_align, u32 sectorsize)
+		      struct btrfs_root *root, int fd, char *path,
+		      u64 block_count, u32 io_width, u32 io_align,
+		      u32 sectorsize)
 {
 	struct btrfs_super_block *disk_super;
 	struct btrfs_super_block *super = &root->fs_info->super_copy;
@@ -478,7 +478,9 @@ int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 
 	memcpy(disk_super, super, sizeof(*disk_super));
 
-	printf("adding device id %llu\n", (unsigned long long)device->devid);
+	printf("adding device %s id %llu\n", path,
+	       (unsigned long long)device->devid);
+
 	btrfs_set_stack_device_id(dev_item, device->devid);
 	btrfs_set_stack_device_type(dev_item, device->type);
 	btrfs_set_stack_device_io_align(dev_item, device->io_align);

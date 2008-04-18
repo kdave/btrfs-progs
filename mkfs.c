@@ -260,12 +260,32 @@ static u64 parse_profile(char *s)
 	return 0;
 }
 
+static char *parse_label(char *input)
+{
+	int i;
+	int len = strlen(input);
+
+	if (len > BTRFS_LABEL_SIZE) {
+		fprintf(stderr, "Label %s is too long (max %d)\n", input,
+			BTRFS_LABEL_SIZE);
+		exit(1);
+	}
+	for (i = 0; i < len; i++) {
+		if (input[i] == '/' || input[i] == '\\') {
+			fprintf(stderr, "invalid label %s\n", input);
+			exit(1);
+		}
+	}
+	return strdup(input);
+}
+
 static struct option long_options[] = {
 	{ "byte-count", 1, NULL, 'b' },
 	{ "leafsize", 1, NULL, 'l' },
+	{ "label", 1, NULL, 'L'},
+	{ "metadata", 1, NULL, 'm' },
 	{ "nodesize", 1, NULL, 'n' },
 	{ "sectorsize", 1, NULL, 's' },
-	{ "metadata", 1, NULL, 'm' },
 	{ "data", 1, NULL, 'd' },
 	{ 0, 0, 0, 0}
 };
@@ -273,27 +293,28 @@ static struct option long_options[] = {
 int main(int ac, char **av)
 {
 	char *file;
+	struct btrfs_root *root;
+	struct btrfs_trans_handle *trans;
+	char *label = NULL;
 	u64 block_count = 0;
 	u64 dev_block_count = 0;
-	int fd;
-	int first_fd;
-	int ret;
-	int i;
+	u64 blocks[6];
+	u64 metadata_profile = BTRFS_BLOCK_GROUP_RAID1 | BTRFS_BLOCK_GROUP_DUP;
+	u64 data_profile = BTRFS_BLOCK_GROUP_RAID0;
 	u32 leafsize = getpagesize();
 	u32 sectorsize = 4096;
 	u32 nodesize = leafsize;
 	u32 stripesize = 4096;
-	u64 blocks[6];
 	int zero_end = 1;
 	int option_index = 0;
-	struct btrfs_root *root;
-	struct btrfs_trans_handle *trans;
-	u64 metadata_profile = BTRFS_BLOCK_GROUP_RAID1 | BTRFS_BLOCK_GROUP_DUP;
-	u64 data_profile = BTRFS_BLOCK_GROUP_RAID0;
+	int fd;
+	int first_fd;
+	int ret;
+	int i;
 
 	while(1) {
 		int c;
-		c = getopt_long(ac, av, "b:l:n:s:m:d:", long_options,
+		c = getopt_long(ac, av, "b:l:n:s:m:d:L:", long_options,
 				&option_index);
 		if (c < 0)
 			break;
@@ -301,12 +322,15 @@ int main(int ac, char **av)
 			case 'd':
 				data_profile = parse_profile(optarg);
 				break;
-			case 'm':
-				metadata_profile = parse_profile(optarg);
 				break;
 			case 'l':
 				leafsize = parse_size(optarg);
 				break;
+			case 'L':
+				label = parse_label(optarg);
+				break;
+			case 'm':
+				metadata_profile = parse_profile(optarg);
 			case 'n':
 				nodesize = parse_size(optarg);
 				break;
@@ -358,7 +382,8 @@ int main(int ac, char **av)
 	for (i = 0; i < 6; i++)
 		blocks[i] = BTRFS_SUPER_INFO_OFFSET + leafsize * i;
 
-	ret = make_btrfs(fd, file, blocks, block_count, nodesize, leafsize,
+	ret = make_btrfs(fd, file, label, blocks, block_count,
+			 nodesize, leafsize,
 			 sectorsize, stripesize);
 	if (ret) {
 		fprintf(stderr, "error during mkfs %d\n", ret);
@@ -369,10 +394,12 @@ int main(int ac, char **av)
 		fprintf(stderr, "failed to setup the root directory\n");
 		exit(1);
 	}
-	printf("fs created on %s nodesize %u leafsize %u sectorsize %u bytes %llu\n",
-	       file, nodesize, leafsize, sectorsize,
+	printf("fs created label %s on %s\n\tnodesize %u leafsize %u "
+	       "sectorsize %u bytes %llu\n",
+	       label, file, nodesize, leafsize, sectorsize,
 	       (unsigned long long)block_count);
 
+	free(label);
 	root = open_ctree(file, 0);
 	trans = btrfs_start_transaction(root, 1);
 
@@ -403,13 +430,12 @@ int main(int ac, char **av)
 			fprintf(stderr, "unable to open %s\n", file);
 			exit(1);
 		}
-		fprintf(stderr, "adding device %s\n", file);
 		ret = btrfs_prepare_device(fd, file, zero_end,
 					   &dev_block_count);
 
 		BUG_ON(ret);
 
-		ret = btrfs_add_to_fsid(trans, root, fd, dev_block_count,
+		ret = btrfs_add_to_fsid(trans, root, fd, file, dev_block_count,
 					sectorsize, sectorsize, sectorsize);
 		BUG_ON(ret);
 		btrfs_register_one_device(file);
