@@ -28,6 +28,11 @@ struct btrfs_device {
 
 	char *name;
 
+	/* these are read off the super block, only in the progs */
+	char *label;
+	u64 total_devs;
+	u64 super_bytes_used;
+
 	/* the internal btrfs device id */
 	u64 devid;
 
@@ -109,4 +114,5 @@ int btrfs_scan_one_device(int fd, const char *path,
 int btrfs_num_copies(struct btrfs_mapping_tree *map_tree, u64 logical, u64 len);
 int btrfs_bootstrap_super_map(struct btrfs_mapping_tree *map_tree,
 			      struct btrfs_fs_devices *fs_devices);
+struct list_head *btrfs_scanned_uuids(void);
 #endif

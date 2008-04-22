@@ -774,3 +774,29 @@ brelse:
 out:
 	return ret;
 }
+
+static char *size_strs[] = { "", "KB", "MB", "GB", "TB",
+			    "PB", "EB", "ZB", "YB"};
+char *pretty_sizes(u64 size)
+{
+	int num_divs = 0;
+	u64 last_size = size;
+	u64 fract_size = size;
+	float fraction;
+	char *pretty;
+
+	while(size > 0) {
+		fract_size = last_size;
+		last_size = size;
+		size /= 1024;
+		num_divs++;
+	}
+	if (num_divs > ARRAY_SIZE(size_strs))
+		return NULL;
+
+	fraction = (float)fract_size / 1024;
+	pretty = malloc(16);
+	sprintf(pretty, "%.2f%s", fraction, size_strs[num_divs-1]);
+	return pretty;
+}
+

@@ -39,4 +39,5 @@ int btrfs_scan_one_dir(char *dirname, int run_ioctl);
 int check_mounted(char *devicename);
 int btrfs_device_already_in_root(struct btrfs_root *root, int fd,
 				 int super_offset);
+char *pretty_sizes(u64 size);
 #endif

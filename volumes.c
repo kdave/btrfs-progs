@@ -119,6 +119,13 @@ static int device_list_add(const char *path,
 			kfree(device);
 			return -ENOMEM;
 		}
+		device->label = kstrdup(disk_super->label, GFP_NOFS);
+		device->total_devs = btrfs_super_num_devices(disk_super);
+		device->super_bytes_used = btrfs_super_bytes_used(disk_super);
+		device->total_bytes =
+			btrfs_stack_device_total_bytes(&disk_super->dev_item);
+		device->bytes_used =
+			btrfs_stack_device_bytes_used(&disk_super->dev_item);
 		list_add(&device->dev_list, &fs_devices->devices);
 	}
 
@@ -156,13 +163,13 @@ int btrfs_open_devices(struct btrfs_fs_devices *fs_devices, int flags)
 
 	list_for_each(cur, head) {
 		device = list_entry(cur, struct btrfs_device, dev_list);
+
 		fd = open(device->name, flags);
-printk("opening %s devid %llu fd %d\n", device->name,
-	(unsigned long long)device->devid, fd);
 		if (fd < 0) {
 			ret = -errno;
 			goto fail;
 		}
+
 		if (device->devid == fs_devices->latest_devid)
 			fs_devices->latest_bdev = fd;
 		if (device->devid == fs_devices->lowest_devid)
@@ -205,12 +212,6 @@ int btrfs_scan_one_device(int fd, const char *path,
 	*total_devs = btrfs_super_num_devices(disk_super);
 	uuid_unparse(disk_super->fsid, uuidbuf);
 
-	printf("device ");
-	if (disk_super->label[0])
-		printf("label %s ", disk_super->label);
-	else
-		printf("fsuuid %s ", uuidbuf);
-	printf("devid %llu %s\n", (unsigned long long)devid, path);
 	ret = device_list_add(path, disk_super, devid, fs_devices_ret);
 
 error_brelse:
@@ -764,7 +765,6 @@ again:
 	*num_bytes = chunk_bytes_by_type(type, calc_size,
 					 num_stripes, sub_stripes);
 	index = 0;
-printk("new chunk type %Lu start %Lu size %Lu\n", type, key.offset, *num_bytes);
 	while(index < num_stripes) {
 		struct btrfs_stripe *stripe;
 		BUG_ON(list_empty(&private_devs));
@@ -781,10 +781,7 @@ printk("new chunk type %Lu start %Lu size %Lu\n", type, key.offset, *num_bytes);
 			     BTRFS_FIRST_CHUNK_TREE_OBJECTID, key.offset,
 			     calc_size, &dev_offset);
 		BUG_ON(ret);
-printk("\talloc chunk size %llu from dev %llu phys %llu\n",
-	(unsigned long long)calc_size,
-	(unsigned long long)device->devid,
-	(unsigned long long)dev_offset);
+
 		device->bytes_used += calc_size;
 		ret = btrfs_update_device(trans, device);
 		BUG_ON(ret);
@@ -1297,3 +1294,7 @@ error:
 	return ret;
 }
 
+struct list_head *btrfs_scanned_uuids(void)
+{
+	return &fs_uuids;
+}

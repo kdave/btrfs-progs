@@ -296,6 +296,7 @@ int main(int ac, char **av)
 	struct btrfs_root *root;
 	struct btrfs_trans_handle *trans;
 	char *label = NULL;
+	char *first_file;
 	u64 block_count = 0;
 	u64 dev_block_count = 0;
 	u64 blocks[6];
@@ -375,6 +376,7 @@ int main(int ac, char **av)
 		exit(1);
 	}
 	first_fd = fd;
+	first_file = file;
 	ret = btrfs_prepare_device(fd, file, zero_end, &dev_block_count);
 	if (block_count == 0)
 		block_count = dev_block_count;
@@ -394,12 +396,6 @@ int main(int ac, char **av)
 		fprintf(stderr, "failed to setup the root directory\n");
 		exit(1);
 	}
-	printf("fs created label %s on %s\n\tnodesize %u leafsize %u "
-	       "sectorsize %u bytes %llu\n",
-	       label, file, nodesize, leafsize, sectorsize,
-	       (unsigned long long)block_count);
-
-	free(label);
 	root = open_ctree(file, 0);
 	trans = btrfs_start_transaction(root, 1);
 
@@ -452,9 +448,17 @@ int main(int ac, char **av)
 raid_groups:
 	ret = create_raid_groups(trans, root, data_profile,
 				 metadata_profile);
+
+	printf("fs created label %s on %s\n\tnodesize %u leafsize %u "
+	    "sectorsize %u size %s\n",
+	    label, first_file, nodesize, leafsize, sectorsize,
+	    pretty_sizes(btrfs_super_total_bytes(&root->fs_info->super_copy)));
+
 	btrfs_commit_transaction(trans, root);
 	ret = close_ctree(root);
 	BUG_ON(ret);
+
+	free(label);
 	return 0;
 }
 

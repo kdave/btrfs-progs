@@ -15,7 +15,7 @@ prefix ?= /usr/local
 bindir = $(prefix)/bin
 LIBS=-luuid
 
-progs = btrfsctl btrfsck mkfs.btrfs debug-tree quick-test
+progs = btrfsctl btrfsck mkfs.btrfs debug-tree quick-test btrfs-show
 
 # make C=1 to enable sparse
 ifdef C
@@ -33,6 +33,9 @@ all: $(progs)
 
 btrfsctl: $(objects) btrfsctl.o
 	gcc $(CFLAGS) -o btrfsctl btrfsctl.o $(objects) $(LDFLAGS) $(LIBS)
+
+btrfs-show: $(objects) btrfs-show.o
+	gcc $(CFLAGS) -o btrfs-show btrfs-show.o $(objects) $(LDFLAGS) $(LIBS)
 
 btrfsck: $(objects) btrfsck.o bit-radix.o
 	gcc $(CFLAGS) -o btrfsck btrfsck.o $(objects) bit-radix.o $(LDFLAGS) $(LIBS)

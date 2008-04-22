@@ -493,8 +493,6 @@ struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr)
 		fprintf(stderr, "No valid Btrfs found on %s\n", path);
 		return NULL;
 	}
-	fprintf(stderr, "found Btrfs on %s with %lu devices\n", path,
-		(unsigned long)total_devs);
 
 	if (total_devs != 1) {
 		ret = btrfs_scan_for_fsid(fs_devices, total_devs, 1);
