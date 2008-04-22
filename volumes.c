@@ -148,7 +148,8 @@ int btrfs_close_devices(struct btrfs_fs_devices *fs_devices)
 
 	list_for_each(cur, head) {
 		device = list_entry(cur, struct btrfs_device, dev_list);
-		device->fd = 0;
+		close(device->fd);
+		device->fd = -1;
 	}
 	return 0;
 }

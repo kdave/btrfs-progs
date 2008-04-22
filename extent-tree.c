@@ -1624,20 +1624,27 @@ int btrfs_alloc_extent(struct btrfs_trans_handle *trans,
 	u64 super_used, root_used;
 	u64 search_start = 0;
 	u64 alloc_profile;
-	struct btrfs_fs_info *info = root->fs_info;
-	struct btrfs_extent_ops *ops = info->extent_ops;
 	u32 sizes[2];
+	struct btrfs_fs_info *info = root->fs_info;
 	struct btrfs_root *extent_root = info->extent_root;
 	struct btrfs_path *path;
 	struct btrfs_extent_item *extent_item;
 	struct btrfs_extent_ref *ref;
 	struct btrfs_key keys[2];
 
+	if (info->extent_ops) {
+		struct btrfs_extent_ops *ops = info->extent_ops;
+		ret = ops->alloc_extent(root, num_bytes, hint_byte, ins);
+		BUG_ON(ret);
+		goto found;
+	}
+
 	if (data) {
 		alloc_profile = info->avail_data_alloc_bits &
 			        info->data_alloc_profile;
 		data = BTRFS_BLOCK_GROUP_DATA | alloc_profile;
-	} else if (root == info->chunk_root || info->force_system_allocs) {
+	} else if ((info->system_allocs > 0 || root == info->chunk_root) &&
+		   info->system_allocs >= 0) {
 		alloc_profile = info->avail_system_alloc_bits &
 			        info->system_alloc_profile;
 		data = BTRFS_BLOCK_GROUP_SYSTEM | alloc_profile;
@@ -1660,15 +1667,12 @@ int btrfs_alloc_extent(struct btrfs_trans_handle *trans,
 	}
 
 	WARN_ON(num_bytes < root->sectorsize);
-	if (ops && ops->alloc_extent) {
-		ret = ops->alloc_extent(root, num_bytes, hint_byte, ins);
-	} else {
-		ret = find_free_extent(trans, root, num_bytes, empty_size,
-				        search_start, search_end, hint_byte,
-					ins, trans->alloc_exclude_start,
-					trans->alloc_exclude_nr, data);
-	}
+	ret = find_free_extent(trans, root, num_bytes, empty_size,
+			       search_start, search_end, hint_byte, ins,
+			       trans->alloc_exclude_start,
+			       trans->alloc_exclude_nr, data);
 	BUG_ON(ret);
+found:
 	if (ret)
 		return ret;
 
@@ -2328,6 +2332,100 @@ int btrfs_make_block_group(struct btrfs_trans_handle *trans,
 	ret = del_pending_extents(trans, extent_root);
 	BUG_ON(ret);
 	set_avail_alloc_bits(extent_root->fs_info, type);
+	return 0;
+}
+
+/*
+ * This is for converter use only.
+ *
+ * In that case, we don't know where are free blocks located.
+ * Therefore all block group cache entries must be setup properly
+ * before doing any block allocation.
+ */
+int btrfs_make_block_groups(struct btrfs_trans_handle *trans,
+			    struct btrfs_root *root)
+{
+	u64 total_bytes;
+	u64 cur_start;
+	u64 group_type;
+	u64 group_size;
+	u64 group_nr = 0;
+	u64 chunk_objectid;
+	int ret;
+	int bit;
+	struct btrfs_root *extent_root;
+	struct btrfs_block_group_cache *cache;
+	struct extent_io_tree *block_group_cache;
+
+	extent_root = root->fs_info->extent_root;
+	block_group_cache = &root->fs_info->block_group_cache;
+	chunk_objectid = BTRFS_FIRST_CHUNK_TREE_OBJECTID;
+	total_bytes = btrfs_super_total_bytes(&root->fs_info->super_copy);
+
+	cur_start = 0;
+	while (cur_start < total_bytes) {
+		if (group_nr == 0) {
+			bit = BLOCK_GROUP_SYSTEM;
+			group_type = BTRFS_BLOCK_GROUP_SYSTEM;
+		} else if (group_nr % 3 == 1) {
+			bit = BLOCK_GROUP_DATA;
+			group_type = BTRFS_BLOCK_GROUP_METADATA;
+		} else {
+			bit = BLOCK_GROUP_METADATA;
+			group_type = BTRFS_BLOCK_GROUP_DATA;
+		}
+		group_nr++;
+
+		if (group_type == BTRFS_BLOCK_GROUP_SYSTEM) {
+			group_size = 32 * 1024 * 1024;
+		} else {
+			group_size = 256 * 1024 * 1024;
+			if (total_bytes - cur_start < group_size * 5 / 4)
+				group_size = total_bytes - cur_start;
+		}
+
+		cache = kzalloc(sizeof(*cache), GFP_NOFS);
+		BUG_ON(!cache);
+
+		cache->key.objectid = cur_start;
+		cache->key.offset = group_size;
+		btrfs_set_key_type(&cache->key, BTRFS_BLOCK_GROUP_ITEM_KEY);
+
+		btrfs_set_block_group_used(&cache->item, 0);
+		btrfs_set_block_group_chunk_objectid(&cache->item,
+						     chunk_objectid);
+		btrfs_set_block_group_flags(&cache->item, group_type);
+
+		cache->flags = group_type;
+
+		ret = update_space_info(root->fs_info, group_type, group_size,
+					0, &cache->space_info);
+		BUG_ON(ret);
+		set_avail_alloc_bits(extent_root->fs_info, group_type);
+
+		set_extent_bits(block_group_cache, cur_start,
+				cur_start + group_size - 1,
+				bit | EXTENT_LOCKED, GFP_NOFS);
+		set_state_private(block_group_cache, cur_start,
+				  (unsigned long)cache);
+		cur_start += group_size;
+	}
+	/* then insert all the items */
+	cur_start = 0;
+	while(cur_start < total_bytes) {
+		cache = btrfs_lookup_block_group(root->fs_info, cur_start);
+		BUG_ON(!cache);
+
+		ret = btrfs_insert_item(trans, extent_root, &cache->key, &cache->item,
+					sizeof(cache->item));
+		BUG_ON(ret);
+
+		finish_current_insert(trans, extent_root);
+		ret = del_pending_extents(trans, extent_root);
+		BUG_ON(ret);
+
+		cur_start = cache->key.objectid + cache->key.offset;
+	}
 	return 0;
 }
 

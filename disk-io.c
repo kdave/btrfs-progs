@@ -457,12 +457,16 @@ insert:
 struct btrfs_root *open_ctree(const char *filename, u64 sb_bytenr)
 {
 	int fp;
+	struct btrfs_root *root;
 
 	fp = open(filename, O_CREAT | O_RDWR, 0600);
 	if (fp < 0) {
 		return NULL;
 	}
-	return open_ctree_fd(fp, filename, sb_bytenr);
+	root = open_ctree_fd(fp, filename, sb_bytenr);
+	close(fp);
+
+	return root;
 }
 
 struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr)
@@ -500,7 +504,6 @@ struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr)
 	}
 
 	memset(fs_info, 0, sizeof(*fs_info));
-	fs_info->fp = fs_devices->lowest_bdev;
 	fs_info->fs_root = root;
 	fs_info->tree_root = tree_root;
 	fs_info->extent_root = extent_root;
@@ -638,7 +641,7 @@ int write_all_supers(struct btrfs_root *root)
 				    (unsigned long)btrfs_device_uuid(dev_item),
 				    BTRFS_UUID_SIZE);
 		sb->fd = dev->fd;
-		sb->dev_bytenr = BTRFS_SUPER_INFO_OFFSET;
+		sb->dev_bytenr = sb->start;
 		btrfs_set_header_flag(sb, BTRFS_HEADER_FLAG_WRITTEN);
 		csum_tree_block(root, sb, 0);
 		ret = write_extent_to_disk(sb);
@@ -683,7 +686,7 @@ static int close_all_devices(struct btrfs_fs_info *fs_info)
 	list = &fs_info->fs_devices->devices;
 	list_for_each(next, list) {
 		device = list_entry(next, struct btrfs_device, dev_list);
-		// close(device->fd);
+		close(device->fd);
 	}
 	return 0;
 }
@@ -704,7 +707,6 @@ int close_ctree(struct btrfs_root *root)
 	write_ctree_super(trans, root);
 	btrfs_free_transaction(root, trans);
 	btrfs_free_block_groups(root->fs_info);
-	close(root->fs_info->fp);
 	if (root->node)
 		free_extent_buffer(root->node);
 	if (root->fs_info->extent_root->node)

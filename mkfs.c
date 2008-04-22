@@ -79,7 +79,7 @@ static int make_root_dir(int fd, const char *device_name) {
 	trans = btrfs_start_transaction(root, 1);
 	bytes_used = btrfs_super_bytes_used(&root->fs_info->super_copy);
 
-	root->fs_info->force_system_allocs = 1;
+	root->fs_info->system_allocs = 1;
 	ret = btrfs_make_block_group(trans, root, bytes_used,
 				     BTRFS_BLOCK_GROUP_SYSTEM,
 				     BTRFS_FIRST_CHUNK_TREE_OBJECTID,
@@ -96,7 +96,7 @@ static int make_root_dir(int fd, const char *device_name) {
 				     chunk_start, chunk_size);
 	BUG_ON(ret);
 
-	root->fs_info->force_system_allocs = 0;
+	root->fs_info->system_allocs = 0;
 	btrfs_commit_transaction(trans, root);
 	trans = btrfs_start_transaction(root, 1);
 	BUG_ON(!trans);

@@ -54,7 +54,7 @@ static u64 reference_root_table[6] = {
 	[5] =	BTRFS_FS_TREE_OBJECTID,
 };
 
-int make_btrfs(int fd, char *device_name, char *label,
+int make_btrfs(int fd, const char *device, const char *label,
 	       u64 blocks[6], u64 num_bytes, u32 nodesize,
 	       u32 leafsize, u32 sectorsize, u32 stripesize)
 {

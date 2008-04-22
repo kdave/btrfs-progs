@@ -539,6 +539,8 @@ static int free_some_buffers(struct extent_io_tree *tree)
 			free_extent_buffer(eb);
 			if (tree->cache_size < cache_max)
 				break;
+		} else {
+			list_move_tail(&eb->lru, &tree->lru);
 		}
 		if (nrscan++ > 64)
 			break;

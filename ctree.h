@@ -513,8 +513,7 @@ struct btrfs_fs_info {
 
 	struct btrfs_fs_devices *fs_devices;
 	struct list_head space_info;
-	int fp;
-	int force_system_allocs;
+	int system_allocs;
 	void *priv_data;
 };
 
@@ -1331,6 +1330,8 @@ int btrfs_make_block_group(struct btrfs_trans_handle *trans,
 			   struct btrfs_root *root, u64 bytes_used,
 			   u64 type, u64 chunk_objectid, u64 chunk_offset,
 			   u64 size);
+int btrfs_make_block_groups(struct btrfs_trans_handle *trans,
+			    struct btrfs_root *root);
 u64 btrfs_hash_extent_ref(u64 root_objectid, u64 ref_generation,
 			  u64 owner, u64 owner_offset);
 int btrfs_update_block_group(struct btrfs_trans_handle *trans,
