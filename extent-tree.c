@@ -293,12 +293,12 @@ struct btrfs_block_group_cache *btrfs_find_block_group(struct btrfs_root *root,
 	int bit;
 	int ret;
 	int full_search = 0;
-	int factor = 8;
+	int factor = 10;
 
 	block_group_cache = &info->block_group_cache;
 
 	if (!owner)
-		factor = 8;
+		factor = 10;
 
 	bit = block_group_state_bits(data);
 
