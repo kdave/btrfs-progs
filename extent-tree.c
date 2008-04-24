@@ -2349,7 +2349,9 @@ int btrfs_make_block_groups(struct btrfs_trans_handle *trans,
 	u64 cur_start;
 	u64 group_type;
 	u64 group_size;
-	u64 group_nr = 0;
+	u64 group_align;
+	u64 total_data = 0;
+	u64 total_metadata = 0;
 	u64 chunk_objectid;
 	int ret;
 	int bit;
@@ -2361,26 +2363,33 @@ int btrfs_make_block_groups(struct btrfs_trans_handle *trans,
 	block_group_cache = &root->fs_info->block_group_cache;
 	chunk_objectid = BTRFS_FIRST_CHUNK_TREE_OBJECTID;
 	total_bytes = btrfs_super_total_bytes(&root->fs_info->super_copy);
+	group_align = 64 * root->sectorsize;
 
 	cur_start = 0;
 	while (cur_start < total_bytes) {
-		if (group_nr == 0) {
+		group_size = total_bytes / 12;
+		group_size = min_t(u64, group_size, total_bytes - cur_start);
+		if (cur_start == 0) {
 			bit = BLOCK_GROUP_SYSTEM;
 			group_type = BTRFS_BLOCK_GROUP_SYSTEM;
-		} else if (group_nr % 3 == 1) {
-			bit = BLOCK_GROUP_DATA;
-			group_type = BTRFS_BLOCK_GROUP_METADATA;
+			group_size /= 4;
+			group_size &= ~(group_align - 1);
+			group_size = max_t(u64, group_size, 32 * 1024 * 1024);
+			group_size = min_t(u64, group_size, 128 * 1024 * 1024);
 		} else {
-			bit = BLOCK_GROUP_METADATA;
-			group_type = BTRFS_BLOCK_GROUP_DATA;
-		}
-		group_nr++;
-
-		if (group_type == BTRFS_BLOCK_GROUP_SYSTEM) {
-			group_size = 32 * 1024 * 1024;
-		} else {
-			group_size = 256 * 1024 * 1024;
-			if (total_bytes - cur_start < group_size * 5 / 4)
+			group_size &= ~(group_align - 1);
+			if (total_data >= total_metadata * 2) {
+				group_type = BTRFS_BLOCK_GROUP_METADATA;
+				group_size = min_t(u64, group_size,
+						   1ULL * 1024 * 1024 * 1024);
+				total_metadata += group_size;
+			} else {
+				group_type = BTRFS_BLOCK_GROUP_DATA;
+				group_size = min_t(u64, group_size,
+						   5ULL * 1024 * 1024 * 1024);
+				total_data += group_size;
+			}
+			if ((total_bytes - cur_start) * 4 < group_size * 5)
 				group_size = total_bytes - cur_start;
 		}
 

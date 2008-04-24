@@ -514,7 +514,6 @@ struct btrfs_fs_info {
 	struct btrfs_fs_devices *fs_devices;
 	struct list_head space_info;
 	int system_allocs;
-	void *priv_data;
 };
 
 /*
