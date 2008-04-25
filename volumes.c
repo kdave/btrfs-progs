@@ -252,6 +252,10 @@ static int find_free_dev_extent(struct btrfs_trans_handle *trans,
 	 * so we make sure to start at an offset of at least 1MB
 	 */
 	search_start = max((u64)1024 * 1024, search_start);
+
+	if (root->fs_info->alloc_start + num_bytes <= device->total_bytes)
+		search_start = max(root->fs_info->alloc_start, search_start);
+
 	key.objectid = device->devid;
 	key.offset = search_start;
 	key.type = BTRFS_DEV_EXTENT_KEY;

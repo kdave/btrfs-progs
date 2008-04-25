@@ -280,6 +280,7 @@ static char *parse_label(char *input)
 }
 
 static struct option long_options[] = {
+	{ "alloc-start", 1, NULL, 'A'},
 	{ "byte-count", 1, NULL, 'b' },
 	{ "leafsize", 1, NULL, 'l' },
 	{ "label", 1, NULL, 'L'},
@@ -300,6 +301,7 @@ int main(int ac, char **av)
 	u64 block_count = 0;
 	u64 dev_block_count = 0;
 	u64 blocks[6];
+	u64 alloc_start;
 	u64 metadata_profile = BTRFS_BLOCK_GROUP_RAID1 | BTRFS_BLOCK_GROUP_DUP;
 	u64 data_profile = BTRFS_BLOCK_GROUP_RAID0;
 	u32 leafsize = getpagesize();
@@ -315,11 +317,14 @@ int main(int ac, char **av)
 
 	while(1) {
 		int c;
-		c = getopt_long(ac, av, "b:l:n:s:m:d:L:", long_options,
+		c = getopt_long(ac, av, "A:b:l:n:s:m:d:L:", long_options,
 				&option_index);
 		if (c < 0)
 			break;
 		switch(c) {
+			case 'A':
+				alloc_start = parse_size(optarg);
+				break;
 			case 'd':
 				data_profile = parse_profile(optarg);
 				break;
@@ -397,6 +402,7 @@ int main(int ac, char **av)
 		exit(1);
 	}
 	root = open_ctree(file, 0);
+	root->fs_info->alloc_start = alloc_start;
 	trans = btrfs_start_transaction(root, 1);
 
 	if (ac == 0)

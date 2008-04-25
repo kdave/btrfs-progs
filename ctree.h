@@ -501,6 +501,7 @@ struct btrfs_fs_info {
 	u64 data_alloc_profile;
 	u64 metadata_alloc_profile;
 	u64 system_alloc_profile;
+	u64 alloc_start;
 
 	struct btrfs_trans_handle *running_transaction;
 	struct btrfs_super_block super_copy;
