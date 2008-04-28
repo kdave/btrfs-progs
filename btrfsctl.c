@@ -36,7 +36,6 @@
 #ifdef __CHECKER__
 #define BLKGETSIZE64 0
 #define BTRFS_IOC_SNAP_CREATE 0
-#define BTRFS_IOC_ADD_DISK 0
 #define BTRFS_VOL_NAME_MAX 255
 struct btrfs_ioctl_vol_args { char name[BTRFS_VOL_NAME_MAX]; };
 static inline int ioctl(int fd, int define, void *arg) { return 0; }

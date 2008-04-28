@@ -18,6 +18,13 @@
 
 #define _XOPEN_SOURCE 500
 #define _GNU_SOURCE
+
+#ifndef __CHECKER__
+#include <sys/ioctl.h>
+#include <sys/mount.h>
+#include "ioctl.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
