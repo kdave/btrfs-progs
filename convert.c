@@ -928,6 +928,10 @@ static int copy_inode_item(struct btrfs_inode_item *dst,
 		btrfs_set_stack_inode_size(dst, 0);
 		btrfs_set_stack_inode_nlink(dst, 1);
 	}
+	if (S_ISREG(src->i_mode)) {
+		btrfs_set_stack_inode_size(dst, (u64)src->i_size_high << 32 |
+					   (u64)src->i_size);
+	}
 	if (!S_ISREG(src->i_mode) && !S_ISDIR(src->i_mode) &&
 	    !S_ISLNK(src->i_mode)) {
 		if (src->i_block[0]) {
