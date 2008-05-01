@@ -71,9 +71,9 @@ int main(int ac, char **av)
 	char *mnt = NULL;
 	int ret;
 	int option_index = 0;
-	int cmd;
+	int cmd = 0;
 	int fd;
-	int devfd;
+	int devfd = 0;
 	DIR *dirstream;
 	struct btrfs_ioctl_vol_args args;
 	u64 dev_block_count = 0;

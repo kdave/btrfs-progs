@@ -308,7 +308,7 @@ int main(int ac, char **av)
 	u64 block_count = 0;
 	u64 dev_block_count = 0;
 	u64 blocks[6];
-	u64 alloc_start;
+	u64 alloc_start = 0;
 	u64 metadata_profile = BTRFS_BLOCK_GROUP_RAID1 | BTRFS_BLOCK_GROUP_DUP;
 	u64 data_profile = BTRFS_BLOCK_GROUP_RAID0;
 	u32 leafsize = getpagesize();

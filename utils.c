@@ -645,7 +645,7 @@ int btrfs_register_one_device(char *fname)
 
 int btrfs_scan_one_dir(char *dirname, int run_ioctl)
 {
-	DIR *dirp;
+	DIR *dirp = NULL;
 	struct dirent *dirent;
 	struct pending_dir *pending;
 	struct stat st;
@@ -734,7 +734,8 @@ again:
 	ret = 0;
 fail:
 	free(pending);
-	closedir(dirp);
+	if (dirp)
+		closedir(dirp);
 	return ret;
 }
 
