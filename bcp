@@ -18,22 +18,32 @@
 import sys, os, stat, fcntl
 from optparse import OptionParser
 
-def copylink(srcname, dst, filename, statinfo):
-    dstname = os.path.join(dst, filename)
+def copylink(srcname, dst, filename, statinfo, force_name):
+    dstname = os.path.join(dst, force_name or filename)
     if not os.path.exists(dstname):
         link_target = os.readlink(srcname)
         os.symlink(link_target, dstname)
 
-def copydev(srcname, dst, filename, statinfo):
+def copydev(srcname, dst, filename, statinfo, force_name):
     devbits = statinfo.st_mode & (stat.S_IFBLK | stat.S_IFCHR)
     mode = stat.S_IMODE(statinfo.st_mode) | devbits
-    dstname = os.path.join(dst, filename)
+    dstname = os.path.join(dst, force_name or filename)
     if not os.path.exists(dstname):
         os.mknod(dstname, mode, statinfo.st_rdev)
 
-def copyfile(srcname, dst, filename, statinfo):
+def copyfile(srcname, dst, filename, statinfo, force_name):
     written = 0
-    dstname = os.path.join(dst, filename)
+    dstname = os.path.join(dst, force_name or filename)
+
+    st_mode = statinfo.st_mode
+    if stat.S_ISLNK(st_mode):
+        copylink(srcname, dst, part, statinfo, None)
+        return
+    elif stat.S_ISBLK(st_mode) or stat.S_ISCHR(st_mode):
+        copydev(srcname, dst, part, statinfo, None)
+        return
+    elif not stat.S_ISREG(st_mode):
+        return
 
     try:
         os.unlink(dstname)
@@ -85,46 +95,67 @@ if options.link and options.copy:
     options.link = False
 
 
-src = args[0]
-dst = args[1]
+total_args = len(args)
+src_args = total_args - 1
+orig_dst = args[-1]
 
-if not os.path.exists(dst):
-    os.makedirs(dst)
+if src_args > 1:
+    if not os.path.exists(orig_dst):
+        os.makedirs(orig_dst)
+    if not os.path.isdir(orig_dst):
+        sys.stderr.write("Destination %s is not a directory\n" % orig_dst)
+        exit(1)
 
-iter = os.walk(src, topdown=True)
+for srci in xrange(0, src_args):
+    src = args[srci]
+    if os.path.isfile(src):
+        statinfo = os.lstat(src)
+        force_name = None
+        if src_args == 1:
+            if not os.path.isdir(orig_dst):
+                force_name = os.path.basename(orig_dst)
+                orig_dst = os.path.dirname(orig_dst) or '.'
+        copyfile(src, orig_dst, os.path.basename(src), statinfo, force_name)
+        continue
 
-for (dirpath, dirnames, filenames) in iter:
-    for x in dirnames:
-        srcname = os.path.join(dirpath, x)
-        statinfo = os.lstat(srcname)
+    if src_args > 1 or os.path.exists(orig_dst):
+        dst = os.path.join(orig_dst, os.path.basename(src))
+    else:
+        dst = orig_dst
 
-        if srcname.startswith(src):
-            part = srcname[len(src) + 1:]
+    if not os.path.exists(dst):
+        os.makedirs(dst)
+        statinfo = os.stat(src)
+        os.chmod(dst, stat.S_IMODE(statinfo.st_mode))
+        os.chown(dst, statinfo.st_uid, statinfo.st_gid)
+        
+    iter = os.walk(src, topdown=True)
 
-        if stat.S_ISLNK(statinfo.st_mode):
-            copylink(srcname, dst, part, statinfo)
-            continue
+    for (dirpath, dirnames, filenames) in iter:
+        for x in dirnames:
+            srcname = os.path.join(dirpath, x)
+            statinfo = os.lstat(srcname)
 
-        dst_dir = os.path.join(dst, part)
-        if not os.path.exists(dst_dir):
-            os.makedirs(dst_dir)
+            if srcname.startswith(src):
+                part = srcname[len(src) + 1:]
 
-        os.chmod(dst_dir, stat.S_IMODE(statinfo.st_mode))
-        os.chown(dst_dir, statinfo.st_uid, statinfo.st_gid)
+            if stat.S_ISLNK(statinfo.st_mode):
+                copylink(srcname, dst, part, statinfo, None)
+                continue
 
-    for f in filenames:
-        srcname = os.path.join(dirpath, f)
-        if srcname.startswith(src):
-            part = srcname[len(src) + 1:]
+            dst_dir = os.path.join(dst, part)
+            if not os.path.exists(dst_dir):
+                os.makedirs(dst_dir)
 
-        statinfo = os.lstat(srcname)
-        st_mode = statinfo.st_mode
+            os.chmod(dst_dir, stat.S_IMODE(statinfo.st_mode))
+            os.chown(dst_dir, statinfo.st_uid, statinfo.st_gid)
 
-        if stat.S_ISLNK(st_mode):
-            copylink(srcname, dst, part, statinfo)
+        for f in filenames:
+            srcname = os.path.join(dirpath, f)
+            if srcname.startswith(src):
+                part = srcname[len(src) + 1:]
 
-        elif stat.S_ISBLK(st_mode) or stat.S_ISCHR(st_mode):
-            copydev(srcname, dst, part, statinfo)
+            statinfo = os.lstat(srcname)
+            copyfile(srcname, dst, part, statinfo, None)
 
-        elif stat.S_ISREG(st_mode):
-            copyfile(srcname, dst, part, statinfo)
+
