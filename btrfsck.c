@@ -606,6 +606,9 @@ static int run_next_block(struct btrfs_root *root,
 
 			data_bytes_allocated +=
 				btrfs_file_extent_disk_num_bytes(buf, fi);
+			if (data_bytes_allocated < root->sectorsize) {
+				abort();
+			}
 			data_bytes_referenced +=
 				btrfs_file_extent_num_bytes(buf, fi);
 			ret = add_extent_rec(extent_cache, NULL, bytenr,
