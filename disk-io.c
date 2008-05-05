@@ -454,22 +454,27 @@ insert:
 	return root;
 }
 
-struct btrfs_root *open_ctree(const char *filename, u64 sb_bytenr)
+struct btrfs_root *open_ctree(const char *filename, u64 sb_bytenr, int writes)
 {
 	int fp;
 	struct btrfs_root *root;
+	int flags = O_CREAT | O_RDWR;
 
-	fp = open(filename, O_CREAT | O_RDWR, 0600);
+	if (!writes)
+		flags = O_RDONLY;
+
+	fp = open(filename, flags, 0600);
 	if (fp < 0) {
 		return NULL;
 	}
-	root = open_ctree_fd(fp, filename, sb_bytenr);
+	root = open_ctree_fd(fp, filename, sb_bytenr, writes);
 	close(fp);
 
 	return root;
 }
 
-struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr)
+struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
+				 int writes)
 {
 	u32 sectorsize;
 	u32 nodesize;
@@ -510,6 +515,9 @@ struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr)
 	fs_info->chunk_root = chunk_root;
 	fs_info->dev_root = dev_root;
 
+	if (!writes)
+		fs_info->readonly = 1;
+
 	extent_io_tree_init(&fs_info->extent_cache);
 	extent_io_tree_init(&fs_info->free_space_cache);
 	extent_io_tree_init(&fs_info->block_group_cache);
@@ -527,7 +535,10 @@ struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr)
 	__setup_root(4096, 4096, 4096, 4096, tree_root,
 		     fs_info, BTRFS_ROOT_TREE_OBJECTID);
 
-	ret = btrfs_open_devices(fs_devices, O_RDWR);
+	if (writes)
+		ret = btrfs_open_devices(fs_devices, O_RDWR);
+	else
+		ret = btrfs_open_devices(fs_devices, O_RDONLY);
 	BUG_ON(ret);
 
 	ret = btrfs_bootstrap_super_map(&fs_info->mapping_tree, fs_devices);
@@ -656,6 +667,10 @@ int write_ctree_super(struct btrfs_trans_handle *trans,
 	int ret;
 	struct btrfs_root *tree_root = root->fs_info->tree_root;
 	struct btrfs_root *chunk_root = root->fs_info->chunk_root;
+
+	if (root->fs_info->readonly)
+		return 0;
+
 	btrfs_set_super_generation(&root->fs_info->super_copy,
 				   trans->transid);
 	btrfs_set_super_root(&root->fs_info->super_copy,

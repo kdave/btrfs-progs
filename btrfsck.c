@@ -746,7 +746,7 @@ int main(int ac, char **av) {
 	cache_tree_init(&nodes);
 	cache_tree_init(&reada);
 
-	root = open_ctree(av[1], 0);
+	root = open_ctree(av[1], 0, 0);
 
 	bits_nr = 1024;
 	bits = malloc(bits_nr * sizeof(struct block_info));

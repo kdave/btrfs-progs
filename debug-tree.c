@@ -130,7 +130,7 @@ int main(int ac, char **av)
 	if (ac != 1)
 		print_usage();
 
-	root = open_ctree(av[optind], 0);
+	root = open_ctree(av[optind], 0, 0);
 	if (!root) {
 		fprintf(stderr, "unable to open %s\n", av[optind]);
 		exit(1);

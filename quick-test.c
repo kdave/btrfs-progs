@@ -50,7 +50,7 @@ int main(int ac, char **av) {
 
 	radix_tree_init();
 
-	root = open_ctree(av[1], BTRFS_SUPER_INFO_OFFSET);
+	root = open_ctree(av[1], BTRFS_SUPER_INFO_OFFSET, O_RDWR);
 	trans = btrfs_start_transaction(root, 1);
 	srand(55);
 	btrfs_set_key_type(&ins, BTRFS_STRING_ITEM_KEY);
@@ -73,7 +73,7 @@ int main(int ac, char **av) {
 	btrfs_commit_transaction(trans, root);
 	close_ctree(root);
 	exit(1);
-	root = open_ctree(av[1], BTRFS_SUPER_INFO_OFFSET);
+	root = open_ctree(av[1], BTRFS_SUPER_INFO_OFFSET, O_RDWR);
 	printf("starting search\n");
 	srand(55);
 	for (i = 0; i < run_size; i++) {
@@ -92,7 +92,7 @@ int main(int ac, char **av) {
 	}
 	close_ctree(root);
 
-	root = open_ctree(av[1], BTRFS_SUPER_INFO_OFFSET);
+	root = open_ctree(av[1], BTRFS_SUPER_INFO_OFFSET, O_RDWR);
 	printf("node %p level %d total ptrs %d free spc %lu\n", root->node,
 	        btrfs_header_level(root->node),
 		btrfs_header_nritems(root->node),
@@ -120,7 +120,7 @@ int main(int ac, char **av) {
 	btrfs_commit_transaction(trans, root);
 	close_ctree(root);
 
-	root = open_ctree(av[1], BTRFS_SUPER_INFO_OFFSET);
+	root = open_ctree(av[1], BTRFS_SUPER_INFO_OFFSET, O_RDWR);
 	trans = btrfs_start_transaction(root, 1);
 	srand(128);
 	for (i = 0; i < run_size; i++) {
@@ -136,7 +136,7 @@ int main(int ac, char **av) {
 	btrfs_commit_transaction(trans, root);
 	close_ctree(root);
 
-	root = open_ctree(av[1], BTRFS_SUPER_INFO_OFFSET);
+	root = open_ctree(av[1], BTRFS_SUPER_INFO_OFFSET, O_RDWR);
 	srand(128);
 	printf("starting search2\n");
 	for (i = 0; i < run_size; i++) {

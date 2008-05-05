@@ -77,7 +77,7 @@ static int make_root_dir(int fd, const char *device_name) {
 	u64 chunk_size = 0;
 	int ret;
 
-	root = open_ctree_fd(fd, device_name, 0);
+	root = open_ctree_fd(fd, device_name, 0, O_RDWR);
 
 	if (!root) {
 		fprintf(stderr, "ctree init failed\n");
@@ -408,7 +408,7 @@ int main(int ac, char **av)
 		fprintf(stderr, "failed to setup the root directory\n");
 		exit(1);
 	}
-	root = open_ctree(file, 0);
+	root = open_ctree(file, 0, O_RDWR);
 	root->fs_info->alloc_start = alloc_start;
 	trans = btrfs_start_transaction(root, 1);
 
