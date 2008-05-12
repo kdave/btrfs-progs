@@ -86,7 +86,8 @@ static void print_extents(struct btrfs_root *root, struct extent_buffer *eb)
 	for (i = 0; i < nr; i++) {
 		struct extent_buffer *next = read_tree_block(root,
 					     btrfs_node_blockptr(eb, i),
-					     size);
+					     size,
+					     btrfs_node_ptr_generation(eb, i));
 		if (btrfs_is_leaf(next) &&
 		    btrfs_header_level(eb) != 1)
 			BUG();
@@ -171,7 +172,7 @@ int main(int ac, char **av)
 			read_extent_buffer(leaf, &ri, offset, sizeof(ri));
 			buf = read_tree_block(root->fs_info->tree_root,
 					      btrfs_root_bytenr(&ri),
-					      root->leafsize);
+					      root->leafsize, 0);
 			switch(found_key.objectid) {
 			case BTRFS_ROOT_TREE_OBJECTID:
 				if (!skip)

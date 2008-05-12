@@ -95,7 +95,8 @@ struct extent_buffer *btrfs_find_create_tree_block(struct btrfs_root *root,
 				   blocksize);
 }
 
-int readahead_tree_block(struct btrfs_root *root, u64 bytenr, u32 blocksize)
+int readahead_tree_block(struct btrfs_root *root, u64 bytenr, u32 blocksize,
+			 u64 parent_transid)
 {
 	int ret;
 	int dev_nr;
@@ -124,7 +125,7 @@ int readahead_tree_block(struct btrfs_root *root, u64 bytenr, u32 blocksize)
 }
 
 struct extent_buffer *read_tree_block(struct btrfs_root *root, u64 bytenr,
-				     u32 blocksize)
+				     u32 blocksize, u64 parent_transid)
 {
 	int ret;
 	int dev_nr;
@@ -380,7 +381,7 @@ static int find_and_setup_root(struct btrfs_root *tree_root,
 
 	blocksize = btrfs_level_size(root, btrfs_root_level(&root->root_item));
 	root->node = read_tree_block(root, btrfs_root_bytenr(&root->root_item),
-				     blocksize);
+				     blocksize, 0);
 	BUG_ON(!root->node);
 	return 0;
 }
@@ -447,7 +448,7 @@ out:
 	}
 	blocksize = btrfs_level_size(root, btrfs_root_level(&root->root_item));
 	root->node = read_tree_block(root, btrfs_root_bytenr(&root->root_item),
-				     blocksize);
+				     blocksize, 0);
 	BUG_ON(!root->node);
 insert:
 	root->ref_cows = 1;
@@ -585,7 +586,7 @@ struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
 
 	chunk_root->node = read_tree_block(chunk_root,
 					   btrfs_super_chunk_root(disk_super),
-					   blocksize);
+					   blocksize, 0);
 
 	BUG_ON(!chunk_root->node);
 
@@ -601,7 +602,7 @@ struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
 
 	tree_root->node = read_tree_block(tree_root,
 					  btrfs_super_root(disk_super),
-					  blocksize);
+					  blocksize, 0);
 	BUG_ON(!tree_root->node);
 	ret = find_and_setup_root(tree_root, fs_info,
 				  BTRFS_EXTENT_TREE_OBJECTID, extent_root);

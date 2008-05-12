@@ -511,7 +511,10 @@ static int run_next_block(struct btrfs_root *root,
 		for(i = 0; i < ret; i++) {
 			insert_cache_extent(reada, bits[i].start,
 					    bits[i].size);
-			readahead_tree_block(root, bits[i].start, bits[i].size);
+
+			/* fixme, get the parent transid */
+			readahead_tree_block(root, bits[i].start,
+					     bits[i].size, 0);
 		}
 	}
 	*last = bits[0].start;
@@ -534,7 +537,8 @@ static int run_next_block(struct btrfs_root *root,
 		free(cache);
 	}
 
-	buf = read_tree_block(root, bytenr, size);
+	/* fixme, get the real parent transid */
+	buf = read_tree_block(root, bytenr, size, 0);
 	nritems = btrfs_header_nritems(buf);
 	ret = check_block(root, extent_cache, buf);
 	if (ret) {
@@ -790,7 +794,7 @@ int main(int ac, char **av) {
 			buf = read_tree_block(root->fs_info->tree_root,
 					      btrfs_root_bytenr(&ri),
 					      btrfs_level_size(root,
-						       btrfs_root_level(&ri)));
+					       btrfs_root_level(&ri)), 0);
 			add_root_to_pending(buf, bits, bits_nr, &extent_cache,
 					    &pending, &seen, &reada, &nodes,
 					    found_key.objectid);

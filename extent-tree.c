@@ -1225,7 +1225,8 @@ static int finish_current_insert(struct btrfs_trans_handle *trans,
 					&extent_item, sizeof(extent_item));
 		clear_extent_bits(&info->extent_ins, start, end, EXTENT_LOCKED,
 				  GFP_NOFS);
-		eb = read_tree_block(extent_root, ins.objectid, ins.offset);
+		eb = read_tree_block(extent_root, ins.objectid, ins.offset,
+				     trans->transid);
 		level = btrfs_header_level(eb);
 		if (level == 0) {
 			btrfs_item_key(eb, &first, 0);
@@ -1892,7 +1893,8 @@ static void noinline reada_walk_down(struct btrfs_root *root,
 			}
 		}
 		mutex_unlock(&root->fs_info->fs_mutex);
-		ret = readahead_tree_block(root, bytenr, blocksize);
+		ret = readahead_tree_block(root, bytenr, blocksize,
+					   btrfs_node_ptr_generation(node, i));
 		last = bytenr + blocksize;
 		cond_resched();
 		mutex_lock(&root->fs_info->fs_mutex);
@@ -1912,6 +1914,7 @@ static int noinline walk_down_tree(struct btrfs_trans_handle *trans,
 	u64 root_owner;
 	u64 root_gen;
 	u64 bytenr;
+	u64 ptr_gen;
 	struct extent_buffer *next;
 	struct extent_buffer *cur;
 	struct extent_buffer *parent;
@@ -1948,6 +1951,7 @@ static int noinline walk_down_tree(struct btrfs_trans_handle *trans,
 			break;
 		}
 		bytenr = btrfs_node_blockptr(cur, path->slots[*level]);
+		ptr_gen = btrfs_node_ptr_generation(cur, path->slots[*level]);
 		blocksize = btrfs_level_size(root, *level - 1);
 		ret = lookup_extent_ref(trans, root, bytenr, blocksize, &refs);
 		BUG_ON(ret);
@@ -1967,7 +1971,8 @@ static int noinline walk_down_tree(struct btrfs_trans_handle *trans,
 			free_extent_buffer(next);
 			reada_walk_down(root, cur, path->slots[*level]);
 			mutex_unlock(&root->fs_info->fs_mutex);
-			next = read_tree_block(root, bytenr, blocksize);
+			next = read_tree_block(root, bytenr, blocksize,
+					       ptr_gen);
 			mutex_lock(&root->fs_info->fs_mutex);
 
 			/* we dropped the lock, check one more time */

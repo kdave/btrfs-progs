@@ -25,8 +25,9 @@
 struct btrfs_device;
 
 struct extent_buffer *read_tree_block(struct btrfs_root *root, u64 bytenr,
-				      u32 blocksize);
-int readahead_tree_block(struct btrfs_root *root, u64 bytenr, u32 blocksize);
+				      u32 blocksize, u64 parent_transid);
+int readahead_tree_block(struct btrfs_root *root, u64 bytenr, u32 blocksize,
+			 u64 parent_transid);
 struct extent_buffer *btrfs_find_create_tree_block(struct btrfs_root *root,
 						   u64 bytenr, u32 blocksize);
 int clean_tree_block(struct btrfs_trans_handle *trans,
@@ -57,4 +58,5 @@ int btrfs_commit_transaction(struct btrfs_trans_handle *trans,
 int btrfs_open_device(struct btrfs_device *dev);
 int csum_tree_block(struct btrfs_root *root, struct extent_buffer *buf,
 		    int verify);
+int btrfs_read_buffer(struct extent_buffer *buf, u64 parent_transid);
 #endif

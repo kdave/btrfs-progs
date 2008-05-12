@@ -314,7 +314,8 @@ void btrfs_print_tree(struct btrfs_root *root, struct extent_buffer *eb)
 	for (i = 0; i < nr; i++) {
 		struct extent_buffer *next = read_tree_block(root,
 					     btrfs_node_blockptr(eb, i),
-					     size);
+					     size,
+					     btrfs_node_ptr_generation(eb, i));
 		if (btrfs_is_leaf(next) &&
 		    btrfs_header_level(eb) != 1)
 			BUG();
