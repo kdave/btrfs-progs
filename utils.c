@@ -792,6 +792,8 @@ char *pretty_sizes(u64 size)
 		size /= 1024;
 		num_divs++;
 	}
+	if (num_divs == 0)
+		num_divs = 1;
 	if (num_divs > ARRAY_SIZE(size_strs))
 		return NULL;
 
