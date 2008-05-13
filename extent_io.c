@@ -1,3 +1,4 @@
+
 /*
  * Copyright (C) 2007 Oracle.  All rights reserved.
  *
@@ -685,6 +686,13 @@ out:
 int set_extent_buffer_uptodate(struct extent_buffer *eb)
 {
 	eb->flags |= EXTENT_UPTODATE;
+	return 0;
+}
+
+int clear_extent_buffer_uptodate(struct extent_io_tree *tree,
+				struct extent_buffer *eb)
+{
+	eb->flags &= ~EXTENT_UPTODATE;
 	return 0;
 }
 

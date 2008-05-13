@@ -1094,7 +1094,7 @@ static int create_image_file_range(struct btrfs_trans_handle *trans,
 	u32 blocksize = ext2_fs->blocksize;
 	u32 block = start_byte / blocksize;
 	u32 last_block = (end_byte + blocksize - 1) / blocksize;
-	int ret;
+	int ret = 0;
 	struct blk_iterate_data data = {
 		.trans		= trans,
 		.root		= root,

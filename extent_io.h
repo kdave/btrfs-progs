@@ -84,6 +84,8 @@ int clear_extent_dirty(struct extent_io_tree *tree, u64 start,
 		       u64 end, gfp_t mask);
 int extent_buffer_uptodate(struct extent_buffer *eb);
 int set_extent_buffer_uptodate(struct extent_buffer *eb);
+int clear_extent_buffer_uptodate(struct extent_io_tree *tree,
+				struct extent_buffer *eb);
 int set_state_private(struct extent_io_tree *tree, u64 start, u64 private);
 int get_state_private(struct extent_io_tree *tree, u64 start, u64 *private);
 struct extent_buffer *find_extent_buffer(struct extent_io_tree *tree,

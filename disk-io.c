@@ -106,7 +106,7 @@ int readahead_tree_block(struct btrfs_root *root, u64 bytenr, u32 blocksize,
 	struct btrfs_device *device;
 
 	eb = btrfs_find_tree_block(root, bytenr, blocksize);
-	if (eb && btrfs_buffer_uptodate(eb)) {
+	if (eb && btrfs_buffer_uptodate(eb, parent_transid)) {
 		free_extent_buffer(eb);
 		return 0;
 	}
@@ -124,6 +124,31 @@ int readahead_tree_block(struct btrfs_root *root, u64 bytenr, u32 blocksize,
 	return 0;
 }
 
+static int verify_parent_transid(struct extent_io_tree *io_tree,
+				 struct extent_buffer *eb, u64 parent_transid)
+{
+	int ret;
+
+	if (!parent_transid || btrfs_header_generation(eb) == parent_transid)
+		return 0;
+
+	if (extent_buffer_uptodate(eb) &&
+	    btrfs_header_generation(eb) == parent_transid) {
+		ret = 0;
+		goto out;
+	}
+	printk("parent transid verify failed on %llu wanted %llu found %llu\n",
+	       (unsigned long long)eb->start,
+	       (unsigned long long)parent_transid,
+	       (unsigned long long)btrfs_header_generation(eb));
+	ret = 1;
+out:
+	clear_extent_buffer_uptodate(io_tree, eb);
+	return ret;
+
+}
+
+
 struct extent_buffer *read_tree_block(struct btrfs_root *root, u64 bytenr,
 				     u32 blocksize, u64 parent_transid)
 {
@@ -140,7 +165,7 @@ struct extent_buffer *read_tree_block(struct btrfs_root *root, u64 bytenr,
 	if (!eb)
 		return NULL;
 
-	if (btrfs_buffer_uptodate(eb))
+	if (btrfs_buffer_uptodate(eb, parent_transid))
 		return eb;
 
 	dev_nr = 0;
@@ -156,19 +181,18 @@ struct extent_buffer *read_tree_block(struct btrfs_root *root, u64 bytenr,
 		kfree(multi);
 		ret = read_extent_from_disk(eb);
 		if (ret == 0 && check_tree_block(root, eb) == 0 &&
-		    csum_tree_block(root, eb, 1) == 0) {
+		    csum_tree_block(root, eb, 1) == 0 &&
+		    verify_parent_transid(eb->tree, eb, parent_transid) == 0) {
 			btrfs_set_buffer_uptodate(eb);
 			return eb;
 		}
 		num_copies = btrfs_num_copies(&root->fs_info->mapping_tree,
 					      eb->start, eb->len);
 		if (num_copies == 1) {
-printk("reading %Lu failed only one copy\n", eb->start);
 			break;
 		}
 		mirror_num++;
 		if (mirror_num > num_copies) {
-printk("bailing at mirror %d of %d\n", mirror_num, num_copies);
 			break;
 		}
 	}
@@ -186,7 +210,7 @@ int write_tree_block(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 
 	if (check_tree_block(root, eb))
 		BUG();
-	if (!btrfs_buffer_uptodate(eb))
+	if (!btrfs_buffer_uptodate(eb, trans->transid))
 		BUG();
 
 	btrfs_set_header_flag(eb, BTRFS_HEADER_FLAG_WRITTEN);
@@ -773,9 +797,16 @@ void btrfs_mark_buffer_dirty(struct extent_buffer *eb)
 	set_extent_buffer_dirty(eb);
 }
 
-int btrfs_buffer_uptodate(struct extent_buffer *eb)
+int btrfs_buffer_uptodate(struct extent_buffer *buf, u64 parent_transid)
 {
-	return extent_buffer_uptodate(eb);
+	int ret;
+
+	ret = extent_buffer_uptodate(buf);
+	if (!ret)
+		return ret;
+
+	ret = verify_parent_transid(buf->tree, buf, parent_transid);
+	return !ret;
 }
 
 int btrfs_set_buffer_uptodate(struct extent_buffer *eb)

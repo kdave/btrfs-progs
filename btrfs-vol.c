@@ -105,7 +105,10 @@ int main(int ac, char **av)
 		print_usage();
 	mnt = av[optind];
 
-	if (device) {
+	if (device && strcmp(device, "missing") == 0 &&
+	    cmd == BTRFS_IOC_RM_DEV) {
+		fprintf(stderr, "removing missing devices from %s\n", mnt);
+	} else if (device) {
 		devfd = open(device, O_RDWR);
 		if (!devfd) {
 			fprintf(stderr, "Unable to open device %s\n", device);
