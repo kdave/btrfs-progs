@@ -51,6 +51,7 @@ void print_usage(void)
 	printf("\t-r [+-]size[gkm] resize the FS\n");
 	printf("\t-A device scans the device for a Btrfs filesystem\n");
 	printf("\t-a scans all devices for Btrfs filesystems\n");
+	printf("\t-c forces a single FS sync\n");
 	exit(1);
 }
 
@@ -115,6 +116,8 @@ int main(int ac, char **av)
 				exit(1);
 			}
 			command = BTRFS_IOC_RESIZE;
+		} else if (strcmp(av[i], "-c") == 0) {
+			command = BTRFS_IOC_SYNC;
 		}
 	}
 	if (command == 0) {
