@@ -50,7 +50,7 @@ void print_usage(void)
 	printf("\t-s snap_name tree_root creates a new subvolume\n");
 	printf("\t-r [+-]size[gkm] resize the FS\n");
 	printf("\t-A device scans the device for a Btrfs filesystem\n");
-	printf("\t-a scans all devices for a Btrfs filesystems\n");
+	printf("\t-a scans all devices for Btrfs filesystems\n");
 	exit(1);
 }
 
@@ -119,6 +119,7 @@ int main(int ac, char **av)
 	}
 	if (command == 0) {
 		fprintf(stderr, "no valid commands given\n");
+		print_usage();
 		exit(1);
 	}
 	fname = av[ac - 1];
@@ -149,6 +150,10 @@ int main(int ac, char **av)
 	else
 		args.name[0] = '\0';
 	ret = ioctl(fd, command, &args);
+	if (ret < 0) {
+		perror("ioctl:");
+		exit(1);
+	}
 	printf("ioctl returns %d\n", ret);
 	return 0;
 }
