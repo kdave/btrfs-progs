@@ -561,7 +561,7 @@ int btrfs_make_root_dir(struct btrfs_trans_handle *trans,
 	if (ret)
 		goto error;
 
-	ret = btrfs_insert_inode_ref(trans, root, "..", 2, objectid, objectid);
+	ret = btrfs_insert_inode_ref(trans, root, "..", 2, objectid, objectid, 0);
 	if (ret)
 		goto error;
 

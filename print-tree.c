@@ -61,14 +61,16 @@ static int print_inode_ref_item(struct extent_buffer *eb, struct btrfs_item *ite
 	u32 cur = 0;
 	u32 len;
 	u32 name_len;
+	u64 index;
 	char namebuf[BTRFS_NAME_LEN];
 	total = btrfs_item_size(eb, item);
 	while(cur < total) {
 		name_len = btrfs_inode_ref_name_len(eb, ref);
+		index = btrfs_inode_ref_index(eb, ref);
 		len = (name_len <= sizeof(namebuf))? name_len: sizeof(namebuf);
 		read_extent_buffer(eb, namebuf, (unsigned long)(ref + 1), len);
-		printf("\t\tinode ref namelen %u name: %.*s\n",
-		       name_len, len, namebuf);
+		printf("\t\tinode ref index %llu namelen %u name: %.*s\n",
+		       index, name_len, len, namebuf);
 		len = sizeof(*ref) + name_len;
 		ref = (struct btrfs_inode_ref *)((char *)ref + len);
 		cur += len;

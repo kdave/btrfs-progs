@@ -106,7 +106,7 @@ out:
 int btrfs_insert_inode_ref(struct btrfs_trans_handle *trans,
 			   struct btrfs_root *root,
 			   const char *name, int name_len,
-			   u64 inode_objectid, u64 ref_objectid)
+			   u64 inode_objectid, u64 ref_objectid, u64 index)
 {
 	struct btrfs_path *path;
 	struct btrfs_key key;
@@ -138,6 +138,7 @@ int btrfs_insert_inode_ref(struct btrfs_trans_handle *trans,
 				     struct btrfs_inode_ref);
 		ref = (struct btrfs_inode_ref *)((unsigned long)ref + old_size);
 		btrfs_set_inode_ref_name_len(path->nodes[0], ref, name_len);
+		btrfs_set_inode_ref_index(path->nodes[0], ref, index);
 		ptr = (unsigned long)(ref + 1);
 		ret = 0;
 	} else if (ret < 0) {
@@ -146,6 +147,7 @@ int btrfs_insert_inode_ref(struct btrfs_trans_handle *trans,
 		ref = btrfs_item_ptr(path->nodes[0], path->slots[0],
 				     struct btrfs_inode_ref);
 		btrfs_set_inode_ref_name_len(path->nodes[0], ref, name_len);
+		btrfs_set_inode_ref_index(path->nodes[0], ref, index);
 		ptr = (unsigned long)(ref + 1);
 	}
 	write_extent_buffer(path->nodes[0], name, ptr, name_len);

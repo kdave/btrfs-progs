@@ -349,6 +349,7 @@ struct btrfs_dev_extent {
 } __attribute__ ((__packed__));
 
 struct btrfs_inode_ref {
+	__le64 index;
 	__le16 name_len;
 	/* name goes here */
 } __attribute__ ((__packed__));
@@ -795,6 +796,7 @@ BTRFS_SETGET_STACK_FUNCS(block_group_flags,
 
 /* struct btrfs_inode_ref */
 BTRFS_SETGET_FUNCS(inode_ref_name_len, struct btrfs_inode_ref, name_len, 16);
+BTRFS_SETGET_FUNCS(inode_ref_index, struct btrfs_inode_ref, index, 64);
 
 /* struct btrfs_inode_item */
 BTRFS_SETGET_FUNCS(inode_generation, struct btrfs_inode_item, generation, 64);
@@ -1461,7 +1463,7 @@ int btrfs_find_highest_inode(struct btrfs_root *fs_root, u64 *objectid);
 int btrfs_insert_inode_ref(struct btrfs_trans_handle *trans,
 			   struct btrfs_root *root,
 			   const char *name, int name_len,
-			   u64 inode_objectid, u64 ref_objectid);
+			   u64 inode_objectid, u64 ref_objectid, u64 index);
 int btrfs_del_inode_ref(struct btrfs_trans_handle *trans,
 			   struct btrfs_root *root,
 			   const char *name, int name_len,

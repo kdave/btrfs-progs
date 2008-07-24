@@ -138,7 +138,7 @@ static int make_root_dir(int fd, const char *device_name) {
 
 	ret = btrfs_insert_inode_ref(trans, root->fs_info->tree_root,
 			     "default", 7, location.objectid,
-			     BTRFS_ROOT_TREE_DIR_OBJECTID);
+			     BTRFS_ROOT_TREE_DIR_OBJECTID, 0);
 	if (ret)
 		goto err;
 
