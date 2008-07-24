@@ -32,6 +32,7 @@
 #include "ctree.h"
 #include "transaction.h"
 #include "utils.h"
+#include "version.h"
 
 #ifdef __CHECKER__
 #define BLKGETSIZE64 0
@@ -52,6 +53,7 @@ void print_usage(void)
 	printf("\t-A device scans the device for a Btrfs filesystem\n");
 	printf("\t-a scans all devices for Btrfs filesystems\n");
 	printf("\t-c forces a single FS sync\n");
+	printf("%s\n", BTRFS_BUILD_VERSION);
 	exit(1);
 }
 
@@ -157,7 +159,15 @@ int main(int ac, char **av)
 		perror("ioctl:");
 		exit(1);
 	}
-	printf("ioctl returns %d\n", ret);
-	return 0;
+	if (ret == 0) {
+		printf("operation complete\n");
+	} else {
+		printf("ioctl failed with error %d\n", ret);
+	}
+	printf("%s\n", BTRFS_BUILD_VERSION);
+	if (ret)
+		exit(0);
+	else
+		exit(1);
 }
 

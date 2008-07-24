@@ -41,6 +41,7 @@
 #include "volumes.h"
 #include "transaction.h"
 #include "utils.h"
+#include "version.h"
 
 static u64 parse_size(char *s)
 {
@@ -247,6 +248,7 @@ static void print_usage(void)
 	fprintf(stderr, "\t -l --leafsize size of btree leaves\n");
 	fprintf(stderr, "\t -n --nodesize size of btree leaves\n");
 	fprintf(stderr, "\t -s --sectorsize min block allocation\n");
+	fprintf(stderr, "%s\n", BTRFS_BUILD_VERSION);
 	exit(1);
 }
 
@@ -467,6 +469,7 @@ raid_groups:
 	    label, first_file, nodesize, leafsize, sectorsize,
 	    pretty_sizes(btrfs_super_total_bytes(&root->fs_info->super_copy)));
 
+	printf("%s\n", BTRFS_BUILD_VERSION);
 	btrfs_commit_transaction(trans, root);
 	ret = close_ctree(root);
 	BUG_ON(ret);

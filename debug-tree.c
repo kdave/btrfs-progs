@@ -26,10 +26,12 @@
 #include "disk-io.h"
 #include "print-tree.h"
 #include "transaction.h"
+#include "version.h"
 
 static int print_usage(void)
 {
 	fprintf(stderr, "usage: debug-tree [ -e ] device\n");
+	fprintf(stderr, "%s\n", BTRFS_BUILD_VERSION);
 	exit(1);
 }
 
@@ -212,5 +214,6 @@ int main(int ac, char **av)
 	uuidbuf[36] = '\0';
 	uuid_unparse(root->fs_info->super_copy.fsid, uuidbuf);
 	printf("uuid %s\n", uuidbuf);
+	printf("%s\n", BTRFS_BUILD_VERSION);
 	return 0;
 }

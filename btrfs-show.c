@@ -36,6 +36,7 @@
 #include "transaction.h"
 #include "utils.h"
 #include "volumes.h"
+#include "version.h"
 
 static int uuid_search(struct btrfs_fs_devices *fs_devices, char *search)
 {
@@ -98,6 +99,7 @@ static void print_one_uuid(struct btrfs_fs_devices *fs_devices)
 static void print_usage(void)
 {
 	fprintf(stderr, "usage: btrfs-show [search label or device]\n");
+	fprintf(stderr, "%s\n", BTRFS_BUILD_VERSION);
 	exit(1);
 }
 
@@ -143,6 +145,7 @@ int main(int ac, char **av)
 			continue;
 		print_one_uuid(fs_devices);
 	}
+	printf("%s\n", BTRFS_BUILD_VERSION);
 	return 0;
 }
 

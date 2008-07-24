@@ -27,6 +27,7 @@
 #include "print-tree.h"
 #include "transaction.h"
 #include "list.h"
+#include "version.h"
 
 static u64 bytes_used = 0;
 static u64 total_csum_bytes = 0;
@@ -719,6 +720,7 @@ int check_extent_refs(struct btrfs_root *root,
 
 void print_usage(void) {
 	fprintf(stderr, "usage: btrfsck dev\n");
+	fprintf(stderr, "%s\n", BTRFS_BUILD_VERSION);
 	exit(1);
 }
 
@@ -821,5 +823,6 @@ int main(int ac, char **av) {
 	printf("file data blocks allocated: %llu\n referenced %llu\n",
 		(unsigned long long)data_bytes_allocated,
 		(unsigned long long)data_bytes_referenced);
+	printf("%s\n", BTRFS_BUILD_VERSION);
 	return ret;
 }

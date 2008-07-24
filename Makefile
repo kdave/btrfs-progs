@@ -29,7 +29,10 @@ endif
 	$(CC) $(DEPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c $<
 
 
-all: $(progs)
+all: version $(progs)
+
+version:
+	bash version.sh
 
 btrfsctl: $(objects) btrfsctl.o
 	gcc $(CFLAGS) -o btrfsctl btrfsctl.o $(objects) $(LDFLAGS) $(LIBS)
