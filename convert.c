@@ -955,29 +955,24 @@ static int copy_inode_item(struct btrfs_inode_item *dst,
 static int copy_single_inode(struct btrfs_trans_handle *trans,
 			     struct btrfs_root *root, u64 objectid,
 			     ext2_filsys ext2_fs, ext2_ino_t ext2_ino,
+			     struct ext2_inode *ext2_inode,
 			     int datacsum, int packing, int noxattr)
 {
 	int ret;
-	errcode_t err;
-	struct ext2_inode ext2_inode;
 	struct btrfs_key inode_key;
 	struct btrfs_inode_item btrfs_inode;
 
 	if (ext2_inode->i_links_count == 0)
 		return 0;
 
-	err = ext2fs_read_inode(ext2_fs, ext2_ino, &ext2_inode);
-	if (err)
-		goto error;
-
-	copy_inode_item(&btrfs_inode, &ext2_inode);
-	if (!datacsum && S_ISREG(ext2_inode.i_mode)) {
+	copy_inode_item(&btrfs_inode, ext2_inode);
+	if (!datacsum && S_ISREG(ext2_inode->i_mode)) {
 		u32 flags = btrfs_stack_inode_flags(&btrfs_inode) |
 			    BTRFS_INODE_NODATASUM;
 		btrfs_set_stack_inode_flags(&btrfs_inode, flags);
 	}
 
-	switch (ext2_inode.i_mode & S_IFMT) {
+	switch (ext2_inode->i_mode & S_IFMT) {
 	case S_IFREG:
 		ret = create_file_extents(trans, root, objectid, &btrfs_inode,
 					ext2_fs, ext2_ino, datacsum, packing);
@@ -988,7 +983,7 @@ static int copy_single_inode(struct btrfs_trans_handle *trans,
 		break;
 	case S_IFLNK:
 		ret = create_symbol_link(trans, root, objectid, &btrfs_inode,
-					 ext2_fs, ext2_ino, &ext2_inode);
+					 ext2_fs, ext2_ino, ext2_inode);
 		break;
 	default:
 		ret = 0;
@@ -1008,9 +1003,6 @@ static int copy_single_inode(struct btrfs_trans_handle *trans,
 	btrfs_set_key_type(&inode_key, BTRFS_INODE_ITEM_KEY);
 	ret = btrfs_insert_inode(trans, root, objectid, &btrfs_inode);
 	return ret;
-error:
-	fprintf(stderr, "ext2fs_read_inode: %s\n", error_message(err));
-	return -1;
 }
 
 static int copy_disk_extent(struct btrfs_root *root, u64 dst_bytenr,
@@ -1043,6 +1035,9 @@ static int copy_inodes(struct btrfs_root *root, ext2_filsys ext2_fs,
 		       int datacsum, int packing, int noxattr)
 {
 	int ret;
+	errcode_t err;
+	ext2_inode_scan ext2_scan;
+	struct ext2_inode ext2_inode;
 	ext2_ino_t ext2_ino;
 	u64 objectid;
 	struct btrfs_trans_handle *trans;
@@ -1050,27 +1045,37 @@ static int copy_inodes(struct btrfs_root *root, ext2_filsys ext2_fs,
 	trans = btrfs_start_transaction(root, 1);
 	if (!trans)
 		return -ENOMEM;
-	ext2_ino = ext2_fs->inode_map->start;
-	for (; ext2_ino <= ext2_fs->inode_map->end; ext2_ino++) {
-		if (ext2fs_fast_test_inode_bitmap(ext2_fs->inode_map,
-						  ext2_ino)) {
-			/* skip special inode in ext2fs */
-			if (ext2_ino < EXT2_GOOD_OLD_FIRST_INO &&
-			    ext2_ino != EXT2_ROOT_INO)
-				continue;
-			objectid = ext2_ino + INO_OFFSET;
-			ret = copy_single_inode(trans, root,
-						objectid, ext2_fs, ext2_ino,
-						datacsum, packing, noxattr);
-			if (ret)
-				return ret;
-		}
+	err = ext2fs_open_inode_scan(ext2_fs, 0, &ext2_scan);
+	if (err) {
+		fprintf(stderr, "ext2fs_open_inode_scan: %s\n", error_message(err));
+		return -1;
+	}
+	while (!(err = ext2fs_get_next_inode(ext2_scan, &ext2_ino,
+					     &ext2_inode))) {
+		/* no more inodes */
+		if (ext2_ino == 0)
+			break;
+		/* skip special inode in ext2fs */
+		if (ext2_ino < EXT2_GOOD_OLD_FIRST_INO &&
+		    ext2_ino != EXT2_ROOT_INO)
+			continue;
+		objectid = ext2_ino + INO_OFFSET;
+		ret = copy_single_inode(trans, root,
+					objectid, ext2_fs, ext2_ino,
+					&ext2_inode, datacsum, packing,
+					noxattr);
+		if (ret)
+			return ret;
 		if (trans->blocks_used >= 4096) {
 			ret = btrfs_commit_transaction(trans, root);
 			BUG_ON(ret);
 			trans = btrfs_start_transaction(root, 1);
 			BUG_ON(!trans);
 		}
+	}
+	if (err) {
+		fprintf(stderr, "ext2fs_get_next_inode: %s\n", error_message(err));
+		return -1;
 	}
 	ret = btrfs_commit_transaction(trans, root);
 	BUG_ON(ret);
