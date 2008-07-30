@@ -188,6 +188,7 @@ struct dir_iterate_data {
 	struct btrfs_root *root;
 	struct btrfs_inode_item *inode;
 	u64 objectid;
+	u64 index_cnt;
 	u64 parent;
 	int errcode;
 };
@@ -242,7 +243,8 @@ static int dir_iterate_proc(ext2_ino_t dir, int entry,
 		goto fail;
 	ret = btrfs_insert_inode_ref(idata->trans, idata->root,
 				     dirent->name, dirent->name_len,
-				     objectid, idata->objectid);
+				     objectid, idata->objectid,
+				     idata->index_cnt++);
 	if (ret)
 		goto fail;
 	inode_size = btrfs_stack_inode_size(idata->inode) +
@@ -266,6 +268,7 @@ static int create_dir_entries(struct btrfs_trans_handle *trans,
 		.root		= root,
 		.inode		= btrfs_inode,
 		.objectid	= objectid,
+		.index_cnt	= 2,
 		.parent		= 0,
 		.errcode	= 0,
 	};
@@ -277,7 +280,7 @@ static int create_dir_entries(struct btrfs_trans_handle *trans,
 	ret = data.errcode;
 	if (ret == 0 && data.parent == objectid) {
 		ret = btrfs_insert_inode_ref(trans, root, "..", 2,
-					     objectid, objectid);
+					     objectid, objectid, 0);
 	}
 	return ret;
 error:
@@ -960,15 +963,13 @@ static int copy_single_inode(struct btrfs_trans_handle *trans,
 	struct btrfs_key inode_key;
 	struct btrfs_inode_item btrfs_inode;
 
+	if (ext2_inode->i_links_count == 0)
+		return 0;
+
 	err = ext2fs_read_inode(ext2_fs, ext2_ino, &ext2_inode);
 	if (err)
 		goto error;
 
-	if (!ext2_inode.i_links_count &&
-	    (!ext2_inode.i_mode || ext2_inode.i_dtime)) {
-		printf("skip inode %u\n", ext2_ino);
-		return 0;
-	}
 	copy_inode_item(&btrfs_inode, &ext2_inode);
 	if (!datacsum && S_ISREG(ext2_inode.i_mode)) {
 		u32 flags = btrfs_stack_inode_flags(&btrfs_inode) |
@@ -1308,7 +1309,7 @@ next:
 		goto fail;
 	ret = btrfs_insert_inode_ref(trans, root, name, strlen(name),
 				     objectid,
-				     btrfs_root_dirid(&root->root_item));
+				     btrfs_root_dirid(&root->root_item), 0);
 	if (ret)
 		goto fail;
 	location.objectid = btrfs_root_dirid(&root->root_item);
@@ -1373,7 +1374,8 @@ struct btrfs_root *create_subvol(struct btrfs_root *root, const char *name)
 		goto fail;
 	ret = btrfs_insert_inode_ref(trans, tree_root, name, strlen(name),
 				     objectid,
-				     btrfs_super_root_dir(&fs_info->super_copy));
+				     btrfs_super_root_dir(&fs_info->super_copy),
+				     0);
 	if (ret)
 		goto fail;
 	ret = btrfs_commit_transaction(trans, root);
@@ -1606,7 +1608,7 @@ static int init_btrfs(struct btrfs_root *root)
 		goto err;
 	ret = btrfs_insert_inode_ref(trans, fs_info->tree_root, "default", 7,
 				location.objectid,
-				btrfs_super_root_dir(&fs_info->super_copy));
+				btrfs_super_root_dir(&fs_info->super_copy), 0);
 	if (ret)
 		goto err;
 	btrfs_set_root_dirid(&fs_info->fs_root->root_item,
