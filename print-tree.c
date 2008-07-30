@@ -183,6 +183,9 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 			di = btrfs_item_ptr(l, i, struct btrfs_dir_item);
 			print_dir_item(l, item, di);
 			break;
+		case BTRFS_ORPHAN_ITEM_KEY:
+			printf("\t\torphan item\n");
+			break;
 		case BTRFS_ROOT_ITEM_KEY:
 			ri = btrfs_item_ptr(l, i, struct btrfs_root_item);
 			read_extent_buffer(l, &root_item, (unsigned long)ri, sizeof(root_item));

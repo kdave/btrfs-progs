@@ -55,6 +55,9 @@ struct btrfs_trans_handle;
 /* directory objectid inside the root tree */
 #define BTRFS_ROOT_TREE_DIR_OBJECTID 6ULL
 
+/* oprhan objectid for tracking unlinked/truncated files */
+#define BTRFS_ORPHAN_OBJECTID -5ULL
+
 /*
  * All files have objectids higher than this.
  */
@@ -564,6 +567,7 @@ struct btrfs_root {
 #define BTRFS_INODE_ITEM_KEY		1
 #define BTRFS_INODE_REF_KEY		2
 #define BTRFS_XATTR_ITEM_KEY		8
+#define BTRFS_ORPHAN_ITEM_KEY		9
 
 /* reserve 3-15 close to the inode for later flexibility */
 
