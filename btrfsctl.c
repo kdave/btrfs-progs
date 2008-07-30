@@ -75,7 +75,7 @@ int main(int ac, char **av)
 		btrfs_scan_one_dir("/dev", 1);
 		exit(0);
 	}
-	for (i = 1; i < ac - 1; i++) {
+	for (i = 1; i < ac; i++) {
 		if (strcmp(av[i], "-s") == 0) {
 			if (i + 1 >= ac - 1) {
 				fprintf(stderr, "-s requires an arg");
