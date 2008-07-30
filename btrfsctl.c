@@ -44,15 +44,16 @@ static inline int ioctl(int fd, int define, void *arg) { return 0; }
 
 void print_usage(void)
 {
-	printf("usage: btrfsctl [ -s name ] [-d] [-r size] file_or_dir\n");
-	printf("\t-d filename defragments one file\n");
-	printf("\t-d directory defragments the entire Btree\n");
-	printf("\t-s snap_name existing_subvol creates a new snapshot\n");
-	printf("\t-s snap_name tree_root creates a new subvolume\n");
-	printf("\t-r [+-]size[gkm] resize the FS\n");
-	printf("\t-A device scans the device for a Btrfs filesystem\n");
-	printf("\t-a scans all devices for Btrfs filesystems\n");
-	printf("\t-c forces a single FS sync\n");
+	printf("usage: btrfsctl [ -d file|dir] [ -s snap_name subvol|tree ]\n");
+	printf("                [-r size] [-A device] [-a] [-c]\n");
+	printf("\t-d filename: defragments one file\n");
+	printf("\t-d directory: defragments the entire Btree\n");
+	printf("\t-s snap_name: existing_subvol creates a new snapshot\n");
+	printf("\t-s snap_name: tree_root creates a new subvolume\n");
+	printf("\t-r [+-]size[gkm]: resize the FS by size amount\n");
+	printf("\t-A device: scans the device file for a Btrfs filesystem\n");
+	printf("\t-a: scans all devices for Btrfs filesystems\n");
+	printf("\t-c: forces a single FS sync\n");
 	printf("%s\n", BTRFS_BUILD_VERSION);
 	exit(1);
 }
