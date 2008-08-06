@@ -9,7 +9,7 @@
 v="Btrfs v0.16"
 
 which hg > /dev/null
-if [ $? == 0 ]; then
+if [ $? == 0 -a -d .hg ]; then
 	last=$(hg tags | grep -m1 -o '^v[0-9.]\+')
 	 
 	# now check if the repo has commits since then...
