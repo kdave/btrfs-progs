@@ -27,7 +27,7 @@
 
 struct btrfs_root;
 struct btrfs_trans_handle;
-#define BTRFS_MAGIC "_B6RfS_M"
+#define BTRFS_MAGIC "_B7RfS_M"
 
 #define BTRFS_MAX_LEVEL 8
 
