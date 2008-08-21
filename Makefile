@@ -2,7 +2,7 @@ CC=gcc
 AM_CFLAGS = -Wall -fno-strict-aliasing -D_FILE_OFFSET_BITS=64 -D_FORTIFY_SOURCE=2
 CFLAGS = -g -Werror -Os
 objects = ctree.o disk-io.o radix-tree.o extent-tree.o print-tree.o \
-	  root-tree.o dir-item.o hash.o file-item.o inode-item.o \
+	  root-tree.o dir-item.o file-item.o inode-item.o \
 	  inode-map.o crc32c.o rbtree.o extent-cache.o extent_io.o \
 	  volumes.o utils.o
 #
