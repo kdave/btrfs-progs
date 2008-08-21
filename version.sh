@@ -8,7 +8,23 @@
  
 v="Btrfs v0.16"
 
-which hg > /dev/null
+which git &> /dev/null
+if [ $? == 0 -a -d .git ]; then
+    if head=`git rev-parse --verify HEAD 2>/dev/null`; then
+        if tag=`git describe --tags 2>/dev/null`; then
+            v="$tag"
+        fi
+
+        # Are there uncommitted changes?
+        git update-index --refresh --unmerged > /dev/null
+        if git diff-index --name-only HEAD | grep -v "^scripts/package" \
+            | read dummy; then
+            v="$v"-dirty
+        fi
+    fi
+fi
+
+which hg &> /dev/null
 if [ $? == 0 -a -d .hg ]; then
 	last=$(hg tags | grep -m1 -o '^v[0-9.]\+')
 	 
