@@ -27,7 +27,7 @@
 
 struct btrfs_root;
 struct btrfs_trans_handle;
-#define BTRFS_MAGIC "_B7RfS_M"
+#define BTRFS_MAGIC "_B8RfS_M"
 
 #define BTRFS_MAX_LEVEL 8
 
@@ -57,6 +57,9 @@ struct btrfs_trans_handle;
 
 /* oprhan objectid for tracking unlinked/truncated files */
 #define BTRFS_ORPHAN_OBJECTID -5ULL
+
+/* does write ahead logging to speed up fsyncs */
+#define BTRFS_TREE_LOG_OBJECTID -6ULL
 
 /*
  * All files have objectids higher than this.
@@ -256,6 +259,7 @@ struct btrfs_super_block {
 	__le64 generation;
 	__le64 root;
 	__le64 chunk_root;
+	__le64 log_root;
 	__le64 total_bytes;
 	__le64 bytes_used;
 	__le64 root_dir_objectid;
@@ -267,6 +271,7 @@ struct btrfs_super_block {
 	__le32 sys_chunk_array_size;
 	u8 root_level;
 	u8 chunk_root_level;
+	u8 log_root_level;
 	struct btrfs_dev_item dev_item;
 	char label[BTRFS_LABEL_SIZE];
 	u8 sys_chunk_array[BTRFS_SYSTEM_CHUNK_ARRAY_SIZE];
@@ -367,7 +372,10 @@ struct btrfs_timespec {
  * make a new item type
  */
 struct btrfs_inode_item {
+	/* nfs style generation number */
 	__le64 generation;
+	/* transid that last touched this inode */
+	__le64 transid;
 	__le64 size;
 	__le64 nblocks;
 	__le64 block_group;
@@ -386,6 +394,7 @@ struct btrfs_inode_item {
 
 struct btrfs_dir_item {
 	struct btrfs_disk_key location;
+	__le64 transid;
 	__le16 data_len;
 	__le16 name_len;
 	u8 type;
@@ -485,6 +494,9 @@ struct btrfs_fs_info {
 	struct btrfs_root *tree_root;
 	struct btrfs_root *chunk_root;
 	struct btrfs_root *dev_root;
+
+	/* the log root tree is a directory of all the other log roots */
+	struct btrfs_root *log_root_tree;
 
 	struct extent_io_tree extent_cache;
 	struct extent_io_tree free_space_cache;
@@ -804,6 +816,7 @@ BTRFS_SETGET_FUNCS(inode_ref_index, struct btrfs_inode_ref, index, 64);
 
 /* struct btrfs_inode_item */
 BTRFS_SETGET_FUNCS(inode_generation, struct btrfs_inode_item, generation, 64);
+BTRFS_SETGET_FUNCS(inode_transid, struct btrfs_inode_item, transid, 64);
 BTRFS_SETGET_FUNCS(inode_size, struct btrfs_inode_item, size, 64);
 BTRFS_SETGET_FUNCS(inode_nblocks, struct btrfs_inode_item, nblocks, 64);
 BTRFS_SETGET_FUNCS(inode_block_group, struct btrfs_inode_item, block_group, 64);
@@ -1029,6 +1042,7 @@ static inline void btrfs_set_item_key(struct extent_buffer *eb,
 BTRFS_SETGET_FUNCS(dir_data_len, struct btrfs_dir_item, data_len, 16);
 BTRFS_SETGET_FUNCS(dir_type, struct btrfs_dir_item, type, 8);
 BTRFS_SETGET_FUNCS(dir_name_len, struct btrfs_dir_item, name_len, 16);
+BTRFS_SETGET_FUNCS(dir_transid, struct btrfs_dir_item, transid, 64);
 
 static inline void btrfs_dir_item_key(struct extent_buffer *eb,
 				      struct btrfs_dir_item *item,
@@ -1199,7 +1213,11 @@ BTRFS_SETGET_STACK_FUNCS(super_root_level, struct btrfs_super_block,
 BTRFS_SETGET_STACK_FUNCS(super_chunk_root, struct btrfs_super_block,
 			 chunk_root, 64);
 BTRFS_SETGET_STACK_FUNCS(super_chunk_root_level, struct btrfs_super_block,
-			 chunk_root_level, 64);
+			 chunk_root_level, 8);
+BTRFS_SETGET_STACK_FUNCS(super_log_root, struct btrfs_super_block,
+			 log_root, 64);
+BTRFS_SETGET_STACK_FUNCS(super_log_root_level, struct btrfs_super_block,
+			 log_root_level, 8);
 BTRFS_SETGET_STACK_FUNCS(super_total_bytes, struct btrfs_super_block,
 			 total_bytes, 64);
 BTRFS_SETGET_STACK_FUNCS(super_bytes_used, struct btrfs_super_block,
