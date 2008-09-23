@@ -58,13 +58,14 @@ static void print_extent_leaf(struct btrfs_root *root, struct extent_buffer *l)
 		case BTRFS_EXTENT_REF_KEY:
 			ref = btrfs_item_ptr(l, i, struct btrfs_extent_ref);
 			printf("%llu %llu extent back ref root %llu gen %llu "
-			       "owner %llu offset %llu\n",
+			       "owner %llu offset %llu num_refs %lu\n",
 			       (unsigned long long)last,
 			       (unsigned long long)last_len,
 			       (unsigned long long)btrfs_ref_root(l, ref),
 			       (unsigned long long)btrfs_ref_generation(l, ref),
 			       (unsigned long long)btrfs_ref_objectid(l, ref),
-			       (unsigned long long)btrfs_ref_offset(l, ref));
+			       (unsigned long long)btrfs_ref_offset(l, ref),
+			       (unsigned long)btrfs_ref_num_refs(l, ref));
 			break;
 		};
 		fflush(stdout);

@@ -317,6 +317,8 @@ static int record_file_extent(struct btrfs_trans_handle *trans,
 	int ret;
 	struct btrfs_fs_info *info = root->fs_info;
 	struct btrfs_root *extent_root = info->extent_root;
+	struct extent_buffer *leaf;
+	struct btrfs_file_extent_item *fi;
 	struct btrfs_key ins_key;
 	struct btrfs_path path;
 	struct btrfs_extent_item extent_item;
@@ -324,13 +326,15 @@ static int record_file_extent(struct btrfs_trans_handle *trans,
 	u64 nblocks;
 	u64 bytes_used;
 
-	ret = btrfs_insert_file_extent(trans, root, objectid, file_pos,
-				       disk_bytenr, num_bytes, num_bytes);
-	if (ret || disk_bytenr == 0)
+	if (disk_bytenr == 0) {
+		ret = btrfs_insert_file_extent(trans, root, objectid,
+						file_pos, disk_bytenr,
+						num_bytes, num_bytes);
 		return ret;
+	}
 
-	nblocks = btrfs_stack_inode_nblocks(inode) + num_bytes / 512;
-	btrfs_set_stack_inode_nblocks(inode, nblocks);
+	btrfs_init_path(&path);
+
 	if (checksum) {
 		u64 offset;
 		char *buffer;
@@ -355,36 +359,53 @@ static int record_file_extent(struct btrfs_trans_handle *trans,
 			goto fail;
 	}
 
+	ins_key.objectid = objectid;
+	ins_key.offset = file_pos;
+	btrfs_set_key_type(&ins_key, BTRFS_EXTENT_DATA_KEY);
+	ret = btrfs_insert_empty_item(trans, root, &path, &ins_key,
+				      sizeof(*fi));
+	if (ret)
+		goto fail;
+	leaf = path.nodes[0];
+	fi = btrfs_item_ptr(leaf, path.slots[0],
+			    struct btrfs_file_extent_item);
+	btrfs_set_file_extent_generation(leaf, fi, trans->transid);
+	btrfs_set_file_extent_type(leaf, fi, BTRFS_FILE_EXTENT_REG);
+	btrfs_set_file_extent_disk_bytenr(leaf, fi, disk_bytenr);
+	btrfs_set_file_extent_disk_num_bytes(leaf, fi, num_bytes);
+	btrfs_set_file_extent_offset(leaf, fi, 0);
+	btrfs_set_file_extent_num_bytes(leaf, fi, num_bytes);
+	btrfs_mark_buffer_dirty(leaf);
+
+	nblocks = btrfs_stack_inode_nblocks(inode) + num_bytes / 512;
+	btrfs_set_stack_inode_nblocks(inode, nblocks);
+
 	bytes_used = btrfs_root_used(&root->root_item);
 	btrfs_set_root_used(&root->root_item, bytes_used + num_bytes);
+
 	ins_key.objectid = disk_bytenr;
 	ins_key.offset = num_bytes;
 	btrfs_set_key_type(&ins_key, BTRFS_EXTENT_ITEM_KEY);
-	btrfs_set_stack_extent_refs(&extent_item, 1);
+	btrfs_set_stack_extent_refs(&extent_item, 0);
 	ret = btrfs_insert_item(trans, extent_root, &ins_key,
 				&extent_item, sizeof(extent_item));
 	if (ret == 0) {
 		bytes_used = btrfs_super_bytes_used(&info->super_copy);
 		btrfs_set_super_bytes_used(&info->super_copy, bytes_used +
 					   num_bytes);
-		btrfs_init_path(&path);
-		ret = btrfs_insert_extent_backref(trans, extent_root, &path,
-					disk_bytenr, root->root_key.objectid,
-					trans->transid, objectid, file_pos);
-		if (ret)
-			goto fail;
-		ret = btrfs_update_block_group(trans, root, disk_bytenr,
-					       num_bytes, 1, 0);
-	} else if (ret == -EEXIST) {
-		ret = btrfs_inc_extent_ref(trans, root, disk_bytenr, num_bytes,
-					   root->root_key.objectid,
-					   trans->transid, objectid, file_pos);
+	} else if (ret != -EEXIST) {
+		goto fail;
 	}
+	btrfs_extent_post_op(trans, extent_root);
+
+	ret = btrfs_inc_extent_ref(trans, root, disk_bytenr, num_bytes,
+				   leaf->start, root->root_key.objectid,
+				   trans->transid, objectid, file_pos);
 	if (ret)
 		goto fail;
-	btrfs_extent_post_op(trans, extent_root);
-	return 0;
+	ret = 0;
 fail:
+	btrfs_release_path(root, &path);
 	return ret;
 }
 
@@ -1795,6 +1816,13 @@ static int relocate_one_reference(struct btrfs_trans_handle *trans,
 	ret = btrfs_del_item(trans, root, &path);
 	if (ret)
 		goto fail;
+
+	ret = btrfs_free_extent(trans, root, extent_start, extent_size,
+				leaf->start, root_owner, root_gen, objectid,
+				offset, 0);
+	if (ret)
+		goto fail;
+
 	btrfs_release_path(root, &path);
 
 	key.objectid = objectid;
@@ -1887,8 +1915,6 @@ static int relocate_one_reference(struct btrfs_trans_handle *trans,
 	btrfs_mark_buffer_dirty(leaf);
 	btrfs_release_path(root, &path);
 
-	ret = btrfs_free_extent(trans, root, extent_start, extent_size,
-				root_owner, root_gen, objectid, offset, 0);
 fail:
 	btrfs_release_path(root, &path);
 	return ret;

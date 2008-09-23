@@ -69,8 +69,8 @@ static u64 parse_size(char *s)
 	return atol(s) * mult;
 }
 
-static int make_root_dir(int fd, const char *device_name) {
-	struct btrfs_root *root;
+static int make_root_dir(struct btrfs_root *root)
+{
 	struct btrfs_trans_handle *trans;
 	struct btrfs_key location;
 	u64 bytes_used;
@@ -78,12 +78,6 @@ static int make_root_dir(int fd, const char *device_name) {
 	u64 chunk_size = 0;
 	int ret;
 
-	root = open_ctree_fd(fd, device_name, 0, O_RDWR);
-
-	if (!root) {
-		fprintf(stderr, "ctree init failed\n");
-		return -1;
-	}
 	trans = btrfs_start_transaction(root, 1);
 	bytes_used = btrfs_super_bytes_used(&root->fs_info->super_copy);
 
@@ -119,7 +113,6 @@ static int make_root_dir(int fd, const char *device_name) {
 				     chunk_start, chunk_size);
 	BUG_ON(ret);
 
-	// ret = btrfs_make_block_group(trans, root, 0, 1);
 	ret = btrfs_make_root_dir(trans, root->fs_info->tree_root,
 			      BTRFS_ROOT_TREE_DIR_OBJECTID);
 	if (ret)
@@ -143,7 +136,6 @@ static int make_root_dir(int fd, const char *device_name) {
 		goto err;
 
 	btrfs_commit_transaction(trans, root);
-	ret = close_ctree(root);
 err:
 	return ret;
 }
@@ -405,13 +397,15 @@ int main(int ac, char **av)
 		fprintf(stderr, "error during mkfs %d\n", ret);
 		exit(1);
 	}
-	ret = make_root_dir(fd, file);
+	root = open_ctree(file, 0, O_RDWR);
+	root->fs_info->alloc_start = alloc_start;
+
+	ret = make_root_dir(root);
 	if (ret) {
 		fprintf(stderr, "failed to setup the root directory\n");
 		exit(1);
 	}
-	root = open_ctree(file, 0, O_RDWR);
-	root->fs_info->alloc_start = alloc_start;
+
 	trans = btrfs_start_transaction(root, 1);
 
 	if (ac == 0)
@@ -463,6 +457,7 @@ int main(int ac, char **av)
 raid_groups:
 	ret = create_raid_groups(trans, root, data_profile,
 				 metadata_profile);
+	BUG_ON(ret);
 
 	printf("fs created label %s on %s\n\tnodesize %u leafsize %u "
 	    "sectorsize %u size %s\n",

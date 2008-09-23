@@ -74,9 +74,7 @@ int make_btrfs(int fd, const char *device, const char *label,
 	int ret;
 	u32 itemoff;
 	u32 nritems = 0;
-	u64 hash;
 	u64 first_free;
-	u64 ref_gen;
 	u64 ref_root;
 	u32 array_size;
 	u32 item_size;
@@ -213,15 +211,9 @@ int make_btrfs(int fd, const char *device, const char *label,
 
 		/* create extent ref */
 		ref_root = reference_root_table[i];
-		if (ref_root == BTRFS_FS_TREE_OBJECTID)
-			ref_gen = 1;
-		else
-			ref_gen = 0;
-
-		hash = btrfs_hash_extent_ref(ref_root, ref_gen, 0, 0);
 		itemoff = itemoff - sizeof(struct btrfs_extent_ref);
 		btrfs_set_disk_key_objectid(&disk_key, blocks[i]);
-		btrfs_set_disk_key_offset(&disk_key, hash);
+		btrfs_set_disk_key_offset(&disk_key, blocks[i]);
 		btrfs_set_disk_key_type(&disk_key, BTRFS_EXTENT_REF_KEY);
 		btrfs_set_item_key(buf, &disk_key, nritems);
 		btrfs_set_item_offset(buf, btrfs_item_nr(buf, nritems),
@@ -231,9 +223,10 @@ int make_btrfs(int fd, const char *device, const char *label,
 		extent_ref = btrfs_item_ptr(buf, nritems,
 					     struct btrfs_extent_ref);
 		btrfs_set_ref_root(buf, extent_ref, ref_root);
-		btrfs_set_ref_generation(buf, extent_ref, ref_gen);
+		btrfs_set_ref_generation(buf, extent_ref, 1);
 		btrfs_set_ref_objectid(buf, extent_ref, 0);
 		btrfs_set_ref_offset(buf, extent_ref, 0);
+		btrfs_set_ref_num_refs(buf, extent_ref, 1);
 		nritems++;
 	}
 	btrfs_set_header_bytenr(buf, blocks[2]);
