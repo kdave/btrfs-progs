@@ -232,6 +232,32 @@ static int create_raid_groups(struct btrfs_trans_handle *trans,
 	return 0;
 }
 
+static int create_data_reloc_tree(struct btrfs_trans_handle *trans,
+				  struct btrfs_root *root)
+{
+	struct btrfs_key location;
+	struct btrfs_root_item root_item;
+	struct extent_buffer *tmp;
+	u64 objectid = BTRFS_DATA_RELOC_TREE_OBJECTID;
+	int ret;
+
+	ret = btrfs_copy_root(trans, root, root->node, &tmp, objectid);
+	BUG_ON(ret);
+
+	memcpy(&root_item, &root->root_item, sizeof(root_item));
+	btrfs_set_root_bytenr(&root_item, tmp->start);
+	btrfs_set_root_level(&root_item, btrfs_header_level(tmp));
+	free_extent_buffer(tmp);
+
+	location.objectid = objectid;
+	location.type = BTRFS_ROOT_ITEM_KEY;
+	location.offset = trans->transid;
+	ret = btrfs_insert_root(trans, root->fs_info->tree_root,
+				&location, &root_item);
+	BUG_ON(ret);
+	return 0;
+}
+
 static void print_usage(void)
 {
 	fprintf(stderr, "usage: mkfs.btrfs [options] dev [ dev ... ]\n");
@@ -457,6 +483,9 @@ int main(int ac, char **av)
 raid_groups:
 	ret = create_raid_groups(trans, root, data_profile,
 				 metadata_profile);
+	BUG_ON(ret);
+
+	ret = create_data_reloc_tree(trans, root);
 	BUG_ON(ret);
 
 	printf("fs created label %s on %s\n\tnodesize %u leafsize %u "
