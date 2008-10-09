@@ -126,7 +126,7 @@ int make_btrfs(int fd, const char *device, const char *label,
 	btrfs_set_stack_inode_generation(inode_item, 1);
 	btrfs_set_stack_inode_size(inode_item, 3);
 	btrfs_set_stack_inode_nlink(inode_item, 1);
-	btrfs_set_stack_inode_nblocks(inode_item, 1);
+	btrfs_set_stack_inode_nbytes(inode_item, leafsize);
 	btrfs_set_stack_inode_mode(inode_item, S_IFDIR | 0755);
 	btrfs_set_root_refs(&root_item, 1);
 	btrfs_set_root_used(&root_item, leafsize);
@@ -543,7 +543,7 @@ int btrfs_make_root_dir(struct btrfs_trans_handle *trans,
 	btrfs_set_stack_inode_generation(&inode_item, trans->transid);
 	btrfs_set_stack_inode_size(&inode_item, 0);
 	btrfs_set_stack_inode_nlink(&inode_item, 1);
-	btrfs_set_stack_inode_nblocks(&inode_item, 1);
+	btrfs_set_stack_inode_nbytes(&inode_item, root->leafsize);
 	btrfs_set_stack_inode_mode(&inode_item, S_IFDIR | 0555);
 
 	if (root->fs_info->tree_root == root)
