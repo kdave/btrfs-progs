@@ -42,7 +42,6 @@ struct extent_backref {
 	u64 root;
 	u64 generation;
 	u64 owner;
-	u64 offset;
 	u32 num_refs;
 	u32 found_ref;
 	int found_extent_tree;
@@ -159,14 +158,13 @@ static int all_backpointers_checked(struct extent_record *rec, int print_errs)
 			if (!print_errs)
 				goto out;
 			fprintf(stderr, "Backref %llu parent %llu"
-				" [%llu %llu %llu %llu %lu]"
+				" [%llu %llu %llu %lu]"
 				" not found in extent tree\n",
 				(unsigned long long)rec->start,
 				(unsigned long long)back->parent,
 				(unsigned long long)back->root,
 				(unsigned long long)back->generation,
 				(unsigned long long)back->owner,
-				(unsigned long long)back->offset,
 				(unsigned long)back->num_refs);
 		}
 		if (!back->found_ref) {
@@ -174,14 +172,13 @@ static int all_backpointers_checked(struct extent_record *rec, int print_errs)
 			if (!print_errs)
 				goto out;
 			fprintf(stderr, "Backref %llu parent %llu"
-				" [%llu %llu %llu %llu %lu]"
+				" [%llu %llu %llu %lu]"
 				" not referenced\n",
 				(unsigned long long)rec->start,
 				(unsigned long long)back->parent,
 				(unsigned long long)back->root,
 				(unsigned long long)back->generation,
 				(unsigned long long)back->owner,
-				(unsigned long long)back->offset,
 				(unsigned long)back->num_refs);
 		}
 		if (back->found_ref != back->num_refs) {
@@ -277,14 +274,13 @@ static struct extent_backref *find_backref(struct extent_record *rec,
 
 static struct extent_backref *alloc_backref(struct extent_record *rec,
 					    u64 parent, u64 root, u64 gen,
-					    u64 owner, u64 owner_offset)
+					    u64 owner)
 {
 	struct extent_backref *ref = malloc(sizeof(*ref));
 	ref->parent = parent;
 	ref->root = root;
 	ref->generation = gen;
 	ref->owner = owner;
-	ref->offset = owner_offset;
 	ref->num_refs = 0;
 	ref->found_extent_tree = 0;
 	ref->found_ref = 0;
@@ -370,7 +366,7 @@ static int add_extent_rec(struct cache_tree *extent_cache,
 
 static int add_backref(struct cache_tree *extent_cache, u64 bytenr,
 		       u64 parent, u64 root, u64 gen, u64 owner,
-		       u64 owner_offset, u32 num_refs, int found_ref)
+		       u32 num_refs, int found_ref)
 {
 	struct extent_record *rec;
 	struct extent_backref *back;
@@ -390,21 +386,19 @@ static int add_backref(struct cache_tree *extent_cache, u64 bytenr,
 	}
 	back = find_backref(rec, parent, root, gen);
 	if (!back)
-		back = alloc_backref(rec, parent, root, gen, owner,
-				     owner_offset);
+		back = alloc_backref(rec, parent, root, gen, owner);
 
 	if (found_ref) {
 		if (back->found_ref > 0 &&
 		    back->owner < BTRFS_FIRST_FREE_OBJECTID) {
 			fprintf(stderr, "Extent back ref already exists "
 				"for %llu parent %llu root %llu gen %llu "
-				"owner %llu offset %llu num_refs %lu\n",
+				"owner %llu num_refs %lu\n",
 				(unsigned long long)parent,
 				(unsigned long long)bytenr,
 				(unsigned long long)root,
 				(unsigned long long)gen,
 				(unsigned long long)owner,
-				(unsigned long long)owner_offset,
 				(unsigned long)num_refs);
 		}
 		BUG_ON(num_refs != 1);
@@ -413,13 +407,12 @@ static int add_backref(struct cache_tree *extent_cache, u64 bytenr,
 		if (back->found_extent_tree) {
 			fprintf(stderr, "Extent back ref already exists "
 				"for %llu parent %llu root %llu gen %llu "
-				"owner %llu offset %llu num_refs %lu\n",
+				"owner %llu num_refs %lu\n",
 				(unsigned long long)parent,
 				(unsigned long long)bytenr,
 				(unsigned long long)root,
 				(unsigned long long)gen,
 				(unsigned long long)owner,
-				(unsigned long long)owner_offset,
 				(unsigned long)num_refs);
 		}
 		back->num_refs = num_refs;
@@ -620,7 +613,6 @@ static int run_next_block(struct btrfs_root *root,
 					btrfs_ref_root(buf, ref),
 					btrfs_ref_generation(buf, ref),
 					btrfs_ref_objectid(buf, ref),
-					btrfs_ref_offset(buf, ref),
 					btrfs_ref_num_refs(buf, ref), 0);
 				continue;
 			}
@@ -651,8 +643,7 @@ static int run_next_block(struct btrfs_root *root,
 				    buf->start,
 				    btrfs_header_owner(buf),
 				    btrfs_header_generation(buf),
-				    btrfs_disk_key_objectid(&disk_key),
-				    btrfs_disk_key_offset(&disk_key), 1, 1);
+				    btrfs_disk_key_objectid(&disk_key), 1, 1);
 			BUG_ON(ret);
 		}
 	} else {
@@ -671,7 +662,7 @@ static int run_next_block(struct btrfs_root *root,
 			add_backref(extent_cache, ptr, buf->start,
 				btrfs_header_owner(buf),
 				btrfs_header_generation(buf),
-				level - 1, 0, 1, 1);
+				level - 1, 1, 1);
 
 			if (level > 1) {
 				add_pending(nodes, seen, ptr, size);
@@ -705,7 +696,7 @@ static int add_root_to_pending(struct extent_buffer *buf,
 
 	add_backref(extent_cache, buf->start, buf->start, root_objectid,
 		    btrfs_header_generation(buf),
-		    btrfs_header_level(buf), 0, 1, 1);
+		    btrfs_header_level(buf), 1, 1);
 	return 0;
 }
 

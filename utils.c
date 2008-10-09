@@ -225,7 +225,6 @@ int make_btrfs(int fd, const char *device, const char *label,
 		btrfs_set_ref_root(buf, extent_ref, ref_root);
 		btrfs_set_ref_generation(buf, extent_ref, 1);
 		btrfs_set_ref_objectid(buf, extent_ref, 0);
-		btrfs_set_ref_offset(buf, extent_ref, 0);
 		btrfs_set_ref_num_refs(buf, extent_ref, 1);
 		nritems++;
 	}
