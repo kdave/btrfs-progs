@@ -228,16 +228,23 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 					    struct btrfs_file_extent_item);
 			if (btrfs_file_extent_type(l, fi) ==
 			    BTRFS_FILE_EXTENT_INLINE) {
-				printf("\t\tinline extent data size %u\n",
-			           btrfs_file_extent_inline_len(l, item));
+				printf("\t\tinline extent data size %u "
+				       "ram %llu compress %d\n",
+			          btrfs_file_extent_inline_len(l, item),
+				  (unsigned long long)
+				  btrfs_file_extent_ram_bytes(l, fi),
+				  btrfs_file_extent_compression(l, fi));
 				break;
 			}
 			printf("\t\textent data disk byte %llu nr %llu\n",
 			       (unsigned long long)btrfs_file_extent_disk_bytenr(l, fi),
 			       (unsigned long long)btrfs_file_extent_disk_num_bytes(l, fi));
-			printf("\t\textent data offset %llu nr %llu\n",
+			printf("\t\textent data offset %llu nr %llu ram %llu\n",
 			  (unsigned long long)btrfs_file_extent_offset(l, fi),
-			  (unsigned long long)btrfs_file_extent_num_bytes(l, fi));
+			  (unsigned long long)btrfs_file_extent_num_bytes(l, fi),
+			  (unsigned long long)btrfs_file_extent_ram_bytes(l, fi));
+			printf("\t\textent compression %d\n",
+			       btrfs_file_extent_compression(l, fi));
 			break;
 		case BTRFS_BLOCK_GROUP_ITEM_KEY:
 			bi = btrfs_item_ptr(l, i,

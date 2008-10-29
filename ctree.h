@@ -377,10 +377,18 @@ struct btrfs_timespec {
 	__le32 nsec;
 } __attribute__ ((__packed__));
 
-/*
- * there is no padding here on purpose.  If you want to extent the inode,
- * make a new item type
- */
+typedef enum {
+	BTRFS_COMPRESS_NONE = 0,
+	BTRFS_COMPRESS_ZLIB = 1,
+	BTRFS_COMPRESS_LAST = 2,
+} btrfs_compression_type;
+
+/* we don't understand any encryption methods right now */
+typedef enum {
+	BTRFS_ENCRYPTION_NONE = 0,
+	BTRFS_ENCRYPTION_LAST = 1,
+} btrfs_encryption_type;
+
 struct btrfs_inode_item {
 	/* nfs style generation number */
 	__le64 generation;
@@ -396,6 +404,7 @@ struct btrfs_inode_item {
 	__le64 rdev;
 	__le16 flags;
 	__le16 compat_flags;
+
 	struct btrfs_timespec atime;
 	struct btrfs_timespec ctime;
 	struct btrfs_timespec mtime;
@@ -427,8 +436,33 @@ struct btrfs_root_item {
 #define BTRFS_FILE_EXTENT_INLINE 1
 
 struct btrfs_file_extent_item {
+	/*
+	 * transaction id that created this extent
+	 */
 	__le64 generation;
+	/*
+	 * max number of bytes to hold this extent in ram
+	 * when we split a compressed extent we can't know how big
+	 * each of the resulting pieces will be.  So, this is
+	 * an upper limit on the size of the extent in ram instead of
+	 * an exact limit.
+	 */
+	__le64 ram_bytes;
+
+	/*
+	 * 32 bits for the various ways we might encode the data,
+	 * including compression and encryption.  If any of these
+	 * are set to something a given disk format doesn't understand
+	 * it is treated like an incompat flag for reading and writing,
+	 * but not for stat.
+	 */
+	u8 compression;
+	u8 encryption;
+	__le16 other_encoding; /* spare for later use */
+
+	/* are we inline data or a real extent? */
 	u8 type;
+
 	/*
 	 * disk space consumed by the extent, checksum blocks are included
 	 * in these numbers
@@ -447,6 +481,7 @@ struct btrfs_file_extent_item {
 	 * the logical number of file blocks (no csums included)
 	 */
 	__le64 num_bytes;
+
 } __attribute__ ((__packed__));
 
 struct btrfs_csum_item {
@@ -1284,6 +1319,14 @@ BTRFS_SETGET_FUNCS(file_extent_offset, struct btrfs_file_extent_item,
 		  offset, 64);
 BTRFS_SETGET_FUNCS(file_extent_num_bytes, struct btrfs_file_extent_item,
 		   num_bytes, 64);
+BTRFS_SETGET_FUNCS(file_extent_ram_bytes, struct btrfs_file_extent_item,
+		   ram_bytes, 64);
+BTRFS_SETGET_FUNCS(file_extent_compression, struct btrfs_file_extent_item,
+		   compression, 8);
+BTRFS_SETGET_FUNCS(file_extent_encryption, struct btrfs_file_extent_item,
+		   encryption, 8);
+BTRFS_SETGET_FUNCS(file_extent_other_encoding, struct btrfs_file_extent_item,
+		   other_encoding, 16);
 
 static inline u32 btrfs_level_size(struct btrfs_root *root, int level) {
 	if (level == 0)
