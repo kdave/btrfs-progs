@@ -274,6 +274,8 @@ static int update_cowonly_root(struct btrfs_trans_handle *trans,
 			break;
 		btrfs_set_root_bytenr(&root->root_item,
 				       root->node->start);
+		btrfs_set_root_generation(&root->root_item,
+					  trans->transid);
 		root->root_item.level = btrfs_header_level(root->node);
 		ret = btrfs_update_root(trans, tree_root,
 					&root->root_key,
@@ -289,6 +291,12 @@ static int commit_tree_roots(struct btrfs_trans_handle *trans,
 {
 	struct btrfs_root *root;
 	struct list_head *next;
+	struct extent_buffer *eb;
+
+	eb = fs_info->tree_root->node;
+	extent_buffer_get(eb);
+	btrfs_cow_block(trans, fs_info->tree_root, eb, NULL, 0, &eb);
+	free_extent_buffer(eb);
 
 	while(!list_empty(&fs_info->dirty_cowonly_roots)) {
 		next = fs_info->dirty_cowonly_roots.next;
@@ -345,6 +353,7 @@ int btrfs_commit_transaction(struct btrfs_trans_handle *trans,
 
 	root->root_key.offset = trans->transid;
 	btrfs_set_root_bytenr(&root->root_item, root->node->start);
+	btrfs_set_root_generation(&root->root_item, root->root_key.offset);
 	root->root_item.level = btrfs_header_level(root->node);
 	ret = btrfs_insert_root(trans, fs_info->tree_root,
 				&root->root_key, &root->root_item);
@@ -395,6 +404,7 @@ static int find_and_setup_root(struct btrfs_root *tree_root,
 {
 	int ret;
 	u32 blocksize;
+	u64 generation;
 
 	__setup_root(tree_root->nodesize, tree_root->leafsize,
 		     tree_root->sectorsize, tree_root->stripesize,
@@ -404,8 +414,9 @@ static int find_and_setup_root(struct btrfs_root *tree_root,
 	BUG_ON(ret);
 
 	blocksize = btrfs_level_size(root, btrfs_root_level(&root->root_item));
+	generation = btrfs_root_generation(&root->root_item);
 	root->node = read_tree_block(root, btrfs_root_bytenr(&root->root_item),
-				     blocksize, 0);
+				     blocksize, generation);
 	BUG_ON(!root->node);
 	return 0;
 }
@@ -428,6 +439,7 @@ struct btrfs_root *btrfs_read_fs_root(struct btrfs_fs_info *fs_info,
 	struct btrfs_root *tree_root = fs_info->tree_root;
 	struct btrfs_path *path;
 	struct extent_buffer *l;
+	u64 generation;
 	u32 blocksize;
 	int ret = 0;
 
@@ -470,9 +482,10 @@ out:
 		free(root);
 		return ERR_PTR(ret);
 	}
+	generation = btrfs_root_generation(&root->root_item);
 	blocksize = btrfs_level_size(root, btrfs_root_level(&root->root_item));
 	root->node = read_tree_block(root, btrfs_root_bytenr(&root->root_item),
-				     blocksize, 0);
+				     blocksize, generation);
 	BUG_ON(!root->node);
 insert:
 	root->ref_cows = 1;
@@ -506,6 +519,7 @@ struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
 	u32 leafsize;
 	u32 blocksize;
 	u32 stripesize;
+	u64 generation;
 	struct btrfs_root *root = malloc(sizeof(struct btrfs_root));
 	struct btrfs_root *tree_root = malloc(sizeof(struct btrfs_root));
 	struct btrfs_root *extent_root = malloc(sizeof(struct btrfs_root));
@@ -604,13 +618,14 @@ struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
 	BUG_ON(ret);
 	blocksize = btrfs_level_size(tree_root,
 				     btrfs_super_chunk_root_level(disk_super));
+	generation = btrfs_super_chunk_root_generation(disk_super);
 
 	__setup_root(nodesize, leafsize, sectorsize, stripesize,
 		     chunk_root, fs_info, BTRFS_CHUNK_TREE_OBJECTID);
 
 	chunk_root->node = read_tree_block(chunk_root,
 					   btrfs_super_chunk_root(disk_super),
-					   blocksize, 0);
+					   blocksize, generation);
 
 	BUG_ON(!chunk_root->node);
 
@@ -623,10 +638,11 @@ struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
 
 	blocksize = btrfs_level_size(tree_root,
 				     btrfs_super_root_level(disk_super));
+	generation = btrfs_super_generation(disk_super);
 
 	tree_root->node = read_tree_block(tree_root,
 					  btrfs_super_root(disk_super),
-					  blocksize, 0);
+					  blocksize, generation);
 	BUG_ON(!tree_root->node);
 	ret = find_and_setup_root(tree_root, fs_info,
 				  BTRFS_EXTENT_TREE_OBJECTID, extent_root);
@@ -706,6 +722,8 @@ int write_ctree_super(struct btrfs_trans_handle *trans,
 				   chunk_root->node->start);
 	btrfs_set_super_chunk_root_level(&root->fs_info->super_copy,
 					 btrfs_header_level(chunk_root->node));
+	btrfs_set_super_chunk_root_generation(&root->fs_info->super_copy,
+				btrfs_header_generation(chunk_root->node));
 	write_extent_buffer(root->fs_info->sb_buffer,
 			    &root->fs_info->super_copy, 0,
 			    sizeof(root->fs_info->super_copy));

@@ -101,6 +101,7 @@ int make_btrfs(int fd, const char *device, const char *label,
 	btrfs_set_super_leafsize(&super, leafsize);
 	btrfs_set_super_nodesize(&super, nodesize);
 	btrfs_set_super_stripesize(&super, stripesize);
+	btrfs_set_super_chunk_root_generation(&super, 1);
 	if (label)
 		strcpy(super.label, label);
 
@@ -130,6 +131,7 @@ int make_btrfs(int fd, const char *device, const char *label,
 	btrfs_set_stack_inode_mode(inode_item, S_IFDIR | 0755);
 	btrfs_set_root_refs(&root_item, 1);
 	btrfs_set_root_used(&root_item, leafsize);
+	btrfs_set_root_generation(&root_item, 1);
 
 	memset(&disk_key, 0, sizeof(disk_key));
 	btrfs_set_disk_key_type(&disk_key, BTRFS_ROOT_ITEM_KEY);
