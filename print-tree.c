@@ -124,6 +124,41 @@ static void print_uuids(struct extent_buffer *eb)
 	printf("fs uuid %s\nchunk uuid %s\n", fs_uuid, chunk_uuid);
 }
 
+static void print_file_extent_item(struct extent_buffer *eb,
+				   struct btrfs_item *item,
+				   struct btrfs_file_extent_item *fi)
+{
+	int extent_type = btrfs_file_extent_type(eb, fi);
+
+	if (extent_type == BTRFS_FILE_EXTENT_INLINE) {
+		printf("\t\tinline extent data size %u "
+		       "ram %llu compress %d\n",
+	          btrfs_file_extent_inline_len(eb, item),
+		  (unsigned long long) btrfs_file_extent_ram_bytes(eb, fi),
+		  btrfs_file_extent_compression(eb, fi));
+		return;
+	}
+	if (extent_type == BTRFS_FILE_EXTENT_PREALLOC) {
+		printf("\t\tprealloc data disk byte %llu nr %llu\n",
+		  (unsigned long long)btrfs_file_extent_disk_bytenr(eb, fi),
+		  (unsigned long long)btrfs_file_extent_disk_num_bytes(eb, fi));
+		printf("\t\tprealloc data offset %llu nr %llu\n",
+		  (unsigned long long)btrfs_file_extent_offset(eb, fi),
+		  (unsigned long long)btrfs_file_extent_num_bytes(eb, fi));
+		return;
+	}
+	printf("\t\textent data disk byte %llu nr %llu\n",
+		(unsigned long long)btrfs_file_extent_disk_bytenr(eb, fi),
+		(unsigned long long)btrfs_file_extent_disk_num_bytes(eb, fi));
+	printf("\t\textent data offset %llu nr %llu ram %llu\n",
+		(unsigned long long)btrfs_file_extent_offset(eb, fi),
+		(unsigned long long)btrfs_file_extent_num_bytes(eb, fi),
+		(unsigned long long)btrfs_file_extent_ram_bytes(eb, fi));
+	printf("\t\textent compression %d\n",
+	       btrfs_file_extent_compression(eb, fi));
+}
+
+
 void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 {
 	int i;
@@ -226,25 +261,7 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 		case BTRFS_EXTENT_DATA_KEY:
 			fi = btrfs_item_ptr(l, i,
 					    struct btrfs_file_extent_item);
-			if (btrfs_file_extent_type(l, fi) ==
-			    BTRFS_FILE_EXTENT_INLINE) {
-				printf("\t\tinline extent data size %u "
-				       "ram %llu compress %d\n",
-			          btrfs_file_extent_inline_len(l, item),
-				  (unsigned long long)
-				  btrfs_file_extent_ram_bytes(l, fi),
-				  btrfs_file_extent_compression(l, fi));
-				break;
-			}
-			printf("\t\textent data disk byte %llu nr %llu\n",
-			       (unsigned long long)btrfs_file_extent_disk_bytenr(l, fi),
-			       (unsigned long long)btrfs_file_extent_disk_num_bytes(l, fi));
-			printf("\t\textent data offset %llu nr %llu ram %llu\n",
-			  (unsigned long long)btrfs_file_extent_offset(l, fi),
-			  (unsigned long long)btrfs_file_extent_num_bytes(l, fi),
-			  (unsigned long long)btrfs_file_extent_ram_bytes(l, fi));
-			printf("\t\textent compression %d\n",
-			       btrfs_file_extent_compression(l, fi));
+			print_file_extent_item(l, item, fi);
 			break;
 		case BTRFS_BLOCK_GROUP_ITEM_KEY:
 			bi = btrfs_item_ptr(l, i,

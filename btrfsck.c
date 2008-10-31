@@ -621,8 +621,8 @@ static int run_next_block(struct btrfs_root *root,
 				continue;
 			fi = btrfs_item_ptr(buf, i,
 					    struct btrfs_file_extent_item);
-			if (btrfs_file_extent_type(buf, fi) !=
-			    BTRFS_FILE_EXTENT_REG)
+			if (btrfs_file_extent_type(buf, fi) ==
+			    BTRFS_FILE_EXTENT_INLINE)
 				continue;
 			if (btrfs_file_extent_disk_bytenr(buf, fi) == 0)
 				continue;
