@@ -37,14 +37,24 @@
 
 static int check_tree_block(struct btrfs_root *root, struct extent_buffer *buf)
 {
-	if (buf->start != btrfs_header_bytenr(buf))
-		return 1;
 
-	if (memcmp_extent_buffer(buf, root->fs_info->fsid,
-				 (unsigned long)btrfs_header_fsid(buf),
-				 BTRFS_FSID_SIZE))
-		return 1;
-	return 0;
+	struct btrfs_fs_devices *fs_devices;
+	int ret = 1;
+
+	if (buf->start != btrfs_header_bytenr(buf))
+		return ret;
+
+	fs_devices = root->fs_info->fs_devices;
+	while (fs_devices) {
+		if (!memcmp_extent_buffer(buf, fs_devices->fsid,
+					  (unsigned long)btrfs_header_fsid(buf),
+					  BTRFS_FSID_SIZE)) {
+			ret = 0;
+			break;
+		}
+		fs_devices = fs_devices->seed;
+	}
+	return ret;
 }
 
 u32 btrfs_csum_data(struct btrfs_root *root, char *data, u32 seed, size_t len)
@@ -685,6 +695,10 @@ int write_all_supers(struct btrfs_root *root)
 						      dev_item);
 	list_for_each(cur, head) {
 		dev = list_entry(cur, struct btrfs_device, dev_list);
+		if (!dev->writeable)
+			continue;
+
+		btrfs_set_device_generation(sb, dev_item, 0);
 		btrfs_set_device_type(sb, dev_item, dev->type);
 		btrfs_set_device_id(sb, dev_item, dev->devid);
 		btrfs_set_device_total_bytes(sb, dev_item, dev->total_bytes);
@@ -694,6 +708,9 @@ int write_all_supers(struct btrfs_root *root)
 		btrfs_set_device_sector_size(sb, dev_item, dev->sector_size);
 		write_extent_buffer(sb, dev->uuid,
 				    (unsigned long)btrfs_device_uuid(dev_item),
+				    BTRFS_UUID_SIZE);
+		write_extent_buffer(sb, dev->fs_devices->fsid,
+				    (unsigned long)btrfs_device_fsid(dev_item),
 				    BTRFS_UUID_SIZE);
 		sb->fd = dev->fd;
 		sb->dev_bytenr = sb->start;

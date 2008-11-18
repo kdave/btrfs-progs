@@ -160,6 +160,9 @@ struct btrfs_dev_item {
 	/* type and info about this device */
 	__le64 type;
 
+	/* expected generation for this device */
+	__le64 generation;
+
 	/* grouping information for allocation decisions */
 	__le32 dev_group;
 
@@ -171,6 +174,9 @@ struct btrfs_dev_item {
 
 	/* btrfs generated uuid for this device */
 	u8 uuid[BTRFS_UUID_SIZE];
+
+	/* uuid of FS who owns this device */
+	u8 fsid[BTRFS_UUID_SIZE];
 } __attribute__ ((__packed__));
 
 struct btrfs_stripe {
@@ -245,6 +251,8 @@ struct btrfs_header {
 #define BTRFS_MAX_INLINE_DATA_SIZE(r) (BTRFS_LEAF_DATA_SIZE(r) - \
 					sizeof(struct btrfs_item) - \
 					sizeof(struct btrfs_file_extent_item))
+
+#define BTRFS_SUPER_FLAG_SEEDING (1ULL << 32)
 
 /*
  * this is a very generous portion of the super block, giving us
@@ -524,6 +532,7 @@ struct btrfs_block_group_cache {
 	u64 pinned;
 	u64 flags;
 	int cached;
+	int ro;
 };
 
 struct btrfs_extent_ops {
@@ -744,6 +753,7 @@ BTRFS_SETGET_FUNCS(device_id, struct btrfs_dev_item, devid, 64);
 BTRFS_SETGET_FUNCS(device_group, struct btrfs_dev_item, dev_group, 32);
 BTRFS_SETGET_FUNCS(device_seek_speed, struct btrfs_dev_item, seek_speed, 8);
 BTRFS_SETGET_FUNCS(device_bandwidth, struct btrfs_dev_item, bandwidth, 8);
+BTRFS_SETGET_FUNCS(device_generation, struct btrfs_dev_item, generation, 64);
 
 BTRFS_SETGET_STACK_FUNCS(stack_device_type, struct btrfs_dev_item, type, 64);
 BTRFS_SETGET_STACK_FUNCS(stack_device_total_bytes, struct btrfs_dev_item,
@@ -763,10 +773,17 @@ BTRFS_SETGET_STACK_FUNCS(stack_device_seek_speed, struct btrfs_dev_item,
 			 seek_speed, 8);
 BTRFS_SETGET_STACK_FUNCS(stack_device_bandwidth, struct btrfs_dev_item,
 			 bandwidth, 8);
+BTRFS_SETGET_STACK_FUNCS(stack_device_generation, struct btrfs_dev_item,
+			 generation, 64);
 
 static inline char *btrfs_device_uuid(struct btrfs_dev_item *d)
 {
 	return (char *)d + offsetof(struct btrfs_dev_item, uuid);
+}
+
+static inline char *btrfs_device_fsid(struct btrfs_dev_item *d)
+{
+	return (char *)d + offsetof(struct btrfs_dev_item, fsid);
 }
 
 BTRFS_SETGET_FUNCS(chunk_length, struct btrfs_chunk, length, 64);
@@ -1259,6 +1276,7 @@ BTRFS_SETGET_STACK_FUNCS(root_last_snapshot, struct btrfs_root_item,
 
 /* struct btrfs_super_block */
 BTRFS_SETGET_STACK_FUNCS(super_bytenr, struct btrfs_super_block, bytenr, 64);
+BTRFS_SETGET_STACK_FUNCS(super_flags, struct btrfs_super_block, flags, 64);
 BTRFS_SETGET_STACK_FUNCS(super_generation, struct btrfs_super_block,
 			 generation, 64);
 BTRFS_SETGET_STACK_FUNCS(super_root, struct btrfs_super_block, root, 64);

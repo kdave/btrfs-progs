@@ -91,7 +91,7 @@ static int device_list_add(const char *path,
 
 	fs_devices = find_fsid(disk_super->fsid);
 	if (!fs_devices) {
-		fs_devices = kmalloc(sizeof(*fs_devices), GFP_NOFS);
+		fs_devices = kzalloc(sizeof(*fs_devices), GFP_NOFS);
 		if (!fs_devices)
 			return -ENOMEM;
 		INIT_LIST_HEAD(&fs_devices->devices);
@@ -127,6 +127,7 @@ static int device_list_add(const char *path,
 		device->bytes_used =
 			btrfs_stack_device_bytes_used(&disk_super->dev_item);
 		list_add(&device->dev_list, &fs_devices->devices);
+		device->fs_devices = fs_devices;
 	}
 
 	if (found_transid > fs_devices->latest_trans) {
@@ -142,15 +143,24 @@ static int device_list_add(const char *path,
 
 int btrfs_close_devices(struct btrfs_fs_devices *fs_devices)
 {
-	struct list_head *head = &fs_devices->devices;
+	struct btrfs_fs_devices *seed_devices;
 	struct list_head *cur;
 	struct btrfs_device *device;
-
-	list_for_each(cur, head) {
+again:
+	list_for_each(cur, &fs_devices->devices) {
 		device = list_entry(cur, struct btrfs_device, dev_list);
 		close(device->fd);
 		device->fd = -1;
+		device->writeable = 0;
 	}
+
+	seed_devices = fs_devices->seed;
+	fs_devices->seed = NULL;
+	if (seed_devices) {
+		fs_devices = seed_devices;
+		goto again;
+	}
+
 	return 0;
 }
 
@@ -176,6 +186,8 @@ int btrfs_open_devices(struct btrfs_fs_devices *fs_devices, int flags)
 		if (device->devid == fs_devices->lowest_devid)
 			fs_devices->lowest_bdev = fd;
 		device->fd = fd;
+		if (flags == O_RDWR)
+			device->writeable = 1;
 	}
 	return 0;
 fail:
@@ -504,6 +516,7 @@ int btrfs_add_device(struct btrfs_trans_handle *trans,
 
 	device->devid = free_devid;
 	btrfs_set_device_id(leaf, dev_item, device->devid);
+	btrfs_set_device_generation(leaf, dev_item, 0);
 	btrfs_set_device_type(leaf, dev_item, device->type);
 	btrfs_set_device_io_align(leaf, dev_item, device->io_align);
 	btrfs_set_device_io_width(leaf, dev_item, device->io_width);
@@ -516,6 +529,8 @@ int btrfs_add_device(struct btrfs_trans_handle *trans,
 
 	ptr = (unsigned long)btrfs_device_uuid(dev_item);
 	write_extent_buffer(leaf, device->uuid, ptr, BTRFS_UUID_SIZE);
+	ptr = (unsigned long)btrfs_device_fsid(dev_item);
+	write_extent_buffer(leaf, root->fs_info->fsid, ptr, BTRFS_UUID_SIZE);
 	btrfs_mark_buffer_dirty(leaf);
 	ret = 0;
 
@@ -996,11 +1011,23 @@ out:
 }
 
 struct btrfs_device *btrfs_find_device(struct btrfs_root *root, u64 devid,
-				       u8 *uuid)
+				       u8 *uuid, u8 *fsid)
 {
-	struct list_head *head = &root->fs_info->fs_devices->devices;
+	struct btrfs_device *device;
+	struct btrfs_fs_devices *cur_devices;
 
-	return __find_device(head, devid, uuid);
+	cur_devices = root->fs_info->fs_devices;
+	while (cur_devices) {
+		if (!fsid ||
+		    !memcmp(cur_devices->fsid, fsid, BTRFS_UUID_SIZE)) {
+			device = __find_device(&cur_devices->devices,
+					       devid, uuid);
+			if (device)
+				return device;
+		}
+		cur_devices = cur_devices->seed;
+	}
+	return NULL;
 }
 
 int btrfs_bootstrap_super_map(struct btrfs_mapping_tree *map_tree,
@@ -1054,6 +1081,28 @@ int btrfs_bootstrap_super_map(struct btrfs_mapping_tree *map_tree,
 	}
 	BUG_ON(ret);
 	return 0;
+}
+
+int btrfs_chunk_readonly(struct btrfs_root *root, u64 chunk_offset)
+{
+	struct cache_extent *ce;
+	struct map_lookup *map;
+	struct btrfs_mapping_tree *map_tree = &root->fs_info->mapping_tree;
+	int readonly = 0;
+	int i;
+
+	ce = find_first_cache_extent(&map_tree->cache_tree, chunk_offset);
+	BUG_ON(!ce);
+
+	map = container_of(ce, struct map_lookup, ce);
+	for (i = 0; i < map->num_stripes; i++) {
+		if (!map->stripes[i].dev->writeable) {
+			readonly = 1;
+			break;
+		}
+	}
+
+	return readonly;
 }
 
 static int read_one_chunk(struct btrfs_root *root, struct btrfs_key *key,
@@ -1111,7 +1160,8 @@ static int read_one_chunk(struct btrfs_root *root, struct btrfs_key *key,
 		read_extent_buffer(leaf, uuid, (unsigned long)
 				   btrfs_stripe_dev_uuid_nr(chunk, i),
 				   BTRFS_UUID_SIZE);
-		map->stripes[i].dev = btrfs_find_device(root, devid, uuid);
+		map->stripes[i].dev = btrfs_find_device(root, devid, uuid,
+							NULL);
 		if (!map->stripes[i].dev) {
 			kfree(map);
 			return -EIO;
@@ -1144,6 +1194,36 @@ static int fill_device_from_item(struct extent_buffer *leaf,
 	return 0;
 }
 
+static int open_seed_devices(struct btrfs_root *root, u8 *fsid)
+{
+	struct btrfs_fs_devices *fs_devices;
+	int ret;
+
+	fs_devices = root->fs_info->fs_devices->seed;
+	while (fs_devices) {
+		if (!memcmp(fs_devices->fsid, fsid, BTRFS_UUID_SIZE)) {
+			ret = 0;
+			goto out;
+		}
+		fs_devices = fs_devices->seed;
+	}
+
+	fs_devices = find_fsid(fsid);
+	if (!fs_devices) {
+		ret = -ENOENT;
+		goto out;
+	}
+
+	ret = btrfs_open_devices(fs_devices, O_RDONLY);
+	if (ret)
+		goto out;
+
+	fs_devices->seed = root->fs_info->fs_devices->seed;
+	root->fs_info->fs_devices->seed = fs_devices;
+out:
+	return ret;
+}
+
 static int read_one_dev(struct btrfs_root *root,
 			struct extent_buffer *leaf,
 			struct btrfs_dev_item *dev_item)
@@ -1151,13 +1231,24 @@ static int read_one_dev(struct btrfs_root *root,
 	struct btrfs_device *device;
 	u64 devid;
 	int ret = 0;
+	u8 fs_uuid[BTRFS_UUID_SIZE];
 	u8 dev_uuid[BTRFS_UUID_SIZE];
 
 	devid = btrfs_device_id(leaf, dev_item);
 	read_extent_buffer(leaf, dev_uuid,
 			   (unsigned long)btrfs_device_uuid(dev_item),
 			   BTRFS_UUID_SIZE);
-	device = btrfs_find_device(root, devid, dev_uuid);
+	read_extent_buffer(leaf, fs_uuid,
+			   (unsigned long)btrfs_device_fsid(dev_item),
+			   BTRFS_UUID_SIZE);
+
+	if (memcmp(fs_uuid, root->fs_info->fsid, BTRFS_UUID_SIZE)) {
+		ret = open_seed_devices(root, fs_uuid);
+		if (ret)
+			return ret;
+	}
+
+	device = btrfs_find_device(root, devid, dev_uuid, fs_uuid);
 	if (!device) {
 		printk("warning devid %llu not found already\n",
 			(unsigned long long)devid);
@@ -1284,6 +1375,7 @@ again:
 			struct btrfs_chunk *chunk;
 			chunk = btrfs_item_ptr(leaf, slot, struct btrfs_chunk);
 			ret = read_one_chunk(root, &found_key, leaf, chunk);
+			BUG_ON(ret);
 		}
 		path->slots[0]++;
 	}

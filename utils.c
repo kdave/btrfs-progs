@@ -96,7 +96,7 @@ int make_btrfs(int fd, const char *device, const char *label,
 	btrfs_set_super_root(&super, blocks[1]);
 	btrfs_set_super_chunk_root(&super, blocks[3]);
 	btrfs_set_super_total_bytes(&super, num_bytes);
-	btrfs_set_super_bytes_used(&super, first_free + 5 * leafsize);
+	btrfs_set_super_bytes_used(&super, 5 * leafsize);
 	btrfs_set_super_sectorsize(&super, sectorsize);
 	btrfs_set_super_leafsize(&super, leafsize);
 	btrfs_set_super_nodesize(&super, nodesize);
@@ -252,6 +252,7 @@ int make_btrfs(int fd, const char *device, const char *label,
 
 	dev_item = btrfs_item_ptr(buf, nritems, struct btrfs_dev_item);
 	btrfs_set_device_id(buf, dev_item, 1);
+	btrfs_set_device_generation(buf, dev_item, 0);
 	btrfs_set_device_total_bytes(buf, dev_item, num_bytes);
 	btrfs_set_device_bytes_used(buf, dev_item,
 				    BTRFS_MKFS_SYSTEM_GROUP_SIZE);
@@ -262,6 +263,9 @@ int make_btrfs(int fd, const char *device, const char *label,
 
 	write_extent_buffer(buf, super.dev_item.uuid,
 			    (unsigned long)btrfs_device_uuid(dev_item),
+			    BTRFS_UUID_SIZE);
+	write_extent_buffer(buf, super.fsid,
+			    (unsigned long)btrfs_device_fsid(dev_item),
 			    BTRFS_UUID_SIZE);
 	read_extent_buffer(buf, &super.dev_item, (unsigned long)dev_item,
 			   sizeof(*dev_item));
@@ -456,6 +460,7 @@ int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 	device->io_align = io_align;
 	device->sector_size = sectorsize;
 	device->fd = fd;
+	device->writeable = 1;
 	device->total_bytes = block_count;
 	device->bytes_used = 0;
 	device->total_ios = 0;
@@ -489,6 +494,7 @@ int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 
 	kfree(buf);
 	list_add(&device->dev_list, &root->fs_info->fs_devices->devices);
+	device->fs_devices = root->fs_info->fs_devices;
 	ret = btrfs_bootstrap_super_map(&root->fs_info->mapping_tree,
 					root->fs_info->fs_devices);
 	BUG_ON(ret);

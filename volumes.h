@@ -21,10 +21,13 @@
 struct btrfs_device {
 	struct list_head dev_list;
 	struct btrfs_root *dev_root;
+	struct btrfs_fs_devices *fs_devices;
 
 	u64 total_ios;
 
 	int fd;
+
+	int writeable;
 
 	char *name;
 
@@ -69,6 +72,9 @@ struct btrfs_fs_devices {
 	int lowest_bdev;
 	struct list_head devices;
 	struct list_head list;
+
+	int seeding;
+	struct btrfs_fs_devices *seed;
 };
 
 struct btrfs_bio_stripe {
@@ -120,4 +126,5 @@ struct list_head *btrfs_scanned_uuids(void);
 int btrfs_add_system_chunk(struct btrfs_trans_handle *trans,
 			   struct btrfs_root *root, struct btrfs_key *key,
 			   struct btrfs_chunk *chunk, int item_size);
+int btrfs_chunk_readonly(struct btrfs_root *root, u64 chunk_offset);
 #endif
