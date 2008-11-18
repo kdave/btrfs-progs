@@ -159,6 +159,21 @@ static void print_file_extent_item(struct extent_buffer *eb,
 }
 
 
+static void print_root_ref(struct extent_buffer *leaf, int slot, char *tag)
+{
+	struct btrfs_root_ref *ref;
+	char namebuf[BTRFS_NAME_LEN];
+	int namelen;
+
+	ref = btrfs_item_ptr(leaf, slot, struct btrfs_root_ref);
+	namelen = btrfs_root_ref_name_len(leaf, ref);
+	read_extent_buffer(leaf, namebuf, (unsigned long)(ref + 1), namelen);
+	printf("\t\troot %s key dirid %llu sequence %llu name %.*s\n", tag,
+	       (unsigned long long)btrfs_root_ref_dirid(leaf, ref),
+	       (unsigned long long)btrfs_root_ref_sequence(leaf, ref),
+	       namelen, namebuf);
+}
+
 void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 {
 	int i;
@@ -239,6 +254,12 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 				       (unsigned long long)drop_key.offset,
 				       root_item.drop_level);
 			}
+			break;
+		case BTRFS_ROOT_REF_KEY:
+			print_root_ref(l, i, "ref");
+			break;
+		case BTRFS_ROOT_BACKREF_KEY:
+			print_root_ref(l, i, "backref");
 			break;
 		case BTRFS_EXTENT_ITEM_KEY:
 			ei = btrfs_item_ptr(l, i, struct btrfs_extent_item);

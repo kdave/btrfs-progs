@@ -32,7 +32,7 @@ int btrfs_find_last_root(struct btrfs_root *root, u64 objectid,
 	int slot;
 
 	search_key.objectid = objectid;
-	search_key.type = (u8)-1;
+	search_key.type = BTRFS_ROOT_ITEM_KEY;
 	search_key.offset = (u64)-1;
 
 	path = btrfs_alloc_path();

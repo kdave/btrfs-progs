@@ -443,6 +443,15 @@ struct btrfs_root_item {
 	u8 level;
 } __attribute__ ((__packed__));
 
+/*
+ * this is used for both forward and backward root refs
+ */
+struct btrfs_root_ref {
+	__le64 dirid;
+	__le64 sequence;
+	__le16 name_len;
+} __attribute__ ((__packed__));
+
 #define BTRFS_FILE_EXTENT_INLINE 0
 #define BTRFS_FILE_EXTENT_REG 1
 #define BTRFS_FILE_EXTENT_PREALLOC 2
@@ -635,50 +644,64 @@ struct btrfs_root {
  * the FS
  */
 #define BTRFS_INODE_ITEM_KEY		1
-#define BTRFS_INODE_REF_KEY		2
-#define BTRFS_XATTR_ITEM_KEY		8
-#define BTRFS_ORPHAN_ITEM_KEY		9
+#define BTRFS_INODE_REF_KEY		12
+#define BTRFS_XATTR_ITEM_KEY		24
+#define BTRFS_ORPHAN_ITEM_KEY		48
 
-/* reserve 3-15 close to the inode for later flexibility */
-
+#define BTRFS_DIR_LOG_ITEM_KEY  60
+#define BTRFS_DIR_LOG_INDEX_KEY 72
 /*
  * dir items are the name -> inode pointers in a directory.  There is one
  * for every name in a directory.
  */
-#define BTRFS_DIR_ITEM_KEY	16
-#define BTRFS_DIR_INDEX_KEY	17
+#define BTRFS_DIR_ITEM_KEY	84
+#define BTRFS_DIR_INDEX_KEY	96
+
 /*
  * extent data is for file data
  */
-#define BTRFS_EXTENT_DATA_KEY	18
+#define BTRFS_EXTENT_DATA_KEY	108
+
 /*
  * csum items have the checksums for data in the extents
  */
-#define BTRFS_CSUM_ITEM_KEY	19
-
-/* reserve 20-31 for other file stuff */
+#define BTRFS_CSUM_ITEM_KEY	120
 
 /*
  * root items point to tree roots.  There are typically in the root
  * tree used by the super block to find all the other trees
  */
-#define BTRFS_ROOT_ITEM_KEY	32
+#define BTRFS_ROOT_ITEM_KEY	132
+
+/*
+ * root backrefs tie subvols and snapshots to the directory entries that
+ * reference them
+ */
+#define BTRFS_ROOT_BACKREF_KEY	144
+
+/*
+ * root refs make a fast index for listing all of the snapshots and
+ * subvolumes referenced by a given root.  They point directly to the
+ * directory item in the root that references the subvol
+ */
+#define BTRFS_ROOT_REF_KEY	156
+
 /*
  * extent items are in the extent map tree.  These record which blocks
  * are used, and how many references there are to each block
  */
-#define BTRFS_EXTENT_ITEM_KEY	33
-#define BTRFS_EXTENT_REF_KEY	34
+#define BTRFS_EXTENT_ITEM_KEY	168
+#define BTRFS_EXTENT_REF_KEY	180
 
 /*
  * block groups give us hints into the extent allocation trees.  Which
  * blocks are free etc etc
  */
-#define BTRFS_BLOCK_GROUP_ITEM_KEY 50
+#define BTRFS_BLOCK_GROUP_ITEM_KEY 192
 
-#define BTRFS_DEV_EXTENT_KEY	75
-#define BTRFS_DEV_ITEM_KEY	76
-#define BTRFS_CHUNK_ITEM_KEY	77
+#define BTRFS_DEV_EXTENT_KEY	204
+#define BTRFS_DEV_ITEM_KEY	216
+#define BTRFS_CHUNK_ITEM_KEY	228
 
 /*
  * string items are for debugging.  They just store a short string of
@@ -1103,6 +1126,13 @@ static inline void btrfs_set_item_key(struct extent_buffer *eb,
 	struct btrfs_item *item = btrfs_item_nr(eb, nr);
 	write_eb_member(eb, item, struct btrfs_item, key, disk_key);
 }
+
+/*
+ * struct btrfs_root_ref
+ */
+BTRFS_SETGET_FUNCS(root_ref_dirid, struct btrfs_root_ref, dirid, 64);
+BTRFS_SETGET_FUNCS(root_ref_sequence, struct btrfs_root_ref, sequence, 64);
+BTRFS_SETGET_FUNCS(root_ref_name_len, struct btrfs_root_ref, name_len, 16);
 
 /* struct btrfs_dir_item */
 BTRFS_SETGET_FUNCS(dir_data_len, struct btrfs_dir_item, data_len, 16);
