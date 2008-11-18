@@ -28,6 +28,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <libgen.h>
 #include "kerncompat.h"
 #include "ctree.h"
 #include "transaction.h"
@@ -48,8 +49,8 @@ void print_usage(void)
 	printf("                [-r size] [-A device] [-a] [-c]\n");
 	printf("\t-d filename: defragments one file\n");
 	printf("\t-d directory: defragments the entire Btree\n");
-	printf("\t-s snap_name: existing_subvol creates a new snapshot\n");
-	printf("\t-s snap_name: tree_root creates a new subvolume\n");
+	printf("\t-s snap_name dir: creates a new snapshot of dir\n");
+	printf("\t-S subvol_name dir: creates a new subvolume\n");
 	printf("\t-r [+-]size[gkm]: resize the FS by size amount\n");
 	printf("\t-A device: scans the device file for a Btrfs filesystem\n");
 	printf("\t-a: scans all devices for Btrfs filesystems\n");
@@ -58,18 +59,47 @@ void print_usage(void)
 	exit(1);
 }
 
+int open_file_or_dir(char *fname)
+{
+	int ret;
+	struct stat st;
+	DIR *dirstream;
+	int fd;
+
+	ret = stat(fname, &st);
+	if (ret < 0) {
+		perror("stat:");
+		exit(1);
+	}
+	if (S_ISDIR(st.st_mode)) {
+		dirstream = opendir(fname);
+		if (!dirstream) {
+			perror("opendir");
+			exit(1);
+		}
+		fd = dirfd(dirstream);
+	} else {
+		fd = open(fname, O_RDWR);
+	}
+	if (fd < 0) {
+		perror("open");
+		exit(1);
+	}
+	return fd;
+}
 int main(int ac, char **av)
 {
-	char *fname;
+	char *fname = NULL;
+	char *snap_location = NULL;
+	int snap_fd = 0;
 	int fd;
 	int ret;
 	struct btrfs_ioctl_vol_args args;
 	char *name = NULL;
 	int i;
-	struct stat st;
-	DIR *dirstream;
 	unsigned long command = 0;
 	int len;
+	char *fullpath;
 
 	if (ac == 2 && strcmp(av[1], "-a") == 0) {
 		fprintf(stderr, "Scanning for Btrfs filesystems\n");
@@ -80,6 +110,33 @@ int main(int ac, char **av)
 		if (strcmp(av[i], "-s") == 0) {
 			if (i + 1 >= ac - 1) {
 				fprintf(stderr, "-s requires an arg");
+				print_usage();
+			}
+			fullpath = av[i + 1];
+
+			snap_location = strdup(fullpath);
+			snap_location = dirname(snap_location);
+
+			snap_fd = open_file_or_dir(snap_location);
+
+			name = strdup(fullpath);
+			name = basename(name);
+			len = strlen(name);
+
+			if (len == 0 || len >= BTRFS_VOL_NAME_MAX) {
+				fprintf(stderr,
+				     "snapshot name zero length or too long\n");
+				exit(1);
+			}
+			if (strchr(name, '/')) {
+				fprintf(stderr,
+					"error: / not allowed in names\n");
+				exit(1);
+			}
+			command = BTRFS_IOC_SNAP_CREATE;
+		} else if (strcmp(av[i], "-S") == 0) {
+			if (i + 1 >= ac - 1) {
+				fprintf(stderr, "-S requires an arg");
 				print_usage();
 			}
 			name = av[i + 1];
@@ -94,7 +151,7 @@ int main(int ac, char **av)
 					"error: / not allowed in names\n");
 				exit(1);
 			}
-			command = BTRFS_IOC_SNAP_CREATE;
+			command = BTRFS_IOC_SUBVOL_CREATE;
 		} else if (strcmp(av[i], "-d") == 0) {
 			if (i >= ac - 1) {
 				fprintf(stderr, "-d requires an arg\n");
@@ -129,33 +186,24 @@ int main(int ac, char **av)
 		exit(1);
 	}
 	fname = av[ac - 1];
-	ret = stat(fname, &st);
-	if (ret < 0) {
-		perror("stat:");
-		exit(1);
-	}
-	if (S_ISDIR(st.st_mode)) {
-		dirstream = opendir(fname);
-		if (!dirstream) {
-			perror("opendir");
-			exit(1);
-		}
-		fd = dirfd(dirstream);
-	} else if (command == BTRFS_IOC_SCAN_DEV) {
+
+	if (command == BTRFS_IOC_SCAN_DEV) {
 		fd = open("/dev/btrfs-control", O_RDWR);
 		name = fname;
-	} else {
-		fd = open(fname, O_RDWR);
-	}
-	if (fd < 0) {
-		perror("open");
-		exit(1);
-	}
+	 } else {
+		fd = open_file_or_dir(fname);
+	 }
+
 	if (name)
 		strcpy(args.name, name);
 	else
 		args.name[0] = '\0';
-	ret = ioctl(fd, command, &args);
+
+	if (command == BTRFS_IOC_SNAP_CREATE) {
+		args.fd = fd;
+		ret = ioctl(snap_fd, command, &args);
+	} else
+		ret = ioctl(fd, command, &args);
 	if (ret < 0) {
 		perror("ioctl:");
 		exit(1);

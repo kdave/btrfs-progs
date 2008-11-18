@@ -18,13 +18,15 @@
 
 #ifndef __IOCTL_
 #define __IOCTL_
+#include <asm/types.h>
 #include <linux/ioctl.h>
 
 #define BTRFS_IOCTL_MAGIC 0x94
 #define BTRFS_VOL_NAME_MAX 255
-#define BTRFS_PATH_NAME_MAX 4095
+#define BTRFS_PATH_NAME_MAX 3072
 
 struct btrfs_ioctl_vol_args {
+	__s64 fd;
 	char name[BTRFS_PATH_NAME_MAX + 1];
 };
 
@@ -51,5 +53,7 @@ struct btrfs_ioctl_vol_args {
 				   struct btrfs_ioctl_vol_args)
 #define BTRFS_IOC_BALANCE _IOW(BTRFS_IOCTL_MAGIC, 12, \
 				   struct btrfs_ioctl_vol_args)
-
+/* 13 is for CLONE_RANGE */
+#define BTRFS_IOC_SUBVOL_CREATE _IOW(BTRFS_IOCTL_MAGIC, 14, \
+				   struct btrfs_ioctl_vol_args)
 #endif
