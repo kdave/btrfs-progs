@@ -252,7 +252,8 @@ struct btrfs_header {
 					sizeof(struct btrfs_item) - \
 					sizeof(struct btrfs_file_extent_item))
 
-#define BTRFS_SUPER_FLAG_SEEDING (1ULL << 32)
+#define BTRFS_SUPER_FLAG_SEEDING	(1ULL << 32)
+#define BTRFS_SUPER_FLAG_METADUMP	(1ULL << 33)
 
 /*
  * this is a very generous portion of the super block, giving us
@@ -1362,14 +1363,6 @@ static inline u32 btrfs_file_extent_calc_inline_size(u32 datasize)
 	return offsetof(struct btrfs_file_extent_item, disk_bytenr) + datasize;
 }
 
-static inline u32 btrfs_file_extent_inline_len(struct extent_buffer *eb,
-					       struct btrfs_item *e)
-{
-	unsigned long offset;
-	offset = offsetof(struct btrfs_file_extent_item, disk_bytenr);
-	return btrfs_item_size(eb, e) - offset;
-}
-
 BTRFS_SETGET_FUNCS(file_extent_disk_bytenr, struct btrfs_file_extent_item,
 		   disk_bytenr, 64);
 BTRFS_SETGET_FUNCS(file_extent_generation, struct btrfs_file_extent_item,
@@ -1388,6 +1381,28 @@ BTRFS_SETGET_FUNCS(file_extent_encryption, struct btrfs_file_extent_item,
 		   encryption, 8);
 BTRFS_SETGET_FUNCS(file_extent_other_encoding, struct btrfs_file_extent_item,
 		   other_encoding, 16);
+
+/* this returns the number of file bytes represented by the inline item.
+ * If an item is compressed, this is the uncompressed size
+ */
+static inline u32 btrfs_file_extent_inline_len(struct extent_buffer *eb,
+					struct btrfs_file_extent_item *e)
+{
+       return btrfs_file_extent_ram_bytes(eb, e);
+}
+
+/*
+ * this returns the number of bytes used by the item on disk, minus the
+ * size of any extent headers.  If a file is compressed on disk, this is
+ * the compressed size
+ */
+static inline u32 btrfs_file_extent_inline_item_len(struct extent_buffer *eb,
+						    struct btrfs_item *e)
+{
+       unsigned long offset;
+       offset = offsetof(struct btrfs_file_extent_item, disk_bytenr);
+       return btrfs_item_size(eb, e) - offset;
+}
 
 static inline u32 btrfs_level_size(struct btrfs_root *root, int level) {
 	if (level == 0)

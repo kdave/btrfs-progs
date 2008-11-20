@@ -132,9 +132,9 @@ static void print_file_extent_item(struct extent_buffer *eb,
 
 	if (extent_type == BTRFS_FILE_EXTENT_INLINE) {
 		printf("\t\tinline extent data size %u "
-		       "ram %llu compress %d\n",
-	          btrfs_file_extent_inline_len(eb, item),
-		  (unsigned long long) btrfs_file_extent_ram_bytes(eb, fi),
+		       "ram %u compress %d\n",
+		  btrfs_file_extent_inline_item_len(eb, item),
+		  btrfs_file_extent_inline_len(eb, fi),
 		  btrfs_file_extent_compression(eb, fi));
 		return;
 	}

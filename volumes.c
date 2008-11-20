@@ -222,7 +222,10 @@ int btrfs_scan_one_device(int fd, const char *path,
 		goto error_brelse;
 	}
 	devid = le64_to_cpu(disk_super->dev_item.devid);
-	*total_devs = btrfs_super_num_devices(disk_super);
+	if (btrfs_super_flags(disk_super) & BTRFS_SUPER_FLAG_METADUMP)
+		*total_devs = 1;
+	else
+		*total_devs = btrfs_super_num_devices(disk_super);
 	uuid_unparse(disk_super->fsid, uuidbuf);
 
 	ret = device_list_add(path, disk_super, devid, fs_devices_ret);

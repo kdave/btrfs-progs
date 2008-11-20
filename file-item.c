@@ -140,8 +140,7 @@ int btrfs_insert_inline_extent(struct btrfs_trans_handle *trans,
 			       (unsigned long long)objectid);
 			goto fail;
 		}
-		found_size = btrfs_file_extent_inline_len(leaf,
-					  btrfs_item_nr(leaf, path->slots[0]));
+		found_size = btrfs_file_extent_inline_len(leaf, ei);
 		found_end = key.offset + found_size;
 
 		if (found_end < offset + size) {

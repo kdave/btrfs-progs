@@ -646,8 +646,10 @@ struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
 	         (unsigned long)btrfs_header_chunk_tree_uuid(chunk_root->node),
 		 BTRFS_UUID_SIZE);
 
-	ret = btrfs_read_chunk_tree(chunk_root);
-	BUG_ON(ret);
+	if (!(btrfs_super_flags(disk_super) & BTRFS_SUPER_FLAG_METADUMP)) {
+		ret = btrfs_read_chunk_tree(chunk_root);
+		BUG_ON(ret);
+	}
 
 	blocksize = btrfs_level_size(tree_root,
 				     btrfs_super_root_level(disk_super));
