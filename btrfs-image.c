@@ -216,8 +216,9 @@ static void *dump_worker(void *data)
 			async->bufsize = compressBound(async->size);
 			async->buffer = malloc(async->bufsize);
 
-			ret = compress2(async->buffer, &async->bufsize, orig,
-					async->size, md->compress_level);
+			ret = compress2(async->buffer,
+					 (unsigned long *)&async->bufsize,
+					 orig, async->size, md->compress_level);
 			BUG_ON(ret != Z_OK);
 
 			free(orig);
@@ -595,8 +596,8 @@ static void *restore_worker(void *data)
 
 		if (mdres->compress_method == COMPRESS_ZLIB) {
 			size = MAX_PENDING_SIZE * 2;
-			ret = uncompress(buffer, &size, async->buffer,
-					 async->bufsize);
+			ret = uncompress(buffer, (unsigned long *)&size,
+					 async->buffer, async->bufsize);
 			BUG_ON(ret != Z_OK);
 			outbuf = buffer;
 		} else {
