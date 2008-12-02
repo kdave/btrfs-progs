@@ -101,6 +101,7 @@ int make_btrfs(int fd, const char *device, const char *label,
 	btrfs_set_super_leafsize(&super, leafsize);
 	btrfs_set_super_nodesize(&super, nodesize);
 	btrfs_set_super_stripesize(&super, stripesize);
+	btrfs_set_super_csum_type(&super, BTRFS_CSUM_TYPE_CRC32);
 	btrfs_set_super_chunk_root_generation(&super, 1);
 	if (label)
 		strcpy(super.label, label);
@@ -174,7 +175,7 @@ int make_btrfs(int fd, const char *device, const char *label,
 	nritems++;
 
 
-	csum_tree_block(NULL, buf, 0);
+	csum_tree_block_size(buf, BTRFS_CRC32_SIZE, 0);
 	ret = pwrite(fd, buf->data, leafsize, blocks[1]);
 	BUG_ON(ret != leafsize);
 
@@ -233,7 +234,7 @@ int make_btrfs(int fd, const char *device, const char *label,
 	btrfs_set_header_bytenr(buf, blocks[2]);
 	btrfs_set_header_owner(buf, BTRFS_EXTENT_TREE_OBJECTID);
 	btrfs_set_header_nritems(buf, nritems);
-	csum_tree_block(NULL, buf, 0);
+	csum_tree_block_size(buf, BTRFS_CRC32_SIZE, 0);
 	ret = pwrite(fd, buf->data, leafsize, blocks[2]);
 	BUG_ON(ret != leafsize);
 
@@ -315,7 +316,7 @@ int make_btrfs(int fd, const char *device, const char *label,
 	btrfs_set_header_bytenr(buf, blocks[3]);
 	btrfs_set_header_owner(buf, BTRFS_CHUNK_TREE_OBJECTID);
 	btrfs_set_header_nritems(buf, nritems);
-	csum_tree_block(NULL, buf, 0);
+	csum_tree_block_size(buf, BTRFS_CRC32_SIZE, 0);
 	ret = pwrite(fd, buf->data, leafsize, blocks[3]);
 
 	/* create the device tree */
@@ -348,14 +349,14 @@ int make_btrfs(int fd, const char *device, const char *label,
 	btrfs_set_header_bytenr(buf, blocks[4]);
 	btrfs_set_header_owner(buf, BTRFS_DEV_TREE_OBJECTID);
 	btrfs_set_header_nritems(buf, nritems);
-	csum_tree_block(NULL, buf, 0);
+	csum_tree_block_size(buf, BTRFS_CRC32_SIZE, 0);
 	ret = pwrite(fd, buf->data, leafsize, blocks[4]);
 
 	/* finally create the FS root */
 	btrfs_set_header_bytenr(buf, blocks[5]);
 	btrfs_set_header_owner(buf, BTRFS_FS_TREE_OBJECTID);
 	btrfs_set_header_nritems(buf, 0);
-	csum_tree_block(NULL, buf, 0);
+	csum_tree_block_size(buf, BTRFS_CRC32_SIZE, 0);
 	ret = pwrite(fd, buf->data, leafsize, blocks[5]);
 	BUG_ON(ret != leafsize);
 
@@ -364,7 +365,7 @@ int make_btrfs(int fd, const char *device, const char *label,
 	memset(buf->data, 0, sectorsize);
 	memcpy(buf->data, &super, sizeof(super));
 	buf->len = sectorsize;
-	csum_tree_block(NULL, buf, 0);
+	csum_tree_block_size(buf, BTRFS_CRC32_SIZE, 0);
 	ret = pwrite(fd, buf->data, sectorsize, blocks[0]);
 	BUG_ON(ret != sectorsize);
 
