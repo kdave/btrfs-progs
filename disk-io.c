@@ -607,8 +607,6 @@ struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
 		ret = btrfs_open_devices(fs_devices, O_RDONLY);
 	BUG_ON(ret);
 
-	ret = btrfs_bootstrap_super_map(&fs_info->mapping_tree, fs_devices);
-	BUG_ON(ret);
 	fs_info->sb_buffer = btrfs_find_create_tree_block(tree_root, sb_bytenr,
 							  4096);
 	BUG_ON(!fs_info->sb_buffer);
@@ -697,6 +695,31 @@ struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
 	return root;
 }
 
+int write_dev_supers(struct btrfs_root *root, struct extent_buffer *sb,
+		     struct btrfs_device *device)
+{
+	u64 bytenr;
+	u64 flags;
+	int i, ret;
+
+	sb->fd = device->fd;
+	for (i = 0; i < BTRFS_SUPER_MIRROR_MAX; i++) {
+		bytenr = btrfs_sb_offset(i);
+		if (bytenr + BTRFS_SUPER_INFO_SIZE >= device->total_bytes)
+			break;
+
+		btrfs_set_header_bytenr(sb, bytenr);
+		flags = btrfs_header_flags(sb);
+		btrfs_set_header_flags(sb, flags | BTRFS_HEADER_FLAG_WRITTEN);
+		csum_tree_block(root, sb, 0);
+
+		sb->dev_bytenr = bytenr;
+		ret = write_extent_to_disk(sb);
+		BUG_ON(ret);
+	}
+	return 0;
+}
+
 int write_all_supers(struct btrfs_root *root)
 {
 	struct list_head *cur;
@@ -728,11 +751,7 @@ int write_all_supers(struct btrfs_root *root)
 		write_extent_buffer(sb, dev->fs_devices->fsid,
 				    (unsigned long)btrfs_device_fsid(dev_item),
 				    BTRFS_UUID_SIZE);
-		sb->fd = dev->fd;
-		sb->dev_bytenr = sb->start;
-		btrfs_set_header_flag(sb, BTRFS_HEADER_FLAG_WRITTEN);
-		csum_tree_block(root, sb, 0);
-		ret = write_extent_to_disk(sb);
+		ret = write_dev_supers(root, sb, dev);
 		BUG_ON(ret);
 	}
 	return 0;

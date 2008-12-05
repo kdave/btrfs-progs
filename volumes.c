@@ -888,6 +888,62 @@ int btrfs_num_copies(struct btrfs_mapping_tree *map_tree, u64 logical, u64 len)
 	return ret;
 }
 
+int btrfs_rmap_block(struct btrfs_mapping_tree *map_tree,
+		     u64 chunk_start, u64 physical, u64 devid,
+		     u64 **logical, int *naddrs, int *stripe_len)
+{
+	struct cache_extent *ce;
+	struct map_lookup *map;
+	u64 *buf;
+	u64 bytenr;
+	u64 length;
+	u64 stripe_nr;
+	int i, j, nr = 0;
+
+	ce = find_first_cache_extent(&map_tree->cache_tree, chunk_start);
+	BUG_ON(!ce || ce->start != chunk_start);
+	map = container_of(ce, struct map_lookup, ce);
+
+		length = ce->size;
+	if (map->type & BTRFS_BLOCK_GROUP_RAID10)
+		length = ce->size / (map->num_stripes / map->sub_stripes);
+	else if (map->type & BTRFS_BLOCK_GROUP_RAID0)
+		length = ce->size / map->num_stripes;
+
+	buf = kzalloc(sizeof(u64) * map->num_stripes, GFP_NOFS);
+
+	for (i = 0; i < map->num_stripes; i++) {
+		if (devid && map->stripes[i].dev->devid != devid)
+			continue;
+		if (map->stripes[i].physical > physical ||
+		    map->stripes[i].physical + length <= physical)
+			continue;
+
+		stripe_nr = (physical - map->stripes[i].physical) /
+			    map->stripe_len;
+
+		if (map->type & BTRFS_BLOCK_GROUP_RAID10) {
+			stripe_nr = (stripe_nr * map->num_stripes + i) /
+				    map->sub_stripes;
+		} else if (map->type & BTRFS_BLOCK_GROUP_RAID0) {
+			stripe_nr = stripe_nr * map->num_stripes + i;
+		}
+		bytenr = chunk_start + stripe_nr * map->stripe_len;
+		for (j = 0; j < nr; j++) {
+			if (buf[j] == bytenr)
+				break;
+		}
+		if (j == nr)
+			buf[nr++] = bytenr;
+	}
+
+	*logical = buf;
+	*naddrs = nr;
+	*stripe_len = map->stripe_len;
+
+	return 0;
+}
+
 int btrfs_map_block(struct btrfs_mapping_tree *map_tree, int rw,
 		    u64 logical, u64 *length,
 		    struct btrfs_multi_bio **multi_ret, int mirror_num)
@@ -1000,7 +1056,6 @@ again:
 	}
 	BUG_ON(stripe_index >= map->num_stripes);
 
-	BUG_ON(stripe_index != 0 && multi->num_stripes > 1);
 	for (i = 0; i < multi->num_stripes; i++) {
 		multi->stripes[i].physical =
 			map->stripes[stripe_index].physical + stripe_offset +
@@ -1118,7 +1173,6 @@ static int read_one_chunk(struct btrfs_root *root, struct btrfs_key *key,
 	u64 logical;
 	u64 length;
 	u64 devid;
-	u64 super_offset_diff = 0;
 	u8 uuid[BTRFS_UUID_SIZE];
 	int num_stripes;
 	int ret;
@@ -1126,12 +1180,6 @@ static int read_one_chunk(struct btrfs_root *root, struct btrfs_key *key,
 
 	logical = key->offset;
 	length = btrfs_chunk_length(leaf, chunk);
-
-	if (logical < BTRFS_SUPER_INFO_OFFSET + BTRFS_SUPER_INFO_SIZE) {
-		super_offset_diff = BTRFS_SUPER_INFO_OFFSET +
-			BTRFS_SUPER_INFO_SIZE - logical;
-		logical = BTRFS_SUPER_INFO_OFFSET + BTRFS_SUPER_INFO_SIZE;
-	}
 
 	ce = find_first_cache_extent(&map_tree->cache_tree, logical);
 
@@ -1146,7 +1194,7 @@ static int read_one_chunk(struct btrfs_root *root, struct btrfs_key *key,
 		return -ENOMEM;
 
 	map->ce.start = logical;
-	map->ce.size = length - super_offset_diff;
+	map->ce.size = length;
 	map->num_stripes = num_stripes;
 	map->io_width = btrfs_chunk_io_width(leaf, chunk);
 	map->io_align = btrfs_chunk_io_align(leaf, chunk);
@@ -1157,8 +1205,7 @@ static int read_one_chunk(struct btrfs_root *root, struct btrfs_key *key,
 
 	for (i = 0; i < num_stripes; i++) {
 		map->stripes[i].physical =
-			btrfs_stripe_offset_nr(leaf, chunk, i) +
-				super_offset_diff;
+			btrfs_stripe_offset_nr(leaf, chunk, i);
 		devid = btrfs_stripe_devid_nr(leaf, chunk, i);
 		read_extent_buffer(leaf, uuid, (unsigned long)
 				   btrfs_stripe_dev_uuid_nr(chunk, i),

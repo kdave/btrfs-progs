@@ -414,8 +414,11 @@ int main(int ac, char **av)
 	if (block_count == 0)
 		block_count = dev_block_count;
 
-	for (i = 0; i < 7; i++)
-		blocks[i] = BTRFS_SUPER_INFO_OFFSET + leafsize * i;
+	blocks[0] = BTRFS_SUPER_INFO_OFFSET;
+	for (i = 1; i < 7; i++) {
+		blocks[i] = BTRFS_SUPER_INFO_OFFSET + 1024 * 1024 +
+			leafsize * i;
+	}
 
 	ret = make_btrfs(fd, file, label, blocks, block_count,
 			 nodesize, leafsize,

@@ -61,6 +61,31 @@ void maybe_unlock_mutex(struct btrfs_root *root)
 {
 }
 
+static int remove_sb_from_cache(struct btrfs_root *root,
+				struct btrfs_block_group_cache *cache)
+{
+	u64 bytenr;
+	u64 *logical;
+	int stripe_len;
+	int i, nr, ret;
+	struct extent_io_tree *free_space_cache;
+
+	free_space_cache = &root->fs_info->free_space_cache;
+	for (i = 0; i < BTRFS_SUPER_MIRROR_MAX; i++) {
+		bytenr = btrfs_sb_offset(i);
+		ret = btrfs_rmap_block(&root->fs_info->mapping_tree,
+				       cache->key.objectid, bytenr, 0,
+				       &logical, &nr, &stripe_len);
+		BUG_ON(ret);
+		while (nr--) {
+			clear_extent_dirty(free_space_cache, logical[nr],
+				logical[nr] + stripe_len - 1, GFP_NOFS);
+		}
+		kfree(logical);
+	}
+	return 0;
+}
+
 static int cache_block_group(struct btrfs_root *root,
 			     struct btrfs_block_group_cache *block_group)
 {
@@ -153,6 +178,7 @@ next:
 		set_extent_dirty(free_space_cache, last,
 				 last + hole_size - 1, GFP_NOFS);
 	}
+	remove_sb_from_cache(root, block_group);
 	block_group->cached = 1;
 err:
 	btrfs_free_path(path);

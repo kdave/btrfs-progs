@@ -194,18 +194,7 @@ int make_btrfs(int fd, const char *device, const char *label,
 
 	/* create the items for the extent tree */
 	nritems = 0;
-	itemoff = __BTRFS_LEAF_DATA_SIZE(leafsize) -
-		  sizeof(struct btrfs_extent_item);
-	btrfs_set_disk_key_objectid(&disk_key, 0);
-	btrfs_set_disk_key_offset(&disk_key, first_free);
-	btrfs_set_disk_key_type(&disk_key, BTRFS_EXTENT_ITEM_KEY);
-	btrfs_set_item_key(buf, &disk_key, nritems);
-	btrfs_set_item_offset(buf, btrfs_item_nr(buf, nritems), itemoff);
-	btrfs_set_item_size(buf, btrfs_item_nr(buf,  nritems),
-			    sizeof(struct btrfs_extent_item));
-	extent_item = btrfs_item_ptr(buf, nritems, struct btrfs_extent_item);
-	btrfs_set_extent_refs(buf, extent_item, 1);
-	nritems++;
+	itemoff = __BTRFS_LEAF_DATA_SIZE(leafsize);
 	for (i = 1; i < 7; i++) {
 		BUG_ON(blocks[i] < first_free);
 		BUG_ON(blocks[i] < blocks[i - 1]);
@@ -517,17 +506,15 @@ int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 	kfree(buf);
 	list_add(&device->dev_list, &root->fs_info->fs_devices->devices);
 	device->fs_devices = root->fs_info->fs_devices;
-	ret = btrfs_bootstrap_super_map(&root->fs_info->mapping_tree,
-					root->fs_info->fs_devices);
-	BUG_ON(ret);
 	return 0;
 }
 
 int btrfs_prepare_device(int fd, char *file, int zero_end, u64 *block_count_ret)
 {
 	u64 block_count;
+	u64 bytenr;
 	struct stat st;
-	int ret;
+	int i, ret;
 
 	ret = fstat(fd, &st);
 	if (ret < 0) {
@@ -550,6 +537,13 @@ int btrfs_prepare_device(int fd, char *file, int zero_end, u64 *block_count_ret)
 	if (ret) {
 		fprintf(stderr, "failed to zero device start %d\n", ret);
 		exit(1);
+	}
+
+	for (i = 0 ; i < BTRFS_SUPER_MIRROR_MAX; i++) {
+		bytenr = btrfs_sb_offset(i);
+		if (bytenr >= block_count)
+			break;
+		zero_blocks(fd, bytenr, BTRFS_SUPER_INFO_SIZE);
 	}
 
 	if (zero_end) {
