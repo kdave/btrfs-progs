@@ -279,6 +279,10 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 			ci = btrfs_item_ptr(l, i, struct btrfs_csum_item);
 			printf("\t\tcsum item\n");
 			break;
+		case BTRFS_EXTENT_CSUM_KEY:
+			ci = btrfs_item_ptr(l, i, struct btrfs_csum_item);
+			printf("\t\textent csum item\n");
+			break;
 		case BTRFS_EXTENT_DATA_KEY:
 			fi = btrfs_item_ptr(l, i,
 					    struct btrfs_file_extent_item);

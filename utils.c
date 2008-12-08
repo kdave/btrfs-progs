@@ -46,16 +46,17 @@
 static inline int ioctl(int fd, int define, u64 *size) { return 0; }
 #endif
 
-static u64 reference_root_table[6] = {
+static u64 reference_root_table[] = {
 	[1] =	BTRFS_ROOT_TREE_OBJECTID,
 	[2] =	BTRFS_EXTENT_TREE_OBJECTID,
 	[3] =	BTRFS_CHUNK_TREE_OBJECTID,
 	[4] =	BTRFS_DEV_TREE_OBJECTID,
 	[5] =	BTRFS_FS_TREE_OBJECTID,
+	[6] =	BTRFS_CSUM_TREE_OBJECTID,
 };
 
 int make_btrfs(int fd, const char *device, const char *label,
-	       u64 blocks[6], u64 num_bytes, u32 nodesize,
+	       u64 blocks[7], u64 num_bytes, u32 nodesize,
 	       u32 leafsize, u32 sectorsize, u32 stripesize)
 {
 	struct btrfs_super_block super;
@@ -96,7 +97,7 @@ int make_btrfs(int fd, const char *device, const char *label,
 	btrfs_set_super_root(&super, blocks[1]);
 	btrfs_set_super_chunk_root(&super, blocks[3]);
 	btrfs_set_super_total_bytes(&super, num_bytes);
-	btrfs_set_super_bytes_used(&super, 5 * leafsize);
+	btrfs_set_super_bytes_used(&super, 6 * leafsize);
 	btrfs_set_super_sectorsize(&super, sectorsize);
 	btrfs_set_super_leafsize(&super, leafsize);
 	btrfs_set_super_nodesize(&super, nodesize);
@@ -112,7 +113,7 @@ int make_btrfs(int fd, const char *device, const char *label,
 	memset(buf->data, 0, leafsize);
 	buf->len = leafsize;
 	btrfs_set_header_bytenr(buf, blocks[1]);
-	btrfs_set_header_nritems(buf, 3);
+	btrfs_set_header_nritems(buf, 4);
 	btrfs_set_header_generation(buf, 1);
 	btrfs_set_header_owner(buf, BTRFS_ROOT_TREE_OBJECTID);
 	write_extent_buffer(buf, super.fsid, (unsigned long)
@@ -174,6 +175,18 @@ int make_btrfs(int fd, const char *device, const char *label,
 			    sizeof(root_item));
 	nritems++;
 
+	itemoff = itemoff - sizeof(root_item);
+	btrfs_set_root_bytenr(&root_item, blocks[6]);
+	btrfs_set_disk_key_objectid(&disk_key, BTRFS_CSUM_TREE_OBJECTID);
+	btrfs_set_item_key(buf, &disk_key, nritems);
+	btrfs_set_item_offset(buf, btrfs_item_nr(buf, nritems), itemoff);
+	btrfs_set_item_size(buf, btrfs_item_nr(buf, nritems),
+			    sizeof(root_item));
+	write_extent_buffer(buf, &root_item,
+			    btrfs_item_ptr_offset(buf, nritems),
+			    sizeof(root_item));
+	nritems++;
+
 
 	csum_tree_block_size(buf, BTRFS_CRC32_SIZE, 0);
 	ret = pwrite(fd, buf->data, leafsize, blocks[1]);
@@ -193,7 +206,7 @@ int make_btrfs(int fd, const char *device, const char *label,
 	extent_item = btrfs_item_ptr(buf, nritems, struct btrfs_extent_item);
 	btrfs_set_extent_refs(buf, extent_item, 1);
 	nritems++;
-	for (i = 1; i < 6; i++) {
+	for (i = 1; i < 7; i++) {
 		BUG_ON(blocks[i] < first_free);
 		BUG_ON(blocks[i] < blocks[i - 1]);
 
@@ -352,12 +365,20 @@ int make_btrfs(int fd, const char *device, const char *label,
 	csum_tree_block_size(buf, BTRFS_CRC32_SIZE, 0);
 	ret = pwrite(fd, buf->data, leafsize, blocks[4]);
 
-	/* finally create the FS root */
+	/* create the FS root */
 	btrfs_set_header_bytenr(buf, blocks[5]);
 	btrfs_set_header_owner(buf, BTRFS_FS_TREE_OBJECTID);
 	btrfs_set_header_nritems(buf, 0);
 	csum_tree_block_size(buf, BTRFS_CRC32_SIZE, 0);
 	ret = pwrite(fd, buf->data, leafsize, blocks[5]);
+	BUG_ON(ret != leafsize);
+
+	/* finally create the csum root */
+	btrfs_set_header_bytenr(buf, blocks[6]);
+	btrfs_set_header_owner(buf, BTRFS_CSUM_TREE_OBJECTID);
+	btrfs_set_header_nritems(buf, 0);
+	csum_tree_block_size(buf, BTRFS_CRC32_SIZE, 0);
+	ret = pwrite(fd, buf->data, leafsize, blocks[6]);
 	BUG_ON(ret != leafsize);
 
 	/* and write out the super block */

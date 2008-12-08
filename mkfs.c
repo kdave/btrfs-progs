@@ -328,7 +328,7 @@ int main(int ac, char **av)
 	char *first_file;
 	u64 block_count = 0;
 	u64 dev_block_count = 0;
-	u64 blocks[6];
+	u64 blocks[7];
 	u64 alloc_start = 0;
 	u64 metadata_profile = BTRFS_BLOCK_GROUP_RAID1 | BTRFS_BLOCK_GROUP_DUP;
 	u64 data_profile = BTRFS_BLOCK_GROUP_RAID0;
@@ -414,7 +414,7 @@ int main(int ac, char **av)
 	if (block_count == 0)
 		block_count = dev_block_count;
 
-	for (i = 0; i < 6; i++)
+	for (i = 0; i < 7; i++)
 		blocks[i] = BTRFS_SUPER_INFO_OFFSET + leafsize * i;
 
 	ret = make_btrfs(fd, file, label, blocks, block_count,

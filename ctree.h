@@ -54,6 +54,9 @@ struct btrfs_trans_handle;
 
 /* directory objectid inside the root tree */
 #define BTRFS_ROOT_TREE_DIR_OBJECTID 6ULL
+/* holds checksums of all the data extents */
+#define BTRFS_CSUM_TREE_OBJECTID 7ULL
+
 
 /* oprhan objectid for tracking unlinked/truncated files */
 #define BTRFS_ORPHAN_OBJECTID -5ULL
@@ -65,6 +68,13 @@ struct btrfs_trans_handle;
 /* space balancing */
 #define BTRFS_TREE_RELOC_OBJECTID -8ULL
 #define BTRFS_DATA_RELOC_TREE_OBJECTID -9ULL
+
+/*
+ * extent checksums all have this objectid
+ * this allows them to share the logging tree
+ * for fsyncs
+ */
+#define BTRFS_EXTENT_CSUM_OBJECTID -10ULL
 
 /* dummy objectid represents multiple objectids */
 #define BTRFS_MULTIPLE_OBJECTIDS -255ULL
@@ -583,6 +593,7 @@ struct btrfs_fs_info {
 	struct btrfs_root *tree_root;
 	struct btrfs_root *chunk_root;
 	struct btrfs_root *dev_root;
+	struct btrfs_root *csum_root;
 
 	/* the log root tree is a directory of all the other log roots */
 	struct btrfs_root *log_root_tree;
@@ -688,6 +699,11 @@ struct btrfs_root {
  * csum items have the checksums for data in the extents
  */
 #define BTRFS_CSUM_ITEM_KEY	120
+/*
+ * extent csums are stored in a separate tree and hold csums for
+ * an entire extent on disk.
+ */
+#define BTRFS_EXTENT_CSUM_KEY	128
 
 /*
  * root items point to tree roots.  There are typically in the root

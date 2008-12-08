@@ -2172,7 +2172,7 @@ int do_convert(const char *devname, int datacsum, int packing, int noxattr)
 {
 	int i, fd, ret;
 	u32 blocksize;
-	u64 blocks[6];
+	u64 blocks[7];
 	u64 total_bytes;
 	u64 super_bytenr;
 	ext2_filsys ext2_fs;
@@ -2195,7 +2195,7 @@ int do_convert(const char *devname, int datacsum, int packing, int noxattr)
 		fprintf(stderr, "filetype feature is missing\n");
 		goto fail;
 	}
-	for (i = 0; i < 6; i++) {
+	for (i = 0; i < 7; i++) {
 		ret = ext2_alloc_block(ext2_fs, 0, blocks + i);
 		if (ret) {
 			fprintf(stderr, "not enough free space\n");
