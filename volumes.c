@@ -210,15 +210,10 @@ int btrfs_scan_one_device(int fd, const char *path,
 		ret = -ENOMEM;
 		goto error;
 	}
-	ret = pread(fd, buf, 4096, super_offset);
-	if (ret != 4096) {
-		ret = -EIO;
-		goto error;
-	}
 	disk_super = (struct btrfs_super_block *)buf;
-	if (strncmp((char *)(&disk_super->magic), BTRFS_MAGIC,
-	    sizeof(disk_super->magic))) {
-		ret = -ENOENT;
+	ret = btrfs_read_dev_super(fd, disk_super, super_offset);
+	if (ret < 0) {
+		ret = -EIO;
 		goto error_brelse;
 	}
 	devid = le64_to_cpu(disk_super->dev_item.devid);
@@ -902,10 +897,10 @@ int btrfs_rmap_block(struct btrfs_mapping_tree *map_tree,
 	int i, j, nr = 0;
 
 	ce = find_first_cache_extent(&map_tree->cache_tree, chunk_start);
-	BUG_ON(!ce || ce->start != chunk_start);
+	BUG_ON(!ce);
 	map = container_of(ce, struct map_lookup, ce);
 
-		length = ce->size;
+	length = ce->size;
 	if (map->type & BTRFS_BLOCK_GROUP_RAID10)
 		length = ce->size / (map->num_stripes / map->sub_stripes);
 	else if (map->type & BTRFS_BLOCK_GROUP_RAID0)
@@ -929,7 +924,7 @@ int btrfs_rmap_block(struct btrfs_mapping_tree *map_tree,
 		} else if (map->type & BTRFS_BLOCK_GROUP_RAID0) {
 			stripe_nr = stripe_nr * map->num_stripes + i;
 		}
-		bytenr = chunk_start + stripe_nr * map->stripe_len;
+		bytenr = ce->start + stripe_nr * map->stripe_len;
 		for (j = 0; j < nr; j++) {
 			if (buf[j] == bytenr)
 				break;
@@ -1328,7 +1323,7 @@ int btrfs_read_super_device(struct btrfs_root *root, struct extent_buffer *buf)
 int btrfs_read_sys_array(struct btrfs_root *root)
 {
 	struct btrfs_super_block *super_copy = &root->fs_info->super_copy;
-	struct extent_buffer *sb = root->fs_info->sb_buffer;
+	struct extent_buffer *sb;
 	struct btrfs_disk_key *disk_key;
 	struct btrfs_chunk *chunk;
 	struct btrfs_key key;
@@ -1340,6 +1335,12 @@ int btrfs_read_sys_array(struct btrfs_root *root)
 	u32 cur;
 	int ret;
 
+	sb = btrfs_find_create_tree_block(root, BTRFS_SUPER_INFO_OFFSET,
+					  BTRFS_SUPER_INFO_SIZE);
+	if (!sb)
+		return -ENOMEM;
+	btrfs_set_buffer_uptodate(sb);
+	write_extent_buffer(sb, super_copy, 0, BTRFS_SUPER_INFO_SIZE);
 	array_size = btrfs_super_sys_array_size(super_copy);
 
 	/*
@@ -1373,6 +1374,7 @@ int btrfs_read_sys_array(struct btrfs_root *root)
 		sb_ptr += len;
 		cur += len;
 	}
+	free_extent_buffer(sb);
 	return 0;
 }
 

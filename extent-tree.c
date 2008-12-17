@@ -95,10 +95,8 @@ static int cache_block_group(struct btrfs_root *root,
 	struct extent_buffer *leaf;
 	struct extent_io_tree *free_space_cache;
 	int slot;
-	u64 last = 0;
+	u64 last;
 	u64 hole_size;
-	u64 first_free;
-	int found = 0;
 
 	if (!block_group)
 		return 0;
@@ -114,22 +112,14 @@ static int cache_block_group(struct btrfs_root *root,
 		return -ENOMEM;
 
 	path->reada = 2;
-	first_free = block_group->key.objectid;
-	key.objectid = block_group->key.objectid;
+	last = max_t(u64, block_group->key.objectid, BTRFS_SUPER_INFO_OFFSET);
+	key.objectid = last;
 	key.offset = 0;
 	btrfs_set_key_type(&key, BTRFS_EXTENT_ITEM_KEY);
 	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
 	if (ret < 0)
-		return ret;
-	ret = btrfs_previous_item(root, path, 0, BTRFS_EXTENT_ITEM_KEY);
-	if (ret < 0)
-		return ret;
-	if (ret == 0) {
-		leaf = path->nodes[0];
-		btrfs_item_key_to_cpu(leaf, &key, path->slots[0]);
-		if (key.objectid + key.offset > first_free)
-			first_free = key.objectid + key.offset;
-	}
+		goto err;
+
 	while(1) {
 		leaf = path->nodes[0];
 		slot = path->slots[0];
@@ -153,10 +143,6 @@ static int cache_block_group(struct btrfs_root *root,
 		}
 
 		if (btrfs_key_type(&key) == BTRFS_EXTENT_ITEM_KEY) {
-			if (!found) {
-				last = first_free;
-				found = 1;
-			}
 			if (key.objectid > last) {
 				hole_size = key.objectid - last;
 				set_extent_dirty(free_space_cache, last,
@@ -169,8 +155,6 @@ next:
 		path->slots[0]++;
 	}
 
-	if (!found)
-		last = first_free;
 	if (block_group->key.objectid +
 	    block_group->key.offset > last) {
 		hole_size = block_group->key.objectid +
@@ -1572,12 +1556,7 @@ static int __free_extent(struct btrfs_trans_handle *trans, struct btrfs_root
 		u64 super_used;
 		u64 root_used;
 
-		if (pin) {
-			ret = pin_down_bytes(trans, root, bytenr, num_bytes, 0);
-			if (ret > 0)
-				mark_free = 1;
-			BUG_ON(ret < 0);
-		}
+
 
 		/* block accounting for super block */
 		super_used = btrfs_super_bytes_used(&info->super_copy);
@@ -1593,8 +1572,25 @@ static int __free_extent(struct btrfs_trans_handle *trans, struct btrfs_root
 		if (ret)
 			return ret;
 
-		if (ops && ops->free_extent)
-			ops->free_extent(root, bytenr, num_bytes);
+		if (ops && ops->free_extent) {
+			ret = ops->free_extent(root, bytenr, num_bytes);
+			if (ret > 0) {
+				pin = 0;
+				mark_free = 0;
+			}
+		}
+
+		if (pin) {
+			ret = pin_down_bytes(trans, root, bytenr, num_bytes, 0);
+			if (ret > 0)
+				mark_free = 1;
+			BUG_ON(ret < 0);
+		}
+
+		if (owner_objectid >= BTRFS_FIRST_FREE_OBJECTID) {
+			ret = btrfs_del_csums(trans, root, bytenr, num_bytes);
+			BUG_ON(ret);
+		}
 
 		ret = update_block_group(trans, root, bytenr, num_bytes, 0,
 					 mark_free);
@@ -2587,8 +2583,8 @@ int btrfs_make_block_groups(struct btrfs_trans_handle *trans,
 			group_type = BTRFS_BLOCK_GROUP_SYSTEM;
 			group_size /= 4;
 			group_size &= ~(group_align - 1);
-			group_size = max_t(u64, group_size, 32 * 1024 * 1024);
-			group_size = min_t(u64, group_size, 128 * 1024 * 1024);
+			group_size = max_t(u64, group_size, 8 * 1024 * 1024);
+			group_size = min_t(u64, group_size, 32 * 1024 * 1024);
 		} else {
 			group_size &= ~(group_align - 1);
 			if (total_data >= total_metadata * 2) {

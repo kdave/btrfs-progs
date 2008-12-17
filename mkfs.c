@@ -125,7 +125,7 @@ static int make_root_dir(struct btrfs_root *root)
 	ret = btrfs_insert_dir_item(trans, root->fs_info->tree_root,
 			"default", 7,
 			btrfs_super_root_dir(&root->fs_info->super_copy),
-			&location, BTRFS_FT_DIR);
+			&location, BTRFS_FT_DIR, 0);
 	if (ret)
 		goto err;
 

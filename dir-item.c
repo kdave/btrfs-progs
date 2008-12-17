@@ -107,7 +107,7 @@ int btrfs_insert_xattr_item(struct btrfs_trans_handle *trans,
 
 int btrfs_insert_dir_item(struct btrfs_trans_handle *trans, struct btrfs_root
 			  *root, const char *name, int name_len, u64 dir,
-			  struct btrfs_key *location, u8 type)
+			  struct btrfs_key *location, u8 type, u64 index)
 {
 	int ret = 0;
 	int ret2 = 0;
@@ -128,8 +128,6 @@ int btrfs_insert_dir_item(struct btrfs_trans_handle *trans, struct btrfs_root
 					name, name_len);
 	if (IS_ERR(dir_item)) {
 		ret = PTR_ERR(dir_item);
-		if (ret == -EEXIST)
-			goto second_insert;
 		goto out;
 	}
 
@@ -144,7 +142,6 @@ int btrfs_insert_dir_item(struct btrfs_trans_handle *trans, struct btrfs_root
 	write_extent_buffer(leaf, name, name_ptr, name_len);
 	btrfs_mark_buffer_dirty(leaf);
 
-second_insert:
 	/* FIXME, use some real flag for selecting the extra index */
 	if (root == root->fs_info->tree_root) {
 		ret = 0;
@@ -153,7 +150,7 @@ second_insert:
 	btrfs_release_path(root, path);
 
 	btrfs_set_key_type(&key, BTRFS_DIR_INDEX_KEY);
-	key.offset = location->objectid;
+	key.offset = index;
 	dir_item = insert_with_overflow(trans, root, path, &key, data_size,
 					name, name_len);
 	if (IS_ERR(dir_item)) {
