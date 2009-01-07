@@ -44,6 +44,11 @@ int insert_cache_extent(struct cache_tree *tree, u64 start, u64 size);
 int insert_existing_cache_extent(struct cache_tree *tree,
 				 struct cache_extent *pe);
 
+static inline int cache_tree_empty(struct cache_tree *tree)
+{
+	return RB_EMPTY_ROOT(&tree->root);
+}
+
 static inline void free_cache_extent(struct cache_extent *pe)
 {
 	free(pe);

@@ -62,7 +62,7 @@ void btrfs_release_path(struct btrfs_root *root, struct btrfs_path *p)
 	int i;
 	for (i = 0; i < BTRFS_MAX_LEVEL; i++) {
 		if (!p->nodes[i])
-			break;
+			continue;
 		free_extent_buffer(p->nodes[i]);
 	}
 	memset(p, 0, sizeof(*p));

@@ -1528,6 +1528,9 @@ int btrfs_alloc_extent(struct btrfs_trans_handle *trans,
 		       u64 root_objectid, u64 ref_generation,
 		       u64 owner, u64 empty_size, u64 hint_byte,
 		       u64 search_end, struct btrfs_key *ins, int data);
+int btrfs_lookup_extent_ref(struct btrfs_trans_handle *trans,
+			    struct btrfs_root *root, u64 bytenr,
+			    u64 num_bytes, u32 *refs);
 int btrfs_inc_ref(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 		  struct extent_buffer *orig_buf, struct extent_buffer *buf,
 		  u32 *nr_extents);

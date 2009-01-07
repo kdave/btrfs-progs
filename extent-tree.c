@@ -801,9 +801,9 @@ int btrfs_extent_post_op(struct btrfs_trans_handle *trans,
 	return 0;
 }
 
-int lookup_extent_ref(struct btrfs_trans_handle *trans,
-		      struct btrfs_root *root, u64 bytenr,
-		      u64 num_bytes, u32 *refs)
+int btrfs_lookup_extent_ref(struct btrfs_trans_handle *trans,
+			    struct btrfs_root *root, u64 bytenr,
+			    u64 num_bytes, u32 *refs)
 {
 	struct btrfs_path *path;
 	int ret;
@@ -2110,8 +2110,8 @@ static void noinline reada_walk_down(struct btrfs_root *root,
 		}
 		blocksize = btrfs_level_size(root, level - 1);
 		if (i != slot) {
-			ret = lookup_extent_ref(NULL, root, bytenr,
-						blocksize, &refs);
+			ret = btrfs_lookup_extent_ref(NULL, root, bytenr,
+						      blocksize, &refs);
 			BUG_ON(ret);
 			if (refs != 1) {
 				skipped++;
@@ -2150,9 +2150,9 @@ static int noinline walk_down_tree(struct btrfs_trans_handle *trans,
 
 	WARN_ON(*level < 0);
 	WARN_ON(*level >= BTRFS_MAX_LEVEL);
-	ret = lookup_extent_ref(trans, root,
-				path->nodes[*level]->start,
-				path->nodes[*level]->len, &refs);
+	ret = btrfs_lookup_extent_ref(trans, root,
+				      path->nodes[*level]->start,
+				      path->nodes[*level]->len, &refs);
 	BUG_ON(ret);
 	if (refs > 1)
 		goto out;
@@ -2179,7 +2179,8 @@ static int noinline walk_down_tree(struct btrfs_trans_handle *trans,
 		bytenr = btrfs_node_blockptr(cur, path->slots[*level]);
 		ptr_gen = btrfs_node_ptr_generation(cur, path->slots[*level]);
 		blocksize = btrfs_level_size(root, *level - 1);
-		ret = lookup_extent_ref(trans, root, bytenr, blocksize, &refs);
+		ret = btrfs_lookup_extent_ref(trans, root, bytenr, blocksize,
+					      &refs);
 		BUG_ON(ret);
 		if (refs != 1) {
 			parent = path->nodes[*level];
