@@ -645,19 +645,26 @@ struct pending_dir {
 	char name[256];
 };
 
-int btrfs_register_one_device(char *fname)
+void btrfs_register_one_device(char *fname)
 {
 	struct btrfs_ioctl_vol_args args;
 	int fd;
 	int ret;
 
 	fd = open("/dev/btrfs-control", O_RDONLY);
-	if (fd < 0)
-		return -EINVAL;
+	if (fd < 0) {
+		fprintf(stderr, "failed to open"
+			"/dev/btrfs-control\n");
+		exit(1);
+	}
 	strcpy(args.name, fname);
 	ret = ioctl(fd, BTRFS_IOC_SCAN_DEV, &args);
 	close(fd);
-	return ret;
+	if (ret < 0) {
+		fprintf(stderr, "failed to register device %s\n",
+			fname);
+		exit(1);
+	}
 }
 
 int btrfs_scan_one_dir(char *dirname, int run_ioctl)
