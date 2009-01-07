@@ -263,9 +263,13 @@ static void print_usage(void)
 {
 	fprintf(stderr, "usage: mkfs.btrfs [options] dev [ dev ... ]\n");
 	fprintf(stderr, "options:\n");
+	fprintf(stderr, "\t -A --alloc-start the offset to start the FS\n");
 	fprintf(stderr, "\t -b --byte-count total number of bytes in the FS\n");
+	fprintf(stderr, "\t -d --data data profile, raid0, raid1, raid10 or single\n");
 	fprintf(stderr, "\t -l --leafsize size of btree leaves\n");
-	fprintf(stderr, "\t -n --nodesize size of btree leaves\n");
+	fprintf(stderr, "\t -L --label set a label\n");
+	fprintf(stderr, "\t -m --metadata metadata profile, values like data profile\n");
+	fprintf(stderr, "\t -n --nodesize size of btree nodes\n");
 	fprintf(stderr, "\t -s --sectorsize min block allocation\n");
 	fprintf(stderr, "%s\n", BTRFS_BUILD_VERSION);
 	exit(1);
