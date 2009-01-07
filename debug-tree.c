@@ -178,21 +178,79 @@ int main(int ac, char **av)
 			switch(found_key.objectid) {
 			case BTRFS_ROOT_TREE_OBJECTID:
 				if (!skip)
-					printf("root ");
-				break;
-			case BTRFS_DEV_TREE_OBJECTID:
-				if (!skip) {
-					printf("device extent tree ");
-				}
+					printf("root");
 				break;
 			case BTRFS_EXTENT_TREE_OBJECTID:
 				skip = 0;
 				if (!extent_only)
-					printf("extent tree ");
+					printf("extent");
 				break;
+			case BTRFS_CHUNK_TREE_OBJECTID:
+				if (!skip) {
+					printf("chunk");
+				}
+				break;
+			case BTRFS_DEV_TREE_OBJECTID:
+				if (!skip) {
+					printf("device");
+				}
+				break;
+			case BTRFS_FS_TREE_OBJECTID:
+				if (!skip) {
+					printf("fs");
+				}
+				break;
+			case BTRFS_ROOT_TREE_DIR_OBJECTID:
+				if (!skip) {
+					printf("directory");
+				}
+				break;
+			case BTRFS_CSUM_TREE_OBJECTID:
+				if (!skip) {
+					printf("checksum");
+				}
+				break;
+			case BTRFS_ORPHAN_OBJECTID:
+				if (!skip) {
+					printf("orphan");
+				}
+				break;
+			case BTRFS_TREE_LOG_OBJECTID:
+				if (!skip) {
+					printf("log");
+				}
+				break;
+			case BTRFS_TREE_LOG_FIXUP_OBJECTID:
+				if (!skip) {
+					printf("log fixup");
+				}
+				break;
+			case BTRFS_TREE_RELOC_OBJECTID:
+				if (!skip) {
+					printf("reloc");
+				}
+				break;
+			case BTRFS_DATA_RELOC_TREE_OBJECTID:
+				if (!skip) {
+					printf("data reloc");
+				}
+				break;
+			case BTRFS_EXTENT_CSUM_OBJECTID:
+				if (!skip) {
+					printf("extent checksum");
+				}
+			case BTRFS_MULTIPLE_OBJECTIDS:
+				if (!skip) {
+					printf("multiple");
+				}
+				break;
+			default:
+				if (!skip) {
+					printf("file");
+				}
 			}
 			if (!skip && !extent_only) {
-				printf("tree %llu %u %llu\n",
+				printf(" tree (%llu %u %llu)\n",
 				       (unsigned long long)found_key.objectid,
 				       found_key.type,
 				       (unsigned long long)found_key.offset);
