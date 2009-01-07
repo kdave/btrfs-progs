@@ -24,6 +24,7 @@
 #include <string.h>
 #include <endian.h>
 #include <byteswap.h>
+#include <assert.h>
 
 #ifndef READ
 #define READ 0
@@ -199,8 +200,8 @@ static inline long IS_ERR(const void *ptr)
 #define kstrdup(x, y) strdup(x)
 #define kfree(x) free(x)
 
-#define BUG_ON(c) do { if (c) abort(); } while (0)
-#define WARN_ON(c) do { if (c) abort(); } while (0)
+#define BUG_ON(c) assert(!(c))
+#define WARN_ON(c) assert(!(c))
 
 #undef offsetof
 #ifdef __compiler_offsetof
