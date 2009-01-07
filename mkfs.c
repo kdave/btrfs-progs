@@ -373,6 +373,13 @@ int main(int ac, char **av)
 				break;
 			case 'b':
 				block_count = parse_size(optarg);
+				if (block_count < 256*1024*1024) {
+					fprintf(stderr, "File system size "
+						"%llu bytes is too small, "
+						"256M is required at least\n",
+						block_count);
+					exit(1);
+				}
 				zero_end = 0;
 				break;
 			default:
