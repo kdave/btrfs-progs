@@ -18,6 +18,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <fcntl.h>
 #include "kerncompat.h"
 #include "radix-tree.h"
 #include "ctree.h"
@@ -96,7 +97,7 @@ int main(int ac, char **av) {
 	printf("node %p level %d total ptrs %d free spc %lu\n", root->node,
 	        btrfs_header_level(root->node),
 		btrfs_header_nritems(root->node),
-		BTRFS_NODEPTRS_PER_BLOCK(root) -
+		(unsigned long)BTRFS_NODEPTRS_PER_BLOCK(root) -
 		btrfs_header_nritems(root->node));
 	printf("all searches good, deleting some items\n");
 	i = 0;
