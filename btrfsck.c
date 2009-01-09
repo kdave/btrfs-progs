@@ -473,6 +473,7 @@ static int merge_inode_recs(struct inode_record *src, struct inode_record *dst,
 		}
 	}
 
+	dst->errors |= src->errors;
 	if (src->found_inode_item) {
 		if (!dst->found_inode_item) {
 			dst->nlink = src->nlink;
@@ -480,7 +481,6 @@ static int merge_inode_recs(struct inode_record *src, struct inode_record *dst,
 			dst->nbytes = src->nbytes;
 			dst->imode = src->imode;
 			dst->nodatasum = src->nodatasum;
-			dst->errors |= src->errors;
 			dst->found_inode_item = 1;
 		} else {
 			dst->errors |= I_ERR_DUP_INODE_ITEM;
@@ -503,11 +503,14 @@ static int splice_shared_node(struct shared_node *src_node,
 	struct ptr_node *node, *ins;
 	struct cache_tree *src, *dst;
 	struct inode_record *rec, *conflict;
+	u64 current_ino = 0;
 	int splice = 0;
 	int ret;
 
 	if (--src_node->refs == 0)
 		splice = 1;
+	if (src_node->current)
+		current_ino = src_node->current->ino;
 
 	src = &src_node->inode_cache;
 	dst = &dst_node->inode_cache;
@@ -537,14 +540,13 @@ static int splice_shared_node(struct shared_node *src_node,
 			BUG_ON(ret);
 		}
 	}
-	if (src_node->current && (!dst_node->current ||
-	    src_node->current->ino > dst_node->current->ino)) {
+	if (current_ino > 0 && (!dst_node->current ||
+	    current_ino > dst_node->current->ino)) {
 		if (dst_node->current) {
 			dst_node->current->checked = 1;
 			maybe_free_inode_rec(dst, dst_node->current);
 		}
-		dst_node->current =
-			get_inode_rec(dst, src_node->current->ino, 1);
+		dst_node->current = get_inode_rec(dst, current_ino, 1);
 	}
 	return 0;
 }
