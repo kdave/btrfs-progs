@@ -403,6 +403,9 @@ int main(int ac, char **av)
 	if (ac == 0)
 		print_usage();
 
+	printf("\nWARNING! - %s IS EXPERIMENTAL\n", BTRFS_BUILD_VERSION);
+	printf("WARNING! - see http://btrfs.wiki.kernel.org before using\n\n");
+
 	file = av[optind++];
 	ret = check_mounted(file);
 	if (ret < 0) {
