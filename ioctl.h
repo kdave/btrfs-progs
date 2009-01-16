@@ -23,7 +23,7 @@
 
 #define BTRFS_IOCTL_MAGIC 0x94
 #define BTRFS_VOL_NAME_MAX 255
-#define BTRFS_PATH_NAME_MAX 3072
+#define BTRFS_PATH_NAME_MAX 4087
 
 struct btrfs_ioctl_vol_args {
 	__s64 fd;

@@ -653,18 +653,13 @@ void btrfs_register_one_device(char *fname)
 
 	fd = open("/dev/btrfs-control", O_RDONLY);
 	if (fd < 0) {
-		fprintf(stderr, "failed to open"
-			"/dev/btrfs-control\n");
-		exit(1);
+		fprintf(stderr, "failed to open /dev/btrfs-control "
+			"skipping device registration\n");
+		return;
 	}
 	strcpy(args.name, fname);
 	ret = ioctl(fd, BTRFS_IOC_SCAN_DEV, &args);
 	close(fd);
-	if (ret < 0) {
-		fprintf(stderr, "failed to register device %s\n",
-			fname);
-		exit(1);
-	}
 }
 
 int btrfs_scan_one_dir(char *dirname, int run_ioctl)
