@@ -43,7 +43,7 @@ struct btrfs_ioctl_vol_args { char name[BTRFS_VOL_NAME_MAX]; };
 static inline int ioctl(int fd, int define, void *arg) { return 0; }
 #endif
 
-void print_usage(void)
+static void print_usage(void)
 {
 	printf("usage: btrfsctl [ -d file|dir] [ -s snap_name subvol|tree ]\n");
 	printf("                [-r size] [-A device] [-a] [-c]\n");
@@ -59,7 +59,7 @@ void print_usage(void)
 	exit(1);
 }
 
-int open_file_or_dir(char *fname)
+static int open_file_or_dir(const char *fname)
 {
 	int ret;
 	struct stat st;

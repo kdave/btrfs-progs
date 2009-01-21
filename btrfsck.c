@@ -1254,7 +1254,7 @@ static int fs_root_objectid(u64 objectid)
 	return 0;
 }
 
-int check_fs_roots(struct btrfs_root *root)
+static int check_fs_roots(struct btrfs_root *root)
 {
 	struct btrfs_path path;
 	struct btrfs_key key;
@@ -1937,7 +1937,7 @@ static int add_root_to_pending(struct extent_buffer *buf,
 	return 0;
 }
 
-int check_extent_refs(struct btrfs_root *root,
+static int check_extent_refs(struct btrfs_root *root,
 		      struct cache_tree *extent_cache)
 {
 	struct extent_record *rec;
@@ -1972,7 +1972,7 @@ int check_extent_refs(struct btrfs_root *root,
 	return err;
 }
 
-int check_extents(struct btrfs_root *root)
+static int check_extents(struct btrfs_root *root)
 {
 	struct cache_tree extent_cache;
 	struct cache_tree seen;
@@ -2057,7 +2057,7 @@ int check_extents(struct btrfs_root *root)
 	return ret;
 }
 
-void print_usage(void)
+static void print_usage(void)
 {
 	fprintf(stderr, "usage: btrfsck dev\n");
 	fprintf(stderr, "%s\n", BTRFS_BUILD_VERSION);
