@@ -189,6 +189,10 @@ int main(int ac, char **av)
 
 	if (command == BTRFS_IOC_SCAN_DEV) {
 		fd = open("/dev/btrfs-control", O_RDWR);
+		if (fd < 0) {
+			perror("failed to open /dev/btrfs-control");
+			exit(1);
+		}
 		name = fname;
 	 } else {
 		fd = open_file_or_dir(fname);
