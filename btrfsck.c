@@ -2075,6 +2075,9 @@ int main(int ac, char **av)
 	radix_tree_init();
 	root = open_ctree(av[1], 0, 0);
 
+	if (root == NULL)
+		return 1;
+
 	ret = check_extents(root);
 	if (ret)
 		goto out;

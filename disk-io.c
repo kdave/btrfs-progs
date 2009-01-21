@@ -530,6 +530,7 @@ struct btrfs_root *open_ctree(const char *filename, u64 sb_bytenr, int writes)
 
 	fp = open(filename, flags, 0600);
 	if (fp < 0) {
+		fprintf (stderr, "Coult not open %s\n", filename);
 		return NULL;
 	}
 	root = open_ctree_fd(fp, filename, sb_bytenr, writes);
