@@ -60,10 +60,10 @@ struct extent_record {
 
 struct inode_backref {
 	struct list_head list;
-	int found_dir_item:1;
-	int found_dir_index:1;
-	int found_inode_ref:1;
-	int filetype:8;
+	unsigned int found_dir_item:1;
+	unsigned int found_dir_index:1;
+	unsigned int found_inode_ref:1;
+	unsigned int filetype:8;
 	int errors;
 	u64 dir;
 	u64 index;
@@ -83,13 +83,13 @@ struct inode_backref {
 
 struct inode_record {
 	struct list_head backrefs;
-	int checked:1;
-	int found_inode_item:1;
-	int found_dir_item:1;
-	int found_file_extent:1;
-	int found_csum_item:1;
-	int some_csum_missing:1;
-	int nodatasum:1;
+	unsigned int checked:1;
+	unsigned int found_inode_item:1;
+	unsigned int found_dir_item:1;
+	unsigned int found_file_extent:1;
+	unsigned int found_csum_item:1;
+	unsigned int some_csum_missing:1;
+	unsigned int nodatasum:1;
 	int errors;
 
 	u64 ino;
