@@ -44,8 +44,8 @@ btrfs-vol: $(objects) btrfs-vol.o
 btrfs-show: $(objects) btrfs-show.o
 	gcc $(CFLAGS) -o btrfs-show btrfs-show.o $(objects) $(LDFLAGS) $(LIBS)
 
-btrfsck: $(objects) btrfsck.o bit-radix.o
-	gcc $(CFLAGS) -o btrfsck btrfsck.o $(objects) bit-radix.o $(LDFLAGS) $(LIBS)
+btrfsck: $(objects) btrfsck.o
+	gcc $(CFLAGS) -o btrfsck btrfsck.o $(objects) $(LDFLAGS) $(LIBS)
 
 mkfs.btrfs: $(objects) mkfs.o
 	gcc $(CFLAGS) -o mkfs.btrfs $(objects) mkfs.o $(LDFLAGS) $(LIBS)
