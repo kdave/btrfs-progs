@@ -741,7 +741,7 @@ static int restore_metadump(const char *input, FILE *out, int num_threads)
 		in = fopen(input, "r");
 		if (!in) {
 			perror("unable to open metadump image");
-			exit(1);
+			return 1;
 		}
 	}
 
@@ -760,7 +760,7 @@ static int restore_metadump(const char *input, FILE *out, int num_threads)
 		if (le64_to_cpu(header->magic) != HEADER_MAGIC ||
 		    le64_to_cpu(header->bytenr) != bytenr) {
 			fprintf(stderr, "bad header in metadump image\n");
-			exit(1);
+			return 1;
 		}
 		ret = add_cluster(cluster, &mdrestore, &bytenr);
 		BUG_ON(ret);
@@ -850,5 +850,5 @@ int main(int argc, char *argv[])
 	else
 		fclose(out);
 
-	exit(0);
+	exit(ret);
 }
