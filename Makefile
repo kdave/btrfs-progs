@@ -30,7 +30,7 @@ endif
 	$(CC) $(DEPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c $<
 
 
-all: version $(progs)
+all: version $(progs) manpages
 
 version:
 	bash version.sh
@@ -68,10 +68,17 @@ quick-test: $(objects) quick-test.o
 convert: $(objects) convert.o
 	gcc $(CFLAGS) -o btrfs-convert $(objects) convert.o -lext2fs $(LDFLAGS) $(LIBS)
 
+manpages:
+	cd man; make
+
+install-man:
+	cd man; make install
+
 clean :
 	rm -f $(progs) cscope.out *.o .*.d btrfs-convert
+	cd man; make clean
 
-install: $(progs)
+install: $(progs) install-man
 	$(INSTALL) -m755 -d $(DESTDIR)$(bindir)
 	$(INSTALL) $(progs) $(DESTDIR)$(bindir)
 	if [ -e btrfs-convert ]; then $(INSTALL) btrfs-convert $(DESTDIR)$(bindir); fi
