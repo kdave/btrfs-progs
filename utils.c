@@ -531,7 +531,8 @@ int btrfs_prepare_device(int fd, char *file, int zero_end, u64 *block_count_ret)
 	zero_end = 1;
 
 	if (block_count < 256 * 1024 * 1024) {
-		fprintf(stderr, "device %s is too small\n", file);
+		fprintf(stderr, "device %s is too small "
+		        "(must be at least 256 MB)\n", file);
 		exit(1);
 	}
 	ret = zero_dev_start(fd);
