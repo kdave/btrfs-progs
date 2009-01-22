@@ -357,19 +357,12 @@ static u64 parse_profile(char *s)
 
 static char *parse_label(char *input)
 {
-	int i;
 	int len = strlen(input);
 
 	if (len >= BTRFS_LABEL_SIZE) {
 		fprintf(stderr, "Label %s is too long (max %d)\n", input,
 			BTRFS_LABEL_SIZE - 1);
 		exit(1);
-	}
-	for (i = 0; i < len; i++) {
-		if (input[i] == '/' || input[i] == '\\') {
-			fprintf(stderr, "invalid label %s\n", input);
-			exit(1);
-		}
 	}
 	return strdup(input);
 }
