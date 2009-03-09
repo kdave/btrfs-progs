@@ -16,7 +16,13 @@
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 021110-1307, USA.
 #
-import sys, os, signal, time, commands, tempfile
+import sys, os, signal, time, commands, tempfile, random
+
+# numpy seems to override random() with something else.  Instantiate our
+# own here
+randgen = random.Random()
+randgen.seed(50)
+
 from optparse import OptionParser
 from matplotlib import rcParams
 from matplotlib.font_manager import fontManager, FontProperties
@@ -78,6 +84,7 @@ class AnnoteFinder:
 
 def loaddata(fh,delimiter=None, converters=None):
 
+    #14413824 8192 extent back ref root 5 gen 10 owner 282 num_refs 1
     def iter(fh, delimiter, converters):
         global total_data
         global total_metadata
@@ -86,6 +93,7 @@ def loaddata(fh,delimiter=None, converters=None):
             start = float(line[0])
             len = float(line[1])
             owner = float(line[10])
+            root = float(line[6])
             if owner <= 255:
                 total_metadata += int(len)
             else:
@@ -95,17 +103,18 @@ def loaddata(fh,delimiter=None, converters=None):
             yield start
             yield len
             yield owner
+            yield root
     X = numpy.fromiter(iter(fh, delimiter, converters), dtype=float)
     return X
 
 def run_debug_tree(device):
-    p = os.popen('debug-tree -e ' + device)
+    p = os.popen('btrfs-debug-tree -e ' + device)
     data = loaddata(p)
     return data
 
 def shapeit(X):
-    lines = len(X) / 3
-    X.shape = (lines, 3)
+    lines = len(X) / 4
+    X.shape = (lines, 4)
 
 def line_picker(line, mouseevent):
     if mouseevent.xdata is None: return False, dict()
@@ -118,28 +127,43 @@ def xycalc(byte):
     xval = byte % num_cells
     return (xval, yval + 1)
 
-def plotone(a, xvals, yvals, owner):
-    global data_lines
-    global meta_lines
+# record the color used for each root the first time we find it
+root_colors = {}
+# there are lots of good colormaps to choose from
+# http://www.scipy.org/Cookbook/Matplotlib/Show_colormaps
+#
+meta_cmap = get_cmap("gist_ncar")
+data_done = False
+
+def plotone(a, xvals, yvals, owner, root, lines, labels):
+    global data_done
+    add_label = False
 
     if owner:
         if options.meta_only:
             return
         color = "blue"
         label = "Data"
+        if not data_done:
+            add_label = True
+            data_done = True
     else:
         if options.data_only:
             return
-        color = "green"
-        label = "Metadata"
+        if root not in root_colors:
+            color = meta_cmap(randgen.random())
+            label = "Meta %d" % int(root)
+            root_colors[root] = (color, label)
+            add_label = True
+        else:
+            color, label = root_colors[root]
 
-    lines = a.plot(xvals, yvals, 's', color=color, mfc=color, mec=color,
+    plotlines = a.plot(xvals, yvals, 's', color=color, mfc=color, mec=color,
            markersize=.23, label=label)
-    if owner and not data_lines:
-        data_lines = lines
-    elif not owner and not meta_lines:
-        meta_lines = lines
-
+    if add_label:
+        lines += plotlines
+        labels.append(label)
+        print "add label %s" % label
 
 def parse_zoom():
     def parse_num(s):
@@ -192,8 +216,6 @@ if not options.device and not options.input_file:
 zoommin, zoommax = parse_zoom()
 total_data = 0
 total_metadata = 0
-data_lines = []
-meta_lines = []
 
 if options.device:
     data = run_debug_tree(options.device)
@@ -217,24 +239,29 @@ f = figure(figsize=(8,6))
 
 # Throughput goes at the botoom
 a = subplot(1, 1, 1)
+subplots_adjust(right=0.7)
 datai = 0
 xvals = []
 yvals = []
-last = 0
+last_owner = 0
+last_root = 0
+lines = []
+labels = []
 while datai < datalen:
     row = data[datai]
     datai += 1
     byte = row[0]
     size = row[1]
     owner = row[2]
+    root = row[3]
 
     if owner <= 255:
         owner = 0
     else:
         owner = 1
 
-    if len(xvals) and owner != last:
-        plotone(a, xvals, yvals, last)
+    if len(xvals) and (owner != last_owner or last_root != root):
+        plotone(a, xvals, yvals, last_owner, last_root, lines, labels)
         xvals = []
         yvals = []
     cell = 0
@@ -245,10 +272,11 @@ while datai < datalen:
         if xy:
             xvals.append(xy[0])
             yvals.append(xy[1])
-    last = owner
+    last_owner = owner
+    last_root = root
 
 if xvals:
-    plotone(a, xvals, yvals, last)
+    plotone(a, xvals, yvals, last_owner, last_root, lines, labels)
 
 # make sure the final second goes on the x axes
 ticks = []
@@ -278,16 +306,7 @@ a.set_ylabel('Disk offset (%s)' % scalestr)
 a.set_xlim(0, num_cells)
 a.set_title('Blocks')
 
-lines = []
-labels = []
-if data_lines:
-    lines += data_lines
-    labels += ["Data"]
-if meta_lines:
-    lines += meta_lines
-    labels += ["Metadata"]
-
-a.legend(lines, labels, loc=(.9, 1.02), shadow=True, pad=0.5, numpoints=1,
+a.legend(lines, labels, loc=(1.05, 0.8), shadow=True, pad=0.1, numpoints=1,
               handletextsep = 0.005,
               labelsep = 0.01,
               markerscale=10,
