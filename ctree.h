@@ -479,6 +479,10 @@ struct btrfs_inode_item {
 	struct btrfs_timespec otime;
 } __attribute__ ((__packed__));
 
+struct btrfs_dir_log_item {
+	__le64 end;
+} __attribute__ ((__packed__));
+
 struct btrfs_dir_item {
 	struct btrfs_disk_key location;
 	__le64 transid;
@@ -1193,6 +1197,8 @@ static inline void btrfs_set_item_key(struct extent_buffer *eb,
 	struct btrfs_item *item = btrfs_item_nr(eb, nr);
 	write_eb_member(eb, item, struct btrfs_item, key, disk_key);
 }
+
+BTRFS_SETGET_FUNCS(dir_log_end, struct btrfs_dir_log_item, end, 64);
 
 /*
  * struct btrfs_root_ref

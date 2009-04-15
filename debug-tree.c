@@ -113,6 +113,7 @@ int main(int ac, char **av)
 	int ret;
 	int slot;
 	int extent_only = 0;
+	struct btrfs_root *tree_root_scan;
 
 	radix_tree_init();
 
@@ -147,18 +148,20 @@ int main(int ac, char **av)
 		btrfs_print_tree(root->fs_info->chunk_root,
 				 root->fs_info->chunk_root->node);
 	}
+	tree_root_scan = root->fs_info->tree_root;
+
 	btrfs_init_path(&path);
+again:
 	key.offset = 0;
 	key.objectid = 0;
 	btrfs_set_key_type(&key, BTRFS_ROOT_ITEM_KEY);
-	ret = btrfs_search_slot(NULL, root->fs_info->tree_root,
-					&key, &path, 0, 0);
+	ret = btrfs_search_slot(NULL, tree_root_scan, &key, &path, 0, 0);
 	BUG_ON(ret < 0);
 	while(1) {
 		leaf = path.nodes[0];
 		slot = path.slots[0];
 		if (slot >= btrfs_header_nritems(leaf)) {
-			ret = btrfs_next_leaf(root, &path);
+			ret = btrfs_next_leaf(tree_root_scan, &path);
 			if (ret != 0)
 				break;
 			leaf = path.nodes[0];
@@ -172,9 +175,9 @@ int main(int ac, char **av)
 
 			offset = btrfs_item_ptr_offset(leaf, slot);
 			read_extent_buffer(leaf, &ri, offset, sizeof(ri));
-			buf = read_tree_block(root->fs_info->tree_root,
+			buf = read_tree_block(tree_root_scan,
 					      btrfs_root_bytenr(&ri),
-					      root->leafsize, 0);
+					      tree_root_scan->leafsize, 0);
 			switch(found_key.objectid) {
 			case BTRFS_ROOT_TREE_OBJECTID:
 				if (!skip)
@@ -254,14 +257,21 @@ int main(int ac, char **av)
 				       (unsigned long long)found_key.objectid,
 				       found_key.type,
 				       (unsigned long long)found_key.offset);
-				btrfs_print_tree(root, buf);
+				btrfs_print_tree(tree_root_scan, buf);
 			} else if (extent_only && !skip) {
-				print_extents(root, buf);
+				print_extents(tree_root_scan, buf);
 			}
 		}
 		path.slots[0]++;
 	}
 	btrfs_release_path(root, &path);
+
+	if (tree_root_scan == root->fs_info->tree_root &&
+	    root->fs_info->log_root_tree) {
+		tree_root_scan = root->fs_info->log_root_tree;
+		goto again;
+	}
+
 	if (extent_only)
 		return 0;
 

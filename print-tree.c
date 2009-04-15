@@ -189,6 +189,12 @@ static void print_key_type(u8 type)
 	case BTRFS_DIR_INDEX_KEY:
 		printf("DIR_INDEX");
 		break;
+	case BTRFS_DIR_LOG_ITEM_KEY:
+		printf("DIR_LOG_ITEM");
+		break;
+	case BTRFS_DIR_LOG_INDEX_KEY:
+		printf("DIR_LOG_INDEX");
+		break;
 	case BTRFS_XATTR_ITEM_KEY:
 		printf("XATTR_ITEM");
 		break;
@@ -257,6 +263,7 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 	struct btrfs_disk_key disk_key;
 	struct btrfs_root_item root_item;
 	struct btrfs_block_group_item bg_item;
+	struct btrfs_dir_log_item *dlog;
 	u32 nr = btrfs_header_nritems(l);
 	u32 type;
 
@@ -299,6 +306,12 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 			di = btrfs_item_ptr(l, i, struct btrfs_dir_item);
 			print_dir_item(l, item, di);
 			break;
+		case BTRFS_DIR_LOG_INDEX_KEY:
+		case BTRFS_DIR_LOG_ITEM_KEY:
+			dlog = btrfs_item_ptr(l, i, struct btrfs_dir_log_item);
+			printf("\t\tdir log end %Lu\n",
+			       btrfs_dir_log_end(l, dlog));
+		       break;
 		case BTRFS_ORPHAN_ITEM_KEY:
 			printf("\t\torphan item\n");
 			break;

@@ -448,6 +448,33 @@ static int find_and_setup_root(struct btrfs_root *tree_root,
 	return 0;
 }
 
+static int find_and_setup_log_root(struct btrfs_root *tree_root,
+			       struct btrfs_fs_info *fs_info,
+			       struct btrfs_super_block *disk_super)
+{
+	u32 blocksize;
+	u64 blocknr = btrfs_super_log_root(disk_super);
+	struct btrfs_root *log_root = malloc(sizeof(struct btrfs_root));
+
+	if (blocknr == 0)
+		return 0;
+
+	blocksize = btrfs_level_size(tree_root,
+			     btrfs_super_log_root_level(disk_super));
+
+	__setup_root(tree_root->nodesize, tree_root->leafsize,
+		     tree_root->sectorsize, tree_root->stripesize,
+		     log_root, fs_info, BTRFS_TREE_LOG_OBJECTID);
+
+	log_root->node = read_tree_block(tree_root, blocknr,
+				     blocksize,
+				     btrfs_super_generation(disk_super) + 1);
+
+	fs_info->log_root_tree = log_root;
+	BUG_ON(!log_root->node);
+	return 0;
+}
+
 int btrfs_free_fs_root(struct btrfs_fs_info *fs_info, struct btrfs_root *root)
 {
 	if (root->node)
@@ -681,7 +708,8 @@ struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
 				  BTRFS_FS_TREE_OBJECTID, root);
 	BUG_ON(ret);
 	root->ref_cows = 1;
-	fs_info->generation = btrfs_super_generation(disk_super) + 1;
+
+	find_and_setup_log_root(tree_root, fs_info, disk_super);
 	btrfs_read_block_groups(root);
 
 	fs_info->data_alloc_profile = (u64)-1;
@@ -884,6 +912,12 @@ int close_ctree(struct btrfs_root *root)
 		free_extent_buffer(root->fs_info->dev_root->node);
 	if (root->fs_info->csum_root->node)
 		free_extent_buffer(root->fs_info->csum_root->node);
+
+	if (root->fs_info->log_root_tree) {
+		if (root->fs_info->log_root_tree->node)
+			free_extent_buffer(root->fs_info->log_root_tree->node);
+		free(root->fs_info->log_root_tree);
+	}
 
 	close_all_devices(root->fs_info);
 	extent_io_tree_cleanup(&fs_info->extent_cache);

@@ -115,9 +115,9 @@ struct inode_record {
 #define I_ERR_ODD_FILE_EXTENT		(1 << 5)
 #define I_ERR_BAD_FILE_EXTENT		(1 << 6)
 #define I_ERR_FILE_EXTENT_OVERLAP	(1 << 7)
-#define I_ERR_FILE_EXTENT_DISCOUNT	(1 << 8)
+#define I_ERR_FILE_EXTENT_DISCOUNT	(1 << 8) // 100
 #define I_ERR_DIR_ISIZE_WRONG		(1 << 9)
-#define I_ERR_FILE_NBYTES_WRONG		(1 << 10)
+#define I_ERR_FILE_NBYTES_WRONG		(1 << 10) // 400
 #define I_ERR_ODD_CSUM_ITEM		(1 << 11)
 #define I_ERR_SOME_CSUM_MISSING		(1 << 12)
 
@@ -2081,7 +2081,6 @@ int main(int ac, char **av)
 	ret = check_extents(root);
 	if (ret)
 		goto out;
-
 	ret = check_fs_roots(root);
 
 out:
