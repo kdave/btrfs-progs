@@ -450,6 +450,12 @@ void btrfs_print_tree(struct btrfs_root *root, struct extent_buffer *eb)
 					     btrfs_node_blockptr(eb, i),
 					     size,
 					     btrfs_node_ptr_generation(eb, i));
+		if (!next) {
+			fprintf(stderr, "failed to read %llu in tree %llu\n",
+				(unsigned long long)btrfs_node_blockptr(eb, i),
+				(unsigned long long)btrfs_header_owner(eb));
+			continue;
+		}
 		if (btrfs_is_leaf(next) &&
 		    btrfs_header_level(eb) != 1)
 			BUG();
