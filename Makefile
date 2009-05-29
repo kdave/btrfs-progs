@@ -1,10 +1,11 @@
 CC=gcc
-AM_CFLAGS = -Wall -fno-strict-aliasing -D_FILE_OFFSET_BITS=64 -D_FORTIFY_SOURCE=2
+AM_CFLAGS = -Wall -D_FILE_OFFSET_BITS=64 -D_FORTIFY_SOURCE=2
 CFLAGS = -g -Werror -Os
 objects = ctree.o disk-io.o radix-tree.o extent-tree.o print-tree.o \
 	  root-tree.o dir-item.o file-item.o inode-item.o \
 	  inode-map.o crc32c.o rbtree.o extent-cache.o extent_io.o \
 	  volumes.o utils.o
+
 #
 CHECKFLAGS=-D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ -Wbitwise \
 		-Wuninitialized -Wshadow -Wundef
@@ -15,8 +16,7 @@ prefix ?= /usr/local
 bindir = $(prefix)/bin
 LIBS=-luuid
 
-progs = btrfsctl btrfsck mkfs.btrfs btrfs-debug-tree btrfs-show btrfs-vol \
-	btrfstune btrfs-image
+progs = btrfsctl mkfs.btrfs btrfs-debug-tree btrfs-show btrfs-vol btrfsck
 
 # make C=1 to enable sparse
 ifdef C

@@ -173,6 +173,11 @@ static int recow_roots(struct btrfs_trans_handle *trans,
 	BUG_ON(ret);
 	free_extent_buffer(tmp);
 
+	ret = __btrfs_cow_block(trans, info->csum_root, info->csum_root->node,
+				NULL, 0, &tmp, 0, 0);
+	BUG_ON(ret);
+	free_extent_buffer(tmp);
+
 	return 0;
 }
 
@@ -252,7 +257,7 @@ static int create_data_reloc_tree(struct btrfs_trans_handle *trans,
 
 	location.objectid = objectid;
 	location.type = BTRFS_ROOT_ITEM_KEY;
-	location.offset = trans->transid;
+	location.offset = 0;
 	ret = btrfs_insert_root(trans, root->fs_info->tree_root,
 				&location, &root_item);
 	BUG_ON(ret);

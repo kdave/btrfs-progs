@@ -63,7 +63,6 @@ int make_btrfs(int fd, const char *device, const char *label,
 	struct extent_buffer *buf;
 	struct btrfs_root_item root_item;
 	struct btrfs_disk_key disk_key;
-	struct btrfs_extent_ref *extent_ref;
 	struct btrfs_extent_item *extent_item;
 	struct btrfs_inode_item *inode_item;
 	struct btrfs_chunk *chunk;
@@ -115,6 +114,7 @@ int make_btrfs(int fd, const char *device, const char *label,
 	btrfs_set_header_bytenr(buf, blocks[1]);
 	btrfs_set_header_nritems(buf, 4);
 	btrfs_set_header_generation(buf, 1);
+	btrfs_set_header_backref_rev(buf, BTRFS_MIXED_BACKREF_REV);
 	btrfs_set_header_owner(buf, BTRFS_ROOT_TREE_OBJECTID);
 	write_extent_buffer(buf, super.fsid, (unsigned long)
 			    btrfs_header_fsid(buf), BTRFS_FSID_SIZE);
@@ -200,7 +200,8 @@ int make_btrfs(int fd, const char *device, const char *label,
 		BUG_ON(blocks[i] < blocks[i - 1]);
 
 		/* create extent item */
-		itemoff = itemoff - sizeof(struct btrfs_extent_item);
+		itemoff -= sizeof(struct btrfs_extent_item) +
+			   sizeof(struct btrfs_tree_block_info);
 		btrfs_set_disk_key_objectid(&disk_key, blocks[i]);
 		btrfs_set_disk_key_offset(&disk_key, leafsize);
 		btrfs_set_disk_key_type(&disk_key, BTRFS_EXTENT_ITEM_KEY);
@@ -208,29 +209,25 @@ int make_btrfs(int fd, const char *device, const char *label,
 		btrfs_set_item_offset(buf, btrfs_item_nr(buf, nritems),
 				      itemoff);
 		btrfs_set_item_size(buf, btrfs_item_nr(buf, nritems),
-				    sizeof(struct btrfs_extent_item));
+				    sizeof(struct btrfs_extent_item) +
+				    sizeof(struct btrfs_tree_block_info));
 		extent_item = btrfs_item_ptr(buf, nritems,
 					     struct btrfs_extent_item);
 		btrfs_set_extent_refs(buf, extent_item, 1);
+		btrfs_set_extent_generation(buf, extent_item, 1);
+		btrfs_set_extent_flags(buf, extent_item,
+				       BTRFS_EXTENT_FLAG_TREE_BLOCK);
 		nritems++;
 
 		/* create extent ref */
 		ref_root = reference_root_table[i];
-		itemoff = itemoff - sizeof(struct btrfs_extent_ref);
 		btrfs_set_disk_key_objectid(&disk_key, blocks[i]);
-		btrfs_set_disk_key_offset(&disk_key, blocks[i]);
-		btrfs_set_disk_key_type(&disk_key, BTRFS_EXTENT_REF_KEY);
+		btrfs_set_disk_key_offset(&disk_key, ref_root);
+		btrfs_set_disk_key_type(&disk_key, BTRFS_TREE_BLOCK_REF_KEY);
 		btrfs_set_item_key(buf, &disk_key, nritems);
 		btrfs_set_item_offset(buf, btrfs_item_nr(buf, nritems),
 				      itemoff);
-		btrfs_set_item_size(buf, btrfs_item_nr(buf, nritems),
-				    sizeof(struct btrfs_extent_ref));
-		extent_ref = btrfs_item_ptr(buf, nritems,
-					     struct btrfs_extent_ref);
-		btrfs_set_ref_root(buf, extent_ref, ref_root);
-		btrfs_set_ref_generation(buf, extent_ref, 1);
-		btrfs_set_ref_objectid(buf, extent_ref, 0);
-		btrfs_set_ref_num_refs(buf, extent_ref, 1);
+		btrfs_set_item_size(buf, btrfs_item_nr(buf, nritems), 0);
 		nritems++;
 	}
 	btrfs_set_header_bytenr(buf, blocks[2]);

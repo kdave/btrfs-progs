@@ -191,6 +191,7 @@ static inline long IS_ERR(const void *ptr)
  */
 #define printk(fmt, args...) fprintf(stderr, fmt, ##args)
 #define	KERN_CRIT	""
+#define KERN_ERR	""
 
 /*
  * kmalloc/kfree

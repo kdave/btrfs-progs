@@ -440,6 +440,42 @@ static int add_metadata(u64 start, u64 size, struct metadump_struct *md)
 	return 0;
 }
 
+#ifdef BTRFS_COMPAT_EXTENT_TREE_V0
+static int is_tree_block(struct btrfs_root *extent_root,
+			 struct btrfs_path *path, u64 bytenr)
+{
+	struct extent_buffer *leaf;
+	struct btrfs_key key;
+	u64 ref_objectid;
+	int ret;
+
+	leaf = path->nodes[0];
+	while (1) {
+		struct btrfs_extent_ref_v0 *ref_item;
+		path->slots[0]++;
+		if (path->slots[0] >= btrfs_header_nritems(leaf)) {
+			ret = btrfs_next_leaf(extent_root, path);
+			BUG_ON(ret < 0);
+			if (ret > 0)
+				break;
+			leaf = path->nodes[0];
+		}
+		btrfs_item_key_to_cpu(leaf, &key, path->slots[0]);
+		if (key.objectid != bytenr)
+			break;
+		if (key.type != BTRFS_EXTENT_REF_V0_KEY)
+			continue;
+		ref_item = btrfs_item_ptr(leaf, path->slots[0],
+					  struct btrfs_extent_ref_v0);
+		ref_objectid = btrfs_ref_objectid_v0(leaf, ref_item);
+		if (ref_objectid < BTRFS_FIRST_FREE_OBJECTID)
+			return 1;
+		break;
+	}
+	return 0;
+}
+#endif
+
 static int create_metadump(const char *input, FILE *out, int num_threads,
 			   int compress_level)
 {
@@ -447,12 +483,11 @@ static int create_metadump(const char *input, FILE *out, int num_threads,
 	struct btrfs_root *extent_root;
 	struct btrfs_path *path;
 	struct extent_buffer *leaf;
-	struct btrfs_extent_ref *ref_item;
+	struct btrfs_extent_item *ei;
 	struct btrfs_key key;
 	struct metadump_struct metadump;
 	u64 bytenr;
 	u64 num_bytes;
-	u64 ref_objectid;
 	int ret;
 
 	root = open_ctree(input, 0, 0);
@@ -495,29 +530,26 @@ static int create_metadump(const char *input, FILE *out, int num_threads,
 
 		bytenr = key.objectid;
 		num_bytes = key.offset;
-		while (1) {
-			path->slots[0]++;
-			if (path->slots[0] >= btrfs_header_nritems(leaf)) {
-				ret = btrfs_next_leaf(extent_root, path);
-				BUG_ON(ret < 0);
-				if (ret > 0)
-					break;
-				leaf = path->nodes[0];
-			}
-			btrfs_item_key_to_cpu(leaf, &key, path->slots[0]);
-			if (key.objectid != bytenr)
-				break;
-			if (key.type != BTRFS_EXTENT_REF_KEY)
-				continue;
-			ref_item = btrfs_item_ptr(leaf, path->slots[0],
-						  struct btrfs_extent_ref);
-			ref_objectid = btrfs_ref_objectid(leaf, ref_item);
-			if (ref_objectid < BTRFS_FIRST_FREE_OBJECTID) {
+
+		if (btrfs_item_size_nr(leaf, path->slots[0]) > sizeof(*ei)) {
+			ei = btrfs_item_ptr(leaf, path->slots[0],
+					    struct btrfs_extent_item);
+			if (btrfs_extent_flags(leaf, ei) &
+			    BTRFS_EXTENT_FLAG_TREE_BLOCK) {
 				ret = add_metadata(bytenr, num_bytes,
 						   &metadump);
 				BUG_ON(ret);
-				break;
 			}
+		} else {
+#ifdef BTRFS_COMPAT_EXTENT_TREE_V0
+			if (is_tree_block(extent_root, path, bytenr)) {
+				ret = add_metadata(bytenr, num_bytes,
+						   &metadump);
+				BUG_ON(ret);
+			}
+#else
+			BUG_ON(1);
+#endif
 		}
 		bytenr += num_bytes;
 	}
