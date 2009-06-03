@@ -1,4 +1,4 @@
-.TH MKFS.BTRFS 8
+.TH BTRFS-SHOW 8
 .SH NAME
 btrfs-show \- scan the /dev directory for btrfs partitions and print results.
 .SH SYNOPSIS

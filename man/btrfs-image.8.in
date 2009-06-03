@@ -1,4 +1,4 @@
-.TH MKFS.BTRFS 8
+.TH BTRFS-IMAGE 8
 .SH NAME
 btrfs-image \- create/restore an image of the filesystem
 .SH SYNOPSIS
