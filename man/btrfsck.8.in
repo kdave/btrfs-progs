@@ -9,7 +9,7 @@ btrfsck \- check a btrfs filesystem
 .SH AVAILABILITY
 .B btrfsck
 is part of btrfs-progs. Btrfs is currently under heavy development,
-and not suitable for for any uses other than benchmarking and review.
+and not suitable for any uses other than benchmarking and review.
 Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for
 further details.
 .SH SEE ALSO
