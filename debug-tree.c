@@ -108,6 +108,7 @@ int main(int ac, char **av)
 	struct btrfs_key key;
 	struct btrfs_root_item ri;
 	struct extent_buffer *leaf;
+	struct btrfs_disk_key disk_key;
 	struct btrfs_key found_key;
 	char uuidbuf[37];
 	int ret;
@@ -167,7 +168,8 @@ again:
 			leaf = path.nodes[0];
 			slot = path.slots[0];
 		}
-		btrfs_item_key_to_cpu(leaf, &found_key, path.slots[0]);
+		btrfs_item_key(leaf, &disk_key, path.slots[0]);
+		btrfs_disk_key_to_cpu(&found_key, &disk_key);
 		if (btrfs_key_type(&found_key) == BTRFS_ROOT_ITEM_KEY) {
 			unsigned long offset;
 			struct extent_buffer *buf;
@@ -253,10 +255,9 @@ again:
 				}
 			}
 			if (!skip && !extent_only) {
-				printf(" tree (%llu %u %llu)\n",
-				       (unsigned long long)found_key.objectid,
-				       found_key.type,
-				       (unsigned long long)found_key.offset);
+				printf(" tree ");
+				btrfs_print_key(&disk_key);
+				printf(" \n");
 				btrfs_print_tree(tree_root_scan, buf);
 			} else if (extent_only && !skip) {
 				print_extents(tree_root_scan, buf);
