@@ -1266,8 +1266,8 @@ again:
 			b = read_node_slot(root, b, slot);
 		} else {
 			p->slots[level] = slot;
-			if (ins_len > 0 && btrfs_leaf_free_space(root, b) <
-			    sizeof(struct btrfs_item) + ins_len) {
+			if (ins_len > 0 &&
+			    ins_len > btrfs_leaf_free_space(root, b)) {
 				int sret = split_leaf(trans, root, key,
 						      p, ins_len, ret == 0);
 				BUG_ON(sret > 0);
@@ -1745,7 +1745,7 @@ static int push_leaf_right(struct btrfs_trans_handle *trans, struct btrfs_root
 
 	right = read_node_slot(root, upper, slot + 1);
 	free_space = btrfs_leaf_free_space(root, right);
-	if (free_space < data_size + sizeof(struct btrfs_item)) {
+	if (free_space < data_size) {
 		free_extent_buffer(right);
 		return 1;
 	}
@@ -1758,7 +1758,7 @@ static int push_leaf_right(struct btrfs_trans_handle *trans, struct btrfs_root
 		return 1;
 	}
 	free_space = btrfs_leaf_free_space(root, right);
-	if (free_space < data_size + sizeof(struct btrfs_item)) {
+	if (free_space < data_size) {
 		free_extent_buffer(right);
 		return 1;
 	}
@@ -1897,7 +1897,7 @@ static int push_leaf_left(struct btrfs_trans_handle *trans, struct btrfs_root
 
 	left = read_node_slot(root, path->nodes[1], slot - 1);
 	free_space = btrfs_leaf_free_space(root, left);
-	if (free_space < data_size + sizeof(struct btrfs_item)) {
+	if (free_space < data_size) {
 		free_extent_buffer(left);
 		return 1;
 	}
@@ -1912,7 +1912,7 @@ static int push_leaf_left(struct btrfs_trans_handle *trans, struct btrfs_root
 	}
 
 	free_space = btrfs_leaf_free_space(root, left);
-	if (free_space < data_size + sizeof(struct btrfs_item)) {
+	if (free_space < data_size) {
 		free_extent_buffer(left);
 		return 1;
 	}
@@ -2557,7 +2557,7 @@ int btrfs_insert_empty_items(struct btrfs_trans_handle *trans,
 	if (!root->node)
 		BUG();
 
-	total_size = total_data + (nr - 1) * sizeof(struct btrfs_item);
+	total_size = total_data + nr * sizeof(struct btrfs_item);
 	ret = btrfs_search_slot(trans, root, cpu_key, path, total_size, 1);
 	if (ret == 0) {
 		return -EEXIST;
@@ -2571,8 +2571,7 @@ int btrfs_insert_empty_items(struct btrfs_trans_handle *trans,
 	nritems = btrfs_header_nritems(leaf);
 	data_end = leaf_data_end(root, leaf);
 
-	if (btrfs_leaf_free_space(root, leaf) <
-	    sizeof(struct btrfs_item) + total_size) {
+	if (btrfs_leaf_free_space(root, leaf) < total_size) {
 		btrfs_print_leaf(root, leaf);
 		printk("not enough freespace need %u have %d\n",
 		       total_size, btrfs_leaf_free_space(root, leaf));

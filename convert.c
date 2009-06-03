@@ -141,6 +141,9 @@ static int cache_free_extents(struct btrfs_root *root, ext2_filsys ext2_fs)
 				   bytenr + STRIPE_LEN - 1, 0);
 	}
 
+	clear_extent_dirty(&root->fs_info->free_space_cache,
+			   0, BTRFS_SUPER_INFO_OFFSET - 1, 0);
+
 	return 0;
 }
 
@@ -364,7 +367,7 @@ static int record_file_extent(struct btrfs_trans_handle *trans,
 	struct btrfs_file_extent_item *fi;
 	struct btrfs_key ins_key;
 	struct btrfs_path path;
-	struct btrfs_extent_item extent_item;
+	struct btrfs_extent_item *ei;
 	u32 blocksize = root->sectorsize;
 	u64 nbytes;
 	u64 bytes_used;
@@ -432,13 +435,25 @@ static int record_file_extent(struct btrfs_trans_handle *trans,
 	bytes_used = btrfs_root_used(&root->root_item);
 	btrfs_set_root_used(&root->root_item, bytes_used + num_bytes);
 
+	btrfs_release_path(root, &path);
+
 	ins_key.objectid = disk_bytenr;
 	ins_key.offset = num_bytes;
-	btrfs_set_key_type(&ins_key, BTRFS_EXTENT_ITEM_KEY);
-	btrfs_set_stack_extent_refs(&extent_item, 0);
-	ret = btrfs_insert_item(trans, extent_root, &ins_key,
-				&extent_item, sizeof(extent_item));
+	ins_key.type = BTRFS_EXTENT_ITEM_KEY;
+
+	ret = btrfs_insert_empty_item(trans, extent_root, &path,
+				      &ins_key, sizeof(*ei));
 	if (ret == 0) {
+		leaf = path.nodes[0];
+		ei = btrfs_item_ptr(leaf, path.slots[0],
+				    struct btrfs_extent_item);
+
+		btrfs_set_extent_refs(leaf, ei, 0);
+		btrfs_set_extent_generation(leaf, ei, 0);
+		btrfs_set_extent_flags(leaf, ei, BTRFS_EXTENT_FLAG_DATA);
+
+		btrfs_mark_buffer_dirty(leaf);
+
 		bytes_used = btrfs_super_bytes_used(&info->super_copy);
 		btrfs_set_super_bytes_used(&info->super_copy, bytes_used +
 					   num_bytes);
@@ -451,9 +466,9 @@ static int record_file_extent(struct btrfs_trans_handle *trans,
 	}
 	btrfs_extent_post_op(trans, extent_root);
 
-	ret = btrfs_inc_extent_ref(trans, root, disk_bytenr, num_bytes,
-				   leaf->start, root->root_key.objectid,
-				   trans->transid, objectid);
+	ret = btrfs_inc_extent_ref(trans, root, disk_bytenr, num_bytes, 0,
+				   root->root_key.objectid,
+				   objectid, file_pos);
 	if (ret)
 		goto fail;
 	ret = 0;
@@ -1239,17 +1254,16 @@ static int create_ext2_image(struct btrfs_root *root, ext2_filsys ext2_fs,
 	struct btrfs_fs_info *fs_info = root->fs_info;
 	struct btrfs_root *extent_root = fs_info->extent_root;
 	struct btrfs_trans_handle *trans;
-	struct btrfs_extent_ref *ref_item;
+	struct btrfs_extent_item *ei;
+	struct btrfs_extent_inline_ref *iref;
+	struct btrfs_extent_data_ref *dref;
 	u64 bytenr;
 	u64 num_bytes;
-	u64 ref_root;
-	u64 ref_owner;
 	u64 objectid;
 	u64 last_byte;
 	u64 first_free;
 	u64 total_bytes;
 	u32 sectorsize = root->sectorsize;
-	int file_extent;
 
 	total_bytes = btrfs_super_total_bytes(&fs_info->super_copy);
 	first_free =  BTRFS_SUPER_INFO_OFFSET + sectorsize * 2 - 1;
@@ -1315,43 +1329,28 @@ next:
 			path.slots[0]++;
 			goto next;
 		}
-		/*
-		 * Check backref to distinguish extent items for normal
-		 * files (files that correspond to files in Ext2fs) from
-		 * extent items for ctree blocks.
-		 */
+
 		bytenr = key.objectid;
 		num_bytes = key.offset;
-		file_extent = 0;
-		while (1) {
-			if (path.slots[0] >= btrfs_header_nritems(leaf)) {
-				ret = btrfs_next_leaf(extent_root, &path);
-				if (ret > 0)
-					break;
-				if (ret < 0)
-					goto fail;
-				leaf = path.nodes[0];
-			}
-			btrfs_item_key_to_cpu(leaf, &key, path.slots[0]);
-			if (key.objectid != bytenr)
-				break;
-			if (key.type != BTRFS_EXTENT_REF_KEY) {
-				path.slots[0]++;
-				continue;
-			}
-			ref_item = btrfs_item_ptr(leaf, path.slots[0],
-						  struct btrfs_extent_ref);
-			ref_root = btrfs_ref_root(leaf, ref_item);
-			ref_owner = btrfs_ref_objectid(leaf, ref_item);
-			if ((ref_root == BTRFS_FS_TREE_OBJECTID) &&
-			    (ref_owner >= BTRFS_FIRST_FREE_OBJECTID)) {
-				file_extent = 1;
-				break;
-			}
+		ei = btrfs_item_ptr(leaf, path.slots[0],
+				    struct btrfs_extent_item);
+		if (!(btrfs_extent_flags(leaf, ei) & BTRFS_EXTENT_FLAG_DATA)) {
 			path.slots[0]++;
-		}
-		if (!file_extent)
 			goto next;
+		}
+
+		BUG_ON(btrfs_item_size_nr(leaf, path.slots[0]) != sizeof(*ei) +
+		       btrfs_extent_inline_ref_size(BTRFS_EXTENT_DATA_REF_KEY));
+
+		iref = (struct btrfs_extent_inline_ref *)(ei + 1);
+		key.type = btrfs_extent_inline_ref_type(leaf, iref);
+		BUG_ON(key.type != BTRFS_EXTENT_DATA_REF_KEY);
+		dref = (struct btrfs_extent_data_ref *)(&iref->offset);
+		if (btrfs_extent_data_ref_root(leaf, dref) !=
+		    BTRFS_FS_TREE_OBJECTID) {
+			path.slots[0]++;
+			goto next;
+		}
 
 		if (bytenr > last_byte) {
 			ret = create_image_file_range(trans, root, objectid,
@@ -1727,7 +1726,6 @@ static int create_subvol(struct btrfs_trans_handle *trans,
 	ret = btrfs_make_root_dir(trans, new_root, BTRFS_FIRST_FREE_OBJECTID);
 	BUG_ON(ret);
 
-	btrfs_free_fs_root(root->fs_info, new_root);
 	return 0;
 }
 
@@ -1737,6 +1735,7 @@ static int init_btrfs(struct btrfs_root *root)
 	struct btrfs_key location;
 	struct btrfs_trans_handle *trans;
 	struct btrfs_fs_info *fs_info = root->fs_info;
+	struct extent_buffer *tmp;
 
 	trans = btrfs_start_transaction(root, 1);
 	BUG_ON(!trans);
@@ -1774,6 +1773,11 @@ static int init_btrfs(struct btrfs_root *root)
 	/* subvol for data relocation */
 	ret = create_subvol(trans, root, BTRFS_DATA_RELOC_TREE_OBJECTID);
 	BUG_ON(ret);
+
+	ret = __btrfs_cow_block(trans, fs_info->csum_root,
+				fs_info->csum_root->node, NULL, 0, &tmp, 0, 0);
+	BUG_ON(ret);
+	free_extent_buffer(tmp);
 
 	ret = btrfs_commit_transaction(trans, root);
 	BUG_ON(ret);
@@ -1906,7 +1910,7 @@ fail:
 static int relocate_one_reference(struct btrfs_trans_handle *trans,
 				  struct btrfs_root *root,
 				  u64 extent_start, u64 extent_size,
-				  u64 objectid, struct btrfs_key *leaf_key,
+				  struct btrfs_key *extent_key,
 				  struct extent_io_tree *reloc_tree)
 {
 	struct extent_buffer *leaf;
@@ -1916,72 +1920,32 @@ static int relocate_one_reference(struct btrfs_trans_handle *trans,
 	struct btrfs_inode_item inode;
 	struct blk_iterate_data data;
 	u64 bytenr;
-	u64 offset;
 	u64 num_bytes;
 	u64 cur_offset;
 	u64 new_pos;
 	u64 nbytes;
-	u64 root_gen;
-	u64 root_owner;
 	u64 sector_end;
-	u32 nritems;
 	u32 sectorsize = root->sectorsize;
 	unsigned long ptr;
-	int found = 0;
 	int datacsum;
 	int fd;
 	int ret;
 
-	memcpy(&key, leaf_key, sizeof(key));
-	if (key.objectid < objectid ||
-	    (key.objectid == objectid &&
-	     key.type < BTRFS_EXTENT_DATA_KEY)) {
-		key.objectid = objectid;
-		key.type = BTRFS_EXTENT_DATA_KEY;
-		key.offset = 0;
-	}
 	btrfs_init_path(&path);
-recow:
-	ret = btrfs_search_slot(trans, root, &key, &path, -1, 1);
-	if (ret < 0)
+	ret = btrfs_search_slot(trans, root, extent_key, &path, -1, 1);
+	if (ret)
 		goto fail;
 
 	leaf = path.nodes[0];
-	nritems = btrfs_header_nritems(leaf);
-	while (1) {
-		if (path.slots[0] >= nritems) {
-			ret = btrfs_next_leaf(root, &path);
-			if (ret < 0)
-				goto fail;
-			if (ret > 0)
-				break;
-			btrfs_item_key_to_cpu(path.nodes[0], &key,
-					      path.slots[0]);
-			btrfs_release_path(root, &path);
-			goto recow;
-		}
-		btrfs_item_key_to_cpu(leaf, &key, path.slots[0]);
-		if (key.objectid != objectid ||
-		    key.type != BTRFS_EXTENT_DATA_KEY)
-			break;
-		fi = btrfs_item_ptr(leaf, path.slots[0],
-				    struct btrfs_file_extent_item);
-		if (extent_start == btrfs_file_extent_disk_bytenr(leaf, fi) &&
-		    extent_size == btrfs_file_extent_disk_num_bytes(leaf, fi)) {
-			offset = key.offset;
-			found = 1;
-			break;
-		}
-		path.slots[0]++;
-	}
-
-	if (!found) {
+	fi = btrfs_item_ptr(leaf, path.slots[0],
+			    struct btrfs_file_extent_item);
+	BUG_ON(btrfs_file_extent_offset(leaf, fi) > 0);
+	if (extent_start != btrfs_file_extent_disk_bytenr(leaf, fi) ||
+	    extent_size != btrfs_file_extent_disk_num_bytes(leaf, fi)) {
 		ret = 1;
 		goto fail;
 	}
 
-	root_gen = btrfs_header_generation(leaf);
-	root_owner = btrfs_header_owner(leaf);
 	bytenr = extent_start + btrfs_file_extent_offset(leaf, fi);
 	num_bytes = btrfs_file_extent_num_bytes(leaf, fi);
 
@@ -1989,15 +1953,15 @@ recow:
 	if (ret)
 		goto fail;
 
-	ret = btrfs_free_extent(trans, root,
-				extent_start, extent_size, leaf->start,
-				root_owner, root_gen, objectid, 0);
+	ret = btrfs_free_extent(trans, root, extent_start, extent_size, 0,
+				root->root_key.objectid,
+				extent_key->objectid, extent_key->offset);
 	if (ret)
 		goto fail;
 
 	btrfs_release_path(root, &path);
 
-	key.objectid = objectid;
+	key.objectid = extent_key->objectid;
 	key.offset = 0;
 	key.type =  BTRFS_INODE_ITEM_KEY;
 	ret = btrfs_lookup_inode(trans, root, &path, &key, 0);
@@ -2018,8 +1982,8 @@ recow:
 		.trans		= trans,
 		.root		= root,
 		.inode		= &inode,
-		.objectid	= objectid,
-		.first_block	= offset / sectorsize,
+		.objectid	= extent_key->objectid,
+		.first_block	= extent_key->offset / sectorsize,
 		.disk_block	= 0,
 		.num_blocks	= 0,
 		.boundary	= (u64)-1,
@@ -2027,7 +1991,7 @@ recow:
 		.errcode	= 0,
 	};
 
-	cur_offset = offset;
+	cur_offset = extent_key->offset;
 	while (num_bytes > 0) {
 		sector_end = bytenr + sectorsize - 1;
 		if (test_range_bit(reloc_tree, bytenr, sector_end,
@@ -2040,7 +2004,7 @@ recow:
 				goto fail;
 			new_pos = key.objectid;
 
-			if (cur_offset == offset) {
+			if (cur_offset == extent_key->offset) {
 				fd = root->fs_info->fs_devices->latest_bdev;
 				readahead(fd, bytenr, num_bytes);
 			}
@@ -2068,14 +2032,15 @@ recow:
 	}
 
 	if (data.num_blocks > 0) {
-		ret = record_file_blocks(trans, root, objectid, &inode,
+		ret = record_file_blocks(trans, root,
+					 extent_key->objectid, &inode,
 					 data.first_block, data.disk_block,
 					 data.num_blocks, datacsum);
 		if (ret)
 			goto fail;
 	}
 
-	key.objectid = objectid;
+	key.objectid = extent_key->objectid;
 	key.offset = 0;
 	key.type =  BTRFS_INODE_ITEM_KEY;
 	ret = btrfs_lookup_inode(trans, root, &path, &key, 1);
@@ -2101,21 +2066,22 @@ static int relocate_extents_range(struct btrfs_root *fs_root,
 	struct btrfs_root *extent_root = info->extent_root;
 	struct btrfs_root *cur_root = NULL;
 	struct btrfs_trans_handle *trans;
-	struct btrfs_extent_ref *ref_item;
+	struct btrfs_extent_data_ref *dref;
+	struct btrfs_extent_inline_ref *iref;
+	struct btrfs_extent_item *ei;
 	struct extent_buffer *leaf;
 	struct btrfs_key key;
-	struct btrfs_key leaf_key;
+	struct btrfs_key extent_key;
 	struct btrfs_path path;
 	struct extent_io_tree reloc_tree;
+	unsigned long ptr;
+	unsigned long end;
 	u64 cur_byte;
 	u64 num_bytes;
 	u64 ref_root;
-	u64 ref_owner;
-	u64 num_refs;
-	u64 leaf_start;
+	u64 num_extents;
 	int pass = 0;
 	int ret;
-	int found;
 
 	btrfs_init_path(&path);
 	extent_io_tree_init(&reloc_tree);
@@ -2141,7 +2107,7 @@ static int relocate_extents_range(struct btrfs_root *fs_root,
 	btrfs_release_path(extent_root, &path);
 again:
 	cur_root = (pass % 2 == 0) ? ext2_root : fs_root;
-	num_refs = 0;
+	num_extents = 0;
 
 	trans = btrfs_start_transaction(cur_root, 1);
 	BUG_ON(!trans);
@@ -2175,53 +2141,47 @@ next:
 		if (key.objectid >= end_byte)
 			break;
 
+		num_extents++;
+
 		cur_byte = key.objectid;
 		num_bytes = key.offset;
-		found = 0;
-		while (1) {
-			if (path.slots[0] >= btrfs_header_nritems(leaf)) {
-				ret = btrfs_next_leaf(extent_root, &path);
-				if (ret > 0)
-					break;
-				if (ret < 0)
-					goto fail;
-				leaf = path.nodes[0];
-			}
+		ei = btrfs_item_ptr(leaf, path.slots[0],
+				    struct btrfs_extent_item);
+		BUG_ON(!(btrfs_extent_flags(leaf, ei) &
+			 BTRFS_EXTENT_FLAG_DATA));
 
-			btrfs_item_key_to_cpu(leaf, &key, path.slots[0]);
-			if (key.objectid != cur_byte)
-				break;
-			if (key.type != BTRFS_EXTENT_REF_KEY) {
-				path.slots[0]++;
-				continue;
-			}
-			ref_item = btrfs_item_ptr(leaf, path.slots[0],
-						  struct btrfs_extent_ref);
-			ref_root = btrfs_ref_root(leaf, ref_item);
-			ref_owner = btrfs_ref_objectid(leaf, ref_item);
-			leaf_start = key.offset;
-			num_refs++;
+		ptr = btrfs_item_ptr_offset(leaf, path.slots[0]);
+		end = ptr + btrfs_item_size_nr(leaf, path.slots[0]);
 
-			BUG_ON(ref_owner < BTRFS_FIRST_FREE_OBJECTID);
-			if (ref_root == cur_root->root_key.objectid) {
-				found = 1;
+		ptr += sizeof(struct btrfs_extent_item);
+
+		while (ptr < end) {
+			iref = (struct btrfs_extent_inline_ref *)ptr;
+			key.type = btrfs_extent_inline_ref_type(leaf, iref);
+			BUG_ON(key.type != BTRFS_EXTENT_DATA_REF_KEY);
+			dref = (struct btrfs_extent_data_ref *)(&iref->offset);
+			ref_root = btrfs_extent_data_ref_root(leaf, dref);
+			extent_key.objectid =
+				btrfs_extent_data_ref_objectid(leaf, dref);
+			extent_key.offset =
+				btrfs_extent_data_ref_offset(leaf, dref);
+			extent_key.type = BTRFS_EXTENT_DATA_KEY;
+			BUG_ON(btrfs_extent_data_ref_count(leaf, dref) != 1);
+
+			if (ref_root == cur_root->root_key.objectid)
 				break;
-			}
-			path.slots[0]++;
+
+			ptr += btrfs_extent_inline_ref_size(key.type);
 		}
-		if (!found)
-			goto next;
 
-		leaf = read_tree_block(cur_root, leaf_start,
-				       btrfs_level_size(cur_root, 0), 0);
-		BUG_ON(!leaf);
-		BUG_ON(btrfs_header_level(leaf) != 0);
-		btrfs_item_key_to_cpu(leaf, &leaf_key, 0);
-		free_extent_buffer(leaf);
+		if (ptr >= end) {
+			path.slots[0]++;
+			goto next;
+		}
 
 		ret = relocate_one_reference(trans, cur_root, cur_byte,
-					     num_bytes, ref_owner,
-					     &leaf_key, &reloc_tree);
+					     num_bytes, &extent_key,
+					     &reloc_tree);
 		if (ret < 0)
 			goto fail;
 
@@ -2240,10 +2200,10 @@ next:
 	ret = btrfs_commit_transaction(trans, cur_root);
 	BUG_ON(ret);
 
-	if (num_refs > 0 && pass++ < 16)
+	if (num_extents > 0 && pass++ < 16)
 		goto again;
 
-	ret = (num_refs > 0) ? -1 : 0;
+	ret = (num_extents > 0) ? -1 : 0;
 fail:
 	btrfs_release_path(cur_root, &path);
 	extent_io_tree_cleanup(&reloc_tree);
@@ -2477,7 +2437,6 @@ int do_convert(const char *devname, int datacsum, int packing, int noxattr)
 		fprintf(stderr, "error during cleanup_sys_chunk %d\n", ret);
 		goto fail;
 	}
-	btrfs_free_fs_root(ext2_root->fs_info, ext2_root);
 	ret = close_ctree(root);
 	if (ret) {
 		fprintf(stderr, "error during close_ctree %d\n", ret);
@@ -2706,7 +2665,6 @@ next_extent:
 		path.slots[0]++;
 	}
 	btrfs_release_path(ext2_root, &path);
-	btrfs_free_fs_root(ext2_root->fs_info, ext2_root);
 
 	if (offset < total_bytes) {
 		fprintf(stderr, "unable to build extent mapping\n");

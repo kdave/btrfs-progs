@@ -2071,8 +2071,8 @@ static int __free_extent(struct btrfs_trans_handle *trans,
 
 	struct btrfs_key key;
 	struct btrfs_path *path;
-	struct btrfs_fs_info *info = root->fs_info;
-	struct btrfs_root *extent_root = info->extent_root;
+	struct btrfs_extent_ops *ops = root->fs_info->extent_ops;
+	struct btrfs_root *extent_root = root->fs_info->extent_root;
 	struct extent_buffer *leaf;
 	struct btrfs_extent_item *ei;
 	struct btrfs_extent_inline_ref *iref;
@@ -2218,6 +2218,7 @@ static int __free_extent(struct btrfs_trans_handle *trans,
 		}
 	} else {
 		int mark_free = 0;
+		int pin = 1;
 
 		if (found_extent) {
 			BUG_ON(is_data && refs_to_drop !=
@@ -2231,10 +2232,21 @@ static int __free_extent(struct btrfs_trans_handle *trans,
 			}
 		}
 
-		ret = pin_down_bytes(trans, root, bytenr, num_bytes, is_data);
-		if (ret > 0)
-			mark_free = 1;
-		BUG_ON(ret < 0);
+		if (ops && ops->free_extent) {
+			ret = ops->free_extent(root, bytenr, num_bytes);
+			if (ret > 0) {
+				pin = 0;
+				mark_free = 0;
+			}
+		}
+
+		if (pin) {
+			ret = pin_down_bytes(trans, root, bytenr, num_bytes,
+					     is_data);
+			if (ret > 0)
+				mark_free = 1;
+			BUG_ON(ret < 0);
+		}
 
 		ret = btrfs_del_items(trans, extent_root, path, path->slots[0],
 				      num_to_del);

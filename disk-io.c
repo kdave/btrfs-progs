@@ -755,6 +755,8 @@ struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
 	BUG_ON(ret);
 
 	find_and_setup_log_root(tree_root, fs_info, disk_super);
+
+	fs_info->generation = generation + 1;
 	btrfs_read_block_groups(fs_info->tree_root);
 
 	key.objectid = BTRFS_FS_TREE_OBJECTID;
@@ -771,6 +773,7 @@ struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
 
 int btrfs_read_dev_super(int fd, struct btrfs_super_block *sb, u64 sb_bytenr)
 {
+	u8 fsid[BTRFS_FSID_SIZE];
 	struct btrfs_super_block buf;
 	int i;
 	int ret;
@@ -800,6 +803,11 @@ int btrfs_read_dev_super(int fd, struct btrfs_super_block *sb, u64 sb_bytenr)
 		if (btrfs_super_bytenr(&buf) != bytenr ||
 		    strncmp((char *)(&buf.magic), BTRFS_MAGIC,
 			    sizeof(buf.magic)))
+			continue;
+
+		if (i == 0)
+			memcpy(fsid, buf.fsid, sizeof(fsid));
+		else if (memcmp(fsid, buf.fsid, sizeof(fsid)))
 			continue;
 
 		if (btrfs_super_generation(&buf) > transid) {
