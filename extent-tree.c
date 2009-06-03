@@ -1697,8 +1697,6 @@ int btrfs_write_dirty_block_groups(struct btrfs_trans_handle *trans,
 	struct extent_io_tree *block_group_cache;
 	struct btrfs_block_group_cache *cache;
 	int ret;
-	int err = 0;
-	int werr = 0;
 	struct btrfs_path *path;
 	u64 last = 0;
 	u64 start;
@@ -1713,30 +1711,26 @@ int btrfs_write_dirty_block_groups(struct btrfs_trans_handle *trans,
 	while(1) {
 		ret = find_first_extent_bit(block_group_cache, last,
 					    &start, &end, BLOCK_GROUP_DIRTY);
-		if (ret)
-			break;
+		if (ret) {
+			if (last == 0)
+				break;
+			last = 0;
+			continue;
+		}
 
 		last = end + 1;
 		ret = get_state_private(block_group_cache, start, &ptr);
-		if (ret)
-			break;
-		cache = (struct btrfs_block_group_cache *)(unsigned long)ptr;
-		err = write_one_cache_group(trans, root,
-					    path, cache);
-		/*
-		 * if we fail to write the cache group, we want
-		 * to keep it marked dirty in hopes that a later
-		 * write will work
-		 */
-		if (err) {
-			werr = err;
-			continue;
-		}
+		BUG_ON(ret);
+
 		clear_extent_bits(block_group_cache, start, end,
 				  BLOCK_GROUP_DIRTY, GFP_NOFS);
+
+		cache = (struct btrfs_block_group_cache *)(unsigned long)ptr;
+		ret = write_one_cache_group(trans, root, path, cache);
+		BUG_ON(ret);
 	}
 	btrfs_free_path(path);
-	return werr;
+	return 0;
 }
 
 static struct btrfs_space_info *__find_space_info(struct btrfs_fs_info *info,
