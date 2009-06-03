@@ -1134,12 +1134,14 @@ static int check_inode_recs(struct btrfs_root *root,
 		ret = check_root_dir(rec);
 		if (ret) {
 			fprintf(stderr, "root %llu root dir %llu error\n",
-				root->root_key.objectid, root_dirid);
+				(unsigned long long)root->root_key.objectid,
+				(unsigned long long)root_dirid);
 			error++;
 		}
 	} else {
 		fprintf(stderr, "root %llu root dir %llu not found\n",
-			root->root_key.objectid, root_dirid);
+			(unsigned long long)root->root_key.objectid,
+			(unsigned long long)root_dirid);
 	}
 
 	while (1) {
@@ -1160,7 +1162,8 @@ static int check_inode_recs(struct btrfs_root *root,
 		if (!rec->found_inode_item)
 			rec->errors |= I_ERR_NO_INODE_ITEM;
 		fprintf(stderr, "root %llu inode %llu errors %x\n",
-			root->root_key.objectid, rec->ino, rec->errors);
+			(unsigned long long) root->root_key.objectid,
+			(unsigned long long) rec->ino, rec->errors);
 		list_for_each_entry(backref, &rec->backrefs, list) {
 			if (!backref->found_dir_item)
 				backref->errors |= REF_ERR_NO_DIR_ITEM;
@@ -1170,7 +1173,8 @@ static int check_inode_recs(struct btrfs_root *root,
 				backref->errors |= REF_ERR_NO_INODE_REF;
 			fprintf(stderr, "\tunresolved ref dir %llu index %llu"
 				" namelen %u name %s filetype %d error %x\n",
-				backref->dir, backref->index,
+				(unsigned long long)backref->dir,
+				(unsigned long long)backref->index,
 				backref->namelen, backref->name,
 				backref->filetype, backref->errors);
 		}

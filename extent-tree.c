@@ -823,7 +823,8 @@ int btrfs_lookup_extent_ref(struct btrfs_trans_handle *trans,
 		goto out;
 	if (ret != 0) {
 		btrfs_print_leaf(root, path->nodes[0]);
-		printk("failed to find block number %Lu\n", bytenr);
+		printk("failed to find block number %Lu\n",
+			(unsigned long long)bytenr);
 		BUG();
 	}
 	l = path->nodes[0];

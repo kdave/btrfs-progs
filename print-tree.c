@@ -71,7 +71,7 @@ static int print_inode_ref_item(struct extent_buffer *eb, struct btrfs_item *ite
 		len = (name_len <= sizeof(namebuf))? name_len: sizeof(namebuf);
 		read_extent_buffer(eb, namebuf, (unsigned long)(ref + 1), len);
 		printf("\t\tinode ref index %llu namelen %u name: %.*s\n",
-		       index, name_len, len, namebuf);
+		       (unsigned long long)index, name_len, len, namebuf);
 		len = sizeof(*ref) + name_len;
 		ref = (struct btrfs_inode_ref *)((char *)ref + len);
 		cur += len;
