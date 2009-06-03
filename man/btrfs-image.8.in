@@ -1,0 +1,34 @@
+.TH MKFS.BTRFS 8
+.SH NAME
+btrfs-image \- create/restore an image of the filesystem
+.SH SYNOPSIS
+.B btrfs-image
+[options] \fIsource\fP \fItarget\fP
+.SH DESCRIPTION
+.B btrfs-image
+is used to create an image of a btrfs filesystem. All data will be zeroed,
+but metadata and the like is preserved.
+.I source
+is the special file corresponding to the device containing a btrfs filesystem.
+(e.g \fI/dev/sdXX\fP).
+.I target
+is the image file that btrfs-image creates. When used with \fB-r\fP option,
+\fBbtrfs-image\fP restores the image file from source into target.
+.SH OPTIONS
+.TP
+\fB\-r\fP
+restore metadump image.
+.TP
+\fB\-c\fR \fIvalue\fP
+compression level (0 ~ 9).
+.TP
+\fB\-t\fR \fIvalue\fP
+number of threads (1 ~ 32) to be used to process the image dump or restore.
+.SH AVAILABILITY
+.B btrfs-image
+is part of btrfs-progs. Btrfs is currently under heavy development,
+and not suitable for any uses other than benchmarking and review.
+Please refer to the btrfs wiki
+http://btrfs.wiki.kernel.org for further details.
+.SH SEE ALSO
+.BR btrfsck (8), btrfsctl (8), mkfs.btrfs (8)
