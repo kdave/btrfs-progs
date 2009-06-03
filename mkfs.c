@@ -275,6 +275,12 @@ static void print_usage(void)
 	exit(1);
 }
 
+static void print_version(void)
+{
+	fprintf(stderr, "mkfs.btrfs, part of %s\n", BTRFS_BUILD_VERSION);
+	exit(0);
+}
+
 static u64 parse_profile(char *s)
 {
 	if (strcmp(s, "raid0") == 0) {
@@ -320,6 +326,7 @@ static struct option long_options[] = {
 	{ "nodesize", 1, NULL, 'n' },
 	{ "sectorsize", 1, NULL, 's' },
 	{ "data", 1, NULL, 'd' },
+	{ "version", 0, NULL, 'V' },
 	{ 0, 0, 0, 0}
 };
 
@@ -349,7 +356,7 @@ int main(int ac, char **av)
 
 	while(1) {
 		int c;
-		c = getopt_long(ac, av, "A:b:l:n:s:m:d:L:", long_options,
+		c = getopt_long(ac, av, "A:b:l:n:s:m:d:L:V", long_options,
 				&option_index);
 		if (c < 0)
 			break;
@@ -385,6 +392,9 @@ int main(int ac, char **av)
 					exit(1);
 				}
 				zero_end = 0;
+				break;
+			case 'V':
+				print_version();
 				break;
 			default:
 				print_usage();
