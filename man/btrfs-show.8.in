@@ -1,0 +1,19 @@
+.TH MKFS.BTRFS 8
+.SH NAME
+btrfs-show \- scan the /dev directory for btrfs partitions and print results.
+.SH SYNOPSIS
+.B btrfs-show
+.SH DESCRIPTION
+.B btrfs-show
+is used to scan the /dev directory for btrfs partitions and display brief
+information such as lable, uuid, etc of each btrfs partition.
+.SH OPTIONS
+none
+.SH AVAILABILITY
+.B btrfs-show
+is part of btrfs-progs. Btrfs is currently under heavy development,
+and not suitable for any uses other than benchmarking and review.
+Please refer to the btrfs wiki
+http://btrfs.wiki.kernel.org for further details.
+.SH SEE ALSO
+.BR btrfsck (8), btrfsctl (8), mkfs.btrfs (8), btrfs-image (8)

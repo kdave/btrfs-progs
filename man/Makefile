@@ -6,7 +6,8 @@ bindir = $(prefix)/bin
 mandir = $(prefix)/man
 man8dir = $(mandir)/man8
 
-MANPAGES = mkfs.btrfs.8.gz btrfsctl.8.gz btrfsck.8.gz btrfs-image.8.gz
+MANPAGES = mkfs.btrfs.8.gz btrfsctl.8.gz btrfsck.8.gz btrfs-image.8.gz \
+	   btrfs-show.8.gz
 
 all: $(MANPAGES)
 
@@ -21,6 +22,9 @@ btrfsck.8.gz: btrfsck.8.in
 
 btrfs-image.8.gz: btrfs-image.8.in
 	$(GZIP) -n -c btrfs-image.8.in > btrfs-image.8.gz
+
+btrfs-show.8.gz: btrfs-show.8.in
+	$(GZIP) -n -c btrfs-show.8.in > btrfs-show.8.gz
 
 clean :
 	rm -f $(MANPAGES)
