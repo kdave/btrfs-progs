@@ -1061,12 +1061,6 @@ static int lookup_inline_extent_backref(struct btrfs_trans_handle *trans,
 #endif
 	BUG_ON(item_size < sizeof(*ei));
 
-	if (owner < BTRFS_FIRST_FREE_OBJECTID && insert &&
-	    item_size + extra_size >= BTRFS_MAX_EXTENT_ITEM_SIZE(root)) {
-		err = -EAGAIN;
-		goto out;
-	}
-
 	ei = btrfs_item_ptr(leaf, path->slots[0], struct btrfs_extent_item);
 	flags = btrfs_extent_flags(leaf, ei);
 
@@ -1139,8 +1133,8 @@ static int lookup_inline_extent_backref(struct btrfs_trans_handle *trans,
 		 * For simplicity, we just do not add new inline back
 		 * ref if there is any back ref item.
 		 */
-		if (owner >= BTRFS_FIRST_FREE_OBJECTID &&
-		    find_next_key(path, &key) == 0 && key.objectid == bytenr) {
+		if (find_next_key(path, &key) == 0 && key.objectid == bytenr &&
+		    key.type < BTRFS_BLOCK_GROUP_ITEM_KEY) {
 			err = -EAGAIN;
 			goto out;
 		}
