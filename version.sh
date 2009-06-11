@@ -6,7 +6,7 @@
 # Copyright 2008, Oracle
 # Released under the GNU GPLv2
  
-v="Btrfs v0.18"
+v="Btrfs v0.19"
 
 which git &> /dev/null
 if [ $? == 0 -a -d .git ]; then
