@@ -370,7 +370,6 @@ static int record_file_extent(struct btrfs_trans_handle *trans,
 	struct btrfs_extent_item *ei;
 	u32 blocksize = root->sectorsize;
 	u64 nbytes;
-	u64 bytes_used;
 
 	if (disk_bytenr == 0) {
 		ret = btrfs_insert_file_extent(trans, root, objectid,
@@ -432,9 +431,6 @@ static int record_file_extent(struct btrfs_trans_handle *trans,
 	nbytes = btrfs_stack_inode_nbytes(inode) + num_bytes;
 	btrfs_set_stack_inode_nbytes(inode, nbytes);
 
-	bytes_used = btrfs_root_used(&root->root_item);
-	btrfs_set_root_used(&root->root_item, bytes_used + num_bytes);
-
 	btrfs_release_path(root, &path);
 
 	ins_key.objectid = disk_bytenr;
@@ -454,9 +450,6 @@ static int record_file_extent(struct btrfs_trans_handle *trans,
 
 		btrfs_mark_buffer_dirty(leaf);
 
-		bytes_used = btrfs_super_bytes_used(&info->super_copy);
-		btrfs_set_super_bytes_used(&info->super_copy, bytes_used +
-					   num_bytes);
 		ret = btrfs_update_block_group(trans, root, disk_bytenr,
 					       num_bytes, 1, 0);
 		if (ret)
