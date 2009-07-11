@@ -50,7 +50,8 @@ struct extent_buffer *debug_corrupt_block(struct btrfs_root *root, u64 bytenr,
 	length = blocksize;
 	while (1) {
 		ret = btrfs_map_block(&root->fs_info->mapping_tree, READ,
-				      eb->start, &length, &multi, mirror_num);
+				      eb->start, &length, &multi,
+				      mirror_num, NULL);
 		BUG_ON(ret);
 		device = multi->stripes[0].dev;
 		eb->fd = device->fd;
@@ -63,7 +64,7 @@ struct extent_buffer *debug_corrupt_block(struct btrfs_root *root, u64 bytenr,
 		kfree(multi);
 
 		if (!copy || mirror_num == copy) {
-			ret = read_extent_from_disk(eb);
+			ret = read_extent_from_disk(eb, 0, eb->len);
 			printf("corrupting %llu copy %d\n", eb->start,
 			       mirror_num);
 			memset(eb->data, 0, eb->len);

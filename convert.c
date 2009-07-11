@@ -2430,7 +2430,7 @@ static int may_rollback(struct btrfs_root *root)
 
 	while (1) {
 		ret = btrfs_map_block(&info->mapping_tree, WRITE, bytenr,
-				      &length, &multi, 0);
+				      &length, &multi, 0, NULL);
 		if (ret)
 			goto fail;
 

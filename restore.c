@@ -228,7 +228,7 @@ static int copy_one_extent(struct btrfs_root *root, int fd,
 again:
 	length = size_left;
 	ret = btrfs_map_block(&root->fs_info->mapping_tree, READ,
-			      bytenr, &length, &multi, 0);
+			      bytenr, &length, &multi, 0, NULL);
 	if (ret) {
 		free(inbuf);
 		free(outbuf);

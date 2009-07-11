@@ -437,6 +437,7 @@ struct btrfs_super_block {
  * code was pretty buggy.  Lets not let them try anymore.
  */
 #define BTRFS_FEATURE_INCOMPAT_BIG_METADATA     (1ULL << 5)
+#define BTRFS_FEATURE_INCOMPAT_RAID56		(1ULL << 7)
 
 
 #define BTRFS_FEATURE_COMPAT_SUPP		0ULL
@@ -446,6 +447,7 @@ struct btrfs_super_block {
 	 BTRFS_FEATURE_INCOMPAT_DEFAULT_SUBVOL |	\
 	 BTRFS_FEATURE_INCOMPAT_COMPRESS_LZO |		\
 	 BTRFS_FEATURE_INCOMPAT_BIG_METADATA |		\
+	 BTRFS_FEATURE_INCOMPAT_RAID56 |		\
 	 BTRFS_FEATURE_INCOMPAT_MIXED_GROUPS)
 
 /*
@@ -779,6 +781,8 @@ struct btrfs_csum_item {
 #define BTRFS_BLOCK_GROUP_RAID1		(1ULL << 4)
 #define BTRFS_BLOCK_GROUP_DUP		(1ULL << 5)
 #define BTRFS_BLOCK_GROUP_RAID10	(1ULL << 6)
+#define BTRFS_BLOCK_GROUP_RAID5    (1ULL << 7)
+#define BTRFS_BLOCK_GROUP_RAID6    (1ULL << 8)
 #define BTRFS_BLOCK_GROUP_RESERVED	BTRFS_AVAIL_ALLOC_BIT_SINGLE
 
 /* used in struct btrfs_balance_args fields */

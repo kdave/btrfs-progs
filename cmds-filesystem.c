@@ -148,6 +148,12 @@ static int cmd_df(int argc, char **argv)
 		} else if (flags & BTRFS_BLOCK_GROUP_RAID10) {
 			snprintf(description+written, 9, "%s", ", RAID10");
 			written += 8;
+		} else if (flags & BTRFS_BLOCK_GROUP_RAID5) {
+			snprintf(description+written, 9, "%s", ", RAID5");
+			written += 7;
+		} else if (flags & BTRFS_BLOCK_GROUP_RAID6) {
+			snprintf(description+written, 9, "%s", ", RAID6");
+			written += 7;
 		}
 
 		total_bytes = pretty_sizes(sargs->spaces[i].total_bytes);

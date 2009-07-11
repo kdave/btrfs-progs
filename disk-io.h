@@ -82,3 +82,6 @@ int csum_tree_block(struct btrfs_root *root, struct extent_buffer *buf,
 		    int verify);
 int btrfs_read_buffer(struct extent_buffer *buf, u64 parent_transid);
 #endif
+
+/* raid6.c */
+void raid6_gen_syndrome(int disks, size_t bytes, void **ptrs);

@@ -378,7 +378,8 @@ static int find_root(struct btrfs_root *root)
 			offset = metadata_offset;
 		}
 		err = __btrfs_map_block(&root->fs_info->mapping_tree, READ,
-				      offset, &map_length, &type, &multi, 0);
+				      offset, &map_length, &type,
+				      &multi, 0, NULL);
 		if (err) {
 			offset += map_length;
 			continue;

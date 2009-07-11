@@ -207,7 +207,8 @@ static int create_raid_groups(struct btrfs_trans_handle *trans,
 			      int metadata_profile_opt, int mixed)
 {
 	u64 num_devices = btrfs_super_num_devices(&root->fs_info->super_copy);
-	u64 allowed;
+	u64 allowed = 0;
+	u64 devices_for_raid = num_devices;
 	int ret;
 
 	/*
@@ -223,13 +224,22 @@ static int create_raid_groups(struct btrfs_trans_handle *trans,
 			BTRFS_BLOCK_GROUP_RAID0 : 0; /* raid0 or single */
 	}
 
-	if (num_devices == 1)
-		allowed = BTRFS_BLOCK_GROUP_DUP;
-	else if (num_devices >= 4) {
-		allowed = BTRFS_BLOCK_GROUP_RAID0 | BTRFS_BLOCK_GROUP_RAID1 |
-			BTRFS_BLOCK_GROUP_RAID10;
-	} else
-		allowed = BTRFS_BLOCK_GROUP_RAID0 | BTRFS_BLOCK_GROUP_RAID1;
+	if (devices_for_raid > 4)
+		devices_for_raid = 4;
+
+	switch (devices_for_raid) {
+	default:
+	case 4:
+		allowed |= BTRFS_BLOCK_GROUP_RAID10;
+	case 3:
+		allowed |= BTRFS_BLOCK_GROUP_RAID6;
+	case 2:
+		allowed |= BTRFS_BLOCK_GROUP_RAID0 | BTRFS_BLOCK_GROUP_RAID1 |
+			BTRFS_BLOCK_GROUP_RAID5;
+		break;
+	case 1:
+		allowed |= BTRFS_BLOCK_GROUP_DUP;
+	}
 
 	if (metadata_profile & ~allowed) {
 		fprintf(stderr,	"unable to create FS with metadata "
@@ -336,6 +346,10 @@ static u64 parse_profile(char *s)
 		return BTRFS_BLOCK_GROUP_RAID0;
 	} else if (strcmp(s, "raid1") == 0) {
 		return BTRFS_BLOCK_GROUP_RAID1;
+	} else if (strcmp(s, "raid5") == 0) {
+		return BTRFS_BLOCK_GROUP_RAID5;
+	} else if (strcmp(s, "raid6") == 0) {
+		return BTRFS_BLOCK_GROUP_RAID6;
 	} else if (strcmp(s, "raid10") == 0) {
 		return BTRFS_BLOCK_GROUP_RAID10;
 	} else if (strcmp(s, "dup") == 0) {
@@ -1436,6 +1450,16 @@ raid_groups:
 
 		flags |= BTRFS_FEATURE_INCOMPAT_MIXED_GROUPS;
 		btrfs_set_super_incompat_flags(super, flags);
+	}
+
+	if ((data_profile | metadata_profile) &
+	    (BTRFS_BLOCK_GROUP_RAID5 | BTRFS_BLOCK_GROUP_RAID6)) {
+		struct btrfs_super_block *super = &root->fs_info->super_copy;
+		u64 flags = btrfs_super_incompat_flags(super);
+
+		flags |= BTRFS_FEATURE_INCOMPAT_RAID56;
+		btrfs_set_super_incompat_flags(super, flags);
+		printf("Setting RAID5/6 feature flag\n");
 	}
 
 	printf("fs created label %s on %s\n\tnodesize %u leafsize %u "

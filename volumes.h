@@ -135,6 +135,10 @@ struct map_lookup {
 #define BTRFS_BALANCE_ARGS_CONVERT	(1ULL << 8)
 #define BTRFS_BALANCE_ARGS_SOFT		(1ULL << 9)
 
+#define BTRFS_RAID5_P_STRIPE ((u64)-2)
+#define BTRFS_RAID6_Q_STRIPE ((u64)-1)
+
+
 int btrfs_alloc_dev_extent(struct btrfs_trans_handle *trans,
 			   struct btrfs_device *device,
 			   u64 chunk_tree, u64 chunk_objectid,
@@ -142,10 +146,12 @@ int btrfs_alloc_dev_extent(struct btrfs_trans_handle *trans,
 			   u64 num_bytes, u64 *start);
 int __btrfs_map_block(struct btrfs_mapping_tree *map_tree, int rw,
 		      u64 logical, u64 *length, u64 *type,
-		      struct btrfs_multi_bio **multi_ret, int mirror_num);
+		      struct btrfs_multi_bio **multi_ret, int mirror_num,
+		      u64 **raid_map);
 int btrfs_map_block(struct btrfs_mapping_tree *map_tree, int rw,
 		    u64 logical, u64 *length,
-		    struct btrfs_multi_bio **multi_ret, int mirror_num);
+		    struct btrfs_multi_bio **multi_ret, int mirror_num,
+		    u64 **raid_map_ret);
 int btrfs_next_metadata(struct btrfs_mapping_tree *map_tree, u64 *logical,
 			u64 *size);
 int btrfs_rmap_block(struct btrfs_mapping_tree *map_tree,

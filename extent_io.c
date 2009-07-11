@@ -663,13 +663,14 @@ struct extent_buffer *alloc_extent_buffer(struct extent_io_tree *tree,
 	return eb;
 }
 
-int read_extent_from_disk(struct extent_buffer *eb)
+int read_extent_from_disk(struct extent_buffer *eb,
+			  unsigned long offset, unsigned long len)
 {
 	int ret;
-	ret = pread(eb->fd, eb->data, eb->len, eb->dev_bytenr);
+	ret = pread(eb->fd, eb->data + offset, len, eb->dev_bytenr);
 	if (ret < 0)
 		goto out;
-	if (ret != eb->len) {
+	if (ret != len) {
 		ret = -EIO;
 		goto out;
 	}
