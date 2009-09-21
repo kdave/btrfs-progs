@@ -56,4 +56,7 @@ struct btrfs_ioctl_vol_args {
 /* 13 is for CLONE_RANGE */
 #define BTRFS_IOC_SUBVOL_CREATE _IOW(BTRFS_IOCTL_MAGIC, 14, \
 				   struct btrfs_ioctl_vol_args)
+
+#define BTRFS_IOC_SNAP_DESTROY _IOW(BTRFS_IOCTL_MAGIC, 15, \
+				   struct btrfs_ioctl_vol_args)
 #endif
