@@ -29,6 +29,7 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <libgen.h>
+#include <stdlib.h>
 #include "kerncompat.h"
 #include "ctree.h"
 #include "transaction.h"
@@ -56,6 +57,8 @@ static void print_usage(void)
 	printf("\t-a: scans all devices for Btrfs filesystems\n");
 	printf("\t-c: forces a single FS sync\n");
 	printf("\t-D: delete snapshot\n");
+	printf("\t-m [tree id] directory: set the default mounted subvolume"
+	       " to the [tree id] or the directory\n");
 	printf("%s\n", BTRFS_BUILD_VERSION);
 	exit(1);
 }
@@ -101,6 +104,7 @@ int main(int ac, char **av)
 	unsigned long command = 0;
 	int len;
 	char *fullpath;
+	u64 objectid = 0;
 
 	if (ac == 2 && strcmp(av[1], "-a") == 0) {
 		fprintf(stderr, "Scanning for Btrfs filesystems\n");
@@ -191,6 +195,16 @@ int main(int ac, char **av)
 			command = BTRFS_IOC_RESIZE;
 		} else if (strcmp(av[i], "-c") == 0) {
 			command = BTRFS_IOC_SYNC;
+		} else if (strcmp(av[i], "-m") == 0) {
+			command = BTRFS_IOC_DEFAULT_SUBVOL;
+			if (i == ac - 3) {
+				objectid = (unsigned long long)
+					    strtoll(av[i + 1], NULL, 0);
+				if (errno == ERANGE) {
+					fprintf(stderr, "invalid tree id\n");
+					exit(1);
+				}
+			}
 		}
 	}
 	if (command == 0) {
@@ -219,6 +233,9 @@ int main(int ac, char **av)
 	if (command == BTRFS_IOC_SNAP_CREATE) {
 		args.fd = fd;
 		ret = ioctl(snap_fd, command, &args);
+	} else if (command == BTRFS_IOC_DEFAULT_SUBVOL) {
+		printf("objectid is %llu\n", objectid);
+		ret = ioctl(fd, command, &objectid);
 	} else
 		ret = ioctl(fd, command, &args);
 	if (ret < 0) {
