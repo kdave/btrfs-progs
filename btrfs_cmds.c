@@ -803,3 +803,91 @@ int do_set_default_subvol(int nargs, char **argv)
 	return 0;
 }
 
+int do_df_filesystem(int nargs, char **argv)
+{
+	struct btrfs_ioctl_space_args *sargs;
+	u64 count = 0, i;
+	int ret;
+	int fd;
+	char *path = argv[1];
+
+	fd = open_file_or_dir(path);
+	if (fd < 0) {
+		fprintf(stderr, "ERROR: can't access to '%s'\n", path);
+		return 12;
+	}
+
+	sargs = malloc(sizeof(struct btrfs_ioctl_space_args));
+	if (!sargs)
+		return -ENOMEM;
+
+	sargs->space_slots = 0;
+	sargs->total_spaces = 0;
+
+	ret = ioctl(fd, BTRFS_IOC_SPACE_INFO, sargs);
+	if (ret) {
+		free(sargs);
+		return ret;
+	}
+	if (!sargs->total_spaces)
+		return 0;
+
+	count = sargs->total_spaces;
+
+	sargs = realloc(sargs, sizeof(struct btrfs_ioctl_space_args) +
+			(count * sizeof(struct btrfs_ioctl_space_info)));
+	if (!sargs)
+		return -ENOMEM;
+
+	sargs->space_slots = count;
+	sargs->total_spaces = 0;
+
+	ret = ioctl(fd, BTRFS_IOC_SPACE_INFO, sargs);
+	if (ret) {
+		free(sargs);
+		return ret;
+	}
+
+	for (i = 0; i < sargs->total_spaces; i++) {
+		char description[80];
+		char *total_bytes;
+		char *used_bytes;
+		int written = 0;
+		u64 flags = sargs->spaces[i].flags;
+
+		memset(description, 0, 80);
+
+		if (flags & BTRFS_BLOCK_GROUP_DATA) {
+			snprintf(description, 5, "%s", "Data");
+			written += 4;
+		} else if (flags & BTRFS_BLOCK_GROUP_SYSTEM) {
+			snprintf(description, 7, "%s", "System");
+			written += 6;
+		} else if (flags & BTRFS_BLOCK_GROUP_METADATA) {
+			snprintf(description, 9, "%s", "Metadata");
+			written += 8;
+		}
+
+		if (flags & BTRFS_BLOCK_GROUP_RAID0) {
+			snprintf(description+written, 8, "%s", ", RAID0");
+			written += 7;
+		} else if (flags & BTRFS_BLOCK_GROUP_RAID1) {
+			snprintf(description+written, 8, "%s", ", RAID1");
+			written += 7;
+		} else if (flags & BTRFS_BLOCK_GROUP_DUP) {
+			snprintf(description+written, 6, "%s", ", DUP");
+			written += 5;
+		} else if (flags & BTRFS_BLOCK_GROUP_RAID10) {
+			snprintf(description+written, 9, "%s", ", RAID10");
+			written += 8;
+		}
+
+		total_bytes = pretty_sizes(sargs->spaces[i].total_bytes);
+		used_bytes = pretty_sizes(sargs->spaces[i].used_bytes);
+		printf("%s: total=%s, used=%s\n", description, total_bytes,
+		       used_bytes);
+	}
+	free(sargs);
+
+	return 0;
+}

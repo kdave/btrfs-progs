@@ -29,3 +29,4 @@ int do_resize(int nargs, char **argv);
 int do_subvol_list(int nargs, char **argv);
 int do_set_default_subvol(int nargs, char **argv);
 int list_subvols(int fd);
+int do_df_filesystem(int nargs, char **argv);

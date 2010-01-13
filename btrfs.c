@@ -83,6 +83,10 @@ static struct Command commands[] = {
 		"Show the info of a btrfs filesystem. If no <uuid> or <label>\n"
 		"is passed, info of all the btrfs filesystem are shown."
 	},
+	{ do_df_filesystem, 1,
+	  "filesystem df", "<path>\n"
+		"Show space usage information for a mount point\n."
+	},
 	{ do_balance, 1,
 	  "filesystem balance", "<path>\n"
 		"Balance the chunks across the device."
