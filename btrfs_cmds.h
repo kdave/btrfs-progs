@@ -1,6 +1,4 @@
 /*
- * Copyright (C) 2010 Oracle.  All rights reserved.
- *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public
  * License v2 as published by the Free Software Foundation.
@@ -16,24 +14,17 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#ifndef __CHECKER__
-#include <sys/ioctl.h>
-#include <sys/mount.h>
-#include "ioctl.h"
-#endif
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <ctype.h>
-#include <unistd.h>
-#include <dirent.h>
-#include <libgen.h>
-#include <getopt.h>
-#include "kerncompat.h"
-#include "ctree.h"
-#include "transaction.h"
-#include "utils.h"
-#include "version.h"
-
+/* btrfs_cmds.c*/
+int do_clone(int nargs, char **argv);
+int do_delete_subvolume(int nargs, char **argv);
+int do_create_subvol(int nargs, char **argv);
+int do_fssync(int nargs, char **argv);
+int do_defrag(int argc, char **argv);
+int do_show_filesystem(int nargs, char **argv);
+int do_add_volume(int nargs, char **args);
+int do_balance(int nargs, char **argv);
+int do_remove_volume(int nargs, char **args);
+int do_scan(int nargs, char **argv);
+int do_resize(int nargs, char **argv);
+int do_subvol_list(int nargs, char **argv);
+int list_subvols(int fd);

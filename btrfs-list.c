@@ -154,39 +154,6 @@ static struct root_info *tree_search(struct rb_root *root, u64 root_id)
 }
 
 /*
- * helper to open either a file or directory so that
- * we can run ioctls on it.
- */
-static int open_file_or_dir(const char *fname)
-{
-	int ret;
-	struct stat st;
-	DIR *dirstream;
-	int fd;
-
-	ret = stat(fname, &st);
-	if (ret < 0) {
-		perror("stat:");
-		exit(1);
-	}
-	if (S_ISDIR(st.st_mode)) {
-		dirstream = opendir(fname);
-		if (!dirstream) {
-			perror("opendir");
-			exit(1);
-		}
-		fd = dirfd(dirstream);
-	} else {
-		fd = open(fname, O_RDWR);
-	}
-	if (fd < 0) {
-		perror("open");
-		exit(1);
-	}
-	return fd;
-}
-
-/*
  * this allocates a new root in the lookup tree.
  *
  * root_id should be the object id of the root
@@ -205,11 +172,12 @@ static int add_root(struct root_lookup *root_lookup,
 {
 	struct root_info *ri;
 	struct rb_node *ret;
-	ri = malloc(sizeof(*ri) + name_len);
+	ri = malloc(sizeof(*ri) + name_len + 1);
 	if (!ri) {
 		printf("memory allocation failed\n");
 		exit(1);
 	}
+	memset(ri, 0, sizeof(*ri) + name_len + 1);
 	ri->path = NULL;
 	ri->dir_id = dir_id;
 	ri->root_id = root_id;
@@ -301,9 +269,9 @@ static int lookup_ino_path(int fd, struct root_info *ri)
 	if (ri->path)
 		return 0;
 
+	memset(&args, 0, sizeof(args));
 	args.treeid = ri->ref_tree;
 	args.objectid = ri->dir_id;
-	args.name[0] = '\0';
 
 	ret = ioctl(fd, BTRFS_IOC_INO_LOOKUP, &args);
 	if (ret) {
@@ -335,7 +303,7 @@ static int lookup_ino_path(int fd, struct root_info *ri)
 	return 0;
 }
 
-static int list_subvols(int fd)
+int list_subvols(int fd)
 {
 	struct root_lookup root_lookup;
 	struct rb_node *n;
@@ -447,20 +415,5 @@ static int list_subvols(int fd)
 		n = rb_prev(n);
 	}
 
-	printf("%s\n", BTRFS_BUILD_VERSION);
 	return ret;
 }
-
-int main(int ac, char **av)
-{
-	int fd;
-
-	if (ac != 2) {
-		fprintf(stderr, "usage: btrfs-list mount_point\n");
-		exit(1);
-	}
-	fd = open_file_or_dir(av[1]);
-
-	return list_subvols(fd);
-}
-

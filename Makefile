@@ -4,7 +4,7 @@ CFLAGS = -g -Werror -Os
 objects = ctree.o disk-io.o radix-tree.o extent-tree.o print-tree.o \
 	  root-tree.o dir-item.o file-item.o inode-item.o \
 	  inode-map.o crc32c.o rbtree.o extent-cache.o extent_io.o \
-	  volumes.o utils.o
+	  volumes.o utils.o btrfs-list.o
 
 #
 CHECKFLAGS=-D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ -Wbitwise \
@@ -17,7 +17,8 @@ bindir = $(prefix)/bin
 LIBS=-luuid
 
 progs = btrfsctl mkfs.btrfs btrfs-debug-tree btrfs-show btrfs-vol btrfsck \
-	btrfs-map-logical btrfs-list btrfs-defrag
+	btrfs \
+	btrfs-map-logical
 
 # make C=1 to enable sparse
 ifdef C
@@ -36,11 +37,9 @@ all: version $(progs) manpages
 version:
 	bash version.sh
 
-btrfs-list: $(objects) btrfs-list.o
-	gcc $(CFLAGS) -o btrfs-list btrfs-list.o $(objects) $(LDFLAGS) $(LIBS)
-
-btrfs-defrag: $(objects) btrfs-defrag.o
-	gcc $(CFLAGS) -o btrfs-defrag btrfs-defrag.o $(objects) $(LDFLAGS) $(LIBS)
+btrfs: $(objects) btrfs.o btrfs_cmds.o
+	gcc $(CFLAGS) -o btrfs btrfs.o btrfs_cmds.o \
+		$(objects) $(LDFLAGS) $(LIBS)
 
 btrfsctl: $(objects) btrfsctl.o
 	gcc $(CFLAGS) -o btrfsctl btrfsctl.o $(objects) $(LDFLAGS) $(LIBS)
