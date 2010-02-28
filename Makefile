@@ -17,7 +17,7 @@ bindir = $(prefix)/bin
 LIBS=-luuid
 
 progs = btrfsctl mkfs.btrfs btrfs-debug-tree btrfs-show btrfs-vol btrfsck \
-	btrfs-map-logical
+	btrfs-map-logical btrfs-list
 
 # make C=1 to enable sparse
 ifdef C
@@ -35,6 +35,9 @@ all: version $(progs) manpages
 
 version:
 	bash version.sh
+
+btrfs-list: $(objects) btrfs-list.o
+	gcc $(CFLAGS) -o btrfs-list btrfs-list.o $(objects) $(LDFLAGS) $(LIBS)
 
 btrfsctl: $(objects) btrfsctl.o
 	gcc $(CFLAGS) -o btrfsctl btrfsctl.o $(objects) $(LDFLAGS) $(LIBS)
