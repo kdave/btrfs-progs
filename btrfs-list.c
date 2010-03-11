@@ -66,7 +66,7 @@ struct root_info {
 	char name[];
 };
 
-void root_lookup_init(struct root_lookup *tree)
+static void root_lookup_init(struct root_lookup *tree)
 {
 	tree->root.rb_node = NULL;
 }
@@ -275,9 +275,9 @@ static int lookup_ino_path(int fd, struct root_info *ri)
 
 	ret = ioctl(fd, BTRFS_IOC_INO_LOOKUP, &args);
 	if (ret) {
-		fprintf(stderr, "Failed to lookup path for root %llu\n",
+		fprintf(stderr, "ERROR: Failed to lookup path for root %llu\n",
 			(unsigned long long)ri->ref_tree);
-		exit(1);
+		return ret;
 	}
 
 	if (args.name[0]) {
@@ -346,8 +346,8 @@ int list_subvols(int fd)
 	while(1) {
 		ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &args);
 		if (ret < 0) {
-			perror("ioctl:");
-			break;
+			fprintf(stderr, "ERROR: can't perform the search\n");
+			return ret;
 		}
 		/* the ioctl returns the number of item it found in nr_items */
 		if (sk->nr_items == 0)
@@ -398,8 +398,11 @@ int list_subvols(int fd)
 	n = rb_first(&root_lookup.root);
 	while (n) {
 		struct root_info *entry;
+		int ret;
 		entry = rb_entry(n, struct root_info, rb_node);
-		lookup_ino_path(fd, entry);
+		ret = lookup_ino_path(fd, entry);
+		if(ret < 0)
+			return ret;
 		n = rb_next(n);
 	}
 
