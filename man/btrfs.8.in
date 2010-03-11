@@ -1,0 +1,170 @@
+.TH BTRFS 8 "" "btrfs" "btrfs"
+.\"
+.\" Man page written by Goffredo Baroncelli <kreijack@inwind.it> (Feb 2010)
+.\"
+.SH NAME
+btrfs \- control a btrfs filesystem
+.SH SYNOPSIS
+\fBbtrfs\fP \fBsubvolume snapshot\fP\fI <source> [<dest>/]<name>\fP
+.PP
+\fBbtrfs\fP \fBsubvolume delete\fP\fI <subvolume>\fP
+.PP
+\fBbtrfs\fP \fBsubvolume create\fP\fI [<dest>/]<name>\fP
+.PP
+\fBbtrfs\fP \fBsubvolume list\fP\fI <path>\fP
+.PP
+\fBbtrfs\fP \fBsubvolume set-default\fP\fI <id> <path>\fP
+.PP
+\fBbtrfs\fP \fBfilesystem defrag\fP\fI <file>|<dir> [<file>|<dir>...]\fP
+.PP
+\fBbtrfs\fP \fBfilesystem sync\fP\fI <path> \fP
+.PP
+\fBbtrfs\fP \fBfilesystem resize\fP\fI [+/\-]<size>[gkm]|max <filesystem>\fP
+.PP
+\fBbtrfs\fP \fBdevice scan\fP\fI [<device> [<device>..]]\fP
+.PP
+\fBbtrfs\fP \fBdevice show\fP\fI <dev>|<label> [<dev>|<label>...]\fP
+.PP
+\fBbtrfs\fP \fBdevice balance\fP\fI <path> \fP
+.PP
+\fBbtrfs\fP \fBdevice add\fP\fI <dev> [<dev>..] <path> \fP
+.PP
+\fBbtrfs\fP \fBdevice delete\fP\fI <dev> [<dev>..] <path> \fP]
+
+.PP
+\fBbtrfs\fP \fBhelp|\-\-help|\-h \fP\fI\fP
+.PP
+.SH DESCRIPTION
+.B btrfs
+is used to control the filesystem and the files and directories stored. It is
+the tool to create or destroy a snapshot or a subvolume for the
+filesystem, to defrag a file or a directory, flush the data to the disk,
+to resize the filesystem, to scan the device.
+
+It is possible to abbreviate the commands unless the commands  are ambiguous.
+For example: it is possible to run
+.I btrfs sub snaps
+instead of
+.I btrfs subvolume snapshot.
+But
+.I btrfs dev s
+is not allowed, because
+.I dev s
+may be interpreted both as
+.I device show
+and as
+.I device scan.
+In this case
+.I btrfs
+returns an error.
+
+If a command is terminated by
+.I --help
+, the relevant help is showed. If the passed command matches more commands,
+the help of all the matched commands are showed. For example
+.I btrfs dev --help
+shows the help of all
+.I device*
+command.
+
+.SH COMMANDS
+.TP
+
+\fBsubvolume snapshot\fR\fI <source> [<dest>/]<name>\fR
+Create a writable snapshot of the subvolume \fI<source>\fR with the name
+\fI<name>\fR in the \fI<dest>\fR directory. If \fI<source>\fR is not a
+subvolume, \fBbtrfs\fR returns an error.
+.TP
+
+\fBsubvolume delete\fR\fI <subvolume>\fR
+Delete the subvolume \fI<subvolume>\fR. If \fI<subvolume>\fR is not a
+subvolume, \fBbtrfs\fR returns an error.
+.TP
+
+\fBsubvolume create\fR\fI [<dest>/]<name>\fR
+Create a subvolume in \fI<dest>\fR (or in the current directory if
+\fI<dest>\fR is omitted).
+.TP
+
+\fBsubvolume list\fR\fI <path>\fR
+List the subvolumes present in the filesystem \fI<path>\fR. For every
+subvolume is showed the subvolume ID (second column), 
+the ID of the \fItop level\fR 
+subvolume (fifth column), and the path (seventh column) relative to the
+\fItop level\fR subvolume.
+These <ID> may be used by the \fBsubvolume set-default\fR command, or at
+mount time via the \fIsubvol=\fR option.
+.TP
+
+\fBsubvolume set-default\fR\fI <id> <path>\fR
+Set the subvolume of the filesystem \fI<path>\fR which is mounted as 
+\fIdefault\fR. The subvolume is identified by \fB<id>\fR, which 
+is returned by the \fBsubvolume list\fR command.
+.TP
+
+\fBfilesystem defragment\fP\fI <file>|<dir> [<file>|<dir>...]\fR
+Defragment files and/or directories.
+.TP
+
+\fBdevice scan\fR \fI[<device> [<device>..]]\fR
+Scan devices for a btrfs filesystem. If no devices are passed, \fBbtrfs\fR scans
+all the block devices.
+.TP
+
+\fBfilesystem sync\fR\fI <path> \fR
+Force a sync for the filesystem identified by \fI<path>\fR.
+.TP
+
+.\"
+.\" Some wording are extracted by the resize2fs man page
+.\"
+
+\fBfilesystem resize\fR\fI [+/\-]<size>[gkm]|max <path>\fR
+Resize a filesystem identified by \fI<path>\fR.
+The \fI<size>\fR parameter specifies the new size of the filesystem.
+If the prefix \fI+\fR or \fI\-\fR is present the size is increased or decreased
+by the quantity \fI<size>\fR.
+If no units are specified, the unit of the \fI<size>\fR parameter defaults to
+bytes. Optionally, the size parameter may be suffixed by one of the following
+the units designators: 'K', 'M', or 'G', kilobytes, megabytes, or gigabytes,
+respectively.
+
+If 'max' is passed, the filesystem will occupy all available space on the
+volume(s).
+
+The \fBresize\fR command \fBdoes not\fR manipulate the size of underlying
+partition.  If you wish to enlarge/reduce a filesystem, you must make sure you
+can expand the partition before enlarging the filesystem and shrink the
+partition after reducing the size of the filesystem.
+.TP
+
+\fBfilesystem show\fR [<uuid>|<label>]\fR
+Show the btrfs filesystem with some additional info. If no UUID or label is
+passed, \fBbtrfs\fR show info of all the btrfs filesystem.
+.TP
+
+\fBdevice balance\fR \fI<path>\fR
+Balance the chunks of the filesystem identified by \fI<path>\fR
+across the devices.
+.TP
+
+\fBdevice add\fR\fI <dev> [<dev>..] <path>\fR
+Add device(s) to the filesystem identified by \fI<path>\fR.
+.TP
+
+\fBdevice delete\fR\fI <dev> [<dev>..] <path>\fR
+Remove device(s) from a filesystem identified by \fI<path>\fR.
+.PP
+
+.SH EXIT STATUS
+\fBbtrfs\fR returns a zero exist status if it succeeds. Non zero is returned in
+case of failure.
+
+.SH AVAILABILITY
+.B btrfs
+is part of btrfs-progs. Btrfs filesystem is currently under heavy development,
+and not suitable for any uses other than benchmarking and review.
+Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for
+further details.
+.SH SEE ALSO
+.BR mkfs.btrfs (8)
