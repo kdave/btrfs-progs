@@ -60,10 +60,14 @@ static struct Command commands[] = {
 	{ do_subvol_list, 1, "subvolume list", "<path>\n"
 		"List the snapshot/subvolume of a filesystem."
 	},
-
 	{ do_defrag, -1,
 	  "filesystem defragment", "[-vcf] [-s start] [-l len] [-t size] <file>|<dir> [<file>|<dir>...]\n"
 		"Defragment a file or a directory."
+	},
+	{ do_set_default_subvol, 2,
+	  "subvolume set-default", "<id> <path>\n"
+		"Set the subvolume of the filesystem <path> which will be mounted\n"
+		"as default."
 	},
 	{ do_fssync, 1,
 	  "filesystem sync", "<path>\n"
@@ -88,11 +92,11 @@ static struct Command commands[] = {
 		"Scan all device for or the passed device for a btrfs\n"
 		"filesystem."
 	},
-	{ do_add_volume, -1,
+	{ do_add_volume, -2,
 	  "device add", "<dev> [<dev>..] <path>\n"
 		"Add a device to a filesystem."
 	},
-	{ do_remove_volume, -1,
+	{ do_remove_volume, -2,
 	  "device delete", "<dev> [<dev>..] <path>\n"
 		"Remove a device from a filesystem."
 	},
@@ -103,9 +107,6 @@ static struct Command commands[] = {
 	*/
 	{ 0, 0 , 0 }
 };
-
-
-
 
 static char *get_prgname(char *programname)
 {

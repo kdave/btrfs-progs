@@ -27,4 +27,5 @@ int do_remove_volume(int nargs, char **args);
 int do_scan(int nargs, char **argv);
 int do_resize(int nargs, char **argv);
 int do_subvol_list(int nargs, char **argv);
+int do_set_default_subvol(int nargs, char **argv);
 int list_subvols(int fd);
