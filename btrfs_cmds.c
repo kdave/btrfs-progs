@@ -142,7 +142,7 @@ static u64 parse_size(char *s)
 	return atoll(s) * mult;
 }
 
-int do_defrag(int ac, char **avp)
+int do_defrag(int ac, char **av)
 {
 	int fd;
 	int compress = 0;
@@ -156,17 +156,6 @@ int do_defrag(int ac, char **avp)
 	int verbose = 0;
 	int fancy_ioctl = 0;
 	struct btrfs_ioctl_defrag_range_args range;
-	char **av;
-
-	/*
-	 * getopt expects av[0] to be the program name and it seems
-	 * to get confused when this isn't the case
-	 */
-	av = malloc((ac + 2) * sizeof(char *));
-	av[0] = "defrag";
-	av[ac + 1] = NULL;
-	memcpy(av + 1, avp, ac * sizeof(char *));
-	ac += 1;
 
 	optind = 1;
 	while(1) {
@@ -264,7 +253,7 @@ int do_subvol_list(int argc, char **argv)
 	int ret;
 	char *subvol;
 
-	subvol = argv[0];
+	subvol = argv[1];
 
 	ret = test_issubvolume(subvol);
 	if (ret < 0) {
@@ -294,8 +283,8 @@ int do_clone(int argc, char **argv)
 	char	*newname;
 	char	*dstdir;
 
-	subvol = argv[0];
-	dst = argv[1];
+	subvol = argv[1];
+	dst = argv[2];
 	struct btrfs_ioctl_vol_args	args;
 
 	res = test_issubvolume(subvol);
@@ -375,7 +364,7 @@ int do_delete_subvolume(int argc, char **argv)
 	int	res, fd, len;
 	struct btrfs_ioctl_vol_args	args;
 	char	*dname, *vname, *cpath;
-	char	*path = argv[0];
+	char	*path = argv[1];
 
 	res = test_issubvolume(path);
 	if(res<0){
@@ -436,7 +425,7 @@ int do_create_subvol(int argc, char **argv)
 	char	*newname;
 	char	*dstdir;
 	struct btrfs_ioctl_vol_args	args;
-	char	*dst = argv[0];
+	char	*dst = argv[1];
 
 	res = test_isdir(dst);
 	if(res >= 0 ){
@@ -487,7 +476,7 @@ int do_create_subvol(int argc, char **argv)
 int do_fssync(int argc, char **argv)
 {
 	int fd, res;
-	char	*path = argv[0];
+	char	*path = argv[1];
 
 	fd = open_file_or_dir(path);
 	if (fd < 0) {
@@ -506,10 +495,10 @@ int do_fssync(int argc, char **argv)
 	return 0;
 }
 
-int do_scan(int nargs, char **argv)
+int do_scan(int argc, char **argv)
 {
 	int	i, fd;
-	if(!nargs){
+	if(argc<=1){
 		int ret;
 
 		printf("Scanning for Btrfs filesystems\n");
@@ -527,9 +516,9 @@ int do_scan(int nargs, char **argv)
 		return 10;
 	}
 
-	for( i = 0 ; i < nargs ; i++ ){
-		struct btrfs_ioctl_vol_args	args;
-		int	ret;
+	for( i = 1 ; i < argc ; i++ ){
+		struct btrfs_ioctl_vol_args args;
+		int ret;
 
 		printf("Scanning for Btrfs filesystems in '%s'\n", argv[i]);
 
@@ -558,7 +547,7 @@ int do_resize(int argc, char **argv)
 
 	struct btrfs_ioctl_vol_args	args;
 	int	fd, res, len;
-	char	*amount=argv[0], *path=argv[1];
+	char	*amount=argv[1], *path=argv[2];
 
 	fd = open_file_or_dir(path);
 	if (fd < 0) {
@@ -646,7 +635,7 @@ int do_show_filesystem(int argc, char **argv)
 	struct list_head *all_uuids;
 	struct btrfs_fs_devices *fs_devices;
 	struct list_head *cur_uuid;
-	char *search = argv[0];
+	char *search = argv[1];
 	int ret;
 
 	ret = btrfs_scan_one_dir("/dev", 0);
@@ -680,8 +669,8 @@ int do_add_volume(int nargs, char **args)
 		return 12;
 	}
 
-	for(i=0 ; i < (nargs-1) ; i++ ){
-		struct	btrfs_ioctl_vol_args ioctl_args;
+	for(i=1 ; i < (nargs-1) ; i++ ){
+		struct btrfs_ioctl_vol_args ioctl_args;
 		int	devfd, res;
 		u64 dev_block_count = 0;
 		struct stat st;
@@ -737,8 +726,8 @@ int do_balance(int argc, char **argv)
 {
 
 	int	fdmnt, ret=0;
-	char	*path = argv[0];
 	struct btrfs_ioctl_vol_args args;
+	char	*path = argv[1];
 
 	fdmnt = open_file_or_dir(path);
 	if (fdmnt < 0) {
@@ -768,7 +757,7 @@ int do_remove_volume(int nargs, char **args)
 		return 12;
 	}
 
-	for(i=0 ; i < (nargs-1) ; i++ ){
+	for(i=1 ; i < (nargs-1) ; i++ ){
 		struct	btrfs_ioctl_vol_args arg;
 		int	res;
 
@@ -786,3 +775,31 @@ int do_remove_volume(int nargs, char **args)
 	else
 		return 0;
 }
+
+int do_set_default_subvol(int nargs, char **argv)
+{
+	int	ret=0, fd;
+	u64	objectid;
+	char	*path = argv[2];
+	char	*subvolid = argv[1];
+
+	fd = open_file_or_dir(path);
+	if (fd < 0) {
+		fprintf(stderr, "ERROR: can't access to '%s'\n", path);
+		return 12;
+	}
+
+	objectid = (unsigned long long)strtoll(subvolid, NULL, 0);
+	if (errno == ERANGE) {
+		fprintf(stderr, "ERROR: invalid tree id (%s)\n",subvolid);
+		return 30;
+	}
+	ret = ioctl(fd, BTRFS_IOC_DEFAULT_SUBVOL, &objectid);
+	close(fd);
+	if( ret < 0 ){
+		fprintf(stderr, "ERROR: unable to set a new default subvolume\n");
+		return 30;
+	}
+	return 0;
+}
+

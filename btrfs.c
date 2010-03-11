@@ -104,6 +104,9 @@ static struct Command commands[] = {
 	{ 0, 0 , 0 }
 };
 
+
+
+
 static char *get_prgname(char *programname)
 {
 	char	*np;
@@ -208,6 +211,41 @@ static int check_ambiguity(struct Command *cmd, char **argv){
 }
 
 /*
+ * This function, compacts the program name and the command in the first
+ * element of the '*av' array
+ */
+static int prepare_args(int *ac, char ***av, char *prgname, struct Command *cmd ){
+
+	char	**ret;
+	int	i;
+	char	*newname;
+
+	ret = (char **)malloc(sizeof(char*)*(*ac+1));
+	newname = (char*)malloc(strlen(prgname)+strlen(cmd->verb)+2);
+	if( !ret || !newname ){
+		free(ret);
+		free(newname);
+		return -1;
+	}
+
+	ret[0] = newname;
+	for(i=0; i < *ac ; i++ )
+		ret[i+1] = (*av)[i];
+
+	strcpy(newname, prgname);
+	strcat(newname, " ");
+	strcat(newname, cmd->verb);
+
+	(*ac)++;
+	*av = ret;
+
+	return 0;
+
+}
+
+
+
+/*
 
 	This function perform the following jobs:
 	- show the help if '--help' or 'help' or '-h' are passed
@@ -307,15 +345,20 @@ static int parse_args(int argc, char **argv,
 			matchcmd->verb, -matchcmd->nargs);
 			return -2;
 	}
-	if(matchcmd->nargs >= 0 && matchcmd->nargs != *nargs_ && matchcmd->nargs != 999 ){
+	if(matchcmd->nargs >= 0 && matchcmd->nargs != *nargs_ && matchcmd->nargs != 999){
 		fprintf(stderr, "ERROR: '%s' requires %d arg(s)\n",
 			matchcmd->verb, matchcmd->nargs);
 			return -2;
 	}
+	
+        if (prepare_args( nargs_, args_, prgname, matchcmd )){
+                fprintf(stderr, "ERROR: not enough memory\\n");
+		return -20;
+        }
+
 
 	return 1;
 }
-
 int main(int ac, char **av )
 {
 
