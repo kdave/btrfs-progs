@@ -77,6 +77,9 @@ quick-test: $(objects) quick-test.o
 convert: $(objects) convert.o
 	gcc $(CFLAGS) -o btrfs-convert $(objects) convert.o -lext2fs $(LDFLAGS) $(LIBS)
 
+ioctl-test: $(objects) ioctl-test.o
+	gcc $(CFLAGS) -o ioctl-test $(objects) ioctl-test.o $(LDFLAGS) $(LIBS)
+
 manpages:
 	cd man; make
 
