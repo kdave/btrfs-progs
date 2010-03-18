@@ -1047,6 +1047,7 @@ BTRFS_SETGET_STACK_FUNCS(block_group_flags,
 
 /* struct btrfs_inode_ref */
 BTRFS_SETGET_FUNCS(inode_ref_name_len, struct btrfs_inode_ref, name_len, 16);
+BTRFS_SETGET_STACK_FUNCS(stack_inode_ref_name_len, struct btrfs_inode_ref, name_len, 16);
 BTRFS_SETGET_FUNCS(inode_ref_index, struct btrfs_inode_ref, index, 64);
 
 /* struct btrfs_inode_item */
@@ -1576,6 +1577,7 @@ static inline unsigned long btrfs_leaf_data(struct extent_buffer *l)
 
 /* struct btrfs_file_extent_item */
 BTRFS_SETGET_FUNCS(file_extent_type, struct btrfs_file_extent_item, type, 8);
+BTRFS_SETGET_STACK_FUNCS(stack_file_extent_type, struct btrfs_file_extent_item, type, 8);
 
 static inline unsigned long btrfs_file_extent_inline_start(struct
 						   btrfs_file_extent_item *e)
@@ -1592,17 +1594,29 @@ static inline u32 btrfs_file_extent_calc_inline_size(u32 datasize)
 
 BTRFS_SETGET_FUNCS(file_extent_disk_bytenr, struct btrfs_file_extent_item,
 		   disk_bytenr, 64);
+BTRFS_SETGET_STACK_FUNCS(stack_file_extent_disk_bytenr, struct btrfs_file_extent_item,
+		   disk_bytenr, 64);
 BTRFS_SETGET_FUNCS(file_extent_generation, struct btrfs_file_extent_item,
+		   generation, 64);
+BTRFS_SETGET_STACK_FUNCS(stack_file_extent_generation, struct btrfs_file_extent_item,
 		   generation, 64);
 BTRFS_SETGET_FUNCS(file_extent_disk_num_bytes, struct btrfs_file_extent_item,
 		   disk_num_bytes, 64);
 BTRFS_SETGET_FUNCS(file_extent_offset, struct btrfs_file_extent_item,
 		  offset, 64);
+BTRFS_SETGET_STACK_FUNCS(stack_file_extent_offset, struct btrfs_file_extent_item,
+		  offset, 64);
 BTRFS_SETGET_FUNCS(file_extent_num_bytes, struct btrfs_file_extent_item,
+		   num_bytes, 64);
+BTRFS_SETGET_STACK_FUNCS(stack_file_extent_num_bytes, struct btrfs_file_extent_item,
 		   num_bytes, 64);
 BTRFS_SETGET_FUNCS(file_extent_ram_bytes, struct btrfs_file_extent_item,
 		   ram_bytes, 64);
+BTRFS_SETGET_STACK_FUNCS(stack_file_extent_ram_bytes, struct btrfs_file_extent_item,
+		   ram_bytes, 64);
 BTRFS_SETGET_FUNCS(file_extent_compression, struct btrfs_file_extent_item,
+		   compression, 8);
+BTRFS_SETGET_STACK_FUNCS(stack_file_extent_compression, struct btrfs_file_extent_item,
 		   compression, 8);
 BTRFS_SETGET_FUNCS(file_extent_encryption, struct btrfs_file_extent_item,
 		   encryption, 8);

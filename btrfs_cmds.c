@@ -247,6 +247,37 @@ int do_defrag(int ac, char **av)
 	return errors + 20;
 }
 
+int do_find_newer(int argc, char **argv)
+{
+	int fd;
+	int ret;
+	char *subvol;
+	u64 last_gen;
+
+	subvol = argv[1];
+	last_gen = atoll(argv[2]);
+
+	ret = test_issubvolume(subvol);
+	if (ret < 0) {
+		fprintf(stderr, "ERROR: error accessing '%s'\n", subvol);
+		return 12;
+	}
+	if (!ret) {
+		fprintf(stderr, "ERROR: '%s' is not a subvolume\n", subvol);
+		return 13;
+	}
+
+	fd = open_file_or_dir(subvol);
+	if (fd < 0) {
+		fprintf(stderr, "ERROR: can't access '%s'\n", subvol);
+		return 12;
+	}
+	ret = find_updated_files(fd, 0, last_gen);
+	if (ret)
+		return 19;
+	return 0;
+}
+
 int do_subvol_list(int argc, char **argv)
 {
 	int fd;

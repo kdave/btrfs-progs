@@ -30,3 +30,5 @@ int do_subvol_list(int nargs, char **argv);
 int do_set_default_subvol(int nargs, char **argv);
 int list_subvols(int fd);
 int do_df_filesystem(int nargs, char **argv);
+int find_updated_files(int fd, u64 root_id, u64 oldest_gen);
+int do_find_newer(int argc, char **argv);

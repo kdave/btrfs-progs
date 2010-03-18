@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "kerncompat.h"
 #include "btrfs_cmds.h"
 #include "version.h"
 
@@ -59,6 +60,9 @@ static struct Command commands[] = {
 	},
 	{ do_subvol_list, 1, "subvolume list", "<path>\n"
 		"List the snapshot/subvolume of a filesystem."
+	},
+	{ do_find_newer, 2, "subvolume find-new", "<path> <last_gen>\n"
+		"List the recently modified files in a filesystem."
 	},
 	{ do_defrag, -1,
 	  "filesystem defragment", "[-vcf] [-s start] [-l len] [-t size] <file>|<dir> [<file>|<dir>...]\n"
