@@ -116,18 +116,22 @@ int main(int ac, char **av)
 	int ret;
 	int slot;
 	int extent_only = 0;
+	u64 block_only = 0;
 	struct btrfs_root *tree_root_scan;
 
 	radix_tree_init();
 
 	while(1) {
 		int c;
-		c = getopt(ac, av, "e");
+		c = getopt(ac, av, "eb:");
 		if (c < 0)
 			break;
 		switch(c) {
 			case 'e':
 				extent_only = 1;
+				break;
+			case 'b':
+				block_only = atoll(optarg);
 				break;
 			default:
 				print_usage();
@@ -142,14 +146,37 @@ int main(int ac, char **av)
 		fprintf(stderr, "unable to open %s\n", av[optind]);
 		exit(1);
 	}
+	if (block_only) {
+		leaf = read_tree_block(root,
+				      block_only,
+				      root->leafsize, 0);
+
+		if (leaf && btrfs_header_level(leaf) != 0) {
+			free_extent_buffer(leaf);
+			leaf = NULL;
+		}
+
+		if (!leaf) {
+			leaf = read_tree_block(root,
+					      block_only,
+					      root->nodesize, 0);
+		}
+		if (!leaf) {
+			fprintf(stderr, "failed to read %llu\n", block_only);
+			return 0;
+		}
+		btrfs_print_tree(root, leaf, 0);
+		return 0;
+	}
+
 	if (!extent_only) {
 		printf("root tree\n");
 		btrfs_print_tree(root->fs_info->tree_root,
-				 root->fs_info->tree_root->node);
+				 root->fs_info->tree_root->node, 1);
 
 		printf("chunk tree\n");
 		btrfs_print_tree(root->fs_info->chunk_root,
-				 root->fs_info->chunk_root->node);
+				 root->fs_info->chunk_root->node, 1);
 	}
 	tree_root_scan = root->fs_info->tree_root;
 
@@ -260,7 +287,7 @@ again:
 				printf(" tree ");
 				btrfs_print_key(&disk_key);
 				printf(" \n");
-				btrfs_print_tree(tree_root_scan, buf);
+				btrfs_print_tree(tree_root_scan, buf, 1);
 			} else if (extent_only && !skip) {
 				print_extents(tree_root_scan, buf);
 			}

@@ -404,7 +404,7 @@ int main(int ac, char **av)
 			if (ret) {
 				fprintf(stderr, "op %d failed %d:%d\n",
 					op, i, iterations);
-				btrfs_print_tree(root, root->node);
+				btrfs_print_tree(root, root->node, 1);
 				fprintf(stderr, "op %d failed %d:%d\n",
 					op, i, iterations);
 				err = ret;

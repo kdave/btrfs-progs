@@ -607,7 +607,7 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 	}
 }
 
-void btrfs_print_tree(struct btrfs_root *root, struct extent_buffer *eb)
+void btrfs_print_tree(struct btrfs_root *root, struct extent_buffer *eb, int follow)
 {
 	int i;
 	u32 nr;
@@ -643,6 +643,9 @@ void btrfs_print_tree(struct btrfs_root *root, struct extent_buffer *eb)
 		       (unsigned long long)btrfs_node_ptr_generation(eb, i));
 		fflush(stdout);
 	}
+	if (!follow)
+		return;
+
 	for (i = 0; i < nr; i++) {
 		struct extent_buffer *next = read_tree_block(root,
 					     btrfs_node_blockptr(eb, i),
@@ -660,8 +663,7 @@ void btrfs_print_tree(struct btrfs_root *root, struct extent_buffer *eb)
 		if (btrfs_header_level(next) !=
 			btrfs_header_level(eb) - 1)
 			BUG();
-		btrfs_print_tree(root, next);
+		btrfs_print_tree(root, next, 1);
 		free_extent_buffer(next);
 	}
 }
-
