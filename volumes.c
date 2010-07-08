@@ -857,6 +857,110 @@ again:
 	return ret;
 }
 
+int btrfs_alloc_data_chunk(struct btrfs_trans_handle *trans,
+			   struct btrfs_root *extent_root, u64 *start,
+			   u64 num_bytes, u64 type)
+{
+	u64 dev_offset;
+	struct btrfs_fs_info *info = extent_root->fs_info;
+	struct btrfs_root *chunk_root = extent_root->fs_info->chunk_root;
+	struct btrfs_stripe *stripes;
+	struct btrfs_device *device = NULL;
+	struct btrfs_chunk *chunk;
+	struct list_head *dev_list = &extent_root->fs_info->fs_devices->devices;
+	struct list_head *cur;
+	struct map_lookup *map;
+	u64 physical;
+	u64 calc_size = 8 * 1024 * 1024;
+	int num_stripes = 1;
+	int sub_stripes = 0;
+	int ret;
+	int index;
+	int stripe_len = 64 * 1024;
+	struct btrfs_key key;
+
+	key.objectid = BTRFS_FIRST_CHUNK_TREE_OBJECTID;
+	key.type = BTRFS_CHUNK_ITEM_KEY;
+	ret = find_next_chunk(chunk_root, BTRFS_FIRST_CHUNK_TREE_OBJECTID,
+			      &key.offset);
+	if (ret)
+		return ret;
+
+	chunk = kmalloc(btrfs_chunk_item_size(num_stripes), GFP_NOFS);
+	if (!chunk)
+		return -ENOMEM;
+
+	map = kmalloc(map_lookup_size(num_stripes), GFP_NOFS);
+	if (!map) {
+		kfree(chunk);
+		return -ENOMEM;
+	}
+
+	stripes = &chunk->stripe;
+	calc_size = num_bytes;
+
+	index = 0;
+	cur = dev_list->next;
+	device = list_entry(cur, struct btrfs_device, dev_list);
+
+	while (index < num_stripes) {
+		struct btrfs_stripe *stripe;
+
+		ret = btrfs_alloc_dev_extent(trans, device,
+			     info->chunk_root->root_key.objectid,
+			     BTRFS_FIRST_CHUNK_TREE_OBJECTID, key.offset,
+			     calc_size, &dev_offset);
+		BUG_ON(ret);
+
+		device->bytes_used += calc_size;
+		ret = btrfs_update_device(trans, device);
+		BUG_ON(ret);
+
+		map->stripes[index].dev = device;
+		map->stripes[index].physical = dev_offset;
+		stripe = stripes + index;
+		btrfs_set_stack_stripe_devid(stripe, device->devid);
+		btrfs_set_stack_stripe_offset(stripe, dev_offset);
+		memcpy(stripe->dev_uuid, device->uuid, BTRFS_UUID_SIZE);
+		physical = dev_offset;
+		index++;
+	}
+
+	/* key was set above */
+	btrfs_set_stack_chunk_length(chunk, num_bytes);
+	btrfs_set_stack_chunk_owner(chunk, extent_root->root_key.objectid);
+	btrfs_set_stack_chunk_stripe_len(chunk, stripe_len);
+	btrfs_set_stack_chunk_type(chunk, type);
+	btrfs_set_stack_chunk_num_stripes(chunk, num_stripes);
+	btrfs_set_stack_chunk_io_align(chunk, stripe_len);
+	btrfs_set_stack_chunk_io_width(chunk, stripe_len);
+	btrfs_set_stack_chunk_sector_size(chunk, extent_root->sectorsize);
+	btrfs_set_stack_chunk_sub_stripes(chunk, sub_stripes);
+	map->sector_size = extent_root->sectorsize;
+	map->stripe_len = stripe_len;
+	map->io_align = stripe_len;
+	map->io_width = stripe_len;
+	map->type = type;
+	map->num_stripes = num_stripes;
+	map->sub_stripes = sub_stripes;
+
+	ret = btrfs_insert_item(trans, chunk_root, &key, chunk,
+				btrfs_chunk_item_size(num_stripes));
+	BUG_ON(ret);
+	*start = key.offset;
+
+	map->ce.start = key.offset;
+	map->ce.size = num_bytes;
+
+	ret = insert_existing_cache_extent(
+			   &extent_root->fs_info->mapping_tree.cache_tree,
+			   &map->ce);
+	BUG_ON(ret);
+
+	kfree(chunk);
+	return ret;
+}
+
 void btrfs_mapping_init(struct btrfs_mapping_tree *tree)
 {
 	cache_tree_init(&tree->cache_tree);
