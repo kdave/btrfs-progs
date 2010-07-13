@@ -212,7 +212,9 @@ again:
 			read_extent_buffer(leaf, &ri, offset, sizeof(ri));
 			buf = read_tree_block(tree_root_scan,
 					      btrfs_root_bytenr(&ri),
-					      tree_root_scan->leafsize, 0);
+					      btrfs_level_size(tree_root_scan,
+							btrfs_root_level(&ri)),
+					      0);
 			switch(found_key.objectid) {
 			case BTRFS_ROOT_TREE_OBJECTID:
 				if (!skip)
