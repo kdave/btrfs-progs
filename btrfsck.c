@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
+#include <sys/stat.h>
 #include "kerncompat.h"
 #include "ctree.h"
 #include "disk-io.h"
