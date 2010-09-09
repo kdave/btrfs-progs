@@ -698,6 +698,15 @@ static int print_one_extent(int fd, struct btrfs_ioctl_search_header *sh,
 		disk_start = 0;
 		disk_offset = 0;
 		len = btrfs_stack_file_extent_ram_bytes(item);
+	} else {
+		printf("unhandled extent type %d for inode %llu "
+		       "file offset %llu gen %llu\n",
+			type,
+			(unsigned long long)sh->objectid,
+			(unsigned long long)sh->offset,
+			(unsigned long long)found_gen);
+
+		return -EIO;
 	}
 	printf("inode %llu file offset %llu len %llu disk start %llu "
 	       "offset %llu gen %llu flags ",
