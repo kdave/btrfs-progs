@@ -413,8 +413,11 @@ static void print_objectid(unsigned long long objectid, u8 type)
 		printf("MULTIPLE");
 		break;
 	case BTRFS_FIRST_CHUNK_TREE_OBJECTID:
-		printf("FIRST_CHUNK_TREE");
-		break;
+		if (type == BTRFS_CHUNK_ITEM_KEY) {
+			printf("FIRST_CHUNK_TREE");
+			break;
+		}
+		/* fall-thru */
 	default:
 		printf("%llu", objectid);
 	}
