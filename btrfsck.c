@@ -423,7 +423,6 @@ static struct inode_backref *get_inode_backref(struct inode_record *rec,
 	memcpy(backref->name, name, namelen);
 	backref->name[namelen] = '\0';
 	list_add_tail(&backref->list, &rec->backrefs);
-	rec->found_link++;
 	return backref;
 }
 
@@ -451,6 +450,7 @@ static int add_inode_backref(struct cache_tree *inode_cache,
 		backref->filetype = filetype;
 		backref->found_dir_index = 1;
 	} else if (itemtype == BTRFS_DIR_ITEM_KEY) {
+		rec->found_link++;
 		if (backref->found_dir_item)
 			backref->errors |= REF_ERR_DUP_DIR_ITEM;
 		if (backref->found_dir_index && backref->filetype != filetype)
@@ -478,6 +478,7 @@ static int merge_inode_recs(struct inode_record *src, struct inode_record *dst,
 			    struct cache_tree *dst_cache)
 {
 	struct inode_backref *backref;
+	u32 dir_count = 0;
 
 	dst->merging = 1;
 	list_for_each_entry(backref, &src->backrefs, list) {
@@ -488,6 +489,7 @@ static int merge_inode_recs(struct inode_record *src, struct inode_record *dst,
 					BTRFS_DIR_INDEX_KEY, backref->errors);
 		}
 		if (backref->found_dir_item) {
+			dir_count++;
 			add_inode_backref(dst_cache, dst->ino,
 					backref->dir, 0, backref->name,
 					backref->namelen, backref->filetype,
@@ -512,6 +514,8 @@ static int merge_inode_recs(struct inode_record *src, struct inode_record *dst,
 	if (dst->first_extent_gap > src->first_extent_gap)
 		dst->first_extent_gap = src->first_extent_gap;
 
+	BUG_ON(src->found_link < dir_count);
+	dst->found_link += src->found_link - dir_count;
 	dst->found_size += src->found_size;
 	if (src->extent_start != (u64)-1) {
 		if (dst->extent_start == (u64)-1) {
@@ -1164,7 +1168,7 @@ static int check_root_dir(struct inode_record *rec)
 
 	if (!rec->found_inode_item || rec->errors)
 		goto out;
-	if (rec->nlink != 1 || rec->found_link != 1)
+	if (rec->nlink != 1 || rec->found_link != 0)
 		goto out;
 	if (list_empty(&rec->backrefs))
 		goto out;
