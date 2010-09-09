@@ -103,6 +103,7 @@ int main(int ac, char **av)
 	int i;
 	unsigned long command = 0;
 	int len;
+	char *pos;
 	char *fullpath;
 	u64 objectid = 0;
 
@@ -171,6 +172,16 @@ int main(int ac, char **av)
 			command = BTRFS_IOC_SNAP_DESTROY;
 			name = av[i + 1];
 			len = strlen(name);
+			pos = strchr(name, '/');
+			if (pos) {
+				if (*(pos + 1) == '\0')
+					*(pos) = '\0';
+				else {
+					fprintf(stderr,
+						"error: / not allowed in names\n");
+					exit(1);
+				}
+			}
 			if (len == 0 || len >= BTRFS_VOL_NAME_MAX) {
 				fprintf(stderr, "-D size too long\n");
 				exit(1);
