@@ -970,13 +970,13 @@ int close_ctree(struct btrfs_root *root)
 	if (fs_info->csum_root->node)
 		free_extent_buffer(fs_info->csum_root->node);
 
-	if (root->fs_info->log_root_tree) {
-		if (root->fs_info->log_root_tree->node)
-			free_extent_buffer(root->fs_info->log_root_tree->node);
-		free(root->fs_info->log_root_tree);
+	if (fs_info->log_root_tree) {
+		if (fs_info->log_root_tree->node)
+			free_extent_buffer(fs_info->log_root_tree->node);
+		free(fs_info->log_root_tree);
 	}
 
-	close_all_devices(root->fs_info);
+	close_all_devices(fs_info);
 	extent_io_tree_cleanup(&fs_info->extent_cache);
 	extent_io_tree_cleanup(&fs_info->free_space_cache);
 	extent_io_tree_cleanup(&fs_info->block_group_cache);
