@@ -663,9 +663,9 @@ static int print_one_extent(int fd, struct btrfs_ioctl_search_header *sh,
 			    char **cache_dir_name, u64 *cache_ino,
 			    char **cache_full_name)
 {
-	u64 len;
-	u64 disk_start;
-	u64 disk_offset;
+	u64 len = 0;
+	u64 disk_start = 0;
+	u64 disk_offset = 0;
 	u8 type;
 	int compressed = 0;
 	int flags = 0;
