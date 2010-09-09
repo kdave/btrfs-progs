@@ -583,7 +583,6 @@ again:
 		}
 		ret = insert_existing_cache_extent(dst, &ins->cache);
 		if (ret == -EEXIST) {
-			WARN_ON(src == &src_node->root_cache);
 			conflict = get_inode_rec(dst, rec->ino, 1);
 			merge_inode_recs(rec, conflict, dst);
 			if (rec->checked) {
