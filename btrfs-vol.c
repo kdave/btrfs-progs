@@ -108,10 +108,24 @@ int main(int ac, char **av)
 	if (device && strcmp(device, "missing") == 0 &&
 	    cmd == BTRFS_IOC_RM_DEV) {
 		fprintf(stderr, "removing missing devices from %s\n", mnt);
-	} else if (device) {
+	} else if (cmd != BTRFS_IOC_BALANCE) {
+		if (cmd == BTRFS_IOC_ADD_DEV) {
+			ret = check_mounted(device);
+			if (ret < 0) {
+				fprintf(stderr,
+					"error checking %s mount status\n",
+					device);
+				exit(1);
+			}
+			if (ret == 1) {
+				fprintf(stderr, "%s is mounted\n", device);
+				exit(1);
+			}
+		}
 		devfd = open(device, O_RDWR);
-		if (!devfd) {
+		if (devfd < 0) {
 			fprintf(stderr, "Unable to open device %s\n", device);
+			exit(1);
 		}
 		ret = fstat(devfd, &st);
 		if (ret) {
