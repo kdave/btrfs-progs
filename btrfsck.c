@@ -28,6 +28,7 @@
 #include "transaction.h"
 #include "list.h"
 #include "version.h"
+#include "utils.h"
 
 static u64 bytes_used = 0;
 static u64 total_csum_bytes = 0;
@@ -2821,6 +2822,15 @@ int main(int ac, char **av)
 
 	radix_tree_init();
 	cache_tree_init(&root_cache);
+
+	if((ret = check_mounted(av[1])) < 0) {
+		fprintf(stderr, "Could not check mount status: %s\n", strerror(ret));
+		return ret;
+	} else if(ret) {
+		fprintf(stderr, "%s is currently mounted. Aborting.\n", av[1]);
+		return -EBUSY;
+	}
+
 	root = open_ctree(av[1], 0, 0);
 
 	if (root == NULL)
