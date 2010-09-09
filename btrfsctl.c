@@ -260,8 +260,8 @@ int main(int ac, char **av)
 	}
 	printf("%s\n", BTRFS_BUILD_VERSION);
 	if (ret)
-		exit(0);
-	else
 		exit(1);
+
+	return 0;
 }
 
