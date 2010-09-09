@@ -42,7 +42,11 @@
 #define GFP_NOFS 0
 #define __read_mostly
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+
+#ifndef ULONG_MAX
 #define ULONG_MAX       (~0UL)
+#endif
+
 #define BUG() abort()
 #ifdef __CHECKER__
 #define __force    __attribute__((force))
