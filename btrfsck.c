@@ -20,6 +20,7 @@
 #define _GNU_SOURCE 1
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include "kerncompat.h"
@@ -2819,23 +2820,43 @@ int main(int ac, char **av)
 {
 	struct cache_tree root_cache;
 	struct btrfs_root *root;
+	u64 bytenr = 0;
 	int ret;
+	int num;
 
-	if (ac < 2)
+	while(1) {
+		int c;
+		c = getopt(ac, av, "s:");
+		if (c < 0)
+			break;
+		switch(c) {
+			case 's':
+				num = atol(optarg);
+				bytenr = btrfs_sb_offset(num);
+				printf("using SB copy %d, bytenr %llu\n", num,
+				       (unsigned long long)bytenr);
+				break;
+			default:
+				print_usage();
+		}
+	}
+	ac = ac - optind;
+
+	if (ac != 1)
 		print_usage();
 
 	radix_tree_init();
 	cache_tree_init(&root_cache);
 
-	if((ret = check_mounted(av[1])) < 0) {
+	if((ret = check_mounted(av[optind])) < 0) {
 		fprintf(stderr, "Could not check mount status: %s\n", strerror(ret));
 		return ret;
 	} else if(ret) {
-		fprintf(stderr, "%s is currently mounted. Aborting.\n", av[1]);
+		fprintf(stderr, "%s is currently mounted. Aborting.\n", av[optind]);
 		return -EBUSY;
 	}
 
-	root = open_ctree(av[1], 0, 0);
+	root = open_ctree(av[optind], bytenr, 0);
 
 	if (root == NULL)
 		return 1;
