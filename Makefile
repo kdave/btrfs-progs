@@ -59,6 +59,9 @@ mkfs.btrfs: $(objects) mkfs.o
 btrfs-debug-tree: $(objects) debug-tree.o
 	gcc $(CFLAGS) -o btrfs-debug-tree $(objects) debug-tree.o $(LDFLAGS) $(LIBS)
 
+btrfs-zero-log: $(objects) btrfs-zero-log.o
+	gcc $(CFLAGS) -o btrfs-zero-log $(objects) btrfs-zero-log.o $(LDFLAGS) $(LIBS)
+
 btrfstune: $(objects) btrfstune.o
 	gcc $(CFLAGS) -o btrfstune $(objects) btrfstune.o $(LDFLAGS) $(LIBS)
 
