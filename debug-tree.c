@@ -116,6 +116,7 @@ int main(int ac, char **av)
 	int ret;
 	int slot;
 	int extent_only = 0;
+	int device_only = 0;
 	u64 block_only = 0;
 	struct btrfs_root *tree_root_scan;
 
@@ -123,12 +124,15 @@ int main(int ac, char **av)
 
 	while(1) {
 		int c;
-		c = getopt(ac, av, "eb:");
+		c = getopt(ac, av, "deb:");
 		if (c < 0)
 			break;
 		switch(c) {
 			case 'e':
 				extent_only = 1;
+				break;
+			case 'd':
+				device_only = 1;
 				break;
 			case 'b':
 				block_only = atoll(optarg);
@@ -202,7 +206,7 @@ again:
 		if (btrfs_key_type(&found_key) == BTRFS_ROOT_ITEM_KEY) {
 			unsigned long offset;
 			struct extent_buffer *buf;
-			int skip = extent_only;
+			int skip = extent_only | device_only;
 
 			offset = btrfs_item_ptr_offset(leaf, slot);
 			read_extent_buffer(leaf, &ri, offset, sizeof(ri));
@@ -215,8 +219,9 @@ again:
 					printf("root");
 				break;
 			case BTRFS_EXTENT_TREE_OBJECTID:
-				skip = 0;
-				if (!extent_only)
+				if (!device_only)
+					skip = 0;
+				if (!extent_only && !device_only)
 					printf("extent");
 				break;
 			case BTRFS_CHUNK_TREE_OBJECTID:
@@ -225,9 +230,8 @@ again:
 				}
 				break;
 			case BTRFS_DEV_TREE_OBJECTID:
-				if (!skip) {
-					printf("device");
-				}
+				skip = 0;
+				printf("device");
 				break;
 			case BTRFS_FS_TREE_OBJECTID:
 				if (!skip) {
@@ -235,9 +239,8 @@ again:
 				}
 				break;
 			case BTRFS_ROOT_TREE_DIR_OBJECTID:
-				if (!skip) {
-					printf("directory");
-				}
+				skip = 0;
+				printf("directory");
 				break;
 			case BTRFS_CSUM_TREE_OBJECTID:
 				if (!skip) {
@@ -283,13 +286,13 @@ again:
 					printf("file");
 				}
 			}
-			if (!skip && !extent_only) {
+			if (extent_only && !skip) {
+				print_extents(tree_root_scan, buf);
+			} else if (!skip) {
 				printf(" tree ");
 				btrfs_print_key(&disk_key);
 				printf(" \n");
 				btrfs_print_tree(tree_root_scan, buf, 1);
-			} else if (extent_only && !skip) {
-				print_extents(tree_root_scan, buf);
 			}
 		}
 		path.slots[0]++;
@@ -302,7 +305,7 @@ again:
 		goto again;
 	}
 
-	if (extent_only)
+	if (extent_only || device_only)
 		return 0;
 
 	printf("total bytes %llu\n",
