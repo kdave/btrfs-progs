@@ -9,6 +9,7 @@ mkfs.btrfs \- create an btrfs filesystem
 [ \fB \-l\fP\fI leafsize\fP ]
 [ \fB \-L\fP\fI label\fP ]
 [ \fB \-m\fP\fI metadata profile\fP ]
+[ \fB \-M\fP\fI mixed data+metadata\fP ]
 [ \fB \-n\fP\fI nodesize\fP ]
 [ \fB \-s\fP\fI sectorsize\fP ]
 [ \fB \-h\fP ]
@@ -44,6 +45,12 @@ Specify a label for the filesystem.
 \fB\-m\fR, \fB\-\-metadata \fIprofile\fR
 Specify how metadata must be spanned across the devices specified. Valid
 values are raid0, raid1, raid10 or single.
+.TP
+\fB\-M\fR, \fB\-\-mixed\fR
+Mix data and metadata chunks together for more efficient space 
+utilization.  This feature incurs a performance penalty in
+larger filesystems.  It is recommended for use with filesystems
+of 1 GiB or smaller.
 .TP
 \fB\-n\fR, \fB\-\-nodesize \fIsize\fR
 Specify the nodesize. By default the value is set to the pagesize.
