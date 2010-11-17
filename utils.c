@@ -587,6 +587,7 @@ int btrfs_make_root_dir(struct btrfs_trans_handle *trans,
 {
 	int ret;
 	struct btrfs_inode_item inode_item;
+	time_t now = time(NULL);
 
 	memset(&inode_item, 0, sizeof(inode_item));
 	btrfs_set_stack_inode_generation(&inode_item, trans->transid);
@@ -594,6 +595,14 @@ int btrfs_make_root_dir(struct btrfs_trans_handle *trans,
 	btrfs_set_stack_inode_nlink(&inode_item, 1);
 	btrfs_set_stack_inode_nbytes(&inode_item, root->leafsize);
 	btrfs_set_stack_inode_mode(&inode_item, S_IFDIR | 0555);
+	btrfs_set_stack_timespec_sec(&inode_item.atime, now);
+	btrfs_set_stack_timespec_nsec(&inode_item.atime, 0);
+	btrfs_set_stack_timespec_sec(&inode_item.ctime, now);
+	btrfs_set_stack_timespec_nsec(&inode_item.ctime, 0);
+	btrfs_set_stack_timespec_sec(&inode_item.mtime, now);
+	btrfs_set_stack_timespec_nsec(&inode_item.mtime, 0);
+	btrfs_set_stack_timespec_sec(&inode_item.otime, 0);
+	btrfs_set_stack_timespec_nsec(&inode_item.otime, 0);
 
 	if (root->fs_info->tree_root == root)
 		btrfs_set_super_root_dir(&root->fs_info->super_copy, objectid);
