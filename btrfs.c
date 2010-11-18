@@ -65,7 +65,7 @@ static struct Command commands[] = {
 		"List the recently modified files in a filesystem."
 	},
 	{ do_defrag, -1,
-	  "filesystem defragment", "[-vcf] [-s start] [-l len] [-t size] <file>|<dir> [<file>|<dir>...]\n"
+	  "filesystem defragment", "[-vf] [-c[zlib,lzo]] [-s start] [-l len] [-t size] <file>|<dir> [<file>|<dir>...]\n"
 		"Defragment a file or a directory."
 	},
 	{ do_set_default_subvol, 2,

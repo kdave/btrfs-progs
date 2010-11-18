@@ -142,10 +142,21 @@ static u64 parse_size(char *s)
 	return atoll(s) * mult;
 }
 
+static int parse_compress_type(char *s)
+{
+	if (strcmp(optarg, "zlib") == 0)
+		return BTRFS_COMPRESS_ZLIB;
+	else if (strcmp(optarg, "lzo") == 0)
+		return BTRFS_COMPRESS_LZO;
+	else {
+		fprintf(stderr, "Unknown compress type %s\n", s);
+		exit(1);
+	};
+}
+
 int do_defrag(int ac, char **av)
 {
 	int fd;
-	int compress = 0;
 	int flush = 0;
 	u64 start = 0;
 	u64 len = (u64)-1;
@@ -157,15 +168,18 @@ int do_defrag(int ac, char **av)
 	int fancy_ioctl = 0;
 	struct btrfs_ioctl_defrag_range_args range;
 	int e=0;
+	int compress_type = BTRFS_COMPRESS_NONE;
 
 	optind = 1;
 	while(1) {
-		int c = getopt(ac, av, "vcfs:l:t:");
+		int c = getopt(ac, av, "vc::fs:l:t:");
 		if (c < 0)
 			break;
 		switch(c) {
 		case 'c':
-			compress = 1;
+			compress_type = BTRFS_COMPRESS_ZLIB;
+			if (optarg)
+				compress_type = parse_compress_type(optarg);
 			fancy_ioctl = 1;
 			break;
 		case 'f':
@@ -203,8 +217,10 @@ int do_defrag(int ac, char **av)
 	range.start = start;
 	range.len = len;
 	range.extent_thresh = thresh;
-	if (compress)
+	if (compress_type) {
 		range.flags |= BTRFS_DEFRAG_RANGE_COMPRESS;
+		range.compress_type = compress_type;
+	}
 	if (flush)
 		range.flags |= BTRFS_DEFRAG_RANGE_START_IO;
 
