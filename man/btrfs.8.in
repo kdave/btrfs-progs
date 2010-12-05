@@ -21,15 +21,19 @@ btrfs \- control a btrfs filesystem
 .PP
 \fBbtrfs\fP \fBfilesystem defrag\fP\fI [options] <file>|<dir> [<file>|<dir>...]\fP
 .PP
-\fBbtrfs\fP \fBdevice scan\fP\fI [<device> [<device>..]]\fP
+\fBbtrfs\fP \fBsubvolume find-new\fP\fI <subvolume> <last_gen>\fP
 .PP
-\fBbtrfs\fP \fBdevice show\fP\fI <dev>|<label> [<dev>|<label>...]\fP
+\fBbtrfs\fP \fBfilesystem balance\fP\fI <path> \fP
 .PP
-\fBbtrfs\fP \fBdevice balance\fP\fI <path> \fP
+\fBbtrfs\fP \fBfilesystem defragment\fP\fI <file>|<dir> [<file>|<dir>...]\fP
 .PP
-\fBbtrfs\fP \fBdevice add\fP\fI <dev> [<dev>..] <path> \fP
+\fBbtrfs\fP \fBdevice scan\fP\fI [<device>...]\fP
 .PP
-\fBbtrfs\fP \fBdevice delete\fP\fI <dev> [<dev>..] <path> \fP]
+\fBbtrfs\fP \fBdevice show\fP\fI [<device>|<uuid>|<label>]\fP
+.PP
+\fBbtrfs\fP \fBdevice add\fP\fI <device> [<device>...] <path> \fP
+.PP
+\fBbtrfs\fP \fBdevice delete\fP\fI <device> [<device>...] <path> \fP]
 .PP
 \fBbtrfs\fP \fBhelp|\-\-help|\-h \fP\fI\fP
 .PP
@@ -48,17 +52,16 @@ For example: it is possible to run
 instead of
 .I btrfs subvolume snapshot.
 But
-.I btrfs dev s
+.I btrfs file s
 is not allowed, because
-.I dev s
+.I file s
 may be interpreted both as
-.I device show
+.I filesystem show
 and as
-.I device scan.
+.I filesystem sync.
 In this case
 .I btrfs
-returns an error.
-
+returnsfilesystem sync
 If a command is terminated by
 .I --help
 , the detailed help is showed. If the passed command matches more commands,
@@ -125,9 +128,11 @@ The start position and the number of bytes to deframention can be specified by \
 NOTE: defragmenting with kernels up to 2.6.37 will unlink COW-ed copies of data, don't 
 use it if you use snapshots, have de-duplicated your data or made copies with 
 \fBcp --reflink\fP.
+\fBsubvolume find-new\fR\fI <subvolume> <last_gen>\fR
+List the recently modified files in a subvolume, after \fI<last_gen>\fR ID.
 .TP
 
-\fBdevice scan\fR \fI[<device> [<device>..]]\fR
+\fBdevice scan\fR \fI[<device>...]\fR
 Scan devices for a btrfs filesystem. If no devices are passed, \fBbtrfs\fR scans
 all the block devices.
 .TP

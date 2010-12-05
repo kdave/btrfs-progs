@@ -61,17 +61,17 @@ static struct Command commands[] = {
 	{ do_subvol_list, 1, "subvolume list", "<path>\n"
 		"List the snapshot/subvolume of a filesystem."
 	},
+	{ do_set_default_subvol, 2,
+	  "subvolume set-default", "<id> <path>\n"
+		"Set the subvolume of the filesystem <path> which will be mounted\n"
+		"as default."
+	},
 	{ do_find_newer, 2, "subvolume find-new", "<path> <last_gen>\n"
 		"List the recently modified files in a filesystem."
 	},
 	{ do_defrag, -1,
 	  "filesystem defragment", "[-vf] [-c[zlib,lzo]] [-s start] [-l len] [-t size] <file>|<dir> [<file>|<dir>...]\n"
 		"Defragment a file or a directory."
-	},
-	{ do_set_default_subvol, 2,
-	  "subvolume set-default", "<id> <path>\n"
-		"Set the subvolume of the filesystem <path> which will be mounted\n"
-		"as default."
 	},
 	{ do_fssync, 1,
 	  "filesystem sync", "<path>\n"
@@ -83,29 +83,29 @@ static struct Command commands[] = {
 		"will occupe all available space on the device."
 	},
 	{ do_show_filesystem, 999,
-	  "filesystem show", "[<uuid>|<label>]\n"
-		"Show the info of a btrfs filesystem. If no <uuid> or <label>\n"
+	  "filesystem show", "[<device>|<uuid>|<label>]\n"
+		"Show the info of a btrfs filesystem. If no argument\n"
 		"is passed, info of all the btrfs filesystem are shown."
 	},
 	{ do_df_filesystem, 1,
 	  "filesystem df", "<path>\n"
-		"Show space usage information for a mount point\n."
+		"Show space usage information for a mount point."
 	},
 	{ do_balance, 1,
 	  "filesystem balance", "<path>\n"
 		"Balance the chunks across the device."
 	},
-	{ do_scan,
-	  999, "device scan", "[<device> [<device>..]\n"
+	{ do_scan, 999, 
+	  "device scan", "[<device>...]\n"
 		"Scan all device for or the passed device for a btrfs\n"
 		"filesystem."
 	},
 	{ do_add_volume, -2,
-	  "device add", "<dev> [<dev>..] <path>\n"
+	  "device add", "<device> [<device>...] <path>\n"
 		"Add a device to a filesystem."
 	},
 	{ do_remove_volume, -2,
-	  "device delete", "<dev> [<dev>..] <path>\n"
+	  "device delete", "<device> [<device>...] <path>\n"
 		"Remove a device from a filesystem."
 	},
 	/* coming soon
