@@ -40,4 +40,6 @@ int check_mounted(const char *devicename);
 int btrfs_device_already_in_root(struct btrfs_root *root, int fd,
 				 int super_offset);
 char *pretty_sizes(u64 size);
+int check_label(char *input);
+int get_mountpt(char *dev, char *mntpt, size_t size);
 #endif

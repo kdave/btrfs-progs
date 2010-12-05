@@ -19,6 +19,8 @@ btrfs \- control a btrfs filesystem
 .PP
 \fBbtrfs\fP \fBfilesystem resize\fP\fI [+/\-]<size>[gkm]|max <filesystem>\fP
 .PP
+\fBbtrfs\fP \fBfilesystem label\fP\fI <dev> [newlabel]\fP
+.PP
 \fBbtrfs\fP \fBfilesystem defrag\fP\fI [options] <file>|<dir> [<file>|<dir>...]\fP
 .PP
 \fBbtrfs\fP \fBsubvolume find-new\fP\fI <subvolume> <last_gen>\fP
@@ -162,6 +164,23 @@ The \fBresize\fR command \fBdoes not\fR manipulate the size of underlying
 partition.  If you wish to enlarge/reduce a filesystem, you must make sure you
 can expand the partition before enlarging the filesystem and shrink the
 partition after reducing the size of the filesystem.
+.TP
+
+\fBbtrfs\fP \fBfilesystem label\fP\fI <dev> [newlabel]\fP
+Show or update the label of a filesystem. \fI<dev>\fR is used to identify the
+filesystem. 
+If a \fInewlabel\fR optional argument is passed, the label is changed. The
+following costraints exist for a label:
+.IP
+- the maximum allowable lenght shall be less or equal than 256 chars
+.IP
+- the label shall not  contain the '/' or '\\' characters.
+
+NOTE: Currently there are the following limitations:
+.IP
+- the filesystem has to be unmounted
+.IP
+- the filesystem should not have more than one device.
 .TP
 
 \fBfilesystem show\fR [<uuid>|<label>]\fR

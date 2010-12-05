@@ -40,6 +40,7 @@
 #include "volumes.h"
 
 #include "btrfs_cmds.h"
+#include "btrfslabel.h"
 
 #ifdef __CHECKER__
 #define BLKGETSIZE64 0
@@ -873,6 +874,21 @@ int do_set_default_subvol(int nargs, char **argv)
 	}
 	return 0;
 }
+
+int do_change_label(int nargs, char **argv)
+{
+	/* check the number of argument */
+	if ( nargs > 3 ){
+		fprintf(stderr, "ERROR: '%s' requires maximum 2 args\n",
+			argv[0]);
+		return -2;
+	}else if (nargs == 2){
+		return get_label(argv[1]);
+	} else {	/* nargs == 0 */
+		return set_label(argv[1], argv[2]);
+	}
+}
+
 
 int do_df_filesystem(int nargs, char **argv)
 {

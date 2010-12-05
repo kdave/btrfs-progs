@@ -108,11 +108,6 @@ static struct Command commands[] = {
 	  "device delete", "<device> [<device>...] <path>\n"
 		"Remove a device from a filesystem."
 	},
-	/* coming soon
-	{ 2, "filesystem label", "<label> <path>\n"
-		"Set the label of a filesystem"
-	}
-	*/
 	{ 0, 0 , 0 }
 };
 

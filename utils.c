@@ -812,6 +812,39 @@ out_mntloop_err:
 	return ret;
 }
 
+/* Gets the mount point of btrfs filesystem that is using the specified device.
+ * Returns 0 is everything is good, <0 if we have an error.
+ * TODO: Fix this fucntion and check_mounted to work with multiple drive BTRFS
+ * setups.
+ */
+int get_mountpt(char *dev, char *mntpt, size_t size)
+{
+       struct mntent *mnt;
+       FILE *f;
+       int ret = 0;
+
+       f = setmntent("/proc/mounts", "r");
+       if (f == NULL)
+               return -errno;
+
+       while ((mnt = getmntent(f)) != NULL )
+       {
+               if (strcmp(dev, mnt->mnt_fsname) == 0)
+               {
+                       strncpy(mntpt, mnt->mnt_dir, size);
+                       break;
+               }
+       }
+
+       if (mnt == NULL)
+       {
+               /* We didn't find an entry so lets report an error */
+               ret = -1;
+       }
+
+       return ret;
+}
+
 struct pending_dir {
 	struct list_head list;
 	char name[256];
@@ -1002,3 +1035,27 @@ char *pretty_sizes(u64 size)
 	return pretty;
 }
 
+/*
+ * Checks to make sure that the label matches our requirements.
+ * Returns:
+       0    if everything is safe and usable
+      -1    if the label is too long
+      -2    if the label contains an invalid character
+ */
+int check_label(char *input)
+{
+       int i;
+       int len = strlen(input);
+
+       if (len > BTRFS_LABEL_SIZE) {
+               return -1;
+       }
+
+       for (i = 0; i < len; i++) {
+               if (input[i] == '/' || input[i] == '\\') {
+                       return -2;
+               }
+       }
+
+       return 0;
+}
