@@ -117,6 +117,11 @@ int main(int ac, char **av)
 	int ret;
 	int option_index = 0;
 
+	printf( "**\n"
+		"** WARNING: this program is considered deprecated\n"
+		"** Please consider to switch to the btrfs utility\n"
+		"**\n");
+
 	while(1) {
 		int c;
 		c = getopt_long(ac, av, "", long_options,

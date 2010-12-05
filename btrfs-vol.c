@@ -78,6 +78,11 @@ int main(int ac, char **av)
 	struct btrfs_ioctl_vol_args args;
 	u64 dev_block_count = 0;
 
+	printf( "**\n"
+		"** WARNING: this program is considered deprecated\n"
+		"** Please consider to switch to the btrfs utility\n"
+		"**\n");
+
 	while(1) {
 		int c;
 		c = getopt_long(ac, av, "a:br:", long_options,

@@ -10,6 +10,9 @@ btrfsctl \- control a btrfs filesystem
 [ \fB \-A\fP\fI device\fP ]
 [ \fB \-a\fP ]
 [ \fB \-c\fP ]
+.SH NOTE
+B btrfsctl
+is deprecated. Please consider to switch to the btrfs utility.
 .SH DESCRIPTION
 .B btrfsctl
 is used to control the filesystem and the files and directories stored. It is the tool to create a new snapshot for the filesystem.

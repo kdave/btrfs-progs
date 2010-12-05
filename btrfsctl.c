@@ -107,6 +107,11 @@ int main(int ac, char **av)
 	char *fullpath;
 	u64 objectid = 0;
 
+	printf( "**\n"
+		"** WARNING: this program is considered deprecated\n"
+		"** Please consider to switch to the btrfs utility\n"
+		"**\n");
+	
 	if (ac == 2 && strcmp(av[1], "-a") == 0) {
 		fprintf(stderr, "Scanning for Btrfs filesystems\n");
 		btrfs_scan_one_dir("/dev", 1);

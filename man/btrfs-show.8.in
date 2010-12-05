@@ -3,6 +3,9 @@
 btrfs-show \- scan the /dev directory for btrfs partitions and print results.
 .SH SYNOPSIS
 .B btrfs-show
+.SH NOTE
+.B btrfs-show
+is deprecated. Please consider to switch to the btrfs utility.	
 .SH DESCRIPTION
 .B btrfs-show
 is used to scan the /dev directory for btrfs partitions and display brief
