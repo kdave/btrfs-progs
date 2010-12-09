@@ -829,7 +829,7 @@ int write_dev_supers(struct btrfs_root *root, struct btrfs_super_block *sb,
 
 	if (root->fs_info->super_bytenr != BTRFS_SUPER_INFO_OFFSET) {
 		btrfs_set_super_bytenr(sb, root->fs_info->super_bytenr);
-
+printk("speiiiiiiiiiiiiiiiiiiiiiiiiiiiii\n");
 		crc = ~(u32)0;
 		crc = btrfs_csum_data(NULL, (char *)sb + BTRFS_CSUM_SIZE, crc,
 				      BTRFS_SUPER_INFO_SIZE - BTRFS_CSUM_SIZE);

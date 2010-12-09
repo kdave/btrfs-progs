@@ -62,6 +62,9 @@ btrfs-debug-tree: $(objects) debug-tree.o
 btrfs-zero-log: $(objects) btrfs-zero-log.o
 	gcc $(CFLAGS) -o btrfs-zero-log $(objects) btrfs-zero-log.o $(LDFLAGS) $(LIBS)
 
+btrfs-select-super: $(objects) btrfs-select-super.o
+	gcc $(CFLAGS) -o btrfs-select-super $(objects) btrfs-select-super.o $(LDFLAGS) $(LIBS)
+
 btrfstune: $(objects) btrfstune.o
 	gcc $(CFLAGS) -o btrfstune $(objects) btrfstune.o $(LDFLAGS) $(LIBS)
 
