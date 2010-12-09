@@ -69,7 +69,7 @@ static u64 parse_size(char *s)
 	return atol(s) * mult;
 }
 
-static int make_root_dir(struct btrfs_root *root)
+static int make_root_dir(struct btrfs_root *root, int mixed)
 {
 	struct btrfs_trans_handle *trans;
 	struct btrfs_key location;
@@ -88,30 +88,47 @@ static int make_root_dir(struct btrfs_root *root)
 				     0, BTRFS_MKFS_SYSTEM_GROUP_SIZE);
 	BUG_ON(ret);
 
-	ret = btrfs_alloc_chunk(trans, root->fs_info->extent_root,
-				&chunk_start, &chunk_size,
-				BTRFS_BLOCK_GROUP_METADATA);
-	BUG_ON(ret);
-	ret = btrfs_make_block_group(trans, root, 0,
-				     BTRFS_BLOCK_GROUP_METADATA,
-				     BTRFS_FIRST_CHUNK_TREE_OBJECTID,
-				     chunk_start, chunk_size);
-	BUG_ON(ret);
+	if (mixed) {
+		ret = btrfs_alloc_chunk(trans, root->fs_info->extent_root,
+					&chunk_start, &chunk_size,
+					BTRFS_BLOCK_GROUP_METADATA |
+					BTRFS_BLOCK_GROUP_DATA);
+		BUG_ON(ret);
+		ret = btrfs_make_block_group(trans, root, 0,
+					     BTRFS_BLOCK_GROUP_METADATA |
+					     BTRFS_BLOCK_GROUP_DATA,
+					     BTRFS_FIRST_CHUNK_TREE_OBJECTID,
+					     chunk_start, chunk_size);
+		BUG_ON(ret);
+		printf("Created a data/metadata chunk of size %llu\n", chunk_size);
+	} else {
+		ret = btrfs_alloc_chunk(trans, root->fs_info->extent_root,
+					&chunk_start, &chunk_size,
+					BTRFS_BLOCK_GROUP_METADATA);
+		BUG_ON(ret);
+		ret = btrfs_make_block_group(trans, root, 0,
+					     BTRFS_BLOCK_GROUP_METADATA,
+					     BTRFS_FIRST_CHUNK_TREE_OBJECTID,
+					     chunk_start, chunk_size);
+		BUG_ON(ret);
+	}
 
 	root->fs_info->system_allocs = 0;
 	btrfs_commit_transaction(trans, root);
 	trans = btrfs_start_transaction(root, 1);
 	BUG_ON(!trans);
 
-	ret = btrfs_alloc_chunk(trans, root->fs_info->extent_root,
-				&chunk_start, &chunk_size,
-				BTRFS_BLOCK_GROUP_DATA);
-	BUG_ON(ret);
-	ret = btrfs_make_block_group(trans, root, 0,
-				     BTRFS_BLOCK_GROUP_DATA,
-				     BTRFS_FIRST_CHUNK_TREE_OBJECTID,
-				     chunk_start, chunk_size);
-	BUG_ON(ret);
+	if (!mixed) {
+		ret = btrfs_alloc_chunk(trans, root->fs_info->extent_root,
+					&chunk_start, &chunk_size,
+					BTRFS_BLOCK_GROUP_DATA);
+		BUG_ON(ret);
+		ret = btrfs_make_block_group(trans, root, 0,
+					     BTRFS_BLOCK_GROUP_DATA,
+					     BTRFS_FIRST_CHUNK_TREE_OBJECTID,
+					     chunk_start, chunk_size);
+		BUG_ON(ret);
+	}
 
 	ret = btrfs_make_root_dir(trans, root->fs_info->tree_root,
 			      BTRFS_ROOT_TREE_DIR_OBJECTID);
@@ -200,7 +217,7 @@ static int create_one_raid_group(struct btrfs_trans_handle *trans,
 
 static int create_raid_groups(struct btrfs_trans_handle *trans,
 			      struct btrfs_root *root, u64 data_profile,
-			      u64 metadata_profile)
+			      u64 metadata_profile, int mixed)
 {
 	u64 num_devices = btrfs_super_num_devices(&root->fs_info->super_copy);
 	u64 allowed;
@@ -215,20 +232,24 @@ static int create_raid_groups(struct btrfs_trans_handle *trans,
 		allowed = BTRFS_BLOCK_GROUP_RAID0 | BTRFS_BLOCK_GROUP_RAID1;
 
 	if (allowed & metadata_profile) {
+		u64 meta_flags = BTRFS_BLOCK_GROUP_METADATA;
+
 		ret = create_one_raid_group(trans, root,
 					    BTRFS_BLOCK_GROUP_SYSTEM |
 					    (allowed & metadata_profile));
 		BUG_ON(ret);
 
-		ret = create_one_raid_group(trans, root,
-					    BTRFS_BLOCK_GROUP_METADATA |
+		if (mixed)
+			meta_flags |= BTRFS_BLOCK_GROUP_DATA;
+
+		ret = create_one_raid_group(trans, root, meta_flags |
 					    (allowed & metadata_profile));
 		BUG_ON(ret);
 
 		ret = recow_roots(trans, root);
 		BUG_ON(ret);
 	}
-	if (num_devices > 1 && (allowed & data_profile)) {
+	if (!mixed && num_devices > 1 && (allowed & data_profile)) {
 		ret = create_one_raid_group(trans, root,
 					    BTRFS_BLOCK_GROUP_DATA |
 					    (allowed & data_profile));
@@ -274,6 +295,7 @@ static void print_usage(void)
 	fprintf(stderr, "\t -l --leafsize size of btree leaves\n");
 	fprintf(stderr, "\t -L --label set a label\n");
 	fprintf(stderr, "\t -m --metadata metadata profile, values like data profile\n");
+	fprintf(stderr, "\t -M --mixed mix metadata and data together\n");
 	fprintf(stderr, "\t -n --nodesize size of btree nodes\n");
 	fprintf(stderr, "\t -s --sectorsize min block allocation\n");
 	fprintf(stderr, "%s\n", BTRFS_BUILD_VERSION);
@@ -328,6 +350,7 @@ static struct option long_options[] = {
 	{ "leafsize", 1, NULL, 'l' },
 	{ "label", 1, NULL, 'L'},
 	{ "metadata", 1, NULL, 'm' },
+	{ "mixed", 0, NULL, 'M' },
 	{ "nodesize", 1, NULL, 'n' },
 	{ "sectorsize", 1, NULL, 's' },
 	{ "data", 1, NULL, 'd' },
@@ -358,10 +381,13 @@ int main(int ac, char **av)
 	int first_fd;
 	int ret;
 	int i;
+	int mixed = 0;
+	int data_profile_opt = 0;
+	int metadata_profile_opt = 0;
 
 	while(1) {
 		int c;
-		c = getopt_long(ac, av, "A:b:l:n:s:m:d:L:V", long_options,
+		c = getopt_long(ac, av, "A:b:l:n:s:m:d:L:VM", long_options,
 				&option_index);
 		if (c < 0)
 			break;
@@ -371,6 +397,7 @@ int main(int ac, char **av)
 				break;
 			case 'd':
 				data_profile = parse_profile(optarg);
+				data_profile_opt = 1;
 				break;
 			case 'l':
 				leafsize = parse_size(optarg);
@@ -380,6 +407,10 @@ int main(int ac, char **av)
 				break;
 			case 'm':
 				metadata_profile = parse_profile(optarg);
+				metadata_profile_opt = 1;
+				break;
+			case 'M':
+				mixed = 1;
 				break;
 			case 'n':
 				nodesize = parse_size(optarg);
@@ -389,12 +420,10 @@ int main(int ac, char **av)
 				break;
 			case 'b':
 				block_count = parse_size(optarg);
-				if (block_count < 256*1024*1024) {
-					fprintf(stderr, "File system size "
-						"%llu bytes is too small, "
-						"256M is required at least\n",
-						(unsigned long long)block_count);
-					exit(1);
+				if (block_count <= 1024*1024*1024) {
+					printf("SMALL VOLUME: forcing mixed "
+					       "metadata/data groups\n");
+					mixed = 1;
 				}
 				zero_end = 0;
 				break;
@@ -439,9 +468,22 @@ int main(int ac, char **av)
 	}
 	first_fd = fd;
 	first_file = file;
-	ret = btrfs_prepare_device(fd, file, zero_end, &dev_block_count);
+	ret = btrfs_prepare_device(fd, file, zero_end, &dev_block_count,
+				   &mixed);
 	if (block_count == 0)
 		block_count = dev_block_count;
+	if (mixed) {
+		if (!metadata_profile_opt)
+			metadata_profile = 0;
+		if (!data_profile_opt)
+			data_profile = 0;
+
+		if (metadata_profile != data_profile) {
+			fprintf(stderr, "With mixed block groups data and metadata "
+				"profiles must be the same\n");
+			exit(1);
+		}
+	}
 
 	blocks[0] = BTRFS_SUPER_INFO_OFFSET;
 	for (i = 1; i < 7; i++) {
@@ -459,7 +501,7 @@ int main(int ac, char **av)
 	root = open_ctree(file, 0, O_RDWR);
 	root->fs_info->alloc_start = alloc_start;
 
-	ret = make_root_dir(root);
+	ret = make_root_dir(root, mixed);
 	if (ret) {
 		fprintf(stderr, "failed to setup the root directory\n");
 		exit(1);
@@ -478,6 +520,8 @@ int main(int ac, char **av)
 
 	zero_end = 1;
 	while(ac-- > 0) {
+		int old_mixed = mixed;
+
 		file = av[optind++];
 		ret = check_mounted(file);
 		if (ret < 0) {
@@ -503,8 +547,8 @@ int main(int ac, char **av)
 			continue;
 		}
 		ret = btrfs_prepare_device(fd, file, zero_end,
-					   &dev_block_count);
-
+					   &dev_block_count, &mixed);
+		mixed = old_mixed;
 		BUG_ON(ret);
 
 		ret = btrfs_add_to_fsid(trans, root, fd, file, dev_block_count,
@@ -515,11 +559,19 @@ int main(int ac, char **av)
 
 raid_groups:
 	ret = create_raid_groups(trans, root, data_profile,
-				 metadata_profile);
+				 metadata_profile, mixed);
 	BUG_ON(ret);
 
 	ret = create_data_reloc_tree(trans, root);
 	BUG_ON(ret);
+
+	if (mixed) {
+		struct btrfs_super_block *super = &root->fs_info->super_copy;
+		u64 flags = btrfs_super_incompat_flags(super);
+
+		flags |= BTRFS_FEATURE_INCOMPAT_MIXED_GROUPS;
+		btrfs_set_super_incompat_flags(super, flags);
+	}
 
 	printf("fs created label %s on %s\n\tnodesize %u leafsize %u "
 	    "sectorsize %u size %s\n",

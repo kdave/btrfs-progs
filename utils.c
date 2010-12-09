@@ -512,7 +512,8 @@ int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 	return 0;
 }
 
-int btrfs_prepare_device(int fd, char *file, int zero_end, u64 *block_count_ret)
+int btrfs_prepare_device(int fd, char *file, int zero_end, u64 *block_count_ret,
+			 int *mixed)
 {
 	u64 block_count;
 	u64 bytenr;
@@ -532,10 +533,9 @@ int btrfs_prepare_device(int fd, char *file, int zero_end, u64 *block_count_ret)
 	}
 	zero_end = 1;
 
-	if (block_count < 256 * 1024 * 1024) {
-		fprintf(stderr, "device %s is too small "
-		        "(must be at least 256 MB)\n", file);
-		exit(1);
+	if (block_count < 1024 * 1024 * 1024 && !(*mixed)) {
+		printf("SMALL VOLUME: forcing mixed metadata/data groups\n");
+		*mixed = 1;
 	}
 	ret = zero_dev_start(fd);
 	if (ret) {

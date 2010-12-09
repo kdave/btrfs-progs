@@ -720,6 +720,7 @@ int do_add_volume(int nargs, char **args)
 		int	devfd, res;
 		u64 dev_block_count = 0;
 		struct stat st;
+		int mixed = 0;
 
 		devfd = open(args[i], O_RDWR);
 		if (!devfd) {
@@ -742,7 +743,7 @@ int do_add_volume(int nargs, char **args)
 			continue;
 		}
 
-		res = btrfs_prepare_device(devfd, args[i], 1, &dev_block_count);
+		res = btrfs_prepare_device(devfd, args[i], 1, &dev_block_count, &mixed);
 		if (res) {
 			fprintf(stderr, "ERROR: Unable to init '%s'\n", args[i]);
 			close(devfd);
@@ -920,8 +921,14 @@ int do_df_filesystem(int nargs, char **argv)
 		memset(description, 0, 80);
 
 		if (flags & BTRFS_BLOCK_GROUP_DATA) {
-			snprintf(description, 5, "%s", "Data");
-			written += 4;
+			if (flags & BTRFS_BLOCK_GROUP_METADATA) {
+				snprintf(description, 15, "%s",
+					 "Data+Metadata");
+				written += 14;
+			} else {
+				snprintf(description, 5, "%s", "Data");
+				written += 4;
+			}
 		} else if (flags & BTRFS_BLOCK_GROUP_SYSTEM) {
 			snprintf(description, 7, "%s", "System");
 			written += 6;
