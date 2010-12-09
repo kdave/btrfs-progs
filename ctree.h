@@ -340,8 +340,10 @@ struct btrfs_super_block {
 
 	char label[BTRFS_LABEL_SIZE];
 
+	__le64 cache_generation;
+
 	/* future expansion */
-	__le64 reserved[32];
+	__le64 reserved[31];
 	u8 sys_chunk_array[BTRFS_SYSTEM_CHUNK_ARRAY_SIZE];
 } __attribute__ ((__packed__));
 
@@ -1564,6 +1566,8 @@ BTRFS_SETGET_STACK_FUNCS(super_incompat_flags, struct btrfs_super_block,
 			 incompat_flags, 64);
 BTRFS_SETGET_STACK_FUNCS(super_csum_type, struct btrfs_super_block,
 			 csum_type, 16);
+BTRFS_SETGET_STACK_FUNCS(super_cache_generation, struct btrfs_super_block,
+			 cache_generation, 64);
 
 static inline int btrfs_super_csum_size(struct btrfs_super_block *s)
 {

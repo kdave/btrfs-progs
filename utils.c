@@ -107,6 +107,7 @@ int make_btrfs(int fd, const char *device, const char *label,
 	btrfs_set_super_stripesize(&super, stripesize);
 	btrfs_set_super_csum_type(&super, BTRFS_CSUM_TYPE_CRC32);
 	btrfs_set_super_chunk_root_generation(&super, 1);
+	btrfs_set_super_cache_generation(&super, -1);
 	if (label)
 		strncpy(super.label, label, BTRFS_LABEL_SIZE - 1);
 
