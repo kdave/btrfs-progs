@@ -636,7 +636,10 @@ static int __list_subvol_search(int fd, struct root_lookup *root_lookup)
 		/* this iteration is done, step forward one root for the next
 		 * ioctl
 		 */
-		if (sk->min_objectid < (u64)-1) {
+		if (sk->min_type < BTRFS_ROOT_BACKREF_KEY) {
+			sk->min_type = BTRFS_ROOT_BACKREF_KEY;
+			sk->min_offset = 0;
+		} else  if (sk->min_objectid < (u64)-1) {
 			sk->min_objectid++;
 			sk->min_type = BTRFS_ROOT_BACKREF_KEY;
 			sk->min_offset = 0;
