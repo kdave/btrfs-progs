@@ -204,6 +204,7 @@ struct extent_buffer *read_tree_block(struct btrfs_root *root, u64 bytenr,
 		eb->dev_bytenr = multi->stripes[0].physical;
 		kfree(multi);
 		ret = read_extent_from_disk(eb);
+
 		if (ret == 0 && check_tree_block(root, eb) == 0 &&
 		    csum_tree_block(root, eb, 1) == 0 &&
 		    verify_parent_transid(eb->tree, eb, parent_transid) == 0) {

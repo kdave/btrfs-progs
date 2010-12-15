@@ -1159,6 +1159,16 @@ int btrfs_chunk_readonly(struct btrfs_root *root, u64 chunk_offset)
 	return readonly;
 }
 
+static struct btrfs_device *fill_missing_device(u64 devid)
+{
+	struct btrfs_device *device;
+
+	device = kzalloc(sizeof(*device), GFP_NOFS);
+	device->devid = devid;
+	device->fd = -1;
+	return device;
+}
+
 static int read_one_chunk(struct btrfs_root *root, struct btrfs_key *key,
 			  struct extent_buffer *leaf,
 			  struct btrfs_chunk *chunk)
@@ -1209,8 +1219,9 @@ static int read_one_chunk(struct btrfs_root *root, struct btrfs_key *key,
 		map->stripes[i].dev = btrfs_find_device(root, devid, uuid,
 							NULL);
 		if (!map->stripes[i].dev) {
-			kfree(map);
-			return -EIO;
+			map->stripes[i].dev = fill_missing_device(devid);
+			printf("warning, device %llu is missing\n",
+			       (unsigned long long)devid);
 		}
 
 	}
