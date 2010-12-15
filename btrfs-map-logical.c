@@ -90,7 +90,7 @@ static void print_usage(void)
 	fprintf(stderr, "\t-l Logical extent to map\n");
 	fprintf(stderr, "\t-c Copy of the extent to read (usually 1 or 2)\n");
 	fprintf(stderr, "\t-o Output file to hold the extent\n");
-	fprintf(stderr, "\t-s Number of bytes to read\n");
+	fprintf(stderr, "\t-b Number of bytes to read\n");
 	exit(1);
 }
 
