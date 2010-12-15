@@ -504,11 +504,12 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 		case BTRFS_ROOT_ITEM_KEY:
 			ri = btrfs_item_ptr(l, i, struct btrfs_root_item);
 			read_extent_buffer(l, &root_item, (unsigned long)ri, sizeof(root_item));
-			printf("\t\troot data bytenr %llu level %d dirid %llu refs %u\n",
+			printf("\t\troot data bytenr %llu level %d dirid %llu refs %u gen %llu\n",
 				(unsigned long long)btrfs_root_bytenr(&root_item),
 				btrfs_root_level(&root_item),
 				(unsigned long long)btrfs_root_dirid(&root_item),
-				btrfs_root_refs(&root_item));
+				btrfs_root_refs(&root_item),
+				(unsigned long long)btrfs_root_generation(&root_item));
 			if (btrfs_root_refs(&root_item) == 0) {
 				struct btrfs_key drop_key;
 				btrfs_disk_key_to_cpu(&drop_key,
