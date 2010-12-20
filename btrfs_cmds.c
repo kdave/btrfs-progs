@@ -156,6 +156,7 @@ int do_defrag(int ac, char **av)
 	int verbose = 0;
 	int fancy_ioctl = 0;
 	struct btrfs_ioctl_defrag_range_args range;
+	int e=0;
 
 	optind = 1;
 	while(1) {
@@ -219,19 +220,21 @@ int do_defrag(int ac, char **av)
 		}
 		if (!fancy_ioctl) {
 			ret = ioctl(fd, BTRFS_IOC_DEFRAG, NULL);
+			e=errno;
 		} else {
 			ret = ioctl(fd, BTRFS_IOC_DEFRAG_RANGE, &range);
 			if (ret && errno == ENOTTY) {
-				fprintf(stderr, "defrag range ioctl not "
+				fprintf(stderr, "ERROR: defrag range ioctl not "
 					"supported in this kernel, please try "
 					"without any options.\n");
 				errors++;
+				close(fd);
 				break;
 			}
 		}
 		if (ret) {
-			fprintf(stderr, "ioctl failed on %s ret %d errno %d\n",
-				av[i], ret, errno);
+			fprintf(stderr, "ERROR: defrag failed on %s - %s\n",
+				av[i], strerror(e));
 			errors++;
 		}
 		close(fd);
@@ -310,7 +313,7 @@ int do_subvol_list(int argc, char **argv)
 int do_clone(int argc, char **argv)
 {
 	char	*subvol, *dst;
-	int	res, fd, fddst, len;
+	int	res, fd, fddst, len, e;
 	char	*newname;
 	char	*dstdir;
 
@@ -377,12 +380,14 @@ int do_clone(int argc, char **argv)
 	args.fd = fd;
 	strncpy(args.name, newname, BTRFS_PATH_NAME_MAX);
 	res = ioctl(fddst, BTRFS_IOC_SNAP_CREATE, &args);
+	e = errno;
 
 	close(fd);
 	close(fddst);
 
 	if(res < 0 ){
-		fprintf( stderr, "ERROR: cannot snapshot '%s'\n",subvol);
+		fprintf( stderr, "ERROR: cannot snapshot '%s' - %s\n",
+			subvol, strerror(e));
 		return 11;
 	}
 
@@ -392,7 +397,7 @@ int do_clone(int argc, char **argv)
 
 int do_delete_subvolume(int argc, char **argv)
 {
-	int	res, fd, len;
+	int	res, fd, len, e;
 	struct btrfs_ioctl_vol_args	args;
 	char	*dname, *vname, *cpath;
 	char	*path = argv[1];
@@ -438,11 +443,13 @@ int do_delete_subvolume(int argc, char **argv)
 	printf("Delete subvolume '%s/%s'\n", dname, vname);
 	strncpy(args.name, vname, BTRFS_PATH_NAME_MAX);
 	res = ioctl(fd, BTRFS_IOC_SNAP_DESTROY, &args);
+	e = errno;
 
 	close(fd);
 
 	if(res < 0 ){
-		fprintf( stderr, "ERROR: cannot delete '%s/%s'\n",dname, vname);
+		fprintf( stderr, "ERROR: cannot delete '%s/%s' - %s\n",
+			dname, vname, strerror(e));
 		return 11;
 	}
 
@@ -452,7 +459,7 @@ int do_delete_subvolume(int argc, char **argv)
 
 int do_create_subvol(int argc, char **argv)
 {
-	int	res, fddst, len;
+	int	res, fddst, len, e;
 	char	*newname;
 	char	*dstdir;
 	struct btrfs_ioctl_vol_args	args;
@@ -492,11 +499,13 @@ int do_create_subvol(int argc, char **argv)
 	printf("Create subvolume '%s/%s'\n", dstdir, newname);
 	strncpy(args.name, newname, BTRFS_PATH_NAME_MAX);
 	res = ioctl(fddst, BTRFS_IOC_SUBVOL_CREATE, &args);
+	e = errno;
 
 	close(fddst);
 
 	if(res < 0 ){
-		fprintf( stderr, "ERROR: cannot create subvolume\n");
+		fprintf( stderr, "ERROR: cannot create subvolume - %s\n",
+			strerror(e));
 		return 11;
 	}
 
@@ -506,7 +515,7 @@ int do_create_subvol(int argc, char **argv)
 
 int do_fssync(int argc, char **argv)
 {
-	int fd, res;
+	int 	fd, res, e;
 	char	*path = argv[1];
 
 	fd = open_file_or_dir(path);
@@ -517,9 +526,11 @@ int do_fssync(int argc, char **argv)
 
 	printf("FSSync '%s'\n", path);
 	res = ioctl(fd, BTRFS_IOC_SYNC);
+	e = errno;
 	close(fd);
 	if( res < 0 ){
-		fprintf(stderr, "ERROR: unable to fs-syncing '%s'\n", path);
+		fprintf(stderr, "ERROR: unable to fs-syncing '%s' - %s\n", 
+			path, strerror(e));
 		return 16;
 	}
 
@@ -528,7 +539,7 @@ int do_fssync(int argc, char **argv)
 
 int do_scan(int argc, char **argv)
 {
-	int	i, fd;
+	int	i, fd, e;
 	if(argc<=1){
 		int ret;
 
@@ -560,10 +571,12 @@ int do_scan(int argc, char **argv)
 		 * a btrfs filesystem from an I/O error !!!
 		 */
 		ret = ioctl(fd, BTRFS_IOC_SCAN_DEV, &args);
+		e = errno;
 
 		if( ret < 0 ){
 			close(fd);
-			fprintf(stderr, "ERROR: unable to scan the device '%s'\n", argv[i]);
+			fprintf(stderr, "ERROR: unable to scan the device '%s' - %s\n", 
+				argv[i], strerror(e));
 			return 11;
 		}
 	}
@@ -577,7 +590,7 @@ int do_resize(int argc, char **argv)
 {
 
 	struct btrfs_ioctl_vol_args	args;
-	int	fd, res, len;
+	int	fd, res, len, e;
 	char	*amount=argv[1], *path=argv[2];
 
 	fd = open_file_or_dir(path);
@@ -595,9 +608,11 @@ int do_resize(int argc, char **argv)
 	printf("Resize '%s' of '%s'\n", path, amount);
 	strncpy(args.name, amount, BTRFS_PATH_NAME_MAX);
 	res = ioctl(fd, BTRFS_IOC_RESIZE, &args);
+	e = errno;
 	close(fd);
 	if( res < 0 ){
-		fprintf(stderr, "ERROR: unable to resize '%s'\n", path);
+		fprintf(stderr, "ERROR: unable to resize '%s' - %s\n", 
+			path, strerror(e));
 		return 30;
 	}
 	return 0;
@@ -691,7 +706,7 @@ int do_add_volume(int nargs, char **args)
 {
 
 	char	*mntpnt = args[nargs-1];
-	int	i, fdmnt, ret=0;
+	int	i, fdmnt, ret=0, e;
 
 
 	fdmnt = open_file_or_dir(mntpnt);
@@ -738,8 +753,10 @@ int do_add_volume(int nargs, char **args)
 
 		strncpy(ioctl_args.name, args[i], BTRFS_PATH_NAME_MAX);
 		res = ioctl(fdmnt, BTRFS_IOC_ADD_DEV, &ioctl_args);
+		e = errno;
 		if(res<0){
-			fprintf(stderr, "ERROR: error adding the device '%s'\n", args[i]);
+			fprintf(stderr, "ERROR: error adding the device '%s' - %s\n", 
+				args[i], strerror(e));
 			ret++;
 		}
 
@@ -756,7 +773,7 @@ int do_add_volume(int nargs, char **args)
 int do_balance(int argc, char **argv)
 {
 
-	int	fdmnt, ret=0;
+	int	fdmnt, ret=0, e;
 	struct btrfs_ioctl_vol_args args;
 	char	*path = argv[1];
 
@@ -768,9 +785,11 @@ int do_balance(int argc, char **argv)
 
 	memset(&args, 0, sizeof(args));
 	ret = ioctl(fdmnt, BTRFS_IOC_BALANCE, &args);
+	e = errno;
 	close(fdmnt);
 	if(ret<0){
-		fprintf(stderr, "ERROR: balancing '%s'\n", path);
+		fprintf(stderr, "ERROR: error during balancing '%s' - %s\n", 
+			path, strerror(e));
 
 		return 19;
 	}
@@ -780,7 +799,7 @@ int do_remove_volume(int nargs, char **args)
 {
 
 	char	*mntpnt = args[nargs-1];
-	int	i, fdmnt, ret=0;
+	int	i, fdmnt, ret=0, e;
 
 	fdmnt = open_file_or_dir(mntpnt);
 	if (fdmnt < 0) {
@@ -794,8 +813,10 @@ int do_remove_volume(int nargs, char **args)
 
 		strncpy(arg.name, args[i], BTRFS_PATH_NAME_MAX);
 		res = ioctl(fdmnt, BTRFS_IOC_RM_DEV, &arg);
+		e = errno;
 		if(res<0){
-			fprintf(stderr, "ERROR: error removing the device '%s'\n", args[i]);
+			fprintf(stderr, "ERROR: error removing the device '%s' - %s\n", 
+				args[i], strerror(e));
 			ret++;
 		}
 	}
@@ -809,7 +830,7 @@ int do_remove_volume(int nargs, char **args)
 
 int do_set_default_subvol(int nargs, char **argv)
 {
-	int	ret=0, fd;
+	int	ret=0, fd, e;
 	u64	objectid;
 	char	*path = argv[2];
 	char	*subvolid = argv[1];
@@ -826,9 +847,11 @@ int do_set_default_subvol(int nargs, char **argv)
 		return 30;
 	}
 	ret = ioctl(fd, BTRFS_IOC_DEFAULT_SUBVOL, &objectid);
+	e = errno;
 	close(fd);
 	if( ret < 0 ){
-		fprintf(stderr, "ERROR: unable to set a new default subvolume\n");
+		fprintf(stderr, "ERROR: unable to set a new default subvolume - %s\n",
+			strerror(e));
 		return 30;
 	}
 	return 0;
@@ -840,6 +863,7 @@ int do_df_filesystem(int nargs, char **argv)
 	u64 count = 0, i;
 	int ret;
 	int fd;
+	int e;
 	char *path = argv[1];
 
 	fd = open_file_or_dir(path);
@@ -856,7 +880,10 @@ int do_df_filesystem(int nargs, char **argv)
 	sargs->total_spaces = 0;
 
 	ret = ioctl(fd, BTRFS_IOC_SPACE_INFO, sargs);
+	e = errno;
 	if (ret) {
+		fprintf(stderr, "ERROR: couldn't get space info on '%s' - %s\n",
+			path, strerror(e));
 		free(sargs);
 		return ret;
 	}
@@ -874,7 +901,11 @@ int do_df_filesystem(int nargs, char **argv)
 	sargs->total_spaces = 0;
 
 	ret = ioctl(fd, BTRFS_IOC_SPACE_INFO, sargs);
+	e = errno;
 	if (ret) {
+		fprintf(stderr, "ERROR: couldn't get space info on '%s' - %s\n",
+			path, strerror(e));
+		close(fd);
 		free(sargs);
 		return ret;
 	}

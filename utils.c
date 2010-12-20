@@ -821,6 +821,7 @@ void btrfs_register_one_device(char *fname)
 	struct btrfs_ioctl_vol_args args;
 	int fd;
 	int ret;
+	int e;
 
 	fd = open("/dev/btrfs-control", O_RDONLY);
 	if (fd < 0) {
@@ -830,6 +831,11 @@ void btrfs_register_one_device(char *fname)
 	}
 	strncpy(args.name, fname, BTRFS_PATH_NAME_MAX);
 	ret = ioctl(fd, BTRFS_IOC_SCAN_DEV, &args);
+	e = errno;
+	if(ret<0){
+		fprintf(stderr, "ERROR: unable to scan the device '%s' - %s\n",
+			fname, strerror(e));
+	}
 	close(fd);
 }
 
