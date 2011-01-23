@@ -146,6 +146,8 @@ static void help(char *np)
 		print_help(np, cp);
 
 	printf("\n\t%s help|--help|-h\n\t\tShow the help.\n",np);
+	printf("\n\t%s <cmd> --help\n\t\tShow detailed help for a command or\n\t\t"
+	       "subset of commands.\n",np);
 	printf("\n%s\n", BTRFS_BUILD_VERSION);
 }
 
