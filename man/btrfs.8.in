@@ -15,7 +15,7 @@ btrfs \- control a btrfs filesystem
 .PP
 \fBbtrfs\fP \fBsubvolume set-default\fP\fI <id> <path>\fP
 .PP
-\fBbtrfs\fP \fBfilesystem defrag\fP\fI <file>|<dir> [<file>|<dir>...]\fP
+\fBbtrfs\fP \fBfilesystem defragment\fP\fI [-vcf] [-s start] [-l len] [-t size] <file>|<dir> [<file>|<dir>...]\fP
 .PP
 \fBbtrfs\fP \fBfilesystem sync\fP\fI <path> \fP
 .PP
@@ -33,6 +33,8 @@ btrfs \- control a btrfs filesystem
 
 .PP
 \fBbtrfs\fP \fBhelp|\-\-help|\-h \fP\fI\fP
+.PP
+\fBbtrfs\fP \fB<command> \-\-help \fP\fI\fP
 .PP
 .SH DESCRIPTION
 .B btrfs
@@ -60,12 +62,12 @@ returns an error.
 
 If a command is terminated by
 .I --help
-, the relevant help is showed. If the passed command matches more commands,
-the help of all the matched commands are showed. For example
+, the detailed help is showed. If the passed command matches more commands,
+detailed help of all the matched commands is showed. For example
 .I btrfs dev --help
 shows the help of all
 .I device*
-command.
+commands.
 
 .SH COMMANDS
 .TP
@@ -98,12 +100,29 @@ mount time via the \fIsubvol=\fR option.
 
 \fBsubvolume set-default\fR\fI <id> <path>\fR
 Set the subvolume of the filesystem \fI<path>\fR which is mounted as 
-\fIdefault\fR. The subvolume is identified by \fB<id>\fR, which 
+\fIdefault\fR. The subvolume is identified by \fI<id>\fR, which 
 is returned by the \fBsubvolume list\fR command.
 .TP
 
-\fBfilesystem defragment\fP\fI <file>|<dir> [<file>|<dir>...]\fR
-Defragment files and/or directories.
+\fBfilesystem defragment\fP\fI [-vcf] [-s start] [-l len] [-t size] <file>|<dir> [<file>|<dir>...]\fR
+Defragment file data and/or directory metadata. To defragment all files in a
+directory you have to specify each one on its own or use your shell wildcards.
+
+\fB-v\fP be verbose
+
+\fB-c\fP compress file contents while defragmenting
+
+\fB-f\fP flush filesystem after defragmenting
+
+\fB-s start\fP defragment only from byte \fIstart\fR onward
+
+\fB-l len\fP defragment only up to \fIlen\fR bytes
+
+\fB-t size\fP defragment only files at least \fIsize\fR bytes big
+
+NOTE: defragmenting with kernels up to 2.6.37 will unlink COW-ed copies of data, don't 
+use it if you use snapshots, have de-duplicated your data or made copies with 
+\fBcp --reflink\fP.
 .TP
 
 \fBdevice scan\fR \fI[<device> [<device>..]]\fR
