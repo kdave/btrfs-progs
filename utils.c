@@ -867,7 +867,7 @@ again:
 	}
 	dirp = opendir(dirname);
 	if (!dirp) {
-		fprintf(stderr, "Unable to open /sys/block for scanning\n");
+		fprintf(stderr, "Unable to open %s for scanning\n", dirname);
 		return -ENOENT;
 	}
 	while(1) {
@@ -902,7 +902,8 @@ again:
 		}
 		fd = open(fullpath, O_RDONLY);
 		if (fd < 0) {
-			fprintf(stderr, "failed to read %s\n", fullpath);
+			fprintf(stderr, "failed to read %s: %s\n", fullpath,
+					strerror(errno));
 			continue;
 		}
 		ret = btrfs_scan_one_device(fd, fullpath, &tmp_devices,
