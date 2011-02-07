@@ -237,7 +237,7 @@ int main(int ac, char **av)
 	 }
 
 	if (name)
-		strcpy(args.name, name);
+                strncpy(args.name, name, BTRFS_PATH_NAME_MAX + 1);
 	else
 		args.name[0] = '\0';
 

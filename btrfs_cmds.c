@@ -375,7 +375,7 @@ int do_clone(int argc, char **argv)
 	printf("Create a snapshot of '%s' in '%s/%s'\n",
 	       subvol, dstdir, newname);
 	args.fd = fd;
-	strcpy(args.name, newname);
+	strncpy(args.name, newname, BTRFS_PATH_NAME_MAX);
 	res = ioctl(fddst, BTRFS_IOC_SNAP_CREATE, &args);
 
 	close(fd);
@@ -436,7 +436,7 @@ int do_delete_subvolume(int argc, char **argv)
 	}
 
 	printf("Delete subvolume '%s/%s'\n", dname, vname);
-	strcpy(args.name, vname);
+	strncpy(args.name, vname, BTRFS_PATH_NAME_MAX);
 	res = ioctl(fd, BTRFS_IOC_SNAP_DESTROY, &args);
 
 	close(fd);
@@ -490,7 +490,7 @@ int do_create_subvol(int argc, char **argv)
 	}
 
 	printf("Create subvolume '%s/%s'\n", dstdir, newname);
-	strcpy(args.name, newname);
+	strncpy(args.name, newname, BTRFS_PATH_NAME_MAX);
 	res = ioctl(fddst, BTRFS_IOC_SUBVOL_CREATE, &args);
 
 	close(fddst);
@@ -553,7 +553,7 @@ int do_scan(int argc, char **argv)
 
 		printf("Scanning for Btrfs filesystems in '%s'\n", argv[i]);
 
-		strcpy(args.name, argv[i]);
+		strncpy(args.name, argv[i], BTRFS_PATH_NAME_MAX);
 		/*
 		 * FIXME: which are the error code returned by this ioctl ?
 		 * it seems that is impossible to understand if there no is
@@ -593,7 +593,7 @@ int do_resize(int argc, char **argv)
 	}
 
 	printf("Resize '%s' of '%s'\n", path, amount);
-	strcpy(args.name, amount);
+	strncpy(args.name, amount, BTRFS_PATH_NAME_MAX);
 	res = ioctl(fd, BTRFS_IOC_RESIZE, &args);
 	close(fd);
 	if( res < 0 ){
@@ -736,7 +736,7 @@ int do_add_volume(int nargs, char **args)
 		}
 		close(devfd);
 
-		strcpy(ioctl_args.name, args[i]);
+		strncpy(ioctl_args.name, args[i], BTRFS_PATH_NAME_MAX);
 		res = ioctl(fdmnt, BTRFS_IOC_ADD_DEV, &ioctl_args);
 		if(res<0){
 			fprintf(stderr, "ERROR: error adding the device '%s'\n", args[i]);
@@ -792,7 +792,7 @@ int do_remove_volume(int nargs, char **args)
 		struct	btrfs_ioctl_vol_args arg;
 		int	res;
 
-		strcpy(arg.name, args[i]);
+		strncpy(arg.name, args[i], BTRFS_PATH_NAME_MAX);
 		res = ioctl(fdmnt, BTRFS_IOC_RM_DEV, &arg);
 		if(res<0){
 			fprintf(stderr, "ERROR: error removing the device '%s'\n", args[i]);

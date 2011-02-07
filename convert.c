@@ -857,7 +857,7 @@ static int copy_single_xattr(struct btrfs_trans_handle *trans,
 		data = databuf;
 		datalen = bufsize;
 	}
-	strcpy(namebuf, xattr_prefix_table[name_index]);
+	strncpy(namebuf, xattr_prefix_table[name_index], XATTR_NAME_MAX);
 	strncat(namebuf, EXT2_EXT_ATTR_NAME(entry), entry->e_name_len);
 	if (name_len + datalen > BTRFS_LEAF_DATA_SIZE(root) -
 	    sizeof(struct btrfs_item) - sizeof(struct btrfs_dir_item)) {

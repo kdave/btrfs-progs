@@ -108,7 +108,7 @@ int make_btrfs(int fd, const char *device, const char *label,
 	btrfs_set_super_csum_type(&super, BTRFS_CSUM_TYPE_CRC32);
 	btrfs_set_super_chunk_root_generation(&super, 1);
 	if (label)
-		strcpy(super.label, label);
+		strncpy(super.label, label, BTRFS_LABEL_SIZE - 1);
 
 	buf = malloc(sizeof(*buf) + max(sectorsize, leafsize));
 
@@ -828,7 +828,7 @@ void btrfs_register_one_device(char *fname)
 			"skipping device registration\n");
 		return;
 	}
-	strcpy(args.name, fname);
+	strncpy(args.name, fname, BTRFS_PATH_NAME_MAX);
 	ret = ioctl(fd, BTRFS_IOC_SCAN_DEV, &args);
 	close(fd);
 }
@@ -971,6 +971,7 @@ static char *size_strs[] = { "", "KB", "MB", "GB", "TB",
 char *pretty_sizes(u64 size)
 {
 	int num_divs = 0;
+        int pretty_len = 16;
 	u64 last_size = size;
 	u64 fract_size = size;
 	float fraction;
@@ -988,8 +989,8 @@ char *pretty_sizes(u64 size)
 		return NULL;
 
 	fraction = (float)fract_size / 1024;
-	pretty = malloc(16);
-	sprintf(pretty, "%.2f%s", fraction, size_strs[num_divs-1]);
+	pretty = malloc(pretty_len);
+	snprintf(pretty, pretty_len, "%.2f%s", fraction, size_strs[num_divs-1]);
 	return pretty;
 }
 
