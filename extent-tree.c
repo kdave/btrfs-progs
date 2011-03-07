@@ -1549,7 +1549,6 @@ static int __btrfs_mod_ref(struct btrfs_trans_handle *trans,
 	int i;
 	int level;
 	int ret = 0;
-	int faili = 0;
 	int (*process_func)(struct btrfs_trans_handle *trans,
 			    struct btrfs_root *root,
 			    u64, u64, u64, u64, u64, u64);
@@ -1592,7 +1591,6 @@ static int __btrfs_mod_ref(struct btrfs_trans_handle *trans,
 					   parent, ref_root, key.objectid,
 					   key.offset);
 			if (ret) {
-				faili = i;
 				WARN_ON(1);
 				goto fail;
 			}
@@ -1602,7 +1600,6 @@ static int __btrfs_mod_ref(struct btrfs_trans_handle *trans,
 			ret = process_func(trans, root, bytenr, num_bytes,
 					   parent, ref_root, level - 1, 0);
 			if (ret) {
-				faili = i;
 				WARN_ON(1);
 				goto fail;
 			}
@@ -1611,33 +1608,6 @@ static int __btrfs_mod_ref(struct btrfs_trans_handle *trans,
 	return 0;
 fail:
 	WARN_ON(1);
-#if 0
-	for (i =0; i < faili; i++) {
-		if (level == 0) {
-			u64 disk_bytenr;
-			btrfs_item_key_to_cpu(buf, &key, i);
-			if (btrfs_key_type(&key) != BTRFS_EXTENT_DATA_KEY)
-				continue;
-			fi = btrfs_item_ptr(buf, i,
-					    struct btrfs_file_extent_item);
-			if (btrfs_file_extent_type(buf, fi) ==
-			    BTRFS_FILE_EXTENT_INLINE)
-				continue;
-			disk_bytenr = btrfs_file_extent_disk_bytenr(buf, fi);
-			if (disk_bytenr == 0)
-				continue;
-			err = btrfs_free_extent(trans, root, disk_bytenr,
-				    btrfs_file_extent_disk_num_bytes(buf,
-								      fi), 0);
-			BUG_ON(err);
-		} else {
-			bytenr = btrfs_node_blockptr(buf, i);
-			err = btrfs_free_extent(trans, root, bytenr,
-					btrfs_level_size(root, level - 1), 0);
-			BUG_ON(err);
-		}
-	}
-#endif
 	return ret;
 }
 

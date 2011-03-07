@@ -1037,7 +1037,7 @@ static int process_one_leaf(struct btrfs_root *root, struct extent_buffer *eb,
 			break;
 		};
 	}
-	return 0;
+	return ret;
 }
 
 static void reada_walk_down(struct btrfs_root *root,
@@ -1917,7 +1917,6 @@ static int check_owner_ref(struct btrfs_root *root,
 	struct btrfs_root *ref_root;
 	struct btrfs_key key;
 	struct btrfs_path path;
-	int ret;
 	int level;
 	int found = 0;
 
@@ -1950,7 +1949,7 @@ static int check_owner_ref(struct btrfs_root *root,
 	
 	btrfs_init_path(&path);
 	path.lowest_level = level + 1;
-	ret = btrfs_search_slot(NULL, ref_root, &key, &path, 0, 0);
+	btrfs_search_slot(NULL, ref_root, &key, &path, 0, 0);
 
 	if (buf->start == btrfs_node_blockptr(path.nodes[level + 1],
 					      path.slots[level + 1]))
@@ -2539,16 +2538,6 @@ static int run_next_block(struct btrfs_root *root,
 				continue;
 			}
 			if (key.type == BTRFS_BLOCK_GROUP_ITEM_KEY) {
-				struct btrfs_block_group_item *bi;
-				bi = btrfs_item_ptr(buf, i,
-					    struct btrfs_block_group_item);
-#if 0
-				fprintf(stderr,"block group %Lu %Lu used %Lu ",
-					btrfs_disk_key_objectid(disk_key),
-					btrfs_disk_key_offset(disk_key),
-					btrfs_block_group_used(bi));
-				fprintf(stderr, "flags %x\n", bi->flags);
-#endif
 				continue;
 			}
 			if (key.type == BTRFS_EXTENT_REF_V0_KEY) {

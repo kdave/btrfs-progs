@@ -1149,7 +1149,6 @@ int main(int ac, char **av)
 	int zero_end = 1;
 	int option_index = 0;
 	int fd;
-	int first_fd;
 	int ret;
 	int i;
 	int mixed = 0;
@@ -1250,7 +1249,6 @@ int main(int ac, char **av)
 			fprintf(stderr, "unable to open %s\n", file);
 			exit(1);
 		}
-		first_fd = fd;
 		first_file = file;
 		ret = btrfs_prepare_device(fd, file, zero_end, &dev_block_count, &mixed);
 		if (block_count == 0)
@@ -1264,7 +1262,6 @@ int main(int ac, char **av)
 		}
 
 		file = output;
-		first_fd = fd;
 		first_file = file;
 		block_count = size_sourcedir(source_dir, sectorsize,
 					     &num_of_meta_chunks, &size_of_data);

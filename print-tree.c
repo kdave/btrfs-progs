@@ -444,7 +444,6 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 	struct btrfs_dir_item *di;
 	struct btrfs_inode_item *ii;
 	struct btrfs_file_extent_item *fi;
-	struct btrfs_csum_item *ci;
 	struct btrfs_block_group_item *bi;
 	struct btrfs_extent_data_ref *dref;
 	struct btrfs_shared_data_ref *sref;
@@ -556,11 +555,9 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 #endif
 			break;
 		case BTRFS_CSUM_ITEM_KEY:
-			ci = btrfs_item_ptr(l, i, struct btrfs_csum_item);
 			printf("\t\tcsum item\n");
 			break;
 		case BTRFS_EXTENT_CSUM_KEY:
-			ci = btrfs_item_ptr(l, i, struct btrfs_csum_item);
 			printf("\t\textent csum item\n");
 			break;
 		case BTRFS_EXTENT_DATA_KEY:

@@ -35,44 +35,6 @@ static int print_usage(void)
 	exit(1);
 }
 
-static void print_extent_leaf(struct btrfs_root *root, struct extent_buffer *l)
-{
-	int i;
-	struct btrfs_item *item;
-//	struct btrfs_extent_ref *ref;
-	struct btrfs_key key;
-	static u64 last = 0;
-	static u64 last_len = 0;
-	u32 nr = btrfs_header_nritems(l);
-	u32 type;
-
-	for (i = 0 ; i < nr ; i++) {
-		item = btrfs_item_nr(l, i);
-		btrfs_item_key_to_cpu(l, &key, i);
-		type = btrfs_key_type(&key);
-		switch (type) {
-		case BTRFS_EXTENT_ITEM_KEY:
-			last_len = key.offset;
-			last = key.objectid;
-			break;
-#if 0
-		case BTRFS_EXTENT_REF_KEY:
-			ref = btrfs_item_ptr(l, i, struct btrfs_extent_ref);
-			printf("%llu %llu extent back ref root %llu gen %llu "
-			       "owner %llu num_refs %lu\n",
-			       (unsigned long long)last,
-			       (unsigned long long)last_len,
-			       (unsigned long long)btrfs_ref_root(l, ref),
-			       (unsigned long long)btrfs_ref_generation(l, ref),
-			       (unsigned long long)btrfs_ref_objectid(l, ref),
-			       (unsigned long)btrfs_ref_num_refs(l, ref));
-			break;
-#endif
-		};
-		fflush(stdout);
-	}
-}
-
 static void print_extents(struct btrfs_root *root, struct extent_buffer *eb)
 {
 	int i;
@@ -81,10 +43,7 @@ static void print_extents(struct btrfs_root *root, struct extent_buffer *eb)
 
 	if (!eb)
 		return;
-	if (btrfs_is_leaf(eb)) {
-		print_extent_leaf(root, eb);
-		return;
-	}
+
 	size = btrfs_level_size(root, btrfs_header_level(eb) - 1);
 	nr = btrfs_header_nritems(eb);
 	for (i = 0; i < nr; i++) {

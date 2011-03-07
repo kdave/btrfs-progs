@@ -296,7 +296,6 @@ int set_extent_bits(struct extent_io_tree *tree, u64 start,
 	struct extent_state *prealloc = NULL;
 	struct cache_extent *node;
 	int err = 0;
-	int set;
 	u64 last_start;
 	u64 last_end;
 again:
@@ -327,7 +326,6 @@ again:
 	 * Just lock what we found and keep going
 	 */
 	if (state->start == start && state->end <= end) {
-		set = state->state & bits;
 		state->state |= bits;
 		merge_state(tree, state);
 		if (last_end == (u64)-1)
@@ -352,7 +350,6 @@ again:
 	 * desired bit on it.
 	 */
 	if (state->start < start) {
-		set = state->state & bits;
 		err = split_state(tree, state, prealloc, start);
 		BUG_ON(err == -EEXIST);
 		prealloc = NULL;
@@ -398,7 +395,6 @@ again:
 	 * We need to split the extent, and set the bit
 	 * on the first half
 	 */
-	set = state->state & bits;
 	err = split_state(tree, state, prealloc, end + 1);
 	BUG_ON(err == -EEXIST);
 

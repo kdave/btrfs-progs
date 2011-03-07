@@ -123,7 +123,6 @@ int readahead_tree_block(struct btrfs_root *root, u64 bytenr, u32 blocksize,
 			 u64 parent_transid)
 {
 	int ret;
-	int dev_nr;
 	struct extent_buffer *eb;
 	u64 length;
 	struct btrfs_multi_bio *multi = NULL;
@@ -135,7 +134,6 @@ int readahead_tree_block(struct btrfs_root *root, u64 bytenr, u32 blocksize,
 		return 0;
 	}
 
-	dev_nr = 0;
 	length = blocksize;
 	ret = btrfs_map_block(&root->fs_info->mapping_tree, READ,
 			      bytenr, &length, &multi, 0);
@@ -177,7 +175,6 @@ struct extent_buffer *read_tree_block(struct btrfs_root *root, u64 bytenr,
 				     u32 blocksize, u64 parent_transid)
 {
 	int ret;
-	int dev_nr;
 	struct extent_buffer *eb;
 	u64 length;
 	struct btrfs_multi_bio *multi = NULL;
@@ -192,7 +189,6 @@ struct extent_buffer *read_tree_block(struct btrfs_root *root, u64 bytenr,
 	if (btrfs_buffer_uptodate(eb, parent_transid))
 		return eb;
 
-	dev_nr = 0;
 	length = blocksize;
 	while (1) {
 		ret = btrfs_map_block(&root->fs_info->mapping_tree, READ,

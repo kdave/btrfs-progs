@@ -96,13 +96,11 @@ int insert_existing_cache_extent(struct cache_tree *tree,
 				 struct cache_extent *pe)
 {
 	struct rb_node *found;
-	struct cache_extent *entry;
 
 	found = tree_insert(&tree->root, pe->start, pe->size, &pe->rb_node);
-	if (found) {
-		entry = rb_entry(found, struct cache_extent, rb_node);
+	if (found)
 		return -EEXIST;
-	}
+
 	return 0;
 }
 

@@ -41,7 +41,6 @@ struct extent_buffer *debug_read_block(struct btrfs_root *root, u64 bytenr,
 				     u32 blocksize, int copy)
 {
 	int ret;
-	int dev_nr;
 	struct extent_buffer *eb;
 	u64 length;
 	struct btrfs_multi_bio *multi = NULL;
@@ -53,7 +52,6 @@ struct extent_buffer *debug_read_block(struct btrfs_root *root, u64 bytenr,
 	if (!eb)
 		return NULL;
 
-	dev_nr = 0;
 	length = blocksize;
 	while (1) {
 		ret = btrfs_map_block(&root->fs_info->mapping_tree, READ,

@@ -643,7 +643,6 @@ int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 	struct list_head *cur;
 	struct map_lookup *map;
 	int min_stripe_size = 1 * 1024 * 1024;
-	u64 physical;
 	u64 calc_size = 8 * 1024 * 1024;
 	u64 min_free;
 	u64 max_chunk_size = 4 * calc_size;
@@ -811,7 +810,6 @@ again:
 		btrfs_set_stack_stripe_devid(stripe, device->devid);
 		btrfs_set_stack_stripe_offset(stripe, dev_offset);
 		memcpy(stripe->dev_uuid, device->uuid, BTRFS_UUID_SIZE);
-		physical = dev_offset;
 		index++;
 	}
 	BUG_ON(!list_empty(&private_devs));
@@ -971,14 +969,12 @@ int btrfs_num_copies(struct btrfs_mapping_tree *map_tree, u64 logical, u64 len)
 	struct cache_extent *ce;
 	struct map_lookup *map;
 	int ret;
-	u64 offset;
 
 	ce = find_first_cache_extent(&map_tree->cache_tree, logical);
 	BUG_ON(!ce);
 	BUG_ON(ce->start > logical || ce->start + ce->size < logical);
 	map = container_of(ce, struct map_lookup, ce);
 
-	offset = logical - ce->start;
 	if (map->type & (BTRFS_BLOCK_GROUP_DUP | BTRFS_BLOCK_GROUP_RAID1))
 		ret = map->num_stripes;
 	else if (map->type & BTRFS_BLOCK_GROUP_RAID10)
