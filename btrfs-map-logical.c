@@ -173,6 +173,7 @@ int main(int ac, char **av)
 		exit(1);
 	}
 
+	info_file = stdout;
 	if (output_file) {
 		if (strcmp(output_file, "-") == 0) {
 			out_fd = 1;
