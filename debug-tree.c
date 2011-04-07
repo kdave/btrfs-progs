@@ -125,7 +125,8 @@ int main(int ac, char **av)
 					      root->nodesize, 0);
 		}
 		if (!leaf) {
-			fprintf(stderr, "failed to read %llu\n", block_only);
+			fprintf(stderr, "failed to read %llu\n",
+				(unsigned long long)block_only);
 			return 0;
 		}
 		btrfs_print_tree(root, leaf, 0);

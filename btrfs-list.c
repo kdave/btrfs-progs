@@ -249,7 +249,8 @@ static int resolve_root(struct root_lookup *rl, struct root_info *ri)
 			break;
 		}
 	}
-	printf("ID %llu top level %llu path %s\n", ri->root_id, top_id,
+	printf("ID %llu top level %llu path %s\n",
+	       (unsigned long long)ri->root_id, (unsigned long long)top_id,
 	       full_path);
 	free(full_path);
 	return 0;

@@ -63,8 +63,8 @@ struct extent_buffer *debug_read_block(struct btrfs_root *root, u64 bytenr,
 		eb->dev_bytenr = multi->stripes[0].physical;
 
 		fprintf(info_file, "mirror %d logical %Lu physical %Lu "
-			"device %s\n", mirror_num, bytenr, eb->dev_bytenr,
-			device->name);
+			"device %s\n", mirror_num, (unsigned long long)bytenr,
+			(unsigned long long)eb->dev_bytenr, device->name);
 		kfree(multi);
 
 		if (!copy || mirror_num == copy)

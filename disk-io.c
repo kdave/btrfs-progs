@@ -675,7 +675,8 @@ struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
 		   ~BTRFS_FEATURE_INCOMPAT_SUPP;
 	if (features) {
 		printk("couldn't open because of unsupported "
-		       "option features (%Lx).\n", features);
+		       "option features (%Lx).\n",
+		       (unsigned long long)features);
 		BUG_ON(1);
 	}
 
@@ -689,7 +690,8 @@ struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
 		~BTRFS_FEATURE_COMPAT_RO_SUPP;
 	if (writes && features) {
 		printk("couldn't open RDWR because of unsupported "
-		       "option features (%Lx).\n", features);
+		       "option features (%Lx).\n",
+		       (unsigned long long)features);
 		BUG_ON(1);
 	}
 

@@ -496,7 +496,7 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 		case BTRFS_DIR_LOG_ITEM_KEY:
 			dlog = btrfs_item_ptr(l, i, struct btrfs_dir_log_item);
 			printf("\t\tdir log end %Lu\n",
-			       btrfs_dir_log_end(l, dlog));
+			       (unsigned long long)btrfs_dir_log_end(l, dlog));
 		       break;
 		case BTRFS_ORPHAN_ITEM_KEY:
 			printf("\t\torphan item\n");

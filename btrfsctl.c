@@ -250,7 +250,7 @@ int main(int ac, char **av)
 		args.fd = fd;
 		ret = ioctl(snap_fd, command, &args);
 	} else if (command == BTRFS_IOC_DEFAULT_SUBVOL) {
-		printf("objectid is %llu\n", objectid);
+		printf("objectid is %llu\n", (unsigned long long)objectid);
 		ret = ioctl(fd, command, &objectid);
 	} else
 		ret = ioctl(fd, command, &args);
