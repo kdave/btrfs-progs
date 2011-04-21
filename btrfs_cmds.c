@@ -732,12 +732,25 @@ int do_add_volume(int nargs, char **args)
 		return 12;
 	}
 
-	for(i=1 ; i < (nargs-1) ; i++ ){
+	for (i = 1; i < (nargs-1); i++ ){
 		struct btrfs_ioctl_vol_args ioctl_args;
 		int	devfd, res;
 		u64 dev_block_count = 0;
 		struct stat st;
 		int mixed = 0;
+
+		res = check_mounted(args[i]);
+		if (res < 0) {
+			fprintf(stderr, "error checking %s mount status\n",
+				args[i]);
+			ret++;
+			continue;
+		}
+		if (res == 1) {
+			fprintf(stderr, "%s is mounted\n", args[i]);
+			ret++;
+			continue;
+		}
 
 		devfd = open(args[i], O_RDWR);
 		if (!devfd) {
@@ -746,8 +759,8 @@ int do_add_volume(int nargs, char **args)
 			ret++;
 			continue;
 		}
-		ret = fstat(devfd, &st);
-		if (ret) {
+		res = fstat(devfd, &st);
+		if (res) {
 			fprintf(stderr, "ERROR: Unable to stat '%s'\n", args[i]);
 			close(devfd);
 			ret++;
@@ -781,7 +794,7 @@ int do_add_volume(int nargs, char **args)
 	}
 
 	close(fdmnt);
-	if( ret)
+	if (ret)
 		return ret+20;
 	else
 		return 0;

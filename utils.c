@@ -50,6 +50,20 @@
 static inline int ioctl(int fd, int define, u64 *size) { return 0; }
 #endif
 
+#ifndef BLKDISCARD
+#define BLKDISCARD	_IO(0x12,119)
+#endif
+
+static int
+discard_blocks(int fd, u64 start, u64 len)
+{
+	u64 range[2] = { start, len };
+
+	if (ioctl(fd, BLKDISCARD, &range) < 0)
+		return errno;
+	return 0;
+}
+
 static u64 reference_root_table[] = {
 	[1] =	BTRFS_ROOT_TREE_OBJECTID,
 	[2] =	BTRFS_EXTENT_TREE_OBJECTID,
@@ -537,6 +551,13 @@ int btrfs_prepare_device(int fd, char *file, int zero_end, u64 *block_count_ret,
 		printf("SMALL VOLUME: forcing mixed metadata/data groups\n");
 		*mixed = 1;
 	}
+
+	/*
+	 * We intentionally ignore errors from the discard ioctl.  It is
+	 * not necessary for the mkfs functionality but just an optimization.
+	 */
+	discard_blocks(fd, 0, block_count);
+
 	ret = zero_dev_start(fd);
 	if (ret) {
 		fprintf(stderr, "failed to zero device start %d\n", ret);
