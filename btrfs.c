@@ -50,8 +50,8 @@ static struct Command commands[] = {
 		avoid short commands different for the case only
 	*/
 	{ do_clone, 2,
-	  "subvolume snapshot", "<source> [<dest>/]<name>\n"
-		"Create a writable snapshot of the subvolume <source> with\n"
+	  "subvolume snapshot", "[-r] <source> [<dest>/]<name>\n"
+		"Create a writable/readonly snapshot of the subvolume <source> with\n"
 		"the name <name> in the <dest> directory.",
 	  NULL
 	},
