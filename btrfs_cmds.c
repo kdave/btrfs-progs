@@ -44,7 +44,7 @@
 
 #ifdef __CHECKER__
 #define BLKGETSIZE64 0
-#define BTRFS_IOC_SNAP_CREATE 0
+#define BTRFS_IOC_SNAP_CREATE_V2 0
 #define BTRFS_VOL_NAME_MAX 255
 struct btrfs_ioctl_vol_args { char name[BTRFS_VOL_NAME_MAX]; };
 static inline int ioctl(int fd, int define, void *arg) { return 0; }
@@ -330,13 +330,38 @@ int do_subvol_list(int argc, char **argv)
 int do_clone(int argc, char **argv)
 {
 	char	*subvol, *dst;
-	int	res, fd, fddst, len, e;
+	int	res, fd, fddst, len, e, optind = 0, readonly = 0;
 	char	*newname;
 	char	*dstdir;
+	struct btrfs_ioctl_vol_args_v2	args;
 
-	subvol = argv[1];
-	dst = argv[2];
-	struct btrfs_ioctl_vol_args	args;
+	memset(&args, 0, sizeof(args));
+
+	while (1) {
+		int c = getopt(argc, argv, "r");
+
+		if (c < 0)
+			break;
+		switch (c) {
+		case 'r':
+			optind++;
+			readonly = 1;
+			break;
+		default:
+			fprintf(stderr,
+				"Invalid arguments for subvolume snapshot\n");
+			free(argv);
+			return 1;
+		}
+	}
+	if (argc - optind < 2) {
+		fprintf(stderr, "Invalid arguments for subvolume snapshot\n");
+		free(argv);
+		return 1;
+	}
+
+	subvol = argv[optind+1];
+	dst = argv[optind+2];
 
 	res = test_issubvolume(subvol);
 	if(res<0){
@@ -392,11 +417,18 @@ int do_clone(int argc, char **argv)
 		return 12;
 	}
 
-	printf("Create a snapshot of '%s' in '%s/%s'\n",
-	       subvol, dstdir, newname);
+	if (readonly) {
+		args.flags |= BTRFS_SUBVOL_RDONLY;
+		printf("Create a readonly snapshot of '%s' in '%s/%s'\n",
+		       subvol, dstdir, newname);
+	} else {
+		printf("Create a snapshot of '%s' in '%s/%s'\n",
+		       subvol, dstdir, newname);
+	}
+
 	args.fd = fd;
 	strncpy(args.name, newname, BTRFS_PATH_NAME_MAX);
-	res = ioctl(fddst, BTRFS_IOC_SNAP_CREATE, &args);
+	res = ioctl(fddst, BTRFS_IOC_SNAP_CREATE_V2, &args);
 	e = errno;
 
 	close(fd);
