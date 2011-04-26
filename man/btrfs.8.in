@@ -5,7 +5,7 @@
 .SH NAME
 btrfs \- control a btrfs filesystem
 .SH SYNOPSIS
-\fBbtrfs\fP \fBsubvolume snapshot\fP\fI <source> [<dest>/]<name>\fP
+\fBbtrfs\fP \fBsubvolume snapshot\fP\fI [-r] <source> [<dest>/]<name>\fP
 .PP
 \fBbtrfs\fP \fBsubvolume delete\fP\fI <subvolume>\fP
 .PP
@@ -76,10 +76,11 @@ commands.
 .SH COMMANDS
 .TP
 
-\fBsubvolume snapshot\fR\fI <source> [<dest>/]<name>\fR
-Create a writable snapshot of the subvolume \fI<source>\fR with the name
-\fI<name>\fR in the \fI<dest>\fR directory. If \fI<source>\fR is not a
-subvolume, \fBbtrfs\fR returns an error.
+\fBsubvolume snapshot\fR\fI [-r] <source> [<dest>/]<name>\fR
+Create a writable/readonly snapshot of the subvolume \fI<source>\fR with the
+name \fI<name>\fR in the \fI<dest>\fR directory. If \fI<source>\fR is not a
+subvolume, \fBbtrfs\fR returns an error. If \fI-r\fR is given, the snapshot
+will be readonly.
 .TP
 
 \fBsubvolume delete\fR\fI <subvolume>\fR
