@@ -22,6 +22,7 @@ unsigned long ioctls[] = {
 	BTRFS_IOC_INO_LOOKUP,
 	BTRFS_IOC_DEFAULT_SUBVOL,
 	BTRFS_IOC_SPACE_INFO,
+	BTRFS_IOC_SNAP_CREATE_V2,
 	0 };
 
 int main(int ac, char **av)
