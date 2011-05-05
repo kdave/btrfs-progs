@@ -1706,7 +1706,7 @@ static struct btrfs_space_info *__find_space_info(struct btrfs_fs_info *info,
 	struct btrfs_space_info *found;
 	list_for_each(cur, head) {
 		found = list_entry(cur, struct btrfs_space_info, list);
-		if (found->flags == flags)
+		if (found->flags & flags)
 			return found;
 	}
 	return NULL;
@@ -1784,7 +1784,8 @@ static int do_chunk_alloc(struct btrfs_trans_handle *trans,
 	    thresh)
 		return 0;
 
-	ret = btrfs_alloc_chunk(trans, extent_root, &start, &num_bytes, flags);
+	ret = btrfs_alloc_chunk(trans, extent_root, &start, &num_bytes,
+	                        space_info->flags);
 	if (ret == -ENOSPC) {
 		space_info->full = 1;
 		return 0;
@@ -1792,7 +1793,7 @@ static int do_chunk_alloc(struct btrfs_trans_handle *trans,
 
 	BUG_ON(ret);
 
-	ret = btrfs_make_block_group(trans, extent_root, 0, flags,
+	ret = btrfs_make_block_group(trans, extent_root, 0, space_info->flags,
 		     BTRFS_FIRST_CHUNK_TREE_OBJECTID, start, num_bytes);
 	BUG_ON(ret);
 	return 0;
