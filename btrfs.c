@@ -119,6 +119,12 @@ static struct Command commands[] = {
 		"Balance the chunks across the device.",
 	  NULL
 	},
+	{ do_change_label, -1,
+	  "filesystem label", "<device> [<newlabel>]\n"
+	  "With one argument, get the label of filesystem on <device>.\n"
+	  "If <newlabel> is passed, set the filesystem label to <newlabel>.\n"
+	  "The filesystem must be unmounted.\n"
+	},
 	{ do_scan, 999, 
 	  "device scan", "[<device>...]\n"
 		"Scan all device for or the passed device for a btrfs\n"
