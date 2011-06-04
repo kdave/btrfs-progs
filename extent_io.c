@@ -568,6 +568,7 @@ static struct extent_buffer *__alloc_extent_buffer(struct extent_io_tree *tree,
 		BUG();
 		return NULL;
 	}
+	memset(eb, 0, sizeof(struct extent_buffer) + blocksize);
 
 	eb->start = bytenr;
 	eb->len = blocksize;

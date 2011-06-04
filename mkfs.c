@@ -411,6 +411,13 @@ static int fill_inode_item(struct btrfs_trans_handle *trans,
 	u64 blocks = 0;
 	u64 sectorsize = root->sectorsize;
 
+	/*
+	 * btrfs_inode_item has some reserved fields
+	 * and represents on-disk inode entry, so
+	 * zero everything to prevent information leak
+	 */
+	memset(dst, 0, sizeof (*dst));
+
 	btrfs_set_stack_inode_generation(dst, trans->transid);
 	btrfs_set_stack_inode_size(dst, src->st_size);
 	btrfs_set_stack_inode_nbytes(dst, 0);
