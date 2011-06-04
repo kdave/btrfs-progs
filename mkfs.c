@@ -1175,6 +1175,7 @@ int main(int ac, char **av)
 	char *output = "output.img";
 	u64 num_of_meta_chunks = 0;
 	u64 size_of_data = 0;
+	char *pretty_buf;
 
 	while(1) {
 		int c;
@@ -1392,7 +1393,8 @@ raid_groups:
 	printf("fs created label %s on %s\n\tnodesize %u leafsize %u "
 	    "sectorsize %u size %s\n",
 	    label, first_file, nodesize, leafsize, sectorsize,
-	    pretty_sizes(btrfs_super_total_bytes(&root->fs_info->super_copy)));
+	    pretty_buf = pretty_sizes(btrfs_super_total_bytes(&root->fs_info->super_copy)));
+	free(pretty_buf);
 
 	printf("%s\n", BTRFS_BUILD_VERSION);
 	btrfs_commit_transaction(trans, root);
