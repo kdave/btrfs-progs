@@ -468,6 +468,18 @@ static int directory_select(const struct direct *entry)
 		return 1;
 }
 
+static void free_namelist(struct direct **files, int count)
+{
+	int i;
+
+	if (count < 0)
+		return;
+
+	for (i = 0; i < count; ++i)
+		free(files[i]);
+	free(files);
+}
+
 static u64 calculate_dir_inode_size(char *dirname)
 {
 	int count, i;
@@ -480,6 +492,8 @@ static u64 calculate_dir_inode_size(char *dirname)
 		cur_file = files[i];
 		dir_inode_size += strlen(cur_file->d_name);
 	}
+
+	free_namelist(files, count);
 
 	dir_inode_size *= 2;
 	return dir_inode_size;
@@ -971,6 +985,7 @@ static int traverse_directory(struct btrfs_trans_handle *trans,
 			}
 		}
 
+		free_namelist(files, count);
 		free(parent_dir_entry->path);
 		free(parent_dir_entry);
 
@@ -980,6 +995,7 @@ static int traverse_directory(struct btrfs_trans_handle *trans,
 
 	return 0;
 fail:
+	free_namelist(files, count);
 	free(parent_dir_entry->path);
 	free(parent_dir_entry);
 	return -1;
