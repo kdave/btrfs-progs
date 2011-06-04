@@ -709,11 +709,13 @@ static int add_symbolic_link(struct btrfs_trans_handle *trans,
 		fprintf(stderr, "readlink failed for %s\n", path_name);
 		goto fail;
 	}
-	if (ret > sectorsize) {
+	if (ret >= sectorsize) {
 		fprintf(stderr, "symlink too long for %s", path_name);
 		ret = -1;
 		goto fail;
 	}
+
+	buf[ret] = '\0'; /* readlink does not do it for us */
 	ret = btrfs_insert_inline_extent(trans, root, objectid, 0,
 					 buf, ret + 1);
 fail:
