@@ -1120,7 +1120,7 @@ fail:
 	return ret;
 }
 /*
- * scan ext2's inode bitmap and copy all used inode.
+ * scan ext2's inode bitmap and copy all used inodes.
  */
 static int copy_inodes(struct btrfs_root *root, ext2_filsys ext2_fs,
 		       int datacsum, int packing, int noxattr)
