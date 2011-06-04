@@ -1287,13 +1287,13 @@ int main(int ac, char **av)
 			block_count = dev_block_count;
 	} else {
 		ac = 0;
+		file = output;
 		fd = open_target(output);
 		if (fd < 0) {
 			fprintf(stderr, "unable to open the %s\n", file);
 			exit(1);
 		}
 
-		file = output;
 		first_file = file;
 		block_count = size_sourcedir(source_dir, sectorsize,
 					     &num_of_meta_chunks, &size_of_data);
