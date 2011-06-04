@@ -895,6 +895,12 @@ static int traverse_directory(struct btrfs_trans_handle *trans,
 
 		count = scandir(parent_dir_entry->path, &files,
 				directory_select, NULL);
+		if (count == -1)
+		{
+			fprintf(stderr, "scandir for %s failed: %s\n",
+				parent_dir_name, strerror (errno));
+			goto fail;
+		}
 
 		for (i = 0; i < count; i++) {
 			cur_file = files[i];
