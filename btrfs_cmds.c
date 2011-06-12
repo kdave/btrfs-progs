@@ -427,7 +427,7 @@ int do_clone(int argc, char **argv)
 	}
 
 	args.fd = fd;
-	strncpy(args.name, newname, BTRFS_PATH_NAME_MAX);
+	strncpy(args.name, newname, BTRFS_SUBVOL_NAME_MAX);
 	res = ioctl(fddst, BTRFS_IOC_SNAP_CREATE_V2, &args);
 	e = errno;
 
