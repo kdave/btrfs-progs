@@ -136,8 +136,7 @@ for srci in xrange(0, src_args):
             srcname = os.path.join(dirpath, x)
             statinfo = os.lstat(srcname)
 
-            if srcname.startswith(src):
-                part = srcname[len(src) + 1:]
+            part = os.path.relpath(srcname, src)
 
             if stat.S_ISLNK(statinfo.st_mode):
                 copylink(srcname, dst, part, statinfo, None)
@@ -152,8 +151,7 @@ for srci in xrange(0, src_args):
 
         for f in filenames:
             srcname = os.path.join(dirpath, f)
-            if srcname.startswith(src):
-                part = srcname[len(src) + 1:]
+            part = os.path.relpath(srcname, src)
 
             statinfo = os.lstat(srcname)
             copyfile(srcname, dst, part, statinfo, None)
