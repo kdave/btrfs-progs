@@ -607,11 +607,29 @@ int do_fssync(int argc, char **argv)
 int do_scan(int argc, char **argv)
 {
 	int	i, fd, e;
-	if(argc<=1){
+	int	checklist = 1;
+	int	devstart = 1;
+
+	if( argc >= 2 && !strcmp(argv[1],"--all-devices")){
+
+		if( argc >2 ){
+			fprintf(stderr, "ERROR: too may arguments\n");
+                        return 22;
+                }
+
+		checklist = 0;
+		devstart += 1;
+	}
+
+	if(argc<=devstart){
+
 		int ret;
 
 		printf("Scanning for Btrfs filesystems\n");
-		ret = btrfs_scan_one_dir("/dev", 1);
+		if(checklist)
+			ret = btrfs_scan_block_devices(1);
+		else
+			ret = btrfs_scan_one_dir("/dev", 1);
 		if (ret){
 			fprintf(stderr, "ERROR: error %d while scanning\n", ret);
 			return 18;
@@ -625,7 +643,7 @@ int do_scan(int argc, char **argv)
 		return 10;
 	}
 
-	for( i = 1 ; i < argc ; i++ ){
+	for( i = devstart ; i < argc ; i++ ){
 		struct btrfs_ioctl_vol_args args;
 		int ret;
 
@@ -748,14 +766,33 @@ int do_show_filesystem(int argc, char **argv)
 	struct list_head *all_uuids;
 	struct btrfs_fs_devices *fs_devices;
 	struct list_head *cur_uuid;
-	char *search = argv[1];
+	char *search = 0;
 	int ret;
+	int checklist = 1;
+	int searchstart = 1;
 
-	ret = btrfs_scan_one_dir("/dev", 0);
+	if( argc >= 2 && !strcmp(argv[1],"--all-devices")){
+		checklist = 0;
+		searchstart += 1;
+	}
+
+	if( argc > searchstart+1 ){
+		fprintf(stderr, "ERROR: too many arguments\n");
+		return 22;
+	}	
+
+	if(checklist)
+		ret = btrfs_scan_block_devices(0);
+	else
+		ret = btrfs_scan_one_dir("/dev", 0);
+
 	if (ret){
 		fprintf(stderr, "ERROR: error %d while scanning\n", ret);
 		return 18;
 	}
+	
+	if(searchstart < argc)
+		search = argv[searchstart];
 
 	all_uuids = btrfs_scanned_uuids();
 	list_for_each(cur_uuid, all_uuids) {

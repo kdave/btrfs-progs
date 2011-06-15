@@ -1114,3 +1114,61 @@ int check_label(char *input)
 
        return 0;
 }
+
+int btrfs_scan_block_devices(int run_ioctl)
+{
+
+	struct stat st;
+	int ret;
+	int fd;
+	struct btrfs_fs_devices *tmp_devices;
+	u64 num_devices;
+	FILE *proc_partitions;
+	int i;
+	char buf[1024];
+	char fullpath[110];
+
+	proc_partitions = fopen("/proc/partitions","r");
+	if (!proc_partitions) {
+		fprintf(stderr, "Unable to open '/proc/partitions' for scanning\n");
+		return -ENOENT;
+	}
+	/* skip the header */
+	for(i=0; i < 2 ; i++)
+		if(!fgets(buf, 1023, proc_partitions)){
+		fprintf(stderr, "Unable to read '/proc/partitions' for scanning\n");
+		fclose(proc_partitions);
+		return -ENOENT;
+	}
+
+	strcpy(fullpath,"/dev/");
+	while(fgets(buf, 1023, proc_partitions)) {
+
+		i = sscanf(buf," %*d %*d %*d %99s", fullpath+5);
+		ret = lstat(fullpath, &st);
+		if (ret < 0) {
+			fprintf(stderr, "failed to stat %s\n", fullpath);
+			continue;
+		}
+		if (!S_ISBLK(st.st_mode)) {
+			continue;
+		}
+
+		fd = open(fullpath, O_RDONLY);
+		if (fd < 0) {
+			fprintf(stderr, "failed to read %s\n", fullpath);
+			continue;
+		}
+		ret = btrfs_scan_one_device(fd, fullpath, &tmp_devices,
+					    &num_devices,
+					    BTRFS_SUPER_INFO_OFFSET);
+		if (ret == 0 && run_ioctl > 0) {
+			btrfs_register_one_device(fullpath);
+		}
+		close(fd);
+	}
+
+	fclose(proc_partitions);
+	return 0;
+}
+

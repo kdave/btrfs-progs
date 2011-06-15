@@ -44,4 +44,6 @@ int btrfs_device_already_in_root(struct btrfs_root *root, int fd,
 char *pretty_sizes(u64 size);
 int check_label(char *input);
 int get_mountpt(char *dev, char *mntpt, size_t size);
+
+int btrfs_scan_block_devices(int run_ioctl);
 #endif

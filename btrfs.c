@@ -109,7 +109,7 @@ static struct Command commands[] = {
 	  NULL
 	},
 	{ do_show_filesystem, 999,
-	  "filesystem show", "[<device>|<uuid>|<label>]\n"
+	  "filesystem show", "[--all-devices][<uuid>|<label>]\n"
 		"Show the info of a btrfs filesystem. If no argument\n"
 		"is passed, info of all the btrfs filesystem are shown.",
 	  NULL
