@@ -193,7 +193,7 @@ int btrfs_csum_file_block(struct btrfs_trans_handle *trans,
 			  struct btrfs_root *root, u64 alloc_end,
 			  u64 bytenr, char *data, size_t len)
 {
-	int ret;
+	int ret = 0;
 	struct btrfs_key file_key;
 	struct btrfs_key found_key;
 	u64 next_offset = (u64)-1;
