@@ -1055,7 +1055,6 @@ static int make_image(char *source_dir, struct btrfs_root *root, int out_fd)
 	struct btrfs_trans_handle *trans;
 
 	struct stat root_st;
-	int root_len;
 
 	struct directory_name_entry dir_head;
 
@@ -1064,8 +1063,6 @@ static int make_image(char *source_dir, struct btrfs_root *root, int out_fd)
 		fprintf(stderr, "unable to lstat the %s\n", source_dir);
 		goto fail;
 	}
-
-	root_len = strlen(source_dir);
 
 	INIT_LIST_HEAD(&dir_head.list);
 

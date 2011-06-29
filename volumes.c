@@ -868,7 +868,6 @@ int btrfs_alloc_data_chunk(struct btrfs_trans_handle *trans,
 	struct list_head *dev_list = &extent_root->fs_info->fs_devices->devices;
 	struct list_head *cur;
 	struct map_lookup *map;
-	u64 physical;
 	u64 calc_size = 8 * 1024 * 1024;
 	int num_stripes = 1;
 	int sub_stripes = 0;
@@ -920,7 +919,6 @@ int btrfs_alloc_data_chunk(struct btrfs_trans_handle *trans,
 		btrfs_set_stack_stripe_devid(stripe, device->devid);
 		btrfs_set_stack_stripe_offset(stripe, dev_offset);
 		memcpy(stripe->dev_uuid, device->uuid, BTRFS_UUID_SIZE);
-		physical = dev_offset;
 		index++;
 	}
 
