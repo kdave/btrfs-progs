@@ -93,7 +93,8 @@ install-man:
 	cd man; make install
 
 clean :
-	rm -f $(progs) cscope.out *.o .*.d btrfs-convert
+	rm -f $(progs) cscope.out *.o .*.d btrfs-convert btrfs-image btrfs-select-super \
+	      btrfs-zero-log btrfstune dir-test ioctl-test quick-test version.h
 	cd man; make clean
 
 install: $(progs) install-man
