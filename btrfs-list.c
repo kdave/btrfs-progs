@@ -200,9 +200,10 @@ static int add_root(struct root_lookup *root_lookup,
  * This can't be called until all the root_info->path fields are filled
  * in by lookup_ino_path
  */
-static int resolve_root(struct root_lookup *rl, struct root_info *ri)
+static int resolve_root(struct root_lookup *rl, struct root_info *ri, int print_parent)
 {
 	u64 top_id;
+	u64 parent_id = 0;
 	char *full_path = NULL;
 	int len = 0;
 	struct root_info *found;
@@ -233,6 +234,11 @@ static int resolve_root(struct root_lookup *rl, struct root_info *ri)
 		}
 
 		next = found->ref_tree;
+		/* record the first parent */
+		if ( parent_id == 0 ) {
+			parent_id = next;
+		}
+
 		/* if the ref_tree refers to ourselves, we're at the top */
 		if (next == found->root_id) {
 			top_id = next;
@@ -249,9 +255,15 @@ static int resolve_root(struct root_lookup *rl, struct root_info *ri)
 			break;
 		}
 	}
-	printf("ID %llu top level %llu path %s\n",
-	       (unsigned long long)ri->root_id, (unsigned long long)top_id,
-	       full_path);
+	if (print_parent) {
+		printf("ID %llu parent %llu top level %llu path %s\n",
+		       (unsigned long long)ri->root_id, (unsigned long long)parent_id, (unsigned long long)top_id,
+			full_path);
+	} else {
+		printf("ID %llu top level %llu path %s\n",
+		       (unsigned long long)ri->root_id, (unsigned long long)top_id,
+			full_path);
+	}
 	free(full_path);
 	return 0;
 }
@@ -549,7 +561,7 @@ build:
 	return full;
 }
 
-int list_subvols(int fd)
+int list_subvols(int fd, int print_parent)
 {
 	struct root_lookup root_lookup;
 	struct rb_node *n;
@@ -666,7 +678,7 @@ int list_subvols(int fd)
 	while (n) {
 		struct root_info *entry;
 		entry = rb_entry(n, struct root_info, rb_node);
-		resolve_root(&root_lookup, entry);
+		resolve_root(&root_lookup, entry, print_parent);
 		n = rb_prev(n);
 	}
 

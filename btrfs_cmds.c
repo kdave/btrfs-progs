@@ -302,9 +302,27 @@ int do_subvol_list(int argc, char **argv)
 {
 	int fd;
 	int ret;
+	int print_parent = 0;
 	char *subvol;
+        int optind = 1;
 
-	subvol = argv[1];
+	while(1) {
+		int c = getopt(argc, argv, "p");
+		if (c < 0) break;
+		switch(c) {
+		case 'p':
+			print_parent = 1;
+			optind++;
+			break;
+		}
+	}
+	
+	if (argc - optind != 1) {
+		fprintf(stderr, "ERROR: invalid arguments for subvolume list\n");
+		return 1;
+	}
+
+	subvol = argv[optind];
 
 	ret = test_issubvolume(subvol);
 	if (ret < 0) {
@@ -321,7 +339,7 @@ int do_subvol_list(int argc, char **argv)
 		fprintf(stderr, "ERROR: can't access '%s'\n", subvol);
 		return 12;
 	}
-	ret = list_subvols(fd);
+	ret = list_subvols(fd, print_parent);
 	if (ret)
 		return 19;
 	return 0;

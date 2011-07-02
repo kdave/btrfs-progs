@@ -66,9 +66,11 @@ static struct Command commands[] = {
 		"not passed).",
 	  NULL
 	},
-	{ do_subvol_list, 1, "subvolume list", "<path>\n"
+	{ do_subvol_list, -1, "subvolume list", "[-p] <path>\n"
 		"List the snapshot/subvolume of a filesystem.",
-	  NULL
+		"[-p] <path>\n"
+		"List the snapshot/subvolume of a filesystem.\n"
+		"-p	   print parent ID"
 	},
 	{ do_set_default_subvol, 2,
 	  "subvolume set-default", "<id> <path>\n"
