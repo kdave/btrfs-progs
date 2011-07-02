@@ -11,7 +11,7 @@ btrfs \- control a btrfs filesystem
 .PP
 \fBbtrfs\fP \fBsubvolume create\fP\fI [<dest>/]<name>\fP
 .PP
-\fBbtrfs\fP \fBsubvolume list\fP\fI <path>\fP
+\fBbtrfs\fP \fBsubvolume list\fP\fI [-p] <path>\fP
 .PP
 \fBbtrfs\fP \fBsubvolume set-default\fP\fI <id> <path>\fP
 .PP
@@ -93,14 +93,17 @@ Create a subvolume in \fI<dest>\fR (or in the current directory if
 \fI<dest>\fR is omitted).
 .TP
 
-\fBsubvolume list\fR\fI <path>\fR
+\fBsubvolume list\fR\fI [-p] <path>\fR
 List the subvolumes present in the filesystem \fI<path>\fR. For every
-subvolume is showed the subvolume ID (second column), 
-the ID of the \fItop level\fR 
-subvolume (fifth column), and the path (seventh column) relative to the
-\fItop level\fR subvolume.
-These <ID> may be used by the \fBsubvolume set-default\fR command, or at
-mount time via the \fIsubvol=\fR option.
+subvolume the following information is shown by default.
+ID <ID> top level <ID> path <path>
+where path is the relative path of the subvolume to the \fItop level\fR
+subvolume.
+The subvolume's ID may be used by the \fBsubvolume set-default\fR command, or
+at mount time via the \fIsubvol=\fR option.
+If \fI-p\fR is given, then \fIparent <ID>\fR is added to the output between ID
+and top level. The parent's ID may be used at mount time via the
+\fIsubvolrootid=\fR option.
 .TP
 
 \fBsubvolume set-default\fR\fI <id> <path>\fR
