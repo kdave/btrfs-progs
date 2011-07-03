@@ -34,7 +34,6 @@
 #include "ctree.h"
 #include "transaction.h"
 #include "utils.h"
-#include "version.h"
 
 /* we store all the roots we find in an rbtree so that we can
  * search for them later.
