@@ -47,6 +47,11 @@ btrfs \- control a btrfs filesystem
 .PP
 \fBbtrfs\fP \fBscrub status\fP [-d] {\fI<path>\fP|\fI<device>\fP}
 .PP
+\fBbtrfs\fP \fBinspect-internal inode-resolve\fP [-v] \fI<inode>\fP \fI<path>\fP
+.PP
+\fBbtrfs\fP \fBinspect-internal logical-resolve\fP
+[-Pv] \fI<logical>\fP \fI<path>\fP
+.PP
 \fBbtrfs\fP \fBhelp|\-\-help|\-h \fP\fI\fP
 .PP
 \fBbtrfs\fP \fB<command> \-\-help \fP\fI\fP
@@ -277,6 +282,30 @@ for that filesystem or device.
 \fIOptions\fR
 .IP -d 5
 Print separate statistics for each device of the filesystem.
+.RE
+.TP
+
+\fBinspect-internal inode-resolve\fP [-v] \fI<inode>\fP \fI<path>\fP
+Resolves an <inode> in subvolume <path> to all filesystem paths.
+.RS
+
+\fIOptions\fR
+.IP -v 5
+verbose mode. print count of returned paths and ioctl() return value
+.RE
+.TP
+
+\fBinspect-internal logical-resolve\fP [-Pv] \fI<logical>\fP \fI<path>\fP
+Resolves a <logical> address in the filesystem mounted at <path> to all inodes.
+By default, each inode is then resolved to a file system path (similar to the
+\fBinode-resolve\fP subcommand).
+.RS
+
+\fIOptions\fR
+.IP -P 5
+skip the path resolving and print the inodes instead
+.IP -v 5
+verbose mode. print count of returned paths and all ioctl() return values
 .RE
 
 .SH EXIT STATUS
