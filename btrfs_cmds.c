@@ -339,7 +339,7 @@ int do_subvol_list(int argc, char **argv)
 		fprintf(stderr, "ERROR: can't access '%s'\n", subvol);
 		return 12;
 	}
-	ret = list_subvols(fd, print_parent);
+	ret = list_subvols(fd, print_parent, 0);
 	if (ret)
 		return 19;
 	return 0;
@@ -952,6 +952,35 @@ int do_change_label(int nargs, char **argv)
 	}
 }
 
+
+int do_get_default_subvol(int nargs, char **argv)
+{
+	int fd;
+	int ret;
+	char *subvol;
+
+	subvol = argv[1];
+
+	ret = test_issubvolume(subvol);
+	if (ret < 0) {
+		fprintf(stderr, "ERROR: error accessing '%s'\n", subvol);
+		return 12;
+	}
+	if (!ret) {
+		fprintf(stderr, "ERROR: '%s' is not a subvolume\n", subvol);
+		return 13;
+	}
+
+	fd = open_file_or_dir(subvol);
+	if (fd < 0) {
+		fprintf(stderr, "ERROR: can't access '%s'\n", subvol);
+		return 12;
+	}
+	ret = list_subvols(fd, 0, 1);
+	if (ret)
+		return 19;
+	return 0;
+}
 
 int do_df_filesystem(int nargs, char **argv)
 {

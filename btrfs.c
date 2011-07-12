@@ -94,6 +94,9 @@ static struct Command commands[] = {
 		"-l len     defragment only up to len bytes\n"
 		"-t size    minimal size of file to be considered for defragmenting\n"
 	},
+	{ do_get_default_subvol, 1, "subvolume get-default", "<path>\n"
+		"Get the default subvolume of a filesystem."
+	},
 	{ do_fssync, 1,
 	  "filesystem sync", "<path>\n"
 		"Force a sync on the filesystem <path>.",

@@ -15,6 +15,8 @@ btrfs \- control a btrfs filesystem
 .PP
 \fBbtrfs\fP \fBsubvolume set-default\fP\fI <id> <path>\fP
 .PP
+\fBbtrfs\fP \fBsubvolume get-default\fP\fI <path>\fP
+.PP
 \fBbtrfs\fP \fBfilesystem sync\fP\fI <path> \fP
 .PP
 \fBbtrfs\fP \fBfilesystem resize\fP\fI [+/\-]<size>[gkm]|max <filesystem>\fP
@@ -118,6 +120,11 @@ and top level. The parent's ID may be used at mount time via the
 Set the subvolume of the filesystem \fI<path>\fR which is mounted as 
 \fIdefault\fR. The subvolume is identified by \fI<id>\fR, which 
 is returned by the \fBsubvolume list\fR command.
+.TP
+
+\fBsubvolume get-default\fR\fI <path>\fR
+Get the default subvolume of the filesystem \fI<path>\fR. The output format
+is similar to \fBsubvolume list\fR command.
 .TP
 
 \fBfilesystem defragment\fP -c[zlib|lzo] [-l \fIlen\fR] [-s \fIstart\fR] [-t \fIsize\fR] -[vf] <\fIfile\fR>|<\fIdir\fR> [<\fIfile\fR>|<\fIdir\fR>...]

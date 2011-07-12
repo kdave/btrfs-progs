@@ -560,7 +560,7 @@ build:
 	return full;
 }
 
-int list_subvols(int fd, int print_parent)
+int list_subvols(int fd, int print_parent, int get_default)
 {
 	struct root_lookup root_lookup;
 	struct rb_node *n;
@@ -569,10 +569,12 @@ int list_subvols(int fd, int print_parent)
 	struct btrfs_ioctl_search_key *sk = &args.key;
 	struct btrfs_ioctl_search_header *sh;
 	struct btrfs_root_ref *ref;
+	struct btrfs_dir_item *di;
 	unsigned long off = 0;
 	int name_len;
 	char *name;
 	u64 dir_id;
+	u64 subvol_id = 0;
 	int i;
 	int e;
 
@@ -669,6 +671,52 @@ int list_subvols(int fd, int print_parent)
 		n = rb_next(n);
 	}
 
+	memset(&args, 0, sizeof(args));
+
+	/* search in the tree of tree roots */
+	sk->tree_id = BTRFS_ROOT_TREE_OBJECTID;
+
+	/* search dir item */
+	sk->max_type = BTRFS_DIR_ITEM_KEY;
+	sk->min_type = BTRFS_DIR_ITEM_KEY;
+
+	sk->max_objectid = BTRFS_ROOT_TREE_DIR_OBJECTID;
+	sk->min_objectid = BTRFS_ROOT_TREE_DIR_OBJECTID;
+	sk->max_offset = (u64)-1;
+	sk->max_transid = (u64)-1;
+
+	/* just a big number, doesn't matter much */
+	sk->nr_items = 4096;
+
+	/* try to get the objectid of default subvolume */
+	if (get_default) {
+		ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &args);
+		if (ret < 0) {
+			fprintf(stderr, "ERROR: can't perform the search\n");
+			return ret;
+		}
+
+		off = 0;
+		/* go through each item to find dir item named "default" */
+		for (i = 0; i < sk->nr_items; i++) {
+			sh = (struct btrfs_ioctl_search_header *)(args.buf +
+								  off);
+			off += sizeof(*sh);
+			if (sh->type == BTRFS_DIR_ITEM_KEY) {
+				di = (struct btrfs_dir_item *)(args.buf + off);
+				name_len = le16_to_cpu(di->name_len);
+				name = (char *)di + sizeof(struct btrfs_dir_item);
+				if (!strncmp("default", name, name_len)) {
+					subvol_id = btrfs_disk_key_objectid(
+						&di->location);
+					break;
+				}
+			}
+
+			off += sh->len;
+		}
+	}
+
 	/* now that we have all the subvol-relative paths filled in,
 	 * we have to string the subvols together so that we can get
 	 * a path all the way back to the FS root
@@ -677,7 +725,13 @@ int list_subvols(int fd, int print_parent)
 	while (n) {
 		struct root_info *entry;
 		entry = rb_entry(n, struct root_info, rb_node);
-		resolve_root(&root_lookup, entry, print_parent);
+		if (!get_default)
+			resolve_root(&root_lookup, entry, print_parent);
+		/* we only want the default subvolume */
+		else if (subvol_id == entry->root_id)
+			resolve_root(&root_lookup, entry, print_parent);
+		else if (subvol_id == 0)
+			break;
 		n = rb_prev(n);
 	}
 
