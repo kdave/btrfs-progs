@@ -51,9 +51,9 @@ btrfs: control program to create snapshots and subvolumes:
 
 btrfsck: do a limited check of the FS extent trees.</li>
 
-debug-tree: print all of the FS metadata in text form.  Example:
+btrfs-debug-tree: print all of the FS metadata in text form.  Example:
 
-	debug-tree /dev/sda2 >& big_output_file
+	btrfs-debug-tree /dev/sda2 >& big_output_file
 
 
 
