@@ -91,7 +91,7 @@ static int test_isdir(char *path)
 
 }
 
-static int open_file_or_dir(const char *fname)
+int open_file_or_dir(const char *fname)
 {
 	int ret;
 	struct stat st;

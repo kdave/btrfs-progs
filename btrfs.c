@@ -127,6 +127,29 @@ static struct Command commands[] = {
 	  "If <newlabel> is passed, set the filesystem label to <newlabel>.\n"
 	  "The filesystem must be unmounted.\n"
 	},
+	{ do_scrub_start, -1,
+	  "scrub start", "[-Bdqr] <path>|<device>\n"
+		"Start a new scrub.",
+		"\n-B  do not background\n"
+		"-d  stats per device (-B only)\n"
+		"-q  quiet\n"
+		"-r  read only mode\n"
+	},
+	{ do_scrub_cancel, 1,
+	  "scrub cancel", "<path>|<device>\n"
+		"Cancel a running scrub.",
+	  NULL
+	},
+	{ do_scrub_resume, -1,
+	  "scrub resume", "[-Bdqr] <path>|<device>\n"
+		"Resume previously canceled or interrupted scrub.",
+	  NULL
+	},
+	{ do_scrub_status, -1,
+	  "scrub status", "[-d] <path>|<device>\n"
+		"Show status of running or finished scrub.",
+	  NULL
+	},
 	{ do_scan, 999, 
 	  "device scan", "[<device>...]\n"
 		"Scan all device for or the passed device for a btrfs\n"

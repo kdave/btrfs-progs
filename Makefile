@@ -35,8 +35,8 @@ all: version $(progs) manpages
 version:
 	bash version.sh
 
-btrfs: $(objects) btrfs.o btrfs_cmds.o
-	$(CC) -lpthread $(CFLAGS) -o btrfs btrfs.o btrfs_cmds.o \
+btrfs: $(objects) btrfs.o btrfs_cmds.o scrub.o
+	$(CC) -lpthread $(CFLAGS) -o btrfs btrfs.o btrfs_cmds.o scrub.o \
 		$(objects) $(LDFLAGS) $(LIBS)
 
 btrfsctl: $(objects) btrfsctl.o
