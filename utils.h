@@ -37,6 +37,8 @@ int btrfs_scan_for_fsid(struct btrfs_fs_devices *fs_devices, u64 total_devs,
 void btrfs_register_one_device(char *fname);
 int btrfs_scan_one_dir(char *dirname, int run_ioctl);
 int check_mounted(const char *devicename);
+int check_mounted_where(int fd, const char *file, char *where, int size,
+			struct btrfs_fs_devices **fs_devices_mnt);
 int btrfs_device_already_in_root(struct btrfs_root *root, int fd,
 				 int super_offset);
 char *pretty_sizes(u64 size);
