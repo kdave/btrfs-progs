@@ -24,6 +24,7 @@
 #include "radix-tree.h"
 #include "extent-cache.h"
 #include "extent_io.h"
+#include "ioctl.h"
 
 struct btrfs_root;
 struct btrfs_trans_handle;
@@ -250,7 +251,6 @@ static inline unsigned long btrfs_chunk_item_size(int num_stripes)
 		sizeof(struct btrfs_stripe) * (num_stripes - 1);
 }
 
-#define BTRFS_FSID_SIZE 16
 #define BTRFS_HEADER_FLAG_WRITTEN		(1ULL << 0)
 #define BTRFS_HEADER_FLAG_RELOC			(1ULL << 1)
 #define BTRFS_SUPER_FLAG_SEEDING		(1ULL << 32)
