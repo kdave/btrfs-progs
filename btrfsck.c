@@ -995,7 +995,7 @@ static int process_one_leaf(struct btrfs_root *root, struct extent_buffer *eb,
 	struct btrfs_key key;
 	u32 nritems;
 	int i;
-	int ret;
+	int ret = 0;
 	struct cache_tree *inode_cache;
 	struct shared_node *active_node;
 
