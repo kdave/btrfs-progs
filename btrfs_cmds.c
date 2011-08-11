@@ -372,7 +372,7 @@ int do_clone(int argc, char **argv)
 			return 1;
 		}
 	}
-	if (argc - optind != 2) {
+	if (argc - optind != 3) {
 		fprintf(stderr, "Invalid arguments for subvolume snapshot\n");
 		free(argv);
 		return 1;
