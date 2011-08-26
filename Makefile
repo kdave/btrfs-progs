@@ -1,6 +1,6 @@
 CC = gcc
 AM_CFLAGS = -Wall -D_FILE_OFFSET_BITS=64 -D_FORTIFY_SOURCE=2
-CFLAGS = -g -Werror -Os
+CFLAGS = -g -Os
 objects = ctree.o disk-io.o radix-tree.o extent-tree.o print-tree.o \
 	  root-tree.o dir-item.o file-item.o inode-item.o \
 	  inode-map.o crc32c.o rbtree.o extent-cache.o extent_io.o \
@@ -13,10 +13,11 @@ DEPFLAGS = -Wp,-MMD,$(@D)/.$(@F).d,-MT,$@
 INSTALL = install
 prefix ?= /usr/local
 bindir = $(prefix)/bin
-LIBS = -luuid
+LIBS=-luuid
+RESTORE_LIBS=-lz
 
 progs = btrfsctl mkfs.btrfs btrfs-debug-tree btrfs-show btrfs-vol btrfsck \
-	btrfs btrfs-map-logical
+	btrfs btrfs-map-logical restore find-root calc-size
 
 # make C=1 to enable sparse
 ifdef C
@@ -38,6 +39,15 @@ version:
 btrfs: $(objects) btrfs.o btrfs_cmds.o scrub.o
 	$(CC) -lpthread $(CFLAGS) -o btrfs btrfs.o btrfs_cmds.o scrub.o \
 		$(objects) $(LDFLAGS) $(LIBS)
+
+calc-size: $(objects) calc-size.o
+	gcc $(CFLAGS) -o calc-size calc-size.o $(objects) $(LDFLAGS) $(LIBS)
+
+find-root: $(objects) find-root.o
+	gcc $(CFLAGS) -o find-root find-root.o $(objects) $(LDFLAGS) $(LIBS)
+
+restore: $(objects) restore.o
+	gcc $(CFLAGS) -o restore restore.o $(objects) $(LDFLAGS) $(LIBS) $(RESTORE_LIBS)
 
 btrfsctl: $(objects) btrfsctl.o
 	$(CC) $(CFLAGS) -o btrfsctl btrfsctl.o $(objects) $(LDFLAGS) $(LIBS)
