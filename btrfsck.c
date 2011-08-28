@@ -2838,7 +2838,7 @@ int main(int ac, char **av)
 	cache_tree_init(&root_cache);
 
 	if((ret = check_mounted(av[optind])) < 0) {
-		fprintf(stderr, "Could not check mount status: %s\n", strerror(ret));
+		fprintf(stderr, "Could not check mount status: %s\n", strerror(-ret));
 		return ret;
 	} else if(ret) {
 		fprintf(stderr, "%s is currently mounted. Aborting.\n", av[optind]);
