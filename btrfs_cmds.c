@@ -1083,9 +1083,9 @@ int do_df_filesystem(int nargs, char **argv)
 
 		if (flags & BTRFS_BLOCK_GROUP_DATA) {
 			if (flags & BTRFS_BLOCK_GROUP_METADATA) {
-				snprintf(description, 15, "%s",
+				snprintf(description, 14, "%s",
 					 "Data+Metadata");
-				written += 14;
+				written += 13;
 			} else {
 				snprintf(description, 5, "%s", "Data");
 				written += 4;
