@@ -3501,11 +3501,12 @@ int main(int ac, char **av)
 
 	while(1) {
 		int c;
-		c = getopt_long(ac, av, "s:", long_options,
+		c = getopt_long(ac, av, "as:", long_options,
 				&option_index);
 		if (c < 0)
 			break;
 		switch(c) {
+			case 'a': /* ignored */ break;
 			case 's':
 				num = atol(optarg);
 				bytenr = btrfs_sb_offset(num);
