@@ -1016,8 +1016,14 @@ again:
 		}
 		fd = open(fullpath, O_RDONLY);
 		if (fd < 0) {
-			fprintf(stderr, "failed to read %s: %s\n", fullpath,
-					strerror(errno));
+			/* ignore the following errors:
+				ENXIO (device don't exists) 
+				ENOMEDIUM (No medium found -> 
+					like a cd tray empty)
+			*/
+			if(errno != ENXIO && errno != ENOMEDIUM) 
+				fprintf(stderr, "failed to read %s: %s\n", 
+					fullpath, strerror(errno));
 			continue;
 		}
 		ret = btrfs_scan_one_device(fd, fullpath, &tmp_devices,
