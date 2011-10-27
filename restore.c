@@ -204,6 +204,10 @@ static int copy_one_extent(struct btrfs_root *root, int fd,
 	ram_size = btrfs_file_extent_ram_bytes(leaf, fi);
 	size_left = disk_size;
 
+	/* we found a hole */
+	if (disk_size == 0)
+		return 0;
+
 	inbuf = malloc(disk_size);
 	if (!inbuf) {
 		fprintf(stderr, "No memory\n");
@@ -258,7 +262,7 @@ again:
 				      pos+total);
 			if (done < 0) {
 				free(inbuf);
-				fprintf(stderr, "Error writing: %d\n", errno);
+				fprintf(stderr, "Error writing: %d %s\n", errno, strerror(errno));
 				return -1;
 			}
 			total += done;
@@ -278,7 +282,7 @@ again:
 		done = pwrite(fd, outbuf+total, ram_size-total, pos+total);
 		if (done < 0) {
 			free(outbuf);
-			fprintf(stderr, "Error writing: %d\n", errno);
+			fprintf(stderr, "Error writing: %d %s\n", errno, strerror(errno));
 			return -1;
 		}
 		total += done;
@@ -314,11 +318,13 @@ static int copy_file(struct btrfs_root *root, int fd, struct btrfs_key *key,
 	struct extent_buffer *leaf;
 	struct btrfs_path *path;
 	struct btrfs_file_extent_item *fi;
+	struct btrfs_inode_item *inode_item;
 	struct btrfs_key found_key;
 	int ret;
 	int extent_type;
 	int compression;
 	int loops = 0;
+	u64 found_size = 0;
 
 	path = btrfs_alloc_path();
 	if (!path) {
@@ -326,6 +332,14 @@ static int copy_file(struct btrfs_root *root, int fd, struct btrfs_key *key,
 		return -1;
 	}
 	path->skip_locking = 1;
+
+	ret = btrfs_lookup_inode(NULL, root, path, key, 0);
+	if (ret == 0) {
+		inode_item = btrfs_item_ptr(path->nodes[0], path->slots[0],
+				    struct btrfs_inode_item);
+		found_size = btrfs_inode_size(path->nodes[0], inode_item);
+	}
+	btrfs_release_path(root, path);
 
 	key->offset = 0;
 	key->type = BTRFS_EXTENT_DATA_KEY;
@@ -370,6 +384,7 @@ static int copy_file(struct btrfs_root *root, int fd, struct btrfs_key *key,
 				} else if (ret) {
 					/* No more leaves to search */
 					btrfs_free_path(path);
+					goto set_size;
 					return 0;
 				}
 				leaf = path->nodes[0];
@@ -415,6 +430,9 @@ next:
 	}
 
 	btrfs_free_path(path);
+set_size:
+	if (found_size)
+		ftruncate(fd, (loff_t)found_size);
 	return 0;
 }
 
