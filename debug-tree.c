@@ -76,6 +76,7 @@ int main(int ac, char **av)
 	int slot;
 	int extent_only = 0;
 	int device_only = 0;
+	int roots_only = 0;
 	u64 block_only = 0;
 	struct btrfs_root *tree_root_scan;
 
@@ -83,7 +84,7 @@ int main(int ac, char **av)
 
 	while(1) {
 		int c;
-		c = getopt(ac, av, "deb:");
+		c = getopt(ac, av, "deb:r");
 		if (c < 0)
 			break;
 		switch(c) {
@@ -92,6 +93,9 @@ int main(int ac, char **av)
 				break;
 			case 'd':
 				device_only = 1;
+				break;
+			case 'r':
+				roots_only = 1;
 				break;
 			case 'b':
 				block_only = atoll(optarg);
@@ -134,13 +138,22 @@ int main(int ac, char **av)
 	}
 
 	if (!extent_only) {
-		printf("root tree\n");
-		btrfs_print_tree(root->fs_info->tree_root,
-				 root->fs_info->tree_root->node, 1);
+		if (roots_only) {
+			printf("root tree: %llu level %d\n",
+			     (unsigned long long)root->fs_info->tree_root->node->start,
+			     btrfs_header_level(root->fs_info->tree_root->node));
+			printf("chunk tree: %llu level %d\n",
+			     (unsigned long long)root->fs_info->chunk_root->node->start,
+			     btrfs_header_level(root->fs_info->chunk_root->node));
+		} else {
+			printf("root tree\n");
+			btrfs_print_tree(root->fs_info->tree_root,
+					 root->fs_info->tree_root->node, 1);
 
-		printf("chunk tree\n");
-		btrfs_print_tree(root->fs_info->chunk_root,
-				 root->fs_info->chunk_root->node, 1);
+			printf("chunk tree\n");
+			btrfs_print_tree(root->fs_info->chunk_root,
+					 root->fs_info->chunk_root->node, 1);
+		}
 	}
 	tree_root_scan = root->fs_info->tree_root;
 
@@ -253,8 +266,14 @@ again:
 			} else if (!skip) {
 				printf(" tree ");
 				btrfs_print_key(&disk_key);
-				printf(" \n");
-				btrfs_print_tree(tree_root_scan, buf, 1);
+				if (roots_only) {
+					printf(" %llu level %d\n",
+					       (unsigned long long)buf->start,
+					       btrfs_header_level(buf));
+				} else {
+					printf(" \n");
+					btrfs_print_tree(tree_root_scan, buf, 1);
+				}
 			}
 		}
 		path.slots[0]++;
