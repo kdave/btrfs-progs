@@ -17,7 +17,7 @@ LIBS=-luuid
 RESTORE_LIBS=-lz
 
 progs = btrfsctl mkfs.btrfs btrfs-debug-tree btrfs-show btrfs-vol btrfsck \
-	btrfs btrfs-map-logical restore find-root calc-size
+	btrfs btrfs-map-logical restore find-root calc-size btrfs-corrupt-block
 
 # make C=1 to enable sparse
 ifdef C
@@ -78,6 +78,9 @@ btrfstune: $(objects) btrfstune.o
 
 btrfs-map-logical: $(objects) btrfs-map-logical.o
 	$(CC) $(CFLAGS) -o btrfs-map-logical $(objects) btrfs-map-logical.o $(LDFLAGS) $(LIBS)
+
+btrfs-corrupt-block: $(objects) btrfs-corrupt-block.o
+	$(CC) $(CFLAGS) -o btrfs-corrupt-block $(objects) btrfs-corrupt-block.o $(LDFLAGS) $(LIBS)
 
 btrfs-image: $(objects) btrfs-image.o
 	$(CC) $(CFLAGS) -o btrfs-image $(objects) btrfs-image.o -lpthread -lz $(LDFLAGS) $(LIBS)
