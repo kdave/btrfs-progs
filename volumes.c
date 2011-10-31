@@ -982,6 +982,30 @@ int btrfs_num_copies(struct btrfs_mapping_tree *map_tree, u64 logical, u64 len)
 	return ret;
 }
 
+int btrfs_next_metadata(struct btrfs_mapping_tree *map_tree, u64 *logical,
+			u64 *size)
+{
+	struct cache_extent *ce;
+	struct map_lookup *map;
+
+	ce = find_first_cache_extent(&map_tree->cache_tree, *logical);
+
+	while (ce) {
+		ce = next_cache_extent(ce);
+		if (!ce)
+			return -ENOENT;
+
+		map = container_of(ce, struct map_lookup, ce);
+		if (map->type & BTRFS_BLOCK_GROUP_METADATA) {
+			*logical = ce->start;
+			*size = ce->size;
+			return 0;
+		}
+	}
+
+	return -ENOENT;
+}
+
 int btrfs_rmap_block(struct btrfs_mapping_tree *map_tree,
 		     u64 chunk_start, u64 physical, u64 devid,
 		     u64 **logical, int *naddrs, int *stripe_len)
@@ -1042,6 +1066,14 @@ int btrfs_map_block(struct btrfs_mapping_tree *map_tree, int rw,
 		    u64 logical, u64 *length,
 		    struct btrfs_multi_bio **multi_ret, int mirror_num)
 {
+	return __btrfs_map_block(map_tree, rw, logical, length, NULL,
+				 multi_ret, mirror_num);
+}
+
+int __btrfs_map_block(struct btrfs_mapping_tree *map_tree, int rw,
+		    u64 logical, u64 *length, u64 *type,
+		    struct btrfs_multi_bio **multi_ret, int mirror_num)
+{
 	struct cache_extent *ce;
 	struct map_lookup *map;
 	u64 offset;
@@ -1057,16 +1089,24 @@ int btrfs_map_block(struct btrfs_mapping_tree *map_tree, int rw,
 		stripes_allocated = 1;
 	}
 again:
+	ce = find_first_cache_extent(&map_tree->cache_tree, logical);
+	if (!ce) {
+		if (multi)
+			kfree(multi);
+		return -ENOENT;
+	}
+	if (ce->start > logical || ce->start + ce->size < logical) {
+		if (multi)
+			kfree(multi);
+		return -ENOENT;
+	}
+
 	if (multi_ret) {
 		multi = kzalloc(btrfs_multi_bio_size(stripes_allocated),
 				GFP_NOFS);
 		if (!multi)
 			return -ENOMEM;
 	}
-
-	ce = find_first_cache_extent(&map_tree->cache_tree, logical);
-	BUG_ON(!ce);
-	BUG_ON(ce->start > logical || ce->start + ce->size < logical);
 	map = container_of(ce, struct map_lookup, ce);
 	offset = logical - ce->start;
 
@@ -1158,6 +1198,8 @@ again:
 		stripe_index++;
 	}
 	*multi_ret = multi;
+	if (type)
+		*type = map->type;
 out:
 	return 0;
 }
@@ -1442,7 +1484,7 @@ int btrfs_read_sys_array(struct btrfs_root *root)
 	u8 *ptr;
 	unsigned long sb_ptr;
 	u32 cur;
-	int ret;
+	int ret = 0;
 
 	sb = btrfs_find_create_tree_block(root, BTRFS_SUPER_INFO_OFFSET,
 					  BTRFS_SUPER_INFO_SIZE);
@@ -1473,7 +1515,8 @@ int btrfs_read_sys_array(struct btrfs_root *root)
 		if (key.type == BTRFS_CHUNK_ITEM_KEY) {
 			chunk = (struct btrfs_chunk *)sb_ptr;
 			ret = read_one_chunk(root, &key, sb, chunk);
-			BUG_ON(ret);
+			if (ret)
+				break;
 			num_stripes = btrfs_chunk_num_stripes(sb, chunk);
 			len = btrfs_chunk_item_size(num_stripes);
 		} else {
@@ -1484,7 +1527,7 @@ int btrfs_read_sys_array(struct btrfs_root *root)
 		cur += len;
 	}
 	free_extent_buffer(sb);
-	return 0;
+	return ret;
 }
 
 int btrfs_read_chunk_tree(struct btrfs_root *root)

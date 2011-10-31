@@ -654,7 +654,6 @@ struct extent_buffer *alloc_extent_buffer(struct extent_io_tree *tree,
 		if (cache) {
 			eb = container_of(cache, struct extent_buffer,
 					  cache_node);
-			BUG_ON(eb->refs != 1);
 			free_extent_buffer(eb);
 		}
 		eb = __alloc_extent_buffer(tree, bytenr, blocksize);

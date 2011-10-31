@@ -687,6 +687,8 @@ int is_same_blk_file(const char* a, const char* b)
 	if(stat(a, &st_buf_a) < 0 ||
 	   stat(b, &st_buf_b) < 0)
 	{
+		if (errno == ENOENT)
+			return 0;
 		return -errno;
 	}
 
@@ -723,9 +725,11 @@ int is_same_loop_file(const char* a, const char* b)
 
 	/* Resolve a if it is a loop device */
 	if((ret = is_loop_device(a)) < 0) {
-	   return ret;
-	} else if(ret) {
-		if((ret = resolve_loop_device(a, res_a, sizeof(res_a))) < 0)
+		if (ret == -ENOENT)
+			return 0;
+		return ret;
+	} else if (ret) {
+		if ((ret = resolve_loop_device(a, res_a, sizeof(res_a))) < 0)
 			return ret;
 
 		final_a = res_a;
@@ -734,9 +738,11 @@ int is_same_loop_file(const char* a, const char* b)
 	}
 
 	/* Resolve b if it is a loop device */
-	if((ret = is_loop_device(b)) < 0) {
-	   return ret;
-	} else if(ret) {
+	if ((ret = is_loop_device(b)) < 0) {
+		if (ret == -ENOENT)
+			return 0;
+		return ret;
+	} else if (ret) {
 		if((ret = resolve_loop_device(b, res_b, sizeof(res_b))) < 0)
 			return ret;
 

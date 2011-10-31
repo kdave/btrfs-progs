@@ -765,7 +765,7 @@ static int bin_search(struct extent_buffer *eb, struct btrfs_key *key,
 	return -1;
 }
 
-static struct extent_buffer *read_node_slot(struct btrfs_root *root,
+struct extent_buffer *read_node_slot(struct btrfs_root *root,
 				   struct extent_buffer *parent, int slot)
 {
 	int level = btrfs_header_level(parent);
@@ -1092,7 +1092,7 @@ static int noinline push_nodes_for_insert(struct btrfs_trans_handle *trans,
 /*
  * readahead one full node of leaves
  */
-static void reada_for_search(struct btrfs_root *root, struct btrfs_path *path,
+void reada_for_search(struct btrfs_root *root, struct btrfs_path *path,
 			     int level, int slot, u64 objectid)
 {
 	struct extent_buffer *node;
@@ -1189,7 +1189,7 @@ int btrfs_search_slot(struct btrfs_trans_handle *trans, struct btrfs_root
 	u8 lowest_level = 0;
 
 	lowest_level = p->lowest_level;
-	WARN_ON(lowest_level && ins_len);
+	WARN_ON(lowest_level && ins_len > 0);
 	WARN_ON(p->nodes[0] != NULL);
 	/*
 	WARN_ON(!mutex_is_locked(&root->fs_info->fs_mutex));
@@ -2915,6 +2915,8 @@ int btrfs_next_leaf(struct btrfs_root *root, struct btrfs_path *path)
 			reada_for_search(root, path, level, slot, 0);
 
 		next = read_node_slot(root, c, slot);
+		if (!next)
+			return -EIO;
 		break;
 	}
 	path->slots[level] = slot;
@@ -2929,6 +2931,8 @@ int btrfs_next_leaf(struct btrfs_root *root, struct btrfs_path *path)
 		if (path->reada)
 			reada_for_search(root, path, level, 0, 0);
 		next = read_node_slot(root, next, 0);
+		if (!next)
+			return -EIO;
 	}
 	return 0;
 }

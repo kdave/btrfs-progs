@@ -96,9 +96,14 @@ int btrfs_alloc_dev_extent(struct btrfs_trans_handle *trans,
 			   u64 chunk_tree, u64 chunk_objectid,
 			   u64 chunk_offset,
 			   u64 num_bytes, u64 *start);
+int __btrfs_map_block(struct btrfs_mapping_tree *map_tree, int rw,
+		      u64 logical, u64 *length, u64 *type,
+		      struct btrfs_multi_bio **multi_ret, int mirror_num);
 int btrfs_map_block(struct btrfs_mapping_tree *map_tree, int rw,
 		    u64 logical, u64 *length,
 		    struct btrfs_multi_bio **multi_ret, int mirror_num);
+int btrfs_next_metadata(struct btrfs_mapping_tree *map_tree, u64 *logical,
+			u64 *size);
 int btrfs_rmap_block(struct btrfs_mapping_tree *map_tree,
 		     u64 chunk_start, u64 physical, u64 devid,
 		     u64 **logical, int *naddrs, int *stripe_len);

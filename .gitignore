@@ -1,0 +1,15 @@
+*.o
+.*.o.d
+version.h
+man/*.gz
+btrfs
+btrfs-debug-tree
+btrfs-map-logical
+btrfs-show
+btrfs-vol
+btrfsck
+btrfsctl
+find-root
+mkfs.btrfs
+repair
+restore

@@ -1039,6 +1039,13 @@ static int lookup_inline_extent_backref(struct btrfs_trans_handle *trans,
 		err = ret;
 		goto out;
 	}
+	if (ret) {
+		printf("Failed to find [%llu, %u, %llu]\n", key.objectid, key.type, key.offset);
+		btrfs_print_leaf(root, path->nodes[0]);
+		btrfs_free_path(path);
+		return -ENOENT;
+	}
+
 	BUG_ON(ret);
 
 	leaf = path->nodes[0];
@@ -1059,6 +1066,12 @@ static int lookup_inline_extent_backref(struct btrfs_trans_handle *trans,
 		item_size = btrfs_item_size_nr(leaf, path->slots[0]);
 	}
 #endif
+	if (item_size < sizeof(*ei)) {
+		printf("Size is %u, needs to be %u, slot %d\n", item_size,
+		       sizeof(*ei), path->slots[0]);
+		btrfs_print_leaf(root, leaf);
+		return -EINVAL;
+	}
 	BUG_ON(item_size < sizeof(*ei));
 
 	ei = btrfs_item_ptr(leaf, path->slots[0], struct btrfs_extent_item);

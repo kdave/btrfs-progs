@@ -79,6 +79,15 @@ struct btrfs_trans_handle;
  */
 #define BTRFS_EXTENT_CSUM_OBJECTID -10ULL
 
+/* For storing free space cache */
+#define BTRFS_FREE_SPACE_OBJECTID -11ULL
+
+/*
+ * The inode number assigned to the special inode for sotring
+ * free ino cache
+ */
+#define BTRFS_FREE_INO_OBJECTID -12ULL
+
 /* dummy objectid represents multiple objectids */
 #define BTRFS_MULTIPLE_OBJECTIDS -255ULL
 
@@ -290,6 +299,9 @@ struct btrfs_header {
 #define BTRFS_MAX_INLINE_DATA_SIZE(r) (BTRFS_LEAF_DATA_SIZE(r) - \
 					sizeof(struct btrfs_item) - \
 					sizeof(struct btrfs_file_extent_item))
+#define BTRFS_MAX_XATTR_SIZE(r)	(BTRFS_LEAF_DATA_SIZE(r) - \
+				 sizeof(struct btrfs_item) -\
+				 sizeof(struct btrfs_dir_item))
 
 
 /*
@@ -1735,6 +1747,10 @@ int btrfs_update_block_group(struct btrfs_trans_handle *trans,
 			     struct btrfs_root *root, u64 bytenr, u64 num,
 			     int alloc, int mark_free);
 /* ctree.c */
+void reada_for_search(struct btrfs_root *root, struct btrfs_path *path,
+			     int level, int slot, u64 objectid);
+struct extent_buffer *read_node_slot(struct btrfs_root *root,
+				   struct extent_buffer *parent, int slot);
 int btrfs_previous_item(struct btrfs_root *root,
 			struct btrfs_path *path, u64 min_objectid,
 			int type);
