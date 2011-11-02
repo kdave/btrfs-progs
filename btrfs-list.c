@@ -899,3 +899,38 @@ int find_updated_files(int fd, u64 root_id, u64 oldest_gen)
 	printf("transid marker was %llu\n", (unsigned long long)max_found);
 	return ret;
 }
+
+char *path_for_root(int fd, u64 root)
+{
+	struct root_lookup root_lookup;
+	struct rb_node *n;
+	char *ret_path = NULL;
+	int ret;
+
+	ret = __list_subvol_search(fd, &root_lookup);
+	if (ret < 0)
+		return ERR_PTR(ret);
+
+	ret = __list_subvol_fill_paths(fd, &root_lookup);
+	if (ret < 0)
+		return ERR_PTR(ret);
+
+	n = rb_last(&root_lookup.root);
+	while (n) {
+		struct root_info *entry;
+		u64 root_id;
+		u64 parent_id;
+		u64 level;
+		char *path;
+		entry = rb_entry(n, struct root_info, rb_node);
+		resolve_root(&root_lookup, entry, &root_id, &parent_id, &level,
+				&path);
+		if (root_id == root)
+			ret_path = path;
+		else
+			free(path);
+		n = rb_prev(n);
+	}
+
+	return ret_path;
+}

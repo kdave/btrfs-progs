@@ -39,3 +39,6 @@ int find_updated_files(int fd, u64 root_id, u64 oldest_gen);
 int do_find_newer(int argc, char **argv);
 int do_change_label(int argc, char **argv);
 int open_file_or_dir(const char *fname);
+int do_ino_to_path(int nargs, char **argv);
+int do_logical_to_ino(int nargs, char **argv);
+char *path_for_root(int fd, u64 root);

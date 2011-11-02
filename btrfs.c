@@ -169,6 +169,16 @@ static struct Command commands[] = {
 		"Remove a device from a filesystem.",
 	  NULL
 	},
+	{ do_ino_to_path, -2,
+	  "inspect-internal inode-resolve", "[-v] <inode> <path>\n"
+		"get file system paths for the given inode.",
+	  NULL
+	},
+	{ do_logical_to_ino, -2,
+	  "inspect-internal logical-resolve", "[-v] [-P] <logical> <path>\n"
+		"get file system paths for the given logical address.",
+	  NULL
+	},
 	{ 0, 0, 0, 0 }
 };
 
