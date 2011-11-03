@@ -1170,8 +1170,6 @@ again:
 			multi->num_stripes = map->sub_stripes;
 		else if (mirror_num)
 			stripe_index += mirror_num - 1;
-		else
-			stripe_index = stripe_nr % map->sub_stripes;
 
 		stripe_nr = stripe_nr / factor;
 	} else if (map->type & BTRFS_BLOCK_GROUP_DUP) {
