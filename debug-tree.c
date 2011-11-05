@@ -62,6 +62,45 @@ static void print_extents(struct btrfs_root *root, struct extent_buffer *eb)
 	}
 }
 
+static void print_old_roots(struct btrfs_super_block *super)
+{
+	struct btrfs_root_backup *backup;
+	int i;
+
+	for (i = 0; i < BTRFS_NUM_BACKUP_ROOTS; i++) {
+		backup = super->super_roots + i;
+		printf("btrfs root backup slot %d\n", i);
+		printf("\ttree root gen %llu block %llu\n",
+		       (unsigned long long)btrfs_backup_tree_root_gen(backup),
+		       (unsigned long long)btrfs_backup_tree_root(backup));
+
+		printf("\t\textent root gen %llu block %llu\n",
+		       (unsigned long long)btrfs_backup_extent_root_gen(backup),
+		       (unsigned long long)btrfs_backup_extent_root(backup));
+
+		printf("\t\tchunk root gen %llu block %llu\n",
+		       (unsigned long long)btrfs_backup_chunk_root_gen(backup),
+		       (unsigned long long)btrfs_backup_chunk_root(backup));
+
+		printf("\t\tdevice root gen %llu block %llu\n",
+		       (unsigned long long)btrfs_backup_dev_root_gen(backup),
+		       (unsigned long long)btrfs_backup_dev_root(backup));
+
+		printf("\t\tcsum root gen %llu block %llu\n",
+		       (unsigned long long)btrfs_backup_csum_root_gen(backup),
+		       (unsigned long long)btrfs_backup_csum_root(backup));
+
+		printf("\t\tfs root gen %llu block %llu\n",
+		       (unsigned long long)btrfs_backup_fs_root_gen(backup),
+		       (unsigned long long)btrfs_backup_fs_root(backup));
+
+		printf("\t\t%llu used %llu total %llu devices\n",
+		       (unsigned long long)btrfs_backup_bytes_used(backup),
+		       (unsigned long long)btrfs_backup_total_bytes(backup),
+		       (unsigned long long)btrfs_backup_num_devices(backup));
+	}
+}
+
 int main(int ac, char **av)
 {
 	struct btrfs_root *root;
@@ -77,6 +116,7 @@ int main(int ac, char **av)
 	int extent_only = 0;
 	int device_only = 0;
 	int roots_only = 0;
+	int root_backups = 0;
 	u64 block_only = 0;
 	struct btrfs_root *tree_root_scan;
 
@@ -84,7 +124,7 @@ int main(int ac, char **av)
 
 	while(1) {
 		int c;
-		c = getopt(ac, av, "deb:r");
+		c = getopt(ac, av, "deb:rR");
 		if (c < 0)
 			break;
 		switch(c) {
@@ -96,6 +136,10 @@ int main(int ac, char **av)
 				break;
 			case 'r':
 				roots_only = 1;
+				break;
+			case 'R':
+				roots_only = 1;
+				root_backups = 1;
 				break;
 			case 'b':
 				block_only = atoll(optarg);
@@ -288,6 +332,9 @@ again:
 
 	if (extent_only || device_only)
 		return 0;
+
+	if (root_backups)
+		print_old_roots(&root->fs_info->super_copy);
 
 	printf("total bytes %llu\n",
 	       (unsigned long long)btrfs_super_total_bytes(&root->fs_info->super_copy));
