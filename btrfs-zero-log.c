@@ -42,6 +42,7 @@ static void print_usage(void)
 int main(int ac, char **av)
 {
 	struct btrfs_root *root;
+	struct btrfs_trans_handle *trans;
 	int ret;
 
 	if (ac != 2)
@@ -62,8 +63,10 @@ int main(int ac, char **av)
 	if (root == NULL)
 		return 1;
 
+	trans = btrfs_start_transaction(root, 1);
 	btrfs_set_super_log_root(&root->fs_info->super_copy, 0);
 	btrfs_set_super_log_root_level(&root->fs_info->super_copy, 0);
+	btrfs_commit_transaction(trans, root);
 	close_ctree(root);
 	return ret;
 }
