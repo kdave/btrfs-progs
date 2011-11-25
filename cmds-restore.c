@@ -27,9 +27,11 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <lzo/lzoconf.h>
 #include <lzo/lzo1x.h>
 #include <zlib.h>
+#include <regex.h>
 
 #include "ctree.h"
 #include "disk-io.h"
@@ -539,7 +541,8 @@ set_size:
 }
 
 static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
-		      const char *output_rootdir, const char *dir)
+		      const char *output_rootdir, const char *dir,
+		      const regex_t *mreg)
 {
 	struct btrfs_path *path;
 	struct extent_buffer *leaf;
@@ -645,6 +648,9 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 
 		/* full path from root of btrfs being restored */
 		snprintf(fs_name, 4096, "%s/%s", dir, filename);
+
+		if (REG_NOMATCH == regexec(mreg, fs_name, 0, NULL, 0))
+			goto next;
 
 		/* full path from system root */
 		snprintf(path_name, 4096, "%s%s", output_rootdir, fs_name);
@@ -759,7 +765,7 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 			}
 			loops = 0;
 			ret = search_dir(search_root, &location,
-					 output_rootdir, dir);
+					 output_rootdir, dir, mreg);
 			free(dir);
 			if (ret) {
 				if (ignore_errors)
@@ -990,8 +996,13 @@ int cmd_restore(int argc, char **argv)
 	int super_mirror = 0;
 	int find_dir = 0;
 	int list_roots = 0;
+	const char *match_regstr = NULL;
+	int match_cflags = REG_EXTENDED | REG_NOSUB | REG_NEWLINE;
+	regex_t match_reg, *mreg = NULL;
+	char reg_err[256];
 
-	while ((opt = getopt(argc, argv, "sviot:u:df:r:l")) != -1) {
+	while ((opt = getopt(argc, argv, "sviot:u:df:r:lcm:")) != -1) {
+
 		switch (opt) {
 			case 's':
 				get_snaps = 1;
@@ -1044,6 +1055,12 @@ int cmd_restore(int argc, char **argv)
 				break;
 			case 'l':
 				list_roots = 1;
+				break;
+			case 'c':
+				match_cflags |= REG_ICASE;
+				break;
+			case 'm':
+				match_regstr = optarg;
 				break;
 			default:
 				usage(cmd_restore_usage);
@@ -1116,9 +1133,21 @@ int cmd_restore(int argc, char **argv)
 		key.objectid = BTRFS_FIRST_FREE_OBJECTID;
 	}
 
-	ret = search_dir(root, &key, dir_name, "");
+	if (match_regstr) {
+		ret = regcomp(&match_reg, match_regstr, match_cflags);
+		if (ret) {
+			regerror(ret, &match_reg, reg_err, sizeof(reg_err));
+			fprintf(stderr, "Regex compile failed: %s\n", reg_err);
+			goto out;
+		}
+		mreg = &match_reg;
+	}
+
+	ret = search_dir(root, &key, dir_name, "", mreg);
 
 out:
+	if (mreg)
+		regfree(mreg);
 	close_ctree(root);
 	return ret;
 }
