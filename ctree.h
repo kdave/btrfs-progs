@@ -1391,9 +1391,11 @@ static inline u8 *btrfs_dev_extent_chunk_tree_uuid(struct btrfs_dev_extent *dev)
 
 /* struct btrfs_extent_item */
 BTRFS_SETGET_FUNCS(extent_refs, struct btrfs_extent_item, refs, 64);
+BTRFS_SETGET_STACK_FUNCS(stack_extent_refs, struct btrfs_extent_item, refs, 64);
 BTRFS_SETGET_FUNCS(extent_generation, struct btrfs_extent_item,
 		   generation, 64);
 BTRFS_SETGET_FUNCS(extent_flags, struct btrfs_extent_item, flags, 64);
+BTRFS_SETGET_STACK_FUNCS(stack_extent_flags, struct btrfs_extent_item, flags, 64);
 
 BTRFS_SETGET_FUNCS(extent_refs_v0, struct btrfs_extent_item_v0, refs, 32);
 
@@ -1429,6 +1431,10 @@ BTRFS_SETGET_FUNCS(extent_inline_ref_type, struct btrfs_extent_inline_ref,
 		   type, 8);
 BTRFS_SETGET_FUNCS(extent_inline_ref_offset, struct btrfs_extent_inline_ref,
 		   offset, 64);
+BTRFS_SETGET_STACK_FUNCS(stack_extent_inline_ref_type,
+			 struct btrfs_extent_inline_ref, type, 8);
+BTRFS_SETGET_STACK_FUNCS(stack_extent_inline_ref_offset,
+			 struct btrfs_extent_inline_ref, offset, 64);
 
 static inline u32 btrfs_extent_inline_ref_size(int type)
 {

@@ -186,6 +186,10 @@ btrfs-convert: $(objects) $(libs) convert.o
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o btrfs-convert $(objects) convert.o -lext2fs -lcom_err $(LDFLAGS) $(LIBS)
 
+btrfs-fragments: $(objects) $(libs) fragments.o
+	@echo "    [LD]     $@"
+	$(Q)$(CC) $(CFLAGS) -o btrfs-fragments $(objects) fragments.o $(LDFLAGS) $(LIBS) -lgd -lpng -ljpeg -lfreetype
+
 ioctl-test: $(objects) $(libs) ioctl-test.o
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o ioctl-test $(objects) ioctl-test.o $(LDFLAGS) $(LIBS)
