@@ -1002,7 +1002,7 @@ static int scrub_fs_info(char *path,
 	}
 
 	ret = ioctl(fd, BTRFS_IOC_FS_INFO, fi_args);
-	if (ret && errno == EINVAL) {
+	if (ret && (errno == EINVAL || errno == ENOTTY)) {
 		/* path is no mounted btrfs. try if it's a device */
 		ret = check_mounted_where(fd, path, mp, sizeof(mp),
 						&fs_devices_mnt);
