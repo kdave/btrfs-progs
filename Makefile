@@ -37,8 +37,8 @@ version:
 	bash version.sh
 
 btrfs: $(objects) btrfs.o btrfs_cmds.o scrub.o
-	$(CC) -lpthread $(CFLAGS) -o btrfs btrfs.o btrfs_cmds.o scrub.o \
-		$(objects) $(LDFLAGS) $(LIBS)
+	$(CC) $(CFLAGS) -o btrfs btrfs.o btrfs_cmds.o scrub.o \
+		$(objects) $(LDFLAGS) $(LIBS) -lpthread
 
 calc-size: $(objects) calc-size.o
 	gcc $(CFLAGS) -o calc-size calc-size.o $(objects) $(LDFLAGS) $(LIBS)
