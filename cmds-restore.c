@@ -649,7 +649,7 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 		/* full path from root of btrfs being restored */
 		snprintf(fs_name, 4096, "%s/%s", dir, filename);
 
-		if (REG_NOMATCH == regexec(mreg, fs_name, 0, NULL, 0))
+		if (mreg && REG_NOMATCH == regexec(mreg, fs_name, 0, NULL, 0))
 			goto next;
 
 		/* full path from system root */
