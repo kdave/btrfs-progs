@@ -1328,7 +1328,12 @@ int main(int ac, char **av)
 		fprintf(stderr, "error during mkfs %d\n", ret);
 		exit(1);
 	}
+
 	root = open_ctree(file, 0, O_RDWR);
+	if (!root) {
+		fprintf(stderr, "ctree init failed\n");
+		exit(1);
+	}
 	root->fs_info->alloc_start = alloc_start;
 
 	ret = make_root_dir(root, mixed);
@@ -1343,10 +1348,6 @@ int main(int ac, char **av)
 		goto raid_groups;
 
 	btrfs_register_one_device(file);
-	if (!root) {
-		fprintf(stderr, "ctree init failed\n");
-		return -1;
-	}
 
 	zero_end = 1;
 	while(ac-- > 0) {
