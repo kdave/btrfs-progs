@@ -17,19 +17,19 @@ btrfs \- control a btrfs filesystem
 .PP
 \fBbtrfs\fP \fBsubvolume get-default\fP\fI <path>\fP
 .PP
+\fBbtrfs\fP \fBfilesystem defragment\fP -c[zlib|lzo] [-l \fIlen\fR] \
+[-s \fIstart\fR] [-t \fIsize\fR] -[vf] <\fIfile\fR>|<\fIdir\fR> \
+[<\fIfile\fR>|<\fIdir\fR>...]
+.PP
 \fBbtrfs\fP \fBfilesystem sync\fP\fI <path> \fP
 .PP
 \fBbtrfs\fP \fBfilesystem resize\fP\fI [devid:][+/\-]<size>[gkm]|[devid:]max <filesystem>\fP
 .PP
 \fBbtrfs\fP \fBfilesystem label\fP\fI <dev> [newlabel]\fP
 .PP
-\fBbtrfs\fP \fBfilesystem defrag\fP\fI [options] <file>|<dir> [<file>|<dir>...]\fP
-.PP
 \fBbtrfs\fP \fBsubvolume find-new\fP\fI <subvolume> <last_gen>\fP
 .PP
 \fBbtrfs\fP \fBfilesystem balance\fP\fI <path> \fP
-.PP
-\fBbtrfs\fP \fBfilesystem defragment\fP\fI <file>|<dir> [<file>|<dir>...]\fP
 .PP
 \fBbtrfs\fP \fBdevice scan\fP\fI [--all-devices|<device> [<device>...]]\fP
 .PP
@@ -78,7 +78,7 @@ and as
 .I filesystem sync.
 In this case
 .I btrfs
-returnsfilesystem sync
+returns filesystem sync
 If a command is terminated by
 .I --help
 , the detailed help is showed. If the passed command matches more commands,
@@ -132,12 +132,17 @@ Get the default subvolume of the filesystem \fI<path>\fR. The output format
 is similar to \fBsubvolume list\fR command.
 .TP
 
-\fBfilesystem defragment\fP -c[zlib|lzo] [-l \fIlen\fR] [-s \fIstart\fR] [-t \fIsize\fR] -[vf] <\fIfile\fR>|<\fIdir\fR> [<\fIfile\fR>|<\fIdir\fR>...]
+\fBfilesystem defragment\fP -c[zlib|lzo] [-l \fIlen\fR] [-s \fIstart\fR] \
+[-t \fIsize\fR] -[vf] <\fIfile\fR>|<\fIdir\fR> [<\fIfile\fR>|<\fIdir\fR>...]
 
 Defragment file data and/or directory metadata. To defragment all files in a
 directory you have to specify each one on its own or use your shell wildcards.
 
-The start position and the number of bytes to deframention can be specified by \fIstart\fR and \fIlen\fR. Any extent bigger than \fIthresh\fR will be considered already defragged. Use 0 to take the kernel default, and use 1 to say eveery single extent must be rewritten. You can also turn on compression in defragment operations.
+The start position and the number of bytes to defragment can be specified by
+\fIstart\fR and \fIlen\fR. Any extent bigger than threshold will be
+considered already defragged. Use 0 to take the kernel default, and use 1 to
+say every single extent must be rewritten. You can also turn on compression in
+defragment operations.
 
 \fB-v\fP be verbose
 
@@ -151,9 +156,9 @@ The start position and the number of bytes to deframention can be specified by \
 
 \fB-t size\fP defragment only files at least \fIsize\fR bytes big
 
-NOTE: defragmenting with kernels up to 2.6.37 will unlink COW-ed copies of data, don't 
-use it if you use snapshots, have de-duplicated your data or made copies with 
-\fBcp --reflink\fP.
+NOTE: defragmenting with kernels up to 2.6.37 will unlink COW-ed copies of data,
+don't use it if you use snapshots, have de-duplicated your data or made
+copies with \fBcp --reflink\fP.
 .TP
 
 \fBsubvolume find-new\fR\fI <subvolume> <last_gen>\fR
@@ -177,7 +182,7 @@ If the prefix \fI+\fR or \fI\-\fR is present the size is increased or decreased
 by the quantity \fI<size>\fR.
 If no units are specified, the unit of the \fI<size>\fR parameter defaults to
 bytes. Optionally, the size parameter may be suffixed by one of the following
-the unit designators: 'K', 'M', or 'G', kilobytes, megabytes, or gigabytes,
+units designators: 'K', 'M', or 'G', kilobytes, megabytes, or gigabytes,
 respectively.
 
 If 'max' is passed, the filesystem will occupy all available space on the
@@ -192,13 +197,13 @@ it with the new desired size.  When recreating the partition make sure to use
 the same starting disk cylinder as before.
 .TP
 
-\fBbtrfs\fP \fBfilesystem label\fP\fI <dev> [newlabel]\fP
+\fBfilesystem label\fP\fI <dev> [newlabel]\fP
 Show or update the label of a filesystem. \fI<dev>\fR is used to identify the
 filesystem. 
 If a \fInewlabel\fR optional argument is passed, the label is changed. The
-following costraints exist for a label:
+following constraints exist for a label:
 .IP
-- the maximum allowable lenght shall be less or equal than 256 chars
+- the maximum allowable length shall be less or equal than 256 chars
 .IP
 - the label shall not  contain the '/' or '\\' characters.
 
@@ -216,7 +221,7 @@ If \fB--all-devices\fP is passed, all the devices under /dev are scanned;
 otherwise the devices list is extracted from the /proc/partitions file.
 .TP
 
-\fBdevice balance\fR \fI<path>\fR
+\fBfilesystem balance\fR \fI<path>\fR
 Balance the chunks of the filesystem identified by \fI<path>\fR
 across the devices.
 .TP
