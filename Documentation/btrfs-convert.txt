@@ -25,6 +25,10 @@ Ignore xattrs and ACLs.
 Disable packing of small files.
 -r::
 Roll back to ext2fs.
+-l <LABEL>::
+set filesystem label during conversion.
+-L::
+use label from the converted filesystem.
 
 EXIT STATUS
 -----------
