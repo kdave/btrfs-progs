@@ -91,6 +91,54 @@ struct btrfs_ioctl_fs_info_args {
 	__u64 reserved[124];			/* pad to 1k */
 };
 
+/* balance control ioctl modes */
+#define BTRFS_BALANCE_CTL_PAUSE		1
+#define BTRFS_BALANCE_CTL_CANCEL	2
+#define BTRFS_BALANCE_CTL_RESUME	3
+
+/*
+ * this is packed, because it should be exactly the same as its disk
+ * byte order counterpart (struct btrfs_disk_balance_args)
+ */
+struct btrfs_balance_args {
+	__u64 profiles;
+	__u64 usage;
+	__u64 devid;
+	__u64 pstart;
+	__u64 pend;
+	__u64 vstart;
+	__u64 vend;
+
+	__u64 target;
+
+	__u64 flags;
+
+	__u64 unused[8];
+} __attribute__ ((__packed__));
+
+struct btrfs_balance_progress {
+	__u64 expected;
+	__u64 considered;
+	__u64 completed;
+};
+
+#define BTRFS_BALANCE_STATE_RUNNING	(1ULL << 0)
+#define BTRFS_BALANCE_STATE_PAUSE_REQ	(1ULL << 1)
+#define BTRFS_BALANCE_STATE_CANCEL_REQ	(1ULL << 2)
+
+struct btrfs_ioctl_balance_args {
+	__u64 flags;				/* in/out */
+	__u64 state;				/* out */
+
+	struct btrfs_balance_args data;		/* in/out */
+	struct btrfs_balance_args meta;		/* in/out */
+	struct btrfs_balance_args sys;		/* in/out */
+
+	struct btrfs_balance_progress stat;	/* out */
+
+	__u64 unused[72];			/* pad to 1k */
+};
+
 struct btrfs_ioctl_search_key {
 	/* which root are we searching.  0 is the tree of tree roots */
 	__u64 tree_id;
@@ -273,6 +321,11 @@ struct btrfs_ioctl_logical_ino_args {
 					struct btrfs_ioctl_dev_info_args)
 #define BTRFS_IOC_FS_INFO _IOR(BTRFS_IOCTL_MAGIC, 31, \
                                  struct btrfs_ioctl_fs_info_args)
+#define BTRFS_IOC_BALANCE_V2 _IOWR(BTRFS_IOCTL_MAGIC, 32, \
+				   struct btrfs_ioctl_balance_args)
+#define BTRFS_IOC_BALANCE_CTL _IOW(BTRFS_IOCTL_MAGIC, 33, int)
+#define BTRFS_IOC_BALANCE_PROGRESS _IOR(BTRFS_IOCTL_MAGIC, 34, \
+					struct btrfs_ioctl_balance_args)
 #define BTRFS_IOC_INO_PATHS _IOWR(BTRFS_IOCTL_MAGIC, 35, \
 					struct btrfs_ioctl_ino_path_args)
 #define BTRFS_IOC_LOGICAL_INO _IOWR(BTRFS_IOCTL_MAGIC, 36, \
