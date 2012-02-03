@@ -38,8 +38,8 @@ all: version $(progs) manpages
 version:
 	bash version.sh
 
-btrfs: $(objects) btrfs.o common.o $(cmds_objects)
-	$(CC) $(CFLAGS) -o btrfs btrfs.o common.o $(cmds_objects) \
+btrfs: $(objects) btrfs.o help.o common.o $(cmds_objects)
+	$(CC) $(CFLAGS) -o btrfs btrfs.o help.o common.o $(cmds_objects) \
 		$(objects) $(LDFLAGS) $(LIBS) -lpthread
 
 calc-size: $(objects) calc-size.o
