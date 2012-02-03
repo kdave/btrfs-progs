@@ -240,6 +240,7 @@ const struct cmd_group btrfs_cmd_group = {
 	btrfs_cmd_group_usage, btrfs_cmd_group_info, {
 		{ "subvolume", cmd_subvolume, NULL, &subvolume_cmd_group, 0 },
 		{ "filesystem", cmd_filesystem, NULL, &filesystem_cmd_group, 0 },
+		{ "balance", cmd_balance, NULL, &balance_cmd_group, 0 },
 		{ "device", cmd_device, NULL, &device_cmd_group, 0 },
 		{ "scrub", cmd_scrub, NULL, &scrub_cmd_group, 0 },
 		{ "inspect-internal", cmd_inspect, NULL, &inspect_cmd_group, 0 },
