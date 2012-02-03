@@ -27,11 +27,14 @@
 #include "kerncompat.h"
 #include "ioctl.h"
 
-#include "btrfs_cmds.h"
+#include "commands.h"
 
 /* btrfs-list.c */
 int list_subvols(int fd, int print_parent, int get_default);
 int find_updated_files(int fd, u64 root_id, u64 oldest_gen);
+
+static const char subvolume_cmd_group_usage[] =
+	"btrfs subvolume <command> <args>";
 
 /*
  * test if path is a directory
@@ -52,13 +55,26 @@ static int test_isdir(char *path)
 	return S_ISDIR(st.st_mode);
 }
 
-int do_create_subvol(int argc, char **argv)
+static const char * const cmd_subvol_create_usage[] = {
+	"btrfs subvolume create [<dest>/]<name>",
+	"Create a subvolume",
+	"Create a subvolume <name> in <dest>.  If <dest> is not given",
+	"subvolume <name> will be created in the current directory.",
+	NULL
+};
+
+static int cmd_subvol_create(int argc, char **argv)
 {
 	int	res, fddst, len, e;
 	char	*newname;
 	char	*dstdir;
 	struct btrfs_ioctl_vol_args	args;
-	char	*dst = argv[1];
+	char	*dst;
+
+	if (check_argc_exact(argc, 2))
+		usage(cmd_subvol_create_usage);
+
+	dst = argv[1];
 
 	res = test_isdir(dst);
 	if(res >= 0 ){
@@ -105,7 +121,6 @@ int do_create_subvol(int argc, char **argv)
 	}
 
 	return 0;
-
 }
 
 /*
@@ -127,12 +142,23 @@ static int test_issubvolume(char *path)
 	return (st.st_ino == 256) && S_ISDIR(st.st_mode);
 }
 
-int do_delete_subvolume(int argc, char **argv)
+static const char * const cmd_subvol_delete_usage[] = {
+	"btrfs subvolume delete <name>",
+	"Delete a subvolume",
+	NULL
+};
+
+static int cmd_subvol_delete(int argc, char **argv)
 {
 	int	res, fd, len, e;
 	struct btrfs_ioctl_vol_args	args;
 	char	*dname, *vname, *cpath;
-	char	*path = argv[1];
+	char	*path;
+
+	if (check_argc_exact(argc, 2))
+		usage(cmd_subvol_delete_usage);
+
+	path = argv[1];
 
 	res = test_issubvolume(path);
 	if(res<0){
@@ -186,32 +212,40 @@ int do_delete_subvolume(int argc, char **argv)
 	}
 
 	return 0;
-
 }
 
-int do_subvol_list(int argc, char **argv)
+static const char * const cmd_subvol_list_usage[] = {
+	"btrfs subvolume list [-p] <path>",
+	"List subvolumes (and snapshots)",
+	"",
+	"-p     print parent ID",
+	NULL
+};
+
+static int cmd_subvol_list(int argc, char **argv)
 {
 	int fd;
 	int ret;
 	int print_parent = 0;
 	char *subvol;
-        int optind = 1;
 
+	optind = 1;
 	while(1) {
 		int c = getopt(argc, argv, "p");
-		if (c < 0) break;
+		if (c < 0)
+			break;
+
 		switch(c) {
 		case 'p':
 			print_parent = 1;
-			optind++;
 			break;
+		default:
+			usage(cmd_subvol_list_usage);
 		}
 	}
-	
-	if (argc - optind != 1) {
-		fprintf(stderr, "ERROR: invalid arguments for subvolume list\n");
-		return 1;
-	}
+
+	if (check_argc_exact(argc - optind, 1))
+		usage(cmd_subvol_list_usage);
 
 	subvol = argv[optind];
 
@@ -236,41 +270,46 @@ int do_subvol_list(int argc, char **argv)
 	return 0;
 }
 
-int do_clone(int argc, char **argv)
+static const char * const cmd_snapshot_usage[] = {
+	"btrfs subvolume snapshot [-r] <source> [<dest>/]<name>",
+	"Create a snapshot of the subvolume",
+	"Create a writable/readonly snapshot of the subvolume <source> with",
+	"the name <name> in the <dest> directory",
+	"",
+	"-r     create a readonly snapshot",
+	NULL
+};
+
+static int cmd_snapshot(int argc, char **argv)
 {
 	char	*subvol, *dst;
-	int	res, fd, fddst, len, e, optind = 0, readonly = 0;
+	int	res, fd, fddst, len, e, readonly = 0;
 	char	*newname;
 	char	*dstdir;
 	struct btrfs_ioctl_vol_args_v2	args;
 
 	memset(&args, 0, sizeof(args));
 
+	optind = 1;
 	while (1) {
 		int c = getopt(argc, argv, "r");
-
 		if (c < 0)
 			break;
+
 		switch (c) {
 		case 'r':
-			optind++;
 			readonly = 1;
 			break;
 		default:
-			fprintf(stderr,
-				"Invalid arguments for subvolume snapshot\n");
-			free(argv);
-			return 1;
+			usage(cmd_snapshot_usage);
 		}
 	}
-	if (argc - optind != 3) {
-		fprintf(stderr, "Invalid arguments for subvolume snapshot\n");
-		free(argv);
-		return 1;
-	}
 
-	subvol = argv[optind+1];
-	dst = argv[optind+2];
+	if (check_argc_exact(argc - optind, 2))
+		usage(cmd_snapshot_usage);
+
+	subvol = argv[optind];
+	dst = argv[optind + 1];
 
 	res = test_issubvolume(subvol);
 	if(res<0){
@@ -350,14 +389,22 @@ int do_clone(int argc, char **argv)
 	}
 
 	return 0;
-
 }
 
-int do_get_default_subvol(int nargs, char **argv)
+static const char * const cmd_subvol_get_default_usage[] = {
+	"btrfs subvolume get-dafault <path>",
+	"Get the default subvolume of a filesystem",
+	NULL
+};
+
+static int cmd_subvol_get_default(int argc, char **argv)
 {
 	int fd;
 	int ret;
 	char *subvol;
+
+	if (check_argc_exact(argc, 2))
+		usage(cmd_subvol_get_default_usage);
 
 	subvol = argv[1];
 
@@ -382,12 +429,24 @@ int do_get_default_subvol(int nargs, char **argv)
 	return 0;
 }
 
-int do_set_default_subvol(int nargs, char **argv)
+static const char * const cmd_subvol_set_default_usage[] = {
+	"btrfs subvolume set-dafault <subvolid> <path>",
+	"Set the default subvolume of a filesystem",
+	NULL
+};
+
+static int cmd_subvol_set_default(int argc, char **argv)
 {
 	int	ret=0, fd, e;
 	u64	objectid;
-	char	*path = argv[2];
-	char	*subvolid = argv[1];
+	char	*path;
+	char	*subvolid;
+
+	if (check_argc_exact(argc, 3))
+		usage(cmd_subvol_set_default_usage);
+
+	subvolid = argv[1];
+	path = argv[2];
 
 	fd = open_file_or_dir(path);
 	if (fd < 0) {
@@ -411,12 +470,21 @@ int do_set_default_subvol(int nargs, char **argv)
 	return 0;
 }
 
-int do_find_newer(int argc, char **argv)
+static const char * const cmd_find_new_usage[] = {
+	"btrfs subvolume find-new <path> <lastgen>",
+	"List the recently modified files in a filesystem",
+	NULL
+};
+
+static int cmd_find_new(int argc, char **argv)
 {
 	int fd;
 	int ret;
 	char *subvol;
 	u64 last_gen;
+
+	if (check_argc_exact(argc, 3))
+		usage(cmd_find_new_usage);
 
 	subvol = argv[1];
 	last_gen = atoll(argv[2]);
@@ -442,3 +510,22 @@ int do_find_newer(int argc, char **argv)
 	return 0;
 }
 
+const struct cmd_group subvolume_cmd_group = {
+	subvolume_cmd_group_usage, NULL, {
+		{ "create", cmd_subvol_create, cmd_subvol_create_usage, NULL, 0 },
+		{ "delete", cmd_subvol_delete, cmd_subvol_delete_usage, NULL, 0 },
+		{ "list", cmd_subvol_list, cmd_subvol_list_usage, NULL, 0 },
+		{ "snapshot", cmd_snapshot, cmd_snapshot_usage, NULL, 0 },
+		{ "get-default", cmd_subvol_get_default,
+			cmd_subvol_get_default_usage, NULL, 0 },
+		{ "set-default", cmd_subvol_set_default,
+			cmd_subvol_set_default_usage, NULL, 0 },
+		{ "find-new", cmd_find_new, cmd_find_new_usage, NULL, 0 },
+		{ 0, 0, 0, 0, 0 }
+	}
+};
+
+int cmd_subvolume(int argc, char **argv)
+{
+	return handle_command_group(&subvolume_cmd_group, argc, argv);
+}

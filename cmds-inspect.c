@@ -23,10 +23,13 @@
 #include "kerncompat.h"
 #include "ioctl.h"
 
-#include "btrfs_cmds.h"
+#include "commands.h"
 
 /* btrfs-list.c */
 char *path_for_root(int fd, u64 root);
+
+static const char inspect_cmd_group_usage[] =
+	"btrfs inspect-internal <command> <args>";
 
 static int __ino_to_path_fd(u64 inum, int fd, int verbose, const char *prepend)
 {
@@ -70,29 +73,34 @@ out:
 	return ret;
 }
 
-int do_ino_to_path(int nargs, char **argv)
+static const char * const cmd_inode_resolve_usage[] = {
+	"btrfs inspect-internal inode-resolve [-v] <inode> <path>",
+	"Get file system paths for the given inode",
+	NULL
+};
+
+static int cmd_inode_resolve(int argc, char **argv)
 {
 	int fd;
 	int verbose = 0;
 
 	optind = 1;
 	while (1) {
-		int c = getopt(nargs, argv, "v");
+		int c = getopt(argc, argv, "v");
 		if (c < 0)
 			break;
+
 		switch (c) {
 		case 'v':
 			verbose = 1;
 			break;
 		default:
-			fprintf(stderr, "invalid arguments for ipath\n");
-			return 1;
+			usage(cmd_inode_resolve_usage);
 		}
 	}
-	if (nargs - optind != 2) {
-		fprintf(stderr, "invalid arguments for ipath\n");
-		return 1;
-	}
+
+	if (check_argc_exact(argc - optind, 2))
+		usage(cmd_inode_resolve_usage);
 
 	fd = open_file_or_dir(argv[optind+1]);
 	if (fd < 0) {
@@ -104,7 +112,13 @@ int do_ino_to_path(int nargs, char **argv)
 				argv[optind+1]);
 }
 
-int do_logical_to_ino(int nargs, char **argv)
+static const char * const cmd_logical_resolve_usage[] = {
+	"btrfs inspect-internal logical-resolve [-Pv] <logical> <path>",
+	"Get file system paths for the given logical address",
+	NULL
+};
+
+static int cmd_logical_resolve(int argc, char **argv)
 {
 	int ret;
 	int fd;
@@ -119,9 +133,10 @@ int do_logical_to_ino(int nargs, char **argv)
 
 	optind = 1;
 	while (1) {
-		int c = getopt(nargs, argv, "Pv");
+		int c = getopt(argc, argv, "Pv");
 		if (c < 0)
 			break;
+
 		switch (c) {
 		case 'P':
 			getpath = 0;
@@ -130,14 +145,12 @@ int do_logical_to_ino(int nargs, char **argv)
 			verbose = 1;
 			break;
 		default:
-			fprintf(stderr, "invalid arguments for ipath\n");
-			return 1;
+			usage(cmd_logical_resolve_usage);
 		}
 	}
-	if (nargs - optind != 2) {
-		fprintf(stderr, "invalid arguments for ipath\n");
-		return 1;
-	}
+
+	if (check_argc_exact(argc - optind, 2))
+		usage(cmd_logical_resolve_usage);
 
 	inodes = malloc(4096);
 	if (!inodes)
@@ -212,3 +225,17 @@ out:
 	return ret;
 }
 
+const struct cmd_group inspect_cmd_group = {
+	inspect_cmd_group_usage, NULL, {
+		{ "inode-resolve", cmd_inode_resolve, cmd_inode_resolve_usage,
+			NULL, 0 },
+		{ "logical-resolve", cmd_logical_resolve,
+			cmd_logical_resolve_usage, NULL, 0 },
+		{ 0, 0, 0, 0, 0 }
+	}
+};
+
+int cmd_inspect(int argc, char **argv)
+{
+	return handle_command_group(&inspect_cmd_group, argc, argv);
+}

@@ -78,3 +78,18 @@ void help_unknown_token(const char *arg, const struct cmd_group *grp);
 void help_ambiguous_token(const char *arg, const struct cmd_group *grp);
 
 void help_command_group(const struct cmd_group *grp, int argc, char **argv);
+
+/* common.c */
+int open_file_or_dir(const char *fname);
+
+extern const struct cmd_group subvolume_cmd_group;
+extern const struct cmd_group filesystem_cmd_group;
+extern const struct cmd_group device_cmd_group;
+extern const struct cmd_group scrub_cmd_group;
+extern const struct cmd_group inspect_cmd_group;
+
+int cmd_subvolume(int argc, char **argv);
+int cmd_filesystem(int argc, char **argv);
+int cmd_device(int argc, char **argv);
+int cmd_scrub(int argc, char **argv);
+int cmd_inspect(int argc, char **argv);

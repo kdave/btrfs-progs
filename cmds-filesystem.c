@@ -31,17 +31,31 @@
 
 #include "version.h"
 
-#include "btrfs_cmds.h"
+#include "commands.h"
 #include "btrfslabel.h"
 
-int do_df_filesystem(int nargs, char **argv)
+static const char filesystem_cmd_group_usage[] =
+	"btrfs filesystem [<group>] <command> [<args>]";
+
+static const char * const cmd_df_usage[] = {
+	"btrfs filesystem df <path>",
+	"Show space usage information for a mount point",
+	NULL
+};
+
+static int cmd_df(int argc, char **argv)
 {
 	struct btrfs_ioctl_space_args *sargs;
 	u64 count = 0, i;
 	int ret;
 	int fd;
 	int e;
-	char *path = argv[1];
+	char *path;
+
+	if (check_argc_exact(argc, 2))
+		usage(cmd_df_usage);
+
+	path = argv[1];
 
 	fd = open_file_or_dir(path);
 	if (fd < 0) {
@@ -195,7 +209,14 @@ static void print_one_uuid(struct btrfs_fs_devices *fs_devices)
 	printf("\n");
 }
 
-int do_show_filesystem(int argc, char **argv)
+static const char * const cmd_show_usage[] = {
+	"btrfs filesystem show [--all-devices] [<uuid>|<label>]",
+	"Show the structure of a filesystem",
+	"If no argument is given, structure of all present filesystems is shown.",
+	NULL
+};
+
+static int cmd_show(int argc, char **argv)
 {
 	struct list_head *all_uuids;
 	struct btrfs_fs_devices *fs_devices;
@@ -205,15 +226,13 @@ int do_show_filesystem(int argc, char **argv)
 	int checklist = 1;
 	int searchstart = 1;
 
-	if( argc >= 2 && !strcmp(argv[1],"--all-devices")){
+	if( argc > 1 && !strcmp(argv[1],"--all-devices")){
 		checklist = 0;
 		searchstart += 1;
 	}
 
-	if( argc > searchstart+1 ){
-		fprintf(stderr, "ERROR: too many arguments\n");
-		return 22;
-	}	
+	if (check_argc_max(argc, searchstart + 1))
+		usage(cmd_show_usage);
 
 	if(checklist)
 		ret = btrfs_scan_block_devices(0);
@@ -240,10 +259,21 @@ int do_show_filesystem(int argc, char **argv)
 	return 0;
 }
 
-int do_fssync(int argc, char **argv)
+static const char * const cmd_sync_usage[] = {
+	"btrfs filesystem sync <path>",
+	"Force a sync on a filesystem",
+	NULL
+};
+
+static int cmd_sync(int argc, char **argv)
 {
 	int 	fd, res, e;
-	char	*path = argv[1];
+	char	*path;
+
+	if (check_argc_exact(argc, 2))
+		usage(cmd_sync_usage);
+
+	path = argv[1];
 
 	fd = open_file_or_dir(path);
 	if (fd < 0) {
@@ -302,7 +332,20 @@ static int parse_compress_type(char *s)
 	};
 }
 
-int do_defrag(int ac, char **av)
+static const char * const cmd_defrag_usage[] = {
+	"btrfs filesystem defragment [options] <file>|<dir> [<file>|<dir>...]",
+	"Defragment a file or a directory",
+	"",
+	"-v             be verbose",
+	"-c[zlib,lzo]   compress the file while defragmenting",
+	"-f             flush data to disk immediately after defragmenting",
+	"-s start       defragment only from byte onward",
+	"-l len         defragment only up to len bytes",
+	"-t size        minimal size of file to be considered for defragmenting",
+	NULL
+};
+
+static int cmd_defrag(int argc, char **argv)
 {
 	int fd;
 	int flush = 0;
@@ -320,9 +363,10 @@ int do_defrag(int ac, char **av)
 
 	optind = 1;
 	while(1) {
-		int c = getopt(ac, av, "vc::fs:l:t:");
+		int c = getopt(argc, argv, "vc::fs:l:t:");
 		if (c < 0)
 			break;
+
 		switch(c) {
 		case 'c':
 			compress_type = BTRFS_COMPRESS_ZLIB;
@@ -350,16 +394,12 @@ int do_defrag(int ac, char **av)
 			fancy_ioctl = 1;
 			break;
 		default:
-			fprintf(stderr, "Invalid arguments for defragment\n");
-			free(av);
-			return 1;
+			usage(cmd_defrag_usage);
 		}
 	}
-	if (ac - optind == 0) {
-		fprintf(stderr, "Invalid arguments for defragment\n");
-		free(av);
-		return 1;
-	}
+
+	if (check_argc_min(argc - optind, 1))
+		usage(cmd_defrag_usage);
 
 	memset(&range, 0, sizeof(range));
 	range.start = start;
@@ -372,12 +412,12 @@ int do_defrag(int ac, char **av)
 	if (flush)
 		range.flags |= BTRFS_DEFRAG_RANGE_START_IO;
 
-	for (i = optind; i < ac; i++) {
+	for (i = optind; i < argc; i++) {
 		if (verbose)
-			printf("%s\n", av[i]);
-		fd = open_file_or_dir(av[i]);
+			printf("%s\n", argv[i]);
+		fd = open_file_or_dir(argv[i]);
 		if (fd < 0) {
-			fprintf(stderr, "failed to open %s\n", av[i]);
+			fprintf(stderr, "failed to open %s\n", argv[i]);
 			perror("open:");
 			errors++;
 			continue;
@@ -398,7 +438,7 @@ int do_defrag(int ac, char **av)
 		}
 		if (ret) {
 			fprintf(stderr, "ERROR: defrag failed on %s - %s\n",
-				av[i], strerror(e));
+				argv[i], strerror(e));
 			errors++;
 		}
 		close(fd);
@@ -410,16 +450,25 @@ int do_defrag(int ac, char **av)
 		exit(1);
 	}
 
-	free(av);
 	return errors + 20;
 }
 
-int do_balance(int argc, char **argv)
-{
+static const char * const cmd_balance_usage[] = {
+	"btrfs filesystem balance <path>",
+	"Balance the chunks across the device",
+	NULL
+};
 
+static int cmd_balance(int argc, char **argv)
+{
 	int	fdmnt, ret=0, e;
 	struct btrfs_ioctl_vol_args args;
-	char	*path = argv[1];
+	char	*path;
+
+	if (check_argc_exact(argc, 2))
+		usage(cmd_balance_usage);
+
+	path = argv[1];
 
 	fdmnt = open_file_or_dir(path);
 	if (fdmnt < 0) {
@@ -440,12 +489,25 @@ int do_balance(int argc, char **argv)
 	return 0;
 }
 
-int do_resize(int argc, char **argv)
-{
+static const char * const cmd_resize_usage[] = {
+	"btrfs filesystem resize [+/-]<newsize>[gkm]|max <path>",
+	"Resize a filesystem",
+	"If 'max' is passed, the filesystem will occupy all available space",
+	"on the device.",
+	NULL
+};
 
+static int cmd_resize(int argc, char **argv)
+{
 	struct btrfs_ioctl_vol_args	args;
 	int	fd, res, len, e;
-	char	*amount=argv[1], *path=argv[2];
+	char	*amount, *path;
+
+	if (check_argc_exact(argc, 3))
+		usage(cmd_resize_usage);
+
+	amount = argv[1];
+	path = argv[2];
 
 	fd = open_file_or_dir(path);
 	if (fd < 0) {
@@ -472,17 +534,39 @@ int do_resize(int argc, char **argv)
 	return 0;
 }
 
-int do_change_label(int nargs, char **argv)
+static const char * const cmd_label_usage[] = {
+	"btrfs filesystem label <device> [<newlabel>]",
+	"Get or change the label of an unmounted filesystem",
+	"With one argument, get the label of filesystem on <device>.",
+	"If <newlabel> is passed, set the filesystem label to <newlabel>.",
+	NULL
+};
+
+static int cmd_label(int argc, char **argv)
 {
-	/* check the number of argument */
-	if ( nargs > 3 ){
-		fprintf(stderr, "ERROR: '%s' requires maximum 2 args\n",
-			argv[0]);
-		return -2;
-	}else if (nargs == 2){
-		return get_label(argv[1]);
-	} else {	/* nargs == 0 */
+	if (check_argc_min(argc, 2) || check_argc_max(argc, 3))
+		usage(cmd_label_usage);
+
+	if (argc > 2)
 		return set_label(argv[1], argv[2]);
-	}
+	else
+		return get_label(argv[1]);
 }
 
+const struct cmd_group filesystem_cmd_group = {
+	filesystem_cmd_group_usage, NULL, {
+		{ "df", cmd_df, cmd_df_usage, NULL, 0 },
+		{ "show", cmd_show, cmd_show_usage, NULL, 0 },
+		{ "sync", cmd_sync, cmd_sync_usage, NULL, 0 },
+		{ "defragment", cmd_defrag, cmd_defrag_usage, NULL, 0 },
+		{ "balance", cmd_balance, cmd_balance_usage, NULL, 0 },
+		{ "resize", cmd_resize, cmd_resize_usage, NULL, 0 },
+		{ "label", cmd_label, cmd_label_usage, NULL, 0 },
+		{ 0, 0, 0, 0, 0 },
+	}
+};
+
+int cmd_filesystem(int argc, char **argv)
+{
+	return handle_command_group(&filesystem_cmd_group, argc, argv);
+}
