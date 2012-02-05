@@ -706,6 +706,9 @@ int clear_extent_buffer_uptodate(struct extent_io_tree *tree,
 
 int extent_buffer_uptodate(struct extent_buffer *eb)
 {
+	if (!eb)
+		return 0;
+
 	if (eb->flags & EXTENT_UPTODATE)
 		return 1;
 	return 0;

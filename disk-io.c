@@ -444,7 +444,9 @@ static int find_and_setup_root(struct btrfs_root *tree_root,
 	generation = btrfs_root_generation(&root->root_item);
 	root->node = read_tree_block(root, btrfs_root_bytenr(&root->root_item),
 				     blocksize, generation);
-	BUG_ON(!root->node);
+	if (!extent_buffer_uptodate(root->node))
+		return -EIO;
+
 	return 0;
 }
 
@@ -471,7 +473,9 @@ static int find_and_setup_log_root(struct btrfs_root *tree_root,
 				     btrfs_super_generation(disk_super) + 1);
 
 	fs_info->log_root_tree = log_root;
-	BUG_ON(!log_root->node);
+
+	if (!extent_buffer_uptodate(log_root->node))
+		return -EIO;
 	return 0;
 }
 
@@ -580,7 +584,7 @@ struct btrfs_root *btrfs_read_fs_root(struct btrfs_fs_info *fs_info,
 		return fs_info->dev_root;
 	if (location->objectid == BTRFS_CSUM_TREE_OBJECTID)
 		return fs_info->csum_root;
-	
+
 	BUG_ON(location->objectid == BTRFS_TREE_RELOC_OBJECTID ||
 	       location->offset != (u64)-1);
 
@@ -601,8 +605,10 @@ struct btrfs_root *btrfs_read_fs_root(struct btrfs_fs_info *fs_info,
 	return root;
 }
 
-struct btrfs_root *__open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
-				   u64 root_tree_bytenr, int writes)
+static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
+					     u64 sb_bytenr,
+					     u64 root_tree_bytenr, int writes,
+					     int partial)
 {
 	u32 sectorsize;
 	u32 nodesize;
@@ -733,7 +739,7 @@ struct btrfs_root *__open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
 	chunk_root->node = read_tree_block(chunk_root,
 					   btrfs_super_chunk_root(disk_super),
 					   blocksize, generation);
-	if (!chunk_root->node) {
+	if (!extent_buffer_uptodate(chunk_root->node)) {
 		printk("Couldn't read chunk root\n");
 		goto out_devices;
 	}
@@ -745,7 +751,7 @@ struct btrfs_root *__open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
 	if (!(btrfs_super_flags(disk_super) & BTRFS_SUPER_FLAG_METADUMP)) {
 		ret = btrfs_read_chunk_tree(chunk_root);
 		if (ret)
-			goto out_chunk;
+			goto out_failed;
 	}
 
 	blocksize = btrfs_level_size(tree_root,
@@ -757,15 +763,15 @@ struct btrfs_root *__open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
 	tree_root->node = read_tree_block(tree_root,
 					  root_tree_bytenr,
 					  blocksize, generation);
-	if (!tree_root->node) {
+	if (!extent_buffer_uptodate(tree_root->node)) {
 		printk("Couldn't read tree root\n");
-		goto out_chunk;
+		goto out_failed;
 	}
 	ret = find_and_setup_root(tree_root, fs_info,
 				  BTRFS_EXTENT_TREE_OBJECTID, extent_root);
 	if (ret) {
 		printk("Couldn't setup extent tree\n");
-		goto out_tree;
+		goto out_failed;
 	}
 	extent_root->track_dirty = 1;
 
@@ -773,7 +779,7 @@ struct btrfs_root *__open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
 				  BTRFS_DEV_TREE_OBJECTID, dev_root);
 	if (ret) {
 		printk("Couldn't setup device tree\n");
-		goto out_extent;
+		goto out_failed;
 	}
 	dev_root->track_dirty = 1;
 
@@ -781,7 +787,7 @@ struct btrfs_root *__open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
 				  BTRFS_CSUM_TREE_OBJECTID, csum_root);
 	if (ret) {
 		printk("Couldn't setup csum tree\n");
-		goto out_dev;
+		goto out_failed;
 	}
 	csum_root->track_dirty = 1;
 
@@ -797,23 +803,28 @@ struct btrfs_root *__open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
 	fs_info->fs_root = btrfs_read_fs_root(fs_info, &key);
 
 	if (!fs_info->fs_root)
-		goto out_csum;
+		goto out_failed;
 
 	fs_info->data_alloc_profile = (u64)-1;
 	fs_info->metadata_alloc_profile = (u64)-1;
 	fs_info->system_alloc_profile = fs_info->metadata_alloc_profile;
 
-	return fs_info->fs_root;
-out_csum:
-	free_extent_buffer(fs_info->csum_root->node);
-out_dev:
-	free_extent_buffer(fs_info->dev_root->node);
-out_extent:
-	free_extent_buffer(fs_info->extent_root->node);
-out_tree:
-	free_extent_buffer(fs_info->tree_root->node);
-out_chunk:
-	free_extent_buffer(fs_info->chunk_root->node);
+	return fs_info;
+
+out_failed:
+	if (partial)
+		return fs_info;
+
+	if (fs_info->csum_root)
+		free_extent_buffer(fs_info->csum_root->node);
+	if (fs_info->dev_root)
+		free_extent_buffer(fs_info->dev_root->node);
+	if (fs_info->extent_root)
+		free_extent_buffer(fs_info->extent_root->node);
+	if (fs_info->tree_root)
+		free_extent_buffer(fs_info->tree_root->node);
+	if (fs_info->chunk_root)
+		free_extent_buffer(fs_info->chunk_root->node);
 out_devices:
 	close_all_devices(fs_info);
 out_cleanup:
@@ -833,10 +844,12 @@ out:
 	return NULL;
 }
 
-struct btrfs_root *open_ctree(const char *filename, u64 sb_bytenr, int writes)
+struct btrfs_fs_info *open_ctree_fs_info(const char *filename,
+					 u64 sb_bytenr, int writes,
+					 int partial)
 {
 	int fp;
-	struct btrfs_root *root;
+	struct btrfs_fs_info *info;
 	int flags = O_CREAT | O_RDWR;
 
 	if (!writes)
@@ -847,33 +860,50 @@ struct btrfs_root *open_ctree(const char *filename, u64 sb_bytenr, int writes)
 		fprintf (stderr, "Could not open %s\n", filename);
 		return NULL;
 	}
-	root = __open_ctree_fd(fp, filename, sb_bytenr, 0, writes);
+	info = __open_ctree_fd(fp, filename, sb_bytenr, 0, writes, partial);
 	close(fp);
+	return info;
+}
 
-	return root;
+struct btrfs_root *open_ctree(const char *filename, u64 sb_bytenr, int writes)
+{
+	struct btrfs_fs_info *info;
+
+	info = open_ctree_fs_info(filename, sb_bytenr, writes, 0);
+	if (!info)
+		return NULL;
+	return info->fs_root;
 }
 
 struct btrfs_root *open_ctree_recovery(const char *filename, u64 sb_bytenr,
 				       u64 root_tree_bytenr)
 {
 	int fp;
-	struct btrfs_root *root;
+	struct btrfs_fs_info *info;
+
 
 	fp = open(filename, O_RDONLY);
 	if (fp < 0) {
 		fprintf (stderr, "Could not open %s\n", filename);
 		return NULL;
 	}
-	root = __open_ctree_fd(fp, filename, sb_bytenr, root_tree_bytenr, 0);
+	info = __open_ctree_fd(fp, filename, sb_bytenr,
+			       root_tree_bytenr, 0, 0);
 	close(fp);
 
-	return root;
+	if (!info)
+		return NULL;
+	return info->fs_root;
 }
 
 struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
 				 int writes)
 {
-	return __open_ctree_fd(fp, path, sb_bytenr, 0, writes);
+	struct btrfs_fs_info *info;
+	info = __open_ctree_fd(fp, path, sb_bytenr, 0, writes, 0);
+	if (!info)
+		return NULL;
+	return info->fs_root;
 }
 
 int btrfs_read_dev_super(int fd, struct btrfs_super_block *sb, u64 sb_bytenr)

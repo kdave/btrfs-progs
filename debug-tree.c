@@ -104,6 +104,7 @@ static void print_old_roots(struct btrfs_super_block *super)
 int main(int ac, char **av)
 {
 	struct btrfs_root *root;
+	struct btrfs_fs_info *info;
 	struct btrfs_path path;
 	struct btrfs_key key;
 	struct btrfs_root_item ri;
@@ -152,12 +153,18 @@ int main(int ac, char **av)
 	if (ac != 1)
 		print_usage();
 
-	root = open_ctree(av[optind], 0, 0);
-	if (!root) {
+	info = open_ctree_fs_info(av[optind], 0, 0, 1);
+	if (!info) {
 		fprintf(stderr, "unable to open %s\n", av[optind]);
 		exit(1);
 	}
+	root = info->fs_root;
+
 	if (block_only) {
+		if (!root) {
+			fprintf(stderr, "unable to open %s\n", av[optind]);
+			exit(1);
+		}
 		leaf = read_tree_block(root,
 				      block_only,
 				      root->leafsize, 0);
@@ -184,25 +191,32 @@ int main(int ac, char **av)
 	if (!extent_only) {
 		if (roots_only) {
 			printf("root tree: %llu level %d\n",
-			     (unsigned long long)root->fs_info->tree_root->node->start,
-			     btrfs_header_level(root->fs_info->tree_root->node));
+			     (unsigned long long)info->tree_root->node->start,
+			     btrfs_header_level(info->tree_root->node));
 			printf("chunk tree: %llu level %d\n",
-			     (unsigned long long)root->fs_info->chunk_root->node->start,
-			     btrfs_header_level(root->fs_info->chunk_root->node));
+			     (unsigned long long)info->chunk_root->node->start,
+			     btrfs_header_level(info->chunk_root->node));
 		} else {
-			printf("root tree\n");
-			btrfs_print_tree(root->fs_info->tree_root,
-					 root->fs_info->tree_root->node, 1);
+			if (info->tree_root->node) {
+				printf("root tree\n");
+				btrfs_print_tree(info->tree_root,
+						 info->tree_root->node, 1);
+			}
 
-			printf("chunk tree\n");
-			btrfs_print_tree(root->fs_info->chunk_root,
-					 root->fs_info->chunk_root->node, 1);
+			if (info->chunk_root->node) {
+				printf("chunk tree\n");
+				btrfs_print_tree(info->chunk_root,
+						 info->chunk_root->node, 1);
+			}
 		}
 	}
-	tree_root_scan = root->fs_info->tree_root;
+	tree_root_scan = info->tree_root;
 
 	btrfs_init_path(&path);
 again:
+	if (!extent_buffer_uptodate(tree_root_scan->node))
+		goto no_node;
+
 	key.offset = 0;
 	key.objectid = 0;
 	btrfs_set_key_type(&key, BTRFS_ROOT_ITEM_KEY);
@@ -232,6 +246,9 @@ again:
 					      btrfs_level_size(tree_root_scan,
 							btrfs_root_level(&ri)),
 					      0);
+			if (!extent_buffer_uptodate(buf))
+				goto next;
+
 			switch(found_key.objectid) {
 			case BTRFS_ROOT_TREE_OBJECTID:
 				if (!skip)
@@ -320,13 +337,15 @@ again:
 				}
 			}
 		}
+next:
 		path.slots[0]++;
 	}
+no_node:
 	btrfs_release_path(root, &path);
 
-	if (tree_root_scan == root->fs_info->tree_root &&
-	    root->fs_info->log_root_tree) {
-		tree_root_scan = root->fs_info->log_root_tree;
+	if (tree_root_scan == info->tree_root &&
+	    info->log_root_tree) {
+		tree_root_scan = info->log_root_tree;
 		goto again;
 	}
 
@@ -334,14 +353,14 @@ again:
 		return 0;
 
 	if (root_backups)
-		print_old_roots(&root->fs_info->super_copy);
+		print_old_roots(&info->super_copy);
 
 	printf("total bytes %llu\n",
-	       (unsigned long long)btrfs_super_total_bytes(&root->fs_info->super_copy));
+	       (unsigned long long)btrfs_super_total_bytes(&info->super_copy));
 	printf("bytes used %llu\n",
-	       (unsigned long long)btrfs_super_bytes_used(&root->fs_info->super_copy));
+	       (unsigned long long)btrfs_super_bytes_used(&info->super_copy));
 	uuidbuf[36] = '\0';
-	uuid_unparse(root->fs_info->super_copy.fsid, uuidbuf);
+	uuid_unparse(info->super_copy.fsid, uuidbuf);
 	printf("uuid %s\n", uuidbuf);
 	printf("%s\n", BTRFS_BUILD_VERSION);
 	return 0;

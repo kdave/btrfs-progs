@@ -2809,6 +2809,7 @@ int main(int ac, char **av)
 {
 	struct cache_tree root_cache;
 	struct btrfs_root *root;
+	struct btrfs_fs_info *info;
 	u64 bytenr = 0;
 	int ret;
 	int num;
@@ -2845,10 +2846,12 @@ int main(int ac, char **av)
 		return -EBUSY;
 	}
 
-	root = open_ctree(av[optind], bytenr, 0);
+	info = open_ctree_fs_info(av[optind], bytenr, 0, 0);
 
-	if (root == NULL)
+	if (info == NULL)
 		return 1;
+
+	root = info->fs_root;
 
 	ret = check_extents(root);
 	if (ret)
