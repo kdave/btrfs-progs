@@ -270,7 +270,18 @@ static void dump_ioctl_balance_args(struct btrfs_ioctl_balance_args *args)
 	}
 }
 
-static int do_balance(const char *path, struct btrfs_ioctl_balance_args *args)
+static int do_balance_v1(int fd)
+{
+	struct btrfs_ioctl_vol_args args;
+	int ret;
+
+	memset(&args, 0, sizeof(args));
+	ret = ioctl(fd, BTRFS_IOC_BALANCE, &args);
+	return ret;
+}
+
+static int do_balance(const char *path, struct btrfs_ioctl_balance_args *args,
+		      int nofilters)
 {
 	int fd;
 	int ret;
@@ -284,29 +295,44 @@ static int do_balance(const char *path, struct btrfs_ioctl_balance_args *args)
 
 	ret = ioctl(fd, BTRFS_IOC_BALANCE_V2, args);
 	e = errno;
-	close(fd);
 
 	if (ret < 0) {
+		/*
+		 * older kernels don't have the new balance ioctl, try the
+		 * old one.  But, the old one doesn't know any filters, so
+		 * don't fall back if they tried to use the fancy new things
+		 */
+		if (e == ENOTTY && nofilters) {
+			ret = do_balance_v1(fd);
+			if (ret == 0)
+				goto out;
+			e = errno;
+		}
+
 		if (e == ECANCELED) {
 			if (args->state & BTRFS_BALANCE_STATE_PAUSE_REQ)
 				fprintf(stderr, "balance paused by user\n");
 			if (args->state & BTRFS_BALANCE_STATE_CANCEL_REQ)
 				fprintf(stderr, "balance canceled by user\n");
+			ret = 0;
 		} else {
 			fprintf(stderr, "ERROR: error during balancing '%s' "
 				"- %s\n", path, strerror(e));
 			if (e != EINPROGRESS)
 				fprintf(stderr, "There may be more info in "
 					"syslog - try dmesg | tail\n");
-			return 19;
+			ret = 19;
 		}
 	} else {
 		printf("Done, had to relocate %llu out of %llu chunks\n",
 		       (unsigned long long)args->stat.completed,
 		       (unsigned long long)args->stat.considered);
+		ret = 0;
 	}
 
-	return 0;
+out:
+	close(fd);
+	return ret;
 }
 
 static const char * const cmd_balance_start_usage[] = {
@@ -438,7 +464,7 @@ static int cmd_balance_start(int argc, char **argv)
 	if (verbose)
 		dump_ioctl_balance_args(&args);
 
-	return do_balance(argv[optind], &args);
+	return do_balance(argv[optind], &args, nofilters);
 }
 
 static const char * const cmd_balance_pause_usage[] = {
@@ -677,7 +703,7 @@ int cmd_balance(int argc, char **argv)
 		memset(&args, 0, sizeof(args));
 		args.flags |= BTRFS_BALANCE_TYPE_MASK;
 
-		return do_balance(argv[1], &args);
+		return do_balance(argv[1], &args, 1);
 	}
 
 	return handle_command_group(&balance_cmd_group, argc, argv);
