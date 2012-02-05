@@ -34,10 +34,14 @@
 
 #include "ctree.h"
 #include "ioctl.h"
-#include "btrfs_cmds.h"
 #include "utils.h"
 #include "volumes.h"
 #include "disk-io.h"
+
+#include "commands.h"
+
+static const char scrub_cmd_group_usage[] =
+	"btrfs scrub <command> [options] <path>|<device>";
 
 #define SCRUB_DATA_FILE "/var/lib/btrfs/scrub.status"
 #define SCRUB_PROGRESS_SOCKET_PATH "/var/lib/btrfs/scrub.progress"
@@ -1047,6 +1051,9 @@ int mkdir_p(char *path)
 	return 0;
 }
 
+static const char * const cmd_scrub_start_usage[];
+static const char * const cmd_scrub_resume_usage[];
+
 static int scrub_start(int argc, char **argv, int resume)
 {
 	int fdmnt;
@@ -1114,21 +1121,16 @@ static int scrub_start(int argc, char **argv, int resume)
 			break;
 		case '?':
 		default:
-			fprintf(stderr, "ERROR: scrub args invalid.\n"
-					" -B  do not background\n"
-					" -d  stats per device (-B only)\n"
-					" -q  quiet\n"
-					" -r  read only mode\n");
-			return 1;
+			usage(resume ? cmd_scrub_resume_usage :
+						cmd_scrub_start_usage);
 		}
 	}
 
 	/* try to catch most error cases before forking */
 
-	if (optind + 1 != argc) {
-		fprintf(stderr, "ERROR: scrub start needs path as last "
-			"argument\n");
-		return 1;
+	if (check_argc_exact(argc - optind, 1)) {
+		usage(resume ? cmd_scrub_resume_usage :
+					cmd_scrub_start_usage);
 	}
 
 	spc.progress = NULL;
@@ -1473,24 +1475,41 @@ out:
 	return 0;
 }
 
-int do_scrub_start(int argc, char **argv)
+static const char * const cmd_scrub_start_usage[] = {
+	"btrfs scrub start [-Bdqr] <path>|<device>",
+	"Start a new scrub",
+	"",
+	"-B     do not background",
+	"-d     stats per device (-B only)",
+	"-q     be quiet",
+	"-r     read only mode",
+	NULL
+};
+
+static int cmd_scrub_start(int argc, char **argv)
 {
 	return scrub_start(argc, argv, 0);
 }
 
-int do_scrub_resume(int argc, char **argv)
-{
-	return scrub_start(argc, argv, 1);
-}
+static const char * const cmd_scrub_cancel_usage[] = {
+	"btrfs scrub cancel <path>|<device>",
+	"Cancel a running scrub",
+	NULL
+};
 
-int do_scrub_cancel(int argc, char **argv)
+static int cmd_scrub_cancel(int argc, char **argv)
 {
-	char *path = argv[1];
+	char *path;
 	int ret;
 	int fdmnt;
 	int err;
 	char mp[BTRFS_PATH_NAME_MAX + 1];
 	struct btrfs_fs_devices *fs_devices_mnt = NULL;
+
+	if (check_argc_exact(argc, 2))
+		usage(cmd_scrub_cancel_usage);
+
+	path = argv[1];
 
 	fdmnt = open_file_or_dir(path);
 	if (fdmnt < 0) {
@@ -1528,9 +1547,33 @@ again:
 	return 0;
 }
 
-int do_scrub_status(int argc, char **argv)
-{
+static const char * const cmd_scrub_resume_usage[] = {
+	"btrfs scrub resume [-Bdqr] <path>|<device>",
+	"Resume previously canceled or interrupted scrub",
+	"",
+	"-B     do not background",
+	"-d     stats per device (-B only)",
+	"-q     be quiet",
+	"-r     read only mode",
+	NULL
+};
 
+static int cmd_scrub_resume(int argc, char **argv)
+{
+	return scrub_start(argc, argv, 1);
+}
+
+static const char * const cmd_scrub_status_usage[] = {
+	"btrfs scrub status [-dR] <path>|<device>",
+	"Show status of running or finished scrub",
+	"",
+	"-d     stats per device",
+	"-R     print raw stats",
+	NULL
+};
+
+static int cmd_scrub_status(int argc, char **argv)
+{
 	char *path;
 	struct btrfs_ioctl_fs_info_args fi_args;
 	struct btrfs_ioctl_dev_info_args *di_args = NULL;
@@ -1543,7 +1586,6 @@ int do_scrub_status(int argc, char **argv)
 	int ret;
 	int fdmnt;
 	int i;
-	optind = 1;
 	int print_raw = 0;
 	int do_stats_per_dev = 0;
 	char c;
@@ -1551,6 +1593,7 @@ int do_scrub_status(int argc, char **argv)
 	int fdres = -1;
 	int err = 0;
 
+	optind = 1;
 	while ((c = getopt(argc, argv, "dR")) != -1) {
 		switch (c) {
 		case 'd':
@@ -1561,17 +1604,12 @@ int do_scrub_status(int argc, char **argv)
 			break;
 		case '?':
 		default:
-			fprintf(stderr, "ERROR: scrub status args invalid.\n"
-					" -d  stats per device\n");
-			return 1;
+			usage(cmd_scrub_status_usage);
 		}
 	}
 
-	if (optind + 1 != argc) {
-		fprintf(stderr, "ERROR: scrub status needs path as last "
-			"argument\n");
-		return 1;
-	}
+	if (check_argc_exact(argc - optind, 1))
+		usage(cmd_scrub_status_usage);
 
 	path = argv[optind];
 
@@ -1663,4 +1701,19 @@ out:
 		close(fdres);
 
 	return err;
+}
+
+const struct cmd_group scrub_cmd_group = {
+	scrub_cmd_group_usage, NULL, {
+		{ "start", cmd_scrub_start, cmd_scrub_start_usage, NULL, 0 },
+		{ "cancel", cmd_scrub_cancel, cmd_scrub_cancel_usage, NULL, 0 },
+		{ "resume", cmd_scrub_resume, cmd_scrub_resume_usage, NULL, 0 },
+		{ "status", cmd_scrub_status, cmd_scrub_status_usage, NULL, 0 },
+		{ 0, 0, 0, 0, 0 }
+	}
+};
+
+int cmd_scrub(int argc, char **argv)
+{
+	return handle_command_group(&scrub_cmd_group, argc, argv);
 }
