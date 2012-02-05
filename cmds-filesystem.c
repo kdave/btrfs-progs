@@ -453,42 +453,6 @@ static int cmd_defrag(int argc, char **argv)
 	return errors + 20;
 }
 
-static const char * const cmd_balance_usage[] = {
-	"btrfs filesystem balance <path>",
-	"Balance the chunks across the device",
-	NULL
-};
-
-static int cmd_balance(int argc, char **argv)
-{
-	int	fdmnt, ret=0, e;
-	struct btrfs_ioctl_vol_args args;
-	char	*path;
-
-	if (check_argc_exact(argc, 2))
-		usage(cmd_balance_usage);
-
-	path = argv[1];
-
-	fdmnt = open_file_or_dir(path);
-	if (fdmnt < 0) {
-		fprintf(stderr, "ERROR: can't access to '%s'\n", path);
-		return 12;
-	}
-
-	memset(&args, 0, sizeof(args));
-	ret = ioctl(fdmnt, BTRFS_IOC_BALANCE, &args);
-	e = errno;
-	close(fdmnt);
-	if(ret<0){
-		fprintf(stderr, "ERROR: error during balancing '%s' - %s\n", 
-			path, strerror(e));
-
-		return 19;
-	}
-	return 0;
-}
-
 static const char * const cmd_resize_usage[] = {
 	"btrfs filesystem resize [+/-]<newsize>[gkm]|max <path>",
 	"Resize a filesystem",
@@ -559,7 +523,7 @@ const struct cmd_group filesystem_cmd_group = {
 		{ "show", cmd_show, cmd_show_usage, NULL, 0 },
 		{ "sync", cmd_sync, cmd_sync_usage, NULL, 0 },
 		{ "defragment", cmd_defrag, cmd_defrag_usage, NULL, 0 },
-		{ "balance", cmd_balance, cmd_balance_usage, NULL, 0 },
+		{ "balance", cmd_balance, NULL, &balance_cmd_group, 1 },
 		{ "resize", cmd_resize, cmd_resize_usage, NULL, 0 },
 		{ "label", cmd_label, cmd_label_usage, NULL, 0 },
 		{ 0, 0, 0, 0, 0 },

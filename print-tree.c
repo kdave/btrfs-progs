@@ -351,6 +351,9 @@ static void print_key_type(u8 type)
 	case BTRFS_DEV_EXTENT_KEY:
 		printf("DEV_EXTENT");
 		break;
+	case BTRFS_BALANCE_ITEM_KEY:
+		printf("BALANCE_ITEM");
+		break;
 	case BTRFS_STRING_ITEM_KEY:
 		printf("STRING_ITEM");
 		break;
@@ -390,6 +393,9 @@ static void print_objectid(unsigned long long objectid, u8 type)
 		break;
 	case BTRFS_CSUM_TREE_OBJECTID:
 		printf("CSUM_TREE");
+		break;
+	case BTRFS_BALANCE_OBJECTID:
+		printf("BALANCE");
 		break;
 	case BTRFS_ORPHAN_OBJECTID:
 		printf("ORPHAN");
