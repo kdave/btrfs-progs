@@ -2853,13 +2853,16 @@ int main(int ac, char **av)
 
 	root = info->fs_root;
 
+	fprintf(stderr, "checking extents\n");
 	ret = check_extents(root);
 	if (ret)
 		goto out;
+	fprintf(stderr, "checking fs roots\n");
 	ret = check_fs_roots(root, &root_cache);
 	if (ret)
 		goto out;
 
+	fprintf(stderr, "checking root refs\n");
 	ret = check_root_refs(root, &root_cache);
 out:
 	free_root_recs(&root_cache);
