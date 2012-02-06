@@ -32,11 +32,6 @@
 #include "list.h"
 #include "version.h"
 
-/* we write the mirror info to stdout unless they are dumping the data
- * to stdout
- * */
-static FILE *info_file;
-
 struct extent_buffer *debug_corrupt_block(struct btrfs_root *root, u64 bytenr,
 				     u32 blocksize, int copy)
 {
@@ -62,7 +57,7 @@ struct extent_buffer *debug_corrupt_block(struct btrfs_root *root, u64 bytenr,
 		device->total_ios++;
 		eb->dev_bytenr = multi->stripes[0].physical;
 
-		fprintf(info_file, "mirror %d logical %Lu physical %Lu "
+		fprintf(stdout, "mirror %d logical %Lu physical %Lu "
 			"device %s\n", mirror_num, (unsigned long long)bytenr,
 			(unsigned long long)eb->dev_bytenr, device->name);
 		kfree(multi);
@@ -106,24 +101,88 @@ static struct option long_options[] = {
 	{ 0, 0, 0, 0}
 };
 
+static int corrupt_extent(struct btrfs_root *root, u64 bytenr, int copy)
+{
+	struct btrfs_trans_handle *trans;
+	struct btrfs_key key;
+	struct extent_buffer *leaf;
+	u32 item_size;
+	unsigned long ptr;
+	struct btrfs_path *path;
+	int ret;
+	int slot;
+
+	trans = btrfs_start_transaction(root, 1);
+	path = btrfs_alloc_path();
+
+	key.objectid = bytenr;
+	key.type = (u8)-1;
+	key.offset = (u64)-1;
+
+	while(1) {
+		ret = btrfs_search_slot(trans, root->fs_info->extent_root,
+					&key, path, 0, 1);
+		if (ret < 0)
+			break;
+
+		if (ret > 0) {
+			if (path->slots[0] == 0)
+				break;
+			path->slots[0]--;
+		}
+		leaf = path->nodes[0];
+		slot = path->slots[0];
+		btrfs_item_key_to_cpu(leaf, &key, slot);
+		if (key.objectid != bytenr)
+			break;
+
+		if (key.type != BTRFS_EXTENT_ITEM_KEY &&
+		    key.type != BTRFS_TREE_BLOCK_REF_KEY &&
+		    key.type != BTRFS_EXTENT_DATA_REF_KEY &&
+		    key.type != BTRFS_EXTENT_REF_V0_KEY &&
+		    key.type != BTRFS_SHARED_BLOCK_REF_KEY &&
+		    key.type != BTRFS_SHARED_DATA_REF_KEY)
+			goto next;
+
+		fprintf(stderr, "corrupting extent record: key %Lu %u %Lu\n",
+			key.objectid, key.type, key.offset);
+
+		ptr = btrfs_item_ptr_offset(leaf, slot);
+		item_size = btrfs_item_size_nr(leaf, slot);
+		memset_extent_buffer(leaf, 0, ptr, item_size);
+		btrfs_mark_buffer_dirty(leaf);
+next:
+		btrfs_release_path(NULL, path);
+
+		if (key.offset > 0)
+			key.offset--;
+		if (key.offset == 0)
+			break;
+	}
+
+	btrfs_free_path(path);
+	btrfs_commit_transaction(trans, root);
+	ret = close_ctree(root);
+	BUG_ON(ret);
+	return 0;
+}
+
 int main(int ac, char **av)
 {
 	struct cache_tree root_cache;
 	struct btrfs_root *root;
 	struct extent_buffer *eb;
 	char *dev;
-	char *output_file = NULL;
 	u64 logical = 0;
 	int ret = 0;
 	int option_index = 0;
 	int copy = 0;
 	u64 bytes = 4096;
-	int out_fd = 0;
-	int err;
+	int extent_rec;
 
 	while(1) {
 		int c;
-		c = getopt_long(ac, av, "l:c:", long_options,
+		c = getopt_long(ac, av, "l:c:e", long_options,
 				&option_index);
 		if (c < 0)
 			break;
@@ -152,6 +211,9 @@ int main(int ac, char **av)
 					print_usage();
 				}
 				break;
+			case 'e':
+				extent_rec = 1;
+				break;
 			default:
 				print_usage();
 		}
@@ -174,23 +236,9 @@ int main(int ac, char **av)
 		fprintf(stderr, "Open ctree failed\n");
 		exit(1);
 	}
-
-	info_file = stdout;
-	if (output_file) {
-		if (strcmp(output_file, "-") == 0) {
-			out_fd = 1;
-			info_file = stderr;
-		} else {
-			out_fd = open(output_file, O_RDWR | O_CREAT, 0600);
-			if (out_fd < 0)
-				goto close;
-			err = ftruncate(out_fd, 0);
-			if (err) {
-				close(out_fd);
-				goto close;
-			}
-			info_file = stdout;
-		}
+	if (extent_rec) {
+		ret = corrupt_extent (root, logical, 0);
+		goto out;
 	}
 
 	if (bytes == 0)
@@ -201,21 +249,10 @@ int main(int ac, char **av)
 
 	while (bytes > 0) {
 		eb = debug_corrupt_block(root, logical, root->sectorsize, copy);
-		if (eb && output_file) {
-			err = write(out_fd, eb->data, eb->len);
-			if (err < 0 || err != eb->len) {
-				fprintf(stderr, "output file write failed\n");
-				goto out_close_fd;
-			}
-		}
 		free_extent_buffer(eb);
 		logical += root->sectorsize;
 		bytes -= root->sectorsize;
 	}
-
-out_close_fd:
-	if (output_file && out_fd != 1)
-		close(out_fd);
-close:
+out:
 	return ret;
 }
