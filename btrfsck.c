@@ -2441,11 +2441,14 @@ static int process_extent_item(struct cache_tree *extent_cache,
 					0);
 			break;
 		default:
-			BUG();
+			fprintf(stderr, "corrupt extent record: key %Lu %u %Lu\n",
+				key.objectid, key.type, key.offset);
+			goto out;
 		}
 		ptr += btrfs_extent_inline_ref_size(type);
 	}
 	WARN_ON(ptr > end);
+out:
 	return 0;
 }
 
