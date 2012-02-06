@@ -28,7 +28,8 @@
 #include "extent_io.h"
 #include "list.h"
 
-u64 cache_max = 1024 * 1024 * 32;
+u64 cache_soft_max = 1024 * 1024 * 256;
+u64 cache_hard_max = 1 * 1024 * 1024 * 1024;
 
 void extent_io_tree_init(struct extent_io_tree *tree)
 {
@@ -540,18 +541,19 @@ static int free_some_buffers(struct extent_io_tree *tree)
 	struct extent_buffer *eb;
 	struct list_head *node, *next;
 
-	if (tree->cache_size < cache_max)
+	if (tree->cache_size < cache_soft_max)
 		return 0;
+
 	list_for_each_safe(node, next, &tree->lru) {
 		eb = list_entry(node, struct extent_buffer, lru);
 		if (eb->refs == 1) {
 			free_extent_buffer(eb);
-			if (tree->cache_size < cache_max)
+			if (tree->cache_size < cache_hard_max)
 				break;
 		} else {
 			list_move_tail(&eb->lru, &tree->lru);
 		}
-		if (nrscan++ > 64)
+		if (nrscan++ > 64 && tree->cache_size < cache_hard_max)
 			break;
 	}
 	return 0;
