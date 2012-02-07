@@ -239,7 +239,7 @@ static void print_extent_item(struct extent_buffer *eb, int slot)
 			       btrfs_shared_data_ref_count(eb, sref));
 			break;
 		default:
-			BUG();
+			return;
 		}
 		ptr += btrfs_extent_inline_ref_size(type);
 	}

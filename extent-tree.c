@@ -1041,8 +1041,6 @@ static int lookup_inline_extent_backref(struct btrfs_trans_handle *trans,
 	}
 	if (ret) {
 		printf("Failed to find [%llu, %u, %llu]\n", key.objectid, key.type, key.offset);
-		btrfs_print_leaf(root, path->nodes[0]);
-		btrfs_free_path(path);
 		return -ENOENT;
 	}
 
@@ -1067,8 +1065,9 @@ static int lookup_inline_extent_backref(struct btrfs_trans_handle *trans,
 	}
 #endif
 	if (item_size < sizeof(*ei)) {
-		printf("Size is %u, needs to be %u, slot %d\n", item_size,
-		       sizeof(*ei), path->slots[0]);
+		printf("Size is %u, needs to be %u, slot %d\n",
+		       (unsigned)item_size,
+		       (unsigned)sizeof(*ei), path->slots[0]);
 		btrfs_print_leaf(root, leaf);
 		return -EINVAL;
 	}
@@ -1460,10 +1459,8 @@ int btrfs_lookup_extent_info(struct btrfs_trans_handle *trans,
 	if (ret < 0)
 		goto out;
 	if (ret != 0) {
-		btrfs_print_leaf(root, path->nodes[0]);
-		printk("failed to find block number %Lu\n",
-		       (unsigned long long)bytenr);
-		BUG();
+		ret = -EIO;
+		goto out;
 	}
 
 	l = path->nodes[0];
@@ -1484,9 +1481,8 @@ int btrfs_lookup_extent_info(struct btrfs_trans_handle *trans,
 			extent_flags = BTRFS_BLOCK_FLAG_FULL_BACKREF;
 #else
 			BUG();
-#endif		
-		}
-		BUG_ON(num_refs == 0);
+#endif
+	}
 	item = btrfs_item_ptr(l, path->slots[0], struct btrfs_extent_item);
 	if (refs)
 		*refs = num_refs;
@@ -2031,6 +2027,12 @@ pinit:
 
 	BUG_ON(err < 0);
 	return 0;
+}
+
+void btrfs_pin_extent(struct btrfs_fs_info *fs_info,
+		       u64 bytenr, u64 num_bytes)
+{
+	update_pinned_extents(fs_info->extent_root, bytenr, num_bytes, 1);
 }
 
 /*
