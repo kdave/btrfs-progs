@@ -1083,7 +1083,9 @@ static int lookup_inline_extent_backref(struct btrfs_trans_handle *trans,
 		ptr += sizeof(struct btrfs_tree_block_info);
 		BUG_ON(ptr > end);
 	} else {
-		BUG_ON(!(flags & BTRFS_EXTENT_FLAG_DATA));
+		if (!(flags & BTRFS_EXTENT_FLAG_DATA)) {
+			return -EIO;
+		}
 	}
 
 	err = -ENOENT;
@@ -2120,8 +2122,6 @@ static int __free_extent(struct btrfs_trans_handle *trans,
 			extent_slot = path->slots[0];
 		}
 	} else {
-		btrfs_print_leaf(extent_root, path->nodes[0]);
-		WARN_ON(1);
 		printk(KERN_ERR "btrfs unable to find ref byte nr %llu "
 		       "parent %llu root %llu  owner %llu offset %llu\n",
 		       (unsigned long long)bytenr,
@@ -2129,6 +2129,8 @@ static int __free_extent(struct btrfs_trans_handle *trans,
 		       (unsigned long long)root_objectid,
 		       (unsigned long long)owner_objectid,
 		       (unsigned long long)owner_offset);
+		ret = -EIO;
+		goto fail;
 	}
 
 	leaf = path->nodes[0];
@@ -2238,6 +2240,7 @@ static int __free_extent(struct btrfs_trans_handle *trans,
 					 mark_free);
 		BUG_ON(ret);
 	}
+fail:
 	btrfs_free_path(path);
 	finish_current_insert(trans, extent_root);
 	return ret;

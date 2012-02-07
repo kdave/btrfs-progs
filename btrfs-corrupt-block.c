@@ -93,17 +93,9 @@ static void print_usage(void)
 	exit(1);
 }
 
-static struct option long_options[] = {
-	/* { "byte-count", 1, NULL, 'b' }, */
-	{ "logical", 1, NULL, 'l' },
-	{ "copy", 1, NULL, 'c' },
-	{ "bytes", 1, NULL, 'b' },
-	{ 0, 0, 0, 0}
-};
-
-static int corrupt_extent(struct btrfs_root *root, u64 bytenr, int copy)
+static int corrupt_extent(struct btrfs_trans_handle *trans,
+			  struct btrfs_root *root, u64 bytenr, int copy)
 {
-	struct btrfs_trans_handle *trans;
 	struct btrfs_key key;
 	struct extent_buffer *leaf;
 	u32 item_size;
@@ -111,8 +103,8 @@ static int corrupt_extent(struct btrfs_root *root, u64 bytenr, int copy)
 	struct btrfs_path *path;
 	int ret;
 	int slot;
+	int should_del = rand() % 3;
 
-	trans = btrfs_start_transaction(root, 1);
 	path = btrfs_alloc_path();
 
 	key.objectid = bytenr;
@@ -121,7 +113,7 @@ static int corrupt_extent(struct btrfs_root *root, u64 bytenr, int copy)
 
 	while(1) {
 		ret = btrfs_search_slot(trans, root->fs_info->extent_root,
-					&key, path, 0, 1);
+					&key, path, -1, 1);
 		if (ret < 0)
 			break;
 
@@ -129,6 +121,7 @@ static int corrupt_extent(struct btrfs_root *root, u64 bytenr, int copy)
 			if (path->slots[0] == 0)
 				break;
 			path->slots[0]--;
+			ret = 0;
 		}
 		leaf = path->nodes[0];
 		slot = path->slots[0];
@@ -144,13 +137,26 @@ static int corrupt_extent(struct btrfs_root *root, u64 bytenr, int copy)
 		    key.type != BTRFS_SHARED_DATA_REF_KEY)
 			goto next;
 
-		fprintf(stderr, "corrupting extent record: key %Lu %u %Lu\n",
-			key.objectid, key.type, key.offset);
+		if (should_del) {
+			fprintf(stderr, "deleting extent record: key %Lu %u %Lu\n",
+				key.objectid, key.type, key.offset);
 
-		ptr = btrfs_item_ptr_offset(leaf, slot);
-		item_size = btrfs_item_size_nr(leaf, slot);
-		memset_extent_buffer(leaf, 0, ptr, item_size);
-		btrfs_mark_buffer_dirty(leaf);
+			if (key.type == BTRFS_EXTENT_ITEM_KEY) {
+				/* make sure this extent doesn't get
+				 * reused for other purposes */
+				btrfs_pin_extent(root->fs_info,
+						 key.objectid, key.offset);
+			}
+
+			btrfs_del_item(trans, root, path);
+		} else {
+			fprintf(stderr, "corrupting extent record: key %Lu %u %Lu\n",
+				key.objectid, key.type, key.offset);
+			ptr = btrfs_item_ptr_offset(leaf, slot);
+			item_size = btrfs_item_size_nr(leaf, slot);
+			memset_extent_buffer(leaf, 0, ptr, item_size);
+			btrfs_mark_buffer_dirty(leaf);
+		}
 next:
 		btrfs_release_path(NULL, path);
 
@@ -161,11 +167,64 @@ next:
 	}
 
 	btrfs_free_path(path);
-	btrfs_commit_transaction(trans, root);
-	ret = close_ctree(root);
-	BUG_ON(ret);
 	return 0;
 }
+
+static void btrfs_corrupt_extent_leaf(struct btrfs_trans_handle *trans,
+				      struct btrfs_root *root, struct extent_buffer *eb)
+{
+	u32 nr = btrfs_header_nritems(eb);
+	u32 victim = rand() % nr;
+	u64 objectid;
+	struct btrfs_key key;
+
+	btrfs_item_key_to_cpu(eb, &key, victim);
+	objectid = key.objectid;
+	corrupt_extent(trans, root, objectid, 1);
+}
+
+static void btrfs_corrupt_extent_tree(struct btrfs_trans_handle *trans,
+				      struct btrfs_root *root, struct extent_buffer *eb)
+{
+	int i;
+	u32 nr;
+
+	if (!eb)
+		return;
+
+	nr = btrfs_header_nritems(eb);
+	if (btrfs_is_leaf(eb)) {
+		btrfs_corrupt_extent_leaf(trans, root, eb);
+		return;
+	}
+
+	if (btrfs_header_level(eb) == 1 && eb != root->node) {
+		if (rand() % 5)
+			return;
+	}
+
+	for (i = 0; i < nr; i++) {
+		struct extent_buffer *next;
+
+		next = read_tree_block(root, btrfs_node_blockptr(eb, i),
+				       root->leafsize, btrfs_node_ptr_generation(eb, i));
+		if (!next)
+			continue;
+		btrfs_corrupt_extent_tree(trans, root, next);
+		free_extent_buffer(next);
+	}
+}
+
+static struct option long_options[] = {
+	/* { "byte-count", 1, NULL, 'b' }, */
+	{ "logical", 1, NULL, 'l' },
+	{ "copy", 1, NULL, 'c' },
+	{ "bytes", 1, NULL, 'b' },
+	{ "extent-record", 0, NULL, 'e' },
+	{ "extent-tree", 0, NULL, 'E' },
+	{ 0, 0, 0, 0}
+};
+
 
 int main(int ac, char **av)
 {
@@ -178,11 +237,14 @@ int main(int ac, char **av)
 	int option_index = 0;
 	int copy = 0;
 	u64 bytes = 4096;
-	int extent_rec;
+	int extent_rec = 0;
+	int extent_tree = 0;
+
+	srand(128);
 
 	while(1) {
 		int c;
-		c = getopt_long(ac, av, "l:c:e", long_options,
+		c = getopt_long(ac, av, "l:c:eE", long_options,
 				&option_index);
 		if (c < 0)
 			break;
@@ -214,6 +276,9 @@ int main(int ac, char **av)
 			case 'e':
 				extent_rec = 1;
 				break;
+			case 'E':
+				extent_tree = 1;
+				break;
 			default:
 				print_usage();
 		}
@@ -221,7 +286,7 @@ int main(int ac, char **av)
 	ac = ac - optind;
 	if (ac == 0)
 		print_usage();
-	if (logical == 0)
+	if (logical == 0 && !extent_tree)
 		print_usage();
 	if (copy < 0)
 		print_usage();
@@ -237,8 +302,19 @@ int main(int ac, char **av)
 		exit(1);
 	}
 	if (extent_rec) {
-		ret = corrupt_extent (root, logical, 0);
-		goto out;
+		struct btrfs_trans_handle *trans;
+		trans = btrfs_start_transaction(root, 1);
+		ret = corrupt_extent (trans, root, logical, 0);
+		btrfs_commit_transaction(trans, root);
+		goto out_close;
+	}
+	if (extent_tree) {
+		struct btrfs_trans_handle *trans;
+		trans = btrfs_start_transaction(root, 1);
+		btrfs_corrupt_extent_tree(trans, root->fs_info->extent_root,
+					  root->fs_info->extent_root->node);
+		btrfs_commit_transaction(trans, root);
+		goto out_close;
 	}
 
 	if (bytes == 0)
@@ -253,6 +329,8 @@ int main(int ac, char **av)
 		logical += root->sectorsize;
 		bytes -= root->sectorsize;
 	}
-out:
+	return ret;
+out_close:
+	close_ctree(root);
 	return ret;
 }
