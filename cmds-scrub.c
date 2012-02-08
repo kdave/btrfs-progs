@@ -40,8 +40,10 @@
 
 #include "commands.h"
 
-static const char scrub_cmd_group_usage[] =
-	"btrfs scrub <command> [options] <path>|<device>";
+static const char * const scrub_cmd_group_usage[] = {
+	"btrfs scrub <command> [options] <path>|<device>",
+	NULL
+};
 
 #define SCRUB_DATA_FILE "/var/lib/btrfs/scrub.status"
 #define SCRUB_PROGRESS_SOCKET_PATH "/var/lib/btrfs/scrub.progress"

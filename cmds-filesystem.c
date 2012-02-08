@@ -34,8 +34,10 @@
 #include "commands.h"
 #include "btrfslabel.h"
 
-static const char filesystem_cmd_group_usage[] =
-	"btrfs filesystem [<group>] <command> [<args>]";
+static const char * const filesystem_cmd_group_usage[] = {
+	"btrfs filesystem [<group>] <command> [<args>]",
+	NULL
+};
 
 static const char * const cmd_df_usage[] = {
 	"btrfs filesystem df <path>",

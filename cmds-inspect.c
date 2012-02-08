@@ -28,8 +28,10 @@
 /* btrfs-list.c */
 char *path_for_root(int fd, u64 root);
 
-static const char inspect_cmd_group_usage[] =
-	"btrfs inspect-internal <command> <args>";
+static const char * const inspect_cmd_group_usage[] = {
+	"btrfs inspect-internal <command> <args>",
+	NULL
+};
 
 static int __ino_to_path_fd(u64 inum, int fd, int verbose, const char *prepend)
 {

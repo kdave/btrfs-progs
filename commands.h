@@ -51,7 +51,7 @@ struct cmd_struct {
 };
 
 struct cmd_group {
-	const char *usagestr;
+	const char * const *usagestr;
 	const char *infostr;
 
 	const struct cmd_struct commands[];
