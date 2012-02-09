@@ -3378,6 +3378,8 @@ int btrfs_fix_block_accounting(struct btrfs_trans_handle *trans,
 	struct btrfs_block_group_cache *cache;
 	struct btrfs_fs_info *fs_info = root->fs_info;
 
+	root = root->fs_info->extent_root;
+
 	while(1) {
 		cache = btrfs_lookup_block_group(fs_info, start);
 		if (!cache)
@@ -3385,6 +3387,10 @@ int btrfs_fix_block_accounting(struct btrfs_trans_handle *trans,
 		start = cache->key.objectid + cache->key.offset;
 		btrfs_set_block_group_used(&cache->item, 0);
 		cache->space_info->bytes_used = 0;
+		set_extent_bits(&root->fs_info->block_group_cache,
+				cache->key.objectid,
+				cache->key.objectid + cache->key.offset -1,
+				BLOCK_GROUP_DIRTY, GFP_NOFS);
 	}
 
 	btrfs_init_path(&path);
