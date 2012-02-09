@@ -3171,6 +3171,7 @@ static void print_usage(void)
 static struct option long_options[] = {
 	{ "super", 1, NULL, 's' },
 	{ "repair", 0, NULL, 0 },
+	{ "init-csum-tree", 0, NULL, 0 },
 	{ 0, 0, 0, 0}
 };
 
@@ -3185,6 +3186,8 @@ int main(int ac, char **av)
 	int num;
 	int repair = 0;
 	int option_index = 0;
+	int init_csum_tree = 0;
+	int rw = 0;
 
 	while(1) {
 		int c;
@@ -3205,6 +3208,11 @@ int main(int ac, char **av)
 		if (option_index == 1) {
 			printf("enabling repair mode\n");
 			repair = 1;
+			rw = 1;
+		} else if (option_index == 2) {
+			printf("Creating a new CRC tree\n");
+			init_csum_tree = 1;
+			rw = 1;
 		}
 
 	}
@@ -3224,7 +3232,7 @@ int main(int ac, char **av)
 		return -EBUSY;
 	}
 
-	info = open_ctree_fs_info(av[optind], bytenr, repair, 1);
+	info = open_ctree_fs_info(av[optind], bytenr, rw, 1);
 
 	if (info == NULL)
 		return 1;
@@ -3240,8 +3248,18 @@ int main(int ac, char **av)
 	root = info->fs_root;
 
 	fprintf(stderr, "checking extents\n");
-	if (repair)
+	if (rw)
 		trans = btrfs_start_transaction(root, 1);
+
+	if (init_csum_tree) {
+		fprintf(stderr, "Reinit crc root\n");
+		ret = btrfs_fsck_reinit_root(trans, info->csum_root);
+		if (ret) {
+			fprintf(stderr, "crc root initialization failed\n");
+			return -EIO;
+		}
+		goto out;
+	}
 
 	ret = check_extents(trans, root, repair);
 	if (ret)
@@ -3259,15 +3277,14 @@ int main(int ac, char **av)
 	ret = check_root_refs(root, &root_cache);
 out:
 	free_root_recs(&root_cache);
-	if (repair) {
+	if (rw) {
 		ret = btrfs_commit_transaction(trans, root);
 		if (ret)
 			exit(1);
 	}
 	close_ctree(root);
 
-	if (found_old_backref) {
-		/*
+	if (found_old_backref) { /*
 		 * there was a disk format change when mixed
 		 * backref was in testing tree. The old format
 		 * existed about one week.

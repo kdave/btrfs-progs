@@ -787,7 +787,8 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 				  BTRFS_CSUM_TREE_OBJECTID, csum_root);
 	if (ret) {
 		printk("Couldn't setup csum tree\n");
-		goto out_failed;
+		if (!partial)
+			goto out_failed;
 	}
 	csum_root->track_dirty = 1;
 

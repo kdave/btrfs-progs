@@ -138,6 +138,46 @@ int btrfs_copy_root(struct btrfs_trans_handle *trans,
 	return 0;
 }
 
+int btrfs_fsck_reinit_root(struct btrfs_trans_handle *trans,
+		      struct btrfs_root *root)
+{
+	struct extent_buffer *c;
+	struct extent_buffer *old = root->node;
+	int level;
+	struct btrfs_disk_key disk_key = {0,0,0};
+
+	level = 0;
+
+	c = btrfs_alloc_free_block(trans, root,
+				   btrfs_level_size(root, 0),
+				   root->root_key.objectid,
+				   &disk_key, level, 0, 0);
+	if (IS_ERR(c))
+		return PTR_ERR(c);
+
+	memset_extent_buffer(c, 0, 0, sizeof(struct btrfs_header));
+	btrfs_set_header_level(c, level);
+	btrfs_set_header_bytenr(c, c->start);
+	btrfs_set_header_generation(c, trans->transid);
+	btrfs_set_header_backref_rev(c, BTRFS_MIXED_BACKREF_REV);
+	btrfs_set_header_owner(c, root->root_key.objectid);
+
+	write_extent_buffer(c, root->fs_info->fsid,
+			    (unsigned long)btrfs_header_fsid(c),
+			    BTRFS_FSID_SIZE);
+
+	write_extent_buffer(c, root->fs_info->chunk_tree_uuid,
+			    (unsigned long)btrfs_header_chunk_tree_uuid(c),
+			    BTRFS_UUID_SIZE);
+
+	btrfs_mark_buffer_dirty(c);
+
+	free_extent_buffer(old);
+	root->node = c;
+	add_root_to_dirty_list(root);
+	return 0;
+}
+
 /*
  * check if the tree block can be shared by multiple trees
  */
