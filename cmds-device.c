@@ -39,8 +39,10 @@ struct btrfs_ioctl_vol_args { char name[BTRFS_VOL_NAME_MAX]; };
 static inline int ioctl(int fd, int define, void *arg) { return 0; }
 #endif
 
-static const char device_cmd_group_usage[] =
-	"btrfs device <command> [<args>]";
+static const char * const device_cmd_group_usage[] = {
+	"btrfs device <command> [<args>]",
+	NULL
+};
 
 static const char * const cmd_add_dev_usage[] = {
 	"btrfs device add <device> [<device>...] <path>",

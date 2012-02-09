@@ -22,8 +22,10 @@
 #include "commands.h"
 #include "version.h"
 
-static const char btrfs_cmd_group_usage[] =
-	"btrfs [--help] [--version] <group> [<group>...] <command> [<args>]";
+static const char * const btrfs_cmd_group_usage[] = {
+	"btrfs [--help] [--version] <group> [<group>...] <command> [<args>]",
+	NULL
+};
 
 static const char btrfs_cmd_group_info[] =
 	"Use --help as an argument for information on a specific group or command.";
@@ -225,7 +227,7 @@ static int handle_options(int *argc, char ***argv)
 		} else {
 			fprintf(stderr, "Unknown option: %s\n", arg);
 			fprintf(stderr, "usage: %s\n",
-				btrfs_cmd_group.usagestr);
+				btrfs_cmd_group.usagestr[0]);
 			exit(129);
 		}
 

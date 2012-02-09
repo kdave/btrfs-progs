@@ -29,8 +29,11 @@
 
 #include "commands.h"
 
-static const char balance_cmd_group_usage[] =
-	"btrfs [filesystem] balance [<command>] [options] <path>";
+static const char * const balance_cmd_group_usage[] = {
+	"btrfs [filesystem] balance <command> [options] <path>",
+	"btrfs [filesystem] balance <path>",
+	NULL
+};
 
 static const char balance_cmd_group_info[] =
 	"'btrfs filesystem balance' command is deprecated, please use\n"

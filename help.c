@@ -162,9 +162,16 @@ static void usage_command_group_internal(const struct cmd_group *grp, int full,
 
 void usage_command_group(const struct cmd_group *grp, int full, int err)
 {
+	const char * const *usagestr = grp->usagestr;
 	FILE *outf = err ? stderr : stdout;
 
-	fprintf(outf, "usage: %s\n\n", grp->usagestr);
+	if (usagestr && *usagestr) {
+		fprintf(outf, "usage: %s\n", *usagestr++);
+		while (*usagestr)
+			fprintf(outf, "   or: %s\n", *usagestr++);
+	}
+
+	fputc('\n', outf);
 	usage_command_group_internal(grp, full, outf);
 	fputc('\n', outf);
 
