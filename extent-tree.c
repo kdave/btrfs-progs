@@ -1734,7 +1734,12 @@ static int update_space_info(struct btrfs_fs_info *info, u64 flags,
 	if (found) {
 		found->total_bytes += total_bytes;
 		found->bytes_used += bytes_used;
-		WARN_ON(found->total_bytes < found->bytes_used);
+		if (found->total_bytes < found->bytes_used) {
+			fprintf(stderr, "warning, bad space info total_bytes "
+				"%llu used %llu\n",
+			       (unsigned long long)found->total_bytes,
+			       (unsigned long long)found->bytes_used);
+		}
 		*space_info = found;
 		return 0;
 	}
@@ -1853,6 +1858,7 @@ static int update_block_group(struct btrfs_trans_handle *trans,
 
 		old_val = btrfs_block_group_used(&cache->item);
 		num_bytes = min(total, cache->key.offset - byte_in_group);
+
 		if (alloc) {
 			old_val += num_bytes;
 			cache->space_info->bytes_used += num_bytes;
@@ -3273,4 +3279,144 @@ int btrfs_update_block_group(struct btrfs_trans_handle *trans,
 {
 	return update_block_group(trans, root, bytenr, num_bytes,
 				  alloc, mark_free);
+}
+
+static int btrfs_count_extents_in_block_group(struct btrfs_root *root,
+					      struct btrfs_path *path, u64 start,
+					      u64 len,
+					      u64 *total)
+{
+	struct btrfs_key key;
+	struct extent_buffer *leaf;
+	u64 bytes_used = 0;
+	int ret;
+	int slot;
+
+	key.offset = 0;
+	key.objectid = start;
+	btrfs_set_key_type(&key, BTRFS_EXTENT_ITEM_KEY);
+	ret = btrfs_search_slot(NULL, root->fs_info->extent_root,
+				&key, path, 0, 0);
+	if (ret < 0)
+		return ret;
+	while(1) {
+		leaf = path->nodes[0];
+		slot = path->slots[0];
+		if (slot >= btrfs_header_nritems(leaf)) {
+			ret = btrfs_next_leaf(root, path);
+			if (ret < 0)
+				return ret;
+			if (ret > 0)
+				break;
+			leaf = path->nodes[0];
+			slot = path->slots[0];
+		}
+		btrfs_item_key_to_cpu(leaf, &key, slot);
+		if (key.objectid > start + len)
+			break;
+		if (key.type == BTRFS_EXTENT_ITEM_KEY)
+			bytes_used += key.offset;
+		path->slots[0]++;
+	}
+	*total = bytes_used;
+	btrfs_release_path(root, path);
+	return 0;
+}
+
+int btrfs_check_block_accounting(struct btrfs_root *root)
+{
+	int ret;
+	u64 start = 0;
+	u64 bytes_used = 0;
+	struct btrfs_path path;
+	struct btrfs_block_group_cache *cache;
+	struct btrfs_fs_info *fs_info = root->fs_info;
+
+	btrfs_init_path(&path);
+
+	while(1) {
+		cache = btrfs_lookup_block_group(fs_info, start);
+		if (!cache)
+			break;
+
+		ret = btrfs_count_extents_in_block_group(root, &path,
+							 cache->key.objectid,
+							 cache->key.offset,
+							 &bytes_used);
+
+		if (ret == 0) {
+			u64 on_disk = btrfs_block_group_used(&cache->item);
+			if (on_disk != bytes_used) {
+				fprintf(stderr, "bad block group accounting found %llu "
+					"expected %llu block group %llu\n",
+					(unsigned long long)bytes_used,
+					(unsigned long long)on_disk,
+					(unsigned long long)cache->key.objectid);
+			}
+		}
+		start = cache->key.objectid + cache->key.offset;
+
+		cache->space_info->bytes_used = 0;
+	}
+	return 0;
+}
+
+/*
+ * Fixup block accounting. The initial block accounting created by
+ * make_block_groups isn't accuracy in this case.
+ */
+int btrfs_fix_block_accounting(struct btrfs_trans_handle *trans,
+			       struct btrfs_root *root)
+{
+	int ret;
+	int slot;
+	u64 start = 0;
+	u64 bytes_used = 0;
+	struct btrfs_path path;
+	struct btrfs_key key;
+	struct extent_buffer *leaf;
+	struct btrfs_block_group_cache *cache;
+	struct btrfs_fs_info *fs_info = root->fs_info;
+
+	while(1) {
+		cache = btrfs_lookup_block_group(fs_info, start);
+		if (!cache)
+			break;
+		start = cache->key.objectid + cache->key.offset;
+		btrfs_set_block_group_used(&cache->item, 0);
+		cache->space_info->bytes_used = 0;
+	}
+
+	btrfs_init_path(&path);
+	key.offset = 0;
+	key.objectid = 0;
+	btrfs_set_key_type(&key, BTRFS_EXTENT_ITEM_KEY);
+	ret = btrfs_search_slot(trans, root->fs_info->extent_root,
+				&key, &path, 0, 0);
+	if (ret < 0)
+		return ret;
+	while(1) {
+		leaf = path.nodes[0];
+		slot = path.slots[0];
+		if (slot >= btrfs_header_nritems(leaf)) {
+			ret = btrfs_next_leaf(root, &path);
+			if (ret < 0)
+				return ret;
+			if (ret > 0)
+				break;
+			leaf = path.nodes[0];
+			slot = path.slots[0];
+		}
+		btrfs_item_key_to_cpu(leaf, &key, slot);
+		if (key.type == BTRFS_EXTENT_ITEM_KEY) {
+			bytes_used += key.offset;
+			ret = btrfs_update_block_group(trans, root,
+				  key.objectid, key.offset, 1, 0);
+			BUG_ON(ret);
+		}
+		path.slots[0]++;
+	}
+	btrfs_set_super_bytes_used(&root->fs_info->super_copy, bytes_used);
+	btrfs_release_path(root, &path);
+	return 0;
 }

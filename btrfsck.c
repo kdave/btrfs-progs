@@ -2725,7 +2725,7 @@ static int add_root_to_pending(struct extent_buffer *buf,
 static int delete_extent_records(struct btrfs_trans_handle *trans,
 				 struct btrfs_root *root,
 				 struct btrfs_path *path,
-				 u64 bytenr)
+				 u64 bytenr, u64 new_len)
 {
 	struct btrfs_key key;
 	struct btrfs_key found_key;
@@ -2787,7 +2787,7 @@ static int delete_extent_records(struct btrfs_trans_handle *trans,
 
 		if (found_key.type == BTRFS_EXTENT_ITEM_KEY) {
 			ret = btrfs_update_block_group(trans, root, bytenr,
-						       found_key.offset, 0, 1);
+						       found_key.offset, 0, 0);
 			if (ret)
 				break;
 		}
@@ -2959,7 +2959,7 @@ static int fixup_extent_refs(struct btrfs_trans_handle *trans,
 
 	/* step one, delete all the existing records */
 	ret = delete_extent_records(trans, info->extent_root, path,
-				    rec->start);
+				    rec->start, rec->max_size);
 
 	if (ret < 0)
 		goto out;
@@ -2987,18 +2987,15 @@ out:
 	return ret;
 }
 
-static int check_extent_refs(struct btrfs_root *root,
-		      struct cache_tree *extent_cache, int repair)
+static int check_extent_refs(struct btrfs_trans_handle *trans,
+			     struct btrfs_root *root,
+			     struct cache_tree *extent_cache, int repair)
 {
 	struct extent_record *rec;
 	struct cache_extent *cache;
-	struct btrfs_trans_handle *trans = NULL;
 	int err = 0;
 	int ret = 0;
 	int fixed = 0;
-
-	if (repair)
-		trans = btrfs_start_transaction(root, 1);
 
 	if (repair) {
 		/*
@@ -3074,12 +3071,12 @@ repair_abort:
 			fprintf(stderr, "failed to repair damaged filesystem, aborting\n");
 			exit(1);
 		}
-		btrfs_commit_transaction(trans, root);
 	}
 	return err;
 }
 
-static int check_extents(struct btrfs_root *root, int repair)
+static int check_extents(struct btrfs_trans_handle *trans,
+			 struct btrfs_root *root, int repair)
 {
 	struct cache_tree extent_cache;
 	struct cache_tree seen;
@@ -3160,7 +3157,7 @@ static int check_extents(struct btrfs_root *root, int repair)
 		if (ret != 0)
 			break;
 	}
-	ret = check_extent_refs(root, &extent_cache, repair);
+	ret = check_extent_refs(trans, root, &extent_cache, repair);
 	return ret;
 }
 
@@ -3182,6 +3179,7 @@ int main(int ac, char **av)
 	struct cache_tree root_cache;
 	struct btrfs_root *root;
 	struct btrfs_fs_info *info;
+	struct btrfs_trans_handle *trans = NULL;
 	u64 bytenr = 0;
 	int ret;
 	int num;
@@ -3242,9 +3240,16 @@ int main(int ac, char **av)
 	root = info->fs_root;
 
 	fprintf(stderr, "checking extents\n");
-	ret = check_extents(root, repair);
+	if (repair)
+		trans = btrfs_start_transaction(root, 1);
+
+	ret = check_extents(trans, root, repair);
 	if (ret)
 		goto out;
+
+	if (repair)
+		btrfs_fix_block_accounting(trans, root);
+
 	fprintf(stderr, "checking fs roots\n");
 	ret = check_fs_roots(root, &root_cache);
 	if (ret)
@@ -3254,6 +3259,11 @@ int main(int ac, char **av)
 	ret = check_root_refs(root, &root_cache);
 out:
 	free_root_recs(&root_cache);
+	if (repair) {
+		ret = btrfs_commit_transaction(trans, root);
+		if (ret)
+			exit(1);
+	}
 	close_ctree(root);
 
 	if (found_old_backref) {
