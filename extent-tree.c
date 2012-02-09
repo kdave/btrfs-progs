@@ -1953,6 +1953,21 @@ int btrfs_finish_extent_commit(struct btrfs_trans_handle *trans,
 	return 0;
 }
 
+static int extent_root_pending_ops(struct btrfs_fs_info *info)
+{
+	u64 start;
+	u64 end;
+	int ret;
+
+	ret = find_first_extent_bit(&info->extent_ins, 0, &start,
+				    &end, EXTENT_LOCKED);
+	if (!ret) {
+		ret = find_first_extent_bit(&info->pending_del, 0, &start, &end,
+					    EXTENT_LOCKED);
+	}
+	return ret == 0;
+
+}
 static int finish_current_insert(struct btrfs_trans_handle *trans,
 				 struct btrfs_root *extent_root)
 {
@@ -3379,6 +3394,15 @@ int btrfs_fix_block_accounting(struct btrfs_trans_handle *trans,
 	struct btrfs_fs_info *fs_info = root->fs_info;
 
 	root = root->fs_info->extent_root;
+
+	while(extent_root_pending_ops(fs_info)) {
+		ret = finish_current_insert(trans, root);
+		if (ret)
+			return ret;
+		ret = del_pending_extents(trans, root);
+		if (ret)
+			return ret;
+	}
 
 	while(1) {
 		cache = btrfs_lookup_block_group(fs_info, start);

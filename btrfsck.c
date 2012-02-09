@@ -3070,7 +3070,12 @@ repair_abort:
 		if (ret) {
 			fprintf(stderr, "failed to repair damaged filesystem, aborting\n");
 			exit(1);
+		} else {
+			btrfs_fix_block_accounting(trans, root);
 		}
+		if (err)
+			fprintf(stderr, "repaired damaged extent references\n");
+		return ret;
 	}
 	return err;
 }
@@ -3262,11 +3267,10 @@ int main(int ac, char **av)
 	}
 
 	ret = check_extents(trans, root, repair);
-	if (ret)
+	if (ret) {
+		fprintf(stderr, "check extents failed with %d!!!!!!!!!\n", ret);
 		goto out;
-
-	if (repair)
-		btrfs_fix_block_accounting(trans, root);
+	}
 
 	fprintf(stderr, "checking fs roots\n");
 	ret = check_fs_roots(root, &root_cache);
