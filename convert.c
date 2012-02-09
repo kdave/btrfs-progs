@@ -1675,7 +1675,7 @@ static int init_btrfs(struct btrfs_root *root)
 	ret = btrfs_make_block_groups(trans, root);
 	if (ret)
 		goto err;
-	ret = btrfs_fixup_block_accounting(trans, root);
+	ret = btrfs_fix_block_accounting(trans, root);
 	if (ret)
 		goto err;
 	ret = create_chunk_mapping(trans, root);

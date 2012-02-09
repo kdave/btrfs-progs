@@ -19,7 +19,8 @@ LIBS=-luuid
 RESTORE_LIBS=-lz
 
 progs = btrfsctl mkfs.btrfs btrfs-debug-tree btrfs-show btrfs-vol btrfsck \
-	btrfs btrfs-map-logical btrfs-image btrfs-zero-log
+	btrfs btrfs-map-logical btrfs-image btrfs-zero-log btrfs-convert \
+	btrfs-find-root btrfs-restore btrfstune
 
 # make C=1 to enable sparse
 ifdef C
@@ -45,11 +46,11 @@ btrfs: $(objects) btrfs.o help.o common.o $(cmds_objects)
 calc-size: $(objects) calc-size.o
 	gcc $(CFLAGS) -o calc-size calc-size.o $(objects) $(LDFLAGS) $(LIBS)
 
-find-root: $(objects) find-root.o
-	gcc $(CFLAGS) -o find-root find-root.o $(objects) $(LDFLAGS) $(LIBS)
+btrfs-find-root: $(objects) find-root.o
+	gcc $(CFLAGS) -o btrfs-find-root find-root.o $(objects) $(LDFLAGS) $(LIBS)
 
-restore: $(objects) restore.o
-	gcc $(CFLAGS) -o restore restore.o $(objects) $(LDFLAGS) $(LIBS) $(RESTORE_LIBS)
+btrfs-restore: $(objects) restore.o
+	gcc $(CFLAGS) -o btrfs-restore restore.o $(objects) $(LDFLAGS) $(LIBS) $(RESTORE_LIBS)
 
 btrfsctl: $(objects) btrfsctl.o
 	$(CC) $(CFLAGS) -o btrfsctl btrfsctl.o $(objects) $(LDFLAGS) $(LIBS)
@@ -93,7 +94,7 @@ dir-test: $(objects) dir-test.o
 quick-test: $(objects) quick-test.o
 	$(CC) $(CFLAGS) -o quick-test $(objects) quick-test.o $(LDFLAGS) $(LIBS)
 
-convert: $(objects) convert.o
+btrfs-convert: $(objects) convert.o
 	$(CC) $(CFLAGS) -o btrfs-convert $(objects) convert.o -lext2fs -lcom_err $(LDFLAGS) $(LIBS)
 
 ioctl-test: $(objects) ioctl-test.o
@@ -113,6 +114,5 @@ clean :
 install: $(progs) install-man
 	$(INSTALL) -m755 -d $(DESTDIR)$(bindir)
 	$(INSTALL) $(progs) $(DESTDIR)$(bindir)
-	if [ -e btrfs-convert ]; then $(INSTALL) btrfs-convert $(DESTDIR)$(bindir); fi
 
 -include .*.d
