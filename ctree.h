@@ -797,6 +797,12 @@ struct btrfs_fs_info {
 	struct list_head space_info;
 	int system_allocs;
 	int readonly;
+	int (*free_extent_hook)(struct btrfs_trans_handle *trans,
+				struct btrfs_root *root,
+				u64 bytenr, u64 num_bytes, u64 parent,
+				u64 root_objectid, u64 owner, u64 offset,
+				int refs_to_drop);
+	struct cache_tree * fsck_extent_cache;
 };
 
 /*

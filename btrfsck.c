@@ -2137,7 +2137,7 @@ static int add_extent_rec(struct cache_tree *extent_cache,
 		if (inc_ref)
 			rec->refs++;
 		if (rec->nr == 1)
-			rec->nr = nr;
+			rec->nr = max(nr, max_size);
 
 		if (start != rec->start) {
 			fprintf(stderr, "warning, start mismatch %llu %llu\n",
@@ -2175,7 +2175,7 @@ static int add_extent_rec(struct cache_tree *extent_cache,
 	rec = malloc(sizeof(*rec));
 	rec->start = start;
 	rec->max_size = max_size;
-	rec->nr = nr;
+	rec->nr = max(nr, max_size);
 	rec->content_checked = 0;
 	rec->owner_ref_checked = 0;
 	INIT_LIST_HEAD(&rec->backrefs);
@@ -2722,6 +2722,77 @@ static int add_root_to_pending(struct extent_buffer *buf,
 	return 0;
 }
 
+/* as we fix the tree, we might be deleting blocks that
+ * we're tracking for repair.  This hook makes sure we
+ * remove any backrefs for blocks as we are fixing them.
+ */
+static int free_extent_hook(struct btrfs_trans_handle *trans,
+			    struct btrfs_root *root,
+			    u64 bytenr, u64 num_bytes, u64 parent,
+			    u64 root_objectid, u64 owner, u64 offset,
+			    int refs_to_drop)
+{
+	struct extent_record *rec;
+	struct cache_extent *cache;
+	int is_data;
+	struct cache_tree *extent_cache = root->fs_info->fsck_extent_cache;
+
+	is_data = owner >= BTRFS_FIRST_FREE_OBJECTID;
+	cache = find_cache_extent(extent_cache, bytenr, num_bytes);
+	if (!cache)
+		return 0;
+
+	rec = container_of(cache, struct extent_record, cache);
+	if (is_data) {
+		struct data_backref *back;
+		back = find_data_backref(rec, parent, root_objectid, owner,
+					 offset);
+		if (!back)
+			goto out;
+		if (back->node.found_ref) {
+			back->found_ref -= refs_to_drop;
+			if (rec->refs)
+				rec->refs -= refs_to_drop;
+		}
+		if (back->node.found_extent_tree) {
+			back->num_refs -= refs_to_drop;
+			if (rec->extent_item_refs)
+				rec->extent_item_refs -= refs_to_drop;
+		}
+		if (back->found_ref == 0)
+			back->node.found_ref = 0;
+		if (back->num_refs == 0)
+			back->node.found_extent_tree = 0;
+
+		if (!back->node.found_extent_tree && back->node.found_ref) {
+			list_del(&back->node.list);
+			free(back);
+		}
+	} else {
+		struct tree_backref *back;
+		back = find_tree_backref(rec, parent, root_objectid);
+		if (!back)
+			goto out;
+		if (back->node.found_ref) {
+			if (rec->refs)
+				rec->refs--;
+			back->node.found_ref = 0;
+		}
+		if (back->node.found_extent_tree) {
+			if (rec->extent_item_refs)
+				rec->extent_item_refs--;
+			back->node.found_extent_tree = 0;
+		}
+		if (!back->node.found_extent_tree && back->node.found_ref) {
+			list_del(&back->node.list);
+			free(back);
+		}
+	}
+	maybe_free_extent_rec(extent_cache, rec);
+out:
+	return 0;
+}
+
 static int delete_extent_records(struct btrfs_trans_handle *trans,
 				 struct btrfs_root *root,
 				 struct btrfs_path *path,
@@ -3008,7 +3079,7 @@ static int check_extent_refs(struct btrfs_trans_handle *trans,
 		while(cache) {
 			rec = container_of(cache, struct extent_record, cache);
 			btrfs_pin_extent(root->fs_info,
-					 rec->start, rec->nr);
+					 rec->start, rec->max_size);
 			cache = next_cache_extent(cache);
 		}
 	}
@@ -3105,6 +3176,11 @@ static int check_extents(struct btrfs_trans_handle *trans,
 	cache_tree_init(&nodes);
 	cache_tree_init(&reada);
 
+	if (repair) {
+		root->fs_info->fsck_extent_cache = &extent_cache;
+		root->fs_info->free_extent_hook = free_extent_hook;
+	}
+
 	bits_nr = 1024;
 	bits = malloc(bits_nr * sizeof(struct block_info));
 	if (!bits) {
@@ -3163,6 +3239,12 @@ static int check_extents(struct btrfs_trans_handle *trans,
 			break;
 	}
 	ret = check_extent_refs(trans, root, &extent_cache, repair);
+
+	if (repair) {
+		root->fs_info->fsck_extent_cache = NULL;
+		root->fs_info->free_extent_hook = NULL;
+	}
+
 	return ret;
 }
 
@@ -3267,10 +3349,8 @@ int main(int ac, char **av)
 	}
 
 	ret = check_extents(trans, root, repair);
-	if (ret) {
-		fprintf(stderr, "check extents failed with %d!!!!!!!!!\n", ret);
-		goto out;
-	}
+	if (ret)
+		fprintf(stderr, "Errors found in extent allocation tree\n");
 
 	fprintf(stderr, "checking fs roots\n");
 	ret = check_fs_roots(root, &root_cache);

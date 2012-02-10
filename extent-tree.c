@@ -2083,6 +2083,12 @@ static int __free_extent(struct btrfs_trans_handle *trans,
 	u32 item_size;
 	u64 refs;
 
+	if (root->fs_info->free_extent_hook) {
+		root->fs_info->free_extent_hook(trans, root, bytenr, num_bytes,
+						parent, root_objectid, owner_objectid,
+						owner_offset, refs_to_drop);
+
+	}
 	path = btrfs_alloc_path();
 	if (!path)
 		return -ENOMEM;
