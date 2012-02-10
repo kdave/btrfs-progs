@@ -1313,6 +1313,10 @@ int main(int ac, char **av)
 		ret = btrfs_prepare_device(fd, file, zero_end, &dev_block_count, &mixed);
 		if (block_count == 0)
 			block_count = dev_block_count;
+		else if (block_count > dev_block_count) {
+			fprintf(stderr, "%s is smaller than requested size\n", file);
+			exit(1);
+		}
 	} else {
 		ac = 0;
 		file = av[optind++];
