@@ -128,7 +128,14 @@ static int device_list_add(const char *path,
 			btrfs_stack_device_bytes_used(&disk_super->dev_item);
 		list_add(&device->dev_list, &fs_devices->devices);
 		device->fs_devices = fs_devices;
-	}
+	} else if (!device->name || strcmp(device->name, path)) {
+		char *name = strdup(path);
+                if (!name)
+                        return -ENOMEM;
+                kfree(device->name);
+                device->name = name;
+        }
+
 
 	if (found_transid > fs_devices->latest_trans) {
 		fs_devices->latest_devid = devid;

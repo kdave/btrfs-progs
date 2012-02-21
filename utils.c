@@ -1138,7 +1138,10 @@ int btrfs_scan_block_devices(int run_ioctl)
 	int i;
 	char buf[1024];
 	char fullpath[110];
+	int scans = 0;
+	int special;
 
+scan_again:
 	proc_partitions = fopen("/proc/partitions","r");
 	if (!proc_partitions) {
 		fprintf(stderr, "Unable to open '/proc/partitions' for scanning\n");
@@ -1154,8 +1157,23 @@ int btrfs_scan_block_devices(int run_ioctl)
 
 	strcpy(fullpath,"/dev/");
 	while(fgets(buf, 1023, proc_partitions)) {
-
 		i = sscanf(buf," %*d %*d %*d %99s", fullpath+5);
+
+		/*
+		 * multipath and MD devices may register as a btrfs filesystem
+		 * both through the original block device and through
+		 * the special (/dev/mapper or /dev/mdX) entry.
+		 * This scans the special entries last
+		 */
+		special = strncmp(fullpath, "/dev/dm-", strlen("/dev/dm-")) == 0;
+		if (!special)
+			special = strncmp(fullpath, "/dev/md", strlen("/dev/md")) == 0;
+
+		if (scans == 0 && special)
+			continue;
+		if (scans > 0 && !special)
+			continue;
+
 		ret = lstat(fullpath, &st);
 		if (ret < 0) {
 			fprintf(stderr, "failed to stat %s\n", fullpath);
@@ -1180,6 +1198,11 @@ int btrfs_scan_block_devices(int run_ioctl)
 	}
 
 	fclose(proc_partitions);
+
+	if (scans == 0) {
+		scans++;
+		goto scan_again;
+	}
 	return 0;
 }
 
