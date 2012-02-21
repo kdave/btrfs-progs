@@ -1034,7 +1034,12 @@ fail:
 int btrfs_scan_for_fsid(struct btrfs_fs_devices *fs_devices, u64 total_devs,
 			int run_ioctls)
 {
-	return btrfs_scan_one_dir("/dev", run_ioctls);
+	int ret;
+
+	ret = btrfs_scan_block_devices(run_ioctls);
+	if (ret)
+		ret = btrfs_scan_one_dir("/dev", run_ioctls);
+	return ret;
 }
 
 int btrfs_device_already_in_root(struct btrfs_root *root, int fd,
