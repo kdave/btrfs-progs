@@ -93,6 +93,56 @@ static void print_usage(void)
 	exit(1);
 }
 
+static void corrupt_keys(struct btrfs_trans_handle *trans,
+			 struct btrfs_root *root,
+			 struct extent_buffer *eb)
+{
+	int slot;
+	int bad_slot;
+	int nr;
+	struct btrfs_disk_key bad_key;;
+
+	nr = btrfs_header_nritems(eb);
+	if (nr == 0)
+		return;
+
+	slot = rand() % nr;
+	bad_slot = rand() % nr;
+
+	if (bad_slot == slot)
+		return;
+
+	fprintf(stderr, "corrupting keys in block %llu slot %d swapping with %d\n",
+		(unsigned long long)eb->start, slot, bad_slot);
+
+	if (btrfs_header_level(eb) == 0) {
+		btrfs_item_key(eb, &bad_key, bad_slot);
+		btrfs_set_item_key(eb, &bad_key, slot);
+	} else {
+		btrfs_node_key(eb, &bad_key, bad_slot);
+		btrfs_set_node_key(eb, &bad_key, slot);
+	}
+	btrfs_mark_buffer_dirty(eb);
+	if (!trans) {
+		csum_tree_block(root, eb, 0);
+		write_extent_to_disk(eb);
+	}
+}
+
+
+static int corrupt_keys_in_block(struct btrfs_root *root, u64 bytenr)
+{
+	struct extent_buffer *eb;
+
+	eb = read_tree_block(root, bytenr, root->leafsize, 0);
+	if (!eb)
+		return -EIO;;
+
+	corrupt_keys(NULL, root, eb);
+	free_extent_buffer(eb);
+	return 0;
+}
+
 static int corrupt_extent(struct btrfs_trans_handle *trans,
 			  struct btrfs_root *root, u64 bytenr, int copy)
 {
@@ -192,6 +242,11 @@ static void btrfs_corrupt_extent_tree(struct btrfs_trans_handle *trans,
 	if (!eb)
 		return;
 
+	if ((rand() % 10) == 0) {
+		corrupt_keys(trans, root, eb);
+		return;
+	}
+
 	nr = btrfs_header_nritems(eb);
 	if (btrfs_is_leaf(eb)) {
 		btrfs_corrupt_extent_leaf(trans, root, eb);
@@ -222,6 +277,7 @@ static struct option long_options[] = {
 	{ "bytes", 1, NULL, 'b' },
 	{ "extent-record", 0, NULL, 'e' },
 	{ "extent-tree", 0, NULL, 'E' },
+	{ "keys", 0, NULL, 'k' },
 	{ 0, 0, 0, 0}
 };
 
@@ -239,12 +295,13 @@ int main(int ac, char **av)
 	u64 bytes = 4096;
 	int extent_rec = 0;
 	int extent_tree = 0;
+	int corrupt_block_keys = 0;
 
 	srand(128);
 
 	while(1) {
 		int c;
-		c = getopt_long(ac, av, "l:c:eE", long_options,
+		c = getopt_long(ac, av, "l:c:eEk", long_options,
 				&option_index);
 		if (c < 0)
 			break;
@@ -278,6 +335,9 @@ int main(int ac, char **av)
 				break;
 			case 'E':
 				extent_tree = 1;
+				break;
+			case 'k':
+				corrupt_block_keys = 1;
 				break;
 			default:
 				print_usage();
@@ -324,8 +384,13 @@ int main(int ac, char **av)
 	bytes *= root->sectorsize;
 
 	while (bytes > 0) {
-		eb = debug_corrupt_block(root, logical, root->sectorsize, copy);
-		free_extent_buffer(eb);
+		if (corrupt_block_keys) {
+			corrupt_keys_in_block(root, logical);
+		} else {
+			eb = debug_corrupt_block(root, logical,
+						 root->sectorsize, copy);
+			free_extent_buffer(eb);
+		}
 		logical += root->sectorsize;
 		bytes -= root->sectorsize;
 	}

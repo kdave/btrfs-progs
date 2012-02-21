@@ -802,7 +802,8 @@ struct btrfs_fs_info {
 				u64 bytenr, u64 num_bytes, u64 parent,
 				u64 root_objectid, u64 owner, u64 offset,
 				int refs_to_drop);
-	struct cache_tree * fsck_extent_cache;
+	struct cache_tree *fsck_extent_cache;
+	struct cache_tree *corrupt_blocks;
 };
 
 /*
@@ -1857,6 +1858,14 @@ int btrfs_update_block_group(struct btrfs_trans_handle *trans,
 			     struct btrfs_root *root, u64 bytenr, u64 num,
 			     int alloc, int mark_free);
 /* ctree.c */
+int btrfs_del_ptr(struct btrfs_trans_handle *trans, struct btrfs_root *root,
+		   struct btrfs_path *path, int level, int slot);
+int btrfs_check_node(struct btrfs_root *root,
+		      struct btrfs_disk_key *parent_key,
+		      struct extent_buffer *buf);
+int btrfs_check_leaf(struct btrfs_root *root,
+		      struct btrfs_disk_key *parent_key,
+		      struct extent_buffer *buf);
 int btrfs_fsck_reinit_root(struct btrfs_trans_handle *trans,
 		      struct btrfs_root *root);
 void reada_for_search(struct btrfs_root *root, struct btrfs_path *path,

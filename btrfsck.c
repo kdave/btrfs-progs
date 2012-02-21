@@ -26,6 +26,7 @@
 #include <getopt.h>
 #include "kerncompat.h"
 #include "ctree.h"
+#include "repair.h"
 #include "disk-io.h"
 #include "print-tree.h"
 #include "transaction.h"
@@ -1718,86 +1719,6 @@ static int check_fs_roots(struct btrfs_root *root,
 	return err;
 }
 
-static int check_node(struct btrfs_root *root,
-		      struct btrfs_disk_key *parent_key,
-		      struct extent_buffer *buf)
-{
-	int i;
-	struct btrfs_key cpukey;
-	struct btrfs_disk_key key;
-	u32 nritems = btrfs_header_nritems(buf);
-
-	if (nritems == 0 || nritems > BTRFS_NODEPTRS_PER_BLOCK(root))
-		return 1;
-	if (parent_key->type) {
-		btrfs_node_key(buf, &key, 0);
-		if (memcmp(parent_key, &key, sizeof(key)))
-			return 1;
-	}
-	for (i = 0; nritems > 1 && i < nritems - 2; i++) {
-		btrfs_node_key(buf, &key, i);
-		btrfs_node_key_to_cpu(buf, &cpukey, i + 1);
-		if (btrfs_comp_keys(&key, &cpukey) >= 0)
-			return 1;
-	}
-	return 0;
-}
-
-static int check_leaf(struct btrfs_root *root,
-		      struct btrfs_disk_key *parent_key,
-		      struct extent_buffer *buf)
-{
-	int i;
-	struct btrfs_key cpukey;
-	struct btrfs_disk_key key;
-	u32 nritems = btrfs_header_nritems(buf);
-
-	if (btrfs_header_level(buf) != 0) {
-		fprintf(stderr, "leaf is not a leaf %llu\n",
-		       (unsigned long long)btrfs_header_bytenr(buf));
-		return 1;
-	}
-	if (btrfs_leaf_free_space(root, buf) < 0) {
-		fprintf(stderr, "leaf free space incorrect %llu %d\n",
-			(unsigned long long)btrfs_header_bytenr(buf),
-			btrfs_leaf_free_space(root, buf));
-		return 1;
-	}
-
-	if (nritems == 0)
-		return 0;
-
-	btrfs_item_key(buf, &key, 0);
-	if (parent_key->type && memcmp(parent_key, &key, sizeof(key))) {
-		fprintf(stderr, "leaf parent key incorrect %llu\n",
-		       (unsigned long long)btrfs_header_bytenr(buf));
-		return 1;
-	}
-	for (i = 0; nritems > 1 && i < nritems - 2; i++) {
-		btrfs_item_key(buf, &key, i);
-		btrfs_item_key_to_cpu(buf, &cpukey, i + 1);
-		if (btrfs_comp_keys(&key, &cpukey) >= 0) {
-			fprintf(stderr, "bad key ordering %d %d\n", i, i+1);
-			return 1;
-		}
-		if (btrfs_item_offset_nr(buf, i) !=
-			btrfs_item_end_nr(buf, i + 1)) {
-			fprintf(stderr, "incorrect offsets %u %u\n",
-				btrfs_item_offset_nr(buf, i),
-				btrfs_item_end_nr(buf, i + 1));
-			return 1;
-		}
-		if (i == 0 && btrfs_item_end_nr(buf, i) !=
-		    BTRFS_LEAF_DATA_SIZE(root)) {
-			fprintf(stderr, "bad item end %u wanted %u\n",
-				btrfs_item_end_nr(buf, i),
-				(unsigned)BTRFS_LEAF_DATA_SIZE(root));
-			return 1;
-		}
-	}
-	return 0;
-}
-
 static int all_backpointers_checked(struct extent_record *rec, int print_errs)
 {
 	struct list_head *cur = rec->backrefs.next;
@@ -1954,7 +1875,7 @@ static int check_owner_ref(struct btrfs_root *root,
 		btrfs_item_key_to_cpu(buf, &key, 0);
 	else
 		btrfs_node_key_to_cpu(buf, &key, 0);
-	
+
 	btrfs_init_path(&path);
 	path.lowest_level = level + 1;
 	btrfs_search_slot(NULL, ref_root, &key, &path, 0, 0);
@@ -1965,6 +1886,48 @@ static int check_owner_ref(struct btrfs_root *root,
 
 	btrfs_release_path(ref_root, &path);
 	return found ? 0 : 1;
+}
+
+static int is_extent_tree_record(struct extent_record *rec)
+{
+	struct list_head *cur = rec->backrefs.next;
+	struct extent_backref *node;
+	struct tree_backref *back;
+	int is_extent = 0;
+
+	while(cur != &rec->backrefs) {
+		node = list_entry(cur, struct extent_backref, list);
+		cur = cur->next;
+		if (node->is_data)
+			return 0;
+		back = (struct tree_backref *)node;
+		if (node->full_backref)
+			return 0;
+		if (back->root == BTRFS_EXTENT_TREE_OBJECTID)
+			is_extent = 1;
+	}
+	return is_extent;
+}
+
+
+static int record_bad_block_io(struct btrfs_fs_info *info,
+			       struct cache_tree *extent_cache,
+			       u64 start, u64 len)
+{
+	struct extent_record *rec;
+	struct cache_extent *cache;
+	struct btrfs_key key;
+
+	cache = find_cache_extent(extent_cache, start, len);
+	if (!cache)
+		return 0;
+
+	rec = container_of(cache, struct extent_record, cache);
+	if (!is_extent_tree_record(rec))
+		return 0;
+
+	btrfs_disk_key_to_cpu(&key, &rec->parent_key);
+	return btrfs_add_corrupt_extent_record(info, &key, start, len, 0);
 }
 
 static int check_block(struct btrfs_root *root,
@@ -1995,11 +1958,11 @@ static int check_block(struct btrfs_root *root,
 	}
 	rec->info_level = level;
 
-	if (btrfs_is_leaf(buf)) {
-		ret = check_leaf(root, &rec->parent_key, buf);
-	} else {
-		ret = check_node(root, &rec->parent_key, buf);
-	}
+	if (btrfs_is_leaf(buf))
+		ret = btrfs_check_leaf(root, &rec->parent_key, buf);
+	else
+		ret = btrfs_check_node(root, &rec->parent_key, buf);
+
 	if (ret) {
 		fprintf(stderr, "bad block %llu\n",
 			(unsigned long long)buf->start);
@@ -2550,6 +2513,13 @@ static int run_next_block(struct btrfs_root *root,
 
 	/* fixme, get the real parent transid */
 	buf = read_tree_block(root, bytenr, size, 0);
+	if (!extent_buffer_uptodate(buf)) {
+		record_bad_block_io(root->fs_info,
+				    extent_cache, bytenr, size);
+		free_extent_buffer(buf);
+		goto out;
+	}
+
 	nritems = btrfs_header_nritems(buf);
 
 	ret = btrfs_lookup_extent_info(NULL, root, bytenr, size, NULL, &flags);
@@ -2565,6 +2535,8 @@ static int run_next_block(struct btrfs_root *root,
 	}
 
 	ret = check_block(root, extent_cache, buf, flags);
+	if (ret)
+		goto out;
 
 	if (btrfs_is_leaf(buf)) {
 		btree_space_waste += btrfs_leaf_free_space(root, buf);
@@ -2691,6 +2663,7 @@ static int run_next_block(struct btrfs_root *root,
 	    btrfs_header_backref_rev(buf) == BTRFS_MIXED_BACKREF_REV &&
 	    !btrfs_header_flag(buf, BTRFS_HEADER_FLAG_RELOC))
 		found_old_backref = 1;
+out:
 	free_extent_buffer(buf);
 	return 0;
 }
@@ -3016,6 +2989,7 @@ static int fixup_extent_refs(struct btrfs_trans_handle *trans,
 	int ret;
 	struct btrfs_path *path;
 	struct list_head *cur = rec->backrefs.next;
+	struct cache_extent *cache;
 	struct extent_backref *back;
 	int allocated = 0;
 	u64 flags = 0;
@@ -3034,6 +3008,13 @@ static int fixup_extent_refs(struct btrfs_trans_handle *trans,
 
 	if (ret < 0)
 		goto out;
+
+	/* was this block corrupt?  If so, don't add references to it */
+	cache = find_cache_extent(info->corrupt_blocks, rec->start, rec->max_size);
+	if (cache) {
+		ret = 0;
+		goto out;
+	}
 
 	/* step two, recreate all the refs we did find */
 	while(cur != &rec->backrefs) {
@@ -3056,6 +3037,107 @@ static int fixup_extent_refs(struct btrfs_trans_handle *trans,
 out:
 	btrfs_free_path(path);
 	return ret;
+}
+
+/* right now we only prune from the extent allocation tree */
+static int prune_one_block(struct btrfs_trans_handle *trans,
+			   struct btrfs_fs_info *info,
+			   struct btrfs_corrupt_block *corrupt)
+{
+	int ret;
+	struct btrfs_path path;
+	struct extent_buffer *eb;
+	u64 found;
+	int slot;
+	int nritems;
+	int level = corrupt->level + 1;
+
+	btrfs_init_path(&path);
+again:
+	/* we want to stop at the parent to our busted block */
+	path.lowest_level = level;
+
+	ret = btrfs_search_slot(trans, info->extent_root,
+				&corrupt->key, &path, -1, 1);
+
+	if (ret < 0)
+		goto out;
+
+	eb = path.nodes[level];
+	if (!eb) {
+		ret = -ENOENT;
+		goto out;
+	}
+
+	/*
+	 * hopefully the search gave us the block we want to prune,
+	 * lets try that first
+	 */
+	slot = path.slots[level];
+	found =  btrfs_node_blockptr(eb, slot);
+	if (found == corrupt->cache.start)
+		goto del_ptr;
+
+	nritems = btrfs_header_nritems(eb);
+
+	/* the search failed, lets scan this node and hope we find it */
+	for (slot = 0; slot < nritems; slot++) {
+		found =  btrfs_node_blockptr(eb, slot);
+		if (found == corrupt->cache.start)
+			goto del_ptr;
+	}
+	/*
+	 * we couldn't find the bad block.  TODO, search all the nodes for pointers
+	 * to this block
+	 */
+	if (eb == info->extent_root->node) {
+		ret = -ENOENT;
+		goto out;
+	} else {
+		level++;
+		btrfs_release_path(NULL, &path);
+		goto again;
+	}
+
+del_ptr:
+	printk("deleting pointer to block %Lu\n", corrupt->cache.start);
+	ret = btrfs_del_ptr(trans, info->extent_root, &path, level, slot);
+
+out:
+	btrfs_release_path(NULL, &path);
+	return ret;
+}
+
+static int prune_corrupt_blocks(struct btrfs_trans_handle *trans,
+				struct btrfs_fs_info *info)
+{
+	struct cache_extent *cache;
+	struct btrfs_corrupt_block *corrupt;
+
+	cache = find_first_cache_extent(info->corrupt_blocks, 0);
+	while (1) {
+		if (!cache)
+			break;
+		corrupt = container_of(cache, struct btrfs_corrupt_block, cache);
+		prune_one_block(trans, info, corrupt);
+		cache = next_cache_extent(cache);
+	}
+	return 0;
+}
+
+static void free_corrupt_blocks(struct btrfs_fs_info *info)
+{
+	struct cache_extent *cache;
+	struct btrfs_corrupt_block *corrupt;
+
+	while (1) {
+		cache = find_first_cache_extent(info->corrupt_blocks, 0);
+		if (!cache)
+			break;
+		corrupt = container_of(cache, struct btrfs_corrupt_block, cache);
+		remove_cache_extent(info->corrupt_blocks, cache);
+		free(corrupt);
+	}
 }
 
 static int check_extent_refs(struct btrfs_trans_handle *trans,
@@ -3082,6 +3164,16 @@ static int check_extent_refs(struct btrfs_trans_handle *trans,
 					 rec->start, rec->max_size);
 			cache = next_cache_extent(cache);
 		}
+
+		/* pin down all the corrupted blocks too */
+		cache = find_first_cache_extent(root->fs_info->corrupt_blocks, 0);
+		while(cache) {
+			rec = container_of(cache, struct extent_record, cache);
+			btrfs_pin_extent(root->fs_info,
+					 rec->start, rec->max_size);
+			cache = next_cache_extent(cache);
+		}
+		prune_corrupt_blocks(trans, root->fs_info);
 	}
 	while(1) {
 		fixed = 0;
@@ -3159,6 +3251,7 @@ static int check_extents(struct btrfs_trans_handle *trans,
 	struct cache_tree pending;
 	struct cache_tree reada;
 	struct cache_tree nodes;
+	struct cache_tree corrupt_blocks;
 	struct btrfs_path path;
 	struct btrfs_key key;
 	struct btrfs_key found_key;
@@ -3175,10 +3268,12 @@ static int check_extents(struct btrfs_trans_handle *trans,
 	cache_tree_init(&pending);
 	cache_tree_init(&nodes);
 	cache_tree_init(&reada);
+	cache_tree_init(&corrupt_blocks);
 
 	if (repair) {
 		root->fs_info->fsck_extent_cache = &extent_cache;
 		root->fs_info->free_extent_hook = free_extent_hook;
+		root->fs_info->corrupt_blocks = &corrupt_blocks;
 	}
 
 	bits_nr = 1024;
@@ -3241,8 +3336,10 @@ static int check_extents(struct btrfs_trans_handle *trans,
 	ret = check_extent_refs(trans, root, &extent_cache, repair);
 
 	if (repair) {
+		free_corrupt_blocks(root->fs_info);
 		root->fs_info->fsck_extent_cache = NULL;
 		root->fs_info->free_extent_hook = NULL;
+		root->fs_info->corrupt_blocks = NULL;
 	}
 
 	return ret;
