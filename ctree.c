@@ -151,8 +151,10 @@ int btrfs_fsck_reinit_root(struct btrfs_trans_handle *trans,
 				   btrfs_level_size(root, 0),
 				   root->root_key.objectid,
 				   &disk_key, level, 0, 0);
-	if (IS_ERR(c))
-		return PTR_ERR(c);
+	if (IS_ERR(c)) {
+		c = old;
+		extent_buffer_get(c);
+	}
 
 	memset_extent_buffer(c, 0, 0, sizeof(struct btrfs_header));
 	btrfs_set_header_level(c, level);
@@ -1262,6 +1264,8 @@ again:
 						 key->objectid);
 
 			b = read_node_slot(root, b, slot);
+			if (!extent_buffer_uptodate(b))
+				return -EIO;
 		} else {
 			p->slots[level] = slot;
 			if (ins_len > 0 &&

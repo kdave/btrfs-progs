@@ -26,6 +26,7 @@
 #include <getopt.h>
 #include "kerncompat.h"
 #include "ctree.h"
+#include "volumes.h"
 #include "repair.h"
 #include "disk-io.h"
 #include "print-tree.h"
@@ -3140,6 +3141,55 @@ static void free_corrupt_blocks(struct btrfs_fs_info *info)
 	}
 }
 
+static int check_block_group(struct btrfs_trans_handle *trans,
+			      struct btrfs_fs_info *info,
+			      struct map_lookup *map,
+			      int *reinit)
+{
+	struct btrfs_key key;
+	struct btrfs_path path;
+	int ret;
+
+	key.objectid = map->ce.start;
+	key.offset = map->ce.size;
+	key.type = BTRFS_BLOCK_GROUP_ITEM_KEY;
+
+	btrfs_init_path(&path);
+	ret = btrfs_search_slot(NULL, info->extent_root,
+				&key, &path, 0, 0);
+	btrfs_release_path(NULL, &path);
+	if (ret <= 0)
+		goto out;
+
+	ret = btrfs_make_block_group(trans, info->extent_root, 0, map->type,
+			       BTRFS_FIRST_CHUNK_TREE_OBJECTID,
+			       key.objectid, key.offset);
+	*reinit = 1;
+out:
+	return ret;
+}
+
+static int check_block_groups(struct btrfs_trans_handle *trans,
+			      struct btrfs_fs_info *info, int *reinit)
+{
+	struct cache_extent *ce;
+	struct map_lookup *map;
+	struct btrfs_mapping_tree *map_tree = &info->mapping_tree;
+
+	/* this isn't quite working */
+	return 0;
+
+	ce = find_first_cache_extent(&map_tree->cache_tree, 0);
+	while (1) {
+		if (!ce)
+			break;
+		map = container_of(ce, struct map_lookup, ce);
+		check_block_group(trans, info, map, reinit);
+		ce = next_cache_extent(ce);
+	}
+	return 0;
+}
+
 static int check_extent_refs(struct btrfs_trans_handle *trans,
 			     struct btrfs_root *root,
 			     struct cache_tree *extent_cache, int repair)
@@ -3149,6 +3199,7 @@ static int check_extent_refs(struct btrfs_trans_handle *trans,
 	int err = 0;
 	int ret = 0;
 	int fixed = 0;
+	int reinit = 0;
 
 	if (repair) {
 		/*
@@ -3174,6 +3225,9 @@ static int check_extent_refs(struct btrfs_trans_handle *trans,
 			cache = next_cache_extent(cache);
 		}
 		prune_corrupt_blocks(trans, root->fs_info);
+		check_block_groups(trans, root->fs_info, &reinit);
+		if (reinit)
+			btrfs_read_block_groups(root->fs_info->extent_root);
 	}
 	while(1) {
 		fixed = 0;
@@ -3356,6 +3410,7 @@ static struct option long_options[] = {
 	{ "super", 1, NULL, 's' },
 	{ "repair", 0, NULL, 0 },
 	{ "init-csum-tree", 0, NULL, 0 },
+	{ "init-extent-tree", 0, NULL, 0 },
 	{ 0, 0, 0, 0}
 };
 
@@ -3444,7 +3499,6 @@ int main(int ac, char **av)
 		}
 		goto out;
 	}
-
 	ret = check_extents(trans, root, repair);
 	if (ret)
 		fprintf(stderr, "Errors found in extent allocation tree\n");

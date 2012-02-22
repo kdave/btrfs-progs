@@ -1703,7 +1703,6 @@ int btrfs_write_dirty_block_groups(struct btrfs_trans_handle *trans,
 
 		cache = (struct btrfs_block_group_cache *)(unsigned long)ptr;
 		ret = write_one_cache_group(trans, root, path, cache);
-		BUG_ON(ret);
 	}
 	btrfs_free_path(path);
 	return 0;
@@ -1894,6 +1893,10 @@ static int update_pinned_extents(struct btrfs_root *root,
 	}
 	while (num > 0) {
 		cache = btrfs_lookup_block_group(fs_info, bytenr);
+		if (!cache) {
+			len = min((u64)root->sectorsize, num);
+			goto next;
+		}
 		WARN_ON(!cache);
 		len = min(num, cache->key.offset -
 			  (bytenr - cache->key.objectid));
@@ -1906,6 +1909,7 @@ static int update_pinned_extents(struct btrfs_root *root,
 			cache->space_info->bytes_pinned -= len;
 			fs_info->total_pinned -= len;
 		}
+next:
 		bytenr += len;
 		num -= len;
 	}
@@ -2263,9 +2267,7 @@ static int __free_extent(struct btrfs_trans_handle *trans,
 			BUG_ON(ret);
 		}
 
-		ret = update_block_group(trans, root, bytenr, num_bytes, 0,
-					 mark_free);
-		BUG_ON(ret);
+		update_block_group(trans, root, bytenr, num_bytes, 0, mark_free);
 	}
 fail:
 	btrfs_free_path(path);
@@ -2596,13 +2598,7 @@ static int alloc_reserved_tree_block(struct btrfs_trans_handle *trans,
 
 	ret = update_block_group(trans, root, ins->objectid, ins->offset,
 				 1, 0);
-	if (ret) {
-		printk(KERN_ERR "btrfs update block group failed for %llu "
-		       "%llu\n", (unsigned long long)ins->objectid,
-		       (unsigned long long)ins->offset);
-		BUG();
-	}
-	return ret;
+	return 0;
 }
 
 static int alloc_tree_block(struct btrfs_trans_handle *trans,
@@ -3185,7 +3181,6 @@ int btrfs_make_block_group(struct btrfs_trans_handle *trans,
 
 	finish_current_insert(trans, extent_root);
 	ret = del_pending_extents(trans, extent_root);
-	BUG_ON(ret);
 	set_avail_alloc_bits(extent_root->fs_info, type);
 	return 0;
 }

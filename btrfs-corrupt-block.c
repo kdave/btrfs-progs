@@ -242,11 +242,6 @@ static void btrfs_corrupt_extent_tree(struct btrfs_trans_handle *trans,
 	if (!eb)
 		return;
 
-	if ((rand() % 10) == 0) {
-		corrupt_keys(trans, root, eb);
-		return;
-	}
-
 	nr = btrfs_header_nritems(eb);
 	if (btrfs_is_leaf(eb)) {
 		btrfs_corrupt_extent_leaf(trans, root, eb);

@@ -18,6 +18,7 @@
 
 #ifndef __BTRFS_VOLUMES_
 #define __BTRFS_VOLUMES_
+
 struct btrfs_device {
 	struct list_head dev_list;
 	struct btrfs_root *dev_root;
@@ -85,6 +86,18 @@ struct btrfs_bio_stripe {
 struct btrfs_multi_bio {
 	int error;
 	int num_stripes;
+	struct btrfs_bio_stripe stripes[];
+};
+
+struct map_lookup {
+	struct cache_extent ce;
+	u64 type;
+	int io_align;
+	int io_width;
+	int stripe_len;
+	int sector_size;
+	int num_stripes;
+	int sub_stripes;
 	struct btrfs_bio_stripe stripes[];
 };
 
