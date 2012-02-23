@@ -750,7 +750,65 @@ static int leave_shared_node(struct btrfs_root *root,
 	return 0;
 }
 
-static int process_dir_item(struct extent_buffer *eb,
+static int is_child_root(struct btrfs_root *root, u64 parent_root_id,
+			 u64 child_root_id)
+{
+	struct btrfs_path path;
+	struct btrfs_key key;
+	struct extent_buffer *leaf;
+	int has_parent = 0;
+	int ret;
+
+	btrfs_init_path(&path);
+
+	key.objectid = parent_root_id;
+	key.type = BTRFS_ROOT_REF_KEY;
+	key.offset = child_root_id;
+	ret = btrfs_search_slot(NULL, root->fs_info->tree_root, &key, &path,
+				0, 0);
+	BUG_ON(ret < 0);
+	btrfs_release_path(root, &path);
+	if (!ret)
+		return 1;
+
+	key.objectid = child_root_id;
+	key.type = BTRFS_ROOT_BACKREF_KEY;
+	key.offset = 0;
+	ret = btrfs_search_slot(NULL, root->fs_info->tree_root, &key, &path,
+				0, 0);
+	BUG_ON(ret <= 0);
+
+	while (1) {
+		leaf = path.nodes[0];
+		if (path.slots[0] >= btrfs_header_nritems(leaf)) {
+			ret = btrfs_next_leaf(root->fs_info->tree_root, &path);
+			BUG_ON(ret < 0);
+
+			if (ret > 0)
+				break;
+		}
+
+		btrfs_item_key_to_cpu(leaf, &key, path.slots[0]);
+		if (key.objectid != child_root_id ||
+		    key.type != BTRFS_ROOT_BACKREF_KEY)
+			break;
+
+		has_parent = 1;
+
+		if (key.offset == parent_root_id) {
+			btrfs_release_path(root, &path);
+			return 1;
+		}
+
+		path.slots[0]++;
+	}
+
+	btrfs_release_path(root, &path);
+	return has_parent? 0 : -1;
+}
+
+static int process_dir_item(struct btrfs_root *root,
+			    struct extent_buffer *eb,
 			    int slot, struct btrfs_key *key,
 			    struct shared_node *active_node)
 {
@@ -798,9 +856,13 @@ static int process_dir_item(struct extent_buffer *eb,
 					  key->objectid, key->offset, namebuf,
 					  len, filetype, key->type, error);
 		} else if (location.type == BTRFS_ROOT_ITEM_KEY) {
-			add_inode_backref(root_cache, location.objectid,
-					  key->objectid, key->offset, namebuf,
-					  len, filetype, key->type, error);
+			u64 parent = root->objectid;
+
+			if (is_child_root(root, parent, location.objectid))
+				add_inode_backref(root_cache, location.objectid,
+						  key->objectid, key->offset,
+						  namebuf, len, filetype,
+						  key->type, error);
 		} else {
 			fprintf(stderr, "warning line %d\n", __LINE__);
 		}
@@ -1035,7 +1097,7 @@ static int process_one_leaf(struct btrfs_root *root, struct extent_buffer *eb,
 		switch (key.type) {
 		case BTRFS_DIR_ITEM_KEY:
 		case BTRFS_DIR_INDEX_KEY:
-			ret = process_dir_item(eb, i, &key, active_node);
+			ret = process_dir_item(root, eb, i, &key, active_node);
 			break;
 		case BTRFS_INODE_REF_KEY:
 			ret = process_inode_ref(eb, i, &key, active_node);
