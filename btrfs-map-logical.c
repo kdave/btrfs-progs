@@ -84,7 +84,7 @@ struct extent_buffer *debug_read_block(struct btrfs_root *root, u64 bytenr,
 
 static void print_usage(void)
 {
-	fprintf(stderr, "usage: btrfs-map-logical [options] mount_point\n");
+	fprintf(stderr, "usage: btrfs-map-logical [options] device\n");
 	fprintf(stderr, "\t-l Logical extent to map\n");
 	fprintf(stderr, "\t-c Copy of the extent to read (usually 1 or 2)\n");
 	fprintf(stderr, "\t-o Output file to hold the extent\n");
@@ -96,7 +96,7 @@ static struct option long_options[] = {
 	/* { "byte-count", 1, NULL, 'b' }, */
 	{ "logical", 1, NULL, 'l' },
 	{ "copy", 1, NULL, 'c' },
-	{ "output", 1, NULL, 'c' },
+	{ "output", 1, NULL, 'o' },
 	{ "bytes", 1, NULL, 'b' },
 	{ 0, 0, 0, 0}
 };
