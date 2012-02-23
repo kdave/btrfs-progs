@@ -85,11 +85,13 @@ struct extent_buffer *debug_corrupt_block(struct btrfs_root *root, u64 bytenr,
 
 static void print_usage(void)
 {
-	fprintf(stderr, "usage: btrfs-map-logical [options] mount_point\n");
-	fprintf(stderr, "\t-l Logical extent to map\n");
-	fprintf(stderr, "\t-c Copy of the extent to read (usually 1 or 2)\n");
-	fprintf(stderr, "\t-o Output file to hold the extent\n");
-	fprintf(stderr, "\t-b Number of bytes to read\n");
+	fprintf(stderr, "usage: btrfs-corrupt-block [options] device\n");
+	fprintf(stderr, "\t-l Logical extent to be corrupted\n");
+	fprintf(stderr, "\t-c Copy of the extent to be corrupted"
+		" (usually 1 or 2, default: 0)\n");
+	fprintf(stderr, "\t-b Number of bytes to be corrupted\n");
+	fprintf(stderr, "\t-e Extent to be corrupted\n");
+	fprintf(stderr, "\t-E The whole extent free to be corrupted\n");
 	exit(1);
 }
 
@@ -296,7 +298,7 @@ int main(int ac, char **av)
 
 	while(1) {
 		int c;
-		c = getopt_long(ac, av, "l:c:eEk", long_options,
+		c = getopt_long(ac, av, "l:c:b:eEk", long_options,
 				&option_index);
 		if (c < 0)
 			break;
