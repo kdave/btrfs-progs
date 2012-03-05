@@ -121,10 +121,6 @@ struct btrfs_trans_handle;
 /* csum types */
 #define BTRFS_CSUM_TYPE_CRC32	0
 
-
-/* csum types */
-#define BTRFS_CSUM_TYPE_CRC32	0
-
 static int btrfs_csum_sizes[] = { 4, 0 };
 
 /* four bytes for CRC32 */
