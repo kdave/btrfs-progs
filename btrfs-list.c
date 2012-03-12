@@ -569,10 +569,6 @@ static int __list_subvol_search(int fd, struct root_lookup *root_lookup)
 	root_lookup_init(root_lookup);
 	memset(&args, 0, sizeof(args));
 
-	root_lookup_init(root_lookup);
-
-	memset(&args, 0, sizeof(args));
-
 	/* search in the tree of tree roots */
 	sk->tree_id = 1;
 
