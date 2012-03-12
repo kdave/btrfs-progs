@@ -552,6 +552,60 @@ build:
 	return full;
 }
 
+static int get_default_subvolid(int fd, u64 *default_id)
+{
+	struct btrfs_ioctl_search_args args;
+	struct btrfs_ioctl_search_key *sk = &args.key;
+	struct btrfs_ioctl_search_header *sh;
+	u64 found = 0;
+	int ret;
+
+	memset(&args, 0, sizeof(args));
+
+	/*
+	 * search for a dir item with a name 'default' in the tree of
+	 * tree roots, it should point us to a default root
+	 */
+	sk->tree_id = 1;
+
+	/* don't worry about ancient format and request only one item */
+	sk->nr_items = 1;
+
+	sk->max_objectid = BTRFS_ROOT_TREE_DIR_OBJECTID;
+	sk->min_objectid = BTRFS_ROOT_TREE_DIR_OBJECTID;
+	sk->max_type = BTRFS_DIR_ITEM_KEY;
+	sk->min_type = BTRFS_DIR_ITEM_KEY;
+	sk->max_offset = (u64)-1;
+	sk->max_transid = (u64)-1;
+
+	ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &args);
+	if (ret < 0)
+		return ret;
+
+	/* the ioctl returns the number of items it found in nr_items */
+	if (sk->nr_items == 0)
+		goto out;
+
+	sh = (struct btrfs_ioctl_search_header *)args.buf;
+
+	if (sh->type == BTRFS_DIR_ITEM_KEY) {
+		struct btrfs_dir_item *di;
+		int name_len;
+		char *name;
+
+		di = (struct btrfs_dir_item *)(sh + 1);
+		name_len = btrfs_stack_dir_name_len(di);
+		name = (char *)(di + 1);
+
+		if (!strncmp("default", name, name_len))
+			found = btrfs_disk_key_objectid(&di->location);
+	}
+
+out:
+	*default_id = found;
+	return 0;
+}
+
 static int __list_subvol_search(int fd, struct root_lookup *root_lookup)
 {
 	int ret;
@@ -663,11 +717,31 @@ static int __list_subvol_fill_paths(int fd, struct root_lookup *root_lookup)
 	return 0;
 }
 
-int list_subvols(int fd, int print_parent)
+int list_subvols(int fd, int print_parent, int get_default)
 {
 	struct root_lookup root_lookup;
 	struct rb_node *n;
+	u64 default_id;
 	int ret;
+
+	if (get_default) {
+		ret = get_default_subvolid(fd, &default_id);
+		if (ret) {
+			fprintf(stderr, "ERROR: can't perform the search - %s\n",
+				strerror(errno));
+			return ret;
+		}
+		if (default_id == 0) {
+			fprintf(stderr, "ERROR: 'default' dir item not found\n");
+			return ret;
+		}
+
+		/* no need to resolve roots if FS_TREE is default */
+		if (default_id == BTRFS_FS_TREE_OBJECTID) {
+			printf("ID 5 (FS_TREE)\n");
+			return ret;
+		}
+	}
 
 	ret = __list_subvol_search(fd, &root_lookup);
 	if (ret) {
@@ -696,6 +770,11 @@ int list_subvols(int fd, int print_parent)
 		char *path;
 
 		entry = rb_entry(n, struct root_info, rb_node);
+		if (get_default && entry->root_id != default_id) {
+			n = rb_prev(n);
+			continue;
+		}
+
 		resolve_root(&root_lookup, entry, &parent_id, &level, &path);
 		if (print_parent) {
 			printf("ID %llu parent %llu top level %llu path %s\n",
