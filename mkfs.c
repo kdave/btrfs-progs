@@ -59,6 +59,9 @@ static u64 parse_size(char *s)
 	int len = strlen(s);
 	char c;
 	u64 mult = 1;
+	u64 ret;
+
+	s = strdup(s);
 
 	if (!isdigit(s[len - 1])) {
 		c = tolower(s[len - 1]);
@@ -77,7 +80,9 @@ static u64 parse_size(char *s)
 		}
 		s[len - 1] = '\0';
 	}
-	return atol(s) * mult;
+	ret = atol(s) * mult;
+	free(s);
+	return ret;
 }
 
 static int make_root_dir(struct btrfs_root *root, int mixed)
@@ -1235,6 +1240,8 @@ int main(int ac, char **av)
 				data_profile_opt = 1;
 				break;
 			case 'l':
+			case 'n':
+				nodesize = parse_size(optarg);
 				leafsize = parse_size(optarg);
 				break;
 			case 'L':
@@ -1246,9 +1253,6 @@ int main(int ac, char **av)
 				break;
 			case 'M':
 				mixed = 1;
-				break;
-			case 'n':
-				nodesize = parse_size(optarg);
 				break;
 			case 's':
 				sectorsize = parse_size(optarg);
