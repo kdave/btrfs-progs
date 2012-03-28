@@ -1407,6 +1407,7 @@ int main(int ac, char **av)
 			close(fd);
 			continue;
 		}
+		dev_block_count = block_count;
 		ret = btrfs_prepare_device(fd, file, zero_end,
 					   &dev_block_count, &mixed);
 		mixed = old_mixed;

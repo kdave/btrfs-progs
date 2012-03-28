@@ -555,6 +555,8 @@ int btrfs_prepare_device(int fd, char *file, int zero_end, u64 *block_count_ret,
 		fprintf(stderr, "unable to find %s size\n", file);
 		exit(1);
 	}
+	if (*block_count_ret)
+		block_count = min(block_count, *block_count_ret);
 	zero_end = 1;
 
 	if (block_count < 1024 * 1024 * 1024 && !(*mixed)) {
