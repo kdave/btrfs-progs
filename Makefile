@@ -101,15 +101,15 @@ ioctl-test: $(objects) ioctl-test.o
 	$(CC) $(CFLAGS) -o ioctl-test $(objects) ioctl-test.o $(LDFLAGS) $(LIBS)
 
 manpages:
-	cd man; make
+	cd man; $(MAKE)
 
 install-man:
-	cd man; make install
+	cd man; $(MAKE) install
 
 clean :
 	rm -f $(progs) cscope.out *.o .*.d btrfs-convert btrfs-image btrfs-select-super \
 	      btrfs-zero-log btrfstune dir-test ioctl-test quick-test version.h
-	cd man; make clean
+	cd man; $(MAKE) clean
 
 install: $(progs) install-man
 	$(INSTALL) -m755 -d $(DESTDIR)$(bindir)
