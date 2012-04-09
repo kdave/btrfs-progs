@@ -274,6 +274,9 @@ static struct inode_record *get_inode_rec(struct cache_tree *inode_cache,
 		node->cache.size = 1;
 		node->data = rec;
 
+		if (ino == BTRFS_FREE_INO_OBJECTID)
+			rec->found_link = 1;
+
 		ret = insert_existing_cache_extent(inode_cache, &node->cache);
 		BUG_ON(ret);
 	}
@@ -1015,6 +1018,10 @@ static int process_one_leaf(struct btrfs_root *root, struct extent_buffer *eb,
 	nritems = btrfs_header_nritems(eb);
 	for (i = 0; i < nritems; i++) {
 		btrfs_item_key_to_cpu(eb, &key, i);
+
+		if (key.objectid == BTRFS_FREE_SPACE_OBJECTID)
+			continue;
+
 		if (active_node->current == NULL ||
 		    active_node->current->ino < key.objectid) {
 			if (active_node->current) {
