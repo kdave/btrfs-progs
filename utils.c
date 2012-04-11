@@ -1021,6 +1021,7 @@ again:
 				     list);
 		list_del(&pending->list);
 		closedir(dirp);
+		dirp = NULL;
 		goto again;
 	}
 	ret = 0;
