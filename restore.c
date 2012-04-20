@@ -849,11 +849,9 @@ int main(int argc, char **argv)
 	strncpy(dir_name, argv[optind + 1], 128);
 
 	/* Strip the trailing / on the dir name */
-	while (1) {
-		len = strlen(dir_name);
-		if (dir_name[len - 1] != '/')
-			break;
-		dir_name[len - 1] = '\0';
+	len = strlen(dir_name);
+	while (len && dir_name[--len] == '/') {
+		dir_name[len] = '\0';
 	}
 
 	if (find_dir) {
