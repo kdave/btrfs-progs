@@ -63,7 +63,7 @@ static u64 parse_size(char *s)
 
 	s = strdup(s);
 
-	if (!isdigit(s[len - 1])) {
+	if (len && !isdigit(s[len - 1])) {
 		c = tolower(s[len - 1]);
 		switch (c) {
 		case 'g':

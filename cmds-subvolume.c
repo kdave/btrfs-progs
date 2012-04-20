@@ -380,7 +380,7 @@ static int cmd_snapshot(int argc, char **argv)
 
 	args.fd = fd;
 	strncpy(args.name, newname, BTRFS_SUBVOL_NAME_MAX);
-	args.name[BTRFS_PATH_NAME_MAX-1] = 0;
+	args.name[BTRFS_SUBVOL_NAME_MAX-1] = 0;
 	res = ioctl(fddst, BTRFS_IOC_SNAP_CREATE_V2, &args);
 	e = errno;
 
