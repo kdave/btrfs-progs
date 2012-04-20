@@ -657,9 +657,11 @@ int resolve_loop_device(const char* loop_dev, char* loop_file, int max_len)
 	ret_ioctl = ioctl(loop_fd, LOOP_GET_STATUS, &loopinfo);
 	close(loop_fd);
 
-	if (ret_ioctl == 0)
+	if (ret_ioctl == 0) {
 		strncpy(loop_file, loopinfo.lo_name, max_len);
-	else
+		if (max_len > 0)
+			loop_file[max_len-1] = 0;
+	} else
 		return -errno;
 
 	return 0;
@@ -860,8 +862,10 @@ int check_mounted_where(int fd, const char *file, char *where, int size,
 	}
 
 	/* Did we find an entry in mnt table? */
-	if (mnt && size && where)
+	if (mnt && size && where) {
 		strncpy(where, mnt->mnt_dir, size);
+		where[size-1] = 0;
+	}
 	if (fs_dev_ret)
 		*fs_dev_ret = fs_devices_mnt;
 
@@ -893,6 +897,8 @@ int get_mountpt(char *dev, char *mntpt, size_t size)
                if (strcmp(dev, mnt->mnt_fsname) == 0)
                {
                        strncpy(mntpt, mnt->mnt_dir, size);
+                       if (size)
+                                mntpt[size-1] = 0;
                        break;
                }
        }
@@ -925,6 +931,7 @@ void btrfs_register_one_device(char *fname)
 		return;
 	}
 	strncpy(args.name, fname, BTRFS_PATH_NAME_MAX);
+	args.name[BTRFS_PATH_NAME_MAX-1] = 0;
 	ret = ioctl(fd, BTRFS_IOC_SCAN_DEV, &args);
 	e = errno;
 	if(ret<0){

@@ -111,6 +111,7 @@ static int cmd_subvol_create(int argc, char **argv)
 
 	printf("Create subvolume '%s/%s'\n", dstdir, newname);
 	strncpy(args.name, newname, BTRFS_PATH_NAME_MAX);
+	args.name[BTRFS_PATH_NAME_MAX-1] = 0;
 	res = ioctl(fddst, BTRFS_IOC_SUBVOL_CREATE, &args);
 	e = errno;
 
@@ -202,6 +203,7 @@ static int cmd_subvol_delete(int argc, char **argv)
 
 	printf("Delete subvolume '%s/%s'\n", dname, vname);
 	strncpy(args.name, vname, BTRFS_PATH_NAME_MAX);
+	args.name[BTRFS_PATH_NAME_MAX-1] = 0;
 	res = ioctl(fd, BTRFS_IOC_SNAP_DESTROY, &args);
 	e = errno;
 
@@ -378,6 +380,7 @@ static int cmd_snapshot(int argc, char **argv)
 
 	args.fd = fd;
 	strncpy(args.name, newname, BTRFS_SUBVOL_NAME_MAX);
+	args.name[BTRFS_PATH_NAME_MAX-1] = 0;
 	res = ioctl(fddst, BTRFS_IOC_SNAP_CREATE_V2, &args);
 	e = errno;
 

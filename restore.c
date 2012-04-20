@@ -846,7 +846,8 @@ int main(int argc, char **argv)
 
 	memset(path_name, 0, 4096);
 
-	strncpy(dir_name, argv[optind + 1], 128);
+	strncpy(dir_name, argv[optind + 1], sizeof dir_name);
+	dir_name[sizeof dir_name - 1] = 0;
 
 	/* Strip the trailing / on the dir name */
 	len = strlen(dir_name);

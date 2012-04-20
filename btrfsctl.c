@@ -241,9 +241,10 @@ int main(int ac, char **av)
 		fd = open_file_or_dir(fname);
 	 }
 
-	if (name)
+	if (name) {
                 strncpy(args.name, name, BTRFS_PATH_NAME_MAX + 1);
-	else
+                args.name[BTRFS_PATH_NAME_MAX] = 0;
+	} else
 		args.name[0] = '\0';
 
 	if (command == BTRFS_IOC_SNAP_CREATE) {

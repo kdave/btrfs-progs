@@ -117,6 +117,7 @@ static int cmd_add_dev(int argc, char **argv)
 		close(devfd);
 
 		strncpy(ioctl_args.name, argv[i], BTRFS_PATH_NAME_MAX);
+		ioctl_args.name[BTRFS_PATH_NAME_MAX-1] = 0;
 		res = ioctl(fdmnt, BTRFS_IOC_ADD_DEV, &ioctl_args);
 		e = errno;
 		if(res<0){
@@ -161,6 +162,7 @@ static int cmd_rm_dev(int argc, char **argv)
 		int	res;
 
 		strncpy(arg.name, argv[i], BTRFS_PATH_NAME_MAX);
+		arg.name[BTRFS_PATH_NAME_MAX-1] = 0;
 		res = ioctl(fdmnt, BTRFS_IOC_RM_DEV, &arg);
 		e = errno;
 		if(res<0){
@@ -226,6 +228,7 @@ static int cmd_scan_dev(int argc, char **argv)
 		printf("Scanning for Btrfs filesystems in '%s'\n", argv[i]);
 
 		strncpy(args.name, argv[i], BTRFS_PATH_NAME_MAX);
+		args.name[BTRFS_PATH_NAME_MAX-1] = 0;
 		/*
 		 * FIXME: which are the error code returned by this ioctl ?
 		 * it seems that is impossible to understand if there no is

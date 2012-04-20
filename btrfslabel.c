@@ -58,6 +58,7 @@ static void change_label_unmounted(char *dev, char *nLabel)
 
        trans = btrfs_start_transaction(root, 1);
        strncpy(root->fs_info->super_copy.label, nLabel, BTRFS_LABEL_SIZE);
+       root->fs_info->super_copy.label[BTRFS_LABEL_SIZE-1] = 0;
        btrfs_commit_transaction(trans, root);
 
        /* Now we close it since we are done. */
