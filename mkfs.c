@@ -911,8 +911,7 @@ static int traverse_directory(struct btrfs_trans_handle *trans,
 	/* Add list for source directory */
 	dir_entry = malloc(sizeof(struct directory_name_entry));
 	dir_entry->dir_name = dir_name;
-	dir_entry->path = malloc(strlen(dir_name) + 1);
-	strcpy(dir_entry->path, dir_name);
+	dir_entry->path = strdup(dir_name);
 
 	parent_inum = highest_inum + BTRFS_FIRST_FREE_OBJECTID;
 	dir_entry->inum = parent_inum;
