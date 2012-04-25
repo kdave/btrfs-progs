@@ -155,8 +155,15 @@ static int cmd_df(int argc, char **argv)
 
 static int uuid_search(struct btrfs_fs_devices *fs_devices, char *search)
 {
+	char uuidbuf[37];
 	struct list_head *cur;
 	struct btrfs_device *device;
+	int search_len = strlen(search);
+
+	search_len = min(search_len, 37);
+	uuid_unparse(fs_devices->fsid, uuidbuf);
+	if (!strncmp(uuidbuf, search, search_len))
+		return 1;
 
 	list_for_each(cur, &fs_devices->devices) {
 		device = list_entry(cur, struct btrfs_device, dev_list);
