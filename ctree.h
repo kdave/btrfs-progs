@@ -1051,6 +1051,12 @@ struct btrfs_root {
 #define BTRFS_DEV_STATS_KEY	249
 
 /*
+ * Persistently stores the device replace state in the device tree.
+ * The key is built like this: (0, BTRFS_DEV_REPLACE_KEY, 0).
+ */
+#define BTRFS_DEV_REPLACE_KEY	250
+
+/*
  * string items are for debugging.  They just store a short string of
  * data in the FS
  */

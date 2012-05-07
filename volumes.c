@@ -1219,6 +1219,22 @@ struct btrfs_device *btrfs_find_device(struct btrfs_root *root, u64 devid,
 	return NULL;
 }
 
+struct btrfs_device *btrfs_find_device_by_devid(struct btrfs_root *root,
+						u64 devid, int instance)
+{
+	struct list_head *head = &root->fs_info->fs_devices->devices;
+	struct btrfs_device *dev;
+	struct list_head *cur;
+	int num_found = 0;
+
+	list_for_each(cur, head) {
+		dev = list_entry(cur, struct btrfs_device, dev_list);
+		if (dev->devid == devid && num_found++ == instance)
+			return dev;
+	}
+	return NULL;
+}
+
 int btrfs_bootstrap_super_map(struct btrfs_mapping_tree *map_tree,
 			      struct btrfs_fs_devices *fs_devices)
 {

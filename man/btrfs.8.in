@@ -39,6 +39,12 @@ btrfs \- control a btrfs filesystem
 .PP
 \fBbtrfs\fP \fBdevice delete\fP\fI <device> [<device>...] <path> \fP
 .PP
+\fBbtrfs\fP \fBreplace start\fP \fI[-Bfr] <srcdev>|<devid> <targetdev> <path>\fP
+.PP
+\fBbtrfs\fP \fBreplace status\fP \fI[-1] <path>\fP
+.PP
+\fBbtrfs\fP \fBreplace cancel\fP \fI<path>\fP
+.PP
 \fBbtrfs\fP \fBscrub start\fP [-Bdqru] {\fI<path>\fP|\fI<device>\fP}
 .PP
 \fBbtrfs\fP \fBscrub cancel\fP {\fI<path>\fP|\fI<device>\fP}
@@ -280,6 +286,54 @@ If no devices are passed, \fBbtrfs\fR scans all the block devices listed
 in the /proc/partitions file.
 Finally, if \fB--all-devices\fP is passed, all the devices under /dev are 
 scanned.
+.TP
+
+\fBreplace start\fR \fI[-Bfr] <srcdev>|<devid> <targetdev> <path>\fR
+Replace device of a btrfs filesystem.
+On a live filesystem, duplicate the data to the target device which
+is currently stored on the source device. If the source device is not
+available anymore, or if the \fB-r\fR option is set, the data is built
+only using the RAID redundancy mechanisms. After completion of the
+operation, the source device is removed from the filesystem.
+If the \fIsrcdev\fR is a numerical value, it is assumed to be the device id
+of the filesystem which is mounted at mount_point, otherwise is is
+the path to the source device. If the source device is disconnected,
+from the system, you have to use the \fIdevid\fR parameter format.
+The targetdev needs to be same size or larger than the \fIsrcdev\fR.
+
+.RS
+\fIOptions\fR
+.TP
+.B -r
+only read from \fIsrcdev\fR if no other zero-defect mirror exists (enable
+this if your drive has lots of read errors, the access would be very slow)
+.TP
+.B -f
+force using and overwriting \fItargetdev\fR even if it looks like
+containing a valid btrfs filesystem. A valid filesystem is
+assumed if a btrfs superblock is found which contains a
+correct checksum. Devices which are currently mounted are
+never allowed to be used as the \fItargetdev\fR
+.TP
+.B -B
+do not background
+.RE
+.TP
+
+\fBreplace status\fR \fI[-1] <path>\fR
+Print status and progress information of a running device replace operation.
+
+.RS
+\fIOptions\fR
+.TP
+.B -1
+print once instead of print continously until the replace
+operation finishes (or is canceled)
+.RE
+.TP
+
+\fBreplace cancel\fR \fI<path>\fR
+Cancel a running device replace operation.
 .TP
 
 \fBscrub start\fP [-Bdqru] {\fI<path>\fP|\fI<device>\fP}
