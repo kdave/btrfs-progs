@@ -397,7 +397,7 @@ static int cmd_snapshot(int argc, char **argv)
 }
 
 static const char * const cmd_subvol_get_default_usage[] = {
-	"btrfs subvolume get-dafault <path>",
+	"btrfs subvolume get-default <path>",
 	"Get the default subvolume of a filesystem",
 	NULL
 };
@@ -435,7 +435,7 @@ static int cmd_subvol_get_default(int argc, char **argv)
 }
 
 static const char * const cmd_subvol_set_default_usage[] = {
-	"btrfs subvolume set-dafault <subvolid> <path>",
+	"btrfs subvolume set-default <subvolid> <path>",
 	"Set the default subvolume of a filesystem",
 	NULL
 };
