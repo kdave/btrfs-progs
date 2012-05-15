@@ -1302,3 +1302,70 @@ int open_file_or_dir(const char *fname)
 	}
 	return fd;
 }
+
+int get_device_info(int fd, u64 devid,
+		    struct btrfs_ioctl_dev_info_args *di_args)
+{
+	int ret;
+
+	di_args->devid = devid;
+	memset(&di_args->uuid, '\0', sizeof(di_args->uuid));
+
+	ret = ioctl(fd, BTRFS_IOC_DEV_INFO, di_args);
+	return ret ? -errno : 0;
+}
+
+int get_fs_info(int fd, char *path, struct btrfs_ioctl_fs_info_args *fi_args,
+		struct btrfs_ioctl_dev_info_args **di_ret)
+{
+	int ret = 0;
+	int ndevs = 0;
+	int i = 1;
+	struct btrfs_fs_devices *fs_devices_mnt = NULL;
+	struct btrfs_ioctl_dev_info_args *di_args;
+	char mp[BTRFS_PATH_NAME_MAX + 1];
+
+	memset(fi_args, 0, sizeof(*fi_args));
+
+	ret = ioctl(fd, BTRFS_IOC_FS_INFO, fi_args);
+	if (ret && (errno == EINVAL || errno == ENOTTY)) {
+		/* path is not a mounted btrfs. Try if it's a device */
+		ret = check_mounted_where(fd, path, mp, sizeof(mp),
+					  &fs_devices_mnt);
+		if (!ret)
+			return -EINVAL;
+		if (ret < 0)
+			return ret;
+		fi_args->num_devices = 1;
+		fi_args->max_id = fs_devices_mnt->latest_devid;
+		i = fs_devices_mnt->latest_devid;
+		memcpy(fi_args->fsid, fs_devices_mnt->fsid, BTRFS_FSID_SIZE);
+		close(fd);
+		fd = open_file_or_dir(mp);
+		if (fd < 0)
+			return -errno;
+	} else if (ret) {
+		return -errno;
+	}
+
+	if (!fi_args->num_devices)
+		return 0;
+
+	di_args = *di_ret = malloc(fi_args->num_devices * sizeof(*di_args));
+	if (!di_args)
+		return -errno;
+
+	for (; i <= fi_args->max_id; ++i) {
+		BUG_ON(ndevs >= fi_args->num_devices);
+		ret = get_device_info(fd, i, &di_args[ndevs]);
+		if (ret == -ENODEV)
+			continue;
+		if (ret)
+			return ret;
+		ndevs++;
+	}
+
+	BUG_ON(ndevs == 0);
+
+	return 0;
+}

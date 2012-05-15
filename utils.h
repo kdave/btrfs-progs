@@ -49,4 +49,8 @@ int get_mountpt(char *dev, char *mntpt, size_t size);
 int btrfs_scan_block_devices(int run_ioctl);
 u64 parse_size(char *s);
 int open_file_or_dir(const char *fname);
+int get_device_info(int fd, u64 devid,
+		    struct btrfs_ioctl_dev_info_args *di_args);
+int get_fs_info(int fd, char *path, struct btrfs_ioctl_fs_info_args *fi_args,
+		struct btrfs_ioctl_dev_info_args **di_ret);
 #endif
