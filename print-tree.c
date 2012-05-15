@@ -455,6 +455,9 @@ static void print_key_type(u64 objectid, u8 type)
 	case BTRFS_QGROUP_LIMIT_KEY:
 		printf("BTRFS_QGROUP_LIMIT_KEY");
 		break;
+	case BTRFS_DEV_STATS_KEY:
+		printf("DEV_STATS_ITEM");
+		break;
 	default:
 		printf("UNKNOWN.%d", type);
 	};
@@ -776,6 +779,9 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 			/* dirty, but it's simple */
 			str = l->data + btrfs_item_ptr_offset(l, i);
 			printf("\t\titem data %.*s\n", btrfs_item_size(l, item), str);
+			break;
+		case BTRFS_DEV_STATS_KEY:
+			printf("\t\tdevice stats\n");
 			break;
 		};
 		fflush(stdout);

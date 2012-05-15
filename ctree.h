@@ -1045,6 +1045,12 @@ struct btrfs_root {
 #define BTRFS_QGROUP_RELATION_KEY	246
 
 /*
+ * Persistently stores the io stats in the device tree.
+ * One key for all stats, (0, BTRFS_DEV_STATS_KEY, devid).
+ */
+#define BTRFS_DEV_STATS_KEY	249
+
+/*
  * string items are for debugging.  They just store a short string of
  * data in the FS
  */

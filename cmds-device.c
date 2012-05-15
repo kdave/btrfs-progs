@@ -284,12 +284,129 @@ static int cmd_ready_dev(int argc, char **argv)
 	return ret;
 }
 
+static const char * const cmd_dev_stats_usage[] = {
+	"btrfs device stats [-z] <path>|<device>",
+	"Show current device IO stats. -z to reset stats afterwards.",
+	NULL
+};
+
+static int cmd_dev_stats(int argc, char **argv)
+{
+	char *path;
+	struct btrfs_ioctl_fs_info_args fi_args;
+	struct btrfs_ioctl_dev_info_args *di_args = NULL;
+	int ret;
+	int fdmnt;
+	int i;
+	char c;
+	int fdres = -1;
+	int err = 0;
+	__u64 flags = 0;
+
+	optind = 1;
+	while ((c = getopt(argc, argv, "z")) != -1) {
+		switch (c) {
+		case 'z':
+			flags = BTRFS_DEV_STATS_RESET;
+			break;
+		case '?':
+		default:
+			fprintf(stderr, "ERROR: device stat args invalid.\n"
+					" device stat [-z] <path>|<device>\n"
+					" -z  to reset stats after reading.\n");
+			return 1;
+		}
+	}
+
+	if (optind + 1 != argc) {
+		fprintf(stderr, "ERROR: device stat needs path|device as single"
+			" argument\n");
+		return 1;
+	}
+
+	path = argv[optind];
+
+	fdmnt = open_file_or_dir(path);
+	if (fdmnt < 0) {
+		fprintf(stderr, "ERROR: can't access '%s'\n", path);
+		return 12;
+	}
+
+	ret = get_fs_info(fdmnt, path, &fi_args, &di_args);
+	if (ret) {
+		fprintf(stderr, "ERROR: getting dev info for devstats failed: "
+				"%s\n", strerror(-ret));
+		err = 1;
+		goto out;
+	}
+	if (!fi_args.num_devices) {
+		fprintf(stderr, "ERROR: no devices found\n");
+		err = 1;
+		goto out;
+	}
+
+	for (i = 0; i < fi_args.num_devices; i++) {
+		struct btrfs_ioctl_get_dev_stats args = {0};
+		__u8 path[BTRFS_DEVICE_PATH_NAME_MAX + 1];
+
+		strncpy((char *)path, (char *)di_args[i].path,
+			BTRFS_DEVICE_PATH_NAME_MAX);
+		path[BTRFS_DEVICE_PATH_NAME_MAX] = '\0';
+
+		args.devid = di_args[i].devid;
+		args.nr_items = BTRFS_DEV_STAT_VALUES_MAX;
+		args.flags = flags;
+
+		if (ioctl(fdmnt, BTRFS_IOC_GET_DEV_STATS, &args) < 0) {
+			fprintf(stderr,
+				"ERROR: ioctl(BTRFS_IOC_GET_DEV_STATS) on %s failed: %s\n",
+				path, strerror(errno));
+			err = 1;
+		} else {
+			if (args.nr_items >= BTRFS_DEV_STAT_WRITE_ERRS + 1)
+				printf("[%s].write_io_errs   %llu\n",
+				       path,
+				       (unsigned long long) args.values[
+					BTRFS_DEV_STAT_WRITE_ERRS]);
+			if (args.nr_items >= BTRFS_DEV_STAT_READ_ERRS + 1)
+				printf("[%s].read_io_errs    %llu\n",
+				       path,
+				       (unsigned long long) args.values[
+					BTRFS_DEV_STAT_READ_ERRS]);
+			if (args.nr_items >= BTRFS_DEV_STAT_FLUSH_ERRS + 1)
+				printf("[%s].flush_io_errs   %llu\n",
+				       path,
+				       (unsigned long long) args.values[
+					BTRFS_DEV_STAT_FLUSH_ERRS]);
+			if (args.nr_items >= BTRFS_DEV_STAT_CORRUPTION_ERRS + 1)
+				printf("[%s].corruption_errs %llu\n",
+				       path,
+				       (unsigned long long) args.values[
+					BTRFS_DEV_STAT_CORRUPTION_ERRS]);
+			if (args.nr_items >= BTRFS_DEV_STAT_GENERATION_ERRS + 1)
+				printf("[%s].generation_errs %llu\n",
+				       path,
+				       (unsigned long long) args.values[
+					BTRFS_DEV_STAT_GENERATION_ERRS]);
+		}
+	}
+
+out:
+	free(di_args);
+	close(fdmnt);
+	if (fdres > -1)
+		close(fdres);
+
+	return err;
+}
+
 const struct cmd_group device_cmd_group = {
 	device_cmd_group_usage, NULL, {
 		{ "add", cmd_add_dev, cmd_add_dev_usage, NULL, 0 },
 		{ "delete", cmd_rm_dev, cmd_rm_dev_usage, NULL, 0 },
 		{ "scan", cmd_scan_dev, cmd_scan_dev_usage, NULL, 0 },
 		{ "ready", cmd_ready_dev, cmd_ready_dev_usage, NULL, 0 },
+		{ "stats", cmd_dev_stats, cmd_dev_stats_usage, NULL, 0 },
 		{ 0, 0, 0, 0, 0 }
 	}
 };

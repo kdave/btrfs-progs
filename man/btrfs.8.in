@@ -33,6 +33,8 @@ btrfs \- control a btrfs filesystem
 .PP
 \fBbtrfs\fP \fBdevice scan\fP\fI [--all-devices|<device> [<device>...]]\fP
 .PP
+\fBbtrfs\fP \fBdevice stats\fP [-z] {\fI<path>\fP|\fI<device>\fP}
+.PP
 \fBbtrfs\fP \fBdevice add\fP\fI <device> [<device>...] <path> \fP
 .PP
 \fBbtrfs\fP \fBdevice delete\fP\fI <device> [<device>...] <path> \fP
@@ -250,6 +252,18 @@ otherwise the devices list is extracted from the /proc/partitions file.
 \fBfilesystem balance\fR \fI<path>\fR
 Balance the chunks of the filesystem identified by \fI<path>\fR
 across the devices.
+.TP
+
+\fBdevice stats\fP [-z] {\fI<path>\fP|\fI<device>\fP}
+Read and print the device IO stats for all devices of the filesystem
+identified by \fI<path>\fR or for a single \fI<device>\fR.
+
+.RS
+\fIOptions\fR
+.TP
+.B -z
+Reset stats to zero after reading them.
+.RE
 .TP
 
 \fBdevice add\fR\fI <dev> [<dev>..] <path>\fR
