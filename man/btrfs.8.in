@@ -47,11 +47,11 @@ btrfs \- control a btrfs filesystem
 .PP
 \fBbtrfs\fP \fBreplace cancel\fP \fI<path>\fP
 .PP
-\fBbtrfs\fP \fBscrub start\fP [-Bdqru] {\fI<path>\fP|\fI<device>\fP}
+\fBbtrfs\fP \fBscrub start\fP [-Bdqru] [-c ioprio_class -n ioprio_classdata] {\fI<path>\fP|\fI<device>\fP}
 .PP
 \fBbtrfs\fP \fBscrub cancel\fP {\fI<path>\fP|\fI<device>\fP}
 .PP
-\fBbtrfs\fP \fBscrub resume\fP [-Bdqru] {\fI<path>\fP|\fI<device>\fP}
+\fBbtrfs\fP \fBscrub resume\fP [-Bdqru] [-c ioprio_class -n ioprio_classdata] {\fI<path>\fP|\fI<device>\fP}
 .PP
 \fBbtrfs\fP \fBscrub status\fP [-d] {\fI<path>\fP|\fI<device>\fP}
 .PP
@@ -355,11 +355,16 @@ Cancel a running device replace operation.
 .TP
 
 \fBscrub start\fP [-Bdqru] {\fI<path>\fP|\fI<device>\fP}
+\fBscrub start\fP [-Bdqru] [-c ioprio_class -n ioprio_classdata] {\fI<path>\fP|\fI<device>\fP}
 Start a scrub on all devices of the filesystem identified by \fI<path>\fR or on
 a single \fI<device>\fR. Without options, scrub is started as a background
 process. Progress can be obtained with the \fBscrub status\fR command. Scrubbing
 involves reading all data from all disks and verifying checksums. Errors are
 corrected along the way if possible.
+.IP
+The default IO priority of scrub is the idle class. The priority can be configured similar to the
+.BR ionice (1)
+syntax.
 .RS
 
 \fIOptions\fR
@@ -373,6 +378,14 @@ Quiet. Omit error messages and statistics.
 Read only mode. Do not attempt to correct anything.
 .IP -u 5
 Scrub unused space as well. (NOT IMPLEMENTED)
+.IP -c 5
+Set IO priority class (see
+.BR ionice (1)
+manpage).
+.IP -n 5
+Set IO priority classdata (see
+.BR ionice (1)
+manpage).
 .RE
 .TP
 
@@ -384,7 +397,7 @@ If a \fI<device>\fR is given, the corresponding filesystem is found and
 \fBscrub cancel\fP behaves as if it was called on that filesystem.
 .TP
 
-\fBscrub resume\fP [-Bdqru] {\fI<path>\fP|\fI<device>\fP}
+\fBscrub resume\fP [-Bdqru] [-c ioprio_class -n ioprio_classdata] {\fI<path>\fP|\fI<device>\fP}
 Resume a canceled or interrupted scrub cycle on the filesystem identified by
 \fI<path>\fR or on a given \fI<device>\fR. Does not start a new scrub if the
 last scrub finished successfully.
@@ -446,4 +459,5 @@ and not suitable for any uses other than benchmarking and review.
 Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for
 further details.
 .SH SEE ALSO
-.BR mkfs.btrfs (8)
+.BR mkfs.btrfs (8),
+.BR ionice (1)

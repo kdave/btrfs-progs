@@ -24,6 +24,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <sys/syscall.h>
 #include <poll.h>
 #include <sys/file.h>
 #include <uuid/uuid.h>
@@ -60,6 +61,15 @@ struct scrub_stats {
 	u64 canceled;
 };
 
+/* TBD: replace with #include "linux/ioprio.h" in some years */
+#if !defined (IOPRIO_H)
+#define IOPRIO_WHO_PROCESS 1
+#define IOPRIO_CLASS_SHIFT 13
+#define IOPRIO_PRIO_VALUE(class, data) \
+		(((class) << IOPRIO_CLASS_SHIFT) | (data))
+#define IOPRIO_CLASS_IDLE 3
+#endif
+
 struct scrub_progress {
 	struct btrfs_ioctl_scrub_args scrub_args;
 	int fd;
@@ -69,6 +79,8 @@ struct scrub_progress {
 	struct scrub_file_record *resumed;
 	int ioctl_errno;
 	pthread_mutex_t progress_mutex;
+	int ioprio_class;
+	int ioprio_classdata;
 };
 
 struct scrub_file_record {
@@ -813,6 +825,14 @@ static void *scrub_one_dev(void *ctx)
 	sp->stats.duration = 0;
 	sp->stats.finished = 0;
 
+	ret = syscall(SYS_ioprio_set, IOPRIO_WHO_PROCESS, 0,
+		      IOPRIO_PRIO_VALUE(sp->ioprio_class,
+					sp->ioprio_classdata));
+	if (ret)
+		fprintf(stderr,
+			"WARNING: setting ioprio failed: %s (ignored).\n",
+			strerror(errno));
+
 	ret = ioctl(sp->fd, BTRFS_IOC_SCRUB, &sp->scrub_args);
 	gettimeofday(&tv, NULL);
 	sp->ret = ret;
@@ -1029,6 +1049,8 @@ static int scrub_start(int argc, char **argv, int resume)
 	int do_record = 1;
 	int readonly = 0;
 	int do_stats_per_dev = 0;
+	int ioprio_class = IOPRIO_CLASS_IDLE;
+	int ioprio_classdata = 0;
 	int n_start = 0;
 	int n_skip = 0;
 	int n_resume = 0;
@@ -1054,7 +1076,7 @@ static int scrub_start(int argc, char **argv, int resume)
 	u64 devid;
 
 	optind = 1;
-	while ((c = getopt(argc, argv, "BdqrR")) != -1) {
+	while ((c = getopt(argc, argv, "BdqrRc:n:")) != -1) {
 		switch (c) {
 		case 'B':
 			do_background = 0;
@@ -1072,6 +1094,12 @@ static int scrub_start(int argc, char **argv, int resume)
 			break;
 		case 'R':
 			print_raw = 1;
+			break;
+		case 'c':
+			ioprio_class = (int)strtol(optarg, NULL, 10);
+			break;
+		case 'n':
+			ioprio_classdata = (int)strtol(optarg, NULL, 10);
 			break;
 		case '?':
 		default:
@@ -1182,6 +1210,8 @@ static int scrub_start(int argc, char **argv, int resume)
 		sp[i].skip = 0;
 		sp[i].scrub_args.end = (u64)-1ll;
 		sp[i].scrub_args.flags = readonly ? BTRFS_SCRUB_READONLY : 0;
+		sp[i].ioprio_class = ioprio_class;
+		sp[i].ioprio_classdata = ioprio_classdata;
 	}
 
 	if (!n_start && !n_resume) {
@@ -1435,13 +1465,15 @@ out:
 }
 
 static const char * const cmd_scrub_start_usage[] = {
-	"btrfs scrub start [-Bdqr] <path>|<device>",
+	"btrfs scrub start Bdqr] [-c ioprio_class -n ioprio_classdata] <path>|<device>\n",
 	"Start a new scrub",
 	"",
 	"-B     do not background",
 	"-d     stats per device (-B only)",
 	"-q     be quiet",
 	"-r     read only mode",
+	"-c     set ioprio class (see ionice(1) manpage)",
+	"-n     set ioprio classdata (see ionice(1) manpage)",
 	NULL
 };
 
@@ -1494,13 +1526,15 @@ out:
 }
 
 static const char * const cmd_scrub_resume_usage[] = {
-	"btrfs scrub resume [-Bdqr] <path>|<device>",
+	"btrfs scrub resume [-Bdqr] [-c ioprio_class -n ioprio_classdata] <path>|<device>\n",
 	"Resume previously canceled or interrupted scrub",
 	"",
 	"-B     do not background",
 	"-d     stats per device (-B only)",
 	"-q     be quiet",
 	"-r     read only mode",
+	"-c     set ioprio class (see ionice(1) manpage)",
+	"-n     set ioprio classdata (see ionice(1) manpage)",
 	NULL
 };
 
