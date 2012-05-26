@@ -19,7 +19,7 @@ btrfs \- control a btrfs filesystem
 .PP
 \fBbtrfs\fP \fBfilesystem sync\fP\fI <path> \fP
 .PP
-\fBbtrfs\fP \fBfilesystem resize\fP\fI [+/\-]<size>[gkm]|max <filesystem>\fP
+\fBbtrfs\fP \fBfilesystem resize\fP\fI [devid:][+/\-]<size>[gkm]|[devid:]max <filesystem>\fP
 .PP
 \fBbtrfs\fP \fBfilesystem label\fP\fI <dev> [newlabel]\fP
 .PP
@@ -168,23 +168,28 @@ Force a sync for the filesystem identified by \fI<path>\fR.
 .\" Some wording are extracted by the resize2fs man page
 .\"
 
-\fBfilesystem resize\fR\fI [+/\-]<size>[gkm]|max <path>\fR
-Resize a filesystem identified by \fI<path>\fR.
+\fBfilesystem resize\fR\fI [devid:][+/\-]<size>[gkm]|[devid:]max <path>\fR
+Resize a filesystem identified by \fI<path>\fR for the underlying device
+\fIdevid\fR.  The \fIdevid\fR can be found with \fBbtrfs filesystem show\fR and
+defaults to 1 if not specified.
 The \fI<size>\fR parameter specifies the new size of the filesystem.
 If the prefix \fI+\fR or \fI\-\fR is present the size is increased or decreased
 by the quantity \fI<size>\fR.
 If no units are specified, the unit of the \fI<size>\fR parameter defaults to
 bytes. Optionally, the size parameter may be suffixed by one of the following
-the units designators: 'K', 'M', or 'G', kilobytes, megabytes, or gigabytes,
+the unit designators: 'K', 'M', or 'G', kilobytes, megabytes, or gigabytes,
 respectively.
 
 If 'max' is passed, the filesystem will occupy all available space on the
-volume(s).
+device \fIdevid\fR.
 
 The \fBresize\fR command \fBdoes not\fR manipulate the size of underlying
 partition.  If you wish to enlarge/reduce a filesystem, you must make sure you
 can expand the partition before enlarging the filesystem and shrink the
-partition after reducing the size of the filesystem.
+partition after reducing the size of the filesystem.  This can done using
+\fBfdisk(8)\fR or \fBparted(8)\fR to delete the existing partition and recreate
+it with the new desired size.  When recreating the partition make sure to use
+the same starting disk cylinder as before.
 .TP
 
 \fBbtrfs\fP \fBfilesystem label\fP\fI <dev> [newlabel]\fP

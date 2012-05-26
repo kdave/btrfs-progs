@@ -463,10 +463,10 @@ static int cmd_defrag(int argc, char **argv)
 }
 
 static const char * const cmd_resize_usage[] = {
-	"btrfs filesystem resize [+/-]<newsize>[gkm]|max <path>",
+	"btrfs filesystem resize [devid:][+/-]<newsize>[gkm]|[devid:]max <path>",
 	"Resize a filesystem",
 	"If 'max' is passed, the filesystem will occupy all available space",
-	"on the device.",
+	"on the device 'devid'.",
 	NULL
 };
 
