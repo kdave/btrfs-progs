@@ -1273,6 +1273,8 @@ int main(int ac, char **av)
 	u64 size_of_data = 0;
 	u64 source_dir_size = 0;
 	char *pretty_buf;
+	struct btrfs_super_block *super;
+	u64 flags;
 
 	while(1) {
 		int c;
@@ -1483,13 +1485,14 @@ raid_groups:
 	ret = create_data_reloc_tree(trans, root);
 	BUG_ON(ret);
 
-	if (mixed) {
-		struct btrfs_super_block *super = &root->fs_info->super_copy;
-		u64 flags = btrfs_super_incompat_flags(super);
+	super = &root->fs_info->super_copy;
+	flags = btrfs_super_incompat_flags(super);
+	flags |= BTRFS_FEATURE_INCOMPAT_EXTENDED_IREF;
 
+	if (mixed)
 		flags |= BTRFS_FEATURE_INCOMPAT_MIXED_GROUPS;
-		btrfs_set_super_incompat_flags(super, flags);
-	}
+
+	btrfs_set_super_incompat_flags(super, flags);
 
 	printf("fs created label %s on %s\n\tnodesize %u leafsize %u "
 	    "sectorsize %u size %s\n",
