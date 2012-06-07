@@ -61,6 +61,42 @@ static int print_dir_item(struct extent_buffer *eb, struct btrfs_item *item,
 	return 0;
 }
 
+static int print_inode_extref_item(struct extent_buffer *eb,
+				   struct btrfs_item *item,
+				   struct btrfs_inode_extref *extref)
+{
+	u32 total;
+	u32 cur = 0;
+	u32 len;
+	u32 name_len = 0;
+	u64 index = 0;
+	u64 parent_objid;
+	char namebuf[BTRFS_NAME_LEN];
+
+	total = btrfs_item_size(eb, item);
+
+	while (cur < total) {
+		index = btrfs_inode_extref_index(eb, extref);
+		name_len = btrfs_inode_extref_name_len(eb, extref);
+		parent_objid = btrfs_inode_extref_parent(eb, extref);
+
+		len = (name_len <= sizeof(namebuf))? name_len: sizeof(namebuf);
+
+		read_extent_buffer(eb, namebuf, (unsigned long)(extref->name), len);
+
+		printf("\t\tinode extref index %llu parent %llu namelen %u "
+		       "name: %.*s\n",
+		       (unsigned long long)index,
+		       (unsigned long long)parent_objid,
+		       name_len, len, namebuf);
+
+		len = sizeof(*extref) + name_len;
+		extref = (struct btrfs_inode_extref *)((char *)extref + len);
+		cur += len;
+	}
+	return 0;
+}
+
 static int print_inode_ref_item(struct extent_buffer *eb, struct btrfs_item *item,
 				struct btrfs_inode_ref *ref)
 {
@@ -371,6 +407,9 @@ static void print_key_type(u64 objectid, u8 type)
 	case BTRFS_INODE_REF_KEY:
 		printf("INODE_REF");
 		break;
+	case BTRFS_INODE_EXTREF_KEY:
+		printf("INODE_EXTREF");
+		break;
 	case BTRFS_DIR_ITEM_KEY:
 		printf("DIR_ITEM");
 		break;
@@ -582,6 +621,7 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 	struct btrfs_extent_data_ref *dref;
 	struct btrfs_shared_data_ref *sref;
 	struct btrfs_inode_ref *iref;
+	struct btrfs_inode_extref *iref2;
 	struct btrfs_dev_extent *dev_extent;
 	struct btrfs_disk_key disk_key;
 	struct btrfs_block_group_item bg_item;
@@ -628,6 +668,10 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 		case BTRFS_INODE_REF_KEY:
 			iref = btrfs_item_ptr(l, i, struct btrfs_inode_ref);
 			print_inode_ref_item(l, item, iref);
+			break;
+		case BTRFS_INODE_EXTREF_KEY:
+			iref2 = btrfs_item_ptr(l, i, struct btrfs_inode_extref);
+			print_inode_extref_item(l, item, iref2);
 			break;
 		case BTRFS_DIR_ITEM_KEY:
 		case BTRFS_DIR_INDEX_KEY:
