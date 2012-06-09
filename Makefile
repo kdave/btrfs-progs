@@ -44,7 +44,7 @@ endif
 
 MAKEOPTS = --no-print-directory Q=$(Q)
 
-progs = btrfsctl mkfs.btrfs btrfs-debug-tree btrfs-show btrfs-vol btrfsck \
+progs = mkfs.btrfs btrfs-debug-tree btrfsck \
 	btrfs btrfs-map-logical btrfs-image btrfs-zero-log btrfs-convert \
 	btrfs-find-root btrfstune btrfs-show-super
 
@@ -126,18 +126,6 @@ btrfs-find-root: $(objects) $(libs) find-root.o
 btrfs-find-root.static: $(static_objects) find-root.static.o
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(STATIC_CFLAGS) -o btrfs-find-root.static find-root.static.o $(static_objects) $(STATIC_LDFLAGS) $(STATIC_LIBS)
-
-btrfsctl: $(objects) $(libs) btrfsctl.o
-	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o btrfsctl btrfsctl.o $(objects) $(LDFLAGS) $(LIBS)
-
-btrfs-vol: $(objects) $(libs) btrfs-vol.o
-	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o btrfs-vol btrfs-vol.o $(objects) $(LDFLAGS) $(LIBS)
-
-btrfs-show: $(objects) $(libs) btrfs-show.o
-	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o btrfs-show btrfs-show.o $(objects) $(LDFLAGS) $(LIBS)
 
 # For backward compatibility, 'btrfs' changes behaviour to fsck if it's named 'btrfsck'
 btrfsck: btrfs

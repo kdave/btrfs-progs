@@ -8,10 +8,7 @@ btrfs
 btrfs.static
 btrfs-debug-tree
 btrfs-map-logical
-btrfs-show
-btrfs-vol
 btrfsck
-btrfsctl
 calc-size
 ioctl-test
 dir-test

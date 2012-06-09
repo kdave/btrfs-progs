@@ -1,10 +1,5 @@
 Install Instructions
 
-Btrfs puts snapshots and subvolumes into the root directory of the FS.  This
-directory can only be changed by btrfsctl right now, and normal filesystem
-operations do not work on it.  The default subvolume is called 'default',
-and you can create files and directories in mount_point/default
-
 Btrfs uses libcrc32c in the kernel for file and metadata checksums.  You need
 to compile the kernel with:
 

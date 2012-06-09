@@ -14,4 +14,3 @@ Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for
 further details.
 .SH SEE ALSO
 .BR mkfs.btrfs (8)
-.BR btrfsctl (8)

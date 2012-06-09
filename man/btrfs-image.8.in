@@ -31,4 +31,4 @@ and not suitable for any uses other than benchmarking and review.
 Please refer to the btrfs wiki
 http://btrfs.wiki.kernel.org for further details.
 .SH SEE ALSO
-.BR btrfsck (8), btrfsctl (8), mkfs.btrfs (8)
+.BR btrfsck (8), mkfs.btrfs (8)
