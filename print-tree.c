@@ -48,6 +48,12 @@ static int print_dir_item(struct extent_buffer *eb, struct btrfs_item *item,
 		read_extent_buffer(eb, namebuf, (unsigned long)(di + 1), len);
 		printf("\t\tnamelen %u datalen %u name: %.*s\n",
 		       name_len, data_len, len, namebuf);
+		if (data_len) {
+			len = (data_len <= sizeof(namebuf))? data_len: sizeof(namebuf);
+			read_extent_buffer(eb, namebuf,
+				(unsigned long)(di + 1) + name_len, len);
+			printf("\t\tdata %.*s\n", len, namebuf);
+		}
 		len = sizeof(*di) + name_len + data_len;
 		di = (struct btrfs_dir_item *)((char *)di + len);
 		cur += len;
@@ -515,8 +521,9 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 		switch (type) {
 		case BTRFS_INODE_ITEM_KEY:
 			ii = btrfs_item_ptr(l, i, struct btrfs_inode_item);
-			printf("\t\tinode generation %llu size %llu block group %llu mode %o links %u\n",
+			printf("\t\tinode generation %llu transid %llu size %llu block group %llu mode %o links %u\n",
 			       (unsigned long long)btrfs_inode_generation(l, ii),
+			       (unsigned long long)btrfs_inode_transid(l, ii),
 			       (unsigned long long)btrfs_inode_size(l, ii),
 			       (unsigned long long)btrfs_inode_block_group(l,ii),
 			       btrfs_inode_mode(l, ii),
