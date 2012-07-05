@@ -94,6 +94,7 @@ static void print_chunk(struct extent_buffer *eb, struct btrfs_chunk *chunk)
 		      (unsigned long long)btrfs_stripe_offset_nr(eb, chunk, i));
 	}
 }
+
 static void print_dev_item(struct extent_buffer *eb,
 			   struct btrfs_dev_item *dev_item)
 {
@@ -276,8 +277,29 @@ static void print_root_ref(struct extent_buffer *leaf, int slot, char *tag)
 	       namelen, namebuf);
 }
 
-static void print_key_type(u8 type)
+static void print_free_space_header(struct extent_buffer *leaf, int slot)
 {
+	struct btrfs_free_space_header *header;
+	struct btrfs_disk_key location;
+
+	header = btrfs_item_ptr(leaf, slot, struct btrfs_free_space_header);
+	btrfs_free_space_key(leaf, header, &location);
+	printf("\t\tlocation ");
+	btrfs_print_key(&location);
+	printf("\n");
+	printf("\t\tcache generation %llu entries %llu bitmaps %llu\n",
+	       (unsigned long long)btrfs_free_space_generation(leaf, header),
+	       (unsigned long long)btrfs_free_space_entries(leaf, header),
+	       (unsigned long long)btrfs_free_space_bitmaps(leaf, header));
+}
+
+static void print_key_type(u64 objectid, u8 type)
+{
+	if (type == 0 && objectid == BTRFS_FREE_SPACE_OBJECTID) {
+		printf("UNTYPED");
+		return;
+	}
+
 	switch (type) {
 	case BTRFS_INODE_ITEM_KEY:
 		printf("INODE_ITEM");
@@ -362,10 +384,10 @@ static void print_key_type(u8 type)
 	};
 }
 
-static void print_objectid(unsigned long long objectid, u8 type)
+static void print_objectid(u64 objectid, u8 type)
 {
 	if (type == BTRFS_DEV_EXTENT_KEY) {
-		printf("%llu", objectid); /* device id */
+		printf("%llu", (unsigned long long)objectid); /* device id */
 		return;
 	}
 
@@ -415,6 +437,12 @@ static void print_objectid(unsigned long long objectid, u8 type)
 	case BTRFS_EXTENT_CSUM_OBJECTID:
 		printf("EXTENT_CSUM");
 		break;
+	case BTRFS_FREE_SPACE_OBJECTID:
+		printf("FREE_SPACE");
+		break;
+	case BTRFS_FREE_INO_OBJECTID:
+		printf("FREE_INO");
+		break;
 	case BTRFS_MULTIPLE_OBJECTIDS:
 		printf("MULTIPLE");
 		break;
@@ -425,19 +453,19 @@ static void print_objectid(unsigned long long objectid, u8 type)
 		}
 		/* fall-thru */
 	default:
-		printf("%llu", objectid);
+		printf("%llu", (unsigned long long)objectid);
 	}
 }
 
 void btrfs_print_key(struct btrfs_disk_key *disk_key)
 {
-	u8 type;
+	u64 objectid = btrfs_disk_key_objectid(disk_key);
+	u8 type = btrfs_disk_key_type(disk_key);
+
 	printf("key (");
-	type = btrfs_disk_key_type(disk_key);
-	print_objectid((unsigned long long)btrfs_disk_key_objectid(disk_key),
-		type);
+	print_objectid(objectid, type);
 	printf(" ");
-	print_key_type(type);
+	print_key_type(objectid, type);
 	printf(" %llu)", (unsigned long long)btrfs_disk_key_offset(disk_key));
 }
 
@@ -460,6 +488,7 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 	struct btrfs_block_group_item bg_item;
 	struct btrfs_dir_log_item *dlog;
 	u32 nr = btrfs_header_nritems(l);
+	u64 objectid;
 	u32 type;
 
 	printf("leaf %llu items %d free space %d generation %llu owner %llu\n",
@@ -472,12 +501,17 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 	for (i = 0 ; i < nr ; i++) {
 		item = btrfs_item_nr(l, i);
 		btrfs_item_key(l, &disk_key, i);
+		objectid = btrfs_disk_key_objectid(&disk_key);
 		type = btrfs_disk_key_type(&disk_key);
 		printf("\titem %d ", i);
 		btrfs_print_key(&disk_key);
 		printf(" itemoff %d itemsize %d\n",
 			btrfs_item_offset(l, item),
 			btrfs_item_size(l, item));
+
+		if (type == 0 && objectid == BTRFS_FREE_SPACE_OBJECTID)
+			print_free_space_header(l, i);
+
 		switch (type) {
 		case BTRFS_INODE_ITEM_KEY:
 			ii = btrfs_item_ptr(l, i, struct btrfs_inode_item);
