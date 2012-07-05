@@ -184,7 +184,7 @@ static int add_root(struct root_lookup *root_lookup,
 	ri->ref_tree = ref_tree;
 	strncpy(ri->name, name, name_len);
 	if (name_len > 0)
-		ri->name[name_len-1] = 0;
+		ri->name[name_len] = 0;
 
 	ret = tree_insert(&root_lookup->root, root_id, ref_tree, &ri->rb_node);
 	if (ret) {
