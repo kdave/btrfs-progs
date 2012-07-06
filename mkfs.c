@@ -348,6 +348,7 @@ static void print_usage(void)
 	fprintf(stderr, "\t -n --nodesize size of btree nodes\n");
 	fprintf(stderr, "\t -s --sectorsize min block allocation\n");
 	fprintf(stderr, "\t -r --rootdir the source directory\n");
+	fprintf(stderr, "\t -T --nodiscard do not perform whole device TRIM\n");
 	fprintf(stderr, "%s\n", BTRFS_BUILD_VERSION);
 	exit(1);
 }
@@ -409,6 +410,7 @@ static struct option long_options[] = {
 	{ "data", 1, NULL, 'd' },
 	{ "version", 0, NULL, 'V' },
 	{ "rootdir", 1, NULL, 'r' },
+	{ "nodiscard", 0, NULL, 'T' },
 	{ 0, 0, 0, 0}
 };
 
@@ -1224,6 +1226,7 @@ int main(int ac, char **av)
 	int mixed = 0;
 	int data_profile_opt = 0;
 	int metadata_profile_opt = 0;
+	int nodiscard = 0;
 
 	char *source_dir = NULL;
 	int source_dir_set = 0;
@@ -1234,7 +1237,7 @@ int main(int ac, char **av)
 
 	while(1) {
 		int c;
-		c = getopt_long(ac, av, "A:b:l:n:s:m:d:L:r:VM", long_options,
+		c = getopt_long(ac, av, "A:b:l:n:s:m:d:L:r:VMT", long_options,
 				&option_index);
 		if (c < 0)
 			break;
@@ -1280,6 +1283,9 @@ int main(int ac, char **av)
 				source_dir = optarg;
 				source_dir_set = 1;
 				break;
+			case 'T':
+				nodiscard=1;
+				break;
 			default:
 				print_usage();
 		}
@@ -1318,7 +1324,8 @@ int main(int ac, char **av)
 			exit(1);
 		}
 		first_file = file;
-		ret = btrfs_prepare_device(fd, file, zero_end, &dev_block_count, &mixed);
+		ret = __btrfs_prepare_device(fd, file, zero_end,
+				&dev_block_count, &mixed, nodiscard);
 		if (block_count == 0)
 			block_count = dev_block_count;
 		else if (block_count > dev_block_count) {
@@ -1416,8 +1423,8 @@ int main(int ac, char **av)
 			continue;
 		}
 		dev_block_count = block_count;
-		ret = btrfs_prepare_device(fd, file, zero_end,
-					   &dev_block_count, &mixed);
+		ret = __btrfs_prepare_device(fd, file, zero_end,
+					   &dev_block_count, &mixed, nodiscard);
 		mixed = old_mixed;
 		BUG_ON(ret);
 

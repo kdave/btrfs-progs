@@ -539,6 +539,12 @@ int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 int btrfs_prepare_device(int fd, char *file, int zero_end, u64 *block_count_ret,
 			 int *mixed)
 {
+	/* discard by default when called from 'device add' */
+	return __btrfs_prepare_device(fd, file, zero_end, block_count_ret, mixed, 0);
+}
+int __btrfs_prepare_device(int fd, char *file, int zero_end, u64 *block_count_ret,
+			 int *mixed, int nodiscard)
+{
 	u64 block_count;
 	u64 bytenr;
 	struct stat st;
@@ -564,11 +570,13 @@ int btrfs_prepare_device(int fd, char *file, int zero_end, u64 *block_count_ret,
 		*mixed = 1;
 	}
 
-	/*
-	 * We intentionally ignore errors from the discard ioctl.  It is
-	 * not necessary for the mkfs functionality but just an optimization.
-	 */
-	discard_blocks(fd, 0, block_count);
+	if (!nodiscard) {
+		/*
+		 * We intentionally ignore errors from the discard ioctl.  It is
+		 * not necessary for the mkfs functionality but just an optimization.
+		 */
+		discard_blocks(fd, 0, block_count);
+	}
 
 	ret = zero_dev_start(fd);
 	if (ret) {
