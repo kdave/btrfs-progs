@@ -3499,7 +3499,7 @@ int main(int ac, char **av)
 
 	while(1) {
 		int c;
-		c = getopt_long(ac, av, "", long_options,
+		c = getopt_long(ac, av, "s:", long_options,
 				&option_index);
 		if (c < 0)
 			break;
