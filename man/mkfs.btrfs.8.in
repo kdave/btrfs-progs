@@ -13,6 +13,7 @@ mkfs.btrfs \- create an btrfs filesystem
 [ \fB\-n\fP\fI nodesize\fP ]
 [ \fB\-s\fP\fI sectorsize\fP ]
 [ \fB\-r\fP\fI rootdir\fP ]
+[ \fB\-K\fP ]
 [ \fB\-h\fP ]
 [ \fB\-V\fP ]
 \fI device\fP [ \fIdevice ...\fP ]
@@ -63,7 +64,7 @@ Specify the sectorsize, the minimum block allocation.
 \fB\-r\fR, \fB\-\-rootdir \fIrootdir\fR
 Specify a directory to copy into the newly created fs.
 .TP
-\fB\-T\fR, \fB\-\-nodiscard \fR
+\fB\-K\fR, \fB\-\-nodiscard \fR
 Do not perform whole device TRIM operation by default.
 .TP
 \fB\-V\fR, \fB\-\-version\fR
