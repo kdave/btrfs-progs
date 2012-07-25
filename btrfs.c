@@ -258,6 +258,8 @@ int main(int argc, char **argv)
 {
 	const struct cmd_struct *cmd;
 
+	crc32c_optimization_init();
+
 	argc--;
 	argv++;
 	handle_options(&argc, &argv);
