@@ -283,6 +283,66 @@ static void print_root_ref(struct extent_buffer *leaf, int slot, char *tag)
 	       namelen, namebuf);
 }
 
+static int count_bytes(void *buf, int len, char b)
+{
+	int cnt = 0;
+	int i;
+	for (i = 0; i < len; i++) {
+		if (((char*)buf)[i] == b)
+			cnt++;
+	}
+	return cnt;
+}
+
+static void print_root(struct extent_buffer *leaf, int slot)
+{
+	struct btrfs_root_item *ri;
+	struct btrfs_root_item root_item;
+	int len;
+	char uuid_str[128];
+
+	ri = btrfs_item_ptr(leaf, slot, struct btrfs_root_item);
+	len = btrfs_item_size_nr(leaf, slot);
+
+	memset(&root_item, 0, sizeof(root_item));
+	read_extent_buffer(leaf, &root_item, (unsigned long)ri, len);
+
+	printf("\t\troot data bytenr %llu level %d dirid %llu refs %u gen %llu\n",
+		(unsigned long long)btrfs_root_bytenr(&root_item),
+		btrfs_root_level(&root_item),
+		(unsigned long long)btrfs_root_dirid(&root_item),
+		btrfs_root_refs(&root_item),
+		(unsigned long long)btrfs_root_generation(&root_item));
+
+	if (root_item.generation == root_item.generation_v2) {
+		uuid_unparse(root_item.uuid, uuid_str);
+		printf("\t\tuuid %s\n", uuid_str);
+		if (count_bytes(root_item.parent_uuid, BTRFS_UUID_SIZE, 0) != BTRFS_UUID_SIZE) {
+			uuid_unparse(root_item.parent_uuid, uuid_str);
+			printf("\t\tparent_uuid %s\n", uuid_str);
+		}
+		if (count_bytes(root_item.received_uuid, BTRFS_UUID_SIZE, 0) != BTRFS_UUID_SIZE) {
+			uuid_unparse(root_item.received_uuid, uuid_str);
+			printf("\t\treceived_uuid %s\n", uuid_str);
+		}
+		if (root_item.ctransid) {
+			printf("\t\tctransid %llu otransid %llu stransid %llu rtransid %llu\n",
+				btrfs_root_ctransid(&root_item),
+				btrfs_root_otransid(&root_item),
+				btrfs_root_stransid(&root_item),
+				btrfs_root_rtransid(&root_item));
+		}
+	}
+	if (btrfs_root_refs(&root_item) == 0) {
+		struct btrfs_key drop_key;
+		btrfs_disk_key_to_cpu(&drop_key,
+				      &root_item.drop_progress);
+		printf("\t\tdrop ");
+		btrfs_print_key(&root_item.drop_progress);
+		printf(" level %d\n", root_item.drop_level);
+	}
+}
+
 static void print_free_space_header(struct extent_buffer *leaf, int slot)
 {
 	struct btrfs_free_space_header *header;
@@ -480,7 +540,6 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 	int i;
 	char *str;
 	struct btrfs_item *item;
-	struct btrfs_root_item *ri;
 	struct btrfs_dir_item *di;
 	struct btrfs_inode_item *ii;
 	struct btrfs_file_extent_item *fi;
@@ -490,7 +549,6 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 	struct btrfs_inode_ref *iref;
 	struct btrfs_dev_extent *dev_extent;
 	struct btrfs_disk_key disk_key;
-	struct btrfs_root_item root_item;
 	struct btrfs_block_group_item bg_item;
 	struct btrfs_dir_log_item *dlog;
 	u32 nr = btrfs_header_nritems(l);
@@ -549,22 +607,7 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 			printf("\t\torphan item\n");
 			break;
 		case BTRFS_ROOT_ITEM_KEY:
-			ri = btrfs_item_ptr(l, i, struct btrfs_root_item);
-			read_extent_buffer(l, &root_item, (unsigned long)ri, sizeof(root_item));
-			printf("\t\troot data bytenr %llu level %d dirid %llu refs %u gen %llu\n",
-				(unsigned long long)btrfs_root_bytenr(&root_item),
-				btrfs_root_level(&root_item),
-				(unsigned long long)btrfs_root_dirid(&root_item),
-				btrfs_root_refs(&root_item),
-				(unsigned long long)btrfs_root_generation(&root_item));
-			if (btrfs_root_refs(&root_item) == 0) {
-				struct btrfs_key drop_key;
-				btrfs_disk_key_to_cpu(&drop_key,
-						      &root_item.drop_progress);
-				printf("\t\tdrop ");
-				btrfs_print_key(&root_item.drop_progress);
-				printf(" level %d\n", root_item.drop_level);
-			}
+			print_root(l, i);
 			break;
 		case BTRFS_ROOT_REF_KEY:
 			print_root_ref(l, i, "ref");
