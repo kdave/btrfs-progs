@@ -107,7 +107,8 @@ static int cmd_add_dev(int argc, char **argv)
 			continue;
 		}
 
-		res = btrfs_prepare_device(devfd, argv[i], 1, &dev_block_count, &mixed);
+		res = btrfs_prepare_device(devfd, argv[i], 1, &dev_block_count,
+					   0, &mixed, 0);
 		if (res) {
 			fprintf(stderr, "ERROR: Unable to init '%s'\n", argv[i]);
 			close(devfd);

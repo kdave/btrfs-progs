@@ -150,7 +150,8 @@ int main(int ac, char **av)
 	if (cmd == BTRFS_IOC_ADD_DEV) {
 		int mixed = 0;
 
-		ret = btrfs_prepare_device(devfd, device, 1, &dev_block_count, &mixed);
+		ret = btrfs_prepare_device(devfd, device, 1, &dev_block_count,
+					   0, &mixed, 0);
 		if (ret) {
 			fprintf(stderr, "Unable to init %s\n", device);
 			exit(1);

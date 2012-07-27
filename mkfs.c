@@ -1324,11 +1324,9 @@ int main(int ac, char **av)
 			exit(1);
 		}
 		first_file = file;
-		ret = __btrfs_prepare_device(fd, file, zero_end,
-				&dev_block_count, &mixed, nodiscard);
-		if (block_count == 0)
-			block_count = dev_block_count;
-		else if (block_count > dev_block_count) {
+		ret = btrfs_prepare_device(fd, file, zero_end, &dev_block_count,
+					   block_count, &mixed, nodiscard);
+		if (block_count && block_count > dev_block_count) {
 			fprintf(stderr, "%s is smaller than requested size\n", file);
 			exit(1);
 		}
@@ -1366,7 +1364,7 @@ int main(int ac, char **av)
 			leafsize * i;
 	}
 
-	ret = make_btrfs(fd, file, label, blocks, block_count,
+	ret = make_btrfs(fd, file, label, blocks, dev_block_count,
 			 nodesize, leafsize,
 			 sectorsize, stripesize);
 	if (ret) {
@@ -1422,9 +1420,8 @@ int main(int ac, char **av)
 			close(fd);
 			continue;
 		}
-		dev_block_count = block_count;
-		ret = __btrfs_prepare_device(fd, file, zero_end,
-					   &dev_block_count, &mixed, nodiscard);
+		ret = btrfs_prepare_device(fd, file, zero_end, &dev_block_count,
+					   block_count, &mixed, nodiscard);
 		mixed = old_mixed;
 		BUG_ON(ret);
 

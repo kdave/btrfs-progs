@@ -537,13 +537,7 @@ int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 }
 
 int btrfs_prepare_device(int fd, char *file, int zero_end, u64 *block_count_ret,
-			 int *mixed)
-{
-	/* discard by default when called from 'device add' */
-	return __btrfs_prepare_device(fd, file, zero_end, block_count_ret, mixed, 0);
-}
-int __btrfs_prepare_device(int fd, char *file, int zero_end, u64 *block_count_ret,
-			 int *mixed, int nodiscard)
+			   u64 max_block_count, int *mixed, int nodiscard)
 {
 	u64 block_count;
 	u64 bytenr;
@@ -561,8 +555,8 @@ int __btrfs_prepare_device(int fd, char *file, int zero_end, u64 *block_count_re
 		fprintf(stderr, "unable to find %s size\n", file);
 		exit(1);
 	}
-	if (*block_count_ret)
-		block_count = min(block_count, *block_count_ret);
+	if (max_block_count)
+		block_count = min(block_count, max_block_count);
 	zero_end = 1;
 
 	if (block_count < 1024 * 1024 * 1024 && !(*mixed)) {
