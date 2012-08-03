@@ -60,6 +60,9 @@ struct root_info {
 	/* generation when the root is created or last updated */
 	u64 gen;
 
+	/* creation time of this root in sec*/
+	time_t otime;
+
 	/* path from the subvol we live in to this root, including the
 	 * root's name.  This is null until we do the extra lookup ioctl.
 	 */
@@ -185,7 +188,7 @@ static struct root_info *tree_search(struct rb_root *root, u64 root_id)
  */
 static int add_root(struct root_lookup *root_lookup,
 		    u64 root_id, u64 ref_tree, u64 dir_id, char *name,
-		    int name_len, u64 *gen)
+		    int name_len, u64 *gen, time_t ot)
 {
 	struct root_info *ri;
 	struct rb_node *ret;
@@ -205,6 +208,7 @@ static int add_root(struct root_lookup *root_lookup,
 		ri->name[name_len] = 0;
 	if (gen)
 		ri->gen = *gen;
+	ri->otime = ot;
 
 	ret = tree_insert(&root_lookup->root, root_id, ref_tree, gen,
 			  &ri->rb_node);
@@ -215,7 +219,8 @@ static int add_root(struct root_lookup *root_lookup,
 	return 0;
 }
 
-static int update_root(struct root_lookup *root_lookup, u64 root_id, u64 gen)
+static int update_root(struct root_lookup *root_lookup, u64 root_id, u64 gen,
+			time_t ot)
 {
 	struct root_info *ri;
 
@@ -225,6 +230,7 @@ static int update_root(struct root_lookup *root_lookup, u64 root_id, u64 gen)
 		return -ENOENT;
 	}
 	ri->gen = gen;
+	ri->otime = ot;
 	return 0;
 }
 
@@ -658,6 +664,7 @@ static int __list_subvol_search(int fd, struct root_lookup *root_lookup)
 	u64 gen = 0;
 	int i;
 	int get_gen = 0;
+	time_t t;
 
 	root_lookup_init(root_lookup);
 	memset(&args, 0, sizeof(args));
@@ -711,12 +718,16 @@ again:
 				dir_id = btrfs_stack_root_ref_dirid(ref);
 
 				add_root(root_lookup, sh->objectid, sh->offset,
-					 dir_id, name, name_len, NULL);
+					 dir_id, name, name_len, NULL, 0);
 			} else if (get_gen && sh->type == BTRFS_ROOT_ITEM_KEY) {
 				ri = (struct btrfs_root_item *)(args.buf + off);
 				gen = btrfs_root_generation(ri);
+				if(ri->generation == ri->generation_v2)
+					t = ri->otime.sec;
+				else
+					t = 0;
 
-				update_root(root_lookup, sh->objectid, gen);
+				update_root(root_lookup, sh->objectid, gen, t);
 			}
 
 			off += sh->len;
@@ -805,14 +816,21 @@ static int __list_snapshot_search(int fd, struct root_lookup *root_lookup)
 		 * read the root_ref item it contains
 		 */
 		for (i = 0; i < sk->nr_items; i++) {
+			struct btrfs_root_item *item;
+			time_t  t;
 			sh = (struct btrfs_ioctl_search_header *)(args.buf +
 								  off);
 			off += sizeof(*sh);
 			if (sh->type == BTRFS_ROOT_ITEM_KEY && sh->offset) {
+				item = (struct btrfs_root_item *)(args.buf + off);
+				if(item->generation == item->generation_v2)
+					t = item->otime.sec;
+				else
+					t = 0;
 				gen = sh->offset;
 
 				add_root(root_lookup, sh->objectid, 0,
-					 0, NULL, 0, &gen);
+					 0, NULL, 0, &gen, t);
 			}
 			off += sh->len;
 
@@ -981,24 +999,33 @@ int list_snapshots(int fd, int print_parent, int order)
 		u64 level;
 		u64 parent_id;
 		char *path;
+		time_t t;
+		char tstr[256];
 
 		entry_snap = rb_entry(n, struct root_info, rb_node);
 		entry = tree_search(&root_lookup.root, entry_snap->root_id);
 
 		resolve_root(&root_lookup, entry, &parent_id, &level, &path);
+		t = entry->otime;
+		if(t)
+			strftime(tstr,256,"%Y-%m-%d %X",localtime(&t));
+		else
+			strcpy(tstr,"-");
 		if (print_parent) {
-			printf("ID %llu gen %llu cgen %llu parent %llu top level %llu path %s\n",
+			printf("ID %llu gen %llu cgen %llu parent %llu top level %llu "
+				"otime %s path %s\n",
 				(unsigned long long)entry->root_id,
 				(unsigned long long)entry->gen,
 				(unsigned long long)entry_snap->gen,
 				(unsigned long long)parent_id,
-				(unsigned long long)level, path);
+				(unsigned long long)level, tstr, path);
 		} else {
-			printf("ID %llu gen %llu cgen %llu top level %llu path %s\n",
+			printf("ID %llu gen %llu cgen %llu top level %llu "
+				"otime %s path %s\n",
 				(unsigned long long)entry->root_id,
 				(unsigned long long)entry->gen,
 				(unsigned long long)entry_snap->gen,
-				(unsigned long long)level, path);
+				(unsigned long long)level, tstr, path);
 		}
 
 		free(path);
