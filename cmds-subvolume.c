@@ -261,10 +261,12 @@ static int cmd_subvol_delete(int argc, char **argv)
 }
 
 static const char * const cmd_subvol_list_usage[] = {
-	"btrfs subvolume list [-p] <path>",
+	"btrfs subvolume list [-ps] <path>",
 	"List subvolumes (and snapshots)",
 	"",
-	"-p     print parent ID",
+	"-p           print parent ID",
+	"-s value     list snapshots with generation in ascending/descending order",
+	"             (1: ascending, 0: descending)",
 	NULL
 };
 
@@ -273,17 +275,23 @@ static int cmd_subvol_list(int argc, char **argv)
 	int fd;
 	int ret;
 	int print_parent = 0;
+	int print_snap_only = 0;
+	int order = 0;
 	char *subvol;
 
 	optind = 1;
 	while(1) {
-		int c = getopt(argc, argv, "p");
+		int c = getopt(argc, argv, "ps:");
 		if (c < 0)
 			break;
 
 		switch(c) {
 		case 'p':
 			print_parent = 1;
+			break;
+		case 's':
+			print_snap_only = 1;
+			order = atoi(optarg);
 			break;
 		default:
 			usage(cmd_subvol_list_usage);
@@ -310,7 +318,10 @@ static int cmd_subvol_list(int argc, char **argv)
 		fprintf(stderr, "ERROR: can't access '%s'\n", subvol);
 		return 12;
 	}
-	ret = list_subvols(fd, print_parent, 0);
+	if (!print_snap_only)
+		ret = list_subvols(fd, print_parent, 0);
+	else
+		ret = list_snapshots(fd, print_parent, order);
 	if (ret)
 		return 19;
 	return 0;

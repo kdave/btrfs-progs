@@ -87,13 +87,23 @@ static int comp_entry(struct root_info *entry, u64 root_id, u64 ref_tree)
 	return 0;
 }
 
+static int comp_entry_with_gen(struct root_info *entry, u64 root_id,
+			       u64 ref_tree, u64 gen)
+{
+	if (entry->gen < gen)
+		return 1;
+	if (entry->gen > gen)
+		return -1;
+	return comp_entry(entry, root_id, ref_tree);
+}
+
 /*
  * insert a new root into the tree.  returns the existing root entry
  * if one is already there.  Both root_id and ref_tree are used
  * as the key
  */
 static struct rb_node *tree_insert(struct rb_root *root, u64 root_id,
-				   u64 ref_tree, struct rb_node *node)
+				   u64 ref_tree, u64 *gen, struct rb_node *node)
 {
 	struct rb_node ** p = &root->rb_node;
 	struct rb_node * parent = NULL;
@@ -104,7 +114,11 @@ static struct rb_node *tree_insert(struct rb_root *root, u64 root_id,
 		parent = *p;
 		entry = rb_entry(parent, struct root_info, rb_node);
 
-		comp = comp_entry(entry, root_id, ref_tree);
+		if (!gen)
+			comp = comp_entry(entry, root_id, ref_tree);
+		else
+			comp = comp_entry_with_gen(entry, root_id, ref_tree,
+						   *gen);
 
 		if (comp < 0)
 			p = &(*p)->rb_left;
@@ -171,7 +185,7 @@ static struct root_info *tree_search(struct rb_root *root, u64 root_id)
  */
 static int add_root(struct root_lookup *root_lookup,
 		    u64 root_id, u64 ref_tree, u64 dir_id, char *name,
-		    int name_len)
+		    int name_len, u64 *gen)
 {
 	struct root_info *ri;
 	struct rb_node *ret;
@@ -185,11 +199,15 @@ static int add_root(struct root_lookup *root_lookup,
 	ri->dir_id = dir_id;
 	ri->root_id = root_id;
 	ri->ref_tree = ref_tree;
-	strncpy(ri->name, name, name_len);
+	if (name)
+		strncpy(ri->name, name, name_len);
 	if (name_len > 0)
 		ri->name[name_len] = 0;
+	if (gen)
+		ri->gen = *gen;
 
-	ret = tree_insert(&root_lookup->root, root_id, ref_tree, &ri->rb_node);
+	ret = tree_insert(&root_lookup->root, root_id, ref_tree, gen,
+			  &ri->rb_node);
 	if (ret) {
 		printf("failed to insert tree %llu\n", (unsigned long long)root_id);
 		exit(1);
@@ -693,7 +711,7 @@ again:
 				dir_id = btrfs_stack_root_ref_dirid(ref);
 
 				add_root(root_lookup, sh->objectid, sh->offset,
-					 dir_id, name, name_len);
+					 dir_id, name, name_len, NULL);
 			} else if (get_gen && sh->type == BTRFS_ROOT_ITEM_KEY) {
 				ri = (struct btrfs_root_item *)(args.buf + off);
 				gen = btrfs_root_generation(ri);
@@ -746,6 +764,79 @@ again:
 
 		get_gen = 1;
 		goto again;
+	}
+	return 0;
+}
+
+static int __list_snapshot_search(int fd, struct root_lookup *root_lookup)
+{
+	int ret;
+	struct btrfs_ioctl_search_args args;
+	struct btrfs_ioctl_search_key *sk = &args.key;
+	struct btrfs_ioctl_search_header *sh;
+	unsigned long off = 0;
+	u64 gen = 0;
+	int i;
+
+	root_lookup_init(root_lookup);
+	memset(&args, 0, sizeof(args));
+
+	sk->tree_id = 1;
+	sk->max_type = BTRFS_ROOT_ITEM_KEY;
+	sk->min_type = BTRFS_ROOT_ITEM_KEY;
+	sk->min_objectid = BTRFS_FIRST_FREE_OBJECTID;
+	sk->max_objectid = BTRFS_LAST_FREE_OBJECTID;
+	sk->max_offset = (u64)-1;
+	sk->max_transid = (u64)-1;
+	sk->nr_items = 4096;
+
+	while (1) {
+		ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &args);
+		if (ret < 0)
+			return ret;
+		/* the ioctl returns the number of item it found in nr_items */
+		if (sk->nr_items == 0)
+			break;
+
+		off = 0;
+
+		/*
+		 * for each item, pull the key out of the header and then
+		 * read the root_ref item it contains
+		 */
+		for (i = 0; i < sk->nr_items; i++) {
+			sh = (struct btrfs_ioctl_search_header *)(args.buf +
+								  off);
+			off += sizeof(*sh);
+			if (sh->type == BTRFS_ROOT_ITEM_KEY && sh->offset) {
+				gen = sh->offset;
+
+				add_root(root_lookup, sh->objectid, 0,
+					 0, NULL, 0, &gen);
+			}
+			off += sh->len;
+
+			/*
+			 * record the mins in sk so we can make sure the
+			 * next search doesn't repeat this root
+			 */
+			sk->min_objectid = sh->objectid;
+			sk->min_type = sh->type;
+			sk->min_offset = sh->offset;
+		}
+		sk->nr_items = 4096;
+		/* this iteration is done, step forward one root for the next
+		 * ioctl
+		 */
+		if (sk->min_type < BTRFS_ROOT_ITEM_KEY) {
+			sk->min_type = BTRFS_ROOT_ITEM_KEY;
+			sk->min_offset = 0;
+		} else  if (sk->min_objectid < BTRFS_LAST_FREE_OBJECTID) {
+			sk->min_objectid++;
+			sk->min_type = BTRFS_ROOT_ITEM_KEY;
+			sk->min_offset = 0;
+		} else
+			break;
 	}
 	return 0;
 }
@@ -842,6 +933,79 @@ int list_subvols(int fd, int print_parent, int get_default)
 
 		free(path);
 		n = rb_prev(n);
+	}
+
+	return ret;
+}
+
+int list_snapshots(int fd, int print_parent, int order)
+{
+	struct root_lookup root_lookup;
+	struct root_lookup root_lookup_snap;
+	struct rb_node *n;
+	int ret;
+
+	ret = __list_snapshot_search(fd, &root_lookup_snap);
+	if (ret) {
+		fprintf(stderr, "ERROR: can't perform the search - %s\n",
+				strerror(errno));
+		return ret;
+	}
+	
+	ret = __list_subvol_search(fd, &root_lookup);
+	if (ret) {
+		fprintf(stderr, "ERROR: can't perform the search - %s\n",
+				strerror(errno));
+		return ret;
+	}
+
+	/*
+	 * now we have an rbtree full of root_info objects, but we need to fill
+	 * in their path names within the subvol that is referencing each one.
+	 */
+	ret = __list_subvol_fill_paths(fd, &root_lookup);
+	if (ret < 0)
+		return ret;
+
+	/* now that we have all the subvol-relative paths filled in,
+	 * we have to string the subvols together so that we can get
+	 * a path all the way back to the FS root
+	 */
+	if (!order)
+		n = rb_last(&root_lookup_snap.root);
+	else
+		n = rb_first(&root_lookup_snap.root);
+	while (n) {
+		struct root_info *entry_snap;
+		struct root_info *entry;
+		u64 level;
+		u64 parent_id;
+		char *path;
+
+		entry_snap = rb_entry(n, struct root_info, rb_node);
+		entry = tree_search(&root_lookup.root, entry_snap->root_id);
+
+		resolve_root(&root_lookup, entry, &parent_id, &level, &path);
+		if (print_parent) {
+			printf("ID %llu gen %llu cgen %llu parent %llu top level %llu path %s\n",
+				(unsigned long long)entry->root_id,
+				(unsigned long long)entry->gen,
+				(unsigned long long)entry_snap->gen,
+				(unsigned long long)parent_id,
+				(unsigned long long)level, path);
+		} else {
+			printf("ID %llu gen %llu cgen %llu top level %llu path %s\n",
+				(unsigned long long)entry->root_id,
+				(unsigned long long)entry->gen,
+				(unsigned long long)entry_snap->gen,
+				(unsigned long long)level, path);
+		}
+
+		free(path);
+		if (!order)
+			n = rb_prev(n);
+		else
+			n = rb_next(n);
 	}
 
 	return ret;
