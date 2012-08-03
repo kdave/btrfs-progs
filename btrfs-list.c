@@ -634,11 +634,13 @@ static int __list_subvol_search(int fd, struct root_lookup *root_lookup)
 	sk->max_type = BTRFS_ROOT_BACKREF_KEY;
 	sk->min_type = BTRFS_ROOT_BACKREF_KEY;
 
+	sk->min_objectid = BTRFS_FIRST_FREE_OBJECTID;
+
 	/*
 	 * set all the other params to the max, we'll take any objectid
 	 * and any trans
 	 */
-	sk->max_objectid = (u64)-1;
+	sk->max_objectid = BTRFS_LAST_FREE_OBJECTID;
 	sk->max_offset = (u64)-1;
 	sk->max_transid = (u64)-1;
 
@@ -690,7 +692,7 @@ static int __list_subvol_search(int fd, struct root_lookup *root_lookup)
 		if (sk->min_type < BTRFS_ROOT_BACKREF_KEY) {
 			sk->min_type = BTRFS_ROOT_BACKREF_KEY;
 			sk->min_offset = 0;
-		} else  if (sk->min_objectid < (u64)-1) {
+		} else  if (sk->min_objectid < BTRFS_LAST_FREE_OBJECTID) {
 			sk->min_objectid++;
 			sk->min_type = BTRFS_ROOT_BACKREF_KEY;
 			sk->min_offset = 0;
