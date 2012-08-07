@@ -445,8 +445,20 @@ static void print_key_type(u64 objectid, u8 type)
 	case BTRFS_STRING_ITEM_KEY:
 		printf("STRING_ITEM");
 		break;
+	case BTRFS_QGROUP_STATUS_KEY:
+		printf("BTRFS_STATUS_KEY");
+		break;
+	case BTRFS_QGROUP_RELATION_KEY:
+		printf("BTRFS_QGROUP_RELATION_KEY");
+		break;
+	case BTRFS_QGROUP_INFO_KEY:
+		printf("BTRFS_QGROUP_INFO_KEY");
+		break;
+	case BTRFS_QGROUP_LIMIT_KEY:
+		printf("BTRFS_QGROUP_LIMIT_KEY");
+		break;
 	default:
-		printf("UNKNOWN");
+		printf("UNKNOWN.%d", type);
 	};
 }
 
@@ -454,6 +466,12 @@ static void print_objectid(u64 objectid, u8 type)
 {
 	if (type == BTRFS_DEV_EXTENT_KEY) {
 		printf("%llu", (unsigned long long)objectid); /* device id */
+		return;
+	}
+	switch (type) {
+	case BTRFS_QGROUP_RELATION_KEY:
+		printf("%llu/%llu", objectid >> 48,
+			objectid & ((1ll << 48) - 1));
 		return;
 	}
 
@@ -508,6 +526,8 @@ static void print_objectid(u64 objectid, u8 type)
 		break;
 	case BTRFS_FREE_INO_OBJECTID:
 		printf("FREE_INO");
+	case BTRFS_QUOTA_TREE_OBJECTID:
+		printf("QUOTA_TREE");
 		break;
 	case BTRFS_MULTIPLE_OBJECTIDS:
 		printf("MULTIPLE");
@@ -527,12 +547,23 @@ void btrfs_print_key(struct btrfs_disk_key *disk_key)
 {
 	u64 objectid = btrfs_disk_key_objectid(disk_key);
 	u8 type = btrfs_disk_key_type(disk_key);
+	u64 offset = btrfs_disk_key_offset(disk_key);
 
 	printf("key (");
 	print_objectid(objectid, type);
 	printf(" ");
 	print_key_type(objectid, type);
-	printf(" %llu)", (unsigned long long)btrfs_disk_key_offset(disk_key));
+	switch (type) {
+	case BTRFS_QGROUP_RELATION_KEY:
+	case BTRFS_QGROUP_INFO_KEY:
+	case BTRFS_QGROUP_LIMIT_KEY:
+		printf(" %llu/%llu)", (unsigned long long)(offset >> 48),
+			(unsigned long long)(offset & ((1ll << 48) - 1)));
+		break;
+	default:
+		printf(" %llu)", (unsigned long long)offset);
+		break;
+	}
 }
 
 void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
@@ -551,6 +582,9 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 	struct btrfs_disk_key disk_key;
 	struct btrfs_block_group_item bg_item;
 	struct btrfs_dir_log_item *dlog;
+	struct btrfs_qgroup_info_item *qg_info;
+	struct btrfs_qgroup_limit_item *qg_limit;
+	struct btrfs_qgroup_status_item *qg_status;
 	u32 nr = btrfs_header_nritems(l);
 	u64 objectid;
 	u32 type;
@@ -687,6 +721,58 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 			       btrfs_dev_extent_chunk_offset(l, dev_extent),
 			       (unsigned long long)
 			       btrfs_dev_extent_length(l, dev_extent));
+			break;
+		case BTRFS_QGROUP_STATUS_KEY:
+			qg_status = btrfs_item_ptr(l, i,
+					struct btrfs_qgroup_status_item);
+			printf("\t\tversion %llu generation %llu flags %#llx "
+				"scan %lld\n",
+				(unsigned long long)
+				btrfs_qgroup_status_version(l, qg_status),
+				(unsigned long long)
+				btrfs_qgroup_status_generation(l, qg_status),
+				(unsigned long long)
+				btrfs_qgroup_status_flags(l, qg_status),
+				(unsigned long long)
+				btrfs_qgroup_status_scan(l, qg_status));
+			break;
+		case BTRFS_QGROUP_RELATION_KEY:
+			break;
+		case BTRFS_QGROUP_INFO_KEY:
+			qg_info = btrfs_item_ptr(l, i,
+						 struct btrfs_qgroup_info_item);
+			printf("\t\tgeneration %llu\n"
+			     "\t\treferenced %lld referenced compressed %lld\n"
+			     "\t\texclusive %lld exclusive compressed %lld\n",
+			       (unsigned long long)
+			       btrfs_qgroup_info_generation(l, qg_info),
+			       (long long)
+			       btrfs_qgroup_info_referenced(l, qg_info),
+			       (long long)
+			       btrfs_qgroup_info_referenced_compressed(l,
+								       qg_info),
+			       (long long)
+			       btrfs_qgroup_info_exclusive(l, qg_info),
+			       (long long)
+			       btrfs_qgroup_info_exclusive_compressed(l,
+								      qg_info));
+			break;
+		case BTRFS_QGROUP_LIMIT_KEY:
+			qg_limit = btrfs_item_ptr(l, i,
+					 struct btrfs_qgroup_limit_item);
+			printf("\t\tflags %llx\n"
+			     "\t\tmax referenced %lld max exclusive %lld\n"
+			     "\t\trsv referenced %lld rsv exclusive %lld\n",
+			       (unsigned long long)
+			       btrfs_qgroup_limit_flags(l, qg_limit),
+			       (long long)
+			       btrfs_qgroup_limit_max_referenced(l, qg_limit),
+			       (long long)
+			       btrfs_qgroup_limit_max_exclusive(l, qg_limit),
+			       (long long)
+			       btrfs_qgroup_limit_rsv_referenced(l, qg_limit),
+			       (long long)
+			       btrfs_qgroup_limit_rsv_exclusive(l, qg_limit));
 			break;
 		case BTRFS_STRING_ITEM_KEY:
 			/* dirty, but it's simple */

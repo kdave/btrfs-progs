@@ -90,6 +90,8 @@ extern const struct cmd_group scrub_cmd_group;
 extern const struct cmd_group inspect_cmd_group;
 extern const struct cmd_group send_cmd_group;
 extern const struct cmd_group receive_cmd_group;
+extern const struct cmd_group quota_cmd_group;
+extern const struct cmd_group qgroup_cmd_group;
 
 int cmd_subvolume(int argc, char **argv);
 int cmd_filesystem(int argc, char **argv);
@@ -99,3 +101,8 @@ int cmd_scrub(int argc, char **argv);
 int cmd_inspect(int argc, char **argv);
 int cmd_send(int argc, char **argv);
 int cmd_receive(int argc, char **argv);
+int cmd_quota(int argc, char **argv);
+int cmd_qgroup(int argc, char **argv);
+
+/* subvolume exported functions */
+int test_issubvolume(char *path);

@@ -59,6 +59,7 @@ struct btrfs_trans_handle;
 #define BTRFS_ROOT_TREE_DIR_OBJECTID 6ULL
 /* holds checksums of all the data extents */
 #define BTRFS_CSUM_TREE_OBJECTID 7ULL
+#define BTRFS_QUOTA_TREE_OBJECTID 8ULL
 
 
 /* for storing balance parameters in the root tree */
@@ -760,10 +761,47 @@ struct btrfs_csum_item {
 /* used in struct btrfs_balance_args fields */
 #define BTRFS_AVAIL_ALLOC_BIT_SINGLE	(1ULL << 48)
 
+#define BTRFS_QGROUP_STATUS_OFF			0
+#define BTRFS_QGROUP_STATUS_ON			1
+#define BTRFS_QGROUP_STATUS_SCANNING		2
+
+#define BTRFS_QGROUP_STATUS_FLAG_INCONSISTENT	(1 << 0)
+
+struct btrfs_qgroup_status_item {
+	__le64 version;
+	__le64 generation;
+	__le64 flags;
+	__le64 scan;		/* progress during scanning */
+} __attribute__ ((__packed__));
+
 struct btrfs_block_group_item {
 	__le64 used;
 	__le64 chunk_objectid;
 	__le64 flags;
+} __attribute__ ((__packed__));
+
+struct btrfs_qgroup_info_item {
+	__le64 generation;
+	__le64 referenced;
+	__le64 referenced_compressed;
+	__le64 exclusive;
+	__le64 exclusive_compressed;
+} __attribute__ ((__packed__));
+
+/* flags definition for qgroup limits */
+#define BTRFS_QGROUP_LIMIT_MAX_RFER	(1ULL << 0)
+#define BTRFS_QGROUP_LIMIT_MAX_EXCL	(1ULL << 1)
+#define BTRFS_QGROUP_LIMIT_RSV_RFER	(1ULL << 2)
+#define BTRFS_QGROUP_LIMIT_RSV_EXCL	(1ULL << 3)
+#define BTRFS_QGROUP_LIMIT_RFER_CMPR	(1ULL << 4)
+#define BTRFS_QGROUP_LIMIT_EXCL_CMPR	(1ULL << 5)
+
+struct btrfs_qgroup_limit_item {
+	__le64 flags;
+	__le64 max_referenced;
+	__le64 max_exclusive;
+	__le64 rsv_referenced;
+	__le64 rsv_exclusive;
 } __attribute__ ((__packed__));
 
 struct btrfs_space_info {
@@ -974,6 +1012,14 @@ struct btrfs_root {
 #define BTRFS_CHUNK_ITEM_KEY	228
 
 #define BTRFS_BALANCE_ITEM_KEY	248
+
+/*
+ * quota groups
+ */
+#define BTRFS_QGROUP_STATUS_KEY		240
+#define BTRFS_QGROUP_INFO_KEY		242
+#define BTRFS_QGROUP_LIMIT_KEY		244
+#define BTRFS_QGROUP_RELATION_KEY	246
 
 /*
  * string items are for debugging.  They just store a short string of
@@ -1834,6 +1880,51 @@ BTRFS_SETGET_FUNCS(file_extent_encryption, struct btrfs_file_extent_item,
 		   encryption, 8);
 BTRFS_SETGET_FUNCS(file_extent_other_encoding, struct btrfs_file_extent_item,
 		   other_encoding, 16);
+
+/* btrfs_qgroup_status_item */
+BTRFS_SETGET_FUNCS(qgroup_status_version, struct btrfs_qgroup_status_item,
+		   version, 64);
+BTRFS_SETGET_FUNCS(qgroup_status_generation, struct btrfs_qgroup_status_item,
+		   generation, 64);
+BTRFS_SETGET_FUNCS(qgroup_status_flags, struct btrfs_qgroup_status_item,
+		   flags, 64);
+BTRFS_SETGET_FUNCS(qgroup_status_scan, struct btrfs_qgroup_status_item,
+		   scan, 64);
+
+/* btrfs_qgroup_info_item */
+BTRFS_SETGET_FUNCS(qgroup_info_generation, struct btrfs_qgroup_info_item,
+		   generation, 64);
+BTRFS_SETGET_FUNCS(qgroup_info_referenced, struct btrfs_qgroup_info_item,
+		   referenced, 64);
+BTRFS_SETGET_FUNCS(qgroup_info_referenced_compressed,
+		   struct btrfs_qgroup_info_item, referenced_compressed, 64);
+BTRFS_SETGET_FUNCS(qgroup_info_exclusive, struct btrfs_qgroup_info_item,
+		   exclusive, 64);
+BTRFS_SETGET_FUNCS(qgroup_info_exclusive_compressed,
+		   struct btrfs_qgroup_info_item, exclusive_compressed, 64);
+
+BTRFS_SETGET_STACK_FUNCS(stack_qgroup_info_generation,
+			 struct btrfs_qgroup_info_item, generation, 64);
+BTRFS_SETGET_STACK_FUNCS(stack_qgroup_info_referenced,
+			 struct btrfs_qgroup_info_item, referenced, 64);
+BTRFS_SETGET_STACK_FUNCS(stack_qgroup_info_referenced_compressed,
+		   struct btrfs_qgroup_info_item, referenced_compressed, 64);
+BTRFS_SETGET_STACK_FUNCS(stack_qgroup_info_exclusive,
+			 struct btrfs_qgroup_info_item, exclusive, 64);
+BTRFS_SETGET_STACK_FUNCS(stack_qgroup_info_exclusive_compressed,
+		   struct btrfs_qgroup_info_item, exclusive_compressed, 64);
+
+/* btrfs_qgroup_limit_item */
+BTRFS_SETGET_FUNCS(qgroup_limit_flags, struct btrfs_qgroup_limit_item,
+		   flags, 64);
+BTRFS_SETGET_FUNCS(qgroup_limit_max_referenced, struct btrfs_qgroup_limit_item,
+		   max_referenced, 64);
+BTRFS_SETGET_FUNCS(qgroup_limit_max_exclusive, struct btrfs_qgroup_limit_item,
+		   max_exclusive, 64);
+BTRFS_SETGET_FUNCS(qgroup_limit_rsv_referenced, struct btrfs_qgroup_limit_item,
+		   rsv_referenced, 64);
+BTRFS_SETGET_FUNCS(qgroup_limit_rsv_exclusive, struct btrfs_qgroup_limit_item,
+		   rsv_exclusive, 64);
 
 /* this returns the number of file bytes represented by the inline item.
  * If an item is compressed, this is the uncompressed size

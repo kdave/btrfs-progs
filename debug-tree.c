@@ -312,6 +312,12 @@ again:
 				if (!skip) {
 					printf("extent checksum");
 				}
+				break;
+			case BTRFS_QUOTA_TREE_OBJECTID:
+				if (!skip) {
+					printf("quota");
+				}
+				break;
 			case BTRFS_MULTIPLE_OBJECTIDS:
 				if (!skip) {
 					printf("multiple");

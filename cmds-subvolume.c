@@ -26,6 +26,7 @@
 
 #include "kerncompat.h"
 #include "ioctl.h"
+#include "qgroup.h"
 
 #include "commands.h"
 
@@ -70,13 +71,35 @@ static int cmd_subvol_create(int argc, char **argv)
 	int	res, fddst, len, e;
 	char	*newname;
 	char	*dstdir;
-	struct btrfs_ioctl_vol_args	args;
 	char	*dst;
+	struct btrfs_qgroup_inherit *inherit = NULL;
 
-	if (check_argc_exact(argc, 2))
+	optind = 1;
+	while (1) {
+		int c = getopt(argc, argv, "c:i:r");
+		if (c < 0)
+			break;
+
+		switch (c) {
+		case 'c':
+			res = qgroup_inherit_add_copy(&inherit, optarg, 0);
+			if (res)
+				return res;
+			break;
+		case 'i':
+			res = qgroup_inherit_add_group(&inherit, optarg);
+			if (res)
+				return res;
+			break;
+		default:
+			usage(cmd_subvol_create_usage);
+		}
+	}
+
+	if (check_argc_exact(argc - optind, 1))
 		usage(cmd_subvol_create_usage);
 
-	dst = argv[1];
+	dst = argv[optind];
 
 	res = test_isdir(dst);
 	if(res >= 0 ){
@@ -110,9 +133,27 @@ static int cmd_subvol_create(int argc, char **argv)
 	}
 
 	printf("Create subvolume '%s/%s'\n", dstdir, newname);
-	strncpy(args.name, newname, BTRFS_PATH_NAME_MAX);
-	args.name[BTRFS_PATH_NAME_MAX-1] = 0;
-	res = ioctl(fddst, BTRFS_IOC_SUBVOL_CREATE, &args);
+	if (inherit) {
+		struct btrfs_ioctl_vol_args_v2	args;
+
+		memset(&args, 0, sizeof(args));
+		strncpy(args.name, newname, BTRFS_SUBVOL_NAME_MAX);
+		args.name[BTRFS_SUBVOL_NAME_MAX-1] = 0;
+		args.flags |= BTRFS_SUBVOL_QGROUP_INHERIT;
+		args.size = qgroup_inherit_size(inherit);
+		args.qgroup_inherit = inherit;
+
+		res = ioctl(fddst, BTRFS_IOC_SUBVOL_CREATE_V2, &args);
+	} else {
+		struct btrfs_ioctl_vol_args	args;
+
+		memset(&args, 0, sizeof(args));
+		strncpy(args.name, newname, BTRFS_SUBVOL_NAME_MAX);
+		args.name[BTRFS_SUBVOL_NAME_MAX-1] = 0;
+
+		res = ioctl(fddst, BTRFS_IOC_SUBVOL_CREATE, &args);
+	}
+
 	e = errno;
 
 	close(fddst);
@@ -122,6 +163,7 @@ static int cmd_subvol_create(int argc, char **argv)
 			strerror(e));
 		return 11;
 	}
+	free(inherit);
 
 	return 0;
 }
@@ -133,7 +175,7 @@ static int cmd_subvol_create(int argc, char **argv)
  * 1-> path exists and it is  a subvolume
  * -1 -> path is unaccessible
  */
-static int test_issubvolume(char *path)
+int test_issubvolume(char *path)
 {
 	struct stat	st;
 	int		res;
@@ -291,18 +333,33 @@ static int cmd_snapshot(int argc, char **argv)
 	char	*newname;
 	char	*dstdir;
 	struct btrfs_ioctl_vol_args_v2	args;
-
-	memset(&args, 0, sizeof(args));
+	struct btrfs_qgroup_inherit *inherit = NULL;
 
 	optind = 1;
+	memset(&args, 0, sizeof(args));
 	while (1) {
-		int c = getopt(argc, argv, "r");
+		int c = getopt(argc, argv, "c:i:r");
 		if (c < 0)
 			break;
 
 		switch (c) {
+		case 'c':
+			res = qgroup_inherit_add_copy(&inherit, optarg, 0);
+			if (res)
+				return res;
+			break;
+		case 'i':
+			res = qgroup_inherit_add_group(&inherit, optarg);
+			if (res)
+				return res;
+			break;
 		case 'r':
 			readonly = 1;
+			break;
+		case 'x':
+			res = qgroup_inherit_add_copy(&inherit, optarg, 1);
+			if (res)
+				return res;
 			break;
 		default:
 			usage(cmd_snapshot_usage);
@@ -379,6 +436,11 @@ static int cmd_snapshot(int argc, char **argv)
 	}
 
 	args.fd = fd;
+	if (inherit) {
+		args.flags |= BTRFS_SUBVOL_QGROUP_INHERIT;
+		args.size = qgroup_inherit_size(inherit);
+		args.qgroup_inherit = inherit;
+	}
 	strncpy(args.name, newname, BTRFS_SUBVOL_NAME_MAX);
 	args.name[BTRFS_SUBVOL_NAME_MAX-1] = 0;
 	res = ioctl(fddst, BTRFS_IOC_SNAP_CREATE_V2, &args);
@@ -392,6 +454,7 @@ static int cmd_snapshot(int argc, char **argv)
 			subvol, strerror(e));
 		return 11;
 	}
+	free(inherit);
 
 	return 0;
 }
