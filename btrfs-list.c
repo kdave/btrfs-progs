@@ -35,6 +35,7 @@
 #include "transaction.h"
 #include "utils.h"
 #include <uuid/uuid.h>
+#include "btrfs-list.h"
 
 /* we store all the roots we find in an rbtree so that we can
  * search for them later.

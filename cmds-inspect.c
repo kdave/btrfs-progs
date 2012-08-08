@@ -24,9 +24,7 @@
 #include "ioctl.h"
 
 #include "commands.h"
-
-/* btrfs-list.c */
-char *path_for_root(int fd, u64 root);
+#include "btrfs-list.h"
 
 static const char * const inspect_cmd_group_usage[] = {
 	"btrfs inspect-internal <command> <args>",

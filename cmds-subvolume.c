@@ -29,10 +29,7 @@
 #include "qgroup.h"
 
 #include "commands.h"
-
-/* btrfs-list.c */
-int list_subvols(int fd, int print_parent, int print_uuid, int get_default);
-int find_updated_files(int fd, u64 root_id, u64 oldest_gen);
+#include "btrfs-list.h"
 
 static const char * const subvolume_cmd_group_usage[] = {
 	"btrfs subvolume <command> <args>",

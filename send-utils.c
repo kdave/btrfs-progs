@@ -21,9 +21,7 @@
 #include "ctree.h"
 #include "send-utils.h"
 #include "ioctl.h"
-
-/* btrfs-list.c */
-char *path_for_root(int fd, u64 root);
+#include "btrfs-list.h"
 
 static struct rb_node *tree_insert(struct rb_root *root,
 				   struct subvol_info *si,
