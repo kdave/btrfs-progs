@@ -268,7 +268,6 @@ int subvol_uuid_search_init(int mnt_fd, struct subvol_uuid_search *s)
 				si->stransid = btrfs_root_stransid(&root_item);
 				si->rtransid = btrfs_root_rtransid(&root_item);
 				si->path = path;
-
 				subvol_uuid_search_add(s, si);
 				root_item_valid = 0;
 			} else {

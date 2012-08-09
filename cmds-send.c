@@ -27,6 +27,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
+#include <libgen.h>
 
 #include <uuid/uuid.h>
 
@@ -55,12 +56,12 @@ struct btrfs_send {
 int find_mount_root(const char *path, char **mount_root)
 {
 	int ret;
-	char cur[BTRFS_PATH_NAME_MAX];
+	char *cur;
 	char fsid[BTRFS_FSID_SIZE];
 	int fd;
 	struct stat st;
-	int pos;
 	char *tmp;
+	char *dup = NULL;
 
 	struct btrfs_ioctl_fs_info_args args;
 
@@ -89,17 +90,15 @@ int find_mount_root(const char *path, char **mount_root)
 	close(fd);
 	fd = -1;
 
-	strcpy(cur, path);
+	cur = strdup(path);
+
 	while (1) {
-		tmp = strrchr(cur, '/');
+		dup = strdup(cur);
+		tmp = dirname(dup);
+
 		if (!tmp)
 			break;
-		if (tmp == cur)
-			break;
-		pos = tmp - cur;
-		cur[pos] = 0;
-
-		fd = open(cur, O_RDONLY | O_NOATIME);
+		fd = open(tmp, O_RDONLY | O_NOATIME);
 		if (fd < 0) {
 			ret = -errno;
 			goto out;
@@ -108,20 +107,27 @@ int find_mount_root(const char *path, char **mount_root)
 		ret = ioctl(fd, BTRFS_IOC_FS_INFO, &args);
 		close(fd);
 		fd = -1;
-		if (ret < 0) {
-			cur[pos] = '/';
+		if (ret < 0)
 			break;
-		}
-		if (memcmp(fsid, args.fsid, BTRFS_FSID_SIZE) != 0) {
-			cur[pos] = '/';
+		if (memcmp(fsid, args.fsid, BTRFS_FSID_SIZE) != 0)
 			break;
-		}
+
+		free(cur);
+		cur = strdup(tmp);
+		free(dup);
+		dup = NULL;
+		if (strcmp(cur, "/") == 0)
+			break;
+		if (strcmp(cur, ".") == 0)
+			break;
 	}
 
 	ret = 0;
 	*mount_root = realpath(cur, NULL);
 
 out:
+	if (dup)
+		free(dup);
 	if (fd != -1)
 		close(fd);
 	return ret;
@@ -373,7 +379,13 @@ out:
 
 static const char *get_subvol_name(struct btrfs_send *s, const char *full_path)
 {
-	return full_path + strlen(s->root_path) + 1;
+	int len = strlen(s->root_path);
+	if (!len)
+		return full_path;
+	if (s->root_path[len - 1] != '/')
+		len += 1;
+
+	return full_path + len;
 }
 
 static int init_root_path(struct btrfs_send *s, const char *subvol)
@@ -527,6 +539,12 @@ int cmd_send_start(int argc, char **argv)
 	/* use first send subvol to determine mount_root */
 	subvol = argv[optind];
 
+	subvol = realpath(argv[optind], NULL);
+	if (!subvol) {
+		fprintf(stderr, "ERROR: unable to resolve %s\n", argv[optind]);
+		goto out;
+	}
+
 	ret = init_root_path(&send, subvol);
 	if (ret < 0)
 		goto out;
@@ -545,7 +563,11 @@ int cmd_send_start(int argc, char **argv)
 	}
 
 	for (i = optind; i < argc; i++) {
-		subvol = argv[i];
+		subvol = realpath(argv[i], NULL);
+		if (!subvol) {
+			fprintf(stderr, "ERROR: unable to resolve %s\n", argv[i]);
+			goto out;
+		}
 
 		ret = find_mount_root(subvol, &mount_root);
 		if (ret < 0) {
@@ -571,6 +593,7 @@ int cmd_send_start(int argc, char **argv)
 					subvol);
 			goto out;
 		}
+		free(subvol);
 	}
 
 	for (i = optind; i < argc; i++) {
