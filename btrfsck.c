@@ -786,6 +786,7 @@ static int is_child_root(struct btrfs_root *root, u64 parent_root_id,
 
 			if (ret > 0)
 				break;
+			leaf = path.nodes[0];
 		}
 
 		btrfs_item_key_to_cpu(leaf, &key, path.slots[0]);
