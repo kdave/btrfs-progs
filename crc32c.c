@@ -113,7 +113,7 @@ void crc32c_intel_probe(void)
 	}
 }
 
-int crc32c_optimization_init(void)
+void crc32c_optimization_init(void)
 {
 	crc32c_intel_probe();
 	if (crc32c_intel_available)
@@ -121,7 +121,7 @@ int crc32c_optimization_init(void)
 }
 #else
 
-int crc32c_optimization_init(void)
+void crc32c_optimization_init(void)
 {
 }
 

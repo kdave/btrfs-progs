@@ -495,6 +495,7 @@ int cmd_send_start(int argc, char **argv)
 
 	subvol = realpath(argv[optind], NULL);
 	if (!subvol) {
+		ret = -errno;
 		fprintf(stderr, "ERROR: unable to resolve %s\n", argv[optind]);
 		goto out;
 	}
@@ -519,6 +520,7 @@ int cmd_send_start(int argc, char **argv)
 	for (i = optind; i < argc; i++) {
 		subvol = realpath(argv[i], NULL);
 		if (!subvol) {
+			ret = -errno;
 			fprintf(stderr, "ERROR: unable to resolve %s\n", argv[i]);
 			goto out;
 		}

@@ -62,6 +62,8 @@ static struct rb_node *tree_insert(struct rb_root *root,
 			entry = rb_entry(parent, struct subvol_info,
 					rb_path_node);
 			comp = strcmp(entry->path, si->path);
+		} else {
+			BUG();
 		}
 
 		if (comp < 0)
@@ -120,6 +122,8 @@ static struct subvol_info *tree_search(struct rb_root *root,
 		} else if (type == subvol_search_by_path) {
 			entry = rb_entry(n, struct subvol_info, rb_path_node);
 			comp = strcmp(entry->path, path);
+		} else {
+			BUG();
 		}
 		if (comp < 0)
 			n = n->rb_left;

@@ -385,7 +385,6 @@ static int copy_file(struct btrfs_root *root, int fd, struct btrfs_key *key,
 					/* No more leaves to search */
 					btrfs_free_path(path);
 					goto set_size;
-					return 0;
 				}
 				leaf = path->nodes[0];
 			} while (!leaf);
@@ -431,8 +430,11 @@ next:
 
 	btrfs_free_path(path);
 set_size:
-	if (found_size)
-		ftruncate(fd, (loff_t)found_size);
+	if (found_size) {
+		ret = ftruncate(fd, (loff_t)found_size);
+		if (ret)
+			return ret;
+	}
 	return 0;
 }
 

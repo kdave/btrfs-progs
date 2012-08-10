@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "crc32c.h"
 #include "commands.h"
 #include "version.h"
 
@@ -93,7 +94,7 @@ static int parse_one_token(const char *arg, const struct cmd_group *grp,
 static const struct cmd_struct *
 parse_command_token(const char *arg, const struct cmd_group *grp)
 {
-	const struct cmd_struct *cmd;
+	const struct cmd_struct *cmd = NULL;
 
 	switch(parse_one_token(arg, grp, &cmd)) {
 	case -1:
