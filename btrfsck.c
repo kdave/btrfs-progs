@@ -857,13 +857,10 @@ static int process_dir_item(struct btrfs_root *root,
 					  key->objectid, key->offset, namebuf,
 					  len, filetype, key->type, error);
 		} else if (location.type == BTRFS_ROOT_ITEM_KEY) {
-			u64 parent = root->objectid;
-
-			if (is_child_root(root, parent, location.objectid))
-				add_inode_backref(root_cache, location.objectid,
-						  key->objectid, key->offset,
-						  namebuf, len, filetype,
-						  key->type, error);
+			add_inode_backref(root_cache, location.objectid,
+					  key->objectid, key->offset,
+					  namebuf, len, filetype,
+					  key->type, error);
 		} else {
 			fprintf(stderr, "warning line %d\n", __LINE__);
 		}
@@ -1489,6 +1486,9 @@ static int merge_root_recs(struct btrfs_root *root,
 		remove_cache_extent(src_cache, &node->cache);
 		free(node);
 
+		if (!is_child_root(root, root->objectid, rec->ino))
+			goto skip;
+
 		list_for_each_entry(backref, &rec->backrefs, list) {
 			BUG_ON(backref->found_inode_ref);
 			if (backref->found_dir_item)
@@ -1504,6 +1504,7 @@ static int merge_root_recs(struct btrfs_root *root,
 					backref->namelen, BTRFS_DIR_INDEX_KEY,
 					backref->errors);
 		}
+skip:
 		free_inode_rec(rec);
 	}
 	return 0;
