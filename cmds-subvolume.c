@@ -31,7 +31,7 @@
 #include "commands.h"
 
 /* btrfs-list.c */
-int list_subvols(int fd, int print_parent, int get_default);
+int list_subvols(int fd, int print_parent, int print_uuid, int get_default);
 int find_updated_files(int fd, u64 root_id, u64 oldest_gen);
 
 static const char * const subvolume_cmd_group_usage[] = {
@@ -278,10 +278,11 @@ static int cmd_subvol_list(int argc, char **argv)
 	int print_snap_only = 0;
 	int order = 0;
 	char *subvol;
+	int print_uuid = 0;
 
 	optind = 1;
 	while(1) {
-		int c = getopt(argc, argv, "ps:");
+		int c = getopt(argc, argv, "ps:u");
 		if (c < 0)
 			break;
 
@@ -292,6 +293,9 @@ static int cmd_subvol_list(int argc, char **argv)
 		case 's':
 			print_snap_only = 1;
 			order = atoi(optarg);
+			break;
+		case 'u':
+			print_uuid =1;
 			break;
 		default:
 			usage(cmd_subvol_list_usage);
@@ -319,9 +323,9 @@ static int cmd_subvol_list(int argc, char **argv)
 		return 12;
 	}
 	if (!print_snap_only)
-		ret = list_subvols(fd, print_parent, 0);
+		ret = list_subvols(fd, print_parent, 0, print_uuid);
 	else
-		ret = list_snapshots(fd, print_parent, order);
+		ret = list_snapshots(fd, print_parent, order, print_uuid);
 	if (ret)
 		return 19;
 	return 0;
@@ -502,7 +506,7 @@ static int cmd_subvol_get_default(int argc, char **argv)
 		fprintf(stderr, "ERROR: can't access '%s'\n", subvol);
 		return 12;
 	}
-	ret = list_subvols(fd, 0, 1);
+	ret = list_subvols(fd, 0, 1, 0);
 	if (ret)
 		return 19;
 	return 0;
