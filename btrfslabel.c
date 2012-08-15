@@ -67,7 +67,7 @@ static void change_label_unmounted(char *dev, char *nLabel)
        close_ctree(root);
 }
 
-static void get_label_unmounted(char *dev)
+int get_label_unmounted(char *dev)
 {
        struct btrfs_root *root;
 
@@ -76,10 +76,14 @@ static void get_label_unmounted(char *dev)
         */
        root = open_ctree(dev, 0, 0);
 
+       if(!root)
+         return -1;
+
        fprintf(stdout, "%s\n", root->fs_info->super_copy.label);
 
        /* Now we close it since we are done. */
        close_ctree(root);
+       return 0;
 }
 
 int get_label(char *btrfs_dev)
@@ -98,8 +102,8 @@ int get_label(char *btrfs_dev)
 	       fprintf(stderr, "FATAL: the filesystem has to be unmounted\n");
 	       return -2;
 	}
-	get_label_unmounted(btrfs_dev);
-	return 0;
+	ret = get_label_unmounted(btrfs_dev);
+	return ret;
 }
 
 
