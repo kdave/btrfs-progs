@@ -28,6 +28,7 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <libgen.h>
+#include <mntent.h>
 
 #include <uuid/uuid.h>
 
@@ -55,82 +56,35 @@ struct btrfs_send {
 
 int find_mount_root(const char *path, char **mount_root)
 {
-	int ret;
-	char *cur;
-	char fsid[BTRFS_FSID_SIZE];
+	FILE *mnttab;
 	int fd;
-	struct stat st;
-	char *tmp;
-	char *dup = NULL;
-
-	struct btrfs_ioctl_fs_info_args args;
+	struct mntent *ent;
+	int len;
+	int longest_matchlen = 0;
+	char *longest_match = NULL;
 
 	fd = open(path, O_RDONLY | O_NOATIME);
-	if (fd < 0) {
-		ret = -errno;
-		goto out;
-	}
-
-	ret = fstat(fd, &st);
-	if (fd < 0) {
-		ret = -errno;
-		goto out;
-	}
-	if (!S_ISDIR(st.st_mode)) {
-		ret = -ENOTDIR;
-		goto out;
-	}
-
-	ret = ioctl(fd, BTRFS_IOC_FS_INFO, &args);
-	if (fd < 0) {
-		ret = -errno;
-		goto out;
-	}
-	memcpy(fsid, args.fsid, BTRFS_FSID_SIZE);
+	if (fd < 0)
+		return -errno;
 	close(fd);
-	fd = -1;
 
-	cur = strdup(path);
-
-	while (1) {
-		dup = strdup(cur);
-		tmp = dirname(dup);
-
-		if (!tmp)
-			break;
-		fd = open(tmp, O_RDONLY | O_NOATIME);
-		if (fd < 0) {
-			ret = -errno;
-			goto out;
+	mnttab = fopen("/etc/mtab", "r");
+	while ((ent = getmntent(mnttab))) {
+		len = strlen(ent->mnt_dir);
+		if (strncmp(ent->mnt_dir, path, len) == 0) {
+			/* match found */
+			if (longest_matchlen < len) {
+				free(longest_match);
+				longest_matchlen = len;
+				longest_match = strdup(ent->mnt_dir);
+			}
 		}
-
-		ret = ioctl(fd, BTRFS_IOC_FS_INFO, &args);
-		close(fd);
-		fd = -1;
-		if (ret < 0)
-			break;
-		if (memcmp(fsid, args.fsid, BTRFS_FSID_SIZE) != 0)
-			break;
-
-		free(cur);
-		cur = strdup(tmp);
-		free(dup);
-		dup = NULL;
-		if (strcmp(cur, "/") == 0)
-			break;
-		if (strcmp(cur, ".") == 0)
-			break;
 	}
 
-	ret = 0;
-	*mount_root = realpath(cur, NULL);
+	*mount_root = realpath(longest_match, NULL);
+	free(longest_match);
 
-out:
-	if (dup)
-		free(dup);
-	if (fd != -1)
-		close(fd);
-	return ret;
+	return 0;
 }
 
 static int get_root_id(struct btrfs_send *s, const char *path, u64 *root_id)
