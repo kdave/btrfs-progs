@@ -1954,7 +1954,7 @@ static int check_owner_ref(struct btrfs_root *root,
 
 	if (buf->start == btrfs_node_blockptr(path.nodes[level + 1],
 					      path.slots[level + 1]))
-		rec->owner_ref_checked = 1;
+		found = 1;
 
 	btrfs_release_path(ref_root, &path);
 	return found ? 0 : 1;
