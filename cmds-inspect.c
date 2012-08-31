@@ -113,8 +113,13 @@ static int cmd_inode_resolve(int argc, char **argv)
 }
 
 static const char * const cmd_logical_resolve_usage[] = {
-	"btrfs inspect-internal logical-resolve [-Pv] <logical> <path>",
+	"btrfs inspect-internal logical-resolve [-Pv] [-s bufsize] <logical> <path>",
 	"Get file system paths for the given logical address",
+	"-P          skip the path resolving and print the inodes instead",
+	"-v          verbose mode",
+	"-s bufsize  set inode container's size. This is used to increase inode",
+	"            container's size in case it is not enough to read all the ",
+	"            resolved results. The max value one can set is 64k",
 	NULL
 };
 
@@ -128,12 +133,13 @@ static int cmd_logical_resolve(int argc, char **argv)
 	int bytes_left;
 	struct btrfs_ioctl_logical_ino_args loi;
 	struct btrfs_data_container *inodes;
+	u64 size = 4096;
 	char full_path[4096];
 	char *path_ptr;
 
 	optind = 1;
 	while (1) {
-		int c = getopt(argc, argv, "Pv");
+		int c = getopt(argc, argv, "Pvs:");
 		if (c < 0)
 			break;
 
@@ -144,6 +150,9 @@ static int cmd_logical_resolve(int argc, char **argv)
 		case 'v':
 			verbose = 1;
 			break;
+		case 's':
+			size = atoll(optarg);
+			break;
 		default:
 			usage(cmd_logical_resolve_usage);
 		}
@@ -152,12 +161,13 @@ static int cmd_logical_resolve(int argc, char **argv)
 	if (check_argc_exact(argc - optind, 2))
 		usage(cmd_logical_resolve_usage);
 
-	inodes = malloc(4096);
+	size = min(size, 64 * 1024);
+	inodes = malloc(size);
 	if (!inodes)
 		return 1;
 
 	loi.logical = atoll(argv[optind]);
-	loi.size = 4096;
+	loi.size = size;
 	loi.inodes = (u64)inodes;
 
 	fd = open_file_or_dir(argv[optind+1]);
@@ -174,8 +184,9 @@ static int cmd_logical_resolve(int argc, char **argv)
 	}
 
 	if (verbose)
-		printf("ioctl ret=%d, bytes_left=%lu, bytes_missing=%lu, "
-			"cnt=%d, missed=%d\n", ret,
+		printf("ioctl ret=%d, total_size=%llu, bytes_left=%lu, "
+			"bytes_missing=%lu, cnt=%d, missed=%d\n",
+			ret, size,
 			(unsigned long)inodes->bytes_left,
 			(unsigned long)inodes->bytes_missing,
 			inodes->elem_cnt, inodes->elem_missed);

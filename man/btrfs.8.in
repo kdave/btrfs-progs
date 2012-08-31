@@ -50,7 +50,7 @@ btrfs \- control a btrfs filesystem
 \fBbtrfs\fP \fBinspect-internal inode-resolve\fP [-v] \fI<inode>\fP \fI<path>\fP
 .PP
 \fBbtrfs\fP \fBinspect-internal logical-resolve\fP
-[-Pv] \fI<logical>\fP \fI<path>\fP
+[-Pv] [-s size] \fI<logical>\fP \fI<path>\fP
 .PP
 \fBbtrfs\fP \fBhelp|\-\-help|\-h \fP\fI\fP
 .PP
@@ -335,7 +335,7 @@ verbose mode. print count of returned paths and ioctl() return value
 .RE
 .TP
 
-\fBinspect-internal logical-resolve\fP [-Pv] \fI<logical>\fP \fI<path>\fP
+\fBinspect-internal logical-resolve\fP [-Pv] [-s bufsize] \fI<logical>\fP \fI<path>\fP
 Resolves a <logical> address in the filesystem mounted at <path> to all inodes.
 By default, each inode is then resolved to a file system path (similar to the
 \fBinode-resolve\fP subcommand).
@@ -346,6 +346,9 @@ By default, each inode is then resolved to a file system path (similar to the
 skip the path resolving and print the inodes instead
 .IP -v 5
 verbose mode. print count of returned paths and all ioctl() return values
+.IP -s bufsize 5
+set inode container's size. This is used to increase inode container's size in case it is
+not enough to read all the resolved results. The max value one can set is 64k.
 .RE
 
 .SH EXIT STATUS
