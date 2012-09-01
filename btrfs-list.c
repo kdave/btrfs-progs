@@ -737,7 +737,8 @@ again:
 			} else if (get_gen && sh->type == BTRFS_ROOT_ITEM_KEY) {
 				ri = (struct btrfs_root_item *)(args.buf + off);
 				gen = btrfs_root_generation(ri);
-				if(ri->generation == ri->generation_v2) {
+				if(sh->len >
+				   sizeof(struct btrfs_root_item_v0)) {
 					t = ri->otime.sec;
 					memcpy(uuid, ri->uuid, BTRFS_UUID_SIZE);
 				} else {
@@ -844,9 +845,11 @@ static int __list_snapshot_search(int fd, struct root_lookup *root_lookup)
 			off += sizeof(*sh);
 			if (sh->type == BTRFS_ROOT_ITEM_KEY && sh->offset) {
 				item = (struct btrfs_root_item *)(args.buf + off);
-				if(item->generation == item->generation_v2) {
+				if(sh->len >
+				   sizeof(struct btrfs_root_item_v0)) {
 					t = item->otime.sec;
-					memcpy(uuid, item->uuid, BTRFS_UUID_SIZE);
+					memcpy(uuid, item->uuid,
+					       BTRFS_UUID_SIZE);
 				} else {
 					t = 0;
 					memset(uuid, 0, BTRFS_UUID_SIZE);

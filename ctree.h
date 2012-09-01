@@ -637,6 +637,21 @@ struct btrfs_dir_item {
 	u8 type;
 } __attribute__ ((__packed__));
 
+struct btrfs_root_item_v0 {
+	struct btrfs_inode_item inode;
+	__le64 generation;
+	__le64 root_dirid;
+	__le64 bytenr;
+	__le64 byte_limit;
+	__le64 bytes_used;
+	__le64 last_snapshot;
+	__le64 flags;
+	__le32 refs;
+	struct btrfs_disk_key drop_progress;
+	u8 drop_level;
+	u8 level;
+} __attribute__ ((__packed__));
+
 struct btrfs_root_item {
 	struct btrfs_inode_item inode;
 	__le64 generation;
