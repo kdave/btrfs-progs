@@ -17,5 +17,6 @@
  */
 
 int list_subvols(int fd, int print_parent, int get_default, int print_uuid);
+int list_snapshots(int fd, int print_parent, int order, int print_uuid);
 int find_updated_files(int fd, u64 root_id, u64 oldest_gen);
 char *path_for_root(int fd, u64 root);
