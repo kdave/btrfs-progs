@@ -910,6 +910,7 @@ struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
 int btrfs_read_dev_super(int fd, struct btrfs_super_block *sb, u64 sb_bytenr)
 {
 	u8 fsid[BTRFS_FSID_SIZE];
+	int fsid_is_initialized = 0;
 	struct btrfs_super_block buf;
 	int i;
 	int ret;
@@ -936,15 +937,26 @@ int btrfs_read_dev_super(int fd, struct btrfs_super_block *sb, u64 sb_bytenr)
 		if (ret < sizeof(buf))
 			break;
 
-		if (btrfs_super_bytenr(&buf) != bytenr ||
-		    strncmp((char *)(&buf.magic), BTRFS_MAGIC,
+		if (btrfs_super_bytenr(&buf) != bytenr )
+			continue;
+		/* if magic is NULL, the device was removed */
+		if (buf.magic == 0 && i == 0) 
+			return -1;
+		if (strncmp((char *)(&buf.magic), BTRFS_MAGIC,
 			    sizeof(buf.magic)))
 			continue;
 
-		if (i == 0)
+		if (!fsid_is_initialized) {
 			memcpy(fsid, buf.fsid, sizeof(fsid));
-		else if (memcmp(fsid, buf.fsid, sizeof(fsid)))
+			fsid_is_initialized = 1;
+		} else if (memcmp(fsid, buf.fsid, sizeof(fsid))) {
+			/*
+			 * the superblocks (the original one and
+			 * its backups) contain data of different
+			 * filesystems -> the super cannot be trusted
+			 */
 			continue;
+		}
 
 		if (btrfs_super_generation(&buf) > transid) {
 			memcpy(sb, &buf, sizeof(*sb));
