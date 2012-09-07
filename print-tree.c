@@ -205,11 +205,9 @@ static void print_extent_item(struct extent_buffer *eb, int slot)
 		struct btrfs_tree_block_info *info;
 		info = (struct btrfs_tree_block_info *)(ei + 1);
 		btrfs_tree_block_key(eb, info, &key);
-		printf("\t\ttree block key (%llu %x %llu) level %d\n",
-		       (unsigned long long)btrfs_disk_key_objectid(&key),
-		       key.type,
-		       (unsigned long long)btrfs_disk_key_offset(&key),
-		       btrfs_tree_block_level(eb, info));
+		printf("\t\ttree block ");
+		btrfs_print_key(&key);
+		printf(" level %d\n", btrfs_tree_block_level(eb, info));
 		iref = (struct btrfs_extent_inline_ref *)(info + 1);
 	} else {
 		iref = (struct btrfs_extent_inline_ref *)(ei + 1);
