@@ -374,6 +374,9 @@ static int cmd_qgroup_limit(int argc, char **argv)
 		}
 	}
 
+	if (check_argc_min(argc - optind, 2))
+		usage(cmd_qgroup_limit_usage);
+
 	if (!parse_limit(argv[optind], &size)) {
 		fprintf(stderr, "Invalid size argument given\n");
 		return 1;
