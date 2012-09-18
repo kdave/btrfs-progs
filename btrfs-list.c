@@ -59,6 +59,9 @@ struct root_info {
 	/* equal the offset of the root's key */
 	u64 root_offset;
 
+	/* flags of the root */
+	u64 flags;
+
 	/* the id of the root that references this one */
 	u64 ref_tree;
 
@@ -394,9 +397,9 @@ static struct root_info *root_tree_search(struct root_lookup *root_tree,
 }
 
 static int update_root(struct root_lookup *root_lookup,
-		       u64 root_id, u64 ref_tree, u64 root_offset, u64 dir_id,
-		       char *name, int name_len, u64 ogen, u64 gen, time_t ot,
-		       void *uuid)
+		       u64 root_id, u64 ref_tree, u64 root_offset, u64 flags,
+		       u64 dir_id, char *name, int name_len, u64 ogen, u64 gen,
+		       time_t ot, void *uuid)
 {
 	struct root_info *ri;
 
@@ -419,6 +422,8 @@ static int update_root(struct root_lookup *root_lookup,
 		ri->ref_tree = ref_tree;
 	if (root_offset)
 		ri->root_offset = root_offset;
+	if (flags)
+		ri->flags = flags;
 	if (dir_id)
 		ri->dir_id = dir_id;
 	if (gen)
@@ -450,15 +455,15 @@ static int update_root(struct root_lookup *root_lookup,
  * uuid: uuid of the root
  */
 static int add_root(struct root_lookup *root_lookup,
-		    u64 root_id, u64 ref_tree, u64 root_offset, u64 dir_id,
-		    char *name, int name_len, u64 ogen, u64 gen, time_t ot,
-		    void *uuid)
+		    u64 root_id, u64 ref_tree, u64 root_offset, u64 flags,
+		    u64 dir_id, char *name, int name_len, u64 ogen, u64 gen,
+		    time_t ot, void *uuid)
 {
 	struct root_info *ri;
 	int ret;
 
-	ret = update_root(root_lookup, root_id, ref_tree, root_offset, dir_id,
-			  name, name_len, ogen, gen, ot, uuid);
+	ret = update_root(root_lookup, root_id, ref_tree, root_offset, flags,
+			  dir_id, name, name_len, ogen, gen, ot, uuid);
 	if (!ret)
 		return 0;
 
@@ -485,6 +490,8 @@ static int add_root(struct root_lookup *root_lookup,
 		ri->dir_id = dir_id;
 	if (root_offset)
 		ri->root_offset = root_offset;
+	if (flags)
+		ri->flags = flags;
 	if (gen)
 		ri->gen = gen;
 	if (ogen)
@@ -961,6 +968,7 @@ static int __list_subvol_search(int fd, struct root_lookup *root_lookup)
 	u64 dir_id;
 	u64 gen = 0;
 	u64 ogen;
+	u64 flags;
 	int i;
 	time_t t;
 	u8 uuid[BTRFS_UUID_SIZE];
@@ -1016,11 +1024,12 @@ static int __list_subvol_search(int fd, struct root_lookup *root_lookup)
 				dir_id = btrfs_stack_root_ref_dirid(ref);
 
 				add_root(root_lookup, sh->objectid, sh->offset,
-					 0, dir_id, name, name_len, 0, 0, 0,
+					 0, 0, dir_id, name, name_len, 0, 0, 0,
 					 NULL);
 			} else if (sh->type == BTRFS_ROOT_ITEM_KEY) {
 				ri = (struct btrfs_root_item *)(args.buf + off);
 				gen = btrfs_root_generation(ri);
+				flags = btrfs_root_flags(ri);
 				if(sh->len >
 				   sizeof(struct btrfs_root_item_v0)) {
 					t = ri->otime.sec;
@@ -1033,8 +1042,8 @@ static int __list_subvol_search(int fd, struct root_lookup *root_lookup)
 				}
 
 				add_root(root_lookup, sh->objectid, 0,
-					 sh->offset, 0, NULL, 0, ogen, gen, t,
-					 uuid);
+					 sh->offset, flags, 0, NULL, 0, ogen,
+					 gen, t, uuid);
 			}
 
 			off += sh->len;
@@ -1077,9 +1086,15 @@ static int filter_snapshot(struct root_info *ri, u64 data)
 	return !!ri->root_offset;
 }
 
+static int filter_flags(struct root_info *ri, u64 flags)
+{
+	return ri->flags & flags;
+}
+
 static btrfs_list_filter_func all_filter_funcs[] = {
 	[BTRFS_LIST_FILTER_ROOTID]		= filter_by_rootid,
 	[BTRFS_LIST_FILTER_SNAPSHOT_ONLY]	= filter_snapshot,
+	[BTRFS_LIST_FILTER_FLAGS]		= filter_flags,
 };
 
 struct btrfs_list_filter_set *btrfs_list_alloc_filter_set(void)

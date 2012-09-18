@@ -61,6 +61,7 @@ enum btrfs_list_column_enum {
 enum btrfs_list_filter_enum {
 	BTRFS_LIST_FILTER_ROOTID,
 	BTRFS_LIST_FILTER_SNAPSHOT_ONLY,
+	BTRFS_LIST_FILTER_FLAGS,
 	BTRFS_LIST_FILTER_MAX,
 };
 
