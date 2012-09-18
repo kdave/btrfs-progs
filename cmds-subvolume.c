@@ -28,6 +28,7 @@
 #include "ioctl.h"
 #include "qgroup.h"
 
+#include "ctree.h"
 #include "commands.h"
 #include "btrfs-list.h"
 
@@ -270,13 +271,15 @@ static const char * const cmd_subvol_list_usage[] = {
 
 static int cmd_subvol_list(int argc, char **argv)
 {
+	struct btrfs_list_filter_set *filter_set;
+	struct btrfs_list_comparer_set *comparer_set;
 	int fd;
 	int ret;
-	int print_parent = 0;
-	int print_snap_only = 0;
-	int order = 0;
+	int order;
 	char *subvol;
-	int print_uuid = 0;
+
+	filter_set = btrfs_list_alloc_filter_set();
+	comparer_set = btrfs_list_alloc_comparer_set();
 
 	optind = 1;
 	while(1) {
@@ -286,14 +289,21 @@ static int cmd_subvol_list(int argc, char **argv)
 
 		switch(c) {
 		case 'p':
-			print_parent = 1;
+			btrfs_list_setup_print_column(BTRFS_LIST_PARENT);
 			break;
 		case 's':
-			print_snap_only = 1;
 			order = atoi(optarg);
+			btrfs_list_setup_filter(&filter_set,
+						BTRFS_LIST_FILTER_SNAPSHOT_ONLY,
+						0);
+			btrfs_list_setup_comparer(&comparer_set,
+						  BTRFS_LIST_COMP_OGEN,
+						  !order);
+			btrfs_list_setup_print_column(BTRFS_LIST_OGENERATION);
+			btrfs_list_setup_print_column(BTRFS_LIST_OTIME);
 			break;
 		case 'u':
-			print_uuid =1;
+			btrfs_list_setup_print_column(BTRFS_LIST_UUID);
 			break;
 		default:
 			usage(cmd_subvol_list_usage);
@@ -320,10 +330,8 @@ static int cmd_subvol_list(int argc, char **argv)
 		fprintf(stderr, "ERROR: can't access '%s'\n", subvol);
 		return 12;
 	}
-	if (!print_snap_only)
-		ret = list_subvols(fd, print_parent, 0, print_uuid);
-	else
-		ret = list_snapshots(fd, print_parent, order, print_uuid);
+
+	ret = btrfs_list_subvols(fd, filter_set, comparer_set);
 	if (ret)
 		return 19;
 	return 0;
@@ -483,6 +491,8 @@ static int cmd_subvol_get_default(int argc, char **argv)
 	int fd;
 	int ret;
 	char *subvol;
+	struct btrfs_list_filter_set *filter_set;
+	u64 default_id;
 
 	if (check_argc_exact(argc, 2))
 		usage(cmd_subvol_get_default_usage);
@@ -504,7 +514,30 @@ static int cmd_subvol_get_default(int argc, char **argv)
 		fprintf(stderr, "ERROR: can't access '%s'\n", subvol);
 		return 12;
 	}
-	ret = list_subvols(fd, 0, 1, 0);
+
+	ret = btrfs_list_get_default_subvolume(fd, &default_id);
+	if (ret) {
+		fprintf(stderr, "ERROR: can't perform the search - %s\n",
+			strerror(errno));
+		return ret;
+	}
+
+	if (default_id == 0) {
+		fprintf(stderr, "ERROR: 'default' dir item not found\n");
+		return ret;
+	}
+
+	/* no need to resolve roots if FS_TREE is default */
+	if (default_id == BTRFS_FS_TREE_OBJECTID) {
+		printf("ID 5 (FS_TREE)\n");
+		return ret;
+	}
+
+	filter_set = btrfs_list_alloc_filter_set();
+	btrfs_list_setup_filter(&filter_set, BTRFS_LIST_FILTER_ROOTID,
+				default_id);
+
+	ret = btrfs_list_subvols(fd, filter_set, NULL);
 	if (ret)
 		return 19;
 	return 0;
@@ -585,7 +618,7 @@ static int cmd_find_new(int argc, char **argv)
 		fprintf(stderr, "ERROR: can't access '%s'\n", subvol);
 		return 12;
 	}
-	ret = find_updated_files(fd, 0, last_gen);
+	ret = btrfs_list_find_updated_files(fd, 0, last_gen);
 	if (ret)
 		return 19;
 	return 0;

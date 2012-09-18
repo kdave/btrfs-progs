@@ -16,7 +16,74 @@
  * Boston, MA 021110-1307, USA.
  */
 
-int list_subvols(int fd, int print_parent, int get_default, int print_uuid);
-int list_snapshots(int fd, int print_parent, int order, int print_uuid);
-int find_updated_files(int fd, u64 root_id, u64 oldest_gen);
-char *path_for_root(int fd, u64 root);
+#include "kerncompat.h"
+
+struct root_info;
+
+typedef int (*btrfs_list_filter_func)(struct root_info *, u64);
+typedef int (*btrfs_list_comp_func)(struct root_info *, struct root_info *,
+				    int);
+
+struct btrfs_list_filter {
+	btrfs_list_filter_func filter_func;
+	u64 data;
+};
+
+struct btrfs_list_comparer {
+	btrfs_list_comp_func comp_func;
+	int is_descending;
+};
+
+struct btrfs_list_filter_set {
+	int total;
+	int nfilters;
+	struct btrfs_list_filter filters[0];
+};
+
+struct btrfs_list_comparer_set {
+	int total;
+	int ncomps;
+	struct btrfs_list_comparer comps[0];
+};
+
+enum btrfs_list_column_enum {
+	BTRFS_LIST_OBJECTID,
+	BTRFS_LIST_GENERATION,
+	BTRFS_LIST_OGENERATION,
+	BTRFS_LIST_PARENT,
+	BTRFS_LIST_TOP_LEVEL,
+	BTRFS_LIST_OTIME,
+	BTRFS_LIST_UUID,
+	BTRFS_LIST_PATH,
+	BTRFS_LIST_ALL,
+};
+
+enum btrfs_list_filter_enum {
+	BTRFS_LIST_FILTER_ROOTID,
+	BTRFS_LIST_FILTER_SNAPSHOT_ONLY,
+	BTRFS_LIST_FILTER_MAX,
+};
+
+enum btrfs_list_comp_enum {
+	BTRFS_LIST_COMP_ROOTID,
+	BTRFS_LIST_COMP_OGEN,
+	BTRFS_LIST_COMP_GEN,
+	BTRFS_LIST_COMP_MAX,
+};
+
+void btrfs_list_setup_print_column(enum btrfs_list_column_enum column);
+struct btrfs_list_filter_set *btrfs_list_alloc_filter_set(void);
+void btrfs_list_free_filter_set(struct btrfs_list_filter_set *filter_set);
+int btrfs_list_setup_filter(struct btrfs_list_filter_set **filter_set,
+			    enum btrfs_list_filter_enum filter, u64 data);
+struct btrfs_list_comparer_set *btrfs_list_alloc_comparer_set(void);
+void btrfs_list_free_comparer_set(struct btrfs_list_comparer_set *comp_set);
+int btrfs_list_setup_comparer(struct btrfs_list_comparer_set **comp_set,
+			      enum btrfs_list_comp_enum comparer,
+			      int is_descending);
+
+int btrfs_list_subvols(int fd, struct btrfs_list_filter_set *filter_set,
+		       struct btrfs_list_comparer_set *comp_set);
+int btrfs_list_find_updated_files(int fd, u64 root_id, u64 oldest_gen);
+int btrfs_list_get_default_subvolume(int fd, u64 *default_id);
+char *btrfs_list_path_for_root(int fd, u64 root);

@@ -194,7 +194,7 @@ static int cmd_logical_resolve(int argc, char **argv)
 		char *name;
 
 		if (getpath) {
-			name = path_for_root(fd, root);
+			name = btrfs_list_path_for_root(fd, root);
 			if (IS_ERR(name))
 				return PTR_ERR(name);
 			if (!name) {

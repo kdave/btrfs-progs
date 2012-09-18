@@ -244,7 +244,8 @@ int subvol_uuid_search_init(int mnt_fd, struct subvol_uuid_search *s)
 				if (!root_item_valid)
 					goto skip;
 
-				path = path_for_root(mnt_fd, sh->objectid);
+				path = btrfs_list_path_for_root(mnt_fd,
+								sh->objectid);
 				if (!path)
 					path = strdup("");
 				if (IS_ERR(path)) {
