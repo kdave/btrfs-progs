@@ -23,6 +23,7 @@
 #include <sys/stat.h>
 #include <libgen.h>
 #include <limits.h>
+#include <getopt.h>
 
 #include "kerncompat.h"
 #include "ioctl.h"
@@ -259,7 +260,8 @@ static int cmd_subvol_delete(int argc, char **argv)
 }
 
 static const char * const cmd_subvol_list_usage[] = {
-	"btrfs subvolume list [-pur] [-s 0|1] <path>",
+	"btrfs subvolume list [-pur] [-s 0|1] [-g [+|-]value] [-c [+|-]value] "
+	"[--sort=gen,ogen,rootid,path] <path>",
 	"List subvolumes (and snapshots)",
 	"",
 	"-p           print parent ID",
@@ -267,7 +269,17 @@ static const char * const cmd_subvol_list_usage[] = {
 	"-s value     list snapshots with generation in ascending/descending order",
 	"             (1: ascending, 0: descending)",
 	"-r           list readonly subvolumes (including snapshots)",
-	NULL
+	"-g [+|-]value",
+	"             filter the subvolumes by generation",
+	"             (+value: >= value; -value: <= value; value: = value)",
+	"-c [+|-]value",
+	"             filter the subvolumes by ogeneration",
+	"             (+value: >= value; -value: <= value; value: = value)",
+	"--sort=gen,ogen,rootid,path",
+	"             list the subvolume in order of gen, ogen, rootid or path",
+	"             you also can add '+' or '-' in front of each items.",
+	"             (+:ascending, -:descending, ascending default)",
+	NULL,
 };
 
 static int cmd_subvol_list(int argc, char **argv)
@@ -278,14 +290,20 @@ static int cmd_subvol_list(int argc, char **argv)
 	int fd;
 	int ret;
 	int order;
+	int c;
 	char *subvol;
+	struct option long_options[] = {
+		{"sort", 1, NULL, 'S'},
+		{0, 0, 0, 0}
+	};
 
 	filter_set = btrfs_list_alloc_filter_set();
 	comparer_set = btrfs_list_alloc_comparer_set();
 
 	optind = 1;
 	while(1) {
-		int c = getopt(argc, argv, "ps:ur");
+		c = getopt_long(argc, argv,
+				    "ps:urg:c:", long_options, NULL);
 		if (c < 0)
 			break;
 
@@ -303,13 +321,37 @@ static int cmd_subvol_list(int argc, char **argv)
 						  !order);
 			btrfs_list_setup_print_column(BTRFS_LIST_OGENERATION);
 			btrfs_list_setup_print_column(BTRFS_LIST_OTIME);
-			break;
+
 		case 'u':
 			btrfs_list_setup_print_column(BTRFS_LIST_UUID);
 			break;
 		case 'r':
 			flags |= BTRFS_ROOT_SUBVOL_RDONLY;
 			break;
+		case 'g':
+			btrfs_list_setup_print_column(BTRFS_LIST_GENERATION);
+			ret = btrfs_list_parse_filter_string(optarg,
+							&filter_set,
+							BTRFS_LIST_FILTER_GEN);
+			if (ret)
+				usage(cmd_subvol_list_usage);
+			break;
+
+		case 'c':
+			btrfs_list_setup_print_column(BTRFS_LIST_OGENERATION);
+			ret = btrfs_list_parse_filter_string(optarg,
+							&filter_set,
+							BTRFS_LIST_FILTER_CGEN);
+			if (ret)
+				usage(cmd_subvol_list_usage);
+			break;
+		case 'S':
+			ret = btrfs_list_parse_sort_string(optarg,
+							   &comparer_set);
+			if (ret)
+				usage(cmd_subvol_list_usage);
+			break;
+
 		default:
 			usage(cmd_subvol_list_usage);
 		}

@@ -215,11 +215,47 @@ static int comp_entry_with_ogen(struct root_info *entry1,
 	return is_descending ? -ret : ret;
 }
 
+static int comp_entry_with_path(struct root_info *entry1,
+				struct root_info *entry2,
+				int is_descending)
+{
+	int ret;
+
+	if (strcmp(entry1->full_path, entry2->full_path) > 0)
+		ret = 1;
+	else if (strcmp(entry1->full_path, entry2->full_path) < 0)
+		ret = -1;
+	else
+		ret = 0;
+
+	return is_descending ? -ret : ret;
+}
+
 static btrfs_list_comp_func all_comp_funcs[] = {
 	[BTRFS_LIST_COMP_ROOTID]	= comp_entry_with_rootid,
 	[BTRFS_LIST_COMP_OGEN]		= comp_entry_with_ogen,
 	[BTRFS_LIST_COMP_GEN]		= comp_entry_with_gen,
+	[BTRFS_LIST_COMP_PATH]		= comp_entry_with_path,
 };
+
+static char *all_sort_items[] = {
+	[BTRFS_LIST_COMP_ROOTID]	= "rootid",
+	[BTRFS_LIST_COMP_OGEN]		= "ogen",
+	[BTRFS_LIST_COMP_GEN]		= "gen",
+	[BTRFS_LIST_COMP_PATH]		= "path",
+	[BTRFS_LIST_COMP_MAX]		= NULL,
+};
+
+static int  btrfs_list_get_sort_item(char *sort_name)
+{
+	int i;
+
+	for (i = 0; i < BTRFS_LIST_COMP_MAX; i++) {
+		if (strcmp(sort_name, all_sort_items[i]) == 0)
+			return i;
+	}
+	return -1;
+}
 
 struct btrfs_list_comparer_set *btrfs_list_alloc_comparer_set(void)
 {
@@ -1091,10 +1127,46 @@ static int filter_flags(struct root_info *ri, u64 flags)
 	return ri->flags & flags;
 }
 
+static int filter_gen_more(struct root_info *ri, u64 data)
+{
+	return ri->gen >= data;
+}
+
+static int filter_gen_less(struct root_info *ri, u64 data)
+{
+	return ri->gen <= data;
+}
+
+static int filter_gen_equal(struct root_info  *ri, u64 data)
+{
+	return ri->gen == data;
+}
+
+static int filter_cgen_more(struct root_info *ri, u64 data)
+{
+	return ri->ogen >= data;
+}
+
+static int filter_cgen_less(struct root_info *ri, u64 data)
+{
+	return ri->ogen <= data;
+}
+
+static int filter_cgen_equal(struct root_info *ri, u64 data)
+{
+	return ri->ogen == data;
+}
+
 static btrfs_list_filter_func all_filter_funcs[] = {
 	[BTRFS_LIST_FILTER_ROOTID]		= filter_by_rootid,
 	[BTRFS_LIST_FILTER_SNAPSHOT_ONLY]	= filter_snapshot,
 	[BTRFS_LIST_FILTER_FLAGS]		= filter_flags,
+	[BTRFS_LIST_FILTER_GEN_MORE]		= filter_gen_more,
+	[BTRFS_LIST_FILTER_GEN_LESS]		= filter_gen_less,
+	[BTRFS_LIST_FILTER_GEN_EQUAL]           = filter_gen_equal,
+	[BTRFS_LIST_FILTER_CGEN_MORE]		= filter_cgen_more,
+	[BTRFS_LIST_FILTER_CGEN_LESS]		= filter_cgen_less,
+	[BTRFS_LIST_FILTER_CGEN_EQUAL]          = filter_cgen_equal,
 };
 
 struct btrfs_list_filter_set *btrfs_list_alloc_filter_set(void)
@@ -1534,3 +1606,99 @@ char *btrfs_list_path_for_root(int fd, u64 root)
 
 	return ret_path;
 }
+
+int btrfs_list_parse_sort_string(char *optarg,
+				 struct btrfs_list_comparer_set **comps)
+{
+	int order;
+	int flag;
+	char *p;
+	char **ptr_argv;
+	int what_to_sort;
+
+	while ((p = strtok(optarg, ",")) != NULL) {
+		flag = 0;
+		ptr_argv = all_sort_items;
+
+		while (*ptr_argv) {
+			if (strcmp(*ptr_argv, p) == 0) {
+				flag = 1;
+				break;
+			} else {
+				p++;
+				if (strcmp(*ptr_argv, p) == 0) {
+					flag = 1;
+					p--;
+					break;
+				}
+				p--;
+			}
+			ptr_argv++;
+		}
+
+		if (flag == 0)
+			return -1;
+
+		else {
+			if (*p == '+') {
+				order = 0;
+				p++;
+			} else if (*p == '-') {
+				order = 1;
+				p++;
+			} else
+				order = 0;
+
+			what_to_sort = btrfs_list_get_sort_item(p);
+			btrfs_list_setup_comparer(comps, what_to_sort, order);
+		}
+		optarg = NULL;
+	}
+
+	return 0;
+}
+
+/*
+ * This function is used to parse the argument of filter condition.
+ *
+ * type is the filter object.
+ */
+int btrfs_list_parse_filter_string(char *optarg,
+				   struct btrfs_list_filter_set **filters,
+				   enum btrfs_list_filter_enum type)
+{
+
+	u64 arg;
+	char *ptr_parse_end = NULL;
+	char *ptr_optarg_end = optarg + strlen(optarg);
+
+	switch (*(optarg++)) {
+	case '+':
+		arg = (u64)strtol(optarg, &ptr_parse_end, 10);
+		type += 2;
+		if (ptr_parse_end != ptr_optarg_end)
+			return -1;
+
+		btrfs_list_setup_filter(filters, type, arg);
+		break;
+	case '-':
+		arg = (u64)strtoll(optarg, &ptr_parse_end, 10);
+		type += 1;
+		if (ptr_parse_end != ptr_optarg_end)
+			return -1;
+
+		btrfs_list_setup_filter(filters, type, arg);
+		break;
+	default:
+		optarg--;
+		arg = (u64)strtoll(optarg, &ptr_parse_end, 10);
+
+		if (ptr_parse_end != ptr_optarg_end)
+			return -1;
+		btrfs_list_setup_filter(filters, type, arg);
+		break;
+	}
+
+	return 0;
+}
+

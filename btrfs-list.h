@@ -62,6 +62,14 @@ enum btrfs_list_filter_enum {
 	BTRFS_LIST_FILTER_ROOTID,
 	BTRFS_LIST_FILTER_SNAPSHOT_ONLY,
 	BTRFS_LIST_FILTER_FLAGS,
+	BTRFS_LIST_FILTER_GEN,
+	BTRFS_LIST_FILTER_GEN_EQUAL	=	BTRFS_LIST_FILTER_GEN,
+	BTRFS_LIST_FILTER_GEN_LESS,
+	BTRFS_LIST_FILTER_GEN_MORE,
+	BTRFS_LIST_FILTER_CGEN,
+	BTRFS_LIST_FILTER_CGEN_EQUAL	=	BTRFS_LIST_FILTER_CGEN,
+	BTRFS_LIST_FILTER_CGEN_LESS,
+	BTRFS_LIST_FILTER_CGEN_MORE,
 	BTRFS_LIST_FILTER_MAX,
 };
 
@@ -69,9 +77,15 @@ enum btrfs_list_comp_enum {
 	BTRFS_LIST_COMP_ROOTID,
 	BTRFS_LIST_COMP_OGEN,
 	BTRFS_LIST_COMP_GEN,
+	BTRFS_LIST_COMP_PATH,
 	BTRFS_LIST_COMP_MAX,
 };
 
+int btrfs_list_parse_sort_string(char *optarg,
+				 struct btrfs_list_comparer_set **comps);
+int btrfs_list_parse_filter_string(char *optarg,
+				   struct btrfs_list_filter_set **filters,
+				   enum btrfs_list_filter_enum type);
 void btrfs_list_setup_print_column(enum btrfs_list_column_enum column);
 struct btrfs_list_filter_set *btrfs_list_alloc_filter_set(void);
 void btrfs_list_free_filter_set(struct btrfs_list_filter_set *filter_set);
