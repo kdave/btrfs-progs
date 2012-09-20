@@ -122,6 +122,8 @@ If \fI-p\fR is given, then \fIparent <ID>\fR is added to the output between ID
 and top level. The parent's ID may be used at mount time via the
 \fIsubvolrootid=\fR option.
 
+\fB-t\fP print the result as a table.
+
 \fB-r\fP only readonly subvolumes in the filesystem wille be listed.
 
 \fB-s\fP only snapshot subvolumes in the filesystem will  be listed.

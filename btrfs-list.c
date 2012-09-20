@@ -1334,6 +1334,25 @@ static void print_subvolume_column(struct root_info *subv,
 	}
 }
 
+static void print_single_volume_info_table(struct root_info *subv)
+{
+	int i;
+
+	for (i = 0; i < BTRFS_LIST_ALL; i++) {
+		if (!btrfs_list_columns[i].need_print)
+			continue;
+
+		print_subvolume_column(subv, i);
+
+		if (i != BTRFS_LIST_PATH)
+			printf("\t");
+
+		if (i == BTRFS_LIST_TOP_LEVEL)
+			printf("\t");
+	}
+	printf("\n");
+}
+
 static void print_single_volume_info_default(struct root_info *subv)
 {
 	int i;
@@ -1351,21 +1370,58 @@ static void print_single_volume_info_default(struct root_info *subv)
 	printf("\n");
 }
 
-static void print_all_volume_info_default(struct root_lookup *sorted_tree)
+static void print_all_volume_info_tab_head()
+{
+	int i;
+	int len;
+	char barrier[20];
+
+	for (i = 0; i < BTRFS_LIST_ALL; i++) {
+		if (btrfs_list_columns[i].need_print)
+			printf("%s\t", btrfs_list_columns[i].name);
+
+		if (i == BTRFS_LIST_ALL-1)
+			printf("\n");
+	}
+
+	for (i = 0; i < BTRFS_LIST_ALL; i++) {
+		memset(barrier, 0, sizeof(barrier));
+
+		if (btrfs_list_columns[i].need_print) {
+			len = strlen(btrfs_list_columns[i].name);
+			while (len--)
+				strcat(barrier, "-");
+
+			printf("%s\t", barrier);
+		}
+		if (i == BTRFS_LIST_ALL-1)
+			printf("\n");
+	}
+}
+
+static void print_all_volume_info(struct root_lookup *sorted_tree,
+				  int is_tab_result)
 {
 	struct rb_node *n;
 	struct root_info *entry;
 
+	if (is_tab_result)
+		print_all_volume_info_tab_head();
+
 	n = rb_first(&sorted_tree->root);
 	while (n) {
 		entry = rb_entry(n, struct root_info, sort_node);
-		print_single_volume_info_default(entry);
+		if (is_tab_result)
+			print_single_volume_info_table(entry);
+		else
+			print_single_volume_info_default(entry);
 		n = rb_next(n);
 	}
 }
 
 int btrfs_list_subvols(int fd, struct btrfs_list_filter_set *filter_set,
-		       struct btrfs_list_comparer_set *comp_set)
+		       struct btrfs_list_comparer_set *comp_set,
+		       int is_tab_result)
 {
 	struct root_lookup root_lookup;
 	struct root_lookup root_sort;
@@ -1389,7 +1445,7 @@ int btrfs_list_subvols(int fd, struct btrfs_list_filter_set *filter_set,
 	__filter_and_sort_subvol(&root_lookup, &root_sort, filter_set,
 				 comp_set);
 
-	print_all_volume_info_default(&root_sort);
+	print_all_volume_info(&root_sort, is_tab_result);
 	__free_all_subvolumn(&root_lookup);
 	return ret;
 }

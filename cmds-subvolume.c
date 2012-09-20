@@ -260,12 +260,13 @@ static int cmd_subvol_delete(int argc, char **argv)
 }
 
 static const char * const cmd_subvol_list_usage[] = {
-	"btrfs subvolume list [-pur] [-s 0|1] [-g [+|-]value] [-c [+|-]value] "
+	"btrfs subvolume list [-purt] [-s 0|1] [-g [+|-]value] [-c [+|-]value] "
 	"[--sort=gen,ogen,rootid,path] <path>",
 	"List subvolumes (and snapshots)",
 	"",
 	"-p           print parent ID",
 	"-u           print the uuid of subvolumes (and snapshots)",
+	"-t           print the result as a table",
 	"-s value     list snapshots with generation in ascending/descending order",
 	"             (1: ascending, 0: descending)",
 	"-r           list readonly subvolumes (including snapshots)",
@@ -292,6 +293,7 @@ static int cmd_subvol_list(int argc, char **argv)
 	int order;
 	int c;
 	char *subvol;
+	int is_tab_result = 0;
 	struct option long_options[] = {
 		{"sort", 1, NULL, 'S'},
 		{0, 0, 0, 0}
@@ -303,13 +305,16 @@ static int cmd_subvol_list(int argc, char **argv)
 	optind = 1;
 	while(1) {
 		c = getopt_long(argc, argv,
-				    "ps:urg:c:", long_options, NULL);
+				    "ps:urg:c:t", long_options, NULL);
 		if (c < 0)
 			break;
 
 		switch(c) {
 		case 'p':
 			btrfs_list_setup_print_column(BTRFS_LIST_PARENT);
+			break;
+		case 't':
+			is_tab_result = 1;
 			break;
 		case 's':
 			order = atoi(optarg);
@@ -382,7 +387,8 @@ static int cmd_subvol_list(int argc, char **argv)
 		return 12;
 	}
 
-	ret = btrfs_list_subvols(fd, filter_set, comparer_set);
+	ret = btrfs_list_subvols(fd, filter_set, comparer_set,
+				is_tab_result);
 	if (ret)
 		return 19;
 	return 0;
@@ -588,7 +594,7 @@ static int cmd_subvol_get_default(int argc, char **argv)
 	btrfs_list_setup_filter(&filter_set, BTRFS_LIST_FILTER_ROOTID,
 				default_id);
 
-	ret = btrfs_list_subvols(fd, filter_set, NULL);
+	ret = btrfs_list_subvols(fd, filter_set, NULL, 0);
 	if (ret)
 		return 19;
 	return 0;
