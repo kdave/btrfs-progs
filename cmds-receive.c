@@ -21,6 +21,8 @@
 #define _XOPEN_SOURCE 700
 #define _BSD_SOURCE
 
+#include "kerncompat.h"
+
 #include <unistd.h>
 #include <stdint.h>
 #include <dirent.h>

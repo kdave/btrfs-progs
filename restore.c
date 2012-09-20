@@ -18,6 +18,9 @@
 
 #define _XOPEN_SOURCE 500
 #define _GNU_SOURCE 1
+
+#include "kerncompat.h"
+
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,7 +28,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <zlib.h>
-#include "kerncompat.h"
+
 #include "ctree.h"
 #include "disk-io.h"
 #include "print-tree.h"

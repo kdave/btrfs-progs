@@ -18,6 +18,8 @@
 
 #define _GNU_SOURCE
 
+#include "kerncompat.h"
+
 #include <unistd.h>
 #include <stdint.h>
 #include <dirent.h>

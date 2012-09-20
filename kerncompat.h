@@ -18,6 +18,7 @@
 
 #ifndef __KERNCOMPAT
 #define __KERNCOMPAT
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -57,11 +58,22 @@
 #endif
 
 #ifndef __CHECKER__
+/*
+ * Since we're using primitive definitions from kernel-space, we need to
+ * define __KERNEL__ so that system header files know which definitions
+ * to use.
+ */
+#define __KERNEL__
 #include <asm/types.h>
 typedef __u32 u32;
 typedef __u64 u64;
 typedef __u16 u16;
 typedef __u8 u8;
+/*
+ * Continuing to define __KERNEL__ breaks others parts of the code, so
+ * we can just undefine it now that we have the correct headers...
+ */
+#undef __KERNEL__
 #else
 typedef unsigned int u32;
 typedef unsigned int __u32;

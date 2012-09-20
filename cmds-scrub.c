@@ -16,6 +16,8 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include "kerncompat.h"
+
 #include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <sys/stat.h>

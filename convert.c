@@ -18,6 +18,9 @@
 
 #define _XOPEN_SOURCE 600
 #define _GNU_SOURCE 1
+
+#include "kerncompat.h"
+
 #ifndef __CHECKER__
 #include <sys/ioctl.h>
 #include <sys/mount.h>
@@ -31,7 +34,7 @@
 #include <unistd.h>
 #include <uuid/uuid.h>
 #include <linux/fs.h>
-#include "kerncompat.h"
+
 #include "ctree.h"
 #include "disk-io.h"
 #include "volumes.h"
