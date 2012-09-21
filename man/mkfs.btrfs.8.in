@@ -1,6 +1,6 @@
 .TH MKFS.BTRFS 8
 .SH NAME
-mkfs.btrfs \- create an btrfs filesystem
+mkfs.btrfs \- create a btrfs filesystem
 .SH SYNOPSIS
 .B mkfs.btrfs
 [ \fB\-A\fP\fI alloc-start\fP ]
@@ -19,7 +19,7 @@ mkfs.btrfs \- create an btrfs filesystem
 \fI device\fP [ \fIdevice ...\fP ]
 .SH DESCRIPTION
 .B mkfs.btrfs
-is used to create an btrfs filesystem (usually in a disk partition, or an array
+is used to create a btrfs filesystem (usually in a disk partition, or an array
 of disk partitions).
 .I device
 is the special file corresponding to the device (e.g \fI/dev/sdXX\fP ).
