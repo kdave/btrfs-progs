@@ -187,31 +187,34 @@ int test_issubvolume(char *path)
 }
 
 static const char * const cmd_subvol_delete_usage[] = {
-	"btrfs subvolume delete <name>",
-	"Delete a subvolume",
+	"btrfs subvolume delete <subvolume> [<subvolume>...]",
+	"Delete subvolume(s)",
 	NULL
 };
 
 static int cmd_subvol_delete(int argc, char **argv)
 {
-	int	res, fd, len, e;
+	int	res, fd, len, e, cnt = 1, ret = 0;
 	struct btrfs_ioctl_vol_args	args;
 	char	*dname, *vname, *cpath;
 	char	*path;
 
-	if (check_argc_exact(argc, 2))
+	if (argc < 2)
 		usage(cmd_subvol_delete_usage);
 
-	path = argv[1];
+again:
+	path = argv[cnt];
 
 	res = test_issubvolume(path);
 	if(res<0){
 		fprintf(stderr, "ERROR: error accessing '%s'\n", path);
-		return 12;
+		ret = 12;
+		goto out;
 	}
 	if(!res){
 		fprintf(stderr, "ERROR: '%s' is not a subvolume\n", path);
-		return 13;
+		ret = 13;
+		goto out;
 	}
 
 	cpath = realpath(path, 0);
@@ -225,21 +228,24 @@ static int cmd_subvol_delete(int argc, char **argv)
 	     strchr(vname, '/') ){
 		fprintf(stderr, "ERROR: incorrect subvolume name ('%s')\n",
 			vname);
-		return 14;
+		ret = 14;
+		goto out;
 	}
 
 	len = strlen(vname);
 	if (len == 0 || len >= BTRFS_VOL_NAME_MAX) {
 		fprintf(stderr, "ERROR: snapshot name too long ('%s)\n",
 			vname);
-		return 14;
+		ret = 14;
+		goto out;
 	}
 
 	fd = open_file_or_dir(dname);
 	if (fd < 0) {
 		close(fd);
 		fprintf(stderr, "ERROR: can't access to '%s'\n", dname);
-		return 12;
+		ret = 12;
+		goto out;
 	}
 
 	printf("Delete subvolume '%s/%s'\n", dname, vname);
@@ -253,10 +259,16 @@ static int cmd_subvol_delete(int argc, char **argv)
 	if(res < 0 ){
 		fprintf( stderr, "ERROR: cannot delete '%s/%s' - %s\n",
 			dname, vname, strerror(e));
-		return 11;
+		ret = 11;
+		goto out;
 	}
 
-	return 0;
+out:
+	cnt++;
+	if (cnt < argc)
+		goto again;
+
+	return ret;
 }
 
 static const char * const cmd_subvol_list_usage[] = {
