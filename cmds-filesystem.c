@@ -47,7 +47,7 @@ static const char * const cmd_df_usage[] = {
 
 static int cmd_df(int argc, char **argv)
 {
-	struct btrfs_ioctl_space_args *sargs;
+	struct btrfs_ioctl_space_args *sargs, *sargs_orig;
 	u64 count = 0, i;
 	int ret;
 	int fd;
@@ -65,7 +65,7 @@ static int cmd_df(int argc, char **argv)
 		return 12;
 	}
 
-	sargs = malloc(sizeof(struct btrfs_ioctl_space_args));
+	sargs_orig = sargs = malloc(sizeof(struct btrfs_ioctl_space_args));
 	if (!sargs)
 		return -ENOMEM;
 
@@ -83,6 +83,7 @@ static int cmd_df(int argc, char **argv)
 	}
 	if (!sargs->total_spaces) {
 		close(fd);
+		free(sargs);
 		return 0;
 	}
 
@@ -92,6 +93,7 @@ static int cmd_df(int argc, char **argv)
 			(count * sizeof(struct btrfs_ioctl_space_info)));
 	if (!sargs) {
 		close(fd);
+		free(sargs_orig);
 		return -ENOMEM;
 	}
 
