@@ -77,18 +77,23 @@ static int cmd_df(int argc, char **argv)
 	if (ret) {
 		fprintf(stderr, "ERROR: couldn't get space info on '%s' - %s\n",
 			path, strerror(e));
+		close(fd);
 		free(sargs);
 		return ret;
 	}
-	if (!sargs->total_spaces)
+	if (!sargs->total_spaces) {
+		close(fd);
 		return 0;
+	}
 
 	count = sargs->total_spaces;
 
 	sargs = realloc(sargs, sizeof(struct btrfs_ioctl_space_args) +
 			(count * sizeof(struct btrfs_ioctl_space_info)));
-	if (!sargs)
+	if (!sargs) {
+		close(fd);
 		return -ENOMEM;
+	}
 
 	sargs->space_slots = count;
 	sargs->total_spaces = 0;
@@ -148,6 +153,7 @@ static int cmd_df(int argc, char **argv)
 		printf("%s: total=%s, used=%s\n", description, total_bytes,
 		       used_bytes);
 	}
+	close(fd);
 	free(sargs);
 
 	return 0;
