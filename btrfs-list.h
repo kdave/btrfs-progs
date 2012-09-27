@@ -70,6 +70,7 @@ enum btrfs_list_filter_enum {
 	BTRFS_LIST_FILTER_CGEN_EQUAL	=	BTRFS_LIST_FILTER_CGEN,
 	BTRFS_LIST_FILTER_CGEN_LESS,
 	BTRFS_LIST_FILTER_CGEN_MORE,
+	BTRFS_LIST_FILTER_TOPID_EQUAL,
 	BTRFS_LIST_FILTER_MAX,
 };
 
@@ -103,3 +104,4 @@ int btrfs_list_subvols(int fd, struct btrfs_list_filter_set *filter_set,
 int btrfs_list_find_updated_files(int fd, u64 root_id, u64 oldest_gen);
 int btrfs_list_get_default_subvolume(int fd, u64 *default_id);
 char *btrfs_list_path_for_root(int fd, u64 root);
+u64 btrfs_list_get_path_rootid(int fd);

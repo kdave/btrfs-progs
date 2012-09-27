@@ -584,7 +584,8 @@ void __free_all_subvolumn(struct root_lookup *root_tree)
  * This can't be called until all the root_info->path fields are filled
  * in by lookup_ino_path
  */
-static int resolve_root(struct root_lookup *rl, struct root_info *ri)
+static int resolve_root(struct root_lookup *rl, struct root_info *ri,
+		       u64 top_id)
 {
 	char *full_path = NULL;
 	int len = 0;
@@ -620,6 +621,11 @@ static int resolve_root(struct root_lookup *rl, struct root_info *ri)
 		}
 
 		next = found->ref_tree;
+
+		if (next ==  top_id) {
+			ri->top_id = top_id;
+			break;
+		}
 
 		/* if the ref_tree refers to ourselves, we're at the top */
 		if (next == found->root_id) {
@@ -1157,6 +1163,11 @@ static int filter_cgen_equal(struct root_info *ri, u64 data)
 	return ri->ogen == data;
 }
 
+static int filter_topid_equal(struct root_info *ri, u64 data)
+{
+	return ri->top_id == data;
+}
+
 static btrfs_list_filter_func all_filter_funcs[] = {
 	[BTRFS_LIST_FILTER_ROOTID]		= filter_by_rootid,
 	[BTRFS_LIST_FILTER_SNAPSHOT_ONLY]	= filter_snapshot,
@@ -1167,6 +1178,7 @@ static btrfs_list_filter_func all_filter_funcs[] = {
 	[BTRFS_LIST_FILTER_CGEN_MORE]		= filter_cgen_more,
 	[BTRFS_LIST_FILTER_CGEN_LESS]		= filter_cgen_less,
 	[BTRFS_LIST_FILTER_CGEN_EQUAL]          = filter_cgen_equal,
+	[BTRFS_LIST_FILTER_TOPID_EQUAL]		= filter_topid_equal,
 };
 
 struct btrfs_list_filter_set *btrfs_list_alloc_filter_set(void)
@@ -1248,11 +1260,13 @@ static int filter_root(struct root_info *ri,
 static void __filter_and_sort_subvol(struct root_lookup *all_subvols,
 				    struct root_lookup *sort_tree,
 				    struct btrfs_list_filter_set *filter_set,
-				    struct btrfs_list_comparer_set *comp_set)
+				    struct btrfs_list_comparer_set *comp_set,
+				    int fd)
 {
 	struct rb_node *n;
 	struct root_info *entry;
 	int ret;
+	u64 top_id = btrfs_list_get_path_rootid(fd);
 
 	root_lookup_init(sort_tree);
 
@@ -1260,7 +1274,7 @@ static void __filter_and_sort_subvol(struct root_lookup *all_subvols,
 	while (n) {
 		entry = rb_entry(n, struct root_info, rb_node);
 
-		resolve_root(all_subvols, entry);
+		resolve_root(all_subvols, entry, top_id);
 		ret = filter_root(entry, filter_set);
 		if (ret)
 			sort_tree_insert(sort_tree, entry, comp_set);
@@ -1443,7 +1457,7 @@ int btrfs_list_subvols(int fd, struct btrfs_list_filter_set *filter_set,
 		return ret;
 
 	__filter_and_sort_subvol(&root_lookup, &root_sort, filter_set,
-				 comp_set);
+				 comp_set, fd);
 
 	print_all_volume_info(&root_sort, is_tab_result);
 	__free_all_subvolumn(&root_lookup);
@@ -1636,6 +1650,7 @@ char *btrfs_list_path_for_root(int fd, u64 root)
 	struct rb_node *n;
 	char *ret_path = NULL;
 	int ret;
+	u64 top_id = btrfs_list_get_path_rootid(fd);
 
 	ret = __list_subvol_search(fd, &root_lookup);
 	if (ret < 0)
@@ -1650,7 +1665,7 @@ char *btrfs_list_path_for_root(int fd, u64 root)
 		struct root_info *entry;
 
 		entry = rb_entry(n, struct root_info, rb_node);
-		resolve_root(&root_lookup, entry);
+		resolve_root(&root_lookup, entry, top_id);
 		if (entry->root_id == root) {
 			ret_path = entry->full_path;
 			entry->full_path = NULL;
@@ -1758,3 +1773,20 @@ int btrfs_list_parse_filter_string(char *optarg,
 	return 0;
 }
 
+u64 btrfs_list_get_path_rootid(int fd)
+{
+	int  ret;
+	struct btrfs_ioctl_ino_lookup_args args;
+
+	memset(&args, 0, sizeof(args));
+	args.objectid = BTRFS_FIRST_FREE_OBJECTID;
+
+	ret = ioctl(fd, BTRFS_IOC_INO_LOOKUP, &args);
+	if (ret < 0) {
+		fprintf(stderr,
+			"ERROR: can't perform the search -%s\n",
+			strerror(errno));
+		return ret;
+	}
+	return args.treeid;
+}

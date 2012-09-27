@@ -289,6 +289,7 @@ static int cmd_subvol_list(int argc, char **argv)
 	struct btrfs_list_comparer_set *comparer_set;
 	u64 flags = 0;
 	int fd;
+	u64 top_id;
 	int ret;
 	int order;
 	int c;
@@ -386,6 +387,11 @@ static int cmd_subvol_list(int argc, char **argv)
 		fprintf(stderr, "ERROR: can't access '%s'\n", subvol);
 		return 12;
 	}
+
+	top_id = btrfs_list_get_path_rootid(fd);
+	btrfs_list_setup_filter(&filter_set,
+				BTRFS_LIST_FILTER_TOPID_EQUAL,
+				top_id);
 
 	ret = btrfs_list_subvols(fd, filter_set, comparer_set,
 				is_tab_result);
