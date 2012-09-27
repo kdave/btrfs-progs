@@ -627,8 +627,16 @@ static int resolve_root(struct root_lookup *rl, struct root_info *ri,
 			break;
 		}
 
-		/* if the ref_tree refers to ourselves, we're at the top */
-		if (next == found->root_id) {
+		if (next == BTRFS_FS_TREE_OBJECTID) {
+			char p[] = "<FS_TREE>";
+			add_len = strlen(p);
+			len = strlen(full_path);
+			tmp = malloc(len + add_len + 2);
+			memcpy(tmp + add_len + 1, full_path, len);
+			tmp[add_len] = '/';
+			memcpy(tmp, p, add_len);
+			free(full_path);
+			full_path = tmp;
 			ri->top_id = next;
 			break;
 		}
