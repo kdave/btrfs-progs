@@ -111,6 +111,12 @@ struct btrfs_trans_handle;
 #define BTRFS_DEV_ITEMS_OBJECTID 1ULL
 
 /*
+ * the max metadata block size.  This limit is somewhat artificial,
+ * but the memmove costs go through the roof for larger blocks.
+ */
+#define BTRFS_MAX_METADATA_BLOCKSIZE 65536
+
+/*
  * we can actually store much bigger names, but lets not confuse the rest
  * of linux
  */

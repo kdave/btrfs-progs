@@ -1201,6 +1201,27 @@ static int zero_output_file(int out_fd, u64 size, u32 sectorsize)
 	return ret;
 }
 
+static int check_leaf_or_node_size(u32 size, u32 sectorsize)
+{
+	if (size < sectorsize) {
+		fprintf(stderr,
+			"Illegal leafsize (or nodesize) %u (smaller than %u)\n",
+			size, sectorsize);
+		return -1;
+	} else if (size > BTRFS_MAX_METADATA_BLOCKSIZE) {
+		fprintf(stderr,
+			"Illegal leafsize (or nodesize) %u (larger than %u)\n",
+			size, BTRFS_MAX_METADATA_BLOCKSIZE);
+		return -1;
+	} else if (size & (sectorsize - 1)) {
+		fprintf(stderr,
+			"Illegal leafsize (or nodesize) %u (not align to %u)\n",
+			size, sectorsize);
+		return -1;
+	}
+	return 0;
+}
+
 int main(int ac, char **av)
 {
 	char *file;
@@ -1291,14 +1312,10 @@ int main(int ac, char **av)
 		}
 	}
 	sectorsize = max(sectorsize, (u32)getpagesize());
-	if (leafsize < sectorsize || (leafsize & (sectorsize - 1))) {
-		fprintf(stderr, "Illegal leafsize %u\n", leafsize);
+	if (check_leaf_or_node_size(leafsize, sectorsize))
 		exit(1);
-	}
-	if (nodesize < sectorsize || (nodesize & (sectorsize - 1))) {
-		fprintf(stderr, "Illegal nodesize %u\n", nodesize);
+	if (check_leaf_or_node_size(nodesize, sectorsize))
 		exit(1);
-	}
 	ac = ac - optind;
 	if (ac == 0)
 		print_usage();
