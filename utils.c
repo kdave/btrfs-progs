@@ -1091,25 +1091,27 @@ char *pretty_sizes(u64 size)
 {
 	int num_divs = 0;
         int pretty_len = 16;
-	u64 last_size = size;
-	u64 fract_size = size;
 	float fraction;
 	char *pretty;
 
-	while(size > 0) {
-		fract_size = last_size;
-		last_size = size;
-		size /= 1024;
-		num_divs++;
-	}
-	if (num_divs == 0)
-		num_divs = 1;
-	if (num_divs > ARRAY_SIZE(size_strs))
-		return NULL;
+	if( size < 1024 ){
+		fraction = size;
+		num_divs = 0;
+	} else {
+		u64 last_size = size;
+		num_divs = 0;
+		while(size >= 1024){
+			last_size = size;
+			size /= 1024;
+			num_divs ++;
+		}
 
-	fraction = (float)fract_size / 1024;
+		if (num_divs > ARRAY_SIZE(size_strs))
+			return NULL;
+		fraction = (float)last_size / 1024;
+	}
 	pretty = malloc(pretty_len);
-	snprintf(pretty, pretty_len, "%.2f%s", fraction, size_strs[num_divs-1]);
+	snprintf(pretty, pretty_len, "%.2f%s", fraction, size_strs[num_divs]);
 	return pretty;
 }
 
