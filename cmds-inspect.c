@@ -161,7 +161,7 @@ static int cmd_logical_resolve(int argc, char **argv)
 	if (check_argc_exact(argc - optind, 2))
 		usage(cmd_logical_resolve_usage);
 
-	size = min(size, 64 * 1024);
+	size = min(size, (u64)64 * 1024);
 	inodes = malloc(size);
 	if (!inodes)
 		return 1;
