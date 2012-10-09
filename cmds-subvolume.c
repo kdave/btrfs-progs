@@ -273,8 +273,13 @@ out:
 	return ret;
 }
 
+/*
+ * Naming of options:
+ * - uppercase for filters and sort options
+ * - lowercase for enabling specific items in the output
+ */
 static const char * const cmd_subvol_list_usage[] = {
-	"btrfs subvolume list [-aopurts] [-g [+|-]value] [-c [+|-]value] "
+	"btrfs subvolume list [-aopurts] [-G [+|-]value] [-C [+|-]value] "
 	"[--sort=gen,ogen,rootid,path] <path>",
 	"List subvolumes (and snapshots)",
 	"",
@@ -288,10 +293,10 @@ static const char * const cmd_subvol_list_usage[] = {
 	"-t           print the result as a table",
 	"-s           list snapshots only in the filesystem",
 	"-r           list readonly subvolumes (including snapshots)",
-	"-g [+|-]value",
+	"-G [+|-]value",
 	"             filter the subvolumes by generation",
 	"             (+value: >= value; -value: <= value; value: = value)",
-	"-c [+|-]value",
+	"-C [+|-]value",
 	"             filter the subvolumes by ogeneration",
 	"             (+value: >= value; -value: <= value; value: = value)",
 	"--sort=gen,ogen,rootid,path",
@@ -325,7 +330,7 @@ static int cmd_subvol_list(int argc, char **argv)
 	optind = 1;
 	while(1) {
 		c = getopt_long(argc, argv,
-				    "aopqsurg:c:t", long_options, NULL);
+				    "aopqsurG:C:t", long_options, NULL);
 		if (c < 0)
 			break;
 
@@ -358,7 +363,7 @@ static int cmd_subvol_list(int argc, char **argv)
 		case 'r':
 			flags |= BTRFS_ROOT_SUBVOL_RDONLY;
 			break;
-		case 'g':
+		case 'G':
 			btrfs_list_setup_print_column(BTRFS_LIST_GENERATION);
 			ret = btrfs_list_parse_filter_string(optarg,
 							&filter_set,
@@ -369,7 +374,7 @@ static int cmd_subvol_list(int argc, char **argv)
 			}
 			break;
 
-		case 'c':
+		case 'C':
 			btrfs_list_setup_print_column(BTRFS_LIST_OGENERATION);
 			ret = btrfs_list_parse_filter_string(optarg,
 							&filter_set,
