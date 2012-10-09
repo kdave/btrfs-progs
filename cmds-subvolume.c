@@ -279,7 +279,7 @@ out:
  * - lowercase for enabling specific items in the output
  */
 static const char * const cmd_subvol_list_usage[] = {
-	"btrfs subvolume list [-aopurts] [-G [+|-]value] [-C [+|-]value] "
+	"btrfs subvolume list [-agopurts] [-G [+|-]value] [-C [+|-]value] "
 	"[--sort=gen,ogen,rootid,path] <path>",
 	"List subvolumes (and snapshots)",
 	"",
@@ -287,6 +287,7 @@ static const char * const cmd_subvol_list_usage[] = {
 	"-a           print all the subvolumes in the filesystem and",
 	"             distinguish absolute and relative path with respect",
 	"             to the given <path>",
+	"-g           print the generation of the subvolume",
 	"-o           print only subvolumes bellow specified path",
 	"-u           print the uuid of subvolumes (and snapshots)",
 	"-q           print the parent uuid of the snapshots",
@@ -330,7 +331,7 @@ static int cmd_subvol_list(int argc, char **argv)
 	optind = 1;
 	while(1) {
 		c = getopt_long(argc, argv,
-				    "aopqsurG:C:t", long_options, NULL);
+				    "agopqsurG:C:t", long_options, NULL);
 		if (c < 0)
 			break;
 
@@ -340,6 +341,9 @@ static int cmd_subvol_list(int argc, char **argv)
 			break;
 		case 'a':
 			is_list_all = 1;
+			break;
+		case 'g':
+			btrfs_list_setup_print_column(BTRFS_LIST_GENERATION);
 			break;
 		case 'o':
 			is_only_in_path = 1;
