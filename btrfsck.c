@@ -26,6 +26,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <getopt.h>
+#include <uuid/uuid.h>
 #include "kerncompat.h"
 #include "ctree.h"
 #include "volumes.h"
@@ -3543,6 +3544,7 @@ int main(int ac, char **av)
 	struct btrfs_fs_info *info;
 	struct btrfs_trans_handle *trans = NULL;
 	u64 bytenr = 0;
+	char uuidbuf[37];
 	int ret;
 	int num;
 	int repair = 0;
@@ -3595,6 +3597,8 @@ int main(int ac, char **av)
 	}
 
 	info = open_ctree_fs_info(av[optind], bytenr, rw, 1);
+	uuid_unparse(info->super_copy.fsid, uuidbuf);
+	printf("Checking filesystem on %s\nUUID: %s\n", av[optind], uuidbuf);
 
 	if (info == NULL)
 		return 1;
