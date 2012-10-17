@@ -725,7 +725,7 @@ static int process_chown(const char *path, u64 uid, u64 gid, void *user)
 		fprintf(stderr, "chown %s - uid=%llu, gid=%llu\n", path,
 				uid, gid);
 
-	ret = chown(full_path, uid, gid);
+	ret = lchown(full_path, uid, gid);
 	if (ret < 0) {
 		ret = -errno;
 		fprintf(stderr, "ERROR: chown %s failed. %s\n",
