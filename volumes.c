@@ -652,6 +652,7 @@ int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 	int index;
 	int stripe_len = 64 * 1024;
 	struct btrfs_key key;
+	u64 offset;
 
 	if (list_empty(dev_list)) {
 		return -ENOSPC;
@@ -757,12 +758,13 @@ again:
 		}
 		return -ENOSPC;
 	}
-	key.objectid = BTRFS_FIRST_CHUNK_TREE_OBJECTID;
-	key.type = BTRFS_CHUNK_ITEM_KEY;
 	ret = find_next_chunk(chunk_root, BTRFS_FIRST_CHUNK_TREE_OBJECTID,
-			      &key.offset);
+			      &offset);
 	if (ret)
 		return ret;
+	key.objectid = BTRFS_FIRST_CHUNK_TREE_OBJECTID;
+	key.type = BTRFS_CHUNK_ITEM_KEY;
+	key.offset = offset;
 
 	chunk = kmalloc(btrfs_chunk_item_size(num_stripes), GFP_NOFS);
 	if (!chunk)
