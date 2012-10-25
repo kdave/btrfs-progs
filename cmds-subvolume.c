@@ -361,7 +361,7 @@ static int cmd_subvol_list(int argc, char **argv)
 						0);
 			btrfs_list_setup_print_column(BTRFS_LIST_OGENERATION);
 			btrfs_list_setup_print_column(BTRFS_LIST_OTIME);
-
+			break;
 		case 'u':
 			btrfs_list_setup_print_column(BTRFS_LIST_UUID);
 			break;
