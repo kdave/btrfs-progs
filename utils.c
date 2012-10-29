@@ -31,6 +31,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <mntent.h>
+#include <ctype.h>
 #include <linux/loop.h>
 #include <linux/major.h>
 #include <linux/kdev_t.h>
@@ -1222,12 +1223,18 @@ scan_again:
 
 u64 parse_size(char *s)
 {
-	int len = strlen(s);
+	int i;
 	char c;
 	u64 mult = 1;
 
-	if (!isdigit(s[len - 1])) {
-		c = tolower(s[len - 1]);
+	for (i=0 ; s[i] && isdigit(s[i]) ; i++) ;
+	if (!i) {
+		fprintf(stderr, "ERROR: size value is empty\n");
+		exit(50);
+	}
+
+	if (s[i]) {
+		c = tolower(s[i]);
 		switch (c) {
 		case 'g':
 			mult *= 1024;
@@ -1238,11 +1245,17 @@ u64 parse_size(char *s)
 		case 'b':
 			break;
 		default:
-			fprintf(stderr, "Unknown size descriptor %c\n", c);
+			fprintf(stderr, "ERROR: Unknown size descriptor "
+				"'%c'\n", c);
 			exit(1);
 		}
-		s[len - 1] = '\0';
 	}
-	return atoll(s) * mult;
+	if (s[i] && s[i+1]) {
+		fprintf(stderr, "ERROR: Illegal suffix contains "
+			"character '%c' in wrong position\n",
+			s[i+1]);
+		exit(51);
+	}
+	return strtoull(s, NULL, 10) * mult;
 }
 
