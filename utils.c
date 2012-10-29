@@ -1236,6 +1236,12 @@ u64 parse_size(char *s)
 	if (s[i]) {
 		c = tolower(s[i]);
 		switch (c) {
+		case 'e':
+			mult *= 1024;
+		case 'p':
+			mult *= 1024;
+		case 't':
+			mult *= 1024;
 		case 'g':
 			mult *= 1024;
 		case 'm':
