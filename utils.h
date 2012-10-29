@@ -46,4 +46,6 @@ int check_label(char *input);
 int get_mountpt(char *dev, char *mntpt, size_t size);
 
 int btrfs_scan_block_devices(int run_ioctl);
+
+u64 parse_size(char *s);
 #endif
