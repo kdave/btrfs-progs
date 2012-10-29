@@ -194,6 +194,9 @@ defragment operations.
 
 \fB-t size\fP defragment only files at least \fIsize\fR bytes big
 
+For \fBstart\fP, \fBlen\fP, \fBsize\fP it is possible to append a suffix
+like \fBk\fP for 1 KBytes, \fBm\fP for 1 MBytes...
+
 NOTE: defragmenting with kernels up to 2.6.37 will unlink COW-ed copies of data,
 don't use it if you use snapshots, have de-duplicated your data or made
 copies with \fBcp --reflink\fP.

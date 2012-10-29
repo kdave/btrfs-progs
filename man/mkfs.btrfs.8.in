@@ -72,6 +72,9 @@ Do not perform whole device TRIM operation by default.
 .TP
 \fB\-V\fR, \fB\-\-version\fR
 Print the \fBmkfs.btrfs\fP version and exit.
+.SH UNIT
+As default the unit is the byte, however it is possible to append a suffix
+to the arguments like \fBk\fP for KBytes, \fBm\fP for MBytes...
 .SH AVAILABILITY
 .B mkfs.btrfs
 is part of btrfs-progs. Btrfs is currently under heavy development,
