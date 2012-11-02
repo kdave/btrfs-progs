@@ -22,7 +22,7 @@ RESTORE_LIBS=-lz
 
 progs = btrfsctl mkfs.btrfs btrfs-debug-tree btrfs-show btrfs-vol btrfsck \
 	btrfs btrfs-map-logical btrfs-image btrfs-zero-log btrfs-convert \
-	btrfs-find-root btrfs-restore btrfstune
+	btrfs-find-root btrfs-restore btrfstune btrfs-show-super
 
 # make C=1 to enable sparse
 ifdef C
@@ -74,6 +74,9 @@ btrfs-debug-tree: $(objects) debug-tree.o
 
 btrfs-zero-log: $(objects) btrfs-zero-log.o
 	$(CC) $(CFLAGS) -o btrfs-zero-log $(objects) btrfs-zero-log.o $(LDFLAGS) $(LIBS)
+
+btrfs-show-super: $(objects) btrfs-show-super.o
+	$(CC) $(CFLAGS) -o btrfs-show-super $(objects) btrfs-show-super.o $(LDFLAGS) $(LIBS)
 
 btrfs-select-super: $(objects) btrfs-select-super.o
 	$(CC) $(CFLAGS) -o btrfs-select-super $(objects) btrfs-select-super.o $(LDFLAGS) $(LIBS)
