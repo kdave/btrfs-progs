@@ -240,7 +240,8 @@ int subvol_uuid_search_init(int mnt_fd, struct subvol_uuid_search *s)
 				memcpy(&root_item, root_item_ptr,
 						sizeof(root_item));
 				root_item_valid = 1;
-			} else if (sh->type == BTRFS_ROOT_BACKREF_KEY) {
+			} else if (sh->type == BTRFS_ROOT_BACKREF_KEY ||
+				   root_item_valid) {
 				if (!root_item_valid)
 					goto skip;
 
@@ -274,7 +275,6 @@ int subvol_uuid_search_init(int mnt_fd, struct subvol_uuid_search *s)
 				subvol_uuid_search_add(s, si);
 				root_item_valid = 0;
 			} else {
-				root_item_valid = 0;
 				goto skip;
 			}
 
