@@ -458,8 +458,10 @@ static int find_and_setup_log_root(struct btrfs_root *tree_root,
 	u64 blocknr = btrfs_super_log_root(disk_super);
 	struct btrfs_root *log_root = malloc(sizeof(struct btrfs_root));
 
-	if (blocknr == 0)
+	if (blocknr == 0) {
+		free(log_root);
 		return 0;
+	}
 
 	blocksize = btrfs_level_size(tree_root,
 			     btrfs_super_log_root_level(disk_super));
@@ -474,8 +476,12 @@ static int find_and_setup_log_root(struct btrfs_root *tree_root,
 
 	fs_info->log_root_tree = log_root;
 
-	if (!extent_buffer_uptodate(log_root->node))
+	if (!extent_buffer_uptodate(log_root->node)) {
+		free(log_root);
 		return -EIO;
+	}
+
+	free(log_root);
 	return 0;
 }
 
