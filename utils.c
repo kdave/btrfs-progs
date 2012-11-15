@@ -981,6 +981,7 @@ again:
 	dirp = opendir(dirname);
 	if (!dirp) {
 		fprintf(stderr, "Unable to open %s for scanning\n", dirname);
+		free(fullpath);
 		return -ENOENT;
 	}
 	while(1) {
@@ -1031,6 +1032,7 @@ again:
 		free(pending);
 		pending = list_entry(pending_list.next, struct pending_dir,
 				     list);
+		free(fullpath);
 		list_del(&pending->list);
 		closedir(dirp);
 		dirp = NULL;
@@ -1039,6 +1041,7 @@ again:
 	ret = 0;
 fail:
 	free(pending);
+	free(fullpath);
 	if (dirp)
 		closedir(dirp);
 	return ret;
