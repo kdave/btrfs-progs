@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdint.h>
 #include <sys/ioctl.h>
 #include <errno.h>
 
@@ -44,7 +45,7 @@ static int __ino_to_path_fd(u64 inum, int fd, int verbose, const char *prepend)
 
 	ipa.inum = inum;
 	ipa.size = 4096;
-	ipa.fspath = (u64)fspath;
+	ipa.fspath = (uintptr_t)fspath;
 
 	ret = ioctl(fd, BTRFS_IOC_INO_PATHS, &ipa);
 	if (ret) {
@@ -168,7 +169,7 @@ static int cmd_logical_resolve(int argc, char **argv)
 
 	loi.logical = atoll(argv[optind]);
 	loi.size = size;
-	loi.inodes = (u64)inodes;
+	loi.inodes = (uintptr_t)inodes;
 
 	fd = open_file_or_dir(argv[optind+1]);
 	if (fd < 0) {
