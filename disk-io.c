@@ -458,6 +458,9 @@ static int find_and_setup_log_root(struct btrfs_root *tree_root,
 	u64 blocknr = btrfs_super_log_root(disk_super);
 	struct btrfs_root *log_root = malloc(sizeof(struct btrfs_root));
 
+	if (!log_root)
+		return -ENOMEM;
+
 	if (blocknr == 0) {
 		free(log_root);
 		return 0;
