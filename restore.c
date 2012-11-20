@@ -830,7 +830,7 @@ int main(int argc, char **argv)
 			strerror(ret));
 		return ret;
 	} else if (ret) {
-		fprintf(stderr, "%s is currently mounted.  Aborting.\n", argv[optind + 1]);
+		fprintf(stderr, "%s is currently mounted.  Aborting.\n", argv[optind]);
 		return -EBUSY;
 	}
 
