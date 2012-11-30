@@ -1606,7 +1606,7 @@ static int cmd_scrub_status(int argc, char **argv)
 	int i;
 	int print_raw = 0;
 	int do_stats_per_dev = 0;
-	char c;
+	int c;
 	char fsid[37];
 	int fdres = -1;
 	int err = 0;

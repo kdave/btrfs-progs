@@ -416,7 +416,7 @@ out:
 int cmd_send_start(int argc, char **argv)
 {
 	char *subvol = NULL;
-	char c;
+	int c;
 	int ret;
 	char *outname = NULL;
 	struct btrfs_send send;
