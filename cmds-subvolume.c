@@ -273,7 +273,7 @@ out:
 }
 
 static const char * const cmd_subvol_list_usage[] = {
-	"btrfs subvolume list [-apurts] [-g [+|-]value] [-c [+|-]value] "
+	"btrfs subvolume list [-aopurts] [-g [+|-]value] [-c [+|-]value] "
 	"[--sort=gen,ogen,rootid,path] <path>",
 	"List subvolumes (and snapshots)",
 	"",
@@ -281,6 +281,7 @@ static const char * const cmd_subvol_list_usage[] = {
 	"-a           print all the subvolumes in the filesystem and",
 	"             distinguish absolute and relative path with respect",
 	"             to the given <path>",
+	"-o           print only subvolumes bellow specified path",
 	"-u           print the uuid of subvolumes (and snapshots)",
 	"-t           print the result as a table",
 	"-s           list snapshots only in the filesystem",
@@ -310,6 +311,7 @@ static int cmd_subvol_list(int argc, char **argv)
 	char *subvol;
 	int is_tab_result = 0;
 	int is_list_all = 0;
+	int is_only_in_path = 1;
 	struct option long_options[] = {
 		{"sort", 1, NULL, 'S'},
 		{0, 0, 0, 0}
@@ -321,7 +323,7 @@ static int cmd_subvol_list(int argc, char **argv)
 	optind = 1;
 	while(1) {
 		c = getopt_long(argc, argv,
-				    "apsurg:c:t", long_options, NULL);
+				    "aopsurg:c:t", long_options, NULL);
 		if (c < 0)
 			break;
 
@@ -331,6 +333,9 @@ static int cmd_subvol_list(int argc, char **argv)
 			break;
 		case 'a':
 			is_list_all = 1;
+			break;
+		case 'o':
+			is_only_in_path = 1;
 			break;
 		case 't':
 			is_tab_result = 1;
@@ -408,7 +413,7 @@ static int cmd_subvol_list(int argc, char **argv)
 		btrfs_list_setup_filter(&filter_set,
 					BTRFS_LIST_FILTER_FULL_PATH,
 					top_id);
-	else
+	else if (is_only_in_path)
 		btrfs_list_setup_filter(&filter_set,
 					BTRFS_LIST_FILTER_TOPID_EQUAL,
 					top_id);
