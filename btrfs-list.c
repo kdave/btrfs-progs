@@ -628,16 +628,6 @@ static int resolve_root(struct root_lookup *rl, struct root_info *ri,
 		}
 
 		if (next == BTRFS_FS_TREE_OBJECTID) {
-			char p[] = "<FS_TREE>";
-			add_len = strlen(p);
-			len = strlen(full_path);
-			tmp = malloc(len + add_len + 2);
-			memcpy(tmp + add_len + 1, full_path, len);
-			tmp[len + add_len + 1] = '\0';
-			tmp[add_len] = '/';
-			memcpy(tmp, p, add_len);
-			free(full_path);
-			full_path = tmp;
 			ri->top_id = next;
 			break;
 		}
@@ -1175,6 +1165,29 @@ static int filter_topid_equal(struct root_info *ri, u64 data)
 	return ri->top_id == data;
 }
 
+static int filter_full_path(struct root_info *ri, u64 data)
+{
+	if (ri->full_path && ri->top_id != data) {
+		char *tmp;
+		char p[] = "<FS_TREE>";
+		int add_len = strlen(p);
+		int len = strlen(ri->full_path);
+
+		tmp = malloc(len + add_len + 2);
+		if (!tmp) {
+			fprintf(stderr, "memory allocation failed\n");
+			exit(1);
+		}
+		memcpy(tmp + add_len + 1, ri->full_path, len);
+		tmp[len + add_len + 1] = '\0';
+		tmp[add_len] = '/';
+		memcpy(tmp, p, add_len);
+		free(ri->full_path);
+		ri->full_path = tmp;
+	}
+	return 1;
+}
+
 static btrfs_list_filter_func all_filter_funcs[] = {
 	[BTRFS_LIST_FILTER_ROOTID]		= filter_by_rootid,
 	[BTRFS_LIST_FILTER_SNAPSHOT_ONLY]	= filter_snapshot,
@@ -1186,6 +1199,7 @@ static btrfs_list_filter_func all_filter_funcs[] = {
 	[BTRFS_LIST_FILTER_CGEN_LESS]		= filter_cgen_less,
 	[BTRFS_LIST_FILTER_CGEN_EQUAL]          = filter_cgen_equal,
 	[BTRFS_LIST_FILTER_TOPID_EQUAL]		= filter_topid_equal,
+	[BTRFS_LIST_FILTER_FULL_PATH]		= filter_full_path,
 };
 
 struct btrfs_list_filter_set *btrfs_list_alloc_filter_set(void)

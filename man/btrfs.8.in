@@ -130,7 +130,8 @@ and top level. The parent's ID may be used at mount time via the
 
 \fB-t\fP print the result as a table.
 
-\fB-a\fP print all the subvolumes in the filesystem.
+\fB-a\fP print all the subvolumes in the filesystem and distinguish between
+absolute and relative path with respect to the given <path>.
 
 \fB-r\fP only readonly subvolumes in the filesystem wille be listed.
 

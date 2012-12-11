@@ -278,7 +278,9 @@ static const char * const cmd_subvol_list_usage[] = {
 	"List subvolumes (and snapshots)",
 	"",
 	"-p           print parent ID",
-	"-a           print all the subvolumes in the filesystem.",
+	"-a           print all the subvolumes in the filesystem and",
+	"             distinguish absolute and relative path with respect",
+	"             to the given <path>",
 	"-u           print the uuid of subvolumes (and snapshots)",
 	"-t           print the result as a table",
 	"-s           list snapshots only in the filesystem",
@@ -401,7 +403,12 @@ static int cmd_subvol_list(int argc, char **argv)
 	}
 
 	top_id = btrfs_list_get_path_rootid(fd);
-	if (!is_list_all)
+
+	if (is_list_all)
+		btrfs_list_setup_filter(&filter_set,
+					BTRFS_LIST_FILTER_FULL_PATH,
+					top_id);
+	else
 		btrfs_list_setup_filter(&filter_set,
 					BTRFS_LIST_FILTER_TOPID_EQUAL,
 					top_id);
