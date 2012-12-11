@@ -1282,12 +1282,11 @@ static void __filter_and_sort_subvol(struct root_lookup *all_subvols,
 				    struct root_lookup *sort_tree,
 				    struct btrfs_list_filter_set *filter_set,
 				    struct btrfs_list_comparer_set *comp_set,
-				    int fd)
+				    u64 top_id)
 {
 	struct rb_node *n;
 	struct root_info *entry;
 	int ret;
-	u64 top_id = btrfs_list_get_path_rootid(fd);
 
 	root_lookup_init(sort_tree);
 
@@ -1456,11 +1455,12 @@ static void print_all_volume_info(struct root_lookup *sorted_tree,
 
 int btrfs_list_subvols(int fd, struct btrfs_list_filter_set *filter_set,
 		       struct btrfs_list_comparer_set *comp_set,
-		       int is_tab_result)
+		       int is_tab_result, int full_path)
 {
 	struct root_lookup root_lookup;
 	struct root_lookup root_sort;
 	int ret;
+	u64 top_id = (full_path ? 0 : btrfs_list_get_path_rootid(fd));
 
 	ret = __list_subvol_search(fd, &root_lookup);
 	if (ret) {
@@ -1478,7 +1478,7 @@ int btrfs_list_subvols(int fd, struct btrfs_list_filter_set *filter_set,
 		return ret;
 
 	__filter_and_sort_subvol(&root_lookup, &root_sort, filter_set,
-				 comp_set, fd);
+				 comp_set, top_id);
 
 	print_all_volume_info(&root_sort, is_tab_result);
 	__free_all_subvolumn(&root_lookup);
