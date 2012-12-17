@@ -63,6 +63,12 @@ static int set_label_unmounted(const char *dev, const char *label)
 		return -1;
 	}
 
+	if (strlen(label) > BTRFS_LABEL_SIZE - 1) {
+		fprintf(stderr, "ERROR: Label %s is too long (max %d)\n",
+			label, BTRFS_LABEL_SIZE - 1);
+		return -1;
+	}
+
 	/* Open the super_block at the default location
 	 * and as read-write.
 	 */
@@ -71,8 +77,8 @@ static int set_label_unmounted(const char *dev, const char *label)
 		return -1;
 
 	trans = btrfs_start_transaction(root, 1);
-	strncpy(root->fs_info->super_copy.label, label, BTRFS_LABEL_SIZE);
-	root->fs_info->super_copy.label[BTRFS_LABEL_SIZE-1] = 0;
+	snprintf(root->fs_info->super_copy.label, BTRFS_LABEL_SIZE, "%s",
+		 label);
 	btrfs_commit_transaction(trans, root);
 
 	/* Now we close it since we are done. */
