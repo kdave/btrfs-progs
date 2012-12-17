@@ -46,26 +46,58 @@
 #define GET_LABEL                      3
 #define SET_LABEL                      4
 
-static int change_label_unmounted(char *dev, char *nLabel)
+static int set_label_unmounted(const char *dev, const char *label)
 {
-       struct btrfs_root *root;
-       struct btrfs_trans_handle *trans;
+	struct btrfs_trans_handle *trans;
+	struct btrfs_root *root;
+	int ret;
 
-       /* Open the super_block at the default location
-        * and as read-write.
-        */
-       root = open_ctree(dev, 0, 1);
-       if (!root) /* errors are printed by open_ctree() */
+	ret = check_mounted(dev);
+	if (ret < 0) {
+	       fprintf(stderr, "FATAL: error checking %s mount status\n", dev);
 	       return -1;
+	}
+	if (ret > 0) {
+		fprintf(stderr, "ERROR: dev %s is mounted, use mount point\n",
+			dev);
+		return -1;
+	}
 
-       trans = btrfs_start_transaction(root, 1);
-       strncpy(root->fs_info->super_copy.label, nLabel, BTRFS_LABEL_SIZE);
-       root->fs_info->super_copy.label[BTRFS_LABEL_SIZE-1] = 0;
-       btrfs_commit_transaction(trans, root);
+	/* Open the super_block at the default location
+	 * and as read-write.
+	 */
+	root = open_ctree(dev, 0, 1);
+	if (!root) /* errors are printed by open_ctree() */
+		return -1;
 
-       /* Now we close it since we are done. */
-       close_ctree(root);
-       return 0;
+	trans = btrfs_start_transaction(root, 1);
+	strncpy(root->fs_info->super_copy.label, label, BTRFS_LABEL_SIZE);
+	root->fs_info->super_copy.label[BTRFS_LABEL_SIZE-1] = 0;
+	btrfs_commit_transaction(trans, root);
+
+	/* Now we close it since we are done. */
+	close_ctree(root);
+	return 0;
+}
+
+static int set_label_mounted(const char *mount_path, const char *label)
+{
+	int fd;
+
+	fd = open(mount_path, O_RDONLY | O_NOATIME);
+	if (fd < 0) {
+		fprintf(stderr, "ERROR: unable access to '%s'\n", mount_path);
+		return -1;
+	}
+
+	if (ioctl(fd, BTRFS_IOC_SET_FSLABEL, label) < 0) {
+		fprintf(stderr, "ERROR: unable to set label %s\n",
+			strerror(errno));
+		close(fd);
+		return -1;
+	}
+
+	return 0;
 }
 
 int get_label_unmounted(char *dev)
@@ -108,21 +140,9 @@ int get_label(char *btrfs_dev)
 }
 
 
-int set_label(char *btrfs_dev, char *nLabel)
+int set_label(char *btrfs_dev, char *label)
 {
-
-	int ret;
-	ret = check_mounted(btrfs_dev);
-	if (ret < 0)
-	{
-	       fprintf(stderr, "FATAL: error checking %s mount status\n", btrfs_dev);
-	       return -1;
-	}
-
-	if(ret != 0)
-	{
-	       fprintf(stderr, "FATAL: the filesystem has to be unmounted\n");
-	       return -2;
-	}
-	return change_label_unmounted(btrfs_dev, nLabel);
+	return is_existing_blk_or_reg_file(btrfs_dev) ?
+		set_label_unmounted(btrfs_dev, label) :
+		set_label_mounted(btrfs_dev, label);
 }
