@@ -18,8 +18,14 @@
 
 #ifndef __PENDING_EXTENT__
 #define __PENDING_EXTENT__
+
+#if BTRFS_FLAT_INCLUDES
 #include "kerncompat.h"
 #include "rbtree.h"
+#else
+#include <btrfs/kerncompat.h>
+#include <btrfs/rbtree.h>
+#endif /* BTRFS_FLAT_INCLUDES */
 
 struct cache_tree {
 	struct rb_root root;

@@ -18,8 +18,13 @@
 #ifndef SEND_UTILS_H_
 #define SEND_UTILS_H_
 
+#if BTRFS_FLAT_INCLUDES
 #include "ctree.h"
 #include "rbtree.h"
+#else
+#include <btrfs/ctree.h>
+#include <btrfs/rbtree.h>
+#endif /* BTRFS_FLAT_INCLUDES */
 
 #ifdef __cplusplus
 extern "C" {

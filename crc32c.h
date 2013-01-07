@@ -19,7 +19,11 @@
 #ifndef __CRC32C__
 #define __CRC32C__
 
+#if BTRFS_FLAT_INCLUDES
 #include "kerncompat.h"
+#else
+#include <btrfs/kerncompat.h>
+#endif /* BTRFS_FLAT_INCLUDES */
 
 u32 crc32c_le(u32 seed, unsigned char const *data, size_t length);
 void crc32c_optimization_init(void);

@@ -18,9 +18,16 @@
 
 #ifndef __EXTENTMAP__
 #define __EXTENTMAP__
+
+#if BTRFS_FLAT_INCLUDES
 #include "kerncompat.h"
 #include "extent-cache.h"
 #include "list.h"
+#else
+#include <btrfs/kerncompat.h>
+#include <btrfs/extent-cache.h>
+#include <btrfs/list.h>
+#endif /* BTRFS_FLAT_INCLUDES */
 
 #define EXTENT_DIRTY 1
 #define EXTENT_WRITEBACK (1 << 1)
