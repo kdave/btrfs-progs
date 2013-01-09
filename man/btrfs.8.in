@@ -50,7 +50,7 @@ btrfs \- control a btrfs filesystem
 \fBbtrfs\fP \fBinspect-internal logical-resolve\fP
 [-Pv] [-s size] \fI<logical>\fP \fI<path>\fP
 .PP
-\fBbtrfs\fP \fBhelp|\-\-help|\-h \fP\fI\fP
+\fBbtrfs\fP \fBhelp|\-\-help \fP\fI\fP
 .PP
 \fBbtrfs\fP \fB<command> \-\-help \fP\fI\fP
 .PP
