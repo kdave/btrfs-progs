@@ -112,7 +112,7 @@ int make_btrfs(int fd, const char *device, const char *label,
 
 	btrfs_set_super_bytenr(&super, blocks[0]);
 	btrfs_set_super_num_devices(&super, 1);
-	strncpy((char *)&super.magic, BTRFS_MAGIC, sizeof(super.magic));
+	super.magic = cpu_to_le64(BTRFS_MAGIC);
 	btrfs_set_super_generation(&super, 1);
 	btrfs_set_super_root(&super, blocks[1]);
 	btrfs_set_super_chunk_root(&super, blocks[3]);
@@ -1085,8 +1085,7 @@ int btrfs_device_already_in_root(struct btrfs_root *root, int fd,
 
 	ret = 0;
 	disk_super = (struct btrfs_super_block *)buf;
-	if (strncmp((char *)(&disk_super->magic), BTRFS_MAGIC,
-	    sizeof(disk_super->magic)))
+	if (disk_super->magic != cpu_to_le64(BTRFS_MAGIC))
 		goto brelse;
 
 	if (!memcmp(disk_super->fsid, root->fs_info->super_copy.fsid,
