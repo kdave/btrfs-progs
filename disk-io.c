@@ -345,14 +345,17 @@ static int commit_tree_roots(struct btrfs_trans_handle *trans,
 	struct btrfs_root *root;
 	struct list_head *next;
 	struct extent_buffer *eb;
+	int ret;
 
 	if (fs_info->readonly)
 		return 0;
 
 	eb = fs_info->tree_root->node;
 	extent_buffer_get(eb);
-	btrfs_cow_block(trans, fs_info->tree_root, eb, NULL, 0, &eb);
+	ret = btrfs_cow_block(trans, fs_info->tree_root, eb, NULL, 0, &eb);
 	free_extent_buffer(eb);
+	if (ret)
+		return ret;
 
 	while(!list_empty(&fs_info->dirty_cowonly_roots)) {
 		next = fs_info->dirty_cowonly_roots.next;
