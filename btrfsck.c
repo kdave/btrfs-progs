@@ -1970,8 +1970,10 @@ static int check_owner_ref(struct btrfs_root *root,
 	struct btrfs_root *ref_root;
 	struct btrfs_key key;
 	struct btrfs_path path;
+	struct extent_buffer *parent;
 	int level;
 	int found = 0;
+	int ret;
 
 	list_for_each_entry(node, &rec->backrefs, list) {
 		if (node->is_data)
@@ -2002,10 +2004,13 @@ static int check_owner_ref(struct btrfs_root *root,
 
 	btrfs_init_path(&path);
 	path.lowest_level = level + 1;
-	btrfs_search_slot(NULL, ref_root, &key, &path, 0, 0);
+	ret = btrfs_search_slot(NULL, ref_root, &key, &path, 0, 0);
+	if (ret < 0)
+		return 0;
 
-	if (buf->start == btrfs_node_blockptr(path.nodes[level + 1],
-					      path.slots[level + 1]))
+	parent = path.nodes[level + 1];
+	if (parent && buf->start == btrfs_node_blockptr(parent,
+							path.slots[level + 1]))
 		found = 1;
 
 	btrfs_release_path(ref_root, &path);
