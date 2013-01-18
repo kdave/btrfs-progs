@@ -19,9 +19,11 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <errno.h>
+#include <sys/stat.h>
 
 #include "kerncompat.h"
 #include "ioctl.h"
+#include "ctree.h"
 
 #include "commands.h"
 #include "btrfs-list.h"
@@ -236,12 +238,205 @@ out:
 	return ret;
 }
 
+static const char * const cmd_bsum_usage[] = {
+	"btrfs inspect-internal _bsum <blockno> <file>",
+	"Get file block checksum of given file",
+	NULL
+};
+
+static int csum_for_offset(int fd, u64 offset, u8 *csums, int *count)
+{
+	struct btrfs_ioctl_search_args args;
+	struct btrfs_ioctl_search_key *sk = &args.key;
+	struct btrfs_ioctl_search_header *sh;
+	int ret = 0;
+	int i;
+	unsigned off;
+	u32 *realcsums = (u32*)csums;
+
+	sk->tree_id = BTRFS_CSUM_TREE_OBJECTID;
+	sk->min_objectid = BTRFS_EXTENT_CSUM_OBJECTID;
+	sk->max_objectid = BTRFS_EXTENT_CSUM_OBJECTID;
+	sk->max_type = BTRFS_EXTENT_CSUM_KEY;
+	sk->min_type = BTRFS_EXTENT_CSUM_KEY;
+	sk->min_offset = offset;
+	sk->max_offset = (u64)-1;
+	sk->max_transid = (u64)-1;
+	sk->nr_items = 1;
+
+	printf("Search block: %llu\n", (unsigned long long)sk->min_offset);
+	ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &args);
+	if (ret) {
+		printf("%s: search ioctl: ioctl ret=%d, error: %s\n", __func__, ret, strerror(errno));
+		ret = -1;
+		goto out;
+	}
+	if (sk->nr_items == 0) {
+		printf("no items found\n");
+		ret = -2;
+		goto out;
+	}
+	off = 0;
+	*count = 0;
+	for (i = 0; i < sk->nr_items; i++) {
+		u32 item;
+		int j;
+		int csum_size = sizeof(item);
+
+		sh = (struct btrfs_ioctl_search_header *)(args.buf +
+				off);
+
+		printf("SH: tid %llu objid %llu off %llu type %u len %u\n",
+				(unsigned long long)sh->transid,
+				(unsigned long long)sh->objectid,
+				(unsigned long long)sh->offset,
+				(unsigned)sh->type,
+				(unsigned)sh->len);
+
+		off += sizeof(*sh);
+		for (j = 0; j < sh->len / csum_size; j++) {
+			memcpy(&item, args.buf + off + j * csum_size, sizeof(item));
+			printf("DATA[%d]: u32 = 0x%08x\n", j, item);
+			realcsums[*count] = item;
+			*count += 1;
+		}
+		off += sh->len;
+
+		sk->min_objectid = sh->objectid;
+		sk->min_type = sh->type;
+		sk->min_offset = sh->offset;
+	}
+out:
+	return ret;
+}
+
+static int extent_offset_to_physical(int fd, u64 ino, u64 offset, u64 *phys)
+{
+	struct btrfs_ioctl_search_args args;
+	struct btrfs_ioctl_search_key *sk = &args.key;
+	struct btrfs_ioctl_search_header *sh;
+	int ret = 0;
+	unsigned off;
+	int i;
+
+	sk->tree_id = BTRFS_FS_TREE_OBJECTID;
+	sk->min_objectid = ino;
+	sk->max_objectid = ino;
+	sk->max_type = BTRFS_EXTENT_DATA_KEY;
+	sk->min_type = BTRFS_EXTENT_DATA_KEY;
+	sk->min_offset = offset;
+	sk->max_offset = (u64)-1;
+	sk->max_transid = (u64)-1;
+	sk->nr_items = 1;
+
+	printf("Search extent offset: %llu\n", (unsigned long long)sk->min_offset);
+	ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &args);
+	if (ret) {
+		printf("%s: search ioctl: ioctl ret=%d, error: %s\n", __func__, ret, strerror(errno));
+		ret = -1;
+		goto out;
+	}
+	if (sk->nr_items == 0) {
+		printf("no items found\n");
+		ret = -2;
+		goto out;
+	}
+	off = 0;
+	for (i = 0; i < sk->nr_items; i++) {
+		struct btrfs_file_extent_item fi;
+
+		sh = (struct btrfs_ioctl_search_header *)(args.buf +
+				off);
+
+		printf("SH: tid %llu objid %llu off %llu type %u len %u\n",
+				(unsigned long long)sh->transid,
+				(unsigned long long)sh->objectid,
+				(unsigned long long)sh->offset,
+				(unsigned)sh->type,
+				(unsigned)sh->len);
+
+		off += sizeof(*sh);
+		/* process data */
+		memcpy(&fi, args.buf + off, sizeof(fi));
+		printf("FI: disk_bytenr %llu disk_num_bytes %llu offset %llu\n",
+				(unsigned long long)fi.disk_bytenr,
+				(unsigned long long)fi.disk_num_bytes,
+				(unsigned long long)fi.offset);
+		*phys = fi.disk_bytenr;
+
+		off += sh->len;
+
+		sk->min_objectid = sh->objectid;
+		sk->min_type = sh->type;
+		sk->min_offset = sh->offset;
+	}
+out:
+	return ret;
+}
+
+static int cmd_bsum(int argc, char **argv)
+{
+	int fd;
+	int ret = 0;
+	int j;
+	struct stat st;
+	u8 csums[4096];
+	int count = 0;
+	u64 offset = 0;
+	u64 phys = 0;
+
+	optind = 1;
+	while (1) {
+		int c = getopt(argc, argv, "");
+		if (c < 0)
+			break;
+
+		switch (c) {
+		default:
+			usage(cmd_logical_resolve_usage);
+		}
+	}
+
+	if (check_argc_exact(argc - optind, 2)) {
+		usage(cmd_logical_resolve_usage);
+		return 1;
+	}
+
+	fd = open_file_or_dir(argv[optind+1]);
+	if (fd < 0) {
+		fprintf(stderr, "ERROR: can't access '%s'\n", argv[optind+1]);
+		ret = 12;
+		goto out;
+	}
+	offset = atoi(argv[optind]);
+	if(fstat(fd, &st) == -1) {
+		fprintf(stderr, "ERROR: stat\n");
+		ret = 1;
+		goto out;
+	}
+	printf("Inode: %llu\n", (unsigned long long)st.st_ino);
+	printf("Offset: %llu\n", (unsigned long long)offset);
+	extent_offset_to_physical(fd, st.st_ino, offset, &phys);
+	printf("Physical: %llu\n", (unsigned long long)phys);
+	csum_for_offset(fd, phys, csums, &count);
+	for (j = 0; j < count; j++) {
+		u32 *items = (u32*)csums;
+		printf("BLOCK[%d] CSUM=0x%x\n",
+			j, items[j]);
+	}
+
+out:
+	return ret;
+}
+
 const struct cmd_group inspect_cmd_group = {
 	inspect_cmd_group_usage, NULL, {
 		{ "inode-resolve", cmd_inode_resolve, cmd_inode_resolve_usage,
 			NULL, 0 },
 		{ "logical-resolve", cmd_logical_resolve,
 			cmd_logical_resolve_usage, NULL, 0 },
+		{ "_bsum", cmd_bsum,
+			cmd_bsum_usage, NULL, 0 },
 		{ 0, 0, 0, 0, 0 }
 	}
 };

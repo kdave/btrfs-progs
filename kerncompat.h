@@ -260,3 +260,7 @@ typedef u64 __bitwise __be64;
 #ifndef noinline
 #define noinline
 #endif
+
+#define __ALIGN_KERNEL(x, a)            __ALIGN_KERNEL_MASK(x, (typeof(x))(a) - 1)
+#define __ALIGN_KERNEL_MASK(x, mask)    (((x) + (mask)) & ~(mask))
+#define ALIGN(x, a)             __ALIGN_KERNEL((x), (a))
