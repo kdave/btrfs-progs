@@ -71,7 +71,6 @@ static int finish_subvol(struct btrfs_receive *r)
 {
 	int ret;
 	int subvol_fd = -1;
-	int info_fd = -1;
 	struct btrfs_ioctl_received_subvol_args rs_args;
 	char uuid_str[128];
 	u64 flags;
@@ -132,8 +131,6 @@ static int finish_subvol(struct btrfs_receive *r)
 out:
 	if (subvol_fd != -1)
 		close(subvol_fd);
-	if (info_fd != -1)
-		close(info_fd);
 	return ret;
 }
 
