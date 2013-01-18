@@ -173,7 +173,7 @@ static int copy_one_inline(int fd, struct btrfs_path *path, u64 pos)
 
 	done = pwrite(fd, outbuf, ram_size, pos);
 	free(outbuf);
-	if (done < len) {
+	if (done < ram_size) {
 		fprintf(stderr, "Short compressed inline write, wanted %d, "
 			"did %zd: %d\n", ram_size, done, errno);
 		return -1;
