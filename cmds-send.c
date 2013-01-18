@@ -637,7 +637,7 @@ static const char * const send_cmd_group_usage[] = {
 	NULL
 };
 
-static const char * const cmd_send_usage[] = {
+const char * const cmd_send_usage[] = {
 	"btrfs send [-v] [-p <parent>] [-c <clone-src>] <subvol>",
 	"Send the subvolume to stdout.",
 	"Sends the subvolume specified by <subvol> to stdout.",
@@ -651,7 +651,7 @@ static const char * const cmd_send_usage[] = {
 	"which case 'btrfs send' will determine a suitable parent among the",
 	"clone sources itself.",
 	"\n",
-	"-v               Enable verbose debug output. Each occurrency of",
+	"-v               Enable verbose debug output. Each occurrence of",
 	"                 this option increases the verbose level more.",
 	"-p <parent>      Send an incremental stream from <parent> to",
 	"                 <subvol>.",
@@ -661,13 +661,6 @@ static const char * const cmd_send_usage[] = {
 	"                 a file, use this option. An alternative would be to",
 	"                 use pipes.",
 	NULL
-};
-
-const struct cmd_group send_cmd_group = {
-	send_cmd_group_usage, NULL, {
-		{ "send", cmd_send_start, cmd_send_usage, NULL, 0 },
-		{ 0, 0, 0, 0, 0 },
-        },
 };
 
 int cmd_send(int argc, char **argv)

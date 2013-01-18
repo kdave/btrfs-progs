@@ -91,6 +91,9 @@ extern const struct cmd_group quota_cmd_group;
 extern const struct cmd_group qgroup_cmd_group;
 extern const struct cmd_group replace_cmd_group;
 
+extern const char * const cmd_send_usage[];
+extern const char * const cmd_receive_usage[];
+
 int cmd_subvolume(int argc, char **argv);
 int cmd_filesystem(int argc, char **argv);
 int cmd_balance(int argc, char **argv);
