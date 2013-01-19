@@ -1206,7 +1206,7 @@ int main(int ac, char **av)
 	u64 alloc_start = 0;
 	u64 metadata_profile = 0;
 	u64 data_profile = 0;
-	u32 leafsize = getpagesize();
+	u32 leafsize = sysconf(_SC_PAGESIZE);
 	u32 sectorsize = 4096;
 	u32 nodesize = leafsize;
 	u32 stripesize = 4096;
@@ -1282,7 +1282,7 @@ int main(int ac, char **av)
 				print_usage();
 		}
 	}
-	sectorsize = max(sectorsize, (u32)getpagesize());
+	sectorsize = max(sectorsize, (u32)sysconf(_SC_PAGESIZE));
 	if (check_leaf_or_node_size(leafsize, sectorsize))
 		exit(1);
 	if (check_leaf_or_node_size(nodesize, sectorsize))
