@@ -250,11 +250,46 @@ static int cmd_scan_dev(int argc, char **argv)
 	return 0;
 }
 
+static const char * const cmd_ready_dev_usage[] = {
+	"btrfs device ready <device>",
+	"Check device to see if it has all of it's devices in cache for mounting",
+	NULL
+};
+
+static int cmd_ready_dev(int argc, char **argv)
+{
+	struct	btrfs_ioctl_vol_args args;
+	int	fd;
+	int	ret;
+
+	if (check_argc_min(argc, 2))
+		usage(cmd_ready_dev_usage);
+
+	fd = open("/dev/btrfs-control", O_RDWR);
+	if (fd < 0) {
+		perror("failed to open /dev/btrfs-control");
+		return 10;
+	}
+
+	strncpy(args.name, argv[argc - 1], BTRFS_PATH_NAME_MAX);
+	ret = ioctl(fd, BTRFS_IOC_DEVICES_READY, &args);
+	if (ret < 0) {
+		fprintf(stderr, "ERROR: unable to determine if the device '%s'"
+			" is ready for mounting - %s\n", argv[argc - 1],
+			strerror(errno));
+		ret = 1;
+	}
+
+	close(fd);
+	return ret;
+}
+
 const struct cmd_group device_cmd_group = {
 	device_cmd_group_usage, NULL, {
 		{ "add", cmd_add_dev, cmd_add_dev_usage, NULL, 0 },
 		{ "delete", cmd_rm_dev, cmd_rm_dev_usage, NULL, 0 },
 		{ "scan", cmd_scan_dev, cmd_scan_dev_usage, NULL, 0 },
+		{ "ready", cmd_ready_dev, cmd_ready_dev_usage, NULL, 0 },
 		{ 0, 0, 0, 0, 0 }
 	}
 };
