@@ -47,7 +47,10 @@ Specify a label for the filesystem.
 .TP
 \fB\-m\fR, \fB\-\-metadata \fIprofile\fR
 Specify how metadata must be spanned across the devices specified. Valid
-values are raid0, raid1, raid10 or single.
+values are raid0, raid1, raid10, single or dup.  Single device will have dup
+set by default except in the case of SSDs which will default to single.  This is
+because SSDs can remap blocks internally so duplicate blocks could end up in the
+same erase block which negates the benefits of doing metadata duplication.
 .TP
 \fB\-M\fR, \fB\-\-mixed\fR
 Mix data and metadata chunks together for more efficient space 

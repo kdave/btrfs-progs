@@ -39,6 +39,7 @@
 #include <linux/fs.h>
 #include <ctype.h>
 #include <attr/xattr.h>
+#include <blkid/blkid.h>
 #include "ctree.h"
 #include "disk-io.h"
 #include "volumes.h"
@@ -204,7 +205,7 @@ static int create_one_raid_group(struct btrfs_trans_handle *trans,
 static int create_raid_groups(struct btrfs_trans_handle *trans,
 			      struct btrfs_root *root, u64 data_profile,
 			      int data_profile_opt, u64 metadata_profile,
-			      int metadata_profile_opt, int mixed)
+			      int metadata_profile_opt, int mixed, int ssd)
 {
 	u64 num_devices = btrfs_super_num_devices(&root->fs_info->super_copy);
 	u64 allowed;
@@ -215,8 +216,12 @@ static int create_raid_groups(struct btrfs_trans_handle *trans,
 	 * For mixed groups defaults are single/single.
 	 */
 	if (!metadata_profile_opt && !mixed) {
+		if (num_devices == 1 && ssd)
+			printf("Detected a SSD, turning off metadata "
+			       "duplication.  Mkfs with -m dup if you want to "
+			       "force metadata duplication.\n");
 		metadata_profile = (num_devices > 1) ?
-			BTRFS_BLOCK_GROUP_RAID1 : BTRFS_BLOCK_GROUP_DUP;
+			BTRFS_BLOCK_GROUP_RAID1 : (ssd) ? 0: BTRFS_BLOCK_GROUP_DUP;
 	}
 	if (!data_profile_opt && !mixed) {
 		data_profile = (num_devices > 1) ?
@@ -1193,6 +1198,54 @@ static int check_leaf_or_node_size(u32 size, u32 sectorsize)
 	return 0;
 }
 
+static int is_ssd(const char *file)
+{
+	char *devname;
+	blkid_probe probe;
+	char *dev;
+	char path[PATH_MAX];
+	dev_t disk;
+	int fd;
+	char rotational;
+
+	probe = blkid_new_probe_from_filename(file);
+	if (!probe)
+		return 0;
+
+	/*
+	 * We want to use blkid_devno_to_wholedisk() but it's broken for some
+	 * reason on F17 at least so we'll do this trickery
+	 */
+	disk = blkid_probe_get_wholedisk_devno(probe);
+	if (!disk)
+		return 0;
+
+	devname = blkid_devno_to_devname(disk);
+	if (!devname)
+		return 0;
+
+	dev = strrchr(devname, '/');
+	dev++;
+
+	snprintf(path, PATH_MAX, "/sys/block/%s/queue/rotational", dev);
+
+	free(devname);
+	blkid_free_probe(probe);
+
+	fd = open(path, O_RDONLY);
+	if (fd < 0) {
+		return 0;
+	}
+
+	if (read(fd, &rotational, sizeof(char)) < sizeof(char)) {
+		close(fd);
+		return 0;
+	}
+	close(fd);
+
+	return !atoi((const char *)&rotational);
+}
+
 int main(int ac, char **av)
 {
 	char *file;
@@ -1219,6 +1272,7 @@ int main(int ac, char **av)
 	int data_profile_opt = 0;
 	int metadata_profile_opt = 0;
 	int nodiscard = 0;
+	int ssd = 0;
 
 	char *source_dir = NULL;
 	int source_dir_set = 0;
@@ -1338,6 +1392,9 @@ int main(int ac, char **av)
 			exit(1);
 		}
 	}
+
+	ssd = is_ssd(file);
+
 	if (mixed) {
 		if (metadata_profile != data_profile) {
 			fprintf(stderr, "With mixed block groups data and metadata "
@@ -1424,7 +1481,7 @@ raid_groups:
 	if (!source_dir_set) {
 		ret = create_raid_groups(trans, root, data_profile,
 				 data_profile_opt, metadata_profile,
-				 metadata_profile_opt, mixed);
+				 metadata_profile_opt, mixed, ssd);
 		BUG_ON(ret);
 	}
 
