@@ -882,7 +882,7 @@ static const char * const receive_cmd_group_usage[] = {
 };
 
 static const char * const cmd_receive_usage[] = {
-	"btrfs receive [-v] [-i <infile>] <mount>",
+	"btrfs receive [-v] [-f <infile>] <mount>",
 	"Receive subvolumes from stdin.",
 	"Receives one or more subvolumes that were previously ",
 	"sent with btrfs send. The received subvolumes are stored",
