@@ -383,7 +383,6 @@ static int cmd_qgroup_limit(int argc, char **argv)
 	}
 
 	memset(&args, 0, sizeof(args));
-	args.qgroupid = parse_qgroupid(argv[optind + 1]);
 	if (size) {
 		if (compressed)
 			args.lim.flags |= BTRFS_QGROUP_LIMIT_RFER_CMPR |
@@ -397,9 +396,8 @@ static int cmd_qgroup_limit(int argc, char **argv)
 		}
 	}
 
-	if (args.qgroupid == 0) {
-		if (check_argc_exact(argc - optind, 2))
-			usage(cmd_qgroup_limit_usage);
+	if (argc - optind == 2) {
+		args.qgroupid = 0;
 		path = argv[optind + 1];
 		ret = test_issubvolume(path);
 		if (ret < 0) {
@@ -415,11 +413,11 @@ static int cmd_qgroup_limit(int argc, char **argv)
 		 * keep qgroupid at 0, this indicates that the subvolume the
 		 * fd refers to is to be limited
 		 */
-	} else {
-		if (check_argc_exact(argc - optind, 3))
-			usage(cmd_qgroup_limit_usage);
+	} else if (argc - optind == 3) {
+		args.qgroupid = parse_qgroupid(argv[optind + 1]);
 		path = argv[optind + 2];
-	}
+	} else
+		usage(cmd_qgroup_limit_usage);
 
 	fd = open_file_or_dir(path);
 	if (fd < 0) {
