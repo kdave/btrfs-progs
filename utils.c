@@ -20,6 +20,7 @@
 #define __USE_XOPEN2K
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #ifndef __CHECKER__
 #include <sys/ioctl.h>
 #include <sys/mount.h>
@@ -652,21 +653,22 @@ int is_loop_device (const char* device) {
  * the associated file (e.g. /images/my_btrfs.img) */
 int resolve_loop_device(const char* loop_dev, char* loop_file, int max_len)
 {
-	int loop_fd;
-	int ret_ioctl;
-	struct loop_info loopinfo;
+	int ret;
+	FILE *f;
+	char fmt[20];
+	char p[PATH_MAX];
+	char real_loop_dev[PATH_MAX];
 
-	if ((loop_fd = open(loop_dev, O_RDONLY)) < 0)
+	if (!realpath(loop_dev, real_loop_dev))
+		return -errno;
+	snprintf(p, PATH_MAX, "/sys/block/%s/loop/backing_file", strrchr(real_loop_dev, '/'));
+	if (!(f = fopen(p, "r")))
 		return -errno;
 
-	ret_ioctl = ioctl(loop_fd, LOOP_GET_STATUS, &loopinfo);
-	close(loop_fd);
-
-	if (ret_ioctl == 0) {
-		strncpy(loop_file, loopinfo.lo_name, max_len);
-		if (max_len > 0)
-			loop_file[max_len-1] = 0;
-	} else
+	snprintf(fmt, 20, "%%%i[^\n]", max_len-1);
+	ret = fscanf(f, fmt, loop_file);
+	fclose(f);
+	if (ret == EOF)
 		return -errno;
 
 	return 0;
