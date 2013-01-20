@@ -20,7 +20,9 @@
 #define _BTRFS_QGROUP_H
 
 #include "ioctl.h"
+#include "kerncompat.h"
 
+u64 parse_qgroupid(char *p);
 int qgroup_inherit_size(struct btrfs_qgroup_inherit *p);
 int qgroup_inherit_realloc(struct btrfs_qgroup_inherit **inherit,
 			   int incgroups, int inccopies);

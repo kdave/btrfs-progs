@@ -24,25 +24,12 @@
 #include "ioctl.h"
 
 #include "commands.h"
+#include "qgroup.h"
 
 static const char * const qgroup_cmd_group_usage[] = {
 	"btrfs qgroup <command> [options] <path>",
 	NULL
 };
-
-static u64 parse_qgroupid(char *p)
-{
-	char *s = strchr(p, '/');
-	u64 level;
-	u64 id;
-
-	if (!s)
-		return atoll(p);
-	level = atoll(p);
-	id = atoll(s + 1);
-
-	return (level << 48) | id;
-}
 
 static int qgroup_assign(int assign, int argc, char **argv)
 {
