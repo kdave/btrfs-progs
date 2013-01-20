@@ -50,7 +50,7 @@ static int qgroup_assign(int assign, int argc, char **argv)
 	/*
 	 * FIXME src should accept subvol path
 	 */
-	if (args.src >= args.dst) {
+	if ((args.src >> 48) >= (args.dst >> 48)) {
 		fprintf(stderr, "ERROR: bad relation requested '%s'\n", path);
 		return 12;
 	}
