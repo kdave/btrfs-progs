@@ -273,6 +273,7 @@ static int do_send(struct btrfs_send *send, u64 root_id, u64 parent_root)
 		goto out;
 	}
 
+	memset(&io_send, 0, sizeof(io_send));
 	io_send.send_fd = pipefd[1];
 	send->send_fd = pipefd[0];
 
