@@ -349,7 +349,7 @@ static const char * const cmd_balance_start_usage[] = {
 	"",
 	"-d[filters]    act on data chunks",
 	"-m[filters]    act on metadata chunks",
-	"-s[filetrs]    act on system chunks (only under -f)",
+	"-s[filters]    act on system chunks (only under -f)",
 	"-v             be verbose",
 	"-f             force reducing of metadata integrity",
 	NULL
