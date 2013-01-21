@@ -491,6 +491,11 @@ static int create_metadump(const char *input, FILE *out, int num_threads,
 	int ret;
 
 	root = open_ctree(input, 0, 0);
+	if (!root) {
+		fprintf(stderr, "Open ctree failed\n");
+		exit(1);
+	}
+
 	BUG_ON(root->nodesize != root->leafsize);
 
 	ret = metadump_init(&metadump, root, out, num_threads,

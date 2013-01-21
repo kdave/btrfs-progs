@@ -356,6 +356,10 @@ int main(int ac, char **av)
 	struct btrfs_trans_handle *trans;
 	radix_tree_init();
 	root = open_ctree("dbfile", &super);
+	if (!root) {
+		fprintf(stderr, "Open ctree failed\n");
+		exit(1);
+	}
 	fill_radix(root, &radix);
 
 	signal(SIGTERM, sigstopper);
@@ -398,6 +402,10 @@ int main(int ac, char **av)
 				btrfs_header_nritems(&root->node->node.header));
 			close_ctree(root, &super);
 			root = open_ctree("dbfile", &super);
+			if (!root) {
+				fprintf(stderr, "Open ctree failed\n");
+				goto out;
+			}
 		}
 		while(count--) {
 			ret = ops[op](trans, root, &radix);

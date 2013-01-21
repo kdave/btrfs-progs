@@ -448,8 +448,11 @@ int main(int argc, char **argv)
 
 	root = open_ctree_broken(dev_fd, argv[optind]);
 	close(dev_fd);
-	if (!root)
+
+	if (!root) {
+		fprintf(stderr, "Open ctree failed\n");
 		exit(1);
+	}
 
 	csum_size = btrfs_super_csum_size(&root->fs_info->super_copy);
 	ret = find_root(root);

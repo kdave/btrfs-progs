@@ -108,6 +108,11 @@ int main(int argc, char *argv[])
 
 	root = open_ctree(device, 0, 1);
 
+	if (!root) {
+		fprintf(stderr, "Open ctree failed\n");
+		return 1;
+	}
+
 	if (seeding_flag) {
 		ret = update_seeding_flag(root, seeding_value);
 		if (!ret)

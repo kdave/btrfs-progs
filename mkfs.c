@@ -1362,7 +1362,8 @@ int main(int ac, char **av)
 
 	root = open_ctree(file, 0, O_RDWR);
 	if (!root) {
-		fprintf(stderr, "ctree init failed\n");
+		fprintf(stderr, "Open ctree failed\n");
+		close(fd);
 		exit(1);
 	}
 	root->fs_info->alloc_start = alloc_start;
