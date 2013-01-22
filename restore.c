@@ -710,7 +710,7 @@ static int find_first_dir(struct btrfs_root *root, u64 *objectid)
 	path = btrfs_alloc_path();
 	if (!path) {
 		fprintf(stderr, "Ran out of memory\n");
-		goto out;
+		return ret;
 	}
 
 	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
