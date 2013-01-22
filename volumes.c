@@ -1601,9 +1601,9 @@ again:
 		goto again;
 	}
 
-	btrfs_free_path(path);
 	ret = 0;
 error:
+	btrfs_free_path(path);
 	return ret;
 }
 
