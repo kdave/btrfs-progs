@@ -828,7 +828,7 @@ int main(int argc, char **argv)
 		return ret;
 	} else if (ret) {
 		fprintf(stderr, "%s is currently mounted.  Aborting.\n", argv[optind]);
-		return -EBUSY;
+		return 1;
 	}
 
 	root = open_fs(argv[optind], tree_location, super_mirror);
