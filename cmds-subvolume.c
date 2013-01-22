@@ -244,7 +244,6 @@ again:
 
 	fd = open_file_or_dir(dname);
 	if (fd < 0) {
-		close(fd);
 		fprintf(stderr, "ERROR: can't access to '%s'\n", dname);
 		ret = 12;
 		goto out;
