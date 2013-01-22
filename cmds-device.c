@@ -87,9 +87,8 @@ static int cmd_add_dev(int argc, char **argv)
 		}
 
 		devfd = open(argv[i], O_RDWR);
-		if (!devfd) {
+		if (devfd < 0) {
 			fprintf(stderr, "ERROR: Unable to open device '%s'\n", argv[i]);
-			close(devfd);
 			ret++;
 			continue;
 		}
