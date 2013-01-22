@@ -569,6 +569,7 @@ static void print_objectid(u64 objectid, u8 type)
 		break;
 	case BTRFS_FREE_INO_OBJECTID:
 		printf("FREE_INO");
+		break;
 	case BTRFS_QUOTA_TREE_OBJECTID:
 		printf("QUOTA_TREE");
 		break;
