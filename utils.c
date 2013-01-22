@@ -1118,7 +1118,7 @@ char *pretty_sizes(u64 size)
 			num_divs ++;
 		}
 
-		if (num_divs > ARRAY_SIZE(size_strs))
+		if (num_divs >= ARRAY_SIZE(size_strs))
 			return NULL;
 		fraction = (float)last_size / 1024;
 	}
