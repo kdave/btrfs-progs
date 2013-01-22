@@ -102,9 +102,6 @@ int next_leaf(struct btrfs_root *root, struct btrfs_path *path)
 			continue;
 		}
 
-		if (next)
-			free_extent_buffer(next);
-
 		if (path->reada)
 			reada_for_search(root, path, level, slot, 0);
 
