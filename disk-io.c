@@ -983,6 +983,10 @@ int write_dev_supers(struct btrfs_root *root, struct btrfs_super_block *sb,
 	u64 bytenr;
 	u32 crc;
 	int i, ret;
+	void *buf;
+
+	buf = calloc(1, BTRFS_SUPER_INFO_SIZE);
+	BUG_ON(!buf);
 
 	if (root->fs_info->super_bytenr != BTRFS_SUPER_INFO_OFFSET) {
 		btrfs_set_super_bytenr(sb, root->fs_info->super_bytenr);
@@ -991,10 +995,11 @@ int write_dev_supers(struct btrfs_root *root, struct btrfs_super_block *sb,
 				      BTRFS_SUPER_INFO_SIZE - BTRFS_CSUM_SIZE);
 		btrfs_csum_final(crc, (char *)&sb->csum[0]);
 
-		ret = pwrite64(device->fd, sb, BTRFS_SUPER_INFO_SIZE,
+		memcpy(buf, sb, sizeof(*sb));
+		ret = pwrite64(device->fd, buf, BTRFS_SUPER_INFO_SIZE,
 			       root->fs_info->super_bytenr);
 		BUG_ON(ret != BTRFS_SUPER_INFO_SIZE);
-		return 0;
+		goto out;
 	}
 
 	for (i = 0; i < BTRFS_SUPER_MIRROR_MAX; i++) {
@@ -1009,9 +1014,12 @@ int write_dev_supers(struct btrfs_root *root, struct btrfs_super_block *sb,
 				      BTRFS_SUPER_INFO_SIZE - BTRFS_CSUM_SIZE);
 		btrfs_csum_final(crc, (char *)&sb->csum[0]);
 
-		ret = pwrite64(device->fd, sb, BTRFS_SUPER_INFO_SIZE, bytenr);
+		memcpy(buf, sb, sizeof(*sb));
+		ret = pwrite64(device->fd, buf, BTRFS_SUPER_INFO_SIZE, bytenr);
 		BUG_ON(ret != BTRFS_SUPER_INFO_SIZE);
 	}
+out:
+	free(buf);
 	return 0;
 }
 
