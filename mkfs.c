@@ -782,7 +782,7 @@ static int add_file_items(struct btrfs_trans_handle *trans,
 	fd = open(path_name, O_RDONLY);
 	if (fd == -1) {
 		fprintf(stderr, "%s open failed\n", path_name);
-		goto end;
+		return ret;
 	}
 
 	blocks = st->st_size / sectorsize;
