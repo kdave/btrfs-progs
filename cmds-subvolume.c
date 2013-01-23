@@ -158,13 +158,13 @@ static int cmd_subvol_create(int argc, char **argv)
 	e = errno;
 
 	close(fddst);
+	free(inherit);
 
 	if(res < 0 ){
 		fprintf( stderr, "ERROR: cannot create subvolume - %s\n",
 			strerror(e));
 		return 11;
 	}
-	free(inherit);
 
 	return 0;
 }
@@ -604,13 +604,13 @@ static int cmd_snapshot(int argc, char **argv)
 
 	close(fd);
 	close(fddst);
+	free(inherit);
 
 	if(res < 0 ){
 		fprintf( stderr, "ERROR: cannot snapshot '%s' - %s\n",
 			subvol, strerror(e));
 		return 11;
 	}
-	free(inherit);
 
 	return 0;
 }
