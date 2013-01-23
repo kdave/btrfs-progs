@@ -764,6 +764,7 @@ static int cmd_find_new(int argc, char **argv)
 		return 12;
 	}
 	ret = btrfs_list_find_updated_files(fd, 0, last_gen);
+	close(fd);
 	if (ret)
 		return 19;
 	return 0;
