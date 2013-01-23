@@ -621,6 +621,7 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 						PTR_ERR(search_root));
 					if (ignore_errors)
 						goto next;
+					btrfs_free_path(path);
 					return PTR_ERR(search_root);
 				}
 
