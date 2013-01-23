@@ -1584,6 +1584,7 @@ static int cmd_scrub_status(int argc, char **argv)
 	addr.sun_path[sizeof(addr.sun_path) - 1] = '\0';
 	ret = connect(fdres, (struct sockaddr *)&addr, sizeof(addr));
 	if (ret == -1) {
+		close(fdres);
 		fdres = scrub_open_file_r(SCRUB_DATA_FILE, fsid);
 		if (fdres < 0 && fdres != -ENOENT) {
 			fprintf(stderr, "WARNING: failed to open status file: "
