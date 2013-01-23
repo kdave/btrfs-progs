@@ -922,7 +922,7 @@ int get_mountpt(char *dev, char *mntpt, size_t size)
 
 struct pending_dir {
 	struct list_head list;
-	char name[256];
+	char name[PATH_MAX];
 };
 
 void btrfs_register_one_device(char *fname)
@@ -958,7 +958,6 @@ int btrfs_scan_one_dir(char *dirname, int run_ioctl)
 	int ret;
 	int fd;
 	int dirname_len;
-	int pathlen;
 	char *fullpath;
 	struct list_head pending_list;
 	struct btrfs_fs_devices *tmp_devices;
@@ -973,8 +972,7 @@ int btrfs_scan_one_dir(char *dirname, int run_ioctl)
 
 again:
 	dirname_len = strlen(pending->name);
-	pathlen = 1024;
-	fullpath = malloc(pathlen);
+	fullpath = malloc(PATH_MAX);
 	dirname = pending->name;
 
 	if (!fullpath) {
@@ -993,11 +991,11 @@ again:
 			break;
 		if (dirent->d_name[0] == '.')
 			continue;
-		if (dirname_len + strlen(dirent->d_name) + 2 > pathlen) {
+		if (dirname_len + strlen(dirent->d_name) + 2 > PATH_MAX) {
 			ret = -EFAULT;
 			goto fail;
 		}
-		snprintf(fullpath, pathlen, "%s/%s", dirname, dirent->d_name);
+		snprintf(fullpath, PATH_MAX, "%s/%s", dirname, dirent->d_name);
 		ret = lstat(fullpath, &st);
 		if (ret < 0) {
 			fprintf(stderr, "failed to stat %s\n", fullpath);
