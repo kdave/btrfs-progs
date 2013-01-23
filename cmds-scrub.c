@@ -754,7 +754,7 @@ static int scrub_write_progress(pthread_mutex_t *m, const char *fsid,
 {
 	int ret;
 	int err;
-	int fd = 0;
+	int fd = -1;
 	int old;
 
 	ret = pthread_mutex_lock(m);
@@ -782,7 +782,7 @@ static int scrub_write_progress(pthread_mutex_t *m, const char *fsid,
 		goto out;
 
 out:
-	if (fd > 0) {
+	if (fd >= 0) {
 		ret = close(fd);
 		if (ret)
 			err = -errno;
