@@ -3520,6 +3520,7 @@ static int check_extents(struct btrfs_trans_handle *trans,
 		root->fs_info->corrupt_blocks = NULL;
 	}
 
+	free(bits);
 	return ret;
 }
 
