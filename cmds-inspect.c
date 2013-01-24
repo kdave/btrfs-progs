@@ -85,6 +85,7 @@ static int cmd_inode_resolve(int argc, char **argv)
 {
 	int fd;
 	int verbose = 0;
+	int ret;
 
 	optind = 1;
 	while (1) {
@@ -110,8 +111,11 @@ static int cmd_inode_resolve(int argc, char **argv)
 		return 12;
 	}
 
-	return __ino_to_path_fd(atoll(argv[optind]), fd, verbose,
-				argv[optind+1]);
+	ret = __ino_to_path_fd(atoll(argv[optind]), fd, verbose,
+			       argv[optind+1]);
+	close(fd);
+	return ret;
+
 }
 
 static const char * const cmd_logical_resolve_usage[] = {
