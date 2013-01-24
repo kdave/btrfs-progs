@@ -385,6 +385,7 @@ static int find_root(struct btrfs_root *root)
 
 		if (!(type & BTRFS_BLOCK_GROUP_METADATA)) {
 			offset += map_length;
+			kfree(multi);
 			continue;
 		}
 
