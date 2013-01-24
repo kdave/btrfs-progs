@@ -6,31 +6,24 @@ bindir = $(prefix)/bin
 mandir = $(prefix)/man
 man8dir = $(mandir)/man8
 
+# clear out all suffixes
+.SUFFIXES:
+# list only those we use
+.SUFFIXES: .in .gz
+
 MANPAGES = mkfs.btrfs.8.gz btrfsctl.8.gz btrfsck.8.gz btrfs-image.8.gz \
 	   btrfs-show.8.gz btrfs.8.gz
+INFILES = ${MANPAGES:.in=.gz}
 
 all: $(MANPAGES)
 
-mkfs.btrfs.8.gz: mkfs.btrfs.8.in
-	$(GZIPCMD) -n -c mkfs.btrfs.8.in > mkfs.btrfs.8.gz
-
-btrfs.8.gz: btrfs.8.in
-	$(GZIPCMD) -n -c btrfs.8.in > btrfs.8.gz
-
-btrfsctl.8.gz: btrfsctl.8.in
-	$(GZIPCMD) -n -c btrfsctl.8.in > btrfsctl.8.gz
-
-btrfsck.8.gz: btrfsck.8.in
-	$(GZIPCMD) -n -c btrfsck.8.in > btrfsck.8.gz
-
-btrfs-image.8.gz: btrfs-image.8.in
-	$(GZIPCMD) -n -c btrfs-image.8.in > btrfs-image.8.gz
-
-btrfs-show.8.gz: btrfs-show.8.in
-	$(GZIPCMD) -n -c btrfs-show.8.in > btrfs-show.8.gz
+.in.gz :
+	@echo "    [MAN]    $@"
+	$(Q)$(GZIPCMD) -n -c $< > $@
 
 clean :
-	rm -f $(MANPAGES)
+	@echo "Cleaning manpages"
+	$(Q)rm -f $(MANPAGES)
 
 install: $(MANPAGES)
 	$(INSTALL) -m755 -d $(DESTDIR)$(man8dir)
