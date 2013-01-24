@@ -152,7 +152,7 @@ static int find_good_parent(struct btrfs_send *s, u64 root_id, u64 *found)
 		if (tmp < 0)
 			tmp *= -1;
 		if (tmp < best_diff) {
-			best_parent = parent;
+			best_parent = parent2;
 			best_diff = tmp;
 		}
 	}
