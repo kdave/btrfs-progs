@@ -633,6 +633,7 @@ static int resolve_root(struct root_lookup *rl, struct root_info *ri,
 			len = strlen(full_path);
 			tmp = malloc(len + add_len + 2);
 			memcpy(tmp + add_len + 1, full_path, len);
+			tmp[len + add_len + 1] = '\0';
 			tmp[add_len] = '/';
 			memcpy(tmp, p, add_len);
 			free(full_path);
