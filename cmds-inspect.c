@@ -44,6 +44,7 @@ static int __ino_to_path_fd(u64 inum, int fd, int verbose, const char *prepend)
 	if (!fspath)
 		return 1;
 
+	memset(fspath, 0, sizeof(*fspath));
 	ipa.inum = inum;
 	ipa.size = 4096;
 	ipa.fspath = (uintptr_t)fspath;
@@ -172,6 +173,7 @@ static int cmd_logical_resolve(int argc, char **argv)
 	if (!inodes)
 		return 1;
 
+	memset(inodes, 0, sizeof(*inodes));
 	loi.logical = atoll(argv[optind]);
 	loi.size = size;
 	loi.inodes = (uintptr_t)inodes;
