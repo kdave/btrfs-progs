@@ -1457,14 +1457,14 @@ static int cmd_scrub_cancel(int argc, char **argv)
 again:
 	ret = ioctl(fdmnt, BTRFS_IOC_SCRUB_CANCEL, NULL);
 	err = errno;
-	close(fdmnt);
 
 	if (ret && err == EINVAL) {
-		/* path is no mounted btrfs. try if it's a device */
+		/* path is not a btrfs mount point.  See if it's a device. */
 		ret = check_mounted_where(fdmnt, path, mp, sizeof(mp),
 					  &fs_devices_mnt);
-		close(fdmnt);
 		if (ret) {
+			/* It is a device; open the mountpoint. */
+			close(fdmnt);
 			fdmnt = open_file_or_dir(mp);
 			if (fdmnt >= 0) {
 				path = mp;
@@ -1472,6 +1472,8 @@ again:
 			}
 		}
 	}
+
+	close(fdmnt);
 
 	if (ret) {
 		fprintf(stderr, "ERROR: scrub cancel failed on %s: %s\n", path,
