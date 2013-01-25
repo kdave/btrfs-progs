@@ -149,8 +149,8 @@ static int cmd_subvol_create(int argc, char **argv)
 		struct btrfs_ioctl_vol_args	args;
 
 		memset(&args, 0, sizeof(args));
-		strncpy(args.name, newname, BTRFS_SUBVOL_NAME_MAX);
-		args.name[BTRFS_SUBVOL_NAME_MAX-1] = 0;
+		strncpy(args.name, newname, BTRFS_PATH_NAME_MAX);
+		args.name[BTRFS_PATH_NAME_MAX-1] = 0;
 
 		res = ioctl(fddst, BTRFS_IOC_SUBVOL_CREATE, &args);
 	}
