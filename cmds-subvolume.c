@@ -32,6 +32,7 @@
 
 #include "ctree.h"
 #include "commands.h"
+#include "utils.h"
 #include "btrfs-list.h"
 #include "utils.h"
 
@@ -138,8 +139,7 @@ static int cmd_subvol_create(int argc, char **argv)
 		struct btrfs_ioctl_vol_args_v2	args;
 
 		memset(&args, 0, sizeof(args));
-		strncpy(args.name, newname, BTRFS_SUBVOL_NAME_MAX);
-		args.name[BTRFS_SUBVOL_NAME_MAX-1] = 0;
+		strncpy_null(args.name, newname);
 		args.flags |= BTRFS_SUBVOL_QGROUP_INHERIT;
 		args.size = qgroup_inherit_size(inherit);
 		args.qgroup_inherit = inherit;
@@ -149,8 +149,7 @@ static int cmd_subvol_create(int argc, char **argv)
 		struct btrfs_ioctl_vol_args	args;
 
 		memset(&args, 0, sizeof(args));
-		strncpy(args.name, newname, BTRFS_PATH_NAME_MAX);
-		args.name[BTRFS_PATH_NAME_MAX-1] = 0;
+		strncpy_null(args.name, newname);
 
 		res = ioctl(fddst, BTRFS_IOC_SUBVOL_CREATE, &args);
 	}
@@ -250,8 +249,7 @@ again:
 	}
 
 	printf("Delete subvolume '%s/%s'\n", dname, vname);
-	strncpy(args.name, vname, BTRFS_PATH_NAME_MAX);
-	args.name[BTRFS_PATH_NAME_MAX-1] = 0;
+	strncpy_null(args.name, vname);
 	res = ioctl(fd, BTRFS_IOC_SNAP_DESTROY, &args);
 	e = errno;
 
@@ -597,8 +595,7 @@ static int cmd_snapshot(int argc, char **argv)
 		args.size = qgroup_inherit_size(inherit);
 		args.qgroup_inherit = inherit;
 	}
-	strncpy(args.name, newname, BTRFS_SUBVOL_NAME_MAX);
-	args.name[BTRFS_SUBVOL_NAME_MAX-1] = 0;
+	strncpy_null(args.name, newname);
 	res = ioctl(fddst, BTRFS_IOC_SNAP_CREATE_V2, &args);
 	e = errno;
 

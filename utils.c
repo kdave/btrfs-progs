@@ -1126,6 +1126,26 @@ char *pretty_sizes(u64 size)
 }
 
 /*
+ * __strncpy__null - strncpy with null termination
+ * @dest:	the target array
+ * @src:	the source string
+ * @n:		maximum bytes to copy (size of *dest)
+ *
+ * Like strncpy, but ensures destination is null-terminated.
+ *
+ * Copies the string pointed to by src, including the terminating null
+ * byte ('\0'), to the buffer pointed to by dest, up to a maximum
+ * of n bytes.  Then ensure that dest is null-terminated.
+ */
+char *__strncpy__null(char *dest, const char *src, size_t n)
+{
+	strncpy(dest, src, n);
+	if (n > 0)
+		dest[n - 1] = '\0';
+	return dest;
+}
+
+/*
  * Checks to make sure that the label matches our requirements.
  * Returns:
        0    if everything is safe and usable

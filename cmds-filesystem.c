@@ -478,8 +478,7 @@ static int cmd_resize(int argc, char **argv)
 	}
 
 	printf("Resize '%s' of '%s'\n", path, amount);
-	strncpy(args.name, amount, BTRFS_PATH_NAME_MAX);
-	args.name[BTRFS_PATH_NAME_MAX-1] = 0;
+	strncpy_null(args.name, amount);
 	res = ioctl(fd, BTRFS_IOC_RESIZE, &args);
 	e = errno;
 	close(fd);
