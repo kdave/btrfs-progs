@@ -1192,6 +1192,7 @@ static int scrub_start(int argc, char **argv, int resume)
 			/* ... yes, so scrub must be running. error out */
 			fprintf(stderr, "ERROR: scrub already running\n");
 			close(prg_fd);
+			prg_fd = -1;
 			goto out;
 		}
 		/*
