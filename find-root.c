@@ -65,32 +65,6 @@ int csum_block(void *buf, u32 len)
 	return ret;
 }
 
-static int __setup_root(u32 nodesize, u32 leafsize, u32 sectorsize,
-			u32 stripesize, struct btrfs_root *root,
-			struct btrfs_fs_info *fs_info, u64 objectid)
-{
-	root->node = NULL;
-	root->commit_root = NULL;
-	root->sectorsize = sectorsize;
-	root->nodesize = nodesize;
-	root->leafsize = leafsize;
-	root->stripesize = stripesize;
-	root->ref_cows = 0;
-	root->track_dirty = 0;
-
-	root->fs_info = fs_info;
-	root->objectid = objectid;
-	root->last_trans = 0;
-	root->highest_inode = 0;
-	root->last_inode_alloc = 0;
-
-	INIT_LIST_HEAD(&root->dirty_list);
-	memset(&root->root_key, 0, sizeof(root->root_key));
-	memset(&root->root_item, 0, sizeof(root->root_item));
-	root->root_key.objectid = objectid;
-	return 0;
-}
-
 static int close_all_devices(struct btrfs_fs_info *fs_info)
 {
 	struct list_head *list;
