@@ -1,8 +1,10 @@
 *.o
+*.static.o
 .*.o.d
 version.h
 man/*.gz
 btrfs
+btrfs.static
 btrfs-debug-tree
 btrfs-map-logical
 btrfs-show

@@ -39,6 +39,16 @@ progs = btrfsctl mkfs.btrfs btrfs-debug-tree btrfs-show btrfs-vol btrfsck \
 	btrfs btrfs-map-logical btrfs-image btrfs-zero-log btrfs-convert \
 	btrfs-find-root btrfs-restore btrfstune btrfs-show-super
 
+# Create all the static targets
+static_objects = $(patsubst %.o, %.static.o, $(objects))
+static_cmds_objects = $(patsubst %.o, %.static.o, $(cmds_objects))
+static_progs = $(patsubst %.o, %.static.o, $(progs))
+
+# Define static compilation flags
+STATIC_CFLAGS = $(CFLAGS) -ffunction-sections -fdata-sections
+STATIC_LDFLAGS = -static -Wl,--gc-sections
+STATIC_LIBS = $(LIBS) -lpthread
+
 # make C=1 to enable sparse
 ifdef C
 	check = sparse $(CHECKFLAGS)
@@ -51,8 +61,17 @@ endif
 	@echo "    [CC]     $@"
 	$(Q)$(CC) $(DEPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c $<
 
+%.static.o: %.c
+	@echo "    [CC]     $@"
+	$(Q)$(CC) $(DEPFLAGS) $(AM_CFLAGS) $(STATIC_CFLAGS) -c $< -o $@
 
 all: version.h $(progs) manpages
+
+#
+# NOTE: For static compiles, you need to have all the required libs
+# 	static equivalent available
+#
+static: version.h btrfs.static
 
 version.h:
 	$(Q)bash version.sh
@@ -61,6 +80,11 @@ btrfs: $(objects) btrfs.o help.o $(cmds_objects)
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o btrfs btrfs.o help.o $(cmds_objects) \
 		$(objects) $(LDFLAGS) $(LIBS) -lpthread
+
+btrfs.static: $(static_objects) btrfs.static.o help.static.o $(static_cmds_objects)
+	@echo "    [LD]     $@"
+	$(Q)$(CC) $(STATIC_CFLAGS) -o btrfs.static btrfs.static.o help.static.o $(static_cmds_objects) \
+		$(static_objects) $(STATIC_LDFLAGS) $(STATIC_LIBS)
 
 calc-size: $(objects) calc-size.o
 	@echo "    [LD]     $@"
@@ -151,7 +175,8 @@ install-man:
 clean :
 	@echo "Cleaning"
 	$(Q)rm -f $(progs) cscope.out *.o .*.d btrfs-convert btrfs-image btrfs-select-super \
-	      btrfs-zero-log btrfstune dir-test ioctl-test quick-test version.h
+	      btrfs-zero-log btrfstune dir-test ioctl-test quick-test btrfs.static \
+	      version.h
 	$(Q)$(MAKE) $(MAKEOPTS) -C man $@
 
 install: $(progs) install-man
