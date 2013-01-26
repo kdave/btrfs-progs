@@ -338,7 +338,7 @@ static int cmd_qgroup_limit(int argc, char **argv)
 	int ret = 0;
 	int fd;
 	int e;
-	char *path;
+	char *path = NULL;
 	struct btrfs_ioctl_qgroup_limit_args args;
 	unsigned long long size;
 	int compressed = 0;
