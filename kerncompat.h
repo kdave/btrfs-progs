@@ -267,6 +267,19 @@ typedef u64 __bitwise __be64;
 #define cpu_to_le16(x) ((__force __le16)(u16)(x))
 #define le16_to_cpu(x) ((__force u16)(__le16)(x))
 #endif
+
+struct __una_u16 { u16 x; } __attribute__((__packed__));
+struct __una_u32 { u32 x; } __attribute__((__packed__));
+struct __una_u64 { u64 x; } __attribute__((__packed__));
+
+#define get_unaligned_le8(p) (*((u8 *)(p)))
+#define put_unaligned_le8(val,p) ((*((u8 *)(p))) = (val))
+#define get_unaligned_le16(p) le16_to_cpu(((const struct __una_u16 *)(p))->x)
+#define put_unaligned_le16(val,p) (((struct __una_u16 *)(p))->x = cpu_to_le16(val))
+#define get_unaligned_le32(p) le32_to_cpu(((const struct __una_u32 *)(p))->x)
+#define put_unaligned_le32(val,p) (((struct __una_u32 *)(p))->x = cpu_to_le32(val))
+#define get_unaligned_le64(p) le64_to_cpu(((const struct __una_u64 *)(p))->x)
+#define put_unaligned_le64(val,p) (((struct __una_u64 *)(p))->x = cpu_to_le64(val))
 #endif
 
 #ifndef noinline
