@@ -16,8 +16,9 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#define _XOPEN_SOURCE 600
-#define __USE_XOPEN2K
+#define _XOPEN_SOURCE 700
+#define __USE_XOPEN2K8
+#define __XOPEN2K8 /* due to an error in dirent.h, to get dirfd() */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1276,3 +1277,28 @@ u64 parse_size(char *s)
 	return strtoull(s, NULL, 10) * mult;
 }
 
+int open_file_or_dir(const char *fname)
+{
+	int ret;
+	struct stat st;
+	DIR *dirstream;
+	int fd;
+
+	ret = stat(fname, &st);
+	if (ret < 0) {
+		return -1;
+	}
+	if (S_ISDIR(st.st_mode)) {
+		dirstream = opendir(fname);
+		if (!dirstream) {
+			return -2;
+		}
+		fd = dirfd(dirstream);
+	} else {
+		fd = open(fname, O_RDWR);
+	}
+	if (fd < 0) {
+		return -3;
+	}
+	return fd;
+}

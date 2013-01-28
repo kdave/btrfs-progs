@@ -57,9 +57,9 @@ all: version $(progs) manpages
 version:
 	$(Q)bash version.sh
 
-btrfs: $(objects) btrfs.o help.o common.o $(cmds_objects)
+btrfs: $(objects) btrfs.o help.o $(cmds_objects)
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o btrfs btrfs.o help.o common.o $(cmds_objects) \
+	$(Q)$(CC) $(CFLAGS) -o btrfs btrfs.o help.o $(cmds_objects) \
 		$(objects) $(LDFLAGS) $(LIBS) -lpthread
 
 calc-size: $(objects) calc-size.o

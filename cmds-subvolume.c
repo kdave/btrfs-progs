@@ -32,6 +32,7 @@
 #include "ctree.h"
 #include "commands.h"
 #include "btrfs-list.h"
+#include "utils.h"
 
 static const char * const subvolume_cmd_group_usage[] = {
 	"btrfs subvolume <command> <args>",

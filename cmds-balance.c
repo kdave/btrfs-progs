@@ -28,6 +28,7 @@
 #include "volumes.h"
 
 #include "commands.h"
+#include "utils.h"
 
 static const char * const balance_cmd_group_usage[] = {
 	"btrfs [filesystem] balance <command> [options] <path>",
