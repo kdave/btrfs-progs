@@ -56,7 +56,7 @@ static int change_label_unmounted(char *dev, char *nLabel)
         */
        root = open_ctree(dev, 0, 1);
        if (!root) /* errors are printed by open_ctree() */
-         return;
+	       return -1;
 
        trans = btrfs_start_transaction(root, 1);
        strncpy(root->fs_info->super_copy.label, nLabel, BTRFS_LABEL_SIZE);
@@ -65,6 +65,7 @@ static int change_label_unmounted(char *dev, char *nLabel)
 
        /* Now we close it since we are done. */
        close_ctree(root);
+       return 0;
 }
 
 int get_label_unmounted(char *dev)
