@@ -2408,6 +2408,8 @@ static int noinline find_free_extent(struct btrfs_trans_handle *trans,
 	WARN_ON(num_bytes < root->sectorsize);
 	btrfs_set_key_type(ins, BTRFS_EXTENT_ITEM_KEY);
 
+	search_start = stripe_align(root, search_start);
+
 	if (hint_byte) {
 		block_group = btrfs_lookup_first_block_group(info, hint_byte);
 		if (!block_group)
@@ -2423,6 +2425,7 @@ static int noinline find_free_extent(struct btrfs_trans_handle *trans,
 	total_needed += empty_size;
 
 check_failed:
+	search_start = stripe_align(root, search_start);
 	if (!block_group) {
 		block_group = btrfs_lookup_first_block_group(info,
 							     search_start);
@@ -2435,7 +2438,6 @@ check_failed:
 	if (ret)
 		goto error;
 
-	search_start = stripe_align(root, search_start);
 	ins->objectid = search_start;
 	ins->offset = num_bytes;
 
