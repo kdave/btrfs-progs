@@ -1384,6 +1384,8 @@ int main(int ac, char **av)
 			fprintf(stderr, "unable to zero the output file\n");
 			exit(1);
 		}
+		/* our "device" is the new image file */
+		dev_block_count = block_count;
 	}
 
 	ssd = is_ssd(file);
