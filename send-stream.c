@@ -418,6 +418,12 @@ static int read_and_process_cmd(struct btrfs_send_stream *s)
 		TLV_GET_TIMESPEC(s, BTRFS_SEND_A_CTIME, &ct);
 		ret = s->ops->utimes(path, &at, &mt, &ct, s->user);
 		break;
+	case BTRFS_SEND_C_UPDATE_EXTENT:
+		TLV_GET_STRING(s, BTRFS_SEND_A_PATH, &path);
+		TLV_GET_U64(s, BTRFS_SEND_A_FILE_OFFSET, &offset);
+		TLV_GET_U64(s, BTRFS_SEND_A_SIZE, &tmp);
+		ret = s->ops->update_extent(path, offset, tmp, s->user);
+		break;
 	case BTRFS_SEND_C_END:
 		ret = 1;
 		break;

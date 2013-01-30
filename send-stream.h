@@ -49,6 +49,7 @@ struct btrfs_send_ops {
 	int (*utimes)(const char *path, struct timespec *at,
 		      struct timespec *mt, struct timespec *ct,
 		      void *user);
+	int (*update_extent)(const char *path, u64 offset, u64 len, void *user);
 };
 
 int btrfs_read_and_process_send_stream(int fd,
