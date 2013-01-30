@@ -32,7 +32,6 @@
 #include "version.h"
 
 #include "commands.h"
-#include "btrfslabel.h"
 
 static const char * const filesystem_cmd_group_usage[] = {
 	"btrfs filesystem [<group>] <command> [<args>]",
