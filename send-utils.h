@@ -21,6 +21,10 @@
 #include "ctree.h"
 #include "rbtree.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum subvol_search_type {
 	subvol_search_by_root_id,
 	subvol_search_by_uuid,
@@ -65,5 +69,8 @@ void subvol_uuid_search_add(struct subvol_uuid_search *s,
 char *path_cat(const char *p1, const char *p2);
 char *path_cat3(const char *p1, const char *p2, const char *p3);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* SEND_UTILS_H_ */

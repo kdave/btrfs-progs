@@ -48,7 +48,7 @@ static struct extent_state *alloc_extent_state(void)
 		return NULL;
 	state->refs = 1;
 	state->state = 0;
-	state->private = 0;
+	state->xprivate = 0;
 	return state;
 }
 
@@ -511,7 +511,7 @@ int set_state_private(struct extent_io_tree *tree, u64 start, u64 private)
 		ret = -ENOENT;
 		goto out;
 	}
-	state->private = private;
+	state->xprivate = private;
 out:
 	return ret;
 }
@@ -532,7 +532,7 @@ int get_state_private(struct extent_io_tree *tree, u64 start, u64 *private)
 		ret = -ENOENT;
 		goto out;
 	}
-	*private = state->private;
+	*private = state->xprivate;
 out:
 	return ret;
 }

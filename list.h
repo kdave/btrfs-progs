@@ -19,8 +19,8 @@
 #ifndef _LINUX_LIST_H
 #define _LINUX_LIST_H
 
-#define LIST_POISON1  ((void *) 0x00100100)
-#define LIST_POISON2  ((void *) 0x00200200)
+#define LIST_POISON1  ((struct list_head *) 0x00100100)
+#define LIST_POISON2  ((struct list_head *) 0x00200200)
 
 /*
  * Simple doubly linked list implementation.
@@ -54,17 +54,17 @@ static inline void INIT_LIST_HEAD(struct list_head *list)
  * the prev/next entries already!
  */
 #ifndef CONFIG_DEBUG_LIST
-static inline void __list_add(struct list_head *new,
+static inline void __list_add(struct list_head *xnew,
 			      struct list_head *prev,
 			      struct list_head *next)
 {
-	next->prev = new;
-	new->next = next;
-	new->prev = prev;
-	prev->next = new;
+	next->prev = xnew;
+	xnew->next = next;
+	xnew->prev = prev;
+	prev->next = xnew;
 }
 #else
-extern void __list_add(struct list_head *new,
+extern void __list_add(struct list_head *xnew,
 			      struct list_head *prev,
 			      struct list_head *next);
 #endif
@@ -78,12 +78,12 @@ extern void __list_add(struct list_head *new,
  * This is good for implementing stacks.
  */
 #ifndef CONFIG_DEBUG_LIST
-static inline void list_add(struct list_head *new, struct list_head *head)
+static inline void list_add(struct list_head *xnew, struct list_head *head)
 {
-	__list_add(new, head, head->next);
+	__list_add(xnew, head, head->next);
 }
 #else
-extern void list_add(struct list_head *new, struct list_head *head);
+extern void list_add(struct list_head *xnew, struct list_head *head);
 #endif
 
 
@@ -95,9 +95,9 @@ extern void list_add(struct list_head *new, struct list_head *head);
  * Insert a new entry before the specified head.
  * This is useful for implementing queues.
  */
-static inline void list_add_tail(struct list_head *new, struct list_head *head)
+static inline void list_add_tail(struct list_head *xnew, struct list_head *head)
 {
-	__list_add(new, head->prev, head);
+	__list_add(xnew, head->prev, head);
 }
 
 /*
@@ -137,18 +137,18 @@ extern void list_del(struct list_head *entry);
  * Note: if 'old' was empty, it will be overwritten.
  */
 static inline void list_replace(struct list_head *old,
-				struct list_head *new)
+				struct list_head *xnew)
 {
-	new->next = old->next;
-	new->next->prev = new;
-	new->prev = old->prev;
-	new->prev->next = new;
+	xnew->next = old->next;
+	xnew->next->prev = xnew;
+	xnew->prev = old->prev;
+	xnew->prev->next = xnew;
 }
 
 static inline void list_replace_init(struct list_head *old,
-					struct list_head *new)
+					struct list_head *xnew)
 {
-	list_replace(old, new);
+	list_replace(old, xnew);
 	INIT_LIST_HEAD(old);
 }
 /**

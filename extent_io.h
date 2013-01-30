@@ -47,7 +47,7 @@ struct extent_state {
 	u64 end;
 	int refs;
 	unsigned long state;
-	u64 private;
+	u64 xprivate;
 };
 
 struct extent_buffer {
@@ -86,8 +86,8 @@ int extent_buffer_uptodate(struct extent_buffer *eb);
 int set_extent_buffer_uptodate(struct extent_buffer *eb);
 int clear_extent_buffer_uptodate(struct extent_io_tree *tree,
 				struct extent_buffer *eb);
-int set_state_private(struct extent_io_tree *tree, u64 start, u64 private);
-int get_state_private(struct extent_io_tree *tree, u64 start, u64 *private);
+int set_state_private(struct extent_io_tree *tree, u64 start, u64 xprivate);
+int get_state_private(struct extent_io_tree *tree, u64 start, u64 *xprivate);
 struct extent_buffer *find_extent_buffer(struct extent_io_tree *tree,
 					 u64 bytenr, u32 blocksize);
 struct extent_buffer *find_first_extent_buffer(struct extent_io_tree *tree,

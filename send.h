@@ -19,6 +19,10 @@
 
 #include "ctree.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define BTRFS_SEND_STREAM_MAGIC "btrfs-stream"
 #define BTRFS_SEND_STREAM_VERSION 1
 
@@ -131,4 +135,8 @@ enum {
 
 #ifdef __KERNEL__
 long btrfs_ioctl_send(struct file *mnt_file, void __user *arg);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
