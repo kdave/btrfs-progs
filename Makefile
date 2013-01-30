@@ -164,6 +164,10 @@ ioctl-test: $(objects) ioctl-test.o
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o ioctl-test $(objects) ioctl-test.o $(LDFLAGS) $(LIBS)
 
+send-test: $(objects) send-test.o
+	@echo "    [LD]     $@"
+	$(Q)$(CC) $(CFLAGS) -o send-test $(objects) send-test.o $(LDFLAGS) $(LIBS) -lpthread
+
 manpages:
 	$(Q)$(MAKE) $(MAKEOPTS) -C man
 
@@ -173,7 +177,7 @@ install-man:
 clean :
 	@echo "Cleaning"
 	$(Q)rm -f $(progs) cscope.out *.o .*.d btrfs-convert btrfs-image btrfs-select-super \
-	      btrfs-zero-log btrfstune dir-test ioctl-test quick-test btrfs.static btrfsck \
+	      btrfs-zero-log btrfstune dir-test ioctl-test quick-test send-test btrfs.static btrfsck \
 	      version.h
 	$(Q)$(MAKE) $(MAKEOPTS) -C man $@
 
