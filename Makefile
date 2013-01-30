@@ -52,9 +52,9 @@ endif
 	$(Q)$(CC) $(DEPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c $<
 
 
-all: version $(progs) manpages
+all: version.h $(progs) manpages
 
-version:
+version.h:
 	$(Q)bash version.sh
 
 btrfs: $(objects) btrfs.o help.o $(cmds_objects)
