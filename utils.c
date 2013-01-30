@@ -1150,21 +1150,15 @@ char *__strncpy__null(char *dest, const char *src, size_t n)
  * Returns:
        0    if everything is safe and usable
       -1    if the label is too long
-      -2    if the label contains an invalid character
  */
-int check_label(char *input)
+static int check_label(const char *input)
 {
-       int i;
        int len = strlen(input);
 
-       if (len > BTRFS_LABEL_SIZE) {
+       if (len > BTRFS_LABEL_SIZE - 1) {
+		fprintf(stderr, "ERROR: Label %s is too long (max %d)\n",
+			input, BTRFS_LABEL_SIZE - 1);
                return -1;
-       }
-
-       for (i = 0; i < len; i++) {
-               if (input[i] == '/' || input[i] == '\\') {
-                       return -2;
-               }
        }
 
        return 0;
