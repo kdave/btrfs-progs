@@ -65,28 +65,49 @@ int update_seeding_flag(struct btrfs_root *root, int set_flag)
 	return 0;
 }
 
+int enable_extrefs_flag(struct btrfs_root *root)
+{
+	struct btrfs_trans_handle *trans;
+	struct btrfs_super_block *disk_super;
+	u64 super_flags;
+
+	disk_super = &root->fs_info->super_copy;
+	super_flags = btrfs_super_incompat_flags(disk_super);
+	super_flags |= BTRFS_FEATURE_INCOMPAT_EXTENDED_IREF;
+	trans = btrfs_start_transaction(root, 1);
+	btrfs_set_super_incompat_flags(disk_super, super_flags);
+	btrfs_commit_transaction(trans, root);
+
+	return 0;
+}
+
 static void print_usage(void)
 {
 	fprintf(stderr, "usage: btrfstune [options] device\n");
 	fprintf(stderr, "\t-S value\tenable/disable seeding\n");
+	fprintf(stderr, "\t-r \t\tenable extended inode refs\n");
 }
 
 int main(int argc, char *argv[])
 {
 	struct btrfs_root *root;
 	int success = 0;
+	int extrefs_flag = 0;
 	int seeding_flag = 0;
 	int seeding_value = 0;
 	int ret;
 
 	while(1) {
-		int c = getopt(argc, argv, "S:");
+		int c = getopt(argc, argv, "S:r");
 		if (c < 0)
 			break;
 		switch(c) {
 		case 'S':
 			seeding_flag = 1;
 			seeding_value = atoi(optarg);
+			break;
+		case 'r':
+			extrefs_flag = 1;
 			break;
 		default:
 			print_usage();
@@ -117,6 +138,11 @@ int main(int argc, char *argv[])
 		ret = update_seeding_flag(root, seeding_value);
 		if (!ret)
 			success++;
+	}
+
+	if (extrefs_flag) {
+		enable_extrefs_flag(root);
+		success++;
 	}
 
 	if (success > 0) {
