@@ -431,11 +431,6 @@ int cmd_send_start(int argc, char **argv)
 	memset(&send, 0, sizeof(send));
 	send.dump_fd = fileno(stdout);
 
-	if (isatty(send.dump_fd)) {
-		fprintf(stderr, "ERROR: not dumping send stream into a terminal, redirect it into a file\n");
-		return 1;
-	}
-
 	while ((c = getopt(argc, argv, "vc:f:i:p:")) != -1) {
 		switch (c) {
 		case 'v':
@@ -506,6 +501,13 @@ int cmd_send_start(int argc, char **argv)
 					outname, strerror(-ret));
 			goto out;
 		}
+	}
+
+	if (isatty(send.dump_fd)) {
+		fprintf(stderr, 
+			"ERROR: not dumping send stream into a terminal, "
+			"redirect it into a file\n");
+		return 1;
 	}
 
 	/* use first send subvol to determine mount_root */
