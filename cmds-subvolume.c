@@ -287,6 +287,7 @@ static const char * const cmd_subvol_list_usage[] = {
 	"-a           print all the subvolumes in the filesystem and",
 	"             distinguish absolute and relative path with respect",
 	"             to the given <path>",
+	"-c           print the ogeneration of the subvolume",
 	"-g           print the generation of the subvolume",
 	"-o           print only subvolumes bellow specified path",
 	"-u           print the uuid of subvolumes (and snapshots)",
@@ -331,7 +332,7 @@ static int cmd_subvol_list(int argc, char **argv)
 	optind = 1;
 	while(1) {
 		c = getopt_long(argc, argv,
-				    "agopqsurG:C:t", long_options, NULL);
+				    "acgopqsurG:C:t", long_options, NULL);
 		if (c < 0)
 			break;
 
@@ -341,6 +342,9 @@ static int cmd_subvol_list(int argc, char **argv)
 			break;
 		case 'a':
 			is_list_all = 1;
+			break;
+		case 'c':
+			btrfs_list_setup_print_column(BTRFS_LIST_OGENERATION);
 			break;
 		case 'g':
 			btrfs_list_setup_print_column(BTRFS_LIST_GENERATION);
