@@ -564,6 +564,12 @@ static int resolve_root(struct root_lookup *rl, struct root_info *ri,
 	while (1) {
 		char *tmp;
 		u64 next;
+		/*
+		* ref_tree = 0 indicates the subvolumes
+		* has been deleted.
+		*/
+		if (!found->ref_tree)
+			return -ENOENT;
 		int add_len = strlen(found->path);
 
 		/* room for / and for null */
@@ -592,20 +598,22 @@ static int resolve_root(struct root_lookup *rl, struct root_info *ri,
 			break;
 		}
 
+		/*
+		* if the ref_tree = BTRFS_FS_TREE_OBJECTID,
+		* we are at the top
+		*/
 		if (next == BTRFS_FS_TREE_OBJECTID) {
 			ri->top_id = next;
 			break;
 		}
 
 		/*
-		 * if the ref_tree wasn't in our tree of roots, we're
-		 * at the top
-		 */
+		* if the ref_tree wasn't in our tree of roots, the
+		* subvolume was deleted.
+		*/
 		found = root_tree_search(rl, next);
-		if (!found) {
-			ri->top_id = next;
-			break;
-		}
+		if (!found)
+			return -ENOENT;
 	}
 
 	ri->full_path = full_path;
@@ -628,6 +636,9 @@ static int lookup_ino_path(int fd, struct root_info *ri)
 	if (ri->path)
 		return 0;
 
+	if (!ri->ref_tree)
+		return -ENOENT;
+
 	memset(&args, 0, sizeof(args));
 	args.treeid = ri->ref_tree;
 	args.objectid = ri->dir_id;
@@ -635,6 +646,10 @@ static int lookup_ino_path(int fd, struct root_info *ri)
 	ret = ioctl(fd, BTRFS_IOC_INO_LOOKUP, &args);
 	e = errno;
 	if (ret) {
+		if (e == ENOENT) {
+			ri->ref_tree = 0;
+			return -ENOENT;
+		}
 		fprintf(stderr, "ERROR: Failed to lookup path for root %llu - %s\n",
 			(unsigned long long)ri->ref_tree,
 			strerror(e));
@@ -1268,10 +1283,13 @@ static void __filter_and_sort_subvol(struct root_lookup *all_subvols,
 	while (n) {
 		entry = rb_entry(n, struct root_info, rb_node);
 
-		resolve_root(all_subvols, entry, top_id);
+		ret = resolve_root(all_subvols, entry, top_id);
+		if (ret == -ENOENT)
+			goto skip;
 		ret = filter_root(entry, filter_set);
 		if (ret)
 			sort_tree_insert(sort_tree, entry, comp_set);
+skip:
 		n = rb_prev(n);
 	}
 }
@@ -1286,7 +1304,7 @@ static int __list_subvol_fill_paths(int fd, struct root_lookup *root_lookup)
 		int ret;
 		entry = rb_entry(n, struct root_info, rb_node);
 		ret = lookup_ino_path(fd, entry);
-		if(ret < 0)
+		if (ret && ret != -ENOENT)
 			return ret;
 		n = rb_next(n);
 	}
@@ -1735,7 +1753,11 @@ char *btrfs_list_path_for_root(int fd, u64 root)
 		struct root_info *entry;
 
 		entry = rb_entry(n, struct root_info, rb_node);
-		resolve_root(&root_lookup, entry, top_id);
+		ret = resolve_root(&root_lookup, entry, top_id);
+		if (ret == -ENOENT && entry->root_id == root) {
+			ret_path = NULL;
+			break;
+		}
 		if (entry->root_id == root) {
 			ret_path = entry->full_path;
 			entry->full_path = NULL;
