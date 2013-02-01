@@ -47,7 +47,7 @@ int btrfs_find_last_root(struct btrfs_root *root, u64 objectid,
 	slot = path->slots[0] - 1;
 	btrfs_item_key_to_cpu(l, &found_key, slot);
 	if (found_key.objectid != objectid) {
-		ret = 1;
+		ret = -ENOENT;
 		goto out;
 	}
 	read_extent_buffer(l, item, btrfs_item_ptr_offset(l, slot),
