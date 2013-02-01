@@ -1453,16 +1453,11 @@ static void print_all_volume_info(struct root_lookup *sorted_tree,
 	}
 }
 
-int btrfs_list_subvols(int fd, struct btrfs_list_filter_set *filter_set,
-		       struct btrfs_list_comparer_set *comp_set,
-		       int is_tab_result, int full_path)
+int btrfs_list_subvols(int fd, struct root_lookup *root_lookup)
 {
-	struct root_lookup root_lookup;
-	struct root_lookup root_sort;
 	int ret;
-	u64 top_id = (full_path ? 0 : btrfs_list_get_path_rootid(fd));
 
-	ret = __list_subvol_search(fd, &root_lookup);
+	ret = __list_subvol_search(fd, root_lookup);
 	if (ret) {
 		fprintf(stderr, "ERROR: can't perform the search - %s\n",
 				strerror(errno));
@@ -1473,16 +1468,29 @@ int btrfs_list_subvols(int fd, struct btrfs_list_filter_set *filter_set,
 	 * now we have an rbtree full of root_info objects, but we need to fill
 	 * in their path names within the subvol that is referencing each one.
 	 */
-	ret = __list_subvol_fill_paths(fd, &root_lookup);
-	if (ret < 0)
-		return ret;
+	ret = __list_subvol_fill_paths(fd, root_lookup);
+	return ret;
+}
 
+int btrfs_list_subvols_print(int fd, struct btrfs_list_filter_set *filter_set,
+		       struct btrfs_list_comparer_set *comp_set,
+		       int is_tab_result, int full_path)
+{
+	struct root_lookup root_lookup;
+	struct root_lookup root_sort;
+	int ret;
+	u64 top_id = (full_path ? 0 : btrfs_list_get_path_rootid(fd));
+
+	ret = btrfs_list_subvols(fd, &root_lookup);
+	if (ret)
+		return ret;
 	__filter_and_sort_subvol(&root_lookup, &root_sort, filter_set,
 				 comp_set, top_id);
 
 	print_all_volume_info(&root_sort, is_tab_result);
 	__free_all_subvolumn(&root_lookup);
-	return ret;
+
+	return 0;
 }
 
 static int print_one_extent(int fd, struct btrfs_ioctl_search_header *sh,

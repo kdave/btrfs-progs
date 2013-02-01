@@ -418,7 +418,7 @@ static int cmd_subvol_list(int argc, char **argv)
 					BTRFS_LIST_FILTER_TOPID_EQUAL,
 					top_id);
 
-	ret = btrfs_list_subvols(fd, filter_set, comparer_set,
+	ret = btrfs_list_subvols_print(fd, filter_set, comparer_set,
 				is_tab_result,
 				!is_list_all && !is_only_in_path);
 	if (ret)
@@ -626,7 +626,7 @@ static int cmd_subvol_get_default(int argc, char **argv)
 	btrfs_list_setup_filter(&filter_set, BTRFS_LIST_FILTER_ROOTID,
 				default_id);
 
-	ret = btrfs_list_subvols(fd, filter_set, NULL, 0, 1);
+	ret = btrfs_list_subvols_print(fd, filter_set, NULL, 0, 1);
 	if (ret)
 		return 19;
 	return 0;
