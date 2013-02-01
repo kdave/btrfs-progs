@@ -874,6 +874,11 @@ static int cmd_subvol_show(int argc, char **argv)
 	printf("\tParent: \t\t%llu\n", get_ri.ref_tree);
 	printf("\tTop Level: \t\t%llu\n", get_ri.top_id);
 
+	if (get_ri.flags & BTRFS_ROOT_SUBVOL_RDONLY)
+		printf("\tFlags: \t\t\treadonly\n");
+	else
+		printf("\tFlags: \t\t\t-\n");
+
 	/* print the snapshots of the given subvol if any*/
 	printf("\tSnapshot(s):\n");
 	filter_set = btrfs_list_alloc_filter_set();
