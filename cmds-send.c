@@ -334,12 +334,12 @@ out:
 	return ret;
 }
 
-static const char *get_subvol_name(struct btrfs_send *s, const char *full_path)
+char *get_subvol_name(char *mnt, char *full_path)
 {
-	int len = strlen(s->root_path);
+	int len = strlen(mnt);
 	if (!len)
 		return full_path;
-	if (s->root_path[len - 1] != '/')
+	if (mnt[len - 1] != '/')
 		len += 1;
 
 	return full_path + len;
@@ -449,7 +449,7 @@ int cmd_send_start(int argc, char **argv)
 			if (ret < 0)
 				goto out;
 
-			ret = get_root_id(&send, get_subvol_name(&send, subvol),
+			ret = get_root_id(&send, get_subvol_name(send.root_path, subvol),
 					&root_id);
 			if (ret < 0) {
 				fprintf(stderr, "ERROR: could not resolve "
@@ -526,7 +526,7 @@ int cmd_send_start(int argc, char **argv)
 
 	if (snapshot_parent != NULL) {
 		ret = get_root_id(&send,
-				get_subvol_name(&send, snapshot_parent),
+				get_subvol_name(send.root_path, snapshot_parent),
 				&parent_root_id);
 		if (ret < 0) {
 			fprintf(stderr, "ERROR: could not resolve root_id "
@@ -585,7 +585,7 @@ int cmd_send_start(int argc, char **argv)
 			goto out;
 		}
 
-		ret = get_root_id(&send, get_subvol_name(&send, subvol),
+		ret = get_root_id(&send, get_subvol_name(send.root_path, subvol),
 				&root_id);
 		if (ret < 0) {
 			fprintf(stderr, "ERROR: could not resolve root_id "
