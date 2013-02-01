@@ -1824,6 +1824,10 @@ static int check_fs_roots(struct btrfs_root *root,
 		    fs_root_objectid(key.objectid)) {
 			tmp_root = btrfs_read_fs_root_no_cache(root->fs_info,
 							       &key);
+			if (IS_ERR(tmp_root)) {
+				err = 1;
+				goto next;
+			}
 			ret = check_fs_root(tmp_root, root_cache, &wc);
 			if (ret)
 				err = 1;
@@ -1833,6 +1837,7 @@ static int check_fs_roots(struct btrfs_root *root,
 			process_root_ref(leaf, path.slots[0], &key,
 					 root_cache);
 		}
+next:
 		path.slots[0]++;
 	}
 	btrfs_release_path(tree_root, &path);
@@ -1994,7 +1999,8 @@ static int check_owner_ref(struct btrfs_root *root,
 	key.offset = (u64)-1;
 
 	ref_root = btrfs_read_fs_root(root->fs_info, &key);
-	BUG_ON(IS_ERR(ref_root));
+	if (IS_ERR(ref_root))
+		return 1;
 
 	level = btrfs_header_level(buf);
 	if (level == 0)
