@@ -283,6 +283,7 @@ static const char * const cmd_subvol_list_usage[] = {
 	"             to the given <path>",
 	"-o           print only subvolumes bellow specified path",
 	"-u           print the uuid of subvolumes (and snapshots)",
+	"-q           print the parent uuid of the snapshots",
 	"-t           print the result as a table",
 	"-s           list snapshots only in the filesystem",
 	"-r           list readonly subvolumes (including snapshots)",
@@ -323,7 +324,7 @@ static int cmd_subvol_list(int argc, char **argv)
 	optind = 1;
 	while(1) {
 		c = getopt_long(argc, argv,
-				    "aopsurg:c:t", long_options, NULL);
+				    "aopqsurg:c:t", long_options, NULL);
 		if (c < 0)
 			break;
 
@@ -349,6 +350,9 @@ static int cmd_subvol_list(int argc, char **argv)
 
 		case 'u':
 			btrfs_list_setup_print_column(BTRFS_LIST_UUID);
+			break;
+		case 'q':
+			btrfs_list_setup_print_column(BTRFS_LIST_PUUID);
 			break;
 		case 'r':
 			flags |= BTRFS_ROOT_SUBVOL_RDONLY;
