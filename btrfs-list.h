@@ -20,6 +20,7 @@
 
 #define BTRFS_LIST_LAYOUT_DEFAULT	0
 #define BTRFS_LIST_LAYOUT_TABLE	1
+#define BTRFS_LIST_LAYOUT_RAW		2
 
 /*
  * one of these for each root we find.
@@ -151,7 +152,7 @@ int btrfs_list_setup_comparer(struct btrfs_list_comparer_set **comp_set,
 
 int btrfs_list_subvols_print(int fd, struct btrfs_list_filter_set *filter_set,
 		       struct btrfs_list_comparer_set *comp_set,
-		       int is_tab_result, int full_path);
+		       int is_tab_result, int full_path, char *raw_prefix);
 int btrfs_list_find_updated_files(int fd, u64 root_id, u64 oldest_gen);
 int btrfs_list_get_default_subvolume(int fd, u64 *default_id);
 char *btrfs_list_path_for_root(int fd, u64 root);

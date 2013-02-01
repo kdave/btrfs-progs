@@ -24,6 +24,7 @@
 #include <libgen.h>
 #include <limits.h>
 #include <getopt.h>
+#include <uuid/uuid.h>
 
 #include "kerncompat.h"
 #include "ioctl.h"
@@ -431,11 +432,11 @@ static int cmd_subvol_list(int argc, char **argv)
 	if (is_tab_result)
 		ret = btrfs_list_subvols_print(fd, filter_set, comparer_set,
 				BTRFS_LIST_LAYOUT_TABLE,
-				!is_list_all && !is_only_in_path);
+				!is_list_all && !is_only_in_path, NULL);
 	else
 		ret = btrfs_list_subvols_print(fd, filter_set, comparer_set,
 				BTRFS_LIST_LAYOUT_DEFAULT,
-				!is_list_all && !is_only_in_path);
+				!is_list_all && !is_only_in_path, NULL);
 	if (ret)
 		return 19;
 	return 0;
@@ -648,7 +649,7 @@ static int cmd_subvol_get_default(int argc, char **argv)
 	btrfs_list_setup_print_column(BTRFS_LIST_PATH);
 
 	ret = btrfs_list_subvols_print(fd, filter_set, NULL,
-		BTRFS_LIST_LAYOUT_DEFAULT, 1);
+		BTRFS_LIST_LAYOUT_DEFAULT, 1, NULL);
 	if (ret)
 		return 19;
 	return 0;
@@ -735,6 +736,153 @@ static int cmd_find_new(int argc, char **argv)
 	return 0;
 }
 
+static const char * const cmd_subvol_show_usage[] = {
+	"btrfs subvolume show <subvol-path>",
+	"Show more information of the subvolume",
+	NULL
+};
+
+static int cmd_subvol_show(int argc, char **argv)
+{
+	struct root_info get_ri;
+	struct btrfs_list_filter_set *filter_set;
+	char tstr[256];
+	char uuidparse[37];
+	char *fullpath = NULL, *svpath = NULL, *mnt = NULL;
+	char raw_prefix[] = "\t\t\t\t";
+	u64 sv_id, mntid;
+	int fd = -1, mntfd = -1;
+	int ret = -1;
+
+	if (check_argc_exact(argc, 2))
+		usage(cmd_subvol_show_usage);
+
+	fullpath = realpath(argv[1], 0);
+	if (!fullpath) {
+		fprintf(stderr, "ERROR: finding real path for '%s', %s\n",
+			argv[1], strerror(errno));
+		goto out;
+	}
+
+	ret = test_issubvolume(fullpath);
+	if (ret < 0) {
+		fprintf(stderr, "ERROR: error accessing '%s'\n", fullpath);
+		goto out;
+	}
+	if (!ret) {
+		fprintf(stderr, "ERROR: '%s' is not a subvolume\n", fullpath);
+		ret = -1;
+		goto out;
+	}
+
+	ret = find_mount_root(fullpath, &mnt);
+	if (ret < 0) {
+		fprintf(stderr, "ERROR: find_mount_root failed on %s: "
+				"%s\n", fullpath, strerror(-ret));
+		goto out;
+	}
+	ret = -1;
+	svpath = get_subvol_name(mnt, fullpath);
+
+	fd = open_file_or_dir(fullpath);
+	if (fd < 0) {
+		fprintf(stderr, "ERROR: can't access '%s'\n", fullpath);
+		goto out;
+	}
+
+	sv_id = btrfs_list_get_path_rootid(fd);
+	if (sv_id < 0) {
+		fprintf(stderr, "ERROR: can't get rootid for '%s'\n",
+			fullpath);
+		goto out;
+	}
+
+	mntfd = open_file_or_dir(mnt);
+	if (mntfd < 0) {
+		fprintf(stderr, "ERROR: can't access '%s'\n", mnt);
+		goto out;
+	}
+
+	mntid = btrfs_list_get_path_rootid(mntfd);
+	if (mntid < 0) {
+		fprintf(stderr, "ERROR: can't get rootid for '%s'\n", mnt);
+		goto out;
+	}
+
+	if (sv_id == BTRFS_FS_TREE_OBJECTID) {
+		printf("%s is btrfs root\n", fullpath);
+		goto out;
+	}
+
+	memset(&get_ri, 0, sizeof(get_ri));
+	get_ri.root_id = sv_id;
+
+	if (btrfs_get_subvol(mntfd, &get_ri)) {
+		fprintf(stderr, "ERROR: can't find '%s'\n",
+			svpath);
+		goto out;
+	}
+
+	ret = 0;
+	/* print the info */
+	printf("%s\n", fullpath);
+	printf("\tName: \t\t\t%s\n", get_ri.name);
+
+	if (uuid_is_null(get_ri.uuid))
+		strcpy(uuidparse, "-");
+	else
+		uuid_unparse(get_ri.uuid, uuidparse);
+	printf("\tuuid: \t\t\t%s\n", uuidparse);
+
+	if (uuid_is_null(get_ri.puuid))
+		strcpy(uuidparse, "-");
+	else
+		uuid_unparse(get_ri.puuid, uuidparse);
+	printf("\tParent uuid: \t\t%s\n", uuidparse);
+
+	if (get_ri.otime)
+		strftime(tstr, 256, "%Y-%m-%d %X",
+			 localtime(&get_ri.otime));
+	else
+		strcpy(tstr, "-");
+	printf("\tCreation time: \t\t%s\n", tstr);
+
+	printf("\tObject ID: \t\t%llu\n", get_ri.root_id);
+	printf("\tGeneration (Gen): \t%llu\n", get_ri.gen);
+	printf("\tGen at creation: \t%llu\n", get_ri.ogen);
+	printf("\tParent: \t\t%llu\n", get_ri.ref_tree);
+	printf("\tTop Level: \t\t%llu\n", get_ri.top_id);
+
+	/* print the snapshots of the given subvol if any*/
+	printf("\tSnapshot(s):\n");
+	filter_set = btrfs_list_alloc_filter_set();
+	btrfs_list_setup_filter(&filter_set, BTRFS_LIST_FILTER_BY_PARENT,
+				(u64)get_ri.uuid);
+	btrfs_list_setup_print_column(BTRFS_LIST_PATH);
+	btrfs_list_subvols_print(fd, filter_set, NULL, BTRFS_LIST_LAYOUT_RAW,
+			1, raw_prefix);
+
+	/* clean up */
+	if (get_ri.path)
+		free(get_ri.path);
+	if (get_ri.name)
+		free(get_ri.name);
+	if (get_ri.full_path)
+		free(get_ri.full_path);
+
+out:
+	if (mntfd >= 0)
+		close(mntfd);
+	if (fd >= 0)
+		close(fd);
+	if (mnt)
+		free(mnt);
+	if (fullpath)
+		free(fullpath);
+
+	return ret;
+}
+
 const struct cmd_group subvolume_cmd_group = {
 	subvolume_cmd_group_usage, NULL, {
 		{ "create", cmd_subvol_create, cmd_subvol_create_usage, NULL, 0 },
@@ -746,6 +894,7 @@ const struct cmd_group subvolume_cmd_group = {
 		{ "set-default", cmd_subvol_set_default,
 			cmd_subvol_set_default_usage, NULL, 0 },
 		{ "find-new", cmd_find_new, cmd_find_new_usage, NULL, 0 },
+		{ "show", cmd_subvol_show, cmd_subvol_show_usage, NULL, 0 },
 		{ 0, 0, 0, 0, 0 }
 	}
 };

@@ -1349,6 +1349,22 @@ static void print_subvolume_column(struct root_info *subv,
 	}
 }
 
+static void print_single_volume_info_raw(struct root_info *subv, char *raw_prefix)
+{
+	int i;
+
+	for (i = 0; i < BTRFS_LIST_ALL; i++) {
+		if (!btrfs_list_columns[i].need_print)
+			continue;
+
+		if (raw_prefix)
+			printf("%s",raw_prefix);
+
+		print_subvolume_column(subv, i);
+	}
+	printf("\n");
+}
+
 static void print_single_volume_info_table(struct root_info *subv)
 {
 	int i;
@@ -1415,7 +1431,7 @@ static void print_all_volume_info_tab_head()
 }
 
 static void print_all_volume_info(struct root_lookup *sorted_tree,
-				  int layout)
+				  int layout, char *raw_prefix)
 {
 	struct rb_node *n;
 	struct root_info *entry;
@@ -1432,6 +1448,9 @@ static void print_all_volume_info(struct root_lookup *sorted_tree,
 			break;
 		case BTRFS_LIST_LAYOUT_TABLE:
 			print_single_volume_info_table(entry);
+			break;
+		case BTRFS_LIST_LAYOUT_RAW:
+			print_single_volume_info_raw(entry, raw_prefix);
 			break;
 		}
 		n = rb_next(n);
@@ -1459,7 +1478,7 @@ int btrfs_list_subvols(int fd, struct root_lookup *root_lookup)
 
 int btrfs_list_subvols_print(int fd, struct btrfs_list_filter_set *filter_set,
 		       struct btrfs_list_comparer_set *comp_set,
-		       int layout, int full_path)
+		       int layout, int full_path, char *raw_prefix)
 {
 	struct root_lookup root_lookup;
 	struct root_lookup root_sort;
@@ -1472,7 +1491,7 @@ int btrfs_list_subvols_print(int fd, struct btrfs_list_filter_set *filter_set,
 	__filter_and_sort_subvol(&root_lookup, &root_sort, filter_set,
 				 comp_set, top_id);
 
-	print_all_volume_info(&root_sort, layout);
+	print_all_volume_info(&root_sort, layout, raw_prefix);
 	__free_all_subvolumn(&root_lookup);
 
 	return 0;
