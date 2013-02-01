@@ -54,12 +54,12 @@ struct {
 	{
 		.name		= "ID",
 		.column_name	= "ID",
-		.need_print	= 1,
+		.need_print	= 0,
 	},
 	{
 		.name		= "gen",
 		.column_name	= "Gen",
-		.need_print	= 1,
+		.need_print	= 0,
 	},
 	{
 		.name		= "cgen",
@@ -74,7 +74,7 @@ struct {
 	{
 		.name		= "top level",
 		.column_name	= "Top Level",
-		.need_print	= 1,
+		.need_print	= 0,
 	},
 	{
 		.name		= "otime",
@@ -94,7 +94,7 @@ struct {
 	{
 		.name		= "path",
 		.column_name	= "Path",
-		.need_print	= 1,
+		.need_print	= 0,
 	},
 	{
 		.name		= NULL,
@@ -1415,21 +1415,25 @@ static void print_all_volume_info_tab_head()
 }
 
 static void print_all_volume_info(struct root_lookup *sorted_tree,
-				  int is_tab_result)
+				  int layout)
 {
 	struct rb_node *n;
 	struct root_info *entry;
 
-	if (is_tab_result)
+	if (layout == BTRFS_LIST_LAYOUT_TABLE)
 		print_all_volume_info_tab_head();
 
 	n = rb_first(&sorted_tree->root);
 	while (n) {
 		entry = rb_entry(n, struct root_info, sort_node);
-		if (is_tab_result)
-			print_single_volume_info_table(entry);
-		else
+		switch (layout) {
+		case BTRFS_LIST_LAYOUT_DEFAULT:
 			print_single_volume_info_default(entry);
+			break;
+		case BTRFS_LIST_LAYOUT_TABLE:
+			print_single_volume_info_table(entry);
+			break;
+		}
 		n = rb_next(n);
 	}
 }
@@ -1455,7 +1459,7 @@ int btrfs_list_subvols(int fd, struct root_lookup *root_lookup)
 
 int btrfs_list_subvols_print(int fd, struct btrfs_list_filter_set *filter_set,
 		       struct btrfs_list_comparer_set *comp_set,
-		       int is_tab_result, int full_path)
+		       int layout, int full_path)
 {
 	struct root_lookup root_lookup;
 	struct root_lookup root_sort;
@@ -1468,7 +1472,7 @@ int btrfs_list_subvols_print(int fd, struct btrfs_list_filter_set *filter_set,
 	__filter_and_sort_subvol(&root_lookup, &root_sort, filter_set,
 				 comp_set, top_id);
 
-	print_all_volume_info(&root_sort, is_tab_result);
+	print_all_volume_info(&root_sort, layout);
 	__free_all_subvolumn(&root_lookup);
 
 	return 0;

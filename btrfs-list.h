@@ -18,6 +18,9 @@
 
 #include "kerncompat.h"
 
+#define BTRFS_LIST_LAYOUT_DEFAULT	0
+#define BTRFS_LIST_LAYOUT_TABLE	1
+
 /*
  * one of these for each root we find.
  */
