@@ -176,6 +176,8 @@ int btrfs_open_devices(struct btrfs_fs_devices *fs_devices, int flags)
 			goto fail;
 		}
 
+		posix_fadvise(fd, 0, 0, POSIX_FADV_DONTNEED);
+
 		if (device->devid == fs_devices->latest_devid)
 			fs_devices->latest_bdev = fd;
 		if (device->devid == fs_devices->lowest_devid)

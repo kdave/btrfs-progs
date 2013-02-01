@@ -641,6 +641,9 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 	if (sb_bytenr == 0)
 		sb_bytenr = BTRFS_SUPER_INFO_OFFSET;
 
+	/* try to drop all the caches */
+	posix_fadvise(fp, 0, 0, POSIX_FADV_DONTNEED);
+
 	ret = btrfs_scan_one_device(fp, path, &fs_devices,
 				    &total_devs, sb_bytenr);
 
@@ -1091,6 +1094,10 @@ static int close_all_devices(struct btrfs_fs_info *fs_info)
 	list = &fs_info->fs_devices->devices;
 	list_for_each(next, list) {
 		device = list_entry(next, struct btrfs_device, dev_list);
+		if (device->fd) {
+			fsync(device->fd);
+			posix_fadvise(device->fd, 0, 0, POSIX_FADV_DONTNEED);
+		}
 		close(device->fd);
 	}
 	return 0;
