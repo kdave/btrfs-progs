@@ -1517,19 +1517,24 @@ int btrfs_list_subvols_print(int fd, struct btrfs_list_filter_set *filter_set,
 
 int btrfs_get_subvol(int fd, struct root_info *the_ri)
 {
-	int ret = -1;
+	int ret = 1, rr;
 	struct root_lookup rl;
 	struct rb_node *rbn;
 	struct root_info *ri;
 	u64 root_id = btrfs_list_get_path_rootid(fd);
 
 	if (btrfs_list_subvols(fd, &rl))
-		return 1;
+		return ret;
 
 	rbn = rb_first(&rl.root);
 	while(rbn) {
 		ri = rb_entry(rbn, struct root_info, rb_node);
-		resolve_root(&rl, ri, root_id);
+		rr = resolve_root(&rl, ri, root_id);
+		if (rr == -ENOENT) {
+			ret = -ENOENT;
+			rbn = rb_next(rbn);
+			continue;
+		}
 		if (!comp_entry_with_rootid(the_ri, ri, 0)) {
 			memcpy(the_ri, ri, offsetof(struct root_info, path));
 			if (ri->path)
