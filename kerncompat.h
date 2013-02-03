@@ -36,7 +36,7 @@
 #define gfp_t int
 #define get_cpu_var(p) (p)
 #define __get_cpu_var(p) (p)
-#define BITS_PER_LONG (sizeof(long) * 8)
+#define BITS_PER_LONG (__SIZEOF_LONG__ * 8)
 #define __GFP_BITS_SHIFT 20
 #define __GFP_BITS_MASK ((int)((1 << __GFP_BITS_SHIFT) - 1))
 #define GFP_KERNEL 0
@@ -125,6 +125,10 @@ static inline int mutex_is_locked(struct mutex *m)
 
 #define BITOP_MASK(nr)		(1UL << ((nr) % BITS_PER_LONG))
 #define BITOP_WORD(nr)		((nr) / BITS_PER_LONG)
+
+#ifndef __attribute_const__
+#define __attribute_const__	__attribute__((__const__))
+#endif
 
 /**
  * __set_bit - Set a bit in memory

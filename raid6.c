@@ -19,6 +19,8 @@
  */
 #include <stdint.h>
 #include <unistd.h>
+#include "kerncompat.h"
+
 /*
  * This is the C data type to use
  */
