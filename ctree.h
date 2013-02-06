@@ -122,6 +122,13 @@ struct btrfs_trans_handle;
  */
 #define BTRFS_NAME_LEN 255
 
+/*
+ * Theoretical limit is larger, but we keep this down to a sane
+ * value. That should limit greatly the possibility of collisions on
+ * inode ref items.
+ */
+#define	BTRFS_LINK_MAX	65535U
+
 /* 32 bytes in various csum fields */
 #define BTRFS_CSUM_SIZE 32
 
@@ -424,6 +431,7 @@ struct btrfs_super_block {
 #define BTRFS_FEATURE_INCOMPAT_DEFAULT_SUBVOL	(1ULL << 1)
 #define BTRFS_FEATURE_INCOMPAT_MIXED_GROUPS	(1ULL << 2)
 #define BTRFS_FEATURE_INCOMPAT_COMPRESS_LZO	(1ULL << 3)
+
 /*
  * some patches floated around with a second compression method
  * lets save that incompat here for when they do get in
@@ -439,6 +447,7 @@ struct btrfs_super_block {
 #define BTRFS_FEATURE_INCOMPAT_BIG_METADATA     (1ULL << 5)
 #define BTRFS_FEATURE_INCOMPAT_RAID56		(1ULL << 7)
 
+#define BTRFS_FEATURE_INCOMPAT_EXTENDED_IREF   (1ULL << 6)
 
 #define BTRFS_FEATURE_COMPAT_SUPP		0ULL
 #define BTRFS_FEATURE_COMPAT_RO_SUPP		0ULL
@@ -447,6 +456,7 @@ struct btrfs_super_block {
 	 BTRFS_FEATURE_INCOMPAT_DEFAULT_SUBVOL |	\
 	 BTRFS_FEATURE_INCOMPAT_COMPRESS_LZO |		\
 	 BTRFS_FEATURE_INCOMPAT_BIG_METADATA |		\
+	 BTRFS_FEATURE_INCOMPAT_EXTENDED_IREF |		\
 	 BTRFS_FEATURE_INCOMPAT_RAID56 |		\
 	 BTRFS_FEATURE_INCOMPAT_MIXED_GROUPS)
 
@@ -585,6 +595,13 @@ struct btrfs_inode_ref {
 	__le64 index;
 	__le16 name_len;
 	/* name goes here */
+} __attribute__ ((__packed__));
+
+struct btrfs_inode_extref {
+	__le64 parent_objectid;
+	__le64 index;
+	__le16 name_len;
+	__u8   name[0]; /* name goes here */
 } __attribute__ ((__packed__));
 
 struct btrfs_timespec {
@@ -964,6 +981,7 @@ struct btrfs_root {
  */
 #define BTRFS_INODE_ITEM_KEY		1
 #define BTRFS_INODE_REF_KEY		12
+#define BTRFS_INODE_EXTREF_KEY		13
 #define BTRFS_XATTR_ITEM_KEY		24
 #define BTRFS_ORPHAN_ITEM_KEY		48
 
@@ -1049,6 +1067,18 @@ struct btrfs_root {
 #define BTRFS_QGROUP_RELATION_KEY	246
 
 /*
+ * Persistently stores the io stats in the device tree.
+ * One key for all stats, (0, BTRFS_DEV_STATS_KEY, devid).
+ */
+#define BTRFS_DEV_STATS_KEY	249
+
+/*
+ * Persistently stores the device replace state in the device tree.
+ * The key is built like this: (0, BTRFS_DEV_REPLACE_KEY, 0).
+ */
+#define BTRFS_DEV_REPLACE_KEY	250
+
+/*
  * string items are for debugging.  They just store a short string of
  * data in the FS
  */
@@ -1090,19 +1120,15 @@ static inline u##bits btrfs_##name(struct extent_buffer *eb,		\
 				   type *s)				\
 {									\
 	unsigned long offset = (unsigned long)s;			\
-	u##bits m;							\
 	type *p = (type *) (eb->data + offset);				\
-	memcpy(&m, &p->member, sizeof(m));				\
-	return le##bits##_to_cpu(m);					\
+	return get_unaligned_le##bits(&p->member);			\
 }									\
 static inline void btrfs_set_##name(struct extent_buffer *eb,		\
 				    type *s, u##bits val)		\
 {									\
 	unsigned long offset = (unsigned long)s;			\
-	u##bits m;							\
 	type *p = (type *) (eb->data + offset);				\
-	m = cpu_to_le##bits(val);					\
-	memcpy(&p->member, &m, sizeof(m));				\
+	put_unaligned_le##bits(val, &p->member);			\
 }
 
 #define BTRFS_SETGET_STACK_FUNCS(name, type, member, bits)		\
@@ -1254,6 +1280,13 @@ BTRFS_SETGET_STACK_FUNCS(block_group_flags,
 BTRFS_SETGET_FUNCS(inode_ref_name_len, struct btrfs_inode_ref, name_len, 16);
 BTRFS_SETGET_STACK_FUNCS(stack_inode_ref_name_len, struct btrfs_inode_ref, name_len, 16);
 BTRFS_SETGET_FUNCS(inode_ref_index, struct btrfs_inode_ref, index, 64);
+
+/* struct btrfs_inode_extref */
+BTRFS_SETGET_FUNCS(inode_extref_parent, struct btrfs_inode_extref,
+		   parent_objectid, 64);
+BTRFS_SETGET_FUNCS(inode_extref_name_len, struct btrfs_inode_extref,
+		   name_len, 16);
+BTRFS_SETGET_FUNCS(inode_extref_index, struct btrfs_inode_extref, index, 64);
 
 /* struct btrfs_inode_item */
 BTRFS_SETGET_FUNCS(inode_generation, struct btrfs_inode_item, generation, 64);

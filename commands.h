@@ -79,9 +79,6 @@ void help_ambiguous_token(const char *arg, const struct cmd_group *grp);
 
 void help_command_group(const struct cmd_group *grp, int argc, char **argv);
 
-/* common.c */
-int open_file_or_dir(const char *fname);
-
 extern const struct cmd_group subvolume_cmd_group;
 extern const struct cmd_group filesystem_cmd_group;
 extern const struct cmd_group balance_cmd_group;
@@ -92,6 +89,10 @@ extern const struct cmd_group send_cmd_group;
 extern const struct cmd_group receive_cmd_group;
 extern const struct cmd_group quota_cmd_group;
 extern const struct cmd_group qgroup_cmd_group;
+extern const struct cmd_group replace_cmd_group;
+
+extern const char * const cmd_send_usage[];
+extern const char * const cmd_receive_usage[];
 
 int cmd_subvolume(int argc, char **argv);
 int cmd_filesystem(int argc, char **argv);
@@ -103,6 +104,11 @@ int cmd_send(int argc, char **argv);
 int cmd_receive(int argc, char **argv);
 int cmd_quota(int argc, char **argv);
 int cmd_qgroup(int argc, char **argv);
+int cmd_replace(int argc, char **argv);
 
 /* subvolume exported functions */
 int test_issubvolume(char *path);
+
+/* send.c */
+int find_mount_root(const char *path, char **mount_root);
+char *get_subvol_name(char *mnt, char *full_path);

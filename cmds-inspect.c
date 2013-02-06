@@ -23,6 +23,7 @@
 
 #include "kerncompat.h"
 #include "ioctl.h"
+#include "utils.h"
 
 #include "commands.h"
 #include "btrfs-list.h"

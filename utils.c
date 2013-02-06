@@ -16,10 +16,12 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#define _XOPEN_SOURCE 600
-#define __USE_XOPEN2K
+#define _XOPEN_SOURCE 700
+#define __USE_XOPEN2K8
+#define __XOPEN2K8 /* due to an error in dirent.h, to get dirfd() */
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #ifndef __CHECKER__
 #include <sys/ioctl.h>
 #include <sys/mount.h>
@@ -652,21 +654,22 @@ int is_loop_device (const char* device) {
  * the associated file (e.g. /images/my_btrfs.img) */
 int resolve_loop_device(const char* loop_dev, char* loop_file, int max_len)
 {
-	int loop_fd;
-	int ret_ioctl;
-	struct loop_info loopinfo;
+	int ret;
+	FILE *f;
+	char fmt[20];
+	char p[PATH_MAX];
+	char real_loop_dev[PATH_MAX];
 
-	if ((loop_fd = open(loop_dev, O_RDONLY)) < 0)
+	if (!realpath(loop_dev, real_loop_dev))
+		return -errno;
+	snprintf(p, PATH_MAX, "/sys/block/%s/loop/backing_file", strrchr(real_loop_dev, '/'));
+	if (!(f = fopen(p, "r")))
 		return -errno;
 
-	ret_ioctl = ioctl(loop_fd, LOOP_GET_STATUS, &loopinfo);
-	close(loop_fd);
-
-	if (ret_ioctl == 0) {
-		strncpy(loop_file, loopinfo.lo_name, max_len);
-		if (max_len > 0)
-			loop_file[max_len-1] = 0;
-	} else
+	snprintf(fmt, 20, "%%%i[^\n]", max_len-1);
+	ret = fscanf(f, fmt, loop_file);
+	fclose(f);
+	if (ret == EOF)
 		return -errno;
 
 	return 0;
@@ -1016,8 +1019,14 @@ again:
 		}
 		fd = open(fullpath, O_RDONLY);
 		if (fd < 0) {
-			fprintf(stderr, "failed to read %s: %s\n", fullpath,
-					strerror(errno));
+			/* ignore the following errors:
+				ENXIO (device don't exists) 
+				ENOMEDIUM (No medium found -> 
+					like a cd tray empty)
+			*/
+			if(errno != ENXIO && errno != ENOMEDIUM) 
+				fprintf(stderr, "failed to read %s: %s\n", 
+					fullpath, strerror(errno));
 			continue;
 		}
 		ret = btrfs_scan_one_device(fd, fullpath, &tmp_devices,
@@ -1268,3 +1277,95 @@ u64 parse_size(char *s)
 	return strtoull(s, NULL, 10) * mult;
 }
 
+int open_file_or_dir(const char *fname)
+{
+	int ret;
+	struct stat st;
+	DIR *dirstream;
+	int fd;
+
+	ret = stat(fname, &st);
+	if (ret < 0) {
+		return -1;
+	}
+	if (S_ISDIR(st.st_mode)) {
+		dirstream = opendir(fname);
+		if (!dirstream) {
+			return -2;
+		}
+		fd = dirfd(dirstream);
+	} else {
+		fd = open(fname, O_RDWR);
+	}
+	if (fd < 0) {
+		return -3;
+	}
+	return fd;
+}
+
+int get_device_info(int fd, u64 devid,
+		    struct btrfs_ioctl_dev_info_args *di_args)
+{
+	int ret;
+
+	di_args->devid = devid;
+	memset(&di_args->uuid, '\0', sizeof(di_args->uuid));
+
+	ret = ioctl(fd, BTRFS_IOC_DEV_INFO, di_args);
+	return ret ? -errno : 0;
+}
+
+int get_fs_info(int fd, char *path, struct btrfs_ioctl_fs_info_args *fi_args,
+		struct btrfs_ioctl_dev_info_args **di_ret)
+{
+	int ret = 0;
+	int ndevs = 0;
+	int i = 1;
+	struct btrfs_fs_devices *fs_devices_mnt = NULL;
+	struct btrfs_ioctl_dev_info_args *di_args;
+	char mp[BTRFS_PATH_NAME_MAX + 1];
+
+	memset(fi_args, 0, sizeof(*fi_args));
+
+	ret = ioctl(fd, BTRFS_IOC_FS_INFO, fi_args);
+	if (ret && (errno == EINVAL || errno == ENOTTY)) {
+		/* path is not a mounted btrfs. Try if it's a device */
+		ret = check_mounted_where(fd, path, mp, sizeof(mp),
+					  &fs_devices_mnt);
+		if (!ret)
+			return -EINVAL;
+		if (ret < 0)
+			return ret;
+		fi_args->num_devices = 1;
+		fi_args->max_id = fs_devices_mnt->latest_devid;
+		i = fs_devices_mnt->latest_devid;
+		memcpy(fi_args->fsid, fs_devices_mnt->fsid, BTRFS_FSID_SIZE);
+		close(fd);
+		fd = open_file_or_dir(mp);
+		if (fd < 0)
+			return -errno;
+	} else if (ret) {
+		return -errno;
+	}
+
+	if (!fi_args->num_devices)
+		return 0;
+
+	di_args = *di_ret = malloc(fi_args->num_devices * sizeof(*di_args));
+	if (!di_args)
+		return -errno;
+
+	for (; i <= fi_args->max_id; ++i) {
+		BUG_ON(ndevs >= fi_args->num_devices);
+		ret = get_device_info(fd, i, &di_args[ndevs]);
+		if (ret == -ENODEV)
+			continue;
+		if (ret)
+			return ret;
+		ndevs++;
+	}
+
+	BUG_ON(ndevs == 0);
+
+	return 0;
+}

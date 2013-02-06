@@ -46,7 +46,7 @@
 #define GET_LABEL                      3
 #define SET_LABEL                      4
 
-static void change_label_unmounted(char *dev, char *nLabel)
+static int change_label_unmounted(char *dev, char *nLabel)
 {
        struct btrfs_root *root;
        struct btrfs_trans_handle *trans;
@@ -56,7 +56,7 @@ static void change_label_unmounted(char *dev, char *nLabel)
         */
        root = open_ctree(dev, 0, 1);
        if (!root) /* errors are printed by open_ctree() */
-         return;
+	       return -1;
 
        trans = btrfs_start_transaction(root, 1);
        strncpy(root->fs_info->super_copy.label, nLabel, BTRFS_LABEL_SIZE);
@@ -65,6 +65,7 @@ static void change_label_unmounted(char *dev, char *nLabel)
 
        /* Now we close it since we are done. */
        close_ctree(root);
+       return 0;
 }
 
 int get_label_unmounted(char *dev)
@@ -123,6 +124,5 @@ int set_label(char *btrfs_dev, char *nLabel)
 	       fprintf(stderr, "FATAL: the filesystem has to be unmounted\n");
 	       return -2;
 	}
-	change_label_unmounted(btrfs_dev, nLabel);
-	return 0;
+	return change_label_unmounted(btrfs_dev, nLabel);
 }

@@ -3410,7 +3410,7 @@ int btrfs_fix_block_accounting(struct btrfs_trans_handle *trans,
 	}
 
 	while(1) {
-		cache = btrfs_lookup_block_group(fs_info, start);
+		cache = btrfs_lookup_first_block_group(fs_info, start);
 		if (!cache)
 			break;
 		start = cache->key.objectid + cache->key.offset;

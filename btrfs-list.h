@@ -18,7 +18,56 @@
 
 #include "kerncompat.h"
 
-struct root_info;
+#define BTRFS_LIST_LAYOUT_DEFAULT	0
+#define BTRFS_LIST_LAYOUT_TABLE	1
+#define BTRFS_LIST_LAYOUT_RAW		2
+
+/*
+ * one of these for each root we find.
+ */
+struct root_info {
+	struct rb_node rb_node;
+	struct rb_node sort_node;
+
+	/* this root's id */
+	u64 root_id;
+
+	/* equal the offset of the root's key */
+	u64 root_offset;
+
+	/* flags of the root */
+	u64 flags;
+
+	/* the id of the root that references this one */
+	u64 ref_tree;
+
+	/* the dir id we're in from ref_tree */
+	u64 dir_id;
+
+	u64 top_id;
+
+	/* generation when the root is created or last updated */
+	u64 gen;
+
+	/* creation generation of this root in sec*/
+	u64 ogen;
+
+	/* creation time of this root in sec*/
+	time_t otime;
+
+	u8 uuid[BTRFS_UUID_SIZE];
+	u8 puuid[BTRFS_UUID_SIZE];
+
+	/* path from the subvol we live in to this root, including the
+	 * root's name.  This is null until we do the extra lookup ioctl.
+	 */
+	char *path;
+
+	/* the name of this root in the directory it lives in */
+	char *name;
+
+	char *full_path;
+};
 
 typedef int (*btrfs_list_filter_func)(struct root_info *, u64);
 typedef int (*btrfs_list_comp_func)(struct root_info *, struct root_info *,
@@ -53,6 +102,7 @@ enum btrfs_list_column_enum {
 	BTRFS_LIST_PARENT,
 	BTRFS_LIST_TOP_LEVEL,
 	BTRFS_LIST_OTIME,
+	BTRFS_LIST_PUUID,
 	BTRFS_LIST_UUID,
 	BTRFS_LIST_PATH,
 	BTRFS_LIST_ALL,
@@ -71,6 +121,8 @@ enum btrfs_list_filter_enum {
 	BTRFS_LIST_FILTER_CGEN_LESS,
 	BTRFS_LIST_FILTER_CGEN_MORE,
 	BTRFS_LIST_FILTER_TOPID_EQUAL,
+	BTRFS_LIST_FILTER_FULL_PATH,
+	BTRFS_LIST_FILTER_BY_PARENT,
 	BTRFS_LIST_FILTER_MAX,
 };
 
@@ -98,10 +150,11 @@ int btrfs_list_setup_comparer(struct btrfs_list_comparer_set **comp_set,
 			      enum btrfs_list_comp_enum comparer,
 			      int is_descending);
 
-int btrfs_list_subvols(int fd, struct btrfs_list_filter_set *filter_set,
+int btrfs_list_subvols_print(int fd, struct btrfs_list_filter_set *filter_set,
 		       struct btrfs_list_comparer_set *comp_set,
-			int is_tab_result);
+		       int is_tab_result, int full_path, char *raw_prefix);
 int btrfs_list_find_updated_files(int fd, u64 root_id, u64 oldest_gen);
 int btrfs_list_get_default_subvolume(int fd, u64 *default_id);
 char *btrfs_list_path_for_root(int fd, u64 root);
 u64 btrfs_list_get_path_rootid(int fd);
+int btrfs_get_subvol(int fd, struct root_info *the_ri);

@@ -24,25 +24,13 @@
 #include "ioctl.h"
 
 #include "commands.h"
+#include "qgroup.h"
+#include "utils.h"
 
 static const char * const qgroup_cmd_group_usage[] = {
 	"btrfs qgroup <command> [options] <path>",
 	NULL
 };
-
-static u64 parse_qgroupid(char *p)
-{
-	char *s = strchr(p, '/');
-	u64 level;
-	u64 id;
-
-	if (!s)
-		return atoll(p);
-	level = atoll(p);
-	id = atoll(s + 1);
-
-	return (level << 48) | id;
-}
 
 static int qgroup_assign(int assign, int argc, char **argv)
 {
@@ -63,7 +51,7 @@ static int qgroup_assign(int assign, int argc, char **argv)
 	/*
 	 * FIXME src should accept subvol path
 	 */
-	if (args.src >= args.dst) {
+	if ((args.src >> 48) >= (args.dst >> 48)) {
 		fprintf(stderr, "ERROR: bad relation requested '%s'\n", path);
 		return 12;
 	}
@@ -351,7 +339,7 @@ static int cmd_qgroup_limit(int argc, char **argv)
 	int ret = 0;
 	int fd;
 	int e;
-	char *path;
+	char *path = NULL;
 	struct btrfs_ioctl_qgroup_limit_args args;
 	unsigned long long size;
 	int compressed = 0;
@@ -383,7 +371,6 @@ static int cmd_qgroup_limit(int argc, char **argv)
 	}
 
 	memset(&args, 0, sizeof(args));
-	args.qgroupid = parse_qgroupid(argv[optind + 1]);
 	if (size) {
 		if (compressed)
 			args.lim.flags |= BTRFS_QGROUP_LIMIT_RFER_CMPR |
@@ -397,9 +384,8 @@ static int cmd_qgroup_limit(int argc, char **argv)
 		}
 	}
 
-	if (args.qgroupid == 0) {
-		if (check_argc_exact(argc - optind, 2))
-			usage(cmd_qgroup_limit_usage);
+	if (argc - optind == 2) {
+		args.qgroupid = 0;
 		path = argv[optind + 1];
 		ret = test_issubvolume(path);
 		if (ret < 0) {
@@ -415,11 +401,11 @@ static int cmd_qgroup_limit(int argc, char **argv)
 		 * keep qgroupid at 0, this indicates that the subvolume the
 		 * fd refers to is to be limited
 		 */
-	} else {
-		if (check_argc_exact(argc - optind, 3))
-			usage(cmd_qgroup_limit_usage);
+	} else if (argc - optind == 3) {
+		args.qgroupid = parse_qgroupid(argv[optind + 1]);
 		path = argv[optind + 2];
-	}
+	} else
+		usage(cmd_qgroup_limit_usage);
 
 	fd = open_file_or_dir(path);
 	if (fd < 0) {

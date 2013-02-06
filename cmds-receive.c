@@ -881,8 +881,8 @@ static const char * const receive_cmd_group_usage[] = {
 	NULL
 };
 
-static const char * const cmd_receive_usage[] = {
-	"btrfs receive [-v] [-i <infile>] <mount>",
+const char * const cmd_receive_usage[] = {
+	"btrfs receive [-v] [-f <infile>] <mount>",
 	"Receive subvolumes from stdin.",
 	"Receives one or more subvolumes that were previously ",
 	"sent with btrfs send. The received subvolumes are stored",
@@ -893,7 +893,7 @@ static const char * const cmd_receive_usage[] = {
 	"After receiving a subvolume, it is immediately set to",
 	"read only.\n",
 	"-v               Enable verbose debug output. Each",
-	"                 occurrency of this option increases the",
+	"                 occurrence of this option increases the",
 	"                 verbose level more.",
 	"-f <infile>      By default, btrfs receive uses stdin",
 	"                 to receive the subvolumes. Use this",

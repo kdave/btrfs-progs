@@ -436,6 +436,12 @@ int main(int ac, char **av)
 	radix_tree_init();
 
 	root = open_ctree(av[ac-1], &super, 0);
+
+	if (!root) {
+		fprintf(stderr, "Open ctree failed\n");
+		return 1;
+	}
+
 	trans = btrfs_start_transaction(root, 1);
 
 	dir_oid = btrfs_super_root_dir(&super);
@@ -479,6 +485,11 @@ int main(int ac, char **av)
 				btrfs_header_nritems(&root->node->node.header));
 			close_ctree(root, &super);
 			root = open_ctree("dbfile", &super, 0);
+
+			if (!root) {
+				fprintf(stderr, "Open ctree failed\n");
+				return 1;
+			}
 		}
 		while(count--) {
 			ret = ops[op](trans, root, &radix);

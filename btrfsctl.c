@@ -63,7 +63,7 @@ static void print_usage(void)
 	exit(1);
 }
 
-static int open_file_or_dir(const char *fname)
+static int btrfsctl_open_file_or_dir(const char *fname)
 {
 	int ret;
 	struct stat st;
@@ -91,6 +91,7 @@ static int open_file_or_dir(const char *fname)
 	}
 	return fd;
 }
+
 int main(int ac, char **av)
 {
 	char *fname = NULL;
@@ -128,7 +129,7 @@ int main(int ac, char **av)
 			snap_location = strdup(fullpath);
 			snap_location = dirname(snap_location);
 
-			snap_fd = open_file_or_dir(snap_location);
+			snap_fd = btrfsctl_open_file_or_dir(snap_location);
 
 			name = strdup(fullpath);
 			name = basename(name);
@@ -238,7 +239,7 @@ int main(int ac, char **av)
 		}
 		name = fname;
 	 } else {
-		fd = open_file_or_dir(fname);
+		fd = btrfsctl_open_file_or_dir(fname);
 	 }
 
 	if (name) {

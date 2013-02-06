@@ -84,8 +84,10 @@ int main(int ac, char **av)
 
 	root = open_ctree(av[optind], bytenr, 1);
 
-	if (root == NULL)
+	if (!root) {
+		fprintf(stderr, "Open ctree failed\n");
 		return 1;
+	}
 
 	/* make the super writing code think we've read the first super */
 	root->fs_info->super_bytenr = BTRFS_SUPER_INFO_OFFSET;

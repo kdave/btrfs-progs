@@ -35,13 +35,12 @@
 #include "utils.h"
 #include "crc32c.h"
 
-static int verbose = 0;
 static u16 csum_size = 0;
 static u64 search_objectid = BTRFS_ROOT_TREE_OBJECTID;
 
 static void usage()
 {
-	fprintf(stderr, "Usage: find-roots [-v] <device>\n");
+	fprintf(stderr, "Usage: find-roots [-o search_objectid] <device>\n");
 }
 
 int csum_block(void *buf, u32 len)
@@ -415,11 +414,8 @@ int main(int argc, char **argv)
 	int opt;
 	int ret;
 
-	while ((opt = getopt(argc, argv, "vo:")) != -1) {
+	while ((opt = getopt(argc, argv, "o:")) != -1) {
 		switch(opt) {
-			case 'v':
-				verbose++;
-				break;
 			case 'o':
 				errno = 0;
 				search_objectid = (u64)strtoll(optarg, NULL,
@@ -449,8 +445,11 @@ int main(int argc, char **argv)
 
 	root = open_ctree_broken(dev_fd, argv[optind]);
 	close(dev_fd);
-	if (!root)
+
+	if (!root) {
+		fprintf(stderr, "Open ctree failed\n");
 		exit(1);
+	}
 
 	csum_size = btrfs_super_csum_size(&root->fs_info->super_copy);
 	ret = find_root(root);

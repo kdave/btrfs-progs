@@ -23,6 +23,7 @@
 #include "ioctl.h"
 
 #include "commands.h"
+#include "utils.h"
 
 static const char * const quota_cmd_group_usage[] = {
 	"btrfs quota <command> [options] <path>",

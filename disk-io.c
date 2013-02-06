@@ -1173,7 +1173,7 @@ int write_dev_supers(struct btrfs_root *root, struct btrfs_super_block *sb,
 
 	for (i = 0; i < BTRFS_SUPER_MIRROR_MAX; i++) {
 		bytenr = btrfs_sb_offset(i);
-		if (bytenr + BTRFS_SUPER_INFO_SIZE >= device->total_bytes)
+		if (bytenr + BTRFS_SUPER_INFO_SIZE > device->total_bytes)
 			break;
 
 		btrfs_set_super_bytenr(sb, bytenr);
