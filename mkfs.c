@@ -40,6 +40,8 @@
 #include <ctype.h>
 #include <attr/xattr.h>
 #include <blkid/blkid.h>
+#include <ftw.h>
+#include "kerncompat.h"
 #include "ctree.h"
 #include "disk-io.h"
 #include "volumes.h"
@@ -794,7 +796,7 @@ static int add_file_items(struct btrfs_trans_handle *trans,
 	fd = open(path_name, O_RDONLY);
 	if (fd == -1) {
 		fprintf(stderr, "%s open failed\n", path_name);
-		goto end;
+		return ret;
 	}
 
 	blocks = st->st_size / sectorsize;
@@ -1111,16 +1113,30 @@ fail:
 	return -1;
 }
 
+/*
+ * This ignores symlinks with unreadable targets and subdirs that can't
+ * be read.  It's a best-effort to give a rough estimate of the size of
+ * a subdir.  It doesn't guarantee that prepopulating btrfs from this
+ * tree won't still run out of space. 
+ *
+ * The rounding up to 4096 is questionable.  Previous code used du -B 4096.
+ */
+static u64 global_total_size;
+static int ftw_add_entry_size(const char *fpath, const struct stat *st,
+			      int type)
+{
+	if (type == FTW_F || type == FTW_D)
+		global_total_size += round_up(st->st_size, 4096);
+
+	return 0;
+}
+
 static u64 size_sourcedir(char *dir_name, u64 sectorsize,
 			  u64 *num_of_meta_chunks_ret, u64 *size_of_data_ret)
 {
 	u64 dir_size = 0;
 	u64 total_size = 0;
 	int ret;
-	char command[1024];
-	char path[512];
-	char *file_name = "temp_file";
-	FILE *file;
 	u64 default_chunk_size = 8 * 1024 * 1024;	/* 8MB */
 	u64 allocated_meta_size = 8 * 1024 * 1024;	/* 8MB */
 	u64 allocated_total_size = 20 * 1024 * 1024;	/* 20MB */
@@ -1128,23 +1144,14 @@ static u64 size_sourcedir(char *dir_name, u64 sectorsize,
 	u64 num_of_allocated_meta_chunks =
 			allocated_meta_size / default_chunk_size;
 
-	ret = sprintf(command, "du -B 4096 -s ");
+	global_total_size = 0;
+	ret = ftw(dir_name, ftw_add_entry_size, 10);
+	dir_size = global_total_size;
 	if (ret < 0) {
-		fprintf(stderr, "error executing sprintf for du command\n");
-		return -1;
+		fprintf(stderr, "ftw subdir walk of '%s' failed: %s\n",
+			dir_name, strerror(errno));
+		exit(1);
 	}
-	strcat(command, dir_name);
-	strcat(command, " > ");
-	strcat(command, file_name);
-	ret = system(command);
-
-	file = fopen(file_name, "r");
-	ret = fscanf(file, "%lld %s\n", &dir_size, path);
-	fclose(file);
-	remove(file_name);
-
-	dir_size *= sectorsize;
-	*size_of_data_ret = dir_size;
 
 	num_of_meta_chunks = (dir_size / 2) / default_chunk_size;
 	if (((dir_size / 2) % default_chunk_size) != 0)

@@ -1960,7 +1960,7 @@ static int push_leaf_left(struct btrfs_trans_handle *trans, struct btrfs_root
 		     btrfs_item_offset_nr(right, push_items - 1),
 		     push_space);
 	old_left_nritems = btrfs_header_nritems(left);
-	BUG_ON(old_left_nritems < 0);
+	BUG_ON(old_left_nritems == 0);
 
 	old_left_item_size = btrfs_item_offset_nr(left, old_left_nritems - 1);
 	for (i = old_left_nritems; i < old_left_nritems + push_items; i++) {
@@ -2872,9 +2872,6 @@ int btrfs_prev_leaf(struct btrfs_root *root, struct btrfs_path *path)
 		}
 		slot--;
 
-		if (next)
-			free_extent_buffer(next);
-
 		next = read_node_slot(root, c, slot);
 		break;
 	}
@@ -2919,9 +2916,6 @@ int btrfs_next_leaf(struct btrfs_root *root, struct btrfs_path *path)
 				return 1;
 			continue;
 		}
-
-		if (next)
-			free_extent_buffer(next);
 
 		if (path->reada)
 			reada_for_search(root, path, level, slot, 0);

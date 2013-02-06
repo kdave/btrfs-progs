@@ -315,12 +315,11 @@ static int cmd_qgroup_show(int argc, char **argv)
 	}
 
 	ret = list_qgroups(fd);
+	close(fd);
 	if (ret < 0) {
 		fprintf(stderr, "ERROR: can't list qgroups\n");
 		return 30;
 	}
-
-	close(fd);
 
 	return ret;
 }

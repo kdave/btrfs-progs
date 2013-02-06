@@ -1668,7 +1668,7 @@ int btrfs_read_sys_array(struct btrfs_root *root)
 	if (!sb)
 		return -ENOMEM;
 	btrfs_set_buffer_uptodate(sb);
-	write_extent_buffer(sb, super_copy, 0, BTRFS_SUPER_INFO_SIZE);
+	write_extent_buffer(sb, super_copy, 0, sizeof(*super_copy));
 	array_size = btrfs_super_sys_array_size(super_copy);
 
 	/*
@@ -1767,9 +1767,9 @@ again:
 		goto again;
 	}
 
-	btrfs_free_path(path);
 	ret = 0;
 error:
+	btrfs_free_path(path);
 	return ret;
 }
 

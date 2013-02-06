@@ -660,7 +660,7 @@ out:
 	pthread_exit(NULL);
 }
 
-static int mdresotre_init(struct mdrestore_struct *mdres,
+static int mdrestore_init(struct mdrestore_struct *mdres,
 			  FILE *in, FILE *out, int num_threads)
 {
 	int i, ret = 0;
@@ -688,7 +688,7 @@ static int mdresotre_init(struct mdrestore_struct *mdres,
 	return ret;
 }
 
-static void mdresotre_destroy(struct mdrestore_struct *mdres)
+static void mdrestore_destroy(struct mdrestore_struct *mdres)
 {
 	int i;
 	pthread_mutex_lock(&mdres->mutex);
@@ -785,7 +785,7 @@ static int restore_metadump(const char *input, FILE *out, int num_threads)
 	cluster = malloc(BLOCK_SIZE);
 	BUG_ON(!cluster);
 
-	ret = mdresotre_init(&mdrestore, in, out, num_threads);
+	ret = mdrestore_init(&mdrestore, in, out, num_threads);
 	BUG_ON(ret);
 
 	while (1) {
@@ -805,7 +805,7 @@ static int restore_metadump(const char *input, FILE *out, int num_threads)
 		wait_for_worker(&mdrestore);
 	}
 
-	mdresotre_destroy(&mdrestore);
+	mdrestore_destroy(&mdrestore);
 	free(cluster);
 	if (in != stdin)
 		fclose(in);

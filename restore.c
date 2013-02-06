@@ -102,9 +102,6 @@ int next_leaf(struct btrfs_root *root, struct btrfs_path *path)
 			continue;
 		}
 
-		if (next)
-			free_extent_buffer(next);
-
 		if (path->reada)
 			reada_for_search(root, path, level, slot, 0);
 
@@ -173,7 +170,7 @@ static int copy_one_inline(int fd, struct btrfs_path *path, u64 pos)
 
 	done = pwrite(fd, outbuf, ram_size, pos);
 	free(outbuf);
-	if (done < len) {
+	if (done < ram_size) {
 		fprintf(stderr, "Short compressed inline write, wanted %d, "
 			"did %zd: %d\n", ram_size, done, errno);
 		return -1;
@@ -624,6 +621,7 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 						PTR_ERR(search_root));
 					if (ignore_errors)
 						goto next;
+					btrfs_free_path(path);
 					return PTR_ERR(search_root);
 				}
 
@@ -713,7 +711,7 @@ static int find_first_dir(struct btrfs_root *root, u64 *objectid)
 	path = btrfs_alloc_path();
 	if (!path) {
 		fprintf(stderr, "Ran out of memory\n");
-		goto out;
+		return ret;
 	}
 
 	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
@@ -831,7 +829,7 @@ int main(int argc, char **argv)
 		return ret;
 	} else if (ret) {
 		fprintf(stderr, "%s is currently mounted.  Aborting.\n", argv[optind]);
-		return -EBUSY;
+		return 1;
 	}
 
 	root = open_fs(argv[optind], tree_location, super_mirror);

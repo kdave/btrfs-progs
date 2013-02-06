@@ -159,7 +159,7 @@ int main(int ac, char **av)
 	}
 	fd = dirfd(dirstream);
 	if (device)
-		strcpy(args.name, device);
+		strncpy_null(args.name, device);
 	else
 		args.name[0] = '\0';
 

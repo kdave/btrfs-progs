@@ -112,7 +112,7 @@ int make_btrfs(int fd, const char *device, const char *label,
 
 	btrfs_set_super_bytenr(&super, blocks[0]);
 	btrfs_set_super_num_devices(&super, 1);
-	strncpy((char *)&super.magic, BTRFS_MAGIC, sizeof(super.magic));
+	super.magic = cpu_to_le64(BTRFS_MAGIC);
 	btrfs_set_super_generation(&super, 1);
 	btrfs_set_super_root(&super, blocks[1]);
 	btrfs_set_super_chunk_root(&super, blocks[3]);
@@ -922,7 +922,7 @@ int get_mountpt(char *dev, char *mntpt, size_t size)
 
 struct pending_dir {
 	struct list_head list;
-	char name[256];
+	char name[PATH_MAX];
 };
 
 void btrfs_register_one_device(char *fname)
@@ -958,7 +958,6 @@ int btrfs_scan_one_dir(char *dirname, int run_ioctl)
 	int ret;
 	int fd;
 	int dirname_len;
-	int pathlen;
 	char *fullpath;
 	struct list_head pending_list;
 	struct btrfs_fs_devices *tmp_devices;
@@ -973,8 +972,7 @@ int btrfs_scan_one_dir(char *dirname, int run_ioctl)
 
 again:
 	dirname_len = strlen(pending->name);
-	pathlen = 1024;
-	fullpath = malloc(pathlen);
+	fullpath = malloc(PATH_MAX);
 	dirname = pending->name;
 
 	if (!fullpath) {
@@ -993,11 +991,11 @@ again:
 			break;
 		if (dirent->d_name[0] == '.')
 			continue;
-		if (dirname_len + strlen(dirent->d_name) + 2 > pathlen) {
+		if (dirname_len + strlen(dirent->d_name) + 2 > PATH_MAX) {
 			ret = -EFAULT;
 			goto fail;
 		}
-		snprintf(fullpath, pathlen, "%s/%s", dirname, dirent->d_name);
+		snprintf(fullpath, PATH_MAX, "%s/%s", dirname, dirent->d_name);
 		ret = lstat(fullpath, &st);
 		if (ret < 0) {
 			fprintf(stderr, "failed to stat %s\n", fullpath);
@@ -1085,8 +1083,7 @@ int btrfs_device_already_in_root(struct btrfs_root *root, int fd,
 
 	ret = 0;
 	disk_super = (struct btrfs_super_block *)buf;
-	if (strncmp((char *)(&disk_super->magic), BTRFS_MAGIC,
-	    sizeof(disk_super->magic)))
+	if (disk_super->magic != cpu_to_le64(BTRFS_MAGIC))
 		goto brelse;
 
 	if (!memcmp(disk_super->fsid, root->fs_info->super_copy.fsid,
@@ -1119,13 +1116,33 @@ char *pretty_sizes(u64 size)
 			num_divs ++;
 		}
 
-		if (num_divs > ARRAY_SIZE(size_strs))
+		if (num_divs >= ARRAY_SIZE(size_strs))
 			return NULL;
 		fraction = (float)last_size / 1024;
 	}
 	pretty = malloc(pretty_len);
 	snprintf(pretty, pretty_len, "%.2f%s", fraction, size_strs[num_divs]);
 	return pretty;
+}
+
+/*
+ * __strncpy__null - strncpy with null termination
+ * @dest:	the target array
+ * @src:	the source string
+ * @n:		maximum bytes to copy (size of *dest)
+ *
+ * Like strncpy, but ensures destination is null-terminated.
+ *
+ * Copies the string pointed to by src, including the terminating null
+ * byte ('\0'), to the buffer pointed to by dest, up to a maximum
+ * of n bytes.  Then ensure that dest is null-terminated.
+ */
+char *__strncpy__null(char *dest, const char *src, size_t n)
+{
+	strncpy(dest, src, n);
+	if (n > 0)
+		dest[n - 1] = '\0';
+	return dest;
 }
 
 /*

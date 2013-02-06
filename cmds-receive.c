@@ -43,6 +43,7 @@
 #include "ctree.h"
 #include "ioctl.h"
 #include "commands.h"
+#include "utils.h"
 #include "list.h"
 
 #include "send.h"
@@ -71,7 +72,6 @@ static int finish_subvol(struct btrfs_receive *r)
 {
 	int ret;
 	int subvol_fd = -1;
-	int info_fd = -1;
 	struct btrfs_ioctl_received_subvol_args rs_args;
 	char uuid_str[128];
 	u64 flags;
@@ -132,8 +132,6 @@ static int finish_subvol(struct btrfs_receive *r)
 out:
 	if (subvol_fd != -1)
 		close(subvol_fd);
-	if (info_fd != -1)
-		close(info_fd);
 	return ret;
 }
 
@@ -168,7 +166,7 @@ static int process_subvol(const char *path, const u8 *uuid, u64 ctransid,
 	}
 
 	memset(&args_v1, 0, sizeof(args_v1));
-	strcpy(args_v1.name, path);
+	strncpy_null(args_v1.name, path);
 	ret = ioctl(r->mnt_fd, BTRFS_IOC_SUBVOL_CREATE, &args_v1);
 	if (ret < 0) {
 		ret = -errno;
@@ -216,7 +214,7 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 	}
 
 	memset(&args_v2, 0, sizeof(args_v2));
-	strcpy(args_v2.name, path);
+	strncpy_null(args_v2.name, path);
 
 	r->parent_subvol = subvol_uuid_search(&r->sus, 0, parent_uuid,
 			parent_ctransid, NULL, subvol_search_by_received_uuid);

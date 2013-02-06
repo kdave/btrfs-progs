@@ -245,7 +245,7 @@ static int do_send(struct btrfs_send *send, u64 root_id, u64 parent_root_id)
 	struct subvol_info *si;
 	void *t_err = NULL;
 	int subvol_fd = -1;
-	int pipefd[2];
+	int pipefd[2] = {-1, -1};
 
 	si = subvol_uuid_search(&send->sus, root_id, NULL, 0, NULL,
 			subvol_search_by_root_id);
@@ -327,9 +327,9 @@ static int do_send(struct btrfs_send *send, u64 root_id, u64 parent_root_id)
 out:
 	if (subvol_fd != -1)
 		close(subvol_fd);
-	if (pipefd[0])
+	if (pipefd[0] != -1)
 		close(pipefd[0]);
-	if (pipefd[1])
+	if (pipefd[1] != -1)
 		close(pipefd[1]);
 	return ret;
 }

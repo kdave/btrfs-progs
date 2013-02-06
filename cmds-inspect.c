@@ -44,6 +44,7 @@ static int __ino_to_path_fd(u64 inum, int fd, int verbose, const char *prepend)
 	if (!fspath)
 		return 1;
 
+	memset(fspath, 0, sizeof(*fspath));
 	ipa.inum = inum;
 	ipa.size = 4096;
 	ipa.fspath = (uintptr_t)fspath;
@@ -85,6 +86,7 @@ static int cmd_inode_resolve(int argc, char **argv)
 {
 	int fd;
 	int verbose = 0;
+	int ret;
 
 	optind = 1;
 	while (1) {
@@ -110,8 +112,11 @@ static int cmd_inode_resolve(int argc, char **argv)
 		return 12;
 	}
 
-	return __ino_to_path_fd(atoll(argv[optind]), fd, verbose,
-				argv[optind+1]);
+	ret = __ino_to_path_fd(atoll(argv[optind]), fd, verbose,
+			       argv[optind+1]);
+	close(fd);
+	return ret;
+
 }
 
 static const char * const cmd_logical_resolve_usage[] = {
@@ -168,6 +173,7 @@ static int cmd_logical_resolve(int argc, char **argv)
 	if (!inodes)
 		return 1;
 
+	memset(inodes, 0, sizeof(*inodes));
 	loi.logical = atoll(argv[optind]);
 	loi.size = size;
 	loi.inodes = (uintptr_t)inodes;
@@ -208,8 +214,10 @@ static int cmd_logical_resolve(int argc, char **argv)
 
 		if (getpath) {
 			name = btrfs_list_path_for_root(fd, root);
-			if (IS_ERR(name))
-				return PTR_ERR(name);
+			if (IS_ERR(name)) {
+				ret = PTR_ERR(name);
+				goto out;
+			}
 			if (!name) {
 				path_ptr[-1] = '\0';
 				path_fd = fd;
@@ -227,6 +235,8 @@ static int cmd_logical_resolve(int argc, char **argv)
 				}
 			}
 			__ino_to_path_fd(inum, path_fd, verbose, full_path);
+			if (path_fd != fd)
+				close(path_fd);
 		} else {
 			printf("inode %llu offset %llu root %llu\n", inum,
 				offset, root);
@@ -234,6 +244,8 @@ static int cmd_logical_resolve(int argc, char **argv)
 	}
 
 out:
+	if (fd >= 0)
+		close(fd);
 	free(inodes);
 	return ret;
 }

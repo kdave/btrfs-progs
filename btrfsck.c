@@ -1970,8 +1970,10 @@ static int check_owner_ref(struct btrfs_root *root,
 	struct btrfs_root *ref_root;
 	struct btrfs_key key;
 	struct btrfs_path path;
+	struct extent_buffer *parent;
 	int level;
 	int found = 0;
+	int ret;
 
 	list_for_each_entry(node, &rec->backrefs, list) {
 		if (node->is_data)
@@ -2002,10 +2004,13 @@ static int check_owner_ref(struct btrfs_root *root,
 
 	btrfs_init_path(&path);
 	path.lowest_level = level + 1;
-	btrfs_search_slot(NULL, ref_root, &key, &path, 0, 0);
+	ret = btrfs_search_slot(NULL, ref_root, &key, &path, 0, 0);
+	if (ret < 0)
+		return 0;
 
-	if (buf->start == btrfs_node_blockptr(path.nodes[level + 1],
-					      path.slots[level + 1]))
+	parent = path.nodes[level + 1];
+	if (parent && buf->start == btrfs_node_blockptr(parent,
+							path.slots[level + 1]))
 		found = 1;
 
 	btrfs_release_path(ref_root, &path);
@@ -2793,12 +2798,9 @@ out:
 }
 
 static int add_root_to_pending(struct extent_buffer *buf,
-			       struct block_info *bits,
-			       int bits_nr,
 			       struct cache_tree *extent_cache,
 			       struct cache_tree *pending,
 			       struct cache_tree *seen,
-			       struct cache_tree *reada,
 			       struct cache_tree *nodes,
 			       struct btrfs_key *root_key)
 {
@@ -3460,12 +3462,12 @@ static int check_extents(struct btrfs_trans_handle *trans,
 		exit(1);
 	}
 
-	add_root_to_pending(root->fs_info->tree_root->node, bits, bits_nr,
-			    &extent_cache, &pending, &seen, &reada, &nodes,
+	add_root_to_pending(root->fs_info->tree_root->node,
+			    &extent_cache, &pending, &seen, &nodes,
 			    &root->fs_info->tree_root->root_key);
 
-	add_root_to_pending(root->fs_info->chunk_root->node, bits, bits_nr,
-			    &extent_cache, &pending, &seen, &reada, &nodes,
+	add_root_to_pending(root->fs_info->chunk_root->node,
+			    &extent_cache, &pending, &seen, &nodes,
 			    &root->fs_info->chunk_root->root_key);
 
 	btrfs_init_path(&path);
@@ -3496,9 +3498,8 @@ static int check_extents(struct btrfs_trans_handle *trans,
 					      btrfs_root_bytenr(&ri),
 					      btrfs_level_size(root,
 					       btrfs_root_level(&ri)), 0);
-			add_root_to_pending(buf, bits, bits_nr, &extent_cache,
-					    &pending, &seen, &reada, &nodes,
-					    &found_key);
+			add_root_to_pending(buf, &extent_cache, &pending,
+					    &seen, &nodes, &found_key);
 			free_extent_buffer(buf);
 		}
 		path.slots[0]++;
@@ -3519,6 +3520,7 @@ static int check_extents(struct btrfs_trans_handle *trans,
 		root->fs_info->corrupt_blocks = NULL;
 	}
 
+	free(bits);
 	return ret;
 }
 

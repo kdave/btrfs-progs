@@ -53,4 +53,9 @@ int get_device_info(int fd, u64 devid,
 		    struct btrfs_ioctl_dev_info_args *di_args);
 int get_fs_info(int fd, char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 		struct btrfs_ioctl_dev_info_args **di_ret);
+
+char *__strncpy__null(char *dest, const char *src, size_t n);
+/* Helper to always get proper size of the destination string */
+#define strncpy_null(dest, src) __strncpy__null(dest, src, sizeof(dest))
+
 #endif

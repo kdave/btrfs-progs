@@ -300,9 +300,11 @@ int set_extent_bits(struct extent_io_tree *tree, u64 start,
 	u64 last_start;
 	u64 last_end;
 again:
-	prealloc = alloc_extent_state();
-	if (!prealloc)
-		return -ENOMEM;
+	if (!prealloc) {
+		prealloc = alloc_extent_state();
+		if (!prealloc)
+			return -ENOMEM;
+	}
 
 	/*
 	 * this search will find the extents that end after

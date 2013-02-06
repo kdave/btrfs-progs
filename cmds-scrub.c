@@ -754,7 +754,7 @@ static int scrub_write_progress(pthread_mutex_t *m, const char *fsid,
 {
 	int ret;
 	int err;
-	int fd = 0;
+	int fd = -1;
 	int old;
 
 	ret = pthread_mutex_lock(m);
@@ -782,7 +782,7 @@ static int scrub_write_progress(pthread_mutex_t *m, const char *fsid,
 		goto out;
 
 out:
-	if (fd > 0) {
+	if (fd >= 0) {
 		ret = close(fd);
 		if (ret)
 			err = -errno;
@@ -1192,6 +1192,7 @@ static int scrub_start(int argc, char **argv, int resume)
 			/* ... yes, so scrub must be running. error out */
 			fprintf(stderr, "ERROR: scrub already running\n");
 			close(prg_fd);
+			prg_fd = -1;
 			goto out;
 		}
 		/*
@@ -1456,14 +1457,14 @@ static int cmd_scrub_cancel(int argc, char **argv)
 again:
 	ret = ioctl(fdmnt, BTRFS_IOC_SCRUB_CANCEL, NULL);
 	err = errno;
-	close(fdmnt);
 
 	if (ret && err == EINVAL) {
-		/* path is no mounted btrfs. try if it's a device */
+		/* path is not a btrfs mount point.  See if it's a device. */
 		ret = check_mounted_where(fdmnt, path, mp, sizeof(mp),
 					  &fs_devices_mnt);
-		close(fdmnt);
 		if (ret) {
+			/* It is a device; open the mountpoint. */
+			close(fdmnt);
 			fdmnt = open_file_or_dir(mp);
 			if (fdmnt >= 0) {
 				path = mp;
@@ -1471,6 +1472,8 @@ again:
 			}
 		}
 	}
+
+	close(fdmnt);
 
 	if (ret) {
 		fprintf(stderr, "ERROR: scrub cancel failed on %s: %s\n", path,
@@ -1584,6 +1587,7 @@ static int cmd_scrub_status(int argc, char **argv)
 	addr.sun_path[sizeof(addr.sun_path) - 1] = '\0';
 	ret = connect(fdres, (struct sockaddr *)&addr, sizeof(addr));
 	if (ret == -1) {
+		close(fdres);
 		fdres = scrub_open_file_r(SCRUB_DATA_FILE, fsid);
 		if (fdres < 0 && fdres != -ENOENT) {
 			fprintf(stderr, "WARNING: failed to open status file: "

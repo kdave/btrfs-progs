@@ -187,7 +187,7 @@ static void dump_superblock(struct btrfs_super_block *sb)
 	s = (char *) &sb->magic;
 	for (i = 0; i < 8; i++)
 		putchar(isprint(s[i]) ? s[i] : '.');
-	if (!memcmp(BTRFS_MAGIC, &sb->magic, 8))
+	if (sb->magic == cpu_to_le64(BTRFS_MAGIC))
 		printf(" [match]\n");
 	else
 		printf(" [DON'T MATCH]\n");
