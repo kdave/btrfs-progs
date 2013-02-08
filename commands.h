@@ -94,11 +94,14 @@ extern const struct cmd_group replace_cmd_group;
 extern const char * const cmd_send_usage[];
 extern const char * const cmd_receive_usage[];
 
+extern const char * const cmd_check_usage[];
+
 int cmd_subvolume(int argc, char **argv);
 int cmd_filesystem(int argc, char **argv);
 int cmd_balance(int argc, char **argv);
 int cmd_device(int argc, char **argv);
 int cmd_scrub(int argc, char **argv);
+int cmd_check(int argc, char **argv);
 int cmd_inspect(int argc, char **argv);
 int cmd_send(int argc, char **argv);
 int cmd_receive(int argc, char **argv);

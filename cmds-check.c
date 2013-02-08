@@ -37,6 +37,7 @@
 #include "list.h"
 #include "version.h"
 #include "utils.h"
+#include "commands.h"
 
 static u64 bytes_used = 0;
 static u64 total_csum_bytes = 0;
@@ -3529,13 +3530,6 @@ static int check_extents(struct btrfs_trans_handle *trans,
 	return ret;
 }
 
-static void print_usage(void)
-{
-	fprintf(stderr, "usage: btrfsck dev\n");
-	fprintf(stderr, "%s\n", BTRFS_BUILD_VERSION);
-	exit(1);
-}
-
 static struct option long_options[] = {
 	{ "super", 1, NULL, 's' },
 	{ "repair", 0, NULL, 0 },
@@ -3544,7 +3538,18 @@ static struct option long_options[] = {
 	{ 0, 0, 0, 0}
 };
 
-int main(int ac, char **av)
+const char * const cmd_check_usage[] = {
+	"btrfs check [options] <device>",
+	"Check an unmounted btrfs filesystem.",
+	"",
+	"-s|--super <superblock>     use this superblock copy",
+	"--repair                    try to repair the filesystem",
+	"--init-csum-tree            create a new CRC tree",
+	"--init-extent-tree          create a new extent tree",
+	NULL
+};
+
+int cmd_check(int argc, char **argv)
 {
 	struct cache_tree root_cache;
 	struct btrfs_root *root;
@@ -3561,7 +3566,7 @@ int main(int ac, char **av)
 
 	while(1) {
 		int c;
-		c = getopt_long(ac, av, "as:", long_options,
+		c = getopt_long(argc, argv, "as:", long_options,
 				&option_index);
 		if (c < 0)
 			break;
@@ -3574,7 +3579,8 @@ int main(int ac, char **av)
 				       (unsigned long long)bytenr);
 				break;
 			case '?':
-				print_usage();
+			case 'h':
+				usage(cmd_check_usage);
 		}
 		if (option_index == 1) {
 			printf("enabling repair mode\n");
@@ -3587,25 +3593,25 @@ int main(int ac, char **av)
 		}
 
 	}
-	ac = ac - optind;
+	argc = argc - optind;
 
-	if (ac != 1)
-		print_usage();
+	if (argc != 1)
+		usage(cmd_check_usage);
 
 	radix_tree_init();
 	cache_tree_init(&root_cache);
 
-	if((ret = check_mounted(av[optind])) < 0) {
+	if((ret = check_mounted(argv[optind])) < 0) {
 		fprintf(stderr, "Could not check mount status: %s\n", strerror(-ret));
 		return ret;
 	} else if(ret) {
-		fprintf(stderr, "%s is currently mounted. Aborting.\n", av[optind]);
+		fprintf(stderr, "%s is currently mounted. Aborting.\n", argv[optind]);
 		return -EBUSY;
 	}
 
-	info = open_ctree_fs_info(av[optind], bytenr, rw, 1);
+	info = open_ctree_fs_info(argv[optind], bytenr, rw, 1);
 	uuid_unparse(info->super_copy.fsid, uuidbuf);
-	printf("Checking filesystem on %s\nUUID: %s\n", av[optind], uuidbuf);
+	printf("Checking filesystem on %s\nUUID: %s\n", argv[optind], uuidbuf);
 
 	if (info == NULL)
 		return 1;
