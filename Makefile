@@ -9,7 +9,8 @@ objects = ctree.o disk-io.o radix-tree.o extent-tree.o print-tree.o \
 	  send-stream.o send-utils.o qgroup.o raid6.o
 cmds_objects = cmds-subvolume.o cmds-filesystem.o cmds-device.o cmds-scrub.o \
 	       cmds-inspect.o cmds-balance.o cmds-send.o cmds-receive.o \
-	       cmds-quota.o cmds-qgroup.o cmds-replace.o cmds-check.o
+	       cmds-quota.o cmds-qgroup.o cmds-replace.o cmds-check.o \
+	       cmds-restore.o
 
 CHECKFLAGS= -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ -Wbitwise \
 	    -Wuninitialized -Wshadow -Wundef
@@ -18,8 +19,7 @@ DEPFLAGS = -Wp,-MMD,$(@D)/.$(@F).d,-MT,$@
 INSTALL = install
 prefix ?= /usr/local
 bindir = $(prefix)/bin
-LIBS=-luuid -lm
-RESTORE_LIBS=-lz
+LIBS=-luuid -lm -lz
 
 ifeq ("$(origin V)", "command line")
   BUILD_VERBOSE = $(V)
@@ -38,7 +38,7 @@ MAKEOPTS = --no-print-directory Q=$(Q)
 
 progs = btrfsctl mkfs.btrfs btrfs-debug-tree btrfs-show btrfs-vol btrfsck \
 	btrfs btrfs-map-logical btrfs-image btrfs-zero-log btrfs-convert \
-	btrfs-find-root btrfs-restore btrfstune btrfs-show-super
+	btrfs-find-root btrfstune btrfs-show-super
 
 # Create all the static targets
 static_objects = $(patsubst %.o, %.static.o, $(objects))
@@ -94,10 +94,6 @@ calc-size: $(objects) calc-size.o
 btrfs-find-root: $(objects) find-root.o
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o btrfs-find-root find-root.o $(objects) $(LDFLAGS) $(LIBS)
-
-btrfs-restore: $(objects) restore.o
-	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o btrfs-restore restore.o $(objects) $(LDFLAGS) $(LIBS) $(RESTORE_LIBS)
 
 btrfsctl: $(objects) btrfsctl.o
 	@echo "    [LD]     $@"

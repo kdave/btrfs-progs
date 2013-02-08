@@ -37,6 +37,7 @@
 #include "version.h"
 #include "volumes.h"
 #include "utils.h"
+#include "commands.h"
 
 static char path_name[4096];
 static int get_snaps = 0;
@@ -673,12 +674,6 @@ next:
 	return 0;
 }
 
-static void usage()
-{
-	fprintf(stderr, "Usage: restore [-svio] [-t disk offset] <device> "
-		"<directory>\n");
-}
-
 static struct btrfs_root *open_fs(const char *dev, u64 root_location, int super_mirror)
 {
 	struct btrfs_root *root;
@@ -756,7 +751,26 @@ out:
 	return ret;
 }
 
-int main(int argc, char **argv)
+const char * const cmd_restore_usage[] = {
+	"btrfs restore [options] <device>",
+	"Try to restore files from a damaged filesystem (unmounted)",
+	"",
+	"-s              get snapshots",
+	"-v              verbose",
+	"-i              ignore errors",
+	"-o              overwrite",
+	"-t              tree location",
+	"-f <offset>     filesystem location",
+	"-u <block>      super mirror",
+	"-d              find dir",
+	"-r <num>        root objectid",
+	"-c              ignore case in regular expression",
+	"-m <regexp>     regular expression to match",
+	"-l              list roots",
+	NULL
+};
+
+int cmd_restore(int argc, char **argv)
 {
 	struct btrfs_root *root;
 	struct btrfs_key key;
@@ -813,15 +827,12 @@ int main(int argc, char **argv)
 				find_dir = 1;
 				break;
 			default:
-				usage();
-				exit(1);
+				usage(cmd_restore_usage);
 		}
 	}
 
-	if (optind + 1 >= argc) {
-		usage();
-		exit(1);
-	}
+	if (optind + 1 >= argc)
+		usage(cmd_restore_usage);
 
 	if ((ret = check_mounted(argv[optind])) < 0) {
 		fprintf(stderr, "Could not check mount status: %s\n",
