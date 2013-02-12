@@ -1,5 +1,6 @@
 CC = gcc
 LN = ln
+AR = ar
 AM_CFLAGS = -Wall -D_FILE_OFFSET_BITS=64 -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2 -DBTRFS_FLAT_INCLUDES -fPIC
 CFLAGS = -g -O1
 objects = ctree.o disk-io.o radix-tree.o extent-tree.o print-tree.o \
@@ -26,7 +27,7 @@ bindir = $(prefix)/bin
 lib_LIBS = -luuid -lblkid -lm -lz -L.
 libdir ?= $(prefix)/lib
 incdir = $(prefix)/include/btrfs
-LIBS = $(lib_LIBS) -lbtrfs
+LIBS = $(lib_LIBS) $(libs_static)
 
 ifeq ("$(origin V)", "command line")
   BUILD_VERBOSE = $(V)
@@ -57,7 +58,9 @@ STATIC_CFLAGS = $(CFLAGS) -ffunction-sections -fdata-sections
 STATIC_LDFLAGS = -static -Wl,--gc-sections
 STATIC_LIBS = $(LIBS) -lpthread
 
-libs = libbtrfs.so.0.1
+libs_shared = libbtrfs.so.0.1
+libs_static = libbtrfs.a
+libs = $(libs_shared) $(libs_static)
 lib_links = libbtrfs.so.0 libbtrfs.so
 headers = $(libbtrfs_headers)
 
@@ -88,9 +91,13 @@ static: version.h $(libs) btrfs.static
 version.h:
 	$(Q)bash version.sh
 
-$(libs): $(libbtrfs_objects) $(lib_links) send.h
+$(libs_shared): $(libbtrfs_objects) $(lib_links) send.h
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) $(libbtrfs_objects) $(lib_LIBS) -shared -Wl,-soname,libbtrfs.so -o libbtrfs.so.0.1
+
+$(libs_static): $(libbtrfs_objects)
+	@echo "    [AR]     $@"
+	$(Q)$(AR) cru libbtrfs.a $(libbtrfs_objects)
 
 $(lib_links):
 	@echo "    [LN]     $@"
