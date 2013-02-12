@@ -263,8 +263,6 @@ int main(int argc, char **argv)
 {
 	const struct cmd_struct *cmd;
 
-	crc32c_optimization_init();
-
 	argc--;
 	argv++;
 	handle_options(&argc, &argv);
@@ -279,6 +277,8 @@ int main(int argc, char **argv)
 	cmd = parse_command_token(argv[0], &btrfs_cmd_group);
 
 	handle_help_options_next_level(cmd, argc, argv);
+
+	crc32c_optimization_init();
 
 	fixup_argv0(argv, cmd->token);
 	exit(cmd->fn(argc, argv));
