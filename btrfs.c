@@ -262,16 +262,26 @@ const struct cmd_group btrfs_cmd_group = {
 int main(int argc, char **argv)
 {
 	const struct cmd_struct *cmd;
+	const char *bname;
 
-	argc--;
-	argv++;
-	handle_options(&argc, &argv);
-	if (argc > 0) {
-		if (!prefixcmp(argv[0], "--"))
-			argv[0] += 2;
+	if ((bname = strrchr(argv[0], '/')) != NULL)
+		bname++;
+	else
+		bname = argv[0];
+
+	if (!strcmp(bname, "btrfsck")) {
+		argv[0] = "check";
 	} else {
-		usage_command_group(&btrfs_cmd_group, 0, 0);
-		exit(1);
+		argc--;
+		argv++;
+		handle_options(&argc, &argv);
+		if (argc > 0) {
+			if (!prefixcmp(argv[0], "--"))
+				argv[0] += 2;
+		} else {
+			usage_command_group(&btrfs_cmd_group, 0, 0);
+			exit(1);
+		}
 	}
 
 	cmd = parse_command_token(argv[0], &btrfs_cmd_group);
