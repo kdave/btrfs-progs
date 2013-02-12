@@ -1,4 +1,5 @@
 CC = gcc
+LN = ln
 AM_CFLAGS = -Wall -D_FILE_OFFSET_BITS=64 -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2
 CFLAGS = -g -O1
 objects = ctree.o disk-io.o radix-tree.o extent-tree.o print-tree.o \
@@ -35,7 +36,7 @@ endif
 
 MAKEOPTS = --no-print-directory Q=$(Q)
 
-progs = btrfsctl mkfs.btrfs btrfs-debug-tree btrfs-show btrfs-vol \
+progs = btrfsctl mkfs.btrfs btrfs-debug-tree btrfs-show btrfs-vol btrfsck \
 	btrfs btrfs-map-logical btrfs-image btrfs-zero-log btrfs-convert \
 	btrfs-find-root btrfs-restore btrfstune btrfs-show-super
 
@@ -110,6 +111,11 @@ btrfs-show: $(objects) btrfs-show.o
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o btrfs-show btrfs-show.o $(objects) $(LDFLAGS) $(LIBS)
 
+# For backward compatibility, 'btrfs' changes behaviour to fsck if it's named 'btrfsck'
+btrfsck: btrfs
+	@echo "    [LN]     $@"
+	$(Q)$(LN) -f btrfs btrfsck
+
 mkfs.btrfs: $(objects) mkfs.o
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o mkfs.btrfs $(objects) mkfs.o $(LDFLAGS) $(LIBS) -lblkid
@@ -171,7 +177,7 @@ install-man:
 clean :
 	@echo "Cleaning"
 	$(Q)rm -f $(progs) cscope.out *.o .*.d btrfs-convert btrfs-image btrfs-select-super \
-	      btrfs-zero-log btrfstune dir-test ioctl-test quick-test btrfs.static \
+	      btrfs-zero-log btrfstune dir-test ioctl-test quick-test btrfs.static btrfsck \
 	      version.h
 	$(Q)$(MAKE) $(MAKEOPTS) -C man $@
 
