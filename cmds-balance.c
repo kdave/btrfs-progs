@@ -164,7 +164,7 @@ static int parse_filters(char *filters, struct btrfs_balance_args *args)
 				return 1;
 			}
 			if (parse_u64(value, &args->usage) ||
-			    args->usage < 1 || args->usage > 100) {
+			    args->usage > 100) {
 				fprintf(stderr, "Invalid usage argument: %s\n",
 				       value);
 				return 1;
