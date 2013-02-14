@@ -1387,3 +1387,78 @@ int get_fs_info(int fd, char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 
 	return 0;
 }
+
+#define isoctal(c)	(((c) & ~7) == '0')
+
+static inline void translate(char *f, char *t)
+{
+	while (*f != '\0') {
+		if (*f == '\\' &&
+		    isoctal(f[1]) && isoctal(f[2]) && isoctal(f[3])) {
+			*t++ = 64*(f[1] & 7) + 8*(f[2] & 7) + (f[3] & 7);
+			f += 4;
+		} else
+			*t++ = *f++;
+	}
+	*t = '\0';
+	return;
+}
+
+/*
+ * Checks if the swap device.
+ * Returns 1 if swap device, < 0 on error or 0 if not swap device.
+ */
+int is_swap_device(const char *file)
+{
+	FILE	*f;
+	struct stat	st_buf;
+	dev_t	dev;
+	ino_t	ino = 0;
+	char	tmp[PATH_MAX];
+	char	buf[PATH_MAX];
+	char	*cp;
+	int	ret = 0;
+
+	if (stat(file, &st_buf) < 0)
+		return -errno;
+	if (S_ISBLK(st_buf.st_mode))
+		dev = st_buf.st_rdev;
+	else if (S_ISREG(st_buf.st_mode)) {
+		dev = st_buf.st_dev;
+		ino = st_buf.st_ino;
+	} else
+		return 0;
+
+	if ((f = fopen("/proc/swaps", "r")) == NULL)
+		return 0;
+
+	/* skip the first line */
+	if (fgets(tmp, sizeof(tmp), f) == NULL)
+		goto out;
+
+	while (fgets(tmp, sizeof(tmp), f) != NULL) {
+		if ((cp = strchr(tmp, ' ')) != NULL)
+			*cp = '\0';
+		if ((cp = strchr(tmp, '\t')) != NULL)
+			*cp = '\0';
+		translate(tmp, buf);
+		if (stat(buf, &st_buf) != 0)
+			continue;
+		if (S_ISBLK(st_buf.st_mode)) {
+			if (dev == st_buf.st_rdev) {
+				ret = 1;
+				break;
+			}
+		} else if (S_ISREG(st_buf.st_mode)) {
+			if (dev == st_buf.st_dev && ino == st_buf.st_ino) {
+				ret = 1;
+				break;
+			}
+		}
+	}
+
+out:
+	fclose(f);
+
+	return ret;
+}

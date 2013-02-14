@@ -1366,6 +1366,16 @@ int main(int ac, char **av)
 
 	if (source_dir == 0) {
 		file = av[optind++];
+		ret = is_swap_device(file);
+		if (ret < 0) {
+			fprintf(stderr, "error checking %s status: %s\n", file,
+				strerror(-ret));
+			exit(1);
+		}
+		if (ret == 1) {
+			fprintf(stderr, "%s is a swap device\n", file);
+			exit(1);
+		}
 		ret = check_mounted(file);
 		if (ret < 0) {
 			fprintf(stderr, "error checking %s mount status\n", file);
@@ -1376,9 +1386,23 @@ int main(int ac, char **av)
 			exit(1);
 		}
 		ac--;
+		/* check if the device is busy */
+		fd = open(file, O_RDWR|O_EXCL);
+		if (fd < 0) {
+			fprintf(stderr, "unable to open %s: %s\n", file,
+				strerror(errno));
+			exit(1);
+		}
+		close(fd);
+		/*
+		 * open again without O_EXCL so that the problem should not
+		 * occur by the following processing.
+		 * (btrfs_register_one_device() fails if O_EXCL is on)
+		 */
 		fd = open(file, O_RDWR);
 		if (fd < 0) {
-			fprintf(stderr, "unable to open %s\n", file);
+			fprintf(stderr, "unable to open %s: %s\n", file,
+				strerror(errno));
 			exit(1);
 		}
 		first_file = file;
@@ -1461,6 +1485,16 @@ int main(int ac, char **av)
 		int old_mixed = mixed;
 
 		file = av[optind++];
+		ret = is_swap_device(file);
+		if (ret < 0) {
+			fprintf(stderr, "error checking %s status: %s\n", file,
+				strerror(-ret));
+			exit(1);
+		}
+		if (ret == 1) {
+			fprintf(stderr, "%s is a swap device\n", file);
+			exit(1);
+		}
 		ret = check_mounted(file);
 		if (ret < 0) {
 			fprintf(stderr, "error checking %s mount status\n",
@@ -1471,9 +1505,23 @@ int main(int ac, char **av)
 			fprintf(stderr, "%s is mounted\n", file);
 			exit(1);
 		}
+		/* check if the device is busy */
+		fd = open(file, O_RDWR|O_EXCL);
+		if (fd < 0) {
+			fprintf(stderr, "unable to open %s: %s\n", file,
+				strerror(errno));
+			exit(1);
+		}
+		close(fd);
+		/*
+		 * open again without O_EXCL so that the problem should not
+		 * occur by the following processing.
+		 * (btrfs_register_one_device() fails if O_EXCL is on)
+		 */
 		fd = open(file, O_RDWR);
 		if (fd < 0) {
-			fprintf(stderr, "unable to open %s\n", file);
+			fprintf(stderr, "unable to open %s: %s\n", file,
+				strerror(errno));
 			exit(1);
 		}
 		ret = btrfs_device_already_in_root(root, fd,
