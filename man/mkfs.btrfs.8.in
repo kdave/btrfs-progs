@@ -6,6 +6,7 @@ mkfs.btrfs \- create a btrfs filesystem
 [ \fB\-A\fP\fI alloc-start\fP ]
 [ \fB\-b\fP\fI byte-count\fP ]
 [ \fB\-d\fP\fI data-profile\fP ]
+[ \fB\-f\fP\fI ]
 [ \fB\-l\fP\fI leafsize\fP ]
 [ \fB\-L\fP\fI label\fP ]
 [ \fB\-m\fP\fI metadata profile\fP ]
@@ -37,6 +38,11 @@ mkfs.btrfs uses all the available storage for the filesystem.
 \fB\-d\fR, \fB\-\-data \fItype\fR
 Specify how the data must be spanned across the devices specified. Valid
 values are raid0, raid1, raid10 or single.
+.TP
+\fB\-f\fR
+Force overwrite when an existing filesystem is detected on the device.
+By default, mkfs.btrfs will not write to the device if it suspects that 
+there is a filesystem or partition table on the device already.
 .TP
 \fB\-l\fR, \fB\-\-leafsize \fIsize\fR
 Specify the leaf size, the least data item in which btrfs stores data. The

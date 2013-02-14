@@ -41,7 +41,6 @@
 #include <attr/xattr.h>
 #include <blkid/blkid.h>
 #include <ftw.h>
-#include "kerncompat.h"
 #include "ctree.h"
 #include "disk-io.h"
 #include "volumes.h"
@@ -1260,6 +1259,86 @@ static int is_ssd(const char *file)
 	return !atoi((const char *)&rotational);
 }
 
+/*
+ * Check for existing filesystem or partition table on device.
+ * Returns:
+ *	 1 for existing fs or partition
+ *	 0 for nothing found
+ *	-1 for internal error
+ */
+static int
+check_overwrite(
+	char		*device)
+{
+	const char	*type;
+	blkid_probe	pr = NULL;
+	int		ret;
+	blkid_loff_t	size;
+
+	if (!device || !*device)
+		return 0;
+
+	ret = -1; /* will reset on success of all setup calls */
+
+	pr = blkid_new_probe_from_filename(device);
+	if (!pr)
+		goto out;
+
+	size = blkid_probe_get_size(pr);
+	if (size < 0)
+		goto out;
+
+	/* nothing to overwrite on a 0-length device */
+	if (size == 0) {
+		ret = 0;
+		goto out;
+	}
+
+	ret = blkid_probe_enable_partitions(pr, 1);
+	if (ret < 0)
+		goto out;
+
+	ret = blkid_do_fullprobe(pr);
+	if (ret < 0)
+		goto out;
+
+	/*
+	 * Blkid returns 1 for nothing found and 0 when it finds a signature,
+	 * but we want the exact opposite, so reverse the return value here.
+	 *
+	 * In addition print some useful diagnostics about what actually is
+	 * on the device.
+	 */
+	if (ret) {
+		ret = 0;
+		goto out;
+	}
+
+	if (!blkid_probe_lookup_value(pr, "TYPE", &type, NULL)) {
+		fprintf(stderr,
+			"%s appears to contain an existing "
+			"filesystem (%s).\n", device, type);
+	} else if (!blkid_probe_lookup_value(pr, "PTTYPE", &type, NULL)) {
+		fprintf(stderr,
+			"%s appears to contain a partition "
+			"table (%s).\n", device, type);
+	} else {
+		fprintf(stderr,
+			"%s appears to contain something weird "
+			"according to blkid\n", device);
+	}
+	ret = 1;
+
+out:
+	if (pr)
+		blkid_free_probe(pr);
+	if (ret == -1)
+		fprintf(stderr,
+			"probe of %s failed, cannot detect "
+			  "existing filesystem.\n", device);
+	return ret;
+}
+
 int main(int ac, char **av)
 {
 	char *file;
@@ -1287,6 +1366,7 @@ int main(int ac, char **av)
 	int metadata_profile_opt = 0;
 	int nodiscard = 0;
 	int ssd = 0;
+	int force_overwrite = 0;
 
 	char *source_dir = NULL;
 	int source_dir_set = 0;
@@ -1299,13 +1379,16 @@ int main(int ac, char **av)
 
 	while(1) {
 		int c;
-		c = getopt_long(ac, av, "A:b:l:n:s:m:d:L:r:VMK", long_options,
+		c = getopt_long(ac, av, "A:b:fl:n:s:m:d:L:r:VMK", long_options,
 				&option_index);
 		if (c < 0)
 			break;
 		switch(c) {
 			case 'A':
 				alloc_start = parse_size(optarg);
+				break;
+			case 'f':
+				force_overwrite = 1;
 				break;
 			case 'd':
 				data_profile = parse_profile(optarg);
@@ -1375,6 +1458,12 @@ int main(int ac, char **av)
 		if (ret == 1) {
 			fprintf(stderr, "%s is a swap device\n", file);
 			exit(1);
+		}
+		if (!force_overwrite) {
+			if (check_overwrite(file)) {
+				fprintf(stderr, "Use the -f option to force overwrite.\n");
+				exit(1);
+			}
 		}
 		ret = check_mounted(file);
 		if (ret < 0) {
@@ -1485,6 +1574,13 @@ int main(int ac, char **av)
 		int old_mixed = mixed;
 
 		file = av[optind++];
+		if (!force_overwrite) {
+			if (check_overwrite(file)) {
+				fprintf(stderr, "Use the -f option to force overwrite.\n");
+				exit(1);
+			}
+		}
+
 		ret = is_swap_device(file);
 		if (ret < 0) {
 			fprintf(stderr, "error checking %s status: %s\n", file,

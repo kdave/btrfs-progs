@@ -19,7 +19,7 @@ DEPFLAGS = -Wp,-MMD,$(@D)/.$(@F).d,-MT,$@
 INSTALL = install
 prefix ?= /usr/local
 bindir = $(prefix)/bin
-LIBS=-luuid -lm -lz
+LIBS=-luuid -lblkid -lm -lz
 
 ifeq ("$(origin V)", "command line")
   BUILD_VERBOSE = $(V)
