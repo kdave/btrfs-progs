@@ -63,12 +63,15 @@ static int __ino_to_path_fd(u64 inum, int fd, int verbose, const char *prepend)
 			fspath->elem_cnt, fspath->elem_missed);
 
 	for (i = 0; i < fspath->elem_cnt; ++i) {
-		char **str = (char **)fspath->val;
-		str[i] += (unsigned long)fspath->val;
+		u64 ptr;
+		char *str;
+		ptr = (u64)(unsigned long)fspath->val;
+		ptr += fspath->val[i];
+		str = (char *)(unsigned long)ptr;
 		if (prepend)
-			printf("%s/%s\n", prepend, str[i]);
+			printf("%s/%s\n", prepend, str);
 		else
-			printf("%s\n", str[i]);
+			printf("%s\n", str);
 	}
 
 out:
