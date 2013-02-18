@@ -52,6 +52,11 @@ static void print_extents(struct btrfs_root *root, struct extent_buffer *eb)
 	if (!eb)
 		return;
 
+	if (btrfs_is_leaf(eb)) {
+		btrfs_print_leaf(root, eb);
+		return;
+	}
+
 	size = btrfs_level_size(root, btrfs_header_level(eb) - 1);
 	nr = btrfs_header_nritems(eb);
 	for (i = 0; i < nr; i++) {
