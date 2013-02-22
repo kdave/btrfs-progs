@@ -1316,12 +1316,13 @@ scan_again:
 		return -ENOENT;
 	}
 	/* skip the header */
-	for(i=0; i < 2 ; i++)
-		if(!fgets(buf, 1023, proc_partitions)){
-		fprintf(stderr, "Unable to read '/proc/partitions' for scanning\n");
-		fclose(proc_partitions);
-		return -ENOENT;
-	}
+	for (i = 0; i < 2; i++)
+		if (!fgets(buf, 1023, proc_partitions)) {
+			fprintf(stderr,
+				"Unable to read '/proc/partitions' for scanning\n");
+			fclose(proc_partitions);
+			return -ENOENT;
+		}
 
 	strcpy(fullpath,"/dev/");
 	while(fgets(buf, 1023, proc_partitions)) {
