@@ -235,7 +235,7 @@ static int cmd_start_replace(int argc, char **argv)
 		}
 	} else {
 		fdsrcdev = open(srcdev, O_RDWR);
-		if (!fdsrcdev) {
+		if (fdsrcdev < 0) {
 			fprintf(stderr, "Error: Unable to open device '%s'\n",
 				srcdev);
 			goto leave_with_error;
