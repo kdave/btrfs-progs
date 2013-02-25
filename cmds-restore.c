@@ -836,7 +836,7 @@ int cmd_restore(int argc, char **argv)
 
 	if ((ret = check_mounted(argv[optind])) < 0) {
 		fprintf(stderr, "Could not check mount status: %s\n",
-			strerror(ret));
+			strerror(-ret));
 		return ret;
 	} else if (ret) {
 		fprintf(stderr, "%s is currently mounted.  Aborting.\n", argv[optind]);
