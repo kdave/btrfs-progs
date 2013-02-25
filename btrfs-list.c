@@ -564,15 +564,18 @@ static int resolve_root(struct root_lookup *rl, struct root_info *ri,
 	while (1) {
 		char *tmp;
 		u64 next;
+		int add_len;
+
 		/*
-		* ref_tree = 0 indicates the subvolumes
-		* has been deleted.
-		*/
+		 * ref_tree = 0 indicates the subvolumes
+		 * has been deleted.
+		 */
 		if (!found->ref_tree) {
 			free(full_path);
 			return -ENOENT;
 		}
-		int add_len = strlen(found->path);
+
+		add_len = strlen(found->path);
 
 		/* room for / and for null */
 		tmp = malloc(add_len + 2 + len);
@@ -595,7 +598,7 @@ static int resolve_root(struct root_lookup *rl, struct root_info *ri,
 
 		next = found->ref_tree;
 
-		if (next ==  top_id) {
+		if (next == top_id) {
 			ri->top_id = top_id;
 			break;
 		}
