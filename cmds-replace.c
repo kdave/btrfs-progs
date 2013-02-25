@@ -228,6 +228,7 @@ static int cmd_start_replace(int argc, char **argv)
 		for (i = 0; i < fi_args.num_devices; i++)
 			if (start_args.start.srcdevid == di_args[i].devid)
 				break;
+		free(di_args);
 		if (i == fi_args.num_devices) {
 			fprintf(stderr, "Error: '%s' is not a valid devid for filesystem '%s'\n",
 				srcdev, path);
