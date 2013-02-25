@@ -1515,6 +1515,13 @@ int btrfs_list_subvols_print(int fd, struct btrfs_list_filter_set *filter_set,
 	return 0;
 }
 
+char *strdup_or_null(const char *s)
+{
+	if (!s)
+		return NULL;
+	return strdup(s);
+}
+
 int btrfs_get_subvol(int fd, struct root_info *the_ri)
 {
 	int ret = 1, rr;
@@ -1537,18 +1544,9 @@ int btrfs_get_subvol(int fd, struct root_info *the_ri)
 		}
 		if (!comp_entry_with_rootid(the_ri, ri, 0)) {
 			memcpy(the_ri, ri, offsetof(struct root_info, path));
-			if (ri->path)
-				the_ri->path = strdup(ri->path);
-			else
-				the_ri->path = NULL;
-			if (ri->name)
-				the_ri->name = strdup(ri->name);
-			else
-				the_ri->name = NULL;
-			if (ri->full_path)
-				the_ri->full_path = strdup(ri->full_path);
-			else
-				the_ri->name = NULL;
+			the_ri->path = strdup_or_null(ri->path);
+			the_ri->name = strdup_or_null(ri->name);
+			the_ri->full_path = strdup_or_null(ri->full_path);
 			ret = 0;
 			break;
 		}
