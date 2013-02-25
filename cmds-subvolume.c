@@ -624,7 +624,7 @@ static const char * const cmd_subvol_get_default_usage[] = {
 
 static int cmd_subvol_get_default(int argc, char **argv)
 {
-	int fd;
+	int fd = -1;
 	int ret;
 	char *subvol;
 	struct btrfs_list_filter_set *filter_set;
@@ -638,35 +638,36 @@ static int cmd_subvol_get_default(int argc, char **argv)
 	ret = test_issubvolume(subvol);
 	if (ret < 0) {
 		fprintf(stderr, "ERROR: error accessing '%s'\n", subvol);
-		return 12;
+		return 1;
 	}
 	if (!ret) {
 		fprintf(stderr, "ERROR: '%s' is not a subvolume\n", subvol);
-		return 13;
+		return 1;
 	}
 
 	fd = open_file_or_dir(subvol);
 	if (fd < 0) {
 		fprintf(stderr, "ERROR: can't access '%s'\n", subvol);
-		return 12;
+		return 1;
 	}
 
 	ret = btrfs_list_get_default_subvolume(fd, &default_id);
 	if (ret) {
 		fprintf(stderr, "ERROR: can't perform the search - %s\n",
 			strerror(errno));
-		return ret;
+		goto out;
 	}
 
+	ret = 1;
 	if (default_id == 0) {
 		fprintf(stderr, "ERROR: 'default' dir item not found\n");
-		return ret;
+		goto out;
 	}
 
 	/* no need to resolve roots if FS_TREE is default */
 	if (default_id == BTRFS_FS_TREE_OBJECTID) {
 		printf("ID 5 (FS_TREE)\n");
-		return ret;
+		goto out;
 	}
 
 	filter_set = btrfs_list_alloc_filter_set();
@@ -684,8 +685,11 @@ static int cmd_subvol_get_default(int argc, char **argv)
 
 	if (filter_set)
 		btrfs_list_free_filter_set(filter_set);
+out:
+	if (fd != -1)
+		close(fd);
 	if (ret)
-		return 19;
+		return 1;
 	return 0;
 }
 
