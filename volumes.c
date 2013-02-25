@@ -1226,6 +1226,7 @@ again:
 	if (multi_ret && stripes_allocated < stripes_required) {
 		stripes_allocated = stripes_required;
 		kfree(multi);
+		multi = NULL;
 		goto again;
 	}
 	stripe_nr = offset;
