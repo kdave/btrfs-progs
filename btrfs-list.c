@@ -1500,8 +1500,13 @@ int btrfs_list_subvols_print(int fd, struct btrfs_list_filter_set *filter_set,
 {
 	struct root_lookup root_lookup;
 	struct root_lookup root_sort;
-	int ret;
-	u64 top_id = (full_path ? 0 : btrfs_list_get_path_rootid(fd));
+	int ret = 0;
+	u64 top_id = 0;
+
+	if (full_path)
+		ret = btrfs_list_get_path_rootid(fd, &top_id);
+	if (ret)
+		return ret;
 
 	ret = btrfs_list_subvols(fd, &root_lookup);
 	if (ret)
@@ -1524,13 +1529,18 @@ char *strdup_or_null(const char *s)
 
 int btrfs_get_subvol(int fd, struct root_info *the_ri)
 {
-	int ret = 1, rr;
+	int ret, rr;
 	struct root_lookup rl;
 	struct rb_node *rbn;
 	struct root_info *ri;
-	u64 root_id = btrfs_list_get_path_rootid(fd);
+	u64 root_id;
 
-	if (btrfs_list_subvols(fd, &rl))
+	ret = btrfs_list_get_path_rootid(fd, &root_id);
+	if (ret)
+		return ret;
+
+	ret = btrfs_list_subvols(fd, &rl);
+	if (ret)
 		return ret;
 
 	rbn = rb_first(&rl.root);
@@ -1741,7 +1751,11 @@ char *btrfs_list_path_for_root(int fd, u64 root)
 	struct rb_node *n;
 	char *ret_path = NULL;
 	int ret;
-	u64 top_id = btrfs_list_get_path_rootid(fd);
+	u64 top_id;
+
+	ret = btrfs_list_get_path_rootid(fd, &top_id);
+	if (ret)
+		return ERR_PTR(ret);
 
 	ret = __list_subvol_search(fd, &root_lookup);
 	if (ret < 0)
@@ -1868,7 +1882,7 @@ int btrfs_list_parse_filter_string(char *optarg,
 	return 0;
 }
 
-u64 btrfs_list_get_path_rootid(int fd)
+int btrfs_list_get_path_rootid(int fd, u64 *treeid)
 {
 	int  ret;
 	struct btrfs_ioctl_ino_lookup_args args;
@@ -1883,5 +1897,6 @@ u64 btrfs_list_get_path_rootid(int fd)
 			strerror(errno));
 		return ret;
 	}
-	return args.treeid;
+	*treeid = args.treeid;
+	return 0;
 }

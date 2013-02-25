@@ -433,7 +433,11 @@ static int cmd_subvol_list(int argc, char **argv)
 		goto out;
 	}
 
-	top_id = btrfs_list_get_path_rootid(fd);
+	ret = btrfs_list_get_path_rootid(fd, &top_id);
+	if (ret) {
+		fprintf(stderr, "ERROR: can't get rootid for '%s'\n", subvol);
+		goto out;
+	}
 
 	if (is_list_all)
 		btrfs_list_setup_filter(&filter_set,
@@ -821,8 +825,8 @@ static int cmd_subvol_show(int argc, char **argv)
 		goto out;
 	}
 
-	sv_id = btrfs_list_get_path_rootid(fd);
-	if (sv_id < 0) {
+	ret = btrfs_list_get_path_rootid(fd, &sv_id);
+	if (ret) {
 		fprintf(stderr, "ERROR: can't get rootid for '%s'\n",
 			fullpath);
 		goto out;
@@ -834,8 +838,8 @@ static int cmd_subvol_show(int argc, char **argv)
 		goto out;
 	}
 
-	mntid = btrfs_list_get_path_rootid(mntfd);
-	if (mntid < 0) {
+	ret = btrfs_list_get_path_rootid(mntfd, &mntid);
+	if (ret) {
 		fprintf(stderr, "ERROR: can't get rootid for '%s'\n", mnt);
 		goto out;
 	}
