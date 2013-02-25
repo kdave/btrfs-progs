@@ -1448,13 +1448,13 @@ static int cmd_scrub_cancel(int argc, char **argv)
 
 	path = argv[1];
 
+again:
 	fdmnt = open_file_or_dir(path);
 	if (fdmnt < 0) {
 		fprintf(stderr, "ERROR: scrub cancel failed\n");
-		return 12;
+		return 1;
 	}
 
-again:
 	ret = ioctl(fdmnt, BTRFS_IOC_SCRUB_CANCEL, NULL);
 	err = errno;
 
@@ -1463,13 +1463,10 @@ again:
 		ret = check_mounted_where(fdmnt, path, mp, sizeof(mp),
 					  &fs_devices_mnt);
 		if (ret) {
-			/* It is a device; open the mountpoint. */
+			/* It is a device; try again with the mountpoint. */
 			close(fdmnt);
-			fdmnt = open_file_or_dir(mp);
-			if (fdmnt >= 0) {
-				path = mp;
-				goto again;
-			}
+			path = mp;
+			goto again;
 		}
 	}
 
