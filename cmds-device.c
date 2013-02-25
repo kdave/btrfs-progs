@@ -295,7 +295,6 @@ static int cmd_dev_stats(int argc, char **argv)
 	int fdmnt;
 	int i;
 	char c;
-	int fdres = -1;
 	int err = 0;
 	__u64 flags = 0;
 
@@ -390,8 +389,6 @@ static int cmd_dev_stats(int argc, char **argv)
 out:
 	free(di_args);
 	close(fdmnt);
-	if (fdres > -1)
-		close(fdres);
 
 	return err;
 }
