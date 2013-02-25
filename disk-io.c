@@ -198,17 +198,21 @@ static int read_whole_eb(struct btrfs_fs_info *info, struct extent_buffer *eb, i
 				      mirror, NULL);
 		if (ret) {
 			printk("Couldn't map the block %Lu\n", eb->start + offset);
+			kfree(multi);
 			return -EIO;
 		}
 		device = multi->stripes[0].dev;
 
-		if (device->fd == 0)
+		if (device->fd == 0) {
+			kfree(multi);
 			return -EIO;
+		}
 
 		eb->fd = device->fd;
 		device->total_ios++;
 		eb->dev_bytenr = multi->stripes[0].physical;
 		kfree(multi);
+		multi = NULL;
 
 		if (read_len > bytes_left)
 			read_len = bytes_left;
