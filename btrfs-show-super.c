@@ -97,7 +97,6 @@ int main(int argc, char **argv)
 		fd = open(filename, O_RDONLY, 0666);
 		if (fd < 0) {
 			fprintf(stderr, "Could not open %s\n", filename);
-			close(fd);
 			exit(1);
 		}
 
