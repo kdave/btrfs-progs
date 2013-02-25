@@ -568,8 +568,10 @@ static int resolve_root(struct root_lookup *rl, struct root_info *ri,
 		* ref_tree = 0 indicates the subvolumes
 		* has been deleted.
 		*/
-		if (!found->ref_tree)
+		if (!found->ref_tree) {
+			free(full_path);
 			return -ENOENT;
+		}
 		int add_len = strlen(found->path);
 
 		/* room for / and for null */
@@ -612,8 +614,10 @@ static int resolve_root(struct root_lookup *rl, struct root_info *ri,
 		* subvolume was deleted.
 		*/
 		found = root_tree_search(rl, next);
-		if (!found)
+		if (!found) {
+			free(full_path);
 			return -ENOENT;
+		}
 	}
 
 	ri->full_path = full_path;
