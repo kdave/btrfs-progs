@@ -1451,7 +1451,7 @@ static int cmd_scrub_cancel(int argc, char **argv)
 again:
 	fdmnt = open_file_or_dir(path);
 	if (fdmnt < 0) {
-		fprintf(stderr, "ERROR: scrub cancel failed\n");
+		perror("ERROR: scrub cancel failed:");
 		return 1;
 	}
 
@@ -1462,11 +1462,18 @@ again:
 		/* path is not a btrfs mount point.  See if it's a device. */
 		ret = check_mounted_where(fdmnt, path, mp, sizeof(mp),
 					  &fs_devices_mnt);
-		if (ret) {
-			/* It is a device; try again with the mountpoint. */
+		if (ret > 0) {
+			/* It's a mounted btrfs device; retry w/ mountpoint. */
 			close(fdmnt);
 			path = mp;
 			goto again;
+		} else {
+			/* It's not a mounted btrfs device either */
+			fprintf(stderr,
+				"ERROR: %s is not a mounted btrfs device\n",
+				path);
+			ret = 1;
+			err = EINVAL;
 		}
 	}
 
@@ -1474,7 +1481,7 @@ again:
 
 	if (ret) {
 		fprintf(stderr, "ERROR: scrub cancel failed on %s: %s\n", path,
-			err == ENOTCONN ? "not running" : strerror(errno));
+			err == ENOTCONN ? "not running" : strerror(err));
 		return 1;
 	}
 
