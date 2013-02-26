@@ -67,7 +67,7 @@ static int parse_one_profile(const char *profile, u64 *flags)
 static int parse_profiles(char *profiles, u64 *flags)
 {
 	char *this_char;
-	char *save_ptr;
+	char *save_ptr = NULL; /* Satisfy static checkers */
 
 	for (this_char = strtok_r(profiles, "|", &save_ptr);
 	     this_char != NULL;
@@ -136,7 +136,7 @@ static int parse_filters(char *filters, struct btrfs_balance_args *args)
 {
 	char *this_char;
 	char *value;
-	char *save_ptr;
+	char *save_ptr = NULL; /* Satisfy static checkers */
 
 	if (!filters)
 		return 0;
