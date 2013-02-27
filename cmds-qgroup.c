@@ -298,6 +298,7 @@ static int cmd_qgroup_show(int argc, char **argv)
 {
 	int ret = 0;
 	int fd;
+	int e;
 	char *path = argv[1];
 
 	if (check_argc_exact(argc, 2))
@@ -310,9 +311,11 @@ static int cmd_qgroup_show(int argc, char **argv)
 	}
 
 	ret = list_qgroups(fd);
+	e = errno;
 	close(fd);
 	if (ret < 0) {
-		fprintf(stderr, "ERROR: can't list qgroups\n");
+		fprintf(stderr, "ERROR: can't list qgroups: %s\n",
+				strerror(e));
 		return 30;
 	}
 
