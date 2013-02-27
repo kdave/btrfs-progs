@@ -3610,11 +3610,11 @@ int cmd_check(int argc, char **argv)
 	}
 
 	info = open_ctree_fs_info(argv[optind], bytenr, rw, 1);
-	uuid_unparse(info->super_copy.fsid, uuidbuf);
-	printf("Checking filesystem on %s\nUUID: %s\n", argv[optind], uuidbuf);
-
 	if (info == NULL)
 		return 1;
+
+	uuid_unparse(info->super_copy.fsid, uuidbuf);
+	printf("Checking filesystem on %s\nUUID: %s\n", argv[optind], uuidbuf);
 
 	if (!extent_buffer_uptodate(info->tree_root->node) ||
 	    !extent_buffer_uptodate(info->dev_root->node) ||
