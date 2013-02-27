@@ -120,7 +120,6 @@ int list_qgroups(int fd)
 	struct btrfs_ioctl_search_header *sh;
 	unsigned long off = 0;
 	unsigned int i;
-	int e;
 	struct btrfs_qgroup_info_item *info;
 
 	memset(&args, 0, sizeof(args));
@@ -143,13 +142,9 @@ int list_qgroups(int fd)
 
 	while (1) {
 		ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &args);
-		e = errno;
-		if (ret < 0) {
-			fprintf(stderr,
-				"ERROR: can't perform the search - %s\n",
-				strerror(e));
+		if (ret < 0)
 			return ret;
-		}
+
 		/* the ioctl returns the number of item it found in nr_items */
 		if (sk->nr_items == 0)
 			break;
