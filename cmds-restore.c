@@ -763,10 +763,6 @@ const char * const cmd_restore_usage[] = {
 	"-f <offset>     filesystem location",
 	"-u <block>      super mirror",
 	"-d              find dir",
-	"-r <num>        root objectid",
-	"-c              ignore case in regular expression",
-	"-m <regexp>     regular expression to match",
-	"-l              list roots",
 	NULL
 };
 
