@@ -945,7 +945,7 @@ void btrfs_register_one_device(char *fname)
 	ret = ioctl(fd, BTRFS_IOC_SCAN_DEV, &args);
 	e = errno;
 	if(ret<0){
-		fprintf(stderr, "ERROR: unable to scan the device '%s' - %s\n",
+		fprintf(stderr, "ERROR: device scan failed '%s' - %s\n",
 			fname, strerror(e));
 	}
 	close(fd);
