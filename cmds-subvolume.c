@@ -464,6 +464,8 @@ static int cmd_subvol_list(int argc, char **argv)
 				!is_list_all && !is_only_in_path, NULL);
 
 out:
+	if (fd != -1)
+		close(fd);
 	if (filter_set)
 		btrfs_list_free_filter_set(filter_set);
 	if (comparer_set)
