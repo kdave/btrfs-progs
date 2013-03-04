@@ -489,7 +489,9 @@ static const char * const cmd_snapshot_usage[] = {
 static int cmd_snapshot(int argc, char **argv)
 {
 	char	*subvol, *dst;
-	int	res, fd, fddst, len, e, readonly = 0;
+	int	res, retval;
+	int	fd = -1, fddst = -1;
+	int	len, readonly = 0;
 	char	*newname;
 	char	*dstdir;
 	struct btrfs_ioctl_vol_args_v2	args;
@@ -532,20 +534,21 @@ static int cmd_snapshot(int argc, char **argv)
 	subvol = argv[optind];
 	dst = argv[optind + 1];
 
+	retval = 1;	/* failure */
 	res = test_issubvolume(subvol);
 	if (res < 0) {
 		fprintf(stderr, "ERROR: error accessing '%s'\n", subvol);
-		return 1;
+		goto out;
 	}
 	if (!res) {
 		fprintf(stderr, "ERROR: '%s' is not a subvolume\n", subvol);
-		return 1;
+		goto out;
 	}
 
 	res = test_isdir(dst);
 	if (res == 0) {
 		fprintf(stderr, "ERROR: '%s' exists and it is not a directory\n", dst);
-		return 1;
+		goto out;
 	}
 
 	if (res > 0) {
@@ -563,27 +566,26 @@ static int cmd_snapshot(int argc, char **argv)
 	     strchr(newname, '/') ){
 		fprintf(stderr, "ERROR: incorrect snapshot name ('%s')\n",
 			newname);
-		return 1;
+		goto out;
 	}
 
 	len = strlen(newname);
 	if (len == 0 || len >= BTRFS_VOL_NAME_MAX) {
 		fprintf(stderr, "ERROR: snapshot name too long ('%s)\n",
 			newname);
-		return 1;
+		goto out;
 	}
 
 	fddst = open_file_or_dir(dstdir);
 	if (fddst < 0) {
 		fprintf(stderr, "ERROR: can't access to '%s'\n", dstdir);
-		return 1;
+		goto out;
 	}
 
 	fd = open_file_or_dir(subvol);
 	if (fd < 0) {
-		close(fddst);
 		fprintf(stderr, "ERROR: can't access to '%s'\n", dstdir);
-		return 1;
+		goto out;
 	}
 
 	if (readonly) {
@@ -602,20 +604,25 @@ static int cmd_snapshot(int argc, char **argv)
 		args.qgroup_inherit = inherit;
 	}
 	strncpy_null(args.name, newname);
-	res = ioctl(fddst, BTRFS_IOC_SNAP_CREATE_V2, &args);
-	e = errno;
 
-	close(fd);
-	close(fddst);
-	free(inherit);
+	res = ioctl(fddst, BTRFS_IOC_SNAP_CREATE_V2, &args);
 
 	if (res < 0) {
 		fprintf( stderr, "ERROR: cannot snapshot '%s' - %s\n",
-			subvol, strerror(e));
-		return 1;
+			subvol, strerror(errno));
+		goto out;
 	}
 
-	return 0;
+	retval = 0;	/* success */
+
+out:
+	if (fd != -1)
+		close(fd);
+	if (fddst != -1)
+		close(fddst);
+	free(inherit);
+
+	return retval;
 }
 
 static const char * const cmd_subvol_get_default_usage[] = {
