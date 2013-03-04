@@ -840,9 +840,11 @@ static void *progress_one_dev(void *ctx)
 	return NULL;
 }
 
+/* nb: returns a negative errno via ERR_PTR */
 static void *scrub_progress_cycle(void *ctx)
 {
 	int ret;
+	int  perr = 0;	/* positive / pthread error returns */
 	int old;
 	int i;
 	char fsid[37];
@@ -867,9 +869,9 @@ static void *scrub_progress_cycle(void *ctx)
 	struct sockaddr_un peer;
 	socklen_t peer_size = sizeof(peer);
 
-	ret = pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, &old);
-	if (ret)
-		return ERR_PTR(-ret);
+	perr = pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, &old);
+	if (perr)
+		goto out;
 
 	uuid_unparse(spc->fi->fsid, fsid);
 
@@ -890,8 +892,10 @@ static void *scrub_progress_cycle(void *ctx)
 
 	while (1) {
 		ret = poll(&accept_poll_fd, 1, 5 * 1000);
-		if (ret == -1)
-			return ERR_PTR(-errno);
+		if (ret == -1) {
+			ret = -errno;
+			goto out;
+		}
 		if (ret)
 			peer_fd = accept(spc->prg_fd, (struct sockaddr *)&peer,
 					 &peer_size);
@@ -909,42 +913,46 @@ static void *scrub_progress_cycle(void *ctx)
 			if (!sp->ret)
 				continue;
 			if (sp->ioctl_errno != ENOTCONN &&
-			    sp->ioctl_errno != ENODEV)
-				return ERR_PTR(-sp->ioctl_errno);
+			    sp->ioctl_errno != ENODEV) {
+				ret = -sp->ioctl_errno;
+				goto out;
+			}
 			/*
 			 * scrub finished or device removed, check the
 			 * finished flag. if unset, just use the last
 			 * result we got for the current write and go
 			 * on. flag should be set on next cycle, then.
 			 */
-			ret = pthread_mutex_lock(&sp_shared->progress_mutex);
-			if (ret)
-				return ERR_PTR(-ret);
+			perr = pthread_mutex_lock(&sp_shared->progress_mutex);
+			if (perr)
+				goto out;
 			if (!sp_shared->stats.finished) {
-				ret = pthread_mutex_unlock(
+				perr = pthread_mutex_unlock(
 						&sp_shared->progress_mutex);
-				if (ret)
-					return ERR_PTR(-ret);
+				if (perr)
+					goto out;
 				memcpy(sp, sp_last, sizeof(*sp));
 				continue;
 			}
-			ret = pthread_mutex_unlock(&sp_shared->progress_mutex);
-			if (ret)
-				return ERR_PTR(-ret);
+			perr = pthread_mutex_unlock(&sp_shared->progress_mutex);
+			if (perr)
+				goto out;
 			memcpy(sp, sp_shared, sizeof(*sp));
 			memcpy(sp_last, sp_shared, sizeof(*sp));
 		}
 		if (peer_fd != -1) {
 			write_poll_fd.fd = peer_fd;
 			ret = poll(&write_poll_fd, 1, 0);
-			if (ret == -1)
-				return ERR_PTR(-errno);
+			if (ret == -1) {
+				ret = -errno;
+				goto out;
+			}
 			if (ret) {
 				ret = scrub_write_file(
 					peer_fd, fsid,
 					&spc->progress[this * ndev], ndev);
 				if (ret)
-					return ERR_PTR(ret);
+					goto out;
 			}
 			close(peer_fd);
 			peer_fd = -1;
@@ -954,8 +962,14 @@ static void *scrub_progress_cycle(void *ctx)
 		ret = scrub_write_progress(spc->write_mutex, fsid,
 					   &spc->progress[this * ndev], ndev);
 		if (ret)
-			return ERR_PTR(ret);
+			goto out;
 	}
+out:
+	if (peer_fd != -1)
+		close(peer_fd);
+	if (perr)
+		ret = -perr;
+	return ERR_PTR(ret);
 }
 
 static struct scrub_file_record *last_dev_scrub(
@@ -1373,11 +1387,14 @@ static int scrub_start(int argc, char **argv, int resume)
 	ret = pthread_cancel(t_prog);
 	if (!ret)
 		ret = pthread_join(t_prog, &terr);
+
+	/* check for errors from the handling of the progress thread */
 	if (do_print && ret) {
-		fprintf(stderr, "ERROR: progress thead handling failed: %s\n",
+		fprintf(stderr, "ERROR: progress thread handling failed: %s\n",
 			strerror(ret));
 	}
 
+	/* check for errors returned from the progress thread itself */
 	if (do_print && terr && terr != PTHREAD_CANCELED) {
 		fprintf(stderr, "ERROR: recording progress "
 			"failed: %s\n", strerror(-PTR_ERR(terr)));
