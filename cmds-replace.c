@@ -77,10 +77,13 @@ static int is_numerical(const char *str)
 static int dev_replace_cancel_fd = -1;
 static void dev_replace_sigint_handler(int signal)
 {
+	int ret;
 	struct btrfs_ioctl_dev_replace_args args = {0};
 
 	args.cmd = BTRFS_IOCTL_DEV_REPLACE_CMD_CANCEL;
-	ioctl(dev_replace_cancel_fd, BTRFS_IOC_DEV_REPLACE, &args);
+	ret = ioctl(dev_replace_cancel_fd, BTRFS_IOC_DEV_REPLACE, &args);
+	if (ret < 0)
+		perror("Device replace cancel failed");
 }
 
 static int dev_replace_handle_sigint(int fd)

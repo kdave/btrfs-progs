@@ -287,7 +287,11 @@ static void free_history(struct scrub_file_record **last_scrubs)
 static int cancel_fd = -1;
 static void scrub_sigint_record_progress(int signal)
 {
-	ioctl(cancel_fd, BTRFS_IOC_SCRUB_CANCEL, NULL);
+	int ret;
+
+	ret = ioctl(cancel_fd, BTRFS_IOC_SCRUB_CANCEL, NULL);
+	if (ret < 0)
+		perror("Scrub cancel failed");
 }
 
 static int scrub_handle_sigint_parent(void)
