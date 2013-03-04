@@ -1382,7 +1382,7 @@ u64 parse_size(char *s)
 	char c;
 	u64 mult = 1;
 
-	for (i=0 ; s[i] && isdigit(s[i]) ; i++) ;
+	for (i = 0; s && s[i] && isdigit(s[i]); i++) ;
 	if (!i) {
 		fprintf(stderr, "ERROR: size value is empty\n");
 		exit(50);
