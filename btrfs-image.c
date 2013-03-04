@@ -765,11 +765,11 @@ static int wait_for_worker(struct mdrestore_struct *mdres)
 
 static int restore_metadump(const char *input, FILE *out, int num_threads)
 {
-	struct meta_cluster *cluster;
+	struct meta_cluster *cluster = NULL;
 	struct meta_cluster_header *header;
 	struct mdrestore_struct mdrestore;
 	u64 bytenr = 0;
-	FILE *in;
+	FILE *in = NULL;
 	int ret;
 
 	if (!strcmp(input, "-")) {
@@ -797,14 +797,15 @@ static int restore_metadump(const char *input, FILE *out, int num_threads)
 		if (le64_to_cpu(header->magic) != HEADER_MAGIC ||
 		    le64_to_cpu(header->bytenr) != bytenr) {
 			fprintf(stderr, "bad header in metadump image\n");
-			return 1;
+			ret = 1;
+			goto out;
 		}
 		ret = add_cluster(cluster, &mdrestore, &bytenr);
 		BUG_ON(ret);
 
 		wait_for_worker(&mdrestore);
 	}
-
+out:
 	mdrestore_destroy(&mdrestore);
 	free(cluster);
 	if (in != stdin)
