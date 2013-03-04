@@ -193,7 +193,8 @@ int btrfs_open_devices(struct btrfs_fs_devices *fs_devices, int flags)
 			goto fail;
 		}
 
-		posix_fadvise(fd, 0, 0, POSIX_FADV_DONTNEED);
+		if (posix_fadvise(fd, 0, 0, POSIX_FADV_DONTNEED))
+			fprintf(stderr, "Warning, could not drop caches\n");
 
 		if (device->devid == fs_devices->latest_devid)
 			fs_devices->latest_bdev = fd;

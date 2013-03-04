@@ -822,7 +822,8 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 		sb_bytenr = BTRFS_SUPER_INFO_OFFSET;
 
 	/* try to drop all the caches */
-	posix_fadvise(fp, 0, 0, POSIX_FADV_DONTNEED);
+	if (posix_fadvise(fp, 0, 0, POSIX_FADV_DONTNEED))
+		fprintf(stderr, "Warning, could not drop caches\n");
 
 	ret = btrfs_scan_one_device(fp, path, &fs_devices,
 				    &total_devs, sb_bytenr);
@@ -1282,7 +1283,8 @@ static int close_all_devices(struct btrfs_fs_info *fs_info)
 		device = list_entry(next, struct btrfs_device, dev_list);
 		if (device->fd) {
 			fsync(device->fd);
-			posix_fadvise(device->fd, 0, 0, POSIX_FADV_DONTNEED);
+			if (posix_fadvise(device->fd, 0, 0, POSIX_FADV_DONTNEED))
+				fprintf(stderr, "Warning, could not drop caches\n");
 		}
 		close(device->fd);
 	}
