@@ -106,8 +106,13 @@ int main(int ac, char **av)
 		}
 	}
 	ac = ac - optind;
-	if (ac == 0)
+	if (ac == 0 || !cmd) {
+		if (!ac)
+			fprintf(stderr, "No mountpoint specified\n");
+		else
+			fprintf(stderr, "No command specified\n");
 		print_usage();
+	}
 	mnt = av[optind];
 
 	if (device && strcmp(device, "missing") == 0 &&
