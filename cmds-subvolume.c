@@ -70,7 +70,8 @@ static const char * const cmd_subvol_create_usage[] = {
 
 static int cmd_subvol_create(int argc, char **argv)
 {
-	int	res, fddst, len, e;
+	int	retval, res, len;
+	int	fddst = -1;
 	char	*newname;
 	char	*dstdir;
 	char	*dst;
@@ -103,10 +104,11 @@ static int cmd_subvol_create(int argc, char **argv)
 
 	dst = argv[optind];
 
+	retval = 1;	/* failure */
 	res = test_isdir(dst);
 	if (res >= 0) {
 		fprintf(stderr, "ERROR: '%s' exists\n", dst);
-		return 1;
+		goto out;
 	}
 
 	newname = strdup(dst);
@@ -118,20 +120,20 @@ static int cmd_subvol_create(int argc, char **argv)
 	     strchr(newname, '/') ){
 		fprintf(stderr, "ERROR: uncorrect subvolume name ('%s')\n",
 			newname);
-		return 1;
+		goto out;
 	}
 
 	len = strlen(newname);
 	if (len == 0 || len >= BTRFS_VOL_NAME_MAX) {
 		fprintf(stderr, "ERROR: subvolume name too long ('%s)\n",
 			newname);
-		return 1;
+		goto out;
 	}
 
 	fddst = open_file_or_dir(dstdir);
 	if (fddst < 0) {
 		fprintf(stderr, "ERROR: can't access to '%s'\n", dstdir);
-		return 1;
+		goto out;
 	}
 
 	printf("Create subvolume '%s/%s'\n", dstdir, newname);
@@ -154,18 +156,19 @@ static int cmd_subvol_create(int argc, char **argv)
 		res = ioctl(fddst, BTRFS_IOC_SUBVOL_CREATE, &args);
 	}
 
-	e = errno;
-
-	close(fddst);
-	free(inherit);
-
 	if (res < 0) {
 		fprintf(stderr, "ERROR: cannot create subvolume - %s\n",
-			strerror(e));
-		return 1;
+			strerror(errno));
+		goto out;
 	}
 
-	return 0;
+	retval = 0;	/* success */
+out:
+	if (fddst != -1)
+		close(fddst);
+	free(inherit);
+
+	return retval;
 }
 
 /*
