@@ -533,57 +533,57 @@ static int cmd_snapshot(int argc, char **argv)
 	dst = argv[optind + 1];
 
 	res = test_issubvolume(subvol);
-	if(res<0){
+	if (res < 0) {
 		fprintf(stderr, "ERROR: error accessing '%s'\n", subvol);
-		return 12;
+		return 1;
 	}
-	if(!res){
+	if (!res) {
 		fprintf(stderr, "ERROR: '%s' is not a subvolume\n", subvol);
-		return 13;
+		return 1;
 	}
 
 	res = test_isdir(dst);
-	if(res == 0 ){
+	if (res == 0) {
 		fprintf(stderr, "ERROR: '%s' exists and it is not a directory\n", dst);
-		return 12;
+		return 1;
 	}
 
-	if(res>0){
+	if (res > 0) {
 		newname = strdup(subvol);
 		newname = basename(newname);
 		dstdir = dst;
-	}else{
+	} else {
 		newname = strdup(dst);
 		newname = basename(newname);
 		dstdir = strdup(dst);
 		dstdir = dirname(dstdir);
 	}
 
-	if( !strcmp(newname,".") || !strcmp(newname,"..") ||
+	if (!strcmp(newname, ".") || !strcmp(newname, "..") ||
 	     strchr(newname, '/') ){
 		fprintf(stderr, "ERROR: incorrect snapshot name ('%s')\n",
 			newname);
-		return 14;
+		return 1;
 	}
 
 	len = strlen(newname);
 	if (len == 0 || len >= BTRFS_VOL_NAME_MAX) {
 		fprintf(stderr, "ERROR: snapshot name too long ('%s)\n",
 			newname);
-		return 14;
+		return 1;
 	}
 
 	fddst = open_file_or_dir(dstdir);
 	if (fddst < 0) {
 		fprintf(stderr, "ERROR: can't access to '%s'\n", dstdir);
-		return 12;
+		return 1;
 	}
 
 	fd = open_file_or_dir(subvol);
 	if (fd < 0) {
 		close(fddst);
 		fprintf(stderr, "ERROR: can't access to '%s'\n", dstdir);
-		return 12;
+		return 1;
 	}
 
 	if (readonly) {
@@ -609,10 +609,10 @@ static int cmd_snapshot(int argc, char **argv)
 	close(fddst);
 	free(inherit);
 
-	if(res < 0 ){
+	if (res < 0) {
 		fprintf( stderr, "ERROR: cannot snapshot '%s' - %s\n",
 			subvol, strerror(e));
-		return 11;
+		return 1;
 	}
 
 	return 0;
