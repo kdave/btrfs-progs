@@ -2455,7 +2455,7 @@ fail:
 
 int do_rollback(const char *devname, int force)
 {
-	int fd;
+	int fd = -1;
 	int ret;
 	int i;
 	struct btrfs_root *root;
@@ -2471,7 +2471,7 @@ int do_rollback(const char *devname, int force)
 	struct btrfs_key key;
 	struct btrfs_path path;
 	struct extent_io_tree io_tree;
-	char *buf;
+	char *buf = NULL;
 	char *name;
 	u64 bytenr;
 	u64 num_bytes;
@@ -2751,7 +2751,11 @@ next_sector:
 	extent_io_tree_cleanup(&io_tree);
 	printf("rollback complete.\n");
 	return 0;
+
 fail:
+	if (fd != -1)
+		close(fd);
+	free(buf);
 	fprintf(stderr, "rollback aborted.\n");
 	return -1;
 }
