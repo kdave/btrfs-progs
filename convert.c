@@ -2277,7 +2277,8 @@ err:
 
 int do_convert(const char *devname, int datacsum, int packing, int noxattr)
 {
-	int i, fd, ret;
+	int i, ret;
+	int fd = -1;
 	u32 blocksize;
 	u64 blocks[7];
 	u64 total_bytes;
@@ -2407,6 +2408,8 @@ int do_convert(const char *devname, int datacsum, int packing, int noxattr)
 	printf("conversion complete.\n");
 	return 0;
 fail:
+	if (fd != -1)
+		close(fd);
 	fprintf(stderr, "conversion aborted.\n");
 	return -1;
 }
