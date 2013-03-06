@@ -40,7 +40,7 @@ int update_seeding_flag(struct btrfs_root *root, int set_flag)
 	struct btrfs_super_block *disk_super;
 	u64 super_flags;
 
-	disk_super = &root->fs_info->super_copy;
+	disk_super = root->fs_info->super_copy;
 	super_flags = btrfs_super_flags(disk_super);
 	if (set_flag) {
 		if (super_flags & BTRFS_SUPER_FLAG_SEEDING) {
@@ -71,7 +71,7 @@ int enable_extrefs_flag(struct btrfs_root *root)
 	struct btrfs_super_block *disk_super;
 	u64 super_flags;
 
-	disk_super = &root->fs_info->super_copy;
+	disk_super = root->fs_info->super_copy;
 	super_flags = btrfs_super_incompat_flags(disk_super);
 	super_flags |= BTRFS_FEATURE_INCOMPAT_EXTENDED_IREF;
 	trans = btrfs_start_transaction(root, 1);

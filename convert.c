@@ -1261,7 +1261,7 @@ static int create_ext2_image(struct btrfs_root *root, ext2_filsys ext2_fs,
 	u64 total_bytes;
 	u32 sectorsize = root->sectorsize;
 
-	total_bytes = btrfs_super_total_bytes(&fs_info->super_copy);
+	total_bytes = btrfs_super_total_bytes(fs_info->super_copy);
 	first_free =  BTRFS_SUPER_INFO_OFFSET + sectorsize * 2 - 1;
 	first_free &= ~((u64)sectorsize - 1);
 
@@ -1527,7 +1527,7 @@ static int create_chunk_mapping(struct btrfs_trans_handle *trans,
 
 	btrfs_init_path(&path);
 
-	total_bytes = btrfs_super_total_bytes(&root->fs_info->super_copy);
+	total_bytes = btrfs_super_total_bytes(root->fs_info->super_copy);
 	chunk_objectid = BTRFS_FIRST_CHUNK_TREE_OBJECTID;
 
 	BUG_ON(list_empty(&info->fs_devices->devices));
@@ -1691,13 +1691,13 @@ static int init_btrfs(struct btrfs_root *root)
 	memcpy(&location, &root->root_key, sizeof(location));
 	location.offset = (u64)-1;
 	ret = btrfs_insert_dir_item(trans, fs_info->tree_root, "default", 7,
-				btrfs_super_root_dir(&fs_info->super_copy),
+				btrfs_super_root_dir(fs_info->super_copy),
 				&location, BTRFS_FT_DIR, 0);
 	if (ret)
 		goto err;
 	ret = btrfs_insert_inode_ref(trans, fs_info->tree_root, "default", 7,
 				location.objectid,
-				btrfs_super_root_dir(&fs_info->super_copy), 0);
+				btrfs_super_root_dir(fs_info->super_copy), 0);
 	if (ret)
 		goto err;
 	btrfs_set_root_dirid(&fs_info->fs_root->root_item,
@@ -2227,7 +2227,7 @@ static int fixup_chunk_mapping(struct btrfs_root *root)
 	btrfs_release_path(chunk_root, &path);
 
 	/* fixup the system chunk array in super block */
-	btrfs_set_super_sys_array_size(&info->super_copy, 0);
+	btrfs_set_super_sys_array_size(info->super_copy, 0);
 
 	key.objectid = BTRFS_FIRST_CHUNK_TREE_OBJECTID;
 	key.offset = 0;
@@ -2425,11 +2425,11 @@ static int may_rollback(struct btrfs_root *root)
 	int num_stripes;
 	int ret;
 
-	if (btrfs_super_num_devices(&info->super_copy) != 1)
+	if (btrfs_super_num_devices(info->super_copy) != 1)
 		goto fail;
 
 	bytenr = BTRFS_SUPER_INFO_OFFSET;
-	total_bytes = btrfs_super_total_bytes(&root->fs_info->super_copy);
+	total_bytes = btrfs_super_total_bytes(root->fs_info->super_copy);
 
 	while (1) {
 		ret = btrfs_map_block(&info->mapping_tree, WRITE, bytenr,
@@ -2659,7 +2659,7 @@ next_extent:
 		goto fail;
 	}
 	/* create a system chunk that maps the whole device */
-	ret = prepare_system_chunk_sb(&root->fs_info->super_copy);
+	ret = prepare_system_chunk_sb(root->fs_info->super_copy);
 	if (ret) {
 		fprintf(stderr, "unable to update system chunk\n");
 		goto fail;

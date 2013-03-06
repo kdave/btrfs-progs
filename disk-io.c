@@ -106,7 +106,7 @@ int csum_tree_block(struct btrfs_root *root, struct extent_buffer *buf,
 		    int verify)
 {
 	u16 csum_size =
-		btrfs_super_csum_size(&root->fs_info->super_copy);
+		btrfs_super_csum_size(root->fs_info->super_copy);
 	return csum_tree_block_size(buf, csum_size, verify);
 }
 
@@ -840,6 +840,7 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 	}
 
 	memset(fs_info, 0, sizeof(*fs_info));
+	fs_info->super_copy = calloc(1, BTRFS_SUPER_INFO_SIZE);
 	fs_info->tree_root = tree_root;
 	fs_info->extent_root = extent_root;
 	fs_info->chunk_root = chunk_root;
@@ -875,7 +876,7 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 		goto out_cleanup;
 
 	fs_info->super_bytenr = sb_bytenr;
-	disk_super = &fs_info->super_copy;
+	disk_super = fs_info->super_copy;
 	ret = btrfs_read_dev_super(fs_devices->latest_bdev,
 				   disk_super, sb_bytenr);
 	if (ret) {
@@ -1164,10 +1165,6 @@ int write_dev_supers(struct btrfs_root *root, struct btrfs_super_block *sb,
 	u64 bytenr;
 	u32 crc;
 	int i, ret;
-	void *buf;
-
-	buf = calloc(1, BTRFS_SUPER_INFO_SIZE);
-	BUG_ON(!buf);
 
 	if (root->fs_info->super_bytenr != BTRFS_SUPER_INFO_OFFSET) {
 		btrfs_set_super_bytenr(sb, root->fs_info->super_bytenr);
@@ -1176,11 +1173,15 @@ int write_dev_supers(struct btrfs_root *root, struct btrfs_super_block *sb,
 				      BTRFS_SUPER_INFO_SIZE - BTRFS_CSUM_SIZE);
 		btrfs_csum_final(crc, (char *)&sb->csum[0]);
 
-		memcpy(buf, sb, sizeof(*sb));
-		ret = pwrite64(device->fd, buf, BTRFS_SUPER_INFO_SIZE,
-			       root->fs_info->super_bytenr);
+		/*
+		 * super_copy is BTRFS_SUPER_INFO_SIZE bytes and is
+		 * zero filled, we can use it directly
+		 */
+		ret = pwrite64(device->fd, root->fs_info->super_copy,
+				BTRFS_SUPER_INFO_SIZE,
+				root->fs_info->super_bytenr);
 		BUG_ON(ret != BTRFS_SUPER_INFO_SIZE);
-		goto out;
+		return 0;
 	}
 
 	for (i = 0; i < BTRFS_SUPER_MIRROR_MAX; i++) {
@@ -1195,12 +1196,15 @@ int write_dev_supers(struct btrfs_root *root, struct btrfs_super_block *sb,
 				      BTRFS_SUPER_INFO_SIZE - BTRFS_CSUM_SIZE);
 		btrfs_csum_final(crc, (char *)&sb->csum[0]);
 
-		memcpy(buf, sb, sizeof(*sb));
-		ret = pwrite64(device->fd, buf, BTRFS_SUPER_INFO_SIZE, bytenr);
+		/*
+		 * super_copy is BTRFS_SUPER_INFO_SIZE bytes and is
+		 * zero filled, we can use it directly
+		 */
+		ret = pwrite64(device->fd, root->fs_info->super_copy,
+				BTRFS_SUPER_INFO_SIZE, bytenr);
 		BUG_ON(ret != BTRFS_SUPER_INFO_SIZE);
 	}
-out:
-	free(buf);
+
 	return 0;
 }
 
@@ -1214,7 +1218,7 @@ int write_all_supers(struct btrfs_root *root)
 	int ret;
 	u64 flags;
 
-	sb = &root->fs_info->super_copy;
+	sb = root->fs_info->super_copy;
 	dev_item = &sb->dev_item;
 	list_for_each(cur, head) {
 		dev = list_entry(cur, struct btrfs_device, dev_list);
@@ -1251,17 +1255,17 @@ int write_ctree_super(struct btrfs_trans_handle *trans,
 	if (root->fs_info->readonly)
 		return 0;
 
-	btrfs_set_super_generation(&root->fs_info->super_copy,
+	btrfs_set_super_generation(root->fs_info->super_copy,
 				   trans->transid);
-	btrfs_set_super_root(&root->fs_info->super_copy,
+	btrfs_set_super_root(root->fs_info->super_copy,
 			     tree_root->node->start);
-	btrfs_set_super_root_level(&root->fs_info->super_copy,
+	btrfs_set_super_root_level(root->fs_info->super_copy,
 				   btrfs_header_level(tree_root->node));
-	btrfs_set_super_chunk_root(&root->fs_info->super_copy,
+	btrfs_set_super_chunk_root(root->fs_info->super_copy,
 				   chunk_root->node->start);
-	btrfs_set_super_chunk_root_level(&root->fs_info->super_copy,
+	btrfs_set_super_chunk_root_level(root->fs_info->super_copy,
 					 btrfs_header_level(chunk_root->node));
-	btrfs_set_super_chunk_root_generation(&root->fs_info->super_copy,
+	btrfs_set_super_chunk_root_generation(root->fs_info->super_copy,
 				btrfs_header_generation(chunk_root->node));
 
 	ret = write_all_supers(root);

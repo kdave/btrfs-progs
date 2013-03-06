@@ -64,8 +64,8 @@ int main(int ac, char **av)
 		return 1;
 
 	trans = btrfs_start_transaction(root, 1);
-	btrfs_set_super_log_root(&root->fs_info->super_copy, 0);
-	btrfs_set_super_log_root_level(&root->fs_info->super_copy, 0);
+	btrfs_set_super_log_root(root->fs_info->super_copy, 0);
+	btrfs_set_super_log_root_level(root->fs_info->super_copy, 0);
 	btrfs_commit_transaction(trans, root);
 	close_ctree(root);
 	return ret;

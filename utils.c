@@ -473,7 +473,7 @@ int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 		      u32 sectorsize)
 {
 	struct btrfs_super_block *disk_super;
-	struct btrfs_super_block *super = &root->fs_info->super_copy;
+	struct btrfs_super_block *super = root->fs_info->super_copy;
 	struct btrfs_device *device;
 	struct btrfs_dev_item *dev_item;
 	char *buf;
@@ -624,7 +624,7 @@ int btrfs_make_root_dir(struct btrfs_trans_handle *trans,
 	btrfs_set_stack_timespec_nsec(&inode_item.otime, 0);
 
 	if (root->fs_info->tree_root == root)
-		btrfs_set_super_root_dir(&root->fs_info->super_copy, objectid);
+		btrfs_set_super_root_dir(root->fs_info->super_copy, objectid);
 
 	ret = btrfs_insert_inode(trans, root, objectid, &inode_item);
 	if (ret)
@@ -1088,7 +1088,7 @@ int btrfs_device_already_in_root(struct btrfs_root *root, int fd,
 	if (disk_super->magic != cpu_to_le64(BTRFS_MAGIC))
 		goto brelse;
 
-	if (!memcmp(disk_super->fsid, root->fs_info->super_copy.fsid,
+	if (!memcmp(disk_super->fsid, root->fs_info->super_copy->fsid,
 		    BTRFS_FSID_SIZE))
 		ret = 1;
 brelse:
@@ -1191,7 +1191,7 @@ static int set_label_unmounted(const char *dev, const char *label)
 		return -1;
 
 	trans = btrfs_start_transaction(root, 1);
-	snprintf(root->fs_info->super_copy.label, BTRFS_LABEL_SIZE, "%s",
+	snprintf(root->fs_info->super_copy->label, BTRFS_LABEL_SIZE, "%s",
 		 label);
 	btrfs_commit_transaction(trans, root);
 
@@ -1243,7 +1243,7 @@ static int get_label_unmounted(const char *dev)
 	if(!root)
 		return -1;
 
-	fprintf(stdout, "%s\n", root->fs_info->super_copy.label);
+	fprintf(stdout, "%s\n", root->fs_info->super_copy->label);
 
 	/* Now we close it since we are done. */
 	close_ctree(root);

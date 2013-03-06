@@ -372,14 +372,14 @@ no_node:
 		return 0;
 
 	if (root_backups)
-		print_old_roots(&info->super_copy);
+		print_old_roots(info->super_copy);
 
 	printf("total bytes %llu\n",
-	       (unsigned long long)btrfs_super_total_bytes(&info->super_copy));
+	       (unsigned long long)btrfs_super_total_bytes(info->super_copy));
 	printf("bytes used %llu\n",
-	       (unsigned long long)btrfs_super_bytes_used(&info->super_copy));
+	       (unsigned long long)btrfs_super_bytes_used(info->super_copy));
 	uuidbuf[36] = '\0';
-	uuid_unparse(info->super_copy.fsid, uuidbuf);
+	uuid_unparse(info->super_copy->fsid, uuidbuf);
 	printf("uuid %s\n", uuidbuf);
 	printf("%s\n", BTRFS_BUILD_VERSION);
 	return 0;

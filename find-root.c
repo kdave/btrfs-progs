@@ -147,7 +147,7 @@ static struct btrfs_root *open_ctree_broken(int fd, const char *device)
 		goto out_cleanup;
 
 	fs_info->super_bytenr = BTRFS_SUPER_INFO_OFFSET;
-	disk_super = &fs_info->super_copy;
+	disk_super = fs_info->super_copy;
 	ret = btrfs_read_dev_super(fs_devices->latest_bdev,
 				   disk_super, BTRFS_SUPER_INFO_OFFSET);
 	if (ret) {
@@ -234,10 +234,10 @@ out:
 static int search_iobuf(struct btrfs_root *root, void *iobuf,
 			size_t iobuf_size, off_t offset)
 {
-	u64 gen = btrfs_super_generation(&root->fs_info->super_copy);
+	u64 gen = btrfs_super_generation(root->fs_info->super_copy);
 	u64 objectid = search_objectid;
-	u32 size = btrfs_super_nodesize(&root->fs_info->super_copy);
-	u8 level = root->fs_info->super_copy.root_level;
+	u32 size = btrfs_super_nodesize(root->fs_info->super_copy);
+	u8 level = root->fs_info->super_copy->root_level;
 	size_t block_off = 0;
 
 	while (block_off < iobuf_size) {
@@ -322,8 +322,8 @@ static int find_root(struct btrfs_root *root)
 	int ret = 1;
 
 	printf("Super think's the tree root is at %Lu, chunk root %Lu\n",
-	       btrfs_super_root(&root->fs_info->super_copy),
-	       btrfs_super_chunk_root(&root->fs_info->super_copy));
+	       btrfs_super_root(root->fs_info->super_copy),
+	       btrfs_super_chunk_root(root->fs_info->super_copy));
 
 	err = btrfs_next_metadata(&root->fs_info->mapping_tree,
 				  &metadata_offset, &metadata_size);
@@ -336,7 +336,7 @@ static int find_root(struct btrfs_root *root)
 		u64 type;
 
 		if (offset >
-		    btrfs_super_total_bytes(&root->fs_info->super_copy)) {
+		    btrfs_super_total_bytes(root->fs_info->super_copy)) {
 			printf("Went past the fs size, exiting");
 			break;
 		}
@@ -426,7 +426,7 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	csum_size = btrfs_super_csum_size(&root->fs_info->super_copy);
+	csum_size = btrfs_super_csum_size(root->fs_info->super_copy);
 	ret = find_root(root);
 	close_ctree(root);
 	return ret;

@@ -604,7 +604,7 @@ int btrfs_add_system_chunk(struct btrfs_trans_handle *trans,
 			   struct btrfs_key *key,
 			   struct btrfs_chunk *chunk, int item_size)
 {
-	struct btrfs_super_block *super_copy = &root->fs_info->super_copy;
+	struct btrfs_super_block *super_copy = root->fs_info->super_copy;
 	struct btrfs_disk_key disk_key;
 	u32 array_size;
 	u8 *ptr;
@@ -708,7 +708,7 @@ int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 	}
 	if (type & BTRFS_BLOCK_GROUP_RAID1) {
 		num_stripes = min_t(u64, 2,
-				  btrfs_super_num_devices(&info->super_copy));
+				  btrfs_super_num_devices(info->super_copy));
 		if (num_stripes < 2)
 			return -ENOSPC;
 		min_stripes = 2;
@@ -718,11 +718,11 @@ int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 		min_stripes = 2;
 	}
 	if (type & (BTRFS_BLOCK_GROUP_RAID0)) {
-		num_stripes = btrfs_super_num_devices(&info->super_copy);
+		num_stripes = btrfs_super_num_devices(info->super_copy);
 		min_stripes = 2;
 	}
 	if (type & (BTRFS_BLOCK_GROUP_RAID10)) {
-		num_stripes = btrfs_super_num_devices(&info->super_copy);
+		num_stripes = btrfs_super_num_devices(info->super_copy);
 		if (num_stripes < 4)
 			return -ENOSPC;
 		num_stripes &= ~(u32)1;
@@ -730,24 +730,24 @@ int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 		min_stripes = 4;
 	}
 	if (type & (BTRFS_BLOCK_GROUP_RAID5)) {
-		num_stripes = btrfs_super_num_devices(&info->super_copy);
+		num_stripes = btrfs_super_num_devices(info->super_copy);
 		if (num_stripes < 2)
 			return -ENOSPC;
 		min_stripes = 2;
 		stripe_len = find_raid56_stripe_len(num_stripes - 1,
-				    btrfs_super_stripesize(&info->super_copy));
+				    btrfs_super_stripesize(info->super_copy));
 	}
 	if (type & (BTRFS_BLOCK_GROUP_RAID6)) {
-		num_stripes = btrfs_super_num_devices(&info->super_copy);
+		num_stripes = btrfs_super_num_devices(info->super_copy);
 		if (num_stripes < 3)
 			return -ENOSPC;
 		min_stripes = 3;
 		stripe_len = find_raid56_stripe_len(num_stripes - 2,
-				    btrfs_super_stripesize(&info->super_copy));
+				    btrfs_super_stripesize(info->super_copy));
 	}
 
 	/* we don't want a chunk larger than 10% of the FS */
-	percent_max = div_factor(btrfs_super_total_bytes(&info->super_copy), 1);
+	percent_max = div_factor(btrfs_super_total_bytes(info->super_copy), 1);
 	max_chunk_size = min(percent_max, max_chunk_size);
 
 again:
@@ -1652,7 +1652,7 @@ int btrfs_read_super_device(struct btrfs_root *root, struct extent_buffer *buf)
 
 int btrfs_read_sys_array(struct btrfs_root *root)
 {
-	struct btrfs_super_block *super_copy = &root->fs_info->super_copy;
+	struct btrfs_super_block *super_copy = root->fs_info->super_copy;
 	struct extent_buffer *sb;
 	struct btrfs_disk_key *disk_key;
 	struct btrfs_chunk *chunk;

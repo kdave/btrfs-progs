@@ -67,7 +67,7 @@ static int make_root_dir(struct btrfs_root *root, int mixed)
 	int ret;
 
 	trans = btrfs_start_transaction(root, 1);
-	bytes_used = btrfs_super_bytes_used(&root->fs_info->super_copy);
+	bytes_used = btrfs_super_bytes_used(root->fs_info->super_copy);
 
 	root->fs_info->system_allocs = 1;
 	ret = btrfs_make_block_group(trans, root, bytes_used,
@@ -129,7 +129,7 @@ static int make_root_dir(struct btrfs_root *root, int mixed)
 	location.offset = (u64)-1;
 	ret = btrfs_insert_dir_item(trans, root->fs_info->tree_root,
 			"default", 7,
-			btrfs_super_root_dir(&root->fs_info->super_copy),
+			btrfs_super_root_dir(root->fs_info->super_copy),
 			&location, BTRFS_FT_DIR, 0);
 	if (ret)
 		goto err;
@@ -208,7 +208,7 @@ static int create_raid_groups(struct btrfs_trans_handle *trans,
 			      int data_profile_opt, u64 metadata_profile,
 			      int metadata_profile_opt, int mixed, int ssd)
 {
-	u64 num_devices = btrfs_super_num_devices(&root->fs_info->super_copy);
+	u64 num_devices = btrfs_super_num_devices(root->fs_info->super_copy);
 	u64 allowed = 0;
 	u64 devices_for_raid = num_devices;
 	int ret;
@@ -1650,7 +1650,7 @@ raid_groups:
 	ret = create_data_reloc_tree(trans, root);
 	BUG_ON(ret);
 
-	super = &root->fs_info->super_copy;
+	super = root->fs_info->super_copy;
 	flags = btrfs_super_incompat_flags(super);
 	flags |= BTRFS_FEATURE_INCOMPAT_EXTENDED_IREF;
 
@@ -1661,7 +1661,7 @@ raid_groups:
 
 	if ((data_profile | metadata_profile) &
 	    (BTRFS_BLOCK_GROUP_RAID5 | BTRFS_BLOCK_GROUP_RAID6)) {
-		struct btrfs_super_block *super = &root->fs_info->super_copy;
+		struct btrfs_super_block *super = root->fs_info->super_copy;
 		u64 flags = btrfs_super_incompat_flags(super);
 
 		flags |= BTRFS_FEATURE_INCOMPAT_RAID56;
@@ -1672,7 +1672,7 @@ raid_groups:
 	printf("fs created label %s on %s\n\tnodesize %u leafsize %u "
 	    "sectorsize %u size %s\n",
 	    label, first_file, nodesize, leafsize, sectorsize,
-	    pretty_buf = pretty_sizes(btrfs_super_total_bytes(&root->fs_info->super_copy)));
+	    pretty_buf = pretty_sizes(btrfs_super_total_bytes(root->fs_info->super_copy)));
 	free(pretty_buf);
 
 	printf("%s\n", BTRFS_BUILD_VERSION);
