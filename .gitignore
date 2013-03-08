@@ -15,3 +15,13 @@ find-root
 mkfs.btrfs
 repair
 restore
+btrfs-convert
+btrfs-find-root
+btrfs-image
+btrfs-show-super
+btrfs-zero-log
+btrfstune
+libbtrfs.a
+libbtrfs.so
+libbtrfs.so.0
+libbtrfs.so.0.1
