@@ -1459,56 +1459,37 @@ static int cmd_scrub_cancel(int argc, char **argv)
 {
 	char *path;
 	int ret;
-	int fdmnt;
-	int err;
-	char mp[BTRFS_PATH_NAME_MAX + 1];
-	struct btrfs_fs_devices *fs_devices_mnt = NULL;
+	int fdmnt = -1;
 
 	if (check_argc_exact(argc, 2))
 		usage(cmd_scrub_cancel_usage);
 
 	path = argv[1];
 
-again:
-	fdmnt = open_file_or_dir(path);
+	fdmnt = open_path_or_dev_mnt(path);
 	if (fdmnt < 0) {
-		perror("ERROR: scrub cancel failed:");
-		return 1;
+		fprintf(stderr, "ERROR: could not open %s: %s\n",
+			path, strerror(errno));
+		ret = 1;
+		goto out;
 	}
 
 	ret = ioctl(fdmnt, BTRFS_IOC_SCRUB_CANCEL, NULL);
-	err = errno;
 
-	if (ret && err == EINVAL) {
-		/* path is not a btrfs mount point.  See if it's a device. */
-		ret = check_mounted_where(fdmnt, path, mp, sizeof(mp),
-					  &fs_devices_mnt);
-		if (ret > 0) {
-			/* It's a mounted btrfs device; retry w/ mountpoint. */
-			close(fdmnt);
-			path = mp;
-			goto again;
-		} else {
-			/* It's not a mounted btrfs device either */
-			fprintf(stderr,
-				"ERROR: %s is not a mounted btrfs device\n",
-				path);
-			ret = 1;
-			err = EINVAL;
-		}
-	}
-
-	close(fdmnt);
-
-	if (ret) {
+	if (ret < 0) {
 		fprintf(stderr, "ERROR: scrub cancel failed on %s: %s\n", path,
-			err == ENOTCONN ? "not running" : strerror(err));
-		return 1;
+			errno == ENOTCONN ? "not running" : strerror(errno));
+		ret = 1;
+		goto out;
 	}
 
+	ret = 0;
 	printf("scrub cancelled\n");
 
-	return 0;
+out:
+	if (fdmnt != -1)
+		close(fdmnt);
+	return ret;
 }
 
 static const char * const cmd_scrub_resume_usage[] = {
