@@ -640,6 +640,93 @@ error:
 	return ret;
 }
 
+/*
+ * checks if a path is a block device node
+ * Returns negative errno on failure, otherwise
+ * returns 1 for blockdev, 0 for not-blockdev
+ */
+int is_block_device(const char *path) {
+	struct stat statbuf;
+
+	if (stat(path, &statbuf) < 0)
+		return -errno;
+
+	return S_ISBLK(statbuf.st_mode);
+}
+
+/*
+ * Find the mount point for a mounted device.
+ * On success, returns 0 with mountpoint in *mp.
+ * On failure, returns -errno (not mounted yields -EINVAL)
+ * Is noisy on failures, expects to be given a mounted device.
+ */
+int get_btrfs_mount(const char *dev, char *mp, size_t mp_size) {
+	int ret;
+	int fd = -1;
+
+	ret = is_block_device(dev);
+	if (ret <= 0) {
+		if (!ret) {
+			fprintf(stderr, "%s is not a block device\n", dev);
+			ret = -EINVAL;
+		} else {
+			fprintf(stderr, "Could not check %s: %s\n",
+				dev, strerror(-ret));
+		}
+		goto out;
+	}
+
+	fd = open(dev, O_RDONLY);
+	if (fd < 0) {
+		ret = -errno;
+		fprintf(stderr, "Could not open %s: %s\n", dev, strerror(errno));
+		goto out;
+	}
+
+	ret = check_mounted_where(fd, dev, mp, mp_size, NULL);
+	if (!ret) {
+		fprintf(stderr, "%s is not a mounted btrfs device\n", dev);
+		ret = -EINVAL;
+	} else { /* mounted, all good */
+		ret = 0;
+	}
+out:
+	if (fd != -1)
+		close(fd);
+	if (ret)
+		fprintf(stderr, "Could not get mountpoint for %s\n", dev);
+	return ret;
+}
+
+/*
+ * Given a pathname, return a filehandle to:
+ * 	the original pathname or,
+ * 	if the pathname is a mounted btrfs device, to its mountpoint.
+ *
+ * On error, return -1, errno should be set.
+ */
+int open_path_or_dev_mnt(const char *path)
+{
+	char mp[BTRFS_PATH_NAME_MAX + 1];
+	int fdmnt;
+
+	if (is_block_device(path)) {
+		int ret;
+
+		ret = get_btrfs_mount(path, mp, sizeof(mp));
+		if (ret < 0) {
+			/* not a mounted btrfs dev */
+			errno = EINVAL;
+			return -1;
+		}
+		fdmnt = open(mp, O_RDWR);
+	} else {
+		fdmnt = open_file_or_dir(path);
+	}
+
+	return fdmnt;
+}
+
 /* checks if a device is a loop device */
 int is_loop_device (const char* device) {
 	struct stat statbuf;

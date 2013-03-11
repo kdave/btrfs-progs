@@ -56,6 +56,9 @@ int get_label(const char *btrfs_dev);
 int set_label(const char *btrfs_dev, const char *label);
 
 char *__strncpy__null(char *dest, const char *src, size_t n);
+int is_block_device(const char *file);
+int get_btrfs_mount(const char *path, char *mp, size_t mp_size);
+int open_path_or_dev_mnt(const char *path);
 int is_swap_device(const char *file);
 /* Helper to always get proper size of the destination string */
 #define strncpy_null(dest, src) __strncpy__null(dest, src, sizeof(dest))
