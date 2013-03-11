@@ -1217,6 +1217,7 @@ static int set_label_mounted(const char *mount_path, const char *label)
 		return -1;
 	}
 
+	close(fd);
 	return 0;
 }
 
@@ -1274,6 +1275,7 @@ static int get_label_mounted(const char *mount_path)
 	}
 
 	fprintf(stdout, "%s\n", label);
+	close(fd);
 	return 0;
 }
 
