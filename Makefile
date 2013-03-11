@@ -86,7 +86,7 @@ all: version.h $(progs) manpages
 # NOTE: For static compiles, you need to have all the required libs
 # 	static equivalent available
 #
-static: version.h $(libs) btrfs.static
+static: version.h $(libs) btrfs.static mkfs.btrfs.static
 
 version.h:
 	$(Q)bash version.sh
@@ -142,6 +142,11 @@ btrfsck: btrfs
 mkfs.btrfs: $(objects) $(libs) mkfs.o
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o mkfs.btrfs $(objects) mkfs.o $(LDFLAGS) $(LIBS) -lblkid
+
+mkfs.btrfs.static: $(static_objects) mkfs.static.o
+	@echo "    [LD]     $@"
+	$(Q)$(CC) $(STATIC_CFLAGS) -o mkfs.btrfs.static mkfs.static.o \
+		$(static_objects) $(STATIC_LDFLAGS) $(STATIC_LIBS)
 
 btrfs-debug-tree: $(objects) $(libs) debug-tree.o
 	@echo "    [LD]     $@"
@@ -204,7 +209,8 @@ install-man:
 clean :
 	@echo "Cleaning"
 	$(Q)rm -f $(progs) cscope.out *.o .*.d btrfs-convert btrfs-image btrfs-select-super \
-	      btrfs-zero-log btrfstune dir-test ioctl-test quick-test send-test btrfs.static btrfsck \
+	      btrfs-zero-log btrfstune dir-test ioctl-test quick-test send-test btrfsck \
+	      btrfs.static mkfs.btrfs.static \
 	      version.h \
 	      $(libs) $(lib_links)
 	$(Q)$(MAKE) $(MAKEOPTS) -C man $@
