@@ -719,7 +719,7 @@ int open_path_or_dev_mnt(const char *path)
 			errno = EINVAL;
 			return -1;
 		}
-		fdmnt = open(mp, O_RDWR);
+		fdmnt = open_file_or_dir(mp);
 	} else {
 		fdmnt = open_file_or_dir(path);
 	}
@@ -1547,9 +1547,20 @@ int get_device_info(int fd, u64 devid,
 	return ret ? -errno : 0;
 }
 
-int get_fs_info(int fd, char *path, struct btrfs_ioctl_fs_info_args *fi_args,
+/*
+ * For a given path, fill in the ioctl fs_ and info_ args.
+ * If the path is a btrfs mountpoint, fill info for all devices.
+ * If the path is a btrfs device, fill in only that device.
+ *
+ * The path provided must be either on a mounted btrfs fs,
+ * or be a mounted btrfs device.
+ *
+ * Returns 0 on success, or a negative errno.
+ */
+int get_fs_info(char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 		struct btrfs_ioctl_dev_info_args **di_ret)
 {
+	int fd = -1;
 	int ret = 0;
 	int ndevs = 0;
 	int i = 1;
@@ -1559,33 +1570,56 @@ int get_fs_info(int fd, char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 
 	memset(fi_args, 0, sizeof(*fi_args));
 
-	ret = ioctl(fd, BTRFS_IOC_FS_INFO, fi_args);
-	if (ret && (errno == EINVAL || errno == ENOTTY)) {
-		/* path is not a mounted btrfs. Try if it's a device */
+	if (is_block_device(path)) {
+		/* Ensure it's mounted, then set path to the mountpoint */
+		fd = open(path, O_RDONLY);
+		if (fd < 0) {
+			ret = -errno;
+			fprintf(stderr, "Couldn't open %s: %s\n",
+				path, strerror(errno));
+			goto out;
+		}
 		ret = check_mounted_where(fd, path, mp, sizeof(mp),
 					  &fs_devices_mnt);
-		if (!ret)
-			return -EINVAL;
+		if (!ret) {
+			ret = -EINVAL;
+			goto out;
+		}
 		if (ret < 0)
-			return ret;
+			goto out;
+		path = mp;
+		/* Only fill in this one device */
 		fi_args->num_devices = 1;
 		fi_args->max_id = fs_devices_mnt->latest_devid;
 		i = fs_devices_mnt->latest_devid;
 		memcpy(fi_args->fsid, fs_devices_mnt->fsid, BTRFS_FSID_SIZE);
 		close(fd);
-		fd = open_file_or_dir(mp);
-		if (fd < 0)
-			return -errno;
-	} else if (ret) {
-		return -errno;
+	}
+
+	/* at this point path must not be for a block device */
+	fd = open_file_or_dir(path);
+	if (fd < 0) {
+		ret = -errno;
+		goto out;
+	}
+
+	/* fill in fi_args if not just a single device */
+	if (fi_args->num_devices != 1) {
+		ret = ioctl(fd, BTRFS_IOC_FS_INFO, fi_args);
+		if (ret < 0) {
+			ret = -errno;
+			goto out;
+		}
 	}
 
 	if (!fi_args->num_devices)
-		return 0;
+		goto out;
 
 	di_args = *di_ret = malloc(fi_args->num_devices * sizeof(*di_args));
-	if (!di_args)
-		return -errno;
+	if (!di_args) {
+		ret = -errno;
+		goto out;
+	}
 
 	for (; i <= fi_args->max_id; ++i) {
 		BUG_ON(ndevs >= fi_args->num_devices);
@@ -1593,13 +1627,16 @@ int get_fs_info(int fd, char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 		if (ret == -ENODEV)
 			continue;
 		if (ret)
-			return ret;
+			goto out;
 		ndevs++;
 	}
 
 	BUG_ON(ndevs == 0);
-
-	return 0;
+	ret = 0;
+out:
+	if (fd != -1)
+		close(fd);
+	return ret;
 }
 
 #define isoctal(c)	(((c) & ~7) == '0')

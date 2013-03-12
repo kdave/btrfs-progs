@@ -321,13 +321,14 @@ static int cmd_dev_stats(int argc, char **argv)
 
 	path = argv[optind];
 
-	fdmnt = open_file_or_dir(path);
+	fdmnt = open_path_or_dev_mnt(path);
+
 	if (fdmnt < 0) {
 		fprintf(stderr, "ERROR: can't access '%s'\n", path);
 		return 12;
 	}
 
-	ret = get_fs_info(fdmnt, path, &fi_args, &di_args);
+	ret = get_fs_info(path, &fi_args, &di_args);
 	if (ret) {
 		fprintf(stderr, "ERROR: getting dev info for devstats failed: "
 				"%s\n", strerror(-ret));

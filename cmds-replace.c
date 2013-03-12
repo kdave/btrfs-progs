@@ -168,7 +168,9 @@ static int cmd_start_replace(int argc, char **argv)
 	if (check_argc_exact(argc - optind, 3))
 		usage(cmd_start_replace_usage);
 	path = argv[optind + 2];
-	fdmnt = open_file_or_dir(path);
+
+	fdmnt = open_path_or_dev_mnt(path);
+
 	if (fdmnt < 0) {
 		fprintf(stderr, "ERROR: can't access \"%s\": %s\n",
 			path, strerror(errno));
@@ -215,7 +217,7 @@ static int cmd_start_replace(int argc, char **argv)
 		}
 		start_args.start.srcdevid = (__u64)atoi(srcdev);
 
-		ret = get_fs_info(fdmnt, path, &fi_args, &di_args);
+		ret = get_fs_info(path, &fi_args, &di_args);
 		if (ret) {
 			fprintf(stderr, "ERROR: getting dev info for devstats failed: "
 					"%s\n", strerror(-ret));

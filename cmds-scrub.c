@@ -1101,13 +1101,14 @@ static int scrub_start(int argc, char **argv, int resume)
 
 	path = argv[optind];
 
-	fdmnt = open_file_or_dir(path);
+	fdmnt = open_path_or_dev_mnt(path);
+
 	if (fdmnt < 0) {
 		ERR(!do_quiet, "ERROR: can't access '%s'\n", path);
 		return 12;
 	}
 
-	ret = get_fs_info(fdmnt, path, &fi_args, &di_args);
+	ret = get_fs_info(path, &fi_args, &di_args);
 	if (ret) {
 		ERR(!do_quiet, "ERROR: getting dev info for scrub failed: "
 		    "%s\n", strerror(-ret));
@@ -1558,13 +1559,14 @@ static int cmd_scrub_status(int argc, char **argv)
 
 	path = argv[optind];
 
-	fdmnt = open_file_or_dir(path);
+	fdmnt = open_path_or_dev_mnt(path);
+
 	if (fdmnt < 0) {
 		fprintf(stderr, "ERROR: can't access to '%s'\n", path);
 		return 12;
 	}
 
-	ret = get_fs_info(fdmnt, path, &fi_args, &di_args);
+	ret = get_fs_info(path, &fi_args, &di_args);
 	if (ret) {
 		fprintf(stderr, "ERROR: getting dev info for scrub failed: "
 				"%s\n", strerror(-ret));
