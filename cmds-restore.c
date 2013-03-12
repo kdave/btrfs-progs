@@ -198,7 +198,7 @@ static int copy_one_extent(struct btrfs_root *root, int fd,
 	int compress;
 	int ret;
 	int dev_fd;
-	int mirror_num = 0;
+	int mirror_num = 1;
 	int num_copies;
 
 	compress = btrfs_file_extent_compression(leaf, fi);
@@ -241,14 +241,15 @@ again:
 
 	if (size_left < length)
 		length = size_left;
-	size_left -= length;
 
 	done = pread(dev_fd, inbuf+count, length, dev_bytenr);
-	if (done < length) {
+	/* Need both checks, or we miss negative values due to u64 conversion */
+	if (done < 0 || done < length) {
 		num_copies = btrfs_num_copies(&root->fs_info->mapping_tree,
 					      bytenr, length);
 		mirror_num++;
-		if (mirror_num >= num_copies) {
+		/* mirror_num is 1-indexed, so num_copies is a valid mirror. */
+		if (mirror_num > num_copies) {
 			ret = -1;
 			fprintf(stderr, "Exhausted mirrors trying to read\n");
 			goto out;
@@ -257,6 +258,8 @@ again:
 		goto again;
 	}
 
+	mirror_num = 1;
+	size_left -= length;
 	count += length;
 	bytenr += length;
 	if (size_left)
