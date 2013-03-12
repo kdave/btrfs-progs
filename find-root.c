@@ -116,6 +116,7 @@ static struct btrfs_root *open_ctree_broken(int fd, const char *device)
 	}
 
 	memset(fs_info, 0, sizeof(*fs_info));
+	fs_info->super_copy = calloc(1, BTRFS_SUPER_INFO_SIZE);
 	fs_info->tree_root = tree_root;
 	fs_info->extent_root = extent_root;
 	fs_info->chunk_root = chunk_root;
