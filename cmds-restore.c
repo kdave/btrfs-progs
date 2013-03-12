@@ -770,9 +770,70 @@ next:
 	return 0;
 }
 
-static struct btrfs_root *open_fs(const char *dev, u64 root_location, int super_mirror)
+static int do_list_roots(struct btrfs_root *root)
 {
-	struct btrfs_root *root;
+	struct btrfs_key key;
+	struct btrfs_key found_key;
+	struct btrfs_disk_key disk_key;
+	struct btrfs_path *path;
+	struct extent_buffer *leaf;
+	struct btrfs_root_item ri;
+	unsigned long offset;
+	int slot;
+	int ret;
+
+	root = root->fs_info->tree_root;
+	path = btrfs_alloc_path();
+	if (!path) {
+		fprintf(stderr, "Failed to alloc path\n");
+		return -1;
+	}
+
+	key.offset = 0;
+	key.objectid = 0;
+	key.type = BTRFS_ROOT_ITEM_KEY;
+
+	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
+	if (ret < 0) {
+		fprintf(stderr, "Failed to do search %d\n", ret);
+		btrfs_free_path(path);
+		return -1;
+	}
+
+	while (1) {
+		leaf = path->nodes[0];
+		slot = path->slots[0];
+		if (slot >= btrfs_header_nritems(leaf)) {
+			ret = btrfs_next_leaf(root, path);
+			if (ret)
+				break;
+			leaf = path->nodes[0];
+			slot = path->slots[0];
+		}
+		btrfs_item_key(leaf, &disk_key, slot);
+		btrfs_disk_key_to_cpu(&found_key, &disk_key);
+		if (btrfs_key_type(&found_key) != BTRFS_ROOT_ITEM_KEY) {
+			path->slots[0]++;
+			continue;
+		}
+
+		offset = btrfs_item_ptr_offset(leaf, slot);
+		read_extent_buffer(leaf, &ri, offset, sizeof(ri));
+		printf(" tree ");
+		btrfs_print_key(&disk_key);
+		printf(" %Lu level %d\n", btrfs_root_bytenr(&ri),
+		       btrfs_root_level(&ri));
+		path->slots[0]++;
+	}
+	btrfs_free_path(path);
+
+	return 0;
+}
+
+static struct btrfs_root *open_fs(const char *dev, u64 root_location,
+				  int super_mirror, int list_roots)
+{
+	struct btrfs_root *root = NULL;
 	u64 bytenr;
 	int i;
 
@@ -780,11 +841,19 @@ static struct btrfs_root *open_fs(const char *dev, u64 root_location, int super_
 		bytenr = btrfs_sb_offset(i);
 		root = open_ctree_recovery(dev, bytenr, root_location);
 		if (root)
-			return root;
+			break;
 		fprintf(stderr, "Could not open root, trying backup super\n");
 	}
 
-	return NULL;
+	if (root && list_roots) {
+		int ret = do_list_roots(root);
+		if (ret) {
+			close_ctree(root);
+			root = NULL;
+		}
+	}
+
+	return root;
 }
 
 static int find_first_dir(struct btrfs_root *root, u64 *objectid)
@@ -875,8 +944,9 @@ int cmd_restore(int argc, char **argv)
 	int opt;
 	int super_mirror = 0;
 	int find_dir = 0;
+	int list_roots = 0;
 
-	while ((opt = getopt(argc, argv, "sviot:u:df:r:")) != -1) {
+	while ((opt = getopt(argc, argv, "sviot:u:df:r:l")) != -1) {
 		switch (opt) {
 			case 's':
 				get_snaps = 1;
@@ -927,12 +997,17 @@ int cmd_restore(int argc, char **argv)
 					exit(1);
 				}
 				break;
+			case 'l':
+				list_roots = 1;
+				break;
 			default:
 				usage(cmd_restore_usage);
 		}
 	}
 
-	if (optind + 1 >= argc)
+	if (!list_roots && optind + 1 >= argc)
+		usage(cmd_restore_usage);
+	else if (list_roots && optind >= argc)
 		usage(cmd_restore_usage);
 
 	if ((ret = check_mounted(argv[optind])) < 0) {
@@ -944,9 +1019,12 @@ int cmd_restore(int argc, char **argv)
 		return 1;
 	}
 
-	root = open_fs(argv[optind], tree_location, super_mirror);
+	root = open_fs(argv[optind], tree_location, super_mirror, list_roots);
 	if (root == NULL)
 		return 1;
+
+	if (list_roots)
+		goto out;
 
 	if (fs_location != 0) {
 		free_extent_buffer(root->node);
