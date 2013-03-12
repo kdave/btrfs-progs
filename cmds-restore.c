@@ -245,9 +245,16 @@ again:
 
 	done = pread(dev_fd, inbuf+count, length, dev_bytenr);
 	if (done < length) {
-		ret = -1;
-		fprintf(stderr, "Short read %d\n", errno);
-		goto out;
+		num_copies = btrfs_num_copies(&root->fs_info->mapping_tree,
+					      bytenr, length);
+		mirror_num++;
+		if (mirror_num >= num_copies) {
+			ret = -1;
+			fprintf(stderr, "Exhausted mirrors trying to read\n");
+			goto out;
+		}
+		fprintf(stderr, "Trying another mirror\n");
+		goto again;
 	}
 
 	count += length;
