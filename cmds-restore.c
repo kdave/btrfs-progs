@@ -27,6 +27,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <lzo/lzoconf.h>
+#include <lzo/lzo1x.h>
 #include <zlib.h>
 
 #include "ctree.h"
@@ -46,8 +48,12 @@ static int verbose = 0;
 static int ignore_errors = 0;
 static int overwrite = 0;
 
-static int decompress(char *inbuf, char *outbuf, u64 compress_len,
-		      u64 decompress_len)
+#define LZO_LEN 4
+#define PAGE_CACHE_SIZE 4096
+#define lzo1x_worst_compress(x) ((x) + ((x) / 16) + 64 + 3)
+
+static int decompress_zlib(char *inbuf, char *outbuf, u64 compress_len,
+			   u64 decompress_len)
 {
 	z_stream strm;
 	int ret;
@@ -72,6 +78,73 @@ static int decompress(char *inbuf, char *outbuf, u64 compress_len,
 
 	(void)inflateEnd(&strm);
 	return 0;
+}
+static inline size_t read_compress_length(unsigned char *buf)
+{
+	__le32 dlen;
+	memcpy(&dlen, buf, LZO_LEN);
+	return le32_to_cpu(dlen);
+}
+
+static int decompress_lzo(unsigned char *inbuf, char *outbuf, u64 compress_len,
+			  u64 *decompress_len)
+{
+	size_t new_len;
+	size_t in_len;
+	size_t out_len = 0;
+	size_t tot_len;
+	size_t tot_in;
+	int ret;
+
+	ret = lzo_init();
+	if (ret != LZO_E_OK) {
+		fprintf(stderr, "lzo init returned %d\n", ret);
+		return -1;
+	}
+
+	tot_len = read_compress_length(inbuf);
+	inbuf += LZO_LEN;
+	tot_in = LZO_LEN;
+
+	while (tot_in < tot_len) {
+		in_len = read_compress_length(inbuf);
+		inbuf += LZO_LEN;
+		tot_in += LZO_LEN;
+
+		new_len = lzo1x_worst_compress(PAGE_CACHE_SIZE);
+		ret = lzo1x_decompress_safe((const unsigned char *)inbuf, in_len,
+					    (unsigned char *)outbuf, &new_len, NULL);
+		if (ret != LZO_E_OK) {
+			fprintf(stderr, "failed to inflate: %d\n", ret);
+			return -1;
+		}
+		out_len += new_len;
+		outbuf += new_len;
+		inbuf += in_len;
+		tot_in += in_len;
+	}
+
+	*decompress_len = out_len;
+
+	return 0;
+}
+
+static int decompress(char *inbuf, char *outbuf, u64 compress_len,
+		      u64 *decompress_len, int compress)
+{
+	switch (compress) {
+	case BTRFS_COMPRESS_ZLIB:
+		return decompress_zlib(inbuf, outbuf, compress_len,
+				       *decompress_len);
+	case BTRFS_COMPRESS_LZO:
+		return decompress_lzo((unsigned char *)inbuf, outbuf, compress_len,
+				      decompress_len);
+	default:
+		break;
+	}
+
+	fprintf(stderr, "invalid compression type: %d\n", compress);
+	return -1;
 }
 
 int next_leaf(struct btrfs_root *root, struct btrfs_path *path)
@@ -132,11 +205,11 @@ static int copy_one_inline(int fd, struct btrfs_path *path, u64 pos)
 	struct btrfs_file_extent_item *fi;
 	char buf[4096];
 	char *outbuf;
+	u64 ram_size;
 	ssize_t done;
 	unsigned long ptr;
 	int ret;
 	int len;
-	int ram_size;
 	int compress;
 
 	fi = btrfs_item_ptr(leaf, path->slots[0],
@@ -164,7 +237,7 @@ static int copy_one_inline(int fd, struct btrfs_path *path, u64 pos)
 		return -1;
 	}
 
-	ret = decompress(buf, outbuf, len, ram_size);
+	ret = decompress(buf, outbuf, len, &ram_size, compress);
 	if (ret) {
 		free(outbuf);
 		return ret;
@@ -173,7 +246,7 @@ static int copy_one_inline(int fd, struct btrfs_path *path, u64 pos)
 	done = pwrite(fd, outbuf, ram_size, pos);
 	free(outbuf);
 	if (done < ram_size) {
-		fprintf(stderr, "Short compressed inline write, wanted %d, "
+		fprintf(stderr, "Short compressed inline write, wanted %Lu, "
 			"did %zd: %d\n", ram_size, done, errno);
 		return -1;
 	}
@@ -195,6 +268,7 @@ static int copy_one_extent(struct btrfs_root *root, int fd,
 	u64 length;
 	u64 size_left;
 	u64 dev_bytenr;
+	u64 offset;
 	u64 count = 0;
 	int compress;
 	int ret;
@@ -206,8 +280,11 @@ static int copy_one_extent(struct btrfs_root *root, int fd,
 	bytenr = btrfs_file_extent_disk_bytenr(leaf, fi);
 	disk_size = btrfs_file_extent_disk_num_bytes(leaf, fi);
 	ram_size = btrfs_file_extent_ram_bytes(leaf, fi);
+	offset = btrfs_file_extent_offset(leaf, fi);
 	size_left = disk_size;
 
+	if (offset)
+		printf("offset is %Lu\n", offset);
 	/* we found a hole */
 	if (disk_size == 0)
 		return 0;
@@ -281,7 +358,7 @@ again:
 		goto out;
 	}
 
-	ret = decompress(inbuf, outbuf, disk_size, ram_size);
+	ret = decompress(inbuf, outbuf, disk_size, &ram_size, compress);
 	if (ret) {
 		num_copies = btrfs_num_copies(&root->fs_info->mapping_tree,
 					      bytenr, length);
