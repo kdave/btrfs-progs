@@ -65,7 +65,7 @@ static int decompress(char *inbuf, char *outbuf, u64 compress_len,
 	ret = inflate(&strm, Z_NO_FLUSH);
 	if (ret != Z_STREAM_END) {
 		(void)inflateEnd(&strm);
-		fprintf(stderr, "ret is %d\n", ret);
+		fprintf(stderr, "failed to inflate: %d\n", ret);
 		return -1;
 	}
 
@@ -198,6 +198,8 @@ static int copy_one_extent(struct btrfs_root *root, int fd,
 	int compress;
 	int ret;
 	int dev_fd;
+	int mirror_num = 0;
+	int num_copies;
 
 	compress = btrfs_file_extent_compression(leaf, fi);
 	bytenr = btrfs_file_extent_disk_bytenr(leaf, fi);
@@ -226,12 +228,10 @@ static int copy_one_extent(struct btrfs_root *root, int fd,
 again:
 	length = size_left;
 	ret = btrfs_map_block(&root->fs_info->mapping_tree, READ,
-			      bytenr, &length, &multi, 0, NULL);
+			      bytenr, &length, &multi, mirror_num, NULL);
 	if (ret) {
-		free(inbuf);
-		free(outbuf);
 		fprintf(stderr, "Error mapping block %d\n", ret);
-		return ret;
+		goto out;
 	}
 	device = multi->stripes[0].dev;
 	dev_fd = device->fd;
@@ -245,10 +245,9 @@ again:
 
 	done = pread(dev_fd, inbuf+count, length, dev_bytenr);
 	if (done < length) {
-		free(inbuf);
-		free(outbuf);
+		ret = -1;
 		fprintf(stderr, "Short read %d\n", errno);
-		return -1;
+		goto out;
 	}
 
 	count += length;
@@ -256,41 +255,46 @@ again:
 	if (size_left)
 		goto again;
 
-
 	if (compress == BTRFS_COMPRESS_NONE) {
 		while (total < ram_size) {
 			done = pwrite(fd, inbuf+total, ram_size-total,
 				      pos+total);
 			if (done < 0) {
-				free(inbuf);
+				ret = -1;
 				fprintf(stderr, "Error writing: %d %s\n", errno, strerror(errno));
-				return -1;
+				goto out;
 			}
 			total += done;
 		}
-		free(inbuf);
-		return 0;
+		ret = 0;
+		goto out;
 	}
 
 	ret = decompress(inbuf, outbuf, disk_size, ram_size);
-	free(inbuf);
 	if (ret) {
-		free(outbuf);
-		return ret;
+		num_copies = btrfs_num_copies(&root->fs_info->mapping_tree,
+					      bytenr, length);
+		mirror_num++;
+		if (mirror_num >= num_copies) {
+			ret = -1;
+			goto out;
+		}
+		fprintf(stderr, "Trying another mirror\n");
+		goto again;
 	}
 
 	while (total < ram_size) {
 		done = pwrite(fd, outbuf+total, ram_size-total, pos+total);
 		if (done < 0) {
-			free(outbuf);
-			fprintf(stderr, "Error writing: %d %s\n", errno, strerror(errno));
-			return -1;
+			ret = -1;
+			goto out;
 		}
 		total += done;
 	}
+out:
+	free(inbuf);
 	free(outbuf);
-
-	return 0;
+	return ret;
 }
 
 static int ask_to_continue(const char *file)
