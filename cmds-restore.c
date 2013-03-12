@@ -773,13 +773,14 @@ int cmd_restore(int argc, char **argv)
 	char dir_name[128];
 	u64 tree_location = 0;
 	u64 fs_location = 0;
+	u64 root_objectid = 0;
 	int len;
 	int ret;
 	int opt;
 	int super_mirror = 0;
 	int find_dir = 0;
 
-	while ((opt = getopt(argc, argv, "sviot:u:df:")) != -1) {
+	while ((opt = getopt(argc, argv, "sviot:u:df:r:")) != -1) {
 		switch (opt) {
 			case 's':
 				get_snaps = 1;
@@ -822,6 +823,14 @@ int cmd_restore(int argc, char **argv)
 			case 'd':
 				find_dir = 1;
 				break;
+			case 'r':
+				errno = 0;
+				root_objectid = (u64)strtoll(optarg, NULL, 10);
+				if (errno != 0) {
+					fprintf(stderr, "Root objectid not valid\n");
+					exit(1);
+				}
+				break;
 			default:
 				usage(cmd_restore_usage);
 		}
@@ -852,8 +861,6 @@ int cmd_restore(int argc, char **argv)
 		}
 	}
 
-	printf("Root objectid is %Lu\n", root->objectid);
-
 	memset(path_name, 0, 4096);
 
 	strncpy(dir_name, argv[optind + 1], sizeof dir_name);
@@ -865,6 +872,23 @@ int cmd_restore(int argc, char **argv)
 		dir_name[len] = '\0';
 	}
 
+	if (root_objectid != 0) {
+		struct btrfs_root *orig_root = root;
+
+		key.objectid = root_objectid;
+		key.type = BTRFS_ROOT_ITEM_KEY;
+		key.offset = (u64)-1;
+		root = btrfs_read_fs_root(orig_root->fs_info, &key);
+		if (IS_ERR(root)) {
+			fprintf(stderr, "Error reading root\n");
+			root = orig_root;
+			ret = 1;
+			goto out;
+		}
+		key.type = 0;
+		key.offset = 0;
+	}
+
 	if (find_dir) {
 		ret = find_first_dir(root, &key.objectid);
 		if (ret)
@@ -873,7 +897,7 @@ int cmd_restore(int argc, char **argv)
 		key.objectid = BTRFS_FIRST_FREE_OBJECTID;
 	}
 
-	ret = search_dir(root->fs_info->fs_root, &key, dir_name);
+	ret = search_dir(root, &key, dir_name);
 
 out:
 	close_ctree(root);
