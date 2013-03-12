@@ -86,7 +86,7 @@ all: version.h $(progs) manpages
 # NOTE: For static compiles, you need to have all the required libs
 # 	static equivalent available
 #
-static: version.h $(libs) btrfs.static mkfs.btrfs.static
+static: version.h $(libs) btrfs.static mkfs.btrfs.static btrfs-find-root.static
 
 version.h:
 	$(Q)bash version.sh
@@ -121,6 +121,10 @@ calc-size: $(objects) $(libs) calc-size.o
 btrfs-find-root: $(objects) $(libs) find-root.o
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o btrfs-find-root find-root.o $(objects) $(LDFLAGS) $(LIBS)
+
+btrfs-find-root.static: $(static_objects) find-root.static.o
+	@echo "    [LD]     $@"
+	$(Q)$(CC) $(STATIC_CFLAGS) -o btrfs-find-root.static find-root.static.o $(static_objects) $(STATIC_LDFLAGS) $(STATIC_LIBS)
 
 btrfsctl: $(objects) $(libs) btrfsctl.o
 	@echo "    [LD]     $@"
