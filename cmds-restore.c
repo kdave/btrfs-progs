@@ -39,6 +39,7 @@
 #include "utils.h"
 #include "commands.h"
 
+static char fs_name[4096];
 static char path_name[4096];
 static int get_snaps = 0;
 static int verbose = 0;
@@ -454,7 +455,7 @@ set_size:
 }
 
 static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
-		      const char *dir)
+		      const char *output_rootdir, const char *dir)
 {
 	struct btrfs_path *path;
 	struct extent_buffer *leaf;
@@ -558,8 +559,11 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 		type = btrfs_dir_type(leaf, dir_item);
 		btrfs_dir_item_key_to_cpu(leaf, dir_item, &location);
 
-		snprintf(path_name, 4096, "%s/%s", dir, filename);
+		/* full path from root of btrfs being restored */
+		snprintf(fs_name, 4096, "%s/%s", dir, filename);
 
+		/* full path from system root */
+		snprintf(path_name, 4096, "%s%s", output_rootdir, fs_name);
 
 		/*
 		 * At this point we're only going to restore directories and
@@ -607,7 +611,7 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 			}
 		} else if (type == BTRFS_FT_DIR) {
 			struct btrfs_root *search_root = root;
-			char *dir = strdup(path_name);
+			char *dir = strdup(fs_name);
 
 			if (!dir) {
 				fprintf(stderr, "Ran out of memory\n");
@@ -669,7 +673,8 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 				return -1;
 			}
 			loops = 0;
-			ret = search_dir(search_root, &location, dir);
+			ret = search_dir(search_root, &location,
+					 output_rootdir, dir);
 			free(dir);
 			if (ret) {
 				if (ignore_errors)
@@ -911,7 +916,7 @@ int cmd_restore(int argc, char **argv)
 		key.objectid = BTRFS_FIRST_FREE_OBJECTID;
 	}
 
-	ret = search_dir(root, &key, dir_name);
+	ret = search_dir(root, &key, dir_name, "");
 
 out:
 	close_ctree(root);
