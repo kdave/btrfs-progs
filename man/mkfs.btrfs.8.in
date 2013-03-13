@@ -39,7 +39,7 @@ mkfs.btrfs uses all the available storage for the filesystem.
 Specify how the data must be spanned across the devices specified. Valid
 values are raid0, raid1, raid10 or single.
 .TP
-\fB\-f\fR
+\fB\-f\fR, \fB\-\-force\fR
 Force overwrite when an existing filesystem is detected on the device.
 By default, mkfs.btrfs will not write to the device if it suspects that 
 there is a filesystem or partition table on the device already.
