@@ -1024,7 +1024,8 @@ void btrfs_register_one_device(char *fname)
 	fd = open("/dev/btrfs-control", O_RDONLY);
 	if (fd < 0) {
 		fprintf(stderr, "failed to open /dev/btrfs-control "
-			"skipping device registration\n");
+			"skipping device registration: %s\n",
+			strerror(errno));
 		return;
 	}
 	strncpy(args.name, fname, BTRFS_PATH_NAME_MAX);
