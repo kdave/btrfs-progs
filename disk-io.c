@@ -660,11 +660,12 @@ static int find_and_setup_log_root(struct btrfs_root *tree_root,
 	fs_info->log_root_tree = log_root;
 
 	if (!extent_buffer_uptodate(log_root->node)) {
+		free_extent_buffer(log_root->node);
 		free(log_root);
+		fs_info->log_root_tree = NULL;
 		return -EIO;
 	}
 
-	free(log_root);
 	return 0;
 }
 
