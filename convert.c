@@ -252,7 +252,7 @@ static u8 filetype_conversion_table[EXT2_FT_MAX] = {
 };
 
 static int dir_iterate_proc(ext2_ino_t dir, int entry,
-			    struct ext2_dir_entry *old,
+			    struct ext2_dir_entry *dirent,
 			    int offset, int blocksize,
 			    char *buf,void *priv_data)
 {
@@ -262,12 +262,14 @@ static int dir_iterate_proc(ext2_ino_t dir, int entry,
         u64 inode_size;
 	char dotdot[] = "..";
 	struct btrfs_key location;
-	struct ext2_dir_entry_2 *dirent = (struct ext2_dir_entry_2 *)old;
 	struct dir_iterate_data *idata = (struct dir_iterate_data *)priv_data;
+	int name_len;
+
+	name_len = dirent->name_len & 0xFF;
 
 	objectid = dirent->inode + INO_OFFSET;
-	if (!strncmp(dirent->name, dotdot, dirent->name_len)) {
-		if (dirent->name_len == 2) {
+	if (!strncmp(dirent->name, dotdot, name_len)) {
+		if (name_len == 2) {
 			BUG_ON(idata->parent != 0);
 			idata->parent = objectid;
 		}
@@ -280,24 +282,24 @@ static int dir_iterate_proc(ext2_ino_t dir, int entry,
 	location.offset = 0;
 	btrfs_set_key_type(&location, BTRFS_INODE_ITEM_KEY);
 
-	file_type = dirent->file_type;
+	file_type = dirent->name_len >> 8;
 	BUG_ON(file_type > EXT2_FT_SYMLINK);
 	ret = btrfs_insert_dir_item(idata->trans, idata->root,
-				    dirent->name, dirent->name_len,
+				    dirent->name, name_len,
 				    idata->objectid, &location,
 				    filetype_conversion_table[file_type],
 				    idata->index_cnt);
 	if (ret)
 		goto fail;
 	ret = btrfs_insert_inode_ref(idata->trans, idata->root,
-				     dirent->name, dirent->name_len,
+				     dirent->name, name_len,
 				     objectid, idata->objectid,
 				     idata->index_cnt);
 	if (ret)
 		goto fail;
 	idata->index_cnt++;
 	inode_size = btrfs_stack_inode_size(idata->inode) +
-		     dirent->name_len * 2;
+		     name_len * 2;
 	btrfs_set_stack_inode_size(idata->inode, inode_size);
 	return 0;
 fail:
