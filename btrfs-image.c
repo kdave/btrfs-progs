@@ -823,13 +823,17 @@ static int create_metadump(const char *input, FILE *out, int num_threads,
 
 		btrfs_item_key_to_cpu(leaf, &key, path->slots[0]);
 		if (key.objectid < bytenr ||
-		    key.type != BTRFS_EXTENT_ITEM_KEY) {
+		    (key.type != BTRFS_EXTENT_ITEM_KEY &&
+		     key.type != BTRFS_METADATA_ITEM_KEY)) {
 			path->slots[0]++;
 			continue;
 		}
 
 		bytenr = key.objectid;
-		num_bytes = key.offset;
+		if (key.type == BTRFS_METADATA_ITEM_KEY)
+			num_bytes = key.offset;
+		else
+			num_bytes = root->leafsize;
 
 		if (btrfs_item_size_nr(leaf, path->slots[0]) > sizeof(*ei)) {
 			ei = btrfs_item_ptr(leaf, path->slots[0],

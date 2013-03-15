@@ -81,11 +81,28 @@ int enable_extrefs_flag(struct btrfs_root *root)
 	return 0;
 }
 
+int enable_skinny_metadata(struct btrfs_root *root)
+{
+	struct btrfs_trans_handle *trans;
+	struct btrfs_super_block *disk_super;
+	u64 super_flags;
+
+	disk_super = &root->fs_info->super_copy;
+	super_flags = btrfs_super_incompat_flags(disk_super);
+	super_flags |= BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA;
+	trans = btrfs_start_transaction(root, 1);
+	btrfs_set_super_incompat_flags(disk_super, super_flags);
+	btrfs_commit_transaction(trans, root);
+
+	return 0;
+}
+
 static void print_usage(void)
 {
 	fprintf(stderr, "usage: btrfstune [options] device\n");
 	fprintf(stderr, "\t-S value\tenable/disable seeding\n");
 	fprintf(stderr, "\t-r \t\tenable extended inode refs\n");
+	fprintf(stderr, "\t-x enable skinny metadata extent refs\n");
 }
 
 int main(int argc, char *argv[])
@@ -95,10 +112,11 @@ int main(int argc, char *argv[])
 	int extrefs_flag = 0;
 	int seeding_flag = 0;
 	int seeding_value = 0;
+	int skinny_flag = 0;
 	int ret;
 
 	while(1) {
-		int c = getopt(argc, argv, "S:r");
+		int c = getopt(argc, argv, "S:rx");
 		if (c < 0)
 			break;
 		switch(c) {
@@ -108,6 +126,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'r':
 			extrefs_flag = 1;
+			break;
+		case 'x':
+			skinny_flag = 1;
 			break;
 		default:
 			print_usage();
@@ -142,6 +163,11 @@ int main(int argc, char *argv[])
 
 	if (extrefs_flag) {
 		enable_extrefs_flag(root);
+		success++;
+	}
+
+	if (skinny_flag) {
+		enable_skinny_metadata(root);
 		success++;
 	}
 

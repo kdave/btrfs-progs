@@ -115,7 +115,8 @@ static int cache_block_group(struct btrfs_root *root,
 	last = max_t(u64, block_group->key.objectid, BTRFS_SUPER_INFO_OFFSET);
 	key.objectid = last;
 	key.offset = 0;
-	btrfs_set_key_type(&key, BTRFS_EXTENT_ITEM_KEY);
+	key.type = 0;
+
 	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
 	if (ret < 0)
 		goto err;
@@ -142,14 +143,18 @@ static int cache_block_group(struct btrfs_root *root,
 			break;
 		}
 
-		if (btrfs_key_type(&key) == BTRFS_EXTENT_ITEM_KEY) {
+		if (key.type == BTRFS_EXTENT_ITEM_KEY ||
+		    key.type == BTRFS_METADATA_ITEM_KEY) {
 			if (key.objectid > last) {
 				hole_size = key.objectid - last;
 				set_extent_dirty(free_space_cache, last,
 						 last + hole_size - 1,
 						 GFP_NOFS);
 			}
-			last = key.objectid + key.offset;
+			if (key.type == BTRFS_METADATA_ITEM_KEY)
+				last = key.objectid + root->leafsize;
+			else
+				last = key.objectid + key.offset;
 		}
 next:
 		path->slots[0]++;
@@ -1024,6 +1029,9 @@ static int lookup_inline_extent_backref(struct btrfs_trans_handle *trans,
 	int want;
 	int ret;
 	int err = 0;
+	int skinny_metadata =
+		btrfs_fs_incompat(root->fs_info,
+				  BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA);
 
 	key.objectid = bytenr;
 	key.type = BTRFS_EXTENT_ITEM_KEY;
@@ -1034,11 +1042,44 @@ static int lookup_inline_extent_backref(struct btrfs_trans_handle *trans,
 		extra_size = btrfs_extent_inline_ref_size(want);
 	else
 		extra_size = -1;
+
+	if (owner < BTRFS_FIRST_FREE_OBJECTID && skinny_metadata) {
+		skinny_metadata = 1;
+		key.type = BTRFS_METADATA_ITEM_KEY;
+		key.offset = owner;
+	} else if (skinny_metadata) {
+		skinny_metadata = 0;
+	}
+
+again:
 	ret = btrfs_search_slot(trans, root, &key, path, extra_size, 1);
 	if (ret < 0) {
 		err = ret;
 		goto out;
 	}
+
+	/*
+	 * We may be a newly converted file system which still has the old fat
+	 * extent entries for metadata, so try and see if we have one of those.
+	 */
+	if (ret > 0 && skinny_metadata) {
+		skinny_metadata = 0;
+		if (path->slots[0]) {
+			path->slots[0]--;
+			btrfs_item_key_to_cpu(path->nodes[0], &key,
+					      path->slots[0]);
+			if (key.objectid == bytenr &&
+			    key.type == BTRFS_EXTENT_ITEM_KEY &&
+			    key.offset == num_bytes)
+				ret = 0;
+		}
+		if (ret) {
+			key.type = BTRFS_EXTENT_ITEM_KEY;
+			key.offset = num_bytes;
+			goto again;
+		}
+	}
+
 	if (ret) {
 		printf("Failed to find [%llu, %u, %llu]\n", key.objectid, key.type, key.offset);
 		return -ENOENT;
@@ -1079,10 +1120,10 @@ static int lookup_inline_extent_backref(struct btrfs_trans_handle *trans,
 	ptr = (unsigned long)(ei + 1);
 	end = (unsigned long)ei + item_size;
 
-	if (flags & BTRFS_EXTENT_FLAG_TREE_BLOCK) {
+	if (flags & BTRFS_EXTENT_FLAG_TREE_BLOCK && !skinny_metadata) {
 		ptr += sizeof(struct btrfs_tree_block_info);
 		BUG_ON(ptr > end);
-	} else {
+	} else if (!(flags & BTRFS_EXTENT_FLAG_TREE_BLOCK)) {
 		if (!(flags & BTRFS_EXTENT_FLAG_DATA)) {
 			return -EIO;
 		}
@@ -1439,7 +1480,7 @@ int btrfs_extent_post_op(struct btrfs_trans_handle *trans,
 
 int btrfs_lookup_extent_info(struct btrfs_trans_handle *trans,
 			     struct btrfs_root *root, u64 bytenr,
-			     u64 num_bytes, u64 *refs, u64 *flags)
+			     u64 offset, int metadata, u64 *refs, u64 *flags)
 {
 	struct btrfs_path *path;
 	int ret;
@@ -1450,16 +1491,54 @@ int btrfs_lookup_extent_info(struct btrfs_trans_handle *trans,
 	u64 num_refs;
 	u64 extent_flags;
 
-	WARN_ON(num_bytes < root->sectorsize);
+	if (metadata &&
+	    !btrfs_fs_incompat(root->fs_info,
+			       BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA)) {
+		offset = root->leafsize;
+		metadata = 0;
+	}
+
 	path = btrfs_alloc_path();
 	path->reada = 1;
+
 	key.objectid = bytenr;
-	key.offset = num_bytes;
-	btrfs_set_key_type(&key, BTRFS_EXTENT_ITEM_KEY);
+	key.offset = offset;
+	if (metadata)
+		key.type = BTRFS_METADATA_ITEM_KEY;
+	else
+		key.type = BTRFS_EXTENT_ITEM_KEY;
+
+again:
 	ret = btrfs_search_slot(trans, root->fs_info->extent_root, &key, path,
 				0, 0);
 	if (ret < 0)
 		goto out;
+
+	/*
+	 * Deal with the fact that we may have mixed SKINNY and normal refs.  If
+	 * we didn't find what we wanted check and see if we have a normal ref
+	 * right next to us, or re-search if we are on the edge of the leaf just
+	 * to make sure.
+	 */
+	if (ret > 0 && metadata) {
+		if (path->slots) {
+			path->slots[0]--;
+			btrfs_item_key_to_cpu(path->nodes[0], &key,
+					      path->slots[0]);
+			if (key.objectid == bytenr &&
+			    key.type == BTRFS_METADATA_ITEM_KEY)
+				ret = 0;
+		}
+
+		if (ret) {
+			btrfs_release_path(root, path);
+			key.type = BTRFS_EXTENT_ITEM_KEY;
+			key.offset = root->leafsize;
+			metadata = 0;
+			goto again;
+		}
+	}
+
 	if (ret != 0) {
 		ret = -EIO;
 		goto out;
@@ -1497,7 +1576,7 @@ out:
 
 int btrfs_set_block_flags(struct btrfs_trans_handle *trans,
 			  struct btrfs_root *root,
-			  u64 bytenr, u64 num_bytes, u64 flags)
+			  u64 bytenr, int level, u64 flags)
 {
 	struct btrfs_path *path;
 	int ret;
@@ -1505,17 +1584,47 @@ int btrfs_set_block_flags(struct btrfs_trans_handle *trans,
 	struct extent_buffer *l;
 	struct btrfs_extent_item *item;
 	u32 item_size;
+	int skinny_metadata =
+		btrfs_fs_incompat(root->fs_info,
+				  BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA);
 
-	WARN_ON(num_bytes < root->sectorsize);
 	path = btrfs_alloc_path();
 	path->reada = 1;
+
 	key.objectid = bytenr;
-	key.offset = num_bytes;
-	btrfs_set_key_type(&key, BTRFS_EXTENT_ITEM_KEY);
+	if (skinny_metadata) {
+		key.offset = level;
+		key.type = BTRFS_METADATA_ITEM_KEY;
+	} else {
+		key.offset = root->leafsize;
+		key.type = BTRFS_EXTENT_ITEM_KEY;
+	}
+
+again:
 	ret = btrfs_search_slot(trans, root->fs_info->extent_root, &key, path,
 				0, 0);
 	if (ret < 0)
 		goto out;
+
+	if (ret > 0 && skinny_metadata) {
+		skinny_metadata = 0;
+		if (path->slots[0]--) {
+			path->slots[0]--;
+			btrfs_item_key_to_cpu(path->nodes[0], &key,
+					      path->slots[0]);
+			if (key.objectid == bytenr &&
+			    key.offset == root->leafsize &&
+			    key.type == BTRFS_EXTENT_ITEM_KEY)
+				ret = 0;
+		}
+		if (ret) {
+			btrfs_release_path(root, path);
+			key.offset = root->leafsize;
+			key.type = BTRFS_EXTENT_ITEM_KEY;
+			goto again;
+		}
+	}
+
 	if (ret != 0) {
 		btrfs_print_leaf(root, path->nodes[0]);
 		printk("failed to find block number %Lu\n",
@@ -1985,6 +2094,9 @@ static int finish_current_insert(struct btrfs_trans_handle *trans,
 	struct pending_extent_op *extent_op;
 	struct btrfs_key key;
 	int ret;
+	int skinny_metadata =
+		btrfs_fs_incompat(extent_root->fs_info,
+				  BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA);
 
 	path = btrfs_alloc_path();
 
@@ -2000,14 +2112,19 @@ static int finish_current_insert(struct btrfs_trans_handle *trans,
 
 		if (extent_op->type == PENDING_EXTENT_INSERT) {
 			key.objectid = start;
-			key.offset = end + 1 - start;
-			key.type = BTRFS_EXTENT_ITEM_KEY;
+			if (skinny_metadata) {
+				key.offset = extent_op->level;
+				key.type = BTRFS_METADATA_ITEM_KEY;
+			} else {
+				key.offset = extent_op->num_bytes;
+				key.type = BTRFS_EXTENT_ITEM_KEY;
+			}
 			ret = alloc_reserved_tree_block(trans, extent_root,
 						extent_root->root_key.objectid,
 						trans->transid,
 						extent_op->flags,
 						&extent_op->key,
-					       	extent_op->level, &key);
+						extent_op->level, &key);
 		} else {
 			BUG_ON(1);
 		}
@@ -2088,6 +2205,9 @@ static int __free_extent(struct btrfs_trans_handle *trans,
 	int num_to_del = 1;
 	u32 item_size;
 	u64 refs;
+	int skinny_metadata =
+		btrfs_fs_incompat(extent_root->fs_info,
+				  BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA);
 
 	if (root->fs_info->free_extent_hook) {
 		root->fs_info->free_extent_hook(trans, root, bytenr, num_bytes,
@@ -2103,6 +2223,8 @@ static int __free_extent(struct btrfs_trans_handle *trans,
 	path->leave_spinning = 1;
 
 	is_data = owner_objectid >= BTRFS_FIRST_FREE_OBJECTID;
+	if (is_data)
+		skinny_metadata = 0;
 	BUG_ON(!is_data && refs_to_drop != 1);
 
 	ret = lookup_extent_backref(trans, extent_root, path, &iref,
@@ -2118,6 +2240,11 @@ static int __free_extent(struct btrfs_trans_handle *trans,
 				break;
 			if (key.type == BTRFS_EXTENT_ITEM_KEY &&
 			    key.offset == num_bytes) {
+				found_extent = 1;
+				break;
+			}
+			if (key.type == BTRFS_METADATA_ITEM_KEY &&
+			    key.offset == owner_objectid) {
 				found_extent = 1;
 				break;
 			}
@@ -2140,11 +2267,37 @@ static int __free_extent(struct btrfs_trans_handle *trans,
 			path->leave_spinning = 1;
 
 			key.objectid = bytenr;
-			key.type = BTRFS_EXTENT_ITEM_KEY;
-			key.offset = num_bytes;
+
+			if (skinny_metadata) {
+				key.type = BTRFS_METADATA_ITEM_KEY;
+				key.offset = owner_objectid;
+			} else {
+				key.type = BTRFS_EXTENT_ITEM_KEY;
+				key.offset = num_bytes;
+			}
 
 			ret = btrfs_search_slot(trans, extent_root,
 						&key, path, -1, 1);
+			if (ret > 0 && skinny_metadata && path->slots[0]) {
+				path->slots[0]--;
+				btrfs_item_key_to_cpu(path->nodes[0],
+						      &key,
+						      path->slots[0]);
+				if (key.objectid == bytenr &&
+				    key.type == BTRFS_EXTENT_ITEM_KEY &&
+				    key.offset == num_bytes)
+					ret = 0;
+			}
+
+			if (ret > 0 && skinny_metadata) {
+				skinny_metadata = 0;
+				btrfs_release_path(extent_root, path);
+				key.type = BTRFS_EXTENT_ITEM_KEY;
+				key.offset = num_bytes;
+				ret = btrfs_search_slot(trans, extent_root,
+							&key, path, -1, 1);
+			}
+
 			if (ret) {
 				printk(KERN_ERR "umm, got %d back from search"
 				       ", was looking for %llu\n", ret,
@@ -2199,7 +2352,8 @@ static int __free_extent(struct btrfs_trans_handle *trans,
 	BUG_ON(item_size < sizeof(*ei));
 	ei = btrfs_item_ptr(leaf, extent_slot,
 			    struct btrfs_extent_item);
-	if (owner_objectid < BTRFS_FIRST_FREE_OBJECTID) {
+	if (owner_objectid < BTRFS_FIRST_FREE_OBJECTID &&
+	    key.type == BTRFS_EXTENT_ITEM_KEY) {
 		struct btrfs_tree_block_info *bi;
 		BUG_ON(item_size < sizeof(*ei) + sizeof(*bi));
 		bi = (struct btrfs_tree_block_info *)(ei + 1);
@@ -2571,7 +2725,13 @@ static int alloc_reserved_tree_block(struct btrfs_trans_handle *trans,
 	struct btrfs_extent_inline_ref *iref;
 	struct btrfs_path *path;
 	struct extent_buffer *leaf;
-	u32 size = sizeof(*extent_item) + sizeof(*block_info) + sizeof(*iref);
+	u32 size = sizeof(*extent_item) + sizeof(*iref);
+	int skinny_metadata =
+		btrfs_fs_incompat(fs_info,
+				  BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA);
+
+	if (!skinny_metadata)
+		size += sizeof(*block_info);
 
 	path = btrfs_alloc_path();
 	BUG_ON(!path);
@@ -2588,19 +2748,23 @@ static int alloc_reserved_tree_block(struct btrfs_trans_handle *trans,
 	btrfs_set_extent_generation(leaf, extent_item, generation);
 	btrfs_set_extent_flags(leaf, extent_item,
 			       flags | BTRFS_EXTENT_FLAG_TREE_BLOCK);
-	block_info = (struct btrfs_tree_block_info *)(extent_item + 1);
 
-	btrfs_set_tree_block_key(leaf, block_info, key);
-	btrfs_set_tree_block_level(leaf, block_info, level);
+	if (skinny_metadata) {
+		iref = (struct btrfs_extent_inline_ref *)(extent_item + 1);
+	} else {
+		block_info = (struct btrfs_tree_block_info *)(extent_item + 1);
+		btrfs_set_tree_block_key(leaf, block_info, key);
+		btrfs_set_tree_block_level(leaf, block_info, level);
+		iref = (struct btrfs_extent_inline_ref *)(block_info + 1);
+	}
 
-	iref = (struct btrfs_extent_inline_ref *)(block_info + 1);
 	btrfs_set_extent_inline_ref_type(leaf, iref, BTRFS_TREE_BLOCK_REF_KEY);
 	btrfs_set_extent_inline_ref_offset(leaf, iref, root_objectid);
 
 	btrfs_mark_buffer_dirty(leaf);
 	btrfs_free_path(path);
 
-	ret = update_block_group(trans, root, ins->objectid, ins->offset,
+	ret = update_block_group(trans, root, ins->objectid, root->leafsize,
 				 1, 0);
 	return 0;
 }
@@ -2636,6 +2800,11 @@ static int alloc_tree_block(struct btrfs_trans_handle *trans,
 		set_state_private(&root->fs_info->extent_ins,
 				  ins->objectid, (unsigned long)extent_op);
 	} else {
+		if (btrfs_fs_incompat(root->fs_info,
+				BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA)) {
+			ins->offset = level;
+			ins->type = BTRFS_METADATA_ITEM_KEY;
+		}
 		ret = alloc_reserved_tree_block(trans, root, root_objectid,
 						generation, flags,
 						key, level, ins);
@@ -3345,6 +3514,8 @@ static int btrfs_count_extents_in_block_group(struct btrfs_root *root,
 			break;
 		if (key.type == BTRFS_EXTENT_ITEM_KEY)
 			bytes_used += key.offset;
+		if (key.type == BTRFS_METADATA_ITEM_KEY)
+			bytes_used += root->leafsize;
 		path->slots[0]++;
 	}
 	*total = bytes_used;
@@ -3456,6 +3627,11 @@ int btrfs_fix_block_accounting(struct btrfs_trans_handle *trans,
 			bytes_used += key.offset;
 			ret = btrfs_update_block_group(trans, root,
 				  key.objectid, key.offset, 1, 0);
+			BUG_ON(ret);
+		} else if (key.type == BTRFS_METADATA_ITEM_KEY) {
+			bytes_used += root->leafsize;
+			ret = btrfs_update_block_group(trans, root,
+				  key.objectid, root->leafsize, 1, 0);
 			BUG_ON(ret);
 		}
 		path.slots[0]++;

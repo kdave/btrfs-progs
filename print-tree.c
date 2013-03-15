@@ -202,7 +202,7 @@ static void print_file_extent_item(struct extent_buffer *eb,
 	       btrfs_file_extent_compression(eb, fi));
 }
 
-static void print_extent_item(struct extent_buffer *eb, int slot)
+static void print_extent_item(struct extent_buffer *eb, int slot, int metadata)
 {
 	struct btrfs_extent_item *ei;
 	struct btrfs_extent_inline_ref *iref;
@@ -237,7 +237,7 @@ static void print_extent_item(struct extent_buffer *eb, int slot)
 	       (unsigned long long)btrfs_extent_generation(eb, ei),
 	       (unsigned long long)flags);
 
-	if (flags & BTRFS_EXTENT_FLAG_TREE_BLOCK) {
+	if (flags & BTRFS_EXTENT_FLAG_TREE_BLOCK && !metadata) {
 		struct btrfs_tree_block_info *info;
 		info = (struct btrfs_tree_block_info *)(ei + 1);
 		btrfs_tree_block_key(eb, info, &key);
@@ -245,7 +245,13 @@ static void print_extent_item(struct extent_buffer *eb, int slot)
 		btrfs_print_key(&key);
 		printf(" level %d\n", btrfs_tree_block_level(eb, info));
 		iref = (struct btrfs_extent_inline_ref *)(info + 1);
-	} else {
+	} else if (metadata) {
+		struct btrfs_key tmp;
+
+		btrfs_item_key_to_cpu(eb, &tmp, slot);
+		printf("\t\ttree block skinny level %d\n", (int)tmp.offset);
+		iref = (struct btrfs_extent_inline_ref *)(ei + 1);
+	} else{
 		iref = (struct btrfs_extent_inline_ref *)(ei + 1);
 	}
 
@@ -439,6 +445,9 @@ static void print_key_type(u64 objectid, u8 type)
 		break;
 	case BTRFS_EXTENT_ITEM_KEY:
 		printf("EXTENT_ITEM");
+		break;
+	case BTRFS_METADATA_ITEM_KEY:
+		printf("METADATA_ITEM");
 		break;
 	case BTRFS_TREE_BLOCK_REF_KEY:
 		printf("TREE_BLOCK_REF");
@@ -699,7 +708,10 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 			print_root_ref(l, i, "backref");
 			break;
 		case BTRFS_EXTENT_ITEM_KEY:
-			print_extent_item(l, i);
+			print_extent_item(l, i, 0);
+			break;
+		case BTRFS_METADATA_ITEM_KEY:
+			print_extent_item(l, i, 1);
 			break;
 		case BTRFS_TREE_BLOCK_REF_KEY:
 			printf("\t\ttree block backref\n");

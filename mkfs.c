@@ -337,6 +337,7 @@ static void print_usage(void)
 	fprintf(stderr, "\t -r --rootdir the source directory\n");
 	fprintf(stderr, "\t -K --nodiscard do not perform whole device TRIM\n");
 	fprintf(stderr, "\t -V --version print the mkfs.btrfs version and exit\n");
+	fprintf(stderr, "\t -x --skinny-extents use the new skinny extent disk format");
 	fprintf(stderr, "%s\n", BTRFS_BUILD_VERSION);
 	exit(1);
 }
@@ -397,6 +398,7 @@ static struct option long_options[] = {
 	{ "version", 0, NULL, 'V' },
 	{ "rootdir", 1, NULL, 'r' },
 	{ "nodiscard", 0, NULL, 'K' },
+	{ "skinny-extents", 0, NULL, 'x'},
 	{ 0, 0, 0, 0}
 };
 
@@ -1289,6 +1291,7 @@ int main(int ac, char **av)
 	int nodiscard = 0;
 	int ssd = 0;
 	int force_overwrite = 0;
+	int skinny_meta_extents = 0;
 
 	char *source_dir = NULL;
 	int source_dir_set = 0;
@@ -1304,8 +1307,8 @@ int main(int ac, char **av)
 
 	while(1) {
 		int c;
-		c = getopt_long(ac, av, "A:b:fl:n:s:m:d:L:r:VMK", long_options,
-				&option_index);
+		c = getopt_long(ac, av, "A:b:fl:n:s:m:d:L:r:VMKx",
+				long_options, &option_index);
 		if (c < 0)
 			break;
 		switch(c) {
@@ -1355,6 +1358,9 @@ int main(int ac, char **av)
 				break;
 			case 'K':
 				nodiscard=1;
+				break;
+			case 'x':
+				skinny_meta_extents = 1;
 				break;
 			default:
 				print_usage();
@@ -1532,6 +1538,9 @@ raid_groups:
 
 	if (mixed)
 		flags |= BTRFS_FEATURE_INCOMPAT_MIXED_GROUPS;
+
+	if (skinny_meta_extents)
+		flags |= BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA;
 
 	btrfs_set_super_incompat_flags(super, flags);
 

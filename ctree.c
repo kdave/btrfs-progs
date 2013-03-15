@@ -235,7 +235,8 @@ static noinline int update_ref_for_cow(struct btrfs_trans_handle *trans,
 
 	if (btrfs_block_can_be_shared(root, buf)) {
 		ret = btrfs_lookup_extent_info(trans, root, buf->start,
-					       buf->len, &refs, &flags);
+					       btrfs_header_level(buf), 1,
+					       &refs, &flags);
 		BUG_ON(ret);
 		BUG_ON(refs == 0);
 	} else {
@@ -277,7 +278,8 @@ static noinline int update_ref_for_cow(struct btrfs_trans_handle *trans,
 		}
 		if (new_flags != 0) {
 			ret = btrfs_set_block_flags(trans, root, buf->start,
-						    buf->len, new_flags);
+						    btrfs_header_level(buf),
+						    new_flags);
 			BUG_ON(ret);
 		}
 	} else {
