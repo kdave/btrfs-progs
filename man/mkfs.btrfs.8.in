@@ -37,7 +37,7 @@ mkfs.btrfs uses all the available storage for the filesystem.
 .TP
 \fB\-d\fR, \fB\-\-data \fItype\fR
 Specify how the data must be spanned across the devices specified. Valid
-values are raid0, raid1, raid10 or single.
+values are raid0, raid1, raid5, raid6, raid10 or single.
 .TP
 \fB\-f\fR, \fB\-\-force\fR
 Force overwrite when an existing filesystem is detected on the device.
@@ -53,10 +53,11 @@ Specify a label for the filesystem.
 .TP
 \fB\-m\fR, \fB\-\-metadata \fIprofile\fR
 Specify how metadata must be spanned across the devices specified. Valid
-values are raid0, raid1, raid10, single or dup.  Single device will have dup
-set by default except in the case of SSDs which will default to single.  This is
-because SSDs can remap blocks internally so duplicate blocks could end up in the
-same erase block which negates the benefits of doing metadata duplication.
+values are raid0, raid1, raid5, raid6, raid10, single or dup.  Single device
+will have dup set by default except in the case of SSDs which will default to
+single. This is because SSDs can remap blocks internally so duplicate blocks
+could end up in the same erase block which negates the benefits of doing
+metadata duplication.
 .TP
 \fB\-M\fR, \fB\-\-mixed\fR
 Mix data and metadata chunks together for more efficient space 
