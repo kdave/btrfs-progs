@@ -532,6 +532,84 @@ static int is_tree_block(struct btrfs_root *extent_root,
 }
 #endif
 
+static int copy_log_blocks(struct btrfs_root *root, struct extent_buffer *eb,
+			   struct metadump_struct *metadump,
+			   int log_root_tree)
+{
+	struct extent_buffer *tmp;
+	struct btrfs_root_item *ri;
+	struct btrfs_key key;
+	u64 bytenr;
+	int level;
+	int nritems = 0;
+	int i = 0;
+	int ret;
+
+	ret = add_metadata(btrfs_header_bytenr(eb), root->leafsize, metadump);
+	if (ret) {
+		fprintf(stderr, "Error adding metadata block\n");
+		return ret;
+	}
+
+	if (btrfs_header_level(eb) == 0 && !log_root_tree)
+		return 0;
+
+	level = btrfs_header_level(eb);
+	nritems = btrfs_header_nritems(eb);
+	for (i = 0; i < nritems; i++) {
+		if (level == 0) {
+			btrfs_item_key_to_cpu(eb, &key, i);
+			if (key.type != BTRFS_ROOT_ITEM_KEY)
+				continue;
+			ri = btrfs_item_ptr(eb, i, struct btrfs_root_item);
+			bytenr = btrfs_disk_root_bytenr(eb, ri);
+			tmp = read_tree_block(root, bytenr, root->leafsize, 0);
+			if (!tmp) {
+				fprintf(stderr,
+					"Error reading log root block\n");
+				return -EIO;
+			}
+			ret = copy_log_blocks(root, tmp, metadump, 0);
+			free_extent_buffer(tmp);
+			if (ret)
+				return ret;
+		} else {
+			bytenr = btrfs_node_blockptr(eb, i);
+			tmp = read_tree_block(root, bytenr, root->leafsize, 0);
+			if (!tmp) {
+				fprintf(stderr, "Error reading log block\n");
+				return -EIO;
+			}
+			ret = copy_log_blocks(root, tmp, metadump,
+					      log_root_tree);
+			free_extent_buffer(tmp);
+			if (ret)
+				return ret;
+		}
+	}
+
+	return 0;
+}
+
+static int copy_log_trees(struct btrfs_root *root,
+			  struct metadump_struct *metadump,
+			  struct btrfs_path *path)
+{
+	u64 blocknr = btrfs_super_log_root(root->fs_info->super_copy);
+
+	if (blocknr == 0)
+		return 0;
+
+	if (!root->fs_info->log_root_tree ||
+	    !root->fs_info->log_root_tree->node) {
+		fprintf(stderr, "Error copying tree log, it wasn't setup\n");
+		return -EIO;
+	}
+
+	return copy_log_blocks(root, root->fs_info->log_root_tree->node,
+			       metadump, 1);
+}
+
 static int create_metadump(const char *input, FILE *out, int num_threads,
 			   int compress_level)
 {
@@ -658,6 +736,9 @@ static int create_metadump(const char *input, FILE *out, int num_threads,
 		bytenr += num_bytes;
 	}
 
+	ret = copy_log_trees(root, &metadump, path);
+	if (ret)
+		err = ret;
 out:
 	ret = flush_pending(&metadump, 1);
 	if (ret) {
