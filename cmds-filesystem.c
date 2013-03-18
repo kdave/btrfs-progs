@@ -446,7 +446,7 @@ static int cmd_defrag(int argc, char **argv)
 		exit(1);
 	}
 
-	return errors + 20;
+	return errors;
 }
 
 static const char * const cmd_resize_usage[] = {
