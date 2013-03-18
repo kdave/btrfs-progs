@@ -3003,10 +3003,12 @@ out:
 
 int btrfs_free_block_groups(struct btrfs_fs_info *info)
 {
+	struct btrfs_space_info *sinfo;
 	u64 start;
 	u64 end;
 	u64 ptr;
 	int ret;
+
 	while(1) {
 		ret = find_first_extent_bit(&info->block_group_cache, 0,
 					    &start, &end, (unsigned int)-1);
@@ -3025,6 +3027,13 @@ int btrfs_free_block_groups(struct btrfs_fs_info *info)
 			break;
 		clear_extent_dirty(&info->free_space_cache, start,
 				   end, GFP_NOFS);
+	}
+
+	while (!list_empty(&info->space_info)) {
+		sinfo = list_entry(info->space_info.next,
+				   struct btrfs_space_info, list);
+		list_del_init(&sinfo->list);
+		kfree(sinfo);
 	}
 	return 0;
 }
