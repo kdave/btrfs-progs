@@ -4,10 +4,9 @@ AR = ar
 AM_CFLAGS = -Wall -D_FILE_OFFSET_BITS=64 -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2 -DBTRFS_FLAT_INCLUDES -fPIC
 CFLAGS = -g -O1
 objects = ctree.o disk-io.o radix-tree.o extent-tree.o print-tree.o \
-	  root-tree.o dir-item.o file-item.o inode-item.o \
-	  inode-map.o extent-cache.o extent_io.o \
-	  volumes.o utils.o btrfs-list.o repair.o \
-	  send-stream.o send-utils.o qgroup.o raid6.o
+	  root-tree.o dir-item.o file-item.o inode-item.o inode-map.o \
+	  extent-cache.o extent_io.o volumes.o utils.o repair.o \
+	  qgroup.o raid6.o
 cmds_objects = cmds-subvolume.o cmds-filesystem.o cmds-device.o cmds-scrub.o \
 	       cmds-inspect.o cmds-balance.o cmds-send.o cmds-receive.o \
 	       cmds-quota.o cmds-qgroup.o cmds-replace.o cmds-check.o \
@@ -51,12 +50,12 @@ progs = mkfs.btrfs btrfs-debug-tree btrfsck \
 # Create all the static targets
 static_objects = $(patsubst %.o, %.static.o, $(objects))
 static_cmds_objects = $(patsubst %.o, %.static.o, $(cmds_objects))
-static_progs = $(patsubst %.o, %.static.o, $(progs))
+static_libbtrfs_objects = $(patsubst %.o, %.static.o, $(libbtrfs_objects))
 
 # Define static compilation flags
 STATIC_CFLAGS = $(CFLAGS) -ffunction-sections -fdata-sections
 STATIC_LDFLAGS = -static -Wl,--gc-sections
-STATIC_LIBS = $(LIBS) -lpthread
+STATIC_LIBS = $(lib_LIBS) -lpthread
 
 libs_shared = libbtrfs.so.0.1
 libs_static = libbtrfs.a
@@ -86,9 +85,10 @@ all: version.h $(progs) manpages
 # NOTE: For static compiles, you need to have all the required libs
 # 	static equivalent available
 #
-static: version.h $(libs) btrfs.static mkfs.btrfs.static btrfs-find-root.static
+static: version.h btrfs.static mkfs.btrfs.static btrfs-find-root.static
 
 version.h:
+	@echo "    [SH]     $@"
 	$(Q)bash version.sh
 
 $(libs_shared): $(libbtrfs_objects) $(lib_links) send.h
@@ -110,10 +110,10 @@ btrfs: $(objects) btrfs.o help.o $(cmds_objects) $(libs)
 	$(Q)$(CC) $(CFLAGS) -o btrfs btrfs.o help.o $(cmds_objects) \
 		$(objects) $(LDFLAGS) $(LIBS) -lpthread
 
-btrfs.static: $(static_objects) $(libs) btrfs.static.o help.static.o $(static_cmds_objects)
+btrfs.static: $(static_objects) btrfs.static.o help.static.o $(static_cmds_objects) $(static_libbtrfs_objects)
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(STATIC_CFLAGS) -o btrfs.static btrfs.static.o help.static.o $(static_cmds_objects) \
-		$(static_objects) $(STATIC_LDFLAGS) $(STATIC_LIBS)
+		$(static_objects) $(static_libbtrfs_objects) $(STATIC_LDFLAGS) $(STATIC_LIBS)
 
 calc-size: $(objects) $(libs) calc-size.o
 	@echo "    [LD]     $@"
@@ -123,9 +123,10 @@ btrfs-find-root: $(objects) $(libs) find-root.o
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o btrfs-find-root find-root.o $(objects) $(LDFLAGS) $(LIBS)
 
-btrfs-find-root.static: $(static_objects) find-root.static.o
+btrfs-find-root.static: $(static_objects) find-root.static.o $(static_libbtrfs_objects)
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(STATIC_CFLAGS) -o btrfs-find-root.static find-root.static.o $(static_objects) $(STATIC_LDFLAGS) $(STATIC_LIBS)
+	$(Q)$(CC) $(STATIC_CFLAGS) -o btrfs-find-root.static find-root.static.o $(static_objects) \
+		$(static_libbtrfs_objects) $(STATIC_LDFLAGS) $(STATIC_LIBS)
 
 # For backward compatibility, 'btrfs' changes behaviour to fsck if it's named 'btrfsck'
 btrfsck: btrfs
@@ -134,12 +135,12 @@ btrfsck: btrfs
 
 mkfs.btrfs: $(objects) $(libs) mkfs.o
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o mkfs.btrfs $(objects) mkfs.o $(LDFLAGS) $(LIBS) -lblkid
+	$(Q)$(CC) $(CFLAGS) -o mkfs.btrfs $(objects) mkfs.o $(LDFLAGS) $(LIBS)
 
-mkfs.btrfs.static: $(static_objects) mkfs.static.o
+mkfs.btrfs.static: $(static_objects) mkfs.static.o $(static_libbtrfs_objects)
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(STATIC_CFLAGS) -o mkfs.btrfs.static mkfs.static.o \
-		$(static_objects) $(STATIC_LDFLAGS) $(STATIC_LIBS)
+	$(Q)$(CC) $(STATIC_CFLAGS) -o mkfs.btrfs.static mkfs.static.o $(static_objects) \
+		$(static_libbtrfs_objects) $(STATIC_LDFLAGS) $(STATIC_LIBS)
 
 btrfs-debug-tree: $(objects) $(libs) debug-tree.o
 	@echo "    [LD]     $@"
