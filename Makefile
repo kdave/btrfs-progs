@@ -93,7 +93,8 @@ version.h:
 
 $(libs_shared): $(libbtrfs_objects) $(lib_links) send.h
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) $(libbtrfs_objects) $(lib_LIBS) -shared -Wl,-soname,libbtrfs.so -o libbtrfs.so.0.1
+	$(Q)$(CC) $(CFLAGS) $(libbtrfs_objects) $(LDFLAGS) $(lib_LIBS) \
+		-shared -Wl,-soname,libbtrfs.so -o libbtrfs.so.0.1
 
 $(libs_static): $(libbtrfs_objects)
 	@echo "    [AR]     $@"
