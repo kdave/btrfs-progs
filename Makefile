@@ -174,6 +174,10 @@ btrfs-image: $(objects) $(libs) btrfs-image.o
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o btrfs-image $(objects) btrfs-image.o -lpthread -lz $(LDFLAGS) $(LIBS)
 
+btrfs-crc: btrfs-crc.o $(libs)
+	@echo "    [LD]     $@"
+	$(Q)$(CC) $(CFLAGS) -o btrfs-crc btrfs-crc.o $(LDFLAGS) $(LIBS)
+
 dir-test: $(objects) $(libs) dir-test.o
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o dir-test $(objects) dir-test.o $(LDFLAGS) $(LIBS)
