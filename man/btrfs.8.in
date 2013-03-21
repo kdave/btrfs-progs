@@ -60,6 +60,18 @@ btrfs \- control a btrfs filesystem
 \fBbtrfs\fP \fBinspect-internal logical-resolve\fP
 [-Pv] [-s size] \fI<logical>\fP \fI<path>\fP
 .PP
+\fBbtrfs\fP \fBqgroup assign\fP \fI<src>\fP \fI<dst>\fP \fI<path>\fP
+.PP
+\fBbtrfs\fP \fBqgroup remove\fP \fI<src>\fP \fI<dst>\fP \fI<path>\fP
+.PP
+\fBbtrfs\fP \fBqgroup create\fP \fI<qgroupid>\fP \fI<path>\fP
+.PP
+\fBbtrfs\fP \fBqgroup destroy\fP \fI<qgroupid>\fP \fI<path>\fP
+.PP
+\fBbtrfs\fP \fBqgroup show\fP \fI<path>\fP
+.PP
+\fBbtrfs\fP \fBqgroup limit\fP [options] \fI<size>\fP|\fBnone\fP [\fI<qgroupid>\fP] \fI<path>\fP
+.PP
 \fBbtrfs\fP \fBhelp|\-\-help \fP\fI\fP
 .PP
 \fBbtrfs\fP \fB<command> \-\-help \fP\fI\fP
@@ -446,6 +458,31 @@ verbose mode. print count of returned paths and all ioctl() return values
 .IP -s bufsize 5
 set inode container's size. This is used to increase inode container's size in case it is
 not enough to read all the resolved results. The max value one can set is 64k.
+.RE
+.TP
+
+\fBbtrfs qgroup assign\fP \fI<src>\fP \fI<dst>\fP \fI<path>\fP
+Enable subvolume qgroup support for a filesystem.
+.TP
+
+\fBbtrfs qgroup remove\fP \fI<src>\fP \fI<dst>\fP \fI<path>\fP
+Remove a subvol from a quota group.
+.TP
+
+\fBbtrfs qgroup create\fP \fI<qgroupid>\fP \fI<path>\fP
+Create a subvolume quota group.
+.TP
+
+\fBbtrfs qgroup destroy\fP \fI<qgroupid>\fP \fI<path>\fP
+Destroy a subvolume quota group.
+.TP
+
+\fBbtrfs qgroup show\fP \fI<path>\fP
+Show all subvolume quota groups.
+.TP
+
+\fBbtrfs\fP \fBqgroup limit\fP [options] \fI<size>\fP|\fBnone\fP [\fI<qgroupid>\fP] \fI<path>\fP
+Limit the size of a subvolume quota group.
 .RE
 
 .SH EXIT STATUS
