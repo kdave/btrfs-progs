@@ -6,7 +6,7 @@ mkfs.btrfs \- create a btrfs filesystem
 [ \fB\-A\fP\fI alloc-start\fP ]
 [ \fB\-b\fP\fI byte-count\fP ]
 [ \fB\-d\fP\fI data-profile\fP ]
-[ \fB\-f\fP\fI ]
+[ \fB\-f\fP ]
 [ \fB\-l\fP\fI leafsize\fP ]
 [ \fB\-L\fP\fI label\fP ]
 [ \fB\-m\fP\fI metadata profile\fP ]
