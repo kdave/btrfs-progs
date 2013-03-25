@@ -70,7 +70,7 @@ int find_mount_root(const char *path, char **mount_root)
 		return -errno;
 	close(fd);
 
-	mnttab = fopen("/etc/mtab", "r");
+	mnttab = fopen("/proc/mounts", "r");
 	while ((ent = getmntent(mnttab))) {
 		len = strlen(ent->mnt_dir);
 		if (strncmp(ent->mnt_dir, path, len) == 0) {
