@@ -24,6 +24,10 @@ compression level (0 ~ 9).
 .TP
 \fB\-t\fR \fIvalue\fP
 number of threads (1 ~ 32) to be used to process the image dump or restore.
+.TP
+\fB\-o\fP
+use the old restore method, this does not fixup the chunk tree so the restored
+file system will not be able to be mounted.
 .SH AVAILABILITY
 .B btrfs-image
 is part of btrfs-progs. Btrfs is currently under heavy development,

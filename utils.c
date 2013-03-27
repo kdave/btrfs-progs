@@ -415,7 +415,7 @@ int make_btrfs(int fd, const char *device, const char *label,
 	return 0;
 }
 
-static u64 device_size(int fd, struct stat *st)
+u64 btrfs_device_size(int fd, struct stat *st)
 {
 	u64 size;
 	if (S_ISREG(st->st_mode)) {
@@ -555,7 +555,7 @@ int btrfs_prepare_device(int fd, char *file, int zero_end, u64 *block_count_ret,
 		exit(1);
 	}
 
-	block_count = device_size(fd, &st);
+	block_count = btrfs_device_size(fd, &st);
 	if (block_count == 0) {
 		fprintf(stderr, "unable to find %s size\n", file);
 		exit(1);
