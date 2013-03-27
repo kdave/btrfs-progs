@@ -64,6 +64,9 @@ int quota_ctl(int cmd, int argc, char **argv)
 static const char * const cmd_quota_enable_usage[] = {
 	"btrfs quota enable <path>",
 	"Enable subvolume quota support for a filesystem.",
+	"Any data already present on the filesystem will not count towards",
+	"the space usage numbers. It is recommended to enable quota for a",
+	"filesystem before writing any data to it.",
 	NULL
 };
 
@@ -92,6 +95,7 @@ static int cmd_quota_disable(int argc, char **argv)
 static const char * const cmd_quota_rescan_usage[] = {
 	"btrfs quota rescan <path>",
 	"Rescan the subvolume for a changed quota setting.",
+	"Not yet implemented.",
 	NULL
 };
 

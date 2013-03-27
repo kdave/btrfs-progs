@@ -326,7 +326,8 @@ static const char * const cmd_qgroup_limit_usage[] = {
 	"btrfs qgroup limit [options] <size>|none [<qgroupid>] <path>",
 	"Limit the size of a subvolume quota group.",
 	"",
-	"-c   limit amount of data after compression",
+	"-c   limit amount of data after compression. This is the default,",
+	"     it is currently not possible to turn off this option.",
 	"-e   limit space exclusively assigned to this qgroup",
 	NULL
 };

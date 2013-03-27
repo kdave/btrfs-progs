@@ -61,10 +61,13 @@ static int test_isdir(char *path)
 }
 
 static const char * const cmd_subvol_create_usage[] = {
-	"btrfs subvolume create [<dest>/]<name>",
+	"btrfs subvolume create [-i <qgroupid>] [<dest>/]<name>",
 	"Create a subvolume",
 	"Create a subvolume <name> in <dest>.  If <dest> is not given",
 	"subvolume <name> will be created in the current directory.",
+	"",
+	"-i <qgroupid>  add the newly created subvolume to a qgroup. This",
+	"               option can be given multiple times.",
 	NULL
 };
 
@@ -481,11 +484,14 @@ out:
 
 static const char * const cmd_snapshot_usage[] = {
 	"btrfs subvolume snapshot [-r] <source> [<dest>/]<name>",
+	"btrfs subvolume snapshot [-r] [-i <qgroupid>] <source> [<dest>/]<name>",
 	"Create a snapshot of the subvolume",
 	"Create a writable/readonly snapshot of the subvolume <source> with",
 	"the name <name> in the <dest> directory",
 	"",
-	"-r     create a readonly snapshot",
+	"-r             create a readonly snapshot",
+	"-i <qgroupid>  add the newly created snapshot to a qgroup. This",
+	"               option can be given multiple times.",
 	NULL
 };
 
