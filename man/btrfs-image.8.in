@@ -28,6 +28,11 @@ number of threads (1 ~ 32) to be used to process the image dump or restore.
 \fB\-o\fP
 use the old restore method, this does not fixup the chunk tree so the restored
 file system will not be able to be mounted.
+.TP
+\fB\-w\fP
+Walk all the trees manually and copy any blocks that are referenced. Use this
+option if your extent tree is corrupted to make sure that all of the metadata is
+captured.
 .SH AVAILABILITY
 .B btrfs-image
 is part of btrfs-progs. Btrfs is currently under heavy development,

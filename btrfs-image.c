@@ -605,9 +605,8 @@ static int is_tree_block(struct btrfs_root *extent_root,
 }
 #endif
 
-static int copy_log_blocks(struct btrfs_root *root, struct extent_buffer *eb,
-			   struct metadump_struct *metadump,
-			   int log_root_tree)
+static int copy_tree_blocks(struct btrfs_root *root, struct extent_buffer *eb,
+			    struct metadump_struct *metadump, int root_tree)
 {
 	struct extent_buffer *tmp;
 	struct btrfs_root_item *ri;
@@ -624,7 +623,7 @@ static int copy_log_blocks(struct btrfs_root *root, struct extent_buffer *eb,
 		return ret;
 	}
 
-	if (btrfs_header_level(eb) == 0 && !log_root_tree)
+	if (btrfs_header_level(eb) == 0 && !root_tree)
 		return 0;
 
 	level = btrfs_header_level(eb);
@@ -642,7 +641,7 @@ static int copy_log_blocks(struct btrfs_root *root, struct extent_buffer *eb,
 					"Error reading log root block\n");
 				return -EIO;
 			}
-			ret = copy_log_blocks(root, tmp, metadump, 0);
+			ret = copy_tree_blocks(root, tmp, metadump, 0);
 			free_extent_buffer(tmp);
 			if (ret)
 				return ret;
@@ -653,8 +652,7 @@ static int copy_log_blocks(struct btrfs_root *root, struct extent_buffer *eb,
 				fprintf(stderr, "Error reading log block\n");
 				return -EIO;
 			}
-			ret = copy_log_blocks(root, tmp, metadump,
-					      log_root_tree);
+			ret = copy_tree_blocks(root, tmp, metadump, root_tree);
 			free_extent_buffer(tmp);
 			if (ret)
 				return ret;
@@ -679,8 +677,8 @@ static int copy_log_trees(struct btrfs_root *root,
 		return -EIO;
 	}
 
-	return copy_log_blocks(root, root->fs_info->log_root_tree->node,
-			       metadump, 1);
+	return copy_tree_blocks(root, root->fs_info->log_root_tree->node,
+				metadump, 1);
 }
 
 static int copy_space_cache(struct btrfs_root *root,
@@ -749,18 +747,113 @@ static int copy_space_cache(struct btrfs_root *root,
 	return 0;
 }
 
-static int create_metadump(const char *input, FILE *out, int num_threads,
-			   int compress_level)
+static int copy_from_extent_tree(struct metadump_struct *metadump,
+				 struct btrfs_path *path)
 {
-	struct btrfs_root *root;
 	struct btrfs_root *extent_root;
-	struct btrfs_path *path = NULL;
 	struct extent_buffer *leaf;
 	struct btrfs_extent_item *ei;
 	struct btrfs_key key;
-	struct metadump_struct metadump;
 	u64 bytenr;
 	u64 num_bytes;
+	int ret;
+
+	extent_root = metadump->root->fs_info->extent_root;
+	bytenr = BTRFS_SUPER_INFO_OFFSET + 4096;
+	key.objectid = bytenr;
+	key.type = BTRFS_EXTENT_ITEM_KEY;
+	key.offset = 0;
+
+	ret = btrfs_search_slot(NULL, extent_root, &key, path, 0, 0);
+	if (ret < 0) {
+		fprintf(stderr, "Error searching extent root %d\n", ret);
+		return ret;
+	}
+	ret = 0;
+
+	while (1) {
+		leaf = path->nodes[0];
+		if (path->slots[0] >= btrfs_header_nritems(leaf)) {
+			ret = btrfs_next_leaf(extent_root, path);
+			if (ret < 0) {
+				fprintf(stderr, "Error going to next leaf %d"
+					"\n", ret);
+				break;
+			}
+			if (ret > 0) {
+				ret = 0;
+				break;
+			}
+			leaf = path->nodes[0];
+		}
+
+		btrfs_item_key_to_cpu(leaf, &key, path->slots[0]);
+		if (key.objectid < bytenr ||
+		    (key.type != BTRFS_EXTENT_ITEM_KEY &&
+		     key.type != BTRFS_METADATA_ITEM_KEY)) {
+			path->slots[0]++;
+			continue;
+		}
+
+		bytenr = key.objectid;
+		if (key.type == BTRFS_METADATA_ITEM_KEY)
+			num_bytes = key.offset;
+		else
+			num_bytes = extent_root->leafsize;
+
+		if (btrfs_item_size_nr(leaf, path->slots[0]) > sizeof(*ei)) {
+			ei = btrfs_item_ptr(leaf, path->slots[0],
+					    struct btrfs_extent_item);
+			if (btrfs_extent_flags(leaf, ei) &
+			    BTRFS_EXTENT_FLAG_TREE_BLOCK) {
+				ret = add_extent(bytenr, num_bytes, metadump,
+						 0);
+				if (ret) {
+					fprintf(stderr, "Error adding block "
+						"%d\n", ret);
+					break;
+				}
+			}
+		} else {
+#ifdef BTRFS_COMPAT_EXTENT_TREE_V0
+			ret = is_tree_block(extent_root, path, bytenr);
+			if (ret < 0) {
+				fprintf(stderr, "Error checking tree block "
+					"%d\n", ret);
+				break;
+			}
+
+			if (ret) {
+				ret = add_extent(bytenr, num_bytes, metadump,
+						 0);
+				if (ret) {
+					fprintf(stderr, "Error adding block "
+						"%d\n", ret);
+					break;
+				}
+			}
+			ret = 0;
+#else
+			fprintf(stderr, "Either extent tree corruption or "
+				"you haven't built with V0 support\n");
+			ret = -EIO;
+			break;
+#endif
+		}
+		bytenr += num_bytes;
+	}
+
+	btrfs_release_path(extent_root, path);
+
+	return ret;
+}
+
+static int create_metadump(const char *input, FILE *out, int num_threads,
+			   int compress_level, int walk_trees)
+{
+	struct btrfs_root *root;
+	struct btrfs_path *path = NULL;
+	struct metadump_struct metadump;
 	int ret;
 	int err = 0;
 
@@ -787,99 +880,34 @@ static int create_metadump(const char *input, FILE *out, int num_threads,
 		goto out;
 	}
 
-	extent_root = root->fs_info->extent_root;
 	path = btrfs_alloc_path();
 	if (!path) {
 		fprintf(stderr, "Out of memory allocing path\n");
 		err = -ENOMEM;
 		goto out;
 	}
-	bytenr = BTRFS_SUPER_INFO_OFFSET + 4096;
-	key.objectid = bytenr;
-	key.type = BTRFS_EXTENT_ITEM_KEY;
-	key.offset = 0;
 
-	ret = btrfs_search_slot(NULL, extent_root, &key, path, 0, 0);
-	if (ret < 0) {
-		fprintf(stderr, "Error searching extent root %d\n", ret);
-		err = ret;
-		goto out;
-	}
-
-	while (1) {
-		leaf = path->nodes[0];
-		if (path->slots[0] >= btrfs_header_nritems(leaf)) {
-			ret = btrfs_next_leaf(extent_root, path);
-			if (ret < 0) {
-				fprintf(stderr, "Error going to next leaf %d"
-					"\n", ret);
-				err = ret;
-				goto out;
-			}
-			if (ret > 0)
-				break;
-			leaf = path->nodes[0];
-		}
-
-		btrfs_item_key_to_cpu(leaf, &key, path->slots[0]);
-		if (key.objectid < bytenr ||
-		    (key.type != BTRFS_EXTENT_ITEM_KEY &&
-		     key.type != BTRFS_METADATA_ITEM_KEY)) {
-			path->slots[0]++;
-			continue;
-		}
-
-		bytenr = key.objectid;
-		if (key.type == BTRFS_METADATA_ITEM_KEY)
-			num_bytes = key.offset;
-		else
-			num_bytes = root->leafsize;
-
-		if (btrfs_item_size_nr(leaf, path->slots[0]) > sizeof(*ei)) {
-			ei = btrfs_item_ptr(leaf, path->slots[0],
-					    struct btrfs_extent_item);
-			if (btrfs_extent_flags(leaf, ei) &
-			    BTRFS_EXTENT_FLAG_TREE_BLOCK) {
-				ret = add_extent(bytenr, num_bytes, &metadump,
-						 0);
-				if (ret) {
-					fprintf(stderr, "Error adding block "
-						"%d\n", ret);
-					err = ret;
-					goto out;
-				}
-			}
-		} else {
-#ifdef BTRFS_COMPAT_EXTENT_TREE_V0
-			ret = is_tree_block(extent_root, path, bytenr);
-			if (ret < 0) {
-				fprintf(stderr, "Error checking tree block "
-					"%d\n", ret);
-				err = ret;
-				goto out;
-			}
-
-			if (ret) {
-				ret = add_extent(bytenr, num_bytes, &metadump,
-						 0);
-				if (ret) {
-					fprintf(stderr, "Error adding block "
-						"%d\n", ret);
-					err = ret;
-					goto out;
-				}
-			}
-#else
-			fprintf(stderr, "Either extent tree corruption or "
-				"you haven't built with V0 support\n");
-			err = -EIO;
+	if (walk_trees) {
+		ret = copy_tree_blocks(root, root->fs_info->chunk_root->node,
+				       &metadump, 1);
+		if (ret) {
+			err = ret;
 			goto out;
-#endif
 		}
-		bytenr += num_bytes;
-	}
 
-	btrfs_release_path(root, path);
+		ret = copy_tree_blocks(root, root->fs_info->tree_root->node,
+				       &metadump, 1);
+		if (ret) {
+			err = ret;
+			goto out;
+		}
+	} else {
+		ret = copy_from_extent_tree(&metadump, path);
+		if (ret) {
+			err = ret;
+			goto out;
+		}
+	}
 
 	ret = copy_log_trees(root, &metadump, path);
 	if (ret) {
@@ -892,7 +920,7 @@ out:
 	ret = flush_pending(&metadump, 1);
 	if (ret) {
 		if (!err)
-			ret = err;
+			err = ret;
 		fprintf(stderr, "Error flushing pending %d\n", ret);
 	}
 
@@ -1498,6 +1526,7 @@ static void print_usage(void)
 	fprintf(stderr, "\t-c value\tcompression level (0 ~ 9)\n");
 	fprintf(stderr, "\t-t value\tnumber of threads (1 ~ 32)\n");
 	fprintf(stderr, "\t-o      \tdon't mess with the chunk tree when restoring\n");
+	fprintf(stderr, "\t-w      \twalk all trees instead of using extent tree, do this if your extent tree is broken\n");
 	exit(1);
 }
 
@@ -1509,11 +1538,12 @@ int main(int argc, char *argv[])
 	int compress_level = 0;
 	int create = 1;
 	int old_restore = 0;
+	int walk_trees = 0;
 	int ret;
 	FILE *out;
 
 	while (1) {
-		int c = getopt(argc, argv, "rc:t:o");
+		int c = getopt(argc, argv, "rc:t:ow");
 		if (c < 0)
 			break;
 		switch (c) {
@@ -1532,6 +1562,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'o':
 			old_restore = 1;
+			break;
+		case 'w':
+			walk_trees = 1;
 			break;
 		default:
 			print_usage();
@@ -1565,7 +1598,7 @@ int main(int argc, char *argv[])
 
 	if (create)
 		ret = create_metadump(source, out, num_threads,
-				      compress_level);
+				      compress_level, walk_trees);
 	else
 		ret = restore_metadump(source, out, old_restore, 1);
 
