@@ -2823,6 +2823,187 @@ static int check_space_cache(struct btrfs_root *root)
 	return error ? -EINVAL : 0;
 }
 
+static int check_extent_exists(struct btrfs_root *root, u64 bytenr,
+			       u64 num_bytes)
+{
+	struct btrfs_path *path;
+	struct extent_buffer *leaf;
+	struct btrfs_key key;
+	int ret;
+
+	path = btrfs_alloc_path();
+	if (!path) {
+		fprintf(stderr, "Error allocing path\n");
+		return -ENOMEM;
+	}
+
+	key.objectid = bytenr;
+	key.type = BTRFS_EXTENT_ITEM_KEY;
+	key.offset = 0;
+
+again:
+	ret = btrfs_search_slot(NULL, root->fs_info->extent_root, &key, path,
+				0, 0);
+	if (ret < 0) {
+		fprintf(stderr, "Error looking up extent record %d\n", ret);
+		btrfs_free_path(path);
+		return ret;
+	} else if (ret && path->slots[0]) {
+		path->slots[0]--;
+	}
+
+	while (num_bytes) {
+		if (path->slots[0] >= btrfs_header_nritems(path->nodes[0])) {
+			ret = btrfs_next_leaf(root, path);
+			if (ret < 0) {
+				fprintf(stderr, "Error going to next leaf "
+					"%d\n", ret);
+				btrfs_free_path(path);
+				return ret;
+			} else if (ret) {
+				break;
+			}
+		}
+		leaf = path->nodes[0];
+		btrfs_item_key_to_cpu(leaf, &key, path->slots[0]);
+		if (key.type != BTRFS_EXTENT_ITEM_KEY) {
+			path->slots[0]++;
+			continue;
+		}
+		if (key.objectid + key.offset < bytenr) {
+			path->slots[0]++;
+			continue;
+		}
+		if (key.objectid > bytenr + num_bytes)
+			break;
+
+		if (key.objectid == bytenr) {
+			if (key.offset >= num_bytes) {
+				num_bytes = 0;
+				break;
+			}
+			num_bytes -= key.offset;
+			bytenr += key.offset;
+		} else if (key.objectid < bytenr) {
+			if (key.objectid + key.offset >= bytenr + num_bytes) {
+				num_bytes = 0;
+				break;
+			}
+			num_bytes = (bytenr + num_bytes) -
+				(key.objectid + key.offset);
+			bytenr = key.objectid + key.offset;
+		} else {
+			if (key.objectid + key.offset < bytenr + num_bytes) {
+				u64 new_start = key.objectid + key.offset;
+				u64 new_bytes = bytenr + num_bytes - new_start;
+
+				/*
+				 * Weird case, the extent is in the middle of
+				 * our range, we'll have to search one side
+				 * and then the other.  Not sure if this happens
+				 * in real life, but no harm in coding it up
+				 * anyway just in case.
+				 */
+				btrfs_release_path(root, path);
+				ret = check_extent_exists(root, new_start,
+							  new_bytes);
+				if (ret) {
+					fprintf(stderr, "Right section didn't "
+						"have a record\n");
+					break;
+				}
+				num_bytes = key.objectid - bytenr;
+				goto again;
+			}
+			num_bytes = key.objectid - bytenr;
+		}
+		path->slots[0]++;
+	}
+	ret = 0;
+
+	if (num_bytes) {
+		fprintf(stderr, "There are no extents for csum range "
+			"%Lu-%Lu\n", bytenr, bytenr+num_bytes);
+		ret = 1;
+	}
+
+	btrfs_free_path(path);
+	return ret;
+}
+
+static int check_csums(struct btrfs_root *root)
+{
+	struct btrfs_path *path;
+	struct extent_buffer *leaf;
+	struct btrfs_key key;
+	u64 offset = 0, num_bytes = 0;
+	u16 csum_size = btrfs_super_csum_size(root->fs_info->super_copy);
+	int errors = 0;
+	int ret;
+
+	root = root->fs_info->csum_root;
+
+	key.objectid = BTRFS_EXTENT_CSUM_OBJECTID;
+	key.type = BTRFS_EXTENT_CSUM_KEY;
+	key.offset = 0;
+
+	path = btrfs_alloc_path();
+	if (!path)
+		return -ENOMEM;
+
+	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
+	if (ret < 0) {
+		fprintf(stderr, "Error searching csum tree %d\n", ret);
+		btrfs_free_path(path);
+		return ret;
+	}
+
+	if (ret > 0 && path->slots[0])
+		path->slots[0]--;
+	ret = 0;
+
+	while (1) {
+		if (path->slots[0] >= btrfs_header_nritems(path->nodes[0])) {
+			ret = btrfs_next_leaf(root, path);
+			if (ret < 0) {
+				fprintf(stderr, "Error going to next leaf "
+					"%d\n", ret);
+				break;
+			}
+			if (ret)
+				break;
+		}
+		leaf = path->nodes[0];
+
+		btrfs_item_key_to_cpu(leaf, &key, path->slots[0]);
+		if (key.type != BTRFS_EXTENT_CSUM_KEY) {
+			path->slots[0]++;
+			continue;
+		}
+
+		if (!num_bytes) {
+			offset = key.offset;
+		} else if (key.offset != offset + num_bytes) {
+			ret = check_extent_exists(root, offset, num_bytes);
+			if (ret) {
+				fprintf(stderr, "Csum exists for %Lu-%Lu but "
+					"there is no extent record\n",
+					offset, offset+num_bytes);
+				errors++;
+			}
+			offset = key.offset;
+			num_bytes = 0;
+		}
+
+		num_bytes += (btrfs_item_size_nr(leaf, path->slots[0]) /
+			      csum_size) * root->sectorsize;
+		path->slots[0]++;
+	}
+
+	btrfs_free_path(path);
+	return errors;
+}
+
 static int run_next_block(struct btrfs_root *root,
 			  struct block_info *bits,
 			  int bits_nr,
@@ -3902,6 +4083,11 @@ int cmd_check(int argc, char **argv)
 
 	fprintf(stderr, "checking fs roots\n");
 	ret = check_fs_roots(root, &root_cache);
+	if (ret)
+		goto out;
+
+	fprintf(stderr, "checking csums\n");
+	ret = check_csums(root);
 	if (ret)
 		goto out;
 
