@@ -41,6 +41,8 @@
 #define EXTENT_CSUM (1 << 9)
 #define EXTENT_IOBITS (EXTENT_LOCKED | EXTENT_WRITEBACK)
 
+struct btrfs_fs_info;
+
 struct extent_io_tree {
 	struct cache_tree state;
 	struct cache_tree cache;
@@ -122,4 +124,6 @@ void memset_extent_buffer(struct extent_buffer *eb, char c,
 			  unsigned long start, unsigned long len);
 int set_extent_buffer_dirty(struct extent_buffer *eb);
 int clear_extent_buffer_dirty(struct extent_buffer *eb);
+int read_data_from_disk(struct btrfs_fs_info *info, void *buf, u64 offset,
+			u64 bytes, int mirror);
 #endif

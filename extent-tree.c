@@ -26,6 +26,7 @@
 #include "transaction.h"
 #include "crc32c.h"
 #include "volumes.h"
+#include "free-space-cache.h"
 
 #define BLOCK_GROUP_DATA     EXTENT_WRITEBACK
 #define BLOCK_GROUP_METADATA EXTENT_UPTODATE
@@ -3173,6 +3174,7 @@ out:
 int btrfs_free_block_groups(struct btrfs_fs_info *info)
 {
 	struct btrfs_space_info *sinfo;
+	struct btrfs_block_group_cache *cache;
 	u64 start;
 	u64 end;
 	u64 ptr;
@@ -3184,8 +3186,14 @@ int btrfs_free_block_groups(struct btrfs_fs_info *info)
 		if (ret)
 			break;
 		ret = get_state_private(&info->block_group_cache, start, &ptr);
-		if (!ret)
-			kfree((void *)(unsigned long)ptr);
+		if (!ret) {
+			cache = (struct btrfs_block_group_cache *)ptr;
+			if (cache->free_space_ctl) {
+				btrfs_remove_free_space_cache(cache);
+				kfree(cache->free_space_ctl);
+			}
+			kfree(cache);
+		}
 		clear_extent_bits(&info->block_group_cache, start,
 				  end, (unsigned int)-1, GFP_NOFS);
 	}

@@ -38,6 +38,7 @@
 #include "version.h"
 #include "utils.h"
 #include "commands.h"
+#include "free-space-cache.h"
 
 static u64 bytes_used = 0;
 static u64 total_csum_bytes = 0;
@@ -2605,6 +2606,223 @@ out:
 	return 0;
 }
 
+static int check_cache_range(struct btrfs_root *root,
+			     struct btrfs_block_group_cache *cache,
+			     u64 offset, u64 bytes)
+{
+	struct btrfs_free_space *entry;
+	u64 *logical;
+	u64 bytenr;
+	int stripe_len;
+	int i, nr, ret;
+
+	for (i = 0; i < BTRFS_SUPER_MIRROR_MAX; i++) {
+		bytenr = btrfs_sb_offset(i);
+		ret = btrfs_rmap_block(&root->fs_info->mapping_tree,
+				       cache->key.objectid, bytenr, 0,
+				       &logical, &nr, &stripe_len);
+		if (ret)
+			return ret;
+
+		while (nr--) {
+			if (logical[nr] + stripe_len <= offset)
+				continue;
+			if (offset + bytes <= logical[nr])
+				continue;
+			if (logical[nr] == offset) {
+				if (stripe_len >= bytes) {
+					kfree(logical);
+					return 0;
+				}
+				bytes -= stripe_len;
+				offset += stripe_len;
+			} else if (logical[nr] < offset) {
+				if (logical[nr] + stripe_len >=
+				    offset + bytes) {
+					kfree(logical);
+					return 0;
+				}
+				bytes = (offset + bytes) -
+					(logical[nr] + stripe_len);
+				offset = logical[nr] + stripe_len;
+			} else {
+				/*
+				 * Could be tricky, the super may land in the
+				 * middle of the area we're checking.  First
+				 * check the easiest case, it's at the end.
+				 */
+				if (logical[nr] + stripe_len >=
+				    bytes + offset) {
+					bytes = logical[nr] - offset;
+					continue;
+				}
+
+				/* Check the left side */
+				ret = check_cache_range(root, cache,
+							offset,
+							logical[nr] - offset);
+				if (ret) {
+					kfree(logical);
+					return ret;
+				}
+
+				/* Now we continue with the right side */
+				bytes = (offset + bytes) -
+					(logical[nr] + stripe_len);
+				offset = logical[nr] + stripe_len;
+			}
+		}
+
+		kfree(logical);
+	}
+
+	entry = btrfs_find_free_space(cache->free_space_ctl, offset, bytes);
+	if (!entry) {
+		fprintf(stderr, "There is no free space entry for %Lu-%Lu\n",
+			offset, offset+bytes);
+		return -EINVAL;
+	}
+
+	if (entry->offset != offset) {
+		fprintf(stderr, "Wanted offset %Lu, found %Lu\n", offset,
+			entry->offset);
+		return -EINVAL;
+	}
+
+	if (entry->bytes != bytes) {
+		fprintf(stderr, "Wanted bytes %Lu, found %Lu for off %Lu\n",
+			bytes, entry->bytes, offset);
+		return -EINVAL;
+	}
+
+	unlink_free_space(cache->free_space_ctl, entry);
+	free(entry);
+	return 0;
+}
+
+static int verify_space_cache(struct btrfs_root *root,
+			      struct btrfs_block_group_cache *cache)
+{
+	struct btrfs_path *path;
+	struct extent_buffer *leaf;
+	struct btrfs_key key;
+	u64 last;
+	int ret = 0;
+
+	path = btrfs_alloc_path();
+	if (!path)
+		return -ENOMEM;
+
+	root = root->fs_info->extent_root;
+
+	last = max_t(u64, cache->key.objectid, BTRFS_SUPER_INFO_OFFSET);
+
+	key.objectid = last;
+	key.offset = 0;
+	key.type = BTRFS_EXTENT_ITEM_KEY;
+
+	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
+	if (ret < 0)
+		return ret;
+	ret = 0;
+	while (1) {
+		if (path->slots[0] >= btrfs_header_nritems(path->nodes[0])) {
+			ret = btrfs_next_leaf(root, path);
+			if (ret < 0)
+				return ret;
+			if (ret > 0) {
+				ret = 0;
+				break;
+			}
+		}
+		leaf = path->nodes[0];
+		btrfs_item_key_to_cpu(leaf, &key, path->slots[0]);
+		if (key.objectid >= cache->key.offset + cache->key.objectid)
+			break;
+		if (key.type != BTRFS_EXTENT_ITEM_KEY &&
+		    key.type != BTRFS_METADATA_ITEM_KEY) {
+			path->slots[0]++;
+			continue;
+		}
+
+		if (last == key.objectid) {
+			last = key.objectid + key.offset;
+			path->slots[0]++;
+			continue;
+		}
+
+		ret = check_cache_range(root, cache, last,
+					key.objectid - last);
+		if (ret)
+			break;
+		if (key.type == BTRFS_EXTENT_ITEM_KEY)
+			last = key.objectid + key.offset;
+		else
+			last = key.objectid + root->leafsize;
+		path->slots[0]++;
+	}
+
+	if (last < cache->key.objectid + cache->key.offset)
+		ret = check_cache_range(root, cache, last,
+					cache->key.objectid +
+					cache->key.offset - last);
+	btrfs_free_path(path);
+
+	if (!ret &&
+	    !RB_EMPTY_ROOT(&cache->free_space_ctl->free_space_offset)) {
+		fprintf(stderr, "There are still entries left in the space "
+			"cache\n");
+		ret = -EINVAL;
+	}
+
+	return ret;
+}
+
+static int check_space_cache(struct btrfs_root *root)
+{
+	struct btrfs_block_group_cache *cache;
+	u64 start = BTRFS_SUPER_INFO_OFFSET + BTRFS_SUPER_INFO_SIZE;
+	int ret;
+	int error = 0;
+
+	if (btrfs_super_generation(root->fs_info->super_copy) !=
+	    btrfs_super_cache_generation(root->fs_info->super_copy)) {
+		printf("cache and super generation don't match, space cache "
+		       "will be invalidated\n");
+		return 0;
+	}
+
+	while (1) {
+		cache = btrfs_lookup_first_block_group(root->fs_info, start);
+		if (!cache)
+			break;
+
+		start = cache->key.objectid + cache->key.offset;
+		if (!cache->free_space_ctl) {
+			if (btrfs_init_free_space_ctl(cache,
+						      root->leafsize)) {
+				ret = -ENOMEM;
+				break;
+			}
+		} else {
+			btrfs_remove_free_space_cache(cache);
+		}
+
+		ret = load_free_space_cache(root->fs_info, cache);
+		if (!ret)
+			continue;
+
+		ret = verify_space_cache(root, cache);
+		if (ret) {
+			fprintf(stderr, "cache appears valid but isnt %Lu\n",
+				cache->key.objectid);
+			error++;
+		}
+	}
+
+	return error ? -EINVAL : 0;
+}
+
 static int run_next_block(struct btrfs_root *root,
 			  struct block_info *bits,
 			  int bits_nr,
@@ -3674,6 +3892,11 @@ int cmd_check(int argc, char **argv)
 	ret = check_extents(trans, root, repair);
 	if (ret)
 		fprintf(stderr, "Errors found in extent allocation tree\n");
+
+	fprintf(stderr, "checking free space cache\n");
+	ret = check_space_cache(root);
+	if (ret)
+		goto out;
 
 	fprintf(stderr, "checking fs roots\n");
 	ret = check_fs_roots(root, &root_cache);

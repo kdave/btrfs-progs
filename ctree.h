@@ -37,6 +37,7 @@
 
 struct btrfs_root;
 struct btrfs_trans_handle;
+struct btrfs_free_space_ctl;
 #define BTRFS_MAGIC 0x4D5F53665248425F /* ascii _BHRfS_M, no null */
 
 #define BTRFS_MAX_LEVEL 8
@@ -275,6 +276,15 @@ struct btrfs_chunk {
 	__le16 sub_stripes;
 	struct btrfs_stripe stripe;
 	/* additional stripes go here */
+} __attribute__ ((__packed__));
+
+#define BTRFS_FREE_SPACE_EXTENT	1
+#define BTRFS_FREE_SPACE_BITMAP	2
+
+struct btrfs_free_space_entry {
+	__le64 offset;
+	__le64 bytes;
+	u8 type;
 } __attribute__ ((__packed__));
 
 struct btrfs_free_space_header {
@@ -873,6 +883,7 @@ struct btrfs_block_group_cache {
 	struct btrfs_key key;
 	struct btrfs_block_group_item item;
 	struct btrfs_space_info *space_info;
+	struct btrfs_free_space_ctl *free_space_ctl;
 	u64 pinned;
 	u64 flags;
 	int cached;
@@ -2044,7 +2055,7 @@ static inline u32 btrfs_level_size(struct btrfs_root *root, int level) {
 static inline int btrfs_fs_incompat(struct btrfs_fs_info *fs_info, u64 flag)
 {
 	struct btrfs_super_block *disk_super;
-	disk_super = &fs_info->super_copy;
+	disk_super = fs_info->super_copy;
 	return !!(btrfs_super_incompat_flags(disk_super) & flag);
 }
 
@@ -2068,6 +2079,9 @@ int btrfs_copy_pinned(struct btrfs_root *root, struct extent_io_tree *copy);
 struct btrfs_block_group_cache *btrfs_lookup_block_group(struct
 							 btrfs_fs_info *info,
 							 u64 bytenr);
+struct btrfs_block_group_cache *btrfs_lookup_first_block_group(struct
+						       btrfs_fs_info *info,
+						       u64 bytenr);
 struct btrfs_block_group_cache *btrfs_find_block_group(struct btrfs_root *root,
 						 struct btrfs_block_group_cache
 						 *hint, u64 search_start,

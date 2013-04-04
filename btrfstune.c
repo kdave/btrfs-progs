@@ -87,7 +87,7 @@ int enable_skinny_metadata(struct btrfs_root *root)
 	struct btrfs_super_block *disk_super;
 	u64 super_flags;
 
-	disk_super = &root->fs_info->super_copy;
+	disk_super = root->fs_info->super_copy;
 	super_flags = btrfs_super_incompat_flags(disk_super);
 	super_flags |= BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA;
 	trans = btrfs_start_transaction(root, 1);
