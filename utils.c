@@ -974,41 +974,6 @@ out_mntloop_err:
 	return ret;
 }
 
-/* Gets the mount point of btrfs filesystem that is using the specified device.
- * Returns 0 is everything is good, <0 if we have an error.
- * TODO: Fix this fucntion and check_mounted to work with multiple drive BTRFS
- * setups.
- */
-int get_mountpt(char *dev, char *mntpt, size_t size)
-{
-       struct mntent *mnt;
-       FILE *f;
-       int ret = 0;
-
-       f = setmntent("/proc/mounts", "r");
-       if (f == NULL)
-               return -errno;
-
-       while ((mnt = getmntent(f)) != NULL )
-       {
-               if (strcmp(dev, mnt->mnt_fsname) == 0)
-               {
-                       strncpy(mntpt, mnt->mnt_dir, size);
-                       if (size)
-                                mntpt[size-1] = 0;
-                       break;
-               }
-       }
-
-       if (mnt == NULL)
-       {
-               /* We didn't find an entry so lets report an error */
-               ret = -1;
-       }
-
-       return ret;
-}
-
 struct pending_dir {
 	struct list_head list;
 	char name[PATH_MAX];
