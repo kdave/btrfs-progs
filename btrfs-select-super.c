@@ -43,7 +43,7 @@ int main(int ac, char **av)
 {
 	struct btrfs_root *root;
 	int ret;
-	int num;
+	int num = 0;
 	u64 bytenr = 0;
 
 	while(1) {
@@ -55,8 +55,6 @@ int main(int ac, char **av)
 			case 's':
 				num = atol(optarg);
 				bytenr = btrfs_sb_offset(num);
-				printf("using SB copy %d, bytenr %llu\n", num,
-				       (unsigned long long)bytenr);
 				break;
 			default:
 				print_usage();
@@ -97,5 +95,7 @@ int main(int ac, char **av)
 	 * transaction commit.  We just want the super copy we pulled off the
 	 * disk to overwrite all the other copies
 	 */ 
+	printf("using SB copy %d, bytenr %llu\n", num,
+	       (unsigned long long)bytenr);
 	return ret;
 }
