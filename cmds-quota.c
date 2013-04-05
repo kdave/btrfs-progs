@@ -93,18 +93,70 @@ static int cmd_quota_disable(int argc, char **argv)
 }
 
 static const char * const cmd_quota_rescan_usage[] = {
-	"btrfs quota rescan <path>",
-	"Rescan the subvolume for a changed quota setting.",
-	"Not yet implemented.",
+	"btrfs quota rescan [-s] <path>",
+	"Trash all qgroup numbers and scan the metadata again with the current config.",
+	"",
+	"-s   show status of a running rescan operation",
 	NULL
 };
 
 static int cmd_quota_rescan(int argc, char **argv)
 {
-	int ret = quota_ctl(BTRFS_QUOTA_CTL_RESCAN, argc, argv);
-	if (ret < 0)
+	int ret = 0;
+	int fd;
+	int e;
+	char *path = NULL;
+	struct btrfs_ioctl_quota_rescan_args args;
+	int ioctlnum = BTRFS_IOC_QUOTA_RESCAN;
+
+	optind = 1;
+	while (1) {
+		int c = getopt(argc, argv, "s");
+		if (c < 0)
+			break;
+		switch (c) {
+		case 's':
+			ioctlnum = BTRFS_IOC_QUOTA_RESCAN_STATUS;
+			break;
+		default:
+			usage(cmd_quota_rescan_usage);
+		}
+	}
+
+	if (check_argc_exact(argc - optind, 1))
 		usage(cmd_quota_rescan_usage);
-	return ret;
+
+	memset(&args, 0, sizeof(args));
+
+	path = argv[optind];
+	fd = open_file_or_dir(path);
+	if (fd < 0) {
+		fprintf(stderr, "ERROR: can't access '%s'\n", path);
+		return 12;
+	}
+
+	ret = ioctl(fd, ioctlnum, &args);
+	e = errno;
+	close(fd);
+
+	if (ioctlnum == BTRFS_IOC_QUOTA_RESCAN) {
+		if (ret < 0) {
+			fprintf(stderr, "ERROR: quota rescan failed: "
+				"%s\n", strerror(e));
+			return 30;
+		}  else {
+			printf("quota rescan started\n");
+		}
+	} else {
+		if (!args.flags) {
+			printf("no rescan operation in progress\n");
+		} else {
+			printf("rescan operation running (current key %lld)\n",
+				args.progress);
+		}
+	}
+
+	return 0;
 }
 
 const struct cmd_group quota_cmd_group = {
