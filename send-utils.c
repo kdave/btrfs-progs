@@ -332,7 +332,7 @@ char *path_cat(const char *p1, const char *p2)
 {
 	int p1_len = strlen(p1);
 	int p2_len = strlen(p2);
-	char *new = malloc(p1_len + p2_len + 3);
+	char *new = malloc(p1_len + p2_len + 2);
 
 	if (p1_len && p1[p1_len - 1] == '/')
 		p1_len--;
@@ -348,7 +348,7 @@ char *path_cat3(const char *p1, const char *p2, const char *p3)
 	int p1_len = strlen(p1);
 	int p2_len = strlen(p2);
 	int p3_len = strlen(p3);
-	char *new = malloc(p1_len + p2_len + p3_len + 4);
+	char *new = malloc(p1_len + p2_len + p3_len + 3);
 
 	if (p1_len && p1[p1_len - 1] == '/')
 		p1_len--;
