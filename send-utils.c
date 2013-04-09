@@ -304,6 +304,29 @@ out:
 	return ret;
 }
 
+/*
+ * It's safe to call this function even without the subvol_uuid_search_init()
+ * call before as long as the subvol_uuid_search structure is all-zero.
+ */
+void subvol_uuid_search_finit(struct subvol_uuid_search *s)
+{
+	struct rb_root *root = &s->root_id_subvols;
+	struct rb_node *node;
+
+	while ((node = rb_first(root))) {
+		struct subvol_info *entry =
+			rb_entry(node, struct subvol_info, rb_root_id_node);
+
+		free(entry->path);
+		rb_erase(node, root);
+		free(entry);
+	}
+
+	s->root_id_subvols = RB_ROOT;
+	s->local_subvols = RB_ROOT;
+	s->received_subvols = RB_ROOT;
+	s->path_subvols = RB_ROOT;
+}
 
 char *path_cat(const char *p1, const char *p2)
 {

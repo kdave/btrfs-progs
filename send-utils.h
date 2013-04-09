@@ -62,6 +62,7 @@ struct subvol_uuid_search {
 };
 
 int subvol_uuid_search_init(int mnt_fd, struct subvol_uuid_search *s);
+void subvol_uuid_search_finit(struct subvol_uuid_search *s);
 struct subvol_info *subvol_uuid_search(struct subvol_uuid_search *s,
 				       u64 root_id, const u8 *uuid, u64 transid,
 				       const char *path,
