@@ -775,7 +775,7 @@ static u64 find_root_gen(int fd)
 
 		if (sk->min_type != BTRFS_ROOT_ITEM_KEY)
 			break;
-		if (sk->min_objectid != BTRFS_ROOT_ITEM_KEY)
+		if (sk->min_objectid != ino_args.treeid)
 			break;
 	}
 	return max_found;
