@@ -84,6 +84,13 @@ int find_mount_root(const char *path, char **mount_root)
 	}
 	fclose(mnttab);
 
+	if (!longest_match) {
+		fprintf(stderr,
+			"ERROR: Failed to find mount root for path %s.\n",
+			path);
+		return -ENOENT;
+	}
+
 	*mount_root = realpath(longest_match, NULL);
 	free(longest_match);
 

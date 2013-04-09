@@ -56,11 +56,13 @@ static int g_verbose = 0;
 struct btrfs_receive
 {
 	int mnt_fd;
+	int dest_dir_fd;
 
 	int write_fd;
 	char *write_path;
 
 	char *root_path;
+	char *dest_dir_path; /* relative to root_path */
 	char *full_subvol_path;
 
 	struct subvol_info *cur_subvol;
@@ -154,9 +156,12 @@ static int process_subvol(const char *path, const u8 *uuid, u64 ctransid,
 
 	r->cur_subvol = calloc(1, sizeof(*r->cur_subvol));
 
-	r->cur_subvol->path = strdup(path);
+	if (strlen(r->dest_dir_path) == 0)
+		r->cur_subvol->path = strdup(path);
+	else
+		r->cur_subvol->path = path_cat(r->dest_dir_path, path);
 	free(r->full_subvol_path);
-	r->full_subvol_path = path_cat(r->root_path, path);
+	r->full_subvol_path = path_cat3(r->root_path, r->dest_dir_path, path);
 
 	fprintf(stderr, "At subvol %s\n", path);
 
@@ -172,7 +177,7 @@ static int process_subvol(const char *path, const u8 *uuid, u64 ctransid,
 
 	memset(&args_v1, 0, sizeof(args_v1));
 	strncpy_null(args_v1.name, path);
-	ret = ioctl(r->mnt_fd, BTRFS_IOC_SUBVOL_CREATE, &args_v1);
+	ret = ioctl(r->dest_dir_fd, BTRFS_IOC_SUBVOL_CREATE, &args_v1);
 	if (ret < 0) {
 		ret = -errno;
 		fprintf(stderr, "ERROR: creating subvolume %s failed. "
@@ -200,9 +205,12 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 
 	r->cur_subvol = calloc(1, sizeof(*r->cur_subvol));
 
-	r->cur_subvol->path = strdup(path);
+	if (strlen(r->dest_dir_path) == 0)
+		r->cur_subvol->path = strdup(path);
+	else
+		r->cur_subvol->path = path_cat(r->dest_dir_path, path);
 	free(r->full_subvol_path);
-	r->full_subvol_path = path_cat(r->root_path, path);
+	r->full_subvol_path = path_cat3(r->root_path, r->dest_dir_path, path);
 
 	fprintf(stderr, "At snapshot %s\n", path);
 
@@ -249,7 +257,7 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 		goto out;
 	}
 
-	ret = ioctl(r->mnt_fd, BTRFS_IOC_SNAP_CREATE_V2, &args_v2);
+	ret = ioctl(r->dest_dir_fd, BTRFS_IOC_SNAP_CREATE_V2, &args_v2);
 	close(args_v2.fd);
 	if (ret < 0) {
 		ret = -errno;
@@ -796,16 +804,48 @@ struct btrfs_send_ops send_ops = {
 int do_receive(struct btrfs_receive *r, const char *tomnt, int r_fd)
 {
 	int ret;
+	char *dest_dir_full_path;
 	int end = 0;
 
-	r->root_path = strdup(tomnt);
-	r->mnt_fd = open(tomnt, O_RDONLY | O_NOATIME);
-	if (r->mnt_fd < 0) {
+	dest_dir_full_path = realpath(tomnt, NULL);
+	if (!dest_dir_full_path) {
 		ret = -errno;
-		fprintf(stderr, "ERROR: failed to open %s. %s\n", tomnt,
-				strerror(-ret));
+		fprintf(stderr, "ERROR: realpath(%s) failed. %s\n", tomnt,
+			strerror(-ret));
 		goto out;
 	}
+	r->dest_dir_fd = open(dest_dir_full_path, O_RDONLY | O_NOATIME);
+	if (r->dest_dir_fd < 0) {
+		ret = -errno;
+		fprintf(stderr,
+			"ERROR: failed to open destination directory %s. %s\n",
+			dest_dir_full_path, strerror(-ret));
+		goto out;
+	}
+
+	ret = find_mount_root(dest_dir_full_path, &r->root_path);
+	if (ret < 0) {
+		ret = -EINVAL;
+		fprintf(stderr, "ERROR: failed to determine mount point "
+			"for %s\n", dest_dir_full_path);
+		goto out;
+	}
+	r->mnt_fd = open(r->root_path, O_RDONLY | O_NOATIME);
+	if (r->mnt_fd < 0) {
+		ret = -errno;
+		fprintf(stderr, "ERROR: failed to open %s. %s\n", r->root_path,
+			strerror(-ret));
+		goto out;
+	}
+
+	/*
+	 * find_mount_root returns a root_path that is a subpath of
+	 * dest_dir_full_path. Now get the other part of root_path,
+	 * which is the destination dir relative to root_path.
+	 */
+	r->dest_dir_path = dest_dir_full_path + strlen(r->root_path);
+	while (r->dest_dir_path[0] == '/')
+		r->dest_dir_path++;
 
 	ret = subvol_uuid_search_init(r->mnt_fd, &r->sus);
 	if (ret < 0)
@@ -839,6 +879,8 @@ out:
 	r->write_path = NULL;
 	free(r->full_subvol_path);
 	r->full_subvol_path = NULL;
+	r->dest_dir_path = NULL;
+	free(dest_dir_full_path);
 	if (r->cur_subvol) {
 		free(r->cur_subvol->path);
 		free(r->cur_subvol);
@@ -848,6 +890,10 @@ out:
 	if (r->mnt_fd != -1) {
 		close(r->mnt_fd);
 		r->mnt_fd = -1;
+	}
+	if (r->dest_dir_fd != -1) {
+		close(r->dest_dir_fd);
+		r->dest_dir_fd = -1;
 	}
 	return ret;
 }
@@ -865,6 +911,7 @@ static int do_cmd_receive(int argc, char **argv)
 	memset(&r, 0, sizeof(r));
 	r.mnt_fd = -1;
 	r.write_fd = -1;
+	r.dest_dir_fd = -1;
 
 	while ((c = getopt(argc, argv, "evf:")) != -1) {
 		switch (c) {
