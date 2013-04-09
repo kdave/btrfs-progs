@@ -265,7 +265,7 @@ static int process_mkfile(const char *path, void *user)
 	struct btrfs_receive *r = user;
 	char *full_path = path_cat(r->full_subvol_path, path);
 
-	if (g_verbose >= 1)
+	if (g_verbose >= 2)
 		fprintf(stderr, "mkfile %s\n", path);
 
 	ret = creat(full_path, 0600);
@@ -289,7 +289,7 @@ static int process_mkdir(const char *path, void *user)
 	struct btrfs_receive *r = user;
 	char *full_path = path_cat(r->full_subvol_path, path);
 
-	if (g_verbose >= 1)
+	if (g_verbose >= 2)
 		fprintf(stderr, "mkdir %s\n", path);
 
 	ret = mkdir(full_path, 0700);
@@ -309,7 +309,7 @@ static int process_mknod(const char *path, u64 mode, u64 dev, void *user)
 	struct btrfs_receive *r = user;
 	char *full_path = path_cat(r->full_subvol_path, path);
 
-	if (g_verbose >= 1)
+	if (g_verbose >= 2)
 		fprintf(stderr, "mknod %s mode=%llu, dev=%llu\n",
 				path, mode, dev);
 
@@ -330,7 +330,7 @@ static int process_mkfifo(const char *path, void *user)
 	struct btrfs_receive *r = user;
 	char *full_path = path_cat(r->full_subvol_path, path);
 
-	if (g_verbose >= 1)
+	if (g_verbose >= 2)
 		fprintf(stderr, "mkfifo %s\n", path);
 
 	ret = mkfifo(full_path, 0600);
@@ -350,7 +350,7 @@ static int process_mksock(const char *path, void *user)
 	struct btrfs_receive *r = user;
 	char *full_path = path_cat(r->full_subvol_path, path);
 
-	if (g_verbose >= 1)
+	if (g_verbose >= 2)
 		fprintf(stderr, "mksock %s\n", path);
 
 	ret = mknod(full_path, 0600 | S_IFSOCK, 0);
@@ -370,7 +370,7 @@ static int process_symlink(const char *path, const char *lnk, void *user)
 	struct btrfs_receive *r = user;
 	char *full_path = path_cat(r->full_subvol_path, path);
 
-	if (g_verbose >= 1)
+	if (g_verbose >= 2)
 		fprintf(stderr, "symlink %s -> %s\n", path, lnk);
 
 	ret = symlink(lnk, full_path);
@@ -391,7 +391,7 @@ static int process_rename(const char *from, const char *to, void *user)
 	char *full_from = path_cat(r->full_subvol_path, from);
 	char *full_to = path_cat(r->full_subvol_path, to);
 
-	if (g_verbose >= 1)
+	if (g_verbose >= 2)
 		fprintf(stderr, "rename %s -> %s\n", from, to);
 
 	ret = rename(full_from, full_to);
@@ -413,7 +413,7 @@ static int process_link(const char *path, const char *lnk, void *user)
 	char *full_path = path_cat(r->full_subvol_path, path);
 	char *full_link_path = path_cat(r->full_subvol_path, lnk);
 
-	if (g_verbose >= 1)
+	if (g_verbose >= 2)
 		fprintf(stderr, "link %s -> %s\n", path, lnk);
 
 	ret = link(full_link_path, full_path);
@@ -435,7 +435,7 @@ static int process_unlink(const char *path, void *user)
 	struct btrfs_receive *r = user;
 	char *full_path = path_cat(r->full_subvol_path, path);
 
-	if (g_verbose >= 1)
+	if (g_verbose >= 2)
 		fprintf(stderr, "unlink %s\n", path);
 
 	ret = unlink(full_path);
@@ -455,7 +455,7 @@ static int process_rmdir(const char *path, void *user)
 	struct btrfs_receive *r = user;
 	char *full_path = path_cat(r->full_subvol_path, path);
 
-	if (g_verbose >= 1)
+	if (g_verbose >= 2)
 		fprintf(stderr, "rmdir %s\n", path);
 
 	ret = rmdir(full_path);
@@ -628,7 +628,7 @@ static int process_set_xattr(const char *path, const char *name,
 	struct btrfs_receive *r = user;
 	char *full_path = path_cat(r->full_subvol_path, path);
 
-	if (g_verbose >= 1) {
+	if (g_verbose >= 2) {
 		fprintf(stderr, "set_xattr %s - name=%s data_len=%d "
 				"data=%.*s\n", path, name, len,
 				len, (char*)data);
@@ -653,7 +653,7 @@ static int process_remove_xattr(const char *path, const char *name, void *user)
 	struct btrfs_receive *r = user;
 	char *full_path = path_cat(r->full_subvol_path, path);
 
-	if (g_verbose >= 1) {
+	if (g_verbose >= 2) {
 		fprintf(stderr, "remove_xattr %s - name=%s\n",
 				path, name);
 	}
@@ -677,7 +677,7 @@ static int process_truncate(const char *path, u64 size, void *user)
 	struct btrfs_receive *r = user;
 	char *full_path = path_cat(r->full_subvol_path, path);
 
-	if (g_verbose >= 1)
+	if (g_verbose >= 2)
 		fprintf(stderr, "truncate %s size=%llu\n", path, size);
 
 	ret = truncate(full_path, size);
@@ -699,7 +699,7 @@ static int process_chmod(const char *path, u64 mode, void *user)
 	struct btrfs_receive *r = user;
 	char *full_path = path_cat(r->full_subvol_path, path);
 
-	if (g_verbose >= 1)
+	if (g_verbose >= 2)
 		fprintf(stderr, "chmod %s - mode=0%o\n", path, (int)mode);
 
 	ret = chmod(full_path, mode);
@@ -721,7 +721,7 @@ static int process_chown(const char *path, u64 uid, u64 gid, void *user)
 	struct btrfs_receive *r = user;
 	char *full_path = path_cat(r->full_subvol_path, path);
 
-	if (g_verbose >= 1)
+	if (g_verbose >= 2)
 		fprintf(stderr, "chown %s - uid=%llu, gid=%llu\n", path,
 				uid, gid);
 
@@ -747,7 +747,7 @@ static int process_utimes(const char *path, struct timespec *at,
 	char *full_path = path_cat(r->full_subvol_path, path);
 	struct timespec tv[2];
 
-	if (g_verbose >= 1)
+	if (g_verbose >= 2)
 		fprintf(stderr, "utimes %s\n", path);
 
 	tv[0] = *at;
