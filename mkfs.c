@@ -1528,7 +1528,6 @@ raid_groups:
 
 	super = root->fs_info->super_copy;
 	flags = btrfs_super_incompat_flags(super);
-	flags |= BTRFS_FEATURE_INCOMPAT_EXTENDED_IREF;
 
 	if (mixed)
 		flags |= BTRFS_FEATURE_INCOMPAT_MIXED_GROUPS;
