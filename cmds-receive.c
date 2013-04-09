@@ -64,7 +64,6 @@ struct btrfs_receive
 	char *full_subvol_path;
 
 	struct subvol_info *cur_subvol;
-	struct subvol_info *parent_subvol;
 
 	struct subvol_uuid_search sus;
 };
@@ -152,7 +151,6 @@ static int process_subvol(const char *path, const u8 *uuid, u64 ctransid,
 		goto out;
 
 	r->cur_subvol = calloc(1, sizeof(*r->cur_subvol));
-	r->parent_subvol = NULL;
 
 	r->cur_subvol->path = strdup(path);
 	free(r->full_subvol_path);
@@ -192,13 +190,13 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 	struct btrfs_receive *r = user;
 	char uuid_str[128];
 	struct btrfs_ioctl_vol_args_v2 args_v2;
+	struct subvol_info *parent_subvol;
 
 	ret = finish_subvol(r);
 	if (ret < 0)
 		goto out;
 
 	r->cur_subvol = calloc(1, sizeof(*r->cur_subvol));
-	r->parent_subvol = NULL;
 
 	r->cur_subvol->path = strdup(path);
 	free(r->full_subvol_path);
@@ -222,9 +220,9 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 	memset(&args_v2, 0, sizeof(args_v2));
 	strncpy_null(args_v2.name, path);
 
-	r->parent_subvol = subvol_uuid_search(&r->sus, 0, parent_uuid,
+	parent_subvol = subvol_uuid_search(&r->sus, 0, parent_uuid,
 			parent_ctransid, NULL, subvol_search_by_received_uuid);
-	if (!r->parent_subvol) {
+	if (!parent_subvol) {
 		ret = -ENOENT;
 		fprintf(stderr, "ERROR: could not find parent subvolume\n");
 		goto out;
@@ -240,12 +238,12 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 		}
 	}*/
 
-	args_v2.fd = openat(r->mnt_fd, r->parent_subvol->path,
+	args_v2.fd = openat(r->mnt_fd, parent_subvol->path,
 			O_RDONLY | O_NOATIME);
 	if (args_v2.fd < 0) {
 		ret = -errno;
 		fprintf(stderr, "ERROR: open %s failed. %s\n",
-				r->parent_subvol->path, strerror(-ret));
+				parent_subvol->path, strerror(-ret));
 		goto out;
 	}
 
@@ -254,7 +252,7 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 	if (ret < 0) {
 		ret = -errno;
 		fprintf(stderr, "ERROR: creating snapshot %s -> %s "
-				"failed. %s\n", r->parent_subvol->path,
+				"failed. %s\n", parent_subvol->path,
 				path, strerror(-ret));
 		goto out;
 	}
