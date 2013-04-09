@@ -151,6 +151,7 @@ static int process_subvol(const char *path, const u8 *uuid, u64 ctransid,
 	r->parent_subvol = NULL;
 
 	r->cur_subvol->path = strdup(path);
+	free(r->full_subvol_path);
 	r->full_subvol_path = path_cat(r->root_path, path);
 
 	fprintf(stderr, "At subvol %s\n", path);
@@ -196,6 +197,7 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 	r->parent_subvol = NULL;
 
 	r->cur_subvol->path = strdup(path);
+	free(r->full_subvol_path);
 	r->full_subvol_path = path_cat(r->root_path, path);
 
 	fprintf(stderr, "At snapshot %s\n", path);
@@ -803,9 +805,7 @@ int do_receive(struct btrfs_receive *r, const char *tomnt, int r_fd)
 
 	ret = subvol_uuid_search_init(r->mnt_fd, &r->sus);
 	if (ret < 0)
-		return ret;
-
-	r->write_fd = -1;
+		goto out;
 
 	while (!end) {
 		ret = btrfs_read_and_process_send_stream(r_fd, &send_ops, r);
@@ -824,7 +824,26 @@ int do_receive(struct btrfs_receive *r, const char *tomnt, int r_fd)
 	ret = 0;
 
 out:
+	if (r->write_fd != -1) {
+		close(r->write_fd);
+		r->write_fd = -1;
+	}
+	free(r->root_path);
+	r->root_path = NULL;
+	free(r->write_path);
+	r->write_path = NULL;
+	free(r->full_subvol_path);
+	r->full_subvol_path = NULL;
+	if (r->cur_subvol) {
+		free(r->cur_subvol->path);
+		free(r->cur_subvol);
+		r->cur_subvol = NULL;
+	}
 	subvol_uuid_search_finit(&r->sus);
+	if (r->mnt_fd != -1) {
+		close(r->mnt_fd);
+		r->mnt_fd = -1;
+	}
 	return ret;
 }
 
@@ -839,6 +858,8 @@ static int do_cmd_receive(int argc, char **argv)
 	int ret;
 
 	memset(&r, 0, sizeof(r));
+	r.mnt_fd = -1;
+	r.write_fd = -1;
 
 	while ((c = getopt(argc, argv, "vf:")) != -1) {
 		switch (c) {
