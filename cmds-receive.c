@@ -756,7 +756,7 @@ static int process_utimes(const char *path, struct timespec *at,
 
 	tv[0] = *at;
 	tv[1] = *mt;
-	ret = utimensat(-1, full_path, tv, AT_SYMLINK_NOFOLLOW);
+	ret = utimensat(AT_FDCWD, full_path, tv, AT_SYMLINK_NOFOLLOW);
 	if (ret < 0) {
 		ret = -errno;
 		fprintf(stderr, "ERROR: utimes %s failed. %s\n",
