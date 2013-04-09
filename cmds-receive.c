@@ -566,7 +566,7 @@ static int process_clone(const char *path, u64 offset, u64 len,
 			subvol_search_by_received_uuid);
 	if (!si) {
 		if (memcmp(clone_uuid, r->cur_subvol->received_uuid,
-				BTRFS_FSID_SIZE) == 0) {
+				BTRFS_UUID_SIZE) == 0) {
 			/* TODO check generation of extent */
 			subvol_path = strdup(r->cur_subvol->path);
 		} else {
