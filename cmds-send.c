@@ -458,6 +458,7 @@ int cmd_send_start(int argc, char **argv)
 				goto out;
 			}
 			add_clone_source(&send, root_id);
+			subvol_uuid_search_finit(&send.sus);
 			free(subvol);
 			full_send = 0;
 			break;
@@ -630,6 +631,7 @@ int cmd_send_start(int argc, char **argv)
 out:
 	if (send.mnt_fd >= 0)
 		close(send.mnt_fd);
+	subvol_uuid_search_finit(&send.sus);
 	return ret;
 }
 

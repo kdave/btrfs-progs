@@ -824,6 +824,7 @@ int do_receive(struct btrfs_receive *r, const char *tomnt, int r_fd)
 	ret = 0;
 
 out:
+	subvol_uuid_search_finit(&r->sus);
 	return ret;
 }
 
