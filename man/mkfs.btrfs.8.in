@@ -17,7 +17,6 @@ mkfs.btrfs \- create a btrfs filesystem
 [ \fB\-K\fP ]
 [ \fB\-h\fP ]
 [ \fB\-V\fP ]
-[ \fB\-x\fP\fI skinny-extents\fP ]
 \fI device\fP [ \fIdevice ...\fP ]
 .SH DESCRIPTION
 .B mkfs.btrfs
@@ -80,13 +79,6 @@ Do not perform whole device TRIM operation by default.
 .TP
 \fB\-V\fR, \fB\-\-version\fR
 Print the \fBmkfs.btrfs\fP version and exit.
-.TP
-\fB\-x\fR, \fB\-\-skinny\-extents\fR
-Use the new skinny extents disk format.  This is an non-backwards compatible
-format change.  This allows btrfs to use a smaller item for describing
-metadata blocks in the extent tree.  This results in a 30% savings in the
-extent tree size, which improves performance on file systems with lots of
-metadata.
 .SH UNIT
 As default the unit is the byte, however it is possible to append a suffix
 to the arguments like \fBk\fP for KBytes, \fBm\fP for MBytes...
