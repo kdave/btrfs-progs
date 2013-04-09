@@ -82,6 +82,7 @@ int find_mount_root(const char *path, char **mount_root)
 			}
 		}
 	}
+	fclose(mnttab);
 
 	*mount_root = realpath(longest_match, NULL);
 	free(longest_match);
