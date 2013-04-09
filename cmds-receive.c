@@ -66,6 +66,8 @@ struct btrfs_receive
 	struct subvol_info *cur_subvol;
 
 	struct subvol_uuid_search sus;
+
+	int honor_end_cmd;
 };
 
 static int finish_subvol(struct btrfs_receive *r)
@@ -810,7 +812,8 @@ int do_receive(struct btrfs_receive *r, const char *tomnt, int r_fd)
 		goto out;
 
 	while (!end) {
-		ret = btrfs_read_and_process_send_stream(r_fd, &send_ops, r);
+		ret = btrfs_read_and_process_send_stream(r_fd, &send_ops, r,
+							 r->honor_end_cmd);
 		if (ret < 0)
 			goto out;
 		if (ret)
@@ -863,13 +866,16 @@ static int do_cmd_receive(int argc, char **argv)
 	r.mnt_fd = -1;
 	r.write_fd = -1;
 
-	while ((c = getopt(argc, argv, "vf:")) != -1) {
+	while ((c = getopt(argc, argv, "evf:")) != -1) {
 		switch (c) {
 		case 'v':
 			g_verbose++;
 			break;
 		case 'f':
 			fromfile = optarg;
+			break;
+		case 'e':
+			r.honor_end_cmd = 1;
 			break;
 		case '?':
 		default:
@@ -904,7 +910,7 @@ static const char * const receive_cmd_group_usage[] = {
 };
 
 const char * const cmd_receive_usage[] = {
-	"btrfs receive [-v] [-f <infile>] <mount>",
+	"btrfs receive [-ve] [-f <infile>] <mount>",
 	"Receive subvolumes from stdin.",
 	"Receives one or more subvolumes that were previously ",
 	"sent with btrfs send. The received subvolumes are stored",
@@ -920,6 +926,10 @@ const char * const cmd_receive_usage[] = {
 	"-f <infile>      By default, btrfs receive uses stdin",
 	"                 to receive the subvolumes. Use this",
 	"                 option to specify a file to use instead.",
+	"-e               Terminate after receiving an <end cmd>",
+	"                 in the data stream. Without this option,",
+	"                 the receiver terminates only if an error",
+	"                 is recognized or on EOF.",
 	NULL
 };
 

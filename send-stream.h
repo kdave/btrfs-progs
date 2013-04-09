@@ -57,7 +57,8 @@ struct btrfs_send_ops {
 };
 
 int btrfs_read_and_process_send_stream(int fd,
-				       struct btrfs_send_ops *ops, void *user);
+				       struct btrfs_send_ops *ops, void *user,
+				       int honor_end_cmd);
 
 #ifdef __cplusplus
 }

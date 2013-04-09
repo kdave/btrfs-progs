@@ -439,7 +439,8 @@ out:
 }
 
 int btrfs_read_and_process_send_stream(int fd,
-				       struct btrfs_send_ops *ops, void *user)
+				       struct btrfs_send_ops *ops, void *user,
+				       int honor_end_cmd)
 {
 	int ret;
 	struct btrfs_send_stream s;
@@ -476,7 +477,8 @@ int btrfs_read_and_process_send_stream(int fd,
 		if (ret < 0)
 			goto out;
 		if (ret) {
-			ret = 0;
+			if (!honor_end_cmd)
+				ret = 0;
 			goto out;
 		}
 	}
