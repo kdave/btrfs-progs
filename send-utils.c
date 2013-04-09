@@ -226,7 +226,7 @@ int subvol_uuid_search_init(int mnt_fd, struct subvol_uuid_search *s)
 
 			if ((sh->objectid != 5 &&
 			    sh->objectid < BTRFS_FIRST_FREE_OBJECTID) ||
-			    sh->objectid == BTRFS_FREE_INO_OBJECTID)
+			    sh->objectid > BTRFS_LAST_FREE_OBJECTID)
 				goto skip;
 
 			if (sh->type == BTRFS_ROOT_ITEM_KEY) {
