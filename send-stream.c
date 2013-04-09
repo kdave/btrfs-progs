@@ -410,9 +410,6 @@ static int read_and_process_cmd(struct btrfs_send_stream *s)
 		break;
 	case BTRFS_SEND_C_UTIMES:
 		TLV_GET_STRING(s, BTRFS_SEND_A_PATH, &path);
-		if (strstr(path, ".bak_1.log")) {
-			ret = 0;
-		}
 		TLV_GET_TIMESPEC(s, BTRFS_SEND_A_ATIME, &at);
 		TLV_GET_TIMESPEC(s, BTRFS_SEND_A_MTIME, &mt);
 		TLV_GET_TIMESPEC(s, BTRFS_SEND_A_CTIME, &ct);
