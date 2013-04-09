@@ -577,13 +577,13 @@ static int resolve_root(struct root_lookup *rl, struct root_info *ri,
 
 		add_len = strlen(found->path);
 
-		/* room for / and for null */
-		tmp = malloc(add_len + 2 + len);
-		if (!tmp) {
-			perror("malloc failed");
-			exit(1);
-		}
 		if (full_path) {
+			/* room for / and for null */
+			tmp = malloc(add_len + 2 + len);
+			if (!tmp) {
+				perror("malloc failed");
+				exit(1);
+			}
 			memcpy(tmp + add_len + 1, full_path, len);
 			tmp[add_len] = '/';
 			memcpy(tmp, found->path, add_len);
