@@ -45,6 +45,7 @@
 #include "commands.h"
 #include "utils.h"
 #include "list.h"
+#include "btrfs-list.h"
 
 #include "send.h"
 #include "send-stream.h"
@@ -125,6 +126,9 @@ static int finish_subvol(struct btrfs_receive *r)
 		goto out;
 	}
 
+	ret = btrfs_list_get_path_rootid(subvol_fd, &r->cur_subvol->root_id);
+	if (ret < 0)
+		goto out;
 	subvol_uuid_search_add(&r->sus, r->cur_subvol);
 	r->cur_subvol = NULL;
 	ret = 0;
