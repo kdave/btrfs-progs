@@ -244,7 +244,8 @@ out:
 	return ERR_PTR(ret);
 }
 
-static int do_send(struct btrfs_send *send, u64 root_id, u64 parent_root_id)
+static int do_send(struct btrfs_send *send, u64 root_id, u64 parent_root_id,
+		   int is_first_subvol, int is_last_subvol)
 {
 	int ret;
 	pthread_t t_read;
@@ -298,11 +299,18 @@ static int do_send(struct btrfs_send *send, u64 root_id, u64 parent_root_id)
 	io_send.clone_sources = (__u64*)send->clone_sources;
 	io_send.clone_sources_count = send->clone_sources_count;
 	io_send.parent_root = parent_root_id;
+	if (!is_first_subvol)
+		io_send.flags |= BTRFS_SEND_FLAG_OMIT_STREAM_HEADER;
+	if (!is_last_subvol)
+		io_send.flags |= BTRFS_SEND_FLAG_OMIT_END_CMD;
 	ret = ioctl(subvol_fd, BTRFS_IOC_SEND, &io_send);
 	if (ret) {
 		ret = -errno;
 		fprintf(stderr, "ERROR: send ioctl failed with %d: %s\n", ret,
 			strerror(-ret));
+		if (ret == -EINVAL && (!is_first_subvol || !is_last_subvol))
+			fprintf(stderr,
+				"Try upgrading your kernel or don't use -e.\n");
 		goto out;
 	}
 	if (g_verbose > 0)
@@ -435,14 +443,18 @@ int cmd_send_start(int argc, char **argv)
 	u64 root_id;
 	u64 parent_root_id = 0;
 	int full_send = 1;
+	int new_end_cmd_semantic = 0;
 
 	memset(&send, 0, sizeof(send));
 	send.dump_fd = fileno(stdout);
 
-	while ((c = getopt(argc, argv, "vc:f:i:p:")) != -1) {
+	while ((c = getopt(argc, argv, "vec:f:i:p:")) != -1) {
 		switch (c) {
 		case 'v':
 			g_verbose++;
+			break;
+		case 'e':
+			new_end_cmd_semantic = 1;
 			break;
 		case 'c':
 			subvol = realpath(optarg, NULL);
@@ -594,6 +606,9 @@ int cmd_send_start(int argc, char **argv)
 	}
 
 	for (i = optind; i < argc; i++) {
+		int is_first_subvol;
+		int is_last_subvol;
+
 		free(subvol);
 		subvol = argv[i];
 
@@ -634,7 +649,17 @@ int cmd_send_start(int argc, char **argv)
 			goto out;
 		}
 
-		ret = do_send(&send, root_id, parent_root_id);
+		if (new_end_cmd_semantic) {
+			/* require new kernel */
+			is_first_subvol = (i == optind);
+			is_last_subvol = (i == argc - 1);
+		} else {
+			/* be compatible to old and new kernel */
+			is_first_subvol = 1;
+			is_last_subvol = 1;
+		}
+		ret = do_send(&send, root_id, parent_root_id,
+			      is_first_subvol, is_last_subvol);
 		if (ret < 0)
 			goto out;
 
@@ -664,7 +689,7 @@ static const char * const send_cmd_group_usage[] = {
 };
 
 const char * const cmd_send_usage[] = {
-	"btrfs send [-v] [-p <parent>] [-c <clone-src>] <subvol>",
+	"btrfs send [-ve] [-p <parent>] [-c <clone-src>] <subvol>",
 	"Send the subvolume to stdout.",
 	"Sends the subvolume specified by <subvol> to stdout.",
 	"By default, this will send the whole subvolume. To do an incremental",
@@ -679,6 +704,8 @@ const char * const cmd_send_usage[] = {
 	"\n",
 	"-v               Enable verbose debug output. Each occurrence of",
 	"                 this option increases the verbose level more.",
+	"-e               If sending multiple subvols at once, use the new",
+	"                 format and omit the end-cmd between the subvols.",
 	"-p <parent>      Send an incremental stream from <parent> to",
 	"                 <subvol>.",
 	"-c <clone-src>   Use this snapshot as a clone source for an ",
