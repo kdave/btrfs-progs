@@ -1216,9 +1216,9 @@ static int check_leaf_or_node_size(u32 size, u32 sectorsize)
 static int is_ssd(const char *file)
 {
 	blkid_probe probe;
-	char dev[32];
-	char path[PATH_MAX];
-	dev_t disk;
+	char wholedisk[32];
+	char sysfs_path[PATH_MAX];
+	dev_t devno;
 	int fd;
 	char rotational;
 
@@ -1227,18 +1227,19 @@ static int is_ssd(const char *file)
 		return 0;
 
 	/* Device number of this disk (possibly a partition) */
-	disk = blkid_probe_get_devno(probe);
-	if (!disk)
+	devno = blkid_probe_get_devno(probe);
+	if (!devno)
 		return 0;
 
 	/* Get whole disk name (not full path) for this devno */
-	blkid_devno_to_wholedisk(disk, dev, sizeof(dev), NULL);
+	blkid_devno_to_wholedisk(devno, wholedisk, sizeof(wholedisk), NULL);
 
-	snprintf(path, PATH_MAX, "/sys/block/%s/queue/rotational", dev);
+	snprintf(sysfs_path, PATH_MAX, "/sys/block/%s/queue/rotational",
+		 wholedisk);
 
 	blkid_free_probe(probe);
 
-	fd = open(path, O_RDONLY);
+	fd = open(sysfs_path, O_RDONLY);
 	if (fd < 0) {
 		return 0;
 	}
