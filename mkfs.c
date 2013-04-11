@@ -1215,9 +1215,8 @@ static int check_leaf_or_node_size(u32 size, u32 sectorsize)
 
 static int is_ssd(const char *file)
 {
-	char *devname;
 	blkid_probe probe;
-	char *dev;
+	char dev[32];
 	char path[PATH_MAX];
 	dev_t disk;
 	int fd;
@@ -1227,24 +1226,16 @@ static int is_ssd(const char *file)
 	if (!probe)
 		return 0;
 
-	/*
-	 * We want to use blkid_devno_to_wholedisk() but it's broken for some
-	 * reason on F17 at least so we'll do this trickery
-	 */
-	disk = blkid_probe_get_wholedisk_devno(probe);
+	/* Device number of this disk (possibly a partition) */
+	disk = blkid_probe_get_devno(probe);
 	if (!disk)
 		return 0;
 
-	devname = blkid_devno_to_devname(disk);
-	if (!devname)
-		return 0;
-
-	dev = strrchr(devname, '/');
-	dev++;
+	/* Get whole disk name (not full path) for this devno */
+	blkid_devno_to_wholedisk(disk, dev, sizeof(dev), NULL);
 
 	snprintf(path, PATH_MAX, "/sys/block/%s/queue/rotational", dev);
 
-	free(devname);
 	blkid_free_probe(probe);
 
 	fd = open(path, O_RDONLY);
