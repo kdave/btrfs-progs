@@ -64,5 +64,6 @@ int is_swap_device(const char *file);
 u64 btrfs_device_size(int fd, struct stat *st);
 /* Helper to always get proper size of the destination string */
 #define strncpy_null(dest, src) __strncpy__null(dest, src, sizeof(dest))
+int test_dev_for_mkfs(char *file, int force_overwrite, char *estr);
 
 #endif

@@ -40,6 +40,7 @@
 #include <linux/major.h>
 #include <linux/kdev_t.h>
 #include <limits.h>
+#include <blkid/blkid.h>
 #include "kerncompat.h"
 #include "radix-tree.h"
 #include "ctree.h"
@@ -1678,4 +1679,131 @@ out:
 	fclose(f);
 
 	return ret;
+}
+
+/*
+ * Check for existing filesystem or partition table on device.
+ * Returns:
+ *	 1 for existing fs or partition
+ *	 0 for nothing found
+ *	-1 for internal error
+ */
+static int
+check_overwrite(
+	char		*device)
+{
+	const char	*type;
+	blkid_probe	pr = NULL;
+	int		ret;
+	blkid_loff_t	size;
+
+	if (!device || !*device)
+		return 0;
+
+	ret = -1; /* will reset on success of all setup calls */
+
+	pr = blkid_new_probe_from_filename(device);
+	if (!pr)
+		goto out;
+
+	size = blkid_probe_get_size(pr);
+	if (size < 0)
+		goto out;
+
+	/* nothing to overwrite on a 0-length device */
+	if (size == 0) {
+		ret = 0;
+		goto out;
+	}
+
+	ret = blkid_probe_enable_partitions(pr, 1);
+	if (ret < 0)
+		goto out;
+
+	ret = blkid_do_fullprobe(pr);
+	if (ret < 0)
+		goto out;
+
+	/*
+	 * Blkid returns 1 for nothing found and 0 when it finds a signature,
+	 * but we want the exact opposite, so reverse the return value here.
+	 *
+	 * In addition print some useful diagnostics about what actually is
+	 * on the device.
+	 */
+	if (ret) {
+		ret = 0;
+		goto out;
+	}
+
+	if (!blkid_probe_lookup_value(pr, "TYPE", &type, NULL)) {
+		fprintf(stderr,
+			"%s appears to contain an existing "
+			"filesystem (%s).\n", device, type);
+	} else if (!blkid_probe_lookup_value(pr, "PTTYPE", &type, NULL)) {
+		fprintf(stderr,
+			"%s appears to contain a partition "
+			"table (%s).\n", device, type);
+	} else {
+		fprintf(stderr,
+			"%s appears to contain something weird "
+			"according to blkid\n", device);
+	}
+	ret = 1;
+
+out:
+	if (pr)
+		blkid_free_probe(pr);
+	if (ret == -1)
+		fprintf(stderr,
+			"probe of %s failed, cannot detect "
+			  "existing filesystem.\n", device);
+	return ret;
+}
+
+/* Check if disk is suitable for btrfs
+ * returns:
+ *  1: something is wrong, estr provides the error
+ *  0: all is fine
+ */
+int test_dev_for_mkfs(char *file, int force_overwrite, char *estr)
+{
+	int ret, fd;
+	size_t sz = 100;
+
+	ret = is_swap_device(file);
+	if (ret < 0) {
+		snprintf(estr, sz, "error checking %s status: %s\n", file,
+			strerror(-ret));
+		return 1;
+	}
+	if (ret == 1) {
+		snprintf(estr, sz, "%s is a swap device\n", file);
+		return 1;
+	}
+	if (!force_overwrite) {
+		if (check_overwrite(file)) {
+			snprintf(estr, sz, "Use the -f option to force overwrite.\n");
+			return 1;
+		}
+	}
+	ret = check_mounted(file);
+	if (ret < 0) {
+		snprintf(estr, sz, "error checking %s mount status\n",
+			file);
+		return 1;
+	}
+	if (ret == 1) {
+		snprintf(estr, sz, "%s is mounted\n", file);
+		return 1;
+	}
+	/* check if the device is busy */
+	fd = open(file, O_RDWR|O_EXCL);
+	if (fd < 0) {
+		snprintf(estr, sz, "unable to open %s: %s\n", file,
+			strerror(errno));
+		return 1;
+	}
+	close(fd);
+	return 0;
 }

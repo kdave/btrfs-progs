@@ -1261,86 +1261,6 @@ static int is_ssd(const char *file)
 	return !atoi((const char *)&rotational);
 }
 
-/*
- * Check for existing filesystem or partition table on device.
- * Returns:
- *	 1 for existing fs or partition
- *	 0 for nothing found
- *	-1 for internal error
- */
-static int
-check_overwrite(
-	char		*device)
-{
-	const char	*type;
-	blkid_probe	pr = NULL;
-	int		ret;
-	blkid_loff_t	size;
-
-	if (!device || !*device)
-		return 0;
-
-	ret = -1; /* will reset on success of all setup calls */
-
-	pr = blkid_new_probe_from_filename(device);
-	if (!pr)
-		goto out;
-
-	size = blkid_probe_get_size(pr);
-	if (size < 0)
-		goto out;
-
-	/* nothing to overwrite on a 0-length device */
-	if (size == 0) {
-		ret = 0;
-		goto out;
-	}
-
-	ret = blkid_probe_enable_partitions(pr, 1);
-	if (ret < 0)
-		goto out;
-
-	ret = blkid_do_fullprobe(pr);
-	if (ret < 0)
-		goto out;
-
-	/*
-	 * Blkid returns 1 for nothing found and 0 when it finds a signature,
-	 * but we want the exact opposite, so reverse the return value here.
-	 *
-	 * In addition print some useful diagnostics about what actually is
-	 * on the device.
-	 */
-	if (ret) {
-		ret = 0;
-		goto out;
-	}
-
-	if (!blkid_probe_lookup_value(pr, "TYPE", &type, NULL)) {
-		fprintf(stderr,
-			"%s appears to contain an existing "
-			"filesystem (%s).\n", device, type);
-	} else if (!blkid_probe_lookup_value(pr, "PTTYPE", &type, NULL)) {
-		fprintf(stderr,
-			"%s appears to contain a partition "
-			"table (%s).\n", device, type);
-	} else {
-		fprintf(stderr,
-			"%s appears to contain something weird "
-			"according to blkid\n", device);
-	}
-	ret = 1;
-
-out:
-	if (pr)
-		blkid_free_probe(pr);
-	if (ret == -1)
-		fprintf(stderr,
-			"probe of %s failed, cannot detect "
-			  "existing filesystem.\n", device);
-	return ret;
-}
-
 int main(int ac, char **av)
 {
 	char *file;
@@ -1378,6 +1298,9 @@ int main(int ac, char **av)
 	char *pretty_buf;
 	struct btrfs_super_block *super;
 	u64 flags;
+	int dev_cnt = 0;
+	int saved_optind;
+	char estr[100];
 
 	while(1) {
 		int c;
@@ -1442,51 +1365,38 @@ int main(int ac, char **av)
 		exit(1);
 	if (check_leaf_or_node_size(nodesize, sectorsize))
 		exit(1);
-	ac = ac - optind;
-	if (ac == 0)
+	saved_optind = optind;
+	dev_cnt = ac - optind;
+	if (dev_cnt == 0)
 		print_usage();
+
+	if (source_dir_set && dev_cnt > 1) {
+		fprintf(stderr,
+			"The -r option is limited to a single device\n");
+		exit(1);
+	}
+	while (dev_cnt-- > 0) {
+		file = av[optind++];
+		if (is_block_device(file))
+			if (test_dev_for_mkfs(file, force_overwrite, estr)) {
+				fprintf(stderr, "Error: %s", estr);
+				exit(1);
+			}
+	}
+
+	/* if we are here that means all devs are good to btrfsify */
+	optind = saved_optind;
+	dev_cnt = ac - optind;
 
 	printf("\nWARNING! - %s IS EXPERIMENTAL\n", BTRFS_BUILD_VERSION);
 	printf("WARNING! - see http://btrfs.wiki.kernel.org before using\n\n");
 
-	if (source_dir == 0) {
-		file = av[optind++];
-		ret = is_swap_device(file);
-		if (ret < 0) {
-			fprintf(stderr, "error checking %s status: %s\n", file,
-				strerror(-ret));
-			exit(1);
-		}
-		if (ret == 1) {
-			fprintf(stderr, "%s is a swap device\n", file);
-			exit(1);
-		}
-		if (!force_overwrite) {
-			if (check_overwrite(file)) {
-				fprintf(stderr, "Use the -f option to force overwrite.\n");
-				exit(1);
-			}
-		}
-		ret = check_mounted(file);
-		if (ret < 0) {
-			fprintf(stderr, "error checking %s mount status\n", file);
-			exit(1);
-		}
-		if (ret == 1) {
-			fprintf(stderr, "%s is mounted\n", file);
-			exit(1);
-		}
-		ac--;
-		/* check if the device is busy */
-		fd = open(file, O_RDWR|O_EXCL);
-		if (fd < 0) {
-			fprintf(stderr, "unable to open %s: %s\n", file,
-				strerror(errno));
-			exit(1);
-		}
-		close(fd);
+	file = av[optind++];
+	dev_cnt--;
+
+	if (!source_dir_set) {
 		/*
-		 * open again without O_EXCL so that the problem should not
+		 * open without O_EXCL so that the problem should not
 		 * occur by the following processing.
 		 * (btrfs_register_one_device() fails if O_EXCL is on)
 		 */
@@ -1504,8 +1414,6 @@ int main(int ac, char **av)
 			exit(1);
 		}
 	} else {
-		ac = 0;
-		file = av[optind++];
 		fd = open_target(file);
 		if (fd < 0) {
 			fprintf(stderr, "unable to open the %s\n", file);
@@ -1566,53 +1474,19 @@ int main(int ac, char **av)
 
 	trans = btrfs_start_transaction(root, 1);
 
-	if (ac == 0)
+	if (dev_cnt == 0)
 		goto raid_groups;
 
 	btrfs_register_one_device(file);
 
 	zero_end = 1;
-	while(ac-- > 0) {
+	while (dev_cnt-- > 0) {
 		int old_mixed = mixed;
 
 		file = av[optind++];
-		if (!force_overwrite) {
-			if (check_overwrite(file)) {
-				fprintf(stderr, "Use the -f option to force overwrite.\n");
-				exit(1);
-			}
-		}
 
-		ret = is_swap_device(file);
-		if (ret < 0) {
-			fprintf(stderr, "error checking %s status: %s\n", file,
-				strerror(-ret));
-			exit(1);
-		}
-		if (ret == 1) {
-			fprintf(stderr, "%s is a swap device\n", file);
-			exit(1);
-		}
-		ret = check_mounted(file);
-		if (ret < 0) {
-			fprintf(stderr, "error checking %s mount status\n",
-				file);
-			exit(1);
-		}
-		if (ret == 1) {
-			fprintf(stderr, "%s is mounted\n", file);
-			exit(1);
-		}
-		/* check if the device is busy */
-		fd = open(file, O_RDWR|O_EXCL);
-		if (fd < 0) {
-			fprintf(stderr, "unable to open %s: %s\n", file,
-				strerror(errno));
-			exit(1);
-		}
-		close(fd);
 		/*
-		 * open again without O_EXCL so that the problem should not
+		 * open without O_EXCL so that the problem should not
 		 * occur by the following processing.
 		 * (btrfs_register_one_device() fails if O_EXCL is on)
 		 */
@@ -1693,8 +1567,6 @@ raid_groups:
 
 	ret = close_ctree(root);
 	BUG_ON(ret);
-
 	free(label);
 	return 0;
 }
-
