@@ -431,6 +431,7 @@ static int cmd_defrag(int argc, char **argv)
 				close(fd);
 				break;
 			}
+			e = errno;
 		}
 		if (ret) {
 			fprintf(stderr, "ERROR: defrag failed on %s - %s\n",
