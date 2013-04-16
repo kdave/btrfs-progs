@@ -616,6 +616,12 @@ static const char * const cmd_balance_status_usage[] = {
 	NULL
 };
 
+/* Checks the status of the balance if any
+ * return codes:
+ *   2 : Error failed to know if there is any pending balance
+ *   1 : Successful to know status of a pending balance
+ *   0 : When there is no pending balance or completed
+ */
 static int cmd_balance_status(int argc, char **argv)
 {
 	struct btrfs_ioctl_balance_args args;
@@ -654,7 +660,7 @@ static int cmd_balance_status(int argc, char **argv)
 	fd = open_file_or_dir(path);
 	if (fd < 0) {
 		fprintf(stderr, "ERROR: can't access to '%s'\n", path);
-		return 12;
+		return 2;
 	}
 
 	ret = ioctl(fd, BTRFS_IOC_BALANCE_PROGRESS, &args);
@@ -662,9 +668,13 @@ static int cmd_balance_status(int argc, char **argv)
 	close(fd);
 
 	if (ret < 0) {
+		if (e == ENOTCONN) {
+			printf("No balance found on '%s'\n", path);
+			return 0;
+		}
 		fprintf(stderr, "ERROR: balance status on '%s' failed - %s\n",
-			path, (e == ENOTCONN) ? "Not in progress" : strerror(e));
-		return 19;
+			path, strerror(e));
+		return 2;
 	}
 
 	if (args.state & BTRFS_BALANCE_STATE_RUNNING) {
@@ -688,7 +698,7 @@ static int cmd_balance_status(int argc, char **argv)
 	if (verbose)
 		dump_ioctl_balance_args(&args);
 
-	return 0;
+	return 1;
 }
 
 const struct cmd_group balance_cmd_group = {
