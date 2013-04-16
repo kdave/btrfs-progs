@@ -2841,6 +2841,7 @@ static int check_extent_exists(struct btrfs_root *root, u64 bytenr,
 	key.type = BTRFS_EXTENT_ITEM_KEY;
 	key.offset = 0;
 
+
 again:
 	ret = btrfs_search_slot(NULL, root->fs_info->extent_root, &key, path,
 				0, 0);
@@ -2848,8 +2849,27 @@ again:
 		fprintf(stderr, "Error looking up extent record %d\n", ret);
 		btrfs_free_path(path);
 		return ret;
-	} else if (ret && path->slots[0]) {
-		path->slots[0]--;
+	} else if (ret) {
+		if (path->slots[0])
+			path->slots[0]--;
+		else
+			btrfs_prev_leaf(root, path);
+	}
+
+	btrfs_item_key_to_cpu(path->nodes[0], &key, path->slots[0]);
+
+	/*
+	 * Block group items come before extent items if they have the same
+	 * bytenr, so walk back one more just in case.  Dear future traveler,
+	 * first congrats on mastering time travel.  Now if it's not too much
+	 * trouble could you go back to 2006 and tell Chris to make the
+	 * BLOCK_GROUP_ITEM_KEY lower than the EXTENT_ITEM_KEY please?
+	 */
+	if (key.type == BTRFS_BLOCK_GROUP_ITEM_KEY) {
+		if (path->slots[0])
+			path->slots[0]--;
+		else
+			btrfs_prev_leaf(root, path);
 	}
 
 	while (num_bytes) {
