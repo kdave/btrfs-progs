@@ -4060,7 +4060,7 @@ int cmd_check(int argc, char **argv)
 		return -EBUSY;
 	}
 
-	info = open_ctree_fs_info(argv[optind], bytenr, rw, 1);
+	info = open_ctree_fs_info(argv[optind], bytenr, 0, rw, 1);
 	if (!info) {
 		fprintf(stderr, "Couldn't open file system\n");
 		return -EIO;

@@ -166,7 +166,7 @@ int main(int ac, char **av)
 	if (ac != 1)
 		print_usage();
 
-	info = open_ctree_fs_info(av[optind], 0, 0, 1);
+	info = open_ctree_fs_info(av[optind], 0, 0, 0, 1);
 	if (!info) {
 		fprintf(stderr, "unable to open %s\n", av[optind]);
 		exit(1);

@@ -833,27 +833,64 @@ static int do_list_roots(struct btrfs_root *root)
 static struct btrfs_root *open_fs(const char *dev, u64 root_location,
 				  int super_mirror, int list_roots)
 {
+	struct btrfs_fs_info *fs_info = NULL;
 	struct btrfs_root *root = NULL;
 	u64 bytenr;
 	int i;
 
 	for (i = super_mirror; i < BTRFS_SUPER_MIRROR_MAX; i++) {
 		bytenr = btrfs_sb_offset(i);
-		root = open_ctree_recovery(dev, bytenr, root_location);
-		if (root)
+		fs_info = open_ctree_fs_info(dev, bytenr, root_location, 0, 1);
+		if (fs_info)
 			break;
 		fprintf(stderr, "Could not open root, trying backup super\n");
 	}
 
-	if (root && list_roots) {
-		int ret = do_list_roots(root);
-		if (ret) {
+	if (!fs_info)
+		return NULL;
+
+	/*
+	 * All we really need to succeed is reading the chunk tree, everything
+	 * else we can do by hand, since we only need to read the tree root and
+	 * the fs_root.
+	 */
+	if (!extent_buffer_uptodate(fs_info->tree_root->node)) {
+		u64 generation;
+
+		root = fs_info->tree_root;
+		if (!root_location)
+			root_location = btrfs_super_root(fs_info->super_copy);
+		generation = btrfs_super_generation(fs_info->super_copy);
+		root->node = read_tree_block(root, root_location,
+					     root->leafsize, generation);
+		if (!extent_buffer_uptodate(root->node)) {
+			fprintf(stderr, "Error opening tree root\n");
 			close_ctree(root);
-			root = NULL;
+			return NULL;
 		}
 	}
 
-	return root;
+	if (!list_roots && !fs_info->fs_root) {
+		struct btrfs_key key;
+
+		key.objectid = BTRFS_FS_TREE_OBJECTID;
+		key.type = BTRFS_ROOT_ITEM_KEY;
+		key.offset = (u64)-1;
+		fs_info->fs_root = btrfs_read_fs_root_no_cache(fs_info, &key);
+		if (IS_ERR(fs_info->fs_root)) {
+			fprintf(stderr, "Couldn't read fs root: %ld\n",
+				PTR_ERR(fs_info->fs_root));
+			close_ctree(fs_info->tree_root);
+			return NULL;
+		}
+	}
+
+	if (list_roots && do_list_roots(fs_info->tree_root)) {
+		close_ctree(fs_info->tree_root);
+		return NULL;
+	}
+
+	return fs_info->fs_root;
 }
 
 static int find_first_dir(struct btrfs_root *root, u64 *objectid)

@@ -945,8 +945,10 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 
 	if (!(btrfs_super_flags(disk_super) & BTRFS_SUPER_FLAG_METADUMP)) {
 		ret = btrfs_read_chunk_tree(chunk_root);
-		if (ret)
-			goto out_failed;
+		if (ret) {
+			printk("Couldn't read chunk tree\n");
+			goto out_chunk;
+		}
 	}
 
 	blocksize = btrfs_level_size(tree_root,
@@ -1019,6 +1021,7 @@ out_failed:
 		free_extent_buffer(fs_info->extent_root->node);
 	if (fs_info->tree_root)
 		free_extent_buffer(fs_info->tree_root->node);
+out_chunk:
 	if (fs_info->chunk_root)
 		free_extent_buffer(fs_info->chunk_root->node);
 out_devices:
@@ -1041,8 +1044,8 @@ out:
 }
 
 struct btrfs_fs_info *open_ctree_fs_info(const char *filename,
-					 u64 sb_bytenr, int writes,
-					 int partial)
+					 u64 sb_bytenr, u64 root_tree_bytenr,
+					 int writes, int partial)
 {
 	int fp;
 	struct btrfs_fs_info *info;
@@ -1056,7 +1059,8 @@ struct btrfs_fs_info *open_ctree_fs_info(const char *filename,
 		fprintf (stderr, "Could not open %s\n", filename);
 		return NULL;
 	}
-	info = __open_ctree_fd(fp, filename, sb_bytenr, 0, writes, partial);
+	info = __open_ctree_fd(fp, filename, sb_bytenr, root_tree_bytenr,
+			       writes, partial);
 	close(fp);
 	return info;
 }
@@ -1065,28 +1069,7 @@ struct btrfs_root *open_ctree(const char *filename, u64 sb_bytenr, int writes)
 {
 	struct btrfs_fs_info *info;
 
-	info = open_ctree_fs_info(filename, sb_bytenr, writes, 0);
-	if (!info)
-		return NULL;
-	return info->fs_root;
-}
-
-struct btrfs_root *open_ctree_recovery(const char *filename, u64 sb_bytenr,
-				       u64 root_tree_bytenr)
-{
-	int fp;
-	struct btrfs_fs_info *info;
-
-
-	fp = open(filename, O_RDONLY);
-	if (fp < 0) {
-		fprintf (stderr, "Could not open %s\n", filename);
-		return NULL;
-	}
-	info = __open_ctree_fd(fp, filename, sb_bytenr,
-			       root_tree_bytenr, 0, 0);
-	close(fp);
-
+	info = open_ctree_fs_info(filename, sb_bytenr, 0, writes, 0);
 	if (!info)
 		return NULL;
 	return info->fs_root;
