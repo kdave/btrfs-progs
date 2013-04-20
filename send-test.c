@@ -354,8 +354,8 @@ static void *process_thread(void *arg_)
 	int ret;
 
 	while (1) {
-		ret = btrfs_read_and_process_send_stream(pipefd[0],
-							 &send_ops_print, arg_);
+		ret = btrfs_read_and_process_send_stream(pipefd[-1],
+							 &send_ops_print, arg_, 0);
 		if (ret)
 			break;
 	}
