@@ -47,6 +47,12 @@ progs = mkfs.btrfs btrfs-debug-tree btrfsck \
 	btrfs btrfs-map-logical btrfs-image btrfs-zero-log btrfs-convert \
 	btrfs-find-root btrfstune btrfs-show-super
 
+# external libs required by various binaries; for btrfs-foo,
+# specify btrfs_foo_libs = <list of libs>; see $($(subst...)) rules below
+btrfs_convert_libs = -lext2fs -lcom_err
+btrfs_image_libs = -lpthread
+btrfs_fragment_libs = -lgd -lpng -ljpeg -lfreetype
+
 # Create all the static targets
 static_objects = $(patsubst %.o, %.static.o, $(objects))
 static_cmds_objects = $(patsubst %.o, %.static.o, $(cmds_objects))
@@ -105,6 +111,26 @@ $(lib_links):
 	$(Q)$(LN) -sf libbtrfs.so.0.1 libbtrfs.so.0
 	$(Q)$(LN) -sf libbtrfs.so.0.1 libbtrfs.so
 
+# keep intermediate files from the below implicit rules around
+.PRECIOUS: $(addsuffix .o,$(progs))
+
+# Make any btrfs-foo out of btrfs-foo.o, with appropriate libs.
+# The $($(subst...)) bits below takes the btrfs_*_libs definitions above and
+# turns them into a list of libraries to link against if they exist
+#
+# For static variants, use an extra $(subst) to get rid of the ".static"
+# from the target name before translating to list of libs
+
+btrfs-%.static: version.h $(static_objects) btrfs-%.static.o $(static_libbtrfs_objects)
+	@echo "    [LD]     $@"
+	$(Q)$(CC) $(STATIC_CFLAGS) -o $@ $@.o $(static_objects) \
+		$(static_libbtrfs_objects) $(STATIC_LDFLAGS) $(STATIC_LIBS) \
+		$($(subst -,_,$(subst .static,,$@)-libs))
+
+btrfs-%: version.h $(objects) $(libs) btrfs-%.o
+	@echo "    [LD]     $@"
+	$(Q)$(CC) $(CFLAGS) -o $@ $(objects) $@.o $(LDFLAGS) $(LIBS) $($(subst -,_,$@-libs))
+
 btrfs: $(objects) btrfs.o help.o $(cmds_objects) $(libs)
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o btrfs btrfs.o help.o $(cmds_objects) \
@@ -114,19 +140,6 @@ btrfs.static: $(static_objects) btrfs.static.o help.static.o $(static_cmds_objec
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(STATIC_CFLAGS) -o btrfs.static btrfs.static.o help.static.o $(static_cmds_objects) \
 		$(static_objects) $(static_libbtrfs_objects) $(STATIC_LDFLAGS) $(STATIC_LIBS)
-
-btrfs-calc-size: $(objects) $(libs) btrfs-calc-size.o
-	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o btrfs-calc-size btrfs-calc-size.o $(objects) $(LDFLAGS) $(LIBS)
-
-btrfs-find-root: $(objects) $(libs) btrfs-find-root.o
-	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o btrfs-find-root btrfs-find-root.o $(objects) $(LDFLAGS) $(LIBS)
-
-btrfs-find-root.static: $(static_objects) btrfs-find-root.static.o $(static_libbtrfs_objects)
-	@echo "    [LD]     $@"
-	$(Q)$(CC) $(STATIC_CFLAGS) -o btrfs-find-root.static btrfs-find-root.static.o $(static_objects) \
-		$(static_libbtrfs_objects) $(STATIC_LDFLAGS) $(STATIC_LIBS)
 
 # For backward compatibility, 'btrfs' changes behaviour to fsck if it's named 'btrfsck'
 btrfsck: btrfs
@@ -142,41 +155,9 @@ mkfs.btrfs.static: $(static_objects) mkfs.static.o $(static_libbtrfs_objects)
 	$(Q)$(CC) $(STATIC_CFLAGS) -o mkfs.btrfs.static mkfs.static.o $(static_objects) \
 		$(static_libbtrfs_objects) $(STATIC_LDFLAGS) $(STATIC_LIBS)
 
-btrfs-debug-tree: $(objects) $(libs) btrfs-debug-tree.o
-	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o btrfs-debug-tree $(objects) btrfs-debug-tree.o $(LDFLAGS) $(LIBS)
-
-btrfs-zero-log: $(objects) $(libs) btrfs-zero-log.o
-	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o btrfs-zero-log $(objects) btrfs-zero-log.o $(LDFLAGS) $(LIBS)
-
-btrfs-show-super: $(objects) $(libs) btrfs-show-super.o
-	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o btrfs-show-super $(objects) btrfs-show-super.o $(LDFLAGS) $(LIBS)
-
-btrfs-select-super: $(objects) $(libs) btrfs-select-super.o
-	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o btrfs-select-super $(objects) btrfs-select-super.o $(LDFLAGS) $(LIBS)
-
 btrfstune: $(objects) $(libs) btrfstune.o
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o btrfstune $(objects) btrfstune.o $(LDFLAGS) $(LIBS)
-
-btrfs-map-logical: $(objects) $(libs) btrfs-map-logical.o
-	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o btrfs-map-logical $(objects) btrfs-map-logical.o $(LDFLAGS) $(LIBS)
-
-btrfs-corrupt-block: $(objects) $(libs) btrfs-corrupt-block.o
-	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o btrfs-corrupt-block $(objects) btrfs-corrupt-block.o $(LDFLAGS) $(LIBS)
-
-btrfs-image: $(objects) $(libs) btrfs-image.o
-	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o btrfs-image $(objects) btrfs-image.o -lpthread -lz $(LDFLAGS) $(LIBS)
-
-btrfs-crc: btrfs-crc.o $(libs)
-	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o btrfs-crc btrfs-crc.o $(LDFLAGS) $(LIBS)
 
 dir-test: $(objects) $(libs) dir-test.o
 	@echo "    [LD]     $@"
@@ -185,14 +166,6 @@ dir-test: $(objects) $(libs) dir-test.o
 quick-test: $(objects) $(libs) quick-test.o
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o quick-test $(objects) quick-test.o $(LDFLAGS) $(LIBS)
-
-btrfs-convert: $(objects) $(libs) btrfs-convert.o
-	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o btrfs-convert $(objects) btrfs-convert.o -lext2fs -lcom_err $(LDFLAGS) $(LIBS)
-
-btrfs-fragments: $(objects) $(libs) btrfs-fragments.o
-	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o btrfs-fragments $(objects) btrfs-fragments.o $(LDFLAGS) $(LIBS) -lgd -lpng -ljpeg -lfreetype
 
 ioctl-test: $(objects) $(libs) ioctl-test.o
 	@echo "    [LD]     $@"
