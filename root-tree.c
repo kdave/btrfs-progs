@@ -69,6 +69,7 @@ int btrfs_update_root(struct btrfs_trans_handle *trans, struct btrfs_root
 	int ret;
 	int slot;
 	unsigned long ptr;
+	u32 old_len;
 
 	path = btrfs_alloc_path();
 	BUG_ON(!path);
@@ -79,6 +80,42 @@ int btrfs_update_root(struct btrfs_trans_handle *trans, struct btrfs_root
 	l = path->nodes[0];
 	slot = path->slots[0];
 	ptr = btrfs_item_ptr_offset(l, slot);
+	old_len = btrfs_item_size_nr(l, slot);
+
+	/*
+	 * If this is the first time we update the root item which originated
+	 * from an older kernel, we need to enlarge the item size to make room
+	 * for the added fields.
+	 */
+	if (old_len < sizeof(*item)) {
+		btrfs_release_path(root, path);
+		ret = btrfs_search_slot(trans, root, key, path,
+				-1, 1);
+		if (ret < 0) {
+			goto out;
+		}
+
+		ret = btrfs_del_item(trans, root, path);
+		if (ret < 0) {
+			goto out;
+		}
+		btrfs_release_path(root, path);
+		ret = btrfs_insert_empty_item(trans, root, path,
+				key, sizeof(*item));
+		if (ret < 0) {
+			goto out;
+		}
+		l = path->nodes[0];
+		slot = path->slots[0];
+		ptr = btrfs_item_ptr_offset(l, slot);
+	}
+
+	/*
+	 * Update generation_v2 so at the next mount we know the new root
+	 * fields are valid.
+	 */
+	btrfs_set_root_generation_v2(item, btrfs_root_generation(item));
+
 	write_extent_buffer(l, item, ptr, sizeof(*item));
 	btrfs_mark_buffer_dirty(path->nodes[0]);
 out:
