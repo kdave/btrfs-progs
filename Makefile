@@ -115,17 +115,17 @@ btrfs.static: $(static_objects) btrfs.static.o help.static.o $(static_cmds_objec
 	$(Q)$(CC) $(STATIC_CFLAGS) -o btrfs.static btrfs.static.o help.static.o $(static_cmds_objects) \
 		$(static_objects) $(static_libbtrfs_objects) $(STATIC_LDFLAGS) $(STATIC_LIBS)
 
-calc-size: $(objects) $(libs) calc-size.o
+btrfs-calc-size: $(objects) $(libs) btrfs-calc-size.o
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o calc-size calc-size.o $(objects) $(LDFLAGS) $(LIBS)
+	$(Q)$(CC) $(CFLAGS) -o btrfs-calc-size btrfs-calc-size.o $(objects) $(LDFLAGS) $(LIBS)
 
-btrfs-find-root: $(objects) $(libs) find-root.o
+btrfs-find-root: $(objects) $(libs) btrfs-find-root.o
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o btrfs-find-root find-root.o $(objects) $(LDFLAGS) $(LIBS)
+	$(Q)$(CC) $(CFLAGS) -o btrfs-find-root btrfs-find-root.o $(objects) $(LDFLAGS) $(LIBS)
 
-btrfs-find-root.static: $(static_objects) find-root.static.o $(static_libbtrfs_objects)
+btrfs-find-root.static: $(static_objects) btrfs-find-root.static.o $(static_libbtrfs_objects)
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(STATIC_CFLAGS) -o btrfs-find-root.static find-root.static.o $(static_objects) \
+	$(Q)$(CC) $(STATIC_CFLAGS) -o btrfs-find-root.static btrfs-find-root.static.o $(static_objects) \
 		$(static_libbtrfs_objects) $(STATIC_LDFLAGS) $(STATIC_LIBS)
 
 # For backward compatibility, 'btrfs' changes behaviour to fsck if it's named 'btrfsck'
@@ -142,9 +142,9 @@ mkfs.btrfs.static: $(static_objects) mkfs.static.o $(static_libbtrfs_objects)
 	$(Q)$(CC) $(STATIC_CFLAGS) -o mkfs.btrfs.static mkfs.static.o $(static_objects) \
 		$(static_libbtrfs_objects) $(STATIC_LDFLAGS) $(STATIC_LIBS)
 
-btrfs-debug-tree: $(objects) $(libs) debug-tree.o
+btrfs-debug-tree: $(objects) $(libs) btrfs-debug-tree.o
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o btrfs-debug-tree $(objects) debug-tree.o $(LDFLAGS) $(LIBS)
+	$(Q)$(CC) $(CFLAGS) -o btrfs-debug-tree $(objects) btrfs-debug-tree.o $(LDFLAGS) $(LIBS)
 
 btrfs-zero-log: $(objects) $(libs) btrfs-zero-log.o
 	@echo "    [LD]     $@"
@@ -186,13 +186,13 @@ quick-test: $(objects) $(libs) quick-test.o
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o quick-test $(objects) quick-test.o $(LDFLAGS) $(LIBS)
 
-btrfs-convert: $(objects) $(libs) convert.o
+btrfs-convert: $(objects) $(libs) btrfs-convert.o
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o btrfs-convert $(objects) convert.o -lext2fs -lcom_err $(LDFLAGS) $(LIBS)
+	$(Q)$(CC) $(CFLAGS) -o btrfs-convert $(objects) btrfs-convert.o -lext2fs -lcom_err $(LDFLAGS) $(LIBS)
 
-btrfs-fragments: $(objects) $(libs) fragments.o
+btrfs-fragments: $(objects) $(libs) btrfs-fragments.o
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o btrfs-fragments $(objects) fragments.o $(LDFLAGS) $(LIBS) -lgd -lpng -ljpeg -lfreetype
+	$(Q)$(CC) $(CFLAGS) -o btrfs-fragments $(objects) btrfs-fragments.o $(LDFLAGS) $(LIBS) -lgd -lpng -ljpeg -lfreetype
 
 ioctl-test: $(objects) $(libs) ioctl-test.o
 	@echo "    [LD]     $@"
@@ -212,7 +212,7 @@ clean :
 	@echo "Cleaning"
 	$(Q)rm -f $(progs) cscope.out *.o .*.d btrfs-convert btrfs-image btrfs-select-super \
 	      btrfs-zero-log btrfstune dir-test ioctl-test quick-test send-test btrfsck \
-	      btrfs.static mkfs.btrfs.static \
+	      btrfs.static mkfs.btrfs.static btrfs-calc-size \
 	      version.h \
 	      $(libs) $(lib_links)
 	$(Q)$(MAKE) $(MAKEOPTS) -C man $@
