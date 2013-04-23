@@ -60,6 +60,8 @@ btrfs \- control a btrfs filesystem
 \fBbtrfs\fP \fBinspect-internal logical-resolve\fP
 [-Pv] [-s size] \fI<logical>\fP \fI<path>\fP
 .PP
+\fBbtrfs\fP \fBinspect-internal subvolid-resolve\fP \fI<subvolid>\fP \fI<path>\fP
+.PP
 \fBbtrfs\fP \fBqgroup assign\fP \fI<src>\fP \fI<dst>\fP \fI<path>\fP
 .PP
 \fBbtrfs\fP \fBqgroup remove\fP \fI<src>\fP \fI<dst>\fP \fI<path>\fP
@@ -459,6 +461,10 @@ verbose mode. print count of returned paths and all ioctl() return values
 set inode container's size. This is used to increase inode container's size in case it is
 not enough to read all the resolved results. The max value one can set is 64k.
 .RE
+.TP
+
+\fBinspect-internal subvolid-resolve\fP \fI<subvolid>\fP \fI<path>\fP
+Get file system paths for the given subvolume ID.
 .TP
 
 \fBbtrfs qgroup assign\fP \fI<src>\fP \fI<dst>\fP \fI<path>\fP

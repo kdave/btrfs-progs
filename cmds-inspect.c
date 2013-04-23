@@ -24,6 +24,8 @@
 #include "kerncompat.h"
 #include "ioctl.h"
 #include "utils.h"
+#include "ctree.h"
+#include "send-utils.h"
 
 #include "commands.h"
 #include "btrfs-list.h"
@@ -253,12 +255,56 @@ out:
 	return ret;
 }
 
+static const char * const cmd_subvolid_resolve_usage[] = {
+	"btrfs inspect-internal subvolid-resolve <subvolid> <path>",
+	"Get file system paths for the given subvolume ID.",
+	NULL
+};
+
+static int cmd_subvolid_resolve(int argc, char **argv)
+{
+	int ret;
+	int fd = -1;
+	u64 subvol_id;
+	char path[BTRFS_PATH_NAME_MAX + 1];
+
+	if (check_argc_exact(argc, 3))
+		usage(cmd_subvolid_resolve_usage);
+
+	fd = open_file_or_dir(argv[2]);
+	if (fd < 0) {
+		fprintf(stderr, "ERROR: can't access '%s'\n", argv[2]);
+		ret = -ENOENT;
+		goto out;
+	}
+
+	subvol_id = atoll(argv[1]);
+	ret = btrfs_subvolid_resolve(fd, path, sizeof(path), subvol_id);
+
+	if (ret) {
+		fprintf(stderr,
+			"%s: btrfs_subvolid_resolve(subvol_id %llu) failed with ret=%d\n",
+			argv[0], (unsigned long long)subvol_id, ret);
+		goto out;
+	}
+
+	path[BTRFS_PATH_NAME_MAX] = '\0';
+	printf("%s\n", path);
+
+out:
+	if (fd >= 0)
+		close(fd);
+	return ret ? 1 : 0;
+}
+
 const struct cmd_group inspect_cmd_group = {
 	inspect_cmd_group_usage, NULL, {
 		{ "inode-resolve", cmd_inode_resolve, cmd_inode_resolve_usage,
 			NULL, 0 },
 		{ "logical-resolve", cmd_logical_resolve,
 			cmd_logical_resolve_usage, NULL, 0 },
+		{ "subvolid-resolve", cmd_subvolid_resolve,
+			cmd_subvolid_resolve_usage, NULL, 0 },
 		{ 0, 0, 0, 0, 0 }
 	}
 };

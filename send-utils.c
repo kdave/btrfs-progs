@@ -23,6 +23,105 @@
 #include "ioctl.h"
 #include "btrfs-list.h"
 
+static int btrfs_subvolid_resolve_sub(int fd, char *path, size_t *path_len,
+				      u64 subvol_id);
+
+int btrfs_subvolid_resolve(int fd, char *path, size_t path_len, u64 subvol_id)
+{
+	if (path_len < 1)
+		return -EOVERFLOW;
+	path[0] = '\0';
+	path_len--;
+	path[path_len] = '\0';
+	return btrfs_subvolid_resolve_sub(fd, path, &path_len, subvol_id);
+}
+
+static int btrfs_subvolid_resolve_sub(int fd, char *path, size_t *path_len,
+				      u64 subvol_id)
+{
+	int ret;
+	struct btrfs_ioctl_search_args search_arg;
+	struct btrfs_ioctl_ino_lookup_args ino_lookup_arg;
+	struct btrfs_ioctl_search_header *search_header;
+	struct btrfs_root_ref *backref_item;
+
+	if (subvol_id == BTRFS_FS_TREE_OBJECTID) {
+		if (*path_len < 1)
+			return -EOVERFLOW;
+		*path = '\0';
+		(*path_len)--;
+		return 0;
+	}
+
+	memset(&search_arg, 0, sizeof(search_arg));
+	search_arg.key.tree_id = BTRFS_ROOT_TREE_OBJECTID;
+	search_arg.key.min_objectid = subvol_id;
+	search_arg.key.max_objectid = subvol_id;
+	search_arg.key.min_type = BTRFS_ROOT_BACKREF_KEY;
+	search_arg.key.max_type = BTRFS_ROOT_BACKREF_KEY;
+	search_arg.key.max_offset = (u64)-1;
+	search_arg.key.max_transid = (u64)-1;
+	search_arg.key.nr_items = 1;
+	ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &search_arg);
+	if (ret) {
+		fprintf(stderr,
+			"ioctl(BTRFS_IOC_TREE_SEARCH, subvol_id %llu) ret=%d, error: %s\n",
+			(unsigned long long)subvol_id, ret, strerror(errno));
+		return ret;
+	}
+
+	if (search_arg.key.nr_items < 1) {
+		fprintf(stderr,
+			"failed to lookup subvol_id %llu!\n",
+			(unsigned long long)subvol_id);
+		return -ENOENT;
+	}
+	search_header = (struct btrfs_ioctl_search_header *)search_arg.buf;
+	backref_item = (struct btrfs_root_ref *)(search_header + 1);
+	if (search_header->offset != BTRFS_FS_TREE_OBJECTID) {
+		int sub_ret;
+
+		sub_ret = btrfs_subvolid_resolve_sub(fd, path, path_len,
+						     search_header->offset);
+		if (sub_ret)
+			return sub_ret;
+		if (*path_len < 1)
+			return -EOVERFLOW;
+		strcat(path, "/");
+		(*path_len)--;
+	}
+
+	if (btrfs_stack_root_ref_dirid(backref_item) !=
+	    BTRFS_FIRST_FREE_OBJECTID) {
+		int len;
+
+		memset(&ino_lookup_arg, 0, sizeof(ino_lookup_arg));
+		ino_lookup_arg.treeid = search_header->offset;
+		ino_lookup_arg.objectid =
+			btrfs_stack_root_ref_dirid(backref_item);
+		ret = ioctl(fd, BTRFS_IOC_INO_LOOKUP, &ino_lookup_arg);
+		if (ret) {
+			fprintf(stderr,
+				"ioctl(BTRFS_IOC_INO_LOOKUP) ret=%d, error: %s\n",
+				ret, strerror(errno));
+			return ret;
+		}
+
+		len = strlen(ino_lookup_arg.name);
+		if (*path_len < len)
+			return -EOVERFLOW;
+		strcat(path, ino_lookup_arg.name);
+		(*path_len) -= len;
+	}
+
+	if (*path_len < btrfs_stack_root_ref_name_len(backref_item))
+		return -EOVERFLOW;
+	strncat(path, (char *)(backref_item + 1),
+		btrfs_stack_root_ref_name_len(backref_item));
+	(*path_len) -= btrfs_stack_root_ref_name_len(backref_item);
+	return 0;
+}
+
 static struct rb_node *tree_insert(struct rb_root *root,
 				   struct subvol_info *si,
 				   enum subvol_search_type type)
