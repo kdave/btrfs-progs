@@ -585,6 +585,9 @@ static void print_objectid(u64 objectid, u8 type)
 	case BTRFS_MULTIPLE_OBJECTIDS:
 		printf("MULTIPLE");
 		break;
+	case (u64)-1:
+		printf("-1");
+		break;
 	case BTRFS_FIRST_CHUNK_TREE_OBJECTID:
 		if (type == BTRFS_CHUNK_ITEM_KEY) {
 			printf("FIRST_CHUNK_TREE");
@@ -614,7 +617,10 @@ void btrfs_print_key(struct btrfs_disk_key *disk_key)
 			(unsigned long long)(offset & ((1ll << 48) - 1)));
 		break;
 	default:
-		printf(" %llu)", (unsigned long long)offset);
+		if (offset == (u64)-1)
+			printf(" -1)");
+		else
+			printf(" %llu)", (unsigned long long)offset);
 		break;
 	}
 }
