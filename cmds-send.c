@@ -467,6 +467,13 @@ int cmd_send_start(int argc, char **argv)
 			add_clone_source(&send, root_id);
 			subvol_uuid_search_finit(&send.sus);
 			free(subvol);
+			subvol = NULL;
+			if (send.mnt_fd >= 0) {
+				close(send.mnt_fd);
+				send.mnt_fd = -1;
+			}
+			free(send.root_path);
+			send.root_path = NULL;
 			full_send = 0;
 			break;
 		case 'f':
@@ -475,7 +482,8 @@ int cmd_send_start(int argc, char **argv)
 		case 'p':
 			if (snapshot_parent) {
 				fprintf(stderr, "ERROR: you cannot have more than one parent (-p)\n");
-				return 1;
+				ret = 1;
+				goto out;
 			}
 			snapshot_parent = realpath(optarg, NULL);
 			if (!snapshot_parent) {
@@ -489,17 +497,20 @@ int cmd_send_start(int argc, char **argv)
 		case 'i':
 			fprintf(stderr,
 				"ERROR: -i was removed, use -c instead\n");
-			return 1;
+			ret = 1;
+			goto out;
 		case '?':
 		default:
 			fprintf(stderr, "ERROR: send args invalid.\n");
-			return 1;
+			ret = 1;
+			goto out;
 		}
 	}
 
 	if (optind == argc) {
 		fprintf(stderr, "ERROR: send needs path to snapshot\n");
-		return 1;
+		ret = 1;
+		goto out;
 	}
 
 	if (outname != NULL) {
@@ -516,7 +527,8 @@ int cmd_send_start(int argc, char **argv)
 		fprintf(stderr, 
 			"ERROR: not dumping send stream into a terminal, "
 			"redirect it into a file\n");
-		return 1;
+		ret = 1;
+		goto out;
 	}
 
 	/* use first send subvol to determine mount_root */
@@ -547,6 +559,7 @@ int cmd_send_start(int argc, char **argv)
 	}
 
 	for (i = optind; i < argc; i++) {
+		free(subvol);
 		subvol = realpath(argv[i], NULL);
 		if (!subvol) {
 			ret = -errno;
@@ -578,10 +591,10 @@ int cmd_send_start(int argc, char **argv)
 					subvol);
 			goto out;
 		}
-		free(subvol);
 	}
 
 	for (i = optind; i < argc; i++) {
+		free(subvol);
 		subvol = argv[i];
 
 		fprintf(stderr, "At subvol %s\n", subvol);
@@ -630,14 +643,17 @@ int cmd_send_start(int argc, char **argv)
 
 		parent_root_id = 0;
 		full_send = 0;
-		free(subvol);
 	}
 
 	ret = 0;
 
 out:
+	free(subvol);
+	free(snapshot_parent);
+	free(send.clone_sources);
 	if (send.mnt_fd >= 0)
 		close(send.mnt_fd);
+	free(send.root_path);
 	subvol_uuid_search_finit(&send.sus);
 	return ret;
 }
