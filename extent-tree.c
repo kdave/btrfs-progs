@@ -27,6 +27,7 @@
 #include "crc32c.h"
 #include "volumes.h"
 #include "free-space-cache.h"
+#include "math.h"
 
 #define PENDING_EXTENT_INSERT 0
 #define PENDING_EXTENT_DELETE 1
@@ -298,15 +299,6 @@ wrapped:
 	}
 	*cache_ret = cache;
 	goto again;
-}
-
-static u64 div_factor(u64 num, int factor)
-{
-	if (factor == 10)
-		return num;
-	num *= factor;
-	num /= 10;
-	return num;
 }
 
 static int block_group_state_bits(u64 flags)

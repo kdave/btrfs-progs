@@ -29,6 +29,7 @@
 #include "transaction.h"
 #include "print-tree.h"
 #include "volumes.h"
+#include "math.h"
 
 struct stripe {
 	struct btrfs_device *dev;
@@ -628,14 +629,6 @@ int btrfs_add_system_chunk(struct btrfs_trans_handle *trans,
 	item_size += sizeof(disk_key);
 	btrfs_set_super_sys_array_size(super_copy, array_size + item_size);
 	return 0;
-}
-
-static u64 div_factor(u64 num, int factor)
-{
-	if (factor == 10)
-		return num;
-	num *= factor;
-	return num / 10;
 }
 
 static u64 chunk_bytes_by_type(u64 type, u64 calc_size, int num_stripes,
