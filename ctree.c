@@ -42,11 +42,7 @@ inline void btrfs_init_path(struct btrfs_path *p)
 struct btrfs_path *btrfs_alloc_path(void)
 {
 	struct btrfs_path *path;
-	path = kmalloc(sizeof(struct btrfs_path), GFP_NOFS);
-	if (path) {
-		btrfs_init_path(path);
-		path->reada = 0;
-	}
+	path = kzalloc(sizeof(struct btrfs_path), GFP_NOFS);
 	return path;
 }
 
