@@ -2188,10 +2188,6 @@ int btrfs_split_item(struct btrfs_trans_handle *trans,
 int btrfs_search_slot(struct btrfs_trans_handle *trans, struct btrfs_root
 		      *root, struct btrfs_key *key, struct btrfs_path *p, int
 		      ins_len, int cow);
-int btrfs_realloc_node(struct btrfs_trans_handle *trans,
-		       struct btrfs_root *root, struct extent_buffer *parent,
-		       int start_slot, int cache_only, u64 *last_ret,
-		       struct btrfs_key *progress);
 void btrfs_release_path(struct btrfs_root *root, struct btrfs_path *p);
 void add_root_to_dirty_list(struct btrfs_root *root);
 struct btrfs_path *btrfs_alloc_path(void);
@@ -2226,8 +2222,6 @@ static inline int btrfs_insert_empty_item(struct btrfs_trans_handle *trans,
 int btrfs_next_leaf(struct btrfs_root *root, struct btrfs_path *path);
 int btrfs_prev_leaf(struct btrfs_root *root, struct btrfs_path *path);
 int btrfs_leaf_free_space(struct btrfs_root *root, struct extent_buffer *leaf);
-int btrfs_drop_snapshot(struct btrfs_trans_handle *trans, struct btrfs_root
-			*root);
 int btrfs_set_item_key_safe(struct btrfs_trans_handle *trans,
 			    struct btrfs_root *root, struct btrfs_path *path,
 			    struct btrfs_key *new_key);
@@ -2248,8 +2242,6 @@ int btrfs_update_root(struct btrfs_trans_handle *trans, struct btrfs_root
 		      *item);
 int btrfs_find_last_root(struct btrfs_root *root, u64 objectid, struct
 			 btrfs_root_item *item, struct btrfs_key *key);
-int btrfs_find_dead_roots(struct btrfs_root *root, u64 objectid,
-			  struct btrfs_root *latest_root);
 /* dir-item.c */
 int btrfs_insert_dir_item(struct btrfs_trans_handle *trans, struct btrfs_root
 			  *root, const char *name, int name_len, u64 dir,
