@@ -2152,8 +2152,6 @@ int btrfs_check_node(struct btrfs_root *root,
 int btrfs_check_leaf(struct btrfs_root *root,
 		      struct btrfs_disk_key *parent_key,
 		      struct extent_buffer *buf);
-int btrfs_fsck_reinit_root(struct btrfs_trans_handle *trans,
-			   struct btrfs_root *root, int overwrite);
 void reada_for_search(struct btrfs_root *root, struct btrfs_path *path,
 			     int level, int slot, u64 objectid);
 struct extent_buffer *read_node_slot(struct btrfs_root *root,
@@ -2195,6 +2193,7 @@ int btrfs_realloc_node(struct btrfs_trans_handle *trans,
 		       int start_slot, int cache_only, u64 *last_ret,
 		       struct btrfs_key *progress);
 void btrfs_release_path(struct btrfs_root *root, struct btrfs_path *p);
+void add_root_to_dirty_list(struct btrfs_root *root);
 struct btrfs_path *btrfs_alloc_path(void);
 void btrfs_free_path(struct btrfs_path *p);
 void btrfs_init_path(struct btrfs_path *p);
