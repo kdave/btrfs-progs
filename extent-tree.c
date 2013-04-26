@@ -954,17 +954,19 @@ static noinline int insert_tree_block_ref(struct btrfs_trans_handle *trans,
 
 static inline int extent_ref_type(u64 parent, u64 owner)
 {
+	int type;
 	if (owner < BTRFS_FIRST_FREE_OBJECTID) {
 		if (parent > 0)
-			return BTRFS_SHARED_BLOCK_REF_KEY;
+			type = BTRFS_SHARED_BLOCK_REF_KEY;
 		else
-			return BTRFS_TREE_BLOCK_REF_KEY;
+			type = BTRFS_TREE_BLOCK_REF_KEY;
 	} else {
 		if (parent > 0)
-			return BTRFS_SHARED_DATA_REF_KEY;
+			type = BTRFS_SHARED_DATA_REF_KEY;
 		else
-			return BTRFS_EXTENT_DATA_REF_KEY;
+			type = BTRFS_EXTENT_DATA_REF_KEY;
 	}
+	return type;
 }
 
 static int find_next_key(struct btrfs_path *path, struct btrfs_key *key)
