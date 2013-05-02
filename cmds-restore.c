@@ -708,6 +708,7 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 					goto next;
 				}
 
+				location.offset = (u64)-1;
 				search_root = btrfs_read_fs_root(root->fs_info,
 								 &location);
 				if (IS_ERR(search_root)) {
