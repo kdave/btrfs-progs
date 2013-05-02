@@ -193,6 +193,8 @@ clean :
 install: $(libs) $(progs) install-man
 	$(INSTALL) -m755 -d $(DESTDIR)$(bindir)
 	$(INSTALL) $(progs) $(DESTDIR)$(bindir)
+	# btrfsck is a link to btrfs in the src tree, make it so for installed file as well
+	$(LN) -f $(DESTDIR)$(bindir)/btrfs $(DESTDIR)$(bindir)/btrfsck
 	$(INSTALL) -m755 -d $(DESTDIR)$(libdir)
 	$(INSTALL) $(libs) $(DESTDIR)$(libdir)
 	cp -a $(lib_links) $(DESTDIR)$(libdir)
