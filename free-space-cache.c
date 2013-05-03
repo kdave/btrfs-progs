@@ -808,8 +808,6 @@ int btrfs_add_free_space(struct btrfs_free_space_ctl *ctl, u64 offset,
 	try_merge_free_space(ctl, info);
 
 	ret = link_free_space(ctl, info);
-	if (ret)
-
 	if (ret) {
 		printk(KERN_CRIT "btrfs: unable to add free space :%d\n", ret);
 		BUG_ON(ret == -EEXIST);

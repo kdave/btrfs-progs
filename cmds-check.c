@@ -2799,8 +2799,15 @@ static int check_space_cache(struct btrfs_root *root)
 
 		start = cache->key.objectid + cache->key.offset;
 		if (!cache->free_space_ctl) {
-			if (btrfs_init_free_space_ctl(cache,
-						      root->leafsize)) {
+			int sectorsize;
+
+			if (cache->flags & (BTRFS_BLOCK_GROUP_METADATA |
+					    BTRFS_BLOCK_GROUP_SYSTEM))
+				sectorsize = root->leafsize;
+			else
+				sectorsize = root->sectorsize;
+
+			if (btrfs_init_free_space_ctl(cache, sectorsize)) {
 				ret = -ENOMEM;
 				break;
 			}
