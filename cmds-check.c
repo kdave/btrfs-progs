@@ -1221,7 +1221,7 @@ static int walk_down_tree(struct btrfs_root *root, struct btrfs_path *path,
 	struct extent_buffer *next;
 	struct extent_buffer *cur;
 	u32 blocksize;
-	int ret;
+	int ret, err = 0;
 	u64 refs;
 
 	WARN_ON(*level < 0);
@@ -1229,14 +1229,18 @@ static int walk_down_tree(struct btrfs_root *root, struct btrfs_path *path,
 	ret = btrfs_lookup_extent_info(NULL, root,
 				       path->nodes[*level]->start,
 				       *level, 1, &refs, NULL);
-	if (ret < 0)
+	if (ret < 0) {
+		err = ret;
 		goto out;
+	}
 
 	if (refs > 1) {
 		ret = enter_shared_node(root, path->nodes[*level]->start,
 					refs, wc, *level);
-		if (ret > 0)
+		if (ret > 0) {
+			err = ret;
 			goto out;
+		}
 	}
 
 	while (*level >= 0) {
@@ -1276,6 +1280,10 @@ static int walk_down_tree(struct btrfs_root *root, struct btrfs_path *path,
 			reada_walk_down(root, cur, path->slots[*level]);
 			next = read_tree_block(root, bytenr, blocksize,
 					       ptr_gen);
+			if (!next) {
+				err = -EIO;
+				goto out;
+			}
 		}
 
 		*level = *level - 1;
@@ -1285,7 +1293,7 @@ static int walk_down_tree(struct btrfs_root *root, struct btrfs_path *path,
 	}
 out:
 	path->slots[*level] = btrfs_header_nritems(path->nodes[*level]);
-	return 0;
+	return err;
 }
 
 static int walk_up_tree(struct btrfs_root *root, struct btrfs_path *path,
