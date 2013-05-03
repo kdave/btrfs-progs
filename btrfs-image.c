@@ -506,7 +506,8 @@ static int flush_pending(struct metadump_struct *md, int done)
 		}
 
 		while (!md->data && size > 0) {
-			eb = read_tree_block(md->root, start, blocksize, 0);
+			u64 this_read = min(blocksize, size);
+			eb = read_tree_block(md->root, start, this_read, 0);
 			if (!eb) {
 				free(async->buffer);
 				free(async);
@@ -516,9 +517,9 @@ static int flush_pending(struct metadump_struct *md, int done)
 			}
 			copy_buffer(async->buffer + offset, eb);
 			free_extent_buffer(eb);
-			start += blocksize;
-			offset += blocksize;
-			size -= blocksize;
+			start += this_read;
+			offset += this_read;
+			size -= this_read;
 		}
 
 		md->pending_start = (u64)-1;
