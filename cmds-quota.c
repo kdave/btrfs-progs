@@ -94,10 +94,11 @@ static int cmd_quota_disable(int argc, char **argv)
 }
 
 static const char * const cmd_quota_rescan_usage[] = {
-	"btrfs quota rescan [-s] <path>",
+	"btrfs quota rescan [-sw] <path>",
 	"Trash all qgroup numbers and scan the metadata again with the current config.",
 	"",
 	"-s   show status of a running rescan operation",
+	"-w   wait for rescan operation to finish (can be already in progress)",
 	NULL
 };
 
@@ -110,19 +111,28 @@ static int cmd_quota_rescan(int argc, char **argv)
 	struct btrfs_ioctl_quota_rescan_args args;
 	int ioctlnum = BTRFS_IOC_QUOTA_RESCAN;
 	DIR *dirstream = NULL;
+	int wait_for_completion = 0;
 
 	optind = 1;
 	while (1) {
-		int c = getopt(argc, argv, "s");
+		int c = getopt(argc, argv, "sw");
 		if (c < 0)
 			break;
 		switch (c) {
 		case 's':
 			ioctlnum = BTRFS_IOC_QUOTA_RESCAN_STATUS;
 			break;
+		case 'w':
+			wait_for_completion = 1;
+			break;
 		default:
 			usage(cmd_quota_rescan_usage);
 		}
+	}
+
+	if (ioctlnum != BTRFS_IOC_QUOTA_RESCAN && wait_for_completion) {
+		fprintf(stderr, "ERROR: -w cannot be used with -s\n");
+		return 12;
 	}
 
 	if (check_argc_exact(argc - optind, 1))
@@ -139,6 +149,11 @@ static int cmd_quota_rescan(int argc, char **argv)
 
 	ret = ioctl(fd, ioctlnum, &args);
 	e = errno;
+
+	if (wait_for_completion && (ret == 0 || e == EINPROGRESS)) {
+		ret = ioctl(fd, BTRFS_IOC_QUOTA_RESCAN_WAIT, &args);
+		e = errno;
+	}
 	close_file_or_dir(fd, dirstream);
 
 	if (ioctlnum == BTRFS_IOC_QUOTA_RESCAN) {
