@@ -89,9 +89,9 @@ int csum_tree_block_size(struct extent_buffer *buf, u16 csum_size,
 
 	if (verify) {
 		if (memcmp_extent_buffer(buf, result, 0, csum_size)) {
-			printk("checksum verify failed on %llu found %X "
-			       "wanted %X\n", (unsigned long long)buf->start,
-			       *((int *)result), *((char *)buf->data));
+			printk("checksum verify failed on %llu found %08X "
+			       "wanted %08X\n", (unsigned long long)buf->start,
+			       *((u32 *)result), *((u32*)(char *)buf->data));
 			free(result);
 			return 1;
 		}
