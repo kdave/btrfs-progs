@@ -429,6 +429,7 @@ struct btrfs_ioctl_quota_ctl_args {
 struct btrfs_ioctl_quota_rescan_args {
 	__u64	flags;
 	__u64   progress;
+	__u64   reserved[6];
 };
 
 struct btrfs_ioctl_qgroup_assign_args {
