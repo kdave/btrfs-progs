@@ -1180,7 +1180,7 @@ static int filter_full_path(struct root_info *ri, u64 data)
 
 static int filter_by_parent(struct root_info *ri, u64 data)
 {
-	return !uuid_compare(ri->puuid, (u8 *)data);
+	return !uuid_compare(ri->puuid, (u8 *)(unsigned long)data);
 }
 
 static btrfs_list_filter_func all_filter_funcs[] = {

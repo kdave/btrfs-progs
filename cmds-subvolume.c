@@ -920,7 +920,7 @@ static int cmd_subvol_show(int argc, char **argv)
 	printf("\tSnapshot(s):\n");
 	filter_set = btrfs_list_alloc_filter_set();
 	btrfs_list_setup_filter(&filter_set, BTRFS_LIST_FILTER_BY_PARENT,
-				(u64)get_ri.uuid);
+				(u64)(unsigned long)get_ri.uuid);
 	btrfs_list_setup_print_column(BTRFS_LIST_PATH);
 	btrfs_list_subvols_print(fd, filter_set, NULL, BTRFS_LIST_LAYOUT_RAW,
 			1, raw_prefix);

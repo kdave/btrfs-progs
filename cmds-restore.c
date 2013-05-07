@@ -113,7 +113,8 @@ static int decompress_lzo(unsigned char *inbuf, char *outbuf, u64 compress_len,
 
 		new_len = lzo1x_worst_compress(PAGE_CACHE_SIZE);
 		ret = lzo1x_decompress_safe((const unsigned char *)inbuf, in_len,
-					    (unsigned char *)outbuf, &new_len, NULL);
+					    (unsigned char *)outbuf,
+					    (void *)&new_len, NULL);
 		if (ret != LZO_E_OK) {
 			fprintf(stderr, "failed to inflate: %d\n", ret);
 			return -1;
