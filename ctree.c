@@ -638,6 +638,12 @@ int btrfs_check_leaf(struct btrfs_root *root,
 	struct btrfs_disk_key key;
 	u32 nritems = btrfs_header_nritems(buf);
 
+	if (nritems * sizeof(struct btrfs_item) > buf->len)  {
+		fprintf(stderr, "invalid number of items %llu\n",
+			(unsigned long long)buf->start);
+		goto fail;
+	}
+
 	if (btrfs_header_level(buf) != 0) {
 		fprintf(stderr, "leaf is not a leaf %llu\n",
 		       (unsigned long long)btrfs_header_bytenr(buf));
