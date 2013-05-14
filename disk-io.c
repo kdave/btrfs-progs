@@ -538,7 +538,10 @@ static int commit_tree_roots(struct btrfs_trans_handle *trans,
 		list_del_init(next);
 		root = list_entry(next, struct btrfs_root, dirty_list);
 		update_cowonly_root(trans, root);
+		free_extent_buffer(root->commit_root);
+		root->commit_root = NULL;
 	}
+
 	return 0;
 }
 

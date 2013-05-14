@@ -2182,6 +2182,12 @@ void btrfs_pin_extent(struct btrfs_fs_info *fs_info,
 	update_pinned_extents(fs_info->extent_root, bytenr, num_bytes, 1);
 }
 
+void btrfs_unpin_extent(struct btrfs_fs_info *fs_info,
+			u64 bytenr, u64 num_bytes)
+{
+	update_pinned_extents(fs_info->extent_root, bytenr, num_bytes, 0);
+}
+
 /*
  * remove an extent from the root, returns 0 on success
  */
