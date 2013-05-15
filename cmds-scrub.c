@@ -1025,6 +1025,27 @@ int mkdir_p(char *path)
 	return 0;
 }
 
+static int is_scrub_running_on_fs(struct btrfs_ioctl_fs_info_args *fi_args,
+				  struct btrfs_ioctl_dev_info_args *di_args,
+				  struct scrub_file_record **past_scrubs)
+{
+	int i;
+
+	if (!fi_args || !di_args || !past_scrubs)
+		return 0;
+
+	for (i = 0; i < fi_args->num_devices; i++) {
+		struct scrub_file_record *sfr =
+			last_dev_scrub(past_scrubs, di_args[i].devid);
+
+		if (!sfr)
+			continue;
+		if (!(sfr->stats.finished || sfr->stats.canceled))
+			return 1;
+	}
+	return 0;
+}
+
 static const char * const cmd_scrub_start_usage[];
 static const char * const cmd_scrub_resume_usage[];
 
@@ -1160,6 +1181,27 @@ static int scrub_start(int argc, char **argv, int resume)
 			ERR(!do_quiet, "WARNING: failed to read status file: "
 			    "%s\n", strerror(-PTR_ERR(past_scrubs)));
 		close(fdres);
+	}
+
+	/*
+	 * check whether any involved device is already busy running a
+	 * scrub. This would cause damaged status messages and the state
+	 * "aborted" without the explanation that a scrub was already
+	 * running. Therefore check it first, prevent it and give some
+	 * feedback to the user if scrub is already running.
+	 * Note that if scrub is started with a block device as the
+	 * parameter, only that particular block device is checked. It
+	 * is a normal mode of operation to start scrub on multiple
+	 * single devices, there is no reason to prevent this.
+	 */
+	if (is_scrub_running_on_fs(&fi_args, di_args, past_scrubs)) {
+		ERR(!do_quiet,
+		    "ERROR: scrub is already running.\n"
+		    "To cancel use 'btrfs scrub cancel %s'.\n"
+		    "To see the status use 'btrfs scrub status [-d] %s'.\n",
+		    path, path);
+		err = 1;
+		goto out;
 	}
 
 	t_devs = malloc(fi_args.num_devices * sizeof(*t_devs));
