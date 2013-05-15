@@ -314,7 +314,7 @@ int __load_free_space_cache(struct btrfs_root *root,
 				    struct btrfs_inode_item);
 	if (btrfs_inode_generation(leaf, inode_item) != generation) {
 		printf("free space inode generation (%llu) did not match "
-		       "free space cache generation (%llu)",
+		       "free space cache generation (%llu)\n",
 		       (unsigned long long)btrfs_inode_generation(leaf,
 								  inode_item),
 		       (unsigned long long)generation);
