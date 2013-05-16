@@ -322,6 +322,7 @@ static void print_usage(void)
 	fprintf(stderr, "\t -s --sectorsize min block allocation\n");
 	fprintf(stderr, "\t -r --rootdir the source directory\n");
 	fprintf(stderr, "\t -K --nodiscard do not perform whole device TRIM\n");
+	fprintf(stderr, "\t -O --features comma separated list of filesystem features\n");
 	fprintf(stderr, "\t -V --version print the mkfs.btrfs version and exit\n");
 	fprintf(stderr, "%s\n", BTRFS_BUILD_VERSION);
 	exit(1);
@@ -383,6 +384,7 @@ static struct option long_options[] = {
 	{ "version", 0, NULL, 'V' },
 	{ "rootdir", 1, NULL, 'r' },
 	{ "nodiscard", 0, NULL, 'K' },
+	{ "features", 0, NULL, 'O' },
 	{ 0, 0, 0, 0}
 };
 
@@ -1239,6 +1241,87 @@ static int is_ssd(const char *file)
 	return !atoi((const char *)&rotational);
 }
 
+#define BTRFS_FEATURE_LIST_ALL		(1ULL << 63)
+
+static const struct btrfs_fs_feature {
+	const char *name;
+	u64 flag;
+	const char *desc;
+} mkfs_features[] = {
+	{ "mixed-bg", BTRFS_FEATURE_INCOMPAT_MIXED_GROUPS,
+		"mixed data and metadata block groups" },
+	{ "extref", BTRFS_FEATURE_INCOMPAT_EXTENDED_IREF,
+		"increased hardlink limit per file to 65536" },
+	{ "raid56", BTRFS_FEATURE_INCOMPAT_RAID56,
+		"raid56 extended format" },
+	{ "skinny-metadata", BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA,
+		"reduced-size metadata extent refs" },
+	/* Keep this one last */
+	{ "list-all", BTRFS_FEATURE_LIST_ALL, NULL }
+};
+
+static void list_all_fs_features(void)
+{
+	int i;
+
+	fprintf(stderr, "Filesystem features available at mkfs time:\n");
+	for (i = 0; i < ARRAY_SIZE(mkfs_features) - 1; i++) {
+		fprintf(stderr, "%-20s- %s (0x%llx)\n",
+				mkfs_features[i].name,
+				mkfs_features[i].desc,
+				mkfs_features[i].flag);
+	}
+}
+
+static int parse_one_fs_feature(const char *name, u64 *flags)
+{
+	int i;
+	int found = 0;
+
+	for (i = 0; i < ARRAY_SIZE(mkfs_features); i++) {
+		if (!strcmp(mkfs_features[i].name, name)) {
+			*flags |= mkfs_features[i].flag;
+			found = 1;
+		}
+	}
+
+	return !found;
+}
+
+static void process_fs_features(u64 flags)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(mkfs_features); i++) {
+		if (flags & mkfs_features[i].flag) {
+			fprintf(stderr,
+				"Turning ON incompat feature '%s': %s\n",
+				mkfs_features[i].name,
+				mkfs_features[i].desc);
+		}
+	}
+}
+
+
+/*
+ * Return NULL if all features were parsed fine, otherwise return the name of
+ * the first unparsed.
+ */
+static char* parse_fs_features(char *namelist, u64 *flags)
+{
+	char *this_char;
+	char *save_ptr = NULL; /* Satisfy static checkers */
+
+	for (this_char = strtok_r(namelist, ",", &save_ptr);
+	     this_char != NULL;
+	     this_char = strtok_r(NULL, ",", &save_ptr)) {
+		if (parse_one_fs_feature(this_char, flags))
+			return this_char;
+	}
+
+	return NULL;
+}
+
 int main(int ac, char **av)
 {
 	char *file;
@@ -1279,10 +1362,11 @@ int main(int ac, char **av)
 	int dev_cnt = 0;
 	int saved_optind;
 	char estr[100];
+	u64 features = 0;
 
 	while(1) {
 		int c;
-		c = getopt_long(ac, av, "A:b:fl:n:s:m:d:L:r:VMK",
+		c = getopt_long(ac, av, "A:b:fl:n:s:m:d:L:O:r:VMK",
 				long_options, &option_index);
 		if (c < 0)
 			break;
@@ -1312,6 +1396,25 @@ int main(int ac, char **av)
 			case 'M':
 				mixed = 1;
 				break;
+			case 'O': {
+				char *orig = strdup(optarg);
+				char *tmp = orig;
+
+				tmp = parse_fs_features(tmp, &features);
+				if (tmp) {
+					fprintf(stderr,
+						"Unrecognized filesystem feature '%s'\n",
+							tmp);
+					free(orig);
+					exit(1);
+				}
+				free(orig);
+				if (features & BTRFS_FEATURE_LIST_ALL) {
+					list_all_fs_features();
+					exit(0);
+				}
+				break;
+				}
 			case 's':
 				sectorsize = parse_size(optarg);
 				break;
@@ -1507,20 +1610,21 @@ raid_groups:
 	super = root->fs_info->super_copy;
 	flags = btrfs_super_incompat_flags(super);
 
+	/*
+	 * FS features that can be set by other means than -O
+	 * just set the bit here
+	 */
 	if (mixed)
-		flags |= BTRFS_FEATURE_INCOMPAT_MIXED_GROUPS;
-
-	btrfs_set_super_incompat_flags(super, flags);
+		features |= BTRFS_FEATURE_INCOMPAT_MIXED_GROUPS;
 
 	if ((data_profile | metadata_profile) &
 	    (BTRFS_BLOCK_GROUP_RAID5 | BTRFS_BLOCK_GROUP_RAID6)) {
-		struct btrfs_super_block *super = root->fs_info->super_copy;
-		u64 flags = btrfs_super_incompat_flags(super);
-
-		flags |= BTRFS_FEATURE_INCOMPAT_RAID56;
-		btrfs_set_super_incompat_flags(super, flags);
-		printf("Setting RAID5/6 feature flag\n");
+		features |= BTRFS_FEATURE_INCOMPAT_RAID56;
 	}
+
+	process_fs_features(features);
+	flags |= features;
+	btrfs_set_super_incompat_flags(super, flags);
 
 	printf("fs created label %s on %s\n\tnodesize %u leafsize %u "
 	    "sectorsize %u size %s\n",

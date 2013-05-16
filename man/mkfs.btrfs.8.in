@@ -15,6 +15,7 @@ mkfs.btrfs \- create a btrfs filesystem
 [ \fB\-s\fP\fI sectorsize\fP ]
 [ \fB\-r\fP\fI rootdir\fP ]
 [ \fB\-K\fP ]
+[ \fB\-O\fP\fI feature1,feature2,...\fP ]
 [ \fB\-h\fP ]
 [ \fB\-V\fP ]
 \fI device\fP [ \fIdevice ...\fP ]
@@ -76,6 +77,14 @@ Specify a directory to copy into the newly created fs.
 .TP
 \fB\-K\fR, \fB\-\-nodiscard \fR
 Do not perform whole device TRIM operation by default.
+.TP
+\fB\-O\fR, \fB\-\-features \fIfeature1,feature2,...\fR
+A list of filesystem features turned on at mkfs time. Not all features are
+supported by old kernels.
+
+To see all run
+
+\fBmkfs.btrfs -O list-all\fR
 .TP
 \fB\-V\fR, \fB\-\-version\fR
 Print the \fBmkfs.btrfs\fP version and exit.
