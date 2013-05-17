@@ -3335,19 +3335,16 @@ error:
 	return ret;
 }
 
-int btrfs_make_block_group(struct btrfs_trans_handle *trans,
-			   struct btrfs_root *root, u64 bytes_used,
-			   u64 type, u64 chunk_objectid, u64 chunk_offset,
-			   u64 size)
+struct btrfs_block_group_cache *
+btrfs_add_block_group(struct btrfs_fs_info *fs_info, u64 bytes_used, u64 type,
+		      u64 chunk_objectid, u64 chunk_offset, u64 size)
 {
 	int ret;
 	int bit = 0;
-	struct btrfs_root *extent_root;
 	struct btrfs_block_group_cache *cache;
 	struct extent_io_tree *block_group_cache;
 
-	extent_root = root->fs_info->extent_root;
-	block_group_cache = &root->fs_info->block_group_cache;
+	block_group_cache = &fs_info->block_group_cache;
 
 	cache = kzalloc(sizeof(*cache), GFP_NOFS);
 	BUG_ON(!cache);
@@ -3360,7 +3357,7 @@ int btrfs_make_block_group(struct btrfs_trans_handle *trans,
 	cache->flags = type;
 	btrfs_set_block_group_flags(&cache->item, type);
 
-	ret = update_space_info(root->fs_info, cache->flags, size, bytes_used,
+	ret = update_space_info(fs_info, cache->flags, size, bytes_used,
 				&cache->space_info);
 	BUG_ON(ret);
 
@@ -3371,13 +3368,29 @@ int btrfs_make_block_group(struct btrfs_trans_handle *trans,
 
 	set_state_private(block_group_cache, chunk_offset,
 			  (unsigned long)cache);
+	set_avail_alloc_bits(fs_info, type);
+
+	return cache;
+}
+
+int btrfs_make_block_group(struct btrfs_trans_handle *trans,
+			   struct btrfs_root *root, u64 bytes_used,
+			   u64 type, u64 chunk_objectid, u64 chunk_offset,
+			   u64 size)
+{
+	int ret;
+	struct btrfs_root *extent_root;
+	struct btrfs_block_group_cache *cache;
+
+	cache = btrfs_add_block_group(root->fs_info, bytes_used, type,
+				      chunk_objectid, chunk_offset, size);
+	extent_root = root->fs_info->extent_root;
 	ret = btrfs_insert_item(trans, extent_root, &cache->key, &cache->item,
 				sizeof(cache->item));
 	BUG_ON(ret);
 
 	finish_current_insert(trans, extent_root);
 	ret = del_pending_extents(trans, extent_root);
-	set_avail_alloc_bits(extent_root->fs_info, type);
 	return 0;
 }
 

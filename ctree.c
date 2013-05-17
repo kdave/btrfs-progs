@@ -138,7 +138,7 @@ int btrfs_copy_root(struct btrfs_trans_handle *trans,
 }
 
 int btrfs_fsck_reinit_root(struct btrfs_trans_handle *trans,
-		      struct btrfs_root *root)
+			   struct btrfs_root *root, int overwrite)
 {
 	struct extent_buffer *c;
 	struct extent_buffer *old = root->node;
@@ -147,6 +147,11 @@ int btrfs_fsck_reinit_root(struct btrfs_trans_handle *trans,
 
 	level = 0;
 
+	if (overwrite) {
+		c = old;
+		extent_buffer_get(c);
+		goto init;
+	}
 	c = btrfs_alloc_free_block(trans, root,
 				   btrfs_level_size(root, 0),
 				   root->root_key.objectid,
@@ -155,7 +160,7 @@ int btrfs_fsck_reinit_root(struct btrfs_trans_handle *trans,
 		c = old;
 		extent_buffer_get(c);
 	}
-
+init:
 	memset_extent_buffer(c, 0, 0, sizeof(struct btrfs_header));
 	btrfs_set_header_level(c, level);
 	btrfs_set_header_bytenr(c, c->start);
