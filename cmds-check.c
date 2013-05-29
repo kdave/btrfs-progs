@@ -2853,7 +2853,10 @@ static int verify_space_cache(struct btrfs_root *root,
 		}
 
 		if (last == key.objectid) {
-			last = key.objectid + key.offset;
+			if (key.type == BTRFS_EXTENT_ITEM_KEY)
+				last = key.objectid + key.offset;
+			else
+				last = key.objectid + root->leafsize;
 			path->slots[0]++;
 			continue;
 		}
@@ -2906,15 +2909,8 @@ static int check_space_cache(struct btrfs_root *root)
 
 		start = cache->key.objectid + cache->key.offset;
 		if (!cache->free_space_ctl) {
-			int sectorsize;
-
-			if (cache->flags & (BTRFS_BLOCK_GROUP_METADATA |
-					    BTRFS_BLOCK_GROUP_SYSTEM))
-				sectorsize = root->leafsize;
-			else
-				sectorsize = root->sectorsize;
-
-			if (btrfs_init_free_space_ctl(cache, sectorsize)) {
+			if (btrfs_init_free_space_ctl(cache,
+						      root->sectorsize)) {
 				ret = -ENOMEM;
 				break;
 			}
