@@ -245,24 +245,22 @@ static int noinline find_search_start(struct btrfs_root *root,
 {
 	int ret;
 	struct btrfs_block_group_cache *cache = *cache_ret;
-	u64 last;
+	u64 last = *start_ret;
 	u64 start = 0;
 	u64 end = 0;
 	u64 search_start = *start_ret;
 	int wrapped = 0;
 
-	if (!cache) {
+	if (!cache)
 		goto out;
-	}
 again:
 	ret = cache_block_group(root, cache);
 	if (ret)
 		goto out;
 
 	last = max(search_start, cache->key.objectid);
-	if (cache->ro || !block_group_bits(cache, data)) {
+	if (cache->ro || !block_group_bits(cache, data))
 		goto new_group;
-	}
 
 	while(1) {
 		ret = find_first_extent_bit(&root->fs_info->free_space_cache,
@@ -283,6 +281,7 @@ again:
 		return 0;
 	}
 out:
+	*start_ret = last;
 	cache = btrfs_lookup_block_group(root->fs_info, search_start);
 	if (!cache) {
 		printk("Unable to find block group for %llu\n",
@@ -296,7 +295,6 @@ new_group:
 wrapped:
 	cache = btrfs_lookup_first_block_group(root->fs_info, last);
 	if (!cache) {
-no_cache:
 		if (!wrapped) {
 			wrapped = 1;
 			last = search_start;
@@ -304,11 +302,6 @@ no_cache:
 		}
 		goto out;
 	}
-	cache = btrfs_find_block_group(root, cache, last, data, 0);
-	cache = btrfs_find_block_group(root, cache, last, data, 0);
-	if (!cache)
-		goto no_cache;
-
 	*cache_ret = cache;
 	goto again;
 }
@@ -2599,7 +2592,7 @@ check_failed:
 	ret = find_search_start(root, &block_group, &search_start,
 				total_needed, data);
 	if (ret)
-		goto error;
+		goto new_group;
 
 	ins->objectid = search_start;
 	ins->offset = num_bytes;
