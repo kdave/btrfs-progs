@@ -18,6 +18,11 @@
 #ifndef SEND_STREAM_H_
 #define SEND_STREAM_H_
 
+/*
+ * NOTE: this file is public API, any incompatible change has to update
+ * library version
+ */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
