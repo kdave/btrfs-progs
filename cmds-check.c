@@ -1507,14 +1507,16 @@ static int add_root_backref(struct cache_tree *root_cache,
 	}
 
 	if (item_type == BTRFS_DIR_ITEM_KEY) {
+		if (backref->found_forward_ref)
+			rec->found_ref++;
 		backref->found_dir_item = 1;
-		backref->reachable = 1;
-		rec->found_ref++;
 	} else if (item_type == BTRFS_DIR_INDEX_KEY) {
 		backref->found_dir_index = 1;
 	} else if (item_type == BTRFS_ROOT_REF_KEY) {
 		if (backref->found_forward_ref)
 			backref->errors |= REF_ERR_DUP_ROOT_REF;
+		else if (backref->found_dir_item)
+			rec->found_ref++;
 		backref->found_forward_ref = 1;
 	} else if (item_type == BTRFS_ROOT_BACKREF_KEY) {
 		if (backref->found_back_ref)
@@ -1524,6 +1526,8 @@ static int add_root_backref(struct cache_tree *root_cache,
 		BUG_ON(1);
 	}
 
+	if (backref->found_forward_ref && backref->found_dir_item)
+		backref->reachable = 1;
 	return 0;
 }
 
