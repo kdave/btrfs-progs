@@ -1637,6 +1637,14 @@ static int check_root_refs(struct btrfs_root *root,
 						rec->objectid);
 			if (ret == 0)
 				continue;
+
+			/*
+			 * If we don't have a root item then we likely just have
+			 * a dir item in a snapshot for this root but no actual
+			 * ref key or anything so it's meaningless.
+			 */
+			if (!rec->found_root_item)
+				continue;
 			errors++;
 			fprintf(stderr, "fs tree %llu not referenced\n",
 				(unsigned long long)rec->objectid);
