@@ -355,6 +355,7 @@ again:
 					btrfs_print_tree(tree_root_scan, buf, 1);
 				}
 			}
+			free_extent_buffer(buf);
 		}
 next:
 		path.slots[0]++;
