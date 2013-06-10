@@ -195,10 +195,10 @@ int main(int ac, char **av)
 		if (!leaf) {
 			fprintf(stderr, "failed to read %llu\n",
 				(unsigned long long)block_only);
-			return 0;
+			goto close_root;
 		}
 		btrfs_print_tree(root, leaf, 0);
-		return 0;
+		goto close_root;
 	}
 
 	if (!extent_only) {
@@ -370,7 +370,7 @@ no_node:
 	}
 
 	if (extent_only || device_only)
-		return 0;
+		goto close_root;
 
 	if (root_backups)
 		print_old_roots(info->super_copy);
@@ -383,5 +383,6 @@ no_node:
 	uuid_unparse(info->super_copy->fsid, uuidbuf);
 	printf("uuid %s\n", uuidbuf);
 	printf("%s\n", BTRFS_BUILD_VERSION);
-	return 0;
+close_root:
+	return close_ctree(root);
 }
