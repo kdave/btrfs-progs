@@ -25,6 +25,42 @@
 #include "disk-io.h"
 #include "print-tree.h"
 
+
+static void print_dir_item_type(struct extent_buffer *eb,
+                                struct btrfs_dir_item *di)
+{
+	u8 type = btrfs_dir_type(eb, di);
+
+	switch (type) {
+	case BTRFS_FT_REG_FILE:
+		printf("FILE");
+		break;
+	case BTRFS_FT_DIR:
+		printf("DIR");
+		break;
+	case BTRFS_FT_CHRDEV:
+		printf("CHRDEV");
+		break;
+	case BTRFS_FT_BLKDEV:
+		printf("BLKDEV");
+		break;
+	case BTRFS_FT_FIFO:
+		printf("FIFO");
+		break;
+	case BTRFS_FT_SOCK:
+		printf("SOCK");
+		break;
+	case BTRFS_FT_SYMLINK:
+		printf("SYMLINK");
+		break;
+	case BTRFS_FT_XATTR:
+		printf("XATTR");
+		break;
+	default:
+		printf("%u", type);
+	}
+}
+
 static int print_dir_item(struct extent_buffer *eb, struct btrfs_item *item,
 			  struct btrfs_dir_item *di)
 {
@@ -41,7 +77,9 @@ static int print_dir_item(struct extent_buffer *eb, struct btrfs_item *item,
 		btrfs_dir_item_key(eb, di, &location);
 		printf("\t\tlocation ");
 		btrfs_print_key(&location);
-		printf(" type %u\n", btrfs_dir_type(eb, di));
+		printf(" type ");
+		print_dir_item_type(eb, di);
+		printf("\n");
 		name_len = btrfs_dir_name_len(eb, di);
 		data_len = btrfs_dir_data_len(eb, di);
 		len = (name_len <= sizeof(namebuf))? name_len: sizeof(namebuf);
