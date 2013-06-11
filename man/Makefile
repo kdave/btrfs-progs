@@ -23,7 +23,6 @@ all: $(MANPAGES)
 	$(Q)$(GZIPCMD) -n -c $< > $@
 
 clean :
-	@echo "Cleaning manpages"
 	$(Q)rm -f $(MANPAGES)
 
 install: $(MANPAGES)

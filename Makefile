@@ -1,3 +1,6 @@
+# Export all variables to sub-makes by default
+export
+
 CC = gcc
 LN = ln
 AR = ar
@@ -49,6 +52,18 @@ progs = mkfs.btrfs btrfs-debug-tree btrfsck \
 btrfs_convert_libs = -lext2fs -lcom_err
 btrfs_image_libs = -lpthread
 btrfs_fragment_libs = -lgd -lpng -ljpeg -lfreetype
+
+SUBDIRS = man
+BUILDDIRS = $(patsubst %,build-%,$(SUBDIRS))
+INSTALLDIRS = $(patsubst %,install-%,$(SUBDIRS))
+CLEANDIRS = $(patsubst %,clean-%,$(SUBDIRS))
+
+.PHONY: $(SUBDIRS)
+.PHONY: $(BUILDDIRS)
+.PHONY: $(INSTALLDIRS)
+.PHONY: $(TESTDIRS)
+.PHONY: $(CLEANDIRS)
+.PHONY: all install clean
 
 # Create all the static targets
 static_objects = $(patsubst %.o, %.static.o, $(objects))
@@ -102,7 +117,11 @@ endif
 	@echo "    [CC]     $@"
 	$(Q)$(CC) $(AM_CFLAGS) $(STATIC_CFLAGS) -c $< -o $@
 
-all: $(progs) manpages
+all: $(progs) manpages $(BUILDDIRS)
+$(SUBDIRS): $(BUILDDIRS)
+$(BUILDDIRS):
+	@echo "Making all in $(patsubst build-%,%,$@)"
+	$(Q)$(MAKE) $(MAKEOPTS) -C $(patsubst build-%,%,$@)
 
 #
 # NOTE: For static compiles, you need to have all the required libs
@@ -195,19 +214,19 @@ send-test: $(objects) $(libs) send-test.o
 manpages:
 	$(Q)$(MAKE) $(MAKEOPTS) -C man
 
-install-man:
-	cd man; $(MAKE) install
-
-clean :
+clean: $(CLEANDIRS)
 	@echo "Cleaning"
 	$(Q)rm -f $(progs) cscope.out *.o *.o.d btrfs-convert btrfs-image btrfs-select-super \
 	      btrfs-zero-log btrfstune dir-test ioctl-test quick-test send-test btrfsck \
 	      btrfs.static mkfs.btrfs.static btrfs-calc-size \
 	      version.h $(check_defs) \
 	      $(libs) $(lib_links)
-	$(Q)$(MAKE) $(MAKEOPTS) -C man $@
 
-install: $(libs) $(progs) install-man
+$(CLEANDIRS):
+	@echo "Cleaning $(patsubst clean-%,%,$@)"
+	$(Q)$(MAKE) $(MAKEOPTS) -C $(patsubst clean-%,%,$@) clean
+
+install: $(libs) $(progs) $(INSTALLDIRS)
 	$(INSTALL) -m755 -d $(DESTDIR)$(bindir)
 	$(INSTALL) $(progs) $(DESTDIR)$(bindir)
 	# btrfsck is a link to btrfs in the src tree, make it so for installed file as well
@@ -217,6 +236,10 @@ install: $(libs) $(progs) install-man
 	cp -a $(lib_links) $(DESTDIR)$(libdir)
 	$(INSTALL) -m755 -d $(DESTDIR)$(incdir)
 	$(INSTALL) -m644 $(headers) $(DESTDIR)$(incdir)
+
+$(INSTALLDIRS):
+	@echo "Making install in $(patsubst install-%,%,$@)"
+	$(Q)$(MAKE) $(MAKEOPTS) -C $(patsubst install-%,%,$@) install
 
 ifneq ($(MAKECMDGOALS),clean)
 -include $(objects:.o=.o.d) $(cmd-objects:.o=.o.d) $(subst .btrfs,, $(filter-out btrfsck.o.d, $(progs:=.o.d)))
