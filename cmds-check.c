@@ -5855,7 +5855,7 @@ int cmd_check(int argc, char **argv)
 			return -EIO;
 		}
 
-		ret = btrfs_commit_transaction(trans, root);
+		ret = btrfs_commit_transaction(trans, info->csum_root);
 		if (ret)
 			exit(1);
 		goto out;
