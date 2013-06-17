@@ -265,22 +265,13 @@ it with the new desired size.  When recreating the partition make sure to use
 the same starting disk cylinder as before.
 .TP
 
-\fBfilesystem label\fP\fI <dev> [newlabel]\fP
-Show or update the label of a filesystem. \fI<dev>\fR is used to identify the
-filesystem. 
+\fBfilesystem label\fP\fI [<device>|<mountpoint>] [newlabel]\fP
+Show or update the label of a filesystem. \fI[<device>|<mountpoint>]\fR is used
+to identify the filesystem. 
 If a \fInewlabel\fR optional argument is passed, the label is changed. The
 following constraints exist for a label:
 .IP
-- the maximum allowable length shall be less or equal than 256 chars
-.IP
-- the label shall not  contain the '/' or '\\' characters.
-
-NOTE: Currently there are the following limitations:
-.IP
-- the filesystem has to be unmounted
-.IP
-- the filesystem should not have more than one device.
-.TP
+- the maximum allowable length shall be less than 256 chars
 
 \fBfilesystem show\fR [--all-devices|<uuid>|<label>]\fR
 Show the btrfs filesystem with some additional info. If no \fIUUID\fP or 
