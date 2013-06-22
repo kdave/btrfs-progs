@@ -126,4 +126,6 @@ int set_extent_buffer_dirty(struct extent_buffer *eb);
 int clear_extent_buffer_dirty(struct extent_buffer *eb);
 int read_data_from_disk(struct btrfs_fs_info *info, void *buf, u64 offset,
 			u64 bytes, int mirror);
+int write_data_to_disk(struct btrfs_fs_info *info, void *buf, u64 offset,
+		       u64 bytes, int mirror);
 #endif

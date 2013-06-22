@@ -182,7 +182,7 @@ out:
 }
 
 
-static int read_whole_eb(struct btrfs_fs_info *info, struct extent_buffer *eb, int mirror)
+int read_whole_eb(struct btrfs_fs_info *info, struct extent_buffer *eb, int mirror)
 {
 	unsigned long offset = 0;
 	struct btrfs_multi_bio *multi = NULL;
@@ -193,26 +193,40 @@ static int read_whole_eb(struct btrfs_fs_info *info, struct extent_buffer *eb, i
 
 	while (bytes_left) {
 		read_len = bytes_left;
-		ret = btrfs_map_block(&info->mapping_tree, READ,
-				      eb->start + offset, &read_len, &multi,
-				      mirror, NULL);
-		if (ret) {
-			printk("Couldn't map the block %Lu\n", eb->start + offset);
-			kfree(multi);
-			return -EIO;
-		}
-		device = multi->stripes[0].dev;
+		device = NULL;
 
-		if (device->fd == 0) {
-			kfree(multi);
-			return -EIO;
-		}
+		if (!info->on_restoring) {
+			ret = btrfs_map_block(&info->mapping_tree, READ,
+					      eb->start + offset, &read_len, &multi,
+					      mirror, NULL);
+			if (ret) {
+				printk("Couldn't map the block %Lu\n", eb->start + offset);
+				kfree(multi);
+				return -EIO;
+			}
+			device = multi->stripes[0].dev;
 
-		eb->fd = device->fd;
-		device->total_ios++;
-		eb->dev_bytenr = multi->stripes[0].physical;
-		kfree(multi);
-		multi = NULL;
+			if (device->fd == 0) {
+				kfree(multi);
+				return -EIO;
+			}
+
+			eb->fd = device->fd;
+			device->total_ios++;
+			eb->dev_bytenr = multi->stripes[0].physical;
+			kfree(multi);
+			multi = NULL;
+		} else {
+			/* special case for restore metadump */
+			list_for_each_entry(device, &info->fs_devices->devices, dev_list) {
+				if (device->devid == 1)
+					break;
+			}
+
+			eb->fd = device->fd;
+			eb->dev_bytenr = eb->start;
+			device->total_ios++;
+		}
 
 		if (read_len > bytes_left)
 			read_len = bytes_left;
@@ -281,149 +295,6 @@ struct extent_buffer *read_tree_block(struct btrfs_root *root, u64 bytenr,
 	return NULL;
 }
 
-static int rmw_eb(struct btrfs_fs_info *info,
-		  struct extent_buffer *eb, struct extent_buffer *orig_eb)
-{
-	int ret;
-	unsigned long orig_off = 0;
-	unsigned long dest_off = 0;
-	unsigned long copy_len = eb->len;
-
-	ret = read_whole_eb(info, eb, 0);
-	if (ret)
-		return ret;
-
-	if (eb->start + eb->len <= orig_eb->start ||
-	    eb->start >= orig_eb->start + orig_eb->len)
-		return 0;
-	/*
-	 * | ----- orig_eb ------- |
-	 *         | ----- stripe -------  |
-	 *         | ----- orig_eb ------- |
-	 *              | ----- orig_eb ------- |
-	 */
-	if (eb->start > orig_eb->start)
-		orig_off = eb->start - orig_eb->start;
-	if (orig_eb->start > eb->start)
-		dest_off = orig_eb->start - eb->start;
-
-	if (copy_len > orig_eb->len - orig_off)
-		copy_len = orig_eb->len - orig_off;
-	if (copy_len > eb->len - dest_off)
-		copy_len = eb->len - dest_off;
-
-	memcpy(eb->data + dest_off, orig_eb->data + orig_off, copy_len);
-	return 0;
-}
-
-static void split_eb_for_raid56(struct btrfs_fs_info *info,
-				struct extent_buffer *orig_eb,
-			       struct extent_buffer **ebs,
-			       u64 stripe_len, u64 *raid_map,
-			       int num_stripes)
-{
-	struct extent_buffer *eb;
-	u64 start = orig_eb->start;
-	u64 this_eb_start;
-	int i;
-	int ret;
-
-	for (i = 0; i < num_stripes; i++) {
-		if (raid_map[i] >= BTRFS_RAID5_P_STRIPE)
-			break;
-
-		eb = malloc(sizeof(struct extent_buffer) + stripe_len);
-		if (!eb)
-			BUG();
-		memset(eb, 0, sizeof(struct extent_buffer) + stripe_len);
-
-		eb->start = raid_map[i];
-		eb->len = stripe_len;
-		eb->refs = 1;
-		eb->flags = 0;
-		eb->fd = -1;
-		eb->dev_bytenr = (u64)-1;
-
-		this_eb_start = raid_map[i];
-
-		if (start > this_eb_start ||
-		    start + orig_eb->len < this_eb_start + stripe_len) {
-			ret = rmw_eb(info, eb, orig_eb);
-			BUG_ON(ret);
-		} else {
-			memcpy(eb->data, orig_eb->data + eb->start - start, stripe_len);
-		}
-		ebs[i] = eb;
-	}
-}
-
-static int write_raid56_with_parity(struct btrfs_fs_info *info,
-				    struct extent_buffer *eb,
-				    struct btrfs_multi_bio *multi,
-				    u64 stripe_len, u64 *raid_map)
-{
-	struct extent_buffer *ebs[multi->num_stripes], *p_eb = NULL, *q_eb = NULL;
-	int i;
-	int j;
-	int ret;
-	int alloc_size = eb->len;
-
-	if (stripe_len > alloc_size)
-		alloc_size = stripe_len;
-
-	split_eb_for_raid56(info, eb, ebs, stripe_len, raid_map,
-			    multi->num_stripes);
-
-	for (i = 0; i < multi->num_stripes; i++) {
-		struct extent_buffer *new_eb;
-		if (raid_map[i] < BTRFS_RAID5_P_STRIPE) {
-			ebs[i]->dev_bytenr = multi->stripes[i].physical;
-			ebs[i]->fd = multi->stripes[i].dev->fd;
-			multi->stripes[i].dev->total_ios++;
-			BUG_ON(ebs[i]->start != raid_map[i]);
-			continue;
-		}
-		new_eb = kmalloc(sizeof(*eb) + alloc_size, GFP_NOFS);
-		BUG_ON(!new_eb);
-		new_eb->dev_bytenr = multi->stripes[i].physical;
-		new_eb->fd = multi->stripes[i].dev->fd;
-		multi->stripes[i].dev->total_ios++;
-		new_eb->len = stripe_len;
-
-		if (raid_map[i] == BTRFS_RAID5_P_STRIPE)
-			p_eb = new_eb;
-		else if (raid_map[i] == BTRFS_RAID6_Q_STRIPE)
-			q_eb = new_eb;
-	}
-	if (q_eb) {
-		void *pointers[multi->num_stripes];
-		ebs[multi->num_stripes - 2] = p_eb;
-		ebs[multi->num_stripes - 1] = q_eb;
-
-		for (i = 0; i < multi->num_stripes; i++)
-			pointers[i] = ebs[i]->data;
-
-		raid6_gen_syndrome(multi->num_stripes, stripe_len, pointers);
-	} else {
-		ebs[multi->num_stripes - 1] = p_eb;
-		memcpy(p_eb->data, ebs[0]->data, stripe_len);
-		for (j = 1; j < multi->num_stripes - 1; j++) {
-			for (i = 0; i < stripe_len; i += sizeof(unsigned long)) {
-				*(unsigned long *)(p_eb->data + i) ^=
-					*(unsigned long *)(ebs[j]->data + i);
-			}
-		}
-	}
-
-	for (i = 0; i < multi->num_stripes; i++) {
-		ret = write_extent_to_disk(ebs[i]);
-		BUG_ON(ret);
-		if (ebs[i] != eb)
-			kfree(ebs[i]);
-	}
-	return 0;
-}
-
 int write_tree_block(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 		     struct extent_buffer *eb)
 {
@@ -435,6 +306,7 @@ int write_tree_block(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 
 	if (check_tree_block(root, eb))
 		BUG();
+
 	if (!btrfs_buffer_uptodate(eb, trans->transid))
 		BUG();
 
@@ -801,7 +673,7 @@ struct btrfs_root *btrfs_read_fs_root(struct btrfs_fs_info *fs_info,
 static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 					     u64 sb_bytenr,
 					     u64 root_tree_bytenr, int writes,
-					     int partial)
+					     int partial, int restore)
 {
 	u32 sectorsize;
 	u32 nodesize;
@@ -821,6 +693,12 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 	struct btrfs_fs_devices *fs_devices = NULL;
 	u64 total_devs;
 	u64 features;
+
+	memset(tree_root, 0, sizeof(struct btrfs_root));
+	memset(extent_root, 0, sizeof(struct btrfs_root));
+	memset(chunk_root, 0, sizeof(struct btrfs_root));
+	memset(dev_root, 0, sizeof(struct btrfs_root));
+	memset(csum_root, 0, sizeof(struct btrfs_root));
 
 	if (sb_bytenr == 0)
 		sb_bytenr = BTRFS_SUPER_INFO_OFFSET;
@@ -853,6 +731,8 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 
 	if (!writes)
 		fs_info->readonly = 1;
+	if (restore)
+		fs_info->on_restoring = 1;
 
 	extent_io_tree_init(&fs_info->extent_cache);
 	extent_io_tree_init(&fs_info->free_space_cache);
@@ -1046,6 +926,29 @@ out:
 	return NULL;
 }
 
+struct btrfs_fs_info *open_ctree_fs_info_restore(const char *filename,
+					 u64 sb_bytenr, u64 root_tree_bytenr,
+					 int writes, int partial)
+{
+	int fp;
+	struct btrfs_fs_info *info;
+	int flags = O_CREAT | O_RDWR;
+	int restore = 1;
+
+	if (!writes)
+		flags = O_RDONLY;
+
+	fp = open(filename, flags, 0600);
+	if (fp < 0) {
+		fprintf (stderr, "Could not open %s\n", filename);
+		return NULL;
+	}
+	info = __open_ctree_fd(fp, filename, sb_bytenr, root_tree_bytenr,
+			       writes, partial, restore);
+	close(fp);
+	return info;
+}
+
 struct btrfs_fs_info *open_ctree_fs_info(const char *filename,
 					 u64 sb_bytenr, u64 root_tree_bytenr,
 					 int writes, int partial)
@@ -1063,7 +966,7 @@ struct btrfs_fs_info *open_ctree_fs_info(const char *filename,
 		return NULL;
 	}
 	info = __open_ctree_fd(fp, filename, sb_bytenr, root_tree_bytenr,
-			       writes, partial);
+			       writes, partial, 0);
 	close(fp);
 	return info;
 }
@@ -1082,7 +985,7 @@ struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
 				 int writes)
 {
 	struct btrfs_fs_info *info;
-	info = __open_ctree_fd(fp, path, sb_bytenr, 0, writes, 0);
+	info = __open_ctree_fd(fp, path, sb_bytenr, 0, writes, 0, 0);
 	if (!info)
 		return NULL;
 	return info->fs_root;

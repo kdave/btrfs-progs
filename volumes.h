@@ -190,4 +190,9 @@ int btrfs_add_system_chunk(struct btrfs_trans_handle *trans,
 int btrfs_chunk_readonly(struct btrfs_root *root, u64 chunk_offset);
 struct btrfs_device *btrfs_find_device_by_devid(struct btrfs_root *root,
                                                 u64 devid, int instance);
+
+int write_raid56_with_parity(struct btrfs_fs_info *info,
+			     struct extent_buffer *eb,
+			     struct btrfs_multi_bio *multi,
+			     u64 stripe_len, u64 *raid_map);
 #endif

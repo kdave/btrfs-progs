@@ -1774,3 +1774,146 @@ struct list_head *btrfs_scanned_uuids(void)
 {
 	return &fs_uuids;
 }
+
+static int rmw_eb(struct btrfs_fs_info *info,
+		  struct extent_buffer *eb, struct extent_buffer *orig_eb)
+{
+	int ret;
+	unsigned long orig_off = 0;
+	unsigned long dest_off = 0;
+	unsigned long copy_len = eb->len;
+
+	ret = read_whole_eb(info, eb, 0);
+	if (ret)
+		return ret;
+
+	if (eb->start + eb->len <= orig_eb->start ||
+	    eb->start >= orig_eb->start + orig_eb->len)
+		return 0;
+	/*
+	 * | ----- orig_eb ------- |
+	 *         | ----- stripe -------  |
+	 *         | ----- orig_eb ------- |
+	 *              | ----- orig_eb ------- |
+	 */
+	if (eb->start > orig_eb->start)
+		orig_off = eb->start - orig_eb->start;
+	if (orig_eb->start > eb->start)
+		dest_off = orig_eb->start - eb->start;
+
+	if (copy_len > orig_eb->len - orig_off)
+		copy_len = orig_eb->len - orig_off;
+	if (copy_len > eb->len - dest_off)
+		copy_len = eb->len - dest_off;
+
+	memcpy(eb->data + dest_off, orig_eb->data + orig_off, copy_len);
+	return 0;
+}
+
+static void split_eb_for_raid56(struct btrfs_fs_info *info,
+				struct extent_buffer *orig_eb,
+			       struct extent_buffer **ebs,
+			       u64 stripe_len, u64 *raid_map,
+			       int num_stripes)
+{
+	struct extent_buffer *eb;
+	u64 start = orig_eb->start;
+	u64 this_eb_start;
+	int i;
+	int ret;
+
+	for (i = 0; i < num_stripes; i++) {
+		if (raid_map[i] >= BTRFS_RAID5_P_STRIPE)
+			break;
+
+		eb = malloc(sizeof(struct extent_buffer) + stripe_len);
+		if (!eb)
+			BUG();
+		memset(eb, 0, sizeof(struct extent_buffer) + stripe_len);
+
+		eb->start = raid_map[i];
+		eb->len = stripe_len;
+		eb->refs = 1;
+		eb->flags = 0;
+		eb->fd = -1;
+		eb->dev_bytenr = (u64)-1;
+
+		this_eb_start = raid_map[i];
+
+		if (start > this_eb_start ||
+		    start + orig_eb->len < this_eb_start + stripe_len) {
+			ret = rmw_eb(info, eb, orig_eb);
+			BUG_ON(ret);
+		} else {
+			memcpy(eb->data, orig_eb->data + eb->start - start, stripe_len);
+		}
+		ebs[i] = eb;
+	}
+}
+
+int write_raid56_with_parity(struct btrfs_fs_info *info,
+			     struct extent_buffer *eb,
+			     struct btrfs_multi_bio *multi,
+			     u64 stripe_len, u64 *raid_map)
+{
+	struct extent_buffer *ebs[multi->num_stripes], *p_eb = NULL, *q_eb = NULL;
+	int i;
+	int j;
+	int ret;
+	int alloc_size = eb->len;
+
+	if (stripe_len > alloc_size)
+		alloc_size = stripe_len;
+
+	split_eb_for_raid56(info, eb, ebs, stripe_len, raid_map,
+			    multi->num_stripes);
+
+	for (i = 0; i < multi->num_stripes; i++) {
+		struct extent_buffer *new_eb;
+		if (raid_map[i] < BTRFS_RAID5_P_STRIPE) {
+			ebs[i]->dev_bytenr = multi->stripes[i].physical;
+			ebs[i]->fd = multi->stripes[i].dev->fd;
+			multi->stripes[i].dev->total_ios++;
+			BUG_ON(ebs[i]->start != raid_map[i]);
+			continue;
+		}
+		new_eb = kmalloc(sizeof(*eb) + alloc_size, GFP_NOFS);
+		BUG_ON(!new_eb);
+		new_eb->dev_bytenr = multi->stripes[i].physical;
+		new_eb->fd = multi->stripes[i].dev->fd;
+		multi->stripes[i].dev->total_ios++;
+		new_eb->len = stripe_len;
+
+		if (raid_map[i] == BTRFS_RAID5_P_STRIPE)
+			p_eb = new_eb;
+		else if (raid_map[i] == BTRFS_RAID6_Q_STRIPE)
+			q_eb = new_eb;
+	}
+	if (q_eb) {
+		void *pointers[multi->num_stripes];
+		ebs[multi->num_stripes - 2] = p_eb;
+		ebs[multi->num_stripes - 1] = q_eb;
+
+		for (i = 0; i < multi->num_stripes; i++)
+			pointers[i] = ebs[i]->data;
+
+		raid6_gen_syndrome(multi->num_stripes, stripe_len, pointers);
+	} else {
+		ebs[multi->num_stripes - 1] = p_eb;
+		memcpy(p_eb->data, ebs[0]->data, stripe_len);
+		for (j = 1; j < multi->num_stripes - 1; j++) {
+			for (i = 0; i < stripe_len; i += sizeof(unsigned long)) {
+				*(unsigned long *)(p_eb->data + i) ^=
+					*(unsigned long *)(ebs[j]->data + i);
+			}
+		}
+	}
+
+	for (i = 0; i < multi->num_stripes; i++) {
+		ret = write_extent_to_disk(ebs[i]);
+		BUG_ON(ret);
+		if (ebs[i] != eb)
+			kfree(ebs[i]);
+	}
+	return 0;
+}
