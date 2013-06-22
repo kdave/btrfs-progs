@@ -186,6 +186,10 @@ int btrfs_open_devices(struct btrfs_fs_devices *fs_devices, int flags)
 
 	list_for_each(cur, head) {
 		device = list_entry(cur, struct btrfs_device, dev_list);
+		if (!device->name) {
+			printk("no name for device %llu, skip it now\n", device->devid);
+			continue;
+		}
 
 		fd = open(device->name, flags);
 		if (fd < 0) {
