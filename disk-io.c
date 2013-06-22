@@ -1280,6 +1280,7 @@ static int close_all_devices(struct btrfs_fs_info *fs_info)
 		kfree(device->label);
 		kfree(device);
 	}
+	list_del(&fs_info->fs_devices->list);
 	kfree(fs_info->fs_devices);
 	return 0;
 }
