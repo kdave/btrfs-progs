@@ -197,7 +197,7 @@ static int clear_state_bit(struct extent_io_tree *tree,
 }
 
 /*
- * set some bits on a range in the tree.
+ * clear some bits on a range in the tree.
  */
 int clear_extent_bits(struct extent_io_tree *tree, u64 start,
 		      u64 end, int bits, gfp_t mask)
