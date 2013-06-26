@@ -31,6 +31,7 @@
 #include <math.h>
 #include <ftw.h>
 #include <wait.h>
+#include <assert.h>
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -129,14 +130,14 @@ static int finish_subvol(struct btrfs_receive *r)
 		goto out;
 	}
 
-	ret = btrfs_list_get_path_rootid(subvol_fd, &r->cur_subvol->root_id);
-	if (ret < 0)
-		goto out;
-	subvol_uuid_search_add(&r->sus, r->cur_subvol);
-	r->cur_subvol = NULL;
 	ret = 0;
 
 out:
+	if (r->cur_subvol) {
+		free(r->cur_subvol->path);
+		free(r->cur_subvol);
+		r->cur_subvol = NULL;
+	}
 	if (subvol_fd != -1)
 		close(subvol_fd);
 	return ret;
@@ -197,7 +198,7 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 	struct btrfs_receive *r = user;
 	char uuid_str[128];
 	struct btrfs_ioctl_vol_args_v2 args_v2;
-	struct subvol_info *parent_subvol;
+	struct subvol_info *parent_subvol = NULL;
 
 	ret = finish_subvol(r);
 	if (ret < 0)
@@ -268,6 +269,10 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 	}
 
 out:
+	if (parent_subvol) {
+		free(parent_subvol->path);
+		free(parent_subvol);
+	}
 	return ret;
 }
 
@@ -557,7 +562,7 @@ static int process_clone(const char *path, u64 offset, u64 len,
 			 const char *clone_path, u64 clone_offset,
 			 void *user)
 {
-	int ret = 0;
+	int ret;
 	struct btrfs_receive *r = user;
 	struct btrfs_ioctl_clone_range_args clone_args;
 	struct subvol_info *si = NULL;
@@ -624,6 +629,10 @@ static int process_clone(const char *path, u64 offset, u64 len,
 	}
 
 out:
+	if (si) {
+		free(si->path);
+		free(si);
+	}
 	free(full_path);
 	free(full_clone_path);
 	free(subvol_path);

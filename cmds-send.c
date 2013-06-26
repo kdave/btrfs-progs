@@ -31,6 +31,7 @@
 #include <sys/ioctl.h>
 #include <libgen.h>
 #include <mntent.h>
+#include <assert.h>
 
 #include <uuid/uuid.h>
 
@@ -106,30 +107,33 @@ static int get_root_id(struct btrfs_send *s, const char *path, u64 *root_id)
 	if (!si)
 		return -ENOENT;
 	*root_id = si->root_id;
+	free(si->path);
+	free(si);
 	return 0;
 }
 
 static struct subvol_info *get_parent(struct btrfs_send *s, u64 root_id)
 {
+	struct subvol_info *si_tmp;
 	struct subvol_info *si;
 
-	si = subvol_uuid_search(&s->sus, root_id, NULL, 0, NULL,
+	si_tmp = subvol_uuid_search(&s->sus, root_id, NULL, 0, NULL,
 			subvol_search_by_root_id);
-	if (!si)
+	if (!si_tmp)
 		return NULL;
 
-	si = subvol_uuid_search(&s->sus, 0, si->parent_uuid, 0, NULL,
+	si = subvol_uuid_search(&s->sus, 0, si_tmp->parent_uuid, 0, NULL,
 			subvol_search_by_uuid);
-	if (!si)
-		return NULL;
+	free(si_tmp->path);
+	free(si_tmp);
 	return si;
 }
 
 static int find_good_parent(struct btrfs_send *s, u64 root_id, u64 *found)
 {
 	int ret;
-	struct subvol_info *parent;
-	struct subvol_info *parent2;
+	struct subvol_info *parent = NULL;
+	struct subvol_info *parent2 = NULL;
 	struct subvol_info *best_parent = NULL;
 	__s64 tmp;
 	u64 best_diff = (u64)-1;
@@ -144,24 +148,43 @@ static int find_good_parent(struct btrfs_send *s, u64 root_id, u64 *found)
 	for (i = 0; i < s->clone_sources_count; i++) {
 		if (s->clone_sources[i] == parent->root_id) {
 			best_parent = parent;
+			parent = NULL;
 			goto out_found;
 		}
 	}
 
 	for (i = 0; i < s->clone_sources_count; i++) {
 		parent2 = get_parent(s, s->clone_sources[i]);
-		if (parent2 != parent)
+		if (!parent2)
 			continue;
+		if (parent2->root_id != parent->root_id) {
+			free(parent2->path);
+			free(parent2);
+			parent2 = NULL;
+			continue;
+		}
 
+		free(parent2->path);
+		free(parent2);
 		parent2 = subvol_uuid_search(&s->sus, s->clone_sources[i], NULL,
 				0, NULL, subvol_search_by_root_id);
 
+		assert(parent2);
 		tmp = parent2->ctransid - parent->ctransid;
 		if (tmp < 0)
 			tmp *= -1;
 		if (tmp < best_diff) {
+			if (best_parent) {
+				free(best_parent->path);
+				free(best_parent);
+			}
 			best_parent = parent2;
+			parent2 = NULL;
 			best_diff = tmp;
+		} else {
+			free(parent2->path);
+			free(parent2);
+			parent2 = NULL;
 		}
 	}
 
@@ -175,6 +198,14 @@ out_found:
 	ret = 0;
 
 out:
+	if (parent) {
+		free(parent->path);
+		free(parent);
+	}
+	if (best_parent) {
+		free(best_parent->path);
+		free(best_parent);
+	}
 	return ret;
 }
 
@@ -320,7 +351,7 @@ static int do_send(struct btrfs_send *send, u64 root_id, u64 parent_root_id,
 		fprintf(stderr, "joining genl thread\n");
 
 	close(pipefd[1]);
-	pipefd[1] = 0;
+	pipefd[1] = -1;
 
 	ret = pthread_join(t_read, &t_err);
 	if (ret) {
@@ -347,6 +378,10 @@ out:
 		close(pipefd[0]);
 	if (pipefd[1] != -1)
 		close(pipefd[1]);
+	if (si) {
+		free(si->path);
+		free(si);
+	}
 	return ret;
 }
 
