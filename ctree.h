@@ -71,6 +71,8 @@ struct btrfs_free_space_ctl;
 #define BTRFS_CSUM_TREE_OBJECTID 7ULL
 #define BTRFS_QUOTA_TREE_OBJECTID 8ULL
 
+/* for storing items that use the BTRFS_UUID_KEY* */
+#define BTRFS_UUID_TREE_OBJECTID 9ULL
 
 /* for storing balance parameters in the root tree */
 #define BTRFS_BALANCE_OBJECTID -4ULL
@@ -1106,6 +1108,19 @@ struct btrfs_root {
  * The key is built like this: (0, BTRFS_DEV_REPLACE_KEY, 0).
  */
 #define BTRFS_DEV_REPLACE_KEY	250
+
+/*
+ * Stores items that allow to quickly map UUIDs to something else.
+ * These items are part of the filesystem UUID tree.
+ * The key is built like this:
+ * (UUID_upper_64_bits, BTRFS_UUID_KEY*, UUID_lower_64_bits).
+ */
+#if BTRFS_UUID_SIZE != 16
+#error "UUID items require BTRFS_UUID_SIZE == 16!"
+#endif
+#define BTRFS_UUID_KEY_SUBVOL	251	/* for UUIDs assigned to subvols */
+#define BTRFS_UUID_KEY_RECEIVED_SUBVOL	252	/* for UUIDs assigned to
+						 * received subvols */
 
 /*
  * string items are for debugging.  They just store a short string of

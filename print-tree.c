@@ -547,6 +547,12 @@ static void print_key_type(u64 objectid, u8 type)
 	case BTRFS_DEV_STATS_KEY:
 		printf("DEV_STATS_ITEM");
 		break;
+	case BTRFS_UUID_KEY_SUBVOL:
+		printf("BTRFS_UUID_KEY_SUBVOL");
+		break;
+	case BTRFS_UUID_KEY_RECEIVED_SUBVOL:
+		printf("BTRFS_UUID_KEY_RECEIVED_SUBVOL");
+		break;
 	default:
 		printf("UNKNOWN.%d", type);
 	};
@@ -554,14 +560,17 @@ static void print_key_type(u64 objectid, u8 type)
 
 static void print_objectid(u64 objectid, u8 type)
 {
-	if (type == BTRFS_DEV_EXTENT_KEY) {
+	switch (type) {
+	case BTRFS_DEV_EXTENT_KEY:
 		printf("%llu", (unsigned long long)objectid); /* device id */
 		return;
-	}
-	switch (type) {
 	case BTRFS_QGROUP_RELATION_KEY:
 		printf("%llu/%llu", objectid >> 48,
 			objectid & ((1ll << 48) - 1));
+		return;
+	case BTRFS_UUID_KEY_SUBVOL:
+	case BTRFS_UUID_KEY_RECEIVED_SUBVOL:
+		printf("0x%016llx", (unsigned long long)objectid);
 		return;
 	}
 
@@ -620,6 +629,9 @@ static void print_objectid(u64 objectid, u8 type)
 	case BTRFS_QUOTA_TREE_OBJECTID:
 		printf("QUOTA_TREE");
 		break;
+	case BTRFS_UUID_TREE_OBJECTID:
+		printf("UUID_TREE");
+		break;
 	case BTRFS_MULTIPLE_OBJECTIDS:
 		printf("MULTIPLE");
 		break;
@@ -654,12 +666,35 @@ void btrfs_print_key(struct btrfs_disk_key *disk_key)
 		printf(" %llu/%llu)", (unsigned long long)(offset >> 48),
 			(unsigned long long)(offset & ((1ll << 48) - 1)));
 		break;
+	case BTRFS_UUID_KEY_SUBVOL:
+	case BTRFS_UUID_KEY_RECEIVED_SUBVOL:
+		printf(" 0x%016llx)", (unsigned long long)offset);
+		break;
 	default:
 		if (offset == (u64)-1)
 			printf(" -1)");
 		else
 			printf(" %llu)", (unsigned long long)offset);
 		break;
+	}
+}
+
+static void print_uuid_item(struct extent_buffer *l, unsigned long offset,
+			    u32 item_size)
+{
+	if (item_size & (sizeof(u64) - 1)) {
+		printf("btrfs: uuid item with illegal size %lu!\n",
+		       (unsigned long)item_size);
+		return;
+	}
+	while (item_size) {
+		u64 subvol_id;
+
+		read_extent_buffer(l, &subvol_id, offset, sizeof(u64));
+		subvol_id = le64_to_cpu(subvol_id);
+		printf("\t\tsubvol_id %llu\n", (unsigned long long)subvol_id);
+		item_size -= sizeof(u64);
+		offset += sizeof(u64);
 	}
 }
 
@@ -878,6 +913,11 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 			       btrfs_qgroup_limit_rsv_referenced(l, qg_limit),
 			       (long long)
 			       btrfs_qgroup_limit_rsv_exclusive(l, qg_limit));
+			break;
+		case BTRFS_UUID_KEY_SUBVOL:
+		case BTRFS_UUID_KEY_RECEIVED_SUBVOL:
+			print_uuid_item(l, btrfs_item_ptr_offset(l, i),
+					btrfs_item_size_nr(l, i));
 			break;
 		case BTRFS_STRING_ITEM_KEY:
 			/* dirty, but it's simple */
