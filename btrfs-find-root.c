@@ -141,10 +141,10 @@ static int search_iobuf(struct btrfs_root *root, void *iobuf,
 		u64 h_byte, h_level, h_gen, h_owner;
 
 //		printf("searching %Lu\n", offset + block_off);
-		h_byte = le64_to_cpu(header->bytenr);
-		h_owner = le64_to_cpu(header->owner);
+		h_byte = btrfs_stack_header_bytenr(header);
+		h_owner = btrfs_stack_header_owner(header);
 		h_level = header->level;
-		h_gen = le64_to_cpu(header->generation);
+		h_gen = btrfs_stack_header_generation(header);
 
 		if (h_owner != objectid)
 			goto next;

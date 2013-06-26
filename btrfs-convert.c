@@ -1802,7 +1802,7 @@ static int prepare_system_chunk_sb(struct btrfs_super_block *super)
 	btrfs_set_stack_chunk_num_stripes(chunk, 1);
 	btrfs_set_stack_chunk_sub_stripes(chunk, 0);
 	chunk->stripe.devid = super->dev_item.devid;
-	chunk->stripe.offset = cpu_to_le64(0);
+	btrfs_set_stack_stripe_offset(&chunk->stripe, 0);
 	memcpy(chunk->stripe.dev_uuid, super->dev_item.uuid, BTRFS_UUID_SIZE);
 	btrfs_set_super_sys_array_size(super, sizeof(*key) + sizeof(*chunk));
 	return 0;

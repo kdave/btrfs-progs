@@ -239,7 +239,7 @@ int btrfs_scan_one_device(int fd, const char *path,
 		ret = -EIO;
 		goto error_brelse;
 	}
-	devid = le64_to_cpu(disk_super->dev_item.devid);
+	devid = btrfs_stack_device_id(&disk_super->dev_item);
 	if (btrfs_super_flags(disk_super) & BTRFS_SUPER_FLAG_METADUMP)
 		*total_devs = 1;
 	else

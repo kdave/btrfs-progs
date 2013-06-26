@@ -1137,7 +1137,7 @@ int btrfs_read_dev_super(int fd, struct btrfs_super_block *sb, u64 sb_bytenr)
 			return -1;
 
 		if (btrfs_super_bytenr(&buf) != sb_bytenr ||
-		    buf.magic != cpu_to_le64(BTRFS_MAGIC))
+		    btrfs_super_magic(&buf) != BTRFS_MAGIC)
 			return -1;
 
 		memcpy(sb, &buf, sizeof(*sb));
@@ -1153,9 +1153,9 @@ int btrfs_read_dev_super(int fd, struct btrfs_super_block *sb, u64 sb_bytenr)
 		if (btrfs_super_bytenr(&buf) != bytenr )
 			continue;
 		/* if magic is NULL, the device was removed */
-		if (buf.magic == 0 && i == 0) 
+		if (btrfs_super_magic(&buf) == 0 && i == 0)
 			return -1;
-		if (buf.magic != cpu_to_le64(BTRFS_MAGIC))
+		if (btrfs_super_magic(&buf) != BTRFS_MAGIC)
 			continue;
 
 		if (!fsid_is_initialized) {
