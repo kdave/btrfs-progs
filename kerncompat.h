@@ -26,6 +26,7 @@
 #include <endian.h>
 #include <byteswap.h>
 #include <assert.h>
+#include <stddef.h>
 
 #ifndef READ
 #define READ 0
@@ -234,12 +235,6 @@ static inline long IS_ERR(const void *ptr)
 #define BUG_ON(c) assert(!(c))
 #define WARN_ON(c) assert(!(c))
 
-#undef offsetof
-#ifdef __compiler_offsetof
-#define offsetof(TYPE,MEMBER) __compiler_offsetof(TYPE,MEMBER)
-#else
-#define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
-#endif
 
 #define container_of(ptr, type, member) ({                      \
         const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
