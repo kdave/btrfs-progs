@@ -2338,4 +2338,9 @@ struct btrfs_csum_item *btrfs_lookup_csum(struct btrfs_trans_handle *trans,
 int btrfs_csum_truncate(struct btrfs_trans_handle *trans,
 			struct btrfs_root *root, struct btrfs_path *path,
 			u64 isize);
+
+/* uuid-tree.c */
+int btrfs_lookup_uuid_subvol_item(int fd, const u8 *uuid, u64 *subvol_id);
+int btrfs_lookup_uuid_received_subvol_item(int fd, const u8 *uuid,
+					   u64 *subvol_id);
 #endif
