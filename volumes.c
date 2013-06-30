@@ -124,6 +124,11 @@ static int device_list_add(const char *path,
 			return -ENOMEM;
 		}
 		device->label = kstrdup(disk_super->label, GFP_NOFS);
+		if (!device->label) {
+			kfree(device->name);
+			kfree(device);
+			return -ENOMEM;
+		}
 		device->total_devs = btrfs_super_num_devices(disk_super);
 		device->super_bytes_used = btrfs_super_bytes_used(disk_super);
 		device->total_bytes =
