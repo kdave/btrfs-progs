@@ -909,7 +909,7 @@ struct btrfs_fs_info {
 	struct btrfs_root *dev_root;
 	struct btrfs_root *csum_root;
 
-	struct cache_tree fs_root_cache;
+	struct rb_root fs_root_tree;
 
 	/* the log root tree is a directory of all the other log roots */
 	struct btrfs_root *log_root_tree;
@@ -993,7 +993,7 @@ struct btrfs_root {
 
 	/* the dirty list is only used by non-reference counted roots */
 	struct list_head dirty_list;
-	struct cache_extent cache;
+	struct rb_node rb_node;
 };
 
 /*
