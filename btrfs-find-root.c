@@ -67,74 +67,31 @@ int csum_block(void *buf, u32 len)
 
 static struct btrfs_root *open_ctree_broken(int fd, const char *device)
 {
-	u32 sectorsize;
-	u32 nodesize;
-	u32 leafsize;
-	u32 blocksize;
-	u32 stripesize;
-	u64 generation;
-	struct btrfs_root *tree_root = malloc(sizeof(struct btrfs_root));
-	struct btrfs_root *extent_root = malloc(sizeof(struct btrfs_root));
-	struct btrfs_root *chunk_root = malloc(sizeof(struct btrfs_root));
-	struct btrfs_root *dev_root = malloc(sizeof(struct btrfs_root));
-	struct btrfs_root *csum_root = malloc(sizeof(struct btrfs_root));
-	struct btrfs_fs_info *fs_info = malloc(sizeof(*fs_info));
-	int ret;
+	struct btrfs_fs_info *fs_info;
 	struct btrfs_super_block *disk_super;
 	struct btrfs_fs_devices *fs_devices = NULL;
-	u64 total_devs;
-	u64 features;
+	struct extent_buffer *eb;
+	int ret;
 
-	ret = btrfs_scan_one_device(fd, device, &fs_devices,
-				    &total_devs, BTRFS_SUPER_INFO_OFFSET);
+	fs_info = btrfs_new_fs_info(0, BTRFS_SUPER_INFO_OFFSET);
+	if (!fs_info) {
+		fprintf(stderr, "Failed to allocate memory for fs_info\n");
+		return NULL;
+	}
 
-	if (ret) {
-		fprintf(stderr, "No valid Btrfs found on %s\n", device);
+	ret = btrfs_scan_fs_devices(fd, device, &fs_devices);
+	if (ret)
 		goto out;
-	}
 
-	if (total_devs != 1) {
-		ret = btrfs_scan_for_fsid(fs_devices, total_devs, 1);
-		if (ret)
-			goto out;
-	}
-
-	memset(fs_info, 0, sizeof(*fs_info));
-	fs_info->super_copy = calloc(1, BTRFS_SUPER_INFO_SIZE);
-	fs_info->tree_root = tree_root;
-	fs_info->extent_root = extent_root;
-	fs_info->chunk_root = chunk_root;
-	fs_info->dev_root = dev_root;
-	fs_info->csum_root = csum_root;
-
-	fs_info->readonly = 1;
-
-	extent_io_tree_init(&fs_info->extent_cache);
-	extent_io_tree_init(&fs_info->free_space_cache);
-	extent_io_tree_init(&fs_info->block_group_cache);
-	extent_io_tree_init(&fs_info->pinned_extents);
-	extent_io_tree_init(&fs_info->pending_del);
-	extent_io_tree_init(&fs_info->extent_ins);
-	cache_tree_init(&fs_info->fs_root_cache);
-
-	cache_tree_init(&fs_info->mapping_tree.cache_tree);
-
-	mutex_init(&fs_info->fs_mutex);
 	fs_info->fs_devices = fs_devices;
-	INIT_LIST_HEAD(&fs_info->dirty_cowonly_roots);
-	INIT_LIST_HEAD(&fs_info->space_info);
-
-	__setup_root(4096, 4096, 4096, 4096, tree_root,
-		     fs_info, BTRFS_ROOT_TREE_OBJECTID);
 
 	ret = btrfs_open_devices(fs_devices, O_RDONLY);
 	if (ret)
-		goto out_cleanup;
+		goto out_devices;
 
-	fs_info->super_bytenr = BTRFS_SUPER_INFO_OFFSET;
 	disk_super = fs_info->super_copy;
 	ret = btrfs_read_dev_super(fs_devices->latest_bdev,
-				   disk_super, BTRFS_SUPER_INFO_OFFSET);
+				   disk_super, fs_info->super_bytenr);
 	if (ret) {
 		printk("No valid btrfs found\n");
 		goto out_devices;
@@ -142,77 +99,27 @@ static struct btrfs_root *open_ctree_broken(int fd, const char *device)
 
 	memcpy(fs_info->fsid, &disk_super->fsid, BTRFS_FSID_SIZE);
 
-
-	features = btrfs_super_incompat_flags(disk_super) &
-		   ~BTRFS_FEATURE_INCOMPAT_SUPP;
-	if (features) {
-		printk("couldn't open because of unsupported "
-		       "option features (%Lx).\n", features);
-		goto out_devices;
-	}
-
-	features = btrfs_super_incompat_flags(disk_super);
-	if (!(features & BTRFS_FEATURE_INCOMPAT_MIXED_BACKREF)) {
-		features |= BTRFS_FEATURE_INCOMPAT_MIXED_BACKREF;
-		btrfs_set_super_incompat_flags(disk_super, features);
-	}
-
-	nodesize = btrfs_super_nodesize(disk_super);
-	leafsize = btrfs_super_leafsize(disk_super);
-	sectorsize = btrfs_super_sectorsize(disk_super);
-	stripesize = btrfs_super_stripesize(disk_super);
-	tree_root->nodesize = nodesize;
-	tree_root->leafsize = leafsize;
-	tree_root->sectorsize = sectorsize;
-	tree_root->stripesize = stripesize;
-
-	ret = btrfs_read_sys_array(tree_root);
+	ret = btrfs_check_fs_compatibility(disk_super, 0);
 	if (ret)
 		goto out_devices;
-	blocksize = btrfs_level_size(tree_root,
-				     btrfs_super_chunk_root_level(disk_super));
-	generation = btrfs_super_chunk_root_generation(disk_super);
 
-	__setup_root(nodesize, leafsize, sectorsize, stripesize,
-		     chunk_root, fs_info, BTRFS_CHUNK_TREE_OBJECTID);
+	ret = btrfs_setup_chunk_tree_and_device_map(fs_info);
+	if (ret)
+		goto out_chunk;
 
-	chunk_root->node = read_tree_block(chunk_root,
-					   btrfs_super_chunk_root(disk_super),
-					   blocksize, generation);
-	if (!chunk_root->node) {
-		printk("Couldn't read chunk root\n");
-		goto out_devices;
-	}
-
-	read_extent_buffer(chunk_root->node, fs_info->chunk_tree_uuid,
-	         (unsigned long)btrfs_header_chunk_tree_uuid(chunk_root->node),
-		 BTRFS_UUID_SIZE);
-
-	if (!(btrfs_super_flags(disk_super) & BTRFS_SUPER_FLAG_METADUMP)) {
-		ret = btrfs_read_chunk_tree(chunk_root);
-		if (ret)
-			goto out_chunk;
-	}
+	eb = fs_info->chunk_root->node;
+	read_extent_buffer(eb, fs_info->chunk_tree_uuid,
+			   (unsigned long)btrfs_header_chunk_tree_uuid(eb),
+			   BTRFS_UUID_SIZE);
 
 	return fs_info->chunk_root;
 out_chunk:
 	free_extent_buffer(fs_info->chunk_root->node);
+	btrfs_cleanup_all_caches(fs_info);
 out_devices:
 	btrfs_close_devices(fs_info->fs_devices);
-out_cleanup:
-	extent_io_tree_cleanup(&fs_info->extent_cache);
-	extent_io_tree_cleanup(&fs_info->free_space_cache);
-	extent_io_tree_cleanup(&fs_info->block_group_cache);
-	extent_io_tree_cleanup(&fs_info->pinned_extents);
-	extent_io_tree_cleanup(&fs_info->pending_del);
-	extent_io_tree_cleanup(&fs_info->extent_ins);
 out:
-	free(tree_root);
-	free(extent_root);
-	free(chunk_root);
-	free(dev_root);
-	free(csum_root);
-	free(fs_info);
+	btrfs_free_fs_info(fs_info);
 	return NULL;
 }
 
