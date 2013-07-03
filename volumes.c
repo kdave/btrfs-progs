@@ -52,9 +52,6 @@ static inline int nr_data_stripes(struct map_lookup *map)
 
 #define is_parity_stripe(x) ( ((x) == BTRFS_RAID5_P_STRIPE) || ((x) == BTRFS_RAID6_Q_STRIPE) )
 
-#define map_lookup_size(n) (sizeof(struct map_lookup) + \
-			    (sizeof(struct btrfs_bio_stripe) * (n)))
-
 static LIST_HEAD(fs_uuids);
 
 static struct btrfs_device *__find_device(struct list_head *head, u64 devid,
@@ -823,7 +820,7 @@ again:
 	if (!chunk)
 		return -ENOMEM;
 
-	map = kmalloc(map_lookup_size(num_stripes), GFP_NOFS);
+	map = kmalloc(btrfs_map_lookup_size(num_stripes), GFP_NOFS);
 	if (!map) {
 		kfree(chunk);
 		return -ENOMEM;
@@ -935,7 +932,7 @@ int btrfs_alloc_data_chunk(struct btrfs_trans_handle *trans,
 	if (!chunk)
 		return -ENOMEM;
 
-	map = kmalloc(map_lookup_size(num_stripes), GFP_NOFS);
+	map = kmalloc(btrfs_map_lookup_size(num_stripes), GFP_NOFS);
 	if (!map) {
 		kfree(chunk);
 		return -ENOMEM;
@@ -1420,7 +1417,7 @@ int btrfs_bootstrap_super_map(struct btrfs_mapping_tree *map_tree,
 	list_for_each(cur, &fs_devices->devices) {
 		num_stripes++;
 	}
-	map = kmalloc(map_lookup_size(num_stripes), GFP_NOFS);
+	map = kmalloc(btrfs_map_lookup_size(num_stripes), GFP_NOFS);
 	if (!map)
 		return -ENOMEM;
 
@@ -1517,7 +1514,7 @@ static int read_one_chunk(struct btrfs_root *root, struct btrfs_key *key,
 	}
 
 	num_stripes = btrfs_chunk_num_stripes(leaf, chunk);
-	map = kmalloc(map_lookup_size(num_stripes), GFP_NOFS);
+	map = kmalloc(btrfs_map_lookup_size(num_stripes), GFP_NOFS);
 	if (!map)
 		return -ENOMEM;
 

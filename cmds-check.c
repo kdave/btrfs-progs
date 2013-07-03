@@ -2625,7 +2625,10 @@ static void free_chunk_record(struct cache_extent *cache)
 	free(rec);
 }
 
-FREE_EXTENT_CACHE_BASED_TREE(chunk_cache, free_chunk_record);
+void free_chunk_cache_tree(struct cache_tree *chunk_cache)
+{
+	cache_tree_free_extents(chunk_cache, free_chunk_record);
+}
 
 static void free_device_record(struct rb_node *node)
 {
@@ -2637,14 +2640,8 @@ static void free_device_record(struct rb_node *node)
 
 FREE_RB_BASED_TREE(device_cache, free_device_record);
 
-static void block_group_tree_init(struct block_group_tree *tree)
-{
-	cache_tree_init(&tree->tree);
-	INIT_LIST_HEAD(&tree->block_groups);
-}
-
-static int insert_block_group_record(struct block_group_tree *tree,
-				     struct block_group_record *bg_rec)
+int insert_block_group_record(struct block_group_tree *tree,
+			      struct block_group_record *bg_rec)
 {
 	int ret;
 
@@ -2664,20 +2661,13 @@ static void free_block_group_record(struct cache_extent *cache)
 	free(rec);
 }
 
-static void free_block_group_tree(struct block_group_tree *tree)
+void free_block_group_tree(struct block_group_tree *tree)
 {
 	cache_tree_free_extents(&tree->tree, free_block_group_record);
 }
 
-static void device_extent_tree_init(struct device_extent_tree *tree)
-{
-	cache_tree_init(&tree->tree);
-	INIT_LIST_HEAD(&tree->no_chunk_orphans);
-	INIT_LIST_HEAD(&tree->no_device_orphans);
-}
-
-static int insert_device_extent_record(struct device_extent_tree *tree,
-				       struct device_extent_record *de_rec)
+int insert_device_extent_record(struct device_extent_tree *tree,
+				struct device_extent_record *de_rec)
 {
 	int ret;
 
@@ -2704,7 +2694,7 @@ static void free_device_extent_record(struct cache_extent *cache)
 	free(rec);
 }
 
-static void free_device_extent_tree(struct device_extent_tree *tree)
+void free_device_extent_tree(struct device_extent_tree *tree)
 {
 	cache_tree_free_extents(&tree->tree, free_device_extent_record);
 }
@@ -2728,50 +2718,69 @@ static int process_extent_ref_v0(struct cache_tree *extent_cache,
 }
 #endif
 
-static inline unsigned long chunk_record_size(int num_stripes)
-{
-	return sizeof(struct chunk_record) +
-	       sizeof(struct stripe) * num_stripes;
-}
-
-static int process_chunk_item(struct cache_tree *chunk_cache,
-		struct btrfs_key *key, struct extent_buffer *eb, int slot)
+struct chunk_record *btrfs_new_chunk_record(struct extent_buffer *leaf,
+					    struct btrfs_key *key,
+					    int slot)
 {
 	struct btrfs_chunk *ptr;
 	struct chunk_record *rec;
 	int num_stripes, i;
-	int ret = 0;
 
-	ptr = btrfs_item_ptr(eb,
-		slot, struct btrfs_chunk);
+	ptr = btrfs_item_ptr(leaf, slot, struct btrfs_chunk);
+	num_stripes = btrfs_chunk_num_stripes(leaf, ptr);
 
-	num_stripes = btrfs_chunk_num_stripes(eb, ptr);
-
-	rec = malloc(chunk_record_size(num_stripes));
+	rec = malloc(btrfs_chunk_record_size(num_stripes));
 	if (!rec) {
 		fprintf(stderr, "memory allocation failed\n");
-		return -ENOMEM;
+		exit(-1);
 	}
 
+	memset(rec, 0, btrfs_chunk_record_size(num_stripes));
+
+	INIT_LIST_HEAD(&rec->list);
+	INIT_LIST_HEAD(&rec->dextents);
+	rec->bg_rec = NULL;
+
 	rec->cache.start = key->offset;
-	rec->cache.size = btrfs_chunk_length(eb, ptr);
+	rec->cache.size = btrfs_chunk_length(leaf, ptr);
+
+	rec->generation = btrfs_header_generation(leaf);
 
 	rec->objectid = key->objectid;
 	rec->type = key->type;
 	rec->offset = key->offset;
 
 	rec->length = rec->cache.size;
-	rec->type_flags = btrfs_chunk_type(eb, ptr);
+	rec->owner = btrfs_chunk_owner(leaf, ptr);
+	rec->stripe_len = btrfs_chunk_stripe_len(leaf, ptr);
+	rec->type_flags = btrfs_chunk_type(leaf, ptr);
+	rec->io_width = btrfs_chunk_io_width(leaf, ptr);
+	rec->io_align = btrfs_chunk_io_align(leaf, ptr);
+	rec->sector_size = btrfs_chunk_sector_size(leaf, ptr);
 	rec->num_stripes = num_stripes;
-	rec->sub_stripes = btrfs_chunk_sub_stripes(eb, ptr);
+	rec->sub_stripes = btrfs_chunk_sub_stripes(leaf, ptr);
 
 	for (i = 0; i < rec->num_stripes; ++i) {
 		rec->stripes[i].devid =
-			btrfs_stripe_devid_nr(eb, ptr, i);
+			btrfs_stripe_devid_nr(leaf, ptr, i);
 		rec->stripes[i].offset =
-			btrfs_stripe_offset_nr(eb, ptr, i);
+			btrfs_stripe_offset_nr(leaf, ptr, i);
+		read_extent_buffer(leaf, rec->stripes[i].dev_uuid,
+				(unsigned long)btrfs_stripe_dev_uuid_nr(ptr, i),
+				BTRFS_UUID_SIZE);
 	}
 
+	return rec;
+}
+
+static int process_chunk_item(struct cache_tree *chunk_cache,
+			      struct btrfs_key *key, struct extent_buffer *eb,
+			      int slot)
+{
+	struct chunk_record *rec;
+	int ret = 0;
+
+	rec = btrfs_new_chunk_record(eb, key, slot);
 	ret = insert_cache_extent(chunk_cache, &rec->cache);
 	if (ret) {
 		fprintf(stderr, "Chunk[%llu, %llu] existed.\n",
@@ -2799,6 +2808,7 @@ static int process_device_item(struct rb_root *dev_cache,
 	}
 
 	rec->devid = key->offset;
+	rec->generation = btrfs_header_generation(eb);
 
 	rec->objectid = key->objectid;
 	rec->type = key->type;
@@ -2817,30 +2827,45 @@ static int process_device_item(struct rb_root *dev_cache,
 	return ret;
 }
 
-static int process_block_group_item(struct block_group_tree *block_group_cache,
-		struct btrfs_key *key, struct extent_buffer *eb, int slot)
+struct block_group_record *
+btrfs_new_block_group_record(struct extent_buffer *leaf, struct btrfs_key *key,
+			     int slot)
 {
 	struct btrfs_block_group_item *ptr;
 	struct block_group_record *rec;
-	int ret = 0;
-
-	ptr = btrfs_item_ptr(eb, slot,
-		struct btrfs_block_group_item);
 
 	rec = malloc(sizeof(*rec));
 	if (!rec) {
 		fprintf(stderr, "memory allocation failed\n");
-		return -ENOMEM;
+		exit(-1);
 	}
+	memset(rec, 0, sizeof(*rec));
 
 	rec->cache.start = key->objectid;
 	rec->cache.size = key->offset;
 
+	rec->generation = btrfs_header_generation(leaf);
+
 	rec->objectid = key->objectid;
 	rec->type = key->type;
 	rec->offset = key->offset;
-	rec->flags = btrfs_disk_block_group_flags(eb, ptr);
 
+	ptr = btrfs_item_ptr(leaf, slot, struct btrfs_block_group_item);
+	rec->flags = btrfs_disk_block_group_flags(leaf, ptr);
+
+	INIT_LIST_HEAD(&rec->list);
+
+	return rec;
+}
+
+static int process_block_group_item(struct block_group_tree *block_group_cache,
+				    struct btrfs_key *key,
+				    struct extent_buffer *eb, int slot)
+{
+	struct block_group_record *rec;
+	int ret = 0;
+
+	rec = btrfs_new_block_group_record(eb, key, slot);
 	ret = insert_block_group_record(block_group_cache, rec);
 	if (ret) {
 		fprintf(stderr, "Block Group[%llu, %llu] existed.\n",
@@ -2851,42 +2876,56 @@ static int process_block_group_item(struct block_group_tree *block_group_cache,
 	return ret;
 }
 
-static int
-process_device_extent_item(struct device_extent_tree *dev_extent_cache,
-			   struct btrfs_key *key, struct extent_buffer *eb,
-			   int slot)
+struct device_extent_record *
+btrfs_new_device_extent_record(struct extent_buffer *leaf,
+			       struct btrfs_key *key, int slot)
 {
-	int ret = 0;
-
-	struct btrfs_dev_extent *ptr;
 	struct device_extent_record *rec;
-
-	ptr = btrfs_item_ptr(eb,
-		slot, struct btrfs_dev_extent);
+	struct btrfs_dev_extent *ptr;
 
 	rec = malloc(sizeof(*rec));
 	if (!rec) {
 		fprintf(stderr, "memory allocation failed\n");
-		return -ENOMEM;
+		exit(-1);
 	}
+	memset(rec, 0, sizeof(*rec));
 
 	rec->cache.objectid = key->objectid;
 	rec->cache.start = key->offset;
+
+	rec->generation = btrfs_header_generation(leaf);
 
 	rec->objectid = key->objectid;
 	rec->type = key->type;
 	rec->offset = key->offset;
 
+	ptr = btrfs_item_ptr(leaf, slot, struct btrfs_dev_extent);
 	rec->chunk_objecteid =
-		btrfs_dev_extent_chunk_objectid(eb, ptr);
+		btrfs_dev_extent_chunk_objectid(leaf, ptr);
 	rec->chunk_offset =
-		btrfs_dev_extent_chunk_offset(eb, ptr);
-	rec->length = btrfs_dev_extent_length(eb, ptr);
+		btrfs_dev_extent_chunk_offset(leaf, ptr);
+	rec->length = btrfs_dev_extent_length(leaf, ptr);
 	rec->cache.size = rec->length;
 
+	INIT_LIST_HEAD(&rec->chunk_list);
+	INIT_LIST_HEAD(&rec->device_list);
+
+	return rec;
+}
+
+static int
+process_device_extent_item(struct device_extent_tree *dev_extent_cache,
+			   struct btrfs_key *key, struct extent_buffer *eb,
+			   int slot)
+{
+	struct device_extent_record *rec;
+	int ret;
+
+	rec = btrfs_new_device_extent_record(eb, key, slot);
 	ret = insert_device_extent_record(dev_extent_cache, rec);
 	if (ret) {
-		fprintf(stderr, "Device extent[%llu, %llu, %llu] existed.\n",
+		fprintf(stderr,
+			"Device extent[%llu, %llu, %llu] existed.\n",
 			rec->objectid, rec->offset, rec->length);
 		free(rec);
 	}
@@ -4911,7 +4950,8 @@ static u64 calc_stripe_length(struct chunk_record *chunk_rec)
 
 static int check_chunk_refs(struct chunk_record *chunk_rec,
 			    struct block_group_tree *block_group_cache,
-			    struct device_extent_tree *dev_extent_cache)
+			    struct device_extent_tree *dev_extent_cache,
+			    int silent)
 {
 	struct cache_extent *block_group_item;
 	struct block_group_record *block_group_rec;
@@ -4933,32 +4973,36 @@ static int check_chunk_refs(struct chunk_record *chunk_rec,
 		if (chunk_rec->length != block_group_rec->offset ||
 		    chunk_rec->offset != block_group_rec->objectid ||
 		    chunk_rec->type_flags != block_group_rec->flags) {
+			if (!silent)
+				fprintf(stderr,
+					"Chunk[%llu, %u, %llu]: length(%llu), offset(%llu), type(%llu) mismatch with block group[%llu, %u, %llu]: offset(%llu), objectid(%llu), flags(%llu)\n",
+					chunk_rec->objectid,
+					chunk_rec->type,
+					chunk_rec->offset,
+					chunk_rec->length,
+					chunk_rec->offset,
+					chunk_rec->type_flags,
+					block_group_rec->objectid,
+					block_group_rec->type,
+					block_group_rec->offset,
+					block_group_rec->offset,
+					block_group_rec->objectid,
+					block_group_rec->flags);
+			ret = -1;
+		} else {
+			list_del_init(&block_group_rec->list);
+			chunk_rec->bg_rec = block_group_rec;
+		}
+	} else {
+		if (!silent)
 			fprintf(stderr,
-				"Chunk[%llu, %u, %llu]: length(%llu), offset(%llu), type(%llu) mismatch with block group[%llu, %u, %llu]: offset(%llu), objectid(%llu), flags(%llu)\n",
+				"Chunk[%llu, %u, %llu]: length(%llu), offset(%llu), type(%llu) is not found in block group\n",
 				chunk_rec->objectid,
 				chunk_rec->type,
 				chunk_rec->offset,
 				chunk_rec->length,
 				chunk_rec->offset,
-				chunk_rec->type_flags,
-				block_group_rec->objectid,
-				block_group_rec->type,
-				block_group_rec->offset,
-				block_group_rec->offset,
-				block_group_rec->objectid,
-				block_group_rec->flags);
-			ret = -1;
-		}
-		list_del(&block_group_rec->list);
-	} else {
-		fprintf(stderr,
-			"Chunk[%llu, %u, %llu]: length(%llu), offset(%llu), type(%llu) is not found in block group\n",
-			chunk_rec->objectid,
-			chunk_rec->type,
-			chunk_rec->offset,
-			chunk_rec->length,
-			chunk_rec->offset,
-			chunk_rec->type_flags);
+				chunk_rec->type_flags);
 		ret = -1;
 	}
 
@@ -4976,27 +5020,31 @@ static int check_chunk_refs(struct chunk_record *chunk_rec,
 			    dev_extent_rec->offset != offset ||
 			    dev_extent_rec->chunk_offset != chunk_rec->offset ||
 			    dev_extent_rec->length != length) {
+				if (!silent)
+					fprintf(stderr,
+						"Chunk[%llu, %u, %llu] stripe[%llu, %llu] dismatch dev extent[%llu, %llu, %llu]\n",
+						chunk_rec->objectid,
+						chunk_rec->type,
+						chunk_rec->offset,
+						chunk_rec->stripes[i].devid,
+						chunk_rec->stripes[i].offset,
+						dev_extent_rec->objectid,
+						dev_extent_rec->offset,
+						dev_extent_rec->length);
+				ret = -1;
+			} else {
+				list_move(&dev_extent_rec->chunk_list,
+					  &chunk_rec->dextents);
+			}
+		} else {
+			if (!silent)
 				fprintf(stderr,
-					"Chunk[%llu, %u, %llu] stripe[%llu, %llu] dismatch dev extent[%llu, %llu, %llu]\n",
+					"Chunk[%llu, %u, %llu] stripe[%llu, %llu] is not found in dev extent\n",
 					chunk_rec->objectid,
 					chunk_rec->type,
 					chunk_rec->offset,
 					chunk_rec->stripes[i].devid,
-					chunk_rec->stripes[i].offset,
-					dev_extent_rec->objectid,
-					dev_extent_rec->offset,
-					dev_extent_rec->length);
-				ret = -1;
-			}
-			list_del(&dev_extent_rec->chunk_list);
-		} else {
-			fprintf(stderr,
-				"Chunk[%llu, %u, %llu] stripe[%llu, %llu] is not found in dev extent\n",
-				chunk_rec->objectid,
-				chunk_rec->type,
-				chunk_rec->offset,
-				chunk_rec->stripes[i].devid,
-				chunk_rec->stripes[i].offset);
+					chunk_rec->stripes[i].offset);
 			ret = -1;
 		}
 	}
@@ -5004,9 +5052,10 @@ static int check_chunk_refs(struct chunk_record *chunk_rec,
 }
 
 /* check btrfs_chunk -> btrfs_dev_extent / btrfs_block_group_item */
-static int check_chunks(struct cache_tree *chunk_cache,
-			struct block_group_tree *block_group_cache,
-			struct device_extent_tree *dev_extent_cache)
+int check_chunks(struct cache_tree *chunk_cache,
+		 struct block_group_tree *block_group_cache,
+		 struct device_extent_tree *dev_extent_cache,
+		 struct list_head *good, struct list_head *bad, int silent)
 {
 	struct cache_extent *chunk_item;
 	struct chunk_record *chunk_rec;
@@ -5020,26 +5069,38 @@ static int check_chunks(struct cache_tree *chunk_cache,
 		chunk_rec = container_of(chunk_item, struct chunk_record,
 					 cache);
 		err = check_chunk_refs(chunk_rec, block_group_cache,
-				       dev_extent_cache);
-		if (err)
+				       dev_extent_cache, silent);
+		if (err) {
 			ret = err;
+			if (bad)
+				list_add_tail(&chunk_rec->list, bad);
+		} else {
+			if (good)
+				list_add_tail(&chunk_rec->list, good);
+		}
 
 		chunk_item = next_cache_extent(chunk_item);
 	}
 
 	list_for_each_entry(bg_rec, &block_group_cache->block_groups, list) {
-		fprintf(stderr,
-			"Block group[%llu, %llu] (flags = %llu) didn't find the relative chunk.\n",
-			bg_rec->objectid, bg_rec->offset, bg_rec->flags);
+		if (!silent)
+			fprintf(stderr,
+				"Block group[%llu, %llu] (flags = %llu) didn't find the relative chunk.\n",
+				bg_rec->objectid,
+				bg_rec->offset,
+				bg_rec->flags);
 		if (!ret)
 			ret = 1;
 	}
 
 	list_for_each_entry(dext_rec, &dev_extent_cache->no_chunk_orphans,
 			    chunk_list) {
-		fprintf(stderr,
-			"Device extent[%llu, %llu, %llu] didn't find the relative chunk.\n",
-			dext_rec->objectid, dext_rec->offset, dext_rec->length);
+		if (!silent)
+			fprintf(stderr,
+				"Device extent[%llu, %llu, %llu] didn't find the relative chunk.\n",
+				dext_rec->objectid,
+				dext_rec->offset,
+				dext_rec->length);
 		if (!ret)
 			ret = 1;
 	}
@@ -5237,7 +5298,7 @@ again:
 	}
 
 	err = check_chunks(&chunk_cache, &block_group_cache,
-			   &dev_extent_cache);
+			   &dev_extent_cache, NULL, NULL, 0);
 	if (err && !ret)
 		ret = err;
 

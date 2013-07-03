@@ -92,6 +92,7 @@ int btrfs_commit_transaction(struct btrfs_trans_handle *trans,
 int btrfs_open_device(struct btrfs_device *dev);
 int csum_tree_block_size(struct extent_buffer *buf, u16 csum_sectorsize,
 			 int verify);
+int verify_tree_block_csum_silent(struct extent_buffer *buf, u16 csum_size);
 int csum_tree_block(struct btrfs_root *root, struct extent_buffer *buf,
 		    int verify);
 int btrfs_read_buffer(struct extent_buffer *buf, u64 parent_transid);

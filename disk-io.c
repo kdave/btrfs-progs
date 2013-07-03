@@ -70,8 +70,8 @@ void btrfs_csum_final(u32 crc, char *result)
 	*(__le32 *)result = ~cpu_to_le32(crc);
 }
 
-int csum_tree_block_size(struct extent_buffer *buf, u16 csum_size,
-			 int verify)
+static int __csum_tree_block_size(struct extent_buffer *buf, u16 csum_size,
+				  int verify, int silent)
 {
 	char *result;
 	u32 len;
@@ -87,9 +87,11 @@ int csum_tree_block_size(struct extent_buffer *buf, u16 csum_size,
 
 	if (verify) {
 		if (memcmp_extent_buffer(buf, result, 0, csum_size)) {
-			printk("checksum verify failed on %llu found %08X "
-			       "wanted %08X\n", (unsigned long long)buf->start,
-			       *((u32 *)result), *((u32*)(char *)buf->data));
+			if (!silent)
+				printk("checksum verify failed on %llu found %08X wanted %08X\n",
+				       (unsigned long long)buf->start,
+				       *((u32 *)result),
+				       *((u32*)(char *)buf->data));
 			free(result);
 			return 1;
 		}
@@ -98,6 +100,16 @@ int csum_tree_block_size(struct extent_buffer *buf, u16 csum_size,
 	}
 	free(result);
 	return 0;
+}
+
+int csum_tree_block_size(struct extent_buffer *buf, u16 csum_size, int verify)
+{
+	return __csum_tree_block_size(buf, csum_size, verify, 0);
+}
+
+int verify_tree_block_csum_silent(struct extent_buffer *buf, u16 csum_size)
+{
+	return __csum_tree_block_size(buf, csum_size, 1, 1);
 }
 
 int csum_tree_block(struct btrfs_root *root, struct extent_buffer *buf,

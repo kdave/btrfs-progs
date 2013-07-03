@@ -103,6 +103,8 @@ struct map_lookup {
 
 #define btrfs_multi_bio_size(n) (sizeof(struct btrfs_multi_bio) + \
 			    (sizeof(struct btrfs_bio_stripe) * (n)))
+#define btrfs_map_lookup_size(n) (sizeof(struct map_lookup) + \
+				 (sizeof(struct btrfs_bio_stripe) * (n)))
 
 /*
  * Restriper's general type filter
@@ -190,4 +192,6 @@ int btrfs_add_system_chunk(struct btrfs_trans_handle *trans,
 int btrfs_chunk_readonly(struct btrfs_root *root, u64 chunk_offset);
 struct btrfs_device *btrfs_find_device_by_devid(struct btrfs_root *root,
                                                 u64 devid, int instance);
+struct btrfs_device *btrfs_find_device(struct btrfs_root *root, u64 devid,
+				       u8 *uuid, u8 *fsid);
 #endif

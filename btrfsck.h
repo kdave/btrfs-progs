@@ -35,6 +35,8 @@ struct block_group_record {
 	/* Used to identify the orphan block groups */
 	struct list_head list;
 
+	u64 generation;
+
 	u64 objectid;
 	u8  type;
 	u64 offset;
@@ -51,6 +53,8 @@ struct device_record {
 	struct rb_node node;
 	u64 devid;
 
+	u64 generation;
+
 	u64 objectid;
 	u8  type;
 	u64 offset;
@@ -64,19 +68,31 @@ struct device_record {
 struct stripe {
 	u64 devid;
 	u64 offset;
+	u8 dev_uuid[BTRFS_UUID_SIZE];
 };
 
 struct chunk_record {
 	struct cache_extent cache;
 
+	struct list_head list;
+	struct list_head dextents;
+	struct block_group_record *bg_rec;
+
+	u64 generation;
+
 	u64 objectid;
 	u8  type;
 	u64 offset;
 
+	u64 owner;
 	u64 length;
 	u64 type_flags;
+	u64 stripe_len;
 	u16 num_stripes;
 	u16 sub_stripes;
+	u32 io_align;
+	u32 io_width;
+	u32 sector_size;
 	struct stripe stripes[0];
 };
 
@@ -88,6 +104,8 @@ struct device_extent_record {
 	 */
 	struct list_head chunk_list;
 	struct list_head device_list;
+
+	u64 generation;
 
 	u64 objectid;
 	u8  type;
@@ -115,4 +133,50 @@ struct device_extent_tree {
 	struct list_head no_device_orphans;
 };
 
+static inline unsigned long btrfs_chunk_record_size(int num_stripes)
+{
+	return sizeof(struct chunk_record) +
+	       sizeof(struct stripe) * num_stripes;
+}
+void free_chunk_cache_tree(struct cache_tree *chunk_cache);
+
+/* For block group tree */
+static inline void block_group_tree_init(struct block_group_tree *tree)
+{
+	cache_tree_init(&tree->tree);
+	INIT_LIST_HEAD(&tree->block_groups);
+}
+
+int insert_block_group_record(struct block_group_tree *tree,
+			      struct block_group_record *bg_rec);
+void free_block_group_tree(struct block_group_tree *tree);
+
+/* For device extent tree */
+static inline void device_extent_tree_init(struct device_extent_tree *tree)
+{
+	cache_tree_init(&tree->tree);
+	INIT_LIST_HEAD(&tree->no_chunk_orphans);
+	INIT_LIST_HEAD(&tree->no_device_orphans);
+}
+
+int insert_device_extent_record(struct device_extent_tree *tree,
+				struct device_extent_record *de_rec);
+void free_device_extent_tree(struct device_extent_tree *tree);
+
+
+/* Create various in-memory record by on-disk data */
+struct chunk_record *btrfs_new_chunk_record(struct extent_buffer *leaf,
+					    struct btrfs_key *key,
+					    int slot);
+struct block_group_record *
+btrfs_new_block_group_record(struct extent_buffer *leaf, struct btrfs_key *key,
+			     int slot);
+struct device_extent_record *
+btrfs_new_device_extent_record(struct extent_buffer *leaf,
+			       struct btrfs_key *key, int slot);
+
+int check_chunks(struct cache_tree *chunk_cache,
+		 struct block_group_tree *block_group_cache,
+		 struct device_extent_tree *dev_extent_cache,
+		 struct list_head *good, struct list_head *bad, int silent);
 #endif
