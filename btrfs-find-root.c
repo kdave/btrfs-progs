@@ -65,25 +65,6 @@ int csum_block(void *buf, u32 len)
 	return ret;
 }
 
-static int close_all_devices(struct btrfs_fs_info *fs_info)
-{
-	struct list_head *list;
-	struct list_head *next;
-	struct btrfs_device *device;
-
-	return 0;
-
-	list = &fs_info->fs_devices->devices;
-	list_for_each(next, list) {
-		device = list_entry(next, struct btrfs_device, dev_list);
-		if (device->fd != -1) {
-			close(device->fd);
-			device->fd = -1;
-		}
-	}
-	return 0;
-}
-
 static struct btrfs_root *open_ctree_broken(int fd, const char *device)
 {
 	u32 sectorsize;
@@ -217,7 +198,7 @@ static struct btrfs_root *open_ctree_broken(int fd, const char *device)
 out_chunk:
 	free_extent_buffer(fs_info->chunk_root->node);
 out_devices:
-	close_all_devices(fs_info);
+	btrfs_close_devices(fs_info->fs_devices);
 out_cleanup:
 	extent_io_tree_cleanup(&fs_info->extent_cache);
 	extent_io_tree_cleanup(&fs_info->free_space_cache);

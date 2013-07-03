@@ -163,6 +163,9 @@ again:
 	list_for_each(cur, &fs_devices->devices) {
 		device = list_entry(cur, struct btrfs_device, dev_list);
 		if (device->fd != -1) {
+			fsync(device->fd);
+			if (posix_fadvise(device->fd, 0, 0, POSIX_FADV_DONTNEED))
+				fprintf(stderr, "Warning, could not drop caches\n");
 			close(device->fd);
 			device->fd = -1;
 		}
