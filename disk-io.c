@@ -1270,12 +1270,13 @@ static int close_all_devices(struct btrfs_fs_info *fs_info)
 	while (!list_empty(list)) {
 		device = list_entry(list->next, struct btrfs_device, dev_list);
 		list_del_init(&device->dev_list);
-		if (device->fd) {
+		if (device->fd != -1) {
 			fsync(device->fd);
 			if (posix_fadvise(device->fd, 0, 0, POSIX_FADV_DONTNEED))
 				fprintf(stderr, "Warning, could not drop caches\n");
+			close(device->fd);
+			device->fd = -1;
 		}
-		close(device->fd);
 		kfree(device->name);
 		kfree(device->label);
 		kfree(device);

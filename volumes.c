@@ -116,6 +116,7 @@ static int device_list_add(const char *path,
 			/* we can safely leave the fs_devices entry around */
 			return -ENOMEM;
 		}
+		device->fd = -1;
 		device->devid = devid;
 		memcpy(device->uuid, disk_super->dev_item.uuid,
 		       BTRFS_UUID_SIZE);
@@ -161,8 +162,10 @@ int btrfs_close_devices(struct btrfs_fs_devices *fs_devices)
 again:
 	list_for_each(cur, &fs_devices->devices) {
 		device = list_entry(cur, struct btrfs_device, dev_list);
-		close(device->fd);
-		device->fd = -1;
+		if (device->fd != -1) {
+			close(device->fd);
+			device->fd = -1;
+		}
 		device->writeable = 0;
 	}
 

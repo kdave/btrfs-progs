@@ -76,7 +76,10 @@ static int close_all_devices(struct btrfs_fs_info *fs_info)
 	list = &fs_info->fs_devices->devices;
 	list_for_each(next, list) {
 		device = list_entry(next, struct btrfs_device, dev_list);
-		close(device->fd);
+		if (device->fd != -1) {
+			close(device->fd);
+			device->fd = -1;
+		}
 	}
 	return 0;
 }
