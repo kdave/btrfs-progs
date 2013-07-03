@@ -145,45 +145,31 @@ err:
 	return ret;
 }
 
-static int recow_roots(struct btrfs_trans_handle *trans,
-		       struct btrfs_root *root)
+static void __recow_root(struct btrfs_trans_handle *trans,
+			 struct btrfs_root *root)
 {
 	int ret;
 	struct extent_buffer *tmp;
+
+	if (trans->transid != btrfs_root_generation(&root->root_item)) {
+		ret = __btrfs_cow_block(trans, root, root->node,
+					NULL, 0, &tmp, 0, 0);
+		BUG_ON(ret);
+		free_extent_buffer(tmp);
+	}
+}
+
+static void recow_roots(struct btrfs_trans_handle *trans,
+		       struct btrfs_root *root)
+{
 	struct btrfs_fs_info *info = root->fs_info;
 
-	ret = __btrfs_cow_block(trans, info->fs_root, info->fs_root->node,
-				NULL, 0, &tmp, 0, 0);
-	BUG_ON(ret);
-	free_extent_buffer(tmp);
-
-	ret = __btrfs_cow_block(trans, info->tree_root, info->tree_root->node,
-				NULL, 0, &tmp, 0, 0);
-	BUG_ON(ret);
-	free_extent_buffer(tmp);
-
-	ret = __btrfs_cow_block(trans, info->extent_root,
-				info->extent_root->node, NULL, 0, &tmp, 0, 0);
-	BUG_ON(ret);
-	free_extent_buffer(tmp);
-
-	ret = __btrfs_cow_block(trans, info->chunk_root, info->chunk_root->node,
-				NULL, 0, &tmp, 0, 0);
-	BUG_ON(ret);
-	free_extent_buffer(tmp);
-
-
-	ret = __btrfs_cow_block(trans, info->dev_root, info->dev_root->node,
-				NULL, 0, &tmp, 0, 0);
-	BUG_ON(ret);
-	free_extent_buffer(tmp);
-
-	ret = __btrfs_cow_block(trans, info->csum_root, info->csum_root->node,
-				NULL, 0, &tmp, 0, 0);
-	BUG_ON(ret);
-	free_extent_buffer(tmp);
-
-	return 0;
+	__recow_root(trans, info->fs_root);
+	__recow_root(trans, info->tree_root);
+	__recow_root(trans, info->extent_root);
+	__recow_root(trans, info->chunk_root);
+	__recow_root(trans, info->dev_root);
+	__recow_root(trans, info->csum_root);
 }
 
 static int create_one_raid_group(struct btrfs_trans_handle *trans,
@@ -281,8 +267,6 @@ static int create_raid_groups(struct btrfs_trans_handle *trans,
 					    (allowed & metadata_profile));
 		BUG_ON(ret);
 
-		ret = recow_roots(trans, root);
-		BUG_ON(ret);
 	}
 	if (!mixed && num_devices > 1 && (allowed & data_profile)) {
 		ret = create_one_raid_group(trans, root,
@@ -290,6 +274,8 @@ static int create_raid_groups(struct btrfs_trans_handle *trans,
 					    (allowed & data_profile));
 		BUG_ON(ret);
 	}
+	recow_roots(trans, root);
+
 	return 0;
 }
 
