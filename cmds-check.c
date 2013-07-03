@@ -268,7 +268,7 @@ static struct inode_record *get_inode_rec(struct cache_tree *inode_cache,
 	struct inode_record *rec = NULL;
 	int ret;
 
-	cache = find_cache_extent(inode_cache, ino, 1);
+	cache = lookup_cache_extent(inode_cache, ino, 1);
 	if (cache) {
 		node = container_of(cache, struct ptr_node, cache);
 		rec = node->data;
@@ -375,7 +375,7 @@ static void maybe_free_inode_rec(struct cache_tree *inode_cache,
 
 	BUG_ON(rec->refs != 1);
 	if (can_free_inode_rec(rec)) {
-		cache = find_cache_extent(inode_cache, rec->ino, 1);
+		cache = lookup_cache_extent(inode_cache, rec->ino, 1);
 		node = container_of(cache, struct ptr_node, cache);
 		BUG_ON(node->data != rec);
 		remove_cache_extent(inode_cache, &node->cache);
@@ -598,7 +598,7 @@ static int splice_shared_node(struct shared_node *src_node,
 	src = &src_node->root_cache;
 	dst = &dst_node->root_cache;
 again:
-	cache = find_first_cache_extent(src, 0);
+	cache = search_cache_extent(src, 0);
 	while (cache) {
 		node = container_of(cache, struct ptr_node, cache);
 		rec = node->data;
@@ -667,7 +667,7 @@ static struct shared_node *find_shared_node(struct cache_tree *shared,
 	struct cache_extent *cache;
 	struct shared_node *node;
 
-	cache = find_cache_extent(shared, bytenr, 1);
+	cache = lookup_cache_extent(shared, bytenr, 1);
 	if (cache) {
 		node = container_of(cache, struct shared_node, cache);
 		return node;
@@ -1355,7 +1355,7 @@ static int check_inode_recs(struct btrfs_root *root,
 	}
 
 	while (1) {
-		cache = find_first_cache_extent(inode_cache, 0);
+		cache = search_cache_extent(inode_cache, 0);
 		if (!cache)
 			break;
 		node = container_of(cache, struct ptr_node, cache);
@@ -1412,7 +1412,7 @@ static struct root_record *get_root_rec(struct cache_tree *root_cache,
 	struct root_record *rec = NULL;
 	int ret;
 
-	cache = find_cache_extent(root_cache, objectid, 1);
+	cache = lookup_cache_extent(root_cache, objectid, 1);
 	if (cache) {
 		rec = container_of(cache, struct root_record, cache);
 	} else {
@@ -1536,7 +1536,7 @@ static int merge_root_recs(struct btrfs_root *root,
 	}
 
 	while (1) {
-		cache = find_first_cache_extent(src_cache, 0);
+		cache = search_cache_extent(src_cache, 0);
 		if (!cache)
 			break;
 		node = container_of(cache, struct ptr_node, cache);
@@ -1586,7 +1586,7 @@ static int check_root_refs(struct btrfs_root *root,
 	/* fixme: this can not detect circular references */
 	while (loop) {
 		loop = 0;
-		cache = find_first_cache_extent(root_cache, 0);
+		cache = search_cache_extent(root_cache, 0);
 		while (1) {
 			if (!cache)
 				break;
@@ -1613,7 +1613,7 @@ static int check_root_refs(struct btrfs_root *root,
 		}
 	}
 
-	cache = find_first_cache_extent(root_cache, 0);
+	cache = search_cache_extent(root_cache, 0);
 	while (1) {
 		if (!cache)
 			break;
@@ -1989,14 +1989,14 @@ static int free_all_extent_backrefs(struct extent_record *rec)
 	return 0;
 }
 
-static void free_extent_cache(struct btrfs_fs_info *fs_info,
-			      struct cache_tree *extent_cache)
+static void free_extent_record_cache(struct btrfs_fs_info *fs_info,
+				     struct cache_tree *extent_cache)
 {
 	struct cache_extent *cache;
 	struct extent_record *rec;
 
 	while (1) {
-		cache = find_first_cache_extent(extent_cache, 0);
+		cache = first_cache_extent(extent_cache);
 		if (!cache)
 			break;
 		rec = container_of(cache, struct extent_record, cache);
@@ -2108,7 +2108,7 @@ static int record_bad_block_io(struct btrfs_fs_info *info,
 	struct cache_extent *cache;
 	struct btrfs_key key;
 
-	cache = find_cache_extent(extent_cache, start, len);
+	cache = lookup_cache_extent(extent_cache, start, len);
 	if (!cache)
 		return 0;
 
@@ -2130,7 +2130,7 @@ static int check_block(struct btrfs_root *root,
 	int ret = 1;
 	int level;
 
-	cache = find_cache_extent(extent_cache, buf->start, buf->len);
+	cache = lookup_cache_extent(extent_cache, buf->start, buf->len);
 	if (!cache)
 		return 1;
 	rec = container_of(cache, struct extent_record, cache);
@@ -2293,7 +2293,7 @@ static int add_extent_rec(struct cache_tree *extent_cache,
 	int ret = 0;
 	int dup = 0;
 
-	cache = find_cache_extent(extent_cache, start, nr);
+	cache = lookup_cache_extent(extent_cache, start, nr);
 	if (cache) {
 		rec = container_of(cache, struct extent_record, cache);
 		if (inc_ref)
@@ -2418,11 +2418,11 @@ static int add_tree_backref(struct cache_tree *extent_cache, u64 bytenr,
 	struct tree_backref *back;
 	struct cache_extent *cache;
 
-	cache = find_cache_extent(extent_cache, bytenr, 1);
+	cache = lookup_cache_extent(extent_cache, bytenr, 1);
 	if (!cache) {
 		add_extent_rec(extent_cache, NULL, bytenr,
 			       1, 0, 0, 0, 0, 1, 0, 0);
-		cache = find_cache_extent(extent_cache, bytenr, 1);
+		cache = lookup_cache_extent(extent_cache, bytenr, 1);
 		if (!cache)
 			abort();
 	}
@@ -2466,11 +2466,11 @@ static int add_data_backref(struct cache_tree *extent_cache, u64 bytenr,
 	struct data_backref *back;
 	struct cache_extent *cache;
 
-	cache = find_cache_extent(extent_cache, bytenr, 1);
+	cache = lookup_cache_extent(extent_cache, bytenr, 1);
 	if (!cache) {
 		add_extent_rec(extent_cache, NULL, bytenr, 1, 0, 0, 0, 0,
 			       0, 0, max_size);
-		cache = find_cache_extent(extent_cache, bytenr, 1);
+		cache = lookup_cache_extent(extent_cache, bytenr, 1);
 		if (!cache)
 			abort();
 	}
@@ -2545,7 +2545,7 @@ static int pick_next_pending(struct cache_tree *pending,
 	struct cache_extent *cache;
 	int ret;
 
-	cache = find_first_cache_extent(reada, 0);
+	cache = search_cache_extent(reada, 0);
 	if (cache) {
 		bits[0].start = cache->start;
 		bits[1].size = cache->size;
@@ -2556,12 +2556,12 @@ static int pick_next_pending(struct cache_tree *pending,
 	if (node_start > 32768)
 		node_start -= 32768;
 
-	cache = find_first_cache_extent(nodes, node_start);
+	cache = search_cache_extent(nodes, node_start);
 	if (!cache)
-		cache = find_first_cache_extent(nodes, 0);
+		cache = search_cache_extent(nodes, 0);
 
 	if (!cache) {
-		 cache = find_first_cache_extent(pending, 0);
+		 cache = search_cache_extent(pending, 0);
 		 if (!cache)
 			 return 0;
 		 ret = 0;
@@ -2585,7 +2585,7 @@ static int pick_next_pending(struct cache_tree *pending,
 	if (bits_nr - ret > 8) {
 		u64 lookup = bits[0].start + bits[0].size;
 		struct cache_extent *next;
-		next = find_first_cache_extent(pending, lookup);
+		next = search_cache_extent(pending, lookup);
 		while(next) {
 			if (next->start - lookup > 32768)
 				break;
@@ -3182,17 +3182,17 @@ static int run_next_block(struct btrfs_root *root,
 	bytenr = bits[0].start;
 	size = bits[0].size;
 
-	cache = find_cache_extent(pending, bytenr, size);
+	cache = lookup_cache_extent(pending, bytenr, size);
 	if (cache) {
 		remove_cache_extent(pending, cache);
 		free(cache);
 	}
-	cache = find_cache_extent(reada, bytenr, size);
+	cache = lookup_cache_extent(reada, bytenr, size);
 	if (cache) {
 		remove_cache_extent(reada, cache);
 		free(cache);
 	}
-	cache = find_cache_extent(nodes, bytenr, size);
+	cache = lookup_cache_extent(nodes, bytenr, size);
 	if (cache) {
 		remove_cache_extent(nodes, cache);
 		free(cache);
@@ -3400,7 +3400,7 @@ static int free_extent_hook(struct btrfs_trans_handle *trans,
 	struct cache_tree *extent_cache = root->fs_info->fsck_extent_cache;
 
 	is_data = owner >= BTRFS_FIRST_FREE_OBJECTID;
-	cache = find_cache_extent(extent_cache, bytenr, num_bytes);
+	cache = lookup_cache_extent(extent_cache, bytenr, num_bytes);
 	if (!cache)
 		return 0;
 
@@ -4070,8 +4070,8 @@ static int process_duplicates(struct btrfs_root *root,
 	good->refs = rec->refs;
 	list_splice_init(&rec->backrefs, &good->backrefs);
 	while (1) {
-		cache = find_cache_extent(extent_cache, good->start,
-					  good->nr);
+		cache = lookup_cache_extent(extent_cache, good->start,
+					    good->nr);
 		if (!cache)
 			break;
 		tmp = container_of(cache, struct extent_record, cache);
@@ -4244,7 +4244,8 @@ static int fixup_extent_refs(struct btrfs_trans_handle *trans,
 		goto out;
 
 	/* was this block corrupt?  If so, don't add references to it */
-	cache = find_cache_extent(info->corrupt_blocks, rec->start, rec->max_size);
+	cache = lookup_cache_extent(info->corrupt_blocks,
+				    rec->start, rec->max_size);
 	if (cache) {
 		ret = 0;
 		goto out;
@@ -4348,7 +4349,7 @@ static int prune_corrupt_blocks(struct btrfs_trans_handle *trans,
 	struct cache_extent *cache;
 	struct btrfs_corrupt_block *corrupt;
 
-	cache = find_first_cache_extent(info->corrupt_blocks, 0);
+	cache = search_cache_extent(info->corrupt_blocks, 0);
 	while (1) {
 		if (!cache)
 			break;
@@ -4407,7 +4408,7 @@ static int check_block_groups(struct btrfs_trans_handle *trans,
 	/* this isn't quite working */
 	return 0;
 
-	ce = find_first_cache_extent(&map_tree->cache_tree, 0);
+	ce = search_cache_extent(&map_tree->cache_tree, 0);
 	while (1) {
 		if (!ce)
 			break;
@@ -4463,7 +4464,7 @@ static int check_extent_refs(struct btrfs_trans_handle *trans,
 		 * In the worst case, this will be all the
 		 * extents in the FS
 		 */
-		cache = find_first_cache_extent(extent_cache, 0);
+		cache = search_cache_extent(extent_cache, 0);
 		while(cache) {
 			rec = container_of(cache, struct extent_record, cache);
 			btrfs_pin_extent(root->fs_info,
@@ -4472,7 +4473,7 @@ static int check_extent_refs(struct btrfs_trans_handle *trans,
 		}
 
 		/* pin down all the corrupted blocks too */
-		cache = find_first_cache_extent(root->fs_info->corrupt_blocks, 0);
+		cache = search_cache_extent(root->fs_info->corrupt_blocks, 0);
 		while(cache) {
 			rec = container_of(cache, struct extent_record, cache);
 			btrfs_pin_extent(root->fs_info,
@@ -4522,7 +4523,7 @@ static int check_extent_refs(struct btrfs_trans_handle *trans,
 
 	while(1) {
 		fixed = 0;
-		cache = find_first_cache_extent(extent_cache, 0);
+		cache = search_cache_extent(extent_cache, 0);
 		if (!cache)
 			break;
 		rec = container_of(cache, struct extent_record, cache);
@@ -4592,19 +4593,6 @@ repair_abort:
 		return ret;
 	}
 	return err;
-}
-
-static void free_cache_tree(struct cache_tree *tree)
-{
-	struct cache_extent *cache;
-
-	while (1) {
-		cache = find_first_cache_extent(tree, 0);
-		if (!cache)
-			break;
-		remove_cache_extent(tree, cache);
-		free(cache);
-	}
 }
 
 static int check_extents(struct btrfs_root *root, int repair)
@@ -4716,11 +4704,11 @@ again:
 		}
 
 		free_corrupt_blocks_tree(root->fs_info->corrupt_blocks);
-		free_cache_tree(&seen);
-		free_cache_tree(&pending);
-		free_cache_tree(&reada);
-		free_cache_tree(&nodes);
-		free_extent_cache(root->fs_info, &extent_cache);
+		free_extent_cache_tree(&seen);
+		free_extent_cache_tree(&pending);
+		free_extent_cache_tree(&reada);
+		free_extent_cache_tree(&nodes);
+		free_extent_record_cache(root->fs_info, &extent_cache);
 		goto again;
 	}
 

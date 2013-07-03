@@ -33,6 +33,7 @@ struct cache_tree {
 
 struct cache_extent {
 	struct rb_node rb_node;
+	u64 objectid;
 	u64 start;
 	u64 size;
 };
@@ -43,10 +44,9 @@ struct cache_extent *first_cache_extent(struct cache_tree *tree);
 struct cache_extent *prev_cache_extent(struct cache_extent *pe);
 struct cache_extent *next_cache_extent(struct cache_extent *pe);
 
-struct cache_extent *find_first_cache_extent(struct cache_tree *tree,
-					     u64 start);
-struct cache_extent *find_cache_extent(struct cache_tree *tree,
-				       u64 start, u64 size);
+struct cache_extent *search_cache_extent(struct cache_tree *tree, u64 start);
+struct cache_extent *lookup_cache_extent(struct cache_tree *tree,
+					 u64 start, u64 size);
 
 int add_cache_extent(struct cache_tree *tree, u64 start, u64 size);
 int insert_cache_extent(struct cache_tree *tree, struct cache_extent *pe);
@@ -67,5 +67,15 @@ static void free_##name##_tree(struct cache_tree *tree)		\
 {								\
 	cache_tree_free_extents(tree, free_func);		\
 }
+
+void free_extent_cache_tree(struct cache_tree *tree);
+
+struct cache_extent *search_cache_extent2(struct cache_tree *tree,
+					  u64 objectid, u64 start);
+struct cache_extent *lookup_cache_extent2(struct cache_tree *tree,
+					  u64 objectid, u64 start, u64 size);
+int add_cache_extent2(struct cache_tree *tree,
+		      u64 objectid, u64 start, u64 size);
+int insert_cache_extent2(struct cache_tree *tree, struct cache_extent *pe);
 
 #endif

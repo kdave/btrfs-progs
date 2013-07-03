@@ -48,6 +48,7 @@ static struct extent_state *alloc_extent_state(void)
 	state = malloc(sizeof(*state));
 	if (!state)
 		return NULL;
+	state->cache_node.objectid = 0;
 	state->refs = 1;
 	state->state = 0;
 	state->xprivate = 0;
@@ -217,7 +218,7 @@ again:
 	 * this search will find the extents that end after
 	 * our range starts
 	 */
-	node = find_first_cache_extent(&tree->state, start);
+	node = search_cache_extent(&tree->state, start);
 	if (!node)
 		goto out;
 	state = container_of(node, struct extent_state, cache_node);
@@ -311,7 +312,7 @@ again:
 	 * this search will find the extents that end after
 	 * our range starts
 	 */
-	node = find_first_cache_extent(&tree->state, start);
+	node = search_cache_extent(&tree->state, start);
 	if (!node) {
 		err = insert_state(tree, prealloc, start, end, bits);
 		BUG_ON(err == -EEXIST);
@@ -438,7 +439,7 @@ int find_first_extent_bit(struct extent_io_tree *tree, u64 start,
 	 * this search will find all the extents that end after
 	 * our range starts.
 	 */
-	node = find_first_cache_extent(&tree->state, start);
+	node = search_cache_extent(&tree->state, start);
 	if (!node)
 		goto out;
 
@@ -465,7 +466,7 @@ int test_range_bit(struct extent_io_tree *tree, u64 start, u64 end,
 	struct cache_extent *node;
 	int bitset = 0;
 
-	node = find_first_cache_extent(&tree->state, start);
+	node = search_cache_extent(&tree->state, start);
 	while (node && start <= end) {
 		state = container_of(node, struct extent_state, cache_node);
 
@@ -502,7 +503,7 @@ int set_state_private(struct extent_io_tree *tree, u64 start, u64 private)
 	struct extent_state *state;
 	int ret = 0;
 
-	node = find_first_cache_extent(&tree->state, start);
+	node = search_cache_extent(&tree->state, start);
 	if (!node) {
 		ret = -ENOENT;
 		goto out;
@@ -523,7 +524,7 @@ int get_state_private(struct extent_io_tree *tree, u64 start, u64 *private)
 	struct extent_state *state;
 	int ret = 0;
 
-	node = find_first_cache_extent(&tree->state, start);
+	node = search_cache_extent(&tree->state, start);
 	if (!node) {
 		ret = -ENOENT;
 		goto out;
@@ -620,7 +621,7 @@ struct extent_buffer *find_extent_buffer(struct extent_io_tree *tree,
 	struct extent_buffer *eb = NULL;
 	struct cache_extent *cache;
 
-	cache = find_cache_extent(&tree->cache, bytenr, blocksize);
+	cache = lookup_cache_extent(&tree->cache, bytenr, blocksize);
 	if (cache && cache->start == bytenr &&
 	    cache->size == blocksize) {
 		eb = container_of(cache, struct extent_buffer, cache_node);
@@ -636,7 +637,7 @@ struct extent_buffer *find_first_extent_buffer(struct extent_io_tree *tree,
 	struct extent_buffer *eb = NULL;
 	struct cache_extent *cache;
 
-	cache = find_first_cache_extent(&tree->cache, start);
+	cache = search_cache_extent(&tree->cache, start);
 	if (cache) {
 		eb = container_of(cache, struct extent_buffer, cache_node);
 		list_move_tail(&eb->lru, &tree->lru);
@@ -651,7 +652,7 @@ struct extent_buffer *alloc_extent_buffer(struct extent_io_tree *tree,
 	struct extent_buffer *eb;
 	struct cache_extent *cache;
 
-	cache = find_cache_extent(&tree->cache, bytenr, blocksize);
+	cache = lookup_cache_extent(&tree->cache, bytenr, blocksize);
 	if (cache && cache->start == bytenr &&
 	    cache->size == blocksize) {
 		eb = container_of(cache, struct extent_buffer, cache_node);

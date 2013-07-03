@@ -1014,7 +1014,7 @@ int btrfs_num_copies(struct btrfs_mapping_tree *map_tree, u64 logical, u64 len)
 	struct map_lookup *map;
 	int ret;
 
-	ce = find_first_cache_extent(&map_tree->cache_tree, logical);
+	ce = search_cache_extent(&map_tree->cache_tree, logical);
 	BUG_ON(!ce);
 	BUG_ON(ce->start > logical || ce->start + ce->size < logical);
 	map = container_of(ce, struct map_lookup, ce);
@@ -1038,7 +1038,7 @@ int btrfs_next_metadata(struct btrfs_mapping_tree *map_tree, u64 *logical,
 	struct cache_extent *ce;
 	struct map_lookup *map;
 
-	ce = find_first_cache_extent(&map_tree->cache_tree, *logical);
+	ce = search_cache_extent(&map_tree->cache_tree, *logical);
 
 	while (ce) {
 		ce = next_cache_extent(ce);
@@ -1069,7 +1069,7 @@ int btrfs_rmap_block(struct btrfs_mapping_tree *map_tree,
 	u64 rmap_len;
 	int i, j, nr = 0;
 
-	ce = find_first_cache_extent(&map_tree->cache_tree, chunk_start);
+	ce = search_cache_extent(&map_tree->cache_tree, chunk_start);
 	BUG_ON(!ce);
 	map = container_of(ce, struct map_lookup, ce);
 
@@ -1181,7 +1181,7 @@ int __btrfs_map_block(struct btrfs_mapping_tree *map_tree, int rw,
 		stripes_allocated = 1;
 	}
 again:
-	ce = find_first_cache_extent(&map_tree->cache_tree, logical);
+	ce = search_cache_extent(&map_tree->cache_tree, logical);
 	if (!ce) {
 		if (multi)
 			kfree(multi);
@@ -1447,7 +1447,8 @@ int btrfs_bootstrap_super_map(struct btrfs_mapping_tree *map_tree,
 	if (ret == -EEXIST) {
 		struct cache_extent *old;
 		struct map_lookup *old_map;
-		old = find_cache_extent(&map_tree->cache_tree, logical, length);
+		old = lookup_cache_extent(&map_tree->cache_tree,
+					  logical, length);
 		old_map = container_of(old, struct map_lookup, ce);
 		remove_cache_extent(&map_tree->cache_tree, old);
 		kfree(old_map);
@@ -1466,7 +1467,7 @@ int btrfs_chunk_readonly(struct btrfs_root *root, u64 chunk_offset)
 	int readonly = 0;
 	int i;
 
-	ce = find_first_cache_extent(&map_tree->cache_tree, chunk_offset);
+	ce = search_cache_extent(&map_tree->cache_tree, chunk_offset);
 	BUG_ON(!ce);
 
 	map = container_of(ce, struct map_lookup, ce);
@@ -1508,7 +1509,7 @@ static int read_one_chunk(struct btrfs_root *root, struct btrfs_key *key,
 	logical = key->offset;
 	length = btrfs_chunk_length(leaf, chunk);
 
-	ce = find_first_cache_extent(&map_tree->cache_tree, logical);
+	ce = search_cache_extent(&map_tree->cache_tree, logical);
 
 	/* already mapped? */
 	if (ce && ce->start <= logical && ce->start + ce->size > logical) {

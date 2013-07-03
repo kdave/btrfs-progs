@@ -21,14 +21,10 @@
 #include "extent-cache.h"
 
 struct cache_extent_search_range {
+	u64 objectid;
 	u64 start;
 	u64 size;
 };
-
-void cache_tree_init(struct cache_tree *tree)
-{
-	tree->root = RB_ROOT;
-}
 
 static int cache_tree_comp_range(struct rb_node *node, void *data)
 {
@@ -58,26 +54,62 @@ static int cache_tree_comp_nodes(struct rb_node *node1, struct rb_node *node2)
 	return cache_tree_comp_range(node1, (void *)&range);
 }
 
-struct cache_extent *alloc_cache_extent(u64 start, u64 size)
+static int cache_tree_comp_range2(struct rb_node *node, void *data)
+{
+	struct cache_extent *entry;
+	struct cache_extent_search_range *range;
+
+	range = (struct cache_extent_search_range *)data;
+	entry = rb_entry(node, struct cache_extent, rb_node);
+
+	if (entry->objectid < range->objectid)
+		return 1;
+	else if (entry->objectid > range->objectid)
+		return -1;
+	else if (entry->start + entry->size <= range->start)
+		return 1;
+	else if (range->start + range->size <= entry->start)
+		return -1;
+	else
+		return 0;
+}
+
+static int cache_tree_comp_nodes2(struct rb_node *node1, struct rb_node *node2)
+{
+	struct cache_extent *entry;
+	struct cache_extent_search_range range;
+
+	entry = rb_entry(node2, struct cache_extent, rb_node);
+	range.objectid = entry->objectid;
+	range.start = entry->start;
+	range.size = entry->size;
+
+	return cache_tree_comp_range2(node1, (void *)&range);
+}
+
+void cache_tree_init(struct cache_tree *tree)
+{
+	tree->root = RB_ROOT;
+}
+
+static struct cache_extent *
+alloc_cache_extent(u64 objectid, u64 start, u64 size)
 {
 	struct cache_extent *pe = malloc(sizeof(*pe));
 
 	if (!pe)
 		return pe;
 
+	pe->objectid = objectid;
 	pe->start = start;
 	pe->size = size;
 	return pe;
 }
 
-int insert_cache_extent(struct cache_tree *tree, struct cache_extent *pe)
+static int __add_cache_extent(struct cache_tree *tree,
+			      u64 objectid, u64 start, u64 size)
 {
-	return rb_insert(&tree->root, &pe->rb_node, cache_tree_comp_nodes);
-}
-
-int add_cache_extent(struct cache_tree *tree, u64 start, u64 size)
-{
-	struct cache_extent *pe = alloc_cache_extent(start, size);
+	struct cache_extent *pe = alloc_cache_extent(objectid, start, size);
 	int ret;
 
 	if (!pe) {
@@ -92,8 +124,29 @@ int add_cache_extent(struct cache_tree *tree, u64 start, u64 size)
 	return ret;
 }
 
-struct cache_extent *find_cache_extent(struct cache_tree *tree,
-				       u64 start, u64 size)
+int add_cache_extent(struct cache_tree *tree, u64 start, u64 size)
+{
+	return __add_cache_extent(tree, 0, start, size);
+}
+
+int add_cache_extent2(struct cache_tree *tree,
+		      u64 objectid, u64 start, u64 size)
+{
+	return __add_cache_extent(tree, objectid, start, size);
+}
+
+int insert_cache_extent(struct cache_tree *tree, struct cache_extent *pe)
+{
+	return rb_insert(&tree->root, &pe->rb_node, cache_tree_comp_nodes);
+}
+
+int insert_cache_extent2(struct cache_tree *tree, struct cache_extent *pe)
+{
+	return rb_insert(&tree->root, &pe->rb_node, cache_tree_comp_nodes2);
+}
+
+struct cache_extent *lookup_cache_extent(struct cache_tree *tree,
+					 u64 start, u64 size)
 {
 	struct rb_node *node;
 	struct cache_extent *entry;
@@ -109,7 +162,25 @@ struct cache_extent *find_cache_extent(struct cache_tree *tree,
 	return entry;
 }
 
-struct cache_extent *find_first_cache_extent(struct cache_tree *tree, u64 start)
+struct cache_extent *lookup_cache_extent2(struct cache_tree *tree,
+					 u64 objectid, u64 start, u64 size)
+{
+	struct rb_node *node;
+	struct cache_extent *entry;
+	struct cache_extent_search_range range;
+
+	range.objectid = objectid;
+	range.start = start;
+	range.size = size;
+	node = rb_search(&tree->root, &range, cache_tree_comp_range2, NULL);
+	if (!node)
+		return NULL;
+
+	entry = rb_entry(node, struct cache_extent, rb_node);
+	return entry;
+}
+
+struct cache_extent *search_cache_extent(struct cache_tree *tree, u64 start)
 {
 	struct rb_node *next;
 	struct rb_node *node;
@@ -119,6 +190,27 @@ struct cache_extent *find_first_cache_extent(struct cache_tree *tree, u64 start)
 	range.start = start;
 	range.size = 1;
 	node = rb_search(&tree->root, &range, cache_tree_comp_range, &next);
+	if (!node)
+		node = next;
+	if (!node)
+		return NULL;
+
+	entry = rb_entry(node, struct cache_extent, rb_node);
+	return entry;
+}
+
+struct cache_extent *search_cache_extent2(struct cache_tree *tree,
+					 u64 objectid, u64 start)
+{
+	struct rb_node *next;
+	struct rb_node *node;
+	struct cache_extent *entry;
+	struct cache_extent_search_range range;
+
+	range.objectid = objectid;
+	range.start = start;
+	range.size = 1;
+	node = rb_search(&tree->root, &range, cache_tree_comp_range2, &next);
 	if (!node)
 		node = next;
 	if (!node)
@@ -169,4 +261,14 @@ void cache_tree_free_extents(struct cache_tree *tree,
 		remove_cache_extent(tree, ce);
 		free_func(ce);
 	}
+}
+
+static void free_extent_cache(struct cache_extent *pe)
+{
+	free(pe);
+}
+
+void free_extent_cache_tree(struct cache_tree *tree)
+{
+	cache_tree_free_extents(tree, free_extent_cache);
 }
