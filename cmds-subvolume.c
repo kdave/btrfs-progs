@@ -89,13 +89,17 @@ static int cmd_subvol_create(int argc, char **argv)
 		switch (c) {
 		case 'c':
 			res = qgroup_inherit_add_copy(&inherit, optarg, 0);
-			if (res)
-				return res;
+			if (res) {
+				retval = res;
+				goto out;
+			}
 			break;
 		case 'i':
 			res = qgroup_inherit_add_group(&inherit, optarg);
-			if (res)
-				return res;
+			if (res) {
+				retval = res;
+				goto out;
+			}
 			break;
 		default:
 			usage(cmd_subvol_create_usage);
@@ -516,21 +520,27 @@ static int cmd_snapshot(int argc, char **argv)
 		switch (c) {
 		case 'c':
 			res = qgroup_inherit_add_copy(&inherit, optarg, 0);
-			if (res)
-				return res;
+			if (res) {
+				retval = res;
+				goto out;
+			}
 			break;
 		case 'i':
 			res = qgroup_inherit_add_group(&inherit, optarg);
-			if (res)
-				return res;
+			if (res) {
+				retval = res;
+				goto out;
+			}
 			break;
 		case 'r':
 			readonly = 1;
 			break;
 		case 'x':
 			res = qgroup_inherit_add_copy(&inherit, optarg, 1);
-			if (res)
-				return res;
+			if (res) {
+				retval = res;
+				goto out;
+			}
 			break;
 		default:
 			usage(cmd_snapshot_usage);
