@@ -231,7 +231,6 @@ int btrfs_scan_one_device(int fd, const char *path,
 	char *buf;
 	int ret;
 	u64 devid;
-	char uuidbuf[37];
 
 	buf = malloc(4096);
 	if (!buf) {
@@ -249,7 +248,6 @@ int btrfs_scan_one_device(int fd, const char *path,
 		*total_devs = 1;
 	else
 		*total_devs = btrfs_super_num_devices(disk_super);
-	uuid_unparse(disk_super->fsid, uuidbuf);
 
 	ret = device_list_add(path, disk_super, devid, fs_devices_ret);
 
