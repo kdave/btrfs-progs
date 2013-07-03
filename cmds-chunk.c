@@ -42,6 +42,7 @@
 #include "commands.h"
 
 #define BTRFS_CHUNK_TREE_REBUILD_ABORTED	-7500
+#define BTRFS_STRIPE_LEN			(64 * 1024)
 
 struct recover_control {
 	int verbose;
@@ -1251,6 +1252,174 @@ again:
 	goto again;
 }
 
+static int btrfs_get_device_extents(u64 chunk_object,
+				    struct list_head *orphan_devexts,
+				    struct list_head *ret_list)
+{
+	struct device_extent_record *devext;
+	struct device_extent_record *next;
+	int count = 0;
+
+	list_for_each_entry_safe(devext, next, orphan_devexts, chunk_list) {
+		if (devext->chunk_offset == chunk_object) {
+			list_move_tail(&devext->chunk_list, ret_list);
+			count++;
+		}
+	}
+	return count;
+}
+
+static int calc_num_stripes(u64 type)
+{
+	if (type & (BTRFS_BLOCK_GROUP_RAID0 |
+		    BTRFS_BLOCK_GROUP_RAID10 |
+		    BTRFS_BLOCK_GROUP_RAID5 |
+		    BTRFS_BLOCK_GROUP_RAID6))
+		return 0;
+	else if (type & (BTRFS_BLOCK_GROUP_RAID1 |
+			 BTRFS_BLOCK_GROUP_DUP))
+		return 2;
+	else
+		return 1;
+}
+
+static inline int calc_sub_nstripes(u64 type)
+{
+	if (type & BTRFS_BLOCK_GROUP_RAID10)
+		return 2;
+	else
+		return 1;
+}
+
+static int btrfs_verify_device_extents(struct block_group_record *bg,
+				       struct list_head *devexts, int ndevexts)
+{
+	struct device_extent_record *devext;
+	u64 strpie_length;
+	int expected_num_stripes;
+
+	expected_num_stripes = calc_num_stripes(bg->flags);
+	if (!expected_num_stripes && expected_num_stripes != ndevexts)
+		return 1;
+
+	strpie_length = calc_stripe_length(bg->flags, bg->offset, ndevexts);
+	list_for_each_entry(devext, devexts, chunk_list) {
+		if (devext->length != strpie_length)
+			return 1;
+	}
+	return 0;
+}
+
+static int btrfs_rebuild_unordered_chunk_stripes(struct recover_control *rc,
+						 struct chunk_record *chunk)
+{
+	struct device_extent_record *devext;
+	struct btrfs_device *device;
+	int i;
+
+	devext = list_first_entry(&chunk->dextents, struct device_extent_record,
+				  chunk_list);
+	for (i = 0; i < chunk->num_stripes; i++) {
+		chunk->stripes[i].devid = devext->objectid;
+		chunk->stripes[i].offset = devext->offset;
+		device = btrfs_find_device_by_devid(rc->fs_devices,
+						    devext->objectid,
+						    0);
+		if (!device)
+			return -ENOENT;
+		BUG_ON(btrfs_find_device_by_devid(rc->fs_devices,
+						  devext->objectid,
+						  1));
+		memcpy(chunk->stripes[i].dev_uuid, device->uuid,
+		       BTRFS_UUID_SIZE);
+		devext = list_next_entry(devext, chunk_list);
+	}
+	return 0;
+}
+
+static int btrfs_rebuild_chunk_stripes(struct recover_control *rc,
+				       struct chunk_record *chunk)
+{
+	int ret;
+
+	if (chunk->type_flags & (BTRFS_BLOCK_GROUP_RAID10 |
+				 BTRFS_BLOCK_GROUP_RAID0 |
+				 BTRFS_BLOCK_GROUP_RAID5 |
+				 BTRFS_BLOCK_GROUP_RAID6))
+		BUG_ON(1);	/* Fixme: implement in the next patch */
+	else
+		ret = btrfs_rebuild_unordered_chunk_stripes(rc, chunk);
+
+	return ret;
+}
+
+static int btrfs_recover_chunks(struct recover_control *rc)
+{
+	struct chunk_record *chunk;
+	struct block_group_record *bg;
+	struct block_group_record *next;
+	LIST_HEAD(new_chunks);
+	LIST_HEAD(devexts);
+	int nstripes;
+	int ret;
+
+	/* create the chunk by block group */
+	list_for_each_entry_safe(bg, next, &rc->bg.block_groups, list) {
+		nstripes = btrfs_get_device_extents(bg->objectid,
+						    &rc->devext.no_chunk_orphans,
+						    &devexts);
+		chunk = malloc(btrfs_chunk_record_size(nstripes));
+		if (!chunk)
+			return -ENOMEM;
+		memset(chunk, 0, btrfs_chunk_record_size(nstripes));
+		INIT_LIST_HEAD(&chunk->dextents);
+		chunk->bg_rec = bg;
+		chunk->cache.start = bg->objectid;
+		chunk->cache.size = bg->offset;
+		chunk->objectid = BTRFS_FIRST_CHUNK_TREE_OBJECTID;
+		chunk->type = BTRFS_CHUNK_ITEM_KEY;
+		chunk->offset = bg->objectid;
+		chunk->generation = bg->generation;
+		chunk->length = bg->offset;
+		chunk->owner = BTRFS_CHUNK_TREE_OBJECTID;
+		chunk->stripe_len = BTRFS_STRIPE_LEN;
+		chunk->type_flags = bg->flags;
+		chunk->io_width = BTRFS_STRIPE_LEN;
+		chunk->io_align = BTRFS_STRIPE_LEN;
+		chunk->sector_size = rc->sectorsize;
+		chunk->sub_stripes = calc_sub_nstripes(bg->flags);
+
+		ret = insert_cache_extent(&rc->chunk, &chunk->cache);
+		BUG_ON(ret);
+
+		if (!nstripes) {
+			list_add_tail(&chunk->list, &rc->bad_chunks);
+			continue;
+		}
+
+		list_splice_init(&devexts, &chunk->dextents);
+
+		ret = btrfs_verify_device_extents(bg, &devexts, nstripes);
+		if (ret) {
+			list_add_tail(&chunk->list, &rc->bad_chunks);
+			continue;
+		}
+
+		chunk->num_stripes = nstripes;
+		ret = btrfs_rebuild_chunk_stripes(rc, chunk);
+		if (ret)
+			list_add_tail(&chunk->list, &rc->bad_chunks);
+		else
+			list_add_tail(&chunk->list, &rc->good_chunks);
+	}
+	/*
+	 * Don't worry about the lost orphan device extents, they don't
+	 * have its chunk and block group, they must be the old ones that
+	 * we have dropped.
+	 */
+	return 0;
+}
+
 static int btrfs_recover_chunk_tree(char *path, int verbose, int yes)
 {
 	int ret = 0;
@@ -1287,9 +1456,9 @@ static int btrfs_recover_chunk_tree(char *path, int verbose, int yes)
 	if (ret) {
 		if (!list_empty(&rc.bg.block_groups) ||
 		    !list_empty(&rc.devext.no_chunk_orphans)) {
-			fprintf(stderr,
-				"There are some orphan block groups and device extents, we can't repair them now.\n");
-			goto fail_rc;
+			ret = btrfs_recover_chunks(&rc);
+			if (ret)
+				goto fail_rc;
 		}
 		/*
 		 * If the chunk is healthy, its block group item and device

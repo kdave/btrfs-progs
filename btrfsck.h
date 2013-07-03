@@ -140,6 +140,7 @@ static inline unsigned long btrfs_chunk_record_size(int num_stripes)
 }
 void free_chunk_cache_tree(struct cache_tree *chunk_cache);
 
+u64 calc_stripe_length(u64 type, u64 length, int num_stripes);
 /* For block group tree */
 static inline void block_group_tree_init(struct block_group_tree *tree)
 {

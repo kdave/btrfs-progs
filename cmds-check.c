@@ -4926,24 +4926,24 @@ repair_abort:
 	return err;
 }
 
-static u64 calc_stripe_length(struct chunk_record *chunk_rec)
+u64 calc_stripe_length(u64 type, u64 length, int num_stripes)
 {
 	u64 stripe_size;
 
-	if (chunk_rec->type_flags & BTRFS_BLOCK_GROUP_RAID0) {
-		stripe_size = chunk_rec->length;
-		stripe_size /= chunk_rec->num_stripes;
-	} else if (chunk_rec->type_flags & BTRFS_BLOCK_GROUP_RAID10) {
-		stripe_size = chunk_rec->length * 2;
-		stripe_size /= chunk_rec->num_stripes;
-	} else if (chunk_rec->type_flags & BTRFS_BLOCK_GROUP_RAID5) {
-		stripe_size = chunk_rec->length;
-		stripe_size /= (chunk_rec->num_stripes - 1);
-	} else if (chunk_rec->type_flags & BTRFS_BLOCK_GROUP_RAID6) {
-		stripe_size = chunk_rec->length;
-		stripe_size /= (chunk_rec->num_stripes - 2);
+	if (type & BTRFS_BLOCK_GROUP_RAID0) {
+		stripe_size = length;
+		stripe_size /= num_stripes;
+	} else if (type & BTRFS_BLOCK_GROUP_RAID10) {
+		stripe_size = length * 2;
+		stripe_size /= num_stripes;
+	} else if (type & BTRFS_BLOCK_GROUP_RAID5) {
+		stripe_size = length;
+		stripe_size /= (num_stripes - 1);
+	} else if (type & BTRFS_BLOCK_GROUP_RAID6) {
+		stripe_size = length;
+		stripe_size /= (num_stripes - 2);
 	} else {
-		stripe_size = chunk_rec->length;
+		stripe_size = length;
 	}
 	return stripe_size;
 }
@@ -5006,7 +5006,8 @@ static int check_chunk_refs(struct chunk_record *chunk_rec,
 		ret = -1;
 	}
 
-	length = calc_stripe_length(chunk_rec);
+	length = calc_stripe_length(chunk_rec->type_flags, chunk_rec->length,
+				    chunk_rec->num_stripes);
 	for (i = 0; i < chunk_rec->num_stripes; ++i) {
 		devid = chunk_rec->stripes[i].devid;
 		offset = chunk_rec->stripes[i].offset;
