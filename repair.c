@@ -41,7 +41,7 @@ int btrfs_add_corrupt_extent_record(struct btrfs_fs_info *info,
 	corrupt->cache.size = len;
 	corrupt->level = level;
 
-	ret = insert_existing_cache_extent(info->corrupt_blocks, &corrupt->cache);
+	ret = insert_cache_extent(info->corrupt_blocks, &corrupt->cache);
 	if (ret)
 		free(corrupt);
 	BUG_ON(ret && ret != -EEXIST);

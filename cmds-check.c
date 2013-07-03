@@ -293,7 +293,7 @@ static struct inode_record *get_inode_rec(struct cache_tree *inode_cache,
 		if (ino == BTRFS_FREE_INO_OBJECTID)
 			rec->found_link = 1;
 
-		ret = insert_existing_cache_extent(inode_cache, &node->cache);
+		ret = insert_cache_extent(inode_cache, &node->cache);
 		BUG_ON(ret);
 	}
 	return rec;
@@ -614,7 +614,7 @@ again:
 			ins->data = rec;
 			rec->refs++;
 		}
-		ret = insert_existing_cache_extent(dst, &ins->cache);
+		ret = insert_cache_extent(dst, &ins->cache);
 		if (ret == -EEXIST) {
 			conflict = get_inode_rec(dst, rec->ino, 1);
 			merge_inode_recs(rec, conflict, dst);
@@ -648,23 +648,18 @@ again:
 	return 0;
 }
 
-static void free_inode_recs(struct cache_tree *inode_cache)
+static void free_inode_ptr(struct cache_extent *cache)
 {
-	struct cache_extent *cache;
 	struct ptr_node *node;
 	struct inode_record *rec;
 
-	while (1) {
-		cache = find_first_cache_extent(inode_cache, 0);
-		if (!cache)
-			break;
-		node = container_of(cache, struct ptr_node, cache);
-		rec = node->data;
-		remove_cache_extent(inode_cache, &node->cache);
-		free(node);
-		free_inode_rec(rec);
-	}
+	node = container_of(cache, struct ptr_node, cache);
+	rec = node->data;
+	free_inode_rec(rec);
+	free(node);
 }
+
+FREE_EXTENT_CACHE_BASED_TREE(inode_recs, free_inode_ptr);
 
 static struct shared_node *find_shared_node(struct cache_tree *shared,
 					    u64 bytenr)
@@ -692,7 +687,7 @@ static int add_shared_node(struct cache_tree *shared, u64 bytenr, u32 refs)
 	cache_tree_init(&node->inode_cache);
 	node->refs = refs;
 
-	ret = insert_existing_cache_extent(shared, &node->cache);
+	ret = insert_cache_extent(shared, &node->cache);
 	BUG_ON(ret);
 	return 0;
 }
@@ -719,8 +714,8 @@ static int enter_shared_node(struct btrfs_root *root, u64 bytenr, u32 refs,
 	if (wc->root_level == wc->active_node &&
 	    btrfs_root_refs(&root->root_item) == 0) {
 		if (--node->refs == 0) {
-			free_inode_recs(&node->root_cache);
-			free_inode_recs(&node->inode_cache);
+			free_inode_recs_tree(&node->root_cache);
+			free_inode_recs_tree(&node->inode_cache);
 			remove_cache_extent(&wc->shared, &node->cache);
 			free(node);
 		}
@@ -1427,7 +1422,7 @@ static struct root_record *get_root_rec(struct cache_tree *root_cache,
 		rec->cache.start = objectid;
 		rec->cache.size = 1;
 
-		ret = insert_existing_cache_extent(root_cache, &rec->cache);
+		ret = insert_cache_extent(root_cache, &rec->cache);
 		BUG_ON(ret);
 	}
 	return rec;
@@ -1460,28 +1455,23 @@ static struct root_backref *get_root_backref(struct root_record *rec,
 	return backref;
 }
 
-static void free_root_recs(struct cache_tree *root_cache)
+static void free_root_record(struct cache_extent *cache)
 {
-	struct cache_extent *cache;
 	struct root_record *rec;
 	struct root_backref *backref;
 
-	while (1) {
-		cache = find_first_cache_extent(root_cache, 0);
-		if (!cache)
-			break;
-		rec = container_of(cache, struct root_record, cache);
-		remove_cache_extent(root_cache, &rec->cache);
-
-		while (!list_empty(&rec->backrefs)) {
-			backref = list_entry(rec->backrefs.next,
-					     struct root_backref, list);
-			list_del(&backref->list);
-			free(backref);
-		}
-		kfree(rec);
+	rec = container_of(cache, struct root_record, cache);
+	while (!list_empty(&rec->backrefs)) {
+		backref = list_entry(rec->backrefs.next,
+				     struct root_backref, list);
+		list_del(&backref->list);
+		free(backref);
 	}
+
+	kfree(rec);
 }
+
+FREE_EXTENT_CACHE_BASED_TREE(root_recs, free_root_record);
 
 static int add_root_backref(struct cache_tree *root_cache,
 			    u64 root_id, u64 ref_root, u64 dir, u64 index,
@@ -1541,7 +1531,7 @@ static int merge_root_recs(struct btrfs_root *root,
 	struct inode_backref *backref;
 
 	if (root->root_key.objectid == BTRFS_TREE_RELOC_OBJECTID) {
-		free_inode_recs(src_cache);
+		free_inode_recs_tree(src_cache);
 		return 0;
 	}
 
@@ -1855,7 +1845,7 @@ static int check_fs_roots(struct btrfs_root *root,
 			ret = check_fs_root(tmp_root, root_cache, &wc);
 			if (ret)
 				err = 1;
-			btrfs_free_fs_root(root->fs_info, tmp_root);
+			btrfs_free_fs_root(tmp_root);
 		} else if (key.type == BTRFS_ROOT_REF_KEY ||
 			   key.type == BTRFS_ROOT_BACKREF_KEY) {
 			process_root_ref(leaf, path.slots[0], &key,
@@ -1935,7 +1925,7 @@ static int all_backpointers_checked(struct extent_record *rec, int print_errs)
 					(unsigned long long)rec->start,
 					back->full_backref ?
 					"parent" : "root",
-					back->full_backref ? 
+					back->full_backref ?
 					(unsigned long long)dback->parent:
 					(unsigned long long)dback->root,
 					(unsigned long long)dback->owner,
@@ -2411,7 +2401,7 @@ static int add_extent_rec(struct cache_tree *extent_cache,
 
 	rec->cache.start = start;
 	rec->cache.size = nr;
-	ret = insert_existing_cache_extent(extent_cache, &rec->cache);
+	ret = insert_cache_extent(extent_cache, &rec->cache);
 	BUG_ON(ret);
 	bytes_used += nr;
 	if (set_checked) {
@@ -2538,10 +2528,10 @@ static int add_pending(struct cache_tree *pending,
 		       struct cache_tree *seen, u64 bytenr, u32 size)
 {
 	int ret;
-	ret = insert_cache_extent(seen, bytenr, size);
+	ret = add_cache_extent(seen, bytenr, size);
 	if (ret)
 		return ret;
-	insert_cache_extent(pending, bytenr, size);
+	add_cache_extent(pending, bytenr, size);
 	return 0;
 }
 
@@ -3171,15 +3161,17 @@ static int run_next_block(struct btrfs_root *root,
 	struct cache_extent *cache;
 	int reada_bits;
 
-	ret = pick_next_pending(pending, reada, nodes, *last, bits,
-				bits_nr, &reada_bits);
-	if (ret == 0) {
+	nritems = pick_next_pending(pending, reada, nodes, *last, bits,
+				    bits_nr, &reada_bits);
+	if (nritems == 0)
 		return 1;
-	}
+
 	if (!reada_bits) {
-		for(i = 0; i < ret; i++) {
-			insert_cache_extent(reada, bits[i].start,
-					    bits[i].size);
+		for(i = 0; i < nritems; i++) {
+			ret = add_cache_extent(reada, bits[i].start,
+					       bits[i].size);
+			if (ret == -EEXIST)
+				continue;
 
 			/* fixme, get the parent transid */
 			readahead_tree_block(root, bits[i].start,
@@ -3295,7 +3287,7 @@ static int run_next_block(struct btrfs_root *root,
 				ref = btrfs_item_ptr(buf, i,
 						struct btrfs_shared_data_ref);
 				add_data_backref(extent_cache,
-					key.objectid, key.offset, 0, 0, 0, 
+					key.objectid, key.offset, 0, 0, 0,
 					btrfs_shared_data_ref_count(buf, ref),
 					0, root->sectorsize);
 				continue;
@@ -4110,7 +4102,7 @@ static int process_duplicates(struct btrfs_root *root,
 		remove_cache_extent(extent_cache, &tmp->cache);
 		free(tmp);
 	}
-	ret = insert_existing_cache_extent(extent_cache, &good->cache);
+	ret = insert_cache_extent(extent_cache, &good->cache);
 	BUG_ON(ret);
 	free(rec);
 	return good->num_duplicates ? 0 : 1;
@@ -4367,20 +4359,15 @@ static int prune_corrupt_blocks(struct btrfs_trans_handle *trans,
 	return 0;
 }
 
-static void free_corrupt_blocks(struct btrfs_fs_info *info)
+static void free_corrupt_block(struct cache_extent *cache)
 {
-	struct cache_extent *cache;
 	struct btrfs_corrupt_block *corrupt;
 
-	while (1) {
-		cache = find_first_cache_extent(info->corrupt_blocks, 0);
-		if (!cache)
-			break;
-		corrupt = container_of(cache, struct btrfs_corrupt_block, cache);
-		remove_cache_extent(info->corrupt_blocks, cache);
-		free(corrupt);
-	}
+	corrupt = container_of(cache, struct btrfs_corrupt_block, cache);
+	free(corrupt);
 }
+
+FREE_EXTENT_CACHE_BASED_TREE(corrupt_blocks, free_corrupt_block);
 
 static int check_block_group(struct btrfs_trans_handle *trans,
 			      struct btrfs_fs_info *info,
@@ -4728,7 +4715,7 @@ again:
 			goto out;
 		}
 
-		free_corrupt_blocks(root->fs_info);
+		free_corrupt_blocks_tree(root->fs_info->corrupt_blocks);
 		free_cache_tree(&seen);
 		free_cache_tree(&pending);
 		free_cache_tree(&reada);
@@ -4746,7 +4733,7 @@ again:
 	}
 out:
 	if (repair) {
-		free_corrupt_blocks(root->fs_info);
+		free_corrupt_blocks_tree(root->fs_info->corrupt_blocks);
 		root->fs_info->fsck_extent_cache = NULL;
 		root->fs_info->free_extent_hook = NULL;
 		root->fs_info->corrupt_blocks = NULL;
@@ -5254,7 +5241,7 @@ int cmd_check(int argc, char **argv)
 	fprintf(stderr, "checking root refs\n");
 	ret = check_root_refs(root, &root_cache);
 out:
-	free_root_recs(&root_cache);
+	free_root_recs_tree(&root_cache);
 	close_ctree(root);
 
 	if (found_old_backref) { /*

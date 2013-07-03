@@ -513,8 +513,11 @@ static int add_root(struct root_lookup *root_lookup,
 	return 0;
 }
 
-void __free_root_info(struct root_info *ri)
+static void __free_root_info(struct rb_node *node)
 {
+	struct root_info *ri;
+
+	ri = rb_entry(node, struct root_info, rb_node);
 	if (ri->name)
 		free(ri->name);
 
@@ -527,19 +530,9 @@ void __free_root_info(struct root_info *ri)
 	free(ri);
 }
 
-void __free_all_subvolumn(struct root_lookup *root_tree)
+static inline void __free_all_subvolumn(struct root_lookup *root_tree)
 {
-	struct root_info *entry;
-	struct rb_node *n;
-
-	n = rb_first(&root_tree->root);
-	while (n) {
-		entry = rb_entry(n, struct root_info, rb_node);
-		rb_erase(n, &root_tree->root);
-		__free_root_info(entry);
-
-		n = rb_first(&root_tree->root);
-	}
+	rb_free_nodes(&root_tree->root, __free_root_info);
 }
 
 /*

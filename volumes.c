@@ -665,12 +665,12 @@ int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 {
 	u64 dev_offset;
 	struct btrfs_fs_info *info = extent_root->fs_info;
-	struct btrfs_root *chunk_root = extent_root->fs_info->chunk_root;
+	struct btrfs_root *chunk_root = info->chunk_root;
 	struct btrfs_stripe *stripes;
 	struct btrfs_device *device = NULL;
 	struct btrfs_chunk *chunk;
 	struct list_head private_devs;
-	struct list_head *dev_list = &extent_root->fs_info->fs_devices->devices;
+	struct list_head *dev_list = &info->fs_devices->devices;
 	struct list_head *cur;
 	struct map_lookup *map;
 	int min_stripe_size = 1 * 1024 * 1024;
@@ -890,9 +890,7 @@ again:
 	map->ce.start = key.offset;
 	map->ce.size = *num_bytes;
 
-	ret = insert_existing_cache_extent(
-			   &extent_root->fs_info->mapping_tree.cache_tree,
-			   &map->ce);
+	ret = insert_cache_extent(&info->mapping_tree.cache_tree, &map->ce);
 	BUG_ON(ret);
 
 	if (type & BTRFS_BLOCK_GROUP_SYSTEM) {
@@ -911,11 +909,11 @@ int btrfs_alloc_data_chunk(struct btrfs_trans_handle *trans,
 {
 	u64 dev_offset;
 	struct btrfs_fs_info *info = extent_root->fs_info;
-	struct btrfs_root *chunk_root = extent_root->fs_info->chunk_root;
+	struct btrfs_root *chunk_root = info->chunk_root;
 	struct btrfs_stripe *stripes;
 	struct btrfs_device *device = NULL;
 	struct btrfs_chunk *chunk;
-	struct list_head *dev_list = &extent_root->fs_info->fs_devices->devices;
+	struct list_head *dev_list = &info->fs_devices->devices;
 	struct list_head *cur;
 	struct map_lookup *map;
 	u64 calc_size = 8 * 1024 * 1024;
@@ -998,9 +996,7 @@ int btrfs_alloc_data_chunk(struct btrfs_trans_handle *trans,
 	map->ce.start = key.offset;
 	map->ce.size = num_bytes;
 
-	ret = insert_existing_cache_extent(
-			   &extent_root->fs_info->mapping_tree.cache_tree,
-			   &map->ce);
+	ret = insert_cache_extent(&info->mapping_tree.cache_tree, &map->ce);
 	BUG_ON(ret);
 
 	kfree(chunk);
@@ -1447,7 +1443,7 @@ int btrfs_bootstrap_super_map(struct btrfs_mapping_tree *map_tree,
 		map->stripes[i].dev = device;
 		i++;
 	}
-	ret = insert_existing_cache_extent(&map_tree->cache_tree, &map->ce);
+	ret = insert_cache_extent(&map_tree->cache_tree, &map->ce);
 	if (ret == -EEXIST) {
 		struct cache_extent *old;
 		struct map_lookup *old_map;
@@ -1455,7 +1451,7 @@ int btrfs_bootstrap_super_map(struct btrfs_mapping_tree *map_tree,
 		old_map = container_of(old, struct map_lookup, ce);
 		remove_cache_extent(&map_tree->cache_tree, old);
 		kfree(old_map);
-		ret = insert_existing_cache_extent(&map_tree->cache_tree,
+		ret = insert_cache_extent(&map_tree->cache_tree,
 						   &map->ce);
 	}
 	BUG_ON(ret);
@@ -1550,7 +1546,7 @@ static int read_one_chunk(struct btrfs_root *root, struct btrfs_key *key,
 		}
 
 	}
-	ret = insert_existing_cache_extent(&map_tree->cache_tree, &map->ce);
+	ret = insert_cache_extent(&map_tree->cache_tree, &map->ce);
 	BUG_ON(ret);
 
 	return 0;

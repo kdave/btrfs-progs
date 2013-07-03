@@ -671,8 +671,7 @@ static int find_and_setup_log_root(struct btrfs_root *tree_root,
 }
 
 
-int btrfs_free_fs_root(struct btrfs_fs_info *fs_info,
-		       struct btrfs_root *root)
+int btrfs_free_fs_root(struct btrfs_root *root)
 {
 	if (root->node)
 		free_extent_buffer(root->node);
@@ -682,21 +681,15 @@ int btrfs_free_fs_root(struct btrfs_fs_info *fs_info,
 	return 0;
 }
 
-static int free_fs_roots(struct btrfs_fs_info *fs_info)
+static void __free_fs_root(struct cache_extent *cache)
 {
-	struct cache_extent *cache;
 	struct btrfs_root *root;
 
-	while (1) {
-		cache = find_first_cache_extent(&fs_info->fs_root_cache, 0);
-		if (!cache)
-			break;
-		root = container_of(cache, struct btrfs_root, cache);
-		remove_cache_extent(&fs_info->fs_root_cache, cache);
-		btrfs_free_fs_root(fs_info, root);
-	}
-	return 0;
+	root = container_of(cache, struct btrfs_root, cache);
+	btrfs_free_fs_root(root);
 }
+
+FREE_EXTENT_CACHE_BASED_TREE(fs_roots, __free_fs_root);
 
 struct btrfs_root *btrfs_read_fs_root_no_cache(struct btrfs_fs_info *fs_info,
 					       struct btrfs_key *location)
@@ -790,8 +783,7 @@ struct btrfs_root *btrfs_read_fs_root(struct btrfs_fs_info *fs_info,
 
 	root->cache.start = location->objectid;
 	root->cache.size = 1;
-	ret = insert_existing_cache_extent(&fs_info->fs_root_cache,
-					   &root->cache);
+	ret = insert_cache_extent(&fs_info->fs_root_cache, &root->cache);
 	BUG_ON(ret);
 	return root;
 }
@@ -989,22 +981,19 @@ void btrfs_release_all_roots(struct btrfs_fs_info *fs_info)
 		free_extent_buffer(fs_info->chunk_root->node);
 }
 
-static void free_mapping_cache(struct btrfs_fs_info *fs_info)
+static void free_map_lookup(struct cache_extent *ce)
 {
-	struct cache_tree *cache_tree = &fs_info->mapping_tree.cache_tree;
-	struct cache_extent *ce;
 	struct map_lookup *map;
 
-	while ((ce = find_first_cache_extent(cache_tree, 0))) {
-		map = container_of(ce, struct map_lookup, ce);
-		remove_cache_extent(cache_tree, ce);
-		kfree(map);
-	}
+	map = container_of(ce, struct map_lookup, ce);
+	kfree(map);
 }
+
+FREE_EXTENT_CACHE_BASED_TREE(mapping_cache, free_map_lookup);
 
 void btrfs_cleanup_all_caches(struct btrfs_fs_info *fs_info)
 {
-	free_mapping_cache(fs_info);
+	free_mapping_cache_tree(&fs_info->mapping_tree.cache_tree);
 	extent_io_tree_cleanup(&fs_info->extent_cache);
 	extent_io_tree_cleanup(&fs_info->free_space_cache);
 	extent_io_tree_cleanup(&fs_info->block_group_cache);
@@ -1394,7 +1383,7 @@ int close_ctree(struct btrfs_root *root)
 	}
 	btrfs_free_block_groups(fs_info);
 
-	free_fs_roots(fs_info);
+	free_fs_roots_tree(&fs_info->fs_root_cache);
 
 	btrfs_release_all_roots(fs_info);
 	btrfs_close_devices(fs_info->fs_devices);

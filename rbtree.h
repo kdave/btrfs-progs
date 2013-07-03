@@ -111,10 +111,7 @@ struct rb_node
 struct rb_root
 {
 	struct rb_node *rb_node;
-	void (*rotate_notify)(struct rb_node *old_parent, struct rb_node *node);
-
 };
-
 
 #define rb_parent(r)   ((struct rb_node *)((r)->rb_parent_color & ~3))
 #define rb_color(r)   ((r)->rb_parent_color & 1)
@@ -159,6 +156,27 @@ static inline void rb_link_node(struct rb_node * node, struct rb_node * parent,
 	node->rb_left = node->rb_right = NULL;
 
 	*rb_link = node;
+}
+
+/* The common insert/search/free functions */
+typedef int (*rb_compare_nodes)(struct rb_node *node1, struct rb_node *node2);
+typedef int (*rb_compare_keys)(struct rb_node *node, void *key);
+typedef void (*rb_free_node)(struct rb_node *node);
+
+int rb_insert(struct rb_root *root, struct rb_node *node,
+	      rb_compare_nodes comp);
+/*
+ * In some cases, we need return the next node if we don't find the node we
+ * specify. At this time, we can use next_ret.
+ */
+struct rb_node *rb_search(struct rb_root *root, void *key, rb_compare_keys comp,
+			  struct rb_node **next_ret);
+void rb_free_nodes(struct rb_root *root, rb_free_node free_node);
+
+#define FREE_RB_BASED_TREE(name, free_func)		\
+static void free_##name##_tree(struct rb_root *root)	\
+{							\
+	rb_free_nodes(root, free_func);			\
 }
 
 #endif	/* _LINUX_RBTREE_H */
