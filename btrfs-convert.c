@@ -2323,7 +2323,8 @@ int do_convert(const char *devname, int datacsum, int packing, int noxattr)
 			 blocks, total_bytes, blocksize, blocksize,
 			 blocksize, blocksize);
 	if (ret) {
-		fprintf(stderr, "unable to create initial ctree\n");
+		fprintf(stderr, "unable to create initial ctree: %s\n",
+			strerror(-ret));
 		goto fail;
 	}
 	/* create a system chunk that maps the whole device */

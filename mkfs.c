@@ -1534,7 +1534,7 @@ int main(int ac, char **av)
 			 nodesize, leafsize,
 			 sectorsize, stripesize);
 	if (ret) {
-		fprintf(stderr, "error during mkfs %d\n", ret);
+		fprintf(stderr, "error during mkfs: %s\n", strerror(-ret));
 		exit(1);
 	}
 
