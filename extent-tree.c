@@ -1504,12 +1504,13 @@ again:
 	 * to make sure.
 	 */
 	if (ret > 0 && metadata) {
-		if (path->slots) {
+		if (path->slots[0]) {
 			path->slots[0]--;
 			btrfs_item_key_to_cpu(path->nodes[0], &key,
 					      path->slots[0]);
 			if (key.objectid == bytenr &&
-			    key.type == BTRFS_METADATA_ITEM_KEY)
+			    key.type == BTRFS_EXTENT_ITEM_KEY &&
+			    key.offset == root->leafsize)
 				ret = 0;
 		}
 
