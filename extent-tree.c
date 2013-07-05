@@ -1592,7 +1592,7 @@ again:
 
 	if (ret > 0 && skinny_metadata) {
 		skinny_metadata = 0;
-		if (path->slots[0]--) {
+		if (path->slots[0]) {
 			path->slots[0]--;
 			btrfs_item_key_to_cpu(path->nodes[0], &key,
 					      path->slots[0]);
