@@ -37,10 +37,13 @@
 
 static u16 csum_size = 0;
 static u64 search_objectid = BTRFS_ROOT_TREE_OBJECTID;
+static u64 search_generation = 0;
+static unsigned long search_level = 0;
 
 static void usage()
 {
-	fprintf(stderr, "Usage: find-roots [-o search_objectid] <device>\n");
+	fprintf(stderr, "Usage: find-roots [-o search_objectid] "
+		"[ -g search_generation ] [ -l search_level ] <device>\n");
 }
 
 int csum_block(void *buf, u32 len)
@@ -126,10 +129,10 @@ out:
 static int search_iobuf(struct btrfs_root *root, void *iobuf,
 			size_t iobuf_size, off_t offset)
 {
-	u64 gen = btrfs_super_generation(root->fs_info->super_copy);
+	u64 gen = search_generation;
 	u64 objectid = search_objectid;
 	u32 size = btrfs_super_nodesize(root->fs_info->super_copy);
-	u8 level = root->fs_info->super_copy->root_level;
+	u8 level = search_level;
 	size_t block_off = 0;
 
 	while (block_off < iobuf_size) {
@@ -147,8 +150,9 @@ static int search_iobuf(struct btrfs_root *root, void *iobuf,
 			goto next;
 		if (h_byte != (offset + block_off))
 			goto next;
-		if (h_level != level)
+		if (h_level < level)
 			goto next;
+		level = h_level;
 		if (csum_block(block, size)) {
 			fprintf(stderr, "Well block %Lu seems good, "
 				"but the csum doesn't match\n",
@@ -158,11 +162,12 @@ static int search_iobuf(struct btrfs_root *root, void *iobuf,
 		if (h_gen != gen) {
 			fprintf(stderr, "Well block %Lu seems great, "
 				"but generation doesn't match, "
-				"have=%Lu, want=%Lu\n", h_byte, h_gen,
-				gen);
+				"have=%Lu, want=%Lu level %Lu\n", h_byte,
+				h_gen, gen, h_level);
 			goto next;
 		}
-		printf("Found tree root at %Lu\n", h_byte);
+		printf("Found tree root at %Lu gen %Lu level %Lu\n", h_byte,
+		       h_gen, h_level);
 		return 0;
 next:
 		block_off += size;
@@ -281,15 +286,32 @@ int main(int argc, char **argv)
 	int opt;
 	int ret;
 
-	while ((opt = getopt(argc, argv, "o:")) != -1) {
+	while ((opt = getopt(argc, argv, "l:o:g:")) != -1) {
 		switch(opt) {
+			errno = 0;
 			case 'o':
-				errno = 0;
 				search_objectid = (u64)strtoll(optarg, NULL,
 							       10);
 				if (errno) {
 					fprintf(stderr, "Error parsing "
 						"objectid\n");
+					exit(1);
+				}
+				break;
+			case 'g':
+				search_generation = (u64)strtoll(optarg, NULL,
+							       10);
+				if (errno) {
+					fprintf(stderr, "Error parsing "
+						"generation\n");
+					exit(1);
+				}
+				break;
+			case 'l':
+				search_level = strtol(optarg, NULL, 10);
+				if (errno) {
+					fprintf(stderr, "Error parsing "
+						"level\n");
 					exit(1);
 				}
 				break;
@@ -317,6 +339,9 @@ int main(int argc, char **argv)
 		fprintf(stderr, "Open ctree failed\n");
 		exit(1);
 	}
+
+	if (search_generation == 0)
+		search_generation = btrfs_super_generation(root->fs_info->super_copy);
 
 	csum_size = btrfs_super_csum_size(root->fs_info->super_copy);
 	ret = find_root(root);
