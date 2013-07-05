@@ -1067,7 +1067,7 @@ int cmd_restore(int argc, char **argv)
 
 	if (fs_location != 0) {
 		free_extent_buffer(root->node);
-		root->node = read_tree_block(root, fs_location, 4096, 0);
+		root->node = read_tree_block(root, fs_location, root->leafsize, 0);
 		if (!root->node) {
 			fprintf(stderr, "Failed to read fs location\n");
 			goto out;
