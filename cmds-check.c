@@ -4806,9 +4806,8 @@ static int check_extent_refs(struct btrfs_trans_handle *trans,
 		/* pin down all the corrupted blocks too */
 		cache = search_cache_extent(root->fs_info->corrupt_blocks, 0);
 		while(cache) {
-			rec = container_of(cache, struct extent_record, cache);
 			btrfs_pin_extent(root->fs_info,
-					 rec->start, rec->max_size);
+					 cache->start, cache->size);
 			cache = next_cache_extent(cache);
 		}
 		prune_corrupt_blocks(trans, root->fs_info);
