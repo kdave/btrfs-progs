@@ -797,7 +797,8 @@ struct extent_buffer *read_node_slot(struct btrfs_root *root,
 	if (slot >= btrfs_header_nritems(parent))
 		return NULL;
 
-	BUG_ON(level == 0);
+	if (level == 0)
+		return NULL;
 
 	return read_tree_block(root, btrfs_node_blockptr(parent, slot),
 		       btrfs_level_size(root, level - 1),

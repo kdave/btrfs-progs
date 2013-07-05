@@ -152,9 +152,11 @@ int next_leaf(struct btrfs_root *root, struct btrfs_path *path)
 {
 	int slot;
 	int level = 1;
+	int offset = 1;
 	struct extent_buffer *c;
 	struct extent_buffer *next = NULL;
 
+again:
 	for (; level < BTRFS_MAX_LEVEL; level++) {
 		if (path->nodes[level])
 			break;
@@ -169,7 +171,7 @@ int next_leaf(struct btrfs_root *root, struct btrfs_path *path)
 		if (!path->nodes[level])
 			return 1;
 
-		slot = path->slots[level] + 1;
+		slot = path->slots[level] + offset;
 		c = path->nodes[level];
 		if (slot >= btrfs_header_nritems(c)) {
 			level++;
@@ -182,7 +184,9 @@ int next_leaf(struct btrfs_root *root, struct btrfs_path *path)
 			reada_for_search(root, path, level, slot, 0);
 
 		next = read_node_slot(root, c, slot);
-		break;
+		if (next)
+			break;
+		offset++;
 	}
 	path->slots[level] = slot;
 	while(1) {
@@ -196,6 +200,8 @@ int next_leaf(struct btrfs_root *root, struct btrfs_path *path)
 		if (path->reada)
 			reada_for_search(root, path, level, 0, 0);
 		next = read_node_slot(root, next, 0);
+		if (!next)
+			goto again;
 	}
 	return 0;
 }
