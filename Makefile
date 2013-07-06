@@ -19,7 +19,6 @@ libbtrfs_headers = send-stream.h send-utils.h send.h rbtree.h btrfs-list.h \
 
 CHECKFLAGS= -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ -Wbitwise \
 	    -Wuninitialized -Wshadow -Wundef
-DEPFLAGS = -Wp,-MMD,$(@D)/.$(@F).d,-MT,$@
 
 INSTALL = install
 prefix ?= /usr/local
@@ -77,22 +76,25 @@ else
 	check = true
 endif
 
+%.o.d: %.c
+	$(Q)$(CC) -MM -MG -MF $@ -MT $(@:.o.d=.o) -MT $(@:.o.d=.static.o) -MT $@ $(AM_CFLAGS) $(CFLAGS) $<
+
 .c.o:
 	$(Q)$(check) $<
 	@echo "    [CC]     $@"
-	$(Q)$(CC) $(DEPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c $<
+	$(Q)$(CC) $(AM_CFLAGS) $(CFLAGS) -c $<
 
 %.static.o: %.c
 	@echo "    [CC]     $@"
-	$(Q)$(CC) $(DEPFLAGS) $(AM_CFLAGS) $(STATIC_CFLAGS) -c $< -o $@
+	$(Q)$(CC) $(AM_CFLAGS) $(STATIC_CFLAGS) -c $< -o $@
 
-all: version.h $(progs) manpages
+all: $(progs) manpages
 
 #
 # NOTE: For static compiles, you need to have all the required libs
 # 	static equivalent available
 #
-static: version.h btrfs.static mkfs.btrfs.static btrfs-find-root.static
+static: btrfs.static mkfs.btrfs.static btrfs-find-root.static
 
 version.h:
 	@echo "    [SH]     $@"
@@ -122,13 +124,13 @@ $(lib_links):
 # For static variants, use an extra $(subst) to get rid of the ".static"
 # from the target name before translating to list of libs
 
-btrfs-%.static: version.h $(static_objects) btrfs-%.static.o $(static_libbtrfs_objects)
+btrfs-%.static: $(static_objects) btrfs-%.static.o $(static_libbtrfs_objects)
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(STATIC_CFLAGS) -o $@ $@.o $(static_objects) \
 		$(static_libbtrfs_objects) $(STATIC_LDFLAGS) $(STATIC_LIBS) \
 		$($(subst -,_,$(subst .static,,$@)-libs))
 
-btrfs-%: version.h $(objects) $(libs) btrfs-%.o
+btrfs-%: $(objects) $(libs) btrfs-%.o
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o $@ $(objects) $@.o $(LDFLAGS) $(LIBS) $($(subst -,_,$@-libs))
 
@@ -184,7 +186,7 @@ install-man:
 
 clean :
 	@echo "Cleaning"
-	$(Q)rm -f $(progs) cscope.out *.o .*.d btrfs-convert btrfs-image btrfs-select-super \
+	$(Q)rm -f $(progs) cscope.out *.o *.o.d btrfs-convert btrfs-image btrfs-select-super \
 	      btrfs-zero-log btrfstune dir-test ioctl-test quick-test send-test btrfsck \
 	      btrfs.static mkfs.btrfs.static btrfs-calc-size \
 	      version.h \
@@ -202,4 +204,6 @@ install: $(libs) $(progs) install-man
 	$(INSTALL) -m755 -d $(DESTDIR)$(incdir)
 	$(INSTALL) -m644 $(headers) $(DESTDIR)$(incdir)
 
--include .*.d
+ifneq ($(MAKECMDGOALS),clean)
+-include $(objects:.o=.o.d) $(cmd-objects:.o=.o.d) $(subst .btrfs,, $(filter-out btrfsck.o.d, $(progs:=.o.d)))
+endif

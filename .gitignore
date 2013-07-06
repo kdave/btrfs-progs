@@ -1,6 +1,6 @@
 *.o
 *.static.o
-.*.o.d
+*.o.d
 version.h
 version
 man/*.gz
