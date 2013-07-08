@@ -2108,6 +2108,7 @@ static int finish_current_insert(struct btrfs_trans_handle *trans,
 						extent_op->flags,
 						&extent_op->key,
 						extent_op->level, &key);
+			BUG_ON(ret);
 		} else {
 			BUG_ON(1);
 		}
@@ -2755,7 +2756,7 @@ static int alloc_reserved_tree_block(struct btrfs_trans_handle *trans,
 
 	ret = update_block_group(trans, root, ins->objectid, root->leafsize,
 				 1, 0);
-	return 0;
+	return ret;
 }
 
 static int alloc_tree_block(struct btrfs_trans_handle *trans,
@@ -3274,12 +3275,14 @@ btrfs_add_block_group(struct btrfs_fs_info *fs_info, u64 bytes_used, u64 type,
 	BUG_ON(ret);
 
 	bit = block_group_state_bits(type);
-	set_extent_bits(block_group_cache, chunk_offset,
-			chunk_offset + size - 1,
-			bit | EXTENT_LOCKED, GFP_NOFS);
+	ret = set_extent_bits(block_group_cache, chunk_offset,
+			      chunk_offset + size - 1,
+			      bit | EXTENT_LOCKED, GFP_NOFS);
+	BUG_ON(ret);
 
-	set_state_private(block_group_cache, chunk_offset,
-			  (unsigned long)cache);
+	ret = set_state_private(block_group_cache, chunk_offset,
+				(unsigned long)cache);
+	BUG_ON(ret);
 	set_avail_alloc_bits(fs_info, type);
 
 	return cache;
@@ -3301,8 +3304,11 @@ int btrfs_make_block_group(struct btrfs_trans_handle *trans,
 				sizeof(cache->item));
 	BUG_ON(ret);
 
-	finish_current_insert(trans, extent_root);
+	ret = finish_current_insert(trans, extent_root);
+	BUG_ON(ret);
 	ret = del_pending_extents(trans, extent_root);
+	BUG_ON(ret);
+
 	return 0;
 }
 
