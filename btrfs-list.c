@@ -1337,10 +1337,12 @@ static void print_subvolume_column(struct root_info *subv,
 		printf("%llu", subv->top_id);
 		break;
 	case BTRFS_LIST_OTIME:
-		if (subv->otime)
-			strftime(tstr, 256, "%Y-%m-%d %X",
-				 localtime(&subv->otime));
-		else
+		if (subv->otime) {
+			struct tm tm;
+
+			localtime_r(&subv->otime, &tm);
+			strftime(tstr, 256, "%Y-%m-%d %X", &tm);
+		} else
 			strcpy(tstr, "-");
 		printf("%s", tstr);
 		break;

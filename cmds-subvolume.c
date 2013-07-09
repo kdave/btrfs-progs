@@ -908,10 +908,12 @@ static int cmd_subvol_show(int argc, char **argv)
 		uuid_unparse(get_ri.puuid, uuidparse);
 	printf("\tParent uuid: \t\t%s\n", uuidparse);
 
-	if (get_ri.otime)
-		strftime(tstr, 256, "%Y-%m-%d %X",
-			 localtime(&get_ri.otime));
-	else
+	if (get_ri.otime) {
+		struct tm tm;
+
+		localtime_r(&get_ri.otime, &tm);
+		strftime(tstr, 256, "%Y-%m-%d %X", &tm);
+	} else
 		strcpy(tstr, "-");
 	printf("\tCreation time: \t\t%s\n", tstr);
 
