@@ -1059,6 +1059,7 @@ again:
 		if (ret) {
 			key.type = BTRFS_EXTENT_ITEM_KEY;
 			key.offset = num_bytes;
+			btrfs_release_path(root, path);
 			goto again;
 		}
 	}
