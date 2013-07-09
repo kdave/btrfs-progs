@@ -1356,7 +1356,6 @@ int main(int ac, char **av)
 	u64 num_of_meta_chunks = 0;
 	u64 size_of_data = 0;
 	u64 source_dir_size = 0;
-	char *pretty_buf;
 	struct btrfs_super_block *super;
 	u64 flags;
 	int dev_cnt = 0;
@@ -1629,8 +1628,7 @@ raid_groups:
 	printf("fs created label %s on %s\n\tnodesize %u leafsize %u "
 	    "sectorsize %u size %s\n",
 	    label, first_file, nodesize, leafsize, sectorsize,
-	    pretty_buf = pretty_sizes(btrfs_super_total_bytes(root->fs_info->super_copy)));
-	free(pretty_buf);
+	    pretty_size(btrfs_super_total_bytes(root->fs_info->super_copy)));
 
 	printf("%s\n", BTRFS_BUILD_VERSION);
 	btrfs_commit_transaction(trans, root);

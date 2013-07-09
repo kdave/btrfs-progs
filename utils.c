@@ -1152,13 +1152,14 @@ out:
 }
 
 static char *size_strs[] = { "", "KB", "MB", "GB", "TB",
-			    "PB", "EB", "ZB", "YB"};
-char *pretty_sizes(u64 size)
+			    "PB", "EB"};
+void pretty_size_snprintf(u64 size, char *str, size_t str_bytes)
 {
 	int num_divs = 0;
-        int pretty_len = 16;
 	float fraction;
-	char *pretty;
+
+	if (str_bytes == 0)
+		return;
 
 	if( size < 1024 ){
 		fraction = size;
@@ -1172,13 +1173,13 @@ char *pretty_sizes(u64 size)
 			num_divs ++;
 		}
 
-		if (num_divs >= ARRAY_SIZE(size_strs))
-			return NULL;
+		if (num_divs >= ARRAY_SIZE(size_strs)) {
+			str[0] = '\0';
+			return;
+		}
 		fraction = (float)last_size / 1024;
 	}
-	pretty = malloc(pretty_len);
-	snprintf(pretty, pretty_len, "%.2f%s", fraction, size_strs[num_divs]);
-	return pretty;
+	snprintf(str, str_bytes, "%.2f%s", fraction, size_strs[num_divs]);
 }
 
 /*

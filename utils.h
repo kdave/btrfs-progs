@@ -44,7 +44,15 @@ int check_mounted_where(int fd, const char *file, char *where, int size,
 			struct btrfs_fs_devices **fs_devices_mnt);
 int btrfs_device_already_in_root(struct btrfs_root *root, int fd,
 				 int super_offset);
-char *pretty_sizes(u64 size);
+
+void pretty_size_snprintf(u64 size, char *str, size_t str_bytes);
+#define pretty_size(size) 						\
+	({								\
+		static __thread char _str[24];				\
+		pretty_size_snprintf((size), _str, sizeof(_str));	\
+		_str;							\
+	})
+
 int get_mountpt(char *dev, char *mntpt, size_t size);
 int btrfs_scan_block_devices(int run_ioctl);
 u64 parse_size(char *s);

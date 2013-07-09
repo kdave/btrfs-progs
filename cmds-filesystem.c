@@ -111,8 +111,6 @@ static int cmd_df(int argc, char **argv)
 
 	for (i = 0; i < sargs->total_spaces; i++) {
 		char description[80];
-		char *total_bytes;
-		char *used_bytes;
 		int written = 0;
 		u64 flags = sargs->spaces[i].flags;
 
@@ -155,10 +153,9 @@ static int cmd_df(int argc, char **argv)
 			written += 7;
 		}
 
-		total_bytes = pretty_sizes(sargs->spaces[i].total_bytes);
-		used_bytes = pretty_sizes(sargs->spaces[i].used_bytes);
-		printf("%s: total=%s, used=%s\n", description, total_bytes,
-		       used_bytes);
+		printf("%s: total=%s, used=%s\n", description,
+			pretty_size(sargs->spaces[i].total_bytes),
+			pretty_size(sargs->spaces[i].used_bytes));
 	}
 	close(fd);
 	free(sargs);
@@ -192,7 +189,6 @@ static void print_one_uuid(struct btrfs_fs_devices *fs_devices)
 	char uuidbuf[37];
 	struct list_head *cur;
 	struct btrfs_device *device;
-	char *super_bytes_used;
 	u64 devs_found = 0;
 	u64 total;
 
@@ -204,25 +200,20 @@ static void print_one_uuid(struct btrfs_fs_devices *fs_devices)
 	else
 		printf("Label: none ");
 
-	super_bytes_used = pretty_sizes(device->super_bytes_used);
 
 	total = device->total_devs;
 	printf(" uuid: %s\n\tTotal devices %llu FS bytes used %s\n", uuidbuf,
-	       (unsigned long long)total, super_bytes_used);
-
-	free(super_bytes_used);
+	       (unsigned long long)total,
+	       pretty_size(device->super_bytes_used));
 
 	list_for_each(cur, &fs_devices->devices) {
-		char *total_bytes;
-		char *bytes_used;
 		device = list_entry(cur, struct btrfs_device, dev_list);
-		total_bytes = pretty_sizes(device->total_bytes);
-		bytes_used = pretty_sizes(device->bytes_used);
+
 		printf("\tdevid %4llu size %s used %s path %s\n",
 		       (unsigned long long)device->devid,
-		       total_bytes, bytes_used, device->name);
-		free(total_bytes);
-		free(bytes_used);
+		       pretty_size(device->total_bytes),
+		       pretty_size(device->bytes_used), device->name);
+
 		devs_found++;
 	}
 	if (devs_found < total) {

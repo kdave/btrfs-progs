@@ -162,18 +162,11 @@ out_print:
 		       stat.total_inline, stat.total_nodes, stat.total_leaves,
 		       level + 1);
 	} else {
-		char *total_size;
-		char *inline_size;
-
-		total_size = pretty_sizes(stat.total_bytes);
-		inline_size = pretty_sizes(stat.total_inline);
-
 		printf("\t%s total size, %s inline data, %Lu nodes, "
 		       "%Lu leaves, %d levels\n",
-		       total_size, inline_size, stat.total_nodes,
-		       stat.total_leaves, level + 1);
-		free(total_size);
-		free(inline_size);
+		       pretty_size(stat.total_bytes),
+		       pretty_size(stat.total_inline),
+		       stat.total_nodes, stat.total_leaves, level + 1);
 	}
 out:
 	btrfs_free_path(path);
