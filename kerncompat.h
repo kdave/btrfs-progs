@@ -27,6 +27,7 @@
 #include <byteswap.h>
 #include <assert.h>
 #include <stddef.h>
+#include <linux/types.h>
 
 #ifndef READ
 #define READ 0
