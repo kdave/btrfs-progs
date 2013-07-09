@@ -34,7 +34,7 @@ void usage(void)
 
 int main(int argc, char **argv)
 {
-	char c;
+	int c;
 	unsigned long checksum = 0;
 	char *str;
 	char *buf;

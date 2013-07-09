@@ -294,7 +294,7 @@ static int cmd_dev_stats(int argc, char **argv)
 	int ret;
 	int fdmnt;
 	int i;
-	char c;
+	int c;
 	int err = 0;
 	__u64 flags = 0;
 
