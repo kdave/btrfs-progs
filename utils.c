@@ -1173,8 +1173,7 @@ out:
 	return ret;
 }
 
-static char *size_strs[] = { "", "KB", "MB", "GB", "TB",
-			    "PB", "EB"};
+static char *size_strs[] = { "", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB"};
 void pretty_size_snprintf(u64 size, char *str, size_t str_bytes)
 {
 	int num_divs = 0;
