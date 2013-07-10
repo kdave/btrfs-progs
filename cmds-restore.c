@@ -974,7 +974,7 @@ static struct option long_options[] = {
 };
 
 const char * const cmd_restore_usage[] = {
-	"btrfs restore [options] <device>",
+	"btrfs restore [options] <device> <path> | -l <device>",
 	"Try to restore files from a damaged filesystem (unmounted)",
 	"",
 	"-s              get snapshots",
@@ -985,6 +985,7 @@ const char * const cmd_restore_usage[] = {
 	"-f <offset>     filesystem location",
 	"-u <block>      super mirror",
 	"-d              find dir",
+	"-l              list roots",
 	"--path-regex <regex>",
 	"                restore only filenames matching regex,",
 	"                you have to use following syntax (possibly quoted):",
