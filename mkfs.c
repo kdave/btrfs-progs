@@ -319,7 +319,7 @@ static void print_usage(void)
 	fprintf(stderr, "\t -m --metadata metadata profile, values like data profile\n");
 	fprintf(stderr, "\t -M --mixed mix metadata and data together\n");
 	fprintf(stderr, "\t -n --nodesize size of btree nodes\n");
-	fprintf(stderr, "\t -s --sectorsize min block allocation\n");
+	fprintf(stderr, "\t -s --sectorsize min block allocation (may not mountable by current kernel)\n");
 	fprintf(stderr, "\t -r --rootdir the source directory\n");
 	fprintf(stderr, "\t -K --nodiscard do not perform whole device TRIM\n");
 	fprintf(stderr, "\t -O --features comma separated list of filesystem features\n");
