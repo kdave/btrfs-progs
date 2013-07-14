@@ -424,18 +424,6 @@ static int cmd_subvol_list(int argc, char **argv)
 	}
 
 	subvol = argv[optind];
-
-	ret = test_issubvolume(subvol);
-	if (ret < 0) {
-		fprintf(stderr, "ERROR: error accessing '%s'\n", subvol);
-		goto out;
-	}
-	if (!ret) {
-		fprintf(stderr, "ERROR: '%s' is not a subvolume\n", subvol);
-		ret = -1;
-		goto out;
-	}
-
 	fd = open_file_or_dir(subvol);
 	if (fd < 0) {
 		ret = -1;
@@ -662,17 +650,6 @@ static int cmd_subvol_get_default(int argc, char **argv)
 		usage(cmd_subvol_get_default_usage);
 
 	subvol = argv[1];
-
-	ret = test_issubvolume(subvol);
-	if (ret < 0) {
-		fprintf(stderr, "ERROR: error accessing '%s'\n", subvol);
-		return 1;
-	}
-	if (!ret) {
-		fprintf(stderr, "ERROR: '%s' is not a subvolume\n", subvol);
-		return 1;
-	}
-
 	fd = open_file_or_dir(subvol);
 	if (fd < 0) {
 		fprintf(stderr, "ERROR: can't access '%s'\n", subvol);
