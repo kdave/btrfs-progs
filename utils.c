@@ -1330,7 +1330,7 @@ static int get_label_unmounted(const char *dev)
  * mounted path rather than device.  Return the corresponding error
  * the user specified the device path.
  */
-static int get_label_mounted(const char *mount_path)
+int get_label_mounted(const char *mount_path, char *labelp)
 {
 	char label[BTRFS_LABEL_SIZE];
 	int fd;
@@ -1348,16 +1348,24 @@ static int get_label_mounted(const char *mount_path)
 		return -1;
 	}
 
-	fprintf(stdout, "%s\n", label);
+	strncpy(labelp, label, sizeof(label));
 	close(fd);
 	return 0;
 }
 
 int get_label(const char *btrfs_dev)
 {
-	return is_existing_blk_or_reg_file(btrfs_dev) ?
-		get_label_unmounted(btrfs_dev) :
-		get_label_mounted(btrfs_dev);
+	int ret;
+	char label[BTRFS_LABEL_SIZE];
+
+	if (is_existing_blk_or_reg_file(btrfs_dev))
+		ret = get_label_unmounted(btrfs_dev);
+	else {
+		ret = get_label_mounted(btrfs_dev, label);
+		if (!ret)
+			fprintf(stdout, "%s\n", label);
+	}
+	return ret;
 }
 
 int set_label(const char *btrfs_dev, const char *label)
