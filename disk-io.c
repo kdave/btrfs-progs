@@ -922,7 +922,7 @@ int btrfs_scan_fs_devices(int fd, const char *path,
 	}
 
 	if (total_devs != 1) {
-		ret = btrfs_scan_for_fsid(*fs_devices, total_devs, 1);
+		ret = btrfs_scan_for_fsid(1);
 		if (ret)
 			return ret;
 	}

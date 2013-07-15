@@ -949,7 +949,7 @@ int check_mounted_where(int fd, const char *file, char *where, int size,
 
 	/* scan other devices */
 	if (is_btrfs && total_devs > 1) {
-		if((ret = btrfs_scan_for_fsid(fs_devices_mnt, total_devs, 1)))
+		if((ret = btrfs_scan_for_fsid(1)))
 			return ret;
 	}
 
@@ -1131,8 +1131,7 @@ fail:
 	return ret;
 }
 
-int btrfs_scan_for_fsid(struct btrfs_fs_devices *fs_devices, u64 total_devs,
-			int run_ioctls)
+int btrfs_scan_for_fsid(int run_ioctls)
 {
 	int ret;
 
