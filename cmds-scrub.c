@@ -1095,6 +1095,7 @@ static int scrub_start(int argc, char **argv, int resume)
 	pthread_mutex_t spc_write_mutex = PTHREAD_MUTEX_INITIALIZER;
 	void *terr;
 	u64 devid;
+	DIR *dirstream = NULL;
 
 	optind = 1;
 	while ((c = getopt(argc, argv, "BdqrRc:n:")) != -1) {
@@ -1150,7 +1151,7 @@ static int scrub_start(int argc, char **argv, int resume)
 
 	path = argv[optind];
 
-	fdmnt = open_path_or_dev_mnt(path);
+	fdmnt = open_path_or_dev_mnt(path, &dirstream);
 
 	if (fdmnt < 0) {
 		ERR(!do_quiet, "ERROR: can't access '%s'\n", path);
@@ -1495,7 +1496,7 @@ out:
 		if (sock_path[0])
 			unlink(sock_path);
 	}
-	close(fdmnt);
+	close_file_or_dir(fdmnt, dirstream);
 
 	if (err)
 		return 1;
@@ -1535,13 +1536,14 @@ static int cmd_scrub_cancel(int argc, char **argv)
 	char *path;
 	int ret;
 	int fdmnt = -1;
+	DIR *dirstream = NULL;
 
 	if (check_argc_exact(argc, 2))
 		usage(cmd_scrub_cancel_usage);
 
 	path = argv[1];
 
-	fdmnt = open_path_or_dev_mnt(path);
+	fdmnt = open_path_or_dev_mnt(path, &dirstream);
 	if (fdmnt < 0) {
 		fprintf(stderr, "ERROR: could not open %s: %s\n",
 			path, strerror(errno));
@@ -1562,8 +1564,7 @@ static int cmd_scrub_cancel(int argc, char **argv)
 	printf("scrub cancelled\n");
 
 out:
-	if (fdmnt != -1)
-		close(fdmnt);
+	close_file_or_dir(fdmnt, dirstream);
 	return ret;
 }
 
@@ -1614,6 +1615,7 @@ static int cmd_scrub_status(int argc, char **argv)
 	char fsid[37];
 	int fdres = -1;
 	int err = 0;
+	DIR *dirstream = NULL;
 
 	optind = 1;
 	while ((c = getopt(argc, argv, "dR")) != -1) {
@@ -1635,7 +1637,7 @@ static int cmd_scrub_status(int argc, char **argv)
 
 	path = argv[optind];
 
-	fdmnt = open_path_or_dev_mnt(path);
+	fdmnt = open_path_or_dev_mnt(path, &dirstream);
 
 	if (fdmnt < 0) {
 		fprintf(stderr, "ERROR: can't access to '%s'\n", path);
@@ -1722,6 +1724,7 @@ out:
 	free(di_args);
 	if (fdres > -1)
 		close(fdres);
+	close_file_or_dir(fdmnt, dirstream);
 
 	return err;
 }

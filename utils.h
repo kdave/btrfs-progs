@@ -21,6 +21,7 @@
 
 #include <sys/stat.h>
 #include "ctree.h"
+#include <dirent.h>
 
 #define BTRFS_MKFS_SYSTEM_GROUP_SIZE (4 * 1024 * 1024)
 
@@ -56,7 +57,8 @@ void pretty_size_snprintf(u64 size, char *str, size_t str_bytes);
 int get_mountpt(char *dev, char *mntpt, size_t size);
 int btrfs_scan_block_devices(int run_ioctl);
 u64 parse_size(char *s);
-int open_file_or_dir(const char *fname);
+int open_file_or_dir(const char *fname, DIR **dirstream);
+void close_file_or_dir(int fd, DIR *dirstream);
 int get_device_info(int fd, u64 devid,
 		    struct btrfs_ioctl_dev_info_args *di_args);
 int get_fs_info(char *path, struct btrfs_ioctl_fs_info_args *fi_args,
@@ -67,7 +69,7 @@ int set_label(const char *btrfs_dev, const char *label);
 char *__strncpy__null(char *dest, const char *src, size_t n);
 int is_block_device(const char *file);
 int get_btrfs_mount(const char *path, char *mp, size_t mp_size);
-int open_path_or_dev_mnt(const char *path);
+int open_path_or_dev_mnt(const char *path, DIR **dirstream);
 int is_swap_device(const char *file);
 u64 btrfs_device_size(int fd, struct stat *st);
 /* Helper to always get proper size of the destination string */

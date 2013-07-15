@@ -52,13 +52,14 @@ static int cmd_df(int argc, char **argv)
 	int fd;
 	int e;
 	char *path;
+	DIR  *dirstream = NULL;
 
 	if (check_argc_exact(argc, 2))
 		usage(cmd_df_usage);
 
 	path = argv[1];
 
-	fd = open_file_or_dir(path);
+	fd = open_file_or_dir(path, &dirstream);
 	if (fd < 0) {
 		fprintf(stderr, "ERROR: can't access to '%s'\n", path);
 		return 12;
@@ -76,14 +77,11 @@ static int cmd_df(int argc, char **argv)
 	if (ret) {
 		fprintf(stderr, "ERROR: couldn't get space info on '%s' - %s\n",
 			path, strerror(e));
-		close(fd);
-		free(sargs);
-		return ret;
+		goto out;
 	}
 	if (!sargs->total_spaces) {
-		close(fd);
-		free(sargs);
-		return 0;
+		ret = 0;
+		goto out;
 	}
 
 	count = sargs->total_spaces;
@@ -91,9 +89,9 @@ static int cmd_df(int argc, char **argv)
 	sargs = realloc(sargs, sizeof(struct btrfs_ioctl_space_args) +
 			(count * sizeof(struct btrfs_ioctl_space_info)));
 	if (!sargs) {
-		close(fd);
-		free(sargs_orig);
-		return -ENOMEM;
+		sargs = sargs_orig;
+		ret = -ENOMEM;
+		goto out;
 	}
 
 	sargs->space_slots = count;
@@ -104,9 +102,7 @@ static int cmd_df(int argc, char **argv)
 	if (ret) {
 		fprintf(stderr, "ERROR: couldn't get space info on '%s' - %s\n",
 			path, strerror(e));
-		close(fd);
-		free(sargs);
-		return ret;
+		goto out;
 	}
 
 	for (i = 0; i < sargs->total_spaces; i++) {
@@ -157,7 +153,8 @@ static int cmd_df(int argc, char **argv)
 			pretty_size(sargs->spaces[i].total_bytes),
 			pretty_size(sargs->spaces[i].used_bytes));
 	}
-	close(fd);
+out:
+	close_file_or_dir(fd, dirstream);
 	free(sargs);
 
 	return 0;
@@ -282,13 +279,14 @@ static int cmd_sync(int argc, char **argv)
 {
 	int 	fd, res, e;
 	char	*path;
+	DIR	*dirstream = NULL;
 
 	if (check_argc_exact(argc, 2))
 		usage(cmd_sync_usage);
 
 	path = argv[1];
 
-	fd = open_file_or_dir(path);
+	fd = open_file_or_dir(path, &dirstream);
 	if (fd < 0) {
 		fprintf(stderr, "ERROR: can't access to '%s'\n", path);
 		return 12;
@@ -297,7 +295,7 @@ static int cmd_sync(int argc, char **argv)
 	printf("FSSync '%s'\n", path);
 	res = ioctl(fd, BTRFS_IOC_SYNC);
 	e = errno;
-	close(fd);
+	close_file_or_dir(fd, dirstream);
 	if( res < 0 ){
 		fprintf(stderr, "ERROR: unable to fs-syncing '%s' - %s\n", 
 			path, strerror(e));
@@ -347,6 +345,7 @@ static int cmd_defrag(int argc, char **argv)
 	struct btrfs_ioctl_defrag_range_args range;
 	int e=0;
 	int compress_type = BTRFS_COMPRESS_NONE;
+	DIR *dirstream = NULL;
 
 	optind = 1;
 	while(1) {
@@ -402,7 +401,7 @@ static int cmd_defrag(int argc, char **argv)
 	for (i = optind; i < argc; i++) {
 		if (verbose)
 			printf("%s\n", argv[i]);
-		fd = open_file_or_dir(argv[i]);
+		fd = open_file_or_dir(argv[i], &dirstream);
 		if (fd < 0) {
 			fprintf(stderr, "failed to open %s\n", argv[i]);
 			perror("open:");
@@ -429,7 +428,7 @@ static int cmd_defrag(int argc, char **argv)
 				argv[i], strerror(e));
 			errors++;
 		}
-		close(fd);
+		close_file_or_dir(fd, dirstream);
 	}
 	if (verbose)
 		printf("%s\n", BTRFS_BUILD_VERSION);
@@ -454,6 +453,7 @@ static int cmd_resize(int argc, char **argv)
 	struct btrfs_ioctl_vol_args	args;
 	int	fd, res, len, e;
 	char	*amount, *path;
+	DIR	*dirstream = NULL;
 
 	if (check_argc_exact(argc, 3))
 		usage(cmd_resize_usage);
@@ -468,7 +468,7 @@ static int cmd_resize(int argc, char **argv)
 		return 14;
 	}
 
-	fd = open_file_or_dir(path);
+	fd = open_file_or_dir(path, &dirstream);
 	if (fd < 0) {
 		fprintf(stderr, "ERROR: can't access to '%s'\n", path);
 		return 12;
@@ -478,7 +478,7 @@ static int cmd_resize(int argc, char **argv)
 	strncpy_null(args.name, amount);
 	res = ioctl(fd, BTRFS_IOC_RESIZE, &args);
 	e = errno;
-	close(fd);
+	close_file_or_dir(fd, dirstream);
 	if( res < 0 ){
 		fprintf(stderr, "ERROR: unable to resize '%s' - %s\n", 
 			path, strerror(e));

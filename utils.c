@@ -31,7 +31,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <uuid/uuid.h>
-#include <dirent.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <mntent.h>
@@ -728,7 +727,7 @@ out:
  *
  * On error, return -1, errno should be set.
  */
-int open_path_or_dev_mnt(const char *path)
+int open_path_or_dev_mnt(const char *path, DIR **dirstream)
 {
 	char mp[BTRFS_PATH_NAME_MAX + 1];
 	int fdmnt;
@@ -742,9 +741,9 @@ int open_path_or_dev_mnt(const char *path)
 			errno = EINVAL;
 			return -1;
 		}
-		fdmnt = open_file_or_dir(mp);
+		fdmnt = open_file_or_dir(mp, dirstream);
 	} else {
-		fdmnt = open_file_or_dir(path);
+		fdmnt = open_file_or_dir(path, dirstream);
 	}
 
 	return fdmnt;
@@ -1498,11 +1497,10 @@ u64 parse_size(char *s)
 	return strtoull(s, NULL, 10) * mult;
 }
 
-int open_file_or_dir(const char *fname)
+int open_file_or_dir(const char *fname, DIR **dirstream)
 {
 	int ret;
 	struct stat st;
-	DIR *dirstream;
 	int fd;
 
 	ret = stat(fname, &st);
@@ -1510,18 +1508,27 @@ int open_file_or_dir(const char *fname)
 		return -1;
 	}
 	if (S_ISDIR(st.st_mode)) {
-		dirstream = opendir(fname);
-		if (!dirstream) {
+		*dirstream = opendir(fname);
+		if (!*dirstream)
 			return -2;
-		}
-		fd = dirfd(dirstream);
+		fd = dirfd(*dirstream);
 	} else {
 		fd = open(fname, O_RDWR);
 	}
 	if (fd < 0) {
-		return -3;
+		fd = -3;
+		if (*dirstream)
+			closedir(*dirstream);
 	}
 	return fd;
+}
+
+void close_file_or_dir(int fd, DIR *dirstream)
+{
+	if (dirstream)
+		closedir(dirstream);
+	else if (fd >= 0)
+		close(fd);
 }
 
 int get_device_info(int fd, u64 devid,
@@ -1556,6 +1563,7 @@ int get_fs_info(char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 	struct btrfs_fs_devices *fs_devices_mnt = NULL;
 	struct btrfs_ioctl_dev_info_args *di_args;
 	char mp[BTRFS_PATH_NAME_MAX + 1];
+	DIR *dirstream = NULL;
 
 	memset(fi_args, 0, sizeof(*fi_args));
 
@@ -1586,7 +1594,7 @@ int get_fs_info(char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 	}
 
 	/* at this point path must not be for a block device */
-	fd = open_file_or_dir(path);
+	fd = open_file_or_dir(path, &dirstream);
 	if (fd < 0) {
 		ret = -errno;
 		goto out;
@@ -1623,8 +1631,7 @@ int get_fs_info(char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 	BUG_ON(ndevs == 0);
 	ret = 0;
 out:
-	if (fd != -1)
-		close(fd);
+	close_file_or_dir(fd, dirstream);
 	return ret;
 }
 

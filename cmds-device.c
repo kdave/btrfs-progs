@@ -54,13 +54,14 @@ static int cmd_add_dev(int argc, char **argv)
 {
 	char	*mntpnt;
 	int	i, fdmnt, ret=0, e;
+	DIR	*dirstream = NULL;
 
 	if (check_argc_min(argc, 3))
 		usage(cmd_add_dev_usage);
 
 	mntpnt = argv[argc - 1];
 
-	fdmnt = open_file_or_dir(mntpnt);
+	fdmnt = open_file_or_dir(mntpnt, &dirstream);
 	if (fdmnt < 0) {
 		fprintf(stderr, "ERROR: can't access to '%s'\n", mntpnt);
 		return 12;
@@ -127,7 +128,7 @@ static int cmd_add_dev(int argc, char **argv)
 
 	}
 
-	close(fdmnt);
+	close_file_or_dir(fdmnt, dirstream);
 	if (ret)
 		return ret+20;
 	else
@@ -144,13 +145,14 @@ static int cmd_rm_dev(int argc, char **argv)
 {
 	char	*mntpnt;
 	int	i, fdmnt, ret=0, e;
+	DIR	*dirstream = NULL;
 
 	if (check_argc_min(argc, 3))
 		usage(cmd_rm_dev_usage);
 
 	mntpnt = argv[argc - 1];
 
-	fdmnt = open_file_or_dir(mntpnt);
+	fdmnt = open_file_or_dir(mntpnt, &dirstream);
 	if (fdmnt < 0) {
 		fprintf(stderr, "ERROR: can't access to '%s'\n", mntpnt);
 		return 12;
@@ -170,7 +172,7 @@ static int cmd_rm_dev(int argc, char **argv)
 		}
 	}
 
-	close(fdmnt);
+	close_file_or_dir(fdmnt, dirstream);
 	if( ret)
 		return ret+20;
 	else
@@ -297,6 +299,7 @@ static int cmd_dev_stats(int argc, char **argv)
 	int c;
 	int err = 0;
 	__u64 flags = 0;
+	DIR *dirstream = NULL;
 
 	optind = 1;
 	while ((c = getopt(argc, argv, "z")) != -1) {
@@ -321,7 +324,7 @@ static int cmd_dev_stats(int argc, char **argv)
 
 	path = argv[optind];
 
-	fdmnt = open_path_or_dev_mnt(path);
+	fdmnt = open_path_or_dev_mnt(path, &dirstream);
 
 	if (fdmnt < 0) {
 		fprintf(stderr, "ERROR: can't access '%s'\n", path);
@@ -389,7 +392,7 @@ static int cmd_dev_stats(int argc, char **argv)
 
 out:
 	free(di_args);
-	close(fdmnt);
+	close_file_or_dir(fdmnt, dirstream);
 
 	return err;
 }

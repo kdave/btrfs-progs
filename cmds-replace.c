@@ -143,6 +143,7 @@ static int cmd_start_replace(int argc, char **argv)
 	u64 dstdev_block_count;
 	int do_not_background = 0;
 	int mixed = 0;
+	DIR *dirstream = NULL;
 
 	while ((c = getopt(argc, argv, "Brf")) != -1) {
 		switch (c) {
@@ -169,7 +170,7 @@ static int cmd_start_replace(int argc, char **argv)
 		usage(cmd_start_replace_usage);
 	path = argv[optind + 2];
 
-	fdmnt = open_path_or_dev_mnt(path);
+	fdmnt = open_path_or_dev_mnt(path, &dirstream);
 
 	if (fdmnt < 0) {
 		fprintf(stderr, "ERROR: can't access \"%s\": %s\n",
@@ -336,7 +337,7 @@ static int cmd_start_replace(int argc, char **argv)
 			goto leave_with_error;
 		}
 	}
-	close(fdmnt);
+	close_file_or_dir(fdmnt, dirstream);
 	return 0;
 
 leave_with_error:
@@ -367,6 +368,7 @@ static int cmd_status_replace(int argc, char **argv)
 	char *path;
 	int once = 0;
 	int ret;
+	DIR *dirstream = NULL;
 
 	while ((c = getopt(argc, argv, "1")) != -1) {
 		switch (c) {
@@ -383,7 +385,7 @@ static int cmd_status_replace(int argc, char **argv)
 		usage(cmd_status_replace_usage);
 
 	path = argv[optind];
-	fd = open_file_or_dir(path);
+	fd = open_file_or_dir(path, &dirstream);
 	e = errno;
 	if (fd < 0) {
 		fprintf(stderr, "ERROR: can't access \"%s\": %s\n",
@@ -392,7 +394,7 @@ static int cmd_status_replace(int argc, char **argv)
 	}
 
 	ret = print_replace_status(fd, path, once);
-	close(fd);
+	close_file_or_dir(fd, dirstream);
 	return ret;
 }
 
@@ -533,6 +535,7 @@ static int cmd_cancel_replace(int argc, char **argv)
 	int fd;
 	int e;
 	char *path;
+	DIR *dirstream = NULL;
 
 	while ((c = getopt(argc, argv, "")) != -1) {
 		switch (c) {
@@ -546,7 +549,7 @@ static int cmd_cancel_replace(int argc, char **argv)
 		usage(cmd_cancel_replace_usage);
 
 	path = argv[optind];
-	fd = open_file_or_dir(path);
+	fd = open_file_or_dir(path, &dirstream);
 	if (fd < 0) {
 		fprintf(stderr, "ERROR: can't access \"%s\": %s\n",
 			path, strerror(errno));
@@ -556,7 +559,7 @@ static int cmd_cancel_replace(int argc, char **argv)
 	args.cmd = BTRFS_IOCTL_DEV_REPLACE_CMD_CANCEL;
 	ret = ioctl(fd, BTRFS_IOC_DEV_REPLACE, &args);
 	e = errno;
-	close(fd);
+	close_file_or_dir(fd, dirstream);
 	if (ret) {
 		fprintf(stderr, "ERROR: ioctl(DEV_REPLACE_CANCEL) failed on \"%s\": %s, %s\n",
 			path, strerror(e),

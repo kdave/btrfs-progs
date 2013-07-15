@@ -79,6 +79,7 @@ static int cmd_subvol_create(int argc, char **argv)
 	char	*dstdir;
 	char	*dst;
 	struct btrfs_qgroup_inherit *inherit = NULL;
+	DIR	*dirstream = NULL;
 
 	optind = 1;
 	while (1) {
@@ -137,7 +138,7 @@ static int cmd_subvol_create(int argc, char **argv)
 		goto out;
 	}
 
-	fddst = open_file_or_dir(dstdir);
+	fddst = open_file_or_dir(dstdir, &dirstream);
 	if (fddst < 0) {
 		fprintf(stderr, "ERROR: can't access to '%s'\n", dstdir);
 		goto out;
@@ -171,8 +172,7 @@ static int cmd_subvol_create(int argc, char **argv)
 
 	retval = 0;	/* success */
 out:
-	if (fddst != -1)
-		close(fddst);
+	close_file_or_dir(fddst, dirstream);
 	free(inherit);
 
 	return retval;
@@ -209,6 +209,7 @@ static int cmd_subvol_delete(int argc, char **argv)
 	struct btrfs_ioctl_vol_args	args;
 	char	*dname, *vname, *cpath;
 	char	*path;
+	DIR	*dirstream = NULL;
 
 	if (argc < 2)
 		usage(cmd_subvol_delete_usage);
@@ -251,7 +252,7 @@ again:
 		goto out;
 	}
 
-	fd = open_file_or_dir(dname);
+	fd = open_file_or_dir(dname, &dirstream);
 	if (fd < 0) {
 		fprintf(stderr, "ERROR: can't access to '%s'\n", dname);
 		ret = 12;
@@ -263,7 +264,7 @@ again:
 	res = ioctl(fd, BTRFS_IOC_SNAP_DESTROY, &args);
 	e = errno;
 
-	close(fd);
+	close_file_or_dir(fd, dirstream);
 
 	if(res < 0 ){
 		fprintf( stderr, "ERROR: cannot delete '%s/%s' - %s\n",
@@ -332,6 +333,7 @@ static int cmd_subvol_list(int argc, char **argv)
 		{"sort", 1, NULL, 'S'},
 		{0, 0, 0, 0}
 	};
+	DIR *dirstream = NULL;
 
 	filter_set = btrfs_list_alloc_filter_set();
 	comparer_set = btrfs_list_alloc_comparer_set();
@@ -424,7 +426,7 @@ static int cmd_subvol_list(int argc, char **argv)
 	}
 
 	subvol = argv[optind];
-	fd = open_file_or_dir(subvol);
+	fd = open_file_or_dir(subvol, &dirstream);
 	if (fd < 0) {
 		ret = -1;
 		fprintf(stderr, "ERROR: can't access '%s'\n", subvol);
@@ -462,8 +464,7 @@ static int cmd_subvol_list(int argc, char **argv)
 				!is_list_all && !is_only_in_path, NULL);
 
 out:
-	if (fd != -1)
-		close(fd);
+	close_file_or_dir(fd, dirstream);
 	if (filter_set)
 		btrfs_list_free_filter_set(filter_set);
 	if (comparer_set)
@@ -497,6 +498,7 @@ static int cmd_snapshot(int argc, char **argv)
 	char	*dstdir;
 	struct btrfs_ioctl_vol_args_v2	args;
 	struct btrfs_qgroup_inherit *inherit = NULL;
+	DIR *dirstream1 = NULL, *dirstream2 = NULL;
 
 	optind = 1;
 	memset(&args, 0, sizeof(args));
@@ -583,13 +585,13 @@ static int cmd_snapshot(int argc, char **argv)
 		goto out;
 	}
 
-	fddst = open_file_or_dir(dstdir);
+	fddst = open_file_or_dir(dstdir, &dirstream1);
 	if (fddst < 0) {
 		fprintf(stderr, "ERROR: can't access to '%s'\n", dstdir);
 		goto out;
 	}
 
-	fd = open_file_or_dir(subvol);
+	fd = open_file_or_dir(subvol, &dirstream2);
 	if (fd < 0) {
 		fprintf(stderr, "ERROR: can't access to '%s'\n", dstdir);
 		goto out;
@@ -623,10 +625,8 @@ static int cmd_snapshot(int argc, char **argv)
 	retval = 0;	/* success */
 
 out:
-	if (fd != -1)
-		close(fd);
-	if (fddst != -1)
-		close(fddst);
+	close_file_or_dir(fddst, dirstream1);
+	close_file_or_dir(fd, dirstream2);
 	free(inherit);
 
 	return retval;
@@ -645,12 +645,13 @@ static int cmd_subvol_get_default(int argc, char **argv)
 	char *subvol;
 	struct btrfs_list_filter_set *filter_set;
 	u64 default_id;
+	DIR *dirstream = NULL;
 
 	if (check_argc_exact(argc, 2))
 		usage(cmd_subvol_get_default_usage);
 
 	subvol = argv[1];
-	fd = open_file_or_dir(subvol);
+	fd = open_file_or_dir(subvol, &dirstream);
 	if (fd < 0) {
 		fprintf(stderr, "ERROR: can't access '%s'\n", subvol);
 		return 1;
@@ -691,8 +692,7 @@ static int cmd_subvol_get_default(int argc, char **argv)
 	if (filter_set)
 		btrfs_list_free_filter_set(filter_set);
 out:
-	if (fd != -1)
-		close(fd);
+	close_file_or_dir(fd, dirstream);
 	if (ret)
 		return 1;
 	return 0;
@@ -710,6 +710,7 @@ static int cmd_subvol_set_default(int argc, char **argv)
 	u64	objectid;
 	char	*path;
 	char	*subvolid;
+	DIR	*dirstream = NULL;
 
 	if (check_argc_exact(argc, 3))
 		usage(cmd_subvol_set_default_usage);
@@ -723,7 +724,7 @@ static int cmd_subvol_set_default(int argc, char **argv)
 		return 1;
 	}
 
-	fd = open_file_or_dir(path);
+	fd = open_file_or_dir(path, &dirstream);
 	if (fd < 0) {
 		fprintf(stderr, "ERROR: can't access to '%s'\n", path);
 		return 1;
@@ -731,7 +732,7 @@ static int cmd_subvol_set_default(int argc, char **argv)
 
 	ret = ioctl(fd, BTRFS_IOC_DEFAULT_SUBVOL, &objectid);
 	e = errno;
-	close(fd);
+	close_file_or_dir(fd, dirstream);
 	if (ret < 0) {
 		fprintf(stderr, "ERROR: unable to set a new default subvolume - %s\n",
 			strerror(e));
@@ -752,6 +753,7 @@ static int cmd_find_new(int argc, char **argv)
 	int ret;
 	char *subvol;
 	u64 last_gen;
+	DIR *dirstream = NULL;
 
 	if (check_argc_exact(argc, 3))
 		usage(cmd_find_new_usage);
@@ -769,13 +771,13 @@ static int cmd_find_new(int argc, char **argv)
 		return 13;
 	}
 
-	fd = open_file_or_dir(subvol);
+	fd = open_file_or_dir(subvol, &dirstream);
 	if (fd < 0) {
 		fprintf(stderr, "ERROR: can't access '%s'\n", subvol);
 		return 12;
 	}
 	ret = btrfs_list_find_updated_files(fd, 0, last_gen);
-	close(fd);
+	close_file_or_dir(fd, dirstream);
 	if (ret)
 		return 19;
 	return 0;
@@ -798,6 +800,7 @@ static int cmd_subvol_show(int argc, char **argv)
 	u64 sv_id, mntid;
 	int fd = -1, mntfd = -1;
 	int ret = -1;
+	DIR *dirstream1 = NULL, *dirstream2 = NULL;
 
 	if (check_argc_exact(argc, 2))
 		usage(cmd_subvol_show_usage);
@@ -829,7 +832,7 @@ static int cmd_subvol_show(int argc, char **argv)
 	ret = -1;
 	svpath = get_subvol_name(mnt, fullpath);
 
-	fd = open_file_or_dir(fullpath);
+	fd = open_file_or_dir(fullpath, &dirstream1);
 	if (fd < 0) {
 		fprintf(stderr, "ERROR: can't access '%s'\n", fullpath);
 		goto out;
@@ -842,7 +845,7 @@ static int cmd_subvol_show(int argc, char **argv)
 		goto out;
 	}
 
-	mntfd = open_file_or_dir(mnt);
+	mntfd = open_file_or_dir(mnt, &dirstream2);
 	if (mntfd < 0) {
 		fprintf(stderr, "ERROR: can't access '%s'\n", mnt);
 		goto out;
@@ -925,10 +928,8 @@ static int cmd_subvol_show(int argc, char **argv)
 		btrfs_list_free_filter_set(filter_set);
 
 out:
-	if (mntfd >= 0)
-		close(mntfd);
-	if (fd >= 0)
-		close(fd);
+	close_file_or_dir(fd, dirstream1);
+	close_file_or_dir(mntfd, dirstream2);
 	if (mnt)
 		free(mnt);
 	if (fullpath)

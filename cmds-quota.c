@@ -37,6 +37,7 @@ int quota_ctl(int cmd, int argc, char **argv)
 	int e;
 	char *path = argv[1];
 	struct btrfs_ioctl_quota_ctl_args args;
+	DIR *dirstream = NULL;
 
 	if (check_argc_exact(argc, 2))
 		return -1;
@@ -44,7 +45,7 @@ int quota_ctl(int cmd, int argc, char **argv)
 	memset(&args, 0, sizeof(args));
 	args.cmd = cmd;
 
-	fd = open_file_or_dir(path);
+	fd = open_file_or_dir(path, &dirstream);
 	if (fd < 0) {
 		fprintf(stderr, "ERROR: can't access '%s'\n", path);
 		return 12;
@@ -52,7 +53,7 @@ int quota_ctl(int cmd, int argc, char **argv)
 
 	ret = ioctl(fd, BTRFS_IOC_QUOTA_CTL, &args);
 	e = errno;
-	close(fd);
+	close_file_or_dir(fd, dirstream);
 	if (ret < 0) {
 		fprintf(stderr, "ERROR: quota command failed: %s\n",
 			strerror(e));
@@ -108,6 +109,7 @@ static int cmd_quota_rescan(int argc, char **argv)
 	char *path = NULL;
 	struct btrfs_ioctl_quota_rescan_args args;
 	int ioctlnum = BTRFS_IOC_QUOTA_RESCAN;
+	DIR *dirstream = NULL;
 
 	optind = 1;
 	while (1) {
@@ -129,7 +131,7 @@ static int cmd_quota_rescan(int argc, char **argv)
 	memset(&args, 0, sizeof(args));
 
 	path = argv[optind];
-	fd = open_file_or_dir(path);
+	fd = open_file_or_dir(path, &dirstream);
 	if (fd < 0) {
 		fprintf(stderr, "ERROR: can't access '%s'\n", path);
 		return 12;
@@ -137,7 +139,7 @@ static int cmd_quota_rescan(int argc, char **argv)
 
 	ret = ioctl(fd, ioctlnum, &args);
 	e = errno;
-	close(fd);
+	close_file_or_dir(fd, dirstream);
 
 	if (ioctlnum == BTRFS_IOC_QUOTA_RESCAN) {
 		if (ret < 0) {

@@ -403,6 +403,7 @@ int main(int argc, char **argv)
 	int ret;
 	u64 flags = 0;
 	char *dir = "html";
+	DIR *dirstream = NULL;
 
 	while (1) {
 		int c = getopt(argc, argv, "cmso:h");
@@ -437,7 +438,7 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	fd = open_file_or_dir(path);
+	fd = open_file_or_dir(path, &dirstream);
 	if (fd < 0) {
 		fprintf(stderr, "ERROR: can't access '%s'\n", path);
 		exit(1);
@@ -447,6 +448,7 @@ int main(int argc, char **argv)
 		flags = BTRFS_BLOCK_GROUP_DATA | BTRFS_BLOCK_GROUP_METADATA;
 
 	ret = list_fragments(fd, flags, dir);
+	close_file_or_dir(fd, dirstream);
 	if (ret)
 		exit(1);
 

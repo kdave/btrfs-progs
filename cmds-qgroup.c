@@ -39,6 +39,7 @@ static int qgroup_assign(int assign, int argc, char **argv)
 	int e;
 	char *path = argv[3];
 	struct btrfs_ioctl_qgroup_assign_args args;
+	DIR *dirstream = NULL;
 
 	if (check_argc_exact(argc, 4))
 		return -1;
@@ -55,7 +56,7 @@ static int qgroup_assign(int assign, int argc, char **argv)
 		fprintf(stderr, "ERROR: bad relation requested '%s'\n", path);
 		return 12;
 	}
-	fd = open_file_or_dir(path);
+	fd = open_file_or_dir(path, &dirstream);
 	if (fd < 0) {
 		fprintf(stderr, "ERROR: can't access '%s'\n", path);
 		return 12;
@@ -63,7 +64,7 @@ static int qgroup_assign(int assign, int argc, char **argv)
 
 	ret = ioctl(fd, BTRFS_IOC_QGROUP_ASSIGN, &args);
 	e = errno;
-	close(fd);
+	close_file_or_dir(fd, dirstream);
 	if (ret < 0) {
 		fprintf(stderr, "ERROR: unable to assign quota group: %s\n",
 			strerror(e));
@@ -79,6 +80,7 @@ static int qgroup_create(int create, int argc, char **argv)
 	int e;
 	char *path = argv[2];
 	struct btrfs_ioctl_qgroup_create_args args;
+	DIR *dirstream = NULL;
 
 	if (check_argc_exact(argc, 3))
 		return -1;
@@ -87,7 +89,7 @@ static int qgroup_create(int create, int argc, char **argv)
 	args.create = create;
 	args.qgroupid = parse_qgroupid(argv[1]);
 
-	fd = open_file_or_dir(path);
+	fd = open_file_or_dir(path, &dirstream);
 	if (fd < 0) {
 		fprintf(stderr, "ERROR: can't access '%s'\n", path);
 		return 12;
@@ -95,7 +97,7 @@ static int qgroup_create(int create, int argc, char **argv)
 
 	ret = ioctl(fd, BTRFS_IOC_QGROUP_CREATE, &args);
 	e = errno;
-	close(fd);
+	close_file_or_dir(fd, dirstream);
 	if (ret < 0) {
 		fprintf(stderr, "ERROR: unable to create quota group: %s\n",
 			strerror(e));
@@ -300,11 +302,12 @@ static int cmd_qgroup_show(int argc, char **argv)
 	int fd;
 	int e;
 	char *path = argv[1];
+	DIR *dirstream = NULL;
 
 	if (check_argc_exact(argc, 2))
 		usage(cmd_qgroup_show_usage);
 
-	fd = open_file_or_dir(path);
+	fd = open_file_or_dir(path, &dirstream);
 	if (fd < 0) {
 		fprintf(stderr, "ERROR: can't access '%s'\n", path);
 		return 12;
@@ -312,7 +315,7 @@ static int cmd_qgroup_show(int argc, char **argv)
 
 	ret = list_qgroups(fd);
 	e = errno;
-	close(fd);
+	close_file_or_dir(fd, dirstream);
 	if (ret < 0) {
 		fprintf(stderr, "ERROR: can't list qgroups: %s\n",
 				strerror(e));
@@ -342,6 +345,7 @@ static int cmd_qgroup_limit(int argc, char **argv)
 	unsigned long long size;
 	int compressed = 0;
 	int exclusive = 0;
+	DIR *dirstream = NULL;
 
 	optind = 1;
 	while (1) {
@@ -405,7 +409,7 @@ static int cmd_qgroup_limit(int argc, char **argv)
 	} else
 		usage(cmd_qgroup_limit_usage);
 
-	fd = open_file_or_dir(path);
+	fd = open_file_or_dir(path, &dirstream);
 	if (fd < 0) {
 		fprintf(stderr, "ERROR: can't access '%s'\n", path);
 		return 12;
@@ -413,7 +417,7 @@ static int cmd_qgroup_limit(int argc, char **argv)
 
 	ret = ioctl(fd, BTRFS_IOC_QGROUP_LIMIT, &args);
 	e = errno;
-	close(fd);
+	close_file_or_dir(fd, dirstream);
 	if (ret < 0) {
 		fprintf(stderr, "ERROR: unable to limit requested quota group: "
 			"%s\n", strerror(e));
