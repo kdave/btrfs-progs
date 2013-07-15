@@ -1135,9 +1135,9 @@ int btrfs_scan_for_fsid(int run_ioctls)
 {
 	int ret;
 
-	ret = btrfs_scan_block_devices(run_ioctls);
+	ret = scan_for_btrfs(BTRFS_SCAN_PROC, run_ioctls);
 	if (ret)
-		ret = btrfs_scan_one_dir("/dev", run_ioctls);
+		ret = scan_for_btrfs(BTRFS_SCAN_DEV, run_ioctls);
 	return ret;
 }
 
@@ -1834,4 +1834,22 @@ int test_dev_for_mkfs(char *file, int force_overwrite, char *estr)
 	}
 	close(fd);
 	return 0;
+}
+
+/*
+ * scans devs for the btrfs
+*/
+int scan_for_btrfs(int where, int update_kernel)
+{
+	int ret = 0;
+
+	switch (where) {
+	case BTRFS_SCAN_PROC:
+		ret = btrfs_scan_block_devices(update_kernel);
+		break;
+	case BTRFS_SCAN_DEV:
+		ret = btrfs_scan_one_dir("/dev", update_kernel);
+		break;
+	}
+	return ret;
 }

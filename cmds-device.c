@@ -188,26 +188,21 @@ static const char * const cmd_scan_dev_usage[] = {
 static int cmd_scan_dev(int argc, char **argv)
 {
 	int	i, fd, e;
-	int	checklist = 1;
+	int	where = BTRFS_SCAN_PROC;
 	int	devstart = 1;
 
 	if( argc > 1 && !strcmp(argv[1],"--all-devices")){
 		if (check_argc_max(argc, 2))
 			usage(cmd_scan_dev_usage);
 
-		checklist = 0;
+		where = BTRFS_SCAN_DEV;
 		devstart += 1;
 	}
 
 	if(argc<=devstart){
-
 		int ret;
-
 		printf("Scanning for Btrfs filesystems\n");
-		if(checklist)
-			ret = btrfs_scan_block_devices(1);
-		else
-			ret = btrfs_scan_one_dir("/dev", 1);
+		ret = scan_for_btrfs(where, 1);
 		if (ret){
 			fprintf(stderr, "ERROR: error %d while scanning\n", ret);
 			return 18;

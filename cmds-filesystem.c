@@ -233,21 +233,18 @@ static int cmd_show(int argc, char **argv)
 	struct list_head *cur_uuid;
 	char *search = 0;
 	int ret;
-	int checklist = 1;
+	int where = BTRFS_SCAN_PROC;
 	int searchstart = 1;
 
 	if( argc > 1 && !strcmp(argv[1],"--all-devices")){
-		checklist = 0;
+		where = BTRFS_SCAN_DEV;
 		searchstart += 1;
 	}
 
 	if (check_argc_max(argc, searchstart + 1))
 		usage(cmd_show_usage);
 
-	if(checklist)
-		ret = btrfs_scan_block_devices(0);
-	else
-		ret = btrfs_scan_one_dir("/dev", 0);
+	ret = scan_for_btrfs(where, 0);
 
 	if (ret){
 		fprintf(stderr, "ERROR: error %d while scanning\n", ret);
