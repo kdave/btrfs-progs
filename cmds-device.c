@@ -165,8 +165,14 @@ static int cmd_rm_dev(int argc, char **argv)
 		strncpy_null(arg.name, argv[i]);
 		res = ioctl(fdmnt, BTRFS_IOC_RM_DEV, &arg);
 		e = errno;
-		if(res<0){
-			fprintf(stderr, "ERROR: error removing the device '%s' - %s\n",
+		if (res > 0) {
+			fprintf(stderr,
+				"ERROR: error removing the device '%s' - %s\n",
+				argv[i], btrfs_err_str(res));
+			ret++;
+		} else if (res < 0) {
+			fprintf(stderr,
+				"ERROR: error removing the device '%s' - %s\n",
 				argv[i], strerror(e));
 			ret++;
 		}
