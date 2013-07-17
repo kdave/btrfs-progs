@@ -909,13 +909,16 @@ void btrfs_cleanup_all_caches(struct btrfs_fs_info *fs_info)
 }
 
 int btrfs_scan_fs_devices(int fd, const char *path,
-			  struct btrfs_fs_devices **fs_devices)
+			  struct btrfs_fs_devices **fs_devices,
+			  u64 sb_bytenr)
 {
 	u64 total_devs;
 	int ret;
+	if (!sb_bytenr)
+		sb_bytenr = BTRFS_SUPER_INFO_OFFSET;
 
 	ret = btrfs_scan_one_device(fd, path, fs_devices,
-				    &total_devs, BTRFS_SUPER_INFO_OFFSET);
+				    &total_devs, sb_bytenr);
 	if (ret) {
 		fprintf(stderr, "No valid Btrfs found on %s\n", path);
 		return ret;
@@ -1001,7 +1004,7 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 	if (restore)
 		fs_info->on_restoring = 1;
 
-	ret = btrfs_scan_fs_devices(fp, path, &fs_devices);
+	ret = btrfs_scan_fs_devices(fp, path, &fs_devices, sb_bytenr);
 	if (ret)
 		goto out;
 
