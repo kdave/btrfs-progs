@@ -57,7 +57,14 @@ struct extent_buffer *debug_read_block(struct btrfs_root *root, u64 bytenr,
 		ret = btrfs_map_block(&root->fs_info->mapping_tree, READ,
 				      eb->start, &length, &multi,
 				      mirror_num, NULL);
-		BUG_ON(ret);
+		if (ret) {
+			fprintf(info_file,
+				"Error: fails to map mirror%d logical %llu: %s\n",
+				mirror_num, (unsigned long long)eb->start,
+				strerror(-ret));
+			free_extent_buffer(eb);
+			return NULL;
+		}
 		device = multi->stripes[0].dev;
 		eb->fd = device->fd;
 		device->total_ios++;
