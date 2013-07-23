@@ -485,7 +485,7 @@ static int cmd_resize(int argc, char **argv)
 }
 
 static const char * const cmd_label_usage[] = {
-	"btrfs filesystem label [<device>|<mountpoint>] [<newlabel>]",
+	"btrfs filesystem label [<device>|<mount_point>] [<newlabel>]",
 	"Get or change the label of a filesystem",
 	"With one argument, get the label of filesystem on <device>.",
 	"If <newlabel> is passed, set the filesystem label to <newlabel>.",

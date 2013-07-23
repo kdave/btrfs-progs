@@ -83,7 +83,7 @@ static int cmd_subvol_create(int argc, char **argv)
 
 	optind = 1;
 	while (1) {
-		int c = getopt(argc, argv, "c:i:r");
+		int c = getopt(argc, argv, "c:i:");
 		if (c < 0)
 			break;
 
@@ -287,7 +287,7 @@ out:
  * - lowercase for enabling specific items in the output
  */
 static const char * const cmd_subvol_list_usage[] = {
-	"btrfs subvolume list [-agopurts] [-G [+|-]value] [-C [+|-]value] "
+	"btrfs subvolume list [options] [-G [+|-]value] [-C [+|-]value] "
 	"[--sort=gen,ogen,rootid,path] <path>",
 	"List subvolumes (and snapshots)",
 	"",
@@ -476,11 +476,12 @@ out:
 }
 
 static const char * const cmd_snapshot_usage[] = {
-	"btrfs subvolume snapshot [-r] <source> [<dest>/]<name>",
-	"btrfs subvolume snapshot [-r] [-i <qgroupid>] <source> [<dest>/]<name>",
+	"btrfs subvolume snapshot [-r] <source> <dest>|[<dest>/]<name>",
+	"btrfs subvolume snapshot [-r] [-i <qgroupid>] <source> <dest>|[<dest>/]<name>",
 	"Create a snapshot of the subvolume",
 	"Create a writable/readonly snapshot of the subvolume <source> with",
-	"the name <name> in the <dest> directory",
+	"the name <name> in the <dest> directory.  If only <dest> is given,",
+	"the subvolume will be named the basename of <source>.",
 	"",
 	"-r             create a readonly snapshot",
 	"-i <qgroupid>  add the newly created snapshot to a qgroup. This",

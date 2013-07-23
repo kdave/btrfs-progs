@@ -84,6 +84,8 @@ out:
 static const char * const cmd_inode_resolve_usage[] = {
 	"btrfs inspect-internal inode-resolve [-v] <inode> <path>",
 	"Get file system paths for the given inode",
+	"",
+	"-v   verbose mode",
 	NULL
 };
 

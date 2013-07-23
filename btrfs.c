@@ -188,7 +188,7 @@ const struct cmd_group btrfs_cmd_group;
 
 static const char * const cmd_help_usage[] = {
 	"btrfs help [--full]",
-	"Dislay help information",
+	"Display help information",
 	"",
 	"--full     display detailed help on every command",
 	NULL

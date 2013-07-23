@@ -97,27 +97,27 @@ static int dev_replace_handle_sigint(int fd)
 }
 
 static const char *const cmd_start_replace_usage[] = {
-	"btrfs replace start srcdev|devid targetdev [-Bfr] mount_point",
+	"btrfs replace start [-Bfr] <srcdev>|<devid> <targetdev> <mount_point>",
 	"Replace device of a btrfs filesystem.",
 	"On a live filesystem, duplicate the data to the target device which",
 	"is currently stored on the source device. If the source device is not",
 	"available anymore, or if the -r option is set, the data is built",
 	"only using the RAID redundancy mechanisms. After completion of the",
 	"operation, the source device is removed from the filesystem.",
-	"If the srcdev is a numerical value, it is assumed to be the device id",
-	"of the filesystem which is mounted at mount_point, otherwise it is",
+	"If the <srcdev> is a numerical value, it is assumed to be the device id",
+	"of the filesystem which is mounted at <mount_point>, otherwise it is",
 	"the path to the source device. If the source device is disconnected,",
-	"from the system, you have to use the devid parameter format.",
-	"The targetdev needs to be same size or larger than the srcdev.",
+	"from the system, you have to use the <devid> parameter format.",
+	"The <targetdev> needs to be same size or larger than the <srcdev>.",
 	"",
-	"-r     only read from srcdev if no other zero-defect mirror exists",
+	"-r     only read from <srcdev> if no other zero-defect mirror exists",
 	"       (enable this if your drive has lots of read errors, the access",
 	"       would be very slow)",
-	"-f     force using and overwriting targetdev even if it looks like",
+	"-f     force using and overwriting <targetdev> even if it looks like",
 	"       containing a valid btrfs filesystem. A valid filesystem is",
 	"       assumed if a btrfs superblock is found which contains a",
 	"       correct checksum. Devices which are currently mounted are",
-	"       never allowed to be used as the targetdev",
+	"       never allowed to be used as the <targetdev>",
 	"-B     do not background",
 	NULL
 };
@@ -351,11 +351,11 @@ leave_with_error:
 }
 
 static const char *const cmd_status_replace_usage[] = {
-	"btrfs replace status mount_point [-1]",
+	"btrfs replace status [-1] <mount_point>",
 	"Print status and progress information of a running device replace",
 	"operation",
 	"",
-	"-1     print once instead of print continously until the replace",
+	"-1     print once instead of print continuously until the replace",
 	"       operation finishes (or is canceled)",
 	NULL
 };
@@ -522,7 +522,7 @@ progress2string(char *buf, size_t s, int progress_1000)
 }
 
 static const char *const cmd_cancel_replace_usage[] = {
-	"btrfs replace cancel mount_point",
+	"btrfs replace cancel <mount_point>",
 	"Cancel a running device replace operation.",
 	NULL
 };

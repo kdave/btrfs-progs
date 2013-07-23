@@ -724,12 +724,12 @@ static const char * const send_cmd_group_usage[] = {
 };
 
 const char * const cmd_send_usage[] = {
-	"btrfs send [-ve] [-p <parent>] [-c <clone-src>] <subvol>",
+	"btrfs send [-ve] [-p <parent>] [-c <clone-src>] [-f <outfile>] <subvol>",
 	"Send the subvolume to stdout.",
 	"Sends the subvolume specified by <subvol> to stdout.",
 	"By default, this will send the whole subvolume. To do an incremental",
 	"send, use '-p <parent>'. If you want to allow btrfs to clone from",
-	"any additional local snapshots, use -c <clone-src> (multiple times",
+	"any additional local snapshots, use '-c <clone-src>' (multiple times",
 	"where applicable). You must not specify clone sources unless you",
 	"guarantee that these snapshots are exactly in the same state on both",
 	"sides, the sender and the receiver. It is allowed to omit the",
