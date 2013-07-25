@@ -245,6 +245,7 @@ static int cmd_start_replace(int argc, char **argv)
 		if (fdsrcdev < 0) {
 			fprintf(stderr, "Error: Unable to open device '%s'\n",
 				srcdev);
+			fprintf(stderr, "\tTry using the devid instead of the path\n");
 			goto leave_with_error;
 		}
 		ret = fstat(fdsrcdev, &st);
