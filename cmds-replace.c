@@ -137,13 +137,12 @@ static int cmd_start_replace(int argc, char **argv)
 	char *dstdev;
 	int avoid_reading_from_srcdev = 0;
 	int force_using_targetdev = 0;
-	u64 total_devs = 1;
-	struct btrfs_fs_devices *fs_devices_mnt = NULL;
 	struct stat st;
 	u64 dstdev_block_count;
 	int do_not_background = 0;
 	int mixed = 0;
 	DIR *dirstream = NULL;
+	char estr[100]; /* check test_dev_for_mkfs() for error string size*/
 
 	while ((c = getopt(argc, argv, "Brf")) != -1) {
 		switch (c) {
@@ -265,37 +264,14 @@ static int cmd_start_replace(int argc, char **argv)
 		start_args.start.srcdevid = 0;
 	}
 
-	ret = check_mounted(dstdev);
-	if (ret < 0) {
-		fprintf(stderr, "Error checking %s mount status\n", dstdev);
-		goto leave_with_error;
-	}
-	if (ret == 1) {
-		fprintf(stderr,
-			"Error, target device %s is in use and currently mounted!\n",
-			dstdev);
+	ret = test_dev_for_mkfs(dstdev, force_using_targetdev, estr);
+	if (ret) {
+		fprintf(stderr, "%s", estr);
 		goto leave_with_error;
 	}
 	fddstdev = open(dstdev, O_RDWR);
 	if (fddstdev < 0) {
 		fprintf(stderr, "Unable to open %s\n", dstdev);
-		goto leave_with_error;
-	}
-	ret = btrfs_scan_one_device(fddstdev, dstdev, &fs_devices_mnt,
-				    &total_devs, BTRFS_SUPER_INFO_OFFSET);
-	if (ret >= 0 && !force_using_targetdev) {
-		fprintf(stderr,
-			"Error, target device %s contains filesystem, use '-f' to force overwriting.\n",
-			dstdev);
-		goto leave_with_error;
-	}
-	ret = fstat(fddstdev, &st);
-	if (ret) {
-		fprintf(stderr, "Error: Unable to stat '%s'\n", dstdev);
-		goto leave_with_error;
-	}
-	if (!S_ISBLK(st.st_mode)) {
-		fprintf(stderr, "Error: '%s' is not a block device\n", dstdev);
 		goto leave_with_error;
 	}
 	strncpy((char *)start_args.start.tgtdev_name, dstdev,

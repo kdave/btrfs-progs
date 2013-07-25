@@ -1807,6 +1807,7 @@ int test_dev_for_mkfs(char *file, int force_overwrite, char *estr)
 {
 	int ret, fd;
 	size_t sz = 100;
+	struct stat st;
 
 	ret = is_swap_device(file);
 	if (ret < 0) {
@@ -1839,6 +1840,15 @@ int test_dev_for_mkfs(char *file, int force_overwrite, char *estr)
 	if (fd < 0) {
 		snprintf(estr, sz, "unable to open %s: %s\n", file,
 			strerror(errno));
+		return 1;
+	}
+	if (fstat(fd, &st)) {
+		snprintf(estr, sz, "unable to stat %s: %s\n", file,
+			strerror(errno));
+		return 1;
+	}
+	if (!S_ISBLK(st.st_mode)) {
+		fprintf(stderr, "'%s' is not a block device\n", file);
 		return 1;
 	}
 	close(fd);
