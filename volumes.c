@@ -1707,14 +1707,15 @@ int btrfs_read_chunk_tree(struct btrfs_root *root)
 	if (!path)
 		return -ENOMEM;
 
-	/* first we search for all of the device items, and then we
-	 * read in all of the chunk items.  This way we can create chunk
-	 * mappings that reference all of the devices that are afound
+	/*
+	 * Read all device items, and then all the chunk items. All
+	 * device items are found before any chunk item (their object id
+	 * is smaller than the lowest possible object id for a chunk
+	 * item - BTRFS_FIRST_CHUNK_TREE_OBJECTID).
 	 */
 	key.objectid = BTRFS_DEV_ITEMS_OBJECTID;
 	key.offset = 0;
 	key.type = 0;
-again:
 	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
 	while(1) {
 		leaf = path->nodes[0];
@@ -1728,16 +1729,12 @@ again:
 			break;
 		}
 		btrfs_item_key_to_cpu(leaf, &found_key, slot);
-		if (key.objectid == BTRFS_DEV_ITEMS_OBJECTID) {
-			if (found_key.objectid != BTRFS_DEV_ITEMS_OBJECTID)
-				break;
-			if (found_key.type == BTRFS_DEV_ITEM_KEY) {
-				struct btrfs_dev_item *dev_item;
-				dev_item = btrfs_item_ptr(leaf, slot,
+		if (found_key.type == BTRFS_DEV_ITEM_KEY) {
+			struct btrfs_dev_item *dev_item;
+			dev_item = btrfs_item_ptr(leaf, slot,
 						  struct btrfs_dev_item);
-				ret = read_one_dev(root, leaf, dev_item);
-				BUG_ON(ret);
-			}
+			ret = read_one_dev(root, leaf, dev_item);
+			BUG_ON(ret);
 		} else if (found_key.type == BTRFS_CHUNK_ITEM_KEY) {
 			struct btrfs_chunk *chunk;
 			chunk = btrfs_item_ptr(leaf, slot, struct btrfs_chunk);
@@ -1745,11 +1742,6 @@ again:
 			BUG_ON(ret);
 		}
 		path->slots[0]++;
-	}
-	if (key.objectid == BTRFS_DEV_ITEMS_OBJECTID) {
-		key.objectid = 0;
-		btrfs_release_path(root, path);
-		goto again;
 	}
 
 	ret = 0;
