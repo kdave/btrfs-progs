@@ -193,6 +193,8 @@ int btrfs_add_root_ref(struct btrfs_trans_handle *trans,
 
 
 	path = btrfs_alloc_path();
+	if (!path)
+		return -ENOMEM;
 
 	key.objectid = root_id;
 	key.type = type;

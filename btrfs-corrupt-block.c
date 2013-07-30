@@ -163,6 +163,8 @@ static int corrupt_extent(struct btrfs_trans_handle *trans,
 	int should_del = rand() % 3;
 
 	path = btrfs_alloc_path();
+	if (!path)
+		return -ENOMEM;
 
 	key.objectid = bytenr;
 	key.type = (u8)-1;

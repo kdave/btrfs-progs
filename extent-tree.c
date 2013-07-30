@@ -1483,6 +1483,8 @@ int btrfs_lookup_extent_info(struct btrfs_trans_handle *trans,
 	}
 
 	path = btrfs_alloc_path();
+	if (!path)
+		return -ENOMEM;
 	path->reada = 1;
 
 	key.objectid = bytenr;
@@ -1574,6 +1576,8 @@ int btrfs_set_block_flags(struct btrfs_trans_handle *trans,
 				  BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA);
 
 	path = btrfs_alloc_path();
+	if (!path)
+		return -ENOMEM;
 	path->reada = 1;
 
 	key.objectid = bytenr;
@@ -2075,15 +2079,12 @@ static int finish_current_insert(struct btrfs_trans_handle *trans,
 	u64 end;
 	u64 priv;
 	struct btrfs_fs_info *info = extent_root->fs_info;
-	struct btrfs_path *path;
 	struct pending_extent_op *extent_op;
 	struct btrfs_key key;
 	int ret;
 	int skinny_metadata =
 		btrfs_fs_incompat(extent_root->fs_info,
 				  BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA);
-
-	path = btrfs_alloc_path();
 
 	while(1) {
 		ret = find_first_extent_bit(&info->extent_ins, 0, &start,
@@ -2119,7 +2120,6 @@ static int finish_current_insert(struct btrfs_trans_handle *trans,
 				  GFP_NOFS);
 		kfree(extent_op);
 	}
-	btrfs_free_path(path);
 	return 0;
 }
 

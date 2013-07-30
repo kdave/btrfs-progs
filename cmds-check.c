@@ -4569,6 +4569,8 @@ static int fixup_extent_refs(struct btrfs_trans_handle *trans,
 		flags = BTRFS_BLOCK_FLAG_FULL_BACKREF;
 
 	path = btrfs_alloc_path();
+	if (!path)
+		return -ENOMEM;
 
 	/* step one, make sure all of the backrefs agree */
 	ret = verify_backrefs(trans, info, path, rec);
