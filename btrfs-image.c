@@ -162,6 +162,7 @@ static int has_name(struct btrfs_key *key)
 	case BTRFS_DIR_INDEX_KEY:
 	case BTRFS_INODE_REF_KEY:
 	case BTRFS_INODE_EXTREF_KEY:
+	case BTRFS_XATTR_ITEM_KEY:
 		return 1;
 	default:
 		break;
@@ -446,6 +447,21 @@ static void sanitize_inode_ref(struct metadump_struct *md,
 	}
 }
 
+static void sanitize_xattr(struct metadump_struct *md,
+			   struct extent_buffer *eb, int slot)
+{
+	struct btrfs_dir_item *dir_item;
+	unsigned long data_ptr;
+	u32 data_len;
+
+	dir_item = btrfs_item_ptr(eb, slot, struct btrfs_dir_item);
+	data_len = btrfs_dir_data_len(eb, dir_item);
+
+	data_ptr = (unsigned long)((char *)(dir_item + 1) +
+				   btrfs_dir_name_len(eb, dir_item));
+	memset_extent_buffer(eb, 0, data_ptr, data_len);
+}
+
 static void sanitize_name(struct metadump_struct *md, u8 *dst,
 			  struct extent_buffer *src, struct btrfs_key *key,
 			  int slot)
@@ -470,6 +486,9 @@ static void sanitize_name(struct metadump_struct *md, u8 *dst,
 		break;
 	case BTRFS_INODE_EXTREF_KEY:
 		sanitize_inode_ref(md, eb, slot, 1);
+		break;
+	case BTRFS_XATTR_ITEM_KEY:
+		sanitize_xattr(md, eb, slot);
 		break;
 	default:
 		break;
