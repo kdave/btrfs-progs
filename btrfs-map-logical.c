@@ -122,7 +122,6 @@ int main(int ac, char **av)
 	int copy = 0;
 	u64 bytes = 0;
 	int out_fd = 0;
-	int err;
 
 	while(1) {
 		int c;
@@ -190,8 +189,9 @@ int main(int ac, char **av)
 			out_fd = open(output_file, O_RDWR | O_CREAT, 0600);
 			if (out_fd < 0)
 				goto close;
-			err = ftruncate(out_fd, 0);
-			if (err) {
+			ret = ftruncate(out_fd, 0);
+			if (ret) {
+				ret = 1;
 				close(out_fd);
 				goto close;
 			}
@@ -208,8 +208,9 @@ int main(int ac, char **av)
 	while (bytes > 0) {
 		eb = debug_read_block(root, logical, root->sectorsize, copy);
 		if (eb && output_file) {
-			err = write(out_fd, eb->data, eb->len);
-			if (err < 0 || err != eb->len) {
+			ret = write(out_fd, eb->data, eb->len);
+			if (ret < 0 || ret != eb->len) {
+				ret = 1;
 				fprintf(stderr, "output file write failed\n");
 				goto out_close_fd;
 			}
