@@ -1133,7 +1133,7 @@ static int copy_space_cache(struct btrfs_root *root,
 		if (ret) {
 			fprintf(stderr, "Error adding space cache blocks %d\n",
 				ret);
-			btrfs_release_path(root, path);
+			btrfs_release_path(path);
 			return ret;
 		}
 		path->slots[0]++;
@@ -1238,7 +1238,7 @@ static int copy_from_extent_tree(struct metadump_struct *metadump,
 		bytenr += num_bytes;
 	}
 
-	btrfs_release_path(extent_root, path);
+	btrfs_release_path(path);
 
 	return ret;
 }
@@ -2385,7 +2385,7 @@ static int update_disk_super_on_device(struct btrfs_fs_info *info,
 	read_extent_buffer(leaf, dev_uuid, (unsigned long)btrfs_device_uuid(dev_item), BTRFS_UUID_SIZE);
 	read_extent_buffer(leaf, fs_uuid, (unsigned long)btrfs_device_fsid(dev_item), BTRFS_UUID_SIZE);
 
-	btrfs_release_path(info->chunk_root, &path);
+	btrfs_release_path(&path);
 
 	printk("update disk super on %s devid=%llu\n", other_dev, devid);
 

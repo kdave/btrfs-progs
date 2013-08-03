@@ -149,7 +149,7 @@ int btrfs_insert_dir_item(struct btrfs_trans_handle *trans, struct btrfs_root
 		ret = 0;
 		goto out;
 	}
-	btrfs_release_path(root, path);
+	btrfs_release_path(path);
 
 	btrfs_set_key_type(&key, BTRFS_DIR_INDEX_KEY);
 	key.offset = index;

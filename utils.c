@@ -682,7 +682,7 @@ int is_block_device(const char *path) {
  * On failure, returns -errno (not mounted yields -EINVAL)
  * Is noisy on failures, expects to be given a mounted device.
  */
-int get_btrfs_mount(const char *dev, char *mp, size_t mp_size) {
+static int get_btrfs_mount(const char *dev, char *mp, size_t mp_size) {
 	int ret;
 	int fd = -1;
 

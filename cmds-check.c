@@ -410,7 +410,7 @@ static int check_orphan_item(struct btrfs_root *root, u64 ino)
 
 	btrfs_init_path(&path);
 	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
-	btrfs_release_path(root, &path);
+	btrfs_release_path(&path);
 	if (ret > 0)
 		ret = -ENOENT;
 	return ret;
@@ -794,7 +794,7 @@ static int is_child_root(struct btrfs_root *root, u64 parent_root_id,
 	ret = btrfs_search_slot(NULL, root->fs_info->tree_root, &key, &path,
 				0, 0);
 	BUG_ON(ret < 0);
-	btrfs_release_path(root, &path);
+	btrfs_release_path(&path);
 	if (!ret)
 		return 1;
 
@@ -824,14 +824,14 @@ static int is_child_root(struct btrfs_root *root, u64 parent_root_id,
 		has_parent = 1;
 
 		if (key.offset == parent_root_id) {
-			btrfs_release_path(root, &path);
+			btrfs_release_path(&path);
 			return 1;
 		}
 
 		path.slots[0]++;
 	}
 
-	btrfs_release_path(root, &path);
+	btrfs_release_path(&path);
 	return has_parent? 0 : -1;
 }
 
@@ -1045,7 +1045,7 @@ static u64 count_csum_range(struct btrfs_root *root, u64 start, u64 len)
 
 		path.slots[0]++;
 	}
-	btrfs_release_path(root->fs_info->csum_root, &path);
+	btrfs_release_path(&path);
 	return found;
 }
 
@@ -1801,7 +1801,7 @@ static int check_fs_root(struct btrfs_root *root,
 		if (wret != 0)
 			break;
 	}
-	btrfs_release_path(root, &path);
+	btrfs_release_path(&path);
 
 	merge_root_recs(root, &root_node.root_cache, root_cache);
 
@@ -1876,7 +1876,7 @@ static int check_fs_roots(struct btrfs_root *root,
 next:
 		path.slots[0]++;
 	}
-	btrfs_release_path(tree_root, &path);
+	btrfs_release_path(&path);
 
 	if (!cache_tree_empty(&wc.shared))
 		fprintf(stderr, "warning line %d\n", __LINE__);
@@ -2096,7 +2096,7 @@ static int check_owner_ref(struct btrfs_root *root,
 							path.slots[level + 1]))
 		found = 1;
 
-	btrfs_release_path(ref_root, &path);
+	btrfs_release_path(&path);
 	return found ? 0 : 1;
 }
 
@@ -3357,7 +3357,7 @@ again:
 				 * in real life, but no harm in coding it up
 				 * anyway just in case.
 				 */
-				btrfs_release_path(root, path);
+				btrfs_release_path(path);
 				ret = check_extent_exists(root, new_start,
 							  new_bytes);
 				if (ret) {
@@ -3838,7 +3838,7 @@ static int delete_extent_records(struct btrfs_trans_handle *trans,
 		    found_key.type != BTRFS_EXTENT_REF_V0_KEY &&
 		    found_key.type != BTRFS_SHARED_BLOCK_REF_KEY &&
 		    found_key.type != BTRFS_SHARED_DATA_REF_KEY) {
-			btrfs_release_path(NULL, path);
+			btrfs_release_path(path);
 			if (found_key.type == 0) {
 				if (found_key.offset == 0)
 					break;
@@ -3856,7 +3856,7 @@ static int delete_extent_records(struct btrfs_trans_handle *trans,
 		ret = btrfs_del_item(trans, root->fs_info->extent_root, path);
 		if (ret)
 			break;
-		btrfs_release_path(NULL, path);
+		btrfs_release_path(path);
 
 		if (found_key.type == BTRFS_EXTENT_ITEM_KEY ||
 		    found_key.type == BTRFS_METADATA_ITEM_KEY) {
@@ -3870,7 +3870,7 @@ static int delete_extent_records(struct btrfs_trans_handle *trans,
 		}
 	}
 
-	btrfs_release_path(NULL, path);
+	btrfs_release_path(path);
 	return ret;
 }
 
@@ -3945,7 +3945,7 @@ static int record_extent(struct btrfs_trans_handle *trans,
 					       rec->max_size, 1, 0);
 		if (ret)
 			goto fail;
-		btrfs_release_path(NULL, path);
+		btrfs_release_path(path);
 	}
 
 	if (back->is_data) {
@@ -4006,7 +4006,7 @@ static int record_extent(struct btrfs_trans_handle *trans,
 	if (ret)
 		goto fail;
 fail:
-	btrfs_release_path(NULL, path);
+	btrfs_release_path(path);
 	return ret;
 }
 
@@ -4123,7 +4123,7 @@ static int repair_ref(struct btrfs_trans_handle *trans,
 		path->slots[0]++;
 	}
 
-	btrfs_release_path(root, path);
+	btrfs_release_path(path);
 
 	/*
 	 * Have to make sure that this root gets updated when we commit the
@@ -4213,7 +4213,7 @@ static int repair_ref(struct btrfs_trans_handle *trans,
 	else
 		printf("ram bytes may be wrong?\n");
 	btrfs_mark_buffer_dirty(leaf);
-	btrfs_release_path(root, path);
+	btrfs_release_path(path);
 	return 0;
 }
 
@@ -4517,7 +4517,7 @@ static int delete_duplicate_records(struct btrfs_trans_handle *trans,
 		ret = btrfs_del_item(trans, root, path);
 		if (ret)
 			goto out;
-		btrfs_release_path(root, path);
+		btrfs_release_path(path);
 		nr_del++;
 	}
 
@@ -4671,7 +4671,7 @@ again:
 		goto out;
 	} else {
 		level++;
-		btrfs_release_path(NULL, &path);
+		btrfs_release_path(&path);
 		goto again;
 	}
 
@@ -4680,7 +4680,7 @@ del_ptr:
 	ret = btrfs_del_ptr(trans, info->extent_root, &path, level, slot);
 
 out:
-	btrfs_release_path(NULL, &path);
+	btrfs_release_path(&path);
 	return ret;
 }
 
@@ -4727,7 +4727,7 @@ static int check_block_group(struct btrfs_trans_handle *trans,
 	btrfs_init_path(&path);
 	ret = btrfs_search_slot(NULL, info->extent_root,
 				&key, &path, 0, 0);
-	btrfs_release_path(NULL, &path);
+	btrfs_release_path(&path);
 	if (ret <= 0)
 		goto out;
 
@@ -5276,7 +5276,7 @@ again:
 		}
 		path.slots[0]++;
 	}
-	btrfs_release_path(root, &path);
+	btrfs_release_path(&path);
 	while(1) {
 		ret = run_next_block(root, bits, bits_nr, &last, &pending,
 				     &seen, &reada, &nodes, &extent_cache,
@@ -5560,7 +5560,7 @@ static int reset_balance(struct btrfs_trans_handle *trans,
 	ret = btrfs_del_item(trans, root, path);
 	if (ret)
 		goto out;
-	btrfs_release_path(root, path);
+	btrfs_release_path(path);
 
 	key.objectid = BTRFS_TREE_RELOC_OBJECTID;
 	key.type = BTRFS_ROOT_ITEM_KEY;
@@ -5582,7 +5582,7 @@ static int reset_balance(struct btrfs_trans_handle *trans,
 					goto out;
 			}
 			key.offset++;
-			btrfs_release_path(root, path);
+			btrfs_release_path(path);
 
 			found = 0;
 			ret = btrfs_search_slot(trans, root, &key, path,
@@ -5614,7 +5614,7 @@ static int reset_balance(struct btrfs_trans_handle *trans,
 		if (ret)
 			goto out;
 	}
-	btrfs_release_path(root, path);
+	btrfs_release_path(path);
 
 	key.objectid = BTRFS_DATA_RELOC_TREE_OBJECTID;
 	key.type = BTRFS_ROOT_ITEM_KEY;

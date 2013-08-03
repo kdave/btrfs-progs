@@ -97,7 +97,7 @@ int main(int ac, char **av) {
 			printf("unable to find %d\n", num);
 			exit(1);
 		}
-		btrfs_release_path(root, &path);
+		btrfs_release_path(&path);
 	}
 	close_ctree(root);
 
@@ -128,7 +128,7 @@ int main(int ac, char **av) {
 				BUG();
 			tree_size--;
 		}
-		btrfs_release_path(root, &path);
+		btrfs_release_path(&path);
 	}
 	btrfs_commit_transaction(trans, root);
 	close_ctree(root);
@@ -172,7 +172,7 @@ int main(int ac, char **av) {
 			printf("unable to find %d\n", num);
 			exit(1);
 		}
-		btrfs_release_path(root, &path);
+		btrfs_release_path(&path);
 	}
 	printf("starting big long delete run\n");
 	trans = btrfs_start_transaction(root, 1);
@@ -205,7 +205,7 @@ int main(int ac, char **av) {
 			}
 			tree_size--;
 		}
-		btrfs_release_path(root, &path);
+		btrfs_release_path(&path);
 	}
 	/*
 	printf("previous tree:\n");

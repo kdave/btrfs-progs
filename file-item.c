@@ -258,7 +258,7 @@ int btrfs_csum_file_block(struct btrfs_trans_handle *trans,
 	 * at this point, we know the tree has an item, but it isn't big
 	 * enough yet to put our csum in.  Grow it
 	 */
-	btrfs_release_path(root, path);
+	btrfs_release_path(path);
 	ret = btrfs_search_slot(trans, root, &file_key, path,
 				csum_size, 1);
 	if (ret < 0)
@@ -290,7 +290,7 @@ int btrfs_csum_file_block(struct btrfs_trans_handle *trans,
 	}
 
 insert:
-	btrfs_release_path(root, path);
+	btrfs_release_path(path);
 	csum_offset = 0;
 	if (found_next) {
 		u64 tmp = min(alloc_end, next_offset);
@@ -328,7 +328,7 @@ found:
 			    csum_size);
 	btrfs_mark_buffer_dirty(path->nodes[0]);
 fail:
-	btrfs_release_path(root, path);
+	btrfs_release_path(path);
 	btrfs_free_path(path);
 	return ret;
 }
@@ -501,7 +501,7 @@ int btrfs_del_csums(struct btrfs_trans_handle *trans,
 						&key, bytenr, len);
 			BUG_ON(ret);
 		}
-		btrfs_release_path(root, path);
+		btrfs_release_path(path);
 	}
 out:
 	btrfs_free_path(path);

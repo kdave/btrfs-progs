@@ -582,14 +582,14 @@ static int check_chunk_by_metadata(struct recover_control *rc,
 		if (ret < 0) {
 			fprintf(stderr, "Search device extent failed(%d)\n",
 				ret);
-			btrfs_release_path(root, &path);
+			btrfs_release_path(&path);
 			return ret;
 		} else if (ret > 0) {
 			if (rc->verbose)
 				fprintf(stderr,
 					"No device extent[%llu, %llu]\n",
 					stripe->devid, stripe->offset);
-			btrfs_release_path(root, &path);
+			btrfs_release_path(&path);
 			return -ENOENT;
 		}
 		l = path.nodes[0];
@@ -604,10 +604,10 @@ static int check_chunk_by_metadata(struct recover_control *rc,
 								dev_extent),
 					btrfs_dev_extent_length(l, dev_extent),
 					chunk->offset, chunk->length);
-			btrfs_release_path(root, &path);
+			btrfs_release_path(&path);
 			return -ENOENT;
 		}
-		btrfs_release_path(root, &path);
+		btrfs_release_path(&path);
 	}
 
 bg_check:
@@ -619,13 +619,13 @@ bg_check:
 				0, 0);
 	if (ret < 0) {
 		fprintf(stderr, "Search block group failed(%d)\n", ret);
-		btrfs_release_path(root, &path);
+		btrfs_release_path(&path);
 		return ret;
 	} else if (ret > 0) {
 		if (rc->verbose)
 			fprintf(stderr, "No block group[%llu, %llu]\n",
 				key.objectid, key.offset);
-		btrfs_release_path(root, &path);
+		btrfs_release_path(&path);
 		return -ENOENT;
 	}
 
@@ -638,10 +638,10 @@ bg_check:
 				"Chunk[%llu, %llu]'s type(%llu) is differemt with Block Group's type(%llu)\n",
 				chunk->offset, chunk->length, chunk->type_flags,
 				btrfs_disk_block_group_flags(l, bg_ptr));
-		btrfs_release_path(root, &path);
+		btrfs_release_path(&path);
 		return -ENOENT;
 	}
-	btrfs_release_path(root, &path);
+	btrfs_release_path(&path);
 	return 0;
 }
 
@@ -915,7 +915,7 @@ again:
 		btrfs_item_key_to_cpu(leaf, &key, 0);
 		if (key.objectid >= end)
 			goto err;
-		btrfs_release_path(root, &path);
+		btrfs_release_path(&path);
 		goto again;
 	}
 
@@ -960,11 +960,11 @@ again:
 			key.type = BTRFS_EXTENT_ITEM_KEY;
 			key.offset = 0;
 		}
-		btrfs_release_path(root, &path);
+		btrfs_release_path(&path);
 		goto again;
 	}
 err:
-	btrfs_release_path(root, &path);
+	btrfs_release_path(&path);
 	return ret;
 }
 

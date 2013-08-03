@@ -133,11 +133,11 @@ error:
 		foundhash = btrfs_name_hash(found, found_len);
 		if (myhash != foundhash)
 			goto fatal_release;
-		btrfs_release_path(root, &path);
+		btrfs_release_path(&path);
 		return 0;
 	}
 fatal_release:
-	btrfs_release_path(root, &path);
+	btrfs_release_path(&path);
 fatal:
 	printf("failed to insert %lu ret %d\n", oid, ret);
 	return -1;
@@ -189,7 +189,7 @@ static int del_dir_item(struct btrfs_trans_handle *trans,
 	ret = btrfs_del_item(trans, root, path);
 	if (ret)
 		goto out_release;
-	btrfs_release_path(root, path);
+	btrfs_release_path(path);
 
 	/* delete the inode */
 	btrfs_init_path(path);
@@ -199,7 +199,7 @@ static int del_dir_item(struct btrfs_trans_handle *trans,
 	ret = btrfs_del_item(trans, root, path);
 	if (ret)
 		goto out_release;
-	btrfs_release_path(root, path);
+	btrfs_release_path(path);
 
 	if (root->fs_info->last_inode_alloc > file_objectid)
 		root->fs_info->last_inode_alloc = file_objectid;
@@ -210,7 +210,7 @@ static int del_dir_item(struct btrfs_trans_handle *trans,
 	}
 	return 0;
 out_release:
-	btrfs_release_path(root, path);
+	btrfs_release_path(path);
 out:
 	printf("failed to delete %lu %d\n", radix_index, ret);
 	return -1;
@@ -239,7 +239,7 @@ static int del_one(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 		goto out_release;
 	return ret;
 out_release:
-	btrfs_release_path(root, &path);
+	btrfs_release_path(&path);
 	printf("failed to delete %lu %d\n", oid, ret);
 	return -1;
 }
@@ -266,7 +266,7 @@ static int lookup_item(struct btrfs_trans_handle *trans, struct btrfs_root
 				    struct btrfs_dir_item);
 		objectid = btrfs_disk_key_objectid(&di->location);
 	}
-	btrfs_release_path(root, &path);
+	btrfs_release_path(&path);
 	if (ret) {
 		printf("unable to find key %lu\n", oid);
 		return -1;
@@ -289,7 +289,7 @@ static int lookup_enoent(struct btrfs_trans_handle *trans, struct btrfs_root
 	btrfs_init_path(&path);
 	ret = btrfs_lookup_dir_item(trans, root, &path, dir_oid, buf,
 				    strlen(buf), 0);
-	btrfs_release_path(root, &path);
+	btrfs_release_path(&path);
 	if (!ret) {
 		printf("able to find key that should not exist %lu\n", oid);
 		return -1;
@@ -318,12 +318,12 @@ static int empty_tree(struct btrfs_trans_handle *trans, struct btrfs_root
 		btrfs_init_path(&path);
 		ret = btrfs_search_slot(trans, root, &key, &path, -1, 1);
 		if (ret < 0) {
-			btrfs_release_path(root, &path);
+			btrfs_release_path(&path);
 			return ret;
 		}
 		if (ret != 0) {
 			if (path.slots[0] == 0) {
-				btrfs_release_path(root, &path);
+				btrfs_release_path(&path);
 				break;
 			}
 			path.slots[0] -= 1;

@@ -436,7 +436,7 @@ static int record_file_extent(struct btrfs_trans_handle *trans,
 	nbytes = btrfs_stack_inode_nbytes(inode) + num_bytes;
 	btrfs_set_stack_inode_nbytes(inode, nbytes);
 
-	btrfs_release_path(root, &path);
+	btrfs_release_path(&path);
 
 	ins_key.objectid = disk_bytenr;
 	ins_key.offset = num_bytes;
@@ -471,7 +471,7 @@ static int record_file_extent(struct btrfs_trans_handle *trans,
 		goto fail;
 	ret = 0;
 fail:
-	btrfs_release_path(root, &path);
+	btrfs_release_path(&path);
 	return ret;
 }
 
@@ -1362,7 +1362,7 @@ next:
 		if (ret)
 			goto fail;
 		last_byte = bytenr + num_bytes;
-		btrfs_release_path(extent_root, &path);
+		btrfs_release_path(&path);
 
 		if (trans->blocks_used >= 4096) {
 			ret = btrfs_commit_transaction(trans, root);
@@ -1371,7 +1371,7 @@ next:
 			BUG_ON(!trans);
 		}
 	}
-	btrfs_release_path(root, &path);
+	btrfs_release_path(&path);
 	if (total_bytes > last_byte) {
 		ret = create_image_file_range(trans, root, objectid,
 					      &btrfs_inode, last_byte,
@@ -1410,11 +1410,11 @@ next:
 	btrfs_set_inode_size(leaf, inode_item, strlen(name) * 2 +
 			     btrfs_inode_size(leaf, inode_item));
 	btrfs_mark_buffer_dirty(leaf);
-	btrfs_release_path(root, &path);
+	btrfs_release_path(&path);
 	ret = btrfs_commit_transaction(trans, root);
 	BUG_ON(ret);
 fail:
-	btrfs_release_path(root, &path);
+	btrfs_release_path(&path);
 	return ret;
 }
 
@@ -1451,7 +1451,7 @@ struct btrfs_root *link_subvol(struct btrfs_root *root, const char *base,
 		if (key.objectid == dirid && key.type == BTRFS_DIR_INDEX_KEY)
 			index = key.offset + 1;
 	}
-	btrfs_release_path(root, path);
+	btrfs_release_path(path);
 
 	trans = btrfs_start_transaction(root, 1);
 	BUG_ON(!trans);
@@ -1484,7 +1484,7 @@ struct btrfs_root *link_subvol(struct btrfs_root *root, const char *base,
 	btrfs_set_inode_size(leaf, inode_item, strlen(buf) * 2 +
 			     btrfs_inode_size(leaf, inode_item));
 	btrfs_mark_buffer_dirty(leaf);
-	btrfs_release_path(root, path);
+	btrfs_release_path(path);
 
 	/* add the backref first */
 	ret = btrfs_add_root_ref(trans, tree_root, root_objectid,
@@ -1549,7 +1549,7 @@ static int create_chunk_mapping(struct btrfs_trans_handle *trans,
 	ret = btrfs_del_item(trans, device->dev_root, &path);
 	if (ret)
 		goto err;
-	btrfs_release_path(device->dev_root, &path);
+	btrfs_release_path(&path);
 
 	/* delete chunk item created by make_btrfs */
 	key.objectid = chunk_objectid;
@@ -1563,7 +1563,7 @@ static int create_chunk_mapping(struct btrfs_trans_handle *trans,
 	ret = btrfs_del_item(trans, chunk_root, &path);
 	if (ret)
 		goto err;
-	btrfs_release_path(chunk_root, &path);
+	btrfs_release_path(&path);
 
 	/* for each block group, create device extent and chunk item */
 	cur_start = 0;
@@ -1595,7 +1595,7 @@ static int create_chunk_mapping(struct btrfs_trans_handle *trans,
 		    (unsigned long)btrfs_dev_extent_chunk_tree_uuid(extent),
 		    BTRFS_UUID_SIZE);
 		btrfs_mark_buffer_dirty(leaf);
-		btrfs_release_path(device->dev_root, &path);
+		btrfs_release_path(&path);
 
 		/* insert chunk item */
 		btrfs_set_stack_chunk_length(&chunk, cache->key.offset);
@@ -1628,7 +1628,7 @@ static int create_chunk_mapping(struct btrfs_trans_handle *trans,
 	device->bytes_used = total_bytes;
 	ret = btrfs_update_device(trans, device);
 err:
-	btrfs_release_path(device->dev_root, &path);
+	btrfs_release_path(&path);
 	return ret;
 }
 
@@ -1897,7 +1897,7 @@ static int relocate_one_reference(struct btrfs_trans_handle *trans,
 	if (ret)
 		goto fail;
 
-	btrfs_release_path(root, &path);
+	btrfs_release_path(&path);
 
 	key.objectid = extent_key->objectid;
 	key.offset = 0;
@@ -1909,7 +1909,7 @@ static int relocate_one_reference(struct btrfs_trans_handle *trans,
 	leaf = path.nodes[0];
 	ptr = btrfs_item_ptr_offset(leaf, path.slots[0]);
 	read_extent_buffer(leaf, &inode, ptr, sizeof(inode));
-	btrfs_release_path(root, &path);
+	btrfs_release_path(&path);
 
 	BUG_ON(num_bytes & (sectorsize - 1));
 	nbytes = btrfs_stack_inode_nbytes(&inode) - num_bytes;
@@ -1989,10 +1989,10 @@ static int relocate_one_reference(struct btrfs_trans_handle *trans,
 	ptr = btrfs_item_ptr_offset(leaf, path.slots[0]);
 	write_extent_buffer(leaf, &inode, ptr, sizeof(inode));
 	btrfs_mark_buffer_dirty(leaf);
-	btrfs_release_path(root, &path);
+	btrfs_release_path(&path);
 
 fail:
-	btrfs_release_path(root, &path);
+	btrfs_release_path(&path);
 	return ret;
 }
 
@@ -2042,7 +2042,7 @@ static int relocate_extents_range(struct btrfs_root *fs_root,
 				start_byte = key.objectid;
 		}
 	}
-	btrfs_release_path(extent_root, &path);
+	btrfs_release_path(&path);
 again:
 	cur_root = (pass % 2 == 0) ? ext2_root : fs_root;
 	num_extents = 0;
@@ -2124,7 +2124,7 @@ next:
 			goto fail;
 
 		cur_byte += num_bytes;
-		btrfs_release_path(extent_root, &path);
+		btrfs_release_path(&path);
 
 		if (trans->blocks_used >= 4096) {
 			ret = btrfs_commit_transaction(trans, cur_root);
@@ -2133,7 +2133,7 @@ next:
 			BUG_ON(!trans);
 		}
 	}
-	btrfs_release_path(cur_root, &path);
+	btrfs_release_path(&path);
 
 	ret = btrfs_commit_transaction(trans, cur_root);
 	BUG_ON(ret);
@@ -2143,7 +2143,7 @@ next:
 
 	ret = (num_extents > 0) ? -1 : 0;
 fail:
-	btrfs_release_path(cur_root, &path);
+	btrfs_release_path(&path);
 	extent_io_tree_cleanup(&reloc_tree);
 	return ret;
 }
@@ -2224,9 +2224,9 @@ static int fixup_chunk_mapping(struct btrfs_root *root)
 			break;
 
 		btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
-		btrfs_release_path(chunk_root, &path);
+		btrfs_release_path(&path);
 	}
-	btrfs_release_path(chunk_root, &path);
+	btrfs_release_path(&path);
 
 	/* fixup the system chunk array in super block */
 	btrfs_set_super_sys_array_size(info->super_copy, 0);
@@ -2273,7 +2273,7 @@ next:
 	ret = btrfs_commit_transaction(trans, root);
 	BUG_ON(ret);
 err:
-	btrfs_release_path(chunk_root, &path);
+	btrfs_release_path(&path);
 	return ret;
 }
 
@@ -2535,7 +2535,7 @@ int do_rollback(const char *devname, int force)
 	}
 	leaf = path.nodes[0];
 	btrfs_dir_item_key_to_cpu(leaf, dir, &key);
-	btrfs_release_path(ext2_root, &path);
+	btrfs_release_path(&path);
 
 	objectid = key.objectid;
 
@@ -2547,7 +2547,7 @@ int do_rollback(const char *devname, int force)
 	leaf = path.nodes[0];
 	inode = btrfs_item_ptr(leaf, path.slots[0], struct btrfs_inode_item);
 	total_bytes = btrfs_inode_size(leaf, inode);
-	btrfs_release_path(ext2_root, &path);
+	btrfs_release_path(&path);
 
 	key.objectid = objectid;
 	key.offset = 0;
@@ -2555,7 +2555,7 @@ int do_rollback(const char *devname, int force)
 	ret = btrfs_search_slot(NULL, ext2_root, &key, &path, 0, 0);
 	if (ret != 0) {
 		fprintf(stderr, "unable to find first file extent\n");
-		btrfs_release_path(ext2_root, &path);
+		btrfs_release_path(&path);
 		goto fail;
 	}
 
@@ -2606,7 +2606,7 @@ next_extent:
 		offset += btrfs_file_extent_num_bytes(leaf, fi);
 		path.slots[0]++;
 	}
-	btrfs_release_path(ext2_root, &path);
+	btrfs_release_path(&path);
 
 	if (offset < total_bytes) {
 		fprintf(stderr, "unable to build extent mapping\n");
@@ -2640,9 +2640,9 @@ next_extent:
 			break;
 
 		btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
-		btrfs_release_path(chunk_root, &path);
+		btrfs_release_path(&path);
 	}
-	btrfs_release_path(chunk_root, &path);
+	btrfs_release_path(&path);
 
 	offset = 0;
 	num_bytes = 0;

@@ -55,7 +55,7 @@ int btrfs_find_last_root(struct btrfs_root *root, u64 objectid,
 	memcpy(key, &found_key, sizeof(found_key));
 	ret = 0;
 out:
-	btrfs_release_path(root, path);
+	btrfs_release_path(path);
 	btrfs_free_path(path);
 	return ret;
 }
@@ -88,7 +88,7 @@ int btrfs_update_root(struct btrfs_trans_handle *trans, struct btrfs_root
 	 * for the added fields.
 	 */
 	if (old_len < sizeof(*item)) {
-		btrfs_release_path(root, path);
+		btrfs_release_path(path);
 		ret = btrfs_search_slot(trans, root, key, path,
 				-1, 1);
 		if (ret < 0) {
@@ -99,7 +99,7 @@ int btrfs_update_root(struct btrfs_trans_handle *trans, struct btrfs_root
 		if (ret < 0) {
 			goto out;
 		}
-		btrfs_release_path(root, path);
+		btrfs_release_path(path);
 		ret = btrfs_insert_empty_item(trans, root, path,
 				key, sizeof(*item));
 		if (ret < 0) {
@@ -119,7 +119,7 @@ int btrfs_update_root(struct btrfs_trans_handle *trans, struct btrfs_root
 	write_extent_buffer(l, item, ptr, sizeof(*item));
 	btrfs_mark_buffer_dirty(path->nodes[0]);
 out:
-	btrfs_release_path(root, path);
+	btrfs_release_path(path);
 	btrfs_free_path(path);
 	return ret;
 }
@@ -160,7 +160,7 @@ int btrfs_del_root(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 	BUG_ON(refs != 0);
 	ret = btrfs_del_item(trans, root, path);
 out:
-	btrfs_release_path(root, path);
+	btrfs_release_path(path);
 	btrfs_free_path(path);
 	return ret;
 }

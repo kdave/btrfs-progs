@@ -364,7 +364,7 @@ check_pending:
 	/* we have to make sure we didn't find an extent that has already
 	 * been allocated by the map tree or the original allocation
 	 */
-	btrfs_release_path(root, path);
+	btrfs_release_path(path);
 	BUG_ON(*start < search_start);
 
 	if (*start + num_bytes > search_end) {
@@ -375,7 +375,7 @@ check_pending:
 	return 0;
 
 error:
-	btrfs_release_path(root, path);
+	btrfs_release_path(path);
 	return ret;
 }
 
@@ -496,7 +496,7 @@ static int find_next_devid(struct btrfs_root *root, struct btrfs_path *path,
 	}
 	ret = 0;
 error:
-	btrfs_release_path(root, path);
+	btrfs_release_path(path);
 	return ret;
 }
 

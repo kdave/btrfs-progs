@@ -704,7 +704,7 @@ static int record_file_extent(struct btrfs_trans_handle *trans,
 	btrfs_set_file_extent_other_encoding(leaf, fi, 0);
 	btrfs_mark_buffer_dirty(leaf);
 
-	btrfs_release_path(root, &path);
+	btrfs_release_path(&path);
 
 	ins_key.objectid = disk_bytenr;
 	ins_key.offset = num_bytes;
@@ -734,7 +734,7 @@ static int record_file_extent(struct btrfs_trans_handle *trans,
 				   root->root_key.objectid,
 				   objectid, 0);
 fail:
-	btrfs_release_path(root, &path);
+	btrfs_release_path(&path);
 	return ret;
 }
 
@@ -920,7 +920,7 @@ static int traverse_directory(struct btrfs_trans_handle *trans,
 	btrfs_set_inode_size(leaf, inode_item, root_dir_inode_size);
 	btrfs_mark_buffer_dirty(leaf);
 
-	btrfs_release_path(root, &path);
+	btrfs_release_path(&path);
 
 	do {
 		parent_dir_entry = list_entry(dir_head->list.next,

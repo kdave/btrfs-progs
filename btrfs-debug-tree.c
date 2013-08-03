@@ -374,7 +374,7 @@ next:
 		path.slots[0]++;
 	}
 no_node:
-	btrfs_release_path(root, &path);
+	btrfs_release_path(&path);
 
 	if (tree_root_scan == info->tree_root &&
 	    info->log_root_tree) {

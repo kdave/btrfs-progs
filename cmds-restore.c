@@ -553,7 +553,7 @@ static int copy_file(struct btrfs_root *root, int fd, struct btrfs_key *key,
 				    struct btrfs_inode_item);
 		found_size = btrfs_inode_size(path->nodes[0], inode_item);
 	}
-	btrfs_release_path(root, path);
+	btrfs_release_path(path);
 
 	key->offset = 0;
 	key->type = BTRFS_EXTENT_DATA_KEY;

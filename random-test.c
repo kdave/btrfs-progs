@@ -118,7 +118,7 @@ static int del_one(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 	if (ret)
 		goto error;
 	ret = btrfs_del_item(trans, root, &path);
-	btrfs_release_path(root, &path);
+	btrfs_release_path(&path);
 	if (ret != 0)
 		goto error;
 	ptr = radix_tree_delete(radix, key.objectid);
@@ -141,7 +141,7 @@ static int lookup_item(struct btrfs_trans_handle *trans, struct btrfs_root
 	if (ret < 0)
 		return 0;
 	ret = btrfs_search_slot(trans, root, &key, &path, 0, 1);
-	btrfs_release_path(root, &path);
+	btrfs_release_path(&path);
 	if (ret)
 		goto error;
 	return 0;
@@ -161,7 +161,7 @@ static int lookup_enoent(struct btrfs_trans_handle *trans, struct btrfs_root
 	if (ret < 0)
 		return ret;
 	ret = btrfs_search_slot(trans, root, &key, &path, 0, 0);
-	btrfs_release_path(root, &path);
+	btrfs_release_path(&path);
 	if (ret <= 0)
 		goto error;
 	return 0;
@@ -190,12 +190,12 @@ static int empty_tree(struct btrfs_trans_handle *trans, struct btrfs_root
 		btrfs_init_path(&path);
 		ret = btrfs_search_slot(trans, root, &key, &path, -1, 1);
 		if (ret < 0) {
-			btrfs_release_path(root, &path);
+			btrfs_release_path(&path);
 			return ret;
 		}
 		if (ret != 0) {
 			if (path.slots[0] == 0) {
-				btrfs_release_path(root, &path);
+				btrfs_release_path(&path);
 				break;
 			}
 			path.slots[0] -= 1;
@@ -211,7 +211,7 @@ static int empty_tree(struct btrfs_trans_handle *trans, struct btrfs_root
 				found);
 			return -1;
 		}
-		btrfs_release_path(root, &path);
+		btrfs_release_path(&path);
 		ptr = radix_tree_delete(radix, found);
 		if (!ptr)
 			goto error;
@@ -294,13 +294,13 @@ static int fill_radix(struct btrfs_root *root, struct radix_tree_root *radix)
 		btrfs_init_path(&path);
 		ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
 		if (ret < 0) {
-			btrfs_release_path(root, &path);
+			btrfs_release_path(&path);
 			return ret;
 		}
 		slot = path.slots[0];
 		if (ret != 0) {
 			if (slot == 0) {
-				btrfs_release_path(root, &path);
+				btrfs_release_path(&path);
 				break;
 			}
 			slot -= 1;
@@ -319,7 +319,7 @@ static int fill_radix(struct btrfs_root *root, struct radix_tree_root *radix)
 
 			radix_tree_preload_end();
 		}
-		btrfs_release_path(root, &path);
+		btrfs_release_path(&path);
 		key.objectid = found - 1;
 		if (key.objectid > found)
 			break;

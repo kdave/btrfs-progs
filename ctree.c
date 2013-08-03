@@ -48,11 +48,11 @@ struct btrfs_path *btrfs_alloc_path(void)
 
 void btrfs_free_path(struct btrfs_path *p)
 {
-	btrfs_release_path(NULL, p);
+	btrfs_release_path(p);
 	kfree(p);
 }
 
-void btrfs_release_path(struct btrfs_root *root, struct btrfs_path *p)
+void btrfs_release_path(struct btrfs_path *p)
 {
 	int i;
 	for (i = 0; i < BTRFS_MAX_LEVEL; i++) {
@@ -1072,7 +1072,7 @@ again:
 					return sret;
 				b = p->nodes[level];
 				if (!b) {
-					btrfs_release_path(NULL, p);
+					btrfs_release_path(p);
 					goto again;
 				}
 				slot = p->slots[level];
@@ -2113,7 +2113,7 @@ int btrfs_split_item(struct btrfs_trans_handle *trans,
 		goto split;
 
 	item_size = btrfs_item_size_nr(leaf, path->slots[0]);
-	btrfs_release_path(root, path);
+	btrfs_release_path(path);
 
 	path->search_for_split = 1;
 

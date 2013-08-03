@@ -219,7 +219,7 @@ static int corrupt_extent(struct btrfs_trans_handle *trans,
 			btrfs_mark_buffer_dirty(leaf);
 		}
 next:
-		btrfs_release_path(NULL, path);
+		btrfs_release_path(path);
 
 		if (key.offset > 0)
 			key.offset--;
