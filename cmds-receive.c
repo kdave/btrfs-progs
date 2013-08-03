@@ -907,7 +907,7 @@ out:
 	return ret;
 }
 
-static int do_cmd_receive(int argc, char **argv)
+int cmd_receive(int argc, char **argv)
 {
 	int c;
 	char *tomnt = NULL;
@@ -960,11 +960,6 @@ static int do_cmd_receive(int argc, char **argv)
 	return ret;
 }
 
-static const char * const receive_cmd_group_usage[] = {
-	"btrfs receive <command> <args>",
-	NULL
-};
-
 const char * const cmd_receive_usage[] = {
 	"btrfs receive [-ve] [-f <infile>] <mount>",
 	"Receive subvolumes from stdin.",
@@ -988,15 +983,3 @@ const char * const cmd_receive_usage[] = {
 	"                 is recognized or on EOF.",
 	NULL
 };
-
-const struct cmd_group receive_cmd_group = {
-	receive_cmd_group_usage, NULL, {
-		{ "receive", do_cmd_receive, cmd_receive_usage, NULL, 0 },
-		{ 0, 0, 0, 0, 0 },
-        },
-};
-
-int cmd_receive(int argc, char **argv)
-{
-	return do_cmd_receive(argc, argv);
-}

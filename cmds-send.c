@@ -465,7 +465,7 @@ out:
 	return ret;
 }
 
-int cmd_send_start(int argc, char **argv)
+int cmd_send(int argc, char **argv)
 {
 	char *subvol = NULL;
 	int c;
@@ -718,11 +718,6 @@ out:
 	return ret;
 }
 
-static const char * const send_cmd_group_usage[] = {
-	"btrfs send <command> <args>",
-	NULL
-};
-
 const char * const cmd_send_usage[] = {
 	"btrfs send [-ve] [-p <parent>] [-c <clone-src>] [-f <outfile>] <subvol>",
 	"Send the subvolume to stdout.",
@@ -750,8 +745,3 @@ const char * const cmd_send_usage[] = {
 	"                 use pipes.",
 	NULL
 };
-
-int cmd_send(int argc, char **argv)
-{
-	return cmd_send_start(argc, argv);
-}
