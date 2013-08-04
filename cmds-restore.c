@@ -33,6 +33,8 @@
 #include <zlib.h>
 #include <regex.h>
 #include <getopt.h>
+#include <sys/types.h>
+#include <attr/xattr.h>
 
 #include "ctree.h"
 #include "disk-io.h"
@@ -50,6 +52,7 @@ static int get_snaps = 0;
 static int verbose = 0;
 static int ignore_errors = 0;
 static int overwrite = 0;
+static int get_xattrs = 0;
 
 #define LZO_LEN 4
 #define PAGE_CACHE_SIZE 4096
@@ -415,6 +418,114 @@ again:
 }
 
 
+static int set_file_xattrs(struct btrfs_root *root, u64 inode,
+			   int fd, const char *file_name)
+{
+	struct btrfs_key key;
+	struct btrfs_path *path;
+	struct extent_buffer *leaf;
+	struct btrfs_dir_item *di;
+	u32 name_len = 0;
+	u32 data_len = 0;
+	u32 len = 0;
+	u32 cur, total_len;
+	char *name = NULL;
+	char *data = NULL;
+	int ret = 0;
+
+	key.objectid = inode;
+	key.type = BTRFS_XATTR_ITEM_KEY;
+	key.offset = 0;
+
+	path = btrfs_alloc_path();
+	if (!path)
+		return -ENOMEM;
+
+	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
+	if (ret < 0)
+		goto out;
+
+	leaf = path->nodes[0];
+	while (1) {
+		if (path->slots[0] >= btrfs_header_nritems(leaf)) {
+			do {
+				ret = next_leaf(root, path);
+				if (ret < 0) {
+					fprintf(stderr,
+						"Error searching for extended attributes: %d\n",
+						ret);
+					goto out;
+				} else if (ret) {
+					/* No more leaves to search */
+					ret = 0;
+					goto out;
+				}
+				leaf = path->nodes[0];
+			} while (!leaf);
+			continue;
+		}
+
+		btrfs_item_key_to_cpu(leaf, &key, path->slots[0]);
+		if (key.type != BTRFS_XATTR_ITEM_KEY || key.objectid != inode)
+			break;
+		cur = 0;
+		total_len = btrfs_item_size_nr(leaf, path->slots[0]);
+		di = btrfs_item_ptr(leaf, path->slots[0],
+				    struct btrfs_dir_item);
+
+		while (cur < total_len) {
+			len = btrfs_dir_name_len(leaf, di);
+			if (len > name_len) {
+				free(name);
+				name = (char *) malloc(len + 1);
+				if (!name) {
+					ret = -ENOMEM;
+					goto out;
+				}
+			}
+			read_extent_buffer(leaf, name,
+					   (unsigned long)(di + 1), len);
+			name[len] = '\0';
+			name_len = len;
+
+			len = btrfs_dir_data_len(leaf, di);
+			if (len > data_len) {
+				free(data);
+				data = (char *) malloc(len);
+				if (!data) {
+					ret = -ENOMEM;
+					goto out;
+				}
+			}
+			read_extent_buffer(leaf, data,
+					   (unsigned long)(di + 1) + name_len,
+					   len);
+			data_len = len;
+
+			if (fsetxattr(fd, name, data, data_len, 0)) {
+				int err = errno;
+
+				fprintf(stderr,
+					"Error setting extended attribute %s on file %s: %s\n",
+					name, file_name, strerror(err));
+			}
+
+			len = sizeof(*di) + name_len + data_len;
+			cur += len;
+			di = (struct btrfs_dir_item *)((char *)di + len);
+		}
+		path->slots[0]++;
+	}
+	ret = 0;
+out:
+	btrfs_free_path(path);
+	free(name);
+	free(data);
+
+	return ret;
+}
+
+
 static int copy_file(struct btrfs_root *root, int fd, struct btrfs_key *key,
 		     const char *file)
 {
@@ -535,6 +646,11 @@ next:
 set_size:
 	if (found_size) {
 		ret = ftruncate(fd, (loff_t)found_size);
+		if (ret)
+			return ret;
+	}
+	if (get_xattrs) {
+		ret = set_file_xattrs(root, key->objectid, fd, file);
 		if (ret)
 			return ret;
 	}
@@ -978,6 +1094,7 @@ const char * const cmd_restore_usage[] = {
 	"Try to restore files from a damaged filesystem (unmounted)",
 	"",
 	"-s              get snapshots",
+	"-x              get extended attributes",
 	"-v              verbose",
 	"-i              ignore errors",
 	"-o              overwrite",
@@ -1013,7 +1130,7 @@ int cmd_restore(int argc, char **argv)
 	regex_t match_reg, *mreg = NULL;
 	char reg_err[256];
 
-	while ((opt = getopt_long(argc, argv, "sviot:u:df:r:lc", long_options,
+	while ((opt = getopt_long(argc, argv, "sxviot:u:df:r:lc", long_options,
 					&option_index)) != -1) {
 
 		switch (opt) {
@@ -1075,6 +1192,9 @@ int cmd_restore(int argc, char **argv)
 			/* long option without single letter alternative */
 			case 256:
 				match_regstr = optarg;
+				break;
+			case 'x':
+				get_xattrs = 1;
 				break;
 			default:
 				usage(cmd_restore_usage);
