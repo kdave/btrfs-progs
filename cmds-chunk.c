@@ -1307,58 +1307,22 @@ fail_close_fd:
 	return ret;
 }
 
-static int ask_user(char *question, int defval)
+/*
+ * This reads a line from the stdin and only returns non-zero if the
+ * first whitespace delimited token is a case insensitive match with yes
+ * or y.
+ */
+static int ask_user(char *question)
 {
-	char answer[5];
-	char *defstr;
-	int i;
+	char buf[30] = {0,};
+	char *saveptr = NULL;
+	char *answer;
 
-	if (defval == 1)
-		defstr = "[Y/n]";
-	else if (defval == 0)
-		defstr = "[y/N]";
-	else if (defval == -1)
-		defstr = "[y/n]";
-	else
-		BUG_ON(1);
-again:
-	printf("%s%s? ", question, defstr);
+	printf("%s [y/N]: ", question);
 
-	i = 0;
-	while (i < 4 && scanf("%c", &answer[i])) {
-		if (answer[i] == '\n') {
-			answer[i] = '\0';
-			break;
-		} else if (answer[i] == ' '){
-			answer[i] = '\0';
-			if (i == 0)
-				continue;
-			else
-				break;
-		} else if (answer[i] >= 'A' && answer[i] <= 'Z') {
-			answer[i] += 'a' - 'A';
-		}
-		i++;
-	}
-	answer[5] = '\0';
-	__fpurge(stdin);
-
-	if (strlen(answer) == 0) {
-		if (defval != -1)
-			return defval;
-		else
-			goto again;
-	}
-
-	if (!strcmp(answer, "yes") ||
-	    !strcmp(answer, "y"))
-		return 1;
-
-	if (!strcmp(answer, "no") ||
-	    !strcmp(answer, "n"))
-		return 0;
-
-	goto again;
+	return fgets(buf, sizeof(buf) - 1, stdin) &&
+	       (answer = strtok_r(buf, " \t\n\r", &saveptr)) &&
+	       (!strcasecmp(answer, "yes") || !strcasecmp(answer, "y"));
 }
 
 static int btrfs_get_device_extents(u64 chunk_object,
@@ -1752,8 +1716,7 @@ static int btrfs_recover_chunk_tree(char *path, int verbose, int yes)
 	}
 
 	if (!rc.yes) {
-		ret = ask_user("We are going to rebuild the chunk tree on disk, it might destroy the old metadata on the disk, Are you sure",
-			       0);
+		ret = ask_user("We are going to rebuild the chunk tree on disk, it might destroy the old metadata on the disk, Are you sure?");
 		if (!ret) {
 			ret = BTRFS_CHUNK_TREE_REBUILD_ABORTED;
 			goto fail_close_ctree;
