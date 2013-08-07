@@ -112,8 +112,8 @@ int verify_tree_block_csum_silent(struct extent_buffer *buf, u16 csum_size)
 	return __csum_tree_block_size(buf, csum_size, 1, 1);
 }
 
-int csum_tree_block(struct btrfs_root *root, struct extent_buffer *buf,
-		    int verify)
+static int csum_tree_block(struct btrfs_root *root, struct extent_buffer *buf,
+			   int verify)
 {
 	u16 csum_size =
 		btrfs_super_csum_size(root->fs_info->super_copy);
@@ -305,8 +305,9 @@ struct extent_buffer *read_tree_block(struct btrfs_root *root, u64 bytenr,
 	return NULL;
 }
 
-int write_tree_block(struct btrfs_trans_handle *trans, struct btrfs_root *root,
-		     struct extent_buffer *eb)
+static int write_tree_block(struct btrfs_trans_handle *trans,
+			    struct btrfs_root *root,
+			    struct extent_buffer *eb)
 {
 	int ret;
 	int dev_nr;
@@ -1182,8 +1183,9 @@ int btrfs_read_dev_super(int fd, struct btrfs_super_block *sb, u64 sb_bytenr)
 	return transid > 0 ? 0 : -1;
 }
 
-int write_dev_supers(struct btrfs_root *root, struct btrfs_super_block *sb,
-		     struct btrfs_device *device)
+static int write_dev_supers(struct btrfs_root *root,
+			    struct btrfs_super_block *sb,
+			    struct btrfs_device *device)
 {
 	u64 bytenr;
 	u32 crc;

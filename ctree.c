@@ -371,7 +371,7 @@ int btrfs_cow_block(struct btrfs_trans_handle *trans,
 /*
  * compare two keys in a memcmp fashion
  */
-int btrfs_comp_keys(struct btrfs_disk_key *disk, struct btrfs_key *k2)
+static int btrfs_comp_keys(struct btrfs_disk_key *disk, struct btrfs_key *k2)
 {
 	struct btrfs_key k1;
 

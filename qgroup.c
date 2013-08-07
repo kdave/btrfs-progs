@@ -54,8 +54,8 @@ int qgroup_inherit_size(struct btrfs_qgroup_inherit *p)
 			     2 * p->num_excl_copies);
 }
 
-int qgroup_inherit_realloc(struct btrfs_qgroup_inherit **inherit, int n,
-			   int pos)
+static int
+qgroup_inherit_realloc(struct btrfs_qgroup_inherit **inherit, int n, int pos)
 {
 	struct btrfs_qgroup_inherit *out;
 	int nitems = 0;

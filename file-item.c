@@ -29,12 +29,6 @@
 #define MAX_CSUM_ITEMS(r,size) ((((BTRFS_LEAF_DATA_SIZE(r) - \
 			       sizeof(struct btrfs_item) * 2) / \
 			       size) - 1))
-int btrfs_create_file(struct btrfs_trans_handle *trans,
-		      struct btrfs_root *root, u64 dirid, u64 *objectid)
-{
-	return 0;
-}
-
 int btrfs_insert_file_extent(struct btrfs_trans_handle *trans,
 			     struct btrfs_root *root,
 			     u64 objectid, u64 pos, u64 offset,
@@ -122,10 +116,11 @@ fail:
 	return err;
 }
 
-struct btrfs_csum_item *btrfs_lookup_csum(struct btrfs_trans_handle *trans,
-					  struct btrfs_root *root,
-					  struct btrfs_path *path,
-					  u64 bytenr, int cow)
+static struct btrfs_csum_item *
+btrfs_lookup_csum(struct btrfs_trans_handle *trans,
+		  struct btrfs_root *root,
+		  struct btrfs_path *path,
+		  u64 bytenr, int cow)
 {
 	int ret;
 	struct btrfs_key file_key;
@@ -170,23 +165,6 @@ fail:
 	if (ret > 0)
 		ret = -ENOENT;
 	return ERR_PTR(ret);
-}
-
-int btrfs_lookup_file_extent(struct btrfs_trans_handle *trans,
-			     struct btrfs_root *root,
-			     struct btrfs_path *path, u64 objectid,
-			     u64 offset, int mod)
-{
-	int ret;
-	struct btrfs_key file_key;
-	int ins_len = mod < 0 ? -1 : 0;
-	int cow = mod != 0;
-
-	file_key.objectid = objectid;
-	file_key.offset = offset;
-	btrfs_set_key_type(&file_key, BTRFS_EXTENT_DATA_KEY);
-	ret = btrfs_search_slot(trans, root, &file_key, path, ins_len, cow);
-	return ret;
 }
 
 int btrfs_csum_file_block(struct btrfs_trans_handle *trans,

@@ -30,8 +30,8 @@
 #include "ctree.h"
 #include "volumes.h"
 
-u64 cache_soft_max = 1024 * 1024 * 256;
-u64 cache_hard_max = 1 * 1024 * 1024 * 1024;
+static u64 cache_soft_max = 1024 * 1024 * 256;
+static u64 cache_hard_max = 1 * 1024 * 1024 * 1024;
 
 void extent_io_tree_init(struct extent_io_tree *tree)
 {
@@ -904,12 +904,6 @@ void copy_extent_buffer(struct extent_buffer *dst, struct extent_buffer *src,
 			unsigned long len)
 {
 	memcpy(dst->data + dst_offset, src->data + src_offset, len);
-}
-
-void memcpy_extent_buffer(struct extent_buffer *dst, unsigned long dst_offset,
-			  unsigned long src_offset, unsigned long len)
-{
-	memcpy(dst->data + dst_offset, dst->data + src_offset, len);
 }
 
 void memmove_extent_buffer(struct extent_buffer *dst, unsigned long dst_offset,

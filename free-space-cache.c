@@ -257,7 +257,7 @@ static int io_ctl_read_bitmap(struct io_ctl *io_ctl,
 }
 
 
-int __load_free_space_cache(struct btrfs_root *root,
+static int __load_free_space_cache(struct btrfs_root *root,
 			    struct btrfs_free_space_ctl *ctl,
 			    struct btrfs_path *path, u64 offset)
 {

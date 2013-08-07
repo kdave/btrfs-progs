@@ -138,33 +138,6 @@ int btrfs_insert_root(struct btrfs_trans_handle *trans, struct btrfs_root
 	return ret;
 }
 
-int btrfs_del_root(struct btrfs_trans_handle *trans, struct btrfs_root *root,
-		   struct btrfs_key *key)
-{
-	struct btrfs_path *path;
-	int ret;
-	u32 refs;
-	struct btrfs_root_item *ri;
-	struct extent_buffer *leaf;
-
-	path = btrfs_alloc_path();
-	BUG_ON(!path);
-	ret = btrfs_search_slot(trans, root, key, path, -1, 1);
-	if (ret < 0)
-		goto out;
-	BUG_ON(ret != 0);
-	leaf = path->nodes[0];
-	ri = btrfs_item_ptr(leaf, path->slots[0], struct btrfs_root_item);
-
-	refs = btrfs_disk_root_refs(leaf, ri);
-	BUG_ON(refs != 0);
-	ret = btrfs_del_item(trans, root, path);
-out:
-	btrfs_release_path(path);
-	btrfs_free_path(path);
-	return ret;
-}
-
 /*
  * add a btrfs_root_ref item.  type is either BTRFS_ROOT_REF_KEY
  * or BTRFS_ROOT_BACKREF_KEY.

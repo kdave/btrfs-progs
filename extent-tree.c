@@ -57,6 +57,9 @@ static int finish_current_insert(struct btrfs_trans_handle *trans, struct
 				 btrfs_root *extent_root);
 static int del_pending_extents(struct btrfs_trans_handle *trans, struct
 			       btrfs_root *extent_root);
+static struct btrfs_block_group_cache *
+btrfs_find_block_group(struct btrfs_root *root, struct btrfs_block_group_cache
+		       *hint, u64 search_start, int data, int owner);
 
 static int remove_sb_from_cache(struct btrfs_root *root,
 				struct btrfs_block_group_cache *cache)
@@ -314,10 +317,9 @@ static int block_group_state_bits(u64 flags)
 	return bits;
 }
 
-struct btrfs_block_group_cache *btrfs_find_block_group(struct btrfs_root *root,
-						 struct btrfs_block_group_cache
-						 *hint, u64 search_start,
-						 int data, int owner)
+static struct btrfs_block_group_cache *
+btrfs_find_block_group(struct btrfs_root *root, struct btrfs_block_group_cache
+		       *hint, u64 search_start, int data, int owner)
 {
 	struct btrfs_block_group_cache *cache;
 	struct extent_io_tree *block_group_cache;
@@ -2016,25 +2018,6 @@ next:
 	return 0;
 }
 
-int btrfs_copy_pinned(struct btrfs_root *root, struct extent_io_tree *copy)
-{
-	u64 last = 0;
-	u64 start;
-	u64 end;
-	struct extent_io_tree *pinned_extents = &root->fs_info->pinned_extents;
-	int ret;
-
-	while(1) {
-		ret = find_first_extent_bit(pinned_extents, last,
-					    &start, &end, EXTENT_DIRTY);
-		if (ret)
-			break;
-		set_extent_dirty(copy, start, end, GFP_NOFS);
-		last = end + 1;
-	}
-	return 0;
-}
-
 int btrfs_finish_extent_commit(struct btrfs_trans_handle *trans,
 			       struct btrfs_root *root,
 			       struct extent_io_tree *unpin)
@@ -3136,8 +3119,8 @@ int btrfs_free_block_groups(struct btrfs_fs_info *info)
 	return 0;
 }
 
-int find_first_block_group(struct btrfs_root *root, struct btrfs_path *path,
-			   struct btrfs_key *key)
+static int find_first_block_group(struct btrfs_root *root,
+		struct btrfs_path *path, struct btrfs_key *key)
 {
 	int ret;
 	struct btrfs_key found_key;
@@ -3424,88 +3407,6 @@ int btrfs_update_block_group(struct btrfs_trans_handle *trans,
 {
 	return update_block_group(trans, root, bytenr, num_bytes,
 				  alloc, mark_free);
-}
-
-static int btrfs_count_extents_in_block_group(struct btrfs_root *root,
-					      struct btrfs_path *path, u64 start,
-					      u64 len,
-					      u64 *total)
-{
-	struct btrfs_key key;
-	struct extent_buffer *leaf;
-	u64 bytes_used = 0;
-	int ret;
-	int slot;
-
-	key.offset = 0;
-	key.objectid = start;
-	btrfs_set_key_type(&key, BTRFS_EXTENT_ITEM_KEY);
-	ret = btrfs_search_slot(NULL, root->fs_info->extent_root,
-				&key, path, 0, 0);
-	if (ret < 0)
-		return ret;
-	while(1) {
-		leaf = path->nodes[0];
-		slot = path->slots[0];
-		if (slot >= btrfs_header_nritems(leaf)) {
-			ret = btrfs_next_leaf(root, path);
-			if (ret < 0)
-				return ret;
-			if (ret > 0)
-				break;
-			leaf = path->nodes[0];
-			slot = path->slots[0];
-		}
-		btrfs_item_key_to_cpu(leaf, &key, slot);
-		if (key.objectid > start + len)
-			break;
-		if (key.type == BTRFS_EXTENT_ITEM_KEY)
-			bytes_used += key.offset;
-		if (key.type == BTRFS_METADATA_ITEM_KEY)
-			bytes_used += root->leafsize;
-		path->slots[0]++;
-	}
-	*total = bytes_used;
-	btrfs_release_path(path);
-	return 0;
-}
-
-int btrfs_check_block_accounting(struct btrfs_root *root)
-{
-	int ret;
-	u64 start = 0;
-	u64 bytes_used = 0;
-	struct btrfs_path path;
-	struct btrfs_block_group_cache *cache;
-	struct btrfs_fs_info *fs_info = root->fs_info;
-
-	btrfs_init_path(&path);
-
-	while(1) {
-		cache = btrfs_lookup_block_group(fs_info, start);
-		if (!cache)
-			break;
-
-		ret = btrfs_count_extents_in_block_group(root, &path,
-							 cache->key.objectid,
-							 cache->key.offset,
-							 &bytes_used);
-
-		if (ret == 0) {
-			u64 on_disk = btrfs_block_group_used(&cache->item);
-			if (on_disk != bytes_used) {
-				fprintf(stderr, "bad block group accounting found %llu "
-					"expected %llu block group %llu\n",
-					(unsigned long long)bytes_used,
-					(unsigned long long)on_disk,
-					(unsigned long long)cache->key.objectid);
-			}
-		}
-		start = cache->key.objectid + cache->key.offset;
-
-		cache->space_info->bytes_used = 0;
-	}
-	return 0;
 }
 
 /*

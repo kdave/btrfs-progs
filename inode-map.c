@@ -20,38 +20,6 @@
 #include "disk-io.h"
 #include "transaction.h"
 
-int btrfs_find_highest_inode(struct btrfs_root *root, u64 *objectid)
-{
-	struct btrfs_path *path;
-	int ret;
-	struct extent_buffer *l;
-	struct btrfs_key search_key;
-	struct btrfs_key found_key;
-	int slot;
-
-	path = btrfs_alloc_path();
-	BUG_ON(!path);
-
-	search_key.objectid = (u64)-1;
-	search_key.offset = (u64)-1;
-	ret = btrfs_search_slot(NULL, root, &search_key, path, 0, 0);
-	if (ret < 0)
-		goto error;
-	BUG_ON(ret == 0);
-	if (path->slots[0] > 0) {
-		slot = path->slots[0] - 1;
-		l = path->nodes[0];
-		btrfs_item_key_to_cpu(l, &found_key, slot);
-		*objectid = found_key.objectid;
-	} else {
-		*objectid = BTRFS_FIRST_FREE_OBJECTID;
-	}
-	ret = 0;
-error:
-	btrfs_free_path(path);
-	return ret;
-}
-
 /*
  * walks the btree of allocated inodes and find a hole.
  */

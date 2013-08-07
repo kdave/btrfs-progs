@@ -379,11 +379,11 @@ error:
 	return ret;
 }
 
-int btrfs_alloc_dev_extent(struct btrfs_trans_handle *trans,
-			   struct btrfs_device *device,
-			   u64 chunk_tree, u64 chunk_objectid,
-			   u64 chunk_offset,
-			   u64 num_bytes, u64 *start)
+static int btrfs_alloc_dev_extent(struct btrfs_trans_handle *trans,
+				  struct btrfs_device *device,
+				  u64 chunk_tree, u64 chunk_objectid,
+				  u64 chunk_offset,
+				  u64 num_bytes, u64 *start)
 {
 	int ret;
 	struct btrfs_path *path;
@@ -1000,11 +1000,6 @@ int btrfs_alloc_data_chunk(struct btrfs_trans_handle *trans,
 	return ret;
 }
 
-void btrfs_mapping_init(struct btrfs_mapping_tree *tree)
-{
-	cache_tree_init(&tree->cache_tree);
-}
-
 int btrfs_num_copies(struct btrfs_mapping_tree *map_tree, u64 logical, u64 len)
 {
 	struct cache_extent *ce;
@@ -1399,60 +1394,6 @@ btrfs_find_device_by_devid(struct btrfs_fs_devices *fs_devices,
 			return dev;
 	}
 	return NULL;
-}
-
-int btrfs_bootstrap_super_map(struct btrfs_mapping_tree *map_tree,
-			      struct btrfs_fs_devices *fs_devices)
-{
-	struct map_lookup *map;
-	u64 logical = BTRFS_SUPER_INFO_OFFSET;
-	u64 length = BTRFS_SUPER_INFO_SIZE;
-	int num_stripes = 0;
-	int sub_stripes = 0;
-	int ret;
-	int i;
-	struct list_head *cur;
-
-	list_for_each(cur, &fs_devices->devices) {
-		num_stripes++;
-	}
-	map = kmalloc(btrfs_map_lookup_size(num_stripes), GFP_NOFS);
-	if (!map)
-		return -ENOMEM;
-
-	map->ce.start = logical;
-	map->ce.size = length;
-	map->num_stripes = num_stripes;
-	map->sub_stripes = sub_stripes;
-	map->io_width = length;
-	map->io_align = length;
-	map->sector_size = length;
-	map->stripe_len = length;
-	map->type = BTRFS_BLOCK_GROUP_RAID1;
-
-	i = 0;
-	list_for_each(cur, &fs_devices->devices) {
-		struct btrfs_device *device = list_entry(cur,
-							 struct btrfs_device,
-							 dev_list);
-		map->stripes[i].physical = logical;
-		map->stripes[i].dev = device;
-		i++;
-	}
-	ret = insert_cache_extent(&map_tree->cache_tree, &map->ce);
-	if (ret == -EEXIST) {
-		struct cache_extent *old;
-		struct map_lookup *old_map;
-		old = lookup_cache_extent(&map_tree->cache_tree,
-					  logical, length);
-		old_map = container_of(old, struct map_lookup, ce);
-		remove_cache_extent(&map_tree->cache_tree, old);
-		kfree(old_map);
-		ret = insert_cache_extent(&map_tree->cache_tree,
-						   &map->ce);
-	}
-	BUG_ON(ret);
-	return 0;
 }
 
 int btrfs_chunk_readonly(struct btrfs_root *root, u64 chunk_offset)
