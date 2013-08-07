@@ -1805,6 +1805,47 @@ out:
 	return ret;
 }
 
+int test_num_disk_vs_raid(u64 metadata_profile, u64 data_profile,
+	u64 dev_cnt, int mixed, char *estr)
+{
+	size_t sz = 100;
+	u64 allowed = 0;
+
+	switch (dev_cnt) {
+	default:
+	case 4:
+		allowed |= BTRFS_BLOCK_GROUP_RAID10;
+	case 3:
+		allowed |= BTRFS_BLOCK_GROUP_RAID6;
+	case 2:
+		allowed |= BTRFS_BLOCK_GROUP_RAID0 | BTRFS_BLOCK_GROUP_RAID1 |
+			BTRFS_BLOCK_GROUP_RAID5;
+		break;
+	case 1:
+		allowed |= BTRFS_BLOCK_GROUP_DUP;
+	}
+
+	if (metadata_profile & ~allowed) {
+		snprintf(estr, sz, "unable to create FS with metadata "
+			"profile %llu (have %llu devices)\n",
+			metadata_profile, dev_cnt);
+		return 1;
+	}
+	if (data_profile & ~allowed) {
+		snprintf(estr, sz, "unable to create FS with data "
+			"profile %llu (have %llu devices)\n",
+			metadata_profile, dev_cnt);
+		return 1;
+	}
+
+	if (!mixed && (data_profile & BTRFS_BLOCK_GROUP_DUP)) {
+		snprintf(estr, sz,
+			"dup for data is allowed only in mixed mode");
+		return 1;
+	}
+	return 0;
+}
+
 /* Check if disk is suitable for btrfs
  * returns:
  *  1: something is wrong, estr provides the error

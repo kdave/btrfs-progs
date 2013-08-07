@@ -191,83 +191,28 @@ static int create_raid_groups(struct btrfs_trans_handle *trans,
 			      int metadata_profile_opt, int mixed, int ssd)
 {
 	u64 num_devices = btrfs_super_num_devices(root->fs_info->super_copy);
-	u64 allowed = 0;
-	u64 devices_for_raid = num_devices;
 	int ret;
 
-	/*
-	 * Set default profiles according to number of added devices.
-	 * For mixed groups defaults are single/single.
-	 */
-	if (!metadata_profile_opt && !mixed) {
-		if (num_devices == 1 && ssd)
-			printf("Detected a SSD, turning off metadata "
-			       "duplication.  Mkfs with -m dup if you want to "
-			       "force metadata duplication.\n");
-		metadata_profile = (num_devices > 1) ?
-			BTRFS_BLOCK_GROUP_RAID1 : (ssd) ? 0: BTRFS_BLOCK_GROUP_DUP;
-	}
-	if (!data_profile_opt && !mixed) {
-		data_profile = (num_devices > 1) ?
-			BTRFS_BLOCK_GROUP_RAID0 : 0; /* raid0 or single */
-	}
-
-	if (devices_for_raid > 4)
-		devices_for_raid = 4;
-
-	switch (devices_for_raid) {
-	default:
-	case 4:
-		allowed |= BTRFS_BLOCK_GROUP_RAID10;
-	case 3:
-		allowed |= BTRFS_BLOCK_GROUP_RAID6;
-	case 2:
-		allowed |= BTRFS_BLOCK_GROUP_RAID0 | BTRFS_BLOCK_GROUP_RAID1 |
-			BTRFS_BLOCK_GROUP_RAID5;
-		break;
-	case 1:
-		allowed |= BTRFS_BLOCK_GROUP_DUP;
-	}
-
-	if (metadata_profile & ~allowed) {
-		fprintf(stderr,	"unable to create FS with metadata "
-			"profile %llu (have %llu devices)\n", metadata_profile,
-			num_devices);
-		exit(1);
-	}
-	if (data_profile & ~allowed) {
-		fprintf(stderr, "unable to create FS with data "
-			"profile %llu (have %llu devices)\n", data_profile,
-			num_devices);
-		exit(1);
-	}
-
-	/* allow dup'ed data chunks only in mixed mode */
-	if (!mixed && (data_profile & BTRFS_BLOCK_GROUP_DUP)) {
-		fprintf(stderr, "dup for data is allowed only in mixed mode\n");
-		exit(1);
-	}
-
-	if (allowed & metadata_profile) {
+	if (metadata_profile) {
 		u64 meta_flags = BTRFS_BLOCK_GROUP_METADATA;
 
 		ret = create_one_raid_group(trans, root,
 					    BTRFS_BLOCK_GROUP_SYSTEM |
-					    (allowed & metadata_profile));
+					    metadata_profile);
 		BUG_ON(ret);
 
 		if (mixed)
 			meta_flags |= BTRFS_BLOCK_GROUP_DATA;
 
 		ret = create_one_raid_group(trans, root, meta_flags |
-					    (allowed & metadata_profile));
+					    metadata_profile);
 		BUG_ON(ret);
 
 	}
-	if (!mixed && num_devices > 1 && (allowed & data_profile)) {
+	if (!mixed && num_devices > 1 && data_profile) {
 		ret = create_one_raid_group(trans, root,
 					    BTRFS_BLOCK_GROUP_DATA |
-					    (allowed & data_profile));
+					    data_profile);
 		BUG_ON(ret);
 	}
 	recow_roots(trans, root);
@@ -1458,14 +1403,48 @@ int main(int ac, char **av)
 			}
 	}
 
-	/* if we are here that means all devs are good to btrfsify */
 	optind = saved_optind;
 	dev_cnt = ac - optind;
 
+	file = av[optind++];
+	ssd = is_ssd(file);
+
+	/*
+	* Set default profiles according to number of added devices.
+	* For mixed groups defaults are single/single.
+	*/
+	if (!mixed) {
+		if (!metadata_profile_opt) {
+			if (dev_cnt == 1 && ssd)
+				printf("Detected a SSD, turning off metadata "
+				"duplication.  Mkfs with -m dup if you want to "
+				"force metadata duplication.\n");
+
+			metadata_profile = (dev_cnt > 1) ?
+					BTRFS_BLOCK_GROUP_RAID1 : (ssd) ?
+					0: BTRFS_BLOCK_GROUP_DUP;
+		}
+		if (!data_profile_opt) {
+			data_profile = (dev_cnt > 1) ?
+				BTRFS_BLOCK_GROUP_RAID0 : 0; /* raid0 or single */
+		}
+	} else {
+		/* this is not needed but just for completeness */
+		metadata_profile = 0;
+		data_profile = 0;
+	}
+
+	ret = test_num_disk_vs_raid(metadata_profile, data_profile,
+			dev_cnt, mixed, estr);
+	if (ret) {
+		fprintf(stderr, "Error: %s\n", estr);
+		exit(1);
+	}
+
+	/* if we are here that means all devs are good to btrfsify */
 	printf("\nWARNING! - %s IS EXPERIMENTAL\n", BTRFS_BUILD_VERSION);
 	printf("WARNING! - see http://btrfs.wiki.kernel.org before using\n\n");
 
-	file = av[optind++];
 	dev_cnt--;
 
 	if (!source_dir_set) {
@@ -1508,7 +1487,6 @@ int main(int ac, char **av)
 		dev_block_count = block_count;
 	}
 
-	ssd = is_ssd(file);
 
 	if (mixed) {
 		if (metadata_profile != data_profile) {
