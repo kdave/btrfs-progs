@@ -430,7 +430,7 @@ int make_btrfs(int fd, const char *device, const char *label,
 	ret = pwrite(fd, buf->data, sectorsize, blocks[0]);
 	if (ret < 0)
 		return -errno;
-	else if (ret != leafsize)
+	else if (ret != sectorsize)
 		return -EIO;
 
 	free(buf);
