@@ -30,7 +30,7 @@ static const char * const quota_cmd_group_usage[] = {
 	NULL
 };
 
-int quota_ctl(int cmd, int argc, char **argv)
+static int quota_ctl(int cmd, int argc, char **argv)
 {
 	int ret = 0;
 	int fd;

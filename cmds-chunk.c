@@ -188,7 +188,8 @@ static struct btrfs_chunk *create_chunk_item(struct chunk_record *record)
 	return ret;
 }
 
-void init_recover_control(struct recover_control *rc, int verbose, int yes)
+static void init_recover_control(struct recover_control *rc, int verbose,
+		int yes)
 {
 	memset(rc, 0, sizeof(struct recover_control));
 	cache_tree_init(&rc->chunk);
@@ -204,7 +205,7 @@ void init_recover_control(struct recover_control *rc, int verbose, int yes)
 	rc->yes = yes;
 }
 
-void free_recover_control(struct recover_control *rc)
+static void free_recover_control(struct recover_control *rc)
 {
 	free_block_group_tree(&rc->bg);
 	free_chunk_cache_tree(&rc->chunk);

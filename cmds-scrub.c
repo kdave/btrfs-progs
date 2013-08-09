@@ -1007,7 +1007,7 @@ static struct scrub_file_record *last_dev_scrub(
 	return NULL;
 }
 
-int mkdir_p(char *path)
+static int mkdir_p(char *path)
 {
 	int i;
 	int ret;

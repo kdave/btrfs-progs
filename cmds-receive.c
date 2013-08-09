@@ -787,7 +787,7 @@ out:
 }
 
 
-struct btrfs_send_ops send_ops = {
+static struct btrfs_send_ops send_ops = {
 	.subvol = process_subvol,
 	.snapshot = process_snapshot,
 	.mkfile = process_mkfile,
@@ -810,7 +810,7 @@ struct btrfs_send_ops send_ops = {
 	.utimes = process_utimes,
 };
 
-int do_receive(struct btrfs_receive *r, const char *tomnt, int r_fd)
+static int do_receive(struct btrfs_receive *r, const char *tomnt, int r_fd)
 {
 	int ret;
 	char *dest_dir_full_path;

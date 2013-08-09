@@ -150,9 +150,6 @@ int btrfs_list_setup_filter(struct btrfs_list_filter_set **filter_set,
 			    enum btrfs_list_filter_enum filter, u64 data);
 struct btrfs_list_comparer_set *btrfs_list_alloc_comparer_set(void);
 void btrfs_list_free_comparer_set(struct btrfs_list_comparer_set *comp_set);
-int btrfs_list_setup_comparer(struct btrfs_list_comparer_set **comp_set,
-			      enum btrfs_list_comp_enum comparer,
-			      int is_descending);
 
 int btrfs_list_subvols_print(int fd, struct btrfs_list_filter_set *filter_set,
 		       struct btrfs_list_comparer_set *comp_set,

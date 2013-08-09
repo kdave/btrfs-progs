@@ -46,7 +46,7 @@ static void usage()
 		"[ -g search_generation ] [ -l search_level ] <device>\n");
 }
 
-int csum_block(void *buf, u32 len)
+static int csum_block(void *buf, u32 len)
 {
 	char *result;
 	u32 crc = ~(u32)0;

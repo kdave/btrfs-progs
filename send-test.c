@@ -325,7 +325,7 @@ static int print_update_extent(const char *path, u64 offset, u64 len,
 	return 0;
 }
 
-struct btrfs_send_ops send_ops_print = {
+static struct btrfs_send_ops send_ops_print = {
 	.subvol = print_subvol,
 	.snapshot = print_snapshot,
 	.mkfile = print_mkfile,

@@ -34,7 +34,7 @@
 
 static char *device;
 
-int update_seeding_flag(struct btrfs_root *root, int set_flag)
+static int update_seeding_flag(struct btrfs_root *root, int set_flag)
 {
 	struct btrfs_trans_handle *trans;
 	struct btrfs_super_block *disk_super;
@@ -65,7 +65,7 @@ int update_seeding_flag(struct btrfs_root *root, int set_flag)
 	return 0;
 }
 
-int enable_extrefs_flag(struct btrfs_root *root)
+static int enable_extrefs_flag(struct btrfs_root *root)
 {
 	struct btrfs_trans_handle *trans;
 	struct btrfs_super_block *disk_super;
@@ -81,7 +81,7 @@ int enable_extrefs_flag(struct btrfs_root *root)
 	return 0;
 }
 
-int enable_skinny_metadata(struct btrfs_root *root)
+static int enable_skinny_metadata(struct btrfs_root *root)
 {
 	struct btrfs_trans_handle *trans;
 	struct btrfs_super_block *disk_super;

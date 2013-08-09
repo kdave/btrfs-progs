@@ -46,7 +46,7 @@ struct root_lookup {
 	struct rb_root root;
 };
 
-struct {
+static struct {
 	char	*name;
 	char	*column_name;
 	int	need_print;
@@ -240,9 +240,8 @@ void btrfs_list_free_comparer_set(struct btrfs_list_comparer_set *comp_set)
 	free(comp_set);
 }
 
-int btrfs_list_setup_comparer(struct btrfs_list_comparer_set  **comp_set,
-			      enum btrfs_list_comp_enum comparer,
-			      int is_descending)
+static int btrfs_list_setup_comparer(struct btrfs_list_comparer_set **comp_set,
+		enum btrfs_list_comp_enum comparer, int is_descending)
 {
 	struct btrfs_list_comparer_set *set = *comp_set;
 	int size;
@@ -820,7 +819,7 @@ static char *__ino_resolve(int fd, u64 dirid)
  * simple string builder, returning a new string with both
  * dirid and name
  */
-char *build_name(char *dirid, char *name)
+static char *build_name(char *dirid, char *name)
 {
 	char *full;
 	if (!dirid)
@@ -1477,7 +1476,7 @@ static void print_all_volume_info(struct root_lookup *sorted_tree,
 	}
 }
 
-int btrfs_list_subvols(int fd, struct root_lookup *root_lookup)
+static int btrfs_list_subvols(int fd, struct root_lookup *root_lookup)
 {
 	int ret;
 
@@ -1522,7 +1521,7 @@ int btrfs_list_subvols_print(int fd, struct btrfs_list_filter_set *filter_set,
 	return 0;
 }
 
-char *strdup_or_null(const char *s)
+static char *strdup_or_null(const char *s)
 {
 	if (!s)
 		return NULL;

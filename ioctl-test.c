@@ -3,7 +3,7 @@
 #include "kerncompat.h"
 #include "ioctl.h"
 
-unsigned long ioctls[] = {
+static unsigned long ioctls[] = {
 	BTRFS_IOC_SNAP_CREATE,
 	BTRFS_IOC_DEFRAG,
 	BTRFS_IOC_RESIZE,

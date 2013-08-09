@@ -106,8 +106,8 @@ parse_command_token(const char *arg, const struct cmd_group *grp)
 	return cmd;
 }
 
-void handle_help_options_next_level(const struct cmd_struct *cmd,
-				    int argc, char **argv)
+static void handle_help_options_next_level(const struct cmd_struct *cmd,
+		int argc, char **argv)
 {
 	if (argc < 2)
 		return;

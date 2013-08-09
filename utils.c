@@ -750,7 +750,7 @@ int open_path_or_dev_mnt(const char *path, DIR **dirstream)
 }
 
 /* checks if a device is a loop device */
-int is_loop_device (const char* device) {
+static int is_loop_device (const char* device) {
 	struct stat statbuf;
 
 	if(stat(device, &statbuf) < 0)
@@ -763,7 +763,8 @@ int is_loop_device (const char* device) {
 
 /* Takes a loop device path (e.g. /dev/loop0) and returns
  * the associated file (e.g. /images/my_btrfs.img) */
-int resolve_loop_device(const char* loop_dev, char* loop_file, int max_len)
+static int resolve_loop_device(const char* loop_dev, char* loop_file,
+		int max_len)
 {
 	int ret;
 	FILE *f;
@@ -789,7 +790,7 @@ int resolve_loop_device(const char* loop_dev, char* loop_file, int max_len)
 /* Checks whether a and b are identical or device
  * files associated with the same block device
  */
-int is_same_blk_file(const char* a, const char* b)
+static int is_same_blk_file(const char* a, const char* b)
 {
 	struct stat st_buf_a, st_buf_b;
 	char real_a[PATH_MAX];
@@ -836,7 +837,7 @@ int is_same_blk_file(const char* a, const char* b)
  * if one file is a loop device that uses the other
  * file.
  */
-int is_same_loop_file(const char* a, const char* b)
+static int is_same_loop_file(const char* a, const char* b)
 {
 	char res_a[PATH_MAX];
 	char res_b[PATH_MAX];
@@ -876,7 +877,7 @@ int is_same_loop_file(const char* a, const char* b)
 }
 
 /* Checks if a file exists and is a block or regular file*/
-int is_existing_blk_or_reg_file(const char* filename)
+static int is_existing_blk_or_reg_file(const char* filename)
 {
 	struct stat st_buf;
 
@@ -893,7 +894,8 @@ int is_existing_blk_or_reg_file(const char* filename)
 /* Checks if a file is used (directly or indirectly via a loop device)
  * by a device in fs_devices
  */
-int blk_file_in_dev_list(struct btrfs_fs_devices* fs_devices, const char* file)
+static int blk_file_in_dev_list(struct btrfs_fs_devices* fs_devices,
+		const char* file)
 {
 	int ret;
 	struct list_head *head;
@@ -1539,8 +1541,8 @@ void close_file_or_dir(int fd, DIR *dirstream)
 		close(fd);
 }
 
-int get_device_info(int fd, u64 devid,
-		    struct btrfs_ioctl_dev_info_args *di_args)
+static int get_device_info(int fd, u64 devid,
+		struct btrfs_ioctl_dev_info_args *di_args)
 {
 	int ret;
 
@@ -1663,7 +1665,7 @@ static inline void translate(char *f, char *t)
  * Checks if the swap device.
  * Returns 1 if swap device, < 0 on error or 0 if not swap device.
  */
-int is_swap_device(const char *file)
+static int is_swap_device(const char *file)
 {
 	FILE	*f;
 	struct stat	st_buf;

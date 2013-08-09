@@ -37,8 +37,8 @@
  * */
 static FILE *info_file;
 
-struct extent_buffer *debug_read_block(struct btrfs_root *root, u64 bytenr,
-				     u32 blocksize, int copy)
+static struct extent_buffer * debug_read_block(struct btrfs_root *root,
+		u64 bytenr, u32 blocksize, int copy)
 {
 	int ret;
 	struct extent_buffer *eb;

@@ -27,7 +27,7 @@
 #include "transaction.h"
 
 /* for testing only */
-int next_key(int i, int max_key) {
+static int next_key(int i, int max_key) {
 	return rand() % max_key;
 	// return i;
 }

@@ -106,7 +106,7 @@ static int qgroup_create(int create, int argc, char **argv)
 	return 0;
 }
 
-void print_qgroup_info(u64 objectid, struct btrfs_qgroup_info_item *info)
+static void print_qgroup_info(u64 objectid, struct btrfs_qgroup_info_item *info)
 {
 	printf("%llu/%llu %lld %lld\n", objectid >> 48,
 		objectid & ((1ll << 48) - 1),
@@ -114,7 +114,7 @@ void print_qgroup_info(u64 objectid, struct btrfs_qgroup_info_item *info)
 		btrfs_stack_qgroup_info_exclusive(info));
 }
 
-int list_qgroups(int fd)
+static int list_qgroups(int fd)
 {
 	int ret;
 	struct btrfs_ioctl_search_args args;

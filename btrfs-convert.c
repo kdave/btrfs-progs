@@ -1418,8 +1418,8 @@ fail:
 	return ret;
 }
 
-struct btrfs_root *link_subvol(struct btrfs_root *root, const char *base,
-			       u64 root_objectid)
+static struct btrfs_root * link_subvol(struct btrfs_root *root,
+		const char *base, u64 root_objectid)
 {
 	struct btrfs_trans_handle *trans;
 	struct btrfs_fs_info *fs_info = root->fs_info;
@@ -2277,7 +2277,8 @@ err:
 	return ret;
 }
 
-int do_convert(const char *devname, int datacsum, int packing, int noxattr)
+static int do_convert(const char *devname, int datacsum, int packing,
+		int noxattr)
 {
 	int i, ret;
 	int fd = -1;
@@ -2456,7 +2457,7 @@ fail:
 	return -1;
 }
 
-int do_rollback(const char *devname, int force)
+static int do_rollback(const char *devname, int force)
 {
 	int fd = -1;
 	int ret;
