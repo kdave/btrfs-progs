@@ -74,7 +74,7 @@ qgroup_inherit_realloc(struct btrfs_qgroup_inherit **inherit, int n, int pos)
 
 	if (*inherit) {
 		struct btrfs_qgroup_inherit *i = *inherit;
-		int s = sizeof(out->qgroups);
+		int s = sizeof(out->qgroups[0]);
 
 		out->num_qgroups = i->num_qgroups;
 		out->num_ref_copies = i->num_ref_copies;
