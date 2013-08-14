@@ -1,0 +1,23 @@
+.TH BTRFS-ZERO-LOG 8
+.SH NAME
+btrfs-zero-log \- clear out log tree.
+.SH SYNOPSIS
+.B btrfs-zero-log \fI <dev>\fP
+.SH DESCRIPTION
+\fBbtrfs-zero-log\fP will remove the log tree if log tree is corrupt, which will allow you to mount the filesystem again. The common case where this
+happens has been fixed a long time ago, so it is unlikely that you will see this particular problem.
+
+.SH EXIT CODE
+\fBbtrfs-zero-log\fR will return 0 exit code if no error happened.
+Other exit code means some problems happened.
+
+.SH AUTHOR
+Written by Shilong Wang and Wenruo Qu.
+
+.SH COPYRIGHT
+Copyright \(co 2013 Fujitsu, Inc.
+License GPLv2: GNU GPL version 2 <http://gnu.org/licenses/gpl.html>.
+.br
+This is free software: you are free  to  change  and  redistribute  it. There is NO WARRANTY, to the extent permitted by law.
+.SH SEE ALSO
+.BR mkfs.btrfs (8)
