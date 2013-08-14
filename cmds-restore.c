@@ -658,7 +658,7 @@ set_size:
 }
 
 static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
-		      const char *output_rootdir, const char *dir,
+		      const char *output_rootdir, const char *in_dir,
 		      const regex_t *mreg)
 {
 	struct btrfs_path *path;
@@ -716,7 +716,7 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 		if (loops++ >= 1024) {
 			printf("We have looped trying to restore files in %s "
 			       "too many times to be making progress, "
-			       "stopping\n", dir);
+			       "stopping\n", in_dir);
 			break;
 		}
 
@@ -764,7 +764,7 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 		btrfs_dir_item_key_to_cpu(leaf, dir_item, &location);
 
 		/* full path from root of btrfs being restored */
-		snprintf(fs_name, 4096, "%s/%s", dir, filename);
+		snprintf(fs_name, 4096, "%s/%s", in_dir, filename);
 
 		if (mreg && REG_NOMATCH == regexec(mreg, fs_name, 0, NULL, 0))
 			goto next;
@@ -896,7 +896,7 @@ next:
 	}
 
 	if (verbose)
-		printf("Done searching %s\n", dir);
+		printf("Done searching %s\n", in_dir);
 	btrfs_free_path(path);
 	return 0;
 }

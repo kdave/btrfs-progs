@@ -1281,7 +1281,7 @@ again:
 				BTRFS_BLOCK_GROUP_RAID6)) {
 
 		if (raid_map) {
-			int i, rot;
+			int rot;
 			u64 tmp;
 			u64 raid56_full_stripe_start;
 			u64 full_stripe_len = nr_data_stripes(map) * map->stripe_len;

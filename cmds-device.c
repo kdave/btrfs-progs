@@ -282,7 +282,7 @@ static const char * const cmd_dev_stats_usage[] = {
 
 static int cmd_dev_stats(int argc, char **argv)
 {
-	char *path;
+	char *dev_path;
 	struct btrfs_ioctl_fs_info_args fi_args;
 	struct btrfs_ioctl_dev_info_args *di_args = NULL;
 	int ret;
@@ -314,16 +314,16 @@ static int cmd_dev_stats(int argc, char **argv)
 		return 1;
 	}
 
-	path = argv[optind];
+	dev_path = argv[optind];
 
-	fdmnt = open_path_or_dev_mnt(path, &dirstream);
+	fdmnt = open_path_or_dev_mnt(dev_path, &dirstream);
 
 	if (fdmnt < 0) {
-		fprintf(stderr, "ERROR: can't access '%s'\n", path);
+		fprintf(stderr, "ERROR: can't access '%s'\n", dev_path);
 		return 12;
 	}
 
-	ret = get_fs_info(path, &fi_args, &di_args);
+	ret = get_fs_info(dev_path, &fi_args, &di_args);
 	if (ret) {
 		fprintf(stderr, "ERROR: getting dev info for devstats failed: "
 				"%s\n", strerror(-ret));

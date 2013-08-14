@@ -3477,6 +3477,7 @@ static int run_next_block(struct btrfs_root *root,
 	u64 parent;
 	u64 owner;
 	u64 flags;
+	u64 ptr;
 	int ret;
 	int i;
 	int nritems;
@@ -3665,8 +3666,8 @@ static int run_next_block(struct btrfs_root *root,
 			btrfs_item_key_to_cpu(buf, &first_key, 0);
 		level = btrfs_header_level(buf);
 		for (i = 0; i < nritems; i++) {
-			u64 ptr = btrfs_node_blockptr(buf, i);
-			u32 size = btrfs_level_size(root, level - 1);
+			ptr = btrfs_node_blockptr(buf, i);
+			size = btrfs_level_size(root, level - 1);
 			btrfs_node_key_to_cpu(buf, &key, i);
 			ret = add_extent_rec(extent_cache, &key,
 					     ptr, size, 0, 0, 1, 0, 1, 0,
@@ -5317,8 +5318,6 @@ again:
 		ret = err;
 
 	if (trans) {
-		int err;
-
 		err = btrfs_commit_transaction(trans, root);
 		if (!ret)
 			ret = err;
