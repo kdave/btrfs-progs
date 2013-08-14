@@ -241,7 +241,6 @@ static inline long IS_ERR(const void *ptr)
         const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
 	        (type *)( (char *)__mptr - offsetof(type,member) );})
 #ifdef __CHECKER__
-#define __CHECK_ENDIAN__
 #define __bitwise __bitwise__
 #else
 #define __bitwise

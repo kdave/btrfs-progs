@@ -1,6 +1,7 @@
 *.o
 *.static.o
 *.o.d
+.cc-defines.h
 version.h
 version
 man/*.gz

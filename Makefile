@@ -1,7 +1,7 @@
 CC = gcc
 LN = ln
 AR = ar
-AM_CFLAGS = -Wall -D_FILE_OFFSET_BITS=64 -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2 -DBTRFS_FLAT_INCLUDES -fPIC
+AM_CFLAGS = -Wall -D_FILE_OFFSET_BITS=64 -DBTRFS_FLAT_INCLUDES -fPIC
 CFLAGS = -g -O1
 objects = ctree.o disk-io.o radix-tree.o extent-tree.o print-tree.o \
 	  root-tree.o dir-item.o file-item.o inode-item.o inode-map.o \
@@ -16,9 +16,6 @@ libbtrfs_objects = send-stream.o send-utils.o rbtree.o btrfs-list.o crc32c.o \
 libbtrfs_headers = send-stream.h send-utils.h send.h rbtree.h btrfs-list.h \
 	       crc32c.h list.h kerncompat.h radix-tree.h extent-cache.h \
 	       extent_io.h ioctl.h ctree.h btrfsck.h
-
-CHECKFLAGS= -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ -Wbitwise \
-	    -Wuninitialized -Wshadow -Wundef
 
 INSTALL = install
 prefix ?= /usr/local
@@ -70,17 +67,34 @@ lib_links = libbtrfs.so.0 libbtrfs.so
 headers = $(libbtrfs_headers)
 
 # make C=1 to enable sparse
+check_defs := .cc-defines.h 
 ifdef C
-	check = sparse $(CHECKFLAGS)
+	#
+	# We're trying to use sparse against glibc headers which go wild
+	# trying to use internal compiler macros to test features.  We
+	# copy gcc's and give them to sparse.  But not __SIZE_TYPE__
+	# 'cause sparse defines that one.
+	#
+	dummy := $(shell $(CC) -dM -E -x c - < /dev/null | \
+			grep -v __SIZE_TYPE__ > $(check_defs))
+	check = sparse -include $(check_defs) -D__CHECKER__ \
+		-D__CHECK_ENDIAN__ -Wbitwise -Wuninitialized -Wshadow -Wundef
+	check_echo = echo
+	# don't use FORTIFY with sparse because glibc with FORTIFY can
+	# generate so many sparse errors that sparse stops parsing,
+	# which masks real errors that we want to see.
 else
 	check = true
+	check_echo = true
+	AM_CFLAGS += -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2
 endif
 
 %.o.d: %.c
 	$(Q)$(CC) -MM -MG -MF $@ -MT $(@:.o.d=.o) -MT $(@:.o.d=.static.o) -MT $@ $(AM_CFLAGS) $(CFLAGS) $<
 
 .c.o:
-	$(Q)$(check) $<
+	@$(check_echo) "    [SP]     $<"
+	$(Q)$(check) $(AM_CFLAGS) $(CFLAGS) $<
 	@echo "    [CC]     $@"
 	$(Q)$(CC) $(AM_CFLAGS) $(CFLAGS) -c $<
 
@@ -189,7 +203,7 @@ clean :
 	$(Q)rm -f $(progs) cscope.out *.o *.o.d btrfs-convert btrfs-image btrfs-select-super \
 	      btrfs-zero-log btrfstune dir-test ioctl-test quick-test send-test btrfsck \
 	      btrfs.static mkfs.btrfs.static btrfs-calc-size \
-	      version.h \
+	      version.h $(check_defs) \
 	      $(libs) $(lib_links)
 	$(Q)$(MAKE) $(MAKEOPTS) -C man $@
 
