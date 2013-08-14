@@ -43,6 +43,7 @@ static int btrfs_uuid_tree_lookup_any(int fd, const u8 *uuid, u8 type,
 	struct btrfs_ioctl_search_args search_arg;
 	struct btrfs_ioctl_search_header *search_header;
 	u32 item_size;
+	__le64 lesubid;
 
 	btrfs_uuid_to_key(uuid, &key_objectid, &key_offset);
 
@@ -82,8 +83,8 @@ static int btrfs_uuid_tree_lookup_any(int fd, const u8 *uuid, u8 type,
 	}
 
 	/* return first stored id */
-	memcpy(subid, search_header + 1, sizeof(*subid));
-	*subid = le64_to_cpu(*subid);
+	memcpy(&lesubid, search_header + 1, sizeof(lesubid));
+	*subid = le64_to_cpu(lesubid);
 
 out:
 	return ret;

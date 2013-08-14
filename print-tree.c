@@ -688,11 +688,11 @@ static void print_uuid_item(struct extent_buffer *l, unsigned long offset,
 		return;
 	}
 	while (item_size) {
-		u64 subvol_id;
+		__le64 subvol_id;
 
 		read_extent_buffer(l, &subvol_id, offset, sizeof(u64));
-		subvol_id = le64_to_cpu(subvol_id);
-		printf("\t\tsubvol_id %llu\n", (unsigned long long)subvol_id);
+		printf("\t\tsubvol_id %llu\n",
+			(unsigned long long)le64_to_cpu(subvol_id));
 		item_size -= sizeof(u64);
 		offset += sizeof(u64);
 	}
