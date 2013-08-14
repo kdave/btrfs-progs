@@ -1779,11 +1779,14 @@ int write_raid56_with_parity(struct btrfs_fs_info *info,
 			     struct btrfs_multi_bio *multi,
 			     u64 stripe_len, u64 *raid_map)
 {
-	struct extent_buffer *ebs[multi->num_stripes], *p_eb = NULL, *q_eb = NULL;
+	struct extent_buffer **ebs, *p_eb = NULL, *q_eb = NULL;
 	int i;
 	int j;
 	int ret;
 	int alloc_size = eb->len;
+
+	ebs = kmalloc(sizeof(*ebs) * multi->num_stripes, GFP_NOFS);
+	BUG_ON(!ebs);
 
 	if (stripe_len > alloc_size)
 		alloc_size = stripe_len;
@@ -1813,7 +1816,12 @@ int write_raid56_with_parity(struct btrfs_fs_info *info,
 			q_eb = new_eb;
 	}
 	if (q_eb) {
-		void *pointers[multi->num_stripes];
+		void **pointers;
+
+		pointers = kmalloc(sizeof(*pointers) * multi->num_stripes,
+				   GFP_NOFS);
+		BUG_ON(!pointers);
+
 		ebs[multi->num_stripes - 2] = p_eb;
 		ebs[multi->num_stripes - 1] = q_eb;
 
@@ -1821,6 +1829,7 @@ int write_raid56_with_parity(struct btrfs_fs_info *info,
 			pointers[i] = ebs[i]->data;
 
 		raid6_gen_syndrome(multi->num_stripes, stripe_len, pointers);
+		kfree(pointers);
 	} else {
 		ebs[multi->num_stripes - 1] = p_eb;
 		memcpy(p_eb->data, ebs[0]->data, stripe_len);
@@ -1838,5 +1847,8 @@ int write_raid56_with_parity(struct btrfs_fs_info *info,
 		if (ebs[i] != eb)
 			kfree(ebs[i]);
 	}
+
+	kfree(ebs);
+
 	return 0;
 }

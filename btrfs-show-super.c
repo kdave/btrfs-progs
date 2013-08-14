@@ -152,7 +152,7 @@ static int load_and_dump_sb(char *filename, int fd, u64 sb_bytenr)
 
 static int check_csum_sblock(void *sb, int csum_size)
 {
-	char result[csum_size];
+	char result[BTRFS_CSUM_SIZE];
 	u32 crc = ~(u32)0;
 
 	crc = btrfs_csum_data(NULL, (char *)sb + BTRFS_CSUM_SIZE,
