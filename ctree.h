@@ -38,7 +38,7 @@
 struct btrfs_root;
 struct btrfs_trans_handle;
 struct btrfs_free_space_ctl;
-#define BTRFS_MAGIC 0x4D5F53665248425F /* ascii _BHRfS_M, no null */
+#define BTRFS_MAGIC 0x4D5F53665248425FULL /* ascii _BHRfS_M, no null */
 
 #define BTRFS_MAX_LEVEL 8
 
