@@ -1,0 +1,35 @@
+.TH BTRFS-DEBUG-TREE 8
+.SH NAME
+btrfs-debug-tree \- dump Btrfs filesystem metadata into stdout.
+.SH SYNOPSIS
+.B btrfs-debug-tree [\fIoptions\fP] \fI<device>\fP
+.SH DESCRIPTION
+\fBbtrfs-debug-tree\fP is used to dump the whole tree of the given device.
+This is maybe useful for analyzing filesystem state or inconsistence and has
+a positive educational effect on understanding the internal structure.
+\fIdevice\fP is the device file where the filesystem is stored.
+
+\fIOptions\fP
+.IP "\fB-e\fP" 5
+print detailed extents info.
+.IP "\fB-d\fP" 5
+print info of btrfs device and root tree dirs only.
+.IP "\fB-r\fP" 5
+print info of roots only.
+.IP "\fB-b \fI<block_num>\fP" 5
+print info of the specified block only.
+
+.SH EXIT CODE
+\fBbtrfs-debug-tree\fP will return 0 if no error happened.
+If any problems happened, 1 will be returned.
+
+.SH AUTHOR
+Written by Shilong Wang and Wenruo Qu.
+
+.SH COPYRIGHT
+Copyright \(co 2013 Fujitsu, Inc.
+License GPLv2: GNU GPL version 2 <http://gnu.org/licenses/gpl.html>.
+.br
+This is free software: you are free  to  change  and  redistribute  it. There is NO WARRANTY, to the extent permitted by law.
+.SH SEE ALSO
+.BR mkfs.btrfs (8)

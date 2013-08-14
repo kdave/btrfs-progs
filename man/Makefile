@@ -11,7 +11,8 @@ man8dir = $(mandir)/man8
 # list only those we use
 .SUFFIXES: .in .gz
 
-MANPAGES = mkfs.btrfs.8.gz btrfsck.8.gz btrfs-image.8.gz btrfs.8.gz
+MANPAGES = mkfs.btrfs.8.gz btrfsck.8.gz btrfs-image.8.gz btrfs.8.gz \
+	   btrfs-debug-tree.8.gz
 INFILES = ${MANPAGES:.in=.gz}
 
 all: $(MANPAGES)
