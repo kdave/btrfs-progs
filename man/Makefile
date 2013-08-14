@@ -12,7 +12,8 @@ man8dir = $(mandir)/man8
 .SUFFIXES: .in .gz
 
 MANPAGES = mkfs.btrfs.8.gz btrfsck.8.gz btrfs-image.8.gz btrfs.8.gz \
-	   btrfs-debug-tree.8.gz btrfs-show-super.8.gz btrfs-find-root.8.gz
+	   btrfs-debug-tree.8.gz btrfs-show-super.8.gz btrfs-find-root.8.gz \
+	   btrfs-convert.8.gz
 INFILES = ${MANPAGES:.in=.gz}
 
 all: $(MANPAGES)

@@ -1,0 +1,33 @@
+.TH BTRFS-CONVERT 8
+.SH NAME
+btrfs-convert \- convert ext2/3/4 to btrfs.
+.SH SYNOPSIS
+.B btrfs-convert [\fIoptions\fP] \fI<dev>\fP
+.SH DESCRIPTION
+\fBbtrfs-convert\fP is used to convert existed ext2/3/4 to btrfs filesystem, and the original filesystem image is accessible as from separate subvolume named ext2_subvol as file image.
+
+\fIOptions\fP
+.IP "\fB-d\fP" 5
+disable data checksum.
+.IP "\fB-i\fP" 5
+ignore xattrs and ACLs.
+.IP "\fB-n\fP" 5
+disable packing of small files.
+.IP "\fB-r\fP" 5
+roll back to ext2fs.
+
+.SH EXIT CODE
+\fBbtrfs-convert\fP will return 0 if no error happened.
+If any problems happened, 1 will be returned.
+
+.SH AUTHOR
+Written by Shilong Wang and Wenruo Qu.
+
+.SH COPYRIGHT
+Copyright \(co 2013 Fujitsu, Inc.
+License GPLv2: GNU GPL version 2 <http://gnu.org/licenses/gpl.html>.
+.br
+This is free software: you are free  to  change  and  redistribute  it. There is NO WARRANTY, to the extent permitted by law.
+
+.SH SEE ALSO
+.BR mkfs.btrfs (8)
