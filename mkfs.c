@@ -33,7 +33,6 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <uuid/uuid.h>
-#include <linux/fs.h>
 #include <ctype.h>
 #include <attr/xattr.h>
 #include <blkid/blkid.h>
