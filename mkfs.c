@@ -381,7 +381,7 @@ static struct option long_options[] = {
 	{ "rootdir", 1, NULL, 'r' },
 	{ "nodiscard", 0, NULL, 'K' },
 	{ "features", 0, NULL, 'O' },
-	{ 0, 0, 0, 0}
+	{ NULL, 0, NULL, 0}
 };
 
 static int add_directory_items(struct btrfs_trans_handle *trans,

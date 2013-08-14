@@ -229,7 +229,7 @@ again:
 		goto out;
 	}
 
-	cpath = realpath(path, 0);
+	cpath = realpath(path, NULL);
 	dname = strdup(cpath);
 	dname = dirname(dname);
 	vname = strdup(cpath);
@@ -331,7 +331,7 @@ static int cmd_subvol_list(int argc, char **argv)
 	int is_only_in_path = 0;
 	struct option long_options[] = {
 		{"sort", 1, NULL, 'S'},
-		{0, 0, 0, 0}
+		{NULL, 0, NULL, 0}
 	};
 	DIR *dirstream = NULL;
 
@@ -806,7 +806,7 @@ static int cmd_subvol_show(int argc, char **argv)
 	if (check_argc_exact(argc, 2))
 		usage(cmd_subvol_show_usage);
 
-	fullpath = realpath(argv[1], 0);
+	fullpath = realpath(argv[1], NULL);
 	if (!fullpath) {
 		fprintf(stderr, "ERROR: finding real path for '%s', %s\n",
 			argv[1], strerror(errno));
@@ -951,7 +951,7 @@ const struct cmd_group subvolume_cmd_group = {
 			cmd_subvol_set_default_usage, NULL, 0 },
 		{ "find-new", cmd_find_new, cmd_find_new_usage, NULL, 0 },
 		{ "show", cmd_subvol_show, cmd_subvol_show_usage, NULL, 0 },
-		{ 0, 0, 0, 0, 0 }
+		NULL_CMD_STRUCT
 	}
 };
 

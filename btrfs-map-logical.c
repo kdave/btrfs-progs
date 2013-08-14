@@ -106,7 +106,7 @@ static struct option long_options[] = {
 	{ "copy", 1, NULL, 'c' },
 	{ "output", 1, NULL, 'o' },
 	{ "bytes", 1, NULL, 'b' },
-	{ 0, 0, 0, 0}
+	{ NULL, 0, NULL, 0}
 };
 
 int main(int ac, char **av)

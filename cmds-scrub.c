@@ -1736,7 +1736,7 @@ const struct cmd_group scrub_cmd_group = {
 		{ "cancel", cmd_scrub_cancel, cmd_scrub_cancel_usage, NULL, 0 },
 		{ "resume", cmd_scrub_resume, cmd_scrub_resume_usage, NULL, 0 },
 		{ "status", cmd_scrub_status, cmd_scrub_status_usage, NULL, 0 },
-		{ 0, 0, 0, 0, 0 }
+		NULL_CMD_STRUCT
 	}
 };
 

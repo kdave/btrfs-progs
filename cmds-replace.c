@@ -555,7 +555,7 @@ const struct cmd_group replace_cmd_group = {
 		  0 },
 		{ "cancel", cmd_cancel_replace, cmd_cancel_replace_usage, NULL,
 		  0 },
-		{ 0, 0, 0, 0, 0 }
+		NULL_CMD_STRUCT
 	}
 };
 

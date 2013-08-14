@@ -179,9 +179,10 @@ static int cmd_quota_rescan(int argc, char **argv)
 const struct cmd_group quota_cmd_group = {
 	quota_cmd_group_usage, NULL, {
 		{ "enable", cmd_quota_enable, cmd_quota_enable_usage, NULL, 0 },
-		{ "disable", cmd_quota_disable, cmd_quota_disable_usage, 0, 0 },
+		{ "disable", cmd_quota_disable, cmd_quota_disable_usage,
+		   NULL, 0 },
 		{ "rescan", cmd_quota_rescan, cmd_quota_rescan_usage, NULL, 0 },
-		{ 0, 0, 0, 0, 0 }
+		NULL_CMD_STRUCT
 	}
 };
 

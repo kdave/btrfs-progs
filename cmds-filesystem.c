@@ -231,7 +231,7 @@ static int cmd_show(int argc, char **argv)
 	struct list_head *all_uuids;
 	struct btrfs_fs_devices *fs_devices;
 	struct list_head *cur_uuid;
-	char *search = 0;
+	char *search = NULL;
 	int ret;
 	int where = BTRFS_SCAN_PROC;
 	int searchstart = 1;
@@ -512,7 +512,7 @@ const struct cmd_group filesystem_cmd_group = {
 		{ "balance", cmd_balance, NULL, &balance_cmd_group, 1 },
 		{ "resize", cmd_resize, cmd_resize_usage, NULL, 0 },
 		{ "label", cmd_label, cmd_label_usage, NULL, 0 },
-		{ 0, 0, 0, 0, 0 },
+		NULL_CMD_STRUCT
 	}
 };
 

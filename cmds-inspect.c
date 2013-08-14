@@ -309,7 +309,7 @@ const struct cmd_group inspect_cmd_group = {
 			cmd_logical_resolve_usage, NULL, 0 },
 		{ "subvolid-resolve", cmd_subvolid_resolve,
 			cmd_subvolid_resolve_usage, NULL, 0 },
-		{ 0, 0, 0, 0, 0 }
+		NULL_CMD_STRUCT
 	}
 };
 

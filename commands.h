@@ -50,6 +50,8 @@ struct cmd_struct {
 	int hidden;
 };
 
+#define NULL_CMD_STRUCT {NULL, NULL, NULL, NULL, 0}
+
 struct cmd_group {
 	const char * const *usagestr;
 	const char *infostr;

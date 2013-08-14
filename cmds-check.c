@@ -5739,7 +5739,7 @@ static struct option long_options[] = {
 	{ "repair", 0, NULL, 0 },
 	{ "init-csum-tree", 0, NULL, 0 },
 	{ "init-extent-tree", 0, NULL, 0 },
-	{ 0, 0, 0, 0}
+	{ NULL, 0, NULL, 0}
 };
 
 const char * const cmd_check_usage[] = {

@@ -428,14 +428,19 @@ static int cmd_qgroup_limit(int argc, char **argv)
 
 const struct cmd_group qgroup_cmd_group = {
 	qgroup_cmd_group_usage, NULL, {
-		{ "assign", cmd_qgroup_assign, cmd_qgroup_assign_usage, 0, 0 },
-		{ "remove", cmd_qgroup_remove, cmd_qgroup_remove_usage, 0, 0 },
-		{ "create", cmd_qgroup_create, cmd_qgroup_create_usage, 0, 0 },
-		{ "destroy", cmd_qgroup_destroy,
-		  cmd_qgroup_destroy_usage, 0, 0 },
-		{ "show", cmd_qgroup_show, cmd_qgroup_show_usage, 0, 0 },
-		{ "limit", cmd_qgroup_limit, cmd_qgroup_limit_usage, 0, 0 },
-		{ 0, 0, 0, 0, 0 }
+		{ "assign", cmd_qgroup_assign, cmd_qgroup_assign_usage,
+		   NULL, 0 },
+		{ "remove", cmd_qgroup_remove, cmd_qgroup_remove_usage,
+		   NULL, 0 },
+		{ "create", cmd_qgroup_create, cmd_qgroup_create_usage,
+		   NULL, 0 },
+		{ "destroy", cmd_qgroup_destroy, cmd_qgroup_destroy_usage,
+		   NULL, 0 },
+		{ "show", cmd_qgroup_show, cmd_qgroup_show_usage,
+		   NULL, 0 },
+		{ "limit", cmd_qgroup_limit, cmd_qgroup_limit_usage,
+		   NULL, 0 },
+		NULL_CMD_STRUCT
 	}
 };
 

@@ -1086,7 +1086,7 @@ out:
 
 static struct option long_options[] = {
 	{ "path-regex", 1, NULL, 256},
-	{ 0, 0, 0, 0}
+	{ NULL, 0, NULL, 0}
 };
 
 const char * const cmd_restore_usage[] = {
