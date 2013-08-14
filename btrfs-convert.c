@@ -77,11 +77,83 @@ static int after_copied_inodes(void *p)
 	return 0;
 }
 
+struct btrfs_convert_context;
+struct btrfs_convert_operations {
+	const char *name;
+	int (*open_fs)(struct btrfs_convert_context *cctx, const char *devname);
+	int (*alloc_block)(struct btrfs_convert_context *cctx, u64 goal,
+			   u64 *block_ret);
+	int (*alloc_block_range)(struct btrfs_convert_context *cctx, u64 goal,
+			   int num, u64 *block_ret);
+	int (*test_block)(struct btrfs_convert_context *cctx, u64 block);
+	void (*free_block)(struct btrfs_convert_context *cctx, u64 block);
+	void (*free_block_range)(struct btrfs_convert_context *cctx, u64 block,
+			   int num);
+	int (*copy_inodes)(struct btrfs_convert_context *cctx,
+			 struct btrfs_root *root, int datacsum,
+			 int packing, int noxattr, struct task_ctx *p);
+	void (*close_fs)(struct btrfs_convert_context *cctx);
+};
+
+struct btrfs_convert_context {
+	u32 blocksize;
+	u32 first_data_block;
+	u32 block_count;
+	u32 inodes_count;
+	u32 free_inodes_count;
+	char *volume_name;
+	const struct btrfs_convert_operations *convert_ops;
+	void *fs_data;
+};
+
+static inline int convert_alloc_block(struct btrfs_convert_context *cctx,
+				      u64 goal, u64 *ret)
+{
+	return  cctx->convert_ops->alloc_block(cctx, goal, ret);
+}
+
+static inline int convert_alloc_block_range(struct btrfs_convert_context *cctx,
+				      u64 goal, int num, u64 *ret)
+{
+	return  cctx->convert_ops->alloc_block_range(cctx, goal, num, ret);
+}
+
+static inline int convert_test_block(struct btrfs_convert_context *cctx,
+				     u64 block)
+{
+	return cctx->convert_ops->test_block(cctx, block);
+}
+
+static inline void convert_free_block(struct btrfs_convert_context *cctx,
+				      u64 block)
+{
+	cctx->convert_ops->free_block(cctx, block);
+}
+
+static inline void convert_free_block_range(struct btrfs_convert_context *cctx,
+				      u64 block, int num)
+{
+	cctx->convert_ops->free_block_range(cctx, block, num);
+}
+
+static inline int copy_inodes(struct btrfs_convert_context *cctx,
+			      struct btrfs_root *root, int datacsum,
+			      int packing, int noxattr, struct task_ctx *p)
+{
+	return cctx->convert_ops->copy_inodes(cctx, root, datacsum, packing,
+					     noxattr, p);
+}
+
+static inline void convert_close_fs(struct btrfs_convert_context *cctx)
+{
+	cctx->convert_ops->close_fs(cctx);
+}
+
 /*
  * Open Ext2fs in readonly mode, read block allocation bitmap and
  * inode bitmap into memory.
  */
-static int open_ext2fs(const char *name, ext2_filsys *ret_fs)
+static int ext2_open_fs(struct btrfs_convert_context *cctx, const char *name)
 {
 	errcode_t ret;
 	ext2_filsys ext2_fs;
@@ -114,20 +186,37 @@ static int open_ext2fs(const char *name, ext2_filsys *ret_fs)
 		ino += EXT2_INODES_PER_GROUP(ext2_fs->super);
 	}
 
-	*ret_fs = ext2_fs;
+	if (!(ext2_fs->super->s_feature_incompat &
+	      EXT2_FEATURE_INCOMPAT_FILETYPE)) {
+		fprintf(stderr, "filetype feature is missing\n");
+		goto fail;
+	}
+
+	cctx->fs_data = ext2_fs;
+	cctx->blocksize = ext2_fs->blocksize;
+	cctx->block_count = ext2_fs->super->s_blocks_count;
+	cctx->volume_name = strndup(ext2_fs->super->s_volume_name, 16);
+	cctx->first_data_block = ext2_fs->super->s_first_data_block;
+	cctx->inodes_count = ext2_fs->super->s_inodes_count;
+	cctx->free_inodes_count = ext2_fs->super->s_free_inodes_count;
 	return 0;
 fail:
 	return -1;
 }
 
-static int close_ext2fs(ext2_filsys fs)
+static void ext2_close_fs(struct btrfs_convert_context *cctx)
 {
-	ext2fs_close(fs);
-	return 0;
+	if (cctx->volume_name) {
+		free(cctx->volume_name);
+		cctx->volume_name = NULL;
+	}
+	ext2fs_close(cctx->fs_data);
 }
 
-static int ext2_alloc_block(ext2_filsys fs, u64 goal, u64 *block_ret)
+static int ext2_alloc_block(struct btrfs_convert_context *cctx,
+			    u64 goal, u64 *block_ret)
 {
+	ext2_filsys fs = cctx->fs_data;
 	blk_t block;
 
 	if (!ext2fs_new_block(fs, goal, NULL, &block)) {
@@ -138,9 +227,10 @@ static int ext2_alloc_block(ext2_filsys fs, u64 goal, u64 *block_ret)
 	return -ENOSPC;
 }
 
-static int ext2_alloc_block_range(ext2_filsys fs, u64 goal, int num,
-		u64 *block_ret)
+static int ext2_alloc_block_range(struct btrfs_convert_context *cctx, u64 goal,
+		int num, u64 *block_ret)
 {
+	ext2_filsys fs = cctx->fs_data;
 	blk_t block;
 	ext2fs_block_bitmap bitmap = fs->block_map;
 	blk_t start = ext2fs_get_block_bitmap_start(bitmap);
@@ -157,31 +247,34 @@ static int ext2_alloc_block_range(ext2_filsys fs, u64 goal, int num,
 	return -ENOSPC;
 }
 
-static int ext2_free_block(ext2_filsys fs, u64 block)
+static void ext2_free_block(struct btrfs_convert_context *cctx, u64 block)
 {
+	ext2_filsys fs = cctx->fs_data;
+
 	BUG_ON(block != (blk_t)block);
 	ext2fs_fast_unmark_block_bitmap(fs->block_map, block);
-	return 0;
 }
 
-static int ext2_free_block_range(ext2_filsys fs, u64 block, int num)
+static void ext2_free_block_range(struct btrfs_convert_context *cctx, u64 block, int num)
 {
+	ext2_filsys fs = cctx->fs_data;
+
 	BUG_ON(block != (blk_t)block);
 	ext2fs_fast_unmark_block_bitmap_range(fs->block_map, block, num);
-	return 0;
 }
 
-static int cache_free_extents(struct btrfs_root *root, ext2_filsys ext2_fs)
+static int cache_free_extents(struct btrfs_root *root,
+			      struct btrfs_convert_context *cctx)
 
 {
 	int i, ret = 0;
 	blk_t block;
 	u64 bytenr;
-	u64 blocksize = ext2_fs->blocksize;
+	u64 blocksize = cctx->blocksize;
 
-	block = ext2_fs->super->s_first_data_block;
-	for (; block < ext2_fs->super->s_blocks_count; block++) {
-		if (ext2fs_fast_test_block_bitmap(ext2_fs->block_map, block))
+	block = cctx->first_data_block;
+	for (; block < cctx->block_count; block++) {
+		if (convert_test_block(cctx, block))
 			continue;
 		bytenr = block * blocksize;
 		ret = set_extent_dirty(&root->fs_info->free_space_cache,
@@ -192,7 +285,7 @@ static int cache_free_extents(struct btrfs_root *root, ext2_filsys ext2_fs)
 	for (i = 0; i < BTRFS_SUPER_MIRROR_MAX; i++) {
 		bytenr = btrfs_sb_offset(i);
 		bytenr &= ~((u64)BTRFS_STRIPE_LEN - 1);
-		if (bytenr >= blocksize * ext2_fs->super->s_blocks_count)
+		if (bytenr >= blocksize * cctx->block_count)
 			break;
 		clear_extent_dirty(&root->fs_info->free_space_cache, bytenr,
 				   bytenr + BTRFS_STRIPE_LEN - 1, 0);
@@ -1137,9 +1230,11 @@ fail:
 /*
  * scan ext2's inode bitmap and copy all used inodes.
  */
-static int copy_inodes(struct btrfs_root *root, ext2_filsys ext2_fs,
-		       int datacsum, int packing, int noxattr, struct task_ctx *p)
+static int ext2_copy_inodes(struct btrfs_convert_context *cctx,
+			    struct btrfs_root *root,
+			    int datacsum, int packing, int noxattr, struct task_ctx *p)
 {
+	ext2_filsys ext2_fs = cctx->fs_data;
 	int ret;
 	errcode_t err;
 	ext2_inode_scan ext2_scan;
@@ -1191,6 +1286,14 @@ static int copy_inodes(struct btrfs_root *root, ext2_filsys ext2_fs,
 	return ret;
 }
 
+static int ext2_test_block(struct btrfs_convert_context *cctx, u64 block)
+{
+	ext2_filsys ext2_fs = cctx->fs_data;
+
+	BUG_ON(block != (u32)block);
+	return ext2fs_fast_test_block_bitmap(ext2_fs->block_map, block);
+}
+
 /*
  * Construct a range of ext2fs image file.
  * scan block allocation bitmap, find all blocks used by the ext2fs
@@ -1203,9 +1306,9 @@ static int create_image_file_range(struct btrfs_trans_handle *trans,
 				   struct btrfs_root *root, u64 objectid,
 				   struct btrfs_inode_item *inode,
 				   u64 start_byte, u64 end_byte,
-				   ext2_filsys ext2_fs, int datacsum)
+				   struct btrfs_convert_context *cctx, int datacsum)
 {
-	u32 blocksize = ext2_fs->blocksize;
+	u32 blocksize = cctx->blocksize;
 	u32 block = start_byte / blocksize;
 	u32 last_block = (end_byte + blocksize - 1) / blocksize;
 	int ret = 0;
@@ -1215,7 +1318,7 @@ static int create_image_file_range(struct btrfs_trans_handle *trans,
 	data.first_block = block;
 
 	for (; start_byte < end_byte; block++, start_byte += blocksize) {
-		if (!ext2fs_fast_test_block_bitmap(ext2_fs->block_map, block))
+		if (!convert_test_block(cctx, block))
 			continue;
 		ret = block_iterate_proc(block, block, &data);
 		if (ret < 0)
@@ -1238,10 +1341,10 @@ fail:
 	return ret;
 }
 /*
- * Create the ext2fs image file.
+ * Create the fs image file.
  */
-static int create_ext2_image(struct btrfs_root *root, ext2_filsys ext2_fs,
-			     const char *name, int datacsum)
+static int create_image(struct btrfs_convert_context *cctx,
+			struct btrfs_root *root, const char *name, int datacsum)
 {
 	int ret;
 	struct btrfs_key key;
@@ -1362,7 +1465,7 @@ next:
 		if (bytenr > last_byte) {
 			ret = create_image_file_range(trans, root, objectid,
 						      &btrfs_inode, last_byte,
-						      bytenr, ext2_fs,
+						      bytenr, cctx,
 						      datacsum);
 			if (ret)
 				goto fail;
@@ -1386,7 +1489,7 @@ next:
 	if (total_bytes > last_byte) {
 		ret = create_image_file_range(trans, root, objectid,
 					      &btrfs_inode, last_byte,
-					      total_bytes, ext2_fs,
+					      total_bytes, cctx,
 					      datacsum);
 		if (ret)
 			goto fail;
@@ -1726,7 +1829,7 @@ static int init_btrfs(struct btrfs_root *root)
 	btrfs_set_root_dirid(&fs_info->fs_root->root_item,
 			     BTRFS_FIRST_FREE_OBJECTID);
 
-	/* subvol for ext2 image file */
+	/* subvol for fs image file */
 	ret = create_subvol(trans, root, CONV_IMAGE_SUBVOL_OBJECTID);
 	BUG_ON(ret);
 	/* subvol for data relocation */
@@ -2286,6 +2389,42 @@ err:
 	return ret;
 }
 
+static const struct btrfs_convert_operations ext2_convert_ops = {
+	.name			= "ext2",
+	.open_fs		= ext2_open_fs,
+	.alloc_block		= ext2_alloc_block,
+	.alloc_block_range	= ext2_alloc_block_range,
+	.copy_inodes		= ext2_copy_inodes,
+	.test_block		= ext2_test_block,
+	.free_block		= ext2_free_block,
+	.free_block_range	= ext2_free_block_range,
+	.close_fs		= ext2_close_fs,
+};
+
+static const struct btrfs_convert_operations *convert_operations[] = {
+	&ext2_convert_ops,
+};
+
+static int convert_open_fs(const char *devname,
+			   struct btrfs_convert_context *cctx)
+{
+	int i;
+
+	memset(cctx, 0, sizeof(*cctx));
+
+	for (i = 0; i < ARRAY_SIZE(convert_operations); i++) {
+		int ret = convert_operations[i]->open_fs(cctx, devname);
+
+		if (ret == 0) {
+			cctx->convert_ops = convert_operations[i];
+			return ret;
+		}
+	}
+
+	fprintf(stderr, "No file system found to convert.\n");
+	return -1;
+}
+
 static int do_convert(const char *devname, int datacsum, int packing, int noxattr,
 		u32 nodesize, int copylabel, const char *fslabel, int progress,
 		u64 features)
@@ -2297,27 +2436,22 @@ static int do_convert(const char *devname, int datacsum, int packing, int noxatt
 	u64 blocks[7];
 	u64 total_bytes;
 	u64 super_bytenr;
-	ext2_filsys ext2_fs;
 	struct btrfs_root *root;
 	struct btrfs_root *image_root;
+	struct btrfs_convert_context cctx;
+	char *subvol_name = NULL;
 	struct task_ctx ctx;
 	char features_buf[64];
 	struct btrfs_mkfs_config mkfs_cfg;
 
-	ret = open_ext2fs(devname, &ext2_fs);
-	if (ret) {
-		fprintf(stderr, "unable to open the Ext2fs\n");
+	ret = convert_open_fs(devname, &cctx);
+	if (ret)
 		goto fail;
-	}
-	blocksize = ext2_fs->blocksize;
-	total_bytes = (u64)ext2_fs->super->s_blocks_count * blocksize;
+
+	blocksize = cctx.blocksize;
+	total_bytes = (u64)blocksize * (u64)cctx.block_count;
 	if (blocksize < 4096) {
 		fprintf(stderr, "block size is too small\n");
-		goto fail;
-	}
-	if (!(ext2_fs->super->s_feature_incompat &
-	      EXT2_FEATURE_INCOMPAT_FILETYPE)) {
-		fprintf(stderr, "filetype feature is missing\n");
 		goto fail;
 	}
 	if (btrfs_check_nodesize(nodesize, blocksize, features))
@@ -2326,9 +2460,9 @@ static int do_convert(const char *devname, int datacsum, int packing, int noxatt
 	ret = -blocks_per_node;
 	for (i = 0; i < 7; i++) {
 		if (nodesize == blocksize)
-			ret = ext2_alloc_block(ext2_fs, 0, blocks + i);
+			ret = convert_alloc_block(&cctx, 0, blocks + i);
 		else
-			ret = ext2_alloc_block_range(ext2_fs,
+			ret = convert_alloc_block_range(&cctx,
 					ret + blocks_per_node, blocks_per_node,
 					blocks + i);
 		if (ret) {
@@ -2352,7 +2486,7 @@ static int do_convert(const char *devname, int datacsum, int packing, int noxatt
 	printf("\tnodesize:  %u\n", nodesize);
 	printf("\tfeatures:  %s\n", features_buf);
 
-	mkfs_cfg.label = ext2_fs->super->s_volume_name;
+	mkfs_cfg.label = cctx.volume_name;
 	mkfs_cfg.fs_uuid = NULL;
 	memcpy(mkfs_cfg.blocks, blocks, sizeof(blocks));
 	mkfs_cfg.num_bytes = total_bytes;
@@ -2378,7 +2512,7 @@ static int do_convert(const char *devname, int datacsum, int packing, int noxatt
 		fprintf(stderr, "unable to open ctree\n");
 		goto fail;
 	}
-	ret = cache_free_extents(root, ext2_fs);
+	ret = cache_free_extents(root, &cctx);
 	if (ret) {
 		fprintf(stderr, "error during cache_free_extents %d\n", ret);
 		goto fail;
@@ -2388,9 +2522,9 @@ static int do_convert(const char *devname, int datacsum, int packing, int noxatt
 	for (i = 0; i < 7; i++) {
 		blocks[i] /= blocksize;
 		if (nodesize == blocksize)
-			ext2_free_block(ext2_fs, blocks[i]);
+			convert_free_block(&cctx, blocks[i]);
 		else
-			ext2_free_block_range(ext2_fs, blocks[i],
+			convert_free_block_range(&cctx, blocks[i],
 					blocks_per_node);
 	}
 	ret = init_btrfs(root);
@@ -2399,15 +2533,14 @@ static int do_convert(const char *devname, int datacsum, int packing, int noxatt
 		goto fail;
 	}
 	printf("creating btrfs metadata.\n");
-	ctx.max_copy_inodes = (ext2_fs->super->s_inodes_count
-			- ext2_fs->super->s_free_inodes_count);
+	ctx.max_copy_inodes = (cctx.inodes_count - cctx.free_inodes_count);
 	ctx.cur_copy_inodes = 0;
 
 	if (progress) {
 		ctx.info = task_init(print_copied_inodes, after_copied_inodes, &ctx);
 		task_start(ctx.info);
 	}
-	ret = copy_inodes(root, ext2_fs, datacsum, packing, noxattr, &ctx);
+	ret = copy_inodes(&cctx, root, datacsum, packing, noxattr, &ctx);
 	if (ret) {
 		fprintf(stderr, "error during copy_inodes %d\n", ret);
 		goto fail;
@@ -2416,21 +2549,32 @@ static int do_convert(const char *devname, int datacsum, int packing, int noxatt
 		task_stop(ctx.info);
 		task_deinit(ctx.info);
 	}
-	printf("creating ext2fs image file.\n");
-	image_root = link_subvol(root, "ext2_saved", CONV_IMAGE_SUBVOL_OBJECTID);
+
+	printf("creating %s image file.\n", cctx.convert_ops->name);
+	ret = asprintf(&subvol_name, "%s_saved", cctx.convert_ops->name);
+	if (ret < 0) {
+		fprintf(stderr, "error allocating subvolume name: %s_saved\n",
+			cctx.convert_ops->name);
+		goto fail;
+	}
+
+	image_root = link_subvol(root, subvol_name, CONV_IMAGE_SUBVOL_OBJECTID);
+
+	free(subvol_name);
+
 	if (!image_root) {
 		fprintf(stderr, "unable to create subvol\n");
 		goto fail;
 	}
-	ret = create_ext2_image(image_root, ext2_fs, "image", datacsum);
+	ret = create_image(&cctx, image_root, "image", datacsum);
 	if (ret) {
-		fprintf(stderr, "error during create_ext2_image %d\n", ret);
+		fprintf(stderr, "error during create_image %d\n", ret);
 		goto fail;
 	}
 	memset(root->fs_info->super_copy->label, 0, BTRFS_LABEL_SIZE);
 	if (copylabel == 1) {
 		strncpy(root->fs_info->super_copy->label,
-				ext2_fs->super->s_volume_name, 16);
+				cctx.volume_name, BTRFS_LABEL_SIZE);
 		fprintf(stderr, "copy label '%s'\n",
 				root->fs_info->super_copy->label);
 	} else if (copylabel == -1) {
@@ -2449,11 +2593,11 @@ static int do_convert(const char *devname, int datacsum, int packing, int noxatt
 		fprintf(stderr, "error during close_ctree %d\n", ret);
 		goto fail;
 	}
-	close_ext2fs(ext2_fs);
+	convert_close_fs(&cctx);
 
 	/*
 	 * If this step succeed, we get a mountable btrfs. Otherwise
-	 * the ext2fs is left unchanged.
+	 * the source fs is left unchanged.
 	 */
 	ret = migrate_super_block(fd, super_bytenr, blocksize);
 	if (ret) {
@@ -2875,7 +3019,7 @@ static void print_usage(void)
 	printf("\t-i|--no-xattr          ignore xattrs and ACLs\n");
 	printf("\t-n|--no-inline         disable inlining of small files to metadata\n");
 	printf("\t-N|--nodesize SIZE     set filesystem metadata nodesize\n");
-	printf("\t-r|--rollback          roll back to ext2fs\n");
+	printf("\t-r|--rollback          roll back to the original filesystem\n");
 	printf("\t-l|--label LABEL       set filesystem label\n");
 	printf("\t-L|--copy-label        use label from converted filesystem\n");
 	printf("\t-p|--progress          show converting progress (default)\n");
