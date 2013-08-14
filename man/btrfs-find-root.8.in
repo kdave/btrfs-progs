@@ -1,0 +1,30 @@
+.TH BTRFS-FIND-ROOT 8
+.SH NAME
+btrfs-find-root \- filter to find btrfs root.
+.SH SYNOPSIS
+.B btrfs-find-root [\fIoptions\fP] \fI<dev>\fP
+.SH DESCRIPTION
+\fBbtrfs-find-root\fP is used to find the satisfied root, you can filter by root tree's objectid, generation, level.
+
+\fIOptions\fP
+.IP "\fB-g \fI<generation>\fP" 5
+filter root tree by it's original transaction id, tree root's generation in default.
+.IP "\fB-o \fI<objectid>\fP" 5
+filter root tree by it's objectid,tree root's objectid in default.
+.IP "\fB-l \fI<level>\fP" 5
+filter root tree by B-+ tree's level, level 0 in default.
+
+.SH EXIT CODE
+\fBbtrfs-find-root\fP will return 0 if no error happened.
+If any problems happened, 1 will be returned.
+
+.SH AUTHOR
+Written by Shilong Wang and Wenruo Qu.
+
+.SH COPYRIGHT
+Copyright \(co 2013 Fujitsu, Inc.
+License GPLv2: GNU GPL version 2 <http://gnu.org/licenses/gpl.html>.
+.br
+This is free software: you are free  to  change  and  redistribute  it. There is NO WARRANTY, to the extent permitted by law.
+.SH SEE ALSO
+.BR mkfs.btrfs (8)
