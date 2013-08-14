@@ -278,9 +278,9 @@ typedef u64 __bitwise __be64;
 #define le16_to_cpu(x) ((__force u16)(__le16)(x))
 #endif
 
-struct __una_u16 { u16 x; } __attribute__((__packed__));
-struct __una_u32 { u32 x; } __attribute__((__packed__));
-struct __una_u64 { u64 x; } __attribute__((__packed__));
+struct __una_u16 { __le16 x; } __attribute__((__packed__));
+struct __una_u32 { __le32 x; } __attribute__((__packed__));
+struct __una_u64 { __le64 x; } __attribute__((__packed__));
 
 #define get_unaligned_le8(p) (*((u8 *)(p)))
 #define put_unaligned_le8(val,p) ((*((u8 *)(p))) = (val))
