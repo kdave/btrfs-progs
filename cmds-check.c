@@ -3931,9 +3931,12 @@ static int record_extent(struct btrfs_trans_handle *trans,
 			bi = (struct btrfs_tree_block_info *)(ei + 1);
 			memset_extent_buffer(leaf, 0, (unsigned long)bi,
 					     sizeof(*bi));
-			memset(&copy_key, 0, sizeof(copy_key));
 
-			copy_key.objectid = le64_to_cpu(rec->info_objectid);
+			btrfs_set_disk_key_objectid(&copy_key,
+						    rec->info_objectid);
+			btrfs_set_disk_key_type(&copy_key, 0);
+			btrfs_set_disk_key_offset(&copy_key, 0);
+
 			btrfs_set_tree_block_level(leaf, bi, rec->info_level);
 			btrfs_set_tree_block_key(leaf, bi, &copy_key);
 
