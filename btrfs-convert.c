@@ -42,7 +42,7 @@
 #include <ext2fs/ext2_ext_attr.h>
 
 #define INO_OFFSET (BTRFS_FIRST_FREE_OBJECTID - EXT2_ROOT_INO)
-#define EXT2_IMAGE_SUBVOL_OBJECTID BTRFS_FIRST_FREE_OBJECTID
+#define CONV_IMAGE_SUBVOL_OBJECTID BTRFS_FIRST_FREE_OBJECTID
 
 struct task_ctx {
 	uint32_t max_copy_inodes;
@@ -1699,7 +1699,7 @@ static int init_btrfs(struct btrfs_root *root)
 			     BTRFS_FIRST_FREE_OBJECTID);
 
 	/* subvol for ext2 image file */
-	ret = create_subvol(trans, root, EXT2_IMAGE_SUBVOL_OBJECTID);
+	ret = create_subvol(trans, root, CONV_IMAGE_SUBVOL_OBJECTID);
 	BUG_ON(ret);
 	/* subvol for data relocation */
 	ret = create_subvol(trans, root, BTRFS_DATA_RELOC_TREE_OBJECTID);
@@ -1980,7 +1980,7 @@ fail:
 }
 
 static int relocate_extents_range(struct btrfs_root *fs_root,
-				  struct btrfs_root *ext2_root,
+				  struct btrfs_root *image_root,
 				  u64 start_byte, u64 end_byte)
 {
 	struct btrfs_fs_info *info = fs_root->fs_info;
@@ -2027,7 +2027,7 @@ static int relocate_extents_range(struct btrfs_root *fs_root,
 	}
 	btrfs_release_path(&path);
 again:
-	cur_root = (pass % 2 == 0) ? ext2_root : fs_root;
+	cur_root = (pass % 2 == 0) ? image_root : fs_root;
 	num_extents = 0;
 
 	trans = btrfs_start_transaction(cur_root, 1);
@@ -2135,7 +2135,7 @@ fail:
  * relocate data in system chunk
  */
 static int cleanup_sys_chunk(struct btrfs_root *fs_root,
-			     struct btrfs_root *ext2_root)
+			     struct btrfs_root *image_root)
 {
 	struct btrfs_block_group_cache *cache;
 	int i, ret = 0;
@@ -2149,7 +2149,7 @@ static int cleanup_sys_chunk(struct btrfs_root *fs_root,
 
 		end_byte = cache->key.objectid + cache->key.offset;
 		if (cache->flags & BTRFS_BLOCK_GROUP_SYSTEM) {
-			ret = relocate_extents_range(fs_root, ext2_root,
+			ret = relocate_extents_range(fs_root, image_root,
 						     cache->key.objectid,
 						     end_byte);
 			if (ret)
@@ -2161,7 +2161,7 @@ static int cleanup_sys_chunk(struct btrfs_root *fs_root,
 		offset = btrfs_sb_offset(i);
 		offset &= ~((u64)BTRFS_STRIPE_LEN - 1);
 
-		ret = relocate_extents_range(fs_root, ext2_root,
+		ret = relocate_extents_range(fs_root, image_root,
 					     offset, offset + BTRFS_STRIPE_LEN);
 		if (ret)
 			goto fail;
@@ -2272,7 +2272,7 @@ static int do_convert(const char *devname, int datacsum, int packing, int noxatt
 	u64 super_bytenr;
 	ext2_filsys ext2_fs;
 	struct btrfs_root *root;
-	struct btrfs_root *ext2_root;
+	struct btrfs_root *image_root;
 	struct task_ctx ctx;
 	char features_buf[64];
 
@@ -2381,12 +2381,12 @@ static int do_convert(const char *devname, int datacsum, int packing, int noxatt
 		task_deinit(ctx.info);
 	}
 	printf("creating ext2fs image file.\n");
-	ext2_root = link_subvol(root, "ext2_saved", EXT2_IMAGE_SUBVOL_OBJECTID);
-	if (!ext2_root) {
+	image_root = link_subvol(root, "ext2_saved", CONV_IMAGE_SUBVOL_OBJECTID);
+	if (!image_root) {
 		fprintf(stderr, "unable to create subvol\n");
 		goto fail;
 	}
-	ret = create_ext2_image(ext2_root, ext2_fs, "image", datacsum);
+	ret = create_ext2_image(image_root, ext2_fs, "image", datacsum);
 	if (ret) {
 		fprintf(stderr, "error during create_ext2_image %d\n", ret);
 		goto fail;
@@ -2403,7 +2403,7 @@ static int do_convert(const char *devname, int datacsum, int packing, int noxatt
 	}
 
 	printf("cleaning up system chunk.\n");
-	ret = cleanup_sys_chunk(root, ext2_root);
+	ret = cleanup_sys_chunk(root, image_root);
 	if (ret) {
 		fprintf(stderr, "error during cleanup_sys_chunk %d\n", ret);
 		goto fail;
@@ -2502,7 +2502,7 @@ static int do_rollback(const char *devname)
 	int ret;
 	int i;
 	struct btrfs_root *root;
-	struct btrfs_root *ext2_root;
+	struct btrfs_root *image_root;
 	struct btrfs_root *chunk_root;
 	struct btrfs_dir_item *dir;
 	struct btrfs_inode_item *inode;
@@ -2555,11 +2555,11 @@ static int do_rollback(const char *devname)
 
 	btrfs_init_path(&path);
 
-	key.objectid = EXT2_IMAGE_SUBVOL_OBJECTID;
+	key.objectid = CONV_IMAGE_SUBVOL_OBJECTID;
 	key.type = BTRFS_ROOT_ITEM_KEY;
 	key.offset = (u64)-1;
-	ext2_root = btrfs_read_fs_root(root->fs_info, &key);
-	if (!ext2_root || IS_ERR(ext2_root)) {
+	image_root = btrfs_read_fs_root(root->fs_info, &key);
+	if (!image_root || IS_ERR(image_root)) {
 		fprintf(stderr, "unable to open subvol %llu\n",
 			(unsigned long long)key.objectid);
 		goto fail;
@@ -2567,7 +2567,7 @@ static int do_rollback(const char *devname)
 
 	name = "image";
 	root_dir = btrfs_root_dirid(&root->root_item);
-	dir = btrfs_lookup_dir_item(NULL, ext2_root, &path,
+	dir = btrfs_lookup_dir_item(NULL, image_root, &path,
 				   root_dir, name, strlen(name), 0);
 	if (!dir || IS_ERR(dir)) {
 		fprintf(stderr, "unable to find file %s\n", name);
@@ -2579,7 +2579,7 @@ static int do_rollback(const char *devname)
 
 	objectid = key.objectid;
 
-	ret = btrfs_lookup_inode(NULL, ext2_root, &path, &key, 0);
+	ret = btrfs_lookup_inode(NULL, image_root, &path, &key, 0);
 	if (ret) {
 		fprintf(stderr, "unable to find inode item\n");
 		goto fail;
@@ -2592,7 +2592,7 @@ static int do_rollback(const char *devname)
 	key.objectid = objectid;
 	key.offset = 0;
 	btrfs_set_key_type(&key, BTRFS_EXTENT_DATA_KEY);
-	ret = btrfs_search_slot(NULL, ext2_root, &key, &path, 0, 0);
+	ret = btrfs_search_slot(NULL, image_root, &key, &path, 0, 0);
 	if (ret != 0) {
 		fprintf(stderr, "unable to find first file extent\n");
 		btrfs_release_path(&path);
