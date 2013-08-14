@@ -1,0 +1,31 @@
+.TH BTRFSTUNE 8
+.SH NAME
+btrfstune \- tune various filesystem parameters.
+.SH SYNOPSIS
+.B btrfstune [\fIoptions\fP] \fI<mnt>\fP
+.SH DESCRIPTION
+\fBbtrfstune\fP is used to tune various filesystem parameters,you can
+enable/disable some extended features for btrfs.
+
+\fIOptions\fP
+.IP "\fB-S \fI<value>\fP" 5
+updates the seeding value, it forces a fs readonly so that you can use it to build other filesystems.
+.IP "\fB-r\fP" 5
+enable extended inode refs.
+.IP "\fB-x\fP" 5
+enable skinny metadata extent refs.
+
+.SH EXIT CODE
+\fBbtrfstune\fP will return 0 if no error happened.
+If any problems happened, 1 will be returned.
+
+.SH AUTHOR
+Written by Shilong Wang and Wenruo Qu.
+
+.SH COPYRIGHT
+Copyright \(co 2013 Fujitsu, Inc.
+License GPLv2: GNU GPL version 2 <http://gnu.org/licenses/gpl.html>.
+.br
+This is free software: you are free  to  change  and  redistribute  it. There is NO WARRANTY, to the extent permitted by law.
+.SH SEE ALSO
+.BR mkfs.btrfs (8)
