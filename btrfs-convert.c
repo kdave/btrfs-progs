@@ -223,7 +223,7 @@ static int custom_free_extent(struct btrfs_root *root, u64 bytenr,
 	return intersect_with_sb(bytenr, num_bytes);
 }
 
-struct btrfs_extent_ops extent_ops = {
+static struct btrfs_extent_ops extent_ops = {
 	.alloc_extent = custom_alloc_extent,
 	.free_extent = custom_free_extent,
 };

@@ -20,7 +20,7 @@
 
 #include "commands.h"
 
-extern char argv0_buf[ARGV0_BUF_SIZE];
+static char argv0_buf[ARGV0_BUF_SIZE];
 
 #define USAGE_SHORT		1U
 #define USAGE_LONG		2U

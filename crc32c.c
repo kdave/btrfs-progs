@@ -62,7 +62,7 @@ static uint32_t crc32c_intel_le_hw_byte(uint32_t crc, unsigned char const *data,
  * Steps through buffer one byte at at time, calculates reflected 
  * crc using table.
  */
-uint32_t crc32c_intel(u32 crc, unsigned char const *data, unsigned long length)
+static uint32_t crc32c_intel(u32 crc, unsigned char const *data, unsigned long length)
 {
 	unsigned int iquotient = length / SCALE_F;
 	unsigned int iremainder = length % SCALE_F;
@@ -100,7 +100,7 @@ static void do_cpuid(unsigned int *eax, unsigned int *ebx, unsigned int *ecx,
 		: "eax", "ebx", "ecx", "edx");
 }
 
-void crc32c_intel_probe(void)
+static void crc32c_intel_probe(void)
 {
 	if (!crc32c_probed) {
 		unsigned int eax, ebx, ecx, edx;

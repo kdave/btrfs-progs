@@ -136,8 +136,8 @@ int btrfs_copy_root(struct btrfs_trans_handle *trans,
 /*
  * check if the tree block can be shared by multiple trees
  */
-int btrfs_block_can_be_shared(struct btrfs_root *root,
-			      struct extent_buffer *buf)
+static int btrfs_block_can_be_shared(struct btrfs_root *root,
+			             struct extent_buffer *buf)
 {
 	/*
 	 * Tree blocks not in refernece counted trees and tree roots

@@ -31,7 +31,7 @@ static const char * const btrfs_cmd_group_usage[] = {
 static const char btrfs_cmd_group_info[] =
 	"Use --help as an argument for information on a specific group or command.";
 
-char argv0_buf[ARGV0_BUF_SIZE] = "btrfs";
+static char argv0_buf[ARGV0_BUF_SIZE] = "btrfs";
 
 static inline const char *skip_prefix(const char *str, const char *prefix)
 {
@@ -184,7 +184,7 @@ int check_argc_max(int nargs, int expected)
 	return 0;
 }
 
-const struct cmd_group btrfs_cmd_group;
+static const struct cmd_group btrfs_cmd_group;
 
 static const char * const cmd_help_usage[] = {
 	"btrfs help [--full]",
@@ -239,7 +239,7 @@ static int handle_options(int *argc, char ***argv)
 	return (*argv) - orig_argv;
 }
 
-const struct cmd_group btrfs_cmd_group = {
+static const struct cmd_group btrfs_cmd_group = {
 	btrfs_cmd_group_usage, btrfs_cmd_group_info, {
 		{ "subvolume", cmd_subvolume, NULL, &subvolume_cmd_group, 0 },
 		{ "filesystem", cmd_filesystem, NULL, &filesystem_cmd_group, 0 },
