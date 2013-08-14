@@ -440,25 +440,6 @@ static int csum_disk_extent(struct btrfs_trans_handle *trans,
 	return ret;
 }
 
-static int record_file_blocks(struct btrfs_trans_handle *trans,
-			      struct btrfs_root *root, u64 objectid,
-			      struct btrfs_inode_item *inode,
-			      u64 file_block, u64 disk_block,
-			      u64 num_blocks, int checksum)
-{
-	int ret;
-	u64 file_pos = file_block * root->sectorsize;
-	u64 disk_bytenr = disk_block * root->sectorsize;
-	u64 num_bytes = num_blocks * root->sectorsize;
-	ret = btrfs_record_file_extent(trans, root, objectid, inode, file_pos,
-					disk_bytenr, num_bytes);
-
-	if (ret || !checksum || disk_bytenr == 0)
-		return ret;
-
-	return csum_disk_extent(trans, root, disk_bytenr, num_bytes);
-}
-
 struct blk_iterate_data {
 	struct btrfs_trans_handle *trans;
 	struct btrfs_root *root;
@@ -472,6 +453,43 @@ struct blk_iterate_data {
 	int errcode;
 };
 
+static void init_blk_iterate_data(struct blk_iterate_data *data,
+				  struct btrfs_trans_handle *trans,
+				  struct btrfs_root *root,
+				  struct btrfs_inode_item *inode,
+				  u64 objectid, int checksum)
+{
+	data->trans		= trans;
+	data->root		= root;
+	data->inode		= inode;
+	data->objectid		= objectid;
+	data->first_block	= 0;
+	data->disk_block	= 0;
+	data->num_blocks	= 0;
+	data->boundary		= (u64)-1;
+	data->checksum		= checksum;
+	data->errcode		= 0;
+}
+
+static int record_file_blocks(struct blk_iterate_data *data,
+			      u64 file_block, u64 disk_block, u64 num_blocks)
+{
+	int ret;
+	struct btrfs_root *root = data->root;
+	u64 file_pos = file_block * root->sectorsize;
+	u64 disk_bytenr = disk_block * root->sectorsize;
+	u64 num_bytes = num_blocks * root->sectorsize;
+	ret = btrfs_record_file_extent(data->trans, data->root,
+				       data->objectid, data->inode, file_pos,
+				       disk_bytenr, num_bytes);
+
+	if (ret || !data->checksum || disk_bytenr == 0)
+		return ret;
+
+	return csum_disk_extent(data->trans, data->root, disk_bytenr,
+				num_bytes);
+}
+
 static int block_iterate_proc(ext2_filsys ext2_fs,
 			      u64 disk_block, u64 file_block,
 		              struct blk_iterate_data *idata)
@@ -480,7 +498,6 @@ static int block_iterate_proc(ext2_filsys ext2_fs,
 	int sb_region;
 	int do_barrier;
 	struct btrfs_root *root = idata->root;
-	struct btrfs_trans_handle *trans = idata->trans;
 	struct btrfs_block_group_cache *cache;
 	u64 bytenr = disk_block * root->sectorsize;
 
@@ -490,20 +507,17 @@ static int block_iterate_proc(ext2_filsys ext2_fs,
 	    (file_block > idata->first_block + idata->num_blocks) ||
 	    (disk_block != idata->disk_block + idata->num_blocks)) {
 		if (idata->num_blocks > 0) {
-			ret = record_file_blocks(trans, root, idata->objectid,
-					idata->inode, idata->first_block,
-					idata->disk_block, idata->num_blocks,
-					idata->checksum);
+			ret = record_file_blocks(idata, idata->first_block,
+						 idata->disk_block,
+						 idata->num_blocks);
 			if (ret)
 				goto fail;
 			idata->first_block += idata->num_blocks;
 			idata->num_blocks = 0;
 		}
 		if (file_block > idata->first_block) {
-			ret = record_file_blocks(trans, root, idata->objectid,
-					idata->inode, idata->first_block,
-					0, file_block - idata->first_block,
-					idata->checksum);
+			ret = record_file_blocks(idata, idata->first_block,
+					0, file_block - idata->first_block);
 			if (ret)
 				goto fail;
 		}
@@ -552,18 +566,11 @@ static int create_file_extents(struct btrfs_trans_handle *trans,
 	u32 last_block;
 	u32 sectorsize = root->sectorsize;
 	u64 inode_size = btrfs_stack_inode_size(btrfs_inode);
-	struct blk_iterate_data data = {
-		.trans		= trans,
-		.root		= root,
-		.inode		= btrfs_inode,
-		.objectid	= objectid,
-		.first_block	= 0,
-		.disk_block	= 0,
-		.num_blocks	= 0,
-		.boundary	= (u64)-1,
-		.checksum	= datacsum,
-		.errcode	= 0,
-	};
+	struct blk_iterate_data data;
+
+	init_blk_iterate_data(&data, trans, root, btrfs_inode, objectid,
+			      datacsum);
+
 	err = ext2fs_block_iterate2(ext2_fs, ext2_ino, BLOCK_FLAG_DATA_ONLY,
 				    NULL, __block_iterate_proc, &data);
 	if (err)
@@ -592,18 +599,16 @@ static int create_file_extents(struct btrfs_trans_handle *trans,
 		nbytes = btrfs_stack_inode_nbytes(btrfs_inode) + num_bytes;
 		btrfs_set_stack_inode_nbytes(btrfs_inode, nbytes);
 	} else if (data.num_blocks > 0) {
-		ret = record_file_blocks(trans, root, objectid, btrfs_inode,
-					 data.first_block, data.disk_block,
-					 data.num_blocks, data.checksum);
+		ret = record_file_blocks(&data, data.first_block,
+					 data.disk_block, data.num_blocks);
 		if (ret)
 			goto fail;
 	}
 	data.first_block += data.num_blocks;
 	last_block = (inode_size + sectorsize - 1) / sectorsize;
 	if (last_block > data.first_block) {
-		ret = record_file_blocks(trans, root, objectid, btrfs_inode,
-					 data.first_block, 0, last_block -
-					 data.first_block, data.checksum);
+		ret = record_file_blocks(&data, data.first_block, 0,
+					 last_block - data.first_block);
 	}
 fail:
 	free(buffer);
@@ -1180,18 +1185,11 @@ static int create_image_file_range(struct btrfs_trans_handle *trans,
 	u32 block = start_byte / blocksize;
 	u32 last_block = (end_byte + blocksize - 1) / blocksize;
 	int ret = 0;
-	struct blk_iterate_data data = {
-		.trans		= trans,
-		.root		= root,
-		.inode		= inode,
-		.objectid	= objectid,
-		.first_block	= block,
-		.disk_block	= 0,
-		.num_blocks	= 0,
-		.boundary	= (u64)-1,
-		.checksum	= datacsum,
-		.errcode	= 0,
-	};
+	struct blk_iterate_data data;
+
+	init_blk_iterate_data(&data, trans, root, inode, objectid, datacsum);
+	data.first_block = block;
+
 	for (; start_byte < end_byte; block++, start_byte += blocksize) {
 		if (!ext2fs_fast_test_block_bitmap(ext2_fs->block_map, block))
 			continue;
@@ -1202,17 +1200,15 @@ static int create_image_file_range(struct btrfs_trans_handle *trans,
 		}
 	}
 	if (data.num_blocks > 0) {
-		ret = record_file_blocks(trans, root, objectid, inode,
-					 data.first_block, data.disk_block,
-					 data.num_blocks, datacsum);
+		ret = record_file_blocks(&data, data.first_block,
+					 data.disk_block, data.num_blocks);
 		if (ret)
 			goto fail;
 		data.first_block += data.num_blocks;
 	}
 	if (last_block > data.first_block) {
-		ret = record_file_blocks(trans, root, objectid, inode,
-					 data.first_block, 0, last_block -
-					 data.first_block, datacsum);
+		ret = record_file_blocks(&data, data.first_block, 0,
+					 last_block - data.first_block);
 		if (ret)
 			goto fail;
 	}
@@ -1920,18 +1916,9 @@ static int relocate_one_reference(struct btrfs_trans_handle *trans,
 	btrfs_set_stack_inode_nbytes(&inode, nbytes);
 	datacsum = !(btrfs_stack_inode_flags(&inode) & BTRFS_INODE_NODATASUM);
 
-	data = (struct blk_iterate_data) {
-		.trans		= trans,
-		.root		= root,
-		.inode		= &inode,
-		.objectid	= extent_key->objectid,
-		.first_block	= extent_key->offset / sectorsize,
-		.disk_block	= 0,
-		.num_blocks	= 0,
-		.boundary	= (u64)-1,
-		.checksum	= datacsum,
-		.errcode	= 0,
-	};
+	init_blk_iterate_data(&data, trans, root, &inode, extent_key->objectid,
+			      datacsum);
+	data.first_block = extent_key->offset;
 
 	cur_offset = extent_key->offset;
 	while (num_bytes > 0) {
@@ -1974,10 +1961,8 @@ static int relocate_one_reference(struct btrfs_trans_handle *trans,
 	}
 
 	if (data.num_blocks > 0) {
-		ret = record_file_blocks(trans, root,
-					 extent_key->objectid, &inode,
-					 data.first_block, data.disk_block,
-					 data.num_blocks, datacsum);
+		ret = record_file_blocks(&data, data.first_block,
+					 data.disk_block, data.num_blocks);
 		if (ret)
 			goto fail;
 	}
