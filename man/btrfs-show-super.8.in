@@ -1,0 +1,30 @@
+.TH BTRFS-SHOW-SUPER 8
+.SH NAME
+btrfs-show-super \- show btrfs superblock information stored in devices
+.SH SYNOPSIS
+.B btrfs-show-super [\fIoptions\fP] \fI<dev>\fP [\fI<dev>...\fP]
+.SH DESCRIPTION
+\fBbtrfs-show-super\fP is used to print the information of superblock,
+you can specify which mirror to print out. In default, every device's
+first superblock will be printed out.
+
+\fIOptions\fP
+.IP "\fB-a\fP" 5
+print all the superblock information, if this option is given, '\fB-i\fP' option will be ignored.
+.IP "\fB-i \fI<super_mirror>\fP" 5
+specify which mirror to print out. \fI<super_mirror>\fP is between 0 and 2. if several '\fB-i \fI<super_mirror>\fP'\fR are given, only the last one is valid.
+
+.SH EXIT CODE
+\fBbtrfs-show-super\fR will return 0 exit code if no error happened.
+If any problems happened, 1 will be returned.
+
+.SH AUTHOR
+Written by Shilong Wang and Wenruo Qu.
+
+.SH COPYRIGHT
+Copyright \(co 2013 Fujitsu, Inc.
+License GPLv2: GNU GPL version 2 <http://gnu.org/licenses/gpl.html>.
+.br
+This is free software: you are free  to  change  and  redistribute  it. There is NO WARRANTY, to the extent permitted by law.
+.SH SEE ALSO
+.BR mkfs.btrfs (8)
