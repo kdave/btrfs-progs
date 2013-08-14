@@ -1418,7 +1418,7 @@ static void print_single_volume_info_default(struct root_info *subv)
 	printf("\n");
 }
 
-static void print_all_volume_info_tab_head()
+static void print_all_volume_info_tab_head(void)
 {
 	int i;
 	int len;

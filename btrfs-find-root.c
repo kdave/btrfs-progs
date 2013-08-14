@@ -40,7 +40,7 @@ static u64 search_objectid = BTRFS_ROOT_TREE_OBJECTID;
 static u64 search_generation = 0;
 static unsigned long search_level = 0;
 
-static void usage()
+static void usage(void)
 {
 	fprintf(stderr, "Usage: find-roots [-o search_objectid] "
 		"[ -g search_generation ] [ -l search_level ] <device>\n");
