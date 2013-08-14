@@ -1,0 +1,33 @@
+.TH BTRFS-MAP-LOGICAL 8
+.SH NAME
+btrfs-map-logical \- map btrfs logical extent to physical extent
+.SH SYNOPSIS
+.B btrfs-map-logical [\fIoptions\fP] \fI<device>\fP
+.SH DESCRIPTION
+\fBbtrfs-map-logical\fP can be used to find out what the physical offsets are
+on the mirrors, the result is dumped into stdout in default.
+
+\fIOptions\fP
+.IP "\fB-l|--logical \fI<logical_num>\fP" 5
+Logical extent to map.
+.IP "\fB-c|--copy \fI<copy>\fP" 5
+Copy of the extent to read(usually 1 or 2).
+.IP "\fB-o|--output \fI<filename>\fP" 5
+Output file to hold the extent.
+.IP "\fB-b|--bytes \fI<bytes>\fP" 5
+Number of bytes to read.
+
+.SH EXIT CODE
+\fBbtrfs-map-logical\fP will return 0 if no error happened.
+If any problems happened, 1 will be returned.
+
+.SH AUTHOR
+Written by Shilong Wang and Wenruo Qu.
+
+.SH COPYRIGHT
+Copyright \(co 2013 Fujitsu, Inc.
+License GPLv2: GNU GPL version 2 <http://gnu.org/licenses/gpl.html>.
+.br
+This is free software: you are free  to  change  and  redistribute  it. There is NO WARRANTY, to the extent permitted by law.
+.SH SEE ALSO
+.BR mkfs.btrfs (8)
