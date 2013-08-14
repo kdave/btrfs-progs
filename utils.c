@@ -24,10 +24,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifndef __CHECKER__
 #include <sys/ioctl.h>
 #include <sys/mount.h>
-#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <uuid/uuid.h>
@@ -49,11 +47,6 @@
 #include "utils.h"
 #include "volumes.h"
 #include "ioctl.h"
-
-#ifdef __CHECKER__
-#define BLKGETSIZE64 0
-static inline int ioctl(int fd, int define, u64 *size) { return 0; }
-#endif
 
 #ifndef BLKDISCARD
 #define BLKDISCARD	_IO(0x12,119)

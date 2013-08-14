@@ -30,15 +30,6 @@
 
 #include "commands.h"
 
-/* FIXME - imported cruft, fix sparse errors and warnings */
-#ifdef __CHECKER__
-#define BLKGETSIZE64 0
-#define BTRFS_IOC_SNAP_CREATE_V2 0
-#define BTRFS_VOL_NAME_MAX 255
-struct btrfs_ioctl_vol_args { char name[BTRFS_VOL_NAME_MAX]; };
-static inline int ioctl(int fd, int define, void *arg) { return 0; }
-#endif
-
 static const char * const device_cmd_group_usage[] = {
 	"btrfs device <command> [<args>]",
 	NULL

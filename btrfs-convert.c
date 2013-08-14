@@ -21,10 +21,8 @@
 
 #include "kerncompat.h"
 
-#ifndef __CHECKER__
 #include <sys/ioctl.h>
 #include <sys/mount.h>
-#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
