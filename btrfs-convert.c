@@ -1041,7 +1041,6 @@ static int copy_single_inode(struct btrfs_trans_handle *trans,
 			     int datacsum, int packing, int noxattr)
 {
 	int ret;
-	struct btrfs_key inode_key;
 	struct btrfs_inode_item btrfs_inode;
 
 	if (ext2_inode->i_links_count == 0)
@@ -1080,11 +1079,7 @@ static int copy_single_inode(struct btrfs_trans_handle *trans,
 		if (ret)
 			return ret;
 	}
-	inode_key.objectid = objectid;
-	inode_key.offset = 0;
-	btrfs_set_key_type(&inode_key, BTRFS_INODE_ITEM_KEY);
-	ret = btrfs_insert_inode(trans, root, objectid, &btrfs_inode);
-	return ret;
+	return btrfs_insert_inode(trans, root, objectid, &btrfs_inode);
 }
 
 static int copy_disk_extent(struct btrfs_root *root, u64 dst_bytenr,
