@@ -490,8 +490,7 @@ static int record_file_blocks(struct blk_iterate_data *data,
 				num_bytes);
 }
 
-static int block_iterate_proc(ext2_filsys ext2_fs,
-			      u64 disk_block, u64 file_block,
+static int block_iterate_proc(u64 disk_block, u64 file_block,
 		              struct blk_iterate_data *idata)
 {
 	int ret;
@@ -548,7 +547,7 @@ static int __block_iterate_proc(ext2_filsys fs, blk_t *blocknr,
 {
 	struct blk_iterate_data *idata;
 	idata = (struct blk_iterate_data *)priv_data;
-	return block_iterate_proc(fs, *blocknr, blockcnt, idata);
+	return block_iterate_proc(*blocknr, blockcnt, idata);
 }
 
 /*
@@ -1193,7 +1192,7 @@ static int create_image_file_range(struct btrfs_trans_handle *trans,
 	for (; start_byte < end_byte; block++, start_byte += blocksize) {
 		if (!ext2fs_fast_test_block_bitmap(ext2_fs->block_map, block))
 			continue;
-		ret = block_iterate_proc(NULL, block, block, &data);
+		ret = block_iterate_proc(block, block, &data);
 		if (ret & BLOCK_ABORT) {
 			ret = data.errcode;
 			goto fail;
@@ -1948,7 +1947,7 @@ static int relocate_one_reference(struct btrfs_trans_handle *trans,
 			BUG_ON(ret);
 		}
 
-		ret = block_iterate_proc(NULL, new_pos / sectorsize,
+		ret = block_iterate_proc(new_pos / sectorsize,
 					 cur_offset / sectorsize, &data);
 		if (ret & BLOCK_ABORT) {
 			ret = data.errcode;
