@@ -1352,8 +1352,6 @@ int main(int ac, char **av)
 	u64 num_of_meta_chunks = 0;
 	u64 size_of_data = 0;
 	u64 source_dir_size = 0;
-	struct btrfs_super_block *super;
-	u64 flags;
 	int dev_cnt = 0;
 	int saved_optind;
 	char estr[100];
@@ -1526,9 +1524,23 @@ int main(int ac, char **av)
 			leafsize * i;
 	}
 
+	/*
+	 * FS features that can be set by other means than -O
+	 * just set the bit here
+	 */
+	if (mixed)
+		features |= BTRFS_FEATURE_INCOMPAT_MIXED_GROUPS;
+
+	if ((data_profile | metadata_profile) &
+	    (BTRFS_BLOCK_GROUP_RAID5 | BTRFS_BLOCK_GROUP_RAID6)) {
+		features |= BTRFS_FEATURE_INCOMPAT_RAID56;
+	}
+
+	process_fs_features(features);
+
 	ret = make_btrfs(fd, file, label, blocks, dev_block_count,
 			 nodesize, leafsize,
-			 sectorsize, stripesize);
+			 sectorsize, stripesize, features);
 	if (ret) {
 		fprintf(stderr, "error during mkfs: %s\n", strerror(-ret));
 		exit(1);
@@ -1601,25 +1613,6 @@ raid_groups:
 
 	ret = create_data_reloc_tree(trans, root);
 	BUG_ON(ret);
-
-	super = root->fs_info->super_copy;
-	flags = btrfs_super_incompat_flags(super);
-
-	/*
-	 * FS features that can be set by other means than -O
-	 * just set the bit here
-	 */
-	if (mixed)
-		features |= BTRFS_FEATURE_INCOMPAT_MIXED_GROUPS;
-
-	if ((data_profile | metadata_profile) &
-	    (BTRFS_BLOCK_GROUP_RAID5 | BTRFS_BLOCK_GROUP_RAID6)) {
-		features |= BTRFS_FEATURE_INCOMPAT_RAID56;
-	}
-
-	process_fs_features(features);
-	flags |= features;
-	btrfs_set_super_incompat_flags(super, flags);
 
 	printf("fs created label %s on %s\n\tnodesize %u leafsize %u "
 	    "sectorsize %u size %s\n",

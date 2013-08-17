@@ -73,7 +73,7 @@ static u64 reference_root_table[] = {
 
 int make_btrfs(int fd, const char *device, const char *label,
 	       u64 blocks[7], u64 num_bytes, u32 nodesize,
-	       u32 leafsize, u32 sectorsize, u32 stripesize)
+	       u32 leafsize, u32 sectorsize, u32 stripesize, u64 features)
 {
 	struct btrfs_super_block super;
 	struct extent_buffer *buf;
@@ -94,6 +94,8 @@ int make_btrfs(int fd, const char *device, const char *label,
 	u64 ref_root;
 	u32 array_size;
 	u32 item_size;
+	int skinny_metadata = !!(features &
+				 BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA);
 
 	first_free = BTRFS_SUPER_INFO_OFFSET + sectorsize * 2 - 1;
 	first_free &= ~((u64)sectorsize - 1);
@@ -120,6 +122,7 @@ int make_btrfs(int fd, const char *device, const char *label,
 	btrfs_set_super_csum_type(&super, BTRFS_CSUM_TYPE_CRC32);
 	btrfs_set_super_chunk_root_generation(&super, 1);
 	btrfs_set_super_cache_generation(&super, -1);
+	btrfs_set_super_incompat_flags(&super, features);
 	if (label)
 		strncpy(super.label, label, BTRFS_LABEL_SIZE - 1);
 
@@ -218,21 +221,30 @@ int make_btrfs(int fd, const char *device, const char *label,
 	nritems = 0;
 	itemoff = __BTRFS_LEAF_DATA_SIZE(leafsize);
 	for (i = 1; i < 7; i++) {
+		item_size = sizeof(struct btrfs_extent_item);
+		if (!skinny_metadata)
+			item_size += sizeof(struct btrfs_tree_block_info);
+
 		BUG_ON(blocks[i] < first_free);
 		BUG_ON(blocks[i] < blocks[i - 1]);
 
 		/* create extent item */
-		itemoff -= sizeof(struct btrfs_extent_item) +
-			   sizeof(struct btrfs_tree_block_info);
+		itemoff -= item_size;
 		btrfs_set_disk_key_objectid(&disk_key, blocks[i]);
-		btrfs_set_disk_key_offset(&disk_key, leafsize);
-		btrfs_set_disk_key_type(&disk_key, BTRFS_EXTENT_ITEM_KEY);
+		if (skinny_metadata) {
+			btrfs_set_disk_key_type(&disk_key,
+						BTRFS_METADATA_ITEM_KEY);
+			btrfs_set_disk_key_offset(&disk_key, 0);
+		} else {
+			btrfs_set_disk_key_type(&disk_key,
+						BTRFS_EXTENT_ITEM_KEY);
+			btrfs_set_disk_key_offset(&disk_key, leafsize);
+		}
 		btrfs_set_item_key(buf, &disk_key, nritems);
 		btrfs_set_item_offset(buf, btrfs_item_nr(buf, nritems),
 				      itemoff);
 		btrfs_set_item_size(buf, btrfs_item_nr(buf, nritems),
-				    sizeof(struct btrfs_extent_item) +
-				    sizeof(struct btrfs_tree_block_info));
+				    item_size);
 		extent_item = btrfs_item_ptr(buf, nritems,
 					     struct btrfs_extent_item);
 		btrfs_set_extent_refs(buf, extent_item, 1);
