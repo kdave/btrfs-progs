@@ -516,6 +516,8 @@ Try to restore files from a damaged filesystem(unmounted).
 \fIOptions\fR
 .IP "\fB-s\fP" 5
 get snapshots.
+.IP "\fB-x\fP" 5
+get extended attributes.
 .IP "\fB-v\fP" 5
 verbose.
 .IP "\fB-i\fP" 5
