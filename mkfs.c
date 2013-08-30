@@ -1409,6 +1409,17 @@ int main(int ac, char **av)
 	file = av[optind++];
 	ssd = is_ssd(file);
 
+	if (is_vol_small(file)) {
+		printf("SMALL VOLUME: forcing mixed metadata/data groups\n");
+		mixed = 1;
+		if (metadata_profile != data_profile) {
+			if (metadata_profile_opt || data_profile_opt) {
+				fprintf(stderr,
+	"With mixed block groups data and metadata profiles must be the same\n");
+				exit(1);
+			}
+		}
+	}
 	/*
 	* Set default profiles according to number of added devices.
 	* For mixed groups defaults are single/single.
@@ -1429,7 +1440,6 @@ int main(int ac, char **av)
 				BTRFS_BLOCK_GROUP_RAID0 : 0; /* raid0 or single */
 		}
 	} else {
-		/* this is not needed but just for completeness */
 		metadata_profile = 0;
 		data_profile = 0;
 	}
@@ -1487,14 +1497,6 @@ int main(int ac, char **av)
 		dev_block_count = block_count;
 	}
 
-
-	if (mixed) {
-		if (metadata_profile != data_profile) {
-			fprintf(stderr, "With mixed block groups data and metadata "
-				"profiles must be the same\n");
-			exit(1);
-		}
-	}
 
 	blocks[0] = BTRFS_SUPER_INFO_OFFSET;
 	for (i = 1; i < 7; i++) {

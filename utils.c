@@ -1920,3 +1920,32 @@ int scan_for_btrfs(int where, int update_kernel)
 	}
 	return ret;
 }
+
+int is_vol_small(char *file)
+{
+	int fd = -1;
+	int e;
+	struct stat st;
+	u64 size;
+
+	fd = open(file, O_RDONLY);
+	if (fd < 0)
+		return -errno;
+	if (fstat(fd, &st) < 0) {
+		e = -errno;
+		close(fd);
+		return e;
+	}
+	size = btrfs_device_size(fd, &st);
+	if (size == 0) {
+		close(fd);
+		return -1;
+	}
+	if (size < 1024 * 1024 * 1024) {
+		close(fd);
+		return 1;
+	} else {
+		close(fd);
+		return 0;
+	}
+}
