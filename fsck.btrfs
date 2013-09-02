@@ -1,0 +1,40 @@
+#!/bin/sh -f
+#
+# Copyright (c) 2013 SUSE
+#
+# copied from fsck.xfs
+# Copyright (c) 2006 Silicon Graphics, Inc.  All Rights Reserved.
+#
+
+# fsck.btrfs is a type of utility that should exist for any filesystem and is
+# called during system setup when the corresponding /etc/fstab entries contain
+# non-zero value for fs_passno. (See fstab(5) for more.)
+#
+# Traditional filesystems need to run their respective fsck utility in case the
+# filesystem was not unmounted cleanly and the log needs to be replayed before
+# mount. This is not needed for BTRFS. You should set fs_passno to 0.
+#
+# If you wish to check the consistency of a BTRFS filesystem or repair a
+# damaged filesystem, see btrfs(8) subcommand 'check'. By default the
+# filesystem consistency is checked, the repair mode is enabled via --repair
+# option (use with care!).
+
+AUTO=false
+while getopts ":aApy" c
+do
+	case $c in
+	a|A|p|y)	AUTO=true;;
+	esac
+done
+eval DEV=\${$#}
+if [ ! -e $DEV ]; then
+	echo "$0: $DEV does not exist"
+	exit 8
+fi
+if $AUTO; then
+	echo "$0: BTRFS file system."
+else
+	echo "If you wish to check the consistency of a BTRFS filesystem or"
+	echo "repair a damaged filesystem, see btrfs(8) subcommand 'check'."
+fi
+exit 0
