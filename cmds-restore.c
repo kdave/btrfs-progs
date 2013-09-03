@@ -278,6 +278,7 @@ static int copy_one_extent(struct btrfs_root *root, int fd,
 	u64 bytenr;
 	u64 ram_size;
 	u64 disk_size;
+	u64 num_bytes;
 	u64 length;
 	u64 size_left;
 	u64 dev_bytenr;
@@ -294,7 +295,9 @@ static int copy_one_extent(struct btrfs_root *root, int fd,
 	disk_size = btrfs_file_extent_disk_num_bytes(leaf, fi);
 	ram_size = btrfs_file_extent_ram_bytes(leaf, fi);
 	offset = btrfs_file_extent_offset(leaf, fi);
-	size_left = disk_size;
+	num_bytes = btrfs_file_extent_num_bytes(leaf, fi);
+	size_left = num_bytes;
+	bytenr += offset;
 
 	if (offset)
 		printf("offset is %Lu\n", offset);
@@ -302,7 +305,7 @@ static int copy_one_extent(struct btrfs_root *root, int fd,
 	if (disk_size == 0)
 		return 0;
 
-	inbuf = malloc(disk_size);
+	inbuf = malloc(size_left);
 	if (!inbuf) {
 		fprintf(stderr, "No memory\n");
 		return -1;
@@ -357,8 +360,8 @@ again:
 		goto again;
 
 	if (compress == BTRFS_COMPRESS_NONE) {
-		while (total < ram_size) {
-			done = pwrite(fd, inbuf+total, ram_size-total,
+		while (total < num_bytes) {
+			done = pwrite(fd, inbuf+total, num_bytes-total,
 				      pos+total);
 			if (done < 0) {
 				ret = -1;
@@ -371,7 +374,7 @@ again:
 		goto out;
 	}
 
-	ret = decompress(inbuf, outbuf, disk_size, &ram_size, compress);
+	ret = decompress(inbuf, outbuf, num_bytes, &ram_size, compress);
 	if (ret) {
 		num_copies = btrfs_num_copies(&root->fs_info->mapping_tree,
 					      bytenr, length);
