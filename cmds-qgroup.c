@@ -54,12 +54,12 @@ static int qgroup_assign(int assign, int argc, char **argv)
 	 */
 	if ((args.src >> 48) >= (args.dst >> 48)) {
 		fprintf(stderr, "ERROR: bad relation requested '%s'\n", path);
-		return 12;
+		return 1;
 	}
 	fd = open_file_or_dir(path, &dirstream);
 	if (fd < 0) {
 		fprintf(stderr, "ERROR: can't access '%s'\n", path);
-		return 12;
+		return 1;
 	}
 
 	ret = ioctl(fd, BTRFS_IOC_QGROUP_ASSIGN, &args);
@@ -68,7 +68,7 @@ static int qgroup_assign(int assign, int argc, char **argv)
 	if (ret < 0) {
 		fprintf(stderr, "ERROR: unable to assign quota group: %s\n",
 			strerror(e));
-		return 30;
+		return 1;
 	}
 	return 0;
 }
@@ -92,7 +92,7 @@ static int qgroup_create(int create, int argc, char **argv)
 	fd = open_file_or_dir(path, &dirstream);
 	if (fd < 0) {
 		fprintf(stderr, "ERROR: can't access '%s'\n", path);
-		return 12;
+		return 1;
 	}
 
 	ret = ioctl(fd, BTRFS_IOC_QGROUP_CREATE, &args);
@@ -101,7 +101,7 @@ static int qgroup_create(int create, int argc, char **argv)
 	if (ret < 0) {
 		fprintf(stderr, "ERROR: unable to create quota group: %s\n",
 			strerror(e));
-		return 30;
+		return 1;
 	}
 	return 0;
 }
@@ -310,19 +310,17 @@ static int cmd_qgroup_show(int argc, char **argv)
 	fd = open_file_or_dir(path, &dirstream);
 	if (fd < 0) {
 		fprintf(stderr, "ERROR: can't access '%s'\n", path);
-		return 12;
+		return 1;
 	}
 
 	ret = list_qgroups(fd);
 	e = errno;
 	close_file_or_dir(fd, dirstream);
-	if (ret < 0) {
+	if (ret < 0)
 		fprintf(stderr, "ERROR: can't list qgroups: %s\n",
 				strerror(e));
-		return 30;
-	}
 
-	return ret;
+	return !!ret;
 }
 
 static const char * const cmd_qgroup_limit_usage[] = {
@@ -392,12 +390,12 @@ static int cmd_qgroup_limit(int argc, char **argv)
 		ret = test_issubvolume(path);
 		if (ret < 0) {
 			fprintf(stderr, "ERROR: error accessing '%s'\n", path);
-			return 12;
+			return 1;
 		}
 		if (!ret) {
 			fprintf(stderr, "ERROR: '%s' is not a subvolume\n",
 				path);
-			return 13;
+			return 1;
 		}
 		/*
 		 * keep qgroupid at 0, this indicates that the subvolume the
@@ -412,7 +410,7 @@ static int cmd_qgroup_limit(int argc, char **argv)
 	fd = open_file_or_dir(path, &dirstream);
 	if (fd < 0) {
 		fprintf(stderr, "ERROR: can't access '%s'\n", path);
-		return 12;
+		return 1;
 	}
 
 	ret = ioctl(fd, BTRFS_IOC_QGROUP_LIMIT, &args);
@@ -421,7 +419,7 @@ static int cmd_qgroup_limit(int argc, char **argv)
 	if (ret < 0) {
 		fprintf(stderr, "ERROR: unable to limit requested quota group: "
 			"%s\n", strerror(e));
-		return 30;
+		return 1;
 	}
 	return 0;
 }
