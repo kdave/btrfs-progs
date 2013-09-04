@@ -794,13 +794,15 @@ static int scan_devices(struct recover_control *rc)
 	int ret = 0;
 	int fd;
 	struct btrfs_device *dev;
+	int e;
 
 	list_for_each_entry(dev, &rc->fs_devices->devices, dev_list) {
 		fd = open(dev->name, O_RDONLY);
 		if (fd < 0) {
+			e = errno;
 			fprintf(stderr, "Failed to open device %s\n",
 				dev->name);
-			return -1;
+			return -e;
 		}
 		ret = scan_one_device(rc, fd, dev);
 		close(fd);
@@ -1785,7 +1787,7 @@ int cmd_chunk_recover(int argc, char *argv[])
 	ret = check_mounted(file);
 	if (ret) {
 		fprintf(stderr, "the device is busy\n");
-		return ret;
+		goto out;
 	}
 
 	ret = btrfs_recover_chunk_tree(file, verbose, yes);
@@ -1797,5 +1799,6 @@ int cmd_chunk_recover(int argc, char *argv[])
 	} else {
 		fprintf(stdout, "Fail to recover the chunk tree.\n");
 	}
-	return ret;
+out:
+	return !!ret;
 }
