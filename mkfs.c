@@ -1150,6 +1150,7 @@ static int is_ssd(const char *file)
 	dev_t devno;
 	int fd;
 	char rotational;
+	int ret;
 
 	probe = blkid_new_probe_from_filename(file);
 	if (!probe)
@@ -1161,7 +1162,12 @@ static int is_ssd(const char *file)
 		return 0;
 
 	/* Get whole disk name (not full path) for this devno */
-	blkid_devno_to_wholedisk(devno, wholedisk, sizeof(wholedisk), NULL);
+	ret = blkid_devno_to_wholedisk(devno,
+			wholedisk, sizeof(wholedisk), NULL);
+	if (ret) {
+		blkid_free_probe(probe);
+		return 0;
+	}
 
 	snprintf(sysfs_path, PATH_MAX, "/sys/block/%s/queue/rotational",
 		 wholedisk);
