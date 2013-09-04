@@ -43,7 +43,7 @@ again:
 	ret = radix_tree_gang_lookup(root, (void **)res, num, 2);
 	if (exists) {
 		if (ret == 0)
-			return -1;
+			return -EEXIST;
 		num = res[0];
 	} else if (ret != 0 && num == res[0]) {
 		num++;
@@ -79,7 +79,7 @@ static int ins_one(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 	return ret;
 error:
 	printf("failed to insert %llu\n", (unsigned long long)key.objectid);
-	return -1;
+	return ret;
 }
 
 static int insert_dup(struct btrfs_trans_handle *trans, struct btrfs_root
@@ -98,7 +98,7 @@ static int insert_dup(struct btrfs_trans_handle *trans, struct btrfs_root
 	if (ret != -EEXIST) {
 		printf("insert on %llu gave us %d\n",
 		       (unsigned long long)key.objectid, ret);
-		return 1;
+		return ret;
 	}
 	return 0;
 }
@@ -127,7 +127,7 @@ static int del_one(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 	return 0;
 error:
 	printf("failed to delete %llu\n", (unsigned long long)key.objectid);
-	return -1;
+	return ret;
 }
 
 static int lookup_item(struct btrfs_trans_handle *trans, struct btrfs_root
@@ -147,7 +147,7 @@ static int lookup_item(struct btrfs_trans_handle *trans, struct btrfs_root
 	return 0;
 error:
 	printf("unable to find key %llu\n", (unsigned long long)key.objectid);
-	return -1;
+	return ret;
 }
 
 static int lookup_enoent(struct btrfs_trans_handle *trans, struct btrfs_root
@@ -168,7 +168,7 @@ static int lookup_enoent(struct btrfs_trans_handle *trans, struct btrfs_root
 error:
 	printf("able to find key that should not exist %llu\n",
 	       (unsigned long long)key.objectid);
-	return -1;
+	return -EEXIST;
 }
 
 static int empty_tree(struct btrfs_trans_handle *trans, struct btrfs_root
@@ -209,7 +209,7 @@ static int empty_tree(struct btrfs_trans_handle *trans, struct btrfs_root
 			fprintf(stderr,
 				"failed to remove %lu from tree\n",
 				found);
-			return -1;
+			return ret;
 		}
 		btrfs_release_path(&path);
 		ptr = radix_tree_delete(radix, found);
@@ -221,7 +221,7 @@ static int empty_tree(struct btrfs_trans_handle *trans, struct btrfs_root
 	return 0;
 error:
 	fprintf(stderr, "failed to delete from the radix %lu\n", found);
-	return -1;
+	return -ENOENT;
 }
 
 static int fill_tree(struct btrfs_trans_handle *trans, struct btrfs_root *root,
@@ -428,6 +428,6 @@ int main(int ac, char **av)
 	}
 out:
 	close_ctree(root, &super);
-	return err;
+	return !!err;
 }
 
