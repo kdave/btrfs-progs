@@ -715,7 +715,7 @@ out:
 		close(send.mnt_fd);
 	free(send.root_path);
 	subvol_uuid_search_finit(&send.sus);
-	return ret;
+	return !!ret;
 }
 
 const char * const cmd_send_usage[] = {
