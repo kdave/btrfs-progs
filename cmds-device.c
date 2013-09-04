@@ -55,7 +55,7 @@ static int cmd_add_dev(int argc, char **argv)
 	fdmnt = open_file_or_dir(mntpnt, &dirstream);
 	if (fdmnt < 0) {
 		fprintf(stderr, "ERROR: can't access to '%s'\n", mntpnt);
-		return 12;
+		return 1;
 	}
 
 	for (i = 1; i < argc - 1; i++ ){
@@ -120,10 +120,7 @@ static int cmd_add_dev(int argc, char **argv)
 	}
 
 	close_file_or_dir(fdmnt, dirstream);
-	if (ret)
-		return ret+20;
-	else
-		return 0;
+	return !!ret;
 }
 
 static const char * const cmd_rm_dev_usage[] = {
@@ -146,7 +143,7 @@ static int cmd_rm_dev(int argc, char **argv)
 	fdmnt = open_file_or_dir(mntpnt, &dirstream);
 	if (fdmnt < 0) {
 		fprintf(stderr, "ERROR: can't access to '%s'\n", mntpnt);
-		return 12;
+		return 1;
 	}
 
 	for(i=1 ; i < argc - 1; i++ ){
@@ -170,10 +167,7 @@ static int cmd_rm_dev(int argc, char **argv)
 	}
 
 	close_file_or_dir(fdmnt, dirstream);
-	if( ret)
-		return ret+20;
-	else
-		return 0;
+	return !!ret;
 }
 
 static const char * const cmd_scan_dev_usage[] = {
@@ -202,7 +196,7 @@ static int cmd_scan_dev(int argc, char **argv)
 		ret = scan_for_btrfs(where, 1);
 		if (ret){
 			fprintf(stderr, "ERROR: error %d while scanning\n", ret);
-			return 18;
+			return 1;
 		}
 		return 0;
 	}
@@ -210,7 +204,7 @@ static int cmd_scan_dev(int argc, char **argv)
 	fd = open("/dev/btrfs-control", O_RDWR);
 	if (fd < 0) {
 		perror("failed to open /dev/btrfs-control");
-		return 10;
+		return 1;
 	}
 
 	for( i = devstart ; i < argc ; i++ ){
@@ -232,7 +226,7 @@ static int cmd_scan_dev(int argc, char **argv)
 			close(fd);
 			fprintf(stderr, "ERROR: unable to scan the device '%s' - %s\n",
 				argv[i], strerror(e));
-			return 11;
+			return 1;
 		}
 	}
 
@@ -258,7 +252,7 @@ static int cmd_ready_dev(int argc, char **argv)
 	fd = open("/dev/btrfs-control", O_RDWR);
 	if (fd < 0) {
 		perror("failed to open /dev/btrfs-control");
-		return 10;
+		return 1;
 	}
 
 	strncpy(args.name, argv[argc - 1], BTRFS_PATH_NAME_MAX);
@@ -320,7 +314,7 @@ static int cmd_dev_stats(int argc, char **argv)
 
 	if (fdmnt < 0) {
 		fprintf(stderr, "ERROR: can't access '%s'\n", dev_path);
-		return 12;
+		return 1;
 	}
 
 	ret = get_fs_info(dev_path, &fi_args, &di_args);
