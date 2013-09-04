@@ -62,12 +62,14 @@ static int cmd_df(int argc, char **argv)
 	fd = open_file_or_dir(path, &dirstream);
 	if (fd < 0) {
 		fprintf(stderr, "ERROR: can't access to '%s'\n", path);
-		return 12;
+		return 1;
 	}
 
 	sargs_orig = sargs = malloc(sizeof(struct btrfs_ioctl_space_args));
-	if (!sargs)
-		return -ENOMEM;
+	if (!sargs) {
+		ret = -ENOMEM;
+		goto out;
+	}
 
 	sargs->space_slots = 0;
 	sargs->total_spaces = 0;
@@ -157,7 +159,7 @@ out:
 	close_file_or_dir(fd, dirstream);
 	free(sargs);
 
-	return 0;
+	return !!ret;
 }
 
 static int uuid_search(struct btrfs_fs_devices *fs_devices, char *search)
@@ -248,7 +250,7 @@ static int cmd_show(int argc, char **argv)
 
 	if (ret){
 		fprintf(stderr, "ERROR: error %d while scanning\n", ret);
-		return 18;
+		return 1;
 	}
 	
 	if(searchstart < argc)
@@ -286,7 +288,7 @@ static int cmd_sync(int argc, char **argv)
 	fd = open_file_or_dir(path, &dirstream);
 	if (fd < 0) {
 		fprintf(stderr, "ERROR: can't access to '%s'\n", path);
-		return 12;
+		return 1;
 	}
 
 	printf("FSSync '%s'\n", path);
@@ -296,7 +298,7 @@ static int cmd_sync(int argc, char **argv)
 	if( res < 0 ){
 		fprintf(stderr, "ERROR: unable to fs-syncing '%s' - %s\n", 
 			path, strerror(e));
-		return 16;
+		return 1;
 	}
 
 	return 0;
@@ -429,12 +431,10 @@ static int cmd_defrag(int argc, char **argv)
 	}
 	if (verbose)
 		printf("%s\n", BTRFS_BUILD_VERSION);
-	if (errors) {
+	if (errors)
 		fprintf(stderr, "total %d failures\n", errors);
-		exit(1);
-	}
 
-	return errors;
+	return !!errors;
 }
 
 static const char * const cmd_resize_usage[] = {
@@ -462,13 +462,13 @@ static int cmd_resize(int argc, char **argv)
 	if (len == 0 || len >= BTRFS_VOL_NAME_MAX) {
 		fprintf(stderr, "ERROR: size value too long ('%s)\n",
 			amount);
-		return 14;
+		return 1;
 	}
 
 	fd = open_file_or_dir(path, &dirstream);
 	if (fd < 0) {
 		fprintf(stderr, "ERROR: can't access to '%s'\n", path);
-		return 12;
+		return 1;
 	}
 
 	printf("Resize '%s' of '%s'\n", path, amount);
@@ -479,7 +479,7 @@ static int cmd_resize(int argc, char **argv)
 	if( res < 0 ){
 		fprintf(stderr, "ERROR: unable to resize '%s' - %s\n", 
 			path, strerror(e));
-		return 30;
+		return 1;
 	}
 	return 0;
 }
