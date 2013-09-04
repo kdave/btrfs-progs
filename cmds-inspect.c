@@ -44,7 +44,7 @@ static int __ino_to_path_fd(u64 inum, int fd, int verbose, const char *prepend)
 
 	fspath = malloc(4096);
 	if (!fspath)
-		return 1;
+		return -ENOMEM;
 
 	memset(fspath, 0, sizeof(*fspath));
 	ipa.inum = inum;
@@ -78,7 +78,7 @@ static int __ino_to_path_fd(u64 inum, int fd, int verbose, const char *prepend)
 
 out:
 	free(fspath);
-	return ret;
+	return !!ret;
 }
 
 static const char * const cmd_inode_resolve_usage[] = {
@@ -117,13 +117,13 @@ static int cmd_inode_resolve(int argc, char **argv)
 	fd = open_file_or_dir(argv[optind+1], &dirstream);
 	if (fd < 0) {
 		fprintf(stderr, "ERROR: can't access '%s'\n", argv[optind+1]);
-		return 12;
+		return 1;
 	}
 
 	ret = __ino_to_path_fd(atoll(argv[optind]), fd, verbose,
 			       argv[optind+1]);
 	close_file_or_dir(fd, dirstream);
-	return ret;
+	return !!ret;
 
 }
 
@@ -256,7 +256,7 @@ static int cmd_logical_resolve(int argc, char **argv)
 out:
 	close_file_or_dir(fd, dirstream);
 	free(inodes);
-	return ret;
+	return !!ret;
 }
 
 static const char * const cmd_subvolid_resolve_usage[] = {
