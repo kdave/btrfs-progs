@@ -951,13 +951,13 @@ int cmd_receive(int argc, char **argv)
 		receive_fd = open(fromfile, O_RDONLY | O_NOATIME);
 		if (receive_fd < 0) {
 			fprintf(stderr, "ERROR: failed to open %s\n", fromfile);
-			return -errno;
+			return 1;
 		}
 	}
 
 	ret = do_receive(&r, tomnt, receive_fd);
 
-	return ret;
+	return !!ret;
 }
 
 const char * const cmd_receive_usage[] = {
