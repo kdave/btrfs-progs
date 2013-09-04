@@ -140,7 +140,7 @@ fatal_release:
 	btrfs_release_path(&path);
 fatal:
 	printf("failed to insert %lu ret %d\n", oid, ret);
-	return -1;
+	return ret;
 }
 
 static int insert_dup(struct btrfs_trans_handle *trans, struct btrfs_root
@@ -213,7 +213,7 @@ out_release:
 	btrfs_release_path(path);
 out:
 	printf("failed to delete %lu %d\n", radix_index, ret);
-	return -1;
+	return ret;
 }
 
 static int del_one(struct btrfs_trans_handle *trans, struct btrfs_root *root,
@@ -241,7 +241,7 @@ static int del_one(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 out_release:
 	btrfs_release_path(&path);
 	printf("failed to delete %lu %d\n", oid, ret);
-	return -1;
+	return ret;
 }
 
 static int lookup_item(struct btrfs_trans_handle *trans, struct btrfs_root
@@ -269,7 +269,7 @@ static int lookup_item(struct btrfs_trans_handle *trans, struct btrfs_root
 	btrfs_release_path(&path);
 	if (ret) {
 		printf("unable to find key %lu\n", oid);
-		return -1;
+		return ret;
 	}
 	return 0;
 }
@@ -292,7 +292,7 @@ static int lookup_enoent(struct btrfs_trans_handle *trans, struct btrfs_root
 	btrfs_release_path(&path);
 	if (!ret) {
 		printf("able to find key that should not exist %lu\n", oid);
-		return -1;
+		return ret;
 	}
 	return 0;
 }
@@ -342,14 +342,14 @@ static int empty_tree(struct btrfs_trans_handle *trans, struct btrfs_root
 			fprintf(stderr,
 				"failed to remove %lu from tree\n",
 				found);
-			return -1;
+			return ret;
 		}
 		if (!keep_running)
 			break;
 	}
 	return 0;
 	fprintf(stderr, "failed to delete from the radix %lu\n", found);
-	return -1;
+	return ret;
 }
 
 static int fill_tree(struct btrfs_trans_handle *trans, struct btrfs_root *root,
@@ -512,6 +512,6 @@ int main(int ac, char **av)
 	}
 out:
 	close_ctree(root, &super);
-	return err;
+	return !!err;
 }
 
