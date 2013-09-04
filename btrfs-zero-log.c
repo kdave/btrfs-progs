@@ -52,10 +52,11 @@ int main(int ac, char **av)
 
 	if((ret = check_mounted(av[1])) < 0) {
 		fprintf(stderr, "Could not check mount status: %s\n", strerror(-ret));
-		return ret;
+		goto out;
 	} else if(ret) {
 		fprintf(stderr, "%s is currently mounted. Aborting.\n", av[1]);
-		return -EBUSY;
+		ret = -EBUSY;
+		goto out;
 	}
 
 	root = open_ctree(av[1], 0, 1);
@@ -68,5 +69,6 @@ int main(int ac, char **av)
 	btrfs_set_super_log_root_level(root->fs_info->super_copy, 0);
 	btrfs_commit_transaction(trans, root);
 	close_ctree(root);
-	return ret;
+out:
+	return !!ret;
 }
