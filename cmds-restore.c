@@ -247,7 +247,7 @@ static int copy_one_inline(int fd, struct btrfs_path *path, u64 pos)
 	outbuf = malloc(ram_size);
 	if (!outbuf) {
 		fprintf(stderr, "No memory\n");
-		return -1;
+		return -ENOMEM;
 	}
 
 	ret = decompress(buf, outbuf, len, &ram_size, compress);
@@ -308,7 +308,7 @@ static int copy_one_extent(struct btrfs_root *root, int fd,
 	inbuf = malloc(size_left);
 	if (!inbuf) {
 		fprintf(stderr, "No memory\n");
-		return -1;
+		return -ENOMEM;
 	}
 
 	if (compress != BTRFS_COMPRESS_NONE) {
@@ -316,7 +316,7 @@ static int copy_one_extent(struct btrfs_root *root, int fd,
 		if (!outbuf) {
 			fprintf(stderr, "No memory\n");
 			free(inbuf);
-			return -1;
+			return -ENOMEM;
 		}
 	}
 again:
@@ -546,7 +546,7 @@ static int copy_file(struct btrfs_root *root, int fd, struct btrfs_key *key,
 	path = btrfs_alloc_path();
 	if (!path) {
 		fprintf(stderr, "Ran out of memory\n");
-		return -1;
+		return -ENOMEM;
 	}
 	path->skip_locking = 1;
 
@@ -679,7 +679,7 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 	path = btrfs_alloc_path();
 	if (!path) {
 		fprintf(stderr, "Ran out of memory\n");
-		return -1;
+		return -ENOMEM;
 	}
 	path->skip_locking = 1;
 
@@ -826,7 +826,7 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 			if (!dir) {
 				fprintf(stderr, "Ran out of memory\n");
 				btrfs_free_path(path);
-				return -1;
+				return -ENOMEM;
 			}
 
 			if (location.type == BTRFS_ROOT_ITEM_KEY) {
@@ -920,7 +920,7 @@ static int do_list_roots(struct btrfs_root *root)
 	path = btrfs_alloc_path();
 	if (!path) {
 		fprintf(stderr, "Failed to alloc path\n");
-		return -1;
+		return -ENOMEM;
 	}
 
 	key.offset = 0;
@@ -1213,7 +1213,7 @@ int cmd_restore(int argc, char **argv)
 	if ((ret = check_mounted(argv[optind])) < 0) {
 		fprintf(stderr, "Could not check mount status: %s\n",
 			strerror(-ret));
-		return ret;
+		return 1;
 	} else if (ret) {
 		fprintf(stderr, "%s is currently mounted.  Aborting.\n", argv[optind]);
 		return 1;
@@ -1287,5 +1287,5 @@ out:
 	if (mreg)
 		regfree(mreg);
 	close_ctree(root);
-	return ret;
+	return !!ret;
 }
