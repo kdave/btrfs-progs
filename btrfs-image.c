@@ -2588,5 +2588,5 @@ out:
 	else
 		fclose(out);
 
-	return ret;
+	return !!ret;
 }
