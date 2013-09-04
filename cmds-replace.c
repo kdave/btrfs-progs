@@ -324,7 +324,7 @@ leave_with_error:
 		close(fdsrcdev);
 	if (fddstdev != -1)
 		close(fddstdev);
-	return -1;
+	return 1;
 }
 
 static const char *const cmd_status_replace_usage[] = {
@@ -367,12 +367,12 @@ static int cmd_status_replace(int argc, char **argv)
 	if (fd < 0) {
 		fprintf(stderr, "ERROR: can't access \"%s\": %s\n",
 			path, strerror(e));
-		return -1;
+		return 1;
 	}
 
 	ret = print_replace_status(fd, path, once);
 	close_file_or_dir(fd, dirstream);
-	return ret;
+	return !!ret;
 }
 
 static int print_replace_status(int fd, const char *path, int once)
@@ -530,7 +530,7 @@ static int cmd_cancel_replace(int argc, char **argv)
 	if (fd < 0) {
 		fprintf(stderr, "ERROR: can't access \"%s\": %s\n",
 			path, strerror(errno));
-		return -1;
+		return 1;
 	}
 
 	args.cmd = BTRFS_IOCTL_DEV_REPLACE_CMD_CANCEL;
@@ -541,9 +541,13 @@ static int cmd_cancel_replace(int argc, char **argv)
 		fprintf(stderr, "ERROR: ioctl(DEV_REPLACE_CANCEL) failed on \"%s\": %s, %s\n",
 			path, strerror(e),
 			replace_dev_result2string(args.result));
-		return ret;
+		return 1;
 	}
-
+	if (args.result == BTRFS_IOCTL_DEV_REPLACE_RESULT_NOT_STARTED) {
+		printf("INFO: ioctl(DEV_REPLACE_CANCEL)\"%s\": %s\n",
+			path, replace_dev_result2string(args.result));
+		return 2;
+	}
 	return 0;
 }
 
