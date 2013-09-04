@@ -218,14 +218,14 @@ again:
 	path = argv[cnt];
 
 	res = test_issubvolume(path);
-	if(res<0){
+	if (res < 0) {
 		fprintf(stderr, "ERROR: error accessing '%s'\n", path);
-		ret = 12;
+		ret = 1;
 		goto out;
 	}
-	if(!res){
+	if (!res) {
 		fprintf(stderr, "ERROR: '%s' is not a subvolume\n", path);
-		ret = 13;
+		ret = 1;
 		goto out;
 	}
 
@@ -236,11 +236,11 @@ again:
 	vname = basename(vname);
 	free(cpath);
 
-	if( !strcmp(vname,".") || !strcmp(vname,"..") ||
-	     strchr(vname, '/') ){
+	if (!strcmp(vname, ".") || !strcmp(vname, "..") ||
+	     strchr(vname, '/')) {
 		fprintf(stderr, "ERROR: incorrect subvolume name ('%s')\n",
 			vname);
-		ret = 14;
+		ret = 1;
 		goto out;
 	}
 
@@ -248,14 +248,14 @@ again:
 	if (len == 0 || len >= BTRFS_VOL_NAME_MAX) {
 		fprintf(stderr, "ERROR: snapshot name too long ('%s)\n",
 			vname);
-		ret = 14;
+		ret = 1;
 		goto out;
 	}
 
 	fd = open_file_or_dir(dname, &dirstream);
 	if (fd < 0) {
 		fprintf(stderr, "ERROR: can't access to '%s'\n", dname);
-		ret = 12;
+		ret = 1;
 		goto out;
 	}
 
@@ -269,7 +269,7 @@ again:
 	if(res < 0 ){
 		fprintf( stderr, "ERROR: cannot delete '%s/%s' - %s\n",
 			dname, vname, strerror(e));
-		ret = 11;
+		ret = 1;
 		goto out;
 	}
 
@@ -471,8 +471,7 @@ out:
 		btrfs_list_free_comparer_set(comparer_set);
 	if (uerr)
 		usage(cmd_subvol_list_usage);
-
-	return ret;
+	return !!ret;
 }
 
 static const char * const cmd_snapshot_usage[] = {
@@ -694,9 +693,7 @@ static int cmd_subvol_get_default(int argc, char **argv)
 		btrfs_list_free_filter_set(filter_set);
 out:
 	close_file_or_dir(fd, dirstream);
-	if (ret)
-		return 1;
-	return 0;
+	return !!ret;
 }
 
 static const char * const cmd_subvol_set_default_usage[] = {
@@ -765,23 +762,21 @@ static int cmd_find_new(int argc, char **argv)
 	ret = test_issubvolume(subvol);
 	if (ret < 0) {
 		fprintf(stderr, "ERROR: error accessing '%s'\n", subvol);
-		return 12;
+		return 1;
 	}
 	if (!ret) {
 		fprintf(stderr, "ERROR: '%s' is not a subvolume\n", subvol);
-		return 13;
+		return 1;
 	}
 
 	fd = open_file_or_dir(subvol, &dirstream);
 	if (fd < 0) {
 		fprintf(stderr, "ERROR: can't access '%s'\n", subvol);
-		return 12;
+		return 1;
 	}
 	ret = btrfs_list_find_updated_files(fd, 0, last_gen);
 	close_file_or_dir(fd, dirstream);
-	if (ret)
-		return 19;
-	return 0;
+	return !!ret;
 }
 
 static const char * const cmd_subvol_show_usage[] = {
@@ -800,7 +795,7 @@ static int cmd_subvol_show(int argc, char **argv)
 	char raw_prefix[] = "\t\t\t\t";
 	u64 sv_id, mntid;
 	int fd = -1, mntfd = -1;
-	int ret = -1;
+	int ret = 1;
 	DIR *dirstream1 = NULL, *dirstream2 = NULL;
 
 	if (check_argc_exact(argc, 2))
@@ -820,7 +815,6 @@ static int cmd_subvol_show(int argc, char **argv)
 	}
 	if (!ret) {
 		fprintf(stderr, "ERROR: '%s' is not a subvolume\n", fullpath);
-		ret = -1;
 		goto out;
 	}
 
@@ -830,7 +824,7 @@ static int cmd_subvol_show(int argc, char **argv)
 				"%s\n", fullpath, strerror(-ret));
 		goto out;
 	}
-	ret = -1;
+	ret = 1;
 	svpath = get_subvol_name(mnt, fullpath);
 
 	fd = open_file_or_dir(fullpath, &dirstream1);
@@ -935,8 +929,7 @@ out:
 		free(mnt);
 	if (fullpath)
 		free(fullpath);
-
-	return ret;
+	return !!ret;
 }
 
 const struct cmd_group subvolume_cmd_group = {
