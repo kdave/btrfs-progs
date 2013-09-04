@@ -121,7 +121,7 @@ void usage_command(const struct cmd_struct *cmd, int full, int err)
 void usage(const char * const *usagestr)
 {
 	usage_command_usagestr(usagestr, NULL, 1, 1);
-	exit(129);
+	exit(1);
 }
 
 static void usage_command_group_internal(const struct cmd_group *grp, int full,
