@@ -1513,6 +1513,11 @@ int main(int ac, char **av)
 		dev_block_count = block_count;
 	}
 
+	/* To create the first block group and chunk 0 in make_btrfs */
+	if (dev_block_count < BTRFS_MKFS_SYSTEM_GROUP_SIZE) {
+		fprintf(stderr, "device is too small to make filesystem\n");
+		exit(1);
+	}
 
 	blocks[0] = BTRFS_SUPER_INFO_OFFSET;
 	for (i = 1; i < 7; i++) {
