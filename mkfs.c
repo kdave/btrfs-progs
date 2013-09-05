@@ -1020,6 +1020,8 @@ static int make_image(char *source_dir, struct btrfs_root *root, int out_fd)
 
 	struct directory_name_entry dir_head;
 
+	struct directory_name_entry *dir_entry = NULL;
+
 	ret = lstat(source_dir, &root_st);
 	if (ret) {
 		fprintf(stderr, "unable to lstat the %s\n", source_dir);
@@ -1039,6 +1041,12 @@ static int make_image(char *source_dir, struct btrfs_root *root, int out_fd)
 	printf("Making image is completed.\n");
 	return 0;
 fail:
+	while (!list_empty(&dir_head.list)) {
+		dir_entry = list_entry(dir_head.list.next,
+				       struct directory_name_entry, list);
+		list_del(&dir_entry->list);
+		free(dir_entry);
+	}
 	fprintf(stderr, "Making image is aborted.\n");
 	return -1;
 }
@@ -1158,8 +1166,10 @@ static int is_ssd(const char *file)
 
 	/* Device number of this disk (possibly a partition) */
 	devno = blkid_probe_get_devno(probe);
-	if (!devno)
+	if (!devno) {
+		blkid_free_probe(probe);
 		return 0;
+	}
 
 	/* Get whole disk name (not full path) for this devno */
 	ret = blkid_devno_to_wholedisk(devno,
