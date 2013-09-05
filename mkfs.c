@@ -77,6 +77,11 @@ static int make_root_dir(struct btrfs_root *root, int mixed)
 					&chunk_start, &chunk_size,
 					BTRFS_BLOCK_GROUP_METADATA |
 					BTRFS_BLOCK_GROUP_DATA);
+		if (ret == -ENOSPC) {
+			fprintf(stderr,
+				"no space to alloc data/metadata chunk\n");
+			goto err;
+		}
 		BUG_ON(ret);
 		ret = btrfs_make_block_group(trans, root, 0,
 					     BTRFS_BLOCK_GROUP_METADATA |
@@ -89,6 +94,10 @@ static int make_root_dir(struct btrfs_root *root, int mixed)
 		ret = btrfs_alloc_chunk(trans, root->fs_info->extent_root,
 					&chunk_start, &chunk_size,
 					BTRFS_BLOCK_GROUP_METADATA);
+		if (ret == -ENOSPC) {
+			fprintf(stderr, "no space to alloc metadata chunk\n");
+			goto err;
+		}
 		BUG_ON(ret);
 		ret = btrfs_make_block_group(trans, root, 0,
 					     BTRFS_BLOCK_GROUP_METADATA,
@@ -106,6 +115,10 @@ static int make_root_dir(struct btrfs_root *root, int mixed)
 		ret = btrfs_alloc_chunk(trans, root->fs_info->extent_root,
 					&chunk_start, &chunk_size,
 					BTRFS_BLOCK_GROUP_DATA);
+		if (ret == -ENOSPC) {
+			fprintf(stderr, "no space to alloc data chunk\n");
+			goto err;
+		}
 		BUG_ON(ret);
 		ret = btrfs_make_block_group(trans, root, 0,
 					     BTRFS_BLOCK_GROUP_DATA,
@@ -177,6 +190,10 @@ static int create_one_raid_group(struct btrfs_trans_handle *trans,
 
 	ret = btrfs_alloc_chunk(trans, root->fs_info->extent_root,
 				&chunk_start, &chunk_size, type);
+	if (ret == -ENOSPC) {
+		fprintf(stderr, "not enough free space\n");
+		exit(1);
+	}
 	BUG_ON(ret);
 	ret = btrfs_make_block_group(trans, root->fs_info->extent_root, 0,
 				     type, BTRFS_FIRST_CHUNK_TREE_OBJECTID,
