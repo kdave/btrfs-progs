@@ -966,7 +966,7 @@ int btrfs_setup_chunk_tree_and_device_map(struct btrfs_fs_info *fs_info)
 	if (!fs_info->chunk_root->node ||
 	    !extent_buffer_uptodate(fs_info->chunk_root->node)) {
 		fprintf(stderr, "Couldn't read chunk root\n");
-		return ret;
+		return -EIO;
 	}
 
 	if (!(btrfs_super_flags(sb) & BTRFS_SUPER_FLAG_METADUMP)) {
