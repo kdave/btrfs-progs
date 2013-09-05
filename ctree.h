@@ -814,6 +814,14 @@ struct btrfs_csum_item {
 	u8 csum;
 } __attribute__ ((__packed__));
 
+/*
+ * We don't want to overwrite 1M at the beginning of device, even though
+ * there is our 1st superblock at 64k. Some possible reasons:
+ *  - the first 64k blank is useful for some boot loader/manager
+ *  - the first 1M could be scratched by buggy partitioner or somesuch
+ */
+#define BTRFS_BLOCK_RESERVED_1M_FOR_SUPER	((u64)1024 * 1024)
+
 /* tag for the radix tree of block groups in ram */
 #define BTRFS_BLOCK_GROUP_DATA		(1ULL << 0)
 #define BTRFS_BLOCK_GROUP_SYSTEM	(1ULL << 1)

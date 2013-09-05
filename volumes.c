@@ -272,7 +272,7 @@ static int find_free_dev_extent(struct btrfs_trans_handle *trans,
 	struct btrfs_dev_extent *dev_extent = NULL;
 	u64 hole_size = 0;
 	u64 last_byte = 0;
-	u64 search_start = 0;
+	u64 search_start = root->fs_info->alloc_start;
 	u64 search_end = device->total_bytes;
 	int ret;
 	int slot = 0;
@@ -287,10 +287,12 @@ static int find_free_dev_extent(struct btrfs_trans_handle *trans,
 	/* we don't want to overwrite the superblock on the drive,
 	 * so we make sure to start at an offset of at least 1MB
 	 */
-	search_start = max((u64)1024 * 1024, search_start);
+	search_start = max(BTRFS_BLOCK_RESERVED_1M_FOR_SUPER, search_start);
 
-	if (root->fs_info->alloc_start + num_bytes <= device->total_bytes)
-		search_start = max(root->fs_info->alloc_start, search_start);
+	if (search_start >= search_end) {
+		ret = -ENOSPC;
+		goto error;
+	}
 
 	key.objectid = device->devid;
 	key.offset = search_start;
@@ -656,6 +658,94 @@ static u32 find_raid56_stripe_len(u32 data_devices, u32 dev_stripe_target)
 	return 64 * 1024;
 }
 
+/*
+ * btrfs_device_avail_bytes - count bytes available for alloc_chunk
+ *
+ * It is not equal to "device->total_bytes - device->bytes_used".
+ * We do not allocate any chunk in 1M at beginning of device, and not
+ * allowed to allocate any chunk before alloc_start if it is specified.
+ * So search holes from max(1M, alloc_start) to device->total_bytes.
+ */
+static int btrfs_device_avail_bytes(struct btrfs_trans_handle *trans,
+				    struct btrfs_device *device,
+				    u64 *avail_bytes)
+{
+	struct btrfs_path *path;
+	struct btrfs_root *root = device->dev_root;
+	struct btrfs_key key;
+	struct btrfs_dev_extent *dev_extent = NULL;
+	struct extent_buffer *l;
+	u64 search_start = root->fs_info->alloc_start;
+	u64 search_end = device->total_bytes;
+	u64 extent_end = 0;
+	u64 free_bytes = 0;
+	int ret;
+	int slot = 0;
+
+	search_start = max(BTRFS_BLOCK_RESERVED_1M_FOR_SUPER, search_start);
+
+	path = btrfs_alloc_path();
+	if (!path)
+		return -ENOMEM;
+
+	key.objectid = device->devid;
+	key.offset = root->fs_info->alloc_start;
+	key.type = BTRFS_DEV_EXTENT_KEY;
+
+	path->reada = 2;
+	ret = btrfs_search_slot(trans, root, &key, path, 0, 0);
+	if (ret < 0)
+		goto error;
+	ret = btrfs_previous_item(root, path, 0, key.type);
+	if (ret < 0)
+		goto error;
+
+	while (1) {
+		l = path->nodes[0];
+		slot = path->slots[0];
+		if (slot >= btrfs_header_nritems(l)) {
+			ret = btrfs_next_leaf(root, path);
+			if (ret == 0)
+				continue;
+			if (ret < 0)
+				goto error;
+			break;
+		}
+		btrfs_item_key_to_cpu(l, &key, slot);
+
+		if (key.objectid < device->devid)
+			goto next;
+		if (key.objectid > device->devid)
+			break;
+		if (btrfs_key_type(&key) != BTRFS_DEV_EXTENT_KEY)
+			goto next;
+		if (key.offset > search_end)
+			break;
+		if (key.offset > search_start)
+			free_bytes += key.offset - search_start;
+
+		dev_extent = btrfs_item_ptr(l, slot, struct btrfs_dev_extent);
+		extent_end = key.offset + btrfs_dev_extent_length(l,
+								  dev_extent);
+		if (extent_end > search_start)
+			search_start = extent_end;
+		if (search_start > search_end)
+			break;
+next:
+		path->slots[0]++;
+		cond_resched();
+	}
+
+	if (search_start < search_end)
+		free_bytes += search_end - search_start;
+
+	*avail_bytes = free_bytes;
+	ret = 0;
+error:
+	btrfs_free_path(path);
+	return ret;
+}
+
 int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 		      struct btrfs_root *extent_root, u64 *start,
 		      u64 *num_bytes, u64 type)
@@ -674,7 +764,7 @@ int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 	u64 calc_size = 8 * 1024 * 1024;
 	u64 min_free;
 	u64 max_chunk_size = 4 * calc_size;
-	u64 avail;
+	u64 avail = 0;
 	u64 max_avail = 0;
 	u64 percent_max;
 	int num_stripes = 1;
@@ -778,7 +868,9 @@ again:
 	/* build a private list of devices we will allocate from */
 	while(index < num_stripes) {
 		device = list_entry(cur, struct btrfs_device, dev_list);
-		avail = device->total_bytes - device->bytes_used;
+		ret = btrfs_device_avail_bytes(trans, device, &avail);
+		if (ret)
+			return ret;
 		cur = cur->next;
 		if (avail >= min_free) {
 			list_move_tail(&device->dev_list, &private_devs);
