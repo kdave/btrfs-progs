@@ -75,6 +75,8 @@ static int cmd_subvol_create(int argc, char **argv)
 {
 	int	retval, res, len;
 	int	fddst = -1;
+	char	*dupname = NULL;
+	char	*dupdir = NULL;
 	char	*newname;
 	char	*dstdir;
 	char	*dst;
@@ -119,10 +121,10 @@ static int cmd_subvol_create(int argc, char **argv)
 		goto out;
 	}
 
-	newname = strdup(dst);
-	newname = basename(newname);
-	dstdir = strdup(dst);
-	dstdir = dirname(dstdir);
+	dupname = strdup(dst);
+	newname = basename(dupname);
+	dupdir = strdup(dst);
+	dstdir = dirname(dupdir);
 
 	if (!strcmp(newname, ".") || !strcmp(newname, "..") ||
 	     strchr(newname, '/') ){
@@ -174,6 +176,8 @@ static int cmd_subvol_create(int argc, char **argv)
 out:
 	close_file_or_dir(fddst, dirstream);
 	free(inherit);
+	free(dupname);
+	free(dupdir);
 
 	return retval;
 }
@@ -208,6 +212,8 @@ static int cmd_subvol_delete(int argc, char **argv)
 	int	res, fd, len, e, cnt = 1, ret = 0;
 	struct btrfs_ioctl_vol_args	args;
 	char	*dname, *vname, *cpath;
+	char	*dupdname = NULL;
+	char	*dupvname = NULL;
 	char	*path;
 	DIR	*dirstream = NULL;
 
@@ -230,10 +236,10 @@ again:
 	}
 
 	cpath = realpath(path, NULL);
-	dname = strdup(cpath);
-	dname = dirname(dname);
-	vname = strdup(cpath);
-	vname = basename(vname);
+	dupdname = strdup(cpath);
+	dname = dirname(dupdname);
+	dupvname = strdup(cpath);
+	vname = basename(dupvname);
 	free(cpath);
 
 	if (!strcmp(vname, ".") || !strcmp(vname, "..") ||
@@ -274,6 +280,8 @@ again:
 	}
 
 out:
+	free(dupdname);
+	free(dupvname);
 	cnt++;
 	if (cnt < argc)
 		goto again;
@@ -494,6 +502,8 @@ static int cmd_snapshot(int argc, char **argv)
 	int	res, retval;
 	int	fd = -1, fddst = -1;
 	int	len, readonly = 0;
+	char	*dupname = NULL;
+	char	*dupdir = NULL;
 	char	*newname;
 	char	*dstdir;
 	struct btrfs_ioctl_vol_args_v2	args;
@@ -561,14 +571,14 @@ static int cmd_snapshot(int argc, char **argv)
 	}
 
 	if (res > 0) {
-		newname = strdup(subvol);
-		newname = basename(newname);
+		dupname = strdup(subvol);
+		newname = basename(dupname);
 		dstdir = dst;
 	} else {
-		newname = strdup(dst);
-		newname = basename(newname);
-		dstdir = strdup(dst);
-		dstdir = dirname(dstdir);
+		dupname = strdup(dst);
+		newname = basename(dupname);
+		dupdir = strdup(dst);
+		dstdir = dirname(dupdir);
 	}
 
 	if (!strcmp(newname, ".") || !strcmp(newname, "..") ||
@@ -628,6 +638,8 @@ out:
 	close_file_or_dir(fddst, dirstream1);
 	close_file_or_dir(fd, dirstream2);
 	free(inherit);
+	free(dupname);
+	free(dupdir);
 
 	return retval;
 }
