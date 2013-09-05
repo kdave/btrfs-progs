@@ -284,6 +284,7 @@ static char *find_collision(struct metadump_struct *md, char *name,
 	val = malloc(sizeof(struct name));
 	if (!val) {
 		fprintf(stderr, "Couldn't sanitize name, enomem\n");
+		free(name);
 		return NULL;
 	}
 
@@ -295,6 +296,7 @@ static char *find_collision(struct metadump_struct *md, char *name,
 	if (!val->sub) {
 		fprintf(stderr, "Couldn't sanitize name, enomem\n");
 		free(val);
+		free(name);
 		return NULL;
 	}
 
