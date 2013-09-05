@@ -3521,6 +3521,11 @@ static int run_next_block(struct btrfs_root *root,
 		remove_cache_extent(nodes, cache);
 		free(cache);
 	}
+	cache = lookup_cache_extent(seen, bytenr, size);
+	if (cache) {
+		remove_cache_extent(seen, cache);
+		free(cache);
+	}
 
 	/* fixme, get the real parent transid */
 	buf = read_tree_block(root, bytenr, size, 0);
