@@ -112,7 +112,7 @@ int verify_tree_block_csum_silent(struct extent_buffer *buf, u16 csum_size)
 	return __csum_tree_block_size(buf, csum_size, 1, 1);
 }
 
-static int csum_tree_block(struct btrfs_root *root, struct extent_buffer *buf,
+int csum_tree_block(struct btrfs_root *root, struct extent_buffer *buf,
 			   int verify)
 {
 	u16 csum_size =

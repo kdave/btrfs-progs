@@ -31,6 +31,7 @@
 #include "transaction.h"
 #include "list.h"
 #include "version.h"
+#include "utils.h"
 
 struct extent_buffer *debug_corrupt_block(struct btrfs_root *root, u64 bytenr,
 				     u32 blocksize, int copy)
