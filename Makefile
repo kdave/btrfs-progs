@@ -19,6 +19,7 @@ libbtrfs_objects = send-stream.o send-utils.o rbtree.o btrfs-list.o crc32c.o \
 libbtrfs_headers = send-stream.h send-utils.h send.h rbtree.h btrfs-list.h \
 	       crc32c.h list.h kerncompat.h radix-tree.h extent-cache.h \
 	       extent_io.h ioctl.h ctree.h btrfsck.h
+TESTS = fsck-tests.sh
 
 INSTALL = install
 prefix ?= /usr/local
@@ -122,6 +123,12 @@ $(SUBDIRS): $(BUILDDIRS)
 $(BUILDDIRS):
 	@echo "Making all in $(patsubst build-%,%,$@)"
 	$(Q)$(MAKE) $(MAKEOPTS) -C $(patsubst build-%,%,$@)
+
+test:
+	$(Q)for t in $(TESTS); do \
+		echo "     [TEST]    $$t"; \
+		bash tests/$$t || exit 1; \
+	done
 
 #
 # NOTE: For static compiles, you need to have all the required libs
