@@ -142,6 +142,7 @@ struct mdrestore_struct {
 	struct btrfs_fs_info *info;
 };
 
+static void print_usage(void) __attribute__((noreturn));
 static int search_for_chunk_blocks(struct mdrestore_struct *mdres,
 				   u64 search, u64 cluster_bytenr);
 static struct extent_buffer *alloc_dummy_eb(u64 bytenr, u32 size);

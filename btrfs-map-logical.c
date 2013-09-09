@@ -90,6 +90,7 @@ static struct extent_buffer * debug_read_block(struct btrfs_root *root,
 	return eb;
 }
 
+static void print_usage(void) __attribute__((noreturn));
 static void print_usage(void)
 {
 	fprintf(stderr, "usage: btrfs-map-logical [options] device\n");

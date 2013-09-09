@@ -32,6 +32,7 @@
 #include "version.h"
 #include "utils.h"
 
+static void print_usage(void) __attribute__((noreturn));
 static void print_usage(void)
 {
 	fprintf(stderr, "usage: btrfs-zero-log dev\n");

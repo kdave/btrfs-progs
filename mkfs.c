@@ -264,6 +264,8 @@ static int create_data_reloc_tree(struct btrfs_trans_handle *trans,
 	return 0;
 }
 
+
+static void print_usage(void) __attribute__((noreturn));
 static void print_usage(void)
 {
 	fprintf(stderr, "usage: mkfs.btrfs [options] dev [ dev ... ]\n");
@@ -286,6 +288,7 @@ static void print_usage(void)
 	exit(1);
 }
 
+static void print_version(void) __attribute__((noreturn));
 static void print_version(void)
 {
 	fprintf(stderr, "mkfs.btrfs, part of %s\n", BTRFS_BUILD_VERSION);

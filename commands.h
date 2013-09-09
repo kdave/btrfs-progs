@@ -72,12 +72,12 @@ int handle_command_group(const struct cmd_group *grp, int argc,
 /* help.c */
 extern const char * const generic_cmd_help_usage[];
 
-void usage(const char * const *usagestr);
+void usage(const char * const *usagestr) __attribute__((noreturn));
 void usage_command(const struct cmd_struct *cmd, int full, int err);
 void usage_command_group(const struct cmd_group *grp, int all, int err);
 
-void help_unknown_token(const char *arg, const struct cmd_group *grp);
-void help_ambiguous_token(const char *arg, const struct cmd_group *grp);
+void help_unknown_token(const char *arg, const struct cmd_group *grp) __attribute__((noreturn));
+void help_ambiguous_token(const char *arg, const struct cmd_group *grp) __attribute__((noreturn));
 
 void help_command_group(const struct cmd_group *grp, int argc, char **argv);
 
