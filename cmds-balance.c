@@ -299,7 +299,7 @@ static int do_balance(const char *path, struct btrfs_ioctl_balance_args *args,
 	fd = open_file_or_dir(path, &dirstream);
 	if (fd < 0) {
 		fprintf(stderr, "ERROR: can't access to '%s'\n", path);
-		return 12;
+		return 1;
 	}
 
 	ret = ioctl(fd, BTRFS_IOC_BALANCE_V2, args);
@@ -330,7 +330,7 @@ static int do_balance(const char *path, struct btrfs_ioctl_balance_args *args,
 			if (e != EINPROGRESS)
 				fprintf(stderr, "There may be more info in "
 					"syslog - try dmesg | tail\n");
-			ret = 19;
+			ret = 1;
 		}
 	} else {
 		printf("Done, had to relocate %llu out of %llu chunks\n",
@@ -498,7 +498,7 @@ static int cmd_balance_pause(int argc, char **argv)
 	fd = open_file_or_dir(path, &dirstream);
 	if (fd < 0) {
 		fprintf(stderr, "ERROR: can't access to '%s'\n", path);
-		return 12;
+		return 1;
 	}
 
 	ret = ioctl(fd, BTRFS_IOC_BALANCE_CTL, BTRFS_BALANCE_CTL_PAUSE);
@@ -508,7 +508,10 @@ static int cmd_balance_pause(int argc, char **argv)
 	if (ret < 0) {
 		fprintf(stderr, "ERROR: balance pause on '%s' failed - %s\n",
 			path, (e == ENOTCONN) ? "Not running" : strerror(e));
-		return 19;
+		if (e == ENOTCONN)
+			return 2;
+		else
+			return 1;
 	}
 
 	return 0;
@@ -536,7 +539,7 @@ static int cmd_balance_cancel(int argc, char **argv)
 	fd = open_file_or_dir(path, &dirstream);
 	if (fd < 0) {
 		fprintf(stderr, "ERROR: can't access to '%s'\n", path);
-		return 12;
+		return 1;
 	}
 
 	ret = ioctl(fd, BTRFS_IOC_BALANCE_CTL, BTRFS_BALANCE_CTL_CANCEL);
@@ -546,7 +549,10 @@ static int cmd_balance_cancel(int argc, char **argv)
 	if (ret < 0) {
 		fprintf(stderr, "ERROR: balance cancel on '%s' failed - %s\n",
 			path, (e == ENOTCONN) ? "Not in progress" : strerror(e));
-		return 19;
+		if (e == ENOTCONN)
+			return 2;
+		else
+			return 1;
 	}
 
 	return 0;
@@ -575,7 +581,7 @@ static int cmd_balance_resume(int argc, char **argv)
 	fd = open_file_or_dir(path, &dirstream);
 	if (fd < 0) {
 		fprintf(stderr, "ERROR: can't access to '%s'\n", path);
-		return 12;
+		return 1;
 	}
 
 	memset(&args, 0, sizeof(args));
@@ -596,12 +602,15 @@ static int cmd_balance_resume(int argc, char **argv)
 				"failed - %s\n", path,
 				(e == ENOTCONN) ? "Not in progress" :
 						  "Already running");
-			return 19;
+			if (e == ENOTCONN)
+				return 2;
+			else
+				return 1;
 		} else {
 			fprintf(stderr,
 "ERROR: error during balancing '%s' - %s\n"
 "There may be more info in syslog - try dmesg | tail\n", path, strerror(e));
-			return 19;
+			return 1;
 		}
 	} else {
 		printf("Done, had to relocate %llu out of %llu chunks\n",
