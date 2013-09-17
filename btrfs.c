@@ -248,7 +248,6 @@ static const struct cmd_group btrfs_cmd_group = {
 		{ "scrub", cmd_scrub, NULL, &scrub_cmd_group, 0 },
 		{ "check", cmd_check, cmd_check_usage, NULL, 0 },
 		{ "rescue", cmd_rescue, NULL, &rescue_cmd_group, 0 },
-		{ "chunk-recover", cmd_chunk_recover, cmd_chunk_recover_usage, NULL, 0},
 		{ "restore", cmd_restore, cmd_restore_usage, NULL, 0 },
 		{ "inspect-internal", cmd_inspect, NULL, &inspect_cmd_group, 0 },
 		{ "send", cmd_send, cmd_send_usage, NULL, 0 },

@@ -1745,7 +1745,7 @@ fail_rc:
 }
 
 const char * const cmd_chunk_recover_usage[] = {
-	"btrfs chunk-recover [options] <device>",
+	"btrfs rescue chunk-recover [options] <device>",
 	"Recover the chunk tree by scanning the devices one by one.",
 	"",
 	"-y	Assume an answer of `yes' to all questions",

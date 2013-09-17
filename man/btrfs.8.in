@@ -69,9 +69,7 @@ btrfs \- control a btrfs filesystem
 .PP
 \fBbtrfs\fP \fBcheck\fP [\fIoptions\fP] \fI<device>\fP
 .PP
-\fBbtrfs\fP \fBrescue\fP [\fIoptions\fP] \fI<path>\fP
-.PP
-\fBbtrfs\fP \fBchunk-recover\fP [\fIoptions\fP] \fI<device>\fP
+\fBbtrfs\fP \fBrescue chunk-recover\fP [\fIoptions\fP] \fI<path>\fP
 .PP
 \fBbtrfs\fP \fBrestore\fP [\fIoptions\fP] \fI<device>\fP
 .PP
@@ -504,11 +502,7 @@ create a new extent tree.
 .RE
 .TP
 
-\fBrescue\fR [\fIoptions\fP] <path>\fR
-Rescue toolbox.
-.TP
-
-\fBchunk-recover\fR [\fIoptions\fP] <device>\fR
+\fBrescue chunk-recover\fR [\fIoptions\fP] <device>\fR
 Recover the chunk tree by scanning the devices one by one.
 .RS
 

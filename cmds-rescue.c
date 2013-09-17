@@ -27,6 +27,7 @@ static const char * const rescue_cmd_group_usage[] = {
 
 const struct cmd_group rescue_cmd_group = {
 	rescue_cmd_group_usage, NULL, {
+		{ "chunk-recover", cmd_chunk_recover, cmd_chunk_recover_usage, NULL, 0},
 		{ 0, 0, 0, 0, 0 }
 	}
 };
