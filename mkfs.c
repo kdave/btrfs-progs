@@ -1324,7 +1324,7 @@ int main(int ac, char **av)
 	int mixed = 0;
 	int data_profile_opt = 0;
 	int metadata_profile_opt = 0;
-	int nodiscard = 0;
+	int discard = 1;
 	int ssd = 0;
 	int force_overwrite = 0;
 
@@ -1409,7 +1409,7 @@ int main(int ac, char **av)
 				source_dir_set = 1;
 				break;
 			case 'K':
-				nodiscard=1;
+				discard = 0;
 				break;
 			default:
 				print_usage();
@@ -1507,7 +1507,7 @@ int main(int ac, char **av)
 		}
 		first_file = file;
 		ret = btrfs_prepare_device(fd, file, zero_end, &dev_block_count,
-					   block_count, &mixed, nodiscard);
+					   block_count, &mixed, discard);
 		if (block_count && block_count > dev_block_count) {
 			fprintf(stderr, "%s is smaller than requested size\n", file);
 			exit(1);
@@ -1614,7 +1614,7 @@ int main(int ac, char **av)
 			continue;
 		}
 		ret = btrfs_prepare_device(fd, file, zero_end, &dev_block_count,
-					   block_count, &mixed, nodiscard);
+					   block_count, &mixed, discard);
 		mixed = old_mixed;
 		BUG_ON(ret);
 
