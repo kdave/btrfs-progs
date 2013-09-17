@@ -22,6 +22,7 @@
 #include <sys/ioctl.h>
 #include <errno.h>
 #include <sys/stat.h>
+#include <getopt.h>
 
 #include "kerncompat.h"
 #include "ctree.h"
@@ -36,8 +37,9 @@ static const char * const device_cmd_group_usage[] = {
 };
 
 static const char * const cmd_add_dev_usage[] = {
-	"btrfs device add <device> [<device>...] <path>",
+	"btrfs device add [options] <device> [<device>...] <path>",
 	"Add a device to a filesystem",
+	"-K|--nodiscard    do not perform whole device TRIM",
 	NULL
 };
 
@@ -46,11 +48,33 @@ static int cmd_add_dev(int argc, char **argv)
 	char	*mntpnt;
 	int	i, fdmnt, ret=0, e;
 	DIR	*dirstream = NULL;
+	int discard = 1;
 
-	if (check_argc_min(argc, 3))
+	while (1) {
+		int long_index;
+		static struct option long_options[] = {
+			{ "nodiscard", optional_argument, NULL, 'K'},
+			{ 0, 0, 0, 0 }
+		};
+		int c = getopt_long(argc, argv, "K", long_options,
+					&long_index);
+		if (c < 0)
+			break;
+		switch (c) {
+		case 'K':
+			discard = 0;
+			break;
+		default:
+			usage(cmd_add_dev_usage);
+		}
+	}
+
+	argc = argc - optind;
+
+	if (check_argc_min(argc, 2))
 		usage(cmd_add_dev_usage);
 
-	mntpnt = argv[argc - 1];
+	mntpnt = argv[optind + argc - 1];
 
 	fdmnt = open_file_or_dir(mntpnt, &dirstream);
 	if (fdmnt < 0) {
@@ -58,7 +82,7 @@ static int cmd_add_dev(int argc, char **argv)
 		return 1;
 	}
 
-	for (i = 1; i < argc - 1; i++ ){
+	for (i = optind; i < optind + argc - 1; i++){
 		struct btrfs_ioctl_vol_args ioctl_args;
 		int	devfd, res;
 		u64 dev_block_count = 0;
@@ -99,7 +123,7 @@ static int cmd_add_dev(int argc, char **argv)
 		}
 
 		res = btrfs_prepare_device(devfd, argv[i], 1, &dev_block_count,
-					   0, &mixed, 0);
+					   0, &mixed, discard);
 		if (res) {
 			fprintf(stderr, "ERROR: Unable to init '%s'\n", argv[i]);
 			close(devfd);

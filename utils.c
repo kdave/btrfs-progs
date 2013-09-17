@@ -597,6 +597,8 @@ int btrfs_prepare_device(int fd, char *file, int zero_end, u64 *block_count_ret,
 	}
 
 	if (discard) {
+		fprintf(stderr, "Performing full device TRIM (%s) ...\n",
+				pretty_size(block_count));
 		/*
 		 * We intentionally ignore errors from the discard ioctl.  It is
 		 * not necessary for the mkfs functionality but just an optimization.

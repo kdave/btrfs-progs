@@ -47,7 +47,7 @@ btrfs \- control a btrfs filesystem
 \fBbtrfs\fP \fB[filesystem] balance status\fP [-v] \fI<path>\fP
 .PP
 .PP
-\fBbtrfs\fP \fBdevice add\fP \fI<device>\fP [\fI<device>...\fP] \fI<path>\fP
+\fBbtrfs\fP \fBdevice add\fP [-K] \fI<device>\fP [\fI<device>...\fP] \fI<path>\fP
 .PP
 \fBbtrfs\fP \fBdevice delete\fP \fI<device>\fP [\fI<device>...\fP] \fI<path>\fP
 .PP
@@ -381,8 +381,15 @@ be verbose
 .RE
 .TP
 
-\fBdevice add\fR\fI <dev> \fP[\fI<dev>...\fP] \fI<path>\fR
+\fBdevice add\fR\fI [-K] <dev> \fP[\fI<dev>...\fP] \fI<path>\fR
 Add device(s) to the filesystem identified by \fI<path>\fR.
+If applicable, a whole device discard (TRIM) operation is performed.
+.RS
+
+\fIOptions\fR
+.IP "\fB-K|--nodiscard\fP" 5
+do not perform discard by default
+.RE
 .TP
 
 \fBdevice delete\fR\fI <dev> \fP[\fI<dev>...\fP] \fI<path>\fR
