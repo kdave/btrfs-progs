@@ -28,10 +28,9 @@
 #include "ioctl.h"
 #include "utils.h"
 #include "volumes.h"
-
 #include "version.h"
-
 #include "commands.h"
+#include "list_sort.h"
 
 static const char * const filesystem_cmd_group_usage[] = {
 	"btrfs filesystem [<group>] <command> [<args>]",
@@ -183,6 +182,21 @@ static int uuid_search(struct btrfs_fs_devices *fs_devices, char *search)
 	return 0;
 }
 
+/*
+ * Sort devices by devid, ascending
+ */
+static int cmp_device_id(void *priv, struct list_head *a,
+		struct list_head *b)
+{
+	const struct btrfs_device *da = list_entry(a, struct btrfs_device,
+			dev_list);
+	const struct btrfs_device *db = list_entry(b, struct btrfs_device,
+			dev_list);
+
+	return da->devid < db->devid ? -1 :
+		da->devid > db->devid ? 1 : 0;
+}
+
 static void print_one_uuid(struct btrfs_fs_devices *fs_devices)
 {
 	char uuidbuf[37];
@@ -205,6 +219,7 @@ static void print_one_uuid(struct btrfs_fs_devices *fs_devices)
 	       (unsigned long long)total,
 	       pretty_size(device->super_bytes_used));
 
+	list_sort(NULL, &fs_devices->devices, cmp_device_id);
 	list_for_each(cur, &fs_devices->devices) {
 		device = list_entry(cur, struct btrfs_device, dev_list);
 
