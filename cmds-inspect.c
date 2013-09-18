@@ -301,6 +301,43 @@ out:
 	return ret ? 1 : 0;
 }
 
+static const char* const cmd_rootid_usage[] = {
+	"btrfs inspect-internal rootid <path>",
+	"Get tree ID of the containing subvolume of path.",
+	NULL
+};
+
+static int cmd_rootid(int argc, char **argv)
+{
+	int ret;
+	int fd = -1;
+	u64 rootid;
+	DIR *dirstream = NULL;
+
+	if (check_argc_exact(argc, 2))
+		usage(cmd_rootid_usage);
+
+	fd = open_file_or_dir(argv[1], &dirstream);
+	if (fd < 0) {
+		fprintf(stderr, "ERROR: can't access '%s'\n", argv[1]);
+		ret = -ENOENT;
+		goto out;
+	}
+
+	ret = lookup_ino_rootid(fd, &rootid);
+	if (ret) {
+		fprintf(stderr, "%s: rootid failed with ret=%d\n",
+			argv[0], ret);
+		goto out;
+	}
+
+	printf("%llu\n", (unsigned long long)rootid);
+out:
+	close_file_or_dir(fd, dirstream);
+
+	return !!ret;
+}
+
 const struct cmd_group inspect_cmd_group = {
 	inspect_cmd_group_usage, NULL, {
 		{ "inode-resolve", cmd_inode_resolve, cmd_inode_resolve_usage,
@@ -309,6 +346,7 @@ const struct cmd_group inspect_cmd_group = {
 			cmd_logical_resolve_usage, NULL, 0 },
 		{ "subvolid-resolve", cmd_subvolid_resolve,
 			cmd_subvolid_resolve_usage, NULL, 0 },
+		{ "rootid", cmd_rootid, cmd_rootid_usage, NULL, 0 },
 		NULL_CMD_STRUCT
 	}
 };

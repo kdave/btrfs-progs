@@ -1975,3 +1975,33 @@ int ask_user(char *question)
 	       (answer = strtok_r(buf, " \t\n\r", &saveptr)) &&
 	       (!strcasecmp(answer, "yes") || !strcasecmp(answer, "y"));
 }
+
+/*
+ * For a given:
+ * - file or directory return the containing tree root id
+ * - subvolume return it's own tree id
+ * - BTRFS_EMPTY_SUBVOL_DIR_OBJECTID (directory with ino == 2) the result is
+ *   undefined and function returns -1
+ */
+int lookup_ino_rootid(int fd, u64 *rootid)
+{
+	struct btrfs_ioctl_ino_lookup_args args;
+	int ret;
+	int e;
+
+	memset(&args, 0, sizeof(args));
+	args.treeid = 0;
+	args.objectid = BTRFS_FIRST_FREE_OBJECTID;
+
+	ret = ioctl(fd, BTRFS_IOC_INO_LOOKUP, &args);
+	e = errno;
+	if (ret) {
+		fprintf(stderr, "ERROR: Failed to lookup root id - %s\n",
+			strerror(e));
+		return ret;
+	}
+
+	*rootid = args.treeid;
+
+	return 0;
+}

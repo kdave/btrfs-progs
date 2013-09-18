@@ -80,6 +80,8 @@ btrfs \- control a btrfs filesystem
 .PP
 \fBbtrfs\fP \fBinspect-internal subvolid-resolve\fP \fI<subvolid>\fP \fI<path>\fP
 .PP
+\fBbtrfs\fP \fBinspect-internal rootid\fP \fI<path>\fP
+.PP
 .PP
 \fBbtrfs\fP \fBsend\fP [-v] [-p \fI<parent>\fP] [-c \fI<clone-src>\fP] [-f \fI<outfile>\fP] \fI<subvol>\fP
 .PP
@@ -575,6 +577,13 @@ not enough to read all the resolved results. The max value one can set is 64k.
 
 \fBinspect-internal subvolid-resolve\fP \fI<subvolid> <path>\fP
 Get file system paths for the given subvolume ID.
+.TP
+
+\fBinspect-internal rootid\fP \fI<path>\fP
+For a given file or directory, return the containing tree root id. For a
+subvolume return it's own tree id.
+
+The result is undefined for the so-called empty subvolumes (identified by inode number 2).
 .TP
 
 \fBsend\fP [-v] [-p \fI<parent>\fP] [-c \fI<clone-src>\fP] [-f \fI<outfile>\fP] \fI<subvol>\fP

@@ -81,4 +81,6 @@ int is_vol_small(char *file);
 int csum_tree_block(struct btrfs_root *root, struct extent_buffer *buf,
 			   int verify);
 int ask_user(char *question);
+int lookup_ino_rootid(int fd, u64 *rootid);
+
 #endif
