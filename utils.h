@@ -80,4 +80,5 @@ int test_num_disk_vs_raid(u64 metadata_profile, u64 data_profile,
 int is_vol_small(char *file);
 int csum_tree_block(struct btrfs_root *root, struct extent_buffer *buf,
 			   int verify);
+int ask_user(char *question);
 #endif

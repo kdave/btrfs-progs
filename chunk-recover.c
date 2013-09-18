@@ -1307,24 +1307,6 @@ fail_close_fd:
 	return ret;
 }
 
-/*
- * This reads a line from the stdin and only returns non-zero if the
- * first whitespace delimited token is a case insensitive match with yes
- * or y.
- */
-static int ask_user(char *question)
-{
-	char buf[30] = {0,};
-	char *saveptr = NULL;
-	char *answer;
-
-	printf("%s [y/N]: ", question);
-
-	return fgets(buf, sizeof(buf) - 1, stdin) &&
-	       (answer = strtok_r(buf, " \t\n\r", &saveptr)) &&
-	       (!strcasecmp(answer, "yes") || !strcasecmp(answer, "y"));
-}
-
 static int btrfs_get_device_extents(u64 chunk_object,
 				    struct list_head *orphan_devexts,
 				    struct list_head *ret_list)

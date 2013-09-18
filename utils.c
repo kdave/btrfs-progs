@@ -1957,3 +1957,21 @@ int is_vol_small(char *file)
 		return 0;
 	}
 }
+
+/*
+ * This reads a line from the stdin and only returns non-zero if the
+ * first whitespace delimited token is a case insensitive match with yes
+ * or y.
+ */
+int ask_user(char *question)
+{
+	char buf[30] = {0,};
+	char *saveptr = NULL;
+	char *answer;
+
+	printf("%s [y/N]: ", question);
+
+	return fgets(buf, sizeof(buf) - 1, stdin) &&
+	       (answer = strtok_r(buf, " \t\n\r", &saveptr)) &&
+	       (!strcasecmp(answer, "yes") || !strcasecmp(answer, "y"));
+}
