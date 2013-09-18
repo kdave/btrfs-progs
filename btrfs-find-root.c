@@ -82,7 +82,7 @@ static struct btrfs_root *open_ctree_broken(int fd, const char *device)
 		return NULL;
 	}
 
-	ret = btrfs_scan_fs_devices(fd, device, &fs_devices, 0);
+	ret = btrfs_scan_fs_devices(fd, device, &fs_devices, 0, 1);
 	if (ret)
 		goto out;
 
