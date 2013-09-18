@@ -24,26 +24,6 @@ if [ $? == 0 -a -d .git ]; then
     fi
 fi
 
-which hg &> /dev/null
-if [ $? == 0 -a -d .hg ]; then
-	last=$(hg tags | grep -m1 -o '^v[0-9.]\+')
-	 
-	# now check if the repo has commits since then...
-	if [[ $(hg id -t) == $last || \
-	    $(hg di -r "$last:." | awk '/^diff/{print $NF}' | sort -u) == .hgtags ]]
-	then
-	    # check if it's dirty
-	    if [[ $(hg id | cut -d' ' -f1) == *+ ]]; then
-		v=$last+
-	    else
-		v=$last
-	    fi
-	else
-	    # includes dirty flag
-	    v=$last+$(hg id -i)
-	fi
-fi
- 
 echo "#ifndef __BUILD_VERSION" > .build-version.h
 echo "#define __BUILD_VERSION" >> .build-version.h
 echo "#define BTRFS_BUILD_VERSION \"Btrfs $v\"" >> .build-version.h
