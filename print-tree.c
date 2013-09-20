@@ -730,7 +730,7 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 	print_uuids(l);
 	fflush(stdout);
 	for (i = 0 ; i < nr ; i++) {
-		item = btrfs_item_nr(l, i);
+		item = btrfs_item_nr(i);
 		btrfs_item_key(l, &disk_key, i);
 		objectid = btrfs_disk_key_objectid(&disk_key);
 		type = btrfs_disk_key_type(&disk_key);

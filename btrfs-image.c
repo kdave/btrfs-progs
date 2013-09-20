@@ -516,7 +516,7 @@ static void zero_items(struct metadump_struct *md, u8 *dst,
 	int i, extent_type;
 
 	for (i = 0; i < nritems; i++) {
-		item = btrfs_item_nr(src, i);
+		item = btrfs_item_nr(i);
 		btrfs_item_key_to_cpu(src, &key, i);
 		if (key.type == BTRFS_CSUM_ITEM_KEY) {
 			size = btrfs_item_size_nr(src, i);
@@ -1459,7 +1459,7 @@ static void truncate_item(struct extent_buffer *eb, int slot, u32 new_size)
 
 	for (i = slot; i < nritems; i++) {
 		u32 ioff;
-		item = btrfs_item_nr(eb, i);
+		item = btrfs_item_nr(i);
 		ioff = btrfs_item_offset(eb, item);
 		btrfs_set_item_offset(eb, item, ioff + size_diff);
 	}
@@ -1467,7 +1467,7 @@ static void truncate_item(struct extent_buffer *eb, int slot, u32 new_size)
 	memmove_extent_buffer(eb, btrfs_leaf_data(eb) + data_end + size_diff,
 			      btrfs_leaf_data(eb) + data_end,
 			      old_data_start + new_size - data_end);
-	item = btrfs_item_nr(eb, slot);
+	item = btrfs_item_nr(slot);
 	btrfs_set_item_size(eb, item, new_size);
 }
 
