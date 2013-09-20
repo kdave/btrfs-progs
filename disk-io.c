@@ -50,7 +50,7 @@ static int check_tree_block(struct btrfs_root *root, struct extent_buffer *buf)
 	fs_devices = root->fs_info->fs_devices;
 	while (fs_devices) {
 		if (!memcmp_extent_buffer(buf, fs_devices->fsid,
-					  (unsigned long)btrfs_header_fsid(buf),
+					  (unsigned long)btrfs_header_fsid(),
 					  BTRFS_FSID_SIZE)) {
 			ret = 0;
 			break;

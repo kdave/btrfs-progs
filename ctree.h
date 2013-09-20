@@ -1777,7 +1777,7 @@ static inline void btrfs_set_header_backref_rev(struct extent_buffer *eb,
 	btrfs_set_header_flags(eb, flags);
 }
 
-static inline u8 *btrfs_header_fsid(struct extent_buffer *eb)
+static inline u8 *btrfs_header_fsid(void)
 {
 	unsigned long ptr = offsetof(struct btrfs_header, fsid);
 	return (u8 *)ptr;
