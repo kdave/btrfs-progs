@@ -831,11 +831,11 @@ static int is_same_blk_file(const char* a, const char* b)
 	char real_a[PATH_MAX];
 	char real_b[PATH_MAX];
 
-	if(!realpath(a, real_a) ||
-	   !realpath(b, real_b))
-	{
-		return -errno;
-	}
+	if(!realpath(a, real_a))
+		strcpy(real_a, a);
+
+	if (!realpath(b, real_b))
+		strcpy(real_b, b);
 
 	/* Identical path? */
 	if(strcmp(real_a, real_b) == 0)
@@ -876,8 +876,8 @@ static int is_same_loop_file(const char* a, const char* b)
 {
 	char res_a[PATH_MAX];
 	char res_b[PATH_MAX];
-	const char* final_a;
-	const char* final_b;
+	const char* final_a = NULL;
+	const char* final_b = NULL;
 	int ret;
 
 	/* Resolve a if it is a loop device */
@@ -886,10 +886,13 @@ static int is_same_loop_file(const char* a, const char* b)
 			return 0;
 		return ret;
 	} else if (ret) {
-		if ((ret = resolve_loop_device(a, res_a, sizeof(res_a))) < 0)
-			return ret;
-
-		final_a = res_a;
+		ret = resolve_loop_device(a, res_a, sizeof(res_a));
+		if (ret < 0) {
+			if (errno != EPERM)
+				return ret;
+		} else {
+			final_a = res_a;
+		}
 	} else {
 		final_a = a;
 	}
@@ -900,10 +903,13 @@ static int is_same_loop_file(const char* a, const char* b)
 			return 0;
 		return ret;
 	} else if (ret) {
-		if((ret = resolve_loop_device(b, res_b, sizeof(res_b))) < 0)
-			return ret;
-
-		final_b = res_b;
+		ret = resolve_loop_device(b, res_b, sizeof(res_b));
+		if (ret < 0) {
+			if (errno != EPERM)
+				return ret;
+		} else {
+			final_b = res_b;
+		}
 	} else {
 		final_b = b;
 	}
