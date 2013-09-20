@@ -210,9 +210,11 @@ int clear_extent_bits(struct extent_io_tree *tree, u64 start,
 	int set = 0;
 
 again:
-	prealloc = alloc_extent_state();
-	if (!prealloc)
-		return -ENOMEM;
+	if (!prealloc) {
+		prealloc = alloc_extent_state();
+		if (!prealloc)
+			return -ENOMEM;
+	}
 
 	/*
 	 * this search will find the extents that end after
