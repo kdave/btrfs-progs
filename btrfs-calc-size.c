@@ -228,7 +228,7 @@ static void print_seek_histogram(struct root_stats *stat)
 	u64 max_seek = stat->max_seek_len;
 	int digits = 1;
 
-	if (stat->total_seeks < 5)
+	if (stat->total_seeks < 20)
 		return;
 
 	while ((max_seek /= 10))
