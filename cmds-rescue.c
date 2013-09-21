@@ -28,6 +28,7 @@ static const char * const rescue_cmd_group_usage[] = {
 };
 
 int btrfs_recover_chunk_tree(char *path, int verbose, int yes);
+int btrfs_recover_superblocks(char *path, int verbose, int yes);
 
 const char * const cmd_chunk_recover_usage[] = {
 	"btrfs rescue chunk-recover [options] <device>",
@@ -36,6 +37,15 @@ const char * const cmd_chunk_recover_usage[] = {
 	"-y	Assume an answer of `yes' to all questions",
 	"-v	Verbose mode",
 	"-h	Help",
+	NULL
+};
+
+const char * const cmd_super_recover_usage[] = {
+	"btrfs rescue super-recover [options] <device>",
+	"Recover bad superblocks from good copies",
+	"",
+	"-y	Assume an answer of `yes' to all questions",
+	"-v	Verbose mode",
 	NULL
 };
 
@@ -87,9 +97,54 @@ int cmd_chunk_recover(int argc, char *argv[])
 	return ret;
 }
 
+/*
+ * return codes:
+ *   0 : All superblocks are valid, no need to recover
+ *   1 : Usage or syntax error
+ *   2 : Recover all bad superblocks successfully
+ *   3 : Fail to Recover bad supeblocks
+ *   4 : Abort to recover bad superblocks
+ */
+int cmd_super_recover(int argc, char **argv)
+{
+	int ret;
+	int verbose = 0;
+	int yes = 0;
+	char *dname;
+
+	while (1) {
+		int c = getopt(argc, argv, "vy");
+		if (c < 0)
+			break;
+		switch (c) {
+		case 'v':
+			verbose = 1;
+			break;
+		case 'y':
+			yes = 1;
+			break;
+		default:
+			usage(cmd_super_recover_usage);
+		}
+	}
+	argc = argc - optind;
+	if (argc != 1)
+		usage(cmd_super_recover_usage);
+
+	dname = argv[optind];
+	ret = check_mounted(dname);
+	if (ret) {
+		fprintf(stderr, "the device is busy\n");
+		return 1;
+	}
+	ret = btrfs_recover_superblocks(dname, verbose, yes);
+	return ret;
+}
+
 const struct cmd_group rescue_cmd_group = {
 	rescue_cmd_group_usage, NULL, {
 		{ "chunk-recover", cmd_chunk_recover, cmd_chunk_recover_usage, NULL, 0},
+		{ "super-recover", cmd_super_recover, cmd_super_recover_usage, NULL, 0},
 		{ 0, 0, 0, 0, 0 }
 	}
 };

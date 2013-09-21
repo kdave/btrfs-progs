@@ -70,6 +70,8 @@ struct btrfs_fs_info *open_ctree_fs_info_restore(const char *filename,
 struct btrfs_fs_info *open_ctree_fs_info(const char *filename,
 					 u64 sb_bytenr, u64 root_tree_bytenr,
 					 int writes, int partial);
+struct btrfs_root *open_ctree_with_broken_super(const char *filename,
+					u64 sb_bytenr, int writes);
 int close_ctree(struct btrfs_root *root);
 int write_all_supers(struct btrfs_root *root);
 int write_ctree_super(struct btrfs_trans_handle *trans,

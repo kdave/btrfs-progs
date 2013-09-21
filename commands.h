@@ -96,6 +96,7 @@ extern const char * const cmd_send_usage[];
 extern const char * const cmd_receive_usage[];
 extern const char * const cmd_check_usage[];
 extern const char * const cmd_chunk_recover_usage[];
+extern const char * const cmd_super_recover_usage[];
 extern const char * const cmd_restore_usage[];
 extern const char * const cmd_rescue_usage[];
 
@@ -106,6 +107,7 @@ int cmd_device(int argc, char **argv);
 int cmd_scrub(int argc, char **argv);
 int cmd_check(int argc, char **argv);
 int cmd_chunk_recover(int argc, char **argv);
+int cmd_super_recover(int argc, char **argv);
 int cmd_inspect(int argc, char **argv);
 int cmd_send(int argc, char **argv);
 int cmd_receive(int argc, char **argv);
