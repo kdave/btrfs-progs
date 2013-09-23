@@ -786,6 +786,15 @@ static int cmd_find_new(int argc, char **argv)
 		fprintf(stderr, "ERROR: can't access '%s'\n", subvol);
 		return 1;
 	}
+
+	ret = ioctl(fd, BTRFS_IOC_SYNC);
+	if (ret < 0) {
+		fprintf(stderr, "ERROR: unable to fs-syncing '%s' - %s\n",
+			subvol, strerror(errno));
+		close_file_or_dir(fd, dirstream);
+		return 1;
+	}
+
 	ret = btrfs_list_find_updated_files(fd, 0, last_gen);
 	close_file_or_dir(fd, dirstream);
 	return !!ret;
