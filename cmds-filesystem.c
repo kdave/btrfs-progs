@@ -43,13 +43,110 @@ static const char * const cmd_df_usage[] = {
 	NULL
 };
 
+static char *group_type_str(u64 flag)
+{
+	switch (flag & BTRFS_BLOCK_GROUP_TYPE_MASK) {
+	case BTRFS_BLOCK_GROUP_DATA:
+		return "Data";
+	case BTRFS_BLOCK_GROUP_SYSTEM:
+		return "System";
+	case BTRFS_BLOCK_GROUP_METADATA:
+		return "Metadata";
+	case BTRFS_BLOCK_GROUP_DATA|BTRFS_BLOCK_GROUP_METADATA:
+		return "Data+Metadata";
+	default:
+		return "unknown";
+	}
+}
+
+static char *group_profile_str(u64 flag)
+{
+	switch (flag & BTRFS_BLOCK_GROUP_PROFILE_MASK) {
+	case 0:
+		return "single";
+	case BTRFS_BLOCK_GROUP_RAID0:
+		return "RAID0";
+	case BTRFS_BLOCK_GROUP_RAID1:
+		return "RAID1";
+	case BTRFS_BLOCK_GROUP_RAID5:
+		return "RAID5";
+	case BTRFS_BLOCK_GROUP_RAID6:
+		return "RAID6";
+	case BTRFS_BLOCK_GROUP_DUP:
+		return "DUP";
+	case BTRFS_BLOCK_GROUP_RAID10:
+		return "RAID10";
+	default:
+		return "unknown";
+	}
+}
+
+static int get_df(int fd, struct btrfs_ioctl_space_args **sargs_ret)
+{
+	u64 count = 0;
+	int ret, e;
+	struct btrfs_ioctl_space_args *sargs;
+
+	sargs = malloc(sizeof(struct btrfs_ioctl_space_args));
+	if (!sargs)
+		return -ENOMEM;
+
+	sargs->space_slots = 0;
+	sargs->total_spaces = 0;
+
+	ret = ioctl(fd, BTRFS_IOC_SPACE_INFO, sargs);
+	e = errno;
+	if (ret) {
+		fprintf(stderr, "ERROR: couldn't get space info - %s\n",
+			strerror(e));
+		free(sargs);
+		return ret;
+	}
+	if (!sargs->total_spaces) {
+		free(sargs);
+		return 0;
+	}
+	count = sargs->total_spaces;
+	free(sargs);
+
+	sargs = malloc(sizeof(struct btrfs_ioctl_space_args) +
+			(count * sizeof(struct btrfs_ioctl_space_info)));
+	if (!sargs)
+		ret = -ENOMEM;
+
+	sargs->space_slots = count;
+	sargs->total_spaces = 0;
+	ret = ioctl(fd, BTRFS_IOC_SPACE_INFO, sargs);
+	e = errno;
+	if (ret) {
+		fprintf(stderr, "ERROR: get space info count %llu - %s\n",
+				count, strerror(e));
+		free(sargs);
+		return ret;
+	}
+	*sargs_ret = sargs;
+	return 0;
+}
+
+static void print_df(struct btrfs_ioctl_space_args *sargs)
+{
+	u64 i;
+	struct btrfs_ioctl_space_info *sp = sargs->spaces;
+
+	for (i = 0; i < sargs->total_spaces; i++, sp++) {
+		printf("%s, %s: total=%s, used=%s\n",
+			group_type_str(sp->flags),
+			group_profile_str(sp->flags),
+			pretty_size(sp->total_bytes),
+			pretty_size(sp->used_bytes));
+	}
+}
+
 static int cmd_df(int argc, char **argv)
 {
-	struct btrfs_ioctl_space_args *sargs, *sargs_orig;
-	u64 count = 0, i;
+	struct btrfs_ioctl_space_args *sargs = NULL;
 	int ret;
 	int fd;
-	int e;
 	char *path;
 	DIR  *dirstream = NULL;
 
@@ -63,101 +160,16 @@ static int cmd_df(int argc, char **argv)
 		fprintf(stderr, "ERROR: can't access to '%s'\n", path);
 		return 1;
 	}
+	ret = get_df(fd, &sargs);
 
-	sargs_orig = sargs = malloc(sizeof(struct btrfs_ioctl_space_args));
-	if (!sargs) {
-		ret = -ENOMEM;
-		goto out;
+	if (!ret && sargs) {
+		print_df(sargs);
+		free(sargs);
+	} else {
+		fprintf(stderr, "ERROR: get_df failed %s\n", strerror(ret));
 	}
 
-	sargs->space_slots = 0;
-	sargs->total_spaces = 0;
-
-	ret = ioctl(fd, BTRFS_IOC_SPACE_INFO, sargs);
-	e = errno;
-	if (ret) {
-		fprintf(stderr, "ERROR: couldn't get space info on '%s' - %s\n",
-			path, strerror(e));
-		goto out;
-	}
-	if (!sargs->total_spaces) {
-		ret = 0;
-		goto out;
-	}
-
-	count = sargs->total_spaces;
-
-	sargs = realloc(sargs, sizeof(struct btrfs_ioctl_space_args) +
-			(count * sizeof(struct btrfs_ioctl_space_info)));
-	if (!sargs) {
-		sargs = sargs_orig;
-		ret = -ENOMEM;
-		goto out;
-	}
-
-	sargs->space_slots = count;
-	sargs->total_spaces = 0;
-
-	ret = ioctl(fd, BTRFS_IOC_SPACE_INFO, sargs);
-	e = errno;
-	if (ret) {
-		fprintf(stderr, "ERROR: couldn't get space info on '%s' - %s\n",
-			path, strerror(e));
-		goto out;
-	}
-
-	for (i = 0; i < sargs->total_spaces; i++) {
-		char description[80];
-		int written = 0;
-		u64 flags = sargs->spaces[i].flags;
-
-		memset(description, 0, 80);
-
-		if (flags & BTRFS_BLOCK_GROUP_DATA) {
-			if (flags & BTRFS_BLOCK_GROUP_METADATA) {
-				snprintf(description, 14, "%s",
-					 "Data+Metadata");
-				written += 13;
-			} else {
-				snprintf(description, 5, "%s", "Data");
-				written += 4;
-			}
-		} else if (flags & BTRFS_BLOCK_GROUP_SYSTEM) {
-			snprintf(description, 7, "%s", "System");
-			written += 6;
-		} else if (flags & BTRFS_BLOCK_GROUP_METADATA) {
-			snprintf(description, 9, "%s", "Metadata");
-			written += 8;
-		}
-
-		if (flags & BTRFS_BLOCK_GROUP_RAID0) {
-			snprintf(description+written, 8, "%s", ", RAID0");
-			written += 7;
-		} else if (flags & BTRFS_BLOCK_GROUP_RAID1) {
-			snprintf(description+written, 8, "%s", ", RAID1");
-			written += 7;
-		} else if (flags & BTRFS_BLOCK_GROUP_DUP) {
-			snprintf(description+written, 6, "%s", ", DUP");
-			written += 5;
-		} else if (flags & BTRFS_BLOCK_GROUP_RAID10) {
-			snprintf(description+written, 9, "%s", ", RAID10");
-			written += 8;
-		} else if (flags & BTRFS_BLOCK_GROUP_RAID5) {
-			snprintf(description+written, 9, "%s", ", RAID5");
-			written += 7;
-		} else if (flags & BTRFS_BLOCK_GROUP_RAID6) {
-			snprintf(description+written, 9, "%s", ", RAID6");
-			written += 7;
-		}
-
-		printf("%s: total=%s, used=%s\n", description,
-			pretty_size(sargs->spaces[i].total_bytes),
-			pretty_size(sargs->spaces[i].used_bytes));
-	}
-out:
 	close_file_or_dir(fd, dirstream);
-	free(sargs);
-
 	return !!ret;
 }
 
