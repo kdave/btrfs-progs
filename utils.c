@@ -1914,6 +1914,58 @@ int test_dev_for_mkfs(char *file, int force_overwrite, char *estr)
 	return 0;
 }
 
+int test_skip_this_disk(char *path)
+{
+	int fd;
+
+	/*
+	 * this will eliminate disks which are mounted (btrfs)
+	 * and non-dm disk path when dm is enabled
+	 */
+	fd = open(path, O_RDWR|O_EXCL);
+	if (fd < 0)
+		return 1;
+	close(fd);
+	return 0;
+}
+
+int btrfs_scan_lblkid(int update_kernel)
+{
+	int fd = -1;
+	u64 num_devices;
+	struct btrfs_fs_devices *tmp_devices;
+	blkid_dev_iterate iter = NULL;
+	blkid_dev dev = NULL;
+	blkid_cache cache = NULL;
+	char path[PATH_MAX];
+
+	if (blkid_get_cache(&cache, 0) < 0) {
+		printf("ERROR: lblkid cache get failed\n");
+		return 1;
+	}
+	blkid_probe_all(cache);
+	iter = blkid_dev_iterate_begin(cache);
+	blkid_dev_set_search(iter, "TYPE", "btrfs");
+	while (blkid_dev_next(iter, &dev) == 0) {
+		dev = blkid_verify(cache, dev);
+		if (!dev)
+			continue;
+		/* if we are here its definitly a btrfs disk*/
+		strcpy(path, blkid_dev_devname(dev));
+		if (test_skip_this_disk(path))
+			continue;
+
+		fd = open(path, O_RDONLY);
+		btrfs_scan_one_device(fd, path, &tmp_devices,
+				&num_devices, BTRFS_SUPER_INFO_OFFSET);
+		close(fd);
+		if (update_kernel)
+			btrfs_register_one_device(path);
+	}
+	blkid_dev_iterate_end(iter);
+	return 0;
+}
+
 /*
  * scans devs for the btrfs
 */
@@ -1927,6 +1979,9 @@ int scan_for_btrfs(int where, int update_kernel)
 		break;
 	case BTRFS_SCAN_DEV:
 		ret = btrfs_scan_one_dir("/dev", update_kernel);
+		break;
+	case BTRFS_SCAN_LBLKID:
+		ret = btrfs_scan_lblkid(update_kernel);
 		break;
 	}
 	return ret;

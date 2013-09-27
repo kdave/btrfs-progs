@@ -27,6 +27,7 @@
 
 #define BTRFS_SCAN_PROC	1
 #define BTRFS_SCAN_DEV		2
+#define BTRFS_SCAN_LBLKID	(1ULL << 3)
 
 int make_btrfs(int fd, const char *device, const char *label,
 	       u64 blocks[6], u64 num_bytes, u32 nodesize,
@@ -82,5 +83,6 @@ int csum_tree_block(struct btrfs_root *root, struct extent_buffer *buf,
 			   int verify);
 int ask_user(char *question);
 int lookup_ino_rootid(int fd, u64 *rootid);
+int btrfs_scan_lblkid(int update_kernel);
 
 #endif
