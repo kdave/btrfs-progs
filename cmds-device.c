@@ -40,6 +40,7 @@ static const char * const cmd_add_dev_usage[] = {
 	"btrfs device add [options] <device> [<device>...] <path>",
 	"Add a device to a filesystem",
 	"-K|--nodiscard    do not perform whole device TRIM",
+	"-f|--force        force overwrite existing filesystem on the disk",
 	NULL
 };
 
@@ -49,20 +50,26 @@ static int cmd_add_dev(int argc, char **argv)
 	int	i, fdmnt, ret=0, e;
 	DIR	*dirstream = NULL;
 	int discard = 1;
+	int force = 0;
+	char estr[100];
 
 	while (1) {
 		int long_index;
 		static struct option long_options[] = {
 			{ "nodiscard", optional_argument, NULL, 'K'},
+			{ "force", no_argument, NULL, 'f'},
 			{ 0, 0, 0, 0 }
 		};
-		int c = getopt_long(argc, argv, "K", long_options,
+		int c = getopt_long(argc, argv, "Kf", long_options,
 					&long_index);
 		if (c < 0)
 			break;
 		switch (c) {
 		case 'K':
 			discard = 0;
+			break;
+		case 'f':
+			force = 1;
 			break;
 		default:
 			usage(cmd_add_dev_usage);
@@ -86,38 +93,17 @@ static int cmd_add_dev(int argc, char **argv)
 		struct btrfs_ioctl_vol_args ioctl_args;
 		int	devfd, res;
 		u64 dev_block_count = 0;
-		struct stat st;
 		int mixed = 0;
 
-		res = check_mounted(argv[i]);
-		if (res < 0) {
-			fprintf(stderr, "error checking %s mount status\n",
-				argv[i]);
-			ret++;
-			continue;
-		}
-		if (res == 1) {
-			fprintf(stderr, "%s is mounted\n", argv[i]);
-			ret++;
+		res = test_dev_for_mkfs(argv[i], force, estr);
+		if (res) {
+			fprintf(stderr, "%s", estr);
 			continue;
 		}
 
 		devfd = open(argv[i], O_RDWR);
 		if (devfd < 0) {
 			fprintf(stderr, "ERROR: Unable to open device '%s'\n", argv[i]);
-			ret++;
-			continue;
-		}
-		res = fstat(devfd, &st);
-		if (res) {
-			fprintf(stderr, "ERROR: Unable to stat '%s'\n", argv[i]);
-			close(devfd);
-			ret++;
-			continue;
-		}
-		if (!S_ISBLK(st.st_mode)) {
-			fprintf(stderr, "ERROR: '%s' is not a block device\n", argv[i]);
-			close(devfd);
 			ret++;
 			continue;
 		}
