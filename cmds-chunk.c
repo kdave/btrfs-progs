@@ -744,8 +744,7 @@ static int scan_one_device(struct recover_control *rc, int fd,
 			break;
 
 		if (memcmp_extent_buffer(buf, rc->fs_devices->fsid,
-					 (unsigned long)btrfs_header_fsid(),
-					 BTRFS_FSID_SIZE)) {
+					 btrfs_header_fsid(), BTRFS_FSID_SIZE)) {
 			bytenr += rc->sectorsize;
 			continue;
 		}
@@ -1047,8 +1046,7 @@ static int __rebuild_chunk_root(struct btrfs_trans_handle *trans,
 	btrfs_set_header_backref_rev(cow, BTRFS_MIXED_BACKREF_REV);
 	btrfs_set_header_owner(cow, BTRFS_CHUNK_TREE_OBJECTID);
 	write_extent_buffer(cow, root->fs_info->fsid,
-			(unsigned long)btrfs_header_fsid(),
-			BTRFS_FSID_SIZE);
+			btrfs_header_fsid(), BTRFS_FSID_SIZE);
 
 	write_extent_buffer(cow, root->fs_info->chunk_tree_uuid,
 			(unsigned long)btrfs_header_chunk_tree_uuid(cow),

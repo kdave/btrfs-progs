@@ -191,7 +191,7 @@ static void print_uuids(struct extent_buffer *eb)
 	char chunk_uuid[37];
 	u8 disk_uuid[BTRFS_UUID_SIZE];
 
-	read_extent_buffer(eb, disk_uuid, (unsigned long)btrfs_header_fsid(),
+	read_extent_buffer(eb, disk_uuid, btrfs_header_fsid(),
 			   BTRFS_FSID_SIZE);
 
 	fs_uuid[36] = '\0';
