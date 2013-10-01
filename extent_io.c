@@ -587,6 +587,7 @@ static struct extent_buffer *__alloc_extent_buffer(struct extent_io_tree *tree,
 	eb->dev_bytenr = (u64)-1;
 	eb->cache_node.start = bytenr;
 	eb->cache_node.size = blocksize;
+	INIT_LIST_HEAD(&eb->recow);
 
 	free_some_buffers(tree);
 	ret = insert_cache_extent(&tree->cache, &eb->cache_node);
@@ -610,6 +611,7 @@ void free_extent_buffer(struct extent_buffer *eb)
 		struct extent_io_tree *tree = eb->tree;
 		BUG_ON(eb->flags & EXTENT_DIRTY);
 		list_del_init(&eb->lru);
+		list_del_init(&eb->recow);
 		remove_cache_extent(&tree->cache, &eb->cache_node);
 		BUG_ON(tree->cache_size < eb->len);
 		tree->cache_size -= eb->len;

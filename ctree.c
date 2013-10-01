@@ -293,7 +293,8 @@ int __btrfs_cow_block(struct btrfs_trans_handle *trans,
 	write_extent_buffer(cow, root->fs_info->fsid,
 			    btrfs_header_fsid(), BTRFS_FSID_SIZE);
 
-	WARN_ON(btrfs_header_generation(buf) > trans->transid);
+	WARN_ON(!(buf->flags & EXTENT_BAD_TRANSID) &&
+		btrfs_header_generation(buf) > trans->transid);
 
 	update_ref_for_cow(trans, root, buf, cow);
 
@@ -316,6 +317,10 @@ int __btrfs_cow_block(struct btrfs_trans_handle *trans,
 
 		btrfs_free_extent(trans, root, buf->start, buf->len,
 				  0, root->root_key.objectid, level, 1);
+	}
+	if (!list_empty(&buf->recow)) {
+		list_del_init(&buf->recow);
+		free_extent_buffer(buf);
 	}
 	free_extent_buffer(buf);
 	btrfs_mark_buffer_dirty(cow);

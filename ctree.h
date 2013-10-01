@@ -966,6 +966,7 @@ struct btrfs_fs_info {
 
 	struct btrfs_extent_ops *extent_ops;
 	struct list_head dirty_cowonly_roots;
+	struct list_head recow_ebs;
 
 	struct btrfs_fs_devices *fs_devices;
 	struct list_head space_info;

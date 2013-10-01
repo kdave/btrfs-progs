@@ -5958,6 +5958,47 @@ static int reinit_extent_tree(struct btrfs_fs_info *fs_info)
 	return btrfs_commit_transaction(trans, fs_info->extent_root);
 }
 
+static int recow_extent_buffer(struct btrfs_root *root, struct extent_buffer *eb)
+{
+	struct btrfs_path *path;
+	struct btrfs_trans_handle *trans;
+	struct btrfs_key key;
+	int ret;
+
+	printf("Recowing metadata block %llu\n", eb->start);
+	key.objectid = btrfs_header_owner(eb);
+	key.type = BTRFS_ROOT_ITEM_KEY;
+	key.offset = (u64)-1;
+
+	root = btrfs_read_fs_root(root->fs_info, &key);
+	if (IS_ERR(root)) {
+		fprintf(stderr, "Couldn't find owner root %llu\n",
+			key.objectid);
+		return PTR_ERR(root);
+	}
+
+	path = btrfs_alloc_path();
+	if (!path)
+		return -ENOMEM;
+
+	trans = btrfs_start_transaction(root, 1);
+	if (IS_ERR(trans)) {
+		btrfs_free_path(path);
+		return PTR_ERR(trans);
+	}
+
+	path->lowest_level = btrfs_header_level(eb);
+	if (path->lowest_level)
+		btrfs_node_key_to_cpu(eb, &key, 0);
+	else
+		btrfs_item_key_to_cpu(eb, &key, 0);
+
+	ret = btrfs_search_slot(trans, root, &key, path, 0, 1);
+	btrfs_commit_transaction(trans, root);
+	btrfs_free_path(path);
+	return ret;
+}
+
 static struct option long_options[] = {
 	{ "super", 1, NULL, 's' },
 	{ "repair", 0, NULL, 0 },
@@ -6108,6 +6149,23 @@ int cmd_check(int argc, char **argv)
 
 	fprintf(stderr, "checking root refs\n");
 	ret = check_root_refs(root, &root_cache);
+	if (ret)
+		goto out;
+
+	while (repair && !list_empty(&root->fs_info->recow_ebs)) {
+		struct extent_buffer *eb;
+
+		eb = list_first_entry(&root->fs_info->recow_ebs,
+				      struct extent_buffer, recow);
+		ret = recow_extent_buffer(root, eb);
+		if (ret)
+			break;
+	}
+
+	if (!list_empty(&root->fs_info->recow_ebs)) {
+		fprintf(stderr, "Transid errors in file system\n");
+		ret = 1;
+	}
 out:
 	free_root_recs_tree(&root_cache);
 	close_ctree(root);

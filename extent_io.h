@@ -39,6 +39,7 @@
 #define EXTENT_DEFRAG_DONE (1 << 7)
 #define EXTENT_BUFFER_FILLED (1 << 8)
 #define EXTENT_CSUM (1 << 9)
+#define EXTENT_BAD_TRANSID (1 << 10)
 #define EXTENT_IOBITS (EXTENT_LOCKED | EXTENT_WRITEBACK)
 
 #define BLOCK_GROUP_DATA     EXTENT_WRITEBACK
@@ -72,6 +73,7 @@ struct extent_buffer {
 	u32 len;
 	struct extent_io_tree *tree;
 	struct list_head lru;
+	struct list_head recow;
 	int refs;
 	int flags;
 	int fd;

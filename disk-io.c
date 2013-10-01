@@ -180,6 +180,7 @@ static int verify_parent_transid(struct extent_io_tree *io_tree,
 	       (unsigned long long)parent_transid,
 	       (unsigned long long)btrfs_header_generation(eb));
 	if (ignore) {
+		eb->flags |= EXTENT_BAD_TRANSID;
 		printk("Ignoring transid failure\n");
 		return 0;
 	}
@@ -274,6 +275,12 @@ struct extent_buffer *read_tree_block(struct btrfs_root *root, u64 bytenr,
 		    csum_tree_block(root, eb, 1) == 0 &&
 		    verify_parent_transid(eb->tree, eb, parent_transid, ignore)
 		    == 0) {
+			if (eb->flags & EXTENT_BAD_TRANSID &&
+			    list_empty(&eb->recow)) {
+				list_add_tail(&eb->recow,
+					      &root->fs_info->recow_ebs);
+				eb->refs++;
+			}
 			btrfs_set_buffer_uptodate(eb);
 			return eb;
 		}
@@ -749,6 +756,7 @@ struct btrfs_fs_info *btrfs_new_fs_info(int writable, u64 sb_bytenr)
 	mutex_init(&fs_info->fs_mutex);
 	INIT_LIST_HEAD(&fs_info->dirty_cowonly_roots);
 	INIT_LIST_HEAD(&fs_info->space_info);
+	INIT_LIST_HEAD(&fs_info->recow_ebs);
 
 	if (!writable)
 		fs_info->readonly = 1;
@@ -900,6 +908,13 @@ FREE_EXTENT_CACHE_BASED_TREE(mapping_cache, free_map_lookup);
 
 void btrfs_cleanup_all_caches(struct btrfs_fs_info *fs_info)
 {
+	while (!list_empty(&fs_info->recow_ebs)) {
+		struct extent_buffer *eb;
+		eb = list_first_entry(&fs_info->recow_ebs,
+				      struct extent_buffer, recow);
+		list_del_init(&eb->recow);
+		free_extent_buffer(eb);
+	}
 	free_mapping_cache_tree(&fs_info->mapping_tree.cache_tree);
 	extent_io_tree_cleanup(&fs_info->extent_cache);
 	extent_io_tree_cleanup(&fs_info->free_space_cache);
