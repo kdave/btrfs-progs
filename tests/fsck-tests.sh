@@ -17,6 +17,7 @@ rm -f fsck-tests-results.txt
 
 for i in $(find $here/tests/fsck-tests -name '*.img')
 do
+	echo "     [TEST]    $(basename $i)"
 	echo "testing image $i" >> fsck-tests-results.txt
 	$here/btrfs-image -r $i test.img >> fsck-tests-results.txt 2>&1 \
 		|| _fail "restore failed"
