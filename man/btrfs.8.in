@@ -268,8 +268,9 @@ Force a sync for the filesystem identified by \fI<path>\fR.
 .TP
 
 \fBfilesystem defragment\fP [\fIoptions\fP] \fI<file>\fP|\fI<dir>\fP [\fI<file>\fP|\fI<dir>...\fP]\fP
-Defragment file data and/or directory metadata. To defragment all files in a
-directory you have to specify each one on its own or use your shell wildcards.
+Defragment file data and/or directory metadata. If \fB-r\fP is passed, 
+files in \fIdir\fR will be defragmented recursively.
+
 
 The start position and the number of bytes to defragment can be specified by
 \fIstart\fR and \fIlen\fR. Any extent bigger than threshold will be
@@ -283,6 +284,8 @@ defragment operations.
 be verbose
 .IP "\fB-c\fP" 5
 compress file contents while defragmenting
+.IP "\fB-r\fP" 5
+defragment files recursively
 .IP "\fB-f\fP" 5
 flush filesystem after defragmenting
 .IP "\fB-s \fIstart\fP\fP" 5
