@@ -139,7 +139,7 @@ int make_btrfs(int fd, const char *device, const char *label,
 	write_extent_buffer(buf, super.fsid, btrfs_header_fsid(),
 			    BTRFS_FSID_SIZE);
 
-	write_extent_buffer(buf, chunk_tree_uuid, (unsigned long)
+	write_extent_buffer(buf, chunk_tree_uuid,
 			    btrfs_header_chunk_tree_uuid(buf),
 			    BTRFS_UUID_SIZE);
 

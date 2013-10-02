@@ -112,8 +112,7 @@ static struct btrfs_root *open_ctree_broken(int fd, const char *device)
 
 	eb = fs_info->chunk_root->node;
 	read_extent_buffer(eb, fs_info->chunk_tree_uuid,
-			   (unsigned long)btrfs_header_chunk_tree_uuid(eb),
-			   BTRFS_UUID_SIZE);
+			   btrfs_header_chunk_tree_uuid(eb), BTRFS_UUID_SIZE);
 
 	return fs_info->chunk_root;
 out_chunk:

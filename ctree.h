@@ -1794,10 +1794,9 @@ static inline unsigned long btrfs_header_fsid(void)
 	return offsetof(struct btrfs_header, fsid);
 }
 
-static inline u8 *btrfs_header_chunk_tree_uuid(struct extent_buffer *eb)
+static inline unsigned long btrfs_header_chunk_tree_uuid(struct extent_buffer *eb)
 {
-	unsigned long ptr = offsetof(struct btrfs_header, chunk_tree_uuid);
-	return (u8 *)ptr;
+	return offsetof(struct btrfs_header, chunk_tree_uuid);
 }
 
 static inline u8 *btrfs_super_fsid(struct extent_buffer *eb)

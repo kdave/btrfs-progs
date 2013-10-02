@@ -5697,7 +5697,7 @@ init:
 			    btrfs_header_fsid(), BTRFS_FSID_SIZE);
 
 	write_extent_buffer(c, root->fs_info->chunk_tree_uuid,
-			    (unsigned long)btrfs_header_chunk_tree_uuid(c),
+			    btrfs_header_chunk_tree_uuid(c),
 			    BTRFS_UUID_SIZE);
 
 	btrfs_mark_buffer_dirty(c);

@@ -199,7 +199,7 @@ static void print_uuids(struct extent_buffer *eb)
 	uuid_unparse(disk_uuid, fs_uuid);
 
 	read_extent_buffer(eb, disk_uuid,
-			   (unsigned long)btrfs_header_chunk_tree_uuid(eb),
+			   btrfs_header_chunk_tree_uuid(eb),
 			   BTRFS_UUID_SIZE);
 
 	chunk_uuid[BTRFS_UUID_UNPARSED_SIZE - 1] = '\0';

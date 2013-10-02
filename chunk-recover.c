@@ -1047,7 +1047,7 @@ static int __rebuild_chunk_root(struct btrfs_trans_handle *trans,
 			btrfs_header_fsid(), BTRFS_FSID_SIZE);
 
 	write_extent_buffer(cow, root->fs_info->chunk_tree_uuid,
-			(unsigned long)btrfs_header_chunk_tree_uuid(cow),
+			btrfs_header_chunk_tree_uuid(cow),
 			BTRFS_UUID_SIZE);
 
 	root->node = cow;
@@ -1235,7 +1235,7 @@ open_ctree_with_broken_chunk(struct recover_control *rc)
 
 	eb = fs_info->tree_root->node;
 	read_extent_buffer(eb, fs_info->chunk_tree_uuid,
-			   (unsigned long)btrfs_header_chunk_tree_uuid(eb),
+			   btrfs_header_chunk_tree_uuid(eb),
 			   BTRFS_UUID_SIZE);
 
 	return fs_info->fs_root;

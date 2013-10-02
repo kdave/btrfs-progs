@@ -1108,7 +1108,7 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 
 	eb = fs_info->chunk_root->node;
 	read_extent_buffer(eb, fs_info->chunk_tree_uuid,
-			   (unsigned long)btrfs_header_chunk_tree_uuid(eb),
+			   btrfs_header_chunk_tree_uuid(eb),
 			   BTRFS_UUID_SIZE);
 
 	ret = btrfs_setup_all_roots(fs_info, root_tree_bytenr, flags);
