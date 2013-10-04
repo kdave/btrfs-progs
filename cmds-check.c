@@ -278,6 +278,70 @@ static struct inode_record *clone_inode_rec(struct inode_record *orig_rec)
 	return rec;
 }
 
+static void print_inode_error(int errors)
+{
+	if (errors & I_ERR_NO_INODE_ITEM)
+		fprintf(stderr, ", no inode item");
+	if (errors & I_ERR_NO_ORPHAN_ITEM)
+		fprintf(stderr, ", no orphan item");
+	if (errors & I_ERR_DUP_INODE_ITEM)
+		fprintf(stderr, ", dup inode item");
+	if (errors & I_ERR_DUP_DIR_INDEX)
+		fprintf(stderr, ", dup dir index");
+	if (errors & I_ERR_ODD_DIR_ITEM)
+		fprintf(stderr, ", odd dir item");
+	if (errors & I_ERR_ODD_FILE_EXTENT)
+		fprintf(stderr, ", odd file extent");
+	if (errors & I_ERR_BAD_FILE_EXTENT)
+		fprintf(stderr, ", bad file extent");
+	if (errors & I_ERR_FILE_EXTENT_OVERLAP)
+		fprintf(stderr, ", file extent overlap");
+	if (errors & I_ERR_FILE_EXTENT_DISCOUNT)
+		fprintf(stderr, ", file extent discount");
+	if (errors & I_ERR_DIR_ISIZE_WRONG)
+		fprintf(stderr, ", dir isize wrong");
+	if (errors & I_ERR_FILE_NBYTES_WRONG)
+		fprintf(stderr, ", nbytes wrong");
+	if (errors & I_ERR_ODD_CSUM_ITEM)
+		fprintf(stderr, ", odd csum item");
+	if (errors & I_ERR_SOME_CSUM_MISSING)
+		fprintf(stderr, ", some csum missing");
+	if (errors & I_ERR_LINK_COUNT_WRONG)
+		fprintf(stderr, ", link count wrong");
+	fprintf(stderr, "\n");
+}
+
+static void print_ref_error(int errors)
+{
+	if (errors & REF_ERR_NO_DIR_ITEM)
+		fprintf(stderr, ", no dir item");
+	if (errors & REF_ERR_NO_DIR_INDEX)
+		fprintf(stderr, ", no dir index");
+	if (errors & REF_ERR_NO_INODE_REF)
+		fprintf(stderr, ", no inode ref");
+	if (errors & REF_ERR_DUP_DIR_ITEM)
+		fprintf(stderr, ", dup dir item");
+	if (errors & REF_ERR_DUP_DIR_INDEX)
+		fprintf(stderr, ", dup dir index");
+	if (errors & REF_ERR_DUP_INODE_REF)
+		fprintf(stderr, ", dup inode ref");
+	if (errors & REF_ERR_INDEX_UNMATCH)
+		fprintf(stderr, ", index unmatch");
+	if (errors & REF_ERR_FILETYPE_UNMATCH)
+		fprintf(stderr, ", filetype unmatch");
+	if (errors & REF_ERR_NAME_TOO_LONG)
+		fprintf(stderr, ", name too long");
+	if (errors & REF_ERR_NO_ROOT_REF)
+		fprintf(stderr, ", no root ref");
+	if (errors & REF_ERR_NO_ROOT_BACKREF)
+		fprintf(stderr, ", no root backref");
+	if (errors & REF_ERR_DUP_ROOT_REF)
+		fprintf(stderr, ", dup root ref");
+	if (errors & REF_ERR_DUP_ROOT_BACKREF)
+		fprintf(stderr, ", dup root backref");
+	fprintf(stderr, "\n");
+}
+
 static struct inode_record *get_inode_rec(struct cache_tree *inode_cache,
 					  u64 ino, int mod)
 {
@@ -1474,9 +1538,10 @@ static int check_inode_recs(struct btrfs_root *root,
 			rec->errors |= I_ERR_NO_INODE_ITEM;
 		if (rec->found_link != rec->nlink)
 			rec->errors |= I_ERR_LINK_COUNT_WRONG;
-		fprintf(stderr, "root %llu inode %llu errors %x\n",
+		fprintf(stderr, "root %llu inode %llu errors %x",
 			(unsigned long long) root->root_key.objectid,
 			(unsigned long long) rec->ino, rec->errors);
+		print_inode_error(rec->errors);
 		list_for_each_entry(backref, &rec->backrefs, list) {
 			if (!backref->found_dir_item)
 				backref->errors |= REF_ERR_NO_DIR_ITEM;
@@ -1485,11 +1550,12 @@ static int check_inode_recs(struct btrfs_root *root,
 			if (!backref->found_inode_ref)
 				backref->errors |= REF_ERR_NO_INODE_REF;
 			fprintf(stderr, "\tunresolved ref dir %llu index %llu"
-				" namelen %u name %s filetype %d error %x\n",
+				" namelen %u name %s filetype %d error %x",
 				(unsigned long long)backref->dir,
 				(unsigned long long)backref->index,
 				backref->namelen, backref->name,
 				backref->filetype, backref->errors);
+			print_ref_error(backref->errors);
 		}
 		free_inode_rec(rec);
 	}
