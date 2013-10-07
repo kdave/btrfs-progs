@@ -92,6 +92,11 @@ struct {
 		.need_print	= 0,
 	},
 	{
+		.name		= "max_excl",
+		.column_name	= "Max_excl",
+		.need_print	= 0,
+	},
+	{
 		.name		= "parent",
 		.column_name	= "Parent",
 		.need_print	= 0,
@@ -172,6 +177,9 @@ static void print_qgroup_column(struct btrfs_qgroup *qgroup,
 		break;
 	case BTRFS_QGROUP_MAX_RFER:
 		printf("%llu", qgroup->max_rfer);
+		break;
+	case BTRFS_QGROUP_MAX_EXCL:
+		printf("%llu", qgroup->max_excl);
 		break;
 	case BTRFS_QGROUP_CHILD:
 		print_child_column(qgroup);

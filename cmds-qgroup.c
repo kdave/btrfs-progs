@@ -202,11 +202,12 @@ static int cmd_qgroup_destroy(int argc, char **argv)
 }
 
 static const char * const cmd_qgroup_show_usage[] = {
-	"btrfs qgroup show -pcr <path>",
+	"btrfs qgroup show -pcre <path>",
 	"Show all subvolume quota groups.",
 	"-p		print parent qgroup id",
 	"-c		print child qgroup id",
 	"-r		print max referenced size of qgroup",
+	"-e		print max exclusive size of qgroup",
 	NULL
 };
 
@@ -221,7 +222,7 @@ static int cmd_qgroup_show(int argc, char **argv)
 
 	optind = 1;
 	while (1) {
-		c = getopt(argc, argv, "pcr");
+		c = getopt(argc, argv, "pcre");
 		if (c < 0)
 			break;
 		switch (c) {
@@ -236,6 +237,10 @@ static int cmd_qgroup_show(int argc, char **argv)
 		case 'r':
 			btrfs_qgroup_setup_print_column(
 				BTRFS_QGROUP_MAX_RFER);
+			break;
+		case 'e':
+			btrfs_qgroup_setup_print_column(
+				BTRFS_QGROUP_MAX_EXCL);
 			break;
 		default:
 			usage(cmd_qgroup_show_usage);
