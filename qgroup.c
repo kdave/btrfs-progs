@@ -21,12 +21,20 @@
 #include "ctree.h"
 #include "ioctl.h"
 
+#define BTRFS_QGROUP_NFILTERS_INCREASE (2 * BTRFS_QGROUP_FILTER_MAX)
+
 struct qgroup_lookup {
 	struct rb_root root;
 };
 
 struct btrfs_qgroup {
 	struct rb_node rb_node;
+	struct rb_node sort_node;
+	/*
+	 *all_parent_node is used to
+	 *filter a qgroup's all parent
+	 */
+	struct rb_node all_parent_node;
 	u64 qgroupid;
 
 	/*
@@ -112,6 +120,8 @@ struct {
 		.need_print	= 0,
 	},
 };
+
+static btrfs_qgroup_filter_func all_filter_funcs[];
 
 void btrfs_qgroup_setup_print_column(enum btrfs_qgroup_column_enum column)
 {
@@ -433,6 +443,205 @@ void __free_all_qgroups(struct qgroup_lookup *root_tree)
 	}
 }
 
+static int filter_all_parent_insert(struct qgroup_lookup *sort_tree,
+				    struct btrfs_qgroup *bq)
+{
+	struct rb_node **p = &sort_tree->root.rb_node;
+	struct rb_node *parent = NULL;
+	struct btrfs_qgroup *curr;
+	int ret;
+
+	while (*p) {
+		parent = *p;
+		curr = rb_entry(parent, struct btrfs_qgroup, all_parent_node);
+
+		ret = comp_entry_with_qgroupid(bq, curr, 0);
+		if (ret < 0)
+			p = &(*p)->rb_left;
+		else if (ret > 0)
+			p = &(*p)->rb_right;
+		else
+			return -EEXIST;
+	}
+	rb_link_node(&bq->all_parent_node, parent, p);
+	rb_insert_color(&bq->all_parent_node, &sort_tree->root);
+	return 0;
+}
+
+static int filter_by_all_parent(struct btrfs_qgroup *bq, u64 data)
+{
+	struct qgroup_lookup lookup;
+	struct qgroup_lookup *ql = &lookup;
+	struct btrfs_qgroup_list *list;
+	struct rb_node *n;
+	struct btrfs_qgroup *qgroup =
+			 (struct btrfs_qgroup *)(unsigned long)data;
+
+	if (data == 0)
+		return 0;
+	if (bq->qgroupid == qgroup->qgroupid)
+		return 1;
+
+	qgroup_lookup_init(ql);
+	filter_all_parent_insert(ql, qgroup);
+	n = rb_first(&ql->root);
+	while (n) {
+		qgroup = rb_entry(n, struct btrfs_qgroup, all_parent_node);
+		if (!list_empty(&qgroup->qgroups)) {
+			list_for_each_entry(list, &qgroup->qgroups,
+					    next_qgroup) {
+				if ((list->qgroup)->qgroupid == bq->qgroupid)
+					return 1;
+				filter_all_parent_insert(ql, list->qgroup);
+			}
+		}
+		rb_erase(n, &ql->root);
+		n = rb_first(&ql->root);
+	}
+	return 0;
+}
+
+static btrfs_qgroup_filter_func all_filter_funcs[] = {
+	[BTRFS_QGROUP_FILTER_ALL_PARENT]	= filter_by_all_parent,
+};
+
+struct btrfs_qgroup_filter_set *btrfs_qgroup_alloc_filter_set(void)
+{
+	struct btrfs_qgroup_filter_set *set;
+	int size;
+
+	size = sizeof(struct btrfs_qgroup_filter_set) +
+	       BTRFS_QGROUP_NFILTERS_INCREASE *
+	       sizeof(struct btrfs_qgroup_filter);
+	set = malloc(size);
+	if (!set) {
+		fprintf(stderr, "memory allocation failed\n");
+		exit(1);
+	}
+	memset(set, 0, size);
+	set->total = BTRFS_QGROUP_NFILTERS_INCREASE;
+
+	return set;
+}
+
+void btrfs_qgroup_free_filter_set(struct btrfs_qgroup_filter_set *filter_set)
+{
+	free(filter_set);
+}
+
+int btrfs_qgroup_setup_filter(struct btrfs_qgroup_filter_set **filter_set,
+			      enum btrfs_qgroup_filter_enum filter, u64 data)
+{
+	struct btrfs_qgroup_filter_set *set = *filter_set;
+	int size;
+
+	BUG_ON(!set);
+	BUG_ON(filter >= BTRFS_QGROUP_FILTER_MAX);
+	BUG_ON(set->nfilters > set->total);
+
+	if (set->nfilters == set->total) {
+		size = set->total + BTRFS_QGROUP_NFILTERS_INCREASE;
+		size = sizeof(*set) + size * sizeof(struct btrfs_qgroup_filter);
+
+		set = realloc(set, size);
+		if (!set) {
+			fprintf(stderr, "memory allocation failed\n");
+			exit(1);
+		}
+		memset(&set->filters[set->total], 0,
+		       BTRFS_QGROUP_NFILTERS_INCREASE *
+		       sizeof(struct btrfs_qgroup_filter));
+		set->total += BTRFS_QGROUP_NFILTERS_INCREASE;
+		*filter_set = set;
+	}
+	BUG_ON(set->filters[set->nfilters].filter_func);
+	set->filters[set->nfilters].filter_func = all_filter_funcs[filter];
+	set->filters[set->nfilters].data = data;
+	set->nfilters++;
+	return 0;
+}
+
+static int filter_qgroup(struct btrfs_qgroup *bq,
+			 struct btrfs_qgroup_filter_set *set)
+{
+	int i, ret;
+
+	if (!set || !set->nfilters)
+		return 1;
+	for (i = 0; i < set->nfilters; i++) {
+		if (!set->filters[i].filter_func)
+			break;
+		ret = set->filters[i].filter_func(bq, set->filters[i].data);
+		if (!ret)
+			return 0;
+	}
+	return 1;
+}
+
+static void pre_process_filter_set(struct qgroup_lookup *lookup,
+				   struct btrfs_qgroup_filter_set *set)
+{
+	int i;
+	struct btrfs_qgroup *qgroup_for_filter = NULL;
+
+	for (i = 0; i < set->nfilters; i++) {
+
+		if (set->filters[i].filter_func == filter_by_all_parent) {
+			qgroup_for_filter = qgroup_tree_search(lookup,
+					    set->filters[i].data);
+			set->filters[i].data =
+				 (u64)(unsigned long)qgroup_for_filter;
+		}
+	}
+}
+
+static int sort_tree_insert(struct qgroup_lookup *sort_tree,
+			    struct btrfs_qgroup *bq)
+{
+	struct rb_node **p = &sort_tree->root.rb_node;
+	struct rb_node *parent = NULL;
+	struct btrfs_qgroup *curr;
+	int ret;
+
+	while (*p) {
+		parent = *p;
+		curr = rb_entry(parent, struct btrfs_qgroup, sort_node);
+
+		ret = comp_entry_with_qgroupid(bq, curr, 0);
+		if (ret < 0)
+			p = &(*p)->rb_left;
+		else if (ret > 0)
+			p = &(*p)->rb_right;
+		else
+			return -EEXIST;
+	}
+	rb_link_node(&bq->sort_node, parent, p);
+	rb_insert_color(&bq->sort_node, &sort_tree->root);
+	return 0;
+}
+
+static void __filter_all_qgroups(struct qgroup_lookup *all_qgroups,
+				 struct qgroup_lookup *sort_tree,
+				 struct btrfs_qgroup_filter_set *filter_set)
+{
+	struct rb_node *n;
+	struct btrfs_qgroup *entry;
+	int ret;
+
+	qgroup_lookup_init(sort_tree);
+	pre_process_filter_set(all_qgroups, filter_set);
+
+	n = rb_last(&all_qgroups->root);
+	while (n) {
+		entry = rb_entry(n, struct btrfs_qgroup, rb_node);
+
+		ret = filter_qgroup(entry, filter_set);
+		if (ret)
+			sort_tree_insert(sort_tree, entry);
+
+		n = rb_prev(n);
+	}
+}
 static int __qgroups_search(int fd, struct qgroup_lookup *qgroup_lookup)
 {
 	int ret;
@@ -565,26 +774,48 @@ static void print_all_qgroups(struct qgroup_lookup *qgroup_lookup)
 
 	n = rb_first(&qgroup_lookup->root);
 	while (n) {
-		entry = rb_entry(n, struct btrfs_qgroup, rb_node);
+		entry = rb_entry(n, struct btrfs_qgroup, sort_node);
 		print_single_qgroup_default(entry);
 		n = rb_next(n);
 	}
 }
 
-int btrfs_show_qgroups(int fd)
+int btrfs_show_qgroups(int fd,
+		       struct btrfs_qgroup_filter_set *filter_set)
 {
 
 	struct qgroup_lookup qgroup_lookup;
+	struct qgroup_lookup sort_tree;
 	int ret;
 
 	ret = __qgroups_search(fd, &qgroup_lookup);
 	if (ret)
 		return ret;
+	__filter_all_qgroups(&qgroup_lookup, &sort_tree,
+			     filter_set);
+	print_all_qgroups(&sort_tree);
 
-	print_all_qgroups(&qgroup_lookup);
 	__free_all_qgroups(&qgroup_lookup);
-
+	btrfs_qgroup_free_filter_set(filter_set);
 	return ret;
+}
+
+u64 btrfs_get_path_rootid(int fd)
+{
+	int  ret;
+	struct btrfs_ioctl_ino_lookup_args args;
+
+	memset(&args, 0, sizeof(args));
+	args.objectid = BTRFS_FIRST_FREE_OBJECTID;
+
+	ret = ioctl(fd, BTRFS_IOC_INO_LOOKUP, &args);
+	if (ret < 0) {
+		fprintf(stderr,
+			"ERROR: can't perform the search -%s\n",
+			strerror(errno));
+		return ret;
+	}
+	return args.treeid;
 }
 
 u64 parse_qgroupid(char *p)

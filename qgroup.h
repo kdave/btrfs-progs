@@ -22,6 +22,21 @@
 #include "ioctl.h"
 #include "kerncompat.h"
 
+struct btrfs_qgroup;
+
+typedef int (*btrfs_qgroup_filter_func)(struct btrfs_qgroup *, u64);
+
+struct btrfs_qgroup_filter {
+	btrfs_qgroup_filter_func filter_func;
+	u64 data;
+};
+
+struct btrfs_qgroup_filter_set {
+	int total;
+	int nfilters;
+	struct btrfs_qgroup_filter filters[0];
+};
+
 enum btrfs_qgroup_column_enum {
 	BTRFS_QGROUP_QGROUPID,
 	BTRFS_QGROUP_RFER,
@@ -33,9 +48,18 @@ enum btrfs_qgroup_column_enum {
 	BTRFS_QGROUP_ALL,
 };
 
-int  btrfs_show_qgroups(int fd);
-void btrfs_qgroup_setup_print_column(enum btrfs_qgroup_column_enum column);
+enum btrfs_qgroup_filter_enum {
+	BTRFS_QGROUP_FILTER_ALL_PARENT,
+	BTRFS_QGROUP_FILTER_MAX,
+};
 
+u64 btrfs_get_path_rootid(int fd);
+int btrfs_show_qgroups(int fd, struct btrfs_qgroup_filter_set *);
+void btrfs_qgroup_setup_print_column(enum btrfs_qgroup_column_enum column);
+struct btrfs_qgroup_filter_set *btrfs_qgroup_alloc_filter_set(void);
+void btrfs_qgroup_free_filter_set(struct btrfs_qgroup_filter_set *filter_set);
+int btrfs_qgroup_setup_filter(struct btrfs_qgroup_filter_set **filter_set,
+			      enum btrfs_qgroup_filter_enum, u64 data);
 u64 parse_qgroupid(char *p);
 int qgroup_inherit_size(struct btrfs_qgroup_inherit *p);
 int qgroup_inherit_add_group(struct btrfs_qgroup_inherit **inherit, char *arg);
