@@ -1686,7 +1686,7 @@ int btrfs_list_find_updated_files(int fd, u64 root_id, u64 oldest_gen)
 		if (ret < 0) {
 			fprintf(stderr, "ERROR: can't perform the search- %s\n",
 				strerror(e));
-			return ret;
+			break;
 		}
 		/* the ioctl returns the number of item it found in nr_items */
 		if (sk->nr_items == 0)
