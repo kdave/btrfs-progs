@@ -88,6 +88,11 @@ struct {
 		.need_print	= 1,
 	},
 	{
+		.name		= "parent",
+		.column_name	= "Parent",
+		.need_print	= 0,
+	},
+	{
 		.name		= NULL,
 		.column_name	= NULL,
 		.need_print	= 0,
@@ -108,6 +113,20 @@ void btrfs_qgroup_setup_print_column(enum btrfs_qgroup_column_enum column)
 		btrfs_qgroup_columns[i].need_print = 1;
 }
 
+static void print_parent_column(struct btrfs_qgroup *qgroup)
+{
+	struct btrfs_qgroup_list *list = NULL;
+
+	list_for_each_entry(list, &qgroup->qgroups, next_qgroup) {
+		printf("%llu/%llu", (list->qgroup)->qgroupid >> 48,
+		      ((1ll << 48) - 1) & (list->qgroup)->qgroupid);
+		if (!list_is_last(&list->next_qgroup, &qgroup->qgroups))
+			printf(",");
+	}
+	if (list_empty(&qgroup->qgroups))
+		printf("---");
+}
+
 static void print_qgroup_column(struct btrfs_qgroup *qgroup,
 				enum btrfs_qgroup_column_enum column)
 {
@@ -124,6 +143,9 @@ static void print_qgroup_column(struct btrfs_qgroup *qgroup,
 		break;
 	case BTRFS_QGROUP_EXCL:
 		printf("%lld", qgroup->excl);
+		break;
+	case BTRFS_QGROUP_PARENT:
+		print_parent_column(qgroup);
 		break;
 	default:
 		break;

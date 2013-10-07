@@ -202,22 +202,39 @@ static int cmd_qgroup_destroy(int argc, char **argv)
 }
 
 static const char * const cmd_qgroup_show_usage[] = {
-	"btrfs qgroup show <path>",
+	"btrfs qgroup show -p <path>",
 	"Show all subvolume quota groups.",
+	"-p		print parent qgroup id",
 	NULL
 };
 
 static int cmd_qgroup_show(int argc, char **argv)
 {
+	char *path;
 	int ret = 0;
 	int fd;
 	int e;
-	char *path = argv[1];
 	DIR *dirstream = NULL;
+	int c;
 
-	if (check_argc_exact(argc, 2))
+	optind = 1;
+	while (1) {
+		c = getopt(argc, argv, "p");
+		if (c < 0)
+			break;
+		switch (c) {
+		case 'p':
+			btrfs_qgroup_setup_print_column(
+				BTRFS_QGROUP_PARENT);
+			break;
+		default:
+			usage(cmd_qgroup_show_usage);
+		}
+	}
+	if (check_argc_exact(argc - optind, 1))
 		usage(cmd_qgroup_show_usage);
 
+	path = argv[optind];
 	fd = open_file_or_dir(path, &dirstream);
 	if (fd < 0) {
 		fprintf(stderr, "ERROR: can't access '%s'\n", path);
