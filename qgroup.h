@@ -49,6 +49,7 @@ enum btrfs_qgroup_column_enum {
 };
 
 enum btrfs_qgroup_filter_enum {
+	BTRFS_QGROUP_FILTER_PARENT,
 	BTRFS_QGROUP_FILTER_ALL_PARENT,
 	BTRFS_QGROUP_FILTER_MAX,
 };

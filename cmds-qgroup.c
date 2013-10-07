@@ -202,7 +202,7 @@ static int cmd_qgroup_destroy(int argc, char **argv)
 }
 
 static const char * const cmd_qgroup_show_usage[] = {
-	"btrfs qgroup show -pcreF <path>",
+	"btrfs qgroup show -pcreFf <path>",
 	"Show subvolume quota groups.",
 	"-p		print parent qgroup id",
 	"-c		print child qgroup id",
@@ -210,6 +210,8 @@ static const char * const cmd_qgroup_show_usage[] = {
 	"-e		print max exclusive size of qgroup",
 	"-F		list all qgroups which impact the given path"
 	"(include ancestral qgroups)",
+	"-f		list all qgroups which impact the given path"
+	"(exclude ancestral qgroups)",
 	NULL
 };
 
@@ -229,7 +231,7 @@ static int cmd_qgroup_show(int argc, char **argv)
 
 	optind = 1;
 	while (1) {
-		c = getopt(argc, argv, "pcreF");
+		c = getopt(argc, argv, "pcreFf");
 		if (c < 0)
 			break;
 		switch (c) {
@@ -252,6 +254,9 @@ static int cmd_qgroup_show(int argc, char **argv)
 		case 'F':
 			filter_flag |= 0x1;
 			break;
+		case 'f':
+			filter_flag |= 0x2;
+			break;
 		default:
 			usage(cmd_qgroup_show_usage);
 		}
@@ -268,9 +273,14 @@ static int cmd_qgroup_show(int argc, char **argv)
 
 	if (filter_flag) {
 		qgroupid = btrfs_get_path_rootid(fd);
-		btrfs_qgroup_setup_filter(&filter_set,
-				BTRFS_QGROUP_FILTER_ALL_PARENT,
-				qgroupid);
+		if (filter_flag & 0x1)
+			btrfs_qgroup_setup_filter(&filter_set,
+					BTRFS_QGROUP_FILTER_ALL_PARENT,
+					qgroupid);
+		if (filter_flag & 0x2)
+			btrfs_qgroup_setup_filter(&filter_set,
+					BTRFS_QGROUP_FILTER_PARENT,
+					qgroupid);
 	}
 	ret = btrfs_show_qgroups(fd, filter_set);
 	e = errno;

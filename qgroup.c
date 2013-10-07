@@ -468,6 +468,18 @@ static int filter_all_parent_insert(struct qgroup_lookup *sort_tree,
 	return 0;
 }
 
+static int filter_by_parent(struct btrfs_qgroup *bq, u64 data)
+{
+	struct btrfs_qgroup *qgroup =
+		(struct btrfs_qgroup *)(unsigned long)data;
+
+	if (data == 0)
+		return 0;
+	if (qgroup->qgroupid == bq->qgroupid)
+		return 1;
+	return 0;
+}
+
 static int filter_by_all_parent(struct btrfs_qgroup *bq, u64 data)
 {
 	struct qgroup_lookup lookup;
@@ -502,6 +514,7 @@ static int filter_by_all_parent(struct btrfs_qgroup *bq, u64 data)
 }
 
 static btrfs_qgroup_filter_func all_filter_funcs[] = {
+	[BTRFS_QGROUP_FILTER_PARENT]		= filter_by_parent,
 	[BTRFS_QGROUP_FILTER_ALL_PARENT]	= filter_by_all_parent,
 };
 
@@ -586,7 +599,8 @@ static void pre_process_filter_set(struct qgroup_lookup *lookup,
 
 	for (i = 0; i < set->nfilters; i++) {
 
-		if (set->filters[i].filter_func == filter_by_all_parent) {
+		if (set->filters[i].filter_func == filter_by_all_parent
+		    || set->filters[i].filter_func == filter_by_parent) {
 			qgroup_for_filter = qgroup_tree_search(lookup,
 					    set->filters[i].data);
 			set->filters[i].data =
