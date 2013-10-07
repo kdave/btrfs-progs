@@ -5003,55 +5003,6 @@ static void free_corrupt_block(struct cache_extent *cache)
 
 FREE_EXTENT_CACHE_BASED_TREE(corrupt_blocks, free_corrupt_block);
 
-static int check_block_group(struct btrfs_trans_handle *trans,
-			      struct btrfs_fs_info *info,
-			      struct map_lookup *map,
-			      int *reinit)
-{
-	struct btrfs_key key;
-	struct btrfs_path path;
-	int ret;
-
-	key.objectid = map->ce.start;
-	key.offset = map->ce.size;
-	key.type = BTRFS_BLOCK_GROUP_ITEM_KEY;
-
-	btrfs_init_path(&path);
-	ret = btrfs_search_slot(NULL, info->extent_root,
-				&key, &path, 0, 0);
-	btrfs_release_path(&path);
-	if (ret <= 0)
-		goto out;
-
-	ret = btrfs_make_block_group(trans, info->extent_root, 0, map->type,
-			       BTRFS_FIRST_CHUNK_TREE_OBJECTID,
-			       key.objectid, key.offset);
-	*reinit = 1;
-out:
-	return ret;
-}
-
-static int check_block_groups(struct btrfs_trans_handle *trans,
-			      struct btrfs_fs_info *info, int *reinit)
-{
-	struct cache_extent *ce;
-	struct map_lookup *map;
-	struct btrfs_mapping_tree *map_tree = &info->mapping_tree;
-
-	/* this isn't quite working */
-	return 0;
-
-	ce = search_cache_extent(&map_tree->cache_tree, 0);
-	while (1) {
-		if (!ce)
-			break;
-		map = container_of(ce, struct map_lookup, ce);
-		check_block_group(trans, info, map, reinit);
-		ce = next_cache_extent(ce);
-	}
-	return 0;
-}
-
 static void reset_cached_block_groups(struct btrfs_fs_info *fs_info)
 {
 	struct btrfs_block_group_cache *cache;
@@ -5113,7 +5064,6 @@ static int check_extent_refs(struct btrfs_trans_handle *trans,
 			cache = next_cache_extent(cache);
 		}
 		prune_corrupt_blocks(trans, root->fs_info);
-		check_block_groups(trans, root->fs_info, &reinit);
 		if (reinit)
 			btrfs_read_block_groups(root->fs_info->extent_root);
 		reset_cached_block_groups(root->fs_info);
