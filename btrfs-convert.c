@@ -1428,9 +1428,14 @@ static struct btrfs_root * link_subvol(struct btrfs_root *root,
 	struct btrfs_key key;
 	u64 dirid = btrfs_root_dirid(&root->root_item);
 	u64 index = 2;
-	char buf[64];
+	char buf[BTRFS_NAME_LEN + 1]; /* for snprintf null */
+	int len;
 	int i;
 	int ret;
+
+	len = strlen(base);
+	if (len < 1 || len > BTRFS_NAME_LEN)
+		return NULL;
 
 	path = btrfs_alloc_path();
 	BUG_ON(!path);
@@ -1467,18 +1472,22 @@ static struct btrfs_root * link_subvol(struct btrfs_root *root,
 	key.offset = (u64)-1;
 	key.type = BTRFS_ROOT_ITEM_KEY;
 
-	strcpy(buf, base);
+	memcpy(buf, base, len);
 	for (i = 0; i < 1024; i++) {
-		ret = btrfs_insert_dir_item(trans, root, buf, strlen(buf),
+		ret = btrfs_insert_dir_item(trans, root, buf, len,
 					    dirid, &key, BTRFS_FT_DIR, index);
 		if (ret != -EEXIST)
 			break;
-		sprintf(buf, "%s%d", base, i);
+		len = snprintf(buf, ARRAY_SIZE(buf), "%s%d", base, i);
+		if (len < 1 || len > BTRFS_NAME_LEN) {
+			ret = -EINVAL;
+			break;
+		}
 	}
 	if (ret)
 		goto fail;
 
-	btrfs_set_inode_size(leaf, inode_item, strlen(buf) * 2 +
+	btrfs_set_inode_size(leaf, inode_item, len * 2 +
 			     btrfs_inode_size(leaf, inode_item));
 	btrfs_mark_buffer_dirty(leaf);
 	btrfs_release_path(path);
@@ -1487,13 +1496,13 @@ static struct btrfs_root * link_subvol(struct btrfs_root *root,
 	ret = btrfs_add_root_ref(trans, tree_root, root_objectid,
 				 BTRFS_ROOT_BACKREF_KEY,
 				 root->root_key.objectid,
-				 dirid, index, buf, strlen(buf));
+				 dirid, index, buf, len);
 	BUG_ON(ret);
 
 	/* now add the forward ref */
 	ret = btrfs_add_root_ref(trans, tree_root, root->root_key.objectid,
 				 BTRFS_ROOT_REF_KEY, root_objectid,
-				 dirid, index, buf, strlen(buf));
+				 dirid, index, buf, len);
 
 	ret = btrfs_commit_transaction(trans, root);
 	BUG_ON(ret);
