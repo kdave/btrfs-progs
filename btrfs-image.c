@@ -2011,6 +2011,7 @@ static int search_for_chunk_blocks(struct mdrestore_struct *mdres,
 	u64 current_cluster = cluster_bytenr, bytenr;
 	u64 item_bytenr;
 	u32 bufsize, nritems, i;
+	u32 max_size = MAX_PENDING_SIZE * 2;
 	u8 *buffer, *tmp = NULL;
 	int ret = 0;
 
@@ -2020,7 +2021,7 @@ static int search_for_chunk_blocks(struct mdrestore_struct *mdres,
 		return -ENOMEM;
 	}
 
-	buffer = malloc(MAX_PENDING_SIZE * 2);
+	buffer = malloc(max_size);
 	if (!buffer) {
 		fprintf(stderr, "Error allocing buffer\n");
 		free(cluster);
@@ -2028,7 +2029,7 @@ static int search_for_chunk_blocks(struct mdrestore_struct *mdres,
 	}
 
 	if (mdres->compress_method == COMPRESS_ZLIB) {
-		tmp = malloc(MAX_PENDING_SIZE * 2);
+		tmp = malloc(max_size);
 		if (!tmp) {
 			fprintf(stderr, "Error allocing tmp buffer\n");
 			free(cluster);
@@ -2079,6 +2080,13 @@ static int search_for_chunk_blocks(struct mdrestore_struct *mdres,
 			bufsize = le32_to_cpu(item->size);
 			item_bytenr = le64_to_cpu(item->bytenr);
 
+			if (bufsize > max_size) {
+				fprintf(stderr, "item %u size %u too big\n",
+					i, bufsize);
+				ret = -EIO;
+				break;
+			}
+
 			if (mdres->compress_method == COMPRESS_ZLIB) {
 				ret = fread(tmp, bufsize, 1, mdres->in);
 				if (ret != 1) {
@@ -2088,7 +2096,7 @@ static int search_for_chunk_blocks(struct mdrestore_struct *mdres,
 					break;
 				}
 
-				size = MAX_PENDING_SIZE * 2;
+				size = max_size;
 				ret = uncompress(buffer,
 						 (unsigned long *)&size, tmp,
 						 bufsize);
