@@ -601,6 +601,9 @@ int corrupt_chunk_tree(struct btrfs_trans_handle *trans,
 	struct extent_buffer *leaf;
 
 	path = btrfs_alloc_path();
+	if (!path)
+		return -ENOMEM;
+
 	key.objectid = (u64)-1;
 	key.offset = (u64)-1;
 	key.type = (u8)-1;
@@ -630,7 +633,7 @@ int corrupt_chunk_tree(struct btrfs_trans_handle *trans,
 		if (ret)
 			goto free_out;
 	}
-	btrfs_free_path(path);
+	btrfs_release_path(path);
 
 	/* Here, cow and ins_len must equals 0 for the following reasons:
 	 * 1) chunk recover is based on disk scanning, so COW should be
@@ -639,7 +642,6 @@ int corrupt_chunk_tree(struct btrfs_trans_handle *trans,
 	 * 2) if cow = 0, ins_len must also be set to 0, or BUG_ON will be
 	 *    triggered.
 	 */
-	path = btrfs_alloc_path();
 	ret = btrfs_search_slot(trans, root, &key, path, 0, 0);
 	BUG_ON(ret == 0);
 	if (ret < 0) {
@@ -829,6 +831,10 @@ int main(int ac, char **av)
 			print_usage();
 		del = rand() % 3;
 		path = btrfs_alloc_path();
+		if (!path) {
+			fprintf(stderr, "path allocation failed\n");
+			goto out_close;
+		}
 
 		if (find_chunk_offset(root->fs_info->chunk_root, path,
 				      logical) != 0) {
