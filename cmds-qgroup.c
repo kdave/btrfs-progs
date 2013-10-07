@@ -202,7 +202,8 @@ static int cmd_qgroup_destroy(int argc, char **argv)
 }
 
 static const char * const cmd_qgroup_show_usage[] = {
-	"btrfs qgroup show -pcreFf <path>",
+	"btrfs qgroup show -pcreFf "
+	"[--sort=qgroupid,rfer,excl,max_rfer,max_excl] <path>",
 	"Show subvolume quota groups.",
 	"-p		print parent qgroup id",
 	"-c		print child qgroup id",
@@ -212,6 +213,11 @@ static const char * const cmd_qgroup_show_usage[] = {
 	"(include ancestral qgroups)",
 	"-f		list all qgroups which impact the given path"
 	"(exclude ancestral qgroups)",
+	"--sort=qgroupid,rfer,excl,max_rfer,max_excl",
+	"		list qgroups in order of qgroupid,"
+	"rfer,max_rfer or max_excl",
+	"		you can use '+' or '-' in front of each item.",
+	"		(+:ascending, -:descending, ascending default)",
 	NULL
 };
 
@@ -226,12 +232,19 @@ static int cmd_qgroup_show(int argc, char **argv)
 	u64 qgroupid;
 	int filter_flag = 0;
 
+	struct btrfs_qgroup_comparer_set *comparer_set;
 	struct btrfs_qgroup_filter_set *filter_set;
 	filter_set = btrfs_qgroup_alloc_filter_set();
+	comparer_set = btrfs_qgroup_alloc_comparer_set();
+	struct option long_options[] = {
+		{"sort", 1, NULL, 'S'},
+		{0, 0, 0, 0}
+	};
 
 	optind = 1;
 	while (1) {
-		c = getopt(argc, argv, "pcreFf");
+		c = getopt_long(argc, argv, "pcreFf",
+				long_options, NULL);
 		if (c < 0)
 			break;
 		switch (c) {
@@ -256,6 +269,12 @@ static int cmd_qgroup_show(int argc, char **argv)
 			break;
 		case 'f':
 			filter_flag |= 0x2;
+			break;
+		case 'S':
+			ret = btrfs_qgroup_parse_sort_string(optarg,
+							     &comparer_set);
+			if (ret)
+				usage(cmd_qgroup_show_usage);
 			break;
 		default:
 			usage(cmd_qgroup_show_usage);
@@ -282,7 +301,7 @@ static int cmd_qgroup_show(int argc, char **argv)
 					BTRFS_QGROUP_FILTER_PARENT,
 					qgroupid);
 	}
-	ret = btrfs_show_qgroups(fd, filter_set);
+	ret = btrfs_show_qgroups(fd, filter_set, comparer_set);
 	e = errno;
 	close_file_or_dir(fd, dirstream);
 	if (ret < 0)
