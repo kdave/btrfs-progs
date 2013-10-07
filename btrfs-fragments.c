@@ -283,7 +283,7 @@ list_fragments(int fd, u64 flags, char *dir)
 				white = gdImageColorAllocate(im, 255, 255, 255);
 				black = gdImageColorAllocate(im, 0, 0, 0);  
 
-				for (j = 0; j < 10; ++j)
+				for (j = 0; j < ARRAY_SIZE(colors); ++j)
 					colors[j] = black;
 
 				init_colors(im, colors);
