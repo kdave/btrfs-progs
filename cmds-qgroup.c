@@ -202,9 +202,10 @@ static int cmd_qgroup_destroy(int argc, char **argv)
 }
 
 static const char * const cmd_qgroup_show_usage[] = {
-	"btrfs qgroup show -p <path>",
+	"btrfs qgroup show -pc <path>",
 	"Show all subvolume quota groups.",
 	"-p		print parent qgroup id",
+	"-c		print child qgroup id",
 	NULL
 };
 
@@ -219,13 +220,17 @@ static int cmd_qgroup_show(int argc, char **argv)
 
 	optind = 1;
 	while (1) {
-		c = getopt(argc, argv, "p");
+		c = getopt(argc, argv, "pc");
 		if (c < 0)
 			break;
 		switch (c) {
 		case 'p':
 			btrfs_qgroup_setup_print_column(
 				BTRFS_QGROUP_PARENT);
+			break;
+		case 'c':
+			btrfs_qgroup_setup_print_column(
+				BTRFS_QGROUP_CHILD);
 			break;
 		default:
 			usage(cmd_qgroup_show_usage);
