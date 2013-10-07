@@ -1541,6 +1541,7 @@ next:
 		bytenr += mdres->leafsize;
 	}
 
+	free(eb);
 	return 0;
 }
 
