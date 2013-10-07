@@ -3294,13 +3294,13 @@ static int verify_space_cache(struct btrfs_root *root,
 
 	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
 	if (ret < 0)
-		return ret;
+		goto out;
 	ret = 0;
 	while (1) {
 		if (path->slots[0] >= btrfs_header_nritems(path->nodes[0])) {
 			ret = btrfs_next_leaf(root, path);
 			if (ret < 0)
-				return ret;
+				goto out;
 			if (ret > 0) {
 				ret = 0;
 				break;
@@ -3340,6 +3340,8 @@ static int verify_space_cache(struct btrfs_root *root,
 		ret = check_cache_range(root, cache, last,
 					cache->key.objectid +
 					cache->key.offset - last);
+
+out:
 	btrfs_free_path(path);
 
 	if (!ret &&
