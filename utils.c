@@ -1190,13 +1190,13 @@ out:
 }
 
 static char *size_strs[] = { "", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB"};
-void pretty_size_snprintf(u64 size, char *str, size_t str_bytes)
+int pretty_size_snprintf(double size, char *str, size_t str_bytes)
 {
 	int num_divs = 0;
 	float fraction;
 
 	if (str_bytes == 0)
-		return;
+		return 0;
 
 	if( size < 1024 ){
 		fraction = size;
@@ -1212,11 +1212,12 @@ void pretty_size_snprintf(u64 size, char *str, size_t str_bytes)
 
 		if (num_divs >= ARRAY_SIZE(size_strs)) {
 			str[0] = '\0';
-			return;
+			return -1;
 		}
 		fraction = (float)last_size / 1024;
 	}
-	snprintf(str, str_bytes, "%.2f%s", fraction, size_strs[num_divs]);
+	return snprintf(str, str_bytes, "%.2f%s", fraction,
+			size_strs[num_divs]);
 }
 
 /*
