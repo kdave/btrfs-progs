@@ -2068,6 +2068,17 @@ BTRFS_SETGET_FUNCS(qgroup_limit_rsv_referenced, struct btrfs_qgroup_limit_item,
 BTRFS_SETGET_FUNCS(qgroup_limit_rsv_exclusive, struct btrfs_qgroup_limit_item,
 		   rsv_exclusive, 64);
 
+BTRFS_SETGET_STACK_FUNCS(stack_qgroup_limit_flags,
+			 struct btrfs_qgroup_limit_item, flags, 64);
+BTRFS_SETGET_STACK_FUNCS(stack_qgroup_limit_max_referenced,
+			 struct btrfs_qgroup_limit_item, max_referenced, 64);
+BTRFS_SETGET_STACK_FUNCS(stack_qgroup_limit_max_exclusive,
+			 struct btrfs_qgroup_limit_item, max_exclusive, 64);
+BTRFS_SETGET_STACK_FUNCS(stack_qgroup_limit_rsv_referenced,
+			 struct btrfs_qgroup_limit_item, rsv_referenced, 64);
+BTRFS_SETGET_STACK_FUNCS(stack_qgroup_limit_rsv_exclusive,
+			 struct btrfs_qgroup_limit_item, rsv_exclusive, 64);
+
 /* this returns the number of file bytes represented by the inline item.
  * If an item is compressed, this is the uncompressed size
  */

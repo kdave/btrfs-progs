@@ -106,95 +106,6 @@ static int qgroup_create(int create, int argc, char **argv)
 	return 0;
 }
 
-static void print_qgroup_info(u64 objectid, struct btrfs_qgroup_info_item *info)
-{
-	printf("%llu/%llu %lld %lld\n", objectid >> 48,
-		objectid & ((1ll << 48) - 1),
-		btrfs_stack_qgroup_info_referenced(info),
-		btrfs_stack_qgroup_info_exclusive(info));
-}
-
-static int list_qgroups(int fd)
-{
-	int ret;
-	struct btrfs_ioctl_search_args args;
-	struct btrfs_ioctl_search_key *sk = &args.key;
-	struct btrfs_ioctl_search_header *sh;
-	unsigned long off = 0;
-	unsigned int i;
-	struct btrfs_qgroup_info_item *info;
-
-	memset(&args, 0, sizeof(args));
-
-	/* search in the quota tree */
-	sk->tree_id = BTRFS_QUOTA_TREE_OBJECTID;
-
-	/*
-	 * set the min and max to backref keys.  The search will
-	 * only send back this type of key now.
-	 */
-	sk->max_type = BTRFS_QGROUP_INFO_KEY;
-	sk->min_type = BTRFS_QGROUP_INFO_KEY;
-	sk->max_objectid = 0;
-	sk->max_offset = (u64)-1;
-	sk->max_transid = (u64)-1;
-
-	/* just a big number, doesn't matter much */
-	sk->nr_items = 4096;
-
-	while (1) {
-		ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &args);
-		if (ret < 0)
-			return ret;
-
-		/* the ioctl returns the number of item it found in nr_items */
-		if (sk->nr_items == 0)
-			break;
-
-		off = 0;
-
-		/*
-		 * for each item, pull the key out of the header and then
-		 * read the root_ref item it contains
-		 */
-		for (i = 0; i < sk->nr_items; i++) {
-			sh = (struct btrfs_ioctl_search_header *)(args.buf +
-								  off);
-			off += sizeof(*sh);
-
-			if (sh->objectid != 0)
-				goto done;
-
-			if (sh->type != BTRFS_QGROUP_INFO_KEY)
-				goto done;
-
-			info = (struct btrfs_qgroup_info_item *)
-					(args.buf + off);
-			print_qgroup_info(sh->offset, info);
-
-			off += sh->len;
-
-			/*
-			 * record the mins in sk so we can make sure the
-			 * next search doesn't repeat this root
-			 */
-			sk->min_offset = sh->offset;
-		}
-		sk->nr_items = 4096;
-		/*
-		 * this iteration is done, step forward one qgroup for the next
-		 * ioctl
-		 */
-		if (sk->min_offset < (u64)-1)
-			sk->min_offset++;
-		else
-			break;
-	}
-
-done:
-	return ret;
-}
-
 static int parse_limit(const char *p, unsigned long long *s)
 {
 	char *endptr;
@@ -313,7 +224,7 @@ static int cmd_qgroup_show(int argc, char **argv)
 		return 1;
 	}
 
-	ret = list_qgroups(fd);
+	ret = btrfs_show_qgroups(fd);
 	e = errno;
 	close_file_or_dir(fd, dirstream);
 	if (ret < 0)

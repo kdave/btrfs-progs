@@ -22,6 +22,16 @@
 #include "ioctl.h"
 #include "kerncompat.h"
 
+enum btrfs_qgroup_column_enum {
+	BTRFS_QGROUP_QGROUPID,
+	BTRFS_QGROUP_RFER,
+	BTRFS_QGROUP_EXCL,
+	BTRFS_QGROUP_ALL,
+};
+
+int  btrfs_show_qgroups(int fd);
+void btrfs_qgroup_setup_print_column(enum btrfs_qgroup_column_enum column);
+
 u64 parse_qgroupid(char *p);
 int qgroup_inherit_size(struct btrfs_qgroup_inherit *p);
 int qgroup_inherit_add_group(struct btrfs_qgroup_inherit **inherit, char *arg);
