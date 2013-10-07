@@ -314,11 +314,11 @@ static char *find_collision(struct metadump_struct *md, char *name,
 		if (val->sub[i] == 127) {
 			do {
 				i++;
-				if (i > name_len)
+				if (i >= name_len)
 					break;
 			} while (val->sub[i] == 127);
 
-			if (i > name_len)
+			if (i >= name_len)
 				break;
 			val->sub[i]++;
 			if (val->sub[i] == '/')
