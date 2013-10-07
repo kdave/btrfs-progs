@@ -508,5 +508,6 @@ int main(int argc, char **argv)
 		goto out;
 out:
 	close_ctree(root);
+	free(roots);
 	return ret;
 }
