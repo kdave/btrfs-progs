@@ -191,7 +191,6 @@ list_fragments(int fd, u64 flags, char *dir)
 	u64 bgused = 0;
 	u64 saved_extent = 0;
 	u64 saved_len = 0;
-	u64 saved_flags = 0;
 	int saved_color = 0;
 	u64 last_end = 0;
 	u64 areas = 0;
@@ -202,7 +201,6 @@ list_fragments(int fd, u64 flags, char *dir)
 
 	gdImagePtr im = NULL;
 	int black = 0;
-	int white = 0;
 	int width = 800;
 
 	snprintf(name, sizeof(name), "%s/index.html", dir);
@@ -280,7 +278,6 @@ list_fragments(int fd, u64 flags, char *dir)
 				im = gdImageCreate(width,
 					(sh->offset / 4096 + 799) / width);
 
-				white = gdImageColorAllocate(im, 255, 255, 255);
 				black = gdImageColorAllocate(im, 0, 0, 0);  
 
 				for (j = 0; j < ARRAY_SIZE(colors); ++j)
@@ -308,13 +305,11 @@ list_fragments(int fd, u64 flags, char *dir)
 				saved_len = 0;
 			}
 			if (im && sh->type == BTRFS_EXTENT_ITEM_KEY) {
-				u64 e_flags;
 				int c;
 				struct btrfs_extent_item *item;
 
 				item = (struct btrfs_extent_item *)
 						(args.buf + off);
-				e_flags = btrfs_stack_extent_flags(item);
 
 				if (use_color)
 					c = colors[get_color(item, sh->len)];
@@ -328,7 +323,6 @@ list_fragments(int fd, u64 flags, char *dir)
 				if (sh->objectid == bgend) {
 					saved_extent = sh->objectid;
 					saved_len = sh->offset;
-					saved_flags = e_flags;
 					saved_color = c;
 					goto skip;
 				}
