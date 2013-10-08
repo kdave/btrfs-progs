@@ -387,11 +387,10 @@ static int cmd_show(int argc, char **argv)
 {
 	struct list_head *all_uuids;
 	struct btrfs_fs_devices *fs_devices;
-	struct btrfs_device *device;
 	struct list_head *cur_uuid;
 	char *search = NULL;
 	int ret;
-	int where = BTRFS_SCAN_PROC;
+	int where = BTRFS_SCAN_LBLKID;
 	int type = 0;
 
 	while (1) {
@@ -453,17 +452,6 @@ devs_only:
 		if (search && uuid_search(fs_devices, search) == 0)
 			continue;
 
-		/* skip mounted as they are already printed by
-		 * btrfs_scan_kernel
-		*/
-		/* do it only for the default, no option */
-		if (where == BTRFS_SCAN_PROC) {
-			device = list_entry(fs_devices->devices.next,
-					struct btrfs_device, dev_list);
-			ret = check_mounted(device->name);
-			if (ret)
-				continue;
-		}
 		print_one_uuid(fs_devices);
 	}
 
