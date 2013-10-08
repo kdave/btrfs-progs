@@ -25,9 +25,16 @@
 
 #define BTRFS_MKFS_SYSTEM_GROUP_SIZE (4 * 1024 * 1024)
 
-#define BTRFS_SCAN_PROC	1
-#define BTRFS_SCAN_DEV		2
+#define BTRFS_SCAN_PROC		(1ULL << 0)
+#define BTRFS_SCAN_DEV		(1ULL << 1)
+#define BTRFS_SCAN_MOUNTED	(1ULL << 2)
 #define BTRFS_SCAN_LBLKID	(1ULL << 3)
+
+#define BTRFS_UPDATE_KERNEL	1
+
+#define BTRFS_ARG_UNKNOWN	0
+#define BTRFS_ARG_PATH		1
+#define BTRFS_ARG_UUID		2
 
 int make_btrfs(int fd, const char *device, const char *label,
 	       u64 blocks[6], u64 num_bytes, u32 nodesize,

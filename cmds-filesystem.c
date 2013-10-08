@@ -25,6 +25,9 @@
 #include <ctype.h>
 #include <fcntl.h>
 #include <ftw.h>
+#include <mntent.h>
+#include <linux/limits.h>
+#include <getopt.h>
 
 #include "kerncompat.h"
 #include "ctree.h"
@@ -251,9 +254,131 @@ static void print_one_uuid(struct btrfs_fs_devices *fs_devices)
 	printf("\n");
 }
 
+/* adds up all the used spaces as reported by the space info ioctl
+ */
+static u64 calc_used_bytes(struct btrfs_ioctl_space_args *si)
+{
+	u64 ret = 0;
+	int i;
+	for (i = 0; i < si->total_spaces; i++)
+		ret += si->spaces[i].used_bytes;
+	return ret;
+}
+
+static int print_one_fs(struct btrfs_ioctl_fs_info_args *fs_info,
+		struct btrfs_ioctl_dev_info_args *dev_info,
+		struct btrfs_ioctl_space_args *space_info,
+		char *label, char *path)
+{
+	int i;
+	char uuidbuf[37];
+	struct btrfs_ioctl_dev_info_args *tmp_dev_info;
+
+	uuid_unparse(fs_info->fsid, uuidbuf);
+	printf("Label: %s  uuid: %s\n",
+		strlen(label) ? label : "none", uuidbuf);
+
+	printf("\tTotal devices %llu FS bytes used %s\n",
+				fs_info->num_devices,
+			pretty_size(calc_used_bytes(space_info)));
+
+	for (i = 0; i < fs_info->num_devices; i++) {
+		tmp_dev_info = (struct btrfs_ioctl_dev_info_args *)&dev_info[i];
+		printf("\tdevid    %llu size %s used %s path %s\n",
+			tmp_dev_info->devid,
+			pretty_size(tmp_dev_info->total_bytes),
+			pretty_size(tmp_dev_info->bytes_used),
+			tmp_dev_info->path);
+	}
+
+	printf("\n");
+	return 0;
+}
+
+/* This function checks if the given input parameter is
+ * an uuid or a path
+ * return -1: some error in the given input
+ * return 0: unknow input
+ * return 1: given input is uuid
+ * return 2: given input is path
+ */
+static int check_arg_type(char *input)
+{
+	uuid_t	out;
+	char path[PATH_MAX];
+
+	if (!input)
+		return BTRFS_ARG_UNKNOWN;
+
+	if (realpath(input, path))
+		return BTRFS_ARG_PATH;
+
+	if (!uuid_parse(input, out))
+		return BTRFS_ARG_UUID;
+
+	return BTRFS_ARG_UNKNOWN;
+}
+
+static int btrfs_scan_kernel(void *search)
+{
+	int ret = 0, fd, type;
+	FILE *f;
+	struct mntent *mnt;
+	struct btrfs_ioctl_fs_info_args fs_info_arg;
+	struct btrfs_ioctl_dev_info_args *dev_info_arg = NULL;
+	struct btrfs_ioctl_space_args *space_info_arg;
+	char label[BTRFS_LABEL_SIZE];
+	uuid_t uuid;
+
+	f = setmntent("/proc/self/mounts", "r");
+	if (f == NULL)
+		return 1;
+
+	type = check_arg_type(search);
+
+	while ((mnt = getmntent(f)) != NULL) {
+		if (strcmp(mnt->mnt_type, "btrfs"))
+			continue;
+		ret = get_fs_info(mnt->mnt_dir, &fs_info_arg,
+				&dev_info_arg);
+		if (ret)
+			return ret;
+
+		switch (type) {
+		case BTRFS_ARG_UUID:
+			ret = uuid_parse(search, uuid);
+			if (ret)
+				return 1;
+			if (uuid_compare(fs_info_arg.fsid, uuid))
+				continue;
+			break;
+		case BTRFS_ARG_PATH:
+			if (strcmp(search, mnt->mnt_dir))
+				continue;
+			break;
+		default:
+			break;
+		}
+
+		fd = open(mnt->mnt_dir, O_RDONLY);
+		if (fd > 0 && !get_df(fd, &space_info_arg)) {
+			get_label_mounted(mnt->mnt_dir, label);
+			print_one_fs(&fs_info_arg, dev_info_arg,
+					space_info_arg, label, mnt->mnt_dir);
+			free(space_info_arg);
+		}
+		if (fd > 0)
+			close(fd);
+		free(dev_info_arg);
+	}
+	return ret;
+}
+
 static const char * const cmd_show_usage[] = {
-	"btrfs filesystem show [--all-devices|<uuid>]",
+	"btrfs filesystem show [options] [<path>|<uuid>]",
 	"Show the structure of a filesystem",
+	"-d|--all-devices   show only disks under /dev containing btrfs filesystem",
+	"-m|--mounted       show only mounted btrfs",
 	"If no argument is given, structure of all present filesystems is shown.",
 	NULL
 };
@@ -262,38 +387,87 @@ static int cmd_show(int argc, char **argv)
 {
 	struct list_head *all_uuids;
 	struct btrfs_fs_devices *fs_devices;
+	struct btrfs_device *device;
 	struct list_head *cur_uuid;
 	char *search = NULL;
 	int ret;
 	int where = BTRFS_SCAN_PROC;
-	int searchstart = 1;
+	int type = 0;
 
-	if( argc > 1 && !strcmp(argv[1],"--all-devices")){
-		where = BTRFS_SCAN_DEV;
-		searchstart += 1;
+	while (1) {
+		int long_index;
+		static struct option long_options[] = {
+			{ "all-devices", no_argument, NULL, 'd'},
+			{ "mounted", no_argument, NULL, 'm'},
+			{ NULL, no_argument, NULL, 0 },
+		};
+		int c = getopt_long(argc, argv, "dm", long_options,
+					&long_index);
+		if (c < 0)
+			break;
+		switch (c) {
+		case 'd':
+			where = BTRFS_SCAN_DEV;
+			break;
+		case 'm':
+			where = BTRFS_SCAN_MOUNTED;
+			break;
+		default:
+			usage(cmd_show_usage);
+		}
 	}
 
-	if (check_argc_max(argc, searchstart + 1))
+	if (check_argc_max(argc, optind + 1))
 		usage(cmd_show_usage);
+	if (argc > optind) {
+		search = argv[optind];
+		type = check_arg_type(search);
+		if (type == BTRFS_ARG_UNKNOWN) {
+			fprintf(stderr, "ERROR: arg type unknown\n");
+			usage(cmd_show_usage);
+		}
+	}
 
-	ret = scan_for_btrfs(where, 0);
+	if (where == BTRFS_SCAN_DEV)
+		goto devs_only;
 
-	if (ret){
-		fprintf(stderr, "ERROR: error %d while scanning\n", ret);
+	/* show mounted btrfs */
+	btrfs_scan_kernel(search);
+
+	/* shows mounted only */
+	if (where == BTRFS_SCAN_MOUNTED)
+		goto out;
+
+devs_only:
+	ret = scan_for_btrfs(where, !BTRFS_UPDATE_KERNEL);
+
+	if (ret) {
+		fprintf(stderr, "ERROR: %d while scanning\n", ret);
 		return 1;
 	}
 	
-	if(searchstart < argc)
-		search = argv[searchstart];
-
 	all_uuids = btrfs_scanned_uuids();
 	list_for_each(cur_uuid, all_uuids) {
 		fs_devices = list_entry(cur_uuid, struct btrfs_fs_devices,
 					list);
 		if (search && uuid_search(fs_devices, search) == 0)
 			continue;
+
+		/* skip mounted as they are already printed by
+		 * btrfs_scan_kernel
+		*/
+		/* do it only for the default, no option */
+		if (where == BTRFS_SCAN_PROC) {
+			device = list_entry(fs_devices->devices.next,
+					struct btrfs_device, dev_list);
+			ret = check_mounted(device->name);
+			if (ret)
+				continue;
+		}
 		print_one_uuid(fs_devices);
 	}
+
+out:
 	printf("%s\n", BTRFS_BUILD_VERSION);
 	return 0;
 }
