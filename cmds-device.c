@@ -203,7 +203,7 @@ static int cmd_scan_dev(int argc, char **argv)
 	if(argc<=devstart){
 		int ret;
 		printf("Scanning for Btrfs filesystems\n");
-		ret = scan_for_btrfs(where, 1);
+		ret = scan_for_btrfs(where, BTRFS_UPDATE_KERNEL);
 		if (ret){
 			fprintf(stderr, "ERROR: error %d while scanning\n", ret);
 			return 1;

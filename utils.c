@@ -961,7 +961,7 @@ int check_mounted_where(int fd, const char *file, char *where, int size,
 
 	/* scan other devices */
 	if (is_btrfs && total_devs > 1) {
-		if((ret = btrfs_scan_for_fsid(0)))
+		if ((ret = btrfs_scan_for_fsid(!BTRFS_UPDATE_KERNEL)))
 			return ret;
 	}
 
