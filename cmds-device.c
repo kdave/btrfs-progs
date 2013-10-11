@@ -189,7 +189,7 @@ static const char * const cmd_scan_dev_usage[] = {
 static int cmd_scan_dev(int argc, char **argv)
 {
 	int	i, fd, e;
-	int	where = BTRFS_SCAN_PROC;
+	int	where = BTRFS_SCAN_LBLKID;
 	int	devstart = 1;
 
 	if( argc > 1 && !strcmp(argv[1],"--all-devices")){
