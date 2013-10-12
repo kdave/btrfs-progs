@@ -63,6 +63,7 @@ int find_mount_root(const char *path, char **mount_root)
 	int fd;
 	struct mntent *ent;
 	int len;
+	int ret;
 	int longest_matchlen = 0;
 	char *longest_match = NULL;
 
@@ -95,10 +96,13 @@ int find_mount_root(const char *path, char **mount_root)
 		return -ENOENT;
 	}
 
+	ret = 0;
 	*mount_root = realpath(longest_match, NULL);
-	free(longest_match);
+	if (!mount_root)
+		ret = -errno;
 
-	return 0;
+	free(longest_match);
+	return ret;
 }
 
 static int get_root_id(struct btrfs_send *s, const char *path, u64 *root_id)

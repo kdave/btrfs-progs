@@ -236,6 +236,12 @@ again:
 	}
 
 	cpath = realpath(path, NULL);
+	if (!cpath) {
+		ret = errno;
+		fprintf(stderr, "ERROR: finding real path for '%s': %s\n",
+			path, strerror(errno));
+		goto out;
+	}
 	dupdname = strdup(cpath);
 	dname = dirname(dupdname);
 	dupvname = strdup(cpath);
