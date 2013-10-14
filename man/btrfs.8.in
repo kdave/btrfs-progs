@@ -116,6 +116,14 @@ btrfs \- control a btrfs filesystem
 .PP
 \fBbtrfs\fP \fBreplace cancel\fP \fI<mount_point>\fP
 .PP
+\fBbtrfs\fP \fBdedup enable <path> \fP\fI\fP
+.PP
+\fBbtrfs\fP \fBdedup disable <path> \fP\fI\fP
+.PP
+\fBbtrfs\fP \fBdedup on [-b|--bs size] <path> \fP\fI\fP
+.PP
+\fBbtrfs\fP \fBdedup off <path> \fP\fI\fP
+.PP
 \fBbtrfs\fP \fBhelp|\-\-help \fP
 .PP
 \fBbtrfs\fP \fB<command> \-\-help \fP
@@ -769,6 +777,22 @@ operation finishes (or is canceled)
 
 \fBreplace cancel\fR \fI<mount_point>\fR
 Cancel a running device replace operation.
+.TP
+
+\fBbtrfs dedup enable\fP \fI<path>\fP
+Enable data deduplication support for a filesystem.
+.TP
+
+\fBbtrfs dedup disable\fP \fI<path>\fP
+Disable data deduplication support for a filesystem.
+.TP
+
+\fBbtrfs dedup on [-b|--bs size]\fP \fI<path>\fP
+Switch on data deduplication or change the dedup blocksize.
+.TP
+
+\fBbtrfs dedup off\fP \fI<path>\fP
+Switch off data deduplication.
 .RE
 
 .SH EXIT STATUS
