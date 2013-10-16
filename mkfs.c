@@ -567,137 +567,6 @@ static int add_xattr_item(struct btrfs_trans_handle *trans,
 
 	return ret;
 }
-static int custom_alloc_extent(struct btrfs_root *root, u64 num_bytes,
-			       u64 hint_byte, struct btrfs_key *ins)
-{
-	u64 start;
-	u64 end;
-	u64 last = hint_byte;
-	int ret;
-	int wrapped = 0;
-	struct btrfs_block_group_cache *cache;
-
-	while (1) {
-		ret = find_first_extent_bit(&root->fs_info->free_space_cache,
-					    last, &start, &end, EXTENT_DIRTY);
-		if (ret) {
-			if (wrapped++ == 0) {
-				last = 0;
-				continue;
-			} else {
-				goto fail;
-			}
-		}
-
-		start = max(last, start);
-		last = end + 1;
-		if (last - start < num_bytes)
-			continue;
-
-		last = start + num_bytes;
-		if (test_range_bit(&root->fs_info->pinned_extents,
-				   start, last - 1, EXTENT_DIRTY, 0))
-			continue;
-
-		cache = btrfs_lookup_block_group(root->fs_info, start);
-		BUG_ON(!cache);
-		if (cache->flags & BTRFS_BLOCK_GROUP_SYSTEM ||
-		    last > cache->key.objectid + cache->key.offset) {
-			last = cache->key.objectid + cache->key.offset;
-			continue;
-		}
-
-		if (cache->flags & (BTRFS_BLOCK_GROUP_SYSTEM |
-			    BTRFS_BLOCK_GROUP_METADATA)) {
-			last = cache->key.objectid + cache->key.offset;
-			continue;
-		}
-
-		clear_extent_dirty(&root->fs_info->free_space_cache,
-				   start, start + num_bytes - 1, 0);
-
-		ins->objectid = start;
-		ins->offset = num_bytes;
-		ins->type = BTRFS_EXTENT_ITEM_KEY;
-		return 0;
-	}
-fail:
-	fprintf(stderr, "not enough free space\n");
-	return -ENOSPC;
-}
-
-static int record_file_extent(struct btrfs_trans_handle *trans,
-			      struct btrfs_root *root, u64 objectid,
-			      struct btrfs_inode_item *inode,
-			      u64 file_pos, u64 disk_bytenr,
-			      u64 num_bytes)
-{
-	int ret;
-	struct btrfs_fs_info *info = root->fs_info;
-	struct btrfs_root *extent_root = info->extent_root;
-	struct extent_buffer *leaf;
-	struct btrfs_file_extent_item *fi;
-	struct btrfs_key ins_key;
-	struct btrfs_path path;
-	struct btrfs_extent_item *ei;
-
-	btrfs_init_path(&path);
-
-	ins_key.objectid = objectid;
-	ins_key.offset = 0;
-	btrfs_set_key_type(&ins_key, BTRFS_EXTENT_DATA_KEY);
-	ret = btrfs_insert_empty_item(trans, root, &path, &ins_key,
-				      sizeof(*fi));
-	if (ret)
-		goto fail;
-	leaf = path.nodes[0];
-	fi = btrfs_item_ptr(leaf, path.slots[0],
-			    struct btrfs_file_extent_item);
-	btrfs_set_file_extent_generation(leaf, fi, trans->transid);
-	btrfs_set_file_extent_type(leaf, fi, BTRFS_FILE_EXTENT_REG);
-	btrfs_set_file_extent_disk_bytenr(leaf, fi, disk_bytenr);
-	btrfs_set_file_extent_disk_num_bytes(leaf, fi, num_bytes);
-	btrfs_set_file_extent_offset(leaf, fi, 0);
-	btrfs_set_file_extent_num_bytes(leaf, fi, num_bytes);
-	btrfs_set_file_extent_ram_bytes(leaf, fi, num_bytes);
-	btrfs_set_file_extent_compression(leaf, fi, 0);
-	btrfs_set_file_extent_encryption(leaf, fi, 0);
-	btrfs_set_file_extent_other_encoding(leaf, fi, 0);
-	btrfs_mark_buffer_dirty(leaf);
-
-	btrfs_release_path(&path);
-
-	ins_key.objectid = disk_bytenr;
-	ins_key.offset = num_bytes;
-	ins_key.type = BTRFS_EXTENT_ITEM_KEY;
-
-	ret = btrfs_insert_empty_item(trans, extent_root, &path,
-				&ins_key, sizeof(*ei));
-	if (ret == 0) {
-		leaf = path.nodes[0];
-		ei = btrfs_item_ptr(leaf, path.slots[0],
-				    struct btrfs_extent_item);
-
-		btrfs_set_extent_refs(leaf, ei, 0);
-		btrfs_set_extent_generation(leaf, ei, trans->transid);
-		btrfs_set_extent_flags(leaf, ei, BTRFS_EXTENT_FLAG_DATA);
-
-		btrfs_mark_buffer_dirty(leaf);
-		ret = btrfs_update_block_group(trans, root, disk_bytenr,
-					       num_bytes, 1, 0);
-		if (ret)
-			goto fail;
-	} else if (ret != -EEXIST) {
-		goto fail;
-	}
-
-	ret = btrfs_inc_extent_ref(trans, root, disk_bytenr, num_bytes, 0,
-				   root->root_key.objectid,
-				   objectid, 0);
-fail:
-	btrfs_release_path(&path);
-	return ret;
-}
 
 static int add_symbolic_link(struct btrfs_trans_handle *trans,
 			     struct btrfs_root *root,
@@ -735,12 +604,14 @@ static int add_file_items(struct btrfs_trans_handle *trans,
 	int ret = -1;
 	ssize_t ret_read;
 	u64 bytes_read = 0;
-	char *buffer = NULL;
 	struct btrfs_key key;
 	int blocks;
 	u32 sectorsize = root->sectorsize;
 	u64 first_block = 0;
-	u64 num_blocks = 0;
+	u64 file_pos = 0;
+	u64 cur_bytes;
+	u64 total_bytes;
+	struct extent_buffer *eb = NULL;
 	int fd;
 
 	fd = open(path_name, O_RDONLY);
@@ -754,7 +625,7 @@ static int add_file_items(struct btrfs_trans_handle *trans,
 		blocks += 1;
 
 	if (st->st_size <= BTRFS_MAX_INLINE_DATA_SIZE(root)) {
-		buffer = malloc(st->st_size);
+		char *buffer = malloc(st->st_size);
 		ret_read = pread64(fd, buffer, st->st_size, bytes_read);
 		if (ret_read == -1) {
 			fprintf(stderr, "%s read failed\n", path_name);
@@ -763,57 +634,89 @@ static int add_file_items(struct btrfs_trans_handle *trans,
 
 		ret = btrfs_insert_inline_extent(trans, root, objectid, 0,
 						 buffer, st->st_size);
+		free(buffer);
 		goto end;
 	}
 
-	ret = custom_alloc_extent(root, blocks * sectorsize, 0, &key);
+	/* round up our st_size to the FS blocksize */
+	total_bytes = (u64)blocks * sectorsize;
+
+	/*
+	 * do our IO in extent buffers so it can work
+	 * against any raid type
+	 */
+	eb = malloc(sizeof(*eb) + sectorsize);
+	if (!eb) {
+		ret = -ENOMEM;
+		goto end;
+	}
+	memset(eb, 0, sizeof(*eb) + sectorsize);
+
+again:
+
+	/*
+	 * keep our extent size at 1MB max, this makes it easier to work inside
+	 * the tiny block groups created during mkfs
+	 */
+	cur_bytes = min(total_bytes, 1024ULL * 1024);
+	ret = btrfs_reserve_extent(trans, root, cur_bytes, 0, 0, (u64)-1,
+				   &key, 1);
 	if (ret)
 		goto end;
 
 	first_block = key.objectid;
 	bytes_read = 0;
-	buffer = malloc(sectorsize);
 
-	do {
-		memset(buffer, 0, sectorsize);
-		ret_read = pread64(fd, buffer, sectorsize, bytes_read);
+	while (bytes_read < cur_bytes) {
+
+		memset(eb->data, 0, sectorsize);
+
+		ret_read = pread64(fd, eb->data, sectorsize, file_pos + bytes_read);
 		if (ret_read == -1) {
 			fprintf(stderr, "%s read failed\n", path_name);
 			goto end;
 		}
 
-		ret = pwrite64(out_fd, buffer, sectorsize,
-			       first_block + bytes_read);
-		if (ret != sectorsize) {
+		eb->start = first_block + bytes_read;
+		eb->len = sectorsize;
+
+		/*
+		 * we're doing the csum before we record the extent, but
+		 * that's ok
+		 */
+		ret = btrfs_csum_file_block(trans, root->fs_info->csum_root,
+					    first_block + bytes_read + sectorsize,
+					    first_block + bytes_read,
+					    eb->data, sectorsize);
+		if (ret)
+			goto end;
+
+		ret = write_and_map_eb(trans, root, eb);
+		if (ret) {
 			fprintf(stderr, "output file write failed\n");
 			goto end;
 		}
 
-		/* checksum for file data */
-		ret = btrfs_csum_file_block(trans, root->fs_info->csum_root,
-				first_block + (blocks * sectorsize),
-				first_block + bytes_read,
-				buffer, sectorsize);
-		if (ret) {
-			fprintf(stderr, "%s checksum failed\n", path_name);
-			goto end;
-		}
-
-		bytes_read += ret_read;
-		num_blocks++;
-	} while (ret_read == sectorsize);
-
-	if (num_blocks > 0) {
-		ret = record_file_extent(trans, root, objectid, btrfs_inode,
-					 first_block, first_block,
-					 blocks * sectorsize);
-		if (ret)
-			goto end;
+		bytes_read += sectorsize;
 	}
 
+	if (bytes_read) {
+		ret = btrfs_record_file_extent(trans, root, objectid, btrfs_inode,
+					       file_pos, first_block, cur_bytes);
+		if (ret)
+			goto end;
+
+	}
+
+	file_pos += cur_bytes;
+	total_bytes -= cur_bytes;
+
+	if (total_bytes)
+		goto again;
+
 end:
-	if (buffer)
-		free(buffer);
+	if (eb)
+		free(eb);
 	close(fd);
 	return ret;
 }
@@ -1019,6 +922,7 @@ static int create_chunks(struct btrfs_trans_handle *trans,
 
 	if (size_of_data < minimum_data_chunk_size)
 		size_of_data = minimum_data_chunk_size;
+
 	ret = btrfs_alloc_data_chunk(trans, root->fs_info->extent_root,
 				     &chunk_start, size_of_data, data_type);
 	BUG_ON(ret);
@@ -1099,6 +1003,7 @@ static u64 size_sourcedir(char *dir_name, u64 sectorsize,
 	u64 allocated_meta_size = 8 * 1024 * 1024;	/* 8MB */
 	u64 allocated_total_size = 20 * 1024 * 1024;	/* 20MB */
 	u64 num_of_meta_chunks = 0;
+	u64 num_of_data_chunks = 0;
 	u64 num_of_allocated_meta_chunks =
 			allocated_meta_size / default_chunk_size;
 
@@ -1111,6 +1016,9 @@ static u64 size_sourcedir(char *dir_name, u64 sectorsize,
 		exit(1);
 	}
 
+	num_of_data_chunks = (dir_size + default_chunk_size - 1) /
+		default_chunk_size;
+
 	num_of_meta_chunks = (dir_size / 2) / default_chunk_size;
 	if (((dir_size / 2) % default_chunk_size) != 0)
 		num_of_meta_chunks++;
@@ -1119,11 +1027,12 @@ static u64 size_sourcedir(char *dir_name, u64 sectorsize,
 	else
 		num_of_meta_chunks -= num_of_allocated_meta_chunks;
 
-	total_size = allocated_total_size + dir_size +
+	total_size = allocated_total_size +
+		     (num_of_data_chunks * default_chunk_size) +
 		     (num_of_meta_chunks * default_chunk_size);
 
 	*num_of_meta_chunks_ret = num_of_meta_chunks;
-
+	*size_of_data_ret = num_of_data_chunks * default_chunk_size;
 	return total_size;
 }
 

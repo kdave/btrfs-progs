@@ -2124,6 +2124,11 @@ static inline int btrfs_fs_incompat(struct btrfs_fs_info *fs_info, u64 flag)
 	btrfs_item_offset_nr(leaf, slot)))
 
 /* extent-tree.c */
+int btrfs_reserve_extent(struct btrfs_trans_handle *trans,
+			 struct btrfs_root *root,
+			 u64 num_bytes, u64 empty_size,
+			 u64 hint_byte, u64 search_end,
+			 struct btrfs_key *ins, int data);
 int btrfs_fix_block_accounting(struct btrfs_trans_handle *trans,
 				 struct btrfs_root *root);
 void btrfs_pin_extent(struct btrfs_fs_info *fs_info, u64 bytenr, u64 num_bytes);
@@ -2191,6 +2196,11 @@ int btrfs_make_block_groups(struct btrfs_trans_handle *trans,
 int btrfs_update_block_group(struct btrfs_trans_handle *trans,
 			     struct btrfs_root *root, u64 bytenr, u64 num,
 			     int alloc, int mark_free);
+int btrfs_record_file_extent(struct btrfs_trans_handle *trans,
+			      struct btrfs_root *root, u64 objectid,
+			      struct btrfs_inode_item *inode,
+			      u64 file_pos, u64 disk_bytenr,
+			      u64 num_bytes);
 /* ctree.c */
 int btrfs_del_ptr(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 		   struct btrfs_path *path, int level, int slot);

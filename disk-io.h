@@ -101,6 +101,8 @@ int csum_tree_block_size(struct extent_buffer *buf, u16 csum_sectorsize,
 			 int verify);
 int verify_tree_block_csum_silent(struct extent_buffer *buf, u16 csum_size);
 int btrfs_read_buffer(struct extent_buffer *buf, u64 parent_transid);
+int write_and_map_eb(struct btrfs_trans_handle *trans, struct btrfs_root *root,
+		     struct extent_buffer *eb);
 #endif
 
 /* raid6.c */

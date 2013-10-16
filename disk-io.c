@@ -312,24 +312,15 @@ struct extent_buffer *read_tree_block(struct btrfs_root *root, u64 bytenr,
 	return NULL;
 }
 
-static int write_tree_block(struct btrfs_trans_handle *trans,
-			    struct btrfs_root *root,
-			    struct extent_buffer *eb)
+int write_and_map_eb(struct btrfs_trans_handle *trans,
+		     struct btrfs_root *root,
+		     struct extent_buffer *eb)
 {
 	int ret;
 	int dev_nr;
 	u64 length;
 	u64 *raid_map = NULL;
 	struct btrfs_multi_bio *multi = NULL;
-
-	if (check_tree_block(root, eb))
-		BUG();
-
-	if (!btrfs_buffer_uptodate(eb, trans->transid))
-		BUG();
-
-	btrfs_set_header_flag(eb, BTRFS_HEADER_FLAG_WRITTEN);
-	csum_tree_block(root, eb, 0);
 
 	dev_nr = 0;
 	length = eb->len;
@@ -351,6 +342,22 @@ static int write_tree_block(struct btrfs_trans_handle *trans,
 	}
 	kfree(multi);
 	return 0;
+}
+
+int write_tree_block(struct btrfs_trans_handle *trans,
+		     struct btrfs_root *root,
+		     struct extent_buffer *eb)
+{
+	if (check_tree_block(root, eb))
+		BUG();
+
+	if (!btrfs_buffer_uptodate(eb, trans->transid))
+		BUG();
+
+	btrfs_set_header_flag(eb, BTRFS_HEADER_FLAG_WRITTEN);
+	csum_tree_block(root, eb, 0);
+
+	return write_and_map_eb(trans, root, eb);
 }
 
 int __setup_root(u32 nodesize, u32 leafsize, u32 sectorsize,
