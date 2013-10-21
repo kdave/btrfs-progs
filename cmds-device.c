@@ -98,6 +98,7 @@ static int cmd_add_dev(int argc, char **argv)
 		res = test_dev_for_mkfs(argv[i], force, estr);
 		if (res) {
 			fprintf(stderr, "%s", estr);
+			ret++;
 			continue;
 		}
 
