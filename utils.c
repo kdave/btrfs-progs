@@ -692,7 +692,8 @@ int is_block_device(const char *path) {
  * On failure, returns -errno (not mounted yields -EINVAL)
  * Is noisy on failures, expects to be given a mounted device.
  */
-static int get_btrfs_mount(const char *dev, char *mp, size_t mp_size) {
+int get_btrfs_mount(const char *dev, char *mp, size_t mp_size)
+{
 	int ret;
 	int fd = -1;
 
@@ -717,7 +718,6 @@ static int get_btrfs_mount(const char *dev, char *mp, size_t mp_size) {
 
 	ret = check_mounted_where(fd, dev, mp, mp_size, NULL);
 	if (!ret) {
-		fprintf(stderr, "%s is not a mounted btrfs device\n", dev);
 		ret = -EINVAL;
 	} else { /* mounted, all good */
 		ret = 0;
@@ -725,8 +725,6 @@ static int get_btrfs_mount(const char *dev, char *mp, size_t mp_size) {
 out:
 	if (fd != -1)
 		close(fd);
-	if (ret)
-		fprintf(stderr, "Could not get mountpoint for %s\n", dev);
 	return ret;
 }
 

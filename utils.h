@@ -91,5 +91,6 @@ int csum_tree_block(struct btrfs_root *root, struct extent_buffer *buf,
 int ask_user(char *question);
 int lookup_ino_rootid(int fd, u64 *rootid);
 int btrfs_scan_lblkid(int update_kernel);
+int get_btrfs_mount(const char *dev, char *mp, size_t mp_size);
 
 #endif
