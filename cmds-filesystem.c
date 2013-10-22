@@ -310,8 +310,15 @@ static int check_arg_type(char *input)
 	if (!input)
 		return BTRFS_ARG_UNKNOWN;
 
-	if (realpath(input, path))
-		return BTRFS_ARG_PATH;
+	if (realpath(input, path)) {
+		if (is_block_device(input) == 1)
+			return BTRFS_ARG_BLKDEV;
+
+		if (is_mount_point(input) == 1)
+			return BTRFS_ARG_MNTPOINT;
+
+		return BTRFS_ARG_UNKNOWN;
+	}
 
 	if (!uuid_parse(input, out))
 		return BTRFS_ARG_UUID;
@@ -335,6 +342,8 @@ static int btrfs_scan_kernel(void *search)
 		return 1;
 
 	type = check_arg_type(search);
+	if (type == BTRFS_ARG_BLKDEV)
+		return 1;
 
 	while ((mnt = getmntent(f)) != NULL) {
 		if (strcmp(mnt->mnt_type, "btrfs"))
@@ -352,11 +361,11 @@ static int btrfs_scan_kernel(void *search)
 			if (uuid_compare(fs_info_arg.fsid, uuid))
 				continue;
 			break;
-		case BTRFS_ARG_PATH:
+		case BTRFS_ARG_MNTPOINT:
 			if (strcmp(search, mnt->mnt_dir))
 				continue;
 			break;
-		default:
+		case BTRFS_ARG_UNKNOWN:
 			break;
 		}
 
@@ -375,7 +384,7 @@ static int btrfs_scan_kernel(void *search)
 }
 
 static const char * const cmd_show_usage[] = {
-	"btrfs filesystem show [options] [<path>|<uuid>]",
+	"btrfs filesystem show [options|<path>|<uuid>]",
 	"Show the structure of a filesystem",
 	"-d|--all-devices   show only disks under /dev containing btrfs filesystem",
 	"-m|--mounted       show only mounted btrfs",
@@ -392,6 +401,7 @@ static int cmd_show(int argc, char **argv)
 	int ret;
 	int where = BTRFS_SCAN_LBLKID;
 	int type = 0;
+	char mp[BTRFS_PATH_NAME_MAX + 1];
 
 	while (1) {
 		int long_index;
@@ -416,14 +426,24 @@ static int cmd_show(int argc, char **argv)
 		}
 	}
 
-	if (check_argc_max(argc, optind + 1))
-		usage(cmd_show_usage);
+	if (where == BTRFS_SCAN_LBLKID) {
+		if (check_argc_max(argc, optind + 1))
+			usage(cmd_show_usage);
+	} else {
+		if (check_argc_max(argc, optind))
+			usage(cmd_show_usage);
+	}
 	if (argc > optind) {
 		search = argv[optind];
 		type = check_arg_type(search);
 		if (type == BTRFS_ARG_UNKNOWN) {
 			fprintf(stderr, "ERROR: arg type unknown\n");
 			usage(cmd_show_usage);
+		}
+		if (type == BTRFS_ARG_BLKDEV) {
+			ret = get_btrfs_mount(search, mp, sizeof(mp));
+			if (ret == 0)
+				search = mp;
 		}
 	}
 

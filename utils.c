@@ -677,13 +677,38 @@ error:
  * Returns negative errno on failure, otherwise
  * returns 1 for blockdev, 0 for not-blockdev
  */
-int is_block_device(const char *path) {
+int is_block_device(const char *path)
+{
 	struct stat statbuf;
 
 	if (stat(path, &statbuf) < 0)
 		return -errno;
 
 	return S_ISBLK(statbuf.st_mode);
+}
+
+/*
+ * check if given path is a mount point
+ * return 1 if yes. 0 if no. -1 for error
+ */
+int is_mount_point(const char *path)
+{
+	FILE *f;
+	struct mntent *mnt;
+	int ret = 0;
+
+	f = setmntent("/proc/self/mounts", "r");
+	if (f == NULL)
+		return -1;
+
+	while ((mnt = getmntent(f)) != NULL) {
+		if (strcmp(mnt->mnt_dir, path))
+			continue;
+		ret = 1;
+		break;
+	}
+	endmntent(f);
+	return ret;
 }
 
 /*

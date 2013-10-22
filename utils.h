@@ -33,8 +33,9 @@
 #define BTRFS_UPDATE_KERNEL	1
 
 #define BTRFS_ARG_UNKNOWN	0
-#define BTRFS_ARG_PATH		1
+#define BTRFS_ARG_MNTPOINT	1
 #define BTRFS_ARG_UUID		2
+#define BTRFS_ARG_BLKDEV	3
 
 int make_btrfs(int fd, const char *device, const char *label,
 	       u64 blocks[6], u64 num_bytes, u32 nodesize,
@@ -76,6 +77,7 @@ int set_label(const char *btrfs_dev, const char *label);
 
 char *__strncpy__null(char *dest, const char *src, size_t n);
 int is_block_device(const char *file);
+int is_mount_point(const char *file);
 int open_path_or_dev_mnt(const char *path, DIR **dirstream);
 u64 btrfs_device_size(int fd, struct stat *st);
 /* Helper to always get proper size of the destination string */
