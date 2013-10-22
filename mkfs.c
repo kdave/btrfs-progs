@@ -1147,6 +1147,8 @@ static const struct btrfs_fs_feature {
 		"raid56 extended format" },
 	{ "skinny-metadata", BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA,
 		"reduced-size metadata extent refs" },
+	{ "no-holes", BTRFS_FEATURE_INCOMPAT_NO_HOLES,
+		"no explicit hole extents for files" },
 	/* Keep this one last */
 	{ "list-all", BTRFS_FEATURE_LIST_ALL, NULL }
 };
