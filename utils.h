@@ -57,7 +57,7 @@ int check_mounted_where(int fd, const char *file, char *where, int size,
 int btrfs_device_already_in_root(struct btrfs_root *root, int fd,
 				 int super_offset);
 
-int pretty_size_snprintf(double size, char *str, size_t str_bytes);
+int pretty_size_snprintf(u64 size, char *str, size_t str_bytes);
 #define pretty_size(size) 						\
 	({								\
 		static __thread char _str[24];				\

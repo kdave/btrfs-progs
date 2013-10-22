@@ -1213,7 +1213,7 @@ out:
 }
 
 static char *size_strs[] = { "", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB"};
-int pretty_size_snprintf(double size, char *str, size_t str_bytes)
+int pretty_size_snprintf(u64 size, char *str, size_t str_bytes)
 {
 	int num_divs = 0;
 	float fraction;
