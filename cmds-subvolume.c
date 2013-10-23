@@ -317,6 +317,7 @@ static const char * const cmd_subvol_list_usage[] = {
 	"-t           print the result as a table",
 	"-s           list snapshots only in the filesystem",
 	"-r           list readonly subvolumes (including snapshots)",
+	"-d           list deleted subvolumes that are not yet cleaned",
 	"-G [+|-]value",
 	"             filter the subvolumes by generation",
 	"             (+value: >= value; -value: <= value; value: = value)",
@@ -355,7 +356,7 @@ static int cmd_subvol_list(int argc, char **argv)
 	optind = 1;
 	while(1) {
 		c = getopt_long(argc, argv,
-				    "acgopqsurG:C:t", long_options, NULL);
+				    "acdgopqsurG:C:t", long_options, NULL);
 		if (c < 0)
 			break;
 
@@ -368,6 +369,11 @@ static int cmd_subvol_list(int argc, char **argv)
 			break;
 		case 'c':
 			btrfs_list_setup_print_column(BTRFS_LIST_OGENERATION);
+			break;
+		case 'd':
+			btrfs_list_setup_filter(&filter_set,
+						BTRFS_LIST_FILTER_DELETED,
+						0);
 			break;
 		case 'g':
 			btrfs_list_setup_print_column(BTRFS_LIST_GENERATION);

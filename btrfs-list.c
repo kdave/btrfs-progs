@@ -1173,6 +1173,11 @@ static int filter_by_parent(struct root_info *ri, u64 data)
 	return !uuid_compare(ri->puuid, (u8 *)(unsigned long)data);
 }
 
+static int filter_deleted(struct root_info *ri, u64 data)
+{
+	return ri->deleted;
+}
+
 static btrfs_list_filter_func all_filter_funcs[] = {
 	[BTRFS_LIST_FILTER_ROOTID]		= filter_by_rootid,
 	[BTRFS_LIST_FILTER_SNAPSHOT_ONLY]	= filter_snapshot,
@@ -1186,6 +1191,7 @@ static btrfs_list_filter_func all_filter_funcs[] = {
 	[BTRFS_LIST_FILTER_TOPID_EQUAL]		= filter_topid_equal,
 	[BTRFS_LIST_FILTER_FULL_PATH]		= filter_full_path,
 	[BTRFS_LIST_FILTER_BY_PARENT]		= filter_by_parent,
+	[BTRFS_LIST_FILTER_DELETED]		= filter_deleted,
 };
 
 struct btrfs_list_filter_set *btrfs_list_alloc_filter_set(void)
@@ -1222,6 +1228,11 @@ int btrfs_list_setup_filter(struct btrfs_list_filter_set **filter_set,
 	BUG_ON(filter >= BTRFS_LIST_FILTER_MAX);
 	BUG_ON(set->nfilters > set->total);
 
+	if (filter == BTRFS_LIST_FILTER_DELETED) {
+		set->only_deleted = 1;
+		return 0;
+	}
+
 	if (set->nfilters == set->total) {
 		size = set->total + BTRFS_LIST_NFILTERS_INCREASE;
 		size = sizeof(*set) + size * sizeof(struct btrfs_list_filter);
@@ -1254,6 +1265,12 @@ static int filter_root(struct root_info *ri,
 	if (!set || !set->nfilters)
 		return 1;
 
+	if (set->only_deleted && !ri->deleted)
+		return 0;
+
+	if (!set->only_deleted && ri->deleted)
+		return 0;
+
 	for (i = 0; i < set->nfilters; i++) {
 		if (!set->filters[i].filter_func)
 			break;
@@ -1281,12 +1298,13 @@ static void __filter_and_sort_subvol(struct root_lookup *all_subvols,
 		entry = rb_entry(n, struct root_info, rb_node);
 
 		ret = resolve_root(all_subvols, entry, top_id);
-		if (ret == -ENOENT)
-			goto skip;
+		if (ret == -ENOENT) {
+			entry->full_path = strdup("DELETED");
+			entry->deleted = 1;
+		}
 		ret = filter_root(entry, filter_set);
 		if (ret)
 			sort_tree_insert(sort_tree, entry, comp_set);
-skip:
 		n = rb_prev(n);
 	}
 }

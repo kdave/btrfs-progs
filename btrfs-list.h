@@ -71,6 +71,8 @@ struct root_info {
 	char *name;
 
 	char *full_path;
+
+	int deleted;
 };
 
 typedef int (*btrfs_list_filter_func)(struct root_info *, u64);
@@ -90,6 +92,7 @@ struct btrfs_list_comparer {
 struct btrfs_list_filter_set {
 	int total;
 	int nfilters;
+	int only_deleted;
 	struct btrfs_list_filter filters[0];
 };
 
@@ -127,6 +130,7 @@ enum btrfs_list_filter_enum {
 	BTRFS_LIST_FILTER_TOPID_EQUAL,
 	BTRFS_LIST_FILTER_FULL_PATH,
 	BTRFS_LIST_FILTER_BY_PARENT,
+	BTRFS_LIST_FILTER_DELETED,
 	BTRFS_LIST_FILTER_MAX,
 };
 
