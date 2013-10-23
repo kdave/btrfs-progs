@@ -53,7 +53,7 @@ void btrfs_free_fs_info(struct btrfs_fs_info *fs_info);
 struct btrfs_fs_info *btrfs_new_fs_info(int writable, u64 sb_bytenr);
 int btrfs_check_fs_compatibility(struct btrfs_super_block *sb, int writable);
 int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info,
-			  u64 root_tree_bytenr, int partial);
+			  u64 root_tree_bytenr, int partial, int backup_root);
 void btrfs_release_all_roots(struct btrfs_fs_info *fs_info);
 void btrfs_cleanup_all_caches(struct btrfs_fs_info *fs_info);
 int btrfs_scan_fs_devices(int fd, const char *path,
@@ -69,7 +69,8 @@ struct btrfs_fs_info *open_ctree_fs_info_restore(const char *filename,
 					 int writes, int partial);
 struct btrfs_fs_info *open_ctree_fs_info(const char *filename,
 					 u64 sb_bytenr, u64 root_tree_bytenr,
-					 int writes, int partial);
+					 int writes, int partial,
+					 int backup_root);
 struct btrfs_root *open_ctree_with_broken_super(const char *filename,
 					u64 sb_bytenr, int writes);
 int close_ctree(struct btrfs_root *root);

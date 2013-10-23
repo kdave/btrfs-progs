@@ -808,8 +808,27 @@ int btrfs_check_fs_compatibility(struct btrfs_super_block *sb, int writable)
 	return 0;
 }
 
+static int find_best_backup_root(struct btrfs_super_block *super)
+{
+	struct btrfs_root_backup *backup;
+	u64 orig_gen = btrfs_super_generation(super);
+	u64 gen = 0;
+	int best_index = 0;
+	int i;
+
+	for (i = 0; i < BTRFS_NUM_BACKUP_ROOTS; i++) {
+		backup = super->super_roots + i;
+		if (btrfs_backup_tree_root_gen(backup) != orig_gen &&
+		    btrfs_backup_tree_root_gen(backup) > gen) {
+			best_index = i;
+			gen = btrfs_backup_tree_root_gen(backup);
+		}
+	}
+	return best_index;
+}
+
 int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info,
-			  u64 root_tree_bytenr, int partial)
+			  u64 root_tree_bytenr, int partial, int backup_root)
 {
 	struct btrfs_super_block *sb = fs_info->super_copy;
 	struct btrfs_root *root;
@@ -833,8 +852,20 @@ int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info,
 	blocksize = btrfs_level_size(root, btrfs_super_root_level(sb));
 	generation = btrfs_super_generation(sb);
 
-	if (!root_tree_bytenr)
+	if (!root_tree_bytenr && !backup_root) {
 		root_tree_bytenr = btrfs_super_root(sb);
+	} else if (backup_root) {
+		struct btrfs_root_backup *backup;
+		int index = find_best_backup_root(sb);
+		if (index >= BTRFS_NUM_BACKUP_ROOTS) {
+			fprintf(stderr, "Invalid backup root number\n");
+			return -EIO;
+		}
+		backup = fs_info->super_copy->super_roots + index;
+		root_tree_bytenr = btrfs_backup_tree_root(backup);
+		generation = btrfs_backup_tree_root_gen(backup);
+	}
+
 	root->node = read_tree_block(root, root_tree_bytenr, blocksize,
 				     generation);
 	if (!extent_buffer_uptodate(root->node)) {
@@ -1005,7 +1036,8 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 					     u64 sb_bytenr,
 					     u64 root_tree_bytenr, int writes,
 					     int partial, int restore,
-					     int recover_super)
+					     int recover_super,
+					     int backup_root)
 {
 	struct btrfs_fs_info *fs_info;
 	struct btrfs_super_block *disk_super;
@@ -1068,7 +1100,8 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 			   (unsigned long)btrfs_header_chunk_tree_uuid(eb),
 			   BTRFS_UUID_SIZE);
 
-	ret = btrfs_setup_all_roots(fs_info, root_tree_bytenr, partial);
+	ret = btrfs_setup_all_roots(fs_info, root_tree_bytenr, partial,
+				    backup_root);
 	if (ret)
 		goto out_failed;
 
@@ -1105,14 +1138,15 @@ struct btrfs_fs_info *open_ctree_fs_info_restore(const char *filename,
 		return NULL;
 	}
 	info = __open_ctree_fd(fp, filename, sb_bytenr, root_tree_bytenr,
-			       writes, partial, restore, 0);
+			       writes, partial, restore, 0, 0);
 	close(fp);
 	return info;
 }
 
 struct btrfs_fs_info *open_ctree_fs_info(const char *filename,
 					 u64 sb_bytenr, u64 root_tree_bytenr,
-					 int writes, int partial)
+					 int writes, int partial,
+					 int backup_root)
 {
 	int fp;
 	struct btrfs_fs_info *info;
@@ -1127,7 +1161,7 @@ struct btrfs_fs_info *open_ctree_fs_info(const char *filename,
 		return NULL;
 	}
 	info = __open_ctree_fd(fp, filename, sb_bytenr, root_tree_bytenr,
-			       writes, partial, 0, 0);
+			       writes, partial, 0, 0, backup_root);
 	close(fp);
 	return info;
 }
@@ -1148,7 +1182,7 @@ struct btrfs_root *open_ctree_with_broken_super(const char *filename,
 		return NULL;
 	}
 	info = __open_ctree_fd(fp, filename, sb_bytenr, 0,
-			       writes, 0, 0, 1);
+			       writes, 0, 0, 1, 0);
 	close(fp);
 	if (info)
 		return info->fs_root;
@@ -1159,7 +1193,7 @@ struct btrfs_root *open_ctree(const char *filename, u64 sb_bytenr, int writes)
 {
 	struct btrfs_fs_info *info;
 
-	info = open_ctree_fs_info(filename, sb_bytenr, 0, writes, 0);
+	info = open_ctree_fs_info(filename, sb_bytenr, 0, writes, 0, 0);
 	if (!info)
 		return NULL;
 	return info->fs_root;
@@ -1169,7 +1203,7 @@ struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
 				 int writes)
 {
 	struct btrfs_fs_info *info;
-	info = __open_ctree_fd(fp, path, sb_bytenr, 0, writes, 0, 0, 0);
+	info = __open_ctree_fd(fp, path, sb_bytenr, 0, writes, 0, 0, 0, 0);
 	if (!info)
 		return NULL;
 	return info->fs_root;

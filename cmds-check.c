@@ -6022,6 +6022,7 @@ static struct option long_options[] = {
 	{ "repair", 0, NULL, 0 },
 	{ "init-csum-tree", 0, NULL, 0 },
 	{ "init-extent-tree", 0, NULL, 0 },
+	{ "backup", 0, NULL, 0 },
 	{ NULL, 0, NULL, 0}
 };
 
@@ -6030,6 +6031,7 @@ const char * const cmd_check_usage[] = {
 	"Check an unmounted btrfs filesystem.",
 	"",
 	"-s|--super <superblock>     use this superblock copy",
+	"-b|--backup                 use the backup root copy",
 	"--repair                    try to repair the filesystem",
 	"--init-csum-tree            create a new CRC tree",
 	"--init-extent-tree          create a new extent tree",
@@ -6043,6 +6045,7 @@ int cmd_check(int argc, char **argv)
 	struct btrfs_fs_info *info;
 	u64 bytenr = 0;
 	char uuidbuf[37];
+	int backup_root = 0;
 	int ret;
 	int num;
 	int option_index = 0;
@@ -6052,12 +6055,15 @@ int cmd_check(int argc, char **argv)
 
 	while(1) {
 		int c;
-		c = getopt_long(argc, argv, "as:", long_options,
+		c = getopt_long(argc, argv, "as:b", long_options,
 				&option_index);
 		if (c < 0)
 			break;
 		switch(c) {
 			case 'a': /* ignored */ break;
+			case 'b':
+				backup_root = 1;
+				break;
 			case 's':
 				num = atol(optarg);
 				bytenr = btrfs_sb_offset(num);
@@ -6099,7 +6105,7 @@ int cmd_check(int argc, char **argv)
 		return -EBUSY;
 	}
 
-	info = open_ctree_fs_info(argv[optind], bytenr, 0, rw, 1);
+	info = open_ctree_fs_info(argv[optind], bytenr, 0, rw, 1, backup_root);
 	if (!info) {
 		fprintf(stderr, "Couldn't open file system\n");
 		return -EIO;
