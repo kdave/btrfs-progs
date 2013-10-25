@@ -877,7 +877,17 @@ int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info, u64 root_tree_bytenr,
 				  fs_info->extent_root);
 	if (ret) {
 		printk("Couldn't setup extent tree\n");
-		return -EIO;
+		if (!(flags & OPEN_CTREE_PARTIAL))
+			return -EIO;
+		/* Need a blank node here just so we don't screw up in the
+		 * million of places that assume a root has a valid ->node
+		 */
+		fs_info->extent_root->node =
+			btrfs_find_create_tree_block(fs_info->extent_root, 0,
+						     leafsize);
+		if (!fs_info->extent_root->node)
+			return -ENOMEM;
+		clear_extent_buffer_uptodate(NULL, fs_info->extent_root->node);
 	}
 	fs_info->extent_root->track_dirty = 1;
 

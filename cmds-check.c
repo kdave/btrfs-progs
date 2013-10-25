@@ -6008,7 +6008,7 @@ static int reinit_extent_tree(struct btrfs_fs_info *fs_info)
 	}
 
 	/* Ok we can allocate now, reinit the extent root */
-	ret = btrfs_fsck_reinit_root(trans, fs_info->extent_root, 1);
+	ret = btrfs_fsck_reinit_root(trans, fs_info->extent_root, 0);
 	if (ret) {
 		fprintf(stderr, "extent root initialization failed\n");
 		/*
@@ -6194,20 +6194,23 @@ int cmd_check(int argc, char **argv)
 
 	if (!extent_buffer_uptodate(info->tree_root->node) ||
 	    !extent_buffer_uptodate(info->dev_root->node) ||
-	    !extent_buffer_uptodate(info->extent_root->node) ||
 	    !extent_buffer_uptodate(info->chunk_root->node)) {
 		fprintf(stderr, "Critical roots corrupted, unable to fsck the FS\n");
 		return -EIO;
 	}
 
 	root = info->fs_root;
-
 	if (init_extent_tree) {
 		printf("Creating a new extent tree\n");
 		ret = reinit_extent_tree(info);
 		if (ret)
 			return ret;
 	}
+	if (!extent_buffer_uptodate(info->extent_root->node)) {
+		fprintf(stderr, "Critical roots corrupted, unable to fsck the FS\n");
+		return -EIO;
+	}
+
 	fprintf(stderr, "checking extents\n");
 	if (init_csum_tree) {
 		struct btrfs_trans_handle *trans;
