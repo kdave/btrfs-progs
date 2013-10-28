@@ -6045,13 +6045,12 @@ int cmd_check(int argc, char **argv)
 	struct btrfs_fs_info *info;
 	u64 bytenr = 0;
 	char uuidbuf[37];
-	int backup_root = 0;
 	int ret;
 	int num;
 	int option_index = 0;
 	int init_csum_tree = 0;
 	int init_extent_tree = 0;
-	int rw = 0;
+	enum btrfs_open_ctree_flags ctree_flags = OPEN_CTREE_PARTIAL;
 
 	while(1) {
 		int c;
@@ -6062,7 +6061,7 @@ int cmd_check(int argc, char **argv)
 		switch(c) {
 			case 'a': /* ignored */ break;
 			case 'b':
-				backup_root = 1;
+				ctree_flags |= OPEN_CTREE_BACKUP_ROOT;
 				break;
 			case 's':
 				num = atol(optarg);
@@ -6077,14 +6076,15 @@ int cmd_check(int argc, char **argv)
 		if (option_index == 1) {
 			printf("enabling repair mode\n");
 			repair = 1;
-			rw = 1;
+			ctree_flags |= OPEN_CTREE_WRITES;
 		} else if (option_index == 2) {
 			printf("Creating a new CRC tree\n");
 			init_csum_tree = 1;
-			rw = 1;
+			ctree_flags |= OPEN_CTREE_WRITES;
 		} else if (option_index == 3) {
 			init_extent_tree = 1;
-			rw = 1;
+			ctree_flags |= (OPEN_CTREE_WRITES |
+					OPEN_CTREE_NO_BLOCK_GROUPS);
 			repair = 1;
 		}
 
@@ -6105,7 +6105,7 @@ int cmd_check(int argc, char **argv)
 		return -EBUSY;
 	}
 
-	info = open_ctree_fs_info(argv[optind], bytenr, 0, rw, 1, backup_root);
+	info = open_ctree_fs_info(argv[optind], bytenr, 0, ctree_flags);
 	if (!info) {
 		fprintf(stderr, "Couldn't open file system\n");
 		return -EIO;

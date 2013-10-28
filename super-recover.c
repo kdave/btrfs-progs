@@ -323,8 +323,8 @@ int btrfs_recover_superblocks(const char *dname,
 		}
 	}
 	record = recover_get_good_super(&recover);
-	root = open_ctree_with_broken_super(record->device_name,
-					record->bytenr, 1);
+	root = open_ctree(record->device_name, record->bytenr,
+			  OPEN_CTREE_RECOVER_SUPER | OPEN_CTREE_WRITES);
 	if (!root) {
 		ret = 3;
 		goto no_recover;

@@ -2256,7 +2256,7 @@ static int do_convert(const char *devname, int datacsum, int packing,
 		fprintf(stderr, "unable to update system chunk\n");
 		goto fail;
 	}
-	root = open_ctree_fd(fd, devname, super_bytenr, O_RDWR);
+	root = open_ctree_fd(fd, devname, super_bytenr, OPEN_CTREE_WRITES);
 	if (!root) {
 		fprintf(stderr, "unable to open ctree\n");
 		goto fail;
@@ -2317,7 +2317,7 @@ static int do_convert(const char *devname, int datacsum, int packing,
 		goto fail;
 	}
 
-	root = open_ctree_fd(fd, devname, 0, O_RDWR);
+	root = open_ctree_fd(fd, devname, 0, OPEN_CTREE_WRITES);
 	if (!root) {
 		fprintf(stderr, "unable to open ctree\n");
 		goto fail;
@@ -2418,7 +2418,7 @@ static int do_rollback(const char *devname, int force)
 		fprintf(stderr, "unable to open %s\n", devname);
 		goto fail;
 	}
-	root = open_ctree_fd(fd, devname, 0, O_RDWR);
+	root = open_ctree_fd(fd, devname, 0, OPEN_CTREE_WRITES);
 	if (!root) {
 		fprintf(stderr, "unable to open ctree\n");
 		goto fail;

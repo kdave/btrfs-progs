@@ -799,7 +799,7 @@ int main(int ac, char **av)
 	radix_tree_init();
 	cache_tree_init(&root_cache);
 
-	root = open_ctree(dev, 0, 1);
+	root = open_ctree(dev, 0, OPEN_CTREE_WRITES);
 	if (!root) {
 		fprintf(stderr, "Open ctree failed\n");
 		exit(1);

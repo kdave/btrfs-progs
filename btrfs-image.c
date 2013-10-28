@@ -2267,7 +2267,10 @@ static int __restore_metadump(const char *input, FILE *out, int old_restore,
 	/* NOTE: open with write mode */
 	if (fixup_offset) {
 		BUG_ON(!target);
-		info = open_ctree_fs_info_restore(target, 0, 0, 1, 1);
+		info = open_ctree_fs_info(target, 0, 0,
+					  OPEN_CTREE_WRITES |
+					  OPEN_CTREE_RESTORE |
+					  OPEN_CTREE_PARTIAL);
 		if (!info) {
 			fprintf(stderr, "%s: open ctree failed\n", __func__);
 			ret = -EIO;
@@ -2555,7 +2558,9 @@ int main(int argc, char *argv[])
 		u64 total_devs;
 		int i;
 
-		info = open_ctree_fs_info_restore(target, 0, 0, 0, 1);
+		info = open_ctree_fs_info(target, 0, 0,
+					  OPEN_CTREE_PARTIAL |
+					  OPEN_CTREE_RESTORE);
 		if (!info) {
 			int e = errno;
 			fprintf(stderr, "unable to open %s error = %s\n",

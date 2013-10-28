@@ -60,7 +60,7 @@ int main(int ac, char **av)
 		goto out;
 	}
 
-	root = open_ctree(av[1], 0, 1);
+	root = open_ctree(av[1], 0, OPEN_CTREE_WRITES);
 
 	if (root == NULL)
 		return 1;

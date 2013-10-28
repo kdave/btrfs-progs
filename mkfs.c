@@ -1476,7 +1476,7 @@ int main(int ac, char **av)
 		exit(1);
 	}
 
-	root = open_ctree(file, 0, O_RDWR);
+	root = open_ctree(file, 0, OPEN_CTREE_WRITES);
 	if (!root) {
 		fprintf(stderr, "Open ctree failed\n");
 		close(fd);

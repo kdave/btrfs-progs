@@ -148,7 +148,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	root = open_ctree(device, 0, 1);
+	root = open_ctree(device, 0, OPEN_CTREE_WRITES);
 
 	if (!root) {
 		fprintf(stderr, "Open ctree failed\n");

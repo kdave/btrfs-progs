@@ -1302,7 +1302,7 @@ static int set_label_unmounted(const char *dev, const char *label)
 	/* Open the super_block at the default location
 	 * and as read-write.
 	 */
-	root = open_ctree(dev, 0, 1);
+	root = open_ctree(dev, 0, OPEN_CTREE_WRITES);
 	if (!root) /* errors are printed by open_ctree() */
 		return -1;
 

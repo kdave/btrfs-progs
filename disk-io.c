@@ -827,8 +827,8 @@ static int find_best_backup_root(struct btrfs_super_block *super)
 	return best_index;
 }
 
-int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info,
-			  u64 root_tree_bytenr, int partial, int backup_root)
+int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info, u64 root_tree_bytenr,
+			  enum btrfs_open_ctree_flags flags)
 {
 	struct btrfs_super_block *sb = fs_info->super_copy;
 	struct btrfs_root *root;
@@ -852,9 +852,9 @@ int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info,
 	blocksize = btrfs_level_size(root, btrfs_super_root_level(sb));
 	generation = btrfs_super_generation(sb);
 
-	if (!root_tree_bytenr && !backup_root) {
+	if (!root_tree_bytenr && !(flags & OPEN_CTREE_BACKUP_ROOT)) {
 		root_tree_bytenr = btrfs_super_root(sb);
-	} else if (backup_root) {
+	} else if (flags & OPEN_CTREE_BACKUP_ROOT) {
 		struct btrfs_root_backup *backup;
 		int index = find_best_backup_root(sb);
 		if (index >= BTRFS_NUM_BACKUP_ROOTS) {
@@ -893,7 +893,7 @@ int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info,
 				  fs_info->csum_root);
 	if (ret) {
 		printk("Couldn't setup csum tree\n");
-		if (!partial)
+		if (!(flags & OPEN_CTREE_PARTIAL))
 			return -EIO;
 	}
 	fs_info->csum_root->track_dirty = 1;
@@ -906,7 +906,9 @@ int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info,
 
 	fs_info->generation = generation;
 	fs_info->last_trans_committed = generation;
-	btrfs_read_block_groups(fs_info->tree_root);
+	if (extent_buffer_uptodate(fs_info->extent_root->node) &&
+	    !(flags & OPEN_CTREE_NO_BLOCK_GROUPS))
+		btrfs_read_block_groups(fs_info->tree_root);
 
 	key.objectid = BTRFS_FS_TREE_OBJECTID;
 	key.type = BTRFS_ROOT_ITEM_KEY;
@@ -1034,10 +1036,8 @@ int btrfs_setup_chunk_tree_and_device_map(struct btrfs_fs_info *fs_info)
 
 static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 					     u64 sb_bytenr,
-					     u64 root_tree_bytenr, int writes,
-					     int partial, int restore,
-					     int recover_super,
-					     int backup_root)
+					     u64 root_tree_bytenr,
+					     enum btrfs_open_ctree_flags flags)
 {
 	struct btrfs_fs_info *fs_info;
 	struct btrfs_super_block *disk_super;
@@ -1052,21 +1052,21 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 	if (posix_fadvise(fp, 0, 0, POSIX_FADV_DONTNEED))
 		fprintf(stderr, "Warning, could not drop caches\n");
 
-	fs_info = btrfs_new_fs_info(writes, sb_bytenr);
+	fs_info = btrfs_new_fs_info(flags & OPEN_CTREE_WRITES, sb_bytenr);
 	if (!fs_info) {
 		fprintf(stderr, "Failed to allocate memory for fs_info\n");
 		return NULL;
 	}
-	if (restore)
+	if (flags & OPEN_CTREE_RESTORE)
 		fs_info->on_restoring = 1;
 
 	ret = btrfs_scan_fs_devices(fp, path, &fs_devices, sb_bytenr,
-				    !recover_super);
+				    !(flags & OPEN_CTREE_RECOVER_SUPER));
 	if (ret)
 		goto out;
 
 	fs_info->fs_devices = fs_devices;
-	if (writes)
+	if (flags & OPEN_CTREE_WRITES)
 		ret = btrfs_open_devices(fs_devices, O_RDWR);
 	else
 		ret = btrfs_open_devices(fs_devices, O_RDONLY);
@@ -1075,7 +1075,7 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 
 
 	disk_super = fs_info->super_copy;
-	if (!recover_super)
+	if (!(flags & OPEN_CTREE_RECOVER_SUPER))
 		ret = btrfs_read_dev_super(fs_devices->latest_bdev,
 					   disk_super, sb_bytenr);
 	else
@@ -1087,7 +1087,8 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 
 	memcpy(fs_info->fsid, &disk_super->fsid, BTRFS_FSID_SIZE);
 
-	ret = btrfs_check_fs_compatibility(fs_info->super_copy, writes);
+	ret = btrfs_check_fs_compatibility(fs_info->super_copy,
+					   flags & OPEN_CTREE_WRITES);
 	if (ret)
 		goto out_devices;
 
@@ -1100,15 +1101,14 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 			   (unsigned long)btrfs_header_chunk_tree_uuid(eb),
 			   BTRFS_UUID_SIZE);
 
-	ret = btrfs_setup_all_roots(fs_info, root_tree_bytenr, partial,
-				    backup_root);
+	ret = btrfs_setup_all_roots(fs_info, root_tree_bytenr, flags);
 	if (ret)
 		goto out_failed;
 
 	return fs_info;
 
 out_failed:
-	if (partial)
+	if (flags & OPEN_CTREE_PARTIAL)
 		return fs_info;
 out_chunk:
 	btrfs_release_all_roots(fs_info);
@@ -1120,90 +1120,44 @@ out:
 	return NULL;
 }
 
-struct btrfs_fs_info *open_ctree_fs_info_restore(const char *filename,
-					 u64 sb_bytenr, u64 root_tree_bytenr,
-					 int writes, int partial)
-{
-	int fp;
-	struct btrfs_fs_info *info;
-	int flags = O_CREAT | O_RDWR;
-	int restore = 1;
-
-	if (!writes)
-		flags = O_RDONLY;
-
-	fp = open(filename, flags, 0600);
-	if (fp < 0) {
-		fprintf (stderr, "Could not open %s\n", filename);
-		return NULL;
-	}
-	info = __open_ctree_fd(fp, filename, sb_bytenr, root_tree_bytenr,
-			       writes, partial, restore, 0, 0);
-	close(fp);
-	return info;
-}
-
 struct btrfs_fs_info *open_ctree_fs_info(const char *filename,
 					 u64 sb_bytenr, u64 root_tree_bytenr,
-					 int writes, int partial,
-					 int backup_root)
+					 enum btrfs_open_ctree_flags flags)
 {
 	int fp;
 	struct btrfs_fs_info *info;
-	int flags = O_CREAT | O_RDWR;
+	int oflags = O_CREAT | O_RDWR;
 
-	if (!writes)
-		flags = O_RDONLY;
+	if (!(flags & OPEN_CTREE_WRITES))
+		oflags = O_RDONLY;
 
-	fp = open(filename, flags, 0600);
+	fp = open(filename, oflags, 0600);
 	if (fp < 0) {
 		fprintf (stderr, "Could not open %s\n", filename);
 		return NULL;
 	}
 	info = __open_ctree_fd(fp, filename, sb_bytenr, root_tree_bytenr,
-			       writes, partial, 0, 0, backup_root);
+			       flags);
 	close(fp);
 	return info;
 }
 
-struct btrfs_root *open_ctree_with_broken_super(const char *filename,
-					u64 sb_bytenr, int writes)
-{
-	int fp;
-	struct btrfs_fs_info *info;
-	int flags = O_CREAT | O_RDWR;
-
-	if (!writes)
-		flags = O_RDONLY;
-
-	fp = open(filename, flags, 0600);
-	if (fp < 0) {
-		fprintf(stderr, "Could not open %s\n", filename);
-		return NULL;
-	}
-	info = __open_ctree_fd(fp, filename, sb_bytenr, 0,
-			       writes, 0, 0, 1, 0);
-	close(fp);
-	if (info)
-		return info->fs_root;
-	return NULL;
-}
-
-struct btrfs_root *open_ctree(const char *filename, u64 sb_bytenr, int writes)
+struct btrfs_root *open_ctree(const char *filename, u64 sb_bytenr,
+			      enum btrfs_open_ctree_flags flags)
 {
 	struct btrfs_fs_info *info;
 
-	info = open_ctree_fs_info(filename, sb_bytenr, 0, writes, 0, 0);
+	info = open_ctree_fs_info(filename, sb_bytenr, 0, flags);
 	if (!info)
 		return NULL;
 	return info->fs_root;
 }
 
 struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
-				 int writes)
+				 enum btrfs_open_ctree_flags flags)
 {
 	struct btrfs_fs_info *info;
-	info = __open_ctree_fd(fp, path, sb_bytenr, 0, writes, 0, 0, 0, 0);
+	info = __open_ctree_fd(fp, path, sb_bytenr, 0, flags);
 	if (!info)
 		return NULL;
 	return info->fs_root;

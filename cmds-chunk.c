@@ -1231,7 +1231,7 @@ open_ctree_with_broken_chunk(struct recover_control *rc)
 	if (ret)
 		goto out_cleanup;
 
-	ret = btrfs_setup_all_roots(fs_info, 0, 0);
+	ret = btrfs_setup_all_roots(fs_info, 0, 0, 0);
 	if (ret)
 		goto out_failed;
 

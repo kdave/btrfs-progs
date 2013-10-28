@@ -51,7 +51,7 @@ int main(int ac, char **av) {
 
 	radix_tree_init();
 
-	root = open_ctree(av[1], BTRFS_SUPER_INFO_OFFSET, O_RDWR);
+	root = open_ctree(av[1], BTRFS_SUPER_INFO_OFFSET, OPEN_CTREE_WRITES);
 	if (!root) {
 		fprintf(stderr, "Open ctree failed\n");
 		exit(1);
@@ -78,7 +78,7 @@ int main(int ac, char **av) {
 	btrfs_commit_transaction(trans, root);
 	close_ctree(root);
 	exit(1);
-	root = open_ctree(av[1], BTRFS_SUPER_INFO_OFFSET, O_RDWR);
+	root = open_ctree(av[1], BTRFS_SUPER_INFO_OFFSET, OPEN_CTREE_WRITES);
 	if (!root) {
 		fprintf(stderr, "Open ctree failed\n");
 		exit(1);
@@ -101,7 +101,7 @@ int main(int ac, char **av) {
 	}
 	close_ctree(root);
 
-	root = open_ctree(av[1], BTRFS_SUPER_INFO_OFFSET, O_RDWR);
+	root = open_ctree(av[1], BTRFS_SUPER_INFO_OFFSET, OPEN_CTREE_WRITES);
 	if (!root) {
 		fprintf(stderr, "Open ctree failed\n");
 		exit(1);
@@ -133,7 +133,7 @@ int main(int ac, char **av) {
 	btrfs_commit_transaction(trans, root);
 	close_ctree(root);
 
-	root = open_ctree(av[1], BTRFS_SUPER_INFO_OFFSET, O_RDWR);
+	root = open_ctree(av[1], BTRFS_SUPER_INFO_OFFSET, OPEN_CTREE_WRITES);
 	if (!root) {
 		fprintf(stderr, "Open ctree failed\n");
 		exit(1);
@@ -153,7 +153,7 @@ int main(int ac, char **av) {
 	btrfs_commit_transaction(trans, root);
 	close_ctree(root);
 
-	root = open_ctree(av[1], BTRFS_SUPER_INFO_OFFSET, O_RDWR);
+	root = open_ctree(av[1], BTRFS_SUPER_INFO_OFFSET, OPEN_CTREE_WRITES);
 	if (!root) {
 		fprintf(stderr, "Open ctree failed\n");
 		exit(1);

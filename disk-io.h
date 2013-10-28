@@ -25,6 +25,15 @@
 #define BTRFS_SUPER_MIRROR_MAX	 3
 #define BTRFS_SUPER_MIRROR_SHIFT 12
 
+enum btrfs_open_ctree_flags {
+	OPEN_CTREE_WRITES		= 1,
+	OPEN_CTREE_PARTIAL		= 2,
+	OPEN_CTREE_BACKUP_ROOT		= 4,
+	OPEN_CTREE_RECOVER_SUPER	= 8,
+	OPEN_CTREE_RESTORE		= 16,
+	OPEN_CTREE_NO_BLOCK_GROUPS	= 32,
+};
+
 static inline u64 btrfs_sb_offset(int mirror)
 {
 	u64 start = 16 * 1024;
@@ -52,8 +61,8 @@ int clean_tree_block(struct btrfs_trans_handle *trans,
 void btrfs_free_fs_info(struct btrfs_fs_info *fs_info);
 struct btrfs_fs_info *btrfs_new_fs_info(int writable, u64 sb_bytenr);
 int btrfs_check_fs_compatibility(struct btrfs_super_block *sb, int writable);
-int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info,
-			  u64 root_tree_bytenr, int partial, int backup_root);
+int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info, u64 root_tree_bytenr,
+			  enum btrfs_open_ctree_flags flags);
 void btrfs_release_all_roots(struct btrfs_fs_info *fs_info);
 void btrfs_cleanup_all_caches(struct btrfs_fs_info *fs_info);
 int btrfs_scan_fs_devices(int fd, const char *path,
@@ -61,18 +70,13 @@ int btrfs_scan_fs_devices(int fd, const char *path,
 			  int run_ioctl);
 int btrfs_setup_chunk_tree_and_device_map(struct btrfs_fs_info *fs_info);
 
-struct btrfs_root *open_ctree(const char *filename, u64 sb_bytenr, int writes);
+struct btrfs_root *open_ctree(const char *filename, u64 sb_bytenr,
+			      enum btrfs_open_ctree_flags flags);
 struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
-				 int writes);
-struct btrfs_fs_info *open_ctree_fs_info_restore(const char *filename,
-					 u64 sb_bytenr, u64 root_tree_bytenr,
-					 int writes, int partial);
+				 enum btrfs_open_ctree_flags flags);
 struct btrfs_fs_info *open_ctree_fs_info(const char *filename,
 					 u64 sb_bytenr, u64 root_tree_bytenr,
-					 int writes, int partial,
-					 int backup_root);
-struct btrfs_root *open_ctree_with_broken_super(const char *filename,
-					u64 sb_bytenr, int writes);
+					 enum btrfs_open_ctree_flags flags);
 int close_ctree(struct btrfs_root *root);
 int write_all_supers(struct btrfs_root *root);
 int write_ctree_super(struct btrfs_trans_handle *trans,
