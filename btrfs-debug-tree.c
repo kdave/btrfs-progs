@@ -27,6 +27,7 @@
 #include "print-tree.h"
 #include "transaction.h"
 #include "version.h"
+#include "utils.h"
 
 static int print_usage(void)
 {
@@ -125,7 +126,7 @@ int main(int ac, char **av)
 	struct extent_buffer *leaf;
 	struct btrfs_disk_key disk_key;
 	struct btrfs_key found_key;
-	char uuidbuf[37];
+	char uuidbuf[BTRFS_UUID_UNPARSED_SIZE];
 	int ret;
 	int slot;
 	int extent_only = 0;
@@ -392,7 +393,7 @@ no_node:
 	       (unsigned long long)btrfs_super_total_bytes(info->super_copy));
 	printf("bytes used %llu\n",
 	       (unsigned long long)btrfs_super_bytes_used(info->super_copy));
-	uuidbuf[36] = '\0';
+	uuidbuf[BTRFS_UUID_UNPARSED_SIZE - 1] = '\0';
 	uuid_unparse(info->super_copy->fsid, uuidbuf);
 	printf("uuid %s\n", uuidbuf);
 	printf("%s\n", BTRFS_BUILD_VERSION);

@@ -165,7 +165,7 @@ static int check_csum_sblock(void *sb, int csum_size)
 static void dump_superblock(struct btrfs_super_block *sb)
 {
 	int i;
-	char *s, buf[36+1];
+	char *s, buf[BTRFS_UUID_UNPARSED_SIZE];
 	u8 *p;
 
 	printf("csum\t\t\t0x");

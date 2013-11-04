@@ -867,7 +867,7 @@ static void *scrub_progress_cycle(void *ctx)
 	int  perr = 0;	/* positive / pthread error returns */
 	int old;
 	int i;
-	char fsid[37];
+	char fsid[BTRFS_UUID_UNPARSED_SIZE];
 	struct scrub_progress *sp;
 	struct scrub_progress *sp_last;
 	struct scrub_progress *sp_shared;
@@ -1089,7 +1089,7 @@ static int scrub_start(int argc, char **argv, int resume)
 	struct scrub_file_record **past_scrubs = NULL;
 	struct scrub_file_record *last_scrub = NULL;
 	char *datafile = strdup(SCRUB_DATA_FILE);
-	char fsid[37];
+	char fsid[BTRFS_UUID_UNPARSED_SIZE];
 	char sock_path[BTRFS_PATH_NAME_MAX + 1] = "";
 	struct scrub_progress_cycle spc;
 	pthread_mutex_t spc_write_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -1615,7 +1615,7 @@ static int cmd_scrub_status(int argc, char **argv)
 	int print_raw = 0;
 	int do_stats_per_dev = 0;
 	int c;
-	char fsid[37];
+	char fsid[BTRFS_UUID_UNPARSED_SIZE];
 	int fdres = -1;
 	int err = 0;
 	DIR *dirstream = NULL;

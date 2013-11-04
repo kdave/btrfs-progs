@@ -6123,7 +6123,7 @@ int cmd_check(int argc, char **argv)
 	struct btrfs_root *root;
 	struct btrfs_fs_info *info;
 	u64 bytenr = 0;
-	char uuidbuf[37];
+	char uuidbuf[BTRFS_UUID_UNPARSED_SIZE];
 	int ret;
 	int num;
 	int option_index = 0;

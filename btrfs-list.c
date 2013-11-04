@@ -1331,7 +1331,7 @@ static void print_subvolume_column(struct root_info *subv,
 				   enum btrfs_list_column_enum column)
 {
 	char tstr[256];
-	char uuidparse[37];
+	char uuidparse[BTRFS_UUID_UNPARSED_SIZE];
 
 	BUG_ON(column >= BTRFS_LIST_ALL || column < 0);
 

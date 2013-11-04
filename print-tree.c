@@ -24,6 +24,7 @@
 #include "ctree.h"
 #include "disk-io.h"
 #include "print-tree.h"
+#include "utils.h"
 
 
 static void print_dir_item_type(struct extent_buffer *eb,
@@ -187,21 +188,21 @@ static void print_dev_item(struct extent_buffer *eb,
 
 static void print_uuids(struct extent_buffer *eb)
 {
-	char fs_uuid[37];
-	char chunk_uuid[37];
+	char fs_uuid[BTRFS_UUID_UNPARSED_SIZE];
+	char chunk_uuid[BTRFS_UUID_UNPARSED_SIZE];
 	u8 disk_uuid[BTRFS_UUID_SIZE];
 
 	read_extent_buffer(eb, disk_uuid, btrfs_header_fsid(),
 			   BTRFS_FSID_SIZE);
 
-	fs_uuid[36] = '\0';
+	fs_uuid[BTRFS_UUID_UNPARSED_SIZE - 1] = '\0';
 	uuid_unparse(disk_uuid, fs_uuid);
 
 	read_extent_buffer(eb, disk_uuid,
 			   (unsigned long)btrfs_header_chunk_tree_uuid(eb),
 			   BTRFS_UUID_SIZE);
 
-	chunk_uuid[36] = '\0';
+	chunk_uuid[BTRFS_UUID_UNPARSED_SIZE - 1] = '\0';
 	uuid_unparse(disk_uuid, chunk_uuid);
 	printf("fs uuid %s\nchunk uuid %s\n", fs_uuid, chunk_uuid);
 }

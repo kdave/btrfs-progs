@@ -826,7 +826,7 @@ static int cmd_subvol_show(int argc, char **argv)
 	struct root_info get_ri;
 	struct btrfs_list_filter_set *filter_set;
 	char tstr[256];
-	char uuidparse[37];
+	char uuidparse[BTRFS_UUID_UNPARSED_SIZE];
 	char *fullpath = NULL, *svpath = NULL, *mnt = NULL;
 	char raw_prefix[] = "\t\t\t\t";
 	u64 sv_id, mntid;

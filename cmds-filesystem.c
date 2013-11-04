@@ -251,10 +251,10 @@ static int cmd_df(int argc, char **argv)
 static int match_search_item_kernel(__u8 *fsid, char *mnt, char *label,
 					char *search)
 {
-	char uuidbuf[37];
+	char uuidbuf[BTRFS_UUID_UNPARSED_SIZE];
 	int search_len = strlen(search);
 
-	search_len = min(search_len, 37);
+	search_len = min(search_len, BTRFS_UUID_UNPARSED_SIZE);
 	uuid_unparse(fsid, uuidbuf);
 	if (!strncmp(uuidbuf, search, search_len))
 		return 1;
@@ -270,12 +270,12 @@ static int match_search_item_kernel(__u8 *fsid, char *mnt, char *label,
 
 static int uuid_search(struct btrfs_fs_devices *fs_devices, char *search)
 {
-	char uuidbuf[37];
+	char uuidbuf[BTRFS_UUID_UNPARSED_SIZE];
 	struct list_head *cur;
 	struct btrfs_device *device;
 	int search_len = strlen(search);
 
-	search_len = min(search_len, 37);
+	search_len = min(search_len, BTRFS_UUID_UNPARSED_SIZE);
 	uuid_unparse(fs_devices->fsid, uuidbuf);
 	if (!strncmp(uuidbuf, search, search_len))
 		return 1;
@@ -306,7 +306,7 @@ static int cmp_device_id(void *priv, struct list_head *a,
 
 static void print_one_uuid(struct btrfs_fs_devices *fs_devices)
 {
-	char uuidbuf[37];
+	char uuidbuf[BTRFS_UUID_UNPARSED_SIZE];
 	struct list_head *cur;
 	struct btrfs_device *device;
 	u64 devs_found = 0;
@@ -363,7 +363,7 @@ static int print_one_fs(struct btrfs_ioctl_fs_info_args *fs_info,
 		char *label, char *path)
 {
 	int i;
-	char uuidbuf[37];
+	char uuidbuf[BTRFS_UUID_UNPARSED_SIZE];
 	struct btrfs_ioctl_dev_info_args *tmp_dev_info;
 	int ret;
 
@@ -421,7 +421,8 @@ static int check_arg_type(char *input)
 		return BTRFS_ARG_UNKNOWN;
 	}
 
-	if (strlen(input) == 36 && !uuid_parse(input, out))
+	if (strlen(input) == (BTRFS_UUID_UNPARSED_SIZE - 1) &&
+		!uuid_parse(input, out))
 		return BTRFS_ARG_UUID;
 
 	return BTRFS_ARG_UNKNOWN;
