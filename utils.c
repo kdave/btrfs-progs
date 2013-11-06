@@ -1978,12 +1978,16 @@ int btrfs_scan_lblkid(int update_kernel)
 		dev = blkid_verify(cache, dev);
 		if (!dev)
 			continue;
-		/* if we are here its definitly a btrfs disk*/
+		/* if we are here its definitely a btrfs disk*/
 		strncpy(path, blkid_dev_devname(dev), PATH_MAX);
 		if (test_skip_this_disk(path))
 			continue;
 
 		fd = open(path, O_RDONLY);
+		if (fd < 0) {
+			printf("ERROR: could not open %s\n", path);
+			continue;
+		}
 		btrfs_scan_one_device(fd, path, &tmp_devices,
 				&num_devices, BTRFS_SUPER_INFO_OFFSET);
 		close(fd);
