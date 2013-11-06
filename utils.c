@@ -1522,16 +1522,22 @@ u64 parse_size(char *s)
 		switch (c) {
 		case 'e':
 			mult *= 1024;
+			/* fallthrough */
 		case 'p':
 			mult *= 1024;
+			/* fallthrough */
 		case 't':
 			mult *= 1024;
+			/* fallthrough */
 		case 'g':
 			mult *= 1024;
+			/* fallthrough */
 		case 'm':
 			mult *= 1024;
+			/* fallthrough */
 		case 'k':
 			mult *= 1024;
+			/* fallthrough */
 		case 'b':
 			break;
 		default:
