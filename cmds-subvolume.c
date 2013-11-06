@@ -288,6 +288,8 @@ again:
 out:
 	free(dupdname);
 	free(dupvname);
+	dupdname = NULL;
+	dupvname = NULL;
 	cnt++;
 	if (cnt < argc)
 		goto again;
