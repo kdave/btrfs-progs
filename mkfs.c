@@ -629,6 +629,7 @@ static int add_file_items(struct btrfs_trans_handle *trans,
 		ret_read = pread64(fd, buffer, st->st_size, bytes_read);
 		if (ret_read == -1) {
 			fprintf(stderr, "%s read failed\n", path_name);
+			free(buffer);
 			goto end;
 		}
 
