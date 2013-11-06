@@ -98,7 +98,7 @@ int find_mount_root(const char *path, char **mount_root)
 
 	ret = 0;
 	*mount_root = realpath(longest_match, NULL);
-	if (!mount_root)
+	if (!*mount_root)
 		ret = -errno;
 
 	free(longest_match);
