@@ -371,13 +371,13 @@ static int btrfs_scan_kernel(void *search)
 		}
 
 		fd = open(mnt->mnt_dir, O_RDONLY);
-		if (fd > 0 && !get_df(fd, &space_info_arg)) {
+		if ((fd != -1) && !get_df(fd, &space_info_arg)) {
 			get_label_mounted(mnt->mnt_dir, label);
 			print_one_fs(&fs_info_arg, dev_info_arg,
 					space_info_arg, label, mnt->mnt_dir);
 			free(space_info_arg);
 		}
-		if (fd > 0)
+		if (fd != -1)
 			close(fd);
 		free(dev_info_arg);
 	}
