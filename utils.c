@@ -1960,6 +1960,7 @@ int test_skip_this_disk(char *path)
 int btrfs_scan_lblkid(int update_kernel)
 {
 	int fd = -1;
+	int ret;
 	u64 num_devices;
 	struct btrfs_fs_devices *tmp_devices;
 	blkid_dev_iterate iter = NULL;
@@ -1988,8 +1989,14 @@ int btrfs_scan_lblkid(int update_kernel)
 			printf("ERROR: could not open %s\n", path);
 			continue;
 		}
-		btrfs_scan_one_device(fd, path, &tmp_devices,
+		ret = btrfs_scan_one_device(fd, path, &tmp_devices,
 				&num_devices, BTRFS_SUPER_INFO_OFFSET);
+		if (ret) {
+			printf("ERROR: could not scan %s\n", path);
+			close (fd);
+			continue;
+		}
+
 		close(fd);
 		if (update_kernel)
 			btrfs_register_one_device(path);
