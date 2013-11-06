@@ -1928,10 +1928,12 @@ int test_dev_for_mkfs(char *file, int force_overwrite, char *estr)
 	if (fstat(fd, &st)) {
 		snprintf(estr, sz, "unable to stat %s: %s\n", file,
 			strerror(errno));
+		close(fd);
 		return 1;
 	}
 	if (!S_ISBLK(st.st_mode)) {
 		fprintf(stderr, "'%s' is not a block device\n", file);
+		close(fd);
 		return 1;
 	}
 	close(fd);
