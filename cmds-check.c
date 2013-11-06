@@ -5040,7 +5040,6 @@ static int check_extent_refs(struct btrfs_trans_handle *trans,
 	int err = 0;
 	int ret = 0;
 	int fixed = 0;
-	int reinit = 0;
 	int had_dups = 0;
 
 	if (repair) {
@@ -5066,8 +5065,6 @@ static int check_extent_refs(struct btrfs_trans_handle *trans,
 			cache = next_cache_extent(cache);
 		}
 		prune_corrupt_blocks(trans, root->fs_info);
-		if (reinit)
-			btrfs_read_block_groups(root->fs_info->extent_root);
 		reset_cached_block_groups(root->fs_info);
 	}
 
