@@ -120,12 +120,15 @@ static int parse_limit(const char *p, unsigned long long *s)
 	case 'T':
 	case 't':
 		size *= 1024;
+		/* fallthrough */
 	case 'G':
 	case 'g':
 		size *= 1024;
+		/* fallthrough */
 	case 'M':
 	case 'm':
 		size *= 1024;
+		/* fallthrough */
 	case 'K':
 	case 'k':
 		size *= 1024;
