@@ -697,6 +697,7 @@ static int cmd_subvol_get_default(int argc, char **argv)
 	/* no need to resolve roots if FS_TREE is default */
 	if (default_id == BTRFS_FS_TREE_OBJECTID) {
 		printf("ID 5 (FS_TREE)\n");
+		ret = 0;
 		goto out;
 	}
 
