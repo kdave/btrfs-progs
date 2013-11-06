@@ -173,7 +173,7 @@ static int cmd_df(int argc, char **argv)
 		print_df(sargs);
 		free(sargs);
 	} else {
-		fprintf(stderr, "ERROR: get_df failed %s\n", strerror(ret));
+		fprintf(stderr, "ERROR: get_df failed %s\n", strerror(-ret));
 	}
 
 	close_file_or_dir(fd, dirstream);
