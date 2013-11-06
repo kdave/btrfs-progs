@@ -681,7 +681,13 @@ static int cmd_defrag(int argc, char **argv)
 		if (recursive) {
 			struct stat st;
 
-			fstat(fd, &st);
+			if (fstat(fd, &st)) {
+				fprintf(stderr, "ERROR: failed to stat %s - %s\n",
+						argv[i], strerror(errno));
+				defrag_global_errors++;
+				close_file_or_dir(fd, dirstream);
+				continue;
+			}
 			if (S_ISDIR(st.st_mode)) {
 				ret = nftw(argv[i], defrag_callback, 10,
 						FTW_MOUNT | FTW_PHYS);
