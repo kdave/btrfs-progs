@@ -210,10 +210,10 @@ int make_btrfs(int fd, const char *device, const char *label,
 
 	csum_tree_block_size(buf, BTRFS_CRC32_SIZE, 0);
 	ret = pwrite(fd, buf->data, leafsize, blocks[1]);
-	if (ret < 0)
-		return -errno;
-	else if (ret != leafsize)
-		return -EIO;
+	if (ret != leafsize) {
+		ret = (ret < 0 ? -errno : -EIO);
+		goto out;
+	}
 
 	/* create the items for the extent tree */
 	memset(buf->data+sizeof(struct btrfs_header), 0,
@@ -269,10 +269,10 @@ int make_btrfs(int fd, const char *device, const char *label,
 	btrfs_set_header_nritems(buf, nritems);
 	csum_tree_block_size(buf, BTRFS_CRC32_SIZE, 0);
 	ret = pwrite(fd, buf->data, leafsize, blocks[2]);
-	if (ret < 0)
-		return -errno;
-	else if (ret != leafsize)
-		return -EIO;
+	if (ret != leafsize) {
+		ret = (ret < 0 ? -errno : -EIO);
+		goto out;
+	}
 
 	/* create the chunk tree */
 	memset(buf->data+sizeof(struct btrfs_header), 0,
@@ -356,10 +356,10 @@ int make_btrfs(int fd, const char *device, const char *label,
 	btrfs_set_header_nritems(buf, nritems);
 	csum_tree_block_size(buf, BTRFS_CRC32_SIZE, 0);
 	ret = pwrite(fd, buf->data, leafsize, blocks[3]);
-	if (ret < 0)
-		return -errno;
-	else if (ret != leafsize)
-		return -EIO;
+	if (ret != leafsize) {
+		ret = (ret < 0 ? -errno : -EIO);
+		goto out;
+	}
 
 	/* create the device tree */
 	memset(buf->data+sizeof(struct btrfs_header), 0,
@@ -395,10 +395,10 @@ int make_btrfs(int fd, const char *device, const char *label,
 	btrfs_set_header_nritems(buf, nritems);
 	csum_tree_block_size(buf, BTRFS_CRC32_SIZE, 0);
 	ret = pwrite(fd, buf->data, leafsize, blocks[4]);
-	if (ret < 0)
-		return -errno;
-	else if (ret != leafsize)
-		return -EIO;
+	if (ret != leafsize) {
+		ret = (ret < 0 ? -errno : -EIO);
+		goto out;
+	}
 
 	/* create the FS root */
 	memset(buf->data+sizeof(struct btrfs_header), 0,
@@ -408,11 +408,10 @@ int make_btrfs(int fd, const char *device, const char *label,
 	btrfs_set_header_nritems(buf, 0);
 	csum_tree_block_size(buf, BTRFS_CRC32_SIZE, 0);
 	ret = pwrite(fd, buf->data, leafsize, blocks[5]);
-	if (ret < 0)
-		return -errno;
-	else if (ret != leafsize)
-		return -EIO;
-
+	if (ret != leafsize) {
+		ret = (ret < 0 ? -errno : -EIO);
+		goto out;
+	}
 	/* finally create the csum root */
 	memset(buf->data+sizeof(struct btrfs_header), 0,
 		leafsize-sizeof(struct btrfs_header));
@@ -421,10 +420,10 @@ int make_btrfs(int fd, const char *device, const char *label,
 	btrfs_set_header_nritems(buf, 0);
 	csum_tree_block_size(buf, BTRFS_CRC32_SIZE, 0);
 	ret = pwrite(fd, buf->data, leafsize, blocks[6]);
-	if (ret < 0)
-		return -errno;
-	else if (ret != leafsize)
-		return -EIO;
+	if (ret != leafsize) {
+		ret = (ret < 0 ? -errno : -EIO);
+		goto out;
+	}
 
 	/* and write out the super block */
 	BUG_ON(sizeof(super) > sectorsize);
@@ -433,13 +432,16 @@ int make_btrfs(int fd, const char *device, const char *label,
 	buf->len = sectorsize;
 	csum_tree_block_size(buf, BTRFS_CRC32_SIZE, 0);
 	ret = pwrite(fd, buf->data, sectorsize, blocks[0]);
-	if (ret < 0)
-		return -errno;
-	else if (ret != sectorsize)
-		return -EIO;
+	if (ret != sectorsize) {
+		ret = (ret < 0 ? -errno : -EIO);
+		goto out;
+	}
 
+	ret = 0;
+
+out:
 	free(buf);
-	return 0;
+	return ret;
 }
 
 u64 btrfs_device_size(int fd, struct stat *st)
