@@ -106,11 +106,12 @@ static int get_df(int fd, struct btrfs_ioctl_space_args **sargs_ret)
 		fprintf(stderr, "ERROR: couldn't get space info - %s\n",
 			strerror(e));
 		free(sargs);
-		return ret;
+		return -e;
 	}
+	/* This really should never happen */
 	if (!sargs->total_spaces) {
 		free(sargs);
-		return 0;
+		return -ENOENT;
 	}
 	count = sargs->total_spaces;
 	free(sargs);
@@ -128,7 +129,7 @@ static int get_df(int fd, struct btrfs_ioctl_space_args **sargs_ret)
 		fprintf(stderr, "ERROR: get space info count %llu - %s\n",
 				count, strerror(e));
 		free(sargs);
-		return ret;
+		return -e;
 	}
 	*sargs_ret = sargs;
 	return 0;
