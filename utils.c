@@ -1975,7 +1975,7 @@ int btrfs_scan_lblkid(int update_kernel)
 		if (!dev)
 			continue;
 		/* if we are here its definitly a btrfs disk*/
-		strcpy(path, blkid_dev_devname(dev));
+		strncpy(path, blkid_dev_devname(dev), PATH_MAX);
 		if (test_skip_this_disk(path))
 			continue;
 
