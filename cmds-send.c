@@ -72,7 +72,7 @@ int find_mount_root(const char *path, char **mount_root)
 		return -errno;
 	close(fd);
 
-	mnttab = fopen("/proc/mounts", "r");
+	mnttab = fopen("/proc/self/mounts", "r");
 	if (!mnttab)
 		return -errno;
 

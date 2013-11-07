@@ -997,7 +997,7 @@ int check_mounted_where(int fd, const char *file, char *where, int size,
 	}
 
 	/* iterate over the list of currently mountes filesystems */
-	if ((f = setmntent ("/proc/mounts", "r")) == NULL)
+	if ((f = setmntent ("/proc/self/mounts", "r")) == NULL)
 		return -errno;
 
 	while ((mnt = getmntent (f)) != NULL) {
