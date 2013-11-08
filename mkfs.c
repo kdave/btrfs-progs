@@ -46,6 +46,8 @@
 
 static u64 index_cnt = 2;
 
+#define DEFAULT_MKFS_LEAF_SIZE 16384
+
 struct directory_name_entry {
 	char *dir_name;
 	char *path;
@@ -1222,7 +1224,7 @@ int main(int ac, char **av)
 	u64 alloc_start = 0;
 	u64 metadata_profile = 0;
 	u64 data_profile = 0;
-	u32 leafsize = sysconf(_SC_PAGESIZE);
+	u32 leafsize = max_t(u32, sysconf(_SC_PAGESIZE), DEFAULT_MKFS_LEAF_SIZE);
 	u32 sectorsize = 4096;
 	u32 nodesize = leafsize;
 	u32 stripesize = 4096;
@@ -1232,6 +1234,7 @@ int main(int ac, char **av)
 	int ret;
 	int i;
 	int mixed = 0;
+	int leaf_forced = 0;
 	int data_profile_opt = 0;
 	int metadata_profile_opt = 0;
 	int discard = 1;
@@ -1269,6 +1272,7 @@ int main(int ac, char **av)
 			case 'n':
 				nodesize = parse_size(optarg);
 				leafsize = parse_size(optarg);
+				leaf_forced = 1;
 				break;
 			case 'L':
 				label = parse_label(optarg);
@@ -1386,8 +1390,21 @@ int main(int ac, char **av)
 				BTRFS_BLOCK_GROUP_RAID0 : 0; /* raid0 or single */
 		}
 	} else {
+		u32 best_leafsize = max_t(u32, sysconf(_SC_PAGESIZE), sectorsize);
 		metadata_profile = 0;
 		data_profile = 0;
+
+		if (!leaf_forced) {
+			leafsize = best_leafsize;
+			nodesize = best_leafsize;
+			if (check_leaf_or_node_size(leafsize, sectorsize))
+				exit(1);
+		}
+		if (leafsize != sectorsize) {
+			fprintf(stderr, "Error: mixed metadata/data block groups "
+				"require metadata blocksizes equal to the sectorsize\n");
+			exit(1);
+		}
 	}
 
 	ret = test_num_disk_vs_raid(metadata_profile, data_profile,
