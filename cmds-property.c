@@ -75,7 +75,7 @@ static int parse_prop(const char *arg, const struct prop_handler *props,
 	return -1;
 }
 
-static int get_fsid(const char *path, u8 *fsid)
+static int get_fsid(const char *path, u8 *fsid, int silent)
 {
 	int ret;
 	int fd;
@@ -84,7 +84,8 @@ static int get_fsid(const char *path, u8 *fsid)
 	fd = open(path, O_RDONLY);
 	if (fd < 0) {
 		ret = -errno;
-		fprintf(stderr, "ERROR: open %s failed. %s\n", path,
+		if (!silent)
+			fprintf(stderr, "ERROR: open %s failed. %s\n", path,
 				strerror(-ret));
 		goto out;
 	}
@@ -109,7 +110,7 @@ static int check_btrfs_object(const char *object)
 	int ret;
 	u8 fsid[BTRFS_FSID_SIZE];
 
-	ret = get_fsid(object, fsid);
+	ret = get_fsid(object, fsid, 0);
 	if (ret < 0)
 		ret = 0;
 	else
@@ -134,20 +135,27 @@ static int check_is_root(const char *object)
 		strcat(tmp, "/");
 	strcat(tmp, "..");
 
-	ret = get_fsid(object, fsid);
+	ret = get_fsid(object, fsid, 0);
 	if (ret < 0) {
 		fprintf(stderr, "ERROR: get_fsid for %s failed. %s\n", object,
 				strerror(-ret));
 		goto out;
 	}
 
-	ret = get_fsid(tmp, fsid2);
-	if (ret < 0) {
+	ret = get_fsid(tmp, fsid2, 1);
+	if (ret == -ENOTTY) {
 		ret = 0;
+		goto out;
+	} else if (ret == -ENOTDIR) {
+		ret = 1;
+		goto out;
+	} else if (ret < 0) {
+		fprintf(stderr, "ERROR: get_fsid for %s failed. %s\n", tmp,
+			strerror(-ret));
 		goto out;
 	}
 
-	if (!memcmp(fsid, fsid2, BTRFS_FSID_SIZE)) {
+	if (memcmp(fsid, fsid2, BTRFS_FSID_SIZE)) {
 		ret = 0;
 		goto out;
 	}
@@ -195,7 +203,7 @@ static int autodetect_object_types(const char *object, int *types_out)
 		ret = check_is_root(object);
 		if (ret < 0)
 			goto out;
-		if (ret)
+		if (!ret)
 			types |= prop_object_root;
 	}
 
