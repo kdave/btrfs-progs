@@ -896,10 +896,18 @@ static int cmd_label(int argc, char **argv)
 	if (check_argc_min(argc, 2) || check_argc_max(argc, 3))
 		usage(cmd_label_usage);
 
-	if (argc > 2)
+	if (argc > 2) {
 		return set_label(argv[1], argv[2]);
-	else
-		return get_label(argv[1]);
+	} else {
+		char label[BTRFS_LABEL_SIZE];
+		int ret;
+
+		ret = get_label(argv[1], label);
+		if (!ret)
+			fprintf(stdout, "%s\n", label);
+
+		return ret;
+	}
 }
 
 const struct cmd_group filesystem_cmd_group = {

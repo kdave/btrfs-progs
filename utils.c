@@ -1345,7 +1345,7 @@ static int set_label_mounted(const char *mount_path, const char *label)
 	return 0;
 }
 
-static int get_label_unmounted(const char *dev)
+static int get_label_unmounted(const char *dev, char *label)
 {
 	struct btrfs_root *root;
 	int ret;
@@ -1368,7 +1368,7 @@ static int get_label_unmounted(const char *dev)
 	if(!root)
 		return -1;
 
-	fprintf(stdout, "%s\n", root->fs_info->super_copy->label);
+	memcpy(label, root->fs_info->super_copy->label, BTRFS_LABEL_SIZE);
 
 	/* Now we close it since we are done. */
 	close_ctree(root);
@@ -1403,18 +1403,15 @@ int get_label_mounted(const char *mount_path, char *labelp)
 	return 0;
 }
 
-int get_label(const char *btrfs_dev)
+int get_label(const char *btrfs_dev, char *label)
 {
 	int ret;
-	char label[BTRFS_LABEL_SIZE];
 
 	if (is_existing_blk_or_reg_file(btrfs_dev))
-		ret = get_label_unmounted(btrfs_dev);
-	else {
+		ret = get_label_unmounted(btrfs_dev, label);
+	else
 		ret = get_label_mounted(btrfs_dev, label);
-		if (!ret)
-			fprintf(stdout, "%s\n", label);
-	}
+
 	return ret;
 }
 
