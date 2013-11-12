@@ -250,6 +250,7 @@ static const struct cmd_group btrfs_cmd_group = {
 		{ "rescue", cmd_rescue, NULL, &rescue_cmd_group, 0 },
 		{ "restore", cmd_restore, cmd_restore_usage, NULL, 0 },
 		{ "inspect-internal", cmd_inspect, NULL, &inspect_cmd_group, 0 },
+		{ "property", cmd_property, NULL, &property_cmd_group, 0 },
 		{ "send", cmd_send, cmd_send_usage, NULL, 0 },
 		{ "receive", cmd_receive, cmd_receive_usage, NULL, 0 },
 		{ "quota", cmd_quota, NULL, &quota_cmd_group, 0 },
