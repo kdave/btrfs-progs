@@ -105,6 +105,7 @@ static int prop_label(enum prop_object_type type,
 const struct prop_handler prop_handlers[] = {
 	{"ro", "Set/get read-only flag of subvolume.", 0, prop_object_subvol,
 	 prop_read_only},
-	{"label", "Set/get label of device.", 0, prop_object_dev, prop_label},
+	{"label", "Set/get label of device.", 0,
+	 prop_object_dev | prop_object_root, prop_label},
 	{0, 0, 0, 0, 0}
 };
