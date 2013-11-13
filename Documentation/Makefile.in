@@ -10,7 +10,6 @@ MAN8_TXT += btrfs-image.asciidoc
 MAN8_TXT += btrfs-map-logical.asciidoc
 MAN8_TXT += btrfs-show-super.asciidoc
 MAN8_TXT += btrfstune.asciidoc
-MAN8_TXT += btrfs-zero-log.asciidoc
 MAN8_TXT += fsck.btrfs.asciidoc
 MAN8_TXT += mkfs.btrfs.asciidoc
 
@@ -93,6 +92,7 @@ install-man: man
 	$(MV) $(DESTDIR)$(man5dir)/btrfs-mount.5.gz $(DESTDIR)$(man5dir)/btrfs.5.gz
 	$(INSTALL) -m 644 $(GZ_MAN8) $(DESTDIR)$(man8dir)
 	$(LN_S) -f btrfs-check.8.gz $(DESTDIR)$(man8dir)/btrfsck.8.gz
+	$(LN_S) -f btrfs-rescue.8.gz $(DESTDIR)$(man8dir)/btrfs-zero-log.8.gz
 
 uninstall:
 	cd $(DESTDIR)$(man8dir); rm -f btrfs-check.8.gz $(GZ_MAN8)

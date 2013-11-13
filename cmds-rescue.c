@@ -19,6 +19,9 @@
 #include "kerncompat.h"
 
 #include <getopt.h>
+#include "ctree.h"
+#include "transaction.h"
+#include "disk-io.h"
 #include "commands.h"
 #include "utils.h"
 
@@ -149,11 +152,61 @@ int cmd_super_recover(int argc, char **argv)
 	return ret;
 }
 
+const char * const cmd_rescue_zero_log_usage[] = {
+	"btrfs rescue zero-log <device>",
+	"Clear the tree log. Usable if it's corrupted and prevents mount.",
+	"",
+	NULL
+};
+
+int cmd_rescue_zero_log(int argc, char **argv)
+{
+	struct btrfs_root *root;
+	struct btrfs_trans_handle *trans;
+	struct btrfs_super_block *sb;
+	char *devname;
+	int ret;
+
+	if (check_argc_exact(argc, 2))
+		usage(cmd_rescue_zero_log_usage);
+
+	devname = argv[optind];
+	ret = check_mounted(devname);
+	if (ret < 0) {
+		fprintf(stderr, "Could not check mount status: %s\n", strerror(-ret));
+		goto out;
+	} else if (ret) {
+		fprintf(stderr, "%s is currently mounted. Aborting.\n", devname);
+		ret = -EBUSY;
+	}
+
+	root = open_ctree(devname, 0, OPEN_CTREE_WRITES | OPEN_CTREE_PARTIAL);
+	if (!root) {
+		fprintf(stderr, "Could not open ctree\n");
+		return 1;
+	}
+
+	sb = root->fs_info->super_copy;
+	printf("Clearing log on %s, previous log_root %llu, level %u\n",
+			devname,
+			(unsigned long long)btrfs_super_log_root(sb),
+			(unsigned)btrfs_super_log_root_level(sb));
+	trans = btrfs_start_transaction(root, 1);
+	btrfs_set_super_log_root(sb, 0);
+	btrfs_set_super_log_root_level(sb, 0);
+	btrfs_commit_transaction(trans, root);
+	close_ctree(root);
+
+out:
+	return !!ret;
+}
+
 const struct cmd_group rescue_cmd_group = {
 	rescue_cmd_group_usage, NULL, {
 		{ "chunk-recover", cmd_chunk_recover, cmd_chunk_recover_usage, NULL, 0},
 		{ "super-recover", cmd_super_recover, cmd_super_recover_usage, NULL, 0},
-		{ 0, 0, 0, 0, 0 }
+		{ "zero-log", cmd_rescue_zero_log, cmd_rescue_zero_log_usage, NULL, 0},
+		NULL_CMD_STRUCT
 	}
 };
 
