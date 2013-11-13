@@ -344,7 +344,7 @@ int write_and_map_eb(struct btrfs_trans_handle *trans,
 	return 0;
 }
 
-int write_tree_block(struct btrfs_trans_handle *trans,
+static int write_tree_block(struct btrfs_trans_handle *trans,
 		     struct btrfs_root *root,
 		     struct extent_buffer *eb)
 {

@@ -76,7 +76,7 @@ struct btrfs_qgroup_list {
 /*
  * qgroupid,rfer,excl default to set
  */
-struct {
+static struct {
 	char *name;
 	char *column_name;
 	int need_print;
@@ -652,7 +652,7 @@ static int add_qgroup(struct qgroup_lookup *qgroup_lookup, u64 qgroupid,
 	return ret;
 }
 
-void __free_btrfs_qgroup(struct btrfs_qgroup *bq)
+static void __free_btrfs_qgroup(struct btrfs_qgroup *bq)
 {
 	struct btrfs_qgroup_list *list;
 	while (!list_empty(&bq->qgroups)) {
@@ -674,7 +674,7 @@ void __free_btrfs_qgroup(struct btrfs_qgroup *bq)
 	free(bq);
 }
 
-void __free_all_qgroups(struct qgroup_lookup *root_tree)
+static void __free_all_qgroups(struct qgroup_lookup *root_tree)
 {
 	struct btrfs_qgroup *entry;
 	struct rb_node *n;

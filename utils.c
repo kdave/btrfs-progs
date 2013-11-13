@@ -1954,7 +1954,7 @@ int test_dev_for_mkfs(char *file, int force_overwrite, char *estr)
 	return 0;
 }
 
-int test_skip_this_disk(char *path)
+static int test_skip_this_disk(char *path)
 {
 	int fd;
 
