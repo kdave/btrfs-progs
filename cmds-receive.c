@@ -234,6 +234,10 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 	parent_subvol = subvol_uuid_search(&r->sus, 0, parent_uuid,
 			parent_ctransid, NULL, subvol_search_by_received_uuid);
 	if (!parent_subvol) {
+		parent_subvol = subvol_uuid_search(&r->sus, 0, parent_uuid,
+				parent_ctransid, NULL, subvol_search_by_uuid);
+	}
+	if (!parent_subvol) {
 		ret = -ENOENT;
 		fprintf(stderr, "ERROR: could not find parent subvolume\n");
 		goto out;
