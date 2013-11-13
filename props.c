@@ -16,6 +16,8 @@
 
 #include <sys/stat.h>
 #include <sys/ioctl.h>
+#include <sys/types.h>
+#include <attr/xattr.h>
 #include <fcntl.h>
 #include <unistd.h>
 
@@ -23,6 +25,10 @@
 #include "commands.h"
 #include "utils.h"
 #include "props.h"
+
+#define XATTR_BTRFS_PREFIX     "btrfs."
+#define XATTR_BTRFS_PREFIX_LEN (sizeof(XATTR_BTRFS_PREFIX) - 1)
+
 
 static int prop_read_only(enum prop_object_type type,
 			  const char *object,
@@ -102,10 +108,82 @@ static int prop_label(enum prop_object_type type,
 	return ret;
 }
 
+static int prop_compression(enum prop_object_type type,
+			    const char *object,
+			    const char *name,
+			    const char *value)
+{
+	int ret;
+	ssize_t sret;
+	int fd = -1;
+	DIR *dirstream = NULL;
+	char *buf = NULL;
+	char *xattr_name = NULL;
+
+	fd = open_file_or_dir(object, &dirstream);
+	if (fd == -1) {
+		ret = -errno;
+		fprintf(stderr, "ERROR: open %s failed. %s\n",
+			object, strerror(-ret));
+		goto out;
+	}
+
+	xattr_name = malloc(XATTR_BTRFS_PREFIX_LEN + strlen(name));
+	if (!xattr_name) {
+		ret = -ENOMEM;
+		goto out;
+	}
+	memcpy(xattr_name, XATTR_BTRFS_PREFIX, XATTR_BTRFS_PREFIX_LEN);
+	memcpy(xattr_name + XATTR_BTRFS_PREFIX_LEN, name, strlen(name));
+
+	if (value)
+		sret = fsetxattr(fd, xattr_name, value, strlen(value), 0);
+	else
+		sret = fgetxattr(fd, xattr_name, NULL, 0);
+	if (sret < 0) {
+		ret = -errno;
+		if (ret != -ENODATA)
+			fprintf(stderr,
+				"ERROR: failed to %s compression for %s. %s\n",
+				value ? "set" : "get", object, strerror(-ret));
+		goto out;
+	}
+	if (!value) {
+		size_t len = sret;
+
+		buf = malloc(len);
+		if (!buf) {
+			ret = -ENOMEM;
+			goto out;
+		}
+		sret = fgetxattr(fd, xattr_name, buf, len);
+		if (sret < 0) {
+			ret = -errno;
+			fprintf(stderr,
+				"ERROR: failed to get compression for %s. %s\n",
+				object, strerror(-ret));
+			goto out;
+		}
+		fprintf(stdout, "compression=%.*s\n", (int)len, buf);
+	}
+
+	ret = 0;
+out:
+	free(xattr_name);
+	free(buf);
+	if (fd >= 0)
+		close_file_or_dir(fd, dirstream);
+
+	return ret;
+}
+
+
 const struct prop_handler prop_handlers[] = {
 	{"ro", "Set/get read-only flag of subvolume.", 0, prop_object_subvol,
 	 prop_read_only},
 	{"label", "Set/get label of device.", 0,
 	 prop_object_dev | prop_object_root, prop_label},
+	{"compression", "Set/get compression for a file or directory", 0,
+	 prop_object_inode, prop_compression},
 	{0, 0, 0, 0, 0}
 };
