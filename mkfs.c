@@ -1168,7 +1168,11 @@ static int parse_one_fs_feature(const char *name, u64 *flags)
 	int found = 0;
 
 	for (i = 0; i < ARRAY_SIZE(mkfs_features); i++) {
-		if (!strcmp(mkfs_features[i].name, name)) {
+		if (name[0] == '^' &&
+			!strcmp(mkfs_features[i].name, name + 1)) {
+			*flags &= ~ mkfs_features[i].flag;
+			found = 1;
+		} else if (!strcmp(mkfs_features[i].name, name)) {
 			*flags |= mkfs_features[i].flag;
 			found = 1;
 		}
