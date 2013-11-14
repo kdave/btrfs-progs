@@ -46,6 +46,8 @@
 
 static u64 index_cnt = 2;
 
+#define DEFAULT_MKFS_FEATURES	(BTRFS_FEATURE_INCOMPAT_EXTENDED_IREF)
+
 #define DEFAULT_MKFS_LEAF_SIZE 16384
 
 struct directory_name_entry {
@@ -1155,10 +1157,15 @@ static void list_all_fs_features(void)
 
 	fprintf(stderr, "Filesystem features available at mkfs time:\n");
 	for (i = 0; i < ARRAY_SIZE(mkfs_features) - 1; i++) {
-		fprintf(stderr, "%-20s- %s (0x%llx)\n",
+		char *is_default = "";
+
+		if (mkfs_features[i].flag & DEFAULT_MKFS_FEATURES)
+			is_default = ", default";
+		fprintf(stderr, "%-20s- %s (0x%llx%s)\n",
 				mkfs_features[i].name,
 				mkfs_features[i].desc,
-				mkfs_features[i].flag);
+				mkfs_features[i].flag,
+				is_default);
 	}
 }
 
@@ -1253,7 +1260,7 @@ int main(int ac, char **av)
 	int dev_cnt = 0;
 	int saved_optind;
 	char estr[100];
-	u64 features = 0;
+	u64 features = DEFAULT_MKFS_FEATURES;
 
 	while(1) {
 		int c;
