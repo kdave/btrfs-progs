@@ -71,6 +71,8 @@ btrfs \- control a btrfs filesystem
 .PP
 \fBbtrfs\fP \fBrescue chunk-recover\fP [\fIoptions\fP] \fI<path>\fP
 .PP
+\fBbtrfs\fP \fBrescue super-recover\fP [\fIoptions\fP] \fI<path>\fP
+.PP
 \fBbtrfs\fP \fBrestore\fP [\fIoptions\fP] \fI<device>\fP
 .PP
 .PP
@@ -522,6 +524,18 @@ assume an answer of 'yes' to all questions.
 verbose mode.
 .IP "\fB-h\fP" 5
 help.
+.RE
+.TP
+
+\fBrescue super-recover\fR [\fIoptions\fP] <device>\fR
+Recover bad superblocks from good copies.
+.RS
+
+\fIOptions\fR
+.IP "\fB-y\fP" 5
+assume an answer of 'yes' to all questions.
+.IP "\fB-v\fP" 5
+verbose mode.
 .RE
 .TP
 
