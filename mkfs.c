@@ -1373,14 +1373,8 @@ int main(int ac, char **av)
 	if (is_vol_small(file)) {
 		printf("SMALL VOLUME: forcing mixed metadata/data groups\n");
 		mixed = 1;
-		if (metadata_profile != data_profile) {
-			if (metadata_profile_opt || data_profile_opt) {
-				fprintf(stderr,
-	"With mixed block groups data and metadata profiles must be the same\n");
-				exit(1);
-			}
-		}
 	}
+
 	/*
 	* Set default profiles according to number of added devices.
 	* For mixed groups defaults are single/single.
@@ -1402,8 +1396,14 @@ int main(int ac, char **av)
 		}
 	} else {
 		u32 best_leafsize = max_t(u32, sysconf(_SC_PAGESIZE), sectorsize);
-		metadata_profile = 0;
-		data_profile = 0;
+
+		if (metadata_profile_opt || data_profile_opt) {
+			if (metadata_profile != data_profile) {
+				fprintf(stderr,
+	"ERROR: With mixed block groups data and metadata profiles must be the same\n");
+				exit(1);
+			}
+		}
 
 		if (!leaf_forced) {
 			leafsize = best_leafsize;
