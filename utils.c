@@ -47,6 +47,7 @@
 #include "utils.h"
 #include "volumes.h"
 #include "ioctl.h"
+#include "btrfs-list.h"
 
 #ifndef BLKDISCARD
 #define BLKDISCARD	_IO(0x12,119)
@@ -2210,5 +2211,79 @@ int find_mount_root(const char *path, char **mount_root)
 		ret = -errno;
 
 	free(longest_match);
+	return ret;
+}
+
+/* scans for fsid(s) in the kernel using the btrfs-control
+ * interface.
+ */
+int get_fslist(struct btrfs_ioctl_fslist **out_fslist, u64 *out_count)
+{
+	int ret, fd, e;
+	struct btrfs_ioctl_fslist_args *fsargs;
+	struct btrfs_ioctl_fslist_args *fsargs_saved = NULL;
+	struct btrfs_ioctl_fslist *fslist;
+	u64 sz;
+	int count;
+
+	fd = open("/dev/btrfs-control", O_RDWR);
+	e = errno;
+	if (fd < 0) {
+		perror("failed to open /dev/btrfs-control");
+		return -e;
+	}
+
+	/* space to hold 512 fsids, doesn't matter if small
+	 * it would fail and return count so then we try again
+	 */
+	count = 512;
+again:
+	sz = sizeof(*fsargs) + sizeof(*fslist) * count;
+
+	fsargs_saved = fsargs = malloc(sz);
+	if (!fsargs) {
+		close(fd);
+		return -ENOMEM;
+	}
+
+	memset(fsargs, 0, sz);
+	fsargs->count = count;
+
+	ret = ioctl(fd, BTRFS_IOC_GET_FSLIST, fsargs);
+	e = errno;
+	if (ret == 1) {
+		/* out of size so reallocate */
+		count = fsargs->count;
+		free(fsargs);
+		goto again;
+	} else if (ret < 0) {
+		printf("ERROR: scan_fsid ioctl failed - %s\n",
+			strerror(e));
+		ret = -e;
+		goto out;
+	}
+
+	/* ioctl returns fsid count in count parameter*/
+
+	*out_count = fsargs->count;
+	if (*out_count == 0) {
+		*out_fslist = NULL;
+		ret = 0;
+		goto out;
+	}
+
+	fslist = (struct btrfs_ioctl_fslist *) (++fsargs);
+
+	sz = sizeof(*fslist) * *out_count;
+	*out_fslist = malloc(sz);
+	if (*out_fslist == NULL) {
+		ret = -ENOMEM;
+		goto out;
+	}
+	memcpy(*out_fslist, fslist, sz);
+	ret = 0;
+out:
+	free(fsargs_saved);
+	close(fd);
 	return ret;
 }
