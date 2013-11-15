@@ -37,6 +37,7 @@
 #include "version.h"
 #include "commands.h"
 #include "list_sort.h"
+#include "disk-io.h"
 
 
 /*
@@ -483,6 +484,39 @@ out:
 	return ret;
 }
 
+static int dev_to_fsid(char *dev, __u8 *fsid)
+{
+	struct btrfs_super_block *disk_super;
+	char *buf;
+	int ret;
+	int fd;
+
+	buf = malloc(4096);
+	if (!buf)
+		return -ENOMEM;
+
+	fd = open(dev, O_RDONLY);
+	if (fd < 0) {
+		ret = -errno;
+		free(buf);
+		return ret;
+	}
+
+	disk_super = (struct btrfs_super_block *)buf;
+	ret = btrfs_read_dev_super(fd, disk_super,
+			BTRFS_SUPER_INFO_OFFSET);
+	if (ret)
+		goto out;
+
+	memcpy(fsid, disk_super->fsid, BTRFS_FSID_SIZE);
+	ret = 0;
+
+out:
+	close(fd);
+	free(buf);
+	return ret;
+}
+
 static const char * const cmd_show_usage[] = {
 	"btrfs filesystem show [options] [<path>|<uuid>|<device>|label]",
 	"Show the structure of a filesystem",
@@ -503,6 +537,8 @@ static int cmd_show(int argc, char **argv)
 	int type = 0;
 	char mp[BTRFS_PATH_NAME_MAX + 1];
 	char path[PATH_MAX];
+	__u8 fsid[BTRFS_FSID_SIZE];
+	char uuid_buf[37];
 
 	while (1) {
 		int long_index;
@@ -535,6 +571,11 @@ static int cmd_show(int argc, char **argv)
 		if (strlen(search) == 0)
 			usage(cmd_show_usage);
 		type = check_arg_type(search);
+		/*
+		 * needs spl handling if input arg is block dev
+		 * And if input arg is mount-point just print it
+		 * right away
+		 */
 		if (type == BTRFS_ARG_BLKDEV) {
 			if (where == BTRFS_SCAN_DEV) {
 				/* we need to do this because
@@ -546,11 +587,23 @@ static int cmd_show(int argc, char **argv)
 			} else {
 				ret = get_btrfs_mount(search,
 						mp, sizeof(mp));
-				if (!ret)
+				if (!ret) {
 					/* given block dev is mounted*/
 					search = mp;
-				else
+					type = BTRFS_ARG_MNTPOINT;
+				} else {
+					ret = dev_to_fsid(search, fsid);
+					if (ret) {
+						fprintf(stderr,
+							"ERROR: No btrfs on %s\n",
+							search);
+						return 1;
+					}
+					uuid_unparse(fsid, uuid_buf);
+					search = uuid_buf;
+					type = BTRFS_ARG_UUID;
 					goto devs_only;
+				}
 			}
 		}
 	}
