@@ -38,6 +38,74 @@
 #include "commands.h"
 #include "list_sort.h"
 
+
+/*
+ * for btrfs fi show, we maintain a hash of fsids we've already printed.
+ * This way we don't print dups if a given FS is mounted more than once.
+ */
+#define SEEN_FSID_HASH_SIZE 256
+
+struct seen_fsid {
+	u8 fsid[BTRFS_FSID_SIZE];
+	struct seen_fsid *next;
+};
+
+static struct seen_fsid *seen_fsid_hash[SEEN_FSID_HASH_SIZE] = {NULL,};
+
+static int add_seen_fsid(u8 *fsid)
+{
+	u8 hash = fsid[0];
+	int slot = hash % SEEN_FSID_HASH_SIZE;
+	struct seen_fsid *seen = seen_fsid_hash[slot];
+	struct seen_fsid *alloc;
+
+	if (!seen)
+		goto insert;
+
+	while (1) {
+		if (memcmp(seen->fsid, fsid, BTRFS_FSID_SIZE) == 0)
+			return -EEXIST;
+
+		if (!seen->next)
+			break;
+
+		seen = seen->next;
+	}
+
+insert:
+
+	alloc = malloc(sizeof(*alloc));
+	if (!alloc)
+		return -ENOMEM;
+
+	alloc->next = NULL;
+	memcpy(alloc->fsid, fsid, BTRFS_FSID_SIZE);
+
+	if (seen)
+		seen->next = alloc;
+	else
+		seen_fsid_hash[slot] = alloc;
+
+	return 0;
+}
+
+static void free_seen_fsid(void)
+{
+	int slot;
+	struct seen_fsid *seen;
+	struct seen_fsid *next;
+
+	for (slot = 0; slot < SEEN_FSID_HASH_SIZE; slot++) {
+		seen = seen_fsid_hash[slot];
+		while (seen) {
+			next = seen->next;
+			free(seen);
+			seen = next;
+		}
+		seen_fsid_hash[slot] = NULL;
+	}
+}
+
 static const char * const filesystem_cmd_group_usage[] = {
 	"btrfs filesystem [<group>] <command> [<args>]",
 	NULL
@@ -224,6 +292,9 @@ static void print_one_uuid(struct btrfs_fs_devices *fs_devices)
 	u64 devs_found = 0;
 	u64 total;
 
+	if (add_seen_fsid(fs_devices->fsid))
+		return;
+
 	uuid_unparse(fs_devices->fsid, uuidbuf);
 	device = list_entry(fs_devices->devices.next, struct btrfs_device,
 			    dev_list);
@@ -274,6 +345,13 @@ static int print_one_fs(struct btrfs_ioctl_fs_info_args *fs_info,
 	int i;
 	char uuidbuf[37];
 	struct btrfs_ioctl_dev_info_args *tmp_dev_info;
+	int ret;
+
+	ret = add_seen_fsid(fs_info->fsid);
+	if (ret == -EEXIST)
+		return 0;
+	else if (ret)
+		return ret;
 
 	uuid_unparse(fs_info->fsid, uuidbuf);
 	printf("Label: %s  uuid: %s\n",
@@ -478,6 +556,7 @@ devs_only:
 
 out:
 	printf("%s\n", BTRFS_BUILD_VERSION);
+	free_seen_fsid();
 	return 0;
 }
 
