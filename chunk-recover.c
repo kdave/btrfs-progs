@@ -1034,7 +1034,7 @@ static int __rebuild_chunk_root(struct btrfs_trans_handle *trans,
 	disk_key.type = BTRFS_DEV_ITEM_KEY;
 	disk_key.offset = min_devid;
 
-	cow = btrfs_alloc_free_block(trans, root, root->sectorsize,
+	cow = btrfs_alloc_free_block(trans, root, root->nodesize,
 				     BTRFS_CHUNK_TREE_OBJECTID,
 				     &disk_key, 0, 0, 0);
 	btrfs_set_header_bytenr(cow, cow->start);
