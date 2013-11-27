@@ -1634,6 +1634,7 @@ static int init_btrfs(struct btrfs_root *root)
 	ret = create_subvol(trans, root, BTRFS_DATA_RELOC_TREE_OBJECTID);
 	BUG_ON(ret);
 
+	extent_buffer_get(fs_info->csum_root->node);
 	ret = __btrfs_cow_block(trans, fs_info->csum_root,
 				fs_info->csum_root->node, NULL, 0, &tmp, 0, 0);
 	BUG_ON(ret);

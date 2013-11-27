@@ -165,6 +165,7 @@ static void __recow_root(struct btrfs_trans_handle *trans,
 	struct extent_buffer *tmp;
 
 	if (trans->transid != btrfs_root_generation(&root->root_item)) {
+		extent_buffer_get(root->node);
 		ret = __btrfs_cow_block(trans, root, root->node,
 					NULL, 0, &tmp, 0, 0);
 		BUG_ON(ret);

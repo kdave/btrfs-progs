@@ -580,7 +580,7 @@ static struct extent_buffer *__alloc_extent_buffer(struct extent_io_tree *tree,
 
 	eb->start = bytenr;
 	eb->len = blocksize;
-	eb->refs = 2;
+	eb->refs = 1;
 	eb->flags = 0;
 	eb->tree = tree;
 	eb->fd = -1;
