@@ -72,7 +72,7 @@ int find_mount_root(const char *path, char **mount_root)
 		return -errno;
 	close(fd);
 
-	mnttab = fopen("/proc/self/mounts", "r");
+	mnttab = setmntent("/proc/self/mounts", "r");
 	if (!mnttab)
 		return -errno;
 
@@ -87,7 +87,7 @@ int find_mount_root(const char *path, char **mount_root)
 			}
 		}
 	}
-	fclose(mnttab);
+	endmntent(mnttab);
 
 	if (!longest_match) {
 		fprintf(stderr,
