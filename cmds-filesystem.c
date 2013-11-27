@@ -449,11 +449,12 @@ static int btrfs_scan_kernel(void *search)
 		ret = get_fs_info(mnt->mnt_dir, &fs_info_arg,
 				&dev_info_arg);
 		if (ret)
-			return ret;
+			goto out;
 
 		if (get_label_mounted(mnt->mnt_dir, label)) {
 			kfree(dev_info_arg);
-			return 1;
+			ret = 1;
+			goto out;
 		}
 		if (search && !match_search_item_kernel(fs_info_arg.fsid,
 					mnt->mnt_dir, label, search)) {
@@ -472,11 +473,14 @@ static int btrfs_scan_kernel(void *search)
 			close(fd);
 		kfree(dev_info_arg);
 		if (search)
-			return 0;
+			ret = 0;
 	}
 	if (search)
-		return 1;
-	return 0;
+		ret = 1;
+
+out:
+	endmntent(f);
+	return ret;
 }
 
 static const char * const cmd_show_usage[] = {
