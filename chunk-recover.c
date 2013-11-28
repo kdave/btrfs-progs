@@ -1197,6 +1197,7 @@ open_ctree_with_broken_chunk(struct recover_control *rc)
 		fprintf(stderr, "Failed to allocate memory for fs_info\n");
 		return ERR_PTR(-ENOMEM);
 	}
+	fs_info->is_chunk_recover = 1;
 
 	fs_info->fs_devices = rc->fs_devices;
 	ret = btrfs_open_devices(fs_info->fs_devices, O_RDWR);

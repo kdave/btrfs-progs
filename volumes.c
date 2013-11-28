@@ -1496,8 +1496,15 @@ int btrfs_chunk_readonly(struct btrfs_root *root, u64 chunk_offset)
 	int readonly = 0;
 	int i;
 
+	/*
+	 * During chunk recovering, we may fail to find block group's
+	 * corresponding chunk, we will rebuild it later
+	 */
 	ce = search_cache_extent(&map_tree->cache_tree, chunk_offset);
-	BUG_ON(!ce);
+	if (!root->fs_info->is_chunk_recover)
+		BUG_ON(!ce);
+	else
+		return 0;
 
 	map = container_of(ce, struct map_lookup, ce);
 	for (i = 0; i < map->num_stripes; i++) {

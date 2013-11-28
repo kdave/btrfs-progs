@@ -973,6 +973,7 @@ struct btrfs_fs_info {
 	int system_allocs;
 	int readonly;
 	int on_restoring;
+	int is_chunk_recover;
 	int (*free_extent_hook)(struct btrfs_trans_handle *trans,
 				struct btrfs_root *root,
 				u64 bytenr, u64 num_bytes, u64 parent,
