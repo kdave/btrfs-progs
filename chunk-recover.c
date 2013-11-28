@@ -1685,6 +1685,9 @@ int btrfs_recover_chunk_tree(char *path, int verbose, int yes)
 		 * droppped from the fs. Don't deal with them now, we will
 		 * check it after the fs is opened.
 		 */
+	} else {
+		fprintf(stderr, "Check chunks successfully with no orphans\n");
+		goto fail_rc;
 	}
 
 	root = open_ctree_with_broken_chunk(&rc);
