@@ -1096,9 +1096,10 @@ static int scrub_start(int argc, char **argv, int resume)
 	void *terr;
 	u64 devid;
 	DIR *dirstream = NULL;
+	int force = 0;
 
 	optind = 1;
-	while ((c = getopt(argc, argv, "BdqrRc:n:")) != -1) {
+	while ((c = getopt(argc, argv, "BdqrRc:n:f")) != -1) {
 		switch (c) {
 		case 'B':
 			do_background = 0;
@@ -1122,6 +1123,9 @@ static int scrub_start(int argc, char **argv, int resume)
 			break;
 		case 'n':
 			ioprio_classdata = (int)strtol(optarg, NULL, 10);
+			break;
+		case 'f':
+			force = 1;
 			break;
 		case '?':
 		default:
@@ -1195,7 +1199,7 @@ static int scrub_start(int argc, char **argv, int resume)
 	 * is a normal mode of operation to start scrub on multiple
 	 * single devices, there is no reason to prevent this.
 	 */
-	if (is_scrub_running_on_fs(&fi_args, di_args, past_scrubs)) {
+	if (!force && is_scrub_running_on_fs(&fi_args, di_args, past_scrubs)) {
 		ERR(!do_quiet,
 		    "ERROR: scrub is already running.\n"
 		    "To cancel use 'btrfs scrub cancel %s'.\n"
@@ -1507,7 +1511,7 @@ out:
 }
 
 static const char * const cmd_scrub_start_usage[] = {
-	"btrfs scrub start [-BdqrR] [-c ioprio_class -n ioprio_classdata] <path>|<device>",
+	"btrfs scrub start [-BdqrRf] [-c ioprio_class -n ioprio_classdata] <path>|<device>",
 	"Start a new scrub",
 	"",
 	"-B     do not background",
@@ -1517,6 +1521,8 @@ static const char * const cmd_scrub_start_usage[] = {
 	"-R     raw print mode, print full data instead of summary"
 	"-c     set ioprio class (see ionice(1) manpage)",
 	"-n     set ioprio classdata (see ionice(1) manpage)",
+	"-f     force to skip checking whether scrub has started/resumed in userspace ",
+	"       this is useful when scrub stats record file is damaged",
 	NULL
 };
 

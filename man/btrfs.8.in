@@ -58,7 +58,7 @@ btrfs \- control a btrfs filesystem
 \fBbtrfs\fP \fBdevice stats\fP [-z] {\fI<path>\fP|\fI<device>\fP}
 .PP
 .PP
-\fBbtrfs\fP \fBscrub start\fP [-BdqrR] [-c \fIioprio_class\fP -n \fIioprio_classdata\fP] {\fI<path>\fP|\fI<device>\fP}
+\fBbtrfs\fP \fBscrub start\fP [-BdqrRf] [-c \fIioprio_class\fP -n \fIioprio_classdata\fP] {\fI<path>\fP|\fI<device>\fP}
 .PP
 \fBbtrfs\fP \fBscrub cancel\fP {\fI<path>\fP|\fI<device>\fP}
 .PP
@@ -461,6 +461,9 @@ manpage).
 Set IO priority classdata (see
 .BR ionice (1)
 manpage).
+.IP "\fB-f\fP" 5
+force to check whether scrub has started or resumed in userspace.
+this is useful when scrub stat record file is damaged.
 .RE
 .TP
 
