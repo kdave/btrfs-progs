@@ -1195,8 +1195,7 @@ static void process_fs_features(u64 flags)
 
 	for (i = 0; i < ARRAY_SIZE(mkfs_features); i++) {
 		if (flags & mkfs_features[i].flag) {
-			fprintf(stderr,
-				"Turning ON incompat feature '%s': %s\n",
+			printf("Turning ON incompat feature '%s': %s\n",
 				mkfs_features[i].name,
 				mkfs_features[i].desc);
 		}
