@@ -6159,6 +6159,7 @@ int cmd_check(int argc, char **argv)
 		} else if (option_index == 2) {
 			printf("Creating a new CRC tree\n");
 			init_csum_tree = 1;
+			repair = 1;
 			ctree_flags |= OPEN_CTREE_WRITES;
 		} else if (option_index == 3) {
 			init_extent_tree = 1;
@@ -6232,6 +6233,11 @@ int cmd_check(int argc, char **argv)
 		ret = btrfs_commit_transaction(trans, info->csum_root);
 		if (ret)
 			exit(1);
+
+		ret = check_chunks_and_extents(root);
+		if (ret)
+			fprintf(stderr,
+				"Errors found in extent allocation tree or chunk allocation\n");
 		goto out;
 	}
 	ret = check_chunks_and_extents(root);
