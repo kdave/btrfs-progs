@@ -99,8 +99,8 @@ static int qgroup_create(int create, int argc, char **argv)
 	e = errno;
 	close_file_or_dir(fd, dirstream);
 	if (ret < 0) {
-		fprintf(stderr, "ERROR: unable to create quota group: %s\n",
-			strerror(e));
+		fprintf(stderr, "ERROR: unable to %s quota group: %s\n",
+			create ? "create":"destroy", strerror(e));
 		return 1;
 	}
 	return 0;
