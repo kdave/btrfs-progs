@@ -285,7 +285,7 @@ static void print_fs_stat(struct scrub_fs_stat *fs_stat, int raw)
 static void free_history(struct scrub_file_record **last_scrubs)
 {
 	struct scrub_file_record **l = last_scrubs;
-	if (!l)
+	if (!l || IS_ERR(l))
 		return;
 	while (*l)
 		free(*l++);
