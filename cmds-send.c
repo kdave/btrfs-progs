@@ -504,6 +504,18 @@ int cmd_send(int argc, char **argv)
 						"root_id for %s\n", subvol);
 				goto out;
 			}
+
+			ret = is_subvol_ro(&send, subvol);
+			if (ret < 0)
+				goto out;
+			if (!ret) {
+				ret = -EINVAL;
+				fprintf(stderr,
+				"ERROR: cloned subvol %s is not read-only.\n",
+					subvol);
+				goto out;
+			}
+
 			add_clone_source(&send, root_id);
 			subvol_uuid_search_finit(&send.sus);
 			free(subvol);
@@ -532,6 +544,18 @@ int cmd_send(int argc, char **argv)
 						"%s\n", optarg, strerror(-ret));
 				goto out;
 			}
+
+			ret = is_subvol_ro(&send, snapshot_parent);
+			if (ret < 0)
+				goto out;
+			if (!ret) {
+				ret = -EINVAL;
+				fprintf(stderr,
+					"ERROR: parent %s is not read-only.\n",
+					snapshot_parent);
+				goto out;
+			}
+
 			full_send = 0;
 			break;
 		case 'i':
