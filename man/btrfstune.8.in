@@ -2,7 +2,7 @@
 .SH NAME
 btrfstune \- tune various filesystem parameters.
 .SH SYNOPSIS
-.B btrfstune [\fIoptions\fP] \fI<mnt>\fP
+.B btrfstune [\fIoptions\fP] \fI<device>\fP
 .SH DESCRIPTION
 \fBbtrfstune\fP is used to tune various filesystem parameters,you can
 enable/disable some extended features for btrfs.
