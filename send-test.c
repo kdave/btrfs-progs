@@ -72,7 +72,7 @@ static int print_subvol(const char *path, const u8 *uuid, u64 ctransid,
 			void *user)
 {
 	struct recv_args *r = user;
-	char uuid_str[128];
+	char uuid_str[BTRFS_UUID_UNPARSED_SIZE];
 
 	r->full_subvol_path = path_cat(r->root_path, path);
 	uuid_unparse(uuid, uuid_str);
@@ -88,8 +88,8 @@ static int print_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 			  void *user)
 {
 	struct recv_args *r = user;
-	char uuid_str[128];
-	char parent_uuid_str[128];
+	char uuid_str[BTRFS_UUID_UNPARSED_SIZE];
+	char parent_uuid_str[BTRFS_UUID_UNPARSED_SIZE];
 
 	r->full_subvol_path = path_cat(r->root_path, path);
 	uuid_unparse(uuid, uuid_str);

@@ -378,7 +378,7 @@ static void print_root(struct extent_buffer *leaf, int slot)
 	struct btrfs_root_item *ri;
 	struct btrfs_root_item root_item;
 	int len;
-	char uuid_str[128];
+	char uuid_str[BTRFS_UUID_UNPARSED_SIZE];
 
 	ri = btrfs_item_ptr(leaf, slot, struct btrfs_root_item);
 	len = btrfs_item_size_nr(leaf, slot);

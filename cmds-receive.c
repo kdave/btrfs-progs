@@ -78,7 +78,7 @@ static int finish_subvol(struct btrfs_receive *r)
 	int ret;
 	int subvol_fd = -1;
 	struct btrfs_ioctl_received_subvol_args rs_args;
-	char uuid_str[128];
+	char uuid_str[BTRFS_UUID_UNPARSED_SIZE];
 	u64 flags;
 
 	if (r->cur_subvol == NULL)
@@ -149,7 +149,7 @@ static int process_subvol(const char *path, const u8 *uuid, u64 ctransid,
 	int ret;
 	struct btrfs_receive *r = user;
 	struct btrfs_ioctl_vol_args args_v1;
-	char uuid_str[128];
+	char uuid_str[BTRFS_UUID_UNPARSED_SIZE];
 
 	ret = finish_subvol(r);
 	if (ret < 0)
@@ -196,7 +196,7 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 {
 	int ret;
 	struct btrfs_receive *r = user;
-	char uuid_str[128];
+	char uuid_str[BTRFS_UUID_UNPARSED_SIZE];
 	struct btrfs_ioctl_vol_args_v2 args_v2;
 	struct subvol_info *parent_subvol = NULL;
 
