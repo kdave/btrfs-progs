@@ -687,7 +687,7 @@ static int defrag_callback(const char *fpath, const struct stat *sb,
 		ret = do_defrag(fd, defrag_global_fancy_ioctl, &defrag_global_range);
 		e = errno;
 		close(fd);
-		if (ret && e == ENOTTY) {
+		if (ret && e == ENOTTY && defrag_global_fancy_ioctl) {
 			fprintf(stderr, "ERROR: defrag range ioctl not "
 				"supported in this kernel, please try "
 				"without any options.\n");
@@ -820,7 +820,7 @@ static int cmd_defrag(int argc, char **argv)
 			e = errno;
 		}
 		close_file_or_dir(fd, dirstream);
-		if (ret && e == ENOTTY) {
+		if (ret && e == ENOTTY && defrag_global_fancy_ioctl) {
 			fprintf(stderr, "ERROR: defrag range ioctl not "
 				"supported in this kernel, please try "
 				"without any options.\n");
