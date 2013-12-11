@@ -6008,6 +6008,12 @@ static int reinit_extent_tree(struct btrfs_fs_info *fs_info)
 		return ret;
 	}
 
+	ret = reset_balance(trans, fs_info);
+	if (ret) {
+		fprintf(stderr, "error reseting the pending balance\n");
+		return ret;
+	}
+
 	/* Ok we can allocate now, reinit the extent root */
 	ret = btrfs_fsck_reinit_root(trans, fs_info->extent_root, 0);
 	if (ret) {
@@ -6017,12 +6023,6 @@ static int reinit_extent_tree(struct btrfs_fs_info *fs_info)
 		 * transaction, but for now progs only knows about commit so
 		 * just return an error.
 		 */
-		return ret;
-	}
-
-	ret = reset_balance(trans, fs_info);
-	if (ret) {
-		fprintf(stderr, "error reseting the pending balance\n");
 		return ret;
 	}
 
