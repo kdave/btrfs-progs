@@ -8,7 +8,7 @@ btrfs \- control a btrfs filesystem
 .SH SYNOPSIS
 \fBbtrfs\fP \fBsubvolume create\fP [-i \fI<qgroupid>\fP] [\fI<dest>\fP/]\fI<name>\fP
 .PP
-\fBbtrfs\fP \fBsubvolume delete\fP \fI<subvolume>\fP [\fI<subvolume>...\fP]
+\fBbtrfs\fP \fBsubvolume delete\fP [\fIoptions\fP] \fI<subvolume>\fP [\fI<subvolume>...\fP]
 .PP
 \fBbtrfs\fP \fBsubvolume list\fP [\fIoptions\fP] [-G [+|-]\fIvalue\fP] [-C [+|-]\fIvalue\fP] [--sort=rootid,gen,ogen,path] \fI<path>\fP
 .PP
@@ -168,9 +168,24 @@ times.
 .RE
 .TP
 
-\fBsubvolume delete\fR\fI <subvolume> \fP[\fI<subvolume>...\fP]\fR
-Delete the subvolume \fI<subvolume>\fR. If \fI<subvolume>\fR is not a
-subvolume, \fBbtrfs\fR returns an error.
+\fBsubvolume delete\fR [\fIoptions\fP] \fI<subvolume>\fP [\fI<subvolume>...\fP]\fR
+Delete the subvolume(s) from the filesystem. If \fI<subvolume>\fR is not a
+subvolume, \fBbtrfs\fR returns an error but continues if there are more arguments
+to process.
+
+The corresponding directory is removed instantly but the data blocks are
+removed later.  The deletion does not involve full commit by default due to
+performance reasons (as a consequence, the subvolume may appear again after a
+crash).  Use one of the --commit options to wait until the operation is safely
+stored on the media.
+.RS
+
+\fIOptions\fP
+.IP "\fB-c|--commit-after\fP" 5
+wait for transaction commit at the end of the operation
+.IP "\fB-C|--commit-each\fP" 5
+wait for transaction commit after deleting each subvolume
+.RE
 .TP
 
 \fBsubvolume list\fR [\fIoptions\fP] [-G [+|-]\fIvalue\fP] [-C [+|-]\fIvalue\fP] [--sort=rootid,gen,ogen,path] \fI<path>\fR

@@ -201,24 +201,77 @@ int test_issubvolume(char *path)
 	return (st.st_ino == 256) && S_ISDIR(st.st_mode);
 }
 
+static int wait_for_commit(int fd)
+{
+	int ret;
+
+	ret = ioctl(fd, BTRFS_IOC_START_SYNC, NULL);
+	if (ret < 0)
+		return ret;
+	return ioctl(fd, BTRFS_IOC_WAIT_SYNC, NULL);
+}
+
 static const char * const cmd_subvol_delete_usage[] = {
-	"btrfs subvolume delete <subvolume> [<subvolume>...]",
+	"btrfs subvolume delete [options] <subvolume> [<subvolume>...]",
 	"Delete subvolume(s)",
+	"Delete subvolumes from the filesystem. The corresponding directory",
+	"is removed instantly but the data blocks are removed later.",
+	"The deletion does not involve full commit by default due to",
+	"performance reasons (as a consequence, the subvolume may appear again",
+	"after a crash). Use one of the --commit options to wait until the",
+	"operation is safely stored on the media.",
+	"",
+	"-c|--commit-after      wait for transaction commit at the end of the operation",
+	"-C|--commit-each       wait for transaction commit after deleting each subvolume",
 	NULL
 };
 
 static int cmd_subvol_delete(int argc, char **argv)
 {
-	int	res, fd, len, e, cnt = 1, ret = 0;
+	int	res, len, e, ret = 0;
+	int cnt;
+	int fd = -1;
 	struct btrfs_ioctl_vol_args	args;
 	char	*dname, *vname, *cpath;
 	char	*dupdname = NULL;
 	char	*dupvname = NULL;
 	char	*path;
 	DIR	*dirstream = NULL;
+	int sync_mode = 0;
+	struct option long_options[] = {
+		{"commit-after", no_argument, NULL, 'c'},  /* sync mode 1 */
+		{"commit-each", no_argument, NULL, 'C'},  /* sync mode 2 */
+		{NULL, 0, NULL, 0}
+	};
 
-	if (argc < 2)
+	optind = 1;
+	while (1) {
+		int c;
+
+		c = getopt_long(argc, argv, "cC", long_options, NULL);
+		if (c < 0)
+			break;
+
+		switch(c) {
+		case 'c':
+			sync_mode = 1;
+			break;
+		case 'C':
+			sync_mode = 2;
+			break;
+		default:
+			usage(cmd_subvol_delete_usage);
+		}
+	}
+
+	if (check_argc_min(argc - optind, 1))
 		usage(cmd_subvol_delete_usage);
+
+	printf("Transaction commit: %s\n",
+		!sync_mode ? "none (default)" :
+		sync_mode == 1 ? "at the end" : "after each");
+
+	cnt = optind;
 
 again:
 	path = argv[cnt];
@@ -276,13 +329,21 @@ again:
 	res = ioctl(fd, BTRFS_IOC_SNAP_DESTROY, &args);
 	e = errno;
 
-	close_file_or_dir(fd, dirstream);
-
 	if(res < 0 ){
 		fprintf( stderr, "ERROR: cannot delete '%s/%s' - %s\n",
 			dname, vname, strerror(e));
 		ret = 1;
 		goto out;
+	}
+
+	if (sync_mode == 1) {
+		res = wait_for_commit(fd);
+		if (res < 0) {
+			fprintf(stderr,
+				"ERROR: unable to wait for commit after '%s': %s\n",
+				path, strerror(errno));
+			ret = 1;
+		}
 	}
 
 out:
@@ -291,8 +352,21 @@ out:
 	dupdname = NULL;
 	dupvname = NULL;
 	cnt++;
-	if (cnt < argc)
+	if (cnt < argc) {
+		close_file_or_dir(fd, dirstream);
 		goto again;
+	}
+
+	if (sync_mode == 2 && fd != -1) {
+		res = wait_for_commit(fd);
+		if (res < 0) {
+			fprintf(stderr,
+				"ERROR: unable to do final sync: %s\n",
+				strerror(errno));
+			ret = 1;
+		}
+	}
+	close_file_or_dir(fd, dirstream);
 
 	return ret;
 }
