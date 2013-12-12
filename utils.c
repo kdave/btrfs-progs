@@ -1571,13 +1571,20 @@ int open_file_or_dir(const char *fname, DIR **dirstream)
 	if (S_ISDIR(st.st_mode)) {
 		*dirstream = opendir(fname);
 		if (!*dirstream)
-			return -2;
+			return -1;
 		fd = dirfd(*dirstream);
-	} else {
+	} else if (S_ISREG(st.st_mode) || S_ISLNK(st.st_mode)) {
 		fd = open(fname, O_RDWR);
+	} else {
+		/*
+		 * we set this on purpose, in case the caller output
+		 * strerror(errno) as success
+		 */
+		errno = EINVAL;
+		return -1;
 	}
 	if (fd < 0) {
-		fd = -3;
+		fd = -1;
 		if (*dirstream)
 			closedir(*dirstream);
 	}
