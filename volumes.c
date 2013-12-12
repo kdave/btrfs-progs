@@ -1267,13 +1267,11 @@ int __btrfs_map_block(struct btrfs_mapping_tree *map_tree, int rw,
 again:
 	ce = search_cache_extent(&map_tree->cache_tree, logical);
 	if (!ce) {
-		if (multi)
-			kfree(multi);
+		kfree(multi);
 		return -ENOENT;
 	}
 	if (ce->start > logical || ce->start + ce->size < logical) {
-		if (multi)
-			kfree(multi);
+		kfree(multi);
 		return -ENOENT;
 	}
 

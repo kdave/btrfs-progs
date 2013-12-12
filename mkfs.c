@@ -721,8 +721,7 @@ again:
 		goto again;
 
 end:
-	if (eb)
-		free(eb);
+	free(eb);
 	close(fd);
 	return ret;
 }

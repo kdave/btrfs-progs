@@ -399,8 +399,7 @@ static int update_root(struct root_lookup *root_lookup,
 	if (!ri || ri->root_id != root_id)
 		return -ENOENT;
 	if (name && name_len > 0) {
-		if (ri->name)
-			free(ri->name);
+		free(ri->name);
 
 		ri->name = malloc(name_len + 1);
 		if (!ri->name) {
@@ -515,15 +514,9 @@ static void __free_root_info(struct rb_node *node)
 	struct root_info *ri;
 
 	ri = rb_entry(node, struct root_info, rb_node);
-	if (ri->name)
-		free(ri->name);
-
-	if (ri->path)
-		free(ri->path);
-
-	if (ri->full_path)
-		free(ri->full_path);
-
+	free(ri->name);
+	free(ri->path);
+	free(ri->full_path);
 	free(ri);
 }
 

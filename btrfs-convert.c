@@ -547,8 +547,7 @@ static int create_file_extents(struct btrfs_trans_handle *trans,
 					 data.first_block, data.checksum);
 	}
 fail:
-	if (buffer)
-		free(buffer);
+	free(buffer);
 	return ret;
 error:
 	fprintf(stderr, "ext2fs_block_iterate2: %s\n", error_message(err));
@@ -785,8 +784,7 @@ static int copy_single_xattr(struct btrfs_trans_handle *trans,
 	ret = btrfs_insert_xattr_item(trans, root, namebuf, name_len,
 				      data, datalen, objectid);
 out:
-	if (databuf)
-		free(databuf);
+	free(databuf);
 	return ret;
 }
 
@@ -892,8 +890,7 @@ static int copy_extended_attrs(struct btrfs_trans_handle *trans,
 		entry = EXT2_EXT_ATTR_NEXT(entry);
 	}
 out:
-	if (buffer != NULL)
-		free(buffer);
+	free(buffer);
 	if ((void *)ext2_inode != inode_buf)
 		free(ext2_inode);
 	return ret;

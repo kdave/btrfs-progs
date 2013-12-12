@@ -949,22 +949,16 @@ static int cmd_subvol_show(int argc, char **argv)
 			1, raw_prefix);
 
 	/* clean up */
-	if (get_ri.path)
-		free(get_ri.path);
-	if (get_ri.name)
-		free(get_ri.name);
-	if (get_ri.full_path)
-		free(get_ri.full_path);
-	if (filter_set)
-		btrfs_list_free_filter_set(filter_set);
+	free(get_ri.path);
+	free(get_ri.name);
+	free(get_ri.full_path);
+	btrfs_list_free_filter_set(filter_set);
 
 out:
 	close_file_or_dir(fd, dirstream1);
 	close_file_or_dir(mntfd, dirstream2);
-	if (mnt)
-		free(mnt);
-	if (fullpath)
-		free(fullpath);
+	free(mnt);
+	free(fullpath);
 	return !!ret;
 }
 
