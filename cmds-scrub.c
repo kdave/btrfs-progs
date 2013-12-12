@@ -1097,6 +1097,7 @@ static int scrub_start(int argc, char **argv, int resume)
 	u64 devid;
 	DIR *dirstream = NULL;
 	int force = 0;
+	int nothing_to_resume = 0;
 
 	optind = 1;
 	while ((c = getopt(argc, argv, "BdqrRc:n:f")) != -1) {
@@ -1265,7 +1266,8 @@ static int scrub_start(int argc, char **argv, int resume)
 		if (!do_quiet)
 			printf("scrub: nothing to resume for %s, fsid %s\n",
 			       path, fsid);
-		return 2;
+		nothing_to_resume = 1;
+		goto out;
 	}
 
 	ret = prg_fd = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -1501,6 +1503,8 @@ out:
 	}
 	close_file_or_dir(fdmnt, dirstream);
 
+	if (nothing_to_resume)
+		return 2;
 	if (err)
 		return 1;
 	if (e_correctable)
