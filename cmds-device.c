@@ -161,6 +161,12 @@ static int cmd_rm_dev(int argc, char **argv)
 		struct	btrfs_ioctl_vol_args arg;
 		int	res;
 
+		if (!is_block_device(argv[i])) {
+			fprintf(stderr,
+				"ERROR: %s is not a block device\n", argv[i]);
+			ret++;
+			continue;
+		}
 		strncpy_null(arg.name, argv[i]);
 		res = ioctl(fdmnt, BTRFS_IOC_RM_DEV, &arg);
 		e = errno;
@@ -222,6 +228,12 @@ static int cmd_scan_dev(int argc, char **argv)
 		struct btrfs_ioctl_vol_args args;
 		int ret;
 
+		if (!is_block_device(argv[i])) {
+			fprintf(stderr,
+				"ERROR: %s is not a block device\n", argv[i]);
+			close(fd);
+			return 1;
+		}
 		printf("Scanning for Btrfs filesystems in '%s'\n", argv[i]);
 
 		strncpy_null(args.name, argv[i]);
@@ -263,6 +275,12 @@ static int cmd_ready_dev(int argc, char **argv)
 	fd = open("/dev/btrfs-control", O_RDWR);
 	if (fd < 0) {
 		perror("failed to open /dev/btrfs-control");
+		return 1;
+	}
+	if (!is_block_device(argv[1])) {
+		fprintf(stderr,
+			"ERROR: %s is not a block device\n", argv[1]);
+		close(fd);
 		return 1;
 	}
 
