@@ -655,7 +655,7 @@ static u64 chunk_bytes_by_type(u64 type, u64 calc_size, int num_stripes,
 static u32 find_raid56_stripe_len(u32 data_devices, u32 dev_stripe_target)
 {
 	/* TODO, add a way to store the preferred stripe size */
-	return 64 * 1024;
+	return BTRFS_STRIPE_LEN;
 }
 
 /*
@@ -773,7 +773,7 @@ int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 	int looped = 0;
 	int ret;
 	int index;
-	int stripe_len = 64 * 1024;
+	int stripe_len = BTRFS_STRIPE_LEN;
 	struct btrfs_key key;
 	u64 offset;
 
@@ -1010,7 +1010,7 @@ int btrfs_alloc_data_chunk(struct btrfs_trans_handle *trans,
 	int sub_stripes = 0;
 	int ret;
 	int index;
-	int stripe_len = 64 * 1024;
+	int stripe_len = BTRFS_STRIPE_LEN;
 	struct btrfs_key key;
 
 	key.objectid = BTRFS_FIRST_CHUNK_TREE_OBJECTID;
