@@ -85,7 +85,7 @@ btrfs \- control a btrfs filesystem
 \fBbtrfs\fP \fBinspect-internal rootid\fP \fI<path>\fP
 .PP
 .PP
-\fBbtrfs\fP \fBsend\fP [-v] [-p \fI<parent>\fP] [-c \fI<clone-src>\fP] [-f \fI<outfile>\fP] \fI<subvol>\fP
+\fBbtrfs\fP \fBsend\fP [-ve] [-p \fI<parent>\fP] [-c \fI<clone-src>\fP] [-f \fI<outfile>\fP] \fI<subvol>\fP [\fI<subvol>\fP...]
 .PP
 \fBbtrfs\fP \fBreceive\fP [-ve] [-f \fI<infile>\fP] \fI<mount>\fP
 .PP
@@ -625,16 +625,16 @@ subvolume return it's own tree id.
 The result is undefined for the so-called empty subvolumes (identified by inode number 2).
 .TP
 
-\fBsend\fP [-v] [-p \fI<parent>\fP] [-c \fI<clone-src>\fP] [-f \fI<outfile>\fP] \fI<subvol>\fP
-Send the subvolume to stdout.
-Sends the subvolume specified by \fI<subvol>\fR to stdout.
+\fBsend\fP [-ve] [-p \fI<parent>\fP] [-c \fI<clone-src>\fP] [-f \fI<outfile>\fP] \fI<subvol>\fP [\fI<subvol>...\fP]
+Send the subvolume(s) to stdout.
+Sends the subvolume(s) specified by \fI<subvol>\fR to stdout.
 By default, this will send the whole subvolume. To do an incremental
 send, use '\fI-p <parent>\fR'. If you want to allow btrfs to clone from
 any additional local snapshots, use '\fI-c <clone-src>\fR' (multiple times
 where applicable). You must not specify clone sources unless you
 guarantee that these snapshots are exactly in the same state on both
-sides, the sender and the receiver. It is allowed to omit the
-'\fI-p <parent>\fR' option when '\fI-c <clone-src>\fR' options are given, in
+sides, the sender and the receiver. It is allowed to omit the '\fI-p <parent>\fR'
+option when '\fI-c <clone-src>\fR' options are given, in
 which case '\fBbtrfs send\fP' will determine a suitable parent among the
 clone sources itself.
 .RS
@@ -643,6 +643,8 @@ clone sources itself.
 .IP "\fB-v\fP" 5
 Enable verbose debug output. Each occurrence of this option increases the
 verbose level more.
+.IP "\fB-e\fP" 5
+If sending multiple subvols at once, use the new format and omit the <end cmd> between the subvols.
 .IP "\fB-p \fI<parent>\fP" 5
 Send an incremental stream from \fI<parent>\fR to \fI<subvol>\fR.
 .IP "\fB-c \fI<clone-src>\fP" 5
