@@ -42,7 +42,6 @@
 #include "btrfsck.h"
 #include "commands.h"
 
-#define BTRFS_STRIPE_LEN			(64 * 1024)
 #define BTRFS_NUM_MIRRORS			2
 
 struct recover_control {

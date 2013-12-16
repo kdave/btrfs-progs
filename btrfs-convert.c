@@ -43,7 +43,6 @@
 #include <ext2fs/ext2_ext_attr.h>
 
 #define INO_OFFSET (BTRFS_FIRST_FREE_OBJECTID - EXT2_ROOT_INO)
-#define STRIPE_LEN (64 * 1024)
 #define EXT2_IMAGE_SUBVOL_OBJECTID BTRFS_FIRST_FREE_OBJECTID
 
 /*
@@ -134,11 +133,11 @@ static int cache_free_extents(struct btrfs_root *root, ext2_filsys ext2_fs)
 
 	for (i = 0; i < BTRFS_SUPER_MIRROR_MAX; i++) {
 		bytenr = btrfs_sb_offset(i);
-		bytenr &= ~((u64)STRIPE_LEN - 1);
+		bytenr &= ~((u64)BTRFS_STRIPE_LEN - 1);
 		if (bytenr >= blocksize * ext2_fs->super->s_blocks_count)
 			break;
 		clear_extent_dirty(&root->fs_info->free_space_cache, bytenr,
-				   bytenr + STRIPE_LEN - 1, 0);
+				   bytenr + BTRFS_STRIPE_LEN - 1, 0);
 	}
 
 	clear_extent_dirty(&root->fs_info->free_space_cache,
@@ -207,9 +206,9 @@ static int intersect_with_sb(u64 bytenr, u64 num_bytes)
 
 	for (i = 0; i < BTRFS_SUPER_MIRROR_MAX; i++) {
 		offset = btrfs_sb_offset(i);
-		offset &= ~((u64)STRIPE_LEN - 1);
+		offset &= ~((u64)BTRFS_STRIPE_LEN - 1);
 
-		if (bytenr < offset + STRIPE_LEN &&
+		if (bytenr < offset + BTRFS_STRIPE_LEN &&
 		    bytenr + num_bytes > offset)
 			return 1;
 	}
@@ -450,8 +449,8 @@ static int block_iterate_proc(ext2_filsys ext2_fs,
 		}
 
 		if (sb_region) {
-			bytenr += STRIPE_LEN - 1;
-			bytenr &= ~((u64)STRIPE_LEN - 1);
+			bytenr += BTRFS_STRIPE_LEN - 1;
+			bytenr &= ~((u64)BTRFS_STRIPE_LEN - 1);
 		} else {
 			cache = btrfs_lookup_block_group(root->fs_info, bytenr);
 			BUG_ON(!cache);
@@ -1520,7 +1519,7 @@ static int create_chunk_mapping(struct btrfs_trans_handle *trans,
 		btrfs_set_stack_chunk_length(&chunk, cache->key.offset);
 		btrfs_set_stack_chunk_owner(&chunk,
 					    extent_root->root_key.objectid);
-		btrfs_set_stack_chunk_stripe_len(&chunk, STRIPE_LEN);
+		btrfs_set_stack_chunk_stripe_len(&chunk, BTRFS_STRIPE_LEN);
 		btrfs_set_stack_chunk_type(&chunk, cache->flags);
 		btrfs_set_stack_chunk_io_align(&chunk, device->io_align);
 		btrfs_set_stack_chunk_io_width(&chunk, device->io_width);
@@ -2096,10 +2095,10 @@ static int cleanup_sys_chunk(struct btrfs_root *fs_root,
 	}
 	for (i = 0; i < BTRFS_SUPER_MIRROR_MAX; i++) {
 		offset = btrfs_sb_offset(i);
-		offset &= ~((u64)STRIPE_LEN - 1);
+		offset &= ~((u64)BTRFS_STRIPE_LEN - 1);
 
 		ret = relocate_extents_range(fs_root, ext2_root,
-					     offset, offset + STRIPE_LEN);
+					     offset, offset + BTRFS_STRIPE_LEN);
 		if (ret)
 			goto fail;
 	}

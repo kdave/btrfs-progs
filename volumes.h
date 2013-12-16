@@ -19,6 +19,8 @@
 #ifndef __BTRFS_VOLUMES_
 #define __BTRFS_VOLUMES_
 
+#define BTRFS_STRIPE_LEN	(64 * 1024)
+
 struct btrfs_device {
 	struct list_head dev_list;
 	struct btrfs_root *dev_root;
