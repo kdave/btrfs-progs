@@ -257,8 +257,15 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 			O_RDONLY | O_NOATIME);
 	if (args_v2.fd < 0) {
 		ret = -errno;
-		fprintf(stderr, "ERROR: open %s failed. %s\n",
-				parent_subvol->path, strerror(-ret));
+		if (errno != ENOENT)
+			fprintf(stderr, "ERROR: open %s failed. %s\n",
+					parent_subvol->path, strerror(-ret));
+		else
+			fprintf(stderr,
+				"It seems that you have changed your default "
+				"subvolume or you specify other subvolume to\n"
+				"mount btrfs, try to remount this btrfs filesystem "
+				"with fs tree, and run btrfs receive again!\n");
 		goto out;
 	}
 

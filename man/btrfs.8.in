@@ -660,11 +660,16 @@ Receive subvolumes from stdin.
 Receives one or more subvolumes that were previously
 sent with btrfs send. The received subvolumes are stored
 into \fI<mount>\fP.
-btrfs receive will fail in case a receiving subvolume
-already exists. It will also fail in case a previously
-received subvolume was changed after it was received.
-After receiving a subvolume, it is immediately set to
-read only.
+btrfs receive will fail with the following case:
+
+1.a receiving subvolume already exists.
+
+2.a previously received subvolume was changed after it was received.
+
+3.default subvolume is changed or you don't mount btrfs filesystem with
+fs tree.
+
+After receiving a subvolume, it is immediately set to read only.
 .RS
 
 \fIOptions\fR
