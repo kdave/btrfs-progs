@@ -581,13 +581,13 @@ int btrfs_prepare_device(int fd, char *file, int zero_end, u64 *block_count_ret,
 	ret = fstat(fd, &st);
 	if (ret < 0) {
 		fprintf(stderr, "unable to stat %s\n", file);
-		exit(1);
+		return 1;
 	}
 
 	block_count = btrfs_device_size(fd, &st);
 	if (block_count == 0) {
 		fprintf(stderr, "unable to find %s size\n", file);
-		exit(1);
+		return 1;
 	}
 	if (max_block_count)
 		block_count = min(block_count, max_block_count);
@@ -612,26 +612,35 @@ int btrfs_prepare_device(int fd, char *file, int zero_end, u64 *block_count_ret,
 	}
 
 	ret = zero_dev_start(fd);
-	if (ret) {
-		fprintf(stderr, "failed to zero device start %d\n", ret);
-		exit(1);
-	}
+	if (ret)
+		goto zero_dev_error;
 
 	for (i = 0 ; i < BTRFS_SUPER_MIRROR_MAX; i++) {
 		bytenr = btrfs_sb_offset(i);
 		if (bytenr >= block_count)
 			break;
-		zero_blocks(fd, bytenr, BTRFS_SUPER_INFO_SIZE);
+		ret = zero_blocks(fd, bytenr, BTRFS_SUPER_INFO_SIZE);
+		if (ret)
+			goto zero_dev_error;
 	}
 
 	if (zero_end) {
 		ret = zero_dev_end(fd, block_count);
-		if (ret) {
-			fprintf(stderr, "failed to zero device end %d\n", ret);
-			exit(1);
-		}
+		if (ret)
+			goto zero_dev_error;
 	}
 	*block_count_ret = block_count;
+
+zero_dev_error:
+	if (ret < 0) {
+		fprintf(stderr, "ERROR: failed to zero device '%s' - %s\n",
+			file, strerror(-ret));
+		return 1;
+	} else if (ret > 0) {
+		fprintf(stderr, "ERROR: failed to zero device '%s' - %d\n",
+			file, ret);
+		return 1;
+	}
 	return 0;
 }
 

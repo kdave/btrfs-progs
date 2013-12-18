@@ -111,13 +111,11 @@ static int cmd_add_dev(int argc, char **argv)
 
 		res = btrfs_prepare_device(devfd, argv[i], 1, &dev_block_count,
 					   0, &mixed, discard);
-		if (res) {
-			fprintf(stderr, "ERROR: Unable to init '%s'\n", argv[i]);
-			close(devfd);
-			ret++;
-			continue;
-		}
 		close(devfd);
+		if (res) {
+			ret++;
+			goto error_out;
+		}
 
 		strncpy_null(ioctl_args.name, argv[i]);
 		res = ioctl(fdmnt, BTRFS_IOC_ADD_DEV, &ioctl_args);
@@ -130,6 +128,7 @@ static int cmd_add_dev(int argc, char **argv)
 
 	}
 
+error_out:
 	close_file_or_dir(fdmnt, dirstream);
 	return !!ret;
 }

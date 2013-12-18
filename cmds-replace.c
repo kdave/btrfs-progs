@@ -276,12 +276,11 @@ static int cmd_start_replace(int argc, char **argv)
 	}
 	strncpy((char *)start_args.start.tgtdev_name, dstdev,
 		BTRFS_DEVICE_PATH_NAME_MAX);
-	if (btrfs_prepare_device(fddstdev, dstdev, 1, &dstdev_block_count, 0,
-				 &mixed, 0)) {
-		fprintf(stderr, "Error: Failed to prepare device '%s'\n",
-			dstdev);
+	ret = btrfs_prepare_device(fddstdev, dstdev, 1, &dstdev_block_count, 0,
+				 &mixed, 0);
+	if (ret)
 		goto leave_with_error;
-	}
+
 	close(fddstdev);
 	fddstdev = -1;
 

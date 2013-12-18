@@ -1445,6 +1445,10 @@ int main(int ac, char **av)
 		first_file = file;
 		ret = btrfs_prepare_device(fd, file, zero_end, &dev_block_count,
 					   block_count, &mixed, discard);
+		if (ret) {
+			close(fd);
+			exit(1);
+		}
 		if (block_count && block_count > dev_block_count) {
 			fprintf(stderr, "%s is smaller than requested size\n", file);
 			exit(1);
@@ -1552,8 +1556,11 @@ int main(int ac, char **av)
 		}
 		ret = btrfs_prepare_device(fd, file, zero_end, &dev_block_count,
 					   block_count, &mixed, discard);
+		if (ret) {
+			close(fd);
+			exit(1);
+		}
 		mixed = old_mixed;
-		BUG_ON(ret);
 
 		ret = btrfs_add_to_fsid(trans, root, fd, file, dev_block_count,
 					sectorsize, sectorsize, sectorsize);
