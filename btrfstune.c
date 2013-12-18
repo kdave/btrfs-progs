@@ -115,6 +115,7 @@ int main(int argc, char *argv[])
 	int skinny_flag = 0;
 	int ret;
 
+	optind = 1;
 	while(1) {
 		int c = getopt(argc, argv, "S:rx");
 		if (c < 0)
@@ -139,6 +140,13 @@ int main(int argc, char *argv[])
 	argc = argc - optind;
 	device = argv[optind];
 	if (argc != 1) {
+		print_usage();
+		return 1;
+	}
+
+	if (!(seeding_flag + extrefs_flag + skinny_flag)) {
+		fprintf(stderr,
+			"ERROR: At least one option should be assigned.\n");
 		print_usage();
 		return 1;
 	}
@@ -176,6 +184,7 @@ int main(int argc, char *argv[])
 	} else {
 		root->fs_info->readonly = 1;
 		ret = 1;
+		fprintf(stderr, "btrfstune failed\n");
 	}
 	close_ctree(root);
 
