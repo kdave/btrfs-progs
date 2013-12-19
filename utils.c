@@ -2287,3 +2287,63 @@ out:
 	close(fd);
 	return ret;
 }
+
+/* This finds the mount point for a given fsid,
+ *  subvols of the same fs/fsid can be mounted
+ *  so here this picks and lowest subvol id
+ *  and returns the mount point
+*/
+int fsid_to_mntpt(__u8 *fsid, char *mntpt, int *mnt_cnt)
+{
+	int fd = -1, ret = 0;
+	DIR *dirstream = NULL;
+	FILE *f;
+	struct btrfs_ioctl_fs_info_args fi_args;
+	u64 svid, saved_svid = (u64)-1;
+	struct mntent *mnt;
+	int mcnt = 0;
+
+	*mnt_cnt = 0;
+	f = setmntent("/proc/self/mounts", "r");
+	if (f == NULL)
+		return 1;
+
+	while ((mnt = getmntent(f)) != NULL) {
+		if (strcmp(mnt->mnt_type, "btrfs"))
+			continue;
+		fd = open_file_or_dir(mnt->mnt_dir, &dirstream);
+		if (fd < 0) {
+			ret = -errno;
+			return ret;
+		}
+		ret = ioctl(fd, BTRFS_IOC_FS_INFO, &fi_args);
+		if (ret < 0) {
+			ret = -errno;
+			close_file_or_dir(fd, dirstream);
+			break;
+		}
+		if (uuid_compare(fsid, fi_args.fsid)) {
+			close_file_or_dir(fd, dirstream);
+			continue;
+		}
+
+		/* found */
+		mcnt++;
+		ret = btrfs_list_get_path_rootid(fd, &svid);
+		if (ret) {
+			/* error so just copy and return*/
+			strcpy(mntpt, mnt->mnt_dir);
+			close_file_or_dir(fd, dirstream);
+			break;
+		}
+		if (svid < saved_svid) {
+			strcpy(mntpt, mnt->mnt_dir);
+			saved_svid = svid;
+		}
+	}
+	endmntent(f);
+	if (mcnt)
+		*mnt_cnt = mcnt;
+
+	return ret;
+}
