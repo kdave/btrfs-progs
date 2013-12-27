@@ -1967,21 +1967,6 @@ int test_dev_for_mkfs(char *file, int force_overwrite, char *estr)
 	return 0;
 }
 
-static int test_skip_this_disk(char *path)
-{
-	int fd;
-
-	/*
-	 * this will eliminate disks which are mounted (btrfs)
-	 * and non-dm disk path when dm is enabled
-	 */
-	fd = open(path, O_RDWR|O_EXCL);
-	if (fd < 0)
-		return 1;
-	close(fd);
-	return 0;
-}
-
 int btrfs_scan_lblkid(int update_kernel)
 {
 	int fd = -1;
@@ -2006,8 +1991,6 @@ int btrfs_scan_lblkid(int update_kernel)
 			continue;
 		/* if we are here its definitely a btrfs disk*/
 		strncpy(path, blkid_dev_devname(dev), PATH_MAX);
-		if (test_skip_this_disk(path))
-			continue;
 
 		fd = open(path, O_RDONLY);
 		if (fd < 0) {
