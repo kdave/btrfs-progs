@@ -367,7 +367,7 @@ static noinline int truncate_one_csum(struct btrfs_trans_handle *trans,
 		BUG_ON(ret);
 
 		key->offset = end_byte;
-		ret = btrfs_set_item_key_safe(trans, root, path, key);
+		ret = btrfs_set_item_key_safe(root, path, key);
 		BUG_ON(ret);
 	} else {
 		BUG();

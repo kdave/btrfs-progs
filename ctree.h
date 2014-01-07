@@ -547,6 +547,7 @@ struct btrfs_path {
 	unsigned int keep_locks:1;
 	unsigned int skip_locking:1;
 	unsigned int leave_spinning:1;
+	unsigned int skip_check_block:1;
 };
 
 /*
@@ -646,6 +647,16 @@ typedef enum {
 	BTRFS_ENCRYPTION_NONE = 0,
 	BTRFS_ENCRYPTION_LAST = 1,
 } btrfs_encryption_type;
+
+enum btrfs_tree_block_status {
+	BTRFS_TREE_BLOCK_CLEAN,
+	BTRFS_TREE_BLOCK_INVALID_NRITEMS,
+	BTRFS_TREE_BLOCK_INVALID_PARENT_KEY,
+	BTRFS_TREE_BLOCK_BAD_KEY_ORDER,
+	BTRFS_TREE_BLOCK_INVALID_LEVEL,
+	BTRFS_TREE_BLOCK_INVALID_FREE_SPACE,
+	BTRFS_TREE_BLOCK_INVALID_OFFSETS,
+};
 
 struct btrfs_inode_item {
 	/* nfs style generation number */
@@ -2202,14 +2213,15 @@ int btrfs_record_file_extent(struct btrfs_trans_handle *trans,
 			      u64 file_pos, u64 disk_bytenr,
 			      u64 num_bytes);
 /* ctree.c */
+int btrfs_comp_cpu_keys(struct btrfs_key *k1, struct btrfs_key *k2);
 int btrfs_del_ptr(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 		   struct btrfs_path *path, int level, int slot);
-int btrfs_check_node(struct btrfs_root *root,
-		      struct btrfs_disk_key *parent_key,
-		      struct extent_buffer *buf);
-int btrfs_check_leaf(struct btrfs_root *root,
-		      struct btrfs_disk_key *parent_key,
-		      struct extent_buffer *buf);
+enum btrfs_tree_block_status
+btrfs_check_node(struct btrfs_root *root, struct btrfs_disk_key *parent_key,
+		 struct extent_buffer *buf);
+enum btrfs_tree_block_status
+btrfs_check_leaf(struct btrfs_root *root, struct btrfs_disk_key *parent_key,
+		 struct extent_buffer *buf);
 void reada_for_search(struct btrfs_root *root, struct btrfs_path *path,
 			     int level, int slot, u64 objectid);
 struct extent_buffer *read_node_slot(struct btrfs_root *root,
@@ -2279,9 +2291,13 @@ static inline int btrfs_insert_empty_item(struct btrfs_trans_handle *trans,
 int btrfs_next_leaf(struct btrfs_root *root, struct btrfs_path *path);
 int btrfs_prev_leaf(struct btrfs_root *root, struct btrfs_path *path);
 int btrfs_leaf_free_space(struct btrfs_root *root, struct extent_buffer *leaf);
-int btrfs_set_item_key_safe(struct btrfs_trans_handle *trans,
-			    struct btrfs_root *root, struct btrfs_path *path,
+void btrfs_fixup_low_keys(struct btrfs_root *root, struct btrfs_path *path,
+			  struct btrfs_disk_key *key, int level);
+int btrfs_set_item_key_safe(struct btrfs_root *root, struct btrfs_path *path,
 			    struct btrfs_key *new_key);
+void btrfs_set_item_key_unsafe(struct btrfs_root *root,
+			       struct btrfs_path *path,
+			       struct btrfs_key *new_key);
 
 /* root-item.c */
 int btrfs_add_root_ref(struct btrfs_trans_handle *trans,
