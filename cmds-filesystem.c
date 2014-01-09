@@ -677,7 +677,7 @@ static int defrag_callback(const char *fpath, const struct stat *sb,
 	int e = 0;
 	int fd = 0;
 
-	if (typeflag == FTW_F) {
+	if ((typeflag == FTW_F) && S_ISREG(sb->st_mode)) {
 		if (defrag_global_verbose)
 			printf("%s\n", fpath);
 		fd = open(fpath, O_RDWR);
@@ -779,6 +779,8 @@ static int cmd_defrag(int argc, char **argv)
 		defrag_global_range.flags |= BTRFS_DEFRAG_RANGE_START_IO;
 
 	for (i = optind; i < argc; i++) {
+		struct stat st;
+
 		dirstream = NULL;
 		fd = open_file_or_dir(argv[i], &dirstream);
 		if (fd < 0) {
@@ -788,16 +790,22 @@ static int cmd_defrag(int argc, char **argv)
 			close_file_or_dir(fd, dirstream);
 			continue;
 		}
+		if (fstat(fd, &st)) {
+			fprintf(stderr, "ERROR: failed to stat %s - %s\n",
+					argv[i], strerror(errno));
+			defrag_global_errors++;
+			close_file_or_dir(fd, dirstream);
+			continue;
+		}
+		if (!(S_ISDIR(st.st_mode) || S_ISREG(st.st_mode))) {
+			fprintf(stderr,
+			    "ERROR: %s is not a directory or a regular file\n",
+			    argv[i]);
+			defrag_global_errors++;
+			close_file_or_dir(fd, dirstream);
+			continue;
+		}
 		if (recursive) {
-			struct stat st;
-
-			if (fstat(fd, &st)) {
-				fprintf(stderr, "ERROR: failed to stat %s - %s\n",
-						argv[i], strerror(errno));
-				defrag_global_errors++;
-				close_file_or_dir(fd, dirstream);
-				continue;
-			}
 			if (S_ISDIR(st.st_mode)) {
 				ret = nftw(argv[i], defrag_callback, 10,
 						FTW_MOUNT | FTW_PHYS);
