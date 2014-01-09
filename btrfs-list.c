@@ -578,23 +578,18 @@ static int resolve_root(struct root_lookup *rl, struct root_info *ri,
 			full_path = strdup(found->path);
 			len = add_len;
 		}
+		if (!ri->top_id)
+			ri->top_id = found->ref_tree;
 
 		next = found->ref_tree;
-
-		if (next == top_id) {
-			ri->top_id = top_id;
+		if (next == top_id)
 			break;
-		}
-
 		/*
 		* if the ref_tree = BTRFS_FS_TREE_OBJECTID,
 		* we are at the top
 		*/
-		if (next == BTRFS_FS_TREE_OBJECTID) {
-			ri->top_id = next;
+		if (next == BTRFS_FS_TREE_OBJECTID)
 			break;
-		}
-
 		/*
 		* if the ref_tree wasn't in our tree of roots, the
 		* subvolume was deleted.
