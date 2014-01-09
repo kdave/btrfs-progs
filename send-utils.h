@@ -38,6 +38,11 @@ enum subvol_search_type {
 };
 
 struct subvol_info {
+	struct rb_node rb_root_id_node;
+	struct rb_node rb_local_node;
+	struct rb_node rb_received_node;
+	struct rb_node rb_path_node;
+
 	u64 root_id;
 	u8 uuid[BTRFS_UUID_SIZE];
 	u8 parent_uuid[BTRFS_UUID_SIZE];
@@ -52,6 +57,12 @@ struct subvol_info {
 
 struct subvol_uuid_search {
 	int mnt_fd;
+	int uuid_tree_existed;
+
+	struct rb_root root_id_subvols;
+	struct rb_root local_subvols;
+	struct rb_root received_subvols;
+	struct rb_root path_subvols;
 };
 
 int subvol_uuid_search_init(int mnt_fd, struct subvol_uuid_search *s);
