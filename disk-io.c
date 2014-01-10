@@ -644,7 +644,10 @@ out:
 	blocksize = btrfs_level_size(root, btrfs_root_level(&root->root_item));
 	root->node = read_tree_block(root, btrfs_root_bytenr(&root->root_item),
 				     blocksize, generation);
-	BUG_ON(!root->node);
+	if (!root->node) {
+		free(root);
+		return ERR_PTR(-EIO);
+	}
 insert:
 	root->ref_cows = 1;
 	return root;

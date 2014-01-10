@@ -435,7 +435,7 @@ int load_free_space_cache(struct btrfs_fs_info *fs_info,
 	if (ret < 0) {
 		ret = 0;
 
-		printf("failed to load free space cache for block group %llu",
+		printf("failed to load free space cache for block group %llu\n",
 			block_group->key.objectid);
 	}
 

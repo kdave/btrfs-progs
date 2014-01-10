@@ -5759,6 +5759,10 @@ again:
 						      btrfs_level_size(root,
 						      btrfs_root_level(&ri)),
 						      0);
+				if (!buf) {
+					ret = -EIO;
+					goto out;
+				}
 				add_root_to_pending(buf, &extent_cache,
 						    &pending, &seen, &nodes,
 						    &found_key);
@@ -5803,6 +5807,10 @@ again:
 				      btrfs_root_bytenr(&rec->ri),
 				      btrfs_level_size(root,
 				      btrfs_root_level(&rec->ri)), 0);
+		if (!buf) {
+			ret = -EIO;
+			goto out;
+		}
 		add_root_to_pending(buf, &extent_cache, &pending,
 				    &seen, &nodes, &rec->found_key);
 		while (1) {
