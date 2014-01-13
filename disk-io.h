@@ -32,6 +32,7 @@ enum btrfs_open_ctree_flags {
 	OPEN_CTREE_RECOVER_SUPER	= 8,
 	OPEN_CTREE_RESTORE		= 16,
 	OPEN_CTREE_NO_BLOCK_GROUPS	= 32,
+	OPEN_CTREE_EXCLUSIVE		= 64,
 };
 
 static inline u64 btrfs_sb_offset(int mirror)

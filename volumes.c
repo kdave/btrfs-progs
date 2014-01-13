@@ -214,7 +214,7 @@ int btrfs_open_devices(struct btrfs_fs_devices *fs_devices, int flags)
 		if (device->devid == fs_devices->lowest_devid)
 			fs_devices->lowest_bdev = fd;
 		device->fd = fd;
-		if (flags == O_RDWR)
+		if (flags & O_RDWR)
 			device->writeable = 1;
 	}
 	return 0;

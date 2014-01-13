@@ -6390,7 +6390,8 @@ int cmd_check(int argc, char **argv)
 	int option_index = 0;
 	int init_csum_tree = 0;
 	int init_extent_tree = 0;
-	enum btrfs_open_ctree_flags ctree_flags = OPEN_CTREE_PARTIAL;
+	enum btrfs_open_ctree_flags ctree_flags =
+		OPEN_CTREE_PARTIAL | OPEN_CTREE_EXCLUSIVE;
 
 	while(1) {
 		int c;

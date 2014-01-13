@@ -1057,6 +1057,7 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 	struct btrfs_fs_devices *fs_devices = NULL;
 	struct extent_buffer *eb;
 	int ret;
+	int oflags;
 
 	if (sb_bytenr == 0)
 		sb_bytenr = BTRFS_SUPER_INFO_OFFSET;
@@ -1080,9 +1081,14 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 
 	fs_info->fs_devices = fs_devices;
 	if (flags & OPEN_CTREE_WRITES)
-		ret = btrfs_open_devices(fs_devices, O_RDWR);
+		oflags = O_RDWR;
 	else
-		ret = btrfs_open_devices(fs_devices, O_RDONLY);
+		oflags = O_RDONLY;
+
+	if (flags & OPEN_CTREE_EXCLUSIVE)
+		oflags |= O_EXCL;
+
+	ret = btrfs_open_devices(fs_devices, oflags);
 	if (ret)
 		goto out_devices;
 
