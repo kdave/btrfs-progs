@@ -298,7 +298,7 @@ static int do_balance(const char *path, struct btrfs_ioctl_balance_args *args,
 
 	fd = open_file_or_dir(path, &dirstream);
 	if (fd < 0) {
-		fprintf(stderr, "ERROR: can't access to '%s'\n", path);
+		fprintf(stderr, "ERROR: can't access '%s'\n", path);
 		return 1;
 	}
 
@@ -497,7 +497,7 @@ static int cmd_balance_pause(int argc, char **argv)
 
 	fd = open_file_or_dir(path, &dirstream);
 	if (fd < 0) {
-		fprintf(stderr, "ERROR: can't access to '%s'\n", path);
+		fprintf(stderr, "ERROR: can't access '%s'\n", path);
 		return 1;
 	}
 
@@ -538,7 +538,7 @@ static int cmd_balance_cancel(int argc, char **argv)
 
 	fd = open_file_or_dir(path, &dirstream);
 	if (fd < 0) {
-		fprintf(stderr, "ERROR: can't access to '%s'\n", path);
+		fprintf(stderr, "ERROR: can't access '%s'\n", path);
 		return 1;
 	}
 
@@ -580,7 +580,7 @@ static int cmd_balance_resume(int argc, char **argv)
 
 	fd = open_file_or_dir(path, &dirstream);
 	if (fd < 0) {
-		fprintf(stderr, "ERROR: can't access to '%s'\n", path);
+		fprintf(stderr, "ERROR: can't access '%s'\n", path);
 		return 1;
 	}
 
@@ -673,7 +673,7 @@ static int cmd_balance_status(int argc, char **argv)
 
 	fd = open_file_or_dir(path, &dirstream);
 	if (fd < 0) {
-		fprintf(stderr, "ERROR: can't access to '%s'\n", path);
+		fprintf(stderr, "ERROR: can't access '%s'\n", path);
 		return 2;
 	}
 

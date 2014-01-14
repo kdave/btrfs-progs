@@ -1653,7 +1653,7 @@ static int cmd_scrub_status(int argc, char **argv)
 	fdmnt = open_path_or_dev_mnt(path, &dirstream);
 
 	if (fdmnt < 0) {
-		fprintf(stderr, "ERROR: can't access to '%s'\n", path);
+		fprintf(stderr, "ERROR: can't access '%s'\n", path);
 		return 1;
 	}
 

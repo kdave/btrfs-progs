@@ -142,7 +142,7 @@ static int cmd_subvol_create(int argc, char **argv)
 
 	fddst = open_file_or_dir(dstdir, &dirstream);
 	if (fddst < 0) {
-		fprintf(stderr, "ERROR: can't access to '%s'\n", dstdir);
+		fprintf(stderr, "ERROR: can't access '%s'\n", dstdir);
 		goto out;
 	}
 
@@ -319,7 +319,7 @@ again:
 
 	fd = open_file_or_dir(dname, &dirstream);
 	if (fd < 0) {
-		fprintf(stderr, "ERROR: can't access to '%s'\n", dname);
+		fprintf(stderr, "ERROR: can't access '%s'\n", dname);
 		ret = 1;
 		goto out;
 	}
@@ -685,13 +685,13 @@ static int cmd_snapshot(int argc, char **argv)
 
 	fddst = open_file_or_dir(dstdir, &dirstream1);
 	if (fddst < 0) {
-		fprintf(stderr, "ERROR: can't access to '%s'\n", dstdir);
+		fprintf(stderr, "ERROR: can't access '%s'\n", dstdir);
 		goto out;
 	}
 
 	fd = open_file_or_dir(subvol, &dirstream2);
 	if (fd < 0) {
-		fprintf(stderr, "ERROR: can't access to '%s'\n", dstdir);
+		fprintf(stderr, "ERROR: can't access '%s'\n", dstdir);
 		goto out;
 	}
 
@@ -825,7 +825,7 @@ static int cmd_subvol_set_default(int argc, char **argv)
 
 	fd = open_file_or_dir(path, &dirstream);
 	if (fd < 0) {
-		fprintf(stderr, "ERROR: can't access to '%s'\n", path);
+		fprintf(stderr, "ERROR: can't access '%s'\n", path);
 		return 1;
 	}
 

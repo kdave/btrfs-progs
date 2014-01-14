@@ -85,7 +85,7 @@ static int cmd_add_dev(int argc, char **argv)
 
 	fdmnt = open_file_or_dir(mntpnt, &dirstream);
 	if (fdmnt < 0) {
-		fprintf(stderr, "ERROR: can't access to '%s'\n", mntpnt);
+		fprintf(stderr, "ERROR: can't access '%s'\n", mntpnt);
 		return 1;
 	}
 
@@ -152,7 +152,7 @@ static int cmd_rm_dev(int argc, char **argv)
 
 	fdmnt = open_file_or_dir(mntpnt, &dirstream);
 	if (fdmnt < 0) {
-		fprintf(stderr, "ERROR: can't access to '%s'\n", mntpnt);
+		fprintf(stderr, "ERROR: can't access '%s'\n", mntpnt);
 		return 1;
 	}
 
