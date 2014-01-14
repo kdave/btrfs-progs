@@ -693,10 +693,11 @@ static int cmd_show(int argc, char **argv)
 			}
 		} else if (type == BTRFS_ARG_MNTPOINT) {
 			char label[BTRFS_LABEL_SIZE];
-			if (get_label_mounted(search, label))
+			ret = get_label_mounted(search, label);
+			if (ret)
 				return 1;
 			handle_print(search, label);
-			return 0;
+			goto out;
 		}
 	}
 
