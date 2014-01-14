@@ -539,6 +539,7 @@ static int cmd_show(int argc, char **argv)
 	char path[PATH_MAX];
 	__u8 fsid[BTRFS_FSID_SIZE];
 	char uuid_buf[37];
+	int found = 0;
 
 	while (1) {
 		int long_index;
@@ -613,8 +614,10 @@ static int cmd_show(int argc, char **argv)
 
 	/* show mounted btrfs */
 	ret = btrfs_scan_kernel(search);
-	if (search && !ret)
-		return 0;
+	if (search && !ret) {
+		/* since search is found we are done */
+		goto out;
+	}
 
 	/* shows mounted only */
 	if (where == BTRFS_SCAN_MOUNTED)
@@ -636,12 +639,15 @@ devs_only:
 			continue;
 
 		print_one_uuid(fs_devices);
+		found = 1;
 	}
+	if (search && !found)
+		ret = 1;
 
 out:
 	printf("%s\n", BTRFS_BUILD_VERSION);
 	free_seen_fsid();
-	return 0;
+	return ret;
 }
 
 static const char * const cmd_sync_usage[] = {
