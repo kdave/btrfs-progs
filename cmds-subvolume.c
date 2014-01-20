@@ -354,6 +354,9 @@ out:
 	cnt++;
 	if (cnt < argc) {
 		close_file_or_dir(fd, dirstream);
+		/* avoid double free */
+		fd = -1;
+		dirstream = NULL;
 		goto again;
 	}
 
