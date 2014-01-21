@@ -159,6 +159,7 @@ static int btrfs_read_root_item(int mnt_fd, u64 root_id,
 	return 0;
 }
 
+#ifdef BTRFS_COMPAT_SEND_NO_UUID_TREE
 static struct rb_node *tree_insert(struct rb_root *root,
 				   struct subvol_info *si,
 				   enum subvol_search_type type)
@@ -223,6 +224,7 @@ static struct rb_node *tree_insert(struct rb_root *root,
 	}
 	return NULL;
 }
+#endif
 
 int btrfs_subvolid_resolve(int fd, char *path, size_t path_len, u64 subvol_id)
 {
@@ -320,6 +322,7 @@ static int btrfs_subvolid_resolve_sub(int fd, char *path, size_t *path_len,
 	return 0;
 }
 
+#ifdef BTRFS_COMPAT_SEND_NO_UUID_TREE
 static int count_bytes(void *buf, int len, char b)
 {
 	int cnt = 0;
@@ -416,6 +419,16 @@ static struct subvol_info *subvol_uuid_search_old(struct subvol_uuid_search *s,
 		return NULL;
 	return tree_search(root, root_id, uuid, transid, path, type);
 }
+#else
+void subvol_uuid_search_add(struct subvol_uuid_search *s,
+			    struct subvol_info *si)
+{
+	if (si) {
+		free(si->path);
+		free(si);
+	}
+}
+#endif
 
 struct subvol_info *subvol_uuid_search(struct subvol_uuid_search *s,
 				       u64 root_id, const u8 *uuid, u64 transid,
@@ -426,9 +439,11 @@ struct subvol_info *subvol_uuid_search(struct subvol_uuid_search *s,
 	struct btrfs_root_item root_item;
 	struct subvol_info *info = NULL;
 
+#ifdef BTRFS_COMPAT_SEND_NO_UUID_TREE
 	if (!s->uuid_tree_existed)
 		return subvol_uuid_search_old(s, root_id, uuid, transid,
 					     path, type);
+#endif
 	switch (type) {
 	case subvol_search_by_received_uuid:
 		ret = btrfs_lookup_uuid_received_subvol_item(s->mnt_fd, uuid,
@@ -481,6 +496,7 @@ out:
 	return info;
 }
 
+#ifdef BTRFS_COMPAT_SEND_NO_UUID_TREE
 static int is_uuid_tree_supported(int fd)
 {
 	int ret;
@@ -679,6 +695,18 @@ void subvol_uuid_search_finit(struct subvol_uuid_search *s)
 	s->received_subvols = RB_ROOT;
 	s->path_subvols = RB_ROOT;
 }
+#else
+int subvol_uuid_search_init(int mnt_fd, struct subvol_uuid_search *s)
+{
+	s->mnt_fd = mnt_fd;
+
+	return 0;
+}
+
+void subvol_uuid_search_finit(struct subvol_uuid_search *s)
+{
+}
+#endif
 
 char *path_cat(const char *p1, const char *p2)
 {
