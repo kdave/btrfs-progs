@@ -34,7 +34,7 @@
 #include <regex.h>
 #include <getopt.h>
 #include <sys/types.h>
-#include <attr/xattr.h>
+#include <sys/xattr.h>
 
 #include "ctree.h"
 #include "disk-io.h"

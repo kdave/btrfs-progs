@@ -34,7 +34,7 @@
 #include <getopt.h>
 #include <uuid/uuid.h>
 #include <ctype.h>
-#include <attr/xattr.h>
+#include <sys/xattr.h>
 #include <blkid/blkid.h>
 #include <ftw.h>
 #include "ctree.h"
