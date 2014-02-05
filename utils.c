@@ -1339,7 +1339,7 @@ static int set_label_mounted(const char *mount_path, const char *label)
 
 	fd = open(mount_path, O_RDONLY | O_NOATIME);
 	if (fd < 0) {
-		fprintf(stderr, "ERROR: unable access to '%s'\n", mount_path);
+		fprintf(stderr, "ERROR: unable to access '%s'\n", mount_path);
 		return -1;
 	}
 
@@ -1396,7 +1396,7 @@ int get_label_mounted(const char *mount_path, char *labelp)
 
 	fd = open(mount_path, O_RDONLY | O_NOATIME);
 	if (fd < 0) {
-		fprintf(stderr, "ERROR: unable access to '%s'\n", mount_path);
+		fprintf(stderr, "ERROR: unable to access '%s'\n", mount_path);
 		return -1;
 	}
 
