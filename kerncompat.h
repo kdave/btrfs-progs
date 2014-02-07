@@ -50,7 +50,7 @@
 #define ULONG_MAX       (~0UL)
 #endif
 
-#define BUG() abort()
+#define BUG() assert(0)
 #ifdef __CHECKER__
 #define __force    __attribute__((force))
 #define __bitwise__ __attribute__((bitwise))
