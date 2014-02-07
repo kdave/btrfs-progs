@@ -1219,6 +1219,7 @@ static int process_one_leaf(struct btrfs_root *root, struct extent_buffer *eb,
 	u32 nritems;
 	int i;
 	int ret = 0;
+	int error = 0;
 	struct cache_tree *inode_cache;
 	struct shared_node *active_node;
 
@@ -1268,8 +1269,10 @@ static int process_one_leaf(struct btrfs_root *root, struct extent_buffer *eb,
 		default:
 			break;
 		};
+		if (ret != 0)
+			error = 1;
 	}
-	return ret;
+	return error;
 }
 
 static void reada_walk_down(struct btrfs_root *root,
