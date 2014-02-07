@@ -364,6 +364,8 @@ static int print_one_fs(struct btrfs_ioctl_fs_info_args *fs_info,
 		char *label, char *path)
 {
 	int i;
+	int fd;
+	int missing = 0;
 	char uuidbuf[BTRFS_UUID_UNPARSED_SIZE];
 	struct btrfs_ioctl_dev_info_args *tmp_dev_info;
 	int ret;
@@ -386,6 +388,14 @@ static int print_one_fs(struct btrfs_ioctl_fs_info_args *fs_info,
 
 	for (i = 0; i < fs_info->num_devices; i++) {
 		tmp_dev_info = (struct btrfs_ioctl_dev_info_args *)&dev_info[i];
+
+		/* Add check for missing devices even mounted */
+		fd = open((char *)tmp_dev_info->path, O_RDONLY);
+		if (fd < 0) {
+			missing = 1;
+			continue;
+		}
+		close(fd);
 		printf("\tdevid %4llu size %s used %s path %s\n",
 			tmp_dev_info->devid,
 			pretty_size(tmp_dev_info->total_bytes),
@@ -393,6 +403,8 @@ static int print_one_fs(struct btrfs_ioctl_fs_info_args *fs_info,
 			tmp_dev_info->path);
 	}
 
+	if (missing)
+		printf("\t*** Some devices missing\n");
 	printf("\n");
 	return 0;
 }
