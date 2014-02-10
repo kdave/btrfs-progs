@@ -126,5 +126,4 @@ int cmd_rescue(int argc, char **argv);
 int test_issubvolume(char *path);
 
 /* send.c */
-int find_mount_root(const char *path, char **mount_root);
 char *get_subvol_name(char *mnt, char *full_path);

@@ -39,6 +39,7 @@
 #include "ioctl.h"
 #include "commands.h"
 #include "list.h"
+#include "utils.h"
 
 #include "send.h"
 #include "send-utils.h"
@@ -56,54 +57,6 @@ struct btrfs_send {
 	char *root_path;
 	struct subvol_uuid_search sus;
 };
-
-int find_mount_root(const char *path, char **mount_root)
-{
-	FILE *mnttab;
-	int fd;
-	struct mntent *ent;
-	int len;
-	int ret;
-	int longest_matchlen = 0;
-	char *longest_match = NULL;
-
-	fd = open(path, O_RDONLY | O_NOATIME);
-	if (fd < 0)
-		return -errno;
-	close(fd);
-
-	mnttab = setmntent("/proc/self/mounts", "r");
-	if (!mnttab)
-		return -errno;
-
-	while ((ent = getmntent(mnttab))) {
-		len = strlen(ent->mnt_dir);
-		if (strncmp(ent->mnt_dir, path, len) == 0) {
-			/* match found */
-			if (longest_matchlen < len) {
-				free(longest_match);
-				longest_matchlen = len;
-				longest_match = strdup(ent->mnt_dir);
-			}
-		}
-	}
-	endmntent(mnttab);
-
-	if (!longest_match) {
-		fprintf(stderr,
-			"ERROR: Failed to find mount root for path %s.\n",
-			path);
-		return -ENOENT;
-	}
-
-	ret = 0;
-	*mount_root = realpath(longest_match, NULL);
-	if (!*mount_root)
-		ret = -errno;
-
-	free(longest_match);
-	return ret;
-}
 
 static int get_root_id(struct btrfs_send *s, const char *path, u64 *root_id)
 {
