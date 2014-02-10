@@ -213,7 +213,7 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 	free(r->full_subvol_path);
 	r->full_subvol_path = path_cat3(r->root_path, r->dest_dir_path, path);
 
-	fprintf(stderr, "At snapshot %s\n", path);
+	fprintf(stdout, "At snapshot %s\n", path);
 
 	memcpy(r->cur_subvol->received_uuid, uuid, BTRFS_UUID_SIZE);
 	r->cur_subvol->stransid = ctransid;
