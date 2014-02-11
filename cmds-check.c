@@ -4037,7 +4037,6 @@ static int run_next_block(struct btrfs_trans_handle *trans,
 				parent, owner, key.objectid, key.offset -
 				btrfs_file_extent_offset(buf, fi), 1, 1,
 				btrfs_file_extent_disk_num_bytes(buf, fi));
-			BUG_ON(ret);
 		}
 	} else {
 		int level;
