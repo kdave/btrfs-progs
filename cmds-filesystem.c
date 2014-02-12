@@ -425,10 +425,10 @@ static int check_arg_type(char *input)
 		return -EINVAL;
 
 	if (realpath(input, path)) {
-		if (is_block_device(input) == 1)
+		if (is_block_device(path) == 1)
 			return BTRFS_ARG_BLKDEV;
 
-		if (is_mount_point(input) == 1)
+		if (is_mount_point(path) == 1)
 			return BTRFS_ARG_MNTPOINT;
 
 		return BTRFS_ARG_UNKNOWN;
