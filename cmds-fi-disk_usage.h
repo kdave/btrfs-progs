@@ -25,4 +25,7 @@ int cmd_filesystem_df(int argc, char **argv);
 extern const char * const cmd_filesystem_disk_usage_usage[];
 int cmd_filesystem_disk_usage(int argc, char **argv);
 
+extern const char * const cmd_device_disk_usage_usage[];
+int cmd_device_disk_usage(int argc, char **argv);
+
 #endif
