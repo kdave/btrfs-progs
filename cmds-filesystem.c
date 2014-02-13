@@ -998,6 +998,9 @@ const struct cmd_group filesystem_cmd_group = {
 		{ "balance", cmd_balance, NULL, &balance_cmd_group, 1 },
 		{ "resize", cmd_resize, cmd_resize_usage, NULL, 0 },
 		{ "label", cmd_label, cmd_label_usage, NULL, 0 },
+		{ "disk-usage", cmd_filesystem_disk_usage,
+			cmd_filesystem_disk_usage_usage, NULL, 0 },
+
 		NULL_CMD_STRUCT
 	}
 };

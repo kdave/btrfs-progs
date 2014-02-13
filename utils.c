@@ -2360,3 +2360,66 @@ u64 disk_size(char *path)
 		return sfs.f_bsize * sfs.f_blocks;
 
 }
+
+u64 get_partition_size(char *dev)
+{
+	u64 result;
+	int fd = open(dev, O_RDONLY);
+
+	if (fd < 0)
+		return 0;
+	if (ioctl(fd, BLKGETSIZE64, &result) < 0) {
+		close(fd);
+		return 0;
+	}
+	close(fd);
+
+	return result;
+}
+
+
+
+
+/*
+ *  Convert a chunk type to a chunk description
+ */
+const char *group_type_str(u64 flag)
+{
+	switch (flag & BTRFS_BLOCK_GROUP_TYPE_MASK) {
+	case BTRFS_BLOCK_GROUP_DATA:
+		return "Data";
+	case BTRFS_BLOCK_GROUP_SYSTEM:
+		return "System";
+	case BTRFS_BLOCK_GROUP_METADATA:
+		return "Metadata";
+	case BTRFS_BLOCK_GROUP_DATA|BTRFS_BLOCK_GROUP_METADATA:
+		return "Data+Metadata";
+	default:
+		return "unknown";
+	}
+}
+
+/*
+ *  Convert a chunk type to a chunk profile description
+ */
+const char *group_profile_str(u64 flag)
+{
+	switch (flag & BTRFS_BLOCK_GROUP_PROFILE_MASK) {
+	case 0:
+		return "single";
+	case BTRFS_BLOCK_GROUP_RAID0:
+		return "RAID0";
+	case BTRFS_BLOCK_GROUP_RAID1:
+		return "RAID1";
+	case BTRFS_BLOCK_GROUP_RAID5:
+		return "RAID5";
+	case BTRFS_BLOCK_GROUP_RAID6:
+		return "RAID6";
+	case BTRFS_BLOCK_GROUP_DUP:
+		return "DUP";
+	case BTRFS_BLOCK_GROUP_RAID10:
+		return "RAID10";
+	default:
+		return "unknown";
+	}
+}
