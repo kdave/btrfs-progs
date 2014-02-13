@@ -951,10 +951,8 @@ int cmd_receive(int argc, char **argv)
 		}
 	}
 
-	if (optind + 1 != argc) {
-		fprintf(stderr, "ERROR: receive needs path to subvolume\n");
-		return 1;
-	}
+	if (check_argc_exact(argc - optind, 1))
+		usage(cmd_receive_usage);
 
 	tomnt = argv[optind];
 
