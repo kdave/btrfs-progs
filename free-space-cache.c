@@ -291,8 +291,6 @@ static int __load_free_space_cache(struct btrfs_root *root,
 		return 0;
 	}
 
-	ret = -1;
-
 	leaf = path->nodes[0];
 	header = btrfs_item_ptr(leaf, path->slots[0],
 				struct btrfs_free_space_header);
