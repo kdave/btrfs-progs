@@ -59,6 +59,9 @@ btrfs \- control a btrfs filesystem
 .PP
 \fBbtrfs\fP \fBdevice scan\fP [\fI--all-devices\fP|\fI<device> \P[\fI<device>...\fP]
 .PP
+\fBbtrfs\fP \fBdevice disk-usage\fP\fI [-b] <path> [<path>...] \fP
+.PP
+.PP
 \fBbtrfs\fP \fBdevice ready\fP\fI <device>\fP
 .PP
 \fBbtrfs\fP \fBdevice stats\fP [-z] {\fI<path>\fP|\fI<device>\fP}
@@ -497,6 +500,14 @@ Remove device(s) from a filesystem identified by \fI<path>\fR.
 .TP
 
 \fBdevice scan\fR [--all-devices|\fI<device> \fP[\fI<device>...\fP]\fR
+.TP
+
+\fBdevice disk-usage\fR\fI [-b] <path> [<path>..] <path>\fR
+Show which chunks are in a device.
+
+\fB-b\fP set byte as unit.
+.TP
+
 If one or more devices are passed, these are scanned for a btrfs filesystem. 
 If no devices are passed, \fBbtrfs\fR uses block devices containing btrfs
 filesystem as listed by blkid.
