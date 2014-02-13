@@ -38,6 +38,8 @@
 #include <linux/kdev_t.h>
 #include <limits.h>
 #include <blkid/blkid.h>
+#include <sys/vfs.h>
+
 #include "kerncompat.h"
 #include "radix-tree.h"
 #include "ctree.h"
@@ -2346,4 +2348,15 @@ int fsid_to_mntpt(__u8 *fsid, char *mntpt, int *mnt_cnt)
 		*mnt_cnt = mcnt;
 
 	return ret;
+}
+
+u64 disk_size(char *path)
+{
+	struct statfs	sfs;
+
+	if (statfs(path, &sfs) < 0)
+		return 0;
+	else
+		return sfs.f_bsize * sfs.f_blocks;
+
 }

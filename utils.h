@@ -20,6 +20,7 @@
 #define __UTILS__
 
 #include <sys/stat.h>
+#include "kerncompat.h"
 #include "ctree.h"
 #include <dirent.h>
 
@@ -102,5 +103,6 @@ int get_device_info(int fd, u64 devid,
 		struct btrfs_ioctl_dev_info_args *di_args);
 int get_fslist(struct btrfs_ioctl_fslist **out_fslist, u64 *out_count);
 int fsid_to_mntpt(__u8 *fsid, char *mntpt, int *mnt_cnt);
+u64 disk_size(char *path);
 
 #endif
