@@ -1641,7 +1641,7 @@ void close_file_or_dir(int fd, DIR *dirstream)
 		close(fd);
 }
 
-static int get_device_info(int fd, u64 devid,
+int get_device_info(int fd, u64 devid,
 		struct btrfs_ioctl_dev_info_args *di_args)
 {
 	int ret;
