@@ -35,6 +35,9 @@ btrfs \- control a btrfs filesystem
 .PP
 \fBbtrfs\fP \fBfilesystem label\fP [\fI<device>\fP|\fI<mount_point>\fP] [\fI<newlabel>\fP]
 .PP
+\fBbtrfs\fP \fBfilesystem filesystem disk-usage [-t][-b]\fP\fI <path> 
+[path..]\fP
+.PP
 \fBbtrfs\fP \fBfilesystem df\fP\fI [-b] \fIpath [path..]\fR\fP
 .PP
 \fBbtrfs\fP \fBfilesystem balance\fP\fI <path> \fP
@@ -364,6 +367,17 @@ the same starting disk cylinder as before.
 \fBfilesystem label\fP [\fI<dev>\fP|\fI<mount_point>\fP] [\fInewlabel\fP]\fP
 Show or update the label of a filesystem. \fI[<device>|<mountpoint>]\fR is used
 to identify the filesystem. 
+.TP
+\fBfilesystem disk-usage\fP [-t][-b] \fIpath [path..]\fR
+
+Show in which disk the chunks are allocated.
+
+\fB-b\fP Set byte as unit
+
+\fB-t\fP Show data in tabular format
+
+.TP
+
 If a \fInewlabel\fR optional argument is passed, the label is changed. The
 following constraints exist for a label:
 .IP
