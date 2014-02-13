@@ -524,11 +524,8 @@ int cmd_send(int argc, char **argv)
 		}
 	}
 
-	if (optind == argc) {
-		fprintf(stderr, "ERROR: send needs path to snapshot\n");
-		ret = 1;
-		goto out;
-	}
+	if (optind == argc)
+		usage(cmd_send_usage);
 
 	if (outname != NULL) {
 		send.dump_fd = creat(outname, 0600);
