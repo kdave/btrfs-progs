@@ -134,6 +134,7 @@ int find_mount_root(const char *path, char **mount_root);
 int get_device_info(int fd, u64 devid,
 		struct btrfs_ioctl_dev_info_args *di_args);
 int test_uuid_unique(char *fs_uuid);
+u64 disk_size(char *path);
 
 int test_minimum_size(const char *file, u32 leafsize);
 int test_issubvolname(const char *name);
