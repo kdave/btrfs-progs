@@ -53,6 +53,7 @@ static int verbose = 0;
 static int ignore_errors = 0;
 static int overwrite = 0;
 static int get_xattrs = 0;
+static int dry_run = 0;
 
 #define LZO_LEN 4
 #define PAGE_CACHE_SIZE 4096
@@ -801,6 +802,8 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 			}
 			if (verbose)
 				printf("Restoring %s\n", path_name);
+			if (dry_run)
+				goto next;
 			fd = open(path_name, O_CREAT|O_WRONLY, 0644);
 			if (fd < 0) {
 				fprintf(stderr, "Error creating %s: %d\n",
@@ -873,7 +876,10 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 				printf("Restoring %s\n", path_name);
 
 			errno = 0;
-			ret = mkdir(path_name, 0755);
+			if (dry_run)
+				ret = 0;
+			else
+				ret = mkdir(path_name, 0755);
 			if (ret && errno != EEXIST) {
 				free(dir);
 				fprintf(stderr, "Error mkdiring %s: %d\n",
@@ -1090,6 +1096,7 @@ out:
 
 static struct option long_options[] = {
 	{ "path-regex", 1, NULL, 256},
+	{ "dry-run", 0, NULL, 'D'},
 	{ NULL, 0, NULL, 0}
 };
 
@@ -1105,9 +1112,10 @@ const char * const cmd_restore_usage[] = {
 	"-t <location>   tree location",
 	"-f <offset>     filesystem location",
 	"-u <block>      super mirror",
-	"-r <rootid>	 root objectid",
+	"-r <rootid>     root objectid",
 	"-d              find dir",
 	"-l              list tree roots",
+	"-D|--dry-run    dry run (only list files that would be recovered)",
 	"--path-regex <regex>",
 	"                restore only filenames matching regex,",
 	"                you have to use following syntax (possibly quoted):",
@@ -1135,7 +1143,7 @@ int cmd_restore(int argc, char **argv)
 	regex_t match_reg, *mreg = NULL;
 	char reg_err[256];
 
-	while ((opt = getopt_long(argc, argv, "sxviot:u:df:r:lc", long_options,
+	while ((opt = getopt_long(argc, argv, "sxviot:u:df:r:lDc", long_options,
 					&option_index)) != -1) {
 
 		switch (opt) {
@@ -1190,6 +1198,9 @@ int cmd_restore(int argc, char **argv)
 				break;
 			case 'l':
 				list_roots = 1;
+				break;
+			case 'D':
+				dry_run = 1;
 				break;
 			case 'c':
 				match_cflags |= REG_ICASE;
@@ -1281,6 +1292,9 @@ int cmd_restore(int argc, char **argv)
 		}
 		mreg = &match_reg;
 	}
+
+	if (dry_run)
+		printf("This is a dry-run, no files are going to be restored\n");
 
 	ret = search_dir(root, &key, dir_name, "", mreg);
 
