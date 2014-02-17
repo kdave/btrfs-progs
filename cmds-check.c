@@ -6443,18 +6443,21 @@ int cmd_check(int argc, char **argv)
 
 	if((ret = check_mounted(argv[optind])) < 0) {
 		fprintf(stderr, "Could not check mount status: %s\n", strerror(-ret));
-		return ret;
+		goto err_out;
 	} else if(ret) {
 		fprintf(stderr, "%s is currently mounted. Aborting.\n", argv[optind]);
-		return -EBUSY;
+		ret = -EBUSY;
+		goto err_out;
 	}
 
 	info = open_ctree_fs_info(argv[optind], bytenr, 0, ctree_flags);
 	if (!info) {
 		fprintf(stderr, "Couldn't open file system\n");
-		return -EIO;
+		ret = -EIO;
+		goto err_out;
 	}
 
+	root = info->fs_root;
 	uuid_unparse(info->super_copy->fsid, uuidbuf);
 	printf("Checking filesystem on %s\nUUID: %s\n", argv[optind], uuidbuf);
 
@@ -6462,19 +6465,20 @@ int cmd_check(int argc, char **argv)
 	    !extent_buffer_uptodate(info->dev_root->node) ||
 	    !extent_buffer_uptodate(info->chunk_root->node)) {
 		fprintf(stderr, "Critical roots corrupted, unable to fsck the FS\n");
-		return -EIO;
+		ret = -EIO;
+		goto close_out;
 	}
 
-	root = info->fs_root;
 	if (init_extent_tree) {
 		printf("Creating a new extent tree\n");
 		ret = reinit_extent_tree(info);
 		if (ret)
-			return ret;
+			goto close_out;
 	}
 	if (!extent_buffer_uptodate(info->extent_root->node)) {
 		fprintf(stderr, "Critical roots corrupted, unable to fsck the FS\n");
-		return -EIO;
+		ret = -EIO;
+		goto close_out;
 	}
 
 	fprintf(stderr, "checking extents\n");
@@ -6485,13 +6489,15 @@ int cmd_check(int argc, char **argv)
 		trans = btrfs_start_transaction(info->csum_root, 1);
 		if (IS_ERR(trans)) {
 			fprintf(stderr, "Error starting transaction\n");
-			return PTR_ERR(trans);
+			ret = PTR_ERR(trans);
+			goto close_out;
 		}
 
 		ret = btrfs_fsck_reinit_root(trans, info->csum_root, 0);
 		if (ret) {
 			fprintf(stderr, "crc root initialization failed\n");
-			return -EIO;
+			ret = -EIO;
+			goto close_out;
 		}
 
 		ret = btrfs_commit_transaction(trans, info->csum_root);
@@ -6561,9 +6567,6 @@ int cmd_check(int argc, char **argv)
 		ret = 1;
 	}
 out:
-	free_root_recs_tree(&root_cache);
-	close_ctree(root);
-
 	if (found_old_backref) { /*
 		 * there was a disk format change when mixed
 		 * backref was in testing tree. The old format
@@ -6590,5 +6593,10 @@ out:
 		(unsigned long long)data_bytes_allocated,
 		(unsigned long long)data_bytes_referenced);
 	printf("%s\n", BTRFS_BUILD_VERSION);
+
+	free_root_recs_tree(&root_cache);
+close_out:
+	close_ctree(root);
+err_out:
 	return ret;
 }
