@@ -2463,8 +2463,8 @@ int main(int argc, char *argv[])
 {
 	char *source;
 	char *target;
-	int num_threads = 0;
-	int compress_level = 0;
+	u64 num_threads = 0;
+	u64 compress_level = 0;
 	int create = 1;
 	int old_restore = 0;
 	int walk_trees = 0;
@@ -2483,13 +2483,13 @@ int main(int argc, char *argv[])
 			create = 0;
 			break;
 		case 't':
-			num_threads = atoi(optarg);
-			if (num_threads <= 0 || num_threads > 32)
+			num_threads = arg_strtou64(optarg);
+			if (num_threads > 32)
 				print_usage();
 			break;
 		case 'c':
-			compress_level = atoi(optarg);
-			if (compress_level < 0 || compress_level > 9)
+			compress_level = arg_strtou64(optarg);
+			if (compress_level > 9)
 				print_usage();
 			break;
 		case 'o':

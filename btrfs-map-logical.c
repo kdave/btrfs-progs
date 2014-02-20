@@ -31,6 +31,7 @@
 #include "transaction.h"
 #include "list.h"
 #include "version.h"
+#include "utils.h"
 
 /* we write the mirror info to stdout unless they are dumping the data
  * to stdout
@@ -38,7 +39,7 @@
 static FILE *info_file;
 
 static struct extent_buffer * debug_read_block(struct btrfs_root *root,
-		u64 bytenr, u32 blocksize, int copy)
+		u64 bytenr, u32 blocksize, u64 copy)
 {
 	int ret;
 	struct extent_buffer *eb;
@@ -120,7 +121,7 @@ int main(int ac, char **av)
 	u64 logical = 0;
 	int ret = 0;
 	int option_index = 0;
-	int copy = 0;
+	u64 copy = 0;
 	u64 bytes = 0;
 	int out_fd = 0;
 
@@ -132,28 +133,13 @@ int main(int ac, char **av)
 			break;
 		switch(c) {
 			case 'l':
-				logical = atoll(optarg);
-				if (logical == 0) {
-					fprintf(stderr,
-						"invalid extent number\n");
-					print_usage();
-				}
+				logical = arg_strtou64(optarg);
 				break;
 			case 'c':
-				copy = atoi(optarg);
-				if (copy == 0) {
-					fprintf(stderr,
-						"invalid copy number\n");
-					print_usage();
-				}
+				copy = arg_strtou64(optarg);
 				break;
 			case 'b':
-				bytes = atoll(optarg);
-				if (bytes == 0) {
-					fprintf(stderr,
-						"invalid byte count\n");
-					print_usage();
-				}
+				bytes = arg_strtou64(optarg);
 				break;
 			case 'o':
 				output_file = strdup(optarg);

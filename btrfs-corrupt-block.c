@@ -36,7 +36,7 @@
 #define FIELD_BUF_LEN 80
 
 struct extent_buffer *debug_corrupt_block(struct btrfs_root *root, u64 bytenr,
-				     u32 blocksize, int copy)
+				     u32 blocksize, u64 copy)
 {
 	int ret;
 	struct extent_buffer *eb;
@@ -165,7 +165,7 @@ static int corrupt_keys_in_block(struct btrfs_root *root, u64 bytenr)
 }
 
 static int corrupt_extent(struct btrfs_trans_handle *trans,
-			  struct btrfs_root *root, u64 bytenr, int copy)
+			  struct btrfs_root *root, u64 bytenr, u64 copy)
 {
 	struct btrfs_key key;
 	struct extent_buffer *leaf;
@@ -792,7 +792,7 @@ int main(int ac, char **av)
 	u64 logical = (u64)-1;
 	int ret = 0;
 	int option_index = 0;
-	int copy = 0;
+	u64 copy = 0;
 	u64 bytes = 4096;
 	int extent_rec = 0;
 	int extent_tree = 0;
@@ -816,23 +816,13 @@ int main(int ac, char **av)
 			break;
 		switch(c) {
 			case 'l':
-				logical = atoll(optarg);
+				logical = arg_strtou64(optarg);
 				break;
 			case 'c':
-				copy = atoi(optarg);
-				if (copy <= 0) {
-					fprintf(stderr,
-						"invalid copy number\n");
-					print_usage();
-				}
+				copy = arg_strtou64(optarg);
 				break;
 			case 'b':
-				bytes = atoll(optarg);
-				if (bytes == 0) {
-					fprintf(stderr,
-						"invalid byte count\n");
-					print_usage();
-				}
+				bytes = arg_strtou64(optarg);
 				break;
 			case 'e':
 				extent_rec = 1;
@@ -849,33 +839,16 @@ int main(int ac, char **av)
 			case 'U':
 				chunk_tree = 1;
 			case 'i':
-				inode = atoll(optarg);
-				if (inode == 0) {
-					fprintf(stderr,
-						"invalid inode number\n");
-					print_usage();
-				}
+				inode = arg_strtou64(optarg);
 				break;
 			case 'f':
 				strncpy(field, optarg, FIELD_BUF_LEN);
 				break;
 			case 'x':
-				errno = 0;
-				file_extent = atoll(optarg);
-				if (errno) {
-					fprintf(stderr, "error converting "
-						"%d\n", errno);
-					print_usage();
-				}
+				file_extent = arg_strtou64(optarg);
 				break;
 			case 'm':
-				errno = 0;
-				metadata_block = atoll(optarg);
-				if (errno) {
-					fprintf(stderr, "error converting "
-						"%d\n", errno);
-					print_usage();
-				}
+				metadata_block = arg_strtou64(optarg);
 				break;
 			case 'K':
 				ret = sscanf(optarg, "%llu,%u,%llu",

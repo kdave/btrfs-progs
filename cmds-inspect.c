@@ -120,7 +120,7 @@ static int cmd_inode_resolve(int argc, char **argv)
 		return 1;
 	}
 
-	ret = __ino_to_path_fd(atoll(argv[optind]), fd, verbose,
+	ret = __ino_to_path_fd(arg_strtou64(argv[optind]), fd, verbose,
 			       argv[optind+1]);
 	close_file_or_dir(fd, dirstream);
 	return !!ret;
@@ -167,7 +167,7 @@ static int cmd_logical_resolve(int argc, char **argv)
 			verbose = 1;
 			break;
 		case 's':
-			size = atoll(optarg);
+			size = arg_strtou64(optarg);
 			break;
 		default:
 			usage(cmd_logical_resolve_usage);
@@ -183,7 +183,7 @@ static int cmd_logical_resolve(int argc, char **argv)
 		return 1;
 
 	memset(inodes, 0, sizeof(*inodes));
-	loi.logical = atoll(argv[optind]);
+	loi.logical = arg_strtou64(argv[optind]);
 	loi.size = size;
 	loi.inodes = (uintptr_t)inodes;
 
@@ -283,7 +283,7 @@ static int cmd_subvolid_resolve(int argc, char **argv)
 		goto out;
 	}
 
-	subvol_id = atoll(argv[1]);
+	subvol_id = arg_strtou64(argv[1]);
 	ret = btrfs_subvolid_resolve(fd, path, sizeof(path), subvol_id);
 
 	if (ret) {
