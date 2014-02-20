@@ -820,11 +820,7 @@ static int cmd_subvol_set_default(int argc, char **argv)
 	subvolid = argv[1];
 	path = argv[2];
 
-	objectid = (unsigned long long)strtoll(subvolid, NULL, 0);
-	if (errno == ERANGE) {
-		fprintf(stderr, "ERROR: invalid tree id (%s)\n", subvolid);
-		return 1;
-	}
+	objectid = arg_strtou64(subvolid);
 
 	fd = open_file_or_dir(path, &dirstream);
 	if (fd < 0) {
@@ -861,7 +857,7 @@ static int cmd_find_new(int argc, char **argv)
 		usage(cmd_find_new_usage);
 
 	subvol = argv[1];
-	last_gen = atoll(argv[2]);
+	last_gen = arg_strtou64(argv[2]);
 
 	ret = test_issubvolume(subvol);
 	if (ret < 0) {

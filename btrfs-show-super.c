@@ -59,17 +59,17 @@ int main(int argc, char **argv)
 	int all = 0;
 	char *filename;
 	int fd = -1;
-	int arg, i;
+	int i;
+	u64 arg;
 	u64 sb_bytenr = btrfs_sb_offset(0);
 
 	while ((opt = getopt(argc, argv, "ai:")) != -1) {
 		switch (opt) {
 		case 'i':
-			arg = atoi(optarg);
-
-			if (arg < 0 || arg >= BTRFS_SUPER_MIRROR_MAX) {
+			arg = arg_strtou64(optarg);
+			if (arg >= BTRFS_SUPER_MIRROR_MAX) {
 				fprintf(stderr,
-					"Illegal super_mirror %d\n",
+					"Illegal super_mirror %llu\n",
 					arg);
 				print_usage();
 				exit(1);

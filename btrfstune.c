@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
 	int success = 0;
 	int extrefs_flag = 0;
 	int seeding_flag = 0;
-	int seeding_value = 0;
+	u64 seeding_value = 0;
 	int skinny_flag = 0;
 	int ret;
 
@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
 		switch(c) {
 		case 'S':
 			seeding_flag = 1;
-			seeding_value = atoi(optarg);
+			seeding_value = arg_strtou64(optarg);
 			break;
 		case 'r':
 			extrefs_flag = 1;
