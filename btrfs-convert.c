@@ -2729,7 +2729,12 @@ int main(int argc, char *argv[])
 	}
 
 	file = argv[optind];
-	if (check_mounted(file)) {
+	ret = check_mounted(file);
+	if (ret < 0) {
+		fprintf(stderr, "Could not check mount status: %s\n",
+			strerror(-ret));
+		return 1;
+	} else if (ret) {
 		fprintf(stderr, "%s is mounted\n", file);
 		return 1;
 	}
