@@ -1160,26 +1160,14 @@ int cmd_restore(int argc, char **argv)
 				overwrite = 1;
 				break;
 			case 't':
-				errno = 0;
-				tree_location = (u64)strtoll(optarg, NULL, 10);
-				if (errno != 0) {
-					fprintf(stderr, "Tree location not valid\n");
-					exit(1);
-				}
+				tree_location = arg_strtou64(optarg);
 				break;
 			case 'f':
-				errno = 0;
-				fs_location = (u64)strtoll(optarg, NULL, 10);
-				if (errno != 0) {
-					fprintf(stderr, "Fs location not valid\n");
-					exit(1);
-				}
+				fs_location = arg_strtou64(optarg);
 				break;
 			case 'u':
-				errno = 0;
-				super_mirror = (int)strtol(optarg, NULL, 10);
-				if (errno != 0 ||
-				    super_mirror >= BTRFS_SUPER_MIRROR_MAX) {
+				super_mirror = arg_strtou64(optarg);
+				if (super_mirror >= BTRFS_SUPER_MIRROR_MAX) {
 					fprintf(stderr, "Super mirror not "
 						"valid\n");
 					exit(1);
@@ -1189,12 +1177,7 @@ int cmd_restore(int argc, char **argv)
 				find_dir = 1;
 				break;
 			case 'r':
-				errno = 0;
-				root_objectid = (u64)strtoll(optarg, NULL, 10);
-				if (errno != 0) {
-					fprintf(stderr, "Root objectid not valid\n");
-					exit(1);
-				}
+				root_objectid = arg_strtou64(optarg);
 				break;
 			case 'l':
 				list_roots = 1;

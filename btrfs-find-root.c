@@ -289,30 +289,13 @@ int main(int argc, char **argv)
 		switch(opt) {
 			errno = 0;
 			case 'o':
-				search_objectid = (u64)strtoll(optarg, NULL,
-							       10);
-				if (errno) {
-					fprintf(stderr, "Error parsing "
-						"objectid\n");
-					exit(1);
-				}
+				search_objectid = arg_strtou64(optarg);
 				break;
 			case 'g':
-				search_generation = (u64)strtoll(optarg, NULL,
-							       10);
-				if (errno) {
-					fprintf(stderr, "Error parsing "
-						"generation\n");
-					exit(1);
-				}
+				search_generation = arg_strtou64(optarg);
 				break;
 			case 'l':
-				search_level = strtol(optarg, NULL, 10);
-				if (errno) {
-					fprintf(stderr, "Error parsing "
-						"level\n");
-					exit(1);
-				}
+				search_level = arg_strtou64(optarg);
 				break;
 			default:
 				usage();
