@@ -151,7 +151,12 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	if (check_mounted(device)) {
+	ret = check_mounted(device);
+	if (ret < 0) {
+		fprintf(stderr, "Could not check mount status: %s\n",
+			strerror(-ret));
+		return 1;
+	} else if (ret) {
 		fprintf(stderr, "%s is mounted\n", device);
 		return 1;
 	}
