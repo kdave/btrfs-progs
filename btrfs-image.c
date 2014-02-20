@@ -1521,7 +1521,8 @@ static int fixup_chunk_tree_block(struct mdrestore_struct *mdres,
 			type = btrfs_stack_chunk_type(&chunk);
 			type &= (BTRFS_BLOCK_GROUP_DATA |
 				 BTRFS_BLOCK_GROUP_SYSTEM |
-				 BTRFS_BLOCK_GROUP_METADATA);
+				 BTRFS_BLOCK_GROUP_METADATA |
+				 BTRFS_BLOCK_GROUP_DUP);
 			btrfs_set_stack_chunk_type(&chunk, type);
 
 			btrfs_set_stack_chunk_num_stripes(&chunk, 1);
