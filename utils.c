@@ -1111,7 +1111,7 @@ again:
 	dirp = opendir(dirname);
 	if (!dirp) {
 		fprintf(stderr, "Unable to open %s for scanning\n", dirname);
-		ret = -ENOENT;
+		ret = -errno;
 		goto fail;
 	}
 	while(1) {
