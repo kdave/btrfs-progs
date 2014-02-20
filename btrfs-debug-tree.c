@@ -162,7 +162,7 @@ int main(int ac, char **av)
 				root_backups = 1;
 				break;
 			case 'b':
-				block_only = atoll(optarg);
+				block_only = arg_strtou64(optarg);
 				break;
 			default:
 				print_usage();
