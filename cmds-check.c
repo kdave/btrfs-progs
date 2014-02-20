@@ -6388,7 +6388,7 @@ int cmd_check(int argc, char **argv)
 	u64 bytenr = 0;
 	char uuidbuf[BTRFS_UUID_UNPARSED_SIZE];
 	int ret;
-	int num;
+	u64 num;
 	int option_index = 0;
 	int init_csum_tree = 0;
 	int init_extent_tree = 0;
@@ -6407,9 +6407,15 @@ int cmd_check(int argc, char **argv)
 				ctree_flags |= OPEN_CTREE_BACKUP_ROOT;
 				break;
 			case 's':
-				num = atol(optarg);
-				bytenr = btrfs_sb_offset(num);
-				printf("using SB copy %d, bytenr %llu\n", num,
+				num = arg_strtou64(optarg);
+				if (num >= BTRFS_SUPER_MIRROR_MAX) {
+					fprintf(stderr,
+						"ERROR: super mirror should be less than: %d\n",
+						BTRFS_SUPER_MIRROR_MAX);
+					exit(1);
+				}
+				bytenr = btrfs_sb_offset(((int)num));
+				printf("using SB copy %llu, bytenr %llu\n", num,
 				       (unsigned long long)bytenr);
 				break;
 			case '?':

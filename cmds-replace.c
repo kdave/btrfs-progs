@@ -210,12 +210,7 @@ static int cmd_start_replace(int argc, char **argv)
 		struct btrfs_ioctl_fs_info_args fi_args;
 		struct btrfs_ioctl_dev_info_args *di_args = NULL;
 
-		if (atoi(srcdev) == 0) {
-			fprintf(stderr, "Error: Failed to parse the numerical devid value '%s'\n",
-				srcdev);
-			goto leave_with_error;
-		}
-		start_args.start.srcdevid = (__u64)atoi(srcdev);
+		start_args.start.srcdevid = arg_strtou64(srcdev);
 
 		ret = get_fs_info(path, &fi_args, &di_args);
 		if (ret) {

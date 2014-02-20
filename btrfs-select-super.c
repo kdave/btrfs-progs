@@ -43,7 +43,7 @@ int main(int ac, char **av)
 {
 	struct btrfs_root *root;
 	int ret;
-	int num = 0;
+	u64 num = 0;
 	u64 bytenr = 0;
 
 	while(1) {
@@ -53,8 +53,14 @@ int main(int ac, char **av)
 			break;
 		switch(c) {
 			case 's':
-				num = atol(optarg);
-				bytenr = btrfs_sb_offset(num);
+				num = arg_strtou64(optarg);
+				if (num >= BTRFS_SUPER_MIRROR_MAX) {
+					fprintf(stderr,
+						"ERROR: super mirror should be less than: %d\n",
+						BTRFS_SUPER_MIRROR_MAX);
+					exit(1);
+				}
+				bytenr = btrfs_sb_offset(((int)num));
 				break;
 			default:
 				print_usage();
