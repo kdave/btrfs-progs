@@ -2477,7 +2477,7 @@ static int check_block(struct btrfs_trans_handle *trans,
 	struct cache_extent *cache;
 	struct btrfs_key key;
 	enum btrfs_tree_block_status status;
-	int ret = 1;
+	int ret = 0;
 	int level;
 
 	cache = lookup_cache_extent(extent_cache, buf->start, buf->len);
