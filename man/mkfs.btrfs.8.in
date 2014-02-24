@@ -47,10 +47,10 @@ there is a filesystem or partition table on the device already.
 .TP
 \fB\-n\fR, \fB\-\-nodesize \fIsize\fR
 \fB\-l\fR, \fB\-\-leafsize \fIsize\fR
-Specify the nodesize, the tree block size in which btrfs stores data. The
-default value is the page size. Must be a multiple of the sectorsize, but
-not larger than 65536. Leafsize always equals nodesize and the options are
-aliases.
+Specify the nodesize, the tree block size in which btrfs stores
+data. The default value is 16KB (16384) or the page size, whichever is
+bigger. Must be a multiple of the sectorsize, but not larger than
+65536. Leafsize always equals nodesize and the options are aliases.
 .TP
 \fB\-L\fR, \fB\-\-label \fIname\fR
 Specify a label for the filesystem.
