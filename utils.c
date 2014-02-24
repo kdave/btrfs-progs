@@ -1752,8 +1752,15 @@ int get_fs_info(char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 		ndevs++;
 	}
 
-	BUG_ON(ndevs == 0);
-	ret = 0;
+	/*
+	* only when the only dev we wanted to find is not there then
+	* let any error be returned
+	*/
+	if (fi_args->num_devices != 1) {
+		BUG_ON(ndevs == 0);
+		ret = 0;
+	}
+
 out:
 	close_file_or_dir(fd, dirstream);
 	return ret;
