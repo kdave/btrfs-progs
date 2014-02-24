@@ -1669,7 +1669,7 @@ int get_fs_info(char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 	int fd = -1;
 	int ret = 0;
 	int ndevs = 0;
-	int i = 1;
+	int i = 0;
 	struct btrfs_fs_devices *fs_devices_mnt = NULL;
 	struct btrfs_ioctl_dev_info_args *di_args;
 	char mp[BTRFS_PATH_NAME_MAX + 1];
