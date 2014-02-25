@@ -984,9 +984,11 @@ struct btrfs_fs_info {
 	struct btrfs_fs_devices *fs_devices;
 	struct list_head space_info;
 	int system_allocs;
-	int readonly;
-	int on_restoring;
-	int is_chunk_recover;
+
+	unsigned int readonly:1;
+	unsigned int on_restoring:1;
+	unsigned int is_chunk_recover:1;
+
 	int (*free_extent_hook)(struct btrfs_trans_handle *trans,
 				struct btrfs_root *root,
 				u64 bytenr, u64 num_bytes, u64 parent,
