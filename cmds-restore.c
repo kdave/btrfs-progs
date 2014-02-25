@@ -298,7 +298,8 @@ static int copy_one_extent(struct btrfs_root *root, int fd,
 	offset = btrfs_file_extent_offset(leaf, fi);
 	num_bytes = btrfs_file_extent_num_bytes(leaf, fi);
 	size_left = num_bytes;
-	bytenr += offset;
+	if (compress == BTRFS_COMPRESS_NONE)
+		bytenr += offset;
 
 	if (offset)
 		printf("offset is %Lu\n", offset);
@@ -388,8 +389,10 @@ again:
 		goto again;
 	}
 
-	while (total < ram_size) {
-		done = pwrite(fd, outbuf+total, ram_size-total, pos+total);
+	while (total < num_bytes) {
+		done = pwrite(fd, outbuf + offset + total,
+			      num_bytes - total,
+			      pos + total);
 		if (done < 0) {
 			ret = -1;
 			goto out;
