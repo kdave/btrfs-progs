@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2012 Fujitsu.  All rights reserved.
+ * Copyright (C) 2012 FUJITSU LIMITED.  All rights reserved.
  * Written by Miao Xie <miaox@cn.fujitsu.com>
  *
  * This program is free software; you can redistribute it and/or
