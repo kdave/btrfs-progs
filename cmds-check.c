@@ -6179,9 +6179,9 @@ out:
 	return ret;
 }
 
-static int reinit_extent_tree(struct btrfs_fs_info *fs_info)
+static int reinit_extent_tree(struct btrfs_trans_handle *trans,
+			      struct btrfs_fs_info *fs_info)
 {
-	struct btrfs_trans_handle *trans;
 	u64 start = 0;
 	int ret;
 
@@ -6198,12 +6198,6 @@ static int reinit_extent_tree(struct btrfs_fs_info *fs_info)
 			"developer you want to do this so they can add this "
 			"functionality.\n");
 		return -EINVAL;
-	}
-
-	trans = btrfs_start_transaction(fs_info->extent_root, 1);
-	if (IS_ERR(trans)) {
-		fprintf(stderr, "Error starting transaction\n");
-		return PTR_ERR(trans);
 	}
 
 	/*
@@ -6268,11 +6262,7 @@ static int reinit_extent_tree(struct btrfs_fs_info *fs_info)
 		btrfs_extent_post_op(trans, fs_info->extent_root);
 	}
 
-	/*
-	 * Ok now we commit and run the normal fsck, which will add extent
-	 * entries for all of the items it finds.
-	 */
-	return btrfs_commit_transaction(trans, fs_info->extent_root);
+	return 0;
 }
 
 static int recow_extent_buffer(struct btrfs_root *root, struct extent_buffer *eb)
@@ -6475,9 +6465,37 @@ int cmd_check(int argc, char **argv)
 		goto close_out;
 	}
 
-	if (init_extent_tree) {
-		printf("Creating a new extent tree\n");
-		ret = reinit_extent_tree(info);
+	if (init_extent_tree || init_csum_tree) {
+		struct btrfs_trans_handle *trans;
+
+		trans = btrfs_start_transaction(info->extent_root, 0);
+		if (IS_ERR(trans)) {
+			fprintf(stderr, "Error starting transaction\n");
+			ret = PTR_ERR(trans);
+			goto close_out;
+		}
+
+		if (init_extent_tree) {
+			printf("Creating a new extent tree\n");
+			ret = reinit_extent_tree(trans, info);
+			if (ret)
+				goto close_out;
+		}
+
+		if (init_csum_tree) {
+			fprintf(stderr, "Reinit crc root\n");
+			ret = btrfs_fsck_reinit_root(trans, info->csum_root, 0);
+			if (ret) {
+				fprintf(stderr, "crc root initialization failed\n");
+				ret = -EIO;
+				goto close_out;
+			}
+		}
+		/*
+		 * Ok now we commit and run the normal fsck, which will add
+		 * extent entries for all of the items it finds.
+		 */
+		ret = btrfs_commit_transaction(trans, info->extent_root);
 		if (ret)
 			goto close_out;
 	}
@@ -6488,34 +6506,6 @@ int cmd_check(int argc, char **argv)
 	}
 
 	fprintf(stderr, "checking extents\n");
-	if (init_csum_tree) {
-		struct btrfs_trans_handle *trans;
-
-		fprintf(stderr, "Reinit crc root\n");
-		trans = btrfs_start_transaction(info->csum_root, 1);
-		if (IS_ERR(trans)) {
-			fprintf(stderr, "Error starting transaction\n");
-			ret = PTR_ERR(trans);
-			goto close_out;
-		}
-
-		ret = btrfs_fsck_reinit_root(trans, info->csum_root, 0);
-		if (ret) {
-			fprintf(stderr, "crc root initialization failed\n");
-			ret = -EIO;
-			goto close_out;
-		}
-
-		ret = btrfs_commit_transaction(trans, info->csum_root);
-		if (ret)
-			exit(1);
-
-		ret = check_chunks_and_extents(root);
-		if (ret)
-			fprintf(stderr,
-				"Errors found in extent allocation tree or chunk allocation\n");
-		goto out;
-	}
 	ret = check_chunks_and_extents(root);
 	if (ret)
 		fprintf(stderr, "Errors found in extent allocation tree or chunk allocation\n");
