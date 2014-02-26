@@ -538,7 +538,7 @@ int subvol_uuid_search_init(int mnt_fd, struct subvol_uuid_search *s)
 	struct btrfs_ioctl_search_key *sk = &args.key;
 	struct btrfs_ioctl_search_header *sh;
 	struct btrfs_root_item *root_item_ptr;
-	struct btrfs_root_item root_item;
+	struct btrfs_root_item root_item = {};
 	struct subvol_info *si = NULL;
 	int root_item_valid = 0;
 	unsigned long off = 0;
