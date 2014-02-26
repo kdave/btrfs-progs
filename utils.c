@@ -2230,10 +2230,8 @@ int get_fslist(struct btrfs_ioctl_fslist **out_fslist, u64 *out_count)
 
 	fd = open("/dev/btrfs-control", O_RDWR);
 	e = errno;
-	if (fd < 0) {
-		perror("failed to open /dev/btrfs-control");
+	if (fd < 0)
 		return -e;
-	}
 
 	/* space to hold 512 fsids, doesn't matter if small
 	 * it would fail and return count so then we try again
@@ -2259,8 +2257,6 @@ again:
 		free(fsargs);
 		goto again;
 	} else if (ret < 0) {
-		printf("ERROR: scan_fsid ioctl failed - %s\n",
-			strerror(e));
 		ret = -e;
 		goto out;
 	}
