@@ -98,6 +98,7 @@ struct extent_record {
 	u64 refs;
 	u64 extent_item_refs;
 	u64 generation;
+	u64 parent_generation;
 	u64 info_objectid;
 	u64 num_duplicates;
 	u8 info_level;
@@ -2646,7 +2647,7 @@ static struct data_backref *alloc_data_backref(struct extent_record *rec,
 }
 
 static int add_extent_rec(struct cache_tree *extent_cache,
-			  struct btrfs_key *parent_key,
+			  struct btrfs_key *parent_key, u64 parent_gen,
 			  u64 start, u64 nr, u64 extent_item_refs,
 			  int is_root, int inc_ref, int set_checked,
 			  int metadata, int extent_rec, u64 max_size)
@@ -2722,6 +2723,8 @@ static int add_extent_rec(struct cache_tree *extent_cache,
 
 		if (parent_key)
 			btrfs_cpu_key_to_disk(&rec->parent_key, parent_key);
+		if (parent_gen)
+			rec->parent_generation = parent_gen;
 
 		if (rec->max_size < max_size)
 			rec->max_size = max_size;
@@ -2762,6 +2765,11 @@ static int add_extent_rec(struct cache_tree *extent_cache,
 	else
 		memset(&rec->parent_key, 0, sizeof(*parent_key));
 
+	if (parent_gen)
+		rec->parent_generation = parent_gen;
+	else
+		rec->parent_generation = 0;
+
 	rec->cache.start = start;
 	rec->cache.size = nr;
 	ret = insert_cache_extent(extent_cache, &rec->cache);
@@ -2783,7 +2791,7 @@ static int add_tree_backref(struct cache_tree *extent_cache, u64 bytenr,
 
 	cache = lookup_cache_extent(extent_cache, bytenr, 1);
 	if (!cache) {
-		add_extent_rec(extent_cache, NULL, bytenr,
+		add_extent_rec(extent_cache, NULL, 0, bytenr,
 			       1, 0, 0, 0, 0, 1, 0, 0);
 		cache = lookup_cache_extent(extent_cache, bytenr, 1);
 		if (!cache)
@@ -2831,7 +2839,7 @@ static int add_data_backref(struct cache_tree *extent_cache, u64 bytenr,
 
 	cache = lookup_cache_extent(extent_cache, bytenr, 1);
 	if (!cache) {
-		add_extent_rec(extent_cache, NULL, bytenr, 1, 0, 0, 0, 0,
+		add_extent_rec(extent_cache, NULL, 0, bytenr, 1, 0, 0, 0, 0,
 			       0, 0, max_size);
 		cache = lookup_cache_extent(extent_cache, bytenr, 1);
 		if (!cache)
@@ -3318,7 +3326,7 @@ static int process_extent_item(struct btrfs_root *root,
 #else
 		BUG();
 #endif
-		return add_extent_rec(extent_cache, NULL, key.objectid,
+		return add_extent_rec(extent_cache, NULL, 0, key.objectid,
 				      num_bytes, refs, 0, 0, 0, metadata, 1,
 				      num_bytes);
 	}
@@ -3326,7 +3334,7 @@ static int process_extent_item(struct btrfs_root *root,
 	ei = btrfs_item_ptr(eb, slot, struct btrfs_extent_item);
 	refs = btrfs_extent_refs(eb, ei);
 
-	add_extent_rec(extent_cache, NULL, key.objectid, num_bytes,
+	add_extent_rec(extent_cache, NULL, 0, key.objectid, num_bytes,
 		       refs, 0, 0, 0, metadata, 1, num_bytes);
 
 	ptr = (unsigned long)(ei + 1);
@@ -3839,6 +3847,7 @@ static int run_next_block(struct btrfs_trans_handle *trans,
 	u64 owner;
 	u64 flags;
 	u64 ptr;
+	u64 gen = 0;
 	int ret = 0;
 	int i;
 	int nritems;
@@ -3888,8 +3897,16 @@ static int run_next_block(struct btrfs_trans_handle *trans,
 		free(cache);
 	}
 
+	cache = lookup_cache_extent(extent_cache, bytenr, size);
+	if (cache) {
+		struct extent_record *rec;
+
+		rec = container_of(cache, struct extent_record, cache);
+		gen = rec->parent_generation;
+	}
+
 	/* fixme, get the real parent transid */
-	buf = read_tree_block(root, bytenr, size, 0);
+	buf = read_tree_block(root, bytenr, size, gen);
 	if (!extent_buffer_uptodate(buf)) {
 		record_bad_block_io(root->fs_info,
 				    extent_cache, bytenr, size);
@@ -4061,6 +4078,7 @@ static int run_next_block(struct btrfs_trans_handle *trans,
 				}
 			}
 			ret = add_extent_rec(extent_cache, &key,
+					     btrfs_node_ptr_generation(buf, i),
 					     ptr, size, 0, 0, 1, 0, 1, 0,
 					     size);
 			BUG_ON(ret);
@@ -4102,7 +4120,7 @@ static int add_root_to_pending(struct extent_buffer *buf,
 		add_pending(nodes, seen, buf->start, buf->len);
 	else
 		add_pending(pending, seen, buf->start, buf->len);
-	add_extent_rec(extent_cache, NULL, buf->start, buf->len,
+	add_extent_rec(extent_cache, NULL, 0, buf->start, buf->len,
 		       0, 1, 1, 0, 1, 0, buf->len);
 
 	if (root_key->objectid == BTRFS_TREE_RELOC_OBJECTID ||
