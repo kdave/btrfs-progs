@@ -297,7 +297,7 @@ struct extent_buffer *read_tree_block(struct btrfs_root *root, u64 bytenr,
 			ignore = 1;
 			continue;
 		}
-		if (btrfs_header_generation(eb) > best_transid) {
+		if (btrfs_header_generation(eb) > best_transid && mirror_num) {
 			best_transid = btrfs_header_generation(eb);
 			good_mirror = mirror_num;
 		}
