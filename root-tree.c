@@ -40,8 +40,10 @@ int btrfs_find_last_root(struct btrfs_root *root, u64 objectid,
 	ret = btrfs_search_slot(NULL, root, &search_key, path, 0, 0);
 	if (ret < 0)
 		goto out;
-	if (path->slots[0] == 0)
-		return -ENOENT;
+	if (path->slots[0] == 0) {
+		ret = -ENOENT;
+		goto out;
+	}
 
 	BUG_ON(ret == 0);
 	l = path->nodes[0];
@@ -56,7 +58,6 @@ int btrfs_find_last_root(struct btrfs_root *root, u64 objectid,
 	memcpy(key, &found_key, sizeof(found_key));
 	ret = 0;
 out:
-	btrfs_release_path(path);
 	btrfs_free_path(path);
 	return ret;
 }
@@ -120,7 +121,6 @@ int btrfs_update_root(struct btrfs_trans_handle *trans, struct btrfs_root
 	write_extent_buffer(l, item, ptr, sizeof(*item));
 	btrfs_mark_buffer_dirty(path->nodes[0]);
 out:
-	btrfs_release_path(path);
 	btrfs_free_path(path);
 	return ret;
 }
