@@ -17,7 +17,10 @@ is the image file that btrfs-image creates. When used with \fB-r\fP option,
 .SH OPTIONS
 .TP
 \fB\-r\fP
-restore metadump image.
+Restore metadump image. By default, this fixes super's chunk tree, by
+using 1 stripe pointing to primary device, so that file system can be
+restored by running tree log reply if possible. To restore without
+changing number of stripes in chunk tree check \fB-o\fP option.
 .TP
 \fB\-c\fR \fIvalue\fP
 compression level (0 ~ 9).

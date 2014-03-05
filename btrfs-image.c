@@ -1373,7 +1373,6 @@ static int update_super(u8 *buffer)
 	u32 new_array_size = 0;
 	u32 array_size;
 	u32 cur = 0;
-	u32 new_cur = 0;
 	u8 *ptr, *write_ptr;
 	int old_num_stripes;
 
@@ -1390,7 +1389,6 @@ static int update_super(u8 *buffer)
 		write_ptr += sizeof(*disk_key);
 		ptr += sizeof(*disk_key);
 		cur += sizeof(*disk_key);
-		new_cur += sizeof(*disk_key);
 
 		if (key.type == BTRFS_CHUNK_ITEM_KEY) {
 			chunk = (struct btrfs_chunk *)ptr;
@@ -1406,7 +1404,6 @@ static int update_super(u8 *buffer)
 			memcpy(chunk->stripe.dev_uuid, super->dev_item.uuid,
 			       BTRFS_UUID_SIZE);
 			new_array_size += sizeof(*chunk);
-			new_cur += sizeof(*chunk);
 		} else {
 			fprintf(stderr, "Bogus key in the sys chunk array "
 				"%d\n", key.type);
