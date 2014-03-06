@@ -5906,6 +5906,7 @@ static int btrfs_fsck_reinit_root(struct btrfs_trans_handle *trans,
 	struct extent_buffer *c;
 	struct extent_buffer *old = root->node;
 	int level;
+	int ret;
 	struct btrfs_disk_key disk_key = {0,0,0};
 
 	level = 0;
@@ -5922,6 +5923,7 @@ static int btrfs_fsck_reinit_root(struct btrfs_trans_handle *trans,
 	if (IS_ERR(c)) {
 		c = old;
 		extent_buffer_get(c);
+		overwrite = 1;
 	}
 init:
 	memset_extent_buffer(c, 0, 0, sizeof(struct btrfs_header));
@@ -5939,7 +5941,26 @@ init:
 			    BTRFS_UUID_SIZE);
 
 	btrfs_mark_buffer_dirty(c);
-
+	/*
+	 * this case can happen in the following case:
+	 *
+	 * 1.overwrite previous root.
+	 *
+	 * 2.reinit reloc data root, this is because we skip pin
+	 * down reloc data tree before which means we can allocate
+	 * same block bytenr here.
+	 */
+	if (old->start == c->start) {
+		btrfs_set_root_generation(&root->root_item,
+					  trans->transid);
+		root->root_item.level = btrfs_header_level(root->node);
+		ret = btrfs_update_root(trans, root->fs_info->tree_root,
+					&root->root_key, &root->root_item);
+		if (ret) {
+			free_extent_buffer(c);
+			return ret;
+		}
+	}
 	free_extent_buffer(old);
 	root->node = c;
 	add_root_to_dirty_list(root);
