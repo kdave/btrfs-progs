@@ -52,6 +52,7 @@ static LIST_HEAD(duplicate_extents);
 static LIST_HEAD(delete_items);
 static int repair = 0;
 static int no_holes = 0;
+static int init_extent_tree = 0;
 
 struct extent_backref {
 	struct list_head list;
@@ -3915,11 +3916,19 @@ static int run_next_block(struct btrfs_trans_handle *trans,
 
 	nritems = btrfs_header_nritems(buf);
 
-	ret = btrfs_lookup_extent_info(NULL, root, bytenr,
+	/*
+	 * FIXME, this only works only if we don't have any full
+	 * backref mode.
+	 */
+	if (!init_extent_tree) {
+		ret = btrfs_lookup_extent_info(NULL, root, bytenr,
 				       btrfs_header_level(buf), 1, NULL,
 				       &flags);
-	if (ret < 0)
-		flags = BTRFS_BLOCK_FLAG_FULL_BACKREF;
+		if (ret < 0)
+			flags = 0;
+	} else {
+		flags = 0;
+	}
 
 	if (flags & BTRFS_BLOCK_FLAG_FULL_BACKREF) {
 		parent = bytenr;
@@ -5102,12 +5111,20 @@ static int fixup_extent_refs(struct btrfs_trans_handle *trans,
 	int allocated = 0;
 	u64 flags = 0;
 
-	/* remember our flags for recreating the extent */
-	ret = btrfs_lookup_extent_info(NULL, info->extent_root, rec->start,
-				       rec->max_size, rec->metadata, NULL,
-				       &flags);
-	if (ret < 0)
-		flags = BTRFS_BLOCK_FLAG_FULL_BACKREF;
+	/*
+	 * remember our flags for recreating the extent.
+	 * FIXME, if we have cleared extent tree, we can not
+	 * lookup extent info in extent tree.
+	 */
+	if (!init_extent_tree) {
+		ret = btrfs_lookup_extent_info(NULL, info->extent_root,
+					rec->start, rec->max_size,
+					rec->metadata, NULL, &flags);
+		if (ret < 0)
+			flags = 0;
+	} else {
+		flags = 0;
+	}
 
 	path = btrfs_alloc_path();
 	if (!path)
@@ -6438,7 +6455,6 @@ int cmd_check(int argc, char **argv)
 	u64 num;
 	int option_index = 0;
 	int init_csum_tree = 0;
-	int init_extent_tree = 0;
 	enum btrfs_open_ctree_flags ctree_flags =
 		OPEN_CTREE_PARTIAL | OPEN_CTREE_EXCLUSIVE;
 
