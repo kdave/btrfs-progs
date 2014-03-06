@@ -6128,7 +6128,10 @@ static int reset_balance(struct btrfs_trans_handle *trans,
 	if (ret) {
 		if (ret > 0)
 			ret = 0;
-		goto out;
+		if (!ret)
+			goto reinit_data_reloc;
+		else
+			goto out;
 	}
 
 	ret = btrfs_del_item(trans, root, path);
@@ -6190,6 +6193,7 @@ static int reset_balance(struct btrfs_trans_handle *trans,
 	}
 	btrfs_release_path(path);
 
+reinit_data_reloc:
 	key.objectid = BTRFS_DATA_RELOC_TREE_OBJECTID;
 	key.type = BTRFS_ROOT_ITEM_KEY;
 	key.offset = (u64)-1;
@@ -6205,6 +6209,9 @@ static int reset_balance(struct btrfs_trans_handle *trans,
 		extent_buffer_get(root->node);
 	}
 	ret = btrfs_fsck_reinit_root(trans, root, 0);
+	if (ret)
+		goto out;
+	ret = btrfs_make_root_dir(trans, root, BTRFS_FIRST_FREE_OBJECTID);
 out:
 	btrfs_free_path(path);
 	return ret;
