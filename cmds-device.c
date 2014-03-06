@@ -187,51 +187,67 @@ static int cmd_rm_dev(int argc, char **argv)
 }
 
 static const char * const cmd_scan_dev_usage[] = {
-	"btrfs device scan [<--all-devices>|<device> [<device>...]]",
+	"btrfs device scan [options] [<device> [<device>...]]",
 	"Scan devices for a btrfs filesystem",
+	"-d|--all-devices    scan all devices under /dev",
 	NULL
 };
 
 static int cmd_scan_dev(int argc, char **argv)
 {
-	int	i, fd, e;
-	int	where = BTRFS_SCAN_LBLKID;
-	int	devstart = 1;
+	int i, fd, e;
+	int where = BTRFS_SCAN_LBLKID;
+	int devstart = 1;
+	int all = 0;
+	int ret = 0;
 
-	if( argc > 1 && !strcmp(argv[1],"--all-devices")){
-		if (check_argc_max(argc, 2))
+	optind = 1;
+	while (1) {
+		int long_index;
+		static struct option long_options[] = {
+			{ "all-devices", no_argument, NULL, 'd'},
+			{ 0, 0, 0, 0 },
+		};
+		int c = getopt_long(argc, argv, "d", long_options,
+				    &long_index);
+		if (c < 0)
+			break;
+		switch (c) {
+		case 'd':
+			where = BTRFS_SCAN_DEV;
+			all = 1;
+			break;
+		default:
 			usage(cmd_scan_dev_usage);
-
-		where = BTRFS_SCAN_DEV;
-		devstart += 1;
+		}
 	}
 
-	if(argc<=devstart){
-		int ret;
+	if (all && check_argc_max(argc, 2))
+		usage(cmd_scan_dev_usage);
+
+	if (all || argc == 1) {
 		printf("Scanning for Btrfs filesystems\n");
 		ret = scan_for_btrfs(where, BTRFS_UPDATE_KERNEL);
-		if (ret){
+		if (ret)
 			fprintf(stderr, "ERROR: error %d while scanning\n", ret);
-			return 1;
-		}
-		return 0;
+		goto out;
 	}
 
 	fd = open("/dev/btrfs-control", O_RDWR);
 	if (fd < 0) {
 		perror("failed to open /dev/btrfs-control");
-		return 1;
+		ret = 1;
+		goto out;
 	}
 
 	for( i = devstart ; i < argc ; i++ ){
 		struct btrfs_ioctl_vol_args args;
-		int ret;
 
 		if (!is_block_device(argv[i])) {
 			fprintf(stderr,
 				"ERROR: %s is not a block device\n", argv[i]);
-			close(fd);
-			return 1;
+			ret = 1;
+			goto close_out;
 		}
 		printf("Scanning for Btrfs filesystems in '%s'\n", argv[i]);
 
@@ -245,15 +261,16 @@ static int cmd_scan_dev(int argc, char **argv)
 		e = errno;
 
 		if( ret < 0 ){
-			close(fd);
 			fprintf(stderr, "ERROR: unable to scan the device '%s' - %s\n",
 				argv[i], strerror(e));
-			return 1;
+			goto close_out;
 		}
 	}
 
+close_out:
 	close(fd);
-	return 0;
+out:
+	return !!ret;
 }
 
 static const char * const cmd_ready_dev_usage[] = {
