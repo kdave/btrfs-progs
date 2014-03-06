@@ -494,10 +494,8 @@ int cmd_filesystem_df(int argc, char **argv)
 		}
 	}
 
-	if (check_argc_min(argc - optind, 1)) {
+	if (check_argc_min(argc - optind, 1))
 		usage(cmd_filesystem_df_usage);
-		return 21;
-	}
 
 	for (i = optind; i < argc ; i++) {
 		int r, fd;
@@ -914,10 +912,8 @@ int cmd_filesystem_disk_usage(int argc, char **argv)
 		}
 	}
 
-	if (check_argc_min(argc - optind, 1)) {
+	if (check_argc_min(argc - optind, 1))
 		usage(cmd_filesystem_disk_usage_usage);
-		return 21;
-	}
 
 	for (i = optind; i < argc ; i++) {
 		int r, fd;
@@ -1050,10 +1046,8 @@ int cmd_device_disk_usage(int argc, char **argv)
 		}
 	}
 
-	if (check_argc_min(argc - optind, 1)) {
+	if (check_argc_min(argc - optind, 1))
 		usage(cmd_device_disk_usage_usage);
-		return 21;
-	}
 
 	for (i = optind; i < argc ; i++) {
 		int r, fd;
