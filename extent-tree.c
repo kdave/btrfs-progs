@@ -1560,7 +1560,7 @@ again:
 		*flags = extent_flags;
 out:
 	btrfs_free_path(path);
-	return 0;
+	return ret;
 }
 
 int btrfs_set_block_flags(struct btrfs_trans_handle *trans,
