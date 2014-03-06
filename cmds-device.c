@@ -323,18 +323,13 @@ static int cmd_dev_stats(int argc, char **argv)
 			break;
 		case '?':
 		default:
-			fprintf(stderr, "ERROR: device stat args invalid.\n"
-					" device stat [-z] <path>|<device>\n"
-					" -z  to reset stats after reading.\n");
-			return 1;
+			usage(cmd_dev_stats_usage);
 		}
 	}
 
-	if (optind + 1 != argc) {
-		fprintf(stderr, "ERROR: device stat needs path|device as single"
-			" argument\n");
-		return 1;
-	}
+	argc = argc - optind;
+	if (check_argc_exact(argc, 1))
+		usage(cmd_dev_stats_usage);
 
 	dev_path = argv[optind];
 
