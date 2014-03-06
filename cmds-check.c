@@ -6253,12 +6253,6 @@ static int reinit_extent_tree(struct btrfs_trans_handle *trans,
 		return ret;
 	}
 
-	ret = reset_balance(trans, fs_info);
-	if (ret) {
-		fprintf(stderr, "error reseting the pending balance\n");
-		return ret;
-	}
-
 	/* Ok we can allocate now, reinit the extent root */
 	ret = btrfs_fsck_reinit_root(trans, fs_info->extent_root, 0);
 	if (ret) {
@@ -6293,7 +6287,11 @@ static int reinit_extent_tree(struct btrfs_trans_handle *trans,
 		btrfs_extent_post_op(trans, fs_info->extent_root);
 	}
 
-	return 0;
+	ret = reset_balance(trans, fs_info);
+	if (ret)
+		fprintf(stderr, "error reseting the pending balance\n");
+
+	return ret;
 }
 
 static int recow_extent_buffer(struct btrfs_root *root, struct extent_buffer *eb)
