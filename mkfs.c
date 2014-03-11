@@ -619,6 +619,9 @@ static int add_file_items(struct btrfs_trans_handle *trans,
 	struct extent_buffer *eb = NULL;
 	int fd;
 
+	if (st->st_size == 0)
+		return 0;
+
 	fd = open(path_name, O_RDONLY);
 	if (fd == -1) {
 		fprintf(stderr, "%s open failed\n", path_name);
