@@ -380,7 +380,10 @@ static int add_directory_items(struct btrfs_trans_handle *trans,
 	ret = btrfs_insert_dir_item(trans, root, name, name_len,
 				    parent_inum, &location,
 				    filetype, index_cnt);
-
+	if (ret)
+		return ret;
+	ret = btrfs_insert_inode_ref(trans, root, name, name_len,
+				     objectid, parent_inum, index_cnt);
 	*dir_index_cnt = index_cnt;
 	index_cnt++;
 
@@ -493,9 +496,7 @@ static int add_inode_items(struct btrfs_trans_handle *trans,
 	struct btrfs_inode_item btrfs_inode;
 	u64 objectid;
 	u64 inode_size = 0;
-	int name_len;
 
-	name_len = strlen(name);
 	fill_inode_item(trans, root, &btrfs_inode, st);
 	objectid = self_objectid;
 
@@ -509,16 +510,8 @@ static int add_inode_items(struct btrfs_trans_handle *trans,
 	btrfs_set_key_type(&inode_key, BTRFS_INODE_ITEM_KEY);
 
 	ret = btrfs_insert_inode(trans, root, objectid, &btrfs_inode);
-	if (ret)
-		goto fail;
-
-	ret = btrfs_insert_inode_ref(trans, root, name, name_len,
-				     objectid, parent_inum, dir_index_cnt);
-	if (ret)
-		goto fail;
 
 	*inode_ret = btrfs_inode;
-fail:
 	return ret;
 }
 
@@ -826,7 +819,7 @@ static int traverse_directory(struct btrfs_trans_handle *trans,
 				goto fail;
 			}
 
-			cur_inum = ++highest_inum + BTRFS_FIRST_FREE_OBJECTID;
+			cur_inum = st.st_ino;
 			ret = add_directory_items(trans, root,
 						  cur_inum, parent_inum,
 						  cur_file->d_name,
@@ -840,6 +833,10 @@ static int traverse_directory(struct btrfs_trans_handle *trans,
 					      cur_file->d_name, cur_inum,
 					      parent_inum, dir_index_cnt,
 					      &cur_inode);
+			if (ret == -EEXIST) {
+				BUG_ON(st.st_nlink <= 1);
+				continue;
+			}
 			if (ret) {
 				fprintf(stderr, "add_inode_items failed\n");
 				goto fail;
