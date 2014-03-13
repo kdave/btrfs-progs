@@ -965,7 +965,7 @@ static int make_image(char *source_dir, struct btrfs_root *root, int out_fd)
 	ret = lstat(source_dir, &root_st);
 	if (ret) {
 		fprintf(stderr, "unable to lstat the %s\n", source_dir);
-		goto fail;
+		goto out;
 	}
 
 	INIT_LIST_HEAD(&dir_head.list);
@@ -987,6 +987,7 @@ fail:
 		list_del(&dir_entry->list);
 		free(dir_entry);
 	}
+out:
 	fprintf(stderr, "Making image is aborted.\n");
 	return -1;
 }
