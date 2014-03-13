@@ -752,6 +752,7 @@ static int traverse_directory(struct btrfs_trans_handle *trans,
 	ino_t parent_inum, cur_inum;
 	ino_t highest_inum = 0;
 	char *parent_dir_name;
+	char real_path[PATH_MAX];
 	struct btrfs_path path;
 	struct extent_buffer *leaf;
 	struct btrfs_key root_dir_key;
@@ -760,7 +761,12 @@ static int traverse_directory(struct btrfs_trans_handle *trans,
 	/* Add list for source directory */
 	dir_entry = malloc(sizeof(struct directory_name_entry));
 	dir_entry->dir_name = dir_name;
-	dir_entry->path = strdup(dir_name);
+	dir_entry->path = realpath(dir_name, real_path);
+	if (!dir_entry->path) {
+		fprintf(stderr, "get directory real path error\n");
+		ret = -1;
+		goto fail_no_dir;
+	}
 
 	parent_inum = highest_inum + BTRFS_FIRST_FREE_OBJECTID;
 	dir_entry->inum = parent_inum;
@@ -774,7 +780,7 @@ static int traverse_directory(struct btrfs_trans_handle *trans,
 	ret = btrfs_lookup_inode(trans, root, &path, &root_dir_key, 1);
 	if (ret) {
 		fprintf(stderr, "root dir lookup error\n");
-		return -1;
+		goto fail_no_dir;
 	}
 
 	leaf = path.nodes[0];
@@ -798,6 +804,7 @@ static int traverse_directory(struct btrfs_trans_handle *trans,
 		if (chdir(parent_dir_entry->path)) {
 			fprintf(stderr, "chdir error for %s\n",
 				parent_dir_name);
+			ret = -1;
 			goto fail_no_files;
 		}
 
@@ -807,6 +814,7 @@ static int traverse_directory(struct btrfs_trans_handle *trans,
 		{
 			fprintf(stderr, "scandir for %s failed: %s\n",
 				parent_dir_name, strerror (errno));
+			ret = -1;
 			goto fail;
 		}
 
@@ -816,6 +824,7 @@ static int traverse_directory(struct btrfs_trans_handle *trans,
 			if (lstat(cur_file->d_name, &st) == -1) {
 				fprintf(stderr, "lstat failed for file %s\n",
 					cur_file->d_name);
+				ret = -1;
 				goto fail;
 			}
 
@@ -876,20 +885,22 @@ static int traverse_directory(struct btrfs_trans_handle *trans,
 		}
 
 		free_namelist(files, count);
-		free(parent_dir_entry->path);
 		free(parent_dir_entry);
 
 		index_cnt = 2;
 
 	} while (!list_empty(&dir_head->list));
 
-	return 0;
+out:
+	return !!ret;
 fail:
 	free_namelist(files, count);
 fail_no_files:
-	free(parent_dir_entry->path);
 	free(parent_dir_entry);
-	return -1;
+	goto out;
+fail_no_dir:
+	free(dir_entry);
+	goto out;
 }
 
 static int open_target(char *output_name)
