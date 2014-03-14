@@ -776,7 +776,7 @@ static int scrub_write_progress(pthread_mutex_t *m, const char *fsid,
 	ret = pthread_mutex_lock(m);
 	if (ret) {
 		err = -ret;
-		goto out;
+		goto fail;
 	}
 
 	ret = pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &old);
@@ -808,6 +808,7 @@ out:
 	if (ret && !err)
 		err = -ret;
 
+fail:
 	ret = pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &old);
 	if (ret && !err)
 		err = -ret;
