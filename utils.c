@@ -2064,6 +2064,7 @@ int btrfs_scan_lblkid(int update_kernel)
 			btrfs_register_one_device(path);
 	}
 	blkid_dev_iterate_end(iter);
+	blkid_put_cache(cache);
 	return 0;
 }
 
