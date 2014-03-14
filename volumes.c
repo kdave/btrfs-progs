@@ -160,11 +160,12 @@ static int device_list_add(const char *path,
 int btrfs_close_devices(struct btrfs_fs_devices *fs_devices)
 {
 	struct btrfs_fs_devices *seed_devices;
-	struct list_head *cur;
 	struct btrfs_device *device;
+
 again:
-	list_for_each(cur, &fs_devices->devices) {
-		device = list_entry(cur, struct btrfs_device, dev_list);
+	while (!list_empty(&fs_devices->devices)) {
+		device = list_entry(fs_devices->devices.next,
+				    struct btrfs_device, dev_list);
 		if (device->fd != -1) {
 			fsync(device->fd);
 			if (posix_fadvise(device->fd, 0, 0, POSIX_FADV_DONTNEED))
@@ -173,6 +174,11 @@ again:
 			device->fd = -1;
 		}
 		device->writeable = 0;
+		list_del(&device->dev_list);
+		/* free the memory */
+		free(device->name);
+		free(device->label);
+		free(device);
 	}
 
 	seed_devices = fs_devices->seed;
@@ -182,6 +188,7 @@ again:
 		goto again;
 	}
 
+	free(fs_devices);
 	return 0;
 }
 
