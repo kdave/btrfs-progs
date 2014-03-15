@@ -188,7 +188,7 @@ static int get_df(int fd, struct btrfs_ioctl_space_args **sargs_ret)
 	sargs = malloc(sizeof(struct btrfs_ioctl_space_args) +
 			(count * sizeof(struct btrfs_ioctl_space_info)));
 	if (!sargs)
-		ret = -ENOMEM;
+		return -ENOMEM;
 
 	sargs->space_slots = count;
 	sargs->total_spaces = 0;
