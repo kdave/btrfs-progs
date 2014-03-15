@@ -2380,7 +2380,7 @@ static int swap_values(struct btrfs_root *root, struct btrfs_path *path,
 			return -ENOMEM;
 		item2_data = malloc(item2_size);
 		if (!item2_data) {
-			free(item2_data);
+			free(item1_data);
 			return -ENOMEM;
 		}
 
