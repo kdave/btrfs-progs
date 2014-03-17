@@ -1206,7 +1206,14 @@ int btrfs_read_dev_super(int fd, struct btrfs_super_block *sb, u64 sb_bytenr)
 		return 0;
 	}
 
-	for (i = 0; i < BTRFS_SUPER_MIRROR_MAX; i++) {
+	/*
+	* we would like to check all the supers, but that would make
+	* a btrfs mount succeed after a mkfs from a different FS.
+	* So, we need to add a special mount option to scan for
+	* later supers, using BTRFS_SUPER_MIRROR_MAX instead
+	*/
+
+	for (i = 0; i < 1; i++) {
 		bytenr = btrfs_sb_offset(i);
 		ret = pread64(fd, &buf, sizeof(buf), bytenr);
 		if (ret < sizeof(buf))
