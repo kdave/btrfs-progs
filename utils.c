@@ -38,6 +38,8 @@
 #include <linux/kdev_t.h>
 #include <limits.h>
 #include <blkid/blkid.h>
+#include <sys/vfs.h>
+
 #include "kerncompat.h"
 #include "radix-tree.h"
 #include "ctree.h"
@@ -47,6 +49,7 @@
 #include "utils.h"
 #include "volumes.h"
 #include "ioctl.h"
+#include "btrfs-list.h"
 
 #ifndef BLKDISCARD
 #define BLKDISCARD	_IO(0x12,119)
@@ -2212,4 +2215,208 @@ int find_mount_root(const char *path, char **mount_root)
 
 	free(longest_match);
 	return ret;
+}
+
+/* scans for fsid(s) in the kernel using the btrfs-control
+ * interface.
+ */
+int get_fslist(struct btrfs_ioctl_fslist **out_fslist, u64 *out_count)
+{
+	int ret, fd, e;
+	struct btrfs_ioctl_fslist_args *fsargs;
+	struct btrfs_ioctl_fslist_args *fsargs_saved = NULL;
+	struct btrfs_ioctl_fslist *fslist;
+	u64 sz;
+	int count;
+
+	fd = open("/dev/btrfs-control", O_RDWR);
+	e = errno;
+	if (fd < 0)
+		return -e;
+
+	/* space to hold 512 fsids, doesn't matter if small
+	 * it would fail and return count so then we try again
+	 */
+	count = 512;
+again:
+	sz = sizeof(*fsargs) + sizeof(*fslist) * count;
+
+	fsargs_saved = fsargs = malloc(sz);
+	if (!fsargs) {
+		close(fd);
+		return -ENOMEM;
+	}
+
+	memset(fsargs, 0, sz);
+	fsargs->count = count;
+
+	ret = ioctl(fd, BTRFS_IOC_GET_FSLIST, fsargs);
+	e = errno;
+	if (ret == 1) {
+		/* out of size so reallocate */
+		count = fsargs->count;
+		free(fsargs);
+		goto again;
+	} else if (ret < 0) {
+		ret = -e;
+		goto out;
+	}
+
+	/* ioctl returns fsid count in count parameter*/
+
+	*out_count = fsargs->count;
+	if (*out_count == 0) {
+		*out_fslist = NULL;
+		ret = 0;
+		goto out;
+	}
+
+	fslist = (struct btrfs_ioctl_fslist *) (++fsargs);
+
+	sz = sizeof(*fslist) * *out_count;
+	*out_fslist = malloc(sz);
+	if (*out_fslist == NULL) {
+		ret = -ENOMEM;
+		goto out;
+	}
+	memcpy(*out_fslist, fslist, sz);
+	ret = 0;
+out:
+	free(fsargs_saved);
+	close(fd);
+	return ret;
+}
+
+/* This finds the mount point for a given fsid,
+ *  subvols of the same fs/fsid can be mounted
+ *  so here this picks and lowest subvol id
+ *  and returns the mount point
+*/
+int fsid_to_mntpt(__u8 *fsid, char *mntpt, int *mnt_cnt)
+{
+	int fd = -1, ret = 0;
+	DIR *dirstream = NULL;
+	FILE *f;
+	struct btrfs_ioctl_fs_info_args fi_args;
+	u64 svid, saved_svid = (u64)-1;
+	struct mntent *mnt;
+	int mcnt = 0;
+
+	*mnt_cnt = 0;
+	f = setmntent("/proc/self/mounts", "r");
+	if (f == NULL)
+		return 1;
+
+	while ((mnt = getmntent(f)) != NULL) {
+		if (strcmp(mnt->mnt_type, "btrfs"))
+			continue;
+		fd = open_file_or_dir(mnt->mnt_dir, &dirstream);
+		if (fd < 0) {
+			ret = -errno;
+			return ret;
+		}
+		ret = ioctl(fd, BTRFS_IOC_FS_INFO, &fi_args);
+		if (ret < 0) {
+			ret = -errno;
+			close_file_or_dir(fd, dirstream);
+			break;
+		}
+		if (uuid_compare(fsid, fi_args.fsid)) {
+			close_file_or_dir(fd, dirstream);
+			continue;
+		}
+
+		/* found */
+		mcnt++;
+		ret = btrfs_list_get_path_rootid(fd, &svid);
+		if (ret) {
+			/* error so just copy and return*/
+			strcpy(mntpt, mnt->mnt_dir);
+			close_file_or_dir(fd, dirstream);
+			break;
+		}
+		if (svid < saved_svid) {
+			strcpy(mntpt, mnt->mnt_dir);
+			saved_svid = svid;
+		}
+	}
+	endmntent(f);
+	if (mcnt)
+		*mnt_cnt = mcnt;
+
+	return ret;
+}
+
+u64 disk_size(char *path)
+{
+	struct statfs	sfs;
+
+	if (statfs(path, &sfs) < 0)
+		return 0;
+	else
+		return sfs.f_bsize * sfs.f_blocks;
+
+}
+
+u64 get_partition_size(char *dev)
+{
+	u64 result;
+	int fd = open(dev, O_RDONLY);
+
+	if (fd < 0)
+		return 0;
+	if (ioctl(fd, BLKGETSIZE64, &result) < 0) {
+		close(fd);
+		return 0;
+	}
+	close(fd);
+
+	return result;
+}
+
+
+
+
+/*
+ *  Convert a chunk type to a chunk description
+ */
+const char *group_type_str(u64 flag)
+{
+	switch (flag & BTRFS_BLOCK_GROUP_TYPE_MASK) {
+	case BTRFS_BLOCK_GROUP_DATA:
+		return "Data";
+	case BTRFS_BLOCK_GROUP_SYSTEM:
+		return "System";
+	case BTRFS_BLOCK_GROUP_METADATA:
+		return "Metadata";
+	case BTRFS_BLOCK_GROUP_DATA|BTRFS_BLOCK_GROUP_METADATA:
+		return "Data+Metadata";
+	default:
+		return "unknown";
+	}
+}
+
+/*
+ *  Convert a chunk type to a chunk profile description
+ */
+const char *group_profile_str(u64 flag)
+{
+	switch (flag & BTRFS_BLOCK_GROUP_PROFILE_MASK) {
+	case 0:
+		return "single";
+	case BTRFS_BLOCK_GROUP_RAID0:
+		return "RAID0";
+	case BTRFS_BLOCK_GROUP_RAID1:
+		return "RAID1";
+	case BTRFS_BLOCK_GROUP_RAID5:
+		return "RAID5";
+	case BTRFS_BLOCK_GROUP_RAID6:
+		return "RAID6";
+	case BTRFS_BLOCK_GROUP_DUP:
+		return "DUP";
+	case BTRFS_BLOCK_GROUP_RAID10:
+		return "RAID10";
+	default:
+		return "unknown";
+	}
 }

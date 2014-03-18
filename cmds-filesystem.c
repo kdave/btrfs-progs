@@ -36,6 +36,7 @@
 #include "volumes.h"
 #include "version.h"
 #include "commands.h"
+#include "cmds-fi-disk_usage.h"
 #include "list_sort.h"
 #include "disk-io.h"
 
@@ -112,49 +113,6 @@ static const char * const filesystem_cmd_group_usage[] = {
 	NULL
 };
 
-static const char * const cmd_df_usage[] = {
-	"btrfs filesystem df <path>",
-	"Show space usage information for a mount point",
-	NULL
-};
-
-static char *group_type_str(u64 flag)
-{
-	switch (flag & BTRFS_BLOCK_GROUP_TYPE_MASK) {
-	case BTRFS_BLOCK_GROUP_DATA:
-		return "Data";
-	case BTRFS_BLOCK_GROUP_SYSTEM:
-		return "System";
-	case BTRFS_BLOCK_GROUP_METADATA:
-		return "Metadata";
-	case BTRFS_BLOCK_GROUP_DATA|BTRFS_BLOCK_GROUP_METADATA:
-		return "Data+Metadata";
-	default:
-		return "unknown";
-	}
-}
-
-static char *group_profile_str(u64 flag)
-{
-	switch (flag & BTRFS_BLOCK_GROUP_PROFILE_MASK) {
-	case 0:
-		return "single";
-	case BTRFS_BLOCK_GROUP_RAID0:
-		return "RAID0";
-	case BTRFS_BLOCK_GROUP_RAID1:
-		return "RAID1";
-	case BTRFS_BLOCK_GROUP_RAID5:
-		return "RAID5";
-	case BTRFS_BLOCK_GROUP_RAID6:
-		return "RAID6";
-	case BTRFS_BLOCK_GROUP_DUP:
-		return "DUP";
-	case BTRFS_BLOCK_GROUP_RAID10:
-		return "RAID10";
-	default:
-		return "unknown";
-	}
-}
 
 static int get_df(int fd, struct btrfs_ioctl_space_args **sargs_ret)
 {
@@ -202,51 +160,6 @@ static int get_df(int fd, struct btrfs_ioctl_space_args **sargs_ret)
 	}
 	*sargs_ret = sargs;
 	return 0;
-}
-
-static void print_df(struct btrfs_ioctl_space_args *sargs)
-{
-	u64 i;
-	struct btrfs_ioctl_space_info *sp = sargs->spaces;
-
-	for (i = 0; i < sargs->total_spaces; i++, sp++) {
-		printf("%s, %s: total=%s, used=%s\n",
-			group_type_str(sp->flags),
-			group_profile_str(sp->flags),
-			pretty_size(sp->total_bytes),
-			pretty_size(sp->used_bytes));
-	}
-}
-
-static int cmd_df(int argc, char **argv)
-{
-	struct btrfs_ioctl_space_args *sargs = NULL;
-	int ret;
-	int fd;
-	char *path;
-	DIR  *dirstream = NULL;
-
-	if (check_argc_exact(argc, 2))
-		usage(cmd_df_usage);
-
-	path = argv[1];
-
-	fd = open_file_or_dir(path, &dirstream);
-	if (fd < 0) {
-		fprintf(stderr, "ERROR: can't access '%s'\n", path);
-		return 1;
-	}
-	ret = get_df(fd, &sargs);
-
-	if (!ret && sargs) {
-		print_df(sargs);
-		free(sargs);
-	} else {
-		fprintf(stderr, "ERROR: get_df failed %s\n", strerror(-ret));
-	}
-
-	close_file_or_dir(fd, dirstream);
-	return !!ret;
 }
 
 static int match_search_item_kernel(__u8 *fsid, char *mnt, char *label,
@@ -409,6 +322,29 @@ static int print_one_fs(struct btrfs_ioctl_fs_info_args *fs_info,
 	return 0;
 }
 
+static void handle_print(char *mnt, char *label)
+{
+	int fd;
+	struct btrfs_ioctl_fs_info_args fs_info_arg;
+	struct btrfs_ioctl_dev_info_args *dev_info_arg = NULL;
+	struct btrfs_ioctl_space_args *space_info_arg;
+
+	if (get_fs_info(mnt, &fs_info_arg, &dev_info_arg)) {
+		fprintf(stdout, "ERROR: get_fs_info failed\n");
+		return;
+	}
+
+	fd = open(mnt, O_RDONLY);
+	if (fd != -1 && !get_df(fd, &space_info_arg)) {
+		print_one_fs(&fs_info_arg, dev_info_arg,
+				space_info_arg, label, mnt);
+		kfree(space_info_arg);
+	}
+	if (fd != -1)
+		close(fd);
+	kfree(dev_info_arg);
+}
+
 /* This function checks if the given input parameter is
  * an uuid or a path
  * return -1: some error in the given input
@@ -439,6 +375,56 @@ static int check_arg_type(char *input)
 		return BTRFS_ARG_UUID;
 
 	return BTRFS_ARG_UNKNOWN;
+}
+
+static int btrfs_scan_kernel_v2(void *search)
+{
+	int ret = 0;
+	char label[BTRFS_LABEL_SIZE];
+	char mnt[BTRFS_PATH_NAME_MAX + 1];
+	struct btrfs_ioctl_fslist *fslist;
+	struct btrfs_ioctl_fslist *fslist_saved;
+	u64 cnt_fs;
+	int cnt_mnt;
+	__u8 *fsid;
+	__u64 flags;
+	int found = 0;
+
+	ret = get_fslist(&fslist, &cnt_fs);
+	if (ret)
+		return ret;
+	fslist_saved = fslist;
+	while (cnt_fs--) {
+		fsid = fslist->fsid;
+		flags = fslist->flags;
+		fslist++;
+		if (!(flags & BTRFS_FS_MOUNTED))
+			continue;
+		memset(mnt, 0, BTRFS_PATH_NAME_MAX + 1);
+		memset(label, 0, sizeof(label));
+		ret = fsid_to_mntpt(fsid, mnt, &cnt_mnt);
+		if (ret)
+			break;
+
+		if (get_label_mounted(mnt, label)) {
+			ret = 1;
+			break;
+		}
+
+		if (search && !match_search_item_kernel(fsid,
+					mnt, label, search))
+			continue;
+
+		handle_print(mnt, label);
+		if (search) {
+			found = 1;
+			break;
+		}
+	}
+	kfree(fslist_saved);
+	if (search && !found)
+		return 1;
+	return ret;
 }
 
 static int btrfs_scan_kernel(void *search)
@@ -618,6 +604,13 @@ static int cmd_show(int argc, char **argv)
 					goto devs_only;
 				}
 			}
+		} else if (type == BTRFS_ARG_MNTPOINT) {
+			char label[BTRFS_LABEL_SIZE];
+			ret = get_label_mounted(search, label);
+			if (ret)
+				return 1;
+			handle_print(search, label);
+			goto out;
 		}
 	}
 
@@ -625,7 +618,9 @@ static int cmd_show(int argc, char **argv)
 		goto devs_only;
 
 	/* show mounted btrfs */
-	ret = btrfs_scan_kernel(search);
+	ret = btrfs_scan_kernel_v2(search);
+	if (ret == -ENOTTY)
+		ret = btrfs_scan_kernel(search);
 	if (search && !ret) {
 		/* since search is found we are done */
 		goto out;
@@ -1002,13 +997,16 @@ static int cmd_label(int argc, char **argv)
 
 const struct cmd_group filesystem_cmd_group = {
 	filesystem_cmd_group_usage, NULL, {
-		{ "df", cmd_df, cmd_df_usage, NULL, 0 },
+		{ "df", cmd_filesystem_df, cmd_filesystem_df_usage, NULL, 0 },
 		{ "show", cmd_show, cmd_show_usage, NULL, 0 },
 		{ "sync", cmd_sync, cmd_sync_usage, NULL, 0 },
 		{ "defragment", cmd_defrag, cmd_defrag_usage, NULL, 0 },
 		{ "balance", cmd_balance, NULL, &balance_cmd_group, 1 },
 		{ "resize", cmd_resize, cmd_resize_usage, NULL, 0 },
 		{ "label", cmd_label, cmd_label_usage, NULL, 0 },
+		{ "disk-usage", cmd_filesystem_disk_usage,
+			cmd_filesystem_disk_usage_usage, NULL, 0 },
+
 		NULL_CMD_STRUCT
 	}
 };
