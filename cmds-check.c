@@ -2920,7 +2920,7 @@ static int pick_next_pending(struct cache_tree *pending,
 	cache = search_cache_extent(reada, 0);
 	if (cache) {
 		bits[0].start = cache->start;
-		bits[1].size = cache->size;
+		bits[0].size = cache->size;
 		*reada_bits = 1;
 		return 1;
 	}
