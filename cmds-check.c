@@ -92,7 +92,6 @@ struct extent_record {
 	struct list_head list;
 	struct cache_extent cache;
 	struct btrfs_disk_key parent_key;
-	unsigned int found_rec;
 	u64 start;
 	u64 max_size;
 	u64 nr;
@@ -101,8 +100,9 @@ struct extent_record {
 	u64 generation;
 	u64 parent_generation;
 	u64 info_objectid;
-	u64 num_duplicates;
+	u32 num_duplicates;
 	u8 info_level;
+	unsigned int found_rec:1;
 	unsigned int content_checked:1;
 	unsigned int owner_ref_checked:1;
 	unsigned int is_root:1;
@@ -2737,7 +2737,7 @@ static int add_extent_rec(struct cache_tree *extent_cache,
 	rec->start = start;
 	rec->max_size = max_size;
 	rec->nr = max(nr, max_size);
-	rec->found_rec = extent_rec;
+	rec->found_rec = !!extent_rec;
 	rec->content_checked = 0;
 	rec->owner_ref_checked = 0;
 	rec->num_duplicates = 0;
