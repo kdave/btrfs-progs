@@ -5909,6 +5909,9 @@ out:
 	free_block_group_tree(&block_group_cache);
 	free_device_extent_tree(&dev_extent_cache);
 	free_extent_cache_tree(&seen);
+	free_extent_cache_tree(&pending);
+	free_extent_cache_tree(&reada);
+	free_extent_cache_tree(&nodes);
 	return ret;
 }
 
