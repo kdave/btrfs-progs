@@ -3892,12 +3892,6 @@ static int run_next_block(struct btrfs_trans_handle *trans,
 		remove_cache_extent(nodes, cache);
 		free(cache);
 	}
-	cache = lookup_cache_extent(seen, bytenr, size);
-	if (cache) {
-		remove_cache_extent(seen, cache);
-		free(cache);
-	}
-
 	cache = lookup_cache_extent(extent_cache, bytenr, size);
 	if (cache) {
 		struct extent_record *rec;
@@ -5914,6 +5908,7 @@ out:
 	free_device_cache_tree(&dev_cache);
 	free_block_group_tree(&block_group_cache);
 	free_device_extent_tree(&dev_extent_cache);
+	free_extent_cache_tree(&seen);
 	return ret;
 }
 
