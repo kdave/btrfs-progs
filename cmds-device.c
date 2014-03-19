@@ -187,9 +187,8 @@ static int cmd_rm_dev(int argc, char **argv)
 }
 
 static const char * const cmd_scan_dev_usage[] = {
-	"btrfs device scan [options] [<device> [<device>...]]",
+	"btrfs device scan [(-d|--all-devices)|<device> [<device>...]]",
 	"Scan devices for a btrfs filesystem",
-	"-d|--all-devices    scan all devices under /dev",
 	NULL
 };
 
