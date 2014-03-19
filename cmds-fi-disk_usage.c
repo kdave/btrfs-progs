@@ -352,6 +352,7 @@ static int get_raid56_used(int fd, u64 *raid5_used, u64 *raid6_used)
 		if (p->type & BTRFS_BLOCK_GROUP_RAID6)
 			(*raid6_used) += p->size / (p->num_stripes -2);
 	}
+	free(info_ptr);
 
 	return 0;
 
