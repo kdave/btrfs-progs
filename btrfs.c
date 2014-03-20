@@ -212,31 +212,20 @@ static int cmd_version(int argc, char **argv)
 	return 0;
 }
 
-static int handle_options(int *argc, char ***argv)
+static void handle_options(int *argc, char ***argv)
 {
-	char **orig_argv = *argv;
-
-	while (*argc > 0) {
+	if (*argc > 0) {
 		const char *arg = (*argv)[0];
-		if (arg[0] != '-')
-			break;
-
-		if (!strcmp(arg, "--help")) {
-			break;
-		} else if (!strcmp(arg, "--version")) {
-			break;
-		} else {
-			fprintf(stderr, "Unknown option: %s\n", arg);
-			fprintf(stderr, "usage: %s\n",
-				btrfs_cmd_group.usagestr[0]);
-			exit(129);
-		}
-
-		(*argv)++;
-		(*argc)--;
+		if (arg[0] != '-' ||
+		    !strcmp(arg, "--help") ||
+		    !strcmp(arg, "--version"))
+			return;
+		fprintf(stderr, "Unknown option: %s\n", arg);
+		fprintf(stderr, "usage: %s\n",
+			btrfs_cmd_group.usagestr[0]);
+		exit(129);
 	}
-
-	return (*argv) - orig_argv;
+	return;
 }
 
 static const struct cmd_group btrfs_cmd_group = {
