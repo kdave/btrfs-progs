@@ -448,7 +448,7 @@ static int btrfs_scan_kernel(void *search)
 	struct mntent *mnt;
 	struct btrfs_ioctl_fs_info_args fs_info_arg;
 	struct btrfs_ioctl_dev_info_args *dev_info_arg = NULL;
-	struct btrfs_ioctl_space_args *space_info_arg;
+	struct btrfs_ioctl_space_args *space_info_arg = NULL;
 	char label[BTRFS_LABEL_SIZE];
 
 	f = setmntent("/proc/self/mounts", "r");
