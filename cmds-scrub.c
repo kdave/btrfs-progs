@@ -1086,7 +1086,6 @@ static int scrub_start(int argc, char **argv, int resume)
 	};
 	pthread_t *t_devs = NULL;
 	pthread_t t_prog;
-	pthread_attr_t t_attr;
 	struct scrub_file_record **past_scrubs = NULL;
 	struct scrub_file_record *last_scrub = NULL;
 	char *datafile = strdup(SCRUB_DATA_FILE);
@@ -1217,14 +1216,6 @@ static int scrub_start(int argc, char **argv, int resume)
 
 	if (!t_devs || !sp || !spc.progress) {
 		ERR(!do_quiet, "ERROR: scrub failed: %s", strerror(errno));
-		err = 1;
-		goto out;
-	}
-
-	ret = pthread_attr_init(&t_attr);
-	if (ret) {
-		ERR(!do_quiet, "ERROR: pthread_attr_init failed: %s\n",
-		    strerror(ret));
 		err = 1;
 		goto out;
 	}
@@ -1376,7 +1367,7 @@ static int scrub_start(int argc, char **argv, int resume)
 		devid = di_args[i].devid;
 		gettimeofday(&tv, NULL);
 		sp[i].stats.t_start = tv.tv_sec;
-		ret = pthread_create(&t_devs[i], &t_attr,
+		ret = pthread_create(&t_devs[i], NULL,
 					scrub_one_dev, &sp[i]);
 		if (ret) {
 			if (do_print)
@@ -1394,7 +1385,7 @@ static int scrub_start(int argc, char **argv, int resume)
 	spc.write_mutex = &spc_write_mutex;
 	spc.shared_progress = sp;
 	spc.fi = &fi_args;
-	ret = pthread_create(&t_prog, &t_attr, scrub_progress_cycle, &spc);
+	ret = pthread_create(&t_prog, NULL, scrub_progress_cycle, &spc);
 	if (ret) {
 		if (do_print)
 			fprintf(stderr, "ERROR: creating progress thread "

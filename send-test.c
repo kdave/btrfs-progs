@@ -371,7 +371,6 @@ int main(int argc, char **argv)
 	int ret = 0;
 	int subvol_fd;
 	pthread_t t_read;
-	pthread_attr_t t_attr;
 	void *t_err = NULL;
 	struct recv_args r;
 
@@ -401,13 +400,6 @@ int main(int argc, char **argv)
 		goto out;
 	}
 
-	ret = pthread_attr_init(&t_attr);
-	if (ret < 0) {
-		fprintf(stderr, "ERROR: pthread init failed. %s\n",
-			strerror(ret));
-		goto out;
-	}
-
 	ret = pipe(pipefd);
 	if (ret < 0) {
 		ret = errno;
@@ -415,7 +407,7 @@ int main(int argc, char **argv)
 		goto out;
 	}
 
-	ret = pthread_create(&t_read, &t_attr, process_thread, &r);
+	ret = pthread_create(&t_read, NULL, process_thread, &r);
 	if (ret < 0) {
 		ret = errno;
 		fprintf(stderr, "ERROR: pthread create failed. %s\n",
@@ -452,7 +444,6 @@ int main(int argc, char **argv)
 		goto out;
 	}
 
-	pthread_attr_destroy(&t_attr);
 out:
 	return !!ret;
 }

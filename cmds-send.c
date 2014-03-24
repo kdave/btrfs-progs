@@ -240,7 +240,6 @@ static int do_send(struct btrfs_send *send, u64 parent_root_id,
 {
 	int ret;
 	pthread_t t_read;
-	pthread_attr_t t_attr;
 	struct btrfs_ioctl_send_args io_send;
 	void *t_err = NULL;
 	int subvol_fd = -1;
@@ -254,8 +253,6 @@ static int do_send(struct btrfs_send *send, u64 parent_root_id,
 		goto out;
 	}
 
-	ret = pthread_attr_init(&t_attr);
-
 	ret = pipe(pipefd);
 	if (ret < 0) {
 		ret = -errno;
@@ -268,7 +265,7 @@ static int do_send(struct btrfs_send *send, u64 parent_root_id,
 	send->send_fd = pipefd[0];
 
 	if (!ret)
-		ret = pthread_create(&t_read, &t_attr, dump_thread,
+		ret = pthread_create(&t_read, NULL, dump_thread,
 					send);
 	if (ret) {
 		ret = -ret;
@@ -316,8 +313,6 @@ static int do_send(struct btrfs_send *send, u64 parent_root_id,
 			"(%s)\n", (long int)t_err, strerror(-ret));
 		goto out;
 	}
-
-	pthread_attr_destroy(&t_attr);
 
 	ret = 0;
 
