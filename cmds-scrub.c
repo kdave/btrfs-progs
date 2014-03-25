@@ -773,31 +773,31 @@ static int scrub_write_progress(pthread_mutex_t *m, const char *fsid,
 	int fd = -1;
 	int old;
 
-	ret = pthread_mutex_lock(m);
-	if (ret) {
-		err = -ret;
-		goto fail;
-	}
-
 	ret = pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &old);
 	if (ret) {
 		err = -ret;
-		goto out;
+		goto out3;
+	}
+
+	ret = pthread_mutex_lock(m);
+	if (ret) {
+		err = -ret;
+		goto out2;
 	}
 
 	fd = scrub_open_file_w(SCRUB_DATA_FILE, fsid, "tmp");
 	if (fd < 0) {
 		err = fd;
-		goto out;
+		goto out1;
 	}
 	err = scrub_write_file(fd, fsid, data, n);
 	if (err)
-		goto out;
+		goto out1;
 	err = scrub_rename_file(SCRUB_DATA_FILE, fsid, "tmp");
 	if (err)
-		goto out;
+		goto out1;
 
-out:
+out1:
 	if (fd >= 0) {
 		ret = close(fd);
 		if (ret)
@@ -808,11 +808,12 @@ out:
 	if (ret && !err)
 		err = -ret;
 
-fail:
+out2:
 	ret = pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &old);
 	if (ret && !err)
 		err = -ret;
 
+out3:
 	return err;
 }
 
@@ -944,6 +945,10 @@ static void *scrub_progress_cycle(void *ctx)
 			 * result we got for the current write and go
 			 * on. flag should be set on next cycle, then.
 			 */
+			perr = pthread_setcancelstate(
+					PTHREAD_CANCEL_DISABLE, &old);
+			if (perr)
+				goto out;
 			perr = pthread_mutex_lock(&sp_shared->progress_mutex);
 			if (perr)
 				goto out;
@@ -952,10 +957,18 @@ static void *scrub_progress_cycle(void *ctx)
 						&sp_shared->progress_mutex);
 				if (perr)
 					goto out;
+				perr = pthread_setcancelstate(
+						PTHREAD_CANCEL_ENABLE, &old);
+				if (perr)
+					goto out;
 				memcpy(sp, sp_last, sizeof(*sp));
 				continue;
 			}
 			perr = pthread_mutex_unlock(&sp_shared->progress_mutex);
+			if (perr)
+				goto out;
+			perr = pthread_setcancelstate(
+					PTHREAD_CANCEL_ENABLE, &old);
 			if (perr)
 				goto out;
 			memcpy(sp, sp_shared, sizeof(*sp));
