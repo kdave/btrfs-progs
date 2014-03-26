@@ -745,8 +745,9 @@ static int scan_one_device(void *dev_scan_struct)
 	struct recover_control *rc = dev_scan->rc;
 	struct btrfs_device *device = dev_scan->dev;
 	int fd = dev_scan->fd;
+	int oldtype;
 
-	ret = pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+	ret = pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, &oldtype);
 	if (ret)
 		return 1;
 
@@ -845,7 +846,8 @@ static int scan_devices(struct recover_control *rc)
 		if (fd < 0) {
 			fprintf(stderr, "Failed to open device %s\n",
 				dev->name);
-			return -1;
+			ret = 1;
+			goto out2;
 		}
 		dev_scans[devidx].rc = rc;
 		dev_scans[devidx].dev = dev;
@@ -856,7 +858,7 @@ static int scan_devices(struct recover_control *rc)
 		if (ret) {
 			cancel_from = 0;
 			cancel_to = devidx - 1;
-			goto out;
+			goto out1;
 		}
 		devidx++;
 	}
@@ -868,15 +870,16 @@ static int scan_devices(struct recover_control *rc)
 			ret = 1;
 			cancel_from = i + 1;
 			cancel_to = devnr - 1;
-			break;
+			goto out1;
 		}
 		i++;
 	}
-out:
-	while (cancel_from <= cancel_to) {
+out1:
+	while (ret && (cancel_from <= cancel_to)) {
 		pthread_cancel(t_scans[cancel_from]);
 		cancel_from++;
 	}
+out2:
 	free(dev_scans);
 	free(t_scans);
 	free(t_rets);
