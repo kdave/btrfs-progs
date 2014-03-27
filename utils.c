@@ -52,13 +52,35 @@
 #define BLKDISCARD	_IO(0x12,119)
 #endif
 
-static int
-discard_blocks(int fd, u64 start, u64 len)
+/*
+ * Discard the given range in one go
+ */
+static int discard_range(int fd, u64 start, u64 len)
 {
 	u64 range[2] = { start, len };
 
 	if (ioctl(fd, BLKDISCARD, &range) < 0)
 		return errno;
+	return 0;
+}
+
+/*
+ * Discard blocks in the given range in 1G chunks, the process is interruptible
+ */
+static int discard_blocks(int fd, u64 start, u64 len)
+{
+	while (len > 0) {
+		/* 1G granularity */
+		u64 chunk_size = min_t(u64, len, 1*1024*1024*1024);
+		int ret;
+
+		ret = discard_range(fd, start, chunk_size);
+		if (ret)
+			return ret;
+		len -= chunk_size;
+		start += chunk_size;
+	}
+
 	return 0;
 }
 
