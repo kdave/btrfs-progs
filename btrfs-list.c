@@ -1216,11 +1216,6 @@ int btrfs_list_setup_filter(struct btrfs_list_filter_set **filter_set,
 	BUG_ON(filter >= BTRFS_LIST_FILTER_MAX);
 	BUG_ON(set->nfilters > set->total);
 
-	if (filter == BTRFS_LIST_FILTER_DELETED) {
-		set->only_deleted = 1;
-		return 0;
-	}
-
 	if (set->nfilters == set->total) {
 		size = set->total + BTRFS_LIST_NFILTERS_INCREASE;
 		size = sizeof(*set) + size * sizeof(struct btrfs_list_filter);
@@ -1239,6 +1234,9 @@ int btrfs_list_setup_filter(struct btrfs_list_filter_set **filter_set,
 
 	BUG_ON(set->filters[set->nfilters].filter_func);
 
+	if (filter == BTRFS_LIST_FILTER_DELETED)
+		set->only_deleted = 1;
+
 	set->filters[set->nfilters].filter_func = all_filter_funcs[filter];
 	set->filters[set->nfilters].data = data;
 	set->nfilters++;
@@ -1250,7 +1248,7 @@ static int filter_root(struct root_info *ri,
 {
 	int i, ret;
 
-	if (!set || !set->nfilters)
+	if (!set)
 		return 1;
 
 	if (set->only_deleted && !ri->deleted)
