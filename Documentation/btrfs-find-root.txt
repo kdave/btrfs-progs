@@ -1,0 +1,45 @@
+btrfs-find-root(8)
+==================
+
+NAME
+----
+btrfs-find-root - filter to find btrfs root
+
+SYNOPSIS
+--------
+'btrfs-find-root' [options] <dev>
+
+DESCRIPTION
+-----------
+'btrfs-find-root' is used to find the satisfied root, you can filter by
+root tree's objectid, generation, level.
+
+OPTIONS
+-------
+-g <generation>::
+Filter root tree by it's original transaction id, tree root's generation in default.
+-o <objectid>::
+Filter root tree by it's objectid,tree root's objectid in default.
+-l <level>::
+Filter root tree by B-+ tree's level, level 0 in default.
+
+EXIT STATUS
+-----------
+'btrfs-find-root' will return 0 if no error happened.
+If any problems happened, 1 will be returned.
+
+AUTHOR
+------
+Written by Shilong Wang and Wenruo Qu.
+
+COPYRIGHT
+---------
+Copyright (C) 2013 FUJITSU LIMITED.
+
+License GPLv2: GNU GPL version 2 <http://gnu.org/licenses/gpl.html>.
+
+This is free software: you are free to change and redistribute it. There is NO WARRANTY, to the extent permitted by law.
+
+SEE ALSO
+--------
+`mkfs.btrfs`(8)
