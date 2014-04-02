@@ -27,6 +27,7 @@ MAN8_TXT += btrfs-inspect-internal.txt
 MAN8_TXT += btrfs-send.txt
 MAN8_TXT += btrfs-receive.txt
 MAN8_TXT += btrfs-quota.txt
+MAN8_TXT += btrfs-qgroup.txt
 #MAN8_TXT += btrfs-replace.txt
 #MAN8_TXT += btrfs-dedup.txt
 
