@@ -1,0 +1,60 @@
+btrfs-check(8)
+==============
+
+NAME
+----
+btrfs-rescue - Recover a damaged btrfs filesystem
+
+SYNOPSIS
+--------
+'btrfs rescue' <subcommand> <args>
+
+DESCRIPTION
+-----------
+'btrfs rescue' is used to try to recover a damaged btrfs filesystem.
+
+SUBCOMMAND
+----------
+'chunk-recover' [options] <device>::
+Recover the chunk tree by scanning the devices
++
+`Options`
++
+-y::::
+assume an answer of 'yes' to all questions.
+-v::::
+verbose mode.
+-h::::
+help.
+
+NOTE: Since 'chunk-recover' will scan the whole device, it will be *VERY* slow
+especially executed on a large device.
+
+'super-recover' [options] <device>::
+Recover bad superblocks from good copies.
++
+`Options`
++
+-y::::
+assume an answer of 'yes' to all questions.
+-v::::
+verbose mode.
+
+EXIT STATUS
+-----------
+'btrfs rescue' returns a zero exist status if it succeeds. Non zero is
+returned in case of failure.
+
+AVAILABILITY
+------------
+'btrfs' is part of btrfs-progs. Btrfs filesystem is currently under heavy
+development,
+and not suitable for any uses other than benchmarking and review.
+Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for
+further details.
+
+SEE ALSO
+--------
+`mkfs.btrfs`(8),
+`btrfs-scrub`(8),
+`btrfs-check`(8)
