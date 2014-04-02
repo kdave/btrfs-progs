@@ -10,7 +10,7 @@ MAN8_TXT += btrfs-image.txt
 MAN8_TXT += btrfs-map-logical.txt
 MAN8_TXT += btrfs-show-super.txt
 MAN8_TXT += btrfstune.txt
-#MAN8_TXT += btrfs-zero-log.txt
+MAN8_TXT += btrfs-zero-log.txt
 #MAN8_TXT += fsck.btrfs.txt
 #MAN8_TXT += mkfs.btrfs.txt
 

@@ -1,0 +1,39 @@
+btrfs-zero-log(8)
+=================
+
+NAME
+----
+btrfs-zero-log - clear out log tree
+
+SYNOPSIS
+--------
+'btrfs-zero-log' <dev>
+
+DESCRIPTION
+-----------
+'btrfs-zero-log' will remove the log tree if log tree is corrupt, which will
+allow you to mount the filesystem again.
+
+The common case where this happens has been fixed a long time ago,
+so it is unlikely that you will see this particular problem.
+
+EXIT STATUS
+-----------
+'btrfs-zero-log' will return 0 if no error happened.
+Other exit code means some problems happened.
+
+AUTHOR
+------
+Written by Shilong Wang and Wenruo Qu.
+
+COPYRIGHT
+---------
+Copyright (C) 2013 FUJITSU LIMITED.
+
+License GPLv2: GNU GPL version 2 <http://gnu.org/licenses/gpl.html>.
+
+This is free software: you are free  to  change  and  redistribute  it. There is NO WARRANTY, to the extent permitted by law.
+
+SEE ALSO
+--------
+`mkfs.btrfs`(8)
