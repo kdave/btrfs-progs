@@ -55,7 +55,7 @@ btrfs_convert_libs = -lext2fs -lcom_err
 btrfs_image_libs = -lpthread
 btrfs_fragment_libs = -lgd -lpng -ljpeg -lfreetype
 
-SUBDIRS = man
+SUBDIRS = Documentation
 BUILDDIRS = $(patsubst %,build-%,$(SUBDIRS))
 INSTALLDIRS = $(patsubst %,install-%,$(SUBDIRS))
 CLEANDIRS = $(patsubst %,clean-%,$(SUBDIRS))
@@ -220,7 +220,7 @@ send-test: $(objects) $(libs) send-test.o
 	$(Q)$(CC) $(CFLAGS) -o send-test $(objects) send-test.o $(LDFLAGS) $(LIBS) -lpthread
 
 manpages:
-	$(Q)$(MAKE) $(MAKEOPTS) -C man
+	$(Q)$(MAKE) $(MAKEOPTS) -C Documentation
 
 clean: $(CLEANDIRS)
 	@echo "Cleaning"
