@@ -1,0 +1,49 @@
+btrfs-convert(8)
+================
+
+NAME
+----
+btrfs-convert - convert from ext2/3/4 filesystem to btrfs or rollback
+
+SYNOPSIS
+--------
+'btrfs-convert' [options] <device>
+
+DESCRIPTION
+-----------
+'btrfs-convert' is used to convert existed ext2/3/4 to btrfs filesystem,
+and the original filesystem image is accessible as from separate subvolume
+named 'ext2_subvol' as file image.
+
+OPTIONS
+-------
+-d::
+Disable data checksum.
+-i::
+Ignore xattrs and ACLs.
+-n::
+Disable packing of small files.
+-r::
+Roll back to ext2fs.
+
+EXIT STATUS
+-----------
+'btrfs-convert' will return 0 if no error happened.
+If any problems happened, 1 will be returned.
+
+AUTHOR
+------
+Written by Shilong Wang and Wenruo Qu.
+
+COPYRIGHT
+---------
+Copyright (C) 2013 FUJITSU LIMITED.
+
+License GPLv2: GNU GPL version 2 <http://gnu.org/licenses/gpl.html>.
+
+This is free software: you are free  to  change  and  redistribute  it. There is NO WARRANTY, to the extent permitted by law.
+
+SEE ALSO
+--------
+`mkfs.btrfs`(8)
+

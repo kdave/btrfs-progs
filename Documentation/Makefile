@@ -3,8 +3,7 @@ MAN8_TXT =
 
 # Top level commands
 MAN8_TXT += btrfs.txt
-#MAN8_TXT += btrfsck.txt
-#MAN8_TXT += btrfs-convert.txt
+MAN8_TXT += btrfs-convert.txt
 #MAN8_TXT += btrfs-debug-tree.txt
 #MAN8_TXT += btrfs-find-root.txt
 #MAN8_TXT += btrfs-image.txt
