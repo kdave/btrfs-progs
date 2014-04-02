@@ -1,0 +1,53 @@
+btrfs-show-super(8)
+====================
+
+NAME
+----
+btrfs-show-super - show btrfs superblock information stored in devices
+
+SYNOPSIS
+--------
+'btrfs-show-super' [options] <dev> [<dev>...]
+
+DESCRIPTION
+-----------
+'btrfs-show-super' is used to print the information of superblock,
+you can specify which mirror to print out.
+
+By default, every device's first superblock will be printed out.
+
+Mainly used for debug purpose.
+
+OPTIONS
+-------
+-a::
+Print all the superblock information.
++
+If this option is given, '-i' option will be ignored.
+
+-i <super_mirror>::
+Specify which mirror to print out.
++
+<super_mirror> is between 0 and 2.
+If several '-i <super_mirror>' are given, only the last one is valid.
+
+EXIT STATUS
+-----------
+'btrfs-show-super' will return 0 if no error happened.
+If any problems happened, 1 will be returned.
+
+AUTHOR
+------
+Written by Shilong Wang and Wenruo Qu.
+
+COPYRIGHT
+---------
+Copyright (C) 2013 FUJITSU LIMITED.
+
+License GPLv2: GNU GPL version 2 <http://gnu.org/licenses/gpl.html>.
+
+This is free software: you are free  to  change  and  redistribute  it. There is NO WARRANTY, to the extent permitted by law.
+
+SEE ALSO
+--------
+`mkfs.btrfs`(8)
