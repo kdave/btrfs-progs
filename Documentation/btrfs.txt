@@ -1,0 +1,117 @@
+btrfs(8)
+========
+
+NAME
+----
+btrfs - control a btrfs filesystem
+
+SYNOPSIS
+--------
+'btrfs' <command> [<args>]
+
+DESCRIPTION
+-----------
+'btrfs' is used to control the filesystem and the files and directories stored.
+It is the tool to create or destroy a snapshot or a subvolume for the
+filesystem, to defrag a file or a directory, flush the data to the disk,
+to resize the filesystem, to scan the device.
+
+It is possible to abbreviate the commands unless the commands are ambiguous.
+For example: it is possible to run 'btrfs sub snaps' instead of
+'btrfs subvolume snapshot'.
+But 'btrfs file s' is not allowed, because 'file s' may be interpreted
+both as 'filesystem show' and as 'filesystem sync'.
+
+If a command is terminated by '--help', the detailed help is showed.
+If the passed command matches more commands,
+detailed help of all the matched commands is showed. For example
+'btrfs dev --help' shows the help of all 'device*' commands.
+
+COMMANDS
+--------
+'subvolume'::
+	Create/delete/list/manage btrfs subvolume. +
+	See `btrfs-subvolume`(8) for details.
+
+'filesystem'::
+	Manage a btrfs filesystem, including label setting/sync and so on. +
+	See `btrfs-filesystem`(8) for details.
+
+'[filesystem] balance'::
+	Balance btrfs filesystem chunks across single or several devices. +
+	See `btrfs-balance`(8) for details.
+
+'device'::
+	Manage devices managed by btrfs, including add/delete/scan and so
+	on. +
+	See `btrfs-device`(8) for details.
+
+'scrub'::
+	Scrub a btrfs filesystem. +
+	See `btrfs-scrub`(8) for details.
+
+'check'::
+	Do off-line check on a btrfs filesystem. +
+	See `btrfs-check`(8) for details.
+
+'rescue'::
+	Try to rescue damaged btrfs filesystem. +
+	See `btrfs-rescue`(8) for details.
+
+'restore'::
+	Manage a btrfs filesystem, including label setting/sync and so on. +
+	See `btrfs-restore`(8) for details.
+
+'inspect-internal'::
+	Debug tools for developers/hackers. +
+	See `btrfs-inspect-internal`(8) for details.
+
+'send'::
+	Send subvolume data to stdout/file for backup and etc. +
+	See `btrfs-send`(8) for details.
+
+'receive'::
+	Receive subvolume data from stdin/file for restore and etc. +
+	See `btrfs-receive`(8) for details.
+'quota'::
+	Manage quota on btrfs filesystem like enabling/rescan and etc. +
+	See `btrfs-quota`(8) and `btrfs-qgroup`(8) for details.
+
+'qgroup'::
+	Manage quota group(qgroup) for btrfs filesystem. +
+	See `btrfs-qgroup`(8) for details.
+
+'replace'::
+	Replace btrfs devices. +
+	See `btrfs-replace`(8) for details.
+
+EXIT STATUS
+-----------
+'btrfs' returns a zero exist status if it succeeds. Non zero is returned in
+case of failure.
+
+AVAILABILITY
+------------
+'btrfs' is part of btrfs-progs. Btrfs filesystem is currently under heavy
+development,
+and not suitable for any uses other than benchmarking and review.
+Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for
+further details.
+
+SEE ALSO
+--------
+`mkfs.btrfs`(8), `ionice`(1),
+`btrfs-subvolume`(8),
+`btrfs-filesystem`(8),
+`btrfs-balance`(8),
+`btrfs-device`(8),
+`btrfs-scrub`(8),
+`btrfs-check`(8),
+`btrfs-rescue`(8),
+`btrfs-restore`(8),
+`btrfs-inspect-internal`(8),
+`btrfs-send`(8),
+`btrfs-receive`(8),
+`btrfs-quota`(8),
+`btrfs-qgroup`(8),
+`btrfs-replace`(8),
