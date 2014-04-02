@@ -1,0 +1,60 @@
+btrfs-send(8)
+=============
+
+NAME
+----
+btrfs-send - send data of subvolume(s) to stdout/file.
+
+SYNOPSIS
+--------
+'btrfs send' [-ve] [-p <parent>] [-c <clone-src>] [-f <outfile>] <subvol> [<subvol>...]
+
+DESCRIPTION
+-----------
+Sends the subvolume(s) specified by <subvol> to stdout.
+
+By default, this will send the whole subvolume. To do an incremental
+send, use '-p <parent>'.
+
+If you want to allow btrfs to clone from any additional local snapshots,
+use '-c <clone-src>' (multiple times where applicable). 
+
+You must not specify clone sources unless you guarantee that these snapshots
+are exactly in the same state on both sides, the sender and the receiver.
+
+It is allowed to omit the '-p <parent>' option when '-c <clone-src>' options
+are given, in which case 'btrfs send' will determine a suitable parent among the
+clone sources itself.
+
+`Options`
+
+-v::
+Enable verbose debug output. Each occurrence of this option increases the
+verbose level more.
+-e::
+If sending multiple subvols at once, use the new format and omit the <end cmd> between the subvols.
+-p <parent>::
+Send an incremental stream from <parent> to <subvol>.
+-c <clone-src>::
+Use this snapshot as a clone source for an incremental send (multiple allowed).
+-f <outfile>::
+Output is normally written to stdout. To write to a file, use this option.
+An alternative would be to use pipes.
+
+EXIT STATUS
+-----------
+'btrfs send' returns a zero exist status if it succeeds. Non zero is
+returned in case of failure.
+
+AVAILABILITY
+------------
+'btrfs' is part of btrfs-progs. Btrfs filesystem is currently under heavy
+development,
+and not suitable for any uses other than benchmarking and review.
+Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for
+further details.
+
+SEE ALSO
+--------
+`mkfs.btrfs`(8),
+`btrfs-receive`(8)
