@@ -1,0 +1,49 @@
+btrfs-map-logical(8)
+====================
+
+NAME
+----
+btrfs-map-logical - map btrfs logical extent to physical extent
+
+SYNOPSIS
+--------
+'btrfs-map-logical' <options> <device>
+
+DESCRIPTION
+-----------
+'btrfs-map-logical' can be used to find out what the physical offsets are
+on the mirrors, the result is dumped into stdout in default.
+
+Mainly used for debug purpose.
+
+OPTIONS
+-------
+-l|--logical <logical_num>::
+Logical extent to map.
+-c|--copy <copy>::
+Copy of the extent to read(usually 1 or 2).
+-o|--output <filename>::
+Output file to hold the extent.
+-b|--bytes <bytes>::
+Number of bytes to read.
+
+EXIT STATUS
+-----------
+'btrfs-map-logical' will return 0 if no error happened.
+If any problems happened, 1 will be returned.
+
+AUTHOR
+------
+Written by Shilong Wang and Wenruo Qu.
+
+COPYRIGHT
+---------
+Copyright (C) 2013 FUJITSU LIMITED.
+
+License GPLv2: GNU GPL version 2 <http://gnu.org/licenses/gpl.html>.
+
+This is free software: you are free  to  change  and  redistribute  it. There is NO WARRANTY, to the extent permitted by law.
+
+SEE ALSO
+--------
+`mkfs.btrfs`(8)
