@@ -16,7 +16,7 @@ MAN8_TXT += btrfs.txt
 #MAN8_TXT += mkfs.btrfs.txt
 
 # Sub commands for btrfs
-#MAN8_TXT += btrfs-subvolume.txt
+MAN8_TXT += btrfs-subvolume.txt
 #MAN8_TXT += btrfs-filesystem.txt
 #MAN8_TXT += btrfs-balance.txt
 #MAN8_TXT += btrfs-device.txt
