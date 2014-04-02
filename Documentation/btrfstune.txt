@@ -1,0 +1,47 @@
+btrfstune(8)
+============
+
+NAME
+----
+btrfstune - tune various btrfs filesystem parameters
+
+SYNOPSIS
+--------
+'btrfstune' [options] <dev> [<dev>...]
+
+DESCRIPTION
+-----------
+'btrfstune' is used to tune various btrfs filesystem parameters,you can
+enable/disable some extended features for btrfs.
+
+OPTIONS
+-------
+-S <value>::
+Updates the seeding value, it forces a fs readonly so that you can use it to
+build other filesystems.
+-r::
+Enable extended inode refs.
+-x::
+Enable skinny metadata extent refs.
+
+
+EXIT STATUS
+-----------
+'btrfstune' will return 0 if no error happened.
+If any problems happened, 1 will be returned.
+
+AUTHOR
+------
+Written by Shilong Wang and Wenruo Qu.
+
+COPYRIGHT
+---------
+Copyright (C) 2013 FUJITSU LIMITED.
+
+License GPLv2: GNU GPL version 2 <http://gnu.org/licenses/gpl.html>.
+
+This is free software: you are free  to  change  and  redistribute  it. There is NO WARRANTY, to the extent permitted by law.
+
+SEE ALSO
+--------
+`mkfs.btrfs`(8)
