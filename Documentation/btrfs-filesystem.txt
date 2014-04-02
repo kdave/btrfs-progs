@@ -1,0 +1,163 @@
+btrfs-filesystem(8)
+===================
+
+NAME
+----
+btrfs-filesystem - control btrfs filesystem
+
+SYNOPSIS
+--------
+'btrfs filesystem' <subcommand> <args>
+
+DESCRIPTION
+-----------
+'btrfs filesystem' is used to do the filesystem level control jobs, including
+all the regular filesystem operations like setting/getting label,
+resizing, defragment.
+
+SUBCOMMAND
+----------
+'df' [-b] path [<path>...]::
+Show space usage information for a mount point.
++
+If '-b' is given, then byte is used as unit. Default unit will be
+human-readable unit such as KiB/MiB/GiB.
++
+The command 'btrfs filesystem df' is used to query how many space on the 
+disk(s) are used and an estimation of the free
+space of the filesystem.
+The output of the command 'btrfs filesystem df' shows:
+
+`Disk size`::::
+the total size of the disks which compose the filesystem.
+
+`Disk allocated`::::
+the size of the area of the disks used by the chunks.
+
+`Disk unallocated`::::
+the size of the area of the disks which is free (i.e.
+the differences of the values above).
+
+`Used`::::
+the portion of the logical space used by the file and metadata.
+
+`Free (estimated)`::::
+the estimated free space available: i.e. how many space can be used
+by the user. The evaluation cannot be rigorous because it depends by the
+allocation policy (DUP, Single, RAID1...) of the metadata and data chunks. +
+If every chunk is stored as "Single" the sum of the free (estimated) space
+and the used space  is equal to the disk size.
+Otherwise if all the chunk are mirrored (raid1 or raid10) or duplicated
+the sum of the free (estimated) space and the used space is
+half of the disk size. Normally the free (estimated) is between
+these two limits.
+
+`Data to disk ratio`::::
+the ratio betwen the logical size (i.e. the space available by
+the chunks) and the disk allocated (by the chunks). Normally it is 
+lower than 100% because the metadata is duplicated for security reasons.
+If all the data and metadata are duplicated (or have a profile like RAID1)
+the Data to disk ratio could be 50%.
+
+'show' [--mounted|--all-devices|<path>|<uuid>|<device>|<lable>]::
+Show the btrfs filesystem with some additional info.
++
+If no option nor <path>|<uuid>|<device>|<lable> is passed, btrfs shows
+information of all the btrfs filesystem both mounted and unmounted.
+If '--mounted' is passed, it would probe btrfs kernel to list mounted btrfs
+filesystem(s);
+If '--all-devices' is passed, all the devices under /dev are scanned;
+otherwise the devices list is extracted from the /proc/partitions file.
+
+'sync' <path>::
+Force a sync for the filesystem identified by <path>.
+
+'defragment' [options] <file>|<dir> [<file>|<dir>...]::
+Defragment file data and/or directory metadata *online*.
++
+If '-r' is passed, files in dir will be defragmented recursively.
+The start position and the number of bytes to defragment can be specified by
+start and len using '-s' and '-l' options below.
+Any extent bigger than threshold given by '-t' option, will be considered
+already defragged.
+Use 0 to take the kernel default, and use 1 to
+say every single extent must be rewritten.
+You can also turn on compression in defragment operations.
++
+`Options`
++
+-v::::
+be verbose
+-c::::
+compress file contents while defragmenting
+-r::::
+defragment files recursively
+-f::::
+flush filesystem after defragmenting
+-s <start>::::
+defragment only from byte <start> onward
+-l <len>::::
+defragment only up to <len> bytes
+-t <size>::::
+defragment only files at least <size> bytes big
++
+For <start>, <len>, <size> it is possible to append a suffix
+like 'k' for 1 KBytes, 'm' for 1 MBytes...
++
+WARNING: defragmenting with kernels up to 2.6.37 will unlink COW-ed copies of data,
+don't use it if you use snapshots, have de-duplicated your data or made
+copies with `cp --reflink`.
+
+// Some wording are extracted by the resize2fs man page
+'resize' [devid:][+/-]<size>[gkm]|[devid:]max <path>::
+Resize a filesystem identified by <path> for the underlying device
+devid *online*. +
+The devid can be found with 'btrfs filesystem show' and
+defaults to 1 if not specified.
+The <size> parameter specifies the new size of the filesystem.
+If the prefix + or - is present the size is increased or decreased
+by the quantity <size>.
+If no units are specified, the unit of the <size> parameter defaults to
+bytes. Optionally, the size parameter may be suffixed by one of the following
+units designators: \'K\', \'M', or \'G', kilobytes, megabytes, or gigabytes,
+respectively.
++
+If \'max' is passed, the filesystem will occupy all available space on the
+device devid.
++
+The resize command does not manipulate the size of underlying
+partition.  If you wish to enlarge/reduce a filesystem, you must make sure you
+can expand the partition before enlarging the filesystem and shrink the
+partition after reducing the size of the filesystem.  This can done using
+`fdisk`(8) or `parted`(8) to delete the existing partition and recreate
+it with the new desired size.  When recreating the partition make sure to use
+the same starting disk cylinder as before.
+
+'label' [<dev>|<mount_point>] [newlabel]::
+Show or update the label of a filesystem.
++
+[<device>|<mountpoint>] is used to identify the filesystem. 
+If a newlabel optional argument is passed, the label is changed.
+NOTE: the maximum allowable length shall be less than 256 chars
+
+'disk-usage' [-tb] path [path...]::
+Show in which disk the chunks are allocated. +
+If '-b' is given,  set byte as unit;
+If '-t' is given, show data in tabular format.
+
+EXIT STATUS
+-----------
+'btrfs filesystem' returns a zero exist status if it succeeds. Non zero is
+returned in case of failure.
+
+AVAILABILITY
+------------
+'btrfs' is part of btrfs-progs. Btrfs filesystem is currently under heavy
+development,
+and not suitable for any uses other than benchmarking and review.
+Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for
+further details.
+
+SEE ALSO
+--------
+`mkfs.btrfs`(8),
