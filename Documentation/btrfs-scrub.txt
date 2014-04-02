@@ -1,0 +1,98 @@
+btrfs-scrub(8)
+==============
+
+NAME
+----
+btrfs-scrub - scrub btrfs filesystem
+
+SYNOPSIS
+--------
+'btrfs scrub' <subcommand> <args>
+
+DESCRIPTION
+-----------
+'btrfs scrub' is used to scrub a btrfs filesystem, which will reading all data
+from all disks and verifying checksums.
+
+SUBCOMMAND
+----------
+'start' [-BdqrRf] [-c ioprio_class -n ioprio_classdata] <path>|<device>::
+Start a scrub on all devices of the filesystem identified by <path> or on
+a single <device>.
++
+Without options, scrub is started as a background process.
+Progress can be obtained with the 'scrub status' command. Scrubbing
+involves reading all data from all disks and verifying checksums. Errors are
+corrected along the way if possible.
++
+The default IO priority of scrub is the idle class. The priority can be
+configured similar to the `ionice`(1) syntax using '-c' and '-n' options.
++
+`Options`
++
+-B::::
+Do not background and print scrub statistics when finished.
+-d::::
+Print separate statistics for each device of the filesystem (-B only).
+-q::::
+Quiet. Omit error messages and statistics.
+-r::::
+Read only mode. Do not attempt to correct anything.
+-R::::
+Raw print mode. Print full data instead of summary.
+-c ioprio_class::::
+Set IO priority class (see
+ ionice (1)
+manpage).
+-n ioprio_classdata::::
+Set IO priority classdata (see `ionice`(1) manpage).
+-f::::
+force to check whether scrub has started or resumed in userspace.
+this is useful when scrub stat record file is damaged.
+
+'cancel' <path>|<device>::
+If a scrub is running on the filesystem identified by <path>, cancel it.
++
+Progress is saved in the scrub progress file and scrubbing can be resumed later
+using the scrub resume command.
+If a <device> is given, the corresponding filesystem is found and
+scrub cancel behaves as if it was called on that filesystem.
+
+'resume' [-BdqrR] [-c ioprio_class -n ioprio_classdata] <path>|<device>::
+Resume a canceled or interrupted scrub cycle on the filesystem identified by
+<path> or on a given <device>.
++
+Does not start a new scrub if the last scrub finished successfully.
++
+`Options`
++
+see 'scrub start'.
+
+'status' [-d] <path>|<device>::
+Show status of a running scrub for the filesystem identified by <path> or
+for the specified <device>.
++
+If no scrub is running, show statistics of the last finished or canceled scrub
+for that filesystem or device.
++
+`Options`
++
+-d::::
+Print separate statistics for each device of the filesystem.
+
+EXIT STATUS
+-----------
+'btrfs scrub' returns a zero exist status if it succeeds. Non zero is
+returned in case of failure.
+
+AVAILABILITY
+------------
+'btrfs' is part of btrfs-progs. Btrfs filesystem is currently under heavy
+development,
+and not suitable for any uses other than benchmarking and review.
+Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for
+further details.
+
+SEE ALSO
+--------
+`mkfs.btrfs`(8),
