@@ -444,6 +444,7 @@ static int check_arg_type(char *input)
 static int btrfs_scan_kernel(void *search)
 {
 	int ret = 0, fd;
+	int found = 0;
 	FILE *f;
 	struct mntent *mnt;
 	struct btrfs_ioctl_fs_info_args fs_info_arg;
@@ -466,7 +467,6 @@ static int btrfs_scan_kernel(void *search)
 
 		if (get_label_mounted(mnt->mnt_dir, label)) {
 			kfree(dev_info_arg);
-			ret = 1;
 			goto out;
 		}
 		if (search && !match_search_item_kernel(fs_info_arg.fsid,
@@ -481,19 +481,16 @@ static int btrfs_scan_kernel(void *search)
 					space_info_arg, label, mnt->mnt_dir);
 			kfree(space_info_arg);
 			memset(label, 0, sizeof(label));
+			found = 1;
 		}
 		if (fd != -1)
 			close(fd);
 		kfree(dev_info_arg);
-		if (search)
-			ret = 0;
 	}
-	if (search)
-		ret = 1;
 
 out:
 	endmntent(f);
-	return ret;
+	return !found;
 }
 
 static int dev_to_fsid(char *dev, __u8 *fsid)
