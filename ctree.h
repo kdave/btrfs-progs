@@ -1184,9 +1184,9 @@ struct btrfs_root {
 			   sizeof(((type *)0)->member)))
 
 #define BTRFS_SETGET_HEADER_FUNCS(name, type, member, bits)		\
-static inline u##bits btrfs_##name(struct extent_buffer *eb)		\
+static inline u##bits btrfs_##name(const struct extent_buffer *eb)	\
 {									\
-	struct btrfs_header *h = (struct btrfs_header *)eb->data;	\
+	const struct btrfs_header *h = (struct btrfs_header *)eb->data;	\
 	return le##bits##_to_cpu(h->member);				\
 }									\
 static inline void btrfs_set_##name(struct extent_buffer *eb,		\
@@ -1197,11 +1197,11 @@ static inline void btrfs_set_##name(struct extent_buffer *eb,		\
 }
 
 #define BTRFS_SETGET_FUNCS(name, type, member, bits)			\
-static inline u##bits btrfs_##name(struct extent_buffer *eb,		\
-				   type *s)				\
+static inline u##bits btrfs_##name(const struct extent_buffer *eb,	\
+				   const type *s)			\
 {									\
 	unsigned long offset = (unsigned long)s;			\
-	type *p = (type *) (eb->data + offset);				\
+	const type *p = (type *) (eb->data + offset);			\
 	return get_unaligned_le##bits(&p->member);			\
 }									\
 static inline void btrfs_set_##name(struct extent_buffer *eb,		\
@@ -1213,7 +1213,7 @@ static inline void btrfs_set_##name(struct extent_buffer *eb,		\
 }
 
 #define BTRFS_SETGET_STACK_FUNCS(name, type, member, bits)		\
-static inline u##bits btrfs_##name(type *s)				\
+static inline u##bits btrfs_##name(const type *s)			\
 {									\
 	return le##bits##_to_cpu(s->member);				\
 }									\
