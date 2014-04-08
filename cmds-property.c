@@ -392,7 +392,7 @@ static int cmd_get(int argc, char **argv)
 	char *name = NULL;
 	int types = 0;
 
-	if (check_argc_min(argc, 2) || check_argc_max(argc, 4))
+	if (check_argc_min(argc, 2) || check_argc_max(argc, 5))
 		usage(cmd_get_usage);
 
 	parse_args(argc, argv, cmd_get_usage, &types, &object, &name, NULL);
@@ -417,7 +417,7 @@ static int cmd_set(int argc, char **argv)
 	char *value;
 	int types = 0;
 
-	if (check_argc_min(argc, 4) || check_argc_max(argc, 5))
+	if (check_argc_min(argc, 4) || check_argc_max(argc, 6))
 		usage(cmd_set_usage);
 
 	parse_args(argc, argv, cmd_set_usage, &types, &object, &name, &value);
@@ -437,7 +437,7 @@ static int cmd_list(int argc, char **argv)
 	char *object = NULL;
 	int types = 0;
 
-	if (check_argc_min(argc, 2) || check_argc_max(argc, 3))
+	if (check_argc_min(argc, 2) || check_argc_max(argc, 4))
 		usage(cmd_list_usage);
 
 	parse_args(argc, argv, cmd_list_usage, &types, &object, NULL, NULL);
