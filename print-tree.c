@@ -209,6 +209,7 @@ static void print_uuids(struct extent_buffer *eb)
 
 static void print_file_extent_item(struct extent_buffer *eb,
 				   struct btrfs_item *item,
+				   int slot,
 				   struct btrfs_file_extent_item *fi)
 {
 	int extent_type = btrfs_file_extent_type(eb, fi);
@@ -217,7 +218,7 @@ static void print_file_extent_item(struct extent_buffer *eb,
 		printf("\t\tinline extent data size %u "
 		       "ram %u compress %d\n",
 		  btrfs_file_extent_inline_item_len(eb, item),
-		  btrfs_file_extent_inline_len(eb, fi),
+		  btrfs_file_extent_inline_len(eb, slot, fi),
 		  btrfs_file_extent_compression(eb, fi));
 		return;
 	}
@@ -829,7 +830,7 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 		case BTRFS_EXTENT_DATA_KEY:
 			fi = btrfs_item_ptr(l, i,
 					    struct btrfs_file_extent_item);
-			print_file_extent_item(l, item, fi);
+			print_file_extent_item(l, item, i, fi);
 			break;
 		case BTRFS_BLOCK_GROUP_ITEM_KEY:
 			bi = btrfs_item_ptr(l, i,

@@ -2094,15 +2094,6 @@ BTRFS_SETGET_STACK_FUNCS(stack_qgroup_limit_rsv_referenced,
 BTRFS_SETGET_STACK_FUNCS(stack_qgroup_limit_rsv_exclusive,
 			 struct btrfs_qgroup_limit_item, rsv_exclusive, 64);
 
-/* this returns the number of file bytes represented by the inline item.
- * If an item is compressed, this is the uncompressed size
- */
-static inline u32 btrfs_file_extent_inline_len(struct extent_buffer *eb,
-					struct btrfs_file_extent_item *e)
-{
-       return btrfs_file_extent_ram_bytes(eb, e);
-}
-
 /*
  * this returns the number of bytes used by the item on disk, minus the
  * size of any extent headers.  If a file is compressed on disk, this is
@@ -2114,6 +2105,28 @@ static inline u32 btrfs_file_extent_inline_item_len(struct extent_buffer *eb,
        unsigned long offset;
        offset = offsetof(struct btrfs_file_extent_item, disk_bytenr);
        return btrfs_item_size(eb, e) - offset;
+}
+
+/* this returns the number of file bytes represented by the inline item.
+ * If an item is compressed, this is the uncompressed size
+ */
+static inline u32 btrfs_file_extent_inline_len(struct extent_buffer *eb,
+					       int slot,
+					       struct btrfs_file_extent_item *fi)
+{
+	/*
+	 * return the space used on disk if this item isn't
+	 * compressed or encoded
+	 */
+	if (btrfs_file_extent_compression(eb, fi) == 0 &&
+	    btrfs_file_extent_encryption(eb, fi) == 0 &&
+	    btrfs_file_extent_other_encoding(eb, fi) == 0) {
+		return btrfs_file_extent_inline_item_len(eb,
+							 btrfs_item_nr(slot));
+	}
+
+	/* otherwise use the ram bytes field */
+	return btrfs_file_extent_ram_bytes(eb, fi);
 }
 
 static inline u32 btrfs_level_size(struct btrfs_root *root, int level) {

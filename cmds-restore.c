@@ -229,8 +229,7 @@ static int copy_one_inline(int fd, struct btrfs_path *path, u64 pos)
 	fi = btrfs_item_ptr(leaf, path->slots[0],
 			    struct btrfs_file_extent_item);
 	ptr = btrfs_file_extent_inline_start(fi);
-	len = btrfs_file_extent_inline_item_len(leaf,
-					btrfs_item_nr(path->slots[0]));
+	len = btrfs_file_extent_inline_len(leaf, path->slots[0], fi);
 	read_extent_buffer(leaf, buf, ptr, len);
 
 	compress = btrfs_file_extent_compression(leaf, fi);

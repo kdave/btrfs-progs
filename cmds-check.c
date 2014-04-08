@@ -1166,7 +1166,7 @@ static int process_file_extent(struct btrfs_root *root,
 	extent_type = btrfs_file_extent_type(eb, fi);
 
 	if (extent_type == BTRFS_FILE_EXTENT_INLINE) {
-		num_bytes = btrfs_file_extent_inline_len(eb, fi);
+		num_bytes = btrfs_file_extent_inline_len(eb, slot, fi);
 		if (num_bytes == 0)
 			rec->errors |= I_ERR_BAD_FILE_EXTENT;
 		rec->found_size += num_bytes;
