@@ -297,7 +297,7 @@ static int copy_one_extent(struct btrfs_root *root, int fd,
 	ram_size = btrfs_file_extent_ram_bytes(leaf, fi);
 	offset = btrfs_file_extent_offset(leaf, fi);
 	num_bytes = btrfs_file_extent_num_bytes(leaf, fi);
-	size_left = num_bytes;
+	size_left = disk_size;
 	if (compress == BTRFS_COMPRESS_NONE)
 		bytenr += offset;
 
@@ -376,7 +376,7 @@ again:
 		goto out;
 	}
 
-	ret = decompress(inbuf, outbuf, num_bytes, &ram_size, compress);
+	ret = decompress(inbuf, outbuf, disk_size, &ram_size, compress);
 	if (ret) {
 		num_copies = btrfs_num_copies(&root->fs_info->mapping_tree,
 					      bytenr, length);
