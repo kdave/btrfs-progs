@@ -14,6 +14,8 @@ DESCRIPTION
 'btrfs balance' is used to balance chunks in a btrfs filesystem across
 multiple or even single device.
 
+See `btrfs-device`(8) for more details about the effect on device management.
+
 SUBCOMMAND
 ----------
 <path>::
@@ -75,3 +77,4 @@ further details.
 SEE ALSO
 --------
 `mkfs.btrfs`(8),
+`btrfs-device`(8)

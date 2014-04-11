@@ -14,6 +14,46 @@ DESCRIPTION
 'btrfs device' is used to control the btrfs devices, since btrfs can be used
 across several devices, 'btrfs device' is used for multiple device management.
 
+DEVICE MANAGEMENT
+-----------------
+Btrfs filesystem is capable to manage multiple devices.
+
+Btrfs filesystem uses different profiles to manage different RAID level, and
+use balance to rebuild chunks, also devices can be added/removed/replace
+online.
+
+Profile::
+Btrfs filesystem uses data/metadata profiles to manage allocation/duplication
+mechanism. Profiles like RAID level can be assigned to data and metadata separately.
++
+See `mkfs.btrfs`(8) for more details.
+
+RAID level::
+Btrfs filesystem supports most of the standard RAID level: 0/1/5/6/10.
+RAID levels can be assigned at mkfs time or online.
++
+See `mkfs.btrfs`(8) for mkfs time RAID level assign and `btrfs-balance`(8) for
+online RAID level assign.
+
+Balance::
+`btrfs-balance`(8) subcommand can be used to balance or rebuild chunks to the
+desired profile.
++
+Due to the fact that balance can rebuild/recovery chunks according to its RAID
+duplication if possible, so when using RAID1/5/6/10 with some devices failed
+and you just added a new device to btrfs using `btrfs-device`(8), you should
+run `btrfs-balance`(8) to rebuild the chunks.
++
+See `btrfs-balance`(8) for more details.
+
+Device add/remove/replace::
+Device can be added/removed using `btrfs-replace`(8) subcommand and replaced
+using `btrfs-replace`(8).
++
+When device is removed or replaced, btrfs will do the chunk rebuild if needed.
++
+See `btrfs-replace`(8) and this man page for more details.
+
 SUBCOMMAND
 ----------
 'add' [-Kf] <dev> [<dev>...] <path>::
@@ -73,3 +113,5 @@ further details.
 SEE ALSO
 --------
 `mkfs.btrfs`(8),
+`btrfs-replace`(8),
+`btrfs-balance`(8)
