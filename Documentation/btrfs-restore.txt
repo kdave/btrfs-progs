@@ -1,0 +1,72 @@
+btrfs-restore(8)
+================
+
+NAME
+----
+btrfs-restore - try to restore files from a damaged btrfs filesystem(unmounted)
+
+SYNOPSIS
+--------
+'btrfs restore' [options] <device> <path> | -l <device>
+
+DESCRIPTION
+-----------
+'btrfs restore' is used to try to salvage files from a damaged filesystem and
+restore them into <path> or just list the tree roots.
+
+Since current `btrfsck`(8) or `btrfs-rescue`(8) only has very limited usage,
+'btrfs restore' is normally a better choice.
+
+OPTIONS
+-------
+-s::
+get snapshots.
+
+-x::
+get extended attributes.
+
+-v::
+verbose.
+
+-i::
+ignore errors.
+
+-o::
+overwrite directories/files in <path>.
+
+-t <location>::
+use <location> to read root tree.
+
+-f <offset>::
+use <offset> to read fs tree.
+
+-u <block>::
+use given superblock mirror identified by <block>.
+
+-r <rootid>::
+use <rootid> as root objectid.
+
+-d::
+find dir.
+
+-l::
+list tree roots.
+
+EXIT STATUS
+-----------
+'btrfs restore' returns a zero exist status if it succeeds. Non zero is
+returned in case of failure.
+
+AVAILABILITY
+------------
+'btrfs' is part of btrfs-progs. Btrfs filesystem is currently under heavy
+development,
+and not suitable for any uses other than benchmarking and review.
+Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for
+further details.
+
+SEE ALSO
+--------
+`mkfs.btrfs`(8),
+`btrfs-rescue`(8),
+`btrfs-check`(8)

@@ -28,7 +28,7 @@ MAN8_TXT += btrfs-receive.txt
 MAN8_TXT += btrfs-quota.txt
 MAN8_TXT += btrfs-qgroup.txt
 MAN8_TXT += btrfs-replace.txt
-#MAN8_TXT += btrfs-dedup.txt
+MAN8_TXT += btrfs-restore.txt
 
 MAN_TXT = $(MAN8_TXT)
 MAN_XML = $(patsubst %.txt,%.xml,$(MAN_TXT))
