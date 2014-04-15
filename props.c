@@ -119,8 +119,9 @@ static int prop_compression(enum prop_object_type type,
 	DIR *dirstream = NULL;
 	char *buf = NULL;
 	char *xattr_name = NULL;
+	int open_flags = value ? O_RDWR : O_RDONLY;
 
-	fd = open_file_or_dir(object, &dirstream);
+	fd = open_file_or_dir3(object, &dirstream, open_flags);
 	if (fd == -1) {
 		ret = -errno;
 		fprintf(stderr, "ERROR: open %s failed. %s\n",

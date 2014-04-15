@@ -1622,7 +1622,7 @@ u64 parse_size(char *s)
 	return strtoull(s, NULL, 10) * mult;
 }
 
-int open_file_or_dir(const char *fname, DIR **dirstream)
+int open_file_or_dir3(const char *fname, DIR **dirstream, int open_flags)
 {
 	int ret;
 	struct stat st;
@@ -1638,7 +1638,7 @@ int open_file_or_dir(const char *fname, DIR **dirstream)
 			return -1;
 		fd = dirfd(*dirstream);
 	} else if (S_ISREG(st.st_mode) || S_ISLNK(st.st_mode)) {
-		fd = open(fname, O_RDWR);
+		fd = open(fname, open_flags);
 	} else {
 		/*
 		 * we set this on purpose, in case the caller output
@@ -1653,6 +1653,11 @@ int open_file_or_dir(const char *fname, DIR **dirstream)
 			closedir(*dirstream);
 	}
 	return fd;
+}
+
+int open_file_or_dir(const char *fname, DIR **dirstream)
+{
+	return open_file_or_dir3(fname, dirstream, O_RDWR);
 }
 
 void close_file_or_dir(int fd, DIR *dirstream)
