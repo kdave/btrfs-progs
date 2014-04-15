@@ -142,10 +142,12 @@ static int prop_compression(enum prop_object_type type,
 		sret = fgetxattr(fd, xattr_name, NULL, 0);
 	if (sret < 0) {
 		ret = -errno;
-		if (ret != -ENODATA)
+		if (ret != -ENOATTR)
 			fprintf(stderr,
 				"ERROR: failed to %s compression for %s. %s\n",
 				value ? "set" : "get", object, strerror(-ret));
+		else
+			ret = 0;
 		goto out;
 	}
 	if (!value) {
