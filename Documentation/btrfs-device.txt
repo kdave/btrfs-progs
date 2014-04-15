@@ -24,16 +24,22 @@ online.
 
 Profile::
 Btrfs filesystem uses data/metadata profiles to manage allocation/duplication
-mechanism. Profiles like RAID level can be assigned to data and metadata separately.
+mechanism. +
+Profiles like RAID level can be assigned to data and metadata separately.
 +
 See `mkfs.btrfs`(8) for more details.
 
 RAID level::
-Btrfs filesystem supports most of the standard RAID level: 0/1/5/6/10.
+Btrfs filesystem supports most of the standard RAID level: 0/1/5/6/10. +
 RAID levels can be assigned at mkfs time or online.
 +
 See `mkfs.btrfs`(8) for mkfs time RAID level assign and `btrfs-balance`(8) for
 online RAID level assign.
++
+NOTE: Since btrfs is under heavy development especially the RAID5/6 support,
+it is *highly* recommended to read the follow btrfs wiki page to get more
+updated details on RAID5/6: +
+https://btrfs.wiki.kernel.org/index.php/RAID56
 
 Balance::
 `btrfs-balance`(8) subcommand can be used to balance or rebuild chunks to the

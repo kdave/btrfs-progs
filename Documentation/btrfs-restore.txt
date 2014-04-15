@@ -17,6 +17,10 @@ restore them into <path> or just list the tree roots.
 Since current `btrfsck`(8) or `btrfs-rescue`(8) only has very limited usage,
 'btrfs restore' is normally a better choice.
 
+NOTE: It is recommended to read the following btrfs wiki page if your data is
+not salvaged with default option: +
+https://btrfs.wiki.kernel.org/index.php/Restore
+
 OPTIONS
 -------
 -s::

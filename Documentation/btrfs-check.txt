@@ -13,6 +13,11 @@ DESCRIPTION
 -----------
 'btrfs check' is used to check or repair a btrfs filesystem offline.
 
+NOTE: Since btrfs is under heavy development especially the 'btrfs check'
+command, it is *highly* recommended to read the following btrfs wiki before
+executing 'btrfs check' with '--repair' option: +
+https://btrfs.wiki.kernel.org/index.php/Btrfsck
+
 OPTIONS
 -------
 -s|--support <superblock>::
