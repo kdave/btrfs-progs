@@ -18,6 +18,8 @@ command, it is *highly* recommended to read the following btrfs wiki before
 executing 'btrfs check' with '--repair' option: +
 https://btrfs.wiki.kernel.org/index.php/Btrfsck
 
+'btrfsck' is an alias of 'btrfs check' command and is now deprecated.
+
 OPTIONS
 -------
 -s|--support <superblock>::
@@ -47,4 +49,3 @@ SEE ALSO
 `mkfs.btrfs`(8),
 `btrfs-scrub`(8),
 `btrfs-rescue`(8)
-`btrfsck`(8)

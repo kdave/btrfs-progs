@@ -14,7 +14,7 @@ DESCRIPTION
 'btrfs restore' is used to try to salvage files from a damaged filesystem and
 restore them into <path> or just list the tree roots.
 
-Since current `btrfsck`(8) or `btrfs-rescue`(8) only has very limited usage,
+Since current `btrfs-check`(8) or `btrfs-rescue`(8) only has very limited usage,
 'btrfs restore' is normally a better choice.
 
 NOTE: It is recommended to read the following btrfs wiki page if your data is

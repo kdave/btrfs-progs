@@ -130,4 +130,4 @@ further details.
 
 SEE ALSO
 --------
-`btrfsck`(8)
+`btrfs`(8)
