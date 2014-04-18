@@ -523,19 +523,14 @@ out:
 	return ret;
 }
 
-static int close_inode_for_write(struct btrfs_receive *r)
+static void close_inode_for_write(struct btrfs_receive *r)
 {
-	int ret = 0;
-
 	if(r->write_fd == -1)
-		goto out;
+		return;
 
 	close(r->write_fd);
 	r->write_fd = -1;
 	r->write_path[0] = 0;
-
-out:
-	return ret;
 }
 
 static int process_write(const char *path, const void *data, u64 offset,
@@ -879,9 +874,7 @@ static int do_receive(struct btrfs_receive *r, const char *tomnt, int r_fd)
 		if (ret)
 			end = 1;
 
-		ret = close_inode_for_write(r);
-		if (ret < 0)
-			goto out;
+		close_inode_for_write(r);
 		ret = finish_subvol(r);
 		if (ret < 0)
 			goto out;
