@@ -1605,7 +1605,7 @@ static int check_inode_recs(struct btrfs_root *root,
 			if (!backref->found_inode_ref)
 				backref->errors |= REF_ERR_NO_INODE_REF;
 			fprintf(stderr, "\tunresolved ref dir %llu index %llu"
-				" namelen %u name %s filetype %d error %x",
+				" namelen %u name %s filetype %d errors %x",
 				(unsigned long long)backref->dir,
 				(unsigned long long)backref->index,
 				backref->namelen, backref->name,
@@ -1881,12 +1881,13 @@ static int check_root_refs(struct btrfs_root *root,
 			if (!backref->errors && rec->found_root_item)
 				continue;
 			fprintf(stderr, "\tunresolved ref root %llu dir %llu"
-				" index %llu namelen %u name %s error %x\n",
+				" index %llu namelen %u name %s errors %x\n",
 				(unsigned long long)backref->ref_root,
 				(unsigned long long)backref->dir,
 				(unsigned long long)backref->index,
 				backref->namelen, backref->name,
 				backref->errors);
+			print_ref_error(backref->errors);
 		}
 	}
 	return errors > 0 ? 1 : 0;
