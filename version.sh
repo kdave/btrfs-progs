@@ -6,7 +6,7 @@
 # Copyright 2008, Oracle
 # Released under the GNU GPLv2
  
-v="v3.14"
+v="v3.14.1"
 
 which git &> /dev/null
 if [ $? == 0 -a -d .git ]; then
