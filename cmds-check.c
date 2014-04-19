@@ -2882,7 +2882,7 @@ static int add_data_backref(struct cache_tree *extent_cache, u64 bytenr,
 	} else {
 		if (back->node.found_extent_tree) {
 			fprintf(stderr, "Extent back ref already exists "
-				"for %llu parent %llu root %llu"
+				"for %llu parent %llu root %llu "
 				"owner %llu offset %llu num_refs %lu\n",
 				(unsigned long long)bytenr,
 				(unsigned long long)parent,
@@ -4735,7 +4735,7 @@ static int verify_backrefs(struct btrfs_trans_handle *trans,
 	if (!best) {
 		entry = find_entry(&entries, rec->start, rec->nr);
 		if (!entry && (!broken_entries || !rec->found_rec)) {
-			fprintf(stderr, "Backrefs don't agree with eachother "
+			fprintf(stderr, "Backrefs don't agree with each other "
 				"and extent record doesn't agree with anybody,"
 				" so we can't fix bytenr %Lu bytes %Lu\n",
 				rec->start, rec->nr);

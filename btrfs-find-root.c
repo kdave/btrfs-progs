@@ -287,7 +287,6 @@ int main(int argc, char **argv)
 
 	while ((opt = getopt(argc, argv, "l:o:g:")) != -1) {
 		switch(opt) {
-			errno = 0;
 			case 'o':
 				search_objectid = arg_strtou64(optarg);
 				break;

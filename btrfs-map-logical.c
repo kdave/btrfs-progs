@@ -153,8 +153,6 @@ int main(int ac, char **av)
 		print_usage();
 	if (logical == 0)
 		print_usage();
-	if (copy < 0)
-		print_usage();
 
 	dev = av[optind];
 
