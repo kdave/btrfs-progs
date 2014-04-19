@@ -104,6 +104,7 @@ static int add_info_to_list(struct chunk_info **info_ptr,
 			struct chunk_info *res = realloc(*info_ptr, size);
 
 			if (!res) {
+				free(*info_ptr);
 				fprintf(stderr, "ERROR: not enough memory\n");
 				return -1;
 			}
@@ -224,7 +225,6 @@ static int load_chunk_info(int fd,
 
 			if (add_info_to_list(info_ptr, info_count, item)) {
 				*info_ptr = 0;
-				free(*info_ptr);
 				return -100;
 			}
 
