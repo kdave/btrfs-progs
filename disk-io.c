@@ -1091,8 +1091,7 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 
 	ret = btrfs_open_devices(fs_devices, oflags);
 	if (ret)
-		goto out_devices;
-
+		goto out;
 
 	disk_super = fs_info->super_copy;
 	if (!(flags & OPEN_CTREE_RECOVER_SUPER))
