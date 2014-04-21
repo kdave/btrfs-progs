@@ -1543,7 +1543,6 @@ int main(int ac, char **av)
 
 	btrfs_register_one_device(file);
 
-	zero_end = 1;
 	while (dev_cnt-- > 0) {
 		int old_mixed = mixed;
 

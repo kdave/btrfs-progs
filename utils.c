@@ -613,7 +613,6 @@ int btrfs_prepare_device(int fd, char *file, int zero_end, u64 *block_count_ret,
 	}
 	if (max_block_count)
 		block_count = min(block_count, max_block_count);
-	zero_end = 1;
 
 	if (block_count < 1024 * 1024 * 1024 && !(*mixed)) {
 		printf("SMALL VOLUME: forcing mixed metadata/data groups\n");
