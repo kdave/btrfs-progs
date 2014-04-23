@@ -328,6 +328,8 @@ static struct btrfs_ioctl_space_args *load_space_info(int fd, char *path)
 	return sargs;
 }
 
+/* Not used, keep for later */
+#if 0
 /*
  * This function computes the space occuped by a *single* RAID5/RAID6 chunk.
  * The computation is performed on the basis of the number of stripes
@@ -465,62 +467,7 @@ exit:
 
 	return ret;
 }
-
-const char * const cmd_filesystem_df_usage[] = {
-	"btrfs filesystem df [-b] <path> [<path>..]",
-	"Show space usage information for a mount point(s).",
-	"",
-	"-b\tSet byte as unit",
-	NULL
-};
-
-int cmd_filesystem_df(int argc, char **argv)
-{
-
-	int	flags = DF_HUMAN_UNIT;
-	int	i, more_than_one = 0;
-
-	optind = 1;
-	while (1) {
-		char	c = getopt(argc, argv, "b");
-		if (c < 0)
-			break;
-
-		switch (c) {
-		case 'b':
-			flags &= ~DF_HUMAN_UNIT;
-			break;
-		default:
-			usage(cmd_filesystem_df_usage);
-		}
-	}
-
-	if (check_argc_min(argc - optind, 1))
-		usage(cmd_filesystem_df_usage);
-
-	for (i = optind; i < argc ; i++) {
-		int r, fd;
-		DIR *dirstream = NULL;
-		if (more_than_one)
-			printf("\n");
-
-		fd = open_file_or_dir(argv[i], &dirstream);
-		if (fd < 0) {
-			fprintf(stderr, "ERROR: can't access to '%s'\n",
-				argv[1]);
-			return 12;
-		}
-		r = _cmd_disk_free(fd, argv[i], flags);
-		close_file_or_dir(fd, dirstream);
-
-		if (r)
-			return r;
-		more_than_one = 1;
-
-	}
-
-	return 0;
-}
+#endif
 
 /*
  *  Helper to sort the disk_info structure
@@ -612,10 +559,10 @@ static u64 calc_chunk_size(struct chunk_info *ci)
 }
 
 /*
- *  This function print the results of the command btrfs fi disk-usage
+ *  This function print the results of the command "btrfs fi usage"
  *  in tabular format
  */
-static void _cmd_filesystem_disk_usage_tabular(int mode,
+static void _cmd_filesystem_usage_tabular(int mode,
 					struct btrfs_ioctl_space_args *sargs,
 					struct chunk_info *chunks_info_ptr,
 					int chunks_info_count,
@@ -795,10 +742,10 @@ static void print_chunk_disks(u64 chunk_type,
 }
 
 /*
- *  This function print the results of the command btrfs fi disk-usage
+ *  This function print the results of the command "btrfs fi usage"
  *  in linear format
  */
-static void _cmd_filesystem_disk_usage_linear(int mode,
+static void _cmd_filesystem_usage_linear(int mode,
 					struct btrfs_ioctl_space_args *sargs,
 					struct chunk_info *info_ptr,
 					int info_count,
@@ -839,7 +786,7 @@ static void _cmd_filesystem_disk_usage_linear(int mode,
 
 }
 
-static int _cmd_filesystem_disk_usage(int fd, char *path, int mode, int tabular)
+static int _cmd_filesystem_usage(int fd, char *path, int mode, int tabular)
 {
 	struct btrfs_ioctl_space_args *sargs = 0;
 	int info_count = 0;
@@ -860,11 +807,11 @@ static int _cmd_filesystem_disk_usage(int fd, char *path, int mode, int tabular)
 	}
 
 	if (tabular)
-		_cmd_filesystem_disk_usage_tabular(mode, sargs,
+		_cmd_filesystem_usage_tabular(mode, sargs,
 					info_ptr, info_count,
 					disks_info_ptr, disks_info_count);
 	else
-		_cmd_filesystem_disk_usage_linear(mode, sargs,
+		_cmd_filesystem_usage_linear(mode, sargs,
 					info_ptr, info_count,
 					disks_info_ptr, disks_info_count);
 
@@ -880,8 +827,8 @@ exit:
 	return ret;
 }
 
-const char * const cmd_filesystem_disk_usage_usage[] = {
-	"btrfs filesystem disk-usage [-b][-t] <path> [<path>..]",
+const char * const cmd_filesystem_usage_usage[] = {
+	"btrfs filesystem usage [-b][-t] <path> [<path>..]",
 	"Show in which disk the chunks are allocated.",
 	"",
 	"-b\tSet byte as unit",
@@ -889,7 +836,7 @@ const char * const cmd_filesystem_disk_usage_usage[] = {
 	NULL
 };
 
-int cmd_filesystem_disk_usage(int argc, char **argv)
+int cmd_filesystem_usage(int argc, char **argv)
 {
 
 	int	flags =	DF_HUMAN_UNIT;
@@ -909,12 +856,12 @@ int cmd_filesystem_disk_usage(int argc, char **argv)
 			tabular = 1;
 			break;
 		default:
-			usage(cmd_filesystem_disk_usage_usage);
+			usage(cmd_filesystem_usage_usage);
 		}
 	}
 
 	if (check_argc_min(argc - optind, 1))
-		usage(cmd_filesystem_disk_usage_usage);
+		usage(cmd_filesystem_usage_usage);
 
 	for (i = optind; i < argc ; i++) {
 		int r, fd;
@@ -928,7 +875,7 @@ int cmd_filesystem_disk_usage(int argc, char **argv)
 				argv[1]);
 			return 12;
 		}
-		r = _cmd_filesystem_disk_usage(fd, argv[i], flags, tabular);
+		r = _cmd_filesystem_usage(fd, argv[i], flags, tabular);
 		close_file_or_dir(fd, dirstream);
 
 		if (r)

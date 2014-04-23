@@ -122,8 +122,7 @@ static const char * const filesystem_cmd_group_usage[] = {
 	NULL
 };
 
-#if 0
-static const char * const cmd_df_usage[] = {
+static const char * const cmd_filesystem_df_usage[] = {
        "btrfs filesystem df [options] <path>",
        "Show space usage information for a mount point",
 	"-b|--raw           raw numbers in bytes",
@@ -137,7 +136,6 @@ static const char * const cmd_df_usage[] = {
 	"-t|--tbytes        show sizes in TiB, or TB with --si",
        NULL
 };
-#endif
 
 static int get_df(int fd, struct btrfs_ioctl_space_args **sargs_ret)
 {
@@ -187,7 +185,6 @@ static int get_df(int fd, struct btrfs_ioctl_space_args **sargs_ret)
 	return 0;
 }
 
-#if 0
 static void print_df(struct btrfs_ioctl_space_args *sargs, unsigned unit_mode)
 {
 	u64 i;
@@ -202,7 +199,7 @@ static void print_df(struct btrfs_ioctl_space_args *sargs, unsigned unit_mode)
 	}
 }
 
-static int cmd_df(int argc, char **argv)
+static int cmd_filesystem_df(int argc, char **argv)
 {
 	struct btrfs_ioctl_space_args *sargs = NULL;
 	int ret;
@@ -255,12 +252,12 @@ static int cmd_df(int argc, char **argv)
 			units_set_mode(&unit_mode, UNITS_BINARY);
 			break;
 		default:
-			usage(cmd_df_usage);
+			usage(cmd_filesystem_df_usage);
 		}
 	}
 
 	if (check_argc_exact(argc, optind + 1))
-		usage(cmd_df_usage);
+		usage(cmd_filesystem_df_usage);
 
 	path = argv[optind];
 
@@ -281,7 +278,6 @@ static int cmd_df(int argc, char **argv)
 	close_file_or_dir(fd, dirstream);
 	return !!ret;
 }
-#endif
 
 static int match_search_item_kernel(__u8 *fsid, char *mnt, char *label,
 					char *search)
@@ -1298,8 +1294,8 @@ const struct cmd_group filesystem_cmd_group = {
 		{ "balance", cmd_balance, NULL, &balance_cmd_group, 1 },
 		{ "resize", cmd_resize, cmd_resize_usage, NULL, 0 },
 		{ "label", cmd_label, cmd_label_usage, NULL, 0 },
-		{ "disk-usage", cmd_filesystem_disk_usage,
-			cmd_filesystem_disk_usage_usage, NULL, 0 },
+		{ "usage", cmd_filesystem_usage,
+			cmd_filesystem_usage_usage, NULL, 0 },
 
 		NULL_CMD_STRUCT
 	}

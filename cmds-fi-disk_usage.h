@@ -19,11 +19,8 @@
 #ifndef __CMDS_FI_DISK_USAGE__
 #define __CMDS_FI_DISK_USAGE__
 
-extern const char * const cmd_filesystem_df_usage[];
-int cmd_filesystem_df(int argc, char **argv);
-
-extern const char * const cmd_filesystem_disk_usage_usage[];
-int cmd_filesystem_disk_usage(int argc, char **argv);
+extern const char * const cmd_filesystem_usage_usage[];
+int cmd_filesystem_usage(int argc, char **argv);
 
 extern const char * const cmd_device_disk_usage_usage[];
 int cmd_device_disk_usage(int argc, char **argv);
