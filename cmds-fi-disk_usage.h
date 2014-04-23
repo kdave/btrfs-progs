@@ -19,10 +19,36 @@
 #ifndef __CMDS_FI_DISK_USAGE__
 #define __CMDS_FI_DISK_USAGE__
 
+#define DF_HUMAN_UNIT		(1<<0)
+
 extern const char * const cmd_filesystem_usage_usage[];
 int cmd_filesystem_usage(int argc, char **argv);
 
-extern const char * const cmd_device_disk_usage_usage[];
-int cmd_device_disk_usage(int argc, char **argv);
+struct device_info {
+	u64	devid;
+	char	path[BTRFS_DEVICE_PATH_NAME_MAX];
+	u64	size;
+};
+
+/*
+ * To store the size information about the chunks:
+ * the chunks info are grouped by the tuple (type, devid, num_stripes),
+ * i.e. if two chunks are of the same type (RAID1, DUP...), are on the
+ * same disk, have the same stripes then their sizes are grouped
+ */
+struct chunk_info {
+	u64	type;
+	u64	size;
+	u64	devid;
+	u64	num_stripes;
+};
+
+int load_device_info(int fd, struct device_info **device_info_ptr,
+		int *device_info_count);
+int load_chunk_info(int fd, struct chunk_info **info_ptr, int *info_count);
+char *df_pretty_sizes(u64 size, int mode);
+void print_device_chunks(int fd, u64 devid, u64 total_size,
+		struct chunk_info *chunks_info_ptr,
+		int chunks_info_count, int mode);
 
 #endif

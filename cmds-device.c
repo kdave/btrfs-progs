@@ -450,6 +450,98 @@ out:
 	return err;
 }
 
+const char * const cmd_device_usage_usage[] = {
+	"btrfs device usage [-b] <path> [<path>..]",
+	"Show which chunks are in a device.",
+	"",
+	"-b\tSet byte as unit",
+	NULL
+};
+
+static int _cmd_device_usage(int fd, char *path, int mode)
+{
+	int i;
+	int ret = 0;
+	int info_count = 0;
+	struct chunk_info *info_ptr = 0;
+	struct device_info *device_info_ptr = 0;
+	int device_info_count = 0;
+
+	if (load_chunk_info(fd, &info_ptr, &info_count) ||
+	    load_device_info(fd, &device_info_ptr, &device_info_count)) {
+		ret = -1;
+		goto exit;
+	}
+
+	for (i = 0; i < device_info_count; i++) {
+		printf("%s\t%10s\n", device_info_ptr[i].path,
+			df_pretty_sizes(device_info_ptr[i].size, mode));
+
+		print_device_chunks(fd, device_info_ptr[i].devid,
+				device_info_ptr[i].size,
+				info_ptr, info_count,
+				mode);
+		printf("\n");
+	}
+
+exit:
+	if (device_info_ptr)
+		free(device_info_ptr);
+	if (info_ptr)
+		free(info_ptr);
+
+	return ret;
+}
+
+int cmd_device_usage(int argc, char **argv)
+{
+
+	int	flags = DF_HUMAN_UNIT;
+	int	i, more_than_one = 0;
+
+	optind = 1;
+	while (1) {
+		char	c = getopt(argc, argv, "b");
+
+		if (c < 0)
+			break;
+
+		switch (c) {
+		case 'b':
+			flags &= ~DF_HUMAN_UNIT;
+			break;
+		default:
+			usage(cmd_device_usage_usage);
+		}
+	}
+
+	if (check_argc_min(argc - optind, 1))
+		usage(cmd_device_usage_usage);
+
+	for (i = optind; i < argc ; i++) {
+		int r, fd;
+		DIR	*dirstream = NULL;
+		if (more_than_one)
+			printf("\n");
+
+		fd = open_file_or_dir(argv[i], &dirstream);
+		if (fd < 0) {
+			fprintf(stderr, "ERROR: can't access to '%s'\n",
+				argv[1]);
+			return 12;
+		}
+		r = _cmd_device_usage(fd, argv[i], flags);
+		close_file_or_dir(fd, dirstream);
+
+		if (r)
+			return r;
+		more_than_one = 1;
+
+	}
+
+	return 0;
+}
+
 const struct cmd_group device_cmd_group = {
 	device_cmd_group_usage, NULL, {
 		{ "add", cmd_add_dev, cmd_add_dev_usage, NULL, 0 },
@@ -457,8 +549,8 @@ const struct cmd_group device_cmd_group = {
 		{ "scan", cmd_scan_dev, cmd_scan_dev_usage, NULL, 0 },
 		{ "ready", cmd_ready_dev, cmd_ready_dev_usage, NULL, 0 },
 		{ "stats", cmd_dev_stats, cmd_dev_stats_usage, NULL, 0 },
-		{ "disk-usage", cmd_device_disk_usage,
-			cmd_device_disk_usage_usage, NULL, 0 },
+		{ "usage", cmd_device_usage,
+			cmd_device_usage_usage, NULL, 0 },
 		NULL_CMD_STRUCT
 	}
 };
