@@ -1294,7 +1294,7 @@ out:
 	return ret;
 }
 
-static char *size_strs[] = { "", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB"};
+static char *size_strs[] = { "B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB"};
 int pretty_size_snprintf(u64 size, char *str, size_t str_bytes)
 {
 	int num_divs = 0;
