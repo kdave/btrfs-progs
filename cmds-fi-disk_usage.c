@@ -847,7 +847,7 @@ int cmd_filesystem_usage(int argc, char **argv)
 	return 0;
 }
 
-void print_device_chunks(int fd, u64 devid, u64 total_size,
+void print_device_chunks(int fd, struct device_info *devinfo,
 		struct chunk_info *chunks_info_ptr,
 		int chunks_info_count, int mode)
 {
@@ -860,7 +860,7 @@ void print_device_chunks(int fd, u64 devid, u64 total_size,
 		u64 flags;
 		u64 size;
 
-		if (chunks_info_ptr[i].devid != devid)
+		if (chunks_info_ptr[i].devid != devinfo->devid)
 			continue;
 
 		flags = chunks_info_ptr[i].type;
@@ -879,7 +879,7 @@ void print_device_chunks(int fd, u64 devid, u64 total_size,
 	}
 	printf("   Unallocated: %*s%10s\n",
 		(int)(20 - strlen("Unallocated")), "",
-		df_pretty_sizes(total_size - allocated, mode));
+		df_pretty_sizes(devinfo->size - allocated, mode));
 }
 
 void print_device_sizes(int fd, struct device_info *devinfo, int mode)

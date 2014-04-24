@@ -50,7 +50,7 @@ int load_device_info(int fd, struct device_info **device_info_ptr,
 		int *device_info_count);
 int load_chunk_info(int fd, struct chunk_info **info_ptr, int *info_count);
 char *df_pretty_sizes(u64 size, int mode);
-void print_device_chunks(int fd, u64 devid, u64 total_size,
+void print_device_chunks(int fd, struct device_info *devinfo,
 		struct chunk_info *chunks_info_ptr,
 		int chunks_info_count, int mode);
 void print_device_sizes(int fd, struct device_info *devinfo, int mode);
