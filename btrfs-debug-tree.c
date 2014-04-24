@@ -177,13 +177,14 @@ int main(int ac, char **av)
 		fprintf(stderr, "unable to open %s\n", av[optind]);
 		exit(1);
 	}
+
 	root = info->fs_root;
+	if (!root) {
+		fprintf(stderr, "unable to open %s\n", av[optind]);
+		exit(1);
+	}
 
 	if (block_only) {
-		if (!root) {
-			fprintf(stderr, "unable to open %s\n", av[optind]);
-			exit(1);
-		}
 		leaf = read_tree_block(root,
 				      block_only,
 				      root->leafsize, 0);
