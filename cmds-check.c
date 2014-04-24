@@ -6121,6 +6121,15 @@ static int pin_down_tree_blocks(struct btrfs_fs_info *fs_info,
 	int ret;
 	int i;
 
+	/*
+	 * If we have pinned this block before, don't pin it again.
+	 * This can not only avoid forever loop with broken filesystem
+	 * but also give us some speedups.
+	 */
+	if (test_range_bit(&fs_info->pinned_extents, eb->start,
+			   eb->start + eb->len - 1, EXTENT_DIRTY, 0))
+		return 0;
+
 	btrfs_pin_extent(fs_info, eb->start, eb->len);
 
 	leafsize = btrfs_super_leafsize(fs_info->super_copy);
