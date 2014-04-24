@@ -474,9 +474,9 @@ static int _cmd_device_usage(int fd, char *path, int mode)
 	}
 
 	for (i = 0; i < device_info_count; i++) {
-		printf("%s\t%10s\n", device_info_ptr[i].path,
-			df_pretty_sizes(device_info_ptr[i].size, mode));
-
+		printf("%s, ID: %llu\n", device_info_ptr[i].path,
+				device_info_ptr[i].devid);
+		print_device_sizes(fd, &device_info_ptr[i], mode);
 		print_device_chunks(fd, device_info_ptr[i].devid,
 				device_info_ptr[i].size,
 				info_ptr, info_count,

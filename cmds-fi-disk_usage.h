@@ -27,7 +27,10 @@ int cmd_filesystem_usage(int argc, char **argv);
 struct device_info {
 	u64	devid;
 	char	path[BTRFS_DEVICE_PATH_NAME_MAX];
-	u64	size;
+	/* Size of the block device */
+	u64	device_size;
+	/* Size that's occupied by the filesystem, can be changed via resize */
+	u64     size;
 };
 
 /*
@@ -50,5 +53,6 @@ char *df_pretty_sizes(u64 size, int mode);
 void print_device_chunks(int fd, u64 devid, u64 total_size,
 		struct chunk_info *chunks_info_ptr,
 		int chunks_info_count, int mode);
+void print_device_sizes(int fd, struct device_info *devinfo, int mode);
 
 #endif

@@ -499,7 +499,8 @@ int load_device_info(int fd, struct device_info **device_info_ptr,
 
 		info[ndevs].devid = dev_info.devid;
 		strcpy(info[ndevs].path, (char *)dev_info.path);
-		info[ndevs].size = get_partition_size((char *)dev_info.path);
+		info[ndevs].device_size = get_partition_size((char *)dev_info.path);
+		info[ndevs].size = dev_info.total_bytes;
 		++ndevs;
 	}
 
@@ -879,5 +880,14 @@ void print_device_chunks(int fd, u64 devid, u64 total_size,
 	printf("   Unallocated: %*s%10s\n",
 		(int)(20 - strlen("Unallocated")), "",
 		df_pretty_sizes(total_size - allocated, mode));
+}
 
+void print_device_sizes(int fd, struct device_info *devinfo, int mode)
+{
+	printf("   Device size: %*s%10s\n",
+		(int)(20 - strlen("Device size")), "",
+		df_pretty_sizes(devinfo->device_size, mode));
+	printf("   FS occupied: %*s%10s\n",
+		(int)(20 - strlen("FS occupied")), "",
+		df_pretty_sizes(devinfo->size, mode));
 }
