@@ -172,6 +172,12 @@ int load_chunk_info(int fd, struct chunk_info **info_ptr, int *info_count)
 	while (1) {
 		ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &args);
 		e = errno;
+		if (ret == -EPERM) {
+			fprintf(stderr,
+				"ERROR: can't read detailed chunk info from ioctl(TREE_SEARCH), run as root\n");
+			return 0;
+		}
+
 		if (ret < 0) {
 			fprintf(stderr,
 				"ERROR: can't perform the search - %s\n",
@@ -461,6 +467,10 @@ int load_device_info(int fd, struct device_info **device_info_ptr,
 	*device_info_ptr = 0;
 
 	ret = ioctl(fd, BTRFS_IOC_FS_INFO, &fi_args);
+	if (ret == -EPERM) {
+		fprintf(stderr, "ERROR: can't get filesystem info from ioctl(FS_INFO), run as root\n");
+		return -1;
+	}
 	if (ret < 0) {
 		fprintf(stderr, "ERROR: cannot get filesystem info\n");
 		return -1;
