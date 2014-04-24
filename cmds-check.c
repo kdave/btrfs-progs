@@ -307,8 +307,22 @@ static struct inode_record *clone_inode_rec(struct inode_record *orig_rec)
 	return rec;
 }
 
-static void print_inode_error(int errors)
+static void print_inode_error(struct btrfs_root *root, struct inode_record *rec)
 {
+	u64 root_objectid = root->root_key.objectid;
+	int errors = rec->errors;
+
+	if (!errors)
+		return;
+	/* reloc root errors, we print its corresponding fs root objectid*/
+	if (root_objectid == BTRFS_TREE_RELOC_OBJECTID) {
+		root_objectid = root->root_key.offset;
+		fprintf(stderr, "reloc");
+	}
+	fprintf(stderr, "root %llu inode %llu errors %x",
+		(unsigned long long) root_objectid,
+		(unsigned long long) rec->ino, rec->errors);
+
 	if (errors & I_ERR_NO_INODE_ITEM)
 		fprintf(stderr, ", no inode item");
 	if (errors & I_ERR_NO_ORPHAN_ITEM)
@@ -1613,10 +1627,7 @@ static int check_inode_recs(struct btrfs_root *root,
 			rec->errors |= I_ERR_NO_INODE_ITEM;
 		if (rec->found_link != rec->nlink)
 			rec->errors |= I_ERR_LINK_COUNT_WRONG;
-		fprintf(stderr, "root %llu inode %llu errors %x",
-			(unsigned long long) root->root_key.objectid,
-			(unsigned long long) rec->ino, rec->errors);
-		print_inode_error(rec->errors);
+		print_inode_error(root, rec);
 		list_for_each_entry(backref, &rec->backrefs, list) {
 			if (!backref->found_dir_item)
 				backref->errors |= REF_ERR_NO_DIR_ITEM;
@@ -2091,8 +2102,14 @@ static int check_fs_roots(struct btrfs_root *root,
 		btrfs_item_key_to_cpu(leaf, &key, path.slots[0]);
 		if (key.type == BTRFS_ROOT_ITEM_KEY &&
 		    fs_root_objectid(key.objectid)) {
-			key.offset = (u64)-1;
-			tmp_root = btrfs_read_fs_root(root->fs_info, &key);
+			if (key.objectid == BTRFS_TREE_RELOC_OBJECTID) {
+				tmp_root = btrfs_read_fs_root_no_cache(
+						root->fs_info, &key);
+			} else {
+				key.offset = (u64)-1;
+				tmp_root = btrfs_read_fs_root(
+						root->fs_info, &key);
+			}
 			if (IS_ERR(tmp_root)) {
 				err = 1;
 				goto next;
@@ -2100,6 +2117,8 @@ static int check_fs_roots(struct btrfs_root *root,
 			ret = check_fs_root(tmp_root, root_cache, &wc);
 			if (ret)
 				err = 1;
+			if (key.objectid == BTRFS_TREE_RELOC_OBJECTID)
+				btrfs_free_fs_root(tmp_root);
 		} else if (key.type == BTRFS_ROOT_REF_KEY ||
 			   key.type == BTRFS_ROOT_BACKREF_KEY) {
 			process_root_ref(leaf, path.slots[0], &key,
