@@ -6551,6 +6551,22 @@ out:
 	return ret;
 }
 
+static int zero_log_tree(struct btrfs_root *root)
+{
+	struct btrfs_trans_handle *trans;
+	int ret;
+
+	trans = btrfs_start_transaction(root, 1);
+	if (IS_ERR(trans)) {
+		ret = PTR_ERR(trans);
+		return ret;
+	}
+	btrfs_set_super_log_root(root->fs_info->super_copy, 0);
+	btrfs_set_super_log_root_level(root->fs_info->super_copy, 0);
+	ret = btrfs_commit_transaction(trans, root);
+	return ret;
+}
+
 static struct option long_options[] = {
 	{ "super", 1, NULL, 's' },
 	{ "repair", 0, NULL, 0 },
@@ -6670,6 +6686,23 @@ int cmd_check(int argc, char **argv)
 	}
 
 	root = info->fs_root;
+	/*
+	 * repair mode will force us to commit transaction which
+	 * will make us fail to load log tree when mounting.
+	 */
+	if (repair && btrfs_super_log_root(info->super_copy)) {
+		ret = ask_user("repair mode will force to clear out log tree, Are you sure?");
+		if (!ret) {
+			ret = 1;
+			goto close_out;
+		}
+		ret = zero_log_tree(root);
+		if (ret) {
+			fprintf(stderr, "fail to zero log tree\n");
+			goto close_out;
+		}
+	}
+
 	uuid_unparse(info->super_copy->fsid, uuidbuf);
 	if (qgroup_report) {
 		printf("Print quota groups for %s\nUUID: %s\n", argv[optind],
