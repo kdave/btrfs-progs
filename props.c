@@ -129,13 +129,14 @@ static int prop_compression(enum prop_object_type type,
 		goto out;
 	}
 
-	xattr_name = malloc(XATTR_BTRFS_PREFIX_LEN + strlen(name));
+	xattr_name = malloc(XATTR_BTRFS_PREFIX_LEN + strlen(name) + 1);
 	if (!xattr_name) {
 		ret = -ENOMEM;
 		goto out;
 	}
 	memcpy(xattr_name, XATTR_BTRFS_PREFIX, XATTR_BTRFS_PREFIX_LEN);
 	memcpy(xattr_name + XATTR_BTRFS_PREFIX_LEN, name, strlen(name));
+	xattr_name[XATTR_BTRFS_PREFIX_LEN + strlen(name)] = '\0';
 
 	if (value)
 		sret = fsetxattr(fd, xattr_name, value, strlen(value), 0);
