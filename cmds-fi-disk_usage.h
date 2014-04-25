@@ -46,9 +46,8 @@ struct chunk_info {
 	u64	num_stripes;
 };
 
-int load_device_info(int fd, struct device_info **device_info_ptr,
-		int *device_info_count);
-int load_chunk_info(int fd, struct chunk_info **info_ptr, int *info_count);
+int load_chunk_and_device_info(int fd, struct chunk_info **chunkinfo,
+		int *chunkcount, struct device_info **devinfo, int *devcount);
 char *df_pretty_sizes(u64 size, int mode);
 void print_device_chunks(int fd, struct device_info *devinfo,
 		struct chunk_info *chunks_info_ptr,

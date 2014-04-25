@@ -141,7 +141,7 @@ static int cmp_chunk_info(const void *a, const void *b)
 		((struct chunk_info *)b)->type);
 }
 
-int load_chunk_info(int fd, struct chunk_info **info_ptr, int *info_count)
+static int load_chunk_info(int fd, struct chunk_info **info_ptr, int *info_count)
 {
 	int ret;
 	struct btrfs_ioctl_search_args args;
@@ -172,11 +172,8 @@ int load_chunk_info(int fd, struct chunk_info **info_ptr, int *info_count)
 	while (1) {
 		ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &args);
 		e = errno;
-		if (ret == -EPERM) {
-			fprintf(stderr,
-				"ERROR: can't read detailed chunk info from ioctl(TREE_SEARCH), run as root\n");
-			return 0;
-		}
+		if (ret == -EPERM)
+			return ret;
 
 		if (ret < 0) {
 			fprintf(stderr,
@@ -308,30 +305,23 @@ static struct btrfs_ioctl_space_args *load_space_info(int fd, char *path)
  * which compose the chunk, which could be different from the number of devices
  * if a disk is added later.
  */
-static int get_raid56_used(int fd, u64 *raid5_used, u64 *raid6_used)
+static void get_raid56_used(int fd, struct chunk_info *chunks, int chunkcount,
+		u64 *raid5_used, u64 *raid6_used)
 {
-	struct chunk_info *info_ptr=0, *p;
-	int info_count=0;
-	int ret;
+	*raid5_used = 0;
+	*raid6_used = 0;
 
-	*raid5_used = *raid6_used =0;
-
-	ret = load_chunk_info(fd, &info_ptr, &info_count);
-	if( ret < 0)
-		return ret;
-
-	for ( p = info_ptr; info_count ; info_count--, p++ ) {
-		if (p->type & BTRFS_BLOCK_GROUP_RAID5)
-			(*raid5_used) += p->size / (p->num_stripes -1);
-		if (p->type & BTRFS_BLOCK_GROUP_RAID6)
-			(*raid6_used) += p->size / (p->num_stripes -2);
+	while (chunkcount-- > 0) {
+		if (chunks->type & BTRFS_BLOCK_GROUP_RAID5)
+			(*raid5_used) += chunks->size / (chunks->num_stripes - 1);
+		if (chunks->type & BTRFS_BLOCK_GROUP_RAID6)
+			(*raid6_used) += chunks->size / (chunks->num_stripes - 2);
 	}
-	free(info_ptr);
-
-	return 0;
 }
 
-static int _cmd_disk_free(int fd, char *path, int mode)
+static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
+		int chunkcount, struct device_info *devinfo, int devcount,
+		char *path, int mode)
 {
 	struct btrfs_ioctl_space_args *sargs = 0;
 	int i;
@@ -360,15 +350,11 @@ static int _cmd_disk_free(int fd, char *path, int mode)
 		ret = 19;
 		goto exit;
 	}
-	if (get_raid56_used(fd, &raid5_used, &raid6_used) < 0) {
-		fprintf(stderr,
-			"ERROR: couldn't get space info on '%s'\n",
-			path );
-		ret = 20;
-		goto exit;
-	}
+	get_raid56_used(fd, chunkinfo, chunkcount, &raid5_used, &raid6_used);
 
-	total_chunks = total_used = total_free = 0;
+	total_chunks = 0;
+	total_used = 0;
+	total_free = 0;
 
 	for (i = 0; i < sargs->total_spaces; i++) {
 		float ratio = 1;
@@ -453,7 +439,7 @@ static int cmp_device_info(const void *a, const void *b)
 /*
  *  This function loads the device_info structure and put them in an array
  */
-int load_device_info(int fd, struct device_info **device_info_ptr,
+static int load_device_info(int fd, struct device_info **device_info_ptr,
 			   int *device_info_count)
 {
 	int ret, i, ndevs;
@@ -465,10 +451,8 @@ int load_device_info(int fd, struct device_info **device_info_ptr,
 	*device_info_ptr = 0;
 
 	ret = ioctl(fd, BTRFS_IOC_FS_INFO, &fi_args);
-	if (ret == -EPERM) {
-		fprintf(stderr, "ERROR: can't get filesystem info from ioctl(FS_INFO), run as root\n");
-		return -1;
-	}
+	if (ret == -EPERM)
+		return ret;
 	if (ret < 0) {
 		fprintf(stderr, "ERROR: cannot get filesystem info\n");
 		return -1;
@@ -510,6 +494,29 @@ int load_device_info(int fd, struct device_info **device_info_ptr,
 	*device_info_ptr = info;
 
 	return 0;
+}
+
+int load_chunk_and_device_info(int fd, struct chunk_info **chunkinfo,
+		int *chunkcount, struct device_info **devinfo, int *devcount)
+{
+	int ret;
+
+	ret = load_chunk_info(fd, chunkinfo, chunkcount);
+	if (ret == -EPERM) {
+		fprintf(stderr,
+			"WARNING: can't read detailed chunk info, RAID5/6 numbers will be incorrect, run as root\n");
+	} else if (ret) {
+		return ret;
+	}
+
+	ret = load_device_info(fd, devinfo, devcount);
+	if (ret == -EPERM) {
+		fprintf(stderr,
+			"WARNING: can't get filesystem info from ioctl(FS_INFO), run as root\n");
+		ret = 0;
+	}
+
+	return ret;
 }
 
 /*
@@ -744,43 +751,32 @@ static void _cmd_filesystem_usage_linear(int mode,
 			mode);
 }
 
-static int _cmd_filesystem_usage(int fd, char *path, int mode, int tabular)
+static int print_filesystem_usage_by_chunk(int fd,
+		struct chunk_info *chunkinfo, int chunkcount,
+		struct device_info *devinfo, int devcount,
+		char *path, int mode, int tabular)
 {
-	struct btrfs_ioctl_space_args *sargs = 0;
-	int info_count = 0;
-	struct chunk_info *info_ptr = 0;
-	struct device_info *device_info_ptr = 0;
-	int device_info_count = 0;
+	struct btrfs_ioctl_space_args *sargs;
 	int ret = 0;
 
-	if (load_chunk_info(fd, &info_ptr, &info_count) ||
-	    load_device_info(fd, &device_info_ptr, &device_info_count)) {
-		ret = -1;
-		goto exit;
-	}
+	if (!chunkinfo)
+		return 0;
 
-	if ((sargs = load_space_info(fd, path)) == NULL) {
-		ret = -1;
+	sargs = load_space_info(fd, path);
+	if (!sargs) {
+		ret = 1;
 		goto exit;
 	}
 
 	if (tabular)
-		_cmd_filesystem_usage_tabular(mode, sargs,
-					info_ptr, info_count,
-					device_info_ptr, device_info_count);
+		_cmd_filesystem_usage_tabular(mode, sargs, chunkinfo,
+				chunkcount, devinfo, devcount);
 	else
-		_cmd_filesystem_usage_linear(mode, sargs,
-					info_ptr, info_count,
-					device_info_ptr, device_info_count);
+		_cmd_filesystem_usage_linear(mode, sargs, chunkinfo,
+				chunkcount, devinfo, devcount);
 
 exit:
-
-	if (sargs)
-		free(sargs);
-	if (device_info_ptr)
-		free(device_info_ptr);
-	if (info_ptr)
-		free(info_ptr);
+	free(sargs);
 
 	return ret;
 }
@@ -796,16 +792,17 @@ const char * const cmd_filesystem_usage_usage[] = {
 
 int cmd_filesystem_usage(int argc, char **argv)
 {
-
 	int	flags =	DF_HUMAN_UNIT;
 	int	i, more_than_one = 0;
 	int	tabular = 0;
 
 	optind = 1;
 	while (1) {
-		char	c = getopt(argc, argv, "bt");
+		int c = getopt(argc, argv, "bt");
+
 		if (c < 0)
 			break;
+
 		switch (c) {
 		case 'b':
 			flags &= ~DF_HUMAN_UNIT;
@@ -821,9 +818,14 @@ int cmd_filesystem_usage(int argc, char **argv)
 	if (check_argc_min(argc - optind, 1))
 		usage(cmd_filesystem_usage_usage);
 
-	for (i = optind; i < argc ; i++) {
-		int r, fd;
-		DIR	*dirstream = NULL;
+	for (i = optind; i < argc; i++) {
+		int ret;
+		int fd;
+		DIR *dirstream = NULL;
+		struct chunk_info *chunkinfo = NULL;
+		struct device_info *devinfo = NULL;
+		int chunkcount = 0;
+		int devcount = 0;
 
 		fd = open_file_or_dir(argv[i], &dirstream);
 		if (fd < 0) {
@@ -834,15 +836,26 @@ int cmd_filesystem_usage(int argc, char **argv)
 		if (more_than_one)
 			printf("\n");
 
-		r = _cmd_disk_free(fd, argv[i], flags);
+		ret = load_chunk_and_device_info(fd, &chunkinfo, &chunkcount,
+				&devinfo, &devcount);
+		if (ret)
+			goto cleanup;
+
+		ret = print_filesystem_usage_overall(fd, chunkinfo, chunkcount,
+				devinfo, devcount, argv[i], flags);
+		if (ret)
+			goto cleanup;
 		printf("\n");
-		r = _cmd_filesystem_usage(fd, argv[i], flags, tabular);
+		ret = print_filesystem_usage_by_chunk(fd, chunkinfo, chunkcount,
+				devinfo, devcount, argv[i], flags, tabular);
+cleanup:
 		close_file_or_dir(fd, dirstream);
+		free(chunkinfo);
+		free(devinfo);
 
-		if (r)
-			return r;
+		if (ret)
+			return ret;
 		more_than_one = 1;
-
 	}
 
 	return 0;

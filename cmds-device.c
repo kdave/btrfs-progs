@@ -462,31 +462,29 @@ static int _cmd_device_usage(int fd, char *path, int mode)
 {
 	int i;
 	int ret = 0;
-	int info_count = 0;
-	struct chunk_info *info_ptr = 0;
-	struct device_info *device_info_ptr = 0;
-	int device_info_count = 0;
+	struct chunk_info *chunkinfo = NULL;
+	struct device_info *devinfo = NULL;
+	int chunkcount = 0;
+	int devcount = 0;
 
-	if (load_chunk_info(fd, &info_ptr, &info_count) ||
-	    load_device_info(fd, &device_info_ptr, &device_info_count)) {
+	ret = load_chunk_and_device_info(fd, &chunkinfo, &chunkcount, &devinfo,
+			&devcount);
+	if (ret) {
 		ret = -1;
 		goto exit;
 	}
 
-	for (i = 0; i < device_info_count; i++) {
-		printf("%s, ID: %llu\n", device_info_ptr[i].path,
-				device_info_ptr[i].devid);
-		print_device_sizes(fd, &device_info_ptr[i], mode);
-		print_device_chunks(fd, &device_info_ptr[i],
-				info_ptr, info_count, mode);
+	for (i = 0; i < devcount; i++) {
+		printf("%s, ID: %llu\n", devinfo[i].path, devinfo[i].devid);
+		print_device_sizes(fd, &devinfo[i], mode);
+		print_device_chunks(fd, &devinfo[i], chunkinfo, chunkcount,
+				mode);
 		printf("\n");
 	}
 
 exit:
-	if (device_info_ptr)
-		free(device_info_ptr);
-	if (info_ptr)
-		free(info_ptr);
+	free(devinfo);
+	free(chunkinfo);
 
 	return ret;
 }
@@ -528,6 +526,7 @@ int cmd_device_usage(int argc, char **argv)
 				argv[1]);
 			return 12;
 		}
+
 		r = _cmd_device_usage(fd, argv[i], flags);
 		close_file_or_dir(fd, dirstream);
 
