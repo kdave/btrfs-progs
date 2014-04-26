@@ -350,7 +350,7 @@ static struct option long_options[] = {
 	{ "version", 0, NULL, 'V' },
 	{ "rootdir", 1, NULL, 'r' },
 	{ "nodiscard", 0, NULL, 'K' },
-	{ "features", 0, NULL, 'O' },
+	{ "features", 1, NULL, 'O' },
 	{ NULL, 0, NULL, 0}
 };
 
