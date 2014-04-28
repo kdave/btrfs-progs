@@ -449,7 +449,10 @@ static int print_replace_status(int fd, const char *path, int once)
 			break;
 		default:
 			prevent_loop = 1;
-			assert(0);
+			fprintf(stderr,
+				"Unknown btrfs dev replace status:%llu",
+				status->replace_state);
+			ret = -EINVAL;
 			break;
 		}
 
@@ -459,9 +462,9 @@ static int print_replace_status(int fd, const char *path, int once)
 				(unsigned long long)status->num_write_errors,
 				(unsigned long long)
 				 status->num_uncorrectable_read_errors);
-		if (once || prevent_loop) {
+		if (once || prevent_loop || ret) {
 			printf("\n");
-			return 0;
+			return ret;
 		}
 
 		fflush(stdout);
