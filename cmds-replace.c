@@ -172,8 +172,13 @@ static int cmd_start_replace(int argc, char **argv)
 	fdmnt = open_path_or_dev_mnt(path, &dirstream);
 
 	if (fdmnt < 0) {
-		fprintf(stderr, "ERROR: can't access \"%s\": %s\n",
-			path, strerror(errno));
+		if (errno == EINVAL)
+			fprintf(stderr,
+				"ERROR: '%s' is not a mounted btrfs device\n",
+				path);
+		else
+			fprintf(stderr, "ERROR: can't access '%s': %s\n",
+				path, strerror(errno));
 		goto leave_with_error;
 	}
 

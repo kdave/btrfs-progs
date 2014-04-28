@@ -1172,7 +1172,13 @@ static int scrub_start(int argc, char **argv, int resume)
 	fdmnt = open_path_or_dev_mnt(path, &dirstream);
 
 	if (fdmnt < 0) {
-		ERR(!do_quiet, "ERROR: can't access '%s'\n", path);
+		if (errno == EINVAL)
+			ERR(!do_quiet,
+			    "ERROR: '%s' is not a mounted btrfs device\n",
+			    path);
+		else
+			ERR(!do_quiet, "ERROR: can't access '%s': %s\n",
+			    path, strerror(errno));
 		return 1;
 	}
 
@@ -1560,8 +1566,13 @@ static int cmd_scrub_cancel(int argc, char **argv)
 
 	fdmnt = open_path_or_dev_mnt(path, &dirstream);
 	if (fdmnt < 0) {
-		fprintf(stderr, "ERROR: could not open %s: %s\n",
-			path, strerror(errno));
+		if (errno == EINVAL)
+			fprintf(stderr,
+				"ERROR: '%s' is not a mounted btrfs device\n",
+				path);
+		else
+			fprintf(stderr, "ERROR: can't access '%s': %s\n",
+				path, strerror(errno));
 		ret = 1;
 		goto out;
 	}
@@ -1658,7 +1669,13 @@ static int cmd_scrub_status(int argc, char **argv)
 	fdmnt = open_path_or_dev_mnt(path, &dirstream);
 
 	if (fdmnt < 0) {
-		fprintf(stderr, "ERROR: can't access '%s'\n", path);
+		if (errno == EINVAL)
+			fprintf(stderr,
+				"ERROR: '%s' is not a mounted btrfs device\n",
+				path);
+		else
+			fprintf(stderr, "ERROR: can't access '%s': %s\n",
+				path, strerror(errno));
 		return 1;
 	}
 

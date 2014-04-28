@@ -352,7 +352,13 @@ static int cmd_dev_stats(int argc, char **argv)
 	fdmnt = open_path_or_dev_mnt(dev_path, &dirstream);
 
 	if (fdmnt < 0) {
-		fprintf(stderr, "ERROR: can't access '%s'\n", dev_path);
+		if (errno == EINVAL)
+			fprintf(stderr,
+				"ERROR: '%s' is not a mounted btrfs device\n",
+				dev_path);
+		else
+			fprintf(stderr, "ERROR: can't access '%s': %s\n",
+				dev_path, strerror(errno));
 		return 1;
 	}
 
