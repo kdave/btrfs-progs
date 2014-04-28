@@ -68,7 +68,7 @@ static int add_info_to_list(struct chunk_info **info_ptr,
 			if (!res) {
 				free(*info_ptr);
 				fprintf(stderr, "ERROR: not enough memory\n");
-				return -1;
+				return -ENOMEM;
 			}
 
 			*info_ptr = res;
@@ -163,7 +163,7 @@ static int load_chunk_info(int fd, struct chunk_info **info_ptr, int *info_count
 			fprintf(stderr,
 				"ERROR: can't perform the search - %s\n",
 				strerror(e));
-			return -99;
+			return ret;
 		}
 		/* the ioctl returns the number of item it found in nr_items */
 
@@ -179,9 +179,10 @@ static int load_chunk_info(int fd, struct chunk_info **info_ptr, int *info_count
 			off += sizeof(*sh);
 			item = (struct btrfs_chunk *)(args.buf + off);
 
-			if (add_info_to_list(info_ptr, info_count, item)) {
+			ret = add_info_to_list(info_ptr, info_count, item);
+			if (ret) {
 				*info_ptr = 0;
-				return -100;
+				return ret;
 			}
 
 			off += sh->len;
@@ -319,8 +320,9 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 	double K;
 	u64 raid5_used, raid6_used;
 
-	if ((sargs = load_space_info(fd, path)) == NULL) {
-		ret = -1;
+	sargs = load_space_info(fd, path);
+	if (!sargs) {
+		ret = 1;
 		goto exit;
 	}
 
@@ -331,7 +333,7 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 			"ERROR: couldn't get space info on '%s' - %s\n",
 			path, strerror(e));
 
-		ret = 19;
+		ret = 1;
 		goto exit;
 	}
 	get_raid56_used(fd, chunkinfo, chunkcount, &raid5_used, &raid6_used);
@@ -439,13 +441,13 @@ static int load_device_info(int fd, struct device_info **device_info_ptr,
 		return ret;
 	if (ret < 0) {
 		fprintf(stderr, "ERROR: cannot get filesystem info\n");
-		return -1;
+		return ret;
 	}
 
 	info = calloc(fi_args.num_devices, sizeof(struct device_info));
 	if (!info) {
 		fprintf(stderr, "ERROR: not enough memory\n");
-		return -1;
+		return ret;
 	}
 
 	for (i = 0, ndevs = 0 ; i <= fi_args.max_id ; i++) {
@@ -460,7 +462,7 @@ static int load_device_info(int fd, struct device_info **device_info_ptr,
 			    "ERROR: cannot get info about device devid=%d\n",
 			    i);
 			free(info);
-			return -1;
+			return ret;
 		}
 
 		info[ndevs].devid = dev_info.devid;
@@ -749,7 +751,7 @@ static int print_filesystem_usage_by_chunk(int fd,
 	sargs = load_space_info(fd, path);
 	if (!sargs) {
 		ret = 1;
-		goto exit;
+		goto out;
 	}
 
 	if (tabular)
@@ -759,9 +761,8 @@ static int print_filesystem_usage_by_chunk(int fd,
 		_cmd_filesystem_usage_linear(mode, sargs, chunkinfo,
 				chunkcount, devinfo, devcount);
 
-exit:
 	free(sargs);
-
+out:
 	return ret;
 }
 
@@ -777,6 +778,7 @@ const char * const cmd_filesystem_usage_usage[] = {
 int cmd_filesystem_usage(int argc, char **argv)
 {
 	int mode = UNITS_HUMAN;
+	int ret = 0;
 	int	i, more_than_one = 0;
 	int	tabular = 0;
 
@@ -803,7 +805,6 @@ int cmd_filesystem_usage(int argc, char **argv)
 		usage(cmd_filesystem_usage_usage);
 
 	for (i = optind; i < argc; i++) {
-		int ret;
 		int fd;
 		DIR *dirstream = NULL;
 		struct chunk_info *chunkinfo = NULL;
@@ -813,9 +814,10 @@ int cmd_filesystem_usage(int argc, char **argv)
 
 		fd = open_file_or_dir(argv[i], &dirstream);
 		if (fd < 0) {
-			fprintf(stderr, "ERROR: can't access to '%s'\n",
+			fprintf(stderr, "ERROR: can't access '%s'\n",
 				argv[1]);
-			return 12;
+			ret = 1;
+			goto out;
 		}
 		if (more_than_one)
 			printf("\n");
@@ -838,11 +840,12 @@ cleanup:
 		free(devinfo);
 
 		if (ret)
-			return ret;
+			goto out;
 		more_than_one = 1;
 	}
 
-	return 0;
+out:
+	return !!ret;
 }
 
 void print_device_chunks(int fd, struct device_info *devinfo,

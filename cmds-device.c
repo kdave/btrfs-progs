@@ -469,10 +469,8 @@ static int _cmd_device_usage(int fd, char *path, int mode)
 
 	ret = load_chunk_and_device_info(fd, &chunkinfo, &chunkcount, &devinfo,
 			&devcount);
-	if (ret) {
-		ret = -1;
-		goto exit;
-	}
+	if (ret)
+		goto out;
 
 	for (i = 0; i < devcount; i++) {
 		printf("%s, ID: %llu\n", devinfo[i].path, devinfo[i].devid);
@@ -482,7 +480,7 @@ static int _cmd_device_usage(int fd, char *path, int mode)
 		printf("\n");
 	}
 
-exit:
+out:
 	free(devinfo);
 	free(chunkinfo);
 
@@ -493,6 +491,7 @@ int cmd_device_usage(int argc, char **argv)
 {
 
 	int mode = UNITS_HUMAN;
+	int ret = 0;
 	int	i, more_than_one = 0;
 
 	optind = 1;
@@ -515,28 +514,28 @@ int cmd_device_usage(int argc, char **argv)
 		usage(cmd_device_usage_usage);
 
 	for (i = optind; i < argc ; i++) {
-		int r, fd;
+		int fd;
 		DIR	*dirstream = NULL;
 		if (more_than_one)
 			printf("\n");
 
 		fd = open_file_or_dir(argv[i], &dirstream);
 		if (fd < 0) {
-			fprintf(stderr, "ERROR: can't access to '%s'\n",
+			fprintf(stderr, "ERROR: can't access '%s'\n",
 				argv[1]);
-			return 12;
+			ret = 1;
+			goto out;
 		}
 
-		r = _cmd_device_usage(fd, argv[i], mode);
+		ret = _cmd_device_usage(fd, argv[i], mode);
 		close_file_or_dir(fd, dirstream);
 
-		if (r)
-			return r;
+		if (ret)
+			goto out;
 		more_than_one = 1;
-
 	}
-
-	return 0;
+out:
+	return !!ret;
 }
 
 const struct cmd_group device_cmd_group = {
