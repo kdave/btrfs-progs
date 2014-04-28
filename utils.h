@@ -47,6 +47,14 @@ int check_argc_max(int nargs, int expected);
 void fixup_argv0(char **argv, const char *token);
 void set_argv0(char **argv);
 
+/*
+ * Output mode of byte units
+ */
+#define UNITS_RAW			(1)
+#define UNITS_BINARY			(2)
+#define UNITS_DECIMAL			(3)
+#define UNITS_HUMAN			UNITS_BINARY
+
 int make_btrfs(int fd, const char *device, const char *label,
 	       char *fs_uuid, u64 blocks[6], u64 num_bytes, u32 nodesize,
 	       u32 leafsize, u32 sectorsize, u32 stripesize, u64 features);
@@ -68,12 +76,13 @@ int check_mounted_where(int fd, const char *file, char *where, int size,
 int btrfs_device_already_in_root(struct btrfs_root *root, int fd,
 				 int super_offset);
 
-int pretty_size_snprintf(u64 size, char *str, size_t str_bytes);
-#define pretty_size(size) 						\
-	({								\
-		static __thread char _str[24];				\
-		(void)pretty_size_snprintf((size), _str, sizeof(_str));	\
-		_str;							\
+int pretty_size_snprintf(u64 size, char *str, size_t str_bytes, int unit_mode);
+#define pretty_size(size) 	pretty_size_mode(size, UNITS_BINARY)
+#define pretty_size_mode(size, mode) 					      \
+	({								      \
+		static __thread char _str[32];				      \
+		(void)pretty_size_snprintf((size), _str, sizeof(_str), mode); \
+		_str;							      \
 	})
 
 int get_mountpt(char *dev, char *mntpt, size_t size);

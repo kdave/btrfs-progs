@@ -1294,35 +1294,62 @@ out:
 	return ret;
 }
 
-static char *size_strs[] = { "B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB"};
-int pretty_size_snprintf(u64 size, char *str, size_t str_bytes)
-{
-	int num_divs = 0;
-	float fraction;
+static const char const *unit_suffix_binary[] =
+	{ "B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB"};
+static const char const *unit_suffix_decimal[] =
+	{ "B", "KB", "MB", "GB", "TB", "PB", "EB"};
 
-	if (str_bytes == 0)
+int pretty_size_snprintf(u64 size, char *str, size_t str_size, int unit_mode)
+{
+	int num_divs;
+	float fraction;
+	int base = 0;
+	const char const **suffix = NULL;
+	u64 last_size;
+
+	if (str_size == 0)
 		return 0;
 
-	if( size < 1024 ){
-		fraction = size;
-		num_divs = 0;
-	} else {
-		u64 last_size = size;
-		num_divs = 0;
-		while(size >= 1024){
-			last_size = size;
-			size /= 1024;
-			num_divs ++;
-		}
-
-		if (num_divs >= ARRAY_SIZE(size_strs)) {
-			str[0] = '\0';
-			return -1;
-		}
-		fraction = (float)last_size / 1024;
+	if (unit_mode == UNITS_RAW) {
+		snprintf(str, str_size, "%llu", size);
+		return 0;
 	}
-	return snprintf(str, str_bytes, "%.2f%s", fraction,
-			size_strs[num_divs]);
+
+	if (unit_mode == UNITS_BINARY) {
+		base = 1024;
+		suffix = unit_suffix_binary;
+	} else if (unit_mode == UNITS_DECIMAL) {
+		base = 1000;
+		suffix = unit_suffix_decimal;
+	}
+
+	/* Unknown mode */
+	if (!base) {
+		fprintf(stderr, "INTERNAL ERROR: unknown unit base, mode %d",
+				unit_mode);
+		assert(0);
+		return -1;
+	}
+
+	num_divs = 0;
+	last_size = size;
+
+	while (size >= base) {
+		last_size = size;
+		size /= base;
+		num_divs++;
+	}
+
+	if (num_divs >= ARRAY_SIZE(unit_suffix_binary)) {
+		str[0] = '\0';
+		printf("INTERNAL ERROR: unsupported unit suffix, index %d\n",
+				num_divs);
+		assert(0);
+		return -1;
+	}
+	fraction = (float)last_size / base;
+
+	return snprintf(str, str_size, "%.2f%s", fraction, suffix[num_divs]);
 }
 
 /*
