@@ -19,8 +19,6 @@
 #ifndef __CMDS_FI_DISK_USAGE__
 #define __CMDS_FI_DISK_USAGE__
 
-#define DF_HUMAN_UNIT		(1<<0)
-
 extern const char * const cmd_filesystem_usage_usage[];
 int cmd_filesystem_usage(int argc, char **argv);
 
@@ -48,7 +46,6 @@ struct chunk_info {
 
 int load_chunk_and_device_info(int fd, struct chunk_info **chunkinfo,
 		int *chunkcount, struct device_info **devinfo, int *devcount);
-char *df_pretty_sizes(u64 size, int mode);
 void print_device_chunks(int fd, struct device_info *devinfo,
 		struct chunk_info *chunks_info_ptr,
 		int chunks_info_count, int mode);

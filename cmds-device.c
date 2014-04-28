@@ -492,19 +492,19 @@ exit:
 int cmd_device_usage(int argc, char **argv)
 {
 
-	int	flags = DF_HUMAN_UNIT;
+	int mode = UNITS_HUMAN;
 	int	i, more_than_one = 0;
 
 	optind = 1;
 	while (1) {
-		char	c = getopt(argc, argv, "b");
+		int c = getopt(argc, argv, "b");
 
 		if (c < 0)
 			break;
 
 		switch (c) {
 		case 'b':
-			flags &= ~DF_HUMAN_UNIT;
+			mode = UNITS_RAW;
 			break;
 		default:
 			usage(cmd_device_usage_usage);
@@ -527,7 +527,7 @@ int cmd_device_usage(int argc, char **argv)
 			return 12;
 		}
 
-		r = _cmd_device_usage(fd, argv[i], flags);
+		r = _cmd_device_usage(fd, argv[i], mode);
 		close_file_or_dir(fd, dirstream);
 
 		if (r)
