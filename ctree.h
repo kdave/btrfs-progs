@@ -860,6 +860,12 @@ struct btrfs_csum_item {
 /* used in struct btrfs_balance_args fields */
 #define BTRFS_AVAIL_ALLOC_BIT_SINGLE	(1ULL << 48)
 
+/*
+ * GLOBAL_RSV does not exist as a on-disk block group type and is used
+ * internally for exporting info about global block reserve from space infos
+ */
+#define BTRFS_SPACE_INFO_GLOBAL_RSV    (1ULL << 49)
+
 #define BTRFS_QGROUP_STATUS_OFF			0
 #define BTRFS_QGROUP_STATUS_ON			1
 #define BTRFS_QGROUP_STATUS_SCANNING		2
