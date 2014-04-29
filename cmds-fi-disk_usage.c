@@ -319,6 +319,8 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 	u64 total_free;		/* logical space un-used */
 	double K;
 	u64 raid5_used, raid6_used;
+	u64 global_reserve;
+	u64 global_reserve_used;
 
 	sargs = load_space_info(fd, path);
 	if (!sargs) {
@@ -341,6 +343,8 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 	total_chunks = 0;
 	total_used = 0;
 	total_free = 0;
+	global_reserve = 0;
+	global_reserve_used = 0;
 
 	for (i = 0; i < sargs->total_spaces; i++) {
 		float ratio = 1;
@@ -365,6 +369,11 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 			ratio = 2;
 		else
 			ratio = 1;
+
+		if (flags & BTRFS_SPACE_INFO_GLOBAL_RSV) {
+			global_reserve = sargs->spaces[i].total_bytes;
+			global_reserve_used = sargs->spaces[i].used_bytes;
+		}
 
 		allocated = sargs->spaces[i].total_bytes * ratio;
 
@@ -404,6 +413,9 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 		pretty_size_mode((total_disk-total_chunks) / 2 + total_free, mode));
 	printf("    Data to device ratio:\t%*.0f %%\n",
 		width - 2, K * 100);
+	printf("    Global reserve:\t\t%*s\t(used: %s)\n", width,
+		pretty_size_mode(global_reserve, mode),
+		pretty_size_mode(global_reserve_used, mode));
 
 exit:
 
@@ -553,8 +565,11 @@ static void _cmd_filesystem_usage_tabular(int mode,
 	/* header */
 	for (i = 0; i < sargs->total_spaces; i++) {
 		const char *description;
-
 		u64 flags = sargs->spaces[i].flags;
+
+		if (flags & BTRFS_SPACE_INFO_GLOBAL_RSV)
+			continue;
+
 		description = btrfs_group_type_str(flags);
 
 		table_printf(matrix, 1+i, 0, "<%s", description);
@@ -715,8 +730,11 @@ static void _cmd_filesystem_usage_linear(int mode,
 	for (i = 0; i < sargs->total_spaces; i++) {
 		const char *description;
 		const char *r_mode;
-
 		u64 flags = sargs->spaces[i].flags;
+
+		if (flags & BTRFS_SPACE_INFO_GLOBAL_RSV)
+			continue;
+
 		description = btrfs_group_type_str(flags);
 		r_mode = btrfs_group_profile_str(flags);
 
