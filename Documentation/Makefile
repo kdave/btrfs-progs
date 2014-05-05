@@ -74,7 +74,7 @@ install: install-man
 install-man: man
 	$(INSTALL) -d -m 755 $(DESTDIR)$(man8dir)
 	$(INSTALL) -m 644 $(GZ_MAN8) $(DESTDIR)$(man8dir)
-	$(LNS) btrfs-check.8.gz $(DESTDIR)$(man8dir)
+	$(LNS) btrfs-check.8.gz $(DESTDIR)$(man8dir)/btrfsck.8.gz
 
 clean:
 	$(RM) *.xml *.xml+ *.8 *.8.gz
