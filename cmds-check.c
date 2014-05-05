@@ -2418,6 +2418,7 @@ static int try_to_fix_bad_block(struct btrfs_trans_handle *trans,
 	struct btrfs_path *path;
 	struct btrfs_key k1, k2;
 	int i;
+	int level;
 	int ret;
 
 	if (status != BTRFS_TREE_BLOCK_BAD_KEY_ORDER)
@@ -2435,9 +2436,10 @@ static int try_to_fix_bad_block(struct btrfs_trans_handle *trans,
 	if (!path)
 		return -EIO;
 
-	path->lowest_level = btrfs_header_level(buf);
+	level = btrfs_header_level(buf);
+	path->lowest_level = level;
 	path->skip_check_block = 1;
-	if (btrfs_header_level(buf))
+	if (level)
 		btrfs_node_key_to_cpu(buf, &k1, 0);
 	else
 		btrfs_item_key_to_cpu(buf, &k1, 0);
@@ -2448,9 +2450,9 @@ static int try_to_fix_bad_block(struct btrfs_trans_handle *trans,
 		return -EIO;
 	}
 
-	buf = path->nodes[0];
+	buf = path->nodes[level];
 	for (i = 0; i < btrfs_header_nritems(buf) - 1; i++) {
-		if (btrfs_header_level(buf)) {
+		if (level) {
 			btrfs_node_key_to_cpu(buf, &k1, i);
 			btrfs_node_key_to_cpu(buf, &k2, i + 1);
 		} else {
