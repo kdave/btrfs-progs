@@ -3792,8 +3792,7 @@ static int check_extent_exists(struct btrfs_root *root, u64 bytenr,
 
 	key.objectid = bytenr;
 	key.type = BTRFS_EXTENT_ITEM_KEY;
-	key.offset = 0;
-
+	key.offset = (u64)-1;
 
 again:
 	ret = btrfs_search_slot(NULL, root->fs_info->extent_root, &key, path,
@@ -3803,10 +3802,17 @@ again:
 		btrfs_free_path(path);
 		return ret;
 	} else if (ret) {
-		if (path->slots[0])
+		if (path->slots[0] > 0) {
 			path->slots[0]--;
-		else
-			btrfs_prev_leaf(root, path);
+		} else {
+			ret = btrfs_prev_leaf(root, path);
+			if (ret < 0) {
+				goto out;
+			} else if (ret > 0) {
+				ret = 0;
+				goto out;
+			}
+		}
 	}
 
 	btrfs_item_key_to_cpu(path->nodes[0], &key, path->slots[0]);
@@ -3816,13 +3822,22 @@ again:
 	 * bytenr, so walk back one more just in case.  Dear future traveler,
 	 * first congrats on mastering time travel.  Now if it's not too much
 	 * trouble could you go back to 2006 and tell Chris to make the
-	 * BLOCK_GROUP_ITEM_KEY lower than the EXTENT_ITEM_KEY please?
+	 * BLOCK_GROUP_ITEM_KEY (and BTRFS_*_REF_KEY) lower than the
+	 * EXTENT_ITEM_KEY please?
 	 */
-	if (key.type == BTRFS_BLOCK_GROUP_ITEM_KEY) {
-		if (path->slots[0])
+	while (key.type > BTRFS_EXTENT_ITEM_KEY) {
+		if (path->slots[0] > 0) {
 			path->slots[0]--;
-		else
-			btrfs_prev_leaf(root, path);
+		} else {
+			ret = btrfs_prev_leaf(root, path);
+			if (ret < 0) {
+				goto out;
+			} else if (ret > 0) {
+				ret = 0;
+				goto out;
+			}
+		}
+		btrfs_item_key_to_cpu(path->nodes[0], &key, path->slots[0]);
 	}
 
 	while (num_bytes) {
@@ -3894,7 +3909,8 @@ again:
 	}
 	ret = 0;
 
-	if (num_bytes) {
+out:
+	if (num_bytes && !ret) {
 		fprintf(stderr, "There are no extents for csum range "
 			"%Lu-%Lu\n", bytenr, bytenr+num_bytes);
 		ret = 1;
