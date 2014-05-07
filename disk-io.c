@@ -569,7 +569,6 @@ static int find_and_setup_log_root(struct btrfs_root *tree_root,
 	return 0;
 }
 
-
 int btrfs_free_fs_root(struct btrfs_root *root)
 {
 	if (root->node)
@@ -695,6 +694,8 @@ struct btrfs_root *btrfs_read_fs_root(struct btrfs_fs_info *fs_info,
 		return fs_info->dev_root;
 	if (location->objectid == BTRFS_CSUM_TREE_OBJECTID)
 		return fs_info->csum_root;
+	if (location->objectid == BTRFS_QUOTA_TREE_OBJECTID)
+		return fs_info->csum_root;
 
 	BUG_ON(location->objectid == BTRFS_TREE_RELOC_OBJECTID ||
 	       location->offset != (u64)-1);
@@ -721,6 +722,7 @@ void btrfs_free_fs_info(struct btrfs_fs_info *fs_info)
 	free(fs_info->chunk_root);
 	free(fs_info->dev_root);
 	free(fs_info->csum_root);
+	free(fs_info->quota_root);
 	free(fs_info->super_copy);
 	free(fs_info->log_root_tree);
 	free(fs_info);
@@ -741,11 +743,13 @@ struct btrfs_fs_info *btrfs_new_fs_info(int writable, u64 sb_bytenr)
 	fs_info->chunk_root = malloc(sizeof(struct btrfs_root));
 	fs_info->dev_root = malloc(sizeof(struct btrfs_root));
 	fs_info->csum_root = malloc(sizeof(struct btrfs_root));
+	fs_info->quota_root = malloc(sizeof(struct btrfs_root));
 	fs_info->super_copy = malloc(BTRFS_SUPER_INFO_SIZE);
 
 	if (!fs_info->tree_root || !fs_info->extent_root ||
 	    !fs_info->chunk_root || !fs_info->dev_root ||
-	    !fs_info->csum_root || !fs_info->super_copy)
+	    !fs_info->csum_root || !fs_info->quota_root ||
+	    !fs_info->super_copy)
 		goto free_all;
 
 	memset(fs_info->super_copy, 0, BTRFS_SUPER_INFO_SIZE);
@@ -754,6 +758,7 @@ struct btrfs_fs_info *btrfs_new_fs_info(int writable, u64 sb_bytenr)
 	memset(fs_info->chunk_root, 0, sizeof(struct btrfs_root));
 	memset(fs_info->dev_root, 0, sizeof(struct btrfs_root));
 	memset(fs_info->csum_root, 0, sizeof(struct btrfs_root));
+	memset(fs_info->quota_root, 0, sizeof(struct btrfs_root));
 
 	extent_io_tree_init(&fs_info->extent_cache);
 	extent_io_tree_init(&fs_info->free_space_cache);
@@ -912,6 +917,11 @@ int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info, u64 root_tree_bytenr,
 	}
 	fs_info->csum_root->track_dirty = 1;
 
+	ret = find_and_setup_root(root, fs_info, BTRFS_QUOTA_TREE_OBJECTID,
+				  fs_info->quota_root);
+	if (ret == 0)
+		fs_info->quota_enabled = 1;
+
 	ret = find_and_setup_log_root(root, fs_info, sb);
 	if (ret) {
 		printk("Couldn't setup log root tree\n");
@@ -936,6 +946,8 @@ int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info, u64 root_tree_bytenr,
 
 void btrfs_release_all_roots(struct btrfs_fs_info *fs_info)
 {
+	if (fs_info->quota_root)
+		free_extent_buffer(fs_info->quota_root->node);
 	if (fs_info->csum_root)
 		free_extent_buffer(fs_info->csum_root->node);
 	if (fs_info->dev_root)

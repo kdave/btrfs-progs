@@ -38,6 +38,7 @@
 #include "commands.h"
 #include "free-space-cache.h"
 #include "btrfsck.h"
+#include "qgroup-verify.h"
 
 static u64 bytes_used = 0;
 static u64 total_csum_bytes = 0;
@@ -6428,6 +6429,7 @@ static struct option long_options[] = {
 	{ "init-csum-tree", 0, NULL, 0 },
 	{ "init-extent-tree", 0, NULL, 0 },
 	{ "backup", 0, NULL, 0 },
+	{ "qgroup-report", 0, NULL, 'Q' },
 	{ NULL, 0, NULL, 0}
 };
 
@@ -6440,6 +6442,7 @@ const char * const cmd_check_usage[] = {
 	"--repair                    try to repair the filesystem",
 	"--init-csum-tree            create a new CRC tree",
 	"--init-extent-tree          create a new extent tree",
+	"--qgroup-report             print a report on qgroup consistency",
 	NULL
 };
 
@@ -6454,6 +6457,7 @@ int cmd_check(int argc, char **argv)
 	u64 num;
 	int option_index = 0;
 	int init_csum_tree = 0;
+	int qgroup_report = 0;
 	enum btrfs_open_ctree_flags ctree_flags =
 		OPEN_CTREE_PARTIAL | OPEN_CTREE_EXCLUSIVE;
 
@@ -6479,6 +6483,9 @@ int cmd_check(int argc, char **argv)
 				bytenr = btrfs_sb_offset(((int)num));
 				printf("using SB copy %llu, bytenr %llu\n", num,
 				       (unsigned long long)bytenr);
+				break;
+			case 'Q':
+				qgroup_report = 1;
 				break;
 			case '?':
 			case 'h':
@@ -6527,6 +6534,14 @@ int cmd_check(int argc, char **argv)
 
 	root = info->fs_root;
 	uuid_unparse(info->super_copy->fsid, uuidbuf);
+	if (qgroup_report) {
+		printf("Print quota groups for %s\nUUID: %s\n", argv[optind],
+		       uuidbuf);
+		ret = qgroup_verify_all(info);
+		if (ret == 0)
+			print_qgroup_report(1);
+		goto close_out;
+	}
 	printf("Checking filesystem on %s\nUUID: %s\n", argv[optind], uuidbuf);
 
 	if (!extent_buffer_uptodate(info->tree_root->node) ||
@@ -6630,11 +6645,20 @@ int cmd_check(int argc, char **argv)
 		free(bad);
 	}
 
+	if (info->quota_enabled) {
+		int err;
+		fprintf(stderr, "checking quota groups\n");
+		err = qgroup_verify_all(info);
+		if (err)
+			goto out;
+	}
+
 	if (!list_empty(&root->fs_info->recow_ebs)) {
 		fprintf(stderr, "Transid errors in file system\n");
 		ret = 1;
 	}
 out:
+	print_qgroup_report(0);
 	if (found_old_backref) { /*
 		 * there was a disk format change when mixed
 		 * backref was in testing tree. The old format

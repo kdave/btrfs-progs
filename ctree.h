@@ -943,6 +943,7 @@ struct btrfs_fs_info {
 	struct btrfs_root *chunk_root;
 	struct btrfs_root *dev_root;
 	struct btrfs_root *csum_root;
+	struct btrfs_root *quota_root;
 
 	struct rb_root fs_root_tree;
 
@@ -988,6 +989,7 @@ struct btrfs_fs_info {
 	unsigned int readonly:1;
 	unsigned int on_restoring:1;
 	unsigned int is_chunk_recover:1;
+	unsigned int quota_enabled:1;
 
 	int (*free_extent_hook)(struct btrfs_trans_handle *trans,
 				struct btrfs_root *root,
@@ -2382,4 +2384,12 @@ int btrfs_csum_truncate(struct btrfs_trans_handle *trans,
 int btrfs_lookup_uuid_subvol_item(int fd, const u8 *uuid, u64 *subvol_id);
 int btrfs_lookup_uuid_received_subvol_item(int fd, const u8 *uuid,
 					   u64 *subvol_id);
+
+static inline int is_fstree(u64 rootid)
+{
+	if (rootid == BTRFS_FS_TREE_OBJECTID ||
+	    (signed long long)rootid >= (signed long long)BTRFS_FIRST_FREE_OBJECTID)
+		return 1;
+	return 0;
+}
 #endif

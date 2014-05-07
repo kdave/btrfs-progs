@@ -251,7 +251,7 @@ static void print_file_extent_item(struct extent_buffer *eb,
 	       btrfs_file_extent_compression(eb, fi));
 }
 
-static void print_extent_item(struct extent_buffer *eb, int slot, int metadata)
+void print_extent_item(struct extent_buffer *eb, int slot, int metadata)
 {
 	struct btrfs_extent_item *ei;
 	struct btrfs_extent_inline_ref *iref;

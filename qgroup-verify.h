@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007 Oracle.  All rights reserved.
+ * Copyright (C) 2014 SUSE.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public
@@ -16,11 +16,10 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#ifndef __PRINT_TREE_
-#define __PRINT_TREE_
-void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l);
-void btrfs_print_tree(struct btrfs_root *root, struct extent_buffer *t, int follow);
-void btrfs_print_key(struct btrfs_disk_key *disk_key);
-void print_chunk(struct extent_buffer *eb, struct btrfs_chunk *chunk);
-void print_extent_item(struct extent_buffer *eb, int slot, int metadata);
-#endif
+#ifndef _BTRFS_QGROUP_VERIFY_H
+#define _BTRFS_QGROUP_VERIFY_H
+
+int qgroup_verify_all(struct btrfs_fs_info *info);
+void print_qgroup_report(int all);
+
+#endif	/* _BTRFS_QGROUP_VERIFY_H */
