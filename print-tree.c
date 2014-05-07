@@ -893,18 +893,18 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 			qg_info = btrfs_item_ptr(l, i,
 						 struct btrfs_qgroup_info_item);
 			printf("\t\tgeneration %llu\n"
-			     "\t\treferenced %lld referenced compressed %lld\n"
-			     "\t\texclusive %lld exclusive compressed %lld\n",
+			     "\t\treferenced %llu referenced compressed %llu\n"
+			     "\t\texclusive %llu exclusive compressed %llu\n",
 			       (unsigned long long)
 			       btrfs_qgroup_info_generation(l, qg_info),
-			       (long long)
+			       (unsigned long long)
 			       btrfs_qgroup_info_referenced(l, qg_info),
-			       (long long)
+			       (unsigned long long)
 			       btrfs_qgroup_info_referenced_compressed(l,
 								       qg_info),
-			       (long long)
+			       (unsigned long long)
 			       btrfs_qgroup_info_exclusive(l, qg_info),
-			       (long long)
+			       (unsigned long long)
 			       btrfs_qgroup_info_exclusive_compressed(l,
 								      qg_info));
 			break;
