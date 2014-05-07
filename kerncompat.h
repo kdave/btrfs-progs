@@ -235,7 +235,7 @@ static inline long IS_ERR(const void *ptr)
 
 #define BUG_ON(c) assert(!(c))
 #define WARN_ON(c) assert(!(c))
-
+#define	ASSERT(c) assert(c)
 
 #define container_of(ptr, type, member) ({                      \
         const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
