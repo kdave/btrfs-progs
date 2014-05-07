@@ -218,6 +218,18 @@ static int parse_filters(char *filters, struct btrfs_balance_args *args)
 			args->flags |= BTRFS_BALANCE_ARGS_CONVERT;
 		} else if (!strcmp(this_char, "soft")) {
 			args->flags |= BTRFS_BALANCE_ARGS_SOFT;
+		} else if (!strcmp(this_char, "limit")) {
+			if (!value || !*value) {
+				fprintf(stderr,
+					"the limit filter requires an argument\n");
+				return 1;
+			}
+			if (parse_u64(value, &args->limit)) {
+				fprintf(stderr, "Invalid limit argument: %s\n",
+				       value);
+				return 1;
+			}
+			args->flags |= BTRFS_BALANCE_ARGS_LIMIT;
 		} else {
 			fprintf(stderr, "Unrecognized balance option '%s'\n",
 				this_char);
@@ -252,6 +264,8 @@ static void dump_balance_args(struct btrfs_balance_args *args)
 		printf(", vrange=%llu..%llu",
 		       (unsigned long long)args->vstart,
 		       (unsigned long long)args->vend);
+	if (args->flags & BTRFS_BALANCE_ARGS_LIMIT)
+		printf(", limit=%llu", (unsigned long long)args->limit);
 
 	printf("\n");
 }
