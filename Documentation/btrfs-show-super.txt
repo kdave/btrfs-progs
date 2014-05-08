@@ -20,8 +20,13 @@ Mainly used for debug purpose.
 
 OPTIONS
 -------
+-f::
+Print full superblock information.
++
+Including the system chunk array and backup roots.
+
 -a::
-Print all the superblock information.
+Print information of all superblocks.
 +
 If this option is given, '-i' option will be ignored.
 
