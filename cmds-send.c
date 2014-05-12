@@ -129,7 +129,10 @@ static int find_good_parent(struct btrfs_send *s, u64 root_id, u64 *found)
 		parent2 = subvol_uuid_search(&s->sus, s->clone_sources[i], NULL,
 				0, NULL, subvol_search_by_root_id);
 
-		assert(parent2);
+		if (!parent2) {
+			ret = -ENOENT;
+			goto out;
+		}
 		tmp = parent2->ctransid - parent->ctransid;
 		if (tmp < 0)
 			tmp *= -1;
