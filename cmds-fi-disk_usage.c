@@ -906,7 +906,13 @@ void print_device_sizes(int fd, struct device_info *devinfo, int mode)
 	printf("   Device size: %*s%10s\n",
 		(int)(20 - strlen("Device size")), "",
 		pretty_size_mode(devinfo->device_size, mode));
+#if 0
+	/*
+	 * The term has not seen an agreement and we don't want to change it
+	 * once it's in non-development branches or even released.
+	 */
 	printf("   FS occupied: %*s%10s\n",
 		(int)(20 - strlen("FS occupied")), "",
 		pretty_size_mode(devinfo->size, mode));
+#endif
 }
