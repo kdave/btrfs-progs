@@ -93,12 +93,41 @@ static u64 reference_root_table[] = {
 	[6] =	BTRFS_CSUM_TREE_OBJECTID,
 };
 
-int make_btrfs(int fd, const char *device, const char *label,
+int test_uuid_unique(char *fs_uuid)
+{
+	int unique = 1;
+	blkid_dev_iterate iter = NULL;
+	blkid_dev dev = NULL;
+	blkid_cache cache = NULL;
+
+	if (blkid_get_cache(&cache, 0) < 0) {
+		printf("ERROR: lblkid cache get failed\n");
+		return 1;
+	}
+	blkid_probe_all(cache);
+	iter = blkid_dev_iterate_begin(cache);
+	blkid_dev_set_search(iter, "UUID", fs_uuid);
+
+	while (blkid_dev_next(iter, &dev) == 0) {
+		dev = blkid_verify(cache, dev);
+		if (dev) {
+			unique = 0;
+			break;
+		}
+	}
+
+	blkid_dev_iterate_end(iter);
+	blkid_put_cache(cache);
+
+	return unique;
+}
+
+int make_btrfs(int fd, const char *device, const char *label, char *fs_uuid,
 	       u64 blocks[7], u64 num_bytes, u32 nodesize,
 	       u32 leafsize, u32 sectorsize, u32 stripesize, u64 features)
 {
 	struct btrfs_super_block super;
-	struct extent_buffer *buf;
+	struct extent_buffer *buf = NULL;
 	struct btrfs_root_item root_item;
 	struct btrfs_disk_key disk_key;
 	struct btrfs_extent_item *extent_item;
@@ -125,7 +154,20 @@ int make_btrfs(int fd, const char *device, const char *label,
 	memset(&super, 0, sizeof(super));
 
 	num_bytes = (num_bytes / sectorsize) * sectorsize;
-	uuid_generate(super.fsid);
+	if (fs_uuid) {
+		if (uuid_parse(fs_uuid, super.fsid) != 0) {
+			fprintf(stderr, "could not parse UUID: %s\n", fs_uuid);
+			ret = -EINVAL;
+			goto out;
+		}
+		if (!test_uuid_unique(fs_uuid)) {
+			fprintf(stderr, "non-unique UUID: %s\n", fs_uuid);
+			ret = -EBUSY;
+			goto out;
+		}
+	} else {
+		uuid_generate(super.fsid);
+	}
 	uuid_generate(super.dev_item.uuid);
 	uuid_generate(chunk_tree_uuid);
 

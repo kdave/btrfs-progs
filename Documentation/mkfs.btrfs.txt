@@ -21,6 +21,7 @@ $$[-s|--sectorsize <sectorsize>]$$
 $$[-r|--rootdir <rootdir>]$$
 $$[-K|--nodiscard]$$
 $$[-O|--features <feature1>[,<feature2>...]]$$
+$$[-U|--uuid <UUID>]$$
 $$[-h]$$
 $$[-V|--version]$$
 $$<device> [<device>...]$$
@@ -111,6 +112,10 @@ supported by old kernels.
 +
 To see all features run::::
 mkfs.btrfs -O list-all
+
+-U|--uuid <UUID>::
+Create the filesystem with the specified UUID, which must not already exist on
+the system.
 
 -V|--version::
 Print the *mkfs.btrfs* version and exit.

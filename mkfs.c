@@ -288,6 +288,7 @@ static void print_usage(void)
 	fprintf(stderr, "\t -r --rootdir the source directory\n");
 	fprintf(stderr, "\t -K --nodiscard do not perform whole device TRIM\n");
 	fprintf(stderr, "\t -O --features comma separated list of filesystem features\n");
+	fprintf(stderr, "\t -U --uuid specify the filesystem UUID\n");
 	fprintf(stderr, "\t -V --version print the mkfs.btrfs version and exit\n");
 	fprintf(stderr, "%s\n", BTRFS_BUILD_VERSION);
 	exit(1);
@@ -351,6 +352,7 @@ static struct option long_options[] = {
 	{ "rootdir", 1, NULL, 'r' },
 	{ "nodiscard", 0, NULL, 'K' },
 	{ "features", 1, NULL, 'O' },
+	{ "uuid", 0, NULL, 'U' },
 	{ NULL, 0, NULL, 0}
 };
 
@@ -1273,11 +1275,12 @@ int main(int ac, char **av)
 	int dev_cnt = 0;
 	int saved_optind;
 	char estr[100];
+	char *fs_uuid = NULL;
 	u64 features = DEFAULT_MKFS_FEATURES;
 
 	while(1) {
 		int c;
-		c = getopt_long(ac, av, "A:b:fl:n:s:m:d:L:O:r:VMK",
+		c = getopt_long(ac, av, "A:b:fl:n:s:m:d:L:O:r:U:VMK",
 				long_options, &option_index);
 		if (c < 0)
 			break;
@@ -1346,6 +1349,9 @@ int main(int ac, char **av)
 				source_dir = optarg;
 				source_dir_set = 1;
 				break;
+			case 'U':
+				fs_uuid = optarg;
+				break;
 			case 'K':
 				discard = 0;
 				break;
@@ -1368,6 +1374,20 @@ int main(int ac, char **av)
 			"The -r option is limited to a single device\n");
 		exit(1);
 	}
+
+	if (fs_uuid) {
+		uuid_t dummy_uuid;
+
+		if (uuid_parse(fs_uuid, dummy_uuid) != 0) {
+			fprintf(stderr, "could not parse UUID: %s\n", fs_uuid);
+			exit(1);
+		}
+		if (!test_uuid_unique(fs_uuid)) {
+			fprintf(stderr, "non-unique UUID: %s\n", fs_uuid);
+			exit(1);
+		}
+	}
+	
 	while (dev_cnt-- > 0) {
 		file = av[optind++];
 		if (is_block_device(file))
@@ -1514,7 +1534,7 @@ int main(int ac, char **av)
 
 	process_fs_features(features);
 
-	ret = make_btrfs(fd, file, label, blocks, dev_block_count,
+	ret = make_btrfs(fd, file, label, fs_uuid, blocks, dev_block_count,
 			 nodesize, leafsize,
 			 sectorsize, stripesize, features);
 	if (ret) {

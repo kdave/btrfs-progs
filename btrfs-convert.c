@@ -2240,7 +2240,7 @@ static int do_convert(const char *devname, int datacsum, int packing,
 		goto fail;
 	}
 	ret = make_btrfs(fd, devname, ext2_fs->super->s_volume_name,
-			 blocks, total_bytes, blocksize, blocksize,
+			 NULL, blocks, total_bytes, blocksize, blocksize,
 			 blocksize, blocksize, 0);
 	if (ret) {
 		fprintf(stderr, "unable to create initial ctree: %s\n",
