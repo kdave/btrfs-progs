@@ -40,16 +40,17 @@
 static void print_usage(void);
 static void dump_superblock(struct btrfs_super_block *sb, int full);
 int main(int argc, char **argv);
-static int load_and_dump_sb(char *, int fd, u64 sb_bytenr, int full);
+static int load_and_dump_sb(char *, int fd, u64 sb_bytenr, int full, int force);
 
 
 static void print_usage(void)
 {
 	fprintf(stderr,
-		"usage: btrfs-show-super [-i super_mirror|-a|-f] dev [dev..]\n");
+		"usage: btrfs-show-super [-i super_mirror|-a|-f|-F] dev [dev..]\n");
 	fprintf(stderr, "\t-f : print full superblock information\n");
 	fprintf(stderr, "\t-a : print information of all superblocks\n");
 	fprintf(stderr, "\t-i <super_mirror> : specify which mirror to print out\n");
+	fprintf(stderr, "\t-F : attempt to dump superblocks with bad magic\n");
 	fprintf(stderr, "%s\n", BTRFS_BUILD_VERSION);
 }
 
@@ -58,13 +59,14 @@ int main(int argc, char **argv)
 	int opt;
 	int all = 0;
 	int full = 0;
+	int force = 0;
 	char *filename;
 	int fd = -1;
 	int i;
 	u64 arg;
 	u64 sb_bytenr = btrfs_sb_offset(0);
 
-	while ((opt = getopt(argc, argv, "fai:")) != -1) {
+	while ((opt = getopt(argc, argv, "fFai:")) != -1) {
 		switch (opt) {
 		case 'i':
 			arg = arg_strtou64(optarg);
@@ -83,6 +85,9 @@ int main(int argc, char **argv)
 			break;
 		case 'f':
 			full = 1;
+			break;
+		case 'F':
+			force = 1;
 			break;
 		default:
 			print_usage();
@@ -108,7 +113,7 @@ int main(int argc, char **argv)
 			for (idx = 0; idx < BTRFS_SUPER_MIRROR_MAX; idx++) {
 				sb_bytenr = btrfs_sb_offset(idx);
 				if (load_and_dump_sb(filename, fd,
-							sb_bytenr, full)) {
+						sb_bytenr, full, force)) {
 					close(fd);
 					exit(1);
 				}
@@ -116,7 +121,7 @@ int main(int argc, char **argv)
 				putchar('\n');
 			}
 		} else {
-			load_and_dump_sb(filename, fd, sb_bytenr, full);
+			load_and_dump_sb(filename, fd, sb_bytenr, full, force);
 			putchar('\n');
 		}
 		close(fd);
@@ -125,7 +130,8 @@ int main(int argc, char **argv)
 	exit(0);
 }
 
-static int load_and_dump_sb(char *filename, int fd, u64 sb_bytenr, int full)
+static int load_and_dump_sb(char *filename, int fd, u64 sb_bytenr, int full,
+		int force)
 {
 	u8 super_block_data[BTRFS_SUPER_INFO_SIZE];
 	struct btrfs_super_block *sb;
@@ -150,7 +156,13 @@ static int load_and_dump_sb(char *filename, int fd, u64 sb_bytenr, int full)
 	}
 	printf("superblock: bytenr=%llu, device=%s\n", sb_bytenr, filename);
 	printf("---------------------------------------------------------\n");
-	dump_superblock(sb, full);
+	if (btrfs_super_magic(sb) != BTRFS_MAGIC && !force) {
+		fprintf(stderr,
+		    "ERROR: bad magic on superblock on %s at %llu\n",
+		    filename, (unsigned long long)sb_bytenr);
+	} else {
+		dump_superblock(sb, full);
+	}
 	return 0;
 }
 

@@ -31,6 +31,10 @@ Specify which mirror to print out.
 <super_mirror> is between 0 and 2.
 If several '-i <super_mirror>' are given, only the last one is valid.
 
+-F::
+Attempt to print the superblock even if no superblock magic is found.  May end
+badly.
+
 EXIT STATUS
 -----------
 *btrfs-show-super* will return 0 if no error happened.
