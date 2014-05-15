@@ -39,7 +39,10 @@ spanning across the specified  devices.
 OPTIONS
 -------
 -A|--alloc-start <offset>::
-Specify the offset from the start of the device to start the btrfs filesystem. The default value is zero, or the start of the device.
+Specify the offset from the start of the device at which to start allocations
+in this btrfs filesystem. The default value is zero, or the start of the
+device.  This option is intended only for debugging filesystem resize
+operations.
 
 -b|--byte-count <size>::
 Specify the size of the resultant filesystem. If this option is not used,
