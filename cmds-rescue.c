@@ -74,7 +74,7 @@ int cmd_chunk_recover(int argc, char *argv[])
 	}
 
 	argc = argc - optind;
-	if (argc == 0)
+	if (check_argc_exact(argc, 1))
 		usage(cmd_chunk_recover_usage);
 
 	file = argv[optind];
@@ -132,7 +132,7 @@ int cmd_super_recover(int argc, char **argv)
 		}
 	}
 	argc = argc - optind;
-	if (argc != 1)
+	if (check_argc_exact(argc, 1))
 		usage(cmd_super_recover_usage);
 
 	dname = argv[optind];
