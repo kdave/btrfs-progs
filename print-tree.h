@@ -21,4 +21,5 @@
 void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l);
 void btrfs_print_tree(struct btrfs_root *root, struct extent_buffer *t, int follow);
 void btrfs_print_key(struct btrfs_disk_key *disk_key);
+void print_chunk(struct extent_buffer *eb, struct btrfs_chunk *chunk);
 #endif

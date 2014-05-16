@@ -160,7 +160,7 @@ static int print_inode_ref_item(struct extent_buffer *eb, struct btrfs_item *ite
 	return 0;
 }
 
-static void print_chunk(struct extent_buffer *eb, struct btrfs_chunk *chunk)
+void print_chunk(struct extent_buffer *eb, struct btrfs_chunk *chunk)
 {
 	int num_stripes = btrfs_chunk_num_stripes(eb, chunk);
 	int i;
