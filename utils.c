@@ -2084,6 +2084,25 @@ out:
 	return ret;
 }
 
+static int group_profile_devs_min(u64 flag)
+{
+	switch (flag & BTRFS_BLOCK_GROUP_PROFILE_MASK) {
+	case 0: /* single */
+	case BTRFS_BLOCK_GROUP_DUP:
+		return 1;
+	case BTRFS_BLOCK_GROUP_RAID0:
+	case BTRFS_BLOCK_GROUP_RAID1:
+	case BTRFS_BLOCK_GROUP_RAID5:
+		return 2;
+	case BTRFS_BLOCK_GROUP_RAID6:
+		return 3;
+	case BTRFS_BLOCK_GROUP_RAID10:
+		return 4;
+	default:
+		return -1;
+	}
+}
+
 int test_num_disk_vs_raid(u64 metadata_profile, u64 data_profile,
 	u64 dev_cnt, int mixed, char *estr)
 {
@@ -2104,16 +2123,26 @@ int test_num_disk_vs_raid(u64 metadata_profile, u64 data_profile,
 		allowed |= BTRFS_BLOCK_GROUP_DUP;
 	}
 
+	if (dev_cnt > 1 &&
+	    ((metadata_profile | data_profile) & BTRFS_BLOCK_GROUP_DUP)) {
+		snprintf(estr, sz,
+			"DUP is not allowed when FS has multiple devices\n");
+		return 1;
+	}
 	if (metadata_profile & ~allowed) {
-		snprintf(estr, sz, "unable to create FS with metadata "
-			"profile %llu (have %llu devices)\n",
-			metadata_profile, dev_cnt);
+		snprintf(estr, sz,
+			"unable to create FS with metadata profile %s "
+			"(have %llu devices but %d devices are required)\n",
+			btrfs_group_profile_str(metadata_profile), dev_cnt,
+			group_profile_devs_min(metadata_profile));
 		return 1;
 	}
 	if (data_profile & ~allowed) {
-		snprintf(estr, sz, "unable to create FS with data "
-			"profile %llu (have %llu devices)\n",
-			metadata_profile, dev_cnt);
+		snprintf(estr, sz,
+			"unable to create FS with data profile %s "
+			"(have %llu devices but %d devices are required)\n",
+			btrfs_group_profile_str(data_profile), dev_cnt,
+			group_profile_devs_min(data_profile));
 		return 1;
 	}
 
