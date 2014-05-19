@@ -7,11 +7,11 @@ btrfs-debug-tree - dump btrfs filesystem metadata into stdout
 
 SYNOPSIS
 --------
-'btrfs-debug-tree' [options] <device>
+*btrfs-debug-tree* [options] <device>
 
 DESCRIPTION
 -----------
-'btrfs-debug-tree' is used to dump the whole tree of the given device.
+*btrfs-debug-tree* is used to dump the whole tree of the given device.
 
 This is maybe useful for analyzing filesystem state or inconsistence and has
 a positive educational effect on understanding the internal structure.
@@ -30,7 +30,7 @@ Print info of the specified block only.
 
 EXIT STATUS
 -----------
-'btrfs-debug-tree' will return 0 if no error happened.
+*btrfs-debug-tree* will return 0 if no error happened.
 If any problems happened, 1 will be returned.
 
 AUTHOR

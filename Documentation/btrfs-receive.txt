@@ -7,15 +7,15 @@ btrfs-receive - receive subvolumes from stdin/file.
 
 SYNOPSIS
 --------
-'btrfs receive' [-ve] [-f <infile>] <mount>
+*btrfs receive* [-ve] [-f <infile>] <mount>
 
 DESCRIPTION
 -----------
 Receives one or more subvolumes that were previously
-sent with 'btrfs send'. The received subvolumes are stored
+sent with *btrfs send*. The received subvolumes are stored
 into <mount>.
 
-'btrfs receive' will fail with the following case:
+*btrfs receive* will fail with the following case:
 
 1. a receiving subvolume already exists.
 
@@ -41,12 +41,12 @@ or on EOF.
 
 EXIT STATUS
 -----------
-'btrfs receive' returns a zero exist status if it succeeds. Non zero is
+*btrfs receive* returns a zero exist status if it succeeds. Non zero is
 returned in case of failure.
 
 AVAILABILITY
 ------------
-'btrfs' is part of btrfs-progs. Btrfs filesystem is currently under heavy
+*btrfs* is part of btrfs-progs. Btrfs filesystem is currently under heavy
 development,
 and not suitable for any uses other than benchmarking and review.
 Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for

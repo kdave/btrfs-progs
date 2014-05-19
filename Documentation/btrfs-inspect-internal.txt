@@ -7,15 +7,15 @@ btrfs-inspect-internal - resolve different btrfs items for debug purpose
 
 SYNOPSIS
 --------
-'btrfs inspect-internal' <subcommand> <args>
+*btrfs inspect-internal* <subcommand> <args>
 
 DESCRIPTION
 -----------
-'btrfs inspect-internal' is used to resolve different items for debug purpose.
+*btrfs inspect-internal* is used to resolve different items for debug purpose.
 
 SUBCOMMAND
 ----------
-'inode-resolve' [-v] <inode> <path>::
+*inode-resolve* [-v] <inode> <path>::
 Resolves an <inode> in subvolume <path> to all filesystem paths.
 +
 `Options`
@@ -23,7 +23,7 @@ Resolves an <inode> in subvolume <path> to all filesystem paths.
 -v::::
 verbose mode. print count of returned paths and ioctl() return value
 
-'logical-resolve' [-Pv] [-s <bufsize>] <logical> <path>::
+*logical-resolve* [-Pv] [-s <bufsize>] <logical> <path>::
 Resolves a <logical> address in the filesystem mounted at <path> to all inodes.
 +
 By default, each inode is then resolved to a file system path (similar to the
@@ -41,10 +41,10 @@ set inode container's size.
 This is used to increase inode container's size in case it is
 not enough to read all the resolved results. The max value one can set is 64k.
 
-'subvolid-resolve' <subvolid> <path>::
+*subvolid-resolve* <subvolid> <path>::
 Get file system paths for the given subvolume ID.
 
-'rootid' <path>::
+*rootid* <path>::
 For a given file or directory, return the containing tree root id. For a
 subvolume return it's own tree id.
 +
@@ -52,12 +52,12 @@ The result is undefined for the so-called empty subvolumes (identified by inode 
 
 EXIT STATUS
 -----------
-'btrfs inspect-internal' returns a zero exist status if it succeeds. Non zero is
+*btrfs inspect-internal* returns a zero exist status if it succeeds. Non zero is
 returned in case of failure.
 
 AVAILABILITY
 ------------
-'btrfs' is part of btrfs-progs. Btrfs filesystem is currently under heavy
+*btrfs* is part of btrfs-progs. Btrfs filesystem is currently under heavy
 development,
 and not suitable for any uses other than benchmarking and review.
 Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for

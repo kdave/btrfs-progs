@@ -7,11 +7,11 @@ btrfstune - tune various btrfs filesystem parameters
 
 SYNOPSIS
 --------
-'btrfstune' [options] <dev> [<dev>...]
+*btrfstune* [options] <dev> [<dev>...]
 
 DESCRIPTION
 -----------
-'btrfstune' is used to tune various btrfs filesystem parameters,you can
+*btrfstune* is used to tune various btrfs filesystem parameters,you can
 enable/disable some extended features for btrfs.
 
 OPTIONS
@@ -27,7 +27,7 @@ Enable skinny metadata extent refs.
 
 EXIT STATUS
 -----------
-'btrfstune' will return 0 if no error happened.
+*btrfstune* will return 0 if no error happened.
 If any problems happened, 1 will be returned.
 
 AUTHOR

@@ -7,15 +7,15 @@ btrfs-restore - try to restore files from a damaged btrfs filesystem(unmounted)
 
 SYNOPSIS
 --------
-'btrfs restore' [options] <device> <path> | -l <device>
+*btrfs restore* [options] <device> <path> | -l <device>
 
 DESCRIPTION
 -----------
-'btrfs restore' is used to try to salvage files from a damaged filesystem and
+*btrfs restore* is used to try to salvage files from a damaged filesystem and
 restore them into <path> or just list the tree roots.
 
 Since current `btrfs-check`(8) or `btrfs-rescue`(8) only has very limited usage,
-'btrfs restore' is normally a better choice.
+*btrfs restore* is normally a better choice.
 
 NOTE: It is recommended to read the following btrfs wiki page if your data is
 not salvaged with default option: +
@@ -58,12 +58,12 @@ list tree roots.
 
 EXIT STATUS
 -----------
-'btrfs restore' returns a zero exist status if it succeeds. Non zero is
+*btrfs restore* returns a zero exist status if it succeeds. Non zero is
 returned in case of failure.
 
 AVAILABILITY
 ------------
-'btrfs' is part of btrfs-progs. Btrfs filesystem is currently under heavy
+*btrfs* is part of btrfs-progs. Btrfs filesystem is currently under heavy
 development,
 and not suitable for any uses other than benchmarking and review.
 Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for

@@ -7,11 +7,11 @@ btrfs-map-logical - map btrfs logical extent to physical extent
 
 SYNOPSIS
 --------
-'btrfs-map-logical' <options> <device>
+*btrfs-map-logical* <options> <device>
 
 DESCRIPTION
 -----------
-'btrfs-map-logical' can be used to find out what the physical offsets are
+*btrfs-map-logical* can be used to find out what the physical offsets are
 on the mirrors, the result is dumped into stdout in default.
 
 Mainly used for debug purpose.
@@ -29,7 +29,7 @@ Number of bytes to read.
 
 EXIT STATUS
 -----------
-'btrfs-map-logical' will return 0 if no error happened.
+*btrfs-map-logical* will return 0 if no error happened.
 If any problems happened, 1 will be returned.
 
 AUTHOR

@@ -7,11 +7,11 @@ btrfs-show-super - show btrfs superblock information stored in devices
 
 SYNOPSIS
 --------
-'btrfs-show-super' [options] <dev> [<dev>...]
+*btrfs-show-super* [options] <dev> [<dev>...]
 
 DESCRIPTION
 -----------
-'btrfs-show-super' is used to print the information of superblock,
+*btrfs-show-super* is used to print the information of superblock,
 you can specify which mirror to print out.
 
 By default, every device's first superblock will be printed out.
@@ -33,7 +33,7 @@ If several '-i <super_mirror>' are given, only the last one is valid.
 
 EXIT STATUS
 -----------
-'btrfs-show-super' will return 0 if no error happened.
+*btrfs-show-super* will return 0 if no error happened.
 If any problems happened, 1 will be returned.
 
 AUTHOR

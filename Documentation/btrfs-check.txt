@@ -7,18 +7,18 @@ btrfs-check - check or repair a btrfs filesystem offline
 
 SYNOPSIS
 --------
-'btrfs check' [options] <device>
+*btrfs check* [options] <device>
 
 DESCRIPTION
 -----------
-'btrfs check' is used to check or repair a btrfs filesystem offline.
+*btrfs check* is used to check or repair a btrfs filesystem offline.
 
-NOTE: Since btrfs is under heavy development especially the 'btrfs check'
+NOTE: Since btrfs is under heavy development especially the *btrfs check*
 command, it is *highly* recommended to read the following btrfs wiki before
-executing 'btrfs check' with '--repair' option: +
+executing *btrfs check* with '--repair' option: +
 https://btrfs.wiki.kernel.org/index.php/Btrfsck
 
-'btrfsck' is an alias of 'btrfs check' command and is now deprecated.
+*btrfsck* is an alias of *btrfs check* command and is now deprecated.
 
 OPTIONS
 -------
@@ -33,12 +33,12 @@ create a new extent tree.
 
 EXIT STATUS
 -----------
-'btrfs check' returns a zero exist status if it succeeds. Non zero is
+*btrfs check* returns a zero exist status if it succeeds. Non zero is
 returned in case of failure.
 
 AVAILABILITY
 ------------
-'btrfs' is part of btrfs-progs. Btrfs filesystem is currently under heavy
+*btrfs* is part of btrfs-progs. Btrfs filesystem is currently under heavy
 development,
 and not suitable for any uses other than benchmarking and review.
 Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for

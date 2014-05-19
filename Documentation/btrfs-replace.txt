@@ -7,11 +7,11 @@ btrfs-replace - replace devices managed by btrfs with other device.
 
 SYNOPSIS
 --------
-'btrfs replace' <subcommand> <args>
+*btrfs replace* <subcommand> <args>
 
 DESCRIPTION
 -----------
-'btrfs replace' is used to replace btrfs managed devices with other device.
+*btrfs replace* is used to replace btrfs managed devices with other device.
 
 Note: this is not currently supported for RAID5/6 profiles and must use the
 device add/delete workaround.
@@ -21,7 +21,7 @@ management.
 
 SUBCOMMAND
 ----------
-'start' [-Bfr] <srcdev>|<devid> <targetdev> <path>::
+*start* [-Bfr] <srcdev>|<devid> <targetdev> <path>::
 Replace device of a btrfs filesystem.
 +
 On a live filesystem, duplicate the data to the target device which
@@ -52,7 +52,7 @@ never allowed to be used as the <targetdev>.
 -B::::
 no background replace.
 
-'status' [-1] <mount_point>::
+*status* [-1] <mount_point>::
 Print status and progress information of a running device replace operation.
 +
 `Options`
@@ -61,17 +61,17 @@ Print status and progress information of a running device replace operation.
 print once instead of print continuously until the replace
 operation finishes (or is canceled)
 
-'cancel' <mount_point>::
+*cancel* <mount_point>::
 Cancel a running device replace operation.
 
 EXIT STATUS
 -----------
-'btrfs replace' returns a zero exist status if it succeeds. Non zero is
+*btrfs replace* returns a zero exist status if it succeeds. Non zero is
 returned in case of failure.
 
 AVAILABILITY
 ------------
-'btrfs' is part of btrfs-progs. Btrfs filesystem is currently under heavy
+*btrfs* is part of btrfs-progs. Btrfs filesystem is currently under heavy
 development,
 and not suitable for any uses other than benchmarking and review.
 Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for

@@ -7,20 +7,20 @@ btrfs-property - get/set/list properties for given btrfs object.
 
 SYNOPSIS
 --------
-'btrfs property' <subcommand> <args>
+*btrfs property* <subcommand> <args>
 
 DESCRIPTION
 -----------
-'btrfs property' is used to get/set/list property, like lable or compression
+*btrfs property* is used to get/set/list property, like lable or compression
 state, for given btrfs object.
 
-'btrfs property' provides an unified and user-friendly method to tune different
+*btrfs property* provides an unified and user-friendly method to tune different
 btrfs properties instead of using the traditional method like `chattr`(1) or
 `lsattr`(1).
 
 SUBCOMMAND
 ----------
-'get' [-t <type>] <object> [<name>]::
+*get* [-t <type>] <object> [<name>]::
 Gets a property from a btrfs object.
 +
 If no name is specified, all properties for the given object are
@@ -37,26 +37,26 @@ Possible types are 's[ubvol]', 'f[ilesystem]', 'i[node]' and 'd[evice]'.
 The <object> can be path of btrfs device, btrfs mount point, or any
 directories/files inside btrfs.
 
-'set' [-t <type>] <object> <name> <value>::
+*set* [-t <type>] <object> <name> <value>::
 Sets a property on a btrfs object.
 +
-See description of 'get' subcommand for a description of objects and object
+See description of *get* subcommand for a description of objects and object
 types.
 
-'list' [-t <type>] <object>::
+*list* [-t <type>] <object>::
 Lists available properties with their descriptions for the given object.
 +
-Please see the help of 'btrfs property get' for a description of
+Please see the help of *btrfs property get* for a description of
 objects and object types.
 
 EXIT STATUS
 -----------
-'btrfs property' returns a zero exist status if it succeeds. Non zero is
+*btrfs property* returns a zero exist status if it succeeds. Non zero is
 returned in case of failure.
 
 AVAILABILITY
 ------------
-'btrfs' is part of btrfs-progs. Btrfs filesystem is currently under heavy
+*btrfs* is part of btrfs-progs. Btrfs filesystem is currently under heavy
 development,
 and not suitable for any uses other than benchmarking and review.
 Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for

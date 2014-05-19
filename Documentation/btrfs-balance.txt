@@ -7,11 +7,11 @@ btrfs-balance - balance btrfs filesystem
 
 SYNOPSIS
 --------
-'btrfs [filesystem] balance' <subcommand>|<args>
+*btrfs [filesystem] balance* <subcommand>|<args>
 
 DESCRIPTION
 -----------
-'btrfs balance' is used to balance chunks in a btrfs filesystem across
+*btrfs balance* is used to balance chunks in a btrfs filesystem across
 multiple or even single device.
 
 See `btrfs-device`(8) for more details about the effect on device management.
@@ -21,10 +21,10 @@ SUBCOMMAND
 <path>::
 Balance chunks across the devices *online*.
 +
-'btrfs balance <path>' is deprecated,
-please use 'btrfs balance start' command instead.
+*btrfs balance <path>* is deprecated,
+please use *btrfs balance start* command instead.
 
-'start' [options] <path>::
+*start* [options] <path>::
 Balance chunks across the devices *online*.
 +
 Balance and/or convert (change allocation profile of) chunks that
@@ -47,28 +47,28 @@ be verbose
 -f::::
 force reducing of metadata integrity
 
-'pause' <path>::
+*pause* <path>::
 Pause running balance.
 
-'cancel' <path>::
+*cancel* <path>::
 Cancel running or paused balance.
 
-'resume' <path>::
+*resume* <path>::
 Resume interrupted balance.
 
-'status' [-v] <path>::
+*status* [-v] <path>::
 Show status of running or paused balance.
 +
 If '-v' option is given, output will be verbose.
 
 EXIT STATUS
 -----------
-'btrfs balance' returns a zero exist status if it succeeds. Non zero is
+*btrfs balance* returns a zero exist status if it succeeds. Non zero is
 returned in case of failure.
 
 AVAILABILITY
 ------------
-'btrfs' is part of btrfs-progs. Btrfs filesystem is currently under heavy
+*btrfs* is part of btrfs-progs. Btrfs filesystem is currently under heavy
 development,
 and not suitable for any uses other than benchmarking and review.
 Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for

@@ -7,11 +7,11 @@ btrfs-convert - convert from ext2/3/4 filesystem to btrfs or rollback
 
 SYNOPSIS
 --------
-'btrfs-convert' [options] <device>
+*btrfs-convert* [options] <device>
 
 DESCRIPTION
 -----------
-'btrfs-convert' is used to convert existed ext2/3/4 to btrfs filesystem,
+*btrfs-convert* is used to convert existed ext2/3/4 to btrfs filesystem,
 and the original filesystem image is accessible as from separate subvolume
 named 'ext2_subvol' as file image.
 
@@ -28,7 +28,7 @@ Roll back to ext2fs.
 
 EXIT STATUS
 -----------
-'btrfs-convert' will return 0 if no error happened.
+*btrfs-convert* will return 0 if no error happened.
 If any problems happened, 1 will be returned.
 
 AUTHOR

@@ -7,11 +7,11 @@ btrfs-find-root - filter to find btrfs root
 
 SYNOPSIS
 --------
-'btrfs-find-root' [options] <dev>
+*btrfs-find-root* [options] <dev>
 
 DESCRIPTION
 -----------
-'btrfs-find-root' is used to find the satisfied root, you can filter by
+*btrfs-find-root* is used to find the satisfied root, you can filter by
 root tree's objectid, generation, level.
 
 OPTIONS
@@ -25,7 +25,7 @@ Filter root tree by B-+ tree's level, level 0 in default.
 
 EXIT STATUS
 -----------
-'btrfs-find-root' will return 0 if no error happened.
+*btrfs-find-root* will return 0 if no error happened.
 If any problems happened, 1 will be returned.
 
 AUTHOR

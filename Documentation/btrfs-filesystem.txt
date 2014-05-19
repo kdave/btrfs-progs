@@ -7,20 +7,20 @@ btrfs-filesystem - control btrfs filesystem
 
 SYNOPSIS
 --------
-'btrfs filesystem' <subcommand> <args>
+*btrfs filesystem* <subcommand> <args>
 
 DESCRIPTION
 -----------
-'btrfs filesystem' is used to do the filesystem level control jobs, including
+*btrfs filesystem* is used to do the filesystem level control jobs, including
 all the regular filesystem operations like setting/getting label,
 resizing, defragment.
 
 SUBCOMMAND
 ----------
-'df' <path> [<path>...]::
+*df* <path> [<path>...]::
 Show space usage information for a mount point.
 
-'show' [--mounted|--all-devices|<path>|<uuid>|<device>|<label>]::
+*show* [--mounted|--all-devices|<path>|<uuid>|<device>|<label>]::
 Show the btrfs filesystem with some additional info.
 +
 If no option nor <path>|<uuid>|<device>|<label> is passed, btrfs shows
@@ -30,10 +30,10 @@ filesystem(s);
 If '--all-devices' is passed, all the devices under /dev are scanned;
 otherwise the devices list is extracted from the /proc/partitions file.
 
-'sync' <path>::
+*sync* <path>::
 Force a sync for the filesystem identified by <path>.
 
-'defragment' [options] <file>|<dir> [<file>|<dir>...]::
+*defragment* [options] <file>|<dir> [<file>|<dir>...]::
 Defragment file data and/or directory metadata *online*.
 +
 If '-r' is passed, files in dir will be defragmented recursively.
@@ -70,10 +70,10 @@ don't use it if you use snapshots, have de-duplicated your data or made
 copies with `cp --reflink`.
 
 // Some wording are extracted by the resize2fs man page
-'resize' [<devid>:][+/-]<size>[gkm]|[<devid>:]max <path>::
+*resize* [<devid>:][+/-]<size>[gkm]|[<devid>:]max <path>::
 Resize a filesystem identified by <path> for the underlying device
 devid *online*. +
-The devid can be found with 'btrfs filesystem show' and
+The devid can be found with *btrfs filesystem show* and
 defaults to 1 if not specified.
 The <size> parameter specifies the new size of the filesystem.
 If the prefix + or - is present the size is increased or decreased
@@ -94,7 +94,7 @@ partition after reducing the size of the filesystem.  This can done using
 it with the new desired size.  When recreating the partition make sure to use
 the same starting disk cylinder as before.
 
-'label' [<dev>|<mountpoint>] [<newlabel>]::
+*label* [<dev>|<mountpoint>] [<newlabel>]::
 Show or update the label of a filesystem.
 +
 [<device>|<mountpoint>] is used to identify the filesystem. 
@@ -103,12 +103,12 @@ NOTE: the maximum allowable length shall be less than 256 chars
 
 EXIT STATUS
 -----------
-'btrfs filesystem' returns a zero exist status if it succeeds. Non zero is
+*btrfs filesystem* returns a zero exist status if it succeeds. Non zero is
 returned in case of failure.
 
 AVAILABILITY
 ------------
-'btrfs' is part of btrfs-progs. Btrfs filesystem is currently under heavy
+*btrfs* is part of btrfs-progs. Btrfs filesystem is currently under heavy
 development,
 and not suitable for any uses other than benchmarking and review.
 Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for

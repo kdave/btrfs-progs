@@ -7,11 +7,11 @@ btrfs-quota - control the quota of a btrfs filesystem
 
 SYNOPSIS
 --------
-'btrfs quota' <subcommand> <args>
+*btrfs quota* <subcommand> <args>
 
 DESCRIPTION
 -----------
-'btrfs quota' is used to enable/disable or rescan subvolume quota of a btrfs
+*btrfs quota* is used to enable/disable or rescan subvolume quota of a btrfs
 filesystem.
 
 For setting quota or other quota operations on a btrfs filesystem, please see
@@ -22,14 +22,14 @@ performance in mainline kernel yet(v3.14 so far).
 
 SUBCOMMAND
 ----------
-'enable' <path>::
+*enable* <path>::
 Enable subvolume quota support for a filesystem.
 
 
-'disable' <path>::
+*disable* <path>::
 Disable subvolume quota support for a filesystem.
 
-'rescan' [-s] <path>::
+*rescan* [-s] <path>::
 Trash all qgroup numbers and scan the metadata again with the current config.
 +
 `Options`
@@ -41,12 +41,12 @@ wait for rescan operation to finish(can be already in progress).
 
 EXIT STATUS
 -----------
-'btrfs quota' returns a zero exist status if it succeeds. Non zero is
+*btrfs quota* returns a zero exist status if it succeeds. Non zero is
 returned in case of failure.
 
 AVAILABILITY
 ------------
-'btrfs' is part of btrfs-progs. Btrfs filesystem is currently under heavy
+*btrfs* is part of btrfs-progs. Btrfs filesystem is currently under heavy
 development,
 and not suitable for any uses other than benchmarking and review.
 Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for

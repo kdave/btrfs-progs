@@ -7,11 +7,11 @@ btrfs-image - create/restore an image of the filesystem
 
 SYNOPSIS
 --------
-'btrfs-image' [options] <source> <target>
+*btrfs-image* [options] <source> <target>
 
 DESCRIPTION
 -----------
-'btrfs-image' is used to create an image of a btrfs filesystem.
+*btrfs-image* is used to create an image of a btrfs filesystem.
 All data will be zeroed, but metadata and the like is preserved.
 
 Mainly used for debug purpose.
@@ -50,7 +50,7 @@ captured.
 
 EXIT STATUS
 -----------
-'btrfs-image' will return 0 if no error happened.
+*btrfs-image* will return 0 if no error happened.
 If any problems happened, 1 will be returned.
 
 AUTHOR

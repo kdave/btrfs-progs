@@ -7,7 +7,7 @@ mkfs.btrfs - create a btrfs filesystem
 
 SYNOPSIS
 --------
-'mkfs.btrfs'
+*mkfs.btrfs*
 $$[-A|--alloc-start <alloc-start>]$$
 $$[-b|--byte-count <byte-count>]$$
 $$[-d|--data <data-profile>]$$
@@ -27,7 +27,7 @@ $$<device> [<device>...]$$
 
 DESCRIPTION
 -----------
-'mkfs.btrfs'
+*mkfs.btrfs*
 is used to create a btrfs filesystem (usually in a disk partition, or an array
 of disk partitions).
 
@@ -110,7 +110,7 @@ To see all features run::::
 mkfs.btrfs -O list-all
 
 -V|--version::
-Print the 'mkfs.btrfs' version and exit.
+Print the *mkfs.btrfs* version and exit.
 
 -h::
 Print help.
@@ -122,7 +122,7 @@ to the arguments like 'k' for KBytes, 'm' for MBytes...
 
 AVAILABILITY
 ------------
-'btrfs' is part of btrfs-progs. Btrfs filesystem is currently under heavy
+*btrfs* is part of btrfs-progs. Btrfs filesystem is currently under heavy
 development,
 and not suitable for any uses other than benchmarking and review.
 Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for

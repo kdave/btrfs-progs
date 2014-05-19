@@ -7,12 +7,12 @@ btrfs-device - control btrfs devices
 
 SYNOPSIS
 --------
-'btrfs device' <subcommand> <args>
+*btrfs device* <subcommand> <args>
 
 DESCRIPTION
 -----------
-'btrfs device' is used to control the btrfs devices, since btrfs can be used
-across several devices, 'btrfs device' is used for multiple device management.
+*btrfs device* is used to control the btrfs devices, since btrfs can be used
+across several devices, *btrfs device* is used for multiple device management.
 
 DEVICE MANAGEMENT
 -----------------
@@ -62,7 +62,7 @@ See `btrfs-replace`(8) and this man page for more details.
 
 SUBCOMMAND
 ----------
-'add' [-Kf] <dev> [<dev>...] <path>::
+*add* [-Kf] <dev> [<dev>...] <path>::
 Add device(s) to the filesystem identified by <path>.
 +
 If applicable, a whole device discard (TRIM) operation is performed.
@@ -74,10 +74,10 @@ do not perform discard by default
 -f|--force::::
 force overwrite of existing filesystem on the given disk(s)
 
-'delete' <dev> [<dev>...] <path>::
+*delete* <dev> [<dev>...] <path>::
 Remove device(s) from a filesystem identified by <path>.
 
-'scan' [(--all-devices|-d)|<device> [<device>...]]::
+*scan* [(--all-devices|-d)|<device> [<device>...]]::
 Scan devices for a btrfs filesystem.
 +
 If one or more devices are passed, these are scanned for a btrfs filesystem. 
@@ -86,10 +86,10 @@ filesystem as listed by blkid.
 Finally, if '--all-devices' or '-d' is passed, all the devices under /dev are 
 scanned.
 
-'ready' <device>::
+*ready* <device>::
 Check device to see if it has all of it's devices in cache for mounting.
 
-'stats' [-z] <path>|<device>::
+*stats* [-z] <path>|<device>::
 Read and print the device IO stats for all devices of the filesystem
 identified by <path> or for a single <device>.
 +
@@ -100,12 +100,12 @@ Reset stats to zero after reading them.
 
 EXIT STATUS
 -----------
-'btrfs device' returns a zero exist status if it succeeds. Non zero is
+*btrfs device* returns a zero exist status if it succeeds. Non zero is
 returned in case of failure.
 
 AVAILABILITY
 ------------
-'btrfs' is part of btrfs-progs. Btrfs filesystem is currently under heavy
+*btrfs* is part of btrfs-progs. Btrfs filesystem is currently under heavy
 development,
 and not suitable for any uses other than benchmarking and review.
 Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for
