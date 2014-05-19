@@ -122,9 +122,7 @@ to the arguments like 'k' for KBytes, 'm' for MBytes...
 
 AVAILABILITY
 ------------
-*btrfs* is part of btrfs-progs. Btrfs filesystem is currently under heavy
-development,
-and not suitable for any uses other than benchmarking and review.
+*btrfs* is part of btrfs-progs.
 Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for
 further details.
 
