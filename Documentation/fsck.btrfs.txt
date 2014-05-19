@@ -7,7 +7,7 @@ fsck.btrfs - do nothing, successfully
 
 SYNOPSIS
 --------
-'fsck.btrfs' [-aApy] [device...]
+'fsck.btrfs' [-aApy] [<device>...]
 
 DESCRIPTION
 -----------

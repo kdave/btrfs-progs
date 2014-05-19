@@ -73,15 +73,15 @@ print max exclusive size of qgroup.
 list all qgroups which impact the given path(include ancestral qgroups)
 -f::::
 list all qgroups which impact the given path(exclude ancestral qgroups)
---sort=[\+/-]ATTR[,[+/-]ATTR]...::::
-list qgroups in order of ATTR.
+--sort=[\+/-]<attr>[,[+/-]<attr>]...::::
+list qgroups in order of <attr>.
 +
-ATTR can be one or more of qgroupid,rfer,excl,max_rfer,max_excl.
+<attr> can be one or more of qgroupid,rfer,excl,max_rfer,max_excl.
 +
-Prefix \'+' means ascending order and \'-' means descending order of ATTR.
+Prefix \'+' means ascending order and \'-' means descending order of <attr>.
 If no prefix is given, use ascending order by default.
 +
-If multiple ATTRs is given, use comma to separate.
+If multiple <attr>s is given, use comma to separate.
 
 'limit' [options] <size>|none [<qgroupid>] <path>::
 Limit the size of a qgroup to <size> or no limit in the btrfs filesystem

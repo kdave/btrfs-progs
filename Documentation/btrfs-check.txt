@@ -22,7 +22,7 @@ https://btrfs.wiki.kernel.org/index.php/Btrfsck
 
 OPTIONS
 -------
--s|--support <superblock>::
+-s|--super <superblock>::
 use <superblock>th superblock copy.
 --repair::
 try to repair the filesystem.

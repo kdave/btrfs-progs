@@ -17,7 +17,7 @@ resizing, defragment.
 
 SUBCOMMAND
 ----------
-'df' [-b] path [<path>...]::
+'df' [-b] <path> [<path>...]::
 Show space usage information for a mount point.
 +
 If '-b' is given, then byte is used as unit. Default unit will be
@@ -59,10 +59,10 @@ lower than 100% because the metadata is duplicated for security reasons.
 If all the data and metadata are duplicated (or have a profile like RAID1)
 the Data to disk ratio could be 50%.
 
-'show' [--mounted|--all-devices|<path>|<uuid>|<device>|<lable>]::
+'show' [--mounted|--all-devices|<path>|<uuid>|<device>|<label>]::
 Show the btrfs filesystem with some additional info.
 +
-If no option nor <path>|<uuid>|<device>|<lable> is passed, btrfs shows
+If no option nor <path>|<uuid>|<device>|<label> is passed, btrfs shows
 information of all the btrfs filesystem both mounted and unmounted.
 If '--mounted' is passed, it would probe btrfs kernel to list mounted btrfs
 filesystem(s);
@@ -109,7 +109,7 @@ don't use it if you use snapshots, have de-duplicated your data or made
 copies with `cp --reflink`.
 
 // Some wording are extracted by the resize2fs man page
-'resize' [devid:][+/-]<size>[gkm]|[devid:]max <path>::
+'resize' [<devid>:][+/-]<size>[gkm]|[<devid>:]max <path>::
 Resize a filesystem identified by <path> for the underlying device
 devid *online*. +
 The devid can be found with 'btrfs filesystem show' and
@@ -133,7 +133,7 @@ partition after reducing the size of the filesystem.  This can done using
 it with the new desired size.  When recreating the partition make sure to use
 the same starting disk cylinder as before.
 
-'label' [<dev>|<mount_point>] [newlabel]::
+'label' [<dev>|<mountpoint>] [<newlabel>]::
 Show or update the label of a filesystem.
 +
 [<device>|<mountpoint>] is used to identify the filesystem. 

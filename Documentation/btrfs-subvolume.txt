@@ -75,7 +75,7 @@ wait for transaction commit at the end of the operation
 -C|--commit-each::::
 wait for transaction commit after delet each subvolume
 
-'list' [options] [-G [\+|-] values] [-C [+|-]value] [--sort=rootid,gen,ogen,path] <path>::
+'list' [options] [-G [\+|-]<value>] [-C [+|-]<value>] [--sort=rootid,gen,ogen,path] <path>::
 List the subvolumes present in the filesystem <path>.
 +
 For every subvolume the following information is shown by default. +
@@ -110,11 +110,11 @@ print the result as a table.
 only snapshot subvolumes in the filesystem will be listed.
 -r::::
 only readonly subvolumes in the filesystem will be listed.
--G [+|-]value::::
+-G [+|-]<value>::::
 list subvolumes in the filesystem that its generation is
 >=, \<= or = value. \'\+' means >= value, \'-' means \<= value, If there is
 neither \'+' nor \'-', it means = value.
--C [+|-]value::::
+-C [+|-]<value>::::
 list subvolumes in the filesystem that its ogeneration is
 >=, \<= or = value. The usage is the same to '-g' option.
 --sort=rootid,gen,ogen,path::::

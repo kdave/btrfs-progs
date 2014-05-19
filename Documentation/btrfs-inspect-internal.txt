@@ -23,7 +23,7 @@ Resolves an <inode> in subvolume <path> to all filesystem paths.
 -v::::
 verbose mode. print count of returned paths and ioctl() return value
 
-'logical-resolve' [-Pv] [-s bufsize] <logical> <path>::
+'logical-resolve' [-Pv] [-s <bufsize>] <logical> <path>::
 Resolves a <logical> address in the filesystem mounted at <path> to all inodes.
 +
 By default, each inode is then resolved to a file system path (similar to the

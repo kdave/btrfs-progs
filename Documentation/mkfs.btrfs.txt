@@ -20,7 +20,7 @@ $$[-M|--mixed]$$
 $$[-s|--sectorsize <sectorsize>]$$
 $$[-r|--rootdir <rootdir>]$$
 $$[-K|--nodiscard]$$
-$$[-O|--features <feature1>[<,feature2...>]]$$
+$$[-O|--features <feature1>[,<feature2>...]]$$
 $$[-h]$$
 $$[-V|--version]$$
 $$<device> [<device>...]$$

@@ -24,10 +24,10 @@ using 1 stripe pointing to primary device, so that file system can be
 restored by running tree log reply if possible. To restore without
 changing number of stripes in chunk tree check -o option.
 
--c value::
+-c <value>::
 Compression level (0 ~ 9).
 
--t value::
+-t <value>::
 Number of threads (1 ~ 32) to be used to process the image dump or restore.
 
 -o::

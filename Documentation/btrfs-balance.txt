@@ -36,11 +36,11 @@ given balance all chunks in a filesystem.
 +
 `Options`
 +
--d[filters]::::
+-d[<filters>]::::
 act on data chunks
--m[filters]::::
+-m[<filters>]::::
 act on metadata chunks
--s[filters]::::
+-s[<filters>]::::
 act on system chunks (only under -f)
 -v::::
 be verbose
