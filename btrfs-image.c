@@ -2216,6 +2216,7 @@ static int build_chunk_tree(struct mdrestore_struct *mdres,
 		buffer = tmp;
 	}
 
+	pthread_mutex_lock(&mdres->mutex);
 	super = (struct btrfs_super_block *)buffer;
 	chunk_root_bytenr = btrfs_super_chunk_root(super);
 	mdres->leafsize = btrfs_super_leafsize(super);
@@ -2224,6 +2225,7 @@ static int build_chunk_tree(struct mdrestore_struct *mdres,
 		       BTRFS_UUID_SIZE);
 	mdres->devid = le64_to_cpu(super->dev_item.devid);
 	free(buffer);
+	pthread_mutex_unlock(&mdres->mutex);
 
 	return search_for_chunk_blocks(mdres, chunk_root_bytenr, 0);
 }
