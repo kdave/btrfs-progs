@@ -86,11 +86,6 @@ filesystem as listed by blkid.
 Finally, if '--all-devices' or '-d' is passed, all the devices under /dev are 
 scanned.
 
-'disk-usage' [-b] <path> [<path>..]::
-Show which chunks are in a device.
-+
-If '-b' is given, byte will be set as unit.
-
 'ready' <device>::
 Check device to see if it has all of it's devices in cache for mounting.
 

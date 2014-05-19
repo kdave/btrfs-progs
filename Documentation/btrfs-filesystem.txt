@@ -17,47 +17,8 @@ resizing, defragment.
 
 SUBCOMMAND
 ----------
-'df' [-b] <path> [<path>...]::
+'df' <path> [<path>...]::
 Show space usage information for a mount point.
-+
-If '-b' is given, then byte is used as unit. Default unit will be
-human-readable unit such as KiB/MiB/GiB.
-+
-The command 'btrfs filesystem df' is used to query how many space on the 
-disk(s) are used and an estimation of the free
-space of the filesystem.
-The output of the command 'btrfs filesystem df' shows:
-
-`Disk size`::::
-the total size of the disks which compose the filesystem.
-
-`Disk allocated`::::
-the size of the area of the disks used by the chunks.
-
-`Disk unallocated`::::
-the size of the area of the disks which is free (i.e.
-the differences of the values above).
-
-`Used`::::
-the portion of the logical space used by the file and metadata.
-
-`Free (estimated)`::::
-the estimated free space available: i.e. how many space can be used
-by the user. The evaluation cannot be rigorous because it depends by the
-allocation policy (DUP, Single, RAID1...) of the metadata and data chunks. +
-If every chunk is stored as "Single" the sum of the free (estimated) space
-and the used space  is equal to the disk size.
-Otherwise if all the chunk are mirrored (raid1 or raid10) or duplicated
-the sum of the free (estimated) space and the used space is
-half of the disk size. Normally the free (estimated) is between
-these two limits.
-
-`Data to disk ratio`::::
-the ratio betwen the logical size (i.e. the space available by
-the chunks) and the disk allocated (by the chunks). Normally it is 
-lower than 100% because the metadata is duplicated for security reasons.
-If all the data and metadata are duplicated (or have a profile like RAID1)
-the Data to disk ratio could be 50%.
 
 'show' [--mounted|--all-devices|<path>|<uuid>|<device>|<label>]::
 Show the btrfs filesystem with some additional info.
@@ -139,11 +100,6 @@ Show or update the label of a filesystem.
 [<device>|<mountpoint>] is used to identify the filesystem. 
 If a newlabel optional argument is passed, the label is changed.
 NOTE: the maximum allowable length shall be less than 256 chars
-
-'disk-usage' [-tb] path [path...]::
-Show in which disk the chunks are allocated. +
-If '-b' is given,  set byte as unit;
-If '-t' is given, show data in tabular format.
 
 EXIT STATUS
 -----------
