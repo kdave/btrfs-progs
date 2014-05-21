@@ -21,7 +21,7 @@ libbtrfs_objects = send-stream.o send-utils.o rbtree.o btrfs-list.o crc32c.o \
 libbtrfs_headers = send-stream.h send-utils.h send.h rbtree.h btrfs-list.h \
 	       crc32c.h list.h kerncompat.h radix-tree.h extent-cache.h \
 	       extent_io.h ioctl.h ctree.h btrfsck.h
-TESTS = fsck-tests.sh
+TESTS = fsck-tests.sh convert-tests.sh
 
 INSTALL = install
 prefix ?= /usr/local
