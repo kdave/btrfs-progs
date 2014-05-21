@@ -100,9 +100,9 @@ static int enable_skinny_metadata(struct btrfs_root *root)
 static void print_usage(void)
 {
 	fprintf(stderr, "usage: btrfstune [options] device\n");
-	fprintf(stderr, "\t-S value\tenable/disable seeding\n");
+	fprintf(stderr, "\t-S value\tpositive value will enable seeding, zero to disable, negative is not allowed\n");
 	fprintf(stderr, "\t-r \t\tenable extended inode refs\n");
-	fprintf(stderr, "\t-x enable skinny metadata extent refs\n");
+	fprintf(stderr, "\t-x \t\tenable skinny metadata extent refs\n");
 }
 
 int main(int argc, char *argv[])

@@ -17,8 +17,9 @@ enable/disable some extended features for btrfs.
 OPTIONS
 -------
 -S <value>::
-Updates the seeding value, it forces a fs readonly so that you can use it to
-build other filesystems.
+Updates the seeding value.
+A positive value will enable seeding, zero will disable seeding, negtive is not allowed.
+Enable seeding forces a fs readonly so that you can use it to build other filesystems.
 -r::
 Enable extended inode refs.
 -x::
