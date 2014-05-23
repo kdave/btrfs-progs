@@ -38,6 +38,9 @@ Use this option to specify a file to use instead.
 Terminate after receiving an <end cmd> in the data stream.
 Without this option, the receiver terminates only if an error is recognized
 or on EOF.
+--max-errors <N>::
+Terminate as soon as N errors happened while processing commands from the send
+stream. Default value is 1. A value of 0 means no limit.
 
 EXIT STATUS
 -----------

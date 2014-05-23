@@ -435,13 +435,21 @@ out:
 	return ret;
 }
 
+/*
+ * If max_errors is 0, then don't stop processing the stream if one of the
+ * callbacks in btrfs_send_ops structure returns an error. If greater than
+ * zero, stop after max_errors errors happened.
+ */
 int btrfs_read_and_process_send_stream(int fd,
 				       struct btrfs_send_ops *ops, void *user,
-				       int honor_end_cmd)
+				       int honor_end_cmd,
+				       u64 max_errors)
 {
 	int ret;
 	struct btrfs_send_stream s;
 	struct btrfs_stream_header hdr;
+	u64 errors = 0;
+	int last_err = 0;
 
 	s.fd = fd;
 	s.ops = ops;
@@ -471,9 +479,12 @@ int btrfs_read_and_process_send_stream(int fd,
 
 	while (1) {
 		ret = read_and_process_cmd(&s);
-		if (ret < 0)
-			goto out;
-		if (ret) {
+		if (ret < 0) {
+			last_err = ret;
+			errors++;
+			if (max_errors > 0 && errors >= max_errors)
+				goto out;
+		} else if (ret > 0) {
 			if (!honor_end_cmd)
 				ret = 0;
 			goto out;
@@ -481,5 +492,8 @@ int btrfs_read_and_process_send_stream(int fd,
 	}
 
 out:
+	if (last_err && !ret)
+		ret = last_err;
+
 	return ret;
 }
