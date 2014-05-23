@@ -41,6 +41,8 @@ static int print_usage(void)
 	fprintf(stderr, "\t-u : print info of uuid tree only\n");
 	fprintf(stderr, "\t-b block_num : print info of the specified block"
                     " only\n");
+	fprintf(stderr,
+		"\t-t tree_id : print only the tree with the given id\n");
 	fprintf(stderr, "%s\n", BTRFS_BUILD_VERSION);
 	exit(1);
 }
@@ -136,12 +138,13 @@ int main(int ac, char **av)
 	int root_backups = 0;
 	u64 block_only = 0;
 	struct btrfs_root *tree_root_scan;
+	u64 tree_id = 0;
 
 	radix_tree_init();
 
 	while(1) {
 		int c;
-		c = getopt(ac, av, "deb:rRu");
+		c = getopt(ac, av, "deb:rRut:");
 		if (c < 0)
 			break;
 		switch(c) {
@@ -163,6 +166,9 @@ int main(int ac, char **av)
 				break;
 			case 'b':
 				block_only = arg_strtou64(optarg);
+				break;
+			case 't':
+				tree_id = arg_strtou64(optarg);
 				break;
 			default:
 				print_usage();
@@ -208,7 +214,7 @@ int main(int ac, char **av)
 		goto close_root;
 	}
 
-	if (!(extent_only || uuid_tree_only)) {
+	if (!(extent_only || uuid_tree_only || tree_id)) {
 		if (roots_only) {
 			printf("root tree: %llu level %d\n",
 			     (unsigned long long)info->tree_root->node->start,
@@ -267,6 +273,8 @@ again:
 							btrfs_root_level(&ri)),
 					      0);
 			if (!extent_buffer_uptodate(buf))
+				goto next;
+			if (tree_id && found_key.objectid != tree_id)
 				goto next;
 
 			switch(found_key.objectid) {
