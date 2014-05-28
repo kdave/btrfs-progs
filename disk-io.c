@@ -939,7 +939,7 @@ int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info, u64 root_tree_bytenr,
 	key.offset = (u64)-1;
 	fs_info->fs_root = btrfs_read_fs_root(fs_info, &key);
 
-	if (!fs_info->fs_root)
+	if (IS_ERR(fs_info->fs_root))
 		return -EIO;
 	return 0;
 }
