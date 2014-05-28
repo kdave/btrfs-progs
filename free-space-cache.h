@@ -36,6 +36,7 @@ struct btrfs_free_space_ctl {
 	int unit;
 	u64 start;
 	void *private;
+	u32 sectorsize;
 };
 
 int load_free_space_cache(struct btrfs_fs_info *fs_info,
