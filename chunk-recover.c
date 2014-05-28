@@ -1922,10 +1922,9 @@ next_csum:
 			list_splice_init(&unordered, &chunk->dextents);
 			btrfs_release_path(&path);
 			return 0;
-		} else
-			ret = 1;
+		}
 
-		goto fail_out;
+		goto next_stripe;
 	}
 
 	if (list_is_last(candidates.next, &candidates)) {
