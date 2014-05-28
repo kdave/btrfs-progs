@@ -1774,6 +1774,17 @@ static int insert_stripe(struct list_head *devexts,
 	return 0;
 }
 
+static inline int count_devext_records(struct list_head *record_list)
+{
+	int num_of_records = 0;
+	struct device_extent_record *devext;
+
+	list_for_each_entry(devext, record_list, chunk_list)
+		num_of_records++;
+
+	return num_of_records;
+}
+
 #define EQUAL_STRIPE (1 << 0)
 
 static int rebuild_raid_data_chunk_stripes(struct recover_control *rc,
@@ -1877,8 +1888,7 @@ next_csum:
 		fprintf(stderr, "Fetch csum failed\n");
 		goto fail_out;
 	} else if (ret == 1) {
-		list_for_each_entry(devext, &unordered, chunk_list)
-			num_unordered++;
+		num_unordered = count_devext_records(&unordered);
 		if (!(*flags & EQUAL_STRIPE))
 			*flags |= EQUAL_STRIPE;
 		goto out;
@@ -1906,8 +1916,7 @@ next_csum:
 	}
 
 	if (list_empty(&candidates)) {
-		list_for_each_entry(devext, &unordered, chunk_list)
-			num_unordered++;
+		num_unordered = count_devext_records(&unordered);
 		if (chunk->type_flags & BTRFS_BLOCK_GROUP_RAID6
 					&& num_unordered == 2) {
 			list_splice_init(&unordered, &chunk->dextents);
@@ -1942,8 +1951,7 @@ next_stripe:
 out:
 	ret = 0;
 	list_splice_init(&candidates, &unordered);
-	list_for_each_entry(devext, &unordered, chunk_list)
-		num_unordered++;
+	num_unordered = count_devext_records(&unordered);
 	if (num_unordered == 1) {
 		for (i = 0; i < chunk->num_stripes; i++) {
 			if (!chunk->stripes[i].devid) {
