@@ -1130,13 +1130,10 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 
 	ret = btrfs_setup_all_roots(fs_info, root_tree_bytenr, flags);
 	if (ret)
-		goto out_failed;
+		goto out_chunk;
 
 	return fs_info;
 
-out_failed:
-	if (flags & OPEN_CTREE_PARTIAL)
-		return fs_info;
 out_chunk:
 	btrfs_release_all_roots(fs_info);
 	btrfs_cleanup_all_caches(fs_info);
