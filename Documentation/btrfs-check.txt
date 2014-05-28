@@ -30,6 +30,8 @@ try to repair the filesystem.
 create a new CRC tree.
 --init-extent-tree::
 create a new extent tree.
+--check-data-csum::
+verify checkums of data blocks.
 
 EXIT STATUS
 -----------
