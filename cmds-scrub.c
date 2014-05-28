@@ -865,7 +865,7 @@ static void *progress_one_dev(void *ctx)
 /* nb: returns a negative errno via ERR_PTR */
 static void *scrub_progress_cycle(void *ctx)
 {
-	int ret;
+	int ret = 0;
 	int  perr = 0;	/* positive / pthread error returns */
 	int old;
 	int i;
