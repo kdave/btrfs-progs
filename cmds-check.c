@@ -6049,12 +6049,12 @@ again:
 	if (err && !ret)
 		ret = err;
 
+out:
 	if (trans) {
 		err = btrfs_commit_transaction(trans, root);
 		if (!ret)
 			ret = err;
 	}
-out:
 	if (repair) {
 		free_corrupt_blocks_tree(root->fs_info->corrupt_blocks);
 		root->fs_info->fsck_extent_cache = NULL;
