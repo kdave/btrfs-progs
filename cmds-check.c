@@ -6990,6 +6990,11 @@ int cmd_check(int argc, char **argv)
 		ret = -EIO;
 		goto close_out;
 	}
+	if (!extent_buffer_uptodate(info->csum_root->node)) {
+		fprintf(stderr, "Checksum root corrupted, rerun with --init-csum-tree option\n");
+		ret = -EIO;
+		goto close_out;
+	}
 
 	fprintf(stderr, "checking extents\n");
 	ret = check_chunks_and_extents(root);

@@ -909,6 +909,13 @@ int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info, u64 root_tree_bytenr,
 		printk("Couldn't setup csum tree\n");
 		if (!(flags & OPEN_CTREE_PARTIAL))
 			return -EIO;
+		/* do the same thing as extent tree rebuilding */
+		fs_info->csum_root->node =
+			btrfs_find_create_tree_block(fs_info->extent_root, 0,
+						     leafsize);
+		if (!fs_info->csum_root->node)
+			return -ENOMEM;
+		clear_extent_buffer_uptodate(NULL, fs_info->csum_root->node);
 	}
 	fs_info->csum_root->track_dirty = 1;
 
