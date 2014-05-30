@@ -54,7 +54,7 @@ progs = mkfs.btrfs btrfs-debug-tree btrfsck \
 # specify btrfs_foo_libs = <list of libs>; see $($(subst...)) rules below
 btrfs_convert_libs = -lext2fs -lcom_err
 btrfs_image_libs = -lpthread
-btrfs_fragment_libs = -lgd -lpng -ljpeg -lfreetype
+btrfs_fragments_libs = -lgd -lpng -ljpeg -lfreetype
 
 SUBDIRS =
 BUILDDIRS = $(patsubst %,build-%,$(SUBDIRS)) build-Documentation
