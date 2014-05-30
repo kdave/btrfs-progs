@@ -54,9 +54,10 @@ BTRFS_VERSION = $(shell sed -n 's/.*BTRFS_BUILD_VERSION "Btrfs \(.*\)"/\1/p'\
 
 ifneq ($(findstring $(MAKEFLAGS),s),s)
 ifndef V
-	QUIET_ASCIIDOC	= @echo '   ' ASCIIDOC $@;
-	QUIET_XMLTO	= @echo '   ' XMLTO $@;
-	QUIET_GZIP	= @echo '   ' GZIP $@;
+	QUIET_RM	= @
+	QUIET_ASCIIDOC	= @echo "    [ASCII]  $@";
+	QUIET_XMLTO	= @echo "    [XMLTO]  $@";
+	QUIET_GZIP	= @echo "    [GZ]     $@";
 	QUIET_STDERR	= 2> /dev/null
 	QUIET_SUBDIR0	= +@subdir=
 	QUIET_SUBDIR1	= ;$(NO_SUBDIR) echo '   ' SUBDIR $$subdir; \
@@ -77,7 +78,7 @@ install-man: man
 	$(LNS) btrfs-check.8.gz $(DESTDIR)$(man8dir)/btrfsck.8.gz
 
 clean:
-	$(RM) *.xml *.xml+ *.8 *.8.gz
+	$(QUIET_RM)$(RM) *.xml *.xml+ *.8 *.8.gz
 
 %.8.gz : %.8
 	$(QUIET_GZIP)$(GZIPCMD) -n -c $< > $@
