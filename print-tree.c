@@ -179,11 +179,20 @@ void print_chunk(struct extent_buffer *eb, struct btrfs_chunk *chunk)
 static void print_dev_item(struct extent_buffer *eb,
 			   struct btrfs_dev_item *dev_item)
 {
+	char disk_uuid_c[BTRFS_UUID_UNPARSED_SIZE];
+	u8 disk_uuid[BTRFS_UUID_SIZE];
+
+	read_extent_buffer(eb, disk_uuid,
+			   (unsigned long)btrfs_device_uuid(dev_item),
+			   BTRFS_UUID_SIZE);
+	uuid_unparse(disk_uuid, disk_uuid_c);
 	printf("\t\tdev item devid %llu "
-	       "total_bytes %llu bytes used %Lu\n",
+	       "total_bytes %llu bytes used %Lu\n"
+	       "\t\tdev uuid %s\n",
 	       (unsigned long long)btrfs_device_id(eb, dev_item),
 	       (unsigned long long)btrfs_device_total_bytes(eb, dev_item),
-	       (unsigned long long)btrfs_device_bytes_used(eb, dev_item));
+	       (unsigned long long)btrfs_device_bytes_used(eb, dev_item),
+	       disk_uuid_c);
 }
 
 static void print_uuids(struct extent_buffer *eb)
