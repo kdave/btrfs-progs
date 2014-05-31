@@ -16,6 +16,9 @@ The Btrfs utility programs require libuuid to build.  This can be found
 in the e2fsprogs sources, and is usually available as libuuid or
 e2fsprogs-devel from various distros.
 
+The Btrfs utility programs also require libblkid (block device identification
+library). This library is usually available as libblkid-dev or libblkid-devel.
+
 Building the utilities is just make ; make install.  The programs go
 into /usr/local/bin.  The mains commands available are:
 
