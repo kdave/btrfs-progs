@@ -12,12 +12,16 @@ complete:
 modprobe libcrc32c
 insmod btrfs.ko
 
-The Btrfs utility programs require libuuid to build.  This can be found
-in the e2fsprogs sources, and is usually available as libuuid or
-e2fsprogs-devel from various distros.
+The Btrfs utility programs require the following libraries/tools to build:
 
-The Btrfs utility programs also require libblkid (block device identification
-library). This library is usually available as libblkid-dev or libblkid-devel.
+- libuuid (This can be found in the e2fsprogs sources, and is usually available
+  as libuuid or e2fsprogs-devel from various distros).
+- libattr (Extended attribute library - Development files)
+- libblkid (Block device id library - Development files)
+- liblzo2 (LZO data compression library - Development files)
+- libacl (Access control list library - Development files)
+- e2fslibs (ext2/ext3/ext4 file system libraries - Development files)
+- asciidoc (Text document format tool - For documentation)
 
 Building the utilities is just make ; make install.  The programs go
 into /usr/local/bin.  The mains commands available are:
