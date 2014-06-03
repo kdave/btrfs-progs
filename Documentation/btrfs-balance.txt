@@ -37,11 +37,11 @@ given balance all chunks in a filesystem.
 `Options`
 +
 -d[<filters>]::::
-act on data chunks
+act on data chunks. See `FILTERS` section for details about <filters>.
 -m[<filters>]::::
-act on metadata chunks
+act on metadata chunks. See `FILTERS` section for details about <filters>.
 -s[<filters>]::::
-act on system chunks (only under -f)
+act on system chunks (only under -f). See `FILTERS` section for details about <filters>.
 -v::::
 be verbose
 -f::::
@@ -60,6 +60,60 @@ Resume interrupted balance.
 Show status of running or paused balance.
 +
 If '-v' option is given, output will be verbose.
+
+FILTERS
+-------
+From kernel 3.3 onwards, btrfs balance can limit its action to a subset of the
+full filesystem, and can be used to change the replication configuration (e.g.
+moving data from single to RAID-1). This functionality is accessed through the
+'-d', '-m' or '-s' options to btrfs balance start, which filter on data,
+metadata and system blocks respectively.
+
+A filter has the following stucture: ::
+'type'[='params'][,'type'=...]
+
+The available types are: ::
+*profiles*::::
+Balances only block groups with the given replication profiles. Parameters
+are a list of profile names separated by |.
+
+*usage*::::
+Balances only block groups with usage under the given percentage. The
+value of 0 is allowed and will clean up completely unused block groups, this
+should not require any new space allocated. You may want to use usage=0 in
+case balance is returnin ENOSPC and your filesystem is not too full.
+
+*devid*::::
+Balances only block groups which have at least one chunk on the given
+device (by btrfs device ID -- use btrfs fi show to list device IDs)
+
+*drange*::::
+Balances only block groups which overlap with the given byte range on any
+device. (Use in conjunction with "devid" to filter on a specific device). The
+parameter is a range specified as <start..end>.
+
+*vrange*::::
+Balances only block groups which overlap with the given byte range in the
+filesystem's internal virtual address space. This is the address space that
+most reports from btrfs in the kernel log use. The parameter is a range
+specified as <start..end>.
+
+*convert*::::
+Convert each selected block group to the given profile name identified by
+parameters.
+
+*soft*::::
+Takes no parameters. Only has meaning when converting between profiles.
+When doing convert from one profile to another and soft mode is on,
+restriper won't touch chunks that already have the target profile. This is
+useful if e.g. half of the FS was converted earlier.
++
+The soft mode switch is (like every other filter) per-type. This means
+that we can convert for example meta chunks the "hard" way while converting
+data chunks selectively with soft switch.
+
+Profile names, used in profiles and convert are one of: 'raid0', 'raid1',
+'raid10', 'raid5', 'raid6', 'dup', 'single'.
 
 EXIT STATUS
 -----------
