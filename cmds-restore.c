@@ -176,7 +176,7 @@ again:
 			break;
 	}
 
-	if (level == BTRFS_MAX_LEVEL)
+	if (level >= BTRFS_MAX_LEVEL)
 		return 1;
 
 	slot = path->slots[level] + 1;
