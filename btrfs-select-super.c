@@ -100,8 +100,8 @@ int main(int ac, char **av)
 	/* we don't close the ctree or anything, because we don't want a real
 	 * transaction commit.  We just want the super copy we pulled off the
 	 * disk to overwrite all the other copies
-	 */ 
-	printf("using SB copy %d, bytenr %llu\n", num,
+	 */
+	printf("using SB copy %llu, bytenr %llu\n", (unsigned long long)num,
 	       (unsigned long long)bytenr);
 	return ret;
 }
