@@ -1027,6 +1027,64 @@ static int blk_file_in_dev_list(struct btrfs_fs_devices* fs_devices,
 }
 
 /*
+ * Resolve a pathname to a device mapper node to /dev/mapper/<name>
+ * Returns NULL on invalid input or malloc failure; Other failures
+ * will be handled by the caller using the input pathame.
+ */
+char *canonicalize_dm_name(const char *ptname)
+{
+	FILE	*f;
+	size_t	sz;
+	char	path[PATH_MAX], name[PATH_MAX], *res = NULL;
+
+	if (!ptname || !*ptname)
+		return NULL;
+
+	snprintf(path, sizeof(path), "/sys/block/%s/dm/name", ptname);
+	if (!(f = fopen(path, "r")))
+		return NULL;
+
+	/* read <name>\n from sysfs */
+	if (fgets(name, sizeof(name), f) && (sz = strlen(name)) > 1) {
+		name[sz - 1] = '\0';
+		snprintf(path, sizeof(path), "/dev/mapper/%s", name);
+
+		if (access(path, F_OK) == 0)
+			res = strdup(path);
+	}
+	fclose(f);
+	return res;
+}
+
+/*
+ * Resolve a pathname to a canonical device node, e.g. /dev/sda1 or
+ * to a device mapper pathname.
+ * Returns NULL on invalid input or malloc failure; Other failures
+ * will be handled by the caller using the input pathame.
+ */
+char *canonicalize_path(const char *path)
+{
+	char *canonical, *p;
+
+	if (!path || !*path)
+		return NULL;
+
+	canonical = realpath(path, NULL);
+	if (!canonical)
+		return strdup(path);
+	p = strrchr(canonical, '/');
+	if (p && strncmp(p, "/dm-", 4) == 0 && isdigit(*(p + 4))) {
+		char *dm = canonicalize_dm_name(p + 1);
+
+		if (dm) {
+			free(canonical);
+			return dm;
+		}
+	}
+	return canonical;
+}
+
+/*
  * returns 1 if the device was mounted, < 0 on error or 0 if everything
  * is safe to continue.
  */

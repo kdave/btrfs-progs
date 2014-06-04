@@ -134,7 +134,7 @@ static int cmd_start_replace(int argc, char **argv)
 	int fddstdev = -1;
 	char *path;
 	char *srcdev;
-	char *dstdev;
+	char *dstdev = NULL;
 	int avoid_reading_from_srcdev = 0;
 	int force_using_targetdev = 0;
 	struct stat st;
@@ -209,7 +209,12 @@ static int cmd_start_replace(int argc, char **argv)
 	}
 
 	srcdev = argv[optind];
-	dstdev = argv[optind + 1];
+	dstdev = canonicalize_path(argv[optind + 1]);
+	if (!dstdev) {
+		fprintf(stderr,
+			"ERROR: Could not canonicalize path '%s': %s\n",
+			argv[optind + 1], strerror(errno));
+	}
 
 	if (is_numerical(srcdev)) {
 		struct btrfs_ioctl_fs_info_args fi_args;
@@ -283,6 +288,8 @@ static int cmd_start_replace(int argc, char **argv)
 
 	close(fddstdev);
 	fddstdev = -1;
+	free(dstdev);
+	dstdev = NULL;
 
 	dev_replace_handle_sigint(fdmnt);
 	if (!do_not_background) {
@@ -317,6 +324,8 @@ static int cmd_start_replace(int argc, char **argv)
 	return 0;
 
 leave_with_error:
+	if (dstdev)
+		free(dstdev);
 	if (fdmnt != -1)
 		close(fdmnt);
 	if (fdsrcdev != -1)

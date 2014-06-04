@@ -53,6 +53,8 @@ int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 int btrfs_scan_for_fsid(int run_ioctls);
 void btrfs_register_one_device(char *fname);
 int btrfs_scan_one_dir(char *dirname, int run_ioctl);
+char *canonicalize_dm_name(const char *ptname);
+char *canonicalize_path(const char *path);
 int check_mounted(const char *devicename);
 int check_mounted_where(int fd, const char *file, char *where, int size,
 			struct btrfs_fs_devices **fs_devices_mnt);
