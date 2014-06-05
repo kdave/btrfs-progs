@@ -427,7 +427,7 @@ int cmd_send(int argc, char **argv)
 	u32 i;
 	char *mount_root = NULL;
 	char *snapshot_parent = NULL;
-	u64 root_id;
+	u64 root_id = 0;
 	u64 parent_root_id = 0;
 	int full_send = 1;
 	int new_end_cmd_semantic = 0;

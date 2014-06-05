@@ -216,7 +216,7 @@ static int tlv_get_string(struct btrfs_send_stream *s, int attr, char **str)
 {
 	int ret;
 	void *data;
-	int len;
+	int len = 0;
 
 	TLV_GET(s, attr, &data, &len);
 
