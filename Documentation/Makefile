@@ -31,13 +31,21 @@ MAN8_TXT += btrfs-replace.txt
 MAN8_TXT += btrfs-restore.txt
 MAN8_TXT += btrfs-property.txt
 
-MAN_TXT = $(MAN8_TXT)
+# Mount manpage
+MAN5_TXT += btrfs-mount.txt
+
+MAN_TXT = $(MAN8_TXT) $(MAN5_TXT)
 MAN_XML = $(patsubst %.txt,%.xml,$(MAN_TXT))
+
+DOC_MAN5 = $(patsubst %.txt,%.5,$(MAN5_TXT))
+GZ_MAN5 = $(patsubst %.txt,%.5.gz,$(MAN5_TXT))
+
 DOC_MAN8 = $(patsubst %.txt,%.8,$(MAN8_TXT))
 GZ_MAN8 = $(patsubst %.txt,%.8.gz,$(MAN8_TXT))
 
 mandir ?= $(prefix)/share/man
 man8dir = $(mandir)/man8
+man5dir = $(mandir)/man5
 
 ASCIIDOC = asciidoc
 ASCIIDOC_EXTRA =
@@ -67,25 +75,36 @@ endif
 endif
 
 all: man
-man: man8
+man: man5 man8
+man5: $(GZ_MAN5)
 man8: $(GZ_MAN8)
 
 install: install-man
 
 install-man: man
+	$(INSTALL) -d -m 755 $(DESTDIR)$(man5dir)
 	$(INSTALL) -d -m 755 $(DESTDIR)$(man8dir)
+	$(INSTALL) -m 644 $(GZ_MAN5) $(DESTDIR)$(man5dir)
 	$(INSTALL) -m 644 $(GZ_MAN8) $(DESTDIR)$(man8dir)
 	$(LNS) btrfs-check.8.gz $(DESTDIR)$(man8dir)/btrfsck.8.gz
 
 clean:
-	$(QUIET_RM)$(RM) *.xml *.xml+ *.8 *.8.gz
+	$(QUIET_RM)$(RM) *.xml *.xml+ *.5 *.5.gz *.8 *.8.gz
+
+%.5.gz : %.5
+	$(QUIET_GZIP)$(GZIPCMD) -n -c $< > $@
 
 %.8.gz : %.8
 	$(QUIET_GZIP)$(GZIPCMD) -n -c $< > $@
 
+%.5 : %.xml
+	$(QUIET_XMLTO)$(RM) $@ && \
+	$(XMLTO) -m $(MANPAGE_XSL) $(XMLTO_EXTRA) man $<
+
 %.8 : %.xml
 	$(QUIET_XMLTO)$(RM) $@ && \
 	$(XMLTO) -m $(MANPAGE_XSL) $(XMLTO_EXTRA) man $<
+
 %.xml : %.txt asciidoc.conf
 	$(QUIET_ASCIIDOC)$(RM) $@.tmp[12] $@ && \
 	sed -e "s/\(<[^>]\+>\)/'\1'/g" < $< > $@.tmp1 && \
