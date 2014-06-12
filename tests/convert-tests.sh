@@ -13,15 +13,16 @@ _fail()
 }
 
 rm -f convert-tests-results.txt
-rm -f test.img
 
 test(){
 	echo "     [TEST]    $1"
-        shift
-        echo "creating ext image with: $*" >> convert-tests-results.txt
+	shift
+	echo "creating ext image with: $*" >> convert-tests-results.txt
 	# 256MB is the smallest acceptable btrfs image.
-	dd if=/dev/zero of=$here/test.img bs=1024 count=$((256*1024)) \
-		>> convert-tests-results.txt 2>&1 || _fail "dd failed"
+	rm -f $here/test.img >> convert-tests-results.txt 2>&1 \
+		|| _fail "could not remove test image file"
+	truncate -s 256M $here/test.img >> convert-tests-results.txt 2>&1 \
+		|| _fail "could not create test image file"
 	$* -F $here/test.img >> convert-tests-results.txt 2>&1 \
 		|| _fail "filesystem create failed"
 	$here/btrfs-convert $here/test.img >> convert-tests-results.txt 2>&1 \
@@ -30,6 +31,7 @@ test(){
 		|| _fail "btrfsck detected errors"
 }
 
-test "ext2, 4k blocksize" mke2fs -b 4096
-test "ext3, 4k blocksize" mke2fs -j -b 4096
-test "ext4, 4k blocksize" mke2fs -t ext4 -b 4096
+# btrfs-convert requires 4k blocksize.
+test "ext2" mke2fs -b 4096
+test "ext3" mke2fs -j -b 4096
+test "ext4" mke2fs -t ext4 -b 4096
