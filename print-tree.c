@@ -160,15 +160,60 @@ static int print_inode_ref_item(struct extent_buffer *eb, struct btrfs_item *ite
 	return 0;
 }
 
+/* Caller should ensure sizeof(*ret)>=21 "DATA|METADATA|RAID10" */
+static void bg_flags_to_str(u64 flags, char *ret)
+{
+	int empty = 1;
+
+	if (flags & BTRFS_BLOCK_GROUP_DATA) {
+		empty = 0;
+		strcpy(ret, "DATA");
+	}
+	if (flags & BTRFS_BLOCK_GROUP_METADATA) {
+		if (!empty)
+			strcat(ret, "|");
+		strcat(ret, "METADATA");
+	}
+	if (flags & BTRFS_BLOCK_GROUP_SYSTEM) {
+		if (!empty)
+			strcat(ret, "|");
+		strcat(ret, "SYSTEM");
+	}
+	switch (flags & BTRFS_BLOCK_GROUP_PROFILE_MASK) {
+	case BTRFS_BLOCK_GROUP_RAID0:
+		strcat(ret, "|RAID0");
+		break;
+	case BTRFS_BLOCK_GROUP_RAID1:
+		strcat(ret, "|RAID1");
+		break;
+	case BTRFS_BLOCK_GROUP_DUP:
+		strcat(ret, "|DUP");
+		break;
+	case BTRFS_BLOCK_GROUP_RAID10:
+		strcat(ret, "|RAID10");
+		break;
+	case BTRFS_BLOCK_GROUP_RAID5:
+		strcat(ret, "|RAID5");
+		break;
+	case BTRFS_BLOCK_GROUP_RAID6:
+		strcat(ret, "|RAID6");
+		break;
+	default:
+		break;
+	}
+}
+
 void print_chunk(struct extent_buffer *eb, struct btrfs_chunk *chunk)
 {
 	int num_stripes = btrfs_chunk_num_stripes(eb, chunk);
 	int i;
-	printf("\t\tchunk length %llu owner %llu type %llu num_stripes %d\n",
+	char chunk_flags_str[32] = {0};
+
+	bg_flags_to_str(btrfs_chunk_type(eb, chunk), chunk_flags_str);
+	printf("\t\tchunk length %llu owner %llu type %s num_stripes %d\n",
 	       (unsigned long long)btrfs_chunk_length(eb, chunk),
 	       (unsigned long long)btrfs_chunk_owner(eb, chunk),
-	       (unsigned long long)btrfs_chunk_type(eb, chunk),
-	       num_stripes);
+	       chunk_flags_str, num_stripes);
 	for (i = 0 ; i < num_stripes ; i++) {
 		printf("\t\t\tstripe %d devid %llu offset %llu\n", i,
 		      (unsigned long long)btrfs_stripe_devid_nr(eb, chunk, i),
@@ -752,6 +797,7 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 	u32 nr = btrfs_header_nritems(l);
 	u64 objectid;
 	u32 type;
+	char bg_flags_str[32];
 
 	printf("leaf %llu items %d free space %d generation %llu owner %llu\n",
 		(unsigned long long)btrfs_header_bytenr(l), nr,
@@ -866,10 +912,13 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 					    struct btrfs_block_group_item);
 			read_extent_buffer(l, &bg_item, (unsigned long)bi,
 					   sizeof(bg_item));
-			printf("\t\tblock group used %llu chunk_objectid %llu flags %llu\n",
+			memset(bg_flags_str, 0, sizeof(bg_flags_str));
+			bg_flags_to_str(btrfs_block_group_flags(&bg_item),
+					bg_flags_str);
+			printf("\t\tblock group used %llu chunk_objectid %llu flags %s\n",
 			       (unsigned long long)btrfs_block_group_used(&bg_item),
 			       (unsigned long long)btrfs_block_group_chunk_objectid(&bg_item),
-			       (unsigned long long)btrfs_block_group_flags(&bg_item));
+			       bg_flags_str);
 			break;
 		case BTRFS_CHUNK_ITEM_KEY:
 			print_chunk(l, btrfs_item_ptr(l, i, struct btrfs_chunk));
