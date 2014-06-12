@@ -128,7 +128,7 @@ struct mdrestore_struct {
 	struct rb_root chunk_tree;
 	struct list_head list;
 	size_t num_items;
-	u64 leafsize;
+	u32 leafsize;
 	u64 devid;
 	u8 uuid[BTRFS_UUID_SIZE];
 	u8 fsid[BTRFS_FSID_SIZE];
