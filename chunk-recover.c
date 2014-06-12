@@ -1785,6 +1785,23 @@ static inline int count_devext_records(struct list_head *record_list)
 	return num_of_records;
 }
 
+static int fill_chunk_up(struct chunk_record *chunk, struct list_head *devexts,
+			 struct recover_control *rc)
+{
+	int ret = 0;
+	int i;
+
+	for (i = 0; i < chunk->num_stripes; i++) {
+		if (!chunk->stripes[i].devid) {
+			ret = insert_stripe(devexts, rc, chunk, i);
+			if (ret)
+				break;
+		}
+	}
+
+	return ret;
+}
+
 #define EQUAL_STRIPE (1 << 0)
 
 static int rebuild_raid_data_chunk_stripes(struct recover_control *rc,
@@ -1918,9 +1935,9 @@ next_csum:
 		num_unordered = count_devext_records(&unordered);
 		if (chunk->type_flags & BTRFS_BLOCK_GROUP_RAID6
 					&& num_unordered == 2) {
-			list_splice_init(&unordered, &chunk->dextents);
 			btrfs_release_path(&path);
-			return 0;
+			ret = fill_chunk_up(chunk, &unordered, rc);
+			return ret;
 		}
 
 		goto next_stripe;
@@ -1965,14 +1982,7 @@ out:
 			& BTRFS_BLOCK_GROUP_RAID5)
 		 || (num_unordered == 3 && chunk->type_flags
 			& BTRFS_BLOCK_GROUP_RAID6)) {
-			for (i = 0; i < chunk->num_stripes; i++) {
-				if (!chunk->stripes[i].devid) {
-					ret = insert_stripe(&unordered, rc,
-							chunk, i);
-					if (ret)
-						break;
-				}
-			}
+			ret = fill_chunk_up(chunk, &unordered, rc);
 		}
 	}
 fail_out:
