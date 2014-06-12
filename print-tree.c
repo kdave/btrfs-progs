@@ -251,6 +251,24 @@ static void print_file_extent_item(struct extent_buffer *eb,
 	       btrfs_file_extent_compression(eb, fi));
 }
 
+/* Caller should ensure sizeof(*ret) >= 16("DATA|TREE_BLOCK") */
+static void extent_flags_to_str(u64 flags, char *ret)
+{
+	int empty = 1;
+
+	if (flags & BTRFS_EXTENT_FLAG_DATA) {
+		empty = 0;
+		strcpy(ret, "DATA");
+	}
+	if (flags & BTRFS_EXTENT_FLAG_TREE_BLOCK) {
+		if (!empty) {
+			empty = 0;
+			strcat(ret, "|");
+		}
+		strcat(ret, "TREE_BLOCK");
+	}
+}
+
 void print_extent_item(struct extent_buffer *eb, int slot, int metadata)
 {
 	struct btrfs_extent_item *ei;
@@ -264,6 +282,7 @@ void print_extent_item(struct extent_buffer *eb, int slot, int metadata)
 	u32 item_size = btrfs_item_size_nr(eb, slot);
 	u64 flags;
 	u64 offset;
+	char flags_str[32] = {0};
 
 	if (item_size < sizeof(*ei)) {
 #ifdef BTRFS_COMPAT_EXTENT_TREE_V0
@@ -280,11 +299,12 @@ void print_extent_item(struct extent_buffer *eb, int slot, int metadata)
 
 	ei = btrfs_item_ptr(eb, slot, struct btrfs_extent_item);
 	flags = btrfs_extent_flags(eb, ei);
+	extent_flags_to_str(flags, flags_str);
 
-	printf("\t\textent refs %llu gen %llu flags %llu\n",
+	printf("\t\textent refs %llu gen %llu flags %s\n",
 	       (unsigned long long)btrfs_extent_refs(eb, ei),
 	       (unsigned long long)btrfs_extent_generation(eb, ei),
-	       (unsigned long long)flags);
+	       flags_str);
 
 	if (flags & BTRFS_EXTENT_FLAG_TREE_BLOCK && !metadata) {
 		struct btrfs_tree_block_info *info;
