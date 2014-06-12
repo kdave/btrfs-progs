@@ -42,7 +42,7 @@
 #include "btrfsck.h"
 #include "commands.h"
 
-#define BTRFS_NUM_MIRRORS			2
+#define BTRFS_NUM_MIRRORS			3
 
 struct recover_control {
 	int verbose;
