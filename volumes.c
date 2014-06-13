@@ -188,6 +188,7 @@ again:
 		goto again;
 	}
 
+	list_del(&fs_devices->list);
 	free(fs_devices);
 	return 0;
 }
