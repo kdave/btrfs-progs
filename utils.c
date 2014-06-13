@@ -1294,9 +1294,9 @@ out:
 	return ret;
 }
 
-static const char const *unit_suffix_binary[] =
+static const char* unit_suffix_binary[] =
 	{ "B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB"};
-static const char const *unit_suffix_decimal[] =
+static const char* unit_suffix_decimal[] =
 	{ "B", "KB", "MB", "GB", "TB", "PB", "EB"};
 
 int pretty_size_snprintf(u64 size, char *str, size_t str_size, int unit_mode)
@@ -1304,7 +1304,7 @@ int pretty_size_snprintf(u64 size, char *str, size_t str_size, int unit_mode)
 	int num_divs;
 	float fraction;
 	int base = 0;
-	const char const **suffix = NULL;
+	const char** suffix = NULL;
 	u64 last_size;
 
 	if (str_size == 0)
