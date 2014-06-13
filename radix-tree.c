@@ -833,10 +833,10 @@ int radix_tree_tagged(struct radix_tree_root *root, unsigned int tag)
 static unsigned long __maxindex(unsigned int height)
 {
 	unsigned int tmp = height * RADIX_TREE_MAP_SHIFT;
-	unsigned long index = (~0UL >> (RADIX_TREE_INDEX_BITS - tmp - 1)) >> 1;
+	unsigned long index = ~0UL;
 
-	if (tmp >= RADIX_TREE_INDEX_BITS)
-		index = ~0UL;
+	if (tmp < RADIX_TREE_INDEX_BITS)
+		index = (index >> (RADIX_TREE_INDEX_BITS - tmp - 1)) >> 1;
 	return index;
 }
 
