@@ -1638,20 +1638,57 @@ scan_again:
 	return 0;
 }
 
-u64 parse_size(char *s)
+/*
+ * A not-so-good version fls64. No fascinating optimization since
+ * no one except parse_size use it
+ */
+static int fls64(u64 x)
 {
 	int i;
+
+	for (i = 0; i <64; i++)
+		if (x << i & (1UL << 63))
+			return 64 - i;
+	return 64 - i;
+}
+
+u64 parse_size(char *s)
+{
 	char c;
+	char *endptr;
 	u64 mult = 1;
+	u64 ret;
 
-	for (i = 0; s && s[i] && isdigit(s[i]); i++) ;
-	if (!i) {
-		fprintf(stderr, "ERROR: size value is empty\n");
-		exit(50);
+	if (!s) {
+		fprintf(stderr, "ERROR: Size value is empty\n");
+		exit(1);
 	}
-
-	if (s[i]) {
-		c = tolower(s[i]);
+	if (s[0] == '-') {
+		fprintf(stderr,
+			"ERROR: Size value '%s' is less equal than 0\n", s);
+		exit(1);
+	}
+	ret = strtoull(s, &endptr, 10);
+	if (endptr == s) {
+		fprintf(stderr, "ERROR: Size value '%s' is invalid\n", s);
+		exit(1);
+	}
+	if (endptr[0] && endptr[1]) {
+		fprintf(stderr, "ERROR: Illegal suffix contains character '%c' in wrong position\n",
+			endptr[1]);
+		exit(1);
+	}
+	/*
+	 * strtoll returns LLONG_MAX when overflow, if this happens,
+	 * need to call strtoull to get the real size
+	 */
+	if (errno == ERANGE && ret == ULLONG_MAX) {
+		fprintf(stderr,
+			"ERROR: Size value '%s' is too large for u64\n", s);
+		exit(1);
+	}
+	if (endptr[0]) {
+		c = tolower(endptr[0]);
 		switch (c) {
 		case 'e':
 			mult *= 1024;
@@ -1674,18 +1711,19 @@ u64 parse_size(char *s)
 		case 'b':
 			break;
 		default:
-			fprintf(stderr, "ERROR: Unknown size descriptor "
-				"'%c'\n", c);
+			fprintf(stderr, "ERROR: Unknown size descriptor '%c'\n",
+				c);
 			exit(1);
 		}
 	}
-	if (s[i] && s[i+1]) {
-		fprintf(stderr, "ERROR: Illegal suffix contains "
-			"character '%c' in wrong position\n",
-			s[i+1]);
-		exit(51);
+	/* Check whether ret * mult overflow */
+	if (fls64(ret) + fls64(mult) - 1 > 64) {
+		fprintf(stderr,
+			"ERROR: Size value '%s' is too large for u64\n", s);
+		exit(1);
 	}
-	return strtoull(s, NULL, 10) * mult;
+	ret *= mult;
+	return ret;
 }
 
 int open_file_or_dir3(const char *fname, DIR **dirstream, int open_flags)
