@@ -310,6 +310,13 @@ static int __load_free_space_cache(struct btrfs_root *root,
 	leaf = path->nodes[0];
 	inode_item = btrfs_item_ptr(leaf, path->slots[0],
 				    struct btrfs_inode_item);
+
+	inode_size = btrfs_inode_size(leaf, inode_item);
+	if (!inode_size || !btrfs_inode_generation(leaf, inode_item)) {
+		btrfs_release_path(path);
+		return 0;
+	}
+
 	if (btrfs_inode_generation(leaf, inode_item) != generation) {
 		printf("free space inode generation (%llu) did not match "
 		       "free space cache generation (%llu)\n",
@@ -320,10 +327,7 @@ static int __load_free_space_cache(struct btrfs_root *root,
 		return 0;
 	}
 
-	inode_size = btrfs_inode_size(leaf, inode_item);
 	btrfs_release_path(path);
-	if (inode_size == 0)
-		return 0;
 
 	if (!num_entries)
 		return 0;
