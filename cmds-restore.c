@@ -1186,6 +1186,11 @@ int cmd_restore(int argc, char **argv)
 				break;
 			case 'r':
 				root_objectid = arg_strtou64(optarg);
+				if (!is_fstree(root_objectid)) {
+					fprintf(stderr, "objectid %llu is not a valid fs/file tree\n",
+							root_objectid);
+					exit(1);
+				}
 				break;
 			case 'l':
 				list_roots = 1;
