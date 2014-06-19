@@ -24,7 +24,7 @@ https://btrfs.wiki.kernel.org/index.php/Restore
 OPTIONS
 -------
 -s::
-get snapshots.
+get snapshots, btrfs restore skips snapshots in default.
 
 -x::
 get extended attributes.
@@ -38,23 +38,33 @@ ignore errors.
 -o::
 overwrite directories/files in <path>.
 
--t <location>::
-use <location> to read root tree.
+-t <bytenr>::
+use <bytenr> to read root tree.
 
--f <offset>::
-use <offset> to read fs tree.
+-f <bytenr>::
+only restore files that are under specified root whose root bytenr is <bytenr>.
 
--u <block>::
-use given superblock mirror identified by <block>.
+-u <mirror>::
+use given superblock mirror identified by <mirror>, it can be 0,1,2.
 
 -r <rootid>::
-use <rootid> as root objectid.
+only restore files that are under specified root whose objectid is <rootid>.
 
 -d::
 find dir.
 
 -l::
 list tree roots.
+
+-D|--dry-run::
+dry run (only list files that would be recovered).
+
+--path-regex <regex>::
+restore only filenames matching regex, you have to use following syntax (possibly quoted):
+^/(|home(|/username(|/Desktop(|/.*))))$
+
+-c::
+ignore case (--path-regrex only).
 
 EXIT STATUS
 -----------

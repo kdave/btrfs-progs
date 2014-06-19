@@ -1117,9 +1117,9 @@ const char * const cmd_restore_usage[] = {
 	"-v              verbose",
 	"-i              ignore errors",
 	"-o              overwrite",
-	"-t <location>   tree location",
-	"-f <offset>     filesystem location",
-	"-u <block>      super mirror",
+	"-t <bytenr>     tree location",
+	"-f <bytenr>     filesystem location",
+	"-u <mirror>     super mirror",
 	"-r <rootid>     root objectid",
 	"-d              find dir",
 	"-l              list tree roots",
@@ -1128,6 +1128,7 @@ const char * const cmd_restore_usage[] = {
 	"                restore only filenames matching regex,",
 	"                you have to use following syntax (possibly quoted):",
 	"                ^/(|home(|/username(|/Desktop(|/.*))))$",
+	"-c              ignore case (--path-regrex only)",
 	NULL
 };
 
