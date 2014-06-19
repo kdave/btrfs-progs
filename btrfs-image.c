@@ -2446,6 +2446,7 @@ static void print_usage(void)
 	fprintf(stderr, "\t-o      \tdon't mess with the chunk tree when restoring\n");
 	fprintf(stderr, "\t-s      \tsanitize file names, use once to just use garbage, use twice if you want crc collisions\n");
 	fprintf(stderr, "\t-w      \twalk all trees instead of using extent tree, do this if your extent tree is broken\n");
+	fprintf(stderr, "\t-m	   \trestore for multiple devices\n");
 	exit(1);
 }
 
