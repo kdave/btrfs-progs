@@ -1090,8 +1090,9 @@ static int copy_space_cache(struct btrfs_root *root,
 		return ret;
 	}
 
+	leaf = path->nodes[0];
+
 	while (1) {
-		leaf = path->nodes[0];
 		if (path->slots[0] >= btrfs_header_nritems(leaf)) {
 			ret = btrfs_next_leaf(root, path);
 			if (ret < 0) {
@@ -1157,8 +1158,9 @@ static int copy_from_extent_tree(struct metadump_struct *metadump,
 	}
 	ret = 0;
 
+	leaf = path->nodes[0];
+
 	while (1) {
-		leaf = path->nodes[0];
 		if (path->slots[0] >= btrfs_header_nritems(leaf)) {
 			ret = btrfs_next_leaf(extent_root, path);
 			if (ret < 0) {
