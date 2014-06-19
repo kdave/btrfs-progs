@@ -2010,13 +2010,10 @@ static int check_fs_root(struct btrfs_root *root,
 
 static int fs_root_objectid(u64 objectid)
 {
-	if (objectid == BTRFS_FS_TREE_OBJECTID ||
-	    objectid == BTRFS_TREE_RELOC_OBJECTID ||
-	    objectid == BTRFS_DATA_RELOC_TREE_OBJECTID ||
-	    (objectid >= BTRFS_FIRST_FREE_OBJECTID &&
-	     objectid <= BTRFS_LAST_FREE_OBJECTID))
+	if (objectid == BTRFS_TREE_RELOC_OBJECTID ||
+	    objectid == BTRFS_DATA_RELOC_TREE_OBJECTID)
 		return 1;
-	return 0;
+	return is_fstree(objectid);
 }
 
 static int check_fs_roots(struct btrfs_root *root,
