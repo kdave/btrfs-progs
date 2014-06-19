@@ -1218,6 +1218,11 @@ int cmd_restore(int argc, char **argv)
 	else if (list_roots && optind >= argc)
 		usage(cmd_restore_usage);
 
+	if (fs_location && root_objectid) {
+		fprintf(stderr, "don't use -f and -r at the same time.\n");
+		return 1;
+	}
+
 	if ((ret = check_mounted(argv[optind])) < 0) {
 		fprintf(stderr, "Could not check mount status: %s\n",
 			strerror(-ret));
