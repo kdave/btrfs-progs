@@ -1263,7 +1263,8 @@ int cmd_restore(int argc, char **argv)
 		key.offset = (u64)-1;
 		root = btrfs_read_fs_root(orig_root->fs_info, &key);
 		if (IS_ERR(root)) {
-			fprintf(stderr, "Error reading root\n");
+			fprintf(stderr, "fail to read root %llu: %s\n",
+					root_objectid, strerror(-PTR_ERR(root)));
 			root = orig_root;
 			ret = 1;
 			goto out;
