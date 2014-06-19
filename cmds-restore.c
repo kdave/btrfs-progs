@@ -1239,6 +1239,7 @@ int cmd_restore(int argc, char **argv)
 		root->node = read_tree_block(root, fs_location, root->leafsize, 0);
 		if (!root->node) {
 			fprintf(stderr, "Failed to read fs location\n");
+			ret = 1;
 			goto out;
 		}
 	}
