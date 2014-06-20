@@ -2829,6 +2829,7 @@ static int add_tree_backref(struct cache_tree *extent_cache, u64 bytenr,
 		}
 		back->node.found_extent_tree = 1;
 	}
+	maybe_free_extent_rec(extent_cache, rec);
 	return 0;
 }
 
@@ -2895,6 +2896,7 @@ static int add_data_backref(struct cache_tree *extent_cache, u64 bytenr,
 		back->num_refs = num_refs;
 		back->node.found_extent_tree = 1;
 	}
+	maybe_free_extent_rec(extent_cache, rec);
 	return 0;
 }
 
