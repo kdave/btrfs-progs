@@ -2463,6 +2463,7 @@ int main(int argc, char *argv[])
 	int ret;
 	int sanitize = 0;
 	int dev_cnt = 0;
+	int usage_error = 0;
 	FILE *out;
 
 	while (1) {
@@ -2501,15 +2502,30 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if ((old_restore) && create)
-		print_usage();
-
 	argc = argc - optind;
 	dev_cnt = argc - 1;
 
-	if (multi_devices && dev_cnt < 2)
-		print_usage();
-	if (!multi_devices && dev_cnt != 1)
+	if (create) {
+		if (old_restore) {
+			fprintf(stderr, "Usage error: create and restore cannot be used at the same time\n");
+			usage_error++;
+		}
+	} else {
+		if (walk_trees || sanitize || compress_level) {
+			fprintf(stderr, "Usage error: use -w, -s, -c options for restore makes no sense\n");
+			usage_error++;
+		}
+		if (multi_devices && dev_cnt < 2) {
+			fprintf(stderr, "Usage error: not enough devices specified for -m option\n");
+			usage_error++;
+		}
+		if (!multi_devices && dev_cnt != 1) {
+			fprintf(stderr, "Usage error: accepts only 1 device without -m option\n");
+			usage_error++;
+		}
+	}
+
+	if (usage_error)
 		print_usage();
 
 	source = argv[optind];
