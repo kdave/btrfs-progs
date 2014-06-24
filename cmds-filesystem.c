@@ -656,7 +656,6 @@ devs_only:
 	while (!list_empty(all_uuids)) {
 		fs_devices = list_entry(all_uuids->next,
 					struct btrfs_fs_devices, list);
-		list_del(&fs_devices->list);
 		btrfs_close_devices(fs_devices);
 	}
 out:
