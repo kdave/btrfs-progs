@@ -2607,10 +2607,20 @@ int main(int argc, char *argv[])
 	}
 
 out:
-	if (out == stdout)
+	if (out == stdout) {
 		fflush(out);
-	else
+	} else {
 		fclose(out);
+		if (ret && create) {
+			int unlink_ret;
+
+			unlink_ret = unlink(target);
+			if (unlink_ret)
+				fprintf(stderr,
+					"unlink output file failed : %s\n",
+					strerror(errno));
+		}
+	}
 
 	return !!ret;
 }
