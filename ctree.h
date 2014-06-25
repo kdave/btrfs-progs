@@ -40,6 +40,8 @@ struct btrfs_trans_handle;
 struct btrfs_free_space_ctl;
 #define BTRFS_MAGIC 0x4D5F53665248425FULL /* ascii _BHRfS_M, no null */
 
+#define BTRFS_MAX_MIRRORS 3
+
 #define BTRFS_MAX_LEVEL 8
 
 #define BTRFS_COMPAT_EXTENT_TREE_V0

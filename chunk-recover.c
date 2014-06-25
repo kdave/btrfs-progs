@@ -42,8 +42,6 @@
 #include "btrfsck.h"
 #include "commands.h"
 
-#define BTRFS_NUM_MIRRORS			3
-
 struct recover_control {
 	int verbose;
 	int yes;
@@ -71,8 +69,8 @@ struct extent_record {
 	struct cache_extent cache;
 	u64 generation;
 	u8 csum[BTRFS_CSUM_SIZE];
-	struct btrfs_device *devices[BTRFS_NUM_MIRRORS];
-	u64 offsets[BTRFS_NUM_MIRRORS];
+	struct btrfs_device *devices[BTRFS_MAX_MIRRORS];
+	u64 offsets[BTRFS_MAX_MIRRORS];
 	int nmirrors;
 };
 
@@ -128,7 +126,7 @@ again:
 			    memcmp(exist->csum, rec->csum, BTRFS_CSUM_SIZE)) {
 				ret = -EEXIST;
 			} else {
-				BUG_ON(exist->nmirrors >= BTRFS_NUM_MIRRORS);
+				BUG_ON(exist->nmirrors >= BTRFS_MAX_MIRRORS);
 				exist->devices[exist->nmirrors] = device;
 				exist->offsets[exist->nmirrors] = offset;
 				exist->nmirrors++;
