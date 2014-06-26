@@ -3,7 +3,7 @@ btrfs-mount(5)
 
 NAME
 ----
-btrfs-mount - mount options for the btrfs filesystem
+btrfs-mount - mount options and supported file attributes for the btrfs filesystem
 
 DESCRIPTION
 -----------
@@ -179,8 +179,33 @@ MOUNT OPTIONS
 *user_subvol_rm_allowed*::
 	Allow subvolumes to be deleted by a non-root user. Use with caution.
 
+FILE ATTRIBUTES
+---------------
+The btrfs filesystem supports setting the following file
+attributes the `chattr`(1) utility
+
+*a* -- append only
+
+*A* -- no atime updates
+
+*c* -- compressed
+
+*C* -- no copy on write
+
+*d* -- no dump
+
+*D* -- synchronous directory updates
+
+*i* -- immutable
+
+*S* -- synchronous updates
+
+For descriptions of these attribute flags, please refer to the
+`chattr`(1) man page.
+
 SEE ALSO
 --------
+`chattr`(1),
 `mkfs.btrfs`(8),
 `mount`(8),
 `btrfs`(8)
