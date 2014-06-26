@@ -107,6 +107,8 @@ struct metadump_struct {
 	int done;
 	int data;
 	int sanitize_names;
+
+	int error;
 };
 
 struct name {
@@ -602,6 +604,14 @@ static void *dump_worker(void *data)
 
 			async->bufsize = compressBound(async->size);
 			async->buffer = malloc(async->bufsize);
+			if (!async->buffer) {
+				fprintf(stderr, "Error allocing buffer\n");
+				pthread_mutex_lock(&md->mutex);
+				if (!md->error)
+					md->error = -ENOMEM;
+				pthread_mutex_unlock(&md->mutex);
+				pthread_exit(NULL);
+			}
 
 			ret = compress2(async->buffer,
 					 (unsigned long *)&async->bufsize,
@@ -736,7 +746,7 @@ static int write_buffers(struct metadump_struct *md, u64 *next)
 		goto out;
 
 	/* wait until all buffers are compressed */
-	while (md->num_items > md->num_ready) {
+	while (!err && md->num_items > md->num_ready) {
 		struct timespec ts = {
 			.tv_sec = 0,
 			.tv_nsec = 10000000,
@@ -744,6 +754,13 @@ static int write_buffers(struct metadump_struct *md, u64 *next)
 		pthread_mutex_unlock(&md->mutex);
 		nanosleep(&ts, NULL);
 		pthread_mutex_lock(&md->mutex);
+		err = md->error;
+	}
+
+	if (err) {
+		fprintf(stderr, "One of the threads errored out %s\n",
+				strerror(err));
+		goto out;
 	}
 
 	/* setup and write index block */
