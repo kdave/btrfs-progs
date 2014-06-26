@@ -2421,7 +2421,8 @@ static int update_disk_super_on_device(struct btrfs_fs_info *info,
 	buf = malloc(BTRFS_SUPER_INFO_SIZE);
 	if (!buf) {
 		ret = -ENOMEM;
-		exit(1);
+		close(fp);
+		return ret;
 	}
 
 	memcpy(buf, info->super_copy, BTRFS_SUPER_INFO_SIZE);
