@@ -1686,7 +1686,7 @@ static void *restore_worker(void *data)
 		if (!mdres->fixup_offset) {
 			while (size) {
 				u64 chunk_size = size;
-				if (!mdres->multi_devices)
+				if (!mdres->multi_devices && !mdres->old_restore)
 					bytenr = logical_to_physical(mdres,
 								     async->start + offset,
 								     &chunk_size);
@@ -2300,7 +2300,7 @@ static int __restore_metadump(const char *input, FILE *out, int old_restore,
 		goto failed_cluster;
 	}
 
-	if (!multi_devices) {
+	if (!multi_devices && !old_restore) {
 		ret = build_chunk_tree(&mdrestore, cluster);
 		if (ret)
 			goto out;
