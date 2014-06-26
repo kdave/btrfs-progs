@@ -1632,7 +1632,7 @@ static void *restore_worker(void *data)
 		if (!mdres->error)
 			mdres->error = -ENOMEM;
 		pthread_mutex_unlock(&mdres->mutex);
-		goto out;
+		pthread_exit(NULL);
 	}
 
 	while (1) {
