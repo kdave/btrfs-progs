@@ -2522,6 +2522,10 @@ int main(int argc, char *argv[])
 	}
 
 	argc = argc - optind;
+	set_argv0(argv);
+	if (check_argc_min(argc, 2))
+		print_usage();
+
 	dev_cnt = argc - 1;
 
 	if (create) {
