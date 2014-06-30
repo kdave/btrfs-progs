@@ -14,8 +14,6 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#define ARGV0_BUF_SIZE	64
-
 struct cmd_struct {
 	const char *token;
 	int (*fn)(int, char **);
@@ -61,10 +59,6 @@ struct cmd_group {
 
 /* btrfs.c */
 int prefixcmp(const char *str, const char *prefix);
-
-int check_argc_exact(int nargs, int expected);
-int check_argc_min(int nargs, int expected);
-int check_argc_max(int nargs, int expected);
 
 int handle_command_group(const struct cmd_group *grp, int argc,
 			 char **argv);

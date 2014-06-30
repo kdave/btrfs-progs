@@ -19,6 +19,7 @@
 #include <string.h>
 
 #include "commands.h"
+#include "utils.h"
 
 static char argv0_buf[ARGV0_BUF_SIZE];
 

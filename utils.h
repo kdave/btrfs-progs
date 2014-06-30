@@ -39,6 +39,15 @@
 
 #define BTRFS_UUID_UNPARSED_SIZE	37
 
+#define ARGV0_BUF_SIZE	64
+
+int check_argc_exact(int nargs, int expected);
+int check_argc_min(int nargs, int expected);
+int check_argc_max(int nargs, int expected);
+
+void fixup_argv0(char **argv, const char *token);
+void set_argv0(char **argv);
+
 int make_btrfs(int fd, const char *device, const char *label,
 	       char *fs_uuid, u64 blocks[6], u64 num_bytes, u32 nodesize,
 	       u32 leafsize, u32 sectorsize, u32 stripesize, u64 features);

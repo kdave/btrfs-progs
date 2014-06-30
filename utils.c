@@ -52,6 +52,52 @@
 #define BLKDISCARD	_IO(0x12,119)
 #endif
 
+static char argv0_buf[ARGV0_BUF_SIZE] = "btrfs";
+
+void fixup_argv0(char **argv, const char *token)
+{
+	int len = strlen(argv0_buf);
+
+	snprintf(argv0_buf + len, sizeof(argv0_buf) - len, " %s", token);
+	argv[0] = argv0_buf;
+}
+
+void set_argv0(char **argv)
+{
+	sprintf(argv0_buf, "%s", argv[0]);
+}
+
+int check_argc_exact(int nargs, int expected)
+{
+	if (nargs < expected)
+		fprintf(stderr, "%s: too few arguments\n", argv0_buf);
+	if (nargs > expected)
+		fprintf(stderr, "%s: too many arguments\n", argv0_buf);
+
+	return nargs != expected;
+}
+
+int check_argc_min(int nargs, int expected)
+{
+	if (nargs < expected) {
+		fprintf(stderr, "%s: too few arguments\n", argv0_buf);
+		return 1;
+	}
+
+	return 0;
+}
+
+int check_argc_max(int nargs, int expected)
+{
+	if (nargs > expected) {
+		fprintf(stderr, "%s: too many arguments\n", argv0_buf);
+		return 1;
+	}
+
+	return 0;
+}
+
+
 /*
  * Discard the given range in one go
  */

@@ -22,6 +22,7 @@
 #include "crc32c.h"
 #include "commands.h"
 #include "version.h"
+#include "utils.h"
 
 static const char * const btrfs_cmd_group_usage[] = {
 	"btrfs [--help] [--version] <group> [<group>...] <command> [<args>]",
@@ -30,8 +31,6 @@ static const char * const btrfs_cmd_group_usage[] = {
 
 static const char btrfs_cmd_group_info[] =
 	"Use --help as an argument for information on a specific group or command.";
-
-static char argv0_buf[ARGV0_BUF_SIZE] = "btrfs";
 
 static inline const char *skip_prefix(const char *str, const char *prefix)
 {
@@ -125,14 +124,6 @@ static void handle_help_options_next_level(const struct cmd_struct *cmd,
 	}
 }
 
-static void fixup_argv0(char **argv, const char *token)
-{
-	int len = strlen(argv0_buf);
-
-	snprintf(argv0_buf + len, sizeof(argv0_buf) - len, " %s", token);
-	argv[0] = argv0_buf;
-}
-
 int handle_command_group(const struct cmd_group *grp, int argc,
 			 char **argv)
 
@@ -152,36 +143,6 @@ int handle_command_group(const struct cmd_group *grp, int argc,
 
 	fixup_argv0(argv, cmd->token);
 	return cmd->fn(argc, argv);
-}
-
-int check_argc_exact(int nargs, int expected)
-{
-	if (nargs < expected)
-		fprintf(stderr, "%s: too few arguments\n", argv0_buf);
-	if (nargs > expected)
-		fprintf(stderr, "%s: too many arguments\n", argv0_buf);
-
-	return nargs != expected;
-}
-
-int check_argc_min(int nargs, int expected)
-{
-	if (nargs < expected) {
-		fprintf(stderr, "%s: too few arguments\n", argv0_buf);
-		return 1;
-	}
-
-	return 0;
-}
-
-int check_argc_max(int nargs, int expected)
-{
-	if (nargs > expected) {
-		fprintf(stderr, "%s: too many arguments\n", argv0_buf);
-		return 1;
-	}
-
-	return 0;
 }
 
 static const struct cmd_group btrfs_cmd_group;
