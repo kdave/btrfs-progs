@@ -200,6 +200,8 @@ attributes the `chattr`(1) utility
 
 *S* -- synchronous updates
 
+*X* -- no compression
+
 For descriptions of these attribute flags, please refer to the
 `chattr`(1) man page.
 
