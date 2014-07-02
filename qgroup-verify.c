@@ -296,6 +296,8 @@ static void find_parent_roots(struct ulist *roots, u64 parent)
 	} while (node && ref->bytenr == parent);
 }
 
+static void print_subvol_info(u64 subvolid, u64 bytenr, u64 num_bytes,
+			      struct ulist *roots);
 /*
  * Account each ref. Walk the refs, for each set of refs in a
  * given bytenr:
@@ -308,7 +310,7 @@ static void find_parent_roots(struct ulist *roots, u64 parent)
  * - Walk ref_roots ulist, adding extent bytes to each qgroup count that
  *    cooresponds to a found root.
  */
-static void account_all_refs(void)
+static void account_all_refs(int do_qgroups, u64 search_subvol)
 {
 	int exclusive;
 	struct ref *ref;
@@ -358,11 +360,15 @@ static void account_all_refs(void)
 		else
 			exclusive = 0;
 
+		if (search_subvol)
+			print_subvol_info(search_subvol, bytenr, num_bytes,
+					  roots);
+
 		ULIST_ITER_INIT(&uiter);
 		while ((unode = ulist_next(roots, &uiter))) {
 			BUG_ON(unode->val == 0ULL);
 			/* We only want to account fs trees */
-			if (is_fstree(unode->val))
+			if (is_fstree(unode->val) && do_qgroups)
 				add_bytes(unode->val, num_bytes, exclusive);
 		}
 	}
@@ -1072,7 +1078,7 @@ int qgroup_verify_all(struct btrfs_fs_info *info)
 		goto out;
 	}
 
-	account_all_refs();
+	account_all_refs(1, 0);
 
 out:
 	/*
@@ -1083,3 +1089,72 @@ out:
 	free_ref_tree(&by_bytenr);
 	return ret;
 }
+
+static void __print_subvol_info(u64 bytenr, u64 num_bytes, struct ulist *roots)
+{
+	int n = roots->nnodes;
+	struct ulist_iterator uiter;
+	struct ulist_node *unode;
+
+	printf("%llu\t%llu\t%d\t", bytenr, num_bytes, n);
+
+	ULIST_ITER_INIT(&uiter);
+	while ((unode = ulist_next(roots, &uiter))) {
+		printf("%llu ", unode->val);
+	}
+	printf("\n");
+}
+
+static void print_subvol_info(u64 subvolid, u64 bytenr, u64 num_bytes,
+			      struct ulist *roots)
+{
+	struct ulist_iterator uiter;
+	struct ulist_node *unode;
+
+	ULIST_ITER_INIT(&uiter);
+	while ((unode = ulist_next(roots, &uiter))) {
+		BUG_ON(unode->val == 0ULL);
+		if (unode->val == subvolid) {
+			__print_subvol_info(bytenr, num_bytes, roots);
+			return;
+		}
+	}
+
+
+}
+
+int print_extent_state(struct btrfs_fs_info *info, u64 subvol)
+{
+	int ret;
+
+	tree_blocks = ulist_alloc(0);
+	if (!tree_blocks) {
+		fprintf(stderr,
+			"ERROR: Out of memory while allocating ulist.\n");
+		return ENOMEM;
+	}
+
+	/*
+	 * Put all extent refs into our rbtree
+	 */
+	ret = scan_extents(info, 0, ~0ULL);
+	if (ret) {
+		fprintf(stderr, "ERROR: while scanning extent tree: %d\n", ret);
+		goto out;
+	}
+
+	ret = map_implied_refs(info);
+	if (ret) {
+		fprintf(stderr, "ERROR: while mapping refs: %d\n", ret);
+		goto out;
+	}
+
+	printf("Offset\t\tLen\tRoot Refs\tRoots\n");
+	account_all_refs(0, subvol);
+
+out:
+	free_tree_blocks();
+	free_ref_tree(&by_bytenr);
+	return ret;
+}
+
