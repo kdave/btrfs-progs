@@ -233,7 +233,7 @@ fail:
 
 int btrfs_scan_one_device(int fd, const char *path,
 			  struct btrfs_fs_devices **fs_devices_ret,
-			  u64 *total_devs, u64 super_offset)
+			  u64 *total_devs, u64 super_offset, int super_recover)
 {
 	struct btrfs_super_block *disk_super;
 	char *buf;
@@ -246,7 +246,7 @@ int btrfs_scan_one_device(int fd, const char *path,
 		goto error;
 	}
 	disk_super = (struct btrfs_super_block *)buf;
-	ret = btrfs_read_dev_super(fd, disk_super, super_offset);
+	ret = btrfs_read_dev_super(fd, disk_super, super_offset, super_recover);
 	if (ret < 0) {
 		ret = -EIO;
 		goto error_brelse;

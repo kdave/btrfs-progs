@@ -992,7 +992,7 @@ void btrfs_cleanup_all_caches(struct btrfs_fs_info *fs_info)
 
 int btrfs_scan_fs_devices(int fd, const char *path,
 			  struct btrfs_fs_devices **fs_devices,
-			  u64 sb_bytenr, int run_ioctl)
+			  u64 sb_bytenr, int run_ioctl, int super_recover)
 {
 	u64 total_devs;
 	int ret;
@@ -1000,7 +1000,7 @@ int btrfs_scan_fs_devices(int fd, const char *path,
 		sb_bytenr = BTRFS_SUPER_INFO_OFFSET;
 
 	ret = btrfs_scan_one_device(fd, path, fs_devices,
-				    &total_devs, sb_bytenr);
+				    &total_devs, sb_bytenr, super_recover);
 	if (ret) {
 		fprintf(stderr, "No valid Btrfs found on %s\n", path);
 		return ret;
@@ -1088,7 +1088,8 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 		fs_info->on_restoring = 1;
 
 	ret = btrfs_scan_fs_devices(fp, path, &fs_devices, sb_bytenr,
-				    !(flags & OPEN_CTREE_RECOVER_SUPER));
+				    !(flags & OPEN_CTREE_RECOVER_SUPER),
+				    (flags & OPEN_CTREE_RECOVER_SUPER));
 	if (ret)
 		goto out;
 
@@ -1108,9 +1109,9 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 	disk_super = fs_info->super_copy;
 	if (!(flags & OPEN_CTREE_RECOVER_SUPER))
 		ret = btrfs_read_dev_super(fs_devices->latest_bdev,
-					   disk_super, sb_bytenr);
+					   disk_super, sb_bytenr, 1);
 	else
-		ret = btrfs_read_dev_super(fp, disk_super, sb_bytenr);
+		ret = btrfs_read_dev_super(fp, disk_super, sb_bytenr, 0);
 	if (ret) {
 		printk("No valid btrfs found\n");
 		goto out_devices;
@@ -1194,13 +1195,15 @@ struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
 	return info->fs_root;
 }
 
-int btrfs_read_dev_super(int fd, struct btrfs_super_block *sb, u64 sb_bytenr)
+int btrfs_read_dev_super(int fd, struct btrfs_super_block *sb, u64 sb_bytenr,
+			 int super_recover)
 {
 	u8 fsid[BTRFS_FSID_SIZE];
 	int fsid_is_initialized = 0;
 	struct btrfs_super_block buf;
 	int i;
 	int ret;
+	int max_super = super_recover ? BTRFS_SUPER_MIRROR_MAX : 1;
 	u64 transid = 0;
 	u64 bytenr;
 
@@ -1224,7 +1227,7 @@ int btrfs_read_dev_super(int fd, struct btrfs_super_block *sb, u64 sb_bytenr)
 	* later supers, using BTRFS_SUPER_MIRROR_MAX instead
 	*/
 
-	for (i = 0; i < 1; i++) {
+	for (i = 0; i < max_super; i++) {
 		bytenr = btrfs_sb_offset(i);
 		ret = pread64(fd, &buf, sizeof(buf), bytenr);
 		if (ret < sizeof(buf))

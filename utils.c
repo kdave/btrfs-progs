@@ -1163,7 +1163,7 @@ int check_mounted_where(int fd, const char *file, char *where, int size,
 
 	/* scan the initial device */
 	ret = btrfs_scan_one_device(fd, file, &fs_devices_mnt,
-				    &total_devs, BTRFS_SUPER_INFO_OFFSET);
+				    &total_devs, BTRFS_SUPER_INFO_OFFSET, 0);
 	is_btrfs = (ret >= 0);
 
 	/* scan other devices */
@@ -1325,7 +1325,7 @@ again:
 		}
 		ret = btrfs_scan_one_device(fd, fullpath, &tmp_devices,
 					    &num_devices,
-					    BTRFS_SUPER_INFO_OFFSET);
+					    BTRFS_SUPER_INFO_OFFSET, 0);
 		if (ret == 0 && run_ioctl > 0) {
 			btrfs_register_one_device(fullpath);
 		}
@@ -1668,7 +1668,7 @@ scan_again:
 		}
 		ret = btrfs_scan_one_device(fd, fullpath, &tmp_devices,
 					    &num_devices,
-					    BTRFS_SUPER_INFO_OFFSET);
+					    BTRFS_SUPER_INFO_OFFSET, 0);
 		if (ret == 0 && run_ioctl > 0) {
 			btrfs_register_one_device(fullpath);
 		}
@@ -1880,7 +1880,8 @@ int get_fs_info(char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 		fi_args->num_devices = 1;
 
 		disk_super = (struct btrfs_super_block *)buf;
-		ret = btrfs_read_dev_super(fd, disk_super, BTRFS_SUPER_INFO_OFFSET);
+		ret = btrfs_read_dev_super(fd, disk_super,
+					   BTRFS_SUPER_INFO_OFFSET, 0);
 		if (ret < 0) {
 			ret = -EIO;
 			goto out;
@@ -2229,7 +2230,7 @@ int btrfs_scan_lblkid(int update_kernel)
 			continue;
 		}
 		ret = btrfs_scan_one_device(fd, path, &tmp_devices,
-				&num_devices, BTRFS_SUPER_INFO_OFFSET);
+				&num_devices, BTRFS_SUPER_INFO_OFFSET, 0);
 		if (ret) {
 			printf("ERROR: could not scan %s\n", path);
 			close (fd);

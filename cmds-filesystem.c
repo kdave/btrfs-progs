@@ -513,7 +513,7 @@ static int dev_to_fsid(char *dev, __u8 *fsid)
 
 	disk_super = (struct btrfs_super_block *)buf;
 	ret = btrfs_read_dev_super(fd, disk_super,
-			BTRFS_SUPER_INFO_OFFSET);
+				   BTRFS_SUPER_INFO_OFFSET, 0);
 	if (ret)
 		goto out;
 
