@@ -1340,7 +1340,7 @@ static int recover_prepare(struct recover_control *rc, char *path)
 		return -1;
 	}
 
-	sb = malloc(sizeof(struct btrfs_super_block));
+	sb = malloc(BTRFS_SUPER_INFO_SIZE);
 	if (!sb) {
 		fprintf(stderr, "allocating memory for sb failed.\n");
 		ret = -ENOMEM;
