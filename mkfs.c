@@ -1451,6 +1451,36 @@ int main(int ac, char **av)
 		}
 	}
 
+	/* Check device/block_count after the leafsize is determined */
+	if (block_count && block_count < btrfs_min_dev_size(leafsize)) {
+		fprintf(stderr,
+			"Size '%llu' is too small to make a usable filesystem\n",
+			block_count);
+		fprintf(stderr,
+			"Minimum size for btrfs filesystem is %llu\n",
+			btrfs_min_dev_size(leafsize));
+		exit(1);
+	}
+	for (i = saved_optind; i < saved_optind + dev_cnt; i++) {
+		char *path;
+
+		path = av[i];
+		ret = test_minimum_size(path, leafsize);
+		if (ret < 0) {
+			fprintf(stderr, "Failed to check size for '%s': %s\n",
+				path, strerror(-ret));
+			exit (1);
+		}
+		if (ret > 0) {
+			fprintf(stderr,
+				"'%s' is too small to make a usable filesystem\n",
+				path);
+			fprintf(stderr,
+				"Minimum size for each btrfs device is %llu.\n",
+				btrfs_min_dev_size(leafsize));
+			exit(1);
+		}
+	}
 	ret = test_num_disk_vs_raid(metadata_profile, data_profile,
 			dev_cnt, mixed, estr);
 	if (ret) {

@@ -2344,3 +2344,23 @@ int find_mount_root(const char *path, char **mount_root)
 	free(longest_match);
 	return ret;
 }
+
+int test_minimum_size(const char *file, u32 leafsize)
+{
+	int fd;
+	struct stat statbuf;
+
+	fd = open(file, O_RDONLY);
+	if (fd < 0)
+		return -errno;
+	if (stat(file, &statbuf) < 0) {
+		close(fd);
+		return -errno;
+	}
+	if (btrfs_device_size(fd, &statbuf) < btrfs_min_dev_size(leafsize)) {
+		close(fd);
+		return 1;
+	}
+	close(fd);
+	return 0;
+}
