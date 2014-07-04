@@ -99,7 +99,7 @@ print the ogeneration of the subvolume, aliases: ogen or origin generation.
 -g::::
 print the generation of the subvolume.
 -o::::
-print only subvolumes bellow specified <path>.
+print only subvolumes below specified <path>.
 -u::::
 print the UUID of the subvolume.
 -q::::
