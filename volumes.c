@@ -184,12 +184,18 @@ again:
 	seed_devices = fs_devices->seed;
 	fs_devices->seed = NULL;
 	if (seed_devices) {
+		struct btrfs_fs_devices *orig;
+
+		orig = fs_devices;
 		fs_devices = seed_devices;
+		list_del(&orig->list);
+		free(orig);
 		goto again;
+	} else {
+		list_del(&fs_devices->list);
+		free(fs_devices);
 	}
 
-	list_del(&fs_devices->list);
-	free(fs_devices);
 	return 0;
 }
 
