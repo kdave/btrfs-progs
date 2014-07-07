@@ -2570,12 +2570,22 @@ int main(int argc, char *argv[])
 			num_threads = 1;
 	}
 
-	if (create)
+	if (create) {
+		ret = check_mounted(source);
+		if (ret < 0) {
+			fprintf(stderr, "Could not check mount status: %s\n",
+				strerror(-ret));
+			exit(1);
+		} else if (ret)
+			fprintf(stderr,
+		"WARNING: The device is mounted. Make sure the filesystem is quiescent.\n");
+
 		ret = create_metadump(source, out, num_threads,
 				      compress_level, sanitize, walk_trees);
-	else
+	} else {
 		ret = restore_metadump(source, out, old_restore, 1,
 				       multi_devices);
+	}
 	if (ret) {
 		printk("%s failed (%s)\n", (create) ? "create" : "restore",
 		       strerror(errno));
