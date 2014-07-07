@@ -24,7 +24,14 @@ Enable seeding forces a fs readonly so that you can use it to build other filesy
 Enable extended inode refs.
 -x::
 Enable skinny metadata extent refs.
+-f::
+Allow dangerous changes, e.g. clear the seeding flag
 
+When mounting the new device, btrfs will check whether the seeding flag is set
+when try to open seeding device.  If the user clears the seeding flag of the
+seeding device, the new device will not be mountable. Even setting the seeding
+flag back will not fix this problem, because the generation will be changed at
+that time. Clear the seeding flag may damage the new filesystem.
 
 EXIT STATUS
 -----------
