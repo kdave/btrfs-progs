@@ -56,6 +56,7 @@ static int update_seeding_flag(struct btrfs_root *root, int set_flag)
 			return 1;
 		}
 		super_flags &= ~BTRFS_SUPER_FLAG_SEEDING;
+		fprintf(stderr, "Warning: Seeding flag cleared.\n");
 	}
 
 	trans = btrfs_start_transaction(root, 1);
@@ -103,6 +104,7 @@ static void print_usage(void)
 	fprintf(stderr, "\t-S value\tpositive value will enable seeding, zero to disable, negative is not allowed\n");
 	fprintf(stderr, "\t-r \t\tenable extended inode refs\n");
 	fprintf(stderr, "\t-x \t\tenable skinny metadata extent refs\n");
+	fprintf(stderr, "\t-f \t\tforce to clear flags, make sure that you are aware of the dangers\n");
 }
 
 int main(int argc, char *argv[])
@@ -113,11 +115,12 @@ int main(int argc, char *argv[])
 	int seeding_flag = 0;
 	u64 seeding_value = 0;
 	int skinny_flag = 0;
+	int force = 0;
 	int ret;
 
 	optind = 1;
 	while(1) {
-		int c = getopt(argc, argv, "S:rx");
+		int c = getopt(argc, argv, "S:rxf");
 		if (c < 0)
 			break;
 		switch(c) {
@@ -130,6 +133,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'x':
 			skinny_flag = 1;
+			break;
+		case 'f':
+			force = 1;
 			break;
 		default:
 			print_usage();
@@ -170,6 +176,15 @@ int main(int argc, char *argv[])
 	}
 
 	if (seeding_flag) {
+		if (!seeding_value && !force) {
+			fprintf(stderr, "Warning: This is dangerous, clearing the seeding flag may cause the derived device not to be mountable!\n");
+			ret = ask_user("We are going to clear the seeding flag, are you sure?");
+			if (!ret) {
+				fprintf(stderr, "Clear seeding flag canceled\n");
+				return 1;
+			}
+		}
+
 		ret = update_seeding_flag(root, seeding_value);
 		if (!ret)
 			success++;
