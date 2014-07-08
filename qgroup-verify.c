@@ -38,6 +38,7 @@ static void add_bytes(u64 root_objectid, u64 num_bytes, int exclusive);
 
 struct qgroup_count {
 	u64				qgroupid;
+	int				subvol_exists;
 
 	struct btrfs_disk_key		key;
 	struct btrfs_qgroup_info_item	diskinfo;
@@ -697,8 +698,10 @@ static int load_quota_info(struct btrfs_fs_info *info)
 {
 	int ret;
 	struct btrfs_root *root = info->quota_root;
+	struct btrfs_root *tmproot;
 	struct btrfs_path path;
 	struct btrfs_key key;
+	struct btrfs_key root_key;
 	struct btrfs_disk_key disk_key;
 	struct extent_buffer *leaf;
 	struct btrfs_qgroup_info_item *item;
@@ -744,6 +747,15 @@ static int load_quota_info(struct btrfs_fs_info *info)
 				ret = ENOMEM;
 				fprintf(stderr, "ERROR: out of memory\n");
 				goto out;
+			}
+
+			root_key.objectid = key.offset;
+			root_key.type = BTRFS_ROOT_ITEM_KEY;
+			root_key.offset = (u64)-1;
+			tmproot = btrfs_read_fs_root_no_cache(info, &root_key);
+			if (tmproot && !IS_ERR(tmproot)) {
+				count->subvol_exists = 1;
+				free(tmproot);
 			}
 		}
 
@@ -1008,7 +1020,7 @@ static void print_qgroup_difference(struct qgroup_count *count, int verbose)
 
 	is_different = excl_diff || ref_diff;
 
-	if (verbose || is_different) {
+	if (verbose || (is_different && count->subvol_exists)) {
 		printf("Counts for qgroup id: %llu %s\n",
 		       (unsigned long long)count->qgroupid,
 		       is_different ? "are different" : "");
