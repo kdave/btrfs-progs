@@ -13,7 +13,7 @@ DESCRIPTION
 -----------
 *btrfs-convert* is used to convert existed ext2/3/4 to btrfs filesystem,
 and the original filesystem image is accessible as from separate subvolume
-named 'ext2_subvol' as file image.
+named 'ext2_saved' as file image.
 
 OPTIONS
 -------
