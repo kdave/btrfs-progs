@@ -1335,7 +1335,7 @@ int main(int ac, char **av)
 				break;
 			case 'b':
 				block_count = parse_size(optarg);
-				if (block_count <= 1024*1024*1024) {
+				if (block_count <= BTRFS_MKFS_SMALL_VOLUME_SIZE) {
 					fprintf(stdout,
 				"SMALL VOLUME: forcing mixed metadata/data groups\n");
 					mixed = 1;

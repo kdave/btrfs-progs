@@ -24,6 +24,7 @@
 #include <dirent.h>
 
 #define BTRFS_MKFS_SYSTEM_GROUP_SIZE (4 * 1024 * 1024)
+#define BTRFS_MKFS_SMALL_VOLUME_SIZE (1024 * 1024 * 1024)
 
 #define BTRFS_SCAN_PROC		(1ULL << 0)
 #define BTRFS_SCAN_DEV		(1ULL << 1)
