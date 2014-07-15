@@ -1336,8 +1336,8 @@ int main(int ac, char **av)
 			case 'b':
 				block_count = parse_size(optarg);
 				if (block_count <= 1024*1024*1024) {
-					printf("SMALL VOLUME: forcing mixed "
-					       "metadata/data groups\n");
+					fprintf(stdout,
+				"SMALL VOLUME: forcing mixed metadata/data groups\n");
 					mixed = 1;
 				}
 				zero_end = 0;
