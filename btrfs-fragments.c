@@ -425,12 +425,14 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (optind < argc) {
-		path = argv[optind++];
-	} else {
+	set_argv0(argv);
+	argc = argc - optind;
+	if (check_argc_min(argc, 1)) {
 		usage();
 		exit(1);
 	}
+
+	path = argv[optind++];
 
 	fd = open_file_or_dir(path, &dirstream);
 	if (fd < 0) {

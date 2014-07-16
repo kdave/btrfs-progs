@@ -2723,7 +2723,8 @@ int main(int argc, char *argv[])
 		}
 	}
 	argc = argc - optind;
-	if (argc != 1) {
+	set_argv0(argv);
+	if (check_argc_exact(argc, 1)) {
 		print_usage();
 		return 1;
 	}

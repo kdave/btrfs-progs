@@ -865,8 +865,9 @@ int main(int ac, char **av)
 				print_usage();
 		}
 	}
+	set_argv0(av);
 	ac = ac - optind;
-	if (ac == 0)
+	if (check_argc_min(ac, 1))
 		print_usage();
 	dev = av[optind];
 

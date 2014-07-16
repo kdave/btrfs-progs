@@ -6634,7 +6634,7 @@ int cmd_check(int argc, char **argv)
 	}
 	argc = argc - optind;
 
-	if (argc != 1)
+	if (check_argc_exact(argc, 1))
 		usage(cmd_check_usage);
 
 	radix_tree_init();

@@ -1214,9 +1214,10 @@ int cmd_restore(int argc, char **argv)
 		}
 	}
 
-	if (!list_roots && optind + 1 >= argc)
+	set_argv0(argv);
+	if (!list_roots && check_argc_min(argc - optind, 2))
 		usage(cmd_restore_usage);
-	else if (list_roots && optind >= argc)
+	else if (list_roots && check_argc_min(argc - optind, 1))
 		usage(cmd_restore_usage);
 
 	if (fs_location && root_objectid) {

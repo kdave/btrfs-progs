@@ -46,7 +46,8 @@ int main(int ac, char **av)
 	struct btrfs_trans_handle *trans;
 	int ret;
 
-	if (ac != 2)
+	set_argv0(av);
+	if (check_argc_exact(ac, 2))
 		print_usage();
 
 	radix_tree_init();

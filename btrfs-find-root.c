@@ -302,7 +302,9 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (optind >= argc) {
+	set_argv0(argv);
+	argc = argc - optind;
+	if (check_argc_min(argc, 1)) {
 		usage();
 		exit(1);
 	}

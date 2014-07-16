@@ -522,7 +522,7 @@ int cmd_send(int argc, char **argv)
 		}
 	}
 
-	if (optind == argc)
+	if (check_argc_min(argc - optind, 1))
 		usage(cmd_send_usage);
 
 	if (outname != NULL) {

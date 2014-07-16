@@ -95,7 +95,8 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (argc < optind + 1) {
+	set_argv0(argv);
+	if (check_argc_min(argc - optind, 1)) {
 		print_usage();
 		exit(1);
 	}

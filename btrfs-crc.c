@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "crc32c.h"
+#include "utils.h"
 
 void usage(void)
 {
@@ -62,13 +63,13 @@ int main(int argc, char **argv)
 		}
 	}
 
+	set_argv0(argv);
 	str = argv[optind];
 
 	if (!loop) {
-		if (optind >= argc) {
-			fprintf(stderr, "not enough arguments\n");
+		if (check_argc_min(argc - optind, 1))
 			return 255;
-		}
+
 		printf("%12u - %s\n", crc32c(~1, str, strlen(str)), str);
 		return 0;
 	}

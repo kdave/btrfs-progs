@@ -174,8 +174,9 @@ int main(int ac, char **av)
 				print_usage();
 		}
 	}
+	set_argv0(av);
 	ac = ac - optind;
-	if (ac != 1)
+	if (check_argc_exact(ac, 1))
 		print_usage();
 
 	info = open_ctree_fs_info(av[optind], 0, 0, OPEN_CTREE_PARTIAL);

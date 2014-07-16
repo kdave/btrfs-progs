@@ -66,9 +66,10 @@ int main(int ac, char **av)
 				print_usage();
 		}
 	}
+	set_argv0(av);
 	ac = ac - optind;
 
-	if (ac != 1)
+	if (check_argc_exact(ac, 1))
 		print_usage();
 
 	if (bytenr == 0) {
