@@ -550,7 +550,7 @@ again:
 				;
 			if (i + j + 1 >= avail)
 				_SCRUB_INVALID;
-			if (j != 36)
+			if (j != BTRFS_UUID_UNPARSED_SIZE - 1)
 				_SCRUB_INVALID;
 			l[i + j] = '\0';
 			ret = uuid_parse(l + i, p[curr]->fsid);
