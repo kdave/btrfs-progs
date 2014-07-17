@@ -1514,14 +1514,17 @@ out:
 	}
 	close_file_or_dir(fdmnt, dirstream);
 
-	if (nothing_to_resume)
-		return 2;
 	if (err)
 		return 1;
-	if (e_correctable)
+	if (nothing_to_resume)
+		return 2;
+	if (e_uncorrectable) {
+		ERR(!do_quiet, "ERROR: There are uncorrectable errors.\n");
 		return 3;
-	if (e_uncorrectable)
-		return 4;
+	}
+	if (e_correctable)
+		ERR(!do_quiet, "WARNING: errors detected during scrubbing, corrected.\n");
+
 	return 0;
 }
 
