@@ -474,9 +474,6 @@ static struct scrub_file_record **scrub_read_file(int fd, int report_errors)
 	char empty_uuid[BTRFS_FSID_SIZE] = {0};
 	struct scrub_file_record **p = NULL;
 
-	if (fd < 0)
-		return ERR_PTR(-EINVAL);
-
 again:
 	old_avail = avail - i;
 	BUG_ON(old_avail < 0);
