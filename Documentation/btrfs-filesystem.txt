@@ -41,8 +41,7 @@ The start position and the number of bytes to defragment can be specified by
 start and len using '-s' and '-l' options below.
 Any extent bigger than threshold given by '-t' option, will be considered
 already defragged.
-Use 0 to take the kernel default, and use 1 to
-say every single extent must be rewritten.
+Use 0 to take the kernel default.
 You can also turn on compression in defragment operations.
 +
 `Options`
