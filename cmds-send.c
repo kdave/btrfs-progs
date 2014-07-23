@@ -355,6 +355,13 @@ static int init_root_path(struct btrfs_send *s, const char *subvol)
 		ret = -EINVAL;
 		goto out;
 	}
+	if (ret > 0) {
+		fprintf(stderr,
+			"ERROR: %s doesn't belong to btrfs mount point\n",
+			subvol);
+		ret = -EINVAL;
+		goto out;
+	}
 
 	s->mnt_fd = open(s->root_path, O_RDONLY | O_NOATIME);
 	if (s->mnt_fd < 0) {
@@ -585,6 +592,13 @@ int cmd_send(int argc, char **argv)
 			fprintf(stderr, "ERROR: find_mount_root failed on %s: "
 					"%s\n", subvol,
 				strerror(-ret));
+			goto out;
+		}
+		if (ret > 0) {
+			fprintf(stderr,
+			"ERROR: %s doesn't belong to btrfs mount point\n",
+				subvol);
+			ret = -EINVAL;
 			goto out;
 		}
 		if (strcmp(send.root_path, mount_root) != 0) {

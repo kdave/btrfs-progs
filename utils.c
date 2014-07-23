@@ -2324,6 +2324,11 @@ int lookup_ino_rootid(int fd, u64 *rootid)
 	return 0;
 }
 
+/*
+ * return 0 if a btrfs mount point is found
+ * return 1 if a mount point is found but not btrfs
+ * return <0 if something goes wrong
+ */
 int find_mount_root(const char *path, char **mount_root)
 {
 	FILE *mnttab;
@@ -2331,6 +2336,7 @@ int find_mount_root(const char *path, char **mount_root)
 	struct mntent *ent;
 	int len;
 	int ret;
+	int not_btrfs = 1;
 	int longest_matchlen = 0;
 	char *longest_match = NULL;
 
@@ -2351,6 +2357,7 @@ int find_mount_root(const char *path, char **mount_root)
 				free(longest_match);
 				longest_matchlen = len;
 				longest_match = strdup(ent->mnt_dir);
+				not_btrfs = strcmp(ent->mnt_type, "btrfs");
 			}
 		}
 	}
@@ -2358,6 +2365,10 @@ int find_mount_root(const char *path, char **mount_root)
 
 	if (!longest_match)
 		return -ENOENT;
+	if (not_btrfs) {
+		free(longest_match);
+		return 1;
+	}
 
 	ret = 0;
 	*mount_root = realpath(longest_match, NULL);

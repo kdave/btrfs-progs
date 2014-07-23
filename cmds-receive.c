@@ -848,6 +848,13 @@ static int do_receive(struct btrfs_receive *r, const char *tomnt, int r_fd,
 		ret = -EINVAL;
 		goto out;
 	}
+	if (ret > 0) {
+		fprintf(stderr,
+			"ERROR: %s doesn't belong to btrfs mount point\n",
+			dest_dir_full_path);
+		ret = -EINVAL;
+		goto out;
+	}
 	r->mnt_fd = open(r->root_path, O_RDONLY | O_NOATIME);
 	if (r->mnt_fd < 0) {
 		ret = -errno;

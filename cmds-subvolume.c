@@ -933,6 +933,13 @@ static int cmd_subvol_show(int argc, char **argv)
 				"%s\n", fullpath, strerror(-ret));
 		goto out;
 	}
+	if (ret > 0) {
+		fprintf(stderr,
+			"ERROR: %s doesn't belong to btrfs mount point\n",
+			fullpath);
+		ret = -EINVAL;
+		goto out;
+	}
 	ret = 1;
 	svpath = get_subvol_name(mnt, fullpath);
 
