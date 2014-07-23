@@ -153,6 +153,17 @@ List the recently modified files in a subvolume, after <last_gen> ID.
 *show* <path>::
 Show information of a given subvolume in the <path>.
 
+*sync* <path> [subvolid...]::
+Wait until given subvolume(s) are completely removed from the filesystem
+after deletion. If no subvolume id is given, wait until all ongoing deletion
+requests are complete. This may take long if new deleted subvolumes appear
+during the sleep interval.
++
+`Options`
++
+-s <N>::::
+sleep N seconds between checks (default: 1)
+
 EXIT STATUS
 -----------
 *btrfs subvolume* returns a zero exit status if it succeeds. Non zero is
