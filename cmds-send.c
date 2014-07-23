@@ -349,9 +349,10 @@ static int init_root_path(struct btrfs_send *s, const char *subvol)
 
 	ret = find_mount_root(subvol, &s->root_path);
 	if (ret < 0) {
+		fprintf(stderr,
+			"ERROR: failed to determine mount point for %s: %s\n",
+			subvol, strerror(-ret));
 		ret = -EINVAL;
-		fprintf(stderr, "ERROR: failed to determine mount point "
-				"for %s\n", subvol);
 		goto out;
 	}
 

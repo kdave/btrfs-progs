@@ -842,9 +842,10 @@ static int do_receive(struct btrfs_receive *r, const char *tomnt, int r_fd,
 
 	ret = find_mount_root(dest_dir_full_path, &r->root_path);
 	if (ret < 0) {
+		fprintf(stderr,
+			"ERROR: failed to determine mount point for %s: %s\n",
+			dest_dir_full_path, strerror(-ret));
 		ret = -EINVAL;
-		fprintf(stderr, "ERROR: failed to determine mount point "
-			"for %s\n", dest_dir_full_path);
 		goto out;
 	}
 	r->mnt_fd = open(r->root_path, O_RDONLY | O_NOATIME);
