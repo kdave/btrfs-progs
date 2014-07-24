@@ -31,18 +31,6 @@ EXIT STATUS
 *btrfs-convert* will return 0 if no error happened.
 If any problems happened, 1 will be returned.
 
-AUTHOR
-------
-Written by Shilong Wang and Wenruo Qu.
-
-COPYRIGHT
----------
-Copyright (C) 2013 FUJITSU LIMITED.
-
-License GPLv2: GNU GPL version 2 <http://gnu.org/licenses/gpl.html>.
-
-This is free software: you are free  to  change  and  redistribute  it. There is NO WARRANTY, to the extent permitted by law.
-
 SEE ALSO
 --------
 `mkfs.btrfs`(8)
