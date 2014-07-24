@@ -835,7 +835,7 @@ int cmd_filesystem_usage(int argc, char **argv)
 		fd = open_file_or_dir(argv[i], &dirstream);
 		if (fd < 0) {
 			fprintf(stderr, "ERROR: can't access '%s'\n",
-				argv[1]);
+				argv[i]);
 			ret = 1;
 			goto out;
 		}
