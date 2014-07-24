@@ -156,14 +156,14 @@ static int load_chunk_info(int fd, struct chunk_info **info_ptr, int *info_count
 	while (1) {
 		ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &args);
 		e = errno;
-		if (ret == -EPERM)
-			return ret;
+		if (e == EPERM)
+			return -e;
 
 		if (ret < 0) {
 			fprintf(stderr,
 				"ERROR: can't perform the search - %s\n",
 				strerror(e));
-			return ret;
+			return 1;
 		}
 		/* the ioctl returns the number of item it found in nr_items */
 
@@ -182,7 +182,7 @@ static int load_chunk_info(int fd, struct chunk_info **info_ptr, int *info_count
 			ret = add_info_to_list(info_ptr, info_count, item);
 			if (ret) {
 				*info_ptr = 0;
-				return ret;
+				return 1;
 			}
 
 			off += sh->len;
@@ -442,7 +442,7 @@ static int cmp_device_info(const void *a, const void *b)
 static int load_device_info(int fd, struct device_info **device_info_ptr,
 			   int *device_info_count)
 {
-	int ret, i, ndevs;
+	int ret, i, ndevs, e;
 	struct btrfs_ioctl_fs_info_args fi_args;
 	struct btrfs_ioctl_dev_info_args dev_info;
 	struct device_info *info;
@@ -451,17 +451,19 @@ static int load_device_info(int fd, struct device_info **device_info_ptr,
 	*device_info_ptr = 0;
 
 	ret = ioctl(fd, BTRFS_IOC_FS_INFO, &fi_args);
-	if (ret == -EPERM)
-		return ret;
+	e = errno;
+	if (e == EPERM)
+		return -e;
 	if (ret < 0) {
-		fprintf(stderr, "ERROR: cannot get filesystem info\n");
-		return ret;
+		fprintf(stderr, "ERROR: cannot get filesystem info - %s\n",
+				strerror(e));
+		return 1;
 	}
 
 	info = calloc(fi_args.num_devices, sizeof(struct device_info));
 	if (!info) {
 		fprintf(stderr, "ERROR: not enough memory\n");
-		return ret;
+		return 1;
 	}
 
 	for (i = 0, ndevs = 0 ; i <= fi_args.max_id ; i++) {
