@@ -293,14 +293,16 @@ static struct btrfs_ioctl_space_args *load_space_info(int fd, char *path)
 static void get_raid56_used(int fd, struct chunk_info *chunks, int chunkcount,
 		u64 *raid5_used, u64 *raid6_used)
 {
+	struct chunk_info *info_ptr = chunks;
 	*raid5_used = 0;
 	*raid6_used = 0;
 
 	while (chunkcount-- > 0) {
-		if (chunks->type & BTRFS_BLOCK_GROUP_RAID5)
-			(*raid5_used) += chunks->size / (chunks->num_stripes - 1);
-		if (chunks->type & BTRFS_BLOCK_GROUP_RAID6)
-			(*raid6_used) += chunks->size / (chunks->num_stripes - 2);
+		if (info_ptr->type & BTRFS_BLOCK_GROUP_RAID5)
+			(*raid5_used) += info_ptr->size / (info_ptr->num_stripes - 1);
+		if (info_ptr->type & BTRFS_BLOCK_GROUP_RAID6)
+			(*raid6_used) += info_ptr->size / (info_ptr->num_stripes - 2);
+		info_ptr++;
 	}
 }
 
