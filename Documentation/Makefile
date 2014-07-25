@@ -91,6 +91,10 @@ install-man: man
 	$(INSTALL) -m 644 $(GZ_MAN8) $(DESTDIR)$(man8dir)
 	$(LNS) btrfs-check.8.gz $(DESTDIR)$(man8dir)/btrfsck.8.gz
 
+uninstall:
+	cd $(DESTDIR)$(man8dir); rm -f btrfs-check.8.gz $(GZ_MAN8)
+	rmdir -p --ignore-fail-on-non-empty $(DESTDIR)$(man8dir)
+
 clean:
 	$(QUIET_RM)$(RM) *.xml *.xml+ *.5 *.5.gz *.8 *.8.gz
 
