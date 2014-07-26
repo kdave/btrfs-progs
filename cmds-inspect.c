@@ -49,7 +49,7 @@ static int __ino_to_path_fd(u64 inum, int fd, int verbose, const char *prepend)
 	memset(fspath, 0, sizeof(*fspath));
 	ipa.inum = inum;
 	ipa.size = 4096;
-	ipa.fspath = (uintptr_t)fspath;
+	ipa.fspath = ptr_to_u64(fspath);
 
 	ret = ioctl(fd, BTRFS_IOC_INO_PATHS, &ipa);
 	if (ret) {
@@ -185,7 +185,7 @@ static int cmd_logical_resolve(int argc, char **argv)
 	memset(inodes, 0, sizeof(*inodes));
 	loi.logical = arg_strtou64(argv[optind]);
 	loi.size = size;
-	loi.inodes = (uintptr_t)inodes;
+	loi.inodes = ptr_to_u64(inodes);
 
 	fd = open_file_or_dir(argv[optind+1], &dirstream);
 	if (fd < 0) {

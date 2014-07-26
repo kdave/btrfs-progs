@@ -117,7 +117,8 @@ static int decompress_lzo(unsigned char *inbuf, char *outbuf, u64 compress_len,
 		in_len = read_compress_length(inbuf);
 
 		if ((tot_in + LZO_LEN + in_len) > tot_len) {
-			fprintf(stderr, "bad compress length %lu\n", in_len);
+			fprintf(stderr, "bad compress length %lu\n",
+				(unsigned long)in_len);
 			return -1;
 		}
 

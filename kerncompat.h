@@ -28,6 +28,10 @@
 #include <assert.h>
 #include <stddef.h>
 #include <linux/types.h>
+#include <stdint.h>
+
+#define ptr_to_u64(x)	((u64)(uintptr_t)x)
+#define u64_to_ptr(x)	((void *)(uintptr_t)x)
 
 #ifndef READ
 #define READ 0

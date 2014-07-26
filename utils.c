@@ -1673,7 +1673,7 @@ static int fls64(u64 x)
 	int i;
 
 	for (i = 0; i <64; i++)
-		if (x << i & (1UL << 63))
+		if (x << i & (1ULL << 63))
 			return 64 - i;
 	return 64 - i;
 }

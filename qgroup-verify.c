@@ -390,7 +390,7 @@ static u64 resolve_one_root(u64 bytenr)
 
 static inline struct tree_block *unode_tree_block(struct ulist_node *unode)
 {
-	return (struct tree_block *)unode->aux;
+	return u64_to_ptr(unode->aux);
 }
 static inline u64 unode_bytenr(struct ulist_node *unode)
 {
@@ -404,7 +404,7 @@ static int alloc_tree_block(u64 bytenr, u64 num_bytes, int level)
 	if (block) {
 		block->num_bytes = num_bytes;
 		block->level = level;
-		if (ulist_add(tree_blocks, bytenr, (unsigned long long)block, 0) >= 0)
+		if (ulist_add(tree_blocks, bytenr, ptr_to_u64(block), 0) >= 0)
 			return 0;
 		free(block);
 	}
