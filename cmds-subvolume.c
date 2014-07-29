@@ -128,14 +128,14 @@ static int cmd_subvol_create(int argc, char **argv)
 
 	if (!strcmp(newname, ".") || !strcmp(newname, "..") ||
 	     strchr(newname, '/') ){
-		fprintf(stderr, "ERROR: uncorrect subvolume name ('%s')\n",
+		fprintf(stderr, "ERROR: incorrect subvolume name '%s'\n",
 			newname);
 		goto out;
 	}
 
 	len = strlen(newname);
 	if (len == 0 || len >= BTRFS_VOL_NAME_MAX) {
-		fprintf(stderr, "ERROR: subvolume name too long ('%s)\n",
+		fprintf(stderr, "ERROR: subvolume name too long '%s'\n",
 			newname);
 		goto out;
 	}
@@ -303,7 +303,7 @@ again:
 
 	if (!strcmp(vname, ".") || !strcmp(vname, "..") ||
 	     strchr(vname, '/')) {
-		fprintf(stderr, "ERROR: incorrect subvolume name ('%s')\n",
+		fprintf(stderr, "ERROR: incorrect subvolume name '%s'\n",
 			vname);
 		ret = 1;
 		goto out;
@@ -311,7 +311,7 @@ again:
 
 	len = strlen(vname);
 	if (len == 0 || len >= BTRFS_VOL_NAME_MAX) {
-		fprintf(stderr, "ERROR: snapshot name too long ('%s)\n",
+		fprintf(stderr, "ERROR: snapshot name too long '%s'\n",
 			vname);
 		ret = 1;
 		goto out;
@@ -674,14 +674,14 @@ static int cmd_snapshot(int argc, char **argv)
 
 	if (!strcmp(newname, ".") || !strcmp(newname, "..") ||
 	     strchr(newname, '/') ){
-		fprintf(stderr, "ERROR: incorrect snapshot name ('%s')\n",
+		fprintf(stderr, "ERROR: incorrect snapshot name '%s'\n",
 			newname);
 		goto out;
 	}
 
 	len = strlen(newname);
 	if (len == 0 || len >= BTRFS_VOL_NAME_MAX) {
-		fprintf(stderr, "ERROR: snapshot name too long ('%s)\n",
+		fprintf(stderr, "ERROR: snapshot name too long '%s'\n",
 			newname);
 		goto out;
 	}
@@ -929,7 +929,7 @@ static int cmd_subvol_show(int argc, char **argv)
 
 	ret = find_mount_root(fullpath, &mnt);
 	if (ret < 0) {
-		fprintf(stderr, "ERROR: find_mount_root failed on %s: "
+		fprintf(stderr, "ERROR: find_mount_root failed on '%s': "
 				"%s\n", fullpath, strerror(-ret));
 		goto out;
 	}
