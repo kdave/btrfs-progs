@@ -411,23 +411,31 @@ out:
 	return ret;
 }
 
-static int ask_to_continue(const char *file)
+enum loop_response {
+	LOOP_STOP,
+	LOOP_CONTINUE,
+	LOOP_DONTASK
+};
+
+static enum loop_response ask_to_continue(const char *file)
 {
 	char buf[2];
 	char *ret;
 
 	printf("We seem to be looping a lot on %s, do you want to keep going "
-	       "on ? (y/N): ", file);
+	       "on ? (y/N/a): ", file);
 again:
 	ret = fgets(buf, 2, stdin);
 	if (*ret == '\n' || tolower(*ret) == 'n')
-		return 1;
+		return LOOP_STOP;
+	if (tolower(*ret) == 'a')
+		return LOOP_DONTASK;
 	if (tolower(*ret) != 'y') {
-		printf("Please enter either 'y' or 'n': ");
+		printf("Please enter one of 'y', 'n', or 'a': ");
 		goto again;
 	}
 
-	return 0;
+	return LOOP_CONTINUE;
 }
 
 
@@ -595,11 +603,16 @@ static int copy_file(struct btrfs_root *root, int fd, struct btrfs_key *key,
 	}
 
 	while (1) {
-		if (loops++ >= 1024) {
-			ret = ask_to_continue(file);
-			if (ret)
+		if (loops >= 0 && loops++ >= 1024) {
+			enum loop_response resp;
+
+			resp = ask_to_continue(file);
+			if (resp == LOOP_STOP)
 				break;
-			loops = 0;
+			else if (resp == LOOP_CONTINUE)
+				loops = 0;
+			else if (resp == LOOP_DONTASK)
+				loops = -1;
 		}
 		if (path->slots[0] >= btrfs_header_nritems(leaf)) {
 			do {
