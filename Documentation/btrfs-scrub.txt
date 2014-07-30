@@ -18,7 +18,7 @@ SUBCOMMAND
 ----------
 *start* [-BdqrRf] [-c <ioprio_class> -n <ioprio_classdata>] <path>|<device>::
 Start a scrub on all devices of the filesystem identified by <path> or on
-a single <device>.
+a single <device>. If a scrub is already running, the new one fails.
 +
 Without options, scrub is started as a background process.
 Progress can be obtained with the *scrub status* command. Scrubbing
@@ -47,8 +47,8 @@ manpage).
 -n <ioprio_classdata>::::
 Set IO priority classdata (see `ionice`(1) manpage).
 -f::::
-force to check whether scrub has started or resumed in userspace.
-this is useful when scrub stat record file is damaged.
+Force starting new scrub even if a scrub is already running.
+This is useful when scrub stat record file is damaged.
 
 *cancel* <path>|<device>::
 If a scrub is running on the filesystem identified by <path>, cancel it.

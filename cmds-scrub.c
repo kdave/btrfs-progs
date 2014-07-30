@@ -1527,7 +1527,7 @@ out:
 
 static const char * const cmd_scrub_start_usage[] = {
 	"btrfs scrub start [-BdqrRf] [-c ioprio_class -n ioprio_classdata] <path>|<device>",
-	"Start a new scrub",
+	"Start a new scrub. If a scrub is already running, the new one fails.",
 	"",
 	"-B     do not background",
 	"-d     stats per device (-B only)",
@@ -1536,7 +1536,7 @@ static const char * const cmd_scrub_start_usage[] = {
 	"-R     raw print mode, print full data instead of summary"
 	"-c     set ioprio class (see ionice(1) manpage)",
 	"-n     set ioprio classdata (see ionice(1) manpage)",
-	"-f     force to skip checking whether scrub has started/resumed in userspace ",
+	"-f     force starting new scrub even if a scrub is already running.",
 	"       this is useful when scrub stats record file is damaged",
 	NULL
 };
