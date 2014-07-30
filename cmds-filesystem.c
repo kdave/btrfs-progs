@@ -238,7 +238,7 @@ static int cmd_df(int argc, char **argv)
 	}
 	ret = get_df(fd, &sargs);
 
-	if (!ret && sargs) {
+	if (ret == 0) {
 		print_df(sargs);
 		free(sargs);
 	} else {
