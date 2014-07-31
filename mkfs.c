@@ -1489,8 +1489,8 @@ int main(int ac, char **av)
 	}
 
 	/* if we are here that means all devs are good to btrfsify */
-	printf("\nWARNING! - %s IS EXPERIMENTAL\n", BTRFS_BUILD_VERSION);
-	printf("WARNING! - see http://btrfs.wiki.kernel.org before using\n\n");
+	printf("%s\n", BTRFS_BUILD_VERSION);
+	printf("See http://btrfs.wiki.kernel.org for more information.\n\n");
 
 	dev_cnt--;
 
@@ -1647,7 +1647,6 @@ raid_groups:
 	    label, first_file, nodesize, leafsize, sectorsize,
 	    pretty_size(btrfs_super_total_bytes(root->fs_info->super_copy)));
 
-	printf("%s\n", BTRFS_BUILD_VERSION);
 	btrfs_commit_transaction(trans, root);
 
 	if (source_dir_set) {
