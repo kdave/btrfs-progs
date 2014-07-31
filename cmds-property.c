@@ -276,10 +276,6 @@ static int setget_prop(int types, const char *object,
 		fprintf(stderr, "ERROR: property is unknown\n");
 		ret = 40;
 		goto out;
-	} else if (ret) {
-		fprintf(stderr, "ERROR: parse_prop reported unknown error\n");
-		ret = 42;
-		goto out;
 	}
 
 	types &= prop->types;
