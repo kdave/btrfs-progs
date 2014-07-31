@@ -1563,22 +1563,29 @@ int get_label(const char *btrfs_dev, char *label)
 {
 	int ret;
 
-	if (is_existing_blk_or_reg_file(btrfs_dev))
-		ret = get_label_unmounted(btrfs_dev, label);
-	else
+	ret = is_existing_blk_or_reg_file(btrfs_dev);
+	if (!ret)
 		ret = get_label_mounted(btrfs_dev, label);
+	else if (ret > 0)
+		ret = get_label_unmounted(btrfs_dev, label);
 
 	return ret;
 }
 
 int set_label(const char *btrfs_dev, const char *label)
 {
+	int ret;
+
 	if (check_label(label))
 		return -1;
 
-	return is_existing_blk_or_reg_file(btrfs_dev) ?
-		set_label_unmounted(btrfs_dev, label) :
-		set_label_mounted(btrfs_dev, label);
+	ret = is_existing_blk_or_reg_file(btrfs_dev);
+	if (!ret)
+		ret = set_label_mounted(btrfs_dev, label);
+	else if (ret > 0)
+		ret = set_label_unmounted(btrfs_dev, label);
+
+	return ret;
 }
 
 int btrfs_scan_block_devices(int run_ioctl)
