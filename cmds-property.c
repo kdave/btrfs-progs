@@ -389,7 +389,7 @@ static void parse_args(int argc, char **argv,
 static int cmd_get(int argc, char **argv)
 {
 	int ret;
-	char *object;
+	char *object = NULL;
 	char *name = NULL;
 	int types = 0;
 
@@ -413,9 +413,9 @@ static int cmd_get(int argc, char **argv)
 static int cmd_set(int argc, char **argv)
 {
 	int ret;
-	char *object;
-	char *name;
-	char *value;
+	char *object = NULL;
+	char *name = NULL;
+	char *value = NULL;
 	int types = 0;
 
 	if (check_argc_min(argc, 4) || check_argc_max(argc, 6))
