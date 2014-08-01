@@ -2405,3 +2405,15 @@ int test_minimum_size(const char *file, u32 leafsize)
 	close(fd);
 	return 0;
 }
+
+/*
+ * test if name is a correct subvolume name
+ * this function return
+ * 0-> name is not a correct subvolume name
+ * 1-> name is a correct subvolume name
+ */
+int test_issubvolname(const char *name)
+{
+	return name[0] != '\0' && !strchr(name, '/') &&
+		strcmp(name, ".") && strcmp(name, "..");
+}

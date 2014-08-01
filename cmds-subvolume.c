@@ -126,8 +126,7 @@ static int cmd_subvol_create(int argc, char **argv)
 	dupdir = strdup(dst);
 	dstdir = dirname(dupdir);
 
-	if (!strcmp(newname, ".") || !strcmp(newname, "..") ||
-	     strchr(newname, '/') ){
+	if (!test_issubvolname(newname)) {
 		fprintf(stderr, "ERROR: incorrect subvolume name '%s'\n",
 			newname);
 		goto out;
@@ -301,8 +300,7 @@ again:
 	vname = basename(dupvname);
 	free(cpath);
 
-	if (!strcmp(vname, ".") || !strcmp(vname, "..") ||
-	     strchr(vname, '/')) {
+	if (!test_issubvolname(vname)) {
 		fprintf(stderr, "ERROR: incorrect subvolume name '%s'\n",
 			vname);
 		ret = 1;
@@ -672,8 +670,7 @@ static int cmd_snapshot(int argc, char **argv)
 		dstdir = dirname(dupdir);
 	}
 
-	if (!strcmp(newname, ".") || !strcmp(newname, "..") ||
-	     strchr(newname, '/') ){
+	if (!test_issubvolname(newname)) {
 		fprintf(stderr, "ERROR: incorrect snapshot name '%s'\n",
 			newname);
 		goto out;

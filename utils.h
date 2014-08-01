@@ -116,6 +116,7 @@ int get_device_info(int fd, u64 devid,
 int test_uuid_unique(char *fs_uuid);
 
 int test_minimum_size(const char *file, u32 leafsize);
+int test_issubvolname(const char *name);
 
 /*
  * Btrfs minimum size calculation is complicated, it should include at least:
