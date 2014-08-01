@@ -2417,3 +2417,22 @@ int test_issubvolname(const char *name)
 	return name[0] != '\0' && !strchr(name, '/') &&
 		strcmp(name, ".") && strcmp(name, "..");
 }
+
+/*
+ * test if path is a directory
+ * this function return
+ * 0-> path exists but it is not a directory
+ * 1-> path exists and it is a directory
+ * -1 -> path is unaccessible
+ */
+int test_isdir(const char *path)
+{
+	struct stat st;
+	int ret;
+
+	ret = stat(path, &st);
+	if(ret < 0 )
+		return -1;
+
+	return S_ISDIR(st.st_mode);
+}

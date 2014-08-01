@@ -41,25 +41,6 @@ static const char * const subvolume_cmd_group_usage[] = {
 	NULL
 };
 
-/*
- * test if path is a directory
- * this function return
- * 0-> path exists but it is not a directory
- * 1-> path exists and it is  a directory
- * -1 -> path is unaccessible
- */
-static int test_isdir(char *path)
-{
-	struct stat	st;
-	int		res;
-
-	res = stat(path, &st);
-	if(res < 0 )
-		return -1;
-
-	return S_ISDIR(st.st_mode);
-}
-
 static const char * const cmd_subvol_create_usage[] = {
 	"btrfs subvolume create [-i <qgroupid>] [<dest>/]<name>",
 	"Create a subvolume",

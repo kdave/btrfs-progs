@@ -117,6 +117,7 @@ int test_uuid_unique(char *fs_uuid);
 
 int test_minimum_size(const char *file, u32 leafsize);
 int test_issubvolname(const char *name);
+int test_isdir(const char *path);
 
 /*
  * Btrfs minimum size calculation is complicated, it should include at least:
