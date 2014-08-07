@@ -2699,6 +2699,7 @@ int main(int argc, char *argv[])
 	int noxattr = 0;
 	int datacsum = 1;
 	int rollback = 0;
+	int usage_error = 0;
 	char *file;
 	while(1) {
 		int c = getopt(argc, argv, "dinr");
@@ -2725,6 +2726,17 @@ int main(int argc, char *argv[])
 	argc = argc - optind;
 	set_argv0(argv);
 	if (check_argc_exact(argc, 1)) {
+		print_usage();
+		return 1;
+	}
+
+	if (rollback && (!datacsum || noxattr || !packing)) {
+		fprintf(stderr,
+			"Usage error: -d, -i, -n options do not apply to rollback\n");
+		usage_error++;
+	}
+
+	if (usage_error) {
 		print_usage();
 		return 1;
 	}
