@@ -2376,7 +2376,7 @@ fail:
 	return -1;
 }
 
-static int do_rollback(const char *devname, int force)
+static int do_rollback(const char *devname)
 {
 	int fd = -1;
 	int ret;
@@ -2753,7 +2753,7 @@ int main(int argc, char *argv[])
 	}
 
 	if (rollback) {
-		ret = do_rollback(file, 0);
+		ret = do_rollback(file);
 	} else {
 		ret = do_convert(file, datacsum, packing, noxattr);
 	}
