@@ -547,7 +547,7 @@ static int cmd_show(int argc, char **argv)
 	char mp[BTRFS_PATH_NAME_MAX + 1];
 	char path[PATH_MAX];
 	__u8 fsid[BTRFS_FSID_SIZE];
-	char uuid_buf[37];
+	char uuid_buf[BTRFS_UUID_UNPARSED_SIZE];
 	int found = 0;
 
 	while (1) {
