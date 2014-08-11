@@ -7,7 +7,7 @@ btrfs-receive - receive subvolumes from stdin/file.
 
 SYNOPSIS
 --------
-*btrfs receive* [-ve] [-f <infile>] <mount>
+*btrfs receive* [-ve] [-f <infile>] [--max-errors <N>] <mount>
 
 DESCRIPTION
 -----------

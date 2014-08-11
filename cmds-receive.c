@@ -982,9 +982,9 @@ int cmd_receive(int argc, char **argv)
 }
 
 const char * const cmd_receive_usage[] = {
-	"btrfs receive [-ve] [-f <infile>] <mount>",
+	"btrfs receive [-ve] [-f <infile>] [--max-errors <N>] <mount>",
 	"Receive subvolumes from stdin.",
-	"Receives one or more subvolumes that were previously ",
+	"Receives one or more subvolumes that were previously",
 	"sent with btrfs send. The received subvolumes are stored",
 	"into <mount>.",
 	"btrfs receive will fail in case a receiving subvolume",
