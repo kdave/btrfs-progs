@@ -369,7 +369,7 @@ static const char * const cmd_subvol_list_usage[] = {
 	"             to the given <path>",
 	"-c           print the ogeneration of the subvolume",
 	"-g           print the generation of the subvolume",
-	"-o           print only subvolumes bellow specified path",
+	"-o           print only subvolumes below specified path",
 	"-u           print the uuid of subvolumes (and snapshots)",
 	"-q           print the parent uuid of the snapshots",
 	"-t           print the result as a table",
