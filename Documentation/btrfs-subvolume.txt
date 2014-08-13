@@ -104,6 +104,8 @@ print only subvolumes bellow specified <path>.
 print the UUID of the subvolume.
 -q::::
 print the parent uuid of subvolumes (and snapshots).
+-R::::
+print the UUID of the sent subvolume, where the subvolume is the result of a receive operation
 -t::::
 print the result as a table.
 -s::::

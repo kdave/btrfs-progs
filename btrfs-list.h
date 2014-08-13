@@ -61,6 +61,7 @@ struct root_info {
 
 	u8 uuid[BTRFS_UUID_SIZE];
 	u8 puuid[BTRFS_UUID_SIZE];
+	u8 ruuid[BTRFS_UUID_SIZE];
 
 	/* path from the subvol we live in to this root, including the
 	 * root's name.  This is null until we do the extra lookup ioctl.
@@ -110,6 +111,7 @@ enum btrfs_list_column_enum {
 	BTRFS_LIST_TOP_LEVEL,
 	BTRFS_LIST_OTIME,
 	BTRFS_LIST_PUUID,
+	BTRFS_LIST_RUUID,
 	BTRFS_LIST_UUID,
 	BTRFS_LIST_PATH,
 	BTRFS_LIST_ALL,
