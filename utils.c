@@ -1819,11 +1819,28 @@ int get_fs_info(char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 	if (!fi_args->num_devices)
 		goto out;
 
-	di_args = *di_ret = malloc(fi_args->num_devices * sizeof(*di_args));
+	/*
+	 * with kernel patch
+	 * btrfs: ioctl BTRFS_IOC_FS_INFO and BTRFS_IOC_DEV_INFO miss-matched with slots
+	 * the kernel now returns total_devices which does not include
+	 * replacing device if running.
+	 * As we need to get dev info of the replace device if it is running,
+	 * so just add one to fi_args->num_devices.
+	 */
+
+	di_args = *di_ret = malloc((fi_args->num_devices + 1) * sizeof(*di_args));
 	if (!di_args) {
 		ret = -errno;
 		goto out;
 	}
+
+	/* get the replace target device if it is there */
+	ret = get_device_info(fd, i, &di_args[ndevs]);
+	if (!ret) {
+		ndevs++;
+		fi_args->num_devices++;
+	}
+	i++;
 
 	for (; i <= fi_args->max_id; ++i) {
 		BUG_ON(ndevs >= fi_args->num_devices);
