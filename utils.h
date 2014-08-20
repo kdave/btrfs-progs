@@ -27,9 +27,8 @@
 #define BTRFS_MKFS_SMALL_VOLUME_SIZE (1024 * 1024 * 1024)
 
 #define BTRFS_SCAN_PROC		(1ULL << 0)
-#define BTRFS_SCAN_DEV		(1ULL << 1)
-#define BTRFS_SCAN_MOUNTED	(1ULL << 2)
-#define BTRFS_SCAN_LBLKID	(1ULL << 3)
+#define BTRFS_SCAN_MOUNTED	(1ULL << 1)
+#define BTRFS_SCAN_LBLKID	(1ULL << 2)
 
 #define BTRFS_UPDATE_KERNEL	1
 
@@ -62,7 +61,6 @@ int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 		      u32 sectorsize);
 int btrfs_scan_for_fsid(int run_ioctls);
 void btrfs_register_one_device(char *fname);
-int btrfs_scan_one_dir(char *dirname, int run_ioctl);
 char *canonicalize_dm_name(const char *ptname);
 char *canonicalize_path(const char *path);
 int check_mounted(const char *devicename);
