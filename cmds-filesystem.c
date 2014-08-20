@@ -568,7 +568,7 @@ static int cmd_show(int argc, char **argv)
 			break;
 		switch (c) {
 		case 'd':
-			where = BTRFS_SCAN_DEV;
+			where = BTRFS_SCAN_PROC;
 			break;
 		case 'm':
 			where = BTRFS_SCAN_MOUNTED;
@@ -592,7 +592,7 @@ static int cmd_show(int argc, char **argv)
 		 * right away
 		 */
 		if (type == BTRFS_ARG_BLKDEV) {
-			if (where == BTRFS_SCAN_DEV) {
+			if (where == BTRFS_SCAN_PROC) {
 				/* we need to do this because
 				 * legacy BTRFS_SCAN_DEV
 				 * provides /dev/dm-x paths
@@ -623,7 +623,7 @@ static int cmd_show(int argc, char **argv)
 		}
 	}
 
-	if (where == BTRFS_SCAN_DEV)
+	if (where == BTRFS_SCAN_PROC)
 		goto devs_only;
 
 	/* show mounted btrfs */

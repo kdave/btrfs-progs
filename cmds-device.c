@@ -223,7 +223,7 @@ static int cmd_scan_dev(int argc, char **argv)
 			break;
 		switch (c) {
 		case 'd':
-			where = BTRFS_SCAN_DEV;
+			where = BTRFS_SCAN_PROC;
 			all = 1;
 			break;
 		default:
