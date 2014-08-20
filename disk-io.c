@@ -1002,7 +1002,7 @@ int btrfs_scan_fs_devices(int fd, const char *path,
 	}
 
 	if (total_devs != 1) {
-		ret = btrfs_scan_for_fsid(run_ioctl);
+		ret = scan_for_btrfs(BTRFS_SCAN_PROC, run_ioctl);
 		if (ret)
 			return ret;
 	}
