@@ -967,8 +967,9 @@ static int do_list_roots(struct btrfs_root *root)
 		return -1;
 	}
 
+	leaf = path->nodes[0];
+
 	while (1) {
-		leaf = path->nodes[0];
 		slot = path->slots[0];
 		if (slot >= btrfs_header_nritems(leaf)) {
 			ret = btrfs_next_leaf(root, path);
