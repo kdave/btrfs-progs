@@ -204,7 +204,7 @@ out:
 		int __len; \
 		TLV_GET(s, attr, (void**)&__tmp, &__len); \
 		TLV_CHECK_LEN(sizeof(*__tmp), __len); \
-		*v = le##bits##_to_cpu(*__tmp); \
+		*v = get_unaligned_le##bits(__tmp); \
 	} while (0)
 
 #define TLV_GET_U8(s, attr, v) TLV_GET_INT(s, attr, 8, v)
