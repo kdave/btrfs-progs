@@ -548,9 +548,6 @@ struct btrfs_path {
 	 * and to force calls to keep space in the nodes
 	 */
 	unsigned int search_for_split:1;
-	unsigned int keep_locks:1;
-	unsigned int skip_locking:1;
-	unsigned int leave_spinning:1;
 	unsigned int skip_check_block:1;
 };
 

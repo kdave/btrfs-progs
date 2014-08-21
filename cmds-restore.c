@@ -566,7 +566,6 @@ static int copy_file(struct btrfs_root *root, int fd, struct btrfs_key *key,
 		fprintf(stderr, "Ran out of memory\n");
 		return -ENOMEM;
 	}
-	path->skip_locking = 1;
 
 	ret = btrfs_lookup_inode(NULL, root, path, key, 0);
 	if (ret == 0) {
@@ -704,7 +703,6 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 		fprintf(stderr, "Ran out of memory\n");
 		return -ENOMEM;
 	}
-	path->skip_locking = 1;
 
 	key->offset = 0;
 	key->type = BTRFS_DIR_INDEX_KEY;
