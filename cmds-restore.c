@@ -251,7 +251,7 @@ static int copy_one_inline(int fd, struct btrfs_path *path, u64 pos)
 	}
 
 	ram_size = btrfs_file_extent_ram_bytes(leaf, fi);
-	outbuf = malloc(ram_size);
+	outbuf = calloc(1, ram_size);
 	if (!outbuf) {
 		fprintf(stderr, "No memory\n");
 		return -ENOMEM;
@@ -320,7 +320,7 @@ static int copy_one_extent(struct btrfs_root *root, int fd,
 	}
 
 	if (compress != BTRFS_COMPRESS_NONE) {
-		outbuf = malloc(ram_size);
+		outbuf = calloc(1, ram_size);
 		if (!outbuf) {
 			fprintf(stderr, "No memory\n");
 			free(inbuf);
