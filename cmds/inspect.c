@@ -35,6 +35,7 @@
 #include "common/open-utils.h"
 #include "common/units.h"
 #include "common/string-utils.h"
+#include "common/string-table.h"
 #include "cmds/commands.h"
 #include "ioctl.h"
 
@@ -685,6 +686,428 @@ out:
 }
 static DEFINE_SIMPLE_COMMAND(inspect_min_dev_size, "min-dev-size");
 
+static const char * const cmd_inspect_list_chunks_usage[] = {
+	"btrfs inspect-internal list-chunks [options] <path>",
+	"Show chunks (block groups) layout",
+	"Show chunks (block groups) layout for all devices",
+	"",
+	HELPINFO_UNITS_LONG,
+	"--sort=MODE        sort by the physical or logical chunk start",
+	"                   MODE is one of pstart or lstart (default: pstart)",
+	"--usage            show usage per block group (note: this can be slow)",
+	"--no-usage         don't show usage per block group",
+	"--empty            show empty space between block groups",
+	"--no-empty         do not show empty space between block groups",
+	NULL
+};
+
+enum {
+	CHUNK_SORT_PSTART,
+	CHUNK_SORT_LSTART,
+	CHUNK_SORT_DEFAULT = CHUNK_SORT_PSTART
+};
+
+struct list_chunks_entry {
+	u64 devid;
+	u64 start;
+	u64 lstart;
+	u64 length;
+	u64 flags;
+	u64 age;
+	u64 used;
+	u32 pnumber;
+};
+
+struct list_chunks_ctx {
+	unsigned length;
+	unsigned size;
+	struct list_chunks_entry *stats;
+};
+
+int cmp_cse_devid_start(const void *va, const void *vb)
+{
+	const struct list_chunks_entry *a = va;
+	const struct list_chunks_entry *b = vb;
+
+	if (a->devid < b->devid)
+		return -1;
+	if (a->devid > b->devid)
+		return 1;
+
+	if (a->start < b->start)
+		return -1;
+	if (a->start == b->start) {
+		error(
+	"chunks start on same offset in the same device: devid %llu start %llu",
+		    (unsigned long long)a->devid, (unsigned long long)a->start);
+		return 0;
+	}
+	return 1;
+}
+
+int cmp_cse_devid_lstart(const void *va, const void *vb)
+{
+	const struct list_chunks_entry *a = va;
+	const struct list_chunks_entry *b = vb;
+
+	if (a->devid < b->devid)
+		return -1;
+	if (a->devid > b->devid)
+		return 1;
+
+	if (a->lstart < b->lstart)
+		return -1;
+	if (a->lstart == b->lstart) {
+		error(
+"chunks logically start on same offset in the same device: devid %llu start %llu",
+		    (unsigned long long)a->devid, (unsigned long long)a->lstart);
+		return 0;
+	}
+	return 1;
+}
+
+int print_list_chunks(struct list_chunks_ctx *ctx, unsigned sort_mode,
+		      unsigned unit_mode, bool with_usage, bool with_empty)
+{
+	u64 devid;
+	struct list_chunks_entry e;
+	struct string_table *table;
+	int i;
+	int chidx;
+	u64 lastend;
+	u64 age;
+	u32 gaps;
+	u32 tabidx;
+
+	/*
+	 * Chunks are sorted logically as found by the ioctl, we need to sort
+	 * them once to find the physical ordering. This is the default mode.
+	 */
+	qsort(ctx->stats, ctx->length, sizeof(ctx->stats[0]), cmp_cse_devid_start);
+	devid = 0;
+	age = 0;
+	gaps = 0;
+	lastend = 0;
+	for (i = 0; i < ctx->length; i++) {
+		e = ctx->stats[i];
+		if (e.devid != devid) {
+			devid = e.devid;
+			age = 0;
+		}
+		ctx->stats[i].pnumber = age;
+		age++;
+		if (with_empty && sort_mode == CHUNK_SORT_PSTART && e.start != lastend)
+			gaps++;
+		lastend = e.start + e.length;
+	}
+
+	if (sort_mode == CHUNK_SORT_LSTART)
+		qsort(ctx->stats, ctx->length, sizeof(ctx->stats[0]),
+				cmp_cse_devid_lstart);
+
+	/* Optional usage, two rows for header and separator, gaps */
+	table = table_create(7 + (int)with_usage, 2 + ctx->length + gaps);
+	if (!table) {
+		error_msg(ERROR_MSG_MEMORY, NULL);
+		return 1;
+	}
+	devid = 0;
+	tabidx = 0;
+	chidx = 1;
+	for (i = 0; i < ctx->length; i++) {
+		e = ctx->stats[i];
+		/* TODO: print header and devid */
+		if (e.devid != devid) {
+			int j;
+
+			devid = e.devid;
+			table_printf(table, 0, tabidx, ">PNumber");
+			table_printf(table, 1, tabidx, ">Type");
+			table_printf(table, 2, tabidx, ">PStart");
+			table_printf(table, 3, tabidx, ">Length");
+			table_printf(table, 4, tabidx, ">PEnd");
+			table_printf(table, 5, tabidx, ">Age");
+			table_printf(table, 6, tabidx, ">LStart");
+			if (with_usage) {
+				table_printf(table, 7, tabidx, ">Usage%%");
+				table_printf(table, 7, tabidx + 1, "*-");
+			}
+			for (j = 0; j < 7; j++)
+				table_printf(table, j, tabidx + 1, "*-");
+
+			chidx = 1;
+			lastend = 0;
+			tabidx += 2;
+		}
+		if (with_empty && sort_mode == CHUNK_SORT_PSTART && e.start != lastend) {
+			table_printf(table, 0, tabidx, "-");
+			table_printf(table, 1, tabidx, ">%s", "empty");
+			table_printf(table, 2, tabidx, "-");
+			table_printf(table, 3, tabidx, ">%s",
+				pretty_size_mode(e.start - lastend, unit_mode));
+			table_printf(table, 4, tabidx, "-");
+			table_printf(table, 5, tabidx, "-");
+			table_printf(table, 6, tabidx, "-");
+			if (with_usage)
+				table_printf(table, 7, tabidx, "-");
+			tabidx++;
+		}
+
+		table_printf(table, 0, tabidx, ">%llu", chidx++);
+		table_printf(table, 1, tabidx, "%10s/%-6s",
+				btrfs_group_type_str(e.flags),
+				btrfs_group_profile_str(e.flags));
+		table_printf(table, 2, tabidx, ">%s", pretty_size_mode(e.start, unit_mode));
+		table_printf(table, 3, tabidx, ">%s", pretty_size_mode(e.length, unit_mode));
+		table_printf(table, 4, tabidx, ">%s", pretty_size_mode(e.start + e.length, unit_mode));
+		table_printf(table, 5, tabidx, ">%llu", e.age);
+		table_printf(table, 6, tabidx, ">%s", pretty_size_mode(e.lstart, unit_mode));
+		if (with_usage)
+			table_printf(table, 7, tabidx, ">%6.2f",
+					(float)e.used / e.length * 100);
+		lastend = e.start + e.length;
+		tabidx++;
+	}
+	table_dump(table);
+	table_free(table);
+
+	return 0;
+}
+
+static u64 fill_usage(int fd, u64 lstart)
+{
+	struct btrfs_ioctl_search_args args;
+	struct btrfs_ioctl_search_key *sk = &args.key;
+	struct btrfs_ioctl_search_header sh;
+	struct btrfs_block_group_item *item;
+	int ret;
+
+	memset(&args, 0, sizeof(args));
+	sk->tree_id = BTRFS_EXTENT_TREE_OBJECTID;
+	sk->min_objectid = lstart;
+	sk->max_objectid = lstart;
+	sk->min_type = BTRFS_BLOCK_GROUP_ITEM_KEY;
+	sk->max_type = BTRFS_BLOCK_GROUP_ITEM_KEY;
+	sk->min_offset = 0;
+	sk->max_offset = (u64)-1;
+	sk->max_transid = (u64)-1;
+	sk->nr_items = 1;
+
+	ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &args);
+	if (ret < 0) {
+		error("cannot perform the search: %m");
+		return 1;
+	}
+	if (sk->nr_items == 0) {
+		warning("blockgroup %llu not found", lstart);
+		return 0;
+	}
+	if (sk->nr_items > 1)
+		warning("found more than one blockgroup %llu", lstart);
+
+	memcpy(&sh, args.buf, sizeof(sh));
+	item = (struct btrfs_block_group_item*)(args.buf + sizeof(sh));
+
+	return item->used;
+}
+
+static int cmd_inspect_list_chunks(const struct cmd_struct *cmd,
+				   int argc, char **argv)
+{
+	struct btrfs_ioctl_search_args args;
+	struct btrfs_ioctl_search_key *sk = &args.key;
+	struct btrfs_ioctl_search_header sh;
+	unsigned long off = 0;
+	u64 *age = NULL;
+	unsigned age_size = 128;
+	int ret;
+	int fd;
+	int i;
+	int e;
+	DIR *dirstream = NULL;
+	unsigned unit_mode;
+	unsigned sort_mode = 0;
+	bool with_usage = true;
+	bool with_empty = true;
+	const char *path;
+	struct list_chunks_ctx ctx = {
+		.length = 0,
+		.size = 1024,
+		.stats = NULL
+	};
+
+	unit_mode = get_unit_mode_from_arg(&argc, argv, 0);
+
+	while (1) {
+		int c;
+		enum { GETOPT_VAL_SORT = GETOPT_VAL_FIRST,
+		       GETOPT_VAL_USAGE, GETOPT_VAL_NO_USAGE,
+		       GETOPT_VAL_EMPTY, GETOPT_VAL_NO_EMPTY
+		};
+		static const struct option long_options[] = {
+			{"sort", required_argument, NULL, GETOPT_VAL_SORT },
+			{"usage", no_argument, NULL, GETOPT_VAL_USAGE },
+			{"no-usage", no_argument, NULL, GETOPT_VAL_NO_USAGE },
+			{"empty", no_argument, NULL, GETOPT_VAL_EMPTY },
+			{"no-empty", no_argument, NULL, GETOPT_VAL_NO_EMPTY },
+			{NULL, 0, NULL, 0}
+		};
+
+		c = getopt_long(argc, argv, "", long_options, NULL);
+		if (c < 0)
+			break;
+
+		switch (c) {
+		case GETOPT_VAL_SORT:
+			if (strcmp(optarg, "pstart") == 0) {
+				sort_mode = CHUNK_SORT_PSTART;
+			} else if (strcmp(optarg, "lstart") == 0) {
+				sort_mode = CHUNK_SORT_LSTART;
+			} else {
+				error("unknown sort mode: %s", optarg);
+				exit(1);
+			}
+			break;
+		case GETOPT_VAL_USAGE:
+		case GETOPT_VAL_NO_USAGE:
+			with_usage = (c == GETOPT_VAL_USAGE);
+			break;
+		case GETOPT_VAL_EMPTY:
+		case GETOPT_VAL_NO_EMPTY:
+			with_empty = (c == GETOPT_VAL_EMPTY);
+			break;
+		default:
+			usage_unknown_option(cmd, argv);
+		}
+	}
+
+	if (check_argc_exact(argc - optind, 1))
+		return 1;
+
+	ctx.stats = calloc(ctx.size, sizeof(ctx.stats[0]));
+	if (!ctx.stats) {
+		ret = 1;
+		error_msg(ERROR_MSG_MEMORY, NULL);
+		goto out_nomem;
+	}
+
+	path = argv[optind];
+
+	fd = open_file_or_dir(path, &dirstream);
+	if (fd < 0) {
+	        error("cannot access '%s': %m", path);
+		return 1;
+	}
+
+	memset(&args, 0, sizeof(args));
+	sk->tree_id = BTRFS_CHUNK_TREE_OBJECTID;
+	sk->min_objectid = BTRFS_FIRST_CHUNK_TREE_OBJECTID;
+	sk->max_objectid = BTRFS_FIRST_CHUNK_TREE_OBJECTID;
+	sk->min_type = BTRFS_CHUNK_ITEM_KEY;
+	sk->max_type = BTRFS_CHUNK_ITEM_KEY;
+	sk->max_offset = (u64)-1;
+	sk->max_transid = (u64)-1;
+	age = calloc(age_size, sizeof(u64));
+	if (!age) {
+		ret = 1;
+		error_msg(ERROR_MSG_MEMORY, NULL);
+		goto out_nomem;
+	}
+
+	while (1) {
+		sk->nr_items = 1;
+		ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &args);
+		e = errno;
+		if (ret < 0) {
+			error("cannot perform the search: %s", strerror(e));
+			return 1;
+		}
+		if (sk->nr_items == 0)
+			break;
+
+		off = 0;
+		for (i = 0; i < sk->nr_items; i++) {
+			struct btrfs_chunk *item;
+			struct btrfs_stripe *stripes;
+			int sidx;
+			u64 used = (u64)-1;
+
+			memcpy(&sh, args.buf + off, sizeof(sh));
+			off += sizeof(sh);
+			item = (struct btrfs_chunk*)(args.buf + off);
+			off += sh.len;
+
+			stripes = &item->stripe;
+			for (sidx = 0; sidx < item->num_stripes; sidx++) {
+				struct list_chunks_entry *e;
+				u64 devid;
+
+				e = &ctx.stats[ctx.length];
+				devid = stripes[sidx].devid;
+				e->devid = devid;
+				e->start = stripes[sidx].offset;
+				e->lstart = sh.offset;
+				e->length = item->length;
+				e->flags = item->type;
+				e->pnumber = -1;
+				while (devid > age_size) {
+					u64 *tmp;
+					unsigned old_size = age_size;
+
+					age_size += 128;
+					tmp = calloc(age_size, sizeof(u64));
+					if (!tmp) {
+						ret = 1;
+						error_msg(ERROR_MSG_MEMORY, NULL);
+						goto out_nomem;
+					}
+					memcpy(tmp, age, sizeof(u64) * old_size);
+					age = tmp;
+				}
+				e->age = age[devid]++;
+				if (with_usage) {
+					if (used == (u64)-1)
+						used = fill_usage(fd, sh.offset);
+					e->used = used;
+				} else {
+					e->used = 0;
+				}
+
+				ctx.length++;
+
+				if (ctx.length == ctx.size) {
+					ctx.size += 1024;
+					ctx.stats = realloc(ctx.stats, ctx.size
+						* sizeof(ctx.stats[0]));
+					if (!ctx.stats) {
+						ret = 1;
+						error_msg(ERROR_MSG_MEMORY, NULL);
+						goto out_nomem;
+					}
+				}
+			}
+
+			sk->min_objectid = sh.objectid;
+			sk->min_type = sh.type;
+			sk->min_offset = sh.offset;
+		}
+		if (sk->min_offset < (u64)-1)
+			sk->min_offset++;
+		else
+			break;
+	}
+
+	ret = print_list_chunks(&ctx, sort_mode, unit_mode, with_usage, with_empty);
+	close_file_or_dir(fd, dirstream);
+
+out_nomem:
+	free(ctx.stats);
+	free(age);
+
+	return !!ret;
+}
+static DEFINE_SIMPLE_COMMAND(inspect_list_chunks, "list-chunks");
+
 static const char inspect_cmd_group_info[] =
 "query various internal information";
 
@@ -698,6 +1121,9 @@ static const struct cmd_group inspect_cmd_group = {
 		&cmd_struct_inspect_dump_tree,
 		&cmd_struct_inspect_dump_super,
 		&cmd_struct_inspect_tree_stats,
+#if EXPERIMENTAL
+		&cmd_struct_inspect_list_chunks,
+#endif
 		NULL
 	}
 };
