@@ -264,12 +264,10 @@ static void btrfs_corrupt_extent_tree(struct btrfs_trans_handle *trans,
 				      struct extent_buffer *eb)
 {
 	int i;
-	u32 nr;
 
 	if (!eb)
 		return;
 
-	nr = btrfs_header_nritems(eb);
 	if (btrfs_is_leaf(eb)) {
 		btrfs_corrupt_extent_leaf(trans, root, eb);
 		return;
@@ -280,7 +278,7 @@ static void btrfs_corrupt_extent_tree(struct btrfs_trans_handle *trans,
 			return;
 	}
 
-	for (i = 0; i < nr; i++) {
+	for (i = 0; i < btrfs_header_nritems(eb); i++) {
 		struct extent_buffer *next;
 
 		next = read_tree_block(root, btrfs_node_blockptr(eb, i),
