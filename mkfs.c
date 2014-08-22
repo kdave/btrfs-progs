@@ -352,7 +352,7 @@ static struct option long_options[] = {
 	{ "rootdir", 1, NULL, 'r' },
 	{ "nodiscard", 0, NULL, 'K' },
 	{ "features", 1, NULL, 'O' },
-	{ "uuid", 0, NULL, 'U' },
+	{ "uuid", required_argument, NULL, 'U' },
 	{ NULL, 0, NULL, 0}
 };
 
