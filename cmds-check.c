@@ -6545,7 +6545,7 @@ static struct option long_options[] = {
 	{ "init-extent-tree", 0, NULL, 0 },
 	{ "check-data-csum", 0, NULL, 0 },
 	{ "backup", 0, NULL, 0 },
-	{ "subvol-extents", 1, NULL, 'E' },
+	{ "subvol-extents", no_argument, NULL, 'E' },
 	{ "qgroup-report", 0, NULL, 'Q' },
 	{ NULL, 0, NULL, 0}
 };
