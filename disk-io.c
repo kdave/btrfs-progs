@@ -134,31 +134,26 @@ struct extent_buffer *btrfs_find_create_tree_block(struct btrfs_root *root,
 				   blocksize);
 }
 
-int readahead_tree_block(struct btrfs_root *root, u64 bytenr, u32 blocksize,
-			 u64 parent_transid)
+void readahead_tree_block(struct btrfs_root *root, u64 bytenr, u32 blocksize,
+			  u64 parent_transid)
 {
-	int ret;
 	struct extent_buffer *eb;
 	u64 length;
 	struct btrfs_multi_bio *multi = NULL;
 	struct btrfs_device *device;
 
 	eb = btrfs_find_tree_block(root, bytenr, blocksize);
-	if (eb && btrfs_buffer_uptodate(eb, parent_transid)) {
-		free_extent_buffer(eb);
-		return 0;
+	if (!(eb && btrfs_buffer_uptodate(eb, parent_transid)) &&
+	    !btrfs_map_block(&root->fs_info->mapping_tree, READ,
+			     bytenr, &length, &multi, 0, NULL)) {
+		device = multi->stripes[0].dev;
+		device->total_ios++;
+		blocksize = min(blocksize, (u32)(64 * 1024));
+		readahead(device->fd, multi->stripes[0].physical, blocksize);
 	}
 
-	length = blocksize;
-	ret = btrfs_map_block(&root->fs_info->mapping_tree, READ,
-			      bytenr, &length, &multi, 0, NULL);
-	BUG_ON(ret);
-	device = multi->stripes[0].dev;
-	device->total_ios++;
-	blocksize = min(blocksize, (u32)(64 * 1024));
-	readahead(device->fd, multi->stripes[0].physical, blocksize);
+	free_extent_buffer(eb);
 	kfree(multi);
-	return 0;
 }
 
 static int verify_parent_transid(struct extent_io_tree *io_tree,

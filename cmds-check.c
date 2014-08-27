@@ -1287,7 +1287,6 @@ static void reada_walk_down(struct btrfs_root *root,
 	u32 nritems;
 	u32 blocksize;
 	int i;
-	int ret;
 	int level;
 
 	level = btrfs_header_level(node);
@@ -1299,9 +1298,7 @@ static void reada_walk_down(struct btrfs_root *root,
 	for (i = slot; i < nritems; i++) {
 		bytenr = btrfs_node_blockptr(node, i);
 		ptr_gen = btrfs_node_ptr_generation(node, i);
-		ret = readahead_tree_block(root, bytenr, blocksize, ptr_gen);
-		if (ret)
-			break;
+		readahead_tree_block(root, bytenr, blocksize, ptr_gen);
 	}
 }
 
