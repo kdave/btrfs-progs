@@ -191,6 +191,7 @@ again:
 			level++;
 			if (level == BTRFS_MAX_LEVEL)
 				return 1;
+			offset = 1;
 			continue;
 		}
 
