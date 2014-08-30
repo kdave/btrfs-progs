@@ -57,9 +57,14 @@ btrfs_image_libs = -lpthread
 btrfs_fragments_libs = -lgd -lpng -ljpeg -lfreetype
 
 SUBDIRS =
-BUILDDIRS = $(patsubst %,build-%,$(SUBDIRS)) build-Documentation
-INSTALLDIRS = $(patsubst %,install-%,$(SUBDIRS)) install-Documentation
+BUILDDIRS = $(patsubst %,build-%,$(SUBDIRS))
+INSTALLDIRS = $(patsubst %,install-%,$(SUBDIRS))
 CLEANDIRS = $(patsubst %,clean-%,$(SUBDIRS))
+
+ifneq ($(DISABLE_DOCUMENTATION),1)
+BUILDDIRS += build-Documentation
+INSTALLDIRS += install-Documentation
+endif
 
 .PHONY: $(SUBDIRS)
 .PHONY: $(BUILDDIRS)
