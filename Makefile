@@ -50,6 +50,8 @@ progs = mkfs.btrfs btrfs-debug-tree btrfsck \
 	btrfs btrfs-map-logical btrfs-image btrfs-zero-log btrfs-convert \
 	btrfs-find-root btrfstune btrfs-show-super
 
+progs_static = $(foreach p,$(progs),$(p).static)
+
 # external libs required by various binaries; for btrfs-foo,
 # specify btrfs_foo_libs = <list of libs>; see $($(subst...)) rules below
 btrfs_convert_libs = -lext2fs -lcom_err
@@ -141,7 +143,7 @@ test:
 # NOTE: For static compiles, you need to have all the required libs
 # 	static equivalent available
 #
-static: btrfs.static mkfs.btrfs.static btrfs-find-root.static
+static: $(progs_static)
 
 version.h:
 	@echo "    [SH]     $@"
@@ -174,8 +176,8 @@ $(lib_links):
 btrfs-%.static: $(static_objects) btrfs-%.static.o $(static_libbtrfs_objects)
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(STATIC_CFLAGS) -o $@ $@.o $(static_objects) \
-		$(static_libbtrfs_objects) $(STATIC_LDFLAGS) $(STATIC_LIBS) \
-		$($(subst -,_,$(subst .static,,$@)-libs))
+		$(static_libbtrfs_objects) $(STATIC_LDFLAGS) \
+		$($(subst -,_,$(subst .static,,$@)-libs)) $(STATIC_LIBS)
 
 btrfs-%: $(objects) $(libs) btrfs-%.o
 	@echo "    [LD]     $@"
@@ -196,6 +198,10 @@ btrfsck: btrfs
 	@echo "    [LN]     $@"
 	$(Q)$(LN) -f btrfs btrfsck
 
+btrfsck.static: btrfs.static
+	@echo "    [LN]     $@"
+	$(Q)$(LN) -f $^ $@
+
 mkfs.btrfs: $(objects) $(libs) mkfs.o
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o mkfs.btrfs $(objects) mkfs.o $(LDFLAGS) $(LIBS)
@@ -208,6 +214,11 @@ mkfs.btrfs.static: $(static_objects) mkfs.static.o $(static_libbtrfs_objects)
 btrfstune: $(objects) $(libs) btrfstune.o
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o btrfstune $(objects) btrfstune.o $(LDFLAGS) $(LIBS)
+
+btrfstune.static: $(static_objects) btrfstune.static.o $(static_libbtrfs_objects)
+	@echo "    [LD]     $@"
+	$(Q)$(CC) $(STATIC_CFLAGS) -o $@ btrfstune.static.o $(static_objects) \
+		$(static_libbtrfs_objects) $(STATIC_LDFLAGS) $(STATIC_LIBS)
 
 dir-test: $(objects) $(libs) dir-test.o
 	@echo "    [LD]     $@"
@@ -257,6 +268,11 @@ install: $(libs) $(progs) $(INSTALLDIRS)
 	cp -a $(lib_links) $(DESTDIR)$(libdir)
 	$(INSTALL) -m755 -d $(DESTDIR)$(incdir)
 	$(INSTALL) -m644 $(headers) $(DESTDIR)$(incdir)
+
+install-static: $(progs_static) $(INSTALLDIRS)
+	for p in $(progs_static) ; do \
+		$(INSTALL) -D -m755 $$p $(DESTDIR)$(bindir)/`basename $$p .static` ; \
+	done
 
 $(INSTALLDIRS):
 	@echo "Making install in $(patsubst install-%,%,$@)"
