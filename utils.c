@@ -1297,35 +1297,38 @@ out:
 static const char* unit_suffix_binary[] =
 	{ "B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB"};
 static const char* unit_suffix_decimal[] =
-	{ "B", "KB", "MB", "GB", "TB", "PB", "EB"};
+	{ "B", "kB", "mB", "gB", "tB", "pB", "eB"};
 
-int pretty_size_snprintf(u64 size, char *str, size_t str_size, int unit_mode)
+int pretty_size_snprintf(u64 size, char *str, size_t str_size, unsigned unit_mode)
 {
 	int num_divs;
 	float fraction;
-	int base = 0;
+	u64 base = 0;
+	int mult = 0;
 	const char** suffix = NULL;
 	u64 last_size;
 
 	if (str_size == 0)
 		return 0;
 
-	if (unit_mode == UNITS_RAW) {
+	if ((unit_mode & ~UNITS_MODE_MASK) == UNITS_RAW) {
 		snprintf(str, str_size, "%llu", size);
 		return 0;
 	}
 
-	if (unit_mode == UNITS_BINARY) {
+	if ((unit_mode & ~UNITS_MODE_MASK) == UNITS_BINARY) {
 		base = 1024;
+		mult = 1024;
 		suffix = unit_suffix_binary;
-	} else if (unit_mode == UNITS_DECIMAL) {
+	} else if ((unit_mode & ~UNITS_MODE_MASK) == UNITS_DECIMAL) {
 		base = 1000;
+		mult = 1000;
 		suffix = unit_suffix_decimal;
 	}
 
 	/* Unknown mode */
 	if (!base) {
-		fprintf(stderr, "INTERNAL ERROR: unknown unit base, mode %d",
+		fprintf(stderr, "INTERNAL ERROR: unknown unit base, mode %d\n",
 				unit_mode);
 		assert(0);
 		return -1;
@@ -1333,11 +1336,22 @@ int pretty_size_snprintf(u64 size, char *str, size_t str_size, int unit_mode)
 
 	num_divs = 0;
 	last_size = size;
-
-	while (size >= base) {
-		last_size = size;
-		size /= base;
-		num_divs++;
+	switch (unit_mode & UNITS_MODE_MASK) {
+	case UNITS_TBYTES: base *= mult; num_divs++;
+	case UNITS_GBYTES: base *= mult; num_divs++;
+	case UNITS_MBYTES: base *= mult; num_divs++;
+	case UNITS_KBYTES: num_divs++;
+			   break;
+	case UNITS_BYTES:
+			   base = 1;
+			   num_divs = 0;
+			   break;
+	default:
+		while (size >= mult) {
+			last_size = size;
+			size /= mult;
+			num_divs++;
+		}
 	}
 
 	if (num_divs >= ARRAY_SIZE(unit_suffix_binary)) {
@@ -2376,4 +2390,18 @@ int test_isdir(const char *path)
 		return -1;
 
 	return S_ISDIR(st.st_mode);
+}
+
+void units_set_mode(unsigned *units, unsigned mode)
+{
+	unsigned base = *units & UNITS_MODE_MASK;
+
+	*units = base | mode;
+}
+
+void units_set_base(unsigned *units, unsigned base)
+{
+	unsigned mode = *units & ~UNITS_MODE_MASK;
+
+	*units = base | mode;
 }

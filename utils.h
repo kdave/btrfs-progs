@@ -48,12 +48,26 @@ void fixup_argv0(char **argv, const char *token);
 void set_argv0(char **argv);
 
 /*
- * Output mode of byte units
+ * Output modes of size
  */
-#define UNITS_RAW			(1)
-#define UNITS_BINARY			(2)
-#define UNITS_DECIMAL			(3)
-#define UNITS_HUMAN			UNITS_BINARY
+#define UNITS_RESERVED			(0)
+#define UNITS_BYTES			(1)
+#define UNITS_KBYTES			(2)
+#define UNITS_MBYTES			(3)
+#define UNITS_GBYTES			(4)
+#define UNITS_TBYTES			(5)
+#define UNITS_RAW			(1U << UNITS_MODE_SHIFT)
+#define UNITS_BINARY			(2U << UNITS_MODE_SHIFT)
+#define UNITS_DECIMAL			(3U << UNITS_MODE_SHIFT)
+#define UNITS_MODE_MASK			((1U << UNITS_MODE_SHIFT) - 1)
+#define UNITS_MODE_SHIFT		(8)
+#define UNITS_HUMAN_BINARY		(UNITS_BINARY)
+#define UNITS_HUMAN_DECIMAL		(UNITS_DECIMAL)
+#define UNITS_HUMAN			(UNITS_HUMAN_BINARY)
+#define UNITS_DEFAULT			(UNITS_HUMAN)
+
+void units_set_mode(unsigned *units, unsigned mode);
+void units_set_base(unsigned *units, unsigned base);
 
 int make_btrfs(int fd, const char *device, const char *label,
 	       char *fs_uuid, u64 blocks[6], u64 num_bytes, u32 nodesize,
@@ -76,12 +90,12 @@ int check_mounted_where(int fd, const char *file, char *where, int size,
 int btrfs_device_already_in_root(struct btrfs_root *root, int fd,
 				 int super_offset);
 
-int pretty_size_snprintf(u64 size, char *str, size_t str_bytes, int unit_mode);
-#define pretty_size(size) 	pretty_size_mode(size, UNITS_BINARY)
+int pretty_size_snprintf(u64 size, char *str, size_t str_bytes, unsigned unit_mode);
+#define pretty_size(size) 	pretty_size_mode(size, UNITS_DEFAULT)
 #define pretty_size_mode(size, mode) 					      \
 	({								      \
 		static __thread char _str[32];				      \
-		(void)pretty_size_snprintf((size), _str, sizeof(_str), mode); \
+		(void)pretty_size_snprintf((size), _str, sizeof(_str), (mode)); \
 		_str;							      \
 	})
 

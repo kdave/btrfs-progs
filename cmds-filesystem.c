@@ -113,9 +113,18 @@ static const char * const filesystem_cmd_group_usage[] = {
 };
 
 static const char * const cmd_df_usage[] = {
-	"btrfs filesystem df <path>",
-	"Show space usage information for a mount point",
-	NULL
+       "btrfs filesystem df [options] <path>",
+       "Show space usage information for a mount point",
+	"-b|--raw           raw numbers in bytes",
+	"-h                 human friendly numbers, base 1024 (default)",
+	"-H                 human friendly numbers, base 1000",
+	"--iec              use 1024 as a base (KiB, MiB, GiB, TiB)",
+	"--si               use 1000 as a base (kB, mB, gB, tB)",
+	"-k|--kbytes        show sizes in KiB, or kB with --si",
+	"-m|--mbytes        show sizes in MiB, or mB with --si",
+	"-g|--gbytes        show sizes in GiB, or gB with --si",
+	"-t|--tbytes        show sizes in TiB, or tB with --si",
+       NULL
 };
 
 static char *group_type_str(u64 flag)
@@ -209,7 +218,7 @@ static int get_df(int fd, struct btrfs_ioctl_space_args **sargs_ret)
 	return 0;
 }
 
-static void print_df(struct btrfs_ioctl_space_args *sargs)
+static void print_df(struct btrfs_ioctl_space_args *sargs, unsigned unit_mode)
 {
 	u64 i;
 	struct btrfs_ioctl_space_info *sp = sargs->spaces;
@@ -218,8 +227,8 @@ static void print_df(struct btrfs_ioctl_space_args *sargs)
 		printf("%s, %s: total=%s, used=%s\n",
 			group_type_str(sp->flags),
 			group_profile_str(sp->flags),
-			pretty_size(sp->total_bytes),
-			pretty_size(sp->used_bytes));
+			pretty_size_mode(sp->total_bytes, unit_mode),
+			pretty_size_mode(sp->used_bytes, unit_mode));
 	}
 }
 
@@ -229,12 +238,62 @@ static int cmd_df(int argc, char **argv)
 	int ret;
 	int fd;
 	char *path;
-	DIR  *dirstream = NULL;
+	DIR *dirstream = NULL;
+	unsigned unit_mode = UNITS_DEFAULT;
 
-	if (check_argc_exact(argc, 2))
+	optind = 1;
+	while (1) {
+		int long_index;
+		static const struct option long_options[] = {
+			{ "raw", no_argument, NULL, 'b'},
+			{ "kbytes", no_argument, NULL, 'k'},
+			{ "mbytes", no_argument, NULL, 'm'},
+			{ "gbytes", no_argument, NULL, 'g'},
+			{ "tbytes", no_argument, NULL, 't'},
+			{ "si", no_argument, NULL, 256},
+			{ "iec", no_argument, NULL, 257},
+		};
+		int c = getopt_long(argc, argv, "bhHkmgt", long_options,
+					&long_index);
+		if (c < 0)
+			break;
+		switch (c) {
+		case 'b':
+			unit_mode = UNITS_RAW;
+			break;
+		case 'k':
+			units_set_base(&unit_mode, UNITS_KBYTES);
+			break;
+		case 'm':
+			units_set_base(&unit_mode, UNITS_MBYTES);
+			break;
+		case 'g':
+			units_set_base(&unit_mode, UNITS_GBYTES);
+			break;
+		case 't':
+			units_set_base(&unit_mode, UNITS_TBYTES);
+			break;
+		case 'h':
+			unit_mode = UNITS_HUMAN_BINARY;
+			break;
+		case 'H':
+			unit_mode = UNITS_HUMAN_DECIMAL;
+			break;
+		case 256:
+			units_set_mode(&unit_mode, UNITS_DECIMAL);
+			break;
+		case 257:
+			units_set_mode(&unit_mode, UNITS_BINARY);
+			break;
+		default:
+			usage(cmd_df_usage);
+		}
+	}
+
+	if (check_argc_max(argc, optind + 1))
 		usage(cmd_df_usage);
 
-	path = argv[1];
+	path = argv[optind];
 
 	fd = open_file_or_dir(path, &dirstream);
 	if (fd < 0) {
@@ -244,7 +303,7 @@ static int cmd_df(int argc, char **argv)
 	ret = get_df(fd, &sargs);
 
 	if (ret == 0) {
-		print_df(sargs);
+		print_df(sargs, unit_mode);
 		free(sargs);
 	} else {
 		fprintf(stderr, "ERROR: get_df failed %s\n", strerror(-ret));
