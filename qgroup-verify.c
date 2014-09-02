@@ -63,9 +63,9 @@ struct rb_root by_bytenr = RB_ROOT;
  * finding roots to account against.
  *
  * An implied ref is when a tree block has refs on it that may not
- * exist in any of it's child nodes. Even though the refs might not
+ * exist in any of its child nodes. Even though the refs might not
  * exist further down the tree, the fact that our interior node has a
- * ref means we need to account anything below it to all it's roots.
+ * ref means we need to account anything below it to all its roots.
  */
 struct ulist *tree_blocks = NULL;	/* unode->val = bytenr, ->aux
 					 * = tree_block pointer */

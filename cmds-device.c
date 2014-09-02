@@ -295,7 +295,7 @@ out:
 
 static const char * const cmd_ready_dev_usage[] = {
 	"btrfs device ready <device>",
-	"Check device to see if it has all of it's devices in cache for mounting",
+	"Check device to see if it has all of its devices in cache for mounting",
 	NULL
 };
 

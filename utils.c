@@ -2304,7 +2304,7 @@ int ask_user(char *question)
 /*
  * For a given:
  * - file or directory return the containing tree root id
- * - subvolume return it's own tree id
+ * - subvolume return its own tree id
  * - BTRFS_EMPTY_SUBVOL_DIR_OBJECTID (directory with ino == 2) the result is
  *   undefined and function returns -1
  */

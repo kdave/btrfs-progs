@@ -1643,7 +1643,7 @@ err:
 }
 
 /*
- * Migrate super block to it's default position and zero 0 ~ 16k
+ * Migrate super block to its default position and zero 0 ~ 16k
  */
 static int migrate_super_block(int fd, u64 old_bytenr, u32 sectorsize)
 {
