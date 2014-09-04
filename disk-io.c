@@ -628,7 +628,6 @@ struct btrfs_root *btrfs_read_fs_root_no_cache(struct btrfs_fs_info *fs_info,
 	memcpy(&root->root_key, location, sizeof(*location));
 	ret = 0;
 out:
-	btrfs_release_path(path);
 	btrfs_free_path(path);
 	if (ret) {
 		free(root);

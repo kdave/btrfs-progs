@@ -306,7 +306,6 @@ found:
 			    csum_size);
 	btrfs_mark_buffer_dirty(path->nodes[0]);
 fail:
-	btrfs_release_path(path);
 	btrfs_free_path(path);
 	return ret;
 }

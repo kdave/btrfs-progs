@@ -90,12 +90,10 @@ int btrfs_find_free_objectid(struct btrfs_trans_handle *trans,
 	// FIXME -ENOSPC
 found:
 	root->last_inode_alloc = *objectid;
-	btrfs_release_path(path);
 	btrfs_free_path(path);
 	BUG_ON(*objectid < search_start);
 	return 0;
 error:
-	btrfs_release_path(path);
 	btrfs_free_path(path);
 	return ret;
 }
