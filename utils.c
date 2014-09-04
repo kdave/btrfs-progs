@@ -2359,8 +2359,8 @@ int find_mount_root(const char *path, char **mount_root)
 	while ((ent = getmntent(mnttab))) {
 		len = strlen(ent->mnt_dir);
 		if (strncmp(ent->mnt_dir, path, len) == 0) {
-			/* match found */
-			if (longest_matchlen < len) {
+			/* match found and use the latest match */
+			if (longest_matchlen <= len) {
 				free(longest_match);
 				longest_matchlen = len;
 				longest_match = strdup(ent->mnt_dir);
