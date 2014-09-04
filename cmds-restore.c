@@ -1229,7 +1229,6 @@ int cmd_restore(int argc, char **argv)
 		}
 	}
 
-	set_argv0(argv);
 	if (!list_roots && check_argc_min(argc - optind, 2))
 		usage(cmd_restore_usage);
 	else if (list_roots && check_argc_min(argc - optind, 1))
