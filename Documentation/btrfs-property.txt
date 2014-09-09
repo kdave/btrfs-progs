@@ -64,4 +64,4 @@ SEE ALSO
 --------
 `mkfs.btrfs`(8),
 `lsattr`(1),
-`setattr`(8)
+`chattr`(1)
