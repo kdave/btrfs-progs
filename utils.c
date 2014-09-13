@@ -1186,7 +1186,8 @@ int check_mounted_where(int fd, const char *file, char *where, int size,
 
 	/* scan other devices */
 	if (is_btrfs && total_devs > 1) {
-		if ((ret = scan_for_btrfs(BTRFS_SCAN_PROC, !BTRFS_UPDATE_KERNEL)))
+		ret = btrfs_scan_lblkid(!BTRFS_UPDATE_KERNEL);
+		if (ret)
 			return ret;
 	}
 
@@ -2158,9 +2159,6 @@ int scan_for_btrfs(int where, int update_kernel)
 	int ret = 0;
 
 	switch (where) {
-	case BTRFS_SCAN_PROC:
-		ret = btrfs_scan_block_devices(update_kernel);
-		break;
 	case BTRFS_SCAN_LBLKID:
 		ret = btrfs_scan_lblkid(update_kernel);
 		break;

@@ -199,13 +199,13 @@ static int cmd_rm_dev(int argc, char **argv)
 static const char * const cmd_scan_dev_usage[] = {
 	"btrfs device scan [(-d|--all-devices)|<device> [<device>...]]",
 	"Scan devices for a btrfs filesystem",
+	" -d|--all-devices (deprecated)",
 	NULL
 };
 
 static int cmd_scan_dev(int argc, char **argv)
 {
 	int i, fd, e;
-	int where = BTRFS_SCAN_LBLKID;
 	int devstart = 1;
 	int all = 0;
 	int ret = 0;
@@ -223,7 +223,6 @@ static int cmd_scan_dev(int argc, char **argv)
 			break;
 		switch (c) {
 		case 'd':
-			where = BTRFS_SCAN_PROC;
 			all = 1;
 			break;
 		default:
@@ -236,7 +235,7 @@ static int cmd_scan_dev(int argc, char **argv)
 
 	if (all || argc == 1) {
 		printf("Scanning for Btrfs filesystems\n");
-		ret = scan_for_btrfs(where, BTRFS_UPDATE_KERNEL);
+		ret = btrfs_scan_lblkid(BTRFS_UPDATE_KERNEL);
 		if (ret)
 			fprintf(stderr, "ERROR: error %d while scanning\n", ret);
 		goto out;

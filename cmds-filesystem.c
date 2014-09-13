@@ -547,7 +547,8 @@ static int cmd_show(int argc, char **argv)
 	struct list_head *cur_uuid;
 	char *search = NULL;
 	int ret;
-	int where = BTRFS_SCAN_LBLKID;
+	/* default, search both kernel and udev */
+	int where = -1;
 	int type = 0;
 	char mp[BTRFS_PATH_NAME_MAX + 1];
 	char path[PATH_MAX];
@@ -568,7 +569,7 @@ static int cmd_show(int argc, char **argv)
 			break;
 		switch (c) {
 		case 'd':
-			where = BTRFS_SCAN_PROC;
+			where = BTRFS_SCAN_LBLKID;
 			break;
 		case 'm':
 			where = BTRFS_SCAN_MOUNTED;
@@ -592,7 +593,7 @@ static int cmd_show(int argc, char **argv)
 		 * right away
 		 */
 		if (type == BTRFS_ARG_BLKDEV) {
-			if (where == BTRFS_SCAN_PROC) {
+			if (where == BTRFS_SCAN_LBLKID) {
 				/* we need to do this because
 				 * legacy BTRFS_SCAN_DEV
 				 * provides /dev/dm-x paths
@@ -623,7 +624,7 @@ static int cmd_show(int argc, char **argv)
 		}
 	}
 
-	if (where == BTRFS_SCAN_PROC)
+	if (where == BTRFS_SCAN_LBLKID)
 		goto devs_only;
 
 	/* show mounted btrfs */
@@ -638,7 +639,7 @@ static int cmd_show(int argc, char **argv)
 		goto out;
 
 devs_only:
-	ret = scan_for_btrfs(where, !BTRFS_UPDATE_KERNEL);
+	ret = btrfs_scan_lblkid(!BTRFS_UPDATE_KERNEL);
 
 	if (ret) {
 		fprintf(stderr, "ERROR: %d while scanning\n", ret);
