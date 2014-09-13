@@ -2151,21 +2151,6 @@ int btrfs_scan_lblkid(int update_kernel)
 	return 0;
 }
 
-/*
- * scans devs for the btrfs
-*/
-int scan_for_btrfs(int where, int update_kernel)
-{
-	int ret = 0;
-
-	switch (where) {
-	case BTRFS_SCAN_LBLKID:
-		ret = btrfs_scan_lblkid(update_kernel);
-		break;
-	}
-	return ret;
-}
-
 int is_vol_small(char *file)
 {
 	int fd = -1;
