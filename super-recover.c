@@ -69,20 +69,10 @@ void init_recover_superblock(struct btrfs_recover_superblock *recover)
 static
 void free_recover_superblock(struct btrfs_recover_superblock *recover)
 {
-	struct btrfs_device *device;
 	struct super_block_record *record;
 
 	if (!recover->fs_devices)
 		return;
-
-	while (!list_empty(&recover->fs_devices->devices)) {
-		device = list_entry(recover->fs_devices->devices.next,
-				struct btrfs_device, dev_list);
-		list_del_init(&device->dev_list);
-		free(device->name);
-		free(device);
-	}
-	free(recover->fs_devices);
 
 	while (!list_empty(&recover->good_supers)) {
 		record = list_entry(recover->good_supers.next,
@@ -341,6 +331,9 @@ int btrfs_recover_superblocks(const char *dname,
 no_recover:
 	recover_err_str(ret);
 	free_recover_superblock(&recover);
+	/* check if we have freed fs_deivces in close_ctree() */
+	if (!root)
+		btrfs_close_devices(recover.fs_devices);
 	return ret;
 }
 
