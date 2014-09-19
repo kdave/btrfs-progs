@@ -100,7 +100,7 @@ Reset stats to zero after reading them.
 
 EXIT STATUS
 -----------
-*btrfs device* returns a zero exist status if it succeeds. Non zero is
+*btrfs device* returns a zero exit status if it succeeds. Non zero is
 returned in case of failure.
 
 AVAILABILITY

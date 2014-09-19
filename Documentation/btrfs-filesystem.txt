@@ -102,7 +102,7 @@ NOTE: the maximum allowable length shall be less than 256 chars
 
 EXIT STATUS
 -----------
-*btrfs filesystem* returns a zero exist status if it succeeds. Non zero is
+*btrfs filesystem* returns a zero exit status if it succeeds. Non zero is
 returned in case of failure.
 
 AVAILABILITY

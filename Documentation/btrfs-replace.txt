@@ -66,7 +66,7 @@ Cancel a running device replace operation.
 
 EXIT STATUS
 -----------
-*btrfs replace* returns a zero exist status if it succeeds. Non zero is
+*btrfs replace* returns a zero exit status if it succeeds. Non zero is
 returned in case of failure.
 
 AVAILABILITY

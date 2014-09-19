@@ -155,7 +155,7 @@ Show information of a given subvolume in the <path>.
 
 EXIT STATUS
 -----------
-*btrfs subvolume* returns a zero exist status if it succeeds. Non zero is
+*btrfs subvolume* returns a zero exit status if it succeeds. Non zero is
 returned in case of failure.
 
 AVAILABILITY

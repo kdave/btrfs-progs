@@ -43,7 +43,7 @@ An alternative would be to use pipes.
 
 EXIT STATUS
 -----------
-*btrfs send* returns a zero exist status if it succeeds. Non zero is
+*btrfs send* returns a zero exit status if it succeeds. Non zero is
 returned in case of failure.
 
 AVAILABILITY

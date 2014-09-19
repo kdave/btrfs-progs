@@ -41,7 +41,7 @@ wait for rescan operation to finish(can be already in progress).
 
 EXIT STATUS
 -----------
-*btrfs quota* returns a zero exist status if it succeeds. Non zero is
+*btrfs quota* returns a zero exit status if it succeeds. Non zero is
 returned in case of failure.
 
 AVAILABILITY

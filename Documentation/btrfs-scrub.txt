@@ -82,7 +82,7 @@ Print separate statistics for each device of the filesystem.
 
 EXIT STATUS
 -----------
-*btrfs scrub* returns a zero exist status if it succeeds. Non zero is
+*btrfs scrub* returns a zero exit status if it succeeds. Non zero is
 returned in case of failure.
 
 AVAILABILITY

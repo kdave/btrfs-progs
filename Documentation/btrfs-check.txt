@@ -35,7 +35,7 @@ verify checkums of data blocks.
 
 EXIT STATUS
 -----------
-*btrfs check* returns a zero exist status if it succeeds. Non zero is
+*btrfs check* returns a zero exit status if it succeeds. Non zero is
 returned in case of failure.
 
 AVAILABILITY

@@ -68,7 +68,7 @@ ignore case (--path-regrex only).
 
 EXIT STATUS
 -----------
-*btrfs restore* returns a zero exist status if it succeeds. Non zero is
+*btrfs restore* returns a zero exit status if it succeeds. Non zero is
 returned in case of failure.
 
 AVAILABILITY

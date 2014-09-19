@@ -42,7 +42,7 @@ verbose mode.
 
 EXIT STATUS
 -----------
-*btrfs rescue* returns a zero exist status if it succeeds. Non zero is
+*btrfs rescue* returns a zero exit status if it succeeds. Non zero is
 returned in case of failure.
 
 AVAILABILITY

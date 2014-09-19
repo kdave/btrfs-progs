@@ -52,7 +52,7 @@ The result is undefined for the so-called empty subvolumes (identified by inode 
 
 EXIT STATUS
 -----------
-*btrfs inspect-internal* returns a zero exist status if it succeeds. Non zero is
+*btrfs inspect-internal* returns a zero exit status if it succeeds. Non zero is
 returned in case of failure.
 
 AVAILABILITY
