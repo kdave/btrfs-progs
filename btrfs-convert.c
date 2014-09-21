@@ -2441,7 +2441,7 @@ static int do_rollback(const char *devname)
 	ext2_root = btrfs_read_fs_root(root->fs_info, &key);
 	if (!ext2_root || IS_ERR(ext2_root)) {
 		fprintf(stderr, "unable to open subvol %llu\n",
-			key.objectid);
+			(unsigned long long)key.objectid);
 		goto fail;
 	}
 
