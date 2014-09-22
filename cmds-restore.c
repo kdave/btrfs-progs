@@ -111,6 +111,8 @@ static int decompress_lzo(unsigned char *inbuf, char *outbuf, u64 compress_len,
 	tot_in = LZO_LEN;
 
 	while (tot_in < tot_len) {
+		size_t mod_page;
+		size_t rem_page;
 		in_len = read_compress_length(inbuf);
 
 		if ((tot_in + LZO_LEN + in_len) > tot_len) {
@@ -134,6 +136,17 @@ static int decompress_lzo(unsigned char *inbuf, char *outbuf, u64 compress_len,
 		outbuf += new_len;
 		inbuf += in_len;
 		tot_in += in_len;
+
+		/*
+		 * If the 4 byte header does not fit to the rest of the page we
+		 * have to move to the next one, unless we read some garbage
+		 */
+		mod_page = tot_in % PAGE_CACHE_SIZE;
+		rem_page = PAGE_CACHE_SIZE - mod_page;
+		if (rem_page < LZO_LEN) {
+			inbuf += rem_page;
+			tot_in += rem_page;
+		}
 	}
 
 	*decompress_len = out_len;
