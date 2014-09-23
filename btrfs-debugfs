@@ -1,0 +1,296 @@
+#!/usr/bin/env python2
+#
+# Simple python program to print out all the extents of a single file
+# LGPLv2 license
+# Copyright Facebook 2014
+
+import sys,os,struct,fcntl,ctypes,stat
+
+# helpers for max ints
+maxu64 = (1L << 64) - 1
+maxu32 = (1L << 32) - 1
+
+# the inode (like form stat)
+BTRFS_INODE_ITEM_KEY = 1
+# backref to the directory
+BTRFS_INODE_REF_KEY = 12
+# backref to the directory v2
+BTRFS_INODE_EXTREF_KEY = 13
+# xattr items
+BTRFS_XATTR_ITEM_KEY = 24
+# orphans for list files
+BTRFS_ORPHAN_ITEM_KEY = 48
+# treelog items for dirs
+BTRFS_DIR_LOG_ITEM_KEY = 60
+BTRFS_DIR_LOG_INDEX_KEY = 72
+# dir items and dir indexes both hold filenames
+BTRFS_DIR_ITEM_KEY = 84
+BTRFS_DIR_INDEX_KEY = 96
+# these are the file extent pointers
+BTRFS_EXTENT_DATA_KEY = 108
+# csums
+BTRFS_EXTENT_CSUM_KEY = 128
+# root item for subvols and snapshots
+BTRFS_ROOT_ITEM_KEY = 132
+# root item backrefs
+BTRFS_ROOT_BACKREF_KEY = 144
+BTRFS_ROOT_REF_KEY = 156
+# each allocated extent has an extent item
+BTRFS_EXTENT_ITEM_KEY = 168
+# optimized extents for metadata only
+BTRFS_METADATA_ITEM_KEY = 169
+# backrefs for extents
+BTRFS_TREE_BLOCK_REF_KEY = 176
+BTRFS_EXTENT_DATA_REF_KEY = 178
+BTRFS_EXTENT_REF_V0_KEY = 180
+BTRFS_SHARED_BLOCK_REF_KEY = 182
+BTRFS_SHARED_DATA_REF_KEY = 184
+# one of these for each block group
+BTRFS_BLOCK_GROUP_ITEM_KEY = 192
+# dev extents records which part of each device is allocated
+BTRFS_DEV_EXTENT_KEY = 204
+# dev items describe devs
+BTRFS_DEV_ITEM_KEY = 216
+# one for each chunk
+BTRFS_CHUNK_ITEM_KEY = 228
+# qgroup info
+BTRFS_QGROUP_STATUS_KEY = 240
+BTRFS_QGROUP_INFO_KEY = 242
+BTRFS_QGROUP_LIMIT_KEY = 244
+BTRFS_QGROUP_RELATION_KEY = 246
+# records balance progress
+BTRFS_BALANCE_ITEM_KEY = 248
+# stats on device errors
+BTRFS_DEV_STATS_KEY = 249
+BTRFS_DEV_REPLACE_KEY = 250
+BTRFS_STRING_ITEM_KEY = 253
+
+# in the kernel sources, this is flattened
+# btrfs_ioctl_search_args_v2.  It includes both the btrfs_ioctl_search_key
+# and the buffer.  We're using a 64K buffer size.
+#
+args_buffer_size = 65536
+class btrfs_ioctl_search_args(ctypes.Structure):
+    _pack_ = 1
+    _fields_ = [ ("tree_id", ctypes.c_ulonglong),
+                 ("min_objectid", ctypes.c_ulonglong),
+                 ("max_objectid", ctypes.c_ulonglong),
+                 ("min_offset", ctypes.c_ulonglong),
+                 ("max_offset", ctypes.c_ulonglong),
+                 ("min_transid", ctypes.c_ulonglong),
+                 ("max_transid", ctypes.c_ulonglong),
+                 ("min_type", ctypes.c_uint),
+                 ("max_type", ctypes.c_uint),
+                 ("nr_items", ctypes.c_uint),
+                 ("unused", ctypes.c_uint),
+                 ("unused1", ctypes.c_ulonglong),
+                 ("unused2", ctypes.c_ulonglong),
+                 ("unused3", ctypes.c_ulonglong),
+                 ("unused4", ctypes.c_ulonglong),
+                 ("buf_size", ctypes.c_ulonglong),
+                 ("buf", ctypes.c_ubyte * args_buffer_size),
+               ]
+
+# the search ioctl resturns one header for each item
+#
+class btrfs_ioctl_search_header(ctypes.Structure):
+    _pack_ = 1
+    _fields_ = [ ("transid", ctypes.c_ulonglong),
+                 ("objectid", ctypes.c_ulonglong),
+                 ("offset", ctypes.c_ulonglong),
+                 ("type", ctypes.c_uint),
+                 ("len", ctypes.c_uint),
+               ]
+
+# the type field in btrfs_file_extent_item
+BTRFS_FILE_EXTENT_INLINE = 0
+BTRFS_FILE_EXTENT_REG = 1
+BTRFS_FILE_EXTENT_PREALLOC = 2
+
+class btrfs_file_extent_item(ctypes.LittleEndianStructure):
+    _pack_ = 1
+    _fields_ = [ ("generation", ctypes.c_ulonglong),
+                 ("ram_bytes", ctypes.c_ulonglong),
+                 ("compression", ctypes.c_ubyte),
+                 ("encryption", ctypes.c_ubyte),
+                 ("other_encoding", ctypes.c_ubyte * 2),
+                 ("type", ctypes.c_ubyte),
+                 ("disk_bytenr", ctypes.c_ulonglong),
+                 ("disk_num_bytes", ctypes.c_ulonglong),
+                 ("offset", ctypes.c_ulonglong),
+                 ("num_bytes", ctypes.c_ulonglong),
+               ]
+
+class btrfs_ioctl_search():
+    def __init__(self):
+        self.args = btrfs_ioctl_search_args()
+        self.args.tree_id = 0
+        self.args.min_objectid = 0
+        self.args.max_objectid = maxu64
+        self.args.min_offset = 0
+        self.args.max_offset = maxu64
+        self.args.min_transid = 0
+        self.args.max_transid = maxu64
+        self.args.min_type = 0
+        self.args.max_type = maxu32
+        self.args.nr_items = 0
+        self.args.buf_size = args_buffer_size
+
+        # magic encoded for x86_64 this is the v2 search ioctl
+        self.ioctl_num = 3228603409L
+
+    # the results of the search get stored into args.buf
+    def search(self, fd, nritems=65536):
+        self.args.nr_items = nritems
+        fcntl.ioctl(fd, self.ioctl_num, self.args, 1)
+
+# this moves the search key forward by one.  If the end result is
+# still a valid search key (all mins less than all maxes), we return
+# True.  Otherwise False
+#
+def advance_search(search):
+    if search.args.min_offset < maxu64:
+        search.args.min_offset += 1
+    elif search.args.min_type < 255:
+        search.args.min_type += 1
+    elif search.args.min_objectid < maxu64:
+        search.args.min_objectid += 1
+    else:
+        return False
+
+    if search.args.min_offset > search.args.max_offset:
+        return False
+    if search.args.min_type > search.args.max_type:
+        return False
+    if search.args.min_objectid > search.args.max_objectid:
+        return False
+
+    return True
+
+# given one search_header and one file_item, print the details.  This
+# also tosses the [disk_bytenr,disk_num_bytes] into extent_hash to record
+# which extents were used by this file
+#
+def print_one_extent(header, fi, extent_hash):
+    # we're ignoring inline items for now
+    if fi.type == BTRFS_FILE_EXTENT_INLINE:
+        # header.len is the length of the item returned.  We subtract
+        # the part of the file item header that is actually used (21 bytes)
+        # and we get the length of the inlined data.
+        # this may or may not be compressed
+        inline_len = header.len - 21
+        if fi.compression:
+            ram_bytes = fi.ram_bytes
+        else:
+            ram_bytes = inline_len
+        print "(%Lu %Lu): ram %Lu disk 0 disk_size %Lu -- inline" % \
+               (header.objectid, header.offset, ram_bytes, inline_len)
+        extent_hash[-1] = inline_len
+        return
+
+    if fi.disk_bytenr == 0:
+        tag = " -- hole"
+    else:
+        tag = ""
+    print "(%Lu %Lu): ram %Lu disk %Lu disk_size %Lu%s" % (header.objectid,
+           header.offset, fi.num_bytes, fi.disk_bytenr, fi.disk_num_bytes, tag)
+
+    if fi.disk_bytenr:
+        extent_hash[fi.disk_bytenr] = fi.disk_num_bytes
+
+# open 'filename' and run the search ioctl against it, printing all the extents
+# we find
+def print_file_extents(filename):
+    extent_hash = {}
+
+    s = btrfs_ioctl_search()
+    s.args.min_type = BTRFS_EXTENT_DATA_KEY
+    s.args.max_type = BTRFS_EXTENT_DATA_KEY
+
+    try:
+        fd = os.open(filename, os.O_RDONLY)
+        st = os.fstat(fd)
+    except Exception, e:
+        sys.stderr.write("Failed to open %s (%s)\n" % (filename, e))
+        return -1
+
+    if not stat.S_ISREG(st.st_mode):
+        sys.stderr.write("%s not a regular file\n" % filename)
+        return 0
+
+    s.args.min_objectid = st.st_ino
+    s.args.max_objectid = st.st_ino
+
+    size = st.st_size
+
+    while True:
+        try:
+            s.search(fd)
+        except Exception, e:
+            sys.stderr.write("Search ioctl failed for %s (%s)\n" % (filename, e))
+            return -1
+
+        if s.args.nr_items == 0:
+            break
+
+        # p is the results buffer from the kernel
+        p = ctypes.addressof(s.args.buf)
+        header = btrfs_ioctl_search_header()
+        header_size = ctypes.sizeof(header)
+        h = ctypes.addressof(header)
+        p_left = args_buffer_size
+
+        for x in xrange(0, s.args.nr_items):
+            # for each item, copy the header from the buffer into
+            # our header struct.
+            ctypes.memmove(h, p, header_size)
+            p += header_size
+            p_left -= header_size
+
+            # this would be a kernel bug it shouldn't be sending malformed
+            # items
+            if p_left <= 0:
+                break
+
+            if header.type == BTRFS_EXTENT_DATA_KEY:
+                fi = btrfs_file_extent_item()
+
+                # this would also be a kernel bug
+                if p_left < ctypes.sizeof(fi):
+                    break
+
+                # Copy the file item out of the results buffer
+                ctypes.memmove(ctypes.addressof(fi), p, ctypes.sizeof(fi))
+                print_one_extent(header, fi, extent_hash)
+
+            p += header.len
+            p_left -= header.len
+            if p_left <= 0:
+                break
+
+            s.args.min_offset = header.offset
+
+        if not advance_search(s):
+            break
+
+    total_on_disk = 0
+    total_extents = 0
+    for x in extent_hash.itervalues():
+        total_on_disk += x
+        total_extents += 1
+
+    # don't divide by zero
+    if total_on_disk == 0:
+        total_on_disk = 1
+
+    print "file: %s extents %Lu disk size %Lu logical size %Lu ratio %.2f" % \
+          (filename, total_extents, total_on_disk, st.st_size,
+          float(st.st_size) / float(total_on_disk))
+    return 0
+
+if len(sys.argv) == 1:
+    sys.stderr.write("Usage: btrfs-debug filename ...\n")
+    sys.exit(1)
+
+for f in sys.argv[1:]:
+    print_file_extents(f)
