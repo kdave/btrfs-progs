@@ -7034,6 +7034,7 @@ int cmd_check(int argc, char **argv)
 
 		eb = list_first_entry(&root->fs_info->recow_ebs,
 				      struct extent_buffer, recow);
+		list_del_init(&eb->recow);
 		ret = recow_extent_buffer(root, eb);
 		if (ret)
 			break;
