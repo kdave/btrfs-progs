@@ -285,6 +285,58 @@ static void print_backup_roots(struct btrfs_super_block *sb)
 	}
 }
 
+struct readable_flag_entry {
+	u64 bit;
+	char *output;
+};
+
+#define DEF_INCOMPAT_FLAG_ENTRY(bit_name)		\
+	{BTRFS_FEATURE_INCOMPAT_##bit_name, #bit_name}
+
+struct readable_flag_entry incompat_flags_array[] = {
+	DEF_INCOMPAT_FLAG_ENTRY(MIXED_BACKREF),
+	DEF_INCOMPAT_FLAG_ENTRY(DEFAULT_SUBVOL),
+	DEF_INCOMPAT_FLAG_ENTRY(MIXED_GROUPS),
+	DEF_INCOMPAT_FLAG_ENTRY(COMPRESS_LZO),
+	DEF_INCOMPAT_FLAG_ENTRY(COMPRESS_LZOv2),
+	DEF_INCOMPAT_FLAG_ENTRY(BIG_METADATA),
+	DEF_INCOMPAT_FLAG_ENTRY(EXTENDED_IREF),
+	DEF_INCOMPAT_FLAG_ENTRY(RAID56),
+	DEF_INCOMPAT_FLAG_ENTRY(SKINNY_METADATA),
+	DEF_INCOMPAT_FLAG_ENTRY(NO_HOLES)
+};
+static const int incompat_flags_num = sizeof(incompat_flags_array) /
+				      sizeof(struct readable_flag_entry);
+
+static void print_readable_incompat_flag(u64 flag)
+{
+	int i;
+	int first = 1;
+	struct readable_flag_entry *entry;
+
+	if (!flag)
+		return;
+	printf("\t\t\t( ");
+	for (i = 0; i < incompat_flags_num; i++) {
+		entry = incompat_flags_array + i;
+		if (flag & entry->bit) {
+			if (first)
+				printf("%s ", entry->output);
+			else
+				printf("|\n\t\t\t  %s ", entry->output);
+		}
+		first = 0;
+	}
+	flag &= ~BTRFS_FEATURE_INCOMPAT_SUPP;
+	if (flag) {
+		if (first)
+			printf("unknown flag: 0x%llx ", flag);
+		else
+			printf("|\n\t\t\t  unknown flag: 0x%llx ", flag);
+	}
+	printf(")\n");
+}
+
 static void dump_superblock(struct btrfs_super_block *sb, int full)
 {
 	int i;
@@ -364,6 +416,7 @@ static void dump_superblock(struct btrfs_super_block *sb, int full)
 	       (unsigned long long)btrfs_super_compat_ro_flags(sb));
 	printf("incompat_flags\t\t0x%llx\n",
 	       (unsigned long long)btrfs_super_incompat_flags(sb));
+	print_readable_incompat_flag(btrfs_super_incompat_flags(sb));
 	printf("csum_type\t\t%llu\n",
 	       (unsigned long long)btrfs_super_csum_type(sb));
 	printf("csum_size\t\t%llu\n",
