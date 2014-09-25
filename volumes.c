@@ -1136,8 +1136,20 @@ int btrfs_num_copies(struct btrfs_mapping_tree *map_tree, u64 logical, u64 len)
 	int ret;
 
 	ce = search_cache_extent(&map_tree->cache_tree, logical);
-	BUG_ON(!ce);
-	BUG_ON(ce->start > logical || ce->start + ce->size < logical);
+	if (!ce) {
+		fprintf(stderr, "No mapping for %llu-%llu\n",
+			(unsigned long long)logical,
+			(unsigned long long)logical+len);
+		return 1;
+	}
+	if (ce->start > logical || ce->start + ce->size < logical) {
+		fprintf(stderr, "Invalid mapping for %llu-%llu, got "
+			"%llu-%llu\n", (unsigned long long)logical,
+			(unsigned long long)logical+len,
+			(unsigned long long)ce->start,
+			(unsigned long long)ce->start + ce->size);
+		return 1;
+	}
 	map = container_of(ce, struct map_lookup, ce);
 
 	if (map->type & (BTRFS_BLOCK_GROUP_DUP | BTRFS_BLOCK_GROUP_RAID1))
