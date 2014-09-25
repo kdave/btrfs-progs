@@ -29,6 +29,7 @@
 #include <stddef.h>
 #include <linux/types.h>
 #include <stdint.h>
+#include <execinfo.h>
 
 #define ptr_to_u64(x)	((u64)(uintptr_t)x)
 #define u64_to_ptr(x)	((void *)(uintptr_t)x)
@@ -54,7 +55,33 @@
 #define ULONG_MAX       (~0UL)
 #endif
 
-#define BUG() assert(0)
+#define MAX_BACKTRACE	16
+static inline void print_trace(void)
+{
+	void *array[MAX_BACKTRACE];
+	size_t size;
+
+	size = backtrace(array, MAX_BACKTRACE);
+	backtrace_symbols_fd(array, size, 2);
+}
+
+static inline void assert_trace(const char *assertion, const char *filename,
+			      const char *func, unsigned line, int val)
+{
+	if (val)
+		return;
+	if (assertion)
+		fprintf(stderr, "%s:%d: %s: Assertion `%s` failed.\n",
+			filename, line, func, assertion);
+	else
+		fprintf(stderr, "%s:%d: %s: Assertion failed.\n", filename,
+			line, func);
+	print_trace();
+	exit(1);
+}
+
+#define BUG() assert_trace(NULL, __FILE__, __func__, __LINE__, 0)
+
 #ifdef __CHECKER__
 #define __force    __attribute__((force))
 #define __bitwise__ __attribute__((bitwise))
@@ -237,9 +264,10 @@ static inline long IS_ERR(const void *ptr)
 #define kstrdup(x, y) strdup(x)
 #define kfree(x) free(x)
 
-#define BUG_ON(c) assert(!(c))
-#define WARN_ON(c) assert(!(c))
-#define	ASSERT(c) assert(c)
+#define BUG_ON(c) assert_trace(#c, __FILE__, __func__, __LINE__, !(c))
+
+#define WARN_ON(c) BUG_ON(c)
+#define	ASSERT(c) assert_trace(#c, __FILE__, __func__, __LINE__, (c))
 
 #define container_of(ptr, type, member) ({                      \
         const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
