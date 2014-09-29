@@ -243,6 +243,17 @@ struct bad_item {
 
 static void reset_cached_block_groups(struct btrfs_fs_info *fs_info);
 
+static void record_root_in_trans(struct btrfs_trans_handle *trans,
+				 struct btrfs_root *root)
+{
+	if (root->last_trans != trans->transid) {
+		root->track_dirty = 1;
+		root->last_trans = trans->transid;
+		root->commit_root = root->node;
+		extent_buffer_get(root->node);
+	}
+}
+
 static u8 imode_to_type(u32 imode)
 {
 #define S_SHIFT 12
@@ -2428,6 +2439,8 @@ static int try_to_fix_bad_block(struct btrfs_trans_handle *trans,
 	root = btrfs_read_fs_root(root->fs_info, &k1);
 	if (IS_ERR(root))
 		return -EIO;
+
+	record_root_in_trans(trans, root);
 
 	path = btrfs_alloc_path();
 	if (!path)
@@ -4667,12 +4680,7 @@ static int repair_ref(struct btrfs_trans_handle *trans,
 	 * Have to make sure that this root gets updated when we commit the
 	 * transaction
 	 */
-	root->track_dirty = 1;
-	if (root->last_trans != trans->transid) {
-		root->last_trans = trans->transid;
-		root->commit_root = root->node;
-		extent_buffer_get(root->node);
-	}
+	record_root_in_trans(trans, root);
 
 	/*
 	 * Ok we have the key of the file extent we want to fix, now we can cow
@@ -6352,12 +6360,7 @@ reinit_data_reloc:
 		fprintf(stderr, "Error reading data reloc tree\n");
 		return PTR_ERR(root);
 	}
-	root->track_dirty = 1;
-	if (root->last_trans != trans->transid) {
-		root->last_trans = trans->transid;
-		root->commit_root = root->node;
-		extent_buffer_get(root->node);
-	}
+	record_root_in_trans(trans, root);
 	ret = btrfs_fsck_reinit_root(trans, root, 0);
 	if (ret)
 		goto out;
