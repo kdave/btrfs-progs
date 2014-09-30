@@ -30,9 +30,6 @@
 #include "ctree.h"
 #include "volumes.h"
 
-static u64 cache_soft_max = 1024 * 1024 * 256;
-static u64 cache_hard_max = 1 * 1024 * 1024 * 1024;
-
 void extent_io_tree_init(struct extent_io_tree *tree)
 {
 	cache_tree_init(&tree->state);
@@ -77,12 +74,9 @@ void extent_io_tree_cleanup(struct extent_io_tree *tree)
 
 	while(!list_empty(&tree->lru)) {
 		eb = list_entry(tree->lru.next, struct extent_buffer, lru);
-		if (eb->refs != 1) {
-			fprintf(stderr, "extent buffer leak: "
-				"start %llu len %u\n",
-				(unsigned long long)eb->start, eb->len);
-			eb->refs = 1;
-		}
+		fprintf(stderr, "extent buffer leak: "
+			"start %llu len %u\n",
+			(unsigned long long)eb->start, eb->len);
 		free_extent_buffer(eb);
 	}
 
@@ -541,30 +535,6 @@ out:
 	return ret;
 }
 
-static int free_some_buffers(struct extent_io_tree *tree)
-{
-	u32 nrscan = 0;
-	struct extent_buffer *eb;
-	struct list_head *node, *next;
-
-	if (tree->cache_size < cache_soft_max)
-		return 0;
-
-	list_for_each_safe(node, next, &tree->lru) {
-		eb = list_entry(node, struct extent_buffer, lru);
-		if (eb->refs == 1 && !(eb->flags & EXTENT_DIRTY)) {
-			free_extent_buffer(eb);
-			if (tree->cache_size < cache_hard_max)
-				break;
-		} else {
-			list_move_tail(&eb->lru, &tree->lru);
-		}
-		if (nrscan++ > 64 && tree->cache_size < cache_hard_max)
-			break;
-	}
-	return 0;
-}
-
 static struct extent_buffer *__alloc_extent_buffer(struct extent_io_tree *tree,
 						   u64 bytenr, u32 blocksize)
 {
@@ -589,7 +559,6 @@ static struct extent_buffer *__alloc_extent_buffer(struct extent_io_tree *tree,
 	eb->cache_node.size = blocksize;
 	INIT_LIST_HEAD(&eb->recow);
 
-	free_some_buffers(tree);
 	ret = insert_cache_extent(&tree->cache, &eb->cache_node);
 	if (ret) {
 		free(eb);
