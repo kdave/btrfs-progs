@@ -3867,6 +3867,10 @@ static int check_csums(struct btrfs_root *root)
 	unsigned long leaf_offset;
 
 	root = root->fs_info->csum_root;
+	if (!extent_buffer_uptodate(root->node)) {
+		fprintf(stderr, "No valid csum tree found\n");
+		return -ENOENT;
+	}
 
 	key.objectid = BTRFS_EXTENT_CSUM_OBJECTID;
 	key.type = BTRFS_EXTENT_CSUM_KEY;
