@@ -494,7 +494,7 @@ btrfs_check_leaf(struct btrfs_root *root, struct btrfs_disk_key *parent_key,
 		       (unsigned long long)btrfs_header_bytenr(buf));
 		goto fail;
 	}
-	for (i = 0; nritems > 1 && i < nritems - 2; i++) {
+	for (i = 0; nritems > 1 && i < nritems - 1; i++) {
 		btrfs_item_key(buf, &key, i);
 		btrfs_item_key_to_cpu(buf, &cpukey, i + 1);
 		if (btrfs_comp_keys(&key, &cpukey) >= 0) {
