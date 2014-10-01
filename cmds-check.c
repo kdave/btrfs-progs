@@ -6634,6 +6634,98 @@ static int zero_log_tree(struct btrfs_root *root)
 	return ret;
 }
 
+static int populate_csum(struct btrfs_trans_handle *trans,
+			 struct btrfs_root *csum_root, char *buf, u64 start,
+			 u64 len)
+{
+	u64 offset = 0;
+	u64 sectorsize;
+	int ret = 0;
+
+	while (offset < len) {
+		sectorsize = csum_root->sectorsize;
+		ret = read_extent_data(csum_root, buf, start + offset,
+				       &sectorsize, 0);
+		if (ret)
+			break;
+		ret = btrfs_csum_file_block(trans, csum_root, start + len,
+					    start + offset, buf, sectorsize);
+		if (ret)
+			break;
+		offset += sectorsize;
+	}
+	return ret;
+}
+
+static int fill_csum_tree(struct btrfs_trans_handle *trans,
+			  struct btrfs_root *csum_root)
+{
+	struct btrfs_root *extent_root = csum_root->fs_info->extent_root;
+	struct btrfs_path *path;
+	struct btrfs_extent_item *ei;
+	struct extent_buffer *leaf;
+	char *buf;
+	struct btrfs_key key;
+	int ret;
+
+	path = btrfs_alloc_path();
+	if (!path)
+		return -ENOMEM;
+
+	key.objectid = 0;
+	key.type = BTRFS_EXTENT_ITEM_KEY;
+	key.offset = 0;
+
+	ret = btrfs_search_slot(NULL, extent_root, &key, path, 0, 0);
+	if (ret < 0) {
+		btrfs_free_path(path);
+		return ret;
+	}
+
+	buf = malloc(csum_root->sectorsize);
+	if (!buf) {
+		btrfs_free_path(path);
+		return -ENOMEM;
+	}
+
+	while (1) {
+		if (path->slots[0] >= btrfs_header_nritems(path->nodes[0])) {
+			ret = btrfs_next_leaf(extent_root, path);
+			if (ret < 0)
+				break;
+			if (ret) {
+				ret = 0;
+				break;
+			}
+		}
+		leaf = path->nodes[0];
+
+		btrfs_item_key_to_cpu(leaf, &key, path->slots[0]);
+		if (key.type != BTRFS_EXTENT_ITEM_KEY) {
+			path->slots[0]++;
+			continue;
+		}
+
+		ei = btrfs_item_ptr(leaf, path->slots[0],
+				    struct btrfs_extent_item);
+		if (!(btrfs_extent_flags(leaf, ei) &
+		      BTRFS_EXTENT_FLAG_DATA)) {
+			path->slots[0]++;
+			continue;
+		}
+
+		ret = populate_csum(trans, csum_root, buf, key.objectid,
+				    key.offset);
+		if (ret)
+			break;
+		path->slots[0]++;
+	}
+
+	btrfs_free_path(path);
+	free(buf);
+	return ret;
+}
+
 static struct option long_options[] = {
 	{ "super", 1, NULL, 's' },
 	{ "repair", 0, NULL, 0 },
@@ -6819,6 +6911,12 @@ int cmd_check(int argc, char **argv)
 				fprintf(stderr, "crc root initialization failed\n");
 				ret = -EIO;
 				goto close_out;
+			}
+
+			ret = fill_csum_tree(trans, info->csum_root);
+			if (ret) {
+				fprintf(stderr, "crc refilling failed\n");
+				return -EIO;
 			}
 		}
 		/*
