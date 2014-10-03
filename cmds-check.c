@@ -1396,6 +1396,7 @@ static int check_child_node(struct btrfs_root *root,
 static int walk_down_tree(struct btrfs_root *root, struct btrfs_path *path,
 			  struct walk_control *wc, int *level)
 {
+	enum btrfs_tree_block_status status;
 	u64 bytenr;
 	u64 ptr_gen;
 	struct extent_buffer *next;
@@ -1473,6 +1474,17 @@ static int walk_down_tree(struct btrfs_root *root, struct btrfs_path *path,
 			err = ret;
 			goto out;
 		}
+
+		if (btrfs_is_leaf(next))
+			status = btrfs_check_leaf(root, NULL, next);
+		else
+			status = btrfs_check_node(root, NULL, next);
+		if (status != BTRFS_TREE_BLOCK_CLEAN) {
+			free_extent_buffer(next);
+			err = -EIO;
+			goto out;
+		}
+
 		*level = *level - 1;
 		free_extent_buffer(path->nodes[*level]);
 		path->nodes[*level] = next;
@@ -2257,6 +2269,7 @@ static int check_fs_root(struct btrfs_root *root,
 	struct shared_node root_node;
 	struct root_record *rec;
 	struct btrfs_root_item *root_item = &root->root_item;
+	enum btrfs_tree_block_status status;
 
 	if (root->root_key.objectid != BTRFS_TREE_RELOC_OBJECTID) {
 		rec = get_root_rec(root_cache, root->root_key.objectid);
@@ -2274,6 +2287,14 @@ static int check_fs_root(struct btrfs_root *root,
 	wc->nodes[level] = &root_node;
 	wc->active_node = level;
 	wc->root_level = level;
+
+	/* We may not have checked the root block, lets do that now */
+	if (btrfs_is_leaf(root->node))
+		status = btrfs_check_leaf(root, NULL, root->node);
+	else
+		status = btrfs_check_node(root, NULL, root->node);
+	if (status != BTRFS_TREE_BLOCK_CLEAN)
+		return -EIO;
 
 	if (btrfs_root_refs(root_item) > 0 ||
 	    btrfs_disk_key_objectid(&root_item->drop_progress) == 0) {
