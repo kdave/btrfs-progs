@@ -2834,6 +2834,42 @@ static int fix_key_order(struct btrfs_trans_handle *trans,
 	return ret;
 }
 
+static int delete_bogus_item(struct btrfs_trans_handle *trans,
+			     struct btrfs_root *root,
+			     struct btrfs_path *path,
+			     struct extent_buffer *buf, int slot)
+{
+	struct btrfs_key key;
+	int nritems = btrfs_header_nritems(buf);
+
+	btrfs_item_key_to_cpu(buf, &key, slot);
+
+	/* These are all the keys we can deal with missing. */
+	if (key.type != BTRFS_DIR_INDEX_KEY &&
+	    key.type != BTRFS_EXTENT_ITEM_KEY &&
+	    key.type != BTRFS_METADATA_ITEM_KEY &&
+	    key.type != BTRFS_TREE_BLOCK_REF_KEY &&
+	    key.type != BTRFS_EXTENT_DATA_REF_KEY)
+		return -1;
+
+	printf("Deleting bogus item [%llu,%u,%llu] at slot %d on block %llu\n",
+	       (unsigned long long)key.objectid, key.type,
+	       (unsigned long long)key.offset, slot, buf->start);
+	memmove_extent_buffer(buf, btrfs_item_nr_offset(slot),
+			      btrfs_item_nr_offset(slot + 1),
+			      sizeof(struct btrfs_item) *
+			      (nritems - slot - 1));
+	btrfs_set_header_nritems(buf, nritems - 1);
+	if (slot == 0) {
+		struct btrfs_disk_key disk_key;
+
+		btrfs_item_key(buf, &disk_key, 0);
+		btrfs_fixup_low_keys(root, path, &disk_key, 1);
+	}
+	btrfs_mark_buffer_dirty(buf);
+	return 0;
+}
+
 static int fix_item_offset(struct btrfs_trans_handle *trans,
 			   struct btrfs_root *root,
 			   struct extent_buffer *buf)
@@ -2873,6 +2909,7 @@ static int fix_item_offset(struct btrfs_trans_handle *trans,
 	}
 
 	buf = path->nodes[level];
+again:
 	for (i = 0; i < btrfs_header_nritems(buf); i++) {
 		unsigned int shift = 0, offset;
 
@@ -2880,6 +2917,10 @@ static int fix_item_offset(struct btrfs_trans_handle *trans,
 		    BTRFS_LEAF_DATA_SIZE(root)) {
 			if (btrfs_item_end_nr(buf, i) >
 			    BTRFS_LEAF_DATA_SIZE(root)) {
+				ret = delete_bogus_item(trans, root, path,
+							buf, i);
+				if (!ret)
+					goto again;
 				fprintf(stderr, "item is off the end of the "
 					"leaf, can't fix\n");
 				ret = -EIO;
@@ -2891,6 +2932,10 @@ static int fix_item_offset(struct btrfs_trans_handle *trans,
 			   btrfs_item_offset_nr(buf, i - 1)) {
 			if (btrfs_item_end_nr(buf, i) >
 			    btrfs_item_offset_nr(buf, i - 1)) {
+				ret = delete_bogus_item(trans, root, path,
+							buf, i);
+				if (!ret)
+					goto again;
 				fprintf(stderr, "items overlap, can't fix\n");
 				ret = -EIO;
 				break;
