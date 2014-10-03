@@ -24,10 +24,6 @@ run_check()
 
 rm -f $RESULT
 
-if [ -z $TEST_DEV ] || [ -z $TEST_MNT ];then
-	_fail "please set TEST_DEV and TEST_MNT"
-fi
-
 # test rely on corrupting blocks tool
 run_check make btrfs-corrupt-block
 
@@ -44,6 +40,11 @@ do
 	run_check $here/btrfsck --repair test.img
 	run_check $here/btrfsck test.img
 done
+
+if [ -z $TEST_DEV ] || [ -z $TEST_MNT ];then
+	echo "     [NOTRUN] extent tree rebuild"
+	exit 0
+fi
 
 # test whether fsck can rebuild a corrupted extent tree
 test_extent_tree_rebuild()
