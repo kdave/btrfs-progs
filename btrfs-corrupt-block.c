@@ -312,6 +312,7 @@ enum btrfs_dir_item_field {
 
 enum btrfs_metadata_block_field {
 	BTRFS_METADATA_BLOCK_GENERATION,
+	BTRFS_METADATA_BLOCK_SHIFT_ITEMS,
 	BTRFS_METADATA_BLOCK_BAD,
 };
 
@@ -346,6 +347,8 @@ convert_metadata_block_field(char *field)
 {
 	if (!strncmp(field, "generation", FIELD_BUF_LEN))
 		return BTRFS_METADATA_BLOCK_GENERATION;
+	if (!strncmp(field, "shift_items", FIELD_BUF_LEN))
+		return BTRFS_METADATA_BLOCK_SHIFT_ITEMS;
 	return BTRFS_METADATA_BLOCK_BAD;
 }
 
@@ -651,6 +654,27 @@ out:
 	return ret;
 }
 
+static void shift_items(struct btrfs_root *root, struct extent_buffer *eb)
+{
+	int nritems = btrfs_header_nritems(eb);
+	int shift_space = btrfs_leaf_free_space(root, eb) / 2;
+	int slot = nritems / 2;
+	int i = 0;
+	unsigned int data_end = btrfs_item_offset_nr(eb, nritems - 1);
+
+	/* Shift the item data up to and including slot back by shift space */
+	memmove_extent_buffer(eb, btrfs_leaf_data(eb) + data_end - shift_space,
+			      btrfs_leaf_data(eb) + data_end,
+			      btrfs_item_offset_nr(eb, slot - 1) - data_end);
+
+	/* Now update the item pointers. */
+	for (i = nritems - 1; i >= slot; i--) {
+		u32 offset = btrfs_item_offset_nr(eb, i);
+		offset -= shift_space;
+		btrfs_set_item_offset(eb, btrfs_item_nr(i), offset);
+	}
+}
+
 static int corrupt_metadata_block(struct btrfs_root *root, u64 block,
 				  char *field)
 {
@@ -720,6 +744,9 @@ static int corrupt_metadata_block(struct btrfs_root *root, u64 block,
 		orig = btrfs_header_generation(eb);
 		bogus = generate_u64(orig);
 		btrfs_set_header_generation(eb, bogus);
+		break;
+	case BTRFS_METADATA_BLOCK_SHIFT_ITEMS:
+		shift_items(root, path->nodes[level]);
 		break;
 	default:
 		ret = -EINVAL;
