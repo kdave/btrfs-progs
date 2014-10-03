@@ -2753,24 +2753,15 @@ static int swap_values(struct btrfs_root *root, struct btrfs_path *path,
 	return 0;
 }
 
-/*
- * Attempt to fix basic block failures.  Currently we only handle bad key
- * orders, we will cycle through the keys and swap them if necessary.
- */
-static int try_to_fix_bad_block(struct btrfs_trans_handle *trans,
-				struct btrfs_root *root,
-				struct extent_buffer *buf,
-				struct btrfs_disk_key *parent_key,
-				enum btrfs_tree_block_status status)
+static int fix_key_order(struct btrfs_trans_handle *trans,
+			 struct btrfs_root *root,
+			 struct extent_buffer *buf)
 {
 	struct btrfs_path *path;
 	struct btrfs_key k1, k2;
 	int i;
 	int level;
 	int ret;
-
-	if (status != BTRFS_TREE_BLOCK_BAD_KEY_ORDER)
-		return -EIO;
 
 	k1.objectid = btrfs_header_owner(buf);
 	k1.type = BTRFS_ROOT_ITEM_KEY;
@@ -2822,6 +2813,111 @@ static int try_to_fix_bad_block(struct btrfs_trans_handle *trans,
 	return ret;
 }
 
+static int fix_item_offset(struct btrfs_trans_handle *trans,
+			   struct btrfs_root *root,
+			   struct extent_buffer *buf)
+{
+	struct btrfs_path *path;
+	struct btrfs_key k1;
+	int i;
+	int level;
+	int ret;
+
+	k1.objectid = btrfs_header_owner(buf);
+	k1.type = BTRFS_ROOT_ITEM_KEY;
+	k1.offset = (u64)-1;
+
+	root = btrfs_read_fs_root(root->fs_info, &k1);
+	if (IS_ERR(root))
+		return -EIO;
+
+	record_root_in_trans(trans, root);
+
+	path = btrfs_alloc_path();
+	if (!path)
+		return -EIO;
+
+	level = btrfs_header_level(buf);
+	path->lowest_level = level;
+	path->skip_check_block = 1;
+	if (level)
+		btrfs_node_key_to_cpu(buf, &k1, 0);
+	else
+		btrfs_item_key_to_cpu(buf, &k1, 0);
+
+	ret = btrfs_search_slot(trans, root, &k1, path, 0, 1);
+	if (ret) {
+		btrfs_free_path(path);
+		return -EIO;
+	}
+
+	buf = path->nodes[level];
+	for (i = 0; i < btrfs_header_nritems(buf); i++) {
+		unsigned int shift = 0, offset;
+
+		if (i == 0 && btrfs_item_end_nr(buf, i) !=
+		    BTRFS_LEAF_DATA_SIZE(root)) {
+			if (btrfs_item_end_nr(buf, i) >
+			    BTRFS_LEAF_DATA_SIZE(root)) {
+				fprintf(stderr, "item is off the end of the "
+					"leaf, can't fix\n");
+				ret = -EIO;
+				break;
+			}
+			shift = BTRFS_LEAF_DATA_SIZE(root) -
+				btrfs_item_end_nr(buf, i);
+		} else if (i > 0 && btrfs_item_end_nr(buf, i) !=
+			   btrfs_item_offset_nr(buf, i - 1)) {
+			if (btrfs_item_end_nr(buf, i) >
+			    btrfs_item_offset_nr(buf, i - 1)) {
+				fprintf(stderr, "items overlap, can't fix\n");
+				ret = -EIO;
+				break;
+			}
+			shift = btrfs_item_offset_nr(buf, i - 1) -
+				btrfs_item_end_nr(buf, i);
+		}
+		if (!shift)
+			continue;
+
+		printf("Shifting item nr %d by %u bytes in block %llu\n",
+		       i, shift, (unsigned long long)buf->start);
+		offset = btrfs_item_offset_nr(buf, i);
+		memmove_extent_buffer(buf,
+				      btrfs_leaf_data(buf) + offset + shift,
+				      btrfs_leaf_data(buf) + offset,
+				      btrfs_item_size_nr(buf, i));
+		btrfs_set_item_offset(buf, btrfs_item_nr(i),
+				      offset + shift);
+		btrfs_mark_buffer_dirty(buf);
+	}
+
+	/*
+	 * We may have moved things, in which case we want to exit so we don't
+	 * write those changes out.  Once we have proper abort functionality in
+	 * progs this can be changed to something nicer.
+	 */
+	BUG_ON(ret);
+	btrfs_free_path(path);
+	return ret;
+}
+
+/*
+ * Attempt to fix basic block failures.  If we can't fix it for whatever reason
+ * then just return -EIO.
+ */
+static int try_to_fix_bad_block(struct btrfs_trans_handle *trans,
+				struct btrfs_root *root,
+				struct extent_buffer *buf,
+				enum btrfs_tree_block_status status)
+{
+	if (status == BTRFS_TREE_BLOCK_BAD_KEY_ORDER)
+		return fix_key_order(trans, root, buf);
+	if (status == BTRFS_TREE_BLOCK_INVALID_OFFSETS)
+		return fix_item_offset(trans, root, buf);
+	return -EIO;
+}
+
 static int check_block(struct btrfs_trans_handle *trans,
 		       struct btrfs_root *root,
 		       struct cache_tree *extent_cache,
@@ -2860,7 +2956,6 @@ static int check_block(struct btrfs_trans_handle *trans,
 	if (status != BTRFS_TREE_BLOCK_CLEAN) {
 		if (repair)
 			status = try_to_fix_bad_block(trans, root, buf,
-						      &rec->parent_key,
 						      status);
 		if (status != BTRFS_TREE_BLOCK_CLEAN) {
 			ret = -EIO;
