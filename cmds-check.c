@@ -1335,6 +1335,56 @@ static void reada_walk_down(struct btrfs_root *root,
 	}
 }
 
+/*
+ * Check the child node/leaf by the following condition:
+ * 1. the first item key of the node/leaf should be the same with the one
+ *    in parent.
+ * 2. block in parent node should match the child node/leaf.
+ * 3. generation of parent node and child's header should be consistent.
+ *
+ * Or the child node/leaf pointed by the key in parent is not valid.
+ *
+ * We hope to check leaf owner too, but since subvol may share leaves,
+ * which makes leaf owner check not so strong, key check should be
+ * sufficient enough for that case.
+ */
+static int check_child_node(struct btrfs_root *root,
+			    struct extent_buffer *parent, int slot,
+			    struct extent_buffer *child)
+{
+	struct btrfs_key parent_key;
+	struct btrfs_key child_key;
+	int ret = 0;
+
+	btrfs_node_key_to_cpu(parent, &parent_key, slot);
+	if (btrfs_header_level(child) == 0)
+		btrfs_item_key_to_cpu(child, &child_key, 0);
+	else
+		btrfs_node_key_to_cpu(child, &child_key, 0);
+
+	if (memcmp(&parent_key, &child_key, sizeof(parent_key))) {
+		ret = -EINVAL;
+		fprintf(stderr,
+			"Wrong key of child node/leaf, wanted: (%llu, %u, %llu), have: (%llu, %u, %llu)\n",
+			parent_key.objectid, parent_key.type, parent_key.offset,
+			child_key.objectid, child_key.type, child_key.offset);
+	}
+	if (btrfs_header_bytenr(child) != btrfs_node_blockptr(parent, slot)) {
+		ret = -EINVAL;
+		fprintf(stderr, "Wrong block of child node/leaf, wanted: %llu, have: %llu\n",
+			btrfs_node_blockptr(parent, slot),
+			btrfs_header_bytenr(child));
+	}
+	if (btrfs_node_ptr_generation(parent, slot) !=
+	    btrfs_header_generation(child)) {
+		ret = -EINVAL;
+		fprintf(stderr, "Wrong generation of child node/leaf, wanted: %llu, have: %llu\n",
+			btrfs_header_generation(child),
+			btrfs_node_ptr_generation(parent, slot));
+	}
+	return ret;
+}
+
 static int walk_down_tree(struct btrfs_root *root, struct btrfs_path *path,
 			  struct walk_control *wc, int *level)
 {
@@ -1410,6 +1460,11 @@ static int walk_down_tree(struct btrfs_root *root, struct btrfs_path *path,
 			}
 		}
 
+		ret = check_child_node(root, cur, path->slots[*level], next);
+		if (ret) {
+			err = ret;
+			goto out;
+		}
 		*level = *level - 1;
 		free_extent_buffer(path->nodes[*level]);
 		path->nodes[*level] = next;
