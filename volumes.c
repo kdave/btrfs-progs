@@ -1672,8 +1672,15 @@ static int open_seed_devices(struct btrfs_root *root, u8 *fsid)
 
 	fs_devices = find_fsid(fsid);
 	if (!fs_devices) {
-		ret = -ENOENT;
-		goto out;
+		/* missing all seed devices */
+		fs_devices = kzalloc(sizeof(*fs_devices), GFP_NOFS);
+		if (!fs_devices) {
+			ret = -ENOMEM;
+			goto out;
+		}
+		INIT_LIST_HEAD(&fs_devices->devices);
+		list_add(&fs_devices->list, &fs_uuids);
+		memcpy(fs_devices->fsid, fsid, BTRFS_FSID_SIZE);
 	}
 
 	ret = btrfs_open_devices(fs_devices, O_RDONLY);
