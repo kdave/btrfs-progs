@@ -1491,7 +1491,7 @@ static int btrfs_calc_stripe_index(struct chunk_record *chunk, u64 logical)
 		stripe_nr /= nr_data_stripes;
 		index = (index + stripe_nr) % chunk->num_stripes;
 	} else {
-		BUG_ON(1);
+		return -1;
 	}
 	return index;
 }
@@ -1554,6 +1554,7 @@ btrfs_rebuild_ordered_meta_chunk_stripes(struct recover_control *rc,
 again:
 	er = container_of(cache, struct extent_record, cache);
 	index = btrfs_calc_stripe_index(chunk, er->cache.start);
+	BUG_ON(index == -1);
 	if (chunk->stripes[index].devid)
 		goto next;
 	list_for_each_entry_safe(devext, next, &devexts, chunk_list) {
@@ -1944,6 +1945,7 @@ next_csum:
 	if (list_is_last(candidates.next, &candidates)) {
 		index = btrfs_calc_stripe_index(chunk,
 			key.offset + csum_offset * blocksize);
+		BUG_ON(index == -1);
 		if (chunk->stripes[index].devid)
 			goto next_stripe;
 		ret = insert_stripe(&candidates, rc, chunk, index);
