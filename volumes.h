@@ -39,6 +39,8 @@ struct btrfs_device {
 	u64 total_devs;
 	u64 super_bytes_used;
 
+	u64 generation;
+
 	/* the internal btrfs device id */
 	u64 devid;
 

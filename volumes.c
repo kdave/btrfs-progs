@@ -116,6 +116,7 @@ static int device_list_add(const char *path,
 		}
 		device->fd = -1;
 		device->devid = devid;
+		device->generation = found_transid;
 		memcpy(device->uuid, disk_super->dev_item.uuid,
 		       BTRFS_UUID_SIZE);
 		device->name = kstrdup(path, GFP_NOFS);
