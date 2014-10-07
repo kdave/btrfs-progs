@@ -29,7 +29,9 @@
 #include <stddef.h>
 #include <linux/types.h>
 #include <stdint.h>
+#ifndef BTRFS_DISABLE_BACKTRACE
 #include <execinfo.h>
+#endif
 
 #define ptr_to_u64(x)	((u64)(uintptr_t)x)
 #define u64_to_ptr(x)	((void *)(uintptr_t)x)
@@ -55,6 +57,7 @@
 #define ULONG_MAX       (~0UL)
 #endif
 
+#ifndef BTRFS_DISABLE_BACKTRACE
 #define MAX_BACKTRACE	16
 static inline void print_trace(void)
 {
@@ -81,6 +84,9 @@ static inline void assert_trace(const char *assertion, const char *filename,
 }
 
 #define BUG() assert_trace(NULL, __FILE__, __func__, __LINE__, 0)
+#else
+#define BUG() assert(0)
+#endif
 
 #ifdef __CHECKER__
 #define __force    __attribute__((force))
@@ -264,10 +270,19 @@ static inline long IS_ERR(const void *ptr)
 #define kstrdup(x, y) strdup(x)
 #define kfree(x) free(x)
 
+#ifndef BTRFS_DISABLE_BACKTRACE
 #define BUG_ON(c) assert_trace(#c, __FILE__, __func__, __LINE__, !(c))
+#else
+#define BUG_ON(c) assert(!(c))
+#endif
 
 #define WARN_ON(c) BUG_ON(c)
+
+#ifndef BTRFS_DISABLE_BACKTRACE
 #define	ASSERT(c) assert_trace(#c, __FILE__, __func__, __LINE__, (c))
+#else
+#define ASSERT(c) assert(c)
+#endif
 
 #define container_of(ptr, type, member) ({                      \
         const typeof( ((type *)0)->member ) *__mptr = (ptr);    \

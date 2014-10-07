@@ -63,6 +63,10 @@ BUILDDIRS = $(patsubst %,build-%,$(SUBDIRS))
 INSTALLDIRS = $(patsubst %,install-%,$(SUBDIRS))
 CLEANDIRS = $(patsubst %,clean-%,$(SUBDIRS))
 
+ifeq ($(DISABLE_BACKTRACE),1)
+AM_CFLAGS += -DBTRFS_DISABLE_BACKTRACE
+endif
+
 ifneq ($(DISABLE_DOCUMENTATION),1)
 BUILDDIRS += build-Documentation
 INSTALLDIRS += install-Documentation
