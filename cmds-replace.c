@@ -214,6 +214,7 @@ static int cmd_start_replace(int argc, char **argv)
 		fprintf(stderr,
 			"ERROR: Could not canonicalize path '%s': %s\n",
 			argv[optind + 1], strerror(errno));
+		goto leave_with_error;
 	}
 
 	if (is_numerical(srcdev)) {
