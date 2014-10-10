@@ -40,6 +40,8 @@
 #include "btrfsck.h"
 #include "qgroup-verify.h"
 #include "rbtree-utils.h"
+#include "backref.h"
+#include "ulist.h"
 
 static u64 bytes_used = 0;
 static u64 total_csum_bytes = 0;
@@ -2776,41 +2778,13 @@ static int swap_values(struct btrfs_root *root, struct btrfs_path *path,
 
 static int fix_key_order(struct btrfs_trans_handle *trans,
 			 struct btrfs_root *root,
-			 struct extent_buffer *buf)
+			 struct btrfs_path *path)
 {
-	struct btrfs_path *path;
+	struct extent_buffer *buf;
 	struct btrfs_key k1, k2;
 	int i;
-	int level;
+	int level = path->lowest_level;
 	int ret;
-
-	k1.objectid = btrfs_header_owner(buf);
-	k1.type = BTRFS_ROOT_ITEM_KEY;
-	k1.offset = (u64)-1;
-
-	root = btrfs_read_fs_root(root->fs_info, &k1);
-	if (IS_ERR(root))
-		return -EIO;
-
-	record_root_in_trans(trans, root);
-
-	path = btrfs_alloc_path();
-	if (!path)
-		return -EIO;
-
-	level = btrfs_header_level(buf);
-	path->lowest_level = level;
-	path->skip_check_block = 1;
-	if (level)
-		btrfs_node_key_to_cpu(buf, &k1, 0);
-	else
-		btrfs_item_key_to_cpu(buf, &k1, 0);
-
-	ret = btrfs_search_slot(trans, root, &k1, path, 0, 1);
-	if (ret) {
-		btrfs_free_path(path);
-		return -EIO;
-	}
 
 	buf = path->nodes[level];
 	for (i = 0; i < btrfs_header_nritems(buf) - 1; i++) {
@@ -2829,8 +2803,6 @@ static int fix_key_order(struct btrfs_trans_handle *trans,
 		btrfs_mark_buffer_dirty(buf);
 		i = 0;
 	}
-
-	btrfs_free_path(path);
 	return ret;
 }
 
@@ -2872,43 +2844,15 @@ static int delete_bogus_item(struct btrfs_trans_handle *trans,
 
 static int fix_item_offset(struct btrfs_trans_handle *trans,
 			   struct btrfs_root *root,
-			   struct extent_buffer *buf)
+			   struct btrfs_path *path)
 {
-	struct btrfs_path *path;
-	struct btrfs_key k1;
+	struct extent_buffer *buf;
 	int i;
-	int level;
-	int ret;
+	int ret = 0;
 
-	k1.objectid = btrfs_header_owner(buf);
-	k1.type = BTRFS_ROOT_ITEM_KEY;
-	k1.offset = (u64)-1;
-
-	root = btrfs_read_fs_root(root->fs_info, &k1);
-	if (IS_ERR(root))
-		return -EIO;
-
-	record_root_in_trans(trans, root);
-
-	path = btrfs_alloc_path();
-	if (!path)
-		return -EIO;
-
-	level = btrfs_header_level(buf);
-	path->lowest_level = level;
-	path->skip_check_block = 1;
-	if (level)
-		btrfs_node_key_to_cpu(buf, &k1, 0);
-	else
-		btrfs_item_key_to_cpu(buf, &k1, 0);
-
-	ret = btrfs_search_slot(trans, root, &k1, path, 0, 1);
-	if (ret) {
-		btrfs_free_path(path);
-		return -EIO;
-	}
-
-	buf = path->nodes[level];
+	/* We should only get this for leaves */
+	BUG_ON(path->lowest_level);
+	buf = path->nodes[0];
 again:
 	for (i = 0; i < btrfs_header_nritems(buf); i++) {
 		unsigned int shift = 0, offset;
@@ -2964,7 +2908,6 @@ again:
 	 * progs this can be changed to something nicer.
 	 */
 	BUG_ON(ret);
-	btrfs_free_path(path);
 	return ret;
 }
 
@@ -2977,11 +2920,65 @@ static int try_to_fix_bad_block(struct btrfs_trans_handle *trans,
 				struct extent_buffer *buf,
 				enum btrfs_tree_block_status status)
 {
-	if (status == BTRFS_TREE_BLOCK_BAD_KEY_ORDER)
-		return fix_key_order(trans, root, buf);
-	if (status == BTRFS_TREE_BLOCK_INVALID_OFFSETS)
-		return fix_item_offset(trans, root, buf);
-	return -EIO;
+	struct ulist *roots;
+	struct ulist_node *node;
+	struct btrfs_root *search_root;
+	struct btrfs_path *path;
+	struct ulist_iterator iter;
+	struct btrfs_key root_key, key;
+	int ret;
+
+	if (status != BTRFS_TREE_BLOCK_BAD_KEY_ORDER &&
+	    status != BTRFS_TREE_BLOCK_INVALID_OFFSETS)
+		return -EIO;
+
+	path = btrfs_alloc_path();
+	if (!path)
+		return -EIO;
+
+	ret = btrfs_find_all_roots(trans, root->fs_info, buf->start,
+				   0, &roots);
+	if (ret) {
+		btrfs_free_path(path);
+		return -EIO;
+	}
+
+	ULIST_ITER_INIT(&iter);
+	while ((node = ulist_next(roots, &iter))) {
+		root_key.objectid = node->val;
+		root_key.type = BTRFS_ROOT_ITEM_KEY;
+		root_key.offset = (u64)-1;
+
+		search_root = btrfs_read_fs_root(root->fs_info, &root_key);
+		if (IS_ERR(root)) {
+			ret = -EIO;
+			break;
+		}
+
+		record_root_in_trans(trans, search_root);
+
+		path->lowest_level = btrfs_header_level(buf);
+		path->skip_check_block = 1;
+		if (path->lowest_level)
+			btrfs_node_key_to_cpu(buf, &key, 0);
+		else
+			btrfs_item_key_to_cpu(buf, &key, 0);
+		ret = btrfs_search_slot(trans, search_root, &key, path, 0, 1);
+		if (ret) {
+			ret = -EIO;
+			break;
+		}
+		if (status == BTRFS_TREE_BLOCK_BAD_KEY_ORDER)
+			ret = fix_key_order(trans, search_root, path);
+		else if (status == BTRFS_TREE_BLOCK_INVALID_OFFSETS)
+			ret = fix_item_offset(trans, search_root, path);
+		if (ret)
+			break;
+		btrfs_release_path(path);
+	}
+	ulist_free(roots);
+	btrfs_free_path(path);
+	return ret;
 }
 
 static int check_block(struct btrfs_trans_handle *trans,
