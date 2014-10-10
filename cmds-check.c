@@ -1583,15 +1583,111 @@ static int repair_inode_orphan_item(struct btrfs_trans_handle *trans,
 	return ret;
 }
 
+static int add_missing_dir_index(struct btrfs_root *root,
+				 struct cache_tree *inode_cache,
+				 struct inode_record *rec,
+				 struct inode_backref *backref)
+{
+	struct btrfs_path *path;
+	struct btrfs_trans_handle *trans;
+	struct btrfs_dir_item *dir_item;
+	struct extent_buffer *leaf;
+	struct btrfs_key key;
+	struct btrfs_disk_key disk_key;
+	struct inode_record *dir_rec;
+	unsigned long name_ptr;
+	u32 data_size = sizeof(*dir_item) + backref->namelen;
+	int ret;
+
+	path = btrfs_alloc_path();
+	if (!path)
+		return -ENOMEM;
+
+	trans = btrfs_start_transaction(root, 1);
+	if (IS_ERR(trans)) {
+		btrfs_free_path(path);
+		return PTR_ERR(trans);
+	}
+
+	fprintf(stderr, "repairing missing dir index item for inode %llu\n",
+		(unsigned long long)rec->ino);
+	key.objectid = backref->dir;
+	key.type = BTRFS_DIR_INDEX_KEY;
+	key.offset = backref->index;
+
+	ret = btrfs_insert_empty_item(trans, root, path, &key, data_size);
+	BUG_ON(ret);
+
+	leaf = path->nodes[0];
+	dir_item = btrfs_item_ptr(leaf, path->slots[0], struct btrfs_dir_item);
+
+	disk_key.objectid = cpu_to_le64(rec->ino);
+	disk_key.type = BTRFS_INODE_ITEM_KEY;
+	disk_key.offset = 0;
+
+	btrfs_set_dir_item_key(leaf, dir_item, &disk_key);
+	btrfs_set_dir_type(leaf, dir_item, imode_to_type(rec->imode));
+	btrfs_set_dir_data_len(leaf, dir_item, 0);
+	btrfs_set_dir_name_len(leaf, dir_item, backref->namelen);
+	name_ptr = (unsigned long)(dir_item + 1);
+	write_extent_buffer(leaf, backref->name, name_ptr, backref->namelen);
+	btrfs_mark_buffer_dirty(leaf);
+	btrfs_free_path(path);
+	btrfs_commit_transaction(trans, root);
+
+	backref->found_dir_index = 1;
+	dir_rec = get_inode_rec(inode_cache, backref->dir, 0);
+	if (!dir_rec)
+		return 0;
+	dir_rec->found_size += backref->namelen;
+	if (dir_rec->found_size == dir_rec->isize &&
+	    (dir_rec->errors & I_ERR_DIR_ISIZE_WRONG))
+		dir_rec->errors &= ~I_ERR_DIR_ISIZE_WRONG;
+	if (dir_rec->found_size != dir_rec->isize)
+		dir_rec->errors |= I_ERR_DIR_ISIZE_WRONG;
+
+	return 0;
+}
+
+static int repair_inode_backrefs(struct btrfs_root *root,
+				 struct inode_record *rec,
+				 struct cache_tree *inode_cache)
+{
+	struct inode_backref *tmp, *backref;
+	u64 root_dirid = btrfs_root_dirid(&root->root_item);
+	int ret = 0;
+
+	list_for_each_entry_safe(backref, tmp, &rec->backrefs, list) {
+		/* Index 0 for root dir's are special, don't mess with it */
+		if (rec->ino == root_dirid && backref->index == 0)
+			continue;
+
+		if (!backref->found_dir_index && backref->found_inode_ref) {
+			ret = add_missing_dir_index(root, inode_cache, rec,
+						    backref);
+			if (ret)
+				break;
+		}
+
+		if (backref->found_dir_item && backref->found_dir_index) {
+			if (!backref->errors && backref->found_inode_ref) {
+				list_del(&backref->list);
+				free(backref);
+			}
+		}
+	}
+
+	return ret;
+}
+
 static int try_repair_inode(struct btrfs_root *root, struct inode_record *rec)
 {
 	struct btrfs_trans_handle *trans;
 	struct btrfs_path *path;
 	int ret = 0;
 
-	/* So far we just fix dir isize wrong */
 	if (!(rec->errors & (I_ERR_DIR_ISIZE_WRONG | I_ERR_NO_ORPHAN_ITEM)))
-		return 1;
+		return rec->errors;
 
 	path = btrfs_alloc_path();
 	if (!path)
@@ -1627,6 +1723,27 @@ static int check_inode_recs(struct btrfs_root *root,
 		if (!cache_tree_empty(inode_cache))
 			fprintf(stderr, "warning line %d\n", __LINE__);
 		return 0;
+	}
+
+	/*
+	 * We need to repair backrefs first because we could change some of the
+	 * errors in the inode recs.
+	 *
+	 * For example, if we were missing a dir index then the directories
+	 * isize would be wrong, so if we fixed the isize to what we thought it
+	 * would be and then fixed the backref we'd still have a invalid fs, so
+	 * we need to add back the dir index and then check to see if the isize
+	 * is still wrong.
+	 */
+	cache = search_cache_extent(inode_cache, 0);
+	while (repair && cache) {
+		node = container_of(cache, struct ptr_node, cache);
+		rec = node->data;
+		cache = next_cache_extent(cache);
+
+		if (list_empty(&rec->backrefs))
+			continue;
+		repair_inode_backrefs(root, rec, inode_cache);
 	}
 
 	rec = get_inode_rec(inode_cache, root_dirid, 0);
