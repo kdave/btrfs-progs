@@ -345,6 +345,11 @@ struct __una_u64 { __le64 x; } __attribute__((__packed__));
 #define put_unaligned_le64(val,p) (((struct __una_u64 *)(p))->x = cpu_to_le64(val))
 #endif
 
+#ifndef true
+#define true 1
+#define false 0
+#endif
+
 #ifndef noinline
 #define noinline
 #endif
