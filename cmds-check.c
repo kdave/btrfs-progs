@@ -620,9 +620,10 @@ static int add_inode_backref(struct cache_tree *inode_cache,
 			backref->errors |= REF_ERR_DUP_INODE_REF;
 		if (backref->found_dir_index && backref->index != index)
 			backref->errors |= REF_ERR_INDEX_UNMATCH;
+		else
+			backref->index = index;
 
 		backref->ref_type = itemtype;
-		backref->index = index;
 		backref->found_inode_ref = 1;
 	} else {
 		BUG_ON(1);
@@ -1719,8 +1720,10 @@ static int repair_inode_backrefs(struct btrfs_root *root,
 		if (rec->ino == root_dirid && backref->index == 0)
 			continue;
 
-		if (delete && backref->found_dir_index &&
-		    !backref->found_inode_ref) {
+		if (delete &&
+		    ((backref->found_dir_index && !backref->found_inode_ref) ||
+		     (backref->found_dir_index && backref->found_inode_ref &&
+		      (backref->errors & REF_ERR_INDEX_UNMATCH)))) {
 			ret = delete_dir_index(root, inode_cache, rec, backref);
 			if (ret)
 				break;
