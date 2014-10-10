@@ -1650,35 +1650,99 @@ static int add_missing_dir_index(struct btrfs_root *root,
 	return 0;
 }
 
+static int delete_dir_index(struct btrfs_root *root,
+			    struct cache_tree *inode_cache,
+			    struct inode_record *rec,
+			    struct inode_backref *backref)
+{
+	struct btrfs_trans_handle *trans;
+	struct btrfs_dir_item *di;
+	struct btrfs_path *path;
+	int ret = 0;
+
+	path = btrfs_alloc_path();
+	if (!path)
+		return -ENOMEM;
+
+	trans = btrfs_start_transaction(root, 1);
+	if (IS_ERR(trans)) {
+		btrfs_free_path(path);
+		return PTR_ERR(trans);
+	}
+
+
+	fprintf(stderr, "Deleting bad dir index [%llu,%u,%llu] root %llu\n",
+		(unsigned long long)backref->dir,
+		BTRFS_DIR_INDEX_KEY, (unsigned long long)backref->index,
+		(unsigned long long)root->objectid);
+
+	di = btrfs_lookup_dir_index(trans, root, path, backref->dir,
+				    backref->name, backref->namelen,
+				    backref->index, -1);
+	if (IS_ERR(di)) {
+		ret = PTR_ERR(di);
+		btrfs_free_path(path);
+		btrfs_commit_transaction(trans, root);
+		if (ret == -ENOENT)
+			return 0;
+		return ret;
+	}
+
+	if (!di)
+		ret = btrfs_del_item(trans, root, path);
+	else
+		ret = btrfs_delete_one_dir_name(trans, root, path, di);
+	BUG_ON(ret);
+	btrfs_free_path(path);
+	btrfs_commit_transaction(trans, root);
+	return ret;
+}
+
 static int repair_inode_backrefs(struct btrfs_root *root,
 				 struct inode_record *rec,
-				 struct cache_tree *inode_cache)
+				 struct cache_tree *inode_cache,
+				 int delete)
 {
 	struct inode_backref *tmp, *backref;
 	u64 root_dirid = btrfs_root_dirid(&root->root_item);
 	int ret = 0;
+	int repaired = 0;
 
 	list_for_each_entry_safe(backref, tmp, &rec->backrefs, list) {
 		/* Index 0 for root dir's are special, don't mess with it */
 		if (rec->ino == root_dirid && backref->index == 0)
 			continue;
 
-		if (!backref->found_dir_index && backref->found_inode_ref) {
+		if (delete && backref->found_dir_index &&
+		    !backref->found_inode_ref) {
+			ret = delete_dir_index(root, inode_cache, rec, backref);
+			if (ret)
+				break;
+			repaired++;
+			list_del(&backref->list);
+			free(backref);
+		}
+
+		if (!delete && !backref->found_dir_index &&
+		    backref->found_dir_item && backref->found_inode_ref) {
 			ret = add_missing_dir_index(root, inode_cache, rec,
 						    backref);
 			if (ret)
 				break;
-		}
-
-		if (backref->found_dir_item && backref->found_dir_index) {
-			if (!backref->errors && backref->found_inode_ref) {
-				list_del(&backref->list);
-				free(backref);
+			repaired++;
+			if (backref->found_dir_item &&
+			    backref->found_dir_index &&
+			    backref->found_dir_index) {
+				if (!backref->errors &&
+				    backref->found_inode_ref) {
+					list_del(&backref->list);
+					free(backref);
+				}
 			}
 		}
-	}
 
-	return ret;
+	}
+	return ret ? ret : repaired;
 }
 
 static int try_repair_inode(struct btrfs_root *root, struct inode_record *rec)
@@ -1716,7 +1780,9 @@ static int check_inode_recs(struct btrfs_root *root,
 	struct ptr_node *node;
 	struct inode_record *rec;
 	struct inode_backref *backref;
+	int stage = 0;
 	int ret;
+	int err = 0;
 	u64 error = 0;
 	u64 root_dirid = btrfs_root_dirid(&root->root_item);
 
@@ -1730,22 +1796,52 @@ static int check_inode_recs(struct btrfs_root *root,
 	 * We need to repair backrefs first because we could change some of the
 	 * errors in the inode recs.
 	 *
+	 * We also need to go through and delete invalid backrefs first and then
+	 * add the correct ones second.  We do this because we may get EEXIST
+	 * when adding back the correct index because we hadn't yet deleted the
+	 * invalid index.
+	 *
 	 * For example, if we were missing a dir index then the directories
 	 * isize would be wrong, so if we fixed the isize to what we thought it
 	 * would be and then fixed the backref we'd still have a invalid fs, so
 	 * we need to add back the dir index and then check to see if the isize
 	 * is still wrong.
 	 */
-	cache = search_cache_extent(inode_cache, 0);
-	while (repair && cache) {
-		node = container_of(cache, struct ptr_node, cache);
-		rec = node->data;
-		cache = next_cache_extent(cache);
+	while (stage < 3) {
+		stage++;
+		if (stage == 3 && !err)
+			break;
 
-		if (list_empty(&rec->backrefs))
-			continue;
-		repair_inode_backrefs(root, rec, inode_cache);
+		cache = search_cache_extent(inode_cache, 0);
+		while (repair && cache) {
+			node = container_of(cache, struct ptr_node, cache);
+			rec = node->data;
+			cache = next_cache_extent(cache);
+
+			/* Need to free everything up and rescan */
+			if (stage == 3) {
+				remove_cache_extent(inode_cache, &node->cache);
+				free(node);
+				free_inode_rec(rec);
+				continue;
+			}
+
+			if (list_empty(&rec->backrefs))
+				continue;
+
+			ret = repair_inode_backrefs(root, rec, inode_cache,
+						    stage == 1);
+			if (ret < 0) {
+				err = ret;
+				stage = 2;
+				break;
+			} if (ret > 0) {
+				err = -EAGAIN;
+			}
+		}
 	}
+	if (err)
+		return err;
 
 	rec = get_inode_rec(inode_cache, root_dirid, 0);
 	if (rec) {
@@ -2295,6 +2391,11 @@ again:
 				goto next;
 			}
 			ret = check_fs_root(tmp_root, root_cache, &wc);
+			if (ret == -EAGAIN) {
+				free_root_recs_tree(root_cache);
+				btrfs_release_path(&path);
+				goto again;
+			}
 			if (ret)
 				err = 1;
 			if (key.objectid == BTRFS_TREE_RELOC_OBJECTID)

@@ -16,6 +16,7 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include <linux/limits.h>
 #include "ctree.h"
 #include "disk-io.h"
 #include "hash.h"
@@ -219,6 +220,97 @@ struct btrfs_dir_item *btrfs_lookup_dir_item(struct btrfs_trans_handle *trans,
 	return btrfs_match_dir_item_name(root, path, name, name_len);
 }
 
+struct btrfs_dir_item *btrfs_lookup_dir_index(struct btrfs_trans_handle *trans,
+					      struct btrfs_root *root,
+					      struct btrfs_path *path, u64 dir,
+					      const char *name, int name_len,
+					      u64 index, int mod)
+{
+	int ret;
+	struct btrfs_key key;
+	int ins_len = mod < 0 ? -1 : 0;
+	int cow = mod != 0;
+
+	key.objectid = dir;
+	key.type = BTRFS_DIR_INDEX_KEY;
+	key.offset = index;
+
+	ret = btrfs_search_slot(trans, root, &key, path, ins_len, cow);
+	if (ret < 0)
+		return ERR_PTR(ret);
+	if (ret > 0)
+		return ERR_PTR(-ENOENT);
+
+	return btrfs_match_dir_item_name(root, path, name, name_len);
+}
+
+/*
+ * given a pointer into a directory item, delete it.  This
+ * handles items that have more than one entry in them.
+ */
+int btrfs_delete_one_dir_name(struct btrfs_trans_handle *trans,
+			      struct btrfs_root *root,
+			      struct btrfs_path *path,
+			      struct btrfs_dir_item *di)
+{
+
+	struct extent_buffer *leaf;
+	u32 sub_item_len;
+	u32 item_len;
+	int ret = 0;
+
+	leaf = path->nodes[0];
+	sub_item_len = sizeof(*di) + btrfs_dir_name_len(leaf, di) +
+		btrfs_dir_data_len(leaf, di);
+	item_len = btrfs_item_size_nr(leaf, path->slots[0]);
+	if (sub_item_len == item_len) {
+		ret = btrfs_del_item(trans, root, path);
+	} else {
+		unsigned long ptr = (unsigned long)di;
+		unsigned long start;
+
+		start = btrfs_item_ptr_offset(leaf, path->slots[0]);
+		memmove_extent_buffer(leaf, ptr, ptr + sub_item_len,
+			item_len - (ptr + sub_item_len - start));
+		btrfs_truncate_item(trans, root, path, item_len - sub_item_len, 1);
+	}
+	return ret;
+}
+
+int verify_dir_item(struct btrfs_root *root,
+		    struct extent_buffer *leaf,
+		    struct btrfs_dir_item *dir_item)
+{
+	u16 namelen = BTRFS_NAME_LEN;
+	u8 type = btrfs_dir_type(leaf, dir_item);
+
+	if (type >= BTRFS_FT_MAX) {
+		fprintf(stderr, "invalid dir item type: %d",
+		       (int)type);
+		return 1;
+	}
+
+	if (type == BTRFS_FT_XATTR)
+		namelen = XATTR_NAME_MAX;
+
+	if (btrfs_dir_name_len(leaf, dir_item) > namelen) {
+		fprintf(stderr, "invalid dir item name len: %u",
+		       (unsigned)btrfs_dir_data_len(leaf, dir_item));
+		return 1;
+	}
+
+	/* BTRFS_MAX_XATTR_SIZE is the same for all dir items */
+	if ((btrfs_dir_data_len(leaf, dir_item) +
+	     btrfs_dir_name_len(leaf, dir_item)) > BTRFS_MAX_XATTR_SIZE(root)) {
+		fprintf(stderr, "invalid dir item name + data len: %u + %u",
+		       (unsigned)btrfs_dir_name_len(leaf, dir_item),
+		       (unsigned)btrfs_dir_data_len(leaf, dir_item));
+		return 1;
+	}
+
+	return 0;
+}
+
 static struct btrfs_dir_item *btrfs_match_dir_item_name(struct btrfs_root *root,
 			      struct btrfs_path *path,
 			      const char *name, int name_len)
@@ -233,10 +325,18 @@ static struct btrfs_dir_item *btrfs_match_dir_item_name(struct btrfs_root *root,
 	leaf = path->nodes[0];
 	dir_item = btrfs_item_ptr(leaf, path->slots[0], struct btrfs_dir_item);
 	total_len = btrfs_item_size_nr(leaf, path->slots[0]);
+	if (verify_dir_item(root, leaf, dir_item))
+		return NULL;
+
 	while(cur < total_len) {
 		this_len = sizeof(*dir_item) +
 			btrfs_dir_name_len(leaf, dir_item) +
 			btrfs_dir_data_len(leaf, dir_item);
+		if (this_len > (total_len - cur)) {
+			fprintf(stderr, "invalid dir item size\n");
+			return NULL;
+		}
+
 		name_ptr = (unsigned long)(dir_item + 1);
 
 		if (btrfs_dir_name_len(leaf, dir_item) == name_len &&
