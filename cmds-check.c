@@ -3217,6 +3217,8 @@ static void free_chunk_record(struct cache_extent *cache)
 	struct chunk_record *rec;
 
 	rec = container_of(cache, struct chunk_record, cache);
+	list_del_init(&rec->list);
+	list_del_init(&rec->dextents);
 	free(rec);
 }
 
@@ -3253,6 +3255,7 @@ static void free_block_group_record(struct cache_extent *cache)
 	struct block_group_record *rec;
 
 	rec = container_of(cache, struct block_group_record, cache);
+	list_del_init(&rec->list);
 	free(rec);
 }
 
@@ -3286,6 +3289,10 @@ static void free_device_extent_record(struct cache_extent *cache)
 	struct device_extent_record *rec;
 
 	rec = container_of(cache, struct device_extent_record, cache);
+	if (!list_empty(&rec->chunk_list))
+		list_del_init(&rec->chunk_list);
+	if (!list_empty(&rec->device_list))
+		list_del_init(&rec->device_list);
 	free(rec);
 }
 
@@ -6019,7 +6026,7 @@ static int check_device_used(struct device_record *dev_rec,
 		if (dev_extent_rec->objectid != dev_rec->devid)
 			break;
 
-		list_del(&dev_extent_rec->device_list);
+		list_del_init(&dev_extent_rec->device_list);
 		total_byte += dev_extent_rec->length;
 		cache = next_cache_extent(cache);
 	}
@@ -6249,6 +6256,10 @@ again:
 		free_extent_cache_tree(&pending);
 		free_extent_cache_tree(&reada);
 		free_extent_cache_tree(&nodes);
+		free_chunk_cache_tree(&chunk_cache);
+		free_block_group_tree(&block_group_cache);
+		free_device_cache_tree(&dev_cache);
+		free_device_extent_tree(&dev_extent_cache);
 		free_extent_record_cache(root->fs_info, &extent_cache);
 		goto again;
 	}
