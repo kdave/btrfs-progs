@@ -108,6 +108,7 @@ static void print_usage(void)
 	fprintf(stderr, "\t-K The key to corrupt in the format "
 		"<num>,<num>,<num> (must also specify -f for the field)\n");
 	fprintf(stderr, "\t-f The field in the item to corrupt\n");
+	fprintf(stderr, "\t-D Corrupt a dir item, must specify key and field\n");
 	exit(1);
 }
 
@@ -301,6 +302,12 @@ enum btrfs_file_extent_field {
 	BTRFS_FILE_EXTENT_BAD,
 };
 
+enum btrfs_dir_item_field {
+	BTRFS_DIR_ITEM_NAME,
+	BTRFS_DIR_ITEM_LOCATION_OBJECTID,
+	BTRFS_DIR_ITEM_BAD,
+};
+
 enum btrfs_metadata_block_field {
 	BTRFS_METADATA_BLOCK_GENERATION,
 	BTRFS_METADATA_BLOCK_BAD,
@@ -344,6 +351,15 @@ static enum btrfs_key_field convert_key_field(char *field)
 	if (!strncmp(field, "offset", FIELD_BUF_LEN))
 		return BTRFS_KEY_OFFSET;
 	return BTRFS_KEY_BAD;
+}
+
+static enum btrfs_dir_item_field convert_dir_item_field(char *field)
+{
+	if (!strncmp(field, "name", FIELD_BUF_LEN))
+		return BTRFS_DIR_ITEM_NAME;
+	if (!strncmp(field, "location_objectid", FIELD_BUF_LEN))
+		return BTRFS_DIR_ITEM_LOCATION_OBJECTID;
+	return BTRFS_DIR_ITEM_BAD;
 }
 
 static u64 generate_u64(u64 orig)
@@ -421,6 +437,80 @@ out:
 	return ret;
 }
 
+static int corrupt_dir_item(struct btrfs_root *root, struct btrfs_key *key,
+			    char *field)
+{
+	struct btrfs_trans_handle *trans;
+	struct btrfs_dir_item *di;
+	struct btrfs_path *path;
+	char *name;
+	struct btrfs_key location;
+	struct btrfs_disk_key disk_key;
+	unsigned long name_ptr;
+	enum btrfs_dir_item_field corrupt_field =
+		convert_dir_item_field(field);
+	u64 bogus;
+	u16 name_len;
+	int ret;
+
+	if (corrupt_field == BTRFS_DIR_ITEM_BAD) {
+		fprintf(stderr, "Invalid field %s\n", field);
+		return -EINVAL;
+	}
+
+	path = btrfs_alloc_path();
+	if (!path)
+		return -ENOMEM;
+
+	trans = btrfs_start_transaction(root, 1);
+	if (IS_ERR(trans)) {
+		btrfs_free_path(path);
+		return PTR_ERR(trans);
+	}
+
+	ret = btrfs_search_slot(trans, root, key, path, 0, 1);
+	if (ret) {
+		if (ret > 0)
+			ret = -ENOENT;
+		fprintf(stderr, "Error searching for dir item %d\n", ret);
+		goto out;
+	}
+
+	di = btrfs_item_ptr(path->nodes[0], path->slots[0],
+			    struct btrfs_dir_item);
+
+	switch (corrupt_field) {
+	case BTRFS_DIR_ITEM_NAME:
+		name_len = btrfs_dir_name_len(path->nodes[0], di);
+		name = malloc(name_len);
+		if (!name) {
+			ret = -ENOMEM;
+			goto out;
+		}
+		name_ptr = (unsigned long)(di + 1);
+		read_extent_buffer(path->nodes[0], name, name_ptr, name_len);
+		name[0]++;
+		write_extent_buffer(path->nodes[0], name, name_ptr, name_len);
+		btrfs_mark_buffer_dirty(path->nodes[0]);
+		free(name);
+		goto out;
+	case BTRFS_DIR_ITEM_LOCATION_OBJECTID:
+		btrfs_dir_item_key_to_cpu(path->nodes[0], di, &location);
+		bogus = generate_u64(location.objectid);
+		location.objectid = bogus;
+		btrfs_cpu_key_to_disk(&disk_key, &location);
+		btrfs_set_dir_item_key(path->nodes[0], di, &disk_key);
+		btrfs_mark_buffer_dirty(path->nodes[0]);
+		goto out;
+	default:
+		ret = -EINVAL;
+		goto out;
+	}
+out:
+	btrfs_commit_transaction(trans, root);
+	btrfs_free_path(path);
+	return ret;
+}
 
 static int corrupt_inode(struct btrfs_trans_handle *trans,
 			 struct btrfs_root *root, u64 inode, char *field)
@@ -634,6 +724,7 @@ static struct option long_options[] = {
 	{ "metadata-block", 1, NULL, 'm'},
 	{ "field", 1, NULL, 'f'},
 	{ "key", 1, NULL, 'K'},
+	{ "dir-item", 0, NULL, 'D'},
 	{ 0, 0, 0, 0}
 };
 
@@ -797,6 +888,7 @@ int main(int ac, char **av)
 	int corrupt_block_keys = 0;
 	int chunk_rec = 0;
 	int chunk_tree = 0;
+	int corrupt_di = 0;
 	u64 metadata_block = 0;
 	u64 inode = 0;
 	u64 file_extent = (u64)-1;
@@ -808,7 +900,7 @@ int main(int ac, char **av)
 
 	while(1) {
 		int c;
-		c = getopt_long(ac, av, "l:c:b:eEkuUi:f:x:m:K:", long_options,
+		c = getopt_long(ac, av, "l:c:b:eEkuUi:f:x:m:K:D", long_options,
 				&option_index);
 		if (c < 0)
 			break;
@@ -858,6 +950,9 @@ int main(int ac, char **av)
 						"%d\n", errno);
 					print_usage();
 				}
+				break;
+			case 'D':
+				corrupt_di = 1;
 				break;
 			default:
 				print_usage();
@@ -953,6 +1048,12 @@ int main(int ac, char **av)
 		if (!strlen(field))
 			print_usage();
 		ret = corrupt_metadata_block(root, metadata_block, field);
+		goto out_close;
+	}
+	if (corrupt_di) {
+		if (!key.objectid || !strlen(field))
+			print_usage();
+		ret = corrupt_dir_item(root, &key, field);
 		goto out_close;
 	}
 	if (key.objectid || key.offset || key.type) {
