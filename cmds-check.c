@@ -2237,7 +2237,7 @@ static int check_fs_roots(struct btrfs_root *root,
 	struct btrfs_path path;
 	struct btrfs_key key;
 	struct walk_control wc;
-	struct extent_buffer *leaf;
+	struct extent_buffer *leaf, *tree_node;
 	struct btrfs_root *tmp_root;
 	struct btrfs_root *tree_root = root->fs_info->tree_root;
 	int ret;
@@ -2253,6 +2253,7 @@ static int check_fs_roots(struct btrfs_root *root,
 	cache_tree_init(&wc.shared);
 	btrfs_init_path(&path);
 
+again:
 	key.offset = 0;
 	key.objectid = 0;
 	key.type = BTRFS_ROOT_ITEM_KEY;
@@ -2261,7 +2262,13 @@ static int check_fs_roots(struct btrfs_root *root,
 		err = 1;
 		goto out;
 	}
+	tree_node = tree_root->node;
 	while (1) {
+		if (tree_node != tree_root->node) {
+			free_root_recs_tree(root_cache);
+			btrfs_release_path(&path);
+			goto again;
+		}
 		leaf = path.nodes[0];
 		if (path.slots[0] >= btrfs_header_nritems(leaf)) {
 			ret = btrfs_next_leaf(tree_root, &path);
