@@ -39,6 +39,7 @@
 #include "free-space-cache.h"
 #include "btrfsck.h"
 #include "qgroup-verify.h"
+#include "rbtree-utils.h"
 
 static u64 bytes_used = 0;
 static u64 total_csum_bytes = 0;

@@ -28,6 +28,7 @@
 #include "print-tree.h"
 #include "utils.h"
 #include "ulist.h"
+#include "rbtree-utils.h"
 
 #include "qgroup-verify.h"
 

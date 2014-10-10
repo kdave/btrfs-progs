@@ -34,6 +34,7 @@
 #include "crc32c.h"
 #include "utils.h"
 #include "print-tree.h"
+#include "rbtree-utils.h"
 
 static int check_tree_block(struct btrfs_root *root, struct extent_buffer *buf)
 {
