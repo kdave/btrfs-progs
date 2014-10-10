@@ -40,6 +40,7 @@
 #define EXTENT_BUFFER_FILLED (1 << 8)
 #define EXTENT_CSUM (1 << 9)
 #define EXTENT_BAD_TRANSID (1 << 10)
+#define EXTENT_BUFFER_DUMMY (1 << 11)
 #define EXTENT_IOBITS (EXTENT_LOCKED | EXTENT_WRITEBACK)
 
 #define BLOCK_GROUP_DATA     EXTENT_WRITEBACK
@@ -111,6 +112,7 @@ struct extent_buffer *find_first_extent_buffer(struct extent_io_tree *tree,
 					       u64 start);
 struct extent_buffer *alloc_extent_buffer(struct extent_io_tree *tree,
 					  u64 bytenr, u32 blocksize);
+struct extent_buffer *btrfs_clone_extent_buffer(struct extent_buffer *src);
 void free_extent_buffer(struct extent_buffer *eb);
 int read_extent_from_disk(struct extent_buffer *eb,
 			  unsigned long offset, unsigned long len);

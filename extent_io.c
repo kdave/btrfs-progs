@@ -539,7 +539,6 @@ static struct extent_buffer *__alloc_extent_buffer(struct extent_io_tree *tree,
 						   u64 bytenr, u32 blocksize)
 {
 	struct extent_buffer *eb;
-	int ret;
 
 	eb = malloc(sizeof(struct extent_buffer) + blocksize);
 	if (!eb) {
@@ -559,14 +558,21 @@ static struct extent_buffer *__alloc_extent_buffer(struct extent_io_tree *tree,
 	eb->cache_node.size = blocksize;
 	INIT_LIST_HEAD(&eb->recow);
 
-	ret = insert_cache_extent(&tree->cache, &eb->cache_node);
-	if (ret) {
-		free(eb);
-		return NULL;
-	}
-	list_add_tail(&eb->lru, &tree->lru);
-	tree->cache_size += blocksize;
 	return eb;
+}
+
+struct extent_buffer *btrfs_clone_extent_buffer(struct extent_buffer *src)
+{
+	struct extent_buffer *new;
+
+	new = __alloc_extent_buffer(NULL, src->start, src->len);
+	if (new == NULL)
+		return NULL;
+
+	copy_extent_buffer(new, src, 0, 0, src->len);
+	new->flags |= EXTENT_BUFFER_DUMMY;
+
+	return new;
 }
 
 void free_extent_buffer(struct extent_buffer *eb)
@@ -581,9 +587,11 @@ void free_extent_buffer(struct extent_buffer *eb)
 		BUG_ON(eb->flags & EXTENT_DIRTY);
 		list_del_init(&eb->lru);
 		list_del_init(&eb->recow);
-		remove_cache_extent(&tree->cache, &eb->cache_node);
-		BUG_ON(tree->cache_size < eb->len);
-		tree->cache_size -= eb->len;
+		if (!(eb->flags & EXTENT_BUFFER_DUMMY)) {
+			BUG_ON(tree->cache_size < eb->len);
+			remove_cache_extent(&tree->cache, &eb->cache_node);
+			tree->cache_size -= eb->len;
+		}
 		free(eb);
 	}
 }
@@ -632,12 +640,23 @@ struct extent_buffer *alloc_extent_buffer(struct extent_io_tree *tree,
 		list_move_tail(&eb->lru, &tree->lru);
 		eb->refs++;
 	} else {
+		int ret;
+
 		if (cache) {
 			eb = container_of(cache, struct extent_buffer,
 					  cache_node);
 			free_extent_buffer(eb);
 		}
 		eb = __alloc_extent_buffer(tree, bytenr, blocksize);
+		if (!eb)
+			return NULL;
+		ret = insert_cache_extent(&tree->cache, &eb->cache_node);
+		if (ret) {
+			free(eb);
+			return NULL;
+		}
+		list_add_tail(&eb->lru, &tree->lru);
+		tree->cache_size += blocksize;
 	}
 	return eb;
 }

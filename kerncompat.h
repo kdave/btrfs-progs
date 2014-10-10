@@ -108,6 +108,9 @@ typedef __u32 u32;
 typedef __u64 u64;
 typedef __u16 u16;
 typedef __u8 u8;
+typedef __s64 s64;
+typedef __s32 s32;
+
 /*
  * Continuing to define __KERNEL__ breaks others parts of the code, so
  * we can just undefine it now that we have the correct headers...
@@ -119,6 +122,8 @@ typedef unsigned int __u32;
 typedef unsigned long long u64;
 typedef unsigned char u8;
 typedef unsigned short u16;
+typedef long long s64;
+typedef int s32
 #endif
 
 
@@ -269,6 +274,8 @@ static inline long IS_ERR(const void *ptr)
 #define kzalloc(x, y) calloc(1, x)
 #define kstrdup(x, y) strdup(x)
 #define kfree(x) free(x)
+#define vmalloc(x) malloc(x)
+#define vfree(x) free(x)
 
 #ifndef BTRFS_DISABLE_BACKTRACE
 #define BUG_ON(c) assert_trace(#c, __FILE__, __func__, __LINE__, !(c))
