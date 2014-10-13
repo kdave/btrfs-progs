@@ -53,6 +53,8 @@ static const char *replace_dev_result2string(__u64 result)
 		return "not started";
 	case BTRFS_IOCTL_DEV_REPLACE_RESULT_ALREADY_STARTED:
 		return "already started";
+	case BTRFS_IOCTL_DEV_REPLACE_RESULT_SCRUB_INPROGRESS:
+		return "scrub is in progress";
 	default:
 		return "<illegal result value>";
 	}
