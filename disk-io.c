@@ -995,7 +995,7 @@ void btrfs_cleanup_all_caches(struct btrfs_fs_info *fs_info)
 
 int btrfs_scan_fs_devices(int fd, const char *path,
 			  struct btrfs_fs_devices **fs_devices,
-			  u64 sb_bytenr, int run_ioctl, int super_recover)
+			  u64 sb_bytenr, int super_recover)
 {
 	u64 total_devs;
 	int ret;
@@ -1010,7 +1010,7 @@ int btrfs_scan_fs_devices(int fd, const char *path,
 	}
 
 	if (total_devs != 1) {
-		ret = btrfs_scan_lblkid(run_ioctl);
+		ret = btrfs_scan_lblkid(!BTRFS_UPDATE_KERNEL);
 		if (ret)
 			return ret;
 	}
@@ -1091,7 +1091,6 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 		fs_info->on_restoring = 1;
 
 	ret = btrfs_scan_fs_devices(fp, path, &fs_devices, sb_bytenr,
-				    !(flags & OPEN_CTREE_RECOVER_SUPER),
 				    (flags & OPEN_CTREE_RECOVER_SUPER));
 	if (ret)
 		goto out;
