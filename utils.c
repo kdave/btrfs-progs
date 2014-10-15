@@ -1246,7 +1246,7 @@ void btrfs_register_one_device(char *fname)
 	int ret;
 	int e;
 
-	fd = open("/dev/btrfs-control", O_RDONLY);
+	fd = open("/dev/btrfs-control", O_RDWR);
 	if (fd < 0) {
 		fprintf(stderr, "failed to open /dev/btrfs-control "
 			"skipping device registration: %s\n",
