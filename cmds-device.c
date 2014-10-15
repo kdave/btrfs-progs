@@ -205,7 +205,7 @@ static const char * const cmd_scan_dev_usage[] = {
 
 static int cmd_scan_dev(int argc, char **argv)
 {
-	int i, fd, e;
+	int i;
 	int devstart = 1;
 	int all = 0;
 	int ret = 0;
@@ -241,22 +241,14 @@ static int cmd_scan_dev(int argc, char **argv)
 		goto out;
 	}
 
-	fd = open("/dev/btrfs-control", O_RDWR);
-	if (fd < 0) {
-		perror("failed to open /dev/btrfs-control");
-		ret = 1;
-		goto out;
-	}
-
 	for( i = devstart ; i < argc ; i++ ){
-		struct btrfs_ioctl_vol_args args;
 		char *path;
 
 		if (!is_block_device(argv[i])) {
 			fprintf(stderr,
 				"ERROR: %s is not a block device\n", argv[i]);
 			ret = 1;
-			goto close_out;
+			goto out;
 		}
 		path = canonicalize_path(argv[i]);
 		if (!path) {
@@ -264,30 +256,17 @@ static int cmd_scan_dev(int argc, char **argv)
 				"ERROR: Could not canonicalize path '%s': %s\n",
 				argv[i], strerror(errno));
 			ret = 1;
-			goto close_out;
+			goto out;
 		}
 		printf("Scanning for Btrfs filesystems in '%s'\n", path);
-
-		strncpy_null(args.name, path);
-		/*
-		 * FIXME: which are the error code returned by this ioctl ?
-		 * it seems that is impossible to understand if there no is
-		 * a btrfs filesystem from an I/O error !!!
-		 */
-		ret = ioctl(fd, BTRFS_IOC_SCAN_DEV, &args);
-		e = errno;
-
-		if( ret < 0 ){
-			fprintf(stderr, "ERROR: unable to scan the device '%s' - %s\n",
-				path, strerror(e));
+		if (btrfs_register_one_device(path) != 0) {
+			ret = 1;
 			free(path);
-			goto close_out;
+			goto out;
 		}
 		free(path);
 	}
 
-close_out:
-	close(fd);
 out:
 	return !!ret;
 }

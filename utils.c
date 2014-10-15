@@ -1239,7 +1239,7 @@ struct pending_dir {
 	char name[PATH_MAX];
 };
 
-void btrfs_register_one_device(char *fname)
+int btrfs_register_one_device(const char *fname)
 {
 	struct btrfs_ioctl_vol_args args;
 	int fd;
@@ -1251,17 +1251,19 @@ void btrfs_register_one_device(char *fname)
 		fprintf(stderr, "failed to open /dev/btrfs-control "
 			"skipping device registration: %s\n",
 			strerror(errno));
-		return;
+		return -errno;
 	}
 	strncpy(args.name, fname, BTRFS_PATH_NAME_MAX);
 	args.name[BTRFS_PATH_NAME_MAX-1] = 0;
 	ret = ioctl(fd, BTRFS_IOC_SCAN_DEV, &args);
 	e = errno;
-	if(ret<0){
+	if (ret < 0) {
 		fprintf(stderr, "ERROR: device scan failed '%s' - %s\n",
 			fname, strerror(e));
+		ret = -e;
 	}
 	close(fd);
+	return ret;
 }
 
 int btrfs_device_already_in_root(struct btrfs_root *root, int fd,
