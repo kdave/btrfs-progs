@@ -834,6 +834,35 @@ static int find_best_backup_root(struct btrfs_super_block *super)
 	return best_index;
 }
 
+static int setup_root_or_create_block(struct btrfs_fs_info *fs_info,
+				      enum btrfs_open_ctree_flags flags,
+				      struct btrfs_root *info_root,
+				      u64 objectid, char *str)
+{
+	struct btrfs_super_block *sb = fs_info->super_copy;
+	struct btrfs_root *root = fs_info->tree_root;
+	u32 leafsize = btrfs_super_leafsize(sb);
+	int ret;
+
+	ret = find_and_setup_root(root, fs_info, objectid, info_root);
+	if (ret) {
+		printk("Couldn't setup %s tree\n", str);
+		if (!(flags & OPEN_CTREE_PARTIAL))
+			return -EIO;
+		/*
+		 * Need a blank node here just so we don't screw up in the
+		 * million of places that assume a root has a valid ->node
+		 */
+		info_root->node =
+			btrfs_find_create_tree_block(info_root, 0, leafsize);
+		if (!info_root->node)
+			return -ENOMEM;
+		clear_extent_buffer_uptodate(NULL, info_root->node);
+	}
+
+	return 0;
+}
+
 int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info, u64 root_tree_bytenr,
 			  enum btrfs_open_ctree_flags flags)
 {
@@ -880,22 +909,10 @@ int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info, u64 root_tree_bytenr,
 		return -EIO;
 	}
 
-	ret = find_and_setup_root(root, fs_info, BTRFS_EXTENT_TREE_OBJECTID,
-				  fs_info->extent_root);
-	if (ret) {
-		printk("Couldn't setup extent tree\n");
-		if (!(flags & OPEN_CTREE_PARTIAL))
-			return -EIO;
-		/* Need a blank node here just so we don't screw up in the
-		 * million of places that assume a root has a valid ->node
-		 */
-		fs_info->extent_root->node =
-			btrfs_find_create_tree_block(fs_info->extent_root, 0,
-						     leafsize);
-		if (!fs_info->extent_root->node)
-			return -ENOMEM;
-		clear_extent_buffer_uptodate(NULL, fs_info->extent_root->node);
-	}
+	ret = setup_root_or_create_block(fs_info, flags, fs_info->extent_root,
+					 BTRFS_EXTENT_TREE_OBJECTID, "extent");
+	if (ret)
+		return ret;
 	fs_info->extent_root->track_dirty = 1;
 
 	ret = find_and_setup_root(root, fs_info, BTRFS_DEV_TREE_OBJECTID,
@@ -906,20 +923,10 @@ int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info, u64 root_tree_bytenr,
 	}
 	fs_info->dev_root->track_dirty = 1;
 
-	ret = find_and_setup_root(root, fs_info, BTRFS_CSUM_TREE_OBJECTID,
-				  fs_info->csum_root);
-	if (ret) {
-		printk("Couldn't setup csum tree\n");
-		if (!(flags & OPEN_CTREE_PARTIAL))
-			return -EIO;
-		/* do the same thing as extent tree rebuilding */
-		fs_info->csum_root->node =
-			btrfs_find_create_tree_block(fs_info->extent_root, 0,
-						     leafsize);
-		if (!fs_info->csum_root->node)
-			return -ENOMEM;
-		clear_extent_buffer_uptodate(NULL, fs_info->csum_root->node);
-	}
+	ret = setup_root_or_create_block(fs_info, flags, fs_info->csum_root,
+					 BTRFS_CSUM_TREE_OBJECTID, "csum");
+	if (ret)
+		return ret;
 	fs_info->csum_root->track_dirty = 1;
 
 	ret = find_and_setup_root(root, fs_info, BTRFS_QUOTA_TREE_OBJECTID,
