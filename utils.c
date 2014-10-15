@@ -1579,7 +1579,12 @@ scan_again:
 
 	strcpy(fullpath,"/dev/");
 	while(fgets(buf, 1023, proc_partitions)) {
-		i = sscanf(buf," %*d %*d %*d %99s", fullpath+5);
+		ret = sscanf(buf," %*d %*d %*d %99s", fullpath + 5);
+		if (ret != 1) {
+			fprintf(stderr,
+				"failed to scan device name from /proc/partitions\n");
+			break;
+		}
 
 		/*
 		 * multipath and MD devices may register as a btrfs filesystem
