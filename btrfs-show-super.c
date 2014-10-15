@@ -324,8 +324,8 @@ static void print_readable_incompat_flag(u64 flag)
 				printf("%s ", entry->output);
 			else
 				printf("|\n\t\t\t  %s ", entry->output);
+			first = 0;
 		}
-		first = 0;
 	}
 	flag &= ~BTRFS_FEATURE_INCOMPAT_SUPP;
 	if (flag) {
