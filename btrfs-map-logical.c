@@ -76,8 +76,18 @@ static struct extent_buffer * debug_read_block(struct btrfs_root *root,
 			(unsigned long long)eb->dev_bytenr, device->name);
 		kfree(multi);
 
-		if (!copy || mirror_num == copy)
+		if (!copy || mirror_num == copy) {
 			ret = read_extent_from_disk(eb, 0, eb->len);
+			if (ret) {
+				fprintf(info_file,
+					"Error: failed to read extent: mirror %d logical %llu: %s\n",
+					mirror_num, (unsigned long long)eb->start,
+					strerror(-ret));
+				free_extent_buffer(eb);
+				eb = NULL;
+				break;
+			}
+		}
 
 		num_copies = btrfs_num_copies(&root->fs_info->mapping_tree,
 					      eb->start, eb->len);

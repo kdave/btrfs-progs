@@ -666,8 +666,10 @@ int read_extent_from_disk(struct extent_buffer *eb,
 {
 	int ret;
 	ret = pread(eb->fd, eb->data + offset, len, eb->dev_bytenr);
-	if (ret < 0)
+	if (ret < 0) {
+		ret = -errno;
 		goto out;
+	}
 	if (ret != len) {
 		ret = -EIO;
 		goto out;
