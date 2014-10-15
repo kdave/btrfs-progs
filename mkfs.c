@@ -1588,10 +1588,10 @@ int main(int ac, char **av)
 
 	trans = btrfs_start_transaction(root, 1);
 
+	btrfs_register_one_device(file);
+
 	if (dev_cnt == 0)
 		goto raid_groups;
-
-	btrfs_register_one_device(file);
 
 	while (dev_cnt-- > 0) {
 		int old_mixed = mixed;
