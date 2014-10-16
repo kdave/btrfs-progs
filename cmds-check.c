@@ -895,6 +895,14 @@ static int leave_shared_node(struct btrfs_root *root,
 	return 0;
 }
 
+/*
+ * Returns:
+ * < 0 - on error
+ * 1   - if the root with id child_root_id is a child of root parent_root_id
+ * 0   - if the root child_root_id isn't a child of the root parent_root_id but
+ *       has other root(s) as parent(s)
+ * 2   - if the root child_root_id doesn't have any parent roots
+ */
 static int is_child_root(struct btrfs_root *root, u64 parent_root_id,
 			 u64 child_root_id)
 {
@@ -952,7 +960,7 @@ out:
 	btrfs_release_path(&path);
 	if (ret < 0)
 		return ret;
-	return has_parent? 0 : -1;
+	return has_parent ? 0 : 2;
 }
 
 static int process_dir_item(struct btrfs_root *root,
