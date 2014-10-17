@@ -27,12 +27,23 @@ rm -f $RESULT
 # test rely on corrupting blocks tool
 run_check make btrfs-corrupt-block
 
-for i in $(find $here/tests/fsck-tests -name '*.img')
+# Some broken filesystem images are kept as .img files, created by the tool
+# btrfs-image, and others are kept as .tar.xz files that contain raw filesystem
+# image (the backing file of a loop device, as a sparse file). The reason for
+# keeping some as tarballs of raw images is that for these cases btrfs-image
+# isn't able to preserve all the (bad) filesystem structure for some reason.
+for i in $(find $here/tests/fsck-tests -name '*.img' -o -name '*.tar.xz')
 do
 	echo "     [TEST]    $(basename $i)"
 	echo "testing image $i" >> $RESULT
 
-	run_check $here/btrfs-image -r $i test.img
+	extension=${i#*.}
+
+	if [ $extension == "img" ]; then
+		run_check $here/btrfs-image -r $i test.img
+	else
+		run_check tar xJf $i
+	fi
 
 	$here/btrfsck test.img >> $RESULT 2>&1
 	[ $? -eq 0 ] && _fail "btrfsck should have detected corruption"

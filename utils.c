@@ -2410,3 +2410,24 @@ void units_set_base(unsigned *units, unsigned base)
 
 	*units = base | mode;
 }
+
+int find_next_key(struct btrfs_path *path, struct btrfs_key *key)
+{
+	int level;
+
+	for (level = 0; level < BTRFS_MAX_LEVEL; level++) {
+		if (!path->nodes[level])
+			break;
+		if (path->slots[level] + 1 >=
+		    btrfs_header_nritems(path->nodes[level]))
+			continue;
+		if (level == 0)
+			btrfs_item_key_to_cpu(path->nodes[level], key,
+					      path->slots[level] + 1);
+		else
+			btrfs_node_key_to_cpu(path->nodes[level], key,
+					      path->slots[level] + 1);
+		return 0;
+	}
+	return 1;
+}

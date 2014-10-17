@@ -158,4 +158,6 @@ static inline u64 btrfs_min_dev_size(u32 leafsize)
 		    btrfs_min_global_blk_rsv_size(leafsize));
 }
 
+int find_next_key(struct btrfs_path *path, struct btrfs_key *key);
+
 #endif

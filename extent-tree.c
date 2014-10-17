@@ -29,6 +29,7 @@
 #include "volumes.h"
 #include "free-space-cache.h"
 #include "math.h"
+#include "utils.h"
 
 #define PENDING_EXTENT_INSERT 0
 #define PENDING_EXTENT_DELETE 1
@@ -970,27 +971,6 @@ static inline int extent_ref_type(u64 parent, u64 owner)
 			type = BTRFS_EXTENT_DATA_REF_KEY;
 	}
 	return type;
-}
-
-static int find_next_key(struct btrfs_path *path, struct btrfs_key *key)
-
-{
-	int level;
-	for (level = 0; level < BTRFS_MAX_LEVEL; level++) {
-		if (!path->nodes[level])
-			break;
-		if (path->slots[level] + 1 >=
-		    btrfs_header_nritems(path->nodes[level]))
-			continue;
-		if (level == 0)
-			btrfs_item_key_to_cpu(path->nodes[level], key,
-					      path->slots[level] + 1);
-		else
-			btrfs_node_key_to_cpu(path->nodes[level], key,
-					      path->slots[level] + 1);
-		return 0;
-	}
-	return 1;
 }
 
 static int lookup_inline_extent_backref(struct btrfs_trans_handle *trans,

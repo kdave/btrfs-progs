@@ -7198,6 +7198,345 @@ static int fill_csum_tree(struct btrfs_trans_handle *trans,
 	return ret;
 }
 
+struct root_item_info {
+	/* level of the root */
+	u8 level;
+	/* number of nodes at this level, must be 1 for a root */
+	int node_count;
+	u64 bytenr;
+	u64 gen;
+	struct cache_extent cache_extent;
+};
+
+static struct cache_tree *roots_info_cache = NULL;
+
+static void free_roots_info_cache(void)
+{
+	if (!roots_info_cache)
+		return;
+
+	while (!cache_tree_empty(roots_info_cache)) {
+		struct cache_extent *entry;
+		struct root_item_info *rii;
+
+		entry = first_cache_extent(roots_info_cache);
+		remove_cache_extent(roots_info_cache, entry);
+		rii = container_of(entry, struct root_item_info, cache_extent);
+		free(rii);
+	}
+
+	free(roots_info_cache);
+	roots_info_cache = NULL;
+}
+
+static int build_roots_info_cache(struct btrfs_fs_info *info)
+{
+	int ret = 0;
+	struct btrfs_key key;
+	struct extent_buffer *leaf;
+	struct btrfs_path *path;
+
+	if (!roots_info_cache) {
+		roots_info_cache = malloc(sizeof(*roots_info_cache));
+		if (!roots_info_cache)
+			return -ENOMEM;
+		cache_tree_init(roots_info_cache);
+	}
+
+	path = btrfs_alloc_path();
+	if (!path)
+		return -ENOMEM;
+
+	key.objectid = 0;
+	key.type = BTRFS_EXTENT_ITEM_KEY;
+	key.offset = 0;
+
+	ret = btrfs_search_slot(NULL, info->extent_root, &key, path, 0, 0);
+	if (ret < 0)
+		goto out;
+	leaf = path->nodes[0];
+
+	while (1) {
+		struct btrfs_key found_key;
+		struct btrfs_extent_item *ei;
+		struct btrfs_extent_inline_ref *iref;
+		int slot = path->slots[0];
+		int type;
+		u64 flags;
+		u64 root_id;
+		u8 level;
+		struct cache_extent *entry;
+		struct root_item_info *rii;
+
+		if (slot >= btrfs_header_nritems(leaf)) {
+			ret = btrfs_next_leaf(info->extent_root, path);
+			if (ret < 0) {
+				break;
+			} else if (ret) {
+				ret = 0;
+				break;
+			}
+			leaf = path->nodes[0];
+			slot = path->slots[0];
+		}
+
+		btrfs_item_key_to_cpu(leaf, &found_key, path->slots[0]);
+
+		if (found_key.type != BTRFS_EXTENT_ITEM_KEY &&
+		    found_key.type != BTRFS_METADATA_ITEM_KEY)
+			goto next;
+
+		ei = btrfs_item_ptr(leaf, slot, struct btrfs_extent_item);
+		flags = btrfs_extent_flags(leaf, ei);
+
+		if (found_key.type == BTRFS_EXTENT_ITEM_KEY &&
+		    !(flags & BTRFS_EXTENT_FLAG_TREE_BLOCK))
+			goto next;
+
+		if (found_key.type == BTRFS_METADATA_ITEM_KEY) {
+			iref = (struct btrfs_extent_inline_ref *)(ei + 1);
+			level = found_key.offset;
+		} else {
+			struct btrfs_tree_block_info *info;
+
+			info = (struct btrfs_tree_block_info *)(ei + 1);
+			iref = (struct btrfs_extent_inline_ref *)(info + 1);
+			level = btrfs_tree_block_level(leaf, info);
+		}
+
+		/*
+		 * For a root extent, it must be of the following type and the
+		 * first (and only one) iref in the item.
+		 */
+		type = btrfs_extent_inline_ref_type(leaf, iref);
+		if (type != BTRFS_TREE_BLOCK_REF_KEY)
+			goto next;
+
+		root_id = btrfs_extent_inline_ref_offset(leaf, iref);
+		entry = lookup_cache_extent(roots_info_cache, root_id, 1);
+		if (!entry) {
+			rii = malloc(sizeof(struct root_item_info));
+			if (!rii) {
+				ret = -ENOMEM;
+				goto out;
+			}
+			rii->cache_extent.start = root_id;
+			rii->cache_extent.size = 1;
+			rii->level = (u8)-1;
+			entry = &rii->cache_extent;
+			ret = insert_cache_extent(roots_info_cache, entry);
+			ASSERT(ret == 0);
+		} else {
+			rii = container_of(entry, struct root_item_info,
+					   cache_extent);
+		}
+
+		ASSERT(rii->cache_extent.start == root_id);
+		ASSERT(rii->cache_extent.size == 1);
+
+		if (level > rii->level || rii->level == (u8)-1) {
+			rii->level = level;
+			rii->bytenr = found_key.objectid;
+			rii->gen = btrfs_extent_generation(leaf, ei);
+			rii->node_count = 1;
+		} else if (level == rii->level) {
+			rii->node_count++;
+		}
+next:
+		path->slots[0]++;
+	}
+
+out:
+	btrfs_free_path(path);
+
+	return ret;
+}
+
+static int maybe_repair_root_item(struct btrfs_fs_info *info,
+				  struct btrfs_path *path,
+				  const struct btrfs_key *root_key,
+				  const int read_only_mode)
+{
+	const u64 root_id = root_key->objectid;
+	struct cache_extent *entry;
+	struct root_item_info *rii;
+	struct btrfs_root_item ri;
+	unsigned long offset;
+
+	entry = lookup_cache_extent(roots_info_cache, root_id, 1);
+	if (!entry) {
+		fprintf(stderr,
+			"Error: could not find extent items for root %llu\n",
+			root_key->objectid);
+		return -ENOENT;
+	}
+
+	rii = container_of(entry, struct root_item_info, cache_extent);
+	ASSERT(rii->cache_extent.start == root_id);
+	ASSERT(rii->cache_extent.size == 1);
+
+	if (rii->node_count != 1) {
+		fprintf(stderr,
+			"Error: could not find btree root extent for root %llu\n",
+			root_id);
+		return -ENOENT;
+	}
+
+	offset = btrfs_item_ptr_offset(path->nodes[0], path->slots[0]);
+	read_extent_buffer(path->nodes[0], &ri, offset, sizeof(ri));
+
+	if (btrfs_root_bytenr(&ri) != rii->bytenr ||
+	    btrfs_root_level(&ri) != rii->level ||
+	    btrfs_root_generation(&ri) != rii->gen) {
+
+		/*
+		 * If we're in repair mode but our caller told us to not update
+		 * the root item, i.e. just check if it needs to be updated, don't
+		 * print this message, since the caller will call us again shortly
+		 * for the same root item without read only mode (the caller will
+		 * open a transaction first).
+		 */
+		if (!(read_only_mode && repair))
+			fprintf(stderr,
+				"%sroot item for root %llu,"
+				" current bytenr %llu, current gen %llu, current level %u,"
+				" new bytenr %llu, new gen %llu, new level %u\n",
+				(read_only_mode ? "" : "fixing "),
+				root_id,
+				btrfs_root_bytenr(&ri), btrfs_root_generation(&ri),
+				btrfs_root_level(&ri),
+				rii->bytenr, rii->gen, rii->level);
+
+		if (btrfs_root_generation(&ri) > rii->gen) {
+			fprintf(stderr,
+				"root %llu has a root item with a more recent gen (%llu) compared to the found root node (%llu)\n",
+				root_id, btrfs_root_generation(&ri), rii->gen);
+			return -EINVAL;
+		}
+
+		if (!read_only_mode) {
+			btrfs_set_root_bytenr(&ri, rii->bytenr);
+			btrfs_set_root_level(&ri, rii->level);
+			btrfs_set_root_generation(&ri, rii->gen);
+			write_extent_buffer(path->nodes[0], &ri,
+					    offset, sizeof(ri));
+		}
+
+		return 1;
+	}
+
+	return 0;
+}
+
+/*
+ * A regression introduced in the 3.17 kernel (more specifically in 3.17-rc2),
+ * caused read-only snapshots to be corrupted if they were created at a moment
+ * when the source subvolume/snapshot had orphan items. The issue was that the
+ * on-disk root items became incorrect, referring to the pre orphan cleanup root
+ * node instead of the post orphan cleanup root node.
+ * So this function, and its callees, just detects and fixes those cases. Even
+ * though the regression was for read-only snapshots, this function applies to
+ * any snapshot/subvolume root.
+ * This must be run before any other repair code - not doing it so, makes other
+ * repair code delete or modify backrefs in the extent tree for example, which
+ * will result in an inconsistent fs after repairing the root items.
+ */
+static int repair_root_items(struct btrfs_fs_info *info)
+{
+	struct btrfs_path *path = NULL;
+	struct btrfs_key key;
+	struct extent_buffer *leaf;
+	struct btrfs_trans_handle *trans = NULL;
+	int ret = 0;
+	int bad_roots = 0;
+	int need_trans = 0;
+
+	ret = build_roots_info_cache(info);
+	if (ret)
+		goto out;
+
+	path = btrfs_alloc_path();
+	if (!path) {
+		ret = -ENOMEM;
+		goto out;
+	}
+
+	key.objectid = BTRFS_FIRST_FREE_OBJECTID;
+	key.type = BTRFS_ROOT_ITEM_KEY;
+	key.offset = 0;
+
+again:
+	/*
+	 * Avoid opening and committing transactions if a leaf doesn't have
+	 * any root items that need to be fixed, so that we avoid rotating
+	 * backup roots unnecessarily.
+	 */
+	if (need_trans) {
+		trans = btrfs_start_transaction(info->tree_root, 1);
+		if (IS_ERR(trans)) {
+			ret = PTR_ERR(trans);
+			goto out;
+		}
+	}
+
+	ret = btrfs_search_slot(trans, info->tree_root, &key, path,
+				0, trans ? 1 : 0);
+	if (ret < 0)
+		goto out;
+	leaf = path->nodes[0];
+
+	while (1) {
+		struct btrfs_key found_key;
+
+		if (path->slots[0] >= btrfs_header_nritems(leaf)) {
+			int no_more_keys = find_next_key(path, &key);
+
+			btrfs_release_path(path);
+			if (trans) {
+				ret = btrfs_commit_transaction(trans,
+							       info->tree_root);
+				trans = NULL;
+				if (ret < 0)
+					goto out;
+			}
+			need_trans = 0;
+			if (no_more_keys)
+				break;
+			goto again;
+		}
+
+		btrfs_item_key_to_cpu(leaf, &found_key, path->slots[0]);
+
+		if (found_key.type != BTRFS_ROOT_ITEM_KEY)
+			goto next;
+
+		ret = maybe_repair_root_item(info, path, &found_key,
+					     trans ? 0 : 1);
+		if (ret < 0)
+			goto out;
+		if (ret) {
+			if (!trans && repair) {
+				need_trans = 1;
+				key = found_key;
+				btrfs_release_path(path);
+				goto again;
+			}
+			bad_roots++;
+		}
+next:
+		path->slots[0]++;
+	}
+	ret = 0;
+out:
+	free_roots_info_cache();
+	if (path)
+		btrfs_free_path(path);
+	if (ret < 0)
+		return ret;
+
+	return bad_roots;
+}
+
 static struct option long_options[] = {
 	{ "super", 1, NULL, 's' },
 	{ "repair", 0, NULL, 0 },
@@ -7320,6 +7659,23 @@ int cmd_check(int argc, char **argv)
 	}
 
 	root = info->fs_root;
+
+	ret = repair_root_items(info);
+	if (ret < 0)
+		goto close_out;
+	if (repair) {
+		fprintf(stderr, "Fixed %d roots.\n", ret);
+		ret = 0;
+	} else if (ret > 0) {
+		fprintf(stderr,
+		       "Found %d roots with an outdated root item.\n",
+		       ret);
+		fprintf(stderr,
+			"Please run a filesystem check with the option --repair to fix them.\n");
+		ret = 1;
+		goto close_out;
+	}
+
 	/*
 	 * repair mode will force us to commit transaction which
 	 * will make us fail to load log tree when mounting.
