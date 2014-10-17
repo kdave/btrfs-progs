@@ -32,7 +32,7 @@ run_check make btrfs-corrupt-block
 # image (the backing file of a loop device, as a sparse file). The reason for
 # keeping some as tarballs of raw images is that for these cases btrfs-image
 # isn't able to preserve all the (bad) filesystem structure for some reason.
-for i in $(find $here/tests/fsck-tests -name '*.img' -o -name '*.tar.xz')
+for i in $(find $here/tests/fsck-tests -name '*.img' -o -name '*.tar.xz' | sort)
 do
 	echo "     [TEST]    $(basename $i)"
 	echo "testing image $i" >> $RESULT
