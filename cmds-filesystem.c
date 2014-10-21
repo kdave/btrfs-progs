@@ -241,7 +241,6 @@ static int cmd_df(int argc, char **argv)
 	DIR *dirstream = NULL;
 	unsigned unit_mode = UNITS_DEFAULT;
 
-	optind = 1;
 	while (1) {
 		int long_index;
 		static const struct option long_options[] = {
@@ -290,7 +289,7 @@ static int cmd_df(int argc, char **argv)
 		}
 	}
 
-	if (check_argc_max(argc, optind + 1))
+	if (check_argc_exact(argc, optind + 1))
 		usage(cmd_df_usage);
 
 	path = argv[optind];
