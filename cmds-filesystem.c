@@ -136,49 +136,6 @@ static const char * const cmd_df_usage[] = {
        NULL
 };
 
-static char *group_type_str(u64 flag)
-{
-	u64 mask = BTRFS_BLOCK_GROUP_TYPE_MASK |
-		BTRFS_SPACE_INFO_GLOBAL_RSV;
-
-	switch (flag & mask) {
-	case BTRFS_BLOCK_GROUP_DATA:
-		return "Data";
-	case BTRFS_BLOCK_GROUP_SYSTEM:
-		return "System";
-	case BTRFS_BLOCK_GROUP_METADATA:
-		return "Metadata";
-	case BTRFS_BLOCK_GROUP_DATA|BTRFS_BLOCK_GROUP_METADATA:
-		return "Data+Metadata";
-	case BTRFS_SPACE_INFO_GLOBAL_RSV:
-		return "GlobalReserve";
-	default:
-		return "unknown";
-	}
-}
-
-static char *group_profile_str(u64 flag)
-{
-	switch (flag & BTRFS_BLOCK_GROUP_PROFILE_MASK) {
-	case 0:
-		return "single";
-	case BTRFS_BLOCK_GROUP_RAID0:
-		return "RAID0";
-	case BTRFS_BLOCK_GROUP_RAID1:
-		return "RAID1";
-	case BTRFS_BLOCK_GROUP_RAID5:
-		return "RAID5";
-	case BTRFS_BLOCK_GROUP_RAID6:
-		return "RAID6";
-	case BTRFS_BLOCK_GROUP_DUP:
-		return "DUP";
-	case BTRFS_BLOCK_GROUP_RAID10:
-		return "RAID10";
-	default:
-		return "unknown";
-	}
-}
-
 static int get_df(int fd, struct btrfs_ioctl_space_args **sargs_ret)
 {
 	u64 count = 0;
@@ -234,8 +191,8 @@ static void print_df(struct btrfs_ioctl_space_args *sargs, unsigned unit_mode)
 
 	for (i = 0; i < sargs->total_spaces; i++, sp++) {
 		printf("%s, %s: total=%s, used=%s\n",
-			group_type_str(sp->flags),
-			group_profile_str(sp->flags),
+			btrfs_group_type_str(sp->flags),
+			btrfs_group_profile_str(sp->flags),
 			pretty_size_mode(sp->total_bytes, unit_mode),
 			pretty_size_mode(sp->used_bytes, unit_mode));
 	}
