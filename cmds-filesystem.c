@@ -53,6 +53,15 @@ struct seen_fsid {
 
 static struct seen_fsid *seen_fsid_hash[SEEN_FSID_HASH_SIZE] = {NULL,};
 
+static int is_seen_fsid(u8 *fsid)
+{
+	u8 hash = fsid[0];
+	int slot = hash % SEEN_FSID_HASH_SIZE;
+	struct seen_fsid *seen = seen_fsid_hash[slot];
+
+	return seen ? 1 : 0;
+}
+
 static int add_seen_fsid(u8 *fsid)
 {
 	u8 hash = fsid[0];
@@ -765,6 +774,10 @@ static int map_seed_devices(struct list_head *all_uuids,
 				continue;
 			*found = 1;
 		}
+
+		/* skip all fs already shown as mounted fs */
+		if (is_seen_fsid(cur_fs->fsid))
+			continue;
 
 		fs_copy = malloc(sizeof(*fs_copy));
 		if (!fs_copy) {
