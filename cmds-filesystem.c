@@ -713,14 +713,10 @@ static int find_and_copy_seed(struct btrfs_fs_devices *seed,
 	return 1;
 }
 
-static int map_seed_devices(struct list_head *all_uuids,
-			    char *search, int *found)
+static int search_umounted_fs_uuids(struct list_head *all_uuids,
+				    char *search)
 {
-	struct btrfs_fs_devices *cur_fs, *cur_seed;
-	struct btrfs_fs_devices *fs_copy, *seed_copy;
-	struct btrfs_fs_devices *opened_fs;
-	struct btrfs_device *device;
-	struct btrfs_fs_info *fs_info;
+	struct btrfs_fs_devices *cur_fs, *fs_copy;
 	struct list_head *fs_uuids;
 	int ret = 0;
 
@@ -735,7 +731,7 @@ static int map_seed_devices(struct list_head *all_uuids,
 		if (search) {
 			if (uuid_search(cur_fs, search) == 0)
 				continue;
-			*found = 1;
+			ret = 1;
 		}
 
 		/* skip all fs already shown as mounted fs */
@@ -756,6 +752,22 @@ static int map_seed_devices(struct list_head *all_uuids,
 
 		list_add(&fs_copy->list, all_uuids);
 	}
+
+out:
+	return ret;
+}
+
+static int map_seed_devices(struct list_head *all_uuids)
+{
+	struct btrfs_fs_devices *cur_fs, *cur_seed;
+	struct btrfs_fs_devices *seed_copy;
+	struct btrfs_fs_devices *opened_fs;
+	struct btrfs_device *device;
+	struct btrfs_fs_info *fs_info;
+	struct list_head *fs_uuids;
+	int ret = 0;
+
+	fs_uuids = btrfs_scanned_uuids();
 
 	list_for_each_entry(cur_fs, all_uuids, list) {
 		device = list_first_entry(&cur_fs->devices,
@@ -924,11 +936,18 @@ devs_only:
 		return 1;
 	}
 
+	found = search_umounted_fs_uuids(&all_uuids, search);
+	if (found < 0) {
+		fprintf(stderr,
+			"ERROR: %d while searching target device\n", ret);
+		return 1;
+	}
+
 	/*
 	 * scan_for_btrfs() don't build seed/sprout mapping,
 	 * do mapping build for each scanned fs here
 	 */
-	ret = map_seed_devices(&all_uuids, search, &found);
+	ret = map_seed_devices(&all_uuids);
 	if (ret) {
 		fprintf(stderr,
 			"ERROR: %d while mapping seed devices\n", ret);
