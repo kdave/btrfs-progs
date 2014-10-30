@@ -266,12 +266,12 @@ clean-all: clean-doc clean
 
 clean: $(CLEANDIRS)
 	@echo "Cleaning"
-	$(Q)rm -f $(progs) cscope.out *.o *.o.d btrfs-convert btrfs-image btrfs-select-super \
-	      btrfs-zero-log btrfstune dir-test ioctl-test quick-test send-test btrfsck \
-	      btrfs.static mkfs.btrfs.static btrfs-calc-size \
+	$(Q)rm -f $(progs) cscope.out *.o *.o.d \
+	      dir-test ioctl-test quick-test send-test library-test library-test-static \
+	      btrfs.static mkfs.btrfs.static \
 	      version.h $(check_defs) \
 	      $(libs) $(lib_links) \
-	      $(progs_extra)
+	      $(progs_static) $(progs_extra)
 
 clean-doc:
 	@echo "Cleaning Documentation"
