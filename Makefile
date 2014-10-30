@@ -248,6 +248,13 @@ library-test.static: $(libs_static) library-test.o
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o library-test-static library-test.o $(LDFLAGS) $(libs_static)
 
+test-build:
+	$(MAKE) clean-all
+	$(MAKE) library-test
+	-$(MAKE) library-test.static
+	$(MAKE) -j 8 all
+	-$(MAKE) -j 8 static
+
 manpages:
 	$(Q)$(MAKE) $(MAKEOPTS) -C Documentation
 
