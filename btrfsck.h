@@ -179,5 +179,6 @@ btrfs_new_device_extent_record(struct extent_buffer *leaf,
 int check_chunks(struct cache_tree *chunk_cache,
 		 struct block_group_tree *block_group_cache,
 		 struct device_extent_tree *dev_extent_cache,
-		 struct list_head *good, struct list_head *bad, int silent);
+		 struct list_head *good, struct list_head *bad,
+		 struct list_head *rebuild, int silent);
 #endif
