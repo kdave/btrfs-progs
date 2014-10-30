@@ -240,6 +240,14 @@ send-test: $(objects) $(libs) send-test.o
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o send-test $(objects) send-test.o $(LDFLAGS) $(LIBS) -lpthread
 
+library-test: $(libs_shared) library-test.o
+	@echo "    [LD]     $@"
+	$(Q)$(CC) $(CFLAGS) -o library-test library-test.o $(LDFLAGS) -lbtrfs
+
+library-test.static: $(libs_static) library-test.o
+	@echo "    [LD]     $@"
+	$(Q)$(CC) $(CFLAGS) -o library-test-static library-test.o $(LDFLAGS) $(libs_static)
+
 manpages:
 	$(Q)$(MAKE) $(MAKEOPTS) -C Documentation
 
