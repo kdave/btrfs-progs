@@ -50,6 +50,9 @@ progs = mkfs.btrfs btrfs-debug-tree btrfsck \
 	btrfs btrfs-map-logical btrfs-image btrfs-zero-log btrfs-convert \
 	btrfs-find-root btrfstune btrfs-show-super
 
+progs_extra = btrfs-corrupt-block btrfs-fragments btrfs-calc-size \
+	      btrfs-select-super
+
 progs_static = $(foreach p,$(progs),$(p).static)
 
 # external libs required by various binaries; for btrfs-foo,
@@ -254,6 +257,7 @@ test-build:
 	-$(MAKE) library-test.static
 	$(MAKE) -j 8 all
 	-$(MAKE) -j 8 static
+	$(MAKE) -j 8 $(progs_extra)
 
 manpages:
 	$(Q)$(MAKE) $(MAKEOPTS) -C Documentation
@@ -266,7 +270,8 @@ clean: $(CLEANDIRS)
 	      btrfs-zero-log btrfstune dir-test ioctl-test quick-test send-test btrfsck \
 	      btrfs.static mkfs.btrfs.static btrfs-calc-size \
 	      version.h $(check_defs) \
-	      $(libs) $(lib_links)
+	      $(libs) $(lib_links) \
+	      $(progs_extra)
 
 clean-doc:
 	@echo "Cleaning Documentation"
