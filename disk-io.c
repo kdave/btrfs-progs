@@ -937,7 +937,8 @@ int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info, u64 root_tree_bytenr,
 	ret = find_and_setup_log_root(root, fs_info, sb);
 	if (ret) {
 		printk("Couldn't setup log root tree\n");
-		return -EIO;
+		if (!(flags & OPEN_CTREE_PARTIAL))
+			return -EIO;
 	}
 
 	fs_info->generation = generation;
