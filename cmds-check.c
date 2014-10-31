@@ -1772,6 +1772,33 @@ static int repair_inode_backrefs(struct btrfs_root *root,
 			}
 		}
 
+		if (!delete && (!backref->found_dir_index &&
+				!backref->found_dir_item &&
+				backref->found_inode_ref)) {
+			struct btrfs_trans_handle *trans;
+			struct btrfs_key location;
+
+			location.objectid = rec->ino;
+			location.type = BTRFS_INODE_ITEM_KEY;
+			location.offset = 0;
+
+			trans = btrfs_start_transaction(root, 1);
+			if (IS_ERR(trans)) {
+				ret = PTR_ERR(trans);
+				break;
+			}
+			fprintf(stderr, "adding missing dir index/item pair "
+				"for inode %llu\n",
+				(unsigned long long)rec->ino);
+			ret = btrfs_insert_dir_item(trans, root, backref->name,
+						    backref->namelen,
+						    backref->dir, &location,
+						    imode_to_type(rec->imode),
+						    backref->index);
+			BUG_ON(ret);
+			btrfs_commit_transaction(trans, root);
+			repaired++;
+		}
 	}
 	return ret ? ret : repaired;
 }
