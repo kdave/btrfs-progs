@@ -1727,6 +1727,61 @@ static int delete_dir_index(struct btrfs_root *root,
 	return ret;
 }
 
+static int create_inode_item(struct btrfs_root *root,
+			     struct inode_record *rec,
+			     struct inode_backref *backref, int root_dir)
+{
+	struct btrfs_trans_handle *trans;
+	struct btrfs_inode_item inode_item;
+	time_t now = time(NULL);
+	int ret;
+
+	trans = btrfs_start_transaction(root, 1);
+	if (IS_ERR(trans)) {
+		ret = PTR_ERR(trans);
+		return ret;
+	}
+
+	fprintf(stderr, "root %llu inode %llu recreating inode item, this may "
+		"be incomplete, please check permissions and content after "
+		"the fsck completes.\n", (unsigned long long)root->objectid,
+		(unsigned long long)rec->ino);
+
+	memset(&inode_item, 0, sizeof(inode_item));
+	btrfs_set_stack_inode_generation(&inode_item, trans->transid);
+	if (root_dir)
+		btrfs_set_stack_inode_nlink(&inode_item, 1);
+	else
+		btrfs_set_stack_inode_nlink(&inode_item, rec->found_link);
+	btrfs_set_stack_inode_nbytes(&inode_item, rec->found_size);
+	if (rec->found_dir_item) {
+		if (rec->found_file_extent)
+			fprintf(stderr, "root %llu inode %llu has both a dir "
+				"item and extents, unsure if it is a dir or a "
+				"regular file so setting it as a directory\n",
+				(unsigned long long)root->objectid,
+				(unsigned long long)rec->ino);
+		btrfs_set_stack_inode_mode(&inode_item, S_IFDIR | 0755);
+		btrfs_set_stack_inode_size(&inode_item, rec->found_size);
+	} else if (!rec->found_dir_item) {
+		btrfs_set_stack_inode_size(&inode_item, rec->extent_end);
+		btrfs_set_stack_inode_mode(&inode_item, S_IFREG | 0755);
+	}
+	btrfs_set_stack_timespec_sec(&inode_item.atime, now);
+	btrfs_set_stack_timespec_nsec(&inode_item.atime, 0);
+	btrfs_set_stack_timespec_sec(&inode_item.ctime, now);
+	btrfs_set_stack_timespec_nsec(&inode_item.ctime, 0);
+	btrfs_set_stack_timespec_sec(&inode_item.mtime, now);
+	btrfs_set_stack_timespec_nsec(&inode_item.mtime, 0);
+	btrfs_set_stack_timespec_sec(&inode_item.otime, 0);
+	btrfs_set_stack_timespec_nsec(&inode_item.otime, 0);
+
+	ret = btrfs_insert_inode(trans, root, rec->ino, &inode_item);
+	BUG_ON(ret);
+	btrfs_commit_transaction(trans, root);
+	return 0;
+}
+
 static int repair_inode_backrefs(struct btrfs_root *root,
 				 struct inode_record *rec,
 				 struct cache_tree *inode_cache,
@@ -1738,6 +1793,15 @@ static int repair_inode_backrefs(struct btrfs_root *root,
 	int repaired = 0;
 
 	list_for_each_entry_safe(backref, tmp, &rec->backrefs, list) {
+		if (!delete && rec->ino == root_dirid) {
+			if (!rec->found_inode_item) {
+				ret = create_inode_item(root, rec, backref, 1);
+				if (ret)
+					break;
+				repaired++;
+			}
+		}
+
 		/* Index 0 for root dir's are special, don't mess with it */
 		if (rec->ino == root_dirid && backref->index == 0)
 			continue;
@@ -1799,6 +1863,18 @@ static int repair_inode_backrefs(struct btrfs_root *root,
 			btrfs_commit_transaction(trans, root);
 			repaired++;
 		}
+
+		if (!delete && (backref->found_inode_ref &&
+				backref->found_dir_index &&
+				backref->found_dir_item &&
+				!(backref->errors & REF_ERR_INDEX_UNMATCH) &&
+				!rec->found_inode_item)) {
+			ret = create_inode_item(root, rec, backref, 0);
+			if (ret)
+				break;
+			repaired++;
+		}
+
 	}
 	return ret ? ret : repaired;
 }
