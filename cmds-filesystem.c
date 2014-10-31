@@ -948,7 +948,7 @@ static int cmd_show(int argc, char **argv)
 		goto out;
 
 devs_only:
-	ret = btrfs_scan_lblkid(!BTRFS_UPDATE_KERNEL);
+	ret = btrfs_scan_lblkid();
 
 	if (ret) {
 		fprintf(stderr, "ERROR: %d while scanning\n", ret);

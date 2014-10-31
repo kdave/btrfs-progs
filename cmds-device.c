@@ -235,9 +235,12 @@ static int cmd_scan_dev(int argc, char **argv)
 
 	if (all || argc == 1) {
 		printf("Scanning for Btrfs filesystems\n");
-		ret = btrfs_scan_lblkid(BTRFS_UPDATE_KERNEL);
+		ret = btrfs_scan_lblkid();
 		if (ret)
 			fprintf(stderr, "ERROR: error %d while scanning\n", ret);
+		ret = btrfs_register_all_devices();
+		if (ret)
+			fprintf(stderr, "ERROR: error %d while registering\n", ret);
 		goto out;
 	}
 

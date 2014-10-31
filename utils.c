@@ -52,6 +52,8 @@
 #define BLKDISCARD	_IO(0x12,119)
 #endif
 
+static int btrfs_scan_done = 0;
+
 static char argv0_buf[ARGV0_BUF_SIZE] = "btrfs";
 
 void fixup_argv0(char **argv, const char *token)
@@ -1186,7 +1188,7 @@ int check_mounted_where(int fd, const char *file, char *where, int size,
 
 	/* scan other devices */
 	if (is_btrfs && total_devs > 1) {
-		ret = btrfs_scan_lblkid(!BTRFS_UPDATE_KERNEL);
+		ret = btrfs_scan_lblkid();
 		if (ret)
 			return ret;
 	}
@@ -2179,7 +2181,7 @@ int test_dev_for_mkfs(char *file, int force_overwrite, char *estr)
 	return 0;
 }
 
-int btrfs_scan_lblkid(int update_kernel)
+int btrfs_scan_lblkid()
 {
 	int fd = -1;
 	int ret;
@@ -2189,6 +2191,9 @@ int btrfs_scan_lblkid(int update_kernel)
 	blkid_dev dev = NULL;
 	blkid_cache cache = NULL;
 	char path[PATH_MAX];
+
+	if (btrfs_scan_done)
+		return 0;
 
 	if (blkid_get_cache(&cache, 0) < 0) {
 		printf("ERROR: lblkid cache get failed\n");
@@ -2218,11 +2223,12 @@ int btrfs_scan_lblkid(int update_kernel)
 		}
 
 		close(fd);
-		if (update_kernel)
-			btrfs_register_one_device(path);
 	}
 	blkid_dev_iterate_end(iter);
 	blkid_put_cache(cache);
+
+	btrfs_scan_done = 1;
+
 	return 0;
 }
 
