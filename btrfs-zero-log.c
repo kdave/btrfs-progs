@@ -71,6 +71,7 @@ int main(int ac, char **av)
 	btrfs_set_super_log_root_level(root->fs_info->super_copy, 0);
 	btrfs_commit_transaction(trans, root);
 	close_ctree(root);
+	printf("Log root zero'ed\n");
 out:
 	return !!ret;
 }
