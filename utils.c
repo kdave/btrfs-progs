@@ -1266,6 +1266,33 @@ int btrfs_register_one_device(const char *fname)
 	return ret;
 }
 
+/*
+ * Register all devices in the fs_uuid list created in the user
+ * space. Ensure btrfs_scan_lblkid() is called before this func.
+ */
+int btrfs_register_all_devices(void)
+{
+	int err;
+	struct btrfs_fs_devices *fs_devices;
+	struct btrfs_device *device;
+	struct list_head *all_uuids;
+
+	all_uuids = btrfs_scanned_uuids();
+
+	list_for_each_entry(fs_devices, all_uuids, list) {
+		list_for_each_entry(device, &fs_devices->devices, dev_list) {
+			if (strlen(device->name) != 0) {
+				err = btrfs_register_one_device(device->name);
+				if (err < 0)
+					return err;
+				if (err > 0)
+					return -err;
+			}
+		}
+	}
+	return 0;
+}
+
 int btrfs_device_already_in_root(struct btrfs_root *root, int fd,
 				 int super_offset)
 {

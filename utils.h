@@ -82,6 +82,7 @@ int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 		      u32 sectorsize);
 int btrfs_scan_for_fsid(int run_ioctls);
 int btrfs_register_one_device(const char *fname);
+int btrfs_register_all_devices(void);
 char *canonicalize_dm_name(const char *ptname);
 char *canonicalize_path(const char *path);
 int check_mounted(const char *devicename);
