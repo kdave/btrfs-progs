@@ -1987,6 +1987,26 @@ static int check_inode_recs(struct btrfs_root *root,
 			error++;
 		}
 	} else {
+		if (repair) {
+			struct btrfs_trans_handle *trans;
+
+			trans = btrfs_start_transaction(root, 1);
+			if (IS_ERR(trans)) {
+				err = PTR_ERR(trans);
+				return err;
+			}
+
+			fprintf(stderr,
+				"root %llu missing its root dir, recreating\n",
+				(unsigned long long)root->objectid);
+
+			ret = btrfs_make_root_dir(trans, root, root_dirid);
+			BUG_ON(ret);
+
+			btrfs_commit_transaction(trans, root);
+			return -EAGAIN;
+		}
+
 		fprintf(stderr, "root %llu root dir %llu not found\n",
 			(unsigned long long)root->root_key.objectid,
 			(unsigned long long)root_dirid);
