@@ -7677,6 +7677,7 @@ static struct option long_options[] = {
 	{ "backup", 0, NULL, 0 },
 	{ "subvol-extents", 1, NULL, 'E' },
 	{ "qgroup-report", 0, NULL, 'Q' },
+	{ "tree-root", 1, NULL, 'r' },
 	{ NULL, 0, NULL, 0}
 };
 
@@ -7692,6 +7693,7 @@ const char * const cmd_check_usage[] = {
 	"--check-data-csum           verify checkums of data blocks",
 	"--qgroup-report             print a report on qgroup consistency",
 	"--subvol-extents <subvolid> print subvolume extents and sharing state",
+	"--tree-root <bytenr>        use the given bytenr for the tree root",
 	NULL
 };
 
@@ -7702,6 +7704,7 @@ int cmd_check(int argc, char **argv)
 	struct btrfs_fs_info *info;
 	u64 bytenr = 0;
 	u64 subvolid = 0;
+	u64 tree_root_bytenr = 0;
 	char uuidbuf[BTRFS_UUID_UNPARSED_SIZE];
 	int ret;
 	u64 num;
@@ -7712,7 +7715,7 @@ int cmd_check(int argc, char **argv)
 
 	while(1) {
 		int c;
-		c = getopt_long(argc, argv, "as:b", long_options,
+		c = getopt_long(argc, argv, "as:br:", long_options,
 				&option_index);
 		if (c < 0)
 			break;
@@ -7738,6 +7741,9 @@ int cmd_check(int argc, char **argv)
 				break;
 			case 'E':
 				subvolid = arg_strtou64(optarg);
+				break;
+			case 'r':
+				tree_root_bytenr = arg_strtou64(optarg);
 				break;
 			case '?':
 			case 'h':
@@ -7782,7 +7788,8 @@ int cmd_check(int argc, char **argv)
 	if (repair)
 		ctree_flags |= OPEN_CTREE_PARTIAL;
 
-	info = open_ctree_fs_info(argv[optind], bytenr, 0, ctree_flags);
+	info = open_ctree_fs_info(argv[optind], bytenr, tree_root_bytenr,
+				  ctree_flags);
 	if (!info) {
 		fprintf(stderr, "Couldn't open file system\n");
 		ret = -EIO;
