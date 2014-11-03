@@ -34,6 +34,10 @@
 #include <btrfs/kerncompat.h>
 #endif /* BTRFS_FLAT_INCLUDES */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct rb_node {
 	unsigned long  __rb_parent_color;
 	struct rb_node *rb_right;
@@ -75,7 +79,7 @@ extern struct rb_node *rb_first_postorder(const struct rb_root *);
 extern struct rb_node *rb_next_postorder(const struct rb_node *);
 
 /* Fast replacement of a single node without remove/rebalance/add/rebalance */
-extern void rb_replace_node(struct rb_node *victim, struct rb_node *new, 
+extern void rb_replace_node(struct rb_node *victim, struct rb_node *new_node,
 			    struct rb_root *root);
 
 static inline void rb_link_node(struct rb_node * node, struct rb_node * parent,
@@ -106,5 +110,9 @@ static inline void rb_link_node(struct rb_node * node, struct rb_node * parent,
 	     pos && ({ n = rb_entry_safe(rb_next_postorder(&pos->field), \
 			typeof(*pos), field); 1; }); \
 	     pos = n)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif	/* _LINUX_RBTREE_H */

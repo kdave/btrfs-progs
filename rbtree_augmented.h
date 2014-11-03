@@ -26,6 +26,10 @@
 
 #include "rbtree.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Please note - only struct rb_augment_callbacks and the prototypes for
  * rb_insert_augmented() and rb_erase_augmented() are intended to be public.
@@ -227,5 +231,9 @@ rb_erase_augmented(struct rb_node *node, struct rb_root *root,
 	if (rebalance)
 		__rb_erase_color(rebalance, root, augment->rotate);
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif	/* _LINUX_RBTREE_AUGMENTED_H */

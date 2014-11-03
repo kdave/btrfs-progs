@@ -21,6 +21,10 @@
 
 #include "rbtree.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* The common insert/search/free functions */
 typedef int (*rb_compare_nodes)(struct rb_node *node1, struct rb_node *node2);
 typedef int (*rb_compare_keys)(struct rb_node *node, void *key);
@@ -41,5 +45,9 @@ static void free_##name##_tree(struct rb_root *root)	\
 {							\
 	rb_free_nodes(root, free_func);			\
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
