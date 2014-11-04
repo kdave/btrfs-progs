@@ -17,7 +17,7 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
-#include <attr/xattr.h>
+#include <sys/xattr.h>
 #include <fcntl.h>
 #include <unistd.h>
 
@@ -29,6 +29,12 @@
 #define XATTR_BTRFS_PREFIX     "btrfs."
 #define XATTR_BTRFS_PREFIX_LEN (sizeof(XATTR_BTRFS_PREFIX) - 1)
 
+/*
+ * Defined as synonyms in attr/xattr.h
+ */
+#ifndef ENOATTR
+#define ENOATTR ENODATA
+#endif
 
 static int prop_read_only(enum prop_object_type type,
 			  const char *object,
