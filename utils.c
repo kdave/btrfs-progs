@@ -1328,7 +1328,7 @@ out:
 static const char* unit_suffix_binary[] =
 	{ "B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB"};
 static const char* unit_suffix_decimal[] =
-	{ "B", "kB", "mB", "gB", "tB", "pB", "eB"};
+	{ "B", "kB", "MB", "GB", "TB", "PB", "EB"};
 
 int pretty_size_snprintf(u64 size, char *str, size_t str_size, unsigned unit_mode)
 {

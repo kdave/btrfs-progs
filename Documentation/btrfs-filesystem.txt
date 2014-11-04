@@ -35,11 +35,11 @@ select the 1000 base for the following options, according to the SI standard
 -k|--kbytes::::
 show sizes in KiB, or kB with --si
 -m|--mbytes::::
-show sizes in MiB, or mB with --si
+show sizes in MiB, or MB with --si
 -g|--gbytes::::
-show sizes in GiB, or gB with --si
+show sizes in GiB, or GB with --si
 -t|--tbytes::::
-show sizes in TiB, or tB with --si
+show sizes in TiB, or TB with --si
 
 If conflicting options are passed, the last one takes precedence.
 

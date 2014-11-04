@@ -128,11 +128,11 @@ static const char * const cmd_df_usage[] = {
 	"-h                 human friendly numbers, base 1024 (default)",
 	"-H                 human friendly numbers, base 1000",
 	"--iec              use 1024 as a base (KiB, MiB, GiB, TiB)",
-	"--si               use 1000 as a base (kB, mB, gB, tB)",
+	"--si               use 1000 as a base (kB, MB, GB, TB)",
 	"-k|--kbytes        show sizes in KiB, or kB with --si",
-	"-m|--mbytes        show sizes in MiB, or mB with --si",
-	"-g|--gbytes        show sizes in GiB, or gB with --si",
-	"-t|--tbytes        show sizes in TiB, or tB with --si",
+	"-m|--mbytes        show sizes in MiB, or MB with --si",
+	"-g|--gbytes        show sizes in GiB, or GB with --si",
+	"-t|--tbytes        show sizes in TiB, or TB with --si",
        NULL
 };
 
