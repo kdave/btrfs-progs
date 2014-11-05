@@ -1818,20 +1818,34 @@ int btrfs_read_sys_array(struct btrfs_root *root)
 
 	while (cur_offset < array_size) {
 		disk_key = (struct btrfs_disk_key *)array_ptr;
+		len = sizeof(*disk_key);
+		if (cur_offset + len > array_size)
+			goto out_short_read;
+
 		btrfs_disk_key_to_cpu(&key, disk_key);
 
-		len = sizeof(*disk_key);
 		array_ptr += len;
 		sb_array_offset += len;
 		cur_offset += len;
 
 		if (key.type == BTRFS_CHUNK_ITEM_KEY) {
 			chunk = (struct btrfs_chunk *)sb_array_offset;
+			/*
+			 * At least one btrfs_chunk with one stripe must be
+			 * present, exact stripe count check comes afterwards
+			 */
+			len = btrfs_chunk_item_size(1);
+			if (cur_offset + len > array_size)
+				goto out_short_read;
+
+			num_stripes = btrfs_chunk_num_stripes(sb, chunk);
+			len = btrfs_chunk_item_size(num_stripes);
+			if (cur_offset + len > array_size)
+				goto out_short_read;
+
 			ret = read_one_chunk(root, &key, sb, chunk, -1);
 			if (ret)
 				break;
-			num_stripes = btrfs_chunk_num_stripes(sb, chunk);
-			len = btrfs_chunk_item_size(num_stripes);
 		} else {
 			BUG();
 		}
@@ -1841,6 +1855,12 @@ int btrfs_read_sys_array(struct btrfs_root *root)
 	}
 	free_extent_buffer(sb);
 	return ret;
+
+out_short_read:
+	printk("ERROR: sys_array too short to read %u bytes at offset %u\n",
+			len, cur_offset);
+	free_extent_buffer(sb);
+	return -EIO;
 }
 
 int btrfs_read_chunk_tree(struct btrfs_root *root)
