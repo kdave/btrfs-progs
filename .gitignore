@@ -1,6 +1,7 @@
 *.o
 *.static.o
 *.o.d
+tags
 .cc-defines.h
 version.h
 version
@@ -30,8 +31,11 @@ btrfs-show-super
 btrfs-zero-log
 btrfs-corrupt-block
 btrfs-select-super
+btrfs-calc-size
 btrfstune
 libbtrfs.a
 libbtrfs.so
 libbtrfs.so.0
 libbtrfs.so.0.1
+library-test
+library-test-static
