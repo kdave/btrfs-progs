@@ -1906,7 +1906,6 @@ int get_fs_info(char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 	}
 
 	for (; i <= fi_args->max_id; ++i) {
-		BUG_ON(ndevs >= fi_args->num_devices);
 		ret = get_device_info(fd, i, &di_args[ndevs]);
 		if (ret == -ENODEV)
 			continue;
