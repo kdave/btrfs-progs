@@ -29,6 +29,8 @@ Roll back to ext2fs.
 set filesystem label during conversion.
 -L::
 use label from the converted filesystem.
+-p::
+Show progress of conversion.
 
 EXIT STATUS
 -----------

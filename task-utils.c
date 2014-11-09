@@ -115,10 +115,8 @@ void task_period_wait(struct task_info *info)
 		return;
 
 	ret = read(info->periodic.timer_fd, &missed, sizeof (missed));
-	if (ret == -1) {
-		perror("read timer");
+	if (ret == -1)
 		return;
-	}
 
 	if (missed > 0)
 		info->periodic.wakeups_missed += (missed - 1);
