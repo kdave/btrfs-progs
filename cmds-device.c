@@ -283,7 +283,7 @@ static int cmd_device_scan(int argc, char **argv)
 
 	if (all || argc - optind == 0) {
 		printf("Scanning for Btrfs filesystems\n");
-		ret = btrfs_scan_lblkid();
+		ret = btrfs_scan_devices();
 		error_on(ret, "error %d while scanning", ret);
 		ret = btrfs_register_all_devices();
 		error_on(ret, "there are %d errors while registering devices", ret);

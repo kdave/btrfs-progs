@@ -872,7 +872,7 @@ static int cmd_filesystem_show(int argc, char **argv)
 		goto out;
 
 devs_only:
-	ret = btrfs_scan_lblkid();
+	ret = btrfs_scan_devices();
 
 	if (ret) {
 		error("blkid device scan returned %d\n", ret);

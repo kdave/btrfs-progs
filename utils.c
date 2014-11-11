@@ -2384,7 +2384,7 @@ int check_mounted_where(int fd, const char *file, char *where, int size,
 
 	/* scan other devices */
 	if (is_btrfs && total_devs > 1) {
-		ret = btrfs_scan_lblkid();
+		ret = btrfs_scan_devices();
 		if (ret)
 			return ret;
 	}
@@ -2464,7 +2464,7 @@ int btrfs_register_one_device(const char *fname)
 
 /*
  * Register all devices in the fs_uuid list created in the user
- * space. Ensure btrfs_scan_lblkid() is called before this func.
+ * space. Ensure btrfs_scan_devices() is called before this func.
  */
 int btrfs_register_all_devices(void)
 {
@@ -3503,7 +3503,7 @@ int test_dev_for_mkfs(const char *file, int force_overwrite)
 	return 0;
 }
 
-int btrfs_scan_lblkid(void)
+int btrfs_scan_devices(void)
 {
 	int fd = -1;
 	int ret;
