@@ -408,31 +408,37 @@ static int cmd_dev_stats(int argc, char **argv)
 				path, strerror(errno));
 			err = 1;
 		} else {
+			char *canonical_path;
+
+			canonical_path = canonicalize_path((char *)path);
+
 			if (args.nr_items >= BTRFS_DEV_STAT_WRITE_ERRS + 1)
 				printf("[%s].write_io_errs   %llu\n",
-				       path,
+				       canonical_path,
 				       (unsigned long long) args.values[
 					BTRFS_DEV_STAT_WRITE_ERRS]);
 			if (args.nr_items >= BTRFS_DEV_STAT_READ_ERRS + 1)
 				printf("[%s].read_io_errs    %llu\n",
-				       path,
+				       canonical_path,
 				       (unsigned long long) args.values[
 					BTRFS_DEV_STAT_READ_ERRS]);
 			if (args.nr_items >= BTRFS_DEV_STAT_FLUSH_ERRS + 1)
 				printf("[%s].flush_io_errs   %llu\n",
-				       path,
+				       canonical_path,
 				       (unsigned long long) args.values[
 					BTRFS_DEV_STAT_FLUSH_ERRS]);
 			if (args.nr_items >= BTRFS_DEV_STAT_CORRUPTION_ERRS + 1)
 				printf("[%s].corruption_errs %llu\n",
-				       path,
+				       canonical_path,
 				       (unsigned long long) args.values[
 					BTRFS_DEV_STAT_CORRUPTION_ERRS]);
 			if (args.nr_items >= BTRFS_DEV_STAT_GENERATION_ERRS + 1)
 				printf("[%s].generation_errs %llu\n",
-				       path,
+				       canonical_path,
 				       (unsigned long long) args.values[
 					BTRFS_DEV_STAT_GENERATION_ERRS]);
+
+			free(canonical_path);
 		}
 	}
 
