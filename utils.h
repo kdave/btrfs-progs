@@ -38,7 +38,7 @@
 
 #define BTRFS_UUID_UNPARSED_SIZE	37
 
-#define ARGV0_BUF_SIZE	64
+#define ARGV0_BUF_SIZE	PATH_MAX
 
 int check_argc_exact(int nargs, int expected);
 int check_argc_min(int nargs, int expected);

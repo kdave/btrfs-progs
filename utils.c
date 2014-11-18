@@ -66,7 +66,8 @@ void fixup_argv0(char **argv, const char *token)
 
 void set_argv0(char **argv)
 {
-	sprintf(argv0_buf, "%s", argv[0]);
+	strncpy(argv0_buf, argv[0], sizeof(argv0_buf));
+	argv0_buf[sizeof(argv0_buf) - 1] = 0;
 }
 
 int check_argc_exact(int nargs, int expected)
