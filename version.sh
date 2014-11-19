@@ -6,7 +6,7 @@
 # Copyright 2008, Oracle
 # Released under the GNU GPLv2
  
-v="v3.17.1"
+v="v3.17.2"
 
 lib_major=0
 lib_minor=1
