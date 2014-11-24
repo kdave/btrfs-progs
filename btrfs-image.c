@@ -2466,6 +2466,9 @@ static void print_usage(void)
 	fprintf(stderr, "\t-s      \tsanitize file names, use once to just use garbage, use twice if you want crc collisions\n");
 	fprintf(stderr, "\t-w      \twalk all trees instead of using extent tree, do this if your extent tree is broken\n");
 	fprintf(stderr, "\t-m	   \trestore for multiple devices\n");
+	fprintf(stderr, "\n");
+	fprintf(stderr, "\tIn the dump mode, source is the btrfs device and target is the output file (use '-' for stdout).\n");
+	fprintf(stderr, "\tIn the restore mode, source is the dumped image and target is the btrfs device/file.\n");
 	exit(1);
 }
 

@@ -13,8 +13,13 @@ DESCRIPTION
 -----------
 *btrfs-image* is used to create an image of a btrfs filesystem.
 All data will be zeroed, but metadata and the like is preserved.
+Mainly used for debugging purposes.
 
-Mainly used for debug purpose.
+In the dump mode, source is the btrfs device/file and target is the output
+file (use '-' for stdout).
+
+In the restore mode (option -r), source is the dumped image and target is the btrfs device/file.
+
 
 OPTIONS
 -------
