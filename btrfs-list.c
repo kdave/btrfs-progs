@@ -1711,7 +1711,7 @@ int btrfs_list_find_updated_files(int fd, u64 root_id, u64 oldest_gen)
 		ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &args);
 		e = errno;
 		if (ret < 0) {
-			fprintf(stderr, "ERROR: can't perform the search- %s\n",
+			fprintf(stderr, "ERROR: can't perform the search - %s\n",
 				strerror(e));
 			break;
 		}
@@ -1911,7 +1911,7 @@ int btrfs_list_get_path_rootid(int fd, u64 *treeid)
 	ret = ioctl(fd, BTRFS_IOC_INO_LOOKUP, &args);
 	if (ret < 0) {
 		fprintf(stderr,
-			"ERROR: can't perform the search -%s\n",
+			"ERROR: can't perform the search - %s\n",
 			strerror(errno));
 		return ret;
 	}

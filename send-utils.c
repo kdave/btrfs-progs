@@ -556,7 +556,7 @@ int subvol_uuid_search_init(int mnt_fd, struct subvol_uuid_search *s)
 	ret = is_uuid_tree_supported(mnt_fd);
 	if (ret < 0) {
 		fprintf(stderr,
-			"ERROR: check if we support uuid tree fails- %s\n",
+			"ERROR: check if we support uuid tree fails - %s\n",
 			strerror(errno));
 		return ret;
 	} else if (ret) {
@@ -579,7 +579,7 @@ int subvol_uuid_search_init(int mnt_fd, struct subvol_uuid_search *s)
 		ret = ioctl(mnt_fd, BTRFS_IOC_TREE_SEARCH, &args);
 		e = errno;
 		if (ret < 0) {
-			fprintf(stderr, "ERROR: can't perform the search- %s\n",
+			fprintf(stderr, "ERROR: can't perform the search - %s\n",
 				strerror(e));
 			return ret;
 		}

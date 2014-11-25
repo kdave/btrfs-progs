@@ -1160,7 +1160,7 @@ u64 btrfs_get_path_rootid(int fd)
 	ret = ioctl(fd, BTRFS_IOC_INO_LOOKUP, &args);
 	if (ret < 0) {
 		fprintf(stderr,
-			"ERROR: can't perform the search -%s\n",
+			"ERROR: can't perform the search - %s\n",
 			strerror(errno));
 		return ret;
 	}
