@@ -279,6 +279,18 @@ struct btrfs_ioctl_search_args {
 	char buf[BTRFS_SEARCH_ARGS_BUFSIZE];
 };
 
+/*
+ * Extended version of TREE_SEARCH ioctl that can return more than 4k of bytes.
+ * The allocated size of the buffer is set in buf_size.
+ */
+struct btrfs_ioctl_search_args_v2 {
+        struct btrfs_ioctl_search_key key; /* in/out - search parameters */
+        __u64 buf_size;			   /* in - size of buffer
+                                            * out - on EOVERFLOW: needed size
+                                            *       to store item */
+        __u64 buf[0];                      /* out - found items */
+};
+
 #define BTRFS_INO_LOOKUP_PATH_MAX 4080
 struct btrfs_ioctl_ino_lookup_args {
 	__u64 treeid;
@@ -542,6 +554,8 @@ struct btrfs_ioctl_clone_range_args {
 				struct btrfs_ioctl_defrag_range_args)
 #define BTRFS_IOC_TREE_SEARCH _IOWR(BTRFS_IOCTL_MAGIC, 17, \
 				   struct btrfs_ioctl_search_args)
+#define BTRFS_IOC_TREE_SEARCH_V2 _IOWR(BTRFS_IOCTL_MAGIC, 17, \
+				   struct btrfs_ioctl_search_args_v2)
 #define BTRFS_IOC_INO_LOOKUP _IOWR(BTRFS_IOCTL_MAGIC, 18, \
 				   struct btrfs_ioctl_ino_lookup_args)
 #define BTRFS_IOC_DEFAULT_SUBVOL _IOW(BTRFS_IOCTL_MAGIC, 19, __u64)

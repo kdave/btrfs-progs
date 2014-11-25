@@ -187,4 +187,6 @@ static inline int count_digits(u64 num)
 	return ret;
 }
 
+int btrfs_tree_search2_ioctl_supported(int fd);
+
 #endif
