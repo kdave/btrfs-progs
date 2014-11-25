@@ -393,7 +393,7 @@ static int record_file_blocks(struct btrfs_trans_handle *trans,
 	ret = btrfs_record_file_extent(trans, root, objectid, inode, file_pos,
 					disk_bytenr, num_bytes);
 
-	if (ret || !checksum)
+	if (ret || !checksum || disk_bytenr == 0)
 		return ret;
 
 	return csum_disk_extent(trans, root, disk_bytenr, num_bytes);
