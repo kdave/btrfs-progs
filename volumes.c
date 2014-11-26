@@ -1318,10 +1318,12 @@ again:
 	ce = search_cache_extent(&map_tree->cache_tree, logical);
 	if (!ce) {
 		kfree(multi);
+		*length = (u64)-1;
 		return -ENOENT;
 	}
 	if (ce->start > logical) {
 		kfree(multi);
+		*length = ce->start - logical;
 		return -ENOENT;
 	}
 

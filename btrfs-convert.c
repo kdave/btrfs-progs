@@ -2418,8 +2418,17 @@ static int may_rollback(struct btrfs_root *root)
 	while (1) {
 		ret = btrfs_map_block(&info->mapping_tree, WRITE, bytenr,
 				      &length, &multi, 0, NULL);
-		if (ret)
+		if (ret) {
+			if (ret == -ENOENT) {
+				/* removed block group at the tail */
+				if (length == (u64)-1)
+					break;
+
+				/* removed block group in the middle */
+				goto next;
+			}
 			goto fail;
+		}
 
 		num_stripes = multi->num_stripes;
 		physical = multi->stripes[0].physical;
@@ -2427,7 +2436,7 @@ static int may_rollback(struct btrfs_root *root)
 
 		if (num_stripes != 1 || physical != bytenr)
 			goto fail;
-
+next:
 		bytenr += length;
 		if (bytenr >= total_bytes)
 			break;
