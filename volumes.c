@@ -1320,7 +1320,7 @@ again:
 		kfree(multi);
 		return -ENOENT;
 	}
-	if (ce->start > logical || ce->start + ce->size < logical) {
+	if (ce->start > logical) {
 		kfree(multi);
 		return -ENOENT;
 	}
