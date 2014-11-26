@@ -8522,22 +8522,6 @@ int cmd_check(int argc, char **argv)
 
 	root = info->fs_root;
 
-	ret = repair_root_items(info);
-	if (ret < 0)
-		goto close_out;
-	if (repair) {
-		fprintf(stderr, "Fixed %d roots.\n", ret);
-		ret = 0;
-	} else if (ret > 0) {
-		fprintf(stderr,
-		       "Found %d roots with an outdated root item.\n",
-		       ret);
-		fprintf(stderr,
-			"Please run a filesystem check with the option --repair to fix them.\n");
-		ret = 1;
-		goto close_out;
-	}
-
 	/*
 	 * repair mode will force us to commit transaction which
 	 * will make us fail to load log tree when mounting.
@@ -8635,6 +8619,22 @@ int cmd_check(int argc, char **argv)
 	ret = check_chunks_and_extents(root);
 	if (ret)
 		fprintf(stderr, "Errors found in extent allocation tree or chunk allocation\n");
+
+	ret = repair_root_items(info);
+	if (ret < 0)
+		goto close_out;
+	if (repair) {
+		fprintf(stderr, "Fixed %d roots.\n", ret);
+		ret = 0;
+	} else if (ret > 0) {
+		fprintf(stderr,
+		       "Found %d roots with an outdated root item.\n",
+		       ret);
+		fprintf(stderr,
+			"Please run a filesystem check with the option --repair to fix them.\n");
+		ret = 1;
+		goto close_out;
+	}
 
 	fprintf(stderr, "checking free space cache\n");
 	ret = check_space_cache(root);
