@@ -906,6 +906,7 @@ static int cmd_subvol_show(int argc, char **argv)
 	}
 	if (!ret) {
 		fprintf(stderr, "ERROR: '%s' is not a subvolume\n", fullpath);
+		ret = 1;
 		goto out;
 	}
 
@@ -919,7 +920,6 @@ static int cmd_subvol_show(int argc, char **argv)
 		fprintf(stderr,
 			"ERROR: %s doesn't belong to btrfs mount point\n",
 			fullpath);
-		ret = -EINVAL;
 		goto out;
 	}
 	ret = 1;
@@ -958,13 +958,13 @@ static int cmd_subvol_show(int argc, char **argv)
 	memset(&get_ri, 0, sizeof(get_ri));
 	get_ri.root_id = sv_id;
 
-	if (btrfs_get_subvol(mntfd, &get_ri)) {
+	ret = btrfs_get_subvol(mntfd, &get_ri);
+	if (ret) {
 		fprintf(stderr, "ERROR: can't find '%s'\n",
 			svpath);
 		goto out;
 	}
 
-	ret = 0;
 	/* print the info */
 	printf("%s\n", fullpath);
 	printf("\tName: \t\t\t%s\n", get_ri.name);
