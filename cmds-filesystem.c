@@ -901,39 +901,45 @@ static int cmd_show(int argc, char **argv)
 		if (strlen(search) == 0)
 			usage(cmd_show_usage);
 		type = check_arg_type(search);
+
 		/*
-		 * needs spl handling if input arg is block dev
-		 * And if input arg is mount-point just print it
-		 * right away
+		 * For search is a device:
+		 *     realpath do /dev/mapper/XX => /dev/dm-X
+		 *     which is required by BTRFS_SCAN_DEV
+		 * For search is a mountpoint:
+		 *     realpath do  /mnt/btrfs/  => /mnt/btrfs
+		 *     which shall be recognized by btrfs_scan_kernel()
 		 */
-		if (type == BTRFS_ARG_BLKDEV) {
-			if (where == BTRFS_SCAN_LBLKID) {
-				/* we need to do this because
-				 * legacy BTRFS_SCAN_DEV
-				 * provides /dev/dm-x paths
-				 */
-				if (realpath(search, path))
-					search = path;
+		if (!realpath(search, path)) {
+			fprintf(stderr, "ERROR: Could not show %s: %s\n",
+					search, strerror(errno));
+			return 1;
+		}
+
+		search = path;
+
+		/*
+		 * Needs special handling if input arg is block dev And if
+		 * input arg is mount-point just print it right away
+		 */
+		if (type == BTRFS_ARG_BLKDEV && where != BTRFS_SCAN_LBLKID) {
+			ret = get_btrfs_mount(search, mp, sizeof(mp));
+			if (!ret) {
+				/* given block dev is mounted */
+				search = mp;
+				type = BTRFS_ARG_MNTPOINT;
 			} else {
-				ret = get_btrfs_mount(search,
-						mp, sizeof(mp));
-				if (!ret) {
-					/* given block dev is mounted*/
-					search = mp;
-					type = BTRFS_ARG_MNTPOINT;
-				} else {
-					ret = dev_to_fsid(search, fsid);
-					if (ret) {
-						fprintf(stderr,
-							"ERROR: No btrfs on %s\n",
-							search);
-						return 1;
-					}
-					uuid_unparse(fsid, uuid_buf);
-					search = uuid_buf;
-					type = BTRFS_ARG_UUID;
-					goto devs_only;
+				ret = dev_to_fsid(search, fsid);
+				if (ret) {
+					fprintf(stderr,
+						"ERROR: No btrfs on %s\n",
+						search);
+					return 1;
 				}
+				uuid_unparse(fsid, uuid_buf);
+				search = uuid_buf;
+				type = BTRFS_ARG_UUID;
+				goto devs_only;
 			}
 		}
 	}
