@@ -553,11 +553,11 @@ static int add_refs_for_implied(struct btrfs_fs_info *info, u64 bytenr,
 				struct tree_block *block)
 {
 	int ret;
-	u64 root_bytenr = resolve_one_root(bytenr);
+	u64 root_id = resolve_one_root(bytenr);
 	struct btrfs_root *root;
 	struct btrfs_key key;
 
-	key.objectid = root_bytenr;
+	key.objectid = root_id;
 	key.type = BTRFS_ROOT_ITEM_KEY;
 	key.offset = (u64)-1;
 
