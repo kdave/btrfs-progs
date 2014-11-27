@@ -303,7 +303,9 @@ again:
 		goto out;
 	}
 
-	printf("Delete subvolume '%s/%s'\n", dname, vname);
+	printf("Delete subvolume (%s): '%s/%s'\n",
+		sync_mode == 2 || (sync_mode == 1 && cnt + 1 == argc)
+		? "commit" : "no-commit", dname, vname);
 	strncpy_null(args.name, vname);
 	res = ioctl(fd, BTRFS_IOC_SNAP_DESTROY, &args);
 	e = errno;
