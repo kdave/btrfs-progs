@@ -66,7 +66,7 @@ static int cmd_subvol_create(int argc, char **argv)
 
 	optind = 1;
 	while (1) {
-		int c = getopt(argc, argv, "c:i:");
+		int c = getopt(argc, argv, "c:i:v");
 		if (c < 0)
 			break;
 
@@ -217,6 +217,7 @@ static int cmd_subvol_delete(int argc, char **argv)
 	char	*dupvname = NULL;
 	char	*path;
 	DIR	*dirstream = NULL;
+	int verbose = 0;
 	int sync_mode = 0;
 	struct option long_options[] = {
 		{"commit-after", no_argument, NULL, 'c'},  /* sync mode 1 */
@@ -239,6 +240,9 @@ static int cmd_subvol_delete(int argc, char **argv)
 		case 'C':
 			sync_mode = 2;
 			break;
+		case 'v':
+			verbose++;
+			break;
 		default:
 			usage(cmd_subvol_delete_usage);
 		}
@@ -247,9 +251,11 @@ static int cmd_subvol_delete(int argc, char **argv)
 	if (check_argc_min(argc - optind, 1))
 		usage(cmd_subvol_delete_usage);
 
-	printf("Transaction commit: %s\n",
-		!sync_mode ? "none (default)" :
-		sync_mode == 1 ? "at the end" : "after each");
+	if (verbose > 0) {
+		printf("Transaction commit: %s\n",
+			!sync_mode ? "none (default)" :
+			sync_mode == 1 ? "at the end" : "after each");
+	}
 
 	cnt = optind;
 
