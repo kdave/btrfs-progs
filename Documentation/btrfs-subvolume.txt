@@ -31,7 +31,7 @@ When `mount`(8) using 'subvol' or 'subvolid' mount option, one can access
 files/directories/subvolumes inside it, but nothing in parent subvolumes.
 
 Also every btrfs filesystem has a default subvolume as its initially top-level
-subvolume, whose subvolume id is 5(FS_TREE).
+subvolume, whose subvolume id is 5. (0 is also acceptable as an alias.)
 
 A btrfs snapshot is much like a subvolume, but shares its data(and metadata)
 with other subvolume/snapshot. Due to the capabilities of COW, modifications
@@ -166,7 +166,7 @@ sleep N seconds between checks (default: 1)
 
 EXIT STATUS
 -----------
-*btrfs subvolume* returns a zero exit status if it succeeds. Non zero is
+*btrfs subvolume* returns a zero exit status if it succeeds. A non-zero value is
 returned in case of failure.
 
 AVAILABILITY
