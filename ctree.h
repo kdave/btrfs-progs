@@ -2403,6 +2403,13 @@ int btrfs_insert_inode_extref(struct btrfs_trans_handle *trans,
 			      struct btrfs_root *root,
 			      const char *name, int name_len,
 			      u64 inode_objectid, u64 ref_objectid, u64 index);
+struct btrfs_inode_ref *btrfs_lookup_inode_ref(struct btrfs_trans_handle *trans,
+		struct btrfs_root *root, struct btrfs_path *path,
+		const char *name, int namelen, u64 ino, u64 parent_ino,
+		u64 index, int ins_len);
+int btrfs_del_inode_ref(struct btrfs_trans_handle *trans,
+			struct btrfs_root *root, const char *name, int name_len,
+			u64 ino, u64 parent_ino, u64 *index);
 
 /* file-item.c */
 int btrfs_del_csums(struct btrfs_trans_handle *trans,
