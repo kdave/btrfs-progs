@@ -1599,14 +1599,9 @@ static int repair_inode_orphan_item(struct btrfs_trans_handle *trans,
 				    struct btrfs_path *path,
 				    struct inode_record *rec)
 {
-	struct btrfs_key key;
 	int ret;
 
-	key.objectid = BTRFS_ORPHAN_OBJECTID;
-	key.type = BTRFS_ORPHAN_ITEM_KEY;
-	key.offset = rec->ino;
-
-	ret = btrfs_insert_empty_item(trans, root, path, &key, 0);
+	ret = btrfs_add_orphan_item(trans, root, path, rec->ino);
 	btrfs_release_path(path);
 	if (!ret)
 		rec->errors &= ~I_ERR_NO_ORPHAN_ITEM;
