@@ -1984,6 +1984,7 @@ static int check_inode_recs(struct btrfs_root *root,
 			fprintf(stderr, "root %llu root dir %llu error\n",
 				(unsigned long long)root->root_key.objectid,
 				(unsigned long long)root_dirid);
+			print_inode_error(root, rec);
 			error++;
 		}
 	} else {
