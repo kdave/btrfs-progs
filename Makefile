@@ -58,7 +58,6 @@ progs_static = $(foreach p,$(progs),$(p).static)
 # external libs required by various binaries; for btrfs-foo,
 # specify btrfs_foo_libs = <list of libs>; see $($(subst...)) rules below
 btrfs_convert_libs = -lext2fs -lcom_err
-btrfs_image_libs = -lpthread
 btrfs_fragments_libs = -lgd -lpng -ljpeg -lfreetype
 
 SUBDIRS =
@@ -90,7 +89,7 @@ static_libbtrfs_objects = $(patsubst %.o, %.static.o, $(libbtrfs_objects))
 # Define static compilation flags
 STATIC_CFLAGS = $(CFLAGS) -ffunction-sections -fdata-sections
 STATIC_LDFLAGS = -static -Wl,--gc-sections
-STATIC_LIBS = $(lib_LIBS) -lpthread
+STATIC_LIBS = $(lib_LIBS)
 
 libs_shared = libbtrfs.so.0.1
 libs_static = libbtrfs.a
@@ -193,7 +192,7 @@ btrfs-%: $(objects) $(libs) btrfs-%.o
 btrfs: $(objects) btrfs.o help.o $(cmds_objects) $(libs)
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o btrfs btrfs.o help.o $(cmds_objects) \
-		$(objects) $(LDFLAGS) $(LIBS) -lpthread
+		$(objects) $(LDFLAGS) $(LIBS)
 
 btrfs.static: $(static_objects) btrfs.static.o help.static.o $(static_cmds_objects) $(static_libbtrfs_objects)
 	@echo "    [LD]     $@"
@@ -241,7 +240,7 @@ ioctl-test: $(objects) $(libs) ioctl-test.o
 
 send-test: $(objects) $(libs) send-test.o
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o send-test $(objects) send-test.o $(LDFLAGS) $(LIBS) -lpthread
+	$(Q)$(CC) $(CFLAGS) -o send-test $(objects) send-test.o $(LDFLAGS) $(LIBS)
 
 library-test: $(libs_shared) library-test.o
 	@echo "    [LD]     $@"
