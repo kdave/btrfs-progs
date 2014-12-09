@@ -20,7 +20,6 @@
 
 #include "crc32c.h"
 #include "commands.h"
-#include "version.h"
 #include "utils.h"
 
 static const char * const btrfs_cmd_group_usage[] = {
@@ -168,7 +167,7 @@ static const char * const cmd_version_usage[] = {
 
 static int cmd_version(int argc, char **argv)
 {
-	printf("%s\n", BTRFS_BUILD_VERSION);
+	printf("%s\n", PACKAGE_STRING);
 	return 0;
 }
 

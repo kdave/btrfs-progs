@@ -36,7 +36,6 @@
 #include "transaction.h"
 #include "crc32c.h"
 #include "utils.h"
-#include "version.h"
 #include "btrfsck.h"
 #include "commands.h"
 

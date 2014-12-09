@@ -41,7 +41,6 @@
 #include "volumes.h"
 #include "transaction.h"
 #include "utils.h"
-#include "version.h"
 
 static u64 index_cnt = 2;
 
@@ -290,14 +289,14 @@ static void print_usage(void)
 	fprintf(stderr, "\t -O --features comma separated list of filesystem features\n");
 	fprintf(stderr, "\t -U --uuid specify the filesystem UUID\n");
 	fprintf(stderr, "\t -V --version print the mkfs.btrfs version and exit\n");
-	fprintf(stderr, "%s\n", BTRFS_BUILD_VERSION);
+	fprintf(stderr, "%s\n", PACKAGE_STRING);
 	exit(1);
 }
 
 static void print_version(void) __attribute__((noreturn));
 static void print_version(void)
 {
-	fprintf(stderr, "mkfs.btrfs, part of %s\n", BTRFS_BUILD_VERSION);
+	fprintf(stderr, "mkfs.btrfs, part of %s\n", PACKAGE_STRING);
 	exit(0);
 }
 
@@ -1489,8 +1488,8 @@ int main(int ac, char **av)
 	}
 
 	/* if we are here that means all devs are good to btrfsify */
-	printf("%s\n", BTRFS_BUILD_VERSION);
-	printf("See http://btrfs.wiki.kernel.org for more information.\n\n");
+	printf("%s\n", PACKAGE_STRING);
+	printf("See %s for more information.\n\n", PACKAGE_URL);
 
 	dev_cnt--;
 

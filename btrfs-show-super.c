@@ -31,7 +31,6 @@
 #include "print-tree.h"
 #include "transaction.h"
 #include "list.h"
-#include "version.h"
 #include "utils.h"
 #include "crc32c.h"
 
@@ -49,7 +48,7 @@ static void print_usage(void)
 	fprintf(stderr, "\t-a : print information of all superblocks\n");
 	fprintf(stderr, "\t-i <super_mirror> : specify which mirror to print out\n");
 	fprintf(stderr, "\t-F : attempt to dump superblocks with bad magic\n");
-	fprintf(stderr, "%s\n", BTRFS_BUILD_VERSION);
+	fprintf(stderr, "%s\n", PACKAGE_STRING);
 }
 
 int main(int argc, char **argv)

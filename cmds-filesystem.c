@@ -33,7 +33,6 @@
 #include "ioctl.h"
 #include "utils.h"
 #include "volumes.h"
-#include "version.h"
 #include "commands.h"
 #include "cmds-fi-disk_usage.h"
 #include "list_sort.h"
@@ -957,7 +956,7 @@ devs_only:
 		free_fs_devices(fs_devices);
 	}
 out:
-	printf("%s\n", BTRFS_BUILD_VERSION);
+	printf("%s\n", PACKAGE_STRING);
 	free_seen_fsid();
 	return ret;
 }
@@ -1213,7 +1212,7 @@ static int cmd_defrag(int argc, char **argv)
 		}
 	}
 	if (defrag_global_verbose)
-		printf("%s\n", BTRFS_BUILD_VERSION);
+		printf("%s\n", PACKAGE_STRING);
 	if (defrag_global_errors)
 		fprintf(stderr, "total %d failures\n", defrag_global_errors);
 

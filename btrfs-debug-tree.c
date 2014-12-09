@@ -26,7 +26,6 @@
 #include "disk-io.h"
 #include "print-tree.h"
 #include "transaction.h"
-#include "version.h"
 #include "utils.h"
 
 static int print_usage(void)
@@ -43,7 +42,7 @@ static int print_usage(void)
                     " only\n");
 	fprintf(stderr,
 		"\t-t tree_id : print only the tree with the given id\n");
-	fprintf(stderr, "%s\n", BTRFS_BUILD_VERSION);
+	fprintf(stderr, "%s\n", PACKAGE_STRING);
 	exit(1);
 }
 
@@ -413,7 +412,7 @@ no_node:
 	uuidbuf[BTRFS_UUID_UNPARSED_SIZE - 1] = '\0';
 	uuid_unparse(info->super_copy->fsid, uuidbuf);
 	printf("uuid %s\n", uuidbuf);
-	printf("%s\n", BTRFS_BUILD_VERSION);
+	printf("%s\n", PACKAGE_STRING);
 close_root:
 	return close_ctree(root);
 }

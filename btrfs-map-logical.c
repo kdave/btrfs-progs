@@ -28,7 +28,6 @@
 #include "print-tree.h"
 #include "transaction.h"
 #include "list.h"
-#include "version.h"
 #include "utils.h"
 
 /* we write the mirror info to stdout unless they are dumping the data

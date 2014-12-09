@@ -31,7 +31,6 @@
 #include "print-tree.h"
 #include "transaction.h"
 #include "list.h"
-#include "version.h"
 #include "volumes.h"
 #include "utils.h"
 
