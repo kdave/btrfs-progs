@@ -3,6 +3,10 @@ AC_INIT([btrfs-progs],
 	[linux-btrfs@vger.kernel.org],,
 	[http://btrfs.wiki.kernel.org])
 
+dnl library version
+LIBBTRFS_MAJOR=0
+LIBBTRFS_MINOR=1
+LIBBTRFS_PATCHLEVEL=1
 
 AC_PREREQ([2.60])
 
@@ -74,11 +78,16 @@ AC_SUBST([LZO2_LIBS_STATIC])
 AC_SUBST([LZO2_CFLAGS])
 
 
+dnl library stuff
+AC_SUBST([LIBBTRFS_MAJOR])
+AC_SUBST([LIBBTRFS_MINOR])
+AC_SUBST([LIBBTRFS_PATCHLEVEL])
 
 AC_CONFIG_HEADERS([config.h])
 
 AC_CONFIG_FILES([
 Makefile
+version.h
 ])
 
 AC_OUTPUT

@@ -155,10 +155,6 @@ test: btrfs btrfs-convert btrfs-image btrfs-corrupt-block
 #
 static: $(progs_static)
 
-version.h:
-	@echo "    [SH]     $@"
-	$(Q)bash version.sh
-
 $(libs_shared): $(libbtrfs_objects) $(lib_links) send.h
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) $(libbtrfs_objects) $(LDFLAGS) $(lib_LIBS) \

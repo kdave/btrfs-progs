@@ -1,0 +1,11 @@
+#ifndef __LIBBTRFS_VERSION_H__
+#define __LIBBTRFS_VERSION_H__
+
+#define BTRFS_LIB_MAJOR		@LIBBTRFS_MAJOR@
+#define BTRFS_LIB_MINOR		@LIBBTRFS_MINOR@
+#define BTRFS_LIB_PATCHLEVEL	@LIBBTRFS_PATCHLEVEL@
+
+#define BTRFS_LIB_VERSION ( BTRFS_LIB_MAJOR * 10000 + \
+                            BTRFS_LIB_MINOR * 100 + \
+                            BTRFS_LIB_PATCHLEVEL )
+#endif
