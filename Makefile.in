@@ -1,9 +1,9 @@
 # Export all variables to sub-makes by default
 export
 
-CC = gcc
-LN = ln
-AR = ar
+CC = @CC@
+LN_S = @LN_S@
+AR = @AR@
 AM_CFLAGS = -include config.h -Wall \
 	    -D_FILE_OFFSET_BITS=64 -DBTRFS_FLAT_INCLUDES \
 	    -D_XOPEN_SOURCE=700  \
@@ -27,7 +27,7 @@ libbtrfs_headers = send-stream.h send-utils.h send.h rbtree.h btrfs-list.h \
 	       extent_io.h ioctl.h ctree.h btrfsck.h version.h
 TESTS = fsck-tests.sh convert-tests.sh
 
-INSTALL = install
+INSTALL = @INSTALL@
 prefix ?= /usr/local
 bindir = $(prefix)/bin
 lib_LIBS = -luuid -lblkid -lz -llzo2 -L. -pthread
@@ -166,8 +166,8 @@ $(libs_static): $(libbtrfs_objects)
 
 $(lib_links):
 	@echo "    [LN]     $@"
-	$(Q)$(LN) -sf libbtrfs.so.0.1 libbtrfs.so.0
-	$(Q)$(LN) -sf libbtrfs.so.0.1 libbtrfs.so
+	$(Q)$(LN_S) -f libbtrfs.so.0.1 libbtrfs.so.0
+	$(Q)$(LN_S) -f libbtrfs.so.0.1 libbtrfs.so
 
 # keep intermediate files from the below implicit rules around
 .PRECIOUS: $(addsuffix .o,$(progs))

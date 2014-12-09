@@ -27,6 +27,8 @@ AC_C_BIGENDIAN
 AC_SYS_LARGEFILE
 
 AC_PROG_INSTALL
+AC_PROG_LN_S
+AC_PATH_PROG([AR], [ar])
 
 AC_CHECK_FUNCS([openat], [],
 	[AC_MSG_ERROR([cannot find openat() function])])
