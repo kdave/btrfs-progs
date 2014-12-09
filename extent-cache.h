@@ -41,6 +41,7 @@ struct cache_extent {
 void cache_tree_init(struct cache_tree *tree);
 
 struct cache_extent *first_cache_extent(struct cache_tree *tree);
+struct cache_extent *last_cache_extent(struct cache_tree *tree);
 struct cache_extent *prev_cache_extent(struct cache_extent *pe);
 struct cache_extent *next_cache_extent(struct cache_extent *pe);
 
