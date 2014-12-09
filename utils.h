@@ -169,4 +169,22 @@ int find_next_key(struct btrfs_path *path, struct btrfs_key *key);
 char* btrfs_group_type_str(u64 flag);
 char* btrfs_group_profile_str(u64 flag);
 
+/*
+ * Get the length of the string converted from a u64 number.
+ *
+ * Result is equal to log10(num) + 1, but without the use of math library.
+ */
+static inline int count_digits(u64 num)
+{
+	int ret = 0;
+
+	if (num == 0)
+		return 1;
+	while (num > 0) {
+		ret++;
+		num /= 10;
+	}
+	return ret;
+}
+
 #endif
