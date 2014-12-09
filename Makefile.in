@@ -27,12 +27,11 @@ libbtrfs_headers = send-stream.h send-utils.h send.h rbtree.h btrfs-list.h \
 	       extent_io.h ioctl.h ctree.h btrfsck.h version.h
 TESTS = fsck-tests.sh convert-tests.sh
 
-INSTALL = @INSTALL@
-prefix ?= /usr/local
-bindir = $(prefix)/bin
-lib_LIBS = -luuid -lblkid -lz -llzo2 -L. -pthread
-libdir ?= $(prefix)/lib
-incdir = $(prefix)/include/btrfs
+prefix ?= @prefix@
+bindir = @bindir@
+lib_LIBS = @UUID_LIBS@ @BLKID_LIBS@ @ZLIB_LIBS@ @LZO2_LIBS@ -L. -pthread
+libdir ?= @libdir@
+incdir = @includedir@/btrfs
 LIBS = $(lib_LIBS) $(libs_static)
 
 ifeq ("$(origin V)", "command line")
