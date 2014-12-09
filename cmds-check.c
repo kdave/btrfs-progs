@@ -1927,6 +1927,21 @@ static int check_inode_recs(struct btrfs_root *root,
 	}
 
 	/*
+	 * We need to record the highest inode number for later 'lost+found'
+	 * dir creation.
+	 * We must select a ino not used/refered by any existing inode, or
+	 * 'lost+found' ino may be a missing ino in a corrupted leaf,
+	 * this may cause 'lost+found' dir has wrong nlinks.
+	 */
+	cache = last_cache_extent(inode_cache);
+	if (cache) {
+		node = container_of(cache, struct ptr_node, cache);
+		rec = node->data;
+		if (rec->ino > root->highest_inode)
+			root->highest_inode = rec->ino;
+	}
+
+	/*
 	 * We need to repair backrefs first because we could change some of the
 	 * errors in the inode recs.
 	 *
