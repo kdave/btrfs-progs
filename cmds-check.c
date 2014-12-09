@@ -1874,6 +1874,47 @@ static int repair_inode_backrefs(struct btrfs_root *root,
 	return ret ? ret : repaired;
 }
 
+/*
+ * To determine the file type for nlink/inode_item repair
+ *
+ * Return 0 if file type is found and BTRFS_FT_* is stored into type.
+ * Return -ENOENT if file type is not found.
+ */
+static int find_file_type(struct inode_record *rec, u8 *type)
+{
+	struct inode_backref *backref;
+
+	list_for_each_entry(backref, &rec->backrefs, list) {
+		if (backref->found_dir_index || backref->found_dir_item) {
+			*type = backref->filetype;
+			return 0;
+		}
+	}
+	return -ENOENT;
+}
+
+/*
+ * To determine the file name for nlink repair
+ *
+ * Return 0 if file name is found, set name and namelen.
+ * Return -ENOENT if file name is not found.
+ */
+static int find_file_name(struct inode_record *rec,
+			  char *name, int *namelen)
+{
+	struct inode_backref *backref;
+
+	list_for_each_entry(backref, &rec->backrefs, list) {
+		if (backref->found_dir_index || backref->found_dir_item ||
+		    backref->found_inode_ref) {
+			memcpy(name, backref->name, backref->namelen);
+			*namelen = backref->namelen;
+			return 0;
+		}
+	}
+	return -ENOENT;
+}
+
 static int try_repair_inode(struct btrfs_root *root, struct inode_record *rec)
 {
 	struct btrfs_trans_handle *trans;
