@@ -2445,6 +2445,8 @@ static inline int is_fstree(u64 rootid)
 /* inode.c */
 int check_dir_conflict(struct btrfs_root *root, char *name, int namelen,
 		u64 dir, u64 index);
+int btrfs_new_inode(struct btrfs_trans_handle *trans, struct btrfs_root *root,
+		u64 ino, u32 mode);
 int btrfs_add_link(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 		   u64 ino, u64 parent_ino, char *name, int namelen,
 		   u8 type, u64 *index, int add_backref);

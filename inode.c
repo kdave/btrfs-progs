@@ -458,9 +458,8 @@ static void fill_inode_item(struct btrfs_trans_handle *trans,
  * its backref.
  * The backref is added by btrfs_add_link().
  */
-static int btrfs_new_inode(struct btrfs_trans_handle *trans,
-			   struct btrfs_root *root,
-			   u64 ino, u32 mode)
+int btrfs_new_inode(struct btrfs_trans_handle *trans, struct btrfs_root *root,
+		u64 ino, u32 mode)
 {
 	struct btrfs_inode_item inode_item = {0};
 	int ret = 0;

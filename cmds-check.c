@@ -1905,6 +1905,12 @@ static int find_file_type(struct inode_record *rec, u8 *type)
 {
 	struct inode_backref *backref;
 
+	/* For inode item recovered case */
+	if (rec->found_inode_item) {
+		*type = imode_to_type(rec->imode);
+		return 0;
+	}
+
 	list_for_each_entry(backref, &rec->backrefs, list) {
 		if (backref->found_dir_index || backref->found_dir_item) {
 			*type = backref->filetype;
@@ -2098,6 +2104,149 @@ out:
 	return ret;
 }
 
+/*
+ * Check if there is any normal(reg or prealloc) file extent for given
+ * ino.
+ * This is used to determine the file type when neither its dir_index/item or
+ * inode_item exists.
+ *
+ * This will *NOT* report error, if any error happens, just consider it does
+ * not have any normal file extent.
+ */
+static int find_normal_file_extent(struct btrfs_root *root, u64 ino)
+{
+	struct btrfs_path *path;
+	struct btrfs_key key;
+	struct btrfs_key found_key;
+	struct btrfs_file_extent_item *fi;
+	u8 type;
+	int ret = 0;
+
+	path = btrfs_alloc_path();
+	if (!path)
+		goto out;
+	key.objectid = ino;
+	key.type = BTRFS_EXTENT_DATA_KEY;
+	key.offset = 0;
+
+	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
+	if (ret < 0) {
+		ret = 0;
+		goto out;
+	}
+	if (ret && path->slots[0] >= btrfs_header_nritems(path->nodes[0])) {
+		ret = btrfs_next_leaf(root, path);
+		if (ret) {
+			ret = 0;
+			goto out;
+		}
+	}
+	while (1) {
+		btrfs_item_key_to_cpu(path->nodes[0], &found_key,
+				      path->slots[0]);
+		if (found_key.objectid != ino ||
+		    found_key.type != BTRFS_EXTENT_DATA_KEY)
+			break;
+		fi = btrfs_item_ptr(path->nodes[0], path->slots[0],
+				    struct btrfs_file_extent_item);
+		type = btrfs_file_extent_type(path->nodes[0], fi);
+		if (type != BTRFS_FILE_EXTENT_INLINE)
+			ret = 1;
+			goto out;
+	}
+out:
+	btrfs_free_path(path);
+	return ret;
+}
+
+static u32 btrfs_type_to_imode(u8 type)
+{
+	static u32 imode_by_btrfs_type[] = {
+		[BTRFS_FT_REG_FILE]	= S_IFREG,
+		[BTRFS_FT_DIR]		= S_IFDIR,
+		[BTRFS_FT_CHRDEV]	= S_IFCHR,
+		[BTRFS_FT_BLKDEV]	= S_IFBLK,
+		[BTRFS_FT_FIFO]		= S_IFIFO,
+		[BTRFS_FT_SOCK]		= S_IFSOCK,
+		[BTRFS_FT_SYMLINK]	= S_IFLNK,
+	};
+
+	return imode_by_btrfs_type[(type)];
+}
+
+static int repair_inode_no_item(struct btrfs_trans_handle *trans,
+				struct btrfs_root *root,
+				struct btrfs_path *path,
+				struct inode_record *rec)
+{
+	u8 filetype;
+	u32 mode = 0700;
+	int type_recovered = 0;
+	int ret = 0;
+
+	/*
+	 * TODO:
+	 * 1. salvage data from existing file extent and
+	 *    punch hole to keep fi ext consistent.
+	 * 2. salvage data from extent tree
+	 */
+	printf("Trying to rebuild inode:%llu\n", rec->ino);
+
+	type_recovered = !find_file_type(rec, &filetype);
+
+	/*
+	 * Try to determine inode type if type not found.
+	 *
+	 * For found regular file extent, it must be FILE.
+	 * For found dir_item/index, it must be DIR.
+	 *
+	 * For undetermined one, use FILE as fallback.
+	 *
+	 * TODO:
+	 * 1. If found extent belong to it in extent tree, it must be FILE
+	 *    Need extra hook in extent tree scan.
+	 * 2. If found backref(inode_index/item is already handled) to it,
+	 *    it must be DIR.
+	 *    Need new inode-inode ref structure to allow search for that.
+	 */
+	if (!type_recovered) {
+		if (rec->found_file_extent &&
+		    find_normal_file_extent(root, rec->ino)) {
+			type_recovered = 1;
+			filetype = BTRFS_FT_REG_FILE;
+		} else if (rec->found_dir_item) {
+			type_recovered = 1;
+			filetype = BTRFS_FT_DIR;
+		} else {
+			printf("Can't determint the filetype for inode %llu, assume it is a normal file\n",
+			       rec->ino);
+			type_recovered = 1;
+			filetype = BTRFS_FT_REG_FILE;
+		}
+	}
+
+	ret = btrfs_new_inode(trans, root, rec->ino,
+			      mode | btrfs_type_to_imode(filetype));
+	if (ret < 0)
+		goto out;
+
+	/*
+	 * Here inode rebuild is done, we only rebuild the inode item,
+	 * don't repair the nlink(like move to lost+found).
+	 * That is the job of nlink repair.
+	 *
+	 * We just fill the record and return
+	 */
+	rec->found_dir_item = 1;
+	rec->imode = mode | btrfs_type_to_imode(filetype);
+	rec->nlink = 0;
+	rec->errors &= ~I_ERR_NO_INODE_ITEM;
+	/* Ensure the inode_nlinks repair function will be called */
+	rec->errors |= I_ERR_LINK_COUNT_WRONG;
+out:
+	return ret;
+}
+
 static int try_repair_inode(struct btrfs_root *root, struct inode_record *rec)
 {
 	struct btrfs_trans_handle *trans;
@@ -2106,7 +2255,8 @@ static int try_repair_inode(struct btrfs_root *root, struct inode_record *rec)
 
 	if (!(rec->errors & (I_ERR_DIR_ISIZE_WRONG |
 			     I_ERR_NO_ORPHAN_ITEM |
-			     I_ERR_LINK_COUNT_WRONG)))
+			     I_ERR_LINK_COUNT_WRONG |
+			     I_ERR_NO_INODE_ITEM)))
 		return rec->errors;
 
 	path = btrfs_alloc_path();
@@ -2126,7 +2276,9 @@ static int try_repair_inode(struct btrfs_root *root, struct inode_record *rec)
 		return PTR_ERR(trans);
 	}
 
-	if (rec->errors & I_ERR_DIR_ISIZE_WRONG)
+	if (rec->errors & I_ERR_NO_INODE_ITEM)
+		ret = repair_inode_no_item(trans, root, path, rec);
+	if (!ret && rec->errors & I_ERR_DIR_ISIZE_WRONG)
 		ret = repair_inode_isize(trans, root, path, rec);
 	if (!ret && rec->errors & I_ERR_NO_ORPHAN_ITEM)
 		ret = repair_inode_orphan_item(trans, root, path, rec);
@@ -2282,6 +2434,8 @@ static int check_inode_recs(struct btrfs_root *root,
 			}
 		}
 
+		if (!rec->found_inode_item)
+			rec->errors |= I_ERR_NO_INODE_ITEM;
 		if (rec->found_link != rec->nlink)
 			rec->errors |= I_ERR_LINK_COUNT_WRONG;
 		if (repair) {
@@ -2294,8 +2448,6 @@ static int check_inode_recs(struct btrfs_root *root,
 		}
 
 		error++;
-		if (!rec->found_inode_item)
-			rec->errors |= I_ERR_NO_INODE_ITEM;
 		print_inode_error(root, rec);
 		list_for_each_entry(backref, &rec->backrefs, list) {
 			if (!backref->found_dir_item)
