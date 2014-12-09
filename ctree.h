@@ -2454,4 +2454,6 @@ int btrfs_unlink(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 int btrfs_add_orphan_item(struct btrfs_trans_handle *trans,
 			  struct btrfs_root *root, struct btrfs_path *path,
 			  u64 ino);
+int btrfs_mkdir(struct btrfs_trans_handle *trans, struct btrfs_root *root,
+		char *name, int namelen, u64 parent_ino, u64 *ino, int mode);
 #endif
