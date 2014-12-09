@@ -1474,6 +1474,15 @@ static int walk_down_tree(struct btrfs_root *root, struct btrfs_path *path,
 			next = read_tree_block(root, bytenr, blocksize,
 					       ptr_gen);
 			if (!next) {
+				struct btrfs_key node_key;
+
+				btrfs_node_key_to_cpu(path->nodes[*level],
+						      &node_key,
+						      path->slots[*level]);
+				btrfs_add_corrupt_extent_record(root->fs_info,
+						&node_key,
+						path->nodes[*level]->start,
+						root->leafsize, *level);
 				err = -EIO;
 				goto out;
 			}
@@ -2627,6 +2636,16 @@ static int process_root_ref(struct extent_buffer *eb, int slot,
 	return 0;
 }
 
+static void free_corrupt_block(struct cache_extent *cache)
+{
+	struct btrfs_corrupt_block *corrupt;
+
+	corrupt = container_of(cache, struct btrfs_corrupt_block, cache);
+	free(corrupt);
+}
+
+FREE_EXTENT_CACHE_BASED_TREE(corrupt_blocks, free_corrupt_block);
+
 static int check_fs_root(struct btrfs_root *root,
 			 struct cache_tree *root_cache,
 			 struct walk_control *wc)
@@ -2639,8 +2658,17 @@ static int check_fs_root(struct btrfs_root *root,
 	struct shared_node root_node;
 	struct root_record *rec;
 	struct btrfs_root_item *root_item = &root->root_item;
+	struct cache_tree corrupt_blocks;
 	enum btrfs_tree_block_status status;
 
+	/*
+	 * Reuse the corrupt_block cache tree to record corrupted tree block
+	 *
+	 * Unlike the usage in extent tree check, here we do it in a per
+	 * fs/subvol tree base.
+	 */
+	cache_tree_init(&corrupt_blocks);
+	root->fs_info->corrupt_blocks = &corrupt_blocks;
 	if (root->root_key.objectid != BTRFS_TREE_RELOC_OBJECTID) {
 		rec = get_root_rec(root_cache, root->root_key.objectid);
 		if (btrfs_root_refs(root_item) > 0)
@@ -2703,6 +2731,25 @@ static int check_fs_root(struct btrfs_root *root,
 skip_walking:
 	btrfs_release_path(&path);
 
+	if (!cache_tree_empty(&corrupt_blocks)) {
+		struct cache_extent *cache;
+		struct btrfs_corrupt_block *corrupt;
+
+		printf("The following tree block(s) is corrupted in tree %llu:\n",
+		       root->root_key.objectid);
+		cache = first_cache_extent(&corrupt_blocks);
+		while (cache) {
+			corrupt = container_of(cache,
+					       struct btrfs_corrupt_block,
+					       cache);
+			printf("\ttree block bytenr: %llu, level: %d, node key: (%llu, %u, %llu)\n",
+			       cache->start, corrupt->level,
+			       corrupt->key.objectid, corrupt->key.type,
+			       corrupt->key.offset);
+			cache = next_cache_extent(cache);
+		}
+	}
+
 	err = merge_root_recs(root, &root_node.root_cache, root_cache);
 	if (err < 0)
 		ret = err;
@@ -2716,6 +2763,9 @@ skip_walking:
 	err = check_inode_recs(root, &root_node.inode_cache);
 	if (!ret)
 		ret = err;
+
+	free_corrupt_blocks_tree(&corrupt_blocks);
+	root->fs_info->corrupt_blocks = NULL;
 	return ret;
 }
 
@@ -6286,16 +6336,6 @@ static int prune_corrupt_blocks(struct btrfs_trans_handle *trans,
 	}
 	return 0;
 }
-
-static void free_corrupt_block(struct cache_extent *cache)
-{
-	struct btrfs_corrupt_block *corrupt;
-
-	corrupt = container_of(cache, struct btrfs_corrupt_block, cache);
-	free(corrupt);
-}
-
-FREE_EXTENT_CACHE_BASED_TREE(corrupt_blocks, free_corrupt_block);
 
 static void reset_cached_block_groups(struct btrfs_fs_info *fs_info)
 {
