@@ -4,11 +4,27 @@ export
 CC = @CC@
 LN_S = @LN_S@
 AR = @AR@
-AM_CFLAGS = -include config.h -Wall \
-	    -D_FILE_OFFSET_BITS=64 -DBTRFS_FLAT_INCLUDES \
-	    -D_XOPEN_SOURCE=700  \
-	    -fno-strict-aliasing -fPIC
-CFLAGS = -g -O1 -fno-strict-aliasing -rdynamic
+INSTALL = @INSTALL@
+
+# Non-static compilation flags
+CFLAGS = @CFLAGS@ \
+	 -include config.h -Wall \
+	 -D_FILE_OFFSET_BITS=64 -DBTRFS_FLAT_INCLUDES \
+	 -D_XOPEN_SOURCE=700  \
+	 -fno-strict-aliasing -fPIC \
+	 -rdynamic
+
+LDFLAGS = @LDFLAGS@
+
+LIBS = @UUID_LIBS@ @BLKID_LIBS@ @ZLIB_LIBS@ @LZO2_LIBS@ -L. -pthread
+LIBBTRFS_LIBS = $(LIBS)
+
+# Static compilation flags
+STATIC_CFLAGS = $(CFLAGS) -ffunction-sections -fdata-sections
+STATIC_LDFLAGS = -static -Wl,--gc-sections
+STATIC_LIBS = @UUID_LIBS_STATIC@ @BLKID_LIBS_STATIC@ \
+	      @ZLIB_LIBS_STATIC@ @LZO2_LIBS_STATIC@ -L. -pthread
+
 objects = ctree.o disk-io.o radix-tree.o extent-tree.o print-tree.o \
 	  root-tree.o dir-item.o file-item.o inode-item.o inode-map.o \
 	  extent-cache.o extent_io.o volumes.o utils.o repair.o \
@@ -29,10 +45,8 @@ TESTS = fsck-tests.sh convert-tests.sh
 
 prefix ?= @prefix@
 bindir = @bindir@
-lib_LIBS = @UUID_LIBS@ @BLKID_LIBS@ @ZLIB_LIBS@ @LZO2_LIBS@ -L. -pthread
 libdir ?= @libdir@
 incdir = @includedir@/btrfs
-LIBS = $(lib_LIBS) $(libs_static)
 
 ifeq ("$(origin V)", "command line")
   BUILD_VERBOSE = $(V)
@@ -69,7 +83,7 @@ INSTALLDIRS = $(patsubst %,install-%,$(SUBDIRS))
 CLEANDIRS = $(patsubst %,clean-%,$(SUBDIRS))
 
 ifeq ($(DISABLE_BACKTRACE),1)
-AM_CFLAGS += -DBTRFS_DISABLE_BACKTRACE
+CFLAGS += -DBTRFS_DISABLE_BACKTRACE
 endif
 
 ifneq ($(DISABLE_DOCUMENTATION),1)
@@ -88,11 +102,6 @@ endif
 static_objects = $(patsubst %.o, %.static.o, $(objects))
 static_cmds_objects = $(patsubst %.o, %.static.o, $(cmds_objects))
 static_libbtrfs_objects = $(patsubst %.o, %.static.o, $(libbtrfs_objects))
-
-# Define static compilation flags
-STATIC_CFLAGS = $(CFLAGS) -ffunction-sections -fdata-sections
-STATIC_LDFLAGS = -static -Wl,--gc-sections
-STATIC_LIBS = $(lib_LIBS)
 
 libs_shared = libbtrfs.so.0.1
 libs_static = libbtrfs.a
@@ -120,21 +129,21 @@ ifdef C
 else
 	check = true
 	check_echo = true
-	AM_CFLAGS += -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2
+	CFLAGS += -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2
 endif
 
 %.o.d: %.c
-	$(Q)$(CC) -MM -MG -MF $@ -MT $(@:.o.d=.o) -MT $(@:.o.d=.static.o) -MT $@ $(AM_CFLAGS) $(CFLAGS) $<
+	$(Q)$(CC) -MM -MG -MF $@ -MT $(@:.o.d=.o) -MT $(@:.o.d=.static.o) -MT $@ $(CFLAGS) $<
 
 .c.o:
 	@$(check_echo) "    [SP]     $<"
-	$(Q)$(check) $(AM_CFLAGS) $(CFLAGS) $<
+	$(Q)$(check) $(CFLAGS) $<
 	@echo "    [CC]     $@"
-	$(Q)$(CC) $(AM_CFLAGS) $(CFLAGS) -c $<
+	$(Q)$(CC) $(CFLAGS) -c $<
 
 %.static.o: %.c
 	@echo "    [CC]     $@"
-	$(Q)$(CC) $(AM_CFLAGS) $(STATIC_CFLAGS) -c $< -o $@
+	$(Q)$(CC) $(STATIC_CFLAGS) -c $< -o $@
 
 all: $(progs) $(BUILDDIRS)
 $(SUBDIRS): $(BUILDDIRS)
@@ -156,7 +165,7 @@ static: $(progs_static)
 
 $(libs_shared): $(libbtrfs_objects) $(lib_links) send.h
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) $(libbtrfs_objects) $(LDFLAGS) $(lib_LIBS) \
+	$(Q)$(CC) $(CFLAGS) $(libbtrfs_objects) $(LDFLAGS) $(LIBBTRFS_LIBS) \
 		-shared -Wl,-soname,libbtrfs.so.0 -o libbtrfs.so.0.1
 
 $(libs_static): $(libbtrfs_objects)
@@ -186,12 +195,13 @@ btrfs-%.static: $(static_objects) btrfs-%.static.o $(static_libbtrfs_objects)
 
 btrfs-%: $(objects) $(libs) btrfs-%.o
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o $@ $(objects) $@.o $(LDFLAGS) $(LIBS) $($(subst -,_,$@-libs))
+	$(Q)$(CC) $(CFLAGS) -o $@ $(objects) $@.o $(libs) \
+		$(LDFLAGS) $(LIBS) $($(subst -,_,$@-libs))
 
 btrfs: $(objects) btrfs.o help.o $(cmds_objects) $(libs)
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o btrfs btrfs.o help.o $(cmds_objects) \
-		$(objects) $(LDFLAGS) $(LIBS)
+		$(objects) $(libs) $(LDFLAGS) $(LIBS)
 
 btrfs.static: $(static_objects) btrfs.static.o help.static.o $(static_cmds_objects) $(static_libbtrfs_objects)
 	@echo "    [LD]     $@"
@@ -201,15 +211,15 @@ btrfs.static: $(static_objects) btrfs.static.o help.static.o $(static_cmds_objec
 # For backward compatibility, 'btrfs' changes behaviour to fsck if it's named 'btrfsck'
 btrfsck: btrfs
 	@echo "    [LN]     $@"
-	$(Q)$(LN) -f btrfs btrfsck
+	$(Q)$(LN_S) -f btrfs btrfsck
 
 btrfsck.static: btrfs.static
 	@echo "    [LN]     $@"
-	$(Q)$(LN) -f $^ $@
+	$(Q)$(LN_S) -f $^ $@
 
 mkfs.btrfs: $(objects) $(libs) mkfs.o
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o mkfs.btrfs $(objects) mkfs.o $(LDFLAGS) $(LIBS)
+	$(Q)$(CC) $(CFLAGS) -o mkfs.btrfs $(objects) $(libs) mkfs.o $(LDFLAGS) $(LIBS)
 
 mkfs.btrfs.static: $(static_objects) mkfs.static.o $(static_libbtrfs_objects)
 	@echo "    [LD]     $@"
@@ -218,7 +228,7 @@ mkfs.btrfs.static: $(static_objects) mkfs.static.o $(static_libbtrfs_objects)
 
 btrfstune: $(objects) $(libs) btrfstune.o
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o btrfstune $(objects) btrfstune.o $(LDFLAGS) $(LIBS)
+	$(Q)$(CC) $(CFLAGS) -o btrfstune $(objects) $(libs) btrfstune.o $(LDFLAGS) $(LIBS)
 
 btrfstune.static: $(static_objects) btrfstune.static.o $(static_libbtrfs_objects)
 	@echo "    [LD]     $@"
@@ -227,19 +237,19 @@ btrfstune.static: $(static_objects) btrfstune.static.o $(static_libbtrfs_objects
 
 dir-test: $(objects) $(libs) dir-test.o
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o dir-test $(objects) dir-test.o $(LDFLAGS) $(LIBS)
+	$(Q)$(CC) $(CFLAGS) -o dir-test $(objects) $(libs) dir-test.o $(LDFLAGS) $(LIBS)
 
 quick-test: $(objects) $(libs) quick-test.o
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o quick-test $(objects) quick-test.o $(LDFLAGS) $(LIBS)
+	$(Q)$(CC) $(CFLAGS) -o quick-test $(objects) $(libs) quick-test.o $(LDFLAGS) $(LIBS)
 
 ioctl-test: $(objects) $(libs) ioctl-test.o
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o ioctl-test $(objects) ioctl-test.o $(LDFLAGS) $(LIBS)
+	$(Q)$(CC) $(CFLAGS) -o ioctl-test $(objects) $(libs) ioctl-test.o $(LDFLAGS) $(LIBS)
 
 send-test: $(objects) $(libs) send-test.o
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o send-test $(objects) send-test.o $(LDFLAGS) $(LIBS)
+	$(Q)$(CC) $(CFLAGS) -o send-test $(objects) $(libs) send-test.o $(LDFLAGS) $(LIBS)
 
 library-test: $(libs_shared) library-test.o
 	@echo "    [LD]     $@"
@@ -284,7 +294,7 @@ install: $(libs) $(progs) $(INSTALLDIRS)
 	$(INSTALL) $(progs) $(DESTDIR)$(bindir)
 	$(INSTALL) fsck.btrfs $(DESTDIR)$(bindir)
 	# btrfsck is a link to btrfs in the src tree, make it so for installed file as well
-	$(LN) -f $(DESTDIR)$(bindir)/btrfs $(DESTDIR)$(bindir)/btrfsck
+	$(LN_S) -f $(DESTDIR)$(bindir)/btrfs $(DESTDIR)$(bindir)/btrfsck
 	$(INSTALL) -m755 -d $(DESTDIR)$(libdir)
 	$(INSTALL) $(libs) $(DESTDIR)$(libdir)
 	cp -a $(lib_links) $(DESTDIR)$(libdir)
