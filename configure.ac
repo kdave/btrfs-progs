@@ -56,6 +56,16 @@ AC_DEFUN([PKG_STATIC], [
   fi
 ])
 
+
+AC_ARG_ENABLE([backtrace],
+  AS_HELP_STRING([--disable-backtrace], [disable btrfs backtrace]),
+  [], [enable_backtrace=yes]
+)
+
+AS_IF([test "x$enable_backtrace" = xno], [
+  AC_DEFINE([BTRFS_DISABLE_BACKTRACE], [1], [disable backtrace stuff in kerncompat.h ])
+])
+
 dnl Define <NAME>_LIBS= and <NAME>_CFLAGS= by pkg-config
 dnl
 dnl The default PKG_CHECK_MODULES() action-if-not-found is end the
