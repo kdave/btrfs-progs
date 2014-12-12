@@ -27,8 +27,8 @@ test(){
 		|| _fail "filesystem create failed"
 	$here/btrfs-convert $here/test.img >> convert-tests-results.txt 2>&1 \
 		|| _fail "btrfs-convert failed"
-	$here/btrfsck $here/test.img >> convert-tests-results.txt 2>&1 \
-		|| _fail "btrfsck detected errors"
+	$here/btrfs check $here/test.img >> convert-tests-results.txt 2>&1 \
+		|| _fail "btrfs check detected errors"
 }
 
 # btrfs-convert requires 4k blocksize.
