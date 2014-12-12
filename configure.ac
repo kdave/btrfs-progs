@@ -66,6 +66,15 @@ AS_IF([test "x$enable_backtrace" = xno], [
   AC_DEFINE([BTRFS_DISABLE_BACKTRACE], [1], [disable backtrace stuff in kerncompat.h ])
 ])
 
+
+AC_ARG_ENABLE([documentation],
+	      AS_HELP_STRING([--disable-documentation], [do not build domumentation]),
+  [], [enable_documentation=yes]
+)
+AS_IF([test "x$enable_documentation" = xyes], [DISABLE_DOCUMENTATION=0], [DISABLE_DOCUMENTATION=1])
+AC_SUBST([DISABLE_DOCUMENTATION])
+
+
 dnl Define <NAME>_LIBS= and <NAME>_CFLAGS= by pkg-config
 dnl
 dnl The default PKG_CHECK_MODULES() action-if-not-found is end the

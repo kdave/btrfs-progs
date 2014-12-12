@@ -5,6 +5,7 @@ CC = @CC@
 LN_S = @LN_S@
 AR = @AR@
 INSTALL = @INSTALL@
+DISABLE_DOCUMENTATION = @DISABLE_DOCUMENTATION@
 
 # Non-static compilation flags
 CFLAGS = @CFLAGS@ \
