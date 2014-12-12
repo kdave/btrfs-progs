@@ -22,10 +22,19 @@ run_check()
 	"$@" >> $RESULT 2>&1 || _fail "failed: $@"
 }
 
+check_prereq()
+{
+	if ! [ -f $here/$1 ]; then
+		_fail "Failed prerequisities: $1";
+	fi
+}
+
 rm -f $RESULT
 
 # test rely on corrupting blocks tool
-run_check make btrfs-corrupt-block
+check_prereq btrfs-corrupt-block
+check_prereq btrfs-image
+check_prereq btrfs
 
 # Some broken filesystem images are kept as .img files, created by the tool
 # btrfs-image, and others are kept as .tar.xz files that contain raw filesystem
