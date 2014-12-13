@@ -29,6 +29,12 @@
 #include <stddef.h>
 #include <linux/types.h>
 #include <stdint.h>
+
+#ifndef __glibc__
+#define BTRFS_DISABLE_BACKTRACE
+#define __always_inline __inline __attribute__ ((__always_inline__))
+#endif
+
 #ifndef BTRFS_DISABLE_BACKTRACE
 #include <execinfo.h>
 #endif
