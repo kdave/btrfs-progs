@@ -31,6 +31,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <uuid/uuid.h>
+#include <linux/limits.h>
 
 #include "ctree.h"
 #include "disk-io.h"

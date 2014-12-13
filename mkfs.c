@@ -35,6 +35,8 @@
 #include <uuid/uuid.h>
 #include <ctype.h>
 #include <sys/xattr.h>
+#include <limits.h>
+#include <linux/limits.h>
 #include <blkid/blkid.h>
 #include <ftw.h>
 #include "ctree.h"
