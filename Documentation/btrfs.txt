@@ -85,6 +85,10 @@ COMMANDS
 	Replace btrfs devices. +
 	See `btrfs-replace`(8) for details.
 
+*property*::
+	Get/set a property from/to a btrfs object. +
+	See `btrfs-property`(8) for details.
+
 EXIT STATUS
 -----------
 *btrfs* returns a zero exit status if it succeeds. Non zero is returned in
@@ -113,3 +117,4 @@ SEE ALSO
 `btrfs-quota`(8),
 `btrfs-qgroup`(8),
 `btrfs-replace`(8),
+`btrfs-property`(8),
