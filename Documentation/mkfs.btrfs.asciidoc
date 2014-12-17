@@ -17,6 +17,7 @@ $$[-l|--leafsize <leafsize>]$$
 $$[-L|--label <label>]$$
 $$[-m|--metadata <metadata profile>]$$
 $$[-M|--mixed]$$
+$$[-q|--quiet]$$
 $$[-s|--sectorsize <sectorsize>]$$
 $$[-r|--rootdir <rootdir>]$$
 $$[-K|--nodiscard]$$
@@ -87,6 +88,9 @@ Mix data and metadata chunks together for more efficient space
 utilization.  This feature incurs a performance penalty in
 larger filesystems.  It is recommended for use with filesystems
 of 1 GiB or smaller.
+
+-q|--quiet::
+Print only error or warning messages. Options --features or --help are unaffected.
 
 -s|--sectorsize <size>::
 Specify the sectorsize, the minimum data block allocation unit.

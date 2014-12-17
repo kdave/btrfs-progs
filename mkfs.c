@@ -43,6 +43,7 @@
 #include "utils.h"
 
 static u64 index_cnt = 2;
+static int verbose = 1;
 
 struct directory_name_entry {
 	char *dir_name;
@@ -87,7 +88,9 @@ static int make_root_dir(struct btrfs_root *root, int mixed)
 					     BTRFS_FIRST_CHUNK_TREE_OBJECTID,
 					     chunk_start, chunk_size);
 		BUG_ON(ret);
-		printf("Created a data/metadata chunk of size %llu\n", chunk_size);
+		if (verbose)
+			printf("Created a data/metadata chunk of size %llu\n",
+					chunk_size);
 	} else {
 		ret = btrfs_alloc_chunk(trans, root->fs_info->extent_root,
 					&chunk_start, &chunk_size,
@@ -283,6 +286,7 @@ static void print_usage(void)
 	fprintf(stderr, "\t-K|--nodiscard          do not perform whole device TRIM\n");
 	fprintf(stderr, "\t-O|--features LIST      comma separated list of filesystem features, use '-O list-all' to list features\n");
 	fprintf(stderr, "\t-U|--uuid UUID          specify the filesystem UUID\n");
+	fprintf(stderr, "\t-q|--quiet              no messages except errors\n");
 	fprintf(stderr, "\t-V|--version            print the mkfs.btrfs version and exit\n");
 	fprintf(stderr, "%s\n", PACKAGE_STRING);
 	exit(1);
@@ -955,7 +959,8 @@ static int make_image(char *source_dir, struct btrfs_root *root, int out_fd)
 	}
 	btrfs_commit_transaction(trans, root);
 
-	printf("Making image is completed.\n");
+	if (verbose)
+		printf("Making image is completed.\n");
 	return 0;
 fail:
 	while (!list_empty(&dir_head.list)) {
@@ -1158,10 +1163,11 @@ int main(int ac, char **av)
 			{ "nodiscard", no_argument, NULL, 'K' },
 			{ "features", required_argument, NULL, 'O' },
 			{ "uuid", required_argument, NULL, 'U' },
+			{ "quiet", 0, NULL, 'q' },
 			{ NULL, 0, NULL, 0}
 		};
 
-		c = getopt_long(ac, av, "A:b:fl:n:s:m:d:L:O:r:U:VMK",
+		c = getopt_long(ac, av, "A:b:fl:n:s:m:d:L:O:r:U:VMKq",
 				long_options, NULL);
 		if (c < 0)
 			break;
@@ -1217,11 +1223,8 @@ int main(int ac, char **av)
 				break;
 			case 'b':
 				block_count = parse_size(optarg);
-				if (block_count <= BTRFS_MKFS_SMALL_VOLUME_SIZE) {
-					fprintf(stdout,
-				"SMALL VOLUME: forcing mixed metadata/data groups\n");
+				if (block_count <= BTRFS_MKFS_SMALL_VOLUME_SIZE)
 					mixed = 1;
-				}
 				zero_end = 0;
 				break;
 			case 'V':
@@ -1236,6 +1239,9 @@ int main(int ac, char **av)
 				break;
 			case 'K':
 				discard = 0;
+				break;
+			case 'q':
+				verbose = 0;
 				break;
 			default:
 				print_usage();
@@ -1283,8 +1289,9 @@ int main(int ac, char **av)
 	file = av[optind++];
 	ssd = is_ssd(file);
 
-	if (is_vol_small(file)) {
-		printf("SMALL VOLUME: forcing mixed metadata/data groups\n");
+	if (is_vol_small(file) || mixed) {
+		if (verbose)
+			printf("SMALL VOLUME: forcing mixed metadata/data groups\n");
 		mixed = 1;
 	}
 
@@ -1294,7 +1301,7 @@ int main(int ac, char **av)
 	*/
 	if (!mixed) {
 		if (!metadata_profile_opt) {
-			if (dev_cnt == 1 && ssd)
+			if (dev_cnt == 1 && ssd && verbose)
 				printf("Detected a SSD, turning off metadata "
 				"duplication.  Mkfs with -m dup if you want to "
 				"force metadata duplication.\n");
@@ -1368,8 +1375,10 @@ int main(int ac, char **av)
 	}
 
 	/* if we are here that means all devs are good to btrfsify */
-	printf("%s\n", PACKAGE_STRING);
-	printf("See %s for more information.\n\n", PACKAGE_URL);
+	if (verbose) {
+		printf("%s\n", PACKAGE_STRING);
+		printf("See %s for more information.\n\n", PACKAGE_URL);
+	}
 
 	dev_cnt--;
 
@@ -1447,7 +1456,8 @@ int main(int ac, char **av)
 		features |= BTRFS_FEATURE_INCOMPAT_RAID56;
 	}
 
-	btrfs_process_fs_features(features);
+	if (verbose)
+		btrfs_process_fs_features(features);
 
 	ret = make_btrfs(fd, file, label, fs_uuid, blocks, dev_block_count,
 			 nodesize, sectorsize, stripesize, features);
@@ -1526,10 +1536,12 @@ raid_groups:
 	ret = create_data_reloc_tree(trans, root);
 	BUG_ON(ret);
 
-	printf("fs created label %s on %s\n\tnodesize %u leafsize %u "
-	    "sectorsize %u size %s\n",
-	    label, first_file, nodesize, nodesize, sectorsize,
-	    pretty_size(btrfs_super_total_bytes(root->fs_info->super_copy)));
+	if (verbose) {
+		printf(
+	"fs created label %s on %s\n\tnodesize %u leafsize %u sectorsize %u size %s\n",
+		    label, first_file, nodesize, nodesize, sectorsize,
+		    pretty_size(btrfs_super_total_bytes(root->fs_info->super_copy)));
+	}
 
 	btrfs_commit_transaction(trans, root);
 
