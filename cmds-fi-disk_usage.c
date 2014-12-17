@@ -848,7 +848,7 @@ const char * const cmd_filesystem_usage_usage[] = {
 	"Show in which disk the chunks are allocated.",
 	"",
 	"-b\tSet byte as unit",
-	"-t\tShow data in tabular format",
+	"-T\tShow data in tabular format",
 	NULL
 };
 
@@ -861,7 +861,7 @@ int cmd_filesystem_usage(int argc, char **argv)
 
 	optind = 1;
 	while (1) {
-		int c = getopt(argc, argv, "bt");
+		int c = getopt(argc, argv, "bT");
 
 		if (c < 0)
 			break;
@@ -870,7 +870,7 @@ int cmd_filesystem_usage(int argc, char **argv)
 		case 'b':
 			mode = UNITS_RAW;
 			break;
-		case 't':
+		case 'T':
 			tabular = 1;
 			break;
 		default:
