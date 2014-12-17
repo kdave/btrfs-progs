@@ -169,6 +169,9 @@ int test_uuid_unique(char *fs_uuid)
 	return unique;
 }
 
+/*
+ * @fs_uuid - if NULL, generates a UUID, returns back the new filesystem UUID
+ */
 int make_btrfs(int fd, const char *device, const char *label, char *fs_uuid,
 	       u64 blocks[7], u64 num_bytes, u32 nodesize,
 	       u32 sectorsize, u32 stripesize, u64 features)
@@ -201,7 +204,7 @@ int make_btrfs(int fd, const char *device, const char *label, char *fs_uuid,
 	memset(&super, 0, sizeof(super));
 
 	num_bytes = (num_bytes / sectorsize) * sectorsize;
-	if (fs_uuid) {
+	if (fs_uuid && *fs_uuid) {
 		if (uuid_parse(fs_uuid, super.fsid) != 0) {
 			fprintf(stderr, "could not parse UUID: %s\n", fs_uuid);
 			ret = -EINVAL;
@@ -214,6 +217,8 @@ int make_btrfs(int fd, const char *device, const char *label, char *fs_uuid,
 		}
 	} else {
 		uuid_generate(super.fsid);
+		if (fs_uuid)
+			uuid_unparse(super.fsid, fs_uuid);
 	}
 	uuid_generate(super.dev_item.uuid);
 	uuid_generate(chunk_tree_uuid);
