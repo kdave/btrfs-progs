@@ -208,7 +208,7 @@ static const char * const cmd_subvol_delete_usage[] = {
 
 static int cmd_subvol_delete(int argc, char **argv)
 {
-	int	res, len, e, ret = 0;
+	int	res, e, ret = 0;
 	int cnt;
 	int fd = -1;
 	struct btrfs_ioctl_vol_args	args;
@@ -286,21 +286,6 @@ again:
 	dupvname = strdup(cpath);
 	vname = basename(dupvname);
 	free(cpath);
-
-	if (!test_issubvolname(vname)) {
-		fprintf(stderr, "ERROR: incorrect subvolume name '%s'\n",
-			vname);
-		ret = 1;
-		goto out;
-	}
-
-	len = strlen(vname);
-	if (len == 0 || len >= BTRFS_VOL_NAME_MAX) {
-		fprintf(stderr, "ERROR: snapshot name too long '%s'\n",
-			vname);
-		ret = 1;
-		goto out;
-	}
 
 	fd = open_file_or_dir(dname, &dirstream);
 	if (fd < 0) {
