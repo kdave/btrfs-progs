@@ -123,6 +123,34 @@ Show or update the label of a filesystem.
 If a newlabel optional argument is passed, the label is changed.
 NOTE: the maximum allowable length shall be less than 256 chars
 
+*usage* [options] <path> [<path>...]::
+Show detailed information about internal filesystem usage.
++
+`Options`
++
+-b|--raw::::
+raw numbers in bytes, without the 'B' suffix
+-h::::
+print human friendly numbers, base 1024, this is the default
+-H::::
+print human friendly numbers, base 1000
+--iec::::
+select the 1024 base for the following options, according to the IEC standard
+--si::::
+select the 1000 base for the following options, according to the SI standard
+-k|--kbytes::::
+show sizes in KiB, or kB with --si
+-m|--mbytes::::
+show sizes in MiB, or MB with --si
+-g|--gbytes::::
+show sizes in GiB, or GB with --si
+-t|--tbytes::::
+show sizes in TiB, or TB with --si
+-T::::
+show data in tabular format
+
+If conflicting options are passed, the last one takes precedence.
+
 EXIT STATUS
 -----------
 *btrfs filesystem* returns a zero exit status if it succeeds. Non zero is
