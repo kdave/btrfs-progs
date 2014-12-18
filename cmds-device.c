@@ -465,7 +465,7 @@ const char * const cmd_device_usage_usage[] = {
 	NULL
 };
 
-static int _cmd_device_usage(int fd, char *path, int mode)
+static int _cmd_device_usage(int fd, char *path, unsigned unit_mode)
 {
 	int i;
 	int ret = 0;
@@ -481,9 +481,9 @@ static int _cmd_device_usage(int fd, char *path, int mode)
 
 	for (i = 0; i < devcount; i++) {
 		printf("%s, ID: %llu\n", devinfo[i].path, devinfo[i].devid);
-		print_device_sizes(fd, &devinfo[i], mode);
+		print_device_sizes(fd, &devinfo[i], unit_mode);
 		print_device_chunks(fd, &devinfo[i], chunkinfo, chunkcount,
-				mode);
+				unit_mode);
 		printf("\n");
 	}
 

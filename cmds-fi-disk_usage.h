@@ -48,7 +48,7 @@ int load_chunk_and_device_info(int fd, struct chunk_info **chunkinfo,
 		int *chunkcount, struct device_info **devinfo, int *devcount);
 void print_device_chunks(int fd, struct device_info *devinfo,
 		struct chunk_info *chunks_info_ptr,
-		int chunks_info_count, int mode);
-void print_device_sizes(int fd, struct device_info *devinfo, int mode);
+		int chunks_info_count, unsigned unit_mode);
+void print_device_sizes(int fd, struct device_info *devinfo, unsigned unit_mode);
 
 #endif
