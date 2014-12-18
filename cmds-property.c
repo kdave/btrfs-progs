@@ -124,7 +124,18 @@ static int check_is_root(const char *object)
 	int ret;
 	u8 fsid[BTRFS_FSID_SIZE];
 	u8 fsid2[BTRFS_FSID_SIZE];
-	char *tmp;
+	char *tmp = NULL;
+	char *rp;
+
+	rp = realpath(object, NULL);
+	if (!rp) {
+		ret = -errno;
+		goto out;
+	}
+	if (!strcmp(rp, "/")) {
+		ret = 0;
+		goto out;
+	}
 
 	tmp = malloc(strlen(object) + 5);
 	if (!tmp) {
@@ -165,6 +176,7 @@ static int check_is_root(const char *object)
 
 out:
 	free(tmp);
+	free(rp);
 	return ret;
 }
 
