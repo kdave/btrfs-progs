@@ -461,22 +461,6 @@ static inline unsigned long bytes_to_bits(u64 bytes, u32 unit)
 	return (unsigned long)(bytes / unit);
 }
 
-static inline u64 offset_to_bitmap(struct btrfs_free_space_ctl *ctl,
-				   u64 offset)
-{
-	u64 bitmap_start;
-	u64 bytes_per_bitmap;
-	u32 sectorsize = ctl->sectorsize;
-
-	bytes_per_bitmap = BITS_PER_BITMAP(sectorsize) * ctl->unit;
-	bitmap_start = offset - ctl->start;
-	bitmap_start = bitmap_start / bytes_per_bitmap;
-	bitmap_start *= bytes_per_bitmap;
-	bitmap_start += ctl->start;
-
-	return bitmap_start;
-}
-
 static int tree_insert_offset(struct rb_root *root, u64 offset,
 			      struct rb_node *node, int bitmap)
 {
