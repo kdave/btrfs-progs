@@ -11,8 +11,9 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-*btrfs property* is used to get/set/list property, like lable or compression
-state, for given btrfs object.
+*btrfs property* is used to get/set/list property for given btrfs object.
+See the description of *get* subcommand for more information about
+both btrfs object and property.
 
 *btrfs property* provides an unified and user-friendly method to tune different
 btrfs properties instead of using the traditional method like `chattr`(1) or
@@ -23,31 +24,36 @@ SUBCOMMAND
 *get* [-t <type>] <object> [<name>]::
 Gets a property from a btrfs object.
 +
-If no name is specified, all properties for the given object are
-printed.
-A filesystem object can be a the filesystem itself, a subvolume,
-an inode or a device.
+A btrfs object, which is set by <object>, can be a btrfs filesystem
+itself, a btrfs subvolume, an inode(file or directory) inside btrfs,
+or a device on which a btrfs exists.
 +
+Set the name of property by '<name>'. If no '<name>' is specified,
+all properties for the given object are printed. '<name>' is one of
+the followings.
++
+ro::::
+read-only flag of subvolume: true or false
+label::::
+label of device
+compression::::
+compression setting for an inode: lzo, zlib, or "" (empty string)
+
 The '-t <type>' option can be used to explicitly
 specify what type of object you meant. This is only needed when a
 property could be set for more then one object type.
 +
 Possible types are 's[ubvol]', 'f[ilesystem]', 'i[node]' and 'd[evice]'.
-+
-The <object> can be path of btrfs device, btrfs mount point, or any
-directories/files inside btrfs.
 
 *set* [-t <type>] <object> <name> <value>::
 Sets a property on a btrfs object.
 +
-See description of *get* subcommand for a description of objects and object
-types.
+See the description of *get* subcommand for the meaning of each option.
 
 *list* [-t <type>] <object>::
 Lists available properties with their descriptions for the given object.
 +
-Please see the help of *btrfs property get* for a description of
-objects and object types.
+See the description of *get* subcommand for the meaning of each option.
 
 EXIT STATUS
 -----------
