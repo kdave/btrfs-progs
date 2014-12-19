@@ -1009,13 +1009,16 @@ int btrfs_scan_fs_devices(int fd, const char *path,
 {
 	u64 total_devs;
 	u64 dev_size;
+	off_t seek_ret;
 	int ret;
 	if (!sb_bytenr)
 		sb_bytenr = BTRFS_SUPER_INFO_OFFSET;
 
-	dev_size = lseek(fd, 0, SEEK_END);
-	if (dev_size < 0)
-		return (int)(dev_size);
+	seek_ret = lseek(fd, 0, SEEK_END);
+	if (seek_ret < 0)
+		return -errno;
+
+	dev_size = seek_ret;
 	lseek(fd, 0, SEEK_SET);
 	if (sb_bytenr > dev_size) {
 		fprintf(stderr, "Superblock bytenr is larger than device size\n");
