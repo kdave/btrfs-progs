@@ -19,7 +19,7 @@
 #define _GNU_SOURCE
 #define _POSIX_C_SOURCE 200809
 #define _XOPEN_SOURCE 700
-#define _BSD_SOURCE
+#define _DEFAULT_SOURCE
 
 #include "kerncompat.h"
 
