@@ -1096,6 +1096,7 @@ int main(int ac, char **av)
 				break;
 			case 'I':
 				corrupt_item = 1;
+				break;
 			case 'd':
 				delete = 1;
 				break;
