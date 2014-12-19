@@ -233,7 +233,7 @@ list_fragments(int fd, u64 flags, char *dir)
 		ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &args);
 		if (ret < 0) {
 			fprintf(stderr, "ERROR: can't perform the search\n");
-			return ret;
+			goto out_close;
 		}
 		/* the ioctl returns the number of item it found in nr_items */
 		if (sk->nr_items == 0)
@@ -373,7 +373,10 @@ skip:;
 		fprintf(html, "</p>");
 	}
 	fprintf(html, "</body></html>\n");
-	
+
+out_close:
+	fclose(html);
+
 	return ret;
 }
 
