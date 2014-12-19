@@ -190,6 +190,15 @@ static inline int count_digits(u64 num)
 	return ret;
 }
 
+static inline u64 div_factor(u64 num, int factor)
+{
+	if (factor == 10)
+		return num;
+	num *= factor;
+	num /= 10;
+	return num;
+}
+
 int btrfs_tree_search2_ioctl_supported(int fd);
 
 #endif

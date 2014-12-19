@@ -29,7 +29,7 @@
 #include "transaction.h"
 #include "print-tree.h"
 #include "volumes.h"
-#include "math.h"
+#include "utils.h"
 
 struct stripe {
 	struct btrfs_device *dev;
