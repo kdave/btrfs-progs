@@ -1068,6 +1068,7 @@ int main(int ac, char **av)
 				break;
 			case 'U':
 				chunk_tree = 1;
+				break;
 			case 'i':
 				inode = arg_strtou64(optarg);
 				break;
