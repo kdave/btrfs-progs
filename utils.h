@@ -40,6 +40,9 @@
 
 #define ARGV0_BUF_SIZE	PATH_MAX
 
+#define GETOPT_VAL_SI	256
+#define GETOPT_VAL_IEC	257
+
 int check_argc_exact(int nargs, int expected);
 int check_argc_min(int nargs, int expected);
 int check_argc_max(int nargs, int expected);

@@ -216,8 +216,8 @@ static int cmd_filesystem_df(int argc, char **argv)
 			{ "mbytes", no_argument, NULL, 'm'},
 			{ "gbytes", no_argument, NULL, 'g'},
 			{ "tbytes", no_argument, NULL, 't'},
-			{ "si", no_argument, NULL, 256},
-			{ "iec", no_argument, NULL, 257},
+			{ "si", no_argument, NULL, GETOPT_VAL_SI},
+			{ "iec", no_argument, NULL, GETOPT_VAL_IEC},
 		};
 		int c = getopt_long(argc, argv, "bhHkmgt", long_options,
 					&long_index);
@@ -245,10 +245,10 @@ static int cmd_filesystem_df(int argc, char **argv)
 		case 'H':
 			unit_mode = UNITS_HUMAN_DECIMAL;
 			break;
-		case 256:
+		case GETOPT_VAL_SI:
 			units_set_mode(&unit_mode, UNITS_DECIMAL);
 			break;
-		case 257:
+		case GETOPT_VAL_IEC:
 			units_set_mode(&unit_mode, UNITS_BINARY);
 			break;
 		default:
