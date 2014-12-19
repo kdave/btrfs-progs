@@ -75,11 +75,6 @@ struct radix_tree_preload {
 };
 static struct radix_tree_preload radix_tree_preloads = { 0, };
 
-static inline gfp_t root_gfp_mask(struct radix_tree_root *root)
-{
-	return root->gfp_mask & __GFP_BITS_MASK;
-}
-
 static int internal_nodes = 0;
 /*
  * This assumes that the caller has performed appropriate preallocation, and
