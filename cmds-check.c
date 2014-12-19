@@ -8075,6 +8075,8 @@ static void free_roots_info_cache(void)
 		struct root_item_info *rii;
 
 		entry = first_cache_extent(roots_info_cache);
+		if (!entry)
+			break;
 		remove_cache_extent(roots_info_cache, entry);
 		rii = container_of(entry, struct root_item_info, cache_extent);
 		free(rii);
