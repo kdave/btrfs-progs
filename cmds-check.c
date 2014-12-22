@@ -2308,7 +2308,7 @@ static int check_inode_recs(struct btrfs_root *root,
 	struct inode_record *rec;
 	struct inode_backref *backref;
 	int stage = 0;
-	int ret;
+	int ret = 0;
 	int err = 0;
 	u64 error = 0;
 	u64 root_dirid = btrfs_root_dirid(&root->root_item);
@@ -2458,7 +2458,8 @@ static int check_inode_recs(struct btrfs_root *root,
 			ret = 0;
 		}
 
-		error++;
+		if (!(repair && ret == 0))
+			error++;
 		print_inode_error(root, rec);
 		list_for_each_entry(backref, &rec->backrefs, list) {
 			if (!backref->found_dir_item)
