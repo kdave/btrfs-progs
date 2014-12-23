@@ -1959,6 +1959,9 @@ static int reset_nlink(struct btrfs_trans_handle *trans,
 	struct btrfs_inode_item *inode_item;
 	int ret = 0;
 
+	/* We don't believe this either, reset it and iterate backref */
+	rec->found_link = 0;
+
 	/* Remove all backref including the valid ones */
 	list_for_each_entry_safe(backref, tmp, &rec->backrefs, list) {
 		ret = btrfs_unlink(trans, root, rec->ino, backref->dir,
@@ -1973,6 +1976,8 @@ static int reset_nlink(struct btrfs_trans_handle *trans,
 		      backref->found_inode_ref)) {
 			list_del(&backref->list);
 			free(backref);
+		} else {
+			rec->found_link++;
 		}
 	}
 
