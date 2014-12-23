@@ -901,13 +901,8 @@ static int cmd_show(int argc, char **argv)
 		 *     realpath do  /mnt/btrfs/  => /mnt/btrfs
 		 *     which shall be recognized by btrfs_scan_kernel()
 		 */
-		if (!realpath(search, path)) {
-			fprintf(stderr, "ERROR: Could not show %s: %s\n",
-					search, strerror(errno));
-			return 1;
-		}
-
-		search = path;
+		if (realpath(search, path))
+			search = path;
 
 		/*
 		 * Needs special handling if input arg is block dev And if
