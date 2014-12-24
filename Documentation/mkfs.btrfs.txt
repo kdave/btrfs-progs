@@ -59,18 +59,17 @@ By default, mkfs.btrfs will not write to the device if it suspects that
 there is a filesystem or partition table on the device already.
 
 -n|--nodesize <size>
-+
+
 -l|--leafsize <size>::
 Specify the nodesize, the tree block size in which btrfs stores
 data. The default value is 16KB (16384) or the page size, whichever is
-bigger. Must be a multiple of the sectorsize, but not larger than
-65536. Leafsize always equals nodesize and the options are aliases.
+bigger. Must be a multiple of the sectorsize, but not larger than 65536.
+Leafsize always equals nodesize and the options are aliases.
 
 -L|--label <name>::
 Specify a label for the filesystem.
 +
 NOTE: <name> should be less than 256 characters.
-
 
 -m|--metadata <profile>::
 Specify how metadata must be spanned across the devices specified. Valid
