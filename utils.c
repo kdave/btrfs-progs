@@ -855,6 +855,39 @@ int is_mount_point(const char *path)
 }
 
 /*
+ * This function checks if the given input parameter is
+ * an uuid or a path
+ * return -1: some error in the given input
+ * return 0: unknow input
+ * return 1: given input is uuid
+ * return 2: given input is path
+ */
+int check_arg_type(const char *input)
+{
+	uuid_t uuid;
+	char path[PATH_MAX];
+
+	if (!input)
+		return -EINVAL;
+
+	if (realpath(input, path)) {
+		if (is_block_device(path) == 1)
+			return BTRFS_ARG_BLKDEV;
+
+		if (is_mount_point(path) == 1)
+			return BTRFS_ARG_MNTPOINT;
+
+		return BTRFS_ARG_UNKNOWN;
+	}
+
+	if (strlen(input) == (BTRFS_UUID_UNPARSED_SIZE - 1) &&
+		!uuid_parse(input, uuid))
+		return BTRFS_ARG_UUID;
+
+	return BTRFS_ARG_UNKNOWN;
+}
+
+/*
  * Find the mount point for a mounted device.
  * On success, returns 0 with mountpoint in *mp.
  * On failure, returns -errno (not mounted yields -EINVAL)

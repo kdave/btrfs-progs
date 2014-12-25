@@ -118,6 +118,7 @@ int set_label(const char *btrfs_dev, const char *label);
 char *__strncpy__null(char *dest, const char *src, size_t n);
 int is_block_device(const char *file);
 int is_mount_point(const char *file);
+int check_arg_type(const char *input);
 int open_path_or_dev_mnt(const char *path, DIR **dirstream);
 u64 btrfs_device_size(int fd, struct stat *st);
 /* Helper to always get proper size of the destination string */

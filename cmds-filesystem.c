@@ -495,38 +495,6 @@ static int print_one_fs(struct btrfs_ioctl_fs_info_args *fs_info,
 	return 0;
 }
 
-/* This function checks if the given input parameter is
- * an uuid or a path
- * return -1: some error in the given input
- * return 0: unknow input
- * return 1: given input is uuid
- * return 2: given input is path
- */
-static int check_arg_type(char *input)
-{
-	uuid_t	out;
-	char path[PATH_MAX];
-
-	if (!input)
-		return -EINVAL;
-
-	if (realpath(input, path)) {
-		if (is_block_device(path) == 1)
-			return BTRFS_ARG_BLKDEV;
-
-		if (is_mount_point(path) == 1)
-			return BTRFS_ARG_MNTPOINT;
-
-		return BTRFS_ARG_UNKNOWN;
-	}
-
-	if (strlen(input) == (BTRFS_UUID_UNPARSED_SIZE - 1) &&
-		!uuid_parse(input, out))
-		return BTRFS_ARG_UUID;
-
-	return BTRFS_ARG_UNKNOWN;
-}
-
 static int btrfs_scan_kernel(void *search)
 {
 	int ret = 0, fd;
