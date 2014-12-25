@@ -1,0 +1,49 @@
+#!/bin/bash
+#
+# Common routines for all tests
+#
+
+_fail()
+{
+	echo "$*" | tee -a $RESULT
+	exit 1
+}
+
+run_check()
+{
+	echo "############### $@" >> $RESULT 2>&1
+	"$@" >> $RESULT 2>&1 || _fail "failed: $@"
+}
+
+check_prereq()
+{
+	if ! [ -f $top/$1 ]; then
+		_fail "Failed prerequisities: $1";
+	fi
+}
+
+check_image()
+{
+	image=$1
+	echo "testing image $(basename $image)" >> $RESULT
+	$top/btrfs check $image >> $RESULT 2>&1
+	[ $? -eq 0 ] && _fail "btrfs check should have detected corruption"
+
+	run_check $top/btrfs check --repair $image
+	run_check $top/btrfs check $image
+}
+
+check_all_images()
+{
+	dir=$1
+	for i in $(find $dir -iname '*.img')
+	do
+		echo "extracting image $(basename $i)" >> $RESULT
+		$top/btrfs-image -r $i $i.restored || \
+			_fail "failed to extract image $i"
+
+		check_image $i.restored
+
+		rm $i.restored
+	done
+}
