@@ -516,8 +516,10 @@ static int btrfs_scan_kernel(void *search)
 			continue;
 		ret = get_fs_info(mnt->mnt_dir, &fs_info_arg,
 				&dev_info_arg);
-		if (ret)
+		if (ret) {
+			kfree(dev_info_arg);
 			goto out;
+		}
 
 		if (get_label_mounted(mnt->mnt_dir, label)) {
 			kfree(dev_info_arg);
