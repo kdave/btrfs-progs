@@ -471,7 +471,6 @@ static int print_one_fs(struct btrfs_ioctl_fs_info_args *fs_info,
 		char *canonical_path;
 
 		tmp_dev_info = (struct btrfs_ioctl_dev_info_args *)&dev_info[i];
-		canonical_path = canonicalize_path((char *)tmp_dev_info->path);
 
 		/* Add check for missing devices even mounted */
 		fd = open((char *)tmp_dev_info->path, O_RDONLY);
@@ -480,6 +479,7 @@ static int print_one_fs(struct btrfs_ioctl_fs_info_args *fs_info,
 			continue;
 		}
 		close(fd);
+		canonical_path = canonicalize_path((char *)tmp_dev_info->path);
 		printf("\tdevid %4llu size %s used %s path %s\n",
 			tmp_dev_info->devid,
 			pretty_size(tmp_dev_info->total_bytes),
