@@ -89,7 +89,7 @@ int btrfs_insert_inode_ref(struct btrfs_trans_handle *trans,
 		ptr = (unsigned long)(ref + 1);
 		ret = 0;
 	} else if (ret < 0) {
-		if (ret == EOVERFLOW)
+		if (ret == -EOVERFLOW)
 			ret = -EMLINK;
 		goto out;
 	} else {
