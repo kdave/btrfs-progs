@@ -2839,7 +2839,7 @@ static int repair_btree(struct btrfs_root *root,
 		ret = PTR_ERR(trans);
 		fprintf(stderr, "Error starting transaction: %s\n",
 			strerror(-ret));
-		return ret;
+		goto out_free_path;
 	}
 	cache = first_cache_extent(corrupt_blocks);
 	while (cache) {
@@ -2894,8 +2894,9 @@ static int repair_btree(struct btrfs_root *root,
 		cache = next_cache_extent(cache);
 	}
 out:
-	btrfs_free_path(path);
 	btrfs_commit_transaction(trans, root);
+out_free_path:
+	btrfs_free_path(path);
 	return ret;
 }
 
