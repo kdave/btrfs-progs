@@ -102,8 +102,9 @@ If the prefix + or - is present the size is increased or decreased
 by the quantity <size>.
 If no units are specified, the unit of the <size> parameter defaults to
 bytes. Optionally, the size parameter may be suffixed by one of the following
-units designators: \'K\', \'M', or \'G', kilobytes, megabytes, or gigabytes,
-respectively.
+units designators: \'K\', \'M\', \'G\', \'T\', \'P\', or \'E\', which represent
+KiB, MiB, GiB, TiB, PiB, or EiB, respectively.
+
 +
 If \'max' is passed, the filesystem will occupy all available space on the
 device devid.
