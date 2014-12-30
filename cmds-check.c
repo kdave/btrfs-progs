@@ -2160,9 +2160,10 @@ static int find_normal_file_extent(struct btrfs_root *root, u64 ino)
 		fi = btrfs_item_ptr(path->nodes[0], path->slots[0],
 				    struct btrfs_file_extent_item);
 		type = btrfs_file_extent_type(path->nodes[0], fi);
-		if (type != BTRFS_FILE_EXTENT_INLINE)
+		if (type != BTRFS_FILE_EXTENT_INLINE) {
 			ret = 1;
 			goto out;
+		}
 	}
 out:
 	btrfs_free_path(path);
