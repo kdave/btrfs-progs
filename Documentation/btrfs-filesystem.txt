@@ -77,22 +77,23 @@ compress file contents while defragmenting
 defragment files recursively
 -f::::
 flush filesystem after defragmenting
--s <start>::::
+-s <start>[kKmMgGtTpPeE]::::
 defragment only from byte <start> onward
--l <len>::::
+-l <len>[kKmMgGtTpPeE]::::
 defragment only up to <len> bytes
--t <size>::::
+-t <size>[kKmMgGtTpPeE]::::
 defragment only files at least <size> bytes big
 +
-For <start>, <len>, <size> it is possible to append a suffix
-like 'k' for 1 KBytes, 'm' for 1 MBytes...
+For <start>, <len>, <size> it is possible to append
+units designator: \'K', \'M', \'G', \'T', \'P', or \'E', which represent
+KiB, MiB, GiB, TiB, PiB, or EiB, respectively. Case does not matter.
 +
 WARNING: defragmenting with kernels up to 2.6.37 will unlink COW-ed copies of data,
 don't use it if you use snapshots, have de-duplicated your data or made
 copies with `cp --reflink`.
 
 // Some wording are extracted by the resize2fs man page
-*resize* [<devid>:][+/-]<size>[gkm]|[<devid>:]max <path>::
+*resize* [<devid>:][+/-]<size>[kKmMgGtTpPeE]|[<devid>:]max <path>::
 Resize a filesystem identified by <path> for the underlying device
 devid *online*. +
 The devid can be found with *btrfs filesystem show* and
@@ -103,8 +104,7 @@ by the quantity <size>.
 If no units are specified, the unit of the <size> parameter defaults to
 bytes. Optionally, the size parameter may be suffixed by one of the following
 units designators: \'K', \'M', \'G', \'T', \'P', or \'E', which represent
-KiB, MiB, GiB, TiB, PiB, or EiB, respectively.
-
+KiB, MiB, GiB, TiB, PiB, or EiB, respectively. Case does not matter.
 +
 If \'max' is passed, the filesystem will occupy all available space on the
 device devid.
