@@ -83,7 +83,8 @@ struct data_backref {
 /*
  * Much like data_backref, just removed the undetermined members
  * and change it to use list_head.
- * Stored in the root->orphan_data_extents list
+ * During extent scan, it is stored in root->orphan_data_extent.
+ * During fs tree scan, it is then moved to inode_rec->orphan_data_extents.
  */
 struct orphan_data_extent {
 	struct list_head list;
@@ -383,6 +384,7 @@ struct inode_record {
 	u64 extent_start;
 	u64 extent_end;
 	struct rb_root holes;
+	struct list_head orphan_extents;
 
 	u32 refs;
 };
@@ -401,6 +403,7 @@ struct inode_record {
 #define I_ERR_ODD_CSUM_ITEM		(1 << 11)
 #define I_ERR_SOME_CSUM_MISSING		(1 << 12)
 #define I_ERR_LINK_COUNT_WRONG		(1 << 13)
+#define I_ERR_FILE_EXTENT_ORPHAN	(1 << 14)
 
 struct root_backref {
 	struct list_head list;
@@ -506,12 +509,15 @@ static struct inode_record *clone_inode_rec(struct inode_record *orig_rec)
 	struct inode_record *rec;
 	struct inode_backref *backref;
 	struct inode_backref *orig;
+	struct orphan_data_extent *src_orphan;
+	struct orphan_data_extent *dst_orphan;
 	size_t size;
 
 	rec = malloc(sizeof(*rec));
 	memcpy(rec, orig_rec, sizeof(*rec));
 	rec->refs = 1;
 	INIT_LIST_HEAD(&rec->backrefs);
+	INIT_LIST_HEAD(&rec->orphan_extents);
 
 	list_for_each_entry(orig, &orig_rec->backrefs, list) {
 		size = sizeof(*orig) + orig->namelen + 1;
@@ -519,7 +525,30 @@ static struct inode_record *clone_inode_rec(struct inode_record *orig_rec)
 		memcpy(backref, orig, size);
 		list_add_tail(&backref->list, &rec->backrefs);
 	}
+	list_for_each_entry(src_orphan, &orig_rec->orphan_extents, list) {
+		dst_orphan = malloc(sizeof(*dst_orphan));
+		/* TODO: Fix all the HELL of un-catched -ENOMEM case */
+		BUG_ON(!dst_orphan);
+		memcpy(dst_orphan, src_orphan, sizeof(*src_orphan));
+		list_add_tail(&dst_orphan->list, &rec->orphan_extents);
+	}
 	return rec;
+}
+
+static void print_orphan_data_extents(struct list_head *orphan_extents,
+				      u64 objectid)
+{
+	struct orphan_data_extent *orphan;
+
+	if (list_empty(orphan_extents))
+		return;
+	printf("The following data extent is lost in tree %llu:\n",
+	       objectid);
+	list_for_each_entry(orphan, orphan_extents, list) {
+		printf("\tinode: %llu, offset:%llu, disk_bytenr: %llu, disk_len: %llu\n",
+		       orphan->objectid, orphan->offset, orphan->disk_bytenr,
+		       orphan->disk_len);
+	}
 }
 
 static void print_inode_error(struct btrfs_root *root, struct inode_record *rec)
@@ -566,7 +595,13 @@ static void print_inode_error(struct btrfs_root *root, struct inode_record *rec)
 		fprintf(stderr, ", some csum missing");
 	if (errors & I_ERR_LINK_COUNT_WRONG)
 		fprintf(stderr, ", link count wrong");
+	if (errors & I_ERR_FILE_EXTENT_ORPHAN)
+		fprintf(stderr, ", orphan file extent");
 	fprintf(stderr, "\n");
+	/* Print the orphan extents if needed */
+	if (errors & I_ERR_FILE_EXTENT_ORPHAN)
+		print_orphan_data_extents(&rec->orphan_extents, root->objectid);
+
 	/* Print the holes if needed */
 	if (errors & I_ERR_FILE_EXTENT_DISCOUNT) {
 		struct file_extent_hole *hole;
@@ -637,6 +672,7 @@ static struct inode_record *get_inode_rec(struct cache_tree *inode_cache,
 		rec->extent_start = (u64)-1;
 		rec->refs = 1;
 		INIT_LIST_HEAD(&rec->backrefs);
+		INIT_LIST_HEAD(&rec->orphan_extents);
 		rec->holes = RB_ROOT;
 
 		node = malloc(sizeof(*node));
@@ -653,6 +689,18 @@ static struct inode_record *get_inode_rec(struct cache_tree *inode_cache,
 	return rec;
 }
 
+static void free_orphan_data_extents(struct list_head *orphan_extents)
+{
+	struct orphan_data_extent *orphan;
+
+	while (!list_empty(orphan_extents)) {
+		orphan = list_entry(orphan_extents->next,
+				    struct orphan_data_extent, list);
+		list_del(&orphan->list);
+		free(orphan);
+	}
+}
+
 static void free_inode_rec(struct inode_record *rec)
 {
 	struct inode_backref *backref;
@@ -666,6 +714,7 @@ static void free_inode_rec(struct inode_record *rec)
 		list_del(&backref->list);
 		free(backref);
 	}
+	free_orphan_data_extents(&rec->orphan_extents);
 	free_file_extent_holes(&rec->holes);
 	free(rec);
 }
@@ -2487,6 +2536,67 @@ out:
 	return ret;
 }
 
+static int repair_inode_orphan_extent(struct btrfs_trans_handle *trans,
+				      struct btrfs_root *root,
+				      struct btrfs_path *path,
+				      struct inode_record *rec)
+{
+	struct orphan_data_extent *orphan;
+	struct orphan_data_extent *tmp;
+	int ret = 0;
+
+	list_for_each_entry_safe(orphan, tmp, &rec->orphan_extents, list) {
+		/*
+		 * Check for conflicting file extents
+		 *
+		 * Here we don't know whether the extents is compressed or not,
+		 * so we can only assume it not compressed nor data offset,
+		 * and use its disk_len as extent length.
+		 */
+		ret = btrfs_get_extent(NULL, root, path, orphan->objectid,
+				       orphan->offset, orphan->disk_len, 0);
+		btrfs_release_path(path);
+		if (ret < 0)
+			goto out;
+		if (!ret) {
+			fprintf(stderr,
+				"orphan extent (%llu, %llu) conflicts, delete the orphan\n",
+				orphan->disk_bytenr, orphan->disk_len);
+			ret = btrfs_free_extent(trans,
+					root->fs_info->extent_root,
+					orphan->disk_bytenr, orphan->disk_len,
+					0, root->objectid, orphan->objectid,
+					orphan->offset);
+			if (ret < 0)
+				goto out;
+		}
+		ret = btrfs_insert_file_extent(trans, root, orphan->objectid,
+				orphan->offset, orphan->disk_bytenr,
+				orphan->disk_len, orphan->disk_len);
+		if (ret < 0)
+			goto out;
+
+		/* Update file size info */
+		rec->found_size += orphan->disk_len;
+		if (rec->found_size == rec->nbytes)
+			rec->errors &= ~I_ERR_FILE_NBYTES_WRONG;
+
+		/* Update the file extent hole info too */
+		ret = del_file_extent_hole(&rec->holes, orphan->offset,
+					   orphan->disk_len);
+		if (ret < 0)
+			goto out;
+		if (RB_EMPTY_ROOT(&rec->holes))
+			rec->errors &= ~I_ERR_FILE_EXTENT_DISCOUNT;
+
+		list_del(&orphan->list);
+		free(orphan);
+	}
+	rec->errors &= ~I_ERR_FILE_EXTENT_ORPHAN;
+out:
+	return ret;
+}
+
 static int try_repair_inode(struct btrfs_root *root, struct inode_record *rec)
 {
 	struct btrfs_trans_handle *trans;
@@ -2496,7 +2606,8 @@ static int try_repair_inode(struct btrfs_root *root, struct inode_record *rec)
 	if (!(rec->errors & (I_ERR_DIR_ISIZE_WRONG |
 			     I_ERR_NO_ORPHAN_ITEM |
 			     I_ERR_LINK_COUNT_WRONG |
-			     I_ERR_NO_INODE_ITEM)))
+			     I_ERR_NO_INODE_ITEM |
+			     I_ERR_FILE_EXTENT_ORPHAN)))
 		return rec->errors;
 
 	path = btrfs_alloc_path();
@@ -2518,6 +2629,8 @@ static int try_repair_inode(struct btrfs_root *root, struct inode_record *rec)
 
 	if (rec->errors & I_ERR_NO_INODE_ITEM)
 		ret = repair_inode_no_item(trans, root, path, rec);
+	if (!ret && rec->errors & I_ERR_FILE_EXTENT_ORPHAN)
+		ret = repair_inode_orphan_extent(trans, root, path, rec);
 	if (!ret && rec->errors & I_ERR_DIR_ISIZE_WRONG)
 		ret = repair_inode_isize(trans, root, path, rec);
 	if (!ret && rec->errors & I_ERR_NO_ORPHAN_ITEM)
@@ -3131,34 +3244,6 @@ out_free_path:
 	return ret;
 }
 
-static void print_orphan_data_extents(struct list_head *orphan_extents,
-				      u64 objectid)
-{
-	struct orphan_data_extent *orphan;
-
-	if (list_empty(orphan_extents))
-		return;
-	printf("The following data extent is lost in tree %llu:\n",
-	       objectid);
-	list_for_each_entry(orphan, orphan_extents, list) {
-		printf("\tinode: %llu, offset:%llu, disk_bytenr: %llu, disk_len: %llu\n",
-		       orphan->objectid, orphan->offset, orphan->disk_bytenr,
-		       orphan->disk_len);
-	}
-}
-
-static void free_orphan_data_extents(struct list_head *orphan_extents)
-{
-	struct orphan_data_extent *orphan;
-
-	while (!list_empty(orphan_extents)) {
-		orphan = list_entry(orphan_extents->next,
-				    struct orphan_data_extent, list);
-		list_del(&orphan->list);
-		free(orphan);
-	}
-}
-
 static int check_fs_root(struct btrfs_root *root,
 			 struct cache_tree *root_cache,
 			 struct walk_control *wc)
@@ -3172,6 +3257,8 @@ static int check_fs_root(struct btrfs_root *root,
 	struct root_record *rec;
 	struct btrfs_root_item *root_item = &root->root_item;
 	struct cache_tree corrupt_blocks;
+	struct orphan_data_extent *orphan;
+	struct orphan_data_extent *tmp;
 	enum btrfs_tree_block_status status;
 
 	/*
@@ -3182,6 +3269,7 @@ static int check_fs_root(struct btrfs_root *root,
 	 */
 	cache_tree_init(&corrupt_blocks);
 	root->fs_info->corrupt_blocks = &corrupt_blocks;
+
 	if (root->root_key.objectid != BTRFS_TREE_RELOC_OBJECTID) {
 		rec = get_root_rec(root_cache, root->root_key.objectid);
 		if (btrfs_root_refs(root_item) > 0)
@@ -3192,6 +3280,17 @@ static int check_fs_root(struct btrfs_root *root,
 	memset(&root_node, 0, sizeof(root_node));
 	cache_tree_init(&root_node.root_cache);
 	cache_tree_init(&root_node.inode_cache);
+
+	/* Move the orphan extent record to corresponding inode_record */
+	list_for_each_entry_safe(orphan, tmp,
+				 &root->orphan_data_extents, list) {
+		struct inode_record *inode;
+
+		inode = get_inode_rec(&root_node.inode_cache, orphan->objectid,
+				      1);
+		inode->errors |= I_ERR_FILE_EXTENT_ORPHAN;
+		list_move(&orphan->list, &inode->orphan_extents);
+	}
 
 	level = btrfs_header_level(root->node);
 	memset(wc->nodes, 0, sizeof(wc->nodes));
@@ -3290,7 +3389,6 @@ skip_walking:
 
 	free_corrupt_blocks_tree(&corrupt_blocks);
 	root->fs_info->corrupt_blocks = NULL;
-	print_orphan_data_extents(&root->orphan_data_extents, root->objectid);
 	free_orphan_data_extents(&root->orphan_data_extents);
 	return ret;
 }
