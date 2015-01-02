@@ -2473,12 +2473,6 @@ static int repair_inode_no_item(struct btrfs_trans_handle *trans,
 	int type_recovered = 0;
 	int ret = 0;
 
-	/*
-	 * TODO:
-	 * 1. salvage data from existing file extent and
-	 *    punch hole to keep fi ext consistent.
-	 * 2. salvage data from extent tree
-	 */
 	printf("Trying to rebuild inode:%llu\n", rec->ino);
 
 	type_recovered = !find_file_type(rec, &filetype);
@@ -2492,9 +2486,7 @@ static int repair_inode_no_item(struct btrfs_trans_handle *trans,
 	 * For undetermined one, use FILE as fallback.
 	 *
 	 * TODO:
-	 * 1. If found extent belong to it in extent tree, it must be FILE
-	 *    Need extra hook in extent tree scan.
-	 * 2. If found backref(inode_index/item is already handled) to it,
+	 * 1. If found backref(inode_index/item is already handled) to it,
 	 *    it must be DIR.
 	 *    Need new inode-inode ref structure to allow search for that.
 	 */
@@ -2506,7 +2498,10 @@ static int repair_inode_no_item(struct btrfs_trans_handle *trans,
 		} else if (rec->found_dir_item) {
 			type_recovered = 1;
 			filetype = BTRFS_FT_DIR;
-		} else {
+		} else if (!list_empty(&rec->orphan_extents)) {
+			type_recovered = 1;
+			filetype = BTRFS_FT_REG_FILE;
+		} else{
 			printf("Can't determint the filetype for inode %llu, assume it is a normal file\n",
 			       rec->ino);
 			type_recovered = 1;
@@ -2597,6 +2592,37 @@ out:
 	return ret;
 }
 
+static int repair_inode_discount_extent(struct btrfs_trans_handle *trans,
+					struct btrfs_root *root,
+					struct btrfs_path *path,
+					struct inode_record *rec)
+{
+	struct rb_node *node;
+	struct file_extent_hole *hole;
+	int ret = 0;
+
+	node = rb_first(&rec->holes);
+
+	while (node) {
+		hole = rb_entry(node, struct file_extent_hole, node);
+		ret = btrfs_punch_hole(trans, root, rec->ino,
+				       hole->start, hole->len);
+		if (ret < 0)
+			goto out;
+		ret = del_file_extent_hole(&rec->holes, hole->start,
+					   hole->len);
+		if (ret < 0)
+			goto out;
+		if (RB_EMPTY_ROOT(&rec->holes))
+			rec->errors &= ~I_ERR_FILE_EXTENT_DISCOUNT;
+		node = rb_first(&rec->holes);
+	}
+	printf("Fixed discount file extents for inode: %llu in root: %llu\n",
+	       rec->ino, root->objectid);
+out:
+	return ret;
+}
+
 static int try_repair_inode(struct btrfs_root *root, struct inode_record *rec)
 {
 	struct btrfs_trans_handle *trans;
@@ -2607,7 +2633,8 @@ static int try_repair_inode(struct btrfs_root *root, struct inode_record *rec)
 			     I_ERR_NO_ORPHAN_ITEM |
 			     I_ERR_LINK_COUNT_WRONG |
 			     I_ERR_NO_INODE_ITEM |
-			     I_ERR_FILE_EXTENT_ORPHAN)))
+			     I_ERR_FILE_EXTENT_ORPHAN |
+			     I_ERR_FILE_EXTENT_DISCOUNT)))
 		return rec->errors;
 
 	path = btrfs_alloc_path();
@@ -2631,6 +2658,8 @@ static int try_repair_inode(struct btrfs_root *root, struct inode_record *rec)
 		ret = repair_inode_no_item(trans, root, path, rec);
 	if (!ret && rec->errors & I_ERR_FILE_EXTENT_ORPHAN)
 		ret = repair_inode_orphan_extent(trans, root, path, rec);
+	if (!ret && rec->errors & I_ERR_FILE_EXTENT_DISCOUNT)
+		ret = repair_inode_discount_extent(trans, root, path, rec);
 	if (!ret && rec->errors & I_ERR_DIR_ISIZE_WRONG)
 		ret = repair_inode_isize(trans, root, path, rec);
 	if (!ret && rec->errors & I_ERR_NO_ORPHAN_ITEM)
