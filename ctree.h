@@ -2468,4 +2468,13 @@ int btrfs_add_orphan_item(struct btrfs_trans_handle *trans,
 			  u64 ino);
 int btrfs_mkdir(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 		char *name, int namelen, u64 parent_ino, u64 *ino, int mode);
+
+/* file.c */
+int btrfs_get_extent(struct btrfs_trans_handle *trans,
+		     struct btrfs_root *root,
+		     struct btrfs_path *path,
+		     u64 ino, u64 offset, u64 len, int ins_len);
+int btrfs_punch_hole(struct btrfs_trans_handle *trans,
+		     struct btrfs_root *root,
+		     u64 ino, u64 offset, u64 len);
 #endif
