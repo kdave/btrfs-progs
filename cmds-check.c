@@ -80,6 +80,20 @@ struct data_backref {
 	u32 found_ref;
 };
 
+/*
+ * Much like data_backref, just removed the undetermined members
+ * and change it to use list_head.
+ * Stored in the root->orphan_data_extents list
+ */
+struct orphan_data_extent {
+	struct list_head list;
+	u64 root;
+	u64 objectid;
+	u64 offset;
+	u64 disk_bytenr;
+	u64 disk_len;
+};
+
 struct tree_backref {
 	struct extent_backref node;
 	union {
@@ -2899,6 +2913,34 @@ out_free_path:
 	return ret;
 }
 
+static void print_orphan_data_extents(struct list_head *orphan_extents,
+				      u64 objectid)
+{
+	struct orphan_data_extent *orphan;
+
+	if (list_empty(orphan_extents))
+		return;
+	printf("The following data extent is lost in tree %llu:\n",
+	       objectid);
+	list_for_each_entry(orphan, orphan_extents, list) {
+		printf("\tinode: %llu, offset:%llu, disk_bytenr: %llu, disk_len: %llu\n",
+		       orphan->objectid, orphan->offset, orphan->disk_bytenr,
+		       orphan->disk_len);
+	}
+}
+
+static void free_orphan_data_extents(struct list_head *orphan_extents)
+{
+	struct orphan_data_extent *orphan;
+
+	while (!list_empty(orphan_extents)) {
+		orphan = list_entry(orphan_extents->next,
+				    struct orphan_data_extent, list);
+		list_del(&orphan->list);
+		free(orphan);
+	}
+}
+
 static int check_fs_root(struct btrfs_root *root,
 			 struct cache_tree *root_cache,
 			 struct walk_control *wc)
@@ -3030,6 +3072,8 @@ skip_walking:
 
 	free_corrupt_blocks_tree(&corrupt_blocks);
 	root->fs_info->corrupt_blocks = NULL;
+	print_orphan_data_extents(&root->orphan_data_extents, root->objectid);
+	free_orphan_data_extents(&root->orphan_data_extents);
 	return ret;
 }
 
@@ -6542,6 +6586,88 @@ static int find_possible_backrefs(struct btrfs_trans_handle *trans,
 }
 
 /*
+ * Record orphan data ref into corresponding root.
+ *
+ * Return 0 if the extent item contains data ref and recorded.
+ * Return 1 if the extent item contains no useful data ref
+ *   On that case, it may contains only shared_dataref or metadata backref
+ *   or the file extent exists(this should be handled by the extent bytenr
+ *   recovery routine)
+ * Return <0 if something goes wrong.
+ */
+static int record_orphan_data_extents(struct btrfs_fs_info *fs_info,
+				      struct extent_record *rec)
+{
+	struct btrfs_key key;
+	struct btrfs_root *dest_root;
+	struct extent_backref *back;
+	struct data_backref *dback;
+	struct orphan_data_extent *orphan;
+	struct btrfs_path *path;
+	int recorded_data_ref = 0;
+	int ret = 0;
+
+	if (rec->metadata)
+		return 1;
+	path = btrfs_alloc_path();
+	if (!path)
+		return -ENOMEM;
+	list_for_each_entry(back, &rec->backrefs, list) {
+		if (back->full_backref || !back->is_data ||
+		    !back->found_extent_tree)
+			continue;
+		dback = (struct data_backref *)back;
+		if (dback->found_ref)
+			continue;
+		key.objectid = dback->root;
+		key.type = BTRFS_ROOT_ITEM_KEY;
+		key.offset = (u64)-1;
+
+		dest_root = btrfs_read_fs_root(fs_info, &key);
+
+		/* For non-exist root we just skip it */
+		if (IS_ERR(dest_root) || !dest_root)
+			continue;
+
+		key.objectid = dback->owner;
+		key.type = BTRFS_EXTENT_DATA_KEY;
+		key.offset = dback->offset;
+
+		ret = btrfs_search_slot(NULL, dest_root, &key, path, 0, 0);
+		/*
+		 * For ret < 0, it's OK since the fs-tree may be corrupted,
+		 * we need to record it for inode/file extent rebuild.
+		 * For ret > 0, we record it only for file extent rebuild.
+		 * For ret == 0, the file extent exists but only bytenr
+		 * mismatch, let the original bytenr fix routine to handle,
+		 * don't record it.
+		 */
+		if (ret == 0)
+			continue;
+		ret = 0;
+		orphan = malloc(sizeof(*orphan));
+		if (!orphan) {
+			ret = -ENOMEM;
+			goto out;
+		}
+		INIT_LIST_HEAD(&orphan->list);
+		orphan->root = dback->root;
+		orphan->objectid = dback->owner;
+		orphan->offset = dback->offset;
+		orphan->disk_bytenr = rec->cache.start;
+		orphan->disk_len = rec->cache.size;
+		list_add(&dest_root->orphan_data_extents, &orphan->list);
+		recorded_data_ref = 1;
+	}
+out:
+	btrfs_free_path(path);
+	if (!ret)
+		return !recorded_data_ref;
+	else
+		return ret;
+}
+
+/*
  * when an incorrect extent item is found, this will delete
  * all of the existing entries for it and recreate them
  * based on what the tree scan found.
@@ -6758,6 +6884,7 @@ static int check_extent_refs(struct btrfs_trans_handle *trans,
 	int ret = 0;
 	int fixed = 0;
 	int had_dups = 0;
+	int recorded = 0;
 
 	if (repair) {
 		/*
@@ -6821,6 +6948,7 @@ static int check_extent_refs(struct btrfs_trans_handle *trans,
 
 	while(1) {
 		fixed = 0;
+		recorded = 0;
 		cache = search_cache_extent(extent_cache, 0);
 		if (!cache)
 			break;
@@ -6838,12 +6966,24 @@ static int check_extent_refs(struct btrfs_trans_handle *trans,
 			fprintf(stderr, "extent item %llu, found %llu\n",
 				(unsigned long long)rec->extent_item_refs,
 				(unsigned long long)rec->refs);
-			if (!fixed && repair) {
-				ret = fixup_extent_refs(trans, root->fs_info,
+			ret = record_orphan_data_extents(root->fs_info, rec);
+			if (ret < 0)
+				goto repair_abort;
+			if (ret == 0) {
+				recorded = 1;
+			} else {
+				/*
+				 * we can't use the extent to repair file
+				 * extent, let the fallback method handle it.
+				 */
+				if (!fixed && repair) {
+					ret = fixup_extent_refs(trans,
+							root->fs_info,
 							extent_cache, rec);
-				if (ret)
-					goto repair_abort;
-				fixed = 1;
+					if (ret)
+						goto repair_abort;
+					fixed = 1;
+				}
 			}
 			err = 1;
 
@@ -6853,21 +6993,20 @@ static int check_extent_refs(struct btrfs_trans_handle *trans,
 				(unsigned long long)rec->start,
 				(unsigned long long)rec->nr);
 
-			if (!fixed && repair) {
+			if (!fixed && !recorded && repair) {
 				ret = fixup_extent_refs(trans, root->fs_info,
 							extent_cache, rec);
 				if (ret)
 					goto repair_abort;
 				fixed = 1;
 			}
-
 			err = 1;
 		}
 		if (!rec->owner_ref_checked) {
 			fprintf(stderr, "owner ref check failed [%llu %llu]\n",
 				(unsigned long long)rec->start,
 				(unsigned long long)rec->nr);
-			if (!fixed && repair) {
+			if (!fixed && !recorded && repair) {
 				ret = fixup_extent_refs(trans, root->fs_info,
 							extent_cache, rec);
 				if (ret)
