@@ -1005,11 +1005,11 @@ static int is_same_blk_file(const char* a, const char* b)
 	char real_a[PATH_MAX];
 	char real_b[PATH_MAX];
 
-	if(!realpath(a, real_a))
-		strcpy(real_a, a);
+	if (!realpath(a, real_a))
+		strncpy_null(real_a, a);
 
 	if (!realpath(b, real_b))
-		strcpy(real_b, b);
+		strncpy_null(real_b, b);
 
 	/* Identical path? */
 	if(strcmp(real_a, real_b) == 0)
