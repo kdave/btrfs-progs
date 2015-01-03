@@ -55,7 +55,7 @@ values are 'raid0', 'raid1', 'raid5', 'raid6', 'raid10' or 'single'.
 
 -f|--force::
 Force overwrite when an existing filesystem is detected on the device.
-By default, mkfs.btrfs will not write to the device if it suspects that 
+By default, mkfs.btrfs will not write to the device if it suspects that
 there is a filesystem or partition table on the device already.
 
 -l|--leafsize <size>::
@@ -83,7 +83,7 @@ could end up in the same erase block which negates the benefits of doing
 metadata duplication.
 
 -M|--mixed::
-Mix data and metadata chunks together for more efficient space 
+Mix data and metadata chunks together for more efficient space
 utilization.  This feature incurs a performance penalty in
 larger filesystems.  It is recommended for use with filesystems
 of 1 GiB or smaller.
@@ -110,8 +110,9 @@ Do not perform whole device TRIM operation by default.
 A list of filesystem features turned on at mkfs time. Not all features are
 supported by old kernels.
 +
-To see all features run::::
-mkfs.btrfs -O list-all
+To see all features run:
++
++mkfs.btrfs -O list-all+
 
 -U|--uuid <UUID>::
 Create the filesystem with the specified UUID, which must not already exist on
