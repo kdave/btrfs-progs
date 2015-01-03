@@ -58,9 +58,10 @@ Force overwrite when an existing filesystem is detected on the device.
 By default, mkfs.btrfs will not write to the device if it suspects that 
 there is a filesystem or partition table on the device already.
 
--n|--nodesize <size>
-
 -l|--leafsize <size>::
+Alias for --nodesize. Deprecated.
+
+-n|--nodesize <size>::
 Specify the nodesize, the tree block size in which btrfs stores
 data. The default value is 16KB (16384) or the page size, whichever is
 bigger. Must be a multiple of the sectorsize, but not larger than 65536.
