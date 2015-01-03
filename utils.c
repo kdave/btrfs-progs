@@ -2343,7 +2343,7 @@ int btrfs_scan_lblkid()
 		if (!dev)
 			continue;
 		/* if we are here its definitely a btrfs disk*/
-		strncpy(path, blkid_dev_devname(dev), PATH_MAX);
+		strncpy_null(path, blkid_dev_devname(dev));
 
 		fd = open(path, O_RDONLY);
 		if (fd < 0) {
