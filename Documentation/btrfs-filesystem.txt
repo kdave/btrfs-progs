@@ -120,8 +120,9 @@ the same starting disk cylinder as before.
 *label* [<dev>|<mountpoint>] [<newlabel>]::
 Show or update the label of a filesystem.
 +
-[<device>|<mountpoint>] is used to identify the filesystem. 
+[<device>|<mountpoint>] is used to identify the filesystem.
 If a newlabel optional argument is passed, the label is changed.
++
 NOTE: the maximum allowable length shall be less than 256 chars
 
 *usage* [options] <path> [<path>...]::
