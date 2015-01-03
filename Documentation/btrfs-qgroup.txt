@@ -40,10 +40,6 @@ SUBCOMMAND
 Assign qgroup <src> as the child qgroup of <dst> in the btrfs filesystem
 identified by <path>.
 
-*remove* <src> <dst> <path>::
-Remove the relationship between child qgroup <src> and parent qgroup <dst> in
-the btrfs filesystem identified by <path>.
-
 *create* <qgroupid> <path>::
 Create a subvolume quota group.
 +
@@ -55,6 +51,17 @@ Destroy a qgroup.
 +
 If a qgroup is no isolated,which means it is a parent or child qgroup, it
 can't be destroyed.
+
+*limit* [options] <size>|none [<qgroupid>] <path>::
+Limit the size of a qgroup to <size> or no limit in the btrfs filesystem
+identified by <path>.
++
+If <qgroupid> is not given, qgroup of the subvolume identified by <path>
+is used if possible.
+
+*remove* <src> <dst> <path>::
+Remove the relationship between child qgroup <src> and parent qgroup <dst> in
+the btrfs filesystem identified by <path>.
 
 *show* [options] <path>::
 Show all qgroups in the btrfs filesystem identified by <path>.
@@ -82,13 +89,6 @@ Prefix \'+' means ascending order and \'-' means descending order of <attr>.
 If no prefix is given, use ascending order by default.
 +
 If multiple <attr>s is given, use comma to separate.
-
-*limit* [options] <size>|none [<qgroupid>] <path>::
-Limit the size of a qgroup to <size> or no limit in the btrfs filesystem
-identified by <path>.
-+
-If <qgroupid> is not given, qgroup of the subvolume identified by <path>
-is used if possible.
 
 EXIT STATUS
 -----------
