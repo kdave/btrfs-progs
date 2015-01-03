@@ -72,42 +72,43 @@ metadata and system blocks respectively.
 A filter has the following stucture: ::
 'type'[='params'][,'type'=...]
 
-The available types are: ::
-*profiles*::::
+The available types are:
+
+*profiles*::
 Balances only block groups with the given replication profiles. Parameters
 are a list of profile names separated by |.
 
-*usage*::::
+*usage*::
 Balances only block groups with usage under the given percentage. The
 value of 0 is allowed and will clean up completely unused block groups, this
 should not require any new space allocated. You may want to use usage=0 in
 case balance is returnin ENOSPC and your filesystem is not too full.
 
-*devid*::::
+*devid*::
 Balances only block groups which have at least one chunk on the given
 device (by btrfs device ID -- use btrfs fi show to list device IDs)
 
-*drange*::::
+*drange*::
 Balances only block groups which overlap with the given byte range on any
 device. (Use in conjunction with "devid" to filter on a specific device). The
 parameter is a range specified as <start..end>.
 
-*vrange*::::
+*vrange*::
 Balances only block groups which overlap with the given byte range in the
 filesystem's internal virtual address space. This is the address space that
 most reports from btrfs in the kernel log use. The parameter is a range
 specified as <start..end>.
 
-*convert*::::
+*convert*::
 Convert each selected block group to the given profile name identified by
 parameters.
 
-*limit*::::
+*limit*::
 Process only given number of chunks, after all filters apply. This can be used
 to specifically target a chunk in connection with other filters (drange,
 vrange) or just simply limit the amount of work done by a single balance run.
 
-*soft*::::
+*soft*::
 Takes no parameters. Only has meaning when converting between profiles.
 When doing convert from one profile to another and soft mode is on,
 restriper won't touch chunks that already have the target profile. This is
