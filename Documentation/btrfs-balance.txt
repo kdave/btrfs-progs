@@ -24,6 +24,15 @@ Balance chunks across the devices *online*.
 *btrfs balance <path>* is deprecated,
 please use *btrfs balance start* command instead.
 
+*cancel* <path>::
+Cancel running or paused balance.
+
+*pause* <path>::
+Pause running balance.
+
+*resume* <path>::
+Resume interrupted balance.
+
 *start* [options] <path>::
 Balance chunks across the devices *online*.
 +
@@ -46,15 +55,6 @@ act on system chunks (only under -f). See `FILTERS` section for details about <f
 be verbose
 -f::::
 force reducing of metadata integrity
-
-*pause* <path>::
-Pause running balance.
-
-*cancel* <path>::
-Cancel running or paused balance.
-
-*resume* <path>::
-Resume interrupted balance.
 
 *status* [-v] <path>::
 Show status of running or paused balance.
