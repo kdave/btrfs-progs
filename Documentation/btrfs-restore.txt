@@ -61,7 +61,8 @@ dry run (only list files that would be recovered).
 
 --path-regex <regex>::
 restore only filenames matching regex, you have to use following syntax (possibly quoted):
-^/(|home(|/username(|/Desktop(|/.*))))$
++
++^/(|home(|/username(|/Desktop(|/.*))))$+
 
 -c::
 ignore case (--path-regrex only).
