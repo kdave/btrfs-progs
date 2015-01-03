@@ -3468,7 +3468,7 @@ static int fix_key_order(struct btrfs_trans_handle *trans,
 	struct btrfs_key k1, k2;
 	int i;
 	int level = path->lowest_level;
-	int ret;
+	int ret = -EIO;
 
 	buf = path->nodes[level];
 	for (i = 0; i < btrfs_header_nritems(buf) - 1; i++) {
