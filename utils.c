@@ -996,7 +996,8 @@ static int resolve_loop_device(const char* loop_dev, char* loop_file,
 	return 0;
 }
 
-/* Checks whether a and b are identical or device
+/*
+ * Checks whether a and b are identical or device
  * files associated with the same block device
  */
 static int is_same_blk_file(const char* a, const char* b)
@@ -1012,29 +1013,24 @@ static int is_same_blk_file(const char* a, const char* b)
 		strncpy_null(real_b, b);
 
 	/* Identical path? */
-	if(strcmp(real_a, real_b) == 0)
+	if (strcmp(real_a, real_b) == 0)
 		return 1;
 
-	if(stat(a, &st_buf_a) < 0 ||
-	   stat(b, &st_buf_b) < 0)
-	{
+	if (stat(a, &st_buf_a) < 0 || stat(b, &st_buf_b) < 0) {
 		if (errno == ENOENT)
 			return 0;
 		return -errno;
 	}
 
 	/* Same blockdevice? */
-	if(S_ISBLK(st_buf_a.st_mode) &&
-	   S_ISBLK(st_buf_b.st_mode) &&
-	   st_buf_a.st_rdev == st_buf_b.st_rdev)
-	{
+	if (S_ISBLK(st_buf_a.st_mode) && S_ISBLK(st_buf_b.st_mode) &&
+	    st_buf_a.st_rdev == st_buf_b.st_rdev) {
 		return 1;
 	}
 
 	/* Hardlink? */
 	if (st_buf_a.st_dev == st_buf_b.st_dev &&
-	    st_buf_a.st_ino == st_buf_b.st_ino)
-	{
+	    st_buf_a.st_ino == st_buf_b.st_ino) {
 		return 1;
 	}
 
