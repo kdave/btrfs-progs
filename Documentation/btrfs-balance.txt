@@ -7,7 +7,7 @@ btrfs-balance - balance btrfs filesystem
 
 SYNOPSIS
 --------
-*btrfs [filesystem] balance* <subcommand>|<args>
+*btrfs balance* <subcommand> <args>
 
 DESCRIPTION
 -----------
@@ -16,14 +16,16 @@ multiple or even single device.
 
 See `btrfs-device`(8) for more details about the effect on device management.
 
+NOTE: The balance subcommand also exists under the *filesystem* namespace. This
+still works for backward compatibility but is deprecated and should not be
+used anymore.
+
+NOTE: A short syntax *btrfs balance <path>* works due to backward compatibility
+but is deprecated and should not be used anymore. Use *btrfs balance start*
+command instead.
+
 SUBCOMMAND
 ----------
-<path>::
-Balance chunks across the devices *online*.
-+
-*btrfs balance <path>* is deprecated,
-please use *btrfs balance start* command instead.
-
 *cancel* <path>::
 Cancel running or paused balance.
 

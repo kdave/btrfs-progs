@@ -29,7 +29,7 @@ detailed help of all the matched commands is showed. For example
 
 COMMANDS
 --------
-*[filesystem] balance*::
+*balance*::
 	Balance btrfs filesystem chunks across single or several devices. +
 	See `btrfs-balance`(8) for details.
 
