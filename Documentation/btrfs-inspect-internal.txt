@@ -41,14 +41,14 @@ set inode container's size.
 This is used to increase inode container's size in case it is
 not enough to read all the resolved results. The max value one can set is 64k.
 
-*subvolid-resolve* <subvolid> <path>::
-Get file system paths for the given subvolume ID.
-
 *rootid* <path>::
 For a given file or directory, return the containing tree root id. For a
 subvolume return it's own tree id.
 +
 The result is undefined for the so-called empty subvolumes (identified by inode number 2).
+
+*subvolid-resolve* <subvolid> <path>::
+Get file system paths for the given subvolume ID.
 
 EXIT STATUS
 -----------
