@@ -45,13 +45,13 @@ property could be set for more then one object type.
 +
 Possible types are 's[ubvol]', 'f[ilesystem]', 'i[node]' and 'd[evice]'.
 
-*set* [-t <type>] <object> <name> <value>::
-Sets a property on a btrfs object.
+*list* [-t <type>] <object>::
+Lists available properties with their descriptions for the given object.
 +
 See the description of *get* subcommand for the meaning of each option.
 
-*list* [-t <type>] <object>::
-Lists available properties with their descriptions for the given object.
+*set* [-t <type>] <object> <name> <value>::
+Sets a property on a btrfs object.
 +
 See the description of *get* subcommand for the meaning of each option.
 
