@@ -77,6 +77,9 @@ force overwrite of existing filesystem on the given disk(s)
 *delete* <dev> [<dev>...] <path>::
 Remove device(s) from a filesystem identified by <path>.
 
+*ready* <device>::
+Check device to see if it has all of it's devices in cache for mounting.
+
 *scan* [(--all-devices|-d)|<device> [<device>...]]::
 Scan devices for a btrfs filesystem.
 +
@@ -85,9 +88,6 @@ If no devices are passed, btrfs uses block devices containing btrfs
 filesystem as listed by blkid.
 Finally, if '--all-devices' or '-d' is passed, all the devices under /dev are 
 scanned.
-
-*ready* <device>::
-Check device to see if it has all of it's devices in cache for mounting.
 
 *stats* [-z] <path>|<device>::
 Read and print the device IO stats for all devices of the filesystem
