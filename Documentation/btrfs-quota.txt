@@ -22,12 +22,11 @@ performance in mainline kernel yet(v3.14 so far).
 
 SUBCOMMAND
 ----------
-*enable* <path>::
-Enable subvolume quota support for a filesystem.
-
-
 *disable* <path>::
 Disable subvolume quota support for a filesystem.
+
+*enable* <path>::
+Enable subvolume quota support for a filesystem.
 
 *rescan* [-s] <path>::
 Trash all qgroup numbers and scan the metadata again with the current config.
