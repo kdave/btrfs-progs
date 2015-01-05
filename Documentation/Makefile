@@ -113,10 +113,8 @@ clean:
 	$(XMLTO) -m $(MANPAGE_XSL) $(XMLTO_EXTRA) man $<
 
 %.xml : %.txt asciidoc.conf
-	$(QUIET_ASCIIDOC)$(RM) $@.tmp[12] $@ && \
-	sed -e "s/\(<[^>]\+>\)/'\1'/g" < $< > $@.tmp1 && \
+	$(QUIET_ASCIIDOC)$(RM) $@+ $@ && \
 	$(ASCIIDOC) -b docbook -d manpage -f asciidoc.conf \
 		$(ASCIIDOC_EXTRA) -abtrfs_version=$(BTRFS_VERSION) \
-		-o $@.tmp2 $@.tmp1 && \
-	mv $@.tmp2 $@ && \
-	rm -f -- $@.tmp1
+		-o $@+ $< && \
+	mv $@+ $@
