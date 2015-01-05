@@ -180,8 +180,9 @@ int main(int ac, char **av)
 		print_usage();
 
 	ret = check_arg_type(av[optind]);
-	if (ret != BTRFS_ARG_BLKDEV) {
-		fprintf(stderr, "'%s' is not a block device\n", av[optind]);
+	if (ret != BTRFS_ARG_BLKDEV && ret != BTRFS_ARG_REG) {
+		fprintf(stderr, "'%s' is not a block device or regular file\n",
+			av[optind]);
 		exit(1);
 	}
 

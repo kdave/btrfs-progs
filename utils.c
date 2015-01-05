@@ -854,13 +854,23 @@ int is_mount_point(const char *path)
 	return ret;
 }
 
+static int is_reg_file(const char *path)
+{
+	struct stat statbuf;
+
+	if (stat(path, &statbuf) < 0)
+		return -errno;
+	return S_ISREG(statbuf.st_mode);
+}
+
 /*
  * This function checks if the given input parameter is
  * an uuid or a path
- * return -1: some error in the given input
- * return 0: unknow input
- * return 1: given input is uuid
- * return 2: given input is path
+ * return <0 : some error in the given input
+ * return BTRFS_ARG_UNKNOWN:	unknown input
+ * return BTRFS_ARG_UUID:	given input is uuid
+ * return BTRFS_ARG_MNTPOINT:	given input is path
+ * return BTRFS_ARG_REG:	given input is regular file
  */
 int check_arg_type(const char *input)
 {
@@ -876,6 +886,9 @@ int check_arg_type(const char *input)
 
 		if (is_mount_point(path) == 1)
 			return BTRFS_ARG_MNTPOINT;
+
+		if (is_reg_file(path))
+			return BTRFS_ARG_REG;
 
 		return BTRFS_ARG_UNKNOWN;
 	}
