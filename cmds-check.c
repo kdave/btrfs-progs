@@ -1186,9 +1186,9 @@ static int count_csum_range(struct btrfs_root *root, u64 start,
 		path.slots[0]++;
 	}
 out:
+	btrfs_release_path(&path);
 	if (ret < 0)
 		return ret;
-	btrfs_release_path(&path);
 	return 0;
 }
 
