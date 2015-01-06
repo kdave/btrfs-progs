@@ -2675,6 +2675,12 @@ next_extent:
 		if (bytenr >= total_bytes)
 			break;
 		ret = pwrite(fd, buf, sectorsize, bytenr);
+		if (ret != sectorsize) {
+			fprintf(stderr,
+				"error during zeroing supreblock %d: %d\n",
+				i, ret);
+			goto fail;
+		}
 	}
 
 	sb_bytenr = (u64)-1;
