@@ -1943,8 +1943,10 @@ int get_fs_info(char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 	int ret = 0;
 	int ndevs = 0;
 	int i = 0;
+	int replacing = 0;
 	struct btrfs_fs_devices *fs_devices_mnt = NULL;
 	struct btrfs_ioctl_dev_info_args *di_args;
+	struct btrfs_ioctl_dev_info_args tmp;
 	char mp[BTRFS_PATH_NAME_MAX + 1];
 	DIR *dirstream = NULL;
 
@@ -2012,6 +2014,19 @@ int get_fs_info(char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 		ret = search_chunk_tree_for_fs_info(fd, fi_args);
 		if (ret)
 			goto out;
+
+		/*
+		 * search_chunk_tree_for_fs_info() will lacks the devid 0
+		 * so manual probe for it here.
+		 */
+		ret = get_device_info(fd, 0, &tmp);
+		if (!ret) {
+			fi_args->num_devices++;
+			ndevs++;
+			replacing = 1;
+			if (i == 0)
+				i++;
+		}
 	}
 
 	if (!fi_args->num_devices)
@@ -2023,6 +2038,8 @@ int get_fs_info(char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 		goto out;
 	}
 
+	if (replacing)
+		memcpy(di_args, &tmp, sizeof(tmp));
 	for (; i <= fi_args->max_id; ++i) {
 		ret = get_device_info(fd, i, &di_args[ndevs]);
 		if (ret == -ENODEV)
