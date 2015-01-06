@@ -350,6 +350,8 @@ int btrfs_unlink(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 		/* For nlinks == 0, add it to orphan list if needed */
 		if (nlinks == 0 && add_orphan) {
 			ret = btrfs_add_orphan_item(trans, root, path, ino);
+			if (ret < 0)
+				goto out;
 			btrfs_mark_buffer_dirty(path->nodes[0]);
 			btrfs_release_path(path);
 		}
