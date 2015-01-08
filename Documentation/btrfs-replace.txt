@@ -52,6 +52,7 @@ containing a valid btrfs filesystem.
 A valid filesystem is assumed if a btrfs superblock is found which contains a
 correct checksum. Devices which are currently mounted are
 never allowed to be used as the <targetdev>.
++
 -B::::
 no background replace.
 
