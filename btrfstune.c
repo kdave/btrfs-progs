@@ -111,6 +111,7 @@ int main(int argc, char *argv[])
 {
 	struct btrfs_root *root;
 	int success = 0;
+	int total = 0;
 	int extrefs_flag = 0;
 	int seeding_flag = 0;
 	u64 seeding_value = 0;
@@ -188,19 +189,22 @@ int main(int argc, char *argv[])
 		ret = update_seeding_flag(root, seeding_value);
 		if (!ret)
 			success++;
+		total++;
 	}
 
 	if (extrefs_flag) {
 		enable_extrefs_flag(root);
 		success++;
+		total++;
 	}
 
 	if (skinny_flag) {
 		enable_skinny_metadata(root);
 		success++;
+		total++;
 	}
 
-	if (success > 0) {
+	if (success == total) {
 		ret = 0;
 	} else {
 		root->fs_info->readonly = 1;
