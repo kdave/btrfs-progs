@@ -91,7 +91,7 @@ MOUNT OPTIONS
 	operations).  This was previously the behavior only when a snapshot is
 	created.
 
-*inode_cache*:
+*inode_cache*::
 	Enable free inode number caching.   Defaults to off due to an overflow
 	problem when the free space crcs don't fit inside a single page.
 

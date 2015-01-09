@@ -59,9 +59,7 @@ Read only mode. Do not attempt to correct anything.
 -R::::
 Raw print mode. Print full data instead of summary.
 -c <ioprio_class>::::
-Set IO priority class (see
- ionice (1)
-manpage).
+Set IO priority class (see `ionice`(1) manpage).
 -n <ioprio_classdata>::::
 Set IO priority classdata (see `ionice`(1) manpage).
 -f::::

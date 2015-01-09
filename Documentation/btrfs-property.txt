@@ -28,22 +28,22 @@ A btrfs object, which is set by <object>, can be a btrfs filesystem
 itself, a btrfs subvolume, an inode(file or directory) inside btrfs,
 or a device on which a btrfs exists.
 +
+The '-t <type>' option can be used to explicitly
+specify what type of object you meant. This is only needed when a
+property could be set for more then one object type.
++
+Possible types are 's[ubvol]', 'f[ilesystem]', 'i[node]' and 'd[evice]'.
++
 Set the name of property by '<name>'. If no '<name>' is specified,
 all properties for the given object are printed. '<name>' is one of
 the followings.
-+
+
 ro::::
 read-only flag of subvolume: true or false
 label::::
 label of device
 compression::::
 compression setting for an inode: lzo, zlib, or "" (empty string)
-
-The '-t <type>' option can be used to explicitly
-specify what type of object you meant. This is only needed when a
-property could be set for more then one object type.
-+
-Possible types are 's[ubvol]', 'f[ilesystem]', 'i[node]' and 'd[evice]'.
 
 *list* [-t <type>] <object>::
 Lists available properties with their descriptions for the given object.
