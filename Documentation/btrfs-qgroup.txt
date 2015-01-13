@@ -58,6 +58,15 @@ identified by <path>.
 +
 If <qgroupid> is not given, qgroup of the subvolume identified by <path>
 is used if possible.
++
+`Options`
++
+-c::::
+limit amount of data after compression. This is the default, it is currently not
+possible to turn off this option.
++
+-e::::
+limit space exclusively assigned to this qgroup.
 
 *remove* <src> <dst> <path>::
 Remove the relationship between child qgroup <src> and parent qgroup <dst> in
