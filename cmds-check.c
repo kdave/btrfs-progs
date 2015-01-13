@@ -5686,6 +5686,7 @@ static int run_next_block(struct btrfs_trans_handle *trans,
 			  struct root_item_record *ri)
 {
 	struct extent_buffer *buf;
+	struct extent_record *rec = NULL;
 	u64 bytenr;
 	u32 size;
 	u64 parent;
@@ -5738,8 +5739,6 @@ static int run_next_block(struct btrfs_trans_handle *trans,
 	}
 	cache = lookup_cache_extent(extent_cache, bytenr, size);
 	if (cache) {
-		struct extent_record *rec;
-
 		rec = container_of(cache, struct extent_record, cache);
 		gen = rec->parent_generation;
 	}
@@ -5758,20 +5757,30 @@ static int run_next_block(struct btrfs_trans_handle *trans,
 	 * FIXME, this only works only if we don't have any full
 	 * backref mode.
 	 */
+	flags = 0;
 	if (!init_extent_tree) {
 		ret = btrfs_lookup_extent_info(NULL, root, bytenr,
 				       btrfs_header_level(buf), 1, NULL,
 				       &flags);
-		if (ret < 0)
-			goto out;
+		if (ret < 0) {
+			ret = calc_extent_flag(root, extent_cache, buf, ri, &flags);
+			if (ret < 0) {
+				fprintf(stderr, "Couldn't calc extent flags\n");
+				flags |= BTRFS_BLOCK_FLAG_FULL_BACKREF;
+			}
+		}
 	} else {
 		flags = 0;
 		ret = calc_extent_flag(root, extent_cache, buf, ri, &flags);
-		if (ret < 0)
-			goto out;
+		if (ret < 0) {
+			fprintf(stderr, "Couldn't calc extent flags\n");
+			flags |= BTRFS_BLOCK_FLAG_FULL_BACKREF;
+		}
 	}
 
 	if (flags & BTRFS_BLOCK_FLAG_FULL_BACKREF) {
+		if (rec)
+			rec->flag_block_full_backref = 1;
 		parent = bytenr;
 		owner = 0;
 	} else {
@@ -7030,21 +7039,8 @@ static int fixup_extent_refs(struct btrfs_trans_handle *trans,
 	int allocated = 0;
 	u64 flags = 0;
 
-	/*
-	 * remember our flags for recreating the extent.
-	 * FIXME, if we have cleared extent tree, we can not
-	 * lookup extent info in extent tree.
-	 */
-	if (!init_extent_tree) {
-		ret = btrfs_lookup_extent_info(NULL, info->extent_root,
-					rec->start, rec->max_size,
-					rec->metadata, NULL, &flags);
-		if (ret < 0)
-			return ret;
-	} else {
-		if (rec->flag_block_full_backref)
-			flags |= BTRFS_BLOCK_FLAG_FULL_BACKREF;
-	}
+	if (rec->flag_block_full_backref)
+		flags |= BTRFS_BLOCK_FLAG_FULL_BACKREF;
 
 	path = btrfs_alloc_path();
 	if (!path)
@@ -7691,8 +7687,6 @@ static int deal_root_from_list(struct list_head *list,
 		 * one by one, otherwise we deal with node firstly which
 		 * can maximize readahead.
 		 */
-		if (!init_extent_tree && !rec->drop_level)
-			goto skip;
 		while (1) {
 			ret = run_next_block(trans, root, bits, bits_nr, &last,
 					     pending, seen, reada,
@@ -7703,10 +7697,11 @@ static int deal_root_from_list(struct list_head *list,
 			if (ret != 0)
 				break;
 		}
-skip:
 		free_extent_buffer(buf);
 		list_del(&rec->list);
 		free(rec);
+		if (ret < 0)
+			break;
 	}
 	while (ret >= 0) {
 		ret = run_next_block(trans, root, bits, bits_nr, &last,
