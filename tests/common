@@ -47,3 +47,18 @@ check_all_images()
 		rm $i.restored
 	done
 }
+
+# some tests need to mount the recovered image and do verifications call
+# 'setup_root_helper' and then check for have_root_helper == 1 if the test
+# needs to fail otherwise; using sudo by default for now
+sudo=
+have_root_helper=0
+export sudo
+export have_root_helper
+setup_root_helper()
+{
+	if [ $UID != 0 ]; then
+		sudo=sudo
+	fi
+	have_root_helper=1
+}
