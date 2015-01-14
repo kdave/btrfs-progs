@@ -143,7 +143,7 @@ $(BUILDDIRS):
 
 test: btrfs btrfs-convert btrfs-image btrfs-corrupt-block
 	$(Q)for t in $(TESTS); do \
-		echo "     [TEST]    $$t"; \
+		echo "    [TEST]   $$t"; \
 		bash tests/$$t || exit 1; \
 	done
 

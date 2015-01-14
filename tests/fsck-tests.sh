@@ -46,7 +46,7 @@ check_prereq btrfs
 
 for i in $(find $top/tests/fsck-tests -maxdepth 1 -mindepth 1 -type d | sort)
 do
-	echo "     [TEST]    $(basename $i)"
+	echo "    [TEST]   $(basename $i)"
 	cd $i
 	if [ -x test.sh ]; then
 		# Type 2

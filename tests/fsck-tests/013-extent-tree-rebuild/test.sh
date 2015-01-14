@@ -3,12 +3,12 @@
 source $top/tests/common
 
 if [ -z $TEST_DEV ]; then
-	echo "     [NOTRUN] extent tree rebuild, need TEST_DEV variant"
+	echo "    [NOTRUN] extent tree rebuild, need TEST_DEV variant"
 	exit 0
 fi
 
 if [ -z $TEST_MNT ];then
-	echo "     [NOTRUN] extent tree rebuild, need TEST_MNT variant"
+	echo "    [NOTRUN] extent tree rebuild, need TEST_MNT variant"
 	exit 0
 fi
 

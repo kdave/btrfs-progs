@@ -15,7 +15,7 @@ _fail()
 rm -f convert-tests-results.txt
 
 test(){
-	echo "     [TEST]    $1"
+	echo "    [TEST]   $1"
 	shift
 	echo "creating ext image with: $*" >> convert-tests-results.txt
 	# 256MB is the smallest acceptable btrfs image.
