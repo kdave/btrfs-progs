@@ -30,7 +30,9 @@
 #include <linux/types.h>
 #include <stdint.h>
 
-#ifndef __glibc__
+#include <features.h>
+
+#ifndef __GLIBC__
 #define BTRFS_DISABLE_BACKTRACE
 #define __always_inline __inline __attribute__ ((__always_inline__))
 #endif
