@@ -55,20 +55,20 @@ check_inode()
 	name=$5
 
 	# Check whether the inode exists
-	exists=$(find $path -inum $ino)
+	exists=$($sudo find $path -inum $ino)
 	if [ -z "$exists" ]; then
 		_fail "inode $ino not recovered correctly"
 	fi
 
 	# Check inode type
-	found_mode=$(printf "%o" 0x$(stat $exists -c %f))
+	found_mode=$(printf "%o" 0x$($sudo stat $exists -c %f))
 	if [ $found_mode -ne $mode ]; then
 		echo "$found_mode"
 		_fail "inode $ino modes not recovered"
 	fi
 
 	# Check inode size
-	found_size=$(stat $exists -c %s)
+	found_size=$($sudo stat $exists -c %s)
 	if [ $mode -ne 41700 -a $found_size -ne $size ]; then
 		_fail "inode $ino size not recovered correctly"
 	fi
@@ -85,8 +85,8 @@ check_inode()
 check_leaf_corrupt_no_data_ext()
 {
 	image=$1
-	if [ $UID -ne 0 ]; then
-		echo "     [NOTRUN] verify recovery. need root privilege"
+	if [ $have_root_helper -ne 1 ]; then
+		echo "     [NOTRUN] root privileges needed to verify recovery"
 		exit 0
 	fi
 	if [ -z $TEST_MNT ]; then
@@ -94,7 +94,7 @@ check_leaf_corrupt_no_data_ext()
 		TEST_MNT="$(pwd)/tmp"
 	fi
 	mkdir -p $TEST_MNT || _fail "failed to create mount point"
-	mount $image -o ro $TEST_MNT
+	$sudo mount $image -o ro $TEST_MNT
 
 	i=0
 	while [ $i -lt ${#leaf_no_data_ext_list[@]} ]; do
@@ -106,8 +106,10 @@ check_leaf_corrupt_no_data_ext()
 			    ${leaf_no_data_ext_list[i + 4]}
 			    ((i+=4))
 	done
-	umount $TEST_MNT
+	$sudo umount $TEST_MNT
 }
+
+setup_root_helper
 
 generate_leaf_corrupt_no_data_ext test.img
 check_image test.img
