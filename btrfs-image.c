@@ -868,6 +868,15 @@ static int read_data_extent(struct metadump_struct *md,
 	return 0;
 }
 
+static int get_dev_fd(struct btrfs_root *root)
+{
+	struct btrfs_device *dev;
+
+	dev = list_first_entry(&root->fs_info->fs_devices->devices,
+			       struct btrfs_device, dev_list);
+	return dev->fd;
+}
+
 static int flush_pending(struct metadump_struct *md, int done)
 {
 	struct async_work *async = NULL;
@@ -902,6 +911,24 @@ static int flush_pending(struct metadump_struct *md, int done)
 				free(async);
 				return ret;
 			}
+		}
+
+		/*
+		 * Balance can make the mapping not cover the super block, so
+		 * just copy directly from one of the devices.
+		 */
+		if (start == BTRFS_SUPER_INFO_OFFSET) {
+			int fd = get_dev_fd(md->root);
+
+			ret = pread64(fd, async->buffer, size, start);
+			if (ret < size) {
+				free(async->buffer);
+				free(async);
+				fprintf(stderr, "Error reading superblock\n");
+				return -EIO;
+			}
+			size = 0;
+			ret = 0;
 		}
 
 		while (!md->data && size > 0) {
