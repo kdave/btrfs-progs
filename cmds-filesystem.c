@@ -700,7 +700,7 @@ static int has_seed_devices(struct btrfs_fs_devices *fs_devices)
 }
 
 static int search_umounted_fs_uuids(struct list_head *all_uuids,
-				    char *search)
+				    char *search, int *found)
 {
 	struct btrfs_fs_devices *cur_fs, *fs_copy;
 	struct list_head *fs_uuids;
@@ -717,7 +717,8 @@ static int search_umounted_fs_uuids(struct list_head *all_uuids,
 		if (search) {
 			if (uuid_search(cur_fs, search) == 0)
 				continue;
-			ret = 1;
+			if (found)
+				*found = 1;
 		}
 
 		/* skip all fs already shown as mounted fs */
@@ -922,8 +923,8 @@ devs_only:
 		return 1;
 	}
 
-	found = search_umounted_fs_uuids(&all_uuids, search);
-	if (found < 0) {
+	ret = search_umounted_fs_uuids(&all_uuids, search, &found);
+	if (ret < 0) {
 		fprintf(stderr,
 			"ERROR: %d while searching target device\n", ret);
 		return 1;
