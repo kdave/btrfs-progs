@@ -8886,6 +8886,8 @@ again:
 
 		if (found_key.type != BTRFS_ROOT_ITEM_KEY)
 			goto next;
+		if (found_key.objectid == BTRFS_TREE_RELOC_OBJECTID)
+			goto next;
 
 		ret = maybe_repair_root_item(info, path, &found_key,
 					     trans ? 0 : 1);
