@@ -281,7 +281,6 @@ static int find_root(struct btrfs_root *root)
 int main(int argc, char **argv)
 {
 	struct btrfs_root *root;
-	int dev_fd;
 	int opt;
 	int ret;
 
@@ -309,14 +308,7 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	dev_fd = open(argv[optind], O_RDONLY);
-	if (dev_fd < 0) {
-		fprintf(stderr, "Failed to open device %s\n", argv[optind]);
-		exit(1);
-	}
-
-	root = open_ctree_broken(dev_fd, argv[optind]);
-	close(dev_fd);
+	root = open_ctree(argv[optind], 0, OPEN_CTREE_CHUNK_ONLY);
 
 	if (!root) {
 		fprintf(stderr, "Open ctree failed\n");
