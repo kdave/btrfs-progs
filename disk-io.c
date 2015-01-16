@@ -1197,7 +1197,7 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 			   BTRFS_UUID_SIZE);
 
 	ret = btrfs_setup_all_roots(fs_info, root_tree_bytenr, flags);
-	if (ret)
+	if (ret && !(flags & __OPEN_CTREEE_RETURN_CHUNK_ROOT))
 		goto out_chunk;
 
 	return fs_info;
@@ -1242,6 +1242,8 @@ struct btrfs_root *open_ctree(const char *filename, u64 sb_bytenr,
 	info = open_ctree_fs_info(filename, sb_bytenr, 0, flags);
 	if (!info)
 		return NULL;
+	if (flags & __OPEN_CTREEE_RETURN_CHUNK_ROOT)
+		return info->chunk_root;
 	return info->fs_root;
 }
 
@@ -1252,6 +1254,8 @@ struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
 	info = __open_ctree_fd(fp, path, sb_bytenr, 0, flags);
 	if (!info)
 		return NULL;
+	if (flags & __OPEN_CTREEE_RETURN_CHUNK_ROOT)
+		return info->chunk_root;
 	return info->fs_root;
 }
 
