@@ -34,6 +34,11 @@ enum btrfs_open_ctree_flags {
 	OPEN_CTREE_NO_BLOCK_GROUPS	= (1 << 5),
 	OPEN_CTREE_EXCLUSIVE		= (1 << 6),
 	OPEN_CTREE_NO_DEVICES		= (1 << 7),
+	/*
+	 * Don't print error messages if bytenr or checksums do not match in
+	 * tree block headers. Turn on by OPEN_CTREE_SUPPRESS_ERROR
+	 */
+	OPEN_CTREE_SUPPRESS_CHECK_BLOCK_ERRORS	= (1 << 8)
 };
 
 static inline u64 btrfs_sb_offset(int mirror)
