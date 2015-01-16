@@ -33,6 +33,7 @@ enum btrfs_open_ctree_flags {
 	OPEN_CTREE_RESTORE		= (1 << 4),
 	OPEN_CTREE_NO_BLOCK_GROUPS	= (1 << 5),
 	OPEN_CTREE_EXCLUSIVE		= (1 << 6),
+	OPEN_CTREE_SUPPRESS_ERROR	= (1 << 7), /* Suppress csum error */
 };
 
 static inline u64 btrfs_sb_offset(int mirror)

@@ -996,6 +996,7 @@ struct btrfs_fs_info {
 	unsigned int on_restoring:1;
 	unsigned int is_chunk_recover:1;
 	unsigned int quota_enabled:1;
+	unsigned int suppress_error:1;
 
 	int (*free_extent_hook)(struct btrfs_trans_handle *trans,
 				struct btrfs_root *root,
@@ -1004,6 +1005,7 @@ struct btrfs_fs_info {
 				int refs_to_drop);
 	struct cache_tree *fsck_extent_cache;
 	struct cache_tree *corrupt_blocks;
+
 };
 
 /*
