@@ -32,6 +32,8 @@
 #include "volumes.h"
 #include "utils.h"
 #include "crc32c.h"
+#include "extent-cache.h"
+#include "find-root.h"
 
 static u16 csum_size = 0;
 static u64 search_objectid = BTRFS_ROOT_TREE_OBJECTID;
@@ -331,22 +333,70 @@ static void get_root_gen_and_level(u64 objectid, struct btrfs_fs_info *fs_info,
 	}
 }
 
+static void print_one_result(struct cache_extent *tree_block,
+			     u8 level, u64 generation,
+			     struct btrfs_find_root_filter *filter)
+{
+	int unsure = 0;
+
+	if (filter->match_gen == (u64)-1 || filter->match_level == (u8)-1)
+		unsure = 1;
+	printf("Well block %llu(gen: %llu level: %u) seems good, ",
+	       tree_block->start, generation, level);
+	if (unsure)
+		printf("but we are unsure about the correct generation/level\n");
+	else
+		printf("but generation/level doesn't match, want gen: %llu level: %u\n",
+		       filter->match_gen, filter->match_level);
+}
+
+static void print_find_root_result(struct cache_tree *result,
+				   struct btrfs_find_root_filter *filter)
+{
+	struct btrfs_find_root_gen_cache *gen_cache;
+	struct cache_extent *cache;
+	struct cache_extent *tree_block;
+	u64 generation = 0;
+	u8 level = 0;
+
+	for (cache = last_cache_extent(result);
+	     cache; cache = prev_cache_extent(cache)) {
+		gen_cache = container_of(cache,
+				struct btrfs_find_root_gen_cache, cache);
+		level = gen_cache->highest_level;
+		generation = cache->start;
+		if (level == filter->match_level &&
+		    generation == filter->match_gen)
+			continue;
+		for (tree_block = last_cache_extent(&gen_cache->eb_tree);
+		     tree_block; tree_block = prev_cache_extent(tree_block))
+			print_one_result(tree_block, level, generation, filter);
+	}
+}
+
 int main(int argc, char **argv)
 {
 	struct btrfs_root *root;
+	struct btrfs_find_root_filter filter = {0};
+	struct cache_tree result;
+	struct cache_extent *found;
 	int opt;
 	int ret;
 
+	/* Default to search root tree */
+	filter.objectid = BTRFS_ROOT_TREE_OBJECTID;
+	filter.match_gen = (u64)-1;
+	filter.match_level = (u8)-1;
 	while ((opt = getopt(argc, argv, "l:o:g:")) != -1) {
 		switch(opt) {
 			case 'o':
-				search_objectid = arg_strtou64(optarg);
+				filter.objectid = arg_strtou64(optarg);
 				break;
 			case 'g':
-				search_generation = arg_strtou64(optarg);
+				filter.generation = arg_strtou64(optarg);
 				break;
 			case 'l':
-				search_level = arg_strtou64(optarg);
+				filter.level = arg_strtou64(optarg);
 				break;
 			default:
 				usage();
@@ -367,13 +417,24 @@ int main(int argc, char **argv)
 		fprintf(stderr, "Open ctree failed\n");
 		exit(1);
 	}
+	cache_tree_init(&result);
 
-	if (search_generation == 0)
-		get_root_gen_and_level(search_objectid, root->fs_info,
-				       &search_generation, NULL);
-
-	csum_size = btrfs_super_csum_size(root->fs_info->super_copy);
-	ret = find_root(root);
+	get_root_gen_and_level(filter.objectid, root->fs_info,
+			       &filter.match_gen, &filter.match_level);
+	ret = btrfs_find_root_search(root, &filter, &result, &found);
+	if (ret < 0) {
+		fprintf(stderr, "Fail to search the tree root: %s\n",
+			strerror(-ret));
+		goto out;
+	}
+	if (ret > 0) {
+		printf("Found tree root at %llu gen %llu level %u\n",
+		       found->start, filter.match_gen, filter.match_level);
+		ret = 0;
+	}
+	print_find_root_result(&result, &filter);
+out:
+	btrfs_find_root_free(&result);
 	close_ctree(root);
 	return ret;
 }
