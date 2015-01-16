@@ -39,7 +39,7 @@
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: find-roots [-o search_objectid] "
+	fprintf(stderr, "Usage: find-roots [-a] [-o search_objectid] "
 		"[ -g search_generation ] [ -l search_level ] <device>\n");
 }
 
@@ -152,20 +152,23 @@ int main(int argc, char **argv)
 	filter.objectid = BTRFS_ROOT_TREE_OBJECTID;
 	filter.match_gen = (u64)-1;
 	filter.match_level = (u8)-1;
-	while ((opt = getopt(argc, argv, "l:o:g:")) != -1) {
+	while ((opt = getopt(argc, argv, "al:o:g:")) != -1) {
 		switch(opt) {
-			case 'o':
-				filter.objectid = arg_strtou64(optarg);
-				break;
-			case 'g':
-				filter.generation = arg_strtou64(optarg);
-				break;
-			case 'l':
-				filter.level = arg_strtou64(optarg);
-				break;
-			default:
-				usage();
-				exit(1);
+		case 'a':
+			filter.search_all = 1;
+			break;
+		case 'o':
+			filter.objectid = arg_strtou64(optarg);
+			break;
+		case 'g':
+			filter.generation = arg_strtou64(optarg);
+			break;
+		case 'l':
+			filter.level = arg_strtou64(optarg);
+			break;
+		default:
+			usage();
+			exit(1);
 		}
 	}
 
