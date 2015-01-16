@@ -141,6 +141,8 @@ int csum_tree_block(struct btrfs_root *root, struct extent_buffer *buf,
 {
 	u16 csum_size =
 		btrfs_super_csum_size(root->fs_info->super_copy);
+	if (verify && root->fs_info->suppress_tree_err)
+		return verify_tree_block_csum_silent(buf, csum_size);
 	return csum_tree_block_size(buf, csum_size, verify);
 }
 
@@ -291,8 +293,8 @@ struct extent_buffer *read_tree_block(struct btrfs_root *root, u64 bytenr,
 
 	while (1) {
 		ret = read_whole_eb(root->fs_info, eb, mirror_num);
-		if (ret == 0 && check_tree_block(root, eb) == 0 &&
-		    csum_tree_block(root, eb, 1) == 0 &&
+		if (ret == 0 && csum_tree_block(root, eb, 1) == 0 &&
+		    check_tree_block(root, eb) == 0 &&
 		    verify_parent_transid(eb->tree, eb, parent_transid, ignore)
 		    == 0) {
 			if (eb->flags & EXTENT_BAD_TRANSID &&
@@ -305,11 +307,14 @@ struct extent_buffer *read_tree_block(struct btrfs_root *root, u64 bytenr,
 			return eb;
 		}
 		if (ignore) {
-			if (check_tree_block(root, eb))
-				print_tree_block_err(root, eb,
+			if (check_tree_block(root, eb)) {
+				if (!root->fs_info->suppress_tree_err)
+					print_tree_block_err(root, eb,
 						check_tree_block(root, eb));
-			else
-				printk("Csum didn't match\n");
+			} else {
+				if (!root->fs_info->suppress_tree_err)
+					fprintf(stderr, "Csum didn't match\n");
+			}
 			break;
 		}
 		num_copies = btrfs_num_copies(&root->fs_info->mapping_tree,
@@ -1138,6 +1143,8 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 	}
 	if (flags & OPEN_CTREE_RESTORE)
 		fs_info->on_restoring = 1;
+	if (flags & OPEN_CTREE_SUPPRESS_ERROR)
+		fs_info->suppress_tree_err = 1;
 
 	ret = btrfs_scan_fs_devices(fp, path, &fs_devices, sb_bytenr,
 				    (flags & OPEN_CTREE_RECOVER_SUPER));
