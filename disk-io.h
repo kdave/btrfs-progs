@@ -35,6 +35,15 @@ enum btrfs_open_ctree_flags {
 	OPEN_CTREE_EXCLUSIVE		= (1 << 6),
 	OPEN_CTREE_SUPPRESS_ERROR	= (1 << 7), /* Suppress tree block
 						       check error */
+	__RETURN_CHUNK_ROOT		= (1 << 8), /* Return chunk root */
+	OPEN_CTREE_CHUNK_ONLY		= OPEN_CTREE_PARTIAL +
+					  OPEN_CTREE_SUPPRESS_ERROR +
+					  __RETURN_CHUNK_ROOT,
+	/*
+	 * TODO: cleanup: Split the open_ctree_flags into more indepent
+	 * tree bits.
+	 * Like split PARTIAL into SKIP_CSUM/SKIP_EXTENT
+	 */
 };
 
 static inline u64 btrfs_sb_offset(int mirror)
