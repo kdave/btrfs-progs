@@ -21,8 +21,6 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#define _GNU_SOURCE
-
 #include <unistd.h>
 #include <stdint.h>
 #include <dirent.h>

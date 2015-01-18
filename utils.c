@@ -17,10 +17,6 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#define _XOPEN_SOURCE 700
-#define __USE_XOPEN2K8
-#define __XOPEN2K8 /* due to an error in dirent.h, to get dirfd() */
-#define _GNU_SOURCE	/* O_NOATIME */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

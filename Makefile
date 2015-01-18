@@ -4,7 +4,7 @@ export
 CC = gcc
 LN = ln
 AR = ar
-AM_CFLAGS = -Wall -D_FILE_OFFSET_BITS=64 -DBTRFS_FLAT_INCLUDES -fno-strict-aliasing -fPIC
+AM_CFLAGS = -Wall -D_FILE_OFFSET_BITS=64 -DBTRFS_FLAT_INCLUDES -D_XOPEN_SOURCE=700 -D_GNU_SOURCE -fno-strict-aliasing -fPIC
 CFLAGS = -g -O1 -fno-strict-aliasing
 LDFLAGS = -rdynamic
 objects = ctree.o disk-io.o radix-tree.o extent-tree.o print-tree.o \

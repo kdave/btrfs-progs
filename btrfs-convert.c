@@ -16,9 +16,6 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#define _XOPEN_SOURCE 600
-#define _GNU_SOURCE 1
-
 #include "kerncompat.h"
 
 #include <sys/ioctl.h>

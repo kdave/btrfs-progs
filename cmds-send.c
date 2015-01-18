@@ -16,7 +16,6 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#define _GNU_SOURCE
 
 #include "kerncompat.h"
 

@@ -16,7 +16,6 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#define _GNU_SOURCE
 #include <sys/ioctl.h>
 #include <sys/mount.h>
 #include "ioctl.h"

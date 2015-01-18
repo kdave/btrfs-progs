@@ -16,11 +16,6 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#define _GNU_SOURCE
-#define _POSIX_C_SOURCE 200809
-#define _XOPEN_SOURCE 700
-#define _DEFAULT_SOURCE
-
 #include "kerncompat.h"
 
 #include <unistd.h>

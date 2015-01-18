@@ -1,5 +1,3 @@
-#define _GNU_SOURCE
-
 #include "kerncompat.h"
 #include <unistd.h>
 #include <stdlib.h>
