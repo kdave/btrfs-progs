@@ -25,7 +25,8 @@ Enable extended inode refs.
 -x::
 Enable skinny metadata extent refs.
 -f::
-Allow dangerous changes, e.g. clear the seeding flag
+Allow dangerous changes, e.g. clear the seeding flag. Make sure that you are
+aware of the dangers.
 
 When mounting the new device, btrfs will check whether the seeding flag is set
 when try to open seeding device.  If the user clears the seeding flag of the
