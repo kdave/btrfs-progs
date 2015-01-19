@@ -231,7 +231,6 @@ static int cmd_qgroup_show(int argc, char **argv)
 	int fd;
 	int e;
 	DIR *dirstream = NULL;
-	int c;
 	u64 qgroupid;
 	int filter_flag = 0;
 
@@ -239,15 +238,17 @@ static int cmd_qgroup_show(int argc, char **argv)
 	struct btrfs_qgroup_filter_set *filter_set;
 	filter_set = btrfs_qgroup_alloc_filter_set();
 	comparer_set = btrfs_qgroup_alloc_comparer_set();
-	struct option long_options[] = {
-		{"sort", 1, NULL, 'S'},
-		{0, 0, 0, 0}
-	};
 
 	optind = 1;
 	while (1) {
+		int c;
+		struct option long_options[] = {
+			{"sort", 1, NULL, 'S'},
+			{0, 0, 0, 0}
+		};
 		c = getopt_long(argc, argv, "pcreFf",
 				long_options, NULL);
+
 		if (c < 0)
 			break;
 		switch (c) {

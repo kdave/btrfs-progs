@@ -845,27 +845,6 @@ out:
 	return ret;
 }
 
-static struct option long_options[] = {
-	/* { "byte-count", 1, NULL, 'b' }, */
-	{ "logical", 1, NULL, 'l' },
-	{ "copy", 1, NULL, 'c' },
-	{ "bytes", 1, NULL, 'b' },
-	{ "extent-record", 0, NULL, 'e' },
-	{ "extent-tree", 0, NULL, 'E' },
-	{ "keys", 0, NULL, 'k' },
-	{ "chunk-record", 0, NULL, 'u' },
-	{ "chunk-tree", 0, NULL, 'U' },
-	{ "inode", 1, NULL, 'i'},
-	{ "file-extent", 1, NULL, 'x'},
-	{ "metadata-block", 1, NULL, 'm'},
-	{ "field", 1, NULL, 'f'},
-	{ "key", 1, NULL, 'K'},
-	{ "item", 0, NULL, 'I'},
-	{ "dir-item", 0, NULL, 'D'},
-	{ "delete", 0, NULL, 'd'},
-	{ 0, 0, 0, 0}
-};
-
 /* corrupt item using NO cow.
  * Because chunk recover will recover based on whole partition scaning,
  * If using COW, chunk recover will use the old item to recover,
@@ -1018,7 +997,6 @@ int main(int ac, char **av)
 	/* chunk offset can be 0,so change to (u64)-1 */
 	u64 logical = (u64)-1;
 	int ret = 0;
-	int option_index = 0;
 	u64 copy = 0;
 	u64 bytes = 4096;
 	int extent_rec = 0;
@@ -1040,6 +1018,28 @@ int main(int ac, char **av)
 
 	while(1) {
 		int c;
+		int option_index = 0;
+		static struct option long_options[] = {
+			/* { "byte-count", 1, NULL, 'b' }, */
+			{ "logical", 1, NULL, 'l' },
+			{ "copy", 1, NULL, 'c' },
+			{ "bytes", 1, NULL, 'b' },
+			{ "extent-record", 0, NULL, 'e' },
+			{ "extent-tree", 0, NULL, 'E' },
+			{ "keys", 0, NULL, 'k' },
+			{ "chunk-record", 0, NULL, 'u' },
+			{ "chunk-tree", 0, NULL, 'U' },
+			{ "inode", 1, NULL, 'i'},
+			{ "file-extent", 1, NULL, 'x'},
+			{ "metadata-block", 1, NULL, 'm'},
+			{ "field", 1, NULL, 'f'},
+			{ "key", 1, NULL, 'K'},
+			{ "item", 0, NULL, 'I'},
+			{ "dir-item", 0, NULL, 'D'},
+			{ "delete", 0, NULL, 'd'},
+			{ 0, 0, 0, 0}
+		};
+
 		c = getopt_long(ac, av, "l:c:b:eEkuUi:f:x:m:K:IDd", long_options,
 				&option_index);
 		if (c < 0)

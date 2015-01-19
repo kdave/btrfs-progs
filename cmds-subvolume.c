@@ -219,15 +219,15 @@ static int cmd_subvol_delete(int argc, char **argv)
 	DIR	*dirstream = NULL;
 	int verbose = 0;
 	int commit_mode = 0;
-	struct option long_options[] = {
-		{"commit-after", no_argument, NULL, 'c'},  /* commit mode 1 */
-		{"commit-each", no_argument, NULL, 'C'},  /* commit mode 2 */
-		{NULL, 0, NULL, 0}
-	};
 
 	optind = 1;
 	while (1) {
 		int c;
+		struct option long_options[] = {
+			{"commit-after", no_argument, NULL, 'c'},  /* commit mode 1 */
+			{"commit-each", no_argument, NULL, 'C'},  /* commit mode 2 */
+			{NULL, 0, NULL, 0}
+		};
 
 		c = getopt_long(argc, argv, "cC", long_options, NULL);
 		if (c < 0)
@@ -391,15 +391,10 @@ static int cmd_subvol_list(int argc, char **argv)
 	int fd = -1;
 	u64 top_id;
 	int ret = -1, uerr = 0;
-	int c;
 	char *subvol;
 	int is_tab_result = 0;
 	int is_list_all = 0;
 	int is_only_in_path = 0;
-	struct option long_options[] = {
-		{"sort", 1, NULL, 'S'},
-		{NULL, 0, NULL, 0}
-	};
 	DIR *dirstream = NULL;
 
 	filter_set = btrfs_list_alloc_filter_set();
@@ -407,6 +402,12 @@ static int cmd_subvol_list(int argc, char **argv)
 
 	optind = 1;
 	while(1) {
+		int c;
+		struct option long_options[] = {
+			{"sort", 1, NULL, 'S'},
+			{NULL, 0, NULL, 0}
+		};
+
 		c = getopt_long(argc, argv,
 				    "acdgopqsurRG:C:t", long_options, NULL);
 		if (c < 0)

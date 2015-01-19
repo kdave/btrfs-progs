@@ -340,25 +340,6 @@ static char *parse_label(char *input)
 	return strdup(input);
 }
 
-static struct option long_options[] = {
-	{ "alloc-start", 1, NULL, 'A'},
-	{ "byte-count", 1, NULL, 'b' },
-	{ "force", 0, NULL, 'f' },
-	{ "leafsize", 1, NULL, 'l' },
-	{ "label", 1, NULL, 'L'},
-	{ "metadata", 1, NULL, 'm' },
-	{ "mixed", 0, NULL, 'M' },
-	{ "nodesize", 1, NULL, 'n' },
-	{ "sectorsize", 1, NULL, 's' },
-	{ "data", 1, NULL, 'd' },
-	{ "version", 0, NULL, 'V' },
-	{ "rootdir", 1, NULL, 'r' },
-	{ "nodiscard", 0, NULL, 'K' },
-	{ "features", 1, NULL, 'O' },
-	{ "uuid", required_argument, NULL, 'U' },
-	{ NULL, 0, NULL, 0}
-};
-
 static int add_directory_items(struct btrfs_trans_handle *trans,
 			       struct btrfs_root *root, u64 objectid,
 			       ino_t parent_inum, const char *name,
@@ -1258,7 +1239,6 @@ int main(int ac, char **av)
 	u32 nodesize = leafsize;
 	u32 stripesize = 4096;
 	int zero_end = 1;
-	int option_index = 0;
 	int fd;
 	int ret;
 	int i;
@@ -1283,6 +1263,26 @@ int main(int ac, char **av)
 
 	while(1) {
 		int c;
+		int option_index = 0;
+		static struct option long_options[] = {
+			{ "alloc-start", 1, NULL, 'A'},
+			{ "byte-count", 1, NULL, 'b' },
+			{ "force", 0, NULL, 'f' },
+			{ "leafsize", 1, NULL, 'l' },
+			{ "label", 1, NULL, 'L'},
+			{ "metadata", 1, NULL, 'm' },
+			{ "mixed", 0, NULL, 'M' },
+			{ "nodesize", 1, NULL, 'n' },
+			{ "sectorsize", 1, NULL, 's' },
+			{ "data", 1, NULL, 'd' },
+			{ "version", 0, NULL, 'V' },
+			{ "rootdir", 1, NULL, 'r' },
+			{ "nodiscard", 0, NULL, 'K' },
+			{ "features", 1, NULL, 'O' },
+			{ "uuid", required_argument, NULL, 'U' },
+			{ NULL, 0, NULL, 0}
+		};
+
 		c = getopt_long(ac, av, "A:b:fl:n:s:m:d:L:O:r:U:VMK",
 				long_options, &option_index);
 		if (c < 0)

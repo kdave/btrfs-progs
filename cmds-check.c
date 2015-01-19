@@ -8403,19 +8403,6 @@ out:
 	return bad_roots;
 }
 
-static struct option long_options[] = {
-	{ "super", 1, NULL, 's' },
-	{ "repair", 0, NULL, 0 },
-	{ "init-csum-tree", 0, NULL, 0 },
-	{ "init-extent-tree", 0, NULL, 0 },
-	{ "check-data-csum", 0, NULL, 0 },
-	{ "backup", 0, NULL, 0 },
-	{ "subvol-extents", 1, NULL, 'E' },
-	{ "qgroup-report", 0, NULL, 'Q' },
-	{ "tree-root", 1, NULL, 'r' },
-	{ NULL, 0, NULL, 0}
-};
-
 const char * const cmd_check_usage[] = {
 	"btrfs check [options] <device>",
 	"Check an unmounted btrfs filesystem.",
@@ -8443,13 +8430,26 @@ int cmd_check(int argc, char **argv)
 	char uuidbuf[BTRFS_UUID_UNPARSED_SIZE];
 	int ret;
 	u64 num;
-	int option_index = 0;
 	int init_csum_tree = 0;
 	int qgroup_report = 0;
 	enum btrfs_open_ctree_flags ctree_flags = OPEN_CTREE_EXCLUSIVE;
 
 	while(1) {
 		int c;
+		int option_index = 0;
+		static struct option long_options[] = {
+			{ "super", 1, NULL, 's' },
+			{ "repair", 0, NULL, 0 },
+			{ "init-csum-tree", 0, NULL, 0 },
+			{ "init-extent-tree", 0, NULL, 0 },
+			{ "check-data-csum", 0, NULL, 0 },
+			{ "backup", 0, NULL, 0 },
+			{ "subvol-extents", 1, NULL, 'E' },
+			{ "qgroup-report", 0, NULL, 'Q' },
+			{ "tree-root", 1, NULL, 'r' },
+			{ NULL, 0, NULL, 0}
+		};
+
 		c = getopt_long(argc, argv, "as:br:", long_options,
 				&option_index);
 		if (c < 0)

@@ -922,14 +922,8 @@ out:
 	return ret;
 }
 
-static const struct option long_opts[] = {
-	{ "max-errors", 1, NULL, 'E' },
-	{ NULL, 0, NULL, 0 }
-};
-
 int cmd_receive(int argc, char **argv)
 {
-	int c;
 	char *tomnt = NULL;
 	char *fromfile = NULL;
 	struct btrfs_receive r;
@@ -942,7 +936,17 @@ int cmd_receive(int argc, char **argv)
 	r.write_fd = -1;
 	r.dest_dir_fd = -1;
 
-	while ((c = getopt_long(argc, argv, "evf:", long_opts, NULL)) != -1) {
+	while (1) {
+		int c;
+		static const struct option long_opts[] = {
+			{ "max-errors", 1, NULL, 'E' },
+			{ NULL, 0, NULL, 0 }
+		};
+
+		c = getopt_long(argc, argv, "evf:", long_opts, NULL);
+		if (c < 0)
+			break;
+
 		switch (c) {
 		case 'v':
 			g_verbose++;
