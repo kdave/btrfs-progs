@@ -58,7 +58,7 @@ export have_root_helper
 setup_root_helper()
 {
 	if [ $UID != 0 ]; then
-		sudo=sudo
+		sudo="sudo --non-interactive"
 	fi
 	have_root_helper=1
 }
