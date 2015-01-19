@@ -208,19 +208,26 @@ static const char * const cmd_qgroup_show_usage[] = {
 	"btrfs qgroup show -pcreFf "
 	"[--sort=qgroupid,rfer,excl,max_rfer,max_excl] <path>",
 	"Show subvolume quota groups.",
-	"-p		print parent qgroup id",
-	"-c		print child qgroup id",
-	"-r		print max referenced size of qgroup",
-	"-e		print max exclusive size of qgroup",
-	"-F		list all qgroups which impact the given path"
+	"-p             print parent qgroup id",
+	"-c             print child qgroup id",
+	"-r             print max referenced size of qgroup",
+	"-e             print max exclusive size of qgroup",
+	"-F             list all qgroups which impact the given path"
 	"(include ancestral qgroups)",
-	"-f		list all qgroups which impact the given path"
+	"-f             list all qgroups which impact the given path"
 	"(exclude ancestral qgroups)",
+	"--raw          raw numbers in bytes",
+	"--iec          use 1024 as a base (KiB, MiB, GiB, TiB)",
+	"--si           use 1000 as a base (kB, MB, GB, TB)",
+	"--kbytes       show sizes in KiB, or kB with --si",
+	"--mbytes       show sizes in MiB, or MB with --si",
+	"--gbytes       show sizes in GiB, or GB with --si",
+	"--tbytes       show sizes in TiB, or TB with --si",
 	"--sort=qgroupid,rfer,excl,max_rfer,max_excl",
-	"		list qgroups in order of qgroupid,"
+	"               list qgroups in order of qgroupid,"
 	"rfer,max_rfer or max_excl",
-	"		you can use '+' or '-' in front of each item.",
-	"		(+:ascending, -:descending, ascending default)",
+	"               you can use '+' or '-' in front of each item.",
+	"               (+:ascending, -:descending, ascending default)",
 	NULL
 };
 
@@ -233,6 +240,7 @@ static int cmd_qgroup_show(int argc, char **argv)
 	DIR *dirstream = NULL;
 	u64 qgroupid;
 	int filter_flag = 0;
+	unsigned unit_mode = UNITS_DEFAULT;
 
 	struct btrfs_qgroup_comparer_set *comparer_set;
 	struct btrfs_qgroup_filter_set *filter_set;
@@ -242,12 +250,20 @@ static int cmd_qgroup_show(int argc, char **argv)
 	optind = 1;
 	while (1) {
 		int c;
+		int option_index = 0;
 		static const struct option long_options[] = {
 			{"sort", 1, NULL, 'S'},
+			{"raw", no_argument, NULL, 0},
+			{"kbytes", no_argument, NULL, 0},
+			{"mbytes", no_argument, NULL, 0},
+			{"gbytes", no_argument, NULL, 0},
+			{"tbytes", no_argument, NULL, 0},
+			{"si", no_argument, NULL, GETOPT_VAL_SI},
+			{"iec", no_argument, NULL, GETOPT_VAL_IEC},
 			{0, 0, 0, 0}
 		};
 		c = getopt_long(argc, argv, "pcreFf",
-				long_options, NULL);
+				long_options, &option_index);
 
 		if (c < 0)
 			break;
@@ -280,10 +296,30 @@ static int cmd_qgroup_show(int argc, char **argv)
 			if (ret)
 				usage(cmd_qgroup_show_usage);
 			break;
+		case 0:
+			if (option_index == 1)
+				unit_mode = UNITS_RAW;
+			else if (option_index == 2)
+				units_set_base(&unit_mode, UNITS_KBYTES);
+			else if (option_index == 3)
+				units_set_base(&unit_mode, UNITS_MBYTES);
+			else if (option_index == 4)
+				units_set_base(&unit_mode, UNITS_GBYTES);
+			else if (option_index == 5)
+				units_set_base(&unit_mode, UNITS_TBYTES);
+			break;
+		case GETOPT_VAL_SI:
+			units_set_mode(&unit_mode, UNITS_DECIMAL);
+			break;
+		case GETOPT_VAL_IEC:
+			units_set_mode(&unit_mode, UNITS_BINARY);
+			break;
 		default:
 			usage(cmd_qgroup_show_usage);
 		}
 	}
+	btrfs_qgroup_setup_units(unit_mode);
+
 	if (check_argc_exact(argc - optind, 1))
 		usage(cmd_qgroup_show_usage);
 

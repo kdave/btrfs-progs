@@ -20,6 +20,7 @@
 #include <sys/ioctl.h>
 #include "ctree.h"
 #include "ioctl.h"
+#include "utils.h"
 
 #define BTRFS_QGROUP_NFILTERS_INCREASE (2 * BTRFS_QGROUP_FILTER_MAX)
 #define BTRFS_QGROUP_NCOMPS_INCREASE (2 * BTRFS_QGROUP_COMP_MAX)
@@ -80,53 +81,62 @@ static struct {
 	char *name;
 	char *column_name;
 	int need_print;
+	unsigned unit_mode;
 	int max_len;
 } btrfs_qgroup_columns[] = {
 	{
 		.name		= "qgroupid",
 		.column_name	= "Qgroupid",
 		.need_print	= 1,
+		.unit_mode	= 0,
 		.max_len	= 8,
 	},
 	{
 		.name		= "rfer",
 		.column_name	= "Rfer",
 		.need_print	= 1,
-		.max_len	= 4,
+		.unit_mode	= UNITS_DEFAULT,
+		.max_len	= 12,
 	},
 	{
 		.name		= "excl",
 		.column_name	= "Excl",
 		.need_print	= 1,
-		.max_len	= 4,
+		.unit_mode	= UNITS_DEFAULT,
+		.max_len	= 12,
 	},
 	{	.name		= "max_rfer",
 		.column_name	= "Max_rfer",
 		.need_print	= 0,
-		.max_len	= 8,
+		.unit_mode	= UNITS_DEFAULT,
+		.max_len	= 12,
 	},
 	{
 		.name		= "max_excl",
 		.column_name	= "Max_excl",
 		.need_print	= 0,
-		.max_len	= 8,
+		.unit_mode	= UNITS_DEFAULT,
+		.max_len	= 12,
 	},
 	{
 		.name		= "parent",
 		.column_name	= "Parent",
 		.need_print	= 0,
+		.unit_mode	= 0,
 		.max_len	= 7,
 	},
 	{
 		.name		= "child",
 		.column_name	= "Child",
 		.need_print	= 0,
+		.unit_mode	= 0,
 		.max_len	= 5,
 	},
 	{
 		.name		= NULL,
 		.column_name	= NULL,
 		.need_print	= 0,
+		.unit_mode	= 0,
 	},
 };
 
@@ -145,6 +155,14 @@ void btrfs_qgroup_setup_print_column(enum btrfs_qgroup_column_enum column)
 	}
 	for (i = 0; i < BTRFS_QGROUP_ALL; i++)
 		btrfs_qgroup_columns[i].need_print = 1;
+}
+
+void btrfs_qgroup_setup_units(unsigned unit_mode)
+{
+	btrfs_qgroup_columns[BTRFS_QGROUP_RFER].unit_mode = unit_mode;
+	btrfs_qgroup_columns[BTRFS_QGROUP_EXCL].unit_mode = unit_mode;
+	btrfs_qgroup_columns[BTRFS_QGROUP_MAX_RFER].unit_mode = unit_mode;
+	btrfs_qgroup_columns[BTRFS_QGROUP_MAX_EXCL].unit_mode = unit_mode;
 }
 
 static int print_parent_column(struct btrfs_qgroup *qgroup)
@@ -194,6 +212,8 @@ static void print_qgroup_column(struct btrfs_qgroup *qgroup,
 {
 	BUG_ON(column >= BTRFS_QGROUP_ALL || column < 0);
 	int len;
+	int unit_mode = btrfs_qgroup_columns[column].unit_mode;
+	int max_len = btrfs_qgroup_columns[column].max_len;
 
 	switch (column) {
 
@@ -203,24 +223,20 @@ static void print_qgroup_column(struct btrfs_qgroup *qgroup,
 		print_qgroup_column_add_blank(BTRFS_QGROUP_QGROUPID, len);
 		break;
 	case BTRFS_QGROUP_RFER:
-		len = printf("%llu", qgroup->rfer);
-		print_qgroup_column_add_blank(BTRFS_QGROUP_RFER, len);
+		len = printf("%*s", max_len, pretty_size_mode(qgroup->rfer, unit_mode));
 		break;
 	case BTRFS_QGROUP_EXCL:
-		len = printf("%llu", qgroup->excl);
-		print_qgroup_column_add_blank(BTRFS_QGROUP_EXCL, len);
+		len = printf("%*s", max_len, pretty_size_mode(qgroup->excl, unit_mode));
 		break;
 	case BTRFS_QGROUP_PARENT:
 		len = print_parent_column(qgroup);
 		print_qgroup_column_add_blank(BTRFS_QGROUP_PARENT, len);
 		break;
 	case BTRFS_QGROUP_MAX_RFER:
-		len = printf("%llu", qgroup->max_rfer);
-		print_qgroup_column_add_blank(BTRFS_QGROUP_MAX_RFER, len);
+		len = printf("%*s", max_len, pretty_size_mode(qgroup->max_rfer, unit_mode));
 		break;
 	case BTRFS_QGROUP_MAX_EXCL:
-		len = printf("%llu", qgroup->max_excl);
-		print_qgroup_column_add_blank(BTRFS_QGROUP_MAX_EXCL, len);
+		len = printf("%*s", max_len, pretty_size_mode(qgroup->max_excl, unit_mode));
 		break;
 	case BTRFS_QGROUP_CHILD:
 		len = print_child_column(qgroup);
@@ -250,30 +266,41 @@ static void print_table_head()
 {
 	int i;
 	int len;
+	int max_len;
 
 	for (i = 0; i < BTRFS_QGROUP_ALL; i++) {
+		max_len = btrfs_qgroup_columns[i].max_len;
 		if (!btrfs_qgroup_columns[i].need_print)
 			continue;
-		printf("%s", btrfs_qgroup_columns[i].name);
-		len = btrfs_qgroup_columns[i].max_len -
-		      strlen(btrfs_qgroup_columns[i].name);
-		while (len--)
-			printf(" ");
+		if ((i == BTRFS_QGROUP_QGROUPID) | (i == BTRFS_QGROUP_PARENT) |
+			(i == BTRFS_QGROUP_CHILD))
+			printf("%-*s", max_len, btrfs_qgroup_columns[i].name);
+		else
+			printf("%*s", max_len, btrfs_qgroup_columns[i].name);
 		printf(" ");
 	}
 	printf("\n");
 	for (i = 0; i < BTRFS_QGROUP_ALL; i++) {
+		max_len = btrfs_qgroup_columns[i].max_len;
 		if (!btrfs_qgroup_columns[i].need_print)
 			continue;
-
-		len = strlen(btrfs_qgroup_columns[i].name);
-		while (len--)
-			printf("-");
-		len = btrfs_qgroup_columns[i].max_len -
-		      strlen(btrfs_qgroup_columns[i].name);
+		if ((i == BTRFS_QGROUP_QGROUPID) | (i == BTRFS_QGROUP_PARENT) |
+			(i == BTRFS_QGROUP_CHILD)) {
+			len = strlen(btrfs_qgroup_columns[i].name);
+			while (len--)
+				printf("-");
+			len = max_len - strlen(btrfs_qgroup_columns[i].name);
+			while (len--)
+				printf(" ");
+		} else {
+			len = max_len - strlen(btrfs_qgroup_columns[i].name);
+			while (len--)
+				printf(" ");
+			len = strlen(btrfs_qgroup_columns[i].name);
+			while (len--)
+				printf("-");
+		}
 		printf(" ");
-		while (len--)
-			printf(" ");
 	}
 	printf("\n");
 }

@@ -89,6 +89,20 @@ print max exclusive size of qgroup.
 list all qgroups which impact the given path(include ancestral qgroups)
 -f::::
 list all qgroups which impact the given path(exclude ancestral qgroups)
+--raw::::
+raw numbers in bytes, without the 'B' suffix.
+--iec::::
+select the 1024 base for the following options, according to the IEC standard.
+--si::::
+select the 1000 base for the following options, according to the SI standard.
+--kbytes::::
+show sizes in KiB, or kB with --si.
+--mbytes::::
+show sizes in MiB, or MB with --si.
+--gbytes::::
+show sizes in GiB, or GB with --si.
+--tbytes::::
+show sizes in TiB, or TB with --si.
 --sort=[\+/-]<attr>[,[+/-]<attr>]...::::
 list qgroups in order of <attr>.
 +
