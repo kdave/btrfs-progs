@@ -1019,7 +1019,7 @@ int main(int ac, char **av)
 	while(1) {
 		int c;
 		int option_index = 0;
-		static struct option long_options[] = {
+		static const struct option long_options[] = {
 			/* { "byte-count", 1, NULL, 'b' }, */
 			{ "logical", 1, NULL, 'l' },
 			{ "copy", 1, NULL, 'c' },

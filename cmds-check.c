@@ -8437,7 +8437,7 @@ int cmd_check(int argc, char **argv)
 	while(1) {
 		int c;
 		int option_index = 0;
-		static struct option long_options[] = {
+		static const struct option long_options[] = {
 			{ "super", 1, NULL, 's' },
 			{ "repair", 0, NULL, 0 },
 			{ "init-csum-tree", 0, NULL, 0 },

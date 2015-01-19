@@ -56,7 +56,7 @@ static int cmd_add_dev(int argc, char **argv)
 
 	while (1) {
 		int long_index;
-		static struct option long_options[] = {
+		static const struct option long_options[] = {
 			{ "nodiscard", optional_argument, NULL, 'K'},
 			{ "force", no_argument, NULL, 'f'},
 			{ 0, 0, 0, 0 }
@@ -214,7 +214,7 @@ static int cmd_scan_dev(int argc, char **argv)
 	optind = 1;
 	while (1) {
 		int long_index;
-		static struct option long_options[] = {
+		static const struct option long_options[] = {
 			{ "all-devices", no_argument, NULL, 'd'},
 			{ 0, 0, 0, 0 },
 		};

@@ -834,7 +834,7 @@ static int cmd_show(int argc, char **argv)
 
 	while (1) {
 		int long_index;
-		static struct option long_options[] = {
+		static const struct option long_options[] = {
 			{ "all-devices", no_argument, NULL, 'd'},
 			{ "mounted", no_argument, NULL, 'm'},
 			{ NULL, no_argument, NULL, 0 },

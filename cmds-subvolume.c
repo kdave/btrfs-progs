@@ -223,7 +223,7 @@ static int cmd_subvol_delete(int argc, char **argv)
 	optind = 1;
 	while (1) {
 		int c;
-		struct option long_options[] = {
+		static const struct option long_options[] = {
 			{"commit-after", no_argument, NULL, 'c'},  /* commit mode 1 */
 			{"commit-each", no_argument, NULL, 'C'},  /* commit mode 2 */
 			{NULL, 0, NULL, 0}
@@ -403,7 +403,7 @@ static int cmd_subvol_list(int argc, char **argv)
 	optind = 1;
 	while(1) {
 		int c;
-		struct option long_options[] = {
+		static const struct option long_options[] = {
 			{"sort", 1, NULL, 'S'},
 			{NULL, 0, NULL, 0}
 		};

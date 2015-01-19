@@ -242,7 +242,7 @@ static int cmd_qgroup_show(int argc, char **argv)
 	optind = 1;
 	while (1) {
 		int c;
-		struct option long_options[] = {
+		static const struct option long_options[] = {
 			{"sort", 1, NULL, 'S'},
 			{0, 0, 0, 0}
 		};

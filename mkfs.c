@@ -1264,7 +1264,7 @@ int main(int ac, char **av)
 	while(1) {
 		int c;
 		int option_index = 0;
-		static struct option long_options[] = {
+		static const struct option long_options[] = {
 			{ "alloc-start", 1, NULL, 'A'},
 			{ "byte-count", 1, NULL, 'b' },
 			{ "force", 0, NULL, 'f' },
