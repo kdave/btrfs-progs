@@ -26,13 +26,23 @@
 #define BTRFS_SUPER_MIRROR_SHIFT 12
 
 enum btrfs_open_ctree_flags {
-	OPEN_CTREE_WRITES		= 1,
-	OPEN_CTREE_PARTIAL		= 2,
-	OPEN_CTREE_BACKUP_ROOT		= 4,
-	OPEN_CTREE_RECOVER_SUPER	= 8,
-	OPEN_CTREE_RESTORE		= 16,
-	OPEN_CTREE_NO_BLOCK_GROUPS	= 32,
-	OPEN_CTREE_EXCLUSIVE		= 64,
+	OPEN_CTREE_WRITES		= (1 << 0),
+	OPEN_CTREE_PARTIAL		= (1 << 1),
+	OPEN_CTREE_BACKUP_ROOT		= (1 << 2),
+	OPEN_CTREE_RECOVER_SUPER	= (1 << 3),
+	OPEN_CTREE_RESTORE		= (1 << 4),
+	OPEN_CTREE_NO_BLOCK_GROUPS	= (1 << 5),
+	OPEN_CTREE_EXCLUSIVE		= (1 << 6),
+	OPEN_CTREE_SUPPRESS_ERROR	= (1 << 7), /* Suppress csum error */
+	__RETURN_CHUNK_ROOT		= (1 << 8), /* Return chunk root */
+	OPEN_CTREE_CHUNK_ONLY		= OPEN_CTREE_PARTIAL +
+					  OPEN_CTREE_SUPPRESS_ERROR +
+					  __RETURN_CHUNK_ROOT,
+	/*
+	 * TODO: cleanup: Split the open_ctree_flags into more indepent
+	 * tree bits.
+	 * Like split PARTIAL into SKIP_CSUM/SKIP_EXTENT
+	 */
 };
 
 static inline u64 btrfs_sb_offset(int mirror)

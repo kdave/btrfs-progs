@@ -35,6 +35,7 @@
 #include "utils.h"
 #include "print-tree.h"
 #include "rbtree-utils.h"
+#include "find-root.h"
 
 static int check_tree_block(struct btrfs_root *root, struct extent_buffer *buf)
 {
@@ -42,7 +43,8 @@ static int check_tree_block(struct btrfs_root *root, struct extent_buffer *buf)
 	struct btrfs_fs_devices *fs_devices;
 	int ret = 1;
 
-	if (buf->start != btrfs_header_bytenr(buf)) {
+	if (buf->start != btrfs_header_bytenr(buf) &&
+	    !root->fs_info->suppress_error) {
 		printk("Check tree block failed, want=%Lu, have=%Lu\n",
 		       buf->start, btrfs_header_bytenr(buf));
 		return ret;
@@ -118,6 +120,8 @@ int csum_tree_block(struct btrfs_root *root, struct extent_buffer *buf,
 {
 	u16 csum_size =
 		btrfs_super_csum_size(root->fs_info->super_copy);
+	if (verify && root->fs_info->suppress_error)
+		return verify_tree_block_csum_silent(buf, csum_size);
 	return csum_tree_block_size(buf, csum_size, verify);
 }
 
@@ -282,10 +286,13 @@ struct extent_buffer *read_tree_block(struct btrfs_root *root, u64 bytenr,
 			return eb;
 		}
 		if (ignore) {
-			if (check_tree_block(root, eb))
-				printk("read block failed check_tree_block\n");
-			else
-				printk("Csum didn't match\n");
+			if (check_tree_block(root, eb)) {
+				if (!root->fs_info->suppress_error)
+					printk("read block failed check_tree_block\n");
+			} else {
+				if (!root->fs_info->suppress_error)
+					printk("Csum didn't match\n");
+			}
 			break;
 		}
 		num_copies = btrfs_num_copies(&root->fs_info->mapping_tree,
@@ -888,9 +895,33 @@ int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info, u64 root_tree_bytenr,
 	blocksize = btrfs_level_size(root, btrfs_super_root_level(sb));
 	generation = btrfs_super_generation(sb);
 
-	if (!root_tree_bytenr && !(flags & OPEN_CTREE_BACKUP_ROOT)) {
+	/*
+	 * If root bytenr is specified, use it and if fails, just return error,
+	 * not to try other method.
+	 */
+	if (root_tree_bytenr) {
+		root->node = read_tree_block(root, root_tree_bytenr,
+					     blocksize, generation);
+		if (!extent_buffer_uptodate(root->node)) {
+			fprintf(stderr, "Couldn't read tree root at %llu\n",
+				root_tree_bytenr);
+			return -EIO;
+		} else
+			goto extent_tree;
+	}
+	/* Normal root bytenr from super */
+	if (!(flags & OPEN_CTREE_BACKUP_ROOT)) {
 		root_tree_bytenr = btrfs_super_root(sb);
-	} else if (flags & OPEN_CTREE_BACKUP_ROOT) {
+		root->node = read_tree_block(root, root_tree_bytenr,
+					     blocksize, generation);
+		if (!extent_buffer_uptodate(root->node)) {
+			fprintf(stderr,
+				"Couldn't read tree root, try backup\n");
+			ret = -EAGAIN;
+		} else
+			goto extent_tree;
+	}
+	if ((flags & OPEN_CTREE_BACKUP_ROOT) || ret == -EAGAIN) {
 		struct btrfs_root_backup *backup;
 		int index = find_best_backup_root(sb);
 		if (index >= BTRFS_NUM_BACKUP_ROOTS) {
@@ -900,15 +931,78 @@ int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info, u64 root_tree_bytenr,
 		backup = fs_info->super_copy->super_roots + index;
 		root_tree_bytenr = btrfs_backup_tree_root(backup);
 		generation = btrfs_backup_tree_root_gen(backup);
+		root->node = read_tree_block(root, root_tree_bytenr,
+					     blocksize, generation);
+		if (!extent_buffer_uptodate(root->node)) {
+			fprintf(stderr,
+				"Couldn't read backup tree root, try searching tree root\n");
+			ret = -EAGAIN;
+		} else {
+			ret = 0;
+			goto extent_tree;
+		}
 	}
 
-	root->node = read_tree_block(root, root_tree_bytenr, blocksize,
-				     generation);
-	if (!extent_buffer_uptodate(root->node)) {
-		fprintf(stderr, "Couldn't read tree root\n");
-		return -EIO;
-	}
+	/* Last chance, search the tree root */
+	if (ret == -EAGAIN) {
+		struct btrfs_find_root_filter filter = {0};
+		struct btrfs_find_root_gen_cache *gen_cache;
+		struct cache_tree result;
+		struct cache_extent *cache;
+		struct cache_extent *tree_block;
 
+		filter.objectid = BTRFS_ROOT_TREE_OBJECTID;
+		cache_tree_init(&result);
+
+		printf("Searching tree root, may take some time\n");
+		ret = btrfs_find_root_search(fs_info->chunk_root, &filter,
+					     &result, NULL);
+		if (ret < 0) {
+			fprintf(stderr, "Couldn't search tree root: %s\n",
+				strerror(-ret));
+			btrfs_find_root_free(&result);
+			return ret;
+		}
+		if (cache_tree_empty(&result)) {
+			fprintf(stderr, "Fail to find any tree root\n");
+			btrfs_find_root_free(&result);
+			return -ENOENT;
+		}
+
+		/* Find the newest root as tree root */
+		root_tree_bytenr = 0;
+		cache = last_cache_extent(&result);
+		while (cache) {
+			gen_cache = container_of(cache,
+					struct btrfs_find_root_gen_cache,
+					cache);
+			if (last_cache_extent(&gen_cache->eb_tree) !=
+			    first_cache_extent(&gen_cache->eb_tree)) {
+				cache = prev_cache_extent(cache);
+				continue;
+			}
+			tree_block = first_cache_extent(&gen_cache->eb_tree);
+			root_tree_bytenr = tree_block->start;
+			generation = gen_cache->cache.start;
+			break;
+		}
+		btrfs_find_root_free(&result);
+		if (!root_tree_bytenr) {
+			fprintf(stderr,
+				"Couldn't find any valid old tree root\n");
+			return -EINVAL;
+		} else
+			printf("Using tree root at %llu, gen: %llu\n",
+			       root_tree_bytenr, generation);
+		root->node = read_tree_block(root, root_tree_bytenr,
+					     blocksize, generation);
+		if (!extent_buffer_uptodate(root->node)) {
+			fprintf(stderr,
+				"Couldn't read the most possible tree root\n");
+			return -EIO;
+		}
+	}
+extent_tree:
 	ret = setup_root_or_create_block(fs_info, flags, fs_info->extent_root,
 					 BTRFS_EXTENT_TREE_OBJECTID, "extent");
 	if (ret)
@@ -1112,6 +1206,8 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 	}
 	if (flags & OPEN_CTREE_RESTORE)
 		fs_info->on_restoring = 1;
+	if (flags & OPEN_CTREE_SUPPRESS_ERROR)
+		fs_info->suppress_error = 1;
 
 	ret = btrfs_scan_fs_devices(fp, path, &fs_devices, sb_bytenr,
 				    (flags & OPEN_CTREE_RECOVER_SUPER));
@@ -1159,7 +1255,7 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 			   BTRFS_UUID_SIZE);
 
 	ret = btrfs_setup_all_roots(fs_info, root_tree_bytenr, flags);
-	if (ret)
+	if (ret && !(flags & __RETURN_CHUNK_ROOT))
 		goto out_chunk;
 
 	return fs_info;
@@ -1204,6 +1300,8 @@ struct btrfs_root *open_ctree(const char *filename, u64 sb_bytenr,
 	info = open_ctree_fs_info(filename, sb_bytenr, 0, flags);
 	if (!info)
 		return NULL;
+	if (flags & __RETURN_CHUNK_ROOT)
+		return info->chunk_root;
 	return info->fs_root;
 }
 
@@ -1214,6 +1312,8 @@ struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
 	info = __open_ctree_fd(fp, path, sb_bytenr, 0, flags);
 	if (!info)
 		return NULL;
+	if (flags & __RETURN_CHUNK_ROOT)
+		return info->chunk_root;
 	return info->fs_root;
 }
 
