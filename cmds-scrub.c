@@ -1073,15 +1073,11 @@ static int is_scrub_running_in_kernel(int fd,
 		memset(&sp, 0, sizeof(sp));
 		sp.scrub_args.devid = di_args[i].devid;
 		ret = ioctl(fd, BTRFS_IOC_SCRUB_PROGRESS, &sp.scrub_args);
-		if (ret < 0 && errno == ENODEV)
-			continue;
-		if (ret < 0 && errno == ENOTCONN)
-			return 0;
 		if (!ret)
 			return 1;
 	}
 
-	return 1;
+	return 0;
 }
 
 static const char * const cmd_scrub_start_usage[];
