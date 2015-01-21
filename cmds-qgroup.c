@@ -253,11 +253,11 @@ static int cmd_qgroup_show(int argc, char **argv)
 		int option_index = 0;
 		static const struct option long_options[] = {
 			{"sort", 1, NULL, 'S'},
-			{"raw", no_argument, NULL, 0},
-			{"kbytes", no_argument, NULL, 0},
-			{"mbytes", no_argument, NULL, 0},
-			{"gbytes", no_argument, NULL, 0},
-			{"tbytes", no_argument, NULL, 0},
+			{"raw", no_argument, NULL, GETOPT_VAL_RAW},
+			{"kbytes", no_argument, NULL, GETOPT_VAL_KBYTES},
+			{"mbytes", no_argument, NULL, GETOPT_VAL_MBYTES},
+			{"gbytes", no_argument, NULL, GETOPT_VAL_GBYTES},
+			{"tbytes", no_argument, NULL, GETOPT_VAL_TBYTES},
 			{"si", no_argument, NULL, GETOPT_VAL_SI},
 			{"iec", no_argument, NULL, GETOPT_VAL_IEC},
 			{0, 0, 0, 0}
@@ -296,17 +296,20 @@ static int cmd_qgroup_show(int argc, char **argv)
 			if (ret)
 				usage(cmd_qgroup_show_usage);
 			break;
-		case 0:
-			if (option_index == 1)
-				unit_mode = UNITS_RAW;
-			else if (option_index == 2)
-				units_set_base(&unit_mode, UNITS_KBYTES);
-			else if (option_index == 3)
-				units_set_base(&unit_mode, UNITS_MBYTES);
-			else if (option_index == 4)
-				units_set_base(&unit_mode, UNITS_GBYTES);
-			else if (option_index == 5)
-				units_set_base(&unit_mode, UNITS_TBYTES);
+		case GETOPT_VAL_RAW:
+			unit_mode = UNITS_RAW;
+			break;
+		case GETOPT_VAL_KBYTES:
+			units_set_base(&unit_mode, UNITS_KBYTES);
+			break;
+		case GETOPT_VAL_MBYTES:
+			units_set_base(&unit_mode, UNITS_MBYTES);
+			break;
+		case GETOPT_VAL_GBYTES:
+			units_set_base(&unit_mode, UNITS_GBYTES);
+			break;
+		case GETOPT_VAL_TBYTES:
+			units_set_base(&unit_mode, UNITS_TBYTES);
 			break;
 		case GETOPT_VAL_SI:
 			units_set_mode(&unit_mode, UNITS_DECIMAL);
