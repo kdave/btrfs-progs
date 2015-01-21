@@ -396,7 +396,7 @@ static int cmd_balance_start(int argc, char **argv)
 			{ "system", optional_argument, NULL, 's' },
 			{ "force", no_argument, NULL, 'f' },
 			{ "verbose", no_argument, NULL, 'v' },
-			{ NULL, no_argument, NULL, 0 },
+			{ NULL, 0, NULL, 0 }
 		};
 
 		int opt = getopt_long(argc, argv, "d::s::m::fv", longopts,
@@ -664,7 +664,7 @@ static int cmd_balance_status(int argc, char **argv)
 		int longindex;
 		static const struct option longopts[] = {
 			{ "verbose", no_argument, NULL, 'v' },
-			{ NULL, no_argument, NULL, 0}
+			{ NULL, 0, NULL, 0 }
 		};
 
 		int opt = getopt_long(argc, argv, "v", longopts, &longindex);

@@ -59,7 +59,7 @@ static int cmd_add_dev(int argc, char **argv)
 		static const struct option long_options[] = {
 			{ "nodiscard", optional_argument, NULL, 'K'},
 			{ "force", no_argument, NULL, 'f'},
-			{ 0, 0, 0, 0 }
+			{ NULL, 0, NULL, 0}
 		};
 		int c = getopt_long(argc, argv, "Kf", long_options,
 					&long_index);
@@ -216,7 +216,7 @@ static int cmd_scan_dev(int argc, char **argv)
 		int long_index;
 		static const struct option long_options[] = {
 			{ "all-devices", no_argument, NULL, 'd'},
-			{ 0, 0, 0, 0 },
+			{ NULL, 0, NULL, 0}
 		};
 		int c = getopt_long(argc, argv, "d", long_options,
 				    &long_index);
@@ -514,6 +514,7 @@ int cmd_device_usage(int argc, char **argv)
 			{ "iec", no_argument, NULL, GETOPT_VAL_IEC},
 			{ "human-readable", no_argument, NULL,
 				GETOPT_VAL_HUMAN_READABLE},
+			{ NULL, 0, NULL, 0 }
 		};
 		int c = getopt_long(argc, argv, "bhHkmgt", long_options,
 				&long_index);

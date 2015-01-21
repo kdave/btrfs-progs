@@ -221,6 +221,7 @@ static int cmd_filesystem_df(int argc, char **argv)
 			{ "iec", no_argument, NULL, GETOPT_VAL_IEC},
 			{ "human-readable", no_argument, NULL,
 				GETOPT_VAL_HUMAN_READABLE},
+			{ NULL, 0, NULL, 0 }
 		};
 		int c = getopt_long(argc, argv, "bhHkmgt", long_options,
 					&long_index);
@@ -841,7 +842,7 @@ static int cmd_show(int argc, char **argv)
 		static const struct option long_options[] = {
 			{ "all-devices", no_argument, NULL, 'd'},
 			{ "mounted", no_argument, NULL, 'm'},
-			{ NULL, no_argument, NULL, 0 },
+			{ NULL, 0, NULL, 0 }
 		};
 		int c = getopt_long(argc, argv, "dm", long_options,
 					&long_index);

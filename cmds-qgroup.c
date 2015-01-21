@@ -264,7 +264,7 @@ static int cmd_qgroup_show(int argc, char **argv)
 			{"iec", no_argument, NULL, GETOPT_VAL_IEC},
 			{ "human-readable", no_argument, NULL,
 				GETOPT_VAL_HUMAN_READABLE},
-			{0, 0, 0, 0}
+			{ NULL, 0, NULL, 0 }
 		};
 		c = getopt_long(argc, argv, "pcreFf",
 				long_options, &option_index);

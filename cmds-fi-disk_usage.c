@@ -882,6 +882,7 @@ int cmd_filesystem_usage(int argc, char **argv)
 			{ "iec", no_argument, NULL, GETOPT_VAL_IEC},
 			{ "human-readable", no_argument, NULL,
 				GETOPT_VAL_HUMAN_READABLE},
+			{ NULL, 0, NULL, 0 }
 		};
 		int c = getopt_long(argc, argv, "bhHkmgtT", long_options,
 				&long_index);

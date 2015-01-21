@@ -1037,7 +1037,7 @@ int main(int ac, char **av)
 			{ "item", 0, NULL, 'I'},
 			{ "dir-item", 0, NULL, 'D'},
 			{ "delete", 0, NULL, 'd'},
-			{ 0, 0, 0, 0}
+			{ NULL, 0, NULL, 0 }
 		};
 
 		c = getopt_long(ac, av, "l:c:b:eEkuUi:f:x:m:K:IDd", long_options,
