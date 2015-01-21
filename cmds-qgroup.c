@@ -217,6 +217,8 @@ static const char * const cmd_qgroup_show_usage[] = {
 	"-f             list all qgroups which impact the given path"
 	"(exclude ancestral qgroups)",
 	"--raw          raw numbers in bytes",
+	"--human-readable",
+	"               human firendly numbers in given base, 1024 by default",
 	"--iec          use 1024 as a base (KiB, MiB, GiB, TiB)",
 	"--si           use 1000 as a base (kB, MB, GB, TB)",
 	"--kbytes       show sizes in KiB, or kB with --si",
@@ -260,6 +262,8 @@ static int cmd_qgroup_show(int argc, char **argv)
 			{"tbytes", no_argument, NULL, GETOPT_VAL_TBYTES},
 			{"si", no_argument, NULL, GETOPT_VAL_SI},
 			{"iec", no_argument, NULL, GETOPT_VAL_IEC},
+			{ "human-readable", no_argument, NULL,
+				GETOPT_VAL_HUMAN_READABLE},
 			{0, 0, 0, 0}
 		};
 		c = getopt_long(argc, argv, "pcreFf",
@@ -316,6 +320,9 @@ static int cmd_qgroup_show(int argc, char **argv)
 			break;
 		case GETOPT_VAL_IEC:
 			units_set_mode(&unit_mode, UNITS_BINARY);
+			break;
+		case GETOPT_VAL_HUMAN_READABLE:
+			unit_mode = UNITS_HUMAN_BINARY;
 			break;
 		default:
 			usage(cmd_qgroup_show_usage);

@@ -24,7 +24,7 @@ Show space usage information for a mount point.
 +
 -b|--raw::::
 raw numbers in bytes, without the 'B' suffix
--h::::
+-h|--human-readable::::
 print human friendly numbers, base 1024, this is the default
 -H::::
 print human friendly numbers, base 1000
@@ -132,7 +132,7 @@ Show detailed information about internal filesystem usage.
 +
 -b|--raw::::
 raw numbers in bytes, without the 'B' suffix
--h::::
+-h|--human-readable::::
 print human friendly numbers, base 1024, this is the default
 -H::::
 print human friendly numbers, base 1000

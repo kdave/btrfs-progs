@@ -91,6 +91,8 @@ list all qgroups which impact the given path(include ancestral qgroups)
 list all qgroups which impact the given path(exclude ancestral qgroups)
 --raw::::
 raw numbers in bytes, without the 'B' suffix.
+--human-readable::::
+print human friendly numbers, base 1024, this is the default
 --iec::::
 select the 1024 base for the following options, according to the IEC standard.
 --si::::

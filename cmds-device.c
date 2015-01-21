@@ -454,7 +454,8 @@ const char * const cmd_device_usage_usage[] = {
 	"btrfs device usage [options] <path> [<path>..]",
 	"Show detailed information about internal allocations in devices.",
 	"-b|--raw           raw numbers in bytes",
-	"-h                 human friendly numbers, base 1024 (default)",
+	"-h|--human-readable",
+	"                   human friendly numbers, base 1024 (default)",
 	"-H                 human friendly numbers, base 1000",
 	"--iec              use 1024 as a base (KiB, MiB, GiB, TiB)",
 	"--si               use 1000 as a base (kB, MB, GB, TB)",
@@ -511,6 +512,8 @@ int cmd_device_usage(int argc, char **argv)
 			{ "tbytes", no_argument, NULL, 't'},
 			{ "si", no_argument, NULL, GETOPT_VAL_SI},
 			{ "iec", no_argument, NULL, GETOPT_VAL_IEC},
+			{ "human-readable", no_argument, NULL,
+				GETOPT_VAL_HUMAN_READABLE},
 		};
 		int c = getopt_long(argc, argv, "bhHkmgt", long_options,
 				&long_index);
@@ -533,6 +536,7 @@ int cmd_device_usage(int argc, char **argv)
 		case 't':
 			units_set_base(&unit_mode, UNITS_TBYTES);
 			break;
+		case GETOPT_VAL_HUMAN_READABLE:
 		case 'h':
 			unit_mode = UNITS_HUMAN_BINARY;
 			break;
