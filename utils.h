@@ -16,8 +16,8 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#ifndef __UTILS__
-#define __UTILS__
+#ifndef __BTRFS_UTILS_H__
+#define __BTRFS_UTILS_H__
 
 #include <sys/stat.h>
 #include "ctree.h"

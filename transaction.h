@@ -16,8 +16,8 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#ifndef __TRANSACTION__
-#define __TRANSACTION__
+#ifndef __BTRFS_TRANSACTION_H__
+#define __BTRFS_TRANSACTION_H__
 
 struct btrfs_trans_handle {
 	u64 transid;

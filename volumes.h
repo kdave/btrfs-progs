@@ -16,8 +16,8 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#ifndef __BTRFS_VOLUMES_
-#define __BTRFS_VOLUMES_
+#ifndef __BTRFS_VOLUMES_H__
+#define __BTRFS_VOLUMES_H__
 
 #define BTRFS_STRIPE_LEN	(64 * 1024)
 

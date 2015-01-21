@@ -5,8 +5,8 @@
  *
  */
 
-#ifndef __ULIST__
-#define __ULIST__
+#ifndef __ULIST_H__
+#define __ULIST_H__
 
 #include "kerncompat.h"
 #include "list.h"

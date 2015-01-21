@@ -16,8 +16,8 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#ifndef _BTRFS_QGROUP_H
-#define _BTRFS_QGROUP_H
+#ifndef __BTRFS_QGROUP_H__
+#define __BTRFS_QGROUP_H__
 
 #include "ioctl.h"
 #include "kerncompat.h"

@@ -14,8 +14,8 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#ifndef PROPS_H_
-#define PROPS_H_
+#ifndef __BTRFS_PROPS_H__
+#define __BTRFS_PROPS_H__
 
 enum prop_object_type {
 	prop_object_dev		= (1 << 0),
@@ -40,4 +40,4 @@ struct prop_handler {
 
 extern const struct prop_handler prop_handlers[];
 
-#endif /* PROPS_H_ */
+#endif

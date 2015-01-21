@@ -17,8 +17,8 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#ifndef __CHUNK_CHECK_H__
-#define __CHUNK_CHECK_H__
+#ifndef __BTRFS_CHECK_H__
+#define __BTRFS_CHECK_H__
 
 #if BTRFS_FLAT_INCLUDES
 #include "kerncompat.h"

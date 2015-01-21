@@ -15,8 +15,9 @@
  * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
  * Boston, MA 021110-1307, USA.
  */
-#ifndef SEND_UTILS_H_
-#define SEND_UTILS_H_
+
+#ifndef __BTRFS_SEND_UTILS_H__
+#define __BTRFS_SEND_UTILS_H__
 
 #if BTRFS_FLAT_INCLUDES
 #include "ctree.h"
@@ -93,4 +94,4 @@ char *path_cat3(const char *p1, const char *p2, const char *p3);
 }
 #endif
 
-#endif /* SEND_UTILS_H_ */
+#endif

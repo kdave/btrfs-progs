@@ -16,8 +16,8 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#ifndef __CMDS_FI_DISK_USAGE__
-#define __CMDS_FI_DISK_USAGE__
+#ifndef __CMDS_FI_DISK_USAGE_H__
+#define __CMDS_FI_DISK_USAGE_H__
 
 extern const char * const cmd_filesystem_usage_usage[];
 int cmd_filesystem_usage(int argc, char **argv);

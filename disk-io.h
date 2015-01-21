@@ -16,8 +16,8 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#ifndef __DISKIO__
-#define __DISKIO__
+#ifndef __BTRFS_DISK_IO_H__
+#define __BTRFS_DISK_IO_H__
 
 #define BTRFS_SUPER_INFO_OFFSET (64 * 1024)
 #define BTRFS_SUPER_INFO_SIZE 4096
@@ -110,7 +110,8 @@ int verify_tree_block_csum_silent(struct extent_buffer *buf, u16 csum_size);
 int btrfs_read_buffer(struct extent_buffer *buf, u64 parent_transid);
 int write_and_map_eb(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 		     struct extent_buffer *eb);
-#endif
 
 /* raid6.c */
 void raid6_gen_syndrome(int disks, size_t bytes, void **ptrs);
+
+#endif

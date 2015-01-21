@@ -16,8 +16,9 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#ifndef __IOCTL_
-#define __IOCTL_
+#ifndef __BTRFS_IOCTL_H__
+#define __BTRFS_IOCTL_H__
+
 #include <asm/types.h>
 #include <linux/ioctl.h>
 #include <time.h>

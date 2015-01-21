@@ -16,8 +16,9 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#ifndef __HASH__
-#define __HASH__
+#ifndef __BTRFS_HASH_H__
+#define __BTRFS_HASH_H__
+
 #include "crc32c.h"
 
 static inline u64 btrfs_name_hash(const char *name, int len)

@@ -14,6 +14,9 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#ifndef __BTRFS_COMMANDS_H__
+#define __BTRFS_COMMANDS_H__
+
 struct cmd_struct {
 	const char *token;
 	int (*fn)(int, char **);
@@ -121,3 +124,5 @@ int test_issubvolume(char *path);
 
 /* send.c */
 char *get_subvol_name(char *mnt, char *full_path);
+
+#endif

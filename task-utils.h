@@ -14,8 +14,8 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#ifndef __TASK_UTILS_H_
-#define __TASK_UTILS_H_
+#ifndef __TASK_UTILS_H__
+#define __TASK_UTILS_H__
 
 #include <pthread.h>
 

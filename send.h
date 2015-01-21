@@ -17,6 +17,9 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#ifndef __BTRFS_SEND_H__
+#define __BTRFS_SEND_H__
+
 #include "ctree.h"
 
 #ifdef __cplusplus
@@ -139,4 +142,6 @@ long btrfs_ioctl_send(struct file *mnt_file, void __user *arg);
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif

@@ -16,12 +16,12 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#ifndef _BTRFS_QGROUP_VERIFY_H
-#define _BTRFS_QGROUP_VERIFY_H
+#ifndef __BTRFS_QGROUP_VERIFY_H__
+#define __BTRFS_QGROUP_VERIFY_H__
 
 int qgroup_verify_all(struct btrfs_fs_info *info);
 void print_qgroup_report(int all);
 
 int print_extent_state(struct btrfs_fs_info *info, u64 subvol);
 
-#endif	/* _BTRFS_QGROUP_VERIFY_H */
+#endif

@@ -16,6 +16,9 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#ifndef __BTRFS_LIST_H__
+#define __BTRFS_LIST_H__
+
 #if BTRFS_FLAT_INCLUDES
 #include "kerncompat.h"
 #else
@@ -165,3 +168,5 @@ int btrfs_list_get_default_subvolume(int fd, u64 *default_id);
 char *btrfs_list_path_for_root(int fd, u64 root);
 int btrfs_list_get_path_rootid(int fd, u64 *treeid);
 int btrfs_get_subvol(int fd, struct root_info *the_ri);
+
+#endif

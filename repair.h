@@ -16,8 +16,8 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#ifndef __BTRFS_REPAIR__
-#define __BTRFS_REPAIR__
+#ifndef __BTRFS_REPAIR_H__
+#define __BTRFS_REPAIR_H__
 
 struct btrfs_corrupt_block {
 	struct cache_extent cache;

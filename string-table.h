@@ -14,8 +14,8 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#ifndef STRING_TABLE_H
-#define STRING_TABLE_H
+#ifndef __STRING_TABLE_H__
+#define __STRING_TABLE_H__
 
 struct string_table {
 

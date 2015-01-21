@@ -16,8 +16,8 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#ifndef __EXTENT_CACHE_H__
-#define __EXTENT_CACHE_H__
+#ifndef __BTRFS_EXTENT_CACHE_H__
+#define __BTRFS_EXTENT_CACHE_H__
 
 #if BTRFS_FLAT_INCLUDES
 #include "kerncompat.h"
