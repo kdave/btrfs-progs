@@ -1530,7 +1530,16 @@ static int process_file_extent(struct btrfs_root *root,
 	}
 	rec->extent_end = key->offset + num_bytes;
 
-	if (disk_bytenr > 0) {
+	/*
+	 * The data reloc tree will copy full extents into its inode and then
+	 * copy the corresponding csums.  Because the extent it copied could be
+	 * a preallocated extent that hasn't been written to yet there may be no
+	 * csums to copy, ergo we won't have csums for our file extent.  This is
+	 * ok so just don't bother checking csums if the inode belongs to the
+	 * data reloc tree.
+	 */
+	if (disk_bytenr > 0 &&
+	    btrfs_header_owner(eb) != BTRFS_DATA_RELOC_TREE_OBJECTID) {
 		u64 found;
 		if (btrfs_file_extent_compression(eb, fi))
 			num_bytes = btrfs_file_extent_disk_num_bytes(eb, fi);
