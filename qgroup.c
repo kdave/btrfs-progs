@@ -915,6 +915,7 @@ static void __update_columns_max_len(struct btrfs_qgroup *bq,
 	struct btrfs_qgroup_list *list = NULL;
 	char tmp[100];
 	int len;
+	unsigned unit_mode = btrfs_qgroup_columns[column].unit_mode;
 
 	switch (column) {
 
@@ -926,26 +927,22 @@ static void __update_columns_max_len(struct btrfs_qgroup *bq,
 			btrfs_qgroup_columns[column].max_len = len;
 		break;
 	case BTRFS_QGROUP_RFER:
-		sprintf(tmp, "%llu", bq->rfer);
-		len = strlen(tmp);
+		len = strlen(pretty_size_mode(bq->rfer, unit_mode));
 		if (btrfs_qgroup_columns[column].max_len < len)
 			btrfs_qgroup_columns[column].max_len = len;
 		break;
 	case BTRFS_QGROUP_EXCL:
-		sprintf(tmp, "%llu", bq->excl);
-		len = strlen(tmp);
+		len = strlen(pretty_size_mode(bq->excl, unit_mode));
 		if (btrfs_qgroup_columns[column].max_len < len)
 			btrfs_qgroup_columns[column].max_len = len;
 		break;
 	case BTRFS_QGROUP_MAX_RFER:
-		sprintf(tmp, "%llu", bq->max_rfer);
-		len = strlen(tmp);
+		len = strlen(pretty_size_mode(bq->max_rfer, unit_mode));
 		if (btrfs_qgroup_columns[column].max_len < len)
 			btrfs_qgroup_columns[column].max_len = len;
 		break;
 	case BTRFS_QGROUP_MAX_EXCL:
-		sprintf(tmp, "%llu", bq->max_excl);
-		len = strlen(tmp);
+		len = strlen(pretty_size_mode(bq->max_excl, unit_mode));
 		if (btrfs_qgroup_columns[column].max_len < len)
 			btrfs_qgroup_columns[column].max_len = len;
 		break;
