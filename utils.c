@@ -746,7 +746,7 @@ int btrfs_prepare_device(int fd, char *file, int zero_end, u64 *block_count_ret,
 		 * optimization.
 		 */
 		if (discard_range(fd, 0, 0) == 0) {
-			fprintf(stderr, "Performing full device TRIM (%s) ...\n",
+			printf("Performing full device TRIM (%s) ...\n",
 				pretty_size(block_count));
 			discard_blocks(fd, 0, block_count);
 		}
