@@ -8429,6 +8429,7 @@ int cmd_check(int argc, char **argv)
 	int ret;
 	u64 num;
 	int init_csum_tree = 0;
+	int readonly = 0;
 	int qgroup_report = 0;
 	enum btrfs_open_ctree_flags ctree_flags = OPEN_CTREE_EXCLUSIVE;
 
@@ -8436,10 +8437,11 @@ int cmd_check(int argc, char **argv)
 		int c;
 		int option_index = 0;
 		enum { OPT_REPAIR = 257, OPT_INIT_CSUM, OPT_INIT_EXTENT,
-			OPT_CHECK_CSUM };
+			OPT_CHECK_CSUM, OPT_READONLY };
 		static const struct option long_options[] = {
 			{ "super", 1, NULL, 's' },
 			{ "repair", 0, NULL, OPT_REPAIR },
+			{ "readonly", 0, NULL, OPT_READONLY },
 			{ "init-csum-tree", 0, NULL, OPT_INIT_CSUM },
 			{ "init-extent-tree", 0, NULL, OPT_INIT_EXTENT },
 			{ "check-data-csum", 0, NULL, OPT_CHECK_CSUM },
@@ -8488,6 +8490,9 @@ int cmd_check(int argc, char **argv)
 				repair = 1;
 				ctree_flags |= OPEN_CTREE_WRITES;
 				break;
+			case OPT_READONLY:
+				readonly = 1;
+				break;
 			case OPT_INIT_CSUM:
 				printf("Creating a new CRC tree\n");
 				init_csum_tree = 1;
@@ -8509,6 +8514,12 @@ int cmd_check(int argc, char **argv)
 
 	if (check_argc_exact(argc, 1))
 		usage(cmd_check_usage);
+
+	/* This check is the only reason for --readonly to exist */
+	if (readonly && repair) {
+		fprintf(stderr, "Repair options are not compatible with --readonly\n");
+		exit(1);
+	}
 
 	radix_tree_init();
 	cache_tree_init(&root_cache);
