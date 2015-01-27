@@ -7335,6 +7335,8 @@ static int check_extent_refs(struct btrfs_root *root,
 		return -EAGAIN;
 
 	while(1) {
+		int cur_err = 0;
+
 		fixed = 0;
 		recorded = 0;
 		cache = search_cache_extent(extent_cache, 0);
@@ -7345,6 +7347,7 @@ static int check_extent_refs(struct btrfs_root *root,
 			fprintf(stderr, "extent item %llu has multiple extent "
 				"items\n", (unsigned long long)rec->start);
 			err = 1;
+			cur_err = 1;
 		}
 
 		if (rec->refs != rec->extent_item_refs) {
@@ -7374,7 +7377,7 @@ static int check_extent_refs(struct btrfs_root *root,
 				}
 			}
 			err = 1;
-
+			cur_err = 1;
 		}
 		if (all_backpointers_checked(rec, 1)) {
 			fprintf(stderr, "backpointer mismatch on [%llu %llu]\n",
@@ -7388,6 +7391,7 @@ static int check_extent_refs(struct btrfs_root *root,
 					goto repair_abort;
 				fixed = 1;
 			}
+			cur_err = 1;
 			err = 1;
 		}
 		if (!rec->owner_ref_checked) {
@@ -7402,10 +7406,16 @@ static int check_extent_refs(struct btrfs_root *root,
 				fixed = 1;
 			}
 			err = 1;
+			cur_err = 1;
 		}
 
 		remove_cache_extent(extent_cache, cache);
 		free_all_extent_backrefs(rec);
+		if (!init_extent_tree && repair && (!cur_err || fixed))
+			clear_extent_dirty(root->fs_info->excluded_extents,
+					   rec->start,
+					   rec->start + rec->max_size - 1,
+					   GFP_NOFS);
 		free(rec);
 	}
 repair_abort:
