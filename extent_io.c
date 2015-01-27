@@ -827,29 +827,6 @@ int write_data_to_disk(struct btrfs_fs_info *info, void *buf, u64 offset,
 	return 0;
 }
 
-
-int set_extent_buffer_uptodate(struct extent_buffer *eb)
-{
-	eb->flags |= EXTENT_UPTODATE;
-	return 0;
-}
-
-int clear_extent_buffer_uptodate(struct extent_io_tree *tree,
-				struct extent_buffer *eb)
-{
-	eb->flags &= ~EXTENT_UPTODATE;
-	return 0;
-}
-
-int extent_buffer_uptodate(struct extent_buffer *eb)
-{
-	if (!eb || IS_ERR(eb))
-		return 0;
-	if (eb->flags & EXTENT_UPTODATE)
-		return 1;
-	return 0;
-}
-
 int set_extent_buffer_dirty(struct extent_buffer *eb)
 {
 	struct extent_io_tree *tree = eb->tree;

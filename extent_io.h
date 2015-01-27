@@ -100,10 +100,28 @@ int set_extent_dirty(struct extent_io_tree *tree, u64 start,
 		     u64 end, gfp_t mask);
 int clear_extent_dirty(struct extent_io_tree *tree, u64 start,
 		       u64 end, gfp_t mask);
-int extent_buffer_uptodate(struct extent_buffer *eb);
-int set_extent_buffer_uptodate(struct extent_buffer *eb);
-int clear_extent_buffer_uptodate(struct extent_io_tree *tree,
-				struct extent_buffer *eb);
+static inline int set_extent_buffer_uptodate(struct extent_buffer *eb)
+{
+	eb->flags |= EXTENT_UPTODATE;
+	return 0;
+}
+
+static inline int clear_extent_buffer_uptodate(struct extent_io_tree *tree,
+				struct extent_buffer *eb)
+{
+	eb->flags &= ~EXTENT_UPTODATE;
+	return 0;
+}
+
+static inline int extent_buffer_uptodate(struct extent_buffer *eb)
+{
+	if (!eb || IS_ERR(eb))
+		return 0;
+	if (eb->flags & EXTENT_UPTODATE)
+		return 1;
+	return 0;
+}
+
 int set_state_private(struct extent_io_tree *tree, u64 start, u64 xprivate);
 int get_state_private(struct extent_io_tree *tree, u64 start, u64 *xprivate);
 struct extent_buffer *find_extent_buffer(struct extent_io_tree *tree,
