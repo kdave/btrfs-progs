@@ -210,12 +210,12 @@ static const char * const cmd_qgroup_show_usage[] = {
 	"Show subvolume quota groups.",
 	"-p             print parent qgroup id",
 	"-c             print child qgroup id",
-	"-r             print max referenced size of qgroup",
-	"-e             print max exclusive size of qgroup",
-	"-F             list all qgroups which impact the given path"
-	"(include ancestral qgroups)",
-	"-f             list all qgroups which impact the given path"
-	"(exclude ancestral qgroups)",
+	"-r             print limit of referenced size of qgroup",
+	"-e             print limit of exclusive size of qgroup",
+	"-F             list all qgroups which impact the given path",
+	"               (including ancestral qgroups)",
+	"-f             list all qgroups which impact the given path",
+	"               (excluding ancestral qgroups)",
 	"--raw          raw numbers in bytes",
 	"--human-readable",
 	"               human firendly numbers in given base, 1024 by default",

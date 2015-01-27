@@ -82,9 +82,9 @@ print parent qgroup id.
 -c::::
 print child qgroup id.
 -r::::
-print max referenced size of qgroup.
+print limit of referenced size of qgroup.
 -e::::
-print max exclusive size of qgroup.
+print limit of exclusive size of qgroup.
 -F::::
 list all qgroups which impact the given path(include ancestral qgroups)
 -f::::
