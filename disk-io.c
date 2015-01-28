@@ -258,7 +258,7 @@ struct extent_buffer *read_tree_block(struct btrfs_root *root, u64 bytenr,
 
 	eb = btrfs_find_create_tree_block(root, bytenr, blocksize);
 	if (!eb)
-		return NULL;
+		return ERR_PTR(-ENOMEM);
 
 	if (btrfs_buffer_uptodate(eb, parent_transid))
 		return eb;
@@ -283,6 +283,7 @@ struct extent_buffer *read_tree_block(struct btrfs_root *root, u64 bytenr,
 				printk("read block failed check_tree_block\n");
 			else
 				printk("Csum didn't match\n");
+			ret = -EIO;
 			break;
 		}
 		num_copies = btrfs_num_copies(&root->fs_info->mapping_tree,
@@ -303,7 +304,7 @@ struct extent_buffer *read_tree_block(struct btrfs_root *root, u64 bytenr,
 		}
 	}
 	free_extent_buffer(eb);
-	return NULL;
+	return ERR_PTR(ret);
 }
 
 int write_and_map_eb(struct btrfs_trans_handle *trans,
@@ -639,7 +640,7 @@ out:
 	blocksize = btrfs_level_size(root, btrfs_root_level(&root->root_item));
 	root->node = read_tree_block(root, btrfs_root_bytenr(&root->root_item),
 				     blocksize, generation);
-	if (!root->node) {
+	if (!extent_buffer_uptodate(root->node)) {
 		free(root);
 		return ERR_PTR(-EIO);
 	}
@@ -1068,8 +1069,7 @@ int btrfs_setup_chunk_tree_and_device_map(struct btrfs_fs_info *fs_info)
 	fs_info->chunk_root->node = read_tree_block(fs_info->chunk_root,
 						    btrfs_super_chunk_root(sb),
 						    blocksize, generation);
-	if (!fs_info->chunk_root->node ||
-	    !extent_buffer_uptodate(fs_info->chunk_root->node)) {
+	if (!extent_buffer_uptodate(fs_info->chunk_root->node)) {
 		fprintf(stderr, "Couldn't read chunk root\n");
 		return -EIO;
 	}

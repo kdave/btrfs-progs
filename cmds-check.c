@@ -1756,7 +1756,7 @@ static int walk_down_tree(struct btrfs_root *root, struct btrfs_path *path,
 			reada_walk_down(root, cur, path->slots[*level]);
 			next = read_tree_block(root, bytenr, blocksize,
 					       ptr_gen);
-			if (!next) {
+			if (!extent_buffer_uptodate(next)) {
 				struct btrfs_key node_key;
 
 				btrfs_node_key_to_cpu(path->nodes[*level],
@@ -8038,7 +8038,7 @@ static int pin_down_tree_blocks(struct btrfs_fs_info *fs_info,
 			 */
 			tmp = read_tree_block(fs_info->extent_root, bytenr,
 					      leafsize, 0);
-			if (!tmp) {
+			if (!extent_buffer_uptodate(tmp)) {
 				fprintf(stderr, "Error reading root block\n");
 				return -EIO;
 			}
@@ -8057,7 +8057,7 @@ static int pin_down_tree_blocks(struct btrfs_fs_info *fs_info,
 
 			tmp = read_tree_block(fs_info->extent_root, bytenr,
 					      leafsize, 0);
-			if (!tmp) {
+			if (!extent_buffer_uptodate(tmp)) {
 				fprintf(stderr, "Error reading tree block\n");
 				return -EIO;
 			}

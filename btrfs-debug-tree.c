@@ -67,6 +67,8 @@ static void print_extents(struct btrfs_root *root, struct extent_buffer *eb)
 					     btrfs_node_blockptr(eb, i),
 					     size,
 					     btrfs_node_ptr_generation(eb, i));
+		if (!extent_buffer_uptodate(next))
+			continue;
 		if (btrfs_is_leaf(next) &&
 		    btrfs_header_level(eb) != 1)
 			BUG();
@@ -202,7 +204,8 @@ int main(int ac, char **av)
 				      block_only,
 				      root->leafsize, 0);
 
-		if (leaf && btrfs_header_level(leaf) != 0) {
+		if (extent_buffer_uptodate(leaf) &&
+		    btrfs_header_level(leaf) != 0) {
 			free_extent_buffer(leaf);
 			leaf = NULL;
 		}
@@ -212,7 +215,7 @@ int main(int ac, char **av)
 					      block_only,
 					      root->nodesize, 0);
 		}
-		if (!leaf) {
+		if (!extent_buffer_uptodate(leaf)) {
 			fprintf(stderr, "failed to read %llu\n",
 				(unsigned long long)block_only);
 			goto close_root;

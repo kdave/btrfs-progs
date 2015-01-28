@@ -575,7 +575,7 @@ struct extent_buffer *btrfs_clone_extent_buffer(struct extent_buffer *src)
 
 void free_extent_buffer(struct extent_buffer *eb)
 {
-	if (!eb)
+	if (!eb || IS_ERR(eb))
 		return;
 
 	eb->refs--;
@@ -843,9 +843,8 @@ int clear_extent_buffer_uptodate(struct extent_io_tree *tree,
 
 int extent_buffer_uptodate(struct extent_buffer *eb)
 {
-	if (!eb)
+	if (!eb || IS_ERR(eb))
 		return 0;
-
 	if (eb->flags & EXTENT_UPTODATE)
 		return 1;
 	return 0;

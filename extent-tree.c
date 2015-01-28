@@ -2962,6 +2962,13 @@ static int noinline walk_down_tree(struct btrfs_trans_handle *trans,
 			next = read_tree_block(root, bytenr, blocksize,
 					       ptr_gen);
 			mutex_lock(&root->fs_info->fs_mutex);
+			if (!extent_buffer_uptodate(next)) {
+				if (IS_ERR(next))
+					ret = PTR_ERR(next);
+				else
+					ret = -EIO;
+				break;
+			}
 		}
 		WARN_ON(*level <= 0);
 		if (path->nodes[*level-1])
