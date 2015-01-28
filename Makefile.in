@@ -295,8 +295,10 @@ clean-doc:
 
 clean-gen:
 	@echo "Cleaning Generated Files"
-	$(Q)rm -f version.h config.status config.cache connfig.log \
-		configure.lineno config.status.lineno Makefile
+	$(Q)rm -rf version.h config.status config.cache connfig.log \
+		configure.lineno config.status.lineno Makefile \
+		config.log config.h config.h.in~ aclocal.m4 \
+		configure autom4te.cache/ config/
 
 $(CLEANDIRS):
 	@echo "Cleaning $(patsubst clean-%,%,$@)"
