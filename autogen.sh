@@ -61,11 +61,27 @@ autoheader $AH_OPTS
 
 # it's better to use helper files from automake installation than
 # maintain copies in git tree
-HELPER_DIR=$(automake --print-libdir)
+find_autofile() {
+	if [ -f "$1" ]; then
+		return
+	fi
+	for HELPER_DIR in $(automake --print-libdir 2>/dev/null) \
+			/usr/share/libtool \
+			/usr/share/automake-* ; do
+		f="$HELPER_DIR/$1"
+		if [ -f "$f" ]; then
+			cp "$f" config/
+			return
+		fi
+	done
+	echo "Cannot find "$1" in known locations"
+	exit 1
+}
+
 mkdir -p config/
-cp $HELPER_DIR/config.guess config/
-cp $HELPER_DIR/config.sub config/
-cp $HELPER_DIR/install-sh config/
+find_autofile config.guess
+find_autofile config.sub
+find_autofile install-sh
 
 cd $THEDIR
 
