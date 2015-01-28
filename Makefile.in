@@ -260,8 +260,14 @@ library-test.static: $(libs_static) library-test.o
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o library-test-static library-test.o $(LDFLAGS) $(libs_static)
 
-test-build:
+test-build: test-build-pre test-build-real
+
+test-build-pre:
 	$(MAKE) clean-all
+	./autogen.sh
+	./configure
+
+test-build-real:
 	$(MAKE) library-test
 	-$(MAKE) library-test.static
 	$(MAKE) -j 8 all
