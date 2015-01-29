@@ -22,6 +22,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <uuid/uuid.h>
 #include "kerncompat.h"
 #include "radix-tree.h"
 #include "ctree.h"
@@ -33,17 +34,18 @@
 #include "print-tree.h"
 #include "rbtree-utils.h"
 
+/* specified errno for check_tree_block */
+#define EBYTENR		1
+#define EFSID		2
+
 static int check_tree_block(struct btrfs_root *root, struct extent_buffer *buf)
 {
 
 	struct btrfs_fs_devices *fs_devices;
-	int ret = 1;
+	int ret = -EFSID;
 
-	if (buf->start != btrfs_header_bytenr(buf)) {
-		printk("Check tree block failed, want=%Lu, have=%Lu\n",
-		       buf->start, btrfs_header_bytenr(buf));
-		return ret;
-	}
+	if (buf->start != btrfs_header_bytenr(buf))
+		return -EBYTENR;
 
 	fs_devices = root->fs_info->fs_devices;
 	while (fs_devices) {
@@ -56,6 +58,30 @@ static int check_tree_block(struct btrfs_root *root, struct extent_buffer *buf)
 		fs_devices = fs_devices->seed;
 	}
 	return ret;
+}
+
+static void print_tree_block_err(struct btrfs_root *root,
+				struct extent_buffer *eb,
+				int err)
+{
+	char fs_uuid[BTRFS_UUID_UNPARSED_SIZE] = {'\0'};
+	char found_uuid[BTRFS_UUID_UNPARSED_SIZE] = {'\0'};
+	u8 buf[BTRFS_UUID_SIZE];
+
+	switch (err) {
+	case -EFSID:
+		read_extent_buffer(eb, buf, btrfs_header_fsid(),
+				   BTRFS_UUID_SIZE);
+		uuid_unparse(buf, found_uuid);
+		uuid_unparse(root->fs_info->fsid, fs_uuid);
+		fprintf(stderr, "fsid mismatch, want=%s, have=%s\n",
+			fs_uuid, found_uuid);
+		break;
+	case -EBYTENR:
+		fprintf(stderr, "bytenr mismatch, want=%llu, have=%llu\n",
+			eb->start, btrfs_header_bytenr(eb));
+		break;
+	}
 }
 
 u32 btrfs_csum_data(struct btrfs_root *root, char *data, u32 seed, size_t len)
@@ -280,7 +306,8 @@ struct extent_buffer *read_tree_block(struct btrfs_root *root, u64 bytenr,
 		}
 		if (ignore) {
 			if (check_tree_block(root, eb))
-				printk("read block failed check_tree_block\n");
+				print_tree_block_err(root, eb,
+						check_tree_block(root, eb));
 			else
 				printk("Csum didn't match\n");
 			break;
@@ -342,8 +369,10 @@ static int write_tree_block(struct btrfs_trans_handle *trans,
 		     struct btrfs_root *root,
 		     struct extent_buffer *eb)
 {
-	if (check_tree_block(root, eb))
+	if (check_tree_block(root, eb)) {
+		print_tree_block_err(root, eb, check_tree_block(root, eb));
 		BUG();
+	}
 
 	if (!btrfs_buffer_uptodate(eb, trans->transid))
 		BUG();
