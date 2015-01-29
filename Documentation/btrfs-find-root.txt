@@ -16,6 +16,8 @@ root tree's objectid, generation, level.
 
 OPTIONS
 -------
+-a::
+Search through all the metadata extents, even the root is already found.
 -g <generation>::
 Filter root tree by it's original transaction id, tree root's generation in default.
 -o <objectid>::
