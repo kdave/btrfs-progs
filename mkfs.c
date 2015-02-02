@@ -272,21 +272,21 @@ static void print_usage(void)
 {
 	fprintf(stderr, "usage: mkfs.btrfs [options] dev [ dev ... ]\n");
 	fprintf(stderr, "options:\n");
-	fprintf(stderr, "\t-A|--alloc-start          the offset to start the FS\n");
-	fprintf(stderr, "\t-b|--byte-count           total number of bytes in the FS\n");
-	fprintf(stderr, "\t-d|--data                 data profile, raid0, raid1, raid5, raid6, raid10, dup or single\n");
-	fprintf(stderr, "\t-f|--force                force overwrite of existing filesystem\n");
-	fprintf(stderr, "\t-l|--leafsize             size of btree leaves\n");
-	fprintf(stderr, "\t-L|--label                set a label\n");
-	fprintf(stderr, "\t-m|--metadata             metadata profile, values like data profile\n");
-	fprintf(stderr, "\t-M|--mixed                mix metadata and data together\n");
-	fprintf(stderr, "\t-n|--nodesize             size of btree nodes\n");
-	fprintf(stderr, "\t-s|--sectorsize           min block allocation (may not mountable by current kernel)\n");
-	fprintf(stderr, "\t-r|--rootdir              the source directory\n");
-	fprintf(stderr, "\t-K|--nodiscard            do not perform whole device TRIM\n");
-	fprintf(stderr, "\t-O|--features             comma separated list of filesystem features\n");
-	fprintf(stderr, "\t-U|--uuid                 specify the filesystem UUID\n");
-	fprintf(stderr, "\t-V|--version              print the mkfs.btrfs version and exit\n");
+	fprintf(stderr, "\t-A|--alloc-start START  the offset to start the FS\n");
+	fprintf(stderr, "\t-b|--byte-count SIZE    total number of bytes in the FS\n");
+	fprintf(stderr, "\t-d|--data PROFILE       data profile, raid0, raid1, raid5, raid6, raid10, dup or single\n");
+	fprintf(stderr, "\t-f|--force              force overwrite of existing filesystem\n");
+	fprintf(stderr, "\t-l|--leafsize SIZE      deprecated, alias for nodesize\n");
+	fprintf(stderr, "\t-L|--label LABEL        set a label\n");
+	fprintf(stderr, "\t-m|--metadata PROFILE   metadata profile, values like data profile\n");
+	fprintf(stderr, "\t-M|--mixed              mix metadata and data together\n");
+	fprintf(stderr, "\t-n|--nodesize SIZE      size of btree nodes\n");
+	fprintf(stderr, "\t-s|--sectorsize SIZE    min block allocation (may not mountable by current kernel)\n");
+	fprintf(stderr, "\t-r|--rootdir DIR        the source directory\n");
+	fprintf(stderr, "\t-K|--nodiscard          do not perform whole device TRIM\n");
+	fprintf(stderr, "\t-O|--features LIST      comma separated list of filesystem features\n");
+	fprintf(stderr, "\t-U|--uuid UUID          specify the filesystem UUID\n");
+	fprintf(stderr, "\t-V|--version            print the mkfs.btrfs version and exit\n");
 	fprintf(stderr, "%s\n", PACKAGE_STRING);
 	exit(1);
 }
