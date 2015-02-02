@@ -1145,16 +1145,16 @@ static void list_all_devices(struct btrfs_root *root)
 		number_of_devices++;
 
 	printf("  Number of devices:\t%d\n", number_of_devices);
-	printf("    ID   SIZE        PATH          UUID\n");
-	printf("    ---  ----------  ------------  ------------------------------------\n");
+	printf("    ID   SIZE        PATH\n");
+	printf("    ---  ----------  ------------\n");
 	list_for_each_entry_reverse(device, &fs_devices->devices, dev_list) {
 		char dev_uuid[BTRFS_UUID_UNPARSED_SIZE];
 
 		uuid_unparse(device->uuid, dev_uuid);
-		printf("    %3llu  %10s  %12s  %s\n",
+		printf("    %3llu  %10s  %12s\n",
 			device->devid,
 			pretty_size(device->total_bytes),
-			device->name, dev_uuid);
+			device->name);
 		total_block_count += device->total_bytes;
 	}
 
