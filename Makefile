@@ -49,8 +49,11 @@ endif
 MAKEOPTS = --no-print-directory Q=$(Q)
 
 progs = mkfs.btrfs btrfs-debug-tree btrfsck \
-	btrfs btrfs-map-logical btrfs-image btrfs-zero-log btrfs-convert \
+	btrfs btrfs-map-logical btrfs-image btrfs-zero-log \
 	btrfs-find-root btrfstune btrfs-show-super
+ifneq ($(DISABLE_BTRFSCONVERT),1)
+progs += btrfs-convert
+endif
 
 progs_extra = btrfs-corrupt-block btrfs-fragments btrfs-calc-size \
 	      btrfs-select-super
