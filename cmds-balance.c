@@ -31,8 +31,8 @@
 #include "utils.h"
 
 static const char * const balance_cmd_group_usage[] = {
-	"btrfs [filesystem] balance <command> [options] <path>",
-	"btrfs [filesystem] balance <path>",
+	"btrfs balance <command> [options] <path>",
+	"btrfs balance <path>",
 	NULL
 };
 
@@ -359,7 +359,7 @@ out:
 }
 
 static const char * const cmd_balance_start_usage[] = {
-	"btrfs [filesystem] balance start [options] <path>",
+	"btrfs balance start [options] <path>",
 	"Balance chunks across the devices",
 	"Balance and/or convert (change allocation profile of) chunks that",
 	"passed all filters in a comma-separated list of filters for a",
@@ -491,7 +491,7 @@ static int cmd_balance_start(int argc, char **argv)
 }
 
 static const char * const cmd_balance_pause_usage[] = {
-	"btrfs [filesystem] balance pause <path>",
+	"btrfs balance pause <path>",
 	"Pause running balance",
 	NULL
 };
@@ -532,7 +532,7 @@ static int cmd_balance_pause(int argc, char **argv)
 }
 
 static const char * const cmd_balance_cancel_usage[] = {
-	"btrfs [filesystem] balance cancel <path>",
+	"btrfs balance cancel <path>",
 	"Cancel running or paused balance",
 	NULL
 };
@@ -573,7 +573,7 @@ static int cmd_balance_cancel(int argc, char **argv)
 }
 
 static const char * const cmd_balance_resume_usage[] = {
-	"btrfs [filesystem] balance resume <path>",
+	"btrfs balance resume <path>",
 	"Resume interrupted balance",
 	NULL
 };
@@ -636,7 +636,7 @@ static int cmd_balance_resume(int argc, char **argv)
 }
 
 static const char * const cmd_balance_status_usage[] = {
-	"btrfs [filesystem] balance status [-v] <path>",
+	"btrfs balance status [-v] <path>",
 	"Show status of running or paused balance",
 	"",
 	"-v     be verbose",
