@@ -1207,17 +1207,16 @@ int main(int ac, char **av)
 	u64 alloc_start = 0;
 	u64 metadata_profile = 0;
 	u64 data_profile = 0;
-	u32 leafsize = max_t(u32, sysconf(_SC_PAGESIZE),
+	u32 nodesize = max_t(u32, sysconf(_SC_PAGESIZE),
 			BTRFS_MKFS_DEFAULT_NODE_SIZE);
 	u32 sectorsize = 4096;
-	u32 nodesize = leafsize;
 	u32 stripesize = 4096;
 	int zero_end = 1;
 	int fd;
 	int ret;
 	int i;
 	int mixed = 0;
-	int leaf_forced = 0;
+	int nodesize_forced = 0;
 	int data_profile_opt = 0;
 	int metadata_profile_opt = 0;
 	int discard = 1;
@@ -1273,10 +1272,11 @@ int main(int ac, char **av)
 				data_profile_opt = 1;
 				break;
 			case 'l':
+				fprintf(stderr,
+			"WARNING: --leafsize is deprecated, use --nodesize\n");
 			case 'n':
 				nodesize = parse_size(optarg);
-				leafsize = parse_size(optarg);
-				leaf_forced = 1;
+				nodesize_forced = 1;
 				break;
 			case 'L':
 				label = parse_label(optarg);
@@ -1337,9 +1337,7 @@ int main(int ac, char **av)
 		}
 	}
 	sectorsize = max(sectorsize, (u32)sysconf(_SC_PAGESIZE));
-	if (btrfs_check_node_or_leaf_size(leafsize, sectorsize))
-		exit(1);
-	if (btrfs_check_node_or_leaf_size(nodesize, sectorsize))
+	if (btrfs_check_nodesize(nodesize, sectorsize))
 		exit(1);
 	saved_optind = optind;
 	dev_cnt = ac - optind;
@@ -1405,7 +1403,7 @@ int main(int ac, char **av)
 				BTRFS_BLOCK_GROUP_RAID0 : 0; /* raid0 or single */
 		}
 	} else {
-		u32 best_leafsize = max_t(u32, sysconf(_SC_PAGESIZE), sectorsize);
+		u32 best_nodesize = max_t(u32, sysconf(_SC_PAGESIZE), sectorsize);
 
 		if (metadata_profile_opt || data_profile_opt) {
 			if (metadata_profile != data_profile) {
@@ -1415,34 +1413,33 @@ int main(int ac, char **av)
 			}
 		}
 
-		if (!leaf_forced) {
-			leafsize = best_leafsize;
-			nodesize = best_leafsize;
-			if (btrfs_check_node_or_leaf_size(leafsize, sectorsize))
+		if (!nodesize_forced) {
+			nodesize = best_nodesize;
+			if (btrfs_check_nodesize(nodesize, sectorsize))
 				exit(1);
 		}
-		if (leafsize != sectorsize) {
+		if (nodesize != sectorsize) {
 			fprintf(stderr, "Error: mixed metadata/data block groups "
 				"require metadata blocksizes equal to the sectorsize\n");
 			exit(1);
 		}
 	}
 
-	/* Check device/block_count after the leafsize is determined */
-	if (block_count && block_count < btrfs_min_dev_size(leafsize)) {
+	/* Check device/block_count after the nodesize is determined */
+	if (block_count && block_count < btrfs_min_dev_size(nodesize)) {
 		fprintf(stderr,
 			"Size '%llu' is too small to make a usable filesystem\n",
 			block_count);
 		fprintf(stderr,
 			"Minimum size for btrfs filesystem is %llu\n",
-			btrfs_min_dev_size(leafsize));
+			btrfs_min_dev_size(nodesize));
 		exit(1);
 	}
 	for (i = saved_optind; i < saved_optind + dev_cnt; i++) {
 		char *path;
 
 		path = av[i];
-		ret = test_minimum_size(path, leafsize);
+		ret = test_minimum_size(path, nodesize);
 		if (ret < 0) {
 			fprintf(stderr, "Failed to check size for '%s': %s\n",
 				path, strerror(-ret));
@@ -1454,7 +1451,7 @@ int main(int ac, char **av)
 				path);
 			fprintf(stderr,
 				"Minimum size for each btrfs device is %llu.\n",
-				btrfs_min_dev_size(leafsize));
+				btrfs_min_dev_size(nodesize));
 			exit(1);
 		}
 	}
@@ -1524,7 +1521,7 @@ int main(int ac, char **av)
 	blocks[0] = BTRFS_SUPER_INFO_OFFSET;
 	for (i = 1; i < 7; i++) {
 		blocks[i] = BTRFS_SUPER_INFO_OFFSET + 1024 * 1024 +
-			leafsize * i;
+			nodesize * i;
 	}
 
 	/*
@@ -1542,8 +1539,7 @@ int main(int ac, char **av)
 	process_fs_features(features);
 
 	ret = make_btrfs(fd, file, label, fs_uuid, blocks, dev_block_count,
-			 nodesize, leafsize,
-			 sectorsize, stripesize, features);
+			 nodesize, sectorsize, stripesize, features);
 	if (ret) {
 		fprintf(stderr, "error during mkfs: %s\n", strerror(-ret));
 		exit(1);
@@ -1621,7 +1617,7 @@ raid_groups:
 
 	printf("fs created label %s on %s\n\tnodesize %u leafsize %u "
 	    "sectorsize %u size %s\n",
-	    label, first_file, nodesize, leafsize, sectorsize,
+	    label, first_file, nodesize, nodesize, sectorsize,
 	    pretty_size(btrfs_super_total_bytes(root->fs_info->super_copy)));
 
 	btrfs_commit_transaction(trans, root);

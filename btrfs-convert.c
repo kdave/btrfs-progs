@@ -2298,7 +2298,7 @@ static int do_convert(const char *devname, int datacsum, int packing, int noxatt
 		fprintf(stderr, "filetype feature is missing\n");
 		goto fail;
 	}
-	if (btrfs_check_node_or_leaf_size(nodesize, blocksize))
+	if (btrfs_check_nodesize(nodesize, blocksize))
 		goto fail;
 	blocks_per_node = nodesize / blocksize;
 	ret = -blocks_per_node;
@@ -2322,7 +2322,7 @@ static int do_convert(const char *devname, int datacsum, int packing, int noxatt
 		goto fail;
 	}
 	ret = make_btrfs(fd, devname, ext2_fs->super->s_volume_name,
-			 NULL, blocks, total_bytes, nodesize, nodesize,
+			 NULL, blocks, total_bytes, nodesize,
 			 blocksize, blocksize, 0);
 	if (ret) {
 		fprintf(stderr, "unable to create initial ctree: %s\n",

@@ -82,7 +82,7 @@ void units_set_base(unsigned *units, unsigned base);
 
 int make_btrfs(int fd, const char *device, const char *label,
 	       char *fs_uuid, u64 blocks[6], u64 num_bytes, u32 nodesize,
-	       u32 leafsize, u32 sectorsize, u32 stripesize, u64 features);
+	       u32 sectorsize, u32 stripesize, u64 features);
 int btrfs_make_root_dir(struct btrfs_trans_handle *trans,
 			struct btrfs_root *root, u64 objectid);
 int btrfs_prepare_device(int fd, char *file, int zero_end, u64 *block_count_ret,
@@ -210,6 +210,6 @@ static inline u64 div_factor(u64 num, int factor)
 }
 
 int btrfs_tree_search2_ioctl_supported(int fd);
-int btrfs_check_node_or_leaf_size(u32 size, u32 sectorsize);
+int btrfs_check_nodesize(u32 nodesize, u32 sectorsize);
 
 #endif
