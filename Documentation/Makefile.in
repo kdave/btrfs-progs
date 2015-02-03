@@ -58,8 +58,8 @@ INSTALL = @INSTALL@
 RM = @RM@
 RMDIR = @RMDIR@
 LN_S = @LN_S@
-BTRFS_VERSION = $(shell sed -n 's/.*BTRFS_BUILD_VERSION "Btrfs \(.*\)"/\1/p'\
-		  ../version.h)
+BTRFS_VERSION = $(shell sed -n 's/.*PACKAGE_VERSION "\(.*\)"/\1/p'\
+		  ../config.h)
 
 ifneq ($(findstring $(MAKEFLAGS),s),s)
 ifndef V
