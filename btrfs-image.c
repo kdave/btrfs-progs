@@ -2557,16 +2557,19 @@ static int restore_metadump(const char *input, FILE *out, int old_restore,
 	ret = wait_for_worker(&mdrestore);
 
 	if (!ret && !multi_devices && !old_restore) {
+		struct btrfs_root *root;
 		struct stat st;
 
-		info = open_ctree_fs_info(target, 0, 0,
+		root = open_ctree_fd(fileno(out), target, 0,
 					  OPEN_CTREE_PARTIAL |
-					  OPEN_CTREE_WRITES);
-		if (!info) {
+					  OPEN_CTREE_WRITES |
+					  OPEN_CTREE_NO_DEVICES);
+		if (!root) {
 			fprintf(stderr, "unable to open %s\n", target);
 			ret = -EIO;
 			goto out;
 		}
+		info = root->fs_info;
 
 		if (stat(target, &st)) {
 			fprintf(stderr, "statting %s failed\n", target);

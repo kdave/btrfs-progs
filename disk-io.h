@@ -33,6 +33,7 @@ enum btrfs_open_ctree_flags {
 	OPEN_CTREE_RESTORE		= (1 << 4),
 	OPEN_CTREE_NO_BLOCK_GROUPS	= (1 << 5),
 	OPEN_CTREE_EXCLUSIVE		= (1 << 6),
+	OPEN_CTREE_NO_DEVICES		= (1 << 7),
 };
 
 static inline u64 btrfs_sb_offset(int mirror)
@@ -68,7 +69,7 @@ void btrfs_release_all_roots(struct btrfs_fs_info *fs_info);
 void btrfs_cleanup_all_caches(struct btrfs_fs_info *fs_info);
 int btrfs_scan_fs_devices(int fd, const char *path,
 			  struct btrfs_fs_devices **fs_devices, u64 sb_bytenr,
-			  int super_recover);
+			  int super_recover, int skip_devices);
 int btrfs_setup_chunk_tree_and_device_map(struct btrfs_fs_info *fs_info);
 
 struct btrfs_root *open_ctree(const char *filename, u64 sb_bytenr,

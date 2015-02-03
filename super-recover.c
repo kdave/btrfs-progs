@@ -279,7 +279,7 @@ int btrfs_recover_superblocks(const char *dname,
 	}
 	init_recover_superblock(&recover);
 
-	ret = btrfs_scan_fs_devices(fd, dname, &recover.fs_devices, 0, 1);
+	ret = btrfs_scan_fs_devices(fd, dname, &recover.fs_devices, 0, 1, 0);
 	close(fd);
 	if (ret) {
 		ret = 1;
