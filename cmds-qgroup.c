@@ -226,8 +226,7 @@ static const char * const cmd_qgroup_show_usage[] = {
 	"--gbytes       show sizes in GiB, or GB with --si",
 	"--tbytes       show sizes in TiB, or TB with --si",
 	"--sort=qgroupid,rfer,excl,max_rfer,max_excl",
-	"               list qgroups in order of qgroupid,"
-	"rfer,max_rfer or max_excl",
+	"               list qgroups sorted by specified items",
 	"               you can use '+' or '-' in front of each item.",
 	"               (+:ascending, -:descending, ascending default)",
 	NULL
