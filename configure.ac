@@ -99,6 +99,11 @@ AC_ARG_ENABLE([convert],
 AS_IF([test "x$enable_btrfsconvert" = xyes], [DISABLE_BTRFSCONVERT=0], [DISABLE_BTRFSCONVERT=1])
 AC_SUBST([DISABLE_BTRFSCONVERT])
 
+if test "x$enable_btrfsconvert" = xyes; then
+	PKG_CHECK_MODULES(EXT2FS, [ext2fs])
+	PKG_CHECK_MODULES(COM_ERR, [com_err])
+fi
+
 
 dnl Define <NAME>_LIBS= and <NAME>_CFLAGS= by pkg-config
 dnl
