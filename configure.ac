@@ -149,6 +149,10 @@ AC_MSG_RESULT([
 	cflags:            ${CFLAGS}
 	ldflags:           ${LDFLAGS}
 
+	documentaton:      ${enable_documentation}
+	backtrace support: ${enable_backtrace}
+	btrfs-convert:     ${enable_btrfsconvert}
+
 	Type 'make' to compile.
 ])
 
