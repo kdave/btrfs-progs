@@ -55,8 +55,8 @@ XMLTO_EXTRA =
 XMLTO_EXTRA = -m manpage-bold-literal.xsl
 GZIPCMD = gzip
 INSTALL ?= install
-RM ?= rm -f
-LNS ?= ln -sf
+RM ?= rm
+LN_S ?= ln -s
 BTRFS_VERSION = $(shell sed -n 's/.*BTRFS_BUILD_VERSION "Btrfs \(.*\)"/\1/p'\
 		  ../version.h)
 
@@ -89,14 +89,14 @@ install-man: man
 	# want to keep the code generic
 	mv $(DESTDIR)$(man5dir)/btrfs-mount.5.gz $(DESTDIR)$(man5dir)/btrfs.5.gz
 	$(INSTALL) -m 644 $(GZ_MAN8) $(DESTDIR)$(man8dir)
-	$(LNS) btrfs-check.8.gz $(DESTDIR)$(man8dir)/btrfsck.8.gz
+	$(LN_S) -f btrfs-check.8.gz $(DESTDIR)$(man8dir)/btrfsck.8.gz
 
 uninstall:
 	cd $(DESTDIR)$(man8dir); rm -f btrfs-check.8.gz $(GZ_MAN8)
 	rmdir -p --ignore-fail-on-non-empty $(DESTDIR)$(man8dir)
 
 clean:
-	$(QUIET_RM)$(RM) *.xml *.xml+ *.5 *.5.gz *.8 *.8.gz
+	$(QUIET_RM)$(RM) -f *.xml *.xml+ *.5 *.5.gz *.8 *.8.gz
 
 %.5.gz : %.5
 	$(QUIET_GZIP)$(GZIPCMD) -n -c $< > $@
@@ -105,15 +105,15 @@ clean:
 	$(QUIET_GZIP)$(GZIPCMD) -n -c $< > $@
 
 %.5 : %.xml
-	$(QUIET_XMLTO)$(RM) $@ && \
+	$(QUIET_XMLTO)$(RM) -f $@ && \
 	$(XMLTO) -m $(MANPAGE_XSL) $(XMLTO_EXTRA) man $<
 
 %.8 : %.xml
-	$(QUIET_XMLTO)$(RM) $@ && \
+	$(QUIET_XMLTO)$(RM) -f $@ && \
 	$(XMLTO) -m $(MANPAGE_XSL) $(XMLTO_EXTRA) man $<
 
 %.xml : %.txt asciidoc.conf
-	$(QUIET_ASCIIDOC)$(RM) $@+ $@ && \
+	$(QUIET_ASCIIDOC)$(RM) -f $@+ $@ && \
 	$(ASCIIDOC) -b docbook -d manpage -f asciidoc.conf \
 		$(ASCIIDOC_EXTRA) -abtrfs_version=$(BTRFS_VERSION) \
 		-o $@+ $< && \
