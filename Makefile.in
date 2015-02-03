@@ -8,6 +8,7 @@ RM = @RM@
 RMDIR = @RMDIR@
 INSTALL = @INSTALL@
 DISABLE_DOCUMENTATION = @DISABLE_DOCUMENTATION@
+DISABLE_BTRFSCONVERT = @DISABLE_BTRFSCONVERT@
 
 # Non-static compilation flags
 CFLAGS = @CFLAGS@ \
@@ -67,13 +68,17 @@ endif
 MAKEOPTS = --no-print-directory Q=$(Q)
 
 progs = mkfs.btrfs btrfs-debug-tree btrfsck \
-	btrfs btrfs-map-logical btrfs-image btrfs-zero-log btrfs-convert \
+	btrfs btrfs-map-logical btrfs-image btrfs-zero-log \
 	btrfs-find-root btrfstune btrfs-show-super \
 	btrfs-corrupt-block btrfs-select-super btrfs-calc-size
 
 progs_extra = btrfs-fragments
 
 progs_static = $(foreach p,$(progs),$(p).static)
+
+ifneq ($(DISABLE_BTRFSCONVERT),1)
+progs += btrfs-convert
+endif
 
 # external libs required by various binaries; for btrfs-foo,
 # specify btrfs_foo_libs = <list of libs>; see $($(subst...)) rules below

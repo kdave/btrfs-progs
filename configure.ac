@@ -85,6 +85,14 @@ if test "x$enable_documentation" = xyes; then
 	AC_PROG_SED
 fi
 
+AC_ARG_ENABLE([convert],
+	      AS_HELP_STRING([--disable-convert], [do not build btrfs-convert]),
+  [], [enable_btrfsconvert=yes]
+)
+
+AS_IF([test "x$enable_btrfsconvert" = xyes], [DISABLE_BTRFSCONVERT=0], [DISABLE_BTRFSCONVERT=1])
+AC_SUBST([DISABLE_BTRFSCONVERT])
+
 
 dnl Define <NAME>_LIBS= and <NAME>_CFLAGS= by pkg-config
 dnl
