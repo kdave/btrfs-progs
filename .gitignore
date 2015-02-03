@@ -61,6 +61,7 @@ depcomp
 libtool
 m4/*.m4
 Makefile
+Documentation/Makefile
 missing
 mkinstalldirs
 stamp-h

@@ -112,6 +112,7 @@ AC_CONFIG_HEADERS([config.h])
 
 AC_CONFIG_FILES([
 Makefile
+Documentation/Makefile
 version.h
 ])
 

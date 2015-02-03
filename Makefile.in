@@ -299,6 +299,7 @@ clean-gen:
 	@echo "Cleaning Generated Files"
 	$(Q)$(RM) -rf version.h config.status config.cache connfig.log \
 		configure.lineno config.status.lineno Makefile \
+		Documentation/Makefile \
 		config.log config.h config.h.in~ aclocal.m4 \
 		configure autom4te.cache/ config/
 
