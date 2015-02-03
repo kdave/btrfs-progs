@@ -54,9 +54,10 @@ XMLTO = xmlto
 XMLTO_EXTRA =
 XMLTO_EXTRA = -m manpage-bold-literal.xsl
 GZIPCMD = gzip
-INSTALL ?= install
-RM ?= rm
-LN_S ?= ln -s
+INSTALL = @INSTALL@
+RM = @RM@
+RMDIR = @RMDIR@
+LN_S = @LN_S@
 BTRFS_VERSION = $(shell sed -n 's/.*BTRFS_BUILD_VERSION "Btrfs \(.*\)"/\1/p'\
 		  ../version.h)
 
@@ -93,7 +94,7 @@ install-man: man
 
 uninstall:
 	cd $(DESTDIR)$(man8dir); rm -f btrfs-check.8.gz $(GZ_MAN8)
-	rmdir -p --ignore-fail-on-non-empty $(DESTDIR)$(man8dir)
+	$(RMDIR) -p --ignore-fail-on-non-empty $(DESTDIR)$(man8dir)
 
 clean:
 	$(QUIET_RM)$(RM) -f *.xml *.xml+ *.5 *.5.gz *.8 *.8.gz
