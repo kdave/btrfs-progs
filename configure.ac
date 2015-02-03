@@ -68,6 +68,12 @@ AS_IF([test "x$enable_backtrace" = xno], [
   AC_DEFINE([BTRFS_DISABLE_BACKTRACE], [1], [disable backtrace stuff in kerncompat.h ])
 ])
 
+if test "x$enable_backtrace" = xyes; then
+	AC_CHECK_HEADERS([execinfo.h])
+	AC_CHECK_FUNCS([backtrace backtrace_symbols_fd], [],
+	      AC_MSG_ERROR([standard library does not have backtrace support]))
+fi
+
 
 AC_ARG_ENABLE([documentation],
 	      AS_HELP_STRING([--disable-documentation], [do not build domumentation]),
