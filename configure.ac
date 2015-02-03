@@ -76,6 +76,15 @@ AC_ARG_ENABLE([documentation],
 AS_IF([test "x$enable_documentation" = xyes], [DISABLE_DOCUMENTATION=0], [DISABLE_DOCUMENTATION=1])
 AC_SUBST([DISABLE_DOCUMENTATION])
 
+dnl detect tools to build documentation
+if test "x$enable_documentation" = xyes; then
+	AC_PATH_PROG([ASCIIDOC], [asciidoc], [asciidoc])
+	AC_PATH_PROG([XMLTO], [xmlto], [xmlto])
+	AC_PATH_PROG([GZIP], [gzip], [gzip])
+	AC_PATH_PROG([MV], [mv], [mv])
+	AC_PROG_SED
+fi
+
 
 dnl Define <NAME>_LIBS= and <NAME>_CFLAGS= by pkg-config
 dnl

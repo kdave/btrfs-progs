@@ -47,18 +47,20 @@ mandir ?= $(prefix)/share/man
 man8dir = $(mandir)/man8
 man5dir = $(mandir)/man5
 
-ASCIIDOC = asciidoc
+ASCIIDOC = @ASCIIDOC@
 ASCIIDOC_EXTRA =
 MANPAGE_XSL = manpage-normal.xsl
-XMLTO = xmlto
+XMLTO = @XMLTO@
 XMLTO_EXTRA =
 XMLTO_EXTRA = -m manpage-bold-literal.xsl
-GZIPCMD = gzip
+GZIPCMD = @GZIP@
 INSTALL = @INSTALL@
 RM = @RM@
 RMDIR = @RMDIR@
 LN_S = @LN_S@
-BTRFS_VERSION = $(shell sed -n 's/.*PACKAGE_VERSION "\(.*\)"/\1/p'\
+MV = @MV@
+SED = @SED@
+BTRFS_VERSION = $(shell $(SED) -n 's/.*PACKAGE_VERSION "\(.*\)"/\1/p'\
 		  ../config.h)
 
 ifneq ($(findstring $(MAKEFLAGS),s),s)
@@ -88,7 +90,7 @@ install-man: man
 	$(INSTALL) -m 644 $(GZ_MAN5) $(DESTDIR)$(man5dir)
 	# the source file name of btrfs.5 clashes with section 8 page, but we
 	# want to keep the code generic
-	mv $(DESTDIR)$(man5dir)/btrfs-mount.5.gz $(DESTDIR)$(man5dir)/btrfs.5.gz
+	$(MV) $(DESTDIR)$(man5dir)/btrfs-mount.5.gz $(DESTDIR)$(man5dir)/btrfs.5.gz
 	$(INSTALL) -m 644 $(GZ_MAN8) $(DESTDIR)$(man8dir)
 	$(LN_S) -f btrfs-check.8.gz $(DESTDIR)$(man8dir)/btrfsck.8.gz
 
@@ -118,4 +120,4 @@ clean:
 	$(ASCIIDOC) -b docbook -d manpage -f asciidoc.conf \
 		$(ASCIIDOC_EXTRA) -abtrfs_version=$(BTRFS_VERSION) \
 		-o $@+ $< && \
-	mv $@+ $@
+	$(MV) $@+ $@
