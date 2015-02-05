@@ -13,7 +13,6 @@ DISABLE_BTRFSCONVERT = @DISABLE_BTRFSCONVERT@
 # Common build flags
 CFLAGS = @CFLAGS@ \
 	 -include config.h \
-	 -D_FILE_OFFSET_BITS=64 \
 	 -DBTRFS_FLAT_INCLUDES \
 	 -D_XOPEN_SOURCE=700  \
 	 -fno-strict-aliasing \
