@@ -132,10 +132,10 @@ ifdef C
 	# don't use FORTIFY with sparse because glibc with FORTIFY can
 	# generate so many sparse errors that sparse stops parsing,
 	# which masks real errors that we want to see.
+	CFLAGS += -U_FORTIFY_SOURCE
 else
 	check = true
 	check_echo = true
-	CFLAGS += -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2
 endif
 
 %.o.d: %.c
