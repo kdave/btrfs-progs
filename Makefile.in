@@ -10,12 +10,14 @@ INSTALL = @INSTALL@
 DISABLE_DOCUMENTATION = @DISABLE_DOCUMENTATION@
 DISABLE_BTRFSCONVERT = @DISABLE_BTRFSCONVERT@
 
-# Non-static compilation flags
+# Common build flags
 CFLAGS = @CFLAGS@ \
-	 -include config.h -Wall \
-	 -D_FILE_OFFSET_BITS=64 -DBTRFS_FLAT_INCLUDES \
+	 -include config.h \
+	 -D_FILE_OFFSET_BITS=64 \
+	 -DBTRFS_FLAT_INCLUDES \
 	 -D_XOPEN_SOURCE=700  \
-	 -fno-strict-aliasing -fPIC \
+	 -fno-strict-aliasing \
+	 -fPIC \
 	 -rdynamic
 
 LDFLAGS = @LDFLAGS@
