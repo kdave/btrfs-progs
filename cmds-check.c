@@ -7426,6 +7426,7 @@ static int check_chunk_refs(struct chunk_record *chunk_rec,
 	u64 devid;
 	u64 offset;
 	u64 length;
+	int metadump_v2 = 0;
 	int i;
 	int ret = 0;
 
@@ -7438,7 +7439,8 @@ static int check_chunk_refs(struct chunk_record *chunk_rec,
 					       cache);
 		if (chunk_rec->length != block_group_rec->offset ||
 		    chunk_rec->offset != block_group_rec->objectid ||
-		    chunk_rec->type_flags != block_group_rec->flags) {
+		    (!metadump_v2 &&
+		     chunk_rec->type_flags != block_group_rec->flags)) {
 			if (!silent)
 				fprintf(stderr,
 					"Chunk[%llu, %u, %llu]: length(%llu), offset(%llu), type(%llu) mismatch with block group[%llu, %u, %llu]: offset(%llu), objectid(%llu), flags(%llu)\n",
@@ -7471,6 +7473,9 @@ static int check_chunk_refs(struct chunk_record *chunk_rec,
 				chunk_rec->type_flags);
 		ret = 1;
 	}
+
+	if (metadump_v2)
+		return ret;
 
 	length = calc_stripe_length(chunk_rec->type_flags, chunk_rec->length,
 				    chunk_rec->num_stripes);
@@ -7538,7 +7543,7 @@ int check_chunks(struct cache_tree *chunk_cache,
 					 cache);
 		err = check_chunk_refs(chunk_rec, block_group_cache,
 				       dev_extent_cache, silent);
-		if (err)
+		if (err < 0)
 			ret = err;
 		if (err == 0 && good)
 			list_add_tail(&chunk_rec->list, good);
