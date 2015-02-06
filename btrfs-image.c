@@ -1922,7 +1922,6 @@ static int add_cluster(struct meta_cluster *cluster,
 	u32 i, nritems;
 	int ret;
 
-	BUG_ON(mdres->num_items);
 	mdres->compress_method = header->compress;
 
 	bytenr = le64_to_cpu(header->bytenr) + BLOCK_SIZE;
@@ -2433,7 +2432,7 @@ static int __restore_metadump(const char *input, FILE *out, int old_restore,
 		goto out;
 	}
 
-	while (1) {
+	while (!mdrestore.error) {
 		ret = fread(cluster, BLOCK_SIZE, 1, in);
 		if (!ret)
 			break;
@@ -2450,14 +2449,8 @@ static int __restore_metadump(const char *input, FILE *out, int old_restore,
 			fprintf(stderr, "Error adding cluster\n");
 			break;
 		}
-
-		ret = wait_for_worker(&mdrestore);
-		if (ret) {
-			fprintf(stderr, "One of the threads errored out %d\n",
-				ret);
-			break;
-		}
 	}
+	ret = wait_for_worker(&mdrestore);
 out:
 	mdrestore_destroy(&mdrestore, num_threads);
 failed_cluster:
@@ -2598,7 +2591,7 @@ int main(int argc, char *argv[])
 {
 	char *source;
 	char *target;
-	u64 num_threads = 0;
+	u64 num_threads = 1;
 	u64 compress_level = 0;
 	int create = 1;
 	int old_restore = 0;
@@ -2689,7 +2682,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if (num_threads == 0 && compress_level > 0) {
+	if (num_threads == 1 && compress_level > 0) {
 		num_threads = sysconf(_SC_NPROCESSORS_ONLN);
 		if (num_threads <= 0)
 			num_threads = 1;
@@ -2708,7 +2701,7 @@ int main(int argc, char *argv[])
 		ret = create_metadump(source, out, num_threads,
 				      compress_level, sanitize, walk_trees);
 	} else {
-		ret = restore_metadump(source, out, old_restore, 1,
+		ret = restore_metadump(source, out, old_restore, num_threads,
 				       multi_devices);
 	}
 	if (ret) {
