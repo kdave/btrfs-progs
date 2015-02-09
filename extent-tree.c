@@ -2566,6 +2566,13 @@ check_failed:
 		goto new_group;
 	}
 
+	if (info->excluded_extents &&
+	    test_range_bit(info->excluded_extents, ins->objectid,
+			   ins->objectid + num_bytes -1, EXTENT_DIRTY, 0)) {
+		search_start = ins->objectid + num_bytes;
+		goto new_group;
+	}
+
 	if (exclude_nr > 0 && (ins->objectid + num_bytes > exclude_start &&
 	    ins->objectid < exclude_start + exclude_nr)) {
 		search_start = exclude_start + exclude_nr;

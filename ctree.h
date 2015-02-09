@@ -963,6 +963,7 @@ struct btrfs_fs_info {
 	struct extent_io_tree pinned_extents;
 	struct extent_io_tree pending_del;
 	struct extent_io_tree extent_ins;
+	struct extent_io_tree *excluded_extents;
 
 	/* logical->physical extent mapping */
 	struct btrfs_mapping_tree mapping_tree;
