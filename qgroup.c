@@ -21,6 +21,7 @@
 #include "ctree.h"
 #include "ioctl.h"
 #include "utils.h"
+#include <errno.h>
 
 #define BTRFS_QGROUP_NFILTERS_INCREASE (2 * BTRFS_QGROUP_FILTER_MAX)
 #define BTRFS_QGROUP_NCOMPS_INCREASE (2 * BTRFS_QGROUP_COMP_MAX)
@@ -1294,7 +1295,7 @@ qgroup_inherit_realloc(struct btrfs_qgroup_inherit **inherit, int n, int pos)
 	out = calloc(sizeof(*out) + sizeof(out->qgroups[0]) * (nitems + n), 1);
 	if (out == NULL) {
 		fprintf(stderr, "ERROR: Not enough memory\n");
-		return 13;
+		return -ENOMEM;
 	}
 
 	if (*inherit) {
@@ -1322,7 +1323,7 @@ int qgroup_inherit_add_group(struct btrfs_qgroup_inherit **inherit, char *arg)
 
 	if (qgroupid == 0) {
 		fprintf(stderr, "ERROR: bad qgroup specification\n");
-		return 12;
+		return -EINVAL;
 	}
 
 	if (*inherit)
@@ -1349,7 +1350,7 @@ int qgroup_inherit_add_copy(struct btrfs_qgroup_inherit **inherit, char *arg,
 	if (!p) {
 bad:
 		fprintf(stderr, "ERROR: bad copy specification\n");
-		return 12;
+		return -EINVAL;
 	}
 	*p = 0;
 	qgroup_src = parse_qgroupid(arg);
