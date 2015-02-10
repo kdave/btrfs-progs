@@ -1520,7 +1520,7 @@ static int recover_prepare(struct recover_control *rc, char *path)
 		goto fail_free_sb;
 	}
 
-	ret = btrfs_scan_fs_devices(fd, path, &fs_devices, 0, 1);
+	ret = btrfs_scan_fs_devices(fd, path, &fs_devices, 0, 1, 0);
 	if (ret)
 		goto fail_free_sb;
 

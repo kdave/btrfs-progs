@@ -1789,11 +1789,11 @@ int btrfs_write_dirty_block_groups(struct btrfs_trans_handle *trans,
 static struct btrfs_space_info *__find_space_info(struct btrfs_fs_info *info,
 						  u64 flags)
 {
-	struct list_head *head = &info->space_info;
-	struct list_head *cur;
 	struct btrfs_space_info *found;
-	list_for_each(cur, head) {
-		found = list_entry(cur, struct btrfs_space_info, list);
+
+	flags &= BTRFS_BLOCK_GROUP_TYPE_MASK;
+
+	list_for_each_entry(found, &info->space_info, list) {
 		if (found->flags & flags)
 			return found;
 	}
@@ -1825,7 +1825,7 @@ static int update_space_info(struct btrfs_fs_info *info, u64 flags,
 		return -ENOMEM;
 
 	list_add(&found->list, &info->space_info);
-	found->flags = flags;
+	found->flags = flags & BTRFS_BLOCK_GROUP_TYPE_MASK;
 	found->total_bytes = total_bytes;
 	found->bytes_used = bytes_used;
 	found->bytes_pinned = 0;
@@ -2561,6 +2561,13 @@ check_failed:
 	}
 
 	if (test_range_bit(&info->pinned_extents, ins->objectid,
+			   ins->objectid + num_bytes -1, EXTENT_DIRTY, 0)) {
+		search_start = ins->objectid + num_bytes;
+		goto new_group;
+	}
+
+	if (info->excluded_extents &&
+	    test_range_bit(info->excluded_extents, ins->objectid,
 			   ins->objectid + num_bytes -1, EXTENT_DIRTY, 0)) {
 		search_start = ins->objectid + num_bytes;
 		goto new_group;

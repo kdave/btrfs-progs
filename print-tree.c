@@ -312,6 +312,10 @@ static void extent_flags_to_str(u64 flags, char *ret)
 		}
 		strcat(ret, "TREE_BLOCK");
 	}
+	if (flags & BTRFS_BLOCK_FLAG_FULL_BACKREF) {
+		strcat(ret, "|");
+		strcat(ret, "FULL_BACKREF");
+	}
 }
 
 void print_extent_item(struct extent_buffer *eb, int slot, int metadata)
