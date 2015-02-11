@@ -34,6 +34,21 @@ enum btrfs_open_ctree_flags {
 	OPEN_CTREE_NO_BLOCK_GROUPS	= (1 << 5),
 	OPEN_CTREE_EXCLUSIVE		= (1 << 6),
 	OPEN_CTREE_NO_DEVICES		= (1 << 7),
+	/*
+	 * Don't print error messages if bytenr or checksums do not match in
+	 * tree block headers. Turn on by OPEN_CTREE_SUPPRESS_ERROR
+	 */
+	OPEN_CTREE_SUPPRESS_CHECK_BLOCK_ERRORS	= (1 << 8),
+	/* Return chunk root */
+	__OPEN_CTREEE_RETURN_CHUNK_ROOT	= (1 << 9),
+	OPEN_CTREE_CHUNK_ROOT_ONLY	= OPEN_CTREE_PARTIAL +
+					  OPEN_CTREE_SUPPRESS_CHECK_BLOCK_ERRORS +
+					  __OPEN_CTREEE_RETURN_CHUNK_ROOT,
+	/*
+	 * TODO: cleanup: Split the open_ctree_flags into more indepent
+	 * tree bits.
+	 * Like split PARTIAL into SKIP_CSUM/SKIP_EXTENT
+	 */
 };
 
 static inline u64 btrfs_sb_offset(int mirror)
