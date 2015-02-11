@@ -16,10 +16,10 @@ CFLAGS = @CFLAGS@ \
 	 -DBTRFS_FLAT_INCLUDES \
 	 -D_XOPEN_SOURCE=700  \
 	 -fno-strict-aliasing \
-	 -fPIC \
-	 -rdynamic
+	 -fPIC
 
-LDFLAGS = @LDFLAGS@
+LDFLAGS = @LDFLAGS@ \
+	  -rdynamic
 
 LIBS = @UUID_LIBS@ @BLKID_LIBS@ @ZLIB_LIBS@ @LZO2_LIBS@ -L. -pthread
 LIBBTRFS_LIBS = $(LIBS)
