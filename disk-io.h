@@ -40,10 +40,10 @@ enum btrfs_open_ctree_flags {
 	 */
 	OPEN_CTREE_SUPPRESS_CHECK_BLOCK_ERRORS	= (1 << 8),
 	/* Return chunk root */
-	__OPEN_CTREEE_RETURN_CHUNK_ROOT	= (1 << 9),
+	__OPEN_CTREE_RETURN_CHUNK_ROOT	= (1 << 9),
 	OPEN_CTREE_CHUNK_ROOT_ONLY	= OPEN_CTREE_PARTIAL +
 					  OPEN_CTREE_SUPPRESS_CHECK_BLOCK_ERRORS +
-					  __OPEN_CTREEE_RETURN_CHUNK_ROOT,
+					  __OPEN_CTREE_RETURN_CHUNK_ROOT,
 	/*
 	 * TODO: cleanup: Split the open_ctree_flags into more indepent
 	 * tree bits.
