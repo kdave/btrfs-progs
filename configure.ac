@@ -3,6 +3,10 @@ AC_INIT([btrfs-progs],
 	[linux-btrfs@vger.kernel.org],,
 	[http://btrfs.wiki.kernel.org])
 
+if test "x$PACKAGE_URL" = "x"; then
+	AC_DEFINE([PACKAGE_URL], ["http://btrfs.wiki.kernel.org"], [URL])
+fi
+
 dnl library version
 LIBBTRFS_MAJOR=0
 LIBBTRFS_MINOR=1
