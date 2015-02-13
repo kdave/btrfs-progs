@@ -28,7 +28,7 @@ fi
 
 if [ "$opt" = "--configure" ]; then
 	# Omit the trailing newline, so that m4_esyscmd can use the result directly.
-	echo "$v" | tr -d '\n'
+	echo -n "$v"
 else
 	echo "$v"
 fi
