@@ -11,8 +11,8 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-*btrfs scrub* is used to scrub a btrfs filesystem, which will reading all data
-from all disks and verifying checksums.
+*btrfs scrub* is used to scrub a btrfs filesystem, which will read all data
+from all disks and verify checksums.
 
 SUBCOMMAND
 ----------
