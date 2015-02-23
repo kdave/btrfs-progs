@@ -2364,7 +2364,11 @@ static int repair_inode_nlinks(struct btrfs_trans_handle *trans,
 		}
 		ret = btrfs_add_link(trans, root, rec->ino, lost_found_ino,
 				     namebuf, namelen, type, NULL, 1);
-		if (ret == -EEXIST) {
+		/*
+		 * Add ".INO" suffix several times to handle case where
+		 * "FILENAME.INO" is already taken by another file.
+		 */
+		while (ret == -EEXIST) {
 			/*
 			 * Conflicting file name, add ".INO" as suffix * +1 for '.'
 			 */
@@ -2396,9 +2400,14 @@ static int repair_inode_nlinks(struct btrfs_trans_handle *trans,
 		printf("Moving file '%.*s' to '%s' dir since it has no valid backref\n",
 		       namelen, namebuf, dir_name);
 	}
-	rec->errors &= ~I_ERR_LINK_COUNT_WRONG;
 	printf("Fixed the nlink of inode %llu\n", rec->ino);
 out:
+	/*
+	 * Clear the flag anyway, or we will loop forever for the same inode
+	 * as it will not be removed from the bad inode list and the dead loop
+	 * happens.
+	 */
+	rec->errors &= ~I_ERR_LINK_COUNT_WRONG;
 	btrfs_release_path(path);
 	return ret;
 }
