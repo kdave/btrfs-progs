@@ -1479,6 +1479,24 @@ out:
 	return ret;
 }
 
+/*
+ * Note: this function uses a static per-thread buffer. Do not call this
+ * function more than 10 times within one argument list!
+ */
+const char *pretty_size_mode(u64 size, unsigned mode)
+{
+	static __thread int ps_index = 0;
+	static __thread char ps_array[10][32];
+	char *ret;
+
+	ret = ps_array[ps_index];
+	ps_index++;
+	ps_index %= 10;
+	(void)pretty_size_snprintf(size, ret, 32, mode);
+
+	return ret;
+}
+
 static const char* unit_suffix_binary[] =
 	{ "B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB"};
 static const char* unit_suffix_decimal[] =
