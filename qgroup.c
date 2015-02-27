@@ -1017,6 +1017,20 @@ static void __filter_and_sort_qgroups(struct qgroup_lookup *all_qgroups,
 		n = rb_prev(n);
 	}
 }
+
+static inline void print_status_flag_warning(u64 flags)
+{
+	if (!(flags & BTRFS_QGROUP_STATUS_FLAG_ON))
+		fprintf(stderr,
+		"WARNING: Quota disabled, qgroup data may be out of date\n");
+	else if (flags & BTRFS_QGROUP_STATUS_FLAG_RESCAN)
+		fprintf(stderr,
+		"WARNING: Rescan is running, qgroup data may be incorrect\n");
+	else if (flags & BTRFS_QGROUP_STATUS_FLAG_INCONSISTENT)
+		fprintf(stderr,
+		"WARNING: Qgroup data inconsistent, rescan recommended\n");
+}
+
 static int __qgroups_search(int fd, struct qgroup_lookup *qgroup_lookup)
 {
 	int ret;
@@ -1040,7 +1054,7 @@ static int __qgroups_search(int fd, struct qgroup_lookup *qgroup_lookup)
 
 	sk->tree_id = BTRFS_QUOTA_TREE_OBJECTID;
 	sk->max_type = BTRFS_QGROUP_RELATION_KEY;
-	sk->min_type = BTRFS_QGROUP_INFO_KEY;
+	sk->min_type = BTRFS_QGROUP_STATUS_KEY;
 	sk->max_objectid = (u64)-1;
 	sk->max_offset = (u64)-1;
 	sk->max_transid = (u64)-1;
@@ -1071,7 +1085,15 @@ static int __qgroups_search(int fd, struct qgroup_lookup *qgroup_lookup)
 								  off);
 			off += sizeof(*sh);
 
-			if (sh->type == BTRFS_QGROUP_INFO_KEY) {
+			if (sh->type == BTRFS_QGROUP_STATUS_KEY) {
+				struct btrfs_qgroup_status_item *si;
+				u64 flags;
+
+				si = (struct btrfs_qgroup_status_item *)
+				     (args.buf + off);
+				flags = btrfs_stack_qgroup_status_flags(si);
+				print_status_flag_warning(flags);
+			} else if (sh->type == BTRFS_QGROUP_INFO_KEY) {
 				info = (struct btrfs_qgroup_info_item *)
 				       (args.buf + off);
 				a1 = btrfs_stack_qgroup_info_generation(info);
