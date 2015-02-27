@@ -52,7 +52,7 @@ static int qgroup_assign(int assign, int argc, char **argv)
 	/*
 	 * FIXME src should accept subvol path
 	 */
-	if ((args.src >> 48) >= (args.dst >> 48)) {
+	if (btrfs_qgroup_level(args.src) >= btrfs_qgroup_level(args.dst)) {
 		fprintf(stderr, "ERROR: bad relation requested '%s'\n", path);
 		return 1;
 	}

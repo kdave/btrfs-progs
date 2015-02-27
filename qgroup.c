@@ -172,8 +172,9 @@ static int print_parent_column(struct btrfs_qgroup *qgroup)
 	int len = 0;
 
 	list_for_each_entry(list, &qgroup->qgroups, next_qgroup) {
-		len += printf("%llu/%llu", (list->qgroup)->qgroupid >> 48,
-			((1ll << 48) - 1) & (list->qgroup)->qgroupid);
+		len += printf("%llu/%llu",
+			      btrfs_qgroup_level(list->qgroup->qgroupid),
+			      btrfs_qgroup_subvid(list->qgroup->qgroupid));
 		if (!list_is_last(&list->next_qgroup, &qgroup->qgroups))
 			len += printf(",");
 	}
@@ -189,8 +190,9 @@ static int print_child_column(struct btrfs_qgroup *qgroup)
 	int len = 0;
 
 	list_for_each_entry(list, &qgroup->members, next_member) {
-		len += printf("%llu/%llu", (list->member)->qgroupid >> 48,
-				((1ll << 48) - 1) & (list->member)->qgroupid);
+		len += printf("%llu/%llu",
+			      btrfs_qgroup_level(list->member->qgroupid),
+			      btrfs_qgroup_subvid(list->member->qgroupid));
 		if (!list_is_last(&list->next_member, &qgroup->members))
 			len += printf(",");
 	}
@@ -219,8 +221,9 @@ static void print_qgroup_column(struct btrfs_qgroup *qgroup,
 	switch (column) {
 
 	case BTRFS_QGROUP_QGROUPID:
-		len = printf("%llu/%llu", qgroup->qgroupid >> 48,
-				((1ll << 48) - 1) & qgroup->qgroupid);
+		len = printf("%llu/%llu",
+			     btrfs_qgroup_level(qgroup->qgroupid),
+			     btrfs_qgroup_subvid(qgroup->qgroupid));
 		print_qgroup_column_add_blank(BTRFS_QGROUP_QGROUPID, len);
 		break;
 	case BTRFS_QGROUP_RFER:
@@ -921,8 +924,9 @@ static void __update_columns_max_len(struct btrfs_qgroup *bq,
 	switch (column) {
 
 	case BTRFS_QGROUP_QGROUPID:
-		sprintf(tmp, "%llu/%llu", (bq->qgroupid >> 48),
-			bq->qgroupid & ((1ll << 48) - 1));
+		sprintf(tmp, "%llu/%llu",
+			btrfs_qgroup_level(bq->qgroupid),
+			btrfs_qgroup_subvid(bq->qgroupid));
 		len = strlen(tmp);
 		if (btrfs_qgroup_columns[column].max_len < len)
 			btrfs_qgroup_columns[column].max_len = len;
@@ -951,8 +955,8 @@ static void __update_columns_max_len(struct btrfs_qgroup *bq,
 		len = 0;
 		list_for_each_entry(list, &bq->qgroups, next_qgroup) {
 			len += sprintf(tmp, "%llu/%llu",
-				(list->qgroup)->qgroupid >> 48,
-				((1ll << 48) - 1) & (list->qgroup)->qgroupid);
+				btrfs_qgroup_level(list->qgroup->qgroupid),
+				btrfs_qgroup_subvid(list->qgroup->qgroupid));
 			if (!list_is_last(&list->next_qgroup, &bq->qgroups))
 				len += 1;
 		}
@@ -963,8 +967,8 @@ static void __update_columns_max_len(struct btrfs_qgroup *bq,
 		len = 0;
 		list_for_each_entry(list, &bq->members, next_member) {
 			len += sprintf(tmp, "%llu/%llu",
-				(list->member)->qgroupid >> 48,
-				((1ll << 48) - 1) & (list->member)->qgroupid);
+				btrfs_qgroup_level(list->member->qgroupid),
+				btrfs_qgroup_subvid(list->member->qgroupid));
 			if (!list_is_last(&list->next_member, &bq->members))
 				len += 1;
 		}

@@ -645,8 +645,8 @@ static void print_objectid(u64 objectid, u8 type)
 		printf("%llu", (unsigned long long)objectid); /* device id */
 		return;
 	case BTRFS_QGROUP_RELATION_KEY:
-		printf("%llu/%llu", objectid >> 48,
-			objectid & ((1ll << 48) - 1));
+		printf("%llu/%llu", btrfs_qgroup_level(objectid),
+		       btrfs_qgroup_subvid(objectid));
 		return;
 	case BTRFS_UUID_KEY_SUBVOL:
 	case BTRFS_UUID_KEY_RECEIVED_SUBVOL:
@@ -743,8 +743,8 @@ void btrfs_print_key(struct btrfs_disk_key *disk_key)
 	case BTRFS_QGROUP_RELATION_KEY:
 	case BTRFS_QGROUP_INFO_KEY:
 	case BTRFS_QGROUP_LIMIT_KEY:
-		printf(" %llu/%llu)", (unsigned long long)(offset >> 48),
-			(unsigned long long)(offset & ((1ll << 48) - 1)));
+		printf(" %llu/%llu)", btrfs_qgroup_level(offset),
+		       btrfs_qgroup_subvid(offset));
 		break;
 	case BTRFS_UUID_KEY_SUBVOL:
 	case BTRFS_UUID_KEY_RECEIVED_SUBVOL:

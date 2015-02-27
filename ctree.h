@@ -868,11 +868,21 @@ struct btrfs_csum_item {
  */
 #define BTRFS_SPACE_INFO_GLOBAL_RSV    (1ULL << 49)
 
-#define BTRFS_QGROUP_STATUS_OFF			0
-#define BTRFS_QGROUP_STATUS_ON			1
-#define BTRFS_QGROUP_STATUS_SCANNING		2
+#define BTRFS_QGROUP_LEVEL_SHIFT		48
 
-#define BTRFS_QGROUP_STATUS_FLAG_INCONSISTENT	(1 << 0)
+static inline u64 btrfs_qgroup_level(u64 qgroupid)
+{
+	return qgroupid >> BTRFS_QGROUP_LEVEL_SHIFT;
+}
+
+static inline u64 btrfs_qgroup_subvid(u64 qgroupid)
+{
+	return qgroupid & ((1ULL << BTRFS_QGROUP_LEVEL_SHIFT) - 1);
+}
+
+#define BTRFS_QGROUP_STATUS_FLAG_ON		(1ULL << 0)
+#define BTRFS_QGROUP_STATUS_FLAG_RESCAN		(1ULL << 1)
+#define BTRFS_QGROUP_STATUS_FLAG_INCONSISTENT	(1ULL << 2)
 
 struct btrfs_qgroup_status_item {
 	__le64 version;
