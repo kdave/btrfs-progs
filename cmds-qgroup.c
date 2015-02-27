@@ -64,13 +64,33 @@ static int qgroup_assign(int assign, int argc, char **argv)
 
 	ret = ioctl(fd, BTRFS_IOC_QGROUP_ASSIGN, &args);
 	e = errno;
-	close_file_or_dir(fd, dirstream);
 	if (ret < 0) {
 		fprintf(stderr, "ERROR: unable to assign quota group: %s\n",
 			strerror(e));
+		close_file_or_dir(fd, dirstream);
 		return 1;
 	}
-	return 0;
+
+	/*
+	 * If ret > 0, it means assign caused qgroup data inconsistent state.
+	 * Schedule a quota rescan if requested.
+	 *
+	 * The return value change only happens in newer kernel. But will not
+	 * cause problem since old kernel has a bug that will never clear
+	 * INCONSISTENT bit.
+	 */
+	if (ret > 0) {
+		struct btrfs_ioctl_quota_rescan_args args;
+
+		printf("Quota data changed, quota rescan scheduled\n");
+		memset(&args, 0, sizeof(args));
+		ret = ioctl(fd, BTRFS_IOC_QUOTA_RESCAN, &args);
+		if (ret < 0)
+			fprintf(stderr, "ERROR: quota rescan failed: %s\n",
+				strerror(errno));
+	}
+	close_file_or_dir(fd, dirstream);
+	return ret;
 }
 
 static int qgroup_create(int create, int argc, char **argv)
