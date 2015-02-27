@@ -1249,34 +1249,6 @@ int btrfs_qgroup_parse_sort_string(char *opt_arg,
 	return 0;
 }
 
-u64 parse_qgroupid(char *p)
-{
-	char *s = strchr(p, '/');
-	char *ptr_src_end = p + strlen(p);
-	char *ptr_parse_end = NULL;
-	u64 level;
-	u64 id;
-
-	if (!s) {
-		id = strtoull(p, &ptr_parse_end, 10);
-		if (ptr_parse_end != ptr_src_end)
-			goto err;
-		return id;
-	}
-	level = strtoull(p, &ptr_parse_end, 10);
-	if (ptr_parse_end != s)
-		goto err;
-
-	id = strtoull(s+1, &ptr_parse_end, 10);
-	if (ptr_parse_end != ptr_src_end)
-		goto  err;
-
-	return (level << 48) | id;
-err:
-	fprintf(stderr, "ERROR:invalid qgroupid\n");
-	exit(-1);
-}
-
 int qgroup_inherit_size(struct btrfs_qgroup_inherit *p)
 {
 	return sizeof(*p) + sizeof(p->qgroups[0]) *

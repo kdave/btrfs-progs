@@ -1795,6 +1795,34 @@ u64 parse_size(char *s)
 	return ret;
 }
 
+u64 parse_qgroupid(const char *p)
+{
+	char *s = strchr(p, '/');
+	const char *ptr_src_end = p + strlen(p);
+	char *ptr_parse_end = NULL;
+	u64 level;
+	u64 id;
+
+	if (!s) {
+		id = strtoull(p, &ptr_parse_end, 10);
+		if (ptr_parse_end != ptr_src_end)
+			goto err;
+		return id;
+	}
+	level = strtoull(p, &ptr_parse_end, 10);
+	if (ptr_parse_end != s)
+		goto err;
+
+	id = strtoull(s + 1, &ptr_parse_end, 10);
+	if (ptr_parse_end != ptr_src_end)
+		goto  err;
+
+	return (level << BTRFS_QGROUP_LEVEL_SHIFT) | id;
+err:
+	fprintf(stderr, "ERROR: invalid qgroupid %s\n", p);
+	exit(-1);
+}
+
 int open_file_or_dir3(const char *fname, DIR **dirstream, int open_flags)
 {
 	int ret;
