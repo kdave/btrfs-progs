@@ -2759,14 +2759,14 @@ fail:
 
 static void print_usage(void)
 {
-	printf("usage: btrfs-convert [-d] [-i] [-n] [-r] [-l label] [-L] device\n");
+	printf("usage: btrfs-convert [-d] [-i] [-n] [-r] [-l label] [-L] [-p] device\n");
 	printf("\t-d           disable data checksum\n");
 	printf("\t-i           ignore xattrs and ACLs\n");
 	printf("\t-n           disable packing of small files\n");
 	printf("\t-r           roll back to ext2fs\n");
 	printf("\t-l LABEL     set filesystem label\n");
 	printf("\t-L           use label from converted fs\n");
-	printf("\t-p           show converting progress\n");
+	printf("\t-p           show converting progress (default)\n");
 }
 
 int main(int argc, char *argv[])
@@ -2778,7 +2778,7 @@ int main(int argc, char *argv[])
 	int rollback = 0;
 	int copylabel = 0;
 	int usage_error = 0;
-	int progress = 0;
+	int progress = 1;
 	char *file;
 	char *fslabel = NULL;
 

@@ -30,7 +30,7 @@ set filesystem label during conversion.
 -L::
 use label from the converted filesystem.
 -p::
-Show progress of conversion.
+Show progress of conversion, on by default.
 
 EXIT STATUS
 -----------
