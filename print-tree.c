@@ -203,6 +203,20 @@ static void bg_flags_to_str(u64 flags, char *ret)
 	}
 }
 
+/* Caller should ensure sizeof(*ret)>= 26 "OFF|SCANNING|INCONSISTENT" */
+static void qgroup_flags_to_str(u64 flags, char *ret)
+{
+	if (flags & BTRFS_QGROUP_STATUS_FLAG_ON)
+		strcpy(ret, "ON");
+	else
+		strcpy(ret, "OFF");
+
+	if (flags & BTRFS_QGROUP_STATUS_FLAG_RESCAN)
+		strcat(ret, "|SCANNING");
+	if (flags & BTRFS_QGROUP_STATUS_FLAG_INCONSISTENT)
+		strcat(ret, "|INCONSISTENT");
+}
+
 void print_chunk(struct extent_buffer *eb, struct btrfs_chunk *chunk)
 {
 	int num_stripes = btrfs_chunk_num_stripes(eb, chunk);
@@ -801,7 +815,7 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 	u32 nr = btrfs_header_nritems(l);
 	u64 objectid;
 	u32 type;
-	char bg_flags_str[32];
+	char flags_str[32];
 
 	printf("leaf %llu items %d free space %d generation %llu owner %llu\n",
 		(unsigned long long)btrfs_header_bytenr(l), nr,
@@ -920,13 +934,13 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 					    struct btrfs_block_group_item);
 			read_extent_buffer(l, &bg_item, (unsigned long)bi,
 					   sizeof(bg_item));
-			memset(bg_flags_str, 0, sizeof(bg_flags_str));
+			memset(flags_str, 0, sizeof(flags_str));
 			bg_flags_to_str(btrfs_block_group_flags(&bg_item),
-					bg_flags_str);
+					flags_str);
 			printf("\t\tblock group used %llu chunk_objectid %llu flags %s\n",
 			       (unsigned long long)btrfs_block_group_used(&bg_item),
 			       (unsigned long long)btrfs_block_group_chunk_objectid(&bg_item),
-			       bg_flags_str);
+			       flags_str);
 			break;
 		case BTRFS_CHUNK_ITEM_KEY:
 			print_chunk(l, btrfs_item_ptr(l, i, struct btrfs_chunk));
@@ -953,14 +967,16 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 		case BTRFS_QGROUP_STATUS_KEY:
 			qg_status = btrfs_item_ptr(l, i,
 					struct btrfs_qgroup_status_item);
-			printf("\t\tversion %llu generation %llu flags %#llx "
+			memset(flags_str, 0, sizeof(flags_str));
+			qgroup_flags_to_str(btrfs_qgroup_status_flags(l, qg_status),
+					flags_str);
+			printf("\t\tversion %llu generation %llu flags %s "
 				"scan %lld\n",
 				(unsigned long long)
 				btrfs_qgroup_status_version(l, qg_status),
 				(unsigned long long)
 				btrfs_qgroup_status_generation(l, qg_status),
-				(unsigned long long)
-				btrfs_qgroup_status_flags(l, qg_status),
+				flags_str,
 				(unsigned long long)
 				btrfs_qgroup_status_scan(l, qg_status));
 			break;
