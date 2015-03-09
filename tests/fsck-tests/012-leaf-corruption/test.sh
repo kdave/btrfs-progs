@@ -55,20 +55,20 @@ check_inode()
 	name=$5
 
 	# Check whether the inode exists
-	exists=$($_sudo find $path -inum $ino)
+	exists=$($SUDO_HELPER find $path -inum $ino)
 	if [ -z "$exists" ]; then
 		_fail "inode $ino not recovered correctly"
 	fi
 
 	# Check inode type
-	found_mode=$(printf "%o" 0x$($_sudo stat $exists -c %f))
+	found_mode=$(printf "%o" 0x$($SUDO_HELPER stat $exists -c %f))
 	if [ $found_mode -ne $mode ]; then
 		echo "$found_mode"
 		_fail "inode $ino modes not recovered"
 	fi
 
 	# Check inode size
-	found_size=$($_sudo stat $exists -c %s)
+	found_size=$($SUDO_HELPER stat $exists -c %s)
 	if [ $mode -ne 41700 -a $found_size -ne $size ]; then
 		_fail "inode $ino size not recovered correctly"
 	fi
@@ -90,7 +90,7 @@ check_leaf_corrupt_no_data_ext()
 		TEST_MNT="$(pwd)/tmp"
 	fi
 	mkdir -p $TEST_MNT || _fail "failed to create mount point"
-	$_sudo mount $image -o ro $TEST_MNT
+	$SUDO_HELPER mount $image -o ro $TEST_MNT
 
 	i=0
 	while [ $i -lt ${#leaf_no_data_ext_list[@]} ]; do
@@ -102,7 +102,7 @@ check_leaf_corrupt_no_data_ext()
 			    ${leaf_no_data_ext_list[i + 4]}
 			    ((i+=4))
 	done
-	$_sudo umount $TEST_MNT
+	$SUDO_HELPER umount $TEST_MNT
 }
 
 setup_root_helper

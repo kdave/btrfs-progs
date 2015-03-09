@@ -57,26 +57,26 @@ check_all_images()
 # some tests need to mount the recovered image and do verifications call
 # 'setup_root_helper' and then check for have_root_helper == 1 if the test
 # needs to fail otherwise; using sudo by default for now
-_sudo=
-need_validate=-1
-export _sudo
-export need_validate
+SUDO_HELPER=
+NEED_SUDO_VALIDATE=unknown
+export SUDO_HELPER
+export NEED_SUDO_VALIDATE
 root_helper()
 {
 	if [ $UID -eq 0 ]; then
-		$*
+		"$@"
 	else
-		if [ $need_validate -eq 1 ]; then
-			sudo -v -n &> /dev/null || \
-				_not_run "Need validate sudo credential"
-			sudo -n $*
-		elif [ $need_validate -eq 0 ]; then
-			sudo -n true  &> /dev/null || \
-				_not_run "Need validate sudo user setting"
-			sudo -n $*
+		if [ "$NEED_SUDO_VALIDATE" = 'yes' ]; then
+			sudo -v -n &>/dev/null || \
+				_not_run "Need to validate sudo credentials"
+			sudo -n "$@"
+		elif [ "$NEED_SUDO_VALIDATE" = 'no' ]; then
+			sudo -n /bin/true &> /dev/null || \
+				_not_run "Need to validate sudo user settings"
+			sudo -n "$@"
 		else
 			# should not happen
-			_not_run "Need validate root privilege"
+			_not_run "Need to validate root privileges"
 		fi
 	fi
 }
@@ -86,15 +86,16 @@ setup_root_helper()
 	if [ $UID -eq 0 ]; then
 		return
 	fi
-	# Test for old sudo or special setting, which makes sudo -v fails even
-	# user is set NOPASSWD
-	sudo -n true &> /dev/null && need_validate=0
+
+	# Test for old sudo or special settings, which make sudo -v fail even
+	# if user setting is NOPASSWD
+	sudo -n /bin/true &>/dev/null && NEED_SUDO_VALIDATE=no
 
 	# Newer sudo or default sudo setting
-	sudo -v -n &> /dev/null && need_validate=1
+	sudo -v -n &>/dev/null && NEED_SUDO_VALIDATE=yes
 
-	if [ $need_validate -eq -1 ]; then
-		_not_run "Need validate root privilege"
+	if [ "$NEED_SUDO_VALIDATE" = 'yes' ]; then
+		_not_run "Need to validate root privileges"
 	fi
-	_sudo=root_helper
+	SUDO_HELPER=root_helper
 }
