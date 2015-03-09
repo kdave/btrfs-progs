@@ -2760,14 +2760,14 @@ fail:
 
 static void print_usage(void)
 {
-	printf("usage: btrfs-convert [-d] [-i] [-n] [-r] [-l label] [-L] [-p] device\n");
-	printf("\t-d           disable data checksum\n");
-	printf("\t-i           ignore xattrs and ACLs\n");
-	printf("\t-n           disable packing of small files\n");
-	printf("\t-r           roll back to ext2fs\n");
-	printf("\t-l LABEL     set filesystem label\n");
-	printf("\t-L           use label from converted fs\n");
-	printf("\t-p           show converting progress (default)\n");
+	printf("usage: btrfs-convert [options] device\n");
+	printf("\t-d             disable data checksum\n");
+	printf("\t-i             ignore xattrs and ACLs\n");
+	printf("\t-n             disable packing of small files\n");
+	printf("\t-r             roll back to ext2fs\n");
+	printf("\t-l LABEL       set filesystem label\n");
+	printf("\t-L             use label from converted fs\n");
+	printf("\t-p             show converting progress (default)\n");
 	printf("\t--no-progress  show only overview, not the detailed progress\n");
 }
 
