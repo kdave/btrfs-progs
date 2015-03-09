@@ -31,6 +31,8 @@ set filesystem label during conversion.
 use label from the converted filesystem.
 -p::
 Show progress of conversion, on by default.
+--no-progress::
+Disable detailed progress and show only the main phases of conversion.
 
 EXIT STATUS
 -----------

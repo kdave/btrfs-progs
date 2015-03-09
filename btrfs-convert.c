@@ -29,6 +29,7 @@
 #include <unistd.h>
 #include <uuid/uuid.h>
 #include <linux/limits.h>
+#include <getopt.h>
 
 #include "ctree.h"
 #include "disk-io.h"
@@ -2767,6 +2768,7 @@ static void print_usage(void)
 	printf("\t-l LABEL     set filesystem label\n");
 	printf("\t-L           use label from converted fs\n");
 	printf("\t-p           show converting progress (default)\n");
+	printf("\t--no-progress  show only overview, not the detailed progress\n");
 }
 
 int main(int argc, char *argv[])
@@ -2783,7 +2785,15 @@ int main(int argc, char *argv[])
 	char *fslabel = NULL;
 
 	while(1) {
-		int c = getopt(argc, argv, "dinrl:Lp");
+		int long_index;
+		enum { GETOPT_VAL_NO_PROGRESS = 256 };
+		static const struct option long_options[] = {
+			{ "no-progress", no_argument, NULL, GETOPT_VAL_IEC},
+			{ NULL, 0, NULL, 0 }
+		};
+		int c = getopt_long(argc, argv, "dinrl:Lp", long_options,
+				&long_index);
+
 		if (c < 0)
 			break;
 		switch(c) {
@@ -2814,6 +2824,9 @@ int main(int argc, char *argv[])
 				break;
 			case 'p':
 				progress = 1;
+				break;
+			case GETOPT_VAL_NO_PROGRESS:
+				progress = 0;
 				break;
 			default:
 				print_usage();
