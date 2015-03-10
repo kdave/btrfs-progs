@@ -94,7 +94,7 @@ setup_root_helper()
 	# Newer sudo or default sudo setting
 	sudo -v -n &>/dev/null && NEED_SUDO_VALIDATE=yes
 
-	if [ "$NEED_SUDO_VALIDATE" = 'yes' ]; then
+	if [ "$NEED_SUDO_VALIDATE" = 'unknown' ]; then
 		_not_run "Need to validate root privileges"
 	fi
 	SUDO_HELPER=root_helper
