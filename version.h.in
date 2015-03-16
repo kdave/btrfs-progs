@@ -8,4 +8,7 @@
 #define BTRFS_LIB_VERSION ( BTRFS_LIB_MAJOR * 10000 + \
                             BTRFS_LIB_MINOR * 100 + \
                             BTRFS_LIB_PATCHLEVEL )
+
+#define BTRFS_BUILD_VERSION "Btrfs @PACKAGE_VERSION@"
+
 #endif
