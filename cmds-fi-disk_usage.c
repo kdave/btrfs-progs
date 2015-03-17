@@ -324,6 +324,7 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 	u64 r_total_chunks = 0;	/* sum of chunks sizes on disk(s) */
 	u64 r_total_used = 0;
 	u64 r_total_unused = 0;
+	u64 r_total_missing = 0;	/* sum of missing devices size */
 	u64 r_data_used = 0;
 	u64 r_data_chunks = 0;
 	u64 l_data_chunks = 0;
@@ -350,8 +351,11 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 	}
 
 	r_total_size = 0;
-	for (i = 0; i < devcount; i++)
-		r_total_size += devinfo[i].device_size;
+	for (i = 0; i < devcount; i++) {
+		r_total_size += devinfo[i].size;
+		if (!devinfo[i].device_size)
+			r_total_missing += devinfo[i].size;
+	}
 
 	if (r_total_size == 0) {
 		fprintf(stderr,
@@ -461,6 +465,8 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 		pretty_size_mode(r_total_chunks, unit_mode));
 	printf("    Device unallocated:\t\t%*s\n", width,
 		pretty_size_mode(r_total_unused, unit_mode));
+	printf("    Device missing:\t\t%*s\n", width,
+		pretty_size_mode(r_total_missing, unit_mode));
 	printf("    Used:\t\t\t%*s\n", width,
 		pretty_size_mode(r_total_used, unit_mode));
 	printf("    Free (estimated):\t\t%*s\t(",
@@ -538,8 +544,13 @@ static int load_device_info(int fd, struct device_info **device_info_ptr,
 		}
 
 		info[ndevs].devid = dev_info.devid;
-		strcpy(info[ndevs].path, (char *)dev_info.path);
-		info[ndevs].device_size = get_partition_size((char *)dev_info.path);
+		if (!dev_info.path[0]) {
+			strcpy(info[ndevs].path, "missing");
+		} else {
+			strcpy(info[ndevs].path, (char *)dev_info.path);
+			info[ndevs].device_size =
+				get_partition_size((char *)dev_info.path);
+		}
 		info[ndevs].size = dev_info.total_bytes;
 		++ndevs;
 	}
