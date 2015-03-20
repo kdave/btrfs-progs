@@ -25,6 +25,7 @@
 
 #define BTRFS_MKFS_SYSTEM_GROUP_SIZE (4 * 1024 * 1024)
 #define BTRFS_MKFS_SMALL_VOLUME_SIZE (1024 * 1024 * 1024)
+#define BTRFS_MKFS_DEFAULT_NODE_SIZE 16384
 
 #define BTRFS_SCAN_MOUNTED	(1ULL << 0)
 #define BTRFS_SCAN_LBLKID	(1ULL << 1)
@@ -208,5 +209,6 @@ static inline u64 div_factor(u64 num, int factor)
 }
 
 int btrfs_tree_search2_ioctl_supported(int fd);
+int btrfs_check_node_or_leaf_size(u32 size, u32 sectorsize);
 
 #endif

@@ -47,8 +47,6 @@ static u64 index_cnt = 2;
 #define DEFAULT_MKFS_FEATURES	(BTRFS_FEATURE_INCOMPAT_EXTENDED_IREF \
 		| BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA)
 
-#define DEFAULT_MKFS_LEAF_SIZE 16384
-
 struct directory_name_entry {
 	char *dir_name;
 	char *path;
@@ -1057,27 +1055,6 @@ static int zero_output_file(int out_fd, u64 size, u32 sectorsize)
 	return ret;
 }
 
-static int check_leaf_or_node_size(u32 size, u32 sectorsize)
-{
-	if (size < sectorsize) {
-		fprintf(stderr,
-			"Illegal leafsize (or nodesize) %u (smaller than %u)\n",
-			size, sectorsize);
-		return -1;
-	} else if (size > BTRFS_MAX_METADATA_BLOCKSIZE) {
-		fprintf(stderr,
-			"Illegal leafsize (or nodesize) %u (larger than %u)\n",
-			size, BTRFS_MAX_METADATA_BLOCKSIZE);
-		return -1;
-	} else if (size & (sectorsize - 1)) {
-		fprintf(stderr,
-			"Illegal leafsize (or nodesize) %u (not align to %u)\n",
-			size, sectorsize);
-		return -1;
-	}
-	return 0;
-}
-
 static int is_ssd(const char *file)
 {
 	blkid_probe probe;
@@ -1230,7 +1207,8 @@ int main(int ac, char **av)
 	u64 alloc_start = 0;
 	u64 metadata_profile = 0;
 	u64 data_profile = 0;
-	u32 leafsize = max_t(u32, sysconf(_SC_PAGESIZE), DEFAULT_MKFS_LEAF_SIZE);
+	u32 leafsize = max_t(u32, sysconf(_SC_PAGESIZE),
+			BTRFS_MKFS_DEFAULT_NODE_SIZE);
 	u32 sectorsize = 4096;
 	u32 nodesize = leafsize;
 	u32 stripesize = 4096;
@@ -1359,9 +1337,9 @@ int main(int ac, char **av)
 		}
 	}
 	sectorsize = max(sectorsize, (u32)sysconf(_SC_PAGESIZE));
-	if (check_leaf_or_node_size(leafsize, sectorsize))
+	if (btrfs_check_node_or_leaf_size(leafsize, sectorsize))
 		exit(1);
-	if (check_leaf_or_node_size(nodesize, sectorsize))
+	if (btrfs_check_node_or_leaf_size(nodesize, sectorsize))
 		exit(1);
 	saved_optind = optind;
 	dev_cnt = ac - optind;
@@ -1440,7 +1418,7 @@ int main(int ac, char **av)
 		if (!leaf_forced) {
 			leafsize = best_leafsize;
 			nodesize = best_leafsize;
-			if (check_leaf_or_node_size(leafsize, sectorsize))
+			if (btrfs_check_node_or_leaf_size(leafsize, sectorsize))
 				exit(1);
 		}
 		if (leafsize != sectorsize) {
