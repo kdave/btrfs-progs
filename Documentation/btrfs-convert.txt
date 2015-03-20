@@ -23,6 +23,10 @@ Disable data checksum.
 Ignore xattrs and ACLs.
 -n::
 Disable packing of small files.
+-N <SIZE>::
+Set filesystem nodesize, the tree block size in which btrfs stores data.
+The default value is 16KB (16384) or the page size, whichever is bigger.
+Must be a multiple of the sectorsize, but not larger than 65536.
 -r::
 Roll back to ext2fs.
 -l <LABEL>::
