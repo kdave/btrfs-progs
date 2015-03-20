@@ -16,7 +16,8 @@ rm -f convert-tests-results.txt
 
 test(){
 	echo "    [TEST]   $1"
-	shift
+	nodesize=$2
+	shift 2
 	echo "creating ext image with: $*" >> convert-tests-results.txt
 	# 256MB is the smallest acceptable btrfs image.
 	rm -f $here/test.img >> convert-tests-results.txt 2>&1 \
@@ -25,13 +26,17 @@ test(){
 		|| _fail "could not create test image file"
 	$* -F $here/test.img >> convert-tests-results.txt 2>&1 \
 		|| _fail "filesystem create failed"
-	$here/btrfs-convert $here/test.img >> convert-tests-results.txt 2>&1 \
+	$here/btrfs-convert -N "$nodesize" $here/test.img \
+			>> convert-tests-results.txt 2>&1 \
 		|| _fail "btrfs-convert failed"
 	$here/btrfs check $here/test.img >> convert-tests-results.txt 2>&1 \
 		|| _fail "btrfs check detected errors"
 }
 
 # btrfs-convert requires 4k blocksize.
-test "ext2" mke2fs -b 4096
-test "ext3" mke2fs -j -b 4096
-test "ext4" mke2fs -t ext4 -b 4096
+test "ext2 4k nodesize" 4096 mke2fs -b 4096
+test "ext3 4k nodesize" 4096 mke2fs -j -b 4096
+test "ext4 4k nodesize" 4096 mke2fs -t ext4 -b 4096
+test "ext2 16k nodesize" 16384 mke2fs -b 4096
+test "ext3 16k nodesize" 16384 mke2fs -j -b 4096
+test "ext4 16k nodesize" 16384 mke2fs -t ext4 -b 4096
