@@ -2725,17 +2725,17 @@ int btrfs_check_node_or_leaf_size(u32 size, u32 sectorsize)
 {
 	if (size < sectorsize) {
 		fprintf(stderr,
-			"Illegal leafsize (or nodesize) %u (smaller than %u)\n",
+			"ERROR: Illegal nodesize (or leafsize) %u (smaller than %u)\n",
 			size, sectorsize);
 		return -1;
 	} else if (size > BTRFS_MAX_METADATA_BLOCKSIZE) {
 		fprintf(stderr,
-			"Illegal leafsize (or nodesize) %u (larger than %u)\n",
+			"ERROR: Illegal nodesize (or leafsize) %u (larger than %u)\n",
 			size, BTRFS_MAX_METADATA_BLOCKSIZE);
 		return -1;
 	} else if (size & (sectorsize - 1)) {
 		fprintf(stderr,
-			"Illegal leafsize (or nodesize) %u (not align to %u)\n",
+			"ERROR: Illegal nodesize (or leafsize) %u (not aligned to %u)\n",
 			size, sectorsize);
 		return -1;
 	}
