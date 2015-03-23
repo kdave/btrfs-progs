@@ -17,23 +17,24 @@ named 'ext2_saved' as file image.
 
 OPTIONS
 -------
--d::
-Disable data checksum.
--i::
+-d|--no-datasum::
+Disable data checksum calculations and set NODATASUM file flag. This can speed
+up the conversion.
+-i|--no-xattr::
 Ignore xattrs and ACLs.
--n::
-Disable packing of small files.
--N <SIZE>::
+-n|--no-inline::
+Disable inlining of small files to metadata blocks.
+-N|--nodesize <SIZE>::
 Set filesystem nodesize, the tree block size in which btrfs stores data.
 The default value is 16KB (16384) or the page size, whichever is bigger.
 Must be a multiple of the sectorsize, but not larger than 65536.
--r::
+-r|--rollback::
 Roll back to ext2fs.
--l <LABEL>::
+-l|--label <LABEL>::
 set filesystem label during conversion.
--L::
+-L|--copy-label::
 use label from the converted filesystem.
--p::
+-p|--progress::
 Show progress of conversion, on by default.
 --no-progress::
 Disable detailed progress and show only the main phases of conversion.
