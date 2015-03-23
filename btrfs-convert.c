@@ -2282,7 +2282,8 @@ err:
 }
 
 static int do_convert(const char *devname, int datacsum, int packing, int noxattr,
-		u32 nodesize, int copylabel, const char *fslabel, int progress)
+		u32 nodesize, int copylabel, const char *fslabel, int progress,
+		u64 features)
 {
 	int i, ret, blocks_per_node;
 	int fd = -1;
@@ -2294,6 +2295,7 @@ static int do_convert(const char *devname, int datacsum, int packing, int noxatt
 	struct btrfs_root *root;
 	struct btrfs_root *ext2_root;
 	struct task_ctx ctx;
+	char features_buf[64];
 
 	ret = open_ext2fs(devname, &ext2_fs);
 	if (ret) {
@@ -2334,9 +2336,17 @@ static int do_convert(const char *devname, int datacsum, int packing, int noxatt
 		fprintf(stderr, "unable to open %s\n", devname);
 		goto fail;
 	}
+	btrfs_parse_features_to_string(features_buf, features);
+	if (features == BTRFS_MKFS_DEFAULT_FEATURES)
+		strcat(features_buf, " (default)");
+
+	printf("create btrfs filesystem:\n");
+	printf("\tblocksize: %u\n", blocksize);
+	printf("\tnodesize:  %u\n", nodesize);
+	printf("\tfeatures:  %s\n", features_buf);
 	ret = make_btrfs(fd, devname, ext2_fs->super->s_volume_name,
 			 NULL, blocks, total_bytes, nodesize,
-			 blocksize, blocksize, 0);
+			 blocksize, blocksize, features);
 	if (ret) {
 		fprintf(stderr, "unable to create initial ctree: %s\n",
 			strerror(-ret));
@@ -2832,6 +2842,7 @@ static void print_usage(void)
 	printf("\t-l|--label LABEL       set filesystem label\n");
 	printf("\t-L|--copy-label        use label from converted filesystem\n");
 	printf("\t-p|--progress          show converting progress (default)\n");
+	printf("\t-O|--features LIST     comma separated list of filesystem features\n");
 	printf("\t--no-progress          show only overview, not the detailed progress\n");
 }
 
@@ -2849,6 +2860,7 @@ int main(int argc, char *argv[])
 	int progress = 1;
 	char *file;
 	char *fslabel = NULL;
+	u64 features = BTRFS_MKFS_DEFAULT_FEATURES;
 
 	while(1) {
 		enum { GETOPT_VAL_NO_PROGRESS = 256 };
@@ -2859,13 +2871,14 @@ int main(int argc, char *argv[])
 			{ "no-inline", no_argument, NULL, 'n' },
 			{ "no-xattr", no_argument, NULL, 'i' },
 			{ "rollback", no_argument, NULL, 'r' },
+			{ "features", required_argument, NULL, 'O' },
 			{ "progress", no_argument, NULL, 'p' },
 			{ "label", required_argument, NULL, 'l' },
 			{ "copy-label", no_argument, NULL, 'L' },
 			{ "nodesize", required_argument, NULL, 'N' },
 			{ NULL, 0, NULL, 0 }
 		};
-		int c = getopt_long(argc, argv, "dinN:rl:Lp", long_options, NULL);
+		int c = getopt_long(argc, argv, "dinN:rl:LpO:", long_options, NULL);
 
 		if (c < 0)
 			break;
@@ -2901,6 +2914,37 @@ int main(int argc, char *argv[])
 			case 'p':
 				progress = 1;
 				break;
+			case 'O': {
+				char *orig = strdup(optarg);
+				char *tmp = orig;
+
+				tmp = btrfs_parse_fs_features(tmp, &features);
+				if (tmp) {
+					fprintf(stderr,
+						"Unrecognized filesystem feature '%s'\n",
+							tmp);
+					free(orig);
+					exit(1);
+				}
+				free(orig);
+				if (features & BTRFS_FEATURE_LIST_ALL) {
+					btrfs_list_all_fs_features(
+						~BTRFS_CONVERT_ALLOWED_FEATURES);
+					exit(0);
+				}
+				if (features & ~BTRFS_CONVERT_ALLOWED_FEATURES) {
+					char buf[64];
+
+					btrfs_parse_features_to_string(buf,
+						features & ~BTRFS_CONVERT_ALLOWED_FEATURES);
+					fprintf(stderr,
+						"ERROR: features not allowed for convert: %s\n",
+						buf);
+					exit(1);
+				}
+
+				break;
+				}
 			case GETOPT_VAL_NO_PROGRESS:
 				progress = 0;
 				break;
@@ -2942,7 +2986,7 @@ int main(int argc, char *argv[])
 		ret = do_rollback(file);
 	} else {
 		ret = do_convert(file, datacsum, packing, noxattr, nodesize,
-				copylabel, fslabel, progress);
+				copylabel, fslabel, progress, features);
 	}
 	if (ret)
 		return 1;
