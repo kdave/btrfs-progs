@@ -606,14 +606,16 @@ void btrfs_process_fs_features(u64 flags)
 	}
 }
 
-void btrfs_list_all_fs_features(void)
+void btrfs_list_all_fs_features(u64 mask_disallowed)
 {
 	int i;
 
-	fprintf(stderr, "Filesystem features available at mkfs time:\n");
+	fprintf(stderr, "Filesystem features available:\n");
 	for (i = 0; i < ARRAY_SIZE(mkfs_features) - 1; i++) {
 		char *is_default = "";
 
+		if (mkfs_features[i].flag & mask_disallowed)
+			continue;
 		if (mkfs_features[i].flag & BTRFS_MKFS_DEFAULT_FEATURES)
 			is_default = ", default";
 		fprintf(stderr, "%-20s- %s (0x%llx%s)\n",

@@ -1208,7 +1208,7 @@ int main(int ac, char **av)
 				}
 				free(orig);
 				if (features & BTRFS_FEATURE_LIST_ALL) {
-					btrfs_list_all_fs_features();
+					btrfs_list_all_fs_features(0);
 					exit(0);
 				}
 				break;
