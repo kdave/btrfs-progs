@@ -2830,7 +2830,8 @@ int main(int argc, char *argv[])
 		int long_index;
 		enum { GETOPT_VAL_NO_PROGRESS = 256 };
 		static const struct option long_options[] = {
-			{ "no-progress", no_argument, NULL, GETOPT_VAL_IEC},
+			{ "no-progress", no_argument, NULL,
+				GETOPT_VAL_NO_PROGRESS },
 			{ NULL, 0, NULL, 0 }
 		};
 		int c = getopt_long(argc, argv, "dinN:rl:Lp", long_options,
