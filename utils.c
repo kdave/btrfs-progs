@@ -555,6 +555,94 @@ out:
 	return ret;
 }
 
+static const struct btrfs_fs_feature {
+	const char *name;
+	u64 flag;
+	const char *desc;
+} mkfs_features[] = {
+	{ "mixed-bg", BTRFS_FEATURE_INCOMPAT_MIXED_GROUPS,
+		"mixed data and metadata block groups" },
+	{ "extref", BTRFS_FEATURE_INCOMPAT_EXTENDED_IREF,
+		"increased hardlink limit per file to 65536" },
+	{ "raid56", BTRFS_FEATURE_INCOMPAT_RAID56,
+		"raid56 extended format" },
+	{ "skinny-metadata", BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA,
+		"reduced-size metadata extent refs" },
+	{ "no-holes", BTRFS_FEATURE_INCOMPAT_NO_HOLES,
+		"no explicit hole extents for files" },
+	/* Keep this one last */
+	{ "list-all", BTRFS_FEATURE_LIST_ALL, NULL }
+};
+
+static int parse_one_fs_feature(const char *name, u64 *flags)
+{
+	int i;
+	int found = 0;
+
+	for (i = 0; i < ARRAY_SIZE(mkfs_features); i++) {
+		if (name[0] == '^' &&
+			!strcmp(mkfs_features[i].name, name + 1)) {
+			*flags &= ~ mkfs_features[i].flag;
+			found = 1;
+		} else if (!strcmp(mkfs_features[i].name, name)) {
+			*flags |= mkfs_features[i].flag;
+			found = 1;
+		}
+	}
+
+	return !found;
+}
+
+void btrfs_process_fs_features(u64 flags)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(mkfs_features); i++) {
+		if (flags & mkfs_features[i].flag) {
+			printf("Turning ON incompat feature '%s': %s\n",
+				mkfs_features[i].name,
+				mkfs_features[i].desc);
+		}
+	}
+}
+
+void btrfs_list_all_fs_features(void)
+{
+	int i;
+
+	fprintf(stderr, "Filesystem features available at mkfs time:\n");
+	for (i = 0; i < ARRAY_SIZE(mkfs_features) - 1; i++) {
+		char *is_default = "";
+
+		if (mkfs_features[i].flag & BTRFS_MKFS_DEFAULT_FEATURES)
+			is_default = ", default";
+		fprintf(stderr, "%-20s- %s (0x%llx%s)\n",
+				mkfs_features[i].name,
+				mkfs_features[i].desc,
+				mkfs_features[i].flag,
+				is_default);
+	}
+}
+
+/*
+ * Return NULL if all features were parsed fine, otherwise return the name of
+ * the first unparsed.
+ */
+char* btrfs_parse_fs_features(char *namelist, u64 *flags)
+{
+	char *this_char;
+	char *save_ptr = NULL; /* Satisfy static checkers */
+
+	for (this_char = strtok_r(namelist, ",", &save_ptr);
+	     this_char != NULL;
+	     this_char = strtok_r(NULL, ",", &save_ptr)) {
+		if (parse_one_fs_feature(this_char, flags))
+			return this_char;
+	}
+
+	return NULL;
+}
+
 u64 btrfs_device_size(int fd, struct stat *st)
 {
 	u64 size;

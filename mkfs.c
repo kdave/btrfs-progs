@@ -44,9 +44,6 @@
 
 static u64 index_cnt = 2;
 
-#define DEFAULT_MKFS_FEATURES	(BTRFS_FEATURE_INCOMPAT_EXTENDED_IREF \
-		| BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA)
-
 struct directory_name_entry {
 	char *dir_name;
 	char *path;
@@ -1103,97 +1100,6 @@ static int is_ssd(const char *file)
 	return !atoi((const char *)&rotational);
 }
 
-#define BTRFS_FEATURE_LIST_ALL		(1ULL << 63)
-
-static const struct btrfs_fs_feature {
-	const char *name;
-	u64 flag;
-	const char *desc;
-} mkfs_features[] = {
-	{ "mixed-bg", BTRFS_FEATURE_INCOMPAT_MIXED_GROUPS,
-		"mixed data and metadata block groups" },
-	{ "extref", BTRFS_FEATURE_INCOMPAT_EXTENDED_IREF,
-		"increased hardlink limit per file to 65536" },
-	{ "raid56", BTRFS_FEATURE_INCOMPAT_RAID56,
-		"raid56 extended format" },
-	{ "skinny-metadata", BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA,
-		"reduced-size metadata extent refs" },
-	{ "no-holes", BTRFS_FEATURE_INCOMPAT_NO_HOLES,
-		"no explicit hole extents for files" },
-	/* Keep this one last */
-	{ "list-all", BTRFS_FEATURE_LIST_ALL, NULL }
-};
-
-static void list_all_fs_features(void)
-{
-	int i;
-
-	fprintf(stderr, "Filesystem features available at mkfs time:\n");
-	for (i = 0; i < ARRAY_SIZE(mkfs_features) - 1; i++) {
-		char *is_default = "";
-
-		if (mkfs_features[i].flag & DEFAULT_MKFS_FEATURES)
-			is_default = ", default";
-		fprintf(stderr, "%-20s- %s (0x%llx%s)\n",
-				mkfs_features[i].name,
-				mkfs_features[i].desc,
-				mkfs_features[i].flag,
-				is_default);
-	}
-}
-
-static int parse_one_fs_feature(const char *name, u64 *flags)
-{
-	int i;
-	int found = 0;
-
-	for (i = 0; i < ARRAY_SIZE(mkfs_features); i++) {
-		if (name[0] == '^' &&
-			!strcmp(mkfs_features[i].name, name + 1)) {
-			*flags &= ~ mkfs_features[i].flag;
-			found = 1;
-		} else if (!strcmp(mkfs_features[i].name, name)) {
-			*flags |= mkfs_features[i].flag;
-			found = 1;
-		}
-	}
-
-	return !found;
-}
-
-static void process_fs_features(u64 flags)
-{
-	int i;
-
-	for (i = 0; i < ARRAY_SIZE(mkfs_features); i++) {
-		if (flags & mkfs_features[i].flag) {
-			printf("Turning ON incompat feature '%s': %s\n",
-				mkfs_features[i].name,
-				mkfs_features[i].desc);
-		}
-	}
-}
-
-
-/*
- * Return NULL if all features were parsed fine, otherwise return the name of
- * the first unparsed.
- */
-static char* parse_fs_features(char *namelist, u64 *flags)
-{
-	char *this_char;
-	char *save_ptr = NULL; /* Satisfy static checkers */
-
-	for (this_char = strtok_r(namelist, ",", &save_ptr);
-	     this_char != NULL;
-	     this_char = strtok_r(NULL, ",", &save_ptr)) {
-		if (parse_one_fs_feature(this_char, flags))
-			return this_char;
-	}
-
-	return NULL;
-}
-
 int main(int ac, char **av)
 {
 	char *file;
@@ -1232,7 +1138,7 @@ int main(int ac, char **av)
 	int saved_optind;
 	char estr[100];
 	char *fs_uuid = NULL;
-	u64 features = DEFAULT_MKFS_FEATURES;
+	u64 features = BTRFS_MKFS_DEFAULT_FEATURES;
 
 	while(1) {
 		int c;
@@ -1292,7 +1198,7 @@ int main(int ac, char **av)
 				char *orig = strdup(optarg);
 				char *tmp = orig;
 
-				tmp = parse_fs_features(tmp, &features);
+				tmp = btrfs_parse_fs_features(tmp, &features);
 				if (tmp) {
 					fprintf(stderr,
 						"Unrecognized filesystem feature '%s'\n",
@@ -1302,7 +1208,7 @@ int main(int ac, char **av)
 				}
 				free(orig);
 				if (features & BTRFS_FEATURE_LIST_ALL) {
-					list_all_fs_features();
+					btrfs_list_all_fs_features();
 					exit(0);
 				}
 				break;
@@ -1536,7 +1442,7 @@ int main(int ac, char **av)
 		features |= BTRFS_FEATURE_INCOMPAT_RAID56;
 	}
 
-	process_fs_features(features);
+	btrfs_process_fs_features(features);
 
 	ret = make_btrfs(fd, file, label, fs_uuid, blocks, dev_block_count,
 			 nodesize, sectorsize, stripesize, features);
