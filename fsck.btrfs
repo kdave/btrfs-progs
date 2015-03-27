@@ -31,9 +31,7 @@ if [ ! -e $DEV ]; then
 	echo "$0: $DEV does not exist"
 	exit 8
 fi
-if $AUTO; then
-	echo "$0: BTRFS file system."
-else
+if [ "$AUTO" == "false" ]; then
 	echo "If you wish to check the consistency of a BTRFS filesystem or"
 	echo "repair a damaged filesystem, see btrfs(8) subcommand 'check'."
 fi
