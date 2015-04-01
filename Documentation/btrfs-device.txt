@@ -83,14 +83,14 @@ Check device to see if it has all of it's devices in cache for mounting.
 *scan* [(--all-devices|-d)|<device> [<device>...]]::
 Scan devices for a btrfs filesystem.
 +
-If one or more devices are passed, these are scanned for a btrfs filesystem. 
+If one or more devices are passed, these are scanned for a btrfs filesystem.
 If no devices are passed, btrfs uses block devices containing btrfs
 filesystem as listed by blkid.
-Finally, if '--all-devices' or '-d' is passed, all the devices under /dev are 
+Finally, if '--all-devices' or '-d' is passed, all the devices under /dev are
 scanned.
 
 *stats* [-z] <path>|<device>::
-Read and print the device IO stats for all devices of the filesystem
+Read and print the device IO stats for all mounted devices of the filesystem
 identified by <path> or for a single <device>.
 +
 `Options`
