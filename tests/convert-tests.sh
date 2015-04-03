@@ -9,7 +9,6 @@ unset LANG
 LANG=C
 SCRIPT_DIR=$(dirname $(realpath $0))
 TOP=$(realpath $SCRIPT_DIR/../)
-TEST_DEV=${TEST_DEV:-}
 TEST_MNT=${TEST_MNT:-$TOP/tests/mnt}
 RESULTS="$TOP/tests/convert-tests-results.txt"
 IMAGE="$TOP/tests/test.img"
@@ -17,6 +16,8 @@ IMAGE="$TOP/tests/test.img"
 source $TOP/tests/common
 
 rm -f $RESULTS
+
+setup_root_helper
 
 convert_test() {
 	echo "    [TEST]   $1"
@@ -27,6 +28,13 @@ convert_test() {
 	run_check rm -f $IMAGE
 	run_check truncate -s 256M $IMAGE
 	run_check $* -F $IMAGE
+
+	# create a file to check btrfs-convert can convert regular file
+	# correct
+	run_check $SUDO_HELPER mount $IMAGE $TEST_MNT
+	run_check $SUDO_HELPER dd if=/dev/zero of=$TEST_MNT/test bs=$nodesize \
+		count=1 1>/dev/null 2>&1
+	run_check $SUDO_HELPER umount $TEST_MNT
 	run_check $TOP/btrfs-convert -N "$nodesize" $IMAGE
 	run_check $TOP/btrfs check $IMAGE
 }
