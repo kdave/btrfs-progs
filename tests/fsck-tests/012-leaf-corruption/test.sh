@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source $top/tests/common
+source $TOP/tests/common
 
 # Check file list for leaf corruption, no regular/preallocated
 # file extent case.
@@ -34,7 +34,7 @@ leaf_no_data_ext_list=(
 generate_leaf_corrupt_no_data_ext()
 {
 	dest=$1
-	echo "generating leaf_corrupt_no_data_ext.btrfs-image" >> $RESULT
+	echo "generating leaf_corrupt_no_data_ext.btrfs-image" >> $RESULTS
 	tar xJf ./no_data_extent.tar.xz || \
 		_fail "failed to extract leaf_corrupt_no_data_ext.btrfs-image"
 	btrfs-image -r test.img.btrfs-image $dest || \
