@@ -15,6 +15,15 @@ DESCRIPTION
 and the original filesystem image is accessible as from separate subvolume
 named 'ext2_saved' as file image.
 
+WARNING: If one hopes to rollback to ext2/3/4, they should not execute
+*btrfs balance* command on converted btrfs, since it will change the extent
+layout and make *btrfs-convert* unable to rollback.
+
+NOTE: If one is satisfied with converted btrfs, and not longer wants to
+rollback to ext2/3/4, it is highly recommended to remove 'ext2_saved' subvolume
+and execute *btrfs filesystem defragment* and *btrfs balance* command on the
+converted btrfs.
+
 OPTIONS
 -------
 -d|--no-datasum::
