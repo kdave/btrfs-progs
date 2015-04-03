@@ -85,10 +85,6 @@ check_inode()
 check_leaf_corrupt_no_data_ext()
 {
 	image=$1
-	if [ -z $TEST_MNT ]; then
-		echo "\$TEST_MNT not set, use $(pwd)/tmp as fallback"
-		TEST_MNT="$(pwd)/tmp"
-	fi
 	mkdir -p $TEST_MNT || _fail "failed to create mount point"
 	$SUDO_HELPER mount $image -o ro $TEST_MNT
 
