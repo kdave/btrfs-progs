@@ -24,7 +24,6 @@ fi
 # test whether fsck can rebuild a corrupted extent tree
 test_extent_tree_rebuild()
 {
-	echo "     [TEST]    extent tree rebuild"
 	run_check $SUDO_HELPER $TOP/mkfs.btrfs -f $TEST_DEV
 
 	run_check $SUDO_HELPER mount $TEST_DEV $TEST_MNT
