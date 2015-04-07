@@ -155,9 +155,9 @@ If '-r' is given, the snapshot will be readonly.
 
 *sync* <path> [subvolid...]::
 Wait until given subvolume(s) are completely removed from the filesystem
-after deletion. If no subvolume id is given, wait until all ongoing deletion
-requests are complete. This may take long if new deleted subvolumes appear
-during the sleep interval.
+after deletion. If no subvolume id is given, wait until all current  deletion
+requests are completed, but do not wait for subvolumes deleted meanwhile.
+The status of subvolume ids is checked periodically.
 +
 `Options`
 +

@@ -1028,9 +1028,9 @@ static const char * const cmd_subvol_sync_usage[] = {
 	"Wait until given subvolume(s) are completely removed from the filesystem.",
 	"Wait until given subvolume(s) are completely removed from the filesystem",
 	"after deletion.",
-	"If no subvolume id is given, wait until all ongoing deletion requests",
-	"are complete. This may take long if new deleted subvolumes appear during",
-	"the sleep interval.",
+	"If no subvolume id is given, wait until all current deletion requests",
+	"are completed, but do not wait for subvolumes deleted meanwhile.",
+	"The status of subvolume ids is checked periodically.",
 	"",
 	"-s <N>       sleep N seconds between checks (default: 1)",
 	NULL
@@ -1063,6 +1063,7 @@ static int is_subvolume_cleaned(int fd, u64 subvolid)
 	return 0;
 }
 
+#if 0
 /*
  * If we're looking for any dead subvolume, take a shortcut and look
  * for any ORPHAN_ITEMs in the tree root
@@ -1126,6 +1127,82 @@ again:
 
 	return 1;
 }
+#endif
+
+#define SUBVOL_ID_BATCH		1024
+
+/*
+ * Enumerate all dead subvolumes that exist in the filesystem.
+ * Fill @ids and reallocate to bigger size if needed.
+ */
+static int enumerate_dead_subvols(int fd, int count, u64 **ids)
+{
+	int ret;
+	struct btrfs_ioctl_search_args args;
+	struct btrfs_ioctl_search_key *sk = &args.key;
+	int idx = 0;
+
+	memset(&args, 0, sizeof(args));
+
+	sk->tree_id = BTRFS_ROOT_TREE_OBJECTID;
+	sk->min_objectid = BTRFS_ORPHAN_OBJECTID;
+	sk->max_objectid = BTRFS_ORPHAN_OBJECTID;
+	sk->min_type = BTRFS_ORPHAN_ITEM_KEY;
+	sk->max_type = BTRFS_ORPHAN_ITEM_KEY;
+	sk->min_offset = 0;
+	sk->max_offset = (u64)-1;
+	sk->min_transid = 0;
+	sk->max_transid = (u64)-1;
+	sk->nr_items = 4096;
+
+	while (1) {
+		struct btrfs_ioctl_search_header *sh;
+		unsigned long off;
+		int i;
+
+		ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &args);
+		if (ret < 0)
+			return -errno;
+
+		if (!sk->nr_items)
+			return idx;
+
+		off = 0;
+		for (i = 0; i < sk->nr_items; i++) {
+			sh = (struct btrfs_ioctl_search_header*)(args.buf + off);
+			off += sizeof(*sh);
+
+			if (sh->type == BTRFS_ORPHAN_ITEM_KEY) {
+				*ids[idx] = sh->offset;
+				idx++;
+				if (idx >= count) {
+					u64 *newids;
+
+					count += SUBVOL_ID_BATCH;
+					newids = (u64*)realloc(*ids, count);
+					if (!newids)
+						return -ENOMEM;
+					*ids = newids;
+				}
+			}
+			off += sh->len;
+
+			sk->min_objectid = sh->objectid;
+			sk->min_type = sh->type;
+			sk->min_offset = sh->offset;
+		}
+		if (sk->min_offset < (u64)-1)
+			sk->min_offset++;
+		else
+			break;
+		if (sk->min_type != BTRFS_ORPHAN_ITEM_KEY)
+			break;
+		if (sk->min_objectid != BTRFS_ORPHAN_OBJECTID)
+			break;
+	}
+
+	return idx;
+}
 
 static int cmd_subvol_sync(int argc, char **argv)
 {
@@ -1173,56 +1250,57 @@ static int cmd_subvol_sync(int argc, char **argv)
 	optind++;
 
 	id_count = argc - optind;
-
-	/*
-	 * Wait for all
-	 */
 	if (!id_count) {
-		while (1) {
-			ret = fs_has_dead_subvolumes(fd);
-			if (ret < 0) {
-				fprintf(stderr, "ERROR: can't perform the search - %s\n",
-						strerror(-ret));
+		id_count = SUBVOL_ID_BATCH;
+		ids = (u64*)malloc(id_count * sizeof(u64));
+		if (!ids) {
+			fprintf(stderr, "ERROR: not enough memory\n");
+			ret = 1;
+			goto out;
+		}
+		id_count = enumerate_dead_subvols(fd, id_count, &ids);
+		if (id_count < 0) {
+			fprintf(stderr, "ERROR: can't enumerate dead subvolumes: %s\n",
+					strerror(-id_count));
+			ret = 1;
+			goto out;
+		}
+		if (id_count == 0) {
+			ret = 0;
+			goto out;
+		}
+	} else {
+		ids = (u64*)malloc(id_count * sizeof(u64));
+		if (!ids) {
+			fprintf(stderr, "ERROR: not enough memory\n");
+			ret = 1;
+			goto out;
+		}
+
+		for (i = 0; i < id_count; i++) {
+			u64 id;
+			const char *arg;
+
+			arg = argv[optind + i];
+			errno = 0;
+			id = strtoull(arg, NULL, 10);
+			if (errno < 0) {
+				fprintf(stderr,
+					"ERROR: unrecognized subvolume id %s\n",
+					arg);
 				ret = 1;
 				goto out;
 			}
-			if (!ret)
+			if (id < BTRFS_FIRST_FREE_OBJECTID
+					|| id > BTRFS_LAST_FREE_OBJECTID) {
+				fprintf(stderr,
+					"ERROR: subvolume id %s out of range\n",
+					arg);
+				ret = 1;
 				goto out;
-			sleep(sleep_interval);
+			}
+			ids[i] = id;
 		}
-	}
-
-	/*
-	 * Wait only for the requested ones
-	 */
-	ids = (u64*)malloc(sizeof(u64) * id_count);
-
-	if (!ids) {
-		fprintf(stderr, "ERROR: not enough memory\n");
-		ret = 1;
-		goto out;
-	}
-
-	for (i = 0; i < id_count; i++) {
-		u64 id;
-		const char *arg;
-
-		arg = argv[optind + i];
-		errno = 0;
-		id = strtoull(arg, NULL, 10);
-		if (errno < 0) {
-			fprintf(stderr, "ERROR: unrecognized subvolume id %s\n",
-				arg);
-			ret = 1;
-			goto out;
-		}
-		if (id < BTRFS_FIRST_FREE_OBJECTID || id > BTRFS_LAST_FREE_OBJECTID) {
-			fprintf(stderr, "ERROR: subvolume id %s out of range\n",
-				arg);
-			ret = 1;
-			goto out;
-		}
-		ids[i] = id;
 	}
 
 	remaining = id_count;
