@@ -3,6 +3,7 @@
 source $TOP/tests/common
 
 check_prereq btrfs-debug-tree
+check_prereq mkfs.btrfs
 setup_root_helper
 
 if [ -z $TEST_DEV ]; then

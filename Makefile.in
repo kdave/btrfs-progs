@@ -161,11 +161,15 @@ $(BUILDDIRS):
 	@echo "Making all in $(patsubst build-%,%,$@)"
 	$(Q)$(MAKE) $(MAKEOPTS) -C $(patsubst build-%,%,$@)
 
-test: btrfs btrfs-convert btrfs-image btrfs-corrupt-block
-	$(Q)for t in $(TESTS); do \
-		echo "    [TEST]   $$t"; \
-		bash tests/$$t || exit 1; \
-	done
+test-convert: btrfs btrfs-convert
+	@echo "    [TEST]   convert-tests.sh"
+	$(Q)bash tests/convert-tests.sh
+
+test-fsck: btrfs btrfs-image btrfs-corrupt-block btrfs-debug-tree mkfs.btrfs
+	@echo "    [TEST]   fsck-tests.sh"
+	$(Q)bash tests/fsck-tests.sh
+
+test: test-fsck test-convert
 
 #
 # NOTE: For static compiles, you need to have all the required libs
