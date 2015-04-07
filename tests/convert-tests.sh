@@ -24,8 +24,10 @@ convert_test() {
 	nodesize=$2
 	shift 2
 	echo "creating ext image with: $*" >> $RESULTS
+	# IMAGE not removed as the file might have special permissions, eg.
+	# when test image is on NFS and would not be writable for root
+	run_check truncate -s 0 $IMAGE
 	# 256MB is the smallest acceptable btrfs image.
-	run_check rm -f $IMAGE
 	run_check truncate -s 256M $IMAGE
 	run_check $* -F $IMAGE
 
