@@ -1799,20 +1799,20 @@ static int prepare_system_chunk_sb(struct btrfs_super_block *super)
 	return 0;
 }
 
-static int prepare_system_chunk(int fd, u64 sb_bytenr, u32 sectorsize)
+static int prepare_system_chunk(int fd, u64 sb_bytenr)
 {
 	int ret;
 	struct extent_buffer *buf;
 	struct btrfs_super_block *super;
 
-	BUG_ON(sectorsize < sizeof(*super));
-	buf = malloc(sizeof(*buf) + sectorsize);
+	BUG_ON(BTRFS_SUPER_INFO_SIZE < sizeof(*super));
+	buf = malloc(sizeof(*buf) + BTRFS_SUPER_INFO_SIZE);
 	if (!buf)
 		return -ENOMEM;
 
-	buf->len = sectorsize;
-	ret = pread(fd, buf->data, sectorsize, sb_bytenr);
-	if (ret != sectorsize)
+	buf->len = BTRFS_SUPER_INFO_SIZE;
+	ret = pread(fd, buf->data, BTRFS_SUPER_INFO_SIZE, sb_bytenr);
+	if (ret != BTRFS_SUPER_INFO_SIZE)
 		goto fail;
 
 	super = (struct btrfs_super_block *)buf->data;
@@ -1824,8 +1824,8 @@ static int prepare_system_chunk(int fd, u64 sb_bytenr, u32 sectorsize)
 		goto fail;
 
 	csum_tree_block_size(buf, BTRFS_CRC32_SIZE, 0);
-	ret = pwrite(fd, buf->data, sectorsize, sb_bytenr);
-	if (ret != sectorsize)
+	ret = pwrite(fd, buf->data, BTRFS_SUPER_INFO_SIZE, sb_bytenr);
+	if (ret != BTRFS_SUPER_INFO_SIZE)
 		goto fail;
 
 	ret = 0;
@@ -2330,7 +2330,7 @@ static int do_convert(const char *devname, int datacsum, int packing, int noxatt
 		goto fail;
 	}
 	/* create a system chunk that maps the whole device */
-	ret = prepare_system_chunk(fd, super_bytenr, blocksize);
+	ret = prepare_system_chunk(fd, super_bytenr);
 	if (ret) {
 		fprintf(stderr, "unable to update system chunk\n");
 		goto fail;
