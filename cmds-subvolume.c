@@ -36,6 +36,66 @@
 #include "btrfs-list.h"
 #include "utils.h"
 
+static int is_subvolume_cleaned(int fd, u64 subvolid)
+{
+	int ret;
+	struct btrfs_ioctl_search_args args;
+	struct btrfs_ioctl_search_key *sk = &args.key;
+
+	sk->tree_id = BTRFS_ROOT_TREE_OBJECTID;
+	sk->min_objectid = subvolid;
+	sk->max_objectid = subvolid;
+	sk->min_type = BTRFS_ROOT_ITEM_KEY;
+	sk->max_type = BTRFS_ROOT_ITEM_KEY;
+	sk->min_offset = 0;
+	sk->max_offset = (u64)-1;
+	sk->min_transid = 0;
+	sk->max_transid = (u64)-1;
+	sk->nr_items = 1;
+
+	ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &args);
+	if (ret < 0)
+		return -errno;
+
+	if (sk->nr_items == 0)
+		return 1;
+
+	return 0;
+}
+
+static int wait_for_subvolume_cleaning(int fd, int count, u64 *ids,
+		int sleep_interval)
+{
+	int ret = 0;
+	int remaining;
+	int i;
+
+	remaining = count;
+	while (1) {
+		for (i = 0; i < count; i++) {
+			if (!ids[i])
+				continue;
+			ret = is_subvolume_cleaned(fd, ids[i]);
+			if (ret < 0) {
+				fprintf(stderr,
+					"ERROR: can't perform the search - %s\n",
+					strerror(-ret));
+				goto out;
+			}
+			if (ret) {
+				printf("Subvolume id %llu is gone\n", ids[i]);
+				ids[i] = 0;
+				remaining--;
+			}
+		}
+		if (!remaining)
+			break;
+		sleep(sleep_interval);
+	}
+out:
+	return ret;
+}
+
 static const char * const subvolume_cmd_group_usage[] = {
 	"btrfs subvolume <command> <args>",
 	NULL
@@ -1036,33 +1096,6 @@ static const char * const cmd_subvol_sync_usage[] = {
 	NULL
 };
 
-static int is_subvolume_cleaned(int fd, u64 subvolid)
-{
-	int ret;
-	struct btrfs_ioctl_search_args args;
-	struct btrfs_ioctl_search_key *sk = &args.key;
-
-	sk->tree_id = BTRFS_ROOT_TREE_OBJECTID;
-	sk->min_objectid = subvolid;
-	sk->max_objectid = subvolid;
-	sk->min_type = BTRFS_ROOT_ITEM_KEY;
-	sk->max_type = BTRFS_ROOT_ITEM_KEY;
-	sk->min_offset = 0;
-	sk->max_offset = (u64)-1;
-	sk->min_transid = 0;
-	sk->max_transid = (u64)-1;
-	sk->nr_items = 1;
-
-	ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &args);
-	if (ret < 0)
-		return -errno;
-
-	if (sk->nr_items == 0)
-		return 1;
-
-	return 0;
-}
-
 #if 0
 /*
  * If we're looking for any dead subvolume, take a shortcut and look
@@ -1212,7 +1245,6 @@ static int cmd_subvol_sync(int argc, char **argv)
 	DIR *dirstream = NULL;
 	u64 *ids = NULL;
 	int id_count;
-	int remaining;
 	int sleep_interval = 1;
 
 	optind = 1;
@@ -1303,27 +1335,7 @@ static int cmd_subvol_sync(int argc, char **argv)
 		}
 	}
 
-	remaining = id_count;
-	while (1) {
-		for (i = 0; i < id_count; i++) {
-			if (!ids[i])
-				continue;
-			ret = is_subvolume_cleaned(fd, ids[i]);
-			if (ret < 0) {
-				fprintf(stderr, "ERROR: can't perform the search - %s\n",
-						strerror(-ret));
-				goto out;
-			}
-			if (ret) {
-				printf("Subvolume id %llu is gone\n", ids[i]);
-				ids[i] = 0;
-				remaining--;
-			}
-		}
-		if (!remaining)
-			break;
-		sleep(sleep_interval);
-	}
+	ret = wait_for_subvolume_cleaning(fd, id_count, ids, sleep_interval);
 
 out:
 	free(ids);
