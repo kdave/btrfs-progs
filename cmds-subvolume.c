@@ -404,7 +404,7 @@ static int cmd_subvol_list(int argc, char **argv)
 	while(1) {
 		int c;
 		static const struct option long_options[] = {
-			{"sort", 1, NULL, 'S'},
+			{"sort", required_argument, NULL, 'S'},
 			{NULL, 0, NULL, 0}
 		};
 

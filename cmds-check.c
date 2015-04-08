@@ -9224,16 +9224,16 @@ int cmd_check(int argc, char **argv)
 		enum { OPT_REPAIR = 257, OPT_INIT_CSUM, OPT_INIT_EXTENT,
 			OPT_CHECK_CSUM, OPT_READONLY };
 		static const struct option long_options[] = {
-			{ "super", 1, NULL, 's' },
-			{ "repair", 0, NULL, OPT_REPAIR },
-			{ "readonly", 0, NULL, OPT_READONLY },
-			{ "init-csum-tree", 0, NULL, OPT_INIT_CSUM },
-			{ "init-extent-tree", 0, NULL, OPT_INIT_EXTENT },
-			{ "check-data-csum", 0, NULL, OPT_CHECK_CSUM },
-			{ "backup", 0, NULL, 'b' },
-			{ "subvol-extents", 1, NULL, 'E' },
-			{ "qgroup-report", 0, NULL, 'Q' },
-			{ "tree-root", 1, NULL, 'r' },
+			{ "super", required_argument, NULL, 's' },
+			{ "repair", no_argument, NULL, OPT_REPAIR },
+			{ "readonly", no_argument, NULL, OPT_READONLY },
+			{ "init-csum-tree", no_argument, NULL, OPT_INIT_CSUM },
+			{ "init-extent-tree", no_argument, NULL, OPT_INIT_EXTENT },
+			{ "check-data-csum", no_argument, NULL, OPT_CHECK_CSUM },
+			{ "backup", no_argument, NULL, 'b' },
+			{ "subvol-extents", required_argument, NULL, 'E' },
+			{ "qgroup-report", no_argument, NULL, 'Q' },
+			{ "tree-root", required_argument, NULL, 'r' },
 			{ NULL, 0, NULL, 0}
 		};
 

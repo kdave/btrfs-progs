@@ -126,10 +126,10 @@ int main(int ac, char **av)
 		int c;
 		static const struct option long_options[] = {
 			/* { "byte-count", 1, NULL, 'b' }, */
-			{ "logical", 1, NULL, 'l' },
-			{ "copy", 1, NULL, 'c' },
-			{ "output", 1, NULL, 'o' },
-			{ "bytes", 1, NULL, 'b' },
+			{ "logical", required_argument, NULL, 'l' },
+			{ "copy", required_argument, NULL, 'c' },
+			{ "output", required_argument, NULL, 'o' },
+			{ "bytes", required_argument, NULL, 'b' },
 			{ NULL, 0, NULL, 0}
 		};
 

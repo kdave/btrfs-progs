@@ -934,7 +934,7 @@ int cmd_receive(int argc, char **argv)
 	while (1) {
 		int c;
 		static const struct option long_opts[] = {
-			{ "max-errors", 1, NULL, 'E' },
+			{ "max-errors", required_argument, NULL, 'E' },
 			{ NULL, 0, NULL, 0 }
 		};
 

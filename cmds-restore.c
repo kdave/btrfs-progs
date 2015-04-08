@@ -1177,8 +1177,8 @@ int cmd_restore(int argc, char **argv)
 	while (1) {
 		int opt;
 		static const struct option long_options[] = {
-			{ "path-regex", 1, NULL, 256},
-			{ "dry-run", 0, NULL, 'D'},
+			{ "path-regex", required_argument, NULL, 256},
+			{ "dry-run", no_argument, NULL, 'D'},
 			{ NULL, 0, NULL, 0}
 		};
 
