@@ -37,7 +37,7 @@ generate_leaf_corrupt_no_data_ext()
 	echo "generating leaf_corrupt_no_data_ext.btrfs-image" >> $RESULTS
 	tar xJf ./no_data_extent.tar.xz || \
 		_fail "failed to extract leaf_corrupt_no_data_ext.btrfs-image"
-	btrfs-image -r test.img.btrfs-image $dest || \
+	$TOP/btrfs-image -r test.img.btrfs-image $dest || \
 		_fail "failed to extract leaf_corrupt_no_data_ext.btrfs-image"
 
 	# leaf at 20832256 contains no regular data extent, clear its csum to
