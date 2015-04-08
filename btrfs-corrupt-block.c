@@ -1017,7 +1017,6 @@ int main(int ac, char **av)
 
 	while(1) {
 		int c;
-		int option_index = 0;
 		static const struct option long_options[] = {
 			/* { "byte-count", 1, NULL, 'b' }, */
 			{ "logical", 1, NULL, 'l' },
@@ -1041,7 +1040,7 @@ int main(int ac, char **av)
 		};
 
 		c = getopt_long(ac, av, "l:c:b:eEkuUi:f:x:m:K:IDdr:",
-				long_options, &option_index);
+				long_options, NULL);
 		if (c < 0)
 			break;
 		switch(c) {

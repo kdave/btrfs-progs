@@ -208,7 +208,7 @@ static int cmd_filesystem_df(int argc, char **argv)
 	unsigned unit_mode = UNITS_DEFAULT;
 
 	while (1) {
-		int long_index;
+		int c;
 		static const struct option long_options[] = {
 			{ "raw", no_argument, NULL, 'b'},
 			{ "kbytes", no_argument, NULL, 'k'},
@@ -221,8 +221,8 @@ static int cmd_filesystem_df(int argc, char **argv)
 				GETOPT_VAL_HUMAN_READABLE},
 			{ NULL, 0, NULL, 0 }
 		};
-		int c = getopt_long(argc, argv, "bhHkmgt", long_options,
-					&long_index);
+
+		c = getopt_long(argc, argv, "bhHkmgt", long_options, NULL);
 		if (c < 0)
 			break;
 		switch (c) {
@@ -836,14 +836,14 @@ static int cmd_show(int argc, char **argv)
 	int found = 0;
 
 	while (1) {
-		int long_index;
+		int c;
 		static const struct option long_options[] = {
 			{ "all-devices", no_argument, NULL, 'd'},
 			{ "mounted", no_argument, NULL, 'm'},
 			{ NULL, 0, NULL, 0 }
 		};
-		int c = getopt_long(argc, argv, "dm", long_options,
-					&long_index);
+
+		c = getopt_long(argc, argv, "dm", long_options, NULL);
 		if (c < 0)
 			break;
 		switch (c) {

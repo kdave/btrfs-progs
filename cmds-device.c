@@ -55,14 +55,14 @@ static int cmd_add_dev(int argc, char **argv)
 	char estr[100];
 
 	while (1) {
-		int long_index;
+		int c;
 		static const struct option long_options[] = {
 			{ "nodiscard", optional_argument, NULL, 'K'},
 			{ "force", no_argument, NULL, 'f'},
 			{ NULL, 0, NULL, 0}
 		};
-		int c = getopt_long(argc, argv, "Kf", long_options,
-					&long_index);
+
+		c = getopt_long(argc, argv, "Kf", long_options, NULL);
 		if (c < 0)
 			break;
 		switch (c) {
@@ -213,13 +213,13 @@ static int cmd_scan_dev(int argc, char **argv)
 
 	optind = 1;
 	while (1) {
-		int long_index;
+		int c;
 		static const struct option long_options[] = {
 			{ "all-devices", no_argument, NULL, 'd'},
 			{ NULL, 0, NULL, 0}
 		};
-		int c = getopt_long(argc, argv, "d", long_options,
-				    &long_index);
+
+		c = getopt_long(argc, argv, "d", long_options, NULL);
 		if (c < 0)
 			break;
 		switch (c) {
@@ -503,7 +503,7 @@ int cmd_device_usage(int argc, char **argv)
 
 	optind = 1;
 	while (1) {
-		int long_index;
+		int c;
 		static const struct option long_options[] = {
 			{ "raw", no_argument, NULL, 'b'},
 			{ "kbytes", no_argument, NULL, 'k'},
@@ -516,9 +516,8 @@ int cmd_device_usage(int argc, char **argv)
 				GETOPT_VAL_HUMAN_READABLE},
 			{ NULL, 0, NULL, 0 }
 		};
-		int c = getopt_long(argc, argv, "bhHkmgt", long_options,
-				&long_index);
 
+		c = getopt_long(argc, argv, "bhHkmgt", long_options, NULL);
 		if (c < 0)
 			break;
 		switch (c) {

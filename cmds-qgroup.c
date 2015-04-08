@@ -251,7 +251,6 @@ static int cmd_qgroup_show(int argc, char **argv)
 	optind = 1;
 	while (1) {
 		int c;
-		int option_index = 0;
 		static const struct option long_options[] = {
 			{"sort", 1, NULL, 'S'},
 			{"raw", no_argument, NULL, GETOPT_VAL_RAW},
@@ -265,9 +264,8 @@ static int cmd_qgroup_show(int argc, char **argv)
 				GETOPT_VAL_HUMAN_READABLE},
 			{ NULL, 0, NULL, 0 }
 		};
-		c = getopt_long(argc, argv, "pcreFf",
-				long_options, &option_index);
 
+		c = getopt_long(argc, argv, "pcreFf", long_options, NULL);
 		if (c < 0)
 			break;
 		switch (c) {

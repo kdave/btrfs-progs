@@ -1176,7 +1176,6 @@ int cmd_restore(int argc, char **argv)
 
 	while (1) {
 		int opt;
-		int option_index = 0;
 		static const struct option long_options[] = {
 			{ "path-regex", 1, NULL, 256},
 			{ "dry-run", 0, NULL, 'D'},
@@ -1184,7 +1183,7 @@ int cmd_restore(int argc, char **argv)
 		};
 
 		opt = getopt_long(argc, argv, "sxviot:u:df:r:lDc", long_options,
-					&option_index);
+					NULL);
 		if (opt < 0)
 			break;
 

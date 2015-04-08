@@ -9221,7 +9221,6 @@ int cmd_check(int argc, char **argv)
 
 	while(1) {
 		int c;
-		int option_index = 0;
 		enum { OPT_REPAIR = 257, OPT_INIT_CSUM, OPT_INIT_EXTENT,
 			OPT_CHECK_CSUM, OPT_READONLY };
 		static const struct option long_options[] = {
@@ -9238,8 +9237,7 @@ int cmd_check(int argc, char **argv)
 			{ NULL, 0, NULL, 0}
 		};
 
-		c = getopt_long(argc, argv, "as:br:", long_options,
-				&option_index);
+		c = getopt_long(argc, argv, "as:br:", long_options, NULL);
 		if (c < 0)
 			break;
 		switch(c) {

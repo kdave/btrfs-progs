@@ -882,7 +882,7 @@ int cmd_filesystem_usage(int argc, char **argv)
 
 	optind = 1;
 	while (1) {
-		int long_index;
+		int c;
 		static const struct option long_options[] = {
 			{ "raw", no_argument, NULL, 'b'},
 			{ "kbytes", no_argument, NULL, 'k'},
@@ -895,8 +895,8 @@ int cmd_filesystem_usage(int argc, char **argv)
 				GETOPT_VAL_HUMAN_READABLE},
 			{ NULL, 0, NULL, 0 }
 		};
-		int c = getopt_long(argc, argv, "bhHkmgtT", long_options,
-				&long_index);
+
+		c = getopt_long(argc, argv, "bhHkmgtT", long_options, NULL);
 
 		if (c < 0)
 			break;

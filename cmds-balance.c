@@ -389,7 +389,6 @@ static int cmd_balance_start(int argc, char **argv)
 
 	optind = 1;
 	while (1) {
-		int longindex;
 		static const struct option longopts[] = {
 			{ "data", optional_argument, NULL, 'd'},
 			{ "metadata", optional_argument, NULL, 'm' },
@@ -399,8 +398,7 @@ static int cmd_balance_start(int argc, char **argv)
 			{ NULL, 0, NULL, 0 }
 		};
 
-		int opt = getopt_long(argc, argv, "d::s::m::fv", longopts,
-				      &longindex);
+		int opt = getopt_long(argc, argv, "d::s::m::fv", longopts, NULL);
 		if (opt < 0)
 			break;
 
@@ -661,13 +659,13 @@ static int cmd_balance_status(int argc, char **argv)
 
 	optind = 1;
 	while (1) {
-		int longindex;
+		int opt;
 		static const struct option longopts[] = {
 			{ "verbose", no_argument, NULL, 'v' },
 			{ NULL, 0, NULL, 0 }
 		};
 
-		int opt = getopt_long(argc, argv, "v", longopts, &longindex);
+		opt = getopt_long(argc, argv, "v", longopts, NULL);
 		if (opt < 0)
 			break;
 
