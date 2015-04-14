@@ -218,9 +218,9 @@ static void print_seek_histogram(struct root_stats *stat)
 	struct rb_node *n = rb_first(&stat->seek_root);
 	struct seek *seek;
 	u64 tick_interval;
-	u64 group_start;
+	u64 group_start = 0;
 	u64 group_count = 0;
-	u64 group_end;
+	u64 group_end = 0;
 	u64 i;
 	u64 max_seek = stat->max_seek_len;
 	int digits = 1;
