@@ -2,46 +2,46 @@
 MAN8_TXT =
 
 # Top level commands
-MAN8_TXT += btrfs.txt
-MAN8_TXT += btrfs-convert.txt
-MAN8_TXT += btrfs-debug-tree.txt
-MAN8_TXT += btrfs-find-root.txt
-MAN8_TXT += btrfs-image.txt
-MAN8_TXT += btrfs-map-logical.txt
-MAN8_TXT += btrfs-show-super.txt
-MAN8_TXT += btrfstune.txt
-MAN8_TXT += btrfs-zero-log.txt
-MAN8_TXT += fsck.btrfs.txt
-MAN8_TXT += mkfs.btrfs.txt
+MAN8_TXT += btrfs.asciidoc
+MAN8_TXT += btrfs-convert.asciidoc
+MAN8_TXT += btrfs-debug-tree.asciidoc
+MAN8_TXT += btrfs-find-root.asciidoc
+MAN8_TXT += btrfs-image.asciidoc
+MAN8_TXT += btrfs-map-logical.asciidoc
+MAN8_TXT += btrfs-show-super.asciidoc
+MAN8_TXT += btrfstune.asciidoc
+MAN8_TXT += btrfs-zero-log.asciidoc
+MAN8_TXT += fsck.btrfs.asciidoc
+MAN8_TXT += mkfs.btrfs.asciidoc
 
 # Sub commands for btrfs
-MAN8_TXT += btrfs-subvolume.txt
-MAN8_TXT += btrfs-filesystem.txt
-MAN8_TXT += btrfs-balance.txt
-MAN8_TXT += btrfs-device.txt
-MAN8_TXT += btrfs-scrub.txt
-MAN8_TXT += btrfs-check.txt
-MAN8_TXT += btrfs-rescue.txt
-MAN8_TXT += btrfs-inspect-internal.txt
-MAN8_TXT += btrfs-send.txt
-MAN8_TXT += btrfs-receive.txt
-MAN8_TXT += btrfs-quota.txt
-MAN8_TXT += btrfs-qgroup.txt
-MAN8_TXT += btrfs-replace.txt
-MAN8_TXT += btrfs-restore.txt
-MAN8_TXT += btrfs-property.txt
+MAN8_TXT += btrfs-subvolume.asciidoc
+MAN8_TXT += btrfs-filesystem.asciidoc
+MAN8_TXT += btrfs-balance.asciidoc
+MAN8_TXT += btrfs-device.asciidoc
+MAN8_TXT += btrfs-scrub.asciidoc
+MAN8_TXT += btrfs-check.asciidoc
+MAN8_TXT += btrfs-rescue.asciidoc
+MAN8_TXT += btrfs-inspect-internal.asciidoc
+MAN8_TXT += btrfs-send.asciidoc
+MAN8_TXT += btrfs-receive.asciidoc
+MAN8_TXT += btrfs-quota.asciidoc
+MAN8_TXT += btrfs-qgroup.asciidoc
+MAN8_TXT += btrfs-replace.asciidoc
+MAN8_TXT += btrfs-restore.asciidoc
+MAN8_TXT += btrfs-property.asciidoc
 
 # Mount manpage
-MAN5_TXT += btrfs-mount.txt
+MAN5_TXT += btrfs-mount.asciidoc
 
 MAN_TXT = $(MAN8_TXT) $(MAN5_TXT)
-MAN_XML = $(patsubst %.txt,%.xml,$(MAN_TXT))
+MAN_XML = $(patsubst %.asciidoc,%.xml,$(MAN_TXT))
 
-DOC_MAN5 = $(patsubst %.txt,%.5,$(MAN5_TXT))
-GZ_MAN5 = $(patsubst %.txt,%.5.gz,$(MAN5_TXT))
+DOC_MAN5 = $(patsubst %.asciidoc,%.5,$(MAN5_TXT))
+GZ_MAN5 = $(patsubst %.asciidoc,%.5.gz,$(MAN5_TXT))
 
-DOC_MAN8 = $(patsubst %.txt,%.8,$(MAN8_TXT))
-GZ_MAN8 = $(patsubst %.txt,%.8.gz,$(MAN8_TXT))
+DOC_MAN8 = $(patsubst %.asciidoc,%.8,$(MAN8_TXT))
+GZ_MAN8 = $(patsubst %.asciidoc,%.8.gz,$(MAN8_TXT))
 
 mandir ?= $(prefix)/share/man
 man8dir = $(mandir)/man8
@@ -115,7 +115,7 @@ clean:
 	$(QUIET_XMLTO)$(RM) -f $@ && \
 	$(XMLTO) -m $(MANPAGE_XSL) $(XMLTO_EXTRA) man $<
 
-%.xml : %.txt asciidoc.conf
+%.xml : %.asciidoc asciidoc.conf
 	$(QUIET_ASCIIDOC)$(RM) -f $@+ $@ && \
 	$(ASCIIDOC) -b docbook -d manpage -f asciidoc.conf \
 		$(ASCIIDOC_EXTRA) -abtrfs_version=$(BTRFS_VERSION) \
