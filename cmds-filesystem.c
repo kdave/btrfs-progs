@@ -1234,6 +1234,7 @@ static int cmd_resize(int argc, char **argv)
 	int	fd, res, len, e;
 	char	*amount, *path;
 	DIR	*dirstream = NULL;
+	struct stat st;
 
 	if (check_argc_exact(argc, 3))
 		usage(cmd_resize_usage);
@@ -1245,6 +1246,20 @@ static int cmd_resize(int argc, char **argv)
 	if (len == 0 || len >= BTRFS_VOL_NAME_MAX) {
 		fprintf(stderr, "ERROR: size value too long ('%s)\n",
 			amount);
+		return 1;
+	}
+
+	res = stat(path, &st);
+	if (res < 0) {
+		fprintf(stderr, "ERROR: resize: cannot stat %s: %s\n",
+				path, strerror(errno));
+		return 1;
+	}
+	if (!S_ISDIR(st.st_mode)) {
+		fprintf(stderr,
+			"ERROR: resize works on mounted filesystems and accepts only\n"
+			"directories as argument. Passing file containing a btrfs image\n"
+			"would resize the underlying filesystem instead of the image.\n");
 		return 1;
 	}
 
