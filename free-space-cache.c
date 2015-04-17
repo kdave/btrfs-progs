@@ -428,7 +428,9 @@ int load_free_space_cache(struct btrfs_fs_info *fs_info,
 {
 	struct btrfs_free_space_ctl *ctl = block_group->free_space_ctl;
 	struct btrfs_path *path;
+	u64 used = btrfs_block_group_used(&block_group->item);
 	int ret = 0;
+	int matched;
 
 	path = btrfs_alloc_path();
 	if (!path)
@@ -437,6 +439,15 @@ int load_free_space_cache(struct btrfs_fs_info *fs_info,
 	ret = __load_free_space_cache(fs_info->tree_root, ctl, path,
 				      block_group->key.objectid);
 	btrfs_free_path(path);
+
+	matched = (ctl->free_space == (block_group->key.offset - used -
+				       block_group->bytes_super));
+	if (ret == 1 && !matched) {
+		__btrfs_remove_free_space_cache(ctl);
+		printf("block group %llu has wrong amount of free space",
+		       block_group->key.objectid);
+		ret = -1;
+	}
 
 	if (ret < 0) {
 		ret = 0;

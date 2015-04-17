@@ -3140,6 +3140,54 @@ error:
 	return ret;
 }
 
+static void account_super_bytes(struct btrfs_fs_info *fs_info,
+				struct btrfs_block_group_cache *cache)
+{
+	u64 bytenr;
+	u64 *logical;
+	int stripe_len;
+	int i, nr, ret;
+
+	if (cache->key.objectid < BTRFS_SUPER_INFO_OFFSET) {
+		stripe_len = BTRFS_SUPER_INFO_OFFSET - cache->key.objectid;
+		cache->bytes_super += stripe_len;
+	}
+
+	for (i = 0; i < BTRFS_SUPER_MIRROR_MAX; i++) {
+		bytenr = btrfs_sb_offset(i);
+		ret = btrfs_rmap_block(&fs_info->mapping_tree,
+				       cache->key.objectid, bytenr,
+				       0, &logical, &nr, &stripe_len);
+		if (ret)
+			return;
+
+		while (nr--) {
+			u64 start, len;
+
+			if (logical[nr] > cache->key.objectid +
+			    cache->key.offset)
+				continue;
+
+			if (logical[nr] + stripe_len <= cache->key.objectid)
+				continue;
+
+			start = logical[nr];
+			if (start < cache->key.objectid) {
+				start = cache->key.objectid;
+				len = (logical[nr] + stripe_len) - start;
+			} else {
+				len = min_t(u64, stripe_len,
+					    cache->key.objectid +
+					    cache->key.offset - start);
+			}
+
+			cache->bytes_super += len;
+		}
+
+		kfree(logical);
+	}
+}
+
 int btrfs_read_block_groups(struct btrfs_root *root)
 {
 	struct btrfs_path *path;
@@ -3201,6 +3249,8 @@ int btrfs_read_block_groups(struct btrfs_root *root)
 		if (btrfs_chunk_readonly(root, cache->key.objectid))
 			cache->ro = 1;
 
+		account_super_bytes(info, cache);
+
 		ret = update_space_info(info, cache->flags, found_key.offset,
 					btrfs_block_group_used(&cache->item),
 					&space_info);
@@ -3242,6 +3292,7 @@ btrfs_add_block_group(struct btrfs_fs_info *fs_info, u64 bytes_used, u64 type,
 	cache->flags = type;
 	btrfs_set_block_group_flags(&cache->item, type);
 
+	account_super_bytes(fs_info, cache);
 	ret = update_space_info(fs_info, cache->flags, size, bytes_used,
 				&cache->space_info);
 	BUG_ON(ret);

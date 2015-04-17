@@ -936,6 +936,7 @@ struct btrfs_block_group_cache {
 	struct btrfs_block_group_item item;
 	struct btrfs_space_info *space_info;
 	struct btrfs_free_space_ctl *free_space_ctl;
+	u64 bytes_super;
 	u64 pinned;
 	u64 flags;
 	int cached;
