@@ -34,7 +34,7 @@
 #include "utils.h"
 #include "volumes.h"
 #include "commands.h"
-#include "cmds-fi-disk_usage.h"
+#include "cmds-fi-usage.h"
 #include "list_sort.h"
 #include "disk-io.h"
 

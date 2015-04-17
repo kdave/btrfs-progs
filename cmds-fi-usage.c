@@ -27,7 +27,7 @@
 #include "kerncompat.h"
 #include "ctree.h"
 #include "string-table.h"
-#include "cmds-fi-disk_usage.h"
+#include "cmds-fi-usage.h"
 #include "commands.h"
 
 #include "version.h"

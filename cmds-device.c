@@ -28,7 +28,7 @@
 #include "ctree.h"
 #include "ioctl.h"
 #include "utils.h"
-#include "cmds-fi-disk_usage.h"
+#include "cmds-fi-usage.h"
 
 #include "commands.h"
 
