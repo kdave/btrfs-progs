@@ -7,7 +7,7 @@ btrfs-receive - receive subvolumes from stdin/file.
 
 SYNOPSIS
 --------
-*btrfs receive* [-ve] [-f <infile>] [--max-errors <N>] <mount>
+*btrfs receive* [options] <mount>
 
 DESCRIPTION
 -----------
@@ -34,6 +34,8 @@ verbose level more.
 -f <infile>::
 By default, btrfs receive uses stdin to receive the subvolumes.
 Use this option to specify a file to use instead.
+-C|--chroot::
+Confine the process to <mount> using chroot.
 -e::
 Terminate after receiving an <end cmd> in the data stream.
 Without this option, the receiver terminates only if an error is recognized
