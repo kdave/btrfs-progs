@@ -109,7 +109,7 @@ static int cmd_quota_rescan(int argc, char **argv)
 	int e;
 	char *path = NULL;
 	struct btrfs_ioctl_quota_rescan_args args;
-	int ioctlnum = BTRFS_IOC_QUOTA_RESCAN;
+	unsigned long ioctlnum = BTRFS_IOC_QUOTA_RESCAN;
 	DIR *dirstream = NULL;
 	int wait_for_completion = 0;
 
