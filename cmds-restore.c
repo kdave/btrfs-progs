@@ -47,6 +47,7 @@ static char fs_name[4096];
 static char path_name[4096];
 static int get_snaps = 0;
 static int verbose = 0;
+static int restore_metadata = 0;
 static int ignore_errors = 0;
 static int overwrite = 0;
 static int get_xattrs = 0;
@@ -559,6 +560,61 @@ out:
 	return ret;
 }
 
+static int copy_metadata(struct btrfs_root *root, int fd,
+		struct btrfs_key *key)
+{
+	struct btrfs_path *path;
+	struct btrfs_inode_item *inode_item;
+	int ret;
+
+	path = btrfs_alloc_path();
+	if (!path) {
+		fprintf(stderr, "ERROR: Ran out of memory\n");
+		return -ENOMEM;
+	}
+
+	ret = btrfs_lookup_inode(NULL, root, path, key, 0);
+	if (ret == 0) {
+		struct btrfs_timespec *bts;
+		struct timespec times[2];
+
+		inode_item = btrfs_item_ptr(path->nodes[0], path->slots[0],
+				struct btrfs_inode_item);
+
+		ret = fchown(fd, btrfs_inode_uid(path->nodes[0], inode_item),
+				btrfs_inode_gid(path->nodes[0], inode_item));
+		if (ret) {
+			fprintf(stderr, "ERROR: Failed to change owner: %s\n",
+					strerror(errno));
+			goto out;
+		}
+
+		ret = fchmod(fd, btrfs_inode_mode(path->nodes[0], inode_item));
+		if (ret) {
+			fprintf(stderr, "ERROR: Failed to change mode: %s\n",
+					strerror(errno));
+			goto out;
+		}
+
+		bts = btrfs_inode_atime(inode_item);
+		times[0].tv_sec = btrfs_timespec_sec(path->nodes[0], bts);
+		times[0].tv_nsec = btrfs_timespec_nsec(path->nodes[0], bts);
+
+		bts = btrfs_inode_mtime(inode_item);
+		times[1].tv_sec = btrfs_timespec_sec(path->nodes[0], bts);
+		times[1].tv_nsec = btrfs_timespec_nsec(path->nodes[0], bts);
+
+		ret = futimens(fd, times);
+		if (ret) {
+			fprintf(stderr, "ERROR: Failed to set times: %s\n",
+					strerror(errno));
+			goto out;
+		}
+	}
+out:
+	btrfs_release_path(path);
+	return ret;
+}
 
 static int copy_file(struct btrfs_root *root, int fd, struct btrfs_key *key,
 		     const char *file)
@@ -567,12 +623,15 @@ static int copy_file(struct btrfs_root *root, int fd, struct btrfs_key *key,
 	struct btrfs_path *path;
 	struct btrfs_file_extent_item *fi;
 	struct btrfs_inode_item *inode_item;
+	struct btrfs_timespec *bts;
 	struct btrfs_key found_key;
 	int ret;
 	int extent_type;
 	int compression;
 	int loops = 0;
 	u64 found_size = 0;
+	struct timespec times[2];
+	int times_ok = 0;
 
 	path = btrfs_alloc_path();
 	if (!path) {
@@ -585,6 +644,35 @@ static int copy_file(struct btrfs_root *root, int fd, struct btrfs_key *key,
 		inode_item = btrfs_item_ptr(path->nodes[0], path->slots[0],
 				    struct btrfs_inode_item);
 		found_size = btrfs_inode_size(path->nodes[0], inode_item);
+
+		if (restore_metadata) {
+			/*
+			 * Change the ownership and mode now, set times when
+			 * copyout is finished.
+			 */
+
+			ret = fchown(fd, btrfs_inode_uid(path->nodes[0], inode_item),
+					btrfs_inode_gid(path->nodes[0], inode_item));
+			if (ret && !ignore_errors) {
+				btrfs_release_path(path);
+				return ret;
+			}
+
+			ret = fchmod(fd, btrfs_inode_mode(path->nodes[0], inode_item));
+			if (ret && !ignore_errors) {
+				btrfs_release_path(path);
+				return ret;
+			}
+
+			bts = btrfs_inode_atime(inode_item);
+			times[0].tv_sec = btrfs_timespec_sec(path->nodes[0], bts);
+			times[0].tv_nsec = btrfs_timespec_nsec(path->nodes[0], bts);
+
+			bts = btrfs_inode_mtime(inode_item);
+			times[1].tv_sec = btrfs_timespec_sec(path->nodes[0], bts);
+			times[1].tv_nsec = btrfs_timespec_nsec(path->nodes[0], bts);
+			times_ok = 1;
+		}
 	}
 	btrfs_release_path(path);
 
@@ -689,6 +777,11 @@ set_size:
 	}
 	if (get_xattrs) {
 		ret = set_file_xattrs(root, key->objectid, fd, file);
+		if (ret)
+			return ret;
+	}
+	if (restore_metadata && times_ok) {
+		ret = futimens(fd, times);
 		if (ret)
 			return ret;
 	}
@@ -941,6 +1034,28 @@ next:
 		path->slots[0]++;
 	}
 
+	if (restore_metadata) {
+		snprintf(path_name, 4096, "%s%s", output_rootdir, in_dir);
+		fd = open(path_name, O_RDONLY);
+		if (fd < 0) {
+			fprintf(stderr, "ERROR: Failed to access %s to restore metadata\n",
+					path_name);
+			if (!ignore_errors)
+				return -1;
+		} else {
+			/*
+			 * Set owner/mode/time on the directory as well
+			 */
+			key->type = BTRFS_INODE_ITEM_KEY;
+			ret = copy_metadata(root, fd, key);
+			close(fd);
+			if (ret && !ignore_errors) {
+				btrfs_free_path(path);
+				return ret;
+			}
+		}
+	}
+
 	if (verbose)
 		printf("Done searching %s\n", in_dir);
 	btrfs_free_path(path);
@@ -1138,6 +1253,7 @@ const char * const cmd_restore_usage[] = {
 	"",
 	"-s              get snapshots",
 	"-x              get extended attributes",
+	"-m|--metadata   restore owner, mode and times",
 	"-v              verbose",
 	"-i              ignore errors",
 	"-o              overwrite",
@@ -1179,10 +1295,11 @@ int cmd_restore(int argc, char **argv)
 		static const struct option long_options[] = {
 			{ "path-regex", required_argument, NULL, 256},
 			{ "dry-run", no_argument, NULL, 'D'},
+			{ "metadata", no_argument, NULL, 'm'},
 			{ NULL, 0, NULL, 0}
 		};
 
-		opt = getopt_long(argc, argv, "sxviot:u:df:r:lDc", long_options,
+		opt = getopt_long(argc, argv, "sxviot:u:dmf:r:lDc", long_options,
 					NULL);
 		if (opt < 0)
 			break;
@@ -1227,6 +1344,9 @@ int cmd_restore(int argc, char **argv)
 				break;
 			case 'l':
 				list_roots = 1;
+				break;
+			case 'm':
+				restore_metadata = 1;
 				break;
 			case 'D':
 				dry_run = 1;
