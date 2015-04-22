@@ -1278,6 +1278,18 @@ static int cmd_resize(int argc, char **argv)
 		fprintf(stderr, "ERROR: unable to resize '%s' - %s\n", 
 			path, strerror(e));
 		return 1;
+	} else if (res > 0) {
+		const char *err_str = btrfs_err_str(res);
+
+		if (err_str) {
+			fprintf(stderr, "ERROR: btrfs error resizing '%s' - %s\n",
+				path, err_str);
+		} else {
+			fprintf(stderr,
+			"ERROR: btrfs error resizing '%s' - unknown btrfs_err_code %d\n",
+				path, res);
+		}
+		return 1;
 	}
 	return 0;
 }
