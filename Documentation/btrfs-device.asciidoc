@@ -53,12 +53,12 @@ run `btrfs-balance`(8) to rebuild the chunks.
 See `btrfs-balance`(8) for more details.
 
 Device add/remove/replace::
-Device can be added/removed using `btrfs-replace`(8) subcommand and replaced
+Device can be added/removed using `btrfs-device`(8) subcommand and replaced
 using `btrfs-replace`(8).
 +
 When device is removed or replaced, btrfs will do the chunk rebuild if needed.
 +
-See `btrfs-replace`(8) and this man page for more details.
+See `btrfs-replace`(8) man page for more details on device replace.
 
 SUBCOMMAND
 ----------
