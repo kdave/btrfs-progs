@@ -799,7 +799,7 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 	char filename[BTRFS_NAME_LEN + 1];
 	unsigned long name_ptr;
 	int name_len;
-	int ret;
+	int ret = 0;
 	int fd;
 	int loops = 0;
 	u8 type;
@@ -816,8 +816,7 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 	ret = btrfs_search_slot(NULL, root, key, path, 0, 0);
 	if (ret < 0) {
 		fprintf(stderr, "Error searching %d\n", ret);
-		btrfs_free_path(path);
-		return ret;
+		goto out;
 	}
 
 	leaf = path->nodes[0];
@@ -829,15 +828,14 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 		if (ret < 0) {
 			fprintf(stderr, "Error getting next leaf %d\n",
 				ret);
-			btrfs_free_path(path);
-			return ret;
+			goto out;
 		} else if (ret > 0) {
 			/* No more leaves to search */
 			if (verbose)
 				printf("Reached the end of the tree looking "
 				       "for the directory\n");
-			btrfs_free_path(path);
-			return 0;
+			ret = 0;
+			goto out;
 		}
 		leaf = path->nodes[0];
 	}
@@ -856,16 +854,15 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 				if (ret < 0) {
 					fprintf(stderr, "Error searching %d\n",
 						ret);
-					btrfs_free_path(path);
-					return ret;
+					goto out;
 				} else if (ret > 0) {
 					/* No more leaves to search */
 					if (verbose)
 						printf("Reached the end of "
 						       "the tree searching the"
 						       " directory\n");
-					btrfs_free_path(path);
-					return 0;
+					ret = 0;
+					goto out;
 				}
 				leaf = path->nodes[0];
 			} while (!leaf);
@@ -936,8 +933,8 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 					path_name, errno);
 				if (ignore_errors)
 					goto next;
-				btrfs_free_path(path);
-				return -1;
+				ret = -1;
+				goto out;
 			}
 			loops = 0;
 			ret = copy_file(root, fd, &location, path_name);
@@ -947,8 +944,7 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 					path_name);
 				if (ignore_errors)
 					goto next;
-				btrfs_free_path(path);
-				return ret;
+				goto out;
 			}
 		} else if (type == BTRFS_FT_DIR) {
 			struct btrfs_root *search_root = root;
@@ -956,8 +952,8 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 
 			if (!dir) {
 				fprintf(stderr, "Ran out of memory\n");
-				btrfs_free_path(path);
-				return -ENOMEM;
+				ret = -ENOMEM;
+				goto out;
 			}
 
 			if (location.type == BTRFS_ROOT_ITEM_KEY) {
@@ -982,8 +978,8 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 						PTR_ERR(search_root));
 					if (ignore_errors)
 						goto next;
-					btrfs_free_path(path);
-					return PTR_ERR(search_root);
+					ret = PTR_ERR(search_root);
+					goto out;
 				}
 
 				/*
@@ -1014,8 +1010,8 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 					path_name, errno);
 				if (ignore_errors)
 					goto next;
-				btrfs_free_path(path);
-				return -1;
+				ret = -1;
+				goto out;
 			}
 			loops = 0;
 			ret = search_dir(search_root, &location,
@@ -1026,8 +1022,7 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 					path_name);
 				if (ignore_errors)
 					goto next;
-				btrfs_free_path(path);
-				return ret;
+				goto out;
 			}
 		}
 next:
@@ -1040,8 +1035,10 @@ next:
 		if (fd < 0) {
 			fprintf(stderr, "ERROR: Failed to access %s to restore metadata\n",
 					path_name);
-			if (!ignore_errors)
-				return -1;
+			if (!ignore_errors) {
+				ret = -1;
+				goto out;
+			}
 		} else {
 			/*
 			 * Set owner/mode/time on the directory as well
@@ -1049,17 +1046,16 @@ next:
 			key->type = BTRFS_INODE_ITEM_KEY;
 			ret = copy_metadata(root, fd, key);
 			close(fd);
-			if (ret && !ignore_errors) {
-				btrfs_free_path(path);
-				return ret;
-			}
+			if (ret && !ignore_errors)
+				goto out;
 		}
 	}
 
 	if (verbose)
 		printf("Done searching %s\n", in_dir);
+out:
 	btrfs_free_path(path);
-	return 0;
+	return ret;
 }
 
 static int do_list_roots(struct btrfs_root *root)
