@@ -612,7 +612,7 @@ static int copy_metadata(struct btrfs_root *root, int fd,
 		}
 	}
 out:
-	btrfs_release_path(path);
+	btrfs_free_path(path);
 	return ret;
 }
 
