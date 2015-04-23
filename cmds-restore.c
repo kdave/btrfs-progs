@@ -781,6 +781,36 @@ out:
 	return ret;
 }
 
+/*
+ * returns:
+ *  0 if the file exists and should be skipped.
+ *  1 if the file does NOT exist
+ *  2 if the file exists but is OK to overwrite
+ */
+static int overwrite_ok(const char * path)
+{
+	static int warn = 0;
+	struct stat st;
+	int ret;
+
+	/* don't be fooled by symlinks */
+	ret = fstatat(-1, path_name, &st, AT_SYMLINK_NOFOLLOW);
+
+	if (!ret) {
+		if (overwrite)
+			return 2;
+
+		if (verbose || !warn)
+			printf("Skipping existing file"
+				   " %s\n", path);
+		if (!warn)
+			printf("If you wish to overwrite use -o\n");
+		warn = 1;
+		return 0;
+	}
+	return 1;
+}
+
 static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 		      const char *output_rootdir, const char *in_dir,
 		      const regex_t *mreg)
@@ -899,25 +929,9 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 		 * files, no symlinks or anything else.
 		 */
 		if (type == BTRFS_FT_REG_FILE) {
-			if (!overwrite) {
-				static int warn = 0;
-				struct stat st;
+			if (!overwrite_ok(path_name))
+				goto next;
 
-				ret = stat(path_name, &st);
-				if (!ret) {
-					loops = 0;
-					if (verbose || !warn)
-						printf("Skipping existing file"
-						       " %s\n", path_name);
-					if (warn)
-						goto next;
-					printf("If you wish to overwrite use "
-					       "the -o option to overwrite\n");
-					warn = 1;
-					goto next;
-				}
-				ret = 0;
-			}
 			if (verbose)
 				printf("Restoring %s\n", path_name);
 			if (dry_run)
