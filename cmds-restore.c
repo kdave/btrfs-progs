@@ -653,16 +653,12 @@ static int copy_file(struct btrfs_root *root, int fd, struct btrfs_key *key,
 
 			ret = fchown(fd, btrfs_inode_uid(path->nodes[0], inode_item),
 					btrfs_inode_gid(path->nodes[0], inode_item));
-			if (ret && !ignore_errors) {
-				btrfs_release_path(path);
-				return ret;
-			}
+			if (ret && !ignore_errors)
+				goto out;
 
 			ret = fchmod(fd, btrfs_inode_mode(path->nodes[0], inode_item));
-			if (ret && !ignore_errors) {
-				btrfs_release_path(path);
-				return ret;
-			}
+			if (ret && !ignore_errors)
+				goto out;
 
 			bts = btrfs_inode_atime(inode_item);
 			times[0].tv_sec = btrfs_timespec_sec(path->nodes[0], bts);
@@ -682,8 +678,7 @@ static int copy_file(struct btrfs_root *root, int fd, struct btrfs_key *key,
 	ret = btrfs_search_slot(NULL, root, key, path, 0, 0);
 	if (ret < 0) {
 		fprintf(stderr, "Error searching %d\n", ret);
-		btrfs_free_path(path);
-		return ret;
+		goto out;
 	}
 
 	leaf = path->nodes[0];
@@ -692,12 +687,11 @@ static int copy_file(struct btrfs_root *root, int fd, struct btrfs_key *key,
 		if (ret < 0) {
 			fprintf(stderr, "Error getting next leaf %d\n",
 				ret);
-			btrfs_free_path(path);
-			return ret;
+			goto out;
 		} else if (ret > 0) {
 			/* No more leaves to search */
-			btrfs_free_path(path);
-			return 0;
+			ret = 0;
+			goto out;
 		}
 		leaf = path->nodes[0];
 	}
@@ -719,8 +713,7 @@ static int copy_file(struct btrfs_root *root, int fd, struct btrfs_key *key,
 				ret = next_leaf(root, path);
 				if (ret < 0) {
 					fprintf(stderr, "Error searching %d\n", ret);
-					btrfs_free_path(path);
-					return ret;
+					goto out;
 				} else if (ret) {
 					/* No more leaves to search */
 					btrfs_free_path(path);
@@ -742,25 +735,21 @@ static int copy_file(struct btrfs_root *root, int fd, struct btrfs_key *key,
 		if (compression >= BTRFS_COMPRESS_LAST) {
 			fprintf(stderr, "Don't support compression yet %d\n",
 				compression);
-			btrfs_free_path(path);
-			return -1;
+			ret = -1;
+			goto out;
 		}
 
 		if (extent_type == BTRFS_FILE_EXTENT_PREALLOC)
 			goto next;
 		if (extent_type == BTRFS_FILE_EXTENT_INLINE) {
 			ret = copy_one_inline(fd, path, found_key.offset);
-			if (ret) {
-				btrfs_free_path(path);
-				return -1;
-			}
+			if (ret)
+				goto out;
 		} else if (extent_type == BTRFS_FILE_EXTENT_REG) {
 			ret = copy_one_extent(root, fd, leaf, fi,
 					      found_key.offset);
-			if (ret) {
-				btrfs_free_path(path);
-				return ret;
-			}
+			if (ret)
+				goto out;
 		} else {
 			printf("Weird extent type %d\n", extent_type);
 		}
@@ -786,6 +775,10 @@ set_size:
 			return ret;
 	}
 	return 0;
+
+out:
+	btrfs_free_path(path);
+	return ret;
 }
 
 static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
