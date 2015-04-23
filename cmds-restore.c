@@ -43,8 +43,8 @@
 #include "utils.h"
 #include "commands.h"
 
-static char fs_name[4096];
-static char path_name[4096];
+static char fs_name[PATH_MAX];
+static char path_name[PATH_MAX];
 static int get_snaps = 0;
 static int verbose = 0;
 static int restore_metadata = 0;
@@ -884,13 +884,13 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 		btrfs_dir_item_key_to_cpu(leaf, dir_item, &location);
 
 		/* full path from root of btrfs being restored */
-		snprintf(fs_name, 4096, "%s/%s", in_dir, filename);
+		snprintf(fs_name, PATH_MAX, "%s/%s", in_dir, filename);
 
 		if (mreg && REG_NOMATCH == regexec(mreg, fs_name, 0, NULL, 0))
 			goto next;
 
 		/* full path from system root */
-		snprintf(path_name, 4096, "%s%s", output_rootdir, fs_name);
+		snprintf(path_name, PATH_MAX, "%s%s", output_rootdir, fs_name);
 
 		/*
 		 * At this point we're only going to restore directories and
@@ -1023,7 +1023,7 @@ next:
 	}
 
 	if (restore_metadata) {
-		snprintf(path_name, 4096, "%s%s", output_rootdir, in_dir);
+		snprintf(path_name, PATH_MAX, "%s%s", output_rootdir, in_dir);
 		fd = open(path_name, O_RDONLY);
 		if (fd < 0) {
 			fprintf(stderr, "ERROR: Failed to access %s to restore metadata\n",
@@ -1391,7 +1391,7 @@ int cmd_restore(int argc, char **argv)
 		}
 	}
 
-	memset(path_name, 0, 4096);
+	memset(path_name, 0, PATH_MAX);
 
 	strncpy(dir_name, argv[optind + 1], sizeof dir_name);
 	dir_name[sizeof dir_name - 1] = 0;
