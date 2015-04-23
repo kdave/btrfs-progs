@@ -286,8 +286,10 @@ static int del_file_extent_hole(struct rb_root *holes,
 {
 	struct file_extent_hole *hole;
 	struct file_extent_hole tmp;
-	struct file_extent_hole prev;
-	struct file_extent_hole next;
+	u64 prev_start = 0;
+	u64 prev_len = 0;
+	u64 next_start = 0;
+	u64 next_len = 0;
 	struct rb_node *node;
 	int have_prev = 0;
 	int have_next = 0;
@@ -307,24 +309,24 @@ static int del_file_extent_hole(struct rb_root *holes,
 	 * split(s) if they exists.
 	 */
 	if (start > hole->start) {
-		prev.start = hole->start;
-		prev.len = start - hole->start;
+		prev_start = hole->start;
+		prev_len = start - hole->start;
 		have_prev = 1;
 	}
 	if (hole->start + hole->len > start + len) {
-		next.start = start + len;
-		next.len = hole->start + hole->len - start - len;
+		next_start = start + len;
+		next_len = hole->start + hole->len - start - len;
 		have_next = 1;
 	}
 	rb_erase(node, holes);
 	free(hole);
 	if (have_prev) {
-		ret = add_file_extent_hole(holes, prev.start, prev.len);
+		ret = add_file_extent_hole(holes, prev_start, prev_len);
 		if (ret < 0)
 			return ret;
 	}
 	if (have_next) {
-		ret = add_file_extent_hole(holes, next.start, next.len);
+		ret = add_file_extent_hole(holes, next_start, next_len);
 		if (ret < 0)
 			return ret;
 	}
