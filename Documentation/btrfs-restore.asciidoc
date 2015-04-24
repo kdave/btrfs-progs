@@ -68,7 +68,7 @@ restore only filenames matching regex, you have to use following syntax (possibl
 +^/(|home(|/username(|/Desktop(|/.*))))$+
 
 -c::
-ignore case (--path-regrex only).
+ignore case (--path-regex only).
 
 EXIT STATUS
 -----------

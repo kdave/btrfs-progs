@@ -1257,7 +1257,7 @@ const char * const cmd_restore_usage[] = {
 	"                restore only filenames matching regex,",
 	"                you have to use following syntax (possibly quoted):",
 	"                ^/(|home(|/username(|/Desktop(|/.*))))$",
-	"-c              ignore case (--path-regrex only)",
+	"-c              ignore case (--path-regex only)",
 	NULL
 };
 
