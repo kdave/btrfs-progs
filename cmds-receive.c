@@ -875,10 +875,7 @@ static int do_receive(struct btrfs_receive *r, const char *tomnt, int r_fd,
 				strerror(-ret));
 			goto out;
 		}
-		if (g_verbose >= 1) {
-			fprintf(stderr, "chrooted to %s\n",
-				dest_dir_full_path);
-		}
+		fprintf(stderr, "Chroot to %s\n", dest_dir_full_path);
 		r->root_path = strdup("/");
 		r->dest_dir_path = r->root_path;
 	} else {
