@@ -32,6 +32,9 @@ get extended attributes.
 -m|--metadata::
 restore owner, mode and times.
 
+-S|--symlinks::
+restore symbolic links as well as normal files.
+
 -v::
 verbose.
 
