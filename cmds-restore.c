@@ -1412,7 +1412,7 @@ int cmd_restore(int argc, char **argv)
 {
 	struct btrfs_root *root;
 	struct btrfs_key key;
-	char dir_name[128];
+	char dir_name[PATH_MAX];
 	u64 tree_location = 0;
 	u64 fs_location = 0;
 	u64 root_objectid = 0;
@@ -1544,6 +1544,11 @@ int cmd_restore(int argc, char **argv)
 
 	memset(path_name, 0, PATH_MAX);
 
+	if (strlen(argv[optind + 1]) >= PATH_MAX) {
+		fprintf(stderr, "ERROR: path too long\n");
+		ret = 1;
+		goto out;
+	}
 	strncpy(dir_name, argv[optind + 1], sizeof dir_name);
 	dir_name[sizeof dir_name - 1] = 0;
 
