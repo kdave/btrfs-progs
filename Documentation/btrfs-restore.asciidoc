@@ -3,7 +3,7 @@ btrfs-restore(8)
 
 NAME
 ----
-btrfs-restore - try to restore files from a damaged btrfs filesystem(unmounted)
+btrfs-restore - try to restore files from a damaged btrfs filesystem image
 
 SYNOPSIS
 --------
@@ -23,10 +23,10 @@ https://btrfs.wiki.kernel.org/index.php/Restore
 
 OPTIONS
 -------
--s::
+-s|--snapshots::
 get snapshots, btrfs restore skips snapshots in default.
 
--x::
+-x|--xattr::
 get extended attributes.
 
 -m|--metadata::
@@ -35,13 +35,13 @@ restore owner, mode and times.
 -S|--symlinks::
 restore symbolic links as well as normal files.
 
--v::
+-v|--verbose::
 verbose.
 
--i::
+-i|--ignore-errors::
 ignore errors.
 
--o::
+-o|--overwrite::
 overwrite directories/files in <path>.
 
 -t <bytenr>::
@@ -50,16 +50,16 @@ use <bytenr> to read root tree.
 -f <bytenr>::
 only restore files that are under specified root whose root bytenr is <bytenr>.
 
--u <mirror>::
+-u|--super <mirror>::
 use given superblock mirror identified by <mirror>, it can be 0,1,2.
 
--r <rootid>::
+-r|--root <rootid>::
 only restore files that are under specified root whose objectid is <rootid>.
 
 -d::
 find dir.
 
--l::
+-l|--list-roots::
 list tree roots.
 
 -D|--dry-run::
