@@ -812,6 +812,8 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 		goto out;
 	}
 
+	ret = 0;
+
 	leaf = path->nodes[0];
 	while (!leaf) {
 		if (verbose > 1)
