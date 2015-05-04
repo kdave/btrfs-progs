@@ -24,7 +24,6 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/acl.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <uuid/uuid.h>
@@ -691,6 +690,20 @@ static int ext2_xattr_check_entry(struct ext2_ext_attr_entry *entry,
 }
 
 #define EXT2_ACL_VERSION	0x0001
+
+/* 23.2.5 acl_tag_t values */
+
+#define ACL_UNDEFINED_TAG       (0x00)
+#define ACL_USER_OBJ            (0x01)
+#define ACL_USER                (0x02)
+#define ACL_GROUP_OBJ           (0x04)
+#define ACL_GROUP               (0x08)
+#define ACL_MASK                (0x10)
+#define ACL_OTHER               (0x20)
+
+/* 23.2.7 ACL qualifier constants */
+
+#define ACL_UNDEFINED_ID        ((id_t)-1)
 
 typedef struct {
 	__le16		e_tag;

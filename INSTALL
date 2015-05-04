@@ -17,10 +17,9 @@ Generating documentation:
 - asciidoc - text document format tool
 - xmlto - text document format tool
 
-XATTR and ACL libraries should be provided by the standard C library or by
+XATTR library should be provided by the standard C library or by
 
 - libattr - extended attribute library
-- libacl - access control list library
 
 Please note that the package names may differ according to the distribution.
 See https://btrfs.wiki.kernel.org/index.php/Btrfs_source_repositories#Dependencies .
