@@ -516,12 +516,14 @@ static struct inode_record *clone_inode_rec(struct inode_record *orig_rec)
 	struct orphan_data_extent *src_orphan;
 	struct orphan_data_extent *dst_orphan;
 	size_t size;
+	int ret;
 
 	rec = malloc(sizeof(*rec));
 	memcpy(rec, orig_rec, sizeof(*rec));
 	rec->refs = 1;
 	INIT_LIST_HEAD(&rec->backrefs);
 	INIT_LIST_HEAD(&rec->orphan_extents);
+	rec->holes = RB_ROOT;
 
 	list_for_each_entry(orig, &orig_rec->backrefs, list) {
 		size = sizeof(*orig) + orig->namelen + 1;
@@ -536,6 +538,9 @@ static struct inode_record *clone_inode_rec(struct inode_record *orig_rec)
 		memcpy(dst_orphan, src_orphan, sizeof(*src_orphan));
 		list_add_tail(&dst_orphan->list, &rec->orphan_extents);
 	}
+	ret = copy_file_extent_holes(&rec->holes, &orig_rec->holes);
+	BUG_ON(ret < 0);
+
 	return rec;
 }
 
