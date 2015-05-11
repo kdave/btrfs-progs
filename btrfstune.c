@@ -198,6 +198,27 @@ out:
 	return ret;
 }
 
+static int change_device_uuid(struct btrfs_root *root, struct extent_buffer *eb,
+			      int slot)
+{
+	struct btrfs_fs_info *fs_info = root->fs_info;
+	struct btrfs_dev_item *di;
+	int ret = 0;
+
+	di = btrfs_item_ptr(eb, slot, struct btrfs_dev_item);
+	if (fs_info->new_fsid) {
+		if (!memcmp_extent_buffer(eb, fs_info->new_fsid,
+					  (unsigned long)btrfs_device_fsid(di),
+					  BTRFS_FSID_SIZE))
+			return ret;
+		write_extent_buffer(eb, fs_info->new_fsid,
+				    (unsigned long)btrfs_device_fsid(di),
+				    BTRFS_FSID_SIZE);
+		ret = write_tree_block(NULL, root, eb);
+	}
+	return ret;
+}
+
 static void print_usage(void)
 {
 	fprintf(stderr, "usage: btrfstune [options] device\n");
