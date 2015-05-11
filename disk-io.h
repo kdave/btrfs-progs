@@ -49,6 +49,8 @@ enum btrfs_open_ctree_flags {
 	 * tree bits.
 	 * Like split PARTIAL into SKIP_CSUM/SKIP_EXTENT
 	 */
+
+	OPEN_CTREE_IGNORE_FSID_MISMATCH	= (1 << 10)
 };
 
 static inline u64 btrfs_sb_offset(int mirror)

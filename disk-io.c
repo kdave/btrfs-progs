@@ -49,7 +49,8 @@ static int check_tree_block(struct btrfs_root *root, struct extent_buffer *buf)
 
 	fs_devices = root->fs_info->fs_devices;
 	while (fs_devices) {
-		if (!memcmp_extent_buffer(buf, fs_devices->fsid,
+		if (root->fs_info->ignore_fsid_mismatch ||
+		    !memcmp_extent_buffer(buf, fs_devices->fsid,
 					  btrfs_header_fsid(),
 					  BTRFS_FSID_SIZE)) {
 			ret = 0;
@@ -1149,6 +1150,8 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 		fs_info->on_restoring = 1;
 	if (flags & OPEN_CTREE_SUPPRESS_CHECK_BLOCK_ERRORS)
 		fs_info->suppress_check_block_errors = 1;
+	if (flags & OPEN_CTREE_IGNORE_FSID_MISMATCH)
+		fs_info->ignore_fsid_mismatch = 1;
 
 	ret = btrfs_scan_fs_devices(fp, path, &fs_devices, sb_bytenr,
 				    (flags & OPEN_CTREE_RECOVER_SUPER),
@@ -1177,6 +1180,12 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 		ret = btrfs_read_dev_super(fp, disk_super, sb_bytenr, 0);
 	if (ret) {
 		printk("No valid btrfs found\n");
+		goto out_devices;
+	}
+
+	if (btrfs_super_flags(disk_super) & BTRFS_SUPER_FLAG_CHANGING_FSID &&
+	    !fs_info->ignore_fsid_mismatch) {
+		fprintf(stderr, "ERROR: Filesystem UUID change in progress\n");
 		goto out_devices;
 	}
 
