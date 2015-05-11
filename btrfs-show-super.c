@@ -305,7 +305,8 @@ struct readable_flag_entry incompat_flags_array[] = {
 static const int incompat_flags_num = sizeof(incompat_flags_array) /
 				      sizeof(struct readable_flag_entry);
 
-static void print_readable_incompat_flag(u64 flag)
+static void __print_readable_flag(u64 flag, struct readable_flag_entry *array,
+				  int array_size, u64 supported_flags)
 {
 	int i;
 	int first = 1;
@@ -313,9 +314,10 @@ static void print_readable_incompat_flag(u64 flag)
 
 	if (!flag)
 		return;
+
 	printf("\t\t\t( ");
-	for (i = 0; i < incompat_flags_num; i++) {
-		entry = incompat_flags_array + i;
+	for (i = 0; i < array_size; i++) {
+		entry = array + i;
 		if (flag & entry->bit) {
 			if (first)
 				printf("%s ", entry->output);
@@ -324,7 +326,7 @@ static void print_readable_incompat_flag(u64 flag)
 			first = 0;
 		}
 	}
-	flag &= ~BTRFS_FEATURE_INCOMPAT_SUPP;
+	flag &= ~supported_flags;
 	if (flag) {
 		if (first)
 			printf("unknown flag: 0x%llx ", flag);
@@ -332,6 +334,13 @@ static void print_readable_incompat_flag(u64 flag)
 			printf("|\n\t\t\t  unknown flag: 0x%llx ", flag);
 	}
 	printf(")\n");
+}
+
+static void print_readable_incompat_flag(u64 flag)
+{
+	return __print_readable_flag(flag, incompat_flags_array,
+				     incompat_flags_num,
+				     BTRFS_FEATURE_INCOMPAT_SUPP);
 }
 
 static void dump_superblock(struct btrfs_super_block *sb, int full)
