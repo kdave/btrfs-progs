@@ -372,7 +372,7 @@ int write_and_map_eb(struct btrfs_trans_handle *trans,
 	return 0;
 }
 
-static int write_tree_block(struct btrfs_trans_handle *trans,
+int write_tree_block(struct btrfs_trans_handle *trans,
 		     struct btrfs_root *root,
 		     struct extent_buffer *eb)
 {
@@ -381,7 +381,7 @@ static int write_tree_block(struct btrfs_trans_handle *trans,
 		BUG();
 	}
 
-	if (!btrfs_buffer_uptodate(eb, trans->transid))
+	if (trans && !btrfs_buffer_uptodate(eb, trans->transid))
 		BUG();
 
 	btrfs_set_header_flag(eb, BTRFS_HEADER_FLAG_WRITTEN);
