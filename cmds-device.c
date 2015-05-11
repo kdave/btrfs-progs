@@ -183,7 +183,7 @@ static int cmd_rm_dev(int argc, char **argv)
 		if (res) {
 			const char *msg;
 
-			if (ret > 0)
+			if (res > 0)
 				msg = btrfs_err_str(res);
 			else
 				msg = strerror(e);
