@@ -130,6 +130,74 @@ static int change_header_uuid(struct btrfs_root *root, struct extent_buffer *eb)
 	return ret;
 }
 
+static int change_extents_uuid(struct btrfs_fs_info *fs_info)
+{
+	struct btrfs_root *root = fs_info->extent_root;
+	struct btrfs_path *path;
+	struct btrfs_key key = {0, 0, 0};
+	int ret = 0;
+
+	if (!fs_info->new_fsid && !fs_info->new_chunk_tree_uuid)
+		return 0;
+
+	path = btrfs_alloc_path();
+	if (!path)
+		return -ENOMEM;
+
+	/*
+	 * Here we don't use transaction as it will takes a lot of reserve
+	 * space, and that will make a near-full btrfs unable to change uuid
+	 */
+	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
+	if (ret < 0)
+		goto out;
+
+	while (1) {
+		struct btrfs_extent_item *ei;
+		struct extent_buffer *eb;
+		u64 flags;
+		u64 bytenr;
+
+		btrfs_item_key_to_cpu(path->nodes[0], &key, path->slots[0]);
+		if (key.type != BTRFS_EXTENT_ITEM_KEY &&
+		    key.type != BTRFS_METADATA_ITEM_KEY)
+			goto next;
+		ei = btrfs_item_ptr(path->nodes[0], path->slots[0],
+				    struct btrfs_extent_item);
+		flags = btrfs_extent_flags(path->nodes[0], ei);
+		if (!(flags & BTRFS_EXTENT_FLAG_TREE_BLOCK))
+			goto next;
+
+		bytenr = key.objectid;
+		eb = read_tree_block(root, bytenr, root->nodesize, 0);
+		if (IS_ERR(eb)) {
+			fprintf(stderr, "Failed to read tree block: %llu\n",
+				bytenr);
+			ret = PTR_ERR(eb);
+			goto out;
+		}
+		ret = change_header_uuid(root, eb);
+		free_extent_buffer(eb);
+		if (ret < 0) {
+			fprintf(stderr, "Failed to change uuid of tree block: %llu\n",
+				bytenr);
+			goto out;
+		}
+next:
+		ret = btrfs_next_item(root, path);
+		if (ret < 0)
+			goto out;
+		if (ret > 0) {
+			ret = 0;
+			goto out;
+		}
+	}
+
+out:
+	btrfs_free_path(path);
+	return ret;
+}
+
 static void print_usage(void)
 {
 	fprintf(stderr, "usage: btrfstune [options] device\n");
