@@ -955,7 +955,9 @@ struct btrfs_device;
 struct btrfs_fs_devices;
 struct btrfs_fs_info {
 	u8 fsid[BTRFS_FSID_SIZE];
+	u8 *new_fsid;
 	u8 chunk_tree_uuid[BTRFS_UUID_SIZE];
+	u8 *new_chunk_tree_uuid;
 	struct btrfs_root *fs_root;
 	struct btrfs_root *extent_root;
 	struct btrfs_root *tree_root;

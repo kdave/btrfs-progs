@@ -187,7 +187,6 @@ out:
 	return ret;
 }
 
-
 const struct prop_handler prop_handlers[] = {
 	{"ro", "Set/get read-only flag of subvolume.", 0, prop_object_subvol,
 	 prop_read_only},

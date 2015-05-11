@@ -98,6 +98,38 @@ static int enable_skinny_metadata(struct btrfs_root *root)
 	return 0;
 }
 
+static int change_header_uuid(struct btrfs_root *root, struct extent_buffer *eb)
+{
+	struct btrfs_fs_info *fs_info = root->fs_info;
+	int same_fsid = 1;
+	int same_chunk_tree_uuid = 1;
+	int ret;
+
+	/* Check for whether we need to change fs/chunk id */
+	if (!fs_info->new_fsid && !fs_info->new_chunk_tree_uuid)
+		return 0;
+	if (fs_info->new_fsid)
+		same_fsid = !memcmp_extent_buffer(eb, fs_info->new_fsid,
+					  btrfs_header_fsid(), BTRFS_FSID_SIZE);
+	if (fs_info->new_chunk_tree_uuid)
+		same_chunk_tree_uuid =
+			!memcmp_extent_buffer(eb, fs_info->new_chunk_tree_uuid,
+					      btrfs_header_chunk_tree_uuid(eb),
+					      BTRFS_UUID_SIZE);
+	if (same_fsid && same_chunk_tree_uuid)
+		return 0;
+	if (!same_fsid)
+		write_extent_buffer(eb, fs_info->new_fsid, btrfs_header_fsid(),
+				    BTRFS_FSID_SIZE);
+	if (!same_chunk_tree_uuid)
+		write_extent_buffer(eb, fs_info->new_chunk_tree_uuid,
+				    btrfs_header_chunk_tree_uuid(eb),
+				    BTRFS_UUID_SIZE);
+	ret = write_tree_block(NULL, root, eb);
+
+	return ret;
+}
+
 static void print_usage(void)
 {
 	fprintf(stderr, "usage: btrfstune [options] device\n");
