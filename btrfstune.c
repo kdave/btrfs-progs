@@ -262,6 +262,34 @@ out:
 	return ret;
 }
 
+static int change_fsid_prepare(struct btrfs_fs_info *fs_info)
+{
+	u64 flags = btrfs_super_flags(fs_info->super_copy);
+
+	if (!fs_info->new_fsid && !fs_info->new_chunk_tree_uuid)
+		return 0;
+
+	if (fs_info->new_fsid)
+		flags |= BTRFS_SUPER_FLAG_CHANGING_FSID;
+	btrfs_set_super_flags(fs_info->super_copy, flags);
+
+	return write_all_supers(fs_info->tree_root);
+}
+
+static int change_fsid_done(struct btrfs_fs_info *fs_info)
+{
+	u64 flags = btrfs_super_flags(fs_info->super_copy);
+
+	if (!fs_info->new_fsid && !fs_info->new_chunk_tree_uuid)
+		return 0;
+
+	if (fs_info->new_fsid)
+		flags &= ~BTRFS_SUPER_FLAG_CHANGING_FSID;
+	btrfs_set_super_flags(fs_info->super_copy, flags);
+
+	return write_all_supers(fs_info->tree_root);
+}
+
 static void print_usage(void)
 {
 	fprintf(stderr, "usage: btrfstune [options] device\n");
