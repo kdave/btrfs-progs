@@ -23,11 +23,14 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <uuid/uuid.h>
+
 #include "kerncompat.h"
 #include "ctree.h"
 #include "disk-io.h"
 #include "transaction.h"
 #include "utils.h"
+#include "volumes.h"
 
 static char *device;
 static int force = 0;
@@ -288,6 +291,72 @@ static int change_fsid_done(struct btrfs_fs_info *fs_info)
 	btrfs_set_super_flags(fs_info->super_copy, flags);
 
 	return write_all_supers(fs_info->tree_root);
+}
+
+static int change_uuid(struct btrfs_fs_info *fs_info, const char *new_fsid,
+		       const char *new_chunk_uuid)
+{
+	int ret = 0;
+
+	/* caller should do extra check on passed uuid */
+	if (new_fsid) {
+		/* allocated mem will be freed at close_ctree() */
+		fs_info->new_fsid = malloc(BTRFS_FSID_SIZE);
+		if (!fs_info->new_fsid) {
+			ret = -ENOMEM;
+			goto out;
+		}
+		ret = uuid_parse(new_fsid, fs_info->new_fsid);
+		if (ret < 0)
+			goto out;
+	}
+
+	if (new_chunk_uuid) {
+		/* allocated mem will be freed at close_ctree() */
+		fs_info->new_chunk_tree_uuid = malloc(BTRFS_UUID_SIZE);
+		if (!fs_info->new_chunk_tree_uuid) {
+			ret = -ENOMEM;
+			goto out;
+		}
+		ret = uuid_parse(new_chunk_uuid, fs_info->new_chunk_tree_uuid);
+		if (ret < 0)
+			goto out;
+	}
+
+	/* Now we can begin fsid change */
+	ret = change_fsid_prepare(fs_info);
+	if (ret < 0)
+		goto out;
+
+	/* Change extents first */
+	ret = change_extents_uuid(fs_info);
+	if (ret < 0) {
+		fprintf(stderr, "Failed to change UUID of metadata\n");
+		goto out;
+	}
+
+	/* Then devices */
+	ret = change_devices_uuid(fs_info);
+	if (ret < 0) {
+		fprintf(stderr, "Failed to change UUID of devices\n");
+		goto out;
+	}
+
+	/* Last, change fsid in super, only fsid change needs this */
+	if (new_fsid) {
+		memcpy(fs_info->fs_devices->fsid, fs_info->new_fsid,
+		       BTRFS_FSID_SIZE);
+		memcpy(fs_info->super_copy->fsid, fs_info->new_fsid,
+		       BTRFS_FSID_SIZE);
+		ret = write_all_supers(fs_info->tree_root);
+		if (ret < 0)
+			goto out;
+	}
+
+	/* Now fsid change is done */
+	ret = change_fsid_done(fs_info);
+out:
+	return ret;
 }
 
 static void print_usage(void)
