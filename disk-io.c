@@ -40,6 +40,8 @@
 #define BTRFS_BAD_LEVEL			(-3)
 #define BTRFS_BAD_NRITEMS		(-4)
 
+#define IS_ALIGNED(x, a)                (((x) & ((typeof(x))(a) - 1)) == 0)
+
 /* Calculate max possible nritems for a leaf/node */
 static u32 max_nritems(u8 level, u32 nodesize)
 {
@@ -1323,6 +1325,141 @@ struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
 	return info->fs_root;
 }
 
+/*
+ * Check if the super is valid:
+ * - nodesize/sectorsize - minimum, maximum, alignment
+ * - tree block starts   - alignment
+ * - number of devices   - something sane
+ * - sys array size      - maximum
+ */
+static int check_super(struct btrfs_super_block *sb)
+{
+	char result[BTRFS_CSUM_SIZE];
+	u32 crc;
+	u16 csum_type;
+	int csum_size;
+
+	if (btrfs_super_magic(sb) != BTRFS_MAGIC) {
+		fprintf(stderr, "ERROR: superblock magic doesn't match\n");
+		return -EIO;
+	}
+
+	csum_type = btrfs_super_csum_type(sb);
+	if (csum_type >= ARRAY_SIZE(btrfs_csum_sizes)) {
+		fprintf(stderr, "ERROR: unsupported checksum algorithm %u\n",
+			csum_type);
+		return -EIO;
+	}
+	csum_size = btrfs_csum_sizes[csum_type];
+
+	crc = ~(u32)0;
+	crc = btrfs_csum_data(NULL, (char *)sb + BTRFS_CSUM_SIZE, crc,
+			      BTRFS_SUPER_INFO_SIZE - BTRFS_CSUM_SIZE);
+	btrfs_csum_final(crc, result);
+
+	if (memcmp(result, sb->csum, csum_size)) {
+		fprintf(stderr, "ERROR: superblock checksum mismatch\n");
+		return -EIO;
+	}
+	if (btrfs_super_root_level(sb) >= BTRFS_MAX_LEVEL) {
+		fprintf(stderr, "ERROR: tree_root level too big: %d >= %d\n",
+			btrfs_super_root_level(sb), BTRFS_MAX_LEVEL);
+		return -EIO;
+	}
+	if (btrfs_super_chunk_root_level(sb) >= BTRFS_MAX_LEVEL) {
+		fprintf(stderr, "ERROR: chunk_root level too big: %d >= %d\n",
+			btrfs_super_chunk_root_level(sb), BTRFS_MAX_LEVEL);
+		return -EIO;
+	}
+	if (btrfs_super_log_root_level(sb) >= BTRFS_MAX_LEVEL) {
+		fprintf(stderr, "ERROR: log_root level too big: %d >= %d\n",
+			btrfs_super_log_root_level(sb), BTRFS_MAX_LEVEL);
+		return -EIO;
+	}
+
+	if (!IS_ALIGNED(btrfs_super_root(sb), 4096)) {
+		fprintf(stderr, "ERROR: tree_root block unaligned: %llu\n",
+			btrfs_super_root(sb));
+		return -EIO;
+	}
+	if (!IS_ALIGNED(btrfs_super_chunk_root(sb), 4096)) {
+		fprintf(stderr, "ERROR: chunk_root block unaligned: %llu\n",
+			btrfs_super_chunk_root(sb));
+		return -EIO;
+	}
+	if (!IS_ALIGNED(btrfs_super_log_root(sb), 4096)) {
+		fprintf(stderr, "ERROR: log_root block unaligned: %llu\n",
+			btrfs_super_log_root(sb));
+		return -EIO;
+	}
+	if (btrfs_super_nodesize(sb) < 4096) {
+		fprintf(stderr, "ERROR: nodesize too small: %u < 4096\n",
+			btrfs_super_nodesize(sb));
+		return -EIO;
+	}
+	if (!IS_ALIGNED(btrfs_super_nodesize(sb), 4096)) {
+		fprintf(stderr, "ERROR: nodesize unaligned: %u\n",
+			btrfs_super_nodesize(sb));
+		return -EIO;
+	}
+	if (btrfs_super_sectorsize(sb) < 4096) {
+		fprintf(stderr, "ERROR: sectorsize too small: %u < 4096\n",
+			btrfs_super_sectorsize(sb));
+		return -EIO;
+	}
+	if (!IS_ALIGNED(btrfs_super_sectorsize(sb), 4096)) {
+		fprintf(stderr, "ERROR: sectorsize unaligned: %u\n",
+			btrfs_super_sectorsize(sb));
+		return -EIO;
+	}
+
+	if (memcmp(sb->fsid, sb->dev_item.fsid, BTRFS_UUID_SIZE) != 0) {
+		char fsid[BTRFS_UUID_UNPARSED_SIZE];
+		char dev_fsid[BTRFS_UUID_UNPARSED_SIZE];
+
+		uuid_unparse(sb->fsid, fsid);
+		uuid_unparse(sb->dev_item.fsid, dev_fsid);
+		printk(KERN_ERR
+			"ERROR: dev_item UUID does not match fsid: %s != %s\n",
+			dev_fsid, fsid);
+		return -EIO;
+	}
+
+	/*
+	 * Hint to catch really bogus numbers, bitflips or so
+	 */
+	if (btrfs_super_num_devices(sb) > (1UL << 31)) {
+		fprintf(stderr, "WARNING: suspicious number of devices: %llu\n",
+			btrfs_super_num_devices(sb));
+	}
+
+	if (btrfs_super_num_devices(sb) == 0) {
+		fprintf(stderr, "ERROR: number of devices is 0\n");
+		return -EIO;
+	}
+
+	/*
+	 * Obvious sys_chunk_array corruptions, it must hold at least one key
+	 * and one chunk
+	 */
+	if (btrfs_super_sys_array_size(sb) > BTRFS_SYSTEM_CHUNK_ARRAY_SIZE) {
+		fprintf(stderr, "BTRFS: system chunk array too big %u > %u\n",
+			btrfs_super_sys_array_size(sb),
+			BTRFS_SYSTEM_CHUNK_ARRAY_SIZE);
+		return -EIO;
+	}
+	if (btrfs_super_sys_array_size(sb) < sizeof(struct btrfs_disk_key)
+			+ sizeof(struct btrfs_chunk)) {
+		fprintf(stderr, "BTRFS: system chunk array too small %u < %lu\n",
+			btrfs_super_sys_array_size(sb),
+			sizeof(struct btrfs_disk_key) +
+			sizeof(struct btrfs_chunk));
+		return -EIO;
+	}
+
+	return 0;
+}
+
 int btrfs_read_dev_super(int fd, struct btrfs_super_block *sb, u64 sb_bytenr,
 			 int super_recover)
 {
@@ -1341,10 +1478,11 @@ int btrfs_read_dev_super(int fd, struct btrfs_super_block *sb, u64 sb_bytenr,
 		if (ret < BTRFS_SUPER_INFO_SIZE)
 			return -1;
 
-		if (btrfs_super_bytenr(buf) != sb_bytenr ||
-		    btrfs_super_magic(buf) != BTRFS_MAGIC)
+		if (btrfs_super_bytenr(buf) != sb_bytenr)
 			return -1;
 
+		if (check_super(buf))
+			return -1;
 		memcpy(sb, buf, BTRFS_SUPER_INFO_SIZE);
 		return 0;
 	}
@@ -1366,8 +1504,8 @@ int btrfs_read_dev_super(int fd, struct btrfs_super_block *sb, u64 sb_bytenr,
 			continue;
 		/* if magic is NULL, the device was removed */
 		if (btrfs_super_magic(buf) == 0 && i == 0)
-			return -1;
-		if (btrfs_super_magic(buf) != BTRFS_MAGIC)
+			break;
+		if (check_super(buf))
 			continue;
 
 		if (!fsid_is_initialized) {
