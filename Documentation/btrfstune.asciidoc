@@ -25,8 +25,22 @@ Enable extended inode refs.
 -x::
 Enable skinny metadata extent refs.
 -f::
-Allow dangerous changes, e.g. clear the seeding flag. Make sure that you are
-aware of the dangers.
+Allow dangerous changes, e.g. clear the seeding flag or change fsid. Make sure
+that you are aware of the dangers.
+-u::
+Change fsid to a random generated UUID or continue previous change operation in
+case it was interrupted with the original UUID.
+-U <UUID>::
+Change fsid to <UUID>.
++
+The <UUID> should be a 36 bytes string in `printf`(3) format
+"%08x-%04x-%04x-%04x-%012x".
+If there is a previous unfinished fsid change, it will only continue if the
+<UUID> matches the unfinished one.
+
+WARNING: Cancelling or interrupting a UUID change operation will make the
+filesystem temporarily unmountable.  To fix it, rerun 'btrfstune -u' to restore
+the UUID and wait it complete.
 
 When mounting the new device, btrfs will check whether the seeding flag is set
 when try to open seeding device.  If the user clears the seeding flag of the
