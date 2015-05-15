@@ -1649,12 +1649,11 @@ static int read_one_chunk(struct btrfs_root *root, struct btrfs_key *key,
 	/*
 	 * Device number check against profile
 	 */
-	if ((map->type & BTRFS_BLOCK_GROUP_RAID10 && num_stripes < 4 &&
-	     map->sub_stripes < 2) ||
-	    (map->type & BTRFS_BLOCK_GROUP_RAID1 && num_stripes < 2) ||
-	    (map->type & BTRFS_BLOCK_GROUP_RAID5 && num_stripes < 3) ||
-	    (map->type & BTRFS_BLOCK_GROUP_RAID6 && num_stripes < 4) ||
-	    (map->type & BTRFS_BLOCK_GROUP_DUP && num_stripes != 1) ||
+	if ((map->type & BTRFS_BLOCK_GROUP_RAID10 && map->sub_stripes == 0) ||
+	    (map->type & BTRFS_BLOCK_GROUP_RAID1 && num_stripes < 1) ||
+	    (map->type & BTRFS_BLOCK_GROUP_RAID5 && num_stripes < 2) ||
+	    (map->type & BTRFS_BLOCK_GROUP_RAID6 && num_stripes < 3) ||
+	    (map->type & BTRFS_BLOCK_GROUP_DUP && num_stripes > 2) ||
 	    ((map->type & BTRFS_BLOCK_GROUP_PROFILE_MASK) == 0 &&
 	     num_stripes != 1)) {
 		fprintf(stderr,
