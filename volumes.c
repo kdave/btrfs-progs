@@ -1510,7 +1510,8 @@ struct btrfs_device *btrfs_find_device(struct btrfs_root *root, u64 devid,
 	cur_devices = root->fs_info->fs_devices;
 	while (cur_devices) {
 		if (!fsid ||
-		    !memcmp(cur_devices->fsid, fsid, BTRFS_UUID_SIZE)) {
+		    (!memcmp(cur_devices->fsid, fsid, BTRFS_UUID_SIZE) ||
+		     root->fs_info->ignore_fsid_mismatch)) {
 			device = __find_device(&cur_devices->devices,
 					       devid, uuid);
 			if (device)
