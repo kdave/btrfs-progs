@@ -406,23 +406,28 @@ static void print_usage(void)
 	fprintf(stderr, "\t-S value\tpositive value will enable seeding, zero to disable, negative is not allowed\n");
 	fprintf(stderr, "\t-r \t\tenable extended inode refs\n");
 	fprintf(stderr, "\t-x \t\tenable skinny metadata extent refs\n");
-	fprintf(stderr, "\t-f \t\tforce to set or clear flags, make sure that you are aware of the dangers\n");
+	fprintf(stderr, "\t-f \t\tforce to do dangerous operation, make sure that you are aware of the dangers\n");
+	fprintf(stderr, "\t-u \t\tchange fsid, use a random one\n");
+	fprintf(stderr, "\t-U UUID\t\tchange fsid to UUID\n");
 }
 
 int main(int argc, char *argv[])
 {
 	struct btrfs_root *root;
+	enum btrfs_open_ctree_flags ctree_flags = OPEN_CTREE_WRITES;
 	int success = 0;
 	int total = 0;
 	int extrefs_flag = 0;
 	int seeding_flag = 0;
 	u64 seeding_value = 0;
 	int skinny_flag = 0;
+	int random_fsid = 0;
+	char *new_fsid_str = NULL;
 	int ret;
 
 	optind = 1;
 	while(1) {
-		int c = getopt(argc, argv, "S:rxf");
+		int c = getopt(argc, argv, "S:rxfuU:");
 		if (c < 0)
 			break;
 		switch(c) {
@@ -439,6 +444,14 @@ int main(int argc, char *argv[])
 		case 'f':
 			force = 1;
 			break;
+		case 'U':
+			ctree_flags |= OPEN_CTREE_IGNORE_FSID_MISMATCH;
+			new_fsid_str = optarg;
+			break;
+		case 'u':
+			ctree_flags |= OPEN_CTREE_IGNORE_FSID_MISMATCH;
+			random_fsid = 1;
+			break;
 		default:
 			print_usage();
 			return 1;
@@ -453,11 +466,35 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	if (!(seeding_flag + extrefs_flag + skinny_flag)) {
+	if (random_fsid && new_fsid_str) {
+		fprintf(stderr,
+			"ERROR: Random fsid can't be used with specified fsid\n");
+		return 1;
+	}
+	if (!(seeding_flag + extrefs_flag + skinny_flag) &&
+	    !(random_fsid || new_fsid_str)) {
 		fprintf(stderr,
 			"ERROR: At least one option should be assigned.\n");
 		print_usage();
 		return 1;
+	}
+
+	if (new_fsid_str) {
+		uuid_t tmp;
+
+		ret = uuid_parse(new_fsid_str, tmp);
+		if (ret < 0) {
+			fprintf(stderr,
+				"ERROR: Could not parse UUID: %s\n",
+				new_fsid_str);
+			return 1;
+		}
+		if (!test_uuid_unique(new_fsid_str)) {
+			fprintf(stderr,
+				"ERROR: Fsid %s is not unique\n",
+				new_fsid_str);
+			return 1;
+		}
 	}
 
 	ret = check_mounted(device);
@@ -470,7 +507,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	root = open_ctree(device, 0, OPEN_CTREE_WRITES);
+	root = open_ctree(device, 0, ctree_flags);
 
 	if (!root) {
 		fprintf(stderr, "Open ctree failed\n");
@@ -483,7 +520,8 @@ int main(int argc, char *argv[])
 			ret = ask_user("We are going to clear the seeding flag, are you sure?");
 			if (!ret) {
 				fprintf(stderr, "Clear seeding flag canceled\n");
-				return 1;
+				ret = 1;
+				goto out;
 			}
 		}
 
@@ -505,6 +543,25 @@ int main(int argc, char *argv[])
 		total++;
 	}
 
+	if (random_fsid || new_fsid_str) {
+		if (!force) {
+			fprintf(stderr,
+				"Warning: It's highly recommended to run 'btrfs check' before this operation\n");
+			fprintf(stderr,
+				"Also canceling running UUID change progress may cause corruption\n");
+			ret = ask_user("We are going to change UUID, are your sure?");
+			if (!ret) {
+				fprintf(stderr, "UUID change canceled\n");
+				ret = 1;
+				goto out;
+			}
+		}
+		ret = change_uuid(root->fs_info, new_fsid_str);
+		if (!ret)
+			success++;
+		total++;
+	}
+
 	if (success == total) {
 		ret = 0;
 	} else {
@@ -512,6 +569,7 @@ int main(int argc, char *argv[])
 		ret = 1;
 		fprintf(stderr, "btrfstune failed\n");
 	}
+out:
 	close_ctree(root);
 
 	return ret;
