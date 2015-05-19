@@ -110,6 +110,9 @@ static void print_usage(void)
 	fprintf(stderr, "\t-D Corrupt a dir item, must specify key and field\n");
 	fprintf(stderr, "\t-d Delete this item (must specify -K)\n");
 	fprintf(stderr, "\t-r Operate on this root (only works with -d)\n");
+	fprintf(stderr, "\t-C Delete a csum for the specified bytenr.  When "
+		"used with -b it'll delete that many bytes, otherwise it's "
+		"just sectorsize\n");
 	exit(1);
 }
 
@@ -843,6 +846,26 @@ out:
 	return ret;
 }
 
+static int delete_csum(struct btrfs_root *root, u64 bytenr, u64 bytes)
+{
+	struct btrfs_trans_handle *trans;
+	int ret;
+
+	root = root->fs_info->csum_root;
+	trans = btrfs_start_transaction(root, 1);
+	if (IS_ERR(trans)) {
+		fprintf(stderr, "Couldn't start transaction %ld\n",
+			PTR_ERR(trans));
+		return PTR_ERR(trans);
+	}
+
+	ret = btrfs_del_csums(trans, root, bytenr, bytes);
+	if (ret)
+		fprintf(stderr, "Error deleting csums %d\n", ret);
+	btrfs_commit_transaction(trans, root);
+	return ret;
+}
+
 /* corrupt item using NO cow.
  * Because chunk recover will recover based on whole partition scaning,
  * If using COW, chunk recover will use the old item to recover,
@@ -1009,6 +1032,7 @@ int main(int ac, char **av)
 	u64 inode = 0;
 	u64 file_extent = (u64)-1;
 	u64 root_objectid = 0;
+	u64 csum_bytenr = 0;
 	char field[FIELD_BUF_LEN];
 
 	field[0] = '\0';
@@ -1036,10 +1060,11 @@ int main(int ac, char **av)
 			{ "dir-item", no_argument, NULL, 'D'},
 			{ "delete", no_argument, NULL, 'd'},
 			{ "root", no_argument, NULL, 'r'},
+			{ "csum", required_argument, NULL, 'C'},
 			{ NULL, 0, NULL, 0 }
 		};
 
-		c = getopt_long(ac, av, "l:c:b:eEkuUi:f:x:m:K:IDdr:",
+		c = getopt_long(ac, av, "l:c:b:eEkuUi:f:x:m:K:IDdr:C:",
 				long_options, NULL);
 		if (c < 0)
 			break;
@@ -1102,6 +1127,9 @@ int main(int ac, char **av)
 				break;
 			case 'r':
 				root_objectid = arg_strtou64(optarg);
+				break;
+			case 'C':
+				csum_bytenr = arg_strtou64(optarg);
 				break;
 			default:
 				print_usage();
@@ -1203,6 +1231,10 @@ int main(int ac, char **av)
 		if (!key.objectid || !strlen(field))
 			print_usage();
 		ret = corrupt_dir_item(root, &key, field);
+		goto out_close;
+	}
+	if (csum_bytenr) {
+		ret = delete_csum(root, csum_bytenr, bytes);
 		goto out_close;
 	}
 	if (corrupt_item) {
