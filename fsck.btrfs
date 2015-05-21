@@ -26,12 +26,13 @@ do
 	a|A|p|y)	AUTO=true;;
 	esac
 done
+shift $(($OPTIND - 1))
 eval DEV=\${$#}
 if [ ! -e $DEV ]; then
 	echo "$0: $DEV does not exist"
 	exit 8
 fi
-if [ "$AUTO" == "false" ]; then
+if ! $AUTO; then
 	echo "If you wish to check the consistency of a BTRFS filesystem or"
 	echo "repair a damaged filesystem, see btrfs(8) subcommand 'check'."
 fi
