@@ -30,6 +30,8 @@ check_prereq()
 
 check_image()
 {
+	local image
+
 	image=$1
 	echo "testing image $(basename $image)" >> $RESULTS
 	$TOP/btrfs check $image >> $RESULTS 2>&1
@@ -39,18 +41,51 @@ check_image()
 	run_check $TOP/btrfs check $image
 }
 
+# Process all image dumps in a given directory,
+# - raw btrfs filesystem images, suffix .raw
+# - dtto compressed by XZ, suffix .raw.xz
+# - meta-dump images with suffix .img
+# - dtto compressed by XZ, suffix .img.xz
 check_all_images()
 {
 	dir=$1
-	for i in $(find $dir -iname '*.img')
+	for image in $(find $dir \( -iname '*.img' -o	\
+				-iname '*.img.xz' -o 	\
+				-iname '*.raw' -o 	\
+				-iname '*.raw.xz' \) )
 	do
-		echo "extracting image $(basename $i)" >> $RESULTS
-		$TOP/btrfs-image -r $i $i.restored || \
-			_fail "failed to extract image $i"
+		cleanme=
+		case "$image" in
+		*.img)
+			rm -f $image.restored
+			: ;;
+		*.img.xz)
+			xz --decompress --keep "$image" || \
+				_fail "failed to decompress image $image"
+			image=${image%%.xz}
+			rm -f $image.restored
+			cleanme=$image
+			;;
+		*.raw)
+			cp --sparse=auto $image $image.restored
+			;;
+		*.raw.xz)
+			xz --decompress --keep "$image" || \
+				_fail "failed to decompress image $image"
+			image=${image%%.xz}
+			mv "$image" "$image".restored
+			;;
+		esac
 
-		check_image $i.restored
+		if ! [ -f $image.restored ]; then
+			echo "restoring image $(basename $image)" >> $RESULTS
+			$TOP/btrfs-image -r $image $image.restored || \
+				_fail "failed to restore image $image"
+		fi
 
-		rm $i.restored
+		check_image $image.restored
+
+		rm -f $image.restored $cleanme
 	done
 }
 
