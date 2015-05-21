@@ -48,6 +48,7 @@ for i in $(find $TOP/tests/fsck-tests -maxdepth 1 -mindepth 1 -type d | sort)
 do
 	echo "    [TEST]   $(basename $i)"
 	cd $i
+	echo "=== Entering $i" >> $RESULTS
 	if [ -x test.sh ]; then
 		# Type 2
 		./test.sh
