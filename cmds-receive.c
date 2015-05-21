@@ -609,9 +609,9 @@ static int process_clone(const char *path, u64 offset, u64 len,
 		subvol_path = strdup(si->path);
 	}
 
-	full_clone_path = path_cat3(r->root_path, subvol_path, clone_path);
+	full_clone_path = path_cat(subvol_path, clone_path);
 
-	clone_fd = open(full_clone_path, O_RDONLY | O_NOATIME);
+	clone_fd = openat(r->mnt_fd, full_clone_path, O_RDONLY | O_NOATIME);
 	if (clone_fd < 0) {
 		ret = -errno;
 		fprintf(stderr, "ERROR: failed to open %s. %s\n",
