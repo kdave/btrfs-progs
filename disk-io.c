@@ -37,6 +37,19 @@
 /* specified errno for check_tree_block */
 #define BTRFS_BAD_BYTENR		(-1)
 #define BTRFS_BAD_FSID			(-2)
+#define BTRFS_BAD_LEVEL			(-3)
+#define BTRFS_BAD_NRITEMS		(-4)
+
+/* Calculate max possible nritems for a leaf/node */
+static u32 max_nritems(u8 level, u32 nodesize)
+{
+
+	if (level == 0)
+		return ((nodesize - sizeof(struct btrfs_header)) /
+			sizeof(struct btrfs_item));
+	return ((nodesize - sizeof(struct btrfs_header)) /
+		sizeof(struct btrfs_key_ptr));
+}
 
 static int check_tree_block(struct btrfs_root *root, struct extent_buffer *buf)
 {
@@ -46,6 +59,11 @@ static int check_tree_block(struct btrfs_root *root, struct extent_buffer *buf)
 
 	if (buf->start != btrfs_header_bytenr(buf))
 		return BTRFS_BAD_BYTENR;
+	if (btrfs_header_level(buf) >= BTRFS_MAX_LEVEL)
+		return BTRFS_BAD_LEVEL;
+	if (btrfs_header_nritems(buf) > max_nritems(btrfs_header_level(buf),
+						    root->nodesize))
+		return BTRFS_BAD_NRITEMS;
 
 	fs_devices = root->fs_info->fs_devices;
 	while (fs_devices) {
@@ -81,6 +99,14 @@ static void print_tree_block_error(struct btrfs_root *root,
 	case BTRFS_BAD_BYTENR:
 		fprintf(stderr, "bytenr mismatch, want=%llu, have=%llu\n",
 			eb->start, btrfs_header_bytenr(eb));
+		break;
+	case BTRFS_BAD_LEVEL:
+		fprintf(stderr, "bad level, %u > %u\n",
+			btrfs_header_level(eb), BTRFS_MAX_LEVEL);
+		break;
+	case BTRFS_BAD_NRITEMS:
+		fprintf(stderr, "invalid nr_items: %u\n",
+			btrfs_header_nritems(eb));
 		break;
 	}
 }
