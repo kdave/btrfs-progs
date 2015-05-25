@@ -1,0 +1,254 @@
+URL: https://bugzilla.kernel.org/show_bug.cgi?id=97171
+
+The btrfs-image attached to this bug causes the btrfs-userland tool to use
+uninitialized memory and ultimately overwrite what seems to be arbitrary memory
+locations, dying in the process. Reproduced on x86-64 and i686.
+
+The kernel seems to be less affected and fails to mount the image. If
+/usr/sbin/btrfs is not setuid (which it probably never is), things should be
+safe. I didn't investigate further though.
+
+gdb output:
+
+GNU gdb (GDB) Fedora 7.8.2-38.fc21
+[... lots of other errors...]
+Ignoring transid failure
+root 5 inode 260 errors 1000, some csum missing
+	unresolved ref dir 256 index 7 namelen 5 name b.bin filetype 1 errors 2, no dir index
+	unresolved ref dir 256 index 7 namelen 5 name b.fin filetype 1 errors 5, no dir item, no inode ref
+root 5 inode 261 errors 200, dir isize wrong
+
+Program received signal SIGSEGV, Segmentation fault.
+0x000000000089bb70 in ?? ()
+(gdb) bt
+#0  0x000000000089bb70 in ?? ()
+#1  0x00007fffffffdb50 in ?? ()
+#2  0x0000000000894b20 in ?? ()
+#3  0x00000032629b88e0 in _IO_2_1_stdout_ () from /lib64/libc.so.6
+#4  0x000000000088c010 in ?? ()
+#5  0x0000000000000000 in ?? ()
+
+
+valgrind output:
+
+[...lots of errors...]
+==12638== Conditional jump or move depends on uninitialised value(s)
+==12638==    at 0x436E77: check_block.part.14 (ctree.c:548)
+==12638==    by 0x438954: UnknownInlinedFun (kerncompat.h:91)
+==12638==    by 0x438954: btrfs_search_slot (ctree.c:1120)
+==12638==    by 0x40DD1F: count_csum_range (cmds-check.c:1419)
+==12638==    by 0x40DD1F: process_file_extent (cmds-check.c:1551)
+==12638==    by 0x40DD1F: process_one_leaf (cmds-check.c:1617)
+==12638==    by 0x40DD1F: walk_down_tree (cmds-check.c:1742)
+==12638==    by 0x40DD1F: check_fs_root (cmds-check.c:3380)
+==12638==    by 0x40DD1F: check_fs_roots.isra.51 (cmds-check.c:3516)
+==12638==    by 0x4C64B0F: ???
+==12638==    by 0x4C30A2F: ???
+==12638==    by 0x4C468CF: ???
+==12638==    by 0x32629B88DF: ??? (in /usr/lib64/libc-2.20.so)
+==12638==    by 0x4C3657F: ???
+==12638== 
+==12638== Conditional jump or move depends on uninitialised value(s)
+==12638==    at 0x4A0B0E7: memcpy@@GLIBC_2.14 (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==12638==    by 0x436E99: UnknownInlinedFun (ctree.h:1613)
+==12638==    by 0x436E99: check_block.part.14 (ctree.c:550)
+==12638==    by 0x438954: UnknownInlinedFun (kerncompat.h:91)
+==12638==    by 0x438954: btrfs_search_slot (ctree.c:1120)
+==12638==    by 0x40DD1F: count_csum_range (cmds-check.c:1419)
+==12638==    by 0x40DD1F: process_file_extent (cmds-check.c:1551)
+==12638==    by 0x40DD1F: process_one_leaf (cmds-check.c:1617)
+==12638==    by 0x40DD1F: walk_down_tree (cmds-check.c:1742)
+==12638==    by 0x40DD1F: check_fs_root (cmds-check.c:3380)
+==12638==    by 0x40DD1F: check_fs_roots.isra.51 (cmds-check.c:3516)
+==12638==    by 0x4C64B0F: ???
+==12638==    by 0x4C30A2F: ???
+==12638==    by 0x4C468CF: ???
+==12638==    by 0x32629B88DF: ??? (in /usr/lib64/libc-2.20.so)
+==12638==    by 0x4C3657F: ???
+==12638== 
+==12638== Conditional jump or move depends on uninitialised value(s)
+==12638==    at 0x4A0B2AC: memcpy@@GLIBC_2.14 (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==12638==    by 0x436E99: UnknownInlinedFun (ctree.h:1613)
+==12638==    by 0x436E99: check_block.part.14 (ctree.c:550)
+==12638==    by 0x438954: UnknownInlinedFun (kerncompat.h:91)
+==12638==    by 0x438954: btrfs_search_slot (ctree.c:1120)
+==12638==    by 0x40DD1F: count_csum_range (cmds-check.c:1419)
+==12638==    by 0x40DD1F: process_file_extent (cmds-check.c:1551)
+==12638==    by 0x40DD1F: process_one_leaf (cmds-check.c:1617)
+==12638==    by 0x40DD1F: walk_down_tree (cmds-check.c:1742)
+==12638==    by 0x40DD1F: check_fs_root (cmds-check.c:3380)
+==12638==    by 0x40DD1F: check_fs_roots.isra.51 (cmds-check.c:3516)
+==12638==    by 0x4C64B0F: ???
+==12638==    by 0x4C30A2F: ???
+==12638==    by 0x4C468CF: ???
+==12638==    by 0x32629B88DF: ??? (in /usr/lib64/libc-2.20.so)
+==12638==    by 0x4C3657F: ???
+==12638== 
+==12638== Conditional jump or move depends on uninitialised value(s)
+==12638==    at 0x4A0B151: memcpy@@GLIBC_2.14 (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==12638==    by 0x436E99: UnknownInlinedFun (ctree.h:1613)
+==12638==    by 0x436E99: check_block.part.14 (ctree.c:550)
+==12638==    by 0x438954: UnknownInlinedFun (kerncompat.h:91)
+==12638==    by 0x438954: btrfs_search_slot (ctree.c:1120)
+==12638==    by 0x40DD1F: count_csum_range (cmds-check.c:1419)
+==12638==    by 0x40DD1F: process_file_extent (cmds-check.c:1551)
+==12638==    by 0x40DD1F: process_one_leaf (cmds-check.c:1617)
+==12638==    by 0x40DD1F: walk_down_tree (cmds-check.c:1742)
+==12638==    by 0x40DD1F: check_fs_root (cmds-check.c:3380)
+==12638==    by 0x40DD1F: check_fs_roots.isra.51 (cmds-check.c:3516)
+==12638==    by 0x4C64B0F: ???
+==12638==    by 0x4C30A2F: ???
+==12638==    by 0x4C468CF: ???
+==12638==    by 0x32629B88DF: ??? (in /usr/lib64/libc-2.20.so)
+==12638==    by 0x4C3657F: ???
+==12638== 
+==12638== Conditional jump or move depends on uninitialised value(s)
+==12638==    at 0x4A0B162: memcpy@@GLIBC_2.14 (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==12638==    by 0x436E99: UnknownInlinedFun (ctree.h:1613)
+==12638==    by 0x436E99: check_block.part.14 (ctree.c:550)
+==12638==    by 0x438954: UnknownInlinedFun (kerncompat.h:91)
+==12638==    by 0x438954: btrfs_search_slot (ctree.c:1120)
+==12638==    by 0x40DD1F: count_csum_range (cmds-check.c:1419)
+==12638==    by 0x40DD1F: process_file_extent (cmds-check.c:1551)
+==12638==    by 0x40DD1F: process_one_leaf (cmds-check.c:1617)
+==12638==    by 0x40DD1F: walk_down_tree (cmds-check.c:1742)
+==12638==    by 0x40DD1F: check_fs_root (cmds-check.c:3380)
+==12638==    by 0x40DD1F: check_fs_roots.isra.51 (cmds-check.c:3516)
+==12638==    by 0x4C64B0F: ???
+==12638==    by 0x4C30A2F: ???
+==12638==    by 0x4C468CF: ???
+==12638==    by 0x32629B88DF: ??? (in /usr/lib64/libc-2.20.so)
+==12638==    by 0x4C3657F: ???
+==12638== 
+==12638== Conditional jump or move depends on uninitialised value(s)
+==12638==    at 0x4A0B176: memcpy@@GLIBC_2.14 (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==12638==    by 0x436E99: UnknownInlinedFun (ctree.h:1613)
+==12638==    by 0x436E99: check_block.part.14 (ctree.c:550)
+==12638==    by 0x438954: UnknownInlinedFun (kerncompat.h:91)
+==12638==    by 0x438954: btrfs_search_slot (ctree.c:1120)
+==12638==    by 0x40DD1F: count_csum_range (cmds-check.c:1419)
+==12638==    by 0x40DD1F: process_file_extent (cmds-check.c:1551)
+==12638==    by 0x40DD1F: process_one_leaf (cmds-check.c:1617)
+==12638==    by 0x40DD1F: walk_down_tree (cmds-check.c:1742)
+==12638==    by 0x40DD1F: check_fs_root (cmds-check.c:3380)
+==12638==    by 0x40DD1F: check_fs_roots.isra.51 (cmds-check.c:3516)
+==12638==    by 0x4C64B0F: ???
+==12638==    by 0x4C30A2F: ???
+==12638==    by 0x4C468CF: ???
+==12638==    by 0x32629B88DF: ??? (in /usr/lib64/libc-2.20.so)
+==12638==    by 0x4C3657F: ???
+==12638== 
+==12638== Conditional jump or move depends on uninitialised value(s)
+==12638==    at 0x4A0B2CE: memcpy@@GLIBC_2.14 (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==12638==    by 0x436E99: UnknownInlinedFun (ctree.h:1613)
+==12638==    by 0x436E99: check_block.part.14 (ctree.c:550)
+==12638==    by 0x438954: UnknownInlinedFun (kerncompat.h:91)
+==12638==    by 0x438954: btrfs_search_slot (ctree.c:1120)
+==12638==    by 0x40DD1F: count_csum_range (cmds-check.c:1419)
+==12638==    by 0x40DD1F: process_file_extent (cmds-check.c:1551)
+==12638==    by 0x40DD1F: process_one_leaf (cmds-check.c:1617)
+==12638==    by 0x40DD1F: walk_down_tree (cmds-check.c:1742)
+==12638==    by 0x40DD1F: check_fs_root (cmds-check.c:3380)
+==12638==    by 0x40DD1F: check_fs_roots.isra.51 (cmds-check.c:3516)
+==12638==    by 0x4C64B0F: ???
+==12638==    by 0x4C30A2F: ???
+==12638==    by 0x4C468CF: ???
+==12638==    by 0x32629B88DF: ??? (in /usr/lib64/libc-2.20.so)
+==12638==    by 0x4C3657F: ???
+==12638== 
+==12638== Conditional jump or move depends on uninitialised value(s)
+==12638==    at 0x4A0B34A: memcpy@@GLIBC_2.14 (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==12638==    by 0x436E99: UnknownInlinedFun (ctree.h:1613)
+==12638==    by 0x436E99: check_block.part.14 (ctree.c:550)
+==12638==    by 0x438954: UnknownInlinedFun (kerncompat.h:91)
+==12638==    by 0x438954: btrfs_search_slot (ctree.c:1120)
+==12638==    by 0x40DD1F: count_csum_range (cmds-check.c:1419)
+==12638==    by 0x40DD1F: process_file_extent (cmds-check.c:1551)
+==12638==    by 0x40DD1F: process_one_leaf (cmds-check.c:1617)
+==12638==    by 0x40DD1F: walk_down_tree (cmds-check.c:1742)
+==12638==    by 0x40DD1F: check_fs_root (cmds-check.c:3380)
+==12638==    by 0x40DD1F: check_fs_roots.isra.51 (cmds-check.c:3516)
+==12638==    by 0x4C64B0F: ???
+==12638==    by 0x4C30A2F: ???
+==12638==    by 0x4C468CF: ???
+==12638==    by 0x32629B88DF: ??? (in /usr/lib64/libc-2.20.so)
+==12638==    by 0x4C3657F: ???
+==12638== 
+==12638== Use of uninitialised value of size 8
+==12638==    at 0x4A0B3A0: memcpy@@GLIBC_2.14 (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==12638==    by 0x436E99: UnknownInlinedFun (ctree.h:1613)
+==12638==    by 0x436E99: check_block.part.14 (ctree.c:550)
+==12638==    by 0x438954: UnknownInlinedFun (kerncompat.h:91)
+==12638==    by 0x438954: btrfs_search_slot (ctree.c:1120)
+==12638==    by 0x40DD1F: count_csum_range (cmds-check.c:1419)
+==12638==    by 0x40DD1F: process_file_extent (cmds-check.c:1551)
+==12638==    by 0x40DD1F: process_one_leaf (cmds-check.c:1617)
+==12638==    by 0x40DD1F: walk_down_tree (cmds-check.c:1742)
+==12638==    by 0x40DD1F: check_fs_root (cmds-check.c:3380)
+==12638==    by 0x40DD1F: check_fs_roots.isra.51 (cmds-check.c:3516)
+==12638==    by 0x4C64B0F: ???
+==12638==    by 0x4C30A2F: ???
+==12638==    by 0x4C468CF: ???
+==12638==    by 0x32629B88DF: ??? (in /usr/lib64/libc-2.20.so)
+==12638==    by 0x4C3657F: ???
+==12638== 
+==12638== Invalid read of size 1
+==12638==    at 0x4A0B3A0: memcpy@@GLIBC_2.14 (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==12638==    by 0x436E99: UnknownInlinedFun (ctree.h:1613)
+==12638==    by 0x436E99: check_block.part.14 (ctree.c:550)
+==12638==    by 0x438954: UnknownInlinedFun (kerncompat.h:91)
+==12638==    by 0x438954: btrfs_search_slot (ctree.c:1120)
+==12638==    by 0x40DD1F: count_csum_range (cmds-check.c:1419)
+==12638==    by 0x40DD1F: process_file_extent (cmds-check.c:1551)
+==12638==    by 0x40DD1F: process_one_leaf (cmds-check.c:1617)
+==12638==    by 0x40DD1F: walk_down_tree (cmds-check.c:1742)
+==12638==    by 0x40DD1F: check_fs_root (cmds-check.c:3380)
+==12638==    by 0x40DD1F: check_fs_roots.isra.51 (cmds-check.c:3516)
+==12638==    by 0x4C64B0F: ???
+==12638==    by 0x4C30A2F: ???
+==12638==    by 0x4C468CF: ???
+==12638==    by 0x32629B88DF: ??? (in /usr/lib64/libc-2.20.so)
+==12638==    by 0x4C3657F: ???
+==12638==  Address 0xa25c9de9 is not stack'd, malloc'd or (recently) free'd
+==12638== 
+==12638== 
+==12638== Process terminating with default action of signal 11 (SIGSEGV)
+==12638==  Access not within mapped region at address 0xA25C9DE9
+==12638==    at 0x4A0B3A0: memcpy@@GLIBC_2.14 (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==12638==    by 0x436E99: UnknownInlinedFun (ctree.h:1613)
+==12638==    by 0x436E99: check_block.part.14 (ctree.c:550)
+==12638==    by 0x438954: UnknownInlinedFun (kerncompat.h:91)
+==12638==    by 0x438954: btrfs_search_slot (ctree.c:1120)
+==12638==    by 0x40DD1F: count_csum_range (cmds-check.c:1419)
+==12638==    by 0x40DD1F: process_file_extent (cmds-check.c:1551)
+==12638==    by 0x40DD1F: process_one_leaf (cmds-check.c:1617)
+==12638==    by 0x40DD1F: walk_down_tree (cmds-check.c:1742)
+==12638==    by 0x40DD1F: check_fs_root (cmds-check.c:3380)
+==12638==    by 0x40DD1F: check_fs_roots.isra.51 (cmds-check.c:3516)
+==12638==    by 0x4C64B0F: ???
+==12638==    by 0x4C30A2F: ???
+==12638==    by 0x4C468CF: ???
+==12638==    by 0x32629B88DF: ??? (in /usr/lib64/libc-2.20.so)
+==12638==    by 0x4C3657F: ???
+==12638==  If you believe this happened as a result of a stack
+==12638==  overflow in your program's main thread (unlikely but
+==12638==  possible), you can try to increase the size of the
+==12638==  main thread stack using the --main-stacksize= flag.
+==12638==  The main thread stack size used in this run was 8388608.
+==12638== 
+==12638== HEAP SUMMARY:
+==12638==     in use at exit: 46,260 bytes in 56 blocks
+==12638==   total heap usage: 380 allocs, 324 frees, 218,054 bytes allocated
+==12638== 
+==12638== LEAK SUMMARY:
+==12638==    definitely lost: 272 bytes in 2 blocks
+==12638==    indirectly lost: 800 bytes in 8 blocks
+==12638==      possibly lost: 88 bytes in 1 blocks
+==12638==    still reachable: 45,100 bytes in 45 blocks
+==12638==         suppressed: 0 bytes in 0 blocks
+==12638== Rerun with --leak-check=full to see details of leaked memory
+==12638== 
+==12638== For counts of detected and suppressed errors, rerun with: -v
+==12638== Use --track-origins=yes to see where uninitialised values come from
+==12638== ERROR SUMMARY: 10 errors from 10 contexts (suppressed: 0 from 0)
+[1]    12638 segmentation fault  valgrind btrfs check btrfs_fukked_memorycorruption.bin
