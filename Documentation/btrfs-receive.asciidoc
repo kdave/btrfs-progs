@@ -43,6 +43,12 @@ or on EOF.
 --max-errors <N>::
 Terminate as soon as N errors happened while processing commands from the send
 stream. Default value is 1. A value of 0 means no limit.
+-m::
+The root mount point of the destination fs.
++
+By default the mountpoint is searched in /proc/self/mounts.
+If you do not have /proc, eg. in a chroot environment, use this option to tell
+us where this filesystem is mounted.
 
 EXIT STATUS
 -----------
