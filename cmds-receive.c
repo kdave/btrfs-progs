@@ -68,6 +68,14 @@ struct btrfs_receive
 	struct subvol_uuid_search sus;
 
 	int honor_end_cmd;
+
+	/*
+	 * Buffer to store capabilities from security.capabilities xattr,
+	 * usually 20 bytes, but make same room for potentially larger
+	 * encodings. Must be set only once per file, denoted by length > 0.
+	 */
+	char cached_capabilities[64];
+	int cached_capabilities_len;
 };
 
 static int finish_subvol(struct btrfs_receive *r)
@@ -652,6 +660,24 @@ static int process_set_xattr(const char *path, const char *name,
 	struct btrfs_receive *r = user;
 	char *full_path = path_cat(r->full_subvol_path, path);
 
+	if (strcmp("security.capability", name) == 0) {
+		if (g_verbose >= 3)
+			fprintf(stderr, "set_xattr: cache capabilities\n");
+		if (r->cached_capabilities_len)
+			fprintf(stderr,
+			  "WARNING: capabilities set multiple times per file: %s\n",
+				full_path);
+		if (len > sizeof(r->cached_capabilities)) {
+			fprintf(stderr,
+			  "ERROR: capabilities encoded to %d bytes, buffer too small\n",
+				len);
+			ret = -E2BIG;
+			goto out;
+		}
+		r->cached_capabilities_len = len;
+		memcpy(r->cached_capabilities, data, len);
+	}
+
 	if (g_verbose >= 2) {
 		fprintf(stderr, "set_xattr %s - name=%s data_len=%d "
 				"data=%.*s\n", path, name, len,
@@ -755,6 +781,23 @@ static int process_chown(const char *path, u64 uid, u64 gid, void *user)
 		fprintf(stderr, "ERROR: chown %s failed. %s\n",
 				path, strerror(-ret));
 		goto out;
+	}
+
+	if (r->cached_capabilities_len) {
+		if (g_verbose >= 2)
+			fprintf(stderr, "chown: restore capabilities\n");
+		ret = lsetxattr(full_path, "security.capability",
+				r->cached_capabilities,
+				r->cached_capabilities_len, 0);
+		memset(r->cached_capabilities, 0,
+				sizeof(r->cached_capabilities));
+		r->cached_capabilities_len = 0;
+		if (ret < 0) {
+			ret = -errno;
+			fprintf(stderr, "ERROR: restoring capabilities %s: %s\n",
+					path, strerror(-ret));
+			goto out;
+		}
 	}
 
 out:
@@ -894,6 +937,14 @@ static int do_receive(struct btrfs_receive *r, const char *tomnt, int r_fd,
 		goto out;
 
 	while (!end) {
+		if (r->cached_capabilities_len) {
+			if (g_verbose >= 3)
+				fprintf(stderr, "clear cached capabilities\n");
+			memset(r->cached_capabilities, 0,
+					sizeof(r->cached_capabilities));
+			r->cached_capabilities_len = 0;
+		}
+
 		ret = btrfs_read_and_process_send_stream(r_fd, &send_ops, r,
 							 r->honor_end_cmd,
 							 max_errors);
