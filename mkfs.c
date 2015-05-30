@@ -1429,6 +1429,12 @@ int main(int ac, char **av)
 			nodesize * i;
 	}
 
+	if (group_profile_max_safe_loss(metadata_profile) <
+		group_profile_max_safe_loss(data_profile)){
+		fprintf(stderr,
+			"WARNING: metatdata has lower redundancy than data!\n\n");
+	}
+
 	/*
 	 * FS features that can be set by other means than -O
 	 * just set the bit here
