@@ -132,14 +132,12 @@ static int cmd_start_replace(int argc, char **argv)
 	int i;
 	int c;
 	int fdmnt = -1;
-	int fdsrcdev = -1;
 	int fddstdev = -1;
 	char *path;
 	char *srcdev;
 	char *dstdev = NULL;
 	int avoid_reading_from_srcdev = 0;
 	int force_using_targetdev = 0;
-	struct stat st;
 	u64 dstdev_block_count;
 	int do_not_background = 0;
 	int mixed = 0;
@@ -252,28 +250,9 @@ static int cmd_start_replace(int argc, char **argv)
 				srcdev, path);
 			goto leave_with_error;
 		}
-	} else {
-		fdsrcdev = open(srcdev, O_RDWR);
-		if (fdsrcdev < 0) {
-			fprintf(stderr, "Error: Unable to open device '%s'\n",
-				srcdev);
-			fprintf(stderr, "\tTry using the devid instead of the path\n");
-			goto leave_with_error;
-		}
-		ret = fstat(fdsrcdev, &st);
-		if (ret) {
-			fprintf(stderr, "Error: Unable to stat '%s'\n", srcdev);
-			goto leave_with_error;
-		}
-		if (!S_ISBLK(st.st_mode)) {
-			fprintf(stderr, "Error: '%s' is not a block device\n",
-				srcdev);
-			goto leave_with_error;
-		}
+	} else if (is_block_device(srcdev)) {
 		strncpy((char *)start_args.start.srcdev_name, srcdev,
 			BTRFS_DEVICE_PATH_NAME_MAX);
-		close(fdsrcdev);
-		fdsrcdev = -1;
 		start_args.start.srcdevid = 0;
 	}
 
@@ -346,8 +325,6 @@ leave_with_error:
 		free(dstdev);
 	if (fdmnt != -1)
 		close(fdmnt);
-	if (fdsrcdev != -1)
-		close(fdsrcdev);
 	if (fddstdev != -1)
 		close(fddstdev);
 	return 1;
