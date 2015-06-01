@@ -281,7 +281,7 @@ static void print_usage(void)
 	fprintf(stderr, "\t-s|--sectorsize SIZE    min block allocation (may not mountable by current kernel)\n");
 	fprintf(stderr, "\t-r|--rootdir DIR        the source directory\n");
 	fprintf(stderr, "\t-K|--nodiscard          do not perform whole device TRIM\n");
-	fprintf(stderr, "\t-O|--features LIST      comma separated list of filesystem features\n");
+	fprintf(stderr, "\t-O|--features LIST      comma separated list of filesystem features, use '-O list-all' to list features\n");
 	fprintf(stderr, "\t-U|--uuid UUID          specify the filesystem UUID\n");
 	fprintf(stderr, "\t-V|--version            print the mkfs.btrfs version and exit\n");
 	fprintf(stderr, "%s\n", PACKAGE_STRING);
