@@ -40,6 +40,7 @@ static int update_seeding_flag(struct btrfs_root *root, int set_flag)
 	struct btrfs_trans_handle *trans;
 	struct btrfs_super_block *disk_super;
 	u64 super_flags;
+	int ret;
 
 	disk_super = root->fs_info->super_copy;
 	super_flags = btrfs_super_flags(disk_super);
@@ -64,41 +65,26 @@ static int update_seeding_flag(struct btrfs_root *root, int set_flag)
 
 	trans = btrfs_start_transaction(root, 1);
 	btrfs_set_super_flags(disk_super, super_flags);
-	btrfs_commit_transaction(trans, root);
+	ret = btrfs_commit_transaction(trans, root);
 
-	return 0;
+	return ret;
 }
 
-static int enable_extrefs_flag(struct btrfs_root *root)
+static int set_super_incompat_flags(struct btrfs_root *root, u64 flags)
 {
 	struct btrfs_trans_handle *trans;
 	struct btrfs_super_block *disk_super;
 	u64 super_flags;
+	int ret;
 
 	disk_super = root->fs_info->super_copy;
 	super_flags = btrfs_super_incompat_flags(disk_super);
-	super_flags |= BTRFS_FEATURE_INCOMPAT_EXTENDED_IREF;
+	super_flags |= flags;
 	trans = btrfs_start_transaction(root, 1);
 	btrfs_set_super_incompat_flags(disk_super, super_flags);
-	btrfs_commit_transaction(trans, root);
+	ret = btrfs_commit_transaction(trans, root);
 
-	return 0;
-}
-
-static int enable_skinny_metadata(struct btrfs_root *root)
-{
-	struct btrfs_trans_handle *trans;
-	struct btrfs_super_block *disk_super;
-	u64 super_flags;
-
-	disk_super = root->fs_info->super_copy;
-	super_flags = btrfs_super_incompat_flags(disk_super);
-	super_flags |= BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA;
-	trans = btrfs_start_transaction(root, 1);
-	btrfs_set_super_incompat_flags(disk_super, super_flags);
-	btrfs_commit_transaction(trans, root);
-
-	return 0;
+	return ret;
 }
 
 static int change_header_uuid(struct btrfs_root *root, struct extent_buffer *eb)
@@ -417,13 +403,12 @@ int main(int argc, char *argv[])
 	enum btrfs_open_ctree_flags ctree_flags = OPEN_CTREE_WRITES;
 	int success = 0;
 	int total = 0;
-	int extrefs_flag = 0;
 	int seeding_flag = 0;
 	u64 seeding_value = 0;
-	int skinny_flag = 0;
 	int random_fsid = 0;
 	char *new_fsid_str = NULL;
 	int ret;
+	u64 super_flags = 0;
 
 	optind = 1;
 	while(1) {
@@ -436,10 +421,10 @@ int main(int argc, char *argv[])
 			seeding_value = arg_strtou64(optarg);
 			break;
 		case 'r':
-			extrefs_flag = 1;
+			super_flags |= BTRFS_FEATURE_INCOMPAT_EXTENDED_IREF;
 			break;
 		case 'x':
-			skinny_flag = 1;
+			super_flags |= BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA;
 			break;
 		case 'f':
 			force = 1;
@@ -471,8 +456,7 @@ int main(int argc, char *argv[])
 			"ERROR: Random fsid can't be used with specified fsid\n");
 		return 1;
 	}
-	if (!(seeding_flag + extrefs_flag + skinny_flag) &&
-	    !(random_fsid || new_fsid_str)) {
+	if (!super_flags && !seeding_flag && !(random_fsid || new_fsid_str)) {
 		fprintf(stderr,
 			"ERROR: At least one option should be assigned.\n");
 		print_usage();
@@ -531,15 +515,10 @@ int main(int argc, char *argv[])
 		total++;
 	}
 
-	if (extrefs_flag) {
-		enable_extrefs_flag(root);
-		success++;
-		total++;
-	}
-
-	if (skinny_flag) {
-		enable_skinny_metadata(root);
-		success++;
+	if (super_flags) {
+		ret = set_super_incompat_flags(root, super_flags);
+		if (!ret)
+			success++;
 		total++;
 	}
 
