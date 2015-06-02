@@ -974,6 +974,12 @@ static int cmd_subvol_show(int argc, char **argv)
 		uuid_unparse(get_ri.puuid, uuidparse);
 	printf("\tParent uuid: \t\t%s\n", uuidparse);
 
+	if (uuid_is_null(get_ri.ruuid))
+		strcpy(uuidparse, "-");
+	else
+		uuid_unparse(get_ri.ruuid, uuidparse);
+	printf("\tReceived uuid: \t\t%s\n", uuidparse);
+
 	if (get_ri.otime) {
 		struct tm tm;
 
