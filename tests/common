@@ -21,6 +21,14 @@ run_check()
 	"$@" >> $RESULTS 2>&1 || _fail "failed: $@"
 }
 
+# same as run_check but the stderr+stdout output is duplicated on stdout and
+# can be processed further
+run_check_stdout()
+{
+	echo "############### $@" >> $RESULTS 2>&1
+	"$@" 2>&1 | tee -a $RESULTS || _fail "failed: $@"
+}
+
 check_prereq()
 {
 	if ! [ -f $TOP/$1 ]; then
