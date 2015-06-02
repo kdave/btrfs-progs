@@ -966,34 +966,34 @@ static int cmd_subvol_show(int argc, char **argv)
 		strcpy(uuidparse, "-");
 	else
 		uuid_unparse(get_ri.uuid, uuidparse);
-	printf("\tuuid: \t\t\t%s\n", uuidparse);
+	printf("\tUUID: \t\t\t%s\n", uuidparse);
 
 	if (uuid_is_null(get_ri.puuid))
 		strcpy(uuidparse, "-");
 	else
 		uuid_unparse(get_ri.puuid, uuidparse);
-	printf("\tParent uuid: \t\t%s\n", uuidparse);
+	printf("\tParent UUID: \t\t%s\n", uuidparse);
 
 	if (uuid_is_null(get_ri.ruuid))
 		strcpy(uuidparse, "-");
 	else
 		uuid_unparse(get_ri.ruuid, uuidparse);
-	printf("\tReceived uuid: \t\t%s\n", uuidparse);
+	printf("\tReceived UUID: \t\t%s\n", uuidparse);
 
 	if (get_ri.otime) {
 		struct tm tm;
 
 		localtime_r(&get_ri.otime, &tm);
-		strftime(tstr, 256, "%Y-%m-%d %X", &tm);
+		strftime(tstr, 256, "%Y-%m-%d %X %z", &tm);
 	} else
 		strcpy(tstr, "-");
 	printf("\tCreation time: \t\t%s\n", tstr);
 
-	printf("\tObject ID: \t\t%llu\n", get_ri.root_id);
-	printf("\tGeneration (Gen): \t%llu\n", get_ri.gen);
+	printf("\tSubvolume ID: \t\t%llu\n", get_ri.root_id);
+	printf("\tGeneration: \t\t%llu\n", get_ri.gen);
 	printf("\tGen at creation: \t%llu\n", get_ri.ogen);
-	printf("\tParent: \t\t%llu\n", get_ri.ref_tree);
-	printf("\tTop Level: \t\t%llu\n", get_ri.top_id);
+	printf("\tParent ID: \t\t%llu\n", get_ri.ref_tree);
+	printf("\tTop level ID: \t\t%llu\n", get_ri.top_id);
 
 	if (get_ri.flags & BTRFS_ROOT_SUBVOL_RDONLY)
 		printf("\tFlags: \t\t\treadonly\n");
