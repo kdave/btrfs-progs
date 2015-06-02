@@ -169,11 +169,15 @@ test-fsck: btrfs btrfs-image btrfs-corrupt-block btrfs-debug-tree mkfs.btrfs
 	@echo "    [TEST]   fsck-tests.sh"
 	$(Q)bash tests/fsck-tests.sh
 
+test-misc: btrfs btrfs-image btrfs-corrupt-block btrfs-debug-tree mkfs.btrfs btrfstune
+	@echo "    [TEST]   misc-tests.sh"
+	$(Q)bash tests/misc-tests.sh
+
 test-clean:
 	@echo "Cleaning tests"
 	$(Q)bash tests/clean-tests.sh
 
-test: test-fsck test-convert
+test: test-fsck test-convert test-misc
 
 #
 # NOTE: For static compiles, you need to have all the required libs
