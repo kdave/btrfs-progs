@@ -24,6 +24,8 @@ Enable seeding forces a fs readonly so that you can use it to build other filesy
 Enable extended inode refs.
 -x::
 Enable skinny metadata extent refs.
+-n::
+Enable no-holes feature. More efficient representation of file holes.
 -f::
 Allow dangerous changes, e.g. clear the seeding flag or change fsid. Make sure
 that you are aware of the dangers.

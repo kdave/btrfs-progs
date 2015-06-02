@@ -392,6 +392,7 @@ static void print_usage(void)
 	fprintf(stderr, "\t-S value\tpositive value will enable seeding, zero to disable, negative is not allowed\n");
 	fprintf(stderr, "\t-r \t\tenable extended inode refs\n");
 	fprintf(stderr, "\t-x \t\tenable skinny metadata extent refs\n");
+	fprintf(stderr, "\t-n \t\tenable no-holes feature (more efficient sparse file representation)\n");
 	fprintf(stderr, "\t-f \t\tforce to do dangerous operation, make sure that you are aware of the dangers\n");
 	fprintf(stderr, "\t-u \t\tchange fsid, use a random one\n");
 	fprintf(stderr, "\t-U UUID\t\tchange fsid to UUID\n");
@@ -412,7 +413,7 @@ int main(int argc, char *argv[])
 
 	optind = 1;
 	while(1) {
-		int c = getopt(argc, argv, "S:rxfuU:");
+		int c = getopt(argc, argv, "S:rxfuU:n");
 		if (c < 0)
 			break;
 		switch(c) {
@@ -425,6 +426,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'x':
 			super_flags |= BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA;
+			break;
+		case 'n':
+			super_flags |= BTRFS_FEATURE_INCOMPAT_NO_HOLES;
 			break;
 		case 'f':
 			force = 1;

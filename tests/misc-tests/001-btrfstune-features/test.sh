@@ -53,4 +53,5 @@ test_feature()
 
 test_feature extref -r EXTENDED_IREF
 test_feature skinny-metadata -x SKINNY_METADATA
+test_feature no-holes -n NO_HOLES
 test_feature '' '-S 1' SEEDING
