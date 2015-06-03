@@ -513,6 +513,11 @@ struct btrfs_ioctl_received_subvol_args {
  */
 #define BTRFS_SEND_FLAG_OMIT_END_CMD		0x4
 
+#define BTRFS_SEND_FLAG_MASK \
+	(BTRFS_SEND_FLAG_NO_FILE_DATA | \
+	 BTRFS_SEND_FLAG_OMIT_STREAM_HEADER | \
+	 BTRFS_SEND_FLAG_OMIT_END_CMD)
+
 struct btrfs_ioctl_send_args {
 	__s64 send_fd;			/* in */
 	__u64 clone_sources_count;	/* in */
@@ -521,7 +526,6 @@ struct btrfs_ioctl_send_args {
 	__u64 flags;			/* in */
 	__u64 reserved[4];		/* in */
 };
-
 
 /* Error codes as returned by the kernel */
 enum btrfs_err_code {
