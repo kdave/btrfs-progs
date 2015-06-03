@@ -116,6 +116,10 @@ static int parse_limit(const char *p, unsigned long long *s)
 		*s = CLEAR_VALUE;
 		return 1;
 	}
+
+	if (p[0] == '-')
+		return 0;
+
 	size = strtoull(p, &endptr, 10);
 	switch (*endptr) {
 	case 'T':
