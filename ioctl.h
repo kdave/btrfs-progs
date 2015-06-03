@@ -42,6 +42,8 @@ struct btrfs_ioctl_vol_args {
 #define BTRFS_SUBVOL_CREATE_ASYNC	(1ULL << 0)
 #define BTRFS_SUBVOL_RDONLY		(1ULL << 1)
 #define BTRFS_SUBVOL_QGROUP_INHERIT	(1ULL << 2)
+#define BTRFS_FSID_SIZE 16
+#define BTRFS_UUID_SIZE 16
 
 #define BTRFS_QGROUP_INHERIT_SET_LIMITS	(1ULL << 0)
 
@@ -68,7 +70,6 @@ struct btrfs_ioctl_qgroup_limit_args {
 };
 
 #define BTRFS_SUBVOL_NAME_MAX 4039
-
 struct btrfs_ioctl_vol_args_v2 {
 	__s64 fd;
 	__u64 transid;
@@ -83,8 +84,6 @@ struct btrfs_ioctl_vol_args_v2 {
 	char name[BTRFS_SUBVOL_NAME_MAX + 1];
 };
 
-#define BTRFS_FSID_SIZE 16
-#define BTRFS_UUID_SIZE 16
 
 struct btrfs_scrub_progress {
 	__u64 data_extents_scrubbed;
@@ -225,6 +224,13 @@ struct btrfs_ioctl_balance_args {
 	__u64 unused[72];			/* pad to 1k */
 };
 
+#define BTRFS_INO_LOOKUP_PATH_MAX 4080
+struct btrfs_ioctl_ino_lookup_args {
+	__u64 treeid;
+	__u64 objectid;
+	char name[BTRFS_INO_LOOKUP_PATH_MAX];
+};
+
 struct btrfs_ioctl_search_key {
 	/* which root are we searching.  0 is the tree of tree roots */
 	__u64 tree_id;
@@ -292,11 +298,11 @@ struct btrfs_ioctl_search_args_v2 {
         __u64 buf[0];                      /* out - found items */
 };
 
-#define BTRFS_INO_LOOKUP_PATH_MAX 4080
-struct btrfs_ioctl_ino_lookup_args {
-	__u64 treeid;
-	__u64 objectid;
-	char name[BTRFS_INO_LOOKUP_PATH_MAX];
+/* With a @src_length of zero, the range from @src_offset->EOF is cloned! */
+struct btrfs_ioctl_clone_range_args {
+	__s64 src_fd;
+	__u64 src_offset, src_length;
+	__u64 dest_offset;
 };
 
 /* flags for the defrag range ioctl */
@@ -370,50 +376,6 @@ struct btrfs_ioctl_logical_ino_args {
 	__u64				inodes;
 };
 
-struct btrfs_ioctl_timespec {
-	__u64 sec;
-	__u32 nsec;
-};
-
-struct btrfs_ioctl_received_subvol_args {
-	char	uuid[BTRFS_UUID_SIZE];	/* in */
-	__u64	stransid;		/* in */
-	__u64	rtransid;		/* out */
-	struct btrfs_ioctl_timespec stime; /* in */
-	struct btrfs_ioctl_timespec rtime; /* out */
-	__u64	flags;			/* in */
-	__u64	reserved[16];		/* in */
-};
-
-/*
- * Caller doesn't want file data in the send stream, even if the
- * search of clone sources doesn't find an extent. UPDATE_EXTENT
- * commands will be sent instead of WRITE commands.
- */
-#define BTRFS_SEND_FLAG_NO_FILE_DATA		0x1
-
-/*
- * Do not add the leading stream header. Used when multiple snapshots
- * are sent back to back.
- */
-#define BTRFS_SEND_FLAG_OMIT_STREAM_HEADER	0x2
-
-/*
- * Omit the command at the end of the stream that indicated the end
- * of the stream. This option is used when multiple snapshots are
- * sent back to back.
- */
-#define BTRFS_SEND_FLAG_OMIT_END_CMD		0x4
-
-struct btrfs_ioctl_send_args {
-	__s64 send_fd;			/* in */
-	__u64 clone_sources_count;	/* in */
-	__u64 *clone_sources;		/* in */
-	__u64 parent_root;		/* in */
-	__u64 flags;			/* in */
-	__u64 reserved[4];		/* in */
-};
-
 enum btrfs_dev_stat_values {
 	/* disk I/O failure stats */
 	BTRFS_DEV_STAT_WRITE_ERRS, /* EIO or EREMOTEIO from lower layers */
@@ -472,6 +434,50 @@ struct btrfs_ioctl_qgroup_create_args {
 	__u64 create;
 	__u64 qgroupid;
 };
+struct btrfs_ioctl_timespec {
+	__u64 sec;
+	__u32 nsec;
+};
+
+struct btrfs_ioctl_received_subvol_args {
+	char	uuid[BTRFS_UUID_SIZE];	/* in */
+	__u64	stransid;		/* in */
+	__u64	rtransid;		/* out */
+	struct btrfs_ioctl_timespec stime; /* in */
+	struct btrfs_ioctl_timespec rtime; /* out */
+	__u64	flags;			/* in */
+	__u64	reserved[16];		/* in */
+};
+
+/*
+ * Caller doesn't want file data in the send stream, even if the
+ * search of clone sources doesn't find an extent. UPDATE_EXTENT
+ * commands will be sent instead of WRITE commands.
+ */
+#define BTRFS_SEND_FLAG_NO_FILE_DATA		0x1
+
+/*
+ * Do not add the leading stream header. Used when multiple snapshots
+ * are sent back to back.
+ */
+#define BTRFS_SEND_FLAG_OMIT_STREAM_HEADER	0x2
+
+/*
+ * Omit the command at the end of the stream that indicated the end
+ * of the stream. This option is used when multiple snapshots are
+ * sent back to back.
+ */
+#define BTRFS_SEND_FLAG_OMIT_END_CMD		0x4
+
+struct btrfs_ioctl_send_args {
+	__s64 send_fd;			/* in */
+	__u64 clone_sources_count;	/* in */
+	__u64 *clone_sources;		/* in */
+	__u64 parent_root;		/* in */
+	__u64 flags;			/* in */
+	__u64 reserved[4];		/* in */
+};
+
 
 /* Error codes as returned by the kernel */
 enum btrfs_err_code {
@@ -522,14 +528,6 @@ static inline char *btrfs_err_str(enum btrfs_err_code err_code)
 				   struct btrfs_ioctl_vol_args)
 #define BTRFS_IOC_SCAN_DEV _IOW(BTRFS_IOCTL_MAGIC, 4, \
 				   struct btrfs_ioctl_vol_args)
-
-/* With a @src_length of zero, the range from @src_offset->EOF is cloned! */
-struct btrfs_ioctl_clone_range_args {
-	__s64 src_fd;
-	__u64 src_offset, src_length;
-	__u64 dest_offset;
-};
-
 /* trans start and trans end are dangerous, and only for
  * use by applications that know how to avoid the
  * resulting deadlocks
@@ -545,8 +543,10 @@ struct btrfs_ioctl_clone_range_args {
 				   struct btrfs_ioctl_vol_args)
 #define BTRFS_IOC_BALANCE _IOW(BTRFS_IOCTL_MAGIC, 12, \
 				   struct btrfs_ioctl_vol_args)
+
 #define BTRFS_IOC_CLONE_RANGE _IOW(BTRFS_IOCTL_MAGIC, 13, \
 				   struct btrfs_ioctl_clone_range_args)
+
 #define BTRFS_IOC_SUBVOL_CREATE _IOW(BTRFS_IOCTL_MAGIC, 14, \
 				   struct btrfs_ioctl_vol_args)
 #define BTRFS_IOC_SNAP_DESTROY _IOW(BTRFS_IOCTL_MAGIC, 15, \
@@ -588,12 +588,11 @@ struct btrfs_ioctl_clone_range_args {
 					struct btrfs_ioctl_ino_path_args)
 #define BTRFS_IOC_LOGICAL_INO _IOWR(BTRFS_IOCTL_MAGIC, 36, \
 					struct btrfs_ioctl_ino_path_args)
-#define BTRFS_IOC_DEVICES_READY _IOR(BTRFS_IOCTL_MAGIC, 39, \
-				     struct btrfs_ioctl_vol_args)
 #define BTRFS_IOC_SET_RECEIVED_SUBVOL _IOWR(BTRFS_IOCTL_MAGIC, 37, \
 				struct btrfs_ioctl_received_subvol_args)
 #define BTRFS_IOC_SEND _IOW(BTRFS_IOCTL_MAGIC, 38, struct btrfs_ioctl_send_args)
-
+#define BTRFS_IOC_DEVICES_READY _IOR(BTRFS_IOCTL_MAGIC, 39, \
+				     struct btrfs_ioctl_vol_args)
 #define BTRFS_IOC_QUOTA_CTL _IOWR(BTRFS_IOCTL_MAGIC, 40, \
 					struct btrfs_ioctl_quota_ctl_args)
 #define BTRFS_IOC_QGROUP_ASSIGN _IOW(BTRFS_IOCTL_MAGIC, 41, \
