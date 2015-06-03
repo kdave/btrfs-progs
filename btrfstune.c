@@ -321,6 +321,7 @@ static int change_uuid(struct btrfs_fs_info *fs_info, const char *new_fsid_str)
 {
 	uuid_t new_fsid;
 	uuid_t new_chunk_id;
+	uuid_t old_fsid;
 	char uuid_buf[BTRFS_UUID_UNPARSED_SIZE];
 	int ret = 0;
 
@@ -347,14 +348,20 @@ static int change_uuid(struct btrfs_fs_info *fs_info, const char *new_fsid_str)
 	fs_info->new_fsid = new_fsid;
 	fs_info->new_chunk_tree_uuid = new_chunk_id;
 
+	uuid_parse((const char*)fs_info->fsid, old_fsid);
+	uuid_unparse_upper(old_fsid, uuid_buf);
+	printf("Current fsid: %s\n", uuid_buf);
+
 	uuid_unparse_upper(new_fsid, uuid_buf);
-	printf("Changing fsid to %s\n", uuid_buf);
+	printf("New fsid: %s\n", uuid_buf);
 	/* Now we can begin fsid change */
+	printf("Set superblock flag CHANGING_FSID\n");
 	ret = change_fsid_prepare(fs_info);
 	if (ret < 0)
 		goto out;
 
 	/* Change extents first */
+	printf("Change fsid in extents\n");
 	ret = change_extents_uuid(fs_info);
 	if (ret < 0) {
 		fprintf(stderr, "Failed to change UUID of metadata\n");
@@ -362,6 +369,7 @@ static int change_uuid(struct btrfs_fs_info *fs_info, const char *new_fsid_str)
 	}
 
 	/* Then devices */
+	printf("Change fsid on devices\n");
 	ret = change_devices_uuid(fs_info);
 	if (ret < 0) {
 		fprintf(stderr, "Failed to change UUID of devices\n");
@@ -378,10 +386,11 @@ static int change_uuid(struct btrfs_fs_info *fs_info, const char *new_fsid_str)
 		goto out;
 
 	/* Now fsid change is done */
+	printf("Clear superblock flag CHANGING_FSID\n");
 	ret = change_fsid_done(fs_info);
 	fs_info->new_fsid = NULL;
 	fs_info->new_chunk_tree_uuid = NULL;
-	printf("Fsid changed to %s\n", uuid_buf);
+	printf("Fsid change finished\n");
 out:
 	return ret;
 }
