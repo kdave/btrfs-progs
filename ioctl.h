@@ -200,6 +200,12 @@ struct btrfs_ioctl_fs_info_args {
 	__u64 reserved[122];			/* pad to 1k */
 };
 
+struct btrfs_ioctl_feature_flags {
+	__u64 compat_flags;
+	__u64 compat_ro_flags;
+	__u64 incompat_flags;
+};
+
 /* balance control ioctl modes */
 #define BTRFS_BALANCE_CTL_PAUSE		1
 #define BTRFS_BALANCE_CTL_CANCEL	2
