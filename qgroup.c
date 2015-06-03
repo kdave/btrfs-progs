@@ -237,10 +237,16 @@ static void print_qgroup_column(struct btrfs_qgroup *qgroup,
 		print_qgroup_column_add_blank(BTRFS_QGROUP_PARENT, len);
 		break;
 	case BTRFS_QGROUP_MAX_RFER:
-		len = printf("%*s", max_len, pretty_size_mode(qgroup->max_rfer, unit_mode));
+		if (qgroup->flags & BTRFS_QGROUP_LIMIT_MAX_RFER)
+			len = printf("%*s", max_len, pretty_size_mode(qgroup->max_rfer, unit_mode));
+		else
+			len = printf("%*s", max_len, "none");
 		break;
 	case BTRFS_QGROUP_MAX_EXCL:
-		len = printf("%*s", max_len, pretty_size_mode(qgroup->max_excl, unit_mode));
+		if (qgroup->flags & BTRFS_QGROUP_LIMIT_MAX_EXCL)
+			len = printf("%*s", max_len, pretty_size_mode(qgroup->max_excl, unit_mode));
+		else
+			len = printf("%*s", max_len, "none");
 		break;
 	case BTRFS_QGROUP_CHILD:
 		len = print_child_column(qgroup);
