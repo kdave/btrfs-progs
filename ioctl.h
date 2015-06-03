@@ -27,6 +27,10 @@
 extern "C" {
 #endif
 
+#ifndef __user
+#define __user
+#endif
+
 #define BTRFS_IOCTL_MAGIC 0x94
 #define BTRFS_VOL_NAME_MAX 255
 
@@ -77,7 +81,7 @@ struct btrfs_ioctl_vol_args_v2 {
 	union {
 		struct {
 			__u64 size;
-			struct btrfs_qgroup_inherit *qgroup_inherit;
+			struct btrfs_qgroup_inherit __user *qgroup_inherit;
 		};
 		__u64 unused[4];
 	};
@@ -521,7 +525,7 @@ struct btrfs_ioctl_received_subvol_args {
 struct btrfs_ioctl_send_args {
 	__s64 send_fd;			/* in */
 	__u64 clone_sources_count;	/* in */
-	__u64 *clone_sources;		/* in */
+	__u64 __user *clone_sources;	/* in */
 	__u64 parent_root;		/* in */
 	__u64 flags;			/* in */
 	__u64 reserved[4];		/* in */
