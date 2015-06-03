@@ -110,9 +110,10 @@ static int parse_limit(const char *p, unsigned long long *s)
 {
 	char *endptr;
 	unsigned long long size;
+	unsigned long long CLEAR_VALUE = -1;
 
 	if (strcasecmp(p, "none") == 0) {
-		*s = 0;
+		*s = CLEAR_VALUE;
 		return 1;
 	}
 	size = strtoull(p, &endptr, 10);
@@ -406,17 +407,15 @@ static int cmd_qgroup_limit(int argc, char **argv)
 	}
 
 	memset(&args, 0, sizeof(args));
-	if (size) {
-		if (compressed)
-			args.lim.flags |= BTRFS_QGROUP_LIMIT_RFER_CMPR |
-					  BTRFS_QGROUP_LIMIT_EXCL_CMPR;
-		if (exclusive) {
-			args.lim.flags |= BTRFS_QGROUP_LIMIT_MAX_EXCL;
-			args.lim.max_exclusive = size;
-		} else {
-			args.lim.flags |= BTRFS_QGROUP_LIMIT_MAX_RFER;
-			args.lim.max_referenced = size;
-		}
+	if (compressed)
+		args.lim.flags |= BTRFS_QGROUP_LIMIT_RFER_CMPR |
+				  BTRFS_QGROUP_LIMIT_EXCL_CMPR;
+	if (exclusive) {
+		args.lim.flags |= BTRFS_QGROUP_LIMIT_MAX_EXCL;
+		args.lim.max_exclusive = size;
+	} else {
+		args.lim.flags |= BTRFS_QGROUP_LIMIT_MAX_RFER;
+		args.lim.max_referenced = size;
 	}
 
 	if (argc - optind == 2) {
