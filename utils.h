@@ -88,6 +88,7 @@ void units_set_base(unsigned *units, unsigned base);
 void btrfs_list_all_fs_features(u64 mask_disallowed);
 char* btrfs_parse_fs_features(char *namelist, u64 *flags);
 void btrfs_process_fs_features(u64 flags);
+void btrfs_parse_features_to_string(char *buf, u64 flags);
 
 int make_btrfs(int fd, const char *device, const char *label,
 	       char *fs_uuid, u64 blocks[6], u64 num_bytes, u32 nodesize,

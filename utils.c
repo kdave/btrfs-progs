@@ -593,6 +593,21 @@ static int parse_one_fs_feature(const char *name, u64 *flags)
 	return !found;
 }
 
+void btrfs_parse_features_to_string(char *buf, u64 flags)
+{
+	int i;
+
+	buf[0] = 0;
+
+	for (i = 0; i < ARRAY_SIZE(mkfs_features); i++) {
+		if (flags & mkfs_features[i].flag) {
+			if (*buf)
+				strcat(buf, ", ");
+			strcat(buf, mkfs_features[i].name);
+		}
+	}
+}
+
 void btrfs_process_fs_features(u64 flags)
 {
 	int i;
