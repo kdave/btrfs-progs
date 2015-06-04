@@ -20,7 +20,17 @@ rm -f $RESULTS
 setup_root_helper
 
 convert_test() {
-	echo "    [TEST]   $1"
+	local features
+	local nodesize
+
+	features="$1"
+	shift
+
+	if [ -z "$features" ]; then
+		echo "    [TEST]   $1, btrfs defaults"
+	else
+		echo "    [TEST]   $1, btrfs $features"
+	fi
 	nodesize=$2
 	shift 2
 	echo "creating ext image with: $*" >> $RESULTS
@@ -37,23 +47,25 @@ convert_test() {
 	run_check $SUDO_HELPER dd if=/dev/zero of=$TEST_MNT/test bs=$nodesize \
 		count=1 1>/dev/null 2>&1
 	run_check $SUDO_HELPER umount $TEST_MNT
-	run_check $TOP/btrfs-convert -N "$nodesize" $IMAGE
+	run_check $TOP/btrfs-convert ${features:+-O "$features"} -N "$nodesize" $IMAGE
 	run_check $TOP/btrfs check $IMAGE
+	run_check $TOP/btrfs-show-super $IMAGE
 }
 
-# btrfs-convert requires 4k blocksize.
-convert_test "ext2 4k nodesize" 4096 mke2fs -b 4096
-convert_test "ext3 4k nodesize" 4096 mke2fs -j -b 4096
-convert_test "ext4 4k nodesize" 4096 mke2fs -t ext4 -b 4096
-convert_test "ext2 8k nodesize" 8192 mke2fs -b 4096
-convert_test "ext3 8k nodesize" 8192 mke2fs -j -b 4096
-convert_test "ext4 8k nodesize" 8192 mke2fs -t ext4 -b 4096
-convert_test "ext2 16k nodesize" 16384 mke2fs -b 4096
-convert_test "ext3 16k nodesize" 16384 mke2fs -j -b 4096
-convert_test "ext4 16k nodesize" 16384 mke2fs -t ext4 -b 4096
-convert_test "ext2 32k nodesize" 32768 mke2fs -b 4096
-convert_test "ext3 32k nodesize" 32768 mke2fs -j -b 4096
-convert_test "ext4 32k nodesize" 32768 mke2fs -t ext4 -b 4096
-convert_test "ext2 64k nodesize" 65536 mke2fs -b 4096
-convert_test "ext3 64k nodesize" 65536 mke2fs -j -b 4096
-convert_test "ext4 64k nodesize" 65536 mke2fs -t ext4 -b 4096
+for feature in '' 'extref' 'skinny-metadata' 'no-holes'; do
+	convert_test "$feature" "ext2 4k nodesize" 4096 mke2fs -b 4096
+	convert_test "$feature" "ext3 4k nodesize" 4096 mke2fs -j -b 4096
+	convert_test "$feature" "ext4 4k nodesize" 4096 mke2fs -t ext4 -b 4096
+	convert_test "$feature" "ext2 8k nodesize" 8192 mke2fs -b 4096
+	convert_test "$feature" "ext3 8k nodesize" 8192 mke2fs -j -b 4096
+	convert_test "$feature" "ext4 8k nodesize" 8192 mke2fs -t ext4 -b 4096
+	convert_test "$feature" "ext2 16k nodesize" 16384 mke2fs -b 4096
+	convert_test "$feature" "ext3 16k nodesize" 16384 mke2fs -j -b 4096
+	convert_test "$feature" "ext4 16k nodesize" 16384 mke2fs -t ext4 -b 4096
+	convert_test "$feature" "ext2 32k nodesize" 32768 mke2fs -b 4096
+	convert_test "$feature" "ext3 32k nodesize" 32768 mke2fs -j -b 4096
+	convert_test "$feature" "ext4 32k nodesize" 32768 mke2fs -t ext4 -b 4096
+	convert_test "$feature" "ext2 64k nodesize" 65536 mke2fs -b 4096
+	convert_test "$feature" "ext3 64k nodesize" 65536 mke2fs -j -b 4096
+	convert_test "$feature" "ext4 64k nodesize" 65536 mke2fs -t ext4 -b 4096
+done
