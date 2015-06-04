@@ -229,6 +229,8 @@ static void _print_scrub_ss(struct scrub_stats *ss)
 {
 	char t[4096];
 	struct tm tm;
+	time_t seconds;
+	unsigned hours;
 
 	if (!ss || !ss->t_start) {
 		printf("\tno stats available\n");
@@ -245,18 +247,21 @@ static void _print_scrub_ss(struct scrub_stats *ss)
 		t[sizeof(t) - 1] = '\0';
 		printf("\tscrub started at %s", t);
 	}
+
+	seconds = ss->duration;
+	hours = ss->duration / (60 * 60);
+	gmtime_r(&seconds, &tm);
+	strftime(t, sizeof(t), "%M:%S", &tm);
 	if (ss->finished && !ss->canceled) {
-		printf(" and finished after %llu seconds\n",
-		       ss->duration);
+		printf(" and finished after %02u:%s\n", hours, t);
 	} else if (ss->canceled) {
-		printf(" and was aborted after %llu seconds\n",
-		       ss->duration);
+		printf(" and was aborted after %02u:%s\n", hours, t);
 	} else {
 		if (ss->in_progress)
-			printf(", running for %llu seconds\n", ss->duration);
+			printf(", running for %02u:%s\n", hours, t);
 		else
-			printf(", interrupted after %llu seconds, not running\n",
-					ss->duration);
+			printf(", interrupted after %02u:%s, not running\n",
+					hours, t);
 	}
 }
 
