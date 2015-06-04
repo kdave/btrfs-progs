@@ -1,4 +1,4 @@
-btrfs-check(8)
+btrfs-rescue(8)
 ==============
 
 NAME
@@ -41,15 +41,21 @@ assume an answer of 'yes' to all questions.
 verbose mode.
 
 *zero-log* <device>::
-clear out log tree
+clear the filesystem log tree
 
-*btrfs rescue zero-log* will remove the log tree if log tree is corrupt, which
-will allow you to mount the filesystem again.
+This command will clear the filesystem log tree. This may fix a specific
+set of problem when the filesystem mount fails due to the log replay. See below
+for sample stacktraces that may show up in system log.
 
 The common case where this happens has been fixed a long time ago,
-so it is unlikely that you will see this particular problem.
+so it is unlikely that you will see this particular problem, but the utility is
+kept around.
 
-One can determine whether *btrfs-zero-log* is needed according to the kernel
+NOTE: clearing the log may lead to loss of changes that were made since the
+last transaction commit. This may be up to 30 seconds (default commit period)
+or less if the commit was implied by other filesystem activity.
+
+One can determine whether *zero-log* is needed according to the kernel
 backtrace:
 ----
 ? replay_one_dir_item+0xb5/0xb5 [btrfs]
@@ -61,8 +67,10 @@ backtrace:
 ? open_ctree+0xff6/0x132c [btrfs]
 ----
 
-If the errors are like above, then *zero-log* could be used to clear
-the log and the filesystem may be mounted normally again.
+If the errors are like above, then *zero-log* should be used to clear
+the log and the filesystem may be mounted normally again. The keywords to look
+for are 'open_ctree' which says that it's during mount and function names
+that contain 'replay', 'recover' or 'log_tree'.
 
 EXIT STATUS
 -----------
