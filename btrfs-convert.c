@@ -1373,7 +1373,7 @@ next:
 	btrfs_set_key_type(&location, BTRFS_INODE_ITEM_KEY);
 	ret = btrfs_insert_dir_item(trans, root, name, strlen(name),
 				    btrfs_root_dirid(&root->root_item),
-				    &location, EXT2_FT_REG_FILE, objectid);
+				    &location, BTRFS_FT_REG_FILE, objectid);
 	if (ret)
 		goto fail;
 	ret = btrfs_insert_inode_ref(trans, root, name, strlen(name),
