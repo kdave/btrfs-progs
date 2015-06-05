@@ -286,6 +286,35 @@ static struct btrfs_extent_ops extent_ops = {
 	.free_extent = custom_free_extent,
 };
 
+static int convert_insert_dirent(struct btrfs_trans_handle *trans,
+				 struct btrfs_root *root,
+				 const char *name, size_t name_len,
+				 u64 dir, u64 objectid,
+				 u8 file_type, u64 index_cnt,
+				 struct btrfs_inode_item *inode)
+{
+	int ret;
+	u64 inode_size;
+	struct btrfs_key location = {
+		.objectid = objectid,
+		.offset = 0,
+		.type = BTRFS_INODE_ITEM_KEY,
+	};
+
+	ret = btrfs_insert_dir_item(trans, root, name, name_len,
+				    dir, &location, file_type, index_cnt);
+	if (ret)
+		return ret;
+	ret = btrfs_insert_inode_ref(trans, root, name, name_len,
+				     objectid, dir, index_cnt);
+	if (ret)
+		return ret;
+	inode_size = btrfs_stack_inode_size(inode) + name_len * 2;
+	btrfs_set_stack_inode_size(inode, inode_size);
+
+	return 0;
+}
+
 struct dir_iterate_data {
 	struct btrfs_trans_handle *trans;
 	struct btrfs_root *root;
@@ -315,9 +344,7 @@ static int dir_iterate_proc(ext2_ino_t dir, int entry,
 	int ret;
 	int file_type;
 	u64 objectid;
-        u64 inode_size;
 	char dotdot[] = "..";
-	struct btrfs_key location;
 	struct dir_iterate_data *idata = (struct dir_iterate_data *)priv_data;
 	int name_len;
 
@@ -334,33 +361,20 @@ static int dir_iterate_proc(ext2_ino_t dir, int entry,
 	if (dirent->inode < EXT2_GOOD_OLD_FIRST_INO)
 		return 0;
 
-	location.objectid = objectid;
-	location.offset = 0;
-	btrfs_set_key_type(&location, BTRFS_INODE_ITEM_KEY);
-
 	file_type = dirent->name_len >> 8;
 	BUG_ON(file_type > EXT2_FT_SYMLINK);
-	ret = btrfs_insert_dir_item(idata->trans, idata->root,
-				    dirent->name, name_len,
-				    idata->objectid, &location,
+
+	ret = convert_insert_dirent(idata->trans, idata->root, dirent->name,
+				    name_len, idata->objectid, objectid,
 				    filetype_conversion_table[file_type],
-				    idata->index_cnt);
-	if (ret)
-		goto fail;
-	ret = btrfs_insert_inode_ref(idata->trans, idata->root,
-				     dirent->name, name_len,
-				     objectid, idata->objectid,
-				     idata->index_cnt);
-	if (ret)
-		goto fail;
+				    idata->index_cnt, idata->inode);
+	if (ret < 0) {
+		idata->errcode = ret;
+		return BLOCK_ABORT;
+	}
+
 	idata->index_cnt++;
-	inode_size = btrfs_stack_inode_size(idata->inode) +
-		     name_len * 2;
-	btrfs_set_stack_inode_size(idata->inode, inode_size);
 	return 0;
-fail:
-	idata->errcode = ret;
-	return BLOCK_ABORT;
 }
 
 static int create_dir_entries(struct btrfs_trans_handle *trans,
