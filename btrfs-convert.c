@@ -507,7 +507,7 @@ static int record_file_blocks(struct blk_iterate_data *data,
 static int block_iterate_proc(u64 disk_block, u64 file_block,
 		              struct blk_iterate_data *idata)
 {
-	int ret;
+	int ret = 0;
 	int sb_region;
 	int do_barrier;
 	struct btrfs_root *root = idata->root;
@@ -549,19 +549,23 @@ static int block_iterate_proc(u64 disk_block, u64 file_block,
 		idata->boundary = bytenr / root->sectorsize;
 	}
 	idata->num_blocks++;
-	return 0;
 fail:
-	idata->errcode = ret;
-	return BLOCK_ABORT;
+	return ret;
 }
 
 static int __block_iterate_proc(ext2_filsys fs, blk_t *blocknr,
 			        e2_blkcnt_t blockcnt, blk_t ref_block,
 			        int ref_offset, void *priv_data)
 {
+	int ret;
 	struct blk_iterate_data *idata;
 	idata = (struct blk_iterate_data *)priv_data;
-	return block_iterate_proc(*blocknr, blockcnt, idata);
+	ret = block_iterate_proc(*blocknr, blockcnt, idata);
+	if (ret) {
+		idata->errcode = ret;
+		return BLOCK_ABORT;
+	}
+	return 0;
 }
 
 /*
@@ -1202,10 +1206,8 @@ static int create_image_file_range(struct btrfs_trans_handle *trans,
 		if (!ext2fs_fast_test_block_bitmap(ext2_fs->block_map, block))
 			continue;
 		ret = block_iterate_proc(block, block, &data);
-		if (ret & BLOCK_ABORT) {
-			ret = data.errcode;
+		if (ret < 0)
 			goto fail;
-		}
 	}
 	if (data.num_blocks > 0) {
 		ret = record_file_blocks(&data, data.first_block,
@@ -1958,10 +1960,8 @@ static int relocate_one_reference(struct btrfs_trans_handle *trans,
 
 		ret = block_iterate_proc(new_pos / sectorsize,
 					 cur_offset / sectorsize, &data);
-		if (ret & BLOCK_ABORT) {
-			ret = data.errcode;
+		if (ret < 0)
 			goto fail;
-		}
 
 		cur_offset += sectorsize;
 		bytenr += sectorsize;
