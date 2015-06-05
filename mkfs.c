@@ -303,17 +303,17 @@ static u64 parse_profile(char *s)
 {
 	if (strcmp(s, "raid0") == 0) {
 		return BTRFS_BLOCK_GROUP_RAID0;
-	} else if (strcmp(s, "raid1") == 0) {
+	} else if (strcasecmp(s, "raid1") == 0) {
 		return BTRFS_BLOCK_GROUP_RAID1;
-	} else if (strcmp(s, "raid5") == 0) {
+	} else if (strcasecmp(s, "raid5") == 0) {
 		return BTRFS_BLOCK_GROUP_RAID5;
-	} else if (strcmp(s, "raid6") == 0) {
+	} else if (strcasecmp(s, "raid6") == 0) {
 		return BTRFS_BLOCK_GROUP_RAID6;
-	} else if (strcmp(s, "raid10") == 0) {
+	} else if (strcasecmp(s, "raid10") == 0) {
 		return BTRFS_BLOCK_GROUP_RAID10;
-	} else if (strcmp(s, "dup") == 0) {
+	} else if (strcasecmp(s, "dup") == 0) {
 		return BTRFS_BLOCK_GROUP_DUP;
-	} else if (strcmp(s, "single") == 0) {
+	} else if (strcasecmp(s, "single") == 0) {
 		return 0;
 	} else {
 		fprintf(stderr, "Unknown profile %s\n", s);
