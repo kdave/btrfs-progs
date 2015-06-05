@@ -16,24 +16,18 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/stat.h>
 #include "kerncompat.h"
+
+#include <stdio.h>
+#include <unistd.h>
 #include "ctree.h"
 #include "disk-io.h"
-#include "print-tree.h"
 #include "transaction.h"
-#include "list.h"
 #include "utils.h"
 
-static void print_usage(void) __attribute__((noreturn));
-static void print_usage(void)
+__attribute__((noreturn)) static void print_usage(void)
 {
 	fprintf(stderr, "usage: btrfs-zero-log dev\n");
-	fprintf(stderr, "%s\n", PACKAGE_STRING);
 	exit(1);
 }
 
@@ -41,6 +35,7 @@ int main(int ac, char **av)
 {
 	struct btrfs_root *root;
 	struct btrfs_trans_handle *trans;
+	struct btrfs_super_block *sb;
 	int ret;
 
 	set_argv0(av);
@@ -49,26 +44,33 @@ int main(int ac, char **av)
 
 	radix_tree_init();
 
-	if((ret = check_mounted(av[1])) < 0) {
-		fprintf(stderr, "Could not check mount status: %s\n", strerror(-ret));
+	printf("WARNING: this utility is deprecated, please use 'btrfs rescue zero-log'\n\n");
+
+	if ((ret = check_mounted(av[1])) < 0) {
+		fprintf(stderr, "ERROR: could not check mount status: %s\n", strerror(-ret));
 		goto out;
-	} else if(ret) {
-		fprintf(stderr, "%s is currently mounted. Aborting.\n", av[1]);
+	} else if (ret) {
+		fprintf(stderr, "ERROR: %s is currently mounted\n", av[1]);
 		ret = -EBUSY;
 		goto out;
 	}
 
 	root = open_ctree(av[1], 0, OPEN_CTREE_WRITES | OPEN_CTREE_PARTIAL);
-
-	if (root == NULL)
+	if (!root) {
+		fprintf(stderr, "ERROR: cannot open ctree\n");
 		return 1;
+	}
 
+	sb = root->fs_info->super_copy;
+	printf("Clearing log on %s, previous log_root %llu, level %u\n",
+			av[1],
+			(unsigned long long)btrfs_super_log_root(sb),
+			(unsigned)btrfs_super_log_root_level(sb));
 	trans = btrfs_start_transaction(root, 1);
 	btrfs_set_super_log_root(root->fs_info->super_copy, 0);
 	btrfs_set_super_log_root_level(root->fs_info->super_copy, 0);
 	btrfs_commit_transaction(trans, root);
 	close_ctree(root);
-	printf("Log root zero'ed\n");
 out:
 	return !!ret;
 }
