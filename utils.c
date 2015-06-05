@@ -762,9 +762,6 @@ int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 
 	memcpy(disk_super, super, sizeof(*disk_super));
 
-	printf("adding device %s id %llu\n", path,
-	       (unsigned long long)device->devid);
-
 	btrfs_set_super_bytenr(disk_super, BTRFS_SUPER_INFO_OFFSET);
 	btrfs_set_stack_device_id(dev_item, device->devid);
 	btrfs_set_stack_device_type(dev_item, device->type);

@@ -1522,6 +1522,15 @@ int main(int ac, char **av)
 		ret = btrfs_add_to_fsid(trans, root, fd, file, dev_block_count,
 					sectorsize, sectorsize, sectorsize);
 		BUG_ON(ret);
+		if (verbose >= 2) {
+			struct btrfs_device *device;
+
+			device = container_of(root->fs_info->fs_devices->devices.next,
+					struct btrfs_device, dev_list);
+			printf("adding device %s id %llu\n", file,
+				(unsigned long long)device->devid);
+		}
+
 		btrfs_register_one_device(file);
 	}
 
