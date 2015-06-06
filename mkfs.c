@@ -1482,7 +1482,8 @@ int main(int ac, char **av)
 
 	trans = btrfs_start_transaction(root, 1);
 
-	btrfs_register_one_device(file);
+	if (is_block_device(file))
+		btrfs_register_one_device(file);
 
 	if (dev_cnt == 0)
 		goto raid_groups;
@@ -1531,7 +1532,8 @@ int main(int ac, char **av)
 				(unsigned long long)device->devid);
 		}
 
-		btrfs_register_one_device(file);
+		if (is_block_device(file))
+			btrfs_register_one_device(file);
 	}
 
 raid_groups:
