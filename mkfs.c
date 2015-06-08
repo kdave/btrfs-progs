@@ -1132,13 +1132,43 @@ static int is_ssd(const char *file)
 	return !atoi((const char *)&rotational);
 }
 
+static void list_all_devices(struct btrfs_root *root)
+{
+	struct btrfs_fs_devices *fs_devices;
+	struct btrfs_device *device;
+	int number_of_devices = 0;
+	u64 total_block_count = 0;
+
+	fs_devices = root->fs_info->fs_devices;
+
+	list_for_each_entry(device, &fs_devices->devices, dev_list)
+		number_of_devices++;
+
+	printf("  Number of devices:\t%d\n", number_of_devices);
+	printf("    UUID                                  ID    SIZE    PATH\n");
+	printf("    ------------------------------------  --  --------- -----------\n");
+	list_for_each_entry_reverse(device, &fs_devices->devices, dev_list) {
+		char dev_uuid[BTRFS_UUID_UNPARSED_SIZE];
+
+		uuid_unparse(device->uuid, dev_uuid);
+		printf("    %s %3llu %10s %s\n",
+			dev_uuid, device->devid,
+			pretty_size(device->total_bytes),
+			device->name);
+		total_block_count += device->total_bytes;
+	}
+
+	printf("\n");
+	printf("  Total devices size: %10s\n",
+		pretty_size(total_block_count));
+}
+
 int main(int ac, char **av)
 {
 	char *file;
 	struct btrfs_root *root;
 	struct btrfs_trans_handle *trans;
 	char *label = NULL;
-	char *first_file;
 	u64 block_count = 0;
 	u64 dev_block_count = 0;
 	u64 blocks[7];
@@ -1423,7 +1453,6 @@ int main(int ac, char **av)
 				strerror(errno));
 			exit(1);
 		}
-		first_file = file;
 		ret = btrfs_prepare_device(fd, file, zero_end, &dev_block_count,
 					   block_count, &mixed, discard);
 		if (ret) {
@@ -1441,7 +1470,6 @@ int main(int ac, char **av)
 			exit(1);
 		}
 
-		first_file = file;
 		source_dir_size = size_sourcedir(source_dir, sectorsize,
 					     &num_of_meta_chunks, &size_of_data);
 		if(block_count < source_dir_size)
@@ -1484,9 +1512,6 @@ int main(int ac, char **av)
 	    (BTRFS_BLOCK_GROUP_RAID5 | BTRFS_BLOCK_GROUP_RAID6)) {
 		features |= BTRFS_FEATURE_INCOMPAT_RAID56;
 	}
-
-	if (verbose)
-		btrfs_process_fs_features(features);
 
 	ret = make_btrfs(fd, file, label, fs_uuid, blocks, dev_block_count,
 			 nodesize, sectorsize, stripesize, features);
@@ -1576,13 +1601,6 @@ raid_groups:
 	ret = create_data_reloc_tree(trans, root);
 	BUG_ON(ret);
 
-	if (verbose) {
-		printf(
-	"fs created label %s on %s\n\tnodesize %u leafsize %u sectorsize %u size %s\n",
-		    label, first_file, nodesize, nodesize, sectorsize,
-		    pretty_size(btrfs_super_total_bytes(root->fs_info->super_copy)));
-	}
-
 	btrfs_commit_transaction(trans, root);
 
 	if (source_dir_set) {
@@ -1595,6 +1613,41 @@ raid_groups:
 
 		ret = make_image(source_dir, root, fd);
 		BUG_ON(ret);
+	}
+
+	if (verbose) {
+		char features_buf[64];
+
+		printf("BTRFS filesystem summary:\n");
+		printf("  Label:\t\t%s\n", label);
+		printf("  UUID:\t\t\t%s\n", fs_uuid);
+		printf("\n");
+
+		printf("  Node size:\t\t%u\n", nodesize);
+		printf("  Sector size:\t\t%u\n", sectorsize);
+		printf("  Initial chunks:\n");
+		if (allocation.data)
+			printf("    Data:\t\t%s\n",
+				pretty_size(allocation.data));
+		if (allocation.metadata)
+			printf("    Metadata:\t\t%s\n",
+				pretty_size(allocation.metadata));
+		if (allocation.mixed)
+			printf("    Data+Metadata:\t%s\n",
+				pretty_size(allocation.mixed));
+		printf("    System:\t\t%s\n",
+			pretty_size(allocation.system));
+		printf("  Metadata profile:\t%s\n",
+			btrfs_group_profile_str(metadata_profile));
+		printf("  Data profile:\t\t%s\n",
+			btrfs_group_profile_str(data_profile));
+		printf("  Mixed mode:\t\t%s\n", mixed ? "YES" : "NO");
+		printf("  SSD detected:\t\t%s\n", ssd ? "YES" : "NO");
+		btrfs_parse_features_to_string(features_buf, features);
+		printf("  Incompat features:\t%s", features_buf);
+		printf("\n");
+
+		list_all_devices(root);
 	}
 
 	ret = close_ctree(root);
