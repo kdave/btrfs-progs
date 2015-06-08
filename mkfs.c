@@ -1641,7 +1641,6 @@ raid_groups:
 			btrfs_group_profile_str(metadata_profile));
 		printf("  Data profile:\t\t%s\n",
 			btrfs_group_profile_str(data_profile));
-		printf("  Mixed mode:\t\t%s\n", mixed ? "YES" : "NO");
 		printf("  SSD detected:\t\t%s\n", ssd ? "YES" : "NO");
 		btrfs_parse_features_to_string(features_buf, features);
 		printf("  Incompat features:\t%s", features_buf);
