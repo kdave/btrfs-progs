@@ -36,10 +36,6 @@ static const char * const balance_cmd_group_usage[] = {
 	NULL
 };
 
-static const char balance_cmd_group_info[] =
-	"'btrfs filesystem balance' command is deprecated, please use\n"
-	"'btrfs balance start' command instead.";
-
 static int parse_one_profile(const char *profile, u64 *flags)
 {
 	if (!strcmp(profile, "raid0")) {
@@ -728,7 +724,7 @@ static int cmd_balance_status(int argc, char **argv)
 }
 
 const struct cmd_group balance_cmd_group = {
-	balance_cmd_group_usage, balance_cmd_group_info, {
+	balance_cmd_group_usage, NULL, {
 		{ "start", cmd_balance_start, cmd_balance_start_usage, NULL, 0 },
 		{ "pause", cmd_balance_pause, cmd_balance_pause_usage, NULL, 0 },
 		{ "cancel", cmd_balance_cancel, cmd_balance_cancel_usage, NULL, 0 },
