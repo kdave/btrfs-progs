@@ -1144,14 +1144,16 @@ static void list_all_devices(struct btrfs_root *root)
 	list_for_each_entry(device, &fs_devices->devices, dev_list)
 		number_of_devices++;
 
-	printf("  Number of devices:\t%d\n", number_of_devices);
-	printf("    ID   SIZE        PATH\n");
-	printf("    ---  ----------  ------------\n");
+	printf("Number of devices:  %d\n", number_of_devices);
+	/* printf("Total devices size: %10s\n", */
+		/* pretty_size(total_block_count)); */
+	printf("Devices:\n");
+	printf("   ID        SIZE  PATH\n");
 	list_for_each_entry_reverse(device, &fs_devices->devices, dev_list) {
 		char dev_uuid[BTRFS_UUID_UNPARSED_SIZE];
 
 		uuid_unparse(device->uuid, dev_uuid);
-		printf("    %3llu  %10s  %12s\n",
+		printf("  %3llu  %10s  %s\n",
 			device->devid,
 			pretty_size(device->total_bytes),
 			device->name);
@@ -1159,8 +1161,6 @@ static void list_all_devices(struct btrfs_root *root)
 	}
 
 	printf("\n");
-	printf("  Total devices size: %10s\n",
-		pretty_size(total_block_count));
 }
 
 int main(int ac, char **av)
@@ -1618,32 +1618,31 @@ raid_groups:
 	if (verbose) {
 		char features_buf[64];
 
-		printf("BTRFS filesystem summary:\n");
-		printf("  Label:\t\t%s\n", label);
-		printf("  UUID:\t\t\t%s\n", fs_uuid);
-		printf("\n");
-
-		printf("  Node size:\t\t%u\n", nodesize);
-		printf("  Sector size:\t\t%u\n", sectorsize);
-		printf("  Initial chunks:\n");
+		printf("Label:              %s\n", label);
+		printf("UUID:               %s\n", fs_uuid);
+		printf("Node size:          %u\n", nodesize);
+		printf("Sector size:        %u\n", sectorsize);
+		printf("Filesystem size:    %s\n",
+			pretty_size(btrfs_super_total_bytes(root->fs_info->super_copy)));
+		printf("Block group profiles:\n");
 		if (allocation.data)
-			printf("    Data:\t\t%s\n",
+			printf("  Data:             %-8s %16s\n",
+				btrfs_group_profile_str(data_profile),
 				pretty_size(allocation.data));
 		if (allocation.metadata)
-			printf("    Metadata:\t\t%s\n",
+			printf("  Metadata:         %-8s %16s\n",
+				btrfs_group_profile_str(metadata_profile),
 				pretty_size(allocation.metadata));
 		if (allocation.mixed)
-			printf("    Data+Metadata:\t%s\n",
+			printf("  Data+Metadata:    %-8s %16s\n",
+				btrfs_group_profile_str(data_profile),
 				pretty_size(allocation.mixed));
-		printf("    System:\t\t%s\n",
+		printf("  System:           %-8s %16s\n",
+			btrfs_group_profile_str(metadata_profile),
 			pretty_size(allocation.system));
-		printf("  Metadata profile:\t%s\n",
-			btrfs_group_profile_str(metadata_profile));
-		printf("  Data profile:\t\t%s\n",
-			btrfs_group_profile_str(data_profile));
-		printf("  SSD detected:\t\t%s\n", ssd ? "YES" : "NO");
+		printf("SSD detected:       %s\n", ssd ? "yes" : "no");
 		btrfs_parse_features_to_string(features_buf, features);
-		printf("  Incompat features:\t%s", features_buf);
+		printf("Incompat features:  %s", features_buf);
 		printf("\n");
 
 		list_all_devices(root);
