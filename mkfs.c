@@ -52,7 +52,15 @@ struct directory_name_entry {
 	struct list_head list;
 };
 
-static int make_root_dir(struct btrfs_root *root, int mixed)
+struct mkfs_allocation {
+	u64 data;
+	u64 metadata;
+	u64 mixed;
+	u64 system;
+};
+
+static int make_root_dir(struct btrfs_root *root, int mixed,
+				struct mkfs_allocation *allocation)
 {
 	struct btrfs_trans_handle *trans;
 	struct btrfs_key location;
@@ -69,6 +77,7 @@ static int make_root_dir(struct btrfs_root *root, int mixed)
 				     BTRFS_BLOCK_GROUP_SYSTEM,
 				     BTRFS_FIRST_CHUNK_TREE_OBJECTID,
 				     0, BTRFS_MKFS_SYSTEM_GROUP_SIZE);
+	allocation->system += BTRFS_MKFS_SYSTEM_GROUP_SIZE;
 	BUG_ON(ret);
 
 	if (mixed) {
@@ -88,9 +97,7 @@ static int make_root_dir(struct btrfs_root *root, int mixed)
 					     BTRFS_FIRST_CHUNK_TREE_OBJECTID,
 					     chunk_start, chunk_size);
 		BUG_ON(ret);
-		if (verbose)
-			printf("Created a data/metadata chunk of size %llu\n",
-					chunk_size);
+		allocation->mixed += chunk_size;
 	} else {
 		ret = btrfs_alloc_chunk(trans, root->fs_info->extent_root,
 					&chunk_start, &chunk_size,
@@ -104,6 +111,7 @@ static int make_root_dir(struct btrfs_root *root, int mixed)
 					     BTRFS_BLOCK_GROUP_METADATA,
 					     BTRFS_FIRST_CHUNK_TREE_OBJECTID,
 					     chunk_start, chunk_size);
+		allocation->metadata += chunk_size;
 		BUG_ON(ret);
 	}
 
@@ -125,6 +133,7 @@ static int make_root_dir(struct btrfs_root *root, int mixed)
 					     BTRFS_BLOCK_GROUP_DATA,
 					     BTRFS_FIRST_CHUNK_TREE_OBJECTID,
 					     chunk_start, chunk_size);
+		allocation->data += chunk_size;
 		BUG_ON(ret);
 	}
 
@@ -184,7 +193,9 @@ static void recow_roots(struct btrfs_trans_handle *trans,
 }
 
 static int create_one_raid_group(struct btrfs_trans_handle *trans,
-			      struct btrfs_root *root, u64 type)
+			      struct btrfs_root *root, u64 type,
+			      struct mkfs_allocation *allocation)
+
 {
 	u64 chunk_start;
 	u64 chunk_size;
@@ -200,6 +211,18 @@ static int create_one_raid_group(struct btrfs_trans_handle *trans,
 	ret = btrfs_make_block_group(trans, root->fs_info->extent_root, 0,
 				     type, BTRFS_FIRST_CHUNK_TREE_OBJECTID,
 				     chunk_start, chunk_size);
+	if ((type & BTRFS_BLOCK_GROUP_TYPE_MASK) == BTRFS_BLOCK_GROUP_DATA)
+		allocation->data += chunk_size;
+	else if ((type & BTRFS_BLOCK_GROUP_TYPE_MASK) == BTRFS_BLOCK_GROUP_METADATA)
+		allocation->metadata += chunk_size;
+	else if ((type & BTRFS_BLOCK_GROUP_TYPE_MASK) == BTRFS_BLOCK_GROUP_SYSTEM)
+		allocation->system += chunk_size;
+	else if ((type & BTRFS_BLOCK_GROUP_TYPE_MASK) ==
+			(BTRFS_BLOCK_GROUP_METADATA|BTRFS_BLOCK_GROUP_DATA))
+		allocation->mixed += chunk_size;
+	else
+		BUG_ON(1);
+
 	BUG_ON(ret);
 	return ret;
 }
@@ -207,7 +230,8 @@ static int create_one_raid_group(struct btrfs_trans_handle *trans,
 static int create_raid_groups(struct btrfs_trans_handle *trans,
 			      struct btrfs_root *root, u64 data_profile,
 			      int data_profile_opt, u64 metadata_profile,
-			      int mixed)
+			      int mixed,
+			      struct mkfs_allocation *allocation)
 {
 	u64 num_devices = btrfs_super_num_devices(root->fs_info->super_copy);
 	int ret;
@@ -217,21 +241,21 @@ static int create_raid_groups(struct btrfs_trans_handle *trans,
 
 		ret = create_one_raid_group(trans, root,
 					    BTRFS_BLOCK_GROUP_SYSTEM |
-					    metadata_profile);
+					    metadata_profile, allocation);
 		BUG_ON(ret);
 
 		if (mixed)
 			meta_flags |= BTRFS_BLOCK_GROUP_DATA;
 
 		ret = create_one_raid_group(trans, root, meta_flags |
-					    metadata_profile);
+					    metadata_profile, allocation);
 		BUG_ON(ret);
 
 	}
 	if (!mixed && num_devices > 1 && data_profile) {
 		ret = create_one_raid_group(trans, root,
 					    BTRFS_BLOCK_GROUP_DATA |
-					    data_profile);
+					    data_profile, allocation);
 		BUG_ON(ret);
 	}
 	recow_roots(trans, root);
@@ -895,7 +919,8 @@ static int open_target(char *output_name)
 
 static int create_chunks(struct btrfs_trans_handle *trans,
 			 struct btrfs_root *root, u64 num_of_meta_chunks,
-			 u64 size_of_data)
+			 u64 size_of_data,
+			 struct mkfs_allocation *allocation)
 {
 	u64 chunk_start;
 	u64 chunk_size;
@@ -912,6 +937,7 @@ static int create_chunks(struct btrfs_trans_handle *trans,
 		ret = btrfs_make_block_group(trans, root->fs_info->extent_root, 0,
 					     meta_type, BTRFS_FIRST_CHUNK_TREE_OBJECTID,
 					     chunk_start, chunk_size);
+		allocation->metadata += chunk_size;
 		BUG_ON(ret);
 		set_extent_dirty(&root->fs_info->free_space_cache,
 				 chunk_start, chunk_start + chunk_size - 1, 0);
@@ -926,6 +952,7 @@ static int create_chunks(struct btrfs_trans_handle *trans,
 	ret = btrfs_make_block_group(trans, root->fs_info->extent_root, 0,
 				     data_type, BTRFS_FIRST_CHUNK_TREE_OBJECTID,
 				     chunk_start, size_of_data);
+	allocation->data += size_of_data;
 	BUG_ON(ret);
 	set_extent_dirty(&root->fs_info->free_space_cache,
 			 chunk_start, chunk_start + size_of_data - 1, 0);
@@ -1144,6 +1171,7 @@ int main(int ac, char **av)
 	char estr[100];
 	char fs_uuid[BTRFS_UUID_UNPARSED_SIZE] = { 0 };
 	u64 features = BTRFS_MKFS_DEFAULT_FEATURES;
+	struct mkfs_allocation allocation = { 0 };
 
 	while(1) {
 		int c;
@@ -1475,7 +1503,7 @@ int main(int ac, char **av)
 	}
 	root->fs_info->alloc_start = alloc_start;
 
-	ret = make_root_dir(root, mixed);
+	ret = make_root_dir(root, mixed, &allocation);
 	if (ret) {
 		fprintf(stderr, "failed to setup the root directory\n");
 		exit(1);
@@ -1541,7 +1569,7 @@ raid_groups:
 	if (!source_dir_set) {
 		ret = create_raid_groups(trans, root, data_profile,
 				 data_profile_opt, metadata_profile,
-				 mixed);
+				 mixed, &allocation);
 		BUG_ON(ret);
 	}
 
@@ -1560,7 +1588,8 @@ raid_groups:
 	if (source_dir_set) {
 		trans = btrfs_start_transaction(root, 1);
 		ret = create_chunks(trans, root,
-				    num_of_meta_chunks, size_of_data);
+				    num_of_meta_chunks, size_of_data,
+				    &allocation);
 		BUG_ON(ret);
 		btrfs_commit_transaction(trans, root);
 
