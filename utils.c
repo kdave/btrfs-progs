@@ -54,6 +54,11 @@ static int btrfs_scan_done = 0;
 
 static char argv0_buf[ARGV0_BUF_SIZE] = "btrfs";
 
+const char *get_argv0_buf(void)
+{
+	return argv0_buf;
+}
+
 void fixup_argv0(char **argv, const char *token)
 {
 	int len = strlen(argv0_buf);

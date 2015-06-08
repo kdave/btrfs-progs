@@ -22,8 +22,6 @@
 #include "commands.h"
 #include "utils.h"
 
-static char argv0_buf[ARGV0_BUF_SIZE];
-
 #define USAGE_SHORT		1U
 #define USAGE_LONG		2U
 #define USAGE_OPTIONS		4U
@@ -183,7 +181,7 @@ void usage_command_group(const struct cmd_group *grp, int full, int err)
 
 void help_unknown_token(const char *arg, const struct cmd_group *grp)
 {
-	fprintf(stderr, "%s: unknown token '%s'\n", argv0_buf, arg);
+	fprintf(stderr, "%s: unknown token '%s'\n", get_argv0_buf(), arg);
 	usage_command_group(grp, 0, 1);
 	exit(1);
 }
@@ -192,7 +190,7 @@ void help_ambiguous_token(const char *arg, const struct cmd_group *grp)
 {
 	const struct cmd_struct *cmd = grp->commands;
 
-	fprintf(stderr, "%s: ambiguous token '%s'\n", argv0_buf, arg);
+	fprintf(stderr, "%s: ambiguous token '%s'\n", get_argv0_buf(), arg);
 	fprintf(stderr, "\nDid you mean one of these ?\n");
 
 	for (; cmd->token; cmd++) {
