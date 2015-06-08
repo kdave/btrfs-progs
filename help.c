@@ -160,6 +160,50 @@ static void usage_command_group_internal(const struct cmd_group *grp, int full,
 	}
 }
 
+void usage_command_group_short(const struct cmd_group *grp)
+{
+	const char * const *usagestr = grp->usagestr;
+	FILE *outf = stdout;
+	const struct cmd_struct *cmd;
+
+	if (usagestr && *usagestr) {
+		fprintf(outf, "usage: %s\n", *usagestr++);
+		while (*usagestr)
+			fprintf(outf, "   or: %s\n", *usagestr++);
+	}
+
+	fputc('\n', outf);
+
+	fprintf(outf, "Command groups:\n");
+	for (cmd = grp->commands; cmd->token; cmd++) {
+		if (cmd->hidden)
+			continue;
+
+		if (!cmd->next)
+			continue;
+
+		fprintf(outf, "  %-16s  %s\n", cmd->token, cmd->next->infostr);
+	}
+
+	fprintf(outf, "\nCommands:\n");
+	for (cmd = grp->commands; cmd->token; cmd++) {
+		if (cmd->hidden)
+			continue;
+
+		if (cmd->next)
+			continue;
+
+		fprintf(outf, "  %-16s  %s\n", cmd->token, cmd->usagestr[1]);
+	}
+
+	fputc('\n', outf);
+	fprintf(stderr, "For an overview of a given command use 'btrfs command --help'\n");
+	fprintf(stderr, "or 'btrfs [command...] --help --full' to print all available options.\n");
+	fprintf(stderr, "Any command name can be shortened as far as it stays unambiguous,\n");
+	fprintf(stderr, "however it is recommended to use full command names in scripts.\n");
+	fprintf(stderr, "All command groups have their manual page named 'btrfs-<group>'.\n");
+}
+
 void usage_command_group(const struct cmd_group *grp, int full, int err)
 {
 	const char * const *usagestr = grp->usagestr;

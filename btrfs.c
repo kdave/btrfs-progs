@@ -230,7 +230,7 @@ int main(int argc, char **argv)
 			if (!prefixcmp(argv[0], "--"))
 				argv[0] += 2;
 		} else {
-			usage_command_group(&btrfs_cmd_group, 0, 0);
+			usage_command_group_short(&btrfs_cmd_group);
 			exit(1);
 		}
 	}
