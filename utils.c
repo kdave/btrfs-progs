@@ -1915,8 +1915,10 @@ int open_file_or_dir3(const char *fname, DIR **dirstream, int open_flags)
 	}
 	if (fd < 0) {
 		fd = -1;
-		if (*dirstream)
+		if (*dirstream) {
 			closedir(*dirstream);
+			*dirstream = NULL;
+		}
 	}
 	return fd;
 }
