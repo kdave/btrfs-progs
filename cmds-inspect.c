@@ -338,8 +338,11 @@ out:
 	return !!ret;
 }
 
+static const char inspect_cmd_group_info[] =
+"query various internal information";
+
 const struct cmd_group inspect_cmd_group = {
-	inspect_cmd_group_usage, NULL, {
+	inspect_cmd_group_usage, inspect_cmd_group_info, {
 		{ "inode-resolve", cmd_inode_resolve, cmd_inode_resolve_usage,
 			NULL, 0 },
 		{ "logical-resolve", cmd_logical_resolve,

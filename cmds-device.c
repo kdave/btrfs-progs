@@ -583,8 +583,11 @@ out:
 	return !!ret;
 }
 
+static const char device_cmd_group_info[] =
+"manage and query devices in the filesystem";
+
 const struct cmd_group device_cmd_group = {
-	device_cmd_group_usage, NULL, {
+	device_cmd_group_usage, device_cmd_group_info, {
 		{ "add", cmd_add_dev, cmd_add_dev_usage, NULL, 0 },
 		{ "delete", cmd_rm_dev, cmd_rm_dev_usage, NULL, 0 },
 		{ "scan", cmd_scan_dev, cmd_scan_dev_usage, NULL, 0 },

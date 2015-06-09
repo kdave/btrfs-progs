@@ -465,8 +465,11 @@ static int cmd_qgroup_limit(int argc, char **argv)
 	return 0;
 }
 
+static const char qgroup_cmd_group_info[] =
+"manage quota groups";
+
 const struct cmd_group qgroup_cmd_group = {
-	qgroup_cmd_group_usage, NULL, {
+	qgroup_cmd_group_usage, qgroup_cmd_group_info, {
 		{ "assign", cmd_qgroup_assign, cmd_qgroup_assign_usage,
 		   NULL, 0 },
 		{ "remove", cmd_qgroup_remove, cmd_qgroup_remove_usage,

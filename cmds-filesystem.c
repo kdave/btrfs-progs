@@ -1321,8 +1321,11 @@ static int cmd_label(int argc, char **argv)
 	}
 }
 
+static const char filesystem_cmd_group_info[] =
+"overall filesystem tasks and information";
+
 const struct cmd_group filesystem_cmd_group = {
-	filesystem_cmd_group_usage, NULL, {
+	filesystem_cmd_group_usage, filesystem_cmd_group_info, {
 		{ "df", cmd_filesystem_df, cmd_filesystem_df_usage, NULL, 0 },
 		{ "show", cmd_show, cmd_show_usage, NULL, 0 },
 		{ "sync", cmd_sync, cmd_sync_usage, NULL, 0 },

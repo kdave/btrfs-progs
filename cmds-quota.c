@@ -176,8 +176,11 @@ static int cmd_quota_rescan(int argc, char **argv)
 	return 0;
 }
 
+static const char quota_cmd_group_info[] =
+"manage filesystem quota settings";
+
 const struct cmd_group quota_cmd_group = {
-	quota_cmd_group_usage, NULL, {
+	quota_cmd_group_usage, quota_cmd_group_info, {
 		{ "enable", cmd_quota_enable, cmd_quota_enable_usage, NULL, 0 },
 		{ "disable", cmd_quota_disable, cmd_quota_disable_usage,
 		   NULL, 0 },

@@ -201,8 +201,11 @@ out:
 	return !!ret;
 }
 
+static const char rescue_cmd_group_info[] =
+"toolbox for specific rescue operations";
+
 const struct cmd_group rescue_cmd_group = {
-	rescue_cmd_group_usage, NULL, {
+	rescue_cmd_group_usage, rescue_cmd_group_info, {
 		{ "chunk-recover", cmd_chunk_recover, cmd_chunk_recover_usage, NULL, 0},
 		{ "super-recover", cmd_super_recover, cmd_super_recover_usage, NULL, 0},
 		{ "zero-log", cmd_rescue_zero_log, cmd_rescue_zero_log_usage, NULL, 0},

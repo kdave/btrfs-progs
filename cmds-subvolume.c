@@ -1254,8 +1254,11 @@ out:
 	return !!ret;
 }
 
+static const char subvolume_cmd_group_info[] =
+"manage subvolumes: create, delete, list, etc";
+
 const struct cmd_group subvolume_cmd_group = {
-	subvolume_cmd_group_usage, NULL, {
+	subvolume_cmd_group_usage, subvolume_cmd_group_info, {
 		{ "create", cmd_subvol_create, cmd_subvol_create_usage, NULL, 0 },
 		{ "delete", cmd_subvol_delete, cmd_subvol_delete_usage, NULL, 0 },
 		{ "list", cmd_subvol_list, cmd_subvol_list_usage, NULL, 0 },

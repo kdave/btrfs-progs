@@ -460,8 +460,11 @@ static int cmd_list(int argc, char **argv)
 	return ret;
 }
 
+static const char property_cmd_group_info[] =
+"modify properties of filesystem objects";
+
 const struct cmd_group property_cmd_group = {
-	property_cmd_group_usage, NULL, {
+	property_cmd_group_usage, property_cmd_group_info, {
 		{ "get", cmd_get, cmd_get_usage, NULL, 0 },
 		{ "set", cmd_set, cmd_set_usage, NULL, 0 },
 		{ "list", cmd_list, cmd_list_usage, NULL, 0 },

@@ -567,8 +567,11 @@ static int cmd_cancel_replace(int argc, char **argv)
 	return 0;
 }
 
+static const char replace_cmd_group_info[] =
+"replace a device in the filesystem";
+
 const struct cmd_group replace_cmd_group = {
-	replace_cmd_group_usage, NULL, {
+	replace_cmd_group_usage, replace_cmd_group_info, {
 		{ "start", cmd_start_replace, cmd_start_replace_usage, NULL,
 		  0 },
 		{ "status", cmd_status_replace, cmd_status_replace_usage, NULL,

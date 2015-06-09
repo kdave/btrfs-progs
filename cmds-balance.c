@@ -723,8 +723,11 @@ static int cmd_balance_status(int argc, char **argv)
 	return 1;
 }
 
+static const char balance_cmd_group_info[] =
+"balance data accross devices, or change block groups using filters";
+
 const struct cmd_group balance_cmd_group = {
-	balance_cmd_group_usage, NULL, {
+	balance_cmd_group_usage, balance_cmd_group_info, {
 		{ "start", cmd_balance_start, cmd_balance_start_usage, NULL, 0 },
 		{ "pause", cmd_balance_pause, cmd_balance_pause_usage, NULL, 0 },
 		{ "cancel", cmd_balance_cancel, cmd_balance_cancel_usage, NULL, 0 },

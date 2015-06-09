@@ -1804,8 +1804,11 @@ out:
 	return !!err;
 }
 
+static const char scrub_cmd_group_info[] =
+"verify checksums of data and metadata";
+
 const struct cmd_group scrub_cmd_group = {
-	scrub_cmd_group_usage, NULL, {
+	scrub_cmd_group_usage, scrub_cmd_group_info, {
 		{ "start", cmd_scrub_start, cmd_scrub_start_usage, NULL, 0 },
 		{ "cancel", cmd_scrub_cancel, cmd_scrub_cancel_usage, NULL, 0 },
 		{ "resume", cmd_scrub_resume, cmd_scrub_resume_usage, NULL, 0 },
