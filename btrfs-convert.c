@@ -2292,6 +2292,7 @@ static int do_convert(const char *devname, int datacsum, int packing, int noxatt
 {
 	int i, ret, blocks_per_node;
 	int fd = -1;
+	int is_btrfs = 0;
 	u32 blocksize;
 	u64 blocks[7];
 	u64 total_bytes;
@@ -2459,6 +2460,7 @@ static int do_convert(const char *devname, int datacsum, int packing, int noxatt
 		fprintf(stderr, "unable to migrate super block\n");
 		goto fail;
 	}
+	is_btrfs = 1;
 
 	root = open_ctree_fd(fd, devname, 0, OPEN_CTREE_WRITES);
 	if (!root) {
@@ -2479,7 +2481,11 @@ static int do_convert(const char *devname, int datacsum, int packing, int noxatt
 fail:
 	if (fd != -1)
 		close(fd);
-	fprintf(stderr, "conversion aborted.\n");
+	if (is_btrfs)
+		fprintf(stderr,
+			"WARNING: an error occured during chunk mapping fixup, filesystem mountable but not finalized\n");
+	else
+		fprintf(stderr, "conversion aborted\n");
 	return -1;
 }
 
