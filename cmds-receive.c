@@ -1002,7 +1002,7 @@ int cmd_receive(int argc, char **argv)
 	struct btrfs_receive r;
 	int receive_fd = fileno(stdin);
 	u64 max_errors = 1;
-	int ret;
+	int ret = 0;
 
 	memset(&r, 0, sizeof(r));
 	r.mnt_fd = -1;
@@ -1039,10 +1039,11 @@ int cmd_receive(int argc, char **argv)
 			max_errors = arg_strtou64(optarg);
 			break;
 		case 'm':
+			free(realmnt);
 			realmnt = strdup(optarg);
 			if (!realmnt) {
 				fprintf(stderr, "ERROR: couldn't allocate realmnt.\n");
-				return 1;
+				goto out;
 			}
 			break;
 		case '?':
@@ -1061,11 +1062,14 @@ int cmd_receive(int argc, char **argv)
 		receive_fd = open(fromfile, O_RDONLY | O_NOATIME);
 		if (receive_fd < 0) {
 			fprintf(stderr, "ERROR: failed to open %s\n", fromfile);
-			return 1;
+			goto out;
 		}
 	}
 
 	ret = do_receive(&r, tomnt, realmnt, receive_fd, max_errors);
+
+out:
+	free(realmnt);
 
 	return !!ret;
 }
