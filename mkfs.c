@@ -1195,7 +1195,6 @@ int main(int ac, char **av)
 	u64 source_dir_size = 0;
 	int dev_cnt = 0;
 	int saved_optind;
-	char estr[100];
 	char fs_uuid[BTRFS_UUID_UNPARSED_SIZE] = { 0 };
 	u64 features = BTRFS_MKFS_DEFAULT_FEATURES;
 	struct mkfs_allocation allocation = { 0 };
@@ -1424,11 +1423,9 @@ int main(int ac, char **av)
 		}
 	}
 	ret = test_num_disk_vs_raid(metadata_profile, data_profile,
-			dev_cnt, mixed, estr);
-	if (ret) {
-		fprintf(stderr, "Error: %s\n", estr);
+			dev_cnt, mixed);
+	if (ret)
 		exit(1);
-	}
 
 	/* if we are here that means all devs are good to btrfsify */
 	if (verbose) {

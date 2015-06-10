@@ -159,7 +159,7 @@ u64 btrfs_device_size(int fd, struct stat *st);
 int test_dev_for_mkfs(char *file, int force_overwrite);
 int get_label_mounted(const char *mount_path, char *labelp);
 int test_num_disk_vs_raid(u64 metadata_profile, u64 data_profile,
-	u64 dev_cnt, int mixed, char *estr);
+	u64 dev_cnt, int mixed);
 int group_profile_max_safe_loss(u64 flags);
 int is_vol_small(char *file);
 int csum_tree_block(struct btrfs_root *root, struct extent_buffer *buf,

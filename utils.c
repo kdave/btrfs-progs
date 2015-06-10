@@ -2329,9 +2329,8 @@ static int group_profile_devs_min(u64 flag)
 }
 
 int test_num_disk_vs_raid(u64 metadata_profile, u64 data_profile,
-	u64 dev_cnt, int mixed, char *estr)
+	u64 dev_cnt, int mixed)
 {
-	size_t sz = 100;
 	u64 allowed = 0;
 
 	switch (dev_cnt) {
@@ -2350,21 +2349,21 @@ int test_num_disk_vs_raid(u64 metadata_profile, u64 data_profile,
 
 	if (dev_cnt > 1 &&
 	    ((metadata_profile | data_profile) & BTRFS_BLOCK_GROUP_DUP)) {
-		snprintf(estr, sz,
-			"DUP is not allowed when FS has multiple devices\n");
+		fprintf(stderr,
+		    "ERROR: DUP is not allowed when FS has multiple devices\n");
 		return 1;
 	}
 	if (metadata_profile & ~allowed) {
-		snprintf(estr, sz,
-			"unable to create FS with metadata profile %s "
+		fprintf(stderr,
+			"ERROR: unable to create FS with metadata profile %s "
 			"(have %llu devices but %d devices are required)\n",
 			btrfs_group_profile_str(metadata_profile), dev_cnt,
 			group_profile_devs_min(metadata_profile));
 		return 1;
 	}
 	if (data_profile & ~allowed) {
-		snprintf(estr, sz,
-			"unable to create FS with data profile %s "
+		fprintf(stderr,
+			"ERROR: unable to create FS with data profile %s "
 			"(have %llu devices but %d devices are required)\n",
 			btrfs_group_profile_str(data_profile), dev_cnt,
 			group_profile_devs_min(data_profile));
@@ -2372,8 +2371,8 @@ int test_num_disk_vs_raid(u64 metadata_profile, u64 data_profile,
 	}
 
 	if (!mixed && (data_profile & BTRFS_BLOCK_GROUP_DUP)) {
-		snprintf(estr, sz,
-			"dup for data is allowed only in mixed mode");
+		fprintf(stderr,
+			"ERROR: DUP for data is allowed only in mixed mode");
 		return 1;
 	}
 	return 0;
