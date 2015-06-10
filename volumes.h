@@ -19,6 +19,9 @@
 #ifndef __BTRFS_VOLUMES_H__
 #define __BTRFS_VOLUMES_H__
 
+#include "kerncompat.h"
+#include "ctree.h"
+
 #define BTRFS_STRIPE_LEN	(64 * 1024)
 
 struct btrfs_device {

@@ -18,7 +18,6 @@
 
 #include <sys/ioctl.h>
 #include <sys/mount.h>
-#include "ioctl.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -30,6 +29,7 @@
 #include "ctree.h"
 #include "transaction.h"
 #include "utils.h"
+#include "ioctl.h"
 #include <uuid/uuid.h>
 #include "btrfs-list.h"
 #include "rbtree-utils.h"

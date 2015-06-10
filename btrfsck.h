@@ -22,10 +22,12 @@
 
 #if BTRFS_FLAT_INCLUDES
 #include "kerncompat.h"
+#include "ctree.h"
 #include "extent-cache.h"
 #include "list.h"
 #else
 #include <btrfs/kerncompat.h>
+#include <btrfs/ctree.h>
 #include <btrfs/extent-cache.h>
 #include <btrfs/list.h>
 #endif /* BTRFS_FLAT_INCLUDES */

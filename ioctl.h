@@ -19,13 +19,12 @@
 #ifndef __BTRFS_IOCTL_H__
 #define __BTRFS_IOCTL_H__
 
-#include <asm/types.h>
-#include <linux/ioctl.h>
-#include <time.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include <asm/types.h>
+#include <linux/ioctl.h>
 
 #ifndef __user
 #define __user

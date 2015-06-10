@@ -21,9 +21,15 @@
 
 #if BTRFS_FLAT_INCLUDES
 #include "kerncompat.h"
+#include "rbtree.h"
+#include "ioctl.h"
 #else
 #include <btrfs/kerncompat.h>
+#include <btrfs/rbtree.h>
+#include <btrfs/ioctl.h>
 #endif /* BTRFS_FLAT_INCLUDES */
+
+#include <time.h>
 
 #define BTRFS_LIST_LAYOUT_DEFAULT	0
 #define BTRFS_LIST_LAYOUT_TABLE	1

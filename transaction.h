@@ -19,6 +19,9 @@
 #ifndef __BTRFS_TRANSACTION_H__
 #define __BTRFS_TRANSACTION_H__
 
+#include "kerncompat.h"
+#include "ctree.h"
+
 struct btrfs_trans_handle {
 	u64 transid;
 	u64 alloc_exclude_start;

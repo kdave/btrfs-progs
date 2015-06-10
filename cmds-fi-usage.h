@@ -19,6 +19,9 @@
 #ifndef __CMDS_FI_USAGE_H__
 #define __CMDS_FI_USAGE_H__
 
+#include "kerncompat.h"
+#include "ioctl.h"
+
 extern const char * const cmd_filesystem_usage_usage[];
 int cmd_filesystem_usage(int argc, char **argv);
 

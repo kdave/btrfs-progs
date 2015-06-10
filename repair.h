@@ -19,6 +19,8 @@
 #ifndef __BTRFS_REPAIR_H__
 #define __BTRFS_REPAIR_H__
 
+#include "ctree.h"
+
 struct btrfs_corrupt_block {
 	struct cache_extent cache;
 	struct btrfs_key key;

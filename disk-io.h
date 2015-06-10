@@ -19,6 +19,9 @@
 #ifndef __BTRFS_DISK_IO_H__
 #define __BTRFS_DISK_IO_H__
 
+#include "kerncompat.h"
+#include "ctree.h"
+
 #define BTRFS_SUPER_INFO_OFFSET (64 * 1024)
 #define BTRFS_SUPER_INFO_SIZE 4096
 
