@@ -61,6 +61,7 @@ struct btrfs_receive
 	char *root_path;
 	char *dest_dir_path; /* relative to root_path */
 	char *full_subvol_path;
+	char *full_root_path;
 	int dest_dir_chroot;
 
 	struct subvol_info *cur_subvol;
@@ -248,6 +249,46 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 		goto out;
 	}
 
+	/*
+	 * The path is resolved from the root subvol, but we could be in some
+	 * subvolume under the root subvolume, so try and adjust the path to be
+	 * relative to our root path.
+	 */
+	if (r->full_root_path) {
+		size_t root_len;
+		size_t sub_len;
+
+		root_len = strlen(r->full_root_path);
+		sub_len = strlen(parent_subvol->path);
+
+		/* First make sure the parent subvol is actually in our path */
+		if (sub_len < root_len ||
+		    strstr(parent_subvol->path, r->full_root_path) == NULL) {
+			fprintf(stderr, "ERROR: parent subvol is not reachable"
+				" from inside the root subvol.\n");
+			ret = -ENOENT;
+			goto out;
+		}
+
+		if (sub_len == root_len) {
+			parent_subvol->path[0] = '/';
+			parent_subvol->path[1] = '\0';
+		} else {
+			/*
+			 * root path is foo/bar
+			 * subvol path is foo/bar/baz
+			 *
+			 * we need to have baz be the path, so we need to move
+			 * the bit after foo/bar/, so path + root_len + 1, and
+			 * move the part we care about, so sub_len - root_len -
+			 * 1.
+			 */
+			memmove(parent_subvol->path,
+				parent_subvol->path + root_len + 1,
+				sub_len - root_len - 1);
+			parent_subvol->path[sub_len - root_len - 1] = '\0';
+		}
+	}
 	/*if (rs_args.ctransid > rs_args.rtransid) {
 		if (!r->force) {
 			ret = -EINVAL;
@@ -258,8 +299,11 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 		}
 	}*/
 
-	args_v2.fd = openat(r->mnt_fd, parent_subvol->path,
-			O_RDONLY | O_NOATIME);
+	if (strlen(parent_subvol->path) == 0)
+		args_v2.fd = dup(r->mnt_fd);
+	else
+		args_v2.fd = openat(r->mnt_fd, parent_subvol->path,
+				O_RDONLY | O_NOATIME);
 	if (args_v2.fd < 0) {
 		ret = -errno;
 		if (errno != ENOENT)
@@ -859,8 +903,10 @@ static struct btrfs_send_ops send_ops = {
 static int do_receive(struct btrfs_receive *r, const char *tomnt,
 		      char *realmnt, int r_fd, u64 max_errors)
 {
+	u64 subvol_id;
 	int ret;
 	char *dest_dir_full_path;
+	char *root_subvol_path;
 	int end = 0;
 
 	dest_dir_full_path = realpath(tomnt, NULL);
@@ -905,6 +951,42 @@ static int do_receive(struct btrfs_receive *r, const char *tomnt,
 			strerror(-ret));
 		goto out;
 	}
+
+	/*
+	 * If we use -m or a default subvol we want to resolve the path to the
+	 * subvolume we're sitting in so that we can adjust the paths of any
+	 * subvols we want to receive in.
+	 */
+	ret = btrfs_list_get_path_rootid(r->mnt_fd, &subvol_id);
+	if (ret) {
+		fprintf(stderr, "ERROR: couldn't resolve our subvolid %d\n",
+			ret);
+		goto out;
+	}
+
+	root_subvol_path = malloc(BTRFS_PATH_NAME_MAX);
+	if (!root_subvol_path) {
+		ret = -ENOMEM;
+		fprintf(stderr, "ERROR: couldn't allocate buffer for the root "
+			"subvol path\n");
+		goto out;
+	}
+
+	ret = btrfs_subvolid_resolve(r->mnt_fd, root_subvol_path,
+				     BTRFS_PATH_NAME_MAX, subvol_id);
+	if (ret) {
+		fprintf(stderr, "ERROR: couldn't resolve our subvol path\n");
+		goto out;
+	}
+
+	/*
+	 * Ok we're inside of a subvol off of the root subvol, we need to
+	 * actually set full_root_path.
+	 */
+	if (strlen(root_subvol_path))
+		r->full_root_path = root_subvol_path;
+	else
+		free(root_subvol_path);
 
 	if (r->dest_dir_chroot) {
 		if (chroot(dest_dir_full_path)) {
@@ -990,6 +1072,10 @@ out:
 	if (r->dest_dir_fd != -1) {
 		close(r->dest_dir_fd);
 		r->dest_dir_fd = -1;
+	}
+	if (r->full_root_path) {
+		free(r->full_root_path);
+		r->full_root_path = NULL;
 	}
 	return ret;
 }
