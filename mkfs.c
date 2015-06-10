@@ -1335,10 +1335,8 @@ int main(int ac, char **av)
 	while (dev_cnt-- > 0) {
 		file = av[optind++];
 		if (is_block_device(file))
-			if (test_dev_for_mkfs(file, force_overwrite, estr)) {
-				fprintf(stderr, "Error: %s", estr);
+			if (test_dev_for_mkfs(file, force_overwrite))
 				exit(1);
-			}
 	}
 
 	optind = saved_optind;

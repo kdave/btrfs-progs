@@ -142,7 +142,6 @@ static int cmd_start_replace(int argc, char **argv)
 	int do_not_background = 0;
 	int mixed = 0;
 	DIR *dirstream = NULL;
-	char estr[100]; /* check test_dev_for_mkfs() for error string size*/
 
 	while ((c = getopt(argc, argv, "Brf")) != -1) {
 		switch (c) {
@@ -256,11 +255,10 @@ static int cmd_start_replace(int argc, char **argv)
 		start_args.start.srcdevid = 0;
 	}
 
-	ret = test_dev_for_mkfs(dstdev, force_using_targetdev, estr);
-	if (ret) {
-		fprintf(stderr, "%s", estr);
+	ret = test_dev_for_mkfs(dstdev, force_using_targetdev);
+	if (ret)
 		goto leave_with_error;
-	}
+
 	fddstdev = open(dstdev, O_RDWR);
 	if (fddstdev < 0) {
 		fprintf(stderr, "Unable to open %s\n", dstdev);

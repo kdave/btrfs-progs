@@ -52,7 +52,6 @@ static int cmd_add_dev(int argc, char **argv)
 	DIR	*dirstream = NULL;
 	int discard = 1;
 	int force = 0;
-	char estr[100];
 
 	while (1) {
 		int c;
@@ -97,9 +96,8 @@ static int cmd_add_dev(int argc, char **argv)
 		int mixed = 0;
 		char *path;
 
-		res = test_dev_for_mkfs(argv[i], force, estr);
+		res = test_dev_for_mkfs(argv[i], force);
 		if (res) {
-			fprintf(stderr, "%s", estr);
 			ret++;
 			continue;
 		}

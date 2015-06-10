@@ -2397,58 +2397,58 @@ int group_profile_max_safe_loss(u64 flags)
 	}
 }
 
-/* Check if disk is suitable for btrfs
+/*
+ * Check if a device is suitable for btrfs
  * returns:
- *  1: something is wrong, estr provides the error
+ *  1: something is wrong, an error is printed
  *  0: all is fine
  */
-int test_dev_for_mkfs(char *file, int force_overwrite, char *estr)
+int test_dev_for_mkfs(char *file, int force_overwrite)
 {
 	int ret, fd;
-	size_t sz = 100;
 	struct stat st;
 
 	ret = is_swap_device(file);
 	if (ret < 0) {
-		snprintf(estr, sz, "error checking %s status: %s\n", file,
+		fprintf(stderr, "ERROR: checking status of %s: %s\n", file,
 			strerror(-ret));
 		return 1;
 	}
 	if (ret == 1) {
-		snprintf(estr, sz, "%s is a swap device\n", file);
+		fprintf(stderr, "ERROR: %s is a swap device\n", file);
 		return 1;
 	}
 	if (!force_overwrite) {
 		if (check_overwrite(file)) {
-			snprintf(estr, sz, "Use the -f option to force overwrite.\n");
+			fprintf(stderr, "Use the -f option to force overwrite.\n");
 			return 1;
 		}
 	}
 	ret = check_mounted(file);
 	if (ret < 0) {
-		snprintf(estr, sz, "error checking %s mount status\n",
-			file);
+		fprintf(stderr, "ERROR: checking mount status of %s: %s\n",
+			file, strerror(-ret));
 		return 1;
 	}
 	if (ret == 1) {
-		snprintf(estr, sz, "%s is mounted\n", file);
+		fprintf(stderr, "ERROR: %s is mounted\n", file);
 		return 1;
 	}
 	/* check if the device is busy */
 	fd = open(file, O_RDWR|O_EXCL);
 	if (fd < 0) {
-		snprintf(estr, sz, "unable to open %s: %s\n", file,
+		fprintf(stderr, "ERROR: unable to open %s: %s\n", file,
 			strerror(errno));
 		return 1;
 	}
 	if (fstat(fd, &st)) {
-		snprintf(estr, sz, "unable to stat %s: %s\n", file,
+		fprintf(stderr, "ERROR: unable to stat %s: %s\n", file,
 			strerror(errno));
 		close(fd);
 		return 1;
 	}
 	if (!S_ISBLK(st.st_mode)) {
-		fprintf(stderr, "'%s' is not a block device\n", file);
+		fprintf(stderr, "ERROR: %s is not a block device\n", file);
 		close(fd);
 		return 1;
 	}
