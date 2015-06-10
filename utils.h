@@ -69,6 +69,8 @@
 #define GETOPT_VAL_GBYTES			262
 #define GETOPT_VAL_TBYTES			263
 
+#define GETOPT_VAL_HELP				270
+
 int check_argc_exact(int nargs, int expected);
 int check_argc_min(int nargs, int expected);
 int check_argc_max(int nargs, int expected);

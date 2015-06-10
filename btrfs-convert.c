@@ -2869,6 +2869,7 @@ int main(int argc, char *argv[])
 			{ "label", required_argument, NULL, 'l' },
 			{ "copy-label", no_argument, NULL, 'L' },
 			{ "nodesize", required_argument, NULL, 'N' },
+			{ "help", no_argument, NULL, GETOPT_VAL_HELP},
 			{ NULL, 0, NULL, 0 }
 		};
 		int c = getopt_long(argc, argv, "dinN:rl:LpO:", long_options, NULL);
@@ -2941,9 +2942,10 @@ int main(int argc, char *argv[])
 			case GETOPT_VAL_NO_PROGRESS:
 				progress = 0;
 				break;
+			case GETOPT_VAL_HELP:
 			default:
 				print_usage();
-				return 1;
+				return c != GETOPT_VAL_HELP;
 		}
 	}
 	argc = argc - optind;

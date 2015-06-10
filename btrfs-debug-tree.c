@@ -20,6 +20,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <uuid/uuid.h>
+#include <getopt.h>
+
 #include "kerncompat.h"
 #include "radix-tree.h"
 #include "ctree.h"
@@ -28,7 +30,7 @@
 #include "transaction.h"
 #include "utils.h"
 
-static int print_usage(void)
+static int print_usage(int ret)
 {
 	fprintf(stderr, "usage: btrfs-debug-tree [-e] [-d] [-r] [-R] [-u]\n");
 	fprintf(stderr, "                        [-b block_num ] device\n");
@@ -43,7 +45,7 @@ static int print_usage(void)
 	fprintf(stderr,
 		"\t-t tree_id : print only the tree with the given id\n");
 	fprintf(stderr, "%s\n", PACKAGE_STRING);
-	exit(1);
+	exit(ret);
 }
 
 static void print_extents(struct btrfs_root *root, struct extent_buffer *eb)
@@ -145,7 +147,12 @@ int main(int ac, char **av)
 
 	while(1) {
 		int c;
-		c = getopt(ac, av, "deb:rRut:");
+		static const struct option long_options[] = {
+			{ "help", no_argument, NULL, GETOPT_VAL_HELP},
+			{ NULL, 0, NULL, 0 }
+		};
+
+		c = getopt_long(ac, av, "deb:rRut:", long_options, NULL);
 		if (c < 0)
 			break;
 		switch(c) {
@@ -171,14 +178,15 @@ int main(int ac, char **av)
 			case 't':
 				tree_id = arg_strtou64(optarg);
 				break;
+			case GETOPT_VAL_HELP:
 			default:
-				print_usage();
+				print_usage(c != GETOPT_VAL_HELP);
 		}
 	}
 	set_argv0(av);
 	ac = ac - optind;
 	if (check_argc_exact(ac, 1))
-		print_usage();
+		print_usage(1);
 
 	ret = check_arg_type(av[optind]);
 	if (ret != BTRFS_ARG_BLKDEV && ret != BTRFS_ARG_REG) {

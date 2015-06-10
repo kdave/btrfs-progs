@@ -25,6 +25,8 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <zlib.h>
+#include <getopt.h>
+
 #include "kerncompat.h"
 #include "crc32c.h"
 #include "ctree.h"
@@ -148,7 +150,6 @@ struct mdrestore_struct {
 	struct btrfs_fs_info *info;
 };
 
-static void print_usage(void) __attribute__((noreturn));
 static int search_for_chunk_blocks(struct mdrestore_struct *mdres,
 				   u64 search, u64 cluster_bytenr);
 static struct extent_buffer *alloc_dummy_eb(u64 bytenr, u32 size);
@@ -2689,7 +2690,7 @@ out:
 	return 0;
 }
 
-static void print_usage(void)
+static void print_usage(int ret)
 {
 	fprintf(stderr, "usage: btrfs-image [options] source target\n");
 	fprintf(stderr, "\t-r      \trestore metadump image\n");
@@ -2702,7 +2703,7 @@ static void print_usage(void)
 	fprintf(stderr, "\n");
 	fprintf(stderr, "\tIn the dump mode, source is the btrfs device and target is the output file (use '-' for stdout).\n");
 	fprintf(stderr, "\tIn the restore mode, source is the dumped image and target is the btrfs device/file.\n");
-	exit(1);
+	exit(ret);
 }
 
 int main(int argc, char *argv[])
@@ -2722,7 +2723,11 @@ int main(int argc, char *argv[])
 	FILE *out;
 
 	while (1) {
-		int c = getopt(argc, argv, "rc:t:oswm");
+		static const struct option long_options[] = {
+			{ "help", no_argument, NULL, GETOPT_VAL_HELP},
+			{ NULL, 0, NULL, 0 }
+		};
+		int c = getopt_long(argc, argv, "rc:t:oswm", long_options, NULL);
 		if (c < 0)
 			break;
 		switch (c) {
@@ -2732,12 +2737,12 @@ int main(int argc, char *argv[])
 		case 't':
 			num_threads = arg_strtou64(optarg);
 			if (num_threads > 32)
-				print_usage();
+				print_usage(1);
 			break;
 		case 'c':
 			compress_level = arg_strtou64(optarg);
 			if (compress_level > 9)
-				print_usage();
+				print_usage(1);
 			break;
 		case 'o':
 			old_restore = 1;
@@ -2752,15 +2757,16 @@ int main(int argc, char *argv[])
 			create = 0;
 			multi_devices = 1;
 			break;
+			case GETOPT_VAL_HELP:
 		default:
-			print_usage();
+			print_usage(c != GETOPT_VAL_HELP);
 		}
 	}
 
 	argc = argc - optind;
 	set_argv0(argv);
 	if (check_argc_min(argc, 2))
-		print_usage();
+		print_usage(1);
 
 	dev_cnt = argc - 1;
 
@@ -2785,7 +2791,7 @@ int main(int argc, char *argv[])
 	}
 
 	if (usage_error)
-		print_usage();
+		print_usage(1);
 
 	source = argv[optind];
 	target = argv[optind + 1];

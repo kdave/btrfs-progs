@@ -290,9 +290,7 @@ static int create_data_reloc_tree(struct btrfs_trans_handle *trans,
 	return 0;
 }
 
-
-static void print_usage(void) __attribute__((noreturn));
-static void print_usage(void)
+static void print_usage(int ret)
 {
 	fprintf(stderr, "usage: mkfs.btrfs [options] dev [ dev ... ]\n");
 	fprintf(stderr, "options:\n");
@@ -313,7 +311,7 @@ static void print_usage(void)
 	fprintf(stderr, "\t-q|--quiet              no messages except errors\n");
 	fprintf(stderr, "\t-V|--version            print the mkfs.btrfs version and exit\n");
 	fprintf(stderr, "%s\n", PACKAGE_STRING);
-	exit(1);
+	exit(ret);
 }
 
 static void print_version(void) __attribute__((noreturn));
@@ -341,7 +339,6 @@ static u64 parse_profile(char *s)
 		return 0;
 	} else {
 		fprintf(stderr, "Unknown profile %s\n", s);
-		print_usage();
 	}
 	/* not reached */
 	return 0;
@@ -1222,6 +1219,7 @@ int main(int ac, char **av)
 			{ "features", required_argument, NULL, 'O' },
 			{ "uuid", required_argument, NULL, 'U' },
 			{ "quiet", 0, NULL, 'q' },
+			{ "help", no_argument, NULL, GETOPT_VAL_HELP },
 			{ NULL, 0, NULL, 0}
 		};
 
@@ -1302,8 +1300,9 @@ int main(int ac, char **av)
 			case 'q':
 				verbose = 0;
 				break;
+			case GETOPT_VAL_HELP:
 			default:
-				print_usage();
+				print_usage(c != GETOPT_VAL_HELP);
 		}
 	}
 	sectorsize = max(sectorsize, (u32)sysconf(_SC_PAGESIZE));
@@ -1312,7 +1311,7 @@ int main(int ac, char **av)
 	saved_optind = optind;
 	dev_cnt = ac - optind;
 	if (dev_cnt == 0)
-		print_usage();
+		print_usage(1);
 
 	if (source_dir_set && dev_cnt > 1) {
 		fprintf(stderr,

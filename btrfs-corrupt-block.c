@@ -21,6 +21,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <getopt.h>
+
 #include "kerncompat.h"
 #include "ctree.h"
 #include "volumes.h"
@@ -85,7 +86,7 @@ struct extent_buffer *debug_corrupt_block(struct btrfs_root *root, u64 bytenr,
 	return eb;
 }
 
-static void print_usage(void)
+static void print_usage(int ret)
 {
 	fprintf(stderr, "usage: btrfs-corrupt-block [options] device\n");
 	fprintf(stderr, "\t-l Logical extent to be corrupted\n");
@@ -113,7 +114,7 @@ static void print_usage(void)
 	fprintf(stderr, "\t-C Delete a csum for the specified bytenr.  When "
 		"used with -b it'll delete that many bytes, otherwise it's "
 		"just sectorsize\n");
-	exit(1);
+	exit(ret);
 }
 
 static void corrupt_keys(struct btrfs_trans_handle *trans,
@@ -1061,6 +1062,7 @@ int main(int ac, char **av)
 			{ "delete", no_argument, NULL, 'd'},
 			{ "root", no_argument, NULL, 'r'},
 			{ "csum", required_argument, NULL, 'C'},
+			{ "help", no_argument, NULL, GETOPT_VAL_HELP},
 			{ NULL, 0, NULL, 0 }
 		};
 
@@ -1113,7 +1115,7 @@ int main(int ac, char **av)
 				if (ret != 3) {
 					fprintf(stderr, "error reading key "
 						"%d\n", errno);
-					print_usage();
+					print_usage(1);
 				}
 				break;
 			case 'D':
@@ -1131,14 +1133,15 @@ int main(int ac, char **av)
 			case 'C':
 				csum_bytenr = arg_strtou64(optarg);
 				break;
+			case GETOPT_VAL_HELP:
 			default:
-				print_usage();
+				print_usage(c != GETOPT_VAL_HELP);
 		}
 	}
 	set_argv0(av);
 	ac = ac - optind;
 	if (check_argc_min(ac, 1))
-		print_usage();
+		print_usage(1);
 	dev = av[optind];
 
 	radix_tree_init();
@@ -1153,7 +1156,7 @@ int main(int ac, char **av)
 		struct btrfs_trans_handle *trans;
 
 		if (logical == (u64)-1)
-			print_usage();
+			print_usage(1);
 		trans = btrfs_start_transaction(root, 1);
 		ret = corrupt_extent (trans, root, logical, 0);
 		btrfs_commit_transaction(trans, root);
@@ -1173,7 +1176,7 @@ int main(int ac, char **av)
 		int del;
 
 		if (logical == (u64)-1)
-			print_usage();
+			print_usage(1);
 		del = rand() % 3;
 		path = btrfs_alloc_path();
 		if (!path) {
@@ -1207,7 +1210,7 @@ int main(int ac, char **av)
 		struct btrfs_trans_handle *trans;
 
 		if (!strlen(field))
-			print_usage();
+			print_usage(1);
 
 		trans = btrfs_start_transaction(root, 1);
 		if (file_extent == (u64)-1) {
@@ -1223,13 +1226,13 @@ int main(int ac, char **av)
 	}
 	if (metadata_block) {
 		if (!strlen(field))
-			print_usage();
+			print_usage(1);
 		ret = corrupt_metadata_block(root, metadata_block, field);
 		goto out_close;
 	}
 	if (corrupt_di) {
 		if (!key.objectid || !strlen(field))
-			print_usage();
+			print_usage(1);
 		ret = corrupt_dir_item(root, &key, field);
 		goto out_close;
 	}
@@ -1239,14 +1242,14 @@ int main(int ac, char **av)
 	}
 	if (corrupt_item) {
 		if (!key.objectid)
-			print_usage();
+			print_usage(1);
 		ret = corrupt_btrfs_item(root, &key, field);
 	}
 	if (delete) {
 		struct btrfs_root *target = root;
 
 		if (!key.objectid)
-			print_usage();
+			print_usage(1);
 		if (root_objectid) {
 			struct btrfs_key root_key;
 
@@ -1258,7 +1261,7 @@ int main(int ac, char **av)
 			if (IS_ERR(target)) {
 				fprintf(stderr, "Couldn't find root %llu\n",
 					(unsigned long long)root_objectid);
-				print_usage();
+				print_usage(1);
 			}
 		}
 		ret = delete_item(target, &key);
@@ -1266,7 +1269,7 @@ int main(int ac, char **av)
 	}
 	if (key.objectid || key.offset || key.type) {
 		if (!strlen(field))
-			print_usage();
+			print_usage(1);
 		ret = corrupt_key(root, &key, field);
 		goto out_close;
 	}
@@ -1275,10 +1278,10 @@ int main(int ac, char **av)
 	 * inode and we're screwed.
 	 */
 	if (file_extent != (u64)-1)
-		print_usage();
+		print_usage(1);
 
 	if (logical == (u64)-1)
-		print_usage();
+		print_usage(1);
 
 	if (bytes == 0)
 		bytes = root->sectorsize;

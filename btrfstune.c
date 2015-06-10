@@ -24,6 +24,7 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <uuid/uuid.h>
+#include <getopt.h>
 
 #include "kerncompat.h"
 #include "ctree.h"
@@ -422,7 +423,12 @@ int main(int argc, char *argv[])
 
 	optind = 1;
 	while(1) {
-		int c = getopt(argc, argv, "S:rxfuU:n");
+		static const struct option long_options[] = {
+			{ "help", no_argument, NULL, GETOPT_VAL_HELP},
+			{ NULL, 0, NULL, 0 }
+		};
+		int c = getopt_long(argc, argv, "S:rxfuU:n", long_options, NULL);
+
 		if (c < 0)
 			break;
 		switch(c) {
@@ -450,9 +456,10 @@ int main(int argc, char *argv[])
 			ctree_flags |= OPEN_CTREE_IGNORE_FSID_MISMATCH;
 			random_fsid = 1;
 			break;
+		case GETOPT_VAL_HELP:
 		default:
 			print_usage();
-			return 1;
+			return c != GETOPT_VAL_HELP;
 		}
 	}
 
