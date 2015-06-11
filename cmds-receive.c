@@ -876,6 +876,20 @@ out:
 	return ret;
 }
 
+static int process_update_extent(const char *path, u64 offset, u64 len,
+		void *user)
+{
+	if (g_verbose >= 2)
+		fprintf(stderr, "update_extent %s: offset=%llu, len=%llu\n",
+				path, (unsigned long long)offset,
+				(unsigned long long)len);
+
+	/*
+	 * Sent with BTRFS_SEND_FLAG_NO_FILE_DATA, nothing to do.
+	 */
+
+	return 0;
+}
 
 static struct btrfs_send_ops send_ops = {
 	.subvol = process_subvol,
@@ -898,6 +912,7 @@ static struct btrfs_send_ops send_ops = {
 	.chmod = process_chmod,
 	.chown = process_chown,
 	.utimes = process_utimes,
+	.update_extent = process_update_extent,
 };
 
 static int do_receive(struct btrfs_receive *r, const char *tomnt,
