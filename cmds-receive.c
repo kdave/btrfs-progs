@@ -939,7 +939,7 @@ static int do_receive(struct btrfs_receive *r, const char *tomnt,
 		goto out;
 	}
 
-	if (realmnt) {
+	if (realmnt[0]) {
 		r->root_path = realmnt;
 	} else {
 		ret = find_mount_root(dest_dir_full_path, &r->root_path);
@@ -1097,7 +1097,7 @@ int cmd_receive(int argc, char **argv)
 {
 	char *tomnt = NULL;
 	char *fromfile = NULL;
-	char *realmnt = NULL;
+	char realmnt[PATH_MAX];
 	struct btrfs_receive r;
 	int receive_fd = fileno(stdin);
 	u64 max_errors = 1;
@@ -1108,6 +1108,7 @@ int cmd_receive(int argc, char **argv)
 	r.write_fd = -1;
 	r.dest_dir_fd = -1;
 	r.dest_dir_chroot = 0;
+	realmnt[0] = 0;
 
 	while (1) {
 		int c;
@@ -1138,10 +1139,11 @@ int cmd_receive(int argc, char **argv)
 			max_errors = arg_strtou64(optarg);
 			break;
 		case 'm':
-			free(realmnt);
-			realmnt = strdup(optarg);
-			if (!realmnt) {
-				fprintf(stderr, "ERROR: couldn't allocate realmnt.\n");
+			if (arg_copy_path(realmnt, optarg, sizeof(realmnt))) {
+				fprintf(stderr,
+				    "ERROR: mount point path too long (%zu)\n",
+				    strlen(optarg));
+				ret = 1;
 				goto out;
 			}
 			break;
@@ -1168,7 +1170,6 @@ int cmd_receive(int argc, char **argv)
 	ret = do_receive(&r, tomnt, realmnt, receive_fd, max_errors);
 
 out:
-	free(realmnt);
 
 	return !!ret;
 }
