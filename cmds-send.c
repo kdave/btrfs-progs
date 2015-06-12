@@ -427,7 +427,7 @@ int cmd_send(int argc, char **argv)
 {
 	char *subvol = NULL;
 	int ret;
-	char *outname = NULL;
+	char outname[PATH_MAX];
 	struct btrfs_send send;
 	u32 i;
 	char *mount_root = NULL;
@@ -440,6 +440,7 @@ int cmd_send(int argc, char **argv)
 
 	memset(&send, 0, sizeof(send));
 	send.dump_fd = fileno(stdout);
+	outname[0] = 0;
 
 	while (1) {
 		enum { GETOPT_VAL_SEND_NO_DATA = 256 };
@@ -507,7 +508,13 @@ int cmd_send(int argc, char **argv)
 			full_send = 0;
 			break;
 		case 'f':
-			outname = optarg;
+			if (arg_copy_path(outname, optarg, sizeof(outname))) {
+				fprintf(stderr,
+				    "ERROR: output file path too long (%zu)\n",
+				    strlen(optarg));
+				ret = 1;
+				goto out;
+			}
 			break;
 		case 'p':
 			if (snapshot_parent) {
@@ -555,7 +562,7 @@ int cmd_send(int argc, char **argv)
 	if (check_argc_min(argc - optind, 1))
 		usage(cmd_send_usage);
 
-	if (outname != NULL) {
+	if (outname[0]) {
 		send.dump_fd = creat(outname, 0600);
 		if (send.dump_fd == -1) {
 			ret = -errno;
