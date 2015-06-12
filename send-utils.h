@@ -90,7 +90,9 @@ void subvol_uuid_search_add(struct subvol_uuid_search *s,
 int btrfs_subvolid_resolve(int fd, char *path, size_t path_len, u64 subvol_id);
 
 char *path_cat(const char *p1, const char *p2);
+int path_cat_out(char *out, const char *p1, const char *p2);
 char *path_cat3(const char *p1, const char *p2, const char *p3);
+int path_cat3_out(char *out, const char *p1, const char *p2, const char *p3);
 
 #ifdef __cplusplus
 }

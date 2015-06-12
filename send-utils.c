@@ -21,6 +21,7 @@
 #include <sys/ioctl.h>
 #include <uuid/uuid.h>
 #include <limits.h>
+#include <errno.h>
 
 #include "ctree.h"
 #include "send-utils.h"
@@ -709,18 +710,52 @@ void subvol_uuid_search_finit(struct subvol_uuid_search *s)
 }
 #endif
 
+int path_cat_out(char *out, const char *p1, const char *p2)
+{
+	int p1_len = strlen(p1);
+	int p2_len = strlen(p2);
+
+	if (p1_len + p2_len + 2 >= PATH_MAX)
+		return -ENAMETOOLONG;
+
+	if (p1_len && p1[p1_len - 1] == '/')
+		p1_len--;
+	if (p2_len && p2[p2_len - 1] == '/')
+		p2_len--;
+	sprintf(out, "%.*s/%.*s", p1_len, p1, p2_len, p2);
+
+	return 0;
+}
+
 char *path_cat(const char *p1, const char *p2)
 {
 	int p1_len = strlen(p1);
 	int p2_len = strlen(p2);
 	char *new = malloc(p1_len + p2_len + 2);
 
+	path_cat_out(new, p1, p2);
+
+	return new;
+}
+
+int path_cat3_out(char *out, const char *p1, const char *p2, const char *p3)
+{
+	int p1_len = strlen(p1);
+	int p2_len = strlen(p2);
+	int p3_len = strlen(p3);
+
+	if (p1_len + p2_len + p3_len + 3 >= PATH_MAX)
+		return -ENAMETOOLONG;
+
 	if (p1_len && p1[p1_len - 1] == '/')
 		p1_len--;
 	if (p2_len && p2[p2_len - 1] == '/')
 		p2_len--;
-	sprintf(new, "%.*s/%.*s", p1_len, p1, p2_len, p2);
-	return new;
+	if (p3_len && p3[p3_len - 1] == '/')
+		p3_len--;
+	sprintf(out, "%.*s/%.*s/%.*s", p1_len, p1, p2_len, p2, p3_len, p3);
+
+	return 0;
 }
 
 char *path_cat3(const char *p1, const char *p2, const char *p3)
@@ -730,12 +765,7 @@ char *path_cat3(const char *p1, const char *p2, const char *p3)
 	int p3_len = strlen(p3);
 	char *new = malloc(p1_len + p2_len + p3_len + 3);
 
-	if (p1_len && p1[p1_len - 1] == '/')
-		p1_len--;
-	if (p2_len && p2[p2_len - 1] == '/')
-		p2_len--;
-	if (p3_len && p3[p3_len - 1] == '/')
-		p3_len--;
-	sprintf(new, "%.*s/%.*s/%.*s", p1_len, p1, p2_len, p2, p3_len, p3);
+	path_cat3_out(new, p1, p2, p3);
+
 	return new;
 }
