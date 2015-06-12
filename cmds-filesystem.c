@@ -1270,6 +1270,7 @@ static int cmd_resize(int argc, char **argv)
 	}
 
 	printf("Resize '%s' of '%s'\n", path, amount);
+	memset(&args, 0, sizeof(args));
 	strncpy_null(args.name, amount);
 	res = ioctl(fd, BTRFS_IOC_RESIZE, &args);
 	e = errno;

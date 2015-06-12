@@ -126,6 +126,7 @@ static int cmd_add_dev(int argc, char **argv)
 			goto error_out;
 		}
 
+		memset(&ioctl_args, 0, sizeof(ioctl_args));
 		strncpy_null(ioctl_args.name, path);
 		res = ioctl(fdmnt, BTRFS_IOC_ADD_DEV, &ioctl_args);
 		e = errno;
@@ -175,6 +176,7 @@ static int cmd_rm_dev(int argc, char **argv)
 			ret++;
 			continue;
 		}
+		memset(&arg, 0, sizeof(arg));
 		strncpy_null(arg.name, argv[i]);
 		res = ioctl(fdmnt, BTRFS_IOC_RM_DEV, &arg);
 		e = errno;
@@ -312,7 +314,8 @@ static int cmd_ready_dev(int argc, char **argv)
 		goto out;
 	}
 
-	strncpy(args.name, path, BTRFS_PATH_NAME_MAX);
+	memset(&args, 0, sizeof(args));
+	strncpy_null(args.name, path);
 	ret = ioctl(fd, BTRFS_IOC_DEVICES_READY, &args);
 	if (ret < 0) {
 		fprintf(stderr, "ERROR: unable to determine if the device '%s'"

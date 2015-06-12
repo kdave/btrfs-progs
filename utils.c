@@ -1409,8 +1409,8 @@ int btrfs_register_one_device(const char *fname)
 			strerror(errno));
 		return -errno;
 	}
-	strncpy(args.name, fname, BTRFS_PATH_NAME_MAX);
-	args.name[BTRFS_PATH_NAME_MAX-1] = 0;
+	memset(&args, 0, sizeof(args));
+	strncpy_null(args.name, fname);
 	ret = ioctl(fd, BTRFS_IOC_SCAN_DEV, &args);
 	e = errno;
 	if (ret < 0) {

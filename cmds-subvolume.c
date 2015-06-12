@@ -357,6 +357,7 @@ again:
 	printf("Delete subvolume (%s): '%s/%s'\n",
 		commit_mode == 2 || (commit_mode == 1 && cnt + 1 == argc)
 		? "commit" : "no-commit", dname, vname);
+	memset(&args, 0, sizeof(args));
 	strncpy_null(args.name, vname);
 	res = ioctl(fd, BTRFS_IOC_SNAP_DESTROY, &args);
 	e = errno;
