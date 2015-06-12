@@ -135,6 +135,7 @@ int get_mountpt(char *dev, char *mntpt, size_t size);
 u64 parse_size(char *s);
 u64 parse_qgroupid(const char *p);
 u64 arg_strtou64(const char *str);
+int arg_copy_path(char *dest, const char *src, int destlen);
 int open_file_or_dir(const char *fname, DIR **dirstream);
 int open_file_or_dir3(const char *fname, DIR **dirstream, int open_flags);
 void close_file_or_dir(int fd, DIR *dirstream);

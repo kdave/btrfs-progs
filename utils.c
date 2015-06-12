@@ -2871,3 +2871,22 @@ int btrfs_check_nodesize(u32 nodesize, u32 sectorsize)
 	}
 	return 0;
 }
+
+/*
+ * Copy a path argument from SRC to DEST and check the SRC length if it's at
+ * most PATH_MAX and fits into DEST. DESTLEN is supposed to be exact size of
+ * the buffer.
+ * The destination buffer is zero terminated.
+ * Return < 0 for error, 0 otherwise.
+ */
+int arg_copy_path(char *dest, const char *src, int destlen)
+{
+	size_t len = strlen(src);
+
+	if (len >= PATH_MAX || len >= destlen)
+		return -ENAMETOOLONG;
+
+	__strncpy__null(dest, src, destlen);
+
+	return 0;
+}
