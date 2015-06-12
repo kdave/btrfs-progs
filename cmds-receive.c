@@ -339,7 +339,13 @@ static int process_mkfile(const char *path, void *user)
 {
 	int ret;
 	struct btrfs_receive *r = user;
-	char *full_path = path_cat(r->full_subvol_path, path);
+	char full_path[PATH_MAX];
+
+	ret = path_cat_out(full_path, r->full_subvol_path, path);
+	if (ret < 0) {
+		fprintf(stderr, "ERROR: mkfile: path invalid: %s\n", path);
+		goto out;
+	}
 
 	if (g_verbose >= 2)
 		fprintf(stderr, "mkfile %s\n", path);
@@ -355,7 +361,6 @@ static int process_mkfile(const char *path, void *user)
 	ret = 0;
 
 out:
-	free(full_path);
 	return ret;
 }
 
@@ -363,7 +368,13 @@ static int process_mkdir(const char *path, void *user)
 {
 	int ret;
 	struct btrfs_receive *r = user;
-	char *full_path = path_cat(r->full_subvol_path, path);
+	char full_path[PATH_MAX];
+
+	ret = path_cat_out(full_path, r->full_subvol_path, path);
+	if (ret < 0) {
+		fprintf(stderr, "ERROR: mkdir: path invalid: %s\n", path);
+		goto out;
+	}
 
 	if (g_verbose >= 2)
 		fprintf(stderr, "mkdir %s\n", path);
@@ -375,7 +386,7 @@ static int process_mkdir(const char *path, void *user)
 				strerror(-ret));
 	}
 
-	free(full_path);
+out:
 	return ret;
 }
 
@@ -383,7 +394,13 @@ static int process_mknod(const char *path, u64 mode, u64 dev, void *user)
 {
 	int ret;
 	struct btrfs_receive *r = user;
-	char *full_path = path_cat(r->full_subvol_path, path);
+	char full_path[PATH_MAX];
+
+	ret = path_cat_out(full_path, r->full_subvol_path, path);
+	if (ret < 0) {
+		fprintf(stderr, "ERROR: mknod: path invalid: %s\n", path);
+		goto out;
+	}
 
 	if (g_verbose >= 2)
 		fprintf(stderr, "mknod %s mode=%llu, dev=%llu\n",
@@ -396,7 +413,7 @@ static int process_mknod(const char *path, u64 mode, u64 dev, void *user)
 				strerror(-ret));
 	}
 
-	free(full_path);
+out:
 	return ret;
 }
 
@@ -404,7 +421,13 @@ static int process_mkfifo(const char *path, void *user)
 {
 	int ret;
 	struct btrfs_receive *r = user;
-	char *full_path = path_cat(r->full_subvol_path, path);
+	char full_path[PATH_MAX];
+
+	ret = path_cat_out(full_path, r->full_subvol_path, path);
+	if (ret < 0) {
+		fprintf(stderr, "ERROR: mkfifo: path invalid: %s\n", path);
+		goto out;
+	}
 
 	if (g_verbose >= 2)
 		fprintf(stderr, "mkfifo %s\n", path);
@@ -416,7 +439,7 @@ static int process_mkfifo(const char *path, void *user)
 				strerror(-ret));
 	}
 
-	free(full_path);
+out:
 	return ret;
 }
 
@@ -424,7 +447,13 @@ static int process_mksock(const char *path, void *user)
 {
 	int ret;
 	struct btrfs_receive *r = user;
-	char *full_path = path_cat(r->full_subvol_path, path);
+	char full_path[PATH_MAX];
+
+	ret = path_cat_out(full_path, r->full_subvol_path, path);
+	if (ret < 0) {
+		fprintf(stderr, "ERROR: mksock: path invalid: %s\n", path);
+		goto out;
+	}
 
 	if (g_verbose >= 2)
 		fprintf(stderr, "mksock %s\n", path);
@@ -436,7 +465,7 @@ static int process_mksock(const char *path, void *user)
 				strerror(-ret));
 	}
 
-	free(full_path);
+out:
 	return ret;
 }
 
@@ -444,7 +473,13 @@ static int process_symlink(const char *path, const char *lnk, void *user)
 {
 	int ret;
 	struct btrfs_receive *r = user;
-	char *full_path = path_cat(r->full_subvol_path, path);
+	char full_path[PATH_MAX];
+
+	ret = path_cat_out(full_path, r->full_subvol_path, path);
+	if (ret < 0) {
+		fprintf(stderr, "ERROR: symlink: path invalid: %s\n", path);
+		goto out;
+	}
 
 	if (g_verbose >= 2)
 		fprintf(stderr, "symlink %s -> %s\n", path, lnk);
@@ -456,7 +491,7 @@ static int process_symlink(const char *path, const char *lnk, void *user)
 				lnk, strerror(-ret));
 	}
 
-	free(full_path);
+out:
 	return ret;
 }
 
@@ -464,8 +499,22 @@ static int process_rename(const char *from, const char *to, void *user)
 {
 	int ret;
 	struct btrfs_receive *r = user;
-	char *full_from = path_cat(r->full_subvol_path, from);
-	char *full_to = path_cat(r->full_subvol_path, to);
+	char full_from[PATH_MAX];
+	char full_to[PATH_MAX];
+
+	ret = path_cat_out(full_from, r->full_subvol_path, from);
+	if (ret < 0) {
+		fprintf(stderr, "ERROR: rename: source path invalid: %s\n",
+				from);
+		goto out;
+	}
+
+	ret = path_cat_out(full_to, r->full_subvol_path, to);
+	if (ret < 0) {
+		fprintf(stderr, "ERROR: rename: target path invalid: %s\n",
+				to);
+		goto out;
+	}
 
 	if (g_verbose >= 2)
 		fprintf(stderr, "rename %s -> %s\n", from, to);
@@ -477,8 +526,7 @@ static int process_rename(const char *from, const char *to, void *user)
 				to, strerror(-ret));
 	}
 
-	free(full_from);
-	free(full_to);
+out:
 	return ret;
 }
 
@@ -486,8 +534,22 @@ static int process_link(const char *path, const char *lnk, void *user)
 {
 	int ret;
 	struct btrfs_receive *r = user;
-	char *full_path = path_cat(r->full_subvol_path, path);
-	char *full_link_path = path_cat(r->full_subvol_path, lnk);
+	char full_path[PATH_MAX];
+	char full_link_path[PATH_MAX];
+
+	ret = path_cat_out(full_path, r->full_subvol_path, path);
+	if (ret < 0) {
+		fprintf(stderr, "ERROR: link: source path invalid: %s\n",
+				full_path);
+		goto out;
+	}
+
+	ret = path_cat_out(full_link_path, r->full_subvol_path, lnk);
+	if (ret < 0) {
+		fprintf(stderr, "ERROR: link: target path invalid: %s\n",
+				full_link_path);
+		goto out;
+	}
 
 	if (g_verbose >= 2)
 		fprintf(stderr, "link %s -> %s\n", path, lnk);
@@ -499,8 +561,7 @@ static int process_link(const char *path, const char *lnk, void *user)
 				lnk, strerror(-ret));
 	}
 
-	free(full_path);
-	free(full_link_path);
+out:
 	return ret;
 }
 
@@ -509,7 +570,13 @@ static int process_unlink(const char *path, void *user)
 {
 	int ret;
 	struct btrfs_receive *r = user;
-	char *full_path = path_cat(r->full_subvol_path, path);
+	char full_path[PATH_MAX];
+
+	ret = path_cat_out(full_path, r->full_subvol_path, path);
+	if (ret < 0) {
+		fprintf(stderr, "ERROR: unlink: path invalid: %s\n", path);
+		goto out;
+	}
 
 	if (g_verbose >= 2)
 		fprintf(stderr, "unlink %s\n", path);
@@ -521,7 +588,7 @@ static int process_unlink(const char *path, void *user)
 				strerror(-ret));
 	}
 
-	free(full_path);
+out:
 	return ret;
 }
 
@@ -529,7 +596,13 @@ static int process_rmdir(const char *path, void *user)
 {
 	int ret;
 	struct btrfs_receive *r = user;
-	char *full_path = path_cat(r->full_subvol_path, path);
+	char full_path[PATH_MAX];
+
+	ret = path_cat_out(full_path, r->full_subvol_path, path);
+	if (ret < 0) {
+		fprintf(stderr, "ERROR: rmdir: path invalid: %s\n", path);
+		goto out;
+	}
 
 	if (g_verbose >= 2)
 		fprintf(stderr, "rmdir %s\n", path);
@@ -541,10 +614,9 @@ static int process_rmdir(const char *path, void *user)
 				strerror(-ret));
 	}
 
-	free(full_path);
+out:
 	return ret;
 }
-
 
 static int open_inode_for_write(struct btrfs_receive *r, const char *path)
 {
@@ -586,9 +658,15 @@ static int process_write(const char *path, const void *data, u64 offset,
 {
 	int ret = 0;
 	struct btrfs_receive *r = user;
-	char *full_path = path_cat(r->full_subvol_path, path);
+	char full_path[PATH_MAX];
 	u64 pos = 0;
 	int w;
+
+	ret = path_cat_out(full_path, r->full_subvol_path, path);
+	if (ret < 0) {
+		fprintf(stderr, "ERROR: write: path invalid: %s\n", path);
+		goto out;
+	}
 
 	ret = open_inode_for_write(r, full_path);
 	if (ret < 0)
@@ -607,7 +685,6 @@ static int process_write(const char *path, const void *data, u64 offset,
 	}
 
 out:
-	free(full_path);
 	return ret;
 }
 
@@ -620,10 +697,17 @@ static int process_clone(const char *path, u64 offset, u64 len,
 	struct btrfs_receive *r = user;
 	struct btrfs_ioctl_clone_range_args clone_args;
 	struct subvol_info *si = NULL;
-	char *full_path = path_cat(r->full_subvol_path, path);
+	char full_path[PATH_MAX];
 	char *subvol_path = NULL;
-	char *full_clone_path = NULL;
+	char full_clone_path[PATH_MAX];
 	int clone_fd = -1;
+
+	ret = path_cat_out(full_path, r->full_subvol_path, path);
+	if (ret < 0) {
+		fprintf(stderr, "ERROR: clone: source path invalid: %s\n",
+				path);
+		goto out;
+	}
 
 	ret = open_inode_for_write(r, full_path);
 	if (ret < 0)
@@ -660,7 +744,12 @@ static int process_clone(const char *path, u64 offset, u64 len,
 		subvol_path = strdup(si->path);
 	}
 
-	full_clone_path = path_cat(subvol_path, clone_path);
+	ret = path_cat_out(full_clone_path, subvol_path, clone_path);
+	if (ret < 0) {
+		fprintf(stderr, "ERROR: clone: target path invalid: %s\n",
+				clone_path);
+		goto out;
+	}
 
 	clone_fd = openat(r->mnt_fd, full_clone_path, O_RDONLY | O_NOATIME);
 	if (clone_fd < 0) {
@@ -687,8 +776,6 @@ out:
 		free(si->path);
 		free(si);
 	}
-	free(full_path);
-	free(full_clone_path);
 	free(subvol_path);
 	if (clone_fd != -1)
 		close(clone_fd);
@@ -701,7 +788,13 @@ static int process_set_xattr(const char *path, const char *name,
 {
 	int ret = 0;
 	struct btrfs_receive *r = user;
-	char *full_path = path_cat(r->full_subvol_path, path);
+	char full_path[PATH_MAX];
+
+	ret = path_cat_out(full_path, r->full_subvol_path, path);
+	if (ret < 0) {
+		fprintf(stderr, "ERROR: set_xattr: path invalid: %s\n", path);
+		goto out;
+	}
 
 	if (strcmp("security.capability", name) == 0) {
 		if (g_verbose >= 3)
@@ -736,7 +829,6 @@ static int process_set_xattr(const char *path, const char *name,
 	}
 
 out:
-	free(full_path);
 	return ret;
 }
 
@@ -744,7 +836,14 @@ static int process_remove_xattr(const char *path, const char *name, void *user)
 {
 	int ret = 0;
 	struct btrfs_receive *r = user;
-	char *full_path = path_cat(r->full_subvol_path, path);
+	char full_path[PATH_MAX];
+
+	ret = path_cat_out(full_path, r->full_subvol_path, path);
+	if (ret < 0) {
+		fprintf(stderr, "ERROR: remove_xattr: path invalid: %s\n",
+				path);
+		goto out;
+	}
 
 	if (g_verbose >= 2) {
 		fprintf(stderr, "remove_xattr %s - name=%s\n",
@@ -760,7 +859,6 @@ static int process_remove_xattr(const char *path, const char *name, void *user)
 	}
 
 out:
-	free(full_path);
 	return ret;
 }
 
@@ -768,7 +866,13 @@ static int process_truncate(const char *path, u64 size, void *user)
 {
 	int ret = 0;
 	struct btrfs_receive *r = user;
-	char *full_path = path_cat(r->full_subvol_path, path);
+	char full_path[PATH_MAX];
+
+	ret = path_cat_out(full_path, r->full_subvol_path, path);
+	if (ret < 0) {
+		fprintf(stderr, "ERROR: truncate: path invalid: %s\n", path);
+		goto out;
+	}
 
 	if (g_verbose >= 2)
 		fprintf(stderr, "truncate %s size=%llu\n", path, size);
@@ -782,7 +886,6 @@ static int process_truncate(const char *path, u64 size, void *user)
 	}
 
 out:
-	free(full_path);
 	return ret;
 }
 
@@ -790,7 +893,13 @@ static int process_chmod(const char *path, u64 mode, void *user)
 {
 	int ret = 0;
 	struct btrfs_receive *r = user;
-	char *full_path = path_cat(r->full_subvol_path, path);
+	char full_path[PATH_MAX];
+
+	ret = path_cat_out(full_path, r->full_subvol_path, path);
+	if (ret < 0) {
+		fprintf(stderr, "ERROR: chmod: path invalid: %s\n", path);
+		goto out;
+	}
 
 	if (g_verbose >= 2)
 		fprintf(stderr, "chmod %s - mode=0%o\n", path, (int)mode);
@@ -804,7 +913,6 @@ static int process_chmod(const char *path, u64 mode, void *user)
 	}
 
 out:
-	free(full_path);
 	return ret;
 }
 
@@ -812,7 +920,13 @@ static int process_chown(const char *path, u64 uid, u64 gid, void *user)
 {
 	int ret = 0;
 	struct btrfs_receive *r = user;
-	char *full_path = path_cat(r->full_subvol_path, path);
+	char full_path[PATH_MAX];
+
+	ret = path_cat_out(full_path, r->full_subvol_path, path);
+	if (ret < 0) {
+		fprintf(stderr, "ERROR: chown: path invalid: %s\n", path);
+		goto out;
+	}
 
 	if (g_verbose >= 2)
 		fprintf(stderr, "chown %s - uid=%llu, gid=%llu\n", path,
@@ -844,7 +958,6 @@ static int process_chown(const char *path, u64 uid, u64 gid, void *user)
 	}
 
 out:
-	free(full_path);
 	return ret;
 }
 
@@ -854,8 +967,14 @@ static int process_utimes(const char *path, struct timespec *at,
 {
 	int ret = 0;
 	struct btrfs_receive *r = user;
-	char *full_path = path_cat(r->full_subvol_path, path);
+	char full_path[PATH_MAX];
 	struct timespec tv[2];
+
+	ret = path_cat_out(full_path, r->full_subvol_path, path);
+	if (ret < 0) {
+		fprintf(stderr, "ERROR: utimes: path invalid: %s\n", path);
+		goto out;
+	}
 
 	if (g_verbose >= 2)
 		fprintf(stderr, "utimes %s\n", path);
@@ -871,7 +990,6 @@ static int process_utimes(const char *path, struct timespec *at,
 	}
 
 out:
-	free(full_path);
 	return ret;
 }
 
