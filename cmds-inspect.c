@@ -270,7 +270,7 @@ static int cmd_subvolid_resolve(int argc, char **argv)
 	int ret;
 	int fd = -1;
 	u64 subvol_id;
-	char path[BTRFS_PATH_NAME_MAX + 1];
+	char path[PATH_MAX];
 	DIR *dirstream = NULL;
 
 	if (check_argc_exact(argc, 3))
@@ -293,7 +293,7 @@ static int cmd_subvolid_resolve(int argc, char **argv)
 		goto out;
 	}
 
-	path[BTRFS_PATH_NAME_MAX] = '\0';
+	path[PATH_MAX] = '\0';
 	printf("%s\n", path);
 
 out:

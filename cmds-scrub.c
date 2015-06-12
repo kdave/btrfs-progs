@@ -390,7 +390,7 @@ static int scrub_open_file(const char *datafile, int m)
 static int scrub_open_file_r(const char *fn_base, const char *fn_local)
 {
 	int ret;
-	char datafile[BTRFS_PATH_NAME_MAX + 1];
+	char datafile[PATH_MAX];
 	ret = scrub_datafile(fn_base, fn_local, NULL,
 				datafile, sizeof(datafile));
 	if (ret < 0)
@@ -402,7 +402,7 @@ static int scrub_open_file_w(const char *fn_base, const char *fn_local,
 				const char *tmp)
 {
 	int ret;
-	char datafile[BTRFS_PATH_NAME_MAX + 1];
+	char datafile[PATH_MAX];
 	ret = scrub_datafile(fn_base, fn_local, tmp,
 				datafile, sizeof(datafile));
 	if (ret < 0)
@@ -414,8 +414,8 @@ static int scrub_rename_file(const char *fn_base, const char *fn_local,
 				const char *tmp)
 {
 	int ret;
-	char datafile_old[BTRFS_PATH_NAME_MAX + 1];
-	char datafile_new[BTRFS_PATH_NAME_MAX + 1];
+	char datafile_old[PATH_MAX];
+	char datafile_new[PATH_MAX];
 	ret = scrub_datafile(fn_base, fn_local, tmp,
 				datafile_old, sizeof(datafile_old));
 	if (ret < 0)
@@ -1128,7 +1128,7 @@ static int scrub_start(int argc, char **argv, int resume)
 	struct scrub_file_record *last_scrub = NULL;
 	char *datafile = strdup(SCRUB_DATA_FILE);
 	char fsid[BTRFS_UUID_UNPARSED_SIZE];
-	char sock_path[BTRFS_PATH_NAME_MAX + 1] = "";
+	char sock_path[PATH_MAX] = "";
 	struct scrub_progress_cycle spc;
 	pthread_mutex_t spc_write_mutex = PTHREAD_MUTEX_INITIALIZER;
 	void *terr;

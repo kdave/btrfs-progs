@@ -1060,7 +1060,7 @@ out:
  */
 int open_path_or_dev_mnt(const char *path, DIR **dirstream)
 {
-	char mp[BTRFS_PATH_NAME_MAX + 1];
+	char mp[PATH_MAX];
 	int fdmnt;
 
 	if (is_block_device(path)) {
@@ -2056,7 +2056,7 @@ int get_fs_info(char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 	struct btrfs_fs_devices *fs_devices_mnt = NULL;
 	struct btrfs_ioctl_dev_info_args *di_args;
 	struct btrfs_ioctl_dev_info_args tmp;
-	char mp[BTRFS_PATH_NAME_MAX + 1];
+	char mp[PATH_MAX];
 	DIR *dirstream = NULL;
 
 	memset(fi_args, 0, sizeof(*fi_args));

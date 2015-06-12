@@ -829,7 +829,7 @@ static int cmd_show(int argc, char **argv)
 	/* default, search both kernel and udev */
 	int where = -1;
 	int type = 0;
-	char mp[BTRFS_PATH_NAME_MAX + 1];
+	char mp[PATH_MAX];
 	char path[PATH_MAX];
 	__u8 fsid[BTRFS_FSID_SIZE];
 	char uuid_buf[BTRFS_UUID_UNPARSED_SIZE];

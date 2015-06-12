@@ -979,7 +979,7 @@ static int do_receive(struct btrfs_receive *r, const char *tomnt,
 		goto out;
 	}
 
-	root_subvol_path = malloc(BTRFS_PATH_NAME_MAX);
+	root_subvol_path = malloc(PATH_MAX);
 	if (!root_subvol_path) {
 		ret = -ENOMEM;
 		fprintf(stderr, "ERROR: couldn't allocate buffer for the root "
@@ -988,7 +988,7 @@ static int do_receive(struct btrfs_receive *r, const char *tomnt,
 	}
 
 	ret = btrfs_subvolid_resolve(r->mnt_fd, root_subvol_path,
-				     BTRFS_PATH_NAME_MAX, subvol_id);
+				     PATH_MAX, subvol_id);
 	if (ret) {
 		fprintf(stderr, "ERROR: couldn't resolve our subvol path\n");
 		goto out;

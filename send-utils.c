@@ -20,6 +20,7 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <uuid/uuid.h>
+#include <limits.h>
 
 #include "ctree.h"
 #include "send-utils.h"
@@ -481,9 +482,9 @@ struct subvol_info *subvol_uuid_search(struct subvol_uuid_search *s,
 	if (type == subvol_search_by_path) {
 		info->path = strdup(path);
 	} else {
-		info->path = malloc(BTRFS_PATH_NAME_MAX);
+		info->path = malloc(PATH_MAX);
 		ret = btrfs_subvolid_resolve(s->mnt_fd, info->path,
-					     BTRFS_PATH_NAME_MAX, root_id);
+					     PATH_MAX, root_id);
 	}
 
 out:
