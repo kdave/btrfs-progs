@@ -64,7 +64,7 @@ struct btrfs_receive
 	char *full_root_path;
 	int dest_dir_chroot;
 
-	struct subvol_info *cur_subvol;
+	struct subvol_info cur_subvol;
 
 	struct subvol_uuid_search sus;
 
@@ -87,21 +87,21 @@ static int finish_subvol(struct btrfs_receive *r)
 	char uuid_str[BTRFS_UUID_UNPARSED_SIZE];
 	u64 flags;
 
-	if (r->cur_subvol == NULL)
+	if (r->cur_subvol.path == NULL)
 		return 0;
 
-	subvol_fd = openat(r->mnt_fd, r->cur_subvol->path,
+	subvol_fd = openat(r->mnt_fd, r->cur_subvol.path,
 			O_RDONLY | O_NOATIME);
 	if (subvol_fd < 0) {
 		ret = -errno;
 		fprintf(stderr, "ERROR: open %s failed. %s\n",
-				r->cur_subvol->path, strerror(-ret));
+				r->cur_subvol.path, strerror(-ret));
 		goto out;
 	}
 
 	memset(&rs_args, 0, sizeof(rs_args));
-	memcpy(rs_args.uuid, r->cur_subvol->received_uuid, BTRFS_UUID_SIZE);
-	rs_args.stransid = r->cur_subvol->stransid;
+	memcpy(rs_args.uuid, r->cur_subvol.received_uuid, BTRFS_UUID_SIZE);
+	rs_args.stransid = r->cur_subvol.stransid;
 
 	if (g_verbose >= 1) {
 		uuid_unparse((u8*)rs_args.uuid, uuid_str);
@@ -116,7 +116,7 @@ static int finish_subvol(struct btrfs_receive *r)
 				strerror(-ret));
 		goto out;
 	}
-	r->cur_subvol->rtransid = rs_args.rtransid;
+	r->cur_subvol.rtransid = rs_args.rtransid;
 
 	ret = ioctl(subvol_fd, BTRFS_IOC_SUBVOL_GETFLAGS, &flags);
 	if (ret < 0) {
@@ -139,10 +139,9 @@ static int finish_subvol(struct btrfs_receive *r)
 	ret = 0;
 
 out:
-	if (r->cur_subvol) {
-		free(r->cur_subvol->path);
-		free(r->cur_subvol);
-		r->cur_subvol = NULL;
+	if (r->cur_subvol.path) {
+		free(r->cur_subvol.path);
+		r->cur_subvol.path = NULL;
 	}
 	if (subvol_fd != -1)
 		close(subvol_fd);
@@ -161,25 +160,25 @@ static int process_subvol(const char *path, const u8 *uuid, u64 ctransid,
 	if (ret < 0)
 		goto out;
 
-	r->cur_subvol = calloc(1, sizeof(*r->cur_subvol));
+	BUG_ON(r->cur_subvol.path);
 
 	if (strlen(r->dest_dir_path) == 0)
-		r->cur_subvol->path = strdup(path);
+		r->cur_subvol.path = strdup(path);
 	else
-		r->cur_subvol->path = path_cat(r->dest_dir_path, path);
+		r->cur_subvol.path = path_cat(r->dest_dir_path, path);
 	free(r->full_subvol_path);
 	r->full_subvol_path = path_cat3(r->root_path, r->dest_dir_path, path);
 
 	fprintf(stderr, "At subvol %s\n", path);
 
-	memcpy(r->cur_subvol->received_uuid, uuid, BTRFS_UUID_SIZE);
-	r->cur_subvol->stransid = ctransid;
+	memcpy(r->cur_subvol.received_uuid, uuid, BTRFS_UUID_SIZE);
+	r->cur_subvol.stransid = ctransid;
 
 	if (g_verbose) {
-		uuid_unparse((u8*)r->cur_subvol->received_uuid, uuid_str);
+		uuid_unparse((u8*)r->cur_subvol.received_uuid, uuid_str);
 		fprintf(stderr, "receiving subvol %s uuid=%s, stransid=%llu\n",
 				path, uuid_str,
-				r->cur_subvol->stransid);
+				r->cur_subvol.stransid);
 	}
 
 	memset(&args_v1, 0, sizeof(args_v1));
@@ -210,25 +209,25 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 	if (ret < 0)
 		goto out;
 
-	r->cur_subvol = calloc(1, sizeof(*r->cur_subvol));
+	BUG_ON(r->cur_subvol.path);
 
 	if (strlen(r->dest_dir_path) == 0)
-		r->cur_subvol->path = strdup(path);
+		r->cur_subvol.path = strdup(path);
 	else
-		r->cur_subvol->path = path_cat(r->dest_dir_path, path);
+		r->cur_subvol.path = path_cat(r->dest_dir_path, path);
 	free(r->full_subvol_path);
 	r->full_subvol_path = path_cat3(r->root_path, r->dest_dir_path, path);
 
 	fprintf(stdout, "At snapshot %s\n", path);
 
-	memcpy(r->cur_subvol->received_uuid, uuid, BTRFS_UUID_SIZE);
-	r->cur_subvol->stransid = ctransid;
+	memcpy(r->cur_subvol.received_uuid, uuid, BTRFS_UUID_SIZE);
+	r->cur_subvol.stransid = ctransid;
 
 	if (g_verbose) {
-		uuid_unparse((u8*)r->cur_subvol->received_uuid, uuid_str);
+		uuid_unparse((u8*)r->cur_subvol.received_uuid, uuid_str);
 		fprintf(stderr, "receiving snapshot %s uuid=%s, "
 				"ctransid=%llu ", path, uuid_str,
-				r->cur_subvol->stransid);
+				r->cur_subvol.stransid);
 		uuid_unparse(parent_uuid, uuid_str);
 		fprintf(stderr, "parent_uuid=%s, parent_ctransid=%llu\n",
 				uuid_str, parent_ctransid);
@@ -633,10 +632,10 @@ static int process_clone(const char *path, u64 offset, u64 len,
 	si = subvol_uuid_search(&r->sus, 0, clone_uuid, clone_ctransid, NULL,
 			subvol_search_by_received_uuid);
 	if (!si) {
-		if (memcmp(clone_uuid, r->cur_subvol->received_uuid,
+		if (memcmp(clone_uuid, r->cur_subvol.received_uuid,
 				BTRFS_UUID_SIZE) == 0) {
 			/* TODO check generation of extent */
-			subvol_path = strdup(r->cur_subvol->path);
+			subvol_path = strdup(r->cur_subvol.path);
 		} else {
 			ret = -ENOENT;
 			fprintf(stderr, "ERROR: did not find source subvol.\n");
@@ -1074,10 +1073,9 @@ out:
 	r->full_subvol_path = NULL;
 	r->dest_dir_path = NULL;
 	free(dest_dir_full_path);
-	if (r->cur_subvol) {
-		free(r->cur_subvol->path);
-		free(r->cur_subvol);
-		r->cur_subvol = NULL;
+	if (r->cur_subvol.path) {
+		free(r->cur_subvol.path);
+		r->cur_subvol.path = NULL;
 	}
 	subvol_uuid_search_finit(&r->sus);
 	if (r->mnt_fd != -1) {
