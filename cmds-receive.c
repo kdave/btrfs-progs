@@ -1096,7 +1096,7 @@ out:
 int cmd_receive(int argc, char **argv)
 {
 	char *tomnt = NULL;
-	char *fromfile = NULL;
+	char fromfile[PATH_MAX];
 	char realmnt[PATH_MAX];
 	struct btrfs_receive r;
 	int receive_fd = fileno(stdin);
@@ -1109,6 +1109,7 @@ int cmd_receive(int argc, char **argv)
 	r.dest_dir_fd = -1;
 	r.dest_dir_chroot = 0;
 	realmnt[0] = 0;
+	fromfile[0] = 0;
 
 	while (1) {
 		int c;
@@ -1127,7 +1128,13 @@ int cmd_receive(int argc, char **argv)
 			g_verbose++;
 			break;
 		case 'f':
-			fromfile = optarg;
+			if (arg_copy_path(fromfile, optarg, sizeof(fromfile))) {
+				fprintf(stderr,
+				    "ERROR: input file path too long (%zu)\n",
+				    strlen(optarg));
+				ret = 1;
+				goto out;
+			}
 			break;
 		case 'e':
 			r.honor_end_cmd = 1;
@@ -1159,7 +1166,7 @@ int cmd_receive(int argc, char **argv)
 
 	tomnt = argv[optind];
 
-	if (fromfile) {
+	if (fromfile[0]) {
 		receive_fd = open(fromfile, O_RDONLY | O_NOATIME);
 		if (receive_fd < 0) {
 			fprintf(stderr, "ERROR: failed to open %s\n", fromfile);
