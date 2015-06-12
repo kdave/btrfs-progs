@@ -40,6 +40,10 @@ Use this snapshot as a clone source for an incremental send (multiple allowed).
 -f <outfile>::
 Output is normally written to stdout. To write to a file, use this option.
 An alternative would be to use pipes.
+--no-data::
+Send in NO_FILE_DATA mode. The output stream does not contain any file
+data and thus cannot be used to transfer changes. This mode is faster and
+useful to show the differences in metadata.
 
 EXIT STATUS
 -----------
