@@ -621,31 +621,31 @@ static void print_key_type(u64 objectid, u8 type)
 		printf("BALANCE_ITEM");
 		break;
 	case BTRFS_DEV_REPLACE_KEY:
-		printf("DEV_REPLACE_ITEM");
+		printf("DEV_REPLACE");
 		break;
 	case BTRFS_STRING_ITEM_KEY:
 		printf("STRING_ITEM");
 		break;
 	case BTRFS_QGROUP_STATUS_KEY:
-		printf("BTRFS_STATUS_KEY");
+		printf("QGROUP_STATUS");
 		break;
 	case BTRFS_QGROUP_RELATION_KEY:
-		printf("BTRFS_QGROUP_RELATION_KEY");
+		printf("QGROUP_RELATION");
 		break;
 	case BTRFS_QGROUP_INFO_KEY:
-		printf("BTRFS_QGROUP_INFO_KEY");
+		printf("QGROUP_INFO");
 		break;
 	case BTRFS_QGROUP_LIMIT_KEY:
-		printf("BTRFS_QGROUP_LIMIT_KEY");
+		printf("QGROUP_LIMIT");
 		break;
 	case BTRFS_DEV_STATS_KEY:
-		printf("DEV_STATS_ITEM");
+		printf("DEV_STATS");
 		break;
 	case BTRFS_UUID_KEY_SUBVOL:
-		printf("BTRFS_UUID_KEY_SUBVOL");
+		printf("UUID_KEY_SUBVOL");
 		break;
 	case BTRFS_UUID_KEY_RECEIVED_SUBVOL:
-		printf("BTRFS_UUID_KEY_RECEIVED_SUBVOL");
+		printf("UUID_KEY_RECEIVED_SUBVOL");
 		break;
 	default:
 		printf("UNKNOWN.%d", type);
