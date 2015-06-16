@@ -65,6 +65,11 @@ struct btrfs_receive
 	int dest_dir_chroot;
 
 	struct subvol_info cur_subvol;
+	/*
+	 * Substitute for cur_subvol::path which is a pointer and we cannot
+	 * change it to an array as it's a public API.
+	 */
+	char cur_subvol_path[PATH_MAX];
 
 	struct subvol_uuid_search sus;
 
@@ -87,15 +92,15 @@ static int finish_subvol(struct btrfs_receive *r)
 	char uuid_str[BTRFS_UUID_UNPARSED_SIZE];
 	u64 flags;
 
-	if (r->cur_subvol.path == NULL)
+	if (r->cur_subvol_path[0] == 0)
 		return 0;
 
-	subvol_fd = openat(r->mnt_fd, r->cur_subvol.path,
+	subvol_fd = openat(r->mnt_fd, r->cur_subvol_path,
 			O_RDONLY | O_NOATIME);
 	if (subvol_fd < 0) {
 		ret = -errno;
 		fprintf(stderr, "ERROR: open %s failed. %s\n",
-				r->cur_subvol.path, strerror(-ret));
+				r->cur_subvol_path, strerror(-ret));
 		goto out;
 	}
 
@@ -139,9 +144,8 @@ static int finish_subvol(struct btrfs_receive *r)
 	ret = 0;
 
 out:
-	if (r->cur_subvol.path) {
-		free(r->cur_subvol.path);
-		r->cur_subvol.path = NULL;
+	if (r->cur_subvol_path[0]) {
+		r->cur_subvol_path[0] = 0;
 	}
 	if (subvol_fd != -1)
 		close(subvol_fd);
@@ -161,11 +165,18 @@ static int process_subvol(const char *path, const u8 *uuid, u64 ctransid,
 		goto out;
 
 	BUG_ON(r->cur_subvol.path);
+	BUG_ON(r->cur_subvol_path[0]);
 
-	if (strlen(r->dest_dir_path) == 0)
-		r->cur_subvol.path = strdup(path);
-	else
-		r->cur_subvol.path = path_cat(r->dest_dir_path, path);
+	if (strlen(r->dest_dir_path) == 0) {
+		strncpy_null(r->cur_subvol_path, path);
+	} else {
+		ret = path_cat_out(r->cur_subvol_path, r->dest_dir_path, path);
+		if (ret < 0) {
+			fprintf(stderr, "ERROR: subvol: path invalid: %s\n",
+					path);
+			goto out;
+		}
+	}
 	ret = path_cat3_out(r->full_subvol_path, r->root_path,
 			r->dest_dir_path, path);
 	if (ret < 0) {
@@ -214,11 +225,18 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 		goto out;
 
 	BUG_ON(r->cur_subvol.path);
+	BUG_ON(r->cur_subvol_path[0]);
 
-	if (strlen(r->dest_dir_path) == 0)
-		r->cur_subvol.path = strdup(path);
-	else
-		r->cur_subvol.path = path_cat(r->dest_dir_path, path);
+	if (strlen(r->dest_dir_path) == 0) {
+		strncpy_null(r->cur_subvol_path, path);
+	} else {
+		ret = path_cat_out(r->cur_subvol_path, r->dest_dir_path, path);
+		if (ret < 0) {
+			fprintf(stderr, "ERROR: snapshot: path invalid: %s\n",
+					path);
+			goto out;
+		}
+	}
 	ret = path_cat3_out(r->full_subvol_path, r->root_path,
 			r->dest_dir_path, path);
 	if (ret < 0) {
@@ -726,7 +744,7 @@ static int process_clone(const char *path, u64 offset, u64 len,
 		if (memcmp(clone_uuid, r->cur_subvol.received_uuid,
 				BTRFS_UUID_SIZE) == 0) {
 			/* TODO check generation of extent */
-			subvol_path = strdup(r->cur_subvol.path);
+			subvol_path = strdup(r->cur_subvol_path);
 		} else {
 			ret = -ENOENT;
 			fprintf(stderr, "ERROR: did not find source subvol.\n");
@@ -1185,10 +1203,6 @@ out:
 	r->root_path = NULL;
 	r->dest_dir_path = NULL;
 	free(dest_dir_full_path);
-	if (r->cur_subvol.path) {
-		free(r->cur_subvol.path);
-		r->cur_subvol.path = NULL;
-	}
 	subvol_uuid_search_finit(&r->sus);
 	if (r->mnt_fd != -1) {
 		close(r->mnt_fd);
