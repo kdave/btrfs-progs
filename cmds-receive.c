@@ -1038,7 +1038,7 @@ static int do_receive(struct btrfs_receive *r, const char *tomnt,
 	u64 subvol_id;
 	int ret;
 	char *dest_dir_full_path;
-	char *root_subvol_path;
+	char root_subvol_path[PATH_MAX];
 	int end = 0;
 
 	dest_dir_full_path = realpath(tomnt, NULL);
@@ -1096,14 +1096,7 @@ static int do_receive(struct btrfs_receive *r, const char *tomnt,
 		goto out;
 	}
 
-	root_subvol_path = malloc(PATH_MAX);
-	if (!root_subvol_path) {
-		ret = -ENOMEM;
-		fprintf(stderr, "ERROR: couldn't allocate buffer for the root "
-			"subvol path\n");
-		goto out;
-	}
-
+	root_subvol_path[0] = 0;
 	ret = btrfs_subvolid_resolve(r->mnt_fd, root_subvol_path,
 				     PATH_MAX, subvol_id);
 	if (ret) {
@@ -1117,8 +1110,6 @@ static int do_receive(struct btrfs_receive *r, const char *tomnt,
 	 */
 	if (strlen(root_subvol_path))
 		r->full_root_path = root_subvol_path;
-	else
-		free(root_subvol_path);
 
 	if (r->dest_dir_chroot) {
 		if (chroot(dest_dir_full_path)) {
@@ -1204,10 +1195,7 @@ out:
 		close(r->dest_dir_fd);
 		r->dest_dir_fd = -1;
 	}
-	if (r->full_root_path) {
-		free(r->full_root_path);
-		r->full_root_path = NULL;
-	}
+
 	return ret;
 }
 
