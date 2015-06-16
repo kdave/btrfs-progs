@@ -359,5 +359,5 @@ uninstall:
 	cd $(DESTDIR)$(bindir); $(RM) -f btrfsck fsck.btrfs $(progs_install)
 
 ifneq ($(MAKECMDGOALS),clean)
--include $(objects:.o=.o.d) $(cmd-objects:.o=.o.d) $(subst .btrfs,, $(filter-out btrfsck.o.d, $(progs:=.o.d)))
+-include $(objects:.o=.o.d) $(cmds_objects:.o=.o.d) $(subst .btrfs,, $(filter-out btrfsck.o.d, $(progs:=.o.d)))
 endif
