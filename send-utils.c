@@ -727,6 +727,7 @@ int path_cat_out(char *out, const char *p1, const char *p2)
 	return 0;
 }
 
+__attribute__((deprecated("please use path_cat_out")))
 char *path_cat(const char *p1, const char *p2)
 {
 	int p1_len = strlen(p1);
@@ -758,6 +759,7 @@ int path_cat3_out(char *out, const char *p1, const char *p2, const char *p3)
 	return 0;
 }
 
+__attribute__((deprecated("please use path_cat3_out")))
 char *path_cat3(const char *p1, const char *p2, const char *p3)
 {
 	int p1_len = strlen(p1);
