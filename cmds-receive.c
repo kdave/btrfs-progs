@@ -56,7 +56,7 @@ struct btrfs_receive
 	int dest_dir_fd;
 
 	int write_fd;
-	char *write_path;
+	char write_path[PATH_MAX];
 
 	char *root_path;
 	char *dest_dir_path; /* relative to root_path */
@@ -636,8 +636,7 @@ static int open_inode_for_write(struct btrfs_receive *r, const char *path)
 				strerror(-ret));
 		goto out;
 	}
-	free(r->write_path);
-	r->write_path = strdup(path);
+	strncpy_null(r->write_path, path);
 
 out:
 	return ret;
@@ -1176,8 +1175,6 @@ out:
 	}
 	free(r->root_path);
 	r->root_path = NULL;
-	free(r->write_path);
-	r->write_path = NULL;
 	free(r->full_subvol_path);
 	r->full_subvol_path = NULL;
 	r->dest_dir_path = NULL;
