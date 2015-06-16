@@ -60,7 +60,7 @@ struct btrfs_receive
 
 	char *root_path;
 	char *dest_dir_path; /* relative to root_path */
-	char *full_subvol_path;
+	char full_subvol_path[PATH_MAX];
 	char *full_root_path;
 	int dest_dir_chroot;
 
@@ -166,8 +166,12 @@ static int process_subvol(const char *path, const u8 *uuid, u64 ctransid,
 		r->cur_subvol.path = strdup(path);
 	else
 		r->cur_subvol.path = path_cat(r->dest_dir_path, path);
-	free(r->full_subvol_path);
-	r->full_subvol_path = path_cat3(r->root_path, r->dest_dir_path, path);
+	ret = path_cat3_out(r->full_subvol_path, r->root_path,
+			r->dest_dir_path, path);
+	if (ret < 0) {
+		fprintf(stderr, "ERROR: subvol: path invalid: %s\n", path);
+		goto out;
+	}
 
 	fprintf(stderr, "At subvol %s\n", path);
 
@@ -215,8 +219,12 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 		r->cur_subvol.path = strdup(path);
 	else
 		r->cur_subvol.path = path_cat(r->dest_dir_path, path);
-	free(r->full_subvol_path);
-	r->full_subvol_path = path_cat3(r->root_path, r->dest_dir_path, path);
+	ret = path_cat3_out(r->full_subvol_path, r->root_path,
+			r->dest_dir_path, path);
+	if (ret < 0) {
+		fprintf(stderr, "ERROR: snapshot: path invalid: %s\n", path);
+		goto out;
+	}
 
 	fprintf(stdout, "At snapshot %s\n", path);
 
@@ -1175,8 +1183,6 @@ out:
 	}
 	free(r->root_path);
 	r->root_path = NULL;
-	free(r->full_subvol_path);
-	r->full_subvol_path = NULL;
 	r->dest_dir_path = NULL;
 	free(dest_dir_full_path);
 	if (r->cur_subvol.path) {
