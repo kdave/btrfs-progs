@@ -93,6 +93,69 @@ out:
 	return ret;
 }
 
+static int __print_mapping_info(struct btrfs_fs_info *fs_info, u64 logical,
+				u64 len, int mirror_num)
+{
+	struct btrfs_multi_bio *multi = NULL;
+	u64 cur_offset = 0;
+	u64 cur_len;
+	int ret = 0;
+
+	while (cur_offset < len) {
+		struct btrfs_device *device;
+		int i;
+
+		cur_len = len - cur_offset;
+		ret = btrfs_map_block(&fs_info->mapping_tree, READ,
+				logical + cur_offset, &cur_len,
+				&multi, mirror_num, NULL);
+		if (ret) {
+			fprintf(info_file,
+				"Error: fails to map mirror%d logical %llu: %s\n",
+				mirror_num, logical, strerror(-ret));
+			return ret;
+		}
+		for (i = 0; i < multi->num_stripes; i++) {
+			device = multi->stripes[i].dev;
+			fprintf(info_file,
+				"mirror %d logical %Lu physical %Lu device %s\n",
+				mirror_num, logical + cur_offset,
+				multi->stripes[0].physical,
+				device->name);
+		}
+		kfree(multi);
+		multi = NULL;
+		cur_offset += cur_len;
+	}
+	return ret;
+}
+
+/*
+ * Logical and len is the exact value of a extent.
+ * And offset is the offset inside the extent. It's only used for case
+ * where user only want to print part of the extent.
+ *
+ * Caller *MUST* ensure the range [logical,logical+len) are in one extent.
+ * Or we can encounter the following case, causing a -ENOENT error:
+ * |<-----given parameter------>|
+ *		|<------ Extent A ----->|
+ */
+static int print_mapping_info(struct btrfs_fs_info *fs_info, u64 logical,
+			      u64 len)
+{
+	int num_copies;
+	int mirror_num;
+	int ret = 0;
+
+	num_copies = btrfs_num_copies(&fs_info->mapping_tree, logical, len);
+	for (mirror_num = 1; mirror_num <= num_copies; mirror_num++) {
+		ret = __print_mapping_info(fs_info, logical, len, mirror_num);
+		if (ret < 0)
+			return ret;
+	}
+	return ret;
+}
+
 static struct extent_buffer * debug_read_block(struct btrfs_root *root,
 		u64 bytenr, u32 blocksize, u64 copy)
 {
