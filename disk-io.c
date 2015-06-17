@@ -366,6 +366,40 @@ struct extent_buffer *read_tree_block(struct btrfs_root *root, u64 bytenr,
 	return ERR_PTR(ret);
 }
 
+int read_extent_data(struct btrfs_root *root, char *data,
+			   u64 logical, u64 *len, int mirror)
+{
+	u64 offset = 0;
+	struct btrfs_multi_bio *multi = NULL;
+	struct btrfs_fs_info *info = root->fs_info;
+	struct btrfs_device *device;
+	int ret = 0;
+	u64 max_len = *len;
+
+	ret = btrfs_map_block(&info->mapping_tree, READ, logical, len,
+			      &multi, mirror, NULL);
+	if (ret) {
+		fprintf(stderr, "Couldn't map the block %llu\n",
+				logical + offset);
+		goto err;
+	}
+	device = multi->stripes[0].dev;
+
+	if (device->fd == 0)
+		goto err;
+	if (*len > max_len)
+		*len = max_len;
+
+	ret = pread64(device->fd, data, *len, multi->stripes[0].physical);
+	if (ret != *len)
+		ret = -EIO;
+	else
+		ret = 0;
+err:
+	kfree(multi);
+	return ret;
+}
+
 int write_and_map_eb(struct btrfs_trans_handle *trans,
 		     struct btrfs_root *root,
 		     struct extent_buffer *eb)
