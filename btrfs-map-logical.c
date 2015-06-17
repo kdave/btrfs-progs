@@ -30,6 +30,8 @@
 #include "list.h"
 #include "utils.h"
 
+#define BUFFER_SIZE (64 * 1024)
+
 /* we write the mirror info to stdout unless they are dumping the data
  * to stdout
  * */
@@ -152,6 +154,38 @@ static int print_mapping_info(struct btrfs_fs_info *fs_info, u64 logical,
 		ret = __print_mapping_info(fs_info, logical, len, mirror_num);
 		if (ret < 0)
 			return ret;
+	}
+	return ret;
+}
+
+/* Same requisition as print_mapping_info function */
+static int write_extent_content(struct btrfs_fs_info *fs_info, int out_fd,
+				u64 logical, u64 length, int mirror)
+{
+	char buffer[BUFFER_SIZE];
+	u64 cur_offset = 0;
+	u64 cur_len;
+	int ret = 0;
+
+	while (cur_offset < length) {
+		cur_len = min_t(u64, length - cur_offset, BUFFER_SIZE);
+		ret = read_extent_data(fs_info->tree_root, buffer,
+				       logical + cur_offset, &cur_len, mirror);
+		if (ret < 0) {
+			fprintf(stderr,
+				"Failed to read extent at [%llu, %llu]: %s\n",
+				logical, logical + length, strerror(-ret));
+			return ret;
+		}
+		ret = write(out_fd, buffer, cur_len);
+		if (ret < 0 || ret != cur_len) {
+			if (ret > 0)
+				ret = -EINTR;
+			fprintf(stderr, "output file write failed: %s\n",
+				strerror(-ret));
+			return ret;
+		}
+		cur_offset += cur_len;
 	}
 	return ret;
 }
