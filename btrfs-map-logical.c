@@ -35,6 +35,64 @@
  * */
 static FILE *info_file;
 
+static int map_one_extent(struct btrfs_fs_info *fs_info,
+			  u64 *logical_ret, u64 *len_ret, int search_foward)
+{
+	struct btrfs_path *path;
+	struct btrfs_key key;
+	u64 logical;
+	u64 len = 0;
+	int ret = 0;
+
+	BUG_ON(!logical_ret);
+	logical = *logical_ret;
+
+	path = btrfs_alloc_path();
+	if (!path)
+		return -ENOMEM;
+
+	key.objectid = logical;
+	key.type = 0;
+	key.offset = 0;
+
+	ret = btrfs_search_slot(NULL, fs_info->extent_root, &key, path,
+				0, 0);
+	if (ret < 0)
+		goto out;
+	BUG_ON(ret == 0);
+	ret = 0;
+
+again:
+	btrfs_item_key_to_cpu(path->nodes[0], &key, path->slots[0]);
+	if ((search_foward && key.objectid < logical) ||
+	    (!search_foward && key.objectid > logical) ||
+	    (key.type != BTRFS_EXTENT_ITEM_KEY &&
+	     key.type != BTRFS_METADATA_ITEM_KEY)) {
+		if (!search_foward)
+			ret = btrfs_previous_extent_item(fs_info->extent_root,
+							 path, 0);
+		else
+			ret = btrfs_next_item(fs_info->extent_root, path);
+		if (ret)
+			goto out;
+		goto again;
+	}
+	logical = key.objectid;
+	if (key.type == BTRFS_METADATA_ITEM_KEY)
+		len = fs_info->tree_root->leafsize;
+	else
+		len = key.offset;
+
+out:
+	btrfs_free_path(path);
+	if (!ret) {
+		*logical_ret = logical;
+		if (len_ret)
+			*len_ret = len;
+	}
+	return ret;
+}
+
 static struct extent_buffer * debug_read_block(struct btrfs_root *root,
 		u64 bytenr, u32 blocksize, u64 copy)
 {
