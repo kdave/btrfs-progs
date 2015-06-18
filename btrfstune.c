@@ -350,10 +350,10 @@ static int change_uuid(struct btrfs_fs_info *fs_info, const char *new_fsid_str)
 	fs_info->new_chunk_tree_uuid = new_chunk_id;
 
 	uuid_parse((const char*)fs_info->fsid, old_fsid);
-	uuid_unparse_upper(old_fsid, uuid_buf);
+	uuid_unparse(old_fsid, uuid_buf);
 	printf("Current fsid: %s\n", uuid_buf);
 
-	uuid_unparse_upper(new_fsid, uuid_buf);
+	uuid_unparse(new_fsid, uuid_buf);
 	printf("New fsid: %s\n", uuid_buf);
 	/* Now we can begin fsid change */
 	printf("Set superblock flag CHANGING_FSID\n");
