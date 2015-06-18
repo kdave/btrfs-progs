@@ -42,9 +42,12 @@ test_uuid_random()
 		--rootdir $TOP/Documentation \
 		$TEST_DEV
 	run_check $TOP/btrfs-show-super "$TEST_DEV"
-	run_check $TOP/btrfstune -f -u $TEST_DEV
-	# btrfs-show-super is called within get_fs_uuid
-	fsid=$(get_fs_uuid $TEST_DEV)
+	currentfsid=$(run_check_stdout $TOP/btrfstune -f -u $TEST_DEV | \
+		grep -i 'current fsid:' | awk '{print $3}')
+	if ! [ $currentfsid = $origuuid ]; then
+		_fail "FAIL: current UUID mismatch"
+	fi
+	run_check $TOP/btrfs-show-super "$TEST_DEV"
 	run_check $SUDO_HELPER $TOP/btrfs check $TEST_DEV
 }
 
