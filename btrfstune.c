@@ -349,7 +349,7 @@ static int change_uuid(struct btrfs_fs_info *fs_info, const char *new_fsid_str)
 	fs_info->new_fsid = new_fsid;
 	fs_info->new_chunk_tree_uuid = new_chunk_id;
 
-	uuid_parse((const char*)fs_info->fsid, old_fsid);
+	memcpy(old_fsid, (const char*)fs_info->fsid, BTRFS_UUID_SIZE);
 	uuid_unparse(old_fsid, uuid_buf);
 	printf("Current fsid: %s\n", uuid_buf);
 
