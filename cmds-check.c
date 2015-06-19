@@ -1918,6 +1918,39 @@ static int repair_inode_orphan_item(struct btrfs_trans_handle *trans,
 	return ret;
 }
 
+static int repair_inode_nbytes(struct btrfs_trans_handle *trans,
+			       struct btrfs_root *root,
+			       struct btrfs_path *path,
+			       struct inode_record *rec)
+{
+	struct btrfs_inode_item *ei;
+	struct btrfs_key key;
+	int ret = 0;
+
+	key.objectid = rec->ino;
+	key.type = BTRFS_INODE_ITEM_KEY;
+	key.offset = 0;
+
+	ret = btrfs_search_slot(trans, root, &key, path, 0, 1);
+	if (ret) {
+		if (ret > 0)
+			ret = -ENOENT;
+		goto out;
+	}
+
+	/* Since ret == 0, no need to check anything */
+	ei = btrfs_item_ptr(path->nodes[0], path->slots[0],
+			    struct btrfs_inode_item);
+	btrfs_set_inode_nbytes(path->nodes[0], ei, rec->found_size);
+	btrfs_mark_buffer_dirty(path->nodes[0]);
+	rec->errors &= ~I_ERR_FILE_NBYTES_WRONG;
+	printf("reset nbytes for ino %llu root %llu\n",
+	       rec->ino, root->root_key.objectid);
+out:
+	btrfs_release_path(path);
+	return ret;
+}
+
 static int add_missing_dir_index(struct btrfs_root *root,
 				 struct cache_tree *inode_cache,
 				 struct inode_record *rec,
@@ -2661,7 +2694,8 @@ static int try_repair_inode(struct btrfs_root *root, struct inode_record *rec)
 			     I_ERR_LINK_COUNT_WRONG |
 			     I_ERR_NO_INODE_ITEM |
 			     I_ERR_FILE_EXTENT_ORPHAN |
-			     I_ERR_FILE_EXTENT_DISCOUNT)))
+			     I_ERR_FILE_EXTENT_DISCOUNT|
+			     I_ERR_FILE_NBYTES_WRONG)))
 		return rec->errors;
 
 	path = btrfs_alloc_path();
@@ -2693,6 +2727,8 @@ static int try_repair_inode(struct btrfs_root *root, struct inode_record *rec)
 		ret = repair_inode_orphan_item(trans, root, path, rec);
 	if (!ret && rec->errors & I_ERR_LINK_COUNT_WRONG)
 		ret = repair_inode_nlinks(trans, root, path, rec);
+	if (!ret && rec->errors & I_ERR_FILE_NBYTES_WRONG)
+		ret = repair_inode_nbytes(trans, root, path, rec);
 	btrfs_commit_transaction(trans, root);
 	btrfs_free_path(path);
 	return ret;
