@@ -24,8 +24,8 @@ XATTR library should be provided by the standard C library or by
 Please note that the package names may differ according to the distribution.
 See https://btrfs.wiki.kernel.org/index.php/Btrfs_source_repositories#Dependencies .
 
-To build from git sources you need to generate the confiture script using the
-autools:
+To build from git sources you need to generate the configure script using the
+autotools:
 
  $ ./autogen.sh
 
