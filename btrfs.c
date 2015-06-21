@@ -24,6 +24,7 @@
 #include "cmds/commands.h"
 #include "common/utils.h"
 #include "common/help.h"
+#include "common/box.h"
 
 static const char * const btrfs_cmd_group_usage[] = {
 	"btrfs [--help] [--version] [--format <format>] <group> [<group>...] <command> [<args>]",
@@ -154,15 +155,33 @@ int handle_command_group(const struct cmd_struct *cmd, int argc,
 static const struct cmd_group btrfs_cmd_group;
 
 static const char * const cmd_help_usage[] = {
-	"btrfs help [--full]",
+	"btrfs help [--full] [--box]",
 	"Display help information",
 	"",
 	"--full     display detailed help on every command",
+	"--box      show list of built-in tools (busybox style)",
 	NULL
 };
 
 static int cmd_help(const struct cmd_struct *unused, int argc, char **argv)
 {
+	int i;
+
+	for (i = 0; i < argc; i++) {
+		if (strcmp(argv[i], "--box") == 0) {
+#if ENABLE_BOX
+			printf("Standalone tools built-in in the busybox style:\n");
+			printf("- mkfs.btrfs\n");
+			printf("- btrfs-image\n");
+			printf("- btrfs-convert\n");
+			printf("- btrfstune\n");
+			printf("- btrfs-find-root\n");
+#else
+			printf("No standalone tools built-in in the busybox style\n");
+#endif
+			exit(0);
+		}
+	}
 	help_command_group(&btrfs_cmd_group, argc, argv);
 	return 0;
 }
@@ -331,6 +350,16 @@ int main(int argc, char **argv)
 
 	if (!strcmp(bname, "btrfsck")) {
 		argv[0] = "check";
+#ifdef ENABLE_BOX
+	} else if (!strcmp(bname, "mkfs.btrfs")) {
+		return mkfs_main(argc, argv);
+	} else if (!strcmp(bname, "btrfs-image")) {
+		return image_main(argc, argv);
+	} else if (!strcmp(bname, "btrfs-convert")) {
+		return convert_main(argc, argv);
+	} else if (!strcmp(bname, "btrfstune")) {
+		return btrfstune_main(argc, argv);
+#endif
 	} else {
 		int shift;
 

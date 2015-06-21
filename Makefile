@@ -7,6 +7,11 @@
 #   clean       clean built binaries (not the documentation)
 #   clean-all   clean as above, clean docs and generated files
 #
+# All-in-one binary (busybox style):
+#   btrfs.box         single binary with functionality of mkfs.btrfs, btrfs-image,
+#                     btrfs-convert and btrfstune, selected by the file name
+#   btrfs.box.static  dtto, static version
+#
 # Tuning by variables (environment or make arguments):
 #   V=1            verbose, print command lines (default: quiet)
 #   C=1            run checker before compilation (default checker: sparse)
@@ -226,6 +231,19 @@ endif
 
 MAKEOPTS = --no-print-directory Q=$(Q)
 
+# built-in sources into "busybox", all files that contain the main function and
+# are not compiled standalone
+progs_box_main = btrfs.o mkfs/main.o image/main.o convert/main.o \
+		 btrfstune.o
+
+progs_box_all_objects = $(mkfs_objects) $(image_objects) $(convert_objects)
+progs_box_all_static_objects = $(static_mkfs_objects) $(static_image_objects) \
+			       $(static_convert_objects)
+
+progs_box_objects = $(filter-out %/main.o, $(progs_box_all_objects)) \
+		    $(patsubst %.o, %.box.o, $(progs_box_main))
+progs_box_static_objects = $(filter-out %/main.static.o, $(progs_box_all_static_objects)) \
+		    $(patsubst %.o, %.box.static.o, $(progs_box_main))
 
 # Programs to install.
 progs_install = btrfs mkfs.btrfs btrfs-map-logical btrfs-image \
@@ -336,6 +354,14 @@ endif
 	@echo "    [CC]     $@"
 	$(Q)$(CC) $(STATIC_CFLAGS) -c $< -o $@ $($(subst /,_,$(subst -,_,$(@:%.static.o=%)-cflags))) \
 		$($(subst -,_,btrfs-$(@:%/$(notdir $@)=%)-cflags))
+
+%.box.o: %.c
+	@echo "    [CC]     $@"
+	$(Q)$(CC) -DENABLE_BOX=1 $(CFLAGS) $(btrfs_convert_cflags) -c $< -o $@
+
+%.box.static.o: %.c
+	@echo "    [CC]     $@"
+	$(Q)$(CC) -DENABLE_BOX=1 $(STATIC_CFLAGS) $(btrfs_convert_cflags) -c $< -o $@
 
 all: $(progs_build) $(libs_build) $(BUILDDIRS)
 ifeq ($(PYTHON_BINDINGS),1)
@@ -488,6 +514,25 @@ btrfs: btrfs.o $(objects) $(cmds_objects) $(libs_static)
 btrfs.static: btrfs.static.o $(static_objects) $(static_cmds_objects) $(static_libbtrfs_objects) $(static_libbtrfsutil_objects)
 	@echo "    [LD]     $@"
 	$(Q)$(CC) -o $@ $^ $(STATIC_LDFLAGS) $(STATIC_LIBS) $(STATIC_LIBS_COMP)
+
+btrfs.box: btrfs.box.o $(objects) $(cmds_objects) $(progs_box_objects) $(libs_static)
+	@echo "    [LD]     $@"
+	$(Q)$(CC) -o $@ $^ $(btrfs_convert_libs) $(LDFLAGS) $(LIBS) $(LIBS_COMP)
+
+btrfs.box.static: btrfs.box.static.o $(static_objects) $(static_cmds_objects) $(progs_box_static_objects) $(static_libbtrfs_objects) $(static_libbtrfsutil_objects)
+	@echo "    [LD]     $@"
+	$(Q)$(CC) $(STATIC_CFLAGS) -o $@ $^ $(btrfs_convert_libs) \
+		$(STATIC_LDFLAGS) $(STATIC_LIBS) $(STATIC_LIBS_COMP)
+
+box-links: btrfs.box
+	@echo "    [LN]     mkfs.btrfs"
+	$(Q)$(LN_S) -sf btrfs.box mkfs.btrfs
+	@echo "    [LN]     btrfs-image"
+	$(Q)$(LN_S) -sf btrfs.box btrfs-image
+	@echo "    [LN]     btrfs-convert"
+	$(Q)$(LN_S) -sf btrfs.box btrfs-convert
+	@echo "    [LN]     btrfstune"
+	$(Q)$(LN_S) -sf btrfs.box btrfstune
 
 # For backward compatibility, 'btrfs' changes behaviour to fsck if it's named 'btrfsck'
 btrfsck: btrfs
@@ -645,6 +690,7 @@ clean: $(CLEANDIRS)
 		cmds/*.o cmds/*.o.d common/*.o common/*.o.d \
 	      ioctl-test quick-test library-test library-test-static \
               mktables btrfs.static mkfs.btrfs.static fssum \
+	      btrfs.box btrfs.box.static \
 	      $(check_defs) \
 	      $(libs) $(lib_links) \
 	      $(progs_static) \

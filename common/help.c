@@ -473,6 +473,7 @@ void help_command_group(const struct cmd_group *grp, int argc, char **argv)
 	if (argc > 1) {
 		if (!strcmp(argv[1], "--full"))
 			full = 1;
+		/* The option --box is handled in the caller */
 	}
 
 	usage_command_group(grp, full, false);

@@ -54,6 +54,9 @@ function build_make_targets() {
 	# defaults, static
 	target=static
 	buildme
+	# defaults, busybox
+	target='btrfs.box btrfs.box.static'
+	buildme
 	# defaults, 32bit
 	target="EXTRA_CFLAGS=-m32"
 	buildme

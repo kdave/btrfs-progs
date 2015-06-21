@@ -47,6 +47,7 @@
 #include "mkfs/rootdir.h"
 #include "kernel-lib/crc32c.h"
 #include "common/fsfeatures.h"
+#include "common/box.h"
 
 static int verbose = 1;
 
@@ -785,7 +786,7 @@ out:
 	return ret;
 }
 
-int main(int argc, char **argv)
+int BOX_MAIN(mkfs)(int argc, char **argv)
 {
 	char *file;
 	struct btrfs_root *root;
