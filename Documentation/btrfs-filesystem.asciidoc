@@ -117,15 +117,35 @@ partition after reducing the size of the filesystem.  This can done using
 it with the new desired size.  When recreating the partition make sure to use
 the same starting disk cylinder as before.
 
-*show* [--mounted|--all-devices|<path>|<uuid>|<device>|<label>]::
+*show* [options] [<path>|<uuid>|<device>|<label>]::
 Show the btrfs filesystem with some additional info.
 +
 If no option nor <path>|<uuid>|<device>|<label> is passed, btrfs shows
 information of all the btrfs filesystem both mounted and unmounted.
-If '--mounted' is passed, it would probe btrfs kernel to list mounted btrfs
-filesystem(s);
-If '--all-devices' is passed, all the devices under /dev are scanned;
-otherwise the devices list is extracted from the /proc/partitions file.
++
+`Options`
++
+-m|--mounted::::
+probe btrfs kernel to list mounted btrfs filesystems(s)
+-d|--all-devices::::
+scan all devices under /dev, otherwise the devices list is extracted from the
+/proc/partitions file.
+--raw::::
+raw numbers in bytes, without the 'B' suffix
+--human-readable::::
+print human friendly numbers, base 1024, this is the default
+--iec::::
+select the 1024 base for the following options, according to the IEC standard
+--si::::
+select the 1000 base for the following options, according to the SI standard
+--kbytes::::
+show sizes in KiB, or kB with --si
+--mbytes::::
+show sizes in MiB, or MB with --si
+--gbytes::::
+show sizes in GiB, or GB with --si
+--tbytes::::
+show sizes in TiB, or TB with --si
 
 *sync* <path>::
 Force a sync for the filesystem identified by <path>.
