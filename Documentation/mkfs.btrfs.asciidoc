@@ -112,7 +112,7 @@ Do not perform whole device TRIM operation by default.
 
 -O|--features <feature1>[,<feature2>...]::
 A list of filesystem features turned on at mkfs time. Not all features are
-supported by old kernels.
+supported by old kernels. To disable a feature, prefix it with '^'.
 +
 To see all features run:
 +
