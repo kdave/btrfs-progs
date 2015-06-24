@@ -131,7 +131,7 @@ static void usage_command_group_internal(const struct cmd_group *grp, int full,
 	int do_sep = 0;
 
 	for (; cmd->token; cmd++) {
-		if (cmd->hidden)
+		if (cmd->flags & CMD_HIDDEN)
 			continue;
 
 		if (full && cmd != grp->commands)
@@ -176,7 +176,7 @@ void usage_command_group_short(const struct cmd_group *grp)
 
 	fprintf(outf, "Command groups:\n");
 	for (cmd = grp->commands; cmd->token; cmd++) {
-		if (cmd->hidden)
+		if (cmd->flags & CMD_HIDDEN)
 			continue;
 
 		if (!cmd->next)
@@ -187,7 +187,7 @@ void usage_command_group_short(const struct cmd_group *grp)
 
 	fprintf(outf, "\nCommands:\n");
 	for (cmd = grp->commands; cmd->token; cmd++) {
-		if (cmd->hidden)
+		if (cmd->flags & CMD_HIDDEN)
 			continue;
 
 		if (cmd->next)

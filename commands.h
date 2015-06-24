@@ -17,6 +17,10 @@
 #ifndef __BTRFS_COMMANDS_H__
 #define __BTRFS_COMMANDS_H__
 
+enum {
+	CMD_HIDDEN = (1 << 0),	/* should not be in help listings */
+};
+
 struct cmd_struct {
 	const char *token;
 	int (*fn)(int, char **);
@@ -47,8 +51,8 @@ struct cmd_struct {
 	/* should be NULL if token is not a subgroup */
 	const struct cmd_group *next;
 
-	/* if true don't list this token in help listings */
-	int hidden;
+	/* CMD_* flags above */
+	int flags;
 };
 
 #define NULL_CMD_STRUCT {NULL, NULL, NULL, NULL, 0}

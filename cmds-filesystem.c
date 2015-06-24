@@ -1382,7 +1382,7 @@ const struct cmd_group filesystem_cmd_group = {
 		{ "show", cmd_show, cmd_show_usage, NULL, 0 },
 		{ "sync", cmd_sync, cmd_sync_usage, NULL, 0 },
 		{ "defragment", cmd_defrag, cmd_defrag_usage, NULL, 0 },
-		{ "balance", cmd_balance, NULL, &balance_cmd_group, 1 },
+		{ "balance", cmd_balance, NULL, &balance_cmd_group, CMD_HIDDEN },
 		{ "resize", cmd_resize, cmd_resize_usage, NULL, 0 },
 		{ "label", cmd_label, cmd_label_usage, NULL, 0 },
 		{ "usage", cmd_filesystem_usage,
