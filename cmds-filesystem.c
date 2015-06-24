@@ -1127,7 +1127,7 @@ static int cmd_defrag(int argc, char **argv)
 	int flush = 0;
 	u64 start = 0;
 	u64 len = (u64)-1;
-	u32 thresh = 0;
+	u64 thresh = 0;
 	int i;
 	int recursive = 0;
 	int ret = 0;
@@ -1186,7 +1186,7 @@ static int cmd_defrag(int argc, char **argv)
 	memset(&defrag_global_range, 0, sizeof(range));
 	defrag_global_range.start = start;
 	defrag_global_range.len = len;
-	defrag_global_range.extent_thresh = thresh;
+	defrag_global_range.extent_thresh = thresh > (u32)-1 ? (u32)-1 : (u32)thresh;
 	if (compress_type) {
 		defrag_global_range.flags |= BTRFS_DEFRAG_RANGE_COMPRESS;
 		defrag_global_range.compress_type = compress_type;
