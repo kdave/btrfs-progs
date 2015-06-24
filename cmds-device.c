@@ -143,20 +143,14 @@ error_out:
 	return !!ret;
 }
 
-static const char * const cmd_rm_dev_usage[] = {
-	"btrfs device delete <device> [<device>...] <path>",
-	"Remove a device from a filesystem",
-	NULL
-};
-
-static int cmd_rm_dev(int argc, char **argv)
+static int _cmd_rm_dev(int argc, char **argv, const char * const *usagestr)
 {
 	char	*mntpnt;
 	int	i, fdmnt, ret=0, e;
 	DIR	*dirstream = NULL;
 
 	if (check_argc_min(argc, 3))
-		usage(cmd_rm_dev_usage);
+		usage(usagestr);
 
 	mntpnt = argv[argc - 1];
 
@@ -196,6 +190,28 @@ static int cmd_rm_dev(int argc, char **argv)
 
 	close_file_or_dir(fdmnt, dirstream);
 	return !!ret;
+}
+
+static const char * const cmd_rm_dev_usage[] = {
+	"btrfs device remove <device> [<device>...] <path>",
+	"Remove a device from a filesystem",
+	NULL
+};
+
+static int cmd_rm_dev(int argc, char **argv)
+{
+	return _cmd_rm_dev(argc, argv, cmd_rm_dev_usage);
+}
+
+static const char * const cmd_del_dev_usage[] = {
+	"btrfs device delete <device> [<device>...] <path>",
+	"Remove a device from a filesystem",
+	NULL
+};
+
+static int cmd_del_dev(int argc, char **argv)
+{
+	return _cmd_rm_dev(argc, argv, cmd_del_dev_usage);
 }
 
 static const char * const cmd_scan_dev_usage[] = {
@@ -590,7 +606,8 @@ static const char device_cmd_group_info[] =
 const struct cmd_group device_cmd_group = {
 	device_cmd_group_usage, device_cmd_group_info, {
 		{ "add", cmd_add_dev, cmd_add_dev_usage, NULL, 0 },
-		{ "delete", cmd_rm_dev, cmd_rm_dev_usage, NULL, 0 },
+		{ "delete", cmd_del_dev, cmd_del_dev_usage, NULL, CMD_ALIAS },
+		{ "remove", cmd_rm_dev, cmd_rm_dev_usage, NULL, 0 },
 		{ "scan", cmd_scan_dev, cmd_scan_dev_usage, NULL, 0 },
 		{ "ready", cmd_ready_dev, cmd_ready_dev_usage, NULL, 0 },
 		{ "stats", cmd_dev_stats, cmd_dev_stats_usage, NULL, 0 },

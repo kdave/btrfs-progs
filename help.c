@@ -79,11 +79,13 @@ static int do_usage_one_command(const char * const *usagestr,
 
 static int usage_command_internal(const char * const *usagestr,
 				  const char *token, int full, int lst,
-				  FILE *outf)
+				  int alias, FILE *outf)
 {
-	unsigned int flags = USAGE_SHORT;
+	unsigned int flags = 0;
 	int ret;
 
+	if (!alias)
+		flags |= USAGE_SHORT;
 	if (full)
 		flags |= USAGE_LONG | USAGE_OPTIONS;
 	if (lst)
@@ -108,7 +110,7 @@ static void usage_command_usagestr(const char * const *usagestr,
 	FILE *outf = err ? stderr : stdout;
 	int ret;
 
-	ret = usage_command_internal(usagestr, token, full, 0, outf);
+	ret = usage_command_internal(usagestr, token, full, 0, 0, outf);
 	if (!ret)
 		fputc('\n', outf);
 }
@@ -144,7 +146,7 @@ static void usage_command_group_internal(const struct cmd_group *grp, int full,
 			}
 
 			usage_command_internal(cmd->usagestr, cmd->token, full,
-					       1, outf);
+					       1, cmd->flags & CMD_ALIAS, outf);
 			continue;
 		}
 

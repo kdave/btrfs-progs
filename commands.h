@@ -19,6 +19,7 @@
 
 enum {
 	CMD_HIDDEN = (1 << 0),	/* should not be in help listings */
+	CMD_ALIAS = (1 << 1),	/* alias of next command in cmd_group */
 };
 
 struct cmd_struct {
