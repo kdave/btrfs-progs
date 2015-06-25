@@ -1170,6 +1170,11 @@ static int cmd_defrag(int argc, char **argv)
 			break;
 		case 't':
 			thresh = parse_size(optarg);
+			if (thresh > (u32)-1) {
+				fprintf(stderr,
+			"WARNING: target extent size %llu too big, trimmed to %u",
+					thresh, (u32)-1);
+			}
 			defrag_global_fancy_ioctl = 1;
 			break;
 		case 'r':
@@ -1186,7 +1191,7 @@ static int cmd_defrag(int argc, char **argv)
 	memset(&defrag_global_range, 0, sizeof(range));
 	defrag_global_range.start = start;
 	defrag_global_range.len = len;
-	defrag_global_range.extent_thresh = thresh > (u32)-1 ? (u32)-1 : (u32)thresh;
+	defrag_global_range.extent_thresh = (u32)thresh;
 	if (compress_type) {
 		defrag_global_range.flags |= BTRFS_DEFRAG_RANGE_COMPRESS;
 		defrag_global_range.compress_type = compress_type;
