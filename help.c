@@ -35,7 +35,7 @@ static int do_usage_one_command(const char * const *usagestr,
 	if (!usagestr || !*usagestr)
 		return -1;
 
-	fprintf(outf, "%s%s\n", (flags & USAGE_LISTING) ? "    " : "usage: ",
+	fprintf(outf, "%s%s", (flags & USAGE_LISTING) ? "    " : "usage: ",
 		*usagestr++);
 
 	/* a short one-line description (mandatory) */
@@ -43,6 +43,7 @@ static int do_usage_one_command(const char * const *usagestr,
 		return 0;
 	else if (!*usagestr)
 		return -2;
+	fputc('\n', outf);
 
 	if (flags & USAGE_LISTING)
 		pad = 8;
