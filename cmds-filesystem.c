@@ -1065,7 +1065,7 @@ static const char * const cmd_defrag_usage[] = {
 	"-f             flush data to disk immediately after defragmenting",
 	"-s start       defragment only from byte onward",
 	"-l len         defragment only up to len bytes",
-	"-t size        minimal size of file to be considered for defragmenting",
+	"-t size        target extent size hint",
 	NULL
 };
 

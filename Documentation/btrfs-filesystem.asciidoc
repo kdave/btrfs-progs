@@ -49,27 +49,32 @@ Defragment file data and/or directory metadata *online*.
 If '-r' is passed, files in dir will be defragmented recursively.
 The start position and the number of bytes to defragment can be specified by
 start and len using '-s' and '-l' options below.
-Any extent bigger than threshold given by '-t' option, will be considered
-already defragged.
-Use 0 to take the kernel default.
+Extents bigger than value given by '-t' will be skipped, otherwise this value
+is used as a target extent size, but is only advisory and may not be reached
+if the free space is too fragmented.
+Use 0 to take the kernel default, which is 256kB but may change in the future.
 You can also turn on compression in defragment operations.
 +
 `Options`
 +
 -v::::
 be verbose
--c::::
-compress file contents while defragmenting
+-c[<algo>]::::
+compress file contents while defragmenting. Optional argument selects the compression
+algorithm, 'zlib' (default) or 'lzo'. Currently it's not possible to select no
+compression.
 -r::::
-defragment files recursively
+defragment files recursively in given directories
 -f::::
-flush filesystem after defragmenting
+flush data for each file before going to the next file. This will limit the amount
+of dirty data to current file, otherwise the amount cumulates from several files
+and may increase system load.
 -s <start>[kKmMgGtTpPeE]::::
 defragment only from byte <start> onward
 -l <len>[kKmMgGtTpPeE]::::
 defragment only up to <len> bytes
 -t <size>[kKmMgGtTpPeE]::::
-defragment only files at least <size> bytes big
+target extent size, do not touch extents bigger than <size>
 +
 For <start>, <len>, <size> it is possible to append
 units designator: \'K', \'M', \'G', \'T', \'P', or \'E', which represent
