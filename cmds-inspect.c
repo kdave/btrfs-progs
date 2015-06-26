@@ -293,7 +293,7 @@ static int cmd_subvolid_resolve(int argc, char **argv)
 		goto out;
 	}
 
-	path[PATH_MAX] = '\0';
+	path[PATH_MAX - 1] = '\0';
 	printf("%s\n", path);
 
 out:
