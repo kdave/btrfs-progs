@@ -75,7 +75,7 @@ COMMANDS
 	See `btrfs-rescue`(8) for details.
 
 *restore*::
-	Manage a btrfs filesystem, including label setting/sync and so on. +
+	Try to restore files from a damaged btrfs filesystem. +
 	See `btrfs-restore`(8) for details.
 
 *scrub*::
