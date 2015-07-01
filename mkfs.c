@@ -121,12 +121,13 @@ err:
 	return ret;
 }
 
-static int make_root_dir(struct btrfs_trans_handle *trans, struct btrfs_root *root,
-		int mixed, struct mkfs_allocation *allocation)
+static int create_data_block_groups(struct btrfs_trans_handle *trans,
+		struct btrfs_root *root, int mixed,
+		struct mkfs_allocation *allocation)
 {
 	u64 chunk_start = 0;
 	u64 chunk_size = 0;
-	int ret;
+	int ret = 0;
 
 	if (!mixed) {
 		ret = btrfs_alloc_chunk(trans, root->fs_info->extent_root,
@@ -144,6 +145,16 @@ static int make_root_dir(struct btrfs_trans_handle *trans, struct btrfs_root *ro
 		allocation->data += chunk_size;
 		BUG_ON(ret);
 	}
+
+err:
+	return ret;
+}
+
+static int make_root_dir(struct btrfs_trans_handle *trans, struct btrfs_root *root,
+		int mixed, struct mkfs_allocation *allocation)
+{
+	struct btrfs_key location;
+	int ret;
 
 	ret = btrfs_make_root_dir(trans, root->fs_info->tree_root,
 			      BTRFS_ROOT_TREE_DIR_OBJECTID);
@@ -1545,6 +1556,12 @@ int main(int ac, char **av)
 
 	trans = btrfs_start_transaction(root, 1);
 	BUG_ON(!trans);
+
+	ret = create_data_block_groups(trans, root, mixed, &allocation);
+	if (ret) {
+		fprintf(stderr, "failed to create default data block groups\n");
+		exit(1);
+	}
 
 	ret = make_root_dir(trans, root, mixed, &allocation);
 	if (ret) {
