@@ -1516,7 +1516,7 @@ int main(int ac, char **av)
 	mkfs_cfg.stripesize = stripesize;
 	mkfs_cfg.features = features;
 
-	ret = make_btrfs(fd, file, &mkfs_cfg);
+	ret = make_btrfs(fd, &mkfs_cfg);
 	if (ret) {
 		fprintf(stderr, "error during mkfs: %s\n", strerror(-ret));
 		exit(1);

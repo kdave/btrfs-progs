@@ -2348,7 +2348,7 @@ static int do_convert(const char *devname, int datacsum, int packing, int noxatt
 	mkfs_cfg.stripesize = blocksize;
 	mkfs_cfg.features = features;
 
-	ret = make_btrfs(fd, devname, &mkfs_cfg);
+	ret = make_btrfs(fd, &mkfs_cfg);
 	if (ret) {
 		fprintf(stderr, "unable to create initial ctree: %s\n",
 			strerror(-ret));

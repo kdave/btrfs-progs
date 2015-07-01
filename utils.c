@@ -177,7 +177,7 @@ int test_uuid_unique(char *fs_uuid)
 /*
  * @fs_uuid - if NULL, generates a UUID, returns back the new filesystem UUID
  */
-int make_btrfs(int fd, const char *device, struct btrfs_mkfs_config *cfg)
+int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 {
 	struct btrfs_super_block super;
 	struct extent_buffer *buf = NULL;
