@@ -521,6 +521,20 @@ btrfs_check_leaf(struct btrfs_root *root, struct btrfs_disk_key *parent_key,
 			goto fail;
 		}
 	}
+
+	for (i = 0; i < nritems; i++) {
+		if (btrfs_item_end_nr(buf, i) > BTRFS_LEAF_DATA_SIZE(root)) {
+			btrfs_item_key(buf, &key, 0);
+			btrfs_print_key(&key);
+			fflush(stdout);
+			ret = BTRFS_TREE_BLOCK_INVALID_OFFSETS;
+			fprintf(stderr, "slot end outside of leaf %llu > %llu\n",
+				(unsigned long long)btrfs_item_end_nr(buf, i),
+				(unsigned long long)BTRFS_LEAF_DATA_SIZE(root));
+			goto fail;
+		}
+	}
+
 	return BTRFS_TREE_BLOCK_CLEAN;
 fail:
 	if (btrfs_header_owner(buf) == BTRFS_EXTENT_TREE_OBJECTID) {
