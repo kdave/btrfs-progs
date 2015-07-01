@@ -33,7 +33,7 @@ _btrfs()
     commands_subvolume='create delete list snapshot find-new get-default set-default show sync'
     commands_filesystem='defragment sync resize show df label usage'
     commands_balance='start pause cancel resume status'
-    commands_device='scan add delete ready stats usage'
+    commands_device='scan add delete remove ready stats usage'
     commands_scrub='start cancel resume status'
     commands_rescue='chunk-recover super-recover'
     commands_inspect_internal='inode-resolve logical-resolve subvolid-resolve rootid'
