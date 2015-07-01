@@ -121,17 +121,12 @@ err:
 	return ret;
 }
 
-static int make_root_dir(struct btrfs_root *root, int mixed,
-				struct mkfs_allocation *allocation)
+static int make_root_dir(struct btrfs_trans_handle *trans, struct btrfs_root *root,
+		int mixed, struct mkfs_allocation *allocation)
 {
-	struct btrfs_trans_handle *trans;
-	struct btrfs_key location;
 	u64 chunk_start = 0;
 	u64 chunk_size = 0;
 	int ret;
-
-	trans = btrfs_start_transaction(root, 1);
-	BUG_ON(!trans);
 
 	if (!mixed) {
 		ret = btrfs_alloc_chunk(trans, root->fs_info->extent_root,
@@ -172,7 +167,6 @@ static int make_root_dir(struct btrfs_root *root, int mixed,
 	if (ret)
 		goto err;
 
-	btrfs_commit_transaction(trans, root);
 err:
 	return ret;
 }
@@ -1549,11 +1543,16 @@ int main(int ac, char **av)
 		exit(1);
 	}
 
-	ret = make_root_dir(root, mixed, &allocation);
+	trans = btrfs_start_transaction(root, 1);
+	BUG_ON(!trans);
+
+	ret = make_root_dir(trans, root, mixed, &allocation);
 	if (ret) {
 		fprintf(stderr, "failed to setup the root directory\n");
 		exit(1);
 	}
+
+	btrfs_commit_transaction(trans, root);
 
 	trans = btrfs_start_transaction(root, 1);
 
