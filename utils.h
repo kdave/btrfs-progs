@@ -105,9 +105,18 @@ char* btrfs_parse_fs_features(char *namelist, u64 *flags);
 void btrfs_process_fs_features(u64 flags);
 void btrfs_parse_features_to_string(char *buf, u64 flags);
 
-int make_btrfs(int fd, const char *device, const char *label,
-	       char *fs_uuid, u64 blocks[6], u64 num_bytes, u32 nodesize,
-	       u32 sectorsize, u32 stripesize, u64 features);
+struct btrfs_mkfs_config {
+	char *label;
+	char *fs_uuid;
+	u64 blocks[8];
+	u64 num_bytes;
+	u32 nodesize;
+	u32 sectorsize;
+	u32 stripesize;
+	u64 features;
+};
+
+int make_btrfs(int fd, const char *device, struct btrfs_mkfs_config *cfg);
 int btrfs_make_root_dir(struct btrfs_trans_handle *trans,
 			struct btrfs_root *root, u64 objectid);
 int btrfs_prepare_device(int fd, char *file, int zero_end, u64 *block_count_ret,

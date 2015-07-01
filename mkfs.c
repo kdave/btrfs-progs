@@ -1187,7 +1187,6 @@ int main(int ac, char **av)
 	int discard = 1;
 	int ssd = 0;
 	int force_overwrite = 0;
-
 	char *source_dir = NULL;
 	int source_dir_set = 0;
 	u64 num_of_meta_chunks = 0;
@@ -1198,6 +1197,7 @@ int main(int ac, char **av)
 	char fs_uuid[BTRFS_UUID_UNPARSED_SIZE] = { 0 };
 	u64 features = BTRFS_MKFS_DEFAULT_FEATURES;
 	struct mkfs_allocation allocation = { 0 };
+	struct btrfs_mkfs_config mkfs_cfg;
 
 	while(1) {
 		int c;
@@ -1507,8 +1507,16 @@ int main(int ac, char **av)
 		features |= BTRFS_FEATURE_INCOMPAT_RAID56;
 	}
 
-	ret = make_btrfs(fd, file, label, fs_uuid, blocks, dev_block_count,
-			 nodesize, sectorsize, stripesize, features);
+	mkfs_cfg.label = label;
+	mkfs_cfg.fs_uuid = fs_uuid;
+	memcpy(mkfs_cfg.blocks, blocks, sizeof(blocks));
+	mkfs_cfg.num_bytes = dev_block_count;
+	mkfs_cfg.nodesize = nodesize;
+	mkfs_cfg.sectorsize = sectorsize;
+	mkfs_cfg.stripesize = stripesize;
+	mkfs_cfg.features = features;
+
+	ret = make_btrfs(fd, file, &mkfs_cfg);
 	if (ret) {
 		fprintf(stderr, "error during mkfs: %s\n", strerror(-ret));
 		exit(1);

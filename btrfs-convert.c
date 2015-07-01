@@ -2289,6 +2289,7 @@ static int do_convert(const char *devname, int datacsum, int packing, int noxatt
 	struct btrfs_root *image_root;
 	struct task_ctx ctx;
 	char features_buf[64];
+	struct btrfs_mkfs_config mkfs_cfg;
 
 	ret = open_ext2fs(devname, &ext2_fs);
 	if (ret) {
@@ -2337,9 +2338,17 @@ static int do_convert(const char *devname, int datacsum, int packing, int noxatt
 	printf("\tblocksize: %u\n", blocksize);
 	printf("\tnodesize:  %u\n", nodesize);
 	printf("\tfeatures:  %s\n", features_buf);
-	ret = make_btrfs(fd, devname, ext2_fs->super->s_volume_name,
-			 NULL, blocks, total_bytes, nodesize,
-			 blocksize, blocksize, features);
+
+	mkfs_cfg.label = ext2_fs->super->s_volume_name;
+	mkfs_cfg.fs_uuid = NULL;
+	memcpy(mkfs_cfg.blocks, blocks, sizeof(blocks));
+	mkfs_cfg.num_bytes = total_bytes;
+	mkfs_cfg.nodesize = nodesize;
+	mkfs_cfg.sectorsize = blocksize;
+	mkfs_cfg.stripesize = blocksize;
+	mkfs_cfg.features = features;
+
+	ret = make_btrfs(fd, devname, &mkfs_cfg);
 	if (ret) {
 		fprintf(stderr, "unable to create initial ctree: %s\n",
 			strerror(-ret));
