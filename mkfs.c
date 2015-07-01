@@ -59,11 +59,10 @@ struct mkfs_allocation {
 	u64 system;
 };
 
-static int make_root_dir(struct btrfs_root *root, int mixed,
+static int create_metadata_block_groups(struct btrfs_root *root, int mixed,
 				struct mkfs_allocation *allocation)
 {
 	struct btrfs_trans_handle *trans;
-	struct btrfs_key location;
 	u64 bytes_used;
 	u64 chunk_start = 0;
 	u64 chunk_size = 0;
@@ -117,6 +116,20 @@ static int make_root_dir(struct btrfs_root *root, int mixed,
 
 	root->fs_info->system_allocs = 0;
 	btrfs_commit_transaction(trans, root);
+
+err:
+	return ret;
+}
+
+static int make_root_dir(struct btrfs_root *root, int mixed,
+				struct mkfs_allocation *allocation)
+{
+	struct btrfs_trans_handle *trans;
+	struct btrfs_key location;
+	u64 chunk_start = 0;
+	u64 chunk_size = 0;
+	int ret;
+
 	trans = btrfs_start_transaction(root, 1);
 	BUG_ON(!trans);
 
@@ -1529,6 +1542,12 @@ int main(int ac, char **av)
 		exit(1);
 	}
 	root->fs_info->alloc_start = alloc_start;
+
+	ret = create_metadata_block_groups(root, mixed, &allocation);
+	if (ret) {
+		fprintf(stderr, "failed to create default block groups\n");
+		exit(1);
+	}
 
 	ret = make_root_dir(root, mixed, &allocation);
 	if (ret) {
