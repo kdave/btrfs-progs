@@ -247,8 +247,7 @@ static int create_one_raid_group(struct btrfs_trans_handle *trans,
 
 static int create_raid_groups(struct btrfs_trans_handle *trans,
 			      struct btrfs_root *root, u64 data_profile,
-			      int data_profile_opt, u64 metadata_profile,
-			      int mixed,
+			      u64 metadata_profile, int mixed,
 			      struct mkfs_allocation *allocation)
 {
 	u64 num_devices = btrfs_super_num_devices(root->fs_info->super_copy);
@@ -1630,8 +1629,7 @@ int main(int ac, char **av)
 raid_groups:
 	if (!source_dir_set) {
 		ret = create_raid_groups(trans, root, data_profile,
-				 data_profile_opt, metadata_profile,
-				 mixed, &allocation);
+				 metadata_profile, mixed, &allocation);
 		BUG_ON(ret);
 	}
 
