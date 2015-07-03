@@ -299,6 +299,7 @@ static void btrfs_corrupt_extent_tree(struct btrfs_trans_handle *trans,
 
 enum btrfs_inode_field {
 	BTRFS_INODE_FIELD_ISIZE,
+	BTRFS_INODE_FIELD_NBYTES,
 	BTRFS_INODE_FIELD_BAD,
 };
 
@@ -335,6 +336,8 @@ static enum btrfs_inode_field convert_inode_field(char *field)
 {
 	if (!strncmp(field, "isize", FIELD_BUF_LEN))
 		return BTRFS_INODE_FIELD_ISIZE;
+	if (!strncmp(field, "nbytes", FIELD_BUF_LEN))
+		return BTRFS_INODE_FIELD_NBYTES;
 	return BTRFS_INODE_FIELD_BAD;
 }
 
@@ -592,6 +595,11 @@ static int corrupt_inode(struct btrfs_trans_handle *trans,
 		orig = btrfs_inode_size(path->nodes[0], ei);
 		bogus = generate_u64(orig);
 		btrfs_set_inode_size(path->nodes[0], ei, bogus);
+		break;
+	case BTRFS_INODE_FIELD_NBYTES:
+		orig = btrfs_inode_nbytes(path->nodes[0], ei);
+		bogus = generate_u64(orig);
+		btrfs_set_inode_nbytes(path->nodes[0], ei, bogus);
 		break;
 	default:
 		ret = -EINVAL;
