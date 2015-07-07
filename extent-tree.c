@@ -3448,6 +3448,42 @@ int btrfs_update_block_group(struct btrfs_trans_handle *trans,
 }
 
 /*
+ * Just remove a block group item in extent tree
+ * Caller should ensure the block group is empty and all space is pinned.
+ * Or new tree block/data may be allocated into it.
+ */
+static int free_block_group_item(struct btrfs_trans_handle *trans,
+				 struct btrfs_fs_info *fs_info,
+				 u64 bytenr, u64 len)
+{
+	struct btrfs_path *path;
+	struct btrfs_key key;
+	struct btrfs_root *root = fs_info->extent_root;
+	int ret = 0;
+
+	key.objectid = bytenr;
+	key.offset = len;
+	key.type = BTRFS_BLOCK_GROUP_ITEM_KEY;
+
+	path = btrfs_alloc_path();
+	if (!path)
+		return -ENOMEM;
+
+	ret = btrfs_search_slot(trans, root, &key, path, -1, 1);
+	if (ret > 0) {
+		ret = -ENOENT;
+		goto out;
+	}
+	if (ret < 0)
+		goto out;
+
+	ret = btrfs_del_item(trans, root, path);
+out:
+	btrfs_free_path(path);
+	return ret;
+}
+
+/*
  * Fixup block accounting. The initial block accounting created by
  * make_block_groups isn't accuracy in this case.
  */
