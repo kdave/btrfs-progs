@@ -1177,6 +1177,149 @@ static void list_all_devices(struct btrfs_root *root)
 	printf("\n");
 }
 
+static int is_temp_block_group(struct extent_buffer *node,
+			       struct btrfs_block_group_item *bgi,
+			       u64 data_profile, u64 meta_profile,
+			       u64 sys_profile)
+{
+	u64 flag = btrfs_disk_block_group_flags(node, bgi);
+	u64 flag_type = flag & BTRFS_BLOCK_GROUP_TYPE_MASK;
+	u64 flag_profile = flag & BTRFS_BLOCK_GROUP_PROFILE_MASK;
+	u64 used = btrfs_disk_block_group_used(node, bgi);
+
+	/*
+	 * Chunks meets all the following conditions is a temp chunk
+	 * 1) Empty chunk
+	 * Temp chunk is always empty.
+	 *
+	 * 2) profile dismatch with mkfs profile.
+	 * Temp chunk is always in SINGLE
+	 *
+	 * 3) Size differs with mkfs_alloc
+	 * Special case for SINGLE/SINGLE btrfs.
+	 * In that case, temp data chunk and real data chunk are always empty.
+	 * So we need to use mkfs_alloc to be sure which chunk is the newly
+	 * allocated.
+	 *
+	 * Normally, new chunk size is equal to mkfs one (One chunk)
+	 * If it has multiple chunks, we just refuse to delete any one.
+	 * As they are all single, so no real problem will happen.
+	 * So only use condition 1) and 2) to judge them.
+	 */
+	if (used != 0)
+		return 0;
+	switch (flag_type) {
+	case BTRFS_BLOCK_GROUP_DATA:
+	case BTRFS_BLOCK_GROUP_DATA | BTRFS_BLOCK_GROUP_METADATA:
+		data_profile &= BTRFS_BLOCK_GROUP_PROFILE_MASK;
+		if (flag_profile != data_profile)
+			return 1;
+		break;
+	case BTRFS_BLOCK_GROUP_METADATA:
+		meta_profile &= BTRFS_BLOCK_GROUP_PROFILE_MASK;
+		if (flag_profile != meta_profile)
+			return 1;
+		break;
+	case BTRFS_BLOCK_GROUP_SYSTEM:
+		sys_profile &= BTRFS_BLOCK_GROUP_PROFILE_MASK;
+		if (flag_profile != sys_profile)
+			return 1;
+		break;
+	}
+	return 0;
+}
+
+/* Note: if current is a block group, it will skip it anyway */
+static int next_block_group(struct btrfs_root *root,
+			    struct btrfs_path *path)
+{
+	struct btrfs_key key;
+	int ret = 0;
+
+	while (1) {
+		ret = btrfs_next_item(root, path);
+		if (ret)
+			goto out;
+
+		btrfs_item_key_to_cpu(path->nodes[0], &key, path->slots[0]);
+		if (key.type == BTRFS_BLOCK_GROUP_ITEM_KEY)
+			goto out;
+	}
+out:
+	return ret;
+}
+
+/* This function will cleanup  */
+static int cleanup_temp_chunks(struct btrfs_fs_info *fs_info,
+			       struct mkfs_allocation *alloc,
+			       u64 data_profile, u64 meta_profile,
+			       u64 sys_profile)
+{
+	struct btrfs_trans_handle *trans = NULL;
+	struct btrfs_block_group_item *bgi;
+	struct btrfs_root *root = fs_info->extent_root;
+	struct btrfs_key key;
+	struct btrfs_key found_key;
+	struct btrfs_path *path;
+	int ret = 0;
+
+	path = btrfs_alloc_path();
+	if (!path) {
+		ret = -ENOMEM;
+		goto out;
+	}
+
+	trans = btrfs_start_transaction(root, 1);
+
+	key.objectid = 0;
+	key.type = BTRFS_BLOCK_GROUP_ITEM_KEY;
+	key.offset = 0;
+
+	while (1) {
+		/*
+		 * as the rest of the loop may modify the tree, we need to
+		 * start a new search each time.
+		 */
+		ret = btrfs_search_slot(trans, root, &key, path, 0, 0);
+		if (ret < 0)
+			goto out;
+
+		btrfs_item_key_to_cpu(path->nodes[0], &found_key,
+				      path->slots[0]);
+		if (found_key.objectid < key.objectid)
+			goto out;
+		if (found_key.type != BTRFS_BLOCK_GROUP_ITEM_KEY) {
+			ret = next_block_group(root, path);
+			if (ret < 0)
+				goto out;
+			if (ret > 0) {
+				ret = 0;
+				goto out;
+			}
+			btrfs_item_key_to_cpu(path->nodes[0], &found_key,
+					      path->slots[0]);
+		}
+
+		bgi = btrfs_item_ptr(path->nodes[0], path->slots[0],
+				     struct btrfs_block_group_item);
+		if (is_temp_block_group(path->nodes[0], bgi,
+					data_profile, meta_profile,
+					sys_profile)) {
+			ret = btrfs_free_block_group(trans, fs_info,
+					found_key.objectid, found_key.offset);
+			if (ret < 0)
+				goto out;
+		}
+		btrfs_release_path(path);
+		key.objectid = found_key.objectid + found_key.offset;
+	}
+out:
+	if (trans)
+		btrfs_commit_transaction(trans, root);
+	btrfs_free_path(path);
+	return ret;
+}
+
 int main(int ac, char **av)
 {
 	char *file;
@@ -1649,6 +1792,12 @@ raid_groups:
 		ret = make_image(source_dir, root, fd);
 		BUG_ON(ret);
 	}
+	ret = cleanup_temp_chunks(root->fs_info, &allocation, data_profile,
+				  metadata_profile, metadata_profile);
+	if (ret < 0) {
+		fprintf(stderr, "Failed to cleanup temporary chunks\n");
+		goto out;
+	}
 
 	if (verbose) {
 		char features_buf[64];
@@ -1683,6 +1832,7 @@ raid_groups:
 		list_all_devices(root);
 	}
 
+out:
 	ret = close_ctree(root);
 	BUG_ON(ret);
 	free(label);
