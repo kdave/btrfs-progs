@@ -13,11 +13,6 @@ DESCRIPTION
 -----------
 *btrfs replace* is used to replace btrfs managed devices with other device.
 
-NOTE: this is not currently supported for RAID5/6 profiles and must use the
-device add/delete workaround.
-It is recommended to see `btrfs-device`(8) for more details about btrfs device
-management.
-
 SUBCOMMAND
 ----------
 *cancel* <mount_point>::
