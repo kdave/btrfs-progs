@@ -98,7 +98,7 @@ static int dev_replace_handle_sigint(int fd)
 	return sigaction(SIGINT, &sa, NULL);
 }
 
-static const char *const cmd_start_replace_usage[] = {
+static const char *const cmd_replace_start_usage[] = {
 	"btrfs replace start [-Bfr] <srcdev>|<devid> <targetdev> <mount_point>",
 	"Replace device of a btrfs filesystem.",
 	"On a live filesystem, duplicate the data to the target device which",
@@ -124,7 +124,7 @@ static const char *const cmd_start_replace_usage[] = {
 	NULL
 };
 
-static int cmd_start_replace(int argc, char **argv)
+static int cmd_replace_start(int argc, char **argv)
 {
 	struct btrfs_ioctl_dev_replace_args start_args = {0};
 	struct btrfs_ioctl_dev_replace_args status_args = {0};
@@ -156,7 +156,7 @@ static int cmd_start_replace(int argc, char **argv)
 			break;
 		case '?':
 		default:
-			usage(cmd_start_replace_usage);
+			usage(cmd_replace_start_usage);
 		}
 	}
 
@@ -165,7 +165,7 @@ static int cmd_start_replace(int argc, char **argv)
 		 BTRFS_IOCTL_DEV_REPLACE_CONT_READING_FROM_SRCDEV_MODE_AVOID :
 		 BTRFS_IOCTL_DEV_REPLACE_CONT_READING_FROM_SRCDEV_MODE_ALWAYS;
 	if (check_argc_exact(argc - optind, 3))
-		usage(cmd_start_replace_usage);
+		usage(cmd_replace_start_usage);
 	path = argv[optind + 2];
 
 	fdmnt = open_path_or_dev_mnt(path, &dirstream);
@@ -328,7 +328,7 @@ leave_with_error:
 	return 1;
 }
 
-static const char *const cmd_status_replace_usage[] = {
+static const char *const cmd_replace_status_usage[] = {
 	"btrfs replace status [-1] <mount_point>",
 	"Print status and progress information of a running device replace",
 	"operation",
@@ -338,7 +338,7 @@ static const char *const cmd_status_replace_usage[] = {
 	NULL
 };
 
-static int cmd_status_replace(int argc, char **argv)
+static int cmd_replace_status(int argc, char **argv)
 {
 	int fd;
 	int e;
@@ -355,12 +355,12 @@ static int cmd_status_replace(int argc, char **argv)
 			break;
 		case '?':
 		default:
-			usage(cmd_status_replace_usage);
+			usage(cmd_replace_status_usage);
 		}
 	}
 
 	if (check_argc_exact(argc - optind, 1))
-		usage(cmd_status_replace_usage);
+		usage(cmd_replace_status_usage);
 
 	path = argv[optind];
 	fd = open_file_or_dir(path, &dirstream);
@@ -507,13 +507,13 @@ progress2string(char *buf, size_t s, int progress_1000)
 	return buf;
 }
 
-static const char *const cmd_cancel_replace_usage[] = {
+static const char *const cmd_replace_cancel_usage[] = {
 	"btrfs replace cancel <mount_point>",
 	"Cancel a running device replace operation.",
 	NULL
 };
 
-static int cmd_cancel_replace(int argc, char **argv)
+static int cmd_replace_cancel(int argc, char **argv)
 {
 	struct btrfs_ioctl_dev_replace_args args = {0};
 	int ret;
@@ -527,12 +527,12 @@ static int cmd_cancel_replace(int argc, char **argv)
 		switch (c) {
 		case '?':
 		default:
-			usage(cmd_cancel_replace_usage);
+			usage(cmd_replace_cancel_usage);
 		}
 	}
 
 	if (check_argc_exact(argc - optind, 1))
-		usage(cmd_cancel_replace_usage);
+		usage(cmd_replace_cancel_usage);
 
 	path = argv[optind];
 	fd = open_file_or_dir(path, &dirstream);
@@ -570,11 +570,11 @@ static const char replace_cmd_group_info[] =
 
 const struct cmd_group replace_cmd_group = {
 	replace_cmd_group_usage, replace_cmd_group_info, {
-		{ "start", cmd_start_replace, cmd_start_replace_usage, NULL,
+		{ "start", cmd_replace_start, cmd_replace_start_usage, NULL,
 		  0 },
-		{ "status", cmd_status_replace, cmd_status_replace_usage, NULL,
+		{ "status", cmd_replace_status, cmd_replace_status_usage, NULL,
 		  0 },
-		{ "cancel", cmd_cancel_replace, cmd_cancel_replace_usage, NULL,
+		{ "cancel", cmd_replace_cancel, cmd_replace_cancel_usage, NULL,
 		  0 },
 		NULL_CMD_STRUCT
 	}

@@ -33,7 +33,7 @@ static const char * const rescue_cmd_group_usage[] = {
 int btrfs_recover_chunk_tree(char *path, int verbose, int yes);
 int btrfs_recover_superblocks(char *path, int verbose, int yes);
 
-const char * const cmd_chunk_recover_usage[] = {
+const char * const cmd_rescue_chunk_recover_usage[] = {
 	"btrfs rescue chunk-recover [options] <device>",
 	"Recover the chunk tree by scanning the devices one by one.",
 	"",
@@ -43,7 +43,7 @@ const char * const cmd_chunk_recover_usage[] = {
 	NULL
 };
 
-const char * const cmd_super_recover_usage[] = {
+const char * const cmd_rescue_super_recover_usage[] = {
 	"btrfs rescue super-recover [options] <device>",
 	"Recover bad superblocks from good copies",
 	"",
@@ -52,7 +52,7 @@ const char * const cmd_super_recover_usage[] = {
 	NULL
 };
 
-int cmd_chunk_recover(int argc, char *argv[])
+int cmd_rescue_chunk_recover(int argc, char *argv[])
 {
 	int ret = 0;
 	char *file;
@@ -72,13 +72,13 @@ int cmd_chunk_recover(int argc, char *argv[])
 			break;
 		case 'h':
 		default:
-			usage(cmd_chunk_recover_usage);
+			usage(cmd_rescue_chunk_recover_usage);
 		}
 	}
 
 	argc = argc - optind;
 	if (check_argc_exact(argc, 1))
-		usage(cmd_chunk_recover_usage);
+		usage(cmd_rescue_chunk_recover_usage);
 
 	file = argv[optind];
 
@@ -112,7 +112,7 @@ int cmd_chunk_recover(int argc, char *argv[])
  *   3 : Fail to Recover bad supeblocks
  *   4 : Abort to recover bad superblocks
  */
-int cmd_super_recover(int argc, char **argv)
+int cmd_rescue_super_recover(int argc, char **argv)
 {
 	int ret;
 	int verbose = 0;
@@ -131,12 +131,12 @@ int cmd_super_recover(int argc, char **argv)
 			yes = 1;
 			break;
 		default:
-			usage(cmd_super_recover_usage);
+			usage(cmd_rescue_super_recover_usage);
 		}
 	}
 	argc = argc - optind;
 	if (check_argc_exact(argc, 1))
-		usage(cmd_super_recover_usage);
+		usage(cmd_rescue_super_recover_usage);
 
 	dname = argv[optind];
 	ret = check_mounted(dname);
@@ -206,8 +206,10 @@ static const char rescue_cmd_group_info[] =
 
 const struct cmd_group rescue_cmd_group = {
 	rescue_cmd_group_usage, rescue_cmd_group_info, {
-		{ "chunk-recover", cmd_chunk_recover, cmd_chunk_recover_usage, NULL, 0},
-		{ "super-recover", cmd_super_recover, cmd_super_recover_usage, NULL, 0},
+		{ "chunk-recover", cmd_rescue_chunk_recover,
+			cmd_rescue_chunk_recover_usage, NULL, 0},
+		{ "super-recover", cmd_rescue_super_recover,
+			cmd_rescue_super_recover_usage, NULL, 0},
 		{ "zero-log", cmd_rescue_zero_log, cmd_rescue_zero_log_usage, NULL, 0},
 		NULL_CMD_STRUCT
 	}

@@ -32,7 +32,7 @@ static const char * const property_cmd_group_usage[] = {
 	NULL
 };
 
-static const char * const cmd_get_usage[] = {
+static const char * const cmd_property_get_usage[] = {
 	"btrfs property get [-t <type>] <object> [<name>]",
 	"Gets a property from a btrfs object.",
 	"If no name is specified, all properties for the given object are",
@@ -45,7 +45,7 @@ static const char * const cmd_get_usage[] = {
 	NULL
 };
 
-static const char * const cmd_set_usage[] = {
+static const char * const cmd_property_set_usage[] = {
 	"btrfs property set [-t <type>] <object> <name> <value>",
 	"Sets a property on a btrfs object.",
 	"Please see the help of 'btrfs property get' for a description of",
@@ -53,7 +53,7 @@ static const char * const cmd_set_usage[] = {
 	NULL
 };
 
-static const char * const cmd_list_usage[] = {
+static const char * const cmd_property_list_usage[] = {
 	"btrfs property list [-t <type>] <object>",
 	"Lists available properties with their descriptions for the given object.",
 	"Please see the help of 'btrfs property get' for a description of",
@@ -394,7 +394,7 @@ static void parse_args(int argc, char **argv,
 	}
 }
 
-static int cmd_get(int argc, char **argv)
+static int cmd_property_get(int argc, char **argv)
 {
 	int ret;
 	char *object = NULL;
@@ -402,12 +402,13 @@ static int cmd_get(int argc, char **argv)
 	int types = 0;
 
 	if (check_argc_min(argc, 2) || check_argc_max(argc, 5))
-		usage(cmd_get_usage);
+		usage(cmd_property_get_usage);
 
-	parse_args(argc, argv, cmd_get_usage, &types, &object, &name, NULL);
+	parse_args(argc, argv, cmd_property_get_usage, &types, &object, &name,
+			NULL);
 	if (!object) {
 		fprintf(stderr, "ERROR: invalid arguments.\n");
-		usage(cmd_set_usage);
+		usage(cmd_property_set_usage);
 	}
 
 	if (name)
@@ -418,7 +419,7 @@ static int cmd_get(int argc, char **argv)
 	return ret;
 }
 
-static int cmd_set(int argc, char **argv)
+static int cmd_property_set(int argc, char **argv)
 {
 	int ret;
 	char *object = NULL;
@@ -427,12 +428,13 @@ static int cmd_set(int argc, char **argv)
 	int types = 0;
 
 	if (check_argc_min(argc, 4) || check_argc_max(argc, 6))
-		usage(cmd_set_usage);
+		usage(cmd_property_set_usage);
 
-	parse_args(argc, argv, cmd_set_usage, &types, &object, &name, &value);
+	parse_args(argc, argv, cmd_property_set_usage, &types,
+			&object, &name, &value);
 	if (!object || !name || !value) {
 		fprintf(stderr, "ERROR: invalid arguments.\n");
-		usage(cmd_set_usage);
+		usage(cmd_property_set_usage);
 	}
 
 	ret = setget_prop(types, object, name, value);
@@ -440,19 +442,20 @@ static int cmd_set(int argc, char **argv)
 	return ret;
 }
 
-static int cmd_list(int argc, char **argv)
+static int cmd_property_list(int argc, char **argv)
 {
 	int ret;
 	char *object = NULL;
 	int types = 0;
 
 	if (check_argc_min(argc, 2) || check_argc_max(argc, 4))
-		usage(cmd_list_usage);
+		usage(cmd_property_list_usage);
 
-	parse_args(argc, argv, cmd_list_usage, &types, &object, NULL, NULL);
+	parse_args(argc, argv, cmd_property_list_usage,
+			&types, &object, NULL, NULL);
 	if (!object) {
 		fprintf(stderr, "ERROR: invalid arguments.\n");
-		usage(cmd_set_usage);
+		usage(cmd_property_set_usage);
 	}
 
 	ret = dump_props(types, object, 1);
@@ -465,9 +468,12 @@ static const char property_cmd_group_info[] =
 
 const struct cmd_group property_cmd_group = {
 	property_cmd_group_usage, property_cmd_group_info, {
-		{ "get", cmd_get, cmd_get_usage, NULL, 0 },
-		{ "set", cmd_set, cmd_set_usage, NULL, 0 },
-		{ "list", cmd_list, cmd_list_usage, NULL, 0 },
+		{ "get", cmd_property_get,
+			cmd_property_get_usage, NULL, 0 },
+		{ "set", cmd_property_set,
+			cmd_property_set_usage, NULL, 0 },
+		{ "list", cmd_property_list,
+			cmd_property_list_usage, NULL, 0 },
 		{ 0, 0, 0, 0, 0 },
 	}
 };

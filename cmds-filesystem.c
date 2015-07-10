@@ -815,7 +815,7 @@ fail_out:
 	goto out;
 }
 
-static const char * const cmd_show_usage[] = {
+static const char * const cmd_filesystem_show_usage[] = {
 	"btrfs filesystem show [options] [<path>|<uuid>|<device>|label]",
 	"Show the structure of a filesystem",
 	"-d|--all-devices   show only disks under /dev containing btrfs filesystem",
@@ -832,7 +832,7 @@ static const char * const cmd_show_usage[] = {
 	NULL
 };
 
-static int cmd_show(int argc, char **argv)
+static int cmd_filesystem_show(int argc, char **argv)
 {
 	LIST_HEAD(all_uuids);
 	struct btrfs_fs_devices *fs_devices;
@@ -900,17 +900,17 @@ static int cmd_show(int argc, char **argv)
 			units_set_mode(&unit_mode, UNITS_HUMAN_BINARY);
 			break;
 		default:
-			usage(cmd_show_usage);
+			usage(cmd_filesystem_show_usage);
 		}
 	}
 
 	if (check_argc_max(argc, optind + 1))
-		usage(cmd_show_usage);
+		usage(cmd_filesystem_show_usage);
 
 	if (argc > optind) {
 		search = argv[optind];
 		if (strlen(search) == 0)
-			usage(cmd_show_usage);
+			usage(cmd_filesystem_show_usage);
 		type = check_arg_type(search);
 
 		/*
@@ -1007,20 +1007,20 @@ out:
 	return ret;
 }
 
-static const char * const cmd_sync_usage[] = {
+static const char * const cmd_filesystem_sync_usage[] = {
 	"btrfs filesystem sync <path>",
 	"Force a sync on a filesystem",
 	NULL
 };
 
-static int cmd_sync(int argc, char **argv)
+static int cmd_filesystem_sync(int argc, char **argv)
 {
 	int 	fd, res, e;
 	char	*path;
 	DIR	*dirstream = NULL;
 
 	if (check_argc_exact(argc, 2))
-		usage(cmd_sync_usage);
+		usage(cmd_filesystem_sync_usage);
 
 	path = argv[1];
 
@@ -1055,7 +1055,7 @@ static int parse_compress_type(char *s)
 	};
 }
 
-static const char * const cmd_defrag_usage[] = {
+static const char * const cmd_filesystem_defrag_usage[] = {
 	"btrfs filesystem defragment [options] <file>|<dir> [<file>|<dir>...]",
 	"Defragment a file or a directory",
 	"",
@@ -1121,7 +1121,7 @@ error:
 	return 0;
 }
 
-static int cmd_defrag(int argc, char **argv)
+static int cmd_filesystem_defrag(int argc, char **argv)
 {
 	int fd;
 	int flush = 0;
@@ -1181,12 +1181,12 @@ static int cmd_defrag(int argc, char **argv)
 			recursive = 1;
 			break;
 		default:
-			usage(cmd_defrag_usage);
+			usage(cmd_filesystem_defrag_usage);
 		}
 	}
 
 	if (check_argc_min(argc - optind, 1))
-		usage(cmd_defrag_usage);
+		usage(cmd_filesystem_defrag_usage);
 
 	memset(&defrag_global_range, 0, sizeof(range));
 	defrag_global_range.start = start;
@@ -1270,7 +1270,7 @@ static int cmd_defrag(int argc, char **argv)
 	return !!defrag_global_errors;
 }
 
-static const char * const cmd_resize_usage[] = {
+static const char * const cmd_filesystem_resize_usage[] = {
 	"btrfs filesystem resize [devid:][+/-]<newsize>[kKmMgGtTpPeE]|[devid:]max <path>",
 	"Resize a filesystem",
 	"If 'max' is passed, the filesystem will occupy all available space",
@@ -1279,7 +1279,7 @@ static const char * const cmd_resize_usage[] = {
 	NULL
 };
 
-static int cmd_resize(int argc, char **argv)
+static int cmd_filesystem_resize(int argc, char **argv)
 {
 	struct btrfs_ioctl_vol_args	args;
 	int	fd, res, len, e;
@@ -1288,7 +1288,7 @@ static int cmd_resize(int argc, char **argv)
 	struct stat st;
 
 	if (check_argc_exact(argc, 3))
-		usage(cmd_resize_usage);
+		usage(cmd_filesystem_resize_usage);
 
 	amount = argv[1];
 	path = argv[2];
@@ -1346,7 +1346,7 @@ static int cmd_resize(int argc, char **argv)
 	return 0;
 }
 
-static const char * const cmd_label_usage[] = {
+static const char * const cmd_filesystem_label_usage[] = {
 	"btrfs filesystem label [<device>|<mount_point>] [<newlabel>]",
 	"Get or change the label of a filesystem",
 	"With one argument, get the label of filesystem on <device>.",
@@ -1354,10 +1354,10 @@ static const char * const cmd_label_usage[] = {
 	NULL
 };
 
-static int cmd_label(int argc, char **argv)
+static int cmd_filesystem_label(int argc, char **argv)
 {
 	if (check_argc_min(argc, 2) || check_argc_max(argc, 3))
-		usage(cmd_label_usage);
+		usage(cmd_filesystem_label_usage);
 
 	if (argc > 2) {
 		return set_label(argv[1], argv[2]);
@@ -1379,12 +1379,18 @@ static const char filesystem_cmd_group_info[] =
 const struct cmd_group filesystem_cmd_group = {
 	filesystem_cmd_group_usage, filesystem_cmd_group_info, {
 		{ "df", cmd_filesystem_df, cmd_filesystem_df_usage, NULL, 0 },
-		{ "show", cmd_show, cmd_show_usage, NULL, 0 },
-		{ "sync", cmd_sync, cmd_sync_usage, NULL, 0 },
-		{ "defragment", cmd_defrag, cmd_defrag_usage, NULL, 0 },
-		{ "balance", cmd_balance, NULL, &balance_cmd_group, CMD_HIDDEN },
-		{ "resize", cmd_resize, cmd_resize_usage, NULL, 0 },
-		{ "label", cmd_label, cmd_label_usage, NULL, 0 },
+		{ "show", cmd_filesystem_show, cmd_filesystem_show_usage, NULL,
+			0 },
+		{ "sync", cmd_filesystem_sync, cmd_filesystem_sync_usage, NULL,
+			0 },
+		{ "defragment", cmd_filesystem_defrag,
+			cmd_filesystem_defrag_usage, NULL, 0 },
+		{ "balance", cmd_balance, NULL, &balance_cmd_group,
+			CMD_HIDDEN },
+		{ "resize", cmd_filesystem_resize, cmd_filesystem_resize_usage,
+			NULL, 0 },
+		{ "label", cmd_filesystem_label, cmd_filesystem_label_usage,
+			NULL, 0 },
 		{ "usage", cmd_filesystem_usage,
 			cmd_filesystem_usage_usage, NULL, 0 },
 

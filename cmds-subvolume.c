@@ -611,7 +611,7 @@ out:
 	return !!ret;
 }
 
-static const char * const cmd_snapshot_usage[] = {
+static const char * const cmd_subvol_snapshot_usage[] = {
 	"btrfs subvolume snapshot [-r] [-i <qgroupid>] <source> <dest>|[<dest>/]<name>",
 	"Create a snapshot of the subvolume",
 	"Create a writable/readonly snapshot of the subvolume <source> with",
@@ -624,7 +624,7 @@ static const char * const cmd_snapshot_usage[] = {
 	NULL
 };
 
-static int cmd_snapshot(int argc, char **argv)
+static int cmd_subvol_snapshot(int argc, char **argv)
 {
 	char	*subvol, *dst;
 	int	res, retval;
@@ -671,12 +671,12 @@ static int cmd_snapshot(int argc, char **argv)
 			}
 			break;
 		default:
-			usage(cmd_snapshot_usage);
+			usage(cmd_subvol_snapshot_usage);
 		}
 	}
 
 	if (check_argc_exact(argc - optind, 2))
-		usage(cmd_snapshot_usage);
+		usage(cmd_subvol_snapshot_usage);
 
 	subvol = argv[optind];
 	dst = argv[optind + 1];
@@ -875,13 +875,13 @@ static int cmd_subvol_set_default(int argc, char **argv)
 	return 0;
 }
 
-static const char * const cmd_find_new_usage[] = {
+static const char * const cmd_subvol_find_new_usage[] = {
 	"btrfs subvolume find-new <path> <lastgen>",
 	"List the recently modified files in a filesystem",
 	NULL
 };
 
-static int cmd_find_new(int argc, char **argv)
+static int cmd_subvol_find_new(int argc, char **argv)
 {
 	int fd;
 	int ret;
@@ -890,7 +890,7 @@ static int cmd_find_new(int argc, char **argv)
 	DIR *dirstream = NULL;
 
 	if (check_argc_exact(argc, 3))
-		usage(cmd_find_new_usage);
+		usage(cmd_subvol_find_new_usage);
 
 	subvol = argv[1];
 	last_gen = arg_strtou64(argv[2]);
@@ -1353,12 +1353,14 @@ const struct cmd_group subvolume_cmd_group = {
 		{ "create", cmd_subvol_create, cmd_subvol_create_usage, NULL, 0 },
 		{ "delete", cmd_subvol_delete, cmd_subvol_delete_usage, NULL, 0 },
 		{ "list", cmd_subvol_list, cmd_subvol_list_usage, NULL, 0 },
-		{ "snapshot", cmd_snapshot, cmd_snapshot_usage, NULL, 0 },
+		{ "snapshot", cmd_subvol_snapshot, cmd_subvol_snapshot_usage,
+			NULL, 0 },
 		{ "get-default", cmd_subvol_get_default,
 			cmd_subvol_get_default_usage, NULL, 0 },
 		{ "set-default", cmd_subvol_set_default,
 			cmd_subvol_set_default_usage, NULL, 0 },
-		{ "find-new", cmd_find_new, cmd_find_new_usage, NULL, 0 },
+		{ "find-new", cmd_subvol_find_new, cmd_subvol_find_new_usage,
+			NULL, 0 },
 		{ "show", cmd_subvol_show, cmd_subvol_show_usage, NULL, 0 },
 		{ "sync", cmd_subvol_sync, cmd_subvol_sync_usage, NULL, 0 },
 		NULL_CMD_STRUCT

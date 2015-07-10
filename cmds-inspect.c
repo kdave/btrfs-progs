@@ -82,7 +82,7 @@ out:
 	return !!ret;
 }
 
-static const char * const cmd_inode_resolve_usage[] = {
+static const char * const cmd_inspect_inode_resolve_usage[] = {
 	"btrfs inspect-internal inode-resolve [-v] <inode> <path>",
 	"Get file system paths for the given inode",
 	"",
@@ -90,7 +90,7 @@ static const char * const cmd_inode_resolve_usage[] = {
 	NULL
 };
 
-static int cmd_inode_resolve(int argc, char **argv)
+static int cmd_inspect_inode_resolve(int argc, char **argv)
 {
 	int fd;
 	int verbose = 0;
@@ -108,12 +108,12 @@ static int cmd_inode_resolve(int argc, char **argv)
 			verbose = 1;
 			break;
 		default:
-			usage(cmd_inode_resolve_usage);
+			usage(cmd_inspect_inode_resolve_usage);
 		}
 	}
 
 	if (check_argc_exact(argc - optind, 2))
-		usage(cmd_inode_resolve_usage);
+		usage(cmd_inspect_inode_resolve_usage);
 
 	fd = open_file_or_dir(argv[optind+1], &dirstream);
 	if (fd < 0) {
@@ -128,7 +128,7 @@ static int cmd_inode_resolve(int argc, char **argv)
 
 }
 
-static const char * const cmd_logical_resolve_usage[] = {
+static const char * const cmd_inspect_logical_resolve_usage[] = {
 	"btrfs inspect-internal logical-resolve [-Pv] [-s bufsize] <logical> <path>",
 	"Get file system paths for the given logical address",
 	"-P          skip the path resolving and print the inodes instead",
@@ -139,7 +139,7 @@ static const char * const cmd_logical_resolve_usage[] = {
 	NULL
 };
 
-static int cmd_logical_resolve(int argc, char **argv)
+static int cmd_inspect_logical_resolve(int argc, char **argv)
 {
 	int ret;
 	int fd;
@@ -171,12 +171,12 @@ static int cmd_logical_resolve(int argc, char **argv)
 			size = arg_strtou64(optarg);
 			break;
 		default:
-			usage(cmd_logical_resolve_usage);
+			usage(cmd_inspect_logical_resolve_usage);
 		}
 	}
 
 	if (check_argc_exact(argc - optind, 2))
-		usage(cmd_logical_resolve_usage);
+		usage(cmd_inspect_logical_resolve_usage);
 
 	size = min(size, (u64)64 * 1024);
 	inodes = malloc(size);
@@ -260,13 +260,13 @@ out:
 	return !!ret;
 }
 
-static const char * const cmd_subvolid_resolve_usage[] = {
+static const char * const cmd_inspect_subvolid_resolve_usage[] = {
 	"btrfs inspect-internal subvolid-resolve <subvolid> <path>",
 	"Get file system paths for the given subvolume ID.",
 	NULL
 };
 
-static int cmd_subvolid_resolve(int argc, char **argv)
+static int cmd_inspect_subvolid_resolve(int argc, char **argv)
 {
 	int ret;
 	int fd = -1;
@@ -275,7 +275,7 @@ static int cmd_subvolid_resolve(int argc, char **argv)
 	DIR *dirstream = NULL;
 
 	if (check_argc_exact(argc, 3))
-		usage(cmd_subvolid_resolve_usage);
+		usage(cmd_inspect_subvolid_resolve_usage);
 
 	fd = open_file_or_dir(argv[2], &dirstream);
 	if (fd < 0) {
@@ -302,13 +302,13 @@ out:
 	return ret ? 1 : 0;
 }
 
-static const char* const cmd_rootid_usage[] = {
+static const char* const cmd_inspect_rootid_usage[] = {
 	"btrfs inspect-internal rootid <path>",
 	"Get tree ID of the containing subvolume of path.",
 	NULL
 };
 
-static int cmd_rootid(int argc, char **argv)
+static int cmd_inspect_rootid(int argc, char **argv)
 {
 	int ret;
 	int fd = -1;
@@ -316,7 +316,7 @@ static int cmd_rootid(int argc, char **argv)
 	DIR *dirstream = NULL;
 
 	if (check_argc_exact(argc, 2))
-		usage(cmd_rootid_usage);
+		usage(cmd_inspect_rootid_usage);
 
 	fd = open_file_or_dir(argv[1], &dirstream);
 	if (fd < 0) {
@@ -636,13 +636,14 @@ static const char inspect_cmd_group_info[] =
 
 const struct cmd_group inspect_cmd_group = {
 	inspect_cmd_group_usage, inspect_cmd_group_info, {
-		{ "inode-resolve", cmd_inode_resolve, cmd_inode_resolve_usage,
-			NULL, 0 },
-		{ "logical-resolve", cmd_logical_resolve,
-			cmd_logical_resolve_usage, NULL, 0 },
-		{ "subvolid-resolve", cmd_subvolid_resolve,
-			cmd_subvolid_resolve_usage, NULL, 0 },
-		{ "rootid", cmd_rootid, cmd_rootid_usage, NULL, 0 },
+		{ "inode-resolve", cmd_inspect_inode_resolve,
+			cmd_inspect_inode_resolve_usage, NULL, 0 },
+		{ "logical-resolve", cmd_inspect_logical_resolve,
+			cmd_inspect_logical_resolve_usage, NULL, 0 },
+		{ "subvolid-resolve", cmd_inspect_subvolid_resolve,
+			cmd_inspect_subvolid_resolve_usage, NULL, 0 },
+		{ "rootid", cmd_inspect_rootid, cmd_inspect_rootid_usage, NULL,
+			0 },
 		{ "min-dev-size", cmd_inspect_min_dev_size,
 			cmd_inspect_min_dev_size_usage, NULL, 0 },
 		NULL_CMD_STRUCT

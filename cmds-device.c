@@ -37,7 +37,7 @@ static const char * const device_cmd_group_usage[] = {
 	NULL
 };
 
-static const char * const cmd_add_dev_usage[] = {
+static const char * const cmd_device_add_usage[] = {
 	"btrfs device add [options] <device> [<device>...] <path>",
 	"Add a device to a filesystem",
 	"-K|--nodiscard    do not perform whole device TRIM",
@@ -45,7 +45,7 @@ static const char * const cmd_add_dev_usage[] = {
 	NULL
 };
 
-static int cmd_add_dev(int argc, char **argv)
+static int cmd_device_add(int argc, char **argv)
 {
 	char	*mntpnt;
 	int	i, fdmnt, ret=0, e;
@@ -72,14 +72,14 @@ static int cmd_add_dev(int argc, char **argv)
 			force = 1;
 			break;
 		default:
-			usage(cmd_add_dev_usage);
+			usage(cmd_device_add_usage);
 		}
 	}
 
 	argc = argc - optind;
 
 	if (check_argc_min(argc, 2))
-		usage(cmd_add_dev_usage);
+		usage(cmd_device_add_usage);
 
 	mntpnt = argv[optind + argc - 1];
 
@@ -143,7 +143,8 @@ error_out:
 	return !!ret;
 }
 
-static int _cmd_rm_dev(int argc, char **argv, const char * const *usagestr)
+static int _cmd_device_remove(int argc, char **argv,
+		const char * const *usagestr)
 {
 	char	*mntpnt;
 	int	i, fdmnt, ret=0, e;
@@ -192,36 +193,36 @@ static int _cmd_rm_dev(int argc, char **argv, const char * const *usagestr)
 	return !!ret;
 }
 
-static const char * const cmd_rm_dev_usage[] = {
+static const char * const cmd_device_remove_usage[] = {
 	"btrfs device remove <device> [<device>...] <path>",
 	"Remove a device from a filesystem",
 	NULL
 };
 
-static int cmd_rm_dev(int argc, char **argv)
+static int cmd_device_remove(int argc, char **argv)
 {
-	return _cmd_rm_dev(argc, argv, cmd_rm_dev_usage);
+	return _cmd_device_remove(argc, argv, cmd_device_remove_usage);
 }
 
-static const char * const cmd_del_dev_usage[] = {
+static const char * const cmd_device_delete_usage[] = {
 	"btrfs device delete <device> [<device>...] <path>",
 	"Remove a device from a filesystem",
 	NULL
 };
 
-static int cmd_del_dev(int argc, char **argv)
+static int cmd_device_delete(int argc, char **argv)
 {
-	return _cmd_rm_dev(argc, argv, cmd_del_dev_usage);
+	return _cmd_device_remove(argc, argv, cmd_device_delete_usage);
 }
 
-static const char * const cmd_scan_dev_usage[] = {
+static const char * const cmd_device_scan_usage[] = {
 	"btrfs device scan [(-d|--all-devices)|<device> [<device>...]]",
 	"Scan devices for a btrfs filesystem",
 	" -d|--all-devices (deprecated)",
 	NULL
 };
 
-static int cmd_scan_dev(int argc, char **argv)
+static int cmd_device_scan(int argc, char **argv)
 {
 	int i;
 	int devstart = 1;
@@ -244,12 +245,12 @@ static int cmd_scan_dev(int argc, char **argv)
 			all = 1;
 			break;
 		default:
-			usage(cmd_scan_dev_usage);
+			usage(cmd_device_scan_usage);
 		}
 	}
 
 	if (all && check_argc_max(argc, 2))
-		usage(cmd_scan_dev_usage);
+		usage(cmd_device_scan_usage);
 
 	if (all || argc == 1) {
 		printf("Scanning for Btrfs filesystems\n");
@@ -292,13 +293,13 @@ out:
 	return !!ret;
 }
 
-static const char * const cmd_ready_dev_usage[] = {
+static const char * const cmd_device_ready_usage[] = {
 	"btrfs device ready <device>",
 	"Check device to see if it has all of its devices in cache for mounting",
 	NULL
 };
 
-static int cmd_ready_dev(int argc, char **argv)
+static int cmd_device_ready(int argc, char **argv)
 {
 	struct	btrfs_ioctl_vol_args args;
 	int	fd;
@@ -306,7 +307,7 @@ static int cmd_ready_dev(int argc, char **argv)
 	char	*path;
 
 	if (check_argc_min(argc, 2))
-		usage(cmd_ready_dev_usage);
+		usage(cmd_device_ready_usage);
 
 	fd = open("/dev/btrfs-control", O_RDWR);
 	if (fd < 0) {
@@ -346,13 +347,13 @@ out:
 	return ret;
 }
 
-static const char * const cmd_dev_stats_usage[] = {
+static const char * const cmd_device_stats_usage[] = {
 	"btrfs device stats [-z] <path>|<device>",
 	"Show current device IO stats. -z to reset stats afterwards.",
 	NULL
 };
 
-static int cmd_dev_stats(int argc, char **argv)
+static int cmd_device_stats(int argc, char **argv)
 {
 	char *dev_path;
 	struct btrfs_ioctl_fs_info_args fi_args;
@@ -373,13 +374,13 @@ static int cmd_dev_stats(int argc, char **argv)
 			break;
 		case '?':
 		default:
-			usage(cmd_dev_stats_usage);
+			usage(cmd_device_stats_usage);
 		}
 	}
 
 	argc = argc - optind;
 	if (check_argc_exact(argc, 1))
-		usage(cmd_dev_stats_usage);
+		usage(cmd_device_stats_usage);
 
 	dev_path = argv[optind];
 
@@ -605,12 +606,13 @@ static const char device_cmd_group_info[] =
 
 const struct cmd_group device_cmd_group = {
 	device_cmd_group_usage, device_cmd_group_info, {
-		{ "add", cmd_add_dev, cmd_add_dev_usage, NULL, 0 },
-		{ "delete", cmd_del_dev, cmd_del_dev_usage, NULL, CMD_ALIAS },
-		{ "remove", cmd_rm_dev, cmd_rm_dev_usage, NULL, 0 },
-		{ "scan", cmd_scan_dev, cmd_scan_dev_usage, NULL, 0 },
-		{ "ready", cmd_ready_dev, cmd_ready_dev_usage, NULL, 0 },
-		{ "stats", cmd_dev_stats, cmd_dev_stats_usage, NULL, 0 },
+		{ "add", cmd_device_add, cmd_device_add_usage, NULL, 0 },
+		{ "delete", cmd_device_delete, cmd_device_delete_usage, NULL,
+			CMD_ALIAS },
+		{ "remove", cmd_device_remove, cmd_device_remove_usage, NULL, 0 },
+		{ "scan", cmd_device_scan, cmd_device_scan_usage, NULL, 0 },
+		{ "ready", cmd_device_ready, cmd_device_ready_usage, NULL, 0 },
+		{ "stats", cmd_device_stats, cmd_device_stats_usage, NULL, 0 },
 		{ "usage", cmd_device_usage,
 			cmd_device_usage_usage, NULL, 0 },
 		NULL_CMD_STRUCT
