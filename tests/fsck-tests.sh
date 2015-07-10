@@ -31,6 +31,26 @@ check_prereq btrfs-corrupt-block
 check_prereq btrfs-image
 check_prereq btrfs
 
+run_one_test() {
+	local testname
+
+	testname="$1"
+	echo "    [TEST]   $(basename $testname)"
+	cd $testname
+	echo "=== Entering $testname" >> $RESULTS
+	if [ -x test.sh ]; then
+		# Type 2
+		./test.sh
+		if [ $? -ne 0 ]; then
+			_fail "test failed for case $(basename $testname)"
+		fi
+	else
+		# Type 1
+		check_all_images `pwd`
+	fi
+	cd $TOP
+}
+
 # Each dir contains one type of error for btrfsck test.
 # Each dir must be one of the following 2 types:
 # 1) Only btrfs-image dump
@@ -46,18 +66,5 @@ check_prereq btrfs
 
 for i in $(find $TOP/tests/fsck-tests -maxdepth 1 -mindepth 1 -type d | sort)
 do
-	echo "    [TEST]   $(basename $i)"
-	cd $i
-	echo "=== Entering $i" >> $RESULTS
-	if [ -x test.sh ]; then
-		# Type 2
-		./test.sh
-		if [ $? -ne 0 ]; then
-			_fail "test failed for case $(basename $i)"
-		fi
-	else
-		# Type 1
-		check_all_images `pwd`
-	fi
-	cd $TOP
+	run_one_test "$i"
 done
