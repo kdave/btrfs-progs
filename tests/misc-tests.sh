@@ -34,7 +34,8 @@ check_prereq btrfs
 
 # The tests are driven by their custom script called 'test.sh'
 
-for i in $(find $TOP/tests/misc-tests -maxdepth 1 -mindepth 1 -type d | sort)
+for i in $(find $TOP/tests/misc-tests -maxdepth 1 -mindepth 1 -type d	\
+	${TEST:+-name "$TEST"} | sort)
 do
 	echo "    [TEST]   $(basename $i)"
 	cd $i

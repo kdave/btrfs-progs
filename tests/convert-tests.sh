@@ -52,6 +52,11 @@ convert_test() {
 	run_check $TOP/btrfs-show-super $IMAGE
 }
 
+if ! [ -z "$TEST" ]; then
+	echo "    [TEST]   skipped all convert tests, TEST=$TEST"
+	exit 0
+fi
+
 for feature in '' 'extref' 'skinny-metadata' 'no-holes'; do
 	convert_test "$feature" "ext2 4k nodesize" 4096 mke2fs -b 4096
 	convert_test "$feature" "ext3 4k nodesize" 4096 mke2fs -j -b 4096

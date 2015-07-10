@@ -64,7 +64,8 @@ run_one_test() {
 #    This is for case btrfs-image can't dump or case needs extra
 #    check/verify
 
-for i in $(find $TOP/tests/fsck-tests -maxdepth 1 -mindepth 1 -type d | sort)
+for i in $(find $TOP/tests/fsck-tests -maxdepth 1 -mindepth 1 -type d	\
+	${TEST:+-name "$TEST"} | sort)
 do
 	run_one_test "$i"
 done
