@@ -474,7 +474,7 @@ const struct cmd_group property_cmd_group = {
 			cmd_property_set_usage, NULL, 0 },
 		{ "list", cmd_property_list,
 			cmd_property_list_usage, NULL, 0 },
-		{ 0, 0, 0, 0, 0 },
+		NULL_CMD_STRUCT
 	}
 };
 
