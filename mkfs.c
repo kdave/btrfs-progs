@@ -1697,7 +1697,10 @@ int main(int ac, char **av)
 	}
 
 	trans = btrfs_start_transaction(root, 1);
-	BUG_ON(!trans);
+	if (!trans) {
+		fprintf(stderr, "failed to start transaction\n");
+		exit(1);
+	}
 
 	ret = create_data_block_groups(trans, root, mixed, &allocation);
 	if (ret) {
@@ -1714,6 +1717,10 @@ int main(int ac, char **av)
 	btrfs_commit_transaction(trans, root);
 
 	trans = btrfs_start_transaction(root, 1);
+	if (!trans) {
+		fprintf(stderr, "failed to start transaction\n");
+		exit(1);
+	}
 
 	if (is_block_device(file))
 		btrfs_register_one_device(file);
