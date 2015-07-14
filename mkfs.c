@@ -59,9 +59,8 @@ struct mkfs_allocation {
 	u64 system;
 };
 
-static int create_metadata_block_groups(struct btrfs_root *root,
-		u64 metadata_profile, int mixed,
-		struct mkfs_allocation *allocation)
+static int create_metadata_block_groups(struct btrfs_root *root, int mixed,
+				struct mkfs_allocation *allocation)
 {
 	struct btrfs_trans_handle *trans;
 	u64 bytes_used;
@@ -74,7 +73,6 @@ static int create_metadata_block_groups(struct btrfs_root *root,
 
 	root->fs_info->system_allocs = 1;
 	ret = btrfs_make_block_group(trans, root, bytes_used,
-				     metadata_profile |
 				     BTRFS_BLOCK_GROUP_SYSTEM,
 				     BTRFS_FIRST_CHUNK_TREE_OBJECTID,
 				     0, BTRFS_MKFS_SYSTEM_GROUP_SIZE);
@@ -93,7 +91,6 @@ static int create_metadata_block_groups(struct btrfs_root *root,
 		}
 		BUG_ON(ret);
 		ret = btrfs_make_block_group(trans, root, 0,
-					     metadata_profile |
 					     BTRFS_BLOCK_GROUP_METADATA |
 					     BTRFS_BLOCK_GROUP_DATA,
 					     BTRFS_FIRST_CHUNK_TREE_OBJECTID,
@@ -110,7 +107,6 @@ static int create_metadata_block_groups(struct btrfs_root *root,
 		}
 		BUG_ON(ret);
 		ret = btrfs_make_block_group(trans, root, 0,
-					     metadata_profile |
 					     BTRFS_BLOCK_GROUP_METADATA,
 					     BTRFS_FIRST_CHUNK_TREE_OBJECTID,
 					     chunk_start, chunk_size);
@@ -126,7 +122,7 @@ err:
 }
 
 static int create_data_block_groups(struct btrfs_trans_handle *trans,
-		struct btrfs_root *root, u64 data_profile, int mixed,
+		struct btrfs_root *root, int mixed,
 		struct mkfs_allocation *allocation)
 {
 	u64 chunk_start = 0;
@@ -143,7 +139,6 @@ static int create_data_block_groups(struct btrfs_trans_handle *trans,
 		}
 		BUG_ON(ret);
 		ret = btrfs_make_block_group(trans, root, 0,
-					     data_profile |
 					     BTRFS_BLOCK_GROUP_DATA,
 					     BTRFS_FIRST_CHUNK_TREE_OBJECTID,
 					     chunk_start, chunk_size);
@@ -1194,8 +1189,6 @@ int main(int ac, char **av)
 	u64 alloc_start = 0;
 	u64 metadata_profile = 0;
 	u64 data_profile = 0;
-	u64 default_metadata_profile = 0;
-	u64 default_data_profile = 0;
 	u32 nodesize = max_t(u32, sysconf(_SC_PAGESIZE),
 			BTRFS_MKFS_DEFAULT_NODE_SIZE);
 	u32 sectorsize = 4096;
@@ -1554,19 +1547,7 @@ int main(int ac, char **av)
 	}
 	root->fs_info->alloc_start = alloc_start;
 
-	if (dev_cnt == 0) {
-		default_metadata_profile = metadata_profile;
-		default_data_profile = data_profile;
-	} else {
-		/*
-		 * Temporary groups to store new device entries
-		 */
-		default_metadata_profile = 0;
-		default_data_profile = 0;
-	}
-
-	ret = create_metadata_block_groups(root, default_metadata_profile,
-			mixed, &allocation);
+	ret = create_metadata_block_groups(root, mixed, &allocation);
 	if (ret) {
 		fprintf(stderr, "failed to create default block groups\n");
 		exit(1);
@@ -1575,8 +1556,7 @@ int main(int ac, char **av)
 	trans = btrfs_start_transaction(root, 1);
 	BUG_ON(!trans);
 
-	ret = create_data_block_groups(trans, root, default_data_profile,
-			mixed, &allocation);
+	ret = create_data_block_groups(trans, root, mixed, &allocation);
 	if (ret) {
 		fprintf(stderr, "failed to create default data block groups\n");
 		exit(1);
@@ -1596,7 +1576,7 @@ int main(int ac, char **av)
 		btrfs_register_one_device(file);
 
 	if (dev_cnt == 0)
-		goto skip_multidev;
+		goto raid_groups;
 
 	while (dev_cnt-- > 0) {
 		int old_mixed = mixed;
@@ -1646,12 +1626,12 @@ int main(int ac, char **av)
 			btrfs_register_one_device(file);
 	}
 
+raid_groups:
 	if (!source_dir_set) {
 		ret = create_raid_groups(trans, root, data_profile,
 				 metadata_profile, mixed, &allocation);
 		BUG_ON(ret);
 	}
-skip_multidev:
 
 	ret = create_data_reloc_tree(trans, root);
 	BUG_ON(ret);
