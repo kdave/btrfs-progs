@@ -2390,7 +2390,7 @@ int test_num_disk_vs_raid(u64 metadata_profile, u64 data_profile,
 
 	if (!mixed && (data_profile & BTRFS_BLOCK_GROUP_DUP)) {
 		fprintf(stderr,
-			"ERROR: DUP for data is allowed only in mixed mode");
+			"ERROR: DUP for data is allowed only in mixed mode\n");
 		return 1;
 	}
 	return 0;
