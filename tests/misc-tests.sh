@@ -20,6 +20,8 @@ export RESULTS
 # For custom script needs to verfiy recovery
 export TEST_MNT
 export LANG
+# For tests that only use a loop device
+export IMAGE
 
 rm -f $RESULTS
 mkdir -p $TEST_MNT || _fail "unable to create mount point on $TEST_MNT"
