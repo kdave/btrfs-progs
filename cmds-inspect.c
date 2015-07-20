@@ -20,13 +20,14 @@
 #include <stdint.h>
 #include <sys/ioctl.h>
 #include <errno.h>
+#include <getopt.h>
 
 #include "kerncompat.h"
 #include "ioctl.h"
 #include "utils.h"
 #include "ctree.h"
 #include "send-utils.h"
-
+#include "disk-io.h"
 #include "commands.h"
 #include "btrfs-list.h"
 
@@ -481,7 +482,7 @@ static void adjust_dev_min_size(struct list_head *extents,
 	}
 }
 
-static int get_min_size(int fd, DIR *dirstream, u64 devid)
+static int print_min_dev_size(int fd, u64 devid)
 {
 	int ret = 1;
 	/*
@@ -572,11 +573,62 @@ static int get_min_size(int fd, DIR *dirstream, u64 devid)
 	printf("%llu bytes (%s)\n", min_size, pretty_size(min_size));
 	ret = 0;
 out:
-	close_file_or_dir(fd, dirstream);
 	free_dev_extent_list(&extents);
 	free_dev_extent_list(&holes);
 
 	return ret;
+}
+
+static const char* const cmd_inspect_min_dev_size_usage[] = {
+	"btrfs inspect-internal min-dev-size [options] <path>",
+	"Get the minimum size the device can be shrunk to. The",
+	"device id 1 is used by default.",
+	"--id DEVID   specify the device id to query",
+	NULL
+};
+
+static int cmd_inspect_min_dev_size(int argc, char **argv)
+{
+	int ret;
+	int fd = -1;
+	DIR *dirstream = NULL;
+	u64 devid = 1;
+
+	while (1) {
+		int c;
+		enum { GETOPT_VAL_DEVID = 256 };
+		static const struct option long_options[] = {
+			{ "id", required_argument, NULL, GETOPT_VAL_DEVID },
+			{NULL, 0, NULL, 0}
+		};
+
+		c = getopt_long(argc, argv, "", long_options, NULL);
+		if (c < 0)
+			break;
+
+		switch (c) {
+		case GETOPT_VAL_DEVID:
+			devid = arg_strtou64(optarg);
+			break;
+		default:
+			usage(cmd_inspect_min_dev_size_usage);
+		}
+	}
+	if (check_argc_exact(argc - optind, 1))
+		usage(cmd_inspect_min_dev_size_usage);
+
+	fd = open_file_or_dir(argv[optind], &dirstream);
+	if (fd < 0) {
+		fprintf(stderr, "ERROR: can't access '%s'\n", argv[optind]);
+		ret = -ENOENT;
+		goto out;
+	}
+
+	ret = print_min_dev_size(fd, devid);
+out:
+	close_file_or_dir(fd, dirstream);
+
+	return !!ret;
 }
 
 static const char inspect_cmd_group_info[] =
@@ -591,6 +643,8 @@ const struct cmd_group inspect_cmd_group = {
 		{ "subvolid-resolve", cmd_subvolid_resolve,
 			cmd_subvolid_resolve_usage, NULL, 0 },
 		{ "rootid", cmd_rootid, cmd_rootid_usage, NULL, 0 },
+		{ "min-dev-size", cmd_inspect_min_dev_size,
+			cmd_inspect_min_dev_size_usage, NULL, 0 },
 		NULL_CMD_STRUCT
 	}
 };

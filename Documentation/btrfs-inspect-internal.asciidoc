@@ -41,6 +41,15 @@ set inode container's size.
 This is used to increase inode container's size in case it is
 not enough to read all the resolved results. The max value one can set is 64k.
 
+*min-dev-size* [options] <path>::
+Return the minimum size the device can be shrunk to, without performing any
+resize operation.
++
+`Options`
++
+--id::::
+specify the device id to query, default is 1
+
 *rootid* <path>::
 For a given file or directory, return the containing tree root id. For a
 subvolume return it's own tree id.

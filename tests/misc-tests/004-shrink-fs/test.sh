@@ -9,14 +9,15 @@ source $TOP/tests/common
 check_prereq mkfs.btrfs
 setup_root_helper
 
+# Optionally take id of the device to shrink
 shrink_test()
 {
-	min_size=$($SUDO_HELPER $TOP/btrfs filesystem resize get_min_size $TEST_MNT)
-	if [ $? != 0 ]; then
-		_fail "Failed to get minimum size"
-	fi
+	min_size=$(run_check_stdout $SUDO_HELPER $TOP/btrfs inspect-internal min-dev-size ${1:+--id $1} $TEST_MNT)
 	min_size=$(echo $min_size | cut -d ' ' -f 1)
 	echo "min size = ${min_size}" >> $RESULTS
+	if [ -z "$min_size" ]; then
+		_fail "Failed to parse minimum size"
+	fi
 	run_check $SUDO_HELPER $TOP/btrfs filesystem resize $min_size $TEST_MNT
 }
 
@@ -63,7 +64,7 @@ done
 run_check $SUDO_HELPER $TOP/btrfs balance start -mconvert=single \
 	-sconvert=single -f $TEST_MNT
 for ((i = 1; i <= 3; i++)); do
-	shrink_test
+	shrink_test 1
 done
 
 run_check $SUDO_HELPER umount $TEST_MNT
