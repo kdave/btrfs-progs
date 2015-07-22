@@ -1327,8 +1327,16 @@ static int cmd_filesystem_resize(int argc, char **argv)
 	e = errno;
 	close_file_or_dir(fd, dirstream);
 	if( res < 0 ){
-		fprintf(stderr, "ERROR: unable to resize '%s' - %s\n", 
-			path, strerror(e));
+		switch (e) {
+		case EFBIG:
+			fprintf(stderr, "ERROR: unable to resize '%s' - no enouth free space\n",
+				path);
+			break;
+		default:
+			fprintf(stderr, "ERROR: unable to resize '%s' - %s\n",
+				path, strerror(e));
+			break;
+		}
 		return 1;
 	} else if (res > 0) {
 		const char *err_str = btrfs_err_str(res);
