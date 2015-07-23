@@ -946,7 +946,7 @@ struct btrfs_block_group_cache {
 
 struct btrfs_extent_ops {
        int (*alloc_extent)(struct btrfs_root *root, u64 num_bytes,
-		           u64 hint_byte, struct btrfs_key *ins);
+			   u64 hint_byte, struct btrfs_key *ins, int metadata);
        int (*free_extent)(struct btrfs_root *root, u64 bytenr,
 		          u64 num_bytes);
 };

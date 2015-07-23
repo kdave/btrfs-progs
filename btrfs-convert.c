@@ -207,7 +207,8 @@ static int cache_free_extents(struct btrfs_root *root, ext2_filsys ext2_fs)
 }
 
 static int custom_alloc_extent(struct btrfs_root *root, u64 num_bytes,
-			       u64 hint_byte, struct btrfs_key *ins)
+			       u64 hint_byte, struct btrfs_key *ins,
+			       int metadata)
 {
 	u64 start;
 	u64 end;
@@ -246,6 +247,14 @@ static int custom_alloc_extent(struct btrfs_root *root, u64 num_bytes,
 			continue;
 		}
 
+		if (metadata) {
+			BUG_ON(num_bytes != root->nodesize);
+			if (check_crossing_stripes(start, num_bytes)) {
+				last = round_down(start + num_bytes,
+						  BTRFS_STRIPE_LEN);
+				continue;
+			}
+		}
 		clear_extent_dirty(&root->fs_info->free_space_cache,
 				   start, start + num_bytes - 1, 0);
 
@@ -1280,7 +1289,7 @@ static int create_ext2_image(struct btrfs_root *root, ext2_filsys ext2_fs,
 	 * special, we can't rely on relocate_extents_range to relocate it.
 	 */
 	for (last_byte = 0; last_byte < first_free; last_byte += sectorsize) {
-		ret = custom_alloc_extent(root, sectorsize, 0, &key);
+		ret = custom_alloc_extent(root, sectorsize, 0, &key, 0);
 		if (ret)
 			goto fail;
 		ret = copy_disk_extent(root, key.objectid, last_byte,
@@ -1938,7 +1947,7 @@ static int relocate_one_reference(struct btrfs_trans_handle *trans,
 			ret = get_state_private(reloc_tree, bytenr, &new_pos);
 			BUG_ON(ret);
 		} else {
-			ret = custom_alloc_extent(root, sectorsize, 0, &key);
+			ret = custom_alloc_extent(root, sectorsize, 0, &key, 0);
 			if (ret)
 				goto fail;
 			new_pos = key.objectid;

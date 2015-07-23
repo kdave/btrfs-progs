@@ -2654,7 +2654,7 @@ int btrfs_reserve_extent(struct btrfs_trans_handle *trans,
 
 	if (info->extent_ops) {
 		struct btrfs_extent_ops *ops = info->extent_ops;
-		ret = ops->alloc_extent(root, num_bytes, hint_byte, ins);
+		ret = ops->alloc_extent(root, num_bytes, hint_byte, ins, !data);
 		BUG_ON(ret);
 		goto found;
 	}
