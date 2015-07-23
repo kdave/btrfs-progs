@@ -2605,6 +2605,11 @@ check_failed:
 	}
 
 	if (!(data & BTRFS_BLOCK_GROUP_DATA)) {
+		if (check_crossing_stripes(ins->objectid, num_bytes)) {
+			search_start = round_down(ins->objectid + num_bytes,
+						  BTRFS_STRIPE_LEN);
+			goto new_group;
+		}
 		block_group = btrfs_lookup_block_group(info, ins->objectid);
 		if (block_group)
 			trans->block_group = block_group;
