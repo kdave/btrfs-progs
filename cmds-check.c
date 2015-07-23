@@ -126,6 +126,7 @@ struct extent_record {
 	unsigned int is_root:1;
 	unsigned int metadata:1;
 	unsigned int bad_full_backref:1;
+	unsigned int crossing_stripes:1;
 };
 
 struct inode_backref {
@@ -3734,7 +3735,7 @@ static int maybe_free_extent_rec(struct cache_tree *extent_cache,
 	if (rec->content_checked && rec->owner_ref_checked &&
 	    rec->extent_item_refs == rec->refs && rec->refs > 0 &&
 	    rec->num_duplicates == 0 && !all_backpointers_checked(rec, 0) &&
-	    !rec->bad_full_backref) {
+	    !rec->bad_full_backref && !rec->crossing_stripes) {
 		remove_cache_extent(extent_cache, &rec->cache);
 		free_all_extent_backrefs(rec);
 		list_del_init(&rec->list);
@@ -4381,6 +4382,15 @@ static int add_extent_rec(struct cache_tree *extent_cache,
 		if (rec->max_size < max_size)
 			rec->max_size = max_size;
 
+		/*
+		 * A metadata extent can't cross stripe_len boundary, otherwise
+		 * kernel scrub won't be able to handle it.
+		 * As now stripe_len is fixed to BTRFS_STRIPE_LEN, just check
+		 * it.
+		 */
+		if (metadata && check_crossing_stripes(rec->start,
+						       rec->max_size))
+				rec->crossing_stripes = 1;
 		maybe_free_extent_rec(extent_cache, rec);
 		return ret;
 	}
@@ -4433,6 +4443,10 @@ static int add_extent_rec(struct cache_tree *extent_cache,
 		rec->content_checked = 1;
 		rec->owner_ref_checked = 1;
 	}
+
+	if (metadata)
+		if (check_crossing_stripes(rec->start, rec->max_size))
+			rec->crossing_stripes = 1;
 	return ret;
 }
 
@@ -7475,6 +7489,18 @@ static int check_extent_refs(struct btrfs_root *root,
 					goto repair_abort;
 				fixed = 1;
 			}
+			err = 1;
+			cur_err = 1;
+		}
+		/*
+		 * Although it's not a extent ref's problem, we reuse this
+		 * routine for error reporting.
+		 * No repair function yet.
+		 */
+		if (rec->crossing_stripes) {
+			fprintf(stderr,
+				"bad metadata [%llu, %llu) crossing stripe boundary\n",
+				rec->start, rec->start + rec->max_size);
 			err = 1;
 			cur_err = 1;
 		}
