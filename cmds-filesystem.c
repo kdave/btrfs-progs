@@ -1172,8 +1172,9 @@ static int cmd_filesystem_defrag(int argc, char **argv)
 			thresh = parse_size(optarg);
 			if (thresh > (u32)-1) {
 				fprintf(stderr,
-			"WARNING: target extent size %llu too big, trimmed to %u",
+			"WARNING: target extent size %llu too big, trimmed to %u\n",
 					thresh, (u32)-1);
+				thresh = (u32)-1;
 			}
 			defrag_global_fancy_ioctl = 1;
 			break;
