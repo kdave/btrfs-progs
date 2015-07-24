@@ -1131,7 +1131,6 @@ static int cmd_filesystem_defrag(int argc, char **argv)
 	int i;
 	int recursive = 0;
 	int ret = 0;
-	struct btrfs_ioctl_defrag_range_args range;
 	int e = 0;
 	int compress_type = BTRFS_COMPRESS_NONE;
 	DIR *dirstream;
@@ -1189,7 +1188,7 @@ static int cmd_filesystem_defrag(int argc, char **argv)
 	if (check_argc_min(argc - optind, 1))
 		usage(cmd_filesystem_defrag_usage);
 
-	memset(&defrag_global_range, 0, sizeof(range));
+	memset(&defrag_global_range, 0, sizeof(defrag_global_range));
 	defrag_global_range.start = start;
 	defrag_global_range.len = len;
 	defrag_global_range.extent_thresh = (u32)thresh;
