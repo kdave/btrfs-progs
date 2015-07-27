@@ -71,10 +71,8 @@ static void *print_copied_inodes(void *p)
 
 static int after_copied_inodes(void *p)
 {
-	struct task_ctx *priv = p;
-
 	printf("\n");
-	task_period_stop(priv->info);
+	fflush(stdout);
 
 	return 0;
 }
