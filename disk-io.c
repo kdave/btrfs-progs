@@ -1412,7 +1412,8 @@ static int write_dev_supers(struct btrfs_root *root,
 		ret = pwrite64(device->fd, root->fs_info->super_copy,
 				BTRFS_SUPER_INFO_SIZE,
 				root->fs_info->super_bytenr);
-		BUG_ON(ret != BTRFS_SUPER_INFO_SIZE);
+		if (ret != BTRFS_SUPER_INFO_SIZE)
+			goto write_err;
 		return 0;
 	}
 
@@ -1434,10 +1435,19 @@ static int write_dev_supers(struct btrfs_root *root,
 		 */
 		ret = pwrite64(device->fd, root->fs_info->super_copy,
 				BTRFS_SUPER_INFO_SIZE, bytenr);
-		BUG_ON(ret != BTRFS_SUPER_INFO_SIZE);
+		if (ret != BTRFS_SUPER_INFO_SIZE)
+			goto write_err;
 	}
 
 	return 0;
+
+write_err:
+	if (ret > 0)
+		fprintf(stderr, "WARNING: failed to write all sb data\n");
+	else
+		fprintf(stderr, "WARNING: failed to write sb: %s\n",
+			strerror(errno));
+	return ret;
 }
 
 int write_all_supers(struct btrfs_root *root)
