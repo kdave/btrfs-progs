@@ -94,8 +94,10 @@ int task_period_start(struct task_info *info, unsigned int period_ms)
 		return -1;
 
 	info->periodic.timer_fd = timerfd_create(CLOCK_MONOTONIC, 0);
-	if (info->periodic.timer_fd == -1)
+	if (info->periodic.timer_fd == -1) {
+		info->periodic.timer_fd = 0;
 		return info->periodic.timer_fd;
+	}
 
 	info->periodic.wakeups_missed = 0;
 
