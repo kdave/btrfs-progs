@@ -36,9 +36,17 @@ will not be functional until qgroup '0/<subvolume id>' is created again.
 
 SUBCOMMAND
 ----------
-*assign* <src> <dst> <path>::
+*assign* [options] <src> <dst> <path>::
 Assign qgroup <src> as the child qgroup of <dst> in the btrfs filesystem
 identified by <path>.
++
+`Options`
++
+--rescan::::
+Automatically schedule quota rescan if the new qgroup assignment leads to
+quota inconsistency.
+--no-rescan::::
+Explicitly ask not to do a rescan.
 
 *create* <qgroupid> <path>::
 Create a subvolume quota group.

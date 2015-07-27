@@ -37,19 +37,40 @@ static int qgroup_assign(int assign, int argc, char **argv)
 	int ret = 0;
 	int fd;
 	int e;
+	int rescan = 0;
 	char *path;
 	struct btrfs_ioctl_qgroup_assign_args args;
 	DIR *dirstream = NULL;
 
-	if (check_argc_exact(argc, 4))
+	while (1) {
+		enum { GETOPT_VAL_RESCAN = 256 };
+		static const struct option long_options[] = {
+			{ "rescan", no_argument, NULL, GETOPT_VAL_RESCAN },
+			{ NULL, 0, NULL, 0 }
+		};
+		int c = getopt_long(argc, argv, "", long_options, NULL);
+
+		if (c < 0)
+			break;
+		switch (c) {
+		case GETOPT_VAL_RESCAN:
+			rescan = 1;
+			break;
+		default:
+			/* Usage printed by the caller */
+			return -1;
+		}
+	}
+
+	if (check_argc_exact(argc - optind, 3))
 		return -1;
 
 	memset(&args, 0, sizeof(args));
 	args.assign = assign;
-	args.src = parse_qgroupid(argv[1]);
-	args.dst = parse_qgroupid(argv[2]);
+	args.src = parse_qgroupid(argv[optind]);
+	args.dst = parse_qgroupid(argv[optind + 1]);
 
-	path = argv[3];
+	path = argv[optind + 2];
 
 	/*
 	 * FIXME src should accept subvol path
@@ -82,14 +103,19 @@ static int qgroup_assign(int assign, int argc, char **argv)
 	 * INCONSISTENT bit.
 	 */
 	if (ret > 0) {
-		struct btrfs_ioctl_quota_rescan_args args;
+		if (rescan) {
+			struct btrfs_ioctl_quota_rescan_args args;
 
-		printf("Quota data changed, quota rescan scheduled\n");
-		memset(&args, 0, sizeof(args));
-		ret = ioctl(fd, BTRFS_IOC_QUOTA_RESCAN, &args);
-		if (ret < 0)
-			fprintf(stderr, "ERROR: quota rescan failed: %s\n",
-				strerror(errno));
+			printf("Quota data changed, rescan scheduled\n");
+			memset(&args, 0, sizeof(args));
+			ret = ioctl(fd, BTRFS_IOC_QUOTA_RESCAN, &args);
+			if (ret < 0)
+				fprintf(stderr,
+					"ERROR: quota rescan failed: %s\n",
+					strerror(errno));
+		} else {
+			printf("WARNING: quotas may be inconsistent, rescan needed\n");
+		}
 	}
 	close_file_or_dir(fd, dirstream);
 	return ret;
@@ -179,8 +205,11 @@ static int parse_limit(const char *p, unsigned long long *s)
 }
 
 static const char * const cmd_qgroup_assign_usage[] = {
-	"btrfs qgroup assign <src> <dst> <path>",
+	"btrfs qgroup assign [options] <src> <dst> <path>",
 	"Enable subvolume qgroup support for a filesystem.",
+	"",
+	"--rescan       schedule qutoa rescan if needed",
+	"--no-rescan    ",
 	NULL
 };
 
