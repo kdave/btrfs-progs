@@ -206,7 +206,7 @@ static int parse_limit(const char *p, unsigned long long *s)
 
 static const char * const cmd_qgroup_assign_usage[] = {
 	"btrfs qgroup assign [options] <src> <dst> <path>",
-	"Enable subvolume qgroup support for a filesystem.",
+	"Assign SRC as the child qgroup of DST",
 	"",
 	"--rescan       schedule qutoa rescan if needed",
 	"--no-rescan    ",
@@ -223,7 +223,7 @@ static int cmd_qgroup_assign(int argc, char **argv)
 
 static const char * const cmd_qgroup_remove_usage[] = {
 	"btrfs qgroup remove <src> <dst> <path>",
-	"Remove a subvol from a quota group.",
+	"Remove a child qgroup SRC from DST.",
 	NULL
 };
 
@@ -251,7 +251,7 @@ static int cmd_qgroup_create(int argc, char **argv)
 
 static const char * const cmd_qgroup_destroy_usage[] = {
 	"btrfs qgroup destroy <qgroupid> <path>",
-	"Destroy a subvolume quota group.",
+	"Destroy a quota group.",
 	NULL
 };
 
@@ -419,7 +419,7 @@ static int cmd_qgroup_show(int argc, char **argv)
 
 static const char * const cmd_qgroup_limit_usage[] = {
 	"btrfs qgroup limit [options] <size>|none [<qgroupid>] <path>",
-	"Limit the size of a subvolume quota group.",
+	"Set the limits a subvolume quota group.",
 	"",
 	"-c   limit amount of data after compression. This is the default,",
 	"     it is currently not possible to turn off this option.",

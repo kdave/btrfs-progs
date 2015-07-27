@@ -11,25 +11,29 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-*btrfs qgroup* is used to control quota group(qgroup) of a btrfs filesystem.
+*btrfs qgroup* is used to control quota group (qgroup) of a btrfs filesystem.
 
-NOTE: To use qgroup, it needs to enable quota first using *btrfs quota*
+NOTE: To use qgroup you need to enable quota first using *btrfs quota enable*
 command.
 
 WARNING: Qgroup is not stable yet and will impact performance in current mainline
-kernel(v3.14 so far).
+kernel (v3.14 so far).
 
 QGROUP
 ------
-Quota group or qgroup in btrfs has its hierarchy like subvolume.
-One subvolume/snapshot can reach its quota limits if it consumes all the quota
-assigned to it or any of the parent qgroup(s).
+Quota groups or qgroup in btrfs make a tree hierarchy, the leaf qgroups are
+attached to subvolumes. The size limits are set per qgroup and apply when any
+limit is reached in tree that contains a given subvolume.
 
-Also for snapshot, it consumes no quota initially since all its data
-shares with its parent, so only modification in snapshot consumes quota.
+The limit sare separated between shared and exclusive and reflect the extent
+ownership. For example a fresh snapshot shares almost all the blocks with the
+original subvolume, new writes to either subvolume will raise towards the
+exclusive limit.
 
-Every subvolume/snapshot will have its own qgroup with id '0/<subvolume id>'
-upon creating, but can be later destroyed by *btrfs qgroup destroy* command.
+The qgroup identifiers conform to 'level/id' where level 0 is reserved to the
+qgroups associated with subvolumes. Such qgroups are created automatically.
+
+The qgroup hierarchy is built by commands *create* and *assign*.
 
 NOTE: If the qgroup of a subvolume is destroyed, quota about the subvolume
 will not be functional until qgroup '0/<subvolume id>' is created again.
