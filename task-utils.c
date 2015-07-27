@@ -64,10 +64,13 @@ void task_stop(struct task_info *info)
 	if (info->id > 0) {
 		pthread_cancel(info->id);
 		pthread_join(info->id, NULL);
+		info->id = -1;
 	}
 
-	if (info->periodic.timer_fd)
+	if (info->periodic.timer_fd) {
 		close(info->periodic.timer_fd);
+		info->periodic.timer_fd = 0;
+	}
 
 	if (info->postfn)
 		info->postfn(info->private_data);
@@ -130,5 +133,6 @@ void task_period_stop(struct task_info *info)
 	if (info->periodic.timer_fd) {
 		timerfd_settime(info->periodic.timer_fd, 0, NULL, NULL);
 		close(info->periodic.timer_fd);
+		info->periodic.timer_fd = -1;
 	}
 }
