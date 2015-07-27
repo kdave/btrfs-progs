@@ -50,9 +50,7 @@ int task_start(struct task_info *info)
 	ret = pthread_create(&info->id, NULL, info->threadfn,
 			     info->private_data);
 
-	if (ret == 0)
-		pthread_detach(info->id);
-	else
+	if (ret)
 		info->id = -1;
 
 	return ret;
@@ -66,8 +64,10 @@ void task_stop(struct task_info *info)
 	if (info->periodic.timer_fd)
 		close(info->periodic.timer_fd);
 
-	if (info->id > 0)
+	if (info->id > 0) {
 		pthread_cancel(info->id);
+		pthread_join(info->id, NULL);
+	}
 
 	if (info->postfn)
 		info->postfn(info->private_data);
