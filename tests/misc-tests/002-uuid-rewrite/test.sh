@@ -7,16 +7,7 @@ check_prereq btrfs-debug-tree
 check_prereq btrfs-show-super
 check_prereq mkfs.btrfs
 check_prereq btrfstune
-
-if [ -z $TEST_DEV ]; then
-	echo "\$TEST_DEV not given, use $TOP/test/test.img as fallback" >> \
-		$RESULTS
-	TEST_DEV="$TOP/tests/test.img"
-
-	# Need at least 1G to avoid mixed block group, which extent tree
-	# rebuild doesn't support.
-	run_check truncate -s 1G $TEST_DEV
-fi
+prepare_test_dev
 
 if [ -z $TEST_MNT ];then
 	echo "    [NOTRUN] extent tree rebuild, need TEST_MNT variant"
