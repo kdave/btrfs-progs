@@ -37,7 +37,7 @@ static int qgroup_assign(int assign, int argc, char **argv)
 	int ret = 0;
 	int fd;
 	int e;
-	char *path = argv[3];
+	char *path;
 	struct btrfs_ioctl_qgroup_assign_args args;
 	DIR *dirstream = NULL;
 
@@ -48,6 +48,8 @@ static int qgroup_assign(int assign, int argc, char **argv)
 	args.assign = assign;
 	args.src = parse_qgroupid(argv[1]);
 	args.dst = parse_qgroupid(argv[2]);
+
+	path = argv[3];
 
 	/*
 	 * FIXME src should accept subvol path
