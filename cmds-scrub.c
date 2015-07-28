@@ -254,17 +254,15 @@ static void _print_scrub_ss(struct scrub_stats *ss)
 	hours = ss->duration / (60 * 60);
 	gmtime_r(&seconds, &tm);
 	strftime(t, sizeof(t), "%M:%S", &tm);
-	if (ss->finished && !ss->canceled) {
-		printf(" and finished after %02u:%s\n", hours, t);
-	} else if (ss->canceled) {
+	if (ss->in_progress)
+		printf(", running for %02u:%s\n", hours, t);
+	else if (ss->canceled)
 		printf(" and was aborted after %02u:%s\n", hours, t);
-	} else {
-		if (ss->in_progress)
-			printf(", running for %02u:%s\n", hours, t);
-		else
-			printf(", interrupted after %02u:%s, not running\n",
-					hours, t);
-	}
+	else if (ss->finished)
+		printf(" and finished after %02u:%s\n", hours, t);
+	else
+		printf(", interrupted after %02u:%s, not running\n",
+		       hours, t);
 }
 
 static void print_scrub_dev(struct btrfs_ioctl_dev_info_args *di,
