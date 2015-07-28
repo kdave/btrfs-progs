@@ -97,8 +97,9 @@ extract_image()
 
 	if ! [ -f $image.restored ]; then
 		echo "restoring image $(basename $image)" >> $RESULTS
-		$TOP/btrfs-image -r $image $image.restored || \
-			_fail "failed to restore image $image" >&2
+		$TOP/btrfs-image -r $image $image.restored \
+			&>> $RESULTS \
+			|| _fail "failed to restore image $image" >&2
 	fi
 
 	[ -f "$cleanme" ] && rm -f "$cleanme"
