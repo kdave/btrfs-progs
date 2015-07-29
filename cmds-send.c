@@ -33,6 +33,7 @@
 #include <assert.h>
 #include <getopt.h>
 #include <uuid/uuid.h>
+#include <limits.h>
 
 #include "ctree.h"
 #include "ioctl.h"

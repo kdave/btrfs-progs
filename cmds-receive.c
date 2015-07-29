@@ -28,6 +28,7 @@
 #include <wait.h>
 #include <assert.h>
 #include <getopt.h>
+#include <limits.h>
 
 #include <sys/stat.h>
 #include <sys/types.h>

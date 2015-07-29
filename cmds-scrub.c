@@ -34,6 +34,7 @@
 #include <ctype.h>
 #include <signal.h>
 #include <stdarg.h>
+#include <limits.h>
 
 #include "ctree.h"
 #include "ioctl.h"

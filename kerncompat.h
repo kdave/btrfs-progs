@@ -33,7 +33,9 @@
 #include <features.h>
 
 #ifndef __GLIBC__
+#ifndef BTRFS_DISABLE_BACKTRACE
 #define BTRFS_DISABLE_BACKTRACE
+#endif
 #define __always_inline __inline __attribute__ ((__always_inline__))
 #endif
 

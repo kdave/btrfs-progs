@@ -21,6 +21,7 @@
 #include <sys/ioctl.h>
 #include <errno.h>
 #include <getopt.h>
+#include <limits.h>
 
 #include "kerncompat.h"
 #include "ioctl.h"
