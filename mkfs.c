@@ -356,6 +356,7 @@ static u64 parse_profile(char *s)
 		return 0;
 	} else {
 		fprintf(stderr, "Unknown profile %s\n", s);
+		exit(1);
 	}
 	/* not reached */
 	return 0;
