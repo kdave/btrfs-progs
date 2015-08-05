@@ -344,8 +344,10 @@ install: $(libs) $(progs_install) $(INSTALLDIRS)
 
 install-static: $(progs_static) $(INSTALLDIRS)
 	for p in $(progs_static) ; do \
-		$(INSTALL) -D -m755 $$p $(DESTDIR)$(bindir)/`basename $$p .static` ; \
+		$(INSTALL) -D -m755 $$p $(DESTDIR)$(bindir)/ ; \
 	done
+	# btrfsck is a link to btrfs in the src tree, make it so for installed file as well
+	$(LN_S) -f btrfs.static $(DESTDIR)$(bindir)/btrfsck.static
 
 $(INSTALLDIRS):
 	@echo "Making install in $(patsubst install-%,%,$@)"
