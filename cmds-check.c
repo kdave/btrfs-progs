@@ -616,15 +616,20 @@ static void print_inode_error(struct btrfs_root *root, struct inode_record *rec)
 	if (errors & I_ERR_FILE_EXTENT_DISCOUNT) {
 		struct file_extent_hole *hole;
 		struct rb_node *node;
+		int found = 0;
 
 		node = rb_first(&rec->holes);
 		fprintf(stderr, "Found file extent holes:\n");
 		while (node) {
+			found = 1;
 			hole = rb_entry(node, struct file_extent_hole, node);
-			fprintf(stderr, "\tstart: %llu, len:%llu\n",
+			fprintf(stderr, "\tstart: %llu, len: %llu\n",
 				hole->start, hole->len);
 			node = rb_next(node);
 		}
+		if (!found)
+			fprintf(stderr, "\tstart: 0, len: %llu\n",
+				round_up(rec->isize, root->sectorsize));
 	}
 }
 
