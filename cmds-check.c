@@ -2665,11 +2665,13 @@ static int repair_inode_discount_extent(struct btrfs_trans_handle *trans,
 {
 	struct rb_node *node;
 	struct file_extent_hole *hole;
+	int found = 0;
 	int ret = 0;
 
 	node = rb_first(&rec->holes);
 
 	while (node) {
+		found = 1;
 		hole = rb_entry(node, struct file_extent_hole, node);
 		ret = btrfs_punch_hole(trans, root, rec->ino,
 				       hole->start, hole->len);
@@ -2682,6 +2684,13 @@ static int repair_inode_discount_extent(struct btrfs_trans_handle *trans,
 		if (RB_EMPTY_ROOT(&rec->holes))
 			rec->errors &= ~I_ERR_FILE_EXTENT_DISCOUNT;
 		node = rb_first(&rec->holes);
+	}
+	/* special case for a file losing all its file extent */
+	if (!found) {
+		ret = btrfs_punch_hole(trans, root, rec->ino, 0,
+				       round_up(rec->isize, root->sectorsize));
+		if (ret < 0)
+			goto out;
 	}
 	printf("Fixed discount file extents for inode: %llu in root: %llu\n",
 	       rec->ino, root->objectid);
