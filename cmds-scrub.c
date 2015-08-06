@@ -1483,8 +1483,9 @@ static int scrub_start(int argc, char **argv, int resume)
 			default:
 				if (do_print)
 					fprintf(stderr,
-			"ERROR: scrubbing %s failed for device id %lld (%s)\n",
+	"ERROR: scrubbing %s failed for device id %lld: ret=%d, errno=%d (%s)\n",
 						path, devid,
+						sp[i].ret, sp[i].ioctl_errno,
 						strerror(sp[i].ioctl_errno));
 				++err;
 				continue;
