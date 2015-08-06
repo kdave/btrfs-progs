@@ -1469,21 +1469,26 @@ static int scrub_start(int argc, char **argv, int resume)
 			++err;
 			continue;
 		}
-		if (sp[i].ret && sp[i].ioctl_errno == ENODEV) {
-			if (do_print)
-				fprintf(stderr, "WARNING: device %lld not "
-					"present\n", devid);
-			continue;
-		}
-		if (sp[i].ret && sp[i].ioctl_errno == ECANCELED) {
-			++err;
-		} else if (sp[i].ret) {
-			if (do_print)
-				fprintf(stderr, "ERROR: scrubbing %s failed "
-					"for device id %lld (%s)\n", path,
-					devid, strerror(sp[i].ioctl_errno));
-			++err;
-			continue;
+		if (sp[i].ret) {
+			switch (sp[i].ioctl_errno) {
+			case ENODEV:
+				if (do_print)
+					fprintf(stderr,
+					    "WARNING: device %lld not present\n",
+					    devid);
+				continue;
+			case ECANCELED:
+				++err;
+				break;
+			default:
+				if (do_print)
+					fprintf(stderr,
+			"ERROR: scrubbing %s failed for device id %lld (%s)\n",
+						path, devid,
+						strerror(sp[i].ioctl_errno));
+				++err;
+				continue;
+			}
 		}
 		if (sp[i].scrub_args.progress.uncorrectable_errors > 0)
 			e_uncorrectable++;
