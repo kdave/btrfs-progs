@@ -198,13 +198,13 @@ static int write_buf(int fd, const void *buf, int size)
 		ret = write(fd, (char*)buf + pos, size - pos);
 		if (ret < 0) {
 			ret = -errno;
-			fprintf(stderr, "ERROR: failed to dump stream. %s",
+			fprintf(stderr, "ERROR: failed to dump stream. %s\n",
 					strerror(-ret));
 			goto out;
 		}
 		if (!ret) {
 			ret = -EIO;
-			fprintf(stderr, "ERROR: failed to dump stream. %s",
+			fprintf(stderr, "ERROR: failed to dump stream. %s\n",
 					strerror(-ret));
 			goto out;
 		}

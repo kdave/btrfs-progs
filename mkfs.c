@@ -600,7 +600,7 @@ static int add_symbolic_link(struct btrfs_trans_handle *trans,
 		goto fail;
 	}
 	if (ret >= sectorsize) {
-		fprintf(stderr, "symlink too long for %s", path_name);
+		fprintf(stderr, "symlink too long for %s\n", path_name);
 		ret = -1;
 		goto fail;
 	}

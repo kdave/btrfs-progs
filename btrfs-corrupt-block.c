@@ -1010,7 +1010,7 @@ int find_chunk_offset(struct btrfs_root *root,
 		goto out;
 	}
 	if (ret < 0) {
-		fprintf(stderr, "Error searching chunk");
+		fprintf(stderr, "Error searching chunk\n");
 		goto out;
 	}
 out:

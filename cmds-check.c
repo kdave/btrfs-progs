@@ -2404,7 +2404,7 @@ static int repair_inode_nlinks(struct btrfs_trans_handle *trans,
 				  BTRFS_FIRST_FREE_OBJECTID, &lost_found_ino,
 				  mode);
 		if (ret < 0) {
-			fprintf(stderr, "Failed to create '%s' dir: %s",
+			fprintf(stderr, "Failed to create '%s' dir: %s\n",
 				dir_name, strerror(-ret));
 			goto out;
 		}
@@ -2432,7 +2432,7 @@ static int repair_inode_nlinks(struct btrfs_trans_handle *trans,
 		}
 		if (ret < 0) {
 			fprintf(stderr,
-				"Failed to link the inode %llu to %s dir: %s",
+				"Failed to link the inode %llu to %s dir: %s\n",
 				rec->ino, dir_name, strerror(-ret));
 			goto out;
 		}
