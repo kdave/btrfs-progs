@@ -9226,8 +9226,7 @@ next:
 	ret = 0;
 out:
 	free_roots_info_cache();
-	if (path)
-		btrfs_free_path(path);
+	btrfs_free_path(path);
 	if (trans)
 		btrfs_commit_transaction(trans, info->tree_root);
 	if (ret < 0)
