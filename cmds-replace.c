@@ -142,6 +142,8 @@ static int cmd_replace_start(int argc, char **argv)
 	int do_not_background = 0;
 	int mixed = 0;
 	DIR *dirstream = NULL;
+	u64 srcdev_size;
+	u64 dstdev_size;
 
 	while ((c = getopt(argc, argv, "Brf")) != -1) {
 		switch (c) {
@@ -249,15 +251,27 @@ static int cmd_replace_start(int argc, char **argv)
 				srcdev, path);
 			goto leave_with_error;
 		}
-	} else if (is_block_device(srcdev)) {
+		srcdev_size = di_args[i].total_bytes;
+	} else if (is_block_device(srcdev) > 0) {
 		strncpy((char *)start_args.start.srcdev_name, srcdev,
 			BTRFS_DEVICE_PATH_NAME_MAX);
 		start_args.start.srcdevid = 0;
+		srcdev_size = get_partition_size(srcdev);
+	} else {
+		fprintf(stderr, "ERROR: source device must be a block device or a devid\n");
+		goto leave_with_error;
 	}
 
 	ret = test_dev_for_mkfs(dstdev, force_using_targetdev);
 	if (ret)
 		goto leave_with_error;
+
+	dstdev_size = get_partition_size(dstdev);
+	if (srcdev_size > dstdev_size) {
+		fprintf(stderr, "ERROR: target device smaller than source device (required %llu bytes)\n",
+			srcdev_size);
+		goto leave_with_error;
+	}
 
 	fddstdev = open(dstdev, O_RDWR);
 	if (fddstdev < 0) {
