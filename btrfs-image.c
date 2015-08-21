@@ -872,54 +872,34 @@ out:
 static int read_data_extent(struct metadump_struct *md,
 			    struct async_work *async)
 {
-	struct btrfs_multi_bio *multi = NULL;
-	struct btrfs_device *device;
+	struct btrfs_root *root = md->root;
 	u64 bytes_left = async->size;
 	u64 logical = async->start;
 	u64 offset = 0;
-	u64 bytenr;
 	u64 read_len;
-	ssize_t done;
-	int fd;
+	int num_copies;
+	int cur_mirror;
 	int ret;
 
-	while (bytes_left) {
-		read_len = bytes_left;
-		ret = btrfs_map_block(&md->root->fs_info->mapping_tree, READ,
-				      logical, &read_len, &multi, 0, NULL);
-		if (ret) {
-			fprintf(stderr, "Couldn't map data block %d\n", ret);
-			return ret;
+	num_copies = btrfs_num_copies(&root->fs_info->mapping_tree, logical,
+				      bytes_left);
+
+	/* Try our best to read data, just like read_tree_block() */
+	for (cur_mirror = 0; cur_mirror < num_copies; cur_mirror++) {
+		while (bytes_left) {
+			read_len = bytes_left;
+			ret = read_extent_data(root,
+					(char *)(async->buffer + offset),
+					logical, &read_len, cur_mirror);
+			if (ret < 0)
+				break;
+			offset += read_len;
+			logical += read_len;
+			bytes_left -= read_len;
 		}
-
-		device = multi->stripes[0].dev;
-
-		if (device->fd <= 0) {
-			fprintf(stderr,
-				"Device we need to read from is not open\n");
-			free(multi);
-			return -EIO;
-		}
-		fd = device->fd;
-		bytenr = multi->stripes[0].physical;
-		free(multi);
-
-		read_len = min(read_len, bytes_left);
-		done = pread64(fd, async->buffer+offset, read_len, bytenr);
-		if (done < read_len) {
-			if (done < 0)
-				fprintf(stderr, "Error reading extent %d\n",
-					errno);
-			else
-				fprintf(stderr, "Short read\n");
-			return -EIO;
-		}
-
-		bytes_left -= done;
-		offset += done;
-		logical += done;
 	}
-
+	if (bytes_left)
+		return -EIO;
 	return 0;
 }
 
