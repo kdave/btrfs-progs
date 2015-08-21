@@ -465,12 +465,16 @@ int btrfs_qgroup_setup_comparer(struct btrfs_qgroup_comparer_set  **comp_set,
 	BUG_ON(set->ncomps > set->total);
 
 	if (set->ncomps == set->total) {
+		void *tmp;
+
 		size = set->total + BTRFS_QGROUP_NCOMPS_INCREASE;
 		size = sizeof(*set) +
 		       size * sizeof(struct btrfs_qgroup_comparer);
+		tmp = set;
 		set = realloc(set, size);
 		if (!set) {
 			fprintf(stderr, "memory allocation failed\n");
+			free(tmp);
 			exit(1);
 		}
 
@@ -836,12 +840,16 @@ int btrfs_qgroup_setup_filter(struct btrfs_qgroup_filter_set **filter_set,
 	BUG_ON(set->nfilters > set->total);
 
 	if (set->nfilters == set->total) {
+		void *tmp;
+
 		size = set->total + BTRFS_QGROUP_NFILTERS_INCREASE;
 		size = sizeof(*set) + size * sizeof(struct btrfs_qgroup_filter);
 
+		tmp = set;
 		set = realloc(set, size);
 		if (!set) {
 			fprintf(stderr, "memory allocation failed\n");
+			free(tmp);
 			exit(1);
 		}
 		memset(&set->filters[set->total], 0,

@@ -502,12 +502,16 @@ again:
 		}
 		return p;
 	}
-	if (avail == -1)
+	if (avail == -1) {
+		free_history(p);
 		return ERR_PTR(-errno);
+	}
 	avail += old_avail;
 
 	i = 0;
 	while (i < avail) {
+		void *tmp;
+
 		switch (state) {
 		case 0: /* start of file */
 			ret = scrub_kvread(&i,
@@ -534,11 +538,17 @@ again:
 				continue;
 			}
 			++curr;
+			tmp = p;
 			p = realloc(p, (curr + 2) * sizeof(*p));
-			if (p)
-				p[curr] = malloc(sizeof(**p));
-			if (!p || !p[curr])
+			if (!p) {
+				free_history(tmp);
 				return ERR_PTR(-errno);
+			}
+			p[curr] = malloc(sizeof(**p));
+			if (!p[curr]) {
+				free_history(p);
+				return ERR_PTR(-errno);
+			}
 			memset(p[curr], 0, sizeof(**p));
 			p[curr + 1] = NULL;
 			++state;

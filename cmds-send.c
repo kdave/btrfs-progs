@@ -174,11 +174,16 @@ out:
 
 static int add_clone_source(struct btrfs_send *s, u64 root_id)
 {
+	void *tmp;
+
+	tmp = s->clone_sources;
 	s->clone_sources = realloc(s->clone_sources,
 		sizeof(*s->clone_sources) * (s->clone_sources_count + 1));
 
-	if (!s->clone_sources)
+	if (!s->clone_sources) {
+		free(tmp);
 		return -ENOMEM;
+	}
 	s->clone_sources[s->clone_sources_count++] = root_id;
 
 	return 0;
