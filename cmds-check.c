@@ -4419,6 +4419,7 @@ static int add_extent_rec(struct cache_tree *extent_cache,
 	rec->metadata = metadata;
 	rec->flag_block_full_backref = -1;
 	rec->bad_full_backref = 0;
+	rec->crossing_stripes = 0;
 	INIT_LIST_HEAD(&rec->backrefs);
 	INIT_LIST_HEAD(&rec->dups);
 	INIT_LIST_HEAD(&rec->list);
