@@ -266,7 +266,7 @@ int read_whole_eb(struct btrfs_fs_info *info, struct extent_buffer *eb, int mirr
 			}
 			device = multi->stripes[0].dev;
 
-			if (device->fd == 0) {
+			if (device->fd <= 0) {
 				kfree(multi);
 				return -EIO;
 			}
@@ -385,7 +385,7 @@ int read_extent_data(struct btrfs_root *root, char *data,
 	}
 	device = multi->stripes[0].dev;
 
-	if (device->fd == 0)
+	if (device->fd <= 0)
 		goto err;
 	if (*len > max_len)
 		*len = max_len;

@@ -714,7 +714,7 @@ int read_data_from_disk(struct btrfs_fs_info *info, void *buf, u64 offset,
 		device = multi->stripes[0].dev;
 
 		read_len = min(bytes_left, read_len);
-		if (device->fd == 0) {
+		if (device->fd <= 0) {
 			kfree(multi);
 			return -EIO;
 		}
@@ -790,7 +790,7 @@ int write_data_to_disk(struct btrfs_fs_info *info, void *buf, u64 offset,
 			raid_map = NULL;
 		} else while (dev_nr < multi->num_stripes) {
 			device = multi->stripes[dev_nr].dev;
-			if (device->fd == 0) {
+			if (device->fd <= 0) {
 				kfree(multi);
 				return -EIO;
 			}

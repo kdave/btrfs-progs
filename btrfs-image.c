@@ -894,7 +894,7 @@ static int read_data_extent(struct metadump_struct *md,
 
 		device = multi->stripes[0].dev;
 
-		if (device->fd == 0) {
+		if (device->fd <= 0) {
 			fprintf(stderr,
 				"Device we need to read from is not open\n");
 			free(multi);
