@@ -187,6 +187,7 @@ int btrfs_add_device(struct btrfs_trans_handle *trans,
 int btrfs_open_devices(struct btrfs_fs_devices *fs_devices,
 		       int flags);
 int btrfs_close_devices(struct btrfs_fs_devices *fs_devices);
+void btrfs_close_all_devices(void);
 int btrfs_add_device(struct btrfs_trans_handle *trans,
 		     struct btrfs_root *root,
 		     struct btrfs_device *device);

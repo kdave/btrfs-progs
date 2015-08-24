@@ -198,6 +198,17 @@ again:
 	return 0;
 }
 
+void btrfs_close_all_devices(void)
+{
+	struct btrfs_fs_devices *fs_devices;
+
+	while (!list_empty(&fs_uuids)) {
+		fs_devices = list_entry(fs_uuids.next, struct btrfs_fs_devices,
+					list);
+		btrfs_close_devices(fs_devices);
+	}
+}
+
 int btrfs_open_devices(struct btrfs_fs_devices *fs_devices, int flags)
 {
 	int fd;
