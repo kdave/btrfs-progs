@@ -9588,6 +9588,7 @@ out:
 	free_root_recs_tree(&root_cache);
 close_out:
 	close_ctree(root);
+	btrfs_close_all_devices();
 err_out:
 	return ret;
 }

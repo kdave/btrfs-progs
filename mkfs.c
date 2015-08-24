@@ -1843,6 +1843,7 @@ raid_groups:
 out:
 	ret = close_ctree(root);
 	BUG_ON(ret);
+	btrfs_close_all_devices();
 	free(label);
 	return 0;
 }
