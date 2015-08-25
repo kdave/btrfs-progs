@@ -349,7 +349,9 @@ out:
 
 static const char * const cmd_device_stats_usage[] = {
 	"btrfs device stats [-z] <path>|<device>",
-	"Show current device IO stats. -z to reset stats afterwards.",
+	"Show current device IO stats.",
+	"",
+	"-z                     show current stats and reset values to zero",
 	NULL
 };
 
