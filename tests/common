@@ -9,6 +9,12 @@ _fail()
 	exit 1
 }
 
+# log a message to the results file
+_log()
+{
+	echo "$*" | tee -a $RESULTS
+}
+
 _not_run()
 {
 	echo "    [NOTRUN] $*"
@@ -27,6 +33,13 @@ run_check_stdout()
 {
 	echo "############### $@" >> $RESULTS 2>&1
 	"$@" 2>&1 | tee -a $RESULTS || _fail "failed: $@"
+}
+
+# same as run_check but does not fail the test, output is logged
+run_mayfail()
+{
+	echo "############### $@" >> $RESULTS 2>&1
+	"$@" >> $RESULTS 2>&1 || _log "failed (ignored): $@"
 }
 
 check_prereq()
