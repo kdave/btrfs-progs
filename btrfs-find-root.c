@@ -109,6 +109,9 @@ static void print_one_result(struct cache_extent *tree_block,
 	       tree_block->start, generation, level);
 	if (unsure)
 		printf("but we are unsure about the correct generation/level\n");
+	else if (level == filter->match_level &&
+		 generation == filter->match_gen)
+		printf("and it matches superblock\n");
 	else
 		printf("but generation/level doesn't match, want gen: %llu level: %u\n",
 		       filter->match_gen, filter->match_level);
@@ -129,8 +132,10 @@ static void print_find_root_result(struct cache_tree *result,
 				struct btrfs_find_root_gen_cache, cache);
 		level = gen_cache->highest_level;
 		generation = cache->start;
+		/* For exact found one, skip it as it's output before */
 		if (level == filter->match_level &&
-		    generation == filter->match_gen)
+		    generation == filter->match_gen &&
+		    !filter->search_all)
 			continue;
 		for (tree_block = last_cache_extent(&gen_cache->eb_tree);
 		     tree_block; tree_block = prev_cache_extent(tree_block))
