@@ -428,6 +428,7 @@ int write_and_map_eb(struct btrfs_trans_handle *trans,
 		ret = write_extent_to_disk(eb);
 		BUG_ON(ret);
 	}
+	kfree(raid_map);
 	kfree(multi);
 	return 0;
 }
