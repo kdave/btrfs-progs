@@ -417,13 +417,14 @@ static int print_replace_status(int fd, const char *path, int once)
 			return ret;
 		}
 
-		status = &args.status;
 		if (args.result != BTRFS_IOCTL_DEV_REPLACE_RESULT_NO_ERROR) {
 			fprintf(stderr, "ERROR: ioctl(DEV_REPLACE_STATUS) on \"%s\" returns error: %s\n",
 				path,
 				replace_dev_result2string(args.result));
 			return -1;
 		}
+
+		status = &args.status;
 
 		skip_stats = 0;
 		num_chars = 0;
@@ -469,12 +470,10 @@ static int print_replace_status(int fd, const char *path, int once)
 			printf("Never started");
 			break;
 		default:
-			prevent_loop = 1;
 			fprintf(stderr,
-				"Unknown btrfs dev replace status:%llu",
-				status->replace_state);
-			ret = -EINVAL;
-			break;
+	"ERROR: ioctl(DEV_REPLACE_STATUS) on \"%s\" got unknown status: %llu\n",
+					path, status->replace_state);
+			return -EINVAL;
 		}
 
 		if (!skip_stats)
@@ -483,9 +482,9 @@ static int print_replace_status(int fd, const char *path, int once)
 				(unsigned long long)status->num_write_errors,
 				(unsigned long long)
 				 status->num_uncorrectable_read_errors);
-		if (once || prevent_loop || ret) {
+		if (once || prevent_loop) {
 			printf("\n");
-			return ret;
+			break;
 		}
 
 		fflush(stdout);
