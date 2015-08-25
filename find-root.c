@@ -46,9 +46,14 @@ static int add_eb_to_result(struct extent_buffer *eb,
 	    generation < filter->generation)
 		return ret;
 
-	/* Get the generation cache or create one */
+	/*
+	 * Get the generation cache or create one
+	 *
+	 * NOTE: search_cache_extent() may return cache that doesn't cover
+	 * the range. So we need an extra check to make sure it's the right one.
+	 */
 	cache = search_cache_extent(result, generation);
-	if (!cache) {
+	if (!cache || cache->start != generation) {
 		gen_cache = malloc(sizeof(*gen_cache));
 		BUG_ON(!gen_cache);
 		cache = &gen_cache->cache;
