@@ -1201,7 +1201,7 @@ static int enumerate_dead_subvols(int fd, int count, u64 **ids)
 			off += sizeof(*sh);
 
 			if (sh->type == BTRFS_ORPHAN_ITEM_KEY) {
-				*ids[idx] = sh->offset;
+				(*ids)[idx] = sh->offset;
 				idx++;
 				if (idx >= count) {
 					u64 *newids;
