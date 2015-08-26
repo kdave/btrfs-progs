@@ -1165,12 +1165,13 @@ again:
  * Enumerate all dead subvolumes that exist in the filesystem.
  * Fill @ids and reallocate to bigger size if needed.
  */
-static int enumerate_dead_subvols(int fd, int count, u64 **ids)
+static int enumerate_dead_subvols(int fd, u64 **ids)
 {
 	int ret;
 	struct btrfs_ioctl_search_args args;
 	struct btrfs_ioctl_search_key *sk = &args.key;
 	int idx = 0;
+	int count = 0;
 
 	memset(&args, 0, sizeof(args));
 
@@ -1185,6 +1186,7 @@ static int enumerate_dead_subvols(int fd, int count, u64 **ids)
 	sk->max_transid = (u64)-1;
 	sk->nr_items = 4096;
 
+	*ids = NULL;
 	while (1) {
 		struct btrfs_ioctl_search_header *sh;
 		unsigned long off;
@@ -1203,8 +1205,6 @@ static int enumerate_dead_subvols(int fd, int count, u64 **ids)
 			off += sizeof(*sh);
 
 			if (sh->type == BTRFS_ORPHAN_ITEM_KEY) {
-				(*ids)[idx] = sh->offset;
-				idx++;
 				if (idx >= count) {
 					u64 *newids;
 
@@ -1214,6 +1214,8 @@ static int enumerate_dead_subvols(int fd, int count, u64 **ids)
 						return -ENOMEM;
 					*ids = newids;
 				}
+				(*ids)[idx] = sh->offset;
+				idx++;
 			}
 			off += sh->len;
 
@@ -1280,14 +1282,7 @@ static int cmd_subvol_sync(int argc, char **argv)
 
 	id_count = argc - optind;
 	if (!id_count) {
-		id_count = SUBVOL_ID_BATCH;
-		ids = (u64*)malloc(id_count * sizeof(u64));
-		if (!ids) {
-			fprintf(stderr, "ERROR: not enough memory\n");
-			ret = 1;
-			goto out;
-		}
-		id_count = enumerate_dead_subvols(fd, id_count, &ids);
+		id_count = enumerate_dead_subvols(fd, &ids);
 		if (id_count < 0) {
 			fprintf(stderr, "ERROR: can't enumerate dead subvolumes: %s\n",
 					strerror(-id_count));
