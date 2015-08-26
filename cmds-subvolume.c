@@ -938,7 +938,7 @@ static int cmd_subvol_show(int argc, char **argv)
 	char uuidparse[BTRFS_UUID_UNPARSED_SIZE];
 	char *fullpath = NULL, *svpath = NULL, *mnt = NULL;
 	char raw_prefix[] = "\t\t\t\t";
-	u64 sv_id, mntid;
+	u64 sv_id;
 	int fd = -1, mntfd = -1;
 	int ret = 1;
 	DIR *dirstream1 = NULL, *dirstream2 = NULL;
@@ -995,12 +995,6 @@ static int cmd_subvol_show(int argc, char **argv)
 	mntfd = open_file_or_dir(mnt, &dirstream2);
 	if (mntfd < 0) {
 		fprintf(stderr, "ERROR: can't access '%s'\n", mnt);
-		goto out;
-	}
-
-	ret = btrfs_list_get_path_rootid(mntfd, &mntid);
-	if (ret) {
-		fprintf(stderr, "ERROR: can't get rootid for '%s'\n", mnt);
 		goto out;
 	}
 
