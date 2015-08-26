@@ -245,13 +245,13 @@ static int cmd_replace_start(int argc, char **argv)
 		for (i = 0; i < fi_args.num_devices; i++)
 			if (start_args.start.srcdevid == di_args[i].devid)
 				break;
+		srcdev_size = di_args[i].total_bytes;
 		free(di_args);
 		if (i == fi_args.num_devices) {
 			fprintf(stderr, "Error: '%s' is not a valid devid for filesystem '%s'\n",
 				srcdev, path);
 			goto leave_with_error;
 		}
-		srcdev_size = di_args[i].total_bytes;
 	} else if (is_block_device(srcdev) > 0) {
 		strncpy((char *)start_args.start.srcdev_name, srcdev,
 			BTRFS_DEVICE_PATH_NAME_MAX);
