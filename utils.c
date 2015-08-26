@@ -35,6 +35,8 @@
 #include <limits.h>
 #include <blkid/blkid.h>
 #include <sys/vfs.h>
+#include <sys/statfs.h>
+#include <linux/magic.h>
 
 #include "kerncompat.h"
 #include "radix-tree.h"
@@ -1078,6 +1080,60 @@ int open_path_or_dev_mnt(const char *path, DIR **dirstream)
 	}
 
 	return fdmnt;
+}
+
+/*
+ * Do the following checks before calling open_file_or_dir():
+ * 1: path is in a btrfs filesystem
+ * 2: path is a directory
+ */
+int btrfs_open_dir(const char *path, DIR **dirstream, int verbose)
+{
+	struct statfs stfs;
+	struct stat st;
+	int ret;
+
+	if (statfs(path, &stfs) != 0) {
+		if (verbose)
+			fprintf(stderr,
+				"ERROR: can't access '%s': %s\n",
+				path, strerror(errno));
+		return -1;
+	}
+
+	if (stfs.f_type != BTRFS_SUPER_MAGIC) {
+		if (verbose)
+			fprintf(stderr,
+				"ERROR: not a btrfs filesystem: %s\n",
+				path);
+		return -2;
+	}
+
+	if (stat(path, &st) != 0) {
+		if (verbose)
+			fprintf(stderr,
+				"ERROR: can't access '%s': %s\n",
+				path, strerror(errno));
+		return -1;
+	}
+
+	if (!S_ISDIR(st.st_mode)) {
+		if (verbose)
+			fprintf(stderr,
+				"ERROR: not a directory: %s\n",
+				path);
+		return -3;
+	}
+
+	ret = open_file_or_dir(path, dirstream);
+	if (ret < 0) {
+		if (verbose)
+			fprintf(stderr,
+				"ERROR: can't access '%s': %s\n",
+				path, strerror(errno));
+	}
+
+	return ret;
 }
 
 /* checks if a device is a loop device */
