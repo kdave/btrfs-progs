@@ -66,7 +66,7 @@ static int is_subvolume_cleaned(int fd, u64 subvolid)
 static int wait_for_subvolume_cleaning(int fd, int count, u64 *ids,
 		int sleep_interval)
 {
-	int ret = 0;
+	int ret;
 	int remaining;
 	int i;
 
@@ -92,6 +92,8 @@ static int wait_for_subvolume_cleaning(int fd, int count, u64 *ids,
 			break;
 		sleep(sleep_interval);
 	}
+
+	ret = 0;
 out:
 	return ret;
 }
