@@ -84,11 +84,9 @@ static int cmd_device_add(int argc, char **argv)
 
 	mntpnt = argv[optind + argc - 1];
 
-	fdmnt = open_file_or_dir(mntpnt, &dirstream);
-	if (fdmnt < 0) {
-		fprintf(stderr, "ERROR: can't access '%s'\n", mntpnt);
+	fdmnt = btrfs_open_dir(mntpnt, &dirstream, 1);
+	if (fdmnt < 0)
 		return 1;
-	}
 
 	for (i = optind; i < optind + argc - 1; i++){
 		struct btrfs_ioctl_vol_args ioctl_args;
@@ -157,11 +155,9 @@ static int _cmd_device_remove(int argc, char **argv,
 
 	mntpnt = argv[argc - 1];
 
-	fdmnt = open_file_or_dir(mntpnt, &dirstream);
-	if (fdmnt < 0) {
-		fprintf(stderr, "ERROR: can't access '%s'\n", mntpnt);
+	fdmnt = btrfs_open_dir(mntpnt, &dirstream, 1);
+	if (fdmnt < 0)
 		return 1;
-	}
 
 	for(i=1 ; i < argc - 1; i++ ){
 		struct	btrfs_ioctl_vol_args arg;
@@ -588,10 +584,8 @@ int cmd_device_usage(int argc, char **argv)
 		if (more_than_one)
 			printf("\n");
 
-		fd = open_file_or_dir(argv[i], &dirstream);
+		fd = btrfs_open_dir(argv[i], &dirstream, 1);
 		if (fd < 0) {
-			fprintf(stderr, "ERROR: can't access '%s'\n",
-				argv[1]);
 			ret = 1;
 			goto out;
 		}
