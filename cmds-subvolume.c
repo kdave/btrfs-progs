@@ -67,11 +67,11 @@ static int wait_for_subvolume_cleaning(int fd, int count, u64 *ids,
 		int sleep_interval)
 {
 	int ret;
-	int remaining;
 	int i;
 
-	remaining = count;
 	while (1) {
+		int clean = 1;
+
 		for (i = 0; i < count; i++) {
 			if (!ids[i])
 				continue;
@@ -80,22 +80,21 @@ static int wait_for_subvolume_cleaning(int fd, int count, u64 *ids,
 				fprintf(stderr,
 					"ERROR: can't perform the search - %s\n",
 					strerror(-ret));
-				goto out;
+				return ret;
 			}
 			if (ret) {
 				printf("Subvolume id %llu is gone\n", ids[i]);
 				ids[i] = 0;
-				remaining--;
+			} else {
+				clean = 0;
 			}
 		}
-		if (!remaining)
+		if (clean == 0)
 			break;
 		sleep(sleep_interval);
 	}
 
-	ret = 0;
-out:
-	return ret;
+	return 0;
 }
 
 static const char * const subvolume_cmd_group_usage[] = {
