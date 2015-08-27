@@ -262,6 +262,7 @@ int main(int ac, char **av)
 	root = open_ctree(dev, 0, 0);
 	if (!root) {
 		fprintf(stderr, "Open ctree failed\n");
+		free(output_file);
 		exit(1);
 	}
 
@@ -354,6 +355,7 @@ out_close_fd:
 	if (output_file && out_fd != 1)
 		close(out_fd);
 close:
+	free(output_file);
 	close_ctree(root);
 	if (ret < 0)
 		ret = 1;
