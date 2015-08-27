@@ -731,21 +731,18 @@ int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 	struct btrfs_super_block *super = root->fs_info->super_copy;
 	struct btrfs_device *device;
 	struct btrfs_dev_item *dev_item;
-	char *buf;
+	char *buf = NULL;
 	u64 total_bytes;
 	u64 num_devs;
 	int ret;
 
 	device = kzalloc(sizeof(*device), GFP_NOFS);
 	if (!device)
-		return -ENOMEM;
-	buf = kmalloc(sectorsize, GFP_NOFS);
-	if (!buf) {
-		kfree(device);
-		return -ENOMEM;
-	}
+		goto err_nomem;
+	buf = kzalloc(sectorsize, GFP_NOFS);
+	if (!buf)
+		goto err_nomem;
 	BUG_ON(sizeof(*disk_super) > sectorsize);
-	memset(buf, 0, sectorsize);
 
 	disk_super = (struct btrfs_super_block *)buf;
 	dev_item = &disk_super->dev_item;
@@ -763,6 +760,8 @@ int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 	device->total_ios = 0;
 	device->dev_root = root->fs_info->dev_root;
 	device->name = strdup(path);
+	if (!device->name)
+		goto err_nomem;
 
 	ret = btrfs_add_device(trans, root, device);
 	BUG_ON(ret);
@@ -792,6 +791,11 @@ int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 	list_add(&device->dev_list, &root->fs_info->fs_devices->devices);
 	device->fs_devices = root->fs_info->fs_devices;
 	return 0;
+
+err_nomem:
+	kfree(device);
+	kfree(buf);
+	return -ENOMEM;
 }
 
 static void btrfs_wipe_existing_sb(int fd)
