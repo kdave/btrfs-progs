@@ -2428,7 +2428,7 @@ static int do_convert(const char *devname, int datacsum, int packing, int noxatt
 		fprintf(stderr, "copy label '%s'\n",
 				root->fs_info->super_copy->label);
 	} else if (copylabel == -1) {
-		strncpy(root->fs_info->super_copy->label, fslabel, BTRFS_LABEL_SIZE);
+		strcpy(root->fs_info->super_copy->label, fslabel);
 		fprintf(stderr, "set label to '%s'\n", fslabel);
 	}
 
@@ -2868,7 +2868,7 @@ int main(int argc, char *argv[])
 	int usage_error = 0;
 	int progress = 1;
 	char *file;
-	char *fslabel = NULL;
+	char fslabel[BTRFS_LABEL_SIZE + 1];
 	u64 features = BTRFS_MKFS_DEFAULT_FEATURES;
 
 	while(1) {
@@ -2910,8 +2910,9 @@ int main(int argc, char *argv[])
 				break;
 			case 'l':
 				copylabel = -1;
-				fslabel = strdup(optarg);
-				if (strlen(fslabel) > BTRFS_LABEL_SIZE) {
+				fslabel[BTRFS_LABEL_SIZE] = 0;
+				strncpy(fslabel, optarg, sizeof(fslabel));
+				if (fslabel[BTRFS_LABEL_SIZE]) {
 					fprintf(stderr,
 						"warning: label too long, trimmed to %d bytes\n",
 						BTRFS_LABEL_SIZE);
