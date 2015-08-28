@@ -1086,7 +1086,8 @@ int open_path_or_dev_mnt(const char *path, DIR **dirstream)
 	char mp[PATH_MAX];
 	int fdmnt;
 
-	if (is_block_device(path)) {
+	fdmnt = is_block_device(path);
+	if (fdmnt == 1) {
 		int ret;
 
 		ret = get_btrfs_mount(path, mp, sizeof(mp));
@@ -1096,7 +1097,7 @@ int open_path_or_dev_mnt(const char *path, DIR **dirstream)
 			return -1;
 		}
 		fdmnt = open_file_or_dir(mp, dirstream);
-	} else {
+	} else if (fdmnt == 0) {
 		fdmnt = open_file_or_dir(path, dirstream);
 	}
 
@@ -2138,7 +2139,7 @@ int get_fs_info(char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 
 	memset(fi_args, 0, sizeof(*fi_args));
 
-	if (is_block_device(path)) {
+	if (is_block_device(path) == 1) {
 		struct btrfs_super_block *disk_super;
 		char buf[BTRFS_SUPER_INFO_SIZE];
 		u64 devid;

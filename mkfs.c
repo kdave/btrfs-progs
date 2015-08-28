@@ -1494,7 +1494,7 @@ int main(int ac, char **av)
 	
 	while (dev_cnt-- > 0) {
 		file = av[optind++];
-		if (is_block_device(file))
+		if (is_block_device(file) == 1)
 			if (test_dev_for_mkfs(file, force_overwrite))
 				exit(1);
 	}
@@ -1718,7 +1718,7 @@ int main(int ac, char **av)
 		exit(1);
 	}
 
-	if (is_block_device(file))
+	if (is_block_device(file) == 1)
 		btrfs_register_one_device(file);
 
 	if (dev_cnt == 0)
@@ -1768,7 +1768,7 @@ int main(int ac, char **av)
 				(unsigned long long)device->devid);
 		}
 
-		if (is_block_device(file))
+		if (is_block_device(file) == 1)
 			btrfs_register_one_device(file);
 	}
 
