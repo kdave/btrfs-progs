@@ -2950,3 +2950,105 @@ int arg_copy_path(char *dest, const char *src, int destlen)
 
 	return 0;
 }
+
+unsigned int get_unit_mode_from_arg(int *argc, char *argv[], int df_mode)
+{
+	unsigned int unit_mode = UNITS_DEFAULT;
+	int arg_i;
+	int arg_end;
+
+	for (arg_i = 0; arg_i < *argc; arg_i++) {
+		if (!strcmp(argv[arg_i], "--raw")) {
+			unit_mode = UNITS_RAW;
+			argv[arg_i] = NULL;
+			continue;
+		}
+		if (!strcmp(argv[arg_i], "--human-readable")) {
+			unit_mode = UNITS_HUMAN_BINARY;
+			argv[arg_i] = NULL;
+			continue;
+		}
+
+		if (!strcmp(argv[arg_i], "--iec")) {
+			units_set_mode(&unit_mode, UNITS_BINARY);
+			argv[arg_i] = NULL;
+			continue;
+		}
+		if (!strcmp(argv[arg_i], "--si")) {
+			units_set_mode(&unit_mode, UNITS_DECIMAL);
+			argv[arg_i] = NULL;
+			continue;
+		}
+
+		if (!strcmp(argv[arg_i], "--kbytes")) {
+			units_set_base(&unit_mode, UNITS_KBYTES);
+			argv[arg_i] = NULL;
+			continue;
+		}
+		if (!strcmp(argv[arg_i], "--mbytes")) {
+			units_set_base(&unit_mode, UNITS_MBYTES);
+			argv[arg_i] = NULL;
+			continue;
+		}
+		if (!strcmp(argv[arg_i], "--gbytes")) {
+			units_set_base(&unit_mode, UNITS_GBYTES);
+			argv[arg_i] = NULL;
+			continue;
+		}
+		if (!strcmp(argv[arg_i], "--tbytes")) {
+			units_set_base(&unit_mode, UNITS_TBYTES);
+			argv[arg_i] = NULL;
+			continue;
+		}
+
+		if (!df_mode)
+			continue;
+
+		if (!strcmp(argv[arg_i], "-b")) {
+			unit_mode = UNITS_RAW;
+			argv[arg_i] = NULL;
+			continue;
+		}
+		if (!strcmp(argv[arg_i], "-h")) {
+			unit_mode = UNITS_HUMAN_BINARY;
+			argv[arg_i] = NULL;
+			continue;
+		}
+		if (!strcmp(argv[arg_i], "-H")) {
+			unit_mode = UNITS_HUMAN_DECIMAL;
+			argv[arg_i] = NULL;
+			continue;
+		}
+		if (!strcmp(argv[arg_i], "-k")) {
+			units_set_base(&unit_mode, UNITS_KBYTES);
+			argv[arg_i] = NULL;
+			continue;
+		}
+		if (!strcmp(argv[arg_i], "-m")) {
+			units_set_base(&unit_mode, UNITS_MBYTES);
+			argv[arg_i] = NULL;
+			continue;
+		}
+		if (!strcmp(argv[arg_i], "-g")) {
+			units_set_base(&unit_mode, UNITS_GBYTES);
+			argv[arg_i] = NULL;
+			continue;
+		}
+		if (!strcmp(argv[arg_i], "-t")) {
+			units_set_base(&unit_mode, UNITS_TBYTES);
+			argv[arg_i] = NULL;
+			continue;
+		}
+	}
+
+	for (arg_i = 0, arg_end = 0; arg_i < *argc; arg_i++) {
+		if (!argv[arg_i])
+			continue;
+		argv[arg_end] = argv[arg_i];
+		arg_end++;
+	}
+
+	*argc = arg_end;
+
+	return unit_mode;
+}

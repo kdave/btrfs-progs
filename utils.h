@@ -245,4 +245,28 @@ int btrfs_check_nodesize(u32 nodesize, u32 sectorsize);
 
 const char *get_argv0_buf(void);
 
+#define HELPINFO_OUTPUT_UNIT							\
+	"--raw              raw numbers in bytes",				\
+	"--human-readable   human friendly numbers, base 1024 (default)",	\
+	"--iec              use 1024 as a base (KiB, MiB, GiB, TiB)",		\
+	"--si               use 1000 as a base (kB, MB, GB, TB)",		\
+	"--kbytes           show sizes in KiB, or kB with --si",		\
+	"--mbytes           show sizes in MiB, or MB with --si",		\
+	"--gbytes           show sizes in GiB, or GB with --si",		\
+	"--tbytes           show sizes in TiB, or TB with --si"
+
+#define HELPINFO_OUTPUT_UNIT_DF							\
+	"-b|--raw           raw numbers in bytes",				\
+	"-h|--human-readable",							\
+	"                   human friendly numbers, base 1024 (default)",	\
+	"-H                 human friendly numbers, base 1000",			\
+	"--iec              use 1024 as a base (KiB, MiB, GiB, TiB)",		\
+	"--si               use 1000 as a base (kB, MB, GB, TB)",		\
+	"-k|--kbytes        show sizes in KiB, or kB with --si",		\
+	"-m|--mbytes        show sizes in MiB, or MB with --si",		\
+	"-g|--gbytes        show sizes in GiB, or GB with --si",		\
+	"-t|--tbytes        show sizes in TiB, or TB with --si"
+
+unsigned int get_unit_mode_from_arg(int *argc, char *argv[], int df_mode);
+
 #endif
