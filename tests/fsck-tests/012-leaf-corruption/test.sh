@@ -85,7 +85,6 @@ check_inode()
 check_leaf_corrupt_no_data_ext()
 {
 	image=$1
-	mkdir -p $TEST_MNT || _fail "failed to create mount point"
 	$SUDO_HELPER mount -o loop $image -o ro $TEST_MNT
 
 	i=0

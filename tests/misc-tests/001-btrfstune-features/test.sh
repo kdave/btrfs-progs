@@ -9,11 +9,6 @@ check_prereq mkfs.btrfs
 setup_root_helper
 prepare_test_dev
 
-if [ -z $TEST_MNT ];then
-	echo "    [NOTRUN] extent tree rebuild, need TEST_MNT variant"
-	exit 0
-fi
-
 # test whether fsck can rebuild a corrupted extent tree
 # parameters:
 # - option for mkfs.btrfs -O, empty for defaults

@@ -11,7 +11,6 @@ LANG=C
 SCRIPT_DIR=$(dirname $(readlink -f $0))
 TOP=$(readlink -f $SCRIPT_DIR/../)
 TEST_DEV=${TEST_DEV:-}
-TEST_MNT=${TEST_MNT:-$TOP/tests/mnt}
 RESULTS="$TOP/tests/fsck-tests-results.txt"
 
 source $TOP/tests/common
@@ -20,11 +19,9 @@ source $TOP/tests/common
 export TOP
 export RESULTS
 # For custom script needs to verfiy recovery
-export TEST_MNT
 export LANG
 
 rm -f $RESULTS
-mkdir -p $TEST_MNT || _fail "unable to create mount point on $TEST_MNT"
 
 # test rely on corrupting blocks tool
 check_prereq btrfs-corrupt-block

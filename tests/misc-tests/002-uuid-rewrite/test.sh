@@ -9,11 +9,6 @@ check_prereq mkfs.btrfs
 check_prereq btrfstune
 prepare_test_dev
 
-if [ -z $TEST_MNT ];then
-	echo "    [NOTRUN] extent tree rebuild, need TEST_MNT variant"
-	exit 0
-fi
-
 get_fs_uuid() {
 	local image
 
