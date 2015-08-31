@@ -17,6 +17,7 @@
  */
 
 #include "kerncompat.h"
+#include "androidcompat.h"
 
 #include <unistd.h>
 #include <stdint.h>
@@ -25,7 +26,7 @@
 #include <pthread.h>
 #include <math.h>
 #include <ftw.h>
-#include <wait.h>
+#include <sys/wait.h>
 #include <assert.h>
 #include <getopt.h>
 #include <limits.h>

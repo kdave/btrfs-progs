@@ -17,6 +17,7 @@
  */
 
 #include "kerncompat.h"
+#include "androidcompat.h"
 
 #include <sys/ioctl.h>
 #include <sys/mount.h>
@@ -25,7 +26,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/dir.h>
+/* #include <sys/dir.h> included via androidcompat.h */
 #include <fcntl.h>
 #include <unistd.h>
 #include <getopt.h>
