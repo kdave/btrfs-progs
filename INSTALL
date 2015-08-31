@@ -42,7 +42,11 @@ Specific CFLAGS or LDFLAGS should be set like
 
  $ CFLAGS=... LDFLAGS=... ./configure --prefix=/usr
 
-and not as arguments to make.
+and not as arguments to make. You can specify additional flags to build via
+variables EXTRA_CFLAGS and EXTRA_LDFLAGS that get appended to the predefined
+values of the respective variables.
+
+ $ make EXTRA_CFLAGS=-ggdb3
 
 References:
 * https://btrfs.wiki.kernel.org
