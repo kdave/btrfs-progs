@@ -474,16 +474,7 @@ out:
 const char * const cmd_device_usage_usage[] = {
 	"btrfs device usage [options] <path> [<path>..]",
 	"Show detailed information about internal allocations in devices.",
-	"-b|--raw           raw numbers in bytes",
-	"-h|--human-readable",
-	"                   human friendly numbers, base 1024 (default)",
-	"-H                 human friendly numbers, base 1000",
-	"--iec              use 1024 as a base (KiB, MiB, GiB, TiB)",
-	"--si               use 1000 as a base (kB, MB, GB, TB)",
-	"-k|--kbytes        show sizes in KiB, or kB with --si",
-	"-m|--mbytes        show sizes in MiB, or MB with --si",
-	"-g|--gbytes        show sizes in GiB, or GB with --si",
-	"-t|--tbytes        show sizes in TiB, or TB with --si",
+	HELPINFO_OUTPUT_UNIT_DF,
 	NULL
 };
 
@@ -518,69 +509,20 @@ out:
 
 int cmd_device_usage(int argc, char **argv)
 {
-	unsigned unit_mode = UNITS_DEFAULT;
+	unsigned unit_mode;
 	int ret = 0;
-	int	i, more_than_one = 0;
+	int more_than_one = 0;
+	int i;
 
-	optind = 1;
-	while (1) {
-		int c;
-		static const struct option long_options[] = {
-			{ "raw", no_argument, NULL, 'b'},
-			{ "kbytes", no_argument, NULL, 'k'},
-			{ "mbytes", no_argument, NULL, 'm'},
-			{ "gbytes", no_argument, NULL, 'g'},
-			{ "tbytes", no_argument, NULL, 't'},
-			{ "si", no_argument, NULL, GETOPT_VAL_SI},
-			{ "iec", no_argument, NULL, GETOPT_VAL_IEC},
-			{ "human-readable", no_argument, NULL,
-				GETOPT_VAL_HUMAN_READABLE},
-			{ NULL, 0, NULL, 0 }
-		};
+	unit_mode = get_unit_mode_from_arg(&argc, argv, 1);
 
-		c = getopt_long(argc, argv, "bhHkmgt", long_options, NULL);
-		if (c < 0)
-			break;
-		switch (c) {
-		case 'b':
-			unit_mode = UNITS_RAW;
-			break;
-		case 'k':
-			units_set_base(&unit_mode, UNITS_KBYTES);
-			break;
-		case 'm':
-			units_set_base(&unit_mode, UNITS_MBYTES);
-			break;
-		case 'g':
-			units_set_base(&unit_mode, UNITS_GBYTES);
-			break;
-		case 't':
-			units_set_base(&unit_mode, UNITS_TBYTES);
-			break;
-		case GETOPT_VAL_HUMAN_READABLE:
-		case 'h':
-			unit_mode = UNITS_HUMAN_BINARY;
-			break;
-		case 'H':
-			unit_mode = UNITS_HUMAN_DECIMAL;
-			break;
-		case GETOPT_VAL_SI:
-			units_set_mode(&unit_mode, UNITS_DECIMAL);
-			break;
-		case GETOPT_VAL_IEC:
-			units_set_mode(&unit_mode, UNITS_BINARY);
-			break;
-		default:
-			usage(cmd_device_usage_usage);
-		}
-	}
-
-	if (check_argc_min(argc - optind, 1))
+	if (check_argc_min(argc, 2) || argv[1][0] == '-')
 		usage(cmd_device_usage_usage);
 
-	for (i = optind; i < argc ; i++) {
+	for (i = 1; i < argc; i++) {
 		int fd;
-		DIR	*dirstream = NULL;
+		DIR *dirstream = NULL;
+
 		if (more_than_one)
 			printf("\n");
 
