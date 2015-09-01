@@ -2588,7 +2588,7 @@ static int update_disk_super_on_device(struct btrfs_fs_info *info,
 	char fs_uuid[BTRFS_UUID_SIZE];
 	u64 devid, type, io_align, io_width;
 	u64 sector_size, total_bytes, bytes_used;
-	char *buf = NULL;
+	char buf[BTRFS_SUPER_INFO_SIZE];
 	int fp = -1;
 	int ret;
 
@@ -2636,13 +2636,6 @@ static int update_disk_super_on_device(struct btrfs_fs_info *info,
 		goto out;
 	}
 
-	buf = malloc(BTRFS_SUPER_INFO_SIZE);
-	if (!buf) {
-		ret = -ENOMEM;
-		close(fp);
-		return ret;
-	}
-
 	memcpy(buf, info->super_copy, BTRFS_SUPER_INFO_SIZE);
 
 	disk_super = (struct btrfs_super_block *)buf;
@@ -2672,7 +2665,6 @@ static int update_disk_super_on_device(struct btrfs_fs_info *info,
 	write_backup_supers(fp, (u8 *)buf);
 
 out:
-	free(buf);
 	if (fp != -1)
 		close(fp);
 	return ret;
