@@ -12,14 +12,14 @@ test_extent_tree_rebuild()
 {
 	run_check $SUDO_HELPER $TOP/mkfs.btrfs -f $TEST_DEV
 
-	run_check $SUDO_HELPER mount $TEST_DEV $TEST_MNT
+	run_check_mount_test_dev
 	run_check $SUDO_HELPER cp -aR /lib/modules/`uname -r`/ $TEST_MNT
 
 	for i in `seq 1 100`;do
 		run_check $SUDO_HELPER $TOP/btrfs sub snapshot $TEST_MNT \
 			$TEST_MNT/snapaaaaaaa_$i
 	done
-	run_check $SUDO_HELPER umount $TEST_DEV
+	run_check_umount_test_dev
 
 	# get extent root bytenr
 	extent_root_bytenr=`$SUDO_HELPER $TOP/btrfs-debug-tree -r $TEST_DEV | \
