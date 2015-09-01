@@ -2588,8 +2588,8 @@ static int update_disk_super_on_device(struct btrfs_fs_info *info,
 	char fs_uuid[BTRFS_UUID_SIZE];
 	u64 devid, type, io_align, io_width;
 	u64 sector_size, total_bytes, bytes_used;
-	char *buf;
-	int fp;
+	char *buf = NULL;
+	int fp = -1;
 	int ret;
 
 	key.objectid = BTRFS_DEV_ITEMS_OBJECTID;
@@ -2599,8 +2599,9 @@ static int update_disk_super_on_device(struct btrfs_fs_info *info,
 	btrfs_init_path(&path);
 	ret = btrfs_search_slot(NULL, info->chunk_root, &key, &path, 0, 0); 
 	if (ret) {
-		fprintf(stderr, "search key fails\n");
-		exit(1);
+		fprintf(stderr, "ERROR: search key failed\n");
+		ret = -EIO;
+		goto out;
 	}
 
 	leaf = path.nodes[0];
@@ -2609,8 +2610,9 @@ static int update_disk_super_on_device(struct btrfs_fs_info *info,
 
 	devid = btrfs_device_id(leaf, dev_item);
 	if (devid != cur_devid) {
-		printk("devid %llu mismatch with %llu\n", devid, cur_devid);
-		exit(1);
+		printk("ERROR: devid %llu mismatch with %llu\n", devid, cur_devid);
+		ret = -EIO;
+		goto out;
 	}
 
 	type = btrfs_device_type(leaf, dev_item);
@@ -2629,8 +2631,9 @@ static int update_disk_super_on_device(struct btrfs_fs_info *info,
 	/* update other devices' super block */
 	fp = open(other_dev, O_CREAT | O_RDWR, 0600);
 	if (fp < 0) {
-		fprintf(stderr, "could not open %s\n", other_dev);
-		exit(1);
+		fprintf(stderr, "ERROR: could not open %s\n", other_dev);
+		ret = -EIO;
+		goto out;
 	}
 
 	buf = malloc(BTRFS_SUPER_INFO_SIZE);
@@ -2658,6 +2661,10 @@ static int update_disk_super_on_device(struct btrfs_fs_info *info,
 
 	ret = pwrite64(fp, buf, BTRFS_SUPER_INFO_SIZE, BTRFS_SUPER_INFO_OFFSET);
 	if (ret != BTRFS_SUPER_INFO_SIZE) {
+		if (ret < 0)
+			fprintf(stderr, "ERROR: cannot write superblock: %s\n", strerror(ret));
+		else
+			fprintf(stderr, "ERROR: cannot write superblock\n");
 		ret = -EIO;
 		goto out;
 	}
@@ -2666,8 +2673,9 @@ static int update_disk_super_on_device(struct btrfs_fs_info *info,
 
 out:
 	free(buf);
-	close(fp);
-	return 0;
+	if (fp != -1)
+		close(fp);
+	return ret;
 }
 
 static void print_usage(int ret)
