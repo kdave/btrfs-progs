@@ -13,7 +13,7 @@ setup_root_helper
 prepare_test_dev
 
 run_check $SUDO_HELPER $TOP/mkfs.btrfs -f "$TEST_DEV"
-run_check $SUDO_HELPER mount "$TEST_DEV" "$TEST_MNT"
+run_check_mount_test_dev
 
 # to check following thing in both 1 and multiple subvolume case:
 # 1: is subvolume sync loop indefinetelly
@@ -29,4 +29,4 @@ run_check $SUDO_HELPER $TOP/btrfs subvolume create "$TEST_MNT"/mysubvol
 run_check $SUDO_HELPER $TOP/btrfs subvolume delete "$TEST_MNT"/mysubvol
 run_check $SUDO_HELPER $TOP/btrfs subvolume sync "$TEST_MNT"
 
-run_check $SUDO_HELPER umount $TEST_MNT
+run_check_umount_test_dev
