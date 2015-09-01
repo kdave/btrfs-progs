@@ -121,19 +121,10 @@ static const char * const filesystem_cmd_group_usage[] = {
 };
 
 static const char * const cmd_filesystem_df_usage[] = {
-       "btrfs filesystem df [options] <path>",
-       "Show space usage information for a mount point",
-	"-b|--raw           raw numbers in bytes",
-	"-h|--human-readable",
-	"                   human friendly numbers, base 1024 (default)",
-	"-H                 human friendly numbers, base 1000",
-	"--iec              use 1024 as a base (KiB, MiB, GiB, TiB)",
-	"--si               use 1000 as a base (kB, MB, GB, TB)",
-	"-k|--kbytes        show sizes in KiB, or kB with --si",
-	"-m|--mbytes        show sizes in MiB, or MB with --si",
-	"-g|--gbytes        show sizes in GiB, or GB with --si",
-	"-t|--tbytes        show sizes in TiB, or TB with --si",
-       NULL
+	"btrfs filesystem df [options] <path>",
+	"Show space usage information for a mount point",
+	HELPINFO_OUTPUT_UNIT_DF,
+	NULL
 };
 
 static int get_df(int fd, struct btrfs_ioctl_space_args **sargs_ret)
@@ -205,64 +196,14 @@ static int cmd_filesystem_df(int argc, char **argv)
 	int fd;
 	char *path;
 	DIR *dirstream = NULL;
-	unsigned unit_mode = UNITS_DEFAULT;
+	unsigned unit_mode;
 
-	while (1) {
-		int c;
-		static const struct option long_options[] = {
-			{ "raw", no_argument, NULL, 'b'},
-			{ "kbytes", no_argument, NULL, 'k'},
-			{ "mbytes", no_argument, NULL, 'm'},
-			{ "gbytes", no_argument, NULL, 'g'},
-			{ "tbytes", no_argument, NULL, 't'},
-			{ "si", no_argument, NULL, GETOPT_VAL_SI},
-			{ "iec", no_argument, NULL, GETOPT_VAL_IEC},
-			{ "human-readable", no_argument, NULL,
-				GETOPT_VAL_HUMAN_READABLE},
-			{ NULL, 0, NULL, 0 }
-		};
+	unit_mode = get_unit_mode_from_arg(&argc, argv, 1);
 
-		c = getopt_long(argc, argv, "bhHkmgt", long_options, NULL);
-		if (c < 0)
-			break;
-		switch (c) {
-		case 'b':
-			unit_mode = UNITS_RAW;
-			break;
-		case 'k':
-			units_set_base(&unit_mode, UNITS_KBYTES);
-			break;
-		case 'm':
-			units_set_base(&unit_mode, UNITS_MBYTES);
-			break;
-		case 'g':
-			units_set_base(&unit_mode, UNITS_GBYTES);
-			break;
-		case 't':
-			units_set_base(&unit_mode, UNITS_TBYTES);
-			break;
-		case GETOPT_VAL_HUMAN_READABLE:
-		case 'h':
-			unit_mode = UNITS_HUMAN_BINARY;
-			break;
-		case 'H':
-			unit_mode = UNITS_HUMAN_DECIMAL;
-			break;
-		case GETOPT_VAL_SI:
-			units_set_mode(&unit_mode, UNITS_DECIMAL);
-			break;
-		case GETOPT_VAL_IEC:
-			units_set_mode(&unit_mode, UNITS_BINARY);
-			break;
-		default:
-			usage(cmd_filesystem_df_usage);
-		}
-	}
-
-	if (check_argc_exact(argc, optind + 1))
+	if (argc != 2 || argv[1][0] == '-')
 		usage(cmd_filesystem_df_usage);
 
-	path = argv[optind];
+	path = argv[1];
 
 	fd = open_file_or_dir(path, &dirstream);
 	if (fd < 0) {
@@ -820,14 +761,7 @@ static const char * const cmd_filesystem_show_usage[] = {
 	"Show the structure of a filesystem",
 	"-d|--all-devices   show only disks under /dev containing btrfs filesystem",
 	"-m|--mounted       show only mounted btrfs",
-	"--raw              raw numbers in bytes",
-	"--human-readable   human friendly numbers, base 1024 (default)",
-	"--iec              use 1024 as a base (KiB, MiB, GiB, TiB)",
-	"--si               use 1000 as a base (kB, MB, GB, TB)",
-	"--kbytes           show sizes in KiB, or kB with --si",
-	"--mbytes           show sizes in MiB, or MB with --si",
-	"--gbytes           show sizes in GiB, or GB with --si",
-	"--tbytes           show sizes in TiB, or TB with --si",
+	HELPINFO_OUTPUT_UNIT,
 	"If no argument is given, structure of all present filesystems is shown.",
 	NULL
 };
@@ -845,23 +779,16 @@ static int cmd_filesystem_show(int argc, char **argv)
 	char path[PATH_MAX];
 	__u8 fsid[BTRFS_FSID_SIZE];
 	char uuid_buf[BTRFS_UUID_UNPARSED_SIZE];
-	unsigned unit_mode = UNITS_DEFAULT;
+	unsigned unit_mode;
 	int found = 0;
+
+	unit_mode = get_unit_mode_from_arg(&argc, argv, 0);
 
 	while (1) {
 		int c;
 		static const struct option long_options[] = {
 			{ "all-devices", no_argument, NULL, 'd'},
 			{ "mounted", no_argument, NULL, 'm'},
-			{ "raw", no_argument, NULL, GETOPT_VAL_RAW},
-			{ "kbytes", no_argument, NULL, GETOPT_VAL_KBYTES},
-			{ "mbytes", no_argument, NULL, GETOPT_VAL_MBYTES},
-			{ "gbytes", no_argument, NULL, GETOPT_VAL_GBYTES},
-			{ "tbytes", no_argument, NULL, GETOPT_VAL_TBYTES},
-			{ "si", no_argument, NULL, GETOPT_VAL_SI},
-			{ "iec", no_argument, NULL, GETOPT_VAL_IEC},
-			{ "human-readable", no_argument, NULL,
-				GETOPT_VAL_HUMAN_READABLE},
 			{ NULL, 0, NULL, 0 }
 		};
 
@@ -874,30 +801,6 @@ static int cmd_filesystem_show(int argc, char **argv)
 			break;
 		case 'm':
 			where = BTRFS_SCAN_MOUNTED;
-			break;
-		case GETOPT_VAL_RAW:
-			units_set_mode(&unit_mode, UNITS_RAW);
-			break;
-		case GETOPT_VAL_KBYTES:
-			units_set_base(&unit_mode, UNITS_KBYTES);
-			break;
-		case GETOPT_VAL_MBYTES:
-			units_set_base(&unit_mode, UNITS_MBYTES);
-			break;
-		case GETOPT_VAL_GBYTES:
-			units_set_base(&unit_mode, UNITS_GBYTES);
-			break;
-		case GETOPT_VAL_TBYTES:
-			units_set_base(&unit_mode, UNITS_TBYTES);
-			break;
-		case GETOPT_VAL_SI:
-			units_set_mode(&unit_mode, UNITS_DECIMAL);
-			break;
-		case GETOPT_VAL_IEC:
-			units_set_mode(&unit_mode, UNITS_BINARY);
-			break;
-		case GETOPT_VAL_HUMAN_READABLE:
-			units_set_mode(&unit_mode, UNITS_HUMAN_BINARY);
 			break;
 		default:
 			usage(cmd_filesystem_show_usage);
