@@ -171,6 +171,32 @@ prepare_test_dev()
 	truncate -s "$size" "$TEST_DEV" || _not_run "create file for loop device failed"
 }
 
+run_check_mount_test_dev()
+{
+	setup_root_helper
+
+	local loop_opt
+	if [[ -b "$TEST_DEV" ]]; then
+		loop_opt=""
+	elif [[ -f "$TEST_DEV" ]]; then
+		loop_opt="-o loop"
+	else
+		_fail "Invalid \$TEST_DEV: $TEST_DEV"
+	fi
+
+	[[ -d "$TEST_MNT" ]] || {
+		_fail "Invalid \$TEST_MNT: $TEST_MNT"
+	}
+
+	run_check $SUDO_HELPER mount $loop_opt "$@" "$TEST_DEV" "$TEST_MNT"
+}
+
+run_check_umount_test_dev()
+{
+	setup_root_helper
+	run_check $SUDO_HELPER umount "$@" "$TEST_DEV"
+}
+
 init_env()
 {
 	TEST_MNT="${TEST_MNT:-$TOP/tests/mnt}"
