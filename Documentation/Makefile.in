@@ -9,6 +9,7 @@ MAN8_TXT += btrfs-find-root.asciidoc
 MAN8_TXT += btrfs-image.asciidoc
 MAN8_TXT += btrfs-map-logical.asciidoc
 MAN8_TXT += btrfs-show-super.asciidoc
+MAN8_TXT += btrfs-select-super.asciidoc
 MAN8_TXT += btrfstune.asciidoc
 MAN8_TXT += fsck.btrfs.asciidoc
 MAN8_TXT += mkfs.btrfs.asciidoc
