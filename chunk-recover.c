@@ -78,6 +78,7 @@ struct device_scan {
 	struct recover_control *rc;
 	struct btrfs_device *dev;
 	int fd;
+	u64 bytenr;
 };
 
 static struct extent_record *btrfs_new_extent_record(struct extent_buffer *eb)
@@ -768,6 +769,8 @@ static int scan_one_device(void *dev_scan_struct)
 
 	bytenr = 0;
 	while (1) {
+		dev_scan->bytenr = bytenr;
+
 		if (is_super_block_address(bytenr))
 			bytenr += rc->sectorsize;
 
@@ -834,9 +837,8 @@ static int scan_devices(struct recover_control *rc)
 	long *t_rets;
 	int devnr = 0;
 	int devidx = 0;
-	int cancel_from = 0;
-	int cancel_to = 0;
 	int i;
+	int all_done;
 
 	list_for_each_entry(dev, &rc->fs_devices->devices, dev_list)
 		devnr++;
@@ -862,30 +864,64 @@ static int scan_devices(struct recover_control *rc)
 		dev_scans[devidx].rc = rc;
 		dev_scans[devidx].dev = dev;
 		dev_scans[devidx].fd = fd;
-		ret = pthread_create(&t_scans[devidx], NULL,
-				     (void *)scan_one_device,
-				     (void *)&dev_scans[devidx]);
-		if (ret) {
-			cancel_from = 0;
-			cancel_to = devidx - 1;
-			goto out1;
-		}
+		dev_scans[devidx].bytenr = -1;
 		devidx++;
 	}
 
 	for (i = 0; i < devidx; i++) {
-		ret = pthread_join(t_scans[i], (void **)&t_rets[i]);
-		if (ret || t_rets[i]) {
-			ret = 1;
-			cancel_from = i + 1;
-			cancel_to = devnr - 1;
+		ret = pthread_create(&t_scans[i], NULL,
+				     (void *)scan_one_device,
+				     (void *)&dev_scans[i]);
+		if (ret)
 			goto out1;
+
+		dev_scans[i].bytenr = 0;
+	}
+
+	while (1) {
+		all_done = 1;
+		for (i = 0; i < devidx; i++) {
+			if (dev_scans[i].bytenr == -1)
+				continue;
+			ret = pthread_tryjoin_np(t_scans[i],
+						 (void **)&t_rets[i]);
+			if (ret == EBUSY) {
+				all_done = 0;
+				continue;
+			}
+			if (ret || t_rets[i]) {
+				ret = 1;
+				goto out1;
+			}
+			dev_scans[i].bytenr = -1;
 		}
+
+		printf("\rScanning: ");
+		for (i = 0; i < devidx; i++) {
+			if (dev_scans[i].bytenr == -1)
+				printf("%sDONE in dev%d",
+				       i ? ", " : "", i);
+			else
+				printf("%s%llu in dev%d",
+				       i ? ", " : "", dev_scans[i].bytenr, i);
+		}
+		/* clear chars if exist in tail */
+		printf("                ");
+		printf("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
+		fflush(stdout);
+
+		if (all_done) {
+			printf("\n");
+			break;
+		}
+
+		sleep(1);
 	}
 out1:
-	while (ret && (cancel_from <= cancel_to)) {
-		pthread_cancel(t_scans[cancel_from]);
-		cancel_from++;
+	for (i = 0; i < devidx; i++) {
+		if (dev_scans[i].bytenr == -1)
+			continue;
+		pthread_cancel(t_scans[i]);
 	}
 out2:
 	free(dev_scans);
