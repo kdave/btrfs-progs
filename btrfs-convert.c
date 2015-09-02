@@ -2868,7 +2868,7 @@ int main(int argc, char *argv[])
 	int usage_error = 0;
 	int progress = 1;
 	char *file;
-	char fslabel[BTRFS_LABEL_SIZE + 1];
+	char fslabel[BTRFS_LABEL_SIZE];
 	u64 features = BTRFS_MKFS_DEFAULT_FEATURES;
 
 	while(1) {
@@ -2910,14 +2910,13 @@ int main(int argc, char *argv[])
 				break;
 			case 'l':
 				copylabel = -1;
-				fslabel[BTRFS_LABEL_SIZE] = 0;
-				strncpy(fslabel, optarg, sizeof(fslabel));
-				if (fslabel[BTRFS_LABEL_SIZE]) {
+				if (strlen(optarg) >= BTRFS_LABEL_SIZE) {
 					fprintf(stderr,
-						"warning: label too long, trimmed to %d bytes\n",
-						BTRFS_LABEL_SIZE);
-					fslabel[BTRFS_LABEL_SIZE] = 0;
+				"WARNING: label too long, trimmed to %d bytes\n",
+						BTRFS_LABEL_SIZE - 1);
 				}
+				strncpy(fslabel, optarg, BTRFS_LABEL_SIZE - 1);
+				fslabel[BTRFS_LABEL_SIZE - 1] = 0;
 				break;
 			case 'L':
 				copylabel = 1;
