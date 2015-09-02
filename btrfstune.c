@@ -95,17 +95,12 @@ static int change_header_uuid(struct btrfs_root *root, struct extent_buffer *eb)
 	int same_chunk_tree_uuid = 1;
 	int ret;
 
-	/* Check for whether we need to change fs/chunk id */
-	if (!fs_info->new_fsid && !fs_info->new_chunk_tree_uuid)
-		return 0;
-	if (fs_info->new_fsid)
-		same_fsid = !memcmp_extent_buffer(eb, fs_info->new_fsid,
-					  btrfs_header_fsid(), BTRFS_FSID_SIZE);
-	if (fs_info->new_chunk_tree_uuid)
-		same_chunk_tree_uuid =
-			!memcmp_extent_buffer(eb, fs_info->new_chunk_tree_uuid,
-					      btrfs_header_chunk_tree_uuid(eb),
-					      BTRFS_UUID_SIZE);
+	same_fsid = !memcmp_extent_buffer(eb, fs_info->new_fsid,
+			btrfs_header_fsid(), BTRFS_FSID_SIZE);
+	same_chunk_tree_uuid =
+		!memcmp_extent_buffer(eb, fs_info->new_chunk_tree_uuid,
+				btrfs_header_chunk_tree_uuid(eb),
+				BTRFS_UUID_SIZE);
 	if (same_fsid && same_chunk_tree_uuid)
 		return 0;
 	if (!same_fsid)
@@ -126,9 +121,6 @@ static int change_extents_uuid(struct btrfs_fs_info *fs_info)
 	struct btrfs_path *path;
 	struct btrfs_key key = {0, 0, 0};
 	int ret = 0;
-
-	if (!fs_info->new_fsid && !fs_info->new_chunk_tree_uuid)
-		return 0;
 
 	path = btrfs_alloc_path();
 	if (!path)
@@ -196,16 +188,16 @@ static int change_device_uuid(struct btrfs_root *root, struct extent_buffer *eb,
 	int ret = 0;
 
 	di = btrfs_item_ptr(eb, slot, struct btrfs_dev_item);
-	if (fs_info->new_fsid) {
-		if (!memcmp_extent_buffer(eb, fs_info->new_fsid,
-					  (unsigned long)btrfs_device_fsid(di),
-					  BTRFS_FSID_SIZE))
-			return ret;
-		write_extent_buffer(eb, fs_info->new_fsid,
-				    (unsigned long)btrfs_device_fsid(di),
-				    BTRFS_FSID_SIZE);
-		ret = write_tree_block(NULL, root, eb);
-	}
+	if (!memcmp_extent_buffer(eb, fs_info->new_fsid,
+				  (unsigned long)btrfs_device_fsid(di),
+				  BTRFS_FSID_SIZE))
+		return ret;
+
+	write_extent_buffer(eb, fs_info->new_fsid,
+			    (unsigned long)btrfs_device_fsid(di),
+			    BTRFS_FSID_SIZE);
+	ret = write_tree_block(NULL, root, eb);
+
 	return ret;
 }
 
@@ -215,12 +207,6 @@ static int change_devices_uuid(struct btrfs_fs_info *fs_info)
 	struct btrfs_path *path;
 	struct btrfs_key key = {0, 0, 0};
 	int ret = 0;
-
-	/*
-	 * Unlike change_extents_uuid, we only need to change fsid in dev_item
-	 */
-	if (!fs_info->new_fsid)
-		return 0;
 
 	path = btrfs_alloc_path();
 	if (!path)
@@ -258,11 +244,7 @@ static int change_fsid_prepare(struct btrfs_fs_info *fs_info)
 	u64 flags = btrfs_super_flags(fs_info->super_copy);
 	int ret = 0;
 
-	if (!fs_info->new_fsid && !fs_info->new_chunk_tree_uuid)
-		return 0;
-
-	if (fs_info->new_fsid)
-		flags |= BTRFS_SUPER_FLAG_CHANGING_FSID;
+	flags |= BTRFS_SUPER_FLAG_CHANGING_FSID;
 	btrfs_set_super_flags(fs_info->super_copy, flags);
 
 	memcpy(fs_info->super_copy->fsid, fs_info->new_fsid, BTRFS_FSID_SIZE);
@@ -281,11 +263,7 @@ static int change_fsid_done(struct btrfs_fs_info *fs_info)
 {
 	u64 flags = btrfs_super_flags(fs_info->super_copy);
 
-	if (!fs_info->new_fsid && !fs_info->new_chunk_tree_uuid)
-		return 0;
-
-	if (fs_info->new_fsid)
-		flags &= ~BTRFS_SUPER_FLAG_CHANGING_FSID;
+	flags &= ~BTRFS_SUPER_FLAG_CHANGING_FSID;
 	btrfs_set_super_flags(fs_info->super_copy, flags);
 
 	return write_all_supers(fs_info->tree_root);
