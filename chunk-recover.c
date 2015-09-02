@@ -831,7 +831,7 @@ static int scan_devices(struct recover_control *rc)
 	struct btrfs_device *dev;
 	struct device_scan *dev_scans;
 	pthread_t *t_scans;
-	int *t_rets;
+	long *t_rets;
 	int devnr = 0;
 	int devidx = 0;
 	int cancel_from = 0;
@@ -847,7 +847,7 @@ static int scan_devices(struct recover_control *rc)
 	t_scans = (pthread_t *)malloc(sizeof(pthread_t) * devnr);
 	if (!t_scans)
 		return -ENOMEM;
-	t_rets = (int *)malloc(sizeof(int) * devnr);
+	t_rets = (long *)malloc(sizeof(long) * devnr);
 	if (!t_rets)
 		return -ENOMEM;
 
