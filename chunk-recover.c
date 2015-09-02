@@ -873,8 +873,7 @@ static int scan_devices(struct recover_control *rc)
 		devidx++;
 	}
 
-	i = 0;
-	while (i < devidx) {
+	for (i = 0; i < devidx; i++) {
 		ret = pthread_join(t_scans[i], (void **)&t_rets[i]);
 		if (ret || t_rets[i]) {
 			ret = 1;
@@ -882,7 +881,6 @@ static int scan_devices(struct recover_control *rc)
 			cancel_to = devnr - 1;
 			goto out1;
 		}
-		i++;
 	}
 out1:
 	while (ret && (cancel_from <= cancel_to)) {
