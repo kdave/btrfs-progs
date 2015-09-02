@@ -261,7 +261,7 @@ again:
 		list_del_init(&exist->list);
 		free(exist);
 		/*
-		 * We must do seach again to avoid the following cache.
+		 * We must do search again to avoid the following cache.
 		 * /--old bg 1--//--old bg 2--/
 		 *        /--new bg--/
 		 */
@@ -2312,7 +2312,7 @@ static void validate_rebuild_chunks(struct recover_control *rc)
 }
 
 /*
- * Return 0 when succesful, < 0 on error and > 0 if aborted by user
+ * Return 0 when successful, < 0 on error and > 0 if aborted by user
  */
 int btrfs_recover_chunk_tree(char *path, int verbose, int yes)
 {
