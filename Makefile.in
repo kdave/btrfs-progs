@@ -199,7 +199,7 @@ $(libs_shared): $(libbtrfs_objects) $(lib_links) send.h
 
 $(libs_static): $(libbtrfs_objects)
 	@echo "    [AR]     $@"
-	$(Q)$(AR) cru libbtrfs.a $(libbtrfs_objects)
+	$(Q)$(AR) cr libbtrfs.a $(libbtrfs_objects)
 
 $(lib_links):
 	@echo "    [LN]     $@"
