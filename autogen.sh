@@ -37,8 +37,17 @@ test -f btrfs.c || {
 (automake --version) < /dev/null > /dev/null 2>&1 || {
 	echo
 	echo "You must have automake installed to generate btrfs-progs build system."
-	echo 
+	echo
 	DIE=1
+}
+
+(pkg-config --version) < /dev/null > /dev/null 2>&1 || {
+	echo
+	echo "You must have pkg-config installed to use btrfs-progs build system."
+	echo "The pkg-config utility was not found in the standard location, set"
+	echo "the PKG_CONFIG/PKG_CONFIG_PATH/PKG_CONFIG_LIBDIR variables at the"
+	echo "configure time."
+	echo
 }
 
 if test "$DIE" -eq 1; then
