@@ -24,6 +24,10 @@ XATTR library should be provided by the standard C library or by
 Please note that the package names may differ according to the distribution.
 See https://btrfs.wiki.kernel.org/index.php/Btrfs_source_repositories#Dependencies .
 
+
+Building from sources
+---------------------
+
 To build from git sources you need to generate the configure script using the
 autotools:
 
@@ -47,6 +51,29 @@ variables EXTRA_CFLAGS and EXTRA_LDFLAGS that get appended to the predefined
 values of the respective variables.
 
  $ make EXTRA_CFLAGS=-ggdb3
+
+The build utilizes autotools, dependencies for generating the configure
+scripts are:
+
+* autconf, autoheader
+* automake, aclocal
+* pkg-config
+
+
+Staticly built binaries
+-----------------------
+
+The makefiles are ready to let you build static binaries of the utilities. This
+may be handy in rescue environments. Your system has to provide static version
+of the libraries.
+
+$ make static
+$ make btrfs.static
+$ make btrfs-convert.static
+
+The resulting static binaries have the '.static' suffix, the intermediate object
+files do not conflict with the normal (dynamic) build.
+
 
 References:
 * https://btrfs.wiki.kernel.org
