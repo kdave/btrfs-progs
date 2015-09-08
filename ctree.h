@@ -1423,7 +1423,7 @@ BTRFS_SETGET_FUNCS(inode_flags, struct btrfs_inode_item, flags, 64);
 BTRFS_SETGET_STACK_FUNCS(stack_inode_generation,
 			 struct btrfs_inode_item, generation, 64);
 BTRFS_SETGET_STACK_FUNCS(stack_inode_sequence,
-			 struct btrfs_inode_item, generation, 64);
+			 struct btrfs_inode_item, sequence, 64);
 BTRFS_SETGET_STACK_FUNCS(stack_inode_size,
 			 struct btrfs_inode_item, size, 64);
 BTRFS_SETGET_STACK_FUNCS(stack_inode_nbytes,
