@@ -1016,6 +1016,8 @@ static int copy_inode_item(struct btrfs_inode_item *dst,
 			   struct ext2_inode *src, u32 blocksize)
 {
 	btrfs_set_stack_inode_generation(dst, 1);
+	btrfs_set_stack_inode_sequence(dst, 0);
+	btrfs_set_stack_inode_transid(dst, 1);
 	btrfs_set_stack_inode_size(dst, src->i_size);
 	btrfs_set_stack_inode_nbytes(dst, 0);
 	btrfs_set_stack_inode_block_group(dst, 0);
@@ -1052,6 +1054,8 @@ static int copy_inode_item(struct btrfs_inode_item *dst,
 				new_decode_dev(src->i_block[1]));
 		}
 	}
+	memset(&dst->reserved, 0, sizeof(dst->reserved));
+
 	return 0;
 }
 
