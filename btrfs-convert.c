@@ -1186,6 +1186,7 @@ static int copy_inodes(struct btrfs_root *root, ext2_filsys ext2_fs,
 	}
 	ret = btrfs_commit_transaction(trans, root);
 	BUG_ON(ret);
+	ext2fs_close_inode_scan(ext2_scan);
 
 	return ret;
 }
