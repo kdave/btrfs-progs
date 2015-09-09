@@ -2786,11 +2786,14 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if ((compress_level > 0 || create == 0) &&
-	    num_threads == 0) {
-		num_threads = sysconf(_SC_NPROCESSORS_ONLN);
-		if (num_threads <= 0)
-			num_threads = 1;
+	if (compress_level > 0 || create == 0) {
+		if (num_threads == 0) {
+			num_threads = sysconf(_SC_NPROCESSORS_ONLN);
+			if (num_threads <= 0)
+				num_threads = 1;
+		}
+	} else {
+		num_threads = 0;
 	}
 
 	if (create) {
