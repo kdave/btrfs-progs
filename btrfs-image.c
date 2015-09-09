@@ -2881,5 +2881,7 @@ out:
 		}
 	}
 
+	btrfs_close_all_devices();
+
 	return !!ret;
 }
