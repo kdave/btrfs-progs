@@ -1,0 +1,137 @@
+URL: https://bugzilla.kernel.org/show_bug.cgi?id=97191
+Lukas Lueg 2015-04-23 22:20:35 UTC
+
+Running btrfs-progs v3.19.1
+
+The btrfs-image attached to this bug causes the btrfs-userland tool to
+overflow some data structures, leading to unallocated memory being written to
+and read from. A segfault results shortly after. Reproduced on x86-64 and
+i686.
+
+The kernel seems to be less affected and fails to mount the image. I didn't
+investigate whether the reads/writes could be used to gain control over $EIP.
+Since the first invalid write of 8 bytes seems to run into adjacent heap
+blocks (crash in unlink()), it may be possible though.
+
+gdb output:
+
+Program received signal SIGSEGV, Segmentation fault.
+malloc_consolidate (av=av@entry=0x32629b7cc0 <main_arena>) at malloc.c:4151
+4151		    unlink(av, p, bck, fwd);
+(gdb) bt
+#0  malloc_consolidate (av=av@entry=0x32629b7cc0 <main_arena>) at malloc.c:4151
+#1  0x0000003262680628 in _int_malloc (av=av@entry=0x32629b7cc0 <main_arena>, bytes=bytes@entry=4224) at malloc.c:3420
+#2  0x000000326268315e in __GI___libc_malloc (bytes=4224) at malloc.c:2896
+#3  0x0000000000449d15 in __alloc_extent_buffer (tree=0x88c078, bytenr=4288512, blocksize=4096) at extent_io.c:541
+#4  0x000000000044a8b4 in alloc_extent_buffer (tree=0x88c078, bytenr=4288512, blocksize=4096) at extent_io.c:648
+#5  0x000000000043b1a0 in btrfs_find_create_tree_block (root=root@entry=0x895840, bytenr=<optimized out>, 
+    blocksize=<optimized out>) at disk-io.c:159
+#6  0x000000000043ca4e in read_tree_block (root=root@entry=0x895840, bytenr=<optimized out>, blocksize=<optimized out>, 
+    parent_transid=13) at disk-io.c:287
+#7  0x000000000043ccb7 in find_and_setup_root (tree_root=0x88c250, fs_info=<optimized out>, objectid=5, root=0x895840)
+    at disk-io.c:557
+#8  0x000000000043ce92 in btrfs_read_fs_root_no_cache (fs_info=fs_info@entry=0x88c010, location=location@entry=0x7fffffffd960)
+    at disk-io.c:640
+#9  0x000000000043d060 in btrfs_read_fs_root (fs_info=fs_info@entry=0x88c010, location=location@entry=0x7fffffffd960)
+    at disk-io.c:739
+#10 0x000000000043d48c in btrfs_setup_all_roots (fs_info=fs_info@entry=0x88c010, root_tree_bytenr=<optimized out>, 
+    root_tree_bytenr@entry=0, flags=flags@entry=OPEN_CTREE_EXCLUSIVE) at disk-io.c:988
+#11 0x000000000043d802 in __open_ctree_fd (fp=fp@entry=3, path=path@entry=0x7fffffffe20d "ramdisk/btrfs_fukked.bin", 
+    sb_bytenr=65536, sb_bytenr@entry=0, root_tree_bytenr=root_tree_bytenr@entry=0, flags=flags@entry=OPEN_CTREE_EXCLUSIVE)
+    at disk-io.c:1199
+#12 0x000000000043d965 in open_ctree_fs_info (filename=0x7fffffffe20d "ramdisk/btrfs_fukked.bin", sb_bytenr=sb_bytenr@entry=0, 
+    root_tree_bytenr=root_tree_bytenr@entry=0, flags=flags@entry=OPEN_CTREE_EXCLUSIVE) at disk-io.c:1231
+#13 0x0000000000427bf5 in cmd_check (argc=1, argv=0x7fffffffdea0) at cmds-check.c:9326
+#14 0x000000000040e5a2 in main (argc=2, argv=0x7fffffffdea0) at btrfs.c:245
+
+
+valgrind output:
+
+==32463== Memcheck, a memory error detector
+==32463== Copyright (C) 2002-2013, and GNU GPL'd, by Julian Seward et al.
+==32463== Using Valgrind-3.10.1 and LibVEX; rerun with -h for copyright info
+==32463== Command: btrfs check ramdisk/btrfs_fukked.bin
+==32463== 
+==32463== Invalid write of size 8
+==32463==    at 0x4386FB: btrfs_search_slot (ctree.c:1119)
+==32463==    by 0x4427F7: UnknownInlinedFun (extent-tree.c:3117)
+==32463==    by 0x4427F7: btrfs_read_block_groups (extent-tree.c:3167)
+==32463==    by 0x43D4F2: btrfs_setup_all_roots (disk-io.c:983)
+==32463==    by 0x43D801: __open_ctree_fd (disk-io.c:1199)
+==32463==    by 0x43D964: open_ctree_fs_info (disk-io.c:1231)
+==32463==    by 0x427BF4: cmd_check (cmds-check.c:9326)
+==32463==    by 0x40E5A1: main (btrfs.c:245)
+==32463==  Address 0x4c409f0 is 16 bytes after a block of size 144 alloc'd
+==32463==    at 0x4A08946: calloc (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==32463==    by 0x4427AB: btrfs_read_block_groups (extent-tree.c:3162)
+==32463==    by 0x43D4F2: btrfs_setup_all_roots (disk-io.c:983)
+==32463==    by 0x43D801: __open_ctree_fd (disk-io.c:1199)
+==32463==    by 0x43D964: open_ctree_fs_info (disk-io.c:1231)
+==32463==    by 0x427BF4: cmd_check (cmds-check.c:9326)
+==32463==    by 0x40E5A1: main (btrfs.c:245)
+==32463== 
+==32463== Invalid read of size 8
+==32463==    at 0x436E70: check_block.part.14 (ctree.c:548)
+==32463==    by 0x438954: UnknownInlinedFun (kerncompat.h:91)
+==32463==    by 0x438954: btrfs_search_slot (ctree.c:1120)
+==32463==    by 0x4427F7: UnknownInlinedFun (extent-tree.c:3117)
+==32463==    by 0x4427F7: btrfs_read_block_groups (extent-tree.c:3167)
+==32463==    by 0x43D4F2: btrfs_setup_all_roots (disk-io.c:983)
+==32463==    by 0x43D801: __open_ctree_fd (disk-io.c:1199)
+==32463==    by 0x43D964: open_ctree_fs_info (disk-io.c:1231)
+==32463==    by 0x427BF4: cmd_check (cmds-check.c:9326)
+==32463==    by 0x40E5A1: main (btrfs.c:245)
+==32463==  Address 0x4c409f8 is 24 bytes after a block of size 144 in arena "client"
+==32463== 
+==32463== Invalid read of size 4
+==32463==    at 0x436E84: UnknownInlinedFun (ctree.h:1605)
+==32463==    by 0x436E84: UnknownInlinedFun (ctree.h:1612)
+==32463==    by 0x436E84: check_block.part.14 (ctree.c:550)
+==32463==    by 0x438954: UnknownInlinedFun (kerncompat.h:91)
+==32463==    by 0x438954: btrfs_search_slot (ctree.c:1120)
+==32463==    by 0x4427F7: UnknownInlinedFun (extent-tree.c:3117)
+==32463==    by 0x4427F7: btrfs_read_block_groups (extent-tree.c:3167)
+==32463==    by 0x43D4F2: btrfs_setup_all_roots (disk-io.c:983)
+==32463==    by 0x43D801: __open_ctree_fd (disk-io.c:1199)
+==32463==    by 0x43D964: open_ctree_fs_info (disk-io.c:1231)
+==32463==    by 0x427BF4: cmd_check (cmds-check.c:9326)
+==32463==    by 0x40E5A1: main (btrfs.c:245)
+==32463==  Address 0x4c409e4 is 4 bytes after a block of size 144 alloc'd
+==32463==    at 0x4A08946: calloc (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==32463==    by 0x4427AB: btrfs_read_block_groups (extent-tree.c:3162)
+==32463==    by 0x43D4F2: btrfs_setup_all_roots (disk-io.c:983)
+==32463==    by 0x43D801: __open_ctree_fd (disk-io.c:1199)
+==32463==    by 0x43D964: open_ctree_fs_info (disk-io.c:1231)
+==32463==    by 0x427BF4: cmd_check (cmds-check.c:9326)
+==32463==    by 0x40E5A1: main (btrfs.c:245)
+==32463== 
+==32463== Invalid read of size 1
+==32463==    at 0x4A0B3A0: memcpy@@GLIBC_2.14 (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==32463==    by 0x436E99: UnknownInlinedFun (ctree.h:1613)
+==32463==    by 0x436E99: check_block.part.14 (ctree.c:550)
+==32463==    by 0x438954: UnknownInlinedFun (kerncompat.h:91)
+==32463==    by 0x438954: btrfs_search_slot (ctree.c:1120)
+==32463==    by 0x4427F7: UnknownInlinedFun (extent-tree.c:3117)
+==32463==    by 0x4427F7: btrfs_read_block_groups (extent-tree.c:3167)
+==32463==    by 0x43D4F2: btrfs_setup_all_roots (disk-io.c:983)
+==32463==    by 0x43D801: __open_ctree_fd (disk-io.c:1199)
+==32463==    by 0x43D964: open_ctree_fs_info (disk-io.c:1231)
+==32463==    by 0x427BF4: cmd_check (cmds-check.c:9326)
+==32463==    by 0x40E5A1: main (btrfs.c:245)
+==32463==  Address 0x1b1 is not stack'd, malloc'd or (recently) free'd
+==32463== 
+==32463== 
+==32463== Process terminating with default action of signal 11 (SIGSEGV)
+==32463==  Access not within mapped region at address 0x1B1
+==32463==    at 0x4A0B3A0: memcpy@@GLIBC_2.14 (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==32463==    by 0x436E99: UnknownInlinedFun (ctree.h:1613)
+==32463==    by 0x436E99: check_block.part.14 (ctree.c:550)
+==32463==    by 0x438954: UnknownInlinedFun (kerncompat.h:91)
+==32463==    by 0x438954: btrfs_search_slot (ctree.c:1120)
+==32463==    by 0x4427F7: UnknownInlinedFun (extent-tree.c:3117)
+==32463==    by 0x4427F7: btrfs_read_block_groups (extent-tree.c:3167)
+==32463==    by 0x43D4F2: btrfs_setup_all_roots (disk-io.c:983)
+==32463==    by 0x43D801: __open_ctree_fd (disk-io.c:1199)
+==32463==    by 0x43D964: open_ctree_fs_info (disk-io.c:1231)
+==32463==    by 0x427BF4: cmd_check (cmds-check.c:9326)
+==32463==    by 0x40E5A1: main (btrfs.c:245)

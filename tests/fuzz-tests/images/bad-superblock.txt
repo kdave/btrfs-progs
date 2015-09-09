@@ -1,0 +1,17 @@
+bad-superblock-*.txt
+
+Crafted images from Jiri Slaby, produced by some symbolic execution framework
+that finds unhandled cases at mount time.
+
+Relevant kernel patches to backport:
+
+e3540eab29e1b2260bc4b9b3979a49a00e3e3af8
+btrfs: add more checks to btrfs_read_sys_array
+
+ce7fca5f57ed0fcd7e7b3d7b1a3e1791f8e56fa3
+btrfs: add checks for sys_chunk_array sizes
+
+75d6ad382bb91f363452119d34238e156589ca2d
+btrfs: more superblock checks, lower bounds on devices and sectorsize/nodesize
+
+(and more from fs/btrfs/super.c)

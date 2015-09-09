@@ -1,0 +1,31 @@
+URL: https://bugzilla.kernel.org/show_bug.cgi?id=104131
+Hanno Boeck 2015-09-07 07:24:32 UTC
+
+Created attachment 186941 [details]
+malformed btrfs filesystem causing oob read
+
+The attached malformed filesystem image will cause an invalid heap out of bounds memory read in btrfsck.
+
+This was found while fuzzing btrfs-progs with american fuzzy lop.
+
+Stack trace from Address Sanitizer:
+==31289==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x60f00000f003 at pc 0x0000005d0dbb bp 0x7ffdf444c180 sp 0x7ffdf444c178
+READ of size 8 at 0x60f00000f003 thread T0
+    #0 0x5d0dba in btrfs_header_bytenr /mnt/ram/btrfs-progs-v4.1.2/./ctree.h:1797:1
+    #1 0x5d0dba in check_tree_block /mnt/ram/btrfs-progs-v4.1.2/disk-io.c:60
+    #2 0x5d0dba in read_tree_block /mnt/ram/btrfs-progs-v4.1.2/disk-io.c:337
+    #3 0x5dc00e in btrfs_setup_chunk_tree_and_device_map /mnt/ram/btrfs-progs-v4.1.2/disk-io.c:1169:30
+    #4 0x5dcf89 in __open_ctree_fd /mnt/ram/btrfs-progs-v4.1.2/disk-io.c:1261:8
+    #5 0x5dc50a in open_ctree_fs_info /mnt/ram/btrfs-progs-v4.1.2/disk-io.c:1302:9
+    #6 0x52f22f in cmd_check /mnt/ram/btrfs-progs-v4.1.2/cmds-check.c:9333:9
+    #7 0x4e7bcc in main /mnt/ram/btrfs-progs-v4.1.2/btrfs.c:245:7
+    #8 0x7f98bb101f9f in __libc_start_main /var/tmp/portage/sys-libs/glibc-2.20-r2/work/glibc-2.20/csu/libc-start.c:289
+    #9 0x41f748 in _start (/mnt/ram/btrfs/btrfs+0x41f748)
+
+0x60f00000f003 is located 3 bytes to the right of 176-byte region [0x60f00000ef50,0x60f00000f000)
+allocated by thread T0 here:
+    #0 0x4bade8 in malloc (/mnt/ram/btrfs/btrfs+0x4bade8)
+    #1 0x622c24 in __alloc_extent_buffer /mnt/ram/btrfs-progs-v4.1.2/extent_io.c:541:7
+    #2 0x622c24 in alloc_extent_buffer /mnt/ram/btrfs-progs-v4.1.2/extent_io.c:648
+    #3 0x5cf436 in btrfs_find_create_tree_block /mnt/ram/btrfs-progs-v4.1.2/disk-io.c:186:9
+    #4 0x5cf436 in read_tree_block /mnt/ram/btrfs-progs-v4.1.2/disk-io.c:314

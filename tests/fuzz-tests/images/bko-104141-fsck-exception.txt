@@ -1,0 +1,9 @@
+URL: https://bugzilla.kernel.org/show_bug.cgi?id=104141
+Hanno Boeck 2015-09-07 07:27:58 UTC
+
+Created attachment 186951 [details]
+malformed filesystem causing floating point exception
+
+The attacked file will cause a floating point exception in btrfsck.
+
+This was found while fuzzing btrfs-progs with american fuzzy lop.

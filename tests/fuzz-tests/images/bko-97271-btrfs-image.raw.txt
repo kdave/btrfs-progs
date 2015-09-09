@@ -1,0 +1,54 @@
+URL: https://bugzilla.kernel.org/show_bug.cgi?id=97271
+Lukas Lueg 2015-04-25 20:34:39 UTC
+
+The attached btrfs-image causes "btrfs check" to write outside of allocated
+memory locations and ultimately die due to a segfault. An adjacent heap block's
+control structure is overwritten with a `struct extent_buffer *`, which is not
+controllable by the user.
+
+"btrfs version" is v3.19.1. Running "btrfs check" immediately dies with
+
+*** Error in `btrfs': double free or corruption (!prev): 0x0000000002396ec0 ***
+*** Error in `btrfs': malloc(): memory corruption: 0x0000000002396f60 ***
+
+Debugging with valgrind and gdb gives
+
+==11670== Invalid write of size 8
+==11670==    at 0x4386FB: btrfs_search_slot (ctree.c:1119)
+==11670==    by 0x44E16E: btrfs_read_chunk_tree (volumes.c:1814)
+==11670==    by 0x43D654: btrfs_setup_chunk_tree_and_device_map (disk-io.c:1115)
+==11670==    by 0x43D7D0: __open_ctree_fd (disk-io.c:1190)
+==11670==    by 0x43D964: open_ctree_fs_info (disk-io.c:1231)
+==11670==    by 0x427BF4: cmd_check (cmds-check.c:9326)
+==11670==    by 0x40E5A1: main (btrfs.c:245)
+==11670==  Address 0x4c3bb98 is 8 bytes after a block of size 144 alloc'd
+==11670==    at 0x4A08946: calloc (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==11670==    by 0x44E133: btrfs_read_chunk_tree (volumes.c:1801)
+==11670==    by 0x43D654: btrfs_setup_chunk_tree_and_device_map (disk-io.c:1115)
+==11670==    by 0x43D7D0: __open_ctree_fd (disk-io.c:1190)
+==11670==    by 0x43D964: open_ctree_fs_info (disk-io.c:1231)
+==11670==    by 0x427BF4: cmd_check (cmds-check.c:9326)
+==11670==    by 0x40E5A1: main (btrfs.c:245)
+
+Program received signal SIGTRAP, Trace/breakpoint trap.
+btrfs_search_slot (trans=trans@entry=0x0, root=root@entry=0x4c36d30, key=key@entry=0xffefff830, p=p@entry=0x4c3bb00,
+    ins_len=ins_len@entry=0, cow=cow@entry=0) at ctree.c:1119
+1119                    p->nodes[level] = b;
+(gdb) p p->nodes
+$1 = {0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}
+(gdb) p p
+$2 = (struct btrfs_path *) 0x4c3bb00
+(gdb) p b
+$3 = (struct extent_buffer *) 0x4c3a990
+
+
+The corresponding part in ctree.c:btrfs_search_slot() seems to fail to check if `level` overflows outside of `node`:
+
+level = btrfs_header_level(b);
+...
+if (level != btrfs_header_level(b))
+    WARN_ON(1);
+level = btrfs_header_level(b);
+p->nodes[level] = b;  // <- Illegal write
+
+Maybe the repeated calls to btrfs_header_level() were meant to do something once, they seem to be noise.
