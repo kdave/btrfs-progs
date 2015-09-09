@@ -2690,7 +2690,7 @@ int main(int argc, char *argv[])
 {
 	char *source;
 	char *target;
-	u64 num_threads = 1;
+	u64 num_threads = 0;
 	u64 compress_level = 0;
 	int create = 1;
 	int old_restore = 0;
@@ -2786,7 +2786,8 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if (num_threads == 1 && compress_level > 0) {
+	if ((compress_level > 0 || create == 0) &&
+	    num_threads == 0) {
 		num_threads = sysconf(_SC_NPROCESSORS_ONLN);
 		if (num_threads <= 0)
 			num_threads = 1;
