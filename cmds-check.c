@@ -186,7 +186,7 @@ static u64 first_extent_gap(struct rb_root *holes)
 	return hole->start;
 }
 
-int compare_hole(struct rb_node *node1, struct rb_node *node2)
+static int compare_hole(struct rb_node *node1, struct rb_node *node2)
 {
 	struct file_extent_hole *hole1;
 	struct file_extent_hole *hole2;

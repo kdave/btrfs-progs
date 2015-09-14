@@ -507,7 +507,7 @@ out:
 	return ret;
 }
 
-int cmd_device_usage(int argc, char **argv)
+static int cmd_device_usage(int argc, char **argv)
 {
 	unsigned unit_mode;
 	int ret = 0;

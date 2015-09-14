@@ -277,7 +277,7 @@ int btrfs_delete_one_dir_name(struct btrfs_trans_handle *trans,
 	return ret;
 }
 
-int verify_dir_item(struct btrfs_root *root,
+static int verify_dir_item(struct btrfs_root *root,
 		    struct extent_buffer *leaf,
 		    struct btrfs_dir_item *dir_item)
 {

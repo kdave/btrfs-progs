@@ -52,7 +52,7 @@ static const char * const cmd_rescue_super_recover_usage[] = {
 	NULL
 };
 
-int cmd_rescue_chunk_recover(int argc, char *argv[])
+static int cmd_rescue_chunk_recover(int argc, char *argv[])
 {
 	int ret = 0;
 	char *file;
@@ -112,7 +112,7 @@ int cmd_rescue_chunk_recover(int argc, char *argv[])
  *   3 : Fail to Recover bad supeblocks
  *   4 : Abort to recover bad superblocks
  */
-int cmd_rescue_super_recover(int argc, char **argv)
+static int cmd_rescue_super_recover(int argc, char **argv)
 {
 	int ret;
 	int verbose = 0;
@@ -159,7 +159,7 @@ static const char * const cmd_rescue_zero_log_usage[] = {
 	NULL
 };
 
-int cmd_rescue_zero_log(int argc, char **argv)
+static int cmd_rescue_zero_log(int argc, char **argv)
 {
 	struct btrfs_root *root;
 	struct btrfs_trans_handle *trans;

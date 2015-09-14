@@ -33,8 +33,8 @@
 
 #define FIELD_BUF_LEN 80
 
-struct extent_buffer *debug_corrupt_block(struct btrfs_root *root, u64 bytenr,
-				     u32 blocksize, u64 copy)
+static struct extent_buffer *debug_corrupt_block(struct btrfs_root *root,
+		u64 bytenr, u32 blocksize, u64 copy)
 {
 	int ret;
 	struct extent_buffer *eb;
@@ -880,7 +880,7 @@ static int delete_csum(struct btrfs_root *root, u64 bytenr, u64 bytes)
  * If using COW, chunk recover will use the old item to recover,
  * which is still OK but we want to check the ability to rebuild chunk
  * not only restore the old ones */
-int corrupt_item_nocow(struct btrfs_trans_handle *trans,
+static int corrupt_item_nocow(struct btrfs_trans_handle *trans,
 		       struct btrfs_root *root, struct btrfs_path *path,
 		       int del)
 {
@@ -913,7 +913,7 @@ int corrupt_item_nocow(struct btrfs_trans_handle *trans,
 	}
 	return ret;
 }
-int corrupt_chunk_tree(struct btrfs_trans_handle *trans,
+static int corrupt_chunk_tree(struct btrfs_trans_handle *trans,
 		       struct btrfs_root *root)
 {
 	int ret;
@@ -986,7 +986,7 @@ free_out:
 	btrfs_free_path(path);
 	return ret;
 }
-int find_chunk_offset(struct btrfs_root *root,
+static int find_chunk_offset(struct btrfs_root *root,
 		      struct btrfs_path *path, u64 offset)
 {
 	struct btrfs_key key;
