@@ -421,7 +421,7 @@ out:
 	return ret;
 }
 
-static void usage()
+static void usage(void)
 {
 	fprintf(stderr, "Usage: calc-size [-v] [-b] <device>\n");
 }

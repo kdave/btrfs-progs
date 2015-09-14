@@ -272,7 +272,7 @@ static void print_single_qgroup_table(struct btrfs_qgroup *qgroup)
 	printf("\n");
 }
 
-static void print_table_head()
+static void print_table_head(void)
 {
 	int i;
 	int len;

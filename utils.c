@@ -2550,7 +2550,7 @@ int test_dev_for_mkfs(char *file, int force_overwrite)
 	return 0;
 }
 
-int btrfs_scan_lblkid()
+int btrfs_scan_lblkid(void)
 {
 	int fd = -1;
 	int ret;
