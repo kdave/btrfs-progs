@@ -33,7 +33,7 @@ static const char * const rescue_cmd_group_usage[] = {
 int btrfs_recover_chunk_tree(char *path, int verbose, int yes);
 int btrfs_recover_superblocks(char *path, int verbose, int yes);
 
-const char * const cmd_rescue_chunk_recover_usage[] = {
+static const char * const cmd_rescue_chunk_recover_usage[] = {
 	"btrfs rescue chunk-recover [options] <device>",
 	"Recover the chunk tree by scanning the devices one by one.",
 	"",
@@ -43,7 +43,7 @@ const char * const cmd_rescue_chunk_recover_usage[] = {
 	NULL
 };
 
-const char * const cmd_rescue_super_recover_usage[] = {
+static const char * const cmd_rescue_super_recover_usage[] = {
 	"btrfs rescue super-recover [options] <device>",
 	"Recover bad superblocks from good copies",
 	"",
@@ -152,7 +152,7 @@ int cmd_rescue_super_recover(int argc, char **argv)
 	return ret;
 }
 
-const char * const cmd_rescue_zero_log_usage[] = {
+static const char * const cmd_rescue_zero_log_usage[] = {
 	"btrfs rescue zero-log <device>",
 	"Clear the tree log. Usable if it's corrupted and prevents mount.",
 	"",
