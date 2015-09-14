@@ -833,27 +833,19 @@ struct btrfs_fs_info *btrfs_new_fs_info(int writable, u64 sb_bytenr)
 
 	memset(fs_info, 0, sizeof(struct btrfs_fs_info));
 
-	fs_info->tree_root = malloc(sizeof(struct btrfs_root));
-	fs_info->extent_root = malloc(sizeof(struct btrfs_root));
-	fs_info->chunk_root = malloc(sizeof(struct btrfs_root));
-	fs_info->dev_root = malloc(sizeof(struct btrfs_root));
-	fs_info->csum_root = malloc(sizeof(struct btrfs_root));
-	fs_info->quota_root = malloc(sizeof(struct btrfs_root));
-	fs_info->super_copy = malloc(BTRFS_SUPER_INFO_SIZE);
+	fs_info->tree_root = calloc(1, sizeof(struct btrfs_root));
+	fs_info->extent_root = calloc(1, sizeof(struct btrfs_root));
+	fs_info->chunk_root = calloc(1, sizeof(struct btrfs_root));
+	fs_info->dev_root = calloc(1, sizeof(struct btrfs_root));
+	fs_info->csum_root = calloc(1, sizeof(struct btrfs_root));
+	fs_info->quota_root = calloc(1, sizeof(struct btrfs_root));
+	fs_info->super_copy = calloc(1, BTRFS_SUPER_INFO_SIZE);
 
 	if (!fs_info->tree_root || !fs_info->extent_root ||
 	    !fs_info->chunk_root || !fs_info->dev_root ||
 	    !fs_info->csum_root || !fs_info->quota_root ||
 	    !fs_info->super_copy)
 		goto free_all;
-
-	memset(fs_info->super_copy, 0, BTRFS_SUPER_INFO_SIZE);
-	memset(fs_info->tree_root, 0, sizeof(struct btrfs_root));
-	memset(fs_info->extent_root, 0, sizeof(struct btrfs_root));
-	memset(fs_info->chunk_root, 0, sizeof(struct btrfs_root));
-	memset(fs_info->dev_root, 0, sizeof(struct btrfs_root));
-	memset(fs_info->csum_root, 0, sizeof(struct btrfs_root));
-	memset(fs_info->quota_root, 0, sizeof(struct btrfs_root));
 
 	extent_io_tree_init(&fs_info->extent_cache);
 	extent_io_tree_init(&fs_info->free_space_cache);
