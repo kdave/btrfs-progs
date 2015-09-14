@@ -20,12 +20,17 @@ MOUNT OPTIONS
 	Default is 1MB.
 
 *autodefrag*::
+*noautodefrag*::
+	(since: 3.0, default: off) +
 	Disable/enable auto defragmentation.
 	Auto defragmentation detects small random writes into files and queue
 	them up for the defrag process.  Works best for small files;
 	Not well suited for large database workloads.
 
-*check_int*|*check_int_data*|*check_int_print_mask='value'*::
+*check_int*::
+*check_int_data*::
+*check_int_print_mask='value'*::
+	(since: 3.0, default: off) +
 	These debugging options control the behavior of the integrity checking
 	module (the BTRFS_FS_CHECK_INTEGRITY config option required). +
 	+
@@ -44,19 +49,25 @@ MOUNT OPTIONS
 	for more info.
 
 *commit='seconds'*::
-	Set the interval of periodic commit, 30 seconds by default. Higher
+	(since: 3.12, default: 30) +
+	Set the interval of periodic commit. Higher
 	values defer data being synced to permanent storage with obvious
 	consequences when the system crashes. The upper bound is not forced,
 	but a warning is printed if it's more than 300 seconds (5 minutes).
 
-*compress*|*compress='type'*|*compress-force*|*compress-force='type'*::
-	Control BTRFS file data compression.  Type may be specified as "zlib"
-	"lzo" or "no" (for no compression, used for remounting).  If no type
-	is specified, zlib is used.  If compress-force is specified,
+*compress*::
+*compress='type'*::
+*compress-force*::
+*compress-force='type'*::
+	(default: off) +
+	Control BTRFS file data compression.  Type may be specified as 'zlib',
+	'lzo' or 'no' (for no compression, used for remounting).  If no type
+	is specified, 'zlib' is used.  If compress-force is specified,
 	all files will be compressed, whether or not they compress well.
-	If compression is enabled, nodatacow and nodatasum are disabled.
+	NOTE: If compression is enabled, 'nodatacow' and 'nodatasum' are disabled.
 
 *degraded*::
+	(default: off) +
 	Allow mounts to continue with missing devices.  A read-write mount may
 	fail with too many devices missing, for example if a stripe member
 	is completely missing.
@@ -67,6 +78,8 @@ MOUNT OPTIONS
 	setup as root.  May be specified multiple times for multiple devices.
 
 *discard*::
+*nodiscard*::
+	(default: off) +
 	Disable/enable discard mount option.
 	Discard issues frequent commands to let the block device reclaim space
 	freed by the filesystem.
@@ -76,14 +89,18 @@ MOUNT OPTIONS
 	initiate batch trims from userspace).
 
 *enospc_debug*::
+	(default: off) +
 	Disable/enable debugging option to be more verbose in some ENOSPC conditions.
 
 *fatal_errors='action'*::
+	(since: 3.4, default: bug) +
 	Action to take when encountering a fatal error. +
-		"bug" - BUG() on a fatal error.  This is the default. +
+		"bug" - BUG() on a fatal error. +
 		"panic" - panic() on a fatal error.
 
 *flushoncommit*::
+*noflushoncommit*::
+	(default: on) +
 	The `flushoncommit` mount option forces any data dirtied by a write in a
 	prior transaction to commit as part of the current commit.  This makes
 	the committed state a fully consistent view of the file system from the
@@ -92,10 +109,13 @@ MOUNT OPTIONS
 	created.
 
 *inode_cache*::
+*noinode_cache*::
+	(since: 3.0, default: off) +
 	Enable free inode number caching.   Defaults to off due to an overflow
 	problem when the free space crcs don't fit inside a single page.
 
 *max_inline='bytes'*::
+	(default: min(8192, page size) )
 	Specify the maximum amount of space, in bytes, that can be inlined in
 	a metadata B-tree leaf.  The value is specified in bytes, optionally
 	with a K, M, or G suffix, case insensitive.  In practice, this value
@@ -106,48 +126,64 @@ MOUNT OPTIONS
 	Specify that 1 metadata chunk should be allocated after every
 	'value' data chunks.  Off by default.
 
+*acl*::
 *noacl*::
+	(default: on) +
 	Enable/disable support for Posix Access Control Lists (ACLs).  See the
 	`acl`(5) manual page for more information about ACLs.
 
+*barrier*::
 *nobarrier*::
+	(default: on) +
 	ensure that certain IOs make it through the device cache and are on
 	persistent storage. If disabled on a device with a volatile
 	(non-battery-backed) write-back cache, nobarrier option will lead to
 	filesystem corruption on a system crash or power loss.
 
+*datacow*::
 *nodatacow*::
+	(default: on) +
 	Enable/disable data copy-on-write for newly created files.
 	Nodatacow implies nodatasum, and disables all compression.
 
+*datasum*::
 *nodatasum*::
+	(default: on) +
 	Enable/disable data checksumming for newly created files.
 	Datasum implies datacow.
 
+*treelog*::
 *notreelog*::
+	(default: on) +
 	Enable/disable the tree logging used for fsync and O_SYNC writes.
 
 *recovery*::
+	(since: 3.2, default: off) +
 	Enable autorecovery attempts if a bad tree root is found at mount time.
 	Currently this scans a list of several previous tree roots and tries to
 	use the first readable.
 
 *rescan_uuid_tree*::
+	(since: 3.12, default: off) +
 	Force check and rebuild procedure of the UUID tree. This should not
 	normally be needed.
 
 *skip_balance*::
+	(since: 3.3, default: off) +
 	Skip automatic resume of interrupted balance operation after mount.
 	May be resumed with "btrfs balance resume."
 
 *nospace_cache*::
+	(since: 3.2) +
 	Disable freespace cache loading without clearing the cache.
 
 *clear_cache*::
 	Force clearing and rebuilding of the disk space cache if something
 	has gone wrong.
 
-*ssd*|*nossd*|*ssd_spread*::
+*ssd*::
+*nossd*::
+*ssd_spread*::
 	Options to control ssd allocation schemes.  By default, BTRFS will
 	enable or disable ssd allocation heuristics depending on whether a
 	rotational or nonrotational disk is in use.  The ssd and nossd options
@@ -166,7 +202,8 @@ MOUNT OPTIONS
 	filesystem.
 	You can use "btrfs subvolume list" to see subvolume ID numbers.
 
-*subvolrootid='objectid' (deprecated)*::
+*subvolrootid='objectid'*::
+	(deprecated) +
 	Mount subvolume specified by 'objectid' rather than the root subvolume.
 	This allows mounting of subvolumes which are not in the root of the mounted
 	filesystem.
@@ -177,6 +214,7 @@ MOUNT OPTIONS
 	to the number of CPUs + 2, or 8, whichever is smaller.
 
 *user_subvol_rm_allowed*::
+	(default: off) +
 	Allow subvolumes to be deleted by a non-root user. Use with caution.
 
 FILE ATTRIBUTES
