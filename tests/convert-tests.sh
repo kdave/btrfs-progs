@@ -42,7 +42,7 @@ convert_test() {
 
 	# create a file to check btrfs-convert can convert regular file
 	# correct
-	run_check $SUDO_HELPER mount $IMAGE $TEST_MNT
+	run_check $SUDO_HELPER mount -o loop $IMAGE $TEST_MNT
 	run_check $SUDO_HELPER dd if=/dev/zero of=$TEST_MNT/test bs=$nodesize \
 		count=1 1>/dev/null 2>&1
 	run_check $SUDO_HELPER umount $TEST_MNT
