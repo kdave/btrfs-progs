@@ -468,6 +468,10 @@ static int btrfs_scan_kernel(void *search, unsigned unit_mode)
 			goto out;
 		}
 
+		/* skip all fs already shown as mounted fs */
+		if (is_seen_fsid(fs_info_arg.fsid))
+			continue;
+
 		ret = get_label_mounted(mnt->mnt_dir, label);
 		/* provide backward kernel compatibility */
 		if (ret == -ENOTTY)
