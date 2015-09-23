@@ -62,51 +62,65 @@ check_image()
 	run_check $TOP/btrfs check $image
 }
 
-# Process all image dumps in a given directory,
+# Extract a usable image from packed formats
 # - raw btrfs filesystem images, suffix .raw
 # - dtto compressed by XZ, suffix .raw.xz
 # - meta-dump images with suffix .img
 # - dtto compressed by XZ, suffix .img.xz
+extract_image()
+{
+	local image
+	local cleanme
+
+	image="$1"
+	case "$image" in
+	*.img)
+		rm -f $image.restored
+		: ;;
+	*.img.xz)
+		xz --decompress --keep "$image" || \
+			_fail "failed to decompress image $image" >&2
+		image=${image%%.xz}
+		rm -f $image.restored
+		cleanme=$image
+		;;
+	*.raw)
+		cp --sparse=auto $image $image.restored
+		;;
+	*.raw.xz)
+		xz --decompress --keep "$image" || \
+			_fail "failed to decompress image $image" >&2
+		image=${image%%.xz}
+		mv "$image" "$image".restored
+		;;
+	esac
+
+	if ! [ -f $image.restored ]; then
+		echo "restoring image $(basename $image)" >> $RESULTS
+		$TOP/btrfs-image -r $image $image.restored || \
+			_fail "failed to restore image $image" >&2
+	fi
+
+	[ -f "$cleanme" ] && rm -f "$cleanme"
+
+	echo "$image.restored"
+}
+
+# Process all image dumps in a given directory
 check_all_images()
 {
-	dir=$1
+	local dir
+	local extracted
+
+	dir="$1"
 	for image in $(find $dir \( -iname '*.img' -o	\
 				-iname '*.img.xz' -o 	\
 				-iname '*.raw' -o 	\
 				-iname '*.raw.xz' \) | sort)
 	do
-		cleanme=
-		case "$image" in
-		*.img)
-			rm -f $image.restored
-			: ;;
-		*.img.xz)
-			xz --decompress --keep "$image" || \
-				_fail "failed to decompress image $image"
-			image=${image%%.xz}
-			rm -f $image.restored
-			cleanme=$image
-			;;
-		*.raw)
-			cp --sparse=auto $image $image.restored
-			;;
-		*.raw.xz)
-			xz --decompress --keep "$image" || \
-				_fail "failed to decompress image $image"
-			image=${image%%.xz}
-			mv "$image" "$image".restored
-			;;
-		esac
-
-		if ! [ -f $image.restored ]; then
-			echo "restoring image $(basename $image)" >> $RESULTS
-			$TOP/btrfs-image -r $image $image.restored || \
-				_fail "failed to restore image $image"
-		fi
-
-		check_image $image.restored
-
-		rm -f $image.restored $cleanme
+		extracted=$(extract_image "$image")
+		check_image "$extracted"
+		rm -f "$extracted"
 	done
 }
 
