@@ -33,6 +33,8 @@ create a new CRC tree and recalculate all checksums
 create a new extent tree
 --check-data-csum::
 verify checkums of data blocks
+-p|--progress::
+indicate progress at various checking phases
 --qgroup-report::
 verify qgroup accounting and compare against filesystem accounting
 --subvol-extents <subvolid>::
