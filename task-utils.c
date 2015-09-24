@@ -51,7 +51,7 @@ int task_start(struct task_info *info)
 			     info->private_data);
 
 	if (ret)
-		info->id = -1;
+		info->id = 0;
 
 	return ret;
 }
@@ -64,7 +64,7 @@ void task_stop(struct task_info *info)
 	if (info->id > 0) {
 		pthread_cancel(info->id);
 		pthread_join(info->id, NULL);
-		info->id = -1;
+		info->id = 0;
 	}
 
 	if (info->periodic.timer_fd) {
