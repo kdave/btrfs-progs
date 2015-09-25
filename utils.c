@@ -959,7 +959,7 @@ int is_block_device(const char *path)
 	if (stat(path, &statbuf) < 0)
 		return -errno;
 
-	return S_ISBLK(statbuf.st_mode);
+	return !!S_ISBLK(statbuf.st_mode);
 }
 
 /*
