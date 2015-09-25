@@ -2928,7 +2928,7 @@ int btrfs_tree_search2_ioctl_supported(int fd)
 	return v2_supported;
 }
 
-int btrfs_check_nodesize(u32 nodesize, u32 sectorsize)
+int btrfs_check_nodesize(u32 nodesize, u32 sectorsize, u64 features)
 {
 	if (nodesize < sectorsize) {
 		fprintf(stderr,
@@ -2943,6 +2943,12 @@ int btrfs_check_nodesize(u32 nodesize, u32 sectorsize)
 	} else if (nodesize & (sectorsize - 1)) {
 		fprintf(stderr,
 			"ERROR: Illegal nodesize %u (not aligned to %u)\n",
+			nodesize, sectorsize);
+		return -1;
+	} else if (features & BTRFS_FEATURE_INCOMPAT_MIXED_GROUPS &&
+		   nodesize != sectorsize) {
+		fprintf(stderr,
+			"ERROR: Illegal nodesize %u (not equal to %u for mixed block group)\n",
 			nodesize, sectorsize);
 		return -1;
 	}

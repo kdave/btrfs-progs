@@ -1466,9 +1466,8 @@ int main(int ac, char **av)
 				print_usage(c != GETOPT_VAL_HELP);
 		}
 	}
+
 	sectorsize = max(sectorsize, (u32)sysconf(_SC_PAGESIZE));
-	if (btrfs_check_nodesize(nodesize, sectorsize))
-		exit(1);
 	saved_optind = optind;
 	dev_cnt = ac - optind;
 	if (dev_cnt == 0)
@@ -1542,17 +1541,12 @@ int main(int ac, char **av)
 			}
 		}
 
-		if (!nodesize_forced) {
+		if (!nodesize_forced)
 			nodesize = best_nodesize;
-			if (btrfs_check_nodesize(nodesize, sectorsize))
-				exit(1);
-		}
-		if (nodesize != sectorsize) {
-			fprintf(stderr, "Error: mixed metadata/data block groups "
-				"require metadata blocksizes equal to the sectorsize\n");
-			exit(1);
-		}
 	}
+	if (btrfs_check_nodesize(nodesize, sectorsize,
+				 features))
+		exit(1);
 
 	/* Check device/block_count after the nodesize is determined */
 	if (block_count && block_count < btrfs_min_dev_size(nodesize)) {

@@ -242,7 +242,7 @@ static inline u64 div_factor(u64 num, int factor)
 }
 
 int btrfs_tree_search2_ioctl_supported(int fd);
-int btrfs_check_nodesize(u32 nodesize, u32 sectorsize);
+int btrfs_check_nodesize(u32 nodesize, u32 sectorsize, u64 features);
 
 const char *get_argv0_buf(void);
 

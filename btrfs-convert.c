@@ -2319,7 +2319,7 @@ static int do_convert(const char *devname, int datacsum, int packing, int noxatt
 		fprintf(stderr, "filetype feature is missing\n");
 		goto fail;
 	}
-	if (btrfs_check_nodesize(nodesize, blocksize))
+	if (btrfs_check_nodesize(nodesize, blocksize, features))
 		goto fail;
 	blocks_per_node = nodesize / blocksize;
 	ret = -blocks_per_node;
