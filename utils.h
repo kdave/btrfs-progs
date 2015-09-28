@@ -22,6 +22,7 @@
 #include <sys/stat.h>
 #include "ctree.h"
 #include <dirent.h>
+#include <stdarg.h>
 
 #define BTRFS_MKFS_SYSTEM_GROUP_SIZE (4 * 1024 * 1024)
 #define BTRFS_MKFS_SMALL_VOLUME_SIZE (1024 * 1024 * 1024)
@@ -269,5 +270,59 @@ const char *get_argv0_buf(void);
 	"-t|--tbytes        show sizes in TiB, or TB with --si"
 
 unsigned int get_unit_mode_from_arg(int *argc, char *argv[], int df_mode);
+
+static inline void warning(const char *fmt, ...)
+{
+	va_list args;
+
+	fputs("WARNING: ", stderr);
+	va_start(args, fmt);
+	vfprintf(stderr, fmt, args);
+	va_end(args);
+	fputc('\n', stderr);
+}
+
+static inline void error(const char *fmt, ...)
+{
+	va_list args;
+
+	fputs("ERROR: ", stderr);
+	va_start(args, fmt);
+	vfprintf(stderr, fmt, args);
+	va_end(args);
+	fputc('\n', stderr);
+}
+
+static inline int warning_on(int condition, const char *fmt, ...)
+{
+	va_list args;
+
+	if (!condition)
+		return 0;
+
+	fputs("WARNING: ", stderr);
+	va_start(args, fmt);
+	vfprintf(stderr, fmt, args);
+	va_end(args);
+	fputc('\n', stderr);
+
+	return 1;
+}
+
+static inline int error_on(int condition, const char *fmt, ...)
+{
+	va_list args;
+
+	if (!condition)
+		return 0;
+
+	fputs("ERROR: ", stderr);
+	va_start(args, fmt);
+	vfprintf(stderr, fmt, args);
+	va_end(args);
+	fputc('\n', stderr);
+
+	return 1;
+}
 
 #endif
