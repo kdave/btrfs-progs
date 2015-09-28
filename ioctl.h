@@ -239,7 +239,9 @@ struct btrfs_balance_args {
 			__u32 limit_max;
 		};
 	};
-	__u64 unused[7];
+	__u32 stripes_min;
+	__u32 stripes_max;
+	__u64 unused[6];
 } __attribute__ ((__packed__));
 
 /* report balance progress to userspace */

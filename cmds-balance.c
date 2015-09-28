@@ -319,6 +319,18 @@ static int parse_filters(char *filters, struct btrfs_balance_args *args)
 				args->flags &= ~BTRFS_BALANCE_ARGS_LIMIT_RANGE;
 				args->flags |= BTRFS_BALANCE_ARGS_LIMIT;
 			}
+		} else if (!strcmp(this_char, "stripes")) {
+			if (!value || !*value) {
+				fprintf(stderr,
+					"the stripes filter requires an argument\n");
+				return 1;
+			}
+			if (parse_range_u32(value, &args->stripes_min,
+					    &args->stripes_max)) {
+				fprintf(stderr, "Invalid stripes argument\n");
+				return 1;
+			}
+			args->flags |= BTRFS_BALANCE_ARGS_STRIPES_RANGE;
 		} else {
 			fprintf(stderr, "Unrecognized balance option '%s'\n",
 				this_char);
@@ -358,6 +370,10 @@ static void dump_balance_args(struct btrfs_balance_args *args)
 	if (args->flags & BTRFS_BALANCE_ARGS_LIMIT_RANGE) {
 		printf(", limit=");
 		print_range_u32(args->limit_min, args->limit_max);
+	}
+	if (args->flags & BTRFS_BALANCE_ARGS_STRIPES_RANGE) {
+		printf(", stripes=");
+		print_range_u32(args->stripes_min, args->stripes_max);
 	}
 
 	printf("\n");
