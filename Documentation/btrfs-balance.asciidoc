@@ -137,6 +137,12 @@ only the single value format.
 +
 The range minimum and maximum are inclusive.
 
+*stripes*::
+Balances only block groups which have the given number of stripes. The
+parameter is a range specified as <start..end>.
++
+The range minimum and maximum are inclusive.
+
 *soft*::
 Takes no parameters. Only has meaning when converting between profiles.
 When doing convert from one profile to another and soft mode is on,
