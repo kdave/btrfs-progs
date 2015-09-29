@@ -2969,7 +2969,7 @@ static struct root_backref *get_root_backref(struct root_record *rec,
 	}
 
 	backref = malloc(sizeof(*backref) + namelen + 1);
-	memset(backref, 0, sizeof(*backref));
+	memset(backref, 0, sizeof(*backref) + namelen + 1);
 	backref->ref_root = ref_root;
 	backref->dir = dir;
 	backref->index = index;
