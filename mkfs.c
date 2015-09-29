@@ -668,12 +668,11 @@ static int add_file_items(struct btrfs_trans_handle *trans,
 	 * do our IO in extent buffers so it can work
 	 * against any raid type
 	 */
-	eb = malloc(sizeof(*eb) + sectorsize);
+	eb = calloc(1, sizeof(*eb) + sectorsize);
 	if (!eb) {
 		ret = -ENOMEM;
 		goto end;
 	}
-	memset(eb, 0, sizeof(*eb) + sectorsize);
 
 again:
 

@@ -698,10 +698,9 @@ struct btrfs_root *btrfs_read_fs_root_no_cache(struct btrfs_fs_info *fs_info,
 	u32 blocksize;
 	int ret = 0;
 
-	root = malloc(sizeof(*root));
+	root = calloc(1, sizeof(*root));
 	if (!root)
 		return ERR_PTR(-ENOMEM);
-	memset(root, 0, sizeof(*root));
 	if (location->offset == (u64)-1) {
 		ret = find_and_setup_root(tree_root, fs_info,
 					  location->objectid, root);
@@ -829,11 +828,9 @@ struct btrfs_fs_info *btrfs_new_fs_info(int writable, u64 sb_bytenr)
 {
 	struct btrfs_fs_info *fs_info;
 
-	fs_info = malloc(sizeof(struct btrfs_fs_info));
+	fs_info = calloc(1, sizeof(struct btrfs_fs_info));
 	if (!fs_info)
 		return NULL;
-
-	memset(fs_info, 0, sizeof(struct btrfs_fs_info));
 
 	fs_info->tree_root = calloc(1, sizeof(struct btrfs_root));
 	fs_info->extent_root = calloc(1, sizeof(struct btrfs_root));

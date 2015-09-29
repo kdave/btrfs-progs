@@ -1505,10 +1505,9 @@ static struct extent_buffer *alloc_dummy_eb(u64 bytenr, u32 size)
 {
 	struct extent_buffer *eb;
 
-	eb = malloc(sizeof(struct extent_buffer) + size);
+	eb = calloc(1, sizeof(struct extent_buffer) + size);
 	if (!eb)
 		return NULL;
-	memset(eb, 0, sizeof(struct extent_buffer) + size);
 
 	eb->start = bytenr;
 	eb->len = size;

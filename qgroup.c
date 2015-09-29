@@ -436,13 +436,12 @@ struct btrfs_qgroup_comparer_set *btrfs_qgroup_alloc_comparer_set(void)
 	size = sizeof(struct btrfs_qgroup_comparer_set) +
 	       BTRFS_QGROUP_NCOMPS_INCREASE *
 	       sizeof(struct btrfs_qgroup_comparer);
-	set = malloc(size);
+	set = calloc(1, size);
 	if (!set) {
 		fprintf(stderr, "memory allocation failed\n");
 		exit(1);
 	}
 
-	memset(set, 0, size);
 	set->total = BTRFS_QGROUP_NCOMPS_INCREASE;
 
 	return set;
@@ -644,12 +643,11 @@ static int add_qgroup(struct qgroup_lookup *qgroup_lookup, u64 qgroupid,
 	if (!ret)
 		return 0;
 
-	bq = malloc(sizeof(*bq));
+	bq = calloc(1, sizeof(*bq));
 	if (!bq) {
 		printf("memory allocation failed\n");
 		exit(1);
 	}
-	memset(bq, 0, sizeof(*bq));
 	if (qgroupid) {
 		bq->qgroupid = qgroupid;
 		INIT_LIST_HEAD(&bq->qgroups);
@@ -813,12 +811,11 @@ struct btrfs_qgroup_filter_set *btrfs_qgroup_alloc_filter_set(void)
 	size = sizeof(struct btrfs_qgroup_filter_set) +
 	       BTRFS_QGROUP_NFILTERS_INCREASE *
 	       sizeof(struct btrfs_qgroup_filter);
-	set = malloc(size);
+	set = calloc(1, size);
 	if (!set) {
 		fprintf(stderr, "memory allocation failed\n");
 		exit(1);
 	}
-	memset(set, 0, size);
 	set->total = BTRFS_QGROUP_NFILTERS_INCREASE;
 
 	return set;

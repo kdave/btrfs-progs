@@ -46,8 +46,7 @@ int main(int ac, char **av) {
 	struct btrfs_root *root;
 	struct btrfs_trans_handle *trans;
 
-	buf = malloc(512);
-	memset(buf, 0, 512);
+	buf = calloc(1, 512);
 
 	radix_tree_init();
 

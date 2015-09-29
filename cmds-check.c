@@ -3020,8 +3020,7 @@ static struct root_backref *get_root_backref(struct root_record *rec,
 		return backref;
 	}
 
-	backref = malloc(sizeof(*backref) + namelen + 1);
-	memset(backref, 0, sizeof(*backref) + namelen + 1);
+	backref = calloc(1, sizeof(*backref) + namelen + 1);
 	backref->ref_root = ref_root;
 	backref->dir = dir;
 	backref->index = index;
@@ -4892,13 +4891,11 @@ struct chunk_record *btrfs_new_chunk_record(struct extent_buffer *leaf,
 	ptr = btrfs_item_ptr(leaf, slot, struct btrfs_chunk);
 	num_stripes = btrfs_chunk_num_stripes(leaf, ptr);
 
-	rec = malloc(btrfs_chunk_record_size(num_stripes));
+	rec = calloc(1, btrfs_chunk_record_size(num_stripes));
 	if (!rec) {
 		fprintf(stderr, "memory allocation failed\n");
 		exit(-1);
 	}
-
-	memset(rec, 0, btrfs_chunk_record_size(num_stripes));
 
 	INIT_LIST_HEAD(&rec->list);
 	INIT_LIST_HEAD(&rec->dextents);
@@ -4997,12 +4994,11 @@ btrfs_new_block_group_record(struct extent_buffer *leaf, struct btrfs_key *key,
 	struct btrfs_block_group_item *ptr;
 	struct block_group_record *rec;
 
-	rec = malloc(sizeof(*rec));
+	rec = calloc(1, sizeof(*rec));
 	if (!rec) {
 		fprintf(stderr, "memory allocation failed\n");
 		exit(-1);
 	}
-	memset(rec, 0, sizeof(*rec));
 
 	rec->cache.start = key->objectid;
 	rec->cache.size = key->offset;
@@ -5046,12 +5042,11 @@ btrfs_new_device_extent_record(struct extent_buffer *leaf,
 	struct device_extent_record *rec;
 	struct btrfs_dev_extent *ptr;
 
-	rec = malloc(sizeof(*rec));
+	rec = calloc(1, sizeof(*rec));
 	if (!rec) {
 		fprintf(stderr, "memory allocation failed\n");
 		exit(-1);
 	}
-	memset(rec, 0, sizeof(*rec));
 
 	rec->cache.objectid = key->objectid;
 	rec->cache.start = key->offset;

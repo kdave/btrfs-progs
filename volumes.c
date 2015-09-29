@@ -1968,10 +1968,9 @@ static void split_eb_for_raid56(struct btrfs_fs_info *info,
 		if (raid_map[i] >= BTRFS_RAID5_P_STRIPE)
 			break;
 
-		eb = malloc(sizeof(struct extent_buffer) + stripe_len);
+		eb = calloc(1, sizeof(struct extent_buffer) + stripe_len);
 		if (!eb)
 			BUG();
-		memset(eb, 0, sizeof(struct extent_buffer) + stripe_len);
 
 		eb->start = raid_map[i];
 		eb->len = stripe_len;

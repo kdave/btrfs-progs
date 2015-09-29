@@ -538,12 +538,11 @@ static struct extent_buffer *__alloc_extent_buffer(struct extent_io_tree *tree,
 {
 	struct extent_buffer *eb;
 
-	eb = malloc(sizeof(struct extent_buffer) + blocksize);
+	eb = calloc(1, sizeof(struct extent_buffer) + blocksize);
 	if (!eb) {
 		BUG();
 		return NULL;
 	}
-	memset(eb, 0, sizeof(struct extent_buffer) + blocksize);
 
 	eb->start = bytenr;
 	eb->len = blocksize;

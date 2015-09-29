@@ -226,13 +226,12 @@ struct btrfs_list_comparer_set *btrfs_list_alloc_comparer_set(void)
 
 	size = sizeof(struct btrfs_list_comparer_set) +
 	       BTRFS_LIST_NCOMPS_INCREASE * sizeof(struct btrfs_list_comparer);
-	set = malloc(size);
+	set = calloc(1, size);
 	if (!set) {
 		fprintf(stderr, "memory allocation failed\n");
 		exit(1);
 	}
 
-	memset(set, 0, size);
 	set->total = BTRFS_LIST_NCOMPS_INCREASE;
 
 	return set;
@@ -474,12 +473,11 @@ static int add_root(struct root_lookup *root_lookup,
 	if (!ret)
 		return 0;
 
-	ri = malloc(sizeof(*ri));
+	ri = calloc(1, sizeof(*ri));
 	if (!ri) {
 		printf("memory allocation failed\n");
 		exit(1);
 	}
-	memset(ri, 0, sizeof(*ri));
 	ri->root_id = root_id;
 
 	if (name && name_len > 0) {
@@ -1208,13 +1206,12 @@ struct btrfs_list_filter_set *btrfs_list_alloc_filter_set(void)
 
 	size = sizeof(struct btrfs_list_filter_set) +
 	       BTRFS_LIST_NFILTERS_INCREASE * sizeof(struct btrfs_list_filter);
-	set = malloc(size);
+	set = calloc(1, size);
 	if (!set) {
 		fprintf(stderr, "memory allocation failed\n");
 		exit(1);
 	}
 
-	memset(set, 0, size);
 	set->total = BTRFS_LIST_NFILTERS_INCREASE;
 
 	return set;
