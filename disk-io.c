@@ -811,6 +811,7 @@ void btrfs_free_fs_info(struct btrfs_fs_info *fs_info)
 	free(fs_info->dev_root);
 	free(fs_info->csum_root);
 	free(fs_info->quota_root);
+	free(fs_info->free_space_root);
 	free(fs_info->super_copy);
 	free(fs_info->log_root_tree);
 	free(fs_info);
@@ -830,12 +831,13 @@ struct btrfs_fs_info *btrfs_new_fs_info(int writable, u64 sb_bytenr)
 	fs_info->dev_root = calloc(1, sizeof(struct btrfs_root));
 	fs_info->csum_root = calloc(1, sizeof(struct btrfs_root));
 	fs_info->quota_root = calloc(1, sizeof(struct btrfs_root));
+	fs_info->free_space_root = calloc(1, sizeof(struct btrfs_root));
 	fs_info->super_copy = calloc(1, BTRFS_SUPER_INFO_SIZE);
 
 	if (!fs_info->tree_root || !fs_info->extent_root ||
 	    !fs_info->chunk_root || !fs_info->dev_root ||
 	    !fs_info->csum_root || !fs_info->quota_root ||
-	    !fs_info->super_copy)
+	    !fs_info->free_space_root || !fs_info->super_copy)
 		goto free_all;
 
 	extent_io_tree_init(&fs_info->extent_cache);
@@ -1016,6 +1018,16 @@ int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info, u64 root_tree_bytenr,
 	if (ret == 0)
 		fs_info->quota_enabled = 1;
 
+	if (btrfs_fs_compat_ro(fs_info, BTRFS_FEATURE_COMPAT_RO_FREE_SPACE_TREE)) {
+		ret = find_and_setup_root(root, fs_info, BTRFS_FREE_SPACE_TREE_OBJECTID,
+					  fs_info->free_space_root);
+		if (ret) {
+			printk("Couldn't read free space tree\n");
+			return -EIO;
+		}
+		fs_info->free_space_root->track_dirty = 1;
+	}
+
 	ret = find_and_setup_log_root(root, fs_info, sb);
 	if (ret) {
 		printk("Couldn't setup log root tree\n");
@@ -1041,6 +1053,8 @@ int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info, u64 root_tree_bytenr,
 
 void btrfs_release_all_roots(struct btrfs_fs_info *fs_info)
 {
+	if (fs_info->free_space_root)
+		free_extent_buffer(fs_info->free_space_root->node);
 	if (fs_info->quota_root)
 		free_extent_buffer(fs_info->quota_root->node);
 	if (fs_info->csum_root)

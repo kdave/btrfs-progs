@@ -619,6 +619,15 @@ static void print_key_type(u64 objectid, u8 type)
 	case BTRFS_BLOCK_GROUP_ITEM_KEY:
 		printf("BLOCK_GROUP_ITEM");
 		break;
+	case BTRFS_FREE_SPACE_INFO_KEY:
+		printf("FREE_SPACE_INFO");
+		break;
+	case BTRFS_FREE_SPACE_EXTENT_KEY:
+		printf("FREE_SPACE_EXTENT");
+		break;
+	case BTRFS_FREE_SPACE_BITMAP_KEY:
+		printf("FREE_SPACE_BITMAP");
+		break;
 	case BTRFS_CHUNK_ITEM_KEY:
 		printf("CHUNK_ITEM");
 		break;
@@ -737,6 +746,9 @@ static void print_objectid(u64 objectid, u8 type)
 	case BTRFS_UUID_TREE_OBJECTID:
 		printf("UUID_TREE");
 		break;
+	case BTRFS_FREE_SPACE_TREE_OBJECTID:
+		printf("FREE_SPACE_TREE");
+		break;
 	case BTRFS_MULTIPLE_OBJECTIDS:
 		printf("MULTIPLE");
 		break;
@@ -819,6 +831,7 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 	struct btrfs_dev_extent *dev_extent;
 	struct btrfs_disk_key disk_key;
 	struct btrfs_block_group_item bg_item;
+	struct btrfs_free_space_info *free_info;
 	struct btrfs_dir_log_item *dlog;
 	struct btrfs_qgroup_info_item *qg_info;
 	struct btrfs_qgroup_limit_item *qg_limit;
@@ -955,6 +968,18 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 			       (unsigned long long)btrfs_block_group_used(&bg_item),
 			       (unsigned long long)btrfs_block_group_chunk_objectid(&bg_item),
 			       flags_str);
+			break;
+		case BTRFS_FREE_SPACE_INFO_KEY:
+			free_info = btrfs_item_ptr(l, i, struct btrfs_free_space_info);
+			printf("\t\tfree space info extent count %u flags %u\n",
+			       (unsigned)btrfs_free_space_extent_count(l, free_info),
+			       (unsigned)btrfs_free_space_flags(l, free_info));
+			break;
+		case BTRFS_FREE_SPACE_EXTENT_KEY:
+			printf("\t\tfree space extent\n");
+			break;
+		case BTRFS_FREE_SPACE_BITMAP_KEY:
+			printf("\t\tfree space bitmap\n");
 			break;
 		case BTRFS_CHUNK_ITEM_KEY:
 			print_chunk(l, btrfs_item_ptr(l, i, struct btrfs_chunk));

@@ -376,6 +376,10 @@ again:
 				if (!skip)
 					printf("uuid");
 				break;
+			case BTRFS_FREE_SPACE_TREE_OBJECTID:
+				if (!skip)
+					printf("free space");
+				break;
 			case BTRFS_MULTIPLE_OBJECTIDS:
 				if (!skip) {
 					printf("multiple");

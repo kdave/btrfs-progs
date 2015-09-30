@@ -76,6 +76,9 @@ struct btrfs_free_space_ctl;
 /* for storing items that use the BTRFS_UUID_KEY* */
 #define BTRFS_UUID_TREE_OBJECTID 9ULL
 
+/* tracks free space in block groups. */
+#define BTRFS_FREE_SPACE_TREE_OBJECTID 10ULL
+
 /* for storing balance parameters in the root tree */
 #define BTRFS_BALANCE_OBJECTID -4ULL
 
@@ -453,6 +456,8 @@ struct btrfs_super_block {
  * Compat flags that we support.  If any incompat flags are set other than the
  * ones specified below then we will fail to mount
  */
+#define BTRFS_FEATURE_COMPAT_RO_FREE_SPACE_TREE	(1ULL << 0)
+
 #define BTRFS_FEATURE_INCOMPAT_MIXED_BACKREF	(1ULL << 0)
 #define BTRFS_FEATURE_INCOMPAT_DEFAULT_SUBVOL	(1ULL << 1)
 #define BTRFS_FEATURE_INCOMPAT_MIXED_GROUPS	(1ULL << 2)
@@ -476,9 +481,10 @@ struct btrfs_super_block {
 #define BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA	(1ULL << 8)
 #define BTRFS_FEATURE_INCOMPAT_NO_HOLES		(1ULL << 9)
 
-
 #define BTRFS_FEATURE_COMPAT_SUPP		0ULL
+
 #define BTRFS_FEATURE_COMPAT_RO_SUPP		0ULL
+
 #define BTRFS_FEATURE_INCOMPAT_SUPP			\
 	(BTRFS_FEATURE_INCOMPAT_MIXED_BACKREF |		\
 	 BTRFS_FEATURE_INCOMPAT_DEFAULT_SUBVOL |	\
@@ -898,6 +904,13 @@ struct btrfs_block_group_item {
 	__le64 flags;
 } __attribute__ ((__packed__));
 
+struct btrfs_free_space_info {
+	__le32 extent_count;
+	__le32 flags;
+} __attribute__ ((__packed__));
+
+#define BTRFS_FREE_SPACE_USING_BITMAPS (1ULL << 0)
+
 struct btrfs_qgroup_info_item {
 	__le64 generation;
 	__le64 referenced;
@@ -965,6 +978,7 @@ struct btrfs_fs_info {
 	struct btrfs_root *dev_root;
 	struct btrfs_root *csum_root;
 	struct btrfs_root *quota_root;
+	struct btrfs_root *free_space_root;
 
 	struct rb_root fs_root_tree;
 
@@ -1156,6 +1170,27 @@ struct btrfs_root {
  * blocks are free etc etc
  */
 #define BTRFS_BLOCK_GROUP_ITEM_KEY 192
+
+/*
+ * Every block group is represented in the free space tree by a free space info
+ * item, which stores some accounting information. It is keyed on
+ * (block_group_start, FREE_SPACE_INFO, block_group_length).
+ */
+#define BTRFS_FREE_SPACE_INFO_KEY 198
+
+/*
+ * A free space extent tracks an extent of space that is free in a block group.
+ * It is keyed on (start, FREE_SPACE_EXTENT, length).
+ */
+#define BTRFS_FREE_SPACE_EXTENT_KEY 199
+
+/*
+ * When a block group becomes very fragmented, we convert it to use bitmaps
+ * instead of extents. A free space bitmap is keyed on
+ * (start, FREE_SPACE_BITMAP, length); the corresponding item is a bitmap with
+ * (length / sectorsize) bits.
+ */
+#define BTRFS_FREE_SPACE_BITMAP_KEY 200
 
 #define BTRFS_DEV_EXTENT_KEY	204
 #define BTRFS_DEV_ITEM_KEY	216
@@ -1393,6 +1428,11 @@ BTRFS_SETGET_FUNCS(disk_block_group_flags,
 		   struct btrfs_block_group_item, flags, 64);
 BTRFS_SETGET_STACK_FUNCS(block_group_flags,
 			struct btrfs_block_group_item, flags, 64);
+
+/* struct btrfs_free_space_info */
+BTRFS_SETGET_FUNCS(free_space_extent_count, struct btrfs_free_space_info,
+		   extent_count, 32);
+BTRFS_SETGET_FUNCS(free_space_flags, struct btrfs_free_space_info, flags, 32);
 
 /* struct btrfs_inode_ref */
 BTRFS_SETGET_FUNCS(inode_ref_name_len, struct btrfs_inode_ref, name_len, 16);
@@ -2191,6 +2231,13 @@ static inline int btrfs_fs_incompat(struct btrfs_fs_info *fs_info, u64 flag)
 	struct btrfs_super_block *disk_super;
 	disk_super = fs_info->super_copy;
 	return !!(btrfs_super_incompat_flags(disk_super) & flag);
+}
+
+static inline int btrfs_fs_compat_ro(struct btrfs_fs_info *fs_info, u64 flag)
+{
+	struct btrfs_super_block *disk_super;
+	disk_super = fs_info->super_copy;
+	return !!(btrfs_super_compat_ro_flags(disk_super) & flag);
 }
 
 /* helper function to cast into the data area of the leaf. */
