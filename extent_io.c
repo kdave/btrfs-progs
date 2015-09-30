@@ -884,3 +884,9 @@ void memset_extent_buffer(struct extent_buffer *eb, char c,
 {
 	memset(eb->data + start, c, len);
 }
+
+int extent_buffer_test_bit(struct extent_buffer *eb, unsigned long start,
+			   unsigned long nr)
+{
+	return test_bit(nr, (unsigned long *)(eb->data + start));
+}

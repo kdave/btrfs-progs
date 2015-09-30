@@ -4001,3 +4001,121 @@ fail:
 	btrfs_release_path(&path);
 	return ret;
 }
+
+
+static int add_excluded_extent(struct btrfs_root *root,
+			       u64 start, u64 num_bytes)
+{
+	u64 end = start + num_bytes - 1;
+	set_extent_bits(&root->fs_info->pinned_extents,
+			start, end, EXTENT_UPTODATE, GFP_NOFS);
+	return 0;
+}
+
+void free_excluded_extents(struct btrfs_root *root,
+			   struct btrfs_block_group_cache *cache)
+{
+	u64 start, end;
+
+	start = cache->key.objectid;
+	end = start + cache->key.offset - 1;
+
+	clear_extent_bits(&root->fs_info->pinned_extents,
+			  start, end, EXTENT_UPTODATE, GFP_NOFS);
+}
+
+int exclude_super_stripes(struct btrfs_root *root,
+			  struct btrfs_block_group_cache *cache)
+{
+	u64 bytenr;
+	u64 *logical;
+	int stripe_len;
+	int i, nr, ret;
+
+	if (cache->key.objectid < BTRFS_SUPER_INFO_OFFSET) {
+		stripe_len = BTRFS_SUPER_INFO_OFFSET - cache->key.objectid;
+		cache->bytes_super += stripe_len;
+		ret = add_excluded_extent(root, cache->key.objectid,
+					  stripe_len);
+		if (ret)
+			return ret;
+	}
+
+	for (i = 0; i < BTRFS_SUPER_MIRROR_MAX; i++) {
+		bytenr = btrfs_sb_offset(i);
+		ret = btrfs_rmap_block(&root->fs_info->mapping_tree,
+				       cache->key.objectid, bytenr,
+				       0, &logical, &nr, &stripe_len);
+		if (ret)
+			return ret;
+
+		while (nr--) {
+			u64 start, len;
+
+			if (logical[nr] > cache->key.objectid +
+			    cache->key.offset)
+				continue;
+
+			if (logical[nr] + stripe_len <= cache->key.objectid)
+				continue;
+
+			start = logical[nr];
+			if (start < cache->key.objectid) {
+				start = cache->key.objectid;
+				len = (logical[nr] + stripe_len) - start;
+			} else {
+				len = min_t(u64, stripe_len,
+					    cache->key.objectid +
+					    cache->key.offset - start);
+			}
+
+			cache->bytes_super += len;
+			ret = add_excluded_extent(root, start, len);
+			if (ret) {
+				kfree(logical);
+				return ret;
+			}
+		}
+
+		kfree(logical);
+	}
+	return 0;
+}
+
+u64 add_new_free_space(struct btrfs_block_group_cache *block_group,
+		       struct btrfs_fs_info *info, u64 start, u64 end)
+{
+	u64 extent_start, extent_end, size, total_added = 0;
+	int ret;
+
+	while (start < end) {
+		ret = find_first_extent_bit(&info->pinned_extents, start,
+					    &extent_start, &extent_end,
+					    EXTENT_DIRTY | EXTENT_UPTODATE);
+		if (ret)
+			break;
+
+		if (extent_start <= start) {
+			start = extent_end + 1;
+		} else if (extent_start > start && extent_start < end) {
+			size = extent_start - start;
+			total_added += size;
+			ret = btrfs_add_free_space(block_group->free_space_ctl,
+						   start, size);
+			BUG_ON(ret); /* -ENOMEM or logic error */
+			start = extent_end + 1;
+		} else {
+			break;
+		}
+	}
+
+	if (start < end) {
+		size = end - start;
+		total_added += size;
+		ret = btrfs_add_free_space(block_group->free_space_ctl, start,
+					   size);
+		BUG_ON(ret); /* -ENOMEM or logic error */
+	}
+
+	return total_added;
+}

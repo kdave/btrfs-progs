@@ -802,8 +802,8 @@ void btrfs_remove_free_space_cache(struct btrfs_block_group_cache *block_group)
 	__btrfs_remove_free_space_cache(block_group->free_space_ctl);
 }
 
-static int btrfs_add_free_space(struct btrfs_free_space_ctl *ctl, u64 offset,
-				u64 bytes)
+int btrfs_add_free_space(struct btrfs_free_space_ctl *ctl, u64 offset,
+			 u64 bytes)
 {
 	struct btrfs_free_space *info;
 	int ret = 0;

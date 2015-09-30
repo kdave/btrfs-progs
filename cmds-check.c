@@ -35,6 +35,7 @@
 #include "utils.h"
 #include "commands.h"
 #include "free-space-cache.h"
+#include "free-space-tree.h"
 #include "btrfsck.h"
 #include "qgroup-verify.h"
 #include "rbtree-utils.h"
@@ -5476,9 +5477,29 @@ static int check_space_cache(struct btrfs_root *root)
 			btrfs_remove_free_space_cache(cache);
 		}
 
-		ret = load_free_space_cache(root->fs_info, cache);
-		if (!ret)
-			continue;
+		if (btrfs_fs_compat_ro(root->fs_info,
+				       BTRFS_FEATURE_COMPAT_RO_FREE_SPACE_TREE)) {
+			ret = exclude_super_stripes(root, cache);
+			if (ret) {
+				fprintf(stderr, "could not exclude super stripes: %s\n",
+					strerror(-ret));
+				error++;
+				continue;
+			}
+			ret = load_free_space_tree(root->fs_info, cache);
+			free_excluded_extents(root, cache);
+			if (ret < 0) {
+				fprintf(stderr, "could not load free space tree: %s\n",
+					strerror(-ret));
+				error++;
+				continue;
+			}
+			error += ret;
+		} else {
+			ret = load_free_space_cache(root->fs_info, cache);
+			if (!ret)
+				continue;
+		}
 
 		ret = verify_space_cache(root, cache);
 		if (ret) {
@@ -9717,8 +9738,12 @@ int cmd_check(int argc, char **argv)
 		goto close_out;
 	}
 
-	if (!ctx.progress_enabled)
-		fprintf(stderr, "checking free space cache\n");
+	if (!ctx.progress_enabled) {
+		if (btrfs_fs_compat_ro(info, BTRFS_FEATURE_COMPAT_RO_FREE_SPACE_TREE))
+			fprintf(stderr, "checking free space tree\n");
+		else
+			fprintf(stderr, "checking free space cache\n");
+	}
 	ret = check_space_cache(root);
 	if (ret)
 		goto out;
