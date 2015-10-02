@@ -504,7 +504,7 @@ static int cmp_device_info(const void *a, const void *b)
 static int load_device_info(int fd, struct device_info **device_info_ptr,
 			   int *device_info_count)
 {
-	int ret, i, ndevs, e;
+	int ret, i, ndevs;
 	struct btrfs_ioctl_fs_info_args fi_args;
 	struct btrfs_ioctl_dev_info_args dev_info;
 	struct device_info *info;
@@ -513,12 +513,11 @@ static int load_device_info(int fd, struct device_info **device_info_ptr,
 	*device_info_ptr = 0;
 
 	ret = ioctl(fd, BTRFS_IOC_FS_INFO, &fi_args);
-	e = errno;
-	if (e == EPERM)
-		return -e;
 	if (ret < 0) {
+		if (errno == EPERM)
+			return -errno;
 		fprintf(stderr, "ERROR: cannot get filesystem info - %s\n",
-				strerror(e));
+				strerror(errno));
 		return 1;
 	}
 
