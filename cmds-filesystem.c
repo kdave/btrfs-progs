@@ -481,6 +481,7 @@ static int btrfs_scan_kernel(void *search, unsigned unit_mode)
 		if (search && !match_search_item_kernel(fs_info_arg.fsid,
 					mnt->mnt_dir, label, search)) {
 			kfree(dev_info_arg);
+			dev_info_arg = NULL;
 			continue;
 		}
 
@@ -496,6 +497,7 @@ static int btrfs_scan_kernel(void *search, unsigned unit_mode)
 		if (fd != -1)
 			close(fd);
 		kfree(dev_info_arg);
+		dev_info_arg = NULL;
 	}
 
 out:
