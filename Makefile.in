@@ -1,6 +1,8 @@
 # Export all variables to sub-makes by default
 export
 
+include Makefile.extrawarn
+
 CC = @CC@
 LN_S = @LN_S@
 AR = @AR@
@@ -19,7 +21,7 @@ CFLAGS = @CFLAGS@ \
 	 -DBTRFS_FLAT_INCLUDES \
 	 -D_XOPEN_SOURCE=700  \
 	 -fno-strict-aliasing \
-	 -fPIC $(EXTRA_CFLAGS)
+	 -fPIC $(KBUILD_CFLAGS) $(EXTRA_CFLAGS)
 
 LDFLAGS = @LDFLAGS@ \
 	  -rdynamic $(EXTRA_LDFLAGS)
