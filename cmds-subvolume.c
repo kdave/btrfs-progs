@@ -89,7 +89,7 @@ static int wait_for_subvolume_cleaning(int fd, int count, u64 *ids,
 				clean = 0;
 			}
 		}
-		if (clean == 0)
+		if (clean)
 			break;
 		sleep(sleep_interval);
 	}
