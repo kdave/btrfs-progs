@@ -9368,17 +9368,23 @@ out:
 
 const char * const cmd_check_usage[] = {
 	"btrfs check [options] <device>",
-	"Check an unmounted btrfs filesystem.",
+	"Check structural inegrity of a filesystem (unmounted).",
+	"Check structural inegrity of an unmounted filesystem. Verify internal",
+	"trees' consistency and item connectivity. In the repair mode try to",
+	"fix the problems found.",
+	"WARNING: the repair mode is considered dangerous",
 	"",
 	"-s|--super <superblock>     use this superblock copy",
 	"-b|--backup                 use the backup root copy",
 	"--repair                    try to repair the filesystem",
+	"--readonly                  run in read-only mode (default)",
 	"--init-csum-tree            create a new CRC tree",
 	"--init-extent-tree          create a new extent tree",
 	"--check-data-csum           verify checkums of data blocks",
-	"--qgroup-report             print a report on qgroup consistency",
-	"--subvol-extents <subvolid> print subvolume extents and sharing state",
-	"--tree-root <bytenr>        use the given bytenr for the tree root",
+	"-Q|--qgroup-report           print a report on qgroup consistency",
+	"-E|--subvol-extents <subvolid>",
+	"                            print subvolume extents and sharing state",
+	"-r|--tree-root <bytenr>     use the given bytenr for the tree root",
 	"-p|--progress               indicate progress",
 	NULL
 };
