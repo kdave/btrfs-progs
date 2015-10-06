@@ -481,12 +481,13 @@ static void print_root(struct extent_buffer *leaf, int slot)
 	memset(&root_item, 0, sizeof(root_item));
 	read_extent_buffer(leaf, &root_item, (unsigned long)ri, len);
 
-	printf("\t\troot data bytenr %llu level %d dirid %llu refs %u gen %llu\n",
+	printf("\t\troot data bytenr %llu level %d dirid %llu refs %u gen %llu lastsnap %llu\n",
 		(unsigned long long)btrfs_root_bytenr(&root_item),
 		btrfs_root_level(&root_item),
 		(unsigned long long)btrfs_root_dirid(&root_item),
 		btrfs_root_refs(&root_item),
-		(unsigned long long)btrfs_root_generation(&root_item));
+		(unsigned long long)btrfs_root_generation(&root_item),
+		(unsigned long long)btrfs_root_last_snapshot(&root_item));
 
 	if (root_item.generation == root_item.generation_v2) {
 		uuid_unparse(root_item.uuid, uuid_str);
