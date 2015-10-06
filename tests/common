@@ -24,6 +24,7 @@ _not_run()
 run_check()
 {
 	echo "############### $@" >> $RESULTS 2>&1
+	if [ "$TEST_LOG" = 'tty' ]; then echo "CMD: $@" > /dev/tty; fi
 	"$@" >> $RESULTS 2>&1 || _fail "failed: $@"
 }
 
@@ -32,6 +33,7 @@ run_check()
 run_check_stdout()
 {
 	echo "############### $@" >> $RESULTS 2>&1
+	if [ "$TEST_LOG" = 'tty' ]; then echo "CMD(stdout): $@" > /dev/tty; fi
 	"$@" 2>&1 | tee -a $RESULTS || _fail "failed: $@"
 }
 
@@ -39,6 +41,7 @@ run_check_stdout()
 run_mayfail()
 {
 	echo "############### $@" >> $RESULTS 2>&1
+	if [ "$TEST_LOG" = 'tty' ]; then echo "CMD(mayfail): $@" > /dev/tty; fi
 	"$@" >> $RESULTS 2>&1 || _log "failed (ignored): $@"
 }
 
