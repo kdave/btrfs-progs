@@ -1,3 +1,20 @@
+# btrfs-progs
+#
+# Basic build targets:
+#   all		all main tools
+#   static      build static bnaries, requires static version of the libraries
+#   test        run the full testsuite
+#   install     install to default location (/usr/local)
+#   clean       clean built binaries (not the documentation)
+#
+# Tuning by variables (environment or make arguments):
+#   V=1            verbose, print command lines (default: quiet)
+#   C=1            run checker before compilation (default checker: sparse)
+#   W=123          build with warnings (default: off)
+#   EXTRA_CFLAGS   additional compiler flags
+#   EXTRA_LDFLAGS  additional linker flags
+#
+
 # Export all variables to sub-makes by default
 export
 
