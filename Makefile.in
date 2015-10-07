@@ -14,6 +14,10 @@
 #   EXTRA_CFLAGS   additional compiler flags
 #   EXTRA_LDFLAGS  additional linker flags
 #
+# Static checkers:
+#   CHECKER        static checker binary to be called (default: sparse)
+#   CHECKER_FLAGS  flags to pass to CHECKER, can override CFLAGS
+#
 
 # Export all variables to sub-makes by default
 export
@@ -51,6 +55,14 @@ STATIC_CFLAGS = $(CFLAGS) -ffunction-sections -fdata-sections
 STATIC_LDFLAGS = -static -Wl,--gc-sections
 STATIC_LIBS = @UUID_LIBS_STATIC@ @BLKID_LIBS_STATIC@ \
 	      @ZLIB_LIBS_STATIC@ @LZO2_LIBS_STATIC@ -L. -pthread
+
+# don't use FORTIFY with sparse because glibc with FORTIFY can
+# generate so many sparse errors that sparse stops parsing,
+# which masks real errors that we want to see.
+CHECKER := sparse
+CHECKER_FLAGS := -include $(check_defs) -D__CHECKER__ \
+	-D__CHECK_ENDIAN__ -Wbitwise -Wuninitialized -Wshadow -Wundef \
+	-U_FORTIFY_SOURCE
 
 objects = ctree.o disk-io.o radix-tree.o extent-tree.o print-tree.o \
 	  root-tree.o dir-item.o file-item.o inode-item.o inode-map.o \
@@ -144,7 +156,6 @@ headers = $(libbtrfs_headers)
 # make C=1 to enable sparse
 check_defs := .cc-defines.h 
 ifdef C
-	#
 	# We're trying to use sparse against glibc headers which go wild
 	# trying to use internal compiler macros to test features.  We
 	# copy gcc's and give them to sparse.  But not __SIZE_TYPE__
@@ -152,13 +163,8 @@ ifdef C
 	#
 	dummy := $(shell $(CC) -dM -E -x c - < /dev/null | \
 			grep -v __SIZE_TYPE__ > $(check_defs))
-	check = sparse -include $(check_defs) -D__CHECKER__ \
-		-D__CHECK_ENDIAN__ -Wbitwise -Wuninitialized -Wshadow -Wundef
+	check = $(CHECKER)
 	check_echo = echo
-	# don't use FORTIFY with sparse because glibc with FORTIFY can
-	# generate so many sparse errors that sparse stops parsing,
-	# which masks real errors that we want to see.
-	CFLAGS += -U_FORTIFY_SOURCE
 else
 	check = true
 	check_echo = true
@@ -169,7 +175,7 @@ endif
 
 .c.o:
 	@$(check_echo) "    [SP]     $<"
-	$(Q)$(check) $(CFLAGS) $<
+	$(Q)$(check) $(CFLAGS) $(CHECKER_FLAGS) $<
 	@echo "    [CC]     $@"
 	$(Q)$(CC) $(CFLAGS) -c $<
 
