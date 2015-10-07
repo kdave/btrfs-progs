@@ -36,6 +36,7 @@ MAN5_TXT += btrfs-mount.asciidoc
 
 MAN_TXT = $(MAN8_TXT) $(MAN5_TXT)
 MAN_XML = $(patsubst %.asciidoc,%.xml,$(MAN_TXT))
+MAN_HTML = $(patsubst %.asciidoc,%.html,$(MAN_TXT))
 
 DOC_MAN5 = $(patsubst %.asciidoc,%.5,$(MAN5_TXT))
 GZ_MAN5 = $(patsubst %.asciidoc,%.5.gz,$(MAN5_TXT))
@@ -81,6 +82,7 @@ all: man
 man: man5 man8
 man5: $(GZ_MAN5)
 man8: $(GZ_MAN8)
+html: $(MAN_HTML)
 
 install: install-man
 
@@ -100,7 +102,7 @@ uninstall:
 	$(RMDIR) -p --ignore-fail-on-non-empty $(DESTDIR)$(man8dir)
 
 clean:
-	$(QUIET_RM)$(RM) -f *.xml *.xml+ *.5 *.5.gz *.8 *.8.gz
+	$(QUIET_RM)$(RM) -f *.xml *.xml+ *.5 *.5.gz *.8 *.8.gz *.html
 
 %.5.gz : %.5
 	$(QUIET_GZIP)$(GZIPCMD) -n -c $< > $@
@@ -119,6 +121,13 @@ clean:
 %.xml : %.asciidoc asciidoc.conf
 	$(QUIET_ASCIIDOC)$(RM) -f $@+ $@ && \
 	$(ASCIIDOC) -b docbook -d manpage -f asciidoc.conf \
+		$(ASCIIDOC_EXTRA) -abtrfs_version=$(BTRFS_VERSION) \
+		-o $@+ $< && \
+	$(MV) $@+ $@
+
+%.html : %.asciidoc asciidoc.conf
+	$(QUIET_ASCIIDOC)$(RM) -f $@+ $@ && \
+	$(ASCIIDOC) -b html -d article -f asciidoc.conf \
 		$(ASCIIDOC_EXTRA) -abtrfs_version=$(BTRFS_VERSION) \
 		-o $@+ $< && \
 	$(MV) $@+ $@

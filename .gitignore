@@ -7,6 +7,7 @@ version.h
 version
 man/*.gz
 Documentation/*.gz
+Documentation/*.html
 btrfs
 btrfs.static
 btrfs-debug-tree
