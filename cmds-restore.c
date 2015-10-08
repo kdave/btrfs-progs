@@ -863,7 +863,7 @@ static int copy_symlink(struct btrfs_root *root, struct btrfs_key *key,
 
 	len = btrfs_file_extent_inline_item_len(leaf,
 			btrfs_item_nr(path->slots[0]));
-	if (len > PATH_MAX) {
+	if (len >= PATH_MAX) {
 		fprintf(stderr, "Symlink '%s' target length %d is longer than PATH_MAX\n",
 				fs_name, len);
 		ret = -1;
