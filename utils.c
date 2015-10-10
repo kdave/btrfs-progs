@@ -3077,3 +3077,14 @@ unsigned int get_unit_mode_from_arg(int *argc, char *argv[], int df_mode)
 
 	return unit_mode;
 }
+
+int string_is_numerical(const char *str)
+{
+	if (!(*str >= '0' && *str <= '9'))
+		return 0;
+	while (*str >= '0' && *str <= '9')
+		str++;
+	if (*str != '\0')
+		return 0;
+	return 1;
+}
