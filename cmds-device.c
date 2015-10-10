@@ -53,6 +53,7 @@ static int cmd_device_add(int argc, char **argv)
 	DIR	*dirstream = NULL;
 	int discard = 1;
 	int force = 0;
+	int last_dev;
 
 	while (1) {
 		int c;
@@ -77,18 +78,17 @@ static int cmd_device_add(int argc, char **argv)
 		}
 	}
 
-	argc = argc - optind;
-
-	if (check_argc_min(argc, 2))
+	if (check_argc_min(argc - optind, 2))
 		usage(cmd_device_add_usage);
 
-	mntpnt = argv[optind + argc - 1];
+	last_dev = argc - 1;
+	mntpnt = argv[last_dev];
 
 	fdmnt = btrfs_open_dir(mntpnt, &dirstream, 1);
 	if (fdmnt < 0)
 		return 1;
 
-	for (i = optind; i < optind + argc - 1; i++){
+	for (i = optind; i < last_dev; i++){
 		struct btrfs_ioctl_vol_args ioctl_args;
 		int	devfd, res;
 		u64 dev_block_count = 0;
