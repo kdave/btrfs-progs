@@ -130,6 +130,12 @@ parameters.
 Process only given number of chunks, after all filters are applied. This can be
 used to specifically target a chunk in connection with other filters (drange,
 vrange) or just simply limit the amount of work done by a single balance run.
++
+The argument may be a single value or a range. The single value *N* means *at
+most N chunks*, equivalent to *..N* range syntax. Kernels prior to 4.4 accept
+only the single value format.
++
+The range minimum and maximum are inclusive.
 
 *soft*::
 Takes no parameters. Only has meaning when converting between profiles.

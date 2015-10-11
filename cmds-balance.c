@@ -347,6 +347,10 @@ static void dump_balance_args(struct btrfs_balance_args *args)
 		       (unsigned long long)args->vend);
 	if (args->flags & BTRFS_BALANCE_ARGS_LIMIT)
 		printf(", limit=%llu", (unsigned long long)args->limit);
+	if (args->flags & BTRFS_BALANCE_ARGS_LIMIT_RANGE) {
+		printf(", limit=");
+		print_range_u32(args->limit_min, args->limit_max);
+	}
 
 	printf("\n");
 }
