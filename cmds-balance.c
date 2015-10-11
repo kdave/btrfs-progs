@@ -306,11 +306,19 @@ static int parse_filters(char *filters, struct btrfs_balance_args *args)
 				return 1;
 			}
 			if (parse_u64(value, &args->limit)) {
-				fprintf(stderr, "Invalid limit argument: %s\n",
-				       value);
-				return 1;
+				if (parse_range_u32(value, &args->limit_min,
+							&args->limit_max)) {
+					fprintf(stderr,
+						"Invalid limit argument: %s\n",
+					       value);
+					return 1;
+				}
+				args->flags &= ~BTRFS_BALANCE_ARGS_LIMIT;
+				args->flags |= BTRFS_BALANCE_ARGS_LIMIT_RANGE;
+			} else {
+				args->flags &= ~BTRFS_BALANCE_ARGS_LIMIT_RANGE;
+				args->flags |= BTRFS_BALANCE_ARGS_LIMIT;
 			}
-			args->flags |= BTRFS_BALANCE_ARGS_LIMIT;
 		} else {
 			fprintf(stderr, "Unrecognized balance option '%s'\n",
 				this_char);
