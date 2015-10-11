@@ -88,42 +88,53 @@ static int parse_u64(const char *str, u64 *result)
 	return 0;
 }
 
+/*
+ * Parse range that's missing some part that can be implicit:
+ * a..b	- exact range, a can be equal to b
+ * a..	- implicitly unbounded maximum (end == (u64)-1)
+ * ..b	- implicitly starting at 0
+ * a	- invalid; unclear semantics, use parse_u64 instead
+ *
+ * Returned values are u64, value validation and interpretation should be done
+ * by the caller.
+ */
 static int parse_range(const char *range, u64 *start, u64 *end)
 {
 	char *dots;
+	const char *rest;
+	int skipped = 0;
 
 	dots = strstr(range, "..");
-	if (dots) {
-		const char *rest = dots + 2;
-		int skipped = 0;
+	if (!dots)
+		return 1;
 
-		*dots = 0;
+	rest = dots + 2;
+	*dots = 0;
 
-		if (!*rest) {
-			*end = (u64)-1;
-			skipped++;
-		} else {
-			if (parse_u64(rest, end))
-				return 1;
-		}
-		if (dots == range) {
-			*start = 0;
-			skipped++;
-		} else {
-			if (parse_u64(range, start))
-				return 1;
-		}
-
-		if (*start >= *end) {
-			fprintf(stderr, "Range %llu..%llu doesn't make "
-				"sense\n", (unsigned long long)*start,
-				(unsigned long long)*end);
+	if (!*rest) {
+		*end = (u64)-1;
+		skipped++;
+	} else {
+		if (parse_u64(rest, end))
 			return 1;
-		}
-
-		if (skipped <= 1)
-			return 0;
 	}
+	if (dots == range) {
+		*start = 0;
+		skipped++;
+	} else {
+		if (parse_u64(range, start))
+			return 1;
+	}
+
+	if (*start >= *end) {
+		fprintf(stderr, "Range %llu..%llu doesn't make "
+			"sense\n", (unsigned long long)*start,
+			(unsigned long long)*end);
+		return 1;
+	}
+
+	if (skipped <= 1)
+		return 0;
 
 	return 1;
 }
