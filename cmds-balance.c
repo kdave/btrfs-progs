@@ -128,15 +128,35 @@ static int parse_range(const char *range, u64 *start, u64 *end)
 			return 1;
 	}
 
-	if (*start >= *end) {
-		fprintf(stderr, "Range %llu..%llu doesn't make "
-			"sense\n", (unsigned long long)*start,
+	if (*start > *end) {
+		fprintf(stderr,
+			"ERROR: range %llu..%llu doesn't make sense\n",
+			(unsigned long long)*start,
 			(unsigned long long)*end);
 		return 1;
 	}
 
 	if (skipped <= 1)
 		return 0;
+
+	return 1;
+}
+
+/*
+ * Parse range and check if start < end
+ */
+static int parse_range_strict(const char *range, u64 *start, u64 *end)
+{
+	if (parse_range(range, start, end) == 0) {
+		if (*start >= *end) {
+			fprintf(stderr,
+				"ERROR: range %llu..%llu not allowed\n",
+				(unsigned long long)*start,
+				(unsigned long long)*end);
+			return 1;
+		}
+		return 0;
+	}
 
 	return 1;
 }
@@ -198,7 +218,7 @@ static int parse_filters(char *filters, struct btrfs_balance_args *args)
 				       "an argument\n");
 				return 1;
 			}
-			if (parse_range(value, &args->pstart, &args->pend)) {
+			if (parse_range_strict(value, &args->pstart, &args->pend)) {
 				fprintf(stderr, "Invalid drange argument\n");
 				return 1;
 			}
@@ -209,7 +229,7 @@ static int parse_filters(char *filters, struct btrfs_balance_args *args)
 				       "an argument\n");
 				return 1;
 			}
-			if (parse_range(value, &args->vstart, &args->vend)) {
+			if (parse_range_strict(value, &args->vstart, &args->vend)) {
 				fprintf(stderr, "Invalid vrange argument\n");
 				return 1;
 			}
