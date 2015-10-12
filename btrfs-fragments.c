@@ -436,11 +436,9 @@ int main(int argc, char **argv)
 
 	path = argv[optind++];
 
-	fd = open_file_or_dir(path, &dirstream);
-	if (fd < 0) {
-		fprintf(stderr, "ERROR: can't access '%s'\n", path);
+	fd = btrfs_open_dir(path, &dirstream, 1);
+	if (fd < 0)
 		exit(1);
-	}
 
 	if (flags == 0)
 		flags = BTRFS_BLOCK_GROUP_DATA | BTRFS_BLOCK_GROUP_METADATA;
