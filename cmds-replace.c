@@ -348,7 +348,6 @@ static const char *const cmd_replace_status_usage[] = {
 static int cmd_replace_status(int argc, char **argv)
 {
 	int fd;
-	int e;
 	int c;
 	char *path;
 	int once = 0;
@@ -370,13 +369,9 @@ static int cmd_replace_status(int argc, char **argv)
 		usage(cmd_replace_status_usage);
 
 	path = argv[optind];
-	fd = open_file_or_dir(path, &dirstream);
-	e = errno;
-	if (fd < 0) {
-		fprintf(stderr, "ERROR: can't access \"%s\": %s\n",
-			path, strerror(e));
+	fd = btrfs_open_dir(path, &dirstream, 1);
+	if (fd < 0)
 		return 1;
-	}
 
 	ret = print_replace_status(fd, path, once);
 	close_file_or_dir(fd, dirstream);
@@ -541,12 +536,9 @@ static int cmd_replace_cancel(int argc, char **argv)
 		usage(cmd_replace_cancel_usage);
 
 	path = argv[optind];
-	fd = open_file_or_dir(path, &dirstream);
-	if (fd < 0) {
-		fprintf(stderr, "ERROR: can't access \"%s\": %s\n",
-			path, strerror(errno));
+	fd = btrfs_open_dir(path, &dirstream, 1);
+	if (fd < 0)
 		return 1;
-	}
 
 	args.cmd = BTRFS_IOCTL_DEV_REPLACE_CMD_CANCEL;
 	args.result = BTRFS_IOCTL_DEV_REPLACE_RESULT_NO_RESULT;
