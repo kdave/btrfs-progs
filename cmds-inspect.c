@@ -626,9 +626,8 @@ static int cmd_inspect_min_dev_size(int argc, char **argv)
 	}
 
 	ret = print_min_dev_size(fd, devid);
-out:
 	close_file_or_dir(fd, dirstream);
-
+out:
 	return !!ret;
 }
 
