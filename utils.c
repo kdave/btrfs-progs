@@ -1081,27 +1081,28 @@ out:
  *
  * On error, return -1, errno should be set.
  */
-int open_path_or_dev_mnt(const char *path, DIR **dirstream)
+int open_path_or_dev_mnt(const char *path, DIR **dirstream, int verbose)
 {
 	char mp[PATH_MAX];
-	int fdmnt;
+	int ret;
 
-	fdmnt = is_block_device(path);
-	if (fdmnt == 1) {
-		int ret;
-
+	if (is_block_device(path)) {
 		ret = get_btrfs_mount(path, mp, sizeof(mp));
 		if (ret < 0) {
 			/* not a mounted btrfs dev */
+			error_on(verbose, "'%s' is not a mounted btrfs device",
+				 path);
 			errno = EINVAL;
 			return -1;
 		}
-		fdmnt = open_file_or_dir(mp, dirstream);
-	} else if (fdmnt == 0) {
-		fdmnt = open_file_or_dir(path, dirstream);
+		ret = open_file_or_dir(mp, dirstream);
+		error_on(verbose && ret < 0, "can't access '%s': %s",
+			 path, strerror(errno));
+	} else {
+		ret = btrfs_open_dir(path, dirstream, 1);
 	}
 
-	return fdmnt;
+	return ret;
 }
 
 /*

@@ -385,18 +385,9 @@ static int cmd_device_stats(int argc, char **argv)
 
 	dev_path = argv[optind];
 
-	fdmnt = open_path_or_dev_mnt(dev_path, &dirstream);
-
-	if (fdmnt < 0) {
-		if (errno == EINVAL)
-			fprintf(stderr,
-				"ERROR: '%s' is not a mounted btrfs device\n",
-				dev_path);
-		else
-			fprintf(stderr, "ERROR: can't access '%s': %s\n",
-				dev_path, strerror(errno));
+	fdmnt = open_path_or_dev_mnt(dev_path, &dirstream, 1);
+	if (fdmnt < 0)
 		return 1;
-	}
 
 	ret = get_fs_info(dev_path, &fi_args, &di_args);
 	if (ret) {

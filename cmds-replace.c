@@ -170,18 +170,9 @@ static int cmd_replace_start(int argc, char **argv)
 		usage(cmd_replace_start_usage);
 	path = argv[optind + 2];
 
-	fdmnt = open_path_or_dev_mnt(path, &dirstream);
-
-	if (fdmnt < 0) {
-		if (errno == EINVAL)
-			fprintf(stderr,
-				"ERROR: '%s' is not a mounted btrfs device\n",
-				path);
-		else
-			fprintf(stderr, "ERROR: can't access '%s': %s\n",
-				path, strerror(errno));
+	fdmnt = open_path_or_dev_mnt(path, &dirstream, 1);
+	if (fdmnt < 0)
 		goto leave_with_error;
-	}
 
 	/* check for possible errors before backgrounding */
 	status_args.cmd = BTRFS_IOCTL_DEV_REPLACE_CMD_STATUS;

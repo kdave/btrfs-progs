@@ -1198,17 +1198,9 @@ static int scrub_start(int argc, char **argv, int resume)
 
 	path = argv[optind];
 
-	fdmnt = open_path_or_dev_mnt(path, &dirstream);
-
-	if (fdmnt < 0) {
-		if (errno == EINVAL)
-			error_on(!do_quiet, "'%s' is not a mounted btrfs device",
-				path);
-		else
-			error_on(!do_quiet, "can't access '%s': %s",
-				path, strerror(errno));
+	fdmnt = open_path_or_dev_mnt(path, &dirstream, !do_quiet);
+	if (fdmnt < 0)
 		return 1;
-	}
 
 	ret = get_fs_info(path, &fi_args, &di_args);
 	if (ret) {
@@ -1604,12 +1596,8 @@ static int cmd_scrub_cancel(int argc, char **argv)
 
 	path = argv[1];
 
-	fdmnt = open_path_or_dev_mnt(path, &dirstream);
+	fdmnt = open_path_or_dev_mnt(path, &dirstream, 1);
 	if (fdmnt < 0) {
-		if (errno == EINVAL)
-			error("'%s' is not a mounted btrfs device", path);
-		else
-			error("can't access '%s': %s", path, strerror(errno));
 		ret = 1;
 		goto out;
 	}
@@ -1705,15 +1693,9 @@ static int cmd_scrub_status(int argc, char **argv)
 
 	path = argv[optind];
 
-	fdmnt = open_path_or_dev_mnt(path, &dirstream);
-
-	if (fdmnt < 0) {
-		if (errno == EINVAL)
-			error("'%s' is not a mounted btrfs device", path);
-		else
-			error("can't access '%s': %s", path, strerror(errno));
+	fdmnt = open_path_or_dev_mnt(path, &dirstream, 1);
+	if (fdmnt < 0)
 		return 1;
-	}
 
 	ret = get_fs_info(path, &fi_args, &di_args);
 	if (ret) {
