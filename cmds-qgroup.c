@@ -79,11 +79,9 @@ static int qgroup_assign(int assign, int argc, char **argv)
 		fprintf(stderr, "ERROR: bad relation requested '%s'\n", path);
 		return 1;
 	}
-	fd = open_file_or_dir(path, &dirstream);
-	if (fd < 0) {
-		fprintf(stderr, "ERROR: can't access '%s'\n", path);
+	fd = btrfs_open_dir(path, &dirstream, 1);
+	if (fd < 0)
 		return 1;
-	}
 
 	ret = ioctl(fd, BTRFS_IOC_QGROUP_ASSIGN, &args);
 	e = errno;
@@ -137,11 +135,9 @@ static int qgroup_create(int create, int argc, char **argv)
 	args.create = create;
 	args.qgroupid = parse_qgroupid(argv[1]);
 
-	fd = open_file_or_dir(path, &dirstream);
-	if (fd < 0) {
-		fprintf(stderr, "ERROR: can't access '%s'\n", path);
+	fd = btrfs_open_dir(path, &dirstream, 1);
+	if (fd < 0)
 		return 1;
-	}
 
 	ret = ioctl(fd, BTRFS_IOC_QGROUP_CREATE, &args);
 	e = errno;
@@ -351,11 +347,9 @@ static int cmd_qgroup_show(int argc, char **argv)
 		usage(cmd_qgroup_show_usage);
 
 	path = argv[optind];
-	fd = open_file_or_dir(path, &dirstream);
-	if (fd < 0) {
-		fprintf(stderr, "ERROR: can't access '%s'\n", path);
+	fd = btrfs_open_dir(path, &dirstream, 1);
+	if (fd < 0)
 		return 1;
-	}
 
 	if (filter_flag) {
 		qgroupid = btrfs_get_path_rootid(fd);
@@ -460,11 +454,9 @@ static int cmd_qgroup_limit(int argc, char **argv)
 	} else
 		usage(cmd_qgroup_limit_usage);
 
-	fd = open_file_or_dir(path, &dirstream);
-	if (fd < 0) {
-		fprintf(stderr, "ERROR: can't access '%s'\n", path);
+	fd = btrfs_open_dir(path, &dirstream, 1);
+	if (fd < 0)
 		return 1;
-	}
 
 	ret = ioctl(fd, BTRFS_IOC_QGROUP_LIMIT, &args);
 	e = errno;
