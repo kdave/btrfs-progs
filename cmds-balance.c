@@ -306,11 +306,9 @@ static int do_balance(const char *path, struct btrfs_ioctl_balance_args *args,
 	int e;
 	DIR *dirstream = NULL;
 
-	fd = open_file_or_dir(path, &dirstream);
-	if (fd < 0) {
-		fprintf(stderr, "ERROR: can't access '%s'\n", path);
+	fd = btrfs_open_dir(path, &dirstream, 1);
+	if (fd < 0)
 		return 1;
-	}
 
 	ret = ioctl(fd, BTRFS_IOC_BALANCE_V2, args);
 	e = errno;
@@ -503,11 +501,9 @@ static int cmd_balance_pause(int argc, char **argv)
 
 	path = argv[1];
 
-	fd = open_file_or_dir(path, &dirstream);
-	if (fd < 0) {
-		fprintf(stderr, "ERROR: can't access '%s'\n", path);
+	fd = btrfs_open_dir(path, &dirstream, 1);
+	if (fd < 0)
 		return 1;
-	}
 
 	ret = ioctl(fd, BTRFS_IOC_BALANCE_CTL, BTRFS_BALANCE_CTL_PAUSE);
 	e = errno;
@@ -544,11 +540,9 @@ static int cmd_balance_cancel(int argc, char **argv)
 
 	path = argv[1];
 
-	fd = open_file_or_dir(path, &dirstream);
-	if (fd < 0) {
-		fprintf(stderr, "ERROR: can't access '%s'\n", path);
+	fd = btrfs_open_dir(path, &dirstream, 1);
+	if (fd < 0)
 		return 1;
-	}
 
 	ret = ioctl(fd, BTRFS_IOC_BALANCE_CTL, BTRFS_BALANCE_CTL_CANCEL);
 	e = errno;
@@ -586,11 +580,9 @@ static int cmd_balance_resume(int argc, char **argv)
 
 	path = argv[1];
 
-	fd = open_file_or_dir(path, &dirstream);
-	if (fd < 0) {
-		fprintf(stderr, "ERROR: can't access '%s'\n", path);
+	fd = btrfs_open_dir(path, &dirstream, 1);
+	if (fd < 0)
 		return 1;
-	}
 
 	memset(&args, 0, sizeof(args));
 	args.flags |= BTRFS_BALANCE_RESUME;
@@ -679,11 +671,9 @@ static int cmd_balance_status(int argc, char **argv)
 
 	path = argv[optind];
 
-	fd = open_file_or_dir(path, &dirstream);
-	if (fd < 0) {
-		fprintf(stderr, "ERROR: can't access '%s'\n", path);
+	fd = btrfs_open_dir(path, &dirstream, 1);
+	if (fd < 0)
 		return 2;
-	}
 
 	ret = ioctl(fd, BTRFS_IOC_BALANCE_PROGRESS, &args);
 	e = errno;
