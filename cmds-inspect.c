@@ -243,6 +243,7 @@ static int cmd_inspect_logical_resolve(int argc, char **argv)
 				if (path_fd < 0) {
 					fprintf(stderr, "ERROR: can't access "
 						"'%s'\n", full_path);
+					ret = -ENOENT;
 					goto out;
 				}
 			}
