@@ -205,11 +205,10 @@ static int cmd_filesystem_df(int argc, char **argv)
 
 	path = argv[1];
 
-	fd = open_file_or_dir(path, &dirstream);
-	if (fd < 0) {
-		fprintf(stderr, "ERROR: can't access '%s'\n", path);
+	fd = btrfs_open_dir(path, &dirstream, 1);
+	if (fd < 0)
 		return 1;
-	}
+
 	ret = get_df(fd, &sargs);
 
 	if (ret == 0) {
@@ -939,11 +938,9 @@ static int cmd_filesystem_sync(int argc, char **argv)
 
 	path = argv[1];
 
-	fd = open_file_or_dir(path, &dirstream);
-	if (fd < 0) {
-		fprintf(stderr, "ERROR: can't access '%s'\n", path);
+	fd = btrfs_open_dir(path, &dirstream, 1);
+	if (fd < 0)
 		return 1;
-	}
 
 	printf("FSSync '%s'\n", path);
 	res = ioctl(fd, BTRFS_IOC_SYNC);
@@ -1229,11 +1226,9 @@ static int cmd_filesystem_resize(int argc, char **argv)
 		return 1;
 	}
 
-	fd = open_file_or_dir(path, &dirstream);
-	if (fd < 0) {
-		fprintf(stderr, "ERROR: can't access '%s'\n", path);
+	fd = btrfs_open_dir(path, &dirstream, 1);
+	if (fd < 0)
 		return 1;
-	}
 
 	printf("Resize '%s' of '%s'\n", path, amount);
 	memset(&args, 0, sizeof(args));

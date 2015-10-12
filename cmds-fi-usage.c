@@ -901,10 +901,8 @@ int cmd_filesystem_usage(int argc, char **argv)
 		int chunkcount = 0;
 		int devcount = 0;
 
-		fd = open_file_or_dir(argv[i], &dirstream);
+		fd = btrfs_open_dir(argv[i], &dirstream, 1);
 		if (fd < 0) {
-			fprintf(stderr, "ERROR: can't access '%s'\n",
-				argv[i]);
 			ret = 1;
 			goto out;
 		}
