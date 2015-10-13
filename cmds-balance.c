@@ -161,6 +161,38 @@ static int parse_range_strict(const char *range, u64 *start, u64 *end)
 	return 1;
 }
 
+/*
+ * Convert 64bit range to 32bit with boundary checkso
+ */
+static int range_to_u32(u64 start, u64 end, u32 *start32, u32 *end32)
+{
+	if (start > (u32)-1)
+		return 1;
+
+	if (end != (u64)-1 && end > (u32)-1)
+		return 1;
+
+	*start32 = (u32)start;
+	*end32 = (u32)end;
+
+	return 0;
+}
+
+__attribute__ ((unused))
+static int parse_range_u32(const char *range, u32 *start, u32 *end)
+{
+	u64 tmp_start;
+	u64 tmp_end;
+
+	if (parse_range(range, &tmp_start, &tmp_end))
+		return 1;
+
+	if (range_to_u32(tmp_start, tmp_end, start, end))
+		return 1;
+
+	return 0;
+}
+
 static int parse_filters(char *filters, struct btrfs_balance_args *args)
 {
 	char *this_char;
