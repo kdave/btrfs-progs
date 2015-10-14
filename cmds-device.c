@@ -92,7 +92,6 @@ static int cmd_device_add(int argc, char **argv)
 		struct btrfs_ioctl_vol_args ioctl_args;
 		int	devfd, res;
 		u64 dev_block_count = 0;
-		int mixed = 0;
 		char *path;
 
 		res = test_dev_for_mkfs(argv[i], force);
@@ -109,7 +108,7 @@ static int cmd_device_add(int argc, char **argv)
 		}
 
 		res = btrfs_prepare_device(devfd, argv[i], 1, &dev_block_count,
-					   0, &mixed, discard);
+					   0, discard);
 		close(devfd);
 		if (res) {
 			ret++;

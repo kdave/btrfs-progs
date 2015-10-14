@@ -129,7 +129,6 @@ static int cmd_replace_start(int argc, char **argv)
 	int force_using_targetdev = 0;
 	u64 dstdev_block_count;
 	int do_not_background = 0;
-	int mixed = 0;
 	DIR *dirstream = NULL;
 	u64 srcdev_size;
 	u64 dstdev_size;
@@ -261,7 +260,7 @@ static int cmd_replace_start(int argc, char **argv)
 	strncpy((char *)start_args.start.tgtdev_name, dstdev,
 		BTRFS_DEVICE_PATH_NAME_MAX);
 	ret = btrfs_prepare_device(fddstdev, dstdev, 1, &dstdev_block_count, 0,
-				 &mixed, 0);
+				0);
 	if (ret)
 		goto leave_with_error;
 

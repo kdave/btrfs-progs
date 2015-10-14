@@ -133,9 +133,42 @@ UNIT
 As default the unit is the byte, however it is possible to append a suffix
 to the arguments like 'k' for KBytes, 'm' for MBytes...
 
+NOTES
+-----
+Since mixed block group creation is optional, we allow small
+filesystem instances with differing values for sectorsize and nodesize
+to be created and could end up in the following situation,
+
+  [root@localhost ~]# mkfs.btrfs -f -n 65536 /dev/loop0
+  btrfs-progs v3.19-rc2-405-g976307c
+  See http://btrfs.wiki.kernel.org for more information.
+
+  Performing full device TRIM (512.00MiB) ...
+  Label:              (null)
+  UUID:               49fab72e-0c8b-466b-a3ca-d1bfe56475f0
+  Node size:          65536
+  Sector size:        4096
+  Filesystem size:    512.00MiB
+  Block group profiles:
+    Data:             single            8.00MiB
+    Metadata:         DUP              40.00MiB
+    System:           DUP              12.00MiB
+  SSD detected:       no
+  Incompat features:  extref, skinny-metadata
+  Number of devices:  1
+  Devices:
+    ID        SIZE  PATH
+     1   512.00MiB  /dev/loop0
+  [root@localhost ~]# mount /dev/loop0 /mnt/
+  mount: mount /dev/loop0 on /mnt failed: No space left on device
+
+The ENOSPC occurs during the creation of the UUID tree. This is
+because of things like large metadata block size, DUP mode used for
+metadata and global reservation consuming space.
+
 AVAILABILITY
 ------------
-*btrfs* is part of btrfs-progs.
+*mkfs.btrfs* is part of btrfs-progs.
 Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for
 further details.
 

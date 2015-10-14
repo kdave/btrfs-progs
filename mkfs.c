@@ -152,7 +152,7 @@ err:
 }
 
 static int make_root_dir(struct btrfs_trans_handle *trans, struct btrfs_root *root,
-		int mixed, struct mkfs_allocation *allocation)
+		struct mkfs_allocation *allocation)
 {
 	struct btrfs_key location;
 	int ret;
@@ -1439,8 +1439,6 @@ int main(int ac, char **av)
 				break;
 			case 'b':
 				block_count = parse_size(optarg);
-				if (block_count <= BTRFS_MKFS_SMALL_VOLUME_SIZE)
-					mixed = 1;
 				zero_end = 0;
 				break;
 			case 'V':
@@ -1490,7 +1488,7 @@ int main(int ac, char **av)
 			exit(1);
 		}
 	}
-	
+
 	while (dev_cnt-- > 0) {
 		file = av[optind++];
 		if (is_block_device(file) == 1)
@@ -1504,10 +1502,9 @@ int main(int ac, char **av)
 	file = av[optind++];
 	ssd = is_ssd(file);
 
-	if (is_vol_small(file) || mixed) {
+	if (mixed) {
 		if (verbose)
-			printf("SMALL VOLUME: forcing mixed metadata/data groups\n");
-		mixed = 1;
+			printf("Forcing mixed metadata/data groups\n");
 	}
 
 	/*
@@ -1603,7 +1600,7 @@ int main(int ac, char **av)
 			exit(1);
 		}
 		ret = btrfs_prepare_device(fd, file, zero_end, &dev_block_count,
-					   block_count, &mixed, discard);
+					   block_count, discard);
 		if (ret) {
 			close(fd);
 			exit(1);
@@ -1703,7 +1700,7 @@ int main(int ac, char **av)
 		exit(1);
 	}
 
-	ret = make_root_dir(trans, root, mixed, &allocation);
+	ret = make_root_dir(trans, root, &allocation);
 	if (ret) {
 		fprintf(stderr, "failed to setup the root directory\n");
 		exit(1);
@@ -1724,8 +1721,6 @@ int main(int ac, char **av)
 		goto raid_groups;
 
 	while (dev_cnt-- > 0) {
-		int old_mixed = mixed;
-
 		file = av[optind++];
 
 		/*
@@ -1748,12 +1743,11 @@ int main(int ac, char **av)
 			continue;
 		}
 		ret = btrfs_prepare_device(fd, file, zero_end, &dev_block_count,
-					   block_count, &mixed, discard);
+					   block_count, discard);
 		if (ret) {
 			close(fd);
 			exit(1);
 		}
-		mixed = old_mixed;
 
 		ret = btrfs_add_to_fsid(trans, root, fd, file, dev_block_count,
 					sectorsize, sectorsize, sectorsize);
