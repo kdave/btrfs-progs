@@ -1540,6 +1540,19 @@ int main(int ac, char **av)
 		if (!nodesize_forced)
 			nodesize = best_nodesize;
 	}
+
+	/*
+	 * FS features that can be set by other means than -O
+	 * just set the bit here
+	 */
+	if (mixed)
+		features |= BTRFS_FEATURE_INCOMPAT_MIXED_GROUPS;
+
+	if ((data_profile | metadata_profile) &
+	    (BTRFS_BLOCK_GROUP_RAID5 | BTRFS_BLOCK_GROUP_RAID6)) {
+		features |= BTRFS_FEATURE_INCOMPAT_RAID56;
+	}
+
 	if (btrfs_check_nodesize(nodesize, sectorsize,
 				 features))
 		exit(1);
@@ -1645,18 +1658,6 @@ int main(int ac, char **av)
 		group_profile_max_safe_loss(data_profile)){
 		fprintf(stderr,
 			"WARNING: metatdata has lower redundancy than data!\n\n");
-	}
-
-	/*
-	 * FS features that can be set by other means than -O
-	 * just set the bit here
-	 */
-	if (mixed)
-		features |= BTRFS_FEATURE_INCOMPAT_MIXED_GROUPS;
-
-	if ((data_profile | metadata_profile) &
-	    (BTRFS_BLOCK_GROUP_RAID5 | BTRFS_BLOCK_GROUP_RAID6)) {
-		features |= BTRFS_FEATURE_INCOMPAT_RAID56;
 	}
 
 	mkfs_cfg.label = label;
