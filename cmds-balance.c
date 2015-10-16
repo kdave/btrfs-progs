@@ -101,6 +101,7 @@ static int parse_u64(const char *str, u64 *result)
 static int parse_range(const char *range, u64 *start, u64 *end)
 {
 	char *dots;
+	char *endptr;
 	const char *rest;
 	int skipped = 0;
 
@@ -109,20 +110,21 @@ static int parse_range(const char *range, u64 *start, u64 *end)
 		return 1;
 
 	rest = dots + 2;
-	*dots = 0;
 
 	if (!*rest) {
 		*end = (u64)-1;
 		skipped++;
 	} else {
-		if (parse_u64(rest, end))
+		*end = strtoull(rest, &endptr, 10);
+		if (*endptr)
 			return 1;
 	}
 	if (dots == range) {
 		*start = 0;
 		skipped++;
 	} else {
-		if (parse_u64(range, start))
+		*end = strtoull(range, &endptr, 10);
+		if (*endptr != 0 && *endptr != '.')
 			return 1;
 	}
 
