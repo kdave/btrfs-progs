@@ -2597,6 +2597,23 @@ static int do_rollback(const char *devname)
 	btrfs_init_path(&path);
 
 	key.objectid = CONV_IMAGE_SUBVOL_OBJECTID;
+	key.type = BTRFS_ROOT_BACKREF_KEY;
+	key.offset = BTRFS_FS_TREE_OBJECTID;
+	ret = btrfs_search_slot(NULL, root->fs_info->tree_root, &key, &path, 0,
+				0);
+	btrfs_release_path(&path);
+	if (ret > 0) {
+		fprintf(stderr,
+		"ERROR: unable to convert ext2 image subvolume, is it deleted?\n");
+		goto fail;
+	} else if (ret < 0) {
+		fprintf(stderr,
+			"ERROR: unable to open ext2_subvol, id=%llu: %s\n",
+			(unsigned long long)key.objectid, strerror(-ret));
+		goto fail;
+	}
+
+	key.objectid = CONV_IMAGE_SUBVOL_OBJECTID;
 	key.type = BTRFS_ROOT_ITEM_KEY;
 	key.offset = (u64)-1;
 	image_root = btrfs_read_fs_root(root->fs_info, &key);
