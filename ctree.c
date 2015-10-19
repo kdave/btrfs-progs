@@ -1058,26 +1058,28 @@ int btrfs_find_item(struct btrfs_root *fs_root, struct btrfs_path *found_path,
 		path = found_path;
 
 	ret = btrfs_search_slot(NULL, fs_root, &key, path, 0, 0);
-	if ((ret < 0) || (found_key == NULL)) {
-		if (path != found_path)
-			btrfs_free_path(path);
-		return ret;
-	}
+	if ((ret < 0) || (found_key == NULL))
+		goto out;
 
 	eb = path->nodes[0];
 	if (ret && path->slots[0] >= btrfs_header_nritems(eb)) {
 		ret = btrfs_next_leaf(fs_root, path);
 		if (ret)
-			return ret;
+			goto out;
 		eb = path->nodes[0];
 	}
 
 	btrfs_item_key_to_cpu(eb, found_key, path->slots[0]);
 	if (found_key->type != key.type ||
-			found_key->objectid != key.objectid)
-		return 1;
+			found_key->objectid != key.objectid) {
+		ret = 1;
+		goto out;
+	}
 
-	return 0;
+out:
+	if (path != found_path)
+		btrfs_free_path(path);
+	return ret;
 }
 
 /*
