@@ -193,6 +193,26 @@ static int parse_range_u32(const char *range, u32 *start, u32 *end)
 	return 0;
 }
 
+__attribute__ ((unused))
+static void print_range(u64 start, u64 end)
+{
+	if (start)
+		printf("%llu", (unsigned long long)start);
+	printf("..");
+	if (end != (u64)-1)
+		printf("%llu", (unsigned long long)end);
+}
+
+__attribute__ ((unused))
+static void print_range_u32(u32 start, u32 end)
+{
+	if (start)
+		printf("%u", start);
+	printf("..");
+	if (end != (u32)-1)
+		printf("%u", end);
+}
+
 static int parse_filters(char *filters, struct btrfs_balance_args *args)
 {
 	char *this_char;
