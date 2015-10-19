@@ -6426,8 +6426,6 @@ static int record_extent(struct btrfs_trans_handle *trans,
 			"start %llu len %llu parent %llu root %llu\n",
 			rec->start, rec->max_size, parent, tback->root);
 	}
-	if (ret)
-		goto fail;
 fail:
 	btrfs_release_path(path);
 	return ret;
