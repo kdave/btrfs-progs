@@ -348,8 +348,11 @@ static int cmd_qgroup_show(int argc, char **argv)
 
 	path = argv[optind];
 	fd = btrfs_open_dir(path, &dirstream, 1);
-	if (fd < 0)
+	if (fd < 0) {
+		btrfs_qgroup_free_filter_set(filter_set);
+		btrfs_qgroup_free_comparer_set(comparer_set);
 		return 1;
+	}
 
 	if (filter_flag) {
 		qgroupid = btrfs_get_path_rootid(fd);

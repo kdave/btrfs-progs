@@ -1208,6 +1208,7 @@ int btrfs_show_qgroups(int fd,
 
 	__free_all_qgroups(&qgroup_lookup);
 	btrfs_qgroup_free_filter_set(filter_set);
+	btrfs_qgroup_free_comparer_set(comp_set);
 	return ret;
 }
 
