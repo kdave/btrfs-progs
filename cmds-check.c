@@ -8195,13 +8195,12 @@ again:
 		goto out;
 	}
 
-	err = check_chunks(&chunk_cache, &block_group_cache,
+	ret = check_chunks(&chunk_cache, &block_group_cache,
 			   &dev_extent_cache, NULL, NULL, NULL, 0);
-	if (err) {
-		if (err == -EAGAIN)
+	if (ret) {
+		if (ret == -EAGAIN)
 			goto loop;
-		if (!ret)
-			ret = err;
+		err = ret;
 	}
 
 	ret = check_extent_refs(root, &extent_cache);
@@ -8211,8 +8210,8 @@ again:
 		goto out;
 	}
 
-	err = check_devices(&dev_cache, &dev_extent_cache);
-	if (err && !ret)
+	ret = check_devices(&dev_cache, &dev_extent_cache);
+	if (ret && err)
 		ret = err;
 
 out:
