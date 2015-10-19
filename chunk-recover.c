@@ -846,11 +846,16 @@ static int scan_devices(struct recover_control *rc)
 	if (!dev_scans)
 		return -ENOMEM;
 	t_scans = (pthread_t *)malloc(sizeof(pthread_t) * devnr);
-	if (!t_scans)
+	if (!t_scans) {
+		free(dev_scans);
 		return -ENOMEM;
+	}
 	t_rets = (long *)malloc(sizeof(long) * devnr);
-	if (!t_rets)
+	if (!t_rets) {
+		free(dev_scans);
+		free(t_scans);
 		return -ENOMEM;
+	}
 
 	list_for_each_entry(dev, &rc->fs_devices->devices, dev_list) {
 		fd = open(dev->name, O_RDONLY);
