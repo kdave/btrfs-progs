@@ -323,9 +323,9 @@ static int __resolve_indirect_ref(struct btrfs_fs_info *fs_info,
 
 	eb = path->nodes[level];
 	while (!eb) {
-		WARN_ON(!level);
 		if (!level) {
 			ret = 1;
+			WARN_ON(1);
 			goto out;
 		}
 		level--;
@@ -1178,7 +1178,6 @@ int extent_from_logical(struct btrfs_fs_info *fs_info, u64 logical,
 		 logical, logical - found_key->objectid, found_key->objectid,
 		 found_key->offset, flags, item_size);
 
-	WARN_ON(!flags_ret);
 	if (flags_ret) {
 		if (flags & BTRFS_EXTENT_FLAG_TREE_BLOCK)
 			*flags_ret = BTRFS_EXTENT_FLAG_TREE_BLOCK;
@@ -1187,9 +1186,10 @@ int extent_from_logical(struct btrfs_fs_info *fs_info, u64 logical,
 		else
 			BUG_ON(1);
 		return 0;
+	} else {
+		WARN_ON(1);
+		return -EIO;
 	}
-
-	return -EIO;
 }
 
 /*
