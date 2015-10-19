@@ -3255,7 +3255,7 @@ int btrfs_read_block_groups(struct btrfs_root *root)
 		cache = kzalloc(sizeof(*cache), GFP_NOFS);
 		if (!cache) {
 			ret = -ENOMEM;
-			break;
+			goto error;
 		}
 
 		read_extent_buffer(leaf, &cache->item,
