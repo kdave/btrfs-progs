@@ -244,11 +244,30 @@ static int parse_filters(char *filters, struct btrfs_balance_args *args)
 				       "an argument\n");
 				return 1;
 			}
-			if (parse_u64(value, &args->usage) ||
-			    args->usage > 100) {
-				fprintf(stderr, "Invalid usage argument: %s\n",
-				       value);
-				return 1;
+			if (parse_u64(value, &args->usage)) {
+				if (parse_range_u32(value, &args->usage_min,
+							&args->usage_max)) {
+					fprintf(stderr,
+						"Invalid usage argument: %s\n",
+						value);
+					return 1;
+				}
+				if (args->usage_max > 100) {
+					fprintf(stderr,
+						"Invalid usage argument: %s\n",
+						value);
+				}
+				args->flags &= ~BTRFS_BALANCE_ARGS_USAGE;
+				args->flags |= BTRFS_BALANCE_ARGS_USAGE_RANGE;
+			} else {
+				if (args->usage > 100) {
+					fprintf(stderr,
+						"Invalid usage argument: %s\n",
+						value);
+					return 1;
+				}
+				args->flags &= ~BTRFS_BALANCE_ARGS_USAGE_RANGE;
+				args->flags |= BTRFS_BALANCE_ARGS_USAGE;
 			}
 			args->flags |= BTRFS_BALANCE_ARGS_USAGE;
 		} else if (!strcmp(this_char, "devid")) {
