@@ -355,6 +355,10 @@ static void dump_balance_args(struct btrfs_balance_args *args)
 		printf(", profiles=%llu", (unsigned long long)args->profiles);
 	if (args->flags & BTRFS_BALANCE_ARGS_USAGE)
 		printf(", usage=%llu", (unsigned long long)args->usage);
+	if (args->flags & BTRFS_BALANCE_ARGS_USAGE_RANGE) {
+		printf(", usage=");
+		print_range_u32(args->usage_min, args->usage_max);
+	}
 	if (args->flags & BTRFS_BALANCE_ARGS_DEVID)
 		printf(", devid=%llu", (unsigned long long)args->devid);
 	if (args->flags & BTRFS_BALANCE_ARGS_DRANGE)

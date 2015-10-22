@@ -106,6 +106,12 @@ Balances only block groups with usage under the given percentage. The
 value of 0 is allowed and will clean up completely unused block groups, this
 should not require any new space allocated. You may want to use 'usage=0' in
 case balance is returnin ENOSPC and your filesystem is not too full.
++
+The argument may be a single value or a range. The single value *N* means *at
+most N percent used*, equivalent to *..N* range syntax. Kernels prior to 4.4
+accept only the single value format.
++
+The minimum boundary is inclusive, maximum is exclusive.
 
 *devid=<id>*::
 Balances only block groups which have at least one chunk on the given
