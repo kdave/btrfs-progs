@@ -684,7 +684,7 @@ static int search_umounted_fs_uuids(struct list_head *all_uuids,
 		if (is_seen_fsid(cur_fs->fsid))
 			continue;
 
-		fs_copy = malloc(sizeof(*fs_copy));
+		fs_copy = calloc(1, sizeof(*fs_copy));
 		if (!fs_copy) {
 			ret = -ENOMEM;
 			goto out;
