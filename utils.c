@@ -763,6 +763,7 @@ int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 	if (!device->name)
 		goto err_nomem;
 
+	INIT_LIST_HEAD(&device->dev_list);
 	ret = btrfs_add_device(trans, root, device);
 	BUG_ON(ret);
 
