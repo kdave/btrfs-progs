@@ -180,7 +180,7 @@ prepare_test_dev()
 	local size="$1"
 
 	[[ "$TEST_DEV" ]] && return
-	[[ "$size" ]] || size='1G'
+	[[ "$size" ]] || size='2G'
 
 	echo "\$TEST_DEV not given, use $TOP/test/test.img as fallback" >> \
 		$RESULTS
