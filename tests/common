@@ -157,7 +157,7 @@ root_helper()
 
 setup_root_helper()
 {
-	if [ $UID -eq 0 ]; then
+	if [ $UID -eq 0 -o -n "$SUDO_HELPER" ]; then
 		return
 	fi
 
