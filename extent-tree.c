@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <math.h>
 #include "kerncompat.h"
 #include "radix-tree.h"
 #include "ctree.h"
@@ -28,7 +29,6 @@
 #include "crc32c.h"
 #include "volumes.h"
 #include "free-space-cache.h"
-#include "math.h"
 #include "utils.h"
 
 #define PENDING_EXTENT_INSERT 0
