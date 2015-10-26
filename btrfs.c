@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "volumes.h"
 #include "crc32c.h"
 #include "commands.h"
 #include "utils.h"
@@ -214,6 +215,7 @@ int main(int argc, char **argv)
 {
 	const struct cmd_struct *cmd;
 	const char *bname;
+	int ret;
 
 	if ((bname = strrchr(argv[0], '/')) != NULL)
 		bname++;
@@ -242,5 +244,10 @@ int main(int argc, char **argv)
 	crc32c_optimization_init();
 
 	fixup_argv0(argv, cmd->token);
-	exit(cmd->fn(argc, argv));
+
+	ret = cmd->fn(argc, argv);
+
+	btrfs_close_all_devices();
+
+	exit(ret);
 }
