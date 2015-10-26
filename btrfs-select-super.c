@@ -102,6 +102,7 @@ int main(int ac, char **av)
 	 */
 	printf("using SB copy %llu, bytenr %llu\n", (unsigned long long)num,
 	       (unsigned long long)bytenr);
+	close_ctree(root);
 	btrfs_close_all_devices();
 	return ret;
 }
