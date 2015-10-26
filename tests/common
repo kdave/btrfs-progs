@@ -51,9 +51,13 @@ run_mayfail()
 	echo "############### $@" >> $RESULTS 2>&1
 	if [ "$TEST_LOG" = 'tty' ]; then echo "CMD(mayfail): $@" > /dev/tty; fi
 	if [ "$1" = 'root_helper' ]; then
-		"$@" >> $RESULTS 2>&1 || _log "failed (ignored): $@"
+		"$@" >> $RESULTS 2>&1
 	else
-		$INSTRUMENT "$@" >> $RESULTS 2>&1 || _log "failed (ignored): $@"
+		$INSTRUMENT "$@" >> $RESULTS 2>&1
+	fi
+	if [ $? != 0 ]; then
+		echo "failed (ignored): $@" >> $RESULTS
+		return 1
 	fi
 }
 
