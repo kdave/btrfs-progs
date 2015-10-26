@@ -25,7 +25,11 @@ run_check()
 {
 	echo "############### $@" >> $RESULTS 2>&1
 	if [ "$TEST_LOG" = 'tty' ]; then echo "CMD: $@" > /dev/tty; fi
-	"$@" >> $RESULTS 2>&1 || _fail "failed: $@"
+	if [ "$1" = 'root_helper' ]; then
+		"$@" >> $RESULTS 2>&1 || _fail "failed: $@"
+	else
+		$INSTRUMENT "$@" >> $RESULTS 2>&1 || _fail "failed: $@"
+	fi
 }
 
 # same as run_check but the stderr+stdout output is duplicated on stdout and
@@ -34,7 +38,11 @@ run_check_stdout()
 {
 	echo "############### $@" >> $RESULTS 2>&1
 	if [ "$TEST_LOG" = 'tty' ]; then echo "CMD(stdout): $@" > /dev/tty; fi
-	"$@" 2>&1 | tee -a $RESULTS || _fail "failed: $@"
+	if [ "$1" = 'root_helper' ]; then
+		"$@" 2>&1 | tee -a $RESULTS || _fail "failed: $@"
+	else
+		$INSTRUMENT "$@" 2>&1 | tee -a $RESULTS || _fail "failed: $@"
+	fi
 }
 
 # same as run_check but does not fail the test, output is logged
@@ -42,7 +50,11 @@ run_mayfail()
 {
 	echo "############### $@" >> $RESULTS 2>&1
 	if [ "$TEST_LOG" = 'tty' ]; then echo "CMD(mayfail): $@" > /dev/tty; fi
-	"$@" >> $RESULTS 2>&1 || _log "failed (ignored): $@"
+	if [ "$1" = 'root_helper' ]; then
+		"$@" >> $RESULTS 2>&1 || _log "failed (ignored): $@"
+	else
+		$INSTRUMENT "$@" >> $RESULTS 2>&1 || _log "failed (ignored): $@"
+	fi
 }
 
 check_prereq()
