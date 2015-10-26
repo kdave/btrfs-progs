@@ -1502,11 +1502,6 @@ int main(int ac, char **av)
 	file = av[optind++];
 	ssd = is_ssd(file);
 
-	if (mixed) {
-		if (verbose)
-			printf("Forcing mixed metadata/data groups\n");
-	}
-
 	/*
 	* Set default profiles according to number of added devices.
 	* For mixed groups defaults are single/single.
