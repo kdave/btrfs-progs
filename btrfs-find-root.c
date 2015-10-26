@@ -216,5 +216,6 @@ int main(int argc, char **argv)
 out:
 	btrfs_find_root_free(&result);
 	close_ctree(root);
+	btrfs_close_all_devices();
 	return ret;
 }

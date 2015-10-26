@@ -548,6 +548,7 @@ int main(int argc, char *argv[])
 	}
 out:
 	close_ctree(root);
+	btrfs_close_all_devices();
 
 	return ret;
 }

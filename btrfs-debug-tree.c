@@ -28,6 +28,7 @@
 #include "disk-io.h"
 #include "print-tree.h"
 #include "transaction.h"
+#include "volumes.h"
 #include "utils.h"
 
 static int print_usage(int ret)
@@ -428,5 +429,7 @@ no_node:
 	printf("uuid %s\n", uuidbuf);
 	printf("%s\n", PACKAGE_STRING);
 close_root:
-	return close_ctree(root);
+	ret = close_ctree(root);
+	btrfs_close_all_devices();
+	return ret;
 }

@@ -359,5 +359,6 @@ close:
 	close_ctree(root);
 	if (ret < 0)
 		ret = 1;
+	btrfs_close_all_devices();
 	return ret;
 }
