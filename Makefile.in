@@ -205,11 +205,15 @@ test-mkfs: btrfs mkfs.btrfs
 	@echo "    [TEST]   mkfs-tests.sh"
 	$(Q)bash tests/mkfs-tests.sh
 
+test-fuzz: btrfs
+	@echo "    [TEST]   fuzz-tests.sh"
+	$(Q)bash tests/fuzz-tests.sh
+
 test-clean:
 	@echo "Cleaning tests"
 	$(Q)bash tests/clean-tests.sh
 
-test: test-fsck test-mkfs test-convert test-misc
+test: test-fsck test-mkfs test-convert test-misc test-fuzz
 
 #
 # NOTE: For static compiles, you need to have all the required libs
