@@ -138,7 +138,6 @@ static int cmd_device_add(int argc, char **argv)
 
 error_out:
 	close_file_or_dir(fdmnt, dirstream);
-	btrfs_close_all_devices();
 	return !!ret;
 }
 
@@ -287,7 +286,6 @@ static int cmd_device_scan(int argc, char **argv)
 	}
 
 out:
-	btrfs_close_all_devices();
 	return !!ret;
 }
 
@@ -456,7 +454,6 @@ static int cmd_device_stats(int argc, char **argv)
 out:
 	free(di_args);
 	close_file_or_dir(fdmnt, dirstream);
-	btrfs_close_all_devices();
 
 	return err;
 }

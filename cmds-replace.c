@@ -309,7 +309,6 @@ static int cmd_replace_start(int argc, char **argv)
 		}
 	}
 	close_file_or_dir(fdmnt, dirstream);
-	btrfs_close_all_devices();
 	return 0;
 
 leave_with_error:
@@ -319,7 +318,6 @@ leave_with_error:
 		close(fdmnt);
 	if (fddstdev != -1)
 		close(fddstdev);
-	btrfs_close_all_devices();
 	return 1;
 }
 
