@@ -417,7 +417,14 @@ out:
 		free(seek);
 	}
 
-	btrfs_free_path(path);
+	/*
+	 * We only use path to save node data in iterating,
+	 * without holding eb's ref_cnt in path.
+	 * Don't use btrfs_free_path() here, it will free these
+	 * eb again, and cause many problems, as negative ref_cnt
+	 * or invalid memory access.
+	 */
+	free(path);
 	return ret;
 }
 
