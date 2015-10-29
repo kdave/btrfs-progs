@@ -372,8 +372,8 @@ out_print:
 		printf("\tTotal seeks: %Lu\n", stat.total_seeks);
 		printf("\t\tForward seeks: %Lu\n", stat.forward_seeks);
 		printf("\t\tBackward seeks: %Lu\n", stat.backward_seeks);
-		printf("\t\tAvg seek len: %Lu\n", stat.total_seek_len /
-		       stat.total_seeks);
+		printf("\t\tAvg seek len: %llu\n", stat.total_seeks ?
+			stat.total_seek_len / stat.total_seeks : 0);
 		print_seek_histogram(&stat);
 		printf("\tTotal clusters: %Lu\n", stat.total_clusters);
 		printf("\t\tAvg cluster size: %Lu\n", stat.total_cluster_size /
