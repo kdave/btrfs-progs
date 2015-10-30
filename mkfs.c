@@ -328,7 +328,6 @@ static void print_usage(int ret)
 	fprintf(stderr, "\t-U|--uuid UUID          specify the filesystem UUID\n");
 	fprintf(stderr, "\t-q|--quiet              no messages except errors\n");
 	fprintf(stderr, "\t-V|--version            print the mkfs.btrfs version and exit\n");
-	fprintf(stderr, "%s\n", PACKAGE_STRING);
 	exit(ret);
 }
 
@@ -1464,6 +1463,11 @@ int main(int ac, char **av)
 		}
 	}
 
+	if (verbose) {
+		printf("%s\n", PACKAGE_STRING);
+		printf("See %s for more information.\n\n", PACKAGE_URL);
+	}
+
 	sectorsize = max(sectorsize, (u32)sysconf(_SC_PAGESIZE));
 	saved_optind = optind;
 	dev_cnt = ac - optind;
@@ -1586,12 +1590,6 @@ int main(int ac, char **av)
 			dev_cnt, mixed);
 	if (ret)
 		exit(1);
-
-	/* if we are here that means all devs are good to btrfsify */
-	if (verbose) {
-		printf("%s\n", PACKAGE_STRING);
-		printf("See %s for more information.\n\n", PACKAGE_URL);
-	}
 
 	dev_cnt--;
 
