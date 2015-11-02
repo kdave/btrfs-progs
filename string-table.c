@@ -26,19 +26,19 @@
  */
 struct string_table *table_create(int columns, int rows)
 {
-	struct string_table *p;
+	struct string_table *tab;
 	int size;
 
 	size = sizeof(struct string_table) + rows * columns * sizeof(char*);
-	p = calloc(1, size);
+	tab = calloc(1, size);
 
-	if (!p)
+	if (!tab)
 		return NULL;
 
-	p->ncols = columns;
-	p->nrows = rows;
+	tab->ncols = columns;
+	tab->nrows = rows;
 
-	return p;
+	return tab;
 }
 
 /*
@@ -95,36 +95,36 @@ void table_dump(struct string_table *tab)
 		sizes[i] = 0;
 		for (j = 0; j < tab->nrows; j++) {
 			int idx = i + j * tab->ncols;
-			int s;
+			int len;
 
 			if (!tab->cells[idx])
 				continue;
 
-			s = strlen(tab->cells[idx]) - 1;
-			if (s < 1 || tab->cells[idx][0] == '=')
+			len = strlen(tab->cells[idx]) - 1;
+			if (len < 1 || tab->cells[idx][0] == '=')
 				continue;
 
-			if (s > sizes[i])
-				sizes[i] = s;
+			if (len > sizes[i])
+				sizes[i] = len;
 		}
 	}
 
 	for (j = 0; j < tab->nrows; j++) {
 		for (i = 0; i < tab->ncols; i++) {
 			int idx = i + j * tab->ncols;
-			char *s = tab->cells[idx];
+			char *cell = tab->cells[idx];
 
-			if (!s || !strlen(s)) {
+			if (!cell || !strlen(cell)) {
 				printf("%*s", sizes[i], "");
-			} else if (s && s[0] == '=') {
+			} else if (cell && cell[0] == '=') {
 				int k = sizes[i];
 
 				while (k--)
 					putchar('=');
 			} else {
 				printf("%*s",
-					s[0] == '<' ? -sizes[i] : sizes[i],
-					s + 1);
+					cell[0] == '<' ? -sizes[i] : sizes[i],
+					cell + 1);
 			}
 			if (i != (tab->ncols - 1))
 				putchar(' ');
