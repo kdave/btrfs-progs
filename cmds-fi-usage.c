@@ -624,6 +624,7 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 	int  ncols, nrows;
 	int col;
 	int unallocated_col;
+	const int vhdr_skip = 3;	/* amount of vertical header space */
 
 	/* path, unallocated */
 	ncols = 2;
@@ -635,7 +636,7 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 	}
 
 	/* 2 for header, empty line, devices, ===, total, used */
-	nrows = 2 + 1 + device_info_count + 1 + 2;
+	nrows = vhdr_skip + device_info_count + 1 + 2;
 
 	matrix = table_create(ncols, nrows);
 	if (!matrix) {
@@ -679,7 +680,8 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 		else
 			p++;
 
-		table_printf(matrix, 0, i + 3, "<%s", device_info_ptr[i].path);
+		table_printf(matrix, 0, vhdr_skip + i, "<%s",
+				device_info_ptr[i].path);
 
 		for (col = 1, k = 0 ; k < sargs->total_spaces ; k++)  {
 			u64	flags = sargs->spaces[k].flags;
@@ -700,10 +702,10 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 			}
 
 			if (size)
-				table_printf(matrix, col, i+3,
+				table_printf(matrix, col, vhdr_skip+ i,
 					">%s", pretty_size_mode(size, unit_mode));
 			else
-				table_printf(matrix, col, i+3, ">-");
+				table_printf(matrix, col, vhdr_skip + i, ">-");
 
 			total_allocated += size;
 			col++;
@@ -712,7 +714,7 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 		unused = get_partition_size(device_info_ptr[i].path)
 				- total_allocated;
 
-		table_printf(matrix, unallocated_col, i + 3,
+		table_printf(matrix, unallocated_col, vhdr_skip + i,
 			       ">%s", pretty_size_mode(unused, unit_mode));
 		total_unused += unused;
 
@@ -722,30 +724,32 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 		if (sargs->spaces[i].flags & BTRFS_SPACE_INFO_GLOBAL_RSV)
 			continue;
 
-		table_printf(matrix, col++, device_info_count + 3, "=");
+		table_printf(matrix, col++, vhdr_skip + device_info_count, "=");
 	}
 	/* One for Unallocated */
-	table_printf(matrix, col, device_info_count + 3, "=");
+	table_printf(matrix, col, vhdr_skip + device_info_count, "=");
 
 	/* footer */
-	table_printf(matrix, 0, device_info_count + 4, "<Total");
+	table_printf(matrix, 0, vhdr_skip + device_info_count + 1, "<Total");
 	for (i = 0, col = 1; i < sargs->total_spaces; i++) {
 		if (sargs->spaces[i].flags & BTRFS_SPACE_INFO_GLOBAL_RSV)
 			continue;
 
-		table_printf(matrix, col++, device_info_count + 4, ">%s",
+		table_printf(matrix, col++, vhdr_skip + device_info_count + 1,
+			">%s",
 			pretty_size_mode(sargs->spaces[i].total_bytes, unit_mode));
 	}
 
-	table_printf(matrix, unallocated_col, device_info_count + 4,
+	table_printf(matrix, unallocated_col, vhdr_skip + device_info_count + 1,
 			">%s", pretty_size_mode(total_unused, unit_mode));
 
-	table_printf(matrix, 0, device_info_count + 5, "<Used");
+	table_printf(matrix, 0, vhdr_skip + device_info_count + 2, "<Used");
 	for (i = 0, col = 1; i < sargs->total_spaces; i++) {
 		if (sargs->spaces[i].flags & BTRFS_SPACE_INFO_GLOBAL_RSV)
 			continue;
 
-		table_printf(matrix, col++, device_info_count+5, ">%s",
+		table_printf(matrix, col++, vhdr_skip + device_info_count + 2,
+			">%s",
 			pretty_size_mode(sargs->spaces[i].used_bytes, unit_mode));
 	}
 
