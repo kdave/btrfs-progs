@@ -3,7 +3,7 @@ btrfs-inspect-internal(8)
 
 NAME
 ----
-btrfs-inspect-internal - resolve different btrfs items for debug purpose
+btrfs-inspect-internal - query various internal information
 
 SYNOPSIS
 --------
@@ -11,53 +11,61 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-*btrfs inspect-internal* is used to resolve different items for debug purpose.
+
+This command group provides an interface to query internal information. The
+functionality ranges from a simple UI to an ioctl or a more complex query that
+assembles the result from several internal structures. The latter usually
+requires calls to privileged ioctls.
 
 SUBCOMMAND
 ----------
-*inode-resolve* [-v] <inode> <path>::
-Resolves an <inode> in subvolume <path> to all filesystem paths.
+*inode-resolve* [-v] <ino> <path>::
+(needs root privileges)
++
+resolve paths to all files with given inode number 'ino' in a given subvolume
+at 'path', ie. all hardlinks
 +
 `Options`
 +
 -v::::
-verbose mode. print count of returned paths and ioctl() return value
+verbose mode, print count of returned paths and ioctl() return value
 
 *logical-resolve* [-Pv] [-s <bufsize>] <logical> <path>::
-Resolves a <logical> address in the filesystem mounted at <path> to all inodes.
+(needs root privileges)
 +
-By default, each inode is then resolved to a file system path (similar to the
-inode-resolve subcommand).
+resolve paths to all files at given 'logical' address in the linear filesystem space
 +
 `Options`
 +
 -P::::
 skip the path resolving and print the inodes instead
 -v::::
-verbose mode. print count of returned paths and all ioctl() return values
+verbose mode, print count of returned paths and all ioctl() return values
 -s <bufsize>::::
-set inode container's size.
-+
-This is used to increase inode container's size in case it is
-not enough to read all the resolved results. The max value one can set is 64k.
+set internal buffer for storing the file names to 'bufsize', default is 4096, maximum 64k
 
 *min-dev-size* [options] <path>::
-Return the minimum size the device can be shrunk to, without performing any
-resize operation.
+(needs root privileges)
++
+return the minimum size the device can be shrunk to, without performing any
+resize operation, this may be useful before executing the actual resize operation
 +
 `Options`
 +
---id::::
-specify the device id to query, default is 1
+--id <id>::::
+specify the device 'id' to query, default is 1 if this option is not used
 
 *rootid* <path>::
-For a given file or directory, return the containing tree root id. For a
-subvolume return it's own tree id.
+for a given file or directory, return the containing tree root id, for a
+subvolume itself return it's own tree id (ie. subvol id)
 +
-The result is undefined for the so-called empty subvolumes (identified by inode number 2).
+NOTE: The result is undefined for the so-called empty subvolumes (identified by
+inode number 2), but such subvolume does not contain any files anyway
 
 *subvolid-resolve* <subvolid> <path>::
-Get file system paths for the given subvolume ID.
+(needs root privileges)
++
+resolve the absolute path of a the subvolume id 'subvolid'
 
 EXIT STATUS
 -----------
