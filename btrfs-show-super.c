@@ -48,6 +48,7 @@ static void print_usage(void)
 	fprintf(stderr, "\t-a : print information of all superblocks\n");
 	fprintf(stderr, "\t-i <super_mirror> : specify which mirror to print out\n");
 	fprintf(stderr, "\t-F : attempt to dump superblocks with bad magic\n");
+	fprintf(stderr, "\t-s <bytenr> : specify alternate superblock offset\n");
 	fprintf(stderr, "%s\n", PACKAGE_STRING);
 }
 
@@ -63,7 +64,7 @@ int main(int argc, char **argv)
 	u64 arg;
 	u64 sb_bytenr = btrfs_sb_offset(0);
 
-	while ((opt = getopt(argc, argv, "fFai:")) != -1) {
+	while ((opt = getopt(argc, argv, "fFai:s:")) != -1) {
 		switch (opt) {
 		case 'i':
 			arg = arg_strtou64(optarg);
@@ -85,6 +86,10 @@ int main(int argc, char **argv)
 			break;
 		case 'F':
 			force = 1;
+			break;
+		case 's':
+			sb_bytenr = arg_strtou64(optarg);
+			all = 0;
 			break;
 		default:
 			print_usage();
