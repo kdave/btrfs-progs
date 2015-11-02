@@ -624,10 +624,12 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 	int  ncols, nrows;
 	int col;
 	int unallocated_col;
+	int spaceinfos_col;
 	const int vhdr_skip = 3;	/* amount of vertical header space */
 
 	/* path, unallocated */
 	ncols = 2;
+	spaceinfos_col = 1;
 	/* Properly count the real space infos */
 	for (i = 0; i < sargs->total_spaces; i++) {
 		if (sargs->spaces[i].flags & BTRFS_SPACE_INFO_GLOBAL_RSV)
@@ -650,7 +652,7 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 	 */
 
 	/* header */
-	for (i = 0, col = 1; i < sargs->total_spaces; i++) {
+	for (i = 0, col = spaceinfos_col; i < sargs->total_spaces; i++) {
 		u64 flags = sargs->spaces[i].flags;
 
 		if (flags & BTRFS_SPACE_INFO_GLOBAL_RSV)
@@ -683,7 +685,7 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 		table_printf(matrix, 0, vhdr_skip + i, "<%s",
 				device_info_ptr[i].path);
 
-		for (col = 1, k = 0 ; k < sargs->total_spaces ; k++)  {
+		for (col = spaceinfos_col, k = 0; k < sargs->total_spaces; k++) {
 			u64	flags = sargs->spaces[k].flags;
 			u64 devid = device_info_ptr[i].devid;
 			int	j;
@@ -720,7 +722,7 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 
 	}
 
-	for (i = 0, col = 1; i < sargs->total_spaces; i++) {
+	for (i = 0, col = spaceinfos_col; i < sargs->total_spaces; i++) {
 		if (sargs->spaces[i].flags & BTRFS_SPACE_INFO_GLOBAL_RSV)
 			continue;
 
@@ -731,7 +733,7 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 
 	/* footer */
 	table_printf(matrix, 0, vhdr_skip + device_info_count + 1, "<Total");
-	for (i = 0, col = 1; i < sargs->total_spaces; i++) {
+	for (i = 0, col = spaceinfos_col; i < sargs->total_spaces; i++) {
 		if (sargs->spaces[i].flags & BTRFS_SPACE_INFO_GLOBAL_RSV)
 			continue;
 
@@ -744,7 +746,7 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 			">%s", pretty_size_mode(total_unused, unit_mode));
 
 	table_printf(matrix, 0, vhdr_skip + device_info_count + 2, "<Used");
-	for (i = 0, col = 1; i < sargs->total_spaces; i++) {
+	for (i = 0, col = spaceinfos_col; i < sargs->total_spaces; i++) {
 		if (sargs->spaces[i].flags & BTRFS_SPACE_INFO_GLOBAL_RSV)
 			continue;
 
