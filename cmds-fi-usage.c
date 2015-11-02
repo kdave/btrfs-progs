@@ -625,8 +625,15 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 	int col;
 	int unallocated_col;
 
-	/* data/metadata/system, unallocated */
-	ncols = sargs->total_spaces + 1;
+	/* path, unallocated */
+	ncols = 2;
+	/* Properly count the real space infos */
+	for (i = 0; i < sargs->total_spaces; i++) {
+		if (sargs->spaces[i].flags & BTRFS_SPACE_INFO_GLOBAL_RSV)
+			continue;
+		ncols++;
+	}
+
 	/* 2 for header, empty line, devices, ===, total, used */
 	nrows = 2 + 1 + device_info_count + 1 + 2;
 
