@@ -643,29 +643,18 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 
 	/* header */
 	for (i = 0, col = 1; i < sargs->total_spaces; i++) {
-		const char *description;
 		u64 flags = sargs->spaces[i].flags;
 
 		if (flags & BTRFS_SPACE_INFO_GLOBAL_RSV)
 			continue;
 
-		description = btrfs_group_type_str(flags);
-
-		table_printf(matrix, col++, 0, "<%s", description);
+		table_printf(matrix, col, 0, "<%s",
+				btrfs_group_type_str(flags));
+		table_printf(matrix, col, 1, "<%s",
+				btrfs_group_profile_str(flags));
+		col++;
 	}
 	unallocated_col = col;
-
-	for (i = 0, col = 1; i < sargs->total_spaces; i++) {
-		const char *r_mode;
-		u64 flags = sargs->spaces[i].flags;
-
-		if (flags & BTRFS_SPACE_INFO_GLOBAL_RSV)
-			continue;
-
-		r_mode = btrfs_group_profile_str(flags);
-
-		table_printf(matrix, col++, 1, "<%s", r_mode);
-	}
 
 	table_printf(matrix, unallocated_col, 1, "<Unallocated");
 
