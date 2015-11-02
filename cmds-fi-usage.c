@@ -656,6 +656,7 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 	}
 	unallocated_col = col;
 
+	table_printf(matrix, 0, 1, "<Path");
 	table_printf(matrix, unallocated_col, 1, "<Unallocated");
 
 	/* body */
