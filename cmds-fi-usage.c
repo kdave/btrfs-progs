@@ -622,8 +622,12 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 	u64 total_unused = 0;
 	struct string_table *matrix = 0;
 	int  ncols, nrows;
+	int col;
+	int unallocated_col;
 
-	ncols = sargs->total_spaces + 2;
+	/* data/metadata/system, unallocated */
+	ncols = sargs->total_spaces + 1;
+	/* 2 for header, empty line, devices, ===, total, used */
 	nrows = 2 + 1 + device_info_count + 1 + 2;
 
 	matrix = table_create(ncols, nrows);
@@ -632,8 +636,13 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 		return;
 	}
 
+	/*
+	 * We have to skip the global block reserve everywhere as it's an
+	 * artificial blockgroup
+	 */
+
 	/* header */
-	for (i = 0; i < sargs->total_spaces; i++) {
+	for (i = 0, col = 1; i < sargs->total_spaces; i++) {
 		const char *description;
 		u64 flags = sargs->spaces[i].flags;
 
@@ -642,23 +651,27 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 
 		description = btrfs_group_type_str(flags);
 
-		table_printf(matrix, 1+i, 0, "<%s", description);
+		table_printf(matrix, col++, 0, "<%s", description);
 	}
+	unallocated_col = col;
 
-	for (i = 0; i < sargs->total_spaces; i++) {
+	for (i = 0, col = 1; i < sargs->total_spaces; i++) {
 		const char *r_mode;
-
 		u64 flags = sargs->spaces[i].flags;
+
+		if (flags & BTRFS_SPACE_INFO_GLOBAL_RSV)
+			continue;
+
 		r_mode = btrfs_group_profile_str(flags);
 
-		table_printf(matrix, 1+i, 1, "<%s", r_mode);
+		table_printf(matrix, col++, 1, "<%s", r_mode);
 	}
 
-	table_printf(matrix, 1+sargs->total_spaces, 1, "<Unallocated");
+	table_printf(matrix, unallocated_col, 1, "<Unallocated");
 
 	/* body */
 	for (i = 0; i < device_info_count; i++) {
-		int k, col;
+		int k;
 		char *p;
 
 		u64  total_allocated = 0, unused;
@@ -676,6 +689,9 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 			u64 devid = device_info_ptr[i].devid;
 			int	j;
 			u64 size = 0;
+
+			if (flags & BTRFS_SPACE_INFO_GLOBAL_RSV)
+				continue;
 
 			for (j = 0 ; j < chunks_info_count ; j++) {
 				if (chunks_info_ptr[j].type != flags )
@@ -699,28 +715,42 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 		unused = get_partition_size(device_info_ptr[i].path)
 				- total_allocated;
 
-		table_printf(matrix, sargs->total_spaces + 1, i + 3,
+		table_printf(matrix, unallocated_col, i + 3,
 			       ">%s", pretty_size_mode(unused, unit_mode));
 		total_unused += unused;
 
 	}
 
-	for (i = 0; i <= sargs->total_spaces; i++)
-		table_printf(matrix, i + 1, device_info_count + 3, "=");
+	for (i = 0, col = 1; i < sargs->total_spaces; i++) {
+		if (sargs->spaces[i].flags & BTRFS_SPACE_INFO_GLOBAL_RSV)
+			continue;
+
+		table_printf(matrix, col++, device_info_count + 3, "=");
+	}
+	/* One for Unallocated */
+	table_printf(matrix, col, device_info_count + 3, "=");
 
 	/* footer */
 	table_printf(matrix, 0, device_info_count + 4, "<Total");
-	for (i = 0; i < sargs->total_spaces; i++)
-		table_printf(matrix, 1 + i, device_info_count + 4, ">%s",
-			pretty_size_mode(sargs->spaces[i].total_bytes, unit_mode));
+	for (i = 0, col = 1; i < sargs->total_spaces; i++) {
+		if (sargs->spaces[i].flags & BTRFS_SPACE_INFO_GLOBAL_RSV)
+			continue;
 
-	table_printf(matrix, sargs->total_spaces + 1, device_info_count + 4,
+		table_printf(matrix, col++, device_info_count + 4, ">%s",
+			pretty_size_mode(sargs->spaces[i].total_bytes, unit_mode));
+	}
+
+	table_printf(matrix, unallocated_col, device_info_count + 4,
 			">%s", pretty_size_mode(total_unused, unit_mode));
 
 	table_printf(matrix, 0, device_info_count + 5, "<Used");
-	for (i = 0; i < sargs->total_spaces; i++)
-		table_printf(matrix, 1 + i, device_info_count+5, ">%s",
+	for (i = 0, col = 1; i < sargs->total_spaces; i++) {
+		if (sargs->spaces[i].flags & BTRFS_SPACE_INFO_GLOBAL_RSV)
+			continue;
+
+		table_printf(matrix, col++, device_info_count+5, ">%s",
 			pretty_size_mode(sargs->spaces[i].used_bytes, unit_mode));
+	}
 
 	table_dump(matrix);
 	table_free(matrix);
