@@ -627,9 +627,9 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 	int spaceinfos_col;
 	const int vhdr_skip = 3;	/* amount of vertical header space */
 
-	/* path, unallocated */
-	ncols = 2;
-	spaceinfos_col = 1;
+	/* id, path, unallocated */
+	ncols = 3;
+	spaceinfos_col = 2;
 	/* Properly count the real space infos */
 	for (i = 0; i < sargs->total_spaces; i++) {
 		if (sargs->spaces[i].flags & BTRFS_SPACE_INFO_GLOBAL_RSV)
@@ -666,7 +666,8 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 	}
 	unallocated_col = col;
 
-	table_printf(matrix, 0, 1, "<Path");
+	table_printf(matrix, 0, 1, "<Id");
+	table_printf(matrix, 1, 1, "<Path");
 	table_printf(matrix, unallocated_col, 1, "<Unallocated");
 
 	/* body */
@@ -682,7 +683,9 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 		else
 			p++;
 
-		table_printf(matrix, 0, vhdr_skip + i, "<%s",
+		table_printf(matrix, 0, vhdr_skip + i, ">%llu",
+				device_info_ptr[i].devid);
+		table_printf(matrix, 1, vhdr_skip + i, "<%s",
 				device_info_ptr[i].path);
 
 		for (col = spaceinfos_col, k = 0; k < sargs->total_spaces; k++) {
@@ -732,7 +735,7 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 	table_printf(matrix, col, vhdr_skip + device_info_count, "=");
 
 	/* footer */
-	table_printf(matrix, 0, vhdr_skip + device_info_count + 1, "<Total");
+	table_printf(matrix, 1, vhdr_skip + device_info_count + 1, "<Total");
 	for (i = 0, col = spaceinfos_col; i < sargs->total_spaces; i++) {
 		if (sargs->spaces[i].flags & BTRFS_SPACE_INFO_GLOBAL_RSV)
 			continue;
@@ -745,7 +748,7 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 	table_printf(matrix, unallocated_col, vhdr_skip + device_info_count + 1,
 			">%s", pretty_size_mode(total_unused, unit_mode));
 
-	table_printf(matrix, 0, vhdr_skip + device_info_count + 2, "<Used");
+	table_printf(matrix, 1, vhdr_skip + device_info_count + 2, "<Used");
 	for (i = 0, col = spaceinfos_col; i < sargs->total_spaces; i++) {
 		if (sargs->spaces[i].flags & BTRFS_SPACE_INFO_GLOBAL_RSV)
 			continue;
