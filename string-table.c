@@ -29,11 +29,11 @@ struct string_table *table_create(int columns, int rows)
 	struct string_table *p;
 	int size;
 
-	size = sizeof( struct string_table ) +
-		rows * columns* sizeof(char *);
+	size = sizeof(struct string_table) + rows * columns * sizeof(char*);
 	p = calloc(1, size);
 
-	if (!p) return NULL;
+	if (!p)
+		return NULL;
 
 	p->ncols = columns;
 	p->nrows = rows;
@@ -51,8 +51,8 @@ struct string_table *table_create(int columns, int rows)
 char *table_vprintf(struct string_table *tab, int column, int row,
 			  char *fmt, va_list ap)
 {
-	int idx = tab->ncols*row+column;
-	char *msg = calloc(100, sizeof(char));
+	int idx = tab->ncols * row + column;
+	char *msg = calloc(100, 1);
 
 	if (!msg)
 		return NULL;
@@ -64,7 +64,6 @@ char *table_vprintf(struct string_table *tab, int column, int row,
 
 	return msg;
 }
-
 
 /*
  * This function is like a printf, but store the results in a cell of
@@ -89,13 +88,13 @@ char *table_printf(struct string_table *tab, int column, int row,
  */
 void table_dump(struct string_table *tab)
 {
-	int	sizes[tab->ncols];
-	int	i, j;
+	int sizes[tab->ncols];
+	int i, j;
 
-	for (i = 0 ; i < tab->ncols ; i++) {
+	for (i = 0; i < tab->ncols; i++) {
 		sizes[i] = 0;
-		for (j = 0 ; j < tab->nrows ; j++) {
-			int idx = i + j*tab->ncols;
+		for (j = 0; j < tab->nrows; j++) {
+			int idx = i + j * tab->ncols;
 			int s;
 
 			if (!tab->cells[idx])
@@ -110,47 +109,42 @@ void table_dump(struct string_table *tab)
 		}
 	}
 
-
-	for (j = 0 ; j < tab->nrows ; j++) {
-		for (i = 0 ; i < tab->ncols ; i++) {
-
-			int idx = i + j*tab->ncols;
+	for (j = 0; j < tab->nrows; j++) {
+		for (i = 0; i < tab->ncols; i++) {
+			int idx = i + j * tab->ncols;
 			char *s = tab->cells[idx];
 
-			if (!s|| !strlen(s)) {
+			if (!s || !strlen(s)) {
 				printf("%*s", sizes[i], "");
 			} else if (s && s[0] == '=') {
 				int k = sizes[i];
-				while(k--)
+
+				while (k--)
 					putchar('=');
 			} else {
 				printf("%*s",
 					s[0] == '<' ? -sizes[i] : sizes[i],
-					s+1);
+					s + 1);
 			}
 			if (i != (tab->ncols - 1))
 				putchar(' ');
 		}
 		putchar('\n');
 	}
-
 }
 
 /*
- *  Deallocate a tabular and all its content
+ *  Deallocate a table and all of its content
  */
-
 void table_free(struct string_table *tab)
 {
-
-	int	i, count;
+	int i, count;
 
 	count = tab->ncols * tab->nrows;
 
-	for (i=0 ; i < count ; i++)
+	for (i = 0; i < count; i++)
 		if (tab->cells[i])
 			free(tab->cells[i]);
 
 	free(tab);
-
 }

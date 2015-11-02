@@ -18,12 +18,10 @@
 #define __STRING_TABLE_H__
 
 struct string_table {
-
-	int	ncols, nrows;
-	char	*cells[];
-
+	int ncols;
+	int nrows;
+	char *cells[];
 };
-
 
 struct string_table *table_create(int columns, int rows);
 char *table_printf(struct string_table *tab, int column, int row,
