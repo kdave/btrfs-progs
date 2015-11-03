@@ -1174,9 +1174,6 @@ static void list_all_devices(struct btrfs_root *root)
 	printf("Devices:\n");
 	printf("   ID        SIZE  PATH\n");
 	list_for_each_entry(device, &fs_devices->devices, dev_list) {
-		char dev_uuid[BTRFS_UUID_UNPARSED_SIZE];
-
-		uuid_unparse(device->uuid, dev_uuid);
 		printf("  %3llu  %10s  %s\n",
 			device->devid,
 			pretty_size(device->total_bytes),
