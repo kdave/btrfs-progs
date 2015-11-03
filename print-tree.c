@@ -231,9 +231,17 @@ void print_chunk(struct extent_buffer *eb, struct btrfs_chunk *chunk)
 	printf("\t\ttype %s num_stripes %d\n",
 	       chunk_flags_str, num_stripes);
 	for (i = 0 ; i < num_stripes ; i++) {
+		unsigned char dev_uuid[BTRFS_UUID_SIZE];
+		char str_dev_uuid[BTRFS_UUID_UNPARSED_SIZE];
+
+		read_extent_buffer(eb, dev_uuid,
+			(unsigned long)btrfs_stripe_dev_uuid_nr(chunk, i),
+			BTRFS_UUID_SIZE);
+		uuid_unparse(dev_uuid, str_dev_uuid);
 		printf("\t\t\tstripe %d devid %llu offset %llu\n", i,
 		      (unsigned long long)btrfs_stripe_devid_nr(eb, chunk, i),
 		      (unsigned long long)btrfs_stripe_offset_nr(eb, chunk, i));
+		printf("\t\t\tdev uuid: %s\n", str_dev_uuid);
 	}
 }
 
