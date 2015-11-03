@@ -724,7 +724,7 @@ static int zero_dev_clamped(int fd, off_t start, ssize_t len, u64 dev_size)
 
 int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 		      struct btrfs_root *root, int fd, char *path,
-		      u64 block_count, u32 io_width, u32 io_align,
+		      u64 device_total_bytes, u32 io_width, u32 io_align,
 		      u32 sectorsize)
 {
 	struct btrfs_super_block *disk_super;
@@ -732,7 +732,7 @@ int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 	struct btrfs_device *device;
 	struct btrfs_dev_item *dev_item;
 	char *buf = NULL;
-	u64 total_bytes;
+	u64 fs_total_bytes;
 	u64 num_devs;
 	int ret;
 
@@ -755,7 +755,7 @@ int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 	device->sector_size = sectorsize;
 	device->fd = fd;
 	device->writeable = 1;
-	device->total_bytes = block_count;
+	device->total_bytes = device_total_bytes;
 	device->bytes_used = 0;
 	device->total_ios = 0;
 	device->dev_root = root->fs_info->dev_root;
@@ -767,8 +767,8 @@ int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 	ret = btrfs_add_device(trans, root, device);
 	BUG_ON(ret);
 
-	total_bytes = btrfs_super_total_bytes(super) + block_count;
-	btrfs_set_super_total_bytes(super, total_bytes);
+	fs_total_bytes = btrfs_super_total_bytes(super) + device_total_bytes;
+	btrfs_set_super_total_bytes(super, fs_total_bytes);
 
 	num_devs = btrfs_super_num_devices(super) + 1;
 	btrfs_set_super_num_devices(super, num_devs);
