@@ -42,6 +42,7 @@
 #include "volumes.h"
 #include "transaction.h"
 #include "utils.h"
+#include "list_sort.h"
 
 static u64 index_cnt = 2;
 static int verbose = 1;
@@ -1146,6 +1147,13 @@ static int is_ssd(const char *file)
 	return !atoi((const char *)&rotational);
 }
 
+static int _cmp_device_by_id(void *priv, struct list_head *a,
+			     struct list_head *b)
+{
+	return list_entry(a, struct btrfs_device, dev_list)->devid -
+	       list_entry(b, struct btrfs_device, dev_list)->devid;
+}
+
 static void list_all_devices(struct btrfs_root *root)
 {
 	struct btrfs_fs_devices *fs_devices;
@@ -1158,12 +1166,14 @@ static void list_all_devices(struct btrfs_root *root)
 	list_for_each_entry(device, &fs_devices->devices, dev_list)
 		number_of_devices++;
 
+	list_sort(NULL, &fs_devices->devices, _cmp_device_by_id);
+
 	printf("Number of devices:  %d\n", number_of_devices);
 	/* printf("Total devices size: %10s\n", */
 		/* pretty_size(total_block_count)); */
 	printf("Devices:\n");
 	printf("   ID        SIZE  PATH\n");
-	list_for_each_entry_reverse(device, &fs_devices->devices, dev_list) {
+	list_for_each_entry(device, &fs_devices->devices, dev_list) {
 		char dev_uuid[BTRFS_UUID_UNPARSED_SIZE];
 
 		uuid_unparse(device->uuid, dev_uuid);
