@@ -725,14 +725,22 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 
 	}
 
+	for (i = 0; i < spaceinfos_col; i++) {
+		table_printf(matrix, i, vhdr_skip - 1, "*-");
+		table_printf(matrix, i, vhdr_skip + device_info_count, "*-");
+	}
+
 	for (i = 0, col = spaceinfos_col; i < sargs->total_spaces; i++) {
 		if (sargs->spaces[i].flags & BTRFS_SPACE_INFO_GLOBAL_RSV)
 			continue;
 
-		table_printf(matrix, col++, vhdr_skip + device_info_count, "*=");
+		table_printf(matrix, col, vhdr_skip - 1, "*-");
+		table_printf(matrix, col, vhdr_skip + device_info_count, "*-");
+		col++;
 	}
 	/* One for Unallocated */
-	table_printf(matrix, col, vhdr_skip + device_info_count, "*=");
+	table_printf(matrix, col, vhdr_skip - 1, "*-");
+	table_printf(matrix, col, vhdr_skip + device_info_count, "*-");
 
 	/* footer */
 	table_printf(matrix, 1, vhdr_skip + device_info_count + 1, "<Total");
