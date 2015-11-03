@@ -736,6 +736,8 @@ int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 	u64 num_devs;
 	int ret;
 
+	device_total_bytes = (device_total_bytes / sectorsize) * sectorsize;
+
 	device = kzalloc(sizeof(*device), GFP_NOFS);
 	if (!device)
 		goto err_nomem;
