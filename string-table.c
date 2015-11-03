@@ -101,7 +101,7 @@ void table_dump(struct string_table *tab)
 				continue;
 
 			len = strlen(tab->cells[idx]) - 1;
-			if (len < 1 || tab->cells[idx][0] == '=')
+			if (len < 1 || tab->cells[idx][0] == '*')
 				continue;
 
 			if (len > sizes[i])
@@ -116,11 +116,11 @@ void table_dump(struct string_table *tab)
 
 			if (!cell || !strlen(cell)) {
 				printf("%*s", sizes[i], "");
-			} else if (cell && cell[0] == '=') {
+			} else if (cell && cell[0] == '*' && cell[1]) {
 				int k = sizes[i];
 
 				while (k--)
-					putchar('=');
+					putchar(cell[1]);
 			} else {
 				printf("%*s",
 					cell[0] == '<' ? -sizes[i] : sizes[i],

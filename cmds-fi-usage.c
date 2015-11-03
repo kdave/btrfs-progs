@@ -729,10 +729,10 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 		if (sargs->spaces[i].flags & BTRFS_SPACE_INFO_GLOBAL_RSV)
 			continue;
 
-		table_printf(matrix, col++, vhdr_skip + device_info_count, "=");
+		table_printf(matrix, col++, vhdr_skip + device_info_count, "*=");
 	}
 	/* One for Unallocated */
-	table_printf(matrix, col, vhdr_skip + device_info_count, "=");
+	table_printf(matrix, col, vhdr_skip + device_info_count, "*=");
 
 	/* footer */
 	table_printf(matrix, 1, vhdr_skip + device_info_count + 1, "<Total");
