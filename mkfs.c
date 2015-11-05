@@ -926,7 +926,7 @@ fail_no_dir:
 static int open_target(char *output_name)
 {
 	int output_fd;
-	output_fd = open(output_name, O_CREAT | O_RDWR | O_TRUNC,
+	output_fd = open(output_name, O_CREAT | O_RDWR,
 		         S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH);
 
 	return output_fd;
