@@ -63,11 +63,6 @@ struct root_stats {
 	int total_levels;
 };
 
-struct fs_root {
-	struct btrfs_key key;
-	struct btrfs_key *snaps;
-};
-
 static int add_seek(struct rb_root *root, u64 dist)
 {
 	struct rb_node **p = &root->rb_node;
@@ -436,7 +431,6 @@ static void usage(void)
 int main(int argc, char **argv)
 {
 	struct btrfs_key key;
-	struct fs_root roots;
 	struct btrfs_root *root;
 	int opt;
 	int ret = 0;
@@ -499,10 +493,10 @@ int main(int argc, char **argv)
 	if (ret)
 		goto out;
 
-	roots.key.objectid = BTRFS_FS_TREE_OBJECTID;
-	roots.key.offset = (u64)-1;
+	key.objectid = BTRFS_FS_TREE_OBJECTID;
+	key.offset = (u64)-1;
 	printf("Calculatin' size of fs tree\n");
-	ret = calc_root_size(root, &roots.key, 1);
+	ret = calc_root_size(root, &key, 1);
 	if (ret)
 		goto out;
 out:
