@@ -733,38 +733,32 @@ static int metadump_init(struct metadump_struct *md, struct btrfs_root *root,
 	int i, ret = 0;
 
 	memset(md, 0, sizeof(*md));
-	pthread_cond_init(&md->cond, NULL);
-	pthread_mutex_init(&md->mutex, NULL);
+	md->cluster = calloc(1, BLOCK_SIZE);
+	if (!md->cluster)
+		return -ENOMEM;
+	md->threads = calloc(num_threads, sizeof(pthread_t));
+	if (!md->threads) {
+		free(md->cluster);
+		return -ENOMEM;
+	}
 	INIT_LIST_HEAD(&md->list);
 	INIT_LIST_HEAD(&md->ordered);
 	md->root = root;
 	md->out = out;
 	md->pending_start = (u64)-1;
 	md->compress_level = compress_level;
-	md->cluster = calloc(1, BLOCK_SIZE);
 	md->sanitize_names = sanitize_names;
 	if (sanitize_names > 1)
 		crc32c_optimization_init();
 
-	if (!md->cluster) {
-		pthread_cond_destroy(&md->cond);
-		pthread_mutex_destroy(&md->mutex);
-		return -ENOMEM;
-	}
-
-	meta_cluster_init(md, 0);
-	if (!num_threads)
-		return 0;
-
 	md->name_tree.rb_node = NULL;
 	md->num_threads = num_threads;
-	md->threads = calloc(num_threads, sizeof(pthread_t));
-	if (!md->threads) {
-		free(md->cluster);
-		pthread_cond_destroy(&md->cond);
-		pthread_mutex_destroy(&md->mutex);
-		return -ENOMEM;
-	}
+	pthread_cond_init(&md->cond, NULL);
+	pthread_mutex_init(&md->mutex, NULL);
+	meta_cluster_init(md, 0);
+
+	if (!num_threads)
+		return 0;
 
 	for (i = 0; i < num_threads; i++) {
 		ret = pthread_create(md->threads + i, NULL, dump_worker, md);
