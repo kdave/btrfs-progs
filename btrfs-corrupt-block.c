@@ -475,7 +475,7 @@ static int corrupt_dir_item(struct btrfs_root *root, struct btrfs_key *key,
 	struct btrfs_trans_handle *trans;
 	struct btrfs_dir_item *di;
 	struct btrfs_path *path;
-	char *name;
+	char name[PATH_MAX];
 	struct btrfs_key location;
 	struct btrfs_disk_key disk_key;
 	unsigned long name_ptr;
@@ -514,17 +514,11 @@ static int corrupt_dir_item(struct btrfs_root *root, struct btrfs_key *key,
 	switch (corrupt_field) {
 	case BTRFS_DIR_ITEM_NAME:
 		name_len = btrfs_dir_name_len(path->nodes[0], di);
-		name = malloc(name_len);
-		if (!name) {
-			ret = -ENOMEM;
-			goto out;
-		}
 		name_ptr = (unsigned long)(di + 1);
 		read_extent_buffer(path->nodes[0], name, name_ptr, name_len);
 		name[0]++;
 		write_extent_buffer(path->nodes[0], name, name_ptr, name_len);
 		btrfs_mark_buffer_dirty(path->nodes[0]);
-		free(name);
 		goto out;
 	case BTRFS_DIR_ITEM_LOCATION_OBJECTID:
 		btrfs_dir_item_key_to_cpu(path->nodes[0], di, &location);
