@@ -126,13 +126,9 @@ void btrfs_csum_final(u32 crc, char *result)
 static int __csum_tree_block_size(struct extent_buffer *buf, u16 csum_size,
 				  int verify, int silent)
 {
-	char *result;
+	char result[BTRFS_CSUM_SIZE];
 	u32 len;
 	u32 crc = ~(u32)0;
-
-	result = malloc(csum_size * sizeof(char));
-	if (!result)
-		return 1;
 
 	len = buf->len - BTRFS_CSUM_SIZE;
 	crc = crc32c(crc, buf->data + BTRFS_CSUM_SIZE, len);
@@ -145,13 +141,11 @@ static int __csum_tree_block_size(struct extent_buffer *buf, u16 csum_size,
 				       (unsigned long long)buf->start,
 				       *((u32 *)result),
 				       *((u32*)(char *)buf->data));
-			free(result);
 			return 1;
 		}
 	} else {
 		write_extent_buffer(buf, result, 0, csum_size);
 	}
-	free(result);
 	return 0;
 }
 
