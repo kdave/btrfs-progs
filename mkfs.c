@@ -786,6 +786,8 @@ static int traverse_directory(struct btrfs_trans_handle *trans,
 
 	/* Add list for source directory */
 	dir_entry = malloc(sizeof(struct directory_name_entry));
+	if (!dir_entry)
+		return -ENOMEM;
 	dir_entry->dir_name = dir_name;
 	dir_entry->path = realpath(dir_name, real_path);
 	if (!dir_entry->path) {
@@ -887,6 +889,10 @@ static int traverse_directory(struct btrfs_trans_handle *trans,
 
 			if (S_ISDIR(st.st_mode)) {
 				dir_entry = malloc(sizeof(struct directory_name_entry));
+				if (!dir_entry) {
+					ret = -ENOMEM;
+					goto fail;
+				}
 				dir_entry->dir_name = cur_file->d_name;
 				dir_entry->path = make_path(parent_dir_entry->path,
 							    cur_file->d_name);
