@@ -233,7 +233,7 @@ static int match_search_item_kernel(__u8 *fsid, char *mnt, char *label,
 	if (!strncmp(uuidbuf, search, search_len))
 		return 1;
 
-	if (strlen(label) && strcmp(label, search) == 0)
+	if (*label && strcmp(label, search) == 0)
 		return 1;
 
 	if (strcmp(mnt, search) == 0)
@@ -403,7 +403,7 @@ static int print_one_fs(struct btrfs_ioctl_fs_info_args *fs_info,
 		return ret;
 
 	uuid_unparse(fs_info->fsid, uuidbuf);
-	if (label && strlen(label))
+	if (label && *label)
 		printf("Label: '%s' ", label);
 	else
 		printf("Label: none ");
@@ -823,7 +823,7 @@ static int cmd_filesystem_show(int argc, char **argv)
 
 	if (argc > optind) {
 		search = argv[optind];
-		if (strlen(search) == 0)
+		if (*search == 0)
 			usage(cmd_filesystem_show_usage);
 		type = check_arg_type(search);
 

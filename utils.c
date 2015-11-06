@@ -1516,7 +1516,7 @@ int btrfs_register_all_devices(void)
 
 	list_for_each_entry(fs_devices, all_uuids, list) {
 		list_for_each_entry(device, &fs_devices->devices, dev_list) {
-			if (strlen(device->name) != 0) {
+			if (*device->name) {
 				err = btrfs_register_one_device(device->name);
 				if (err < 0)
 					return err;

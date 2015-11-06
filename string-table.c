@@ -101,7 +101,7 @@ void table_dump(struct string_table *tab)
 				continue;
 
 			len = strlen(tab->cells[idx]) - 1;
-			if (len < 1 || tab->cells[idx][0] == '*')
+			if (len == 0 || tab->cells[idx][0] == '*')
 				continue;
 
 			if (len > sizes[i])

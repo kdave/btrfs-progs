@@ -1217,7 +1217,7 @@ int main(int ac, char **av)
 	if (inode) {
 		struct btrfs_trans_handle *trans;
 
-		if (!strlen(field))
+		if (*field == 0)
 			print_usage(1);
 
 		trans = btrfs_start_transaction(root, 1);
@@ -1233,13 +1233,13 @@ int main(int ac, char **av)
 		goto out_close;
 	}
 	if (metadata_block) {
-		if (!strlen(field))
+		if (*field == 0)
 			print_usage(1);
 		ret = corrupt_metadata_block(root, metadata_block, field);
 		goto out_close;
 	}
 	if (corrupt_di) {
-		if (!key.objectid || !strlen(field))
+		if (!key.objectid || *field == 0)
 			print_usage(1);
 		ret = corrupt_dir_item(root, &key, field);
 		goto out_close;
@@ -1276,7 +1276,7 @@ int main(int ac, char **av)
 		goto out_close;
 	}
 	if (key.objectid || key.offset || key.type) {
-		if (!strlen(field))
+		if (*field == 0)
 			print_usage(1);
 		ret = corrupt_key(root, &key, field);
 		goto out_close;

@@ -169,7 +169,7 @@ static int process_subvol(const char *path, const u8 *uuid, u64 ctransid,
 	BUG_ON(r->cur_subvol.path);
 	BUG_ON(r->cur_subvol_path[0]);
 
-	if (strlen(r->dest_dir_path) == 0) {
+	if (*r->dest_dir_path == 0) {
 		strncpy_null(r->cur_subvol_path, path);
 	} else {
 		ret = path_cat_out(r->cur_subvol_path, r->dest_dir_path, path);
@@ -229,7 +229,7 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 	BUG_ON(r->cur_subvol.path);
 	BUG_ON(r->cur_subvol_path[0]);
 
-	if (strlen(r->dest_dir_path) == 0) {
+	if (*r->dest_dir_path == 0) {
 		strncpy_null(r->cur_subvol_path, path);
 	} else {
 		ret = path_cat_out(r->cur_subvol_path, r->dest_dir_path, path);
@@ -326,7 +326,7 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 		}
 	}*/
 
-	if (strlen(parent_subvol->path) == 0)
+	if (*parent_subvol->path == 0)
 		args_v2.fd = dup(r->mnt_fd);
 	else
 		args_v2.fd = openat(r->mnt_fd, parent_subvol->path,
@@ -1135,7 +1135,7 @@ static int do_receive(struct btrfs_receive *r, const char *tomnt,
 	 * Ok we're inside of a subvol off of the root subvol, we need to
 	 * actually set full_root_path.
 	 */
-	if (strlen(root_subvol_path))
+	if (*root_subvol_path)
 		r->full_root_path = root_subvol_path;
 
 	if (r->dest_dir_chroot) {

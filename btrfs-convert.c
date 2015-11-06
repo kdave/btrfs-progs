@@ -1449,7 +1449,7 @@ static struct btrfs_root * link_subvol(struct btrfs_root *root,
 	int ret;
 
 	len = strlen(base);
-	if (len < 1 || len > BTRFS_NAME_LEN)
+	if (len == 0 || len > BTRFS_NAME_LEN)
 		return NULL;
 
 	path = btrfs_alloc_path();
