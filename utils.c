@@ -182,7 +182,7 @@ int test_uuid_unique(char *fs_uuid)
 int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 {
 	struct btrfs_super_block super;
-	struct extent_buffer *buf = NULL;
+	struct extent_buffer *buf;
 	struct btrfs_root_item root_item;
 	struct btrfs_disk_key disk_key;
 	struct btrfs_extent_item *extent_item;
@@ -203,6 +203,10 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 	int skinny_metadata = !!(cfg->features &
 				 BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA);
 	u64 num_bytes;
+
+	buf = malloc(sizeof(*buf) + max(cfg->sectorsize, cfg->nodesize));
+	if (!buf)
+		return -ENOMEM;
 
 	first_free = BTRFS_SUPER_INFO_OFFSET + cfg->sectorsize * 2 - 1;
 	first_free &= ~((u64)cfg->sectorsize - 1);
@@ -248,8 +252,6 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 	btrfs_set_super_incompat_flags(&super, cfg->features);
 	if (cfg->label)
 		strncpy(super.label, cfg->label, BTRFS_LABEL_SIZE - 1);
-
-	buf = malloc(sizeof(*buf) + max(cfg->sectorsize, cfg->nodesize));
 
 	/* create the tree of root objects */
 	memset(buf->data, 0, cfg->nodesize);
