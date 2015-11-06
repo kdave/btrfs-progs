@@ -916,7 +916,6 @@ devs_only:
 		free_fs_devices(fs_devices);
 	}
 out:
-	printf("%s\n", PACKAGE_STRING);
 	free_seen_fsid();
 	return ret;
 }
@@ -1174,8 +1173,6 @@ static int cmd_filesystem_defrag(int argc, char **argv)
 			defrag_global_errors++;
 		}
 	}
-	if (defrag_global_verbose)
-		printf("%s\n", PACKAGE_STRING);
 	if (defrag_global_errors)
 		fprintf(stderr, "total %d failures\n", defrag_global_errors);
 
