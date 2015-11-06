@@ -1520,6 +1520,7 @@ static int recover_prepare(struct recover_control *rc, char *path)
 	int ret;
 	int fd;
 	struct btrfs_super_block *sb;
+	char buf[BTRFS_SUPER_INFO_SIZE];
 	struct btrfs_fs_devices *fs_devices;
 
 	ret = 0;
@@ -1529,17 +1530,11 @@ static int recover_prepare(struct recover_control *rc, char *path)
 		return -1;
 	}
 
-	sb = malloc(BTRFS_SUPER_INFO_SIZE);
-	if (!sb) {
-		fprintf(stderr, "allocating memory for sb failed.\n");
-		ret = -ENOMEM;
-		goto fail_close_fd;
-	}
-
+	sb = (struct btrfs_super_block*)buf;
 	ret = btrfs_read_dev_super(fd, sb, BTRFS_SUPER_INFO_OFFSET, 1);
 	if (ret) {
 		fprintf(stderr, "read super block error\n");
-		goto fail_free_sb;
+		goto out_close_fd;
 	}
 
 	rc->sectorsize = btrfs_super_sectorsize(sb);
@@ -1552,21 +1547,19 @@ static int recover_prepare(struct recover_control *rc, char *path)
 	if (btrfs_super_flags(sb) & BTRFS_SUPER_FLAG_SEEDING) {
 		fprintf(stderr, "this device is seed device\n");
 		ret = -1;
-		goto fail_free_sb;
+		goto out_close_fd;
 	}
 
 	ret = btrfs_scan_fs_devices(fd, path, &fs_devices, 0, 1, 0);
 	if (ret)
-		goto fail_free_sb;
+		goto out_close_fd;
 
 	rc->fs_devices = fs_devices;
 
 	if (rc->verbose)
 		print_all_devices(&rc->fs_devices->devices);
 
-fail_free_sb:
-	free(sb);
-fail_close_fd:
+out_close_fd:
 	close(fd);
 	return ret;
 }
