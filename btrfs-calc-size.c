@@ -436,9 +436,8 @@ static void usage(void)
 int main(int argc, char **argv)
 {
 	struct btrfs_key key;
-	struct fs_root *roots;
+	struct fs_root roots;
 	struct btrfs_root *root;
-	size_t fs_roots_size = sizeof(struct fs_root);
 	int opt;
 	int ret = 0;
 
@@ -482,12 +481,6 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	roots = malloc(fs_roots_size);
-	if (!roots) {
-		fprintf(stderr, "No memory\n");
-		goto out;
-	}
-
 	printf("Calculating size of root tree\n");
 	key.objectid = BTRFS_ROOT_TREE_OBJECTID;
 	ret = calc_root_size(root, &key, 0);
@@ -506,15 +499,14 @@ int main(int argc, char **argv)
 	if (ret)
 		goto out;
 
-	roots[0].key.objectid = BTRFS_FS_TREE_OBJECTID;
-	roots[0].key.offset = (u64)-1;
+	roots.key.objectid = BTRFS_FS_TREE_OBJECTID;
+	roots.key.offset = (u64)-1;
 	printf("Calculatin' size of fs tree\n");
-	ret = calc_root_size(root, &roots[0].key, 1);
+	ret = calc_root_size(root, &roots.key, 1);
 	if (ret)
 		goto out;
 out:
 	close_ctree(root);
-	free(roots);
 	btrfs_close_all_devices();
 	return ret;
 }
