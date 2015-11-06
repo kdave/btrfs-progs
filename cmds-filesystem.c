@@ -387,7 +387,7 @@ static u64 calc_used_bytes(struct btrfs_ioctl_space_args *si)
 static int print_one_fs(struct btrfs_ioctl_fs_info_args *fs_info,
 		struct btrfs_ioctl_dev_info_args *dev_info,
 		struct btrfs_ioctl_space_args *space_info,
-		char *label, char *path, unsigned unit_mode)
+		char *label, unsigned unit_mode)
 {
 	int i;
 	int fd;
@@ -491,8 +491,7 @@ static int btrfs_scan_kernel(void *search, unsigned unit_mode)
 		fd = open(mnt->mnt_dir, O_RDONLY);
 		if ((fd != -1) && !get_df(fd, &space_info_arg)) {
 			print_one_fs(&fs_info_arg, dev_info_arg,
-				     space_info_arg, label, mnt->mnt_dir,
-				     unit_mode);
+				     space_info_arg, label, unit_mode);
 			kfree(space_info_arg);
 			memset(label, 0, sizeof(label));
 			found = 1;
