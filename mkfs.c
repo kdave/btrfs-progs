@@ -1091,23 +1091,20 @@ static u64 size_sourcedir(char *dir_name, u64 sectorsize,
 
 static int zero_output_file(int out_fd, u64 size, u32 sectorsize)
 {
-	int len = sectorsize;
-	int loop_num = size / sectorsize;
+	int loop_num;
 	u64 location = 0;
-	char *buf = malloc(len);
+	char buf[4096];
 	int ret = 0, i;
 	ssize_t written;
 
-	if (!buf)
-		return -ENOMEM;
-	memset(buf, 0, len);
+	memset(buf, 0, 4096);
+	loop_num = size / 4096;
 	for (i = 0; i < loop_num; i++) {
-		written = pwrite64(out_fd, buf, len, location);
-		if (written != len)
+		written = pwrite64(out_fd, buf, 4096, location);
+		if (written != 4096)
 			ret = -EIO;
-		location += sectorsize;
+		location += 4096;
 	}
-	free(buf);
 	return ret;
 }
 
