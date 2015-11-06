@@ -42,15 +42,11 @@ static int __ino_to_path_fd(u64 inum, int fd, int verbose, const char *prepend)
 	int ret;
 	int i;
 	struct btrfs_ioctl_ino_path_args ipa;
-	struct btrfs_data_container *fspath;
-
-	fspath = malloc(4096);
-	if (!fspath)
-		return -ENOMEM;
+	struct btrfs_data_container fspath[PATH_MAX];
 
 	memset(fspath, 0, sizeof(*fspath));
 	ipa.inum = inum;
-	ipa.size = 4096;
+	ipa.size = PATH_MAX;
 	ipa.fspath = ptr_to_u64(fspath);
 
 	ret = ioctl(fd, BTRFS_IOC_INO_PATHS, &ipa);
@@ -79,7 +75,6 @@ static int __ino_to_path_fd(u64 inum, int fd, int verbose, const char *prepend)
 	}
 
 out:
-	free(fspath);
 	return !!ret;
 }
 
