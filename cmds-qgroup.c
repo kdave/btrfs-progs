@@ -271,7 +271,7 @@ static const char * const cmd_qgroup_show_usage[] = {
 	"               (including ancestral qgroups)",
 	"-f             list all qgroups which impact the given path",
 	"               (excluding ancestral qgroups)",
-	HELPINFO_OUTPUT_UNIT,
+	HELPINFO_UNITS_LONG,
 	"--sort=qgroupid,rfer,excl,max_rfer,max_excl",
 	"               list qgroups sorted by specified items",
 	"               you can use '+' or '-' in front of each item.",

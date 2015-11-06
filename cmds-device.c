@@ -461,7 +461,7 @@ out:
 static const char * const cmd_device_usage_usage[] = {
 	"btrfs device usage [options] <path> [<path>..]",
 	"Show detailed information about internal allocations in devices.",
-	HELPINFO_OUTPUT_UNIT_DF,
+	HELPINFO_UNITS_SHORT_LONG,
 	NULL
 };
 
