@@ -252,21 +252,14 @@ int btrfs_scan_one_device(int fd, const char *path,
 			  u64 *total_devs, u64 super_offset, int super_recover)
 {
 	struct btrfs_super_block *disk_super;
-	char *buf;
+	char buf[BTRFS_SUPER_INFO_SIZE];
 	int ret;
 	u64 devid;
 
-	buf = malloc(4096);
-	if (!buf) {
-		ret = -ENOMEM;
-		goto error;
-	}
 	disk_super = (struct btrfs_super_block *)buf;
 	ret = btrfs_read_dev_super(fd, disk_super, super_offset, super_recover);
-	if (ret < 0) {
-		ret = -EIO;
-		goto error_brelse;
-	}
+	if (ret < 0)
+		return -EIO;
 	devid = btrfs_stack_device_id(&disk_super->dev_item);
 	if (btrfs_super_flags(disk_super) & BTRFS_SUPER_FLAG_METADUMP)
 		*total_devs = 1;
@@ -275,9 +268,6 @@ int btrfs_scan_one_device(int fd, const char *path,
 
 	ret = device_list_add(path, disk_super, devid, fs_devices_ret);
 
-error_brelse:
-	free(buf);
-error:
 	return ret;
 }
 
