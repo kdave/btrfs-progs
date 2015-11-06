@@ -648,6 +648,12 @@ static int add_file_items(struct btrfs_trans_handle *trans,
 
 	if (st->st_size <= BTRFS_MAX_INLINE_DATA_SIZE(root)) {
 		char *buffer = malloc(st->st_size);
+
+		if (!buffer) {
+			ret = -ENOMEM;
+			goto end;
+		}
+
 		ret_read = pread64(fd, buffer, st->st_size, bytes_read);
 		if (ret_read == -1) {
 			fprintf(stderr, "%s read failed\n", path_name);
