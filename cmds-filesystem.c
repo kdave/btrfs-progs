@@ -510,18 +510,13 @@ out:
 static int dev_to_fsid(char *dev, __u8 *fsid)
 {
 	struct btrfs_super_block *disk_super;
-	char *buf;
+	char buf[BTRFS_SUPER_INFO_SIZE];
 	int ret;
 	int fd;
-
-	buf = malloc(4096);
-	if (!buf)
-		return -ENOMEM;
 
 	fd = open(dev, O_RDONLY);
 	if (fd < 0) {
 		ret = -errno;
-		free(buf);
 		return ret;
 	}
 
@@ -536,7 +531,6 @@ static int dev_to_fsid(char *dev, __u8 *fsid)
 
 out:
 	close(fd);
-	free(buf);
 	return ret;
 }
 
