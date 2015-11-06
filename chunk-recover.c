@@ -1191,12 +1191,9 @@ static int __rebuild_device_items(struct btrfs_trans_handle *trans,
 {
 	struct btrfs_device *dev;
 	struct btrfs_key key;
-	struct btrfs_dev_item *dev_item;
+	struct btrfs_dev_item dev_item_tmp;
+	struct btrfs_dev_item *dev_item = &dev_item_tmp;
 	int ret = 0;
-
-	dev_item = malloc(sizeof(struct btrfs_dev_item));
-	if (!dev_item)
-		return -ENOMEM;
 
 	list_for_each_entry(dev, &rc->fs_devices->devices, dev_list) {
 		key.objectid = BTRFS_DEV_ITEMS_OBJECTID;
@@ -1218,7 +1215,6 @@ static int __rebuild_device_items(struct btrfs_trans_handle *trans,
 					dev_item, sizeof(*dev_item));
 	}
 
-	free(dev_item);
 	return ret;
 }
 
