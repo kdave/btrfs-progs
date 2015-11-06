@@ -1089,7 +1089,7 @@ static u64 size_sourcedir(char *dir_name, u64 sectorsize,
 	return total_size;
 }
 
-static int zero_output_file(int out_fd, u64 size, u32 sectorsize)
+static int zero_output_file(int out_fd, u64 size)
 {
 	int loop_num;
 	u64 location = 0;
@@ -1642,7 +1642,7 @@ int main(int ac, char **av)
 					     &num_of_meta_chunks, &size_of_data);
 		if(block_count < source_dir_size)
 			block_count = source_dir_size;
-		ret = zero_output_file(fd, block_count, sectorsize);
+		ret = zero_output_file(fd, block_count);
 		if (ret) {
 			fprintf(stderr, "unable to zero the output file\n");
 			exit(1);
