@@ -161,7 +161,7 @@ static int _cmd_device_remove(int argc, char **argv,
 		struct	btrfs_ioctl_vol_args arg;
 		int	res;
 
-		if (is_block_device(argv[i]) != 1) {
+		if (is_block_device(argv[i]) != 1 && strcmp(argv[i], "missing")) {
 			fprintf(stderr,
 				"ERROR: %s is not a block device\n", argv[i]);
 			ret++;
