@@ -1111,7 +1111,7 @@ static int zero_output_file(int out_fd, u64 size)
 static int is_ssd(const char *file)
 {
 	blkid_probe probe;
-	char wholedisk[32];
+	char wholedisk[PATH_MAX];
 	char sysfs_path[PATH_MAX];
 	dev_t devno;
 	int fd;
