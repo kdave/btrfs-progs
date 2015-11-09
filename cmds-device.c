@@ -487,7 +487,6 @@ static int cmd_device_usage(int argc, char **argv)
 {
 	unsigned unit_mode;
 	int ret = 0;
-	int more_than_one = 0;
 	int i;
 
 	unit_mode = get_unit_mode_from_arg(&argc, argv, 1);
@@ -499,23 +498,22 @@ static int cmd_device_usage(int argc, char **argv)
 		int fd;
 		DIR *dirstream = NULL;
 
-		if (more_than_one)
+		if (i > 1)
 			printf("\n");
 
 		fd = btrfs_open_dir(argv[i], &dirstream, 1);
 		if (fd < 0) {
 			ret = 1;
-			goto out;
+			break;
 		}
 
 		ret = _cmd_device_usage(fd, argv[i], unit_mode);
 		close_file_or_dir(fd, dirstream);
 
 		if (ret)
-			goto out;
-		more_than_one = 1;
+			break;
 	}
-out:
+
 	return !!ret;
 }
 
