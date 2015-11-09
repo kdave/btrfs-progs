@@ -119,6 +119,9 @@ void task_period_wait(struct task_info *info)
 	if (!info)
 		return;
 
+	if (info->periodic.timer_fd == 0)
+		return;
+
 	ret = read(info->periodic.timer_fd, &missed, sizeof (missed));
 	if (ret == -1)
 		return;
