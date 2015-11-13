@@ -1165,8 +1165,8 @@ int btrfs_num_copies(struct btrfs_mapping_tree *map_tree, u64 logical, u64 len)
 	return ret;
 }
 
-int btrfs_next_metadata(struct btrfs_mapping_tree *map_tree, u64 *logical,
-			u64 *size)
+int btrfs_next_bg(struct btrfs_mapping_tree *map_tree, u64 *logical,
+		     u64 *size, u64 type)
 {
 	struct cache_extent *ce;
 	struct map_lookup *map;
@@ -1179,7 +1179,7 @@ int btrfs_next_metadata(struct btrfs_mapping_tree *map_tree, u64 *logical,
 			return -ENOENT;
 
 		map = container_of(ce, struct map_lookup, ce);
-		if (map->type & BTRFS_BLOCK_GROUP_METADATA) {
+		if (map->type & type) {
 			*logical = ce->start;
 			*size = ce->size;
 			return 0;

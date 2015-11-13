@@ -108,8 +108,8 @@ int btrfs_find_root_search(struct btrfs_root *chunk_root,
 {
 	struct btrfs_fs_info *fs_info = chunk_root->fs_info;
 	struct extent_buffer *eb;
-	u64 metadata_offset = 0;
-	u64 metadata_size = 0;
+	u64 chunk_offset = 0;
+	u64 chunk_size = 0;
 	u64 offset = 0;
 	u32 leafsize = chunk_root->leafsize;
 	int suppress_errors = 0;
@@ -118,15 +118,21 @@ int btrfs_find_root_search(struct btrfs_root *chunk_root,
 	suppress_errors = fs_info->suppress_check_block_errors;
 	fs_info->suppress_check_block_errors = 1;
 	while (1) {
-		ret = btrfs_next_metadata(&fs_info->mapping_tree,
-					  &metadata_offset, &metadata_size);
+		if (filter->objectid != BTRFS_CHUNK_TREE_OBJECTID)
+			ret = btrfs_next_bg_metadata(&fs_info->mapping_tree,
+						  &chunk_offset,
+						  &chunk_size);
+		else
+			ret = btrfs_next_bg_system(&fs_info->mapping_tree,
+						&chunk_offset,
+						&chunk_size);
 		if (ret) {
 			if (ret == -ENOENT)
 				ret = 0;
 			break;
 		}
-		for (offset = metadata_offset;
-		     offset < metadata_offset + metadata_size;
+		for (offset = chunk_offset;
+		     offset < chunk_offset + chunk_size;
 		     offset += chunk_root->leafsize) {
 			eb = read_tree_block(chunk_root, offset, leafsize, 0);
 			if (!eb || IS_ERR(eb))
