@@ -1180,20 +1180,25 @@ static int is_loop_device (const char* device) {
 static int resolve_loop_device_with_loopdev(const char* loop_dev, char* loop_file)
 {
 	int fd;
+	int ret;
 	struct loop_info64 lo64;
 
 	fd = open(loop_dev, O_RDONLY | O_NONBLOCK);
 	if (fd < 0)
 		return -errno;
-	if (ioctl(fd, LOOP_GET_STATUS64, &lo64) < 0)
-		return -errno;
+	ret = ioctl(fd, LOOP_GET_STATUS64, &lo64);
+	if (ret < 0) {
+		ret = -errno;
+		goto out;
+	}
 
 	memcpy(loop_file, lo64.lo_file_name, sizeof(lo64.lo_file_name));
 	loop_file[sizeof(lo64.lo_file_name)] = 0;
-	if (close(fd) < 0)
-		return -errno;
 
-	return 0;
+out:
+	close(fd);
+
+	return ret;
 }
 
 /* Takes a loop device path (e.g. /dev/loop0) and returns
