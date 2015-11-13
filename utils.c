@@ -1188,7 +1188,8 @@ static int resolve_loop_device_with_loopdev(const char* loop_dev, char* loop_fil
 	if (ioctl(fd, LOOP_GET_STATUS64, &lo64) < 0)
 		return -errno;
 
-	memcpy(loop_file, lo64.lo_file_name, strlen(lo64.lo_file_name) + 1);
+	memcpy(loop_file, lo64.lo_file_name, sizeof(lo64.lo_file_name));
+	loop_file[sizeof(lo64.lo_file_name)] = 0;
 	if (close(fd) < 0)
 		return -errno;
 
