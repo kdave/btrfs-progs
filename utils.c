@@ -1172,6 +1172,28 @@ static int is_loop_device (const char* device) {
 		MAJOR(statbuf.st_rdev) == LOOP_MAJOR);
 }
 
+/*
+ * Takes a loop device path (e.g. /dev/loop0) and returns
+ * the associated file (e.g. /images/my_btrfs.img) using
+ * loopdev API
+ */
+static int resolve_loop_device_with_loopdev(const char* loop_dev, char* loop_file)
+{
+	int fd;
+	struct loop_info64 lo64;
+
+	fd = open(loop_dev, O_RDONLY | O_NONBLOCK);
+	if (fd < 0)
+		return -errno;
+	if (ioctl(fd, LOOP_GET_STATUS64, &lo64) < 0)
+		return -errno;
+
+	memcpy(loop_file, lo64.lo_file_name, strlen(lo64.lo_file_name) + 1);
+	if (close(fd) < 0)
+		return -errno;
+
+	return 0;
+}
 
 /* Takes a loop device path (e.g. /dev/loop0) and returns
  * the associated file (e.g. /images/my_btrfs.img) */
@@ -1187,8 +1209,15 @@ static int resolve_loop_device(const char* loop_dev, char* loop_file,
 	if (!realpath(loop_dev, real_loop_dev))
 		return -errno;
 	snprintf(p, PATH_MAX, "/sys/block/%s/loop/backing_file", strrchr(real_loop_dev, '/'));
-	if (!(f = fopen(p, "r")))
+	if (!(f = fopen(p, "r"))) {
+		if (errno == ENOENT)
+			/*
+			 * It's possibly a partitioned loop device, which is
+			 * resolvable with loopdev API.
+			 */
+			return resolve_loop_device_with_loopdev(loop_dev, loop_file);
 		return -errno;
+	}
 
 	snprintf(fmt, 20, "%%%i[^\n]", max_len-1);
 	ret = fscanf(f, fmt, loop_file);
