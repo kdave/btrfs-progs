@@ -134,7 +134,7 @@ vrange) or just simply limit the amount of work done by a single balance run.
 *soft*::
 Takes no parameters. Only has meaning when converting between profiles.
 When doing convert from one profile to another and soft mode is on,
-chunks that alread yave the target profile are left untouched
+chunks that already have the target profile are left untouched
  This is useful if e.g. half of the filesystem was converted earlier.
 +
 The soft mode switch is (like every other filter) per-type.
