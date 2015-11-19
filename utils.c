@@ -552,12 +552,12 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 
 	/* and write out the super block */
 	BUG_ON(sizeof(super) > cfg->sectorsize);
-	memset(buf->data, 0, cfg->sectorsize);
+	memset(buf->data, 0, BTRFS_SUPER_INFO_SIZE);
 	memcpy(buf->data, &super, sizeof(super));
-	buf->len = cfg->sectorsize;
+	buf->len = BTRFS_SUPER_INFO_SIZE;
 	csum_tree_block_size(buf, BTRFS_CRC32_SIZE, 0);
-	ret = pwrite(fd, buf->data, cfg->sectorsize, cfg->blocks[0]);
-	if (ret != cfg->sectorsize) {
+	ret = pwrite(fd, buf->data, BTRFS_SUPER_INFO_SIZE, cfg->blocks[0]);
+	if (ret != BTRFS_SUPER_INFO_SIZE) {
 		ret = (ret < 0 ? -errno : -EIO);
 		goto out;
 	}
