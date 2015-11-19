@@ -1607,16 +1607,19 @@ static int btrfs_verify_device_extents(struct block_group_record *bg,
 				       struct list_head *devexts, int ndevexts)
 {
 	struct device_extent_record *devext;
-	u64 strpie_length;
+	u64 stripe_length;
 	int expected_num_stripes;
 
 	expected_num_stripes = calc_num_stripes(bg->flags);
 	if (expected_num_stripes && expected_num_stripes != ndevexts)
 		return 1;
 
-	strpie_length = calc_stripe_length(bg->flags, bg->offset, ndevexts);
+	if (check_num_stripes(bg->flags, ndevexts) < 0)
+		return 1;
+
+	stripe_length = calc_stripe_length(bg->flags, bg->offset, ndevexts);
 	list_for_each_entry(devext, devexts, chunk_list) {
-		if (devext->length != strpie_length)
+		if (devext->length != stripe_length)
 			return 1;
 	}
 	return 0;
