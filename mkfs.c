@@ -252,7 +252,6 @@ static int create_raid_groups(struct btrfs_trans_handle *trans,
 			      u64 metadata_profile, int mixed,
 			      struct mkfs_allocation *allocation)
 {
-	u64 num_devices = btrfs_super_num_devices(root->fs_info->super_copy);
 	int ret;
 
 	if (metadata_profile) {
@@ -271,7 +270,7 @@ static int create_raid_groups(struct btrfs_trans_handle *trans,
 		BUG_ON(ret);
 
 	}
-	if (!mixed && num_devices > 1 && data_profile) {
+	if (!mixed && data_profile) {
 		ret = create_one_raid_group(trans, root,
 					    BTRFS_BLOCK_GROUP_DATA |
 					    data_profile, allocation);
@@ -1603,7 +1602,7 @@ int main(int ac, char **av)
 		}
 	}
 	ret = test_num_disk_vs_raid(metadata_profile, data_profile,
-			dev_cnt, mixed);
+			dev_cnt, mixed, ssd);
 	if (ret)
 		exit(1);
 

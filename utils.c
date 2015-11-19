@@ -2463,7 +2463,7 @@ static int group_profile_devs_min(u64 flag)
 }
 
 int test_num_disk_vs_raid(u64 metadata_profile, u64 data_profile,
-	u64 dev_cnt, int mixed)
+	u64 dev_cnt, int mixed, int ssd)
 {
 	u64 allowed = 0;
 
@@ -2504,11 +2504,9 @@ int test_num_disk_vs_raid(u64 metadata_profile, u64 data_profile,
 		return 1;
 	}
 
-	if (!mixed && (data_profile & BTRFS_BLOCK_GROUP_DUP)) {
-		fprintf(stderr,
-			"ERROR: DUP for data is allowed only in mixed mode\n");
-		return 1;
-	}
+	warning_on(!mixed && (data_profile & BTRFS_BLOCK_GROUP_DUP) && ssd,
+		   "DUP have no effect if your SSD have deduplication function");
+
 	return 0;
 }
 
