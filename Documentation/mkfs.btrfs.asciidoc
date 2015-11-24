@@ -248,16 +248,22 @@ PROFILES
 
 There are the following block group types available:
 
-[ width="60%",options="header" ]
+[ cols="^,^,^,^,^",width="60%" ]
 |=============================================================
-| Profile | Redundancy          | Striping   | Min/max devices
-| single  | 1 copy              | n/a        | 1/any
-| DUP     | 2 copies / 1 device | n/a        | 1/1
-| RAID0   | n/a                 | 1 to N     | 2/any
-| RAID10  | 2 copies            | 1 to N     | 4/any
-| RAID5   | 2 copies            | 3 to N - 1 | 2/any
-| RAID6   | 3 copies            | 3 to N - 2 | 3/any
+.2+^.<h| Profile   3+^.^h| Redundancy           .2+^.<h| Min/max devices
+      ^.^h| Copies   ^.^h| Parity     ^.<h| Striping
+| single  | 1            |                |            | 1/any
+| DUP     | 2 / 1 device |                |            | 1/1 ^(see note)^
+| RAID0   |              |                | 1 to N     | 2/any
+| RAID1   | 2            |                |            | 2/any
+| RAID10  | 2            |                | 1 to N     | 4/any
+| RAID5   | 1            | 1              | 2 to N - 1 | 2/any
+| RAID6   | 1            | 2              | 3 to N - 2 | 3/any
 |=============================================================
+
+'Note:' DUP may exist on more than 1 device if it starts on a single device and
+another one is added, but *mkfs.btrfs* will not let you create DUP on multiple
+devices.
 
 KNOWN ISSUES
 ------------
