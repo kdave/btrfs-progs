@@ -5134,6 +5134,10 @@ static int process_extent_item(struct btrfs_root *root,
 
 	ei = btrfs_item_ptr(eb, slot, struct btrfs_extent_item);
 	refs = btrfs_extent_refs(eb, ei);
+	if (btrfs_extent_flags(eb, ei) & BTRFS_EXTENT_FLAG_TREE_BLOCK)
+		metadata = 1;
+	else
+		metadata = 0;
 
 	add_extent_rec(extent_cache, NULL, 0, key.objectid, num_bytes,
 		       refs, 0, 0, 0, metadata, 1, num_bytes);
