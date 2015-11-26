@@ -70,6 +70,8 @@ test_mkfs_single
 test_mkfs_single  -d  single  -m  single
 test_mkfs_single  -d  single  -m  single  --mixed
 test_mkfs_single  -d  single  -m  dup
+test_mkfs_single  -d  dup     -m  single
+test_mkfs_single  -d  dup     -m  dup
 test_mkfs_single  -d  dup     -m  dup     --mixed
 
 test_mkfs_multi
