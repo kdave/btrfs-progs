@@ -2505,7 +2505,7 @@ int test_num_disk_vs_raid(u64 metadata_profile, u64 data_profile,
 	}
 
 	warning_on(!mixed && (data_profile & BTRFS_BLOCK_GROUP_DUP) && ssd,
-		   "DUP have no effect if your SSD have deduplication function");
+		   "DUP may not actually lead to 2 copies on the device, see manual page");
 
 	return 0;
 }

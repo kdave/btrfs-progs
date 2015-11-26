@@ -50,7 +50,9 @@ mkfs.btrfs uses the entire device space for the filesystem.
 
 *-d|--data <profile>*::
 Specify the profile for the data block groups.  Valid values are 'raid0',
-'raid1', 'raid5', 'raid6', 'raid10' or 'single', (case does not matter).
+'raid1', 'raid5', 'raid6', 'raid10' or 'single' or dup (case does not matter).
++
+See 'DUP PROFILES ON A SINGLE DEVICE' for more.
 
 *-m|--metadata <profile>*::
 Specify the profile for the metadata block groups.
@@ -60,13 +62,12 @@ Valid values are 'raid0', 'raid1', 'raid5', 'raid6', 'raid10', 'single' or
 A single device filesystem will default to 'DUP', unless a SSD is detected. Then
 it will default to 'single'. The detection is based on the value of
 `/sys/block/DEV/queue/rotational`, where 'DEV' is the short name of the device.
-This is because SSDs can remap the blocks internally to a single copy thus
-deduplicating them which negates the purpose of increased metadata redunancy
-and just wastes space. 
 +
 Note that the rotational status can be arbitrarily set by the underlying block
 device driver and may not reflect the true status (network block device, memory-backed
 SCSI devices etc). Use the options '--data/--metadata' to avoid confusion.
++
+See 'DUP PROFILES ON A SINGLE DEVICE' for more details.
 
 *-M|--mixed*::
 Normally the data and metadata block groups are isolated. The 'mixed' mode
@@ -264,6 +265,29 @@ There are the following block group types available:
 'Note:' DUP may exist on more than 1 device if it starts on a single device and
 another one is added, but *mkfs.btrfs* will not let you create DUP on multiple
 devices.
+
+DUP PROFILES ON A SINGLE DEVICE
+-------------------------------
+
+The mkfs utility will let the user create a filesystem with profiles that write
+the logical blocks to 2 physical locations. Whether there are really 2
+physical copies highly depends on the underlying device type.
+
+For example, a SSD drive can remap the blocks internally to a single copy thus
+deduplicating them. This negates the purpose of increased redunancy and just
+wastes space.
+
+The duplicated data/metadata may still be useful to statistically improve the
+chances on a device that might perform some internal optimizations. The actual
+details are not usually disclosed by vendors. As another example, the widely
+used USB flash or SD cards use a translation layer. The data lifetime may
+be affected by frequent plugging. The memory cells could get damaged, hopefully
+not destroying both copies of particular data.
+
+The traditional rotational hard drives usually fail at the sector level.
+
+In any case, a device that starts to misbehave and repairs from the DUP copy
+should be replaced! *DUP is not backup*.
 
 KNOWN ISSUES
 ------------
