@@ -23,7 +23,7 @@ dnl the compiler (like AC_PROG_LIBTOOL) to avoid autoconf errors.
 AC_USE_SYSTEM_EXTENSIONS
 
 AC_CONFIG_SRCDIR([btrfs.c])
-AC_PREFIX_DEFAULT([/usr])
+AC_PREFIX_DEFAULT([/usr/local])
 
 AC_PROG_CC
 AC_CANONICAL_HOST
