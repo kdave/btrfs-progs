@@ -31,7 +31,7 @@ do
 	cd $i
 	if [ -x test.sh ]; then
 		echo "=== Entering $i" >> $RESULTS
-		echo "    [TEST]   $name"
+		echo "    [TEST/fuzz]   $name"
 		./test.sh
 		if [ $? -ne 0 ]; then
 			_fail "test failed for case $(basename $i)"

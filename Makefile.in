@@ -190,23 +190,23 @@ $(BUILDDIRS):
 	$(Q)$(MAKE) $(MAKEOPTS) -C $(patsubst build-%,%,$@)
 
 test-convert: btrfs btrfs-convert
-	@echo "    [TEST]   convert-tests.sh"
+	@echo "    [TEST]       convert-tests.sh"
 	$(Q)bash tests/convert-tests.sh
 
 test-fsck: btrfs btrfs-image btrfs-corrupt-block btrfs-debug-tree mkfs.btrfs
-	@echo "    [TEST]   fsck-tests.sh"
+	@echo "    [TEST]       fsck-tests.sh"
 	$(Q)bash tests/fsck-tests.sh
 
 test-misc: btrfs btrfs-image btrfs-corrupt-block btrfs-debug-tree mkfs.btrfs btrfstune
-	@echo "    [TEST]   misc-tests.sh"
+	@echo "    [TEST]       misc-tests.sh"
 	$(Q)bash tests/misc-tests.sh
 
 test-mkfs: btrfs mkfs.btrfs
-	@echo "    [TEST]   mkfs-tests.sh"
+	@echo "    [TEST]       mkfs-tests.sh"
 	$(Q)bash tests/mkfs-tests.sh
 
 test-fuzz: btrfs
-	@echo "    [TEST]   fuzz-tests.sh"
+	@echo "    [TEST]       fuzz-tests.sh"
 	$(Q)bash tests/fuzz-tests.sh
 
 test-clean:

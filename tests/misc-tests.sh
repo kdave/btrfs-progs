@@ -34,7 +34,7 @@ check_prereq btrfs
 for i in $(find $TOP/tests/misc-tests -maxdepth 1 -mindepth 1 -type d	\
 	${TEST:+-name "$TEST"} | sort)
 do
-	echo "    [TEST]   $(basename $i)"
+	echo "    [TEST/misc]   $(basename $i)"
 	cd $i
 	echo "=== Entering $i" >> $RESULTS
 	if [ -x test.sh ]; then

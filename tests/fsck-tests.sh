@@ -32,7 +32,7 @@ run_one_test() {
 	local testname
 
 	testname="$1"
-	echo "    [TEST]   $(basename $testname)"
+	echo "    [TEST/fsck]   $(basename $testname)"
 	cd $testname
 	echo "=== Entering $testname" >> $RESULTS
 	if [ -x test.sh ]; then
