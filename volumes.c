@@ -1795,12 +1795,14 @@ int btrfs_read_sys_array(struct btrfs_root *root)
 	struct extent_buffer *sb;
 	struct btrfs_disk_key *disk_key;
 	struct btrfs_chunk *chunk;
-	struct btrfs_key key;
-	u32 num_stripes;
-	u32 len = 0;
 	u8 *ptr;
-	u8 *array_end;
+	unsigned long sb_ptr;
 	int ret = 0;
+	u32 num_stripes;
+	u32 array_size;
+	u32 len = 0;
+	u32 cur;
+	struct btrfs_key key;
 
 	sb = btrfs_find_create_tree_block(root, BTRFS_SUPER_INFO_OFFSET,
 					  BTRFS_SUPER_INFO_SIZE);
@@ -1808,25 +1810,22 @@ int btrfs_read_sys_array(struct btrfs_root *root)
 		return -ENOMEM;
 	btrfs_set_buffer_uptodate(sb);
 	write_extent_buffer(sb, super_copy, 0, sizeof(*super_copy));
-	array_end = ((u8 *)super_copy->sys_chunk_array) +
-		    btrfs_super_sys_array_size(super_copy);
+	array_size = btrfs_super_sys_array_size(super_copy);
 
-	/*
-	 * we do this loop twice, once for the device items and
-	 * once for all of the chunks.  This way there are device
-	 * structs filled in for every chunk
-	 */
 	ptr = super_copy->sys_chunk_array;
+	sb_ptr = offsetof(struct btrfs_super_block, sys_chunk_array);
+	cur = 0;
 
-	while (ptr < array_end) {
+	while (cur < array_size) {
 		disk_key = (struct btrfs_disk_key *)ptr;
 		btrfs_disk_key_to_cpu(&key, disk_key);
 
-		len = sizeof(*disk_key);
-		ptr += len;
+		len = sizeof(*disk_key); ptr += len;
+		sb_ptr += len;
+		cur += len;
 
 		if (key.type == BTRFS_CHUNK_ITEM_KEY) {
-			chunk = (struct btrfs_chunk *)(ptr - (u8 *)super_copy);
+			chunk = (struct btrfs_chunk *)sb_ptr;
 			ret = read_one_chunk(root, &key, sb, chunk, -1);
 			if (ret)
 				break;
@@ -1836,6 +1835,8 @@ int btrfs_read_sys_array(struct btrfs_root *root)
 			BUG();
 		}
 		ptr += len;
+		sb_ptr += len;
+		cur += len;
 	}
 	free_extent_buffer(sb);
 	return ret;
