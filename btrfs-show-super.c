@@ -186,11 +186,14 @@ static void print_sys_chunk_array(struct btrfs_super_block *sb)
 	struct extent_buffer *buf;
 	struct btrfs_disk_key *disk_key;
 	struct btrfs_chunk *chunk;
-	struct btrfs_key key;
-	u8 *ptr, *array_end;
+	u8 *array_ptr;
+	unsigned long sb_array_offset;
 	u32 num_stripes;
+	u32 array_size;
 	u32 len = 0;
-	int i = 0;
+	u32 cur_offset;
+	struct btrfs_key key;
+	int item;
 
 	buf = malloc(sizeof(*buf) + sizeof(*sb));
 	if (!buf) {
@@ -198,33 +201,69 @@ static void print_sys_chunk_array(struct btrfs_super_block *sb)
 		exit(1);
 	}
 	write_extent_buffer(buf, sb, 0, sizeof(*sb));
-	ptr = sb->sys_chunk_array;
-	array_end = ptr + btrfs_super_sys_array_size(sb);
+	array_size = btrfs_super_sys_array_size(sb);
 
-	while (ptr < array_end) {
-		disk_key = (struct btrfs_disk_key *)ptr;
+	array_ptr = sb->sys_chunk_array;
+	sb_array_offset = offsetof(struct btrfs_super_block, sys_chunk_array);
+	cur_offset = 0;
+	item = 0;
+
+	while (cur_offset < array_size) {
+		disk_key = (struct btrfs_disk_key *)array_ptr;
+		len = sizeof(*disk_key);
+		if (cur_offset + len > array_size)
+			goto out_short_read;
+
 		btrfs_disk_key_to_cpu(&key, disk_key);
 
-		printf("\titem %d ", i);
-		btrfs_print_key(disk_key);
+		array_ptr += len;
+		sb_array_offset += len;
+		cur_offset += len;
 
-		len = sizeof(*disk_key);
+		printf("\titem %d ", item);
+		btrfs_print_key(disk_key);
 		putchar('\n');
-		ptr += len;
 
 		if (key.type == BTRFS_CHUNK_ITEM_KEY) {
-			chunk = (struct btrfs_chunk *)(ptr - (u8 *)sb);
+			chunk = (struct btrfs_chunk *)sb_array_offset;
+			/*
+			 * At least one btrfs_chunk with one stripe must be
+			 * present, exact stripe count check comes afterwards
+			 */
+			len = btrfs_chunk_item_size(1);
+			if (cur_offset + len > array_size)
+				goto out_short_read;
+
 			print_chunk(buf, chunk);
 			num_stripes = btrfs_chunk_num_stripes(buf, chunk);
+			if (!num_stripes) {
+				printk(
+	    "ERROR: invalid number of stripes %u in sys_array at offset %u\n",
+					num_stripes, cur_offset);
+				break;
+			}
 			len = btrfs_chunk_item_size(num_stripes);
+			if (cur_offset + len > array_size)
+				goto out_short_read;
 		} else {
-			BUG();
+			printk(
+		"ERROR: unexpected item type %u in sys_array at offset %u\n",
+				(u32)key.type, cur_offset);
+ 			break;
 		}
+		array_ptr += len;
+		sb_array_offset += len;
+		cur_offset += len;
 
-		ptr += len;
-		i++;
+		item++;
 	}
 
+	free(buf);
+	return;
+
+out_short_read:
+	printk("ERROR: sys_array too short to read %u bytes at offset %u\n",
+			len, cur_offset);
 	free(buf);
 }
 
