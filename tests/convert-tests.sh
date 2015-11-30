@@ -26,9 +26,9 @@ convert_test() {
 	shift
 
 	if [ -z "$features" ]; then
-		echo "    [TEST]   $1, btrfs defaults"
+		echo "    [TEST/conv]   $1, btrfs defaults"
 	else
-		echo "    [TEST]   $1, btrfs $features"
+		echo "    [TEST/conv]   $1, btrfs $features"
 	fi
 	nodesize=$2
 	shift 2
@@ -52,7 +52,7 @@ convert_test() {
 }
 
 if ! [ -z "$TEST" ]; then
-	echo "    [TEST]   skipped all convert tests, TEST=$TEST"
+	echo "    [TEST/conv]   skipped all convert tests, TEST=$TEST"
 	exit 0
 fi
 
