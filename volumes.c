@@ -1855,7 +1855,11 @@ int btrfs_read_sys_array(struct btrfs_root *root)
 			if (ret)
 				break;
 		} else {
-			BUG();
+			printk(
+		"ERROR: unexpected item type %u in sys_array at offset %u\n",
+				(u32)key.type, cur_offset);
+ 			ret = -EIO;
+ 			break;
 		}
 		array_ptr += len;
 		sb_array_offset += len;
