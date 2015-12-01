@@ -109,12 +109,16 @@ void btrfs_parse_features_to_string(char *buf, u64 flags);
 struct btrfs_mkfs_config {
 	char *label;
 	char *fs_uuid;
+	char *chunk_uuid;
 	u64 blocks[8];
 	u64 num_bytes;
 	u32 nodesize;
 	u32 sectorsize;
 	u32 stripesize;
 	u64 features;
+
+	/* Super bytenr after make_btrfs */
+	u64 super_bytenr;
 };
 
 int make_btrfs(int fd, struct btrfs_mkfs_config *cfg);
