@@ -110,4 +110,12 @@ int add_cache_extent2(struct cache_tree *tree,
 		      u64 objectid, u64 start, u64 size);
 int insert_cache_extent2(struct cache_tree *tree, struct cache_extent *pe);
 
+/*
+ * Insert a cache_extent range [start, start + size).
+ *
+ * This function may merge with existing cache_extent.
+ * NOTE: caller must ensure the inserted range won't cover with any existing
+ * range.
+ */
+int add_merge_cache_extent(struct cache_tree *tree, u64 start, u64 size);
 #endif

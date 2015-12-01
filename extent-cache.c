@@ -282,3 +282,60 @@ void free_extent_cache_tree(struct cache_tree *tree)
 {
 	cache_tree_free_extents(tree, free_extent_cache);
 }
+
+int add_merge_cache_extent(struct cache_tree *tree, u64 start, u64 size)
+{
+	struct cache_extent *cache;
+	struct cache_extent *next = NULL;
+	struct cache_extent *prev = NULL;
+	int next_merged = 0;
+	int prev_merged = 0;
+	int ret = 0;
+
+	if (cache_tree_empty(tree))
+		goto insert;
+
+	cache = search_cache_extent(tree, start);
+	if (!cache) {
+		/*
+		 * Either the tree is completely empty, or the no range after
+		 * start.
+		 * Either way, the last cache_extent should be prev.
+		 */
+		prev = last_cache_extent(tree);
+	} else if (start <= cache->start) {
+		next = cache;
+		prev = prev_cache_extent(cache);
+	} else {
+		prev = cache;
+		next = next_cache_extent(cache);
+	}
+
+	/*
+	 * Ensure the range to be inserted won't cover with existings
+	 * Or we will need extra loop to do merge
+	 */
+	BUG_ON(next && start + size > next->start);
+	BUG_ON(prev && prev->start + prev->size > start);
+
+	if (next && start + size == next->start) {
+		next_merged = 1;
+		next->size = next->start + next->size - start;
+		next->start = start;
+	}
+	if (prev && prev->start + prev->size == start) {
+		prev_merged = 1;
+		if (next_merged) {
+			next->size = next->start + next->size - prev->start;
+			next->start = prev->start;
+			remove_cache_extent(tree, prev);
+			free(prev);
+		} else {
+			prev->size = start + size - prev->start;
+		}
+	}
+insert:
+	if (!prev_merged && !next_merged)
+		ret = add_cache_extent(tree, start, size);
+	return ret;
+}
