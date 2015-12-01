@@ -101,10 +101,35 @@ struct btrfs_convert_context {
 	u32 block_count;
 	u32 inodes_count;
 	u32 free_inodes_count;
+	u64 total_bytes;
 	char *volume_name;
 	const struct btrfs_convert_operations *convert_ops;
+
+	/* The accurate used space of old filesystem */
+	struct cache_tree used;
+
+	/* Batched ranges which must be covered by data chunks */
+	struct cache_tree data_chunks;
+
+	/* Free space which is not covered by data_chunks */
+	struct cache_tree free;
+
 	void *fs_data;
 };
+
+static void init_convert_context(struct btrfs_convert_context *cctx)
+{
+	cache_tree_init(&cctx->used);
+	cache_tree_init(&cctx->data_chunks);
+	cache_tree_init(&cctx->free);
+}
+
+static void clean_convert_context(struct btrfs_convert_context *cctx)
+{
+	free_extent_cache_tree(&cctx->used);
+	free_extent_cache_tree(&cctx->data_chunks);
+	free_extent_cache_tree(&cctx->free);
+}
 
 static inline int convert_alloc_block(struct btrfs_convert_context *cctx,
 				      u64 goal, u64 *ret)
@@ -195,6 +220,7 @@ static int ext2_open_fs(struct btrfs_convert_context *cctx, const char *name)
 	cctx->fs_data = ext2_fs;
 	cctx->blocksize = ext2_fs->blocksize;
 	cctx->block_count = ext2_fs->super->s_blocks_count;
+	cctx->total_bytes = ext2_fs->blocksize * ext2_fs->super->s_blocks_count;
 	cctx->volume_name = strndup(ext2_fs->super->s_volume_name, 16);
 	cctx->first_data_block = ext2_fs->super->s_first_data_block;
 	cctx->inodes_count = ext2_fs->super->s_inodes_count;
@@ -2444,6 +2470,7 @@ static int do_convert(const char *devname, int datacsum, int packing, int noxatt
 	char features_buf[64];
 	struct btrfs_mkfs_config mkfs_cfg;
 
+	init_convert_context(&cctx);
 	ret = convert_open_fs(devname, &cctx);
 	if (ret)
 		goto fail;
@@ -2594,6 +2621,7 @@ static int do_convert(const char *devname, int datacsum, int packing, int noxatt
 		goto fail;
 	}
 	convert_close_fs(&cctx);
+	clean_convert_context(&cctx);
 
 	/*
 	 * If this step succeed, we get a mountable btrfs. Otherwise
@@ -2623,6 +2651,7 @@ static int do_convert(const char *devname, int datacsum, int packing, int noxatt
 	printf("conversion complete.\n");
 	return 0;
 fail:
+	clean_convert_context(&cctx);
 	if (fd != -1)
 		close(fd);
 	if (is_btrfs)
