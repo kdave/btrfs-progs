@@ -45,11 +45,31 @@ struct cache_extent *last_cache_extent(struct cache_tree *tree);
 struct cache_extent *prev_cache_extent(struct cache_extent *pe);
 struct cache_extent *next_cache_extent(struct cache_extent *pe);
 
+/*
+ * Find a cache_extent which covers start.
+ *
+ * If not found, return next cache_extent if possible.
+ */
 struct cache_extent *search_cache_extent(struct cache_tree *tree, u64 start);
+
+/*
+ * Find a cahce_extent which restrictly covers start.
+ *
+ * If not found, return NULL.
+ */
 struct cache_extent *lookup_cache_extent(struct cache_tree *tree,
 					 u64 start, u64 size);
 
+/*
+ * Add an non-overlap extent into cache tree
+ *
+ * If [start, start+size) overlap with existing one, it will return -EEXIST.
+ */
 int add_cache_extent(struct cache_tree *tree, u64 start, u64 size);
+
+/*
+ * Same with add_cache_extent, but with cache_extent strcut.
+ */
 int insert_cache_extent(struct cache_tree *tree, struct cache_extent *pe);
 void remove_cache_extent(struct cache_tree *tree, struct cache_extent *pe);
 
@@ -71,8 +91,19 @@ static void free_##name##_tree(struct cache_tree *tree)		\
 
 void free_extent_cache_tree(struct cache_tree *tree);
 
+/*
+ * Search a cache_extent with same objectid, and covers start.
+ *
+ * If not found, return next if possible.
+ */
 struct cache_extent *search_cache_extent2(struct cache_tree *tree,
 					  u64 objectid, u64 start);
+/*
+ * Search a cache_extent with same objectid, and covers the range
+ * [start, start + size)
+ *
+ * If not found, return next cache_extent if possible.
+ */
 struct cache_extent *lookup_cache_extent2(struct cache_tree *tree,
 					  u64 objectid, u64 start, u64 size);
 int add_cache_extent2(struct cache_tree *tree,
