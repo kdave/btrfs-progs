@@ -1201,7 +1201,9 @@ out:
 		close(r->write_fd);
 		r->write_fd = -1;
 	}
-	free(r->root_path);
+
+	if (r->root_path != realmnt)
+		free(r->root_path);
 	r->root_path = NULL;
 	r->dest_dir_path = NULL;
 	free(dest_dir_full_path);
