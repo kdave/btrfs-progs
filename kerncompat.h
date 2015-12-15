@@ -310,6 +310,14 @@ static inline long IS_ERR(const void *ptr)
 #define __bitwise
 #endif
 
+/* Alignment check */
+#define IS_ALIGNED(x, a)                (((x) & ((typeof(x))(a) - 1)) == 0)
+
+static inline int is_power_of_2(unsigned long n)
+{
+	return (n != 0 && ((n & (n - 1)) == 0));
+}
+
 typedef u16 __bitwise __le16;
 typedef u16 __bitwise __be16;
 typedef u32 __bitwise __le32;
