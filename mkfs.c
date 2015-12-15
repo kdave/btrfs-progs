@@ -1031,16 +1031,15 @@ out:
  * This ignores symlinks with unreadable targets and subdirs that can't
  * be read.  It's a best-effort to give a rough estimate of the size of
  * a subdir.  It doesn't guarantee that prepopulating btrfs from this
- * tree won't still run out of space. 
- *
- * The rounding up to 4096 is questionable.  Previous code used du -B 4096.
+ * tree won't still run out of space.
  */
 static u64 global_total_size;
+static u64 fs_block_size;
 static int ftw_add_entry_size(const char *fpath, const struct stat *st,
 			      int type)
 {
 	if (type == FTW_F || type == FTW_D)
-		global_total_size += round_up(st->st_size, 4096);
+		global_total_size += round_up(st->st_size, fs_block_size);
 
 	return 0;
 }
@@ -1060,6 +1059,7 @@ static u64 size_sourcedir(char *dir_name, u64 sectorsize,
 			allocated_meta_size / default_chunk_size;
 
 	global_total_size = 0;
+	fs_block_size = sectorsize;
 	ret = ftw(dir_name, ftw_add_entry_size, 10);
 	dir_size = global_total_size;
 	if (ret < 0) {
