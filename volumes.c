@@ -1591,6 +1591,7 @@ static int read_one_chunk(struct btrfs_root *root, struct btrfs_key *key,
 	struct cache_extent *ce;
 	u64 logical;
 	u64 length;
+	u64 stripe_len;
 	u64 devid;
 	u8 uuid[BTRFS_UUID_SIZE];
 	int num_stripes;
@@ -1599,6 +1600,33 @@ static int read_one_chunk(struct btrfs_root *root, struct btrfs_key *key,
 
 	logical = key->offset;
 	length = btrfs_chunk_length(leaf, chunk);
+	stripe_len = btrfs_chunk_stripe_len(leaf, chunk);
+	num_stripes = btrfs_chunk_num_stripes(leaf, chunk);
+	/* Validation check */
+	if (!num_stripes) {
+		error("invalid chunk num_stripes: %u", num_stripes);
+		return -EIO;
+	}
+	if (!IS_ALIGNED(logical, root->sectorsize)) {
+		error("invalid chunk logical %llu", logical);
+		return -EIO;
+	}
+	if (!length || !IS_ALIGNED(length, root->sectorsize)) {
+		error("invalid chunk length %llu", length);
+		return -EIO;
+	}
+	if (!is_power_of_2(stripe_len)) {
+		error("invalid chunk stripe length: %llu", stripe_len);
+		return -EIO;
+	}
+	if (~(BTRFS_BLOCK_GROUP_TYPE_MASK | BTRFS_BLOCK_GROUP_PROFILE_MASK) &
+	    btrfs_chunk_type(leaf, chunk)) {
+		error("unrecognized chunk type: %llu",
+		      ~(BTRFS_BLOCK_GROUP_TYPE_MASK |
+			BTRFS_BLOCK_GROUP_PROFILE_MASK) &
+		      btrfs_chunk_type(leaf, chunk));
+		return -EIO;
+	}
 
 	ce = search_cache_extent(&map_tree->cache_tree, logical);
 
@@ -1607,7 +1635,6 @@ static int read_one_chunk(struct btrfs_root *root, struct btrfs_key *key,
 		return 0;
 	}
 
-	num_stripes = btrfs_chunk_num_stripes(leaf, chunk);
 	map = kmalloc(btrfs_map_lookup_size(num_stripes), GFP_NOFS);
 	if (!map)
 		return -ENOMEM;

@@ -40,8 +40,6 @@
 #define BTRFS_BAD_LEVEL			(-3)
 #define BTRFS_BAD_NRITEMS		(-4)
 
-#define IS_ALIGNED(x, a)                (((x) & ((typeof(x))(a) - 1)) == 0)
-
 /* Calculate max possible nritems for a leaf/node */
 static u32 max_nritems(u8 level, u32 nodesize)
 {
