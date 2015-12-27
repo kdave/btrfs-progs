@@ -55,6 +55,13 @@ if the free space is too fragmented.
 Use 0 to take the kernel default, which is 256kB but may change in the future.
 You can also turn on compression in defragment operations.
 +
+WARNING: Defragmenting with Linux kernel versions < 3.9 or ≥ 3.14-rc2 as well as
+with Linux stable kernel versions ≥ 3.10.31, ≥ 3.12.12 or ≥ 3.13.4 will break up
+the ref-links of CoW data (for example files copied with `cp --reflink`,
+snapshots or de-duplicated data).
+This may cause considerable increase of space usage depending on the broken up
+ref-links.
++
 `Options`
 +
 -v::::
@@ -79,10 +86,6 @@ target extent size, do not touch extents bigger than <size>
 For <start>, <len>, <size> it is possible to append
 units designator: \'K', \'M', \'G', \'T', \'P', or \'E', which represent
 KiB, MiB, GiB, TiB, PiB, or EiB, respectively. Case does not matter.
-+
-WARNING: defragmenting with kernels up to 2.6.37 will unlink COW-ed copies of data,
-don't use it if you use snapshots, have de-duplicated your data or made
-copies with `cp --reflink`.
 
 *label* [<dev>|<mountpoint>] [<newlabel>]::
 Show or update the label of a filesystem.
