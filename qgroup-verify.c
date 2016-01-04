@@ -37,16 +37,23 @@ static unsigned long tot_extents_scanned = 0;
 
 static void add_bytes(u64 root_objectid, u64 num_bytes, int exclusive);
 
+struct qgroup_info {
+	u64 referenced;
+	u64 referenced_compressed;
+	u64 exclusive;
+	u64 exclusive_compressed;
+};
+
 struct qgroup_count {
-	u64				qgroupid;
-	int				subvol_exists;
+	u64 qgroupid;
+	int subvol_exists;
 
-	struct btrfs_disk_key		key;
-	struct btrfs_qgroup_info_item	diskinfo;
+	struct btrfs_disk_key key;
+	struct qgroup_info diskinfo;
 
-	struct btrfs_qgroup_info_item	info;
+	struct qgroup_info info;
 
-	struct rb_node			rb_node;
+	struct rb_node rb_node;
 };
 
 static struct counts_tree {
@@ -647,14 +654,13 @@ static struct qgroup_count *alloc_count(struct btrfs_disk_key *key,
 					struct btrfs_qgroup_info_item *disk)
 {
 	struct qgroup_count *c = calloc(1, sizeof(*c));
-	struct btrfs_qgroup_info_item *item;
+	struct qgroup_info *item;
 
 	if (c) {
 		c->qgroupid = btrfs_disk_key_offset(key);
 		c->key = *key;
 
 		item = &c->diskinfo;
-		item->generation = btrfs_qgroup_info_generation(leaf, disk);
 		item->referenced = btrfs_qgroup_info_referenced(leaf, disk);
 		item->referenced_compressed =
 			btrfs_qgroup_info_referenced_compressed(leaf, disk);
@@ -673,7 +679,7 @@ static struct qgroup_count *alloc_count(struct btrfs_disk_key *key,
 static void add_bytes(u64 root_objectid, u64 num_bytes, int exclusive)
 {
 	struct qgroup_count *count = find_count(root_objectid);
-	struct btrfs_qgroup_info_item *qg;
+	struct qgroup_info *qg;
 
 	BUG_ON(num_bytes < 4096); /* Random sanity check. */
 
@@ -1014,8 +1020,8 @@ static void print_fields_signed(long long bytes,
 static void print_qgroup_difference(struct qgroup_count *count, int verbose)
 {
 	int is_different;
-	struct btrfs_qgroup_info_item *info = &count->info;
-	struct btrfs_qgroup_info_item *disk = &count->diskinfo;
+	struct qgroup_info *info = &count->info;
+	struct qgroup_info *disk = &count->diskinfo;
 	long long excl_diff = info->exclusive - disk->exclusive;
 	long long ref_diff = info->referenced - disk->referenced;
 
