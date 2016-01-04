@@ -1464,8 +1464,7 @@ static int update_super(struct mdrestore_struct *mdres, u8 *buffer)
 			btrfs_set_stack_chunk_sub_stripes(chunk, 0);
 			btrfs_set_stack_chunk_type(chunk,
 						   BTRFS_BLOCK_GROUP_SYSTEM);
-			btrfs_set_stack_stripe_devid(&chunk->stripe,
-						     super->dev_item.devid);
+			chunk->stripe.devid = super->dev_item.devid;
 			physical = logical_to_physical(mdres, key.offset,
 						       &size);
 			if (size != (u64)-1)
