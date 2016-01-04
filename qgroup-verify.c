@@ -49,12 +49,12 @@ struct qgroup_count {
 	struct rb_node			rb_node;
 };
 
-struct counts_tree {
+static struct counts_tree {
 	struct rb_root		root;
 	unsigned int		num_groups;
 } counts = { .root = RB_ROOT };
 
-struct rb_root by_bytenr = RB_ROOT;
+static struct rb_root by_bytenr = RB_ROOT;
 
 /*
  * List of interior tree blocks. We walk this list after loading the
@@ -68,8 +68,8 @@ struct rb_root by_bytenr = RB_ROOT;
  * exist further down the tree, the fact that our interior node has a
  * ref means we need to account anything below it to all its roots.
  */
-struct ulist *tree_blocks = NULL;	/* unode->val = bytenr, ->aux
-					 * = tree_block pointer */
+static struct ulist *tree_blocks = NULL;	/* unode->val = bytenr, ->aux
+						 * = tree_block pointer */
 struct tree_block {
 	int			level;
 	u64			num_bytes;

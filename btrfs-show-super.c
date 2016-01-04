@@ -334,7 +334,7 @@ struct readable_flag_entry {
 #define DEF_INCOMPAT_FLAG_ENTRY(bit_name)		\
 	{BTRFS_FEATURE_INCOMPAT_##bit_name, #bit_name}
 
-struct readable_flag_entry incompat_flags_array[] = {
+static struct readable_flag_entry incompat_flags_array[] = {
 	DEF_INCOMPAT_FLAG_ENTRY(MIXED_BACKREF),
 	DEF_INCOMPAT_FLAG_ENTRY(DEFAULT_SUBVOL),
 	DEF_INCOMPAT_FLAG_ENTRY(MIXED_GROUPS),
@@ -354,7 +354,7 @@ static const int incompat_flags_num = sizeof(incompat_flags_array) /
 #define DEF_SUPER_FLAG_ENTRY(bit_name)			\
 	{BTRFS_SUPER_FLAG_##bit_name, #bit_name}
 
-struct readable_flag_entry super_flags_array[] = {
+static struct readable_flag_entry super_flags_array[] = {
 	DEF_HEADER_FLAG_ENTRY(WRITTEN),
 	DEF_HEADER_FLAG_ENTRY(RELOC),
 	DEF_SUPER_FLAG_ENTRY(CHANGING_FSID),
