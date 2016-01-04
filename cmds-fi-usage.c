@@ -47,7 +47,7 @@ static int add_info_to_list(struct chunk_info **info_ptr,
 
 	for (j = 0 ; j < num_stripes ; j++) {
 		int i;
-		struct chunk_info *p = 0;
+		struct chunk_info *p = NULL;
 		struct btrfs_stripe *stripe;
 		u64    devid;
 
@@ -182,7 +182,7 @@ static int load_chunk_info(int fd, struct chunk_info **info_ptr, int *info_count
 
 			ret = add_info_to_list(info_ptr, info_count, item);
 			if (ret) {
-				*info_ptr = 0;
+				*info_ptr = NULL;
 				return 1;
 			}
 
@@ -228,7 +228,7 @@ static int cmp_btrfs_ioctl_space_info(const void *a, const void *b)
  */
 static struct btrfs_ioctl_space_args *load_space_info(int fd, char *path)
 {
-	struct btrfs_ioctl_space_args *sargs = 0, *sargs_orig = 0;
+	struct btrfs_ioctl_space_args *sargs = NULL, *sargs_orig = NULL;
 	int e, ret, count;
 
 	sargs_orig = sargs = calloc(1, sizeof(struct btrfs_ioctl_space_args));
@@ -312,7 +312,7 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 		int chunkcount, struct device_info *devinfo, int devcount,
 		char *path, unsigned unit_mode)
 {
-	struct btrfs_ioctl_space_args *sargs = 0;
+	struct btrfs_ioctl_space_args *sargs = NULL;
 	int i;
 	int ret = 0;
 	int width = 10;		/* default 10 for human units */
@@ -510,7 +510,7 @@ static int load_device_info(int fd, struct device_info **device_info_ptr,
 	struct device_info *info;
 
 	*device_info_count = 0;
-	*device_info_ptr = 0;
+	*device_info_ptr = NULL;
 
 	ret = ioctl(fd, BTRFS_IOC_FS_INFO, &fi_args);
 	if (ret < 0) {
@@ -620,7 +620,7 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 {
 	int i;
 	u64 total_unused = 0;
-	struct string_table *matrix = 0;
+	struct string_table *matrix = NULL;
 	int  ncols, nrows;
 	int col;
 	int unallocated_col;
