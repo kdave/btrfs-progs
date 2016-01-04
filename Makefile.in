@@ -60,6 +60,7 @@ STATIC_LIBS = @UUID_LIBS_STATIC@ @BLKID_LIBS_STATIC@ \
 # generate so many sparse errors that sparse stops parsing,
 # which masks real errors that we want to see.
 CHECKER := sparse
+check_defs := .cc-defines.h
 CHECKER_FLAGS := -include $(check_defs) -D__CHECKER__ \
 	-D__CHECK_ENDIAN__ -Wbitwise -Wuninitialized -Wshadow -Wundef \
 	-U_FORTIFY_SOURCE
@@ -154,7 +155,6 @@ lib_links = libbtrfs.so.0 libbtrfs.so
 headers = $(libbtrfs_headers)
 
 # make C=1 to enable sparse
-check_defs := .cc-defines.h 
 ifdef C
 	# We're trying to use sparse against glibc headers which go wild
 	# trying to use internal compiler macros to test features.  We
