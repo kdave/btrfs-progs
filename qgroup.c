@@ -1117,7 +1117,8 @@ static int __qgroups_search(int fd, struct qgroup_lookup *qgroup_lookup)
 				  btrfs_stack_qgroup_info_exclusive_compressed
 				  (info);
 				add_qgroup(qgroup_lookup, sh->offset, a1, a2,
-					   a3, a4, a5, 0, 0, 0, 0, 0, 0, 0);
+					   a3, a4, a5, 0, 0, 0, 0, 0,
+					   NULL, NULL);
 			} else if (sh->type == BTRFS_QGROUP_LIMIT_KEY) {
 				limit = (struct btrfs_qgroup_limit_item *)
 				    (args.buf + off);
@@ -1132,7 +1133,8 @@ static int __qgroups_search(int fd, struct qgroup_lookup *qgroup_lookup)
 				a5 = btrfs_stack_qgroup_limit_rsv_exclusive
 				     (limit);
 				add_qgroup(qgroup_lookup, sh->offset, 0, 0,
-					   0, 0, 0, a1, a2, a3, a4, a5, 0, 0);
+					   0, 0, 0, a1, a2, a3, a4, a5,
+					   NULL, NULL);
 			} else if (sh->type == BTRFS_QGROUP_RELATION_KEY) {
 				if (sh->offset < sh->objectid)
 					goto skip;

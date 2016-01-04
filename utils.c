@@ -154,7 +154,7 @@ int test_uuid_unique(char *fs_uuid)
 	blkid_dev dev = NULL;
 	blkid_cache cache = NULL;
 
-	if (blkid_get_cache(&cache, 0) < 0) {
+	if (blkid_get_cache(&cache, NULL) < 0) {
 		printf("ERROR: lblkid cache get failed\n");
 		return 1;
 	}
@@ -2601,7 +2601,7 @@ int btrfs_scan_lblkid(void)
 	if (btrfs_scan_done)
 		return 0;
 
-	if (blkid_get_cache(&cache, 0) < 0) {
+	if (blkid_get_cache(&cache, NULL) < 0) {
 		printf("ERROR: lblkid cache get failed\n");
 		return 1;
 	}
