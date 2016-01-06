@@ -591,15 +591,14 @@ static int add_symbolic_link(struct btrfs_trans_handle *trans,
 			     u64 objectid, const char *path_name)
 {
 	int ret;
-	u64 sectorsize = root->sectorsize;
-	char *buf = malloc(sectorsize);
+	char buf[PATH_MAX];
 
-	ret = readlink(path_name, buf, sectorsize);
+	ret = readlink(path_name, buf, sizeof(buf));
 	if (ret <= 0) {
 		fprintf(stderr, "readlink failed for %s\n", path_name);
 		goto fail;
 	}
-	if (ret >= sectorsize) {
+	if (ret >= sizeof(buf)) {
 		fprintf(stderr, "symlink too long for %s\n", path_name);
 		ret = -1;
 		goto fail;
@@ -609,7 +608,6 @@ static int add_symbolic_link(struct btrfs_trans_handle *trans,
 	ret = btrfs_insert_inline_extent(trans, root, objectid, 0,
 					 buf, ret + 1);
 fail:
-	free(buf);
 	return ret;
 }
 
