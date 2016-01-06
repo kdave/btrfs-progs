@@ -1199,6 +1199,8 @@ static int add_shared_node(struct cache_tree *shared, u64 bytenr, u32 refs)
 	struct shared_node *node;
 
 	node = calloc(1, sizeof(*node));
+	if (!node)
+		return -ENOMEM;
 	node->cache.start = bytenr;
 	node->cache.size = 1;
 	cache_tree_init(&node->root_cache);
@@ -1206,8 +1208,8 @@ static int add_shared_node(struct cache_tree *shared, u64 bytenr, u32 refs)
 	node->refs = refs;
 
 	ret = insert_cache_extent(shared, &node->cache);
-	BUG_ON(ret);
-	return 0;
+
+	return ret;
 }
 
 static int enter_shared_node(struct btrfs_root *root, u64 bytenr, u32 refs,
@@ -1215,6 +1217,7 @@ static int enter_shared_node(struct btrfs_root *root, u64 bytenr, u32 refs,
 {
 	struct shared_node *node;
 	struct shared_node *dest;
+	int ret;
 
 	if (level == wc->active_node)
 		return 0;
@@ -1222,7 +1225,8 @@ static int enter_shared_node(struct btrfs_root *root, u64 bytenr, u32 refs,
 	BUG_ON(wc->active_node <= level);
 	node = find_shared_node(&wc->shared, bytenr);
 	if (!node) {
-		add_shared_node(&wc->shared, bytenr, refs);
+		ret = add_shared_node(&wc->shared, bytenr, refs);
+		BUG_ON(ret);
 		node = find_shared_node(&wc->shared, bytenr);
 		wc->nodes[level] = node;
 		wc->active_node = level;
