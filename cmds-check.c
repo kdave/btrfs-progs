@@ -3040,13 +3040,16 @@ static struct root_record *get_root_rec(struct cache_tree *root_cache,
 		rec = container_of(cache, struct root_record, cache);
 	} else {
 		rec = calloc(1, sizeof(*rec));
+		if (!rec)
+			return ERR_PTR(-ENOMEM);
 		rec->objectid = objectid;
 		INIT_LIST_HEAD(&rec->backrefs);
 		rec->cache.start = objectid;
 		rec->cache.size = 1;
 
 		ret = insert_cache_extent(root_cache, &rec->cache);
-		BUG_ON(ret);
+		if (ret)
+			return ERR_PTR(-EEXIST);
 	}
 	return rec;
 }
@@ -3104,6 +3107,7 @@ static int add_root_backref(struct cache_tree *root_cache,
 	struct root_backref *backref;
 
 	rec = get_root_rec(root_cache, root_id);
+	BUG_ON(IS_ERR(rec));
 	backref = get_root_backref(rec, ref_root, dir, index, name, namelen);
 
 	backref->errors |= errors;
@@ -3209,6 +3213,7 @@ static int check_root_refs(struct btrfs_root *root,
 	int errors = 0;
 
 	rec = get_root_rec(root_cache, BTRFS_FS_TREE_OBJECTID);
+	BUG_ON(IS_ERR(rec));
 	rec->found_ref = 1;
 
 	/* fixme: this can not detect circular references */
@@ -3230,6 +3235,7 @@ static int check_root_refs(struct btrfs_root *root,
 
 				ref_root = get_root_rec(root_cache,
 							backref->ref_root);
+				BUG_ON(IS_ERR(ref_root));
 				if (ref_root->found_ref > 0)
 					continue;
 
@@ -3476,6 +3482,7 @@ static int check_fs_root(struct btrfs_root *root,
 
 	if (root->root_key.objectid != BTRFS_TREE_RELOC_OBJECTID) {
 		rec = get_root_rec(root_cache, root->root_key.objectid);
+		BUG_ON(IS_ERR(rec));
 		if (btrfs_root_refs(root_item) > 0)
 			rec->found_root_item = 1;
 	}
