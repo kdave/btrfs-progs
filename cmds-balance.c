@@ -123,7 +123,7 @@ static int parse_range(const char *range, u64 *start, u64 *end)
 		*start = 0;
 		skipped++;
 	} else {
-		*end = strtoull(range, &endptr, 10);
+		*start = strtoull(range, &endptr, 10);
 		if (*endptr != 0 && *endptr != '.')
 			return 1;
 	}
