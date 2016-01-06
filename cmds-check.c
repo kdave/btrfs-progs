@@ -952,6 +952,8 @@ static struct inode_backref *get_inode_backref(struct inode_record *rec,
 	}
 
 	backref = malloc(sizeof(*backref) + namelen + 1);
+	if (!backref)
+		return NULL;
 	memset(backref, 0, sizeof(*backref));
 	backref->dir = dir;
 	backref->namelen = namelen;
@@ -972,6 +974,7 @@ static int add_inode_backref(struct cache_tree *inode_cache,
 	rec = get_inode_rec(inode_cache, ino, 1);
 	BUG_ON(IS_ERR(rec));
 	backref = get_inode_backref(rec, name, namelen, dir);
+	BUG_ON(!backref);
 	if (errors)
 		backref->errors |= errors;
 	if (itemtype == BTRFS_DIR_INDEX_KEY) {
