@@ -4354,6 +4354,9 @@ static struct tree_backref *alloc_tree_backref(struct extent_record *rec,
 						u64 parent, u64 root)
 {
 	struct tree_backref *ref = malloc(sizeof(*ref));
+
+	if (!ref)
+		return NULL;
 	memset(&ref->node, 0, sizeof(ref->node));
 	if (parent > 0) {
 		ref->parent = parent;
@@ -4660,8 +4663,10 @@ static int add_tree_backref(struct cache_tree *extent_cache, u64 bytenr,
 	}
 
 	back = find_tree_backref(rec, parent, root);
-	if (!back)
+	if (!back) {
 		back = alloc_tree_backref(rec, parent, root);
+		BUG_ON(!back);
+	}
 
 	if (found_ref) {
 		if (back->node.found_ref) {
