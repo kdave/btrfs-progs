@@ -3070,6 +3070,8 @@ static struct root_backref *get_root_backref(struct root_record *rec,
 	}
 
 	backref = calloc(1, sizeof(*backref) + namelen + 1);
+	if (!backref)
+		return NULL;
 	backref->ref_root = ref_root;
 	backref->dir = dir;
 	backref->index = index;
@@ -3109,6 +3111,7 @@ static int add_root_backref(struct cache_tree *root_cache,
 	rec = get_root_rec(root_cache, root_id);
 	BUG_ON(IS_ERR(rec));
 	backref = get_root_backref(rec, ref_root, dir, index, name, namelen);
+	BUG_ON(!backref);
 
 	backref->errors |= errors;
 
