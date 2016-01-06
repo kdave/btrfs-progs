@@ -2243,6 +2243,7 @@ split:
 
 
 	buf = kmalloc(item_size, GFP_NOFS);
+	BUG_ON(!buf);
 	read_extent_buffer(leaf, buf, btrfs_item_ptr_offset(leaf,
 			    path->slots[0]), item_size);
 	slot = path->slots[0] + 1;
