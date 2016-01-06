@@ -4413,6 +4413,9 @@ static struct data_backref *alloc_data_backref(struct extent_record *rec,
 						u64 max_size)
 {
 	struct data_backref *ref = malloc(sizeof(*ref));
+
+	if (!ref)
+		return NULL;
 	memset(&ref->node, 0, sizeof(ref->node));
 	ref->node.is_data = 1;
 
@@ -4725,9 +4728,11 @@ static int add_data_backref(struct cache_tree *extent_cache, u64 bytenr,
 	 */
 	back = find_data_backref(rec, parent, root, owner, offset, found_ref,
 				 bytenr, max_size);
-	if (!back)
+	if (!back) {
 		back = alloc_data_backref(rec, parent, root, owner, offset,
 					  max_size);
+		BUG_ON(!back);
+	}
 
 	if (found_ref) {
 		BUG_ON(num_refs != 1);
