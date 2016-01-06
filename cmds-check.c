@@ -4586,6 +4586,8 @@ static int add_extent_rec(struct cache_tree *extent_cache,
 		return ret;
 	}
 	rec = malloc(sizeof(*rec));
+	if (!rec)
+		return -ENOMEM;
 	rec->start = start;
 	rec->max_size = max_size;
 	rec->nr = max(nr, max_size);
