@@ -735,6 +735,8 @@ static struct inode_record *get_inode_rec(struct cache_tree *inode_cache,
 		}
 	} else if (mod) {
 		rec = calloc(1, sizeof(*rec));
+		if (!rec)
+			return ERR_PTR(-ENOMEM);
 		rec->ino = ino;
 		rec->extent_start = (u64)-1;
 		rec->refs = 1;
@@ -743,6 +745,10 @@ static struct inode_record *get_inode_rec(struct cache_tree *inode_cache,
 		rec->holes = RB_ROOT;
 
 		node = malloc(sizeof(*node));
+		if (!node) {
+			free(rec);
+			return ERR_PTR(-ENOMEM);
+		}
 		node->cache.start = ino;
 		node->cache.size = 1;
 		node->data = rec;
@@ -751,7 +757,8 @@ static struct inode_record *get_inode_rec(struct cache_tree *inode_cache,
 			rec->found_link = 1;
 
 		ret = insert_cache_extent(inode_cache, &node->cache);
-		BUG_ON(ret);
+		if (ret)
+			return ERR_PTR(-EEXIST);
 	}
 	return rec;
 }
@@ -935,6 +942,7 @@ static int add_inode_backref(struct cache_tree *inode_cache,
 	struct inode_backref *backref;
 
 	rec = get_inode_rec(inode_cache, ino, 1);
+	BUG_ON(IS_ERR(rec));
 	backref = get_inode_backref(rec, name, namelen, dir);
 	if (errors)
 		backref->errors |= errors;
@@ -1097,6 +1105,7 @@ again:
 		ret = insert_cache_extent(dst, &ins->cache);
 		if (ret == -EEXIST) {
 			conflict = get_inode_rec(dst, rec->ino, 1);
+			BUG_ON(IS_ERR(conflict));
 			merge_inode_recs(rec, conflict, dst);
 			if (rec->checked) {
 				conflict->checked = 1;
@@ -1124,6 +1133,7 @@ again:
 			maybe_free_inode_rec(dst, dst_node->current);
 		}
 		dst_node->current = get_inode_rec(dst, current_ino, 1);
+		BUG_ON(IS_ERR(dst_node->current));
 	}
 	return 0;
 }
@@ -1664,6 +1674,7 @@ static int process_one_leaf(struct btrfs_root *root, struct extent_buffer *eb,
 			}
 			active_node->current = get_inode_rec(inode_cache,
 							     key.objectid, 1);
+			BUG_ON(IS_ERR(active_node->current));
 		}
 		switch (key.type) {
 		case BTRFS_DIR_ITEM_KEY:
@@ -2064,6 +2075,7 @@ static int add_missing_dir_index(struct btrfs_root *root,
 
 	backref->found_dir_index = 1;
 	dir_rec = get_inode_rec(inode_cache, backref->dir, 0);
+	BUG_ON(IS_ERR(dir_rec));
 	if (!dir_rec)
 		return 0;
 	dir_rec->found_size += backref->namelen;
@@ -2888,6 +2900,7 @@ static int check_inode_recs(struct btrfs_root *root,
 		return err;
 
 	rec = get_inode_rec(inode_cache, root_dirid, 0);
+	BUG_ON(IS_ERR(rec));
 	if (rec) {
 		ret = check_root_dir(rec);
 		if (ret) {
@@ -3447,6 +3460,7 @@ static int check_fs_root(struct btrfs_root *root,
 
 		inode = get_inode_rec(&root_node.inode_cache, orphan->objectid,
 				      1);
+		BUG_ON(IS_ERR(inode));
 		inode->errors |= I_ERR_FILE_EXTENT_ORPHAN;
 		list_move(&orphan->list, &inode->orphan_extents);
 	}
