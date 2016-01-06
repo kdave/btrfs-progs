@@ -566,12 +566,15 @@ static struct inode_record *clone_inode_rec(struct inode_record *orig_rec)
 	struct inode_record *rec;
 	struct inode_backref *backref;
 	struct inode_backref *orig;
+	struct inode_backref *tmp;
 	struct orphan_data_extent *src_orphan;
 	struct orphan_data_extent *dst_orphan;
 	size_t size;
 	int ret;
 
 	rec = malloc(sizeof(*rec));
+	if (!rec)
+		return ERR_PTR(-ENOMEM);
 	memcpy(rec, orig_rec, sizeof(*rec));
 	rec->refs = 1;
 	INIT_LIST_HEAD(&rec->backrefs);
@@ -581,13 +584,19 @@ static struct inode_record *clone_inode_rec(struct inode_record *orig_rec)
 	list_for_each_entry(orig, &orig_rec->backrefs, list) {
 		size = sizeof(*orig) + orig->namelen + 1;
 		backref = malloc(size);
+		if (!backref) {
+			ret = -ENOMEM;
+			goto cleanup;
+		}
 		memcpy(backref, orig, size);
 		list_add_tail(&backref->list, &rec->backrefs);
 	}
 	list_for_each_entry(src_orphan, &orig_rec->orphan_extents, list) {
 		dst_orphan = malloc(sizeof(*dst_orphan));
-		/* TODO: Fix all the HELL of un-catched -ENOMEM case */
-		BUG_ON(!dst_orphan);
+		if (!dst_orphan) {
+			ret = -ENOMEM;
+			goto cleanup;
+		}
 		memcpy(dst_orphan, src_orphan, sizeof(*src_orphan));
 		list_add_tail(&dst_orphan->list, &rec->orphan_extents);
 	}
@@ -595,6 +604,23 @@ static struct inode_record *clone_inode_rec(struct inode_record *orig_rec)
 	BUG_ON(ret < 0);
 
 	return rec;
+
+cleanup:
+	if (!list_empty(&rec->backrefs))
+		list_for_each_entry_safe(orig, tmp, &rec->backrefs, list) {
+			list_del(&orig->list);
+			free(orig);
+		}
+
+	if (!list_empty(&rec->orphan_extents))
+		list_for_each_entry_safe(orig, tmp, &rec->orphan_extents, list) {
+			list_del(&orig->list);
+			free(orig);
+		}
+
+	free(rec);
+
+	return ERR_PTR(ret);
 }
 
 static void print_orphan_data_extents(struct list_head *orphan_extents,
@@ -730,6 +756,8 @@ static struct inode_record *get_inode_rec(struct cache_tree *inode_cache,
 		rec = node->data;
 		if (mod && rec->refs > 1) {
 			node->data = clone_inode_rec(rec);
+			if (IS_ERR(node->data))
+				return node->data;
 			rec->refs--;
 			rec = node->data;
 		}
