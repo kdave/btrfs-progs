@@ -1128,6 +1128,7 @@ again:
 			ins = node;
 		} else {
 			ins = malloc(sizeof(*ins));
+			BUG_ON(!ins);
 			ins->cache.start = node->cache.start;
 			ins->cache.size = node->cache.size;
 			ins->data = rec;
