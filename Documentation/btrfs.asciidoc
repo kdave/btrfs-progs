@@ -11,21 +11,27 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-*btrfs* is used to control the filesystem and the files and directories stored.
-It is the tool to create or destroy a snapshot or a subvolume for the
-filesystem, to defrag a file or a directory, flush the data to the disk,
-to resize the filesystem, to scan the device.
+The *btrfs* utility is a toolbox for managing btrfs filesystems.  There are
+command groups to work with subvolumes, devices, for whole filesystem or other
+specific actions. See section *COMMANDS*.
 
-It is possible to abbreviate the commands unless the commands are ambiguous.
+COMMAND SYTNAX
+--------------
+
+Any command name can be shortened as far as it stays unambiguous,
+however it is recommended to use full command names in scripts.
+All command groups have their manual page named *btrfs-<group>*.
+
 For example: it is possible to run *btrfs sub snaps* instead of
 *btrfs subvolume snapshot*.
 But *btrfs file s* is not allowed, because *file s* may be interpreted
 both as *filesystem show* and as *filesystem sync*.
 
-If a command is terminated by '--help', the detailed help is showed.
-If the passed command matches more commands,
-detailed help of all the matched commands is showed. For example
-*btrfs dev --help* shows the help of all *device** commands.
+If the command name is ambiguous, the list of conflicting options is
+printed.
+
+For an overview of a given command use 'btrfs command --help'
+or 'btrfs [command...] --help --full' to print all available options.
 
 COMMANDS
 --------
