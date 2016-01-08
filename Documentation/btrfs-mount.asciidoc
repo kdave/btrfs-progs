@@ -103,8 +103,13 @@ Disable/enable debugging option to be more verbose in some ENOSPC conditions.
 *fatal_errors='action'*::
 (since: 3.4, default: bug) +
 Action to take when encountering a fatal error. +
-	"bug" - BUG() on a fatal error. +
-	"panic" - panic() on a fatal error.
+*bug*::::
+'BUG()' on a fatal error, the system will stay in the crashed state and may be
+still partially usable, but reboot is required for full operation +
+*panic*::::
+'panic()' on a fatal error, depending on other system configuration, this may
+be followed by a reboot. Please refer to the documentation of kernel boot
+parameters, eg. 'panic', 'oops' or 'crashkernel'.
 
 *flushoncommit*::
 *noflushoncommit*::
