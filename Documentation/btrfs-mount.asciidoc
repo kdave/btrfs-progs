@@ -71,6 +71,7 @@ Control BTRFS file data compression.  Type may be specified as 'zlib',
 'lzo' or 'no' (for no compression, used for remounting).  If no type
 is specified, 'zlib' is used.  If compress-force is specified,
 all files will be compressed, whether or not they compress well.
++
 NOTE: If compression is enabled, 'nodatacow' and 'nodatasum' are disabled.
 
 *degraded*::
