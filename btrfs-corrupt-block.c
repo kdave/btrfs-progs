@@ -21,6 +21,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <getopt.h>
+#include <limits.h>
 
 #include "kerncompat.h"
 #include "ctree.h"
