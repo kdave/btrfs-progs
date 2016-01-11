@@ -76,7 +76,7 @@ static int qgroup_assign(int assign, int argc, char **argv)
 	 * FIXME src should accept subvol path
 	 */
 	if (btrfs_qgroup_level(args.src) >= btrfs_qgroup_level(args.dst)) {
-		fprintf(stderr, "ERROR: bad relation requested '%s'\n", path);
+		error("bad relation requested: %s", path);
 		return 1;
 	}
 	fd = btrfs_open_dir(path, &dirstream, 1);
@@ -86,8 +86,7 @@ static int qgroup_assign(int assign, int argc, char **argv)
 	ret = ioctl(fd, BTRFS_IOC_QGROUP_ASSIGN, &args);
 	e = errno;
 	if (ret < 0) {
-		fprintf(stderr, "ERROR: unable to assign quota group: %s\n",
-			strerror(e));
+		error("unable to assign quota group: %s", strerror(e));
 		close_file_or_dir(fd, dirstream);
 		return 1;
 	}
@@ -108,11 +107,10 @@ static int qgroup_assign(int assign, int argc, char **argv)
 			memset(&args, 0, sizeof(args));
 			ret = ioctl(fd, BTRFS_IOC_QUOTA_RESCAN, &args);
 			if (ret < 0)
-				fprintf(stderr,
-					"ERROR: quota rescan failed: %s\n",
+				error("quota rescan failed: %s",
 					strerror(errno));
 		} else {
-			printf("WARNING: quotas may be inconsistent, rescan needed\n");
+			warning("quotas may be inconsistent, rescan needed");
 		}
 	}
 	close_file_or_dir(fd, dirstream);
@@ -143,7 +141,7 @@ static int qgroup_create(int create, int argc, char **argv)
 	e = errno;
 	close_file_or_dir(fd, dirstream);
 	if (ret < 0) {
-		fprintf(stderr, "ERROR: unable to %s quota group: %s\n",
+		error("unable to %s quota group: %s",
 			create ? "create":"destroy", strerror(e));
 		return 1;
 	}
@@ -369,8 +367,7 @@ static int cmd_qgroup_show(int argc, char **argv)
 	e = errno;
 	close_file_or_dir(fd, dirstream);
 	if (ret < 0)
-		fprintf(stderr, "ERROR: can't list qgroups: %s\n",
-				strerror(e));
+		error("can't list qgroups: %s", strerror(e));
 
 	return !!ret;
 }
@@ -418,7 +415,7 @@ static int cmd_qgroup_limit(int argc, char **argv)
 		usage(cmd_qgroup_limit_usage);
 
 	if (!parse_limit(argv[optind], &size)) {
-		fprintf(stderr, "Invalid size argument given\n");
+		error("invalid size argument: %s", argv[optind]);
 		return 1;
 	}
 
@@ -439,12 +436,11 @@ static int cmd_qgroup_limit(int argc, char **argv)
 		path = argv[optind + 1];
 		ret = test_issubvolume(path);
 		if (ret < 0) {
-			fprintf(stderr, "ERROR: error accessing '%s'\n", path);
+			error("cannot access '%s'", path);
 			return 1;
 		}
 		if (!ret) {
-			fprintf(stderr, "ERROR: '%s' is not a subvolume\n",
-				path);
+			error("'%s' is not a subvolume", path);
 			return 1;
 		}
 		/*
@@ -465,8 +461,7 @@ static int cmd_qgroup_limit(int argc, char **argv)
 	e = errno;
 	close_file_or_dir(fd, dirstream);
 	if (ret < 0) {
-		fprintf(stderr, "ERROR: unable to limit requested quota group: "
-			"%s\n", strerror(e));
+		error("unable to limit requested quota group: %s", strerror(e));
 		return 1;
 	}
 	return 0;
