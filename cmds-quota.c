@@ -53,8 +53,7 @@ static int quota_ctl(int cmd, int argc, char **argv)
 	e = errno;
 	close_file_or_dir(fd, dirstream);
 	if (ret < 0) {
-		fprintf(stderr, "ERROR: quota command failed: %s\n",
-			strerror(e));
+		error("quota command failed: %s", strerror(e));
 		return 1;
 	}
 	return 0;
@@ -129,7 +128,7 @@ static int cmd_quota_rescan(int argc, char **argv)
 	}
 
 	if (ioctlnum != BTRFS_IOC_QUOTA_RESCAN && wait_for_completion) {
-		fprintf(stderr, "ERROR: -w cannot be used with -s\n");
+		error("switch -w cannot be used with -s");
 		return 1;
 	}
 
@@ -154,8 +153,7 @@ static int cmd_quota_rescan(int argc, char **argv)
 
 	if (ioctlnum == BTRFS_IOC_QUOTA_RESCAN) {
 		if (ret < 0) {
-			fprintf(stderr, "ERROR: quota rescan failed: "
-				"%s\n", strerror(e));
+			error("quota rescan failed: %s", strerror(e));
 			return 1;
 		}  else {
 			printf("quota rescan started\n");
