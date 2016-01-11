@@ -1,9 +1,9 @@
-btrfs-mount(5)
+btrfs-man5(5)
 ==============
 
 NAME
 ----
-btrfs-mount - topics about the BTRFS filesystem (mount options, supported file attributes and other)
+btrfs-man5 - topics about the BTRFS filesystem (mount options, supported file attributes and other)
 
 DESCRIPTION
 -----------
