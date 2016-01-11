@@ -53,7 +53,7 @@ static int parse_one_profile(const char *profile, u64 *flags)
 	} else if (!strcmp(profile, "single")) {
 		*flags |= BTRFS_AVAIL_ALLOC_BIT_SINGLE;
 	} else {
-		fprintf(stderr, "Unknown profile '%s'\n", profile);
+		error("unknown profile: %s", profile);
 		return 1;
 	}
 
@@ -129,8 +129,7 @@ static int parse_range(const char *range, u64 *start, u64 *end)
 	}
 
 	if (*start > *end) {
-		fprintf(stderr,
-			"ERROR: range %llu..%llu doesn't make sense\n",
+		error("range %llu..%llu doesn't make sense",
 			(unsigned long long)*start,
 			(unsigned long long)*end);
 		return 1;
@@ -149,8 +148,7 @@ static int parse_range_strict(const char *range, u64 *start, u64 *end)
 {
 	if (parse_range(range, start, end) == 0) {
 		if (*start >= *end) {
-			fprintf(stderr,
-				"ERROR: range %llu..%llu not allowed\n",
+			error("range %llu..%llu not allowed",
 				(unsigned long long)*start,
 				(unsigned long long)*end);
 			return 1;
@@ -229,40 +227,35 @@ static int parse_filters(char *filters, struct btrfs_balance_args *args)
 			*value++ = 0;
 		if (!strcmp(this_char, "profiles")) {
 			if (!value || !*value) {
-				fprintf(stderr, "the profiles filter requires "
-				       "an argument\n");
+				error("the profiles filter requires an argument");
 				return 1;
 			}
 			if (parse_profiles(value, &args->profiles)) {
-				fprintf(stderr, "Invalid profiles argument\n");
+				error("invalid profiles argument");
 				return 1;
 			}
 			args->flags |= BTRFS_BALANCE_ARGS_PROFILES;
 		} else if (!strcmp(this_char, "usage")) {
 			if (!value || !*value) {
-				fprintf(stderr, "the usage filter requires "
-				       "an argument\n");
+				error("the usage filter requires an argument");
 				return 1;
 			}
 			if (parse_u64(value, &args->usage)) {
 				if (parse_range_u32(value, &args->usage_min,
 							&args->usage_max)) {
-					fprintf(stderr,
-						"Invalid usage argument: %s\n",
+					error("invalid usage argument: %s",
 						value);
 					return 1;
 				}
 				if (args->usage_max > 100) {
-					fprintf(stderr,
-						"Invalid usage argument: %s\n",
+					error("invalid usage argument: %s",
 						value);
 				}
 				args->flags &= ~BTRFS_BALANCE_ARGS_USAGE;
 				args->flags |= BTRFS_BALANCE_ARGS_USAGE_RANGE;
 			} else {
 				if (args->usage > 100) {
-					fprintf(stderr,
-						"Invalid usage argument: %s\n",
+					error("invalid usage argument: %s",
 						value);
 					return 1;
 				}
@@ -272,47 +265,41 @@ static int parse_filters(char *filters, struct btrfs_balance_args *args)
 			args->flags |= BTRFS_BALANCE_ARGS_USAGE;
 		} else if (!strcmp(this_char, "devid")) {
 			if (!value || !*value) {
-				fprintf(stderr, "the devid filter requires "
-				       "an argument\n");
+				error("the devid filter requires an argument");
 				return 1;
 			}
-			if (parse_u64(value, &args->devid) ||
-			    args->devid == 0) {
-				fprintf(stderr, "Invalid devid argument: %s\n",
-				       value);
+			if (parse_u64(value, &args->devid) || args->devid == 0) {
+				error("invalid devid argument: %s", value);
 				return 1;
 			}
 			args->flags |= BTRFS_BALANCE_ARGS_DEVID;
 		} else if (!strcmp(this_char, "drange")) {
 			if (!value || !*value) {
-				fprintf(stderr, "the drange filter requires "
-				       "an argument\n");
+				error("the drange filter requires an argument");
 				return 1;
 			}
 			if (parse_range_strict(value, &args->pstart, &args->pend)) {
-				fprintf(stderr, "Invalid drange argument\n");
+				error("invalid drange argument");
 				return 1;
 			}
 			args->flags |= BTRFS_BALANCE_ARGS_DRANGE;
 		} else if (!strcmp(this_char, "vrange")) {
 			if (!value || !*value) {
-				fprintf(stderr, "the vrange filter requires "
-				       "an argument\n");
+				error("the vrange filter requires an argument");
 				return 1;
 			}
 			if (parse_range_strict(value, &args->vstart, &args->vend)) {
-				fprintf(stderr, "Invalid vrange argument\n");
+				error("invalid vrange argument");
 				return 1;
 			}
 			args->flags |= BTRFS_BALANCE_ARGS_VRANGE;
 		} else if (!strcmp(this_char, "convert")) {
 			if (!value || !*value) {
-				fprintf(stderr, "the convert option requires "
-				       "an argument\n");
+				error("the convert option requires an argument");
 				return 1;
 			}
 			if (parse_one_profile(value, &args->target)) {
-				fprintf(stderr, "Invalid convert argument\n");
+				error("invalid convert argument");
 				return 1;
 			}
 			args->flags |= BTRFS_BALANCE_ARGS_CONVERT;
@@ -320,15 +307,13 @@ static int parse_filters(char *filters, struct btrfs_balance_args *args)
 			args->flags |= BTRFS_BALANCE_ARGS_SOFT;
 		} else if (!strcmp(this_char, "limit")) {
 			if (!value || !*value) {
-				fprintf(stderr,
-					"the limit filter requires an argument\n");
+				error("the limit filter requires an argument");
 				return 1;
 			}
 			if (parse_u64(value, &args->limit)) {
 				if (parse_range_u32(value, &args->limit_min,
 							&args->limit_max)) {
-					fprintf(stderr,
-						"Invalid limit argument: %s\n",
+					error("Invalid limit argument: %s",
 					       value);
 					return 1;
 				}
@@ -340,19 +325,17 @@ static int parse_filters(char *filters, struct btrfs_balance_args *args)
 			}
 		} else if (!strcmp(this_char, "stripes")) {
 			if (!value || !*value) {
-				fprintf(stderr,
-					"the stripes filter requires an argument\n");
+				error("the stripes filter requires an argument");
 				return 1;
 			}
 			if (parse_range_u32(value, &args->stripes_min,
 					    &args->stripes_max)) {
-				fprintf(stderr, "Invalid stripes argument\n");
+				error("invalid stripes argument");
 				return 1;
 			}
 			args->flags |= BTRFS_BALANCE_ARGS_STRIPES_RANGE;
 		} else {
-			fprintf(stderr, "Unrecognized balance option '%s'\n",
-				this_char);
+			error("unrecognized balance option: %s", this_char);
 			return 1;
 		}
 	}
@@ -469,11 +452,10 @@ static int do_balance(const char *path, struct btrfs_ioctl_balance_args *args,
 				fprintf(stderr, "balance canceled by user\n");
 			ret = 0;
 		} else {
-			fprintf(stderr, "ERROR: error during balancing '%s' "
-				"- %s\n", path, strerror(e));
+			error("error during balancing '%s': %s", path, strerror(e));
 			if (e != EINPROGRESS)
-				fprintf(stderr, "There may be more info in "
-					"syslog - try dmesg | tail\n");
+				fprintf(stderr,
+			"There may be more info in syslog - try dmesg | tail\n");
 			ret = 1;
 		}
 	} else {
@@ -574,9 +556,9 @@ static int cmd_balance_start(int argc, char **argv)
 	 */
 	if (args.flags & BTRFS_BALANCE_SYSTEM) {
 		if (!force) {
-			fprintf(stderr,
-"Refusing to explicitly operate on system chunks.\n"
-"Pass --force if you really want to do that.\n");
+			error(
+			    "Refusing to explicitly operate on system chunks.\n"
+			    "Pass --force if you really want to do that.");
 			return 1;
 		}
 	} else if (args.flags & BTRFS_BALANCE_METADATA) {
@@ -594,8 +576,7 @@ static int cmd_balance_start(int argc, char **argv)
 	for (i = 0; ptrs[i]; i++) {
 		if ((ptrs[i]->flags & BTRFS_BALANCE_ARGS_DRANGE) &&
 		    !(ptrs[i]->flags & BTRFS_BALANCE_ARGS_DEVID)) {
-			fprintf(stderr, "drange filter can be used only if "
-				"devid filter is used\n");
+			error("drange filter must be used with devid filter");
 			return 1;
 		}
 	}
@@ -604,8 +585,7 @@ static int cmd_balance_start(int argc, char **argv)
 	for (i = 0; ptrs[i]; i++) {
 		if ((ptrs[i]->flags & BTRFS_BALANCE_ARGS_SOFT) &&
 		    !(ptrs[i]->flags & BTRFS_BALANCE_ARGS_CONVERT)) {
-			fprintf(stderr, "'soft' option can be used only if "
-				"changing profiles\n");
+			error("'soft' option can be used only when converting profiles");
 			return 1;
 		}
 	}
@@ -646,8 +626,8 @@ static int cmd_balance_pause(int argc, char **argv)
 	close_file_or_dir(fd, dirstream);
 
 	if (ret < 0) {
-		fprintf(stderr, "ERROR: balance pause on '%s' failed - %s\n",
-			path, (e == ENOTCONN) ? "Not running" : strerror(e));
+		error("balance pause on '%s' failed: %s", path,
+			(e == ENOTCONN) ? "Not running" : strerror(e));
 		if (e == ENOTCONN)
 			return 2;
 		else
@@ -685,8 +665,8 @@ static int cmd_balance_cancel(int argc, char **argv)
 	close_file_or_dir(fd, dirstream);
 
 	if (ret < 0) {
-		fprintf(stderr, "ERROR: balance cancel on '%s' failed - %s\n",
-			path, (e == ENOTCONN) ? "Not in progress" : strerror(e));
+		error("balance cancel on '%s' failed: %s", path,
+			(e == ENOTCONN) ? "Not in progress" : strerror(e));
 		if (e == ENOTCONN)
 			return 2;
 		else
@@ -734,8 +714,7 @@ static int cmd_balance_resume(int argc, char **argv)
 			if (args.state & BTRFS_BALANCE_STATE_CANCEL_REQ)
 				fprintf(stderr, "balance canceled by user\n");
 		} else if (e == ENOTCONN || e == EINPROGRESS) {
-			fprintf(stderr, "ERROR: balance resume on '%s' "
-				"failed - %s\n", path,
+			error("balance resume on '%s' failed: %s", path,
 				(e == ENOTCONN) ? "Not in progress" :
 						  "Already running");
 			if (e == ENOTCONN)
@@ -743,9 +722,9 @@ static int cmd_balance_resume(int argc, char **argv)
 			else
 				return 1;
 		} else {
-			fprintf(stderr,
-"ERROR: error during balancing '%s' - %s\n"
-"There may be more info in syslog - try dmesg | tail\n", path, strerror(e));
+			error("error during balancing '%s': %s\n"
+			  "There may be more info in syslog - try dmesg | tail",
+				path, strerror(e));
 			return 1;
 		}
 	} else {
@@ -820,8 +799,7 @@ static int cmd_balance_status(int argc, char **argv)
 			printf("No balance found on '%s'\n", path);
 			return 0;
 		}
-		fprintf(stderr, "ERROR: balance status on '%s' failed - %s\n",
-			path, strerror(e));
+		error("balance status on '%s' failed: %s", path, strerror(e));
 		return 2;
 	}
 
