@@ -402,7 +402,7 @@ static int cmd_property_get(int argc, char **argv)
 			NULL);
 	if (!object) {
 		error("invalid arguments");
-		usage(cmd_property_set_usage);
+		usage(cmd_property_get_usage);
 	}
 
 	if (name)
@@ -449,7 +449,7 @@ static int cmd_property_list(int argc, char **argv)
 			&types, &object, NULL, NULL);
 	if (!object) {
 		error("invalid arguments");
-		usage(cmd_property_set_usage);
+		usage(cmd_property_list_usage);
 	}
 
 	ret = dump_props(types, object, 1);
