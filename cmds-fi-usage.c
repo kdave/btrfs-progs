@@ -68,7 +68,7 @@ static int add_info_to_list(struct chunk_info **info_ptr,
 
 			if (!res) {
 				free(*info_ptr);
-				fprintf(stderr, "ERROR: not enough memory\n");
+				error("not enough memory");
 				return -ENOMEM;
 			}
 
@@ -161,8 +161,7 @@ static int load_chunk_info(int fd, struct chunk_info **info_ptr, int *info_count
 			return -e;
 
 		if (ret < 0) {
-			fprintf(stderr,
-				"ERROR: can't perform the search - %s\n",
+			error("cannot look up chunk tree info: %s",
 				strerror(e));
 			return 1;
 		}
@@ -233,7 +232,7 @@ static struct btrfs_ioctl_space_args *load_space_info(int fd, char *path)
 
 	sargs_orig = sargs = calloc(1, sizeof(struct btrfs_ioctl_space_args));
 	if (!sargs) {
-		fprintf(stderr, "ERROR: not enough memory\n");
+		error("not enough memory");
 		return NULL;
 	}
 
@@ -243,9 +242,7 @@ static struct btrfs_ioctl_space_args *load_space_info(int fd, char *path)
 	ret = ioctl(fd, BTRFS_IOC_SPACE_INFO, sargs);
 	e = errno;
 	if (ret) {
-		fprintf(stderr,
-			"ERROR: couldn't get space info on '%s' - %s\n",
-			path, strerror(e));
+		error("cannot get space info on '%s': %s", path, strerror(e));
 		free(sargs);
 		return NULL;
 	}
@@ -261,7 +258,7 @@ static struct btrfs_ioctl_space_args *load_space_info(int fd, char *path)
 			(count * sizeof(struct btrfs_ioctl_space_info)));
 	if (!sargs) {
 		free(sargs_orig);
-		fprintf(stderr, "ERROR: not enough memory\n");
+		error("not enough memory");
 		return NULL;
 	}
 
@@ -272,9 +269,8 @@ static struct btrfs_ioctl_space_args *load_space_info(int fd, char *path)
 	e = errno;
 
 	if (ret) {
-		fprintf(stderr,
-			"ERROR: couldn't get space info on '%s' - %s\n",
-			path, strerror(e));
+		error("cannot get space info with %u slots: %s",
+			count, strerror(e));
 		free(sargs);
 		return NULL;
 	}
@@ -358,8 +354,7 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 	}
 
 	if (r_total_size == 0) {
-		fprintf(stderr,
-			"ERROR: couldn't get space info on '%s' - %s\n",
+		error("cannot get space info on '%s': %s",
 			path, strerror(errno));
 
 		ret = 1;
@@ -391,7 +386,7 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 			ratio = 1;
 
 		if (!ratio)
-			fprintf(stderr, "WARNING: RAID56 detected, not implemented\n");
+			warning("RAID56 detected, not implemented");
 
 		if (ratio > max_data_ratio)
 			max_data_ratio = ratio;
@@ -402,7 +397,7 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 		}
 		if ((flags & (BTRFS_BLOCK_GROUP_DATA | BTRFS_BLOCK_GROUP_METADATA))
 			== (BTRFS_BLOCK_GROUP_DATA | BTRFS_BLOCK_GROUP_METADATA)) {
-			fprintf(stderr, "WARNING: MIXED blockgroups not handled\n");
+			warning("MIXED blockgroups not handled");
 		}
 
 		if (flags & BTRFS_BLOCK_GROUP_DATA) {
@@ -516,14 +511,14 @@ static int load_device_info(int fd, struct device_info **device_info_ptr,
 	if (ret < 0) {
 		if (errno == EPERM)
 			return -errno;
-		fprintf(stderr, "ERROR: cannot get filesystem info - %s\n",
+		error("cannot get filesystem info: %s",
 				strerror(errno));
 		return 1;
 	}
 
 	info = calloc(fi_args.num_devices, sizeof(struct device_info));
 	if (!info) {
-		fprintf(stderr, "ERROR: not enough memory\n");
+		error("not enough memory");
 		return 1;
 	}
 
@@ -535,9 +530,7 @@ static int load_device_info(int fd, struct device_info **device_info_ptr,
 		if (ret == -ENODEV)
 			continue;
 		if (ret) {
-			fprintf(stderr,
-			    "ERROR: cannot get info about device devid=%d\n",
-			    i);
+			error("cannot get info about device devid=%d", i);
 			free(info);
 			return ret;
 		}
@@ -571,16 +564,16 @@ int load_chunk_and_device_info(int fd, struct chunk_info **chunkinfo,
 
 	ret = load_chunk_info(fd, chunkinfo, chunkcount);
 	if (ret == -EPERM) {
-		fprintf(stderr,
-			"WARNING: can't read detailed chunk info, RAID5/6 numbers will be incorrect, run as root\n");
+		warning(
+"cannot read detailed chunk info, RAID5/6 numbers will be incorrect, run as root");
 	} else if (ret) {
 		return ret;
 	}
 
 	ret = load_device_info(fd, devinfo, devcount);
 	if (ret == -EPERM) {
-		fprintf(stderr,
-			"WARNING: can't get filesystem info from ioctl(FS_INFO), run as root\n");
+		warning(
+		"cannot get filesystem info from ioctl(FS_INFO), run as root");
 		ret = 0;
 	}
 
@@ -642,7 +635,7 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 
 	matrix = table_create(ncols, nrows);
 	if (!matrix) {
-		fprintf(stderr, "ERROR: not enough memory\n");
+		error("not enough memory");
 		return;
 	}
 
