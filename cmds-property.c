@@ -86,7 +86,7 @@ static int get_fsid(const char *path, u8 *fsid, int silent)
 	if (fd < 0) {
 		ret = -errno;
 		if (!silent)
-			fprintf(stderr, "ERROR: open %s failed. %s\n", path,
+			error("failed to open %s: %s", path,
 				strerror(-ret));
 		goto out;
 	}
@@ -149,8 +149,7 @@ static int check_is_root(const char *object)
 
 	ret = get_fsid(object, fsid, 0);
 	if (ret < 0) {
-		fprintf(stderr, "ERROR: get_fsid for %s failed. %s\n", object,
-				strerror(-ret));
+		error("get_fsid for %s failed: %s", object, strerror(-ret));
 		goto out;
 	}
 
@@ -162,8 +161,7 @@ static int check_is_root(const char *object)
 		ret = 1;
 		goto out;
 	} else if (ret < 0) {
-		fprintf(stderr, "ERROR: get_fsid for %s failed. %s\n", tmp,
-			strerror(-ret));
+		error("get_fsid for %s failed: %s", tmp, strerror(-ret));
 		goto out;
 	}
 
@@ -285,28 +283,26 @@ static int setget_prop(int types, const char *object,
 
 	ret = parse_prop(name, prop_handlers, &prop);
 	if (ret == -1) {
-		fprintf(stderr, "ERROR: property is unknown\n");
+		error("unknown property: %s", name);
 		ret = 40;
 		goto out;
 	}
 
 	types &= prop->types;
 	if (!types) {
-		fprintf(stderr,
-			"ERROR: object is not compatible with property\n");
+		error("object is not compatible with property: %s", prop->name);
 		ret = 47;
 		goto out;
 	}
 
 	if (count_bits(types) > 1) {
-		fprintf(stderr,
-			"ERROR: type of object is ambiguous. Please specify a type by hand.\n");
+		error("type of object is ambiguous, please use option -t");
 		ret = 48;
 		goto out;
 	}
 
 	if (value && prop->read_only) {
-		fprintf(stderr, "ERROR: %s is a read-only property.\n",
+		error("property is read-only property: %s",
 				prop->name);
 		ret = 51;
 		goto out;
@@ -361,7 +357,7 @@ static void parse_args(int argc, char **argv,
 			   !strcmp(type_str, "device")) {
 			*types = prop_object_dev;
 		} else {
-			fprintf(stderr, "ERROR: invalid object type.\n");
+			error("invalid object type: %s", type_str);
 			usage(usage_str);
 		}
 	}
@@ -374,21 +370,19 @@ static void parse_args(int argc, char **argv,
 		*value = argv[optind++];
 
 	if (optind != argc) {
-		fprintf(stderr, "ERROR: invalid arguments.\n");
+		error("unexpected agruments found");
 		usage(usage_str);
 	}
 
 	if (!*types && object && *object) {
 		ret = autodetect_object_types(*object, types);
 		if (ret < 0) {
-			fprintf(stderr,
-				"ERROR: failed to detect object type. %s\n",
+			error("failed to detect object type: %s",
 				strerror(-ret));
 			usage(usage_str);
 		}
 		if (!*types) {
-			fprintf(stderr,
-				"ERROR: object is not a btrfs object.\n");
+			error("object is not a btrfs object: %s", *object);
 			usage(usage_str);
 		}
 	}
@@ -407,7 +401,7 @@ static int cmd_property_get(int argc, char **argv)
 	parse_args(argc, argv, cmd_property_get_usage, &types, &object, &name,
 			NULL);
 	if (!object) {
-		fprintf(stderr, "ERROR: invalid arguments.\n");
+		error("invalid arguments");
 		usage(cmd_property_set_usage);
 	}
 
@@ -433,7 +427,7 @@ static int cmd_property_set(int argc, char **argv)
 	parse_args(argc, argv, cmd_property_set_usage, &types,
 			&object, &name, &value);
 	if (!object || !name || !value) {
-		fprintf(stderr, "ERROR: invalid arguments.\n");
+		error("invalid arguments");
 		usage(cmd_property_set_usage);
 	}
 
@@ -454,7 +448,7 @@ static int cmd_property_list(int argc, char **argv)
 	parse_args(argc, argv, cmd_property_list_usage,
 			&types, &object, NULL, NULL);
 	if (!object) {
-		fprintf(stderr, "ERROR: invalid arguments.\n");
+		error("invalid arguments");
 		usage(cmd_property_set_usage);
 	}
 
