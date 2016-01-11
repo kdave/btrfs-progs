@@ -102,13 +102,15 @@ static int load_free_space_bitmaps(struct btrfs_fs_info *fs_info,
 			break;
 		}
 		if (key.objectid >= end) {
-			fprintf(stderr, "free space bitmap starts at %Lu, beyond end of block group %Lu-%Lu\n",
+			fprintf(stderr,
+	"free space bitmap starts at %llu, beyond end of block group %llu-%llu\n",
 				key.objectid, start, end);
 			(*errors)++;
 			break;
 		}
 		if (key.objectid + key.offset > end) {
-			fprintf(stderr, "free space bitmap ends at %Lu, beyond end of block group %Lu-%Lu\n",
+			fprintf(stderr,
+	"free space bitmap ends at %llu, beyond end of block group %llu-%llu\n",
 				key.objectid, start, end);
 			(*errors)++;
 			break;
@@ -179,13 +181,15 @@ static int load_free_space_extents(struct btrfs_fs_info *fs_info,
 			break;
 		}
 		if (key.objectid >= end) {
-			fprintf(stderr, "free space extent starts at %Lu, beyond end of block group %Lu-%Lu\n",
+			fprintf(stderr,
+	"free space extent starts at %llu, beyond end of block group %llu-%llu\n",
 				key.objectid, start, end);
 			(*errors)++;
 			break;
 		}
 		if (key.objectid + key.offset > end) {
-			fprintf(stderr, "free space extent ends at %Lu, beyond end of block group %Lu-%Lu\n",
+			fprintf(stderr,
+	"free space extent ends at %llu, beyond end of block group %llu-%llu\n",
 				key.objectid, start, end);
 			(*errors)++;
 			break;
@@ -198,12 +202,14 @@ static int load_free_space_extents(struct btrfs_fs_info *fs_info,
 			u64 prev_end = prev_start + prev_key.offset;
 
 			if (cur_start < prev_end) {
-				fprintf(stderr, "free space extent %Lu-%Lu overlaps with previous %Lu-%Lu\n",
+				fprintf(stderr,
+	"free space extent %llu-%llu overlaps with previous %llu-%llu\n",
 					cur_start, cur_end,
 					prev_start, prev_end);
 				(*errors)++;
 			} else if (cur_start == prev_end) {
-				fprintf(stderr, "free space extent %Lu-%Lu is unmerged with previous %Lu-%Lu\n",
+				fprintf(stderr,
+	"free space extent %llu-%llu is unmerged with previous %llu-%llu\n",
 					cur_start, cur_end,
 					prev_start, prev_end);
 				(*errors)++;
