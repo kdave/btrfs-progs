@@ -18,7 +18,15 @@ MOUNT OPTIONS
 -------------
 
 This section describes mount options specific to BTRFS.  For the generic mount
-options please refer to `mount`(8) manpage.
+options please refer to `mount`(8) manpage. The options are sorted alphabetically
+(discarding the 'no' prefix).
+
+*acl*::
+*noacl*::
+(default: on)
++
+Enable/disable support for Posix Access Control Lists (ACLs).  See the
+`acl`(5) manual page for more information about ACLs.
 
 *alloc_start='bytes'*::
 (default: 1M, minimum: 1M)
@@ -50,6 +58,27 @@ copied with `cp --reflink`, snapshots or de-duplicated data).
 This may cause considerable increase of space usage depending on the
 broken up ref-links.
 
+*barrier*::
+*nobarrier*::
+(default: on)
++
+Ensure that all IO write operations make it through the device cache and are stored
+permanently when the filesystem is at it's consistency checkpoint. This
+typically means that a flush command is sent to the device that will
+synchronize all pending data and ordinary metadata blocks, then writes the
+superblock and issues another flush.
++
+The write flushes incur a slight hit and also prevent the IO block
+scheduler to reorder requests in more effective way. Disabling barriers gets
+rid of that penalty but will most certainly lead to a corrupted filesystem in
+case of a crash or power loss. The ordinary metadata blocks could be yet
+unwrittent at the time the new superblock is stored permanently, expecting that
+the block pointers to metadata were stored permanently before.
++
+On a device with a volatile battery-backed write-back cache, the 'nobarrier'
+option will not lead to filesystem corruption as the pending blocks are
+supposed to make it to the permanent storage.
+
 *check_int*::
 *check_int_data*::
 *check_int_print_mask='value'*::
@@ -72,6 +101,10 @@ checker module behavior. +
 See comments at the top of 'fs/btrfs/check-integrity.c'
 for more info.
 
+*clear_cache*::
+Force clearing and rebuilding of the disk space cache if something
+has gone wrong. See also: 'space_cache'.
+
 *commit='seconds'*::
 (since: 3.12, default: 30)
 +
@@ -92,6 +125,23 @@ is specified, 'zlib' is used.  If compress-force is specified,
 all files will be compressed, whether or not they compress well.
 +
 NOTE: If compression is enabled, 'nodatacow' and 'nodatasum' are disabled.
+
+*datacow*::
+*nodatacow*::
+(default: on)
++
+Enable data copy-on-write for newly created files.
+'Nodatacow' implies 'nodatasum', and disables 'compression'. All files created
+under 'nodatacow' are also set the NOCOW file attribute (see `chattr`(1)).
+
+*datasum*::
+*nodatasum*::
+(default: on)
++
+Enable data checksumming for newly created files.
+'Datasum' implies 'datacow', ie. the normal mode of operation. All files created
+under 'nodatasum' inherit the "no checksums" property, however there's no
+corresponding file attribute (see `chattr`(1)).
 
 *degraded*::
 (default: off)
@@ -125,6 +175,7 @@ If discarding is not necessary to be done at the block freeing time, there's
 possibly not much interfering with other operations.
 
 *enospc_debug*::
+*noenospc_debug*::
 (default: off)
 +
 Enable verbose output for some ENOSPC conditions. It's safe to use but can
@@ -198,65 +249,6 @@ override the internal logic in favor of the metadata allocation if the expected
 workload is supposed to be metadata intense (snapshots, reflinks, xattrs,
 inlined files).
 
-*acl*::
-*noacl*::
-(default: on)
-+
-Enable/disable support for Posix Access Control Lists (ACLs).  See the
-`acl`(5) manual page for more information about ACLs.
-
-*barrier*::
-*nobarrier*::
-(default: on)
-+
-Ensure that all IO write operations make it through the device cache and are stored
-permanently when the filesystem is at it's consistency checkpoint. This
-typically means that a flush command is sent to the device that will
-synchronize all pending data and ordinary metadata blocks, then writes the
-superblock and issues another flush.
-+
-The write flushes incur a slight hit and also prevent the IO block
-scheduler to reorder requests in more effective way. Disabling barriers gets
-rid of that penalty but will most certainly lead to a corrupted filesystem in
-case of a crash or power loss. The ordinary metadata blocks could be yet
-unwrittent at the time the new superblock is stored permanently, expecting that
-the block pointers to metadata were stored permanently before.
-+
-On a device with a volatile battery-backed write-back cache, the 'nobarrier'
-option will not lead to filesystem corruption as the pending blocks are
-supposed to make it to the permanent storage.
-
-*datacow*::
-*nodatacow*::
-(default: on)
-+
-Enable data copy-on-write for newly created files.
-'Nodatacow' implies 'nodatasum', and disables 'compression'. All files created
-under 'nodatacow' are also set the NOCOW file attribute (see `chattr`(1)).
-
-*datasum*::
-*nodatasum*::
-(default: on)
-+
-Enable data checksumming for newly created files.
-'Datasum' implies 'datacow', ie. the normal mode of operation. All files created
-under 'nodatasum' inherit the "no checksums" property, however there's no
-corresponding file attribute (see `chattr`(1)).
-
-*treelog*::
-*notreelog*::
-(default: on)
-+
-Enable the tree logging used for 'fsync' and 'O_SYNC' writes. The tree log
-stores changes without the need of a full filesystem sync. The log operations
-are flushed at sync and transaction commit. If the system crashes between two
-such syncs, the pending tree log operations are replayed during mount.
-+
-WARNING: currently, the tree log is replayed even with a read-only mount!
-+
-The tree log could contain new files/directories, these would not exist on
-a mounted filesystm if the log is not replayed.
-
 *recovery*::
 (since: 3.2, default: off)
 +
@@ -277,17 +269,14 @@ Skip automatic resume of interrupted balance operation after mount.
 May be resumed with *btrfs balance resume* or the paused state can be removed
 by *btrfs balance cancel*.
 
+*space_cache*::
 *nospace_cache*::
-(since: 3.2)
+('nospace_cache' since: 3.2, default: on)
 +
 Disable freespace cache loading without clearing the cache and the free space
 cache will not be used during the mount. This affects performance as searching
 for new free blocks could take longer. On the other hand, managing the space
 cache consumes some resources.
-
-*clear_cache*::
-Force clearing and rebuilding of the disk space cache if something
-has gone wrong.
 
 *ssd*::
 *nossd*::
@@ -327,6 +316,20 @@ detected at the time of mount. Small number leads to less parallelism in
 processing data and metadata, higher numbers could lead to a performance due to
 increased locking contention, cache-line bouncing or costly data transfers
 between local CPU memories.
+
+*treelog*::
+*notreelog*::
+(default: on)
++
+Enable the tree logging used for 'fsync' and 'O_SYNC' writes. The tree log
+stores changes without the need of a full filesystem sync. The log operations
+are flushed at sync and transaction commit. If the system crashes between two
+such syncs, the pending tree log operations are replayed during mount.
++
+WARNING: currently, the tree log is replayed even with a read-only mount!
++
+The tree log could contain new files/directories, these would not exist on
+a mounted filesystm if the log is not replayed.
 
 *user_subvol_rm_allowed*::
 (default: off)
