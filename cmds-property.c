@@ -32,35 +32,6 @@ static const char * const property_cmd_group_usage[] = {
 	NULL
 };
 
-static const char * const cmd_property_get_usage[] = {
-	"btrfs property get [-t <type>] <object> [<name>]",
-	"Gets a property from a btrfs object.",
-	"If no name is specified, all properties for the given object are",
-	"printed.",
-	"A filesystem object can be a the filesystem itself, a subvolume,",
-	"an inode or a device. The '-t <type>' option can be used to explicitly",
-	"specify what type of object you meant. This is only needed when a",
-	"property could be set for more then one object type. Possible types",
-	"are s[ubvol], f[ilesystem], i[node] and d[evice].",
-	NULL
-};
-
-static const char * const cmd_property_set_usage[] = {
-	"btrfs property set [-t <type>] <object> <name> <value>",
-	"Sets a property on a btrfs object.",
-	"Please see the help of 'btrfs property get' for a description of",
-	"objects and object types.",
-	NULL
-};
-
-static const char * const cmd_property_list_usage[] = {
-	"btrfs property list [-t <type>] <object>",
-	"Lists available properties with their descriptions for the given object.",
-	"Please see the help of 'btrfs property get' for a description of",
-	"objects and object types.",
-	NULL
-};
-
 static int parse_prop(const char *arg, const struct prop_handler *props,
 		      const struct prop_handler **prop_ret)
 {
@@ -388,6 +359,19 @@ static void parse_args(int argc, char **argv,
 	}
 }
 
+static const char * const cmd_property_get_usage[] = {
+	"btrfs property get [-t <type>] <object> [<name>]",
+	"Gets a property from a btrfs object.",
+	"If no name is specified, all properties for the given object are",
+	"printed.",
+	"A filesystem object can be a the filesystem itself, a subvolume,",
+	"an inode or a device. The '-t <type>' option can be used to explicitly",
+	"specify what type of object you meant. This is only needed when a",
+	"property could be set for more then one object type. Possible types",
+	"are s[ubvol], f[ilesystem], i[node] and d[evice].",
+	NULL
+};
+
 static int cmd_property_get(int argc, char **argv)
 {
 	int ret;
@@ -413,6 +397,14 @@ static int cmd_property_get(int argc, char **argv)
 	return ret;
 }
 
+static const char * const cmd_property_set_usage[] = {
+	"btrfs property set [-t <type>] <object> <name> <value>",
+	"Sets a property on a btrfs object.",
+	"Please see the help of 'btrfs property get' for a description of",
+	"objects and object types.",
+	NULL
+};
+
 static int cmd_property_set(int argc, char **argv)
 {
 	int ret;
@@ -435,6 +427,14 @@ static int cmd_property_set(int argc, char **argv)
 
 	return ret;
 }
+
+static const char * const cmd_property_list_usage[] = {
+	"btrfs property list [-t <type>] <object>",
+	"Lists available properties with their descriptions for the given object.",
+	"Please see the help of 'btrfs property get' for a description of",
+	"objects and object types.",
+	NULL
+};
 
 static int cmd_property_list(int argc, char **argv)
 {

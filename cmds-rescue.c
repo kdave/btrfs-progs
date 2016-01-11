@@ -43,15 +43,6 @@ static const char * const cmd_rescue_chunk_recover_usage[] = {
 	NULL
 };
 
-static const char * const cmd_rescue_super_recover_usage[] = {
-	"btrfs rescue super-recover [options] <device>",
-	"Recover bad superblocks from good copies",
-	"",
-	"-y	Assume an answer of `yes' to all questions",
-	"-v	Verbose mode",
-	NULL
-};
-
 static int cmd_rescue_chunk_recover(int argc, char *argv[])
 {
 	int ret = 0;
@@ -102,6 +93,15 @@ static int cmd_rescue_chunk_recover(int argc, char *argv[])
 	}
 	return ret;
 }
+
+static const char * const cmd_rescue_super_recover_usage[] = {
+	"btrfs rescue super-recover [options] <device>",
+	"Recover bad superblocks from good copies",
+	"",
+	"-y	Assume an answer of `yes' to all questions",
+	"-v	Verbose mode",
+	NULL
+};
 
 /*
  * return codes:

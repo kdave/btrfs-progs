@@ -329,6 +329,14 @@ out:
 	return !!ret;
 }
 
+static const char* const cmd_inspect_min_dev_size_usage[] = {
+	"btrfs inspect-internal min-dev-size [options] <path>",
+	"Get the minimum size the device can be shrunk to. The",
+	"device id 1 is used by default.",
+	"--id DEVID   specify the device id to query",
+	NULL
+};
+
 struct dev_extent_elem {
 	u64 start;
 	/* inclusive end */
@@ -568,14 +576,6 @@ out:
 
 	return ret;
 }
-
-static const char* const cmd_inspect_min_dev_size_usage[] = {
-	"btrfs inspect-internal min-dev-size [options] <path>",
-	"Get the minimum size the device can be shrunk to. The",
-	"device id 1 is used by default.",
-	"--id DEVID   specify the device id to query",
-	NULL
-};
 
 static int cmd_inspect_min_dev_size(int argc, char **argv)
 {
