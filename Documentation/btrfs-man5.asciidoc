@@ -207,6 +207,14 @@ behavior only when a snapshot was created.
 +
 Disabling flushing may improve performance but is not crash-safe.
 
+*fragment='type'*::
+(depends on compile-time option BTRFS_DEBUG, since: 4.4, default: off)
++
+A debugging helper to intentionally fragment given 'type' of block groups. The
+type can be 'data', 'metadata' or 'all'. This mount option should not be used
+outside of debugging environments and is not recognized if the kernel config
+option 'BTRFS_DEBUG' is not enabled.
+
 *inode_cache*::
 *noinode_cache*::
 (since: 3.0, default: off)
