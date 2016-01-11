@@ -8,7 +8,11 @@ btrfs-mount - topics about the BTRFS filesystem (mount options, supported file a
 DESCRIPTION
 -----------
 This document describes topics related to BTRFS that are not specific to the
-tools.
+tools.  Currently covers:
+
+1. mount options
+
+2. file attributes
 
 MOUNT OPTIONS
 -------------
@@ -332,29 +336,54 @@ root user can do that.
 
 FILE ATTRIBUTES
 ---------------
-The btrfs filesystem supports setting the following file
-attributes the `chattr`(1) utility
+The btrfs filesystem supports setting the following file attributes using the
+`chattr`(1) utility:
 
-*a* -- append only
+*a*::
+'append only', new writes are always written at the end of the file
 
-*A* -- no atime updates
+*A*::
+'no atime updates'
 
-*c* -- compressed
+*c*::
+'compress data', all data written after this attribute is set will be compressed.
+Please note that compression is also affected by the mount options or the parent
+directory attributes.
++
+When set on a directory, all newly created files will inherit this attribute.
 
-*C* -- no copy on write
+*C*::
+'no copy-on-write', file modifications are done in-place
++
+When set on a directory, all newly created files will inherit this attribute.
++
+NOTE: due to implementation limitations, this flag can be set/unset only on
+empty files.
 
-*d* -- no dump
+*d*::
+'no dump', makes sense with 3rd party tools like `dump`(8), on BTRFS the
+attribute can be set/unset on no other special handling is done
 
-*D* -- synchronous directory updates
+*D*::
+'synchronous directory updates', for more details search `open`(2) for 'O_SYNC'
+and 'O_DSYNC'
 
-*i* -- immutable
+*i*::
+'immutable', no file data and metadata changes allowed even to the root user as
+long as this attribute is set (obviously the exception is unsetting the attribute)
 
-*S* -- synchronous updates
+*S*::
+'synchronous updates', for more details search `open`(2) for 'O_SYNC' and
+'O_DSYNC'
 
-*X* -- no compression
+*X*::
+'no compression', permanently turn off compression on the given file, other
+compression mount options will not affect that
++
+When set on a directory, all newly created files will inherit this attribute.
 
-For descriptions of these attribute flags, please refer to the
-`chattr`(1) man page.
+No other attributes are supported.  For the complete list please refer to the
+`chattr`(1) manual page.
 
 SEE ALSO
 --------
