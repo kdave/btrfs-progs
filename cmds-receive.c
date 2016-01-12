@@ -771,7 +771,7 @@ static int process_clone(const char *path, u64 offset, u64 len,
 	clone_args.src_length = len;
 	clone_args.dest_offset = offset;
 	ret = ioctl(r->write_fd, BTRFS_IOC_CLONE_RANGE, &clone_args);
-	if (ret) {
+	if (ret < 0) {
 		ret = -errno;
 		error("failed to clone extents to %s\n%s\n",
 				path, strerror(-ret));

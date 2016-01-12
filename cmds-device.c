@@ -166,6 +166,10 @@ static int _cmd_device_remove(int argc, char **argv,
 		}
 		memset(&arg, 0, sizeof(arg));
 		strncpy_null(arg.name, argv[i]);
+		/*
+		 * Positive values are from BTRFS_ERROR_DEV_*,
+		 * otherwise it's a generic error, one of errnos
+		 */
 		res = ioctl(fdmnt, BTRFS_IOC_RM_DEV, &arg);
 		if (res) {
 			const char *msg;

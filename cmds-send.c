@@ -293,7 +293,7 @@ static int do_send(struct btrfs_send *send, u64 parent_root_id,
 	if (!is_last_subvol)
 		io_send.flags |= BTRFS_SEND_FLAG_OMIT_END_CMD;
 	ret = ioctl(subvol_fd, BTRFS_IOC_SEND, &io_send);
-	if (ret) {
+	if (ret < 0) {
 		ret = -errno;
 		error("send ioctl failed with %d: %s", ret, strerror(-ret));
 		if (ret == -EINVAL && (!is_first_subvol || !is_last_subvol))

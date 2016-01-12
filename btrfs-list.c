@@ -643,7 +643,7 @@ static int lookup_ino_path(int fd, struct root_info *ri)
 	args.objectid = ri->dir_id;
 
 	ret = ioctl(fd, BTRFS_IOC_INO_LOOKUP, &args);
-	if (ret) {
+	if (ret < 0) {
 		if (errno == ENOENT) {
 			ri->ref_tree = 0;
 			return -ENOENT;
@@ -699,7 +699,7 @@ static u64 find_root_gen(int fd)
 
 	/* this ioctl fills in ino_args->treeid */
 	ret = ioctl(fd, BTRFS_IOC_INO_LOOKUP, &ino_args);
-	if (ret) {
+	if (ret < 0) {
 		fprintf(stderr, "ERROR: Failed to lookup path for dirid %llu - %s\n",
 			(unsigned long long)BTRFS_FIRST_FREE_OBJECTID,
 			strerror(errno));
@@ -786,7 +786,7 @@ static char *__ino_resolve(int fd, u64 dirid)
 	args.objectid = dirid;
 
 	ret = ioctl(fd, BTRFS_IOC_INO_LOOKUP, &args);
-	if (ret) {
+	if (ret < 0) {
 		fprintf(stderr, "ERROR: Failed to lookup path for dirid %llu - %s\n",
 			(unsigned long long)dirid, strerror(errno));
 		return ERR_PTR(ret);

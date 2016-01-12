@@ -166,7 +166,7 @@ static int cmd_replace_start(int argc, char **argv)
 	status_args.cmd = BTRFS_IOCTL_DEV_REPLACE_CMD_STATUS;
 	status_args.result = BTRFS_IOCTL_DEV_REPLACE_RESULT_NO_RESULT;
 	ret = ioctl(fdmnt, BTRFS_IOC_DEV_REPLACE, &status_args);
-	if (ret) {
+	if (ret < 0) {
 		fprintf(stderr,
 			"ERROR: ioctl(DEV_REPLACE_STATUS) failed on \"%s\": %s",
 			path, strerror(errno));
@@ -276,7 +276,7 @@ static int cmd_replace_start(int argc, char **argv)
 	start_args.result = BTRFS_IOCTL_DEV_REPLACE_RESULT_NO_RESULT;
 	ret = ioctl(fdmnt, BTRFS_IOC_DEV_REPLACE, &start_args);
 	if (do_not_background) {
-		if (ret) {
+		if (ret < 0) {
 			fprintf(stderr,
 				"ERROR: ioctl(DEV_REPLACE_START) failed on \"%s\": %s",
 				path, strerror(errno));
@@ -372,7 +372,7 @@ static int print_replace_status(int fd, const char *path, int once)
 		args.cmd = BTRFS_IOCTL_DEV_REPLACE_CMD_STATUS;
 		args.result = BTRFS_IOCTL_DEV_REPLACE_RESULT_NO_RESULT;
 		ret = ioctl(fd, BTRFS_IOC_DEV_REPLACE, &args);
-		if (ret) {
+		if (ret < 0) {
 			fprintf(stderr, "ERROR: ioctl(DEV_REPLACE_STATUS) failed on \"%s\": %s",
 				path, strerror(errno));
 			if (args.result != BTRFS_IOCTL_DEV_REPLACE_RESULT_NO_RESULT)
@@ -522,7 +522,7 @@ static int cmd_replace_cancel(int argc, char **argv)
 	ret = ioctl(fd, BTRFS_IOC_DEV_REPLACE, &args);
 	e = errno;
 	close_file_or_dir(fd, dirstream);
-	if (ret) {
+	if (ret < 0) {
 		fprintf(stderr, "ERROR: ioctl(DEV_REPLACE_CANCEL) failed on \"%s\": %s",
 			path, strerror(e));
 		if (args.result != BTRFS_IOCTL_DEV_REPLACE_RESULT_NO_RESULT)

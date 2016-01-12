@@ -265,7 +265,7 @@ static int btrfs_subvolid_resolve_sub(int fd, char *path, size_t *path_len,
 	search_arg.key.max_transid = (u64)-1;
 	search_arg.key.nr_items = 1;
 	ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &search_arg);
-	if (ret) {
+	if (ret < 0) {
 		fprintf(stderr,
 			"ioctl(BTRFS_IOC_TREE_SEARCH, subvol_id %llu) ret=%d, error: %s\n",
 			(unsigned long long)subvol_id, ret, strerror(errno));
@@ -302,7 +302,7 @@ static int btrfs_subvolid_resolve_sub(int fd, char *path, size_t *path_len,
 		ino_lookup_arg.objectid =
 			btrfs_stack_root_ref_dirid(backref_item);
 		ret = ioctl(fd, BTRFS_IOC_INO_LOOKUP, &ino_lookup_arg);
-		if (ret) {
+		if (ret < 0) {
 			fprintf(stderr,
 				"ioctl(BTRFS_IOC_INO_LOOKUP) ret=%d, error: %s\n",
 				ret, strerror(errno));

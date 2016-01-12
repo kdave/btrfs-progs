@@ -50,7 +50,7 @@ static int __ino_to_path_fd(u64 inum, int fd, int verbose, const char *prepend)
 	ipa.fspath = ptr_to_u64(fspath);
 
 	ret = ioctl(fd, BTRFS_IOC_INO_PATHS, &ipa);
-	if (ret) {
+	if (ret < 0) {
 		printf("ioctl ret=%d, error: %s\n", ret, strerror(errno));
 		goto out;
 	}
@@ -189,7 +189,7 @@ static int cmd_inspect_logical_resolve(int argc, char **argv)
 	}
 
 	ret = ioctl(fd, BTRFS_IOC_LOGICAL_INO, &loi);
-	if (ret) {
+	if (ret < 0) {
 		printf("ioctl ret=%d, error: %s\n", ret, strerror(errno));
 		goto out;
 	}

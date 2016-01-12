@@ -240,7 +240,7 @@ static struct btrfs_ioctl_space_args *load_space_info(int fd, char *path)
 	sargs->total_spaces = 0;
 
 	ret = ioctl(fd, BTRFS_IOC_SPACE_INFO, sargs);
-	if (ret) {
+	if (ret < 0) {
 		error("cannot get space info on '%s': %s", path,
 			strerror(errno));
 		free(sargs);
@@ -266,7 +266,7 @@ static struct btrfs_ioctl_space_args *load_space_info(int fd, char *path)
 	sargs->total_spaces = 0;
 
 	ret = ioctl(fd, BTRFS_IOC_SPACE_INFO, sargs);
-	if (ret) {
+	if (ret < 0) {
 		error("cannot get space info with %u slots: %s",
 			count, strerror(errno));
 		free(sargs);

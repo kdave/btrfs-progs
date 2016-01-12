@@ -141,7 +141,7 @@ static int get_df(int fd, struct btrfs_ioctl_space_args **sargs_ret)
 	sargs->total_spaces = 0;
 
 	ret = ioctl(fd, BTRFS_IOC_SPACE_INFO, sargs);
-	if (ret) {
+	if (ret < 0) {
 		error("cannot get space info: %s\n", strerror(errno));
 		free(sargs);
 		return -errno;
@@ -162,7 +162,7 @@ static int get_df(int fd, struct btrfs_ioctl_space_args **sargs_ret)
 	sargs->space_slots = count;
 	sargs->total_spaces = 0;
 	ret = ioctl(fd, BTRFS_IOC_SPACE_INFO, sargs);
-	if (ret) {
+	if (ret < 0) {
 		error("cannot get space info with %llu slots: %s",
 				count, strerror(errno));
 		free(sargs);

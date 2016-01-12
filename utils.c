@@ -2077,7 +2077,7 @@ int get_device_info(int fd, u64 devid,
 	memset(&di_args->uuid, '\0', sizeof(di_args->uuid));
 
 	ret = ioctl(fd, BTRFS_IOC_DEV_INFO, di_args);
-	return ret ? -errno : 0;
+	return ret < 0 ? -errno : 0;
 }
 
 static u64 find_max_device_id(struct btrfs_ioctl_search_args *search_args,
@@ -2700,7 +2700,7 @@ int lookup_ino_rootid(int fd, u64 *rootid)
 	args.objectid = BTRFS_FIRST_FREE_OBJECTID;
 
 	ret = ioctl(fd, BTRFS_IOC_INO_LOOKUP, &args);
-	if (ret) {
+	if (ret < 0) {
 		fprintf(stderr, "ERROR: Failed to lookup root id - %s\n",
 			strerror(errno));
 		return ret;
