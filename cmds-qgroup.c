@@ -99,11 +99,11 @@ static int qgroup_assign(int assign, int argc, char **argv)
 	 */
 	if (ret > 0) {
 		if (rescan) {
-			struct btrfs_ioctl_quota_rescan_args args;
+			struct btrfs_ioctl_quota_rescan_args qargs;
 
 			printf("Quota data changed, rescan scheduled\n");
-			memset(&args, 0, sizeof(args));
-			ret = ioctl(fd, BTRFS_IOC_QUOTA_RESCAN, &args);
+			memset(&qargs, 0, sizeof(qargs));
+			ret = ioctl(fd, BTRFS_IOC_QUOTA_RESCAN, &qargs);
 			if (ret < 0)
 				error("quota rescan failed: %s",
 					strerror(errno));
