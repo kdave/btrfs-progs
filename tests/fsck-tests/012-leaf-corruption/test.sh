@@ -2,6 +2,8 @@
 
 source $TOP/tests/common
 
+check_prereq btrfs-image
+
 # Check file list for leaf corruption, no regular/preallocated
 # file extent case.
 # Corrupted leaf is 20832256, which contains inode 1862~1872

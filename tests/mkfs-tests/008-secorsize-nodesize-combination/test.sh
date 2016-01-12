@@ -8,6 +8,7 @@ source $TOP/tests/common
 
 check_prereq mkfs.btrfs
 check_prereq btrfs
+
 prepare_test_dev
 
 # disable mixed bg to avoid sectorsize == nodesize check

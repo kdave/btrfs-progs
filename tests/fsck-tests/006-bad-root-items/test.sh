@@ -2,6 +2,8 @@
 
 source $TOP/tests/common
 
+check_prereq btrfs
+
 echo "extracting image default_case.tar.xz" >> $RESULTS
 tar --no-same-owner -xJf default_case.tar.xz || \
 	_fail "failed to extract default_case.tar.xz"

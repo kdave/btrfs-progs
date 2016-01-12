@@ -2,8 +2,11 @@
 
 source $TOP/tests/common
 
+check_prereq btrfs-corrupt-block
 check_prereq btrfs-debug-tree
 check_prereq mkfs.btrfs
+check_prereq btrfs
+
 setup_root_helper
 prepare_test_dev 1G
 

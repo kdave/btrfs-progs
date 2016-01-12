@@ -4,8 +4,8 @@
 
 source $TOP/tests/common
 
-check_prereq btrfs-show-super
 check_prereq mkfs.btrfs
+
 setup_root_helper
 
 run_check truncate -s 512M $IMAGE
