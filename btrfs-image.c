@@ -2822,9 +2822,8 @@ int main(int argc, char *argv[])
 					  OPEN_CTREE_PARTIAL |
 					  OPEN_CTREE_RESTORE);
 		if (!info) {
-			int e = errno;
 			fprintf(stderr, "unable to open %s error = %s\n",
-				target, strerror(e));
+				target, strerror(errno));
 			return 1;
 		}
 

@@ -130,7 +130,7 @@ static const char * const cmd_filesystem_df_usage[] = {
 static int get_df(int fd, struct btrfs_ioctl_space_args **sargs_ret)
 {
 	u64 count = 0;
-	int ret, e;
+	int ret;
 	struct btrfs_ioctl_space_args *sargs;
 
 	sargs = malloc(sizeof(struct btrfs_ioctl_space_args));
@@ -141,11 +141,10 @@ static int get_df(int fd, struct btrfs_ioctl_space_args **sargs_ret)
 	sargs->total_spaces = 0;
 
 	ret = ioctl(fd, BTRFS_IOC_SPACE_INFO, sargs);
-	e = errno;
 	if (ret) {
-		error("cannot get space info: %s\n", strerror(e));
+		error("cannot get space info: %s\n", strerror(errno));
 		free(sargs);
-		return -e;
+		return -errno;
 	}
 	/* This really should never happen */
 	if (!sargs->total_spaces) {
@@ -163,12 +162,11 @@ static int get_df(int fd, struct btrfs_ioctl_space_args **sargs_ret)
 	sargs->space_slots = count;
 	sargs->total_spaces = 0;
 	ret = ioctl(fd, BTRFS_IOC_SPACE_INFO, sargs);
-	e = errno;
 	if (ret) {
 		error("cannot get space info with %llu slots: %s",
-				count, strerror(e));
+				count, strerror(errno));
 		free(sargs);
-		return -e;
+		return -errno;
 	}
 	*sargs_ret = sargs;
 	return 0;
@@ -995,7 +993,6 @@ static int defrag_callback(const char *fpath, const struct stat *sb,
 		if (defrag_global_verbose)
 			printf("%s\n", fpath);
 		fd = open(fpath, O_RDWR);
-		e = errno;
 		if (fd < 0)
 			goto error;
 		ret = do_defrag(fd, defrag_global_fancy_ioctl, &defrag_global_range);

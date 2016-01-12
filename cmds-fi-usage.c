@@ -228,7 +228,7 @@ static int cmp_btrfs_ioctl_space_info(const void *a, const void *b)
 static struct btrfs_ioctl_space_args *load_space_info(int fd, char *path)
 {
 	struct btrfs_ioctl_space_args *sargs = NULL, *sargs_orig = NULL;
-	int e, ret, count;
+	int ret, count;
 
 	sargs_orig = sargs = calloc(1, sizeof(struct btrfs_ioctl_space_args));
 	if (!sargs) {
@@ -240,9 +240,9 @@ static struct btrfs_ioctl_space_args *load_space_info(int fd, char *path)
 	sargs->total_spaces = 0;
 
 	ret = ioctl(fd, BTRFS_IOC_SPACE_INFO, sargs);
-	e = errno;
 	if (ret) {
-		error("cannot get space info on '%s': %s", path, strerror(e));
+		error("cannot get space info on '%s': %s", path,
+			strerror(errno));
 		free(sargs);
 		return NULL;
 	}
@@ -266,11 +266,9 @@ static struct btrfs_ioctl_space_args *load_space_info(int fd, char *path)
 	sargs->total_spaces = 0;
 
 	ret = ioctl(fd, BTRFS_IOC_SPACE_INFO, sargs);
-	e = errno;
-
 	if (ret) {
 		error("cannot get space info with %u slots: %s",
-			count, strerror(e));
+			count, strerror(errno));
 		free(sargs);
 		return NULL;
 	}

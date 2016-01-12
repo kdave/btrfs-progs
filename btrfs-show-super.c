@@ -144,17 +144,15 @@ static int load_and_dump_sb(char *filename, int fd, u64 sb_bytenr, int full,
 
 	ret = pread64(fd, super_block_data, BTRFS_SUPER_INFO_SIZE, sb_bytenr);
 	if (ret != BTRFS_SUPER_INFO_SIZE) {
-		int e = errno;
-
 		/* check if the disk if too short for further superblock */
-		if (ret == 0 && e == 0)
+		if (ret == 0 && errno == 0)
 			return 0;
 
 		fprintf(stderr,
 		   "ERROR: Failed to read the superblock on %s at %llu\n",
 		   filename, (unsigned long long)sb_bytenr);
 		fprintf(stderr,
-		   "ERROR: error = '%s', errno = %d\n", strerror(e), e);
+		   "ERROR: error = '%s', errno = %d\n", strerror(errno), errno);
 		return 1;
 	}
 	printf("superblock: bytenr=%llu, device=%s\n", sb_bytenr, filename);

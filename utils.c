@@ -1516,7 +1516,6 @@ int btrfs_register_one_device(const char *fname)
 	struct btrfs_ioctl_vol_args args;
 	int fd;
 	int ret;
-	int e;
 
 	fd = open("/dev/btrfs-control", O_RDWR);
 	if (fd < 0) {
@@ -1528,11 +1527,10 @@ int btrfs_register_one_device(const char *fname)
 	memset(&args, 0, sizeof(args));
 	strncpy_null(args.name, fname);
 	ret = ioctl(fd, BTRFS_IOC_SCAN_DEV, &args);
-	e = errno;
 	if (ret < 0) {
 		fprintf(stderr, "ERROR: device scan failed '%s' - %s\n",
-			fname, strerror(e));
-		ret = -e;
+			fname, strerror(errno));
+		ret = -errno;
 	}
 	close(fd);
 	return ret;
@@ -2696,17 +2694,15 @@ int lookup_ino_rootid(int fd, u64 *rootid)
 {
 	struct btrfs_ioctl_ino_lookup_args args;
 	int ret;
-	int e;
 
 	memset(&args, 0, sizeof(args));
 	args.treeid = 0;
 	args.objectid = BTRFS_FIRST_FREE_OBJECTID;
 
 	ret = ioctl(fd, BTRFS_IOC_INO_LOOKUP, &args);
-	e = errno;
 	if (ret) {
 		fprintf(stderr, "ERROR: Failed to lookup root id - %s\n",
-			strerror(e));
+			strerror(errno));
 		return ret;
 	}
 

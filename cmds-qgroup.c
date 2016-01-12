@@ -36,7 +36,6 @@ static int qgroup_assign(int assign, int argc, char **argv)
 {
 	int ret = 0;
 	int fd;
-	int e;
 	int rescan = 0;
 	char *path;
 	struct btrfs_ioctl_qgroup_assign_args args;
@@ -84,9 +83,8 @@ static int qgroup_assign(int assign, int argc, char **argv)
 		return 1;
 
 	ret = ioctl(fd, BTRFS_IOC_QGROUP_ASSIGN, &args);
-	e = errno;
 	if (ret < 0) {
-		error("unable to assign quota group: %s", strerror(e));
+		error("unable to assign quota group: %s", strerror(errno));
 		close_file_or_dir(fd, dirstream);
 		return 1;
 	}

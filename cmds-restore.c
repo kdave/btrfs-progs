@@ -539,13 +539,10 @@ static int set_file_xattrs(struct btrfs_root *root, u64 inode,
 					   len);
 			data_len = len;
 
-			if (fsetxattr(fd, name, data, data_len, 0)) {
-				int err = errno;
-
+			if (fsetxattr(fd, name, data, data_len, 0))
 				fprintf(stderr,
 					"Error setting extended attribute %s on file %s: %s\n",
-					name, file_name, strerror(err));
-			}
+					name, file_name, strerror(errno));
 
 			len = sizeof(*di) + name_len + data_len;
 			cur += len;

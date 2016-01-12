@@ -545,7 +545,6 @@ int subvol_uuid_search_init(int mnt_fd, struct subvol_uuid_search *s)
 	int root_item_valid = 0;
 	unsigned long off = 0;
 	int i;
-	int e;
 	char *path;
 
 	s->mnt_fd = mnt_fd;
@@ -579,10 +578,9 @@ int subvol_uuid_search_init(int mnt_fd, struct subvol_uuid_search *s)
 
 	while (1) {
 		ret = ioctl(mnt_fd, BTRFS_IOC_TREE_SEARCH, &args);
-		e = errno;
 		if (ret < 0) {
 			fprintf(stderr, "ERROR: can't perform the search - %s\n",
-				strerror(e));
+				strerror(errno));
 			return ret;
 		}
 		if (sk->nr_items == 0)

@@ -49,7 +49,7 @@ static const char * const cmd_device_add_usage[] = {
 static int cmd_device_add(int argc, char **argv)
 {
 	char	*mntpnt;
-	int	i, fdmnt, ret=0, e;
+	int i, fdmnt, ret = 0;
 	DIR	*dirstream = NULL;
 	int discard = 1;
 	int force = 0;
@@ -126,10 +126,9 @@ static int cmd_device_add(int argc, char **argv)
 		memset(&ioctl_args, 0, sizeof(ioctl_args));
 		strncpy_null(ioctl_args.name, path);
 		res = ioctl(fdmnt, BTRFS_IOC_ADD_DEV, &ioctl_args);
-		e = errno;
 		if (res < 0) {
 			error("error adding device '%s': %s",
-				path, strerror(e));
+				path, strerror(errno));
 			ret++;
 		}
 		free(path);
@@ -144,7 +143,7 @@ static int _cmd_device_remove(int argc, char **argv,
 		const char * const *usagestr)
 {
 	char	*mntpnt;
-	int	i, fdmnt, ret=0, e;
+	int i, fdmnt, ret = 0;
 	DIR	*dirstream = NULL;
 
 	if (check_argc_min(argc, 3))
@@ -168,14 +167,13 @@ static int _cmd_device_remove(int argc, char **argv,
 		memset(&arg, 0, sizeof(arg));
 		strncpy_null(arg.name, argv[i]);
 		res = ioctl(fdmnt, BTRFS_IOC_RM_DEV, &arg);
-		e = errno;
 		if (res) {
 			const char *msg;
 
 			if (res > 0)
 				msg = btrfs_err_str(res);
 			else
-				msg = strerror(e);
+				msg = strerror(errno);
 			error("error removing device '%s': %s",
 				argv[i], msg);
 			ret++;

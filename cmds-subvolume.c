@@ -264,7 +264,7 @@ static const char * const cmd_subvol_delete_usage[] = {
 
 static int cmd_subvol_delete(int argc, char **argv)
 {
-	int	res, e, ret = 0;
+	int res, ret = 0;
 	int cnt;
 	int fd = -1;
 	struct btrfs_ioctl_vol_args	args;
@@ -355,10 +355,9 @@ again:
 	memset(&args, 0, sizeof(args));
 	strncpy_null(args.name, vname);
 	res = ioctl(fd, BTRFS_IOC_SNAP_DESTROY, &args);
-	e = errno;
-
 	if(res < 0 ){
-		error("cannot delete '%s/%s': %s", dname, vname, strerror(e));
+		error("cannot delete '%s/%s': %s", dname, vname,
+			strerror(errno));
 		ret = 1;
 		goto out;
 	}

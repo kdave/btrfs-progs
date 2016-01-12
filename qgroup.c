@@ -1050,7 +1050,6 @@ static int __qgroups_search(int fd, struct qgroup_lookup *qgroup_lookup)
 	struct btrfs_ioctl_search_header *sh;
 	unsigned long off = 0;
 	unsigned int i;
-	int e;
 	struct btrfs_qgroup_info_item *info;
 	struct btrfs_qgroup_limit_item *limit;
 	struct btrfs_qgroup *bq;
@@ -1075,11 +1074,10 @@ static int __qgroups_search(int fd, struct qgroup_lookup *qgroup_lookup)
 
 	while (1) {
 		ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &args);
-		e = errno;
 		if (ret < 0) {
 			fprintf(stderr,
 				"ERROR: can't perform the search - %s\n",
-				strerror(e));
+				strerror(errno));
 			return ret;
 		}
 		/* the ioctl returns the number of item it found in nr_items */
