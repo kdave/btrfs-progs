@@ -63,8 +63,8 @@ static int add_info_to_list(struct chunk_info **info_ptr,
 			}
 
 		if (!p) {
-			int size = sizeof(struct btrfs_chunk) * (*info_count+1);
-			struct chunk_info *res = realloc(*info_ptr, size);
+			int tmp = sizeof(struct btrfs_chunk) * (*info_count + 1);
+			struct chunk_info *res = realloc(*info_ptr, tmp);
 
 			if (!res) {
 				free(*info_ptr);
