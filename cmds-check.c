@@ -9218,11 +9218,11 @@ static int build_roots_info_cache(struct btrfs_fs_info *info)
 			iref = (struct btrfs_extent_inline_ref *)(ei + 1);
 			level = found_key.offset;
 		} else {
-			struct btrfs_tree_block_info *info;
+			struct btrfs_tree_block_info *binfo;
 
-			info = (struct btrfs_tree_block_info *)(ei + 1);
-			iref = (struct btrfs_extent_inline_ref *)(info + 1);
-			level = btrfs_tree_block_level(leaf, info);
+			binfo = (struct btrfs_tree_block_info *)(ei + 1);
+			iref = (struct btrfs_extent_inline_ref *)(binfo + 1);
+			level = btrfs_tree_block_level(leaf, binfo);
 		}
 
 		/*
