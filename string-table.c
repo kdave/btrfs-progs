@@ -69,6 +69,7 @@ char *table_vprintf(struct string_table *tab, int column, int row,
  * This function is like a printf, but store the results in a cell of
  * the table.
  */
+__attribute__ ((format (printf, 4, 5)))
 char *table_printf(struct string_table *tab, int column, int row,
 			  char *fmt, ...)
 {

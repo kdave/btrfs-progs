@@ -276,6 +276,7 @@ const char *get_argv0_buf(void);
 unsigned int get_unit_mode_from_arg(int *argc, char *argv[], int df_mode);
 int string_is_numerical(const char *str);
 
+__attribute__ ((format (printf, 1, 2)))
 static inline void warning(const char *fmt, ...)
 {
 	va_list args;
@@ -287,6 +288,7 @@ static inline void warning(const char *fmt, ...)
 	fputc('\n', stderr);
 }
 
+__attribute__ ((format (printf, 1, 2)))
 static inline void error(const char *fmt, ...)
 {
 	va_list args;
@@ -298,6 +300,7 @@ static inline void error(const char *fmt, ...)
 	fputc('\n', stderr);
 }
 
+__attribute__ ((format (printf, 2, 3)))
 static inline int warning_on(int condition, const char *fmt, ...)
 {
 	va_list args;
@@ -314,6 +317,7 @@ static inline int warning_on(int condition, const char *fmt, ...)
 	return 1;
 }
 
+__attribute__ ((format (printf, 2, 3)))
 static inline int error_on(int condition, const char *fmt, ...)
 {
 	va_list args;
