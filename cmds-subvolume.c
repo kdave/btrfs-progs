@@ -158,6 +158,10 @@ static int cmd_subvol_create(int argc, char **argv)
 
 	retval = 1;	/* failure */
 	res = test_isdir(dst);
+	if (res < 0 && res != -ENOENT) {
+		error("cannot access %s: %s", dst, strerror(-res));
+		goto out;
+	}
 	if (res >= 0) {
 		error("target path already exists: %s", dst);
 		goto out;
@@ -684,6 +688,10 @@ static int cmd_subvol_snapshot(int argc, char **argv)
 	}
 
 	res = test_isdir(dst);
+	if (res < 0 && res != -ENOENT) {
+		error("cannot access %s: %s", dst, strerror(-res));
+		goto out;
+	}
 	if (res == 0) {
 		error("'%s' exists and it is not a directory", dst);
 		goto out;
