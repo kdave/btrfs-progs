@@ -325,7 +325,7 @@ again:
 
 	res = test_issubvolume(path);
 	if (res < 0) {
-		error("cannot access subvolume %s", path);
+		error("cannot access subvolume %s: %s", path, strerror(-res));
 		ret = 1;
 		goto out;
 	}
@@ -680,7 +680,7 @@ static int cmd_subvol_snapshot(int argc, char **argv)
 	retval = 1;	/* failure */
 	res = test_issubvolume(subvol);
 	if (res < 0) {
-		error("cannot access subvolume %s", subvol);
+		error("cannot access subvolume %s: %s", subvol, strerror(-res));
 		goto out;
 	}
 	if (!res) {
@@ -886,7 +886,7 @@ static int cmd_subvol_find_new(int argc, char **argv)
 
 	ret = test_issubvolume(subvol);
 	if (ret < 0) {
-		error("cannot access subvolume %s", subvol);
+		error("cannot access subvolume %s: %s", subvol, strerror(-ret));
 		return 1;
 	}
 	if (!ret) {
@@ -957,7 +957,8 @@ static int cmd_subvol_show(int argc, char **argv)
 
 	ret = test_issubvolume(fullpath);
 	if (ret < 0) {
-		error("cannot access subvolume %s", fullpath);
+		error("cannot access subvolume %s: %s", fullpath,
+			strerror(-ret));
 		goto out;
 	}
 	if (!ret) {

@@ -434,7 +434,7 @@ static int cmd_qgroup_limit(int argc, char **argv)
 		path = argv[optind + 1];
 		ret = test_issubvolume(path);
 		if (ret < 0) {
-			error("cannot access '%s'", path);
+			error("cannot access '%s': %s", path, strerror(-ret));
 			return 1;
 		}
 		if (!ret) {
