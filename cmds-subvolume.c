@@ -223,20 +223,20 @@ out:
 }
 
 /*
- * test if path is a subvolume:
- * this function return
- * 0-> path exists but it is not a subvolume
- * 1-> path exists and it is  a subvolume
- * -1 -> path is unaccessible
+ * Test if path is a subvolume
+ * Returns:
+ *   0 - path exists but it is not a subvolume
+ *   1 - path exists and it is  a subvolume
+ * < 0 - error
  */
-int test_issubvolume(char *path)
+int test_issubvolume(const char *path)
 {
 	struct stat	st;
 	int		res;
 
 	res = stat(path, &st);
-	if(res < 0 )
-		return -1;
+	if (res < 0)
+		return -errno;
 
 	return (st.st_ino == BTRFS_FIRST_FREE_OBJECTID)
 		&& S_ISDIR(st.st_mode);
