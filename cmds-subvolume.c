@@ -921,13 +921,28 @@ static int cmd_subvol_show(int argc, char **argv)
 	int ret = 1;
 	DIR *dirstream1 = NULL, *dirstream2 = NULL;
 
-	if (check_argc_exact(argc, 2))
+	while (1) {
+		static const struct option long_options[] = {
+			{NULL, 0, NULL, 0}
+		};
+		int c = getopt_long(argc, argv, "", long_options, NULL);
+
+		if (c < 0)
+			break;
+
+		switch (c) {
+		default:
+			usage(cmd_subvol_show_usage);
+		}
+	}
+
+	if (check_argc_exact(argc - optind, 1))
 		usage(cmd_subvol_show_usage);
 
-	fullpath = realpath(argv[1], NULL);
+	fullpath = realpath(argv[optind], NULL);
 	if (!fullpath) {
 		error("cannot find real path for '%s': %s",
-			argv[1], strerror(errno));
+			argv[optind], strerror(errno));
 		goto out;
 	}
 
