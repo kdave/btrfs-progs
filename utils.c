@@ -2799,11 +2799,11 @@ int test_issubvolname(const char *name)
 }
 
 /*
- * test if path is a directory
- * this function return
- * 0-> path exists but it is not a directory
- * 1-> path exists and it is a directory
- * -1 -> path is unaccessible
+ * Test if path is a directory
+ * Returns:
+ *   0 - path exists but it is not a directory
+ *   1 - path exists and it is a directory
+ * < 0 - error
  */
 int test_isdir(const char *path)
 {
@@ -2811,10 +2811,10 @@ int test_isdir(const char *path)
 	int ret;
 
 	ret = stat(path, &st);
-	if(ret < 0 )
-		return -1;
+	if (ret < 0)
+		return -errno;
 
-	return S_ISDIR(st.st_mode);
+	return !!S_ISDIR(st.st_mode);
 }
 
 void units_set_mode(unsigned *units, unsigned mode)
