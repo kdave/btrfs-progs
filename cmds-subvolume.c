@@ -21,10 +21,12 @@
 #include <sys/ioctl.h>
 #include <errno.h>
 #include <sys/stat.h>
+#include <sys/vfs.h>
 #include <libgen.h>
 #include <limits.h>
 #include <getopt.h>
 #include <uuid/uuid.h>
+#include <linux/magic.h>
 
 #include "kerncompat.h"
 #include "ioctl.h"
@@ -232,14 +234,21 @@ out:
 int test_issubvolume(const char *path)
 {
 	struct stat	st;
+	struct statfs stfs;
 	int		res;
 
 	res = stat(path, &st);
 	if (res < 0)
 		return -errno;
 
-	return (st.st_ino == BTRFS_FIRST_FREE_OBJECTID)
-		&& S_ISDIR(st.st_mode);
+	if (st.st_ino != BTRFS_FIRST_FREE_OBJECTID || !S_ISDIR(st.st_mode))
+		return 0;
+
+	res = statfs(path, &stfs);
+	if (res < 0)
+		return -errno;
+
+	return (int)stfs.f_type == BTRFS_SUPER_MAGIC;
 }
 
 static int wait_for_commit(int fd)
