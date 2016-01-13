@@ -263,6 +263,29 @@ again:
 	if (!extent_buffer_uptodate(tree_root_scan->node))
 		goto no_node;
 
+	/*
+	 * Tree's that are not pointed by the tree of tree roots
+	 */
+	if (tree_id && tree_id == BTRFS_ROOT_TREE_OBJECTID) {
+		if (!info->tree_root) {
+			error("cannot print root tree, invalid pointer");
+			goto no_node;
+		}
+		printf("root tree\n");
+		btrfs_print_tree(info->tree_root, info->tree_root->node, 1);
+		goto no_node;
+	}
+
+	if (tree_id && tree_id == BTRFS_CHUNK_TREE_OBJECTID) {
+		if (!info->chunk_root) {
+			error("cannot print chunk tree, invalid pointer");
+			goto no_node;
+		}
+		printf("chunk tree\n");
+		btrfs_print_tree(info->chunk_root, info->chunk_root->node, 1);
+		goto no_node;
+	}
+
 	key.offset = 0;
 	key.objectid = 0;
 	btrfs_set_key_type(&key, BTRFS_ROOT_ITEM_KEY);
