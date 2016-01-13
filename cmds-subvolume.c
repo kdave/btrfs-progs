@@ -238,7 +238,8 @@ int test_issubvolume(char *path)
 	if(res < 0 )
 		return -1;
 
-	return (st.st_ino == 256) && S_ISDIR(st.st_mode);
+	return (st.st_ino == BTRFS_FIRST_FREE_OBJECTID)
+		&& S_ISDIR(st.st_mode);
 }
 
 static int wait_for_commit(int fd)
