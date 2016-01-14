@@ -1266,6 +1266,8 @@ int cmd_receive(int argc, char **argv)
 	}
 
 	ret = do_receive(&r, tomnt, realmnt, receive_fd, max_errors);
+	if (receive_fd != fileno(stdin))
+		close(receive_fd);
 
 out:
 
