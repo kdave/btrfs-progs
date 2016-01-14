@@ -37,6 +37,7 @@
 #include <sys/vfs.h>
 #include <sys/statfs.h>
 #include <linux/magic.h>
+#include <getopt.h>
 
 #include "kerncompat.h"
 #include "radix-tree.h"
@@ -47,6 +48,7 @@
 #include "utils.h"
 #include "volumes.h"
 #include "ioctl.h"
+#include "commands.h"
 
 #ifndef BLKDISCARD
 #define BLKDISCARD	_IO(0x12,119)
@@ -3118,4 +3120,30 @@ int string_is_numerical(const char *str)
 	if (*str != '\0')
 		return 0;
 	return 1;
+}
+
+/*
+ * Preprocess @argv with getopt_long to reorder options and consume the "--"
+ * option separator.
+ * Unknown short and long options are reported, optionally the @usage is printed
+ * before exit.
+ */
+void clean_args_no_options(int argc, char *argv[], const char * const *usagestr)
+{
+	static const struct option long_options[] = {
+		{NULL, 0, NULL, 0}
+	};
+
+	while (1) {
+		int c = getopt_long(argc, argv, "", long_options, NULL);
+
+		if (c < 0)
+			break;
+
+		switch (c) {
+		default:
+			if (usagestr)
+				usage(usagestr);
+		}
+	}
 }

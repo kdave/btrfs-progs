@@ -274,6 +274,7 @@ const char *get_argv0_buf(void);
 	"-t|--tbytes        show sizes in TiB, or TB with --si"
 
 unsigned int get_unit_mode_from_arg(int *argc, char *argv[], int df_mode);
+void clean_args_no_options(int argc, char *argv[], const char * const *usage);
 int string_is_numerical(const char *str);
 
 __attribute__ ((format (printf, 1, 2)))
