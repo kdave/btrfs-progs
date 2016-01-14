@@ -35,7 +35,7 @@ AC_SYS_LARGEFILE
 
 AC_PROG_INSTALL
 AC_PROG_LN_S
-AC_PATH_PROG([AR], [ar])
+AC_CHECK_TOOL([AR], [ar])
 AC_PATH_PROG([RM], [rm], [rm])
 AC_PATH_PROG([RMDIR], [rmdir], [rmdir])
 
