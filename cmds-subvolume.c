@@ -939,20 +939,7 @@ static int cmd_subvol_show(int argc, char **argv)
 	int ret = 1;
 	DIR *dirstream1 = NULL, *dirstream2 = NULL;
 
-	while (1) {
-		static const struct option long_options[] = {
-			{NULL, 0, NULL, 0}
-		};
-		int c = getopt_long(argc, argv, "", long_options, NULL);
-
-		if (c < 0)
-			break;
-
-		switch (c) {
-		default:
-			usage(cmd_subvol_show_usage);
-		}
-	}
+	clean_args_no_options(argc, argv, cmd_subvol_show_usage);
 
 	if (check_argc_exact(argc - optind, 1))
 		usage(cmd_subvol_show_usage);
