@@ -267,7 +267,7 @@ again:
 	 * Tree's that are not pointed by the tree of tree roots
 	 */
 	if (tree_id && tree_id == BTRFS_ROOT_TREE_OBJECTID) {
-		if (!info->tree_root) {
+		if (!info->tree_root->node) {
 			error("cannot print root tree, invalid pointer");
 			goto no_node;
 		}
@@ -277,7 +277,7 @@ again:
 	}
 
 	if (tree_id && tree_id == BTRFS_CHUNK_TREE_OBJECTID) {
-		if (!info->chunk_root) {
+		if (!info->chunk_root->node) {
 			error("cannot print chunk tree, invalid pointer");
 			goto no_node;
 		}
