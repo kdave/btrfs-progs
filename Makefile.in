@@ -265,9 +265,9 @@ btrfs: $(objects) btrfs.o $(cmds_objects) $(libs_static)
 	$(Q)$(CC) $(CFLAGS) -o btrfs btrfs.o $(cmds_objects) \
 		$(objects) $(libs_static) $(LDFLAGS) $(LIBS)
 
-btrfs.static: $(static_objects) btrfs.static.o help.static.o $(static_cmds_objects) $(static_libbtrfs_objects)
+btrfs.static: $(static_objects) btrfs.static.o $(static_cmds_objects) $(static_libbtrfs_objects)
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(STATIC_CFLAGS) -o btrfs.static btrfs.static.o help.static.o $(static_cmds_objects) \
+	$(Q)$(CC) $(STATIC_CFLAGS) -o btrfs.static btrfs.static.o $(static_cmds_objects) \
 		$(static_objects) $(static_libbtrfs_objects) $(STATIC_LDFLAGS) $(STATIC_LIBS)
 
 # For backward compatibility, 'btrfs' changes behaviour to fsck if it's named 'btrfsck'
