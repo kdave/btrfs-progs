@@ -118,6 +118,7 @@ static const char * const cmd_subvol_create_usage[] = {
 static int cmd_subvol_create(int argc, char **argv)
 {
 	int	retval, res, len;
+	int	verbose = 0;
 	int	fddst = -1;
 	char	*dupname = NULL;
 	char	*dupdir = NULL;
@@ -147,6 +148,9 @@ static int cmd_subvol_create(int argc, char **argv)
 				retval = res;
 				goto out;
 			}
+			break;
+		case 'v':
+			verbose++;
 			break;
 		default:
 			usage(cmd_subvol_create_usage);
@@ -189,7 +193,9 @@ static int cmd_subvol_create(int argc, char **argv)
 	if (fddst < 0)
 		goto out;
 
-	printf("Create subvolume '%s/%s'\n", dstdir, newname);
+	if (verbose)
+		printf("Create subvolume '%s/%s'\n", dstdir, newname);
+
 	if (inherit) {
 		struct btrfs_ioctl_vol_args_v2	args;
 
@@ -299,7 +305,7 @@ static int cmd_subvol_delete(int argc, char **argv)
 			{NULL, 0, NULL, 0}
 		};
 
-		c = getopt_long(argc, argv, "cC", long_options, NULL);
+		c = getopt_long(argc, argv, "cCv", long_options, NULL);
 		if (c < 0)
 			break;
 
@@ -321,7 +327,7 @@ static int cmd_subvol_delete(int argc, char **argv)
 	if (check_argc_min(argc - optind, 1))
 		usage(cmd_subvol_delete_usage);
 
-	if (verbose > 0) {
+	if (verbose > 1) {
 		printf("Transaction commit: %s\n",
 			!commit_mode ? "none (default)" :
 			commit_mode == 1 ? "at the end" : "after each");
@@ -363,9 +369,10 @@ again:
 		goto out;
 	}
 
-	printf("Delete subvolume (%s): '%s/%s'\n",
-		commit_mode == 2 || (commit_mode == 1 && cnt + 1 == argc)
-		? "commit" : "no-commit", dname, vname);
+	if (verbose)
+		printf("Delete subvolume (%s): '%s/%s'\n",
+			commit_mode == 2 || (commit_mode == 1 && cnt + 1 == argc)
+			? "commit" : "no-commit", dname, vname);
 	memset(&args, 0, sizeof(args));
 	strncpy_null(args.name, vname);
 	res = ioctl(fd, BTRFS_IOC_SNAP_DESTROY, &args);
@@ -635,6 +642,7 @@ static int cmd_subvol_snapshot(int argc, char **argv)
 	int	res, retval;
 	int	fd = -1, fddst = -1;
 	int	len, readonly = 0;
+	int	verbose = 0;
 	char	*dupname = NULL;
 	char	*dupdir = NULL;
 	char	*newname;
@@ -646,7 +654,7 @@ static int cmd_subvol_snapshot(int argc, char **argv)
 	optind = 1;
 	memset(&args, 0, sizeof(args));
 	while (1) {
-		int c = getopt(argc, argv, "c:i:r");
+		int c = getopt(argc, argv, "c:i:rv");
 		if (c < 0)
 			break;
 
@@ -667,6 +675,9 @@ static int cmd_subvol_snapshot(int argc, char **argv)
 			break;
 		case 'r':
 			readonly = 1;
+			break;
+		case 'v':
+			verbose++;
 			break;
 		case 'x':
 			res = qgroup_inherit_add_copy(&inherit, optarg, 1);
@@ -737,13 +748,15 @@ static int cmd_subvol_snapshot(int argc, char **argv)
 	if (fd < 0)
 		goto out;
 
-	if (readonly) {
-		args.flags |= BTRFS_SUBVOL_RDONLY;
-		printf("Create a readonly snapshot of '%s' in '%s/%s'\n",
-		       subvol, dstdir, newname);
-	} else {
-		printf("Create a snapshot of '%s' in '%s/%s'\n",
-		       subvol, dstdir, newname);
+	if (verbose) {
+		if (readonly) {
+			args.flags |= BTRFS_SUBVOL_RDONLY;
+			printf("Create a readonly snapshot of '%s' in '%s/%s'\n",
+			       subvol, dstdir, newname);
+		} else {
+			printf("Create a snapshot of '%s' in '%s/%s'\n",
+			       subvol, dstdir, newname);
+		}
 	}
 
 	args.fd = fd;
