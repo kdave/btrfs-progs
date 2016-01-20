@@ -37,7 +37,7 @@
 #include "cmds-fi-usage.h"
 #include "list_sort.h"
 #include "disk-io.h"
-
+#include "cmds-fi-du.h"
 
 /*
  * for btrfs fi show, we maintain a hash of fsids we've already printed.
@@ -1270,6 +1270,7 @@ static const char filesystem_cmd_group_info[] =
 const struct cmd_group filesystem_cmd_group = {
 	filesystem_cmd_group_usage, filesystem_cmd_group_info, {
 		{ "df", cmd_filesystem_df, cmd_filesystem_df_usage, NULL, 0 },
+		{ "du", cmd_filesystem_du, cmd_filesystem_du_usage, NULL, 0 },
 		{ "show", cmd_filesystem_show, cmd_filesystem_show_usage, NULL,
 			0 },
 		{ "sync", cmd_filesystem_sync, cmd_filesystem_sync_usage, NULL,
