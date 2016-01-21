@@ -379,9 +379,8 @@ install: $(libs) $(progs_install) $(INSTALLDIRS)
 	$(INSTALL) -m644 $(headers) $(DESTDIR)$(incdir)
 
 install-static: $(progs_static) $(INSTALLDIRS)
-	for p in $(progs_static) ; do \
-		$(INSTALL) -D -m755 $$p $(DESTDIR)$(bindir)/ ; \
-	done
+	$(INSTALL) -m755 -d $(DESTDIR)$(bindir)
+	$(INSTALL) $(progs_static) $(DESTDIR)$(bindir)
 	# btrfsck is a link to btrfs in the src tree, make it so for installed file as well
 	$(LN_S) -f btrfs.static $(DESTDIR)$(bindir)/btrfsck.static
 
