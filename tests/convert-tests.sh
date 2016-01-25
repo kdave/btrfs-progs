@@ -45,10 +45,14 @@ convert_test() {
 	run_check $SUDO_HELPER mount -o loop $IMAGE $TEST_MNT
 	run_check $SUDO_HELPER dd if=/dev/zero of=$TEST_MNT/test bs=$nodesize \
 		count=1 1>/dev/null 2>&1
+	run_check_stdout $SUDO_HELPER md5sum $TEST_MNT/test > $TEST_MNT/test.md5sum
 	run_check $SUDO_HELPER umount $TEST_MNT
 	run_check $TOP/btrfs-convert ${features:+-O "$features"} -N "$nodesize" $IMAGE
 	run_check $TOP/btrfs check $IMAGE
 	run_check $TOP/btrfs-show-super $IMAGE
+	run_check $SUDO_HELPER mount -o loop $IMAGE $TEST_MNT
+	run_check_stdout $SUDO_HELPER md5sum -c $TEST_MNT/test.md5sum | grep -q 'OK' || _fail "file validation failed."
+	run_check $SUDO_HELPER umount $TEST_MNT
 }
 
 if ! [ -z "$TEST" ]; then
