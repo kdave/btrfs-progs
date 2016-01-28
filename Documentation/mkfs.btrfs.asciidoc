@@ -78,7 +78,7 @@ where the space is reserved for the other block group type, is not available for
 allocation and can lead to ENOSPC state.
 +
 The recommended size for the mixed mode is for filesystems less than 1GiB. The
-soft recommendation is to use it for filesystems smaller than 5GiB. Thie mixed
+soft recommendation is to use it for filesystems smaller than 5GiB. The mixed
 mode may lead to degraded performance on larger filesystems, but is otherwise
 usable, even on multiple devices.
 +

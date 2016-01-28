@@ -24,7 +24,7 @@ OPTIONS
 -------
 -s|--super <superblock>::
 use <superblock>th superblock copy, valid values are 0 up to 2 if the
-respective superblock offset is within the fileystem
+respective superblock offset is within the filesystem
 --repair::
 try to repair the filesystem
 --init-csum-tree::
@@ -32,7 +32,7 @@ create a new CRC tree and recalculate all checksums
 --init-extent-tree::
 create a new extent tree
 --check-data-csum::
-verify checkums of data blocks
+verify checksums of data blocks
 -p|--progress::
 indicate progress at various checking phases
 --qgroup-report::
