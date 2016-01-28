@@ -154,8 +154,8 @@ Print help.
 SIZE UNITS
 ----------
 The default unit is 'byte'. All size parameters accept suffixes in the 1024
-base. The recognized suffixes are: 'k', 'm', 'g', 't', 'e', both uppercase and
-lowercase.
+base. The recognized suffixes are: 'k', 'm', 'g', 't', 'p', 'e', both uppercase
+and lowercase.
 
 MULTIPLE DEVICES
 ----------------
