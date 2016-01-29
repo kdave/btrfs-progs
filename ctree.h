@@ -578,6 +578,7 @@ struct btrfs_extent_item_v0 {
 
 #define BTRFS_MAX_EXTENT_ITEM_SIZE(r) ((BTRFS_LEAF_DATA_SIZE(r) >> 4) - \
 					sizeof(struct btrfs_item))
+#define BTRFS_MAX_EXTENT_SIZE		(128 * 1024 * 1024)
 
 #define BTRFS_EXTENT_FLAG_DATA		(1ULL << 0)
 #define BTRFS_EXTENT_FLAG_TREE_BLOCK	(1ULL << 1)
