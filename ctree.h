@@ -960,13 +960,6 @@ struct btrfs_block_group_cache {
 	int ro;
 };
 
-struct btrfs_extent_ops {
-       int (*alloc_extent)(struct btrfs_root *root, u64 num_bytes,
-			   u64 hint_byte, struct btrfs_key *ins, int metadata);
-       int (*free_extent)(struct btrfs_root *root, u64 bytenr,
-		          u64 num_bytes);
-};
-
 struct btrfs_device;
 struct btrfs_fs_devices;
 struct btrfs_fs_info {
@@ -1017,7 +1010,6 @@ struct btrfs_fs_info {
 	u64 super_bytenr;
 	u64 total_pinned;
 
-	struct btrfs_extent_ops *extent_ops;
 	struct list_head dirty_cowonly_roots;
 	struct list_head recow_ebs;
 
