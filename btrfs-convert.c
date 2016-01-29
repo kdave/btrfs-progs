@@ -3828,11 +3828,19 @@ static int do_rollback(const char *devname)
 		num_bytes = btrfs_file_extent_num_bytes(leaf, fi);
 
 		cache1 = btrfs_lookup_block_group(root->fs_info, offset);
-		cache2 =  btrfs_lookup_block_group(root->fs_info,
-						   offset + num_bytes - 1);
-		if (!cache1 || cache1 != cache2 ||
-		    (!(cache1->flags & BTRFS_BLOCK_GROUP_SYSTEM) &&
-		     !intersect_with_sb(offset, num_bytes)))
+		cache2 = btrfs_lookup_block_group(root->fs_info,
+						  offset + num_bytes - 1);
+		/*
+		 * Here we must take consideration of old and new convert
+		 * behavior.
+		 * For old convert case, sign, there is no consist chunk type
+		 * that will cover the extent. META/DATA/SYS are all possible.
+		 * Just ensure relocate one is in SYS chunk.
+		 * For new convert case, they are all covered by DATA chunk.
+		 *
+		 * So, there is not valid chunk type check for it now.
+		 */
+		if (cache1 != cache2)
 			break;
 
 		set_extent_bits(&io_tree, offset, offset + num_bytes - 1,
@@ -3846,6 +3854,7 @@ next_extent:
 
 	if (offset < total_bytes) {
 		fprintf(stderr, "unable to build extent mapping\n");
+		fprintf(stderr, "converted filesystem after balance is unable to rollback\n");
 		goto fail;
 	}
 
