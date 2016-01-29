@@ -1904,6 +1904,16 @@ static int do_chunk_alloc(struct btrfs_trans_handle *trans,
 	    thresh)
 		return 0;
 
+	/*
+	 * Avoid allocating given chunk type
+	 */
+	if (extent_root->fs_info->avoid_meta_chunk_alloc &&
+	    (flags & BTRFS_BLOCK_GROUP_METADATA))
+		return 0;
+	if (extent_root->fs_info->avoid_sys_chunk_alloc &&
+	    (flags & BTRFS_BLOCK_GROUP_SYSTEM))
+		return 0;
+
 	ret = btrfs_alloc_chunk(trans, extent_root, &start, &num_bytes,
 	                        space_info->flags);
 	if (ret == -ENOSPC) {
