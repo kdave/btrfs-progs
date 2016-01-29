@@ -653,6 +653,28 @@ out:
 	return ret;
 }
 
+static int setup_temp_fs_tree(int fd, struct btrfs_mkfs_config *cfg,
+			      u64 fs_bytenr)
+{
+	struct extent_buffer *buf = NULL;
+	int ret;
+
+	buf = malloc(sizeof(*buf) + cfg->nodesize);
+	if (!buf)
+		return -ENOMEM;
+	ret = setup_temp_extent_buffer(buf, cfg, fs_bytenr,
+				       BTRFS_FS_TREE_OBJECTID);
+	if (ret < 0)
+		goto out;
+	/*
+	 * Temporary fs tree is completely empty.
+	 */
+	ret = write_temp_extent_buffer(fd, buf, fs_bytenr);
+out:
+	free(buf);
+	return ret;
+}
+
 /*
  * Improved version of make_btrfs().
  *
@@ -748,6 +770,10 @@ static int make_convert_btrfs(int fd, struct btrfs_mkfs_config *cfg,
 		goto out;
 	ret = setup_temp_dev_tree(fd, cfg, sys_chunk_start, meta_chunk_start,
 				  dev_bytenr);
+	if (ret < 0)
+		goto out;
+	ret = setup_temp_fs_tree(fd, cfg, fs_bytenr);
+
 out:
 	return ret;
 }
