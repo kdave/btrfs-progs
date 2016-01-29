@@ -182,9 +182,96 @@ int test_uuid_unique(char *fs_uuid)
 }
 
 /*
+ * Reserve space from free_tree.
+ * The algorithm is very simple, find the first cache_extent with enough space
+ * and allocate from its beginning.
+ */
+static int reserve_free_space(struct cache_tree *free_tree, u64 len,
+			      u64 *ret_start)
+{
+	struct cache_extent *cache;
+	int found = 0;
+
+	BUG_ON(!ret_start);
+	cache = first_cache_extent(free_tree);
+	while (cache) {
+		if (cache->size > len) {
+			found = 1;
+			*ret_start = cache->start;
+
+			cache->size -= len;
+			if (cache->size == 0) {
+				remove_cache_extent(free_tree, cache);
+				free(cache);
+			} else {
+				cache->start += len;
+			}
+			break;
+		}
+		cache = next_cache_extent(cache);
+	}
+	if (!found)
+		return -ENOSPC;
+	return 0;
+}
+
+/*
+ * Improved version of make_btrfs().
+ *
+ * This one will
+ * 1) Do chunk allocation to avoid used data
+ *    And after this function, extent type matches chunk type
+ * 2) Better structured code
+ *    No super long hand written codes to initialized all tree blocks
+ *    Split into small blocks and reuse codes.
+ *    TODO: Reuse tree operation facilities by introducing new flags
+ */
+static int make_convert_btrfs(int fd, struct btrfs_mkfs_config *cfg,
+			      struct btrfs_convert_context *cctx)
+{
+	struct cache_tree *free = &cctx->free;
+	struct cache_tree *used = &cctx->used;
+	u64 sys_chunk_start;
+	u64 meta_chunk_start;
+	int ret;
+
+	/* Shouldn't happen */
+	BUG_ON(cache_tree_empty(used));
+
+	/*
+	 * reserve space for temporary superblock first
+	 * Here we allocate a little larger space, to keep later
+	 * free space will be STRIPE_LEN aligned
+	 */
+	ret = reserve_free_space(free, BTRFS_STRIPE_LEN,
+				 &cfg->super_bytenr);
+	if (ret < 0)
+		goto out;
+
+	/*
+	 * Then reserve system chunk space
+	 * TODO: Change system group size depending on cctx->total_bytes.
+	 * If using current 4M, it can only handle less than one TB for
+	 * worst case and then run out of sys space.
+	 */
+	ret = reserve_free_space(free, BTRFS_MKFS_SYSTEM_GROUP_SIZE,
+				 &sys_chunk_start);
+	if (ret < 0)
+		goto out;
+	ret = reserve_free_space(free, BTRFS_CONVERT_META_GROUP_SIZE,
+				 &meta_chunk_start);
+	if (ret < 0)
+		goto out;
+
+out:
+	return ret;
+}
+
+/*
  * @fs_uuid - if NULL, generates a UUID, returns back the new filesystem UUID
  */
-int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
+int make_btrfs(int fd, struct btrfs_mkfs_config *cfg,
+		struct btrfs_convert_context *cctx)
 {
 	struct btrfs_super_block super;
 	struct extent_buffer *buf;
@@ -209,6 +296,8 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 				 BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA);
 	u64 num_bytes;
 
+	if (cctx)
+		return make_convert_btrfs(fd, cfg, cctx);
 	buf = malloc(sizeof(*buf) + max(cfg->sectorsize, cfg->nodesize));
 	if (!buf)
 		return -ENOMEM;

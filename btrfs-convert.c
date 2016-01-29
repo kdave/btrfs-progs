@@ -108,28 +108,6 @@ struct btrfs_convert_operations {
 	void (*close_fs)(struct btrfs_convert_context *cctx);
 };
 
-struct btrfs_convert_context {
-	u32 blocksize;
-	u32 first_data_block;
-	u32 block_count;
-	u32 inodes_count;
-	u32 free_inodes_count;
-	u64 total_bytes;
-	char *volume_name;
-	const struct btrfs_convert_operations *convert_ops;
-
-	/* The accurate used space of old filesystem */
-	struct cache_tree used;
-
-	/* Batched ranges which must be covered by data chunks */
-	struct cache_tree data_chunks;
-
-	/* Free space which is not covered by data_chunks */
-	struct cache_tree free;
-
-	void *fs_data;
-};
-
 static void init_convert_context(struct btrfs_convert_context *cctx)
 {
 	cache_tree_init(&cctx->used);
@@ -2834,7 +2812,7 @@ static int do_convert(const char *devname, int datacsum, int packing, int noxatt
 	mkfs_cfg.stripesize = blocksize;
 	mkfs_cfg.features = features;
 
-	ret = make_btrfs(fd, &mkfs_cfg);
+	ret = make_btrfs(fd, &mkfs_cfg, NULL);
 	if (ret) {
 		fprintf(stderr, "unable to create initial ctree: %s\n",
 			strerror(-ret));

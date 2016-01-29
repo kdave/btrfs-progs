@@ -46,6 +46,8 @@
 	| BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA		\
 	| BTRFS_FEATURE_INCOMPAT_NO_HOLES)
 
+#define BTRFS_CONVERT_META_GROUP_SIZE (32 * 1024 * 1024)
+
 #define BTRFS_FEATURE_LIST_ALL		(1ULL << 63)
 
 #define BTRFS_SCAN_MOUNTED	(1ULL << 0)
@@ -123,7 +125,30 @@ struct btrfs_mkfs_config {
 	u64 super_bytenr;
 };
 
-int make_btrfs(int fd, struct btrfs_mkfs_config *cfg);
+struct btrfs_convert_context {
+	u32 blocksize;
+	u32 first_data_block;
+	u32 block_count;
+	u32 inodes_count;
+	u32 free_inodes_count;
+	u64 total_bytes;
+	char *volume_name;
+	const struct btrfs_convert_operations *convert_ops;
+
+	/* The accurate used space of old filesystem */
+	struct cache_tree used;
+
+	/* Batched ranges which must be covered by data chunks */
+	struct cache_tree data_chunks;
+
+	/* Free space which is not covered by data_chunks */
+	struct cache_tree free;
+
+	void *fs_data;
+};
+
+int make_btrfs(int fd, struct btrfs_mkfs_config *cfg,
+		struct btrfs_convert_context *cctx);
 int btrfs_make_root_dir(struct btrfs_trans_handle *trans,
 			struct btrfs_root *root, u64 objectid);
 int btrfs_prepare_device(int fd, const char *file, int zero_end,
