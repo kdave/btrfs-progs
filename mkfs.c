@@ -971,7 +971,7 @@ static int create_chunks(struct btrfs_trans_handle *trans,
 		size_of_data = minimum_data_chunk_size;
 
 	ret = btrfs_alloc_data_chunk(trans, root->fs_info->extent_root,
-				     &chunk_start, size_of_data, data_type);
+				     &chunk_start, size_of_data, data_type, 0);
 	BUG_ON(ret);
 	ret = btrfs_make_block_group(trans, root->fs_info->extent_root, 0,
 				     data_type, BTRFS_FIRST_CHUNK_TREE_OBJECTID,
