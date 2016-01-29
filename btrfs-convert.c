@@ -2349,6 +2349,13 @@ static int init_btrfs_v2(struct btrfs_mkfs_config *cfg, struct btrfs_root *root,
 	struct btrfs_fs_info *fs_info = root->fs_info;
 	int ret;
 
+	/*
+	 * Don't alloc any metadata/system chunk, as we don't want
+	 * any meta/sys chunk allcated before all data chunks are inserted.
+	 * Or we screw up the chunk layout just like the old implement.
+	 */
+	fs_info->avoid_sys_chunk_alloc = 1;
+	fs_info->avoid_meta_chunk_alloc = 1;
 	trans = btrfs_start_transaction(root, 1);
 	BUG_ON(!trans);
 	ret = btrfs_fix_block_accounting(trans, root);
@@ -2386,6 +2393,8 @@ static int init_btrfs_v2(struct btrfs_mkfs_config *cfg, struct btrfs_root *root,
 		goto err;
 
 	ret = btrfs_commit_transaction(trans, root);
+	fs_info->avoid_sys_chunk_alloc = 0;
+	fs_info->avoid_meta_chunk_alloc = 0;
 err:
 	return ret;
 }
