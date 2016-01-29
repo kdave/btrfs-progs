@@ -2181,7 +2181,6 @@ static int __free_extent(struct btrfs_trans_handle *trans,
 
 	struct btrfs_key key;
 	struct btrfs_path *path;
-	struct btrfs_extent_ops *ops = root->fs_info->extent_ops;
 	struct btrfs_root *extent_root = root->fs_info->extent_root;
 	struct extent_buffer *leaf;
 	struct btrfs_extent_item *ei;
@@ -2379,14 +2378,6 @@ static int __free_extent(struct btrfs_trans_handle *trans,
 				BUG_ON(path->slots[0] != extent_slot + 1);
 				path->slots[0] = extent_slot;
 				num_to_del = 2;
-			}
-		}
-
-		if (ops && ops->free_extent) {
-			ret = ops->free_extent(root, bytenr, num_bytes);
-			if (ret > 0) {
-				pin = 0;
-				mark_free = 0;
 			}
 		}
 
@@ -2662,13 +2653,6 @@ int btrfs_reserve_extent(struct btrfs_trans_handle *trans,
 	u64 alloc_profile;
 	struct btrfs_fs_info *info = root->fs_info;
 
-	if (info->extent_ops) {
-		struct btrfs_extent_ops *ops = info->extent_ops;
-		ret = ops->alloc_extent(root, num_bytes, hint_byte, ins, !data);
-		BUG_ON(ret);
-		goto found;
-	}
-
 	if (data) {
 		alloc_profile = info->avail_data_alloc_bits &
 			        info->data_alloc_profile;
@@ -2702,7 +2686,6 @@ int btrfs_reserve_extent(struct btrfs_trans_handle *trans,
 			       trans->alloc_exclude_start,
 			       trans->alloc_exclude_nr, data);
 	BUG_ON(ret);
-found:
 	clear_extent_dirty(&root->fs_info->free_space_cache,
 			   ins->objectid, ins->objectid + ins->offset - 1,
 			   GFP_NOFS);
