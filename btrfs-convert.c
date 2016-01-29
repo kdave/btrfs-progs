@@ -1706,6 +1706,123 @@ static int create_image_file_range_v2(struct btrfs_trans_handle *trans,
 	return ret;
 }
 
+
+/*
+ * Relocate old fs data in one reserved ranges
+ *
+ * Since all old fs data in reserved range is not covered by any chunk nor
+ * data extent, we don't need to handle any reference but add new
+ * extent/reference, which makes codes more clear
+ */
+static int migrate_one_reserved_range(struct btrfs_trans_handle *trans,
+				      struct btrfs_root *root,
+				      struct cache_tree *used,
+				      struct btrfs_inode_item *inode, int fd,
+				      u64 ino, u64 start, u64 len, int datacsum)
+{
+	u64 cur_off = start;
+	u64 cur_len = len;
+	struct cache_extent *cache;
+	struct btrfs_key key;
+	struct extent_buffer *eb;
+	int ret = 0;
+
+	while (cur_off < start + len) {
+		cache = lookup_cache_extent(used, cur_off, cur_len);
+		if (!cache)
+			break;
+		cur_off = max(cache->start, cur_off);
+		cur_len = min(cache->start + cache->size, start + len) -
+			  cur_off;
+		BUG_ON(cur_len < root->sectorsize);
+
+		/* reserve extent for the data */
+		ret = btrfs_reserve_extent(trans, root, cur_len, 0, 0, (u64)-1,
+					   &key, 1);
+		if (ret < 0)
+			break;
+
+		eb = malloc(sizeof(*eb) + cur_len);
+		if (!eb) {
+			ret = -ENOMEM;
+			break;
+		}
+
+		ret = pread(fd, eb->data, cur_len, cur_off);
+		if (ret < cur_len) {
+			ret = (ret < 0 ? ret : -EIO);
+			free(eb);
+			break;
+		}
+		eb->start = key.objectid;
+		eb->len = key.offset;
+
+		/* Write the data */
+		ret = write_and_map_eb(trans, root, eb);
+		free(eb);
+		if (ret < 0)
+			break;
+
+		/* Now handle extent item and file extent things */
+		ret = btrfs_record_file_extent(trans, root, ino, inode, cur_off,
+					       key.objectid, key.offset);
+		if (ret < 0)
+			break;
+		/* Finally, insert csum items */
+		if (datacsum)
+			ret = csum_disk_extent(trans, root, key.objectid,
+					       key.offset);
+
+		cur_off += key.offset;
+		cur_len = start + len - cur_off;
+	}
+	return ret;
+}
+
+/*
+ * Relocate the used ext2 data in reserved ranges
+ * [0,1M)
+ * [btrfs_sb_offset(1), +BTRFS_STRIPE_LEN)
+ * [btrfs_sb_offset(2), +BTRFS_STRIPE_LEN)
+ */
+static int migrate_reserved_ranges(struct btrfs_trans_handle *trans,
+				   struct btrfs_root *root,
+				   struct cache_tree *used,
+				   struct btrfs_inode_item *inode, int fd,
+				   u64 ino, u64 total_bytes, int datacsum)
+{
+	u64 cur_off;
+	u64 cur_len;
+	int ret = 0;
+
+	/* 0 ~ 1M */
+	cur_off = 0;
+	cur_len = 1024 * 1024;
+	ret = migrate_one_reserved_range(trans, root, used, inode, fd, ino,
+					 cur_off, cur_len, datacsum);
+	if (ret < 0)
+		return ret;
+
+	/* second sb(fisrt sb is included in 0~1M) */
+	cur_off = btrfs_sb_offset(1);
+	cur_len = min(total_bytes, cur_off + BTRFS_STRIPE_LEN) - cur_off;
+	if (cur_off < total_bytes)
+		return ret;
+	ret = migrate_one_reserved_range(trans, root, used, inode, fd, ino,
+					 cur_off, cur_len, datacsum);
+	if (ret < 0)
+		return ret;
+
+	/* Last sb */
+	cur_off = btrfs_sb_offset(2);
+	cur_len = min(total_bytes, cur_off + BTRFS_STRIPE_LEN) - cur_off;
+	if (cur_off < total_bytes)
+		return ret;
+	ret = migrate_one_reserved_range(trans, root, used, inode, fd, ino,
+					 cur_off, cur_len, datacsum);
+	return ret;
+}
+
 static int wipe_reserved_ranges(struct cache_tree *tree, u64 min_stripe_size,
 				int ensure_size);
 
@@ -1714,11 +1831,10 @@ static int wipe_reserved_ranges(struct cache_tree *tree, u64 min_stripe_size,
  *
  * This is completely fs independent as we have cctx->used, only
  * need to create file extents pointing to all the positions.
- * TODO: Add handler for reserved ranges in next patch
  */
 static int create_image_v2(struct btrfs_root *root,
 			   struct btrfs_mkfs_config *cfg,
-			   struct btrfs_convert_context *cctx,
+			   struct btrfs_convert_context *cctx, int fd,
 			   u64 size, char *name, int datacsum)
 {
 	struct btrfs_inode_item buf;
@@ -1796,6 +1912,10 @@ static int create_image_v2(struct btrfs_root *root,
 			goto out;
 		cur += len;
 	}
+	/* Handle the reserved ranges */
+	ret = migrate_reserved_ranges(trans, root, &cctx->used, &buf, fd, ino,
+				      cfg->num_bytes, datacsum);
+
 
 	key.objectid = ino;
 	key.type = BTRFS_INODE_ITEM_KEY;
