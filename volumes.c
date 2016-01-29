@@ -399,7 +399,7 @@ static int btrfs_alloc_dev_extent(struct btrfs_trans_handle *trans,
 				  struct btrfs_device *device,
 				  u64 chunk_tree, u64 chunk_objectid,
 				  u64 chunk_offset,
-				  u64 num_bytes, u64 *start)
+				  u64 num_bytes, u64 *start, int convert)
 {
 	int ret;
 	struct btrfs_path *path;
@@ -412,9 +412,15 @@ static int btrfs_alloc_dev_extent(struct btrfs_trans_handle *trans,
 	if (!path)
 		return -ENOMEM;
 
-	ret = find_free_dev_extent(trans, device, path, num_bytes, start);
-	if (ret) {
-		goto err;
+	/*
+	 * For convert case, just skip search free dev_extent, as caller
+	 * is responsible to make sure it's free.
+	 */
+	if (!convert) {
+		ret = find_free_dev_extent(trans, device, path, num_bytes,
+					   start);
+		if (ret)
+			goto err;
 	}
 
 	key.objectid = device->devid;
@@ -973,7 +979,7 @@ again:
 		ret = btrfs_alloc_dev_extent(trans, device,
 			     info->chunk_root->root_key.objectid,
 			     BTRFS_FIRST_CHUNK_TREE_OBJECTID, key.offset,
-			     calc_size, &dev_offset);
+			     calc_size, &dev_offset, 0);
 		BUG_ON(ret);
 
 		device->bytes_used += calc_size;
@@ -1029,9 +1035,17 @@ again:
 	return ret;
 }
 
+/*
+ * Alloc a DATA chunk with SINGLE profile.
+ *
+ * If 'convert' is set, it will alloc a chunk with 1:1 mapping
+ * (btrfs logical bytenr == on-disk bytenr)
+ * For that case, caller must make sure the chunk and dev_extent are not
+ * occupied.
+ */
 int btrfs_alloc_data_chunk(struct btrfs_trans_handle *trans,
 			   struct btrfs_root *extent_root, u64 *start,
-			   u64 num_bytes, u64 type)
+			   u64 num_bytes, u64 type, int convert)
 {
 	u64 dev_offset;
 	struct btrfs_fs_info *info = extent_root->fs_info;
@@ -1052,10 +1066,17 @@ int btrfs_alloc_data_chunk(struct btrfs_trans_handle *trans,
 
 	key.objectid = BTRFS_FIRST_CHUNK_TREE_OBJECTID;
 	key.type = BTRFS_CHUNK_ITEM_KEY;
-	ret = find_next_chunk(chunk_root, BTRFS_FIRST_CHUNK_TREE_OBJECTID,
-			      &key.offset);
-	if (ret)
-		return ret;
+	if (convert) {
+		BUG_ON(*start != round_down(*start, extent_root->sectorsize));
+		key.offset = *start;
+		dev_offset = *start;
+	} else {
+		ret = find_next_chunk(chunk_root,
+				      BTRFS_FIRST_CHUNK_TREE_OBJECTID,
+				      &key.offset);
+		if (ret)
+			return ret;
+	}
 
 	chunk = kmalloc(btrfs_chunk_item_size(num_stripes), GFP_NOFS);
 	if (!chunk)
@@ -1080,7 +1101,7 @@ int btrfs_alloc_data_chunk(struct btrfs_trans_handle *trans,
 		ret = btrfs_alloc_dev_extent(trans, device,
 			     info->chunk_root->root_key.objectid,
 			     BTRFS_FIRST_CHUNK_TREE_OBJECTID, key.offset,
-			     calc_size, &dev_offset);
+			     calc_size, &dev_offset, convert);
 		BUG_ON(ret);
 
 		device->bytes_used += calc_size;
@@ -1117,7 +1138,8 @@ int btrfs_alloc_data_chunk(struct btrfs_trans_handle *trans,
 	ret = btrfs_insert_item(trans, chunk_root, &key, chunk,
 				btrfs_chunk_item_size(num_stripes));
 	BUG_ON(ret);
-	*start = key.offset;
+	if (!convert)
+		*start = key.offset;
 
 	map->ce.start = key.offset;
 	map->ce.size = num_bytes;
