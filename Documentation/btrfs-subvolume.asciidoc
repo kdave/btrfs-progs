@@ -178,6 +178,5 @@ further details.
 SEE ALSO
 --------
 `mkfs.btrfs`(8),
-`btrfs-subvolume`(8),
 `btrfs-quota`(8),
 `btrfs-qgroup`(8),
