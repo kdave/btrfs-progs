@@ -711,6 +711,7 @@ const char * const cmd_send_usage[] = {
 	"btrfs send [-ve] [-p <parent>] [-c <clone-src>] [-f <outfile>] <subvol> [<subvol>...]",
 	"Send the subvolume(s) to stdout.",
 	"Sends the subvolume(s) specified by <subvol> to stdout.",
+	"<subvol> should be read-only here.",
 	"By default, this will send the whole subvolume. To do an incremental",
 	"send, use '-p <parent>'. If you want to allow btrfs to clone from",
 	"any additional local snapshots, use '-c <clone-src>' (multiple times",

@@ -12,6 +12,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 Sends the subvolume(s) specified by <subvol> to stdout.
+<subvol> should be read-only here.
 
 By default, this will send the whole subvolume. To do an incremental
 send, use '-p <parent>'.
