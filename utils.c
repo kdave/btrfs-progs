@@ -1007,6 +1007,7 @@ static int is_reg_file(const char *path)
  * return BTRFS_ARG_UUID:	given input is uuid
  * return BTRFS_ARG_MNTPOINT:	given input is path
  * return BTRFS_ARG_REG:	given input is regular file
+ * return BTRFS_ARG_BLKDEV:	given input is block device
  */
 int check_arg_type(const char *input)
 {
