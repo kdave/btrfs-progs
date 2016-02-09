@@ -109,6 +109,8 @@ void btrfs_list_all_fs_features(u64 mask_disallowed);
 char* btrfs_parse_fs_features(char *namelist, u64 *flags);
 void btrfs_process_fs_features(u64 flags);
 void btrfs_parse_features_to_string(char *buf, u64 flags);
+void print_kernel_version(FILE *stream, u32 version);
+u32 get_running_kernel_version(void);
 
 struct btrfs_mkfs_config {
 	char *label;
