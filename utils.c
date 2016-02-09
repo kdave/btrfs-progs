@@ -1450,20 +1450,43 @@ out:
 	return ret;
 }
 
+/*
+ * Feature stability status and versions: compat <= safe <= default
+ */
 static const struct btrfs_fs_feature {
 	const char *name;
 	u64 flag;
+	/*
+	 * Compatibility with kernel of given version. Filesystem can be
+	 * mounted.
+	 */
+	const char *compat_ver;
+	/*
+	 * Considered safe for use, but is not on by default, even if the
+	 * kernel supports the feature.
+	 */
+	const char *safe_ver;
+	/*
+	 * Considered safe for use and will be turned on by default if
+	 * supported by the running kernel.
+	 */
+	const char *default_ver;
 	const char *desc;
 } mkfs_features[] = {
 	{ "mixed-bg", BTRFS_FEATURE_INCOMPAT_MIXED_GROUPS,
+		"2.6.37", "2.6.37", NULL,
 		"mixed data and metadata block groups" },
 	{ "extref", BTRFS_FEATURE_INCOMPAT_EXTENDED_IREF,
+		"3.7", "3.12", "3.12",
 		"increased hardlink limit per file to 65536" },
 	{ "raid56", BTRFS_FEATURE_INCOMPAT_RAID56,
+		"3.9", NULL, NULL,
 		"raid56 extended format" },
 	{ "skinny-metadata", BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA,
+		"3.10", "3.18", "3.18",
 		"reduced-size metadata extent refs" },
 	{ "no-holes", BTRFS_FEATURE_INCOMPAT_NO_HOLES,
+		"3.14", "4.0", NULL,
 		"no explicit hole extents for files" },
 	/* Keep this one last */
 	{ "list-all", BTRFS_FEATURE_LIST_ALL, NULL }
@@ -1523,14 +1546,18 @@ void btrfs_list_all_fs_features(u64 mask_disallowed)
 	fprintf(stderr, "Filesystem features available:\n");
 	for (i = 0; i < ARRAY_SIZE(mkfs_features) - 1; i++) {
 		const struct btrfs_fs_feature *feat = &mkfs_features[i];
-		char *is_default = "";
 
 		if (feat->flag & mask_disallowed)
 			continue;
-		if (feat->flag & BTRFS_MKFS_DEFAULT_FEATURES)
-			is_default = ", default";
-		fprintf(stderr, "%-20s- %s (0x%llx%s)\n", feat->name,
-				feat->desc, feat->flag, is_default);
+		fprintf(stderr, "%-20s- %s (0x%llx", feat->name, feat->desc,
+				feat->flag);
+		if (feat->compat_ver)
+			fprintf(stderr, ", compat=%s", feat->compat_ver);
+		if (feat->safe_ver)
+			fprintf(stderr, ", safe=%s", feat->safe_ver);
+		if (feat->default_ver)
+			fprintf(stderr, ", default=%s", feat->default_ver);
+		fprintf(stderr, ")\n");
 	}
 }
 
