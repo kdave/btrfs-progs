@@ -18,6 +18,8 @@ rm -f $RESULTS
 
 setup_root_helper
 
+CHECKSUMTMP=$(mktemp --tmpdir btrfs-progs-convert.XXXXXXXXXX)
+
 convert_test() {
 	local features
 	local nodesize
@@ -45,13 +47,14 @@ convert_test() {
 	run_check $SUDO_HELPER mount -o loop $IMAGE $TEST_MNT
 	run_check $SUDO_HELPER dd if=/dev/zero of=$TEST_MNT/test bs=$nodesize \
 		count=1 1>/dev/null 2>&1
-	run_check_stdout $SUDO_HELPER md5sum $TEST_MNT/test > $TEST_MNT/test.md5sum
+	run_check_stdout md5sum $TEST_MNT/test > $CHECKSUMTMP
 	run_check $SUDO_HELPER umount $TEST_MNT
 	run_check $TOP/btrfs-convert ${features:+-O "$features"} -N "$nodesize" $IMAGE
 	run_check $TOP/btrfs check $IMAGE
 	run_check $TOP/btrfs-show-super $IMAGE
 	run_check $SUDO_HELPER mount -o loop $IMAGE $TEST_MNT
-	run_check_stdout $SUDO_HELPER md5sum -c $TEST_MNT/test.md5sum | grep -q 'OK' || _fail "file validation failed."
+	run_check_stdout md5sum -c $CHECKSUMTMP |
+		grep -q 'OK' || _fail "file validation failed."
 	run_check $SUDO_HELPER umount $TEST_MNT
 }
 
@@ -77,3 +80,5 @@ for feature in '' 'extref' 'skinny-metadata' 'no-holes'; do
 	convert_test "$feature" "ext3 64k nodesize" 65536 mke2fs -j -b 4096
 	convert_test "$feature" "ext4 64k nodesize" 65536 mke2fs -t ext4 -b 4096
 done
+
+rm $CHECKSUMTMP
