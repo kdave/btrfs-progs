@@ -10,13 +10,13 @@ LANG=C
 SCRIPT_DIR=$(dirname $(readlink -f $0))
 TOP=$(readlink -f $SCRIPT_DIR/../)
 RESULTS="$TOP/tests/convert-tests-results.txt"
-IMAGE="$TOP/tests/test.img"
 
 source $TOP/tests/common
 
 rm -f $RESULTS
 
 setup_root_helper
+prepare_test_dev 256M
 
 CHECKSUMTMP=$(mktemp --tmpdir btrfs-progs-convert.XXXXXXXXXX)
 
@@ -35,27 +35,29 @@ convert_test() {
 	nodesize=$2
 	shift 2
 	echo "creating ext image with: $*" >> $RESULTS
-	# IMAGE not removed as the file might have special permissions, eg.
+	# TEST_DEV not removed as the file might have special permissions, eg.
 	# when test image is on NFS and would not be writable for root
-	run_check truncate -s 0 $IMAGE
+	run_check truncate -s 0 $TEST_DEV
 	# 256MB is the smallest acceptable btrfs image.
-	run_check truncate -s 256M $IMAGE
-	run_check $* -F $IMAGE
+	run_check truncate -s 256M $TEST_DEV
+	run_check $* -F $TEST_DEV
 
 	# create a file to check btrfs-convert can convert regular file
 	# correct
-	run_check $SUDO_HELPER mount -o loop $IMAGE $TEST_MNT
+	run_check_mount_test_dev
 	run_check $SUDO_HELPER dd if=/dev/zero of=$TEST_MNT/test bs=$nodesize \
 		count=1 1>/dev/null 2>&1
 	run_check_stdout md5sum $TEST_MNT/test > $CHECKSUMTMP
-	run_check $SUDO_HELPER umount $TEST_MNT
-	run_check $TOP/btrfs-convert ${features:+-O "$features"} -N "$nodesize" $IMAGE
-	run_check $TOP/btrfs check $IMAGE
-	run_check $TOP/btrfs-show-super $IMAGE
-	run_check $SUDO_HELPER mount -o loop $IMAGE $TEST_MNT
+	run_check_umount_test_dev
+
+	run_check $TOP/btrfs-convert ${features:+-O "$features"} -N "$nodesize" $TEST_DEV
+	run_check $TOP/btrfs check $TEST_DEV
+	run_check $TOP/btrfs-show-super $TEST_DEV
+
+	run_check_mount_test_dev
 	run_check_stdout md5sum -c $CHECKSUMTMP |
 		grep -q 'OK' || _fail "file validation failed."
-	run_check $SUDO_HELPER umount $TEST_MNT
+	run_check_umount_test_dev
 }
 
 if ! [ -z "$TEST" ]; then
