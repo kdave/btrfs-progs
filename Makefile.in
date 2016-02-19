@@ -236,8 +236,7 @@ $(libs_static): $(libbtrfs_objects)
 
 $(lib_links):
 	@echo "    [LN]     $@"
-	$(Q)$(LN_S) -f libbtrfs.so.0.1 libbtrfs.so.0
-	$(Q)$(LN_S) -f libbtrfs.so.0.1 libbtrfs.so
+	$(Q)$(LN_S) -f libbtrfs.so.0.1 $@
 
 # keep intermediate files from the below implicit rules around
 .PRECIOUS: $(addsuffix .o,$(progs))
