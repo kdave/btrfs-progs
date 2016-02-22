@@ -1,6 +1,4 @@
 /*
- * Copyright (C) 2007 Oracle.  All rights reserved.
- *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public
  * License v2 as published by the Free Software Foundation.
@@ -16,26 +14,11 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#include "disk-io.h"
-#include "volumes.h"
-#include "utils.h"
-#include "commands.h"
-#include "cmds-inspect-dump-tree.h"
+#ifndef __CMDS_INSPECT_DUMP_TREE_H__
+#define __CMDS_INSPECT_DUMP_TREE_H__
 
-int main(int ac, char **av)
-{
-	int ret;
+int cmd_inspect_dump_tree(int ac, char **av);
 
-	set_argv0(av);
+extern const char * const cmd_inspect_dump_tree_usage[];
 
-	if (ac > 1 && !strcmp(av[1], "--help"))
-		usage(cmd_inspect_dump_tree_usage);
-
-	radix_tree_init();
-
-	ret = cmd_inspect_dump_tree(ac, av);
-
-	btrfs_close_all_devices();
-
-	return ret;
-}
+#endif

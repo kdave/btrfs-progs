@@ -31,6 +31,7 @@
 #include "disk-io.h"
 #include "commands.h"
 #include "btrfs-list.h"
+#include "cmds-inspect-dump-tree.h"
 
 static const char * const inspect_cmd_group_usage[] = {
 	"btrfs inspect-internal <command> <args>",
@@ -619,6 +620,11 @@ out:
 	return !!ret;
 }
 
+static int cmd_inspect_dump_tree_hook(int ac, char **av)
+{
+	return cmd_inspect_dump_tree(ac, av);
+}
+
 static const char inspect_cmd_group_info[] =
 "query various internal information";
 
@@ -634,6 +640,8 @@ const struct cmd_group inspect_cmd_group = {
 			0 },
 		{ "min-dev-size", cmd_inspect_min_dev_size,
 			cmd_inspect_min_dev_size_usage, NULL, 0 },
+		{ "dump-tree", cmd_inspect_dump_tree_hook,
+				cmd_inspect_dump_tree_usage, NULL, 0 },
 		NULL_CMD_STRUCT
 	}
 };
