@@ -1029,6 +1029,7 @@ struct btrfs_fs_info {
 	unsigned int quota_enabled:1;
 	unsigned int suppress_check_block_errors:1;
 	unsigned int ignore_fsid_mismatch:1;
+	unsigned int ignore_chunk_tree_error:1;
 
 	int (*free_extent_hook)(struct btrfs_trans_handle *trans,
 				struct btrfs_root *root,

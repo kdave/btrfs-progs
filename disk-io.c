@@ -1168,8 +1168,14 @@ int btrfs_setup_chunk_tree_and_device_map(struct btrfs_fs_info *fs_info)
 						    btrfs_super_chunk_root(sb),
 						    blocksize, generation);
 	if (!extent_buffer_uptodate(fs_info->chunk_root->node)) {
-		fprintf(stderr, "Couldn't read chunk root\n");
-		return -EIO;
+		if (fs_info->ignore_chunk_tree_error) {
+			warning("cannot read chunk root, continue anyway");
+			fs_info->chunk_root = NULL;
+			return 0;
+		} else {
+			error("cannot read chunk root");
+			return -EIO;
+		}
 	}
 
 	if (!(btrfs_super_flags(sb) & BTRFS_SUPER_FLAG_METADUMP)) {
@@ -1212,6 +1218,8 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 		fs_info->suppress_check_block_errors = 1;
 	if (flags & OPEN_CTREE_IGNORE_FSID_MISMATCH)
 		fs_info->ignore_fsid_mismatch = 1;
+	if (flags & OPEN_CTREE_IGNORE_CHUNK_TREE_ERROR)
+		fs_info->ignore_chunk_tree_error = 1;
 
 	ret = btrfs_scan_fs_devices(fp, path, &fs_devices, sb_bytenr,
 				    (flags & OPEN_CTREE_RECOVER_SUPER),
@@ -1260,13 +1268,18 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 	if (ret)
 		goto out_chunk;
 
+	/* Chunk tree root is unable to read, return directly */
+	if (!fs_info->chunk_root)
+		return fs_info;
+
 	eb = fs_info->chunk_root->node;
 	read_extent_buffer(eb, fs_info->chunk_tree_uuid,
 			   btrfs_header_chunk_tree_uuid(eb),
 			   BTRFS_UUID_SIZE);
 
 	ret = btrfs_setup_all_roots(fs_info, root_tree_bytenr, flags);
-	if (ret && !(flags & __OPEN_CTREE_RETURN_CHUNK_ROOT))
+	if (ret && !(flags & __OPEN_CTREE_RETURN_CHUNK_ROOT) &&
+	    !fs_info->ignore_chunk_tree_error)
 		goto out_chunk;
 
 	return fs_info;
@@ -1308,6 +1321,8 @@ struct btrfs_root *open_ctree(const char *filename, u64 sb_bytenr,
 {
 	struct btrfs_fs_info *info;
 
+	/* This flags may not return fs_info with any valid root */
+	BUG_ON(flags & OPEN_CTREE_IGNORE_CHUNK_TREE_ERROR);
 	info = open_ctree_fs_info(filename, sb_bytenr, 0, flags);
 	if (!info)
 		return NULL;
@@ -1320,6 +1335,9 @@ struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
 				 enum btrfs_open_ctree_flags flags)
 {
 	struct btrfs_fs_info *info;
+
+	/* This flags may not return fs_info with any valid root */
+	BUG_ON(flags & OPEN_CTREE_IGNORE_CHUNK_TREE_ERROR);
 	info = __open_ctree_fd(fp, path, sb_bytenr, 0, flags);
 	if (!info)
 		return NULL;
@@ -1658,14 +1676,15 @@ int write_ctree_super(struct btrfs_trans_handle *trans,
 	return ret;
 }
 
-int close_ctree(struct btrfs_root *root)
+int close_ctree_fs_info(struct btrfs_fs_info *fs_info)
 {
 	int ret;
 	struct btrfs_trans_handle *trans;
-	struct btrfs_fs_info *fs_info = root->fs_info;
+	struct btrfs_root *root = fs_info->tree_root;
 
 	if (fs_info->last_trans_committed !=
 	    fs_info->generation) {
+		BUG_ON(!root);
 		trans = btrfs_start_transaction(root, 1);
 		btrfs_commit_transaction(trans, root);
 		trans = btrfs_start_transaction(root, 1);

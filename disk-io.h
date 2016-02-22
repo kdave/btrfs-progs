@@ -53,7 +53,15 @@ enum btrfs_open_ctree_flags {
 	 * Like split PARTIAL into SKIP_CSUM/SKIP_EXTENT
 	 */
 
-	OPEN_CTREE_IGNORE_FSID_MISMATCH	= (1 << 10)
+	OPEN_CTREE_IGNORE_FSID_MISMATCH	= (1 << 10),
+
+	/*
+	 * Allow open_ctree_fs_info() to return a incomplete fs_info with
+	 * system chunks from super block only.
+	 * It's useful for chunk corruption case.
+	 * Makes no sense for open_ctree variants returning btrfs_root.
+	 */
+	OPEN_CTREE_IGNORE_CHUNK_TREE_ERROR = (1 << 11)
 };
 
 static inline u64 btrfs_sb_offset(int mirror)
@@ -101,7 +109,13 @@ struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
 struct btrfs_fs_info *open_ctree_fs_info(const char *filename,
 					 u64 sb_bytenr, u64 root_tree_bytenr,
 					 enum btrfs_open_ctree_flags flags);
-int close_ctree(struct btrfs_root *root);
+int close_ctree_fs_info(struct btrfs_fs_info *fs_info);
+static inline int close_ctree(struct btrfs_root *root)
+{
+	BUG_ON(!root);
+	return close_ctree_fs_info(root->fs_info);
+}
+
 int write_all_supers(struct btrfs_root *root);
 int write_ctree_super(struct btrfs_trans_handle *trans,
 		      struct btrfs_root *root);
