@@ -19,6 +19,31 @@ requires calls to privileged ioctls.
 
 SUBCOMMAND
 ----------
+*dump-tree* [options] <device>::
+(needs root privileges)
++
+Dump the whole tree of the given device.
+This is useful for analyzing filesystem state or inconsistence and has
+a positive educational effect on understanding the internal structure.
+<device> is the device file where the filesystem is stored.
++
+`Options`
++
+-e::::
+Print detailed extents info.
+-d::::
+Print info of btrfs device and root tree dirs only.
+-r::::
+Print info of roots only.
+-R::::
+Print info of roots and root backups.
+-u::::
+Print info of UUID tree only.
+-b <block_num>::::
+Print info of the specified block only.
+-t <tree_id>::::
+Print only the tree with the specified ID.
+
 *inode-resolve* [-v] <ino> <path>::
 (needs root privileges)
 +

@@ -25,8 +25,15 @@ Print detailed extents info.
 Print info of btrfs device and root tree dirs only.
 -r::
 Print info of roots only.
+-R::
+Print info of roots and root backups.
+-u::
+Print info of UUID tree only.
 -b <block_num>::
 Print info of the specified block only.
+-t <tree_id>::
+Print only the tree with the specified ID.
+
 
 EXIT STATUS
 -----------
