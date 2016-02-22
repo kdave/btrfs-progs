@@ -1840,7 +1840,8 @@ int btrfs_read_sys_array(struct btrfs_root *root)
 	u32 cur_offset;
 	struct btrfs_key key;
 
-	sb = btrfs_find_create_tree_block(root, BTRFS_SUPER_INFO_OFFSET,
+	sb = btrfs_find_create_tree_block(root->fs_info,
+					  BTRFS_SUPER_INFO_OFFSET,
 					  BTRFS_SUPER_INFO_SIZE);
 	if (!sb)
 		return -ENOMEM;

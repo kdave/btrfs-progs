@@ -45,7 +45,7 @@ static struct extent_buffer *debug_corrupt_block(struct btrfs_root *root,
 	int num_copies;
 	int mirror_num = 1;
 
-	eb = btrfs_find_create_tree_block(root, bytenr, blocksize);
+	eb = btrfs_find_create_tree_block(root->fs_info, bytenr, blocksize);
 	if (!eb)
 		return NULL;
 

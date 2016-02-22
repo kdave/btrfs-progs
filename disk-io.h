@@ -75,14 +75,23 @@ static inline u64 btrfs_sb_offset(int mirror)
 struct btrfs_device;
 
 int read_whole_eb(struct btrfs_fs_info *info, struct extent_buffer *eb, int mirror);
-struct extent_buffer *read_tree_block(struct btrfs_root *root, u64 bytenr,
-				      u32 blocksize, u64 parent_transid);
+struct extent_buffer* read_tree_block_fs_info(
+		struct btrfs_fs_info *fs_info, u64 bytenr, u32 blocksize,
+		u64 parent_transid);
+static inline struct extent_buffer* read_tree_block(
+		struct btrfs_root *root, u64 bytenr, u32 blocksize,
+		u64 parent_transid)
+{
+	return read_tree_block_fs_info(root->fs_info, bytenr, blocksize,
+			parent_transid);
+}
+
 int read_extent_data(struct btrfs_root *root, char *data, u64 logical,
 		     u64 *len, int mirror);
 void readahead_tree_block(struct btrfs_root *root, u64 bytenr, u32 blocksize,
 			  u64 parent_transid);
-struct extent_buffer *btrfs_find_create_tree_block(struct btrfs_root *root,
-						   u64 bytenr, u32 blocksize);
+struct extent_buffer* btrfs_find_create_tree_block(
+		struct btrfs_fs_info *fs_info, u64 bytenr, u32 blocksize);
 
 int __setup_root(u32 nodesize, u32 leafsize, u32 sectorsize,
                         u32 stripesize, struct btrfs_root *root,
