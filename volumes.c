@@ -1170,14 +1170,23 @@ int btrfs_next_bg(struct btrfs_mapping_tree *map_tree, u64 *logical,
 {
 	struct cache_extent *ce;
 	struct map_lookup *map;
+	u64 cur = *logical;
 
-	ce = search_cache_extent(&map_tree->cache_tree, *logical);
+	ce = search_cache_extent(&map_tree->cache_tree, cur);
 
 	while (ce) {
-		ce = next_cache_extent(ce);
-		if (!ce)
-			return -ENOENT;
+		/*
+		 * only jump to next bg if our cur is not 0
+		 * As the initial logical for btrfs_next_bg() is 0, and
+		 * if we jump to next bg, we skipped a valid bg.
+		 */
+		if (cur) {
+			ce = next_cache_extent(ce);
+			if (!ce)
+				return -ENOENT;
+		}
 
+		cur = ce->start;
 		map = container_of(ce, struct map_lookup, ce);
 		if (map->type & type) {
 			*logical = ce->start;
