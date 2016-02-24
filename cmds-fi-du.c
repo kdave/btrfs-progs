@@ -295,7 +295,7 @@ const char * const cmd_filesystem_du_usage[] = {
  */
 #define	SKIP_FLAGS	(FIEMAP_EXTENT_UNKNOWN|FIEMAP_EXTENT_DELALLOC|FIEMAP_EXTENT_DATA_INLINE)
 static int du_calc_file_space(int fd, struct rb_root *shared_extents,
-			      uint64_t *ret_total, uint64_t *ret_shared)
+			      u64 *ret_total, u64 *ret_shared)
 {
 	char buf[16384];
 	struct fiemap *fiemap = (struct fiemap *)buf;
@@ -362,16 +362,16 @@ out:
 }
 
 struct du_dir_ctxt {
-	uint64_t	bytes_total;
-	uint64_t	bytes_shared;
+	u64		bytes_total;
+	u64		bytes_shared;
 	DIR		*dirstream;
 	struct rb_root	shared_extents;
 };
 #define INIT_DU_DIR_CTXT	(struct du_dir_ctxt) { 0ULL, 0ULL, NULL, RB_ROOT }
 
 static int du_add_file(const char *filename, int dirfd,
-		       struct rb_root *shared_extents, uint64_t *ret_total,
-		       uint64_t *ret_shared, int top_level);
+		       struct rb_root *shared_extents, u64 *ret_total,
+		       u64 *ret_shared, int top_level);
 
 static int du_walk_dir(struct du_dir_ctxt *ctxt, struct rb_root *shared_extents)
 {
@@ -381,7 +381,7 @@ static int du_walk_dir(struct du_dir_ctxt *ctxt, struct rb_root *shared_extents)
 
 	ret = 0;
 	do {
-		uint64_t tot, shr;
+		u64 tot, shr;
 
 		errno = 0;
 		entry = readdir(dirstream);
@@ -411,16 +411,16 @@ static int du_walk_dir(struct du_dir_ctxt *ctxt, struct rb_root *shared_extents)
 }
 
 static int du_add_file(const char *filename, int dirfd,
-		       struct rb_root *shared_extents, uint64_t *ret_total,
-		       uint64_t *ret_shared, int top_level)
+		       struct rb_root *shared_extents, u64 *ret_total,
+		       u64 *ret_shared, int top_level)
 {
 	int ret, len = strlen(filename);
 	char *pathtmp;
 	struct stat st;
 	struct du_dir_ctxt dir = INIT_DU_DIR_CTXT;
 	int is_dir = 0;
-	uint64_t file_total = 0;
-	uint64_t file_shared = 0;
+	u64 file_total = 0;
+	u64 file_shared = 0;
 	u64 dir_set_shared = 0;
 	u64 subvol;
 	int fd;
