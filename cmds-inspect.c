@@ -32,6 +32,7 @@
 #include "commands.h"
 #include "btrfs-list.h"
 #include "cmds-inspect-dump-tree.h"
+#include "cmds-inspect-dump-super.h"
 
 static const char * const inspect_cmd_group_usage[] = {
 	"btrfs inspect-internal <command> <args>",
@@ -625,6 +626,11 @@ static int cmd_inspect_dump_tree_hook(int ac, char **av)
 	return cmd_inspect_dump_tree(ac, av);
 }
 
+static int cmd_inspect_dump_super_hook(int ac, char **av)
+{
+	return cmd_inspect_dump_super(ac, av);
+}
+
 static const char inspect_cmd_group_info[] =
 "query various internal information";
 
@@ -642,6 +648,8 @@ const struct cmd_group inspect_cmd_group = {
 			cmd_inspect_min_dev_size_usage, NULL, 0 },
 		{ "dump-tree", cmd_inspect_dump_tree_hook,
 				cmd_inspect_dump_tree_usage, NULL, 0 },
+		{ "dump-super", cmd_inspect_dump_super_hook,
+				cmd_inspect_dump_super_usage, NULL, 0 },
 		NULL_CMD_STRUCT
 	}
 };

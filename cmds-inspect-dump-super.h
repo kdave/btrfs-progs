@@ -16,21 +16,11 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#include "utils.h"
-#include "commands.h"
-#include "cmds-inspect-dump-super.h"
+#ifndef __CMDS_INSPECT_DUMP_SUPER_H__
+#define __CMDS_INSPECT_DUMP_SUPER_H__
 
-int main(int argc, char **argv)
-{
+int cmd_inspect_dump_super(int ac, char **av);
 
-	int ret;
+extern const char * const cmd_inspect_dump_super_usage[];
 
-	set_argv0(argv);
-
-	if (argc > 1 && !strcmp(argv[1], "--help"))
-		usage(cmd_inspect_dump_super_usage);
-
-	ret = cmd_inspect_dump_super(argc, argv);
-
-	return ret;
-}
+#endif
