@@ -279,15 +279,6 @@ static void clear_seen_inodes(void)
 	}
 }
 
-const char * const cmd_filesystem_du_usage[] = {
-	"btrfs filesystem du [options] <path> [<path>..]",
-	"Summarize disk usage of each file.",
-	"-h|--human-readable",
-	"                   human friendly numbers, base 1024 (default)",
-	"-s                 display only a total for each argument",
-	NULL
-};
-
 /*
  * Inline extents are skipped because they do not take data space,
  * delalloc and unknown are skipped because we do not know how much
@@ -533,28 +524,32 @@ out:
 	return ret;
 }
 
+const char * const cmd_filesystem_du_usage[] = {
+	"btrfs filesystem du [options] <path> [<path>..]",
+	"Summarize disk usage of each file.",
+	HELPINFO_UNITS_LONG,
+	"-s                 display only a total for each argument",
+	NULL
+};
+
 int cmd_filesystem_du(int argc, char **argv)
 {
 	int ret = 0, error = 0;
 	int i;
 
+	unit_mode = get_unit_mode_from_arg(&argc, argv, 1);
+
 	optind = 1;
 	while (1) {
-		int long_index;
 		static const struct option long_options[] = {
 			{ "summarize", no_argument, NULL, 's'},
-			{ "human-readable", no_argument, NULL, 'h'},
 			{ NULL, 0, NULL, 0 }
 		};
-		int c = getopt_long(argc, argv, "sh", long_options,
-				&long_index);
+		int c = getopt_long(argc, argv, "s", long_options, NULL);
 
 		if (c < 0)
 			break;
 		switch (c) {
-		case 'h':
-			unit_mode = UNITS_HUMAN;
-			break;
 		case 's':
 			summarize = 1;
 			break;
