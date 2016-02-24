@@ -87,6 +87,42 @@ subvolume itself return it's own tree id (ie. subvol id)
 NOTE: The result is undefined for the so-called empty subvolumes (identified by
 inode number 2), but such subvolume does not contain any files anyway
 
+*show-super* [options] <device> [device...]::
+(needs root privileges)
++
+Show btrfs superblock information stored in devices.
+It is used to print the information of superblock,
+you can specify which mirror to print out.
++
+By default, every device's first superblock will be printed out.
++
+Mainly used for debug purpose.
++
+`Options`
++
+-f::::
+Print full superblock information.
++
+Including the system chunk array and backup roots.
++
+-a::::
+Print information of all superblocks.
++
+If this option is given, '-i' option will be ignored.
++
+-i <super_mirror>::::
+Specify which mirror to print out.
++
+<super_mirror> is between 0 and 2.
+If several '-i <super_mirror>' are given, only the last one is valid.
++
+-F::::
+Attempt to print the superblock even if no superblock magic is found.  May end
+badly.
+-s <bytenr>::::
+specifiy offset to a superblock in a non-standard location at 'bytenr', useful
+for debugging (disables the '-f' option)
+
 *subvolid-resolve* <subvolid> <path>::
 (needs root privileges)
 +
