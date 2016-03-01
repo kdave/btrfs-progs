@@ -624,16 +624,6 @@ out:
 	return !!ret;
 }
 
-static int cmd_inspect_dump_tree_hook(int argc, char **argv)
-{
-	return cmd_inspect_dump_tree(argc, argv);
-}
-
-static int cmd_inspect_dump_super_hook(int argc, char **argv)
-{
-	return cmd_inspect_dump_super(argc, argv);
-}
-
 static const char inspect_cmd_group_info[] =
 "query various internal information";
 
@@ -649,9 +639,9 @@ const struct cmd_group inspect_cmd_group = {
 			0 },
 		{ "min-dev-size", cmd_inspect_min_dev_size,
 			cmd_inspect_min_dev_size_usage, NULL, 0 },
-		{ "dump-tree", cmd_inspect_dump_tree_hook,
+		{ "dump-tree", cmd_inspect_dump_tree,
 				cmd_inspect_dump_tree_usage, NULL, 0 },
-		{ "dump-super", cmd_inspect_dump_super_hook,
+		{ "dump-super", cmd_inspect_dump_super,
 				cmd_inspect_dump_super_usage, NULL, 0 },
 		NULL_CMD_STRUCT
 	}
