@@ -17,7 +17,7 @@
 #ifndef __CMDS_INSPECT_DUMP_TREE_H__
 #define __CMDS_INSPECT_DUMP_TREE_H__
 
-int cmd_inspect_dump_tree(int ac, char **av);
+int cmd_inspect_dump_tree(int argc, char **argv);
 
 extern const char * const cmd_inspect_dump_tree_usage[];
 

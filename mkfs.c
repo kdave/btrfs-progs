@@ -1333,7 +1333,7 @@ out:
 	return ret;
 }
 
-int main(int ac, char **av)
+int main(int argc, char **argv)
 {
 	char *file;
 	struct btrfs_root *root;
@@ -1395,7 +1395,7 @@ int main(int ac, char **av)
 			{ NULL, 0, NULL, 0}
 		};
 
-		c = getopt_long(ac, av, "A:b:fl:n:s:m:d:L:O:r:U:VMKq",
+		c = getopt_long(argc, argv, "A:b:fl:n:s:m:d:L:O:r:U:VMKq",
 				long_options, NULL);
 		if (c < 0)
 			break;
@@ -1483,7 +1483,7 @@ int main(int ac, char **av)
 
 	sectorsize = max(sectorsize, (u32)sysconf(_SC_PAGESIZE));
 	saved_optind = optind;
-	dev_cnt = ac - optind;
+	dev_cnt = argc - optind;
 	if (dev_cnt == 0)
 		print_usage(1);
 
@@ -1507,16 +1507,16 @@ int main(int ac, char **av)
 	}
 
 	while (dev_cnt-- > 0) {
-		file = av[optind++];
+		file = argv[optind++];
 		if (is_block_device(file) == 1)
 			if (test_dev_for_mkfs(file, force_overwrite))
 				exit(1);
 	}
 
 	optind = saved_optind;
-	dev_cnt = ac - optind;
+	dev_cnt = argc - optind;
 
-	file = av[optind++];
+	file = argv[optind++];
 	ssd = is_ssd(file);
 
 	/*
@@ -1582,7 +1582,7 @@ int main(int ac, char **av)
 	for (i = saved_optind; i < saved_optind + dev_cnt; i++) {
 		char *path;
 
-		path = av[i];
+		path = argv[i];
 		ret = test_minimum_size(path, nodesize);
 		if (ret < 0) {
 			fprintf(stderr, "Failed to check size for '%s': %s\n",
@@ -1728,7 +1728,7 @@ int main(int ac, char **av)
 		goto raid_groups;
 
 	while (dev_cnt-- > 0) {
-		file = av[optind++];
+		file = argv[optind++];
 
 		/*
 		 * open without O_EXCL so that the problem should not

@@ -22,18 +22,18 @@
 #include "commands.h"
 #include "cmds-inspect-dump-tree.h"
 
-int main(int ac, char **av)
+int main(int argc, char **argv)
 {
 	int ret;
 
-	set_argv0(av);
+	set_argv0(argv);
 
-	if (ac > 1 && !strcmp(av[1], "--help"))
+	if (argc > 1 && !strcmp(argv[1], "--help"))
 		usage(cmd_inspect_dump_tree_usage);
 
 	radix_tree_init();
 
-	ret = cmd_inspect_dump_tree(ac, av);
+	ret = cmd_inspect_dump_tree(argc, argv);
 
 	btrfs_close_all_devices();
 

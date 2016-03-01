@@ -119,7 +119,7 @@ const char * const cmd_inspect_dump_tree_usage[] = {
 	NULL
 };
 
-int cmd_inspect_dump_tree(int ac, char **av)
+int cmd_inspect_dump_tree(int argc, char **argv)
 {
 	struct btrfs_root *root;
 	struct btrfs_fs_info *info;
@@ -154,7 +154,7 @@ int cmd_inspect_dump_tree(int ac, char **av)
 			{ NULL, 0, NULL, 0 }
 		};
 
-		c = getopt_long(ac, av, "deb:rRut:", long_options, NULL);
+		c = getopt_long(argc, argv, "deb:rRut:", long_options, NULL);
 		if (c < 0)
 			break;
 		switch (c) {
@@ -185,26 +185,26 @@ int cmd_inspect_dump_tree(int ac, char **av)
 		}
 	}
 
-	ac = ac - optind;
-	if (check_argc_exact(ac, 1))
+	argc = argc - optind;
+	if (check_argc_exact(argc, 1))
 		usage(cmd_inspect_dump_tree_usage);
 
-	ret = check_arg_type(av[optind]);
+	ret = check_arg_type(argv[optind]);
 	if (ret != BTRFS_ARG_BLKDEV && ret != BTRFS_ARG_REG) {
 		fprintf(stderr, "'%s' is not a block device or regular file\n",
-			av[optind]);
+			argv[optind]);
 		goto out;
 	}
 
-	info = open_ctree_fs_info(av[optind], 0, 0, OPEN_CTREE_PARTIAL);
+	info = open_ctree_fs_info(argv[optind], 0, 0, OPEN_CTREE_PARTIAL);
 	if (!info) {
-		fprintf(stderr, "unable to open %s\n", av[optind]);
+		fprintf(stderr, "unable to open %s\n", argv[optind]);
 		goto out;
 	}
 
 	root = info->fs_root;
 	if (!root) {
-		fprintf(stderr, "unable to open %s\n", av[optind]);
+		fprintf(stderr, "unable to open %s\n", argv[optind]);
 		goto out;
 	}
 

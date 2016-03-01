@@ -201,7 +201,7 @@ static void print_usage(void)
 	exit(1);
 }
 
-int main(int ac, char **av)
+int main(int argc, char **argv)
 {
 	struct cache_tree root_cache;
 	struct btrfs_root *root;
@@ -227,7 +227,7 @@ int main(int ac, char **av)
 			{ NULL, 0, NULL, 0}
 		};
 
-		c = getopt_long(ac, av, "l:c:o:b:", long_options, NULL);
+		c = getopt_long(argc, argv, "l:c:o:b:", long_options, NULL);
 		if (c < 0)
 			break;
 		switch(c) {
@@ -247,14 +247,14 @@ int main(int ac, char **av)
 				print_usage();
 		}
 	}
-	set_argv0(av);
-	ac = ac - optind;
-	if (check_argc_min(ac, 1))
+	set_argv0(argv);
+	argc = argc - optind;
+	if (check_argc_min(argc, 1))
 		print_usage();
 	if (logical == 0)
 		print_usage();
 
-	dev = av[optind];
+	dev = argv[optind];
 
 	radix_tree_init();
 	cache_tree_init(&root_cache);

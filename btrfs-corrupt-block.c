@@ -1012,7 +1012,7 @@ out:
 	return ret;
 
 }
-int main(int ac, char **av)
+int main(int argc, char **argv)
 {
 	struct cache_tree root_cache;
 	struct btrfs_key key;
@@ -1069,7 +1069,7 @@ int main(int ac, char **av)
 			{ NULL, 0, NULL, 0 }
 		};
 
-		c = getopt_long(ac, av, "l:c:b:eEkuUi:f:x:m:K:IDdr:C:",
+		c = getopt_long(argc, argv, "l:c:b:eEkuUi:f:x:m:K:IDdr:C:",
 				long_options, NULL);
 		if (c < 0)
 			break;
@@ -1141,11 +1141,11 @@ int main(int ac, char **av)
 				print_usage(c != GETOPT_VAL_HELP);
 		}
 	}
-	set_argv0(av);
-	ac = ac - optind;
-	if (check_argc_min(ac, 1))
+	set_argv0(argv);
+	argc = argc - optind;
+	if (check_argc_min(argc, 1))
 		print_usage(1);
-	dev = av[optind];
+	dev = argv[optind];
 
 	radix_tree_init();
 	cache_tree_init(&root_cache);

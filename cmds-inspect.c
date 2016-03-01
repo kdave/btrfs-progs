@@ -624,14 +624,14 @@ out:
 	return !!ret;
 }
 
-static int cmd_inspect_dump_tree_hook(int ac, char **av)
+static int cmd_inspect_dump_tree_hook(int argc, char **argv)
 {
-	return cmd_inspect_dump_tree(ac, av);
+	return cmd_inspect_dump_tree(argc, argv);
 }
 
-static int cmd_inspect_dump_super_hook(int ac, char **av)
+static int cmd_inspect_dump_super_hook(int argc, char **argv)
 {
-	return cmd_inspect_dump_super(ac, av);
+	return cmd_inspect_dump_super(argc, argv);
 }
 
 static const char inspect_cmd_group_info[] =

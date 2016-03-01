@@ -19,7 +19,7 @@
 #ifndef __CMDS_INSPECT_DUMP_SUPER_H__
 #define __CMDS_INSPECT_DUMP_SUPER_H__
 
-int cmd_inspect_dump_super(int ac, char **av);
+int cmd_inspect_dump_super(int argc, char **argv);
 
 extern const char * const cmd_inspect_dump_super_usage[];
 
