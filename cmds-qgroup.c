@@ -32,7 +32,7 @@ static const char * const qgroup_cmd_group_usage[] = {
 	NULL
 };
 
-static int qgroup_assign(int assign, int argc, char **argv)
+static int _cmd_qgroup_assign(int assign, int argc, char **argv)
 {
 	int ret = 0;
 	int fd;
@@ -115,7 +115,7 @@ static int qgroup_assign(int assign, int argc, char **argv)
 	return ret;
 }
 
-static int qgroup_create(int create, int argc, char **argv)
+static int _cmd_qgroup_create(int create, int argc, char **argv)
 {
 	int ret = 0;
 	int fd;
@@ -212,7 +212,7 @@ static int cmd_qgroup_assign(int argc, char **argv)
 
 	clean_args_no_options(argc, argv, cmd_qgroup_assign_usage);
 
-	ret = qgroup_assign(1, argc, argv);
+	ret = _cmd_qgroup_assign(1, argc, argv);
 
 	if (ret < 0)
 		usage(cmd_qgroup_assign_usage);
@@ -231,7 +231,7 @@ static int cmd_qgroup_remove(int argc, char **argv)
 
 	clean_args_no_options(argc, argv, cmd_qgroup_remove_usage);
 
-	ret = qgroup_assign(0, argc, argv);
+	ret = _cmd_qgroup_assign(0, argc, argv);
 
 	if (ret < 0)
 		usage(cmd_qgroup_remove_usage);
@@ -250,7 +250,7 @@ static int cmd_qgroup_create(int argc, char **argv)
 
 	clean_args_no_options(argc, argv, cmd_qgroup_create_usage);
 
-	ret = qgroup_create(1, argc, argv);
+	ret = _cmd_qgroup_create(1, argc, argv);
 
 	if (ret < 0)
 		usage(cmd_qgroup_create_usage);
@@ -269,7 +269,7 @@ static int cmd_qgroup_destroy(int argc, char **argv)
 
 	clean_args_no_options(argc, argv, cmd_qgroup_destroy_usage);
 
-	ret = qgroup_create(0, argc, argv);
+	ret = _cmd_qgroup_create(0, argc, argv);
 
 	if (ret < 0)
 		usage(cmd_qgroup_destroy_usage);
