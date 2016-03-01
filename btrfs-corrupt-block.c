@@ -1142,8 +1142,7 @@ int main(int argc, char **argv)
 		}
 	}
 	set_argv0(argv);
-	argc = argc - optind;
-	if (check_argc_min(argc, 1))
+	if (check_argc_min(argc - optind, 1))
 		print_usage(1);
 	dev = argv[optind];
 

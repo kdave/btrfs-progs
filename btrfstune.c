@@ -442,9 +442,8 @@ int main(int argc, char *argv[])
 	}
 
 	set_argv0(argv);
-	argc = argc - optind;
 	device = argv[optind];
-	if (check_argc_exact(argc, 1)) {
+	if (check_argc_exact(argc - optind, 1)) {
 		print_usage();
 		return 1;
 	}

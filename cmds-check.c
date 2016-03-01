@@ -9579,9 +9579,8 @@ int cmd_check(int argc, char **argv)
 				break;
 		}
 	}
-	argc = argc - optind;
 
-	if (check_argc_exact(argc, 1))
+	if (check_argc_exact(argc - optind, 1))
 		usage(cmd_check_usage);
 
 	if (ctx.progress_enabled) {

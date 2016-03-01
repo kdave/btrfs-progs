@@ -246,10 +246,10 @@ static int cmd_device_scan(int argc, char **argv)
 		}
 	}
 
-	if (all && check_argc_max(argc, 2))
+	if (all && check_argc_max(argc - optind, 1))
 		usage(cmd_device_scan_usage);
 
-	if (all || argc == 1) {
+	if (all || argc - optind == 1) {
 		printf("Scanning for Btrfs filesystems\n");
 		ret = btrfs_scan_lblkid();
 		error_on(ret, "error %d while scanning", ret);
@@ -372,8 +372,7 @@ static int cmd_device_stats(int argc, char **argv)
 		}
 	}
 
-	argc = argc - optind;
-	if (check_argc_exact(argc, 1))
+	if (check_argc_exact(argc - optind, 1))
 		usage(cmd_device_stats_usage);
 
 	dev_path = argv[optind];

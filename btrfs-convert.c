@@ -3165,9 +3165,8 @@ int main(int argc, char *argv[])
 				return c != GETOPT_VAL_HELP;
 		}
 	}
-	argc = argc - optind;
 	set_argv0(argv);
-	if (check_argc_exact(argc, 1)) {
+	if (check_argc_exact(argc - optind, 1)) {
 		print_usage();
 		return 1;
 	}
