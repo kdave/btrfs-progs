@@ -165,6 +165,8 @@ static int cmd_rescue_zero_log(int argc, char **argv)
 	char *devname;
 	int ret;
 
+	clean_args_no_options(argc, argv, cmd_rescue_zero_log_usage);
+
 	if (check_argc_exact(argc, 2))
 		usage(cmd_rescue_zero_log_usage);
 

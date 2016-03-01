@@ -146,7 +146,9 @@ static int _cmd_device_remove(int argc, char **argv,
 	int i, fdmnt, ret = 0;
 	DIR	*dirstream = NULL;
 
-	if (check_argc_min(argc, 3))
+	clean_args_no_options(argc, argv, usagestr);
+
+	if (check_argc_min(argc - optind, 2))
 		usage(usagestr);
 
 	mntpnt = argv[argc - 1];
@@ -155,7 +157,7 @@ static int _cmd_device_remove(int argc, char **argv,
 	if (fdmnt < 0)
 		return 1;
 
-	for(i=1 ; i < argc - 1; i++ ){
+	for(i = optind; i < argc - 1; i++) {
 		struct	btrfs_ioctl_vol_args arg;
 		int	res;
 
@@ -297,7 +299,9 @@ static int cmd_device_ready(int argc, char **argv)
 	int	ret;
 	char	*path;
 
-	if (check_argc_min(argc, 2))
+	clean_args_no_options(argc, argv, cmd_device_ready_usage);
+
+	if (check_argc_min(argc - optind, 1))
 		usage(cmd_device_ready_usage);
 
 	fd = open("/dev/btrfs-control", O_RDWR);
@@ -306,10 +310,10 @@ static int cmd_device_ready(int argc, char **argv)
 		return 1;
 	}
 
-	path = canonicalize_path(argv[argc - 1]);
+	path = canonicalize_path(argv[optind]);
 	if (!path) {
 		error("could not canonicalize pathname '%s': %s",
-			argv[argc - 1], strerror(errno));
+			argv[optind], strerror(errno));
 		ret = 1;
 		goto out;
 	}
@@ -493,10 +497,12 @@ static int cmd_device_usage(int argc, char **argv)
 
 	unit_mode = get_unit_mode_from_arg(&argc, argv, 1);
 
-	if (check_argc_min(argc, 2) || argv[1][0] == '-')
+	clean_args_no_options(argc, argv, cmd_device_usage_usage);
+
+	if (check_argc_min(argc - optind, 1))
 		usage(cmd_device_usage_usage);
 
-	for (i = 1; i < argc; i++) {
+	for (i = optind; i < argc; i++) {
 		int fd;
 		DIR *dirstream = NULL;
 

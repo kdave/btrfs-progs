@@ -379,6 +379,8 @@ static int cmd_property_get(int argc, char **argv)
 	char *name = NULL;
 	int types = 0;
 
+	clean_args_no_options(argc, argv, cmd_property_get_usage);
+
 	if (check_argc_min(argc, 2) || check_argc_max(argc, 5))
 		usage(cmd_property_get_usage);
 
@@ -413,6 +415,8 @@ static int cmd_property_set(int argc, char **argv)
 	char *value = NULL;
 	int types = 0;
 
+	clean_args_no_options(argc, argv, cmd_property_set_usage);
+
 	if (check_argc_min(argc, 4) || check_argc_max(argc, 6))
 		usage(cmd_property_set_usage);
 
@@ -441,6 +445,8 @@ static int cmd_property_list(int argc, char **argv)
 	int ret;
 	char *object = NULL;
 	int types = 0;
+
+	clean_args_no_options(argc, argv, cmd_property_list_usage);
 
 	if (check_argc_min(argc, 2) || check_argc_max(argc, 4))
 		usage(cmd_property_list_usage);

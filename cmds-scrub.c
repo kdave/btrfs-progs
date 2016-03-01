@@ -1591,10 +1591,12 @@ static int cmd_scrub_cancel(int argc, char **argv)
 	int fdmnt = -1;
 	DIR *dirstream = NULL;
 
-	if (check_argc_exact(argc, 2))
+	clean_args_no_options(argc, argv, cmd_scrub_cancel_usage);
+
+	if (check_argc_exact(argc - optind, 1))
 		usage(cmd_scrub_cancel_usage);
 
-	path = argv[1];
+	path = argv[optind];
 
 	fdmnt = open_path_or_dev_mnt(path, &dirstream, 1);
 	if (fdmnt < 0) {

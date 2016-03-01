@@ -788,7 +788,9 @@ static int cmd_subvol_get_default(int argc, char **argv)
 	u64 default_id;
 	DIR *dirstream = NULL;
 
-	if (check_argc_exact(argc, 2))
+	clean_args_no_options(argc, argv, cmd_subvol_get_default_usage);
+
+	if (check_argc_exact(argc - optind, 2))
 		usage(cmd_subvol_get_default_usage);
 
 	subvol = argv[1];
@@ -850,11 +852,13 @@ static int cmd_subvol_set_default(int argc, char **argv)
 	char	*subvolid;
 	DIR	*dirstream = NULL;
 
-	if (check_argc_exact(argc, 3))
+	clean_args_no_options(argc, argv, cmd_subvol_set_default_usage);
+
+	if (check_argc_exact(argc - optind, 2))
 		usage(cmd_subvol_set_default_usage);
 
-	subvolid = argv[1];
-	path = argv[2];
+	subvolid = argv[optind];
+	path = argv[optind + 1];
 
 	objectid = arg_strtou64(subvolid);
 
@@ -887,11 +891,13 @@ static int cmd_subvol_find_new(int argc, char **argv)
 	u64 last_gen;
 	DIR *dirstream = NULL;
 
-	if (check_argc_exact(argc, 3))
+	clean_args_no_options(argc, argv, cmd_subvol_find_new_usage);
+
+	if (check_argc_exact(argc - optind, 2))
 		usage(cmd_subvol_find_new_usage);
 
-	subvol = argv[1];
-	last_gen = arg_strtou64(argv[2]);
+	subvol = argv[optind];
+	last_gen = arg_strtou64(argv[optind + 1]);
 
 	ret = test_issubvolume(subvol);
 	if (ret < 0) {

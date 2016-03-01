@@ -120,16 +120,17 @@ static int qgroup_create(int create, int argc, char **argv)
 	int ret = 0;
 	int fd;
 	int e;
-	char *path = argv[2];
+	char *path;
 	struct btrfs_ioctl_qgroup_create_args args;
 	DIR *dirstream = NULL;
 
-	if (check_argc_exact(argc, 3))
+	if (check_argc_exact(argc - optind, 3))
 		return -1;
 
 	memset(&args, 0, sizeof(args));
 	args.create = create;
-	args.qgroupid = parse_qgroupid(argv[1]);
+	args.qgroupid = parse_qgroupid(argv[optind]);
+	path = argv[optind + 1];
 
 	fd = btrfs_open_dir(path, &dirstream, 1);
 	if (fd < 0)
@@ -207,7 +208,12 @@ static const char * const cmd_qgroup_assign_usage[] = {
 
 static int cmd_qgroup_assign(int argc, char **argv)
 {
-	int ret = qgroup_assign(1, argc, argv);
+	int ret;
+
+	clean_args_no_options(argc, argv, cmd_qgroup_assign_usage);
+
+	ret = qgroup_assign(1, argc, argv);
+
 	if (ret < 0)
 		usage(cmd_qgroup_assign_usage);
 	return ret;
@@ -221,7 +227,12 @@ static const char * const cmd_qgroup_remove_usage[] = {
 
 static int cmd_qgroup_remove(int argc, char **argv)
 {
-	int ret = qgroup_assign(0, argc, argv);
+	int ret;
+
+	clean_args_no_options(argc, argv, cmd_qgroup_remove_usage);
+
+	ret = qgroup_assign(0, argc, argv);
+
 	if (ret < 0)
 		usage(cmd_qgroup_remove_usage);
 	return ret;
@@ -235,7 +246,12 @@ static const char * const cmd_qgroup_create_usage[] = {
 
 static int cmd_qgroup_create(int argc, char **argv)
 {
-	int ret = qgroup_create(1, argc, argv);
+	int ret;
+
+	clean_args_no_options(argc, argv, cmd_qgroup_create_usage);
+
+	ret = qgroup_create(1, argc, argv);
+
 	if (ret < 0)
 		usage(cmd_qgroup_create_usage);
 	return ret;
@@ -249,7 +265,12 @@ static const char * const cmd_qgroup_destroy_usage[] = {
 
 static int cmd_qgroup_destroy(int argc, char **argv)
 {
-	int ret = qgroup_create(0, argc, argv);
+	int ret;
+
+	clean_args_no_options(argc, argv, cmd_qgroup_destroy_usage);
+
+	ret = qgroup_create(0, argc, argv);
+
 	if (ret < 0)
 		usage(cmd_qgroup_destroy_usage);
 	return ret;

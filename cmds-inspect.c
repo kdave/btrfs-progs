@@ -268,22 +268,24 @@ static int cmd_inspect_subvolid_resolve(int argc, char **argv)
 	char path[PATH_MAX];
 	DIR *dirstream = NULL;
 
-	if (check_argc_exact(argc, 3))
+	clean_args_no_options(argc, argv, cmd_inspect_subvolid_resolve_usage);
+
+	if (check_argc_exact(argc - optind, 2))
 		usage(cmd_inspect_subvolid_resolve_usage);
 
-	fd = btrfs_open_dir(argv[2], &dirstream, 1);
+	fd = btrfs_open_dir(argv[optind], &dirstream, 1);
 	if (fd < 0) {
 		ret = -ENOENT;
 		goto out;
 	}
 
-	subvol_id = arg_strtou64(argv[1]);
+	subvol_id = arg_strtou64(argv[optind]);
 	ret = btrfs_subvolid_resolve(fd, path, sizeof(path), subvol_id);
 
 	if (ret) {
 		fprintf(stderr,
-			"%s: btrfs_subvolid_resolve(subvol_id %llu) failed with ret=%d\n",
-			argv[0], (unsigned long long)subvol_id, ret);
+			"btrfs_subvolid_resolve(subvol_id %llu) failed with ret=%d\n",
+			(unsigned long long)subvol_id, ret);
 		goto out;
 	}
 
@@ -308,10 +310,12 @@ static int cmd_inspect_rootid(int argc, char **argv)
 	u64 rootid;
 	DIR *dirstream = NULL;
 
-	if (check_argc_exact(argc, 2))
+	clean_args_no_options(argc, argv, cmd_inspect_rootid_usage);
+
+	if (check_argc_exact(argc - optind, 1))
 		usage(cmd_inspect_rootid_usage);
 
-	fd = btrfs_open_dir(argv[1], &dirstream, 1);
+	fd = btrfs_open_dir(argv[optind], &dirstream, 1);
 	if (fd < 0) {
 		ret = -ENOENT;
 		goto out;
@@ -319,8 +323,7 @@ static int cmd_inspect_rootid(int argc, char **argv)
 
 	ret = lookup_ino_rootid(fd, &rootid);
 	if (ret) {
-		fprintf(stderr, "%s: rootid failed with ret=%d\n",
-			argv[0], ret);
+		fprintf(stderr, "rootid failed with ret=%d\n", ret);
 		goto out;
 	}
 

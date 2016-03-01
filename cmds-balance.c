@@ -612,10 +612,12 @@ static int cmd_balance_pause(int argc, char **argv)
 	int e;
 	DIR *dirstream = NULL;
 
-	if (check_argc_exact(argc, 2))
+	clean_args_no_options(argc, argv, cmd_balance_pause_usage);
+
+	if (check_argc_exact(argc - optind, 1))
 		usage(cmd_balance_pause_usage);
 
-	path = argv[1];
+	path = argv[optind];
 
 	fd = btrfs_open_dir(path, &dirstream, 1);
 	if (fd < 0)
@@ -651,10 +653,12 @@ static int cmd_balance_cancel(int argc, char **argv)
 	int e;
 	DIR *dirstream = NULL;
 
-	if (check_argc_exact(argc, 2))
+	clean_args_no_options(argc, argv, cmd_balance_cancel_usage);
+
+	if (check_argc_exact(argc - optind, 1))
 		usage(cmd_balance_cancel_usage);
 
-	path = argv[1];
+	path = argv[optind];
 
 	fd = btrfs_open_dir(path, &dirstream, 1);
 	if (fd < 0)
@@ -691,10 +695,12 @@ static int cmd_balance_resume(int argc, char **argv)
 	int ret;
 	int e;
 
-	if (check_argc_exact(argc, 2))
+	clean_args_no_options(argc, argv, cmd_balance_resume_usage);
+
+	if (check_argc_exact(argc - optind, 1))
 		usage(cmd_balance_resume_usage);
 
-	path = argv[1];
+	path = argv[optind];
 
 	fd = btrfs_open_dir(path, &dirstream, 1);
 	if (fd < 0)

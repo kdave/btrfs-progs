@@ -70,7 +70,12 @@ static const char * const cmd_quota_enable_usage[] = {
 
 static int cmd_quota_enable(int argc, char **argv)
 {
-	int ret = quota_ctl(BTRFS_QUOTA_CTL_ENABLE, argc, argv);
+	int ret;
+
+	clean_args_no_options(argc, argv, cmd_quota_enable_usage);
+
+	ret = quota_ctl(BTRFS_QUOTA_CTL_ENABLE, argc, argv);
+
 	if (ret < 0)
 		usage(cmd_quota_enable_usage);
 	return ret;
@@ -84,7 +89,12 @@ static const char * const cmd_quota_disable_usage[] = {
 
 static int cmd_quota_disable(int argc, char **argv)
 {
-	int ret = quota_ctl(BTRFS_QUOTA_CTL_DISABLE, argc, argv);
+	int ret;
+
+	clean_args_no_options(argc, argv, cmd_quota_disable_usage);
+
+	ret = quota_ctl(BTRFS_QUOTA_CTL_DISABLE, argc, argv);
+
 	if (ret < 0)
 		usage(cmd_quota_disable_usage);
 	return ret;

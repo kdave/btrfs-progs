@@ -197,10 +197,12 @@ static int cmd_filesystem_df(int argc, char **argv)
 
 	unit_mode = get_unit_mode_from_arg(&argc, argv, 1);
 
-	if (argc != 2 || argv[1][0] == '-')
+	clean_args_no_options(argc, argv, cmd_filesystem_df_usage);
+
+	if (check_argc_exact(argc - optind, 1))
 		usage(cmd_filesystem_df_usage);
 
-	path = argv[1];
+	path = argv[optind];
 
 	fd = btrfs_open_dir(path, &dirstream, 1);
 	if (fd < 0)
@@ -918,10 +920,12 @@ static int cmd_filesystem_sync(int argc, char **argv)
 	char	*path;
 	DIR	*dirstream = NULL;
 
-	if (check_argc_exact(argc, 2))
+	clean_args_no_options(argc, argv, cmd_filesystem_sync_usage);
+
+	if (check_argc_exact(argc - optind, 1))
 		usage(cmd_filesystem_sync_usage);
 
-	path = argv[1];
+	path = argv[optind];
 
 	fd = btrfs_open_dir(path, &dirstream, 1);
 	if (fd < 0)
@@ -1178,11 +1182,13 @@ static int cmd_filesystem_resize(int argc, char **argv)
 	DIR	*dirstream = NULL;
 	struct stat st;
 
-	if (check_argc_exact(argc, 3))
+	clean_args_no_options(argc, argv, cmd_filesystem_resize_usage);
+
+	if (check_argc_exact(argc - optind, 2))
 		usage(cmd_filesystem_resize_usage);
 
-	amount = argv[1];
-	path = argv[2];
+	amount = argv[optind];
+	path = argv[optind + 1];
 
 	len = strlen(amount);
 	if (len == 0 || len >= BTRFS_VOL_NAME_MAX) {
@@ -1247,16 +1253,19 @@ static const char * const cmd_filesystem_label_usage[] = {
 
 static int cmd_filesystem_label(int argc, char **argv)
 {
-	if (check_argc_min(argc, 2) || check_argc_max(argc, 3))
+	clean_args_no_options(argc, argv, cmd_filesystem_label_usage);
+
+	if (check_argc_min(argc - optind, 2) ||
+			check_argc_max(argc - optind, 3))
 		usage(cmd_filesystem_label_usage);
 
-	if (argc > 2) {
-		return set_label(argv[1], argv[2]);
+	if (argc - optind > 2) {
+		return set_label(argv[optind], argv[optind + 1]);
 	} else {
 		char label[BTRFS_LABEL_SIZE];
 		int ret;
 
-		ret = get_label(argv[1], label);
+		ret = get_label(argv[optind], label);
 		if (!ret)
 			fprintf(stdout, "%s\n", label);
 
