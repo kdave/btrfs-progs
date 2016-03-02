@@ -68,7 +68,7 @@ static int decompress_zlib(char *inbuf, char *outbuf, u64 compress_len,
 	memset(&strm, 0, sizeof(strm));
 	ret = inflateInit(&strm);
 	if (ret != Z_OK) {
-		fprintf(stderr, "inflate init returnd %d\n", ret);
+		error("zlib init returned %d", ret);
 		return -1;
 	}
 
@@ -79,7 +79,7 @@ static int decompress_zlib(char *inbuf, char *outbuf, u64 compress_len,
 	ret = inflate(&strm, Z_NO_FLUSH);
 	if (ret != Z_STREAM_END) {
 		(void)inflateEnd(&strm);
-		fprintf(stderr, "failed to inflate: %d\n", ret);
+		error("zlib inflate failed: %d", ret);
 		return -1;
 	}
 
@@ -105,7 +105,7 @@ static int decompress_lzo(unsigned char *inbuf, char *outbuf, u64 compress_len,
 
 	ret = lzo_init();
 	if (ret != LZO_E_OK) {
-		fprintf(stderr, "lzo init returned %d\n", ret);
+		error("lzo init returned %d", ret);
 		return -1;
 	}
 
@@ -119,7 +119,7 @@ static int decompress_lzo(unsigned char *inbuf, char *outbuf, u64 compress_len,
 		in_len = read_compress_length(inbuf);
 
 		if ((tot_in + LZO_LEN + in_len) > tot_len) {
-			fprintf(stderr, "bad compress length %lu\n",
+			error("bad compress length %lu",
 				(unsigned long)in_len);
 			return -1;
 		}
@@ -132,7 +132,7 @@ static int decompress_lzo(unsigned char *inbuf, char *outbuf, u64 compress_len,
 					    (unsigned char *)outbuf,
 					    (void *)&new_len, NULL);
 		if (ret != LZO_E_OK) {
-			fprintf(stderr, "failed to inflate: %d\n", ret);
+			error("lzo decompress failed: %d", ret);
 			return -1;
 		}
 		out_len += new_len;
@@ -171,7 +171,7 @@ static int decompress(char *inbuf, char *outbuf, u64 compress_len,
 		break;
 	}
 
-	fprintf(stderr, "invalid compression type: %d\n", compress);
+	error("invalid compression type: %d", compress);
 	return -1;
 }
 
@@ -269,7 +269,7 @@ static int copy_one_inline(int fd, struct btrfs_path *path, u64 pos)
 	ram_size = btrfs_file_extent_ram_bytes(leaf, fi);
 	outbuf = calloc(1, ram_size);
 	if (!outbuf) {
-		fprintf(stderr, "No memory\n");
+		error("not enough memory");
 		return -ENOMEM;
 	}
 
@@ -331,14 +331,14 @@ static int copy_one_extent(struct btrfs_root *root, int fd,
 
 	inbuf = malloc(size_left);
 	if (!inbuf) {
-		fprintf(stderr, "No memory\n");
+		error("not enough memory\n");
 		return -ENOMEM;
 	}
 
 	if (compress != BTRFS_COMPRESS_NONE) {
 		outbuf = calloc(1, ram_size);
 		if (!outbuf) {
-			fprintf(stderr, "No memory\n");
+			error("not enough memory");
 			free(inbuf);
 			return -ENOMEM;
 		}
@@ -348,7 +348,9 @@ again:
 	ret = btrfs_map_block(&root->fs_info->mapping_tree, READ,
 			      bytenr, &length, &multi, mirror_num, NULL);
 	if (ret) {
-		fprintf(stderr, "Error mapping block %d\n", ret);
+		error("cannot map block logical %llu length %llu: %d",
+				(unsigned long long)bytenr,
+				(unsigned long long)length, ret);
 		goto out;
 	}
 	device = multi->stripes[0].dev;
@@ -369,7 +371,8 @@ again:
 		/* mirror_num is 1-indexed, so num_copies is a valid mirror. */
 		if (mirror_num > num_copies) {
 			ret = -1;
-			fprintf(stderr, "Exhausted mirrors trying to read\n");
+			error("exhausted mirrors trying to read (%d > %d)",
+					mirror_num, num_copies);
 			goto out;
 		}
 		fprintf(stderr, "Trying another mirror\n");
@@ -389,7 +392,7 @@ again:
 				      pos+total);
 			if (done < 0) {
 				ret = -1;
-				fprintf(stderr, "Error writing: %d %s\n", errno, strerror(errno));
+				error("cannot write data: %d %s", errno, strerror(errno));
 				goto out;
 			}
 			total += done;
@@ -488,8 +491,7 @@ static int set_file_xattrs(struct btrfs_root *root, u64 inode,
 			do {
 				ret = next_leaf(root, path);
 				if (ret < 0) {
-					fprintf(stderr,
-						"Error searching for extended attributes: %d\n",
+					error("searching for extended attributes: %d\n",
 						ret);
 					goto out;
 				} else if (ret) {
@@ -540,8 +542,7 @@ static int set_file_xattrs(struct btrfs_root *root, u64 inode,
 			data_len = len;
 
 			if (fsetxattr(fd, name, data, data_len, 0))
-				fprintf(stderr,
-					"Error setting extended attribute %s on file %s: %s\n",
+				error("setting extended attribute %s on file %s: %s",
 					name, file_name, strerror(errno));
 
 			len = sizeof(*di) + name_len + data_len;
@@ -568,7 +569,7 @@ static int copy_metadata(struct btrfs_root *root, int fd,
 
 	path = btrfs_alloc_path();
 	if (!path) {
-		fprintf(stderr, "ERROR: Ran out of memory\n");
+		error("not enough memory");
 		return -ENOMEM;
 	}
 
@@ -583,15 +584,13 @@ static int copy_metadata(struct btrfs_root *root, int fd,
 		ret = fchown(fd, btrfs_inode_uid(path->nodes[0], inode_item),
 				btrfs_inode_gid(path->nodes[0], inode_item));
 		if (ret) {
-			fprintf(stderr, "ERROR: Failed to change owner: %s\n",
-					strerror(errno));
+			error("failed to change owner: %s", strerror(errno));
 			goto out;
 		}
 
 		ret = fchmod(fd, btrfs_inode_mode(path->nodes[0], inode_item));
 		if (ret) {
-			fprintf(stderr, "ERROR: Failed to change mode: %s\n",
-					strerror(errno));
+			error("failed to change mode: %s", strerror(errno));
 			goto out;
 		}
 
@@ -605,8 +604,7 @@ static int copy_metadata(struct btrfs_root *root, int fd,
 
 		ret = futimens(fd, times);
 		if (ret) {
-			fprintf(stderr, "ERROR: Failed to set times: %s\n",
-					strerror(errno));
+			error("failed to set times: %s", strerror(errno));
 			goto out;
 		}
 	}
@@ -634,7 +632,7 @@ static int copy_file(struct btrfs_root *root, int fd, struct btrfs_key *key,
 
 	path = btrfs_alloc_path();
 	if (!path) {
-		fprintf(stderr, "Ran out of memory\n");
+		error("not enough memory");
 		return -ENOMEM;
 	}
 
@@ -676,7 +674,7 @@ static int copy_file(struct btrfs_root *root, int fd, struct btrfs_key *key,
 
 	ret = btrfs_search_slot(NULL, root, key, path, 0, 0);
 	if (ret < 0) {
-		fprintf(stderr, "Error searching %d\n", ret);
+		error("searching extent data returned %d", ret);
 		goto out;
 	}
 
@@ -684,8 +682,7 @@ static int copy_file(struct btrfs_root *root, int fd, struct btrfs_key *key,
 	while (!leaf) {
 		ret = next_leaf(root, path);
 		if (ret < 0) {
-			fprintf(stderr, "Error getting next leaf %d\n",
-				ret);
+			error("cannot get next leaf: %d", ret);
 			goto out;
 		} else if (ret > 0) {
 			/* No more leaves to search */
@@ -732,7 +729,7 @@ static int copy_file(struct btrfs_root *root, int fd, struct btrfs_key *key,
 		extent_type = btrfs_file_extent_type(leaf, fi);
 		compression = btrfs_file_extent_compression(leaf, fi);
 		if (compression >= BTRFS_COMPRESS_LAST) {
-			fprintf(stderr, "Don't support compression yet %d\n",
+			warning("compression type %d not supported",
 				compression);
 			ret = -1;
 			goto out;
@@ -750,7 +747,7 @@ static int copy_file(struct btrfs_root *root, int fd, struct btrfs_key *key,
 			if (ret)
 				goto out;
 		} else {
-			printf("Weird extent type %d\n", extent_type);
+			warning("weird extent type %d", extent_type);
 		}
 next:
 		path->slots[0]++;
