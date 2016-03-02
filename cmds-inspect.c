@@ -53,7 +53,7 @@ static int __ino_to_path_fd(u64 inum, int fd, int verbose, const char *prepend)
 
 	ret = ioctl(fd, BTRFS_IOC_INO_PATHS, &ipa);
 	if (ret < 0) {
-		printf("ioctl ret=%d, error: %s\n", ret, strerror(errno));
+		error("ino paths ioctl: %s", strerror(errno));
 		goto out;
 	}
 
@@ -192,7 +192,7 @@ static int cmd_inspect_logical_resolve(int argc, char **argv)
 
 	ret = ioctl(fd, BTRFS_IOC_LOGICAL_INO, &loi);
 	if (ret < 0) {
-		printf("ioctl ret=%d, error: %s\n", ret, strerror(errno));
+		error("logical ino ioctl: %s", strerror(errno));
 		goto out;
 	}
 
@@ -283,8 +283,7 @@ static int cmd_inspect_subvolid_resolve(int argc, char **argv)
 	ret = btrfs_subvolid_resolve(fd, path, sizeof(path), subvol_id);
 
 	if (ret) {
-		fprintf(stderr,
-			"btrfs_subvolid_resolve(subvol_id %llu) failed with ret=%d\n",
+		error("resolving subvolid %llu error %d",
 			(unsigned long long)subvol_id, ret);
 		goto out;
 	}
@@ -323,7 +322,7 @@ static int cmd_inspect_rootid(int argc, char **argv)
 
 	ret = lookup_ino_rootid(fd, &rootid);
 	if (ret) {
-		fprintf(stderr, "rootid failed with ret=%d\n", ret);
+		error("rootid failed with ret=%d", ret);
 		goto out;
 	}
 
@@ -521,9 +520,7 @@ static int print_min_dev_size(int fd, u64 devid)
 
 		ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &args);
 		if (ret < 0) {
-			fprintf(stderr,
-				"Error invoking tree search ioctl: %s\n",
-				strerror(errno));
+			error("tree search ioctl: %s", strerror(errno));
 			ret = 1;
 			goto out;
 		}
@@ -559,7 +556,7 @@ static int print_min_dev_size(int fd, u64 devid)
 				ret = add_dev_extent(&holes, last_pos,
 						     sh->offset - 1, 1);
 			if (ret) {
-				fprintf(stderr, "Error: %s\n", strerror(-ret));
+				error("add device extent: %s", strerror(-ret));
 				ret = 1;
 				goto out;
 			}

@@ -191,20 +191,19 @@ int cmd_inspect_dump_tree(int argc, char **argv)
 
 	ret = check_arg_type(argv[optind]);
 	if (ret != BTRFS_ARG_BLKDEV && ret != BTRFS_ARG_REG) {
-		fprintf(stderr, "'%s' is not a block device or regular file\n",
-			argv[optind]);
+		error("not a block device or regular file: %s", argv[optind]);
 		goto out;
 	}
 
 	info = open_ctree_fs_info(argv[optind], 0, 0, OPEN_CTREE_PARTIAL);
 	if (!info) {
-		fprintf(stderr, "unable to open %s\n", argv[optind]);
+		error("unable to open %s", argv[optind]);
 		goto out;
 	}
 
 	root = info->fs_root;
 	if (!root) {
-		fprintf(stderr, "unable to open %s\n", argv[optind]);
+		error("unable to open %s", argv[optind]);
 		goto out;
 	}
 
@@ -225,7 +224,7 @@ int cmd_inspect_dump_tree(int argc, char **argv)
 					      root->nodesize, 0);
 		}
 		if (!extent_buffer_uptodate(leaf)) {
-			fprintf(stderr, "failed to read %llu\n",
+			error("failed to read %llu",
 				(unsigned long long)block_only);
 			goto close_root;
 		}

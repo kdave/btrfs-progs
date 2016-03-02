@@ -427,8 +427,7 @@ static int du_add_file(const char *filename, int dirfd,
 		return 0;
 
 	if (len > (path_max - pathp)) {
-		fprintf(stderr, "ERROR: Path max exceeded: %s %s\n", path,
-			filename);
+		error("path too long: %s %s", path, filename);
 		return ENAMETOOLONG;
 	}
 
@@ -534,7 +533,7 @@ const char * const cmd_filesystem_du_usage[] = {
 
 int cmd_filesystem_du(int argc, char **argv)
 {
-	int ret = 0, error = 0;
+	int ret = 0, err = 0;
 	int i;
 
 	unit_mode = get_unit_mode_from_arg(&argc, argv, 1);
@@ -566,14 +565,14 @@ int cmd_filesystem_du(int argc, char **argv)
 	for (i = optind; i < argc; i++) {
 		ret = du_add_file(argv[i], AT_FDCWD, NULL, NULL, NULL, 1);
 		if (ret) {
-			fprintf(stderr, "ERROR: can't check space of '%s': %s\n",
-				argv[i], strerror(ret));
-			error = 1;
+			error("cannot check space of '%s': %s", argv[i],
+					strerror(ret));
+			err = 1;
 		}
 
 		/* reset hard-link detection for each argument */
 		clear_seen_inodes();
 	}
 
-	return error;
+	return err;
 }

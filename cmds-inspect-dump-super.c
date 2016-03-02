@@ -62,7 +62,7 @@ static void print_sys_chunk_array(struct btrfs_super_block *sb)
 
 	buf = malloc(sizeof(*buf) + sizeof(*sb));
 	if (!buf) {
-		fprintf(stderr, "%s\n", strerror(ENOMEM));
+		error("not enough memory");
 		goto out;
 	}
 	write_extent_buffer(buf, sb, 0, sizeof(*sb));
@@ -424,19 +424,16 @@ static int load_and_dump_sb(char *filename, int fd, u64 sb_bytenr, int full,
 		if (ret == 0 && errno == 0)
 			return 0;
 
-		fprintf(stderr,
-		   "ERROR: Failed to read the superblock on %s at %llu\n",
-		   filename, (unsigned long long)sb_bytenr);
-		fprintf(stderr,
-		   "ERROR: error = '%s', errno = %d\n", strerror(errno), errno);
+		error("failed to read the superblock on %s at %llu",
+				filename, (unsigned long long)sb_bytenr);
+		error("error = '%s', errno = %d", strerror(errno), errno);
 		return 1;
 	}
 	printf("superblock: bytenr=%llu, device=%s\n", sb_bytenr, filename);
 	printf("---------------------------------------------------------\n");
 	if (btrfs_super_magic(sb) != BTRFS_MAGIC && !force) {
-		fprintf(stderr,
-		    "ERROR: bad magic on superblock on %s at %llu\n",
-		    filename, (unsigned long long)sb_bytenr);
+		error("bad magic on superblock on %s at %llu",
+				filename, (unsigned long long)sb_bytenr);
 	} else {
 		dump_superblock(sb, full);
 	}
@@ -472,9 +469,8 @@ int cmd_inspect_dump_super(int argc, char **argv)
 		case 'i':
 			arg = arg_strtou64(optarg);
 			if (arg >= BTRFS_SUPER_MIRROR_MAX) {
-				fprintf(stderr,
-					"Illegal super_mirror %llu\n",
-					arg);
+				error("super mirror too big: %llu >= %d",
+					arg, BTRFS_SUPER_MIRROR_MAX);
 				usage(cmd_inspect_dump_super_usage);
 			}
 			sb_bytenr = btrfs_sb_offset(arg);
@@ -505,7 +501,7 @@ int cmd_inspect_dump_super(int argc, char **argv)
 		filename = argv[i];
 		fd = open(filename, O_RDONLY, 0666);
 		if (fd < 0) {
-			fprintf(stderr, "Could not open %s\n", filename);
+			error("cannot open %s: %s", filename, strerror(errno));
 			ret = 1;
 			goto out;
 		}
