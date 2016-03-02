@@ -83,6 +83,13 @@ rollback to the original ext2/3/4 filesystem if possible
 set filesystem label during conversion
 -L|--copy-label::
 use label from the converted filesystem
+-O|--features <feature1>[,<feature2>...]::
+A list of filesystem features turned on at btrfs-convert time. Not all features
+are supported by old kernels. To disable a feature, prefix it with '^'.
++
+To see all available features that btrfs-convert supports run:
++
++btrfs-convert -O list-all+
 -p|--progress::
 show progress of conversion, on by default
 --no-progress::
