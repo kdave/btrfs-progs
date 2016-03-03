@@ -1810,8 +1810,6 @@ static int read_one_dev(struct btrfs_root *root,
 
 	device = btrfs_find_device(root, devid, dev_uuid, fs_uuid);
 	if (!device) {
-		printk("warning devid %llu not found already\n",
-			(unsigned long long)devid);
 		device = kzalloc(sizeof(*device), GFP_NOFS);
 		if (!device)
 			return -ENOMEM;
