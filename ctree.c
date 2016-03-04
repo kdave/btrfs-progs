@@ -20,6 +20,7 @@
 #include "transaction.h"
 #include "print-tree.h"
 #include "repair.h"
+#include "internal.h"
 
 static int split_node(struct btrfs_trans_handle *trans, struct btrfs_root
 		      *root, struct btrfs_path *path, int level);

@@ -22,6 +22,7 @@
 #include "backref.h"
 #include "ulist.h"
 #include "transaction.h"
+#include "internal.h"
 
 #define pr_debug(...) do { } while (0)
 

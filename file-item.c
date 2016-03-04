@@ -25,6 +25,7 @@
 #include "transaction.h"
 #include "print-tree.h"
 #include "crc32c.h"
+#include "internal.h"
 
 #define MAX_CSUM_ITEMS(r,size) ((((BTRFS_LEAF_DATA_SIZE(r) - \
 			       sizeof(struct btrfs_item) * 2) / \
