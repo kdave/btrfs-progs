@@ -190,7 +190,7 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	fs_info = open_ctree_fs_info(argv[optind], 0, 0,
+	fs_info = open_ctree_fs_info(argv[optind], 0, 0, 0,
 			OPEN_CTREE_CHUNK_ROOT_ONLY |
 			OPEN_CTREE_IGNORE_CHUNK_TREE_ERROR);
 	if (!fs_info) {

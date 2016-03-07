@@ -9480,6 +9480,7 @@ const char * const cmd_check_usage[] = {
 	"-E|--subvol-extents <subvolid>",
 	"                            print subvolume extents and sharing state",
 	"-r|--tree-root <bytenr>     use the given bytenr for the tree root",
+	"-c|--chunk-root <bytenr>    use the given bytenr for the chunk tree root",
 	"-p|--progress               indicate progress",
 	NULL
 };
@@ -9492,6 +9493,7 @@ int cmd_check(int argc, char **argv)
 	u64 bytenr = 0;
 	u64 subvolid = 0;
 	u64 tree_root_bytenr = 0;
+	u64 chunk_root_bytenr = 0;
 	char uuidbuf[BTRFS_UUID_UNPARSED_SIZE];
 	int ret;
 	u64 num;
@@ -9515,11 +9517,12 @@ int cmd_check(int argc, char **argv)
 			{ "subvol-extents", required_argument, NULL, 'E' },
 			{ "qgroup-report", no_argument, NULL, 'Q' },
 			{ "tree-root", required_argument, NULL, 'r' },
+			{ "chunk-root", required_argument, NULL, 'c' },
 			{ "progress", no_argument, NULL, 'p' },
 			{ NULL, 0, NULL, 0}
 		};
 
-		c = getopt_long(argc, argv, "as:br:p", long_options, NULL);
+		c = getopt_long(argc, argv, "as:br:pc:", long_options, NULL);
 		if (c < 0)
 			break;
 		switch(c) {
@@ -9547,6 +9550,9 @@ int cmd_check(int argc, char **argv)
 				break;
 			case 'r':
 				tree_root_bytenr = arg_strtou64(optarg);
+				break;
+			case 'c':
+				chunk_root_bytenr = arg_strtou64(optarg);
 				break;
 			case 'p':
 				ctx.progress_enabled = true;
@@ -9611,7 +9617,7 @@ int cmd_check(int argc, char **argv)
 		ctree_flags |= OPEN_CTREE_PARTIAL;
 
 	info = open_ctree_fs_info(argv[optind], bytenr, tree_root_bytenr,
-				  ctree_flags);
+				  chunk_root_bytenr, ctree_flags);
 	if (!info) {
 		fprintf(stderr, "Couldn't open file system\n");
 		ret = -EIO;

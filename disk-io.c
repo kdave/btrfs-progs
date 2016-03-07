@@ -1146,7 +1146,8 @@ int btrfs_scan_fs_devices(int fd, const char *path,
 	return 0;
 }
 
-int btrfs_setup_chunk_tree_and_device_map(struct btrfs_fs_info *fs_info)
+int btrfs_setup_chunk_tree_and_device_map(struct btrfs_fs_info *fs_info,
+					  u64 chunk_root_bytenr)
 {
 	struct btrfs_super_block *sb = fs_info->super_copy;
 	u32 sectorsize;
@@ -1173,8 +1174,20 @@ int btrfs_setup_chunk_tree_and_device_map(struct btrfs_fs_info *fs_info)
 				     btrfs_super_chunk_root_level(sb));
 	generation = btrfs_super_chunk_root_generation(sb);
 
+	if (chunk_root_bytenr && !IS_ALIGNED(chunk_root_bytenr,
+					    btrfs_super_sectorsize(sb))) {
+		warning("chunk_root_bytenr %llu is unaligned to %u, ignore it",
+			chunk_root_bytenr, btrfs_super_sectorsize(sb));
+		chunk_root_bytenr = 0;
+	}
+
+	if (!chunk_root_bytenr)
+		chunk_root_bytenr = btrfs_super_chunk_root(sb);
+	else
+		generation = 0;
+
 	fs_info->chunk_root->node = read_tree_block(fs_info->chunk_root,
-						    btrfs_super_chunk_root(sb),
+						    chunk_root_bytenr,
 						    blocksize, generation);
 	if (!extent_buffer_uptodate(fs_info->chunk_root->node)) {
 		if (fs_info->ignore_chunk_tree_error) {
@@ -1200,6 +1213,7 @@ int btrfs_setup_chunk_tree_and_device_map(struct btrfs_fs_info *fs_info)
 static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 					     u64 sb_bytenr,
 					     u64 root_tree_bytenr,
+					     u64 chunk_root_bytenr,
 					     enum btrfs_open_ctree_flags flags)
 {
 	struct btrfs_fs_info *fs_info;
@@ -1273,7 +1287,7 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 	if (ret)
 		goto out_devices;
 
-	ret = btrfs_setup_chunk_tree_and_device_map(fs_info);
+	ret = btrfs_setup_chunk_tree_and_device_map(fs_info, chunk_root_bytenr);
 	if (ret)
 		goto out_chunk;
 
@@ -1305,6 +1319,7 @@ out:
 
 struct btrfs_fs_info *open_ctree_fs_info(const char *filename,
 					 u64 sb_bytenr, u64 root_tree_bytenr,
+					 u64 chunk_root_bytenr,
 					 enum btrfs_open_ctree_flags flags)
 {
 	int fp;
@@ -1320,7 +1335,7 @@ struct btrfs_fs_info *open_ctree_fs_info(const char *filename,
 		return NULL;
 	}
 	info = __open_ctree_fd(fp, filename, sb_bytenr, root_tree_bytenr,
-			       flags);
+			       chunk_root_bytenr, flags);
 	close(fp);
 	return info;
 }
@@ -1332,7 +1347,7 @@ struct btrfs_root *open_ctree(const char *filename, u64 sb_bytenr,
 
 	/* This flags may not return fs_info with any valid root */
 	BUG_ON(flags & OPEN_CTREE_IGNORE_CHUNK_TREE_ERROR);
-	info = open_ctree_fs_info(filename, sb_bytenr, 0, flags);
+	info = open_ctree_fs_info(filename, sb_bytenr, 0, 0, flags);
 	if (!info)
 		return NULL;
 	if (flags & __OPEN_CTREE_RETURN_CHUNK_ROOT)
@@ -1347,7 +1362,7 @@ struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
 
 	/* This flags may not return fs_info with any valid root */
 	BUG_ON(flags & OPEN_CTREE_IGNORE_CHUNK_TREE_ERROR);
-	info = __open_ctree_fd(fp, path, sb_bytenr, 0, flags);
+	info = __open_ctree_fd(fp, path, sb_bytenr, 0, 0, flags);
 	if (!info)
 		return NULL;
 	if (flags & __OPEN_CTREE_RETURN_CHUNK_ROOT)

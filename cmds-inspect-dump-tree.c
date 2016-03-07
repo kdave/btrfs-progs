@@ -194,7 +194,7 @@ int cmd_inspect_dump_tree(int argc, char **argv)
 		goto out;
 	}
 
-	info = open_ctree_fs_info(argv[optind], 0, 0, OPEN_CTREE_PARTIAL);
+	info = open_ctree_fs_info(argv[optind], 0, 0, 0, OPEN_CTREE_PARTIAL);
 	if (!info) {
 		error("unable to open %s", argv[optind]);
 		goto out;

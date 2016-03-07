@@ -1262,7 +1262,7 @@ static struct btrfs_root *open_fs(const char *dev, u64 root_location,
 
 	for (i = super_mirror; i < BTRFS_SUPER_MIRROR_MAX; i++) {
 		bytenr = btrfs_sb_offset(i);
-		fs_info = open_ctree_fs_info(dev, bytenr, root_location,
+		fs_info = open_ctree_fs_info(dev, bytenr, root_location, 0,
 					     OPEN_CTREE_PARTIAL);
 		if (fs_info)
 			break;

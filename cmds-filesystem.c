@@ -720,7 +720,7 @@ static int map_seed_devices(struct list_head *all_uuids)
 		/*
 		 * open_ctree_* detects seed/sprout mapping
 		 */
-		fs_info = open_ctree_fs_info(device->name, 0, 0,
+		fs_info = open_ctree_fs_info(device->name, 0, 0, 0,
 						OPEN_CTREE_PARTIAL);
 		if (!fs_info)
 			continue;
