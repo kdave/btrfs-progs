@@ -9480,7 +9480,7 @@ const char * const cmd_check_usage[] = {
 	"-E|--subvol-extents <subvolid>",
 	"                            print subvolume extents and sharing state",
 	"-r|--tree-root <bytenr>     use the given bytenr for the tree root",
-	"-c|--chunk-root <bytenr>    use the given bytenr for the chunk tree root",
+	"--chunk-root <bytenr>       use the given bytenr for the chunk tree root",
 	"-p|--progress               indicate progress",
 	NULL
 };
@@ -9505,7 +9505,7 @@ int cmd_check(int argc, char **argv)
 	while(1) {
 		int c;
 		enum { OPT_REPAIR = 257, OPT_INIT_CSUM, OPT_INIT_EXTENT,
-			OPT_CHECK_CSUM, OPT_READONLY };
+			OPT_CHECK_CSUM, OPT_READONLY, OPT_CHUNK_TREE };
 		static const struct option long_options[] = {
 			{ "super", required_argument, NULL, 's' },
 			{ "repair", no_argument, NULL, OPT_REPAIR },
@@ -9517,12 +9517,12 @@ int cmd_check(int argc, char **argv)
 			{ "subvol-extents", required_argument, NULL, 'E' },
 			{ "qgroup-report", no_argument, NULL, 'Q' },
 			{ "tree-root", required_argument, NULL, 'r' },
-			{ "chunk-root", required_argument, NULL, 'c' },
+			{ "chunk-root", required_argument, NULL, OPT_CHUNK_TREE },
 			{ "progress", no_argument, NULL, 'p' },
 			{ NULL, 0, NULL, 0}
 		};
 
-		c = getopt_long(argc, argv, "as:br:pc:", long_options, NULL);
+		c = getopt_long(argc, argv, "as:br:p", long_options, NULL);
 		if (c < 0)
 			break;
 		switch(c) {
@@ -9551,7 +9551,7 @@ int cmd_check(int argc, char **argv)
 			case 'r':
 				tree_root_bytenr = arg_strtou64(optarg);
 				break;
-			case 'c':
+			case OPT_CHUNK_TREE:
 				chunk_root_bytenr = arg_strtou64(optarg);
 				break;
 			case 'p':
