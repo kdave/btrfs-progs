@@ -25,8 +25,12 @@ OPTIONS
 -s|--super <superblock>::
 use <superblock>th superblock copy, valid values are 0 up to 2 if the
 respective superblock offset is within the filesystem
+-b|--backup::
+use the first backup roots stored in the superblock that is valid
 --repair::
 try to repair the filesystem
+--readonly::
+run in read-only mode (default)
 --init-csum-tree::
 create a new CRC tree and recalculate all checksums
 --init-extent-tree::
@@ -37,10 +41,12 @@ verify checksums of data blocks
 indicate progress at various checking phases
 --qgroup-report::
 verify qgroup accounting and compare against filesystem accounting
---subvol-extents <subvolid>::
-show extent state for a subvolume
---tree-root <bytenr>::
+-E|--subvol-extents <subvolid>::
+show extent state for the given subvolume
+-r|--tree-root <bytenr>::
 use the given bytenr for the tree root
+--chunk-root <bytenr>::
+use the given bytenr for the chunk tree root
 
 EXIT STATUS
 -----------

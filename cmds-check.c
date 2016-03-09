@@ -9470,7 +9470,7 @@ const char * const cmd_check_usage[] = {
 	"WARNING: the repair mode is considered dangerous",
 	"",
 	"-s|--super <superblock>     use this superblock copy",
-	"-b|--backup                 use the backup root copy",
+	"-b|--backup                 use the first valid backup root copy",
 	"--repair                    try to repair the filesystem",
 	"--readonly                  run in read-only mode (default)",
 	"--init-csum-tree            create a new CRC tree",
