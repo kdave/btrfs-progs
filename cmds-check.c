@@ -9504,20 +9504,25 @@ int cmd_check(int argc, char **argv)
 
 	while(1) {
 		int c;
-		enum { OPT_REPAIR = 257, OPT_INIT_CSUM, OPT_INIT_EXTENT,
-			OPT_CHECK_CSUM, OPT_READONLY, OPT_CHUNK_TREE };
+		enum { GETOPT_VAL_REPAIR = 257, GETOPT_VAL_INIT_CSUM,
+			GETOPT_VAL_INIT_EXTENT, GETOPT_VAL_CHECK_CSUM,
+			GETOPT_VAL_READONLY, GETOPT_VAL_CHUNK_TREE };
 		static const struct option long_options[] = {
 			{ "super", required_argument, NULL, 's' },
-			{ "repair", no_argument, NULL, OPT_REPAIR },
-			{ "readonly", no_argument, NULL, OPT_READONLY },
-			{ "init-csum-tree", no_argument, NULL, OPT_INIT_CSUM },
-			{ "init-extent-tree", no_argument, NULL, OPT_INIT_EXTENT },
-			{ "check-data-csum", no_argument, NULL, OPT_CHECK_CSUM },
+			{ "repair", no_argument, NULL, GETOPT_VAL_REPAIR },
+			{ "readonly", no_argument, NULL, GETOPT_VAL_READONLY },
+			{ "init-csum-tree", no_argument, NULL,
+				GETOPT_VAL_INIT_CSUM },
+			{ "init-extent-tree", no_argument, NULL,
+				GETOPT_VAL_INIT_EXTENT },
+			{ "check-data-csum", no_argument, NULL,
+				GETOPT_VAL_CHECK_CSUM },
 			{ "backup", no_argument, NULL, 'b' },
 			{ "subvol-extents", required_argument, NULL, 'E' },
 			{ "qgroup-report", no_argument, NULL, 'Q' },
 			{ "tree-root", required_argument, NULL, 'r' },
-			{ "chunk-root", required_argument, NULL, OPT_CHUNK_TREE },
+			{ "chunk-root", required_argument, NULL,
+				GETOPT_VAL_CHUNK_TREE },
 			{ "progress", no_argument, NULL, 'p' },
 			{ NULL, 0, NULL, 0}
 		};
@@ -9551,7 +9556,7 @@ int cmd_check(int argc, char **argv)
 			case 'r':
 				tree_root_bytenr = arg_strtou64(optarg);
 				break;
-			case OPT_CHUNK_TREE:
+			case GETOPT_VAL_CHUNK_TREE:
 				chunk_root_bytenr = arg_strtou64(optarg);
 				break;
 			case 'p':
@@ -9560,27 +9565,27 @@ int cmd_check(int argc, char **argv)
 			case '?':
 			case 'h':
 				usage(cmd_check_usage);
-			case OPT_REPAIR:
+			case GETOPT_VAL_REPAIR:
 				printf("enabling repair mode\n");
 				repair = 1;
 				ctree_flags |= OPEN_CTREE_WRITES;
 				break;
-			case OPT_READONLY:
+			case GETOPT_VAL_READONLY:
 				readonly = 1;
 				break;
-			case OPT_INIT_CSUM:
+			case GETOPT_VAL_INIT_CSUM:
 				printf("Creating a new CRC tree\n");
 				init_csum_tree = 1;
 				repair = 1;
 				ctree_flags |= OPEN_CTREE_WRITES;
 				break;
-			case OPT_INIT_EXTENT:
+			case GETOPT_VAL_INIT_EXTENT:
 				init_extent_tree = 1;
 				ctree_flags |= (OPEN_CTREE_WRITES |
 						OPEN_CTREE_NO_BLOCK_GROUPS);
 				repair = 1;
 				break;
-			case OPT_CHECK_CSUM:
+			case GETOPT_VAL_CHECK_CSUM:
 				check_data_csum = 1;
 				break;
 		}
