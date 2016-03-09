@@ -1672,6 +1672,13 @@ int pretty_size_snprintf(u64 size, char *str, size_t str_size, unsigned unit_mod
 			size /= mult;
 			num_divs++;
 		}
+		/*
+		 * If the value is smaller than base, we didn't do any
+		 * division, in that case, base should be 1, not original
+		 * base, or the unit will be wrong
+		 */
+		if (num_divs == 0)
+			base = 1;
 	}
 
 	if (num_divs >= ARRAY_SIZE(unit_suffix_binary)) {
