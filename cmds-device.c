@@ -249,7 +249,7 @@ static int cmd_device_scan(int argc, char **argv)
 	if (all && check_argc_max(argc - optind, 1))
 		usage(cmd_device_scan_usage);
 
-	if (all || argc - optind == 1) {
+	if (all || argc - optind == 0) {
 		printf("Scanning for Btrfs filesystems\n");
 		ret = btrfs_scan_lblkid();
 		error_on(ret, "error %d while scanning", ret);
