@@ -185,8 +185,7 @@ int cmd_inspect_dump_tree(int argc, char **argv)
 		}
 	}
 
-	argc = argc - optind;
-	if (check_argc_exact(argc, 1))
+	if (check_argc_exact(argc - optind, 1))
 		usage(cmd_inspect_dump_tree_usage);
 
 	ret = check_arg_type(argv[optind]);

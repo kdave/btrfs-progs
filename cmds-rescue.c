@@ -67,8 +67,7 @@ static int cmd_rescue_chunk_recover(int argc, char *argv[])
 		}
 	}
 
-	argc = argc - optind;
-	if (check_argc_exact(argc, 1))
+	if (check_argc_exact(argc - optind, 1))
 		usage(cmd_rescue_chunk_recover_usage);
 
 	file = argv[optind];
@@ -133,8 +132,7 @@ static int cmd_rescue_super_recover(int argc, char **argv)
 			usage(cmd_rescue_super_recover_usage);
 		}
 	}
-	argc = argc - optind;
-	if (check_argc_exact(argc, 1))
+	if (check_argc_exact(argc - optind, 1))
 		usage(cmd_rescue_super_recover_usage);
 
 	dname = argv[optind];
