@@ -412,6 +412,9 @@ again:
 				}
 			}
 			if (extent_only && !skip) {
+				printf(" tree ");
+				btrfs_print_key(&disk_key);
+				printf("\n");
 				print_extents(tree_root_scan, buf);
 			} else if (!skip) {
 				printf(" tree ");
