@@ -194,6 +194,8 @@ int cmd_inspect_dump_tree(int argc, char **argv)
 		goto out;
 	}
 
+	printf("%s\n", PACKAGE_STRING);
+
 	info = open_ctree_fs_info(argv[optind], 0, 0, 0, OPEN_CTREE_PARTIAL);
 	if (!info) {
 		error("unable to open %s", argv[optind]);
@@ -455,7 +457,6 @@ no_node:
 	uuidbuf[BTRFS_UUID_UNPARSED_SIZE - 1] = '\0';
 	uuid_unparse(info->super_copy->fsid, uuidbuf);
 	printf("uuid %s\n", uuidbuf);
-	printf("%s\n", PACKAGE_STRING);
 close_root:
 	ret = close_ctree(root);
 out:
