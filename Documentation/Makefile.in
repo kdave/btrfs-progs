@@ -4,7 +4,6 @@ MAN8_TXT =
 # Top level commands
 MAN8_TXT += btrfs.asciidoc
 MAN8_TXT += btrfs-convert.asciidoc
-MAN8_TXT += btrfs-debug-tree.asciidoc
 MAN8_TXT += btrfs-find-root.asciidoc
 MAN8_TXT += btrfs-image.asciidoc
 MAN8_TXT += btrfs-map-logical.asciidoc
@@ -96,6 +95,7 @@ install-man: man
 	$(INSTALL) -m 644 $(GZ_MAN8) $(DESTDIR)$(man8dir)
 	$(LN_S) -f btrfs-check.8.gz $(DESTDIR)$(man8dir)/btrfsck.8.gz
 	$(LN_S) -f btrfs-rescue.8.gz $(DESTDIR)$(man8dir)/btrfs-zero-log.8.gz
+	$(LN_S) -f btrfs-inspect-internal.8.gz $(DESTDIR)$(man8dir)/btrfs-debug-tree.8.gz
 
 uninstall:
 	cd $(DESTDIR)$(man8dir); rm -f btrfs-check.8.gz $(GZ_MAN8)

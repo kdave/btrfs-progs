@@ -20,7 +20,7 @@ requires calls to privileged ioctls.
 SUBCOMMAND
 ----------
 *dump-tree* [options] <device>::
-(may need root privileges to access the device)
+(replaces the standalone tool *btrfs-debug-tree*)
 +
 Dump tree structures from a given device in textual form, expand keys to human
 readable equivalents where possible.
@@ -154,5 +154,4 @@ further details.
 
 SEE ALSO
 --------
-`mkfs.btrfs`(8),
-`btrfs-debug-tree`(8)
+`mkfs.btrfs`(8)
