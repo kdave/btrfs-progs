@@ -108,14 +108,19 @@ static void print_old_roots(struct btrfs_super_block *super)
 
 const char * const cmd_inspect_dump_tree_usage[] = {
 	"btrfs inspect-internal dump-tree [options] device",
-	"Dump structures from a device",
-	"-e|--extents           print detailed extents info",
-	"-d|--device            print info of btrfs device and root tree dir only",
-	"-r|--roots             print info of roots only",
-	"-R|--backups           print info of roots and root backups",
-	"-u|--uuid              print info of uuid tree only",
-	"-b|--block <block_num> print info of the specified block only",
-	"-t|--tree  <tree_id>   print only the tree with the given id",
+	"Dump tree structures from a given device",
+	"Dump tree structures from a given device in textual form, expand keys to human",
+	"readable equivalents where possible.",
+	"Note: contains file names, consider that if you're asked to send the dump",
+	"for analysis.",
+	"",
+	"-e|--extents           print only extent info: extent and device trees",
+	"-d|--device            print only device info: tree root, chunk and device trees",
+	"-r|--roots             print only short root node info",
+	"-R|--backups           same as --roots plus print backup root info",
+	"-u|--uuid              print only the uuid tree",
+	"-b|--block <block_num> print info from the specified block only",
+	"-t|--tree <tree_id>    print only the tree with the given tree_id",
 	NULL
 };
 

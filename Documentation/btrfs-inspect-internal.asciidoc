@@ -20,29 +20,33 @@ requires calls to privileged ioctls.
 SUBCOMMAND
 ----------
 *dump-tree* [options] <device>::
-(needs root privileges)
+(may need root privileges to access the device)
 +
-Dump the whole tree of the given device.
-This is useful for analyzing filesystem state or inconsistence and has
-a positive educational effect on understanding the internal structure.
-<device> is the device file where the filesystem is stored.
+Dump tree structures from a given device in textual form, expand keys to human
+readable equivalents where possible.
+This is useful for analyzing filesystem state or inconsistencies and has
+a positive educational effect on understanding the internal filesystem structure.
++
+NOTE: contains file names, consider that if you're asked to send the dump for
+analysis. Does not contain file data.
 +
 `Options`
 +
--e::::
-Print detailed extents info.
--d::::
-Print info of btrfs device and root tree dirs only.
--r::::
-Print info of roots only.
--R::::
-Print info of roots and root backups.
--u::::
-Print info of UUID tree only.
+-e|--extents::::
+print only extent-related information: extent and device trees
+-d|--device::::
+print only device-related information: tree root, chunk and device trees
+-r|--roots::::
+print only short root node information, ie. the root tree keys
+-R|--backups::::
+same as --roots plus print backup root info, ie. the backup root keys and
+the respective tree root block offset
+-u|--uuid::::
+print only the uuid tree information, empty output if the tree does not exist
 -b <block_num>::::
-Print info of the specified block only.
+print info of the specified block only
 -t <tree_id>::::
-Print only the tree with the specified ID.
+print only the tree with the specified numerical ID
 
 *inode-resolve* [-v] <ino> <path>::
 (needs root privileges)
