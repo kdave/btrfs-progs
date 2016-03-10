@@ -46,7 +46,16 @@ print only the uuid tree information, empty output if the tree does not exist
 -b <block_num>::::
 print info of the specified block only
 -t <tree_id>::::
-print only the tree with the specified numerical ID
+print only the tree with the specified ID, where the ID can be numerical or
+common name in a flexible human readable form
++
+The tree id name recognition rules:
+[options="compact"]
+* case does not matter
+* the C source definition, eg. BTRFS_ROOT_TREE_OBJECTID
+* short forms without BTRFS_ prefix, without _TREE and _OBJECTID suffix, eg. ROOT_TREE, ROOT
+* convenience aliases, eg. DEVICE for the DEV tree, CHECKSUM for CSUM
+* unrecognized ID is an error
 
 *inode-resolve* [-v] <ino> <path>::
 (needs root privileges)
