@@ -222,7 +222,7 @@ static const char * const cmd_device_scan_usage[] = {
 static int cmd_device_scan(int argc, char **argv)
 {
 	int i;
-	int devstart = 1;
+	int devstart;
 	int all = 0;
 	int ret = 0;
 
@@ -245,6 +245,7 @@ static int cmd_device_scan(int argc, char **argv)
 			usage(cmd_device_scan_usage);
 		}
 	}
+	devstart = optind;
 
 	if (all && check_argc_max(argc - optind, 1))
 		usage(cmd_device_scan_usage);
