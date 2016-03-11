@@ -285,19 +285,40 @@ static void print_uuids(struct extent_buffer *eb)
 	printf("fs uuid %s\nchunk uuid %s\n", fs_uuid, chunk_uuid);
 }
 
+static void compress_type_to_str(u8 compress_type, char *ret)
+{
+	switch (compress_type) {
+	case BTRFS_COMPRESS_NONE:
+		strcpy(ret, "none");
+		break;
+	case BTRFS_COMPRESS_ZLIB:
+		strcpy(ret, "zlib");
+		break;
+	case BTRFS_COMPRESS_LZO:
+		strcpy(ret, "lzo");
+		break;
+	default:
+		sprintf(ret, "UNKNOWN.%d", compress_type);
+	}
+}
+
 static void print_file_extent_item(struct extent_buffer *eb,
 				   struct btrfs_item *item,
 				   int slot,
 				   struct btrfs_file_extent_item *fi)
 {
 	int extent_type = btrfs_file_extent_type(eb, fi);
+	char compress_str[16];
+
+	compress_type_to_str(btrfs_file_extent_compression(eb, fi),
+			     compress_str);
 
 	if (extent_type == BTRFS_FILE_EXTENT_INLINE) {
 		printf("\t\tinline extent data size %u "
-		       "ram %u compress %d\n",
+		       "ram %u compress(%s)\n",
 		  btrfs_file_extent_inline_item_len(eb, item),
 		  btrfs_file_extent_inline_len(eb, slot, fi),
-		  btrfs_file_extent_compression(eb, fi));
+		  compress_str);
 		return;
 	}
 	if (extent_type == BTRFS_FILE_EXTENT_PREALLOC) {
@@ -316,8 +337,7 @@ static void print_file_extent_item(struct extent_buffer *eb,
 		(unsigned long long)btrfs_file_extent_offset(eb, fi),
 		(unsigned long long)btrfs_file_extent_num_bytes(eb, fi),
 		(unsigned long long)btrfs_file_extent_ram_bytes(eb, fi));
-	printf("\t\textent compression %d\n",
-	       btrfs_file_extent_compression(eb, fi));
+	printf("\t\textent compression(%s)\n", compress_str);
 }
 
 /* Caller should ensure sizeof(*ret) >= 16("DATA|TREE_BLOCK") */
