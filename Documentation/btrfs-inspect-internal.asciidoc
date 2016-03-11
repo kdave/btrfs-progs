@@ -136,6 +136,16 @@ inode number 2), but such subvolume does not contain any files anyway
 +
 resolve the absolute path of a the subvolume id 'subvolid'
 
+*tree-stats* [options] <device>::
+(needs root privileges)
++
+Print sizes and statistics of trees.
++
+`Options`
++
+-b::::
+Print raw numbers in bytes.
+
 EXIT STATUS
 -----------
 *btrfs inspect-internal* returns a zero exit status if it succeeds. Non zero is
