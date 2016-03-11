@@ -1545,7 +1545,8 @@ int btrfs_register_one_device(const char *fname)
  */
 int btrfs_register_all_devices(void)
 {
-	int err;
+	int err = 0;
+	int ret = 0;
 	struct btrfs_fs_devices *fs_devices;
 	struct btrfs_device *device;
 	struct list_head *all_uuids;
@@ -1554,16 +1555,15 @@ int btrfs_register_all_devices(void)
 
 	list_for_each_entry(fs_devices, all_uuids, list) {
 		list_for_each_entry(device, &fs_devices->devices, dev_list) {
-			if (*device->name) {
+			if (*device->name)
 				err = btrfs_register_one_device(device->name);
-				if (err < 0)
-					return err;
-				if (err > 0)
-					return -err;
-			}
+
+			if (err)
+				ret++;
 		}
 	}
-	return 0;
+
+	return ret;
 }
 
 int btrfs_device_already_in_root(struct btrfs_root *root, int fd,

@@ -254,7 +254,7 @@ static int cmd_device_scan(int argc, char **argv)
 		ret = btrfs_scan_lblkid();
 		error_on(ret, "error %d while scanning", ret);
 		ret = btrfs_register_all_devices();
-		error_on(ret, "error %d while registering devices", ret);
+		error_on(ret, "there are %d errors while registering devices", ret);
 		goto out;
 	}
 
