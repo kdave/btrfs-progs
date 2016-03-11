@@ -33,6 +33,7 @@
 #include "btrfs-list.h"
 #include "cmds-inspect-dump-tree.h"
 #include "cmds-inspect-dump-super.h"
+#include "cmds-inspect-tree-stats.h"
 
 static const char * const inspect_cmd_group_usage[] = {
 	"btrfs inspect-internal <command> <args>",
@@ -293,7 +294,7 @@ static int cmd_inspect_subvolid_resolve(int argc, char **argv)
 
 out:
 	close_file_or_dir(fd, dirstream);
-	return ret ? 1 : 0;
+	return !!ret;
 }
 
 static const char* const cmd_inspect_rootid_usage[] = {
@@ -640,6 +641,8 @@ const struct cmd_group inspect_cmd_group = {
 				cmd_inspect_dump_tree_usage, NULL, 0 },
 		{ "dump-super", cmd_inspect_dump_super,
 				cmd_inspect_dump_super_usage, NULL, 0 },
+		{ "tree-stats", cmd_inspect_tree_stats,
+				cmd_inspect_tree_stats_usage, NULL, 0 },
 		NULL_CMD_STRUCT
 	}
 };
