@@ -39,7 +39,7 @@ GlobalReserve, single: total=512.00MiB, used=0.00B
 ------------------------------
 +
 --
-* 'Data', 'System' and 'Metadata' are separeate block group types.
+* 'Data', 'System' and 'Metadata' are separate block group types.
 'GlobalReserve' is an artificial and internal emergency space, see below.
 * 'single' -- the allocation profile, defined at mkfs time
 * 'total' -- sum of space reserved for
@@ -177,7 +177,7 @@ Show the btrfs filesystem with some additional info about devices and space
 allocation.
 +
 If no option none of 'path'/'uuid'/'device'/'label' is passed, information
-about all the BTRFS filesystems is shown, both mounted and unmounted. 
+about all the BTRFS filesystems is shown, both mounted and unmounted.
 +
 `Options`
 +
@@ -286,18 +286,18 @@ of IO load and the system may stall for a moment.
 
 *$ btrfs filesystem defrag -v -r -f dir/*
 
-Recusively defragment files under 'dir/', be verbose and wait until all blocks
+Recursively defragment files under 'dir/', be verbose and wait until all blocks
 are flushed before processing next file. You can note slower progress of the
 output and lower IO load (proportional to currently defragmented file).
 
 *$ btrfs filesystem defrag -v -r -f -clzo dir/*
 
-Recusively defragment files under 'dir/', be verbose, wait until all blocks are
+Recursively defragment files under 'dir/', be verbose, wait until all blocks are
 flushed and force file compression.
 
 *$ btrfs filesystem defrag -v -r -t 64M dir/*
 
-Recusively defragment files under 'dir/', be verbose and try to merge extents
+Recursively defragment files under 'dir/', be verbose and try to merge extents
 to be about 64MiB. As stated above, the success rate depends on actual free
 space fragmentation and the final result is not guaranteed to meet the target
 even if run repeatedly.

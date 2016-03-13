@@ -35,7 +35,7 @@ Debugging option to force all block allocations above a certain
 byte threshold on each block device.  The value is specified in
 bytes, optionally with a K, M, or G suffix (case insensitive).
 +
-This option was used for testing and has not practial use, it's slated to be
+This option was used for testing and has no practical use, it's slated to be
 removed in the future.
 
 *autodefrag*::
@@ -72,7 +72,7 @@ The write flushes incur a slight hit and also prevent the IO block
 scheduler to reorder requests in more effective way. Disabling barriers gets
 rid of that penalty but will most certainly lead to a corrupted filesystem in
 case of a crash or power loss. The ordinary metadata blocks could be yet
-unwrittent at the time the new superblock is stored permanently, expecting that
+unwritten at the time the new superblock is stored permanently, expecting that
 the block pointers to metadata were stored permanently before.
 +
 On a device with a volatile battery-backed write-back cache, the 'nobarrier'
@@ -167,7 +167,7 @@ system at that point.
 Enable discarding of freed file blocks using TRIM operation.  This is useful
 for SSD devices, thinly provisioned LUNs or virtual machine images where the
 backing device understands the operation. Depending on support of the
-underlying device, the operation may severly hurt performance in case the TRIM
+underlying device, the operation may severely hurt performance in case the TRIM
 operation is synchronous (eg. with SATA devices up to revision 3.0).
 +
 If discarding is not necessary to be done at the block freeing time, there's

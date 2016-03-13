@@ -78,7 +78,7 @@ force overwrite of existing filesystem on the given disk(s)
 Remove device(s) from a filesystem identified by <path>.
 
 *delete* <dev> [<dev>...] <path>::
-Alias of remove kept for backwards compatability
+Alias of remove kept for backward compatibility
 
 *ready* <device>::
 Check device to see if it has all of it's devices in cache for mounting.

@@ -93,7 +93,7 @@ moving data from single to RAID1). This functionality is accessed through the
 '-d', '-m' or '-s' options to btrfs balance start, which filter on data,
 metadata and system blocks respectively.
 
-A filter has the following stucture: 'type'[='params'][,'type'=...]
+A filter has the following structure: 'type'[='params'][,'type'=...]
 
 The available types are:
 
@@ -106,7 +106,7 @@ are a list of profile names separated by "'|'" (pipe).
 Balances only block groups with usage under the given percentage. The
 value of 0 is allowed and will clean up completely unused block groups, this
 should not require any new work space allocated. You may want to use 'usage=0'
-in case balance is returnin ENOSPC and your filesystem is not too full.
+in case balance is returning ENOSPC and your filesystem is not too full.
 +
 The argument may be a single value or a range. The single value 'N' means 'at
 most N percent used', equivalent to '..N' range syntax. Kernels prior to 4.4

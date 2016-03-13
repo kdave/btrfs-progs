@@ -133,7 +133,7 @@ If several '-i <super_mirror>' are given, only the last one is valid.
 Attempt to print the superblock even if no superblock magic is found.  May end
 badly.
 -s <bytenr>::::
-specifiy offset to a superblock in a non-standard location at 'bytenr', useful
+specify offset to a superblock in a non-standard location at 'bytenr', useful
 for debugging (disables the '-f' option)
 
 *subvolid-resolve* <subvolid> <path>::

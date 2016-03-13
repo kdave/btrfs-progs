@@ -230,7 +230,7 @@ Other terms commonly used:
 *block group*::
 *chunk*::
 a logical range of space of a given profile, stores data, metadata or both;
-sometimes the terms are used interchangably
+sometimes the terms are used interchangeably
 +
 A typical size of metadata block group is 256MiB (filesystem smaller than
 50GiB) and 1GiB (larger than 50GiB), for data it's 1GiB. The system block group
@@ -274,7 +274,7 @@ the logical blocks to 2 physical locations. Whether there are really 2
 physical copies highly depends on the underlying device type.
 
 For example, a SSD drive can remap the blocks internally to a single copy thus
-deduplicating them. This negates the purpose of increased redunancy and just
+deduplicating them. This negates the purpose of increased redundancy and just
 wastes space.
 
 The duplicated data/metadata may still be useful to statistically improve the

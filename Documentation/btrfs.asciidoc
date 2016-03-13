@@ -15,7 +15,7 @@ The *btrfs* utility is a toolbox for managing btrfs filesystems.  There are
 command groups to work with subvolumes, devices, for whole filesystem or other
 specific actions. See section *COMMANDS*.
 
-COMMAND SYTNAX
+COMMAND SYNTAX
 --------------
 
 Any command name can be shortened as far as it stays unambiguous,
