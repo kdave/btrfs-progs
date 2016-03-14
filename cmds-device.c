@@ -159,20 +159,46 @@ static int _cmd_device_remove(int argc, char **argv,
 
 	for(i = optind; i < argc - 1; i++) {
 		struct	btrfs_ioctl_vol_args arg;
+		struct btrfs_ioctl_vol_args_v2 argv2 = {0};
+		int is_devid = 0;
 		int	res;
 
-		if (is_block_device(argv[i]) != 1 && strcmp(argv[i], "missing")) {
+		if (string_is_numerical(argv[i])) {
+			argv2.devid = arg_strtou64(argv[i]);
+			argv2.flags = BTRFS_DEVICE_SPEC_BY_ID;
+			is_devid = 1;
+		} else if (is_block_device(argv[i]) == 1 ||
+				strcmp(argv[i], "missing") == 0) {
+			strncpy_null(argv2.name, argv[i]);
+		} else {
 			error("not a block device: %s", argv[i]);
 			ret++;
 			continue;
 		}
-		memset(&arg, 0, sizeof(arg));
-		strncpy_null(arg.name, argv[i]);
+
 		/*
 		 * Positive values are from BTRFS_ERROR_DEV_*,
 		 * otherwise it's a generic error, one of errnos
 		 */
-		res = ioctl(fdmnt, BTRFS_IOC_RM_DEV, &arg);
+		res = ioctl(fdmnt, BTRFS_IOC_RM_DEV_V2, &argv2);
+
+		/*
+		 * If BTRFS_IOC_RM_DEV_V2 is not supported we get ENOTTY and if
+		 * argv2.flags includes a flag which kernel doesn't understand then
+		 * we shall get EOPNOTSUPP
+		 */
+		if (res < 0 && (errno == ENOTTY || errno == EOPNOTSUPP)) {
+			if (is_devid) {
+				error("device delete by id failed: %s",
+							strerror(errno));
+				ret++;
+				continue;
+			}
+			memset(&arg, 0, sizeof(arg));
+			strncpy_null(arg.name, argv[i]);
+			res = ioctl(fdmnt, BTRFS_IOC_RM_DEV, &arg);
+		}
+
 		if (res) {
 			const char *msg;
 
@@ -180,8 +206,13 @@ static int _cmd_device_remove(int argc, char **argv,
 				msg = btrfs_err_str(res);
 			else
 				msg = strerror(errno);
-			error("error removing device '%s': %s",
-				argv[i], msg);
+			if (is_devid) {
+				error("error removing devid %llu: %s",
+					(unsigned long long)argv2.devid, msg);
+			} else {
+				error("error removing device '%s': %s",
+					argv[i], msg);
+			}
 			ret++;
 		}
 	}
@@ -191,7 +222,7 @@ static int _cmd_device_remove(int argc, char **argv,
 }
 
 static const char * const cmd_device_remove_usage[] = {
-	"btrfs device remove <device> [<device>...] <path>",
+	"btrfs device remove <device>|<devid> [<device>|<devid>...] <path>",
 	"Remove a device from a filesystem",
 	NULL
 };
@@ -202,7 +233,7 @@ static int cmd_device_remove(int argc, char **argv)
 }
 
 static const char * const cmd_device_delete_usage[] = {
-	"btrfs device delete <device> [<device>...] <path>",
+	"btrfs device delete <device>|<devid> [<device>|<devid>...] <path>",
 	"Remove a device from a filesystem",
 	NULL
 };
