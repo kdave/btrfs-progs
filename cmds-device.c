@@ -333,7 +333,7 @@ static int cmd_device_ready(int argc, char **argv)
 
 	clean_args_no_options(argc, argv, cmd_device_ready_usage);
 
-	if (check_argc_min(argc - optind, 1))
+	if (check_argc_exact(argc - optind, 1))
 		usage(cmd_device_ready_usage);
 
 	fd = open("/dev/btrfs-control", O_RDWR);
