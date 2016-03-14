@@ -25,7 +25,7 @@ If a <device> is given, the corresponding filesystem is found and
 scrub cancel behaves as if it was called on that filesystem.
 
 *resume* [-BdqrR] [-c <ioprio_class> -n <ioprio_classdata>] <path>|<device>::
-Resume a canceled or interrupted scrub cycle on the filesystem identified by
+Resume a cancelled or interrupted scrub cycle on the filesystem identified by
 <path> or on a given <device>.
 +
 Does not start a new scrub if the last scrub finished successfully.
@@ -64,13 +64,13 @@ Set IO priority class (see `ionice`(1) manpage).
 Set IO priority classdata (see `ionice`(1) manpage).
 -f::::
 Force starting new scrub even if a scrub is already running.
-This is useful when scrub stat record file is damaged.
+This is useful when scrub status record file is damaged.
 
 *status* [-d] <path>|<device>::
 Show status of a running scrub for the filesystem identified by <path> or
 for the specified <device>.
 +
-If no scrub is running, show statistics of the last finished or canceled scrub
+If no scrub is running, show statistics of the last finished or cancelled scrub
 for that filesystem or device.
 +
 `Options`

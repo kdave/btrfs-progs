@@ -57,7 +57,7 @@ If a previously-seeding device is changed, all filesystems that used that
 device will become unmountable. Setting the seeding flag back will not fix
 that. +
 A valid usecase is 'seeding device as a base image'. Clear the seeding
-flag, update the filesystem and make it seeding again, provided that it's ok
+flag, update the filesystem and make it seeding again, provided that it's OK
 to throw away all filesystems built on top of the previous base.
 
 EXIT STATUS

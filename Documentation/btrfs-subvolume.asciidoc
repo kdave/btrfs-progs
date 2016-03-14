@@ -73,7 +73,7 @@ stored on the media.
 wait for transaction commit at the end of the operation
 +
 -C|--commit-each::::
-wait for transaction commit after delet each subvolume
+wait for transaction commit after deleting each subvolume
 
 *find-new* <subvolume> <last_gen>::
 List the recently modified files in a subvolume, after <last_gen> ID.

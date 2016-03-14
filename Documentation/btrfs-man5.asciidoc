@@ -293,7 +293,7 @@ cache consumes some resources.
 +
 Options to control SSD allocation schemes.  By default, BTRFS will
 enable or disable SSD allocation heuristics depending on whether a
-rotational or nonrotational disk is in use.  The 'ssd' and 'nossd' options
+rotational or non-rotational disk is in use.  The 'ssd' and 'nossd' options
 can override this autodetection.
 +
 The 'ssd_spread' mount option attempts to allocate into bigger and aligned
@@ -337,7 +337,7 @@ such syncs, the pending tree log operations are replayed during mount.
 WARNING: currently, the tree log is replayed even with a read-only mount!
 +
 The tree log could contain new files/directories, these would not exist on
-a mounted filesystm if the log is not replayed.
+a mounted filesystem if the log is not replayed.
 
 *user_subvol_rm_allowed*::
 (default: off)

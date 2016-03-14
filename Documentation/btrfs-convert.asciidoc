@@ -75,7 +75,7 @@ consumption and may help to convert a filesystem with low free space
 -N|--nodesize <SIZE>::
 set filesystem nodesize, the tree block size in which btrfs stores its metadata.
 The default value is 16KB (16384) or the page size, whichever is bigger.
-Must be a multiple of the sectorsize, but not larger than 65536. Se
+Must be a multiple of the sectorsize, but not larger than 65536. See
 `mkfs.btrfs`(8) for more details.
 -r|--rollback::
 rollback to the original ext2/3/4 filesystem if possible

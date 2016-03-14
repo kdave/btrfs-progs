@@ -25,7 +25,7 @@ Quota groups or qgroup in btrfs make a tree hierarchy, the leaf qgroups are
 attached to subvolumes. The size limits are set per qgroup and apply when any
 limit is reached in tree that contains a given subvolume.
 
-The limit sare separated between shared and exclusive and reflect the extent
+The limits are separated between shared and exclusive and reflect the extent
 ownership. For example a fresh snapshot shares almost all the blocks with the
 original subvolume, new writes to either subvolume will raise towards the
 exclusive limit.
