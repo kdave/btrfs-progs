@@ -3024,6 +3024,9 @@ unsigned int get_unit_mode_from_arg(int *argc, char *argv[], int df_mode)
 	int arg_end;
 
 	for (arg_i = 0; arg_i < *argc; arg_i++) {
+		if (!strcmp(argv[arg_i], "--"))
+			break;
+
 		if (!strcmp(argv[arg_i], "--raw")) {
 			unit_mode = UNITS_RAW;
 			argv[arg_i] = NULL;
