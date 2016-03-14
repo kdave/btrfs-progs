@@ -842,8 +842,11 @@ static int btrfs_wipe_existing_sb(int fd)
 
 	memset(buf, 0, len);
 	ret = pwrite(fd, buf, len, offset);
-	if (ret != len) {
-		fprintf(stderr, "ERROR: cannot wipe existing superblock\n");
+	if (ret < 0) {
+		error("cannot wipe existing superblock: %s", strerror(errno));
+		ret = -1;
+	} else if (ret != len) {
+		error("cannot wipe existing superblock: wrote %d of %zd", ret, len);
 		ret = -1;
 	}
 	fsync(fd);
