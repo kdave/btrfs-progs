@@ -76,10 +76,10 @@ int main(int argc, char **argv)
 	radix_tree_init();
 
 	if((ret = check_mounted(argv[optind])) < 0) {
-		fprintf(stderr, "Could not check mount status: %s\n", strerror(-ret));
+		error("cannot check mount status: %s", strerror(-ret));
 		return ret;
 	} else if(ret) {
-		fprintf(stderr, "%s is currently mounted. Aborting.\n", argv[optind]);
+		error("%s is currently mounted, aborting", argv[optind]);
 		return -EBUSY;
 	}
 

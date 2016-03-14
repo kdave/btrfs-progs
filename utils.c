@@ -865,13 +865,13 @@ int btrfs_prepare_device(int fd, char *file, int zero_end, u64 *block_count_ret,
 
 	ret = fstat(fd, &st);
 	if (ret < 0) {
-		fprintf(stderr, "unable to stat %s\n", file);
+		error("unable to stat %s: %s", file, strerror(errno));
 		return 1;
 	}
 
 	block_count = btrfs_device_size(fd, &st);
 	if (block_count == 0) {
-		fprintf(stderr, "unable to find %s size\n", file);
+		error("unable to determine size of %s", file);
 		return 1;
 	}
 	if (max_block_count)
@@ -899,15 +899,13 @@ int btrfs_prepare_device(int fd, char *file, int zero_end, u64 *block_count_ret,
 				       ZERO_DEV_BYTES, block_count);
 
 	if (ret < 0) {
-		fprintf(stderr, "ERROR: failed to zero device '%s' - %s\n",
-			file, strerror(-ret));
+		error("failed to zero device '%s': %s", file, strerror(-ret));
 		return 1;
 	}
 
 	ret = btrfs_wipe_existing_sb(fd);
 	if (ret < 0) {
-		fprintf(stderr, "ERROR: cannot wipe superblocks on '%s'\n",
-				file);
+		error("cannot wipe superblocks on %s", file);
 		return 1;
 	}
 
@@ -1054,11 +1052,10 @@ int get_btrfs_mount(const char *dev, char *mp, size_t mp_size)
 	ret = is_block_device(dev);
 	if (ret <= 0) {
 		if (!ret) {
-			fprintf(stderr, "%s is not a block device\n", dev);
+			error("not a block device: %s", dev);
 			ret = -EINVAL;
 		} else {
-			fprintf(stderr, "Could not check %s: %s\n",
-				dev, strerror(-ret));
+			error("cannot check %s: %s", dev, strerror(-ret));
 		}
 		goto out;
 	}
@@ -1066,7 +1063,7 @@ int get_btrfs_mount(const char *dev, char *mp, size_t mp_size)
 	fd = open(dev, O_RDONLY);
 	if (fd < 0) {
 		ret = -errno;
-		fprintf(stderr, "Could not open %s: %s\n", dev, strerror(errno));
+		error("cannot open %s: %s", dev, strerror(errno));
 		goto out;
 	}
 
@@ -1125,43 +1122,31 @@ int btrfs_open_dir(const char *path, DIR **dirstream, int verbose)
 	int ret;
 
 	if (statfs(path, &stfs) != 0) {
-		if (verbose)
-			fprintf(stderr,
-				"ERROR: can't access '%s': %s\n",
-				path, strerror(errno));
+		error_on(verbose, "cannot access '%s': %s", path,
+				strerror(errno));
 		return -1;
 	}
 
 	if (stfs.f_type != BTRFS_SUPER_MAGIC) {
-		if (verbose)
-			fprintf(stderr,
-				"ERROR: not a btrfs filesystem: %s\n",
-				path);
+		error_on(verbose, "not a btrfs filesystem: %s", path);
 		return -2;
 	}
 
 	if (stat(path, &st) != 0) {
-		if (verbose)
-			fprintf(stderr,
-				"ERROR: can't access '%s': %s\n",
-				path, strerror(errno));
+		error_on(verbose, "cannot access '%s': %s", path,
+				strerror(errno));
 		return -1;
 	}
 
 	if (!S_ISDIR(st.st_mode)) {
-		if (verbose)
-			fprintf(stderr,
-				"ERROR: not a directory: %s\n",
-				path);
+		error_on(verbose, "not a directory: %s", path);
 		return -3;
 	}
 
 	ret = open_file_or_dir(path, dirstream);
 	if (ret < 0) {
-		if (verbose)
-			fprintf(stderr,
-				"ERROR: can't access '%s': %s\n",
-				path, strerror(errno));
+		error_on(verbose, "cannot access '%s': %s", path,
+				strerror(errno));
 	}
 
 	return ret;
@@ -1437,7 +1422,8 @@ int check_mounted(const char* file)
 
 	fd = open(file, O_RDONLY);
 	if (fd < 0) {
-		fprintf (stderr, "check_mounted(): Could not open %s\n", file);
+		error("mount check: cannot open %s: %s", file,
+				strerror(errno));
 		return -errno;
 	}
 
@@ -1525,8 +1511,8 @@ int btrfs_register_one_device(const char *fname)
 
 	fd = open("/dev/btrfs-control", O_RDWR);
 	if (fd < 0) {
-		fprintf(stderr, "failed to open /dev/btrfs-control "
-			"skipping device registration: %s\n",
+		warning(
+	"failed to open /dev/btrfs-control, skipping device registration: %s",
 			strerror(errno));
 		return -errno;
 	}
@@ -1534,8 +1520,8 @@ int btrfs_register_one_device(const char *fname)
 	strncpy_null(args.name, fname);
 	ret = ioctl(fd, BTRFS_IOC_SCAN_DEV, &args);
 	if (ret < 0) {
-		fprintf(stderr, "ERROR: device scan failed '%s' - %s\n",
-			fname, strerror(errno));
+		error("device scan failed on '%s': %s", fname,
+				strerror(errno));
 		ret = -errno;
 	}
 	close(fd);
@@ -2197,8 +2183,7 @@ int get_fs_info(char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 		fd = open(path, O_RDONLY);
 		if (fd < 0) {
 			ret = -errno;
-			fprintf(stderr, "Couldn't open %s: %s\n",
-				path, strerror(errno));
+			error("cannot open %s: %s", path, strerror(errno));
 			goto out;
 		}
 		ret = check_mounted_where(fd, path, mp, sizeof(mp),
