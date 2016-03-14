@@ -1255,11 +1255,11 @@ static int cmd_filesystem_label(int argc, char **argv)
 {
 	clean_args_no_options(argc, argv, cmd_filesystem_label_usage);
 
-	if (check_argc_min(argc - optind, 2) ||
-			check_argc_max(argc - optind, 3))
+	if (check_argc_min(argc - optind, 1) ||
+			check_argc_max(argc - optind, 2))
 		usage(cmd_filesystem_label_usage);
 
-	if (argc - optind > 2) {
+	if (argc - optind > 1) {
 		return set_label(argv[optind], argv[optind + 1]);
 	} else {
 		char label[BTRFS_LABEL_SIZE];
