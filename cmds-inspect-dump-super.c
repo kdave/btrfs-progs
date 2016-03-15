@@ -23,6 +23,7 @@
 #include <ctype.h>
 #include <uuid/uuid.h>
 #include <errno.h>
+#include <getopt.h>
 
 #include "ctree.h"
 #include "disk-io.h"
@@ -453,7 +454,6 @@ const char * const cmd_inspect_dump_super_usage[] = {
 
 int cmd_inspect_dump_super(int argc, char **argv)
 {
-	int opt;
 	int all = 0;
 	int full = 0;
 	int force = 0;
@@ -464,8 +464,17 @@ int cmd_inspect_dump_super(int argc, char **argv)
 	u64 arg;
 	u64 sb_bytenr = btrfs_sb_offset(0);
 
-	while ((opt = getopt(argc, argv, "fFai:s:")) != -1) {
-		switch (opt) {
+	while (1) {
+		int c;
+		static const struct option long_options[] = {
+			{NULL, 0, NULL, 0}
+		};
+
+		c = getopt_long(argc, argv, "fFai:s:", long_options, NULL);
+		if (c < 0)
+			break;
+
+		switch (c) {
 		case 'i':
 			arg = arg_strtou64(optarg);
 			if (arg >= BTRFS_SUPER_MIRROR_MAX) {
