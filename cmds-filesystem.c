@@ -457,14 +457,14 @@ static int btrfs_scan_kernel(void *search, unsigned unit_mode)
 
 	memset(label, 0, sizeof(label));
 	while ((mnt = getmntent(f)) != NULL) {
+		free(dev_info_arg);
+		dev_info_arg = NULL;
 		if (strcmp(mnt->mnt_type, "btrfs"))
 			continue;
 		ret = get_fs_info(mnt->mnt_dir, &fs_info_arg,
 				&dev_info_arg);
-		if (ret) {
-			kfree(dev_info_arg);
+		if (ret)
 			goto out;
-		}
 
 		/* skip all fs already shown as mounted fs */
 		if (is_seen_fsid(fs_info_arg.fsid))
@@ -476,14 +476,11 @@ static int btrfs_scan_kernel(void *search, unsigned unit_mode)
 			ret = get_label_unmounted(
 				(const char *)dev_info_arg->path, label);
 
-		if (ret) {
-			kfree(dev_info_arg);
+		if (ret)
 			goto out;
-		}
+
 		if (search && !match_search_item_kernel(fs_info_arg.fsid,
 					mnt->mnt_dir, label, search)) {
-			kfree(dev_info_arg);
-			dev_info_arg = NULL;
 			continue;
 		}
 
@@ -497,11 +494,10 @@ static int btrfs_scan_kernel(void *search, unsigned unit_mode)
 		}
 		if (fd != -1)
 			close(fd);
-		kfree(dev_info_arg);
-		dev_info_arg = NULL;
 	}
 
 out:
+	free(dev_info_arg);
 	endmntent(f);
 	return !found;
 }
