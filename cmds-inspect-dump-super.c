@@ -443,11 +443,11 @@ static int load_and_dump_sb(char *filename, int fd, u64 sb_bytenr, int full,
 
 const char * const cmd_inspect_dump_super_usage[] = {
 	"btrfs inspect-internal dump-super [options] device [device...]",
-	"Dump superblock from a device",
-	"-f                  print full superblock information",
-	"-a                  print information of all superblocks",
+	"Dump superblock from a device in a textual form",
+	"-f|--full           print full superblock information",
+	"-a|--all            print information about all superblocks",
 	"-i <super_mirror>   specify which mirror to print out",
-	"-F                  attempt to dump superblocks with bad magic",
+	"-F|--force          attempt to dump superblocks with bad magic",
 	"-s <bytenr>         specify alternate superblock offset",
 	NULL
 };
@@ -467,6 +467,9 @@ int cmd_inspect_dump_super(int argc, char **argv)
 	while (1) {
 		int c;
 		static const struct option long_options[] = {
+			{"all", no_argument, NULL, 'a'},
+			{"full", no_argument, NULL, 'f'},
+			{"force", no_argument, NULL, 'F'},
 			{NULL, 0, NULL, 0}
 		};
 
