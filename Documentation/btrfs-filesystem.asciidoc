@@ -126,6 +126,41 @@ NOTE: Directory arguments without '-r' do not defragment files recursively but w
 defragment certain internal trees (extent tree and the subvolume tree). This has been
 confusing and could be removed in the future.
 
+*du* [options] <path> [<path>..]::
+Calculate disk usage of the target files using FIEMAP. For individual
+files, it will report a count of total bytes, and exclusive (not
+shared) bytes. We also calculate a 'set shared' value which is
+described below.
++
+Each argument to 'btrfs fi du' will have a 'set shared' value
+calculated for it. We define each 'set' as those files found by a
+recursive search of an argument. The 'set shared' value
+then is a sum of all shared space referenced by the set.
++
+'set shared' takes into account overlapping shared extents, hence it
+isn't as simple as adding up shared extents.
++
+`Options`
++
+-s|--summarize::::
+display only a total for each argument
+--raw::::
+raw numbers in bytes, without the 'B' suffix.
+--human-readable::::
+print human friendly numbers, base 1024, this is the default
+--iec::::
+select the 1024 base for the following options, according to the IEC standard.
+--si::::
+select the 1000 base for the following options, according to the SI standard.
+--kbytes::::
+show sizes in KiB, or kB with --si.
+--mbytes::::
+show sizes in MiB, or MB with --si.
+--gbytes::::
+show sizes in GiB, or GB with --si.
+--tbytes::::
+show sizes in TiB, or TB with --si.
+
 *label* [<dev>|<mountpoint>] [<newlabel>]::
 Show or update the label of a filesystem. This works on a mounted filesystem or
 a filesystem image.
