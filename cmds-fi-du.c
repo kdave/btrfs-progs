@@ -497,14 +497,15 @@ static int du_add_file(const char *filename, int dirfd,
 			if (is_dir)
 				set_shared = dir_set_shared;
 
-			printf("%s\t%s\t%s\t%s\n",
+			printf("%10s  %10s  %10s  %s\n",
 			       pretty_size_mode(file_total, unit_mode),
 			       pretty_size_mode(excl, unit_mode),
 			       pretty_size_mode(set_shared, unit_mode),
 			       path);
 		} else {
-			printf("%s\t%s\t\t\t%s\n",
+			printf("%10s  %10s  %10s  %s\n",
 			       pretty_size_mode(file_total, unit_mode),
+			       "-",
 			       pretty_size_mode(excl, unit_mode), path);
 		}
 	}
@@ -560,7 +561,8 @@ int cmd_filesystem_du(int argc, char **argv)
 	if (check_argc_min(argc - optind, 1))
 		usage(cmd_filesystem_du_usage);
 
-	printf("total\texclusive\tset shared\tfilename\n");
+	printf("%10s  %10s  %10s  %s\n", "Total", "Exclusive", "Set shared",
+			"Filename");
 
 	for (i = optind; i < argc; i++) {
 		ret = du_add_file(argv[i], AT_FDCWD, NULL, NULL, NULL, 1);
