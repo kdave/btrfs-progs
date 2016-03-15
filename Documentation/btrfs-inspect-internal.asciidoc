@@ -20,37 +20,32 @@ requires calls to privileged ioctls.
 SUBCOMMAND
 ----------
 *dump-super* [options] <device> [device...]::
-(needs root privileges)
+(replaces the standalone tool *btrfs-show-super*)
 +
-Show btrfs superblock information stored in devices.
-It is used to print the information of superblock,
-you can specify which mirror to print out.
+Show btrfs superblock information stored on given devices in textual form.
+By default the first superblock is printed, more details about all copies or
+additional backup data can be printed.
 +
-By default, every device's first superblock will be printed out.
-+
-Mainly used for debug purpose.
+Besides verifictaion of the filesystem signature, there are no other sanity
+checks. The superblock checksum status is reported, the device item and
+filesystem UUIDs are checked and reported.
 +
 `Options`
 +
--f::::
-Print full superblock information.
-+
-Including the system chunk array and backup roots.
-+
--a::::
-Print information of all superblocks.
-+
-If this option is given, '-i' option will be ignored.
-+
+-f|--full::::
+print full superblock information, including the system chunk array and backup roots
+-a|--all::::
+print information about all present superblock copies (cannot be used together with '-i' option)
 -i <super_mirror>::::
-Specify which mirror to print out.
+specify which mirror to print, valid values are 0, 1 and 2 and the superblock must be present on the device
 +
-<super_mirror> is between 0 and 2.
-If several '-i <super_mirror>' are given, only the last one is valid.
+If there are multiple options specified, only the last one is applies.
 +
--F::::
-Attempt to print the superblock even if no superblock magic is found.  May end
-badly.
+-F|--force::::
+attempt to print the superblock even if thre's no valid BTRFS signature found
++
+The result may be completely wrong if the data do not resemble a superblock.
++
 -s <bytenr>::::
 specify offset to a superblock in a non-standard location at 'bytenr', useful
 for debugging (disables the '-f' option)
