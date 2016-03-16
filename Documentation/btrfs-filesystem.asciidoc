@@ -97,6 +97,14 @@ snapshots or de-duplicated data).
 This may cause considerable increase of space usage depending on the broken up
 ref-links.
 +
+NOTE: Directory arguments without '-r' do not defragment files recursively but will
+defragment certain internal trees (extent tree and the subvolume tree). This has been
+confusing and could be removed in the future.
++
+For 'start', 'len', 'size' it is possible to append
+units designator: \'K', \'M', \'G', \'T', \'P', or \'E', which represent
+KiB, MiB, GiB, TiB, PiB, or EiB, respectively (case does not matter).
++
 `Options`
 +
 -v::::
@@ -117,14 +125,6 @@ defragmentation will start from the given offset, default is beginning of a file
 defragment only up to 'len' bytes, default is the file size
 -t <size>[kKmMgGtTpPeE]::::
 target extent size, do not touch extents bigger than 'size'
-+
-For 'start', 'len', 'size' it is possible to append
-units designator: \'K', \'M', \'G', \'T', \'P', or \'E', which represent
-KiB, MiB, GiB, TiB, PiB, or EiB, respectively (case does not matter).
-+
-NOTE: Directory arguments without '-r' do not defragment files recursively but will
-defragment certain internal trees (extent tree and the subvolume tree). This has been
-confusing and could be removed in the future.
 
 *du* [options] <path> [<path>..]::
 Calculate disk usage of the target files using FIEMAP. For individual
