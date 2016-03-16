@@ -340,7 +340,7 @@ static void print_version(void)
 
 static u64 parse_profile(char *s)
 {
-	if (strcmp(s, "raid0") == 0) {
+	if (strcasecmp(s, "raid0") == 0) {
 		return BTRFS_BLOCK_GROUP_RAID0;
 	} else if (strcasecmp(s, "raid1") == 0) {
 		return BTRFS_BLOCK_GROUP_RAID1;
