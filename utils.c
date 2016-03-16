@@ -2461,9 +2461,7 @@ int test_num_disk_vs_raid(u64 metadata_profile, u64 data_profile,
 
 	if (dev_cnt > 1 &&
 	    ((metadata_profile | data_profile) & BTRFS_BLOCK_GROUP_DUP)) {
-		fprintf(stderr,
-		    "ERROR: DUP is not allowed when FS has multiple devices\n");
-		return 1;
+		warning("DUP is not recommended on filesystem with multiple devices");
 	}
 	if (metadata_profile & ~allowed) {
 		fprintf(stderr,
