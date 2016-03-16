@@ -294,10 +294,11 @@ out:
 static void parse_args(int argc, char **argv,
 		       const char * const *usage_str,
 		       int *types, char **object,
-		       char **name, char **value)
+		       char **name, char **value, int min_nonopt_args)
 {
 	int ret;
 	char *type_str = NULL;
+	int max_nonopt_args = 0;
 
 	optind = 1;
 	while (1) {
@@ -313,6 +314,17 @@ static void parse_args(int argc, char **argv,
 			usage(usage_str);
 		}
 	}
+
+	if (object)
+		max_nonopt_args++;
+	if (name)
+		max_nonopt_args++;
+	if (value)
+		max_nonopt_args++;
+
+	if (check_argc_min(argc - optind, min_nonopt_args) ||
+	    check_argc_max(argc - optind, max_nonopt_args))
+		usage(usage_str);
 
 	*types = 0;
 	if (type_str) {
@@ -379,13 +391,8 @@ static int cmd_property_get(int argc, char **argv)
 	char *name = NULL;
 	int types = 0;
 
-	clean_args_no_options(argc, argv, cmd_property_get_usage);
-
-	if (check_argc_min(argc, 2) || check_argc_max(argc, 5))
-		usage(cmd_property_get_usage);
-
 	parse_args(argc, argv, cmd_property_get_usage, &types, &object, &name,
-			NULL);
+		   NULL, 1);
 	if (!object) {
 		error("invalid arguments");
 		usage(cmd_property_get_usage);
@@ -415,13 +422,8 @@ static int cmd_property_set(int argc, char **argv)
 	char *value = NULL;
 	int types = 0;
 
-	clean_args_no_options(argc, argv, cmd_property_set_usage);
-
-	if (check_argc_min(argc, 4) || check_argc_max(argc, 6))
-		usage(cmd_property_set_usage);
-
 	parse_args(argc, argv, cmd_property_set_usage, &types,
-			&object, &name, &value);
+		   &object, &name, &value, 3);
 	if (!object || !name || !value) {
 		error("invalid arguments");
 		usage(cmd_property_set_usage);
@@ -446,13 +448,8 @@ static int cmd_property_list(int argc, char **argv)
 	char *object = NULL;
 	int types = 0;
 
-	clean_args_no_options(argc, argv, cmd_property_list_usage);
-
-	if (check_argc_min(argc, 2) || check_argc_max(argc, 4))
-		usage(cmd_property_list_usage);
-
 	parse_args(argc, argv, cmd_property_list_usage,
-			&types, &object, NULL, NULL);
+		   &types, &object, NULL, NULL, 1);
 	if (!object) {
 		error("invalid arguments");
 		usage(cmd_property_list_usage);
