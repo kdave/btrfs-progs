@@ -278,13 +278,25 @@ May be resumed with *btrfs balance resume* or the paused state can be removed
 by *btrfs balance cancel*.
 
 *space_cache*::
+*space_cache=v2*::
 *nospace_cache*::
-('nospace_cache' since: 3.2, default: on)
+('nospace_cache' since: 3.2, 'space_cache=v2' since 4.5, default: on)
 +
-Disable freespace cache loading without clearing the cache and the free space
-cache will not be used during the mount. This affects performance as searching
-for new free blocks could take longer. On the other hand, managing the space
-cache consumes some resources.
+Options to control the free space cache.  This affects performance as searching
+for new free blocks could take longer if the space cache is not enabled. On the
+other hand, managing the space cache consumes some resources.  It can be
+disabled without clearing at mount time.
++
+There are two implementations of how the space is tracked. The safe default is
+'v1'.  On large filesystems (many-terabytes) and certain workloads the 'v1'
+performance may degrade.  This problem is addressed by 'v2', that is based on
+b-trees, sometimes referred to as 'free-space-tree'.
++
+'Compatibility notes:'
++
+* the 'v2' has to be enabled manually at mount time, once
+* kernel without 'v2' support will be able to mount the filesystem in read-only mode
+* 'v2' can be removed by mounting with 'clear_cache'
 
 *ssd*::
 *nossd*::
