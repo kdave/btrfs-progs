@@ -1204,7 +1204,8 @@ static int enumerate_dead_subvols(int fd, u64 **ids)
 					u64 *newids;
 
 					count += SUBVOL_ID_BATCH;
-					newids = (u64*)realloc(*ids, count);
+					newids = (u64*)realloc(*ids,
+							count * sizeof(u64));
 					if (!newids)
 						return -ENOMEM;
 					*ids = newids;
