@@ -790,7 +790,7 @@ static int cmd_subvol_get_default(int argc, char **argv)
 
 	clean_args_no_options(argc, argv, cmd_subvol_get_default_usage);
 
-	if (check_argc_exact(argc - optind, 2))
+	if (check_argc_exact(argc - optind, 1))
 		usage(cmd_subvol_get_default_usage);
 
 	subvol = argv[1];
