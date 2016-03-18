@@ -44,10 +44,12 @@ static int _cmd_qgroup_assign(int assign, int argc, char **argv,
 
 	if (assign) {
 		while (1) {
-			enum { GETOPT_VAL_RESCAN = 256 };
+			enum { GETOPT_VAL_RESCAN = 256, GETOPT_VAL_NO_RESCAN };
 			static const struct option long_options[] = {
 				{ "rescan", no_argument, NULL,
 					GETOPT_VAL_RESCAN },
+				{ "no-rescan", no_argument, NULL,
+					GETOPT_VAL_NO_RESCAN },
 				{ NULL, 0, NULL, 0 }
 			};
 			int c = getopt_long(argc, argv, "", long_options, NULL);
@@ -57,6 +59,9 @@ static int _cmd_qgroup_assign(int assign, int argc, char **argv,
 			switch (c) {
 			case GETOPT_VAL_RESCAN:
 				rescan = 1;
+				break;
+			case GETOPT_VAL_NO_RESCAN:
+				rescan = 0;
 				break;
 			default:
 				/* Usage printed by the caller */
@@ -208,7 +213,7 @@ static const char * const cmd_qgroup_assign_usage[] = {
 	"Assign SRC as the child qgroup of DST",
 	"",
 	"--rescan       schedule qutoa rescan if needed",
-	"--no-rescan    ",
+	"--no-rescan    don't schedule quota rescan",
 	NULL
 };
 
