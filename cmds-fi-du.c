@@ -505,8 +505,8 @@ static int du_add_file(const char *filename, int dirfd,
 		} else {
 			printf("%10s  %10s  %10s  %s\n",
 			       pretty_size_mode(file_total, unit_mode),
-			       "-",
-			       pretty_size_mode(excl, unit_mode), path);
+			       pretty_size_mode(excl, unit_mode),
+			       "-", path);
 		}
 	}
 
