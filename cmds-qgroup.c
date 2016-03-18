@@ -32,7 +32,8 @@ static const char * const qgroup_cmd_group_usage[] = {
 	NULL
 };
 
-static int _cmd_qgroup_assign(int assign, int argc, char **argv)
+static int _cmd_qgroup_assign(int assign, int argc, char **argv,
+		const char * const *usage_str)
 {
 	int ret = 0;
 	int fd;
@@ -41,28 +42,33 @@ static int _cmd_qgroup_assign(int assign, int argc, char **argv)
 	struct btrfs_ioctl_qgroup_assign_args args;
 	DIR *dirstream = NULL;
 
-	while (1) {
-		enum { GETOPT_VAL_RESCAN = 256 };
-		static const struct option long_options[] = {
-			{ "rescan", no_argument, NULL, GETOPT_VAL_RESCAN },
-			{ NULL, 0, NULL, 0 }
-		};
-		int c = getopt_long(argc, argv, "", long_options, NULL);
+	if (assign) {
+		while (1) {
+			enum { GETOPT_VAL_RESCAN = 256 };
+			static const struct option long_options[] = {
+				{ "rescan", no_argument, NULL,
+					GETOPT_VAL_RESCAN },
+				{ NULL, 0, NULL, 0 }
+			};
+			int c = getopt_long(argc, argv, "", long_options, NULL);
 
-		if (c < 0)
-			break;
-		switch (c) {
-		case GETOPT_VAL_RESCAN:
-			rescan = 1;
-			break;
-		default:
-			/* Usage printed by the caller */
-			return -1;
+			if (c < 0)
+				break;
+			switch (c) {
+			case GETOPT_VAL_RESCAN:
+				rescan = 1;
+				break;
+			default:
+				/* Usage printed by the caller */
+				return -1;
+			}
 		}
+	} else {
+		clean_args_no_options(argc, argv, usage_str);
 	}
 
 	if (check_argc_exact(argc - optind, 3))
-		return -1;
+		usage(usage_str);
 
 	memset(&args, 0, sizeof(args));
 	args.assign = assign;
@@ -208,15 +214,7 @@ static const char * const cmd_qgroup_assign_usage[] = {
 
 static int cmd_qgroup_assign(int argc, char **argv)
 {
-	int ret;
-
-	clean_args_no_options(argc, argv, cmd_qgroup_assign_usage);
-
-	ret = _cmd_qgroup_assign(1, argc, argv);
-
-	if (ret < 0)
-		usage(cmd_qgroup_assign_usage);
-	return ret;
+	return _cmd_qgroup_assign(1, argc, argv, cmd_qgroup_assign_usage);
 }
 
 static const char * const cmd_qgroup_remove_usage[] = {
@@ -227,15 +225,7 @@ static const char * const cmd_qgroup_remove_usage[] = {
 
 static int cmd_qgroup_remove(int argc, char **argv)
 {
-	int ret;
-
-	clean_args_no_options(argc, argv, cmd_qgroup_remove_usage);
-
-	ret = _cmd_qgroup_assign(0, argc, argv);
-
-	if (ret < 0)
-		usage(cmd_qgroup_remove_usage);
-	return ret;
+	return _cmd_qgroup_assign(0, argc, argv, cmd_qgroup_remove_usage);
 }
 
 static const char * const cmd_qgroup_create_usage[] = {
