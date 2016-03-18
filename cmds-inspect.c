@@ -273,7 +273,7 @@ static int cmd_inspect_subvolid_resolve(int argc, char **argv)
 	if (check_argc_exact(argc - optind, 2))
 		usage(cmd_inspect_subvolid_resolve_usage);
 
-	fd = btrfs_open_dir(argv[optind], &dirstream, 1);
+	fd = btrfs_open_dir(argv[optind + 1], &dirstream, 1);
 	if (fd < 0) {
 		ret = -ENOENT;
 		goto out;
