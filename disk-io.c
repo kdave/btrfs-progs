@@ -1334,7 +1334,7 @@ struct btrfs_fs_info *open_ctree_fs_info(const char *filename,
 		return NULL;
 	}
 	if (!(((st.st_mode & S_IFMT) == S_IFREG) || ((st.st_mode & S_IFMT) == S_IFBLK))) {
-		fprintf (stderr, "%s is not a regular file or block device\n", filename);
+		error("not a regular file or block device: %s", filename);
 		return NULL;
 	}
 
@@ -1343,7 +1343,7 @@ struct btrfs_fs_info *open_ctree_fs_info(const char *filename,
 
 	fp = open(filename, oflags, 0600);
 	if (fp < 0) {
-		fprintf (stderr, "Could not open %s\n", filename);
+		error("cannot open '%s': %s", filename, strerror(errno));
 		return NULL;
 	}
 	info = __open_ctree_fd(fp, filename, sb_bytenr, root_tree_bytenr,
