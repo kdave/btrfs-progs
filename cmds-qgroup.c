@@ -124,7 +124,7 @@ static int _cmd_qgroup_create(int create, int argc, char **argv)
 	struct btrfs_ioctl_qgroup_create_args args;
 	DIR *dirstream = NULL;
 
-	if (check_argc_exact(argc - optind, 3))
+	if (check_argc_exact(argc - optind, 2))
 		return -1;
 
 	memset(&args, 0, sizeof(args));
