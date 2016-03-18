@@ -1323,11 +1323,16 @@ struct btrfs_fs_info *open_ctree_fs_info(const char *filename,
 					 enum btrfs_open_ctree_flags flags)
 {
 	int fp;
+	int ret;
 	struct btrfs_fs_info *info;
 	int oflags = O_CREAT | O_RDWR;
 	struct stat st;
 
-	stat(filename, &st);
+	ret = stat(filename, &st);
+	if (ret < 0) {
+		error("cannot stat '%s': %s", filename, strerror(errno));
+		return NULL;
+	}
 	if (!(((st.st_mode & S_IFMT) == S_IFREG) || ((st.st_mode & S_IFMT) == S_IFBLK))) {
 		fprintf (stderr, "%s is not a regular file or block device\n", filename);
 		return NULL;
