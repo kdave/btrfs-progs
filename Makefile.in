@@ -215,6 +215,10 @@ test-fuzz: btrfs
 	@echo "    [TEST]   fuzz-tests.sh"
 	$(Q)bash tests/fuzz-tests.sh
 
+test-cli: btrfs
+	@echo "    [TEST]   cli-tests.sh"
+	$(Q)bash tests/cli-tests.sh
+
 test-clean:
 	@echo "Cleaning tests"
 	$(Q)bash tests/clean-tests.sh
