@@ -24,6 +24,7 @@
 #include <dirent.h>
 #include <stdarg.h>
 #include "internal.h"
+#include "btrfs-list.h"
 
 #define BTRFS_MKFS_SYSTEM_GROUP_SIZE (4 * 1024 * 1024)
 #define BTRFS_MKFS_SMALL_VOLUME_SIZE (1024 * 1024 * 1024)
@@ -198,6 +199,7 @@ int test_issubvolume(const char *path);
 int test_isdir(const char *path);
 
 char *get_subvol_name(char *mnt, char *full_path);
+int get_subvol_info(char *fullpath, struct root_info *get_ri);
 
 /*
  * Btrfs minimum size calculation is complicated, it should include at least:

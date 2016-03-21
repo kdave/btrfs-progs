@@ -3171,3 +3171,76 @@ char *get_subvol_name(char *mnt, char *full_path)
 
 	return full_path + len;
 }
+
+/*
+ * Returns
+ * <0: Std error
+ * 0: All fine
+ * 1: Error; and error info printed to the terminal. Fixme.
+ * 2: If the fullpath is root tree instead of subvol tree
+ */
+int get_subvol_info(char *fullpath, struct root_info *get_ri)
+{
+	u64 sv_id;
+	int ret = 1;
+	int fd = -1;
+	int mntfd = -1;
+	char *mnt = NULL;
+	char *svpath = NULL;
+	DIR *dirstream1 = NULL;
+	DIR *dirstream2 = NULL;
+
+	ret = test_issubvolume(fullpath);
+	if (ret < 0)
+		return ret;
+	if (!ret) {
+		error("not a subvolume: %s", fullpath);
+		return 1;
+	}
+
+	ret = find_mount_root(fullpath, &mnt);
+	if (ret < 0)
+		return ret;
+	if (ret > 0) {
+		error("%s doesn't belong to btrfs mount point", fullpath);
+		return 1;
+	}
+	ret = 1;
+	svpath = get_subvol_name(mnt, fullpath);
+
+	fd = btrfs_open_dir(fullpath, &dirstream1, 1);
+	if (fd < 0)
+		goto out;
+
+	ret = btrfs_list_get_path_rootid(fd, &sv_id);
+	if (ret) {
+		error("can't get rootid for '%s'", fullpath);
+		goto out;
+	}
+
+	mntfd = btrfs_open_dir(mnt, &dirstream2, 1);
+	if (mntfd < 0)
+		goto out;
+
+	if (sv_id == BTRFS_FS_TREE_OBJECTID) {
+		ret = 2;
+		/*
+		 * So that caller may decide if thats an error or just fine.
+		 */
+		goto out;
+	}
+
+	memset(get_ri, 0, sizeof(*get_ri));
+	get_ri->root_id = sv_id;
+
+	ret = btrfs_get_subvol(mntfd, get_ri);
+	if (ret)
+		error("can't find '%s': %d", svpath, ret);
+
+out:
+	close_file_or_dir(mntfd, dirstream2);
+	close_file_or_dir(mntfd, dirstream1);
+	free(mnt);
+
+	return ret;
+}
