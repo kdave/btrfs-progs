@@ -1867,25 +1867,6 @@ int set_label(const char *btrfs_dev, const char *label)
 }
 
 /*
- * Unsafe subvolume check.
- *
- * This only checks ino == BTRFS_FIRST_FREE_OBJECTID, even it is not in a
- * btrfs mount point.
- * Must use together with other reliable method like btrfs ioctl.
- */
-static int __is_subvol(const char *path)
-{
-	struct stat st;
-	int ret;
-
-	ret = lstat(path, &st);
-	if (ret < 0)
-		return ret;
-
-	return st.st_ino == BTRFS_FIRST_FREE_OBJECTID;
-}
-
-/*
  * A not-so-good version fls64. No fascinating optimization since
  * no one except parse_size use it
  */
@@ -2005,7 +1986,7 @@ u64 parse_qgroupid(const char *p)
 
 path:
 	/* Path format like subv at 'my_subvol' is the fallback case */
-	ret = __is_subvol(p);
+	ret = test_issubvolume(p);
 	if (ret < 0 || !ret)
 		goto err;
 	fd = open(p, O_RDONLY);
