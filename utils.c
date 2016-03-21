@@ -3160,7 +3160,7 @@ int test_issubvolume(const char *path)
 	return (int)stfs.f_type == BTRFS_SUPER_MAGIC;
 }
 
-char *get_subvol_name(char *mnt, char *full_path)
+char *subvol_strip_mountpoint(char *mnt, char *full_path)
 {
 	int len = strlen(mnt);
 	if (!len)
@@ -3206,7 +3206,7 @@ int get_subvol_info(char *fullpath, struct root_info *get_ri)
 		return 1;
 	}
 	ret = 1;
-	svpath = get_subvol_name(mnt, fullpath);
+	svpath = subvol_strip_mountpoint(mnt, fullpath);
 
 	fd = btrfs_open_dir(fullpath, &dirstream1, 1);
 	if (fd < 0)

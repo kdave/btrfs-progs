@@ -455,8 +455,9 @@ int cmd_send(int argc, char **argv)
 			if (ret < 0)
 				goto out;
 
-			ret = get_root_id(&send, get_subvol_name(send.root_path, subvol),
-					&root_id);
+			ret = get_root_id(&send,
+				subvol_strip_mountpoint(send.root_path, subvol),
+				&root_id);
 			if (ret < 0) {
 				error("cannot resolve rootid for %s", subvol);
 				goto out;
@@ -569,8 +570,8 @@ int cmd_send(int argc, char **argv)
 
 	if (snapshot_parent != NULL) {
 		ret = get_root_id(&send,
-				get_subvol_name(send.root_path, snapshot_parent),
-				&parent_root_id);
+			subvol_strip_mountpoint(send.root_path, snapshot_parent),
+			&parent_root_id);
 		if (ret < 0) {
 			error("could not resolve rootid for %s", snapshot_parent);
 			goto out;

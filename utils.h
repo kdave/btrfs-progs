@@ -198,7 +198,7 @@ int test_issubvolname(const char *name);
 int test_issubvolume(const char *path);
 int test_isdir(const char *path);
 
-char *get_subvol_name(char *mnt, char *full_path);
+char *subvol_strip_mountpoint(char *mnt, char *full_path);
 int get_subvol_info(char *fullpath, struct root_info *get_ri);
 
 /*
