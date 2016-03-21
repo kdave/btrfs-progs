@@ -197,6 +197,8 @@ int test_issubvolname(const char *name);
 int test_issubvolume(const char *path);
 int test_isdir(const char *path);
 
+char *get_subvol_name(char *mnt, char *full_path);
+
 /*
  * Btrfs minimum size calculation is complicated, it should include at least:
  * 1. system group size

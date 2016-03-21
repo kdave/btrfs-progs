@@ -335,17 +335,6 @@ out:
 	return ret;
 }
 
-char *get_subvol_name(char *mnt, char *full_path)
-{
-	int len = strlen(mnt);
-	if (!len)
-		return full_path;
-	if (mnt[len - 1] != '/')
-		len += 1;
-
-	return full_path + len;
-}
-
 static int init_root_path(struct btrfs_send *s, const char *subvol)
 {
 	int ret = 0;

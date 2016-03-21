@@ -3159,3 +3159,15 @@ int test_issubvolume(const char *path)
 
 	return (int)stfs.f_type == BTRFS_SUPER_MAGIC;
 }
+
+char *get_subvol_name(char *mnt, char *full_path)
+{
+	int len = strlen(mnt);
+	if (!len)
+		return full_path;
+
+	if (mnt[len - 1] != '/')
+		len += 1;
+
+	return full_path + len;
+}
