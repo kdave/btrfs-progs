@@ -194,6 +194,7 @@ const char* group_profile_str(u64 flags);
 
 int test_minimum_size(const char *file, u32 leafsize);
 int test_issubvolname(const char *name);
+int test_issubvolume(const char *path);
 int test_isdir(const char *path);
 
 /*

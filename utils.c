@@ -3151,3 +3151,30 @@ int test_issubvolname(const char *name)
 	return name[0] != '\0' && !strchr(name, '/') &&
 		strcmp(name, ".") && strcmp(name, "..");
 }
+
+/*
+ * Test if path is a subvolume
+ * Returns:
+ *   0 - path exists but it is not a subvolume
+ *   1 - path exists and it is  a subvolume
+ * < 0 - error
+ */
+int test_issubvolume(const char *path)
+{
+	struct stat	st;
+	struct statfs stfs;
+	int		res;
+
+	res = stat(path, &st);
+	if (res < 0)
+		return -errno;
+
+	if (st.st_ino != BTRFS_FIRST_FREE_OBJECTID || !S_ISDIR(st.st_mode))
+		return 0;
+
+	res = statfs(path, &stfs);
+	if (res < 0)
+		return -errno;
+
+	return (int)stfs.f_type == BTRFS_SUPER_MAGIC;
+}
