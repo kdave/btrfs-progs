@@ -438,7 +438,7 @@ static int du_add_file(const char *filename, int dirfd,
 		ret = sprintf(pathp, "/%s", filename);
 	pathp += ret;
 
-	fd = open_file_or_dir(path, &dirstream);
+	fd = open_file_or_dir3(path, &dirstream, O_RDONLY);
 	if (fd < 0) {
 		ret = fd;
 		goto out;
