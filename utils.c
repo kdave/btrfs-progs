@@ -1755,9 +1755,10 @@ static int set_label_unmounted(const char *dev, const char *label)
 	return 0;
 }
 
-static int set_label_mounted(const char *mount_path, const char *label)
+static int set_label_mounted(const char *mount_path, const char *labelp)
 {
 	int fd;
+	char label[BTRFS_LABEL_SIZE];
 
 	fd = open(mount_path, O_RDONLY | O_NOATIME);
 	if (fd < 0) {
@@ -1765,6 +1766,8 @@ static int set_label_mounted(const char *mount_path, const char *label)
 		return -1;
 	}
 
+	memset(label, 0, sizeof(label));
+	strncpy(label, labelp, sizeof(label));
 	if (ioctl(fd, BTRFS_IOC_SET_FSLABEL, label) < 0) {
 		fprintf(stderr, "ERROR: unable to set label %s\n",
 			strerror(errno));
