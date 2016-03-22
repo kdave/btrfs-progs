@@ -2821,7 +2821,7 @@ int find_next_key(struct btrfs_path *path, struct btrfs_key *key)
 	return 1;
 }
 
-char* btrfs_group_type_str(u64 flag)
+const char* btrfs_group_type_str(u64 flag)
 {
 	u64 mask = BTRFS_BLOCK_GROUP_TYPE_MASK |
 		BTRFS_SPACE_INFO_GLOBAL_RSV;
@@ -2842,7 +2842,7 @@ char* btrfs_group_type_str(u64 flag)
 	}
 }
 
-char* btrfs_group_profile_str(u64 flag)
+const char* btrfs_group_profile_str(u64 flag)
 {
 	switch (flag & BTRFS_BLOCK_GROUP_PROFILE_MASK) {
 	case 0:

@@ -220,8 +220,8 @@ static inline u64 btrfs_min_dev_size(u32 leafsize)
 }
 
 int find_next_key(struct btrfs_path *path, struct btrfs_key *key);
-char* btrfs_group_type_str(u64 flag);
-char* btrfs_group_profile_str(u64 flag);
+const char* btrfs_group_type_str(u64 flag);
+const char* btrfs_group_profile_str(u64 flag);
 
 /*
  * Get the length of the string converted from a u64 number.
