@@ -126,8 +126,8 @@ struct btrfs_mkfs_config {
 int make_btrfs(int fd, struct btrfs_mkfs_config *cfg);
 int btrfs_make_root_dir(struct btrfs_trans_handle *trans,
 			struct btrfs_root *root, u64 objectid);
-int btrfs_prepare_device(int fd, char *file, int zero_end, u64 *block_count_ret,
-			 u64 max_block_count, int discard);
+int btrfs_prepare_device(int fd, const char *file, int zero_end,
+		u64 *block_count_ret, u64 max_block_count, int discard);
 int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 		      struct btrfs_root *root, int fd, char *path,
 		      u64 block_count, u32 io_width, u32 io_align,
@@ -169,16 +169,16 @@ int btrfs_open_dir(const char *path, DIR **dirstream, int verbose);
 u64 btrfs_device_size(int fd, struct stat *st);
 /* Helper to always get proper size of the destination string */
 #define strncpy_null(dest, src) __strncpy__null(dest, src, sizeof(dest))
-int test_dev_for_mkfs(char *file, int force_overwrite);
+int test_dev_for_mkfs(const char *file, int force_overwrite);
 int get_label_mounted(const char *mount_path, char *labelp);
 int get_label_unmounted(const char *dev, char *label);
 int test_num_disk_vs_raid(u64 metadata_profile, u64 data_profile,
 	u64 dev_cnt, int mixed, int ssd);
 int group_profile_max_safe_loss(u64 flags);
-int is_vol_small(char *file);
+int is_vol_small(const char *file);
 int csum_tree_block(struct btrfs_root *root, struct extent_buffer *buf,
 			   int verify);
-int ask_user(char *question);
+int ask_user(const char *question);
 int lookup_ino_rootid(int fd, u64 *rootid);
 int btrfs_scan_lblkid(void);
 int get_btrfs_mount(const char *dev, char *mp, size_t mp_size);
@@ -186,20 +186,18 @@ int find_mount_root(const char *path, char **mount_root);
 int get_device_info(int fd, u64 devid,
 		struct btrfs_ioctl_dev_info_args *di_args);
 int test_uuid_unique(char *fs_uuid);
-u64 disk_size(char *path);
+u64 disk_size(const char *path);
 int get_device_info(int fd, u64 devid,
 		struct btrfs_ioctl_dev_info_args *di_args);
-u64 get_partition_size(char *dev);
-const char* group_type_str(u64 flags);
-const char* group_profile_str(u64 flags);
+u64 get_partition_size(const char *dev);
 
 int test_minimum_size(const char *file, u32 leafsize);
 int test_issubvolname(const char *name);
 int test_issubvolume(const char *path);
 int test_isdir(const char *path);
 
-char *subvol_strip_mountpoint(char *mnt, char *full_path);
-int get_subvol_info(char *fullpath, struct root_info *get_ri);
+const char *subvol_strip_mountpoint(const char *mnt, const char *full_path);
+int get_subvol_info(const char *fullpath, struct root_info *get_ri);
 
 /*
  * Btrfs minimum size calculation is complicated, it should include at least:

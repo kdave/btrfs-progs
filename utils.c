@@ -856,8 +856,8 @@ out:
 	return ret;
 }
 
-int btrfs_prepare_device(int fd, char *file, int zero_end, u64 *block_count_ret,
-			   u64 max_block_count, int discard)
+int btrfs_prepare_device(int fd, const char *file, int zero_end,
+		u64 *block_count_ret, u64 max_block_count, int discard)
 {
 	u64 block_count;
 	struct stat st;
@@ -2350,9 +2350,7 @@ out:
  *	 0 for nothing found
  *	-1 for internal error
  */
-static int
-check_overwrite(
-	char		*device)
+static int check_overwrite(const char *device)
 {
 	const char	*type;
 	blkid_probe	pr = NULL;
@@ -2514,7 +2512,7 @@ int group_profile_max_safe_loss(u64 flags)
  *  1: something is wrong, an error is printed
  *  0: all is fine
  */
-int test_dev_for_mkfs(char *file, int force_overwrite)
+int test_dev_for_mkfs(const char *file, int force_overwrite)
 {
 	int ret, fd;
 	struct stat st;
@@ -2618,7 +2616,7 @@ int btrfs_scan_lblkid(void)
 	return 0;
 }
 
-int is_vol_small(char *file)
+int is_vol_small(const char *file)
 {
 	int fd = -1;
 	int e;
@@ -2652,7 +2650,7 @@ int is_vol_small(char *file)
  * first whitespace delimited token is a case insensitive match with yes
  * or y.
  */
-int ask_user(char *question)
+int ask_user(const char *question)
 {
 	char buf[30] = {0,};
 	char *saveptr = NULL;
@@ -2866,7 +2864,7 @@ char* btrfs_group_profile_str(u64 flag)
 	}
 }
 
-u64 disk_size(char *path)
+u64 disk_size(const char *path)
 {
 	struct statfs sfs;
 
@@ -2876,7 +2874,7 @@ u64 disk_size(char *path)
 		return sfs.f_bsize * sfs.f_blocks;
 }
 
-u64 get_partition_size(char *dev)
+u64 get_partition_size(const char *dev)
 {
 	u64 result;
 	int fd = open(dev, O_RDONLY);
@@ -3160,7 +3158,7 @@ int test_issubvolume(const char *path)
 	return (int)stfs.f_type == BTRFS_SUPER_MAGIC;
 }
 
-char *subvol_strip_mountpoint(char *mnt, char *full_path)
+const char *subvol_strip_mountpoint(const char *mnt, const char *full_path)
 {
 	int len = strlen(mnt);
 	if (!len)
@@ -3179,14 +3177,14 @@ char *subvol_strip_mountpoint(char *mnt, char *full_path)
  * 1: Error; and error info printed to the terminal. Fixme.
  * 2: If the fullpath is root tree instead of subvol tree
  */
-int get_subvol_info(char *fullpath, struct root_info *get_ri)
+int get_subvol_info(const char *fullpath, struct root_info *get_ri)
 {
 	u64 sv_id;
 	int ret = 1;
 	int fd = -1;
 	int mntfd = -1;
 	char *mnt = NULL;
-	char *svpath = NULL;
+	const char *svpath = NULL;
 	DIR *dirstream1 = NULL;
 	DIR *dirstream2 = NULL;
 
