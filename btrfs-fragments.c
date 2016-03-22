@@ -379,8 +379,7 @@ out_close:
 	return ret;
 }
 
-void
-usage(void)
+void fragments_usage(void)
 {
 	printf("usage: btrfs-fragments [options] <path>\n");
 	printf("         -c               use color\n");
@@ -423,15 +422,13 @@ int main(int argc, char **argv)
 			break;
 		case 'h':
 		default:
-			usage();
+			fragments_usage();
 		}
 	}
 
 	set_argv0(argv);
-	if (check_argc_min(argc - optind, 1)) {
-		usage();
-		exit(1);
-	}
+	if (check_argc_min(argc - optind, 1))
+		fragments_usage();
 
 	path = argv[optind++];
 
