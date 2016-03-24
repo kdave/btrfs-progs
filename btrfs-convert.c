@@ -2600,8 +2600,8 @@ static int do_convert(const char *devname, int datacsum, int packing, int noxatt
 	}
 	memset(root->fs_info->super_copy->label, 0, BTRFS_LABEL_SIZE);
 	if (copylabel == 1) {
-		strncpy(root->fs_info->super_copy->label,
-				cctx.volume_name, BTRFS_LABEL_SIZE);
+		__strncpy_null(root->fs_info->super_copy->label,
+				cctx.volume_name, BTRFS_LABEL_SIZE - 1);
 		fprintf(stderr, "copy label '%s'\n",
 				root->fs_info->super_copy->label);
 	} else if (copylabel == -1) {
@@ -3116,8 +3116,7 @@ int main(int argc, char *argv[])
 				"WARNING: label too long, trimmed to %d bytes\n",
 						BTRFS_LABEL_SIZE - 1);
 				}
-				strncpy(fslabel, optarg, BTRFS_LABEL_SIZE - 1);
-				fslabel[BTRFS_LABEL_SIZE - 1] = 0;
+				__strncpy_null(fslabel, optarg, BTRFS_LABEL_SIZE - 1);
 				break;
 			case 'L':
 				copylabel = 1;

@@ -253,7 +253,7 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 	btrfs_set_super_cache_generation(&super, -1);
 	btrfs_set_super_incompat_flags(&super, cfg->features);
 	if (cfg->label)
-		strncpy(super.label, cfg->label, BTRFS_LABEL_SIZE - 1);
+		__strncpy_null(super.label, cfg->label, BTRFS_LABEL_SIZE - 1);
 
 	/* create the tree of root objects */
 	memset(buf->data, 0, cfg->nodesize);
@@ -1746,8 +1746,8 @@ static int set_label_unmounted(const char *dev, const char *label)
 		return -1;
 
 	trans = btrfs_start_transaction(root, 1);
-	snprintf(root->fs_info->super_copy->label, BTRFS_LABEL_SIZE, "%s",
-		 label);
+	__strncpy_null(root->fs_info->super_copy->label, label, BTRFS_LABEL_SIZE - 1);
+
 	btrfs_commit_transaction(trans, root);
 
 	/* Now we close it since we are done. */
@@ -1767,7 +1767,7 @@ static int set_label_mounted(const char *mount_path, const char *labelp)
 	}
 
 	memset(label, 0, sizeof(label));
-	strncpy(label, labelp, sizeof(label));
+	__strncpy_null(label, labelp, BTRFS_LABEL_SIZE - 1);
 	if (ioctl(fd, BTRFS_IOC_SET_FSLABEL, label) < 0) {
 		fprintf(stderr, "ERROR: unable to set label %s\n",
 			strerror(errno));
@@ -1797,7 +1797,8 @@ int get_label_unmounted(const char *dev, char *label)
 	if(!root)
 		return -1;
 
-	memcpy(label, root->fs_info->super_copy->label, BTRFS_LABEL_SIZE);
+	__strncpy_null(label, root->fs_info->super_copy->label,
+			BTRFS_LABEL_SIZE - 1);
 
 	/* Now we close it since we are done. */
 	close_ctree(root);
@@ -1832,7 +1833,7 @@ int get_label_mounted(const char *mount_path, char *labelp)
 		return ret;
 	}
 
-	strncpy(labelp, label, sizeof(label));
+	__strncpy_null(labelp, label, BTRFS_LABEL_SIZE - 1);
 	close(fd);
 	return 0;
 }
