@@ -474,7 +474,7 @@ int cmd_send(int argc, char **argv)
 
 			ret = add_clone_source(&send, root_id);
 			if (ret < 0) {
-				error("not enough memory");
+				error("cannot add clone source: %s", strerror(-ret));
 				goto out;
 			}
 			subvol_uuid_search_finit(&send.sus);
@@ -579,7 +579,7 @@ int cmd_send(int argc, char **argv)
 
 		ret = add_clone_source(&send, parent_root_id);
 		if (ret < 0) {
-			error("not enough memory");
+			error("cannot add clone source: %s", strerror(-ret));
 			goto out;
 		}
 	}
@@ -677,7 +677,7 @@ int cmd_send(int argc, char **argv)
 			/* done with this subvol, so add it to the clone sources */
 			ret = add_clone_source(&send, root_id);
 			if (ret < 0) {
-				error("not enough memory");
+				error("cannot add clone source: %s", strerror(-ret));
 				goto out;
 			}
 		}
