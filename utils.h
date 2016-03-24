@@ -160,7 +160,7 @@ int get_fs_info(char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 int get_label(const char *btrfs_dev, char *label);
 int set_label(const char *btrfs_dev, const char *label);
 
-char *__strncpy__null(char *dest, const char *src, size_t n);
+char *__strncpy_null(char *dest, const char *src, size_t n);
 int is_block_device(const char *file);
 int is_mount_point(const char *file);
 int check_arg_type(const char *input);
@@ -168,7 +168,7 @@ int open_path_or_dev_mnt(const char *path, DIR **dirstream, int verbose);
 int btrfs_open_dir(const char *path, DIR **dirstream, int verbose);
 u64 btrfs_device_size(int fd, struct stat *st);
 /* Helper to always get proper size of the destination string */
-#define strncpy_null(dest, src) __strncpy__null(dest, src, sizeof(dest))
+#define strncpy_null(dest, src) __strncpy_null(dest, src, sizeof(dest))
 int test_dev_for_mkfs(const char *file, int force_overwrite);
 int get_label_mounted(const char *mount_path, char *labelp);
 int get_label_unmounted(const char *dev, char *label);

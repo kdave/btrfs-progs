@@ -1683,7 +1683,7 @@ int pretty_size_snprintf(u64 size, char *str, size_t str_size, unsigned unit_mod
 }
 
 /*
- * __strncpy__null - strncpy with null termination
+ * __strncpy_null - strncpy with null termination
  * @dest:	the target array
  * @src:	the source string
  * @n:		maximum bytes to copy (size of *dest)
@@ -1694,7 +1694,7 @@ int pretty_size_snprintf(u64 size, char *str, size_t str_size, unsigned unit_mod
  * byte ('\0'), to the buffer pointed to by dest, up to a maximum
  * of n bytes.  Then ensure that dest is null-terminated.
  */
-char *__strncpy__null(char *dest, const char *src, size_t n)
+char *__strncpy_null(char *dest, const char *src, size_t n)
 {
 	strncpy(dest, src, n);
 	if (n > 0)
@@ -2969,7 +2969,7 @@ int arg_copy_path(char *dest, const char *src, int destlen)
 	if (len >= PATH_MAX || len >= destlen)
 		return -ENAMETOOLONG;
 
-	__strncpy__null(dest, src, destlen);
+	__strncpy_null(dest, src, destlen);
 
 	return 0;
 }
