@@ -673,15 +673,16 @@ int cmd_send(int argc, char **argv)
 		if (ret < 0)
 			goto out;
 
-		/* done with this subvol, so add it to the clone sources */
-		ret = add_clone_source(&send, root_id);
-		if (ret < 0) {
-			error("not enough memory");
-			goto out;
+		if (!full_send) {
+			/* done with this subvol, so add it to the clone sources */
+			ret = add_clone_source(&send, root_id);
+			if (ret < 0) {
+				error("not enough memory");
+				goto out;
+			}
 		}
 
 		parent_root_id = 0;
-		full_send = 0;
 	}
 
 	ret = 0;
