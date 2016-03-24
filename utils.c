@@ -3236,7 +3236,7 @@ int get_subvol_info(const char *fullpath, struct root_info *get_ri)
 
 out:
 	close_file_or_dir(mntfd, dirstream2);
-	close_file_or_dir(mntfd, dirstream1);
+	close_file_or_dir(fd, dirstream1);
 	free(mnt);
 
 	return ret;
