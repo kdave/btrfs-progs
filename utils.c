@@ -2455,7 +2455,6 @@ int test_num_disk_vs_raid(u64 metadata_profile, u64 data_profile,
 	case 2:
 		allowed |= BTRFS_BLOCK_GROUP_RAID0 | BTRFS_BLOCK_GROUP_RAID1 |
 			BTRFS_BLOCK_GROUP_RAID5;
-		break;
 	case 1:
 		allowed |= BTRFS_BLOCK_GROUP_DUP;
 	}
