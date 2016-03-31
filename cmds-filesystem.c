@@ -927,7 +927,6 @@ static int cmd_filesystem_sync(int argc, char **argv)
 	if (fd < 0)
 		return 1;
 
-	printf("FSSync '%s'\n", path);
 	res = ioctl(fd, BTRFS_IOC_SYNC);
 	e = errno;
 	close_file_or_dir(fd, dirstream);
