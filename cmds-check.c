@@ -4579,9 +4579,9 @@ static int add_extent_rec(struct cache_tree *extent_cache,
 		 * As now stripe_len is fixed to BTRFS_STRIPE_LEN, just check
 		 * it.
 		 */
-		if (metadata && check_crossing_stripes(rec->start,
-						       rec->max_size))
-				rec->crossing_stripes = 1;
+		if (metadata)
+			rec->crossing_stripes = check_crossing_stripes(
+					rec->start, rec->max_size);
 		check_extent_type(rec);
 		maybe_free_extent_rec(extent_cache, rec);
 		return ret;
@@ -4641,8 +4641,8 @@ static int add_extent_rec(struct cache_tree *extent_cache,
 	}
 
 	if (metadata)
-		if (check_crossing_stripes(rec->start, rec->max_size))
-			rec->crossing_stripes = 1;
+		rec->crossing_stripes = check_crossing_stripes(rec->start,
+				rec->max_size);
 	check_extent_type(rec);
 	return ret;
 }
