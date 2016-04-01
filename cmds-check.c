@@ -4535,29 +4535,14 @@ static int add_extent_rec_nolookup(struct cache_tree *extent_cache,
 	rec->bad_full_backref = 0;
 	rec->crossing_stripes = 0;
 	rec->wrong_chunk_type = 0;
+	rec->is_root = tmpl->is_root;
+	rec->refs = tmpl->refs;
+	rec->extent_item_refs = tmpl->extent_item_refs;
+	rec->parent_generation = tmpl->parent_generation;
 	INIT_LIST_HEAD(&rec->backrefs);
 	INIT_LIST_HEAD(&rec->dups);
 	INIT_LIST_HEAD(&rec->list);
-
-	if (tmpl->is_root)
-		rec->is_root = 1;
-	else
-		rec->is_root = 0;
-
-	rec->refs = tmpl->refs;
-
-	if (tmpl->extent_item_refs)
-		rec->extent_item_refs = tmpl->extent_item_refs;
-	else
-		rec->extent_item_refs = 0;
-
 	memcpy(&rec->parent_key, &tmpl->parent_key, sizeof(tmpl->parent_key));
-
-	if (tmpl->parent_generation)
-		rec->parent_generation = tmpl->parent_generation;
-	else
-		rec->parent_generation = 0;
-
 	rec->cache.start = tmpl->start;
 	rec->cache.size = tmpl->nr;
 	ret = insert_cache_extent(extent_cache, &rec->cache);
