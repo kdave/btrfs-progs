@@ -73,40 +73,7 @@ static int init_extent_tree = 0;
 static int check_data_csum = 0;
 static struct btrfs_fs_info *global_info;
 static struct task_ctx ctx = { 0 };
-
-static void *print_status_check(void *p)
-{
-	struct task_ctx *priv = p;
-	const char work_indicator[] = { '.', 'o', 'O', 'o' };
-	uint32_t count = 0;
-	static char *task_position_string[] = {
-		"checking extents",
-		"checking free space cache",
-		"checking fs roots",
-	};
-
-	task_period_start(priv->info, 1000 /* 1s */);
-
-	if (priv->tp == TASK_NOTHING)
-		return NULL;
-
-	while (1) {
-		printf("%s [%c]\r", task_position_string[priv->tp],
-				work_indicator[count % 4]);
-		count++;
-		fflush(stdout);
-		task_period_wait(priv->info);
-	}
-	return NULL;
-}
-
-static int print_status_return(void *p)
-{
-	printf("\n");
-	fflush(stdout);
-
-	return 0;
-}
+static struct cache_tree *roots_info_cache = NULL;
 
 struct extent_backref {
 	struct list_head list;
@@ -226,6 +193,156 @@ struct file_extent_hole {
 	u64 start;
 	u64 len;
 };
+
+struct inode_record {
+	struct list_head backrefs;
+	unsigned int checked:1;
+	unsigned int merging:1;
+	unsigned int found_inode_item:1;
+	unsigned int found_dir_item:1;
+	unsigned int found_file_extent:1;
+	unsigned int found_csum_item:1;
+	unsigned int some_csum_missing:1;
+	unsigned int nodatasum:1;
+	int errors;
+
+	u64 ino;
+	u32 nlink;
+	u32 imode;
+	u64 isize;
+	u64 nbytes;
+
+	u32 found_link;
+	u64 found_size;
+	u64 extent_start;
+	u64 extent_end;
+	struct rb_root holes;
+	struct list_head orphan_extents;
+
+	u32 refs;
+};
+
+#define I_ERR_NO_INODE_ITEM		(1 << 0)
+#define I_ERR_NO_ORPHAN_ITEM		(1 << 1)
+#define I_ERR_DUP_INODE_ITEM		(1 << 2)
+#define I_ERR_DUP_DIR_INDEX		(1 << 3)
+#define I_ERR_ODD_DIR_ITEM		(1 << 4)
+#define I_ERR_ODD_FILE_EXTENT		(1 << 5)
+#define I_ERR_BAD_FILE_EXTENT		(1 << 6)
+#define I_ERR_FILE_EXTENT_OVERLAP	(1 << 7)
+#define I_ERR_FILE_EXTENT_DISCOUNT	(1 << 8) // 100
+#define I_ERR_DIR_ISIZE_WRONG		(1 << 9)
+#define I_ERR_FILE_NBYTES_WRONG		(1 << 10) // 400
+#define I_ERR_ODD_CSUM_ITEM		(1 << 11)
+#define I_ERR_SOME_CSUM_MISSING		(1 << 12)
+#define I_ERR_LINK_COUNT_WRONG		(1 << 13)
+#define I_ERR_FILE_EXTENT_ORPHAN	(1 << 14)
+
+struct root_backref {
+	struct list_head list;
+	unsigned int found_dir_item:1;
+	unsigned int found_dir_index:1;
+	unsigned int found_back_ref:1;
+	unsigned int found_forward_ref:1;
+	unsigned int reachable:1;
+	int errors;
+	u64 ref_root;
+	u64 dir;
+	u64 index;
+	u16 namelen;
+	char name[0];
+};
+
+struct root_record {
+	struct list_head backrefs;
+	struct cache_extent cache;
+	unsigned int found_root_item:1;
+	u64 objectid;
+	u32 found_ref;
+};
+
+struct ptr_node {
+	struct cache_extent cache;
+	void *data;
+};
+
+struct shared_node {
+	struct cache_extent cache;
+	struct cache_tree root_cache;
+	struct cache_tree inode_cache;
+	struct inode_record *current;
+	u32 refs;
+};
+
+struct block_info {
+	u64 start;
+	u32 size;
+};
+
+struct walk_control {
+	struct cache_tree shared;
+	struct shared_node *nodes[BTRFS_MAX_LEVEL];
+	int active_node;
+	int root_level;
+};
+
+struct bad_item {
+	struct btrfs_key key;
+	u64 root_id;
+	struct list_head list;
+};
+
+struct extent_entry {
+	u64 bytenr;
+	u64 bytes;
+	int count;
+	int broken;
+	struct list_head list;
+};
+
+struct root_item_info {
+	/* level of the root */
+	u8 level;
+	/* number of nodes at this level, must be 1 for a root */
+	int node_count;
+	u64 bytenr;
+	u64 gen;
+	struct cache_extent cache_extent;
+};
+
+static void *print_status_check(void *p)
+{
+	struct task_ctx *priv = p;
+	const char work_indicator[] = { '.', 'o', 'O', 'o' };
+	uint32_t count = 0;
+	static char *task_position_string[] = {
+		"checking extents",
+		"checking free space cache",
+		"checking fs roots",
+	};
+
+	task_period_start(priv->info, 1000 /* 1s */);
+
+	if (priv->tp == TASK_NOTHING)
+		return NULL;
+
+	while (1) {
+		printf("%s [%c]\r", task_position_string[priv->tp],
+				work_indicator[count % 4]);
+		count++;
+		fflush(stdout);
+		task_period_wait(priv->info);
+	}
+	return NULL;
+}
+
+static int print_status_return(void *p)
+{
+	printf("\n");
+	fflush(stdout);
+
+	return 0;
+}
 
 /* Compatible function to allow reuse of old codes */
 static u64 first_extent_gap(struct rb_root *holes)
@@ -418,104 +535,6 @@ static void free_file_extent_holes(struct rb_root *holes)
 		node = rb_first(holes);
 	}
 }
-
-struct inode_record {
-	struct list_head backrefs;
-	unsigned int checked:1;
-	unsigned int merging:1;
-	unsigned int found_inode_item:1;
-	unsigned int found_dir_item:1;
-	unsigned int found_file_extent:1;
-	unsigned int found_csum_item:1;
-	unsigned int some_csum_missing:1;
-	unsigned int nodatasum:1;
-	int errors;
-
-	u64 ino;
-	u32 nlink;
-	u32 imode;
-	u64 isize;
-	u64 nbytes;
-
-	u32 found_link;
-	u64 found_size;
-	u64 extent_start;
-	u64 extent_end;
-	struct rb_root holes;
-	struct list_head orphan_extents;
-
-	u32 refs;
-};
-
-#define I_ERR_NO_INODE_ITEM		(1 << 0)
-#define I_ERR_NO_ORPHAN_ITEM		(1 << 1)
-#define I_ERR_DUP_INODE_ITEM		(1 << 2)
-#define I_ERR_DUP_DIR_INDEX		(1 << 3)
-#define I_ERR_ODD_DIR_ITEM		(1 << 4)
-#define I_ERR_ODD_FILE_EXTENT		(1 << 5)
-#define I_ERR_BAD_FILE_EXTENT		(1 << 6)
-#define I_ERR_FILE_EXTENT_OVERLAP	(1 << 7)
-#define I_ERR_FILE_EXTENT_DISCOUNT	(1 << 8) // 100
-#define I_ERR_DIR_ISIZE_WRONG		(1 << 9)
-#define I_ERR_FILE_NBYTES_WRONG		(1 << 10) // 400
-#define I_ERR_ODD_CSUM_ITEM		(1 << 11)
-#define I_ERR_SOME_CSUM_MISSING		(1 << 12)
-#define I_ERR_LINK_COUNT_WRONG		(1 << 13)
-#define I_ERR_FILE_EXTENT_ORPHAN	(1 << 14)
-
-struct root_backref {
-	struct list_head list;
-	unsigned int found_dir_item:1;
-	unsigned int found_dir_index:1;
-	unsigned int found_back_ref:1;
-	unsigned int found_forward_ref:1;
-	unsigned int reachable:1;
-	int errors;
-	u64 ref_root;
-	u64 dir;
-	u64 index;
-	u16 namelen;
-	char name[0];
-};
-
-struct root_record {
-	struct list_head backrefs;
-	struct cache_extent cache;
-	unsigned int found_root_item:1;
-	u64 objectid;
-	u32 found_ref;
-};
-
-struct ptr_node {
-	struct cache_extent cache;
-	void *data;
-};
-
-struct shared_node {
-	struct cache_extent cache;
-	struct cache_tree root_cache;
-	struct cache_tree inode_cache;
-	struct inode_record *current;
-	u32 refs;
-};
-
-struct block_info {
-	u64 start;
-	u32 size;
-};
-
-struct walk_control {
-	struct cache_tree shared;
-	struct shared_node *nodes[BTRFS_MAX_LEVEL];
-	int active_node;
-	int root_level;
-};
-
-struct bad_item {
-	struct btrfs_key key;
-	u64 root_id;
-	struct list_head list;
-};
 
 static void reset_cached_block_groups(struct btrfs_fs_info *fs_info);
 
@@ -6529,14 +6548,6 @@ fail:
 	return ret;
 }
 
-struct extent_entry {
-	u64 bytenr;
-	u64 bytes;
-	int count;
-	int broken;
-	struct list_head list;
-};
-
 static struct extent_entry *find_entry(struct list_head *entries,
 				       u64 bytenr, u64 bytes)
 {
@@ -9116,18 +9127,6 @@ static int fill_csum_tree(struct btrfs_trans_handle *trans,
 	else
 		return fill_csum_tree_from_extent(trans, csum_root);
 }
-
-struct root_item_info {
-	/* level of the root */
-	u8 level;
-	/* number of nodes at this level, must be 1 for a root */
-	int node_count;
-	u64 bytenr;
-	u64 gen;
-	struct cache_extent cache_extent;
-};
-
-static struct cache_tree *roots_info_cache = NULL;
 
 static void free_roots_info_cache(void)
 {
