@@ -4692,7 +4692,7 @@ static int add_tree_backref(struct cache_tree *extent_cache, u64 bytenr,
 
 	cache = lookup_cache_extent(extent_cache, bytenr, 1);
 	if (!cache) {
-		add_extent_rec(extent_cache, NULL, 0, bytenr,
+		add_extent_rec_nolookup(extent_cache, NULL, 0, bytenr,
 			       1, 0, 0, 0, 0, 1, 0, 0);
 		cache = lookup_cache_extent(extent_cache, bytenr, 1);
 		if (!cache)
@@ -4744,8 +4744,8 @@ static int add_data_backref(struct cache_tree *extent_cache, u64 bytenr,
 
 	cache = lookup_cache_extent(extent_cache, bytenr, 1);
 	if (!cache) {
-		add_extent_rec(extent_cache, NULL, 0, bytenr, 1, 0, 0, 0, 0,
-			       0, 0, max_size);
+		add_extent_rec_nolookup(extent_cache, NULL, 0, bytenr, 1, 0, 0,
+				0, 0, 0, 0, max_size);
 		cache = lookup_cache_extent(extent_cache, bytenr, 1);
 		if (!cache)
 			abort();
