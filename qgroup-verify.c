@@ -544,8 +544,7 @@ static int travel_tree(struct btrfs_fs_info *info, struct btrfs_root *root,
 	nr = btrfs_header_nritems(eb);
 	for (i = 0; i < nr; i++) {
 		new_bytenr = btrfs_node_blockptr(eb, i);
-		new_num_bytes = btrfs_level_size(root,
-						 btrfs_header_level(eb) - 1);
+		new_num_bytes = root->nodesize;
 
 		ret = travel_tree(info, root, new_bytenr, new_num_bytes,
 				  ref_parent);

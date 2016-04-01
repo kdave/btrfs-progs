@@ -2223,6 +2223,11 @@ static inline u32 btrfs_file_extent_inline_len(struct extent_buffer *eb,
 	return btrfs_file_extent_ram_bytes(eb, fi);
 }
 
+/*
+ * NOTE: Backward compatibility, do not use.
+ * Replacement: read nodesize directly
+ */
+__attribute__((deprecated))
 static inline u32 btrfs_level_size(struct btrfs_root *root, int level) {
 	if (level == 0)
 		return root->leafsize;

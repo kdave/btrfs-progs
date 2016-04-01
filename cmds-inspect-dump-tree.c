@@ -47,7 +47,7 @@ static void print_extents(struct btrfs_root *root, struct extent_buffer *eb)
 		return;
 	}
 
-	size = btrfs_level_size(root, btrfs_header_level(eb) - 1);
+	size = root->nodesize;
 	nr = btrfs_header_nritems(eb);
 	for (i = 0; i < nr; i++) {
 		struct extent_buffer *next = read_tree_block(root,
@@ -400,8 +400,7 @@ again:
 			read_extent_buffer(leaf, &ri, offset, sizeof(ri));
 			buf = read_tree_block(tree_root_scan,
 					      btrfs_root_bytenr(&ri),
-					      btrfs_level_size(tree_root_scan,
-							btrfs_root_level(&ri)),
+					      tree_root_scan->nodesize,
 					      0);
 			if (!extent_buffer_uptodate(buf))
 				goto next;
