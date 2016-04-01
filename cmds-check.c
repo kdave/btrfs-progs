@@ -122,6 +122,9 @@ struct tree_backref {
 	};
 };
 
+/* Explicit initialization for extent_record::flag_block_full_backref */
+enum { FLAG_UNSET = 2 };
+
 struct extent_record {
 	struct list_head backrefs;
 	struct list_head dups;
@@ -138,7 +141,7 @@ struct extent_record {
 	u64 info_objectid;
 	u32 num_duplicates;
 	u8 info_level;
-	int flag_block_full_backref;
+	unsigned int flag_block_full_backref:2;
 	unsigned int found_rec:1;
 	unsigned int content_checked:1;
 	unsigned int owner_ref_checked:1;
@@ -4531,7 +4534,7 @@ static int add_extent_rec_nolookup(struct cache_tree *extent_cache,
 	rec->owner_ref_checked = tmpl->owner_ref_checked;
 	rec->num_duplicates = 0;
 	rec->metadata = tmpl->metadata;
-	rec->flag_block_full_backref = -1;
+	rec->flag_block_full_backref = FLAG_UNSET;
 	rec->bad_full_backref = 0;
 	rec->crossing_stripes = 0;
 	rec->wrong_chunk_type = 0;
@@ -5931,13 +5934,13 @@ static int calc_extent_flag(struct btrfs_root *root,
 		goto full_backref;
 normal:
 	*flags = 0;
-	if (rec->flag_block_full_backref != -1 &&
+	if (rec->flag_block_full_backref != FLAG_UNSET &&
 	    rec->flag_block_full_backref != 0)
 		rec->bad_full_backref = 1;
 	return 0;
 full_backref:
 	*flags |= BTRFS_BLOCK_FLAG_FULL_BACKREF;
-	if (rec->flag_block_full_backref != -1 &&
+	if (rec->flag_block_full_backref != FLAG_UNSET &&
 	    rec->flag_block_full_backref != 1)
 		rec->bad_full_backref = 1;
 	return 0;
