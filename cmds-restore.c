@@ -1284,7 +1284,7 @@ static struct btrfs_root *open_fs(const char *dev, u64 root_location,
 			root_location = btrfs_super_root(fs_info->super_copy);
 		generation = btrfs_super_generation(fs_info->super_copy);
 		root->node = read_tree_block(root, root_location,
-					     root->leafsize, generation);
+					     root->nodesize, generation);
 		if (!extent_buffer_uptodate(root->node)) {
 			fprintf(stderr, "Error opening tree root\n");
 			close_ctree(root);
@@ -1535,7 +1535,7 @@ int cmd_restore(int argc, char **argv)
 
 	if (fs_location != 0) {
 		free_extent_buffer(root->node);
-		root->node = read_tree_block(root, fs_location, root->leafsize, 0);
+		root->node = read_tree_block(root, fs_location, root->nodesize, 0);
 		if (!extent_buffer_uptodate(root->node)) {
 			fprintf(stderr, "Failed to read fs location\n");
 			ret = 1;

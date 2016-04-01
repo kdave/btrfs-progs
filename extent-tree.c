@@ -153,7 +153,7 @@ static int cache_block_group(struct btrfs_root *root,
 						 GFP_NOFS);
 			}
 			if (key.type == BTRFS_METADATA_ITEM_KEY)
-				last = key.objectid + root->leafsize;
+				last = key.objectid + root->nodesize;
 			else
 				last = key.objectid + key.offset;
 		}
@@ -1458,7 +1458,7 @@ int btrfs_lookup_extent_info(struct btrfs_trans_handle *trans,
 	if (metadata &&
 	    !btrfs_fs_incompat(root->fs_info,
 			       BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA)) {
-		offset = root->leafsize;
+		offset = root->nodesize;
 		metadata = 0;
 	}
 
@@ -1493,14 +1493,14 @@ again:
 					      path->slots[0]);
 			if (key.objectid == bytenr &&
 			    key.type == BTRFS_EXTENT_ITEM_KEY &&
-			    key.offset == root->leafsize)
+			    key.offset == root->nodesize)
 				ret = 0;
 		}
 
 		if (ret) {
 			btrfs_release_path(path);
 			key.type = BTRFS_EXTENT_ITEM_KEY;
-			key.offset = root->leafsize;
+			key.offset = root->nodesize;
 			metadata = 0;
 			goto again;
 		}
@@ -1565,7 +1565,7 @@ int btrfs_set_block_flags(struct btrfs_trans_handle *trans,
 		key.offset = level;
 		key.type = BTRFS_METADATA_ITEM_KEY;
 	} else {
-		key.offset = root->leafsize;
+		key.offset = root->nodesize;
 		key.type = BTRFS_EXTENT_ITEM_KEY;
 	}
 
@@ -1582,13 +1582,13 @@ again:
 			btrfs_item_key_to_cpu(path->nodes[0], &key,
 					      path->slots[0]);
 			if (key.objectid == bytenr &&
-			    key.offset == root->leafsize &&
+			    key.offset == root->nodesize &&
 			    key.type == BTRFS_EXTENT_ITEM_KEY)
 				ret = 0;
 		}
 		if (ret) {
 			btrfs_release_path(path);
-			key.offset = root->leafsize;
+			key.offset = root->nodesize;
 			key.type = BTRFS_EXTENT_ITEM_KEY;
 			goto again;
 		}
@@ -2750,7 +2750,7 @@ static int alloc_reserved_tree_block(struct btrfs_trans_handle *trans,
 	btrfs_mark_buffer_dirty(leaf);
 	btrfs_free_path(path);
 
-	ret = update_block_group(trans, root, ins->objectid, root->leafsize,
+	ret = update_block_group(trans, root, ins->objectid, root->nodesize,
 				 1, 0);
 	return ret;
 }
@@ -3897,9 +3897,9 @@ int btrfs_fix_block_accounting(struct btrfs_trans_handle *trans,
 				  key.objectid, key.offset, 1, 0);
 			BUG_ON(ret);
 		} else if (key.type == BTRFS_METADATA_ITEM_KEY) {
-			bytes_used += root->leafsize;
+			bytes_used += root->nodesize;
 			ret = btrfs_update_block_group(trans, root,
-				  key.objectid, root->leafsize, 1, 0);
+				  key.objectid, root->nodesize, 1, 0);
 			BUG_ON(ret);
 		}
 		path.slots[0]++;

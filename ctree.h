@@ -345,7 +345,7 @@ struct btrfs_header {
 			        sizeof(struct btrfs_header)) / \
 			        sizeof(struct btrfs_key_ptr))
 #define __BTRFS_LEAF_DATA_SIZE(bs) ((bs) - sizeof(struct btrfs_header))
-#define BTRFS_LEAF_DATA_SIZE(r) (__BTRFS_LEAF_DATA_SIZE(r->leafsize))
+#define BTRFS_LEAF_DATA_SIZE(r) (__BTRFS_LEAF_DATA_SIZE(r->nodesize))
 #define BTRFS_MAX_INLINE_DATA_SIZE(r) (BTRFS_LEAF_DATA_SIZE(r) - \
 					sizeof(struct btrfs_item) - \
 					sizeof(struct btrfs_file_extent_item))
@@ -428,6 +428,7 @@ struct btrfs_super_block {
 	__le64 num_devices;
 	__le32 sectorsize;
 	__le32 nodesize;
+	/* Unused and must be equal to nodesize */
 	__le32 leafsize;
 	__le32 stripesize;
 	__le32 sys_chunk_array_size;
@@ -1060,10 +1061,10 @@ struct btrfs_root {
 	/* node allocations are done in nodesize units */
 	u32 nodesize;
 
-	/* leaf allocations are done in leafsize units */
+	/* Unused, equal to nodesize */
 	u32 leafsize;
 
-	/* leaf allocations are done in leafsize units */
+	/* leaf allocations are done in nodesize units */
 	u32 stripesize;
 
 	int ref_cows;

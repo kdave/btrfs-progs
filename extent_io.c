@@ -771,7 +771,7 @@ int write_data_to_disk(struct btrfs_fs_info *info, void *buf, u64 offset,
 			u64 stripe_len = this_len;
 
 			this_len = min(this_len, bytes_left);
-			this_len = min(this_len, (u64)info->tree_root->leafsize);
+			this_len = min(this_len, (u64)info->tree_root->nodesize);
 
 			eb = malloc(sizeof(struct extent_buffer) + this_len);
 			BUG_ON(!eb);

@@ -299,7 +299,7 @@ int cmd_inspect_dump_tree(int argc, char **argv)
 	if (block_only) {
 		leaf = read_tree_block(root,
 				      block_only,
-				      root->leafsize, 0);
+				      root->nodesize, 0);
 
 		if (extent_buffer_uptodate(leaf) &&
 		    btrfs_header_level(leaf) != 0) {

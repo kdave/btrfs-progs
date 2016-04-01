@@ -191,7 +191,7 @@ int get_device_info(int fd, u64 devid,
 		struct btrfs_ioctl_dev_info_args *di_args);
 u64 get_partition_size(const char *dev);
 
-int test_minimum_size(const char *file, u32 leafsize);
+int test_minimum_size(const char *file, u32 nodesize);
 int test_issubvolname(const char *name);
 int test_issubvolume(const char *path);
 int test_isdir(const char *path);
@@ -209,14 +209,14 @@ int get_subvol_info(const char *fullpath, struct root_info *get_ri);
  * To avoid the overkill calculation, (system group + global block rsv) * 2
  * for *EACH* device should be good enough.
  */
-static inline u64 btrfs_min_global_blk_rsv_size(u32 leafsize)
+static inline u64 btrfs_min_global_blk_rsv_size(u32 nodesize)
 {
-	return leafsize << 10;
+	return nodesize << 10;
 }
-static inline u64 btrfs_min_dev_size(u32 leafsize)
+static inline u64 btrfs_min_dev_size(u32 nodesize)
 {
 	return 2 * (BTRFS_MKFS_SYSTEM_GROUP_SIZE +
-		    btrfs_min_global_blk_rsv_size(leafsize));
+		    btrfs_min_global_blk_rsv_size(nodesize));
 }
 
 int find_next_key(struct btrfs_path *path, struct btrfs_key *key);

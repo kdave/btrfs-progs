@@ -944,7 +944,7 @@ static int scan_extents(struct btrfs_fs_info *info,
 				bytenr = key.objectid;
 				num_bytes = key.offset;
 				if (key.type == BTRFS_METADATA_ITEM_KEY) {
-					num_bytes = info->extent_root->leafsize;
+					num_bytes = info->extent_root->nodesize;
 					meta = 1;
 				}
 

@@ -1890,7 +1890,7 @@ static int walk_down_tree(struct btrfs_root *root, struct btrfs_path *path,
 				btrfs_add_corrupt_extent_record(root->fs_info,
 						&node_key,
 						path->nodes[*level]->start,
-						root->leafsize, *level);
+						root->nodesize, *level);
 				err = -EIO;
 				goto out;
 			}
@@ -5187,7 +5187,7 @@ static int process_extent_item(struct btrfs_root *root,
 
 	if (key.type == BTRFS_METADATA_ITEM_KEY) {
 		metadata = 1;
-		num_bytes = root->leafsize;
+		num_bytes = root->nodesize;
 	} else {
 		num_bytes = key.offset;
 	}
@@ -5407,7 +5407,7 @@ static int verify_space_cache(struct btrfs_root *root,
 			if (key.type == BTRFS_EXTENT_ITEM_KEY)
 				last = key.objectid + key.offset;
 			else
-				last = key.objectid + root->leafsize;
+				last = key.objectid + root->nodesize;
 			path->slots[0]++;
 			continue;
 		}
@@ -5419,7 +5419,7 @@ static int verify_space_cache(struct btrfs_root *root,
 		if (key.type == BTRFS_EXTENT_ITEM_KEY)
 			last = key.objectid + key.offset;
 		else
-			last = key.objectid + root->leafsize;
+			last = key.objectid + root->nodesize;
 		path->slots[0]++;
 	}
 
@@ -6379,7 +6379,7 @@ static int delete_extent_records(struct btrfs_trans_handle *trans,
 		if (found_key.type == BTRFS_EXTENT_ITEM_KEY ||
 		    found_key.type == BTRFS_METADATA_ITEM_KEY) {
 			u64 bytes = (found_key.type == BTRFS_EXTENT_ITEM_KEY) ?
-				found_key.offset : root->leafsize;
+				found_key.offset : root->nodesize;
 
 			ret = btrfs_update_block_group(trans, root, bytenr,
 						       bytes, 0, 0);
@@ -6414,7 +6414,7 @@ static int record_extent(struct btrfs_trans_handle *trans,
 
 	if (!back->is_data)
 		rec->max_size = max_t(u64, rec->max_size,
-				    info->extent_root->leafsize);
+				    info->extent_root->nodesize);
 
 	if (!allocated) {
 		u32 item_size = sizeof(*ei);
@@ -8421,7 +8421,7 @@ static int pin_down_tree_blocks(struct btrfs_fs_info *fs_info,
 	struct btrfs_root_item *ri;
 	struct btrfs_key key;
 	u64 bytenr;
-	u32 leafsize;
+	u32 nodesize;
 	int level = btrfs_header_level(eb);
 	int nritems;
 	int ret;
@@ -8438,7 +8438,7 @@ static int pin_down_tree_blocks(struct btrfs_fs_info *fs_info,
 
 	btrfs_pin_extent(fs_info, eb->start, eb->len);
 
-	leafsize = btrfs_super_leafsize(fs_info->super_copy);
+	nodesize = btrfs_super_nodesize(fs_info->super_copy);
 	nritems = btrfs_header_nritems(eb);
 	for (i = 0; i < nritems; i++) {
 		if (level == 0) {
@@ -8460,7 +8460,7 @@ static int pin_down_tree_blocks(struct btrfs_fs_info *fs_info,
 			 * just pass in extent_root.
 			 */
 			tmp = read_tree_block(fs_info->extent_root, bytenr,
-					      leafsize, 0);
+					      nodesize, 0);
 			if (!extent_buffer_uptodate(tmp)) {
 				fprintf(stderr, "Error reading root block\n");
 				return -EIO;
@@ -8474,12 +8474,12 @@ static int pin_down_tree_blocks(struct btrfs_fs_info *fs_info,
 
 			/* If we aren't the tree root don't read the block */
 			if (level == 1 && !tree_root) {
-				btrfs_pin_extent(fs_info, bytenr, leafsize);
+				btrfs_pin_extent(fs_info, bytenr, nodesize);
 				continue;
 			}
 
 			tmp = read_tree_block(fs_info->extent_root, bytenr,
-					      leafsize, 0);
+					      nodesize, 0);
 			if (!extent_buffer_uptodate(tmp)) {
 				fprintf(stderr, "Error reading tree block\n");
 				return -EIO;

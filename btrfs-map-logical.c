@@ -81,7 +81,7 @@ again:
 	}
 	logical = key.objectid;
 	if (key.type == BTRFS_METADATA_ITEM_KEY)
-		len = fs_info->tree_root->leafsize;
+		len = fs_info->tree_root->nodesize;
 	else
 		len = key.offset;
 

@@ -47,7 +47,7 @@ struct recover_control {
 
 	u16 csum_size;
 	u32 sectorsize;
-	u32 leafsize;
+	u32 nodesize;
 	u64 generation;
 	u64 chunk_root_generation;
 
@@ -477,7 +477,7 @@ static void print_scan_result(struct recover_control *rc)
 	printf("DEVICE SCAN RESULT:\n");
 	printf("Filesystem Information:\n");
 	printf("\tsectorsize: %d\n", rc->sectorsize);
-	printf("\tleafsize: %d\n", rc->leafsize);
+	printf("\tnodesize: %d\n", rc->nodesize);
 	printf("\ttree root generation: %llu\n", rc->generation);
 	printf("\tchunk root generation: %llu\n", rc->chunk_root_generation);
 	printf("\n");
@@ -761,10 +761,10 @@ static int scan_one_device(void *dev_scan_struct)
 	if (ret)
 		return 1;
 
-	buf = malloc(sizeof(*buf) + rc->leafsize);
+	buf = malloc(sizeof(*buf) + rc->nodesize);
 	if (!buf)
 		return -ENOMEM;
-	buf->len = rc->leafsize;
+	buf->len = rc->nodesize;
 
 	bytenr = 0;
 	while (1) {
@@ -773,8 +773,8 @@ static int scan_one_device(void *dev_scan_struct)
 		if (is_super_block_address(bytenr))
 			bytenr += rc->sectorsize;
 
-		if (pread64(fd, buf->data, rc->leafsize, bytenr) <
-		    rc->leafsize)
+		if (pread64(fd, buf->data, rc->nodesize, bytenr) <
+		    rc->nodesize)
 			break;
 
 		if (memcmp_extent_buffer(buf, rc->fs_devices->fsid,
@@ -818,7 +818,7 @@ static int scan_one_device(void *dev_scan_struct)
 			break;
 		}
 next_node:
-		bytenr += rc->leafsize;
+		bytenr += rc->nodesize;
 	}
 out:
 	close(fd);
@@ -1070,7 +1070,7 @@ again:
 		    key.type == BTRFS_METADATA_ITEM_KEY) {
 			old_val = btrfs_super_bytes_used(fs_info->super_copy);
 			if (key.type == BTRFS_METADATA_ITEM_KEY)
-				old_val += root->leafsize;
+				old_val += root->nodesize;
 			else
 				old_val += key.offset;
 			btrfs_set_super_bytes_used(fs_info->super_copy,
@@ -1538,7 +1538,7 @@ static int recover_prepare(struct recover_control *rc, char *path)
 	}
 
 	rc->sectorsize = btrfs_super_sectorsize(sb);
-	rc->leafsize = btrfs_super_leafsize(sb);
+	rc->nodesize = btrfs_super_nodesize(sb);
 	rc->generation = btrfs_super_generation(sb);
 	rc->chunk_root_generation = btrfs_super_chunk_root_generation(sb);
 	rc->csum_size = btrfs_super_csum_size(sb);

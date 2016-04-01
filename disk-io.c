@@ -56,7 +56,7 @@ static int check_tree_block(struct btrfs_fs_info *fs_info,
 {
 
 	struct btrfs_fs_devices *fs_devices;
-	u32 leafsize = btrfs_super_leafsize(fs_info->super_copy);
+	u32 nodesize = btrfs_super_nodesize(fs_info->super_copy);
 	int ret = BTRFS_BAD_FSID;
 
 	if (buf->start != btrfs_header_bytenr(buf))
@@ -64,7 +64,7 @@ static int check_tree_block(struct btrfs_fs_info *fs_info,
 	if (btrfs_header_level(buf) >= BTRFS_MAX_LEVEL)
 		return BTRFS_BAD_LEVEL;
 	if (btrfs_header_nritems(buf) > max_nritems(btrfs_header_level(buf),
-						    leafsize))
+						    nodesize))
 		return BTRFS_BAD_NRITEMS;
 
 	fs_devices = fs_info->fs_devices;
@@ -934,7 +934,7 @@ static int setup_root_or_create_block(struct btrfs_fs_info *fs_info,
 {
 	struct btrfs_super_block *sb = fs_info->super_copy;
 	struct btrfs_root *root = fs_info->tree_root;
-	u32 leafsize = btrfs_super_leafsize(sb);
+	u32 nodesize = btrfs_super_nodesize(sb);
 	int ret;
 
 	ret = find_and_setup_root(root, fs_info, objectid, info_root);
@@ -947,7 +947,7 @@ static int setup_root_or_create_block(struct btrfs_fs_info *fs_info,
 		 * million of places that assume a root has a valid ->node
 		 */
 		info_root->node =
-			btrfs_find_create_tree_block(fs_info, 0, leafsize);
+			btrfs_find_create_tree_block(fs_info, 0, nodesize);
 		if (!info_root->node)
 			return -ENOMEM;
 		clear_extent_buffer_uptodate(NULL, info_root->node);

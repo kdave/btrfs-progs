@@ -133,7 +133,7 @@ struct mdrestore_struct {
 	struct list_head list;
 	struct list_head overlapping_chunks;
 	size_t num_items;
-	u32 leafsize;
+	u32 nodesize;
 	u64 devid;
 	u64 alloced_chunks;
 	u64 last_physical_offset;
@@ -1073,7 +1073,7 @@ static int copy_tree_blocks(struct btrfs_root *root, struct extent_buffer *eb,
 	int i = 0;
 	int ret;
 
-	ret = add_extent(btrfs_header_bytenr(eb), root->leafsize, metadump, 0);
+	ret = add_extent(btrfs_header_bytenr(eb), root->nodesize, metadump, 0);
 	if (ret) {
 		fprintf(stderr, "Error adding metadata block\n");
 		return ret;
@@ -1091,7 +1091,7 @@ static int copy_tree_blocks(struct btrfs_root *root, struct extent_buffer *eb,
 				continue;
 			ri = btrfs_item_ptr(eb, i, struct btrfs_root_item);
 			bytenr = btrfs_disk_root_bytenr(eb, ri);
-			tmp = read_tree_block(root, bytenr, root->leafsize, 0);
+			tmp = read_tree_block(root, bytenr, root->nodesize, 0);
 			if (!extent_buffer_uptodate(tmp)) {
 				fprintf(stderr,
 					"Error reading log root block\n");
@@ -1103,7 +1103,7 @@ static int copy_tree_blocks(struct btrfs_root *root, struct extent_buffer *eb,
 				return ret;
 		} else {
 			bytenr = btrfs_node_blockptr(eb, i);
-			tmp = read_tree_block(root, bytenr, root->leafsize, 0);
+			tmp = read_tree_block(root, bytenr, root->nodesize, 0);
 			if (!extent_buffer_uptodate(tmp)) {
 				fprintf(stderr, "Error reading log block\n");
 				return -EIO;
@@ -1255,7 +1255,7 @@ static int copy_from_extent_tree(struct metadump_struct *metadump,
 
 		bytenr = key.objectid;
 		if (key.type == BTRFS_METADATA_ITEM_KEY)
-			num_bytes = extent_root->leafsize;
+			num_bytes = extent_root->nodesize;
 		else
 			num_bytes = key.offset;
 
@@ -1320,8 +1320,6 @@ static int create_metadump(const char *input, FILE *out, int num_threads,
 		fprintf(stderr, "Open ctree failed\n");
 		return -EIO;
 	}
-
-	BUG_ON(root->nodesize != root->leafsize);
 
 	ret = metadump_init(&metadump, root, out, num_threads,
 			    compress_level, sanitize);
@@ -1550,16 +1548,16 @@ static int fixup_chunk_tree_block(struct mdrestore_struct *mdres,
 	u64 bytenr = async->start;
 	int i;
 
-	if (size_left % mdres->leafsize)
+	if (size_left % mdres->nodesize)
 		return 0;
 
-	eb = alloc_dummy_eb(bytenr, mdres->leafsize);
+	eb = alloc_dummy_eb(bytenr, mdres->nodesize);
 	if (!eb)
 		return -ENOMEM;
 
 	while (size_left) {
 		eb->start = bytenr;
-		memcpy(eb->data, buffer, mdres->leafsize);
+		memcpy(eb->data, buffer, mdres->nodesize);
 
 		if (btrfs_header_bytenr(eb) != bytenr)
 			break;
@@ -1614,9 +1612,9 @@ static int fixup_chunk_tree_block(struct mdrestore_struct *mdres,
 		memcpy(buffer, eb->data, eb->len);
 		csum_block(buffer, eb->len);
 next:
-		size_left -= mdres->leafsize;
-		buffer += mdres->leafsize;
-		bytenr += mdres->leafsize;
+		size_left -= mdres->nodesize;
+		buffer += mdres->nodesize;
+		bytenr += mdres->nodesize;
 	}
 
 	free(eb);
@@ -1687,7 +1685,7 @@ static void *restore_worker(void *data)
 		int err = 0;
 
 		pthread_mutex_lock(&mdres->mutex);
-		while (!mdres->leafsize || list_empty(&mdres->list)) {
+		while (!mdres->nodesize || list_empty(&mdres->list)) {
 			if (mdres->done) {
 				pthread_mutex_unlock(&mdres->mutex);
 				goto out;
@@ -1859,7 +1857,7 @@ static int fill_mdres_info(struct mdrestore_struct *mdres,
 	int ret;
 
 	/* We've already been initialized */
-	if (mdres->leafsize)
+	if (mdres->nodesize)
 		return 0;
 
 	if (mdres->compress_method == COMPRESS_ZLIB) {
@@ -1881,7 +1879,7 @@ static int fill_mdres_info(struct mdrestore_struct *mdres,
 	}
 
 	super = (struct btrfs_super_block *)outbuf;
-	mdres->leafsize = btrfs_super_leafsize(super);
+	mdres->nodesize = btrfs_super_nodesize(super);
 	memcpy(mdres->fsid, super->fsid, BTRFS_FSID_SIZE);
 	memcpy(mdres->uuid, super->dev_item.uuid,
 		       BTRFS_UUID_SIZE);
@@ -1987,18 +1985,18 @@ static int read_chunk_block(struct mdrestore_struct *mdres, u8 *buffer,
 	int ret = 0;
 	int i;
 
-	eb = alloc_dummy_eb(bytenr, mdres->leafsize);
+	eb = alloc_dummy_eb(bytenr, mdres->nodesize);
 	if (!eb) {
 		ret = -ENOMEM;
 		goto out;
 	}
 
 	while (item_bytenr != bytenr) {
-		buffer += mdres->leafsize;
-		item_bytenr += mdres->leafsize;
+		buffer += mdres->nodesize;
+		item_bytenr += mdres->nodesize;
 	}
 
-	memcpy(eb->data, buffer, mdres->leafsize);
+	memcpy(eb->data, buffer, mdres->nodesize);
 	if (btrfs_header_bytenr(eb) != bytenr) {
 		fprintf(stderr, "Eb bytenr doesn't match found bytenr\n");
 		ret = -EIO;
@@ -2301,7 +2299,7 @@ static int build_chunk_tree(struct mdrestore_struct *mdres,
 	pthread_mutex_lock(&mdres->mutex);
 	super = (struct btrfs_super_block *)buffer;
 	chunk_root_bytenr = btrfs_super_chunk_root(super);
-	mdres->leafsize = btrfs_super_leafsize(super);
+	mdres->nodesize = btrfs_super_nodesize(super);
 	memcpy(mdres->fsid, super->fsid, BTRFS_FSID_SIZE);
 	memcpy(mdres->uuid, super->dev_item.uuid,
 		       BTRFS_UUID_SIZE);
