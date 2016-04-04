@@ -4554,7 +4554,7 @@ static int add_extent_rec_nolookup(struct cache_tree *extent_cache,
 
 	if (tmpl->metadata)
 		rec->crossing_stripes = check_crossing_stripes(rec->start,
-				rec->max_size);
+				global_info->tree_root->nodesize);
 	check_extent_type(rec);
 	return ret;
 }
@@ -4655,7 +4655,7 @@ static int add_extent_rec(struct cache_tree *extent_cache,
 		 */
 		if (tmpl->metadata)
 			rec->crossing_stripes = check_crossing_stripes(
-					rec->start, rec->max_size);
+				rec->start, global_info->tree_root->nodesize);
 		check_extent_type(rec);
 		maybe_free_extent_rec(extent_cache, rec);
 		return ret;
