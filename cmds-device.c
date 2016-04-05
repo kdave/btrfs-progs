@@ -447,6 +447,13 @@ static int cmd_device_stats(int argc, char **argv)
 
 			canonical_path = canonicalize_path((char *)path);
 
+			/* No path when device is missing. */
+			if (!canonical_path) {
+				canonical_path = malloc(32);
+				snprintf(canonical_path, 32,
+					 "devid:%llu", args.devid);
+			}
+
 			if (args.nr_items >= BTRFS_DEV_STAT_WRITE_ERRS + 1)
 				printf("[%s].write_io_errs   %llu\n",
 				       canonical_path,
