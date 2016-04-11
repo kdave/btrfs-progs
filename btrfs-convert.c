@@ -2781,7 +2781,7 @@ static int do_rollback(const char *devname)
 		goto fail;
 	} else if (ret < 0) {
 		fprintf(stderr,
-			"ERROR: unable to open ext2_subvol, id=%llu: %s\n",
+			"ERROR: unable to open ext2_saved, id=%llu: %s\n",
 			(unsigned long long)key.objectid, strerror(-ret));
 		goto fail;
 	}
