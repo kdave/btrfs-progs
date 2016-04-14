@@ -105,7 +105,7 @@ AS_IF([test "x$enable_convert" = xyes], [DISABLE_BTRFSCONVERT=0], [DISABLE_BTRFS
 AC_SUBST([DISABLE_BTRFSCONVERT])
 
 if test "x$enable_convert" = xyes; then
-	PKG_CHECK_MODULES(EXT2FS, [ext2fs])
+	PKG_CHECK_MODULES(EXT2FS, [ext2fs >= 1.41])
 	PKG_CHECK_MODULES(COM_ERR, [com_err])
 fi
 
