@@ -58,7 +58,14 @@ static int is_seen_fsid(u8 *fsid)
 	int slot = hash % SEEN_FSID_HASH_SIZE;
 	struct seen_fsid *seen = seen_fsid_hash[slot];
 
-	return seen ? 1 : 0;
+	while (seen) {
+		if (memcmp(seen->fsid, fsid, BTRFS_FSID_SIZE) == 0)
+			return 1;
+
+		seen = seen->next;
+	}
+
+	return 0;
 }
 
 static int add_seen_fsid(u8 *fsid)
