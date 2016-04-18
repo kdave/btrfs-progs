@@ -1016,7 +1016,7 @@ static void print_fields_signed(long long bytes,
 	       prefix, type, bytes, type, bytes_compressed);
 }
 
-static void print_qgroup_difference(struct qgroup_count *count, int verbose)
+static int report_qgroup_difference(struct qgroup_count *count, int verbose)
 {
 	int is_different;
 	struct qgroup_info *info = &count->info;
@@ -1046,19 +1046,22 @@ static void print_qgroup_difference(struct qgroup_count *count, int verbose)
 			print_fields_signed(excl_diff, excl_diff,
 					    "diff:", "exclusive");
 	}
+	return (is_different && count->subvol_exists);
 }
 
-void print_qgroup_report(int all)
+int report_qgroups(int all)
 {
 	struct rb_node *node;
 	struct qgroup_count *c;
+	int ret = 0;
 
 	node = rb_first(&counts.root);
 	while (node) {
 		c = rb_entry(node, struct qgroup_count, rb_node);
-		print_qgroup_difference(c, all);
+		ret |= report_qgroup_difference(c, all);
 		node = rb_next(node);
 	}
+	return ret;
 }
 
 int qgroup_verify_all(struct btrfs_fs_info *info)

@@ -9671,7 +9671,7 @@ int cmd_check(int argc, char **argv)
 		       uuidbuf);
 		ret = qgroup_verify_all(info);
 		if (ret == 0)
-			print_qgroup_report(1);
+			ret = report_qgroups(1);
 		goto close_out;
 	}
 	if (subvolid) {
@@ -9832,7 +9832,11 @@ int cmd_check(int argc, char **argv)
 		ret = 1;
 	}
 out:
-	print_qgroup_report(0);
+	/* Don't override original ret */
+	if (ret)
+		report_qgroups(0);
+	else
+		ret = report_qgroups(0);
 	if (found_old_backref) { /*
 		 * there was a disk format change when mixed
 		 * backref was in testing tree. The old format

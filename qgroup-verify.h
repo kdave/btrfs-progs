@@ -23,7 +23,7 @@
 #include "ctree.h"
 
 int qgroup_verify_all(struct btrfs_fs_info *info);
-void print_qgroup_report(int all);
+int report_qgroups(int all);
 
 int print_extent_state(struct btrfs_fs_info *info, u64 subvol);
 
