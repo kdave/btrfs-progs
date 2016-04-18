@@ -761,7 +761,7 @@ static int load_quota_info(struct btrfs_fs_info *info)
 			tmproot = btrfs_read_fs_root_no_cache(info, &root_key);
 			if (tmproot && !IS_ERR(tmproot)) {
 				count->subvol_exists = 1;
-				free(tmproot);
+				btrfs_free_fs_root(tmproot);
 			}
 		}
 
