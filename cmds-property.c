@@ -352,11 +352,6 @@ static void parse_args(int argc, char **argv,
 	if (value && optind < argc)
 		*value = argv[optind++];
 
-	if (optind != argc) {
-		error("unexpected agruments found");
-		usage(usage_str);
-	}
-
 	if (!*types && object && *object) {
 		ret = autodetect_object_types(*object, types);
 		if (ret < 0) {
