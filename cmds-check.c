@@ -8897,6 +8897,49 @@ out:
 	return err;
 }
 
+/*
+ * Check referencer for shared block backref
+ * If level == -1, this function will resolve the level.
+ */
+static int check_shared_block_backref(struct btrfs_fs_info *fs_info,
+				     u64 parent, u64 bytenr, int level)
+{
+	struct extent_buffer *eb;
+	u32 nodesize = btrfs_super_nodesize(fs_info->super_copy);
+	u32 nr;
+	int found_parent = 0;
+	int i;
+
+	eb = read_tree_block_fs_info(fs_info, parent, nodesize, 0);
+	if (!extent_buffer_uptodate(eb))
+		goto out;
+
+	if (level == -1)
+		level = query_tree_block_level(fs_info, bytenr);
+	if (level < 0)
+		goto out;
+
+	if (level + 1 != btrfs_header_level(eb))
+		goto out;
+
+	nr = btrfs_header_nritems(eb);
+	for (i = 0; i < nr; i++) {
+		if (bytenr == btrfs_node_blockptr(eb, i)) {
+			found_parent = 1;
+			break;
+		}
+	}
+out:
+	free_extent_buffer(eb);
+	if (!found_parent) {
+		error(
+	"shared extent[%llu %u] lost its parent (parent: %llu, level: %u)",
+			bytenr, nodesize, parent, level);
+		return REFERENCER_MISSING;
+	}
+	return 0;
+}
+
 static int btrfs_fsck_reinit_root(struct btrfs_trans_handle *trans,
 			   struct btrfs_root *root, int overwrite)
 {
