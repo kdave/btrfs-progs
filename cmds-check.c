@@ -322,6 +322,8 @@ struct root_item_info {
 #define BACKREF_MISSING		(1 << 0) /* Backref missing in extent tree */
 #define BACKREF_MISMATCH	(1 << 1) /* Backref exists but does not match */
 #define BYTES_UNALIGNED		(1 << 2) /* Some bytes are not aligned */
+#define REFERENCER_MISSING	(1 << 3) /* Referencer not found */
+#define REFERENCER_MISMATCH	(1 << 4) /* Referenceer found but does not match */
 
 static void *print_status_check(void *p)
 {
@@ -8797,6 +8799,102 @@ static int query_tree_block_level(struct btrfs_fs_info *fs_info, u64 bytenr)
 release_out:
 	btrfs_release_path(&path);
 	return ret;
+}
+
+/*
+ * Check if a tree block backref is valid (points to a valid tree block)
+ * if level == -1, level will be resolved
+ * Return >0 for any error found and print error message
+ */
+static int check_tree_block_backref(struct btrfs_fs_info *fs_info, u64 root_id,
+				    u64 bytenr, int level)
+{
+	struct btrfs_root *root;
+	struct btrfs_key key;
+	struct btrfs_path path;
+	struct extent_buffer *eb;
+	struct extent_buffer *node;
+	u32 nodesize = btrfs_super_nodesize(fs_info->super_copy);
+	int err = 0;
+	int ret;
+
+	/* Query level for level == -1 special case */
+	if (level == -1)
+		level = query_tree_block_level(fs_info, bytenr);
+	if (level < 0) {
+		err |= REFERENCER_MISSING;
+		goto out;
+	}
+
+	key.objectid = root_id;
+	key.type = BTRFS_ROOT_ITEM_KEY;
+	key.offset = (u64)-1;
+
+	root = btrfs_read_fs_root(fs_info, &key);
+	if (IS_ERR(root)) {
+		err |= REFERENCER_MISSING;
+		goto out;
+	}
+
+	/* Read out the tree block to get item/node key */
+	eb = read_tree_block(root, bytenr, root->nodesize, 0);
+	if (!extent_buffer_uptodate(eb)) {
+		err |= REFERENCER_MISSING;
+		free_extent_buffer(eb);
+		goto out;
+	}
+
+	/* Empty tree, no need to check key */
+	if (!btrfs_header_nritems(eb) && !level) {
+		free_extent_buffer(eb);
+		goto out;
+	}
+
+	if (level)
+		btrfs_node_key_to_cpu(eb, &key, 0);
+	else
+		btrfs_item_key_to_cpu(eb, &key, 0);
+
+	free_extent_buffer(eb);
+
+	btrfs_init_path(&path);
+	/* Search with the first key, to ensure we can reach it */
+	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
+	if (ret) {
+		err |= REFERENCER_MISSING;
+		goto release_out;
+	}
+
+	node = path.nodes[level];
+	if (btrfs_header_bytenr(node) != bytenr) {
+		error(
+	"extent [%llu %d] referencer bytenr mismatch, wanted: %llu, have: %llu",
+			bytenr, nodesize, bytenr,
+			btrfs_header_bytenr(node));
+		err |= REFERENCER_MISMATCH;
+	}
+	if (btrfs_header_level(node) != level) {
+		error(
+	"extent [%llu %d] referencer level mismatch, wanted: %d, have: %d",
+			bytenr, nodesize, level,
+			btrfs_header_level(node));
+		err |= REFERENCER_MISMATCH;
+	}
+
+release_out:
+	btrfs_release_path(&path);
+out:
+	if (err & REFERENCER_MISSING) {
+		if (level < 0)
+			error("extent [%llu %d] lost referencer (owner: %llu)",
+				bytenr, nodesize, root_id);
+		else
+			error(
+		"extent [%llu %d] lost referencer (owner: %llu, level: %u)",
+				bytenr, nodesize, root_id, level);
+	}
+
+	return err;
 }
 
 static int btrfs_fsck_reinit_root(struct btrfs_trans_handle *trans,
