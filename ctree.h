@@ -2364,6 +2364,8 @@ int exclude_super_stripes(struct btrfs_root *root,
 			  struct btrfs_block_group_cache *cache);
 u64 add_new_free_space(struct btrfs_block_group_cache *block_group,
 		       struct btrfs_fs_info *info, u64 start, u64 end);
+u64 hash_extent_data_ref(u64 root_objectid, u64 owner, u64 offset);
+
 /* ctree.c */
 int btrfs_comp_cpu_keys(struct btrfs_key *k1, struct btrfs_key *k2);
 int btrfs_del_ptr(struct btrfs_trans_handle *trans, struct btrfs_root *root,
