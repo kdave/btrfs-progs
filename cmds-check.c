@@ -71,6 +71,7 @@ static int repair = 0;
 static int no_holes = 0;
 static int init_extent_tree = 0;
 static int check_data_csum = 0;
+static int low_memory = 0;
 static struct btrfs_fs_info *global_info;
 static struct task_ctx ctx = { 0 };
 static struct cache_tree *roots_info_cache = NULL;
@@ -9815,6 +9816,63 @@ static int traverse_tree_block(struct btrfs_root *root,
 	return err;
 }
 
+/*
+ * Low memory usage version check_chunks_and_extents.
+ */
+static int check_chunks_and_extents_v2(struct btrfs_root *root)
+{
+	struct btrfs_path path;
+	struct btrfs_key key;
+	struct btrfs_root *root1;
+	struct btrfs_root *cur_root;
+	int err = 0;
+	int ret;
+
+	root1 = root->fs_info->chunk_root;
+	ret = traverse_tree_block(root1, root1->node);
+	err |= ret;
+
+	root1 = root->fs_info->tree_root;
+	ret = traverse_tree_block(root1, root1->node);
+	err |= ret;
+
+	btrfs_init_path(&path);
+	key.objectid = BTRFS_EXTENT_TREE_OBJECTID;
+	key.offset = 0;
+	key.type = BTRFS_ROOT_ITEM_KEY;
+
+	ret = btrfs_search_slot(NULL, root1, &key, &path, 0, 0);
+	if (ret) {
+		error("cannot find extent treet in tree_root");
+		goto out;
+	}
+
+	while (1) {
+		btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
+		if (key.type != BTRFS_ROOT_ITEM_KEY)
+			goto next;
+		key.offset = (u64)-1;
+
+		cur_root = btrfs_read_fs_root(root->fs_info, &key);
+		if (IS_ERR(cur_root) || !cur_root) {
+			error("failed to read tree: %lld", key.objectid);
+			goto next;
+		}
+
+		ret = traverse_tree_block(cur_root, cur_root->node);
+		err |= ret;
+
+next:
+		ret = btrfs_next_item(root1, &path);
+		if (ret)
+			goto out;
+	}
+
+out:
+	btrfs_release_path(&path);
+	return err;
+}
+
 static int btrfs_fsck_reinit_root(struct btrfs_trans_handle *trans,
 			   struct btrfs_root *root, int overwrite)
 {
@@ -10931,6 +10989,7 @@ const char * const cmd_check_usage[] = {
 	"--readonly                  run in read-only mode (default)",
 	"--init-csum-tree            create a new CRC tree",
 	"--init-extent-tree          create a new extent tree",
+	"--low-memory                check in low memory usage mode(experimental)",
 	"--check-data-csum           verify checksums of data blocks",
 	"-Q|--qgroup-report           print a report on qgroup consistency",
 	"-E|--subvol-extents <subvolid>",
@@ -10962,7 +11021,8 @@ int cmd_check(int argc, char **argv)
 		int c;
 		enum { GETOPT_VAL_REPAIR = 257, GETOPT_VAL_INIT_CSUM,
 			GETOPT_VAL_INIT_EXTENT, GETOPT_VAL_CHECK_CSUM,
-			GETOPT_VAL_READONLY, GETOPT_VAL_CHUNK_TREE };
+			GETOPT_VAL_READONLY, GETOPT_VAL_CHUNK_TREE,
+			GETOPT_VAL_LOW_MEMORY };
 		static const struct option long_options[] = {
 			{ "super", required_argument, NULL, 's' },
 			{ "repair", no_argument, NULL, GETOPT_VAL_REPAIR },
@@ -10980,6 +11040,8 @@ int cmd_check(int argc, char **argv)
 			{ "chunk-root", required_argument, NULL,
 				GETOPT_VAL_CHUNK_TREE },
 			{ "progress", no_argument, NULL, 'p' },
+			{ "low-memory", no_argument, NULL,
+				GETOPT_VAL_LOW_MEMORY },
 			{ NULL, 0, NULL, 0}
 		};
 
@@ -11044,6 +11106,9 @@ int cmd_check(int argc, char **argv)
 			case GETOPT_VAL_CHECK_CSUM:
 				check_data_csum = 1;
 				break;
+			case GETOPT_VAL_LOW_MEMORY:
+				low_memory = 1;
+				break;
 		}
 	}
 
@@ -11058,6 +11123,14 @@ int cmd_check(int argc, char **argv)
 	/* This check is the only reason for --readonly to exist */
 	if (readonly && repair) {
 		fprintf(stderr, "Repair options are not compatible with --readonly\n");
+		exit(1);
+	}
+
+	/*
+	 * Not supported yet
+	 */
+	if (repair && low_memory) {
+		error("Low memory mode doesn't support repair yet");
 		exit(1);
 	}
 
@@ -11184,7 +11257,10 @@ int cmd_check(int argc, char **argv)
 
 	if (!ctx.progress_enabled)
 		fprintf(stderr, "checking extents\n");
-	ret = check_chunks_and_extents(root);
+	if (low_memory)
+		ret = check_chunks_and_extents_v2(root);
+	else
+		ret = check_chunks_and_extents(root);
 	if (ret)
 		fprintf(stderr, "Errors found in extent allocation tree or chunk allocation\n");
 
