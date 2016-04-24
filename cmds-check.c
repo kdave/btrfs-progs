@@ -9568,6 +9568,87 @@ out:
 	return err;
 }
 
+/*
+ * Main entry function to check known items and update related accounting info
+ */
+static int check_leaf_items(struct btrfs_root *root, struct extent_buffer *eb)
+{
+	struct btrfs_fs_info *fs_info = root->fs_info;
+	struct btrfs_key key;
+	int slot = 0;
+	int type;
+	struct btrfs_extent_data_ref *dref;
+	int ret;
+	int err = 0;
+
+next:
+	btrfs_item_key_to_cpu(eb, &key, slot);
+	type = btrfs_key_type(&key);
+
+	switch (type) {
+	case BTRFS_EXTENT_DATA_KEY:
+		ret = check_extent_data_item(root, eb, slot);
+		err |= ret;
+		break;
+	case BTRFS_BLOCK_GROUP_ITEM_KEY:
+		ret = check_block_group_item(fs_info, eb, slot);
+		err |= ret;
+		break;
+	case BTRFS_DEV_ITEM_KEY:
+		ret = check_dev_item(fs_info, eb, slot);
+		err |= ret;
+		break;
+	case BTRFS_CHUNK_ITEM_KEY:
+		ret = check_chunk_item(fs_info, eb, slot);
+		err |= ret;
+		break;
+	case BTRFS_DEV_EXTENT_KEY:
+		ret = check_dev_extent_item(fs_info, eb, slot);
+		err |= ret;
+		break;
+	case BTRFS_EXTENT_ITEM_KEY:
+	case BTRFS_METADATA_ITEM_KEY:
+		ret = check_extent_item(fs_info, eb, slot);
+		err |= ret;
+		break;
+	case BTRFS_EXTENT_CSUM_KEY:
+		total_csum_bytes += btrfs_item_size_nr(eb, slot);
+		break;
+	case BTRFS_TREE_BLOCK_REF_KEY:
+		ret = check_tree_block_backref(fs_info, key.offset,
+					       key.objectid, -1);
+		err |= ret;
+		break;
+	case BTRFS_EXTENT_DATA_REF_KEY:
+		dref = btrfs_item_ptr(eb, slot, struct btrfs_extent_data_ref);
+		ret = check_extent_data_backref(fs_info,
+				btrfs_extent_data_ref_root(eb, dref),
+				btrfs_extent_data_ref_objectid(eb, dref),
+				btrfs_extent_data_ref_offset(eb, dref),
+				key.objectid, 0,
+				btrfs_extent_data_ref_count(eb, dref));
+		err |= ret;
+		break;
+	case BTRFS_SHARED_BLOCK_REF_KEY:
+		ret = check_shared_block_backref(fs_info, key.offset,
+						 key.objectid, -1);
+		err |= ret;
+		break;
+	case BTRFS_SHARED_DATA_REF_KEY:
+		ret = check_shared_data_backref(fs_info, key.offset,
+						key.objectid);
+		err |= ret;
+		break;
+	default:
+		break;
+	}
+
+	if (++slot < btrfs_header_nritems(eb))
+		goto next;
+
+	return err;
+}
+
 static int btrfs_fsck_reinit_root(struct btrfs_trans_handle *trans,
 			   struct btrfs_root *root, int overwrite)
 {
