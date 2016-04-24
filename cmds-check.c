@@ -327,6 +327,7 @@ struct root_item_info {
 #define CROSSING_STRIPE_BOUNDARY (1 << 4) /* For kernel scrub workaround */
 #define ITEM_SIZE_MISMATCH	(1 << 5) /* Bad item size */
 #define UNKNOWN_TYPE		(1 << 6) /* Unknown type */
+#define ACCOUNTING_MISMATCH	(1 << 7) /* Used space accounting error */
 
 static void *print_status_check(void *p)
 {
@@ -9259,6 +9260,70 @@ out:
 		"device extent[%llu, %llu, %llu] did not find the related chunk",
 			devext_key.objectid, devext_key.offset, length);
 		return REFERENCER_MISSING;
+	}
+	return 0;
+}
+
+/*
+ * Check if the used space is correct with the dev item
+ */
+static int check_dev_item(struct btrfs_fs_info *fs_info,
+			  struct extent_buffer *eb, int slot)
+{
+	struct btrfs_root *dev_root = fs_info->dev_root;
+	struct btrfs_dev_item *dev_item;
+	struct btrfs_path path;
+	struct btrfs_key key;
+	struct btrfs_dev_extent *ptr;
+	u64 dev_id;
+	u64 used;
+	u64 total = 0;
+	int ret;
+
+	dev_item = btrfs_item_ptr(eb, slot, struct btrfs_dev_item);
+	dev_id = btrfs_device_id(eb, dev_item);
+	used = btrfs_device_bytes_used(eb, dev_item);
+
+	key.objectid = dev_id;
+	key.type = BTRFS_DEV_EXTENT_KEY;
+	key.offset = 0;
+
+	btrfs_init_path(&path);
+	ret = btrfs_search_slot(NULL, dev_root, &key, &path, 0, 0);
+	if (ret < 0) {
+		btrfs_item_key_to_cpu(eb, &key, slot);
+		error("cannot find any related dev extent for dev[%llu, %u, %llu]",
+			key.objectid, key.type, key.offset);
+		btrfs_release_path(&path);
+		return REFERENCER_MISSING;
+	}
+
+	/* Iterate dev_extents to calculate the used space of a device */
+	while (1) {
+		btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
+
+		if (key.objectid > dev_id)
+			break;
+		if (key.type != BTRFS_DEV_EXTENT_KEY || key.objectid != dev_id)
+			goto next;
+
+		ptr = btrfs_item_ptr(path.nodes[0], path.slots[0],
+				     struct btrfs_dev_extent);
+		total += btrfs_dev_extent_length(path.nodes[0], ptr);
+next:
+		ret = btrfs_next_item(dev_root, &path);
+		if (ret)
+			break;
+	}
+	btrfs_release_path(&path);
+
+	if (used != total) {
+		btrfs_item_key_to_cpu(eb, &key, slot);
+		error(
+"Dev extent's total-byte %llu is not equal to bytes-used %llu in dev[%llu, %u, %llu]",
+			total, used, BTRFS_ROOT_TREE_OBJECTID,
+			BTRFS_DEV_EXTENT_KEY, dev_id);
+		return ACCOUNTING_MISMATCH;
 	}
 	return 0;
 }
