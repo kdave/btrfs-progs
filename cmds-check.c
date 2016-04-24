@@ -9040,6 +9040,50 @@ out:
 	return 0;
 }
 
+/*
+ * Check if the referencer of a shared data backref exists
+ */
+static int check_shared_data_backref(struct btrfs_fs_info *fs_info,
+				     u64 parent, u64 bytenr)
+{
+	struct extent_buffer *eb;
+	struct btrfs_key key;
+	struct btrfs_file_extent_item *fi;
+	u32 nodesize = btrfs_super_nodesize(fs_info->super_copy);
+	u32 nr;
+	int found_parent = 0;
+	int i;
+
+	eb = read_tree_block_fs_info(fs_info, parent, nodesize, 0);
+	if (!extent_buffer_uptodate(eb))
+		goto out;
+
+	nr = btrfs_header_nritems(eb);
+	for (i = 0; i < nr; i++) {
+		btrfs_item_key_to_cpu(eb, &key, i);
+		if (key.type != BTRFS_EXTENT_DATA_KEY)
+			continue;
+
+		fi = btrfs_item_ptr(eb, i, struct btrfs_file_extent_item);
+		if (btrfs_file_extent_type(eb, fi) == BTRFS_FILE_EXTENT_INLINE)
+			continue;
+
+		if (btrfs_file_extent_disk_bytenr(eb, fi) == bytenr) {
+			found_parent = 1;
+			break;
+		}
+	}
+
+out:
+	free_extent_buffer(eb);
+	if (!found_parent) {
+		error("shared extent %llu referencer lost (parent: %llu)",
+			bytenr, parent);
+		return REFERENCER_MISSING;
+	}
+	return 0;
+}
+
 static int btrfs_fsck_reinit_root(struct btrfs_trans_handle *trans,
 			   struct btrfs_root *root, int overwrite)
 {
