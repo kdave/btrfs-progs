@@ -93,6 +93,12 @@ build the extent tree from scratch
 +
 NOTE: Do not use unless you know what you're doing.
 
+--low-memory::
+check fs in low memory usage mode(experimental)
+May takes longer time than normal check.
++
+NOTE: Doesn't work with '--repair' option yet.
+
 EXIT STATUS
 -----------
 *btrfs check* returns a zero exit status if it succeeds. Non zero is
