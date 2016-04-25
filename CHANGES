@@ -1,0 +1,445 @@
+btrfs-progs-4.5.1 (2016-03-31)
+  * mkfs: allow DUP on multi-device filesystems
+  * bugfixes: build fixes, assorted other fixes
+
+btrfs-progs-4.5 (2016-03-20)
+  New/moved commands:
+    * btrfs-show-super -> btrfs inspect-internal dump-super
+    * btrfs-debug-tree -> btrfs inspect-internal dump-tree
+
+  New commands:
+    * btrfs fi du - calculate disk usage, including shared extents
+
+  Enhancements:
+    * device delete - delete by id (needs kernel support, not merged to
+      4.6)
+    * check - new option to specify chunk root
+    * debug-tree/dump-tree - option -t understands human readable name of
+      the tree (along numerical ids)
+    * btrfs-debugfs - can dump block group information
+
+  Bugfixes:
+    * all commands should accept the option separator "--"
+    * several fixes in device scan
+    * restore works on filesystems with sectorsize > 4k
+    * debug-tree/dump-tree - print compression type as string
+    * subvol sync: fix crash, memory corruption
+    * argument parsing fixes: subvol get-default, qgroup create/destroy/
+      assign, inspect subvolid-resolve
+    * check for block device or regular file in several commands
+
+  Other:
+    * documentation updates
+    * manual pages for the moved tools now point to btrfs-filesystem
+    * testsuite updates
+
+btrfs-progs-4.4.1 (2016-02-26)
+  * find-root: don't skip the first chunk
+  * free-space-tree compat bits fix
+  * build: target symlinks
+  * documentation updates
+  * test updates
+
+btrfs-progs-4.4 (2016-01-18)
+  User visible changes:
+    * mkfs.btrfs --data dup
+
+  People asked about duplicating data on a single device for a long time. There
+  are no technical obstacles preventing that, so it got enabled with a warning
+  about potential dangers when the device will not do the duplicated copies. See
+  mkfs.btrfs section DUP PROFILES ON A SINGLE DEVICE.
+
+    * support balance filters added/enhanced in linux 4.4
+      * usage=min..max -- enhanced to take range
+      * stripes=min..max -- new, filter by stripes for raid0/10/5/6
+      * limit=min..max -- enhanced to take range
+  Note: due to backward compatibility, the range maximum for 'usage' is not
+  inclusive as for the others, to keep the same behaviour as usage=N .
+
+    * manual pages enhanced (btrfs, mkfs, mount, filesystem, balance)
+    * error messages updates, rewordings -- some fstests may break due to that
+    * added support for free-space-tree implementation of space cache -- this
+      requires kernel 4.5 and is not recommended for non-developers yet
+    * btrfs filesystem usage works with mixed blockgroups
+
+  Other:
+    * installation to /usr/local -- this has unintentionally changed during
+      conversion to autotools in 3.19
+    * check: fix a false alert where extent record has wrong metadata flag
+    * improved stability on fuzzed/crafted images when reading sys array in
+      superblock
+    * build: the 'ar' tool is properly deteced during cross-compilation
+    * debug-tree: option -t understands ids for tree root and chnuk tree
+    * preparatory work for btrfs-convert rewrite
+    * sparse, gcc warning fixes
+    * more memory allocation failure handling
+    * cleanups
+    * more tests
+
+  Bugfixes:
+    * chunk recovery: fix floating point exception
+    * chunk recovery: endianity bugfix during rebuild
+    * mkfs with 64K pages and nodesize reported superblock checksum mismatch
+    * check: properly reset nlink of multi-linked file
+
+btrfs-progs-4.3.1 (2015-11-16)
+  * fixes
+    * device delete: recognize 'missing' again
+    * mkfs: long names are not trimmed when doing ssd check
+    * support partitioned loop devices
+  * other
+    * replace several mallocs with on-stack variables
+    * more memory allocation failure handling
+    * add tests for bugs fixed
+    * cmd-device: switch to new message printing helpers
+    * minor code cleanups
+
+btrfs-progs-4.3 (2015-11-06)
+  * mkfs
+    * mixed mode is not forced for filesystems smaller than 1GiB
+    * mixed mode broken with mismatching sectorsize and nodesize, fixed
+    * print version info earlier
+    * print devices sorted by id
+    * do not truncate target image with --rootsize
+  * fi usage:
+    * don't print global block reserve
+    * print device id
+    * minor output tuning
+    * other cleanups
+  * calc-size:
+    * div-by-zero fix on an empty filesystem
+    * fix crash
+  * bugfixes:
+    * more superblock sanity checks
+    * consistently round size of all devices down to sectorsize
+    * misc leak fixes
+    * convert: don't try to rollback with a half-deleted ext2_saved
+      subvolume
+  * other:
+    * check: add progress indicator
+    * scrub: enahced error message
+    * show-super: read superblock from a given offset
+    * add README
+    * docs: update manual page for mkfs.btrfs, btrfstune, balance,
+      convert and inspect-internal
+    * build: optional build with more warnings (W=...)
+    * build: better support for static checkers
+    * build: html output of documentation
+    * pretty-print: last_snapshot for root_item
+    * pretty-print: stripe dev uuid
+    * error reporting wrappers, introduced and example use
+    * refactor open_file_or_dir
+    * other docs and help updates
+  * testing:
+    * test for nodes crossing stripes
+    * test for broken 'subvolume sync'
+    * basic tests for mkfs, raid option combinations
+    * basic tests for fuzzed images (check)
+    * command intrumentation (eg valgrind)
+    * print commands if requested
+    * add README for tests
+
+btrfs-progs-4.2.3 (2015-10-19)
+  * subvol sync: make it actually work again: it's been broken since 4.1.2,
+    due to a reversed condition it returned immediatelly instead of waiting
+  * scanning: do not scan already discovered filesystems (minor optimization)
+  * convert: better error message in case the filesystem is not finalized
+  * restore: off-by-one symlink path check fix
+
+btrfs-progs-4.2.2 (2015-10-05)
+  * fi label: use fallback if the label ioctl is not available
+  * convert: check nodesize constraints against commandline features (-O)
+  * scrub: report status 'running' until all devices are finished
+  * device scanning might crash in some scenarios
+  * fi usage: print summary for non-root users
+
+btrfs-progs-4.2.1 (2015-09-20)
+  * fix an off-by-one error in cross-stripe boundary check
+    * if nodesize was 64k, any metadata block was reported as crossing,
+      this leads to mkfs failure for example due to "no free blocks
+      found"
+    * for other nodesizes, if the end of the metadata block was 64k
+      aligned, it was incorrectly reported by fsck
+  * convert: don't write uninitialized data to image
+  * image:
+    * don't loop with option -t0
+    * don't create threads if compression is not requested
+  * other: minor cleanups
+
+btrfs-progs-4.2 (2015-09-03)
+  * enhancements:
+    * mkfs: do not create extra single chunks on multiple devices
+    * resize: try to guess the minimal size, 'inspect min-dev-size'
+    * qgroup assign: add option to schedule rescan
+    * chunk-recover: be more verbose about the scanning process
+  * fixes:
+    * check:
+	* find stripes crossing stripe boundary -- created by convert
+	* print correct range for file hole when there are no extents
+	  and learn how to fix it
+    * replace: more sanity checks
+    * convert: concurrency fixes related to reporting progress
+    * find-root: option -a will not skip the current root anymore
+    * subvol list: fix occasional crash
+    * do not create stripes crossing stripe boundary
+  * build:
+    * fixes for musl libc
+    * preliminary support for android (not working yet, more code changes
+      needed)
+    * new EXTRA_CFLAGS and EXTRA_LDFLAGS
+  * other:
+    * lots of cleanups
+    * tests: lots of updates, new tests, framework improvements
+    * documentation updates
+    * debugging: print-tree shows stripe length
+
+btrfs-progs-4.1.2 (2015-07-14)
+  * urgent bugfix: mkfs creates invalid filesystem, must be recreated
+
+btrfs-progs-4.1.1 (2015-07-10) -- Do not use this version!
+  Bugfixes:
+    * defrag: threshold overflow fix
+    * fsck:
+      * check if items fit into the leaf space
+      * fix wrong nbytes
+    * mkfs:
+      * create only desired block groups for single device
+      * preparatory work for fix on multiple devices
+  Enhancements:
+    * new alias for 'device delete': 'device remove'
+  Other:
+    * fix compilation on old gcc (4.3)
+    * documentation updates
+    * debug-tree: print nbytes
+    * test: image for corrupted nbytes
+    * corupt-block: let it kill nbytes
+
+btrfs-progs-4.1 (2015-06-22)
+  Bugfixes:
+    * fsck.btrfs: no bash-isms
+    * bugzilla 97171: invalid memory access (with tests)
+    * receive:
+      * cloning works with --chroot
+      * capabilities not lost
+    * mkfs: do not try to register bare file images
+    * option --help accepted by the standalone utilities
+    
+  Enhancements:
+    * corrupt block: ability to remove csums
+    * mkfs:
+      * warn if metadata redundancy is lower than for data
+      * options to make the output quiet (only errors)
+      * mixed case names of raid profiles accepted
+      * rework the output:
+      * more comprehensive, 'key: value' format
+    * subvol:
+      * show:
+	* print received uuid
+	* update the output
+	* new options to specify size units
+      * sync: grab all deleted ids and print them as they're removed,
+	previous implementation only checked if there are any to be
+	deleted - change in command semantics
+    * scrub: print timestamps in days HMS format
+    * receive:
+      * can specify mount point, do not rely on /proc
+      * can work inside subvolumes
+    * send: new option to send stream without data (NO_FILE_DATA)
+    * convert: specify incompat features on the new fs
+    * qgroup:
+      * show: distinguish no limits and 0 limit value
+      * limit: ability to clear the limit
+    * help for 'btrfs' is shorter, 1st level command overview
+    * debug tree: print key names according to their C name
+
+  New:
+    * rescure zero-log
+    * btrfsune:
+      * rewrite uuid on a filesystem image
+      * new option to turn on NO_HOLES incompat feature
+
+  Deprecated:
+    * standalone btrfs-zero-log
+
+  Other:
+    * testing framework updates
+      * uuid rewrite test
+      * btrfstune feature setting test
+      * zero-log tests
+      * more testing image formats
+    * manual page updates
+    * ioctl.h synced with current kernel uapi version
+    * convert: preparatory works for more filesystems (reiserfs pending)
+    * use static buffers for path handling where possible
+    * add new helpers for send uilts that check memory allocations,
+      switch all users, deprecate old helpers
+    * Makefile: fix build dependency generation
+    * map-logical: make it work again
+
+btrfs-progs-4.0.1 (2015-05-20)
+  * restore:
+    * can restore symlinks, new option --symlinks
+    * long option variants added
+  * convert: dropped dependency on acl.h header and libacl is not required
+    for build
+  * fix for 'check' crash
+  * device remove error message fix
+  * preparatory works for fsid change
+
+btrfs-progs-4.0 (2015-04-29)
+  * resize:
+    * don't accept file as an argument (it's confusing)
+    * print better error message in case of an error
+  * restore: optionally restore metadata (time, mode, uid/gid)
+  * receive: optionally enforce chroot
+  * new rescue subcommand 'zero-log', same as btrfs-zero-log, but now also
+    part of the main utility
+  * check:
+    * free space checks match kernel, fixes incorrect reports
+  * convert: fix setting of checksum bit if --no-datasum is used
+  * fsck.btrfs: don't print messages
+  * fix quota rescan on PPC64 (mangled ioctl number)
+  * test updates
+  * documentation: files renamed to .asciidoc, misc fixups
+
+btrfs-progs-3.19.1 (2015-03-25)
+  * convert:
+    * new option to specify metadata block size
+    * --no-progress actually works
+  * restore: properly handle the page boundary corner case
+  * build fixes:
+    * missing macro from public header, BTRFS_BUILD_VERSION
+    * wrong handling of --enable-convert
+  * fi usage: reports correct space for degraded mounts
+  * other:
+    * mkfs: help string updates
+    * completion: added 'usage' subcommands
+    * cleanups in qgroup code, preparatory work
+
+btrfs-progs-3.19 (2015-03-11)
+  * build converted to autotools
+  * btrfs-image
+    * restore can now run in parallel threads
+    * fixed restore of multiple image from multiple devices onto a single
+      dev
+    * introduced metadump v2
+  * check: make --init-csum-tree and --init-extent-tree work together
+  * find-new: option to search through all metadata even if a root was
+    already found
+  * convert: show progress by default, can be turned off
+  * corrupt-block: option to work on a specific root
+  * bash completion script for all subcommands
+
+btrfs-progs-3.18.2 (2015-01-27)
+  * qgroup show: print human readable sizes, options to say otherwise
+  * check: new option to explicitly say no to writes
+  * mkfs: message about trimming is not printed to stderr
+  * fi show: fixed return value
+  * tests: new infrastructure
+  * btrfstune: force flag can be used together with seeding option
+  * backtrace support is back
+  * getopt cleanups
+  * doc and help updates
+
+btrfs-progs-3.18.1 (2015-01-09)
+  * minor fixes
+  * documentation updates
+
+btrfs-progs-3.18 (2014-12-30)
+  * mkfs - skinny-metadata feature is now on by default, first introduced in
+    kernel 3.10
+  * filesystem usage - give an overview of fs usage in a way that's more
+    comprehensible than existing 'fi df'
+  * device usage - more detailed information about per-device allocations
+  * check
+    * option to set a different tree root byte number
+    * ability to link lost files to lost+found, caused by a recent kernel
+      bug
+    * repair of severely corrupted fs (use with care)
+  * convert - option to show progress
+  * subvol create - print the commit mode inline, print the global mode only
+    if --verbose
+  * other updates: musl-libc support, coverity bugfixes, new test images,
+    documentation
+
+btrfs-progs-3.17.3 (2014-12-04)
+  * convert: fix conversion of sparse ext* filesystems
+  * show: resolve to the correct path
+  * fsck: more verbose error for root dir problems
+
+btrfs-progs-3.17.2 (2014-11-19)
+  * check improvements
+    * add ability to replace missing dir item/dir indexes
+    * fix missing inode items
+    * create missing root dirid
+  * corrupt block: enhancements for testing fsck
+  * zero-log: able to reset a fs with bogus log tree pointer (bug_72151)
+
+btrfs-progs-3.17.1 (2014-11-04)
+  * fi df: argument handling
+  * fix linking with libbtrfs
+  * replace: better error reporting
+  * fi show: fixed stall if run concurrently with balance
+  * check: fixed argument parsing for --subvol-extents
+  * fi df: SI prefixes corrected
+
+btrfs-progs-3.17 (2014-10-17)
+  * check: --init-csum-tree actually does something useful, rebuilds the
+    whole csum tree
+  * /dev scanning for btrfs devices is gone
+  * /proc/partitions scanning is gone, blkid is used exclusively
+  * new subcommand subvolume sync
+  * filesystem df: new options to set unit format
+  * convert: allow to copy label from the origin, or specify a new one
+
+btrfs-progs-3.16.2 (2014-10-01)
+  * a few fixes in fsck and image tools
+
+btrfs-progs-3.16.1 (2014-09-15)
+  * print GlobalReserve in fi df output
+  * new option -R in subvol list
+  * library version defines
+  * static build is fixed
+  * build without documentation is possible
+
+btrfs-progs-3.16 (2014-08-26)
+  * mkfs: new option to specify UUID, drop experimental notice
+  * check: new option to verify quotas, reduced memory requirements, new
+    option to print extent sharing
+  * restore: check length before decompression, more error handling, option
+    to loop during restoring
+  * balance: new filter 'limit'
+  * recover: allow to read all sb copies
+  * btrfstune: new option to force dangerous changes
+  * receive: new option to limit number of errors
+  * show-super: skip unrecognized sb, add option to force
+  * debug-tree: print tree by id
+  * documentation updates
+
+btrfs-progs-3.14.2 (2014-05-29)
+  * documentation is now written in asciidoc and there are manpages for each
+    subcommand
+  * misc bugfixes
+
+btrfs-progs-3.14.1 (2014-04-18)
+  * properties: fix handling of option -t
+  * restore: fix reading of compressed extents
+  * minor code and doc updates
+
+btrfs-progs-3.14 (2014-04-06)
+  * fsck: fixes and enhancements to --init-extent-tree mode
+  * fsck: chunk-recover updates
+  * scrub: add force option -f
+  * send: check if subvolumes are read-only
+  * subvol delete: add options to affect commit behaviour
+  * btrfs: add property command group
+  * restore: add dry-run option
+  * restore: fix restoring of compressed files
+  * mkfs: support for no-holes feature
+  * mkfs: option -r deals with hardlinks and relative paths
+  * mkfs: discard phase is interruptible
+  * documentation updates
+
+btrfs-progs-3.12 (2013-11-25)
+  * announcement, tarballs
+  * first release after 0.19 (2009/06) with a lot of changes
