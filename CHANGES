@@ -1,3 +1,16 @@
+btrfs-progs-4.5.3 (2016-05-11)
+  * ioctl: fix unaligned access in buffer from TREE_SEARCH; might cause SIGBUS
+    on architectures that do not support unaligned access and do not performa
+    any fixups
+  * improved validation checks of superblock and chunk-related structures
+  * subvolume sync: fix handling of -s option
+  * balance: adjust timing of safety delay countdown with --full-balance
+  * rescue super-recover: fix reversed condition check
+  * check: fix bytes_used accounting
+  * documentation updates: mount options, scrub, send, receive, select-super,
+    check, mkfs
+  * testing: new fuzzed images, for superblock and chunks
+
 btrfs-progs-4.5.2 (2016-05-02)
   * new/moved command: btrfs-calc-stats -> btrfs inspect tree-stats
   * check: fix false alert for metadata blocks crossing stripe boundary
