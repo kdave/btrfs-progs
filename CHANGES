@@ -1,3 +1,17 @@
+btrfs-progs-4.5.2 (2016-05-02)
+  * new/moved command: btrfs-calc-stats -> btrfs inspect tree-stats
+  * check: fix false alert for metadata blocks crossing stripe boundary
+  * check: catch when qgroup numbers mismatch
+  * check: detect running quota rescan and report mismatches
+  * balance start: add safety delay before doing a full balance
+  * fi sync: is now silent
+  * fi show: don't miss filesystems with partially matching uuids
+  * dev ready: accept only one argument for device
+  * dev stats: print "devid:N" for a missing device instead of "(null)"
+  * other:
+    * lowest supported version of e2fsprogs is 1.41
+    * minor cleanups, test updates
+
 btrfs-progs-4.5.1 (2016-03-31)
   * mkfs: allow DUP on multi-device filesystems
   * bugfixes: build fixes, assorted other fixes
