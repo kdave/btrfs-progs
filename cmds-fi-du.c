@@ -83,7 +83,7 @@ static int add_shared_extent(u64 start, u64 len, struct rb_root *root)
 
 	sh = calloc(1, sizeof(*sh));
 	if (!sh)
-		return ENOMEM;
+		return -ENOMEM;
 
 	sh->start = start;
 	sh->last = (start + len - 1);
@@ -233,7 +233,7 @@ static int mark_inode_seen(u64 ino, u64 subvol)
 
 	si = calloc(1, sizeof(*si));
 	if (!si)
-		return ENOMEM;
+		return -ENOMEM;
 
 	si->i_ino = ino;
 	si->i_subvol = subvol;
@@ -259,7 +259,7 @@ static int inode_seen(u64 ino, u64 subvol)
 		else if (cmp > 0)
 			n = n->rb_right;
 		else
-			return EEXIST;
+			return -EEXIST;
 	}
 	return 0;
 }
@@ -308,7 +308,7 @@ static int du_calc_file_space(int fd, struct rb_root *shared_extents,
 		fiemap->fm_extent_count = count;
 		rc = ioctl(fd, FS_IOC_FIEMAP, (unsigned long) fiemap);
 		if (rc < 0) {
-			ret = errno;
+			ret = -errno;
 			goto out;
 		}
 
@@ -418,17 +418,15 @@ static int du_add_file(const char *filename, int dirfd,
 	DIR *dirstream = NULL;
 
 	ret = fstatat(dirfd, filename, &st, 0);
-	if (ret) {
-		ret = errno;
-		return ret;
-	}
+	if (ret)
+		return -errno;
 
 	if (!S_ISREG(st.st_mode) && !S_ISDIR(st.st_mode))
 		return 0;
 
 	if (len > (path_max - pathp)) {
 		error("path too long: %s %s", path, filename);
-		return ENAMETOOLONG;
+		return -ENAMETOOLONG;
 	}
 
 	pathtmp = pathp;
@@ -440,7 +438,7 @@ static int du_add_file(const char *filename, int dirfd,
 
 	fd = open_file_or_dir3(path, &dirstream, O_RDONLY);
 	if (fd < 0) {
-		ret = fd;
+		ret = -errno;
 		goto out;
 	}
 
@@ -568,7 +566,7 @@ int cmd_filesystem_du(int argc, char **argv)
 		ret = du_add_file(argv[i], AT_FDCWD, NULL, NULL, NULL, 1);
 		if (ret) {
 			error("cannot check space of '%s': %s", argv[i],
-					strerror(ret));
+					strerror(-ret));
 			err = 1;
 		}
 
