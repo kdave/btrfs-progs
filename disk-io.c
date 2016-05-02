@@ -1262,7 +1262,7 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 		goto out;
 
 	disk_super = fs_info->super_copy;
-	if (!(flags & OPEN_CTREE_RECOVER_SUPER))
+	if (flags & OPEN_CTREE_RECOVER_SUPER)
 		ret = btrfs_read_dev_super(fs_devices->latest_bdev,
 					   disk_super, sb_bytenr, 1);
 	else
