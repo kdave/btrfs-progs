@@ -67,6 +67,12 @@ resume interrupted balance
 start the balance operation according to the specified filters, no filters
 will rewrite the entire filesystem. The process runs in the foreground.
 +
+NOTE: the balance command without filters will basically rewrite everything
+in the filesystem. The run time is potentially very long, depending on the
+filesystem size. To prevent starting a full balance by accident, the user is
+warned and has a few seconds to cancel the operation before it starts. The
+warning and delay can be skipped with '--full-balance' option.
++
 `Options`
 +
 -d[<filters>]::::

@@ -417,8 +417,13 @@ static int do_balance_v1(int fd)
 	return ret;
 }
 
+enum {
+	BALANCE_START_FILTERS = 1 << 0,
+	BALANCE_START_NOWARN  = 1 << 1
+};
+
 static int do_balance(const char *path, struct btrfs_ioctl_balance_args *args,
-		      int nofilters)
+		      unsigned flags)
 {
 	int fd;
 	int ret;
@@ -429,6 +434,24 @@ static int do_balance(const char *path, struct btrfs_ioctl_balance_args *args,
 	if (fd < 0)
 		return 1;
 
+	if (!(flags & BALANCE_START_FILTERS) && !(flags & BALANCE_START_NOWARN)) {
+		int delay = 10;
+
+		printf("WARNING:\n\n");
+		printf("\tFull balance without filters requested. This operation is very\n");
+		printf("\tintense and takes potentially very long. It is recommended to\n");
+		printf("\tuse the balance filters to narrow down the balanced data.\n");
+		printf("\tUse 'btrfs balance start --full-balance' option to skip this\n");
+		printf("\twarning. The operation will start in %d seconds.\n", delay);
+		printf("\tUse Ctrl-C to stop it.\n");
+		while (delay) {
+			sleep(1);
+			printf("%2d", delay--);
+			fflush(stdout);
+		}
+		printf("\nStarting balance without any filters.\n");
+	}
+
 	ret = ioctl(fd, BTRFS_IOC_BALANCE_V2, args);
 	e = errno;
 
@@ -438,7 +461,7 @@ static int do_balance(const char *path, struct btrfs_ioctl_balance_args *args,
 		 * old one.  But, the old one doesn't know any filters, so
 		 * don't fall back if they tried to use the fancy new things
 		 */
-		if (e == ENOTTY && nofilters) {
+		if (e == ENOTTY && !(flags & BALANCE_START_FILTERS)) {
 			ret = do_balance_v1(fd);
 			if (ret == 0)
 				goto out;
@@ -477,13 +500,16 @@ static const char * const cmd_balance_start_usage[] = {
 	"passed all filters in a comma-separated list of filters for a",
 	"particular chunk type.  If filter list is not given balance all",
 	"chunks of that type.  In case none of the -d, -m or -s options is",
-	"given balance all chunks in a filesystem.",
+	"given balance all chunks in a filesystem. This is potentially",
+	"long operation and the user is warned before this start, with",
+	"a delay to stop it.",
 	"",
 	"-d[filters]    act on data chunks",
 	"-m[filters]    act on metadata chunks",
 	"-s[filters]    act on system chunks (only under -f)",
 	"-v             be verbose",
 	"-f             force reducing of metadata integrity",
+	"--full-balance do not print warning and do not delay start",
 	NULL
 };
 
@@ -494,19 +520,22 @@ static int cmd_balance_start(int argc, char **argv)
 						&args.meta, NULL };
 	int force = 0;
 	int verbose = 0;
-	int nofilters = 1;
+	unsigned start_flags = 0;
 	int i;
 
 	memset(&args, 0, sizeof(args));
 
 	optind = 1;
 	while (1) {
+		enum { GETOPT_VAL_FULL_BALANCE = 256 };
 		static const struct option longopts[] = {
 			{ "data", optional_argument, NULL, 'd'},
 			{ "metadata", optional_argument, NULL, 'm' },
 			{ "system", optional_argument, NULL, 's' },
 			{ "force", no_argument, NULL, 'f' },
 			{ "verbose", no_argument, NULL, 'v' },
+			{ "full-balance", no_argument, NULL,
+				GETOPT_VAL_FULL_BALANCE },
 			{ NULL, 0, NULL, 0 }
 		};
 
@@ -516,21 +545,21 @@ static int cmd_balance_start(int argc, char **argv)
 
 		switch (opt) {
 		case 'd':
-			nofilters = 0;
+			start_flags |= BALANCE_START_FILTERS;
 			args.flags |= BTRFS_BALANCE_DATA;
 
 			if (parse_filters(optarg, &args.data))
 				return 1;
 			break;
 		case 's':
-			nofilters = 0;
+			start_flags |= BALANCE_START_FILTERS;
 			args.flags |= BTRFS_BALANCE_SYSTEM;
 
 			if (parse_filters(optarg, &args.sys))
 				return 1;
 			break;
 		case 'm':
-			nofilters = 0;
+			start_flags |= BALANCE_START_FILTERS;
 			args.flags |= BTRFS_BALANCE_METADATA;
 
 			if (parse_filters(optarg, &args.meta))
@@ -541,6 +570,9 @@ static int cmd_balance_start(int argc, char **argv)
 			break;
 		case 'v':
 			verbose = 1;
+			break;
+		case GETOPT_VAL_FULL_BALANCE:
+			start_flags |= BALANCE_START_NOWARN;
 			break;
 		default:
 			usage(cmd_balance_start_usage);
@@ -567,7 +599,7 @@ static int cmd_balance_start(int argc, char **argv)
 			sizeof(struct btrfs_balance_args));
 	}
 
-	if (nofilters) {
+	if (!(start_flags & BALANCE_START_FILTERS)) {
 		/* relocate everything - no filters */
 		args.flags |= BTRFS_BALANCE_TYPE_MASK;
 	}
@@ -595,7 +627,7 @@ static int cmd_balance_start(int argc, char **argv)
 	if (verbose)
 		dump_ioctl_balance_args(&args);
 
-	return do_balance(argv[optind], &args, nofilters);
+	return do_balance(argv[optind], &args, start_flags);
 }
 
 static const char * const cmd_balance_pause_usage[] = {
@@ -833,6 +865,16 @@ static int cmd_balance_status(int argc, char **argv)
 	return 1;
 }
 
+static int cmd_balance_full(int argc, char **argv)
+{
+	struct btrfs_ioctl_balance_args args;
+
+	memset(&args, 0, sizeof(args));
+	args.flags |= BTRFS_BALANCE_TYPE_MASK;
+
+	return do_balance(argv[1], &args, BALANCE_START_NOWARN);
+}
+
 static const char balance_cmd_group_info[] =
 "balance data accross devices, or change block groups using filters";
 
@@ -843,20 +885,21 @@ const struct cmd_group balance_cmd_group = {
 		{ "cancel", cmd_balance_cancel, cmd_balance_cancel_usage, NULL, 0 },
 		{ "resume", cmd_balance_resume, cmd_balance_resume_usage, NULL, 0 },
 		{ "status", cmd_balance_status, cmd_balance_status_usage, NULL, 0 },
+		{ "--full-balance", cmd_balance_full, NULL, NULL, 1 },
 		NULL_CMD_STRUCT
 	}
 };
 
 int cmd_balance(int argc, char **argv)
 {
-	if (argc == 2) {
+	if (argc == 2 && strcmp("start", argv[1]) != 0) {
 		/* old 'btrfs filesystem balance <path>' syntax */
 		struct btrfs_ioctl_balance_args args;
 
 		memset(&args, 0, sizeof(args));
 		args.flags |= BTRFS_BALANCE_TYPE_MASK;
 
-		return do_balance(argv[1], &args, 1);
+		return do_balance(argv[1], &args, 0);
 	}
 
 	return handle_command_group(&balance_cmd_group, argc, argv);
