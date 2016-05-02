@@ -1,0 +1,54 @@
+[  135.166891] BTRFS info (device loop0): disk space caching is enabled
+[  135.169199] divide error: 0000 [#1] SMP 
+[  135.169581] Modules linked in:
+[  135.169819] CPU: 2 PID: 1512 Comm: btrfs.exe Tainted: G        W       4.6.0-rc5 #130
+[  135.170285] Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS 1.8.2-20150714_191134- 04/01/2014
+[  135.170958] task: ffff880074925180 ti: ffff880077fa4000 task.ti: ffff880077fa4000
+[  135.171583] RIP: 0010:[<ffffffff81475ba0>]  [<ffffffff81475ba0>] __btrfs_map_block+0xc0/0x11b0
+[  135.172096] RSP: 0000:ffff880077fa77b0  EFLAGS: 00010206
+[  135.172374] RAX: 0000000000020000 RBX: 0000000000020000 RCX: 0000000000000000
+[  135.172754] RDX: 0000000000000000 RSI: 0000000000400000 RDI: ffff880076258270
+[  135.173143] RBP: ffff880077fa7898 R08: 0000000000400000 R09: 0000000000000000
+[  135.173523] R10: 0000000000000001 R11: 0000000000000000 R12: 0000000000020000
+[  135.173916] R13: ffff880076258270 R14: ffff880077fa78e0 R15: ffff88006bb3b000
+[  135.174290] FS:  00007fd8267dc700(0000) GS:ffff88007ca00000(0000) knlGS:0000000000000000
+[  135.174718] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[  135.175019] CR2: 00007ffe9c378df7 CR3: 0000000078788000 CR4: 00000000000006e0
+[  135.175392] Stack:
+[  135.175503]  ffff88007cbe2c40 0000000000000000 ffff88007cbe2c50 ffff880074925180
+[  135.175924]  ffff880074926560 ffff880074925180 0000000200000000 0000000000000000
+[  135.176340]  ffffffffffffffff 0007ffffffffffff ffffffff8143eb18 0240004000000000
+[  135.176778] Call Trace:
+[  135.176913]  [<ffffffff8143eb18>] ? btrfs_bio_wq_end_io+0x28/0x70
+[  135.177234]  [<ffffffff81477218>] btrfs_map_bio+0x88/0x350
+[  135.177522]  [<ffffffff8143eb18>] ? btrfs_bio_wq_end_io+0x28/0x70
+[  135.177960]  [<ffffffff8143ed9d>] btree_submit_bio_hook+0x6d/0x110
+[  135.178410]  [<ffffffff81464d1d>] submit_one_bio+0x6d/0xa0
+[  135.178814]  [<ffffffff8146d6f1>] read_extent_buffer_pages+0x1c1/0x350
+[  135.179276]  [<ffffffff8143cd60>] ? free_root_pointers+0x70/0x70
+[  135.179708]  [<ffffffff8143e12c>] btree_read_extent_buffer_pages.constprop.55+0xac/0x110
+[  135.180261]  [<ffffffff8143f036>] read_tree_block+0x36/0x60
+[  135.180647]  [<ffffffff81443b52>] open_ctree+0x17a2/0x2900
+[  135.181027]  [<ffffffff81417225>] btrfs_mount+0xd05/0xe60
+[  135.181400]  [<ffffffff819cd15a>] ? __mutex_unlock_slowpath+0xfa/0x1c0
+[  135.181850]  [<ffffffff810fd3e4>] ? lockdep_init_map+0x64/0x710
+[  135.182241]  [<ffffffff81272918>] mount_fs+0x38/0x170
+[  135.182609]  [<ffffffff81292b7b>] vfs_kern_mount+0x6b/0x150
+[  135.182998]  [<ffffffff814166e6>] btrfs_mount+0x1c6/0xe60
+[  135.183372]  [<ffffffff819cd15a>] ? __mutex_unlock_slowpath+0xfa/0x1c0
+[  135.183825]  [<ffffffff810fd3e4>] ? lockdep_init_map+0x64/0x710
+[  135.184233]  [<ffffffff81272918>] mount_fs+0x38/0x170
+[  135.184583]  [<ffffffff81292b7b>] vfs_kern_mount+0x6b/0x150
+[  135.184971]  [<ffffffff812958c6>] do_mount+0x256/0xeb0
+[  135.185318]  [<ffffffff8124bb33>] ? __kmalloc_track_caller+0x113/0x290
+[  135.185759]  [<ffffffff812b0b63>] ? block_ioctl+0x43/0x50
+[  135.186124]  [<ffffffff811ff023>] ? memdup_user+0x53/0x80
+[  135.186488]  [<ffffffff81296865>] SyS_mount+0x95/0xe0
+[  135.186877]  [<ffffffff819cfd3c>] entry_SYSCALL_64_fastpath+0x1f/0xbd
+[  135.187308] Code: 8b 70 20 4c 8d 04 31 4c 39 c3 0f 87 2f 0b 00 00 48 8b 45 a8 49 89 dc 31 d2 49 29 cc 48 8b 40 70 48 63 48 10 48 89 45 a0 4c 89 e0 <48> f7 f1 49 89 cf 48 89 45 b8 48 0f af c1 49 39 c4 0f 82 c3 0a 
+[  135.189097] RIP  [<ffffffff81475ba0>] __btrfs_map_block+0xc0/0x11b0
+[  135.189527]  RSP <ffff880077fa77b0>
+[  135.189819] ---[ end trace ea21fae64670799a ]---
+
+---------------------------------------------------------------------------
+Fixed by patch:

@@ -1,0 +1,32 @@
+[  125.415910] BTRFS info (device loop0): disk space caching is enabled
+[  125.550479] ------------[ cut here ]------------
+[  125.551145] WARNING: CPU: 6 PID: 1496 at fs/btrfs/locking.c:251 btrfs_tree_lock+0x22e/0x250
+[  125.552292] Modules linked in:
+[  125.552602] CPU: 6 PID: 1496 Comm: btrfs.exe Tainted: G        W       4.6.0-rc5 #130
+[  125.553138] Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS 1.8.2-20150714_191134- 04/01/2014
+[  125.553775]  0000000000000286 000000009b4bdd50 ffff88006a7478e0 ffffffff8157e563
+[  125.554299]  0000000000000000 0000000000000000 ffff88006a747920 ffffffff810a74ab
+[  125.554825]  000000fb8146c531 ffff88006bfec460 ffff88006bc63000 0000000000000000
+[  125.555373] Call Trace:
+[  125.555545]  [<ffffffff8157e563>] dump_stack+0x85/0xc2
+[  125.555892]  [<ffffffff810a74ab>] __warn+0xcb/0xf0
+[  125.556226]  [<ffffffff810a75dd>] warn_slowpath_null+0x1d/0x20
+[  125.556654]  [<ffffffff814871ee>] btrfs_tree_lock+0x22e/0x250
+[  125.557041]  [<ffffffff81423831>] btrfs_init_new_buffer+0x81/0x160
+[  125.557458]  [<ffffffff8143472a>] btrfs_alloc_tree_block+0x22a/0x430
+[  125.557883]  [<ffffffff8141ae61>] __btrfs_cow_block+0x141/0x590
+[  125.558279]  [<ffffffff8141b44f>] btrfs_cow_block+0x11f/0x1f0
+[  125.558666]  [<ffffffff8141f09e>] btrfs_search_slot+0x1fe/0xa30
+[  125.559063]  [<ffffffff81247c9d>] ? kmem_cache_alloc+0xfd/0x240
+[  125.559482]  [<ffffffff8143b1f0>] btrfs_del_inode_ref+0x80/0x380
+[  125.559884]  [<ffffffff8148e11a>] ? btrfs_del_inode_ref_in_log+0x8a/0x160
+[  125.560340]  [<ffffffff8148e14d>] btrfs_del_inode_ref_in_log+0xbd/0x160
+[  125.560776]  [<ffffffff814507f7>] __btrfs_unlink_inode+0x1d7/0x470
+[  125.561188]  [<ffffffff814567a7>] btrfs_rename2+0x327/0x790
+[  125.561568]  [<ffffffff8127b398>] vfs_rename+0x4d8/0x840
+[  125.561928]  [<ffffffff81281b21>] SyS_rename+0x371/0x390
+[  125.562289]  [<ffffffff819cfd3c>] entry_SYSCALL_64_fastpath+0x1f/0xbd
+[  125.562743] ---[ end trace 3b751f511705fb90 ]---
+
+---------------------------------------------------------------------------
+Fixed by patch:

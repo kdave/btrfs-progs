@@ -1,0 +1,55 @@
+[  145.676440] BTRFS error (device loop0): bad tree block start 0 131072
+[  145.677032] ------------[ cut here ]------------
+[  145.677307] kernel BUG at fs/btrfs/raid56.c:2142!
+[  145.677627] invalid opcode: 0000 [#1] SMP 
+[  145.677955] Modules linked in:
+[  145.678182] CPU: 3 PID: 1538 Comm: btrfs.exe Tainted: G        W       4.6.0-rc5 #130
+[  145.678734] Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS 1.8.2-20150714_191134- 04/01/2014
+[  145.679402] task: ffff88006c830000 ti: ffff88006fc74000 task.ti: ffff88006fc74000
+[  145.679919] RIP: 0010:[<ffffffff814c5794>]  [<ffffffff814c5794>] raid56_parity_recover+0xc4/0x160
+[  145.680514] RSP: 0018:ffff88006fc77868  EFLAGS: 00010286
+[  145.680865] RAX: ffff88006f725280 RBX: ffff880070ba0a68 RCX: 0000000000020000
+[  145.681373] RDX: 0000000000000100 RSI: 00000000ffffffff RDI: ffffffff831229e8
+[  145.681866] RBP: ffff88006fc77898 R08: 0000000000010000 R09: ffff8800768ff400
+[  145.682380] R10: ffff88007c003180 R11: 0000000000030000 R12: ffff88006f725280
+[  145.682870] R13: ffff88007b449000 R14: 0000000000000001 R15: ffff8800768ff400
+[  145.683363] FS:  00007f68b95a8700(0000) GS:ffff88007cc00000(0000) knlGS:0000000000000000
+[  145.683941] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[  145.684340] CR2: 00007fff0d130f98 CR3: 000000006bfd7000 CR4: 00000000000006e0
+[  145.684832] Stack:
+[  145.684977]  00000002e6816dd1 ffff880070ba0a68 ffff88007b449000 0000000000000001
+[  145.685541]  0000000000020000 0000000000000002 ffff88006fc77920 ffffffff814773cd
+[  145.686082]  ffff880000000001 0000000002400040 ffff88006fc778f8 0000000081247c9d
+[  145.686654] Call Trace:
+[  145.686831]  [<ffffffff814773cd>] btrfs_map_bio+0x23d/0x350
+[  145.687217]  [<ffffffff8143ed9d>] btree_submit_bio_hook+0x6d/0x110
+[  145.687649]  [<ffffffff81464d1d>] submit_one_bio+0x6d/0xa0
+[  145.688028]  [<ffffffff8146d6f1>] read_extent_buffer_pages+0x1c1/0x350
+[  145.688501]  [<ffffffff8143cd60>] ? free_root_pointers+0x70/0x70
+[  145.688916]  [<ffffffff8143e12c>] btree_read_extent_buffer_pages.constprop.55+0xac/0x110
+[  145.689474]  [<ffffffff8143f036>] read_tree_block+0x36/0x60
+[  145.689861]  [<ffffffff81443b52>] open_ctree+0x17a2/0x2900
+[  145.690242]  [<ffffffff81417225>] btrfs_mount+0xd05/0xe60
+[  145.690623]  [<ffffffff819cd15a>] ? __mutex_unlock_slowpath+0xfa/0x1c0
+[  145.691064]  [<ffffffff810fd3e4>] ? lockdep_init_map+0x64/0x710
+[  145.691510]  [<ffffffff81272918>] mount_fs+0x38/0x170
+[  145.691852]  [<ffffffff81292b7b>] vfs_kern_mount+0x6b/0x150
+[  145.692227]  [<ffffffff814166e6>] btrfs_mount+0x1c6/0xe60
+[  145.692594]  [<ffffffff819cd15a>] ? __mutex_unlock_slowpath+0xfa/0x1c0
+[  145.693032]  [<ffffffff810fd3e4>] ? lockdep_init_map+0x64/0x710
+[  145.693453]  [<ffffffff81272918>] mount_fs+0x38/0x170
+[  145.693793]  [<ffffffff81292b7b>] vfs_kern_mount+0x6b/0x150
+[  145.694168]  [<ffffffff812958c6>] do_mount+0x256/0xeb0
+[  145.694537]  [<ffffffff8124bb33>] ? __kmalloc_track_caller+0x113/0x290
+[  145.694974]  [<ffffffff812b0b63>] ? block_ioctl+0x43/0x50
+[  145.695338]  [<ffffffff811ff023>] ? memdup_user+0x53/0x80
+[  145.695703]  [<ffffffff81296865>] SyS_mount+0x95/0xe0
+[  145.696046]  [<ffffffff819cfd3c>] entry_SYSCALL_64_fastpath+0x1f/0xbd
+[  145.696480] Code: 1f 48 8b 78 58 31 c0 48 8b 14 c7 48 39 d1 72 08 4c 01 c2 48 39 d1 72 15 48 83 c0 01 39 c6 7f e7 41 c7 87 3c 01 00 00 ff ff ff ff <0f> 0b 45 85 f6 41 89 87 3c 01 00 00 75 35 4c 89 e7 e8 e6 02 fb 
+[  145.698326] RIP  [<ffffffff814c5794>] raid56_parity_recover+0xc4/0x160
+[  145.698771]  RSP <ffff88006fc77868>
+[  145.699047] ---[ end trace 22f39f01df276367 ]---
+
+-----------------------------------------------------
+Fixed by patch: 
+

@@ -1,0 +1,50 @@
+[342246.846031] BTRFS info (device loop0): disk space caching is enabled
+[342246.862115] ------------[ cut here ]------------
+[342246.862500] kernel BUG at fs/btrfs/inode.c:978!
+[342246.862861] invalid opcode: 0000 [#1] SMP 
+[342246.863176] Modules linked in:
+[342246.863410] CPU: 2 PID: 14504 Comm: btrfs.exe Tainted: G        W       4.6.0-rc5 #130
+[342246.864010] Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS 1.8.2-20150714_191134- 04/01/2014
+[342246.864674] task: ffff88006fdf0000 ti: ffff8800702e0000 task.ti: ffff8800702e0000
+[342246.865186] RIP: 0010:[<ffffffff8144e9c7>]  [<ffffffff8144e9c7>] cow_file_range+0x3f7/0x440
+[342246.865770] RSP: 0018:ffff8800702e39e0  EFLAGS: 00010206
+[342246.866157] RAX: ffff88006bb23000 RBX: 0000000000000001 RCX: 0000000000010000
+[342246.866687] RDX: 0000000000000000 RSI: 0000000000001000 RDI: 0000000000010000
+[342246.867191] RBP: ffff8800702e3a70 R08: 0000000000000000 R09: 0000000000000000
+[342246.867682] R10: 000000000000ffff R11: 0000000000010000 R12: ffff8800702e3bc0
+[342246.868170] R13: ffff8800702e3b3c R14: 0000000000000000 R15: ffff880075369c10
+[342246.868660] FS:  00007f96f5a38700(0000) GS:ffff88007ca00000(0000) knlGS:0000000000000000
+[342246.869212] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[342246.869642] CR2: 000000000060f4bf CR3: 000000006fc9f000 CR4: 00000000000006e0
+[342246.870146] Stack:
+[342246.870295]  0000000000000000 0000000000000001 000000000000ffff ffffea00010c08c0
+[342246.870838]  ffff8800753698e8 0000000000010000 ffff88006fe0f000 000000000000ffff
+[342246.871397]  000000000000ffff ffffffff814683e5 ffff8800753698c8 ffff8800753698e8
+[342246.871944] Call Trace:
+[342246.872124]  [<ffffffff814683e5>] ? test_range_bit+0xe5/0x130
+[342246.872522]  [<ffffffff8144f906>] run_delalloc_range+0x396/0x3d0
+[342246.872975]  [<ffffffff8146873f>] writepage_delalloc.isra.42+0x10f/0x170
+[342246.873437]  [<ffffffff8146a674>] __extent_writepage+0xf4/0x370
+[342246.873848]  [<ffffffff8146abf4>] extent_write_cache_pages.isra.39.constprop.57+0x304/0x3f0
+[342246.874419]  [<ffffffff8146beec>] extent_writepages+0x5c/0x90
+[342246.874818]  [<ffffffff8144c870>] ? btrfs_real_readdir+0x5f0/0x5f0
+[342246.875245]  [<ffffffff814498f8>] btrfs_writepages+0x28/0x30
+[342246.875641]  [<ffffffff811ebc61>] do_writepages+0x21/0x30
+[342246.876031]  [<ffffffff811dc1a6>] __filemap_fdatawrite_range+0xc6/0x100
+[342246.876487]  [<ffffffff811dc2b3>] filemap_fdatawrite_range+0x13/0x20
+[342246.876949]  [<ffffffff8145eae0>] btrfs_fdatawrite_range+0x20/0x50
+[342246.877375]  [<ffffffff8145eb29>] start_ordered_ops+0x19/0x30
+[342246.877774]  [<ffffffff8145ebc2>] btrfs_sync_file+0x82/0x3f0
+[342246.878166]  [<ffffffff810fb717>] ? update_fast_ctr+0x17/0x30
+[342246.878564]  [<ffffffff812a848b>] vfs_fsync_range+0x4b/0xb0
+[342246.878987]  [<ffffffff8128fce6>] ? __fget_light+0x66/0x90
+[342246.879368]  [<ffffffff812a854d>] do_fsync+0x3d/0x70
+[342246.879708]  [<ffffffff812a8823>] SyS_fdatasync+0x13/0x20
+[342246.880099]  [<ffffffff819cfd3c>] entry_SYSCALL_64_fastpath+0x1f/0xbd
+[342246.880554] Code: 03 00 00 48 c7 c7 00 b3 c9 81 c6 05 54 b6 b1 00 01 e8 0e 8c c5 ff e9 e5 fe ff ff 49 8b 57 40 e9 c0 fe ff ff bb f4 ff ff ff eb a1 <0f> 0b 48 8b 55 80 41 b9 0f 00 00 00 41 b8 68 00 00 00 31 c9 31 
+[342246.882394] RIP  [<ffffffff8144e9c7>] cow_file_range+0x3f7/0x440
+[342246.882810]  RSP <ffff8800702e39e0>
+[342246.883076] ---[ end trace 094193b6df6e45e7 ]---
+
+--------------------------------------------------------
+Fixed by patch: 
