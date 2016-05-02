@@ -450,6 +450,10 @@ static int cmd_device_stats(int argc, char **argv)
 			/* No path when device is missing. */
 			if (!canonical_path) {
 				canonical_path = malloc(32);
+				if (!canonical_path) {
+					error("not enough memory for path buffer");
+					goto out;
+				}
 				snprintf(canonical_path, 32,
 					 "devid:%llu", args.devid);
 			}
