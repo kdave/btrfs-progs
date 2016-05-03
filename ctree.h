@@ -2201,6 +2201,32 @@ static inline u32 btrfs_file_extent_inline_item_len(struct extent_buffer *eb,
        return btrfs_item_size(eb, e) - offset;
 }
 
+/* struct btrfs_ioctl_search_header */
+static inline u64 btrfs_search_header_transid(struct btrfs_ioctl_search_header *sh)
+{
+	return get_unaligned_64(&sh->transid);
+}
+
+static inline u64 btrfs_search_header_objectid(struct btrfs_ioctl_search_header *sh)
+{
+	return get_unaligned_64(&sh->objectid);
+}
+
+static inline u64 btrfs_search_header_offset(struct btrfs_ioctl_search_header *sh)
+{
+	return get_unaligned_64(&sh->offset);
+}
+
+static inline u32 btrfs_search_header_type(struct btrfs_ioctl_search_header *sh)
+{
+	return get_unaligned_32(&sh->type);
+}
+
+static inline u32 btrfs_search_header_len(struct btrfs_ioctl_search_header *sh)
+{
+	return get_unaligned_32(&sh->len);
+}
+
 /* this returns the number of file bytes represented by the inline item.
  * If an item is compressed, this is the uncompressed size
  */
