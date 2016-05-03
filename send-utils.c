@@ -99,25 +99,25 @@ static int btrfs_read_root_item_raw(int mnt_fd, u64 root_id, size_t buf_len,
 
 			off += sizeof(*sh);
 			item = (struct btrfs_root_item *)(args.buf + off);
-			off += sh->len;
+			off += btrfs_search_header_len(sh);
 
-			sk->min_objectid = sh->objectid;
-			sk->min_type = sh->type;
-			sk->min_offset = sh->offset;
+			sk->min_objectid = btrfs_search_header_objectid(sh);
+			sk->min_type = btrfs_search_header_type(sh);
+			sk->min_offset = btrfs_search_header_offset(sh);
 
-			if (sh->objectid > root_id)
+			if (btrfs_search_header_objectid(sh) > root_id)
 				break;
 
-			if (sh->objectid == root_id &&
-			    sh->type == BTRFS_ROOT_ITEM_KEY) {
-				if (sh->len > buf_len) {
+			if (btrfs_search_header_objectid(sh) == root_id &&
+			    btrfs_search_header_type(sh) == BTRFS_ROOT_ITEM_KEY) {
+				if (btrfs_search_header_len(sh) > buf_len) {
 					/* btrfs-progs is too old for kernel */
 					fprintf(stderr,
 						"ERROR: buf for read_root_item_raw() is too small, get newer btrfs tools!\n");
 					return -EOVERFLOW;
 				}
-				memcpy(buf, item, sh->len);
-				*read_len = sh->len;
+				memcpy(buf, item, btrfs_search_header_len(sh));
+				*read_len = btrfs_search_header_len(sh);
 				found = 1;
 			}
 		}
@@ -280,11 +280,12 @@ static int btrfs_subvolid_resolve_sub(int fd, char *path, size_t *path_len,
 	}
 	search_header = (struct btrfs_ioctl_search_header *)search_arg.buf;
 	backref_item = (struct btrfs_root_ref *)(search_header + 1);
-	if (search_header->offset != BTRFS_FS_TREE_OBJECTID) {
+	if (btrfs_search_header_offset(search_header)
+	    != BTRFS_FS_TREE_OBJECTID) {
 		int sub_ret;
 
 		sub_ret = btrfs_subvolid_resolve_sub(fd, path, path_len,
-						     search_header->offset);
+				btrfs_search_header_offset(search_header));
 		if (sub_ret)
 			return sub_ret;
 		if (*path_len < 1)
@@ -298,7 +299,8 @@ static int btrfs_subvolid_resolve_sub(int fd, char *path, size_t *path_len,
 		int len;
 
 		memset(&ino_lookup_arg, 0, sizeof(ino_lookup_arg));
-		ino_lookup_arg.treeid = search_header->offset;
+		ino_lookup_arg.treeid =
+			btrfs_search_header_offset(search_header);
 		ino_lookup_arg.objectid =
 			btrfs_stack_root_ref_dirid(backref_item);
 		ret = ioctl(fd, BTRFS_IOC_INO_LOOKUP, &ino_lookup_arg);
@@ -593,14 +595,19 @@ int subvol_uuid_search_init(int mnt_fd, struct subvol_uuid_search *s)
 								  off);
 			off += sizeof(*sh);
 
-			if ((sh->objectid != 5 &&
-			    sh->objectid < BTRFS_FIRST_FREE_OBJECTID) ||
-			    sh->objectid > BTRFS_LAST_FREE_OBJECTID)
+			if ((btrfs_search_header_objectid(sh) != 5 &&
+			     btrfs_search_header_objectid(sh)
+			     < BTRFS_FIRST_FREE_OBJECTID) ||
+			    btrfs_search_header_objectid(sh)
+			    > BTRFS_LAST_FREE_OBJECTID) {
 				goto skip;
+			}
 
-			if (sh->type == BTRFS_ROOT_ITEM_KEY) {
+			if (btrfs_search_header_type(sh)
+			    == BTRFS_ROOT_ITEM_KEY) {
 				/* older kernels don't have uuids+times */
-				if (sh->len < sizeof(root_item)) {
+				if (btrfs_search_header_len(sh)
+				    < sizeof(root_item)) {
 					root_item_valid = 0;
 					goto skip;
 				}
@@ -609,13 +616,14 @@ int subvol_uuid_search_init(int mnt_fd, struct subvol_uuid_search *s)
 				memcpy(&root_item, root_item_ptr,
 						sizeof(root_item));
 				root_item_valid = 1;
-			} else if (sh->type == BTRFS_ROOT_BACKREF_KEY ||
+			} else if (btrfs_search_header_type(sh)
+				   == BTRFS_ROOT_BACKREF_KEY ||
 				   root_item_valid) {
 				if (!root_item_valid)
 					goto skip;
 
 				path = btrfs_list_path_for_root(mnt_fd,
-								sh->objectid);
+					btrfs_search_header_objectid(sh));
 				if (!path)
 					path = strdup("");
 				if (IS_ERR(path)) {
@@ -623,12 +631,12 @@ int subvol_uuid_search_init(int mnt_fd, struct subvol_uuid_search *s)
 					fprintf(stderr, "ERROR: unable to "
 							"resolve path "
 							"for root %llu\n",
-							sh->objectid);
+						btrfs_search_header_objectid(sh));
 					goto out;
 				}
 
 				si = calloc(1, sizeof(*si));
-				si->root_id = sh->objectid;
+				si->root_id = btrfs_search_header_objectid(sh);
 				memcpy(si->uuid, root_item.uuid,
 						BTRFS_UUID_SIZE);
 				memcpy(si->parent_uuid, root_item.parent_uuid,
@@ -648,15 +656,15 @@ int subvol_uuid_search_init(int mnt_fd, struct subvol_uuid_search *s)
 			}
 
 skip:
-			off += sh->len;
+			off += btrfs_search_header_len(sh);
 
 			/*
 			 * record the mins in sk so we can make sure the
 			 * next search doesn't repeat this root
 			 */
-			sk->min_objectid = sh->objectid;
-			sk->min_offset = sh->offset;
-			sk->min_type = sh->type;
+			sk->min_objectid = btrfs_search_header_objectid(sh);
+			sk->min_offset = btrfs_search_header_offset(sh);
+			sk->min_type = btrfs_search_header_type(sh);
 		}
 		sk->nr_items = 4096;
 		if (sk->min_offset < (u64)-1)

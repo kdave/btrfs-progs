@@ -876,9 +876,9 @@ static char *ino_resolve(int fd, u64 ino, u64 *cache_dirid, char **cache_name)
 	off = 0;
 	sh = (struct btrfs_ioctl_search_header *)(args.buf + off);
 
-	if (sh->type == BTRFS_INODE_REF_KEY) {
+	if (btrfs_search_header_type(sh) == BTRFS_INODE_REF_KEY) {
 		struct btrfs_inode_ref *ref;
-		dirid = sh->offset;
+		dirid = btrfs_search_header_offset(sh);
 
 		ref = (struct btrfs_inode_ref *)(sh + 1);
 		namelen = btrfs_stack_inode_ref_name_len(ref);
@@ -947,7 +947,7 @@ int btrfs_list_get_default_subvolume(int fd, u64 *default_id)
 
 	sh = (struct btrfs_ioctl_search_header *)args.buf;
 
-	if (sh->type == BTRFS_DIR_ITEM_KEY) {
+	if (btrfs_search_header_type(sh) == BTRFS_DIR_ITEM_KEY) {
 		struct btrfs_dir_item *di;
 		int name_len;
 		char *name;
@@ -1602,17 +1602,18 @@ static int print_one_extent(int fd, struct btrfs_ioctl_search_header *sh,
 	int flags = 0;
 	char *name = NULL;
 
-	if (sh->objectid == *cache_ino) {
+	if (btrfs_search_header_objectid(sh) == *cache_ino) {
 		name = *cache_full_name;
 	} else if (*cache_full_name) {
 		free(*cache_full_name);
 		*cache_full_name = NULL;
 	}
 	if (!name) {
-		name = ino_resolve(fd, sh->objectid, cache_dirid,
+		name = ino_resolve(fd, btrfs_search_header_objectid(sh),
+				   cache_dirid,
 				   cache_dir_name);
 		*cache_full_name = name;
-		*cache_ino = sh->objectid;
+		*cache_ino = btrfs_search_header_objectid(sh);
 	}
 	if (!name)
 		return -EIO;
@@ -1633,16 +1634,16 @@ static int print_one_extent(int fd, struct btrfs_ioctl_search_header *sh,
 		printf("unhandled extent type %d for inode %llu "
 		       "file offset %llu gen %llu\n",
 			type,
-			(unsigned long long)sh->objectid,
-			(unsigned long long)sh->offset,
+			(unsigned long long)btrfs_search_header_objectid(sh),
+			(unsigned long long)btrfs_search_header_offset(sh),
 			(unsigned long long)found_gen);
 
 		return -EIO;
 	}
 	printf("inode %llu file offset %llu len %llu disk start %llu "
 	       "offset %llu gen %llu flags ",
-	       (unsigned long long)sh->objectid,
-	       (unsigned long long)sh->offset,
+	       (unsigned long long)btrfs_search_header_objectid(sh),
+	       (unsigned long long)btrfs_search_header_offset(sh),
 	       (unsigned long long)len,
 	       (unsigned long long)disk_start,
 	       (unsigned long long)disk_offset,

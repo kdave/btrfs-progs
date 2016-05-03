@@ -185,11 +185,11 @@ static int load_chunk_info(int fd, struct chunk_info **info_ptr, int *info_count
 				return 1;
 			}
 
-			off += sh->len;
+			off += btrfs_search_header_len(sh);
 
-			sk->min_objectid = sh->objectid;
-			sk->min_type = sh->type;
-			sk->min_offset = sh->offset+1;
+			sk->min_objectid = btrfs_search_header_objectid(sh);
+			sk->min_type = btrfs_search_header_type(sh);
+			sk->min_offset = btrfs_search_header_offset(sh)+1;
 
 		}
 		if (!sk->min_offset)	/* overflow */

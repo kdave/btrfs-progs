@@ -1142,7 +1142,8 @@ static int enumerate_dead_subvols(int fd, u64 **ids)
 			sh = (struct btrfs_ioctl_search_header*)(args.buf + off);
 			off += sizeof(*sh);
 
-			if (sh->type == BTRFS_ORPHAN_ITEM_KEY) {
+			if (btrfs_search_header_type(sh)
+			    == BTRFS_ORPHAN_ITEM_KEY) {
 				if (idx >= count) {
 					u64 *newids;
 
@@ -1153,14 +1154,14 @@ static int enumerate_dead_subvols(int fd, u64 **ids)
 						return -ENOMEM;
 					*ids = newids;
 				}
-				(*ids)[idx] = sh->offset;
+				(*ids)[idx] = btrfs_search_header_offset(sh);
 				idx++;
 			}
-			off += sh->len;
+			off += btrfs_search_header_len(sh);
 
-			sk->min_objectid = sh->objectid;
-			sk->min_type = sh->type;
-			sk->min_offset = sh->offset;
+			sk->min_objectid = btrfs_search_header_objectid(sh);
+			sk->min_type = btrfs_search_header_type(sh);
+			sk->min_offset = btrfs_search_header_offset(sh);
 		}
 		if (sk->min_offset < (u64)-1)
 			sk->min_offset++;

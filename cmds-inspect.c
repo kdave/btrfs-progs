@@ -537,32 +537,33 @@ static int print_min_dev_size(int fd, u64 devid)
 								  off);
 			off += sizeof(*sh);
 			extent = (struct btrfs_dev_extent *)(args.buf + off);
-			off += sh->len;
+			off += btrfs_search_header_len(sh);
 
-			sk->min_objectid = sh->objectid;
-			sk->min_type = sh->type;
-			sk->min_offset = sh->offset + 1;
+			sk->min_objectid = btrfs_search_header_objectid(sh);
+			sk->min_type = btrfs_search_header_type(sh);
+			sk->min_offset = btrfs_search_header_offset(sh) + 1;
 
-			if (sh->objectid != devid ||
-			    sh->type != BTRFS_DEV_EXTENT_KEY)
+			if (btrfs_search_header_objectid(sh) != devid ||
+			    btrfs_search_header_type(sh) != BTRFS_DEV_EXTENT_KEY)
 				continue;
 
 			len = btrfs_stack_dev_extent_length(extent);
 			min_size += len;
-			ret = add_dev_extent(&extents, sh->offset,
-					     sh->offset + len - 1, 0);
+			ret = add_dev_extent(&extents,
+				btrfs_search_header_offset(sh),
+				btrfs_search_header_offset(sh) + len - 1, 0);
 
 			if (!ret && last_pos != (u64)-1 &&
-			    last_pos != sh->offset)
+			    last_pos != btrfs_search_header_offset(sh))
 				ret = add_dev_extent(&holes, last_pos,
-						     sh->offset - 1, 1);
+					btrfs_search_header_offset(sh) - 1, 1);
 			if (ret) {
 				error("add device extent: %s", strerror(-ret));
 				ret = 1;
 				goto out;
 			}
 
-			last_pos = sh->offset + len;
+			last_pos = btrfs_search_header_offset(sh) + len;
 		}
 
 		if (sk->min_type != BTRFS_DEV_EXTENT_KEY ||

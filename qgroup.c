@@ -1094,7 +1094,8 @@ static int __qgroups_search(int fd, struct qgroup_lookup *qgroup_lookup)
 								  off);
 			off += sizeof(*sh);
 
-			if (sh->type == BTRFS_QGROUP_STATUS_KEY) {
+			if (btrfs_search_header_type(sh)
+			    == BTRFS_QGROUP_STATUS_KEY) {
 				struct btrfs_qgroup_status_item *si;
 				u64 flags;
 
@@ -1102,7 +1103,8 @@ static int __qgroups_search(int fd, struct qgroup_lookup *qgroup_lookup)
 				     (args.buf + off);
 				flags = btrfs_stack_qgroup_status_flags(si);
 				print_status_flag_warning(flags);
-			} else if (sh->type == BTRFS_QGROUP_INFO_KEY) {
+			} else if (btrfs_search_header_type(sh)
+				   == BTRFS_QGROUP_INFO_KEY) {
 				info = (struct btrfs_qgroup_info_item *)
 				       (args.buf + off);
 				a1 = btrfs_stack_qgroup_info_generation(info);
@@ -1114,10 +1116,12 @@ static int __qgroups_search(int fd, struct qgroup_lookup *qgroup_lookup)
 				a5 =
 				  btrfs_stack_qgroup_info_exclusive_compressed
 				  (info);
-				add_qgroup(qgroup_lookup, sh->offset, a1, a2,
-					   a3, a4, a5, 0, 0, 0, 0, 0,
-					   NULL, NULL);
-			} else if (sh->type == BTRFS_QGROUP_LIMIT_KEY) {
+				add_qgroup(qgroup_lookup,
+					btrfs_search_header_offset(sh), a1,
+					a2, a3, a4, a5, 0, 0, 0, 0, 0, NULL,
+					NULL);
+			} else if (btrfs_search_header_type(sh)
+				   == BTRFS_QGROUP_LIMIT_KEY) {
 				limit = (struct btrfs_qgroup_limit_item *)
 				    (args.buf + off);
 
@@ -1130,34 +1134,38 @@ static int __qgroups_search(int fd, struct qgroup_lookup *qgroup_lookup)
 				     (limit);
 				a5 = btrfs_stack_qgroup_limit_rsv_exclusive
 				     (limit);
-				add_qgroup(qgroup_lookup, sh->offset, 0, 0,
-					   0, 0, 0, a1, a2, a3, a4, a5,
+				add_qgroup(qgroup_lookup,
+					   btrfs_search_header_offset(sh), 0,
+					   0, 0, 0, 0, a1, a2, a3, a4, a5,
 					   NULL, NULL);
-			} else if (sh->type == BTRFS_QGROUP_RELATION_KEY) {
-				if (sh->offset < sh->objectid)
+			} else if (btrfs_search_header_type(sh)
+				   == BTRFS_QGROUP_RELATION_KEY) {
+				if (btrfs_search_header_offset(sh)
+				    < btrfs_search_header_objectid(sh))
 					goto skip;
 				bq = qgroup_tree_search(qgroup_lookup,
-							sh->offset);
+					btrfs_search_header_offset(sh));
 				if (!bq)
 					goto skip;
 				bq1 = qgroup_tree_search(qgroup_lookup,
-							 sh->objectid);
+					 btrfs_search_header_objectid(sh));
 				if (!bq1)
 					goto skip;
-				add_qgroup(qgroup_lookup, sh->offset, 0, 0,
-					   0, 0, 0, 0, 0, 0, 0, 0, bq, bq1);
+				add_qgroup(qgroup_lookup,
+					   btrfs_search_header_offset(sh), 0,
+					   0, 0, 0, 0, 0, 0, 0, 0, 0, bq, bq1);
 			} else
 				goto done;
 skip:
-			off += sh->len;
+			off += btrfs_search_header_len(sh);
 
 			/*
 			 * record the mins in sk so we can make sure the
 			 * next search doesn't repeat this root
 			 */
-			sk->min_type = sh->type;
-			sk->min_offset = sh->offset;
-			sk->min_objectid = sh->objectid;
+			sk->min_type = btrfs_search_header_type(sh);
+			sk->min_offset = btrfs_search_header_offset(sh);
+			sk->min_objectid = btrfs_search_header_objectid(sh);
 		}
 		sk->nr_items = 4096;
 		/*
