@@ -1195,10 +1195,9 @@ static int cmd_subvol_sync(int argc, char **argv)
 
 		switch (c) {
 		case 's':
-			sleep_interval = atoi(argv[optind]);
+			sleep_interval = atoi(optarg);
 			if (sleep_interval < 1) {
-				error("invalid sleep interval %s",
-					argv[optind]);
+				error("invalid sleep interval %s", optarg);
 				ret = 1;
 				goto out;
 			}
