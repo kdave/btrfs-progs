@@ -445,9 +445,9 @@ static int do_balance(const char *path, struct btrfs_ioctl_balance_args *args,
 		printf("\twarning. The operation will start in %d seconds.\n", delay);
 		printf("\tUse Ctrl-C to stop it.\n");
 		while (delay) {
-			sleep(1);
 			printf("%2d", delay--);
 			fflush(stdout);
+			sleep(1);
 		}
 		printf("\nStarting balance without any filters.\n");
 	}
