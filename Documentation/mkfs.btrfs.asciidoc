@@ -275,14 +275,27 @@ physical copies highly depends on the underlying device type.
 
 For example, a SSD drive can remap the blocks internally to a single copy thus
 deduplicating them. This negates the purpose of increased redundancy and just
-wastes space.
+wastes filesystem space without the expected level of redundancy.
 
 The duplicated data/metadata may still be useful to statistically improve the
 chances on a device that might perform some internal optimizations. The actual
-details are not usually disclosed by vendors. As another example, the widely
-used USB flash or SD cards use a translation layer. The data lifetime may
-be affected by frequent plugging. The memory cells could get damaged, hopefully
-not destroying both copies of particular data.
+details are not usually disclosed by vendors. For example we could expect that
+not all blocks get deduplicated. This will provide a non-zero probability of
+recovery compared to a zero chance if the single profile is used. The user
+should make the tradeoff decision. The deduplication in SSDs is thought to be
+widely available so the reason behind the mkfs default is to not give a false
+sense of redundancy.
+
+As another example, the widely used USB flash or SD cards use a translation
+layer between the logical and physical view of the device. The data lifetime
+may be affected by frequent plugging. The memory cells could get damaged,
+hopefully not destroying both copies of particular data in case of DUP.
+
+The wear levelling techniques can also lead to reduced redundancy, even if the
+device does not do any deduplication. The controllers may put data written in
+a short timespan into the same physical storage unit (cell, block etc). In case
+this unit dies, both copies are lost. BTRFS does not add any artificial delay
+between metadata writes.
 
 The traditional rotational hard drives usually fail at the sector level.
 
