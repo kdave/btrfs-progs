@@ -3,7 +3,7 @@ btrfs-scrub(8)
 
 NAME
 ----
-btrfs-scrub - scrub btrfs filesystem
+btrfs-scrub - scrub btrfs filesystem, verify block checksums
 
 SYNOPSIS
 --------
@@ -12,21 +12,22 @@ SYNOPSIS
 DESCRIPTION
 -----------
 *btrfs scrub* is used to scrub a btrfs filesystem, which will read all data
-from all disks and verify checksums.
+and metadata blocks from all disks and verify checksums. Automatically repair
+corrupted blocks if there's a correct copy available.
 
 SUBCOMMAND
 ----------
 *cancel* <path>|<device>::
-If a scrub is running on the filesystem identified by <path>, cancel it.
+If a scrub is running on the filesystem identified by 'path>' cancel it.
 +
-Progress is saved in the scrub progress file and scrubbing can be resumed later
-using the scrub resume command.
-If a <device> is given, the corresponding filesystem is found and
-scrub cancel behaves as if it was called on that filesystem.
+Progress is saved in the scrub progress file ('/var/lib/btrfs/scrub.status.UUID')
+and scrubbing can be resumed later using the *btrfs scrub resume* command.
+If a 'device' is specified, the corresponding filesystem is found and
+*btrfs scrub cancel* behaves as if it was called on that filesystem.
 
 *resume* [-BdqrR] [-c <ioprio_class> -n <ioprio_classdata>] <path>|<device>::
-Resume a cancelled or interrupted scrub cycle on the filesystem identified by
-<path> or on a given <device>.
+Resume a cancelled or interrupted scrub on the filesystem identified by
+'path' or on a given 'device'.
 +
 Does not start a new scrub if the last scrub finished successfully.
 +
@@ -35,11 +36,11 @@ Does not start a new scrub if the last scrub finished successfully.
 see *scrub start*.
 
 *start* [-BdqrRf] [-c <ioprio_class> -n <ioprio_classdata>] <path>|<device>::
-Start a scrub on all devices of the filesystem identified by <path> or on
-a single <device>. If a scrub is already running, the new one fails.
+Start a scrub on all devices of the filesystem identified by 'path' or on
+a single 'device'. If a scrub is already running, the new one fails.
 +
 Without options, scrub is started as a background process.
-Progress can be obtained with the *scrub status* command. Scrubbing
+Progress can be obtained with the *btrfs scrub status* command. Scrubbing
 involves reading all data from all disks and verifying checksums. Errors are
 corrected along the way if possible.
 +
@@ -49,26 +50,28 @@ configured similar to the `ionice`(1) syntax using '-c' and '-n' options.
 `Options`
 +
 -B::::
-Do not background and print scrub statistics when finished.
+do not background and print scrub statistics when finished
 -d::::
-Print separate statistics for each device of the filesystem (-B only).
+print separate statistics for each device of the filesystem ('-B' only)
 -q::::
-Quiet. Omit error messages and statistics.
+be quiet, omit error messages and statistics
 -r::::
-Read only mode. Do not attempt to correct anything.
+read only mode, do not attempt to correct anything, can be run on a read-only
+filesystem
 -R::::
-Raw print mode. Print full data instead of summary.
+print raw statistics per-device instead of a summary
 -c <ioprio_class>::::
-Set IO priority class (see `ionice`(1) manpage).
+set IO priority class (see `ionice`(1) manpage)
 -n <ioprio_classdata>::::
-Set IO priority classdata (see `ionice`(1) manpage).
+set IO priority classdata (see `ionice`(1) manpage)
 -f::::
-Force starting new scrub even if a scrub is already running.
-This is useful when scrub status record file is damaged.
+force starting new scrub even if a scrub is already running,
+this is useful when scrub status file is damaged and reports a running
+scrub although it is not
 
 *status* [-d] <path>|<device>::
-Show status of a running scrub for the filesystem identified by <path> or
-for the specified <device>.
+Show status of a running scrub for the filesystem identified by 'path' or
+for the specified 'device'.
 +
 If no scrub is running, show statistics of the last finished or cancelled scrub
 for that filesystem or device.
@@ -76,7 +79,7 @@ for that filesystem or device.
 `Options`
 +
 -d::::
-Print separate statistics for each device of the filesystem.
+print separate statistics for each device of the filesystem
 
 EXIT STATUS
 -----------
