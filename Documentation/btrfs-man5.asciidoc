@@ -27,6 +27,9 @@ options please refer to `mount`(8) manpage. The options are sorted alphabeticall
 +
 Enable/disable support for Posix Access Control Lists (ACLs).  See the
 `acl`(5) manual page for more information about ACLs.
++
+The support for ACL is build-time configurable (BTRFS_FS_POSIX_ACL) and
+mount fails if 'acl' is requested but the feature is not compiled in.
 
 *alloc_start='bytes'*::
 (default: 1M, minimum: 1M)
@@ -69,7 +72,7 @@ synchronize all pending data and ordinary metadata blocks, then writes the
 superblock and issues another flush.
 +
 The write flushes incur a slight hit and also prevent the IO block
-scheduler to reorder requests in more effective way. Disabling barriers gets
+scheduler to reorder requests in a more effective way. Disabling barriers gets
 rid of that penalty but will most certainly lead to a corrupted filesystem in
 case of a crash or power loss. The ordinary metadata blocks could be yet
 unwritten at the time the new superblock is stored permanently, expecting that
@@ -121,8 +124,11 @@ but a warning is printed if it's more than 300 seconds (5 minutes).
 +
 Control BTRFS file data compression.  Type may be specified as 'zlib',
 'lzo' or 'no' (for no compression, used for remounting).  If no type
-is specified, 'zlib' is used.  If compress-force is specified,
-all files will be compressed, whether or not they compress well.
+is specified, 'zlib' is used.  If 'compress-force' is specified,
+all files will be compressed, whether or not they compress well. Otherwise
+some simple heuristics are applied to detect an incompressible file. If the
+first blocks written to a file are not compressible, the whole file is
+permanently marked to skip compression.
 +
 NOTE: If compression is enabled, 'nodatacow' and 'nodatasum' are disabled.
 
@@ -171,15 +177,17 @@ underlying device, the operation may severely hurt performance in case the TRIM
 operation is synchronous (eg. with SATA devices up to revision 3.0).
 +
 If discarding is not necessary to be done at the block freeing time, there's
-*fstrim* tool that lets the filesystem discard all free blocks in a batch,
-possibly not much interfering with other operations.
+`fstrim` tool that lets the filesystem discard all free blocks in a batch,
+possibly not much interfering with other operations. Also, the the device may
+ignore the TRIM command if the range is too small, so running the batch discard
+can actually discard the blocks.
 
 *enospc_debug*::
 *noenospc_debug*::
 (default: off)
 +
 Enable verbose output for some ENOSPC conditions. It's safe to use but can
-be noisy if the system hits reaches near-full state.
+be noisy if the system reaches near-full state.
 
 *fatal_errors='action'*::
 (since: 3.4, default: bug)
@@ -231,20 +239,31 @@ the option.
 NOTE: Defaults to off due to a potential overflow problem when the free space
 checksums don't fit inside a single page.
 
+*logreplay*::
+*nologreplay*::
+(default: on, even read-only)
++
+Enable/disable log replay at mount time. See also 'treelog'.
++
+WARNING: currently, the tree log is replayed even with a read-only mount! To
+disable that behaviour, mount also with 'nologreplay'.
+
 *max_inline='bytes'*::
-(default: min(8192, page size) )
+(default: min(2048, page size) )
 +
 Specify the maximum amount of space, in bytes, that can be inlined in
 a metadata B-tree leaf.  The value is specified in bytes, optionally
 with a K suffix (case insensitive).  In practice, this value
 is limited by the filesystem block size (named 'sectorsize' at mkfs time),
 and memory page size of the system. In case of sectorsize limit, there's
-some space unavailable due to leaf headers.  For example, a 4k sectorsize, max
-inline data is ~3900 bytes.
+some space unavailable due to leaf headers.  For example, a 4k sectorsize,
+maximum size of inline data is about 3900 bytes.
 +
-Inlining can be completely turned off specifying 0. This will increase data
+Inlining can be completely turned off by specifying 0. This will increase data
 block slack if file sizes are much smaller than block size but will reduce
 metadata consumption in return.
++
+NOTE: the default value has changed to 2048 in kernel 4.6.
 
 *metadata_ratio='value'*::
 (default: 0, internal logic)
@@ -252,17 +271,27 @@ metadata consumption in return.
 Specifies that 1 metadata chunk should be allocated after every 'value' data
 chunks. Default behaviour depends on internal logic, some percent of unused
 metadata space is attempted to be maintained but is not always possible if
-there's not space left for chunk allocation. The option could be useful to
+there's not enough space left for chunk allocation. The option could be useful to
 override the internal logic in favor of the metadata allocation if the expected
 workload is supposed to be metadata intense (snapshots, reflinks, xattrs,
 inlined files).
 
 *recovery*::
-(since: 3.2, default: off)
+(since: 3.2, default: off, deprecated since: 4.5)
 +
-Enable autorecovery attempts if a bad tree root is found at mount time.
-Currently this scans a backup list of several previous tree roots and tries to
-use the first readable. This can be used with read-only mounts as well.
+NOTE: this option has been replaced by 'usebackuproot' and should not be used
+but will work on 4.5+ kernels.
+
+*norecovery*::
+(since: 4.5, default: off)
++
+Do not attempt any data recovery at mount time. This will disable 'logreplay'
+and avoids other write operations.
++
+NOTE: The opposite option 'recovery' used to have different meaning but was
+changed for consistency with other filesystems, where 'norecovery' is used for
+skipping log replay. BTRFS does the same and in general will try to avoid any
+write operations.
 
 *rescan_uuid_tree*::
 (since: 3.12, default: off)
@@ -275,7 +304,7 @@ normally be needed.
 +
 Skip automatic resume of interrupted balance operation after mount.
 May be resumed with *btrfs balance resume* or the paused state can be removed
-by *btrfs balance cancel*.
+by *btrfs balance cancel*. The default behaviour is to start interrutpd balance.
 
 *space_cache*::
 *space_cache=v2*::
@@ -305,7 +334,8 @@ b-trees, sometimes referred to as 'free-space-tree'.
 +
 Options to control SSD allocation schemes.  By default, BTRFS will
 enable or disable SSD allocation heuristics depending on whether a
-rotational or non-rotational disk is in use.  The 'ssd' and 'nossd' options
+rotational or non-rotational disk is in use (contents of
+'/sys/block/DEV/queue/rotational').  The 'ssd' and 'nossd' options
 can override this autodetection.
 +
 The 'ssd_spread' mount option attempts to allocate into bigger and aligned
@@ -321,6 +351,9 @@ This mount option overrides the default subvolume set for the given filesystem.
 Mount subvolume specified by a 'subvolid' number rather than the toplevel
 subvolume.  You can use *btrfs subvolume list* to see subvolume ID numbers.
 This mount option overrides the default subvolume set for the given filesystem.
++
+NOTE: if both 'subvolid' and 'subvol' are specified, they must point at the
+same subvolume, otherwise mount will fail.
 
 *subvolrootid='objectid'*::
 (irrelevant since: 3.2, formally deprecated since: 3.10)
@@ -333,9 +366,9 @@ subvolume that did not reside directly under the toplevel subvolume.
 +
 The number of worker threads to allocate. NRCPUS is number of on-line CPUs
 detected at the time of mount. Small number leads to less parallelism in
-processing data and metadata, higher numbers could lead to a performance due to
-increased locking contention, cache-line bouncing or costly data transfers
-between local CPU memories.
+processing data and metadata, higher numbers could lead to a performance hit
+due to increased locking contention, cache-line bouncing or costly data
+transfers between local CPU memories.
 
 *treelog*::
 *notreelog*::
@@ -346,10 +379,20 @@ stores changes without the need of a full filesystem sync. The log operations
 are flushed at sync and transaction commit. If the system crashes between two
 such syncs, the pending tree log operations are replayed during mount.
 +
-WARNING: currently, the tree log is replayed even with a read-only mount!
+WARNING: currently, the tree log is replayed even with a read-only mount! To
+disable that behaviour, mount also with 'nologreplay'.
 +
 The tree log could contain new files/directories, these would not exist on
 a mounted filesystem if the log is not replayed.
+
+*usebackuproot*::
+*nousebackuproot*::
++
+Enable autorecovery attempts if a bad tree root is found at mount time.
+Currently this scans a backup list of several previous tree roots and tries to
+use the first readable. This can be used with read-only mounts as well.
++
+NOTE: This option has replaced 'recovery'.
 
 *user_subvol_rm_allowed*::
 (default: off)
