@@ -1,0 +1,10 @@
+SUBSYSTEM!="block", GOTO="btrfs_end"
+KERNEL!="dm-[0-9]*", GOTO="btrfs_end"
+ACTION!="add|change", GOTO="btrfs_end"
+ENV{ID_FS_TYPE}!="btrfs", GOTO="btrfs_end"
+
+# Once the device mapper symlink is created, tell btrfs about it
+# so we get the friendly name in /proc/mounts (and tools that read it)
+ENV{DM_NAME}=="?*", RUN{builtin}+="btrfs ready /dev/mapper/$env{DM_NAME}"
+
+LABEL="btrfs_end"
