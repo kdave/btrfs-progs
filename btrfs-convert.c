@@ -44,6 +44,18 @@
 #define INO_OFFSET (BTRFS_FIRST_FREE_OBJECTID - EXT2_ROOT_INO)
 #define CONV_IMAGE_SUBVOL_OBJECTID BTRFS_FIRST_FREE_OBJECTID
 
+/*
+ * Compatibility code for e2fsprogs 1.41 which doesn't support RO compat flag
+ * BIGALLOC.
+ * Unlike normal RO compat flag, BIGALLOC affects how e2fsprogs check used
+ * space, and btrfs-convert heavily relies on it.
+ */
+#ifdef HAVE_OLD_E2FSPROGS
+#define EXT2FS_CLUSTER_RATIO(fs)	(1)
+#define EXT2_CLUSTERS_PER_GROUP(s)	(EXT2_BLOCKS_PER_GROUP(s))
+#define EXT2FS_B2C(fs, blk)		(blk)
+#endif
+
 struct task_ctx {
 	uint32_t max_copy_inodes;
 	uint32_t cur_copy_inodes;
@@ -183,9 +195,23 @@ static int ext2_open_fs(struct btrfs_convert_context *cctx, const char *name)
 	errcode_t ret;
 	ext2_filsys ext2_fs;
 	ext2_ino_t ino;
+	u32 ro_feature;
+
 	ret = ext2fs_open(name, 0, 0, 0, unix_io_manager, &ext2_fs);
 	if (ret) {
 		fprintf(stderr, "ext2fs_open: %s\n", error_message(ret));
+		return -1;
+	}
+	/*
+	 * We need to know exactly the used space, some RO compat flags like
+	 * BIGALLOC will affect how used space is present.
+	 * So we need manuall check any unsupported RO compat flags
+	 */
+	ro_feature = ext2_fs->super->s_feature_ro_compat;
+	if (ro_feature & ~EXT2_LIB_FEATURE_RO_COMPAT_SUPP) {
+		error(
+"unsupported RO features detected: %x, abort convert to avoid possible corruption",
+		      ro_feature & ~EXT2_LIB_FEATURE_COMPAT_SUPP);
 		goto fail;
 	}
 	ret = ext2fs_read_inode_bitmap(ext2_fs);
@@ -227,6 +253,7 @@ static int ext2_open_fs(struct btrfs_convert_context *cctx, const char *name)
 	cctx->free_inodes_count = ext2_fs->super->s_free_inodes_count;
 	return 0;
 fail:
+	ext2fs_close(ext2_fs);
 	return -1;
 }
 
