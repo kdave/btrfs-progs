@@ -48,16 +48,15 @@ static int prop_read_only(enum prop_object_type type,
 	fd = open(object, O_RDONLY);
 	if (fd < 0) {
 		ret = -errno;
-		fprintf(stderr, "ERROR: open %s failed. %s\n",
-				object, strerror(-ret));
+		error("failed to open %s: %s", object, strerror(-ret));
 		goto out;
 	}
 
 	ret = ioctl(fd, BTRFS_IOC_SUBVOL_GETFLAGS, &flags);
 	if (ret < 0) {
 		ret = -errno;
-		fprintf(stderr, "ERROR: failed to get flags for %s. %s\n",
-				object, strerror(-ret));
+		error("failed to get flags for %s: %s", object,
+				strerror(-ret));
 		goto out;
 	}
 
@@ -76,15 +75,15 @@ static int prop_read_only(enum prop_object_type type,
 		flags = flags & ~BTRFS_SUBVOL_RDONLY;
 	} else {
 		ret = -EINVAL;
-		fprintf(stderr, "ERROR: invalid value for property.\n");
+		error("invalid value for property: %s", value);
 		goto out;
 	}
 
 	ret = ioctl(fd, BTRFS_IOC_SUBVOL_SETFLAGS, &flags);
 	if (ret < 0) {
 		ret = -errno;
-		fprintf(stderr, "ERROR: failed to set flags for %s. %s\n",
-				object, strerror(-ret));
+		error("failed to set flags for %s: %s", object,
+				strerror(-ret));
 		goto out;
 	}
 
@@ -130,8 +129,7 @@ static int prop_compression(enum prop_object_type type,
 	fd = open_file_or_dir3(object, &dirstream, open_flags);
 	if (fd == -1) {
 		ret = -errno;
-		fprintf(stderr, "ERROR: open %s failed. %s\n",
-			object, strerror(-ret));
+		error("failed to open %s: %s", object, strerror(-ret));
 		goto out;
 	}
 
@@ -151,9 +149,8 @@ static int prop_compression(enum prop_object_type type,
 	if (sret < 0) {
 		ret = -errno;
 		if (ret != -ENOATTR)
-			fprintf(stderr,
-				"ERROR: failed to %s compression for %s. %s\n",
-				value ? "set" : "get", object, strerror(-ret));
+			error("failed to %s compression for %s: %s",
+			      value ? "set" : "get", object, strerror(-ret));
 		else
 			ret = 0;
 		goto out;
@@ -169,9 +166,8 @@ static int prop_compression(enum prop_object_type type,
 		sret = fgetxattr(fd, xattr_name, buf, len);
 		if (sret < 0) {
 			ret = -errno;
-			fprintf(stderr,
-				"ERROR: failed to get compression for %s. %s\n",
-				object, strerror(-ret));
+			error("failed to get compression for %s: %s",
+			      object, strerror(-ret));
 			goto out;
 		}
 		fprintf(stdout, "compression=%.*s\n", (int)len, buf);
