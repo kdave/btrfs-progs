@@ -2038,7 +2038,7 @@ static int read_chunk_block(struct mdrestore_struct *mdres, u8 *buffer,
 
 		fs_chunk = malloc(sizeof(struct fs_chunk));
 		if (!fs_chunk) {
-			fprintf(stderr, "Erorr allocating chunk\n");
+			fprintf(stderr, "Error allocating chunk\n");
 			ret = -ENOMEM;
 			break;
 		}

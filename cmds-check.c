@@ -5539,7 +5539,7 @@ static int check_space_cache(struct btrfs_root *root)
 
 		ret = verify_space_cache(root, cache);
 		if (ret) {
-			fprintf(stderr, "cache appears valid but isnt %Lu\n",
+			fprintf(stderr, "cache appears valid but isn't %Lu\n",
 				cache->key.objectid);
 			error++;
 		}
