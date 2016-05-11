@@ -2656,7 +2656,7 @@ fail:
 		close(fd);
 	if (is_btrfs)
 		fprintf(stderr,
-			"WARNING: an error occured during chunk mapping fixup, filesystem mountable but not finalized\n");
+			"WARNING: an error occurred during chunk mapping fixup, filesystem mountable but not finalized\n");
 	else
 		fprintf(stderr, "conversion aborted\n");
 	return -1;
