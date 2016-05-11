@@ -479,7 +479,7 @@ static int del_file_extent_hole(struct rb_root *holes,
 		return -EEXIST;
 
 	/*
-	 * Now there will be no overflap, delete the hole and re-add the
+	 * Now there will be no overlap, delete the hole and re-add the
 	 * split(s) if they exists.
 	 */
 	if (start > hole->start) {
@@ -749,9 +749,9 @@ static void print_ref_error(int errors)
 	if (errors & REF_ERR_DUP_INODE_REF)
 		fprintf(stderr, ", dup inode ref");
 	if (errors & REF_ERR_INDEX_UNMATCH)
-		fprintf(stderr, ", index unmatch");
+		fprintf(stderr, ", index mismatch");
 	if (errors & REF_ERR_FILETYPE_UNMATCH)
-		fprintf(stderr, ", filetype unmatch");
+		fprintf(stderr, ", filetype mismatch");
 	if (errors & REF_ERR_NAME_TOO_LONG)
 		fprintf(stderr, ", name too long");
 	if (errors & REF_ERR_NO_ROOT_REF)
@@ -2692,7 +2692,7 @@ static int repair_inode_no_item(struct btrfs_trans_handle *trans,
 			type_recovered = 1;
 			filetype = BTRFS_FT_REG_FILE;
 		} else{
-			printf("Can't determint the filetype for inode %llu, assume it is a normal file\n",
+			printf("Can't determine the filetype for inode %llu, assume it is a normal file\n",
 			       rec->ino);
 			type_recovered = 1;
 			filetype = BTRFS_FT_REG_FILE;
@@ -2895,7 +2895,7 @@ static int check_inode_recs(struct btrfs_root *root,
 	/*
 	 * We need to record the highest inode number for later 'lost+found'
 	 * dir creation.
-	 * We must select a ino not used/refered by any existing inode, or
+	 * We must select an ino not used/referred by any existing inode, or
 	 * 'lost+found' ino may be a missing ino in a corrupted leaf,
 	 * this may cause 'lost+found' dir has wrong nlinks.
 	 */
@@ -4326,7 +4326,7 @@ static int check_block(struct btrfs_root *root,
 		} else {
 			/*
 			 * Signal to callers we need to start the scan over
-			 * again since we'll have cow'ed blocks.
+			 * again since we'll have cowed blocks.
 			 */
 			ret = -EAGAIN;
 		}
@@ -5549,7 +5549,7 @@ static int check_space_cache(struct btrfs_root *root)
 
 		ret = verify_space_cache(root, cache);
 		if (ret) {
-			fprintf(stderr, "cache appears valid but isnt %Lu\n",
+			fprintf(stderr, "cache appears valid but isn't %Lu\n",
 				cache->key.objectid);
 			error++;
 		}
@@ -5639,7 +5639,7 @@ static int check_extent_exists(struct btrfs_root *root, u64 bytenr,
 
 	path = btrfs_alloc_path();
 	if (!path) {
-		fprintf(stderr, "Error allocing path\n");
+		fprintf(stderr, "Error allocating path\n");
 		return -ENOMEM;
 	}
 
@@ -5672,7 +5672,7 @@ again:
 
 	/*
 	 * Block group items come before extent items if they have the same
-	 * bytenr, so walk back one more just in case.  Dear future traveler,
+	 * bytenr, so walk back one more just in case.  Dear future traveller,
 	 * first congrats on mastering time travel.  Now if it's not too much
 	 * trouble could you go back to 2006 and tell Chris to make the
 	 * BLOCK_GROUP_ITEM_KEY (and BTRFS_*_REF_KEY) lower than the
@@ -5881,7 +5881,7 @@ static int is_dropped_key(struct btrfs_key *key,
  * 1) If BTRFS_HEADER_FLAG_RELOC is set then we have FULL_BACKREF set.
  * 2) If btrfs_header_owner(buf) no longer points to buf then we have
  *	FULL_BACKREF set.
- * 3) We cow'ed the block walking down a reloc tree.  This is impossible to tell
+ * 3) We cowed the block walking down a reloc tree.  This is impossible to tell
  *    if it happened after the relocation occurred since we'll have dropped the
  *    reloc root, so it's entirely possible to have FULL_BACKREF set on buf and
  *    have no real way to know for sure.
@@ -7090,7 +7090,7 @@ static int delete_duplicate_records(struct btrfs_root *root,
 
 		if (tmp->start + tmp->nr < good->start + good->nr) {
 			fprintf(stderr, "Ok we have overlapping extents that "
-				"aren't completely covered by eachother, this "
+				"aren't completely covered by each other, this "
 				"is going to require more careful thought.  "
 				"The extents are [%Lu-%Lu] and [%Lu-%Lu]\n",
 				tmp->start, tmp->nr, good->start, good->nr);
@@ -8824,7 +8824,7 @@ static int reinit_extent_tree(struct btrfs_trans_handle *trans,
 
 	ret = reset_balance(trans, fs_info);
 	if (ret)
-		fprintf(stderr, "error reseting the pending balance\n");
+		fprintf(stderr, "error resetting the pending balance\n");
 
 	return ret;
 }
@@ -9506,8 +9506,8 @@ out:
 
 const char * const cmd_check_usage[] = {
 	"btrfs check [options] <device>",
-	"Check structural inegrity of a filesystem (unmounted).",
-	"Check structural inegrity of an unmounted filesystem. Verify internal",
+	"Check structural integrity of a filesystem (unmounted).",
+	"Check structural integrity of an unmounted filesystem. Verify internal",
 	"trees' consistency and item connectivity. In the repair mode try to",
 	"fix the problems found.",
 	"WARNING: the repair mode is considered dangerous",
@@ -9518,7 +9518,7 @@ const char * const cmd_check_usage[] = {
 	"--readonly                  run in read-only mode (default)",
 	"--init-csum-tree            create a new CRC tree",
 	"--init-extent-tree          create a new extent tree",
-	"--check-data-csum           verify checkums of data blocks",
+	"--check-data-csum           verify checksums of data blocks",
 	"-Q|--qgroup-report           print a report on qgroup consistency",
 	"-E|--subvol-extents <subvolid>",
 	"                            print subvolume extents and sharing state",

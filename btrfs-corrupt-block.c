@@ -719,7 +719,7 @@ static int corrupt_metadata_block(struct btrfs_root *root, u64 block,
 
 	root = btrfs_read_fs_root(root->fs_info, &root_key);
 	if (IS_ERR(root)) {
-		fprintf(stderr, "Couldn't finde owner root %llu\n",
+		fprintf(stderr, "Couldn't find owner root %llu\n",
 			key.objectid);
 		return PTR_ERR(root);
 	}
@@ -871,7 +871,7 @@ static int delete_csum(struct btrfs_root *root, u64 bytenr, u64 bytes)
 }
 
 /* corrupt item using NO cow.
- * Because chunk recover will recover based on whole partition scaning,
+ * Because chunk recover will recover based on whole partition scanning,
  * If using COW, chunk recover will use the old item to recover,
  * which is still OK but we want to check the ability to rebuild chunk
  * not only restore the old ones */

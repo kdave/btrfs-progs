@@ -90,7 +90,7 @@ run_mustfail()
 check_prereq()
 {
 	if ! [ -f $TOP/$1 ]; then
-		_fail "Failed prerequisities: $1";
+		_fail "Failed prerequisites: $1";
 	fi
 }
 

@@ -2279,7 +2279,7 @@ int check_mounted_where(int fd, const char *file, char *where, int size,
 			return ret;
 	}
 
-	/* iterate over the list of currently mountes filesystems */
+	/* iterate over the list of currently mounted filesystems */
 	if ((f = setmntent ("/proc/self/mounts", "r")) == NULL)
 		return -errno;
 

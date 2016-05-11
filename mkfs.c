@@ -88,7 +88,7 @@ static int create_metadata_block_groups(struct btrfs_root *root, int mixed,
 					BTRFS_BLOCK_GROUP_DATA);
 		if (ret == -ENOSPC) {
 			fprintf(stderr,
-				"no space to alloc data/metadata chunk\n");
+				"no space to allocate data/metadata chunk\n");
 			goto err;
 		}
 		BUG_ON(ret);
@@ -104,7 +104,7 @@ static int create_metadata_block_groups(struct btrfs_root *root, int mixed,
 					&chunk_start, &chunk_size,
 					BTRFS_BLOCK_GROUP_METADATA);
 		if (ret == -ENOSPC) {
-			fprintf(stderr, "no space to alloc metadata chunk\n");
+			fprintf(stderr, "no space to allocate metadata chunk\n");
 			goto err;
 		}
 		BUG_ON(ret);
@@ -136,7 +136,7 @@ static int create_data_block_groups(struct btrfs_trans_handle *trans,
 					&chunk_start, &chunk_size,
 					BTRFS_BLOCK_GROUP_DATA);
 		if (ret == -ENOSPC) {
-			fprintf(stderr, "no space to alloc data chunk\n");
+			fprintf(stderr, "no space to allocate data chunk\n");
 			goto err;
 		}
 		BUG_ON(ret);
@@ -1205,7 +1205,7 @@ static int is_temp_block_group(struct extent_buffer *node,
 	 * 1) Empty chunk
 	 * Temp chunk is always empty.
 	 *
-	 * 2) profile dismatch with mkfs profile.
+	 * 2) profile mismatch with mkfs profile.
 	 * Temp chunk is always in SINGLE
 	 *
 	 * 3) Size differs with mkfs_alloc
@@ -1663,7 +1663,7 @@ int main(int argc, char **argv)
 	if (group_profile_max_safe_loss(metadata_profile) <
 		group_profile_max_safe_loss(data_profile)){
 		fprintf(stderr,
-			"WARNING: metatdata has lower redundancy than data!\n\n");
+			"WARNING: metadata has lower redundancy than data!\n\n");
 	}
 
 	mkfs_cfg.label = label;

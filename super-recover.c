@@ -316,7 +316,7 @@ int btrfs_recover_superblocks(const char *dname,
 		ret = 3;
 		goto no_recover;
 	}
-	/* reset super_bytenr in order that we will rewite all supers */
+	/* reset super_bytenr in order that we will rewrite all supers */
 	root->fs_info->super_bytenr = BTRFS_SUPER_INFO_OFFSET;
 	ret = write_all_supers(root);
 	if (!ret)
@@ -328,7 +328,7 @@ int btrfs_recover_superblocks(const char *dname,
 no_recover:
 	recover_err_str(ret);
 	free_recover_superblock(&recover);
-	/* check if we have freed fs_deivces in close_ctree() */
+	/* check if we have freed fs_devices in close_ctree() */
 	if (!root)
 		btrfs_close_devices(recover.fs_devices);
 	return ret;

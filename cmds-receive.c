@@ -644,7 +644,7 @@ static int open_inode_for_write(struct btrfs_receive *r, const char *path)
 	r->write_fd = open(path, O_RDWR);
 	if (r->write_fd < 0) {
 		ret = -errno;
-		error("cannont open %s: %s", path, strerror(-ret));
+		error("cannot open %s: %s", path, strerror(-ret));
 		goto out;
 	}
 	strncpy_null(r->write_path, path);

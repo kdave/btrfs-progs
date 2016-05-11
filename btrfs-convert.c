@@ -2619,7 +2619,7 @@ next_extent:
 		ret = pwrite(fd, buf, sectorsize, bytenr);
 		if (ret != sectorsize) {
 			fprintf(stderr,
-				"error during zeroing supreblock %d: %d\n",
+				"error during zeroing superblock %d: %d\n",
 				i, ret);
 			goto fail;
 		}

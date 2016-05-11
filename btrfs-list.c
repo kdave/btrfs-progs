@@ -564,7 +564,7 @@ static int resolve_root(struct root_lookup *rl, struct root_info *ri,
 		int add_len;
 
 		/*
-		 * ref_tree = 0 indicates the subvolumes
+		 * ref_tree = 0 indicates the subvolume
 		 * has been deleted.
 		 */
 		if (!found->ref_tree) {
@@ -678,7 +678,7 @@ static int lookup_ino_path(int fd, struct root_info *ri)
 }
 
 /* finding the generation for a given path is a two step process.
- * First we use the inode loookup routine to find out the root id
+ * First we use the inode lookup routine to find out the root id
  *
  * Then we use the tree search ioctl to scan all the root items for a
  * given root id and spit out the latest generation we can find

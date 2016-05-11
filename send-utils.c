@@ -403,7 +403,7 @@ static struct subvol_info *tree_search(struct rb_root *root,
 }
 
 /*
- * this function will be only called if kernel dosen't support uuid tree.
+ * this function will be only called if kernel doesn't support uuid tree.
  */
 static struct subvol_info *subvol_uuid_search_old(struct subvol_uuid_search *s,
 				       u64 root_id, const u8 *uuid, u64 transid,

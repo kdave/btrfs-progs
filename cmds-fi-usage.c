@@ -280,7 +280,7 @@ static struct btrfs_ioctl_space_args *load_space_info(int fd, char *path)
 }
 
 /*
- * This function computes the space occuped by a *single* RAID5/RAID6 chunk.
+ * This function computes the space occupied by a *single* RAID5/RAID6 chunk.
  * The computation is performed on the basis of the number of stripes
  * which compose the chunk, which could be different from the number of devices
  * if a disk is added later.

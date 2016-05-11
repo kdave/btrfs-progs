@@ -18,7 +18,7 @@ source $TOP/tests/common
 # Allow child test to use $TOP and $RESULTS
 export TOP
 export RESULTS
-# For custom script needs to verfiy recovery
+# For custom script needs to verify recovery
 export LANG
 
 rm -f $RESULTS

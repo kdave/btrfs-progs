@@ -657,7 +657,7 @@ static void *dump_worker(void *data)
 			async->bufsize = compressBound(async->size);
 			async->buffer = malloc(async->bufsize);
 			if (!async->buffer) {
-				fprintf(stderr, "Error allocing buffer\n");
+				fprintf(stderr, "Error allocating buffer\n");
 				pthread_mutex_lock(&md->mutex);
 				if (!md->error)
 					md->error = -ENOMEM;
@@ -1324,7 +1324,7 @@ static int create_metadump(const char *input, FILE *out, int num_threads,
 	ret = metadump_init(&metadump, root, out, num_threads,
 			    compress_level, sanitize);
 	if (ret) {
-		fprintf(stderr, "Error initing metadump %d\n", ret);
+		fprintf(stderr, "Error initializing metadump %d\n", ret);
 		close_ctree(root);
 		return ret;
 	}
@@ -1339,7 +1339,7 @@ static int create_metadump(const char *input, FILE *out, int num_threads,
 
 	path = btrfs_alloc_path();
 	if (!path) {
-		fprintf(stderr, "Out of memory allocing path\n");
+		fprintf(stderr, "Out of memory allocating path\n");
 		err = -ENOMEM;
 		goto out;
 	}
@@ -1671,7 +1671,7 @@ static void *restore_worker(void *data)
 	outfd = fileno(mdres->out);
 	buffer = malloc(compress_size);
 	if (!buffer) {
-		fprintf(stderr, "Error allocing buffer\n");
+		fprintf(stderr, "Error allocating buffer\n");
 		pthread_mutex_lock(&mdres->mutex);
 		if (!mdres->error)
 			mdres->error = -ENOMEM;
@@ -1913,7 +1913,7 @@ static int add_cluster(struct meta_cluster *cluster,
 		async->bufsize = le32_to_cpu(item->size);
 		async->buffer = malloc(async->bufsize);
 		if (!async->buffer) {
-			fprintf(stderr, "Error allocing async buffer\n");
+			fprintf(stderr, "Error allocating async buffer\n");
 			free(async);
 			return -ENOMEM;
 		}
@@ -2038,7 +2038,7 @@ static int read_chunk_block(struct mdrestore_struct *mdres, u8 *buffer,
 
 		fs_chunk = malloc(sizeof(struct fs_chunk));
 		if (!fs_chunk) {
-			fprintf(stderr, "Erorr allocating chunk\n");
+			fprintf(stderr, "Error allocating chunk\n");
 			ret = -ENOMEM;
 			break;
 		}
@@ -2090,7 +2090,7 @@ static int search_for_chunk_blocks(struct mdrestore_struct *mdres,
 
 	buffer = malloc(max_size);
 	if (!buffer) {
-		fprintf(stderr, "Error allocing buffer\n");
+		fprintf(stderr, "Error allocating buffer\n");
 		free(cluster);
 		return -ENOMEM;
 	}
@@ -2098,7 +2098,7 @@ static int search_for_chunk_blocks(struct mdrestore_struct *mdres,
 	if (mdres->compress_method == COMPRESS_ZLIB) {
 		tmp = malloc(max_size);
 		if (!tmp) {
-			fprintf(stderr, "Error allocing tmp buffer\n");
+			fprintf(stderr, "Error allocating tmp buffer\n");
 			free(cluster);
 			free(buffer);
 			return -ENOMEM;
@@ -2264,7 +2264,7 @@ static int build_chunk_tree(struct mdrestore_struct *mdres,
 
 	buffer = malloc(le32_to_cpu(item->size));
 	if (!buffer) {
-		fprintf(stderr, "Error allocing buffer\n");
+		fprintf(stderr, "Error allocating buffer\n");
 		return -ENOMEM;
 	}
 
@@ -2360,7 +2360,7 @@ static int fixup_devices(struct btrfs_fs_info *fs_info,
 
 	path = btrfs_alloc_path();
 	if (!path) {
-		fprintf(stderr, "Error alloc'ing path\n");
+		fprintf(stderr, "Error allocating path\n");
 		return -ENOMEM;
 	}
 
@@ -2490,7 +2490,7 @@ static int restore_metadump(const char *input, FILE *out, int old_restore,
 	ret = mdrestore_init(&mdrestore, in, out, old_restore, num_threads,
 			     fixup_offset, info, multi_devices);
 	if (ret) {
-		fprintf(stderr, "Error initing mdrestore %d\n", ret);
+		fprintf(stderr, "Error initializing mdrestore %d\n", ret);
 		goto failed_cluster;
 	}
 

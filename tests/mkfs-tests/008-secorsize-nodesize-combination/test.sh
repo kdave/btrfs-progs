@@ -34,7 +34,7 @@ do_test 8191 8191 && _fail
 # Invalid: Aligned sectorsize with unaligned nodesize
 do_test 4k 16385 && _fail
 
-# Invalid: Ungliend sectorsize with aligned nodesize
+# Invalid: Unaligned sectorsize with aligned nodesize
 do_test 8191 16k && _fail
 
 # Valid: Aligned sectorsize and nodesize

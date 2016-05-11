@@ -1694,7 +1694,7 @@ static int btrfs_check_chunk_valid(struct btrfs_root *root,
 }
 
 /*
- * Slot is used to verfy the chunk item is valid
+ * Slot is used to verify the chunk item is valid
  *
  * For sys chunk in superblock, pass -1 to indicate sys chunk.
  */

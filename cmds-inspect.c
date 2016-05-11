@@ -415,7 +415,7 @@ static void adjust_dev_min_size(struct list_head *extents,
 	/*
 	 * List of device extents is sorted by descending order of the extent's
 	 * end offset. If some extent goes beyond the computed minimum size,
-	 * which initially matches the sum of the lenghts of all extents,
+	 * which initially matches the sum of the lengths of all extents,
 	 * we need to check if the extent can be relocated to an hole in the
 	 * device between [0, *min_size[ (which is what the resize ioctl does).
 	 */

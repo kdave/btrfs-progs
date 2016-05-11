@@ -173,7 +173,7 @@ static int btrfs_csum_sizes[] = { 4 };
 
 /*
  * the key defines the order in the tree, and so it also defines (optimal)
- * block layout.  objectid corresonds to the inode number.  The flags
+ * block layout.  objectid corresponds to the inode number.  The flags
  * tells us things about the object, and is a kind of stream selector.
  * so for a given inode, keys with flags of 1 might refer to the inode
  * data, flags of 2 may point to file data in the btree and flags == 3
@@ -229,7 +229,7 @@ struct btrfs_dev_item {
 
 	/*
 	 * starting byte of this partition on the device,
-	 * to allowr for stripe alignment in the future
+	 * to allow for stripe alignment in the future
 	 */
 	__le64 start_offset;
 
@@ -747,7 +747,7 @@ struct btrfs_root_item {
 
 	/*
 	 * This generation number is used to test if the new fields are valid
-	 * and up to date while reading the root item. Everytime the root item
+	 * and up to date while reading the root item. Every time the root item
 	 * is written out, the "generation" field is copied into this field. If
 	 * anyone ever mounted the fs with an older kernel, we will have
 	 * mismatching generation values here and thus must invalidate the
