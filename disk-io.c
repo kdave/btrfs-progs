@@ -1419,53 +1419,65 @@ static int check_super(struct btrfs_super_block *sb)
 	if (btrfs_super_root_level(sb) >= BTRFS_MAX_LEVEL) {
 		fprintf(stderr, "ERROR: tree_root level too big: %d >= %d\n",
 			btrfs_super_root_level(sb), BTRFS_MAX_LEVEL);
-		return -EIO;
+		goto error_out;
 	}
 	if (btrfs_super_chunk_root_level(sb) >= BTRFS_MAX_LEVEL) {
 		fprintf(stderr, "ERROR: chunk_root level too big: %d >= %d\n",
 			btrfs_super_chunk_root_level(sb), BTRFS_MAX_LEVEL);
-		return -EIO;
+		goto error_out;
 	}
 	if (btrfs_super_log_root_level(sb) >= BTRFS_MAX_LEVEL) {
 		fprintf(stderr, "ERROR: log_root level too big: %d >= %d\n",
 			btrfs_super_log_root_level(sb), BTRFS_MAX_LEVEL);
-		return -EIO;
+		goto error_out;
 	}
 
 	if (!IS_ALIGNED(btrfs_super_root(sb), 4096)) {
 		fprintf(stderr, "ERROR: tree_root block unaligned: %llu\n",
 			btrfs_super_root(sb));
-		return -EIO;
+		goto error_out;
 	}
 	if (!IS_ALIGNED(btrfs_super_chunk_root(sb), 4096)) {
 		fprintf(stderr, "ERROR: chunk_root block unaligned: %llu\n",
 			btrfs_super_chunk_root(sb));
-		return -EIO;
+		goto error_out;
 	}
 	if (!IS_ALIGNED(btrfs_super_log_root(sb), 4096)) {
 		fprintf(stderr, "ERROR: log_root block unaligned: %llu\n",
 			btrfs_super_log_root(sb));
-		return -EIO;
+		goto error_out;
 	}
 	if (btrfs_super_nodesize(sb) < 4096) {
 		fprintf(stderr, "ERROR: nodesize too small: %u < 4096\n",
 			btrfs_super_nodesize(sb));
-		return -EIO;
+		goto error_out;
 	}
 	if (!IS_ALIGNED(btrfs_super_nodesize(sb), 4096)) {
 		fprintf(stderr, "ERROR: nodesize unaligned: %u\n",
 			btrfs_super_nodesize(sb));
-		return -EIO;
+		goto error_out;
 	}
 	if (btrfs_super_sectorsize(sb) < 4096) {
 		fprintf(stderr, "ERROR: sectorsize too small: %u < 4096\n",
 			btrfs_super_sectorsize(sb));
-		return -EIO;
+		goto error_out;
 	}
 	if (!IS_ALIGNED(btrfs_super_sectorsize(sb), 4096)) {
 		fprintf(stderr, "ERROR: sectorsize unaligned: %u\n",
 			btrfs_super_sectorsize(sb));
-		return -EIO;
+		goto error_out;
+	}
+	if (btrfs_super_total_bytes(sb) == 0) {
+		error("invalid total_bytes 0");
+		goto error_out;
+	}
+	if (btrfs_super_bytes_used(sb) < 6 * btrfs_super_nodesize(sb)) {
+		error("invalid bytes_used %llu", btrfs_super_bytes_used(sb));
+		goto error_out;
+	}
+	if (btrfs_super_stripesize(sb) != 4096) {
+		error("invalid stripesize %u", btrfs_super_stripesize(sb));
+		goto error_out;
 	}
 
 	if (memcmp(sb->fsid, sb->dev_item.fsid, BTRFS_UUID_SIZE) != 0) {
@@ -1477,7 +1489,7 @@ static int check_super(struct btrfs_super_block *sb)
 		printk(KERN_ERR
 			"ERROR: dev_item UUID does not match fsid: %s != %s\n",
 			dev_fsid, fsid);
-		return -EIO;
+		goto error_out;
 	}
 
 	/*
@@ -1490,7 +1502,7 @@ static int check_super(struct btrfs_super_block *sb)
 
 	if (btrfs_super_num_devices(sb) == 0) {
 		fprintf(stderr, "ERROR: number of devices is 0\n");
-		return -EIO;
+		goto error_out;
 	}
 
 	/*
@@ -1501,7 +1513,7 @@ static int check_super(struct btrfs_super_block *sb)
 		fprintf(stderr, "BTRFS: system chunk array too big %u > %u\n",
 			btrfs_super_sys_array_size(sb),
 			BTRFS_SYSTEM_CHUNK_ARRAY_SIZE);
-		return -EIO;
+		goto error_out;
 	}
 	if (btrfs_super_sys_array_size(sb) < sizeof(struct btrfs_disk_key)
 			+ sizeof(struct btrfs_chunk)) {
@@ -1509,10 +1521,14 @@ static int check_super(struct btrfs_super_block *sb)
 			btrfs_super_sys_array_size(sb),
 			sizeof(struct btrfs_disk_key) +
 			sizeof(struct btrfs_chunk));
-		return -EIO;
+		goto error_out;
 	}
 
 	return 0;
+
+error_out:
+	error("superblock checksum matches but it has invalid members");
+	return -EIO;
 }
 
 int btrfs_read_dev_super(int fd, struct btrfs_super_block *sb, u64 sb_bytenr,
