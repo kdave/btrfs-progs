@@ -160,7 +160,7 @@ static int parse_range_strict(const char *range, u64 *start, u64 *end)
 }
 
 /*
- * Convert 64bit range to 32bit with boundary checkso
+ * Convert 64bit range to 32bit with boundary checks
  */
 static int range_to_u32(u64 start, u64 end, u32 *start32, u32 *end32)
 {
@@ -876,7 +876,7 @@ static int cmd_balance_full(int argc, char **argv)
 }
 
 static const char balance_cmd_group_info[] =
-"balance data accross devices, or change block groups using filters";
+"balance data across devices, or change block groups using filters";
 
 const struct cmd_group balance_cmd_group = {
 	balance_cmd_group_usage, balance_cmd_group_info, {

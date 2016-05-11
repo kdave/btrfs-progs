@@ -617,7 +617,7 @@ int cmd_send(int argc, char **argv)
 			goto out;
 		if (!ret) {
 			ret = -EINVAL;
-			error("subvolum %s is not read-only", subvol);
+			error("subvolume %s is not read-only", subvol);
 			goto out;
 		}
 	}

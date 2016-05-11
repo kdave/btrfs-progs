@@ -96,7 +96,7 @@ class btrfs_ioctl_search_args(ctypes.Structure):
                  ("buf", ctypes.c_ubyte * args_buffer_size),
                ]
 
-# the search ioctl resturns one header for each item
+# the search ioctl returns one header for each item
 #
 class btrfs_ioctl_search_header(ctypes.Structure):
     _pack_ = 1

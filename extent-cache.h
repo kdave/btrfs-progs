@@ -53,7 +53,7 @@ struct cache_extent *next_cache_extent(struct cache_extent *pe);
 struct cache_extent *search_cache_extent(struct cache_tree *tree, u64 start);
 
 /*
- * Find a cahce_extent which restrictly covers start.
+ * Find a cache_extent which restrictly covers start.
  *
  * If not found, return NULL.
  */

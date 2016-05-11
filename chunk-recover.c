@@ -247,7 +247,7 @@ again:
 					      generation);
 			/*
 			 * According to the current kernel code, the following
-			 * case is impossble, or there is something wrong in
+			 * case is impossible, or there is something wrong in
 			 * the kernel code.
 			 */
 			if (memcmp(((void *)exist) + offset,
@@ -618,7 +618,7 @@ static int check_chunk_by_metadata(struct recover_control *rc,
 		    btrfs_dev_extent_chunk_offset(l, dev_extent)) {
 			if (rc->verbose)
 				fprintf(stderr,
-					"Device tree unmatch with chunks dev_extent[%llu, %llu], chunk[%llu, %llu]\n",
+					"Device tree mismatch with chunks dev_extent[%llu, %llu], chunk[%llu, %llu]\n",
 					btrfs_dev_extent_chunk_offset(l,
 								dev_extent),
 					btrfs_dev_extent_length(l, dev_extent),
@@ -654,7 +654,7 @@ bg_check:
 	if (chunk->type_flags != btrfs_disk_block_group_flags(l, bg_ptr)) {
 		if (rc->verbose)
 			fprintf(stderr,
-				"Chunk[%llu, %llu]'s type(%llu) is differemt with Block Group's type(%llu)\n",
+				"Chunk[%llu, %llu]'s type(%llu) is different with Block Group's type(%llu)\n",
 				chunk->offset, chunk->length, chunk->type_flags,
 				btrfs_disk_block_group_flags(l, bg_ptr));
 		btrfs_release_path(&path);

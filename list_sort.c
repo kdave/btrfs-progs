@@ -1,5 +1,5 @@
 /*
- * taken from linux kernel lib/list_sort.c, removed uneeded code and adapted
+ * taken from linux kernel lib/list_sort.c, removed unneeded code and adapted
  * for btrfsprogs
  */
 

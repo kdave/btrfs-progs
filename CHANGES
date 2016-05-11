@@ -95,8 +95,8 @@ btrfs-progs-4.4 (2016-01-18)
     * check: fix a false alert where extent record has wrong metadata flag
     * improved stability on fuzzed/crafted images when reading sys array in
       superblock
-    * build: the 'ar' tool is properly deteced during cross-compilation
-    * debug-tree: option -t understands ids for tree root and chnuk tree
+    * build: the 'ar' tool is properly detected during cross-compilation
+    * debug-tree: option -t understands ids for tree root and chunk tree
     * preparatory work for btrfs-convert rewrite
     * sparse, gcc warning fixes
     * more memory allocation failure handling
@@ -144,7 +144,7 @@ btrfs-progs-4.3 (2015-11-06)
       subvolume
   * other:
     * check: add progress indicator
-    * scrub: enahced error message
+    * scrub: enhanced error message
     * show-super: read superblock from a given offset
     * add README
     * docs: update manual page for mkfs.btrfs, btrfstune, balance,
@@ -168,7 +168,7 @@ btrfs-progs-4.3 (2015-11-06)
 
 btrfs-progs-4.2.3 (2015-10-19)
   * subvol sync: make it actually work again: it's been broken since 4.1.2,
-    due to a reversed condition it returned immediatelly instead of waiting
+    due to a reversed condition it returned immediately instead of waiting
   * scanning: do not scan already discovered filesystems (minor optimization)
   * convert: better error message in case the filesystem is not finalized
   * restore: off-by-one symlink path check fix
@@ -239,7 +239,7 @@ btrfs-progs-4.1.1 (2015-07-10) -- Do not use this version!
     * documentation updates
     * debug-tree: print nbytes
     * test: image for corrupted nbytes
-    * corupt-block: let it kill nbytes
+    * corrupt-block: let it kill nbytes
 
 btrfs-progs-4.1 (2015-06-22)
   Bugfixes:
@@ -280,7 +280,7 @@ btrfs-progs-4.1 (2015-06-22)
     * debug tree: print key names according to their C name
 
   New:
-    * rescure zero-log
+    * rescue zero-log
     * btrfsune:
       * rewrite uuid on a filesystem image
       * new option to turn on NO_HOLES incompat feature

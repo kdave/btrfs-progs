@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Verify that subovolume sync waits until the subvolume is cleaned and does not
+# Verify that subvolume sync waits until the subvolume is cleaned and does not
 # crash at the end
 
 source $TOP/tests/common

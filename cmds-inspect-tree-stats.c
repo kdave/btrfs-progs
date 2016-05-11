@@ -496,7 +496,7 @@ int cmd_inspect_tree_stats(int argc, char **argv)
 
 	key.objectid = BTRFS_FS_TREE_OBJECTID;
 	key.offset = (u64)-1;
-	printf("Calculatin' size of fs tree\n");
+	printf("Calculating size of fs tree\n");
 	ret = calc_root_size(root, &key, 1);
 	if (ret)
 		goto out;

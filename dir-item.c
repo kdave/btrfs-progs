@@ -86,7 +86,7 @@ int btrfs_insert_xattr_item(struct btrfs_trans_handle *trans,
 					name, name_len);
 	/*
 	 * FIXME: at some point we should handle xattr's that are larger than
-	 * what we can fit in our leaf.  We set location to NULL b/c we arent
+	 * what we can fit in our leaf.  We set location to NULL b/c we aren't
 	 * pointing at anything else, that will change if we store the xattr
 	 * data in a separate inode.
 	 */

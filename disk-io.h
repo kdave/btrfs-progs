@@ -48,8 +48,8 @@ enum btrfs_open_ctree_flags {
 					  OPEN_CTREE_SUPPRESS_CHECK_BLOCK_ERRORS +
 					  __OPEN_CTREE_RETURN_CHUNK_ROOT,
 	/*
-	 * TODO: cleanup: Split the open_ctree_flags into more indepent
-	 * tree bits.
+	 * TODO: cleanup: Split the open_ctree_flags into more independent
+	 * Tree bits.
 	 * Like split PARTIAL into SKIP_CSUM/SKIP_EXTENT
 	 */
 

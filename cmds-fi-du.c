@@ -153,7 +153,7 @@ static u64 count_unique_bytes(struct rb_root *root, struct shared_extent *n)
 
 /*
  * What we want to do here is get a count of shared bytes within the
- * set of extents we have collected. Specifcally, we don't want to
+ * set of extents we have collected. Specifically, we don't want to
  * count any byte more than once, so just adding them up doesn't
  * work.
  *

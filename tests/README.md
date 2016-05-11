@@ -20,7 +20,7 @@ category, eg. `fsck-tests-results.txt`.
 
 ## Selective testing
 
-The test are prefixed by a number for ordering and uniquenes. To run a
+The test are prefixed by a number for ordering and uniqueness. To run a
 particular test use:
 
 ```shell
@@ -120,7 +120,7 @@ close to the purpose of your new test.
 * Use the highest unused number in the sequence, write a short descriptive title
 and join by dashes `-`.
 
-* Write a short description of the bug and how it's teste to the comment at the
+* Write a short description of the bug and how it's tested to the comment at the
 begining of `test.sh`.
 
 * Write the test commands, comment anything that's not obvious.

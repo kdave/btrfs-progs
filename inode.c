@@ -20,7 +20,7 @@
  * Unlike inode.c in kernel, which can use most of the kernel infrastructure
  * like inode/dentry things, in user-land, we can only use inode number to
  * do directly operation on extent buffer, which may cause extra searching,
- * but should not be a huge problem since progs is less performence sensitive.
+ * but should not be a huge problem since progs is less performance sensitive.
  */
 #include <sys/stat.h>
 
@@ -262,7 +262,7 @@ int btrfs_add_orphan_item(struct btrfs_trans_handle *trans,
  * dir_item if any of them exists.
  *
  * If an inode's nlink is reduced to 0 and 'add_orphan' is true, it will be
- * added to orphan inode and wairing to be deleted by next kernel mount.
+ * added to orphan inode and waiting to be deleted by next kernel mount.
  */
 int btrfs_unlink(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 		 u64 ino, u64 parent_ino, u64 index, const char *name,

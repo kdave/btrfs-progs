@@ -142,7 +142,7 @@ static int btrfs_block_can_be_shared(struct btrfs_root *root,
 			             struct extent_buffer *buf)
 {
 	/*
-	 * Tree blocks not in refernece counted trees and tree roots
+	 * Tree blocks not in reference counted trees and tree roots
 	 * are never shared. If a block was allocated after the last
 	 * snapshot and the block was not allocated by tree relocation,
 	 * we know the block is not shared.
