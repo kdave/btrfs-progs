@@ -44,7 +44,11 @@
 #include "send.h"
 #include "send-utils.h"
 
-static int g_verbose = 0;
+/*
+ * Default is 1 for historical reasons, changing may break scripts that expect
+ * the 'At subvol' message.
+ */
+static int g_verbose = 1;
 
 struct btrfs_send {
 	int send_fd;
@@ -301,10 +305,10 @@ static int do_send(struct btrfs_send *send, u64 parent_root_id,
 				"Try upgrading your kernel or don't use -e.\n");
 		goto out;
 	}
-	if (g_verbose > 0)
+	if (g_verbose > 1)
 		fprintf(stderr, "BTRFS_IOC_SEND returned %d\n", ret);
 
-	if (g_verbose > 0)
+	if (g_verbose > 1)
 		fprintf(stderr, "joining genl thread\n");
 
 	close(pipefd[1]);
@@ -429,9 +433,11 @@ int cmd_send(int argc, char **argv)
 	while (1) {
 		enum { GETOPT_VAL_SEND_NO_DATA = 256 };
 		static const struct option long_options[] = {
+			{ "verbose", no_argument, NULL, 'v' },
+			{ "quiet", no_argument, NULL, 'q' },
 			{ "no-data", no_argument, NULL, GETOPT_VAL_SEND_NO_DATA }
 		};
-		int c = getopt_long(argc, argv, "vec:f:i:p:", long_options, NULL);
+		int c = getopt_long(argc, argv, "vqec:f:i:p:", long_options, NULL);
 
 		if (c < 0)
 			break;
@@ -439,6 +445,9 @@ int cmd_send(int argc, char **argv)
 		switch (c) {
 		case 'v':
 			g_verbose++;
+			break;
+		case 'q':
+			g_verbose = 0;
 			break;
 		case 'e':
 			new_end_cmd_semantic = 1;
@@ -622,8 +631,9 @@ int cmd_send(int argc, char **argv)
 		}
 	}
 
-	if (send_flags & BTRFS_SEND_FLAG_NO_FILE_DATA)
-		printf("Mode NO_FILE_DATA enabled\n");
+	if ((send_flags & BTRFS_SEND_FLAG_NO_FILE_DATA) && g_verbose > 1)
+		if (g_verbose > 1)
+			fprintf(stderr, "Mode NO_FILE_DATA enabled\n");
 
 	for (i = optind; i < argc; i++) {
 		int is_first_subvol;
@@ -632,7 +642,8 @@ int cmd_send(int argc, char **argv)
 		free(subvol);
 		subvol = argv[i];
 
-		fprintf(stderr, "At subvol %s\n", subvol);
+		if (g_verbose > 0)
+			fprintf(stderr, "At subvol %s\n", subvol);
 
 		subvol = realpath(subvol, NULL);
 		if (!subvol) {
@@ -713,8 +724,6 @@ const char * const cmd_send_usage[] = {
 	"which case 'btrfs send' will determine a suitable parent among the",
 	"clone sources itself.",
 	"\n",
-	"-v               Enable verbose debug output. Each occurrence of",
-	"                 this option increases the verbose level more.",
 	"-e               If sending multiple subvols at once, use the new",
 	"                 format and omit the end-cmd between the subvols.",
 	"-p <parent>      Send an incremental stream from <parent> to",
@@ -728,5 +737,8 @@ const char * const cmd_send_usage[] = {
 	"                 does not contain any file data and thus cannot be used",
 	"                 to transfer changes. This mode is faster and useful to",
 	"                 show the differences in metadata.",
+	"-v|--verbose     enable verbose output to stderr, each occurrence of",
+	"                 this option increases verbosity",
+	"-q|--quiet       suppress all messages, except errors",
 	NULL
 };
