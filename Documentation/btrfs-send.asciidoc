@@ -37,9 +37,6 @@ are exactly in the same state on both sides, the sender and the receiver.
 
 `Options`
 
--v::
-enable verbose output, print generated commands in a readable form, (each
-occurrence of this option increases the verbosity level)
 -e::
 if sending multiple subvolumes at once, use the new format and omit the
 'end cmd' marker in the stream separating the subvolumes
@@ -56,6 +53,11 @@ send in 'NO_FILE_DATA' mode
 The output stream does not contain any file
 data and thus cannot be used to transfer changes. This mode is faster and
 useful to show the differences in metadata.
+-v|--verbose::
+enable verbose output, print generated commands in a readable form, (each
+occurrence of this option increases the verbosity level)
+-q|--quiet::
+suppress all messagese except errors
 
 EXIT STATUS
 -----------
