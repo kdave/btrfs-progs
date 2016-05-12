@@ -10,7 +10,9 @@
 # Tuning by variables (environment or make arguments):
 #   V=1            verbose, print command lines (default: quiet)
 #   C=1            run checker before compilation (default checker: sparse)
+#   D=1            debugging build, turn off optimizations
 #   W=123          build with warnings (default: off)
+#   DEBUG_CFLAGS   additional compiler flags for debugging build
 #   EXTRA_CFLAGS   additional compiler flags
 #   EXTRA_LDFLAGS  additional linker flags
 #
@@ -36,13 +38,20 @@ DISABLE_BTRFSCONVERT = @DISABLE_BTRFSCONVERT@
 EXTRA_CFLAGS :=
 EXTRA_LDFLAGS :=
 
+DEBUG_CFLAGS_DEFAULT = -O0 -U_FORTIFY_SOURCE -ggdb3
+DEBUG_CFLAGS_INTERNAL =
+DEBUG_CFLAGS :=
+
 # Common build flags
 CFLAGS = @CFLAGS@ \
 	 -include config.h \
 	 -DBTRFS_FLAT_INCLUDES \
 	 -D_XOPEN_SOURCE=700  \
 	 -fno-strict-aliasing \
-	 -fPIC $(EXTRAWARN_CFLAGS) $(EXTRA_CFLAGS)
+	 -fPIC \
+	 $(EXTRAWARN_CFLAGS) \
+	 $(DEBUG_CFLAGS_INTERNAL) \
+	 $(EXTRA_CFLAGS)
 
 LDFLAGS = @LDFLAGS@ \
 	  -rdynamic $(EXTRA_LDFLAGS)
@@ -105,6 +114,10 @@ ifeq ($(BUILD_VERBOSE),1)
   Q =
 else
   Q = @
+endif
+
+ifeq ("$(origin D)", "command line")
+  DEBUG_CFLAGS_INTERNAL = $(DEBUG_CFLAGS_DEFAULT) $(DEBUG_CFLAGS)
 endif
 
 MAKEOPTS = --no-print-directory Q=$(Q)
