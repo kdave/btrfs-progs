@@ -64,9 +64,10 @@ echo "   automake:   $(automake --version | head -1)"
 chmod +x version.sh
 rm -rf autom4te.cache
 
-aclocal $AL_OPTS
-autoconf $AC_OPTS
-autoheader $AH_OPTS
+aclocal $AL_OPTS &&
+autoconf $AC_OPTS &&
+autoheader $AH_OPTS ||
+exit 1
 
 # it's better to use helper files from automake installation than
 # maintain copies in git tree
