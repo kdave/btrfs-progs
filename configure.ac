@@ -128,7 +128,8 @@ PKG_STATIC(UUID_LIBS_STATIC, [uuid])
 PKG_CHECK_MODULES(ZLIB, [zlib])
 PKG_STATIC(ZLIB_LIBS_STATIC, [zlib])
 
-PKG_CHECK_VAR([UDEVDIR], [udev], [udevdir])
+UDEVDIR="$(pkg-config udev --variable=udevdir)"
+AC_SUBST(UDEVDIR)
 
 dnl lzo library does not provide pkg-config, let use classic way
 AC_CHECK_LIB([lzo2], [lzo_version], [
