@@ -92,7 +92,7 @@ find_autofile config.guess
 find_autofile config.sub
 find_autofile install-sh
 
-cd $THEDIR
+cd "$THEDIR"
 
 echo
 echo "Now type '$srcdir/configure' and 'make' to compile."
