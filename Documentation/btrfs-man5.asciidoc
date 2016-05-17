@@ -139,6 +139,8 @@ NOTE: If compression is enabled, 'nodatacow' and 'nodatasum' are disabled.
 Enable data copy-on-write for newly created files.
 'Nodatacow' implies 'nodatasum', and disables 'compression'. All files created
 under 'nodatacow' are also set the NOCOW file attribute (see `chattr`(1)).
++
+NOTE: If 'nodatacow' or 'nodatasum' are enabled, compression is disabled.
 
 *datasum*::
 *nodatasum*::
@@ -148,6 +150,8 @@ Enable data checksumming for newly created files.
 'Datasum' implies 'datacow', ie. the normal mode of operation. All files created
 under 'nodatasum' inherit the "no checksums" property, however there's no
 corresponding file attribute (see `chattr`(1)).
++
+NOTE: If 'nodatacow' or 'nodatasum' are enabled, compression is disabled.
 
 *degraded*::
 (default: off)
