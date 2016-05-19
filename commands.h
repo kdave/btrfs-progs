@@ -125,10 +125,4 @@ int cmd_dump_super(int argc, char **argv);
 int cmd_debug_tree(int argc, char **argv);
 int cmd_rescue(int argc, char **argv);
 
-/* subvolume exported functions */
-int test_issubvolume(const char *path);
-
-/* send.c */
-char *get_subvol_name(char *mnt, char *full_path);
-
 #endif
