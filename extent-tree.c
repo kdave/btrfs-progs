@@ -598,7 +598,7 @@ static int convert_extent_item_v0(struct btrfs_trans_handle *trans,
 }
 #endif
 
-static u64 hash_extent_data_ref(u64 root_objectid, u64 owner, u64 offset)
+u64 hash_extent_data_ref(u64 root_objectid, u64 owner, u64 offset)
 {
 	u32 high_crc = ~(u32)0;
 	u32 low_crc = ~(u32)0;
