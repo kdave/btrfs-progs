@@ -6,6 +6,7 @@
 #   test        run the full testsuite
 #   install     install to default location (/usr/local)
 #   clean       clean built binaries (not the documentation)
+#   clean-all   clean as above, clean docs and generated files
 #
 # Tuning by variables (environment or make arguments):
 #   V=1            verbose, print command lines (default: quiet)
