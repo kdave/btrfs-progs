@@ -67,6 +67,11 @@ static int check_tree_block(struct btrfs_fs_info *fs_info,
 						    nodesize))
 		return BTRFS_BAD_NRITEMS;
 
+	/* Only leaf can be empty */
+	if (btrfs_header_nritems(buf) == 0 &&
+	    btrfs_header_level(buf) != 0)
+		return BTRFS_BAD_NRITEMS;
+
 	fs_devices = fs_info->fs_devices;
 	while (fs_devices) {
 		if (fs_info->ignore_fsid_mismatch ||
