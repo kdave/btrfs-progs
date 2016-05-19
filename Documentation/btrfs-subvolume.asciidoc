@@ -46,7 +46,7 @@ SUBCOMMAND
 *create* [-i <qgroupid>] [<dest>]<name>::
 Create a subvolume <name> in <dest>.
 +
-If <dest> is not given, subvolume <name> will be created in the currently
+If <dest> is not given, subvolume <name> will be created in the current
 directory.
 +
 `Options`
