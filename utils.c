@@ -218,13 +218,12 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 	num_bytes = (cfg->num_bytes / cfg->sectorsize) * cfg->sectorsize;
 	if (cfg->fs_uuid && *cfg->fs_uuid) {
 		if (uuid_parse(cfg->fs_uuid, super.fsid) != 0) {
-			fprintf(stderr, "could not parse UUID: %s\n",
-				cfg->fs_uuid);
+			error("cannot not parse UUID: %s", cfg->fs_uuid);
 			ret = -EINVAL;
 			goto out;
 		}
 		if (!test_uuid_unique(cfg->fs_uuid)) {
-			fprintf(stderr, "non-unique UUID: %s\n", cfg->fs_uuid);
+			error("non-unique UUID: %s", cfg->fs_uuid);
 			ret = -EBUSY;
 			goto out;
 		}
@@ -1713,8 +1712,8 @@ static int check_label(const char *input)
        int len = strlen(input);
 
        if (len > BTRFS_LABEL_SIZE - 1) {
-		fprintf(stderr, "ERROR: Label %s is too long (max %d)\n",
-			input, BTRFS_LABEL_SIZE - 1);
+		error("label %s is too long (max %d)", input,
+				BTRFS_LABEL_SIZE - 1);
                return -1;
        }
 
@@ -1729,12 +1728,11 @@ static int set_label_unmounted(const char *dev, const char *label)
 
 	ret = check_mounted(dev);
 	if (ret < 0) {
-	       fprintf(stderr, "FATAL: error checking %s mount status\n", dev);
+	       error("checking mount status of %s failed: %d", dev, ret);
 	       return -1;
 	}
 	if (ret > 0) {
-		fprintf(stderr, "ERROR: dev %s is mounted, use mount point\n",
-			dev);
+		error("device %s is mounted, use mount point", dev);
 		return -1;
 	}
 
@@ -1762,15 +1760,15 @@ static int set_label_mounted(const char *mount_path, const char *labelp)
 
 	fd = open(mount_path, O_RDONLY | O_NOATIME);
 	if (fd < 0) {
-		fprintf(stderr, "ERROR: unable to access '%s'\n", mount_path);
+		error("unable to access %s: %s", mount_path, strerror(errno));
 		return -1;
 	}
 
 	memset(label, 0, sizeof(label));
 	__strncpy_null(label, labelp, BTRFS_LABEL_SIZE - 1);
 	if (ioctl(fd, BTRFS_IOC_SET_FSLABEL, label) < 0) {
-		fprintf(stderr, "ERROR: unable to set label %s\n",
-			strerror(errno));
+		error("unable to set label of %s: %s", mount_path,
+				strerror(errno));
 		close(fd);
 		return -1;
 	}
@@ -1786,7 +1784,7 @@ int get_label_unmounted(const char *dev, char *label)
 
 	ret = check_mounted(dev);
 	if (ret < 0) {
-	       fprintf(stderr, "FATAL: error checking %s mount status\n", dev);
+	       error("checking mount status of %s failed: %d", dev, ret);
 	       return -1;
 	}
 
@@ -1818,7 +1816,7 @@ int get_label_mounted(const char *mount_path, char *labelp)
 
 	fd = open(mount_path, O_RDONLY | O_NOATIME);
 	if (fd < 0) {
-		fprintf(stderr, "ERROR: unable to access '%s'\n", mount_path);
+		error("unable to access %s: %s", mount_path, strerror(errno));
 		return -1;
 	}
 
@@ -1826,7 +1824,7 @@ int get_label_mounted(const char *mount_path, char *labelp)
 	ret = ioctl(fd, BTRFS_IOC_GET_FSLABEL, label);
 	if (ret < 0) {
 		if (errno != ENOTTY)
-			fprintf(stderr, "ERROR: unable to get label %s\n",
+			error("unable to get label of %s: %s", mount_path,
 					strerror(errno));
 		ret = -errno;
 		close(fd);
@@ -1889,21 +1887,20 @@ u64 parse_size(char *s)
 	u64 ret;
 
 	if (!s) {
-		fprintf(stderr, "ERROR: Size value is empty\n");
+		error("size value is empty");
 		exit(1);
 	}
 	if (s[0] == '-') {
-		fprintf(stderr,
-			"ERROR: Size value '%s' is less equal than 0\n", s);
+		error("size value '%s' is less equal than 0", s);
 		exit(1);
 	}
 	ret = strtoull(s, &endptr, 10);
 	if (endptr == s) {
-		fprintf(stderr, "ERROR: Size value '%s' is invalid\n", s);
+		error("size value '%s' is invalid", s);
 		exit(1);
 	}
 	if (endptr[0] && endptr[1]) {
-		fprintf(stderr, "ERROR: Illegal suffix contains character '%c' in wrong position\n",
+		error("illegal suffix contains character '%c' in wrong position",
 			endptr[1]);
 		exit(1);
 	}
@@ -1912,8 +1909,7 @@ u64 parse_size(char *s)
 	 * need to call strtoull to get the real size
 	 */
 	if (errno == ERANGE && ret == ULLONG_MAX) {
-		fprintf(stderr,
-			"ERROR: Size value '%s' is too large for u64\n", s);
+		error("size value '%s' is too large for u64", s);
 		exit(1);
 	}
 	if (endptr[0]) {
@@ -1940,15 +1936,13 @@ u64 parse_size(char *s)
 		case 'b':
 			break;
 		default:
-			fprintf(stderr, "ERROR: Unknown size descriptor '%c'\n",
-				c);
+			error("unknown size descriptor '%c'", c);
 			exit(1);
 		}
 	}
 	/* Check whether ret * mult overflow */
 	if (fls64(ret) + fls64(mult) - 1 > 64) {
-		fprintf(stderr,
-			"ERROR: Size value '%s' is too large for u64\n", s);
+		error("size value '%s' is too large for u64", s);
 		exit(1);
 	}
 	ret *= mult;
@@ -2000,7 +1994,7 @@ path:
 	return id;
 
 err:
-	fprintf(stderr, "ERROR: invalid qgroupid or subvolume path: %s\n", p);
+	error("invalid qgroupid or subvolume path: %s", p);
 	exit(-1);
 }
 
@@ -2517,45 +2511,43 @@ int test_dev_for_mkfs(const char *file, int force_overwrite)
 
 	ret = is_swap_device(file);
 	if (ret < 0) {
-		fprintf(stderr, "ERROR: checking status of %s: %s\n", file,
-			strerror(-ret));
+		error("checking status of %s: %s", file, strerror(-ret));
 		return 1;
 	}
 	if (ret == 1) {
-		fprintf(stderr, "ERROR: %s is a swap device\n", file);
+		error("%s is a swap device", file);
 		return 1;
 	}
 	if (!force_overwrite) {
 		if (check_overwrite(file)) {
-			fprintf(stderr, "Use the -f option to force overwrite.\n");
+			error("use the -f option to force overwrite of %s",
+					file);
 			return 1;
 		}
 	}
 	ret = check_mounted(file);
 	if (ret < 0) {
-		fprintf(stderr, "ERROR: checking mount status of %s: %s\n",
-			file, strerror(-ret));
+		error("cannot check mount status of %s: %s", file,
+				strerror(-ret));
 		return 1;
 	}
 	if (ret == 1) {
-		fprintf(stderr, "ERROR: %s is mounted\n", file);
+		error("%s is mounted", file);
 		return 1;
 	}
 	/* check if the device is busy */
 	fd = open(file, O_RDWR|O_EXCL);
 	if (fd < 0) {
-		fprintf(stderr, "ERROR: unable to open %s: %s\n", file,
-			strerror(errno));
+		error("unable to open %s: %s", file, strerror(errno));
 		return 1;
 	}
 	if (fstat(fd, &st)) {
-		fprintf(stderr, "ERROR: unable to stat %s: %s\n", file,
-			strerror(errno));
+		error("unable to stat %s: %s", file, strerror(errno));
 		close(fd);
 		return 1;
 	}
 	if (!S_ISBLK(st.st_mode)) {
-		fprintf(stderr, "ERROR: %s is not a block device\n", file);
+		error("%s is not a block device", file);
 		close(fd);
 		return 1;
 	}
@@ -2578,7 +2570,7 @@ int btrfs_scan_lblkid(void)
 		return 0;
 
 	if (blkid_get_cache(&cache, NULL) < 0) {
-		printf("ERROR: lblkid cache get failed\n");
+		error("blkid cache get failed");
 		return 1;
 	}
 	blkid_probe_all(cache);
@@ -2593,13 +2585,13 @@ int btrfs_scan_lblkid(void)
 
 		fd = open(path, O_RDONLY);
 		if (fd < 0) {
-			printf("ERROR: could not open %s\n", path);
+			error("cannot open %s: %s", path, strerror(errno));
 			continue;
 		}
 		ret = btrfs_scan_one_device(fd, path, &tmp_devices,
 				&num_devices, BTRFS_SUPER_INFO_OFFSET, 0);
 		if (ret) {
-			printf("ERROR: could not scan %s\n", path);
+			error("cannot scan %s: %s", path, strerror(-ret));
 			close (fd);
 			continue;
 		}
@@ -2679,8 +2671,7 @@ int lookup_ino_rootid(int fd, u64 *rootid)
 
 	ret = ioctl(fd, BTRFS_IOC_INO_LOOKUP, &args);
 	if (ret < 0) {
-		fprintf(stderr, "ERROR: Failed to lookup root id - %s\n",
-			strerror(errno));
+		error("failed to lookup root id: %s", strerror(errno));
 		return ret;
 	}
 
@@ -2931,24 +2922,20 @@ int btrfs_tree_search2_ioctl_supported(int fd)
 int btrfs_check_nodesize(u32 nodesize, u32 sectorsize, u64 features)
 {
 	if (nodesize < sectorsize) {
-		fprintf(stderr,
-			"ERROR: Illegal nodesize %u (smaller than %u)\n",
-			nodesize, sectorsize);
+		error("illegal nodesize %u (smaller than %u)",
+				nodesize, sectorsize);
 		return -1;
 	} else if (nodesize > BTRFS_MAX_METADATA_BLOCKSIZE) {
-		fprintf(stderr,
-			"ERROR: Illegal nodesize %u (larger than %u)\n",
+		error("illegal nodesize %u (larger than %u)",
 			nodesize, BTRFS_MAX_METADATA_BLOCKSIZE);
 		return -1;
 	} else if (nodesize & (sectorsize - 1)) {
-		fprintf(stderr,
-			"ERROR: Illegal nodesize %u (not aligned to %u)\n",
+		error("illegal nodesize %u (not aligned to %u)",
 			nodesize, sectorsize);
 		return -1;
 	} else if (features & BTRFS_FEATURE_INCOMPAT_MIXED_GROUPS &&
 		   nodesize != sectorsize) {
-		fprintf(stderr,
-			"ERROR: Illegal nodesize %u (not equal to %u for mixed block group)\n",
+		error("illegal nodesize %u (not equal to %u for mixed block group)",
 			nodesize, sectorsize);
 		return -1;
 	}
