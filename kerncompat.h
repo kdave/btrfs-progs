@@ -72,7 +72,7 @@
 static inline void print_trace(void)
 {
 	void *array[MAX_BACKTRACE];
-	size_t size;
+	int size;
 
 	size = backtrace(array, MAX_BACKTRACE);
 	backtrace_symbols_fd(array, size, 2);
