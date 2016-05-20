@@ -1328,7 +1328,7 @@ struct btrfs_fs_info *open_ctree_fs_info(const char *filename,
 	int fp;
 	int ret;
 	struct btrfs_fs_info *info;
-	int oflags = O_CREAT | O_RDWR;
+	int oflags = O_RDWR;
 	struct stat st;
 
 	ret = stat(filename, &st);
@@ -1344,7 +1344,7 @@ struct btrfs_fs_info *open_ctree_fs_info(const char *filename,
 	if (!(flags & OPEN_CTREE_WRITES))
 		oflags = O_RDONLY;
 
-	fp = open(filename, oflags, 0600);
+	fp = open(filename, oflags);
 	if (fp < 0) {
 		error("cannot open '%s': %s", filename, strerror(errno));
 		return NULL;
