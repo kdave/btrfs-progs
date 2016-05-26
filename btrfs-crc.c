@@ -40,7 +40,7 @@ int main(int argc, char **argv)
 	char *str;
 	char *buf;
 	int length = 10;
-	int seed = getpid() ^ getppid();
+	u64 seed = 0;
 	int loop = 0;
 	int i;
 
@@ -54,7 +54,7 @@ int main(int argc, char **argv)
 			loop = 1;
 			break;
 		case 's':
-			seed = atol(optarg);
+			seed = atoll(optarg);
 			break;
 		case 'h':
 			usage();
@@ -77,11 +77,12 @@ int main(int argc, char **argv)
 	buf = malloc(length);
 	if (!buf)
 		return -ENOMEM;
-	srand(seed);
+	if (seed)
+		init_rand_seed(seed);
 
 	while (1) {
 		for (i = 0; i < length; i++)
-			buf[i] = rand() % 94 + 33;
+			buf[i] = rand_range(94) + 33;
 		if (crc32c(~1, buf, length) == checksum)
 			printf("%12lu - %.*s\n", checksum, length, buf);
 	}

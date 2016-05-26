@@ -195,7 +195,7 @@ static char *generate_garbage(u32 name_len)
 		return NULL;
 
 	for (i = 0; i < name_len; i++) {
-		char c = rand() % 94 + 33;
+		char c = rand_range(94) + 33;
 
 		if (c == '/')
 			c++;
@@ -408,7 +408,7 @@ static char *find_collision(struct metadump_struct *md, char *name,
 			"generating normal garbage, it won't match indexes\n",
 			val->len, val->val);
 		for (i = 0; i < name_len; i++) {
-			char c = rand() % 94 + 33;
+			char c = rand_range(94) + 33;
 
 			if (c == '/')
 				c++;
