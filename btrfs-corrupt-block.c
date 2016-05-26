@@ -210,6 +210,7 @@ static int corrupt_extent(struct btrfs_trans_handle *trans,
 			break;
 
 		if (key.type != BTRFS_EXTENT_ITEM_KEY &&
+		    key.type != BTRFS_METADATA_ITEM_KEY &&
 		    key.type != BTRFS_TREE_BLOCK_REF_KEY &&
 		    key.type != BTRFS_EXTENT_DATA_REF_KEY &&
 		    key.type != BTRFS_EXTENT_REF_V0_KEY &&
