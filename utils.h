@@ -337,4 +337,38 @@ static inline int error_on(int condition, const char *fmt, ...)
 	return 1;
 }
 
+/* Pseudo random number generator wrappers */
+u32 rand_u32(void);
+
+static inline int rand_int(void)
+{
+	return (int)(rand_u32());
+}
+
+static inline u64 rand_u64(void)
+{
+	u64 ret = 0;
+
+	ret += rand_u32();
+	ret <<= 32;
+	ret += rand_u32();
+	return ret;
+}
+
+static inline u16 rand_u16(void)
+{
+	return (u16)(rand_u32());
+}
+
+static inline u8 rand_u8(void)
+{
+	return (u8)(rand_u32());
+}
+
+/* Return random number in range [0, limit) */
+unsigned int rand_range(unsigned int upper);
+
+/* Also allow setting the seed manually */
+void init_rand_seed(u64 seed);
+
 #endif

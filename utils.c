@@ -58,6 +58,9 @@ static int btrfs_scan_done = 0;
 
 static char argv0_buf[ARGV0_BUF_SIZE] = "btrfs";
 
+static int rand_seed_initlized = 0;
+static unsigned short rand_seed[3];
+
 const char *get_argv0_buf(void)
 {
 	return argv0_buf;
@@ -3226,4 +3229,63 @@ out:
 	free(mnt);
 
 	return ret;
+}
+
+void init_rand_seed(u64 seed)
+{
+	int i;
+
+	/* only use the last 48 bits */
+	for (i = 0; i < 3; i++) {
+		rand_seed[i] = (unsigned short)(seed ^ (unsigned short)(-1));
+		seed >>= 16;
+	}
+	rand_seed_initlized = 1;
+}
+
+static void __init_seed(void)
+{
+	struct timeval tv;
+	int ret;
+	int fd;
+
+	if(rand_seed_initlized)
+		return;
+	/* Use urandom as primary seed source. */
+	fd = open("/dev/urandom", O_RDONLY);
+	if (fd >= 0) {
+		ret = read(fd, rand_seed, sizeof(rand_seed));
+		close(fd);
+		if (ret < sizeof(rand_seed))
+			goto fallback;
+	} else {
+fallback:
+		/* Use time and pid as fallback seed */
+		warning("failed to read /dev/urandom, use time and pid as random seed");
+		gettimeofday(&tv, 0);
+		rand_seed[0] = getpid() ^ (tv.tv_sec & 0xFFFF);
+		rand_seed[1] = getppid() ^ (tv.tv_usec & 0xFFFF);
+		rand_seed[2] = (tv.tv_sec ^ tv.tv_usec) >> 16;
+	}
+	rand_seed_initlized = 1;
+}
+
+u32 rand_u32(void)
+{
+	__init_seed();
+	/*
+	 * Don't use nrand48, its range is [0,2^31) The highest bit will alwasy
+	 * be 0.  Use jrand48 to include the highest bit.
+	 */
+	return (u32)jrand48(rand_seed);
+}
+
+unsigned int rand_range(unsigned int upper)
+{
+	__init_seed();
+	/*
+	 * Use the full 48bits to mod, which would be more uniformly
+	 * distributed
+	 */
+	return (unsigned int)(jrand48(rand_seed) % upper);
 }
