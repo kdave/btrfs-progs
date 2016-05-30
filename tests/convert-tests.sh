@@ -127,7 +127,7 @@ convert_test() {
 	populate_fs
 	run_check $SUDO_HELPER dd if=/dev/zero of=$TEST_MNT/test bs=$nodesize \
 		count=1 >/dev/null 2>&1
-	run_check_stdout find $TEST_MNT -type f ! -name 'image' -exec md5sum {} \+ > $CHECKSUMTMP
+	run_check_stdout $SUDO_HELPER find $TEST_MNT -type f ! -name 'image' -exec md5sum {} \+ > $CHECKSUMTMP
 	run_check_umount_test_dev
 
 	run_check $TOP/btrfs-convert ${features:+-O "$features"} -N "$nodesize" $TEST_DEV
@@ -135,7 +135,7 @@ convert_test() {
 	run_check $TOP/btrfs-show-super $TEST_DEV
 
 	run_check_mount_test_dev
-	run_check_stdout md5sum -c $CHECKSUMTMP |
+	run_check_stdout $SUDO_HELPER md5sum -c $CHECKSUMTMP |
 		grep -q 'FAILED' && _fail "file validation failed."
 	run_check_umount_test_dev
 }
