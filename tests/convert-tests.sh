@@ -138,6 +138,9 @@ convert_test() {
 	run_check_stdout $SUDO_HELPER md5sum -c $CHECKSUMTMP |
 		grep -q 'FAILED' && _fail "file validation failed."
 	run_check_umount_test_dev
+
+	run_check $TOP/btrfs-convert --rollback $TEST_DEV
+	run_check fsck -n -t ext2,ext3,ext4 $TEST_DEV
 }
 
 if ! [ -z "$TEST" ]; then
