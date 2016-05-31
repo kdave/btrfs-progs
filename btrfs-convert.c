@@ -1263,11 +1263,54 @@ static int create_image_file_range(struct btrfs_trans_handle *trans,
 	struct btrfs_block_group_cache *bg_cache;
 	u64 len = *ret_len;
 	u64 disk_bytenr;
+	int i;
 	int ret;
 
 	BUG_ON(bytenr != round_down(bytenr, root->sectorsize));
 	BUG_ON(len != round_down(len, root->sectorsize));
 	len = min_t(u64, len, BTRFS_MAX_EXTENT_SIZE);
+
+	/*
+	 * Skip sb ranges first
+	 * [0, 1M), [sb_offset(1), +64K), [sb_offset(2), +64K].
+	 *
+	 * Or we will insert a hole into current image file, and later
+	 * migrate block will fail as there is already a file extent.
+	 */
+	if (bytenr < 1024 * 1024) {
+		*ret_len = 1024 * 1024 - bytenr;
+		return 0;
+	}
+	for (i = 1; i < BTRFS_SUPER_MIRROR_MAX; i++) {
+		u64 cur = btrfs_sb_offset(i);
+
+		if (bytenr >= cur && bytenr < cur + BTRFS_STRIPE_LEN) {
+			*ret_len = cur + BTRFS_STRIPE_LEN - bytenr;
+			return 0;
+		}
+	}
+	for (i = 1; i < BTRFS_SUPER_MIRROR_MAX; i++) {
+		u64 cur = btrfs_sb_offset(i);
+
+		/*
+		 *      |--reserved--|
+		 * |----range-------|
+		 * May still need to go through file extent inserts
+		 */
+		if (bytenr < cur && bytenr + len >= cur) {
+			len = min_t(u64, len, cur - bytenr);
+			break;
+		}
+		/*
+		 * |--reserved--|
+		 *      |---range---|
+		 * Drop out, no need to insert anything
+		 */
+		if (bytenr >= cur && bytenr < cur + BTRFS_STRIPE_LEN) {
+			*ret_len = cur + BTRFS_STRIPE_LEN - bytenr;
+			return 0;
+		}
+	}
 
 	cache = search_cache_extent(used, bytenr);
 	if (cache) {
@@ -1425,7 +1468,7 @@ static int migrate_reserved_ranges(struct btrfs_trans_handle *trans,
 	/* second sb(fisrt sb is included in 0~1M) */
 	cur_off = btrfs_sb_offset(1);
 	cur_len = min(total_bytes, cur_off + BTRFS_STRIPE_LEN) - cur_off;
-	if (cur_off < total_bytes)
+	if (cur_off > total_bytes)
 		return ret;
 	ret = migrate_one_reserved_range(trans, root, used, inode, fd, ino,
 					 cur_off, cur_len, datacsum);
@@ -1435,7 +1478,7 @@ static int migrate_reserved_ranges(struct btrfs_trans_handle *trans,
 	/* Last sb */
 	cur_off = btrfs_sb_offset(2);
 	cur_len = min(total_bytes, cur_off + BTRFS_STRIPE_LEN) - cur_off;
-	if (cur_off < total_bytes)
+	if (cur_off > total_bytes)
 		return ret;
 	ret = migrate_one_reserved_range(trans, root, used, inode, fd, ino,
 					 cur_off, cur_len, datacsum);
