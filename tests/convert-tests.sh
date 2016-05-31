@@ -132,7 +132,7 @@ convert_test() {
 
 	run_check $TOP/btrfs-convert ${features:+-O "$features"} -N "$nodesize" $TEST_DEV
 	run_check $TOP/btrfs check $TEST_DEV
-	run_check $TOP/btrfs-show-super $TEST_DEV
+	run_check $TOP/btrfs-show-super -Ffa $TEST_DEV
 
 	run_check_mount_test_dev
 	run_check_stdout $SUDO_HELPER md5sum -c $CHECKSUMTMP |
