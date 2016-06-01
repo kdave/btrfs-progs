@@ -1384,6 +1384,8 @@ static int migrate_one_reserved_range(struct btrfs_trans_handle *trans,
 {
 	u64 cur_off = start;
 	u64 cur_len = len;
+	u64 hole_start = start;
+	u64 hole_len;
 	struct cache_extent *cache;
 	struct btrfs_key key;
 	struct extent_buffer *eb;
@@ -1435,9 +1437,23 @@ static int migrate_one_reserved_range(struct btrfs_trans_handle *trans,
 			ret = csum_disk_extent(trans, root, key.objectid,
 					       key.offset);
 
+		/* Don't forget to insert hole */
+		hole_len = cur_off - hole_start;
+		if (hole_len) {
+			ret = btrfs_record_file_extent(trans, root, ino, inode,
+					hole_start, 0, hole_len);
+			if (ret < 0)
+				break;
+		}
+
 		cur_off += key.offset;
+		hole_start = cur_off;
 		cur_len = start + len - cur_off;
 	}
+	/* Last hole */
+	if (start + len - hole_start > 0)
+		ret = btrfs_record_file_extent(trans, root, ino, inode,
+				hole_start, 0, start + len - hole_start);
 	return ret;
 }
 
