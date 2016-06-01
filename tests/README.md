@@ -54,6 +54,13 @@ will run the first test in fsck-tests subdirectory.
   * tests that are supposed to run various utilities on the images and not
     crash
 
+*tests/cli-tests/:*
+
+  * tests for command line interface, option coverage, weird optin combinations that should not work
+  * not necessary to do any functional testing, could be rather lightweight
+  * functional tests should go to to other test dirs
+  * the driver script will only execute `./test.sh` in the test directory
+
 *tests/misc-tests/:*
 
   * anything that does not fit to the above, the test driver script will only
