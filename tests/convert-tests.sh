@@ -124,6 +124,12 @@ convert_test() {
 	# create a file to check btrfs-convert can convert regular file
 	# correct
 	run_check_mount_test_dev
+
+	# create a file inside the fs before convert, to make sure there is
+	# data covering btrfs backup superblock range (64M)
+	run_check $SUDO_HELPER dd if=/dev/zero bs=1M count=64 \
+		of=$TEST_MNT/convert_space_holder
+
 	populate_fs
 	run_check $SUDO_HELPER dd if=/dev/zero of=$TEST_MNT/test bs=$nodesize \
 		count=1 >/dev/null 2>&1
