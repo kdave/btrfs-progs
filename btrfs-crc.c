@@ -22,7 +22,7 @@
 #include "crc32c.h"
 #include "utils.h"
 
-void usage(void)
+void print_usage(void)
 {
 	printf("usage: btrfs-crc filename\n");
 	printf("    print out the btrfs crc for \"filename\"\n");
@@ -57,7 +57,7 @@ int main(int argc, char **argv)
 			seed = atoll(optarg);
 			break;
 		case 'h':
-			usage();
+			print_usage();
 		case '?':
 			return 255;
 		}
