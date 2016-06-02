@@ -22,7 +22,7 @@
 #include "crc32c.h"
 #include "utils.h"
 
-void print_usage(void)
+void print_usage(int status)
 {
 	printf("usage: btrfs-crc filename\n");
 	printf("    print out the btrfs crc for \"filename\"\n");
@@ -30,7 +30,7 @@ void print_usage(void)
 	printf("    brute force search for file names with the given crc\n");
 	printf("      -s seed    the random seed (default: random)\n");
 	printf("      -l length  the length of the file names (default: 10)\n");
-	exit(1);
+	exit(status);
 }
 
 int main(int argc, char **argv)
@@ -57,9 +57,9 @@ int main(int argc, char **argv)
 			seed = atoll(optarg);
 			break;
 		case 'h':
-			print_usage();
+			print_usage(1);
 		case '?':
-			return 255;
+			print_usage(255);
 		}
 	}
 
@@ -68,7 +68,7 @@ int main(int argc, char **argv)
 
 	if (!loop) {
 		if (check_argc_min(argc - optind, 1))
-			return 255;
+			print_usage(255);
 
 		printf("%12u - %s\n", crc32c(~1, str, strlen(str)), str);
 		return 0;
