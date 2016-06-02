@@ -69,12 +69,14 @@ int main(int argc, char **argv)
 	str = argv[optind];
 
 	if (!loop) {
-		if (check_argc_min(argc - optind, 1))
+		if (check_argc_exact(argc - optind, 1))
 			print_usage(255);
 
 		printf("%12u - %s\n", crc32c(~1, str, strlen(str)), str);
 		return 0;
 	}
+	if (check_argc_exact(argc - optind, 0))
+		print_usage(255);
 
 	buf = malloc(length);
 	if (!buf)
