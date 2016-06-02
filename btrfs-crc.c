@@ -26,10 +26,12 @@ void print_usage(int status)
 {
 	printf("usage: btrfs-crc filename\n");
 	printf("    print out the btrfs crc for \"filename\"\n");
-	printf("usage: btrfs-crc filename -c crc [-s seed] [-l length]\n");
+	printf("usage: btrfs-crc -c crc [-s seed] [-l length]\n");
 	printf("    brute force search for file names with the given crc\n");
 	printf("      -s seed    the random seed (default: random)\n");
 	printf("      -l length  the length of the file names (default: 10)\n");
+	printf("usage: btrfs-crc -h\n");
+	printf("    print this message\n");
 	exit(status);
 }
 
