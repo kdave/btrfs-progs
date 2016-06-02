@@ -572,7 +572,11 @@ static int record_file_blocks(struct blk_iterate_data *data,
 		BUG_ON(cur_off - key.offset >= extent_num_bytes);
 		btrfs_release_path(path);
 
-		real_disk_bytenr = cur_off - key.offset + extent_disk_bytenr;
+		if (extent_disk_bytenr)
+			real_disk_bytenr = cur_off - key.offset +
+					   extent_disk_bytenr;
+		else
+			real_disk_bytenr = 0;
 		cur_len = min(key.offset + extent_num_bytes,
 			      old_disk_bytenr + num_bytes) - cur_off;
 		ret = btrfs_record_file_extent(data->trans, data->root,
