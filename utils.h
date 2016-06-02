@@ -209,8 +209,9 @@ int get_subvol_info(const char *fullpath, struct root_info *get_ri);
  */
 static inline u64 btrfs_min_global_blk_rsv_size(u32 nodesize)
 {
-	return nodesize << 10;
+	return (u64)nodesize << 10;
 }
+
 static inline u64 btrfs_min_dev_size(u32 nodesize)
 {
 	return 2 * (BTRFS_MKFS_SYSTEM_GROUP_SIZE +
