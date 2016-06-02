@@ -33,6 +33,7 @@ btrfs-zero-log
 btrfs-corrupt-block
 btrfs-select-super
 btrfs-calc-size
+btrfs-crc
 btrfstune
 libbtrfs.a
 libbtrfs.so
