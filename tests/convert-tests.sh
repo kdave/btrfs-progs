@@ -49,15 +49,10 @@ if ! [ -z "$TEST" ]; then
 fi
 
 for feature in '' 'extref' 'skinny-metadata' 'no-holes'; do
-	convert_test "$feature" "ext3 4k nodesize" 4096 mke2fs -j -b 4096
 	convert_test "$feature" "ext4 4k nodesize" 4096 mke2fs -t ext4 -b 4096
-	convert_test "$feature" "ext3 8k nodesize" 8192 mke2fs -j -b 4096
 	convert_test "$feature" "ext4 8k nodesize" 8192 mke2fs -t ext4 -b 4096
-	convert_test "$feature" "ext3 16k nodesize" 16384 mke2fs -j -b 4096
 	convert_test "$feature" "ext4 16k nodesize" 16384 mke2fs -t ext4 -b 4096
-	convert_test "$feature" "ext3 32k nodesize" 32768 mke2fs -j -b 4096
 	convert_test "$feature" "ext4 32k nodesize" 32768 mke2fs -t ext4 -b 4096
-	convert_test "$feature" "ext3 64k nodesize" 65536 mke2fs -j -b 4096
 	convert_test "$feature" "ext4 64k nodesize" 65536 mke2fs -t ext4 -b 4096
 done
 
