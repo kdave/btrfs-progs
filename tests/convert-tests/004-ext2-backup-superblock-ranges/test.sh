@@ -22,18 +22,19 @@ setup_root_helper
 prepare_test_dev 512M
 
 for src in $(find . -iname "*.e2image.raw.xz"); do
-	extracted=$(extract_image "$src")
-	run_check $SUDO_HELPER e2fsck -n -f $extracted
-	run_check $SUDO_HELPER $TOP/btrfs-convert $extracted
-	run_check $SUDO_HELPER $TOP/btrfs check $extracted
-	run_check $SUDO_HELPER $TOP/btrfs-show-super $extracted
+	TEST_DEV=$(extract_image "$src")
+	run_check e2fsck -n -f $TEST_DEV
+	run_check $TOP/btrfs-convert $TEST_DEV
+	run_check $TOP/btrfs check $TEST_DEV
+	run_check $TOP/btrfs-show-super $TEST_DEV
 
-	run_check $SUDO_HELPER mount -o loop $extracted $TEST_MNT
+	run_check_mount_test_dev
 	run_check $SUDO_HELPER e2fsck -n -f $TEST_MNT/ext2_saved/image
 	run_check $SUDO_HELPER umount $TEST_MNT
 
-	run_check $SUDO_HELPER $TOP/btrfs check $extracted
-	run_check $SUDO_HELPER $TOP/btrfs-convert -r $extracted
-	run_check $SUDO_HELPER e2fsck -n -f $extracted
-	rm -f $extracted
+	run_check $TOP/btrfs check $TEST_DEV
+	run_check $TOP/btrfs-convert -r $TEST_DEV
+	run_check e2fsck -n -f $TEST_DEV
+
+	rm -f $TEST_DEV
 done
