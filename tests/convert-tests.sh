@@ -21,9 +21,6 @@ export LANG
 
 rm -f $RESULTS
 
-setup_root_helper
-prepare_test_dev 512M
-
 run_one_test() {
 	local testname
 
@@ -42,15 +39,6 @@ run_one_test() {
 		_fail "custom test script not found"
 	fi
 }
-
-if ! [ -z "$TEST" ]; then
-	echo "    [TEST/conv]   skipped all convert tests, TEST=$TEST"
-	exit 0
-fi
-
-for feature in '' 'extref' 'skinny-metadata' 'no-holes'; do
-	:
-done
 
 # Test special images
 for i in $(find $TOP/tests/convert-tests -maxdepth 1 -mindepth 1 -type d \
