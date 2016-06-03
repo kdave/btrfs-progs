@@ -94,6 +94,14 @@ check_prereq()
 	fi
 }
 
+check_global_prereq()
+{
+	which $1 &> /dev/null
+	if [ $? -ne 0 ]; then
+		_fail "Failed system wide prerequisities: $1";
+	fi
+}
+
 check_image()
 {
 	local image
