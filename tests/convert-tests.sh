@@ -9,7 +9,9 @@ unset LANG
 LANG=C
 SCRIPT_DIR=$(dirname $(readlink -f $0))
 TOP=$(readlink -f $SCRIPT_DIR/../)
+TEST_DEV=${TEST_DEV:-}
 RESULTS="$TOP/tests/convert-tests-results.txt"
+IMAGE="$TOP/tests/test.img"
 
 source $TOP/tests/common
 source $TOP/tests/common.convert
