@@ -21,8 +21,9 @@ check_global_prereq xzcat
 setup_root_helper
 prepare_test_dev 512M
 
-for src in $(find . -iname "*.e2image.raw.xz"); do
-	TEST_DEV=$(extract_image "$src")
+# override common function
+function check_image() {
+	TEST_DEV="$1"
 	run_check e2fsck -n -f $TEST_DEV
 	run_check $TOP/btrfs-convert $TEST_DEV
 	run_check $TOP/btrfs check $TEST_DEV
@@ -37,4 +38,6 @@ for src in $(find . -iname "*.e2image.raw.xz"); do
 	run_check e2fsck -n -f $TEST_DEV
 
 	rm -f $TEST_DEV
-done
+}
+
+check_all_images
