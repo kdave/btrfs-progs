@@ -2,8 +2,6 @@
 #
 # command line interface coverage tests
 
-unset TOP
-unset LANG
 LANG=C
 SCRIPT_DIR=$(dirname $(readlink -f $0))
 TOP=$(readlink -f $SCRIPT_DIR/../)
@@ -17,6 +15,7 @@ export TOP
 export RESULTS
 export LANG
 export IMAGE
+export TEST_DEV
 
 rm -f $RESULTS
 

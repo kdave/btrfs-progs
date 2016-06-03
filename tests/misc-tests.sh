@@ -2,8 +2,6 @@
 #
 # Misc tests
 
-unset TOP
-unset LANG
 LANG=C
 SCRIPT_DIR=$(dirname $(readlink -f $0))
 TOP=$(readlink -f $SCRIPT_DIR/../)
@@ -13,12 +11,10 @@ IMAGE="$TOP/tests/test.img"
 
 source $TOP/tests/common
 
-# Allow child test to use $TOP and $RESULTS
 export TOP
 export RESULTS
-# For custom script needs to verify recovery
 export LANG
-# For tests that only use a loop device
+export TEST_DEV
 export IMAGE
 
 rm -f $RESULTS

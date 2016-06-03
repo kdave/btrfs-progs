@@ -2,10 +2,7 @@
 #
 # convert ext2/3/4 images to btrfs images, and make sure the results are
 # clean.
-#
 
-unset TOP
-unset LANG
 LANG=C
 SCRIPT_DIR=$(dirname $(readlink -f $0))
 TOP=$(readlink -f $SCRIPT_DIR/../)
@@ -16,10 +13,11 @@ IMAGE="$TOP/tests/test.img"
 source $TOP/tests/common
 source $TOP/tests/common.convert
 
-# Allow child test to use $TOP and $RESULTS
 export TOP
 export RESULTS
 export LANG
+export IMAGE
+export TEST_DEV
 
 rm -f $RESULTS
 
