@@ -1,3 +1,12 @@
+btrfs-progs-4.6.1 (2016-06-24)
+  * fi resize: negative resize argument accepted again (broken
+  * qgroup rescan: fix skipping when rescan is in progress
+  * mkfs: initialize stripesize to correct value
+  * testsuite updates, mostly convert tests
+  * documentation updates
+    * btrfs-device, btrfs-restore manual pages enhanced
+    * misc fixups
+
 btrfs-progs-4.6 (2016-06-10)
   * convert - major rewrite:
     * fix a long-standing bug that led to mixing data blocks into metadata block
