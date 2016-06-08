@@ -1,3 +1,21 @@
+btrfs-progs-4.6 (2016-06-10)
+  * convert - major rewrite:
+    * fix a long-standing bug that led to mixing data blocks into metadata block
+      groups
+    * the workaround was to do full balance after conversion, which was
+      recommended practice anyway
+    * explicitly set the lowest supported version of e2fstools to 1.41
+  * provide and install udev rules file that addresses problems with device
+    mapper devices, renames after removal
+  * send: new option: quiet
+  * dev usage: report slack space (device size minus filesystem area on the dev)
+  * image: support DUP
+  * build: short options to enable debugging builds
+  * other:
+    * code cleanups
+    * build fixes
+    * more tests and other enhancements
+
 btrfs-progs-4.5.3 (2016-05-11)
   * ioctl: fix unaligned access in buffer from TREE_SEARCH; might cause SIGBUS
     on architectures that do not support unaligned access and do not performa
