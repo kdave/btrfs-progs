@@ -227,6 +227,8 @@ int btrfs_open_devices(struct btrfs_fs_devices *fs_devices, int flags)
 		fd = open(device->name, flags);
 		if (fd < 0) {
 			ret = -errno;
+			error("cannot open device '%s': %s", device->name,
+					strerror(errno));
 			goto fail;
 		}
 
