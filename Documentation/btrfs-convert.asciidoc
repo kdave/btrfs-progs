@@ -90,6 +90,7 @@ are supported by old kernels. To disable a feature, prefix it with '^'.
 To see all available features that btrfs-convert supports run:
 +
 +btrfs-convert -O list-all+
++
 -p|--progress::
 show progress of conversion, on by default
 --no-progress::
