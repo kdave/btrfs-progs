@@ -7,14 +7,14 @@ btrfs-receive - receive subvolumes from send stream
 
 SYNOPSIS
 --------
-*btrfs receive* [options] <mount>
+*btrfs receive* [options] <path>
 
 DESCRIPTION
 -----------
 
 Receive a stream of changes and replicate one or more subvolumes that were
 previously used with *btrfs send* The received subvolumes are stored to
-'mount'.
+'path'.
 
 *btrfs receive* will fail int the following cases:
 
@@ -37,7 +37,7 @@ by default, btrfs receive uses standard input to receive the stream,
 use this option to read from a file instead
 
 -C|--chroot::
-confine the process to 'mount' using `chroot`(1)
+confine the process to 'path' using `chroot`(1)
 
 -e::
 terminate after receiving an 'end cmd' marker in the stream.
