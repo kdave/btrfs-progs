@@ -9890,6 +9890,7 @@ out:
 		(unsigned long long)data_bytes_allocated,
 		(unsigned long long)data_bytes_referenced);
 
+	free_qgroup_counts();
 	free_root_recs_tree(&root_cache);
 close_out:
 	close_ctree(root);

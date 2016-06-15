@@ -27,4 +27,6 @@ int report_qgroups(int all);
 
 int print_extent_state(struct btrfs_fs_info *info, u64 subvol);
 
+void free_qgroup_counts(void);
+
 #endif

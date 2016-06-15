@@ -1100,6 +1100,19 @@ int report_qgroups(int all)
 	return ret;
 }
 
+void free_qgroup_counts(void)
+{
+	struct rb_node *node;
+	struct qgroup_count *c;
+	node = rb_first(&counts.root);
+	while (node) {
+		c = rb_entry(node, struct qgroup_count, rb_node);
+		node = rb_next(node);
+		rb_erase(&c->rb_node, &counts.root);
+		free(c);
+	}
+}
+
 int qgroup_verify_all(struct btrfs_fs_info *info)
 {
 	int ret;
