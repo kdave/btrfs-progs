@@ -3930,6 +3930,24 @@ void clean_args_no_options(int argc, char *argv[], const char * const *usagestr)
 	}
 }
 
+/*
+ * Same as clean_args_no_options but pass through arguments that could look
+ * like short options. Eg. reisze which takes a negative resize argument like
+ * '-123M' .
+ *
+ * This accepts only two forms:
+ * - "-- option1 option2 ..."
+ * - "option1 option2 ..."
+ */
+void clean_args_no_options_relaxed(int argc, char *argv[], const char * const *usagestr)
+{
+	if (argc <= 1)
+		return;
+
+	if (strcmp(argv[1], "--") == 0)
+		optind = 2;
+}
+
 /* Subvolume helper functions */
 /*
  * test if name is a correct subvolume name

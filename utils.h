@@ -303,6 +303,8 @@ const char *get_argv0_buf(void);
 
 unsigned int get_unit_mode_from_arg(int *argc, char *argv[], int df_mode);
 void clean_args_no_options(int argc, char *argv[], const char * const *usage);
+void clean_args_no_options_relaxed(int argc, char *argv[],
+		const char * const *usagestr);
 int string_is_numerical(const char *str);
 
 __attribute__ ((format (printf, 1, 2)))
