@@ -1184,7 +1184,7 @@ static int cmd_filesystem_resize(int argc, char **argv)
 	DIR	*dirstream = NULL;
 	struct stat st;
 
-	clean_args_no_options(argc, argv, cmd_filesystem_resize_usage);
+	clean_args_no_options_relaxed(argc, argv, cmd_filesystem_resize_usage);
 
 	if (check_argc_exact(argc - optind, 2))
 		usage(cmd_filesystem_resize_usage);
