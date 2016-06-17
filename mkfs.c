@@ -1482,6 +1482,7 @@ int main(int argc, char **argv)
 	}
 
 	sectorsize = max(sectorsize, (u32)sysconf(_SC_PAGESIZE));
+	stripesize = sectorsize;
 	saved_optind = optind;
 	dev_cnt = argc - optind;
 	if (dev_cnt == 0)

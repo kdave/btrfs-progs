@@ -1476,7 +1476,8 @@ static int check_super(struct btrfs_super_block *sb)
 		error("invalid bytes_used %llu", btrfs_super_bytes_used(sb));
 		goto error_out;
 	}
-	if (btrfs_super_stripesize(sb) != 4096) {
+	if ((btrfs_super_stripesize(sb) != 4096)
+		&& (btrfs_super_stripesize(sb) != btrfs_super_sectorsize(sb))) {
 		error("invalid stripesize %u", btrfs_super_stripesize(sb));
 		goto error_out;
 	}
