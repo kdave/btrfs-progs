@@ -20,6 +20,9 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <sys/ioctl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <errno.h>
 
 #include "kerncompat.h"
@@ -507,6 +510,7 @@ static const char * const cmd_balance_start_usage[] = {
 	"-v             be verbose",
 	"-f             force reducing of metadata integrity",
 	"--full-balance do not print warning and do not delay start",
+	"--background   run the balance as a background process",
 	NULL
 };
 
@@ -517,13 +521,15 @@ static int cmd_balance_start(int argc, char **argv)
 						&args.meta, NULL };
 	int force = 0;
 	int verbose = 0;
+	int background = 0;
 	unsigned start_flags = 0;
 	int i;
 
 	memset(&args, 0, sizeof(args));
 
 	while (1) {
-		enum { GETOPT_VAL_FULL_BALANCE = 256 };
+		enum { GETOPT_VAL_FULL_BALANCE = 256,
+			GETOPT_VAL_BACKGROUND = 257 };
 		static const struct option longopts[] = {
 			{ "data", optional_argument, NULL, 'd'},
 			{ "metadata", optional_argument, NULL, 'm' },
@@ -532,6 +538,8 @@ static int cmd_balance_start(int argc, char **argv)
 			{ "verbose", no_argument, NULL, 'v' },
 			{ "full-balance", no_argument, NULL,
 				GETOPT_VAL_FULL_BALANCE },
+			{ "background", no_argument, NULL,
+				GETOPT_VAL_BACKGROUND },
 			{ NULL, 0, NULL, 0 }
 		};
 
@@ -569,6 +577,9 @@ static int cmd_balance_start(int argc, char **argv)
 			break;
 		case GETOPT_VAL_FULL_BALANCE:
 			start_flags |= BALANCE_START_NOWARN;
+			break;
+		case GETOPT_VAL_BACKGROUND:
+			background = 1;
 			break;
 		default:
 			usage(cmd_balance_start_usage);
@@ -622,6 +633,35 @@ static int cmd_balance_start(int argc, char **argv)
 		args.flags |= BTRFS_BALANCE_FORCE;
 	if (verbose)
 		dump_ioctl_balance_args(&args);
+	if (background) {
+		switch (fork()) {
+		case (-1):
+			error("unable to fork to run balance in background");
+			return 1;
+		case (0):
+			setsid();
+			switch(fork()) {
+			case (-1):
+				error(
+				"unable to fork to run balance in background");
+				exit(1);
+			case (0):
+				chdir("/");
+				close(0);
+				close(1);
+				close(2);
+				open("/dev/null", O_RDONLY);
+				open("/dev/null", O_WRONLY);
+				open("/dev/null", O_WRONLY);
+				break;
+			default:
+				exit(0);
+			}
+			break;
+		default:
+			exit(0);
+		}
+	}
 
 	return do_balance(argv[optind], &args, start_flags);
 }
