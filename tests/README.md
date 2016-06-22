@@ -1,5 +1,14 @@
 # Btrfs-progs tests
 
+A testsuite covering functionality of btrfs-progs, ie. the checker, image, mkfs
+and similar tools. There are no special requirements on kernel features, the
+tests build on top of the core functionality like snapshots and device
+management. In some cases optional features are turned on by mkfs and the
+filesystem image could be mounted, such tests might fail if there's lack of
+support.
+
+## Quick start
+
 Run the tests from the top directory:
 
 ```shell
@@ -56,7 +65,7 @@ will run the first test in fsck-tests subdirectory.
 
 *tests/cli-tests/:*
 
-  * tests for command line interface, option coverage, weird optin combinations that should not work
+  * tests for command line interface, option coverage, weird option combinations that should not work
   * not necessary to do any functional testing, could be rather lightweight
   * functional tests should go to to other test dirs
   * the driver script will only execute `./test.sh` in the test directory
@@ -67,8 +76,9 @@ will run the first test in fsck-tests subdirectory.
     execute `./test.sh` in the test directory
 
 *tests/common:*
+*tests/common.convert:*
 
-  * script with helpers
+  * script with shell helpers, separated by functionality
 
 *tests/test.img:*
 
@@ -99,7 +109,8 @@ the root helper).
 ### Verbosity
 
 Setting the variable `TEST_LOG=tty` will print all commands executed by some of
-the wrappers (`run_check` etc), other commands are silent.
+the wrappers (`run_check` etc), other commands are not printed to the terminal
+(but the full output is in the log).
 
 ### Permissions
 
@@ -118,26 +129,33 @@ least the mounts and loop devices need to be cleaned before the next run.
 This is partially done by the script `clean-tests.sh`, you may want to check
 the loop devices as they are managed on a per-test basis.
 
+### Prototyping tests, quick tests
+
+There's a script `test-console.sh` that will run shell commands in a loop and
+logs the output with the testing environment set up.
+
 ## New test
 
 1. Pick the category for the new test or fallback to `misc-tests` if not sure. For
 an easy start copy an existing `test.sh` script from some test that might be
-close to the purpose of your new test.
+close to the purpose of your new test. The environment setup includes the
+common scripts and/or prepares the test devices. Other scripts contain examples
+how to do mkfs, mount, unmount, check, etc.
 
-* Use the highest unused number in the sequence, write a short descriptive title
-and join by dashes `-`.
+2. Use the highest unused number in the sequence, write a short descriptive title
+and join by dashes `-`. This will become the directory name, eg. `012-subvolume-sync-must-wait`.
 
-* Write a short description of the bug and how it's tested to the comment at the
-begining of `test.sh`.
+3. Write a short description of the bug and how it's tested to the comment at the
+begining of `test.sh`. You don't need to add the file to git yet.
 
-* Write the test commands, comment anything that's not obvious.
+4. Write the test commands, comment anything that's not obvious.
 
-* Test your test. Use the `TEST` variable to jump right to your test:
+5. Test your test. Use the `TEST` variable to jump right to your test:
 ```shell
 $ make TEST=012\* tests-misc           # from top directory
 $ TEST=012\* ./misc-tests.sh           # from tests/
 ```
 
-* The commit changelog should reference a commit that either introduced or
+6. The commit changelog should reference a commit that either introduced or
   fixed the bug (or both). Subject line of the shall mention the name of the
   new directory for ease of search, eg. `btrfs-progs: tests: add 012-subvolume-sync-must-wait`
