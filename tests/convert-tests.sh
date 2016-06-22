@@ -22,18 +22,19 @@ export TEST_DEV
 rm -f $RESULTS
 
 run_one_test() {
+	local testdir
 	local testname
 
-	testname="$1"
+	testdir="$1"
+	testname=$(basename "$testdir")
 	echo "    [TEST/conv]   $testname"
-	cd $testname
+	cd "$testdir"
 	echo "=== Entering $testname" >> $RESULTS
 	if [ -x test.sh ]; then
-		# Difference convert test case needs different tools to restore
-		# and check image, so only support custom test scripts
+		# Only support custom test scripts
 		./test.sh
 		if [ $? -ne 0 ]; then
-			_fail "test failed for case $(basename $testname)"
+			_fail "test failed for case $testname"
 		fi
 	else
 		_fail "custom test script not found"
