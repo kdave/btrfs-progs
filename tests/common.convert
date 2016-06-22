@@ -81,55 +81,102 @@ populate_fs() {
 	done
 }
 
-convert_test() {
+# verbose message before the test, same arguments as convert_test
+convert_test_preamble() {
 	local features
-	local nodesize
+	local msg
 
 	features="$1"
-	shift
+	msg="$2"
+	shift 3
+	echo "    [TEST/conv]     $msg, btrfs" "${features:-defaults}"
+	echo "creating ext image with: $@" >> $RESULTS
+}
 
-	if [ -z "$features" ]; then
-		echo "    [TEST/conv]   $1, btrfs defaults"
-	else
-		echo "    [TEST/conv]   $1, btrfs $features"
-	fi
-	nodesize=$2
-	shift 2
-	echo "creating ext image with: $*" >> $RESULTS
+#  prepare TEST_DEV before conversion, create filesystem and mount it, image
+#  size is 512MB
+#  $@: free form, command to create the filesystem, with appended -F
+convert_test_prep_fs() {
 	# TEST_DEV not removed as the file might have special permissions, eg.
 	# when test image is on NFS and would not be writable for root
 	run_check truncate -s 0 $TEST_DEV
 	# 256MB is the smallest acceptable btrfs image.
 	run_check truncate -s 512M $TEST_DEV
-	run_check $* -F $TEST_DEV
-	CHECKSUMTMP=$(mktemp --tmpdir btrfs-progs-convert.XXXXXXXXXX)
+	run_check "$@" -F $TEST_DEV
 
-	# create a file to check btrfs-convert can convert regular file
-	# correct
+	# create a file to check btrfs-convert can convert regular file correct
 	run_check_mount_test_dev
 
 	# create a file inside the fs before convert, to make sure there is
 	# data covering btrfs backup superblock range (64M)
 	run_check $SUDO_HELPER dd if=/dev/zero bs=1M count=64 \
 		of=$TEST_MNT/convert_space_holder
+}
 
-	populate_fs
+# generate md5 checksums of files on $TEST_MNT
+# $1: path where the checksums will be stored
+convert_test_gen_checksums() {
+	local CHECKSUMTMP
+	CHECKSUMTMP="$1"
+
 	run_check $SUDO_HELPER dd if=/dev/zero of=$TEST_MNT/test bs=$nodesize \
 		count=1 >/dev/null 2>&1
-	run_check_stdout $SUDO_HELPER find $TEST_MNT -type f ! -name 'image' -exec md5sum {} \+ > $CHECKSUMTMP
-	run_check_umount_test_dev
+	run_check_stdout $SUDO_HELPER find $TEST_MNT -type f ! -name 'image' -exec md5sum {} \+ > "$CHECKSUMTMP"
+}
 
-	run_check $TOP/btrfs-convert ${features:+-O "$features"} -N "$nodesize" $TEST_DEV
+# do conversion with given features and nodesize, fsck afterwards
+# $1: features, argument of -O, can be empty
+# $2: nodesize, argument of -N, can be empty
+convert_test_do_convert() {
+	run_check $TOP/btrfs-convert ${1:+-O "$1"} ${2:+-N "$2"} $TEST_DEV
 	run_check $TOP/btrfs check $TEST_DEV
 	run_check $TOP/btrfs-show-super -Ffa $TEST_DEV
+}
+
+# post conversion checks, verify md5sums
+# $1: file with checksums
+convert_test_post_check() {
+	local CHECKSUMTMP
+	CHECKSUMTMP="$1"
 
 	run_check_mount_test_dev
-	run_check_stdout $SUDO_HELPER md5sum -c $CHECKSUMTMP |
-		grep -q 'FAILED' && _fail "file validation failed."
+	run_check_stdout $SUDO_HELPER md5sum -c "$CHECKSUMTMP" |
+		grep -q 'FAILED' && _fail "file validation failed"
 	run_check_umount_test_dev
-	rm $CHECKSUMTMP
+}
 
+# do rollback and fsck
+convert_test_post_rollback() {
 	run_check $TOP/btrfs-convert --rollback $TEST_DEV
 	run_check fsck -n -t ext2,ext3,ext4 $TEST_DEV
 }
 
+# simple wrapper for a convert test
+# $1: btrfs features, argument to -O
+# $2: description of the test "ext2 8k nodesize"
+# $3: nodesize value
+# $4 + rest: command to create the ext2 image
+convert_test() {
+	local features
+	local nodesize
+	local msg
+	local CHECKSUMTMP
+
+	features="$1"
+	msg="$2"
+	nodesize="$3"
+	shift 3
+	convert_test_preamble "$features" "$msg" "$nodesize" "$@"
+	convert_test_prep_fs "$@"
+	populate_fs
+	CHECKSUMTMP=$(mktemp --tmpdir btrfs-progs-convert.XXXXXXXXXX)
+	convert_test_gen_checksums "$CHECKSUMTMP"
+
+	run_check_umount_test_dev
+
+	convert_test_do_convert "$features" "$nodesize"
+	convert_test_post_check "$CHECKSUMTMP"
+	rm $CHECKSUMTMP
+
+	convert_test_post_rollback
+}
