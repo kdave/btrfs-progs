@@ -113,6 +113,8 @@ if test "x$enable_convert" = xyes; then
 	PKG_CHECK_MODULES(COM_ERR, [com_err])
 fi
 
+AX_CHECK_DEFINE([linux/fiemap.h], [FIEMAP_EXTENT_SHARED], [],
+		[AC_MSG_ERROR([no definition of FIEMAP_EXTENT_SHARED found])])
 
 dnl Define <NAME>_LIBS= and <NAME>_CFLAGS= by pkg-config
 dnl
