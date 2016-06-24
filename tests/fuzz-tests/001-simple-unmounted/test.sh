@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # iterate over all fuzzed images and run 'btrfs check'
 
