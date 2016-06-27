@@ -3985,10 +3985,11 @@ static int __btrfs_record_file_extent(struct btrfs_trans_handle *trans,
 	u64 extent_offset;
 	u64 num_bytes = *ret_num_bytes;
 
-	num_bytes = min_t(u64, num_bytes, BTRFS_MAX_EXTENT_SIZE);
 	/*
 	 * All supported file system should not use its 0 extent.
 	 * As it's for hole
+	 *
+	 * And hole extent has no size limit, no need to loop.
 	 */
 	if (disk_bytenr == 0) {
 		ret = btrfs_insert_file_extent(trans, root, objectid,
@@ -3996,6 +3997,7 @@ static int __btrfs_record_file_extent(struct btrfs_trans_handle *trans,
 						num_bytes, num_bytes);
 		return ret;
 	}
+	num_bytes = min_t(u64, num_bytes, BTRFS_MAX_EXTENT_SIZE);
 
 	path = btrfs_alloc_path();
 	if (!path)
