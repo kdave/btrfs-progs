@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # a shell with test environment set up, logged commands and output
 
 LANG=C
