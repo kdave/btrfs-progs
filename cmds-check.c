@@ -67,7 +67,6 @@ static u64 data_bytes_referenced = 0;
 static int found_old_backref = 0;
 static LIST_HEAD(duplicate_extents);
 static LIST_HEAD(delete_items);
-static int repair = 0;
 static int no_holes = 0;
 static int init_extent_tree = 0;
 static int check_data_csum = 0;
