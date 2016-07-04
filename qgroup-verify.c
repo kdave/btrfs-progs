@@ -29,6 +29,8 @@
 #include "utils.h"
 #include "ulist.h"
 #include "rbtree-utils.h"
+#include "transaction.h"
+#include "repair.h"
 
 #include "qgroup-verify.h"
 
@@ -66,6 +68,8 @@ struct qgroup_count {
 	struct list_head members;
 
 	u64 cur_refcnt;
+
+	struct list_head bad_list;
 };
 
 static struct counts_tree {
@@ -74,6 +78,8 @@ static struct counts_tree {
 	unsigned int		rescan_running:1;
 	unsigned int		qgroup_inconsist:1;
 } counts = { .root = RB_ROOT };
+
+static LIST_HEAD(bad_qgroups);
 
 static struct rb_root by_bytenr = RB_ROOT;
 
@@ -819,6 +825,7 @@ static struct qgroup_count *alloc_count(struct btrfs_disk_key *key,
 			btrfs_qgroup_info_exclusive_compressed(leaf, disk);
 		INIT_LIST_HEAD(&c->groups);
 		INIT_LIST_HEAD(&c->members);
+		INIT_LIST_HEAD(&c->bad_list);
 
 		if (insert_count(c)) {
 			free(c);
@@ -1250,34 +1257,36 @@ static int report_qgroup_difference(struct qgroup_count *count, int verbose)
 			print_fields_signed(excl_diff, excl_diff,
 					    "diff:", "exclusive");
 	}
-	return (is_different && count->subvol_exists);
+
+	return is_different;
 }
 
-int report_qgroups(int all)
+void report_qgroups(int all)
 {
 	struct rb_node *node;
 	struct qgroup_count *c;
-	int ret = 0;
 
-	if (counts.rescan_running) {
+	if (!repair && counts.rescan_running) {
 		if (all) {
 			printf(
-	"Qgroup rescan is running, qgroup counts difference is expected\n");
+	"Qgroup rescan is running, a difference in qgroup counts is expected\n");
 		} else {
 			printf(
-	"Qgroup rescan is running, ignore qgroup check\n");
-			return ret;
+	"Qgroup rescan is running, qgroups will not be printed.\n");
+			return;
 		}
 	}
 	if (counts.qgroup_inconsist && !counts.rescan_running)
-		fprintf(stderr, "Qgroup is already inconsistent before checking\n");
+		fprintf(stderr, "Qgroup are marked as inconsistent.\n");
 	node = rb_first(&counts.root);
 	while (node) {
 		c = rb_entry(node, struct qgroup_count, rb_node);
-		ret |= report_qgroup_difference(c, all);
+
+		if (report_qgroup_difference(c, all))
+			list_add_tail(&c->bad_list, &bad_qgroups);
+
 		node = rb_next(node);
 	}
-	return ret;
 }
 
 void free_qgroup_counts(void)
@@ -1289,6 +1298,8 @@ void free_qgroup_counts(void)
 	node = rb_first(&counts.root);
 	while (node) {
 		c = rb_entry(node, struct qgroup_count, rb_node);
+
+		list_del(&c->bad_list);
 
 		list_for_each_entry_safe(glist, tmpglist, &c->groups,
 					 next_group) {
@@ -1425,3 +1436,150 @@ out:
 	return ret;
 }
 
+static int repair_qgroup_info(struct btrfs_fs_info *info,
+			      struct qgroup_count *count)
+{
+	int ret;
+	struct btrfs_root *root = info->quota_root;
+	struct btrfs_trans_handle *trans;
+	struct btrfs_path *path;
+	struct btrfs_qgroup_info_item *info_item;
+	struct btrfs_key key;
+
+	printf("Repair qgroup %llu/%llu\n", btrfs_qgroup_level(count->qgroupid),
+	       btrfs_qgroup_subvid(count->qgroupid));
+
+	path = btrfs_alloc_path();
+	if (!path)
+		return -ENOMEM;
+
+	trans = btrfs_start_transaction(root, 1);
+	if (IS_ERR(trans)) {
+		btrfs_free_path(path);
+		return PTR_ERR(trans);
+	}
+
+	key.objectid = 0;
+	key.type = BTRFS_QGROUP_INFO_KEY;
+	key.offset = count->qgroupid;
+	ret = btrfs_search_slot(trans, root, &key, path, 0, 1);
+	if (ret) {
+		error("Could not find disk item for qgroup %llu/%llu.\n",
+		      btrfs_qgroup_level(count->qgroupid),
+		      btrfs_qgroup_subvid(count->qgroupid));
+		if (ret > 0)
+			ret = -ENOENT;
+		goto out;
+	}
+
+	info_item = btrfs_item_ptr(path->nodes[0], path->slots[0],
+				   struct btrfs_qgroup_info_item);
+
+	btrfs_set_qgroup_info_generation(path->nodes[0], info_item,
+					 trans->transid);
+
+	btrfs_set_qgroup_info_referenced(path->nodes[0], info_item,
+					 count->info.referenced);
+	btrfs_set_qgroup_info_referenced_compressed(path->nodes[0], info_item,
+					    count->info.referenced_compressed);
+
+	btrfs_set_qgroup_info_exclusive(path->nodes[0], info_item,
+					count->info.exclusive);
+	btrfs_set_qgroup_info_exclusive_compressed(path->nodes[0], info_item,
+					   count->info.exclusive_compressed);
+
+	btrfs_mark_buffer_dirty(path->nodes[0]);
+
+out:
+	btrfs_commit_transaction(trans, root);
+	btrfs_free_path(path);
+
+	return ret;
+}
+
+static int repair_qgroup_status(struct btrfs_fs_info *info)
+{
+	int ret;
+	struct btrfs_root *root = info->quota_root;
+	struct btrfs_trans_handle *trans;
+	struct btrfs_path *path;
+	struct btrfs_key key;
+	struct btrfs_qgroup_status_item *status_item;
+
+	printf("Repair qgroup status item\n");
+
+	path = btrfs_alloc_path();
+	if (!path)
+		return -ENOMEM;
+
+	trans = btrfs_start_transaction(root, 1);
+	if (IS_ERR(trans)) {
+		btrfs_free_path(path);
+		return PTR_ERR(trans);
+	}
+
+	key.objectid = 0;
+	key.type = BTRFS_QGROUP_STATUS_KEY;
+	key.offset = 0;
+	ret = btrfs_search_slot(trans, root, &key, path, 0, 1);
+	if (ret) {
+		error("Could not find qgroup status item\n");
+		if (ret > 0)
+			ret = -ENOENT;
+		goto out;
+	}
+
+	status_item = btrfs_item_ptr(path->nodes[0], path->slots[0],
+				     struct btrfs_qgroup_status_item);
+	btrfs_set_qgroup_status_flags(path->nodes[0], status_item,
+				      BTRFS_QGROUP_STATUS_FLAG_ON);
+	btrfs_set_qgroup_status_rescan(path->nodes[0], status_item, 0);
+	btrfs_set_qgroup_status_generation(path->nodes[0], status_item,
+					   trans->transid);
+
+	btrfs_mark_buffer_dirty(path->nodes[0]);
+
+out:
+	btrfs_commit_transaction(trans, root);
+	btrfs_free_path(path);
+
+	return ret;
+}
+
+int repair_qgroups(struct btrfs_fs_info *info, int *repaired)
+{
+	int ret;
+	struct qgroup_count *count, *tmpcount;
+
+	*repaired = 0;
+
+	if (!repair)
+		return 0;
+
+	list_for_each_entry_safe(count, tmpcount, &bad_qgroups, bad_list) {
+		ret = repair_qgroup_info(info, count);
+		if (ret) {
+			goto out;
+		}
+
+		(*repaired)++;
+
+		list_del_init(&count->bad_list);
+	}
+
+	/*
+	 * Do this step last as we want the latest transaction id on
+	 * our qgroup status to avoid a (useless) warning after
+	 * mount.
+	 */
+	if (*repaired || counts.qgroup_inconsist || counts.rescan_running) {
+		ret = repair_qgroup_status(info);
+		if (ret)
+			goto out;
+
+		(*repaired)++;
+	}
+
+out:
+	return ret;
+}

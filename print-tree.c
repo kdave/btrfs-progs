@@ -1037,7 +1037,7 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 				btrfs_qgroup_status_generation(l, qg_status),
 				flags_str,
 				(unsigned long long)
-				btrfs_qgroup_status_scan(l, qg_status));
+				btrfs_qgroup_status_rescan(l, qg_status));
 			break;
 		case BTRFS_QGROUP_RELATION_KEY:
 			break;
