@@ -2815,6 +2815,8 @@ path:
 	if (fd < 0)
 		goto err;
 	ret = lookup_ino_rootid(fd, &id);
+	if (ret)
+		error("failed to lookup root id: %s", strerror(-ret));
 	close(fd);
 	if (ret < 0)
 		goto err;
@@ -3497,10 +3499,8 @@ int lookup_ino_rootid(int fd, u64 *rootid)
 	args.objectid = BTRFS_FIRST_FREE_OBJECTID;
 
 	ret = ioctl(fd, BTRFS_IOC_INO_LOOKUP, &args);
-	if (ret < 0) {
-		error("failed to lookup root id: %s", strerror(errno));
-		return ret;
-	}
+	if (ret < 0)
+		return -errno;
 
 	*rootid = args.treeid;
 
