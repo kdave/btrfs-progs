@@ -14,6 +14,8 @@ tools.  Currently covers:
 
 2. file attributes
 
+3. control device
+
 MOUNT OPTIONS
 -------------
 
@@ -455,11 +457,43 @@ When set on a directory, all newly created files will inherit this attribute.
 No other attributes are supported.  For the complete list please refer to the
 `chattr`(1) manual page.
 
+CONTROL DEVICE
+--------------
+
+There's a character special device `/dev/btrfs-control` with major and minor
+numbers 10 and 234 (the device can be found under the 'misc' category).
+
+--------------------
+$ ls -l /dev/btrfs-control
+crw------- 1 root root 10, 234 Jan  1 12:00 /dev/btrfs-control
+--------------------
+
+The device accepts some ioctl calls that can perform following actions on the
+filesyste module:
+
+* scan devices for btrfs filesytem (ie. to let multi-device filesystems mount
+  automatically) and register them with the kernel module
+* similar to scan, but also wait until the device scanning process is finished
+  for a given filesystem
+* get the supported features (can be also found under '/sys/fs/btrfs/features')
+
+
+The device is usually created by ..., but can be created manually:
+
+--------------------
+# mknod --mode=600 c 10 234 /dev/btrfs-control
+--------------------
+
+The device is not strictly required but the device scanning will not work and a
+workaround would need to be used to mount a multi-device filesystem. The mount
+option 'device' can trigger the device scanning during mount.
+
 SEE ALSO
 --------
 `acl`(5),
 `btrfs`(8),
 `chattr`(1),
 `fstrim`(8),
+`ioctl`(2),
 `mkfs.btrfs`(8),
 `mount`(8)
