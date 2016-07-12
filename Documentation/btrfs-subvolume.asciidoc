@@ -3,7 +3,7 @@ btrfs-subvolume(8)
 
 NAME
 ----
-btrfs-subvolume - control btrfs subvolume(s)
+btrfs-subvolume - manage btrfs subvolumes
 
 SYNOPSIS
 --------
@@ -11,35 +11,39 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-*btrfs subvolume* is used to control the filesystem to create/delete/list/show
-subvolumes and snapshots.
+*btrfs subvolume* is used to create/delete/list/show btrfs subvolumes and
+snapshots.
 
 SUBVOLUME AND SNAPSHOT
 ----------------------
-A subvolume in btrfs is not like an LVM logical volume, which is quite
-independent from each other, a btrfs subvolume has its hierarchy and relations
-between other subvolumes.
 
-A subvolume in btrfs can be accessed in two ways.
+A subvolume is a part of filesystem with it's own and independent
+file/directory hierarchy. Subvolumes can share file extents. A snapshot is
+also subvolume, but with a given initial content of the original subvolume.
 
-1. From the parent subvolume +
-When accessing from the parent subvolume, the subvolume can be used just
-like a directory. It can have child subvolumes and its own files/directories.
+NOTE: A subvolume in btrfs is not like an LVM logical volume, which is
+block-level snapshot while btrfs subvolumes are file extent-based.
 
-2. Separate mounted filesystem +
-When `mount`(8) using 'subvol' or 'subvolid' mount option, one can access
-files/directories/subvolumes inside it, but nothing in parent subvolumes.
+A subvolume looks like a normal directory, with some additional operations
+described below. Subvolumes can be renamed or moved, nesting subvolumes is not
+restricted but has some implications regarding snapshotting.
 
-Also every btrfs filesystem has a default subvolume as its initially top-level
-subvolume, whose subvolume id is 5. (0 is also acceptable as an alias.)
+A subvolume in btrfs can be accessed in two ways:
 
-A btrfs snapshot is much like a subvolume, but shares its data(and metadata)
-with other subvolume/snapshot. Due to the capabilities of COW, modifications
-inside a snapshot will only show in a snapshot but not in its source subvolume.
+* like any other directory that is accessible to the user
+* like a separately mounted filesystem (options 'subvol' or 'subvolid')
 
-Although in btrfs, subvolumes/snapshots are treated as directories, only
-subvolume/snapshot can be the source of a snapshot, snapshot can not be made
-from normal directories.
+In the latter case the parent directory is not visible and accessible. This is
+similar to a bind mount, and in fact the subvolume mount does exactly that.
+
+A freshly created filesystem is also a subvolume, called 'top-level',
+internally has an id 5. This subvolume cannot be removed or replaced by another
+subvolume. This is also the subvolume that will be mounted by default, unless
+the default subvolume has been changed (see subcommand 'set-default').
+
+A snapshot is a subvolume like any other, with given initial content. By
+default, snapshots are created read-write. File modifications in a snapshot
+do not affect the files in the original subvolume.
 
 SUBCOMMAND
 -----------
@@ -178,5 +182,6 @@ further details.
 SEE ALSO
 --------
 `mkfs.btrfs`(8),
+`mount`(8),
 `btrfs-quota`(8),
 `btrfs-qgroup`(8),
