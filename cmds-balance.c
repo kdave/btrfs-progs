@@ -657,18 +657,18 @@ static int cmd_balance_pause(int argc, char **argv)
 
 	ret = ioctl(fd, BTRFS_IOC_BALANCE_CTL, BTRFS_BALANCE_CTL_PAUSE);
 	e = errno;
-	close_file_or_dir(fd, dirstream);
 
 	if (ret < 0) {
 		error("balance pause on '%s' failed: %s", path,
 			(e == ENOTCONN) ? "Not running" : strerror(e));
 		if (e == ENOTCONN)
-			return 2;
+			ret = 2;
 		else
-			return 1;
+			ret = 1;
 	}
 
-	return 0;
+	close_file_or_dir(fd, dirstream);
+	return ret;
 }
 
 static const char * const cmd_balance_cancel_usage[] = {
@@ -698,18 +698,18 @@ static int cmd_balance_cancel(int argc, char **argv)
 
 	ret = ioctl(fd, BTRFS_IOC_BALANCE_CTL, BTRFS_BALANCE_CTL_CANCEL);
 	e = errno;
-	close_file_or_dir(fd, dirstream);
 
 	if (ret < 0) {
 		error("balance cancel on '%s' failed: %s", path,
 			(e == ENOTCONN) ? "Not in progress" : strerror(e));
 		if (e == ENOTCONN)
-			return 2;
+			ret = 2;
 		else
-			return 1;
+			ret = 1;
 	}
 
-	return 0;
+	close_file_or_dir(fd, dirstream);
+	return ret;
 }
 
 static const char * const cmd_balance_resume_usage[] = {
@@ -743,7 +743,6 @@ static int cmd_balance_resume(int argc, char **argv)
 
 	ret = ioctl(fd, BTRFS_IOC_BALANCE_V2, &args);
 	e = errno;
-	close_file_or_dir(fd, dirstream);
 
 	if (ret < 0) {
 		if (e == ECANCELED) {
@@ -756,14 +755,14 @@ static int cmd_balance_resume(int argc, char **argv)
 				(e == ENOTCONN) ? "Not in progress" :
 						  "Already running");
 			if (e == ENOTCONN)
-				return 2;
+				ret = 2;
 			else
-				return 1;
+				ret = 1;
 		} else {
 			error("error during balancing '%s': %s\n"
 			  "There may be more info in syslog - try dmesg | tail",
 				path, strerror(e));
-			return 1;
+			ret = 1;
 		}
 	} else {
 		printf("Done, had to relocate %llu out of %llu chunks\n",
@@ -771,7 +770,8 @@ static int cmd_balance_resume(int argc, char **argv)
 		       (unsigned long long)args.stat.considered);
 	}
 
-	return 0;
+	close_file_or_dir(fd, dirstream);
+	return ret;
 }
 
 static const char * const cmd_balance_status_usage[] = {
@@ -830,15 +830,16 @@ static int cmd_balance_status(int argc, char **argv)
 
 	ret = ioctl(fd, BTRFS_IOC_BALANCE_PROGRESS, &args);
 	e = errno;
-	close_file_or_dir(fd, dirstream);
 
 	if (ret < 0) {
 		if (e == ENOTCONN) {
 			printf("No balance found on '%s'\n", path);
-			return 0;
+			ret = 0;
+			goto out;
 		}
 		error("balance status on '%s' failed: %s", path, strerror(e));
-		return 2;
+		ret = 2;
+		goto out;
 	}
 
 	if (args.state & BTRFS_BALANCE_STATE_RUNNING) {
@@ -862,7 +863,10 @@ static int cmd_balance_status(int argc, char **argv)
 	if (verbose)
 		dump_ioctl_balance_args(&args);
 
-	return 1;
+	ret = 1;
+out:
+	close_file_or_dir(fd, dirstream);
+	return ret;
 }
 
 static int cmd_balance_full(int argc, char **argv)
