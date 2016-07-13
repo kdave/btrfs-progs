@@ -522,7 +522,6 @@ static int cmd_balance_start(int argc, char **argv)
 
 	memset(&args, 0, sizeof(args));
 
-	optind = 1;
 	while (1) {
 		enum { GETOPT_VAL_FULL_BALANCE = 256 };
 		static const struct option longopts[] = {
@@ -785,7 +784,6 @@ static int cmd_balance_status(int argc, char **argv)
 	int verbose = 0;
 	int ret;
 
-	optind = 1;
 	while (1) {
 		int opt;
 		static const struct option longopts[] = {

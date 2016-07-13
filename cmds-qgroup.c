@@ -309,7 +309,6 @@ static int cmd_qgroup_show(int argc, char **argv)
 
 	unit_mode = get_unit_mode_from_arg(&argc, argv, 0);
 
-	optind = 1;
 	while (1) {
 		int c;
 		static const struct option long_options[] = {
@@ -408,7 +407,6 @@ static int cmd_qgroup_limit(int argc, char **argv)
 	int exclusive = 0;
 	DIR *dirstream = NULL;
 
-	optind = 1;
 	while (1) {
 		int c = getopt(argc, argv, "ce");
 		if (c < 0)

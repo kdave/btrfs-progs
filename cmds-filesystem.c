@@ -1041,7 +1041,6 @@ static int cmd_filesystem_defrag(int argc, char **argv)
 	defrag_global_verbose = 0;
 	defrag_global_errors = 0;
 	defrag_global_fancy_ioctl = 0;
-	optind = 1;
 	while(1) {
 		int c = getopt(argc, argv, "vrc::fs:l:t:");
 		if (c < 0)

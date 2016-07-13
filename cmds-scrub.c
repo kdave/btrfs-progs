@@ -1141,7 +1141,6 @@ static int scrub_start(int argc, char **argv, int resume)
 	int force = 0;
 	int nothing_to_resume = 0;
 
-	optind = 1;
 	while ((c = getopt(argc, argv, "BdqrRc:n:f")) != -1) {
 		switch (c) {
 		case 'B':
@@ -1675,7 +1674,6 @@ static int cmd_scrub_status(int argc, char **argv)
 	int err = 0;
 	DIR *dirstream = NULL;
 
-	optind = 1;
 	while ((c = getopt(argc, argv, "dR")) != -1) {
 		switch (c) {
 		case 'd':

@@ -399,7 +399,6 @@ int main(int argc, char *argv[])
 	int ret;
 	u64 super_flags = 0;
 
-	optind = 1;
 	while(1) {
 		static const struct option long_options[] = {
 			{ "help", no_argument, NULL, GETOPT_VAL_HELP},

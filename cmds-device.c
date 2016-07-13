@@ -257,7 +257,6 @@ static int cmd_device_scan(int argc, char **argv)
 	int all = 0;
 	int ret = 0;
 
-	optind = 1;
 	while (1) {
 		int c;
 		static const struct option long_options[] = {
@@ -392,7 +391,6 @@ static int cmd_device_stats(int argc, char **argv)
 	__u64 flags = 0;
 	DIR *dirstream = NULL;
 
-	optind = 1;
 	while ((c = getopt(argc, argv, "z")) != -1) {
 		switch (c) {
 		case 'z':
