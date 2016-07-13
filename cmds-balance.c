@@ -427,7 +427,6 @@ static int do_balance(const char *path, struct btrfs_ioctl_balance_args *args,
 {
 	int fd;
 	int ret;
-	int e;
 	DIR *dirstream = NULL;
 
 	fd = btrfs_open_dir(path, &dirstream, 1);
@@ -453,30 +452,28 @@ static int do_balance(const char *path, struct btrfs_ioctl_balance_args *args,
 	}
 
 	ret = ioctl(fd, BTRFS_IOC_BALANCE_V2, args);
-	e = errno;
-
 	if (ret < 0) {
 		/*
 		 * older kernels don't have the new balance ioctl, try the
 		 * old one.  But, the old one doesn't know any filters, so
 		 * don't fall back if they tried to use the fancy new things
 		 */
-		if (e == ENOTTY && !(flags & BALANCE_START_FILTERS)) {
+		if (errno == ENOTTY && !(flags & BALANCE_START_FILTERS)) {
 			ret = do_balance_v1(fd);
 			if (ret == 0)
 				goto out;
-			e = errno;
 		}
 
-		if (e == ECANCELED) {
+		if (errno == ECANCELED) {
 			if (args->state & BTRFS_BALANCE_STATE_PAUSE_REQ)
 				fprintf(stderr, "balance paused by user\n");
 			if (args->state & BTRFS_BALANCE_STATE_CANCEL_REQ)
 				fprintf(stderr, "balance canceled by user\n");
 			ret = 0;
 		} else {
-			error("error during balancing '%s': %s", path, strerror(e));
-			if (e != EINPROGRESS)
+			error("error during balancing '%s': %s", path,
+					strerror(errno));
+			if (errno != EINPROGRESS)
 				fprintf(stderr,
 			"There may be more info in syslog - try dmesg | tail\n");
 			ret = 1;
@@ -641,7 +638,6 @@ static int cmd_balance_pause(int argc, char **argv)
 	const char *path;
 	int fd;
 	int ret;
-	int e;
 	DIR *dirstream = NULL;
 
 	clean_args_no_options(argc, argv, cmd_balance_pause_usage);
@@ -656,12 +652,10 @@ static int cmd_balance_pause(int argc, char **argv)
 		return 1;
 
 	ret = ioctl(fd, BTRFS_IOC_BALANCE_CTL, BTRFS_BALANCE_CTL_PAUSE);
-	e = errno;
-
 	if (ret < 0) {
 		error("balance pause on '%s' failed: %s", path,
-			(e == ENOTCONN) ? "Not running" : strerror(e));
-		if (e == ENOTCONN)
+			(errno == ENOTCONN) ? "Not running" : strerror(errno));
+		if (errno == ENOTCONN)
 			ret = 2;
 		else
 			ret = 1;
@@ -682,7 +676,6 @@ static int cmd_balance_cancel(int argc, char **argv)
 	const char *path;
 	int fd;
 	int ret;
-	int e;
 	DIR *dirstream = NULL;
 
 	clean_args_no_options(argc, argv, cmd_balance_cancel_usage);
@@ -697,12 +690,10 @@ static int cmd_balance_cancel(int argc, char **argv)
 		return 1;
 
 	ret = ioctl(fd, BTRFS_IOC_BALANCE_CTL, BTRFS_BALANCE_CTL_CANCEL);
-	e = errno;
-
 	if (ret < 0) {
 		error("balance cancel on '%s' failed: %s", path,
-			(e == ENOTCONN) ? "Not in progress" : strerror(e));
-		if (e == ENOTCONN)
+			(errno == ENOTCONN) ? "Not in progress" : strerror(errno));
+		if (errno == ENOTCONN)
 			ret = 2;
 		else
 			ret = 1;
@@ -725,7 +716,6 @@ static int cmd_balance_resume(int argc, char **argv)
 	DIR *dirstream = NULL;
 	int fd;
 	int ret;
-	int e;
 
 	clean_args_no_options(argc, argv, cmd_balance_resume_usage);
 
@@ -742,26 +732,24 @@ static int cmd_balance_resume(int argc, char **argv)
 	args.flags |= BTRFS_BALANCE_RESUME;
 
 	ret = ioctl(fd, BTRFS_IOC_BALANCE_V2, &args);
-	e = errno;
-
 	if (ret < 0) {
-		if (e == ECANCELED) {
+		if (errno == ECANCELED) {
 			if (args.state & BTRFS_BALANCE_STATE_PAUSE_REQ)
 				fprintf(stderr, "balance paused by user\n");
 			if (args.state & BTRFS_BALANCE_STATE_CANCEL_REQ)
 				fprintf(stderr, "balance canceled by user\n");
-		} else if (e == ENOTCONN || e == EINPROGRESS) {
+		} else if (errno == ENOTCONN || errno == EINPROGRESS) {
 			error("balance resume on '%s' failed: %s", path,
-				(e == ENOTCONN) ? "Not in progress" :
+				(errno == ENOTCONN) ? "Not in progress" :
 						  "Already running");
-			if (e == ENOTCONN)
+			if (errno == ENOTCONN)
 				ret = 2;
 			else
 				ret = 1;
 		} else {
 			error("error during balancing '%s': %s\n"
 			  "There may be more info in syslog - try dmesg | tail",
-				path, strerror(e));
+				path, strerror(errno));
 			ret = 1;
 		}
 	} else {
@@ -796,7 +784,6 @@ static int cmd_balance_status(int argc, char **argv)
 	int fd;
 	int verbose = 0;
 	int ret;
-	int e;
 
 	optind = 1;
 	while (1) {
@@ -829,15 +816,13 @@ static int cmd_balance_status(int argc, char **argv)
 		return 2;
 
 	ret = ioctl(fd, BTRFS_IOC_BALANCE_PROGRESS, &args);
-	e = errno;
-
 	if (ret < 0) {
-		if (e == ENOTCONN) {
+		if (errno == ENOTCONN) {
 			printf("No balance found on '%s'\n", path);
 			ret = 0;
 			goto out;
 		}
-		error("balance status on '%s' failed: %s", path, strerror(e));
+		error("balance status on '%s' failed: %s", path, strerror(errno));
 		ret = 2;
 		goto out;
 	}
