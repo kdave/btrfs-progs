@@ -11,9 +11,10 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-*btrfs filesystem* is used to do the whole filesystem level tasks, including
-all the regular filesystem operations like resizing, space stats, label
-setting/getting, and defragmentation.
+*btrfs filesystem* is used to perform several whole filesystem level tasks,
+including all the regular filesystem operations like resizing, space stats,
+label setting/getting, and defragmentation. There are other whole filesystem
+taks like scrub or balance that are grouped in separate commands.
 
 SUBCOMMAND
 ----------
