@@ -3,7 +3,7 @@ btrfs(8)
 
 NAME
 ----
-btrfs - control a btrfs filesystem
+btrfs - a toolbox to manage btrfs filesystems
 
 SYNOPSIS
 --------
@@ -14,6 +14,10 @@ DESCRIPTION
 The *btrfs* utility is a toolbox for managing btrfs filesystems.  There are
 command groups to work with subvolumes, devices, for whole filesystem or other
 specific actions. See section *COMMANDS*.
+
+There are also standalone tools for some tasks like *btrfs-convert* or
+*btrfstune* that were separate historically and/or haven't been merged to the
+main utility. See section 'STANDALONE TOOLS' for more details.
 
 COMMAND SYNTAX
 --------------
@@ -96,6 +100,27 @@ COMMANDS
 	Create/delete/list/manage btrfs subvolume. +
 	See `btrfs-subvolume`(8) for details.
 
+STANDALONE TOOLS
+----------------
+
+There are several standalone tools to provide certain functionality. If the
+functionality proves to be useful, the standalone tools are declared obsolete
+and their functionality copied to the main tool. The deprecation period is long
+(years) and the obsolete binaries are still provided.
+
+Tools that are still in active use without an equivalent in *btrfs*:
+
+*btrfs-convert*:: in-place conversion from ext2/3/4 filesystems to btrfs
+*btrfstune*:: tweak some filesystem properties on a unmounted filesystem
+*btrfs-select-super*:: rescue tool to overwrite primary superblock from a spare copy
+*btrfs-find-root*:: rescue helper to find tree roots in a filesystem
+
+Deprecated and obsolete tools:
+
+*btrfs-debug-tree*:: moved to *btrfs inspect-internal dump-tree*
+*btrfs-show-super*:: moved to *btrfs inspect-internal dump-super*
+*btrfs-zero-log*:: moved to *btrfs rescue zero-log*
+
 EXIT STATUS
 -----------
 *btrfs* returns a zero exit status if it succeeds. Non zero is returned in
@@ -109,9 +134,9 @@ further details.
 
 SEE ALSO
 --------
-`mkfs.btrfs`(8), `ionice`(1),
 `btrfs-balance`(8),
 `btrfs-check`(8),
+`btrfs-convert`(8),
 `btrfs-device`(8),
 `btrfs-filesystem`(8),
 `btrfs-inspect-internal`(8),
@@ -125,3 +150,5 @@ SEE ALSO
 `btrfs-scrub`(8),
 `btrfs-send`(8),
 `btrfs-subvolume`(8),
+`btrfstune`(8),
+`mkfs.btrfs`(8)
