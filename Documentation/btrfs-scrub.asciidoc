@@ -12,16 +12,30 @@ SYNOPSIS
 DESCRIPTION
 -----------
 *btrfs scrub* is used to scrub a btrfs filesystem, which will read all data
-and metadata blocks from all disks and verify checksums. Automatically repair
+and metadata blocks from all devices and verify checksums. Automatically repair
 corrupted blocks if there's a correct copy available.
+
+NOTE: Scrub is not a filesystem checker (fsck) and does not verify nor repair
+structural damage in the filesystem.
+
+The user is supposed to run it manually or via a periodic system service. The
+recommended period is a month but could be less. The estimated device bandwidth
+utilization is about 80% on an idle filesytem. The IO priority class is by
+default 'idle' so background scrub should not interfere with normal filesystem
+operation significantly.
+
+The scrubbing status is recorded in '/var/lib/btrfs/' in textual files named
+'scrub.status.UUID' for a filesystem identified by the given UUID. (An
+itermediate progress is communicated through a named pipe in file
+'scrub.progress.UUID' in the same directory.) The status file is updated
+periodically every 5 seconds. An resumed scrub will continue from the last
+saved position.
 
 SUBCOMMAND
 ----------
 *cancel* <path>|<device>::
 If a scrub is running on the filesystem identified by 'path>' cancel it.
 +
-Progress is saved in the scrub progress file ('/var/lib/btrfs/scrub.status.UUID')
-and scrubbing can be resumed later using the *btrfs scrub resume* command.
 If a 'device' is specified, the corresponding filesystem is found and
 *btrfs scrub cancel* behaves as if it was called on that filesystem.
 
@@ -40,9 +54,6 @@ Start a scrub on all devices of the filesystem identified by 'path' or on
 a single 'device'. If a scrub is already running, the new one fails.
 +
 Without options, scrub is started as a background process.
-Progress can be obtained with the *btrfs scrub status* command. Scrubbing
-involves reading all data from all disks and verifying checksums. Errors are
-corrected along the way if possible.
 +
 The default IO priority of scrub is the idle class. The priority can be
 configured similar to the `ionice`(1) syntax using '-c' and '-n' options.
@@ -52,11 +63,11 @@ configured similar to the `ionice`(1) syntax using '-c' and '-n' options.
 -B::::
 do not background and print scrub statistics when finished
 -d::::
-print separate statistics for each device of the filesystem ('-B' only)
+print separate statistics for each device of the filesystem ('-B' only) at the end
 -q::::
 be quiet, omit error messages and statistics
 -r::::
-read only mode, do not attempt to correct anything, can be run on a read-only
+run in read-only mode, do not attempt to correct anything, can be run on a read-only
 filesystem
 -R::::
 print raw statistics per-device instead of a summary
@@ -66,8 +77,8 @@ set IO priority class (see `ionice`(1) manpage)
 set IO priority classdata (see `ionice`(1) manpage)
 -f::::
 force starting new scrub even if a scrub is already running,
-this is useful when scrub status file is damaged and reports a running
-scrub although it is not
+this can useful when scrub status file is damaged and reports a running
+scrub although it is not, but should not normally be necessary
 
 *status* [-d] <path>|<device>::
 Show status of a running scrub for the filesystem identified by 'path' or
@@ -95,3 +106,4 @@ further details.
 SEE ALSO
 --------
 `mkfs.btrfs`(8),
+`ionice`(1)
