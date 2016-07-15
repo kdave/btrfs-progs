@@ -34,7 +34,7 @@
 
 #define FIELD_BUF_LEN 80
 
-static void debug_corrupt_block(struct extent_buffer *eb,
+static int debug_corrupt_block(struct extent_buffer *eb,
 		struct btrfs_root *root, u64 bytenr, u32 blocksize, u64 copy)
 {
 	int ret;
@@ -49,7 +49,13 @@ static void debug_corrupt_block(struct extent_buffer *eb,
 		ret = btrfs_map_block(&root->fs_info->mapping_tree, READ,
 				      eb->start, &length, &multi,
 				      mirror_num, NULL);
-		BUG_ON(ret);
+		if (ret) {
+			error("cannot map block %llu length %llu mirror %d: %d",
+					(unsigned long long)eb->start,
+					(unsigned long long)length,
+					mirror_num, ret);
+			return ret;
+		}
 		device = multi->stripes[0].dev;
 		eb->fd = device->fd;
 		device->total_ios++;
@@ -79,6 +85,8 @@ static void debug_corrupt_block(struct extent_buffer *eb,
 		if (mirror_num > num_copies)
 			break;
 	}
+
+	return 0;
 }
 
 static void print_usage(int ret)
