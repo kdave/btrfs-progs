@@ -318,10 +318,11 @@ FREE_RB_BASED_TREE(ref, free_ref_node);
 /*
  * Resolves all the possible roots for the ref at parent.
  */
-static void find_parent_roots(struct ulist *roots, u64 parent)
+static int find_parent_roots(struct ulist *roots, u64 parent)
 {
 	struct ref *ref;
 	struct rb_node *node;
+	int ret;
 
 	/*
 	 * Search the rbtree for the first ref with bytenr == parent.
@@ -348,16 +349,25 @@ static void find_parent_roots(struct ulist *roots, u64 parent)
 
 	do {
 		if (ref->root) {
-			if (is_fstree(ref->root))
-				ulist_add(roots, ref->root, 0, 0);
+			if (is_fstree(ref->root)) {
+				ret = ulist_add(roots, ref->root, 0, 0);
+				if (ret < 0)
+					goto out;
+			}
 		} else {
-			find_parent_roots(roots, ref->parent);
+			ret = find_parent_roots(roots, ref->parent);
+			if (ret < 0)
+				goto out;
 		}
 
 		node = rb_next(node);
 		if (node)
 			ref = rb_entry(node, struct ref, bytenr_node);
 	} while (node && ref->bytenr == parent);
+
+	ret = 0;
+out:
+	return ret;
 }
 
 static int account_one_extent(struct ulist *roots, u64 bytenr, u64 num_bytes)
@@ -488,6 +498,7 @@ static int account_all_refs(int do_qgroups, u64 search_subvol)
 	struct rb_node *node;
 	u64 bytenr, num_bytes;
 	struct ulist *roots = ulist_alloc(0);
+	int ret;
 
 	node = rb_first(&by_bytenr);
 	while (node) {
@@ -511,7 +522,9 @@ static int account_all_refs(int do_qgroups, u64 search_subvol)
 						goto enomem;
 				}
 			} else {
-				find_parent_roots(roots, ref->parent);
+				ret = find_parent_roots(roots, ref->parent);
+				if (ret < 0)
+					goto enomem;
 			}
 
 			/*
