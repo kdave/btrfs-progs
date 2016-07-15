@@ -329,6 +329,11 @@ int main(int argc, char **argv)
 			goto out_close_fd;
 		if (ret > 0)
 			break;
+		/* check again if there is overlap. */
+		if (cur_logical + cur_len < logical ||
+		    cur_logical >= logical + bytes)
+			break;
+
 		real_logical = max(logical, cur_logical);
 		real_len = min(logical + bytes, cur_logical + cur_len) -
 			   real_logical;
