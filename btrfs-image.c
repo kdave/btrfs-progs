@@ -2598,6 +2598,7 @@ static int restore_metadump(const char *input, FILE *out, int old_restore,
 		if (stat(target, &st)) {
 			fprintf(stderr, "statting %s failed\n", target);
 			close_ctree(info->chunk_root);
+			free(cluster);
 			return 1;
 		}
 
