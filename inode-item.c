@@ -19,7 +19,7 @@
 #include "ctree.h"
 #include "disk-io.h"
 #include "transaction.h"
-#include "crc32c.h"
+#include "hash.h"
 
 static int find_name_in_backref(struct btrfs_path *path, const char * name,
 			 int name_len, struct btrfs_inode_ref **ref_ret)
@@ -182,12 +182,6 @@ out:
 		return ERR_PTR(ret);
 	else
 		return ret_inode_ref;
-}
-
-static inline u64 btrfs_extref_hash(u64 parent_ino, const char *name,
-				    int namelen)
-{
-	return (u64)btrfs_crc32c(parent_ino, name, namelen);
 }
 
 static int btrfs_find_name_in_ext_backref(struct btrfs_path *path,
