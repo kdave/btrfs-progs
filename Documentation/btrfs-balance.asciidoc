@@ -104,8 +104,9 @@ act on system chunks (requires '-f'), see `FILTERS` section for details about 'f
 be verbose and print balance filter arguments
 -f::::
 force reducing of metadata integrity, eg. when going from 'raid1' to 'single'
---background::::
-run the balance operation asynchronously in the background
+--background|--bg::::
+run the balance operation asynchronously in the background, uses `fork`(2) to
+start the process that calls the kernel ioctl
 
 *status* [-v] <path>::
 Show status of running or paused balance.
