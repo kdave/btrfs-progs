@@ -646,7 +646,12 @@ static int cmd_balance_start(int argc, char **argv)
 				"unable to fork to run balance in background");
 				exit(1);
 			case (0):
-				chdir("/");
+				/*
+				 * Read the return value to silence compiler
+				 * warning. Change to / should succeed and
+				 * we're not in a security-sensitive context.
+				 */
+				i = chdir("/");
 				close(0);
 				close(1);
 				close(2);
