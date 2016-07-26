@@ -510,7 +510,8 @@ static const char * const cmd_balance_start_usage[] = {
 	"-v             be verbose",
 	"-f             force reducing of metadata integrity",
 	"--full-balance do not print warning and do not delay start",
-	"--background   run the balance as a background process",
+	"--background|--bg",
+	"               run the balance as a background process",
 	NULL
 };
 
@@ -540,6 +541,7 @@ static int cmd_balance_start(int argc, char **argv)
 				GETOPT_VAL_FULL_BALANCE },
 			{ "background", no_argument, NULL,
 				GETOPT_VAL_BACKGROUND },
+			{ "bg", no_argument, NULL, GETOPT_VAL_BACKGROUND },
 			{ NULL, 0, NULL, 0 }
 		};
 
