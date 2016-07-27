@@ -2154,9 +2154,14 @@ int write_raid56_with_parity(struct btrfs_fs_info *info,
 		ebs[multi->num_stripes - 1] = p_eb;
 		memcpy(p_eb->data, ebs[0]->data, stripe_len);
 		for (j = 1; j < multi->num_stripes - 1; j++) {
-			for (i = 0; i < stripe_len; i += sizeof(unsigned long)) {
-				*(unsigned long *)(p_eb->data + i) ^=
-					*(unsigned long *)(ebs[j]->data + i);
+			for (i = 0; i < stripe_len; i += sizeof(u64)) {
+				u64 p_eb_data;
+				u64 ebs_data;
+
+				p_eb_data = get_unaligned_64(p_eb->data + i);
+				ebs_data = get_unaligned_64(ebs[j]->data + i);
+				p_eb_data ^= ebs_data;
+				put_unaligned_64(p_eb_data, p_eb->data + i);
 			}
 		}
 	}
