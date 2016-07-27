@@ -29,18 +29,18 @@
 #include <btrfs/list.h>
 #endif /* BTRFS_FLAT_INCLUDES */
 
-#define EXTENT_DIRTY 1
-#define EXTENT_WRITEBACK (1 << 1)
-#define EXTENT_UPTODATE (1 << 2)
-#define EXTENT_LOCKED (1 << 3)
-#define EXTENT_NEW (1 << 4)
-#define EXTENT_DELALLOC (1 << 5)
-#define EXTENT_DEFRAG (1 << 6)
-#define EXTENT_DEFRAG_DONE (1 << 7)
-#define EXTENT_BUFFER_FILLED (1 << 8)
-#define EXTENT_CSUM (1 << 9)
-#define EXTENT_BAD_TRANSID (1 << 10)
-#define EXTENT_BUFFER_DUMMY (1 << 11)
+#define EXTENT_DIRTY		(1U << 0)
+#define EXTENT_WRITEBACK	(1U << 1)
+#define EXTENT_UPTODATE		(1U << 2)
+#define EXTENT_LOCKED		(1U << 3)
+#define EXTENT_NEW		(1U << 4)
+#define EXTENT_DELALLOC		(1U << 5)
+#define EXTENT_DEFRAG		(1U << 6)
+#define EXTENT_DEFRAG_DONE	(1U << 7)
+#define EXTENT_BUFFER_FILLED	(1U << 8)
+#define EXTENT_CSUM		(1U << 9)
+#define EXTENT_BAD_TRANSID	(1U << 10)
+#define EXTENT_BUFFER_DUMMY	(1U << 11)
 #define EXTENT_IOBITS (EXTENT_LOCKED | EXTENT_WRITEBACK)
 
 #define BLOCK_GROUP_DATA	(1U << 1)
