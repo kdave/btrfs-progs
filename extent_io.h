@@ -95,7 +95,7 @@ struct extent_buffer {
 	struct list_head lru;
 	struct list_head recow;
 	int refs;
-	int flags;
+	u32 flags;
 	int fd;
 	char data[];
 };
