@@ -43,11 +43,11 @@
 #define EXTENT_BUFFER_DUMMY (1 << 11)
 #define EXTENT_IOBITS (EXTENT_LOCKED | EXTENT_WRITEBACK)
 
-#define BLOCK_GROUP_DATA     EXTENT_WRITEBACK
-#define BLOCK_GROUP_METADATA EXTENT_UPTODATE
-#define BLOCK_GROUP_SYSTEM   EXTENT_NEW
+#define BLOCK_GROUP_DATA	(1U << 1)
+#define BLOCK_GROUP_METADATA	(1U << 2)
+#define BLOCK_GROUP_SYSTEM	(1U << 4)
 
-#define BLOCK_GROUP_DIRTY EXTENT_DIRTY
+#define BLOCK_GROUP_DIRTY 	(1U)
 
 /*
  * The extent buffer bitmap operations are done with byte granularity instead of
