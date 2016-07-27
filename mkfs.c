@@ -1636,8 +1636,11 @@ int main(int argc, char **argv)
 				strerror(errno));
 			exit(1);
 		}
-		ret = btrfs_prepare_device(fd, file, zero_end, &dev_block_count,
-					   block_count, discard);
+		ret = btrfs_prepare_device(fd, file, &dev_block_count,
+				block_count,
+				(zero_end ? PREP_DEVICE_ZERO_END : 0) |
+				(discard ? PREP_DEVICE_DISCARD : 0) |
+				(verbose ? PREP_DEVICE_VERBOSE : 0));
 		if (ret) {
 			close(fd);
 			exit(1);
@@ -1767,8 +1770,11 @@ int main(int argc, char **argv)
 			close(fd);
 			continue;
 		}
-		ret = btrfs_prepare_device(fd, file, zero_end, &dev_block_count,
-					   block_count, discard);
+		ret = btrfs_prepare_device(fd, file, &dev_block_count,
+				block_count,
+				(verbose ? PREP_DEVICE_VERBOSE : 0) |
+				(zero_end ? PREP_DEVICE_ZERO_END : 0) |
+				(discard ? PREP_DEVICE_DISCARD : 0));
 		if (ret) {
 			close(fd);
 			exit(1);

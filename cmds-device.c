@@ -107,8 +107,9 @@ static int cmd_device_add(int argc, char **argv)
 			continue;
 		}
 
-		res = btrfs_prepare_device(devfd, argv[i], 1, &dev_block_count,
-					   0, discard);
+		res = btrfs_prepare_device(devfd, argv[i], &dev_block_count, 0,
+				PREP_DEVICE_ZERO_END | PREP_DEVICE_VERBOSE |
+				(discard ? PREP_DEVICE_DISCARD : 0));
 		close(devfd);
 		if (res) {
 			ret++;

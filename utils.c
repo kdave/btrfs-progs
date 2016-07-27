@@ -1682,8 +1682,8 @@ out:
 	return ret;
 }
 
-int btrfs_prepare_device(int fd, const char *file, int zero_end,
-		u64 *block_count_ret, u64 max_block_count, int discard)
+int btrfs_prepare_device(int fd, const char *file, u64 *block_count_ret,
+		u64 max_block_count, unsigned opflags)
 {
 	u64 block_count;
 	struct stat st;
@@ -1703,15 +1703,16 @@ int btrfs_prepare_device(int fd, const char *file, int zero_end,
 	if (max_block_count)
 		block_count = min(block_count, max_block_count);
 
-	if (discard) {
+	if (opflags & PREP_DEVICE_DISCARD) {
 		/*
 		 * We intentionally ignore errors from the discard ioctl.  It
 		 * is not necessary for the mkfs functionality but just an
 		 * optimization.
 		 */
 		if (discard_range(fd, 0, 0) == 0) {
-			printf("Performing full device TRIM (%s) ...\n",
-				pretty_size(block_count));
+			if (opflags & PREP_DEVICE_VERBOSE)
+				printf("Performing full device TRIM (%s) ...\n",
+						pretty_size(block_count));
 			discard_blocks(fd, 0, block_count);
 		}
 	}
@@ -1720,7 +1721,7 @@ int btrfs_prepare_device(int fd, const char *file, int zero_end,
 	for (i = 0 ; !ret && i < BTRFS_SUPER_MIRROR_MAX; i++)
 		ret = zero_dev_clamped(fd, btrfs_sb_offset(i),
 				       BTRFS_SUPER_INFO_SIZE, block_count);
-	if (!ret && zero_end)
+	if (!ret && (opflags & PREP_DEVICE_ZERO_END))
 		ret = zero_dev_clamped(fd, block_count - ZERO_DEV_BYTES,
 				       ZERO_DEV_BYTES, block_count);
 

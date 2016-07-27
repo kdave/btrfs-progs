@@ -254,8 +254,8 @@ static int cmd_replace_start(int argc, char **argv)
 	}
 	strncpy((char *)start_args.start.tgtdev_name, dstdev,
 		BTRFS_DEVICE_PATH_NAME_MAX);
-	ret = btrfs_prepare_device(fddstdev, dstdev, 1, &dstdev_block_count, 0,
-				0);
+	ret = btrfs_prepare_device(fddstdev, dstdev, &dstdev_block_count, 0,
+			PREP_DEVICE_ZERO_END | PREP_DEVICE_VERBOSE);
 	if (ret)
 		goto leave_with_error;
 
