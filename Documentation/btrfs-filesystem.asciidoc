@@ -117,15 +117,23 @@ compression. See also section 'EXAMPLES'.
 -r::::
 defragment files recursively in given directories
 -f::::
-flush data for each file before going to the next file. This will limit the amount
-of dirty data to current file, otherwise the amount cumulates from several files
-and may increase system load.
+flush data for each file before going to the next file.
++
+This will limit the amount of dirty data to current file, otherwise the amount
+cumulates from several files and will increase system load. This can also lead
+to ENOSPC if there's too much dirty data to write and it's not possible to make
+the reservations for the new data (ie. how the COW design works).
++
 -s <start>[kKmMgGtTpPeE]::::
 defragmentation will start from the given offset, default is beginning of a file
 -l <len>[kKmMgGtTpPeE]::::
 defragment only up to 'len' bytes, default is the file size
 -t <size>[kKmMgGtTpPeE]::::
-target extent size, do not touch extents bigger than 'size'
+target extent size, do not touch extents bigger than 'size', default: 32M
++
+The value is only advisory and the final size of the extents may differ,
+depending on the state of the free space and fragmentation or other internal
+logic. Reasonable values are from tens to hundreds of megabytes.
 
 *du* [options] <path> [<path>..]::
 Calculate disk usage of the target files using FIEMAP. For individual
