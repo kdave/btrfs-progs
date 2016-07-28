@@ -540,10 +540,8 @@ static struct extent_buffer *__alloc_extent_buffer(struct extent_io_tree *tree,
 	struct extent_buffer *eb;
 
 	eb = calloc(1, sizeof(struct extent_buffer) + blocksize);
-	if (!eb) {
-		BUG();
+	if (!eb)
 		return NULL;
-	}
 
 	eb->start = bytenr;
 	eb->len = blocksize;
@@ -564,7 +562,7 @@ struct extent_buffer *btrfs_clone_extent_buffer(struct extent_buffer *src)
 	struct extent_buffer *new;
 
 	new = __alloc_extent_buffer(NULL, src->start, src->len);
-	if (new == NULL)
+	if (!new)
 		return NULL;
 
 	copy_extent_buffer(new, src, 0, 0, src->len);
