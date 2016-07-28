@@ -1,3 +1,12 @@
+btrfs-progs-4.8 (2016-10-05)
+  * error handling improvements all over the place
+  * new fuzzed images, test updates
+  * doc fixups
+  * minor cleanups and improvements
+  * kernel library helpers moved to own directory
+  * qgroup: fix regression leading to incorrect status after check,
+    introduced in 4.7
+
 btrfs-progs-4.7.3 (2016-09-21)
   * fixed free space tree compat status
   * check: low-mem mode: handle partially dropped snapshots
