@@ -1761,6 +1761,8 @@ static int read_one_chunk(struct btrfs_root *root, struct btrfs_key *key,
 			map->stripes[i].dev = fill_missing_device(devid);
 			printf("warning, device %llu is missing\n",
 			       (unsigned long long)devid);
+			list_add(&map->stripes[i].dev->dev_list,
+				 &root->fs_info->fs_devices->devices);
 		}
 
 	}
