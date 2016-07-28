@@ -772,7 +772,11 @@ int write_data_to_disk(struct btrfs_fs_info *info, void *buf, u64 offset,
 			this_len = min(this_len, (u64)info->tree_root->nodesize);
 
 			eb = malloc(sizeof(struct extent_buffer) + this_len);
-			BUG_ON(!eb);
+			if (!eb) {
+				fprintf(stderr, "cannot allocate memory for eb\n");
+				ret = -ENOMEM;
+				goto out;
+			}
 
 			memset(eb, 0, sizeof(struct extent_buffer) + this_len);
 			eb->start = offset;
@@ -823,6 +827,10 @@ int write_data_to_disk(struct btrfs_fs_info *info, void *buf, u64 offset,
 		multi = NULL;
 	}
 	return 0;
+
+out:
+	kfree(raid_map);
+	return ret;
 }
 
 int set_extent_buffer_dirty(struct extent_buffer *eb)
