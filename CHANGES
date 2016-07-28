@@ -1,5 +1,21 @@
+btrfs-progs-4.7 (2016-07-29)
+  * convert: fix creating discontig extents
+  * check: speed up traversing heavily reflinked extents within a file
+  * check: verify qgroups of higher levels
+  * check: repair can now fix wrong qgroup numbers
+  * balance: new option to run in the background
+  * defrag: default extent target size changed to 32MiB
+  * du: silently skip non-btrfs dirs/files
+  * documentation updates: btrfs(5), btrfs(8), balance, subvolume, scrub,
+    filesystem, convert
+  * bugfixes:
+    * unaligned access (reported for sparc64) in raid56 parity calculations
+    * use /bin/bash
+    * other stability fixes and cleanups
+  * more tests
+
 btrfs-progs-4.6.1 (2016-06-24)
-  * fi resize: negative resize argument accepted again (broken
+  * fi resize: negative resize argument accepted again
   * qgroup rescan: fix skipping when rescan is in progress
   * mkfs: initialize stripesize to correct value
   * testsuite updates, mostly convert tests
