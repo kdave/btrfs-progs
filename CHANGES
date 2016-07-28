@@ -1,3 +1,19 @@
+btrfs-progs-4.7.1 (2016-08-25)
+  * check:
+    * new optional mode: optimized for low memory usage (memory/io tradeoff)
+    * --mode=lowmem, not default, still considered experimental
+    * does not work with --repair yet
+  * convert: regression fix, ext2_subvol/image rw permissions
+  * mkfs/convert:
+    * two-staged creation, partially created filesystem will not be recognized
+    * improved error handling (fewer BUG_ONs)
+  * convert: preparation for more filesystems to convert from
+  * documentation updates: quota, qgroup
+  * other
+    * message updates
+    * more tests
+    * more build options, enhanced debugging
+
 btrfs-progs-4.7 (2016-07-29)
   * convert: fix creating discontig extents
   * check: speed up traversing heavily reflinked extents within a file
