@@ -1,3 +1,17 @@
+btrfs-progs-4.7.2 (2016-09-05)
+  * check:
+    * urgent fix: false report of backref mismatches; do not --repair
+      last unaffected version 4.6.1 (code reverted to that state)
+  * fuzzing and fixes
+    * added more sanity checks for various structures
+    * testing images added
+  * build: udev compatibility: do not install .rules on version < 190
+  * other:
+    * dump-super: do not crash on garbage value in csum_type
+    * minor improvements in messages and help strings
+  * documentation:
+    * filesystem features
+
 btrfs-progs-4.7.1 (2016-08-25)
   * check:
     * new optional mode: optimized for low memory usage (memory/io tradeoff)
