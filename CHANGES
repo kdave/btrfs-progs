@@ -1,3 +1,17 @@
+btrfs-progs-4.7.3 (2016-09-21)
+  * fixed free space tree compat status
+  * check: low-mem mode: handle partially dropped snapshots
+  * dump-super: consolidate options for superblock copy
+  * tree-stats: check mount status
+  * subvol delete: handle verbosity option
+  * defrag: print correct error string
+  * mkfs: fix reading rotational status
+  * other:
+    * UBSAN build option
+    * documentation updates
+    * enhanced tests: convert, fuzzed images, more tools to run on fuzzed
+      images
+
 btrfs-progs-4.7.2 (2016-09-05)
   * check:
     * urgent fix: false report of backref mismatches; do not --repair
