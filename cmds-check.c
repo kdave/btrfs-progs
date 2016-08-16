@@ -1953,8 +1953,14 @@ static int check_child_node(struct btrfs_root *root,
 	return ret;
 }
 
+struct node_refs {
+	u64 bytenr[BTRFS_MAX_LEVEL];
+	u64 refs[BTRFS_MAX_LEVEL];
+};
+
 static int walk_down_tree(struct btrfs_root *root, struct btrfs_path *path,
-			  struct walk_control *wc, int *level)
+			  struct walk_control *wc, int *level,
+			  struct node_refs *nrefs)
 {
 	enum btrfs_tree_block_status status;
 	u64 bytenr;
@@ -1967,12 +1973,20 @@ static int walk_down_tree(struct btrfs_root *root, struct btrfs_path *path,
 
 	WARN_ON(*level < 0);
 	WARN_ON(*level >= BTRFS_MAX_LEVEL);
-	ret = btrfs_lookup_extent_info(NULL, root,
+
+	if (path->nodes[*level]->start == nrefs->bytenr[*level]) {
+		refs = nrefs->refs[*level];
+		ret = 0;
+	} else {
+		ret = btrfs_lookup_extent_info(NULL, root,
 				       path->nodes[*level]->start,
 				       *level, 1, &refs, NULL);
-	if (ret < 0) {
-		err = ret;
-		goto out;
+		if (ret < 0) {
+			err = ret;
+			goto out;
+		}
+		nrefs->bytenr[*level] = path->nodes[*level]->start;
+		nrefs->refs[*level] = refs;
 	}
 
 	if (refs > 1) {
@@ -2003,10 +2017,19 @@ static int walk_down_tree(struct btrfs_root *root, struct btrfs_path *path,
 		bytenr = btrfs_node_blockptr(cur, path->slots[*level]);
 		ptr_gen = btrfs_node_ptr_generation(cur, path->slots[*level]);
 		blocksize = root->nodesize;
-		ret = btrfs_lookup_extent_info(NULL, root, bytenr, *level - 1,
-					       1, &refs, NULL);
-		if (ret < 0)
-			refs = 0;
+
+		if (bytenr == nrefs->bytenr[*level - 1]) {
+			refs = nrefs->refs[*level - 1];
+		} else {
+			ret = btrfs_lookup_extent_info(NULL, root, bytenr,
+					*level - 1, 1, &refs, NULL);
+			if (ret < 0) {
+				refs = 0;
+			} else {
+				nrefs->bytenr[*level - 1] = bytenr;
+				nrefs->refs[*level - 1] = refs;
+			}
+		}
 
 		if (refs > 1) {
 			ret = enter_shared_node(root, bytenr, refs,
@@ -3619,6 +3642,7 @@ static int check_fs_root(struct btrfs_root *root,
 	struct orphan_data_extent *orphan;
 	struct orphan_data_extent *tmp;
 	enum btrfs_tree_block_status status;
+	struct node_refs nrefs;
 
 	/*
 	 * Reuse the corrupt_block cache tree to record corrupted tree block
@@ -3640,6 +3664,7 @@ static int check_fs_root(struct btrfs_root *root,
 	memset(&root_node, 0, sizeof(root_node));
 	cache_tree_init(&root_node.root_cache);
 	cache_tree_init(&root_node.inode_cache);
+	memset(&nrefs, 0, sizeof(nrefs));
 
 	/* Move the orphan extent record to corresponding inode_record */
 	list_for_each_entry_safe(orphan, tmp,
@@ -3689,7 +3714,7 @@ static int check_fs_root(struct btrfs_root *root,
 	}
 
 	while (1) {
-		wret = walk_down_tree(root, &path, wc, &level);
+		wret = walk_down_tree(root, &path, wc, &level, &nrefs);
 		if (wret < 0)
 			ret = wret;
 		if (wret != 0)
