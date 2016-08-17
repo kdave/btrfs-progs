@@ -93,11 +93,18 @@ build the extent tree from scratch
 +
 NOTE: Do not use unless you know what you're doing.
 
---low-memory::
-check fs in low memory usage mode(experimental)
-May takes longer time than normal check.
+--mode=MODE::
+select mode of operation regarding memory and IO
 +
-NOTE: Doesn't work with '--repair' option yet.
+The 'MODE' can be one of 'original' and 'lowmem'. The original mode is mostly
+unoptimized regarding memory consumpption and can lead to out-of-memory
+conditions on large filesystems. The possible workaround is to export the block
+device over network to a machine with enough memory. The low memory mode is
+supposed to address the memory consumption, at the cost of increased IO when it
+needs to re-read blocks when needed. This may increase run time.
+
+NOTE: 'lowmem' mode does not work with '--repair' yet, and is still considered
+experimental.
 
 EXIT STATUS
 -----------

@@ -70,10 +70,18 @@ static LIST_HEAD(delete_items);
 static int no_holes = 0;
 static int init_extent_tree = 0;
 static int check_data_csum = 0;
-static int low_memory = 0;
 static struct btrfs_fs_info *global_info;
 static struct task_ctx ctx = { 0 };
 static struct cache_tree *roots_info_cache = NULL;
+
+enum btrfs_check_mode {
+	CHECK_MODE_ORIGINAL,
+	CHECK_MODE_LOWMEM,
+	CHECK_MODE_UNKNOWN,
+	CHECK_MODE_DEFAULT = CHECK_MODE_ORIGINAL
+};
+
+static enum btrfs_check_mode check_mode = CHECK_MODE_DEFAULT;
 
 struct extent_backref {
 	struct rb_node node;
@@ -484,6 +492,18 @@ static int print_status_return(void *p)
 	fflush(stdout);
 
 	return 0;
+}
+
+static enum btrfs_check_mode parse_check_mode(const char *str)
+{
+	if (strcmp(str, "lowmem") == 0)
+		return CHECK_MODE_LOWMEM;
+	if (strcmp(str, "orig") == 0)
+		return CHECK_MODE_ORIGINAL;
+	if (strcmp(str, "original") == 0)
+		return CHECK_MODE_ORIGINAL;
+
+	return CHECK_MODE_UNKNOWN;
 }
 
 /* Compatible function to allow reuse of old codes */
@@ -11117,7 +11137,7 @@ const char * const cmd_check_usage[] = {
 	"Check structural integrity of a filesystem (unmounted).",
 	"Check structural integrity of an unmounted filesystem. Verify internal",
 	"trees' consistency and item connectivity. In the repair mode try to",
-	"fix the problems found.",
+	"fix the problems found. ",
 	"WARNING: the repair mode is considered dangerous",
 	"",
 	"-s|--super <superblock>     use this superblock copy",
@@ -11126,7 +11146,12 @@ const char * const cmd_check_usage[] = {
 	"--readonly                  run in read-only mode (default)",
 	"--init-csum-tree            create a new CRC tree",
 	"--init-extent-tree          create a new extent tree",
-	"--low-memory                check in low memory usage mode(experimental)",
+	"--mode <MODE>               select mode, allows to make some memory/IO",
+	"                            trade-offs, where MODE is one of:",
+	"                            original - read inodes and extents to memory (requires",
+	"                                       more memory, does less IO)",
+	"                            lowmem   - try to use less memory but read blocks again",
+	"                                       when needed",
 	"--check-data-csum           verify checksums of data blocks",
 	"-Q|--qgroup-report           print a report on qgroup consistency",
 	"-E|--subvol-extents <subvolid>",
@@ -11160,7 +11185,7 @@ int cmd_check(int argc, char **argv)
 		enum { GETOPT_VAL_REPAIR = 257, GETOPT_VAL_INIT_CSUM,
 			GETOPT_VAL_INIT_EXTENT, GETOPT_VAL_CHECK_CSUM,
 			GETOPT_VAL_READONLY, GETOPT_VAL_CHUNK_TREE,
-			GETOPT_VAL_LOW_MEMORY };
+			GETOPT_VAL_MODE };
 		static const struct option long_options[] = {
 			{ "super", required_argument, NULL, 's' },
 			{ "repair", no_argument, NULL, GETOPT_VAL_REPAIR },
@@ -11178,8 +11203,8 @@ int cmd_check(int argc, char **argv)
 			{ "chunk-root", required_argument, NULL,
 				GETOPT_VAL_CHUNK_TREE },
 			{ "progress", no_argument, NULL, 'p' },
-			{ "low-memory", no_argument, NULL,
-				GETOPT_VAL_LOW_MEMORY },
+			{ "mode", required_argument, NULL,
+				GETOPT_VAL_MODE },
 			{ NULL, 0, NULL, 0}
 		};
 
@@ -11244,8 +11269,12 @@ int cmd_check(int argc, char **argv)
 			case GETOPT_VAL_CHECK_CSUM:
 				check_data_csum = 1;
 				break;
-			case GETOPT_VAL_LOW_MEMORY:
-				low_memory = 1;
+			case GETOPT_VAL_MODE:
+				check_mode = parse_check_mode(optarg);
+				if (check_mode == CHECK_MODE_UNKNOWN) {
+					error("unknown mode: %s", optarg);
+					exit(1);
+				}
 				break;
 		}
 	}
@@ -11267,7 +11296,7 @@ int cmd_check(int argc, char **argv)
 	/*
 	 * Not supported yet
 	 */
-	if (repair && low_memory) {
+	if (repair && check_mode == CHECK_MODE_LOWMEM) {
 		error("Low memory mode doesn't support repair yet");
 		exit(1);
 	}
@@ -11395,7 +11424,7 @@ int cmd_check(int argc, char **argv)
 
 	if (!ctx.progress_enabled)
 		fprintf(stderr, "checking extents\n");
-	if (low_memory)
+	if (check_mode == CHECK_MODE_LOWMEM)
 		ret = check_chunks_and_extents_v2(root);
 	else
 		ret = check_chunks_and_extents(root);
