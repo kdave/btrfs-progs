@@ -16,7 +16,23 @@ of a btrfs filesystem. The quota groups (qgroups) are managed by the subcommand
 `btrfs qgroup`(8).
 
 NOTE: the qgroups are different than the traditional user quotas and designed
-to track shared and exlusive data per-subvolume.
+to track shared and exlusive data per-subvolume.  Plese refer to the section
+'HIERARCHICAL QUOTA GROUP CONCEPTS' for a detailed description.
+
+PERFORMANCE IMPLICATIONS
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+When the quotas are turned on, they affect all extent processing, taking a
+performance hit. It is not recommended to turn on qgroups unless the user
+intends to actually use them.
+
+STABILITY STATUS
+~~~~~~~~~~~~~~~~
+
+The qgroup implementation has turned out to be quite difficult as it affects
+the core of the filesystem operation. The users have hit various corner cases
+over time, eg. wrong accounting or system instability. The situation is
+gradually improving but currently (4.7) there are still issues found and fixed.
 
 HIERARCHICAL QUOTA GROUP CONCEPTS
 ---------------------------------
