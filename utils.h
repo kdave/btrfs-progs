@@ -311,8 +311,61 @@ void clean_args_no_options_relaxed(int argc, char *argv[],
 		const char * const *usagestr);
 int string_is_numerical(const char *str);
 
+#if DEBUG_VERBOSE_ERROR
+#define	PRINT_VERBOSE_ERROR	fprintf(stderr, "%s:%d:", __FILE__, __LINE__)
+#else
+#define PRINT_VERBOSE_ERROR
+#endif
+
+#if DEBUG_TRACE_ON_ERROR
+#define PRINT_TRACE_ON_ERROR	print_trace()
+#else
+#define PRINT_TRACE_ON_ERROR
+#endif
+
+#if DEBUG_ABORT_ON_ERROR
+#define DO_ABORT_ON_ERROR	abort()
+#else
+#define DO_ABORT_ON_ERROR
+#endif
+
+#define error(fmt, ...)							\
+	do {								\
+		PRINT_TRACE_ON_ERROR;					\
+		PRINT_VERBOSE_ERROR;					\
+		__error((fmt), ##__VA_ARGS__);				\
+		DO_ABORT_ON_ERROR;					\
+	} while (0)
+
+#define error_on(cond, fmt, ...)					\
+	do {								\
+		if ((cond))						\
+			PRINT_TRACE_ON_ERROR;				\
+		if ((cond))						\
+			PRINT_VERBOSE_ERROR;				\
+		__error_on((cond), (fmt), ##__VA_ARGS__);		\
+		if ((cond))						\
+			DO_ABORT_ON_ERROR;				\
+	} while (0)
+
+#define warning(fmt, ...)						\
+	do {								\
+		PRINT_TRACE_ON_ERROR;					\
+		PRINT_VERBOSE_ERROR;					\
+		__warning((fmt), ##__VA_ARGS__);			\
+	} while (0)
+
+#define warning_on(cond, fmt, ...)					\
+	do {								\
+		if ((cond))						\
+			PRINT_TRACE_ON_ERROR;				\
+		if ((cond))						\
+			PRINT_VERBOSE_ERROR;				\
+		__warning_on((cond), (fmt), ##__VA_ARGS__);		\
+	} while (0)
+
 __attribute__ ((format (printf, 1, 2)))
-static inline void warning(const char *fmt, ...)
+static inline void __warning(const char *fmt, ...)
 {
 	va_list args;
 
@@ -324,7 +377,7 @@ static inline void warning(const char *fmt, ...)
 }
 
 __attribute__ ((format (printf, 1, 2)))
-static inline void error(const char *fmt, ...)
+static inline void __error(const char *fmt, ...)
 {
 	va_list args;
 
@@ -336,7 +389,7 @@ static inline void error(const char *fmt, ...)
 }
 
 __attribute__ ((format (printf, 2, 3)))
-static inline int warning_on(int condition, const char *fmt, ...)
+static inline int __warning_on(int condition, const char *fmt, ...)
 {
 	va_list args;
 
@@ -353,7 +406,7 @@ static inline int warning_on(int condition, const char *fmt, ...)
 }
 
 __attribute__ ((format (printf, 2, 3)))
-static inline int error_on(int condition, const char *fmt, ...)
+static inline int __error_on(int condition, const char *fmt, ...)
 {
 	va_list args;
 
