@@ -937,11 +937,13 @@ static int cmd_subvol_show(int argc, char **argv)
 		goto out;
 	}
 	if (ret) {
-		ret < 0 ?
+		if (ret < 0) {
 			error("Failed to get subvol info %s: %s\n",
-							fullpath, strerror(-ret)):
+					fullpath, strerror(-ret));
+		} else {
 			error("Failed to get subvol info %s: %d\n",
-							fullpath, ret);
+					fullpath, ret);
+		}
 		return ret;
 	}
 
