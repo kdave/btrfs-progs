@@ -251,7 +251,7 @@ fail:
 
 int btrfs_scan_one_device(int fd, const char *path,
 			  struct btrfs_fs_devices **fs_devices_ret,
-			  u64 *total_devs, u64 super_offset, int super_recover)
+			  u64 *total_devs, u64 super_offset, unsigned sbflags)
 {
 	struct btrfs_super_block *disk_super;
 	char buf[BTRFS_SUPER_INFO_SIZE];
@@ -259,7 +259,7 @@ int btrfs_scan_one_device(int fd, const char *path,
 	u64 devid;
 
 	disk_super = (struct btrfs_super_block *)buf;
-	ret = btrfs_read_dev_super(fd, disk_super, super_offset, super_recover);
+	ret = btrfs_read_dev_super(fd, disk_super, super_offset, sbflags);
 	if (ret < 0)
 		return -EIO;
 	devid = btrfs_stack_device_id(&disk_super->dev_item);

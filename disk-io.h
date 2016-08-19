@@ -64,6 +64,15 @@ enum btrfs_open_ctree_flags {
 	OPEN_CTREE_IGNORE_CHUNK_TREE_ERROR = (1 << 11)
 };
 
+/*
+ * Modes of superblock access
+ */
+enum btrfs_read_sb_flags {
+	SBREAD_DEFAULT		= 0,
+	/* Reading superblock during recovery */
+	SBREAD_RECOVER		= (1 << 0),
+};
+
 static inline u64 btrfs_sb_offset(int mirror)
 {
 	u64 start = 16 * 1024;
@@ -108,7 +117,7 @@ void btrfs_release_all_roots(struct btrfs_fs_info *fs_info);
 void btrfs_cleanup_all_caches(struct btrfs_fs_info *fs_info);
 int btrfs_scan_fs_devices(int fd, const char *path,
 			  struct btrfs_fs_devices **fs_devices, u64 sb_bytenr,
-			  int super_recover, int skip_devices);
+			  unsigned sbflags, int skip_devices);
 int btrfs_setup_chunk_tree_and_device_map(struct btrfs_fs_info *fs_info,
 			  u64 chunk_root_bytenr);
 
@@ -132,7 +141,7 @@ int write_all_supers(struct btrfs_root *root);
 int write_ctree_super(struct btrfs_trans_handle *trans,
 		      struct btrfs_root *root);
 int btrfs_read_dev_super(int fd, struct btrfs_super_block *sb, u64 sb_bytenr,
-			 int super_recover);
+		unsigned sbflags);
 int btrfs_map_bh_to_logical(struct btrfs_root *root, struct extent_buffer *bh,
 			    u64 logical);
 struct extent_buffer *btrfs_find_tree_block(struct btrfs_root *root,

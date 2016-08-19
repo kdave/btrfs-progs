@@ -1470,7 +1470,8 @@ open_ctree_with_broken_chunk(struct recover_control *rc)
 
 	disk_super = fs_info->super_copy;
 	ret = btrfs_read_dev_super(fs_info->fs_devices->latest_bdev,
-				   disk_super, fs_info->super_bytenr, 1);
+				   disk_super, fs_info->super_bytenr,
+				   SBREAD_RECOVER);
 	if (ret) {
 		fprintf(stderr, "No valid btrfs found\n");
 		goto out_devices;
@@ -1531,7 +1532,8 @@ static int recover_prepare(struct recover_control *rc, char *path)
 	}
 
 	sb = (struct btrfs_super_block*)buf;
-	ret = btrfs_read_dev_super(fd, sb, BTRFS_SUPER_INFO_OFFSET, 1);
+	ret = btrfs_read_dev_super(fd, sb, BTRFS_SUPER_INFO_OFFSET,
+			SBREAD_RECOVER);
 	if (ret) {
 		fprintf(stderr, "read super block error\n");
 		goto out_close_fd;
@@ -1550,7 +1552,7 @@ static int recover_prepare(struct recover_control *rc, char *path)
 		goto out_close_fd;
 	}
 
-	ret = btrfs_scan_fs_devices(fd, path, &fs_devices, 0, 1, 0);
+	ret = btrfs_scan_fs_devices(fd, path, &fs_devices, 0, SBREAD_RECOVER, 0);
 	if (ret)
 		goto out_close_fd;
 

@@ -2272,7 +2272,7 @@ int check_mounted_where(int fd, const char *file, char *where, int size,
 
 	/* scan the initial device */
 	ret = btrfs_scan_one_device(fd, file, &fs_devices_mnt,
-				    &total_devs, BTRFS_SUPER_INFO_OFFSET, 0);
+		    &total_devs, BTRFS_SUPER_INFO_OFFSET, SBREAD_DEFAULT);
 	is_btrfs = (ret >= 0);
 
 	/* scan other devices */
@@ -3419,7 +3419,8 @@ int btrfs_scan_lblkid(void)
 			continue;
 		}
 		ret = btrfs_scan_one_device(fd, path, &tmp_devices,
-				&num_devices, BTRFS_SUPER_INFO_OFFSET, 0);
+				&num_devices, BTRFS_SUPER_INFO_OFFSET,
+				SBREAD_DEFAULT);
 		if (ret) {
 			error("cannot scan %s: %s", path, strerror(-ret));
 			close (fd);
