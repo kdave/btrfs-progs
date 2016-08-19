@@ -932,7 +932,7 @@ static int find_best_backup_root(struct btrfs_super_block *super)
 }
 
 static int setup_root_or_create_block(struct btrfs_fs_info *fs_info,
-				      enum btrfs_open_ctree_flags flags,
+				      unsigned flags,
 				      struct btrfs_root *info_root,
 				      u64 objectid, char *str)
 {
@@ -961,7 +961,7 @@ static int setup_root_or_create_block(struct btrfs_fs_info *fs_info,
 }
 
 int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info, u64 root_tree_bytenr,
-			  enum btrfs_open_ctree_flags flags)
+			  unsigned flags)
 {
 	struct btrfs_super_block *sb = fs_info->super_copy;
 	struct btrfs_root *root;
@@ -1217,7 +1217,7 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 					     u64 sb_bytenr,
 					     u64 root_tree_bytenr,
 					     u64 chunk_root_bytenr,
-					     enum btrfs_open_ctree_flags flags)
+					     unsigned flags)
 {
 	struct btrfs_fs_info *fs_info;
 	struct btrfs_super_block *disk_super;
@@ -1323,7 +1323,7 @@ out:
 struct btrfs_fs_info *open_ctree_fs_info(const char *filename,
 					 u64 sb_bytenr, u64 root_tree_bytenr,
 					 u64 chunk_root_bytenr,
-					 enum btrfs_open_ctree_flags flags)
+					 unsigned flags)
 {
 	int fp;
 	int ret;
@@ -1356,7 +1356,7 @@ struct btrfs_fs_info *open_ctree_fs_info(const char *filename,
 }
 
 struct btrfs_root *open_ctree(const char *filename, u64 sb_bytenr,
-			      enum btrfs_open_ctree_flags flags)
+			      unsigned flags)
 {
 	struct btrfs_fs_info *info;
 
@@ -1371,7 +1371,7 @@ struct btrfs_root *open_ctree(const char *filename, u64 sb_bytenr,
 }
 
 struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
-				 enum btrfs_open_ctree_flags flags)
+				 unsigned flags)
 {
 	struct btrfs_fs_info *info;
 

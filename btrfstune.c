@@ -389,7 +389,7 @@ static void print_usage(void)
 int main(int argc, char *argv[])
 {
 	struct btrfs_root *root;
-	enum btrfs_open_ctree_flags ctree_flags = OPEN_CTREE_WRITES;
+	unsigned ctree_flags = OPEN_CTREE_WRITES;
 	int success = 0;
 	int total = 0;
 	int seeding_flag = 0;

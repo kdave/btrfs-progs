@@ -11178,7 +11178,7 @@ int cmd_check(int argc, char **argv)
 	int readonly = 0;
 	int qgroup_report = 0;
 	int qgroups_repaired = 0;
-	enum btrfs_open_ctree_flags ctree_flags = OPEN_CTREE_EXCLUSIVE;
+	unsigned ctree_flags = OPEN_CTREE_EXCLUSIVE;
 
 	while(1) {
 		int c;
