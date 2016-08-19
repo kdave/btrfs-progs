@@ -835,6 +835,33 @@ static void print_uuid_item(struct extent_buffer *l, unsigned long offset,
 	}
 }
 
+/* Caller should ensure sizeof(*ret) >= 29 "NODATASUM|NODATACOW|READONLY" */
+static void inode_flags_to_str(u64 flags, char *ret)
+{
+	int empty = 1;
+
+	if (flags & BTRFS_INODE_NODATASUM) {
+		empty = 0;
+		strcpy(ret, "NODATASUM");
+	}
+	if (flags & BTRFS_INODE_NODATACOW) {
+		if (!empty) {
+			empty = 0;
+			strcat(ret, "|");
+		}
+		strcat(ret, "NODATACOW");
+	}
+	if (flags & BTRFS_INODE_READONLY) {
+		if (!empty) {
+			empty = 0;
+			strcat(ret, "|");
+		}
+		strcat(ret, "READONLY");
+	}
+	if (empty)
+		strcat(ret, "none");
+}
+
 void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 {
 	int i;
@@ -884,10 +911,12 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 
 		switch (type) {
 		case BTRFS_INODE_ITEM_KEY:
+			memset(flags_str, 0, sizeof(flags_str));
 			ii = btrfs_item_ptr(l, i, struct btrfs_inode_item);
+			inode_flags_to_str(btrfs_inode_flags(l, ii), flags_str);
 			printf("\t\tinode generation %llu transid %llu size %llu nbytes %llu\n"
 			       "\t\tblock group %llu mode %o links %u uid %u gid %u\n"
-			       "\t\trdev %llu flags 0x%llx\n",
+			       "\t\trdev %llu flags 0x%llx(%s)\n",
 			       (unsigned long long)btrfs_inode_generation(l, ii),
 			       (unsigned long long)btrfs_inode_transid(l, ii),
 			       (unsigned long long)btrfs_inode_size(l, ii),
@@ -898,7 +927,8 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 			       btrfs_inode_uid(l, ii),
 			       btrfs_inode_gid(l, ii),
 			       (unsigned long long)btrfs_inode_rdev(l,ii),
-			       (unsigned long long)btrfs_inode_flags(l,ii));
+			       (unsigned long long)btrfs_inode_flags(l,ii),
+			       flags_str);
 			break;
 		case BTRFS_INODE_REF_KEY:
 			iref = btrfs_item_ptr(l, i, struct btrfs_inode_ref);
