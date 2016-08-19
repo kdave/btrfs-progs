@@ -472,6 +472,42 @@ int btrfs_new_inode(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 }
 
 /*
+ * Change inode flags to given value
+ */
+int btrfs_change_inode_flags(struct btrfs_trans_handle *trans,
+			     struct btrfs_root *root, u64 ino, u64 flags)
+{
+	struct btrfs_inode_item *item;
+	struct btrfs_path *path;
+	struct btrfs_key key;
+	int ret;
+
+	path = btrfs_alloc_path();
+	if (!path)
+		return -ENOMEM;
+
+	key.objectid = ino;
+	key.type = BTRFS_INODE_ITEM_KEY;
+	key.offset = 0;
+
+	ret = btrfs_search_slot(trans, root, &key, path, 0, 1);
+	if (ret > 0) {
+		ret = -ENOENT;
+		goto out;
+	}
+	if (ret < 0)
+		goto out;
+
+	item = btrfs_item_ptr(path->nodes[0], path->slots[0],
+			      struct btrfs_inode_item);
+	btrfs_set_inode_flags(path->nodes[0], item, flags);
+	btrfs_mark_buffer_dirty(path->nodes[0]);
+out:
+	btrfs_free_path(path);
+	return ret;
+}
+
+/*
  * Make a dir under the parent inode 'parent_ino' with 'name'
  * and 'mode', The owner will be root/root.
  */

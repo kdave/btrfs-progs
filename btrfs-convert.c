@@ -1527,7 +1527,11 @@ static int create_image(struct btrfs_root *root,
 	struct cache_tree used_tmp;
 	u64 cur;
 	u64 ino;
+	u64 flags = BTRFS_INODE_READONLY;
 	int ret;
+
+	if (!datacsum)
+		flags |= BTRFS_INODE_NODATASUM;
 
 	trans = btrfs_start_transaction(root, 1);
 	if (!trans)
@@ -1539,7 +1543,10 @@ static int create_image(struct btrfs_root *root,
 				       &ino);
 	if (ret < 0)
 		goto out;
-	ret = btrfs_new_inode(trans, root, ino, 0600 | S_IFREG);
+	ret = btrfs_new_inode(trans, root, ino, 0400 | S_IFREG);
+	if (ret < 0)
+		goto out;
+	ret = btrfs_change_inode_flags(trans, root, ino, flags);
 	if (ret < 0)
 		goto out;
 	ret = btrfs_add_link(trans, root, ino, BTRFS_FIRST_FREE_OBJECTID, name,
