@@ -2400,7 +2400,12 @@ int btrfs_device_already_in_root(struct btrfs_root *root, int fd,
 
 	ret = 0;
 	disk_super = (struct btrfs_super_block *)buf;
-	if (btrfs_super_magic(disk_super) != BTRFS_MAGIC)
+	/*
+	 * Accept devices from the same filesystem, allow partially created
+	 * structures.
+	 */
+	if (btrfs_super_magic(disk_super) != BTRFS_MAGIC &&
+			btrfs_super_magic(disk_super) != BTRFS_MAGIC_PARTIAL)
 		goto brelse;
 
 	if (!memcmp(disk_super->fsid, root->fs_info->super_copy->fsid,
