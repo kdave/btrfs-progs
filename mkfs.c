@@ -1748,9 +1748,6 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	if (is_block_device(file) == 1)
-		btrfs_register_one_device(file);
-
 	if (dev_cnt == 0)
 		goto raid_groups;
 
@@ -1796,9 +1793,6 @@ int main(int argc, char **argv)
 			printf("adding device %s id %llu\n", file,
 				(unsigned long long)device->devid);
 		}
-
-		if (is_block_device(file) == 1)
-			btrfs_register_one_device(file);
 	}
 
 raid_groups:
@@ -1867,6 +1861,15 @@ raid_groups:
 out:
 	ret = close_ctree(root);
 	BUG_ON(ret);
+
+	optind = saved_optind;
+	dev_cnt = argc - optind;
+	while (dev_cnt-- > 0) {
+		file = argv[optind++];
+		if (is_block_device(file) == 1)
+			btrfs_register_one_device(file);
+	}
+
 	btrfs_close_all_devices();
 	free(label);
 	return 0;
