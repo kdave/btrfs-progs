@@ -1708,7 +1708,7 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	root = open_ctree(file, 0, OPEN_CTREE_WRITES);
+	root = open_ctree(file, 0, OPEN_CTREE_WRITES | OPEN_CTREE_FS_PARTIAL);
 	if (!root) {
 		error("open ctree failed");
 		close(fd);
@@ -1858,6 +1858,11 @@ raid_groups:
 		list_all_devices(root);
 	}
 
+	/*
+	 * The filesystem is now fully set up, commit the remaining changes and
+	 * fix the signature as the last step before closing the devices.
+	 */
+	root->fs_info->finalize_on_close = 1;
 out:
 	ret = close_ctree(root);
 	BUG_ON(ret);

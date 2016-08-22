@@ -1225,6 +1225,7 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 	struct extent_buffer *eb;
 	int ret;
 	int oflags;
+	unsigned sbflags = SBREAD_DEFAULT;
 
 	if (sb_bytenr == 0)
 		sb_bytenr = BTRFS_SUPER_INFO_OFFSET;
@@ -1247,9 +1248,18 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 	if (flags & OPEN_CTREE_IGNORE_CHUNK_TREE_ERROR)
 		fs_info->ignore_chunk_tree_error = 1;
 
-	ret = btrfs_scan_fs_devices(fp, path, &fs_devices, sb_bytenr,
-		(flags & OPEN_CTREE_RECOVER_SUPER) ? SBREAD_RECOVER : SBREAD_DEFAULT,
-		(flags & OPEN_CTREE_NO_DEVICES));
+	if ((flags & OPEN_CTREE_RECOVER_SUPER)
+	     && (flags & OPEN_CTREE_FS_PARTIAL)) {
+		fprintf(stderr,
+		    "cannot open a partially created filesystem for recovery");
+		goto out;
+	}
+
+	if (flags & OPEN_CTREE_FS_PARTIAL)
+		sbflags = SBREAD_PARTIAL;
+
+	ret = btrfs_scan_fs_devices(fp, path, &fs_devices, sb_bytenr, sbflags,
+			(flags & OPEN_CTREE_NO_DEVICES));
 	if (ret)
 		goto out;
 
@@ -1272,7 +1282,7 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 				sb_bytenr, SBREAD_RECOVER);
 	else
 		ret = btrfs_read_dev_super(fp, disk_super, sb_bytenr,
-				SBREAD_DEFAULT);
+				sbflags);
 	if (ret) {
 		printk("No valid btrfs found\n");
 		goto out_devices;
@@ -1401,8 +1411,12 @@ static int check_super(struct btrfs_super_block *sb, unsigned sbflags)
 	int csum_size;
 
 	if (btrfs_super_magic(sb) != BTRFS_MAGIC) {
-		error("superblock magic doesn't match");
-		return -EIO;
+		if (btrfs_super_magic(sb) == BTRFS_MAGIC_PARTIAL) {
+			if (!(sbflags & SBREAD_PARTIAL)) {
+				error("superblock magic doesn't match");
+				return -EIO;
+			}
+		}
 	}
 
 	csum_type = btrfs_super_csum_type(sb);
@@ -1746,6 +1760,15 @@ int close_ctree_fs_info(struct btrfs_fs_info *fs_info)
 		BUG_ON(ret);
 		write_ctree_super(trans, root);
 		btrfs_free_transaction(root, trans);
+	}
+
+	if (fs_info->finalize_on_close) {
+		btrfs_set_super_magic(fs_info->super_copy, BTRFS_MAGIC);
+		root->fs_info->finalize_on_close = 0;
+		ret = write_all_supers(root);
+		if (ret)
+			fprintf(stderr,
+				"failed to write new super block err %d\n", ret);
 	}
 	btrfs_free_block_groups(fs_info);
 

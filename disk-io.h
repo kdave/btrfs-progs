@@ -61,7 +61,10 @@ enum btrfs_open_ctree_flags {
 	 * It's useful for chunk corruption case.
 	 * Makes no sense for open_ctree variants returning btrfs_root.
 	 */
-	OPEN_CTREE_IGNORE_CHUNK_TREE_ERROR = (1 << 11)
+	OPEN_CTREE_IGNORE_CHUNK_TREE_ERROR = (1 << 11),
+
+	/* Allow to open a partially created filesystem */
+	OPEN_CTREE_FS_PARTIAL = (1 << 12),
 };
 
 /*
@@ -71,6 +74,12 @@ enum btrfs_read_sb_flags {
 	SBREAD_DEFAULT		= 0,
 	/* Reading superblock during recovery */
 	SBREAD_RECOVER		= (1 << 0),
+
+	/*
+	 * Read superblock with the fake signature, cannot be used with
+	 * SBREAD_RECOVER
+	 */
+	SBREAD_PARTIAL		= (1 << 1),
 };
 
 static inline u64 btrfs_sb_offset(int mirror)

@@ -2345,7 +2345,7 @@ static int do_convert(const char *devname, int datacsum, int packing,
 	}
 
 	root = open_ctree_fd(fd, devname, mkfs_cfg.super_bytenr,
-			     OPEN_CTREE_WRITES);
+			     OPEN_CTREE_WRITES | OPEN_CTREE_FS_PARTIAL);
 	if (!root) {
 		fprintf(stderr, "unable to open ctree\n");
 		goto fail;
@@ -2431,11 +2431,14 @@ static int do_convert(const char *devname, int datacsum, int packing,
 	}
 	is_btrfs = 1;
 
-	root = open_ctree_fd(fd, devname, 0, OPEN_CTREE_WRITES);
+	root = open_ctree_fd(fd, devname, 0,
+			OPEN_CTREE_WRITES | OPEN_CTREE_FS_PARTIAL);
 	if (!root) {
 		fprintf(stderr, "unable to open ctree\n");
 		goto fail;
 	}
+	root->fs_info->finalize_on_close = 1;
+	close_ctree(root);
 	close(fd);
 
 	printf("conversion complete.\n");
