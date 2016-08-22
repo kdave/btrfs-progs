@@ -910,7 +910,12 @@ static int traverse_directory(struct btrfs_trans_handle *trans,
 					      parent_inum, dir_index_cnt,
 					      &cur_inode);
 			if (ret == -EEXIST) {
-				BUG_ON(st.st_nlink <= 1);
+				if (st.st_nlink <= 1) {
+					error(
+			"item %s already exists but has wrong st_nlink %ld <= 1",
+						cur_file->d_name, st.st_nlink);
+					goto fail;
+				}
 				continue;
 			}
 			if (ret) {
