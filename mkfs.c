@@ -344,31 +344,31 @@ static int create_data_reloc_tree(struct btrfs_trans_handle *trans,
 
 static void print_usage(int ret)
 {
-	fprintf(stderr, "usage: mkfs.btrfs [options] dev [ dev ... ]\n");
-	fprintf(stderr, "options:\n");
-	fprintf(stderr, "\t-A|--alloc-start START  the offset to start the FS\n");
-	fprintf(stderr, "\t-b|--byte-count SIZE    total number of bytes in the FS\n");
-	fprintf(stderr, "\t-d|--data PROFILE       data profile, raid0, raid1, raid5, raid6, raid10, dup or single\n");
-	fprintf(stderr, "\t-f|--force              force overwrite of existing filesystem\n");
-	fprintf(stderr, "\t-l|--leafsize SIZE      deprecated, alias for nodesize\n");
-	fprintf(stderr, "\t-L|--label LABEL        set a label\n");
-	fprintf(stderr, "\t-m|--metadata PROFILE   metadata profile, values like data profile\n");
-	fprintf(stderr, "\t-M|--mixed              mix metadata and data together\n");
-	fprintf(stderr, "\t-n|--nodesize SIZE      size of btree nodes\n");
-	fprintf(stderr, "\t-s|--sectorsize SIZE    min block allocation (may not mountable by current kernel)\n");
-	fprintf(stderr, "\t-r|--rootdir DIR        the source directory\n");
-	fprintf(stderr, "\t-K|--nodiscard          do not perform whole device TRIM\n");
-	fprintf(stderr, "\t-O|--features LIST      comma separated list of filesystem features, use '-O list-all' to list features\n");
-	fprintf(stderr, "\t-U|--uuid UUID          specify the filesystem UUID\n");
-	fprintf(stderr, "\t-q|--quiet              no messages except errors\n");
-	fprintf(stderr, "\t-V|--version            print the mkfs.btrfs version and exit\n");
+	printf("usage: mkfs.btrfs [options] dev [ dev ... ]\n");
+	printf("options:\n");
+	printf("\t-A|--alloc-start START  the offset to start the FS\n");
+	printf("\t-b|--byte-count SIZE    total number of bytes in the FS\n");
+	printf("\t-d|--data PROFILE       data profile, raid0, raid1, raid5, raid6, raid10, dup or single\n");
+	printf("\t-f|--force              force overwrite of existing filesystem\n");
+	printf("\t-l|--leafsize SIZE      deprecated, alias for nodesize\n");
+	printf("\t-L|--label LABEL        set a label\n");
+	printf("\t-m|--metadata PROFILE   metadata profile, values like data profile\n");
+	printf("\t-M|--mixed              mix metadata and data together\n");
+	printf("\t-n|--nodesize SIZE      size of btree nodes\n");
+	printf("\t-s|--sectorsize SIZE    min block allocation (may not mountable by current kernel)\n");
+	printf("\t-r|--rootdir DIR        the source directory\n");
+	printf("\t-K|--nodiscard          do not perform whole device TRIM\n");
+	printf("\t-O|--features LIST      comma separated list of filesystem features, use '-O list-all' to list features\n");
+	printf("\t-U|--uuid UUID          specify the filesystem UUID\n");
+	printf("\t-q|--quiet              no messages except errors\n");
+	printf("\t-V|--version            print the mkfs.btrfs version and exit\n");
 	exit(ret);
 }
 
 static void print_version(void) __attribute__((noreturn));
 static void print_version(void)
 {
-	fprintf(stderr, "mkfs.btrfs, part of %s\n", PACKAGE_STRING);
+	printf("mkfs.btrfs, part of %s\n", PACKAGE_STRING);
 	exit(0);
 }
 
