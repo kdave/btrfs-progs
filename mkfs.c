@@ -190,32 +190,50 @@ err:
 	return ret;
 }
 
-static void __recow_root(struct btrfs_trans_handle *trans,
+static int __recow_root(struct btrfs_trans_handle *trans,
 			 struct btrfs_root *root)
 {
-	int ret;
 	struct extent_buffer *tmp;
+	int ret;
 
 	if (trans->transid != btrfs_root_generation(&root->root_item)) {
 		extent_buffer_get(root->node);
 		ret = __btrfs_cow_block(trans, root, root->node,
 					NULL, 0, &tmp, 0, 0);
-		BUG_ON(ret);
+		if (ret)
+			return ret;
 		free_extent_buffer(tmp);
 	}
+
+	return 0;
 }
 
-static void recow_roots(struct btrfs_trans_handle *trans,
+static int recow_roots(struct btrfs_trans_handle *trans,
 		       struct btrfs_root *root)
 {
 	struct btrfs_fs_info *info = root->fs_info;
+	int ret;
 
-	__recow_root(trans, info->fs_root);
-	__recow_root(trans, info->tree_root);
-	__recow_root(trans, info->extent_root);
-	__recow_root(trans, info->chunk_root);
-	__recow_root(trans, info->dev_root);
-	__recow_root(trans, info->csum_root);
+	ret = __recow_root(trans, info->fs_root);
+	if (ret)
+		return ret;
+	ret = __recow_root(trans, info->tree_root);
+	if (ret)
+		return ret;
+	ret = __recow_root(trans, info->extent_root);
+	if (ret)
+		return ret;
+	ret = __recow_root(trans, info->chunk_root);
+	if (ret)
+		return ret;
+	ret = __recow_root(trans, info->dev_root);
+	if (ret)
+		return ret;
+	ret = __recow_root(trans, info->csum_root);
+	if (ret)
+		return ret;
+
+	return 0;
 }
 
 static int create_one_raid_group(struct btrfs_trans_handle *trans,
@@ -291,9 +309,9 @@ static int create_raid_groups(struct btrfs_trans_handle *trans,
 		if (ret)
 			return ret;
 	}
-	recow_roots(trans, root);
+	ret = recow_roots(trans, root);
 
-	return 0;
+	return ret;
 }
 
 static int create_data_reloc_tree(struct btrfs_trans_handle *trans,
