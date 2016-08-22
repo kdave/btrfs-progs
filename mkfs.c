@@ -1063,7 +1063,11 @@ static int make_image(char *source_dir, struct btrfs_root *root, int out_fd)
 		error("unable to traverse directory %s: %d", source_dir, ret);
 		goto fail;
 	}
-	btrfs_commit_transaction(trans, root);
+	ret = btrfs_commit_transaction(trans, root);
+	if (ret) {
+		error("transaction commit failed: %d", ret);
+		goto out;
+	}
 
 	if (verbose)
 		printf("Making image is completed.\n");
@@ -1784,7 +1788,11 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	btrfs_commit_transaction(trans, root);
+	ret = btrfs_commit_transaction(trans, root);
+	if (ret) {
+		error("unable to commit transaction: %d", ret);
+		goto out;
+	}
 
 	trans = btrfs_start_transaction(root, 1);
 	if (!trans) {
@@ -1858,7 +1866,11 @@ raid_groups:
 		goto out;
 	}
 
-	btrfs_commit_transaction(trans, root);
+	ret = btrfs_commit_transaction(trans, root);
+	if (ret) {
+		error("unable to commit transaction: %d", ret);
+		goto out;
+	}
 
 	if (source_dir_set) {
 		trans = btrfs_start_transaction(root, 1);
