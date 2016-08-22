@@ -1042,16 +1042,14 @@ static int make_image(char *source_dir, struct btrfs_root *root, int out_fd)
 {
 	int ret;
 	struct btrfs_trans_handle *trans;
-
 	struct stat root_st;
-
 	struct directory_name_entry dir_head;
-
 	struct directory_name_entry *dir_entry = NULL;
 
 	ret = lstat(source_dir, &root_st);
 	if (ret) {
 		error("unable to lstat %s: %s", source_dir, strerror(errno));
+		ret = -errno;
 		goto out;
 	}
 
@@ -1080,8 +1078,7 @@ fail:
 		free(dir_entry);
 	}
 out:
-	fprintf(stderr, "Making image is aborted.\n");
-	return -1;
+	return ret;
 }
 
 /*
