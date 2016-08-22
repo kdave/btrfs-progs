@@ -1805,7 +1805,10 @@ int main(int argc, char **argv)
 
 		ret = btrfs_add_to_fsid(trans, root, fd, file, dev_block_count,
 					sectorsize, sectorsize, sectorsize);
-		BUG_ON(ret);
+		if (ret) {
+			error("unable to add %s to filesystem: %d", file, ret);
+			goto out;
+		}
 		if (verbose >= 2) {
 			struct btrfs_device *device;
 
@@ -1820,11 +1823,17 @@ raid_groups:
 	if (!source_dir_set) {
 		ret = create_raid_groups(trans, root, data_profile,
 				 metadata_profile, mixed, &allocation);
-		BUG_ON(ret);
+		if (ret) {
+			error("unable to create raid groups: %d", ret);
+			goto out;
+		}
 	}
 
 	ret = create_data_reloc_tree(trans, root);
-	BUG_ON(ret);
+	if (ret) {
+		error("unable to create data reloc tree: %d", ret);
+		goto out;
+	}
 
 	btrfs_commit_transaction(trans, root);
 
@@ -1833,11 +1842,21 @@ raid_groups:
 		ret = create_chunks(trans, root,
 				    num_of_meta_chunks, size_of_data,
 				    &allocation);
-		BUG_ON(ret);
-		btrfs_commit_transaction(trans, root);
+		if (ret) {
+			error("unable to create chunks: %d", ret);
+			goto out;
+		}
+		ret = btrfs_commit_transaction(trans, root);
+		if (ret) {
+			error("transaction commit failed: %d", ret);
+			goto out;
+		}
 
 		ret = make_image(source_dir, root, fd);
-		BUG_ON(ret);
+		if (ret) {
+			error("error wihle filling filesystem: %d", ret);
+			goto out;
+		}
 	}
 	ret = cleanup_temp_chunks(root->fs_info, &allocation, data_profile,
 				  metadata_profile, metadata_profile);
@@ -1886,17 +1905,19 @@ raid_groups:
 	root->fs_info->finalize_on_close = 1;
 out:
 	ret = close_ctree(root);
-	BUG_ON(ret);
 
-	optind = saved_optind;
-	dev_cnt = argc - optind;
-	while (dev_cnt-- > 0) {
-		file = argv[optind++];
-		if (is_block_device(file) == 1)
-			btrfs_register_one_device(file);
+	if (!ret) {
+		optind = saved_optind;
+		dev_cnt = argc - optind;
+		while (dev_cnt-- > 0) {
+			file = argv[optind++];
+			if (is_block_device(file) == 1)
+				btrfs_register_one_device(file);
+		}
 	}
 
 	btrfs_close_all_devices();
 	free(label);
-	return 0;
+
+	return !!ret;
 }
