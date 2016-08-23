@@ -365,13 +365,6 @@ static void print_usage(int ret)
 	exit(ret);
 }
 
-static void print_version(void) __attribute__((noreturn));
-static void print_version(void)
-{
-	printf("mkfs.btrfs, part of %s\n", PACKAGE_STRING);
-	exit(0);
-}
-
 static u64 parse_profile(char *s)
 {
 	if (strcasecmp(s, "raid0") == 0) {
@@ -1525,7 +1518,9 @@ int main(int argc, char **argv)
 				zero_end = 0;
 				break;
 			case 'V':
-				print_version();
+				printf("mkfs.btrfs, part of %s\n",
+						PACKAGE_STRING);
+				exit(0);
 				break;
 			case 'r':
 				source_dir = optarg;
