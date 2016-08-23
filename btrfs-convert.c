@@ -1359,7 +1359,6 @@ static int migrate_super_block(int fd, u64 old_bytenr, u32 sectorsize)
 	u32 len;
 	u32 bytenr;
 
-	BUG_ON(sectorsize < sizeof(*super));
 	buf = malloc(sizeof(*buf) + sectorsize);
 	if (!buf)
 		return -ENOMEM;
