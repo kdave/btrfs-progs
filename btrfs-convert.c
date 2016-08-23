@@ -809,6 +809,36 @@ static int wipe_one_reserved_range(struct cache_tree *tree,
 }
 
 /*
+ * Remove reserved ranges from given cache_tree
+ *
+ * It will remove the following ranges
+ * 1) 0~1M
+ * 2) 2nd superblock, +64K (make sure chunks are 64K aligned)
+ * 3) 3rd superblock, +64K
+ *
+ * @min_stripe must be given for safety check
+ * and if @ensure_size is given, it will ensure affected cache_extent will be
+ * larger than min_stripe_size
+ */
+static int wipe_reserved_ranges(struct cache_tree *tree, u64 min_stripe_size,
+				int ensure_size)
+{
+	int ret;
+
+	ret = wipe_one_reserved_range(tree, 0, 1024 * 1024, min_stripe_size,
+				      ensure_size);
+	if (ret < 0)
+		return ret;
+	ret = wipe_one_reserved_range(tree, btrfs_sb_offset(1),
+			BTRFS_STRIPE_LEN, min_stripe_size, ensure_size);
+	if (ret < 0)
+		return ret;
+	ret = wipe_one_reserved_range(tree, btrfs_sb_offset(2),
+			BTRFS_STRIPE_LEN, min_stripe_size, ensure_size);
+	return ret;
+}
+
+/*
  * Open Ext2fs in readonly mode, read block allocation bitmap and
  * inode bitmap into memory.
  */
@@ -1657,9 +1687,6 @@ static int ext2_copy_inodes(struct btrfs_convert_context *cctx,
 	return ret;
 }
 
-static int wipe_reserved_ranges(struct cache_tree *tree, u64 min_stripe_size,
-				int ensure_size);
-
 /*
  * Create the fs image file of old filesystem.
  *
@@ -2147,36 +2174,6 @@ static int convert_open_fs(const char *devname,
 
 	fprintf(stderr, "No file system found to convert.\n");
 	return -1;
-}
-
-/*
- * Remove reserved ranges from given cache_tree
- *
- * It will remove the following ranges
- * 1) 0~1M
- * 2) 2nd superblock, +64K (make sure chunks are 64K aligned)
- * 3) 3rd superblock, +64K
- *
- * @min_stripe must be given for safety check
- * and if @ensure_size is given, it will ensure affected cache_extent will be
- * larger than min_stripe_size
- */
-static int wipe_reserved_ranges(struct cache_tree *tree, u64 min_stripe_size,
-				int ensure_size)
-{
-	int ret;
-
-	ret = wipe_one_reserved_range(tree, 0, 1024 * 1024, min_stripe_size,
-				      ensure_size);
-	if (ret < 0)
-		return ret;
-	ret = wipe_one_reserved_range(tree, btrfs_sb_offset(1),
-			BTRFS_STRIPE_LEN, min_stripe_size, ensure_size);
-	if (ret < 0)
-		return ret;
-	ret = wipe_one_reserved_range(tree, btrfs_sb_offset(2),
-			BTRFS_STRIPE_LEN, min_stripe_size, ensure_size);
-	return ret;
 }
 
 static int calculate_available_space(struct btrfs_convert_context *cctx)
