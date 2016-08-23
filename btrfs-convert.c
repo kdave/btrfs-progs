@@ -357,6 +357,55 @@ static int record_file_blocks(struct blk_iterate_data *data,
 	return ret;
 }
 
+static int block_iterate_proc(u64 disk_block, u64 file_block,
+		              struct blk_iterate_data *idata)
+{
+	int ret = 0;
+	int sb_region;
+	int do_barrier;
+	struct btrfs_root *root = idata->root;
+	struct btrfs_block_group_cache *cache;
+	u64 bytenr = disk_block * root->sectorsize;
+
+	sb_region = intersect_with_sb(bytenr, root->sectorsize);
+	do_barrier = sb_region || disk_block >= idata->boundary;
+	if ((idata->num_blocks > 0 && do_barrier) ||
+	    (file_block > idata->first_block + idata->num_blocks) ||
+	    (disk_block != idata->disk_block + idata->num_blocks)) {
+		if (idata->num_blocks > 0) {
+			ret = record_file_blocks(idata, idata->first_block,
+						 idata->disk_block,
+						 idata->num_blocks);
+			if (ret)
+				goto fail;
+			idata->first_block += idata->num_blocks;
+			idata->num_blocks = 0;
+		}
+		if (file_block > idata->first_block) {
+			ret = record_file_blocks(idata, idata->first_block,
+					0, file_block - idata->first_block);
+			if (ret)
+				goto fail;
+		}
+
+		if (sb_region) {
+			bytenr += BTRFS_STRIPE_LEN - 1;
+			bytenr &= ~((u64)BTRFS_STRIPE_LEN - 1);
+		} else {
+			cache = btrfs_lookup_block_group(root->fs_info, bytenr);
+			BUG_ON(!cache);
+			bytenr = cache->key.objectid + cache->key.offset;
+		}
+
+		idata->first_block = file_block;
+		idata->disk_block = disk_block;
+		idata->boundary = bytenr / root->sectorsize;
+	}
+	idata->num_blocks++;
+fail:
+	return ret;
+}
+
 /*
  * Open Ext2fs in readonly mode, read block allocation bitmap and
  * inode bitmap into memory.
@@ -596,55 +645,6 @@ static int ext2_create_dir_entries(struct btrfs_trans_handle *trans,
 error:
 	fprintf(stderr, "ext2fs_dir_iterate2: %s\n", error_message(err));
 	return -1;
-}
-
-static int block_iterate_proc(u64 disk_block, u64 file_block,
-		              struct blk_iterate_data *idata)
-{
-	int ret = 0;
-	int sb_region;
-	int do_barrier;
-	struct btrfs_root *root = idata->root;
-	struct btrfs_block_group_cache *cache;
-	u64 bytenr = disk_block * root->sectorsize;
-
-	sb_region = intersect_with_sb(bytenr, root->sectorsize);
-	do_barrier = sb_region || disk_block >= idata->boundary;
-	if ((idata->num_blocks > 0 && do_barrier) ||
-	    (file_block > idata->first_block + idata->num_blocks) ||
-	    (disk_block != idata->disk_block + idata->num_blocks)) {
-		if (idata->num_blocks > 0) {
-			ret = record_file_blocks(idata, idata->first_block,
-						 idata->disk_block,
-						 idata->num_blocks);
-			if (ret)
-				goto fail;
-			idata->first_block += idata->num_blocks;
-			idata->num_blocks = 0;
-		}
-		if (file_block > idata->first_block) {
-			ret = record_file_blocks(idata, idata->first_block,
-					0, file_block - idata->first_block);
-			if (ret)
-				goto fail;
-		}
-
-		if (sb_region) {
-			bytenr += BTRFS_STRIPE_LEN - 1;
-			bytenr &= ~((u64)BTRFS_STRIPE_LEN - 1);
-		} else {
-			cache = btrfs_lookup_block_group(root->fs_info, bytenr);
-			BUG_ON(!cache);
-			bytenr = cache->key.objectid + cache->key.offset;
-		}
-
-		idata->first_block = file_block;
-		idata->disk_block = disk_block;
-		idata->boundary = bytenr / root->sectorsize;
-	}
-	idata->num_blocks++;
-fail:
-	return ret;
 }
 
 static int ext2_block_iterate_proc(ext2_filsys fs, blk_t *blocknr,
