@@ -330,7 +330,7 @@ struct dir_iterate_data {
 	int errcode;
 };
 
-static u8 filetype_conversion_table[EXT2_FT_MAX] = {
+static u8 ext2_filetype_conversion_table[EXT2_FT_MAX] = {
 	[EXT2_FT_UNKNOWN]	= BTRFS_FT_UNKNOWN,
 	[EXT2_FT_REG_FILE]	= BTRFS_FT_REG_FILE,
 	[EXT2_FT_DIR]		= BTRFS_FT_DIR,
@@ -341,7 +341,7 @@ static u8 filetype_conversion_table[EXT2_FT_MAX] = {
 	[EXT2_FT_SYMLINK]	= BTRFS_FT_SYMLINK,
 };
 
-static int dir_iterate_proc(ext2_ino_t dir, int entry,
+static int ext2_dir_iterate_proc(ext2_ino_t dir, int entry,
 			    struct ext2_dir_entry *dirent,
 			    int offset, int blocksize,
 			    char *buf,void *priv_data)
@@ -371,7 +371,7 @@ static int dir_iterate_proc(ext2_ino_t dir, int entry,
 
 	ret = convert_insert_dirent(idata->trans, idata->root, dirent->name,
 				    name_len, idata->objectid, objectid,
-				    filetype_conversion_table[file_type],
+				    ext2_filetype_conversion_table[file_type],
 				    idata->index_cnt, idata->inode);
 	if (ret < 0) {
 		idata->errcode = ret;
@@ -382,7 +382,7 @@ static int dir_iterate_proc(ext2_ino_t dir, int entry,
 	return 0;
 }
 
-static int create_dir_entries(struct btrfs_trans_handle *trans,
+static int ext2_create_dir_entries(struct btrfs_trans_handle *trans,
 			      struct btrfs_root *root, u64 objectid,
 			      struct btrfs_inode_item *btrfs_inode,
 			      ext2_filsys ext2_fs, ext2_ino_t ext2_ino)
@@ -400,7 +400,7 @@ static int create_dir_entries(struct btrfs_trans_handle *trans,
 	};
 
 	err = ext2fs_dir_iterate2(ext2_fs, ext2_ino, 0, NULL,
-				  dir_iterate_proc, &data);
+				  ext2_dir_iterate_proc, &data);
 	if (err)
 		goto error;
 	ret = data.errcode;
@@ -647,7 +647,7 @@ fail:
 	return ret;
 }
 
-static int __block_iterate_proc(ext2_filsys fs, blk_t *blocknr,
+static int ext2_block_iterate_proc(ext2_filsys fs, blk_t *blocknr,
 			        e2_blkcnt_t blockcnt, blk_t ref_block,
 			        int ref_offset, void *priv_data)
 {
@@ -665,7 +665,7 @@ static int __block_iterate_proc(ext2_filsys fs, blk_t *blocknr,
 /*
  * traverse file's data blocks, record these data blocks as file extents.
  */
-static int create_file_extents(struct btrfs_trans_handle *trans,
+static int ext2_create_file_extents(struct btrfs_trans_handle *trans,
 			       struct btrfs_root *root, u64 objectid,
 			       struct btrfs_inode_item *btrfs_inode,
 			       ext2_filsys ext2_fs, ext2_ino_t ext2_ino,
@@ -683,7 +683,7 @@ static int create_file_extents(struct btrfs_trans_handle *trans,
 			      datacsum);
 
 	err = ext2fs_block_iterate2(ext2_fs, ext2_ino, BLOCK_FLAG_DATA_ONLY,
-				    NULL, __block_iterate_proc, &data);
+				    NULL, ext2_block_iterate_proc, &data);
 	if (err)
 		goto error;
 	ret = data.errcode;
@@ -729,7 +729,7 @@ error:
 	return -1;
 }
 
-static int create_symbol_link(struct btrfs_trans_handle *trans,
+static int ext2_create_symbol_link(struct btrfs_trans_handle *trans,
 			      struct btrfs_root *root, u64 objectid,
 			      struct btrfs_inode_item *btrfs_inode,
 			      ext2_filsys ext2_fs, ext2_ino_t ext2_ino,
@@ -740,8 +740,8 @@ static int create_symbol_link(struct btrfs_trans_handle *trans,
 	u64 inode_size = btrfs_stack_inode_size(btrfs_inode);
 	if (ext2fs_inode_data_blocks(ext2_fs, ext2_inode)) {
 		btrfs_set_stack_inode_size(btrfs_inode, inode_size + 1);
-		ret = create_file_extents(trans, root, objectid, btrfs_inode,
-					  ext2_fs, ext2_ino, 1, 1);
+		ret = ext2_create_file_extents(trans, root, objectid,
+				btrfs_inode, ext2_fs, ext2_ino, 1, 1);
 		btrfs_set_stack_inode_size(btrfs_inode, inode_size);
 		return ret;
 	}
@@ -931,7 +931,7 @@ static char *xattr_prefix_table[] = {
 	[6] =	"security.",
 };
 
-static int copy_single_xattr(struct btrfs_trans_handle *trans,
+static int ext2_copy_single_xattr(struct btrfs_trans_handle *trans,
 			     struct btrfs_root *root, u64 objectid,
 			     struct ext2_ext_attr_entry *entry,
 			     const void *data, u32 datalen)
@@ -977,7 +977,7 @@ out:
 	return ret;
 }
 
-static int copy_extended_attrs(struct btrfs_trans_handle *trans,
+static int ext2_copy_extended_attrs(struct btrfs_trans_handle *trans,
 			       struct btrfs_root *root, u64 objectid,
 			       struct btrfs_inode_item *btrfs_inode,
 			       ext2_filsys ext2_fs, ext2_ino_t ext2_ino)
@@ -1038,7 +1038,7 @@ static int copy_extended_attrs(struct btrfs_trans_handle *trans,
 			data = (void *)EXT2_XATTR_IFIRST(ext2_inode) +
 				entry->e_value_offs;
 			datalen = entry->e_value_size;
-			ret = copy_single_xattr(trans, root, objectid,
+			ret = ext2_copy_single_xattr(trans, root, objectid,
 						entry, data, datalen);
 			if (ret)
 				goto out;
@@ -1072,7 +1072,7 @@ static int copy_extended_attrs(struct btrfs_trans_handle *trans,
 			goto out;
 		data = buffer + entry->e_value_offs;
 		datalen = entry->e_value_size;
-		ret = copy_single_xattr(trans, root, objectid,
+		ret = ext2_copy_single_xattr(trans, root, objectid,
 					entry, data, datalen);
 		if (ret)
 			goto out;
@@ -1099,7 +1099,7 @@ static inline dev_t new_decode_dev(u32 dev)
 	return MKDEV(major, minor);
 }
 
-static int copy_inode_item(struct btrfs_inode_item *dst,
+static void ext2_copy_inode_item(struct btrfs_inode_item *dst,
 			   struct ext2_inode *src, u32 blocksize)
 {
 	btrfs_set_stack_inode_generation(dst, 1);
@@ -1142,15 +1142,13 @@ static int copy_inode_item(struct btrfs_inode_item *dst,
 		}
 	}
 	memset(&dst->reserved, 0, sizeof(dst->reserved));
-
-	return 0;
 }
 
 /*
  * copy a single inode. do all the required works, such as cloning
  * inode item, creating file extents and creating directory entries.
  */
-static int copy_single_inode(struct btrfs_trans_handle *trans,
+static int ext2_copy_single_inode(struct btrfs_trans_handle *trans,
 			     struct btrfs_root *root, u64 objectid,
 			     ext2_filsys ext2_fs, ext2_ino_t ext2_ino,
 			     struct ext2_inode *ext2_inode,
@@ -1162,7 +1160,7 @@ static int copy_single_inode(struct btrfs_trans_handle *trans,
 	if (ext2_inode->i_links_count == 0)
 		return 0;
 
-	copy_inode_item(&btrfs_inode, ext2_inode, ext2_fs->blocksize);
+	ext2_copy_inode_item(&btrfs_inode, ext2_inode, ext2_fs->blocksize);
 	if (!datacsum && S_ISREG(ext2_inode->i_mode)) {
 		u32 flags = btrfs_stack_inode_flags(&btrfs_inode) |
 			    BTRFS_INODE_NODATASUM;
@@ -1171,16 +1169,16 @@ static int copy_single_inode(struct btrfs_trans_handle *trans,
 
 	switch (ext2_inode->i_mode & S_IFMT) {
 	case S_IFREG:
-		ret = create_file_extents(trans, root, objectid, &btrfs_inode,
-					ext2_fs, ext2_ino, datacsum, packing);
+		ret = ext2_create_file_extents(trans, root, objectid,
+			&btrfs_inode, ext2_fs, ext2_ino, datacsum, packing);
 		break;
 	case S_IFDIR:
-		ret = create_dir_entries(trans, root, objectid, &btrfs_inode,
-					 ext2_fs, ext2_ino);
+		ret = ext2_create_dir_entries(trans, root, objectid,
+				&btrfs_inode, ext2_fs, ext2_ino);
 		break;
 	case S_IFLNK:
-		ret = create_symbol_link(trans, root, objectid, &btrfs_inode,
-					 ext2_fs, ext2_ino, ext2_inode);
+		ret = ext2_create_symbol_link(trans, root, objectid,
+				&btrfs_inode, ext2_fs, ext2_ino, ext2_inode);
 		break;
 	default:
 		ret = 0;
@@ -1190,8 +1188,8 @@ static int copy_single_inode(struct btrfs_trans_handle *trans,
 		return ret;
 
 	if (!noxattr) {
-		ret = copy_extended_attrs(trans, root, objectid, &btrfs_inode,
-					  ext2_fs, ext2_ino);
+		ret = ext2_copy_extended_attrs(trans, root, objectid,
+				&btrfs_inode, ext2_fs, ext2_ino);
 		if (ret)
 			return ret;
 	}
@@ -1232,7 +1230,7 @@ static int ext2_copy_inodes(struct btrfs_convert_context *cctx,
 		    ext2_ino != EXT2_ROOT_INO)
 			continue;
 		objectid = ext2_ino + INO_OFFSET;
-		ret = copy_single_inode(trans, root,
+		ret = ext2_copy_single_inode(trans, root,
 					objectid, ext2_fs, ext2_ino,
 					&ext2_inode, datacsum, packing,
 					noxattr);
