@@ -920,6 +920,22 @@ out:
 }
 
 /*
+ * Read used space, and since we have the used space,
+ * calcuate data_chunks and free for later mkfs
+ */
+static int convert_read_used_space(struct btrfs_convert_context *cctx)
+{
+	int ret;
+
+	ret = cctx->convert_ops->read_used_space(cctx);
+	if (ret)
+		return ret;
+
+	ret = calculate_available_space(cctx);
+	return ret;
+}
+
+/*
  * Open Ext2fs in readonly mode, read block allocation bitmap and
  * inode bitmap into memory.
  */
@@ -2255,22 +2271,6 @@ static int convert_open_fs(const char *devname,
 
 	fprintf(stderr, "No file system found to convert.\n");
 	return -1;
-}
-
-/*
- * Read used space, and since we have the used space,
- * calcuate data_chunks and free for later mkfs
- */
-static int convert_read_used_space(struct btrfs_convert_context *cctx)
-{
-	int ret;
-
-	ret = cctx->convert_ops->read_used_space(cctx);
-	if (ret)
-		return ret;
-
-	ret = calculate_available_space(cctx);
-	return ret;
 }
 
 static int do_convert(const char *devname, int datacsum, int packing,
