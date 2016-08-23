@@ -189,6 +189,35 @@ fail:
 	return ret;
 }
 
+static int csum_disk_extent(struct btrfs_trans_handle *trans,
+			    struct btrfs_root *root,
+			    u64 disk_bytenr, u64 num_bytes)
+{
+	u32 blocksize = root->sectorsize;
+	u64 offset;
+	char *buffer;
+	int ret = 0;
+
+	buffer = malloc(blocksize);
+	if (!buffer)
+		return -ENOMEM;
+	for (offset = 0; offset < num_bytes; offset += blocksize) {
+		ret = read_disk_extent(root, disk_bytenr + offset,
+					blocksize, buffer);
+		if (ret)
+			break;
+		ret = btrfs_csum_file_block(trans,
+					    root->fs_info->csum_root,
+					    disk_bytenr + num_bytes,
+					    disk_bytenr + offset,
+					    buffer, blocksize);
+		if (ret)
+			break;
+	}
+	free(buffer);
+	return ret;
+}
+
 /*
  * Open Ext2fs in readonly mode, read block allocation bitmap and
  * inode bitmap into memory.
@@ -428,35 +457,6 @@ static int ext2_create_dir_entries(struct btrfs_trans_handle *trans,
 error:
 	fprintf(stderr, "ext2fs_dir_iterate2: %s\n", error_message(err));
 	return -1;
-}
-
-static int csum_disk_extent(struct btrfs_trans_handle *trans,
-			    struct btrfs_root *root,
-			    u64 disk_bytenr, u64 num_bytes)
-{
-	u32 blocksize = root->sectorsize;
-	u64 offset;
-	char *buffer;
-	int ret = 0;
-
-	buffer = malloc(blocksize);
-	if (!buffer)
-		return -ENOMEM;
-	for (offset = 0; offset < num_bytes; offset += blocksize) {
-		ret = read_disk_extent(root, disk_bytenr + offset,
-					blocksize, buffer);
-		if (ret)
-			break;
-		ret = btrfs_csum_file_block(trans,
-					    root->fs_info->csum_root,
-					    disk_bytenr + num_bytes,
-					    disk_bytenr + offset,
-					    buffer, blocksize);
-		if (ret)
-			break;
-	}
-	free(buffer);
-	return ret;
 }
 
 struct blk_iterate_data {
