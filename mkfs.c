@@ -1403,6 +1403,7 @@ int main(int argc, char **argv)
 {
 	char *file;
 	struct btrfs_root *root;
+	struct btrfs_fs_info *fs_info;
 	struct btrfs_trans_handle *trans;
 	char *label = NULL;
 	u64 block_count = 0;
@@ -1748,13 +1749,15 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	root = open_ctree(file, 0, OPEN_CTREE_WRITES | OPEN_CTREE_FS_PARTIAL);
-	if (!root) {
+	fs_info = open_ctree_fs_info(file, 0, 0, 0,
+			OPEN_CTREE_WRITES | OPEN_CTREE_FS_PARTIAL);
+	if (!fs_info) {
 		error("open ctree failed");
 		close(fd);
 		exit(1);
 	}
-	root->fs_info->alloc_start = alloc_start;
+	root = fs_info->fs_root;
+	fs_info->alloc_start = alloc_start;
 
 	ret = create_metadata_block_groups(root, mixed, &allocation);
 	if (ret) {
@@ -1835,7 +1838,7 @@ int main(int argc, char **argv)
 		if (verbose >= 2) {
 			struct btrfs_device *device;
 
-			device = container_of(root->fs_info->fs_devices->devices.next,
+			device = container_of(fs_info->fs_devices->devices.next,
 					struct btrfs_device, dev_list);
 			printf("adding device %s id %llu\n", file,
 				(unsigned long long)device->devid);
@@ -1885,7 +1888,7 @@ raid_groups:
 			goto out;
 		}
 	}
-	ret = cleanup_temp_chunks(root->fs_info, &allocation, data_profile,
+	ret = cleanup_temp_chunks(fs_info, &allocation, data_profile,
 				  metadata_profile, metadata_profile);
 	if (ret < 0) {
 		error("failed to cleanup temporary chunks: %d", ret);
@@ -1900,7 +1903,7 @@ raid_groups:
 		printf("Node size:          %u\n", nodesize);
 		printf("Sector size:        %u\n", sectorsize);
 		printf("Filesystem size:    %s\n",
-			pretty_size(btrfs_super_total_bytes(root->fs_info->super_copy)));
+			pretty_size(btrfs_super_total_bytes(fs_info->super_copy)));
 		printf("Block group profiles:\n");
 		if (allocation.data)
 			printf("  Data:             %-8s %16s\n",
@@ -1929,7 +1932,7 @@ raid_groups:
 	 * The filesystem is now fully set up, commit the remaining changes and
 	 * fix the signature as the last step before closing the devices.
 	 */
-	root->fs_info->finalize_on_close = 1;
+	fs_info->finalize_on_close = 1;
 out:
 	ret = close_ctree(root);
 
