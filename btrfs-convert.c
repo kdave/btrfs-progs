@@ -38,12 +38,12 @@
 #include "utils.h"
 #include "task-utils.h"
 
+#if BTRFSCONVERT_EXT2
 #include <ext2fs/ext2_fs.h>
 #include <ext2fs/ext2fs.h>
 #include <ext2fs/ext2_ext_attr.h>
 
 #define INO_OFFSET (BTRFS_FIRST_FREE_OBJECTID - EXT2_ROOT_INO)
-#define CONV_IMAGE_SUBVOL_OBJECTID BTRFS_FIRST_FREE_OBJECTID
 
 /*
  * Compatibility code for e2fsprogs 1.41 which doesn't support RO compat flag
@@ -56,6 +56,10 @@
 #define EXT2_CLUSTERS_PER_GROUP(s)	(EXT2_BLOCKS_PER_GROUP(s))
 #define EXT2FS_B2C(fs, blk)		(blk)
 #endif
+
+#endif
+
+#define CONV_IMAGE_SUBVOL_OBJECTID BTRFS_FIRST_FREE_OBJECTID
 
 struct task_ctx {
 	uint32_t max_copy_inodes;
@@ -1392,6 +1396,8 @@ static int prepare_system_chunk_sb(struct btrfs_super_block *super)
 	return 0;
 }
 
+#if BTRFSCONVERT_EXT2
+
 /*
  * Open Ext2fs in readonly mode, read block allocation bitmap and
  * inode bitmap into memory.
@@ -2249,8 +2255,12 @@ static const struct btrfs_convert_operations ext2_convert_ops = {
 	.close_fs		= ext2_close_fs,
 };
 
+#endif
+
 static const struct btrfs_convert_operations *convert_operations[] = {
+#if BTRFSCONVERT_EXT2
 	&ext2_convert_ops,
+#endif
 };
 
 static int convert_open_fs(const char *devname,
@@ -2929,6 +2939,9 @@ static void print_usage(void)
 	printf("\t-p|--progress          show converting progress (default)\n");
 	printf("\t-O|--features LIST     comma separated list of filesystem features\n");
 	printf("\t--no-progress          show only overview, not the detailed progress\n");
+	printf("\n");
+	printf("Suported filesystems:\n");
+	printf("\text2/3/4: %s\n", BTRFSCONVERT_EXT2 ? "yes" : "no");
 }
 
 int main(int argc, char *argv[])
