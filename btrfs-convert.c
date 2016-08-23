@@ -1079,14 +1079,19 @@ static struct btrfs_root* link_subvol(struct btrfs_root *root,
 		return NULL;
 
 	path = btrfs_alloc_path();
-	BUG_ON(!path);
+	if (!path)
+		return NULL;
 
 	key.objectid = dirid;
 	key.type = BTRFS_DIR_INDEX_KEY;
 	key.offset = (u64)-1;
 
 	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
-	BUG_ON(ret <= 0);
+	if (ret <= 0) {
+		error("search for DIR_INDEX dirid %llu failed: %d",
+				(unsigned long long)dirid, ret);
+		goto fail;
+	}
 
 	if (path->slots[0] > 0) {
 		path->slots[0]--;
@@ -1097,14 +1102,21 @@ static struct btrfs_root* link_subvol(struct btrfs_root *root,
 	btrfs_release_path(path);
 
 	trans = btrfs_start_transaction(root, 1);
-	BUG_ON(!trans);
+	if (!trans) {
+		error("unable to start transaction");
+		goto fail;
+	}
 
 	key.objectid = dirid;
 	key.offset = 0;
 	key.type =  BTRFS_INODE_ITEM_KEY;
 
 	ret = btrfs_lookup_inode(trans, root, path, &key, 1);
-	BUG_ON(ret);
+	if (ret) {
+		error("search for INODE_ITEM %llu failed: %d",
+				(unsigned long long)dirid, ret);
+		goto fail;
+	}
 	leaf = path->nodes[0];
 	inode_item = btrfs_item_ptr(leaf, path->slots[0],
 				    struct btrfs_inode_item);
@@ -1138,19 +1150,33 @@ static struct btrfs_root* link_subvol(struct btrfs_root *root,
 				 BTRFS_ROOT_BACKREF_KEY,
 				 root->root_key.objectid,
 				 dirid, index, buf, len);
-	BUG_ON(ret);
+	if (ret) {
+		error("unable to add root backref for %llu: %d",
+				root->root_key.objectid, ret);
+		goto fail;
+	}
 
 	/* now add the forward ref */
 	ret = btrfs_add_root_ref(trans, tree_root, root->root_key.objectid,
 				 BTRFS_ROOT_REF_KEY, root_objectid,
 				 dirid, index, buf, len);
+	if (ret) {
+		error("unable to add root ref for %llu: %d",
+				root->root_key.objectid, ret);
+		goto fail;
+	}
 
 	ret = btrfs_commit_transaction(trans, root);
-	BUG_ON(ret);
+	if (ret) {
+		error("transaction commit failed: %d", ret);
+		goto fail;
+	}
 
 	new_root = btrfs_read_fs_root(fs_info, &key);
-	if (IS_ERR(new_root))
+	if (IS_ERR(new_root)) {
+		error("unable to fs read root: %lu", PTR_ERR(new_root));
 		new_root = NULL;
+	}
 fail:
 	btrfs_free_path(path);
 	return new_root;
@@ -2404,6 +2430,10 @@ static int do_convert(const char *devname, int datacsum, int packing,
 	}
 
 	image_root = link_subvol(root, subvol_name, CONV_IMAGE_SUBVOL_OBJECTID);
+	if (!image_root) {
+		error("unable to link subvolume %s", subvol_name);
+		goto fail;
+	}
 
 	free(subvol_name);
 
