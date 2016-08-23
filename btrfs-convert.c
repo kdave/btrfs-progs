@@ -144,6 +144,35 @@ static int intersect_with_sb(u64 bytenr, u64 num_bytes)
 	return 0;
 }
 
+static int convert_insert_dirent(struct btrfs_trans_handle *trans,
+				 struct btrfs_root *root,
+				 const char *name, size_t name_len,
+				 u64 dir, u64 objectid,
+				 u8 file_type, u64 index_cnt,
+				 struct btrfs_inode_item *inode)
+{
+	int ret;
+	u64 inode_size;
+	struct btrfs_key location = {
+		.objectid = objectid,
+		.offset = 0,
+		.type = BTRFS_INODE_ITEM_KEY,
+	};
+
+	ret = btrfs_insert_dir_item(trans, root, name, name_len,
+				    dir, &location, file_type, index_cnt);
+	if (ret)
+		return ret;
+	ret = btrfs_insert_inode_ref(trans, root, name, name_len,
+				     objectid, dir, index_cnt);
+	if (ret)
+		return ret;
+	inode_size = btrfs_stack_inode_size(inode) + name_len * 2;
+	btrfs_set_stack_inode_size(inode, inode_size);
+
+	return 0;
+}
+
 /*
  * Open Ext2fs in readonly mode, read block allocation bitmap and
  * inode bitmap into memory.
@@ -289,35 +318,6 @@ static void ext2_close_fs(struct btrfs_convert_context *cctx)
 		cctx->volume_name = NULL;
 	}
 	ext2fs_close(cctx->fs_data);
-}
-
-static int convert_insert_dirent(struct btrfs_trans_handle *trans,
-				 struct btrfs_root *root,
-				 const char *name, size_t name_len,
-				 u64 dir, u64 objectid,
-				 u8 file_type, u64 index_cnt,
-				 struct btrfs_inode_item *inode)
-{
-	int ret;
-	u64 inode_size;
-	struct btrfs_key location = {
-		.objectid = objectid,
-		.offset = 0,
-		.type = BTRFS_INODE_ITEM_KEY,
-	};
-
-	ret = btrfs_insert_dir_item(trans, root, name, name_len,
-				    dir, &location, file_type, index_cnt);
-	if (ret)
-		return ret;
-	ret = btrfs_insert_inode_ref(trans, root, name, name_len,
-				     objectid, dir, index_cnt);
-	if (ret)
-		return ret;
-	inode_size = btrfs_stack_inode_size(inode) + name_len * 2;
-	btrfs_set_stack_inode_size(inode, inode_size);
-
-	return 0;
 }
 
 struct dir_iterate_data {
