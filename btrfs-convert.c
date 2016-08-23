@@ -128,6 +128,22 @@ static inline void convert_close_fs(struct btrfs_convert_context *cctx)
 	cctx->convert_ops->close_fs(cctx);
 }
 
+static int intersect_with_sb(u64 bytenr, u64 num_bytes)
+{
+	int i;
+	u64 offset;
+
+	for (i = 0; i < BTRFS_SUPER_MIRROR_MAX; i++) {
+		offset = btrfs_sb_offset(i);
+		offset &= ~((u64)BTRFS_STRIPE_LEN - 1);
+
+		if (bytenr < offset + BTRFS_STRIPE_LEN &&
+		    bytenr + num_bytes > offset)
+			return 1;
+	}
+	return 0;
+}
+
 /*
  * Open Ext2fs in readonly mode, read block allocation bitmap and
  * inode bitmap into memory.
@@ -273,22 +289,6 @@ static void ext2_close_fs(struct btrfs_convert_context *cctx)
 		cctx->volume_name = NULL;
 	}
 	ext2fs_close(cctx->fs_data);
-}
-
-static int intersect_with_sb(u64 bytenr, u64 num_bytes)
-{
-	int i;
-	u64 offset;
-
-	for (i = 0; i < BTRFS_SUPER_MIRROR_MAX; i++) {
-		offset = btrfs_sb_offset(i);
-		offset &= ~((u64)BTRFS_STRIPE_LEN - 1);
-
-		if (bytenr < offset + BTRFS_STRIPE_LEN &&
-		    bytenr + num_bytes > offset)
-			return 1;
-	}
-	return 0;
 }
 
 static int convert_insert_dirent(struct btrfs_trans_handle *trans,
