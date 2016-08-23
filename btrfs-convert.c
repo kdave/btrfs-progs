@@ -2325,7 +2325,6 @@ static int do_convert(const char *devname, int datacsum, int packing,
 {
 	int ret;
 	int fd = -1;
-	int is_btrfs = 0;
 	u32 blocksize;
 	u64 total_bytes;
 	struct btrfs_root *root;
@@ -2473,7 +2472,6 @@ static int do_convert(const char *devname, int datacsum, int packing,
 		error("unable to migrate super block: %d", ret);
 		goto fail;
 	}
-	is_btrfs = 1;
 
 	root = open_ctree_fd(fd, devname, 0,
 			OPEN_CTREE_WRITES | OPEN_CTREE_FS_PARTIAL);
@@ -2491,11 +2489,8 @@ fail:
 	clean_convert_context(&cctx);
 	if (fd != -1)
 		close(fd);
-	if (is_btrfs)
-		warning(
-"an error occurred during chunk mapping fixup, filesystem mountable but not finalized");
-	else
-		error("conversion aborted");
+	warning(
+"an error occurred during conversion, filesystem is partially created but not finalized and not mountable");
 	return -1;
 }
 
