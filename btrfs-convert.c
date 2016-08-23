@@ -2348,14 +2348,14 @@ static int do_convert(const char *devname, int datacsum, int packing,
 	blocksize = cctx.blocksize;
 	total_bytes = (u64)blocksize * (u64)cctx.block_count;
 	if (blocksize < 4096) {
-		fprintf(stderr, "block size is too small\n");
+		error("block size is too small: %u < 4096", blocksize);
 		goto fail;
 	}
 	if (btrfs_check_nodesize(nodesize, blocksize, features))
 		goto fail;
 	fd = open(devname, O_RDWR);
 	if (fd < 0) {
-		fprintf(stderr, "unable to open %s\n", devname);
+		error("unable to open %s: %s", devname, strerror(errno));
 		goto fail;
 	}
 	btrfs_parse_features_to_string(features_buf, features);
@@ -2381,27 +2381,26 @@ static int do_convert(const char *devname, int datacsum, int packing,
 
 	ret = make_btrfs(fd, &mkfs_cfg, &cctx);
 	if (ret) {
-		fprintf(stderr, "unable to create initial ctree: %s\n",
-			strerror(-ret));
+		error("unable to create initial ctree: %s", strerror(-ret));
 		goto fail;
 	}
 
 	root = open_ctree_fd(fd, devname, mkfs_cfg.super_bytenr,
 			     OPEN_CTREE_WRITES | OPEN_CTREE_FS_PARTIAL);
 	if (!root) {
-		fprintf(stderr, "unable to open ctree\n");
+		error("unable to open ctree");
 		goto fail;
 	}
 	ret = init_btrfs(&mkfs_cfg, root, &cctx, datacsum, packing, noxattr);
 	if (ret) {
-		fprintf(stderr, "unable to setup the root tree\n");
+		error("unable to setup the root tree: %d", ret);
 		goto fail;
 	}
 
-	printf("creating %s image file.\n", cctx.convert_ops->name);
+	printf("creating %s image file\n", cctx.convert_ops->name);
 	ret = asprintf(&subvol_name, "%s_saved", cctx.convert_ops->name);
 	if (ret < 0) {
-		fprintf(stderr, "error allocating subvolume name: %s_saved\n",
+		error("memory allocation failure for subvolume name: %s_saved",
 			cctx.convert_ops->name);
 		goto fail;
 	}
@@ -2410,17 +2409,17 @@ static int do_convert(const char *devname, int datacsum, int packing,
 	key.type = BTRFS_ROOT_ITEM_KEY;
 	image_root = btrfs_read_fs_root(root->fs_info, &key);
 	if (!image_root) {
-		fprintf(stderr, "unable to create subvol\n");
+		error("unable to create image subvolume");
 		goto fail;
 	}
 	ret = create_image(image_root, &mkfs_cfg, &cctx, fd,
 			      mkfs_cfg.num_bytes, "image", datacsum);
 	if (ret) {
-		fprintf(stderr, "error during create_image %d\n", ret);
+		error("failed to create %s/image: %d", subvol_name, ret);
 		goto fail;
 	}
 
-	printf("creating btrfs metadata.\n");
+	printf("creating btrfs metadata");
 	ctx.max_copy_inodes = (cctx.inodes_count - cctx.free_inodes_count);
 	ctx.cur_copy_inodes = 0;
 
@@ -2431,7 +2430,7 @@ static int do_convert(const char *devname, int datacsum, int packing,
 	}
 	ret = copy_inodes(&cctx, root, datacsum, packing, noxattr, &ctx);
 	if (ret) {
-		fprintf(stderr, "error during copy_inodes %d\n", ret);
+		error("error during copy_inodes %d", ret);
 		goto fail;
 	}
 	if (progress) {
@@ -2451,16 +2450,15 @@ static int do_convert(const char *devname, int datacsum, int packing,
 	if (copylabel == 1) {
 		__strncpy_null(root->fs_info->super_copy->label,
 				cctx.volume_name, BTRFS_LABEL_SIZE - 1);
-		fprintf(stderr, "copy label '%s'\n",
-				root->fs_info->super_copy->label);
+		printf("copy label '%s'\n", root->fs_info->super_copy->label);
 	} else if (copylabel == -1) {
 		strcpy(root->fs_info->super_copy->label, fslabel);
-		fprintf(stderr, "set label to '%s'\n", fslabel);
+		printf("set label to '%s'\n", fslabel);
 	}
 
 	ret = close_ctree(root);
 	if (ret) {
-		fprintf(stderr, "error during close_ctree %d\n", ret);
+		error("close_ctree failed: %d", ret);
 		goto fail;
 	}
 	convert_close_fs(&cctx);
@@ -2472,7 +2470,7 @@ static int do_convert(const char *devname, int datacsum, int packing,
 	 */
 	ret = migrate_super_block(fd, mkfs_cfg.super_bytenr, blocksize);
 	if (ret) {
-		fprintf(stderr, "unable to migrate super block\n");
+		error("unable to migrate super block: %d", ret);
 		goto fail;
 	}
 	is_btrfs = 1;
@@ -2480,24 +2478,24 @@ static int do_convert(const char *devname, int datacsum, int packing,
 	root = open_ctree_fd(fd, devname, 0,
 			OPEN_CTREE_WRITES | OPEN_CTREE_FS_PARTIAL);
 	if (!root) {
-		fprintf(stderr, "unable to open ctree\n");
+		error("unable to open ctree for finalization");
 		goto fail;
 	}
 	root->fs_info->finalize_on_close = 1;
 	close_ctree(root);
 	close(fd);
 
-	printf("conversion complete.\n");
+	printf("conversion complete");
 	return 0;
 fail:
 	clean_convert_context(&cctx);
 	if (fd != -1)
 		close(fd);
 	if (is_btrfs)
-		fprintf(stderr,
-			"WARNING: an error occurred during chunk mapping fixup, filesystem mountable but not finalized\n");
+		warning(
+"an error occurred during chunk mapping fixup, filesystem mountable but not finalized");
 	else
-		fprintf(stderr, "conversion aborted\n");
+		error("conversion aborted");
 	return -1;
 }
 
