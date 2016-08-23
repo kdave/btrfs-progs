@@ -2655,24 +2655,24 @@ static int do_rollback(const char *devname)
 
 	fd = open(devname, O_RDWR);
 	if (fd < 0) {
-		fprintf(stderr, "unable to open %s\n", devname);
+		error("unable to open %s: %s", devname, strerror(errno));
 		goto fail;
 	}
 	root = open_ctree_fd(fd, devname, 0, OPEN_CTREE_WRITES);
 	if (!root) {
-		fprintf(stderr, "unable to open ctree\n");
+		error("unable to open ctree");
 		goto fail;
 	}
 	ret = may_rollback(root);
 	if (ret < 0) {
-		fprintf(stderr, "unable to do rollback\n");
+		error("unable to do rollback: %d", ret);
 		goto fail;
 	}
 
 	sectorsize = root->sectorsize;
 	buf = malloc(sectorsize);
 	if (!buf) {
-		fprintf(stderr, "unable to allocate memory\n");
+		error("unable to allocate memory");
 		goto fail;
 	}
 
@@ -2685,12 +2685,10 @@ static int do_rollback(const char *devname)
 				0);
 	btrfs_release_path(&path);
 	if (ret > 0) {
-		fprintf(stderr,
-		"ERROR: unable to convert ext2 image subvolume, is it deleted?\n");
+		error("unable to convert ext2 image subvolume, is it deleted?");
 		goto fail;
 	} else if (ret < 0) {
-		fprintf(stderr,
-			"ERROR: unable to open ext2_saved, id=%llu: %s\n",
+		error("unable to open ext2_saved, id %llu: %s",
 			(unsigned long long)key.objectid, strerror(-ret));
 		goto fail;
 	}
@@ -2700,8 +2698,8 @@ static int do_rollback(const char *devname)
 	key.offset = (u64)-1;
 	image_root = btrfs_read_fs_root(root->fs_info, &key);
 	if (!image_root || IS_ERR(image_root)) {
-		fprintf(stderr, "unable to open subvol %llu\n",
-			(unsigned long long)key.objectid);
+		error("unable to open subvolume %llu: %ld",
+			(unsigned long long)key.objectid, PTR_ERR(image_root));
 		goto fail;
 	}
 
@@ -2710,7 +2708,7 @@ static int do_rollback(const char *devname)
 	dir = btrfs_lookup_dir_item(NULL, image_root, &path,
 				   root_dir, name, strlen(name), 0);
 	if (!dir || IS_ERR(dir)) {
-		fprintf(stderr, "unable to find file %s\n", name);
+		error("unable to find file %s: %ld", name, PTR_ERR(dir));
 		goto fail;
 	}
 	leaf = path.nodes[0];
@@ -2721,7 +2719,7 @@ static int do_rollback(const char *devname)
 
 	ret = btrfs_lookup_inode(NULL, image_root, &path, &key, 0);
 	if (ret) {
-		fprintf(stderr, "unable to find inode item\n");
+		error("unable to find inode item: %d", ret);
 		goto fail;
 	}
 	leaf = path.nodes[0];
@@ -2734,7 +2732,7 @@ static int do_rollback(const char *devname)
 	btrfs_set_key_type(&key, BTRFS_EXTENT_DATA_KEY);
 	ret = btrfs_search_slot(NULL, image_root, &key, &path, 0, 0);
 	if (ret != 0) {
-		fprintf(stderr, "unable to find first file extent\n");
+		error("unable to find first file extent: %d", ret);
 		btrfs_release_path(&path);
 		goto fail;
 	}
@@ -2797,8 +2795,10 @@ next_extent:
 	btrfs_release_path(&path);
 
 	if (offset < total_bytes) {
-		fprintf(stderr, "unable to build extent mapping\n");
-		fprintf(stderr, "converted filesystem after balance is unable to rollback\n");
+		error("unable to build extent mapping (offset %llu, total_bytes %llu)",
+				(unsigned long long)offset,
+				(unsigned long long)total_bytes);
+		error("converted filesystem after balance is unable to rollback");
 		goto fail;
 	}
 
@@ -2806,7 +2806,7 @@ next_extent:
 	first_free &= ~((u64)sectorsize - 1);
 	/* backup for extent #0 should exist */
 	if(!test_range_bit(&io_tree, 0, first_free - 1, EXTENT_LOCKED, 1)) {
-		fprintf(stderr, "no backup for the first extent\n");
+		error("no backup for the first extent");
 		goto fail;
 	}
 	/* force no allocation from system block group */
@@ -2847,13 +2847,16 @@ next_extent:
 	}
 	/* only extent #0 left in system block group? */
 	if (num_bytes > first_free) {
-		fprintf(stderr, "unable to empty system block group\n");
+		error(
+	"unable to empty system block group (num_bytes %llu, first_free %llu",
+				(unsigned long long)num_bytes,
+				(unsigned long long)first_free);
 		goto fail;
 	}
 	/* create a system chunk that maps the whole device */
 	ret = prepare_system_chunk_sb(root->fs_info->super_copy);
 	if (ret) {
-		fprintf(stderr, "unable to update system chunk\n");
+		error("unable to update system chunk: %d", ret);
 		goto fail;
 	}
 
@@ -2862,7 +2865,7 @@ next_extent:
 
 	ret = close_ctree(root);
 	if (ret) {
-		fprintf(stderr, "error during close_ctree %d\n", ret);
+		error("close_ctree failed: %d", ret);
 		goto fail;
 	}
 
@@ -2874,9 +2877,8 @@ next_extent:
 			break;
 		ret = pwrite(fd, buf, sectorsize, bytenr);
 		if (ret != sectorsize) {
-			fprintf(stderr,
-				"error during zeroing superblock %d: %d\n",
-				i, ret);
+			error("zeroing superblock mirror %d failed: %d",
+					i, ret);
 			goto fail;
 		}
 	}
@@ -2902,13 +2904,15 @@ next_extent:
 			}
 			ret = pread(fd, buf, sectorsize, bytenr);
 			if (ret < 0) {
-				fprintf(stderr, "error during pread %d\n", ret);
+				error("reading superblock at %llu failed: %d",
+						(unsigned long long)bytenr, ret);
 				goto fail;
 			}
 			BUG_ON(ret != sectorsize);
 			ret = pwrite(fd, buf, sectorsize, start);
 			if (ret < 0) {
-				fprintf(stderr, "error during pwrite %d\n", ret);
+				error("writing superblock at %llu failed: %d",
+						(unsigned long long)start, ret);
 				goto fail;
 			}
 			BUG_ON(ret != sectorsize);
@@ -2919,8 +2923,8 @@ next_sector:
 	}
 
 	ret = fsync(fd);
-	if (ret) {
-		fprintf(stderr, "error during fsync %d\n", ret);
+	if (ret < 0) {
+		error("fsync failed: %s", strerror(errno));
 		goto fail;
 	}
 	/*
@@ -2928,33 +2932,35 @@ next_sector:
 	 */
 	ret = pread(fd, buf, sectorsize, sb_bytenr);
 	if (ret < 0) {
-		fprintf(stderr, "error during pread %d\n", ret);
+		error("reading primary superblock failed: %s",
+				strerror(errno));
 		goto fail;
 	}
 	BUG_ON(ret != sectorsize);
 	ret = pwrite(fd, buf, sectorsize, BTRFS_SUPER_INFO_OFFSET);
 	if (ret < 0) {
-		fprintf(stderr, "error during pwrite %d\n", ret);
+		error("writing primary superblock failed: %s",
+				strerror(errno));
 		goto fail;
 	}
 	BUG_ON(ret != sectorsize);
 	ret = fsync(fd);
-	if (ret) {
-		fprintf(stderr, "error during fsync %d\n", ret);
+	if (ret < 0) {
+		error("fsync failed: %s", strerror(errno));
 		goto fail;
 	}
 
 	close(fd);
 	free(buf);
 	extent_io_tree_cleanup(&io_tree);
-	printf("rollback complete.\n");
+	printf("rollback complete\n");
 	return 0;
 
 fail:
 	if (fd != -1)
 		close(fd);
 	free(buf);
-	fprintf(stderr, "rollback aborted.\n");
+	error("rollback aborted");
 	return -1;
 }
 
