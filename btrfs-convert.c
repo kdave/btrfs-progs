@@ -655,6 +655,57 @@ static int migrate_reserved_ranges(struct btrfs_trans_handle *trans,
 }
 
 /*
+ * Helper for expand and merge extent_cache for wipe_one_reserved_range() to
+ * handle wiping a range that exists in cache.
+ */
+static int _expand_extent_cache(struct cache_tree *tree,
+				struct cache_extent *entry,
+				u64 min_stripe_size, int backward)
+{
+	struct cache_extent *ce;
+	int diff;
+
+	if (entry->size >= min_stripe_size)
+		return 0;
+	diff = min_stripe_size - entry->size;
+
+	if (backward) {
+		ce = prev_cache_extent(entry);
+		if (!ce)
+			goto expand_back;
+		if (ce->start + ce->size >= entry->start - diff) {
+			/* Directly merge with previous extent */
+			ce->size = entry->start + entry->size - ce->start;
+			remove_cache_extent(tree, entry);
+			free(entry);
+			return 0;
+		}
+expand_back:
+		/* No overlap, normal extent */
+		if (entry->start < diff) {
+			error("cannot find space for data chunk layout");
+			return -ENOSPC;
+		}
+		entry->start -= diff;
+		entry->size += diff;
+		return 0;
+	}
+	ce = next_cache_extent(entry);
+	if (!ce)
+		goto expand_after;
+	if (entry->start + entry->size + diff >= ce->start) {
+		/* Directly merge with next extent */
+		entry->size = ce->start + ce->size - entry->start;
+		remove_cache_extent(tree, ce);
+		free(ce);
+		return 0;
+	}
+expand_after:
+	entry->size += diff;
+	return 0;
+}
+
+/*
  * Open Ext2fs in readonly mode, read block allocation bitmap and
  * inode bitmap into memory.
  */
@@ -1993,57 +2044,6 @@ static int convert_open_fs(const char *devname,
 
 	fprintf(stderr, "No file system found to convert.\n");
 	return -1;
-}
-
-/*
- * Helper for expand and merge extent_cache for wipe_one_reserved_range() to
- * handle wiping a range that exists in cache.
- */
-static int _expand_extent_cache(struct cache_tree *tree,
-				struct cache_extent *entry,
-				u64 min_stripe_size, int backward)
-{
-	struct cache_extent *ce;
-	int diff;
-
-	if (entry->size >= min_stripe_size)
-		return 0;
-	diff = min_stripe_size - entry->size;
-
-	if (backward) {
-		ce = prev_cache_extent(entry);
-		if (!ce)
-			goto expand_back;
-		if (ce->start + ce->size >= entry->start - diff) {
-			/* Directly merge with previous extent */
-			ce->size = entry->start + entry->size - ce->start;
-			remove_cache_extent(tree, entry);
-			free(entry);
-			return 0;
-		}
-expand_back:
-		/* No overlap, normal extent */
-		if (entry->start < diff) {
-			error("cannot find space for data chunk layout");
-			return -ENOSPC;
-		}
-		entry->start -= diff;
-		entry->size += diff;
-		return 0;
-	}
-	ce = next_cache_extent(entry);
-	if (!ce)
-		goto expand_after;
-	if (entry->start + entry->size + diff >= ce->start) {
-		/* Directly merge with next extent */
-		entry->size = ce->start + ce->size - entry->start;
-		remove_cache_extent(tree, ce);
-		free(ce);
-		return 0;
-	}
-expand_after:
-	entry->size += diff;
-	return 0;
 }
 
 /*
