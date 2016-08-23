@@ -218,6 +218,49 @@ static int csum_disk_extent(struct btrfs_trans_handle *trans,
 	return ret;
 }
 
+struct blk_iterate_data {
+	struct btrfs_trans_handle *trans;
+	struct btrfs_root *root;
+	struct btrfs_root *convert_root;
+	struct btrfs_inode_item *inode;
+	u64 convert_ino;
+	u64 objectid;
+	u64 first_block;
+	u64 disk_block;
+	u64 num_blocks;
+	u64 boundary;
+	int checksum;
+	int errcode;
+};
+
+static void init_blk_iterate_data(struct blk_iterate_data *data,
+				  struct btrfs_trans_handle *trans,
+				  struct btrfs_root *root,
+				  struct btrfs_inode_item *inode,
+				  u64 objectid, int checksum)
+{
+	struct btrfs_key key;
+
+	data->trans		= trans;
+	data->root		= root;
+	data->inode		= inode;
+	data->objectid		= objectid;
+	data->first_block	= 0;
+	data->disk_block	= 0;
+	data->num_blocks	= 0;
+	data->boundary		= (u64)-1;
+	data->checksum		= checksum;
+	data->errcode		= 0;
+
+	key.objectid = CONV_IMAGE_SUBVOL_OBJECTID;
+	key.type = BTRFS_ROOT_ITEM_KEY;
+	key.offset = (u64)-1;
+	data->convert_root = btrfs_read_fs_root(root->fs_info, &key);
+	/* Impossible as we just opened it before */
+	BUG_ON(!data->convert_root || IS_ERR(data->convert_root));
+	data->convert_ino = BTRFS_FIRST_FREE_OBJECTID + 1;
+}
+
 /*
  * Open Ext2fs in readonly mode, read block allocation bitmap and
  * inode bitmap into memory.
@@ -457,49 +500,6 @@ static int ext2_create_dir_entries(struct btrfs_trans_handle *trans,
 error:
 	fprintf(stderr, "ext2fs_dir_iterate2: %s\n", error_message(err));
 	return -1;
-}
-
-struct blk_iterate_data {
-	struct btrfs_trans_handle *trans;
-	struct btrfs_root *root;
-	struct btrfs_root *convert_root;
-	struct btrfs_inode_item *inode;
-	u64 convert_ino;
-	u64 objectid;
-	u64 first_block;
-	u64 disk_block;
-	u64 num_blocks;
-	u64 boundary;
-	int checksum;
-	int errcode;
-};
-
-static void init_blk_iterate_data(struct blk_iterate_data *data,
-				  struct btrfs_trans_handle *trans,
-				  struct btrfs_root *root,
-				  struct btrfs_inode_item *inode,
-				  u64 objectid, int checksum)
-{
-	struct btrfs_key key;
-
-	data->trans		= trans;
-	data->root		= root;
-	data->inode		= inode;
-	data->objectid		= objectid;
-	data->first_block	= 0;
-	data->disk_block	= 0;
-	data->num_blocks	= 0;
-	data->boundary		= (u64)-1;
-	data->checksum		= checksum;
-	data->errcode		= 0;
-
-	key.objectid = CONV_IMAGE_SUBVOL_OBJECTID;
-	key.type = BTRFS_ROOT_ITEM_KEY;
-	key.offset = (u64)-1;
-	data->convert_root = btrfs_read_fs_root(root->fs_info, &key);
-	/* Impossible as we just opened it before */
-	BUG_ON(!data->convert_root || IS_ERR(data->convert_root));
-	data->convert_ino = BTRFS_FIRST_FREE_OBJECTID + 1;
 }
 
 /*
