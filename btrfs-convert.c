@@ -1188,6 +1188,56 @@ static int create_subvol(struct btrfs_trans_handle *trans,
 }
 
 /*
+ * New make_btrfs() has handle system and meta chunks quite well.
+ * So only need to add remaining data chunks.
+ */
+static int make_convert_data_block_groups(struct btrfs_trans_handle *trans,
+					  struct btrfs_fs_info *fs_info,
+					  struct btrfs_mkfs_config *cfg,
+					  struct btrfs_convert_context *cctx)
+{
+	struct btrfs_root *extent_root = fs_info->extent_root;
+	struct cache_tree *data_chunks = &cctx->data_chunks;
+	struct cache_extent *cache;
+	u64 max_chunk_size;
+	int ret = 0;
+
+	/*
+	 * Don't create data chunk over 10% of the convert device
+	 * And for single chunk, don't create chunk larger than 1G.
+	 */
+	max_chunk_size = cfg->num_bytes / 10;
+	max_chunk_size = min((u64)(1024 * 1024 * 1024), max_chunk_size);
+	max_chunk_size = round_down(max_chunk_size, extent_root->sectorsize);
+
+	for (cache = first_cache_extent(data_chunks); cache;
+	     cache = next_cache_extent(cache)) {
+		u64 cur = cache->start;
+
+		while (cur < cache->start + cache->size) {
+			u64 len;
+			u64 cur_backup = cur;
+
+			len = min(max_chunk_size,
+				  cache->start + cache->size - cur);
+			ret = btrfs_alloc_data_chunk(trans, extent_root,
+					&cur_backup, len,
+					BTRFS_BLOCK_GROUP_DATA, 1);
+			if (ret < 0)
+				break;
+			ret = btrfs_make_block_group(trans, extent_root, 0,
+					BTRFS_BLOCK_GROUP_DATA,
+					BTRFS_FIRST_CHUNK_TREE_OBJECTID,
+					cur, len);
+			if (ret < 0)
+				break;
+			cur += len;
+		}
+	}
+	return ret;
+}
+
+/*
  * Open Ext2fs in readonly mode, read block allocation bitmap and
  * inode bitmap into memory.
  */
@@ -2033,56 +2083,6 @@ static int ext2_copy_inodes(struct btrfs_convert_context *cctx,
 	BUG_ON(ret);
 	ext2fs_close_inode_scan(ext2_scan);
 
-	return ret;
-}
-
-/*
- * New make_btrfs() has handle system and meta chunks quite well.
- * So only need to add remaining data chunks.
- */
-static int make_convert_data_block_groups(struct btrfs_trans_handle *trans,
-					  struct btrfs_fs_info *fs_info,
-					  struct btrfs_mkfs_config *cfg,
-					  struct btrfs_convert_context *cctx)
-{
-	struct btrfs_root *extent_root = fs_info->extent_root;
-	struct cache_tree *data_chunks = &cctx->data_chunks;
-	struct cache_extent *cache;
-	u64 max_chunk_size;
-	int ret = 0;
-
-	/*
-	 * Don't create data chunk over 10% of the convert device
-	 * And for single chunk, don't create chunk larger than 1G.
-	 */
-	max_chunk_size = cfg->num_bytes / 10;
-	max_chunk_size = min((u64)(1024 * 1024 * 1024), max_chunk_size);
-	max_chunk_size = round_down(max_chunk_size, extent_root->sectorsize);
-
-	for (cache = first_cache_extent(data_chunks); cache;
-	     cache = next_cache_extent(cache)) {
-		u64 cur = cache->start;
-
-		while (cur < cache->start + cache->size) {
-			u64 len;
-			u64 cur_backup = cur;
-
-			len = min(max_chunk_size,
-				  cache->start + cache->size - cur);
-			ret = btrfs_alloc_data_chunk(trans, extent_root,
-					&cur_backup, len,
-					BTRFS_BLOCK_GROUP_DATA, 1);
-			if (ret < 0)
-				break;
-			ret = btrfs_make_block_group(trans, extent_root, 0,
-					BTRFS_BLOCK_GROUP_DATA,
-					BTRFS_FIRST_CHUNK_TREE_OBJECTID,
-					cur, len);
-			if (ret < 0)
-				break;
-			cur += len;
-		}
-	}
 	return ret;
 }
 
