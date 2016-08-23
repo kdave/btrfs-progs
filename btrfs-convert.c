@@ -523,6 +523,94 @@ static int create_image_file_range(struct btrfs_trans_handle *trans,
 }
 
 /*
+ * Relocate old fs data in one reserved ranges
+ *
+ * Since all old fs data in reserved range is not covered by any chunk nor
+ * data extent, we don't need to handle any reference but add new
+ * extent/reference, which makes codes more clear
+ */
+static int migrate_one_reserved_range(struct btrfs_trans_handle *trans,
+				      struct btrfs_root *root,
+				      struct cache_tree *used,
+				      struct btrfs_inode_item *inode, int fd,
+				      u64 ino, u64 start, u64 len, int datacsum)
+{
+	u64 cur_off = start;
+	u64 cur_len = len;
+	u64 hole_start = start;
+	u64 hole_len;
+	struct cache_extent *cache;
+	struct btrfs_key key;
+	struct extent_buffer *eb;
+	int ret = 0;
+
+	while (cur_off < start + len) {
+		cache = lookup_cache_extent(used, cur_off, cur_len);
+		if (!cache)
+			break;
+		cur_off = max(cache->start, cur_off);
+		cur_len = min(cache->start + cache->size, start + len) -
+			  cur_off;
+		BUG_ON(cur_len < root->sectorsize);
+
+		/* reserve extent for the data */
+		ret = btrfs_reserve_extent(trans, root, cur_len, 0, 0, (u64)-1,
+					   &key, 1);
+		if (ret < 0)
+			break;
+
+		eb = malloc(sizeof(*eb) + cur_len);
+		if (!eb) {
+			ret = -ENOMEM;
+			break;
+		}
+
+		ret = pread(fd, eb->data, cur_len, cur_off);
+		if (ret < cur_len) {
+			ret = (ret < 0 ? ret : -EIO);
+			free(eb);
+			break;
+		}
+		eb->start = key.objectid;
+		eb->len = key.offset;
+
+		/* Write the data */
+		ret = write_and_map_eb(trans, root, eb);
+		free(eb);
+		if (ret < 0)
+			break;
+
+		/* Now handle extent item and file extent things */
+		ret = btrfs_record_file_extent(trans, root, ino, inode, cur_off,
+					       key.objectid, key.offset);
+		if (ret < 0)
+			break;
+		/* Finally, insert csum items */
+		if (datacsum)
+			ret = csum_disk_extent(trans, root, key.objectid,
+					       key.offset);
+
+		/* Don't forget to insert hole */
+		hole_len = cur_off - hole_start;
+		if (hole_len) {
+			ret = btrfs_record_file_extent(trans, root, ino, inode,
+					hole_start, 0, hole_len);
+			if (ret < 0)
+				break;
+		}
+
+		cur_off += key.offset;
+		hole_start = cur_off;
+		cur_len = start + len - cur_off;
+	}
+	/* Last hole */
+	if (start + len - hole_start > 0)
+		ret = btrfs_record_file_extent(trans, root, ino, inode,
+				hole_start, 0, start + len - hole_start);
+	return ret;
+}
+
+/*
  * Open Ext2fs in readonly mode, read block allocation bitmap and
  * inode bitmap into memory.
  */
@@ -1368,94 +1456,6 @@ static int ext2_copy_inodes(struct btrfs_convert_context *cctx,
 	BUG_ON(ret);
 	ext2fs_close_inode_scan(ext2_scan);
 
-	return ret;
-}
-
-/*
- * Relocate old fs data in one reserved ranges
- *
- * Since all old fs data in reserved range is not covered by any chunk nor
- * data extent, we don't need to handle any reference but add new
- * extent/reference, which makes codes more clear
- */
-static int migrate_one_reserved_range(struct btrfs_trans_handle *trans,
-				      struct btrfs_root *root,
-				      struct cache_tree *used,
-				      struct btrfs_inode_item *inode, int fd,
-				      u64 ino, u64 start, u64 len, int datacsum)
-{
-	u64 cur_off = start;
-	u64 cur_len = len;
-	u64 hole_start = start;
-	u64 hole_len;
-	struct cache_extent *cache;
-	struct btrfs_key key;
-	struct extent_buffer *eb;
-	int ret = 0;
-
-	while (cur_off < start + len) {
-		cache = lookup_cache_extent(used, cur_off, cur_len);
-		if (!cache)
-			break;
-		cur_off = max(cache->start, cur_off);
-		cur_len = min(cache->start + cache->size, start + len) -
-			  cur_off;
-		BUG_ON(cur_len < root->sectorsize);
-
-		/* reserve extent for the data */
-		ret = btrfs_reserve_extent(trans, root, cur_len, 0, 0, (u64)-1,
-					   &key, 1);
-		if (ret < 0)
-			break;
-
-		eb = malloc(sizeof(*eb) + cur_len);
-		if (!eb) {
-			ret = -ENOMEM;
-			break;
-		}
-
-		ret = pread(fd, eb->data, cur_len, cur_off);
-		if (ret < cur_len) {
-			ret = (ret < 0 ? ret : -EIO);
-			free(eb);
-			break;
-		}
-		eb->start = key.objectid;
-		eb->len = key.offset;
-
-		/* Write the data */
-		ret = write_and_map_eb(trans, root, eb);
-		free(eb);
-		if (ret < 0)
-			break;
-
-		/* Now handle extent item and file extent things */
-		ret = btrfs_record_file_extent(trans, root, ino, inode, cur_off,
-					       key.objectid, key.offset);
-		if (ret < 0)
-			break;
-		/* Finally, insert csum items */
-		if (datacsum)
-			ret = csum_disk_extent(trans, root, key.objectid,
-					       key.offset);
-
-		/* Don't forget to insert hole */
-		hole_len = cur_off - hole_start;
-		if (hole_len) {
-			ret = btrfs_record_file_extent(trans, root, ino, inode,
-					hole_start, 0, hole_len);
-			if (ret < 0)
-				break;
-		}
-
-		cur_off += key.offset;
-		hole_start = cur_off;
-		cur_len = start + len - cur_off;
-	}
-	/* Last hole */
-	if (start + len - hole_start > 0)
-		ret = btrfs_record_file_extent(trans, root, ino, inode,
-				hole_start, 0, start + len - hole_start);
 	return ret;
 }
 
