@@ -1193,7 +1193,8 @@ static int create_subvol(struct btrfs_trans_handle *trans,
 
 	ret = btrfs_copy_root(trans, root, root->node, &tmp,
 			      root_objectid);
-	BUG_ON(ret);
+	if (ret)
+		return ret;
 
 	memcpy(&root_item, &root->root_item, sizeof(root_item));
 	btrfs_set_root_bytenr(&root_item, tmp->start);
@@ -1209,12 +1210,14 @@ static int create_subvol(struct btrfs_trans_handle *trans,
 
 	key.offset = (u64)-1;
 	new_root = btrfs_read_fs_root(root->fs_info, &key);
-	BUG_ON(!new_root || IS_ERR(new_root));
+	if (!new_root || IS_ERR(new_root)) {
+		error("unable to fs read root: %lu", PTR_ERR(new_root));
+		return PTR_ERR(new_root);
+	}
 
 	ret = btrfs_make_root_dir(trans, new_root, BTRFS_FIRST_FREE_OBJECTID);
-	BUG_ON(ret);
 
-	return 0;
+	return ret;
 }
 
 /*
@@ -1323,12 +1326,16 @@ static int init_btrfs(struct btrfs_mkfs_config *cfg, struct btrfs_root *root,
 
 	/* subvol for fs image file */
 	ret = create_subvol(trans, root, CONV_IMAGE_SUBVOL_OBJECTID);
-	if (ret < 0)
+	if (ret < 0) {
+		error("failed to create subvolume image root: %d", ret);
 		goto err;
+	}
 	/* subvol for data relocation tree */
 	ret = create_subvol(trans, root, BTRFS_DATA_RELOC_TREE_OBJECTID);
-	if (ret < 0)
+	if (ret < 0) {
+		error("failed to create DATA_RELOC root: %d", ret);
 		goto err;
+	}
 
 	ret = btrfs_commit_transaction(trans, root);
 	fs_info->avoid_sys_chunk_alloc = 0;
