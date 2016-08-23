@@ -1308,6 +1308,61 @@ err:
 }
 
 /*
+ * Migrate super block to its default position and zero 0 ~ 16k
+ */
+static int migrate_super_block(int fd, u64 old_bytenr, u32 sectorsize)
+{
+	int ret;
+	struct extent_buffer *buf;
+	struct btrfs_super_block *super;
+	u32 len;
+	u32 bytenr;
+
+	BUG_ON(sectorsize < sizeof(*super));
+	buf = malloc(sizeof(*buf) + sectorsize);
+	if (!buf)
+		return -ENOMEM;
+
+	buf->len = sectorsize;
+	ret = pread(fd, buf->data, sectorsize, old_bytenr);
+	if (ret != sectorsize)
+		goto fail;
+
+	super = (struct btrfs_super_block *)buf->data;
+	BUG_ON(btrfs_super_bytenr(super) != old_bytenr);
+	btrfs_set_super_bytenr(super, BTRFS_SUPER_INFO_OFFSET);
+
+	csum_tree_block_size(buf, BTRFS_CRC32_SIZE, 0);
+	ret = pwrite(fd, buf->data, sectorsize, BTRFS_SUPER_INFO_OFFSET);
+	if (ret != sectorsize)
+		goto fail;
+
+	ret = fsync(fd);
+	if (ret)
+		goto fail;
+
+	memset(buf->data, 0, sectorsize);
+	for (bytenr = 0; bytenr < BTRFS_SUPER_INFO_OFFSET; ) {
+		len = BTRFS_SUPER_INFO_OFFSET - bytenr;
+		if (len > sectorsize)
+			len = sectorsize;
+		ret = pwrite(fd, buf->data, len, bytenr);
+		if (ret != len) {
+			fprintf(stderr, "unable to zero fill device\n");
+			break;
+		}
+		bytenr += len;
+	}
+	ret = 0;
+	fsync(fd);
+fail:
+	free(buf);
+	if (ret > 0)
+		ret = -1;
+	return ret;
+}
+
+/*
  * Open Ext2fs in readonly mode, read block allocation bitmap and
  * inode bitmap into memory.
  */
@@ -2153,61 +2208,6 @@ static int ext2_copy_inodes(struct btrfs_convert_context *cctx,
 	BUG_ON(ret);
 	ext2fs_close_inode_scan(ext2_scan);
 
-	return ret;
-}
-
-/*
- * Migrate super block to its default position and zero 0 ~ 16k
- */
-static int migrate_super_block(int fd, u64 old_bytenr, u32 sectorsize)
-{
-	int ret;
-	struct extent_buffer *buf;
-	struct btrfs_super_block *super;
-	u32 len;
-	u32 bytenr;
-
-	BUG_ON(sectorsize < sizeof(*super));
-	buf = malloc(sizeof(*buf) + sectorsize);
-	if (!buf)
-		return -ENOMEM;
-
-	buf->len = sectorsize;
-	ret = pread(fd, buf->data, sectorsize, old_bytenr);
-	if (ret != sectorsize)
-		goto fail;
-
-	super = (struct btrfs_super_block *)buf->data;
-	BUG_ON(btrfs_super_bytenr(super) != old_bytenr);
-	btrfs_set_super_bytenr(super, BTRFS_SUPER_INFO_OFFSET);
-
-	csum_tree_block_size(buf, BTRFS_CRC32_SIZE, 0);
-	ret = pwrite(fd, buf->data, sectorsize, BTRFS_SUPER_INFO_OFFSET);
-	if (ret != sectorsize)
-		goto fail;
-
-	ret = fsync(fd);
-	if (ret)
-		goto fail;
-
-	memset(buf->data, 0, sectorsize);
-	for (bytenr = 0; bytenr < BTRFS_SUPER_INFO_OFFSET; ) {
-		len = BTRFS_SUPER_INFO_OFFSET - bytenr;
-		if (len > sectorsize)
-			len = sectorsize;
-		ret = pwrite(fd, buf->data, len, bytenr);
-		if (ret != len) {
-			fprintf(stderr, "unable to zero fill device\n");
-			break;
-		}
-		bytenr += len;
-	}
-	ret = 0;
-	fsync(fd);
-fail:
-	free(buf);
-	if (ret > 0)
-		ret = -1;
 	return ret;
 }
 
