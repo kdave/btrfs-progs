@@ -104,13 +104,44 @@ AC_ARG_ENABLE([convert],
 AS_IF([test "x$enable_convert" = xyes], [DISABLE_BTRFSCONVERT=0], [DISABLE_BTRFSCONVERT=1])
 AC_SUBST([DISABLE_BTRFSCONVERT])
 
+AC_ARG_WITH([convert],
+	    AS_HELP_STRING([[[]--with-convert[[=auto]]]], [built-in filesystems for convert (default: auto)
+supported (comma separated list): ext2]),
+  [], [with_convert=auto]
+)
+
+if test "$with_convert" = "yes"; then
+	with_convert=auto
+fi
+
+if test "$with_convert" = "no"; then
+	with_convert=
+fi
+
+convertfs=
+BTRFSCONVERT_EXT2=0
 if test "x$enable_convert" = xyes; then
-	PKG_CHECK_MODULES(EXT2FS, [ext2fs >= 1.42],,
-		[PKG_CHECK_MODULES(EXT2FS, [ext2fs],
-			[AC_DEFINE([HAVE_OLD_E2FSPROGS], [1],
-				  [E2fsprogs does not support BIGALLOC])]
-			)])
-	PKG_CHECK_MODULES(COM_ERR, [com_err])
+	if test "x$with_convert" = "xauto" || echo "$with_convert" | grep -q "ext2"; then
+		PKG_CHECK_MODULES(EXT2FS, [ext2fs >= 1.42],,
+			[PKG_CHECK_MODULES(EXT2FS, [ext2fs],
+				[AC_DEFINE([HAVE_OLD_E2FSPROGS], [1],
+					  [E2fsprogs does not support BIGALLOC])]
+				)])
+		PKG_CHECK_MODULES(COM_ERR, [com_err])
+		convertfs="${convertfs:+$convertfs,}ext2"
+		BTRFSCONVERT_EXT2=1
+	fi
+fi
+AC_SUBST([BTRFSCONVERT_EXT2])
+
+# catch typos
+tmp=$(echo "$with_convert" | sed -e 's/auto//' | sed -e 's/ext2//' | sed -e 's/,\+/,/')
+if ! test "x$tmp" = "x"; then
+	AC_MSG_ERROR([unknown tokens for --with-convert: $tmp])
+fi
+
+if test "$DISABLE_BTRFSCONVERT" = 0 && test "x$convertfs" = "x"; then
+	AC_MSG_ERROR([no filesystems for convert, use --disable-convert instead])
 fi
 
 AX_CHECK_DEFINE([linux/fiemap.h], [FIEMAP_EXTENT_SHARED], [],
@@ -176,7 +207,7 @@ AC_MSG_RESULT([
 
 	documentation:     ${enable_documentation}
 	backtrace support: ${enable_backtrace}
-	btrfs-convert:     ${enable_convert}
+	btrfs-convert:     ${enable_convert} ${convertfs:+($convertfs)}
 
 	Type 'make' to compile.
 ])
