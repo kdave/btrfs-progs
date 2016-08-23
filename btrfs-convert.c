@@ -1362,6 +1362,36 @@ fail:
 	return ret;
 }
 
+static int prepare_system_chunk_sb(struct btrfs_super_block *super)
+{
+	struct btrfs_chunk *chunk;
+	struct btrfs_disk_key *key;
+	u32 sectorsize = btrfs_super_sectorsize(super);
+
+	key = (struct btrfs_disk_key *)(super->sys_chunk_array);
+	chunk = (struct btrfs_chunk *)(super->sys_chunk_array +
+				       sizeof(struct btrfs_disk_key));
+
+	btrfs_set_disk_key_objectid(key, BTRFS_FIRST_CHUNK_TREE_OBJECTID);
+	btrfs_set_disk_key_type(key, BTRFS_CHUNK_ITEM_KEY);
+	btrfs_set_disk_key_offset(key, 0);
+
+	btrfs_set_stack_chunk_length(chunk, btrfs_super_total_bytes(super));
+	btrfs_set_stack_chunk_owner(chunk, BTRFS_EXTENT_TREE_OBJECTID);
+	btrfs_set_stack_chunk_stripe_len(chunk, BTRFS_STRIPE_LEN);
+	btrfs_set_stack_chunk_type(chunk, BTRFS_BLOCK_GROUP_SYSTEM);
+	btrfs_set_stack_chunk_io_align(chunk, sectorsize);
+	btrfs_set_stack_chunk_io_width(chunk, sectorsize);
+	btrfs_set_stack_chunk_sector_size(chunk, sectorsize);
+	btrfs_set_stack_chunk_num_stripes(chunk, 1);
+	btrfs_set_stack_chunk_sub_stripes(chunk, 0);
+	chunk->stripe.devid = super->dev_item.devid;
+	btrfs_set_stack_stripe_offset(&chunk->stripe, 0);
+	memcpy(chunk->stripe.dev_uuid, super->dev_item.uuid, BTRFS_UUID_SIZE);
+	btrfs_set_super_sys_array_size(super, sizeof(*key) + sizeof(*chunk));
+	return 0;
+}
+
 /*
  * Open Ext2fs in readonly mode, read block allocation bitmap and
  * inode bitmap into memory.
@@ -2209,36 +2239,6 @@ static int ext2_copy_inodes(struct btrfs_convert_context *cctx,
 	ext2fs_close_inode_scan(ext2_scan);
 
 	return ret;
-}
-
-static int prepare_system_chunk_sb(struct btrfs_super_block *super)
-{
-	struct btrfs_chunk *chunk;
-	struct btrfs_disk_key *key;
-	u32 sectorsize = btrfs_super_sectorsize(super);
-
-	key = (struct btrfs_disk_key *)(super->sys_chunk_array);
-	chunk = (struct btrfs_chunk *)(super->sys_chunk_array +
-				       sizeof(struct btrfs_disk_key));
-
-	btrfs_set_disk_key_objectid(key, BTRFS_FIRST_CHUNK_TREE_OBJECTID);
-	btrfs_set_disk_key_type(key, BTRFS_CHUNK_ITEM_KEY);
-	btrfs_set_disk_key_offset(key, 0);
-
-	btrfs_set_stack_chunk_length(chunk, btrfs_super_total_bytes(super));
-	btrfs_set_stack_chunk_owner(chunk, BTRFS_EXTENT_TREE_OBJECTID);
-	btrfs_set_stack_chunk_stripe_len(chunk, BTRFS_STRIPE_LEN);
-	btrfs_set_stack_chunk_type(chunk, BTRFS_BLOCK_GROUP_SYSTEM);
-	btrfs_set_stack_chunk_io_align(chunk, sectorsize);
-	btrfs_set_stack_chunk_io_width(chunk, sectorsize);
-	btrfs_set_stack_chunk_sector_size(chunk, sectorsize);
-	btrfs_set_stack_chunk_num_stripes(chunk, 1);
-	btrfs_set_stack_chunk_sub_stripes(chunk, 0);
-	chunk->stripe.devid = super->dev_item.devid;
-	btrfs_set_stack_stripe_offset(&chunk->stripe, 0);
-	memcpy(chunk->stripe.dev_uuid, super->dev_item.uuid, BTRFS_UUID_SIZE);
-	btrfs_set_super_sys_array_size(super, sizeof(*key) + sizeof(*chunk));
-	return 0;
 }
 
 static const struct btrfs_convert_operations ext2_convert_ops = {
