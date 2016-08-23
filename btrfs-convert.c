@@ -406,6 +406,122 @@ fail:
 	return ret;
 }
 
+static int create_image_file_range(struct btrfs_trans_handle *trans,
+				      struct btrfs_root *root,
+				      struct cache_tree *used,
+				      struct btrfs_inode_item *inode,
+				      u64 ino, u64 bytenr, u64 *ret_len,
+				      int datacsum)
+{
+	struct cache_extent *cache;
+	struct btrfs_block_group_cache *bg_cache;
+	u64 len = *ret_len;
+	u64 disk_bytenr;
+	int i;
+	int ret;
+
+	BUG_ON(bytenr != round_down(bytenr, root->sectorsize));
+	BUG_ON(len != round_down(len, root->sectorsize));
+	len = min_t(u64, len, BTRFS_MAX_EXTENT_SIZE);
+
+	/*
+	 * Skip sb ranges first
+	 * [0, 1M), [sb_offset(1), +64K), [sb_offset(2), +64K].
+	 *
+	 * Or we will insert a hole into current image file, and later
+	 * migrate block will fail as there is already a file extent.
+	 */
+	if (bytenr < 1024 * 1024) {
+		*ret_len = 1024 * 1024 - bytenr;
+		return 0;
+	}
+	for (i = 1; i < BTRFS_SUPER_MIRROR_MAX; i++) {
+		u64 cur = btrfs_sb_offset(i);
+
+		if (bytenr >= cur && bytenr < cur + BTRFS_STRIPE_LEN) {
+			*ret_len = cur + BTRFS_STRIPE_LEN - bytenr;
+			return 0;
+		}
+	}
+	for (i = 1; i < BTRFS_SUPER_MIRROR_MAX; i++) {
+		u64 cur = btrfs_sb_offset(i);
+
+		/*
+		 *      |--reserved--|
+		 * |----range-------|
+		 * May still need to go through file extent inserts
+		 */
+		if (bytenr < cur && bytenr + len >= cur) {
+			len = min_t(u64, len, cur - bytenr);
+			break;
+		}
+		/*
+		 * |--reserved--|
+		 *      |---range---|
+		 * Drop out, no need to insert anything
+		 */
+		if (bytenr >= cur && bytenr < cur + BTRFS_STRIPE_LEN) {
+			*ret_len = cur + BTRFS_STRIPE_LEN - bytenr;
+			return 0;
+		}
+	}
+
+	cache = search_cache_extent(used, bytenr);
+	if (cache) {
+		if (cache->start <= bytenr) {
+			/*
+			 * |///////Used///////|
+			 *	|<--insert--->|
+			 *	bytenr
+			 */
+			len = min_t(u64, len, cache->start + cache->size -
+				    bytenr);
+			disk_bytenr = bytenr;
+		} else {
+			/*
+			 *		|//Used//|
+			 *  |<-insert-->|
+			 *  bytenr
+			 */
+			len = min(len, cache->start - bytenr);
+			disk_bytenr = 0;
+			datacsum = 0;
+		}
+	} else {
+		/*
+		 * |//Used//|		|EOF
+		 *	    |<-insert-->|
+		 *	    bytenr
+		 */
+		disk_bytenr = 0;
+		datacsum = 0;
+	}
+
+	if (disk_bytenr) {
+		/* Check if the range is in a data block group */
+		bg_cache = btrfs_lookup_block_group(root->fs_info, bytenr);
+		if (!bg_cache)
+			return -ENOENT;
+		if (!(bg_cache->flags & BTRFS_BLOCK_GROUP_DATA))
+			return -EINVAL;
+
+		/* The extent should never cross block group boundary */
+		len = min_t(u64, len, bg_cache->key.objectid +
+			    bg_cache->key.offset - bytenr);
+	}
+
+	BUG_ON(len != round_down(len, root->sectorsize));
+	ret = btrfs_record_file_extent(trans, root, ino, inode, bytenr,
+				       disk_bytenr, len);
+	if (ret < 0)
+		return ret;
+
+	if (datacsum)
+		ret = csum_disk_extent(trans, root, bytenr, len);
+	*ret_len = len;
+	return ret;
+}
+
 /*
  * Open Ext2fs in readonly mode, read block allocation bitmap and
  * inode bitmap into memory.
@@ -1254,123 +1370,6 @@ static int ext2_copy_inodes(struct btrfs_convert_context *cctx,
 
 	return ret;
 }
-
-static int create_image_file_range(struct btrfs_trans_handle *trans,
-				      struct btrfs_root *root,
-				      struct cache_tree *used,
-				      struct btrfs_inode_item *inode,
-				      u64 ino, u64 bytenr, u64 *ret_len,
-				      int datacsum)
-{
-	struct cache_extent *cache;
-	struct btrfs_block_group_cache *bg_cache;
-	u64 len = *ret_len;
-	u64 disk_bytenr;
-	int i;
-	int ret;
-
-	BUG_ON(bytenr != round_down(bytenr, root->sectorsize));
-	BUG_ON(len != round_down(len, root->sectorsize));
-	len = min_t(u64, len, BTRFS_MAX_EXTENT_SIZE);
-
-	/*
-	 * Skip sb ranges first
-	 * [0, 1M), [sb_offset(1), +64K), [sb_offset(2), +64K].
-	 *
-	 * Or we will insert a hole into current image file, and later
-	 * migrate block will fail as there is already a file extent.
-	 */
-	if (bytenr < 1024 * 1024) {
-		*ret_len = 1024 * 1024 - bytenr;
-		return 0;
-	}
-	for (i = 1; i < BTRFS_SUPER_MIRROR_MAX; i++) {
-		u64 cur = btrfs_sb_offset(i);
-
-		if (bytenr >= cur && bytenr < cur + BTRFS_STRIPE_LEN) {
-			*ret_len = cur + BTRFS_STRIPE_LEN - bytenr;
-			return 0;
-		}
-	}
-	for (i = 1; i < BTRFS_SUPER_MIRROR_MAX; i++) {
-		u64 cur = btrfs_sb_offset(i);
-
-		/*
-		 *      |--reserved--|
-		 * |----range-------|
-		 * May still need to go through file extent inserts
-		 */
-		if (bytenr < cur && bytenr + len >= cur) {
-			len = min_t(u64, len, cur - bytenr);
-			break;
-		}
-		/*
-		 * |--reserved--|
-		 *      |---range---|
-		 * Drop out, no need to insert anything
-		 */
-		if (bytenr >= cur && bytenr < cur + BTRFS_STRIPE_LEN) {
-			*ret_len = cur + BTRFS_STRIPE_LEN - bytenr;
-			return 0;
-		}
-	}
-
-	cache = search_cache_extent(used, bytenr);
-	if (cache) {
-		if (cache->start <= bytenr) {
-			/*
-			 * |///////Used///////|
-			 *	|<--insert--->|
-			 *	bytenr
-			 */
-			len = min_t(u64, len, cache->start + cache->size -
-				    bytenr);
-			disk_bytenr = bytenr;
-		} else {
-			/*
-			 *		|//Used//|
-			 *  |<-insert-->|
-			 *  bytenr
-			 */
-			len = min(len, cache->start - bytenr);
-			disk_bytenr = 0;
-			datacsum = 0;
-		}
-	} else {
-		/*
-		 * |//Used//|		|EOF
-		 *	    |<-insert-->|
-		 *	    bytenr
-		 */
-		disk_bytenr = 0;
-		datacsum = 0;
-	}
-
-	if (disk_bytenr) {
-		/* Check if the range is in a data block group */
-		bg_cache = btrfs_lookup_block_group(root->fs_info, bytenr);
-		if (!bg_cache)
-			return -ENOENT;
-		if (!(bg_cache->flags & BTRFS_BLOCK_GROUP_DATA))
-			return -EINVAL;
-
-		/* The extent should never cross block group boundary */
-		len = min_t(u64, len, bg_cache->key.objectid +
-			    bg_cache->key.offset - bytenr);
-	}
-
-	BUG_ON(len != round_down(len, root->sectorsize));
-	ret = btrfs_record_file_extent(trans, root, ino, inode, bytenr,
-				       disk_bytenr, len);
-	if (ret < 0)
-		return ret;
-
-	if (datacsum)
-		ret = csum_disk_extent(trans, root, bytenr, len);
-	*ret_len = len;
-	return ret;
-}
-
 
 /*
  * Relocate old fs data in one reserved ranges
