@@ -936,6 +936,123 @@ static int convert_read_used_space(struct btrfs_convert_context *cctx)
 }
 
 /*
+ * Create the fs image file of old filesystem.
+ *
+ * This is completely fs independent as we have cctx->used, only
+ * need to create file extents pointing to all the positions.
+ */
+static int create_image(struct btrfs_root *root,
+			   struct btrfs_mkfs_config *cfg,
+			   struct btrfs_convert_context *cctx, int fd,
+			   u64 size, char *name, int datacsum)
+{
+	struct btrfs_inode_item buf;
+	struct btrfs_trans_handle *trans;
+	struct btrfs_path *path = NULL;
+	struct btrfs_key key;
+	struct cache_extent *cache;
+	struct cache_tree used_tmp;
+	u64 cur;
+	u64 ino;
+	u64 flags = BTRFS_INODE_READONLY;
+	int ret;
+
+	if (!datacsum)
+		flags |= BTRFS_INODE_NODATASUM;
+
+	trans = btrfs_start_transaction(root, 1);
+	if (!trans)
+		return -ENOMEM;
+
+	cache_tree_init(&used_tmp);
+
+	ret = btrfs_find_free_objectid(trans, root, BTRFS_FIRST_FREE_OBJECTID,
+				       &ino);
+	if (ret < 0)
+		goto out;
+	ret = btrfs_new_inode(trans, root, ino, 0400 | S_IFREG);
+	if (ret < 0)
+		goto out;
+	ret = btrfs_change_inode_flags(trans, root, ino, flags);
+	if (ret < 0)
+		goto out;
+	ret = btrfs_add_link(trans, root, ino, BTRFS_FIRST_FREE_OBJECTID, name,
+			     strlen(name), BTRFS_FT_REG_FILE, NULL, 1);
+	if (ret < 0)
+		goto out;
+
+	path = btrfs_alloc_path();
+	if (!path) {
+		ret = -ENOMEM;
+		goto out;
+	}
+	key.objectid = ino;
+	key.type = BTRFS_INODE_ITEM_KEY;
+	key.offset = 0;
+
+	ret = btrfs_search_slot(trans, root, &key, path, 0, 1);
+	if (ret) {
+		ret = (ret > 0 ? -ENOENT : ret);
+		goto out;
+	}
+	read_extent_buffer(path->nodes[0], &buf,
+			btrfs_item_ptr_offset(path->nodes[0], path->slots[0]),
+			sizeof(buf));
+	btrfs_release_path(path);
+
+	/*
+	 * Create a new used space cache, which doesn't contain the reserved
+	 * range
+	 */
+	for (cache = first_cache_extent(&cctx->used); cache;
+	     cache = next_cache_extent(cache)) {
+		ret = add_cache_extent(&used_tmp, cache->start, cache->size);
+		if (ret < 0)
+			goto out;
+	}
+	ret = wipe_reserved_ranges(&used_tmp, 0, 0);
+	if (ret < 0)
+		goto out;
+
+	/*
+	 * Start from 1M, as 0~1M is reserved, and create_image_file_range()
+	 * can't handle bytenr 0(will consider it as a hole)
+	 */
+	cur = 1024 * 1024;
+	while (cur < size) {
+		u64 len = size - cur;
+
+		ret = create_image_file_range(trans, root, &used_tmp,
+						&buf, ino, cur, &len, datacsum);
+		if (ret < 0)
+			goto out;
+		cur += len;
+	}
+	/* Handle the reserved ranges */
+	ret = migrate_reserved_ranges(trans, root, &cctx->used, &buf, fd, ino,
+				      cfg->num_bytes, datacsum);
+
+
+	key.objectid = ino;
+	key.type = BTRFS_INODE_ITEM_KEY;
+	key.offset = 0;
+	ret = btrfs_search_slot(trans, root, &key, path, 0, 1);
+	if (ret) {
+		ret = (ret > 0 ? -ENOENT : ret);
+		goto out;
+	}
+	btrfs_set_stack_inode_size(&buf, cfg->num_bytes);
+	write_extent_buffer(path->nodes[0], &buf,
+			btrfs_item_ptr_offset(path->nodes[0], path->slots[0]),
+			sizeof(buf));
+out:
+	free_extent_cache_tree(&used_tmp);
+	btrfs_free_path(path);
+	btrfs_commit_transaction(trans, root);
+	return ret;
+}
+
+/*
  * Open Ext2fs in readonly mode, read block allocation bitmap and
  * inode bitmap into memory.
  */
@@ -1781,123 +1898,6 @@ static int ext2_copy_inodes(struct btrfs_convert_context *cctx,
 	BUG_ON(ret);
 	ext2fs_close_inode_scan(ext2_scan);
 
-	return ret;
-}
-
-/*
- * Create the fs image file of old filesystem.
- *
- * This is completely fs independent as we have cctx->used, only
- * need to create file extents pointing to all the positions.
- */
-static int create_image(struct btrfs_root *root,
-			   struct btrfs_mkfs_config *cfg,
-			   struct btrfs_convert_context *cctx, int fd,
-			   u64 size, char *name, int datacsum)
-{
-	struct btrfs_inode_item buf;
-	struct btrfs_trans_handle *trans;
-	struct btrfs_path *path = NULL;
-	struct btrfs_key key;
-	struct cache_extent *cache;
-	struct cache_tree used_tmp;
-	u64 cur;
-	u64 ino;
-	u64 flags = BTRFS_INODE_READONLY;
-	int ret;
-
-	if (!datacsum)
-		flags |= BTRFS_INODE_NODATASUM;
-
-	trans = btrfs_start_transaction(root, 1);
-	if (!trans)
-		return -ENOMEM;
-
-	cache_tree_init(&used_tmp);
-
-	ret = btrfs_find_free_objectid(trans, root, BTRFS_FIRST_FREE_OBJECTID,
-				       &ino);
-	if (ret < 0)
-		goto out;
-	ret = btrfs_new_inode(trans, root, ino, 0400 | S_IFREG);
-	if (ret < 0)
-		goto out;
-	ret = btrfs_change_inode_flags(trans, root, ino, flags);
-	if (ret < 0)
-		goto out;
-	ret = btrfs_add_link(trans, root, ino, BTRFS_FIRST_FREE_OBJECTID, name,
-			     strlen(name), BTRFS_FT_REG_FILE, NULL, 1);
-	if (ret < 0)
-		goto out;
-
-	path = btrfs_alloc_path();
-	if (!path) {
-		ret = -ENOMEM;
-		goto out;
-	}
-	key.objectid = ino;
-	key.type = BTRFS_INODE_ITEM_KEY;
-	key.offset = 0;
-
-	ret = btrfs_search_slot(trans, root, &key, path, 0, 1);
-	if (ret) {
-		ret = (ret > 0 ? -ENOENT : ret);
-		goto out;
-	}
-	read_extent_buffer(path->nodes[0], &buf,
-			btrfs_item_ptr_offset(path->nodes[0], path->slots[0]),
-			sizeof(buf));
-	btrfs_release_path(path);
-
-	/*
-	 * Create a new used space cache, which doesn't contain the reserved
-	 * range
-	 */
-	for (cache = first_cache_extent(&cctx->used); cache;
-	     cache = next_cache_extent(cache)) {
-		ret = add_cache_extent(&used_tmp, cache->start, cache->size);
-		if (ret < 0)
-			goto out;
-	}
-	ret = wipe_reserved_ranges(&used_tmp, 0, 0);
-	if (ret < 0)
-		goto out;
-
-	/*
-	 * Start from 1M, as 0~1M is reserved, and create_image_file_range()
-	 * can't handle bytenr 0(will consider it as a hole)
-	 */
-	cur = 1024 * 1024;
-	while (cur < size) {
-		u64 len = size - cur;
-
-		ret = create_image_file_range(trans, root, &used_tmp,
-						&buf, ino, cur, &len, datacsum);
-		if (ret < 0)
-			goto out;
-		cur += len;
-	}
-	/* Handle the reserved ranges */
-	ret = migrate_reserved_ranges(trans, root, &cctx->used, &buf, fd, ino,
-				      cfg->num_bytes, datacsum);
-
-
-	key.objectid = ino;
-	key.type = BTRFS_INODE_ITEM_KEY;
-	key.offset = 0;
-	ret = btrfs_search_slot(trans, root, &key, path, 0, 1);
-	if (ret) {
-		ret = (ret > 0 ? -ENOENT : ret);
-		goto out;
-	}
-	btrfs_set_stack_inode_size(&buf, cfg->num_bytes);
-	write_extent_buffer(path->nodes[0], &buf,
-			btrfs_item_ptr_offset(path->nodes[0], path->slots[0]),
-			sizeof(buf));
-out:
-	free_extent_cache_tree(&used_tmp);
-	btrfs_free_path(path);
-	btrfs_commit_transaction(trans, root);
 	return ret;
 }
 
