@@ -1238,6 +1238,76 @@ static int make_convert_data_block_groups(struct btrfs_trans_handle *trans,
 }
 
 /*
+ * Init the temp btrfs to a operational status.
+ *
+ * It will fix the extent usage accounting(XXX: Do we really need?) and
+ * insert needed data chunks, to ensure all old fs data extents are covered
+ * by DATA chunks, preventing wrong chunks are allocated.
+ *
+ * And also create convert image subvolume and relocation tree.
+ * (XXX: Not need again?)
+ * But the convert image subvolume is *NOT* linked to fs tree yet.
+ */
+static int init_btrfs(struct btrfs_mkfs_config *cfg, struct btrfs_root *root,
+			 struct btrfs_convert_context *cctx, int datacsum,
+			 int packing, int noxattr)
+{
+	struct btrfs_key location;
+	struct btrfs_trans_handle *trans;
+	struct btrfs_fs_info *fs_info = root->fs_info;
+	int ret;
+
+	/*
+	 * Don't alloc any metadata/system chunk, as we don't want
+	 * any meta/sys chunk allcated before all data chunks are inserted.
+	 * Or we screw up the chunk layout just like the old implement.
+	 */
+	fs_info->avoid_sys_chunk_alloc = 1;
+	fs_info->avoid_meta_chunk_alloc = 1;
+	trans = btrfs_start_transaction(root, 1);
+	BUG_ON(!trans);
+	ret = btrfs_fix_block_accounting(trans, root);
+	if (ret)
+		goto err;
+	ret = make_convert_data_block_groups(trans, fs_info, cfg, cctx);
+	if (ret)
+		goto err;
+	ret = btrfs_make_root_dir(trans, fs_info->tree_root,
+				  BTRFS_ROOT_TREE_DIR_OBJECTID);
+	if (ret)
+		goto err;
+	memcpy(&location, &root->root_key, sizeof(location));
+	location.offset = (u64)-1;
+	ret = btrfs_insert_dir_item(trans, fs_info->tree_root, "default", 7,
+				btrfs_super_root_dir(fs_info->super_copy),
+				&location, BTRFS_FT_DIR, 0);
+	if (ret)
+		goto err;
+	ret = btrfs_insert_inode_ref(trans, fs_info->tree_root, "default", 7,
+				location.objectid,
+				btrfs_super_root_dir(fs_info->super_copy), 0);
+	if (ret)
+		goto err;
+	btrfs_set_root_dirid(&fs_info->fs_root->root_item,
+			     BTRFS_FIRST_FREE_OBJECTID);
+
+	/* subvol for fs image file */
+	ret = create_subvol(trans, root, CONV_IMAGE_SUBVOL_OBJECTID);
+	if (ret < 0)
+		goto err;
+	/* subvol for data relocation tree */
+	ret = create_subvol(trans, root, BTRFS_DATA_RELOC_TREE_OBJECTID);
+	if (ret < 0)
+		goto err;
+
+	ret = btrfs_commit_transaction(trans, root);
+	fs_info->avoid_sys_chunk_alloc = 0;
+	fs_info->avoid_meta_chunk_alloc = 0;
+err:
+	return ret;
+}
+
+/*
  * Open Ext2fs in readonly mode, read block allocation bitmap and
  * inode bitmap into memory.
  */
@@ -2083,76 +2153,6 @@ static int ext2_copy_inodes(struct btrfs_convert_context *cctx,
 	BUG_ON(ret);
 	ext2fs_close_inode_scan(ext2_scan);
 
-	return ret;
-}
-
-/*
- * Init the temp btrfs to a operational status.
- *
- * It will fix the extent usage accounting(XXX: Do we really need?) and
- * insert needed data chunks, to ensure all old fs data extents are covered
- * by DATA chunks, preventing wrong chunks are allocated.
- *
- * And also create convert image subvolume and relocation tree.
- * (XXX: Not need again?)
- * But the convert image subvolume is *NOT* linked to fs tree yet.
- */
-static int init_btrfs(struct btrfs_mkfs_config *cfg, struct btrfs_root *root,
-			 struct btrfs_convert_context *cctx, int datacsum,
-			 int packing, int noxattr)
-{
-	struct btrfs_key location;
-	struct btrfs_trans_handle *trans;
-	struct btrfs_fs_info *fs_info = root->fs_info;
-	int ret;
-
-	/*
-	 * Don't alloc any metadata/system chunk, as we don't want
-	 * any meta/sys chunk allcated before all data chunks are inserted.
-	 * Or we screw up the chunk layout just like the old implement.
-	 */
-	fs_info->avoid_sys_chunk_alloc = 1;
-	fs_info->avoid_meta_chunk_alloc = 1;
-	trans = btrfs_start_transaction(root, 1);
-	BUG_ON(!trans);
-	ret = btrfs_fix_block_accounting(trans, root);
-	if (ret)
-		goto err;
-	ret = make_convert_data_block_groups(trans, fs_info, cfg, cctx);
-	if (ret)
-		goto err;
-	ret = btrfs_make_root_dir(trans, fs_info->tree_root,
-				  BTRFS_ROOT_TREE_DIR_OBJECTID);
-	if (ret)
-		goto err;
-	memcpy(&location, &root->root_key, sizeof(location));
-	location.offset = (u64)-1;
-	ret = btrfs_insert_dir_item(trans, fs_info->tree_root, "default", 7,
-				btrfs_super_root_dir(fs_info->super_copy),
-				&location, BTRFS_FT_DIR, 0);
-	if (ret)
-		goto err;
-	ret = btrfs_insert_inode_ref(trans, fs_info->tree_root, "default", 7,
-				location.objectid,
-				btrfs_super_root_dir(fs_info->super_copy), 0);
-	if (ret)
-		goto err;
-	btrfs_set_root_dirid(&fs_info->fs_root->root_item,
-			     BTRFS_FIRST_FREE_OBJECTID);
-
-	/* subvol for fs image file */
-	ret = create_subvol(trans, root, CONV_IMAGE_SUBVOL_OBJECTID);
-	if (ret < 0)
-		goto err;
-	/* subvol for data relocation tree */
-	ret = create_subvol(trans, root, BTRFS_DATA_RELOC_TREE_OBJECTID);
-	if (ret < 0)
-		goto err;
-
-	ret = btrfs_commit_transaction(trans, root);
-	fs_info->avoid_sys_chunk_alloc = 0;
-	fs_info->avoid_meta_chunk_alloc = 0;
-err:
 	return ret;
 }
 
