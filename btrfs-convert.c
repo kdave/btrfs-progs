@@ -173,6 +173,22 @@ static int convert_insert_dirent(struct btrfs_trans_handle *trans,
 	return 0;
 }
 
+static int read_disk_extent(struct btrfs_root *root, u64 bytenr,
+		            u32 num_bytes, char *buffer)
+{
+	int ret;
+	struct btrfs_fs_devices *fs_devs = root->fs_info->fs_devices;
+
+	ret = pread(fs_devs->latest_bdev, buffer, num_bytes, bytenr);
+	if (ret != num_bytes)
+		goto fail;
+	ret = 0;
+fail:
+	if (ret > 0)
+		ret = -1;
+	return ret;
+}
+
 /*
  * Open Ext2fs in readonly mode, read block allocation bitmap and
  * inode bitmap into memory.
@@ -412,22 +428,6 @@ static int ext2_create_dir_entries(struct btrfs_trans_handle *trans,
 error:
 	fprintf(stderr, "ext2fs_dir_iterate2: %s\n", error_message(err));
 	return -1;
-}
-
-static int read_disk_extent(struct btrfs_root *root, u64 bytenr,
-		            u32 num_bytes, char *buffer)
-{
-	int ret;
-	struct btrfs_fs_devices *fs_devs = root->fs_info->fs_devices;
-
-	ret = pread(fs_devs->latest_bdev, buffer, num_bytes, bytenr);
-	if (ret != num_bytes)
-		goto fail;
-	ret = 0;
-fail:
-	if (ret > 0)
-		ret = -1;
-	return ret;
 }
 
 static int csum_disk_extent(struct btrfs_trans_handle *trans,
