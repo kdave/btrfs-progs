@@ -611,6 +611,50 @@ static int migrate_one_reserved_range(struct btrfs_trans_handle *trans,
 }
 
 /*
+ * Relocate the used ext2 data in reserved ranges
+ * [0,1M)
+ * [btrfs_sb_offset(1), +BTRFS_STRIPE_LEN)
+ * [btrfs_sb_offset(2), +BTRFS_STRIPE_LEN)
+ */
+static int migrate_reserved_ranges(struct btrfs_trans_handle *trans,
+				   struct btrfs_root *root,
+				   struct cache_tree *used,
+				   struct btrfs_inode_item *inode, int fd,
+				   u64 ino, u64 total_bytes, int datacsum)
+{
+	u64 cur_off;
+	u64 cur_len;
+	int ret = 0;
+
+	/* 0 ~ 1M */
+	cur_off = 0;
+	cur_len = 1024 * 1024;
+	ret = migrate_one_reserved_range(trans, root, used, inode, fd, ino,
+					 cur_off, cur_len, datacsum);
+	if (ret < 0)
+		return ret;
+
+	/* second sb(fisrt sb is included in 0~1M) */
+	cur_off = btrfs_sb_offset(1);
+	cur_len = min(total_bytes, cur_off + BTRFS_STRIPE_LEN) - cur_off;
+	if (cur_off > total_bytes)
+		return ret;
+	ret = migrate_one_reserved_range(trans, root, used, inode, fd, ino,
+					 cur_off, cur_len, datacsum);
+	if (ret < 0)
+		return ret;
+
+	/* Last sb */
+	cur_off = btrfs_sb_offset(2);
+	cur_len = min(total_bytes, cur_off + BTRFS_STRIPE_LEN) - cur_off;
+	if (cur_off > total_bytes)
+		return ret;
+	ret = migrate_one_reserved_range(trans, root, used, inode, fd, ino,
+					 cur_off, cur_len, datacsum);
+	return ret;
+}
+
+/*
  * Open Ext2fs in readonly mode, read block allocation bitmap and
  * inode bitmap into memory.
  */
@@ -1456,50 +1500,6 @@ static int ext2_copy_inodes(struct btrfs_convert_context *cctx,
 	BUG_ON(ret);
 	ext2fs_close_inode_scan(ext2_scan);
 
-	return ret;
-}
-
-/*
- * Relocate the used ext2 data in reserved ranges
- * [0,1M)
- * [btrfs_sb_offset(1), +BTRFS_STRIPE_LEN)
- * [btrfs_sb_offset(2), +BTRFS_STRIPE_LEN)
- */
-static int migrate_reserved_ranges(struct btrfs_trans_handle *trans,
-				   struct btrfs_root *root,
-				   struct cache_tree *used,
-				   struct btrfs_inode_item *inode, int fd,
-				   u64 ino, u64 total_bytes, int datacsum)
-{
-	u64 cur_off;
-	u64 cur_len;
-	int ret = 0;
-
-	/* 0 ~ 1M */
-	cur_off = 0;
-	cur_len = 1024 * 1024;
-	ret = migrate_one_reserved_range(trans, root, used, inode, fd, ino,
-					 cur_off, cur_len, datacsum);
-	if (ret < 0)
-		return ret;
-
-	/* second sb(fisrt sb is included in 0~1M) */
-	cur_off = btrfs_sb_offset(1);
-	cur_len = min(total_bytes, cur_off + BTRFS_STRIPE_LEN) - cur_off;
-	if (cur_off > total_bytes)
-		return ret;
-	ret = migrate_one_reserved_range(trans, root, used, inode, fd, ino,
-					 cur_off, cur_len, datacsum);
-	if (ret < 0)
-		return ret;
-
-	/* Last sb */
-	cur_off = btrfs_sb_offset(2);
-	cur_len = min(total_bytes, cur_off + BTRFS_STRIPE_LEN) - cur_off;
-	if (cur_off > total_bytes)
-		return ret;
-	ret = migrate_one_reserved_range(trans, root, used, inode, fd, ino,
-					 cur_off, cur_len, datacsum);
 	return ret;
 }
 
