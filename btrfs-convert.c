@@ -838,6 +838,87 @@ static int wipe_reserved_ranges(struct cache_tree *tree, u64 min_stripe_size,
 	return ret;
 }
 
+static int calculate_available_space(struct btrfs_convert_context *cctx)
+{
+	struct cache_tree *used = &cctx->used;
+	struct cache_tree *data_chunks = &cctx->data_chunks;
+	struct cache_tree *free = &cctx->free;
+	struct cache_extent *cache;
+	u64 cur_off = 0;
+	/*
+	 * Twice the minimal chunk size, to allow later wipe_reserved_ranges()
+	 * works without need to consider overlap
+	 */
+	u64 min_stripe_size = 2 * 16 * 1024 * 1024;
+	int ret;
+
+	/* Calculate data_chunks */
+	for (cache = first_cache_extent(used); cache;
+	     cache = next_cache_extent(cache)) {
+		u64 cur_len;
+
+		if (cache->start + cache->size < cur_off)
+			continue;
+		if (cache->start > cur_off + min_stripe_size)
+			cur_off = cache->start;
+		cur_len = max(cache->start + cache->size - cur_off,
+			      min_stripe_size);
+		ret = add_merge_cache_extent(data_chunks, cur_off, cur_len);
+		if (ret < 0)
+			goto out;
+		cur_off += cur_len;
+	}
+	/*
+	 * remove reserved ranges, so we won't ever bother relocating an old
+	 * filesystem extent to other place.
+	 */
+	ret = wipe_reserved_ranges(data_chunks, min_stripe_size, 1);
+	if (ret < 0)
+		goto out;
+
+	cur_off = 0;
+	/*
+	 * Calculate free space
+	 * Always round up the start bytenr, to avoid metadata extent corss
+	 * stripe boundary, as later mkfs_convert() won't have all the extent
+	 * allocation check
+	 */
+	for (cache = first_cache_extent(data_chunks); cache;
+	     cache = next_cache_extent(cache)) {
+		if (cache->start < cur_off)
+			continue;
+		if (cache->start > cur_off) {
+			u64 insert_start;
+			u64 len;
+
+			len = cache->start - round_up(cur_off,
+						      BTRFS_STRIPE_LEN);
+			insert_start = round_up(cur_off, BTRFS_STRIPE_LEN);
+
+			ret = add_merge_cache_extent(free, insert_start, len);
+			if (ret < 0)
+				goto out;
+		}
+		cur_off = cache->start + cache->size;
+	}
+	/* Don't forget the last range */
+	if (cctx->total_bytes > cur_off) {
+		u64 len = cctx->total_bytes - cur_off;
+		u64 insert_start;
+
+		insert_start = round_up(cur_off, BTRFS_STRIPE_LEN);
+
+		ret = add_merge_cache_extent(free, insert_start, len);
+		if (ret < 0)
+			goto out;
+	}
+
+	/* Remove reserved bytes */
+	ret = wipe_reserved_ranges(free, min_stripe_size, 0);
+out:
+	return ret;
+}
+
 /*
  * Open Ext2fs in readonly mode, read block allocation bitmap and
  * inode bitmap into memory.
@@ -2176,86 +2257,6 @@ static int convert_open_fs(const char *devname,
 	return -1;
 }
 
-static int calculate_available_space(struct btrfs_convert_context *cctx)
-{
-	struct cache_tree *used = &cctx->used;
-	struct cache_tree *data_chunks = &cctx->data_chunks;
-	struct cache_tree *free = &cctx->free;
-	struct cache_extent *cache;
-	u64 cur_off = 0;
-	/*
-	 * Twice the minimal chunk size, to allow later wipe_reserved_ranges()
-	 * works without need to consider overlap
-	 */
-	u64 min_stripe_size = 2 * 16 * 1024 * 1024;
-	int ret;
-
-	/* Calculate data_chunks */
-	for (cache = first_cache_extent(used); cache;
-	     cache = next_cache_extent(cache)) {
-		u64 cur_len;
-
-		if (cache->start + cache->size < cur_off)
-			continue;
-		if (cache->start > cur_off + min_stripe_size)
-			cur_off = cache->start;
-		cur_len = max(cache->start + cache->size - cur_off,
-			      min_stripe_size);
-		ret = add_merge_cache_extent(data_chunks, cur_off, cur_len);
-		if (ret < 0)
-			goto out;
-		cur_off += cur_len;
-	}
-	/*
-	 * remove reserved ranges, so we won't ever bother relocating an old
-	 * filesystem extent to other place.
-	 */
-	ret = wipe_reserved_ranges(data_chunks, min_stripe_size, 1);
-	if (ret < 0)
-		goto out;
-
-	cur_off = 0;
-	/*
-	 * Calculate free space
-	 * Always round up the start bytenr, to avoid metadata extent corss
-	 * stripe boundary, as later mkfs_convert() won't have all the extent
-	 * allocation check
-	 */
-	for (cache = first_cache_extent(data_chunks); cache;
-	     cache = next_cache_extent(cache)) {
-		if (cache->start < cur_off)
-			continue;
-		if (cache->start > cur_off) {
-			u64 insert_start;
-			u64 len;
-
-			len = cache->start - round_up(cur_off,
-						      BTRFS_STRIPE_LEN);
-			insert_start = round_up(cur_off, BTRFS_STRIPE_LEN);
-
-			ret = add_merge_cache_extent(free, insert_start, len);
-			if (ret < 0)
-				goto out;
-		}
-		cur_off = cache->start + cache->size;
-	}
-	/* Don't forget the last range */
-	if (cctx->total_bytes > cur_off) {
-		u64 len = cctx->total_bytes - cur_off;
-		u64 insert_start;
-
-		insert_start = round_up(cur_off, BTRFS_STRIPE_LEN);
-
-		ret = add_merge_cache_extent(free, insert_start, len);
-		if (ret < 0)
-			goto out;
-	}
-
-	/* Remove reserved bytes */
-	ret = wipe_reserved_ranges(free, min_stripe_size, 0);
-out:
-	return ret;
-}
 /*
  * Read used space, and since we have the used space,
  * calcuate data_chunks and free for later mkfs
