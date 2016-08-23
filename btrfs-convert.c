@@ -262,6 +262,102 @@ static void init_blk_iterate_data(struct blk_iterate_data *data,
 }
 
 /*
+ * Record a file extent in original filesystem into btrfs one.
+ * The special point is, old disk_block can point to a reserved range.
+ * So here, we don't use disk_block directly but search convert_root
+ * to get the real disk_bytenr.
+ */
+static int record_file_blocks(struct blk_iterate_data *data,
+			      u64 file_block, u64 disk_block, u64 num_blocks)
+{
+	int ret = 0;
+	struct btrfs_root *root = data->root;
+	struct btrfs_root *convert_root = data->convert_root;
+	struct btrfs_path *path;
+	u64 file_pos = file_block * root->sectorsize;
+	u64 old_disk_bytenr = disk_block * root->sectorsize;
+	u64 num_bytes = num_blocks * root->sectorsize;
+	u64 cur_off = old_disk_bytenr;
+
+	/* Hole, pass it to record_file_extent directly */
+	if (old_disk_bytenr == 0)
+		return btrfs_record_file_extent(data->trans, root,
+				data->objectid, data->inode, file_pos, 0,
+				num_bytes);
+
+	path = btrfs_alloc_path();
+	if (!path)
+		return -ENOMEM;
+
+	/*
+	 * Search real disk bytenr from convert root
+	 */
+	while (cur_off < old_disk_bytenr + num_bytes) {
+		struct btrfs_key key;
+		struct btrfs_file_extent_item *fi;
+		struct extent_buffer *node;
+		int slot;
+		u64 extent_disk_bytenr;
+		u64 extent_num_bytes;
+		u64 real_disk_bytenr;
+		u64 cur_len;
+
+		key.objectid = data->convert_ino;
+		key.type = BTRFS_EXTENT_DATA_KEY;
+		key.offset = cur_off;
+
+		ret = btrfs_search_slot(NULL, convert_root, &key, path, 0, 0);
+		if (ret < 0)
+			break;
+		if (ret > 0) {
+			ret = btrfs_previous_item(convert_root, path,
+						  data->convert_ino,
+						  BTRFS_EXTENT_DATA_KEY);
+			if (ret < 0)
+				break;
+			if (ret > 0) {
+				ret = -ENOENT;
+				break;
+			}
+		}
+		node = path->nodes[0];
+		slot = path->slots[0];
+		btrfs_item_key_to_cpu(node, &key, slot);
+		BUG_ON(key.type != BTRFS_EXTENT_DATA_KEY ||
+		       key.objectid != data->convert_ino ||
+		       key.offset > cur_off);
+		fi = btrfs_item_ptr(node, slot, struct btrfs_file_extent_item);
+		extent_disk_bytenr = btrfs_file_extent_disk_bytenr(node, fi);
+		extent_num_bytes = btrfs_file_extent_disk_num_bytes(node, fi);
+		BUG_ON(cur_off - key.offset >= extent_num_bytes);
+		btrfs_release_path(path);
+
+		if (extent_disk_bytenr)
+			real_disk_bytenr = cur_off - key.offset +
+					   extent_disk_bytenr;
+		else
+			real_disk_bytenr = 0;
+		cur_len = min(key.offset + extent_num_bytes,
+			      old_disk_bytenr + num_bytes) - cur_off;
+		ret = btrfs_record_file_extent(data->trans, data->root,
+					data->objectid, data->inode, file_pos,
+					real_disk_bytenr, cur_len);
+		if (ret < 0)
+			break;
+		cur_off += cur_len;
+		file_pos += cur_len;
+
+		/*
+		 * No need to care about csum
+		 * As every byte of old fs image is calculated for csum, no
+		 * need to waste CPU cycles now.
+		 */
+	}
+	btrfs_free_path(path);
+	return ret;
+}
+
+/*
  * Open Ext2fs in readonly mode, read block allocation bitmap and
  * inode bitmap into memory.
  */
@@ -500,102 +596,6 @@ static int ext2_create_dir_entries(struct btrfs_trans_handle *trans,
 error:
 	fprintf(stderr, "ext2fs_dir_iterate2: %s\n", error_message(err));
 	return -1;
-}
-
-/*
- * Record a file extent in original filesystem into btrfs one.
- * The special point is, old disk_block can point to a reserved range.
- * So here, we don't use disk_block directly but search convert_root
- * to get the real disk_bytenr.
- */
-static int record_file_blocks(struct blk_iterate_data *data,
-			      u64 file_block, u64 disk_block, u64 num_blocks)
-{
-	int ret = 0;
-	struct btrfs_root *root = data->root;
-	struct btrfs_root *convert_root = data->convert_root;
-	struct btrfs_path *path;
-	u64 file_pos = file_block * root->sectorsize;
-	u64 old_disk_bytenr = disk_block * root->sectorsize;
-	u64 num_bytes = num_blocks * root->sectorsize;
-	u64 cur_off = old_disk_bytenr;
-
-	/* Hole, pass it to record_file_extent directly */
-	if (old_disk_bytenr == 0)
-		return btrfs_record_file_extent(data->trans, root,
-				data->objectid, data->inode, file_pos, 0,
-				num_bytes);
-
-	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
-
-	/*
-	 * Search real disk bytenr from convert root
-	 */
-	while (cur_off < old_disk_bytenr + num_bytes) {
-		struct btrfs_key key;
-		struct btrfs_file_extent_item *fi;
-		struct extent_buffer *node;
-		int slot;
-		u64 extent_disk_bytenr;
-		u64 extent_num_bytes;
-		u64 real_disk_bytenr;
-		u64 cur_len;
-
-		key.objectid = data->convert_ino;
-		key.type = BTRFS_EXTENT_DATA_KEY;
-		key.offset = cur_off;
-
-		ret = btrfs_search_slot(NULL, convert_root, &key, path, 0, 0);
-		if (ret < 0)
-			break;
-		if (ret > 0) {
-			ret = btrfs_previous_item(convert_root, path,
-						  data->convert_ino,
-						  BTRFS_EXTENT_DATA_KEY);
-			if (ret < 0)
-				break;
-			if (ret > 0) {
-				ret = -ENOENT;
-				break;
-			}
-		}
-		node = path->nodes[0];
-		slot = path->slots[0];
-		btrfs_item_key_to_cpu(node, &key, slot);
-		BUG_ON(key.type != BTRFS_EXTENT_DATA_KEY ||
-		       key.objectid != data->convert_ino ||
-		       key.offset > cur_off);
-		fi = btrfs_item_ptr(node, slot, struct btrfs_file_extent_item);
-		extent_disk_bytenr = btrfs_file_extent_disk_bytenr(node, fi);
-		extent_num_bytes = btrfs_file_extent_disk_num_bytes(node, fi);
-		BUG_ON(cur_off - key.offset >= extent_num_bytes);
-		btrfs_release_path(path);
-
-		if (extent_disk_bytenr)
-			real_disk_bytenr = cur_off - key.offset +
-					   extent_disk_bytenr;
-		else
-			real_disk_bytenr = 0;
-		cur_len = min(key.offset + extent_num_bytes,
-			      old_disk_bytenr + num_bytes) - cur_off;
-		ret = btrfs_record_file_extent(data->trans, data->root,
-					data->objectid, data->inode, file_pos,
-					real_disk_bytenr, cur_len);
-		if (ret < 0)
-			break;
-		cur_off += cur_len;
-		file_pos += cur_len;
-
-		/*
-		 * No need to care about csum
-		 * As every byte of old fs image is calculated for csum, no
-		 * need to waste CPU cycles now.
-		 */
-	}
-	btrfs_free_path(path);
-	return ret;
 }
 
 static int block_iterate_proc(u64 disk_block, u64 file_block,
