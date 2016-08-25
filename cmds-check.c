@@ -9074,9 +9074,10 @@ static int check_tree_block_backref(struct btrfs_fs_info *fs_info, u64 root_id,
 	free_extent_buffer(eb);
 
 	btrfs_init_path(&path);
+	path.lowest_level = level;
 	/* Search with the first key, to ensure we can reach it */
 	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
-	if (ret) {
+	if (ret < 0) {
 		err |= REFERENCER_MISSING;
 		goto release_out;
 	}
@@ -9959,6 +9960,8 @@ static int traverse_tree_block(struct btrfs_root *root,
 				struct extent_buffer *node)
 {
 	struct extent_buffer *eb;
+	struct btrfs_key key;
+	struct btrfs_key drop_key;
 	int level;
 	u64 nr;
 	int i;
@@ -10004,12 +10007,18 @@ static int traverse_tree_block(struct btrfs_root *root,
 	}
 
 	nr = btrfs_header_nritems(node);
+	btrfs_disk_key_to_cpu(&drop_key, &root->root_item.drop_progress);
 	btree_space_waste += (BTRFS_NODEPTRS_PER_BLOCK(root) - nr) *
 		sizeof(struct btrfs_key_ptr);
 
 	/* Then check all its children */
 	for (i = 0; i < nr; i++) {
 		u64 blocknr = btrfs_node_blockptr(node, i);
+
+		btrfs_node_key_to_cpu(node, &key, i);
+		if (level == root->root_item.drop_level &&
+		    is_dropped_key(&key, &drop_key))
+			continue;
 
 		/*
 		 * As a btrfs tree has most 8 levels (0..7), so it's quite safe
