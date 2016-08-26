@@ -390,7 +390,12 @@ again:
 	key.objectid = 0;
 	btrfs_set_key_type(&key, BTRFS_ROOT_ITEM_KEY);
 	ret = btrfs_search_slot(NULL, tree_root_scan, &key, &path, 0, 0);
-	BUG_ON(ret < 0);
+	if (ret < 0) {
+		error("cannot read ROOT_ITEM from tree %llu: %s",
+			(unsigned long long)tree_root_scan->root_key.objectid,
+			strerror(-ret));
+		goto close_root;
+	}
 	while (1) {
 		leaf = path.nodes[0];
 		slot = path.slots[0];
@@ -537,8 +542,7 @@ next:
 no_node:
 	btrfs_release_path(&path);
 
-	if (tree_root_scan == info->tree_root &&
-	    info->log_root_tree) {
+	if (tree_root_scan == info->tree_root && info->log_root_tree) {
 		tree_root_scan = info->log_root_tree;
 		goto again;
 	}
