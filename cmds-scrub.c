@@ -481,7 +481,10 @@ static struct scrub_file_record **scrub_read_file(int fd, int report_errors)
 
 again:
 	old_avail = avail - i;
-	BUG_ON(old_avail < 0);
+	if (old_avail < 0) {
+		error("scrub record file corrupted near byte %d", i);
+		return ERR_PTR(-EINVAL);
+	}
 	if (old_avail)
 		memmove(l, l + i, old_avail);
 	avail = read(fd, l + old_avail, sizeof(l) - old_avail);
@@ -650,7 +653,9 @@ skip:
 			} while (i < avail);
 			continue;
 		}
-		BUG();
+		error("internal error: unknown parser state %d near byte %d",
+				state, i);
+		return ERR_PTR(-EINVAL);
 	}
 	goto again;
 }
