@@ -35,6 +35,7 @@
 
 static void print_extents(struct btrfs_root *root, struct extent_buffer *eb)
 {
+	struct extent_buffer *next;
 	int i;
 	u32 nr;
 	u32 size;
@@ -50,21 +51,32 @@ static void print_extents(struct btrfs_root *root, struct extent_buffer *eb)
 	size = root->nodesize;
 	nr = btrfs_header_nritems(eb);
 	for (i = 0; i < nr; i++) {
-		struct extent_buffer *next = read_tree_block(root,
-					     btrfs_node_blockptr(eb, i),
-					     size,
-					     btrfs_node_ptr_generation(eb, i));
+		next = read_tree_block(root, btrfs_node_blockptr(eb, i),
+				size, btrfs_node_ptr_generation(eb, i));
 		if (!extent_buffer_uptodate(next))
 			continue;
-		if (btrfs_is_leaf(next) &&
-		    btrfs_header_level(eb) != 1)
-			BUG();
-		if (btrfs_header_level(next) !=
-			btrfs_header_level(eb) - 1)
-			BUG();
+		if (btrfs_is_leaf(next) && btrfs_header_level(eb) != 1) {
+			warning(
+	"eb corrupted: item %d eb level %d next level %d, skipping the rest",
+				i, btrfs_header_level(next),
+				btrfs_header_level(eb));
+			goto out;
+		}
+		if (btrfs_header_level(next) != btrfs_header_level(eb) - 1) {
+			warning(
+	"eb corrupted: item %d eb level %d next level %d, skipping the rest",
+				i, btrfs_header_level(next),
+				btrfs_header_level(eb));
+			goto out;
+		}
 		print_extents(root, next);
 		free_extent_buffer(next);
 	}
+
+	return;
+
+out:
+	free_extent_buffer(next);
 }
 
 static void print_old_roots(struct btrfs_super_block *super)
