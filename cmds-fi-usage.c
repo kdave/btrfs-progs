@@ -535,7 +535,11 @@ static int load_device_info(int fd, struct device_info **device_info_ptr,
 	}
 
 	for (i = 0, ndevs = 0 ; i <= fi_args.max_id ; i++) {
-		BUG_ON(ndevs >= fi_args.num_devices);
+		if (ndevs >= fi_args.num_devices) {
+			error("unexpected number of devices: %d >= %llu", ndevs,
+				(unsigned long long)fi_args.num_devices);
+			goto out;
+		}
 		memset(&dev_info, 0, sizeof(dev_info));
 		ret = get_device_info(fd, i, &dev_info);
 
@@ -543,8 +547,7 @@ static int load_device_info(int fd, struct device_info **device_info_ptr,
 			continue;
 		if (ret) {
 			error("cannot get info about device devid=%d", i);
-			free(info);
-			return ret;
+			goto out;
 		}
 
 		info[ndevs].devid = dev_info.devid;
@@ -559,7 +562,12 @@ static int load_device_info(int fd, struct device_info **device_info_ptr,
 		++ndevs;
 	}
 
-	BUG_ON(ndevs != fi_args.num_devices);
+	if (ndevs != fi_args.num_devices) {
+		error("unexpected number of devices: %d != %llu", ndevs,
+				(unsigned long long)fi_args.num_devices);
+		goto out;
+	}
+
 	qsort(info, fi_args.num_devices,
 		sizeof(struct device_info), cmp_device_info);
 
@@ -567,6 +575,10 @@ static int load_device_info(int fd, struct device_info **device_info_ptr,
 	*device_info_ptr = info;
 
 	return 0;
+
+out:
+	free(info);
+	return ret;
 }
 
 int load_chunk_and_device_info(int fd, struct chunk_info **chunkinfo,
