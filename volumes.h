@@ -226,4 +226,8 @@ int write_raid56_with_parity(struct btrfs_fs_info *info,
 			     struct extent_buffer *eb,
 			     struct btrfs_multi_bio *multi,
 			     u64 stripe_len, u64 *raid_map);
+int btrfs_check_chunk_valid(struct btrfs_root *root,
+			    struct extent_buffer *leaf,
+			    struct btrfs_chunk *chunk,
+			    int slot, u64 logical);
 #endif

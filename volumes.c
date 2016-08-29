@@ -1614,10 +1614,10 @@ static struct btrfs_device *fill_missing_device(u64 devid)
  * slot == -1: SYSTEM chunk
  * return -EIO on error, otherwise return 0
  */
-static int btrfs_check_chunk_valid(struct btrfs_root *root,
-				   struct extent_buffer *leaf,
-				   struct btrfs_chunk *chunk,
-				   int slot, u64 logical)
+int btrfs_check_chunk_valid(struct btrfs_root *root,
+			    struct extent_buffer *leaf,
+			    struct btrfs_chunk *chunk,
+			    int slot, u64 logical)
 {
 	u64 length;
 	u64 stripe_len;

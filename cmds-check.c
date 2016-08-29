@@ -5220,8 +5220,24 @@ static int process_chunk_item(struct cache_tree *chunk_cache,
 			      int slot)
 {
 	struct chunk_record *rec;
+	struct btrfs_chunk *chunk;
 	int ret = 0;
 
+	chunk = btrfs_item_ptr(eb, slot, struct btrfs_chunk);
+	/*
+	 * Do extra check for this chunk item,
+	 *
+	 * It's still possible one can craft a leaf with CHUNK_ITEM, with
+	 * wrong onwer(3) out of chunk tree, to pass both chunk tree check
+	 * and owner<->key_type check.
+	 */
+	ret = btrfs_check_chunk_valid(global_info->tree_root, eb, chunk, slot,
+				      key->offset);
+	if (ret < 0) {
+		error("chunk(%llu, %llu) is not valid, ignore it",
+		      key->offset, btrfs_chunk_length(eb, chunk));
+		return 0;
+	}
 	rec = btrfs_new_chunk_record(eb, key, slot);
 	ret = insert_cache_extent(chunk_cache, &rec->cache);
 	if (ret) {
