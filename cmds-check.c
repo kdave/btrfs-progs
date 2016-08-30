@@ -5422,6 +5422,11 @@ static int process_extent_item(struct btrfs_root *root,
 		num_bytes = key.offset;
 	}
 
+	if (!IS_ALIGNED(key.objectid, root->sectorsize)) {
+		error("ignoring invalid extent, bytenr %llu is not aligned to %u",
+		      key.objectid, root->sectorsize);
+		return -EIO;
+	}
 	if (item_size < sizeof(*ei)) {
 #ifdef BTRFS_COMPAT_EXTENT_TREE_V0
 		struct btrfs_extent_item_v0 *ei0;
@@ -5448,6 +5453,16 @@ static int process_extent_item(struct btrfs_root *root,
 		metadata = 1;
 	else
 		metadata = 0;
+	if (metadata && num_bytes != root->nodesize) {
+		error("ignore invalid metadata extent, length %llu does not equal to %u",
+		      num_bytes, root->nodesize);
+		return -EIO;
+	}
+	if (!metadata && !IS_ALIGNED(num_bytes, root->sectorsize)) {
+		error("ignore invalid data extent, length %llu is not aligned to %u",
+		      num_bytes, root->sectorsize);
+		return -EIO;
+	}
 
 	memset(&tmpl, 0, sizeof(tmpl));
 	tmpl.start = key.objectid;
