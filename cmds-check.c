@@ -3742,6 +3742,11 @@ static int check_fs_root(struct btrfs_root *root,
 		btrfs_disk_key_to_cpu(&key, &root_item->drop_progress);
 		level = root_item->drop_level;
 		path.lowest_level = level;
+		if (level > btrfs_header_level(root->node) ||
+		    level >= BTRFS_MAX_LEVEL) {
+			error("ignoring invalid drop level: %u", level);
+			goto skip_walking;
+		}
 		wret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
 		if (wret < 0)
 			goto skip_walking;
