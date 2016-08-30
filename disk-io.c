@@ -313,11 +313,29 @@ struct extent_buffer* read_tree_block_fs_info(
 	int ret;
 	struct extent_buffer *eb;
 	u64 best_transid = 0;
+	u32 sectorsize = btrfs_super_sectorsize(fs_info->super_copy);
+	u32 nodesize = btrfs_super_nodesize(fs_info->super_copy);
 	int mirror_num = 0;
 	int good_mirror = 0;
 	int num_copies;
 	int ignore = 0;
 
+	/*
+	 * Don't even try to create tree block for unaligned tree block
+	 * bytenr.
+	 * Such unaligned tree block will free overlapping extent buffer,
+	 * causing use-after-free bugs for fuzzed images.
+	 */
+	if (!IS_ALIGNED(bytenr, sectorsize)) {
+		error("tree block bytenr %llu is not aligned to sectorsize %u",
+		      bytenr, sectorsize);
+		return ERR_PTR(-EIO);
+	}
+	if (!IS_ALIGNED(blocksize, nodesize)) {
+		error("tree block size %u is not aligned to nodesize %u",
+		      blocksize, nodesize);
+		return ERR_PTR(-EIO);
+	}
 	eb = btrfs_find_create_tree_block(fs_info, bytenr, blocksize);
 	if (!eb)
 		return ERR_PTR(-ENOMEM);
