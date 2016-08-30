@@ -1,0 +1,35 @@
+URL: https://bugzilla.kernel.org/show_bug.cgi?id=155201
+Lukas Lueg 2016-08-28 19:15:53 UTC 
+
+Created attachment 230921 [details]
+Image causing SIGFPE in btrfsck
+
+News from the fuzzer. See the attached image to reproduce using btrfs-progs
+v4.7-42-g56e9586.
+
+
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib64/libthread_db.so.1".
+checking extents
+Chunk[0, 4194304] existed.
+Chunk[18446744073709551607, 228, 0]: length(1), offset(0), type(4160) mismatch
+with block group[0, 192, 4194304]: offset(4194304), objectid(0), flags(2)
+
+Program received signal SIGFPE, Arithmetic exception.
+0x000000000042b178 in calc_stripe_length (type=4160, length=1, num_stripes=0)
+at cmds-check.c:8018
+8018			stripe_size /= num_stripes;
+#0  0x000000000042b178 in calc_stripe_length (type=4160, length=1,
+num_stripes=0) at cmds-check.c:8018
+#1  0x000000000042b56d in check_chunk_refs (silent=0,
+dev_extent_cache=0x7fffffffdd30, block_group_cache=0x7fffffffdd60,
+chunk_rec=0x6b92c0) at cmds-check.c:8101
+#2  check_chunks (chunk_cache=chunk_cache@entry=0x7fffffffdd80,
+block_group_cache=block_group_cache@entry=0x7fffffffdd60,
+dev_extent_cache=dev_extent_cache@entry=0x7fffffffdd30, good=good@entry=0x0,
+bad=bad@entry=0x0, rebuild=rebuild@entry=0x0, silent=0) at cmds-check.c:8165
+#3  0x000000000042bbdd in check_chunks_and_extents (root=root@entry=0x6b2cf0)
+at cmds-check.c:8524
+#4  0x000000000042e3cb in cmd_check (argc=<optimized out>, argv=<optimized
+out>) at cmds-check.c:11430
+#5  0x000000000040a416 in main (argc=2, argv=0x7fffffffe218) at btrfs.c:243
