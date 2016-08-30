@@ -159,3 +159,14 @@ $ TEST=012\* ./misc-tests.sh           # from tests/
 6. The commit changelog should reference a commit that either introduced or
   fixed the bug (or both). Subject line of the shall mention the name of the
   new directory for ease of search, eg. `btrfs-progs: tests: add 012-subvolume-sync-must-wait`
+
+### Crafted/fuzzed images
+
+Images that are create by fuzzing or specially crafted to trigger some error
+conditions should be added to the directory *fuzz-tests/images*, accompanied by
+a textual description of the source (bugzilla, mail), the reporter, brief
+description of the problem or the stack trace.
+
+If you have a fix for the problem, please submit it prior to the test image, so
+the fuzz tests always succeed when run on random checked out. This helps
+bisectability.
