@@ -161,7 +161,13 @@ PKG_STATIC(UUID_LIBS_STATIC, [uuid])
 PKG_CHECK_MODULES(ZLIB, [zlib])
 PKG_STATIC(ZLIB_LIBS_STATIC, [zlib])
 
-UDEVDIR="$(pkg-config udev --variable=udevdir)"
+# udev v190 introduced the btrfs builtin and a udev rule to use it.
+# Our udev rule gives us the friendly dm names but isn't required (or valid)
+# on earlier releases.
+UDEVDIR=
+if pkg-config udev --atleast-version 190; then
+	UDEVDIR="$(pkg-config udev --variable=udevdir)"
+fi
 AC_SUBST(UDEVDIR)
 
 dnl lzo library does not provide pkg-config, let use classic way
