@@ -2714,7 +2714,8 @@ static int alloc_reserved_tree_block(struct btrfs_trans_handle *trans,
 		size += sizeof(*block_info);
 
 	path = btrfs_alloc_path();
-	BUG_ON(!path);
+	if (!path)
+		return -ENOMEM;
 
 	ret = btrfs_insert_empty_item(trans, fs_info->extent_root, path,
 				      ins, size);

@@ -739,7 +739,11 @@ struct btrfs_root *btrfs_read_fs_root_no_cache(struct btrfs_fs_info *fs_info,
 		     root, fs_info, location->objectid);
 
 	path = btrfs_alloc_path();
-	BUG_ON(!path);
+	if (!path) {
+		free(root);
+		return ERR_PTR(-ENOMEM);
+	}
+
 	ret = btrfs_search_slot(NULL, tree_root, location, path, 0, 0);
 	if (ret != 0) {
 		if (ret > 0)
