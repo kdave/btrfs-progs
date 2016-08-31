@@ -1735,7 +1735,7 @@ int main(int argc, char **argv)
 	}
 
 	mkfs_cfg.label = label;
-	mkfs_cfg.fs_uuid = fs_uuid;
+	memcpy(mkfs_cfg.fs_uuid, fs_uuid, sizeof(mkfs_cfg.fs_uuid));
 	memcpy(mkfs_cfg.blocks, blocks, sizeof(blocks));
 	mkfs_cfg.num_bytes = dev_block_count;
 	mkfs_cfg.nodesize = nodesize;
