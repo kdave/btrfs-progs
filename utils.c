@@ -192,7 +192,7 @@ static int reserve_free_space(struct cache_tree *free_tree, u64 len,
 	struct cache_extent *cache;
 	int found = 0;
 
-	BUG_ON(!ret_start);
+	ASSERT(ret_start != NULL);
 	cache = first_cache_extent(free_tree);
 	while (cache) {
 		if (cache->size > len) {
