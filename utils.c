@@ -405,8 +405,23 @@ static int setup_temp_root_tree(int fd, struct btrfs_mkfs_config *cfg,
 	 * Provided bytenr must in ascending order, or tree root will have a
 	 * bad key order.
 	 */
-	BUG_ON(!(root_bytenr < extent_bytenr && extent_bytenr < dev_bytenr &&
-		 dev_bytenr < fs_bytenr && fs_bytenr < csum_bytenr));
+	if (!(root_bytenr < extent_bytenr && extent_bytenr < dev_bytenr &&
+	      dev_bytenr < fs_bytenr && fs_bytenr < csum_bytenr)) {
+		error("bad tree bytenr order: "
+				"root < extent %llu < %llu, "
+				"extent < dev %llu < %llu, "
+				"dev < fs %llu < %llu, "
+				"fs < csum %llu < %llu",
+				(unsigned long long)root_bytenr,
+				(unsigned long long)extent_bytenr,
+				(unsigned long long)extent_bytenr,
+				(unsigned long long)dev_bytenr,
+				(unsigned long long)dev_bytenr,
+				(unsigned long long)fs_bytenr,
+				(unsigned long long)fs_bytenr,
+				(unsigned long long)csum_bytenr);
+		return -EINVAL;
+	}
 	buf = malloc(sizeof(*buf) + cfg->nodesize);
 	if (!buf)
 		return -ENOMEM;
@@ -567,7 +582,12 @@ static int setup_temp_chunk_tree(int fd, struct btrfs_mkfs_config *cfg,
 	int ret;
 
 	/* Must ensure SYS chunk starts before META chunk */
-	BUG_ON(meta_chunk_start < sys_chunk_start);
+	if (meta_chunk_start < sys_chunk_start) {
+		error("wrong chunk order: meta < system %llu < %llu",
+				(unsigned long long)meta_chunk_start,
+				(unsigned long long)sys_chunk_start);
+		return -EINVAL;
+	}
 	buf = malloc(sizeof(*buf) + cfg->nodesize);
 	if (!buf)
 		return -ENOMEM;
@@ -633,7 +653,12 @@ static int setup_temp_dev_tree(int fd, struct btrfs_mkfs_config *cfg,
 	int ret;
 
 	/* Must ensure SYS chunk starts before META chunk */
-	BUG_ON(meta_chunk_start < sys_chunk_start);
+	if (meta_chunk_start < sys_chunk_start) {
+		error("wrong chunk order: meta < system %llu < %llu",
+				(unsigned long long)meta_chunk_start,
+				(unsigned long long)sys_chunk_start);
+		return -EINVAL;
+	}
 	buf = malloc(sizeof(*buf) + cfg->nodesize);
 	if (!buf)
 		return -ENOMEM;
@@ -829,9 +854,27 @@ static int setup_temp_extent_tree(int fd, struct btrfs_mkfs_config *cfg,
 	 * We must ensure provided bytenr are in ascending order,
 	 * or extent tree key order will be broken.
 	 */
-	BUG_ON(!(chunk_bytenr < root_bytenr && root_bytenr < extent_bytenr &&
-		 extent_bytenr < dev_bytenr && dev_bytenr < fs_bytenr &&
-		 fs_bytenr < csum_bytenr));
+	if (!(chunk_bytenr < root_bytenr && root_bytenr < extent_bytenr &&
+	      extent_bytenr < dev_bytenr && dev_bytenr < fs_bytenr &&
+	      fs_bytenr < csum_bytenr)) {
+		error("bad tree bytenr order: "
+				"chunk < root %llu < %llu, "
+				"root < extent %llu < %llu, "
+				"extent < dev %llu < %llu, "
+				"dev < fs %llu < %llu, "
+				"fs < csum %llu < %llu",
+				(unsigned long long)chunk_bytenr,
+				(unsigned long long)root_bytenr,
+				(unsigned long long)root_bytenr,
+				(unsigned long long)extent_bytenr,
+				(unsigned long long)extent_bytenr,
+				(unsigned long long)dev_bytenr,
+				(unsigned long long)dev_bytenr,
+				(unsigned long long)fs_bytenr,
+				(unsigned long long)fs_bytenr,
+				(unsigned long long)csum_bytenr);
+		return -EINVAL;
+	}
 	buf = malloc(sizeof(*buf) + cfg->nodesize);
 	if (!buf)
 		return -ENOMEM;
