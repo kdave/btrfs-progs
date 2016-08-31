@@ -31,12 +31,14 @@ int btrfs_find_last_root(struct btrfs_root *root, u64 objectid,
 	int ret;
 	int slot;
 
+	path = btrfs_alloc_path();
+	if (!path)
+		return -ENOMEM;
+
 	search_key.objectid = objectid;
 	search_key.type = BTRFS_ROOT_ITEM_KEY;
 	search_key.offset = (u64)-1;
 
-	path = btrfs_alloc_path();
-	BUG_ON(!path);
 	ret = btrfs_search_slot(NULL, root, &search_key, path, 0, 0);
 	if (ret < 0)
 		goto out;
@@ -74,7 +76,9 @@ int btrfs_update_root(struct btrfs_trans_handle *trans, struct btrfs_root
 	u32 old_len;
 
 	path = btrfs_alloc_path();
-	BUG_ON(!path);
+	if (!path)
+		return -ENOMEM;
+
 	ret = btrfs_search_slot(trans, root, key, path, 0, 1);
 	if (ret < 0)
 		goto out;

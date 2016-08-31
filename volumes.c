@@ -459,7 +459,8 @@ static int find_next_chunk(struct btrfs_root *root, u64 objectid, u64 *offset)
 	struct btrfs_key found_key;
 
 	path = btrfs_alloc_path();
-	BUG_ON(!path);
+	if (!path)
+		return -ENOMEM;
 
 	key.objectid = objectid;
 	key.offset = (u64)-1;
