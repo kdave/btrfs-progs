@@ -1420,7 +1420,6 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg,
 	}
 
 	/* and write out the super block */
-	BUG_ON(sizeof(super) > cfg->sectorsize);
 	memset(buf->data, 0, BTRFS_SUPER_INFO_SIZE);
 	memcpy(buf->data, &super, sizeof(super));
 	buf->len = BTRFS_SUPER_INFO_SIZE;

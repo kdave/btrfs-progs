@@ -1636,6 +1636,12 @@ int main(int argc, char **argv)
 				 features))
 		exit(1);
 
+	if (sectorsize < sizeof(struct btrfs_super_block)) {
+		error("sectorsize smaller than superblock: %u < %zu",
+				sectorsize, sizeof(struct btrfs_super_block));
+		exit(1);
+	}
+
 	/* Check device/block_count after the nodesize is determined */
 	if (block_count && block_count < btrfs_min_dev_size(nodesize)) {
 		error("size %llu is too small to make a usable filesystem",
