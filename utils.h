@@ -112,8 +112,8 @@ void btrfs_parse_features_to_string(char *buf, u64 flags);
 
 struct btrfs_mkfs_config {
 	char *label;
-	char *fs_uuid;
-	char *chunk_uuid;
+	char fs_uuid[BTRFS_UUID_UNPARSED_SIZE];
+	char chunk_uuid[BTRFS_UUID_UNPARSED_SIZE];
 	u64 blocks[8];
 	u64 num_bytes;
 	u32 nodesize;

@@ -2373,10 +2373,8 @@ static int do_convert(const char *devname, int datacsum, int packing,
 	mkfs_cfg.stripesize = blocksize;
 	mkfs_cfg.features = features;
 	/* New convert need these space */
-	mkfs_cfg.fs_uuid = malloc(BTRFS_UUID_UNPARSED_SIZE);
-	mkfs_cfg.chunk_uuid = malloc(BTRFS_UUID_UNPARSED_SIZE);
-	*(mkfs_cfg.fs_uuid) = '\0';
-	*(mkfs_cfg.chunk_uuid) = '\0';
+	memset(mkfs_cfg.chunk_uuid, 0, BTRFS_UUID_UNPARSED_SIZE);
+	memset(mkfs_cfg.fs_uuid, 0, BTRFS_UUID_UNPARSED_SIZE);
 
 	ret = make_btrfs(fd, &mkfs_cfg, &cctx);
 	if (ret) {

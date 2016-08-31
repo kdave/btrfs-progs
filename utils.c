@@ -250,16 +250,10 @@ static int setup_temp_super(int fd, struct btrfs_mkfs_config *cfg,
 	struct btrfs_super_block *super = (struct btrfs_super_block *)super_buf;
 	int ret;
 
-	/*
-	 * We rely on cfg->chunk_uuid and cfg->fs_uuid to pass uuid
-	 * for other functions.
-	 * Caller must allocate space for them
-	 */
-	BUG_ON(!cfg->chunk_uuid || !cfg->fs_uuid);
 	memset(super_buf, 0, BTRFS_SUPER_INFO_SIZE);
 	cfg->num_bytes = round_down(cfg->num_bytes, cfg->sectorsize);
 
-	if (cfg->fs_uuid && *cfg->fs_uuid) {
+	if (*cfg->fs_uuid) {
 		if (uuid_parse(cfg->fs_uuid, super->fsid) != 0) {
 			error("cound not parse UUID: %s", cfg->fs_uuid);
 			ret = -EINVAL;
@@ -320,8 +314,6 @@ static int setup_temp_extent_buffer(struct extent_buffer *buf,
 	unsigned char chunk_uuid[BTRFS_UUID_SIZE];
 	int ret;
 
-	/* We rely on cfg->fs_uuid and chunk_uuid to fsid and chunk uuid */
-	BUG_ON(!cfg->fs_uuid || !cfg->chunk_uuid);
 	ret = uuid_parse(cfg->fs_uuid, fsid);
 	if (ret)
 		return -EINVAL;
@@ -1049,7 +1041,7 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg,
 	memset(&super, 0, sizeof(super));
 
 	num_bytes = (cfg->num_bytes / cfg->sectorsize) * cfg->sectorsize;
-	if (cfg->fs_uuid && *cfg->fs_uuid) {
+	if (*cfg->fs_uuid) {
 		if (uuid_parse(cfg->fs_uuid, super.fsid) != 0) {
 			error("cannot not parse UUID: %s", cfg->fs_uuid);
 			ret = -EINVAL;
