@@ -287,11 +287,29 @@ static void dump_superblock(struct btrfs_super_block *sb, int full)
 	int i;
 	char *s, buf[BTRFS_UUID_UNPARSED_SIZE];
 	u8 *p;
+	u32 csum_size;
+	u16 csum_type;
+
+	csum_type = btrfs_super_csum_type(sb);
+	csum_size = BTRFS_CSUM_SIZE;
+	printf("csum_type\t\t%hu (", csum_type);
+	if (csum_type >= ARRAY_SIZE(btrfs_csum_sizes)) {
+		printf("INVALID");
+	} else {
+		if (csum_type == BTRFS_CSUM_TYPE_CRC32) {
+			printf("crc32c");
+			csum_size = btrfs_csum_sizes[csum_type];
+		} else {
+			printf("unknown");
+		}
+	}
+	printf(")\n");
+	printf("csum_size\t\t%llu\n", (unsigned long long)csum_size);
 
 	printf("csum\t\t\t0x");
-	for (i = 0, p = sb->csum; i < btrfs_super_csum_size(sb); i++)
+	for (i = 0, p = sb->csum; i < csum_size; i++)
 		printf("%02x", p[i]);
-	if (check_csum_sblock(sb, btrfs_super_csum_size(sb)))
+	if (check_csum_sblock(sb, csum_size))
 		printf(" [match]");
 	else
 		printf(" [DON'T MATCH]");
@@ -363,10 +381,6 @@ static void dump_superblock(struct btrfs_super_block *sb, int full)
 	printf("incompat_flags\t\t0x%llx\n",
 	       (unsigned long long)btrfs_super_incompat_flags(sb));
 	print_readable_incompat_flag(btrfs_super_incompat_flags(sb));
-	printf("csum_type\t\t%llu\n",
-	       (unsigned long long)btrfs_super_csum_type(sb));
-	printf("csum_size\t\t%llu\n",
-	       (unsigned long long)btrfs_super_csum_size(sb));
 	printf("cache_generation\t%llu\n",
 	       (unsigned long long)btrfs_super_cache_generation(sb));
 	printf("uuid_tree_generation\t%llu\n",
