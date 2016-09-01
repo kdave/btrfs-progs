@@ -138,7 +138,7 @@ read_dev_supers(char *filename, struct btrfs_recover_superblock *recover)
 
 	struct btrfs_super_block *sb = (struct btrfs_super_block *)buf;
 
-	fd = open(filename, O_RDONLY, 0666);
+	fd = open(filename, O_RDONLY);
 	if (fd < 0)
 		return -errno;
 

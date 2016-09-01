@@ -511,7 +511,7 @@ int cmd_inspect_dump_super(int argc, char **argv)
 
 	for (i = optind; i < argc; i++) {
 		filename = argv[i];
-		fd = open(filename, O_RDONLY, 0666);
+		fd = open(filename, O_RDONLY);
 		if (fd < 0) {
 			error("cannot open %s: %s", filename, strerror(errno));
 			ret = 1;
