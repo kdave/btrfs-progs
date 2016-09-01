@@ -12,9 +12,12 @@ tools.  Currently covers:
 
 1. mount options
 
-2. file attributes
+2. filesystem features
 
-3. control device
+3. file attributes
+
+4. control device
+
 
 MOUNT OPTIONS
 -------------
@@ -405,6 +408,91 @@ NOTE: This option has replaced 'recovery'.
 +
 Allow subvolumes to be deleted by their respective owner. Otherwise, only the
 root user can do that.
+
+FILESYSTEM FEATURES
+-------------------
+
+The basic set of filesystem features gets extended over time. The backward
+compatibility is maintained and the features are optional, need to be
+explicitly asked for so accidental use will not create incompatibilities.
+
+There are several classes and the respective tools to manage the features:
+
+at mkfs time only::
+This is namely for core structures, like the b-tree nodesize, see
+`mkfs.btrfs`(8) for more details.
+
+after mkfs, on an unmounted filesystem::
+Features that may optimize internal structures or add new structures to support
+new functionality, see `btrfstune`(8). The command *btrfs inspect-internal
+dump-super device* will dump a superblock, you can map the value of
+'incompat_flags' to the features listed below
+
+after mkfs, on a mounted filesystem::
+The features of a filesystem (with a given UUID) are listed in
+`/sys/fs/btrfs/UUID/features/`, one file per feature. The status of is stored
+insid the file. The value '1' is for enabled, '0' means the feature was had
+been enabled at the mount time and turned off afterwards.
++
+Whether a particular feature can be turned on a mounted filesystem can be found
+in the directory `/sys/fs/btrfs/features/`, one file per feature. The value '1'
+means the feature can be enabled.
+
+List of features (see also `mkfs.btrfs`(8) section 'FILESYSTEM FEATURES'):
+
+big_metadata::
+(since: 3.4)
++
+the filesystem uses 'nodesize' bigger than the page size
+compress_lzo::
+(since: 2.6.38)
++
+the 'lzo' compression has been used on the filesystem, either as a mount option
+or via *btrfs filesystem defrag*.
+
+default_subvol::
+(since: 2.6.34)
++
+the default subvolume has been set on the filesystem
+
+extended_iref::
+(since: 3.7)
++
+increased hardlink limit per file in a directory to 65536, older kernels
+supported a varying number of hardlinks depending on the sum of all file name
+sizes that can be stored into one metadata block
+
+mixed_backref::
+(since: 2.6.31)
++
+the last major disk format change, improved backreferences
+
+mixed_groups::
+(since: 2.6.37)
++
+mixed data and metadata block groups, ie. the data and metadata are not
+separated and occupy the same block groups, this mode is suitable for small
+volumes as there are no constraints how the remaining space should be used
+(compared to the split mode, where empty metadata space cannot be used for data
+and vice versa)
++
+on the other hand, the final layout is quite unpredictable and possibly highly
+fragmented, which means worse performance
+
+no_holes::
+(since: 3.14)
+improved representation of file extents where holes are not explicitly
+stored as an extent, saves a few percent of metadata if sparse files are used
+
+raid56::
+(since: 3.9)
++
+the filesystem contains or contained a raid56 profile of block groups
++
+skinny_metadata::
+(since: 3.10)
++
+reduced-size metadata for extent references, saves a few percent of metadata
 
 FILE ATTRIBUTES
 ---------------

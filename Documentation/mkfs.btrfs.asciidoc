@@ -185,7 +185,12 @@ initramfs/initrd systems.
 FILESYSTEM FEATURES
 -------------------
 
+Features that can be enabled during creation time. See also `btrfs`(5) section
+'FILESYSTEM FEATURES'.
+
 *mixed-bg*::
+(kernel support since 2.6.37)
++
 mixed data and metadata block groups, also set by option '--mixed'
 
 *extref*::
@@ -196,6 +201,8 @@ supported a varying number of hardlinks depending on the sum of all file name
 sizes that can be stored into one metadata block
 
 *raid56*::
+(kernel support since 3.9)
++
 extended format for RAID5/6, also enabled if raid5 or raid6 block groups
 are selected
 
@@ -205,6 +212,8 @@ are selected
 reduced-size metadata for extent references, saves a few percent of metadata
 
 *no-holes*::
+(kernel support since 3.14)
++
 improved representation of file extents where holes are not explicitly
 stored as an extent, saves a few percent of metadata if sparse files are used
 
@@ -351,4 +360,6 @@ further details.
 
 SEE ALSO
 --------
-`btrfs`(8), `wipefs`(8)
+`btrfs`(5),
+`btrfs`(8),
+`wipefs`(8)
