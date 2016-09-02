@@ -30,25 +30,36 @@ Besides verifictaion of the filesystem signature, there are no other sanity
 checks. The superblock checksum status is reported, the device item and
 filesystem UUIDs are checked and reported.
 +
+NOTE: the meaning of option '-s' has changed in version 4.8 to be consistent
+with other tools to specify superblock copy rather the offset. The old way still
+works, but prints a warning. Please update your scripts to use '--bytenr'
+instead. The option '-i' has been deprecated.
++
 `Options`
 +
 -f|--full::::
 print full superblock information, including the system chunk array and backup roots
 -a|--all::::
-print information about all present superblock copies (cannot be used together with '-i' option)
--i <super_mirror>::::
-specify which mirror to print, valid values are 0, 1 and 2 and the superblock must be present on the device
-+
-If there are multiple options specified, only the last one is applies.
-+
--F|--force::::
-attempt to print the superblock even if thre's no valid BTRFS signature found
-+
-The result may be completely wrong if the data do not resemble a superblock.
-+
--s <bytenr>::::
+print information about all present superblock copies (cannot be used together
+with '-s' option)
+-i <super>::::
+(deprecated since 4.8, same behaviour as '--super')
+--bytenr <bytenr>::::
 specify offset to a superblock in a non-standard location at 'bytenr', useful
 for debugging (disables the '-f' option)
++
+If there are multiple options specified, only the last one applies.
++
+-F|--force::::
+attempt to print the superblock even if thre's no valid BTRFS signature found,
+the result may be completely wrong if the data do not resemble a superblock
++
+-s|--super <bytenr>::::
+(see compatibility note above)
++
+specify which mirror to print, valid values are 0, 1 and 2 and the superblock
+must be present on the device with a valid signature, can be used together with
+'--force'
 
 *dump-tree* [options] <device>::
 (replaces the standalone tool *btrfs-debug-tree*)
