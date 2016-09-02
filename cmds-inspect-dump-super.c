@@ -458,11 +458,18 @@ static int load_and_dump_sb(char *filename, int fd, u64 sb_bytenr, int full,
 const char * const cmd_inspect_dump_super_usage[] = {
 	"btrfs inspect-internal dump-super [options] device [device...]",
 	"Dump superblock from a device in a textual form",
-	"-f|--full           print full superblock information",
-	"-a|--all            print information about all superblocks",
-	"-i <super_mirror>   specify which mirror to print out",
-	"-F|--force          attempt to dump superblocks with bad magic",
-	"-s <bytenr>         specify alternate superblock offset",
+	"-f|--full             print full superblock information, backup roots etc.",
+	"-a|--all              print information about all superblocks",
+	"-s|--super <super>    specify which copy to print out (values: 0, 1, 2)",
+	"-F|--force            attempt to dump superblocks with bad magic",
+	"--bytenr <offset>     specify alternate superblock offset",
+	"",
+	"Deprecated syntax:",
+	"-s <bytenr>           specify alternate superblock offset, values other than 0, 1, 2",
+	"                      will be interpreted as --bytenr for backward compatibility,",
+	"                      option renamed for consistency with other tools (eg. check)",
+	"-i <super>            specify which copy to print out (values: 0, 1, 2), now moved",
+	"                      to -s|--super",
 	NULL
 };
 
@@ -484,6 +491,7 @@ int cmd_inspect_dump_super(int argc, char **argv)
 			{"all", no_argument, NULL, 'a'},
 			{"full", no_argument, NULL, 'f'},
 			{"force", no_argument, NULL, 'F'},
+			{"super", required_argument, NULL, 's' },
 			{NULL, 0, NULL, 0}
 		};
 
@@ -493,11 +501,13 @@ int cmd_inspect_dump_super(int argc, char **argv)
 
 		switch (c) {
 		case 'i':
+			warning(
+			    "option -i is deprecated, please use -s or --super");
 			arg = arg_strtou64(optarg);
 			if (arg >= BTRFS_SUPER_MIRROR_MAX) {
 				error("super mirror too big: %llu >= %d",
 					arg, BTRFS_SUPER_MIRROR_MAX);
-				usage(cmd_inspect_dump_super_usage);
+				return 1;
 			}
 			sb_bytenr = btrfs_sb_offset(arg);
 			break;
@@ -512,7 +522,15 @@ int cmd_inspect_dump_super(int argc, char **argv)
 			force = 1;
 			break;
 		case 's':
-			sb_bytenr = arg_strtou64(optarg);
+			arg = arg_strtou64(optarg);
+			if (BTRFS_SUPER_MIRROR_MAX <= arg) {
+				warning(
+		"deprecated use of -s <bytenr> with %llu, assuming --bytenr",
+						(unsigned long long)arg);
+				sb_bytenr = arg;
+			} else {
+				sb_bytenr = btrfs_sb_offset(arg);
+			}
 			all = 0;
 			break;
 		default:
