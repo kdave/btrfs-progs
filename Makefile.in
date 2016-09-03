@@ -17,6 +17,7 @@
 #                  trace   - print trace before the error/warning messages
 #                  abort   - call abort() on first error (dumps core)
 #                  all     - shortcut for all of the above
+#                  asan    - enable address sanitizer compiler feature
 #   W=123          build with warnings (default: off)
 #   DEBUG_CFLAGS   additional compiler flags for debugging build
 #   EXTRA_CFLAGS   additional compiler flags
@@ -143,6 +144,10 @@ ifneq (,$(findstring all,$(D)))
   DEBUG_CFLAGS_INTERNAL += -DDEBUG_VERBOSE_ERROR=1
   DEBUG_CFLAGS_INTERNAL += -DDEBUG_TRACE_ON_ERROR=1
   DEBUG_CFLAGS_INTERNAL += -DDEBUG_ABORT_ON_ERROR=1
+endif
+
+ifneq (,$(findstring asan,$(D)))
+  DEBUG_CFLAGS_INTERNAL += -fsanitize=address
 endif
 
 MAKEOPTS = --no-print-directory Q=$(Q)
