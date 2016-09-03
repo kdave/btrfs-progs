@@ -2760,13 +2760,19 @@ int main(int argc, char *argv[])
 			break;
 		case 't':
 			num_threads = arg_strtou64(optarg);
-			if (num_threads > 32)
-				print_usage(1);
+			if (num_threads > 32) {
+				error("number of threads out of range: %llu",
+					(unsigned long long)num_threads);
+				return 1;
+			}
 			break;
 		case 'c':
 			compress_level = arg_strtou64(optarg);
-			if (compress_level > 9)
-				print_usage(1);
+			if (compress_level > 9) {
+				error("compression level out of range: %llu",
+					(unsigned long long)compress_level);
+				return 1;
+			}
 			break;
 		case 'o':
 			old_restore = 1;
