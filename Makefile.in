@@ -18,6 +18,7 @@
 #                  abort   - call abort() on first error (dumps core)
 #                  all     - shortcut for all of the above
 #                  asan    - enable address sanitizer compiler feature
+#                  ubsan   - undefined behaviour sanitizer compiler feature
 #   W=123          build with warnings (default: off)
 #   DEBUG_CFLAGS   additional compiler flags for debugging build
 #   EXTRA_CFLAGS   additional compiler flags
@@ -148,6 +149,10 @@ endif
 
 ifneq (,$(findstring asan,$(D)))
   DEBUG_CFLAGS_INTERNAL += -fsanitize=address
+endif
+
+ifneq (,$(findstring ubsan,$(D)))
+  DEBUG_CFLAGS_INTERNAL += -fsanitize=undefined
 endif
 
 MAKEOPTS = --no-print-directory Q=$(Q)
