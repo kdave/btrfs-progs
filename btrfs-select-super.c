@@ -32,8 +32,8 @@
 
 static void print_usage(void)
 {
-	fprintf(stderr, "usage: btrfs-select-super -s number dev\n");
-	fprintf(stderr, "%s\n", PACKAGE_STRING);
+	printf("usage: btrfs-select-super -s number dev\n");
+	printf("\t-s super   copy of superbloc to overwrite the primary one (values: 1, 2)\n");
 	exit(1);
 }
 

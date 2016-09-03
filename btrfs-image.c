@@ -2716,17 +2716,17 @@ out:
 
 static void print_usage(int ret)
 {
-	fprintf(stderr, "usage: btrfs-image [options] source target\n");
-	fprintf(stderr, "\t-r      \trestore metadump image\n");
-	fprintf(stderr, "\t-c value\tcompression level (0 ~ 9)\n");
-	fprintf(stderr, "\t-t value\tnumber of threads (1 ~ 32)\n");
-	fprintf(stderr, "\t-o      \tdon't mess with the chunk tree when restoring\n");
-	fprintf(stderr, "\t-s      \tsanitize file names, use once to just use garbage, use twice if you want crc collisions\n");
-	fprintf(stderr, "\t-w      \twalk all trees instead of using extent tree, do this if your extent tree is broken\n");
-	fprintf(stderr, "\t-m	   \trestore for multiple devices\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "\tIn the dump mode, source is the btrfs device and target is the output file (use '-' for stdout).\n");
-	fprintf(stderr, "\tIn the restore mode, source is the dumped image and target is the btrfs device/file.\n");
+	printf("usage: btrfs-image [options] source target\n");
+	printf("\t-r      \trestore metadump image\n");
+	printf("\t-c value\tcompression level (0 ~ 9)\n");
+	printf("\t-t value\tnumber of threads (1 ~ 32)\n");
+	printf("\t-o      \tdon't mess with the chunk tree when restoring\n");
+	printf("\t-s      \tsanitize file names, use once to just use garbage, use twice if you want crc collisions\n");
+	printf("\t-w      \twalk all trees instead of using extent tree, do this if your extent tree is broken\n");
+	printf("\t-m	   \trestore for multiple devices\n");
+	printf("\n");
+	printf("\tIn the dump mode, source is the btrfs device and target is the output file (use '-' for stdout).\n");
+	printf("\tIn the restore mode, source is the dumped image and target is the btrfs device/file.\n");
 	exit(ret);
 }
 

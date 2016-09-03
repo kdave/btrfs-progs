@@ -193,11 +193,11 @@ static int write_extent_content(struct btrfs_fs_info *fs_info, int out_fd,
 static void print_usage(void) __attribute__((noreturn));
 static void print_usage(void)
 {
-	fprintf(stderr, "usage: btrfs-map-logical [options] device\n");
-	fprintf(stderr, "\t-l Logical extent to map\n");
-	fprintf(stderr, "\t-c Copy of the extent to read (usually 1 or 2)\n");
-	fprintf(stderr, "\t-o Output file to hold the extent\n");
-	fprintf(stderr, "\t-b Number of bytes to read\n");
+	printf("usage: btrfs-map-logical [options] device\n");
+	printf("\t-l Logical extent to map\n");
+	printf("\t-c Copy of the extent to read (usually 1 or 2)\n");
+	printf("\t-o Output file to hold the extent\n");
+	printf("\t-b Number of bytes to read\n");
 	exit(1);
 }
 

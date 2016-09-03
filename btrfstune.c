@@ -376,14 +376,14 @@ out:
 
 static void print_usage(void)
 {
-	fprintf(stderr, "usage: btrfstune [options] device\n");
-	fprintf(stderr, "\t-S value\tpositive value will enable seeding, zero to disable, negative is not allowed\n");
-	fprintf(stderr, "\t-r \t\tenable extended inode refs\n");
-	fprintf(stderr, "\t-x \t\tenable skinny metadata extent refs\n");
-	fprintf(stderr, "\t-n \t\tenable no-holes feature (more efficient sparse file representation)\n");
-	fprintf(stderr, "\t-f \t\tforce to do dangerous operation, make sure that you are aware of the dangers\n");
-	fprintf(stderr, "\t-u \t\tchange fsid, use a random one\n");
-	fprintf(stderr, "\t-U UUID\t\tchange fsid to UUID\n");
+	printf("usage: btrfstune [options] device\n");
+	printf("\t-S value\tpositive value will enable seeding, zero to disable, negative is not allowed\n");
+	printf("\t-r \t\tenable extended inode refs\n");
+	printf("\t-x \t\tenable skinny metadata extent refs\n");
+	printf("\t-n \t\tenable no-holes feature (more efficient sparse file representation)\n");
+	printf("\t-f \t\tforce to do dangerous operation, make sure that you are aware of the dangers\n");
+	printf("\t-u \t\tchange fsid, use a random one\n");
+	printf("\t-U UUID\t\tchange fsid to UUID\n");
 }
 
 int main(int argc, char *argv[])

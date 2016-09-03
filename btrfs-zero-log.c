@@ -27,7 +27,7 @@
 
 __attribute__((noreturn)) static void print_usage(void)
 {
-	fprintf(stderr, "usage: btrfs-zero-log dev\n");
+	printf("usage: btrfs-zero-log dev\n");
 	exit(1);
 }
 
