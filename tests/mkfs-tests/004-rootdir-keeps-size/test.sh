@@ -4,6 +4,7 @@
 source $TOP/tests/common
 
 check_prereq mkfs.btrfs
+
 prepare_test_dev
 
 test_mkfs_with_size() {

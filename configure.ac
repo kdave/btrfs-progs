@@ -23,7 +23,7 @@ dnl the compiler (like AC_PROG_LIBTOOL) to avoid autoconf errors.
 AC_USE_SYSTEM_EXTENSIONS
 
 AC_CONFIG_SRCDIR([btrfs.c])
-AC_PREFIX_DEFAULT([/usr])
+AC_PREFIX_DEFAULT([/usr/local])
 
 AC_PROG_CC
 AC_CANONICAL_HOST
@@ -35,7 +35,7 @@ AC_SYS_LARGEFILE
 
 AC_PROG_INSTALL
 AC_PROG_LN_S
-AC_PATH_PROG([AR], [ar])
+AC_CHECK_TOOL([AR], [ar])
 AC_PATH_PROG([RM], [rm], [rm])
 AC_PATH_PROG([RMDIR], [rmdir], [rmdir])
 
@@ -104,11 +104,48 @@ AC_ARG_ENABLE([convert],
 AS_IF([test "x$enable_convert" = xyes], [DISABLE_BTRFSCONVERT=0], [DISABLE_BTRFSCONVERT=1])
 AC_SUBST([DISABLE_BTRFSCONVERT])
 
-if test "x$enable_convert" = xyes; then
-	PKG_CHECK_MODULES(EXT2FS, [ext2fs])
-	PKG_CHECK_MODULES(COM_ERR, [com_err])
+AC_ARG_WITH([convert],
+	    AS_HELP_STRING([[[]--with-convert[[=auto]]]], [built-in filesystems for convert (default: auto)
+supported (comma separated list): ext2]),
+  [], [with_convert=auto]
+)
+
+if test "$with_convert" = "yes"; then
+	with_convert=auto
 fi
 
+if test "$with_convert" = "no"; then
+	with_convert=
+fi
+
+convertfs=
+BTRFSCONVERT_EXT2=0
+if test "x$enable_convert" = xyes; then
+	if test "x$with_convert" = "xauto" || echo "$with_convert" | grep -q "ext2"; then
+		PKG_CHECK_MODULES(EXT2FS, [ext2fs >= 1.42],,
+			[PKG_CHECK_MODULES(EXT2FS, [ext2fs],
+				[AC_DEFINE([HAVE_OLD_E2FSPROGS], [1],
+					  [E2fsprogs does not support BIGALLOC])]
+				)])
+		PKG_CHECK_MODULES(COM_ERR, [com_err])
+		convertfs="${convertfs:+$convertfs,}ext2"
+		BTRFSCONVERT_EXT2=1
+	fi
+fi
+AC_SUBST([BTRFSCONVERT_EXT2])
+
+# catch typos
+tmp=$(echo "$with_convert" | sed -e 's/auto//' | sed -e 's/ext2//' | sed -e 's/,\+/,/')
+if ! test "x$tmp" = "x"; then
+	AC_MSG_ERROR([unknown tokens for --with-convert: $tmp])
+fi
+
+if test "$DISABLE_BTRFSCONVERT" = 0 && test "x$convertfs" = "x"; then
+	AC_MSG_ERROR([no filesystems for convert, use --disable-convert instead])
+fi
+
+AX_CHECK_DEFINE([linux/fiemap.h], [FIEMAP_EXTENT_SHARED], [],
+		[AC_MSG_ERROR([no definition of FIEMAP_EXTENT_SHARED found])])
 
 dnl Define <NAME>_LIBS= and <NAME>_CFLAGS= by pkg-config
 dnl
@@ -123,6 +160,15 @@ PKG_STATIC(UUID_LIBS_STATIC, [uuid])
 
 PKG_CHECK_MODULES(ZLIB, [zlib])
 PKG_STATIC(ZLIB_LIBS_STATIC, [zlib])
+
+# udev v190 introduced the btrfs builtin and a udev rule to use it.
+# Our udev rule gives us the friendly dm names but isn't required (or valid)
+# on earlier releases.
+UDEVDIR=
+if pkg-config udev --atleast-version 190; then
+	UDEVDIR="$(pkg-config udev --variable=udevdir)"
+fi
+AC_SUBST(UDEVDIR)
 
 dnl lzo library does not provide pkg-config, let use classic way
 AC_CHECK_LIB([lzo2], [lzo_version], [
@@ -167,7 +213,7 @@ AC_MSG_RESULT([
 
 	documentation:     ${enable_documentation}
 	backtrace support: ${enable_backtrace}
-	btrfs-convert:     ${enable_convert}
+	btrfs-convert:     ${enable_convert} ${convertfs:+($convertfs)}
 
 	Type 'make' to compile.
 ])

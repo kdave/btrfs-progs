@@ -65,7 +65,7 @@ struct btrfs_find_root_filter {
 	 * This *WILL* take *TONS* of extra time.
 	 */
 };
-int btrfs_find_root_search(struct btrfs_root *chunk_root,
+int btrfs_find_root_search(struct btrfs_fs_info *fs_info,
 			   struct btrfs_find_root_filter *filter,
 			   struct cache_tree *result,
 			   struct cache_extent **match);

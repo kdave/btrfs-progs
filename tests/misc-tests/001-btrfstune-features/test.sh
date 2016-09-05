@@ -6,6 +6,9 @@ source $TOP/tests/common
 check_prereq btrfs-debug-tree
 check_prereq btrfs-show-super
 check_prereq mkfs.btrfs
+check_prereq btrfstune
+check_prereq btrfs
+
 setup_root_helper
 prepare_test_dev
 

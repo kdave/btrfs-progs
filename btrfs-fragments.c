@@ -245,7 +245,8 @@ list_fragments(int fd, u64 flags, char *dir)
 			sh = (struct btrfs_ioctl_search_header *)(args.buf +
 								  off);
 			off += sizeof(*sh);
-			if (sh->type == BTRFS_BLOCK_GROUP_ITEM_KEY) {
+			if (btrfs_search_header_type(sh)
+			    == BTRFS_BLOCK_GROUP_ITEM_KEY) {
 				struct btrfs_block_group_item *bg;
 
 				if (im) {
@@ -262,20 +263,24 @@ list_fragments(int fd, u64 flags, char *dir)
 						(args.buf + off);
 				bgflags = btrfs_block_group_flags(bg);
 				bgused = btrfs_block_group_used(bg);
-				
+
 				printf("found block group %lld len %lld "
-					"flags %lld\n", sh->objectid,
-					sh->offset, bgflags);
+					"flags %lld\n",
+					btrfs_search_header_objectid(sh),
+					btrfs_search_header_offset(sh),
+					bgflags);
 				if (!(bgflags & flags)) {
 					/* skip this block group */
-					sk->min_objectid = sh->objectid +
-							   sh->offset;
+					sk->min_objectid =
+					    btrfs_search_header_objectid(sh) +
+					    btrfs_search_header_offset(sh);
 					sk->min_type = 0;
 					sk->min_offset = 0;
 					break;
 				}
 				im = gdImageCreate(width,
-					(sh->offset / 4096 + 799) / width);
+					(btrfs_search_header_offset(sh)
+					 / 4096 + 799) / width);
 
 				black = gdImageColorAllocate(im, 0, 0, 0);  
 
@@ -283,8 +288,8 @@ list_fragments(int fd, u64 flags, char *dir)
 					colors[j] = black;
 
 				init_colors(im, colors);
-				bgstart = sh->objectid;
-				bglen = sh->offset;
+				bgstart = btrfs_search_header_objectid(sh);
+				bglen = btrfs_search_header_offset(sh);
 				bgend = bgstart + bglen;
 
 				snprintf(name, sizeof(name), "bg%d.png", bgnum);
@@ -303,7 +308,8 @@ list_fragments(int fd, u64 flags, char *dir)
 				areas = 0;
 				saved_len = 0;
 			}
-			if (im && sh->type == BTRFS_EXTENT_ITEM_KEY) {
+			if (im && btrfs_search_header_type(sh)
+					== BTRFS_EXTENT_ITEM_KEY) {
 				int c;
 				struct btrfs_extent_item *item;
 
@@ -311,40 +317,48 @@ list_fragments(int fd, u64 flags, char *dir)
 						(args.buf + off);
 
 				if (use_color)
-					c = colors[get_color(item, sh->len)];
+					c = colors[get_color(item,
+						btrfs_search_header_len(sh))];
 				else
 					c = black;
-				if (sh->objectid > bgend) {
+				if (btrfs_search_header_objectid(sh) > bgend) {
 					printf("WARN: extent %lld is without "
-						"block group\n", sh->objectid);
+						"block group\n",
+						btrfs_search_header_objectid(sh));
 					goto skip;
 				}
-				if (sh->objectid == bgend) {
-					saved_extent = sh->objectid;
-					saved_len = sh->offset;
+				if (btrfs_search_header_objectid(sh) == bgend) {
+					saved_extent =
+						btrfs_search_header_objectid(sh);
+					saved_len =
+						btrfs_search_header_offset(sh);
 					saved_color = c;
 					goto skip;
 				}
-				px = (sh->objectid - bgstart) / 4096;
-				for (j = 0; j < sh->offset / 4096; ++j) {
+				px = (btrfs_search_header_objectid(sh)
+					- bgstart) / 4096;
+				for (j = 0;
+				     j < btrfs_search_header_offset(sh) / 4096;
+				     ++j) {
 					int x = (px + j) % width;
 					int y = (px + j) / width;
 					gdImageSetPixel(im, x, y, c);
 				}
-				if (sh->objectid != last_end)
+				if (btrfs_search_header_objectid(sh) != last_end)
 					++areas;
-				last_end = sh->objectid + sh->offset;
+				last_end = btrfs_search_header_objectid(sh)
+					+ btrfs_search_header_offset(sh);
 skip:;
 			}
-			off += sh->len;
+			off += btrfs_search_header_len(sh);
 
 			/*
 			 * record the mins in sk so we can make sure the
 			 * next search doesn't repeat this root
 			 */
-			sk->min_objectid = sh->objectid;
-			sk->min_type = sh->type;
-			sk->min_offset = sh->offset;
+			sk->min_objectid = btrfs_search_header_objectid(sh);
+			sk->min_type = btrfs_search_header_type(sh);
+			sk->min_offset = btrfs_search_header_offset(sh);
 		}
 		sk->nr_items = 4096;
 
@@ -379,8 +393,7 @@ out_close:
 	return ret;
 }
 
-void
-usage(void)
+void fragments_usage(void)
 {
 	printf("usage: btrfs-fragments [options] <path>\n");
 	printf("         -c               use color\n");
@@ -423,16 +436,13 @@ int main(int argc, char **argv)
 			break;
 		case 'h':
 		default:
-			usage();
+			fragments_usage();
 		}
 	}
 
 	set_argv0(argv);
-	argc = argc - optind;
-	if (check_argc_min(argc, 1)) {
-		usage();
-		exit(1);
-	}
+	if (check_argc_min(argc - optind, 1))
+		fragments_usage();
 
 	path = argv[optind++];
 

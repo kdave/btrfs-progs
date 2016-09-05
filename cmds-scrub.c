@@ -430,7 +430,7 @@ static int scrub_rename_file(const char *fn_base, const char *fn_local,
 /*
  * returns 0 if the key did not match (nothing was read)
  *         1 if the key did match (success)
- *        -1 if the key did match and an error occured
+ *        -1 if the key did match and an error occurred
  */
 static int scrub_kvread(int *i, int len, int avail, const char *buf,
 			const char *key, u64 *dest)
@@ -1141,7 +1141,6 @@ static int scrub_start(int argc, char **argv, int resume)
 	int force = 0;
 	int nothing_to_resume = 0;
 
-	optind = 1;
 	while ((c = getopt(argc, argv, "BdqrRc:n:f")) != -1) {
 		switch (c) {
 		case 'B':
@@ -1591,10 +1590,12 @@ static int cmd_scrub_cancel(int argc, char **argv)
 	int fdmnt = -1;
 	DIR *dirstream = NULL;
 
-	if (check_argc_exact(argc, 2))
+	clean_args_no_options(argc, argv, cmd_scrub_cancel_usage);
+
+	if (check_argc_exact(argc - optind, 1))
 		usage(cmd_scrub_cancel_usage);
 
-	path = argv[1];
+	path = argv[optind];
 
 	fdmnt = open_path_or_dev_mnt(path, &dirstream, 1);
 	if (fdmnt < 0) {
@@ -1673,7 +1674,6 @@ static int cmd_scrub_status(int argc, char **argv)
 	int err = 0;
 	DIR *dirstream = NULL;
 
-	optind = 1;
 	while ((c = getopt(argc, argv, "dR")) != -1) {
 		switch (c) {
 		case 'd':

@@ -21,6 +21,8 @@
 
 #include "ctree.h"
 
+extern int repair; /* repair mode */
+
 struct btrfs_corrupt_block {
 	struct cache_extent cache;
 	struct btrfs_key key;

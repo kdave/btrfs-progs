@@ -81,7 +81,7 @@ again:
 	}
 	logical = key.objectid;
 	if (key.type == BTRFS_METADATA_ITEM_KEY)
-		len = fs_info->tree_root->leafsize;
+		len = fs_info->tree_root->nodesize;
 	else
 		len = key.offset;
 
@@ -193,15 +193,15 @@ static int write_extent_content(struct btrfs_fs_info *fs_info, int out_fd,
 static void print_usage(void) __attribute__((noreturn));
 static void print_usage(void)
 {
-	fprintf(stderr, "usage: btrfs-map-logical [options] device\n");
-	fprintf(stderr, "\t-l Logical extent to map\n");
-	fprintf(stderr, "\t-c Copy of the extent to read (usually 1 or 2)\n");
-	fprintf(stderr, "\t-o Output file to hold the extent\n");
-	fprintf(stderr, "\t-b Number of bytes to read\n");
+	printf("usage: btrfs-map-logical [options] device\n");
+	printf("\t-l Logical extent to map\n");
+	printf("\t-c Copy of the extent to read (usually 1 or 2)\n");
+	printf("\t-o Output file to hold the extent\n");
+	printf("\t-b Number of bytes to read\n");
 	exit(1);
 }
 
-int main(int ac, char **av)
+int main(int argc, char **argv)
 {
 	struct cache_tree root_cache;
 	struct btrfs_root *root;
@@ -227,7 +227,7 @@ int main(int ac, char **av)
 			{ NULL, 0, NULL, 0}
 		};
 
-		c = getopt_long(ac, av, "l:c:o:b:", long_options, NULL);
+		c = getopt_long(argc, argv, "l:c:o:b:", long_options, NULL);
 		if (c < 0)
 			break;
 		switch(c) {
@@ -247,14 +247,13 @@ int main(int ac, char **av)
 				print_usage();
 		}
 	}
-	set_argv0(av);
-	ac = ac - optind;
-	if (check_argc_min(ac, 1))
+	set_argv0(argv);
+	if (check_argc_min(argc - optind, 1))
 		print_usage();
 	if (logical == 0)
 		print_usage();
 
-	dev = av[optind];
+	dev = argv[optind];
 
 	radix_tree_init();
 	cache_tree_init(&root_cache);
@@ -330,6 +329,11 @@ int main(int ac, char **av)
 			goto out_close_fd;
 		if (ret > 0)
 			break;
+		/* check again if there is overlap. */
+		if (cur_logical + cur_len < logical ||
+		    cur_logical >= logical + bytes)
+			break;
+
 		real_logical = max(logical, cur_logical);
 		real_len = min(logical + bytes, cur_logical + cur_len) -
 			   real_logical;

@@ -7,6 +7,8 @@
 source $TOP/tests/common
 
 check_prereq mkfs.btrfs
+check_prereq btrfs
+
 setup_root_helper
 
 # Optionally take id of the device to shrink

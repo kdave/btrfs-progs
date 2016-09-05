@@ -23,6 +23,8 @@
 #include "ctree.h"
 #include <dirent.h>
 #include <stdarg.h>
+#include "internal.h"
+#include "btrfs-list.h"
 
 #define BTRFS_MKFS_SYSTEM_GROUP_SIZE (4 * 1024 * 1024)
 #define BTRFS_MKFS_SMALL_VOLUME_SIZE (1024 * 1024 * 1024)
@@ -43,6 +45,8 @@
 	| BTRFS_FEATURE_INCOMPAT_EXTENDED_IREF			\
 	| BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA		\
 	| BTRFS_FEATURE_INCOMPAT_NO_HOLES)
+
+#define BTRFS_CONVERT_META_GROUP_SIZE (32 * 1024 * 1024)
 
 #define BTRFS_FEATURE_LIST_ALL		(1ULL << 63)
 
@@ -109,19 +113,50 @@ void btrfs_parse_features_to_string(char *buf, u64 flags);
 struct btrfs_mkfs_config {
 	char *label;
 	char *fs_uuid;
+	char *chunk_uuid;
 	u64 blocks[8];
 	u64 num_bytes;
 	u32 nodesize;
 	u32 sectorsize;
 	u32 stripesize;
 	u64 features;
+
+	/* Super bytenr after make_btrfs */
+	u64 super_bytenr;
 };
 
-int make_btrfs(int fd, struct btrfs_mkfs_config *cfg);
+struct btrfs_convert_context {
+	u32 blocksize;
+	u32 first_data_block;
+	u32 block_count;
+	u32 inodes_count;
+	u32 free_inodes_count;
+	u64 total_bytes;
+	char *volume_name;
+	const struct btrfs_convert_operations *convert_ops;
+
+	/* The accurate used space of old filesystem */
+	struct cache_tree used;
+
+	/* Batched ranges which must be covered by data chunks */
+	struct cache_tree data_chunks;
+
+	/* Free space which is not covered by data_chunks */
+	struct cache_tree free;
+
+	void *fs_data;
+};
+
+#define	PREP_DEVICE_ZERO_END	(1U << 0)
+#define	PREP_DEVICE_DISCARD	(1U << 1)
+#define	PREP_DEVICE_VERBOSE	(1U << 2)
+
+int make_btrfs(int fd, struct btrfs_mkfs_config *cfg,
+		struct btrfs_convert_context *cctx);
 int btrfs_make_root_dir(struct btrfs_trans_handle *trans,
 			struct btrfs_root *root, u64 objectid);
-int btrfs_prepare_device(int fd, char *file, int zero_end, u64 *block_count_ret,
-			 u64 max_block_count, int discard);
+int btrfs_prepare_device(int fd, const char *file, u64 *block_count_ret,
+		u64 max_block_count, unsigned opflags);
 int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 		      struct btrfs_root *root, int fd, char *path,
 		      u64 block_count, u32 io_width, u32 io_align,
@@ -154,7 +189,7 @@ int get_fs_info(char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 int get_label(const char *btrfs_dev, char *label);
 int set_label(const char *btrfs_dev, const char *label);
 
-char *__strncpy__null(char *dest, const char *src, size_t n);
+char *__strncpy_null(char *dest, const char *src, size_t n);
 int is_block_device(const char *file);
 int is_mount_point(const char *file);
 int check_arg_type(const char *input);
@@ -162,17 +197,17 @@ int open_path_or_dev_mnt(const char *path, DIR **dirstream, int verbose);
 int btrfs_open_dir(const char *path, DIR **dirstream, int verbose);
 u64 btrfs_device_size(int fd, struct stat *st);
 /* Helper to always get proper size of the destination string */
-#define strncpy_null(dest, src) __strncpy__null(dest, src, sizeof(dest))
-int test_dev_for_mkfs(char *file, int force_overwrite);
+#define strncpy_null(dest, src) __strncpy_null(dest, src, sizeof(dest))
+int test_dev_for_mkfs(const char *file, int force_overwrite);
 int get_label_mounted(const char *mount_path, char *labelp);
 int get_label_unmounted(const char *dev, char *label);
 int test_num_disk_vs_raid(u64 metadata_profile, u64 data_profile,
-	u64 dev_cnt, int mixed);
+	u64 dev_cnt, int mixed, int ssd);
 int group_profile_max_safe_loss(u64 flags);
-int is_vol_small(char *file);
+int is_vol_small(const char *file);
 int csum_tree_block(struct btrfs_root *root, struct extent_buffer *buf,
 			   int verify);
-int ask_user(char *question);
+int ask_user(const char *question);
 int lookup_ino_rootid(int fd, u64 *rootid);
 int btrfs_scan_lblkid(void);
 int get_btrfs_mount(const char *dev, char *mp, size_t mp_size);
@@ -180,16 +215,16 @@ int find_mount_root(const char *path, char **mount_root);
 int get_device_info(int fd, u64 devid,
 		struct btrfs_ioctl_dev_info_args *di_args);
 int test_uuid_unique(char *fs_uuid);
-u64 disk_size(char *path);
-int get_device_info(int fd, u64 devid,
-		struct btrfs_ioctl_dev_info_args *di_args);
-u64 get_partition_size(char *dev);
-const char* group_type_str(u64 flags);
-const char* group_profile_str(u64 flags);
+u64 disk_size(const char *path);
+u64 get_partition_size(const char *dev);
 
-int test_minimum_size(const char *file, u32 leafsize);
+int test_minimum_size(const char *file, u32 nodesize);
 int test_issubvolname(const char *name);
+int test_issubvolume(const char *path);
 int test_isdir(const char *path);
+
+const char *subvol_strip_mountpoint(const char *mnt, const char *full_path);
+int get_subvol_info(const char *fullpath, struct root_info *get_ri);
 
 /*
  * Btrfs minimum size calculation is complicated, it should include at least:
@@ -201,19 +236,20 @@ int test_isdir(const char *path);
  * To avoid the overkill calculation, (system group + global block rsv) * 2
  * for *EACH* device should be good enough.
  */
-static inline u64 btrfs_min_global_blk_rsv_size(u32 leafsize)
+static inline u64 btrfs_min_global_blk_rsv_size(u32 nodesize)
 {
-	return leafsize << 10;
+	return (u64)nodesize << 10;
 }
-static inline u64 btrfs_min_dev_size(u32 leafsize)
+
+static inline u64 btrfs_min_dev_size(u32 nodesize)
 {
 	return 2 * (BTRFS_MKFS_SYSTEM_GROUP_SIZE +
-		    btrfs_min_global_blk_rsv_size(leafsize));
+		    btrfs_min_global_blk_rsv_size(nodesize));
 }
 
 int find_next_key(struct btrfs_path *path, struct btrfs_key *key);
-char* btrfs_group_type_str(u64 flag);
-char* btrfs_group_profile_str(u64 flag);
+const char* btrfs_group_type_str(u64 flag);
+const char* btrfs_group_profile_str(u64 flag);
 
 /*
  * Get the length of the string converted from a u64 number.
@@ -270,9 +306,66 @@ const char *get_argv0_buf(void);
 	"-t|--tbytes        show sizes in TiB, or TB with --si"
 
 unsigned int get_unit_mode_from_arg(int *argc, char *argv[], int df_mode);
+void clean_args_no_options(int argc, char *argv[], const char * const *usage);
+void clean_args_no_options_relaxed(int argc, char *argv[],
+		const char * const *usagestr);
 int string_is_numerical(const char *str);
 
-static inline void warning(const char *fmt, ...)
+#if DEBUG_VERBOSE_ERROR
+#define	PRINT_VERBOSE_ERROR	fprintf(stderr, "%s:%d:", __FILE__, __LINE__)
+#else
+#define PRINT_VERBOSE_ERROR
+#endif
+
+#if DEBUG_TRACE_ON_ERROR
+#define PRINT_TRACE_ON_ERROR	print_trace()
+#else
+#define PRINT_TRACE_ON_ERROR
+#endif
+
+#if DEBUG_ABORT_ON_ERROR
+#define DO_ABORT_ON_ERROR	abort()
+#else
+#define DO_ABORT_ON_ERROR
+#endif
+
+#define error(fmt, ...)							\
+	do {								\
+		PRINT_TRACE_ON_ERROR;					\
+		PRINT_VERBOSE_ERROR;					\
+		__error((fmt), ##__VA_ARGS__);				\
+		DO_ABORT_ON_ERROR;					\
+	} while (0)
+
+#define error_on(cond, fmt, ...)					\
+	do {								\
+		if ((cond))						\
+			PRINT_TRACE_ON_ERROR;				\
+		if ((cond))						\
+			PRINT_VERBOSE_ERROR;				\
+		__error_on((cond), (fmt), ##__VA_ARGS__);		\
+		if ((cond))						\
+			DO_ABORT_ON_ERROR;				\
+	} while (0)
+
+#define warning(fmt, ...)						\
+	do {								\
+		PRINT_TRACE_ON_ERROR;					\
+		PRINT_VERBOSE_ERROR;					\
+		__warning((fmt), ##__VA_ARGS__);			\
+	} while (0)
+
+#define warning_on(cond, fmt, ...)					\
+	do {								\
+		if ((cond))						\
+			PRINT_TRACE_ON_ERROR;				\
+		if ((cond))						\
+			PRINT_VERBOSE_ERROR;				\
+		__warning_on((cond), (fmt), ##__VA_ARGS__);		\
+	} while (0)
+
+__attribute__ ((format (printf, 1, 2)))
+static inline void __warning(const char *fmt, ...)
 {
 	va_list args;
 
@@ -283,7 +376,8 @@ static inline void warning(const char *fmt, ...)
 	fputc('\n', stderr);
 }
 
-static inline void error(const char *fmt, ...)
+__attribute__ ((format (printf, 1, 2)))
+static inline void __error(const char *fmt, ...)
 {
 	va_list args;
 
@@ -294,7 +388,8 @@ static inline void error(const char *fmt, ...)
 	fputc('\n', stderr);
 }
 
-static inline int warning_on(int condition, const char *fmt, ...)
+__attribute__ ((format (printf, 2, 3)))
+static inline int __warning_on(int condition, const char *fmt, ...)
 {
 	va_list args;
 
@@ -310,7 +405,8 @@ static inline int warning_on(int condition, const char *fmt, ...)
 	return 1;
 }
 
-static inline int error_on(int condition, const char *fmt, ...)
+__attribute__ ((format (printf, 2, 3)))
+static inline int __error_on(int condition, const char *fmt, ...)
 {
 	va_list args;
 
@@ -325,5 +421,39 @@ static inline int error_on(int condition, const char *fmt, ...)
 
 	return 1;
 }
+
+/* Pseudo random number generator wrappers */
+u32 rand_u32(void);
+
+static inline int rand_int(void)
+{
+	return (int)(rand_u32());
+}
+
+static inline u64 rand_u64(void)
+{
+	u64 ret = 0;
+
+	ret += rand_u32();
+	ret <<= 32;
+	ret += rand_u32();
+	return ret;
+}
+
+static inline u16 rand_u16(void)
+{
+	return (u16)(rand_u32());
+}
+
+static inline u8 rand_u8(void)
+{
+	return (u8)(rand_u32());
+}
+
+/* Return random number in range [0, limit) */
+unsigned int rand_range(unsigned int upper);
+
+/* Also allow setting the seed manually */
+void init_rand_seed(u64 seed);
 
 #endif

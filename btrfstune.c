@@ -376,20 +376,20 @@ out:
 
 static void print_usage(void)
 {
-	fprintf(stderr, "usage: btrfstune [options] device\n");
-	fprintf(stderr, "\t-S value\tpositive value will enable seeding, zero to disable, negative is not allowed\n");
-	fprintf(stderr, "\t-r \t\tenable extended inode refs\n");
-	fprintf(stderr, "\t-x \t\tenable skinny metadata extent refs\n");
-	fprintf(stderr, "\t-n \t\tenable no-holes feature (more efficient sparse file representation)\n");
-	fprintf(stderr, "\t-f \t\tforce to do dangerous operation, make sure that you are aware of the dangers\n");
-	fprintf(stderr, "\t-u \t\tchange fsid, use a random one\n");
-	fprintf(stderr, "\t-U UUID\t\tchange fsid to UUID\n");
+	printf("usage: btrfstune [options] device\n");
+	printf("\t-S value\tpositive value will enable seeding, zero to disable, negative is not allowed\n");
+	printf("\t-r \t\tenable extended inode refs\n");
+	printf("\t-x \t\tenable skinny metadata extent refs\n");
+	printf("\t-n \t\tenable no-holes feature (more efficient sparse file representation)\n");
+	printf("\t-f \t\tforce to do dangerous operation, make sure that you are aware of the dangers\n");
+	printf("\t-u \t\tchange fsid, use a random one\n");
+	printf("\t-U UUID\t\tchange fsid to UUID\n");
 }
 
 int main(int argc, char *argv[])
 {
 	struct btrfs_root *root;
-	enum btrfs_open_ctree_flags ctree_flags = OPEN_CTREE_WRITES;
+	unsigned ctree_flags = OPEN_CTREE_WRITES;
 	int success = 0;
 	int total = 0;
 	int seeding_flag = 0;
@@ -399,7 +399,6 @@ int main(int argc, char *argv[])
 	int ret;
 	u64 super_flags = 0;
 
-	optind = 1;
 	while(1) {
 		static const struct option long_options[] = {
 			{ "help", no_argument, NULL, GETOPT_VAL_HELP},
@@ -442,9 +441,8 @@ int main(int argc, char *argv[])
 	}
 
 	set_argv0(argv);
-	argc = argc - optind;
 	device = argv[optind];
-	if (check_argc_exact(argc, 1)) {
+	if (check_argc_exact(argc - optind, 1)) {
 		print_usage();
 		return 1;
 	}

@@ -50,7 +50,9 @@ mkfs.btrfs uses the entire device space for the filesystem.
 
 *-d|--data <profile>*::
 Specify the profile for the data block groups.  Valid values are 'raid0',
-'raid1', 'raid5', 'raid6', 'raid10' or 'single', (case does not matter).
+'raid1', 'raid5', 'raid6', 'raid10' or 'single' or dup (case does not matter).
++
+See 'DUP PROFILES ON A SINGLE DEVICE' for more.
 
 *-m|--metadata <profile>*::
 Specify the profile for the metadata block groups.
@@ -60,13 +62,12 @@ Valid values are 'raid0', 'raid1', 'raid5', 'raid6', 'raid10', 'single' or
 A single device filesystem will default to 'DUP', unless a SSD is detected. Then
 it will default to 'single'. The detection is based on the value of
 `/sys/block/DEV/queue/rotational`, where 'DEV' is the short name of the device.
-This is because SSDs can remap the blocks internally to a single copy thus
-deduplicating them which negates the purpose of increased metadata redunancy
-and just wastes space. 
 +
 Note that the rotational status can be arbitrarily set by the underlying block
 device driver and may not reflect the true status (network block device, memory-backed
 SCSI devices etc). Use the options '--data/--metadata' to avoid confusion.
++
+See 'DUP PROFILES ON A SINGLE DEVICE' for more details.
 
 *-M|--mixed*::
 Normally the data and metadata block groups are isolated. The 'mixed' mode
@@ -77,7 +78,7 @@ where the space is reserved for the other block group type, is not available for
 allocation and can lead to ENOSPC state.
 +
 The recommended size for the mixed mode is for filesystems less than 1GiB. The
-soft recommendation is to use it for filesystems smaller than 5GiB. Thie mixed
+soft recommendation is to use it for filesystems smaller than 5GiB. The mixed
 mode may lead to degraded performance on larger filesystems, but is otherwise
 usable, even on multiple devices.
 +
@@ -153,8 +154,8 @@ Print help.
 SIZE UNITS
 ----------
 The default unit is 'byte'. All size parameters accept suffixes in the 1024
-base. The recognized suffixes are: 'k', 'm', 'g', 't', 'e', both uppercase and
-lowercase.
+base. The recognized suffixes are: 'k', 'm', 'g', 't', 'p', 'e', both uppercase
+and lowercase.
 
 MULTIPLE DEVICES
 ----------------
@@ -184,7 +185,12 @@ initramfs/initrd systems.
 FILESYSTEM FEATURES
 -------------------
 
+Features that can be enabled during creation time. See also `btrfs`(5) section
+'FILESYSTEM FEATURES'.
+
 *mixed-bg*::
+(kernel support since 2.6.37)
++
 mixed data and metadata block groups, also set by option '--mixed'
 
 *extref*::
@@ -195,6 +201,8 @@ supported a varying number of hardlinks depending on the sum of all file name
 sizes that can be stored into one metadata block
 
 *raid56*::
+(kernel support since 3.9)
++
 extended format for RAID5/6, also enabled if raid5 or raid6 block groups
 are selected
 
@@ -204,6 +212,8 @@ are selected
 reduced-size metadata for extent references, saves a few percent of metadata
 
 *no-holes*::
+(kernel support since 3.14)
++
 improved representation of file extents where holes are not explicitly
 stored as an extent, saves a few percent of metadata if sparse files are used
 
@@ -229,7 +239,7 @@ Other terms commonly used:
 *block group*::
 *chunk*::
 a logical range of space of a given profile, stores data, metadata or both;
-sometimes the terms are used interchangably
+sometimes the terms are used interchangeably
 +
 A typical size of metadata block group is 256MiB (filesystem smaller than
 50GiB) and 1GiB (larger than 50GiB), for data it's 1GiB. The system block group
@@ -248,16 +258,58 @@ PROFILES
 
 There are the following block group types available:
 
-[ width="60%",options="header" ]
+[ cols="^,^,^,^,^",width="60%" ]
 |=============================================================
-| Profile | Redundancy          | Striping   | Min/max devices
-| single  | 1 copy              | n/a        | 1/any
-| DUP     | 2 copies / 1 device | n/a        | 1/1
-| RAID0   | n/a                 | 1 to N     | 2/any
-| RAID10  | 2 copies            | 1 to N     | 4/any
-| RAID5   | 2 copies            | 3 to N - 1 | 2/any
-| RAID6   | 3 copies            | 3 to N - 2 | 3/any
+.2+^.<h| Profile   3+^.^h| Redundancy           .2+^.<h| Min/max devices
+      ^.^h| Copies   ^.^h| Parity     ^.<h| Striping
+| single  | 1            |                |            | 1/any
+| DUP     | 2 / 1 device |                |            | 1/any ^(see note)^
+| RAID0   |              |                | 1 to N     | 2/any
+| RAID1   | 2            |                |            | 2/any
+| RAID10  | 2            |                | 1 to N     | 4/any
+| RAID5   | 1            | 1              | 2 to N - 1 | 2/any
+| RAID6   | 1            | 2              | 3 to N - 2 | 3/any
 |=============================================================
+
+'Note:' DUP may exist on more than 1 device if it starts on a single device and
+another one is added. Since version 4.5.1, *mkfs.btrfs* will let you create DUP
+on multiple devices.
+
+DUP PROFILES ON A SINGLE DEVICE
+-------------------------------
+
+The mkfs utility will let the user create a filesystem with profiles that write
+the logical blocks to 2 physical locations. Whether there are really 2
+physical copies highly depends on the underlying device type.
+
+For example, a SSD drive can remap the blocks internally to a single copy thus
+deduplicating them. This negates the purpose of increased redundancy and just
+wastes filesystem space without the expected level of redundancy.
+
+The duplicated data/metadata may still be useful to statistically improve the
+chances on a device that might perform some internal optimizations. The actual
+details are not usually disclosed by vendors. For example we could expect that
+not all blocks get deduplicated. This will provide a non-zero probability of
+recovery compared to a zero chance if the single profile is used. The user
+should make the tradeoff decision. The deduplication in SSDs is thought to be
+widely available so the reason behind the mkfs default is to not give a false
+sense of redundancy.
+
+As another example, the widely used USB flash or SD cards use a translation
+layer between the logical and physical view of the device. The data lifetime
+may be affected by frequent plugging. The memory cells could get damaged,
+hopefully not destroying both copies of particular data in case of DUP.
+
+The wear levelling techniques can also lead to reduced redundancy, even if the
+device does not do any deduplication. The controllers may put data written in
+a short timespan into the same physical storage unit (cell, block etc). In case
+this unit dies, both copies are lost. BTRFS does not add any artificial delay
+between metadata writes.
+
+The traditional rotational hard drives usually fail at the sector level.
+
+In any case, a device that starts to misbehave and repairs from the DUP copy
+should be replaced! *DUP is not backup*.
 
 KNOWN ISSUES
 ------------
@@ -308,4 +360,6 @@ further details.
 
 SEE ALSO
 --------
-`btrfs`(8), `wipefs`(8)
+`btrfs`(5),
+`btrfs`(8),
+`wipefs`(8)

@@ -22,6 +22,7 @@
 #include "backref.h"
 #include "ulist.h"
 #include "transaction.h"
+#include "internal.h"
 
 #define pr_debug(...) do { } while (0)
 
@@ -450,7 +451,7 @@ static int __add_missing_keys(struct btrfs_fs_info *fs_info,
 			continue;
 		BUG_ON(!ref->wanted_disk_byte);
 		eb = read_tree_block(fs_info->tree_root, ref->wanted_disk_byte,
-				     fs_info->tree_root->leafsize, 0);
+				     fs_info->tree_root->nodesize, 0);
 		if (!extent_buffer_uptodate(eb)) {
 			free_extent_buffer(eb);
 			return -EIO;
@@ -804,8 +805,7 @@ static int find_parent_nodes(struct btrfs_trans_handle *trans,
 			    ref->level == 0) {
 				u32 bsz;
 				struct extent_buffer *eb;
-				bsz = btrfs_level_size(fs_info->extent_root,
-							ref->level);
+				bsz = fs_info->extent_root->nodesize;
 				eb = read_tree_block(fs_info->extent_root,
 							   ref->parent, bsz, 0);
 				if (!extent_buffer_uptodate(eb)) {
@@ -1156,7 +1156,7 @@ int extent_from_logical(struct btrfs_fs_info *fs_info, u64 logical,
 	}
 	btrfs_item_key_to_cpu(path->nodes[0], found_key, path->slots[0]);
 	if (found_key->type == BTRFS_METADATA_ITEM_KEY)
-		size = fs_info->extent_root->leafsize;
+		size = fs_info->extent_root->nodesize;
 	else if (found_key->type == BTRFS_EXTENT_ITEM_KEY)
 		size = found_key->offset;
 
@@ -1578,8 +1578,8 @@ static int inode_to_path(u64 inum, u32 name_len, unsigned long name_off,
  * is has been created large enough. each path is zero-terminated and accessed
  * from ipath->fspath->val[i].
  * when it returns, there are ipath->fspath->elem_cnt number of paths available
- * in ipath->fspath->val[]. when the allocated space wasn't sufficient, the
- * number of missed paths in recored in ipath->fspath->elem_missed, otherwise,
+ * in ipath->fspath->val[]. When the allocated space wasn't sufficient, the
+ * number of missed paths is recorded in ipath->fspath->elem_missed, otherwise,
  * it's zero. ipath->fspath->bytes_missing holds the number of bytes that would
  * have been needed to return all paths.
  */

@@ -6,11 +6,20 @@
 #   test        run the full testsuite
 #   install     install to default location (/usr/local)
 #   clean       clean built binaries (not the documentation)
+#   clean-all   clean as above, clean docs and generated files
 #
 # Tuning by variables (environment or make arguments):
 #   V=1            verbose, print command lines (default: quiet)
 #   C=1            run checker before compilation (default checker: sparse)
+#   D=1            debugging build, turn off optimizations
+#   D=dflags       dtto, turn on additional debugging features:
+#                  verbose - print file:line along with error/warning messages
+#                  trace   - print trace before the error/warning messages
+#                  abort   - call abort() on first error (dumps core)
+#                  all     - shortcut for all of the above
+#                  asan    - enable address sanitizer compiler feature
 #   W=123          build with warnings (default: off)
+#   DEBUG_CFLAGS   additional compiler flags for debugging build
 #   EXTRA_CFLAGS   additional compiler flags
 #   EXTRA_LDFLAGS  additional linker flags
 #
@@ -32,9 +41,14 @@ RMDIR = @RMDIR@
 INSTALL = @INSTALL@
 DISABLE_DOCUMENTATION = @DISABLE_DOCUMENTATION@
 DISABLE_BTRFSCONVERT = @DISABLE_BTRFSCONVERT@
+BTRFSCONVERT_EXT2 = @BTRFSCONVERT_EXT2@
 
 EXTRA_CFLAGS :=
 EXTRA_LDFLAGS :=
+
+DEBUG_CFLAGS_DEFAULT = -O0 -U_FORTIFY_SOURCE -ggdb3
+DEBUG_CFLAGS_INTERNAL =
+DEBUG_CFLAGS :=
 
 # Common build flags
 CFLAGS = @CFLAGS@ \
@@ -42,7 +56,10 @@ CFLAGS = @CFLAGS@ \
 	 -DBTRFS_FLAT_INCLUDES \
 	 -D_XOPEN_SOURCE=700  \
 	 -fno-strict-aliasing \
-	 -fPIC $(KBUILD_CFLAGS) $(EXTRA_CFLAGS)
+	 -fPIC \
+	 $(EXTRAWARN_CFLAGS) \
+	 $(DEBUG_CFLAGS_INTERNAL) \
+	 $(EXTRA_CFLAGS)
 
 LDFLAGS = @LDFLAGS@ \
 	  -rdynamic $(EXTRA_LDFLAGS)
@@ -60,6 +77,7 @@ STATIC_LIBS = @UUID_LIBS_STATIC@ @BLKID_LIBS_STATIC@ \
 # generate so many sparse errors that sparse stops parsing,
 # which masks real errors that we want to see.
 CHECKER := sparse
+check_defs := .cc-defines.h
 CHECKER_FLAGS := -include $(check_defs) -D__CHECKER__ \
 	-D__CHECK_ENDIAN__ -Wbitwise -Wuninitialized -Wshadow -Wundef \
 	-U_FORTIFY_SOURCE
@@ -69,12 +87,13 @@ objects = ctree.o disk-io.o radix-tree.o extent-tree.o print-tree.o \
 	  extent-cache.o extent_io.o volumes.o utils.o repair.o \
 	  qgroup.o raid6.o free-space-cache.o list_sort.o props.o \
 	  ulist.o qgroup-verify.o backref.o string-table.o task-utils.o \
-	  inode.o file.o find-root.o
+	  inode.o file.o find-root.o free-space-tree.o help.o
 cmds_objects = cmds-subvolume.o cmds-filesystem.o cmds-device.o cmds-scrub.o \
 	       cmds-inspect.o cmds-balance.o cmds-send.o cmds-receive.o \
 	       cmds-quota.o cmds-qgroup.o cmds-replace.o cmds-check.o \
 	       cmds-restore.o cmds-rescue.o chunk-recover.o super-recover.o \
-	       cmds-property.o cmds-fi-usage.o
+	       cmds-property.o cmds-fi-usage.o cmds-inspect-dump-tree.o \
+	       cmds-inspect-dump-super.o cmds-inspect-tree-stats.o cmds-fi-du.o
 libbtrfs_objects = send-stream.o send-utils.o rbtree.o btrfs-list.o crc32c.o \
 		   uuid-tree.o utils-lib.o rbtree-utils.o
 libbtrfs_headers = send-stream.h send-utils.h send.h rbtree.h btrfs-list.h \
@@ -82,11 +101,15 @@ libbtrfs_headers = send-stream.h send-utils.h send.h rbtree.h btrfs-list.h \
 	       extent_io.h ioctl.h ctree.h btrfsck.h version.h
 TESTS = fsck-tests.sh convert-tests.sh
 
+udev_rules = 64-btrfs-dm.rules
+
 prefix ?= @prefix@
 exec_prefix = @exec_prefix@
 bindir = @bindir@
 libdir ?= @libdir@
 incdir = @includedir@/btrfs
+udevdir = @UDEVDIR@
+udevruledir = ${udevdir}/rules.d
 
 ifeq ("$(origin V)", "command line")
   BUILD_VERBOSE = $(V)
@@ -99,6 +122,32 @@ ifeq ($(BUILD_VERBOSE),1)
   Q =
 else
   Q = @
+endif
+
+ifeq ("$(origin D)", "command line")
+  DEBUG_CFLAGS_INTERNAL = $(DEBUG_CFLAGS_DEFAULT) $(DEBUG_CFLAGS)
+endif
+
+ifneq (,$(findstring verbose,$(D)))
+  DEBUG_CFLAGS_INTERNAL += -DDEBUG_VERBOSE_ERROR=1
+endif
+
+ifneq (,$(findstring trace,$(D)))
+  DEBUG_CFLAGS_INTERNAL += -DDEBUG_TRACE_ON_ERROR=1
+endif
+
+ifneq (,$(findstring abort,$(D)))
+  DEBUG_CFLAGS_INTERNAL += -DDEBUG_ABORT_ON_ERROR=1
+endif
+
+ifneq (,$(findstring all,$(D)))
+  DEBUG_CFLAGS_INTERNAL += -DDEBUG_VERBOSE_ERROR=1
+  DEBUG_CFLAGS_INTERNAL += -DDEBUG_TRACE_ON_ERROR=1
+  DEBUG_CFLAGS_INTERNAL += -DDEBUG_ABORT_ON_ERROR=1
+endif
+
+ifneq (,$(findstring asan,$(D)))
+  DEBUG_CFLAGS_INTERNAL += -fsanitize=address
 endif
 
 MAKEOPTS = --no-print-directory Q=$(Q)
@@ -123,7 +172,14 @@ endif
 # external libs required by various binaries; for btrfs-foo,
 # specify btrfs_foo_libs = <list of libs>; see $($(subst...)) rules below
 btrfs_convert_libs = @EXT2FS_LIBS@ @COM_ERR_LIBS@
+btrfs_convert_cflags = -DBTRFSCONVERT_EXT2=$(BTRFSCONVERT_EXT2)
 btrfs_fragments_libs = -lgd -lpng -ljpeg -lfreetype
+btrfs_debug_tree_objects = cmds-inspect-dump-tree.o
+btrfs_show_super_objects = cmds-inspect-dump-super.o
+btrfs_calc_size_objects = cmds-inspect-tree-stats.o
+
+# collect values of the variables above
+standalone_deps = $(foreach dep,$(patsubst %,%_objects,$(subst -,_,$(filter btrfs-%, $(progs)))),$($(dep)))
 
 SUBDIRS =
 BUILDDIRS = $(patsubst %,build-%,$(SUBDIRS))
@@ -154,7 +210,6 @@ lib_links = libbtrfs.so.0 libbtrfs.so
 headers = $(libbtrfs_headers)
 
 # make C=1 to enable sparse
-check_defs := .cc-defines.h 
 ifdef C
 	# We're trying to use sparse against glibc headers which go wild
 	# trying to use internal compiler macros to test features.  We
@@ -173,15 +228,18 @@ endif
 %.o.d: %.c
 	$(Q)$(CC) -MM -MG -MF $@ -MT $(@:.o.d=.o) -MT $(@:.o.d=.static.o) -MT $@ $(CFLAGS) $<
 
+#
+# Pick from per-file variables, btrfs_*_cflags
+#
 .c.o:
 	@$(check_echo) "    [SP]     $<"
 	$(Q)$(check) $(CFLAGS) $(CHECKER_FLAGS) $<
 	@echo "    [CC]     $@"
-	$(Q)$(CC) $(CFLAGS) -c $<
+	$(Q)$(CC) $(CFLAGS) -c $< $($(subst -,_,$(@:%.o=%)-cflags))
 
 %.static.o: %.c
 	@echo "    [CC]     $@"
-	$(Q)$(CC) $(STATIC_CFLAGS) -c $< -o $@
+	$(Q)$(CC) $(STATIC_CFLAGS) -c $< -o $@ $($(subst -,_,$(@:%.static.o=%)-cflags))
 
 all: $(progs) $(BUILDDIRS)
 $(SUBDIRS): $(BUILDDIRS)
@@ -209,9 +267,19 @@ test-fuzz: btrfs
 	@echo "    [TEST]   fuzz-tests.sh"
 	$(Q)bash tests/fuzz-tests.sh
 
+test-cli: btrfs
+	@echo "    [TEST]   cli-tests.sh"
+	$(Q)bash tests/cli-tests.sh
+
 test-clean:
 	@echo "Cleaning tests"
 	$(Q)bash tests/clean-tests.sh
+
+test-inst: all
+	@tmpdest=`mktemp --tmpdir -d btrfs-inst.XXXXXX` && \
+		echo "Test installation to $$tmpdest" && \
+		$(MAKE) DESTDIR=$$tmpdest install && \
+		$(RM) -rf -- $$tmpdest
 
 test: test-fsck test-mkfs test-convert test-misc test-fuzz
 
@@ -236,8 +304,7 @@ $(libs_static): $(libbtrfs_objects)
 
 $(lib_links):
 	@echo "    [LN]     $@"
-	$(Q)$(LN_S) -f libbtrfs.so.0.1 libbtrfs.so.0
-	$(Q)$(LN_S) -f libbtrfs.so.0.1 libbtrfs.so
+	$(Q)$(LN_S) -f libbtrfs.so.0.1 $@
 
 # keep intermediate files from the below implicit rules around
 .PRECIOUS: $(addsuffix .o,$(progs))
@@ -249,25 +316,28 @@ $(lib_links):
 # For static variants, use an extra $(subst) to get rid of the ".static"
 # from the target name before translating to list of libs
 
-btrfs-%.static: $(static_objects) btrfs-%.static.o $(static_libbtrfs_objects)
+btrfs-%.static: $(static_objects) btrfs-%.static.o $(static_libbtrfs_objects) $(patsubst %.o,%.static.o,$(standalone_deps))
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(STATIC_CFLAGS) -o $@ $@.o $(static_objects) \
+		$(patsubst %.o, %.static.o, $($(subst -,_,$(subst .static,,$@)-objects))) \
 		$(static_libbtrfs_objects) $(STATIC_LDFLAGS) \
 		$($(subst -,_,$(subst .static,,$@)-libs)) $(STATIC_LIBS)
 
-btrfs-%: $(objects) $(libs_static) btrfs-%.o
+btrfs-%: $(objects) $(libs_static) btrfs-%.o $(standalone_deps)
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o $@ $(objects) $@.o $(libs_static) \
+	$(Q)$(CC) $(CFLAGS) -o $@ $(objects) $@.o \
+		$($(subst -,_,$@-objects)) \
+		$(libs_static) \
 		$(LDFLAGS) $(LIBS) $($(subst -,_,$@-libs))
 
-btrfs: $(objects) btrfs.o help.o $(cmds_objects) $(libs_static)
+btrfs: $(objects) btrfs.o $(cmds_objects) $(libs_static)
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o btrfs btrfs.o help.o $(cmds_objects) \
+	$(Q)$(CC) $(CFLAGS) -o btrfs btrfs.o $(cmds_objects) \
 		$(objects) $(libs_static) $(LDFLAGS) $(LIBS)
 
-btrfs.static: $(static_objects) btrfs.static.o help.static.o $(static_cmds_objects) $(static_libbtrfs_objects)
+btrfs.static: $(static_objects) btrfs.static.o $(static_cmds_objects) $(static_libbtrfs_objects)
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(STATIC_CFLAGS) -o btrfs.static btrfs.static.o help.static.o $(static_cmds_objects) \
+	$(Q)$(CC) $(STATIC_CFLAGS) -o btrfs.static btrfs.static.o $(static_cmds_objects) \
 		$(static_objects) $(static_libbtrfs_objects) $(STATIC_LDFLAGS) $(STATIC_LIBS)
 
 # For backward compatibility, 'btrfs' changes behaviour to fsck if it's named 'btrfsck'
@@ -377,11 +447,14 @@ install: $(libs) $(progs_install) $(INSTALLDIRS)
 	cp -a $(lib_links) $(DESTDIR)$(libdir)
 	$(INSTALL) -m755 -d $(DESTDIR)$(incdir)
 	$(INSTALL) -m644 $(headers) $(DESTDIR)$(incdir)
+ifneq ($(udevdir),)
+	$(INSTALL) -m755 -d $(DESTDIR)$(udevruledir)
+	$(INSTALL) -m644 $(udev_rules) $(DESTDIR)$(udevruledir)
+endif
 
 install-static: $(progs_static) $(INSTALLDIRS)
-	for p in $(progs_static) ; do \
-		$(INSTALL) -D -m755 $$p $(DESTDIR)$(bindir)/ ; \
-	done
+	$(INSTALL) -m755 -d $(DESTDIR)$(bindir)
+	$(INSTALL) $(progs_static) $(DESTDIR)$(bindir)
 	# btrfsck is a link to btrfs in the src tree, make it so for installed file as well
 	$(LN_S) -f btrfs.static $(DESTDIR)$(bindir)/btrfsck.static
 

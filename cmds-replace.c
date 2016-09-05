@@ -166,7 +166,7 @@ static int cmd_replace_start(int argc, char **argv)
 	status_args.cmd = BTRFS_IOCTL_DEV_REPLACE_CMD_STATUS;
 	status_args.result = BTRFS_IOCTL_DEV_REPLACE_RESULT_NO_RESULT;
 	ret = ioctl(fdmnt, BTRFS_IOC_DEV_REPLACE, &status_args);
-	if (ret) {
+	if (ret < 0) {
 		fprintf(stderr,
 			"ERROR: ioctl(DEV_REPLACE_STATUS) failed on \"%s\": %s",
 			path, strerror(errno));
@@ -179,25 +179,21 @@ static int cmd_replace_start(int argc, char **argv)
 	}
 
 	if (status_args.result != BTRFS_IOCTL_DEV_REPLACE_RESULT_NO_ERROR) {
-		fprintf(stderr,
-			"ERROR: ioctl(DEV_REPLACE_STATUS) on \"%s\" returns error: %s\n",
+		error("ioctl(DEV_REPLACE_STATUS) on '%s' returns error: %s",
 			path, replace_dev_result2string(status_args.result));
 		goto leave_with_error;
 	}
 
 	if (status_args.status.replace_state ==
 	    BTRFS_IOCTL_DEV_REPLACE_STATE_STARTED) {
-		fprintf(stderr,
-			"ERROR: btrfs replace on \"%s\" already started!\n",
-			path);
+		error("device replace on '%s' already started", path);
 		goto leave_with_error;
 	}
 
 	srcdev = argv[optind];
 	dstdev = canonicalize_path(argv[optind + 1]);
 	if (!dstdev) {
-		fprintf(stderr,
-			"ERROR: Could not canonicalize path '%s': %s\n",
+		error("cannot canonicalize path '%s': %s",
 			argv[optind + 1], strerror(errno));
 		goto leave_with_error;
 	}
@@ -210,13 +206,12 @@ static int cmd_replace_start(int argc, char **argv)
 
 		ret = get_fs_info(path, &fi_args, &di_args);
 		if (ret) {
-			fprintf(stderr, "ERROR: getting dev info for devstats failed: "
-					"%s\n", strerror(-ret));
+			error("failed to get device info: %s", strerror(-ret));
 			free(di_args);
 			goto leave_with_error;
 		}
 		if (!fi_args.num_devices) {
-			fprintf(stderr, "ERROR: no devices found\n");
+			error("no devices found");
 			free(di_args);
 			goto leave_with_error;
 		}
@@ -227,7 +222,7 @@ static int cmd_replace_start(int argc, char **argv)
 		srcdev_size = di_args[i].total_bytes;
 		free(di_args);
 		if (i == fi_args.num_devices) {
-			fprintf(stderr, "Error: '%s' is not a valid devid for filesystem '%s'\n",
+			error("'%s' is not a valid devid for filesystem '%s'",
 				srcdev, path);
 			goto leave_with_error;
 		}
@@ -237,7 +232,7 @@ static int cmd_replace_start(int argc, char **argv)
 		start_args.start.srcdevid = 0;
 		srcdev_size = get_partition_size(srcdev);
 	} else {
-		fprintf(stderr, "ERROR: source device must be a block device or a devid\n");
+		error("source device must be a block device or a devid");
 		goto leave_with_error;
 	}
 
@@ -247,20 +242,20 @@ static int cmd_replace_start(int argc, char **argv)
 
 	dstdev_size = get_partition_size(dstdev);
 	if (srcdev_size > dstdev_size) {
-		fprintf(stderr, "ERROR: target device smaller than source device (required %llu bytes)\n",
+		error("target device smaller than source device (required %llu bytes)",
 			srcdev_size);
 		goto leave_with_error;
 	}
 
 	fddstdev = open(dstdev, O_RDWR);
 	if (fddstdev < 0) {
-		fprintf(stderr, "Unable to open %s\n", dstdev);
+		error("unable to open %s: %s", dstdev, strerror(errno));
 		goto leave_with_error;
 	}
 	strncpy((char *)start_args.start.tgtdev_name, dstdev,
 		BTRFS_DEVICE_PATH_NAME_MAX);
-	ret = btrfs_prepare_device(fddstdev, dstdev, 1, &dstdev_block_count, 0,
-				0);
+	ret = btrfs_prepare_device(fddstdev, dstdev, &dstdev_block_count, 0,
+			PREP_DEVICE_ZERO_END | PREP_DEVICE_VERBOSE);
 	if (ret)
 		goto leave_with_error;
 
@@ -272,8 +267,7 @@ static int cmd_replace_start(int argc, char **argv)
 	dev_replace_handle_sigint(fdmnt);
 	if (!do_not_background) {
 		if (daemon(0, 0) < 0) {
-			fprintf(stderr, "ERROR, backgrounding failed: %s\n",
-				strerror(errno));
+			error("backgrounding failed: %s", strerror(errno));
 			goto leave_with_error;
 		}
 	}
@@ -282,7 +276,7 @@ static int cmd_replace_start(int argc, char **argv)
 	start_args.result = BTRFS_IOCTL_DEV_REPLACE_RESULT_NO_RESULT;
 	ret = ioctl(fdmnt, BTRFS_IOC_DEV_REPLACE, &start_args);
 	if (do_not_background) {
-		if (ret) {
+		if (ret < 0) {
 			fprintf(stderr,
 				"ERROR: ioctl(DEV_REPLACE_START) failed on \"%s\": %s",
 				path, strerror(errno));
@@ -293,16 +287,14 @@ static int cmd_replace_start(int argc, char **argv)
 				fprintf(stderr, "\n");
 
 			if (errno == EOPNOTSUPP)
-				fprintf(stderr,
-					"WARNING: dev_replace does not yet handle RAID5/6\n");
+				warning("device replace of RAID5/6 not supported with this kernel");
 
 			goto leave_with_error;
 		}
 
 		if (start_args.result !=
 		    BTRFS_IOCTL_DEV_REPLACE_RESULT_NO_ERROR) {
-			fprintf(stderr,
-				"ERROR: ioctl(DEV_REPLACE_START) on \"%s\" returns error: %s\n",
+			error("ioctl(DEV_REPLACE_START) on '%s' returns error: %s",
 				path,
 				replace_dev_result2string(start_args.result));
 			goto leave_with_error;
@@ -380,7 +372,7 @@ static int print_replace_status(int fd, const char *path, int once)
 		args.cmd = BTRFS_IOCTL_DEV_REPLACE_CMD_STATUS;
 		args.result = BTRFS_IOCTL_DEV_REPLACE_RESULT_NO_RESULT;
 		ret = ioctl(fd, BTRFS_IOC_DEV_REPLACE, &args);
-		if (ret) {
+		if (ret < 0) {
 			fprintf(stderr, "ERROR: ioctl(DEV_REPLACE_STATUS) failed on \"%s\": %s",
 				path, strerror(errno));
 			if (args.result != BTRFS_IOCTL_DEV_REPLACE_RESULT_NO_RESULT)
@@ -392,7 +384,7 @@ static int print_replace_status(int fd, const char *path, int once)
 		}
 
 		if (args.result != BTRFS_IOCTL_DEV_REPLACE_RESULT_NO_ERROR) {
-			fprintf(stderr, "ERROR: ioctl(DEV_REPLACE_STATUS) on \"%s\" returns error: %s\n",
+			error("ioctl(DEV_REPLACE_STATUS) on '%s' returns error: %s",
 				path,
 				replace_dev_result2string(args.result));
 			return -1;
@@ -444,8 +436,7 @@ static int print_replace_status(int fd, const char *path, int once)
 			printf("Never started");
 			break;
 		default:
-			fprintf(stderr,
-	"ERROR: ioctl(DEV_REPLACE_STATUS) on \"%s\" got unknown status: %llu\n",
+			error("unknown status from ioctl DEV_REPLACE_STATUS on '%s': %llu\n",
 					path, status->replace_state);
 			return -EINVAL;
 		}
@@ -531,7 +522,7 @@ static int cmd_replace_cancel(int argc, char **argv)
 	ret = ioctl(fd, BTRFS_IOC_DEV_REPLACE, &args);
 	e = errno;
 	close_file_or_dir(fd, dirstream);
-	if (ret) {
+	if (ret < 0) {
 		fprintf(stderr, "ERROR: ioctl(DEV_REPLACE_CANCEL) failed on \"%s\": %s",
 			path, strerror(e));
 		if (args.result != BTRFS_IOCTL_DEV_REPLACE_RESULT_NO_RESULT)

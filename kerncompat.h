@@ -55,7 +55,8 @@
 #define gfp_t int
 #define get_cpu_var(p) (p)
 #define __get_cpu_var(p) (p)
-#define BITS_PER_LONG (__SIZEOF_LONG__ * 8)
+#define BITS_PER_BYTE 8
+#define BITS_PER_LONG (__SIZEOF_LONG__ * BITS_PER_BYTE)
 #define __GFP_BITS_SHIFT 20
 #define __GFP_BITS_MASK ((int)((1 << __GFP_BITS_SHIFT) - 1))
 #define GFP_KERNEL 0
@@ -72,7 +73,7 @@
 static inline void print_trace(void)
 {
 	void *array[MAX_BACKTRACE];
-	size_t size;
+	int size;
 
 	size = backtrace(array, MAX_BACKTRACE);
 	backtrace_symbols_fd(array, size, 2);
@@ -241,26 +242,6 @@ static inline long IS_ERR(const void *ptr)
 }
 
 /*
- * max/min macro
- */
-#define min(x,y) ({ \
-	typeof(x) _x = (x);	\
-	typeof(y) _y = (y);	\
-	(void) (&_x == &_y);		\
-	_x < _y ? _x : _y; })
-
-#define max(x,y) ({ \
-	typeof(x) _x = (x);	\
-	typeof(y) _y = (y);	\
-	(void) (&_x == &_y);		\
-	_x > _y ? _x : _y; })
-
-#define min_t(type,x,y) \
-	({ type __x = (x); type __y = (y); __x < __y ? __x: __y; })
-#define max_t(type,x,y) \
-	({ type __x = (x); type __y = (y); __x > __y ? __x: __y; })
-
-/*
  * This looks more complex than it should be. But we need to
  * get the type for the ~ right in round_down (it needs to be
  * as wide as the result!), and we want to evaluate the macro
@@ -310,6 +291,14 @@ static inline long IS_ERR(const void *ptr)
 #define __bitwise
 #endif
 
+/* Alignment check */
+#define IS_ALIGNED(x, a)                (((x) & ((typeof(x))(a) - 1)) == 0)
+
+static inline int is_power_of_2(unsigned long n)
+{
+	return (n != 0 && ((n & (n - 1)) == 0));
+}
+
 typedef u16 __bitwise __le16;
 typedef u16 __bitwise __be16;
 typedef u32 __bitwise __le32;
@@ -346,13 +335,21 @@ struct __una_u32 { __le32 x; } __attribute__((__packed__));
 struct __una_u64 { __le64 x; } __attribute__((__packed__));
 
 #define get_unaligned_le8(p) (*((u8 *)(p)))
+#define get_unaligned_8(p) (*((u8 *)(p)))
 #define put_unaligned_le8(val,p) ((*((u8 *)(p))) = (val))
+#define put_unaligned_8(val,p) ((*((u8 *)(p))) = (val))
 #define get_unaligned_le16(p) le16_to_cpu(((const struct __una_u16 *)(p))->x)
+#define get_unaligned_16(p) (((const struct __una_u16 *)(p))->x)
 #define put_unaligned_le16(val,p) (((struct __una_u16 *)(p))->x = cpu_to_le16(val))
+#define put_unaligned_16(val,p) (((struct __una_u16 *)(p))->x = (val))
 #define get_unaligned_le32(p) le32_to_cpu(((const struct __una_u32 *)(p))->x)
+#define get_unaligned_32(p) (((const struct __una_u32 *)(p))->x)
 #define put_unaligned_le32(val,p) (((struct __una_u32 *)(p))->x = cpu_to_le32(val))
+#define put_unaligned_32(val,p) (((struct __una_u32 *)(p))->x = (val))
 #define get_unaligned_le64(p) le64_to_cpu(((const struct __una_u64 *)(p))->x)
+#define get_unaligned_64(p) (((const struct __una_u64 *)(p))->x)
 #define put_unaligned_le64(val,p) (((struct __una_u64 *)(p))->x = cpu_to_le64(val))
+#define put_unaligned_64(val,p) (((struct __una_u64 *)(p))->x = (val))
 
 #ifndef true
 #define true 1

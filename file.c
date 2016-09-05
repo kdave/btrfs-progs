@@ -52,7 +52,7 @@ int btrfs_get_extent(struct btrfs_trans_handle *trans,
 	if (ret <= 0)
 		goto out;
 	if (ret > 0) {
-		/* Check preivous file extent */
+		/* Check previous file extent */
 		ret = btrfs_previous_item(root, path, ino,
 					  BTRFS_EXTENT_DATA_KEY);
 		if (ret < 0)
@@ -111,7 +111,7 @@ check_next:
 		not_found = 1;
 
 	/*
-	 * To keep the search hehavior consistent with search_slot(),
+	 * To keep the search behavior consistent with search_slot(),
 	 * we need to go back to the prev leaf's nritem slot if
 	 * we are at the first slot of the leaf.
 	 */

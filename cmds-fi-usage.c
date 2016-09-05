@@ -47,7 +47,7 @@ static int add_info_to_list(struct chunk_info **info_ptr,
 
 	for (j = 0 ; j < num_stripes ; j++) {
 		int i;
-		struct chunk_info *p = 0;
+		struct chunk_info *p = NULL;
 		struct btrfs_stripe *stripe;
 		u64    devid;
 
@@ -63,12 +63,12 @@ static int add_info_to_list(struct chunk_info **info_ptr,
 			}
 
 		if (!p) {
-			int size = sizeof(struct btrfs_chunk) * (*info_count+1);
-			struct chunk_info *res = realloc(*info_ptr, size);
+			int tmp = sizeof(struct btrfs_chunk) * (*info_count + 1);
+			struct chunk_info *res = realloc(*info_ptr, tmp);
 
 			if (!res) {
 				free(*info_ptr);
-				fprintf(stderr, "ERROR: not enough memory\n");
+				error("not enough memory");
 				return -ENOMEM;
 			}
 
@@ -161,8 +161,7 @@ static int load_chunk_info(int fd, struct chunk_info **info_ptr, int *info_count
 			return -e;
 
 		if (ret < 0) {
-			fprintf(stderr,
-				"ERROR: can't perform the search - %s\n",
+			error("cannot look up chunk tree info: %s",
 				strerror(e));
 			return 1;
 		}
@@ -182,15 +181,15 @@ static int load_chunk_info(int fd, struct chunk_info **info_ptr, int *info_count
 
 			ret = add_info_to_list(info_ptr, info_count, item);
 			if (ret) {
-				*info_ptr = 0;
+				*info_ptr = NULL;
 				return 1;
 			}
 
-			off += sh->len;
+			off += btrfs_search_header_len(sh);
 
-			sk->min_objectid = sh->objectid;
-			sk->min_type = sh->type;
-			sk->min_offset = sh->offset+1;
+			sk->min_objectid = btrfs_search_header_objectid(sh);
+			sk->min_type = btrfs_search_header_type(sh);
+			sk->min_offset = btrfs_search_header_offset(sh)+1;
 
 		}
 		if (!sk->min_offset)	/* overflow */
@@ -228,12 +227,12 @@ static int cmp_btrfs_ioctl_space_info(const void *a, const void *b)
  */
 static struct btrfs_ioctl_space_args *load_space_info(int fd, char *path)
 {
-	struct btrfs_ioctl_space_args *sargs = 0, *sargs_orig = 0;
-	int e, ret, count;
+	struct btrfs_ioctl_space_args *sargs = NULL, *sargs_orig = NULL;
+	int ret, count;
 
 	sargs_orig = sargs = calloc(1, sizeof(struct btrfs_ioctl_space_args));
 	if (!sargs) {
-		fprintf(stderr, "ERROR: not enough memory\n");
+		error("not enough memory");
 		return NULL;
 	}
 
@@ -241,11 +240,9 @@ static struct btrfs_ioctl_space_args *load_space_info(int fd, char *path)
 	sargs->total_spaces = 0;
 
 	ret = ioctl(fd, BTRFS_IOC_SPACE_INFO, sargs);
-	e = errno;
-	if (ret) {
-		fprintf(stderr,
-			"ERROR: couldn't get space info on '%s' - %s\n",
-			path, strerror(e));
+	if (ret < 0) {
+		error("cannot get space info on '%s': %s", path,
+			strerror(errno));
 		free(sargs);
 		return NULL;
 	}
@@ -261,7 +258,7 @@ static struct btrfs_ioctl_space_args *load_space_info(int fd, char *path)
 			(count * sizeof(struct btrfs_ioctl_space_info)));
 	if (!sargs) {
 		free(sargs_orig);
-		fprintf(stderr, "ERROR: not enough memory\n");
+		error("not enough memory");
 		return NULL;
 	}
 
@@ -269,12 +266,9 @@ static struct btrfs_ioctl_space_args *load_space_info(int fd, char *path)
 	sargs->total_spaces = 0;
 
 	ret = ioctl(fd, BTRFS_IOC_SPACE_INFO, sargs);
-	e = errno;
-
-	if (ret) {
-		fprintf(stderr,
-			"ERROR: couldn't get space info on '%s' - %s\n",
-			path, strerror(e));
+	if (ret < 0) {
+		error("cannot get space info with %u slots: %s",
+			count, strerror(errno));
 		free(sargs);
 		return NULL;
 	}
@@ -286,7 +280,7 @@ static struct btrfs_ioctl_space_args *load_space_info(int fd, char *path)
 }
 
 /*
- * This function computes the space occuped by a *single* RAID5/RAID6 chunk.
+ * This function computes the space occupied by a *single* RAID5/RAID6 chunk.
  * The computation is performed on the basis of the number of stripes
  * which compose the chunk, which could be different from the number of devices
  * if a disk is added later.
@@ -312,7 +306,7 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 		int chunkcount, struct device_info *devinfo, int devcount,
 		char *path, unsigned unit_mode)
 {
-	struct btrfs_ioctl_space_args *sargs = 0;
+	struct btrfs_ioctl_space_args *sargs = NULL;
 	int i;
 	int ret = 0;
 	int width = 10;		/* default 10 for human units */
@@ -343,6 +337,7 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 	u64 free_estimated = 0;
 	u64 free_min = 0;
 	int max_data_ratio = 1;
+	int mixed = 0;
 
 	sargs = load_space_info(fd, path);
 	if (!sargs) {
@@ -358,8 +353,7 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 	}
 
 	if (r_total_size == 0) {
-		fprintf(stderr,
-			"ERROR: couldn't get space info on '%s' - %s\n",
+		error("cannot get space info on '%s': %s",
 			path, strerror(errno));
 
 		ret = 1;
@@ -391,7 +385,7 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 			ratio = 1;
 
 		if (!ratio)
-			fprintf(stderr, "WARNING: RAID56 detected, not implemented\n");
+			warning("RAID56 detected, not implemented");
 
 		if (ratio > max_data_ratio)
 			max_data_ratio = ratio;
@@ -401,10 +395,9 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 			l_global_reserve_used = sargs->spaces[i].used_bytes;
 		}
 		if ((flags & (BTRFS_BLOCK_GROUP_DATA | BTRFS_BLOCK_GROUP_METADATA))
-			== (BTRFS_BLOCK_GROUP_DATA | BTRFS_BLOCK_GROUP_METADATA)) {
-			fprintf(stderr, "WARNING: MIXED blockgroups not handled\n");
+		    == (BTRFS_BLOCK_GROUP_DATA | BTRFS_BLOCK_GROUP_METADATA)) {
+			mixed = 1;
 		}
-
 		if (flags & BTRFS_BLOCK_GROUP_DATA) {
 			r_data_used += sargs->spaces[i].used_bytes * ratio;
 			r_data_chunks += sargs->spaces[i].total_bytes * ratio;
@@ -421,13 +414,20 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 		}
 	}
 
-	r_total_chunks = r_data_chunks + r_metadata_chunks + r_system_chunks;
-	r_total_used = r_data_used + r_metadata_used + r_system_used;
+	r_total_chunks = r_data_chunks + r_system_chunks;
+	r_total_used = r_data_used + r_system_used;
+	if (!mixed) {
+		r_total_chunks += r_metadata_chunks;
+		r_total_used += r_metadata_used;
+	}
 	r_total_unused = r_total_size - r_total_chunks;
 
 	/* Raw / Logical = raid factor, >= 1 */
 	data_ratio = (double)r_data_chunks / l_data_chunks;
-	metadata_ratio = (double)r_metadata_chunks / l_metadata_chunks;
+	if (mixed)
+		metadata_ratio = data_ratio;
+	else
+		metadata_ratio = (double)r_metadata_chunks / l_metadata_chunks;
 
 #if 0
 	/* add the raid5/6 allocated space */
@@ -444,6 +444,13 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 	 * In non-mixed case there's no difference.
 	 */
 	free_estimated = (r_data_chunks - r_data_used) / data_ratio;
+	/*
+	 * For mixed-bg the metadata are left out in calculations thus global
+	 * reserve would be lost. Part of it could be permanently allocated,
+	 * we have to subtract the used bytes so we don't go under zero free.
+	 */
+	if (mixed)
+		free_estimated -= l_global_reserve - l_global_reserve_used;
 	free_min = free_estimated;
 
 	/* Chop unallocatable space */
@@ -510,20 +517,20 @@ static int load_device_info(int fd, struct device_info **device_info_ptr,
 	struct device_info *info;
 
 	*device_info_count = 0;
-	*device_info_ptr = 0;
+	*device_info_ptr = NULL;
 
 	ret = ioctl(fd, BTRFS_IOC_FS_INFO, &fi_args);
 	if (ret < 0) {
 		if (errno == EPERM)
 			return -errno;
-		fprintf(stderr, "ERROR: cannot get filesystem info - %s\n",
+		error("cannot get filesystem info: %s",
 				strerror(errno));
 		return 1;
 	}
 
 	info = calloc(fi_args.num_devices, sizeof(struct device_info));
 	if (!info) {
-		fprintf(stderr, "ERROR: not enough memory\n");
+		error("not enough memory");
 		return 1;
 	}
 
@@ -535,9 +542,7 @@ static int load_device_info(int fd, struct device_info **device_info_ptr,
 		if (ret == -ENODEV)
 			continue;
 		if (ret) {
-			fprintf(stderr,
-			    "ERROR: cannot get info about device devid=%d\n",
-			    i);
+			error("cannot get info about device devid=%d", i);
 			free(info);
 			return ret;
 		}
@@ -571,16 +576,16 @@ int load_chunk_and_device_info(int fd, struct chunk_info **chunkinfo,
 
 	ret = load_chunk_info(fd, chunkinfo, chunkcount);
 	if (ret == -EPERM) {
-		fprintf(stderr,
-			"WARNING: can't read detailed chunk info, RAID5/6 numbers will be incorrect, run as root\n");
+		warning(
+"cannot read detailed chunk info, RAID5/6 numbers will be incorrect, run as root");
 	} else if (ret) {
 		return ret;
 	}
 
 	ret = load_device_info(fd, devinfo, devcount);
 	if (ret == -EPERM) {
-		fprintf(stderr,
-			"WARNING: can't get filesystem info from ioctl(FS_INFO), run as root\n");
+		warning(
+		"cannot get filesystem info from ioctl(FS_INFO), run as root");
 		ret = 0;
 	}
 
@@ -620,7 +625,7 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 {
 	int i;
 	u64 total_unused = 0;
-	struct string_table *matrix = 0;
+	struct string_table *matrix = NULL;
 	int  ncols, nrows;
 	int col;
 	int unallocated_col;
@@ -642,7 +647,7 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 
 	matrix = table_create(ncols, nrows);
 	if (!matrix) {
-		fprintf(stderr, "ERROR: not enough memory\n");
+		error("not enough memory");
 		return;
 	}
 
@@ -917,7 +922,6 @@ int cmd_filesystem_usage(int argc, char **argv)
 
 	unit_mode = get_unit_mode_from_arg(&argc, argv, 1);
 
-	optind = 1;
 	while (1) {
 		int c;
 
@@ -1019,13 +1023,8 @@ void print_device_sizes(int fd, struct device_info *devinfo, unsigned unit_mode)
 	printf("   Device size: %*s%10s\n",
 		(int)(20 - strlen("Device size")), "",
 		pretty_size_mode(devinfo->device_size, unit_mode));
-#if 0
-	/*
-	 * The term has not seen an agreement and we don't want to change it
-	 * once it's in non-development branches or even released.
-	 */
-	printf("   FS occupied: %*s%10s\n",
-		(int)(20 - strlen("FS occupied")), "",
-		pretty_size_mode(devinfo->size, unit_mode));
-#endif
+	printf("   Device slack: %*s%10s\n",
+		(int)(20 - strlen("Device slack")), "",
+		pretty_size_mode(devinfo->device_size - devinfo->size,
+			unit_mode));
 }

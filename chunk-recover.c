@@ -47,7 +47,7 @@ struct recover_control {
 
 	u16 csum_size;
 	u32 sectorsize;
-	u32 leafsize;
+	u32 nodesize;
 	u64 generation;
 	u64 chunk_root_generation;
 
@@ -247,7 +247,7 @@ again:
 					      generation);
 			/*
 			 * According to the current kernel code, the following
-			 * case is impossble, or there is something wrong in
+			 * case is impossible, or there is something wrong in
 			 * the kernel code.
 			 */
 			if (memcmp(((void *)exist) + offset,
@@ -477,7 +477,7 @@ static void print_scan_result(struct recover_control *rc)
 	printf("DEVICE SCAN RESULT:\n");
 	printf("Filesystem Information:\n");
 	printf("\tsectorsize: %d\n", rc->sectorsize);
-	printf("\tleafsize: %d\n", rc->leafsize);
+	printf("\tnodesize: %d\n", rc->nodesize);
 	printf("\ttree root generation: %llu\n", rc->generation);
 	printf("\tchunk root generation: %llu\n", rc->chunk_root_generation);
 	printf("\n");
@@ -618,7 +618,7 @@ static int check_chunk_by_metadata(struct recover_control *rc,
 		    btrfs_dev_extent_chunk_offset(l, dev_extent)) {
 			if (rc->verbose)
 				fprintf(stderr,
-					"Device tree unmatch with chunks dev_extent[%llu, %llu], chunk[%llu, %llu]\n",
+					"Device tree mismatch with chunks dev_extent[%llu, %llu], chunk[%llu, %llu]\n",
 					btrfs_dev_extent_chunk_offset(l,
 								dev_extent),
 					btrfs_dev_extent_length(l, dev_extent),
@@ -654,7 +654,7 @@ bg_check:
 	if (chunk->type_flags != btrfs_disk_block_group_flags(l, bg_ptr)) {
 		if (rc->verbose)
 			fprintf(stderr,
-				"Chunk[%llu, %llu]'s type(%llu) is differemt with Block Group's type(%llu)\n",
+				"Chunk[%llu, %llu]'s type(%llu) is different with Block Group's type(%llu)\n",
 				chunk->offset, chunk->length, chunk->type_flags,
 				btrfs_disk_block_group_flags(l, bg_ptr));
 		btrfs_release_path(&path);
@@ -761,10 +761,10 @@ static int scan_one_device(void *dev_scan_struct)
 	if (ret)
 		return 1;
 
-	buf = malloc(sizeof(*buf) + rc->leafsize);
+	buf = malloc(sizeof(*buf) + rc->nodesize);
 	if (!buf)
 		return -ENOMEM;
-	buf->len = rc->leafsize;
+	buf->len = rc->nodesize;
 
 	bytenr = 0;
 	while (1) {
@@ -773,8 +773,8 @@ static int scan_one_device(void *dev_scan_struct)
 		if (is_super_block_address(bytenr))
 			bytenr += rc->sectorsize;
 
-		if (pread64(fd, buf->data, rc->leafsize, bytenr) <
-		    rc->leafsize)
+		if (pread64(fd, buf->data, rc->nodesize, bytenr) <
+		    rc->nodesize)
 			break;
 
 		if (memcmp_extent_buffer(buf, rc->fs_devices->fsid,
@@ -818,7 +818,7 @@ static int scan_one_device(void *dev_scan_struct)
 			break;
 		}
 next_node:
-		bytenr += rc->leafsize;
+		bytenr += rc->nodesize;
 	}
 out:
 	close(fd);
@@ -1070,7 +1070,7 @@ again:
 		    key.type == BTRFS_METADATA_ITEM_KEY) {
 			old_val = btrfs_super_bytes_used(fs_info->super_copy);
 			if (key.type == BTRFS_METADATA_ITEM_KEY)
-				old_val += root->leafsize;
+				old_val += root->nodesize;
 			else
 				old_val += key.offset;
 			btrfs_set_super_bytes_used(fs_info->super_copy,
@@ -1159,9 +1159,9 @@ static int __rebuild_chunk_root(struct btrfs_trans_handle *trans,
 		if (min_devid > dev->devid)
 			min_devid = dev->devid;
 	}
-	disk_key.objectid = BTRFS_DEV_ITEMS_OBJECTID;
-	disk_key.type = BTRFS_DEV_ITEM_KEY;
-	disk_key.offset = min_devid;
+	btrfs_set_disk_key_objectid(&disk_key, BTRFS_DEV_ITEMS_OBJECTID);
+	btrfs_set_disk_key_type(&disk_key, BTRFS_DEV_ITEM_KEY);
+	btrfs_set_disk_key_offset(&disk_key, min_devid);
 
 	cow = btrfs_alloc_free_block(trans, root, root->nodesize,
 				     BTRFS_CHUNK_TREE_OBJECTID,
@@ -1234,7 +1234,7 @@ static int __insert_chunk_item(struct btrfs_trans_handle *trans,
 	key.offset = chunk_rec->offset;
 
 	ret = btrfs_insert_item(trans, chunk_root, &key, chunk,
-				btrfs_chunk_item_size(chunk->num_stripes));
+				btrfs_chunk_item_size(chunk_rec->num_stripes));
 	free(chunk);
 	return ret;
 }
@@ -1470,7 +1470,8 @@ open_ctree_with_broken_chunk(struct recover_control *rc)
 
 	disk_super = fs_info->super_copy;
 	ret = btrfs_read_dev_super(fs_info->fs_devices->latest_bdev,
-				   disk_super, fs_info->super_bytenr, 1);
+				   disk_super, fs_info->super_bytenr,
+				   SBREAD_RECOVER);
 	if (ret) {
 		fprintf(stderr, "No valid btrfs found\n");
 		goto out_devices;
@@ -1531,14 +1532,15 @@ static int recover_prepare(struct recover_control *rc, char *path)
 	}
 
 	sb = (struct btrfs_super_block*)buf;
-	ret = btrfs_read_dev_super(fd, sb, BTRFS_SUPER_INFO_OFFSET, 1);
+	ret = btrfs_read_dev_super(fd, sb, BTRFS_SUPER_INFO_OFFSET,
+			SBREAD_RECOVER);
 	if (ret) {
 		fprintf(stderr, "read super block error\n");
 		goto out_close_fd;
 	}
 
 	rc->sectorsize = btrfs_super_sectorsize(sb);
-	rc->leafsize = btrfs_super_leafsize(sb);
+	rc->nodesize = btrfs_super_nodesize(sb);
 	rc->generation = btrfs_super_generation(sb);
 	rc->chunk_root_generation = btrfs_super_chunk_root_generation(sb);
 	rc->csum_size = btrfs_super_csum_size(sb);
@@ -1550,7 +1552,7 @@ static int recover_prepare(struct recover_control *rc, char *path)
 		goto out_close_fd;
 	}
 
-	ret = btrfs_scan_fs_devices(fd, path, &fs_devices, 0, 1, 0);
+	ret = btrfs_scan_fs_devices(fd, path, &fs_devices, 0, SBREAD_RECOVER, 0);
 	if (ret)
 		goto out_close_fd;
 
@@ -1607,16 +1609,19 @@ static int btrfs_verify_device_extents(struct block_group_record *bg,
 				       struct list_head *devexts, int ndevexts)
 {
 	struct device_extent_record *devext;
-	u64 strpie_length;
+	u64 stripe_length;
 	int expected_num_stripes;
 
 	expected_num_stripes = calc_num_stripes(bg->flags);
 	if (expected_num_stripes && expected_num_stripes != ndevexts)
 		return 1;
 
-	strpie_length = calc_stripe_length(bg->flags, bg->offset, ndevexts);
+	if (check_num_stripes(bg->flags, ndevexts) < 0)
+		return 1;
+
+	stripe_length = calc_stripe_length(bg->flags, bg->offset, ndevexts);
 	list_for_each_entry(devext, devexts, chunk_list) {
-		if (devext->length != strpie_length)
+		if (devext->length != stripe_length)
 			return 1;
 	}
 	return 0;

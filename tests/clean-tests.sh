@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # remove all intermediate files from tests
 
 SCRIPT_DIR=$(dirname $(readlink -f $0))

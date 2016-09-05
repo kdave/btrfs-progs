@@ -3,51 +3,57 @@ btrfs-receive(8)
 
 NAME
 ----
-btrfs-receive - receive subvolumes from stdin/file.
+btrfs-receive - receive subvolumes from send stream
 
 SYNOPSIS
 --------
-*btrfs receive* [options] <mount>
+*btrfs receive* [options] <path>
 
 DESCRIPTION
 -----------
-Receives one or more subvolumes that were previously
-sent with *btrfs send*. The received subvolumes are stored
-into <mount>.
 
-*btrfs receive* will fail with the following case:
+Receive a stream of changes and replicate one or more subvolumes that were
+previously used with *btrfs send* The received subvolumes are stored to
+'path'.
 
-1. a receiving subvolume already exists.
+*btrfs receive* will fail int the following cases:
 
-2. a previously received subvolume was changed after it was received.
+1. receiving subvolume already exists
 
-3. default subvolume is changed or you don't mount btrfs filesystem with
-fs tree.
+2. previously received subvolume was changed after it was received
 
-After receiving a subvolume, it is immediately set to read only.
+3. default subvolume has changed or you didn't mount BTRFS filesystem at the toplevel subvolume
+
+A subvolume is made read-only after the receiving process finishes succesfully.
 
 `Options`
 
 -v::
-Enable verbose debug output. Each occurrence of this option increases the
-verbose level more.
+enable verbose debug output, print each operation (each occurrence of this
+option increases the verbosity level)
+
 -f <infile>::
-By default, btrfs receive uses stdin to receive the subvolumes.
-Use this option to specify a file to use instead.
+by default, btrfs receive uses standard input to receive the stream,
+use this option to read from a file instead
+
 -C|--chroot::
-Confine the process to <mount> using chroot.
+confine the process to 'path' using `chroot`(1)
+
 -e::
-Terminate after receiving an <end cmd> in the data stream.
-Without this option, the receiver terminates only if an error is recognized
-or on EOF.
---max-errors <N>::
-Terminate as soon as N errors happened while processing commands from the send
-stream. Default value is 1. A value of 0 means no limit.
--m::
-The root mount point of the destination fs.
+terminate after receiving an 'end cmd' marker in the stream.
 +
-By default the mountpoint is searched in /proc/self/mounts.
-If you do not have /proc, eg. in a chroot environment, use this option to tell
+Without this option, the receiver terminates only if an error is encountered
+or at end of file
+
+--max-errors <N>::
+terminate as soon as N errors happened while processing commands from the send
+stream, default value is 1, 0 means no limit
+
+-m <mountpoint>::
+the root mount point of the destination filesystem
++
+By default the mountpoint is searched in '/proc/self/mounts'.
+If you do not have '/proc', eg. in a chroot environment, use this option to tell
 us where this filesystem is mounted.
 
 EXIT STATUS

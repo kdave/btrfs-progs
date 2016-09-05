@@ -21,6 +21,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <getopt.h>
+#include <limits.h>
 
 #include "kerncompat.h"
 #include "ctree.h"
@@ -33,27 +34,28 @@
 
 #define FIELD_BUF_LEN 80
 
-static struct extent_buffer *debug_corrupt_block(struct btrfs_root *root,
-		u64 bytenr, u32 blocksize, u64 copy)
+static int debug_corrupt_block(struct extent_buffer *eb,
+		struct btrfs_root *root, u64 bytenr, u32 blocksize, u64 copy)
 {
 	int ret;
-	struct extent_buffer *eb;
 	u64 length;
 	struct btrfs_multi_bio *multi = NULL;
 	struct btrfs_device *device;
 	int num_copies;
 	int mirror_num = 1;
 
-	eb = btrfs_find_create_tree_block(root, bytenr, blocksize);
-	if (!eb)
-		return NULL;
-
 	length = blocksize;
 	while (1) {
 		ret = btrfs_map_block(&root->fs_info->mapping_tree, READ,
 				      eb->start, &length, &multi,
 				      mirror_num, NULL);
-		BUG_ON(ret);
+		if (ret) {
+			error("cannot map block %llu length %llu mirror %d: %d",
+					(unsigned long long)eb->start,
+					(unsigned long long)length,
+					mirror_num, ret);
+			return ret;
+		}
 		device = multi->stripes[0].dev;
 		eb->fd = device->fd;
 		device->total_ios++;
@@ -67,10 +69,22 @@ static struct extent_buffer *debug_corrupt_block(struct btrfs_root *root,
 
 		if (!copy || mirror_num == copy) {
 			ret = read_extent_from_disk(eb, 0, eb->len);
+			if (ret < 0) {
+				error("cannot read eb bytenr %llu: %s",
+						(unsigned long long)eb->dev_bytenr,
+						strerror(-ret));
+				return ret;
+			}
 			printf("corrupting %llu copy %d\n", eb->start,
 			       mirror_num);
 			memset(eb->data, 0, eb->len);
-			write_extent_to_disk(eb);
+			ret = write_extent_to_disk(eb);
+			if (ret < 0) {
+				error("cannot write eb bytenr %llu: %s",
+						(unsigned long long)eb->dev_bytenr,
+						strerror(-ret));
+				return ret;
+			}
 			fsync(eb->fd);
 		}
 
@@ -83,37 +97,30 @@ static struct extent_buffer *debug_corrupt_block(struct btrfs_root *root,
 		if (mirror_num > num_copies)
 			break;
 	}
-	return eb;
+
+	return 0;
 }
 
 static void print_usage(int ret)
 {
-	fprintf(stderr, "usage: btrfs-corrupt-block [options] device\n");
-	fprintf(stderr, "\t-l Logical extent to be corrupted\n");
-	fprintf(stderr, "\t-c Copy of the extent to be corrupted"
-		" (usually 1 or 2, default: 0)\n");
-	fprintf(stderr, "\t-b Number of bytes to be corrupted\n");
-	fprintf(stderr, "\t-e Extent to be corrupted\n");
-	fprintf(stderr, "\t-E The whole extent tree to be corrupted\n");
-	fprintf(stderr, "\t-u Given chunk item to be corrupted\n");
-	fprintf(stderr, "\t-U The whole chunk tree to be corrupted\n");
-	fprintf(stderr, "\t-i The inode item to corrupt (must also specify "
-		"the field to corrupt)\n");
-	fprintf(stderr, "\t-x The file extent item to corrupt (must also "
-		"specify -i for the inode and -f for the field to corrupt)\n");
-	fprintf(stderr, "\t-m The metadata block to corrupt (must also "
-		"specify -f for the field to corrupt)\n");
-	fprintf(stderr, "\t-K The key to corrupt in the format "
-		"<num>,<num>,<num> (must also specify -f for the field)\n");
-	fprintf(stderr, "\t-f The field in the item to corrupt\n");
-	fprintf(stderr, "\t-I An item to corrupt (must also specify the field "
-		"to corrupt and a root+key for the item)\n");
-	fprintf(stderr, "\t-D Corrupt a dir item, must specify key and field\n");
-	fprintf(stderr, "\t-d Delete this item (must specify -K)\n");
-	fprintf(stderr, "\t-r Operate on this root (only works with -d)\n");
-	fprintf(stderr, "\t-C Delete a csum for the specified bytenr.  When "
-		"used with -b it'll delete that many bytes, otherwise it's "
-		"just sectorsize\n");
+	printf("usage: btrfs-corrupt-block [options] device\n");
+	printf("\t-l   Logical extent to be corrupted\n");
+	printf("\t-c   Copy of the extent to be corrupted (usually 1 or 2, default: 0)\n");
+	printf("\t-b   Number of bytes to be corrupted\n");
+	printf("\t-e   Extent to be corrupted\n");
+	printf("\t-E   The whole extent tree to be corrupted\n");
+	printf("\t-u   Given chunk item to be corrupted\n");
+	printf("\t-U   The whole chunk tree to be corrupted\n");
+	printf("\t-i   The inode item to corrupt (must also specify the field to corrupt)\n");
+	printf("\t-x   The file extent item to corrupt (must also specify -i for the inode and -f for the field to corrupt)\n");
+	printf("\t-m   The metadata block to corrupt (must also specify -f for the field to corrupt)\n");
+	printf("\t-K   The key to corrupt in the format <num>,<num>,<num> (must also specify -f for the field)\n");
+	printf("\t-f   The field in the item to corrupt\n");
+	printf("\t-I   An item to corrupt (must also specify the field to corrupt and a root+key for the item)\n");
+	printf("\t-D   Corrupt a dir item, must specify key and field\n");
+	printf("\t-d   Delete this item (must specify -K)\n");
+	printf("\t-r   Operate on this root (only works with -d)\n");
+	printf("\t-C   Delete a csum for the specified bytenr.  When used with -b it'll delete that many bytes, otherwise it's just sectorsize\n");
 	exit(ret);
 }
 
@@ -130,8 +137,8 @@ static void corrupt_keys(struct btrfs_trans_handle *trans,
 	if (nr == 0)
 		return;
 
-	slot = rand() % nr;
-	bad_slot = rand() % nr;
+	slot = rand_range(nr);
+	bad_slot = rand_range(nr);
 
 	if (bad_slot == slot)
 		return;
@@ -161,7 +168,7 @@ static int corrupt_keys_in_block(struct btrfs_root *root, u64 bytenr)
 {
 	struct extent_buffer *eb;
 
-	eb = read_tree_block(root, bytenr, root->leafsize, 0);
+	eb = read_tree_block(root, bytenr, root->nodesize, 0);
 	if (!extent_buffer_uptodate(eb))
 		return -EIO;;
 
@@ -180,7 +187,7 @@ static int corrupt_extent(struct btrfs_trans_handle *trans,
 	struct btrfs_path *path;
 	int ret;
 	int slot;
-	int should_del = rand() % 3;
+	int should_del = rand_range(3);
 
 	path = btrfs_alloc_path();
 	if (!path)
@@ -209,6 +216,7 @@ static int corrupt_extent(struct btrfs_trans_handle *trans,
 			break;
 
 		if (key.type != BTRFS_EXTENT_ITEM_KEY &&
+		    key.type != BTRFS_METADATA_ITEM_KEY &&
 		    key.type != BTRFS_TREE_BLOCK_REF_KEY &&
 		    key.type != BTRFS_EXTENT_DATA_REF_KEY &&
 		    key.type != BTRFS_EXTENT_REF_V0_KEY &&
@@ -256,7 +264,7 @@ static void btrfs_corrupt_extent_leaf(struct btrfs_trans_handle *trans,
 				      struct extent_buffer *eb)
 {
 	u32 nr = btrfs_header_nritems(eb);
-	u32 victim = rand() % nr;
+	u32 victim = rand_range(nr);
 	u64 objectid;
 	struct btrfs_key key;
 
@@ -280,7 +288,7 @@ static void btrfs_corrupt_extent_tree(struct btrfs_trans_handle *trans,
 	}
 
 	if (btrfs_header_level(eb) == 1 && eb != root->node) {
-		if (rand() % 5)
+		if (rand_range(5))
 			return;
 	}
 
@@ -288,7 +296,7 @@ static void btrfs_corrupt_extent_tree(struct btrfs_trans_handle *trans,
 		struct extent_buffer *next;
 
 		next = read_tree_block(root, btrfs_node_blockptr(eb, i),
-				       root->leafsize,
+				       root->nodesize,
 				       btrfs_node_ptr_generation(eb, i));
 		if (!extent_buffer_uptodate(next))
 			continue;
@@ -389,7 +397,7 @@ static u64 generate_u64(u64 orig)
 {
 	u64 ret;
 	do {
-		ret = rand();
+		ret = rand_u64();
 	} while (ret == orig);
 	return ret;
 }
@@ -398,7 +406,7 @@ static u32 generate_u32(u32 orig)
 {
 	u32 ret;
 	do {
-		ret = rand();
+		ret = rand_u32();
 	} while (ret == orig);
 	return ret;
 }
@@ -407,7 +415,7 @@ static u8 generate_u8(u8 orig)
 {
 	u8 ret;
 	do {
-		ret = rand();
+		ret = rand_u8();
 	} while (ret == orig);
 	return ret;
 }
@@ -699,7 +707,7 @@ static int corrupt_metadata_block(struct btrfs_root *root, u64 block,
 		return -EINVAL;
 	}
 
-	eb = read_tree_block(root, block, root->leafsize, 0);
+	eb = read_tree_block(root, block, root->nodesize, 0);
 	if (!extent_buffer_uptodate(eb)) {
 		fprintf(stderr, "Couldn't read in tree block %s\n", field);
 		return -EINVAL;
@@ -718,7 +726,7 @@ static int corrupt_metadata_block(struct btrfs_root *root, u64 block,
 
 	root = btrfs_read_fs_root(root->fs_info, &root_key);
 	if (IS_ERR(root)) {
-		fprintf(stderr, "Couldn't finde owner root %llu\n",
+		fprintf(stderr, "Couldn't find owner root %llu\n",
 			key.objectid);
 		return PTR_ERR(root);
 	}
@@ -870,7 +878,7 @@ static int delete_csum(struct btrfs_root *root, u64 bytenr, u64 bytes)
 }
 
 /* corrupt item using NO cow.
- * Because chunk recover will recover based on whole partition scaning,
+ * Because chunk recover will recover based on whole partition scanning,
  * If using COW, chunk recover will use the old item to recover,
  * which is still OK but we want to check the ability to rebuild chunk
  * not only restore the old ones */
@@ -943,7 +951,7 @@ static int corrupt_chunk_tree(struct btrfs_trans_handle *trans,
 	while (!btrfs_previous_item(root, path, 0, BTRFS_DEV_ITEM_KEY)) {
 		slot = path->slots[0];
 		leaf = path->nodes[0];
-		del = rand() % 3;
+		del = rand_range(3);
 		/* Never delete the first item to keep the leaf structure */
 		if (path->slots[0] == 0)
 			del = 0;
@@ -970,7 +978,7 @@ static int corrupt_chunk_tree(struct btrfs_trans_handle *trans,
 	while (!btrfs_previous_item(root, path, 0, BTRFS_CHUNK_ITEM_KEY)) {
 		slot = path->slots[0];
 		leaf = path->nodes[0];
-		del = rand() % 3;
+		del = rand_range(3);
 		btrfs_item_key_to_cpu(leaf, &found_key, slot);
 		ret = corrupt_item_nocow(trans, root, path, del);
 		if (ret)
@@ -1011,12 +1019,11 @@ out:
 	return ret;
 
 }
-int main(int ac, char **av)
+int main(int argc, char **argv)
 {
 	struct cache_tree root_cache;
 	struct btrfs_key key;
 	struct btrfs_root *root;
-	struct extent_buffer *eb;
 	char *dev;
 	/* chunk offset can be 0,so change to (u64)-1 */
 	u64 logical = (u64)-1;
@@ -1039,7 +1046,6 @@ int main(int ac, char **av)
 	char field[FIELD_BUF_LEN];
 
 	field[0] = '\0';
-	srand(128);
 	memset(&key, 0, sizeof(key));
 
 	while(1) {
@@ -1068,7 +1074,7 @@ int main(int ac, char **av)
 			{ NULL, 0, NULL, 0 }
 		};
 
-		c = getopt_long(ac, av, "l:c:b:eEkuUi:f:x:m:K:IDdr:C:",
+		c = getopt_long(argc, argv, "l:c:b:eEkuUi:f:x:m:K:IDdr:C:",
 				long_options, NULL);
 		if (c < 0)
 			break;
@@ -1140,11 +1146,10 @@ int main(int ac, char **av)
 				print_usage(c != GETOPT_VAL_HELP);
 		}
 	}
-	set_argv0(av);
-	ac = ac - optind;
-	if (check_argc_min(ac, 1))
+	set_argv0(argv);
+	if (check_argc_min(argc - optind, 1))
 		print_usage(1);
-	dev = av[optind];
+	dev = argv[optind];
 
 	radix_tree_init();
 	cache_tree_init(&root_cache);
@@ -1179,7 +1184,7 @@ int main(int ac, char **av)
 
 		if (logical == (u64)-1)
 			print_usage(1);
-		del = rand() % 3;
+		del = rand_range(3);
 		path = btrfs_alloc_path();
 		if (!path) {
 			fprintf(stderr, "path allocation failed\n");
@@ -1295,8 +1300,20 @@ int main(int ac, char **av)
 		if (corrupt_block_keys) {
 			corrupt_keys_in_block(root, logical);
 		} else {
-			eb = debug_corrupt_block(root, logical,
-						 root->sectorsize, copy);
+			struct extent_buffer *eb;
+
+			eb = btrfs_find_create_tree_block(root->fs_info,
+					logical, root->sectorsize);
+			if (!eb) {
+				error(
+		"not enough memory to allocate extent buffer for bytenr %llu",
+					(unsigned long long)logical);
+				ret = 1;
+				goto out_close;
+			}
+
+			debug_corrupt_block(eb, root, logical, root->sectorsize,
+					copy);
 			free_extent_buffer(eb);
 		}
 		logical += root->sectorsize;

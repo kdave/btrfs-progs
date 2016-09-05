@@ -29,25 +29,44 @@
 #include <btrfs/list.h>
 #endif /* BTRFS_FLAT_INCLUDES */
 
-#define EXTENT_DIRTY 1
-#define EXTENT_WRITEBACK (1 << 1)
-#define EXTENT_UPTODATE (1 << 2)
-#define EXTENT_LOCKED (1 << 3)
-#define EXTENT_NEW (1 << 4)
-#define EXTENT_DELALLOC (1 << 5)
-#define EXTENT_DEFRAG (1 << 6)
-#define EXTENT_DEFRAG_DONE (1 << 7)
-#define EXTENT_BUFFER_FILLED (1 << 8)
-#define EXTENT_CSUM (1 << 9)
-#define EXTENT_BAD_TRANSID (1 << 10)
-#define EXTENT_BUFFER_DUMMY (1 << 11)
+#define EXTENT_DIRTY		(1U << 0)
+#define EXTENT_WRITEBACK	(1U << 1)
+#define EXTENT_UPTODATE		(1U << 2)
+#define EXTENT_LOCKED		(1U << 3)
+#define EXTENT_NEW		(1U << 4)
+#define EXTENT_DELALLOC		(1U << 5)
+#define EXTENT_DEFRAG		(1U << 6)
+#define EXTENT_DEFRAG_DONE	(1U << 7)
+#define EXTENT_BUFFER_FILLED	(1U << 8)
+#define EXTENT_CSUM		(1U << 9)
+#define EXTENT_BAD_TRANSID	(1U << 10)
+#define EXTENT_BUFFER_DUMMY	(1U << 11)
 #define EXTENT_IOBITS (EXTENT_LOCKED | EXTENT_WRITEBACK)
 
-#define BLOCK_GROUP_DATA     EXTENT_WRITEBACK
-#define BLOCK_GROUP_METADATA EXTENT_UPTODATE
-#define BLOCK_GROUP_SYSTEM   EXTENT_NEW
+#define BLOCK_GROUP_DATA	(1U << 1)
+#define BLOCK_GROUP_METADATA	(1U << 2)
+#define BLOCK_GROUP_SYSTEM	(1U << 4)
 
-#define BLOCK_GROUP_DIRTY EXTENT_DIRTY
+#define BLOCK_GROUP_DIRTY 	(1U)
+
+/*
+ * The extent buffer bitmap operations are done with byte granularity instead of
+ * word granularity for two reasons:
+ * 1. The bitmaps must be little-endian on disk.
+ * 2. Bitmap items are not guaranteed to be aligned to a word and therefore a
+ *    single word in a bitmap may straddle two pages in the extent buffer.
+ */
+#define BIT_BYTE(nr) ((nr) / BITS_PER_BYTE)
+#define BYTE_MASK ((1 << BITS_PER_BYTE) - 1)
+#define BITMAP_FIRST_BYTE_MASK(start) \
+	((BYTE_MASK << ((start) & (BITS_PER_BYTE - 1))) & BYTE_MASK)
+#define BITMAP_LAST_BYTE_MASK(nbits) \
+	(BYTE_MASK >> (-(nbits) & (BITS_PER_BYTE - 1)))
+
+static inline int le_test_bit(int nr, const u8 *addr)
+{
+	return 1U & (addr[BIT_BYTE(nr)] >> (nr & (BITS_PER_BYTE-1)));
+}
 
 struct btrfs_fs_info;
 
@@ -76,7 +95,7 @@ struct extent_buffer {
 	struct list_head lru;
 	struct list_head recow;
 	int refs;
-	int flags;
+	u32 flags;
 	int fd;
 	char data[];
 };
@@ -148,6 +167,8 @@ void memmove_extent_buffer(struct extent_buffer *dst, unsigned long dst_offset,
 			   unsigned long src_offset, unsigned long len);
 void memset_extent_buffer(struct extent_buffer *eb, char c,
 			  unsigned long start, unsigned long len);
+int extent_buffer_test_bit(struct extent_buffer *eb, unsigned long start,
+			   unsigned long nr);
 int set_extent_buffer_dirty(struct extent_buffer *eb);
 int clear_extent_buffer_dirty(struct extent_buffer *eb);
 int read_data_from_disk(struct btrfs_fs_info *info, void *buf, u64 offset,

@@ -22,15 +22,17 @@
 #include "crc32c.h"
 #include "utils.h"
 
-void usage(void)
+void print_usage(int status)
 {
 	printf("usage: btrfs-crc filename\n");
 	printf("    print out the btrfs crc for \"filename\"\n");
-	printf("usage: btrfs-crc filename -c crc [-s seed] [-l length]\n");
+	printf("usage: btrfs-crc -c crc [-s seed] [-l length]\n");
 	printf("    brute force search for file names with the given crc\n");
 	printf("      -s seed    the random seed (default: random)\n");
 	printf("      -l length  the length of the file names (default: 10)\n");
-	exit(1);
+	printf("usage: btrfs-crc -h\n");
+	printf("    print this message\n");
+	exit(status);
 }
 
 int main(int argc, char **argv)
@@ -40,7 +42,7 @@ int main(int argc, char **argv)
 	char *str;
 	char *buf;
 	int length = 10;
-	int seed = getpid() ^ getppid();
+	u64 seed = 0;
 	int loop = 0;
 	int i;
 
@@ -54,12 +56,12 @@ int main(int argc, char **argv)
 			loop = 1;
 			break;
 		case 's':
-			seed = atol(optarg);
+			seed = atoll(optarg);
 			break;
 		case 'h':
-			usage();
+			print_usage(1);
 		case '?':
-			return 255;
+			print_usage(255);
 		}
 	}
 
@@ -67,21 +69,24 @@ int main(int argc, char **argv)
 	str = argv[optind];
 
 	if (!loop) {
-		if (check_argc_min(argc - optind, 1))
-			return 255;
+		if (check_argc_exact(argc - optind, 1))
+			print_usage(255);
 
 		printf("%12u - %s\n", crc32c(~1, str, strlen(str)), str);
 		return 0;
 	}
+	if (check_argc_exact(argc - optind, 0))
+		print_usage(255);
 
 	buf = malloc(length);
 	if (!buf)
 		return -ENOMEM;
-	srand(seed);
+	if (seed)
+		init_rand_seed(seed);
 
 	while (1) {
 		for (i = 0; i < length; i++)
-			buf[i] = rand() % 94 + 33;
+			buf[i] = rand_range(94) + 33;
 		if (crc32c(~1, buf, length) == checksum)
 			printf("%12lu - %.*s\n", checksum, length, buf);
 	}

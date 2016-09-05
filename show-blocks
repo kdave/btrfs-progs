@@ -224,7 +224,7 @@ elif options.input_file:
 shapeit(data)
 
 # try to drop out the least common data points by creating
-# a historgram of the sectors seen.
+# a histogram of the sectors seen.
 sectors = data[:,0]
 sizes = data[:,1]
 datalen = len(data)
@@ -237,7 +237,7 @@ bytes_per_cell = byte_range / total_cells
 
 f = figure(figsize=(8,6))
 
-# Throughput goes at the botoom
+# Throughput goes at the bottom
 a = subplot(1, 1, 1)
 subplots_adjust(right=0.7)
 datai = 0

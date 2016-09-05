@@ -1,10 +1,12 @@
 #!/bin/bash
 #
-# Verify that subovolume sync waits until the subvolume is cleaned
+# Verify that subvolume sync waits until the subvolume is cleaned
 
 source $TOP/tests/common
 
 check_prereq mkfs.btrfs
+check_prereq btrfs
+
 setup_root_helper
 
 run_check truncate -s 2G $IMAGE

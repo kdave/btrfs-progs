@@ -21,6 +21,8 @@
 #include "utils.h"
 #include "repair.h"
 
+int repair = 0;
+
 int btrfs_add_corrupt_extent_record(struct btrfs_fs_info *info,
 				    struct btrfs_key *first_key,
 				    u64 start, u64 len, int level)

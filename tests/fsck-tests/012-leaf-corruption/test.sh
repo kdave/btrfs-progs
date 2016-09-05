@@ -2,6 +2,8 @@
 
 source $TOP/tests/common
 
+check_prereq btrfs-image
+
 # Check file list for leaf corruption, no regular/preallocated
 # file extent case.
 # Corrupted leaf is 20832256, which contains inode 1862~1872
@@ -29,6 +31,7 @@ leaf_no_data_ext_list=(
 	1869 0 40700 "snmp"
 	1871 0 100700 "machine-id"
 	1872 0 100700 "adjtime"
+	1877 0 40700 "del"
 )
 
 generate_leaf_corrupt_no_data_ext()
@@ -40,10 +43,12 @@ generate_leaf_corrupt_no_data_ext()
 	$TOP/btrfs-image -r test.img.btrfs-image $dest || \
 		_fail "failed to extract leaf_corrupt_no_data_ext.btrfs-image"
 
-	# leaf at 20832256 contains no regular data extent, clear its csum to
-	# corrupt the leaf.
-	dd if=/dev/zero of=$dest bs=1 count=32 conv=notrunc seek=20832256 \
-		1>/dev/null 2>&1
+	# leaf at 4206592 and 20905984 contains no regular data
+	# extent, clear its csum to corrupt the leaf.
+	for x in 4206592 20905984; do
+		dd if=/dev/zero of=$dest bs=1 count=32 conv=notrunc seek=$x \
+			1>/dev/null 2>&1
+	done
 }
 
 check_inode()

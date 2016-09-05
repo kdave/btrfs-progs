@@ -1,0 +1,33 @@
+URL: https://bugzilla.kernel.org/show_bug.cgi?id=153641
+Lukas Lueg 2016-08-23 19:54:45 UTC
+
+Created attachment 229941 [details]
+Image triggering btrfsck into asan error
+
+The filesystem-image attached to this bug drives btrfsck from btrfs-progs
+v4.7-42-g56e9586 into a heap-use-after-free. The src was from kdave's mirror,
+devel branch. CFLAGS='-DNDEBUG -O1 -g -fsanitize=address
+-fno-omit-frame-pointer -fno-optimize-sibling-calls'
+
+
+The juicy parts:
+==32639==ERROR: AddressSanitizer: heap-use-after-free on address
+0x621000019170 at pc 0x0000005c046e bp 0x7fff631e48d0 sp 0x7fff631e48c8
+READ of size 4 at 0x621000019170 thread T0
+    #0 0x5c046d in free_extent_buffer
+/home/lukas/dev/btrfsprogs_fuzz/src/extent_io.c:579:10
+    #1 0x59356c in btrfs_release_all_roots
+/home/lukas/dev/btrfsprogs_fuzz/src/disk-io.c:1084:3
+    #2 0x5949a7 in __open_ctree_fd
+/home/lukas/dev/btrfsprogs_fuzz/src/disk-io.c:1325:2
+    #3 0x594325 in open_ctree_fs_info
+/home/lukas/dev/btrfsprogs_fuzz/src/disk-io.c:1363:9
+    #4 0x51e717 in cmd_check
+/home/lukas/dev/btrfsprogs_fuzz/src/cmds-check.c:11320:9
+    #5 0x4f0f81 in main /home/lukas/dev/btrfsprogs_fuzz/src/btrfs.c:243:8
+    #6 0x7f5ce75ee730 in __libc_start_main (/lib64/libc.so.6+0x20730)
+    #7 0x4213f8 in _start (/home/lukas/dev/btrfsfuzz/bin/bin/btrfs+0x4213f8)
+
+
+Note that the bug happens within core itself. The kernel may be vulnerable as
+well, I didn't check, though.

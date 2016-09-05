@@ -72,7 +72,7 @@ static int btrfs_uuid_tree_lookup_any(int fd, const u8 *uuid, u8 type,
 		goto out;
 	}
 	search_header = (struct btrfs_ioctl_search_header *)(search_arg.buf);
-	item_size = search_header->len;
+	item_size = btrfs_search_header_len(search_header);
 	if ((item_size & (sizeof(u64) - 1)) || item_size == 0) {
 		printf("btrfs: uuid item with illegal size %lu!\n",
 		       (unsigned long)item_size);

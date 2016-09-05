@@ -420,7 +420,7 @@ int main(int argc, char **argv)
 	io_send.flags = BTRFS_SEND_FLAG_NO_FILE_DATA;
 
 	ret = ioctl(subvol_fd, BTRFS_IOC_SEND, &io_send);
-	if (ret) {
+	if (ret < 0) {
 		ret = errno;
 		fprintf(stderr, "ERROR: send ioctl failed with %d: %s\n", ret,
 			strerror(ret));

@@ -27,35 +27,35 @@
 
 __attribute__((noreturn)) static void print_usage(void)
 {
-	fprintf(stderr, "usage: btrfs-zero-log dev\n");
+	printf("usage: btrfs-zero-log dev\n");
 	exit(1);
 }
 
-int main(int ac, char **av)
+int main(int argc, char **argv)
 {
 	struct btrfs_root *root;
 	struct btrfs_trans_handle *trans;
 	struct btrfs_super_block *sb;
 	int ret;
 
-	set_argv0(av);
-	if (check_argc_exact(ac, 2))
+	set_argv0(argv);
+	if (check_argc_exact(argc - optind, 1))
 		print_usage();
 
 	radix_tree_init();
 
 	printf("WARNING: this utility is deprecated, please use 'btrfs rescue zero-log'\n\n");
 
-	if ((ret = check_mounted(av[1])) < 0) {
+	if ((ret = check_mounted(argv[optind])) < 0) {
 		fprintf(stderr, "ERROR: could not check mount status: %s\n", strerror(-ret));
 		goto out;
 	} else if (ret) {
-		fprintf(stderr, "ERROR: %s is currently mounted\n", av[1]);
+		fprintf(stderr, "ERROR: %s is currently mounted\n", argv[optind]);
 		ret = -EBUSY;
 		goto out;
 	}
 
-	root = open_ctree(av[1], 0, OPEN_CTREE_WRITES | OPEN_CTREE_PARTIAL);
+	root = open_ctree(argv[optind], 0, OPEN_CTREE_WRITES | OPEN_CTREE_PARTIAL);
 	if (!root) {
 		fprintf(stderr, "ERROR: cannot open ctree\n");
 		return 1;
@@ -63,7 +63,7 @@ int main(int ac, char **av)
 
 	sb = root->fs_info->super_copy;
 	printf("Clearing log on %s, previous log_root %llu, level %u\n",
-			av[1],
+			argv[optind],
 			(unsigned long long)btrfs_super_log_root(sb),
 			(unsigned)btrfs_super_log_root_level(sb));
 	trans = btrfs_start_transaction(root, 1);

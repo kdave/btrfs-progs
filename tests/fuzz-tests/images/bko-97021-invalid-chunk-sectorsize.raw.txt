@@ -1,0 +1,41 @@
+URL: https://bugzilla.kernel.org/show_bug.cgi?id=97021
+Lukas Lueg 2015-04-21 21:36:31 UTC
+
+The btrfs-image attached to this bug causes the userland tools v3.19.1 to crash
+by reaching a call to abort().
+
+(gdb) run check btrfs_fukked_abort_cmds-check:5919.bin
+Starting program: /usr/sbin/btrfs check btrfs_fukked_abort_cmds-check:5919.bin
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib64/libthread_db.so.1".
+Checking filesystem on btrfs_fukked_abort_cmds-check:5919.bin
+UUID: cdd8684f-9eb1-40a4-91ec-1ed7c3cb444c
+checking extents
+
+Program received signal SIGABRT, Aborted.
+0x00000032626348d7 in __GI_raise (sig=sig@entry=6)
+    at ../sysdeps/unix/sysv/linux/raise.c:55
+55	  return INLINE_SYSCALL (tgkill, 3, pid, selftid, sig);
+(gdb) bt
+#0  0x00000032626348d7 in __GI_raise (sig=sig@entry=6)
+    at ../sysdeps/unix/sysv/linux/raise.c:55
+#1  0x000000326263653a in __GI_abort () at abort.c:89
+#2  0x0000000000425038 in run_next_block (root=root@entry=0x894b20, 
+    bits=bits@entry=0x896960, last=last@entry=0x7fffffffd470, 
+    pending=pending@entry=0x7fffffffd5f0, seen=seen@entry=0x7fffffffd5e0, 
+    reada=reada@entry=0x7fffffffd600, nodes=0x7fffffffd610, 
+    extent_cache=0x7fffffffd5d0, chunk_cache=0x7fffffffd5c0, dev_cache=0x7fffffffd5b0, 
+    block_group_cache=0x7fffffffd6a0, dev_extent_cache=0x7fffffffd6c0, ri=0x894e20, 
+    bits_nr=1024) at cmds-check.c:5908
+#3  0x000000000042523d in deal_root_from_list (list=list@entry=0x7fffffffd640, 
+    root=root@entry=0x894b20, bits=bits@entry=0x896960, 
+    pending=pending@entry=0x7fffffffd5f0, seen=seen@entry=0x7fffffffd5e0, 
+    reada=reada@entry=0x7fffffffd600, nodes=0x7fffffffd610, 
+    extent_cache=0x7fffffffd5d0, chunk_cache=0x7fffffffd5c0, dev_cache=0x7fffffffd5b0, 
+    block_group_cache=0x7fffffffd6a0, dev_extent_cache=0x7fffffffd6c0, bits_nr=1024)
+    at cmds-check.c:7838
+#4  0x0000000000425f3d in check_chunks_and_extents (root=root@entry=0x894b20)
+    at cmds-check.c:8000
+#5  0x0000000000428144 in cmd_check (argc=<optimized out>, argv=<optimized out>)
+    at cmds-check.c:9431
+#6  0x000000000040e5a2 in main (argc=2, argv=0x7fffffffde90) at btrfs.c:245

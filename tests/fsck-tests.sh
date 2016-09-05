@@ -1,25 +1,21 @@
 #!/bin/bash
 #
 # loop through all of our bad images and make sure fsck repairs them properly
-#
-# It's GPL, same as everything else in this tree.
-#
 
-unset TOP
-unset LANG
 LANG=C
 SCRIPT_DIR=$(dirname $(readlink -f $0))
 TOP=$(readlink -f $SCRIPT_DIR/../)
 TEST_DEV=${TEST_DEV:-}
 RESULTS="$TOP/tests/fsck-tests-results.txt"
+IMAGE="$TOP/tests/test.img"
 
 source $TOP/tests/common
 
-# Allow child test to use $TOP and $RESULTS
 export TOP
 export RESULTS
-# For custom script needs to verfiy recovery
 export LANG
+export IMAGE
+export TEST_DEV
 
 rm -f $RESULTS
 
@@ -32,7 +28,7 @@ run_one_test() {
 	local testname
 
 	testname="$1"
-	echo "    [TEST]   $(basename $testname)"
+	echo "    [TEST/fsck]   $(basename $testname)"
 	cd $testname
 	echo "=== Entering $testname" >> $RESULTS
 	if [ -x test.sh ]; then

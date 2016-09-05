@@ -19,6 +19,75 @@ requires calls to privileged ioctls.
 
 SUBCOMMAND
 ----------
+*dump-super* [options] <device> [device...]::
+(replaces the standalone tool *btrfs-show-super*)
++
+Show btrfs superblock information stored on given devices in textual form.
+By default the first superblock is printed, more details about all copies or
+additional backup data can be printed.
++
+Besides verifictaion of the filesystem signature, there are no other sanity
+checks. The superblock checksum status is reported, the device item and
+filesystem UUIDs are checked and reported.
++
+`Options`
++
+-f|--full::::
+print full superblock information, including the system chunk array and backup roots
+-a|--all::::
+print information about all present superblock copies (cannot be used together with '-i' option)
+-i <super_mirror>::::
+specify which mirror to print, valid values are 0, 1 and 2 and the superblock must be present on the device
++
+If there are multiple options specified, only the last one is applies.
++
+-F|--force::::
+attempt to print the superblock even if thre's no valid BTRFS signature found
++
+The result may be completely wrong if the data do not resemble a superblock.
++
+-s <bytenr>::::
+specify offset to a superblock in a non-standard location at 'bytenr', useful
+for debugging (disables the '-f' option)
+
+*dump-tree* [options] <device>::
+(replaces the standalone tool *btrfs-debug-tree*)
++
+Dump tree structures from a given device in textual form, expand keys to human
+readable equivalents where possible.
+This is useful for analyzing filesystem state or inconsistencies and has
+a positive educational effect on understanding the internal filesystem structure.
++
+NOTE: contains file names, consider that if you're asked to send the dump for
+analysis. Does not contain file data.
++
+`Options`
++
+-e|--extents::::
+print only extent-related information: extent and device trees
+-d|--device::::
+print only device-related information: tree root, chunk and device trees
+-r|--roots::::
+print only short root node information, ie. the root tree keys
+-R|--backups::::
+same as --roots plus print backup root info, ie. the backup root keys and
+the respective tree root block offset
+-u|--uuid::::
+print only the uuid tree information, empty output if the tree does not exist
+-b <block_num>::::
+print info of the specified block only
+-t <tree_id>::::
+print only the tree with the specified ID, where the ID can be numerical or
+common name in a flexible human readable form
++
+The tree id name recognition rules:
+[options="compact"]
+* case does not matter
+* the C source definition, eg. BTRFS_ROOT_TREE_OBJECTID
+* short forms without BTRFS_ prefix, without _TREE and _OBJECTID suffix, eg. ROOT_TREE, ROOT
+* convenience aliases, eg. DEVICE for the DEV tree, CHECKSUM for CSUM
+* unrecognized ID is an error
+
 *inode-resolve* [-v] <ino> <path>::
 (needs root privileges)
 +
@@ -67,6 +136,16 @@ inode number 2), but such subvolume does not contain any files anyway
 +
 resolve the absolute path of a the subvolume id 'subvolid'
 
+*tree-stats* [options] <device>::
+(needs root privileges)
++
+Print sizes and statistics of trees.
++
+`Options`
++
+-b::::
+Print raw numbers in bytes.
+
 EXIT STATUS
 -----------
 *btrfs inspect-internal* returns a zero exit status if it succeeds. Non zero is
@@ -80,5 +159,4 @@ further details.
 
 SEE ALSO
 --------
-`mkfs.btrfs`(8),
-`btrfs-debug-tree`(8)
+`mkfs.btrfs`(8)

@@ -70,6 +70,8 @@ test_mkfs_single
 test_mkfs_single  -d  single  -m  single
 test_mkfs_single  -d  single  -m  single  --mixed
 test_mkfs_single  -d  single  -m  dup
+test_mkfs_single  -d  dup     -m  single
+test_mkfs_single  -d  dup     -m  dup
 test_mkfs_single  -d  dup     -m  dup     --mixed
 
 test_mkfs_multi
@@ -85,5 +87,7 @@ test_mkfs_multi   -d  raid5   -m  raid5
 test_mkfs_multi   -d  raid5   -m  raid5   --mixed
 test_mkfs_multi   -d  raid6   -m  raid6
 test_mkfs_multi   -d  raid6   -m  raid6   --mixed
+test_mkfs_multi   -d  dup     -m  dup
+test_mkfs_multi   -d  dup     -m  dup     --mixed
 
 cleanup_devices

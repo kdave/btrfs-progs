@@ -4,11 +4,9 @@ MAN8_TXT =
 # Top level commands
 MAN8_TXT += btrfs.asciidoc
 MAN8_TXT += btrfs-convert.asciidoc
-MAN8_TXT += btrfs-debug-tree.asciidoc
 MAN8_TXT += btrfs-find-root.asciidoc
 MAN8_TXT += btrfs-image.asciidoc
 MAN8_TXT += btrfs-map-logical.asciidoc
-MAN8_TXT += btrfs-show-super.asciidoc
 MAN8_TXT += btrfs-select-super.asciidoc
 MAN8_TXT += btrfstune.asciidoc
 MAN8_TXT += fsck.btrfs.asciidoc
@@ -31,8 +29,8 @@ MAN8_TXT += btrfs-replace.asciidoc
 MAN8_TXT += btrfs-restore.asciidoc
 MAN8_TXT += btrfs-property.asciidoc
 
-# Mount manpage
-MAN5_TXT += btrfs-mount.asciidoc
+# Category 5 manual page
+MAN5_TXT += btrfs-man5.asciidoc
 
 MAN_TXT = $(MAN8_TXT) $(MAN5_TXT)
 MAN_XML = $(patsubst %.asciidoc,%.xml,$(MAN_TXT))
@@ -92,10 +90,12 @@ install-man: man
 	$(INSTALL) -m 644 $(GZ_MAN5) $(DESTDIR)$(man5dir)
 	# the source file name of btrfs.5 clashes with section 8 page, but we
 	# want to keep the code generic
-	$(MV) $(DESTDIR)$(man5dir)/btrfs-mount.5.gz $(DESTDIR)$(man5dir)/btrfs.5.gz
+	$(MV) $(DESTDIR)$(man5dir)/btrfs-man5.5.gz $(DESTDIR)$(man5dir)/btrfs.5.gz
 	$(INSTALL) -m 644 $(GZ_MAN8) $(DESTDIR)$(man8dir)
 	$(LN_S) -f btrfs-check.8.gz $(DESTDIR)$(man8dir)/btrfsck.8.gz
 	$(LN_S) -f btrfs-rescue.8.gz $(DESTDIR)$(man8dir)/btrfs-zero-log.8.gz
+	$(LN_S) -f btrfs-inspect-internal.8.gz $(DESTDIR)$(man8dir)/btrfs-debug-tree.8.gz
+	$(LN_S) -f btrfs-inspect-internal.8.gz $(DESTDIR)$(man8dir)/btrfs-show-super.8.gz
 
 uninstall:
 	cd $(DESTDIR)$(man8dir); rm -f btrfs-check.8.gz $(GZ_MAN8)

@@ -1,0 +1,30 @@
+URL: https://bugzilla.kernel.org/show_bug.cgi?id=154021
+Lukas Lueg 2016-08-26 22:53:42 UTC
+
+Created attachment 230361 [details]
+Image triggering btrfsck to segv
+
+The fuzzer hit again:
+
+==32522==ERROR: AddressSanitizer: SEGV on unknown address 0x00027fff801c (pc
+0x0000004a952e bp 0x7fff5222ce70 sp 0x7fff5222c600 T0)
+    #0 0x4a952d in __asan_memcpy
+(/home/lukas/dev/btrfsfuzz/bin-asan/bin/btrfs+0x4a952d)
+    #1 0x66a323 in read_extent_buffer
+/home/lukas/dev/btrfsfuzz/src-asan/extent_io.c:867:2
+    #2 0x55ad25 in btrfs_node_key
+/home/lukas/dev/btrfsfuzz/src-asan/./ctree.h:1668:2
+    #3 0x58573b in check_fs_root
+/home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:3748:3
+    #4 0x544136 in check_fs_roots
+/home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:3896:10
+    #5 0x53d8c5 in cmd_check
+/home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:11470:8
+    #6 0x4f105f in main /home/lukas/dev/btrfsfuzz/src-asan/btrfs.c:243:8
+    #7 0x7fea1bcb7730 in __libc_start_main (/lib64/libc.so.6+0x20730)
+    #8 0x421238 in _start
+(/home/lukas/dev/btrfsfuzz/bin-asan/bin/btrfs+0x421238)
+
+
+See the attached image to reproduce using btrfs-progs btrfs-progs
+v4.7-42-g56e9586.

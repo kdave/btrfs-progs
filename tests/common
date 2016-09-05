@@ -61,10 +61,44 @@ run_mayfail()
 	fi
 }
 
+# first argument is error message to print if it fails, otherwise
+# same as run_check but expects the command to fail, output is logged
+run_mustfail()
+{
+	local msg
+
+	msg="$1"
+	shift
+
+	echo "############### $@" >> $RESULTS 2>&1
+	if [ "$TEST_LOG" = 'tty' ]; then echo "CMD(mustfail): $@" > /dev/tty; fi
+	if [ "$1" = 'root_helper' ]; then
+		"$@" >> $RESULTS 2>&1
+	else
+		$INSTRUMENT "$@" >> $RESULTS 2>&1
+	fi
+	if [ $? != 0 ]; then
+		echo "failed (expected): $@" >> $RESULTS
+		return 0
+	else
+		echo "succeeded (unexpected!): $@" >> $RESULTS
+		_fail "unexpected success: $msg"
+		return 1
+	fi
+}
+
 check_prereq()
 {
 	if ! [ -f $TOP/$1 ]; then
-		_fail "Failed prerequisities: $1";
+		_fail "Failed prerequisites: $1";
+	fi
+}
+
+check_global_prereq()
+{
+	which $1 &> /dev/null
+	if [ $? -ne 0 ]; then
+		_fail "Failed system wide prerequisities: $1";
 	fi
 }
 

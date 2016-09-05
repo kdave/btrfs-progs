@@ -3,7 +3,7 @@ btrfs-send(8)
 
 NAME
 ----
-btrfs-send - send data of subvolume(s) to stdout/file.
+btrfs-send - generate a stream of changes between two subvolumes
 
 SYNOPSIS
 --------
@@ -11,39 +11,54 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Sends the subvolume(s) specified by <subvol> to stdout.
 
-By default, this will send the whole subvolume. To do an incremental
-send, use '-p <parent>'.
+This command will generate a stream of instructions that describe changes
+between two subvolumes. The stream can be consumed by the *btrfs receive*
+command to replicate the sent subvolume on a different filesystem.
+The command operates in two modes: full and incremental.
 
-If you want to allow btrfs to clone from any additional local snapshots,
-use '-c <clone-src>' (multiple times where applicable). 
+All subvolumes involved in one send command must be read-only (ie. the
+read-only snapshots and this status cannot be changed if there's a running send
+operation that uses the subvolume).
 
-You must not specify clone sources unless you guarantee that these snapshots
-are exactly in the same state on both sides, the sender and the receiver.
+In the full mode, the entire subvolume data and metadata will end up in the
+stream.
+
+In the incremental mode (options '-p' and '-c'), there can be one or more
+parent subvolumes that will establish the base for determining the changes.
+The final stream will be smaller compared to the full mode.
 
 It is allowed to omit the '-p <parent>' option when '-c <clone-src>' options
 are given, in which case *btrfs send* will determine a suitable parent among the
 clone sources itself.
 
+You must not specify clone sources unless you guarantee that these snapshots
+are exactly in the same state on both sides, the sender and the receiver.
+
 `Options`
 
--v::
-Enable verbose debug output. Each occurrence of this option increases the
-verbose level more.
 -e::
-If sending multiple subvols at once, use the new format and omit the <end cmd> between the subvols.
+if sending multiple subvolumes at once, use the new format and omit the
+'end cmd' marker in the stream separating the subvolumes
 -p <parent>::
-Send an incremental stream from <parent> to <subvol>.
+send an incremental stream from 'parent' to 'subvol'
 -c <clone-src>::
-Use this snapshot as a clone source for an incremental send (multiple allowed).
+use this snapshot as a clone source for an incremental send (multiple allowed)
 -f <outfile>::
-Output is normally written to stdout. To write to a file, use this option.
-An alternative would be to use pipes.
+output is normally written to standard outout so it can be eg. piped to
+receive, use this option to write it to a file
 --no-data::
-Send in NO_FILE_DATA mode. The output stream does not contain any file
+send in 'NO_FILE_DATA' mode
++
+The output stream does not contain any file
 data and thus cannot be used to transfer changes. This mode is faster and
 useful to show the differences in metadata.
+
+-v|--verbose::
+enable verbose output, print generated commands in a readable form, (each
+occurrence of this option increases the verbosity level)
+-q|--quiet::
+suppress all messagese except errors
 
 EXIT STATUS
 -----------

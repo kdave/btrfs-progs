@@ -4,7 +4,8 @@
 source $TOP/tests/common
 
 check_prereq mkfs.btrfs
-check_prereq btrfs
+check_prereq btrfs-show-super
+
 setup_root_helper
 
 run_check truncate -s0 img

@@ -20,7 +20,7 @@
  * Unlike inode.c in kernel, which can use most of the kernel infrastructure
  * like inode/dentry things, in user-land, we can only use inode number to
  * do directly operation on extent buffer, which may cause extra searching,
- * but should not be a huge problem since progs is less performence sensitive.
+ * but should not be a huge problem since progs is less performance sensitive.
  */
 #include <sys/stat.h>
 
@@ -262,7 +262,7 @@ int btrfs_add_orphan_item(struct btrfs_trans_handle *trans,
  * dir_item if any of them exists.
  *
  * If an inode's nlink is reduced to 0 and 'add_orphan' is true, it will be
- * added to orphan inode and wairing to be deleted by next kernel mount.
+ * added to orphan inode and waiting to be deleted by next kernel mount.
  */
 int btrfs_unlink(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 		 u64 ino, u64 parent_ino, u64 index, const char *name,
@@ -468,6 +468,42 @@ int btrfs_new_inode(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 
 	fill_inode_item(trans, &inode_item, mode, 0);
 	ret = btrfs_insert_inode(trans, root, ino, &inode_item);
+	return ret;
+}
+
+/*
+ * Change inode flags to given value
+ */
+int btrfs_change_inode_flags(struct btrfs_trans_handle *trans,
+			     struct btrfs_root *root, u64 ino, u64 flags)
+{
+	struct btrfs_inode_item *item;
+	struct btrfs_path *path;
+	struct btrfs_key key;
+	int ret;
+
+	path = btrfs_alloc_path();
+	if (!path)
+		return -ENOMEM;
+
+	key.objectid = ino;
+	key.type = BTRFS_INODE_ITEM_KEY;
+	key.offset = 0;
+
+	ret = btrfs_search_slot(trans, root, &key, path, 0, 1);
+	if (ret > 0) {
+		ret = -ENOENT;
+		goto out;
+	}
+	if (ret < 0)
+		goto out;
+
+	item = btrfs_item_ptr(path->nodes[0], path->slots[0],
+			      struct btrfs_inode_item);
+	btrfs_set_inode_flags(path->nodes[0], item, flags);
+	btrfs_mark_buffer_dirty(path->nodes[0]);
+out:
+	btrfs_free_path(path);
 	return ret;
 }
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 # test btrfs subvolume run normally with more than one subvolume
 #
-# - btrfs subvolume must not loop indefinetelly
+# - btrfs subvolume must not loop indefinitely
 # - btrfs subvolume return 0 in normal case
 
 source $TOP/tests/common
@@ -16,7 +16,7 @@ run_check $SUDO_HELPER $TOP/mkfs.btrfs -f "$TEST_DEV"
 run_check_mount_test_dev
 
 # to check following thing in both 1 and multiple subvolume case:
-# 1: is subvolume sync loop indefinetelly
+# 1: is subvolume sync loop indefinitely
 # 2: is return value right
 #
 run_check $SUDO_HELPER $TOP/btrfs subvolume create "$TEST_MNT"/mysubvol1

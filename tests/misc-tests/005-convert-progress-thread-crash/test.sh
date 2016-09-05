@@ -3,7 +3,8 @@
 
 source $TOP/tests/common
 
-check_prereq btrfs
+check_prereq btrfs-convert
+
 mkfs.ext4 -V &>/dev/null || _not_run "mkfs.ext4 not found"
 prepare_test_dev 1G
 

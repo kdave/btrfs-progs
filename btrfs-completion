@@ -20,13 +20,13 @@ _btrfs_mnts()
 	COMPREPLY+=( $( compgen -W "$MNTS" -- "$cur" ) )
 }
 
-_btrfs() 
+_btrfs()
 {
 	local cur prev words cword
     _init_completion || return
 
     COMPREPLY=()
-    
+
 	local cmd=${words[1]}
 
     commands='subvolume filesystem balance device scrub check rescue restore inspect-internal property send receive quota qgroup replace help version'
@@ -36,7 +36,7 @@ _btrfs()
     commands_device='scan add delete remove ready stats usage'
     commands_scrub='start cancel resume status'
     commands_rescue='chunk-recover super-recover'
-    commands_inspect_internal='inode-resolve logical-resolve subvolid-resolve rootid min-dev-size'
+    commands_inspect_internal='inode-resolve logical-resolve subvolid-resolve rootid min-dev-size dump-tree dump-super tree-stats'
     commands_property='get set list'
     commands_quota='enable disable rescan'
     commands_qgroup='assign remove create destroy show limit'
@@ -146,7 +146,7 @@ _btrfs()
     fi
 
     _filedir -d
-    return 0  
+    return 0
 }
 
 complete -F _btrfs btrfs

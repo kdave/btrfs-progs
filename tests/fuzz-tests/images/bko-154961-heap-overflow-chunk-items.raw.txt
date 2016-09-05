@@ -1,0 +1,21 @@
+URL: https://bugzilla.kernel.org/show_bug.cgi?id=154961
+Lukas Lueg 2016-08-27 17:29:35 UTC
+
+More news from the fuzzer. See the attached image to reproduce using
+btrfs-progs btrfs-progs v4.7-42-g56e9586. You may need to compile with ASAN,
+could not reproduce without...
+
+
+==2572==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x621000018d86 at pc 0x000000547c3c bp 0x7ffd60ec5ef0 sp 0x7ffd60ec5ee8
+READ of size 8 at 0x621000018d86 thread T0
+    #0 0x547c3b in btrfs_stripe_offset /home/lukas/dev/btrfsfuzz/src-asan/./ctree.h:1357:1
+    #1 0x5391f7 in btrfs_stripe_offset_nr /home/lukas/dev/btrfsfuzz/src-asan/./ctree.h:1399:9
+    #2 0x538790 in btrfs_new_chunk_record /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:5209:4
+    #3 0x56c55d in process_chunk_item /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:5225:8
+    #4 0x5634e7 in run_next_block /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:6290:5
+    #5 0x55c489 in deal_root_from_list /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:8338:10
+    #6 0x541d53 in check_chunks_and_extents /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:8505:8
+    #7 0x53d565 in cmd_check /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:11430:9
+    #8 0x4f105f in main /home/lukas/dev/btrfsfuzz/src-asan/btrfs.c:243:8
+    #9 0x7f40dcd8b730 in __libc_start_main (/lib64/libc.so.6+0x20730)
+    #10 0x421238 in _start (/home/lukas/dev/btrfsfuzz/bin-asan/bin/btrfs+0x421238)

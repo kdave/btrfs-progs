@@ -1,0 +1,8 @@
+URL: https://bugzilla.kernel.org/show_bug.cgi?id=155181
+Lukas Lueg 2016-08-28 10:52:32 UTC
+
+Created attachment 230891 [details]
+BTRFS-image that reaches abort() in btrfsck
+
+More news from the fuzzer. The attached image causes btrfsck to reach abort()
+in in cmds-check.c:add_tree_backref(); using btrfs-progs v4.7-42-g56e9586.

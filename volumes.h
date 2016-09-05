@@ -136,6 +136,9 @@ struct map_lookup {
 #define BTRFS_BALANCE_ARGS_DRANGE	(1ULL << 3)
 #define BTRFS_BALANCE_ARGS_VRANGE	(1ULL << 4)
 #define BTRFS_BALANCE_ARGS_LIMIT	(1ULL << 5)
+#define BTRFS_BALANCE_ARGS_LIMIT_RANGE	(1ULL << 6)
+#define BTRFS_BALANCE_ARGS_STRIPES_RANGE (1ULL << 7)
+#define BTRFS_BALANCE_ARGS_USAGE_RANGE	(1ULL << 10)
 
 /*
  * Profile changing flags.  When SOFT is set we won't relocate chunk if
@@ -191,7 +194,7 @@ int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 		      u64 *num_bytes, u64 type);
 int btrfs_alloc_data_chunk(struct btrfs_trans_handle *trans,
 			   struct btrfs_root *extent_root, u64 *start,
-			   u64 num_bytes, u64 type);
+			   u64 num_bytes, u64 type, int convert);
 int btrfs_read_super_device(struct btrfs_root *root, struct extent_buffer *buf);
 int btrfs_add_device(struct btrfs_trans_handle *trans,
 		     struct btrfs_root *root,
@@ -207,7 +210,7 @@ int btrfs_update_device(struct btrfs_trans_handle *trans,
 			struct btrfs_device *device);
 int btrfs_scan_one_device(int fd, const char *path,
 			  struct btrfs_fs_devices **fs_devices_ret,
-			  u64 *total_devs, u64 super_offset, int super_recover);
+			  u64 *total_devs, u64 super_offset, unsigned sbflags);
 int btrfs_num_copies(struct btrfs_mapping_tree *map_tree, u64 logical, u64 len);
 struct list_head *btrfs_scanned_uuids(void);
 int btrfs_add_system_chunk(struct btrfs_trans_handle *trans,
@@ -223,4 +226,8 @@ int write_raid56_with_parity(struct btrfs_fs_info *info,
 			     struct extent_buffer *eb,
 			     struct btrfs_multi_bio *multi,
 			     u64 stripe_len, u64 *raid_map);
+int btrfs_check_chunk_valid(struct btrfs_root *root,
+			    struct extent_buffer *leaf,
+			    struct btrfs_chunk *chunk,
+			    int slot, u64 logical);
 #endif

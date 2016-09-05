@@ -32,12 +32,12 @@
 
 static void print_usage(void)
 {
-	fprintf(stderr, "usage: btrfs-select-super -s number dev\n");
-	fprintf(stderr, "%s\n", PACKAGE_STRING);
+	printf("usage: btrfs-select-super -s number dev\n");
+	printf("\t-s super   copy of superbloc to overwrite the primary one (values: 1, 2)\n");
 	exit(1);
 }
 
-int main(int ac, char **av)
+int main(int argc, char **argv)
 {
 	struct btrfs_root *root;
 	int ret;
@@ -46,7 +46,7 @@ int main(int ac, char **av)
 
 	while(1) {
 		int c;
-		c = getopt(ac, av, "s:");
+		c = getopt(argc, argv, "s:");
 		if (c < 0)
 			break;
 		switch(c) {
@@ -64,10 +64,8 @@ int main(int ac, char **av)
 				print_usage();
 		}
 	}
-	set_argv0(av);
-	ac = ac - optind;
-
-	if (check_argc_exact(ac, 1))
+	set_argv0(argv);
+	if (check_argc_exact(argc - optind, 1))
 		print_usage();
 
 	if (bytenr == 0) {
@@ -77,15 +75,15 @@ int main(int ac, char **av)
 
 	radix_tree_init();
 
-	if((ret = check_mounted(av[optind])) < 0) {
-		fprintf(stderr, "Could not check mount status: %s\n", strerror(-ret));
+	if((ret = check_mounted(argv[optind])) < 0) {
+		error("cannot check mount status: %s", strerror(-ret));
 		return ret;
 	} else if(ret) {
-		fprintf(stderr, "%s is currently mounted. Aborting.\n", av[optind]);
+		error("%s is currently mounted, aborting", argv[optind]);
 		return -EBUSY;
 	}
 
-	root = open_ctree(av[optind], bytenr, 1);
+	root = open_ctree(argv[optind], bytenr, 1);
 
 	if (!root) {
 		fprintf(stderr, "Open ctree failed\n");

@@ -30,7 +30,7 @@
 /* Return value is the same as btrfs_find_root_search(). */
 static int add_eb_to_result(struct extent_buffer *eb,
 			    struct cache_tree *result,
-			    u32 leafsize,
+			    u32 nodesize,
 			    struct btrfs_find_root_filter *filter,
 			    struct cache_extent **match)
 {
@@ -80,7 +80,7 @@ static int add_eb_to_result(struct extent_buffer *eb,
 	/* Same level, insert it into the eb_tree */
 	if (level == gen_cache->highest_level) {
 		ret = add_cache_extent(&gen_cache->eb_tree,
-				       start, leafsize);
+				       start, nodesize);
 		if (ret < 0 && ret != -EEXIST)
 			return ret;
 		ret = 0;
@@ -101,17 +101,16 @@ static int add_eb_to_result(struct extent_buffer *eb,
  * Return 1 if found root with given gen/level and set *match to it.
  * Return <0 if error happens
  */
-int btrfs_find_root_search(struct btrfs_root *chunk_root,
+int btrfs_find_root_search(struct btrfs_fs_info *fs_info,
 			   struct btrfs_find_root_filter *filter,
 			   struct cache_tree *result,
 			   struct cache_extent **match)
 {
-	struct btrfs_fs_info *fs_info = chunk_root->fs_info;
 	struct extent_buffer *eb;
 	u64 chunk_offset = 0;
 	u64 chunk_size = 0;
 	u64 offset = 0;
-	u32 leafsize = chunk_root->leafsize;
+	u32 nodesize = btrfs_super_nodesize(fs_info->super_copy);
 	int suppress_errors = 0;
 	int ret = 0;
 
@@ -133,11 +132,12 @@ int btrfs_find_root_search(struct btrfs_root *chunk_root,
 		}
 		for (offset = chunk_offset;
 		     offset < chunk_offset + chunk_size;
-		     offset += chunk_root->leafsize) {
-			eb = read_tree_block(chunk_root, offset, leafsize, 0);
+		     offset += nodesize) {
+			eb = read_tree_block_fs_info(fs_info, offset, nodesize,
+						     0);
 			if (!eb || IS_ERR(eb))
 				continue;
-			ret = add_eb_to_result(eb, result, leafsize, filter,
+			ret = add_eb_to_result(eb, result, nodesize, filter,
 					       match);
 			free_extent_buffer(eb);
 			if (ret)

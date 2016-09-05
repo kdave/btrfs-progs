@@ -43,15 +43,6 @@ static const char * const cmd_rescue_chunk_recover_usage[] = {
 	NULL
 };
 
-static const char * const cmd_rescue_super_recover_usage[] = {
-	"btrfs rescue super-recover [options] <device>",
-	"Recover bad superblocks from good copies",
-	"",
-	"-y	Assume an answer of `yes' to all questions",
-	"-v	Verbose mode",
-	NULL
-};
-
 static int cmd_rescue_chunk_recover(int argc, char *argv[])
 {
 	int ret = 0;
@@ -76,33 +67,40 @@ static int cmd_rescue_chunk_recover(int argc, char *argv[])
 		}
 	}
 
-	argc = argc - optind;
-	if (check_argc_exact(argc, 1))
+	if (check_argc_exact(argc - optind, 1))
 		usage(cmd_rescue_chunk_recover_usage);
 
 	file = argv[optind];
 
 	ret = check_mounted(file);
 	if (ret < 0) {
-		fprintf(stderr, "Could not check mount status: %s\n",
-			strerror(-ret));
+		error("could not check mount status: %s", strerror(-ret));
 		return 1;
 	} else if (ret) {
-		fprintf(stderr, "the device is busy\n");
+		error("the device is busy");
 		return 1;
 	}
 
 	ret = btrfs_recover_chunk_tree(file, verbose, yes);
 	if (!ret) {
-		fprintf(stdout, "Recover the chunk tree successfully.\n");
+		fprintf(stdout, "Chunk tree recovered successfully\n");
 	} else if (ret > 0) {
 		ret = 0;
-		fprintf(stdout, "Abort to rebuild the on-disk chunk tree.\n");
+		fprintf(stdout, "Chunk tree recovery aborted\n");
 	} else {
-		fprintf(stdout, "Fail to recover the chunk tree.\n");
+		fprintf(stdout, "Chunk tree recovery failed\n");
 	}
 	return ret;
 }
+
+static const char * const cmd_rescue_super_recover_usage[] = {
+	"btrfs rescue super-recover [options] <device>",
+	"Recover bad superblocks from good copies",
+	"",
+	"-y	Assume an answer of `yes' to all questions",
+	"-v	Verbose mode",
+	NULL
+};
 
 /*
  * return codes:
@@ -134,18 +132,16 @@ static int cmd_rescue_super_recover(int argc, char **argv)
 			usage(cmd_rescue_super_recover_usage);
 		}
 	}
-	argc = argc - optind;
-	if (check_argc_exact(argc, 1))
+	if (check_argc_exact(argc - optind, 1))
 		usage(cmd_rescue_super_recover_usage);
 
 	dname = argv[optind];
 	ret = check_mounted(dname);
 	if (ret < 0) {
-		fprintf(stderr, "Could not check mount status: %s\n",
-			strerror(-ret));
+		error("could not check mount status: %s", strerror(-ret));
 		return 1;
 	} else if (ret) {
-		fprintf(stderr, "the device is busy\n");
+		error("the device is busy");
 		return 1;
 	}
 	ret = btrfs_recover_superblocks(dname, verbose, yes);
@@ -167,22 +163,24 @@ static int cmd_rescue_zero_log(int argc, char **argv)
 	char *devname;
 	int ret;
 
+	clean_args_no_options(argc, argv, cmd_rescue_zero_log_usage);
+
 	if (check_argc_exact(argc, 2))
 		usage(cmd_rescue_zero_log_usage);
 
 	devname = argv[optind];
 	ret = check_mounted(devname);
 	if (ret < 0) {
-		fprintf(stderr, "Could not check mount status: %s\n", strerror(-ret));
+		error("could not check mount status: %s", strerror(-ret));
 		goto out;
 	} else if (ret) {
-		fprintf(stderr, "%s is currently mounted. Aborting.\n", devname);
+		error("%s is currently mounted", devname);
 		ret = -EBUSY;
 	}
 
 	root = open_ctree(devname, 0, OPEN_CTREE_WRITES | OPEN_CTREE_PARTIAL);
 	if (!root) {
-		fprintf(stderr, "Could not open ctree\n");
+		error("could not open ctree");
 		return 1;
 	}
 
