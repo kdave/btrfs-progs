@@ -123,6 +123,38 @@ convert_test_gen_checksums() {
 		count=1 >/dev/null 2>&1
 	run_check_stdout $SUDO_HELPER find $TEST_MNT -type f ! -name 'image' -exec md5sum {} \+ > "$CHECKSUMTMP"
 }
+# list $TEST_MNT data set file permissions.
+# $1: path where the permissions will be stored
+convert_test_perm() {
+	local PERMTMP
+	PERMTMP="$1"
+	FILES_LIST=$(mktemp --tmpdir btrfs-progs-convert.fileslistXXXXXX)
+
+	run_check $SUDO_HELPER dd if=/dev/zero of=$TEST_MNT/test bs=$nodesize \
+		count=1 >/dev/null 2>&1
+	run_check_stdout $SUDO_HELPER find $TEST_MNT -type f ! -name 'image' -fprint $FILES_LIST
+	# Fix directory entries order
+	sort $FILES_LIST -o $FILES_LIST
+	for file in `cat $FILES_LIST` ;do
+		run_check_stdout $SUDO_HELPER getfacl --absolute-names $file >> "$PERMTMP"
+	done
+	rm -- $FILES_LIST
+}
+# list acls of files on $TEST_MNT
+# $1: path where the acls will be stored
+convert_test_acl() {
+	local ACLSTMP
+	ACLTMP="$1"
+	FILES_LIST=$(mktemp --tmpdir btrfs-progs-convert.fileslistXXXXXX)
+
+	run_check_stdout $SUDO_HELPER find $TEST_MNT/acls -type f -fprint $FILES_LIST
+	# Fix directory entries order
+	sort $FILES_LIST -o $FILES_LIST
+	for file in `cat $FILES_LIST`;do
+		run_check_stdout $SUDO_HELPER getfattr --absolute-names -d $file >> "$ACLTMP"
+	done
+	rm -- $FILES_LIST
+}
 
 # do conversion with given features and nodesize, fsck afterwards
 # $1: features, argument of -O, can be empty
@@ -133,15 +165,68 @@ convert_test_do_convert() {
 	run_check $TOP/btrfs-show-super -Ffa $TEST_DEV
 }
 
+# post conversion check, verify file permissions.
+# $1: file with ext permissions.
+convert_test_post_check_permissions() {
+	local EXT_PERMTMP
+	local BTRFS_PERMTMP
+
+	EXT_PERMTMP="$1"
+	BTRFS_PERMTMP=$(mktemp --tmpdir btrfs-progs-convert.permXXXXXX)
+	convert_test_perm "$BTRFS_PERMTMP"
+
+	btrfs_perm=`md5sum $BTRFS_PERMTMP | cut -f1 -d' '`
+	ext_perm=`md5sum $EXT_PERMTMP | cut -f1 -d' '`
+
+	if [ "$btrfs_perm" != "$ext_perm" ];
+	then
+		btrfs_perm_file=`md5sum $BTRFS_PERMTMP | cut -f2 -d' '`
+		ext_perm_file=`md5sum $EXT_PERMTMP | cut -f2 -d' '`
+		_fail "file permission failed. Mismatched BTRFS:$btrfs_perm_file:$btrfs_perm EXT:$ext_perm_file:$ext_perm"
+	fi
+
+	rm -- $BTRFS_PERMTMP
+}
+# post conversion check, compare BTRFS file acls against EXT.
+# $1: file with ext acls.
+convert_test_post_check_acl() {
+	local EXT_ACLTMP
+	local BTRFS_ACLTMP
+
+	EXT_ACLTMP="$1"
+	BTRFS_ACLTMP=$(mktemp --tmpdir btrfs-progs-convert.aclsXXXXXXX)
+	convert_test_acl "$BTRFS_ACLTMP"
+
+	btrfs_acl=`md5sum $BTRFS_ACLTMP | cut -f1 -d' '`
+	ext_acl=`md5sum $EXT_ACLTMP | cut -f1 -d' '`
+
+	if [ "$btrfs_acl" != "$ext_acl" ]
+	then
+		btrfs_acl_file=`md5sum $BTRFS_ACLTMP | cut -f2 -d' '`
+		ext_acl_file=`md5sum $EXT_ACLTMP | cut -f2 -d' '`
+		_fail "file acl failed. Mismatched BTRFS:$btrfs_acl_file:$btrfs_acl EXT:$ext_acl_file:$ext_acl"
+	fi
+
+	rm -- $BTRFS_ACLTMP
+}
 # post conversion checks, verify md5sums
 # $1: file with checksums
+# $2: file with permissions.
+# $3: file with acl entries.
 convert_test_post_check() {
 	local CHECKSUMTMP
+	local EXT_PERMTMP
+	local EXT_ACLTMP
+
 	CHECKSUMTMP="$1"
+	EXT_PERMTMP="$2"
+	EXT_ACLTMP="$3"
 
 	run_check_mount_test_dev
 	run_check_stdout $SUDO_HELPER md5sum -c "$CHECKSUMTMP" |
 		grep -q 'FAILED' && _fail "file validation failed"
+	convert_test_post_check_permissions "$EXT_PERMTMP"
+	convert_test_post_check_acl "$EXT_ACLTMP"
 	run_check_umount_test_dev
 }
 
@@ -161,6 +246,8 @@ convert_test() {
 	local nodesize
 	local msg
 	local CHECKSUMTMP
+	local EXT_PERMTMP
+	local EXT_ACLTMP
 
 	features="$1"
 	msg="$2"
@@ -170,13 +257,19 @@ convert_test() {
 	convert_test_prep_fs "$@"
 	populate_fs
 	CHECKSUMTMP=$(mktemp --tmpdir btrfs-progs-convert.XXXXXXXXXX)
+	EXT_PERMTMP=$(mktemp --tmpdir btrfs-progs-convert.permXXXXXX)
+	EXT_ACLTMP=$(mktemp --tmpdir btrfs-progs-convert.aclsXXXXXXX)
 	convert_test_gen_checksums "$CHECKSUMTMP"
+	convert_test_perm "$EXT_PERMTMP"
+	convert_test_acl "$EXT_ACLTMP"
 
 	run_check_umount_test_dev
 
 	convert_test_do_convert "$features" "$nodesize"
-	convert_test_post_check "$CHECKSUMTMP"
+	convert_test_post_check "$CHECKSUMTMP" "$EXT_PERMTMP" "$EXT_ACLTMP"
 	rm $CHECKSUMTMP
+	rm $EXT_PERMTMP
+	rm $EXT_ACLTMP
 
 	convert_test_post_rollback
 }
