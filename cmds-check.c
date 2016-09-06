@@ -6047,7 +6047,9 @@ static int calc_extent_flag(struct btrfs_root *root,
 
 	cache = lookup_cache_extent(extent_cache, buf->start, 1);
 	/* we have added this extent before */
-	BUG_ON(!cache);
+	if (!cache)
+		return -ENOENT;
+
 	rec = container_of(cache, struct extent_record, cache);
 
 	/*
