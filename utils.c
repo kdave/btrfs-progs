@@ -3327,6 +3327,7 @@ int test_num_disk_vs_raid(u64 metadata_profile, u64 data_profile,
 	u64 dev_cnt, int mixed, int ssd)
 {
 	u64 allowed = 0;
+	u64 profile = metadata_profile | data_profile;
 
 	switch (dev_cnt) {
 	default:
@@ -3341,8 +3342,7 @@ int test_num_disk_vs_raid(u64 metadata_profile, u64 data_profile,
 		allowed |= BTRFS_BLOCK_GROUP_DUP;
 	}
 
-	if (dev_cnt > 1 &&
-	    ((metadata_profile | data_profile) & BTRFS_BLOCK_GROUP_DUP)) {
+	if (dev_cnt > 1 && profile & BTRFS_BLOCK_GROUP_DUP) {
 		warning("DUP is not recommended on filesystem with multiple devices");
 	}
 	if (metadata_profile & ~allowed) {
@@ -3362,6 +3362,12 @@ int test_num_disk_vs_raid(u64 metadata_profile, u64 data_profile,
 		return 1;
 	}
 
+	if (dev_cnt == 3 && profile & BTRFS_BLOCK_GROUP_RAID6) {
+		warning("RAID6 is not recommended on filesystem with 3 devices only");
+	}
+	if (dev_cnt == 2 && profile & BTRFS_BLOCK_GROUP_RAID5) {
+		warning("RAID5 is not recommended on filesystem with 2 devices only");
+	}
 	warning_on(!mixed && (data_profile & BTRFS_BLOCK_GROUP_DUP) && ssd,
 		   "DUP may not actually lead to 2 copies on the device, see manual page");
 

@@ -263,17 +263,25 @@ There are the following block group types available:
 .2+^.<h| Profile   3+^.^h| Redundancy           .2+^.<h| Min/max devices
       ^.^h| Copies   ^.^h| Parity     ^.<h| Striping
 | single  | 1            |                |            | 1/any
-| DUP     | 2 / 1 device |                |            | 1/any ^(see note)^
+| DUP     | 2 / 1 device |                |            | 1/any ^(see note 1)^
 | RAID0   |              |                | 1 to N     | 2/any
 | RAID1   | 2            |                |            | 2/any
 | RAID10  | 2            |                | 1 to N     | 4/any
-| RAID5   | 1            | 1              | 2 to N - 1 | 2/any
-| RAID6   | 1            | 2              | 3 to N - 2 | 3/any
+| RAID5   | 1            | 1              | 2 to N - 1 | 2/any ^(see note 2)^
+| RAID6   | 1            | 2              | 3 to N - 2 | 3/any ^(see note 3)^
 |=============================================================
 
-'Note:' DUP may exist on more than 1 device if it starts on a single device and
+'Note 1:' DUP may exist on more than 1 device if it starts on a single device and
 another one is added. Since version 4.5.1, *mkfs.btrfs* will let you create DUP
 on multiple devices.
+
+'Note 2:' It's not recommended to use 2 devices with RAID5. In that case,
+parity stripe will contain the same data as the data stripe, making RAID5
+degraded to RAID1 with more overhead.
+
+'Note 3:' It's also not recommended to use 3 devices with RAID6, unless you
+want to get effectively 3 copies in a RAID1-like manner (but not exactly that).
+N-copies RAID1 is not implemented.
 
 DUP PROFILES ON A SINGLE DEVICE
 -------------------------------
