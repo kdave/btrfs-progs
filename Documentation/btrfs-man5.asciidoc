@@ -214,15 +214,18 @@ parameters, eg. 'panic', 'oops' or 'crashkernel'.
 
 *flushoncommit*::
 *noflushoncommit*::
-(default: on)
+(default: off)
 +
 This option forces any data dirtied by a write in a prior transaction to commit
-as part of the current commit.  This makes the committed state a fully
-consistent view of the file system from the application's perspective (i.e., it
-includes all completed file system operations).  This was previously the
-behavior only when a snapshot was created.
+as part of the current commit, effectively a full filesystem sync.
 +
-Disabling flushing may improve performance but is not crash-safe.
+This makes the committed state a fully consistent view of the file system from
+the application's perspective (i.e., it includes all completed file system
+operations). This was previously the behavior only when a snapshot was
+created.
++
+When off, the filesystem is consistent but buffered writes may last more than
+one transaction commit.
 
 *fragment='type'*::
 (depends on compile-time option BTRFS_DEBUG, since: 4.4, default: off)
