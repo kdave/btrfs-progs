@@ -1947,9 +1947,12 @@ static int insert_stripe(struct list_head *devexts,
 	dev = btrfs_find_device_by_devid(rc->fs_devices, devext->objectid,
 					0);
 	if (!dev)
-		return 1;
-	BUG_ON(btrfs_find_device_by_devid(rc->fs_devices, devext->objectid,
-					1));
+		return -ENOENT;
+	if (btrfs_find_device_by_devid(rc->fs_devices, devext->objectid, 1)) {
+		error("unexpected: found another device with id %llu",
+				(unsigned long long)devext->objectid);
+		return -EINVAL;
+	}
 
 	chunk->stripes[index].devid = devext->objectid;
 	chunk->stripes[index].offset = devext->offset;
