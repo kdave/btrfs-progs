@@ -271,6 +271,10 @@ There are the following block group types available:
 | RAID6   | 1            | 2              | 3 to N - 2 | 3/any ^(see note 3)^
 |=============================================================
 
+WARNING: It's not recommended to build btrfs with RAID0/1/10/5/6 prfiles on
+partitions from the same device.  Neither redundancy nor performance will be
+improved.
+
 'Note 1:' DUP may exist on more than 1 device if it starts on a single device and
 another one is added. Since version 4.5.1, *mkfs.btrfs* will let you create DUP
 on multiple devices.
