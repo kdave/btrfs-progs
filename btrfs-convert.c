@@ -424,8 +424,16 @@ static int create_image_file_range(struct btrfs_trans_handle *trans,
 	int i;
 	int ret;
 
-	BUG_ON(bytenr != round_down(bytenr, root->sectorsize));
-	BUG_ON(len != round_down(len, root->sectorsize));
+	if (bytenr != round_down(bytenr, root->sectorsize)) {
+		error("bytenr not sectorsize aligned: %llu",
+				(unsigned long long)bytenr);
+		return -EINVAL;
+	}
+	if (len != round_down(len, root->sectorsize)) {
+		error("length not sectorsize aligned: %llu",
+				(unsigned long long)len);
+		return -EINVAL;
+	}
 	len = min_t(u64, len, BTRFS_MAX_EXTENT_SIZE);
 
 	/*
@@ -514,7 +522,11 @@ static int create_image_file_range(struct btrfs_trans_handle *trans,
 			    bg_cache->key.offset - bytenr);
 	}
 
-	BUG_ON(len != round_down(len, root->sectorsize));
+	if (len != round_down(len, root->sectorsize)) {
+		error("remaining length not sectorsize aligned: %llu",
+				(unsigned long long)len);
+		return -EINVAL;
+	}
 	ret = btrfs_record_file_extent(trans, root, ino, inode, bytenr,
 				       disk_bytenr, len);
 	if (ret < 0)
