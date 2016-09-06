@@ -1219,8 +1219,21 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg,
 		if (!skinny_metadata)
 			item_size += sizeof(struct btrfs_tree_block_info);
 
-		BUG_ON(cfg->blocks[i] < first_free);
-		BUG_ON(cfg->blocks[i] < cfg->blocks[i - 1]);
+		if (cfg->blocks[i] < first_free) {
+			error("block[%d] below first free: %llu < %llu",
+					i, (unsigned long long)cfg->blocks[i],
+					(unsigned long long)first_free);
+			ret = -EINVAL;
+			goto out;
+		}
+		if (cfg->blocks[i] < cfg->blocks[i - 1]) {
+			error("blocks %d and %d in reverse order: %llu < %llu",
+				i, i - 1,
+				(unsigned long long)cfg->blocks[i],
+				(unsigned long long)cfg->blocks[i - 1]);
+			ret = -EINVAL;
+			goto out;
+		}
 
 		/* create extent item */
 		itemoff -= item_size;
