@@ -148,7 +148,7 @@ void btrfs_qgroup_setup_print_column(enum btrfs_qgroup_column_enum column)
 {
 	int i;
 
-	BUG_ON(column < 0 || column > BTRFS_QGROUP_ALL);
+	ASSERT(0 <= column && column <= BTRFS_QGROUP_ALL);
 
 	if (column < BTRFS_QGROUP_ALL) {
 		btrfs_qgroup_columns[column].need_print = 1;
@@ -213,10 +213,11 @@ static void print_qgroup_column_add_blank(enum btrfs_qgroup_column_enum column,
 static void print_qgroup_column(struct btrfs_qgroup *qgroup,
 				enum btrfs_qgroup_column_enum column)
 {
-	BUG_ON(column >= BTRFS_QGROUP_ALL || column < 0);
 	int len;
 	int unit_mode = btrfs_qgroup_columns[column].unit_mode;
 	int max_len = btrfs_qgroup_columns[column].max_len;
+
+	ASSERT(0 <= column && column < BTRFS_QGROUP_ALL);
 
 	switch (column) {
 
@@ -459,9 +460,9 @@ int btrfs_qgroup_setup_comparer(struct btrfs_qgroup_comparer_set  **comp_set,
 	struct btrfs_qgroup_comparer_set *set = *comp_set;
 	int size;
 
-	BUG_ON(!set);
-	BUG_ON(comparer >= BTRFS_QGROUP_COMP_MAX);
-	BUG_ON(set->ncomps > set->total);
+	ASSERT(set != NULL);
+	ASSERT(comparer < BTRFS_QGROUP_COMP_MAX);
+	ASSERT(set->ncomps <= set->total);
 
 	if (set->ncomps == set->total) {
 		void *tmp;
@@ -484,7 +485,7 @@ int btrfs_qgroup_setup_comparer(struct btrfs_qgroup_comparer_set  **comp_set,
 		*comp_set = set;
 	}
 
-	BUG_ON(set->comps[set->ncomps].comp_func);
+	ASSERT(set->comps[set->ncomps].comp_func != NULL);
 
 	set->comps[set->ncomps].comp_func = all_comp_funcs[comparer];
 	set->comps[set->ncomps].is_descending = is_descending;
@@ -832,9 +833,9 @@ int btrfs_qgroup_setup_filter(struct btrfs_qgroup_filter_set **filter_set,
 	struct btrfs_qgroup_filter_set *set = *filter_set;
 	int size;
 
-	BUG_ON(!set);
-	BUG_ON(filter >= BTRFS_QGROUP_FILTER_MAX);
-	BUG_ON(set->nfilters > set->total);
+	ASSERT(set != NULL);
+	ASSERT(filter < BTRFS_QGROUP_FILTER_MAX);
+	ASSERT(set->nfilters <= set->total);
 
 	if (set->nfilters == set->total) {
 		void *tmp;
@@ -855,7 +856,8 @@ int btrfs_qgroup_setup_filter(struct btrfs_qgroup_filter_set **filter_set,
 		set->total += BTRFS_QGROUP_NFILTERS_INCREASE;
 		*filter_set = set;
 	}
-	BUG_ON(set->filters[set->nfilters].filter_func);
+
+	ASSERT(set->filters[set->nfilters].filter_func != NULL);
 	set->filters[set->nfilters].filter_func = all_filter_funcs[filter];
 	set->filters[set->nfilters].data = data;
 	set->nfilters++;
@@ -926,11 +928,12 @@ static int sort_tree_insert(struct qgroup_lookup *sort_tree,
 static void __update_columns_max_len(struct btrfs_qgroup *bq,
 				     enum btrfs_qgroup_column_enum column)
 {
-	BUG_ON(column >= BTRFS_QGROUP_ALL || column < 0);
 	struct btrfs_qgroup_list *list = NULL;
 	char tmp[100];
 	int len;
 	unsigned unit_mode = btrfs_qgroup_columns[column].unit_mode;
+
+	ASSERT(column <= 0 && column < BTRFS_QGROUP_ALL);
 
 	switch (column) {
 

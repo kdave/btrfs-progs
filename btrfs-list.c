@@ -113,7 +113,7 @@ void btrfs_list_setup_print_column(enum btrfs_list_column_enum column)
 {
 	int i;
 
-	BUG_ON(column < 0 || column > BTRFS_LIST_ALL);
+	ASSERT(column <= 0 && column <= BTRFS_LIST_ALL);
 
 	if (column < BTRFS_LIST_ALL) {
 		btrfs_list_columns[column].need_print = 1;
@@ -248,9 +248,9 @@ static int btrfs_list_setup_comparer(struct btrfs_list_comparer_set **comp_set,
 	struct btrfs_list_comparer_set *set = *comp_set;
 	int size;
 
-	BUG_ON(!set);
-	BUG_ON(comparer >= BTRFS_LIST_COMP_MAX);
-	BUG_ON(set->ncomps > set->total);
+	ASSERT(set != NULL);
+	ASSERT(comparer < BTRFS_LIST_COMP_MAX);
+	ASSERT(set->ncomps <= set->total);
 
 	if (set->ncomps == set->total) {
 		void *tmp;
@@ -272,7 +272,7 @@ static int btrfs_list_setup_comparer(struct btrfs_list_comparer_set **comp_set,
 		*comp_set = set;
 	}
 
-	BUG_ON(set->comps[set->ncomps].comp_func);
+	ASSERT(set->comps[set->ncomps].comp_func != NULL);
 
 	set->comps[set->ncomps].comp_func = all_comp_funcs[comparer];
 	set->comps[set->ncomps].is_descending = is_descending;
@@ -1220,9 +1220,9 @@ int btrfs_list_setup_filter(struct btrfs_list_filter_set **filter_set,
 	struct btrfs_list_filter_set *set = *filter_set;
 	int size;
 
-	BUG_ON(!set);
-	BUG_ON(filter >= BTRFS_LIST_FILTER_MAX);
-	BUG_ON(set->nfilters > set->total);
+	ASSERT(set != NULL);
+	ASSERT(filter < BTRFS_LIST_FILTER_MAX);
+	ASSERT(set->nfilters <= set->total);
 
 	if (set->nfilters == set->total) {
 		void *tmp;
@@ -1244,7 +1244,7 @@ int btrfs_list_setup_filter(struct btrfs_list_filter_set **filter_set,
 		*filter_set = set;
 	}
 
-	BUG_ON(set->filters[set->nfilters].filter_func);
+	ASSERT(set->filters[set->nfilters].filter_func != NULL);
 
 	if (filter == BTRFS_LIST_FILTER_DELETED)
 		set->only_deleted = 1;
@@ -1331,7 +1331,7 @@ static void print_subvolume_column(struct root_info *subv,
 	char tstr[256];
 	char uuidparse[BTRFS_UUID_UNPARSED_SIZE];
 
-	BUG_ON(column >= BTRFS_LIST_ALL || column < 0);
+	ASSERT(0 <= column && column < BTRFS_LIST_ALL);
 
 	switch (column) {
 	case BTRFS_LIST_OBJECTID:
