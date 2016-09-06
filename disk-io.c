@@ -1411,7 +1411,11 @@ struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
 	struct btrfs_fs_info *info;
 
 	/* This flags may not return fs_info with any valid root */
-	BUG_ON(flags & OPEN_CTREE_IGNORE_CHUNK_TREE_ERROR);
+	if (flags & OPEN_CTREE_IGNORE_CHUNK_TREE_ERROR) {
+		error("invalid open_ctree flags: 0x%llx",
+				(unsigned long long)flags);
+		return NULL;
+	}
 	info = __open_ctree_fd(fp, path, sb_bytenr, 0, 0, flags);
 	if (!info)
 		return NULL;
