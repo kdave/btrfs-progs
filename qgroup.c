@@ -448,11 +448,6 @@ struct btrfs_qgroup_comparer_set *btrfs_qgroup_alloc_comparer_set(void)
 	return set;
 }
 
-void btrfs_qgroup_free_comparer_set(struct btrfs_qgroup_comparer_set *comp_set)
-{
-	free(comp_set);
-}
-
 int btrfs_qgroup_setup_comparer(struct btrfs_qgroup_comparer_set  **comp_set,
 				enum btrfs_qgroup_comp_enum comparer,
 				int is_descending)
@@ -820,11 +815,6 @@ struct btrfs_qgroup_filter_set *btrfs_qgroup_alloc_filter_set(void)
 	set->total = BTRFS_QGROUP_NFILTERS_INCREASE;
 
 	return set;
-}
-
-void btrfs_qgroup_free_filter_set(struct btrfs_qgroup_filter_set *filter_set)
-{
-	free(filter_set);
 }
 
 int btrfs_qgroup_setup_filter(struct btrfs_qgroup_filter_set **filter_set,
@@ -1218,8 +1208,8 @@ int btrfs_show_qgroups(int fd,
 	print_all_qgroups(&sort_tree);
 
 	__free_all_qgroups(&qgroup_lookup);
-	btrfs_qgroup_free_filter_set(filter_set);
-	btrfs_qgroup_free_comparer_set(comp_set);
+	free(filter_set);
+	free(comp_set);
 	return ret;
 }
 
