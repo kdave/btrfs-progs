@@ -166,8 +166,18 @@ static int process_subvol(const char *path, const u8 *uuid, u64 ctransid,
 	if (ret < 0)
 		goto out;
 
-	BUG_ON(r->cur_subvol.path);
-	BUG_ON(r->cur_subvol_path[0]);
+	if (r->cur_subvol.path) {
+		error("subvol: another one already started, path ptr: %s",
+				r->cur_subvol.path);
+		ret = -EINVAL;
+		goto out;
+	}
+	if (r->cur_subvol_path[0]) {
+		error("subvol: another one already started, path buf: %s",
+				r->cur_subvol.path);
+		ret = -EINVAL;
+		goto out;
+	}
 
 	if (*r->dest_dir_path == 0) {
 		strncpy_null(r->cur_subvol_path, path);
@@ -224,8 +234,18 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 	if (ret < 0)
 		goto out;
 
-	BUG_ON(r->cur_subvol.path);
-	BUG_ON(r->cur_subvol_path[0]);
+	if (r->cur_subvol.path) {
+		error("snapshot: another one already started, path ptr: %s",
+				r->cur_subvol.path);
+		ret = -EINVAL;
+		goto out;
+	}
+	if (r->cur_subvol_path[0]) {
+		error("snapshot: another one already started, path buf: %s",
+				r->cur_subvol.path);
+		ret = -EINVAL;
+		goto out;
+	}
 
 	if (*r->dest_dir_path == 0) {
 		strncpy_null(r->cur_subvol_path, path);
