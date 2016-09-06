@@ -1148,6 +1148,7 @@ void btrfs_print_tree(struct btrfs_root *root, struct extent_buffer *eb, int fol
 	u32 size;
 	struct btrfs_disk_key disk_key;
 	struct btrfs_key key;
+	struct extent_buffer *next;
 
 	if (!eb)
 		return;
@@ -1181,23 +1182,34 @@ void btrfs_print_tree(struct btrfs_root *root, struct extent_buffer *eb, int fol
 		return;
 
 	for (i = 0; i < nr; i++) {
-		struct extent_buffer *next = read_tree_block(root,
-					     btrfs_node_blockptr(eb, i),
-					     size,
-					     btrfs_node_ptr_generation(eb, i));
+		next = read_tree_block(root, btrfs_node_blockptr(eb, i), size,
+				btrfs_node_ptr_generation(eb, i));
 		if (!extent_buffer_uptodate(next)) {
 			fprintf(stderr, "failed to read %llu in tree %llu\n",
 				(unsigned long long)btrfs_node_blockptr(eb, i),
 				(unsigned long long)btrfs_header_owner(eb));
 			continue;
 		}
-		if (btrfs_is_leaf(next) &&
-		    btrfs_header_level(eb) != 1)
-			BUG();
-		if (btrfs_header_level(next) !=
-			btrfs_header_level(eb) - 1)
-			BUG();
+		if (btrfs_is_leaf(next) && btrfs_header_level(eb) != 1) {
+			warning(
+	"eb corrupted: item %d eb level %d next level %d, skipping the rest",
+				i, btrfs_header_level(next),
+				btrfs_header_level(eb));
+			goto out;
+		}
+		if (btrfs_header_level(next) != btrfs_header_level(eb) - 1) {
+			warning(
+	"eb corrupted: item %d eb level %d next level %d, skipping the rest",
+				i, btrfs_header_level(next),
+				btrfs_header_level(eb));
+			goto out;
+		}
 		btrfs_print_tree(root, next, 1);
 		free_extent_buffer(next);
 	}
+
+	return;
+
+out:
+	free_extent_buffer(next);
 }
