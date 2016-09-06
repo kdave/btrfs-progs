@@ -580,9 +580,9 @@ static int cmd_subvol_list(int argc, char **argv)
 out:
 	close_file_or_dir(fd, dirstream);
 	if (filter_set)
-		btrfs_list_free_filter_set(filter_set);
+		free(filter_set);
 	if (comparer_set)
-		btrfs_list_free_comparer_set(comparer_set);
+		free(comparer_set);
 	if (uerr)
 		usage(cmd_subvol_list_usage);
 	return !!ret;
@@ -803,7 +803,7 @@ static int cmd_subvol_get_default(int argc, char **argv)
 		BTRFS_LIST_LAYOUT_DEFAULT, 1, NULL);
 
 	if (filter_set)
-		btrfs_list_free_filter_set(filter_set);
+		free(filter_set);
 out:
 	close_file_or_dir(fd, dirstream);
 	return !!ret;
@@ -1011,7 +1011,7 @@ out:
 	free(get_ri.path);
 	free(get_ri.name);
 	free(get_ri.full_path);
-	btrfs_list_free_filter_set(filter_set);
+	free(filter_set);
 
 	close_file_or_dir(fd, dirstream1);
 	free(fullpath);

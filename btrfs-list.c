@@ -237,11 +237,6 @@ struct btrfs_list_comparer_set *btrfs_list_alloc_comparer_set(void)
 	return set;
 }
 
-void btrfs_list_free_comparer_set(struct btrfs_list_comparer_set *comp_set)
-{
-	free(comp_set);
-}
-
 static int btrfs_list_setup_comparer(struct btrfs_list_comparer_set **comp_set,
 		enum btrfs_list_comp_enum comparer, int is_descending)
 {
@@ -1207,11 +1202,6 @@ struct btrfs_list_filter_set *btrfs_list_alloc_filter_set(void)
 	set->total = BTRFS_LIST_NFILTERS_INCREASE;
 
 	return set;
-}
-
-void btrfs_list_free_filter_set(struct btrfs_list_filter_set *filter_set)
-{
-	free(filter_set);
 }
 
 int btrfs_list_setup_filter(struct btrfs_list_filter_set **filter_set,
