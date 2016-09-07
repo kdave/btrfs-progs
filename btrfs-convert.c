@@ -2598,7 +2598,7 @@ static int may_rollback(struct btrfs_root *root)
 
 		num_stripes = multi->num_stripes;
 		physical = multi->stripes[0].physical;
-		kfree(multi);
+		free(multi);
 
 		if (num_stripes != 1) {
 			error("num stripes for bytenr %llu is not 1", bytenr);

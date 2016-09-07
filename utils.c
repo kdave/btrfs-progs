@@ -1621,12 +1621,12 @@ int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 
 	device_total_bytes = (device_total_bytes / sectorsize) * sectorsize;
 
-	device = kzalloc(sizeof(*device), GFP_NOFS);
+	device = calloc(1, sizeof(*device));
 	if (!device) {
 		ret = -ENOMEM;
 		goto out;
 	}
-	buf = kzalloc(sectorsize, GFP_NOFS);
+	buf = calloc(1, sectorsize);
 	if (!buf) {
 		ret = -ENOMEM;
 		goto out;
@@ -1679,14 +1679,14 @@ int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 	ret = pwrite(fd, buf, sectorsize, BTRFS_SUPER_INFO_OFFSET);
 	BUG_ON(ret != sectorsize);
 
-	kfree(buf);
+	free(buf);
 	list_add(&device->dev_list, &root->fs_info->fs_devices->devices);
 	device->fs_devices = root->fs_info->fs_devices;
 	return 0;
 
 out:
-	kfree(device);
-	kfree(buf);
+	free(device);
+	free(buf);
 	return ret;
 }
 

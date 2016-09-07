@@ -65,7 +65,7 @@ static int debug_corrupt_block(struct extent_buffer *eb,
 			"mirror %d logical %llu physical %llu device %s\n",
 			mirror_num, (unsigned long long)bytenr,
 			(unsigned long long)eb->dev_bytenr, device->name);
-		kfree(multi);
+		free(multi);
 
 		if (!copy || mirror_num == copy) {
 			ret = read_extent_from_disk(eb, 0, eb->len);

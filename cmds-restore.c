@@ -356,7 +356,7 @@ again:
 	dev_fd = device->fd;
 	device->total_ios++;
 	dev_bytenr = multi->stripes[0].physical;
-	kfree(multi);
+	free(multi);
 
 	if (size_left < length)
 		length = size_left;

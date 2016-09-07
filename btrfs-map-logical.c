@@ -125,7 +125,7 @@ static int __print_mapping_info(struct btrfs_fs_info *fs_info, u64 logical,
 				multi->stripes[0].physical,
 				device->name);
 		}
-		kfree(multi);
+		free(multi);
 		multi = NULL;
 		cur_offset += cur_len;
 	}

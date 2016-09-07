@@ -3210,7 +3210,7 @@ static void free_root_record(struct cache_extent *cache)
 		free(backref);
 	}
 
-	kfree(rec);
+	free(rec);
 }
 
 FREE_EXTENT_CACHE_BASED_TREE(root_recs, free_root_record);
@@ -5474,7 +5474,7 @@ static int check_cache_range(struct btrfs_root *root,
 				continue;
 			if (logical[nr] == offset) {
 				if (stripe_len >= bytes) {
-					kfree(logical);
+					free(logical);
 					return 0;
 				}
 				bytes -= stripe_len;
@@ -5482,7 +5482,7 @@ static int check_cache_range(struct btrfs_root *root,
 			} else if (logical[nr] < offset) {
 				if (logical[nr] + stripe_len >=
 				    offset + bytes) {
-					kfree(logical);
+					free(logical);
 					return 0;
 				}
 				bytes = (offset + bytes) -
@@ -5505,7 +5505,7 @@ static int check_cache_range(struct btrfs_root *root,
 							offset,
 							logical[nr] - offset);
 				if (ret) {
-					kfree(logical);
+					free(logical);
 					return ret;
 				}
 
@@ -5516,7 +5516,7 @@ static int check_cache_range(struct btrfs_root *root,
 			}
 		}
 
-		kfree(logical);
+		free(logical);
 	}
 
 	entry = btrfs_find_free_space(cache->free_space_ctl, offset, bytes);

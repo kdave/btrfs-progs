@@ -495,7 +495,7 @@ static int btrfs_scan_kernel(void *search, unsigned unit_mode)
 		if ((fd != -1) && !get_df(fd, &space_info_arg)) {
 			print_one_fs(&fs_info_arg, dev_info_arg,
 				     space_info_arg, label, unit_mode);
-			kfree(space_info_arg);
+			free(space_info_arg);
 			memset(label, 0, sizeof(label));
 			found = 1;
 		}

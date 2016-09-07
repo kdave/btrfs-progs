@@ -968,7 +968,7 @@ static int build_device_map_by_chunk_record(struct btrfs_root *root,
 		map->stripes[i].dev = btrfs_find_device(root, devid,
 							uuid, NULL);
 		if (!map->stripes[i].dev) {
-			kfree(map);
+			free(map);
 			return -EIO;
 		}
 	}
