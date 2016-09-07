@@ -1627,7 +1627,6 @@ int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 	buf = kzalloc(sectorsize, GFP_NOFS);
 	if (!buf)
 		goto err_nomem;
-	BUG_ON(sizeof(*disk_super) > sectorsize);
 
 	disk_super = (struct btrfs_super_block *)buf;
 	dev_item = &disk_super->dev_item;
