@@ -103,8 +103,8 @@ static void print_sys_chunk_array(struct btrfs_super_block *sb)
 			print_chunk(buf, chunk);
 			num_stripes = btrfs_chunk_num_stripes(buf, chunk);
 			if (!num_stripes) {
-				printk(
-	    "ERROR: invalid number of stripes %u in sys_array at offset %u\n",
+				error(
+			"invalid number of stripes %u in sys_array at offset %u",
 					num_stripes, cur_offset);
 				break;
 			}
@@ -112,8 +112,7 @@ static void print_sys_chunk_array(struct btrfs_super_block *sb)
 			if (cur_offset + len > array_size)
 				goto out_short_read;
 		} else {
-			printk(
-		"ERROR: unexpected item type %u in sys_array at offset %u\n",
+			error("unexpected item type %u in sys_array at offset %u",
 				(u32)key.type, cur_offset);
 			break;
 		}
@@ -129,7 +128,7 @@ out:
 	return;
 
 out_short_read:
-	printk("ERROR: sys_array too short to read %u bytes at offset %u\n",
+	error("sys_array too short to read %u bytes at offset %u",
 			len, cur_offset);
 	free(buf);
 }
