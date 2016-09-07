@@ -49,6 +49,7 @@
 #include "send.h"
 #include "send-stream.h"
 #include "send-utils.h"
+#include "send-dump.h"
 
 static int g_verbose = 0;
 
@@ -1226,6 +1227,7 @@ int cmd_receive(int argc, char **argv)
 	struct btrfs_receive rctx;
 	int receive_fd = fileno(stdin);
 	u64 max_errors = 1;
+	int dump = 0;
 	int ret = 0;
 
 	memset(&rctx, 0, sizeof(rctx));
@@ -1238,9 +1240,11 @@ int cmd_receive(int argc, char **argv)
 
 	while (1) {
 		int c;
+		enum { GETOPT_VAL_DUMP = 257 };
 		static const struct option long_opts[] = {
 			{ "max-errors", required_argument, NULL, 'E' },
 			{ "chroot", no_argument, NULL, 'C' },
+			{ "dump", no_argument, NULL, GETOPT_VAL_DUMP },
 			{ NULL, 0, NULL, 0 }
 		};
 
@@ -1277,6 +1281,9 @@ int cmd_receive(int argc, char **argv)
 				goto out;
 			}
 			break;
+		case GETOPT_VAL_DUMP:
+			dump = 1;
+			break;
 		case '?':
 		default:
 			error("receive args invalid");
@@ -1284,7 +1291,9 @@ int cmd_receive(int argc, char **argv)
 		}
 	}
 
-	if (check_argc_exact(argc - optind, 1))
+	if (dump && check_argc_exact(argc - optind, 0))
+		usage(cmd_receive_usage);
+	if (!dump && check_argc_exact(argc - optind, 1))
 		usage(cmd_receive_usage);
 
 	tomnt = argv[optind];
@@ -1297,17 +1306,33 @@ int cmd_receive(int argc, char **argv)
 		}
 	}
 
-	ret = do_receive(&rctx, tomnt, realmnt, receive_fd, max_errors);
+	if (dump) {
+		struct btrfs_dump_send_args dump_args;
+
+		dump_args.root_path[0] = '.';
+		dump_args.root_path[1] = '\0';
+		dump_args.full_subvol_path[0] = '.';
+		dump_args.full_subvol_path[1] = '\0';
+		ret = btrfs_read_and_process_send_stream(receive_fd,
+				&btrfs_print_send_ops, &dump_args, 0, 0);
+		if (ret < 0)
+			error("failed to dump the send stream: %s",
+			      strerror(-ret));
+	} else {
+		ret = do_receive(&rctx, tomnt, realmnt, receive_fd, max_errors);
+	}
+
 	if (receive_fd != fileno(stdin))
 		close(receive_fd);
-
 out:
 
 	return !!ret;
 }
 
 const char * const cmd_receive_usage[] = {
-	"btrfs receive [-ve] [-f <infile>] [--max-errors <N>] <mount>",
+	"btrfs receive [options] <mount>",
+	"or",
+	"btrfs receive --dump [options]",
 	"Receive subvolumes from stdin.",
 	"Receives one or more subvolumes that were previously",
 	"sent with btrfs send. The received subvolumes are stored",
@@ -1334,5 +1359,7 @@ const char * const cmd_receive_usage[] = {
 	"-m <mountpoint>  The root mount point of the destination fs.",
 	"                 If you do not have /proc use this to tell us where ",
 	"                 this file system is mounted.",
+	"--dump           Exam and output metadata info of send stream.",
+	"                 Don't need <mount> parameter.",
 	NULL
 };

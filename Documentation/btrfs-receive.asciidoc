@@ -9,12 +9,19 @@ SYNOPSIS
 --------
 *btrfs receive* [options] <path>
 
+or
+
+*btrfs receive* --dump [options]
+
 DESCRIPTION
 -----------
 
 Receive a stream of changes and replicate one or more subvolumes that were
 previously used with *btrfs send* The received subvolumes are stored to
-'path'.
+'path', if '--dump' option is not given.
+
+If '--dump' option is given, *btrfs receive* will only do the validation of
+the stream, and print the stream metadata.
 
 *btrfs receive* will fail int the following cases:
 
@@ -55,6 +62,12 @@ the root mount point of the destination filesystem
 By default the mountpoint is searched in '/proc/self/mounts'.
 If you do not have '/proc', eg. in a chroot environment, use this option to tell
 us where this filesystem is mounted.
+
+--dump::
+print the stream metadata
++
+Does not accept the 'path' parameter. So with this option, *btrfs receive* won't
+modify your filesystem, and can be run by non-privileged users.
 
 EXIT STATUS
 -----------
