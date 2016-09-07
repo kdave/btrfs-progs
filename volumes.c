@@ -1070,7 +1070,11 @@ int btrfs_alloc_data_chunk(struct btrfs_trans_handle *trans,
 	key.objectid = BTRFS_FIRST_CHUNK_TREE_OBJECTID;
 	key.type = BTRFS_CHUNK_ITEM_KEY;
 	if (convert) {
-		BUG_ON(*start != round_down(*start, extent_root->sectorsize));
+		if (*start != round_down(*start, extent_root->sectorsize)) {
+			error("DATA chunk start not sectorsize aligned: %llu",
+					(unsigned long long)*start);
+			return -EINVAL;
+		}
 		key.offset = *start;
 		dev_offset = *start;
 	} else {
