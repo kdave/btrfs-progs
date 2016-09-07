@@ -457,18 +457,14 @@ int cmd_inspect_tree_stats(int argc, char **argv)
 		usage(cmd_inspect_tree_stats_usage);
 	}
 
-	/*
-	if ((ret = check_mounted(argv[optind])) < 0) {
-		fprintf(stderr, "Could not check mount status: %d\n", ret);
-		if (ret == -EACCES)
-			fprintf(stderr, "Maybe you need to run as root?\n");
-		return ret;
+	ret = check_mounted(argv[optind]);
+	if (ret < 0) {
+		warning("unable to check mount status of: %s",
+				strerror(-ret));
 	} else if (ret) {
-		fprintf(stderr, "%s is currently mounted.  Aborting.\n",
-			argv[optind]);
-		return -EBUSY;
+		warning("%s already mounted, results may be inaccurate",
+				argv[optind]);
 	}
-	*/
 
 	root = open_ctree(argv[optind], 0, 0);
 	if (!root) {
