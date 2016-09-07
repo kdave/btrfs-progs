@@ -79,7 +79,7 @@ static int add_shared_extent(u64 start, u64 len, struct rb_root *root)
 {
 	struct shared_extent *sh;
 
-	BUG_ON(len == 0);
+	ASSERT(len != 0);
 
 	sh = calloc(1, sizeof(*sh));
 	if (!sh)
@@ -325,6 +325,12 @@ static int du_calc_file_space(int fd, struct rb_root *shared_extents,
 
 			if (flags & SKIP_FLAGS)
 				continue;
+
+			if (ext_len == 0) {
+				warning("extent %llu has length 0, skipping",
+					(unsigned long long)fm_ext[i].fe_physical);
+				continue;
+			}
 
 			file_total += ext_len;
 			if (flags & FIEMAP_EXTENT_SHARED) {
