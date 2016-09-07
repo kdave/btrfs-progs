@@ -899,7 +899,11 @@ static int corrupt_item_nocow(struct btrfs_trans_handle *trans,
 	if (slot == 0)
 		del = 0;
 	/* Only accept valid eb */
-	BUG_ON(!leaf->data || slot >= btrfs_header_nritems(leaf));
+	if (!leaf->data || slot >= btrfs_header_nritems(leaf)) {
+		error("invalid eb: no data or slot out of range: %d >= %d",
+				slot, btrfs_header_nritems(leaf));
+		return -EINVAL;
+	}
 	btrfs_item_key_to_cpu(leaf, &key, slot);
 	if (del) {
 		fprintf(stdout, "Deleting key and data [%llu, %u, %llu].\n",
