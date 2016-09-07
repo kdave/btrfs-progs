@@ -874,15 +874,14 @@ static int add_qgroup_relation(u64 memberid, u64 parentid)
 	return 0;
 }
 
-static void read_qgroup_status(struct btrfs_path *path,
+static void read_qgroup_status(struct extent_buffer *eb, int slot,
 			      struct counts_tree *counts)
 {
 	struct btrfs_qgroup_status_item *status_item;
 	u64 flags;
 
-	status_item = btrfs_item_ptr(path->nodes[0], path->slots[0],
-				     struct btrfs_qgroup_status_item);
-	flags = btrfs_qgroup_status_flags(path->nodes[0], status_item);
+	status_item = btrfs_item_ptr(eb, slot, struct btrfs_qgroup_status_item);
+	flags = btrfs_qgroup_status_flags(eb, status_item);
 	/*
 	 * Since qgroup_inconsist/rescan_running is just one bit,
 	 * assign value directly won't work.
@@ -946,7 +945,7 @@ loop:
 			}
 
 			if (key.type == BTRFS_QGROUP_STATUS_KEY) {
-				read_qgroup_status(&path, &counts);
+				read_qgroup_status(leaf, i, &counts);
 				continue;
 			}
 
