@@ -207,7 +207,10 @@ static int cmd_inspect_logical_resolve(int argc, char **argv)
 	ret = snprintf(full_path, bytes_left, "%s/", argv[optind+1]);
 	path_ptr = full_path + ret;
 	bytes_left -= ret + 1;
-	BUG_ON(bytes_left < 0);
+	if (bytes_left < 0) {
+		error("path buffer too small: %d bytes", bytes_left);
+		goto out;
+	}
 
 	for (i = 0; i < inodes->elem_cnt; i += 3) {
 		u64 inum = inodes->val[i];
@@ -230,8 +233,12 @@ static int cmd_inspect_logical_resolve(int argc, char **argv)
 				path_ptr[-1] = '/';
 				ret = snprintf(path_ptr, bytes_left, "%s",
 						name);
-				BUG_ON(ret >= bytes_left);
 				free(name);
+				if (ret >= bytes_left) {
+					error("path buffer too small: %d bytes",
+							bytes_left - ret);
+					goto out;
+				}
 				path_fd = btrfs_open_dir(full_path, &dirs, 1);
 				if (path_fd < 0) {
 					ret = -ENOENT;
