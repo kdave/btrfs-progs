@@ -228,7 +228,7 @@ static int mark_inode_seen(u64 ino, u64 subvol)
 		else if (cmp > 0)
 			p = &(*p)->rb_right;
 		else
-			BUG();
+			return -EEXIST;
 	}
 
 	si = calloc(1, sizeof(*si));
