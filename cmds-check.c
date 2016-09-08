@@ -4766,6 +4766,7 @@ static int add_tree_backref(struct cache_tree *extent_cache, u64 bytenr,
 	struct extent_record *rec;
 	struct tree_backref *back;
 	struct cache_extent *cache;
+	int ret;
 
 	cache = lookup_cache_extent(extent_cache, bytenr, 1);
 	if (!cache) {
@@ -4776,7 +4777,9 @@ static int add_tree_backref(struct cache_tree *extent_cache, u64 bytenr,
 		tmpl.nr = 1;
 		tmpl.metadata = 1;
 
-		add_extent_rec_nolookup(extent_cache, &tmpl);
+		ret = add_extent_rec_nolookup(extent_cache, &tmpl);
+		if (ret)
+			return ret;
 
 		/* really a bug in cache_extent implement now */
 		cache = lookup_cache_extent(extent_cache, bytenr, 1);
@@ -4830,6 +4833,7 @@ static int add_data_backref(struct cache_tree *extent_cache, u64 bytenr,
 	struct extent_record *rec;
 	struct data_backref *back;
 	struct cache_extent *cache;
+	int ret;
 
 	cache = lookup_cache_extent(extent_cache, bytenr, 1);
 	if (!cache) {
@@ -4840,7 +4844,9 @@ static int add_data_backref(struct cache_tree *extent_cache, u64 bytenr,
 		tmpl.nr = 1;
 		tmpl.max_size = max_size;
 
-		add_extent_rec_nolookup(extent_cache, &tmpl);
+		ret = add_extent_rec_nolookup(extent_cache, &tmpl);
+		if (ret)
+			return ret;
 
 		cache = lookup_cache_extent(extent_cache, bytenr, 1);
 		if (!cache)
