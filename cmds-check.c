@@ -4643,7 +4643,10 @@ static int add_extent_rec_nolookup(struct cache_tree *extent_cache,
 	rec->cache.start = tmpl->start;
 	rec->cache.size = tmpl->nr;
 	ret = insert_cache_extent(extent_cache, &rec->cache);
-	BUG_ON(ret);
+	if (ret) {
+		free(rec);
+		return ret;
+	}
 	bytes_used += rec->nr;
 
 	if (tmpl->metadata)
