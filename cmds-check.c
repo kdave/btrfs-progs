@@ -11272,8 +11272,8 @@ int cmd_check(int argc, char **argv)
 			case 's':
 				num = arg_strtou64(optarg);
 				if (num >= BTRFS_SUPER_MIRROR_MAX) {
-					fprintf(stderr,
-						"ERROR: super mirror should be less than: %d\n",
+					error(
+					"super mirror should be less than %d",
 						BTRFS_SUPER_MIRROR_MAX);
 					exit(1);
 				}
@@ -11342,7 +11342,7 @@ int cmd_check(int argc, char **argv)
 
 	/* This check is the only reason for --readonly to exist */
 	if (readonly && repair) {
-		fprintf(stderr, "Repair options are not compatible with --readonly\n");
+		error("repair options are not compatible with --readonly");
 		exit(1);
 	}
 
@@ -11350,7 +11350,7 @@ int cmd_check(int argc, char **argv)
 	 * Not supported yet
 	 */
 	if (repair && check_mode == CHECK_MODE_LOWMEM) {
-		error("Low memory mode doesn't support repair yet");
+		error("low memory mode doesn't support repair yet");
 		exit(1);
 	}
 
@@ -11358,10 +11358,10 @@ int cmd_check(int argc, char **argv)
 	cache_tree_init(&root_cache);
 
 	if((ret = check_mounted(argv[optind])) < 0) {
-		fprintf(stderr, "Could not check mount status: %s\n", strerror(-ret));
+		error("could not check mount status: %s", strerror(-ret));
 		goto err_out;
 	} else if(ret) {
-		fprintf(stderr, "%s is currently mounted. Aborting.\n", argv[optind]);
+		error("%s is currently mounted, aborting", argv[optind]);
 		ret = -EBUSY;
 		goto err_out;
 	}
@@ -11373,7 +11373,7 @@ int cmd_check(int argc, char **argv)
 	info = open_ctree_fs_info(argv[optind], bytenr, tree_root_bytenr,
 				  chunk_root_bytenr, ctree_flags);
 	if (!info) {
-		fprintf(stderr, "Couldn't open file system\n");
+		error("cannot open file system");
 		ret = -EIO;
 		goto err_out;
 	}
@@ -11386,14 +11386,14 @@ int cmd_check(int argc, char **argv)
 	 * will make us fail to load log tree when mounting.
 	 */
 	if (repair && btrfs_super_log_root(info->super_copy)) {
-		ret = ask_user("repair mode will force to clear out log tree, Are you sure?");
+		ret = ask_user("repair mode will force to clear out log tree, are you sure?");
 		if (!ret) {
 			ret = 1;
 			goto close_out;
 		}
 		ret = zero_log_tree(root);
 		if (ret) {
-			fprintf(stderr, "fail to zero log tree\n");
+			error("failed to zero log tree: %d", ret);
 			goto close_out;
 		}
 	}
@@ -11418,7 +11418,7 @@ int cmd_check(int argc, char **argv)
 	if (!extent_buffer_uptodate(info->tree_root->node) ||
 	    !extent_buffer_uptodate(info->dev_root->node) ||
 	    !extent_buffer_uptodate(info->chunk_root->node)) {
-		fprintf(stderr, "Critical roots corrupted, unable to fsck the FS\n");
+		error("critical roots corrupted, unable to check the filesystem");
 		ret = -EIO;
 		goto close_out;
 	}
@@ -11428,7 +11428,7 @@ int cmd_check(int argc, char **argv)
 
 		trans = btrfs_start_transaction(info->extent_root, 0);
 		if (IS_ERR(trans)) {
-			fprintf(stderr, "Error starting transaction\n");
+			error("error starting transaction");
 			ret = PTR_ERR(trans);
 			goto close_out;
 		}
@@ -11441,10 +11441,11 @@ int cmd_check(int argc, char **argv)
 		}
 
 		if (init_csum_tree) {
-			fprintf(stderr, "Reinit crc root\n");
+			printf("Reinitialize checksum tree\n");
 			ret = btrfs_fsck_reinit_root(trans, info->csum_root, 0);
 			if (ret) {
-				fprintf(stderr, "crc root initialization failed\n");
+				error("checksum tree initialization failed: %d",
+						ret);
 				ret = -EIO;
 				goto close_out;
 			}
@@ -11452,7 +11453,7 @@ int cmd_check(int argc, char **argv)
 			ret = fill_csum_tree(trans, info->csum_root,
 					     init_extent_tree);
 			if (ret) {
-				fprintf(stderr, "crc refilling failed\n");
+				error("checksum tree refilling failed: %d", ret);
 				return -EIO;
 			}
 		}
@@ -11465,24 +11466,24 @@ int cmd_check(int argc, char **argv)
 			goto close_out;
 	}
 	if (!extent_buffer_uptodate(info->extent_root->node)) {
-		fprintf(stderr, "Critical roots corrupted, unable to fsck the FS\n");
+		error("critical: extent_root, unable to check the filesystem");
 		ret = -EIO;
 		goto close_out;
 	}
 	if (!extent_buffer_uptodate(info->csum_root->node)) {
-		fprintf(stderr, "Checksum root corrupted, rerun with --init-csum-tree option\n");
+		error("critical: csum_root, unable to check the filesystem");
 		ret = -EIO;
 		goto close_out;
 	}
 
 	if (!ctx.progress_enabled)
-		fprintf(stderr, "checking extents\n");
+		printf("checking extents");
 	if (check_mode == CHECK_MODE_LOWMEM)
 		ret = check_chunks_and_extents_v2(root);
 	else
 		ret = check_chunks_and_extents(root);
 	if (ret)
-		fprintf(stderr, "Errors found in extent allocation tree or chunk allocation\n");
+		printf("Errors found in extent allocation tree or chunk allocation");
 
 	ret = repair_root_items(info);
 	if (ret < 0)
@@ -11568,7 +11569,7 @@ int cmd_check(int argc, char **argv)
 	}
 
 	if (!list_empty(&root->fs_info->recow_ebs)) {
-		fprintf(stderr, "Transid errors in file system\n");
+		error("transid errors in file system");
 		ret = 1;
 	}
 out:
