@@ -1,0 +1,22 @@
+ULR: https://bugzilla.kernel.org/show_bug.cgi?id=155181
+Lukas Lueg 2016-08-28 10:52:32 UTC
+
+More news from the fuzzer. The attached image causes btrfsck to reach abort()
+in in cmds-check.c:add_tree_backref(); using btrfs-progs v4.7-42-g56e9586.
+
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib64/libthread_db.so.1".
+Checking filesystem on crash2.bin
+UUID: 5cb33553-6f6d-4ce8-83fd-20af5a2f8181
+
+Program received signal SIGABRT, Aborted.
+0x00007ffff6fae6f5 in raise () from /lib64/libc.so.6
+#0  0x00007ffff6fae6f5 in raise () from /lib64/libc.so.6
+#1  0x00007ffff6fb02fa in abort () from /lib64/libc.so.6
+#2  0x000000000041fbe1 in add_tree_backref (extent_cache=extent_cache@entry=0x7fffffffdd20, bytenr=bytenr@entry=131200, parent=parent@entry=0, root=3, found_ref=found_ref@entry=0) at cmds-check.c:4869
+#3  0x0000000000423538 in process_extent_item (root=root@entry=0x6b2cf0, extent_cache=extent_cache@entry=0x7fffffffdd20, eb=eb@entry=0x6af7c0, slot=slot@entry=1) at cmds-check.c:5452
+#4  0x000000000042a605 in run_next_block (root=root@entry=0x6b2cf0, bits=bits@entry=0x6b4ff0, bits_nr=bits_nr@entry=1024, last=last@entry=0x7fffffffd878, pending=pending@entry=0x7fffffffdd00, seen=seen@entry=0x7fffffffdd10, reada=0x7fffffffdcf0, nodes=0x7fffffffdce0, extent_cache=0x7fffffffdd20, chunk_cache=0x7fffffffdd80, dev_cache=0x7fffffffdd90, block_group_cache=0x7fffffffdd60, dev_extent_cache=0x7fffffffdd30, ri=0x6b9000) at cmds-check.c:6280
+#5  0x000000000042afb6 in deal_root_from_list (list=list@entry=0x7fffffffda10, root=root@entry=0x6b2cf0, bits=bits@entry=0x6b4ff0, bits_nr=bits_nr@entry=1024, pending=pending@entry=0x7fffffffdd00, seen=seen@entry=0x7fffffffdd10, reada=0x7fffffffdcf0, nodes=0x7fffffffdce0, extent_cache=0x7fffffffdd20, chunk_cache=0x7fffffffdd80, dev_cache=0x7fffffffdd90, block_group_cache=0x7fffffffdd60, dev_extent_cache=0x7fffffffdd30) at cmds-check.c:8338
+#6  0x000000000042bb15 in check_chunks_and_extents (root=root@entry=0x6b2cf0) at cmds-check.c:8505
+#7  0x000000000042e3cb in cmd_check (argc=<optimized out>, argv=<optimized out>) at cmds-check.c:11430
+#8  0x000000000040a416 in main (argc=2, argv=0x7fffffffe218) at btrfs.c:243
