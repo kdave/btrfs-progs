@@ -2822,7 +2822,10 @@ next_extent:
 	/* force no allocation from system block group */
 	root->fs_info->system_allocs = -1;
 	trans = btrfs_start_transaction(root, 1);
-	BUG_ON(!trans);
+	if (!trans) {
+		error("unable to start transaction");
+		goto fail;
+	}
 	/*
 	 * recow the whole chunk tree, this will remove all chunk tree blocks
 	 * from system block group
@@ -2871,7 +2874,10 @@ next_extent:
 	}
 
 	ret = btrfs_commit_transaction(trans, root);
-	BUG_ON(ret);
+	if (ret) {
+		error("transaction commit failed: %d", ret);
+		goto fail;
+	}
 
 	ret = close_ctree(root);
 	if (ret) {
