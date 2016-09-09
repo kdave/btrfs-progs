@@ -1,0 +1,25 @@
+URL: https://bugzilla.kernel.org/show_bug.cgi?id=155621
+Lukas Lueg 2016-08-30 16:07:36 UTC
+
+More news from the fuzzer. The attached image causes btrfsck to enter what
+seems to be an endless loop; using btrfs-progs v4.7-42-g56e9586.
+
+Starting program: /home/lukas/dev/btrfsfuzz/bin/bin/btrfsck hang17.img
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib64/libthread_db.so.1".
+
+Program received signal SIGINT, Interrupt.
+__find_space_info (info=info@entry=0x6ab3a0, flags=0, flags@entry=8589934592) at extent-tree.c:1796
+1796		list_for_each_entry(found, &info->space_info, list) {
+#0  __find_space_info (info=info@entry=0x6ab3a0, flags=0, flags@entry=8589934592) at extent-tree.c:1796
+#1  0x000000000044c66d in update_space_info (info=info@entry=0x6ab3a0, flags=8589934592, total_bytes=total_bytes@entry=0, bytes_used=17592186044416, space_info=space_info@entry=0x7fffffffdbd8)
+    at extent-tree.c:1835
+#2  0x0000000000451622 in btrfs_read_block_groups (root=0x6ab850) at extent-tree.c:3278
+#3  0x000000000044b157 in btrfs_setup_all_roots (fs_info=fs_info@entry=0x6ab3a0, root_tree_bytenr=<optimized out>, root_tree_bytenr@entry=0, flags=flags@entry=64) at disk-io.c:1055
+#4  0x000000000044b484 in __open_ctree_fd (fp=fp@entry=3, path=path@entry=0x7fffffffe4eb "hang17.img", sb_bytenr=65536, sb_bytenr@entry=0, root_tree_bytenr=root_tree_bytenr@entry=0, 
+    chunk_root_bytenr=chunk_root_bytenr@entry=0, flags=flags@entry=64) at disk-io.c:1317
+#5  0x000000000044b611 in open_ctree_fs_info (filename=0x7fffffffe4eb "hang17.img", sb_bytenr=sb_bytenr@entry=0, root_tree_bytenr=root_tree_bytenr@entry=0, chunk_root_bytenr=chunk_root_bytenr@entry=0, 
+    flags=64) at disk-io.c:1363
+#6  0x000000000042deca in cmd_check (argc=<optimized out>, argv=0x7fffffffe218) at cmds-check.c:11320
+#7  0x000000000040a416 in main (argc=2, argv=0x7fffffffe218) at btrfs.c:243
+quit
