@@ -3260,6 +3260,8 @@ int btrfs_read_block_groups(struct btrfs_root *root)
 		cache->cached = 0;
 		cache->pinned = 0;
 		key.objectid = found_key.objectid + found_key.offset;
+		if (found_key.offset == 0)
+			key.objectid++;
 		btrfs_release_path(path);
 		cache->flags = btrfs_block_group_flags(&cache->item);
 		bit = 0;
