@@ -1,0 +1,5 @@
+URL: https://bugzilla.kernel.org/show_bug.cgi?id=155151
+Lukas Lueg 2016-08-27 20:19:24 UTC
+
+More news from the fuzzer. The attached image causes btrfsck to enter what
+seems to be an endless loop; using btrfs-progs v4.7-42-g56e9586.
