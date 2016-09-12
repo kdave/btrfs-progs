@@ -97,7 +97,7 @@ struct extent_buffer {
 	int refs;
 	u32 flags;
 	int fd;
-	char data[];
+	char data[] __attribute__((aligned(8)));
 };
 
 static inline void extent_buffer_get(struct extent_buffer *eb)
