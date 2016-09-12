@@ -1,0 +1,62 @@
+URL: https://bugzilla.kernel.org/show_bug.cgi?id=156471
+Lukas Lueg 2016-09-09 18:58:27 UTC
+
+More news from the fuzzer and (up to now) the only news from UBSAN using
+btrfs-progs v4.7-42-g56e9586. The attached image causes btrfsck to trigger
+undefined behavior by dereferencing a ptr to a long unsigned int that was cast
+from an uchar with no alignment guarantees.
+
+UBSAN complains:
+crc32c.c:75:19: runtime error: load of misaligned address 0x000001b3736c for
+type 'long unsigned int', which requires 8 byte alignment
+
+I've attached an image and a log, the behavior is triggered all the time and
+unspecific, though.
+
+AFAIC the problem is that *ptmp is cast from *data. This may actually not cause
+the CPU to fault due to how *data is de-facto aligned by it's callers. The code
+may still cause nose demons as the pure act of having *ptmp is undefined
+behavior.
+
+crc32c.c:75:19: runtime error: load of misaligned address 0x000001b3736c for type 'long unsigned int', which requires 8 byte alignment
+0x000001b3736c: note: pointer points here
+  00 00 00 00 b7 0e 65 6c  64 61 40 4b a5 0d 0f ba  33 0c 75 27 00 00 02 00  00 00 00 00 01 00 00 00
+              ^ 
+    #0 0x4f4308 in crc32c_intel /home/lukas/dev/btrfsfuzz/src-ubsan/crc32c.c:75
+    #1 0x4f43f3 in crc32c_le /home/lukas/dev/btrfsfuzz/src-ubsan/crc32c.c:221
+    #2 0x486c39 in __csum_tree_block_size /home/lukas/dev/btrfsfuzz/src-ubsan/disk-io.c:139
+    #3 0x486c39 in csum_tree_block_size /home/lukas/dev/btrfsfuzz/src-ubsan/disk-io.c:159
+    #4 0x486d48 in csum_tree_block_fs_info /home/lukas/dev/btrfsfuzz/src-ubsan/disk-io.c:174
+    #5 0x48ba29 in read_tree_block_fs_info /home/lukas/dev/btrfsfuzz/src-ubsan/disk-io.c:348
+    #6 0x48d48d in read_tree_block /home/lukas/dev/btrfsfuzz/src-ubsan/disk-io.h:112
+    #7 0x48d48d in btrfs_setup_chunk_tree_and_device_map /home/lukas/dev/btrfsfuzz/src-ubsan/disk-io.c:1210
+    #8 0x48d95b in __open_ctree_fd /home/lukas/dev/btrfsfuzz/src-ubsan/disk-io.c:1322
+    #9 0x48dd80 in open_ctree_fs_info /home/lukas/dev/btrfsfuzz/src-ubsan/disk-io.c:1381
+    #10 0x45011a in cmd_check /home/lukas/dev/btrfsfuzz/src-ubsan/cmds-check.c:11449
+    #11 0x40a799 in main /home/lukas/dev/btrfsfuzz/src-ubsan/btrfs.c:243
+    #12 0x7fdf11c96730 in __libc_start_main (/lib64/libc.so.6+0x20730)
+    #13 0x40a1e8 in _start (/home/lukas/dev/btrfsfuzz/bin-ubsan/bin/btrfs+0x40a1e8)
+
+key (3472328296227680304 INODE_EXTREF 3472328296227680304)slot end outside of leaf 12360 > 3995
+parent transid verify failed on 4227072 wanted 3472328296227680304 found 4
+Ignoring transid failure
+checking extents
+Checking filesystem on ubsan_logs/id:000990,src:000816,op:flip1,pos:3845.img
+UUID: b70e656c-6461-404b-a50d-0fba330c7527
+key (3472328296227680304 INODE_EXTREF 3472328296227680304)slot end outside of leaf 12360 > 3995
+Invalid key type(ROOT_ITEM) found in root(3472328296227680304)
+ignoring invalid key
+Invalid key type(ROOT_ITEM) found in root(3472328296227680304)
+ignoring invalid key
+Invalid key type(ROOT_ITEM) found in root(3472328296227680304)
+ignoring invalid key
+Invalid key type(ROOT_ITEM) found in root(3472328296227680304)
+ignoring invalid key
+key (3472328296227680304 INODE_EXTREF 3472328296227680304)slot end outside of leaf 12360 > 3995
+key (3472328296227680304 INODE_EXTREF 3472328296227680304)slot end outside of leaf 12360 > 3995
+key (3472328296227680304 INODE_EXTREF 3472328296227680304)slot end outside of leaf 12360 > 3995
+key (3472328296227680304 INODE_EXTREF 3472328296227680304)slot end outside of leaf 12360 > 3995
+key (3472328296227680304 INODE_EXTREF 3472328296227680304)slot end outside of leaf 12360 > 3995
+bad block 4202496
+Errors found in extent allocation tree or chunk allocation
+key (3472328296227680304 INODE_EXTREF 3472328296227680304)slot end outside of leaf 12360 > 3995
