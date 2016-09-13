@@ -971,15 +971,6 @@ fail_no_dir:
 	goto out;
 }
 
-static int open_target(char *output_name)
-{
-	int output_fd;
-	output_fd = open(output_name, O_CREAT | O_RDWR,
-		         S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH);
-
-	return output_fd;
-}
-
 static int create_chunks(struct btrfs_trans_handle *trans,
 			 struct btrfs_root *root, u64 num_of_meta_chunks,
 			 u64 size_of_data,
@@ -1698,7 +1689,8 @@ int main(int argc, char **argv)
 			exit(1);
 		}
 	} else {
-		fd = open_target(file);
+		fd = open(file, O_CREAT | O_RDWR,
+				S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH);
 		if (fd < 0) {
 			error("unable to open %s: %s", file, strerror(errno));
 			exit(1);
