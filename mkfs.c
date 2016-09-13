@@ -539,7 +539,6 @@ static int add_inode_items(struct btrfs_trans_handle *trans,
 			   int dir_index_cnt, struct btrfs_inode_item *inode_ret)
 {
 	int ret;
-	struct btrfs_key inode_key;
 	struct btrfs_inode_item btrfs_inode;
 	u64 objectid;
 	u64 inode_size = 0;
@@ -551,10 +550,6 @@ static int add_inode_items(struct btrfs_trans_handle *trans,
 		inode_size = calculate_dir_inode_size(name);
 		btrfs_set_stack_inode_size(&btrfs_inode, inode_size);
 	}
-
-	inode_key.objectid = objectid;
-	inode_key.offset = 0;
-	inode_key.type = BTRFS_INODE_ITEM_KEY;
 
 	ret = btrfs_insert_inode(trans, root, objectid, &btrfs_inode);
 
