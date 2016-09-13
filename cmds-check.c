@@ -8525,7 +8525,7 @@ again:
 			slot = path.slots[0];
 		}
 		btrfs_item_key_to_cpu(leaf, &found_key, path.slots[0]);
-		if (btrfs_key_type(&found_key) == BTRFS_ROOT_ITEM_KEY) {
+		if (found_key.type == BTRFS_ROOT_ITEM_KEY) {
 			unsigned long offset;
 			u64 last_snapshot;
 
@@ -9807,7 +9807,7 @@ static int check_leaf_items(struct btrfs_root *root, struct extent_buffer *eb)
 
 next:
 	btrfs_item_key_to_cpu(eb, &key, slot);
-	type = btrfs_key_type(&key);
+	type = key.type;
 
 	switch (type) {
 	case BTRFS_EXTENT_DATA_KEY:

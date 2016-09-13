@@ -1233,7 +1233,7 @@ static int do_list_roots(struct btrfs_root *root)
 		}
 		btrfs_item_key(leaf, &disk_key, slot);
 		btrfs_disk_key_to_cpu(&found_key, &disk_key);
-		if (btrfs_key_type(&found_key) != BTRFS_ROOT_ITEM_KEY) {
+		if (found_key.type != BTRFS_ROOT_ITEM_KEY) {
 			path->slots[0]++;
 			continue;
 		}

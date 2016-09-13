@@ -408,7 +408,7 @@ again:
 		}
 		btrfs_item_key(leaf, &disk_key, path.slots[0]);
 		btrfs_disk_key_to_cpu(&found_key, &disk_key);
-		if (btrfs_key_type(&found_key) == BTRFS_ROOT_ITEM_KEY) {
+		if (found_key.type == BTRFS_ROOT_ITEM_KEY) {
 			unsigned long offset;
 			struct extent_buffer *buf;
 			int skip = extent_only | device_only | uuid_tree_only;

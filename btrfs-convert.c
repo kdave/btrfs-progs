@@ -2759,7 +2759,7 @@ static int do_rollback(const char *devname)
 
 		btrfs_item_key_to_cpu(leaf, &key, path.slots[0]);
 		if (key.objectid != objectid || key.offset != offset ||
-		    btrfs_key_type(&key) != BTRFS_EXTENT_DATA_KEY)
+		    key.type != BTRFS_EXTENT_DATA_KEY)
 			break;
 
 		fi = btrfs_item_ptr(leaf, path.slots[0],

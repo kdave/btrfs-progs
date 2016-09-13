@@ -367,7 +367,7 @@ no_more_items:
 				goto check_pending;
 			}
 		}
-		if (btrfs_key_type(&key) != BTRFS_DEV_EXTENT_KEY) {
+		if (key.type != BTRFS_DEV_EXTENT_KEY) {
 			goto next;
 		}
 
@@ -741,7 +741,7 @@ static int btrfs_device_avail_bytes(struct btrfs_trans_handle *trans,
 			goto next;
 		if (key.objectid > device->devid)
 			break;
-		if (btrfs_key_type(&key) != BTRFS_DEV_EXTENT_KEY)
+		if (key.type != BTRFS_DEV_EXTENT_KEY)
 			goto next;
 		if (key.offset > search_end)
 			break;

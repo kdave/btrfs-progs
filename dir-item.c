@@ -213,7 +213,7 @@ struct btrfs_dir_item *btrfs_lookup_dir_item(struct btrfs_trans_handle *trans,
 	btrfs_item_key_to_cpu(leaf, &found_key, path->slots[0]);
 
 	if (found_key.objectid != dir ||
-	    btrfs_key_type(&found_key) != BTRFS_DIR_ITEM_KEY ||
+	    found_key.type != BTRFS_DIR_ITEM_KEY ||
 	    found_key.offset != key.offset)
 		return NULL;
 
