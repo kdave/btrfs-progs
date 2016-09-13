@@ -659,6 +659,7 @@ static struct inode_record *clone_inode_rec(struct inode_record *orig_rec)
 	struct inode_backref *tmp;
 	struct orphan_data_extent *src_orphan;
 	struct orphan_data_extent *dst_orphan;
+	struct rb_node *rb;
 	size_t size;
 	int ret;
 
@@ -691,9 +692,20 @@ static struct inode_record *clone_inode_rec(struct inode_record *orig_rec)
 		list_add_tail(&dst_orphan->list, &rec->orphan_extents);
 	}
 	ret = copy_file_extent_holes(&rec->holes, &orig_rec->holes);
-	BUG_ON(ret < 0);
+	if (ret < 0)
+		goto cleanup_rb;
 
 	return rec;
+
+cleanup_rb:
+	rb = rb_first(&rec->holes);
+	while (rb) {
+		struct file_extent_hole *hole;
+
+		hole = rb_entry(rb, struct file_extent_hole, node);
+		rb = rb_next(rb);
+		free(hole);
+	}
 
 cleanup:
 	if (!list_empty(&rec->backrefs))
