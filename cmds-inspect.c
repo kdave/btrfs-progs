@@ -146,7 +146,7 @@ static int cmd_inspect_logical_resolve(int argc, char **argv)
 	struct btrfs_ioctl_logical_ino_args loi;
 	struct btrfs_data_container *inodes;
 	u64 size = 4096;
-	char full_path[4096];
+	char full_path[PATH_MAX];
 	char *path_ptr;
 	DIR *dirstream = NULL;
 
