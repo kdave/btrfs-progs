@@ -415,7 +415,7 @@ static int add_directory_items(struct btrfs_trans_handle *trans,
 
 	location.objectid = objectid;
 	location.offset = 0;
-	btrfs_set_key_type(&location, BTRFS_INODE_ITEM_KEY);
+	location.type = BTRFS_INODE_ITEM_KEY;
 
 	if (S_ISDIR(st->st_mode))
 		filetype = BTRFS_FT_DIR;
@@ -554,7 +554,7 @@ static int add_inode_items(struct btrfs_trans_handle *trans,
 
 	inode_key.objectid = objectid;
 	inode_key.offset = 0;
-	btrfs_set_key_type(&inode_key, BTRFS_INODE_ITEM_KEY);
+	inode_key.type = BTRFS_INODE_ITEM_KEY;
 
 	ret = btrfs_insert_inode(trans, root, objectid, &btrfs_inode);
 
@@ -835,7 +835,7 @@ static int traverse_directory(struct btrfs_trans_handle *trans,
 
 	root_dir_key.objectid = btrfs_root_dirid(&root->root_item);
 	root_dir_key.offset = 0;
-	btrfs_set_key_type(&root_dir_key, BTRFS_INODE_ITEM_KEY);
+	root_dir_key.type = BTRFS_INODE_ITEM_KEY;
 	ret = btrfs_lookup_inode(trans, root, &path, &root_dir_key, 1);
 	if (ret) {
 		error("failed to lookup root dir: %d", ret);

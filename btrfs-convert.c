@@ -2739,7 +2739,7 @@ static int do_rollback(const char *devname)
 
 	key.objectid = objectid;
 	key.offset = 0;
-	btrfs_set_key_type(&key, BTRFS_EXTENT_DATA_KEY);
+	key.type = BTRFS_EXTENT_DATA_KEY;
 	ret = btrfs_search_slot(NULL, image_root, &key, &path, 0, 0);
 	if (ret != 0) {
 		error("unable to find first file extent: %d", ret);

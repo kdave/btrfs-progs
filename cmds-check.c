@@ -8509,7 +8509,7 @@ again:
 	btrfs_init_path(&path);
 	key.offset = 0;
 	key.objectid = 0;
-	btrfs_set_key_type(&key, BTRFS_ROOT_ITEM_KEY);
+	key.type = BTRFS_ROOT_ITEM_KEY;
 	ret = btrfs_search_slot(NULL, root->fs_info->tree_root,
 					&key, &path, 0, 0);
 	if (ret < 0)
@@ -9207,7 +9207,7 @@ static int check_extent_data_backref(struct btrfs_fs_info *fs_info,
 		btrfs_release_path(&path);
 	}
 	key.objectid = root_id;
-	btrfs_set_key_type(&key, BTRFS_ROOT_ITEM_KEY);
+	key.type = BTRFS_ROOT_ITEM_KEY;
 	key.offset = (u64)-1;
 	btrfs_init_path(&path);
 

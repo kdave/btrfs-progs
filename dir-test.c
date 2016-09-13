@@ -87,7 +87,7 @@ static int ins_one(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 
 	inode_map.objectid = objectid;
 	inode_map.flags = 0;
-	btrfs_set_key_type(&inode_map, BTRFS_INODE_ITEM_KEY);
+	inode_map.type = BTRFS_INODE_ITEM_KEY;
 	inode_map.offset = 0;
 
 	initial_inode_init(root, &inode_item);
@@ -158,7 +158,7 @@ static int insert_dup(struct btrfs_trans_handle *trans, struct btrfs_root
 
 	key.objectid = file_oid;
 	key.flags = 0;
-	btrfs_set_key_type(&key, BTRFS_INODE_ITEM_KEY);
+	key.type = BTRFS_INODE_ITEM_KEY;
 	key.offset = 0;
 	ret = btrfs_insert_dir_item(trans, root, buf, strlen(buf), dir_oid,
 				    &key, BTRFS_FT_UNKNOWN);
@@ -312,7 +312,7 @@ static int empty_tree(struct btrfs_trans_handle *trans, struct btrfs_root
 
 	key.offset = (u64)-1;
 	key.flags = 0;
-	btrfs_set_key_type(&key, BTRFS_DIR_ITEM_KEY);
+	key.type = BTRFS_DIR_ITEM_KEY;
 	key.objectid = dir_oid;
 	while(nr-- >= 0) {
 		btrfs_init_path(&path);

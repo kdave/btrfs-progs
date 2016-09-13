@@ -2538,7 +2538,7 @@ static int noinline find_free_extent(struct btrfs_trans_handle *trans,
 	int wrapped = 0;
 
 	WARN_ON(num_bytes < root->sectorsize);
-	btrfs_set_key_type(ins, BTRFS_EXTENT_ITEM_KEY);
+	ins->type = BTRFS_EXTENT_ITEM_KEY;
 
 	search_start = stripe_align(root, search_start);
 
@@ -3231,7 +3231,7 @@ int btrfs_read_block_groups(struct btrfs_root *root)
 	root = info->extent_root;
 	key.objectid = 0;
 	key.offset = 0;
-	btrfs_set_key_type(&key, BTRFS_BLOCK_GROUP_ITEM_KEY);
+	key.type = BTRFS_BLOCK_GROUP_ITEM_KEY;
 	path = btrfs_alloc_path();
 	if (!path)
 		return -ENOMEM;
@@ -3313,7 +3313,7 @@ btrfs_add_block_group(struct btrfs_fs_info *fs_info, u64 bytes_used, u64 type,
 	cache->key.objectid = chunk_offset;
 	cache->key.offset = size;
 
-	btrfs_set_key_type(&cache->key, BTRFS_BLOCK_GROUP_ITEM_KEY);
+	cache->key.type = BTRFS_BLOCK_GROUP_ITEM_KEY;
 	btrfs_set_block_group_used(&cache->item, bytes_used);
 	btrfs_set_block_group_chunk_objectid(&cache->item, chunk_objectid);
 	cache->flags = type;
@@ -3425,7 +3425,7 @@ int btrfs_make_block_groups(struct btrfs_trans_handle *trans,
 
 		cache->key.objectid = cur_start;
 		cache->key.offset = group_size;
-		btrfs_set_key_type(&cache->key, BTRFS_BLOCK_GROUP_ITEM_KEY);
+		cache->key.type = BTRFS_BLOCK_GROUP_ITEM_KEY;
 
 		btrfs_set_block_group_used(&cache->item, 0);
 		btrfs_set_block_group_chunk_objectid(&cache->item,
@@ -3869,7 +3869,7 @@ int btrfs_fix_block_accounting(struct btrfs_trans_handle *trans,
 	btrfs_init_path(&path);
 	key.offset = 0;
 	key.objectid = 0;
-	btrfs_set_key_type(&key, BTRFS_EXTENT_ITEM_KEY);
+	key.type = BTRFS_EXTENT_ITEM_KEY;
 	ret = btrfs_search_slot(trans, root->fs_info->extent_root,
 				&key, &path, 0, 0);
 	if (ret < 0)
@@ -4061,7 +4061,7 @@ static int __btrfs_record_file_extent(struct btrfs_trans_handle *trans,
 	btrfs_release_path(path);
 	ins_key.objectid = objectid;
 	ins_key.offset = file_pos;
-	btrfs_set_key_type(&ins_key, BTRFS_EXTENT_DATA_KEY);
+	ins_key.type = BTRFS_EXTENT_DATA_KEY;
 	ret = btrfs_insert_empty_item(trans, root, path, &ins_key,
 				      sizeof(*fi));
 	if (ret)

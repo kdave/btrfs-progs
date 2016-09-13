@@ -388,7 +388,7 @@ again:
 
 	key.offset = 0;
 	key.objectid = 0;
-	btrfs_set_key_type(&key, BTRFS_ROOT_ITEM_KEY);
+	key.type = BTRFS_ROOT_ITEM_KEY;
 	ret = btrfs_search_slot(NULL, tree_root_scan, &key, &path, 0, 0);
 	if (ret < 0) {
 		error("cannot read ROOT_ITEM from tree %llu: %s",

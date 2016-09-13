@@ -1840,11 +1840,6 @@ static inline u8 btrfs_key_type(struct btrfs_key *key)
 	return key->type;
 }
 
-static inline void btrfs_set_key_type(struct btrfs_key *key, u8 val)
-{
-	key->type = val;
-}
-
 /* struct btrfs_header */
 BTRFS_SETGET_HEADER_FUNCS(header_bytenr, struct btrfs_header, bytenr, 64);
 BTRFS_SETGET_HEADER_FUNCS(header_generation, struct btrfs_header,

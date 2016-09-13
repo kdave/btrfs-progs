@@ -37,7 +37,7 @@ static int setup_key(struct radix_tree_root *root, struct btrfs_key *key,
 	int ret;
 
 	key->flags = 0;
-	btrfs_set_key_type(key, BTRFS_STRING_ITEM_KEY);
+	key->type = BTRFS_STRING_ITEM_KEY;
 	key->offset = 0;
 again:
 	ret = radix_tree_gang_lookup(root, (void **)res, num, 2);
@@ -184,7 +184,7 @@ static int empty_tree(struct btrfs_trans_handle *trans, struct btrfs_root
 
 	key.offset = 0;
 	key.flags = 0;
-	btrfs_set_key_type(&key, BTRFS_STRING_ITEM_KEY);
+	key.type = BTRFS_STRING_ITEM_KEY;
 	key.objectid = (unsigned long)-1;
 	while(nr-- >= 0) {
 		btrfs_init_path(&path);
@@ -288,7 +288,7 @@ static int fill_radix(struct btrfs_root *root, struct radix_tree_root *radix)
 
 	key.offset = 0;
 	key.flags = 0;
-	btrfs_set_key_type(&key, BTRFS_STRING_ITEM_KEY);
+	key.type = BTRFS_STRING_ITEM_KEY;
 	key.objectid = (unsigned long)-1;
 	while(1) {
 		btrfs_init_path(&path);

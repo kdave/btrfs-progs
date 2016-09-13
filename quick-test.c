@@ -57,7 +57,7 @@ int main(int ac, char **av) {
 	}
 	trans = btrfs_start_transaction(root, 1);
 	srand(55);
-	btrfs_set_key_type(&ins, BTRFS_STRING_ITEM_KEY);
+	ins.type = BTRFS_STRING_ITEM_KEY;
 	for (i = 0; i < run_size; i++) {
 		num = next_key(i, max_key);
 		// num = i;
