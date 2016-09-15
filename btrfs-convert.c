@@ -2183,6 +2183,17 @@ static void ext2_copy_inode_item(struct btrfs_inode_item *dst,
 	}
 	memset(&dst->reserved, 0, sizeof(dst->reserved));
 }
+static int check_filesystem_state(struct btrfs_convert_context *cctx)
+{
+	ext2_filsys fs = cctx->fs_data;
+
+        if (!(fs->super->s_state & EXT2_VALID_FS))
+		return 1;
+	else if (fs->super->s_state & EXT2_ERROR_FS)
+		return 1;
+	else
+		return 0;
+}
 
 /*
  * copy a single inode. do all the required works, such as cloning
@@ -2352,6 +2363,10 @@ static int do_convert(const char *devname, int datacsum, int packing,
 	ret = convert_open_fs(devname, &cctx);
 	if (ret)
 		goto fail;
+	ret = check_filesystem_state(&cctx);
+	if (ret)
+		warning(
+		"source filesystem is not clean, running filesystem check is recommended");
 	ret = convert_read_used_space(&cctx);
 	if (ret)
 		goto fail;

@@ -33,6 +33,9 @@ have supported data block size (ie. the same that would be valid for
 'mkfs.btrfs'). This is typically the system page size (4KiB on x86_64
 machines).
 
+NOTE: The source filesystem should be clean, you are encouraged to run the
+'fsck' tool if you're not sure.
+
 **REMOVE THE ORIGINAL FILESYSTEM METADATA**
 
 By removing the 'ext2_saved' subvolume, all metadata of the original filesystem
