@@ -245,6 +245,7 @@ static const char * const cmd_subvol_delete_usage[] = {
 	"",
 	"-c|--commit-after      wait for transaction commit at the end of the operation",
 	"-C|--commit-each       wait for transaction commit after deleting each subvolume",
+	"-v|--verbose           verbose output of operations",
 	NULL
 };
 
@@ -267,10 +268,11 @@ static int cmd_subvol_delete(int argc, char **argv)
 		static const struct option long_options[] = {
 			{"commit-after", no_argument, NULL, 'c'},  /* commit mode 1 */
 			{"commit-each", no_argument, NULL, 'C'},  /* commit mode 2 */
+			{"verbose", no_argument, NULL, 'v'},
 			{NULL, 0, NULL, 0}
 		};
 
-		c = getopt_long(argc, argv, "cC", long_options, NULL);
+		c = getopt_long(argc, argv, "cCv", long_options, NULL);
 		if (c < 0)
 			break;
 
