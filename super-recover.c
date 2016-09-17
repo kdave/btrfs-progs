@@ -91,7 +91,7 @@ void free_recover_superblock(struct btrfs_recover_superblock *recover)
 static int check_super(u64 bytenr, struct btrfs_super_block *sb)
 {
 	int csum_size = btrfs_super_csum_size(sb);
-	char result[csum_size];
+	u8 result[csum_size];
 	u32 crc = ~(u32)0;
 
 	if (btrfs_super_bytenr(sb) != bytenr)

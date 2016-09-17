@@ -5761,7 +5761,7 @@ again:
 
 			csum = btrfs_csum_data(NULL, (char *)data + tmp,
 					       csum, root->sectorsize);
-			btrfs_csum_final(csum, (char *)&csum);
+			btrfs_csum_final(csum, (u8 *)&csum);
 
 			csum_offset = leaf_offset +
 				 tmp / root->sectorsize * csum_size;

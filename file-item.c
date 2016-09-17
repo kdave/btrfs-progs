@@ -300,7 +300,7 @@ csum:
 					  csum_offset * csum_size);
 found:
 	csum_result = btrfs_csum_data(root, data, csum_result, len);
-	btrfs_csum_final(csum_result, (char *)&csum_result);
+	btrfs_csum_final(csum_result, (u8 *)&csum_result);
 	if (csum_result == 0) {
 		printk("csum result is 0 for block %llu\n",
 		       (unsigned long long)bytenr);

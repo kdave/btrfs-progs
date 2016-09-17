@@ -223,7 +223,7 @@ static inline int write_temp_super(int fd, struct btrfs_super_block *sb,
 
 	crc = btrfs_csum_data(NULL, (char *)sb + BTRFS_CSUM_SIZE, crc,
 			      BTRFS_SUPER_INFO_SIZE - BTRFS_CSUM_SIZE);
-	btrfs_csum_final(crc, (char *)&sb->csum[0]);
+	btrfs_csum_final(crc, &sb->csum[0]);
 	ret = pwrite(fd, sb, BTRFS_SUPER_INFO_SIZE, sb_bytenr);
 	if (ret < BTRFS_SUPER_INFO_SIZE)
 		ret = (ret < 0 ? -errno : -EIO);

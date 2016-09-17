@@ -37,7 +37,7 @@
 
 static int check_csum_sblock(void *sb, int csum_size)
 {
-	char result[BTRFS_CSUM_SIZE];
+	u8 result[BTRFS_CSUM_SIZE];
 	u32 crc = ~(u32)0;
 
 	crc = btrfs_csum_data(NULL, (char *)sb + BTRFS_CSUM_SIZE,
