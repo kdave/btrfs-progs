@@ -47,7 +47,7 @@ do not affect the files in the original subvolume.
 
 SUBCOMMAND
 -----------
-*create* [-i <qgroupid>] [<dest>]<name>::
+*create* [-i <qgroupid>] [<dest>/]<name>::
 Create a subvolume <name> in <dest>.
 +
 If <dest> is not given, subvolume <name> will be created in the current
@@ -130,14 +130,14 @@ list subvolumes in the filesystem that its generation is
 neither \'+' nor \'-', it means = value.
 -C [+|-]<value>::::
 list subvolumes in the filesystem that its ogeneration is
->=, \<= or = value. The usage is the same to '-g' option.
+>=, \<= or = value. The usage is the same to '-G' option.
 --sort=rootid,gen,ogen,path::::
 list subvolumes in order by specified items.
 you can add \'\+' or \'-' in front of each items, \'+' means ascending,
 \'-' means descending. The default is ascending.
 +
 for --sort you can combine some items together by \',', just like
--sort=+ogen,-gen,path,rootid.
+--sort=+ogen,-gen,path,rootid.
 
 *set-default* <id> <path>::
 Set the subvolume of the filesystem <path> which is mounted as
