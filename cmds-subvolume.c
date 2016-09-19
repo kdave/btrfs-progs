@@ -128,7 +128,7 @@ static int cmd_subvol_create(int argc, char **argv)
 	DIR	*dirstream = NULL;
 
 	while (1) {
-		int c = getopt(argc, argv, "c:i:v");
+		int c = getopt(argc, argv, "c:i:");
 		if (c < 0)
 			break;
 
