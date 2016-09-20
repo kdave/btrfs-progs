@@ -993,32 +993,35 @@ static int defrag_callback(const char *fpath, const struct stat *sb,
 		int typeflag, struct FTW *ftwbuf)
 {
 	int ret = 0;
-	int e = 0;
+	int err = 0;
 	int fd = 0;
 
 	if ((typeflag == FTW_F) && S_ISREG(sb->st_mode)) {
 		if (defrag_global_verbose)
 			printf("%s\n", fpath);
 		fd = open(fpath, O_RDWR);
-		if (fd < 0)
+		if (fd < 0) {
+			err = errno;
 			goto error;
+		}
 		ret = do_defrag(fd, defrag_global_fancy_ioctl, &defrag_global_range);
-		e = errno;
 		close(fd);
-		if (ret && e == ENOTTY && defrag_global_fancy_ioctl) {
+		if (ret && errno == ENOTTY && defrag_global_fancy_ioctl) {
 			error("defrag range ioctl not "
 				"supported in this kernel, please try "
 				"without any options.");
 			defrag_global_errors++;
 			return ENOTTY;
 		}
-		if (ret)
+		if (ret) {
+			err = errno;
 			goto error;
+		}
 	}
 	return 0;
 
 error:
-	error("defrag failed on %s: %s", fpath, strerror(e));
+	error("defrag failed on %s: %s", fpath, strerror(err));
 	defrag_global_errors++;
 	return 0;
 }
