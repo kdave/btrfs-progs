@@ -88,24 +88,6 @@ void free_recover_superblock(struct btrfs_recover_superblock *recover)
 	}
 }
 
-static int check_super(u64 bytenr, struct btrfs_super_block *sb)
-{
-	int csum_size = btrfs_super_csum_size(sb);
-	u8 result[csum_size];
-	u32 crc = ~(u32)0;
-
-	if (btrfs_super_bytenr(sb) != bytenr)
-		return 0;
-	if (sb->magic != cpu_to_le64(BTRFS_MAGIC))
-		return 0;
-
-	crc = btrfs_csum_data(NULL, (char *)sb + BTRFS_CSUM_SIZE,
-			crc, BTRFS_SUPER_INFO_SIZE - BTRFS_CSUM_SIZE);
-	btrfs_csum_final(crc, result);
-
-	return !memcmp(sb, &result, csum_size);
-}
-
 static int add_superblock_record(struct btrfs_super_block *sb, char *fname,
 			u64 bytenr, struct list_head *head)
 {
@@ -133,10 +115,10 @@ read_dev_supers(char *filename, struct btrfs_recover_superblock *recover)
 	int i, ret, fd;
 	u8 buf[BTRFS_SUPER_INFO_SIZE];
 	u64 max_gen, bytenr;
+	struct btrfs_super_block *sb = (struct btrfs_super_block *)buf;
+
 	/* just ignore errno that were set in btrfs_scan_fs_devices() */
 	errno = 0;
-
-	struct btrfs_super_block *sb = (struct btrfs_super_block *)buf;
 
 	fd = open(filename, O_RDONLY);
 	if (fd < 0)
@@ -144,13 +126,9 @@ read_dev_supers(char *filename, struct btrfs_recover_superblock *recover)
 
 	for (i = 0; i < BTRFS_SUPER_MIRROR_MAX; i++) {
 		bytenr = btrfs_sb_offset(i);
-		ret = pread64(fd, buf, sizeof(buf), bytenr);
-		if (ret < sizeof(buf)) {
-			ret = -errno;
-			goto out;
-		}
-		ret = check_super(bytenr, sb);
-		if (ret) {
+
+		ret = btrfs_read_dev_super(fd, sb, bytenr, SBREAD_DEFAULT);
+		if (!ret) {
 			ret = add_superblock_record(sb, filename, bytenr,
 							&recover->good_supers);
 			if (ret)
@@ -158,13 +136,18 @@ read_dev_supers(char *filename, struct btrfs_recover_superblock *recover)
 			max_gen = btrfs_super_generation(sb);
 			if (max_gen > recover->max_generation)
 				recover->max_generation = max_gen;
-		} else {
+		} else if (ret == -EIO){
+			/*
+			 * Skip superblock which doesn't exist, only adds
+			 * really corrupted superblock
+			 */
 			ret = add_superblock_record(sb, filename, bytenr,
 						&recover->bad_supers);
 			if (ret)
 				goto out;
 		}
 	}
+	ret = 0;
 out:
 	close(fd);
 	return ret;
