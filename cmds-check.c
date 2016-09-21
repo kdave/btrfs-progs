@@ -1875,6 +1875,7 @@ static int process_one_leaf_v2(struct btrfs_root *root, struct btrfs_path *path,
 	struct btrfs_key key;
 	u64 cur_bytenr;
 	u32 nritems;
+	u64 first_ino = 0;
 	int root_level = btrfs_header_level(root->node);
 	int i;
 	int ret = 0; /* Final return value */
@@ -1882,11 +1883,14 @@ static int process_one_leaf_v2(struct btrfs_root *root, struct btrfs_path *path,
 
 	cur_bytenr = cur->start;
 
-	/* skip to first inode item in this leaf */
+	/* skip to first inode item or the first inode number change */
 	nritems = btrfs_header_nritems(cur);
 	for (i = 0; i < nritems; i++) {
 		btrfs_item_key_to_cpu(cur, &key, i);
-		if (key.type == BTRFS_INODE_ITEM_KEY)
+		if (i == 0)
+			first_ino = key.objectid;
+		if (key.type == BTRFS_INODE_ITEM_KEY ||
+		    (first_ino && first_ino != key.objectid))
 			break;
 	}
 	if (i == nritems) {
@@ -4928,6 +4932,34 @@ out:
 	return err;
 }
 
+static int check_fs_first_inode(struct btrfs_root *root, unsigned int ext_ref)
+{
+	struct btrfs_path *path;
+	struct btrfs_key key;
+	int err = 0;
+	int ret;
+
+	path = btrfs_alloc_path();
+	key.objectid = 256;
+	key.type = BTRFS_INODE_ITEM_KEY;
+	key.offset = 0;
+
+	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
+	if (ret < 0)
+		return ret;
+	if (ret > 0) {
+		ret = 0;
+		err |= INODE_ITEM_MISSING;
+	}
+
+	err |= check_inode_item(root, path, ext_ref);
+	err &= ~LAST_ITEM;
+	if (err && !ret)
+		ret = -EIO;
+	btrfs_free_path(path);
+	return ret;
+}
+
 /*
  * Iterate all item on the tree and call check_inode_item() to check.
  *
@@ -4944,6 +4976,16 @@ static int check_fs_root_v2(struct btrfs_root *root, unsigned int ext_ref)
 	struct btrfs_root_item *root_item = &root->root_item;
 	int ret, wret;
 	int level;
+
+	/*
+	 * We need to manually check the first inode item(256)
+	 * As the following traversal function will only start from
+	 * the first inode item in the leaf, if inode item(256) is missing
+	 * we will just skip it forever.
+	 */
+	ret = check_fs_first_inode(root, ext_ref);
+	if (ret < 0)
+		return ret;
 
 	path = btrfs_alloc_path();
 	if (!path)
