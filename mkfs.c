@@ -1193,13 +1193,13 @@ static int is_ssd(const char *file)
 		return 0;
 	}
 
-	if (read(fd, &rotational, sizeof(char)) < sizeof(char)) {
+	if (read(fd, &rotational, 1) < 1) {
 		close(fd);
 		return 0;
 	}
 	close(fd);
 
-	return !atoi((const char *)&rotational);
+	return rotational == '0';
 }
 
 static int _cmp_device_by_id(void *priv, struct list_head *a,
