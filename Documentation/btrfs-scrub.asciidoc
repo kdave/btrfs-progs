@@ -95,7 +95,14 @@ print separate statistics for each device of the filesystem
 EXIT STATUS
 -----------
 *btrfs scrub* returns a zero exit status if it succeeds. Non zero is
-returned in case of failure.
+returned in case of failure:
+
+1::::
+scrub couldn't be performed
+2::::
+there is nothing to resume
+3::::
+scrub found uncorrectable errors
 
 AVAILABILITY
 ------------
