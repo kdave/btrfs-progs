@@ -51,6 +51,8 @@ DEBUG_CFLAGS_DEFAULT = -O0 -U_FORTIFY_SOURCE -ggdb3
 DEBUG_CFLAGS_INTERNAL =
 DEBUG_CFLAGS :=
 
+TOPDIR := $(shell pwd)
+
 # Common build flags
 CFLAGS = @CFLAGS@ \
 	 -include config.h \
@@ -58,6 +60,7 @@ CFLAGS = @CFLAGS@ \
 	 -D_XOPEN_SOURCE=700  \
 	 -fno-strict-aliasing \
 	 -fPIC \
+	 -I$(TOPDIR) \
 	 $(EXTRAWARN_CFLAGS) \
 	 $(DEBUG_CFLAGS_INTERNAL) \
 	 $(EXTRA_CFLAGS)
@@ -231,7 +234,7 @@ else
 endif
 
 %.o.d: %.c
-	$(Q)$(CC) -MM -MG -MF $@ -MT $(@:.o.d=.o) -MT $(@:.o.d=.static.o) -MT $@ $(CFLAGS) $<
+	$(Q)$(CC) -MD -MM -MG -MF $@ -MT $(@:.o.d=.o) -MT $(@:.o.d=.static.o) -MT $@ $(CFLAGS) $<
 
 #
 # Pick from per-file variables, btrfs_*_cflags
@@ -240,7 +243,7 @@ endif
 	@$(check_echo) "    [SP]     $<"
 	$(Q)$(check) $(CFLAGS) $(CHECKER_FLAGS) $<
 	@echo "    [CC]     $@"
-	$(Q)$(CC) $(CFLAGS) -c $< $($(subst -,_,$(@:%.o=%)-cflags))
+	$(Q)$(CC) $(CFLAGS) -c $< -o $@ $($(subst -,_,$(@:%.o=%)-cflags))
 
 %.static.o: %.c
 	@echo "    [CC]     $@"
