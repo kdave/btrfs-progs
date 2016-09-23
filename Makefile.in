@@ -61,6 +61,7 @@ CFLAGS = @CFLAGS@ \
 	 -fno-strict-aliasing \
 	 -fPIC \
 	 -I$(TOPDIR) \
+	 -I$(TOPDIR)/kernel-lib \
 	 $(EXTRAWARN_CFLAGS) \
 	 $(DEBUG_CFLAGS_INTERNAL) \
 	 $(EXTRA_CFLAGS)
@@ -86,10 +87,10 @@ CHECKER_FLAGS := -include $(check_defs) -D__CHECKER__ \
 	-D__CHECK_ENDIAN__ -Wbitwise -Wuninitialized -Wshadow -Wundef \
 	-U_FORTIFY_SOURCE
 
-objects = ctree.o disk-io.o radix-tree.o extent-tree.o print-tree.o \
+objects = ctree.o disk-io.o kernel-lib/radix-tree.o extent-tree.o print-tree.o \
 	  root-tree.o dir-item.o file-item.o inode-item.o inode-map.o \
 	  extent-cache.o extent_io.o volumes.o utils.o repair.o \
-	  qgroup.o raid6.o free-space-cache.o list_sort.o props.o \
+	  qgroup.o raid6.o free-space-cache.o kernel-lib/list_sort.o props.o \
 	  ulist.o qgroup-verify.o backref.o string-table.o task-utils.o \
 	  inode.o file.o find-root.o free-space-tree.o help.o
 cmds_objects = cmds-subvolume.o cmds-filesystem.o cmds-device.o cmds-scrub.o \
@@ -98,10 +99,12 @@ cmds_objects = cmds-subvolume.o cmds-filesystem.o cmds-device.o cmds-scrub.o \
 	       cmds-restore.o cmds-rescue.o chunk-recover.o super-recover.o \
 	       cmds-property.o cmds-fi-usage.o cmds-inspect-dump-tree.o \
 	       cmds-inspect-dump-super.o cmds-inspect-tree-stats.o cmds-fi-du.o
-libbtrfs_objects = send-stream.o send-utils.o rbtree.o btrfs-list.o crc32c.o \
+libbtrfs_objects = send-stream.o send-utils.o kernel-lib/rbtree.o btrfs-list.o \
+		   kernel-lib/crc32c.o \
 		   uuid-tree.o utils-lib.o rbtree-utils.o
-libbtrfs_headers = send-stream.h send-utils.h send.h rbtree.h btrfs-list.h \
-	       crc32c.h list.h kerncompat.h radix-tree.h extent-cache.h \
+libbtrfs_headers = send-stream.h send-utils.h send.h kernel-lib/rbtree.h btrfs-list.h \
+	       kernel-lib/crc32c.h kernel-lib/list.h kerncompat.h \
+	       kernel-lib/radix-tree.h extent-cache.h \
 	       extent_io.h ioctl.h ctree.h btrfsck.h version.h
 TESTS = fsck-tests.sh convert-tests.sh
 
@@ -422,6 +425,7 @@ clean-all: clean clean-doc clean-gen
 clean: $(CLEANDIRS)
 	@echo "Cleaning"
 	$(Q)$(RM) -f $(progs) cscope.out *.o *.o.d \
+		kernel-lib/*.o kernel-lib/*.o.d \
 	      dir-test ioctl-test quick-test send-test library-test library-test-static \
 	      btrfs.static mkfs.btrfs.static \
 	      $(check_defs) \
