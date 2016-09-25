@@ -20,7 +20,7 @@ by the option '--readonly'.
 
 *btrfsck* is an alias of *btrfs check* command and is now deprecated.
 
-WARNING: Do not use '--repair' unless you are adviced to by a developer, an
+WARNING: Do not use '--repair' unless you are advised to by a developer, an
 experienced user or accept the fact that 'fsck' cannot possibly fix all sorts
 of damage that could happen to a filesystem because of software and hardware
 bugs.

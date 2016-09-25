@@ -562,7 +562,7 @@ crw------- 1 root root 10, 234 Jan  1 12:00 /dev/btrfs-control
 The device accepts some ioctl calls that can perform following actions on the
 filesyste module:
 
-* scan devices for btrfs filesytem (ie. to let multi-device filesystems mount
+* scan devices for btrfs filesystem (ie. to let multi-device filesystems mount
   automatically) and register them with the kernel module
 * similar to scan, but also wait until the device scanning process is finished
   for a given filesystem

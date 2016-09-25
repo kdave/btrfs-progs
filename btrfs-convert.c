@@ -3010,7 +3010,7 @@ static void print_usage(void)
 	printf("\t-O|--features LIST     comma separated list of filesystem features\n");
 	printf("\t--no-progress          show only overview, not the detailed progress\n");
 	printf("\n");
-	printf("Suported filesystems:\n");
+	printf("Supported filesystems:\n");
 	printf("\text2/3/4: %s\n", BTRFSCONVERT_EXT2 ? "yes" : "no");
 }
 

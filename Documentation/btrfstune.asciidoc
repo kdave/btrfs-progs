@@ -20,7 +20,7 @@ complete list of features and kernel version of their introduction at
 https://btrfs.wiki.kernel.org/index.php/Changelog#By_feature .  Also, the
 manual page `mkfs.btrfs`(8) contains more details about the features.
 
-Some of the features could be enabled on a mounted filesytem. Please refer to
+Some of the features could be enabled on a mounted filesystem. Please refer to
 the respective section in `btrfs`(5).
 
 OPTIONS

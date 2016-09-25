@@ -27,7 +27,7 @@ The device management works on a mounted filesystem. Devices can be added,
 removed or replaced, by commands profided by *btrfs device* and *btrfs replace*.
 
 The profiles can be also changed, provided there's enough workspace to do the
-conversion, using the *btrfs balance* comand and namely the filter 'convert'.
+conversion, using the *btrfs balance* command and namely the filter 'convert'.
 
 Profile::
 A profile describes an allocation policy based on the redundancy/replication

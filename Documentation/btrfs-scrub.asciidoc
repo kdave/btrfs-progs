@@ -20,7 +20,7 @@ structural damage in the filesystem.
 
 The user is supposed to run it manually or via a periodic system service. The
 recommended period is a month but could be less. The estimated device bandwidth
-utilization is about 80% on an idle filesytem. The IO priority class is by
+utilization is about 80% on an idle filesystem. The IO priority class is by
 default 'idle' so background scrub should not interfere with normal filesystem
 operation significantly.
 
