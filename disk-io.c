@@ -1590,14 +1590,20 @@ int btrfs_read_dev_super(int fd, struct btrfs_super_block *sb, u64 sb_bytenr,
 
 	if (sb_bytenr != BTRFS_SUPER_INFO_OFFSET) {
 		ret = pread64(fd, buf, BTRFS_SUPER_INFO_SIZE, sb_bytenr);
+		/* real error */
+		if (ret < 0)
+			return -errno;
+
+		/* Not large enough sb, return -ENOENT instead of normal -EIO */
 		if (ret < BTRFS_SUPER_INFO_SIZE)
-			return -1;
+			return -ENOENT;
 
 		if (btrfs_super_bytenr(buf) != sb_bytenr)
-			return -1;
+			return -EIO;
 
-		if (check_super(buf, sbflags))
-			return -1;
+		ret = check_super(buf, sbflags);
+		if (ret < 0)
+			return ret;
 		memcpy(sb, buf, BTRFS_SUPER_INFO_SIZE);
 		return 0;
 	}
