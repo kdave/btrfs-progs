@@ -241,7 +241,7 @@ static int verify_parent_transid(struct extent_io_tree *io_tree,
 
 	ret = 1;
 out:
-	clear_extent_buffer_uptodate(io_tree, eb);
+	clear_extent_buffer_uptodate(eb);
 	return ret;
 
 }
@@ -976,7 +976,7 @@ static int setup_root_or_create_block(struct btrfs_fs_info *fs_info,
 			btrfs_find_create_tree_block(fs_info, 0, nodesize);
 		if (!info_root->node)
 			return -ENOMEM;
-		clear_extent_buffer_uptodate(NULL, info_root->node);
+		clear_extent_buffer_uptodate(info_root->node);
 	}
 
 	return 0;
