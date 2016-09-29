@@ -25,9 +25,9 @@ struct string_table {
 
 struct string_table *table_create(int columns, int rows);
 char *table_printf(struct string_table *tab, int column, int row,
-			  char *fmt, ...);
+			  const char *fmt, ...);
 char *table_vprintf(struct string_table *tab, int column, int row,
-			  char *fmt, va_list ap);
+			  const char *fmt, va_list ap);
 void table_dump(struct string_table *tab);
 void table_free(struct string_table *);
 

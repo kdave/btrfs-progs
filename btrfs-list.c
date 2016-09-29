@@ -808,9 +808,10 @@ static char *__ino_resolve(int fd, u64 dirid)
  * simple string builder, returning a new string with both
  * dirid and name
  */
-static char *build_name(char *dirid, char *name)
+static char *build_name(const char *dirid, const char *name)
 {
 	char *full;
+
 	if (!dirid)
 		return strdup(name);
 

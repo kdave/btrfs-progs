@@ -1225,7 +1225,7 @@ u64 btrfs_get_path_rootid(int fd)
 	return args.treeid;
 }
 
-int btrfs_qgroup_parse_sort_string(char *opt_arg,
+int btrfs_qgroup_parse_sort_string(const char *opt_arg,
 				   struct btrfs_qgroup_comparer_set **comps)
 {
 	int order;

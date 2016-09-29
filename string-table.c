@@ -49,7 +49,7 @@ struct string_table *table_create(int columns, int rows)
  * be replaced by a '=====' dimensioned on the basis of the column width
  */
 char *table_vprintf(struct string_table *tab, int column, int row,
-			  char *fmt, va_list ap)
+			  const char *fmt, va_list ap)
 {
 	int idx = tab->ncols * row + column;
 	char *msg = calloc(100, 1);
@@ -71,7 +71,7 @@ char *table_vprintf(struct string_table *tab, int column, int row,
  */
 __attribute__ ((format (printf, 4, 5)))
 char *table_printf(struct string_table *tab, int column, int row,
-			  char *fmt, ...)
+			  const char *fmt, ...)
 {
 	va_list ap;
 	char *ret;

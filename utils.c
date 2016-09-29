@@ -1606,7 +1606,7 @@ static int zero_dev_clamped(int fd, off_t start, ssize_t len, u64 dev_size)
 }
 
 int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
-		      struct btrfs_root *root, int fd, char *path,
+		      struct btrfs_root *root, int fd, const char *path,
 		      u64 device_total_bytes, u32 io_width, u32 io_align,
 		      u32 sectorsize)
 {
@@ -3031,7 +3031,7 @@ again:
  *
  * Returns 0 on success, or a negative errno.
  */
-int get_fs_info(char *path, struct btrfs_ioctl_fs_info_args *fi_args,
+int get_fs_info(const char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 		struct btrfs_ioctl_dev_info_args **di_ret)
 {
 	int fd = -1;
