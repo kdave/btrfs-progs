@@ -1233,8 +1233,14 @@ int btrfs_qgroup_parse_sort_string(char *opt_arg,
 	char *p;
 	char **ptr_argv;
 	int what_to_sort;
+	char *opt_tmp;
+	int ret = 0;
 
-	while ((p = strtok(opt_arg, ",")) != NULL) {
+	opt_tmp = strdup(opt_arg);
+	if (!opt_tmp)
+		return -ENOMEM;
+
+	while ((p = strtok(opt_tmp, ",")) != NULL) {
 		flag = 0;
 		ptr_argv = all_sort_items;
 
@@ -1254,10 +1260,10 @@ int btrfs_qgroup_parse_sort_string(char *opt_arg,
 			ptr_argv++;
 		}
 
-		if (flag == 0)
-			return -1;
-
-		else {
+		if (flag == 0) {
+			ret = -1;
+			goto out;
+		} else {
 			if (*p == '+') {
 				order = 0;
 				p++;
@@ -1268,14 +1274,19 @@ int btrfs_qgroup_parse_sort_string(char *opt_arg,
 				order = 0;
 
 			what_to_sort = btrfs_qgroup_get_sort_item(p);
-			if (what_to_sort < 0)
-				return -1;
+			if (what_to_sort < 0) {
+				ret = -1;
+				goto out;
+			}
 			btrfs_qgroup_setup_comparer(comps, what_to_sort, order);
 		}
-		opt_arg = NULL;
+		free(opt_tmp);
+		opt_tmp = NULL;
 	}
 
-	return 0;
+out:
+	free(opt_tmp);
+	return ret;
 }
 
 int qgroup_inherit_size(struct btrfs_qgroup_inherit *p)
