@@ -330,9 +330,18 @@ static int find_parent_roots(struct ulist *roots, u64 parent)
 	 * For each unresolved root, we recurse
 	 */
 	ref = find_ref_bytenr(parent);
+	if (!ref) {
+		error("bytenr ref not found for parent %llu",
+				(unsigned long long)parent);
+		return -EIO;
+	}
 	node = &ref->bytenr_node;
-	BUG_ON(ref == NULL);
-	BUG_ON(ref->bytenr != parent);
+	if (ref->bytenr != parent) {
+		error("found bytenr ref does not match parent: %llu != %llu",
+				(unsigned long long)ref->bytenr,
+				(unsigned long long)parent);
+		return -EIO;
+	}
 
 	{
 		/*
@@ -341,9 +350,15 @@ static int find_parent_roots(struct ulist *roots, u64 parent)
 		 */
 		struct rb_node *prev_node = rb_prev(&ref->bytenr_node);
 		struct ref *prev;
+
 		if (prev_node) {
 			prev = rb_entry(prev_node, struct ref, bytenr_node);
-			BUG_ON(prev->bytenr == parent);
+			if (prev->bytenr == parent) {
+				error(
+				"unexpected: prev bytenr same as parent: %llu",
+						(unsigned long long)parent);
+				return -EIO;
+			}
 		}
 	}
 
