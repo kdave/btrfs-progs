@@ -50,18 +50,18 @@ static int update_seeding_flag(struct btrfs_root *root, int set_flag)
 			if (force)
 				return 0;
 			else
-				fprintf(stderr, "seeding flag is already set on %s\n", device);
+				warning("seeding flag is already set on %s",
+						device);
 			return 1;
 		}
 		super_flags |= BTRFS_SUPER_FLAG_SEEDING;
 	} else {
 		if (!(super_flags & BTRFS_SUPER_FLAG_SEEDING)) {
-			fprintf(stderr, "seeding flag is not set on %s\n",
-				device);
+			warning("seeding flag is not set on %s", device);
 			return 1;
 		}
 		super_flags &= ~BTRFS_SUPER_FLAG_SEEDING;
-		fprintf(stderr, "Warning: Seeding flag cleared.\n");
+		warning("seeding flag cleared on %s", device);
 	}
 
 	trans = btrfs_start_transaction(root, 1);
@@ -153,15 +153,14 @@ static int change_extents_uuid(struct btrfs_fs_info *fs_info)
 		bytenr = key.objectid;
 		eb = read_tree_block(root, bytenr, root->nodesize, 0);
 		if (IS_ERR(eb)) {
-			fprintf(stderr, "Failed to read tree block: %llu\n",
-				bytenr);
+			error("failed to read tree block: %llu", bytenr);
 			ret = PTR_ERR(eb);
 			goto out;
 		}
 		ret = change_header_uuid(root, eb);
 		free_extent_buffer(eb);
 		if (ret < 0) {
-			fprintf(stderr, "Failed to change uuid of tree block: %llu\n",
+			error("failed to change uuid of tree block: %llu",
 				bytenr);
 			goto out;
 		}
@@ -310,8 +309,8 @@ static int change_uuid(struct btrfs_fs_info *fs_info, const char *new_fsid_str)
 
 			uuid_parse(new_fsid_str, tmp);
 			if (memcmp(tmp, new_fsid, BTRFS_FSID_SIZE)) {
-				fprintf(stderr,
-		"ERROR: New fsid %s is not the same with unfinished fsid change\n",
+				error(
+		"new fsid %s is not the same with unfinished fsid change",
 					new_fsid_str);
 				return -EINVAL;
 			}
@@ -343,7 +342,7 @@ static int change_uuid(struct btrfs_fs_info *fs_info, const char *new_fsid_str)
 	printf("Change fsid in extents\n");
 	ret = change_extents_uuid(fs_info);
 	if (ret < 0) {
-		fprintf(stderr, "Failed to change UUID of metadata\n");
+		error("failed to change UUID of metadata: %d", ret);
 		goto out;
 	}
 
@@ -351,7 +350,7 @@ static int change_uuid(struct btrfs_fs_info *fs_info, const char *new_fsid_str)
 	printf("Change fsid on devices\n");
 	ret = change_devices_uuid(fs_info);
 	if (ret < 0) {
-		fprintf(stderr, "Failed to change UUID of devices\n");
+		error("failed to change UUID of devices: %d", ret);
 		goto out;
 	}
 
@@ -448,13 +447,11 @@ int main(int argc, char *argv[])
 	}
 
 	if (random_fsid && new_fsid_str) {
-		fprintf(stderr,
-			"ERROR: Random fsid can't be used with specified fsid\n");
+		error("random fsid can't be used with specified fsid");
 		return 1;
 	}
 	if (!super_flags && !seeding_flag && !(random_fsid || new_fsid_str)) {
-		fprintf(stderr,
-			"ERROR: At least one option should be assigned.\n");
+		error("at least one option should be specified");
 		print_usage();
 		return 1;
 	}
@@ -464,39 +461,36 @@ int main(int argc, char *argv[])
 
 		ret = uuid_parse(new_fsid_str, tmp);
 		if (ret < 0) {
-			fprintf(stderr,
-				"ERROR: Could not parse UUID: %s\n",
-				new_fsid_str);
+			error("could not parse UUID: %s", new_fsid_str);
 			return 1;
 		}
 		if (!test_uuid_unique(new_fsid_str)) {
-			fprintf(stderr,
-				"ERROR: Fsid %s is not unique\n",
-				new_fsid_str);
+			error("fsid %s is not unique", new_fsid_str);
 			return 1;
 		}
 	}
 
 	ret = check_mounted(device);
 	if (ret < 0) {
-		fprintf(stderr, "Could not check mount status: %s\n",
+		error("could not check mount status of %s: %s", device,
 			strerror(-ret));
 		return 1;
 	} else if (ret) {
-		fprintf(stderr, "%s is mounted\n", device);
+		error("%s is mounted", device);
 		return 1;
 	}
 
 	root = open_ctree(device, 0, ctree_flags);
 
 	if (!root) {
-		fprintf(stderr, "Open ctree failed\n");
+		error("open ctree failed");
 		return 1;
 	}
 
 	if (seeding_flag) {
 		if (!seeding_value && !force) {
-			fprintf(stderr, "Warning: This is dangerous, clearing the seeding flag may cause the derived device not to be mountable!\n");
+			warning(
+"this is dangerous, clearing the seeding flag may cause the derived device not to be mountable!");
 			ret = ask_user("We are going to clear the seeding flag, are you sure?");
 			if (!ret) {
 				fprintf(stderr, "Clear seeding flag canceled\n");
@@ -520,10 +514,10 @@ int main(int argc, char *argv[])
 
 	if (random_fsid || new_fsid_str) {
 		if (!force) {
-			fprintf(stderr,
-				"Warning: It's highly recommended to run 'btrfs check' before this operation\n");
-			fprintf(stderr,
-				"Also canceling running UUID change progress may cause corruption\n");
+			warning(
+	"it's highly recommended to run 'btrfs check' before this operation");
+			warning(
+	"also canceling running UUID change progress may cause corruption");
 			ret = ask_user("We are going to change UUID, are your sure?");
 			if (!ret) {
 				fprintf(stderr, "UUID change canceled\n");
@@ -542,7 +536,7 @@ int main(int argc, char *argv[])
 	} else {
 		root->fs_info->readonly = 1;
 		ret = 1;
-		fprintf(stderr, "btrfstune failed\n");
+		error("btrfstune failed");
 	}
 out:
 	close_ctree(root);
