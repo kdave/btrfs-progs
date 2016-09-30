@@ -199,5 +199,6 @@ int write_and_map_eb(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 
 /* raid56.c */
 void raid6_gen_syndrome(int disks, size_t bytes, void **ptrs);
+int raid5_gen_result(int nr_devs, size_t stripe_len, int dest, void **data);
 
 #endif

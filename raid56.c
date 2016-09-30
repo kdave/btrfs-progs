@@ -26,6 +26,8 @@
 #include "kerncompat.h"
 #include "ctree.h"
 #include "disk-io.h"
+#include "volumes.h"
+#include "utils.h"
 
 /*
  * This is the C data type to use
@@ -107,3 +109,64 @@ void raid6_gen_syndrome(int disks, size_t bytes, void **ptrs)
 	}
 }
 
+static void xor_range(char *dst, const char*src, size_t size)
+{
+	/* Move to DWORD aligned */
+	while (size && ((unsigned long)dst & sizeof(unsigned long))) {
+		*dst++ ^= *src++;
+		size--;
+	}
+
+	/* DWORD aligned part */
+	while (size >= sizeof(unsigned long)) {
+		*(unsigned long *)dst ^= *(unsigned long *)src;
+		src += sizeof(unsigned long);
+		dst += sizeof(unsigned long);
+		size -= sizeof(unsigned long);
+	}
+	/* Remaining */
+	while (size) {
+		*dst++ ^= *src++;
+		size--;
+	}
+}
+
+/*
+ * Generate desired data/parity stripe for RAID5
+ *
+ * @nr_devs:	Total number of devices, including parity
+ * @stripe_len:	Stripe length
+ * @data:	Data, with special layout:
+ * 		data[0]:	 Data stripe 0
+ * 		data[nr_devs-2]: Last data stripe
+ * 		data[nr_devs-1]: RAID5 parity
+ * @dest:	To generate which data. should follow above data layout
+ */
+int raid5_gen_result(int nr_devs, size_t stripe_len, int dest, void **data)
+{
+	int i;
+	char *buf = data[dest];
+
+	/* Validation check */
+	if (stripe_len <= 0 || stripe_len != BTRFS_STRIPE_LEN) {
+		error("invalid parameter for %s", __func__);
+		return -EINVAL;
+	}
+
+	if (dest >= nr_devs || nr_devs < 2) {
+		error("invalid parameter for %s", __func__);
+		return -EINVAL;
+	}
+	/* Shortcut for 2 devs RAID5, which is just RAID1 */
+	if (nr_devs == 2) {
+		memcpy(data[dest], data[1 - dest], stripe_len);
+		return 0;
+	}
+	memset(buf, 0, stripe_len);
+	for (i = 0; i < nr_devs; i++) {
+		if (i == dest)
+			continue;
+		xor_range(buf, data[i], stripe_len);
+	}
+	return 0;
+}
