@@ -190,7 +190,7 @@ int write_tree_block(struct btrfs_trans_handle *trans,
 int write_and_map_eb(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 		     struct extent_buffer *eb);
 
-/* raid6.c */
+/* raid56.c */
 void raid6_gen_syndrome(int disks, size_t bytes, void **ptrs);
 
 #endif
