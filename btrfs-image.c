@@ -312,7 +312,7 @@ static u64 logical_to_physical(struct mdrestore_struct *mdres, u64 logical,
 	entry = tree_search(&mdres->chunk_tree, &search.l, chunk_cmp, 1);
 	if (!entry) {
 		if (mdres->in != stdin)
-			printf("Couldn't find a chunk, using logical\n");
+			warning("cannot find a chunk, using logical");
 		return logical;
 	}
 	fs_chunk = rb_entry(entry, struct fs_chunk, l);
@@ -2390,9 +2390,8 @@ static void remap_overlapping_chunks(struct mdrestore_struct *mdres)
 		list_del_init(&fs_chunk->list);
 		if (range_contains_super(fs_chunk->physical,
 					 fs_chunk->bytes)) {
-			printf("remapping a chunk that had a super "
-				"mirror inside of it, clearing space cache "
-				"so we don't end up with corruption\n");
+			warning(
+"remapping a chunk that had a super mirror inside of it, clearing space cache so we don't end up with corruption");
 			mdres->clear_space_cache = 1;
 		}
 		fs_chunk->physical = mdres->last_physical_offset;
@@ -2803,24 +2802,22 @@ int main(int argc, char *argv[])
 
 	if (create) {
 		if (old_restore) {
-			fprintf(stderr,
-	"Usage error: create and restore cannot be used at the same time\n");
+			error(
+			"create and restore cannot be used at the same time");
 			usage_error++;
 		}
 	} else {
 		if (walk_trees || sanitize || compress_level) {
-			fprintf(stderr,
-	"Usage error: use -w, -s, -c options for restore makes no sense\n");
+			error(
+			"useing -w, -s, -c options for restore makes no sense");
 			usage_error++;
 		}
 		if (multi_devices && dev_cnt < 2) {
-			fprintf(stderr,
-	"Usage error: not enough devices specified for -m option\n");
+			error("not enough devices specified for -m option");
 			usage_error++;
 		}
 		if (!multi_devices && dev_cnt != 1) {
-			fprintf(stderr,
-	"Usage error: accepts only 1 device without -m option\n");
+			error("accepts only 1 device without -m option");
 			usage_error++;
 		}
 	}
