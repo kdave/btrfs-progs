@@ -1880,8 +1880,11 @@ static int mdrestore_init(struct mdrestore_struct *mdres,
 	for (i = 0; i < num_threads; i++) {
 		ret = pthread_create(mdres->threads + i, NULL, restore_worker,
 				     mdres);
-		if (ret)
+		if (ret) {
+			/* pthread_create returns errno directly */
+			ret = -ret;
 			break;
+		}
 	}
 	if (ret)
 		mdrestore_destroy(mdres, i + 1);
