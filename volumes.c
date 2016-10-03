@@ -162,6 +162,8 @@ int btrfs_close_devices(struct btrfs_fs_devices *fs_devices)
 	struct btrfs_device *device;
 
 again:
+	if (!fs_devices)
+		return 0;
 	while (!list_empty(&fs_devices->devices)) {
 		device = list_entry(fs_devices->devices.next,
 				    struct btrfs_device, dev_list);
