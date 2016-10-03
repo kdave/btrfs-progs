@@ -2250,6 +2250,13 @@ static int btrfs_recover_chunks(struct recover_control *rc)
 		chunk->sub_stripes = calc_sub_nstripes(bg->flags);
 
 		ret = insert_cache_extent(&rc->chunk, &chunk->cache);
+		if (ret == -EEXIST) {
+			error("duplicate entry in cache start %llu size %llu",
+					(unsigned long long)chunk->cache.start,
+					(unsigned long long)chunk->cache.size);
+			free(chunk);
+			return ret;
+		}
 		BUG_ON(ret);
 
 		list_del_init(&bg->list);
