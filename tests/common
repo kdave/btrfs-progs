@@ -48,6 +48,8 @@ run_check_stdout()
 # same as run_check but does not fail the test, output is logged
 run_mayfail()
 {
+	local ret
+
 	echo "############### $@" >> $RESULTS 2>&1
 	if [ "$TEST_LOG" = 'tty' ]; then echo "CMD(mayfail): $@" > /dev/tty; fi
 	if [ "$1" = 'root_helper' ]; then
@@ -55,9 +57,13 @@ run_mayfail()
 	else
 		$INSTRUMENT "$@" >> $RESULTS 2>&1
 	fi
-	if [ $? != 0 ]; then
-		echo "failed (ignored): $@" >> $RESULTS
-		return 1
+	ret=$?
+	if [ $ret != 0 ]; then
+		echo "failed (ignored, ret=$ret): $@" >> $RESULTS
+		if [ $ret == 139 ]; then
+			_fail "mayfail: returned code 139 (SEGFAULT), not ignored"
+		fi
+		return $ret
 	fi
 }
 
