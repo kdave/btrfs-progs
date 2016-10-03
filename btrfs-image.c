@@ -1264,10 +1264,18 @@ static int copy_from_extent_tree(struct metadump_struct *metadump,
 		}
 
 		bytenr = key.objectid;
-		if (key.type == BTRFS_METADATA_ITEM_KEY)
+		if (key.type == BTRFS_METADATA_ITEM_KEY) {
 			num_bytes = extent_root->nodesize;
-		else
+		} else {
 			num_bytes = key.offset;
+		}
+
+		if (num_bytes == 0) {
+			error("extent length 0 at bytenr %llu key type %d",
+					(unsigned long long)bytenr, key.type);
+			ret = -EIO;
+			break;
+		}
 
 		if (btrfs_item_size_nr(leaf, path->slots[0]) > sizeof(*ei)) {
 			ei = btrfs_item_ptr(leaf, path->slots[0],
