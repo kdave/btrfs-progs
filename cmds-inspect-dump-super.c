@@ -100,7 +100,6 @@ static void print_sys_chunk_array(struct btrfs_super_block *sb)
 			if (cur_offset + len > array_size)
 				goto out_short_read;
 
-			print_chunk(buf, chunk);
 			num_stripes = btrfs_chunk_num_stripes(buf, chunk);
 			if (!num_stripes) {
 				error(
@@ -111,6 +110,7 @@ static void print_sys_chunk_array(struct btrfs_super_block *sb)
 			len = btrfs_chunk_item_size(num_stripes);
 			if (cur_offset + len > array_size)
 				goto out_short_read;
+			print_chunk(buf, chunk);
 		} else {
 			error("unexpected item type %u in sys_array at offset %u",
 				(u32)key.type, cur_offset);
