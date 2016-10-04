@@ -62,6 +62,8 @@ run_mayfail()
 		echo "failed (ignored, ret=$ret): $@" >> $RESULTS
 		if [ $ret == 139 ]; then
 			_fail "mayfail: returned code 139 (SEGFAULT), not ignored"
+		elif [ $ret == 134 ]; then
+			_fail "mayfail: returned code 134 (SIGABRT), not ignored"
 		fi
 		return $ret
 	fi
