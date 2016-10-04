@@ -103,6 +103,7 @@ struct btrfs_convert_operations {
 			 struct btrfs_root *root, int datacsum,
 			 int packing, int noxattr, struct task_ctx *p);
 	void (*close_fs)(struct btrfs_convert_context *cctx);
+	int (*check_state)(struct btrfs_convert_context *cctx);
 };
 
 static void init_convert_context(struct btrfs_convert_context *cctx)
@@ -130,6 +131,11 @@ static inline int copy_inodes(struct btrfs_convert_context *cctx,
 static inline void convert_close_fs(struct btrfs_convert_context *cctx)
 {
 	cctx->convert_ops->close_fs(cctx);
+}
+
+static inline int convert_check_state(struct btrfs_convert_context *cctx)
+{
+	return cctx->convert_ops->check_state(cctx);
 }
 
 static int intersect_with_sb(u64 bytenr, u64 num_bytes)
@@ -2183,7 +2189,7 @@ static void ext2_copy_inode_item(struct btrfs_inode_item *dst,
 	}
 	memset(&dst->reserved, 0, sizeof(dst->reserved));
 }
-static int check_filesystem_state(struct btrfs_convert_context *cctx)
+static int ext2_check_state(struct btrfs_convert_context *cctx)
 {
 	ext2_filsys fs = cctx->fs_data;
 
@@ -2312,6 +2318,7 @@ static const struct btrfs_convert_operations ext2_convert_ops = {
 	.read_used_space	= ext2_read_used_space,
 	.copy_inodes		= ext2_copy_inodes,
 	.close_fs		= ext2_close_fs,
+	.check_state		= ext2_check_state,
 };
 
 #endif
@@ -2363,7 +2370,7 @@ static int do_convert(const char *devname, int datacsum, int packing,
 	ret = convert_open_fs(devname, &cctx);
 	if (ret)
 		goto fail;
-	ret = check_filesystem_state(&cctx);
+	ret = convert_check_state(&cctx);
 	if (ret)
 		warning(
 		"source filesystem is not clean, running filesystem check is recommended");
