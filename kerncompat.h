@@ -68,6 +68,10 @@
 #define ULONG_MAX       (~0UL)
 #endif
 
+#define __token_glue(a,b,c)	___token_glue(a,b,c)
+#define ___token_glue(a,b,c)	a ## b ## c
+#define BUILD_ASSERT(x)		extern int __token_glue(compile_time_assert_,__LINE__,__COUNTER__)[1-2*!(x)] __attribute__((unused))
+
 #ifndef BTRFS_DISABLE_BACKTRACE
 #define MAX_BACKTRACE	16
 static inline void print_trace(void)
