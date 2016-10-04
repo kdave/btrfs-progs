@@ -262,6 +262,7 @@ test-convert: btrfs btrfs-convert
 	@echo "    [TEST]   convert-tests.sh"
 	$(Q)bash tests/convert-tests.sh
 
+test-check: test-fsck
 test-fsck: btrfs btrfs-image btrfs-corrupt-block btrfs-debug-tree mkfs.btrfs
 	@echo "    [TEST]   fsck-tests.sh"
 	$(Q)bash tests/fsck-tests.sh
