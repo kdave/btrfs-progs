@@ -1488,7 +1488,7 @@ open_ctree_with_broken_chunk(struct recover_control *rc)
 	sectorsize = btrfs_super_sectorsize(disk_super);
 	stripesize = btrfs_super_stripesize(disk_super);
 
-	__setup_root(nodesize, leafsize, sectorsize, stripesize,
+	btrfs_setup_root(nodesize, leafsize, sectorsize, stripesize,
 		     fs_info->chunk_root, fs_info, BTRFS_CHUNK_TREE_OBJECTID);
 
 	ret = build_device_maps_by_chunk_records(rc, fs_info->chunk_root);
