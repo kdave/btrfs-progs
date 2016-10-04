@@ -900,8 +900,9 @@ static int traverse_directory(struct btrfs_trans_handle *trans,
 			if (ret == -EEXIST) {
 				if (st.st_nlink <= 1) {
 					error(
-			"item %s already exists but has wrong st_nlink %ld <= 1",
-						cur_file->d_name, st.st_nlink);
+			"item %s already exists but has wrong st_nlink %lu <= 1",
+						cur_file->d_name,
+						(unsigned long)st.st_nlink);
 					goto fail;
 				}
 				continue;
