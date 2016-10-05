@@ -924,7 +924,7 @@ static int flush_pending(struct metadump_struct *md, int done)
 	struct async_work *async = NULL;
 	struct extent_buffer *eb;
 	u64 blocksize = md->root->nodesize;
-	u64 start;
+	u64 start = 0;
 	u64 size;
 	size_t offset;
 	int ret = 0;
