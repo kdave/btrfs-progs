@@ -369,6 +369,11 @@ static int find_parent_roots(struct ulist *roots, u64 parent)
 				if (ret < 0)
 					goto out;
 			}
+		} else if (ref->parent == ref->bytenr) {
+			/*
+			 * Special loop case for tree reloc tree
+			 */
+			ref->root = BTRFS_TREE_RELOC_OBJECTID;
 		} else {
 			ret = find_parent_roots(roots, ref->parent);
 			if (ret < 0)
@@ -578,6 +583,8 @@ static u64 resolve_one_root(u64 bytenr)
 
 	if (ref->root)
 		return ref->root;
+	if (ref->parent == bytenr)
+		return BTRFS_TREE_RELOC_OBJECTID;
 	return resolve_one_root(ref->parent);
 }
 
@@ -748,6 +755,9 @@ static int add_refs_for_implied(struct btrfs_fs_info *info, u64 bytenr,
 	struct btrfs_root *root;
 	struct btrfs_key key;
 
+	/* Tree reloc tree doesn't contribute qgroup, skip it */
+	if (root_id == BTRFS_TREE_RELOC_OBJECTID)
+		return 0;
 	key.objectid = root_id;
 	key.type = BTRFS_ROOT_ITEM_KEY;
 	key.offset = (u64)-1;
