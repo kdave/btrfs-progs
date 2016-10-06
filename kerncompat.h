@@ -99,6 +99,11 @@ static inline void assert_trace(const char *assertion, const char *filename,
 	exit(1);
 }
 
+#define BUG() assert_trace(NULL, __FILE__, __func__, __LINE__, 0)
+#else
+#define BUG() assert(0)
+#endif
+
 static inline void warning_trace(const char *assertion, const char *filename,
 			      const char *func, unsigned line, int val,
 			      int trace)
@@ -113,14 +118,12 @@ static inline void warning_trace(const char *assertion, const char *filename,
 		fprintf(stderr,
 			"%s:%d: %s: Warning: assertion failed, value %d.\n",
 			filename, line, func, val);
+#ifndef BTRFS_DISABLE_BACKTRACE
 	if (trace)
 		print_trace();
+#endif
 }
 
-#define BUG() assert_trace(NULL, __FILE__, __func__, __LINE__, 0)
-#else
-#define BUG() assert(0)
-#endif
 
 #ifdef __CHECKER__
 #define __force    __attribute__((force))
