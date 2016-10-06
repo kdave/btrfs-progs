@@ -425,7 +425,7 @@ clean-all: clean clean-doc clean-gen
 
 clean: $(CLEANDIRS)
 	@echo "Cleaning"
-	$(Q)$(RM) -f $(progs) cscope.out *.o *.o.d \
+	$(Q)$(RM) -f -- $(progs) cscope.out *.o *.o.d \
 		kernel-lib/*.o kernel-lib/*.o.d \
 	      dir-test ioctl-test quick-test send-test library-test library-test-static \
 	      btrfs.static mkfs.btrfs.static \
@@ -439,7 +439,7 @@ clean-doc:
 
 clean-gen:
 	@echo "Cleaning Generated Files"
-	$(Q)$(RM) -rf version.h config.status config.cache connfig.log \
+	$(Q)$(RM) -rf -- version.h config.status config.cache connfig.log \
 		configure.lineno config.status.lineno Makefile \
 		Documentation/Makefile \
 		config.log config.h config.h.in~ aclocal.m4 \
@@ -477,10 +477,10 @@ $(INSTALLDIRS):
 
 uninstall:
 	$(Q)$(MAKE) $(MAKEOPTS) -C Documentation uninstall
-	cd $(DESTDIR)$(incdir); $(RM) -f $(headers)
-	$(RMDIR) -p --ignore-fail-on-non-empty $(DESTDIR)$(incdir)
-	cd $(DESTDIR)$(libdir); $(RM) -f $(lib_links) $(libs)
-	cd $(DESTDIR)$(bindir); $(RM) -f btrfsck fsck.btrfs $(progs_install)
+	cd $(DESTDIR)$(incdir); $(RM) -f -- $(headers)
+	$(RMDIR) -p --ignore-fail-on-non-empty -- $(DESTDIR)$(incdir)
+	cd $(DESTDIR)$(libdir); $(RM) -f -- $(lib_links) $(libs)
+	cd $(DESTDIR)$(bindir); $(RM) -f -- btrfsck fsck.btrfs $(progs_install)
 
 ifneq ($(MAKECMDGOALS),clean)
 -include $(objects:.o=.o.d) $(cmds_objects:.o=.o.d) $(subst .btrfs,, $(filter-out btrfsck.o.d, $(progs:=.o.d)))
