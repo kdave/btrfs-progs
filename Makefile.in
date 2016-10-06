@@ -392,9 +392,30 @@ quick-test: $(objects) $(libs) quick-test.o
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o quick-test $(objects) $(libs) quick-test.o $(LDFLAGS) $(LIBS)
 
-ioctl-test: $(objects) $(libs) ioctl-test.o
-	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o ioctl-test $(objects) $(libs) ioctl-test.o $(LDFLAGS) $(LIBS)
+ioctl-test-32.o: ioctl-test.c ioctl.h kerncompat.h ctree.h
+	@echo "    [CC32]   $@"
+	$(Q)$(CC) $(CFLAGS) -m32 -c $< -o $@
+
+ioctl-test-64.o: ioctl-test.c ioctl.h kerncompat.h ctree.h
+	@echo "    [CC64]   $@"
+	$(Q)$(CC) $(CFLAGS) -m64 -c $< -o $@
+
+ioctl-test-32: ioctl-test-32.o
+	@echo "    [LD32]   $@"
+	$(Q)$(CC) $(CFLAGS) -m32 -o $@ $< $(LDFLAGS)
+	@echo "   ?[PAHOLE] $@.pahole"
+	-$(Q)pahole $@ > $@.pahole
+
+ioctl-test-64: ioctl-test-64.o
+	@echo "    [LD64]   $@"
+	$(Q)$(CC) $(CFLAGS) -m64 -o $@ $< $(LDFLAGS)
+	@echo "   ?[PAHOLE] $@.pahole"
+	-$(Q)pahole $@ > $@.pahole
+
+test-ioctl: ioctl-test-32 ioctl-test-64
+	@echo "    [TEST/ioctl]"
+	$(Q)./ioctl-test-32 > ioctl-test-32.log
+	$(Q)./ioctl-test-64 > ioctl-test-64.log
 
 send-test: $(objects) $(libs) send-test.o
 	@echo "    [LD]     $@"
