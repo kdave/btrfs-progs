@@ -1561,7 +1561,7 @@ static int check_super(struct btrfs_super_block *sb, unsigned sbflags)
 	}
 	if (btrfs_super_sys_array_size(sb) < sizeof(struct btrfs_disk_key)
 			+ sizeof(struct btrfs_chunk)) {
-		error("system chunk array too small %u < %lu",
+		error("system chunk array too small %u < %zu",
 		      btrfs_super_sys_array_size(sb),
 		      sizeof(struct btrfs_disk_key) +
 		      sizeof(struct btrfs_chunk));
