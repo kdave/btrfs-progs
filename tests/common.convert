@@ -25,10 +25,10 @@ generate_dataset() {
 			done
 			;;
 
-		symlink)
+		fast_symlink)
 			for num in $(seq 1 $DATASET_SIZE); do
 				run_check $SUDO_HELPER touch $dirpath/$dataset_type.$num
-				run_check $SUDO_HELPER ln -s $dirpath/$dataset_type.$num $dirpath/slink.$num
+				run_check cd $dirpath && $SUDO_HELPER ln -s $dataset_type.$num $dirpath/slink.$num && cd /
 			done
 			;;
 
@@ -71,12 +71,26 @@ generate_dataset() {
 				run_check $SUDO_HELPER setfattr -n user.foo -v bar$num $dirpath/$dataset_type.$num
 			done
 			;;
+
+		fifo)
+			for num in $(seq 1 $DATASET_SIZE); do
+				run_check $SUDO_HELPER mkfifo $dirpath/$dataset_type.$num
+			done
+			;;
+
+		slow_symlink)
+			long_filename=`date +%s | sha256sum | cut -f1 -d'-'`
+			run_check $SUDO_HELPER touch $dirpath/$long_filename
+			for num in $(seq 1 $DATASET_SIZE); do
+				run_check $SUDO_HELPER ln -s $dirpath/$long_filename $dirpath/slow_slink.$num
+			done
+			;;
 	esac
 }
 
 populate_fs() {
 
-        for dataset_type in 'small' 'hardlink' 'symlink' 'brokenlink' 'perm' 'sparse' 'acls'; do
+        for dataset_type in 'small' 'hardlink' 'fast_symlink' 'brokenlink' 'perm' 'sparse' 'acls' 'fifo' 'slow_symlink'; do
 		generate_dataset "$dataset_type"
 	done
 }
