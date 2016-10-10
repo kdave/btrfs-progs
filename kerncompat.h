@@ -70,7 +70,11 @@
 
 #define __token_glue(a,b,c)	___token_glue(a,b,c)
 #define ___token_glue(a,b,c)	a ## b ## c
+#ifdef DEBUG_BUILD_CHECKS
 #define BUILD_ASSERT(x)		extern int __token_glue(compile_time_assert_,__LINE__,__COUNTER__)[1-2*!(x)] __attribute__((unused))
+#else
+#define BUILD_ASSERT(x)
+#endif
 
 #ifndef BTRFS_DISABLE_BACKTRACE
 #define MAX_BACKTRACE	16
