@@ -851,29 +851,36 @@ static void print_uuid_item(struct extent_buffer *l, unsigned long offset,
 	}
 }
 
-/* Caller should ensure sizeof(*ret) >= 29 "NODATASUM|NODATACOW|READONLY" */
+/* Btrfs inode flag stringification helper */
+#define STRCAT_ONE_INODE_FLAG(flags, name, empty, dst) ({			\
+	if (flags & BTRFS_INODE_##name) {				\
+		if (!empty)						\
+			strcat(dst, "|");				\
+		strcat(dst, #name);					\
+		empty = 0;						\
+	}								\
+})
+
+/*
+ * Caller should ensure sizeof(*ret) >= 102: all charactors plus '|' of
+ * BTRFS_INODE_* flags
+ */
 static void inode_flags_to_str(u64 flags, char *ret)
 {
 	int empty = 1;
 
-	if (flags & BTRFS_INODE_NODATASUM) {
-		empty = 0;
-		strcpy(ret, "NODATASUM");
-	}
-	if (flags & BTRFS_INODE_NODATACOW) {
-		if (!empty) {
-			empty = 0;
-			strcat(ret, "|");
-		}
-		strcat(ret, "NODATACOW");
-	}
-	if (flags & BTRFS_INODE_READONLY) {
-		if (!empty) {
-			empty = 0;
-			strcat(ret, "|");
-		}
-		strcat(ret, "READONLY");
-	}
+	STRCAT_ONE_INODE_FLAG(flags, NODATASUM, empty, ret);
+	STRCAT_ONE_INODE_FLAG(flags, NODATACOW, empty, ret);
+	STRCAT_ONE_INODE_FLAG(flags, READONLY, empty, ret);
+	STRCAT_ONE_INODE_FLAG(flags, NOCOMPRESS, empty, ret);
+	STRCAT_ONE_INODE_FLAG(flags, PREALLOC, empty, ret);
+	STRCAT_ONE_INODE_FLAG(flags, SYNC, empty, ret);
+	STRCAT_ONE_INODE_FLAG(flags, IMMUTABLE, empty, ret);
+	STRCAT_ONE_INODE_FLAG(flags, APPEND, empty, ret);
+	STRCAT_ONE_INODE_FLAG(flags, NODUMP, empty, ret);
+	STRCAT_ONE_INODE_FLAG(flags, NOATIME, empty, ret);
+	STRCAT_ONE_INODE_FLAG(flags, DIRSYNC, empty, ret);
+	STRCAT_ONE_INODE_FLAG(flags, COMPRESS, empty, ret);
 	if (empty)
 		strcat(ret, "none");
 }
@@ -902,7 +909,7 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 	u32 nr = btrfs_header_nritems(l);
 	u64 objectid;
 	u32 type;
-	char flags_str[32];
+	char flags_str[256];
 
 	printf("leaf %llu items %d free space %d generation %llu owner %llu\n",
 		(unsigned long long)btrfs_header_bytenr(l), nr,
