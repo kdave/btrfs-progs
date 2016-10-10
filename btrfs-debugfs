@@ -4,7 +4,7 @@
 # LGPLv2 license
 # Copyright Facebook 2014
 
-import sys,os,struct,fcntl,ctypes,stat,argparse
+import sys, os, fcntl, ctypes, stat, argparse
 
 # helpers for max ints
 maxu64 = (1L << 64) - 1
@@ -233,7 +233,6 @@ def print_file_extents(filename):
     s.args.min_objectid = st.st_ino
     s.args.max_objectid = st.st_ino
 
-    size = st.st_size
 
     while True:
         try:
@@ -314,7 +313,7 @@ def print_block_groups(mountpoint):
 
     try:
         fd = os.open(mountpoint, os.O_RDONLY)
-        st = os.fstat(fd)
+        os.fstat(fd)
     except Exception, e:
         sys.stderr.write("Failed to open %s (%s)\n" % (mountpoint, e))
         return -1
@@ -336,7 +335,7 @@ def print_block_groups(mountpoint):
         h = ctypes.addressof(header)
         p_left = args_buffer_size
 
-        for x in xrange(0, s.args.nr_items):
+        for _ in xrange(0, s.args.nr_items):
             # for each itme, copy the header from the buffer into
             # our header struct
             ctypes.memmove(h, p, header_size)
