@@ -2201,6 +2201,31 @@ static int ext2_check_state(struct btrfs_convert_context *cctx)
 		return 0;
 }
 
+/* EXT2_*_FL to BTRFS_INODE_FLAG_* stringification helper */
+#define COPY_ONE_EXT2_FLAG(flags, ext2_inode, name) ({			\
+	if (ext2_inode->i_flags & EXT2_##name##_FL)			\
+		flags |= BTRFS_INODE_##name;				\
+})
+
+/*
+ * Convert EXT2_*_FL to corresponding BTRFS_INODE_* flags
+ *
+ * Only a subset of EXT_*_FL is supported in btrfs.
+ */
+static void ext2_convert_inode_flags(struct btrfs_inode_item *dst,
+				     struct ext2_inode *src)
+{
+	u64 flags = 0;
+
+	COPY_ONE_EXT2_FLAG(flags, src, APPEND);
+	COPY_ONE_EXT2_FLAG(flags, src, SYNC);
+	COPY_ONE_EXT2_FLAG(flags, src, IMMUTABLE);
+	COPY_ONE_EXT2_FLAG(flags, src, NODUMP);
+	COPY_ONE_EXT2_FLAG(flags, src, NOATIME);
+	COPY_ONE_EXT2_FLAG(flags, src, DIRSYNC);
+	btrfs_set_stack_inode_flags(dst, flags);
+}
+
 /*
  * copy a single inode. do all the required works, such as cloning
  * inode item, creating file extents and creating directory entries.
@@ -2223,6 +2248,7 @@ static int ext2_copy_single_inode(struct btrfs_trans_handle *trans,
 			    BTRFS_INODE_NODATASUM;
 		btrfs_set_stack_inode_flags(&btrfs_inode, flags);
 	}
+	ext2_convert_inode_flags(&btrfs_inode, ext2_inode);
 
 	switch (ext2_inode->i_mode & S_IFMT) {
 	case S_IFREG:
