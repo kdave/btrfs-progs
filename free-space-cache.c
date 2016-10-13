@@ -25,6 +25,7 @@
 #include "crc32c.h"
 #include "bitops.h"
 #include "internal.h"
+#include "utils.h"
 
 /*
  * Kernel always uses PAGE_CACHE_SIZE for sectorsize, but we don't have
@@ -876,4 +877,130 @@ again:
 next:
 		prev = e;
 	}
+}
+
+int btrfs_clear_free_space_cache(struct btrfs_fs_info *fs_info,
+				 struct btrfs_block_group_cache *bg)
+{
+	struct btrfs_trans_handle *trans;
+	struct btrfs_root *tree_root = fs_info->tree_root;
+	struct btrfs_path path;
+	struct btrfs_key key;
+	struct btrfs_disk_key location;
+	struct btrfs_free_space_header *sc_header;
+	struct extent_buffer *node;
+	u64 ino;
+	int slot;
+	int ret;
+
+	trans = btrfs_start_transaction(tree_root, 1);
+	if (IS_ERR(trans))
+		return PTR_ERR(trans);
+
+	btrfs_init_path(&path);
+
+	key.objectid = BTRFS_FREE_SPACE_OBJECTID;
+	key.type = 0;
+	key.offset = bg->key.objectid;
+
+	ret = btrfs_search_slot(trans, tree_root, &key, &path, -1, 1);
+	if (ret > 0) {
+		ret = 0;
+		goto out;
+	}
+	if (ret < 0)
+		goto out;
+
+	node = path.nodes[0];
+	slot = path.slots[0];
+	sc_header = btrfs_item_ptr(node, slot, struct btrfs_free_space_header);
+	btrfs_free_space_key(node, sc_header, &location);
+	ino = location.objectid;
+
+	/* Delete the free space header, as we have the ino to continue */
+	ret = btrfs_del_item(trans, tree_root, &path);
+	if (ret < 0) {
+		error("failed to remove free space header for block group %llu: %d",
+		      bg->key.objectid, ret);
+		goto out;
+	}
+	btrfs_release_path(&path);
+
+	/* Iterate from the end of the free space cache inode */
+	key.objectid = ino;
+	key.type = BTRFS_EXTENT_DATA_KEY;
+	key.offset = (u64)-1;
+	ret = btrfs_search_slot(trans, tree_root, &key, &path, -1, 1);
+	if (ret < 0) {
+		error("failed to locate free space cache extent for block group %llu: %d",
+		      bg->key.objectid, ret);
+		goto out;
+	}
+	while (1) {
+		struct btrfs_file_extent_item *fi;
+		u64 disk_bytenr;
+		u64 disk_num_bytes;
+
+		ret = btrfs_previous_item(tree_root, &path, ino,
+					  BTRFS_EXTENT_DATA_KEY);
+		if (ret > 0) {
+			ret = 0;
+			break;
+		}
+		if (ret < 0) {
+			error(
+	"failed to locate free space cache extent for block group %llu: %d",
+				bg->key.objectid, ret);
+			goto out;
+		}
+		node = path.nodes[0];
+		slot = path.slots[0];
+		btrfs_item_key_to_cpu(node, &key, slot);
+		fi = btrfs_item_ptr(node, slot, struct btrfs_file_extent_item);
+		disk_bytenr = btrfs_file_extent_disk_bytenr(node, fi);
+		disk_num_bytes = btrfs_file_extent_disk_num_bytes(node, fi);
+
+		ret = btrfs_free_extent(trans, tree_root, disk_bytenr,
+					disk_num_bytes, 0, tree_root->objectid,
+					ino, key.offset);
+		if (ret < 0) {
+			error("failed to remove backref for disk bytenr %llu: %d",
+			      disk_bytenr, ret);
+			goto out;
+		}
+		ret = btrfs_del_item(trans, tree_root, &path);
+		if (ret < 0) {
+			error(
+	"failed to remove free space extent data for ino %llu offset %llu: %d",
+			      ino, key.offset, ret);
+			goto out;
+		}
+	}
+	btrfs_release_path(&path);
+
+	/* Now delete free space cache inode item */
+	key.objectid = ino;
+	key.type = BTRFS_INODE_ITEM_KEY;
+	key.offset = 0;
+
+	ret = btrfs_search_slot(trans, tree_root, &key, &path, -1, 1);
+	if (ret > 0)
+		warning("free space inode %llu not found, ignore", ino);
+	if (ret < 0) {
+		error(
+	"failed to locate free space cache inode %llu for block group %llu: %d",
+		      ino, bg->key.objectid, ret);
+		goto out;
+	}
+	ret = btrfs_del_item(trans, tree_root, &path);
+	if (ret < 0) {
+		error(
+	"failed to delete free space cache inode %llu for block group %llu: %d",
+		      ino, bg->key.objectid, ret);
+	}
+out:
+	btrfs_release_path(&path);
+	if (!ret)
+		btrfs_commit_transaction(trans, tree_root);
+	return ret;
 }

@@ -11209,6 +11209,36 @@ out:
 	return bad_roots;
 }
 
+static int clear_free_space_cache(struct btrfs_fs_info *fs_info)
+{
+	struct btrfs_trans_handle *trans;
+	struct btrfs_block_group_cache *bg_cache;
+	u64 current = 0;
+	int ret = 0;
+
+	/* Clear all free space cache inodes and its extent data */
+	while (1) {
+		bg_cache = btrfs_lookup_first_block_group(fs_info, current);
+		if (!bg_cache)
+			break;
+		ret = btrfs_clear_free_space_cache(fs_info, bg_cache);
+		if (ret < 0)
+			return ret;
+		current = bg_cache->key.objectid + bg_cache->key.offset;
+	}
+
+	/* Don't forget to set cache_generation to -1 */
+	trans = btrfs_start_transaction(fs_info->tree_root, 0);
+	if (IS_ERR(trans)) {
+		error("failed to update super block cache generation");
+		return PTR_ERR(trans);
+	}
+	btrfs_set_super_cache_generation(fs_info->super_copy, (u64)-1);
+	btrfs_commit_transaction(trans, fs_info->tree_root);
+
+	return ret;
+}
+
 const char * const cmd_check_usage[] = {
 	"btrfs check [options] <device>",
 	"Check structural integrity of a filesystem (unmounted).",
@@ -11236,6 +11266,8 @@ const char * const cmd_check_usage[] = {
 	"-r|--tree-root <bytenr>     use the given bytenr for the tree root",
 	"--chunk-root <bytenr>       use the given bytenr for the chunk tree root",
 	"-p|--progress               indicate progress",
+	"--clear-space-cache v1|v2   clear space cache for v1 or v2",
+	"                            NOTE: v1 support implemented",
 	NULL
 };
 
@@ -11253,6 +11285,7 @@ int cmd_check(int argc, char **argv)
 	u64 num;
 	int init_csum_tree = 0;
 	int readonly = 0;
+	int clear_space_cache = 0;
 	int qgroup_report = 0;
 	int qgroups_repaired = 0;
 	unsigned ctree_flags = OPEN_CTREE_EXCLUSIVE;
@@ -11262,7 +11295,7 @@ int cmd_check(int argc, char **argv)
 		enum { GETOPT_VAL_REPAIR = 257, GETOPT_VAL_INIT_CSUM,
 			GETOPT_VAL_INIT_EXTENT, GETOPT_VAL_CHECK_CSUM,
 			GETOPT_VAL_READONLY, GETOPT_VAL_CHUNK_TREE,
-			GETOPT_VAL_MODE };
+			GETOPT_VAL_MODE, GETOPT_VAL_CLEAR_SPACE_CACHE };
 		static const struct option long_options[] = {
 			{ "super", required_argument, NULL, 's' },
 			{ "repair", no_argument, NULL, GETOPT_VAL_REPAIR },
@@ -11282,6 +11315,8 @@ int cmd_check(int argc, char **argv)
 			{ "progress", no_argument, NULL, 'p' },
 			{ "mode", required_argument, NULL,
 				GETOPT_VAL_MODE },
+			{ "clear-space-cache", required_argument, NULL,
+				GETOPT_VAL_CLEAR_SPACE_CACHE},
 			{ NULL, 0, NULL, 0}
 		};
 
@@ -11353,6 +11388,16 @@ int cmd_check(int argc, char **argv)
 					exit(1);
 				}
 				break;
+			case GETOPT_VAL_CLEAR_SPACE_CACHE:
+				if (strcmp(optarg, "v1") != 0) {
+					error(
+			"only v1 support implmented, unrecognized value %s",
+			optarg);
+					exit(1);
+				}
+				clear_space_cache = 1;
+				ctree_flags |= OPEN_CTREE_WRITES;
+				break;
 		}
 	}
 
@@ -11404,6 +11449,24 @@ int cmd_check(int argc, char **argv)
 
 	global_info = info;
 	root = info->fs_root;
+	if (clear_space_cache) {
+		if (btrfs_fs_compat_ro(info,
+				BTRFS_FEATURE_COMPAT_RO_FREE_SPACE_TREE)) {
+			error(
+			"free space cache v2 detected, clearing not implemented");
+			ret = 1;
+			goto close_out;
+		}
+		printf("Clearing free space cache\n");
+		ret = clear_free_space_cache(info);
+		if (ret) {
+			error("failed to clear free space cache");
+			ret = 1;
+		} else {
+			printf("Free space cache cleared\n");
+		}
+		goto close_out;
+	}
 
 	/*
 	 * repair mode will force us to commit transaction which

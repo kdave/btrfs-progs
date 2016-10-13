@@ -78,6 +78,16 @@ respective superblock offset is within the device size
 This can be used to use a different starting point if some of the primary
 superblock is damaged.
 
+--clear-space-cache v1|v2::
+completely wipe all free space cache of given type
+
+NOTE: Only v1 free space cache supported is implemented.
++
+Kernel mount option 'clear_cache' is only designed to rebuild free space cache
+which is modified during the lifetime of that mount option.  It doesn't rebuild
+all free space cache, nor clear them out.
+
+
 DANGEROUS OPTIONS
 -----------------
 
