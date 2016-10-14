@@ -144,8 +144,16 @@ if test "$DISABLE_BTRFSCONVERT" = 0 && test "x$convertfs" = "x"; then
 	AC_MSG_ERROR([no filesystems for convert, use --disable-convert instead])
 fi
 
+HAVE_OWN_FIEMAP_EXTENT_SHARED_DEFINE=0
 AX_CHECK_DEFINE([linux/fiemap.h], [FIEMAP_EXTENT_SHARED], [],
-		[AC_MSG_ERROR([no definition of FIEMAP_EXTENT_SHARED found])])
+		[HAVE_OWN_FIEMAP_EXTENT_SHARED_DEFINE=1
+		 AC_MSG_WARN([no definition of FIEMAP_EXTENT_SHARED found, probably old kernel, will use own defintion, 'btrfs fi du' might report wrong numbers])])
+
+if test "x$HAVE_OWN_FIEMAP_EXTENT_SHARED_DEFINE" == "x1"; then
+AC_DEFINE([HAVE_OWN_FIEMAP_EXTENT_SHARED_DEFINE], [1], [We defined FIEMAP_EXTENT_SHARED])
+else
+AC_DEFINE([HAVE_OWN_FIEMAP_EXTENT_SHARED_DEFINE], [0], [We did not define FIEMAP_EXTENT_SHARED])
+fi
 
 dnl Define <NAME>_LIBS= and <NAME>_CFLAGS= by pkg-config
 dnl

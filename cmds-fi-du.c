@@ -27,7 +27,12 @@
 
 #include <sys/ioctl.h>
 #include <linux/fs.h>
+#include <linux/version.h>
 #include <linux/fiemap.h>
+
+#if !defined(FIEMAP_EXTENT_SHARED) && (HAVE_OWN_FIEMAP_EXTENT_SHARED_DEFINE == 1)
+#define FIEMAP_EXTENT_SHARED           0x00002000
+#endif
 
 #include "utils.h"
 #include "commands.h"
@@ -546,6 +551,7 @@ int cmd_filesystem_du(int argc, char **argv)
 {
 	int ret = 0, err = 0;
 	int i;
+	u32 kernel_version;
 
 	unit_mode = get_unit_mode_from_arg(&argc, argv, 1);
 
@@ -569,6 +575,14 @@ int cmd_filesystem_du(int argc, char **argv)
 
 	if (check_argc_min(argc - optind, 1))
 		usage(cmd_filesystem_du_usage);
+
+	kernel_version = get_running_kernel_version();
+
+	if (kernel_version < KERNEL_VERSION(2,6,33)) {
+		warning(
+"old kernel version detected, shared space will be reported as exclusive\n"
+"due to missing support for FIEMAP_EXTENT_SHARED flag");
+	}
 
 	printf("%10s  %10s  %10s  %s\n", "Total", "Exclusive", "Set shared",
 			"Filename");
