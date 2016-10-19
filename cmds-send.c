@@ -564,8 +564,6 @@ int cmd_send(int argc, char **argv)
 	}
 
 	/* use first send subvol to determine mount_root */
-	subvol = argv[optind];
-
 	subvol = realpath(argv[optind], NULL);
 	if (!subvol) {
 		ret = -errno;
@@ -659,15 +657,6 @@ int cmd_send(int argc, char **argv)
 					root_id);
 				goto out;
 			}
-		}
-
-		ret = is_subvol_ro(&send, subvol);
-		if (ret < 0)
-			goto out;
-		if (!ret) {
-			ret = -EINVAL;
-			error("subvolume %s is not read-only", subvol);
-			goto out;
 		}
 
 		if (new_end_cmd_semantic) {
