@@ -260,26 +260,27 @@ int cmd_inspect_dump_tree(int argc, char **argv)
 		case 'b':
 			block_only = arg_strtou64(optarg);
 			break;
-		case 't':
-			if (string_is_numerical(optarg)) {
-				tree_id = arg_strtou64(optarg);
-			} else {
-				const char *end = NULL;
+		case 't': {
+			const char *end = NULL;
 
+			if (string_is_numerical(optarg))
+				tree_id = arg_strtou64(optarg);
+			else
 				tree_id = treeid_from_string(optarg, &end);
 
-				if (*end) {
-					error("unexpected tree id suffix of '%s': %s\n",
-							optarg, end);
-					exit(1);
-				}
-			}
 			if (!tree_id) {
 				error("unrecognized tree id: %s\n",
 						optarg);
 				exit(1);
 			}
+
+			if (end && *end) {
+				error("unexpected tree id suffix of '%s': %s",
+						optarg, end);
+				exit(1);
+			}
 			break;
+			}
 		default:
 			usage(cmd_inspect_dump_tree_usage);
 		}
