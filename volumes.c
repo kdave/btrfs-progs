@@ -2143,8 +2143,11 @@ int write_raid56_with_parity(struct btrfs_fs_info *info,
 
 	ebs = malloc(sizeof(*ebs) * multi->num_stripes);
 	pointers = malloc(sizeof(*pointers) * multi->num_stripes);
-	if (!ebs || !pointers)
+	if (!ebs || !pointers) {
+		free(ebs);
+		free(pointers);
 		return -ENOMEM;
+	}
 
 	if (stripe_len > alloc_size)
 		alloc_size = stripe_len;
