@@ -4056,6 +4056,8 @@ unsigned int get_unit_mode_from_arg(int *argc, char *argv[], int df_mode)
 
 int string_is_numerical(const char *str)
 {
+	if (!str)
+		return 0;
 	if (!(*str >= '0' && *str <= '9'))
 		return 0;
 	while (*str >= '0' && *str <= '9')
