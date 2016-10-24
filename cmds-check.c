@@ -7544,6 +7544,7 @@ static int record_orphan_data_extents(struct btrfs_fs_info *fs_info,
 		key.offset = dback->offset;
 
 		ret = btrfs_search_slot(NULL, dest_root, &key, path, 0, 0);
+		btrfs_release_path(path);
 		/*
 		 * For ret < 0, it's OK since the fs-tree may be corrupted,
 		 * we need to record it for inode/file extent rebuild.
