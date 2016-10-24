@@ -5044,7 +5044,7 @@ out:
 static int check_root_ref(struct btrfs_root *root, struct btrfs_key *ref_key,
 			  struct extent_buffer *node, int slot)
 {
-	struct btrfs_path *path;
+	struct btrfs_path path;
 	struct btrfs_key key;
 	struct btrfs_root_ref *ref;
 	struct btrfs_root_ref *backref;
@@ -5081,8 +5081,8 @@ static int check_root_ref(struct btrfs_root *root, struct btrfs_key *ref_key,
 	key.type = BTRFS_ROOT_BACKREF_KEY + BTRFS_ROOT_REF_KEY - ref_key->type;
 	key.offset = ref_key->objectid;
 
-	path = btrfs_alloc_path();
-	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
+	btrfs_init_path(&path);
+	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
 	if (ret) {
 		err |= ROOT_REF_MISSING;
 		error("%s[%llu %llu] couldn't find relative ref",
@@ -5092,11 +5092,11 @@ static int check_root_ref(struct btrfs_root *root, struct btrfs_key *ref_key,
 		goto out;
 	}
 
-	backref = btrfs_item_ptr(path->nodes[0], path->slots[0],
+	backref = btrfs_item_ptr(path.nodes[0], path.slots[0],
 				 struct btrfs_root_ref);
-	backref_dirid = btrfs_root_ref_dirid(path->nodes[0], backref);
-	backref_seq = btrfs_root_ref_sequence(path->nodes[0], backref);
-	backref_namelen = btrfs_root_ref_name_len(path->nodes[0], backref);
+	backref_dirid = btrfs_root_ref_dirid(path.nodes[0], backref);
+	backref_seq = btrfs_root_ref_sequence(path.nodes[0], backref);
+	backref_namelen = btrfs_root_ref_name_len(path.nodes[0], backref);
 
 	if (backref_namelen <= BTRFS_NAME_LEN) {
 		len = backref_namelen;
@@ -5107,7 +5107,7 @@ static int check_root_ref(struct btrfs_root *root, struct btrfs_key *ref_key,
 			"ROOT_REF" : "ROOT_BACKREF",
 			key.objectid, key.offset);
 	}
-	read_extent_buffer(path->nodes[0], backref_name,
+	read_extent_buffer(path.nodes[0], backref_name,
 			   (unsigned long)(backref + 1), len);
 
 	if (ref_dirid != backref_dirid || ref_seq != backref_seq ||
@@ -5120,7 +5120,7 @@ static int check_root_ref(struct btrfs_root *root, struct btrfs_key *ref_key,
 		      ref_key->objectid, ref_key->offset);
 	}
 out:
-	btrfs_free_path(path);
+	btrfs_release_path(&path);
 	return err;
 }
 
