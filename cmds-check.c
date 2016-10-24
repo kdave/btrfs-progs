@@ -4940,13 +4940,15 @@ static int check_fs_first_inode(struct btrfs_root *root, unsigned int ext_ref)
 	int ret;
 
 	path = btrfs_alloc_path();
+	if (!path)
+		return -ENOMEM;
 	key.objectid = 256;
 	key.type = BTRFS_INODE_ITEM_KEY;
 	key.offset = 0;
 
 	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
 	if (ret < 0)
-		return ret;
+		goto out;
 	if (ret > 0) {
 		ret = 0;
 		err |= INODE_ITEM_MISSING;
@@ -4956,6 +4958,7 @@ static int check_fs_first_inode(struct btrfs_root *root, unsigned int ext_ref)
 	err &= ~LAST_ITEM;
 	if (err && !ret)
 		ret = -EIO;
+out:
 	btrfs_free_path(path);
 	return ret;
 }
