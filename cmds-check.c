@@ -4662,8 +4662,8 @@ static int add_extent_rec_nolookup(struct cache_tree *extent_cache,
 	bytes_used += rec->nr;
 
 	if (tmpl->metadata)
-		rec->crossing_stripes = check_crossing_stripes(rec->start,
-				global_info->tree_root->nodesize);
+		rec->crossing_stripes = check_crossing_stripes(global_info,
+				rec->start, global_info->tree_root->nodesize);
 	check_extent_type(rec);
 	return ret;
 }
@@ -4764,7 +4764,8 @@ static int add_extent_rec(struct cache_tree *extent_cache,
 		 */
 		if (tmpl->metadata)
 			rec->crossing_stripes = check_crossing_stripes(
-				rec->start, global_info->tree_root->nodesize);
+					global_info, rec->start,
+					global_info->tree_root->nodesize);
 		check_extent_type(rec);
 		maybe_free_extent_rec(extent_cache, rec);
 		return ret;
@@ -9359,7 +9360,8 @@ static int check_extent_item(struct btrfs_fs_info *fs_info,
 
 	if (flags & BTRFS_EXTENT_FLAG_TREE_BLOCK)
 		metadata = 1;
-	if (metadata && check_crossing_stripes(key.objectid, eb->len)) {
+	if (metadata && check_crossing_stripes(global_info, key.objectid,
+					       eb->len)) {
 		error("bad metadata [%llu, %llu) crossing stripe boundary",
 		      key.objectid, key.objectid + nodesize);
 		err |= CROSSING_STRIPE_BOUNDARY;

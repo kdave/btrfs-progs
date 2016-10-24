@@ -155,11 +155,28 @@ struct map_lookup {
  * Check if the given range cross stripes.
  * To ensure kernel scrub won't causing bug on with METADATA in mixed
  * block group
+ *
+ * Return 1 if the range crosses STRIPE boundary
+ * Return 0 if the range doesn't cross STRIPE boundary or it
+ * doesn't belong to any block group (no boundary to cross)
  */
-static inline int check_crossing_stripes(u64 start, u64 len)
+static inline int check_crossing_stripes(struct btrfs_fs_info *fs_info,
+					 u64 start, u64 len)
 {
-	return (start / BTRFS_STRIPE_LEN) !=
-	       ((start + len - 1) / BTRFS_STRIPE_LEN);
+	struct btrfs_block_group_cache *bg_cache;
+	u64 bg_offset;
+
+	bg_cache = btrfs_lookup_block_group(fs_info, start);
+	/*
+	 * Does not belong to block group, no boundary to cross
+	 * although it's a bigger problem, but here we don't care.
+	 */
+	if (!bg_cache)
+		return 0;
+	bg_offset = start - bg_cache->key.objectid;
+
+	return (bg_offset / BTRFS_STRIPE_LEN !=
+		(bg_offset + len - 1) / BTRFS_STRIPE_LEN);
 }
 
 int __btrfs_map_block(struct btrfs_mapping_tree *map_tree, int rw,
