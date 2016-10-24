@@ -30,6 +30,11 @@ extern "C" {
 #define __user
 #endif
 
+/* We don't want to include entire kerncompat.h */
+#ifndef BUILD_ASSERT
+#define BUILD_ASSERT(x)
+#endif
+
 #define BTRFS_IOCTL_MAGIC 0x94
 #define BTRFS_VOL_NAME_MAX 255
 
