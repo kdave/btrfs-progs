@@ -4,7 +4,6 @@
 
 source $TOP/tests/common
 
-check_prereq btrfs-show-super
 check_prereq mkfs.btrfs
 check_prereq btrfs
 
@@ -38,7 +37,7 @@ cleanup_devices()
 
 test_get_info()
 {
-	run_check $TOP/btrfs-show-super $dev1
+	run_check $TOP/btrfs inspect-internal dump-super $dev1
 	run_check $SUDO_HELPER $TOP/btrfs check $dev1
 	run_check $SUDO_HELPER mount $dev1 $TEST_MNT
 	run_check $TOP/btrfs filesystem df $TEST_MNT

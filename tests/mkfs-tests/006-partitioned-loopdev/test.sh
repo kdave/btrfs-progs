@@ -4,7 +4,6 @@
 source $TOP/tests/common
 
 check_prereq mkfs.btrfs
-check_prereq btrfs-show-super
 
 setup_root_helper
 
@@ -19,7 +18,7 @@ base=$(basename $loopdev)
 # expect partitions named like loop0p1 etc
 for looppart in $(ls /dev/$base?*); do
 	run_check $SUDO_HELPER $TOP/mkfs.btrfs -f $looppart
-	run_check $TOP/btrfs-show-super $looppart
+	run_check $TOP/btrfs inspect-internal dump-super $looppart
 done
 
 # cleanup

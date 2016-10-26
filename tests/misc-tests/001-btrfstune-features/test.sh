@@ -3,8 +3,6 @@
 
 source $TOP/tests/common
 
-check_prereq btrfs-debug-tree
-check_prereq btrfs-show-super
 check_prereq mkfs.btrfs
 check_prereq btrfstune
 check_prereq btrfs
@@ -16,7 +14,7 @@ prepare_test_dev
 # parameters:
 # - option for mkfs.btrfs -O, empty for defaults
 # - option for btrfstune
-# - string representing the feature in btrfs-show-super dump
+# - string representing the feature in dump-super output
 test_feature()
 {
 	local mkfsfeatures
@@ -28,12 +26,12 @@ test_feature()
 	sbflag="$3"
 
 	run_check $SUDO_HELPER $TOP/mkfs.btrfs -f $mkfsfeatures $TEST_DEV
-	if run_check_stdout $TOP/btrfs-show-super $TEST_DEV | \
+	if run_check_stdout $TOP/btrfs inspect-internal dump-super $TEST_DEV | \
 			grep -q "$sbflag"; then
 		_fail "FAIL: feature $sbflag must not be set on the base image"
 	fi
 	run_check $TOP/btrfstune $tuneopt $TEST_DEV
-	if ! run_check_stdout $TOP/btrfs-show-super $TEST_DEV | \
+	if ! run_check_stdout $TOP/btrfs inspect-internal dump-super $TEST_DEV | \
 			grep -q "$sbflag"; then
 		_fail "FAIL: feature $sbflag not set"
 	fi

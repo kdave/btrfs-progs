@@ -3,8 +3,6 @@
 
 source $TOP/tests/common
 
-check_prereq btrfs-debug-tree
-check_prereq btrfs-show-super
 check_prereq mkfs.btrfs
 check_prereq btrfstune
 check_prereq btrfs
@@ -15,7 +13,7 @@ get_fs_uuid() {
 	local image
 
 	image="$1"
-	run_check_stdout $TOP/btrfs-show-super "$image" | \
+	run_check_stdout $TOP/btrfs inspect-internal dump-super "$image" | \
 		grep '^fsid' | awk '{print $2}'
 }
 
@@ -29,13 +27,13 @@ test_uuid_random()
 		--uuid $origuuid \
 		--rootdir $TOP/Documentation \
 		$TEST_DEV
-	run_check $TOP/btrfs-show-super "$TEST_DEV"
+	run_check $TOP/btrfs inspect-internal dump-super "$TEST_DEV"
 	currentfsid=$(run_check_stdout $TOP/btrfstune -f -u $TEST_DEV | \
 		grep -i 'current fsid:' | awk '{print $3}')
 	if ! [ $currentfsid = $origuuid ]; then
 		_fail "FAIL: current UUID mismatch"
 	fi
-	run_check $TOP/btrfs-show-super "$TEST_DEV"
+	run_check $TOP/btrfs inspect-internal dump-super "$TEST_DEV"
 	run_check $SUDO_HELPER $TOP/btrfs check $TEST_DEV
 }
 
@@ -51,10 +49,10 @@ test_uuid_user()
 		--uuid $origuuid \
 		--rootdir $TOP/Documentation \
 		$TEST_DEV
-	run_check $TOP/btrfs-show-super "$TEST_DEV"
+	run_check $TOP/btrfs inspect-internal dump-super "$TEST_DEV"
 	run_check $TOP/btrfstune -f -U $newuuid \
 		$TEST_DEV
-	# btrfs-show-super is called within get_fs_uuid
+	# btrfs inspect-internal dump-super is called within get_fs_uuid
 	fsid=$(get_fs_uuid $TEST_DEV)
 	if ! [ $fsid = $newuuid ]; then
 		_fail "FAIL: UUID not rewritten"

@@ -176,7 +176,7 @@ convert_test_acl() {
 convert_test_do_convert() {
 	run_check $TOP/btrfs-convert ${1:+-O "$1"} ${2:+-N "$2"} $TEST_DEV
 	run_check $TOP/btrfs check $TEST_DEV
-	run_check $TOP/btrfs-show-super -Ffa $TEST_DEV
+	run_check $TOP/btrfs inspect-internal dump-super -Ffa $TEST_DEV
 }
 
 # post conversion check, verify file permissions.

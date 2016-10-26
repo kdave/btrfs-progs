@@ -4,7 +4,6 @@
 source $TOP/tests/common
 
 check_prereq mkfs.btrfs
-check_prereq btrfs-show-super
 
 setup_root_helper
 prepare_test_dev
@@ -33,7 +32,7 @@ run_check cat $rot
 # test
 run_check_stdout $SUDO_HELPER $TOP/mkfs.btrfs -f $@ $dmdev |
 	grep -q 'SSD detected:.*yes' || _fail 'SSD not detected'
-run_check $TOP/btrfs-show-super $dmdev
+run_check $TOP/btrfs inspect-internal dump-super $dmdev
 
 # cleanup
 run_check $SUDO_HELPER dmsetup remove $dmname

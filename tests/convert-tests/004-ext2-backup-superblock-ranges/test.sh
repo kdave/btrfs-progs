@@ -14,7 +14,6 @@ source $TOP/tests/common
 
 check_prereq btrfs-convert
 check_prereq btrfs
-check_prereq btrfs-show-super
 check_global_prereq e2fsck
 check_global_prereq xzcat
 
@@ -27,7 +26,7 @@ function check_image() {
 	run_check e2fsck -n -f $TEST_DEV
 	run_check $TOP/btrfs-convert $TEST_DEV
 	run_check $TOP/btrfs check $TEST_DEV
-	run_check $TOP/btrfs-show-super $TEST_DEV
+	run_check $TOP/btrfs inspect-internal dump-super $TEST_DEV
 
 	run_check_mount_test_dev
 	run_check $SUDO_HELPER e2fsck -n -f $TEST_MNT/ext2_saved/image

@@ -6,7 +6,6 @@
 
 source $TOP/tests/common
 
-check_prereq btrfs-show-super
 check_prereq btrfs-image
 check_prereq mkfs.btrfs
 check_prereq btrfs

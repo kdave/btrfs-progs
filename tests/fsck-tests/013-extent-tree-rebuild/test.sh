@@ -3,7 +3,6 @@
 source $TOP/tests/common
 
 check_prereq btrfs-corrupt-block
-check_prereq btrfs-debug-tree
 check_prereq mkfs.btrfs
 check_prereq btrfs
 
@@ -25,7 +24,7 @@ test_extent_tree_rebuild()
 	run_check_umount_test_dev
 
 	# get extent root bytenr
-	extent_root_bytenr=`$SUDO_HELPER $TOP/btrfs-debug-tree -r $TEST_DEV | \
+	extent_root_bytenr=`$SUDO_HELPER $TOP/btrfs inspect-internal dump-tree -r $TEST_DEV | \
 			    grep extent | awk '{print $7}'`
 	if [ -z $extent_root_bytenr ];then
 		_fail "fail to get extent root bytenr"
