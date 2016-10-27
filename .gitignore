@@ -64,6 +64,7 @@ config/py-compile
 config/test-driver
 configure
 cscope.out
+.clang_complete
 depcomp
 libtool
 Makefile
