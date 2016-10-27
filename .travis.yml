@@ -1,0 +1,38 @@
+#
+# Copyright (C) 2016 Roman Lebedev.
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public
+# License v2 as published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public
+# License along with this program; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+# Boston, MA 021110-1307, USA.
+#
+
+sudo: required
+
+language: c
+
+services:
+  - docker
+
+before_install:
+#  - docker build -t lebedevri/btrfs-progs .
+  - docker pull lebedevri/btrfs-progs:CI
+
+env:
+  global:
+    - SRC_DIR=/build/btrfs-progs
+    - CFLAGS=-pipe CXXFLAGS=-pipe
+  matrix:
+    - CC=gcc CXX=g++
+
+script:
+  - docker run --volume $TRAVIS_BUILD_DIR:$SRC_DIR --workdir $SRC_DIR --env CC --env CXX --env CFLAGS --env CXXFLAGS --env SRC_DIR lebedevri/btrfs-progs:CI sh -c "./autogen.sh && ./configure && make"
