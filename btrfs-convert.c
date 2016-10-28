@@ -1505,7 +1505,7 @@ static int ext2_open_fs(struct btrfs_convert_context *cctx, const char *name)
 
 	if (!(ext2_fs->super->s_feature_incompat &
 	      EXT2_FEATURE_INCOMPAT_FILETYPE)) {
-		fprintf(stderr, "filetype feature is missing\n");
+		error("filetype feature is missing");
 		goto fail;
 	}
 
@@ -2371,7 +2371,7 @@ static int convert_open_fs(const char *devname,
 		}
 	}
 
-	fprintf(stderr, "No file system found to convert.\n");
+	error("no file system found to convert");
 	return -1;
 }
 
@@ -3103,8 +3103,8 @@ int main(int argc, char *argv[])
 			case 'l':
 				copylabel = -1;
 				if (strlen(optarg) >= BTRFS_LABEL_SIZE) {
-					fprintf(stderr,
-				"WARNING: label too long, trimmed to %d bytes\n",
+					warning(
+					"label too long, trimmed to %d bytes",
 						BTRFS_LABEL_SIZE - 1);
 				}
 				__strncpy_null(fslabel, optarg, BTRFS_LABEL_SIZE - 1);
@@ -3121,8 +3121,7 @@ int main(int argc, char *argv[])
 
 				tmp = btrfs_parse_fs_features(tmp, &features);
 				if (tmp) {
-					fprintf(stderr,
-						"Unrecognized filesystem feature '%s'\n",
+					error("unrecognized filesystem feature: %s",
 							tmp);
 					free(orig);
 					exit(1);
@@ -3138,8 +3137,7 @@ int main(int argc, char *argv[])
 
 					btrfs_parse_features_to_string(buf,
 						features & ~BTRFS_CONVERT_ALLOWED_FEATURES);
-					fprintf(stderr,
-						"ERROR: features not allowed for convert: %s\n",
+					error("features not allowed for convert: %s",
 						buf);
 					exit(1);
 				}
@@ -3175,11 +3173,10 @@ int main(int argc, char *argv[])
 	file = argv[optind];
 	ret = check_mounted(file);
 	if (ret < 0) {
-		fprintf(stderr, "Could not check mount status: %s\n",
-			strerror(-ret));
+		error("could not check mount status: %s", strerror(-ret));
 		return 1;
 	} else if (ret) {
-		fprintf(stderr, "%s is mounted\n", file);
+		error("%s is mounted", file);
 		return 1;
 	}
 
