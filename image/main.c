@@ -2156,7 +2156,7 @@ static int search_for_chunk_blocks(struct mdrestore_struct *mdres,
 	bytenr = current_cluster;
 	while (1) {
 		if (fseek(mdres->in, current_cluster, SEEK_SET)) {
-			error("seek failed: %s\n", strerror(errno));
+			error("seek failed: %s", strerror(errno));
 			ret = -EIO;
 			break;
 		}
@@ -2303,7 +2303,7 @@ static int build_chunk_tree(struct mdrestore_struct *mdres,
 			break;
 		bytenr += le32_to_cpu(item->size);
 		if (fseek(mdres->in, le32_to_cpu(item->size), SEEK_CUR)) {
-			error("seek failed: %s\n", strerror(errno));
+			error("seek failed: %s", strerror(errno));
 			return -EIO;
 		}
 	}
@@ -2546,7 +2546,7 @@ static int restore_metadump(const char *input, FILE *out, int old_restore,
 	}
 
 	if (in != stdin && fseek(in, 0, SEEK_SET)) {
-		error("seek failed: %s\n", strerror(errno));
+		error("seek failed: %s", strerror(errno));
 		goto out;
 	}
 

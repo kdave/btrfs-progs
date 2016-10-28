@@ -149,7 +149,7 @@ static int get_df(int fd, struct btrfs_ioctl_space_args **sargs_ret)
 
 	ret = ioctl(fd, BTRFS_IOC_SPACE_INFO, sargs);
 	if (ret < 0) {
-		error("cannot get space info: %s\n", strerror(errno));
+		error("cannot get space info: %s", strerror(errno));
 		free(sargs);
 		return -errno;
 	}
@@ -875,7 +875,7 @@ devs_only:
 	ret = btrfs_scan_devices();
 
 	if (ret) {
-		error("blkid device scan returned %d\n", ret);
+		error("blkid device scan returned %d", ret);
 		return 1;
 	}
 
@@ -1116,7 +1116,7 @@ static int cmd_filesystem_defrag(int argc, char **argv)
 		dirstream = NULL;
 		fd = open_file_or_dir(argv[i], &dirstream);
 		if (fd < 0) {
-			error("cannot open %s: %s\n", argv[i],
+			error("cannot open %s: %s", argv[i],
 					strerror(errno));
 			defrag_global_errors++;
 			close_file_or_dir(fd, dirstream);
@@ -1130,7 +1130,7 @@ static int cmd_filesystem_defrag(int argc, char **argv)
 			continue;
 		}
 		if (!(S_ISDIR(st.st_mode) || S_ISREG(st.st_mode))) {
-			error("%s is not a directory or a regular file\n",
+			error("%s is not a directory or a regular file",
 					argv[i]);
 			defrag_global_errors++;
 			close_file_or_dir(fd, dirstream);

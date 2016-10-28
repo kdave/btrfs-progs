@@ -4526,7 +4526,7 @@ extref:
 			len = ref_namelen;
 		} else {
 			len = BTRFS_NAME_LEN;
-			warning("Warning: root %llu INODE %s[%llu %llu] name too long\n",
+			warning("root %llu INODE %s[%llu %llu] name too long",
 				root->objectid,
 				key->type == BTRFS_INODE_REF_KEY ?
 					"REF" : "EXTREF",

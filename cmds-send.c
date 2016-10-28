@@ -236,7 +236,7 @@ static void *dump_thread(void *arg)
 		rbytes = read(sctx->send_fd, buf, sizeof(buf));
 		if (rbytes < 0) {
 			ret = -errno;
-			error("failed to read stream from kernel: %s\n",
+			error("failed to read stream from kernel: %s",
 				strerror(-ret));
 			goto out;
 		}

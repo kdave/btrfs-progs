@@ -436,7 +436,7 @@ static int print_replace_status(int fd, const char *path, int once)
 			printf("Never started");
 			break;
 		default:
-			error("unknown status from ioctl DEV_REPLACE_STATUS on '%s': %llu\n",
+			error("unknown status from ioctl DEV_REPLACE_STATUS on '%s': %llu",
 					path, status->replace_state);
 			return -EINVAL;
 		}

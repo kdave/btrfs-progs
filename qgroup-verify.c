@@ -1496,7 +1496,7 @@ static int repair_qgroup_info(struct btrfs_fs_info *info,
 	key.offset = count->qgroupid;
 	ret = btrfs_search_slot(trans, root, &key, &path, 0, 1);
 	if (ret) {
-		error("Could not find disk item for qgroup %llu/%llu.\n",
+		error("could not find disk item for qgroup %llu/%llu",
 		      btrfs_qgroup_level(count->qgroupid),
 		      btrfs_qgroup_subvid(count->qgroupid));
 		if (ret > 0)
@@ -1550,7 +1550,7 @@ static int repair_qgroup_status(struct btrfs_fs_info *info)
 	key.offset = 0;
 	ret = btrfs_search_slot(trans, root, &key, &path, 0, 1);
 	if (ret) {
-		error("Could not find qgroup status item\n");
+		error("could not find qgroup status item");
 		if (ret > 0)
 			ret = -ENOENT;
 		goto out;

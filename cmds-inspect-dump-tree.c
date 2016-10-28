@@ -269,7 +269,7 @@ int cmd_inspect_dump_tree(int argc, char **argv)
 				tree_id = treeid_from_string(optarg, &end);
 
 			if (!tree_id) {
-				error("unrecognized tree id: %s\n",
+				error("unrecognized tree id: %s",
 						optarg);
 				exit(1);
 			}

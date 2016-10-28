@@ -330,7 +330,7 @@ static int copy_one_extent(struct btrfs_root *root, int fd,
 
 	inbuf = malloc(size_left);
 	if (!inbuf) {
-		error("not enough memory\n");
+		error("not enough memory");
 		return -ENOMEM;
 	}
 
@@ -486,7 +486,7 @@ static int set_file_xattrs(struct btrfs_root *root, u64 inode,
 			do {
 				ret = next_leaf(root, &path);
 				if (ret < 0) {
-					error("searching for extended attributes: %d\n",
+					error("searching for extended attributes: %d",
 						ret);
 					goto out;
 				} else if (ret) {

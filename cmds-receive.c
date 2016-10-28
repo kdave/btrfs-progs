@@ -101,7 +101,7 @@ static int finish_subvol(struct btrfs_receive *r)
 			O_RDONLY | O_NOATIME);
 	if (subvol_fd < 0) {
 		ret = -errno;
-		error("cannot open %s: %s\n",
+		error("cannot open %s: %s",
 				r->cur_subvol_path, strerror(-ret));
 		goto out;
 	}
@@ -184,7 +184,7 @@ static int process_subvol(const char *path, const u8 *uuid, u64 ctransid,
 	} else {
 		ret = path_cat_out(r->cur_subvol_path, r->dest_dir_path, path);
 		if (ret < 0) {
-			error("subvol: path invalid: %s\n", path);
+			error("subvol: path invalid: %s", path);
 			goto out;
 		}
 	}
@@ -707,7 +707,7 @@ static int process_write(const char *path, const void *data, u64 offset,
 				offset + pos);
 		if (w < 0) {
 			ret = -errno;
-			error("writing to %s failed: %s\n",
+			error("writing to %s failed: %s",
 					path, strerror(-ret));
 			goto out;
 		}
@@ -793,7 +793,7 @@ static int process_clone(const char *path, u64 offset, u64 len,
 	ret = ioctl(r->write_fd, BTRFS_IOC_CLONE_RANGE, &clone_args);
 	if (ret < 0) {
 		ret = -errno;
-		error("failed to clone extents to %s\n%s\n",
+		error("failed to clone extents to %s\n%s",
 				path, strerror(-ret));
 		goto out;
 	}
