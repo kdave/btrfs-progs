@@ -327,6 +327,16 @@ static void compress_type_to_str(u8 compress_type, char *ret)
 	}
 }
 
+static const char* file_extent_type_to_str(u8 type)
+{
+	switch (type) {
+	case BTRFS_FILE_EXTENT_INLINE: return "inline";
+	case BTRFS_FILE_EXTENT_PREALLOC: return "prealloc";
+	case BTRFS_FILE_EXTENT_REG: return "regular";
+	default: return "unknown";
+	}
+}
+
 static void print_file_extent_item(struct extent_buffer *eb,
 				   struct btrfs_item *item,
 				   int slot,
@@ -338,9 +348,12 @@ static void print_file_extent_item(struct extent_buffer *eb,
 	compress_type_to_str(btrfs_file_extent_compression(eb, fi),
 			     compress_str);
 
+	printf("\t\tgeneration %llu type %hhu (%s)\n",
+			btrfs_file_extent_generation(eb, fi),
+			extent_type, file_extent_type_to_str(extent_type));
+
 	if (extent_type == BTRFS_FILE_EXTENT_INLINE) {
-		printf("\t\tinline extent data size %u "
-		       "ram %u compress(%s)\n",
+		printf("\t\tinline extent data size %u ram %u compress(%s)\n",
 		  btrfs_file_extent_inline_item_len(eb, item),
 		  btrfs_file_extent_inline_len(eb, slot, fi),
 		  compress_str);
