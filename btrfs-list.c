@@ -518,7 +518,7 @@ static int add_root(struct root_lookup *root_lookup,
 	return 0;
 }
 
-static void __free_root_info(struct rb_node *node)
+static void free_root_info(struct rb_node *node)
 {
 	struct root_info *ri;
 
@@ -956,7 +956,7 @@ out:
 	return 0;
 }
 
-static int __list_subvol_search(int fd, struct root_lookup *root_lookup)
+static int list_subvol_search(int fd, struct root_lookup *root_lookup)
 {
 	int ret;
 	struct btrfs_ioctl_search_args args;
@@ -1265,7 +1265,7 @@ static int filter_root(struct root_info *ri,
 	return 1;
 }
 
-static void __filter_and_sort_subvol(struct root_lookup *all_subvols,
+static void filter_and_sort_subvol(struct root_lookup *all_subvols,
 				    struct root_lookup *sort_tree,
 				    struct btrfs_list_filter_set *filter_set,
 				    struct btrfs_list_comparer_set *comp_set,
@@ -1293,7 +1293,7 @@ static void __filter_and_sort_subvol(struct root_lookup *all_subvols,
 	}
 }
 
-static int __list_subvol_fill_paths(int fd, struct root_lookup *root_lookup)
+static int list_subvol_fill_paths(int fd, struct root_lookup *root_lookup)
 {
 	struct rb_node *n;
 
@@ -1487,7 +1487,7 @@ static int btrfs_list_subvols(int fd, struct root_lookup *root_lookup)
 {
 	int ret;
 
-	ret = __list_subvol_search(fd, root_lookup);
+	ret = list_subvol_search(fd, root_lookup);
 	if (ret) {
 		fprintf(stderr, "ERROR: can't perform the search - %s\n",
 				strerror(errno));
@@ -1498,7 +1498,7 @@ static int btrfs_list_subvols(int fd, struct root_lookup *root_lookup)
 	 * now we have an rbtree full of root_info objects, but we need to fill
 	 * in their path names within the subvol that is referencing each one.
 	 */
-	ret = __list_subvol_fill_paths(fd, root_lookup);
+	ret = list_subvol_fill_paths(fd, root_lookup);
 	return ret;
 }
 
@@ -1519,11 +1519,11 @@ int btrfs_list_subvols_print(int fd, struct btrfs_list_filter_set *filter_set,
 	ret = btrfs_list_subvols(fd, &root_lookup);
 	if (ret)
 		return ret;
-	__filter_and_sort_subvol(&root_lookup, &root_sort, filter_set,
+	filter_and_sort_subvol(&root_lookup, &root_sort, filter_set,
 				 comp_set, top_id);
 
 	print_all_volume_info(&root_sort, layout, raw_prefix);
-	rb_free_nodes(&root_lookup.root, __free_root_info);
+	rb_free_nodes(&root_lookup.root, free_root_info);
 
 	return 0;
 }
@@ -1570,7 +1570,7 @@ int btrfs_get_subvol(int fd, struct root_info *the_ri)
 		}
 		rbn = rb_next(rbn);
 	}
-	rb_free_nodes(&rl.root, __free_root_info);
+	rb_free_nodes(&rl.root, free_root_info);
 	return ret;
 }
 
@@ -1764,11 +1764,11 @@ char *btrfs_list_path_for_root(int fd, u64 root)
 	if (ret)
 		return ERR_PTR(ret);
 
-	ret = __list_subvol_search(fd, &root_lookup);
+	ret = list_subvol_search(fd, &root_lookup);
 	if (ret < 0)
 		return ERR_PTR(ret);
 
-	ret = __list_subvol_fill_paths(fd, &root_lookup);
+	ret = list_subvol_fill_paths(fd, &root_lookup);
 	if (ret < 0)
 		return ERR_PTR(ret);
 
@@ -1789,7 +1789,7 @@ char *btrfs_list_path_for_root(int fd, u64 root)
 
 		n = rb_prev(n);
 	}
-	rb_free_nodes(&root_lookup.root, __free_root_info);
+	rb_free_nodes(&root_lookup.root, free_root_info);
 
 	return ret_path;
 }
