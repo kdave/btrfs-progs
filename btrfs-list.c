@@ -698,7 +698,7 @@ static u64 find_root_gen(int fd)
 
 	memset(&args, 0, sizeof(args));
 
-	sk->tree_id = 1;
+	sk->tree_id = BTRFS_ROOT_TREE_OBJECTID;
 
 	/*
 	 * there may be more than one ROOT_ITEM key if there are
@@ -916,7 +916,7 @@ int btrfs_list_get_default_subvolume(int fd, u64 *default_id)
 	 * search for a dir item with a name 'default' in the tree of
 	 * tree roots, it should point us to a default root
 	 */
-	sk->tree_id = 1;
+	sk->tree_id = BTRFS_ROOT_TREE_OBJECTID;
 
 	/* don't worry about ancient format and request only one item */
 	sk->nr_items = 1;
@@ -980,8 +980,7 @@ static int list_subvol_search(int fd, struct root_lookup *root_lookup)
 	root_lookup_init(root_lookup);
 	memset(&args, 0, sizeof(args));
 
-	/* search in the tree of tree roots */
-	sk->tree_id = 1;
+	sk->tree_id = BTRFS_ROOT_TREE_OBJECTID;
 
 	/*
 	 * set the min and max to backref keys.  The search will

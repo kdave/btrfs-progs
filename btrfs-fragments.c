@@ -218,7 +218,7 @@ list_fragments(int fd, u64 flags, char *dir)
 	
 	memset(&args, 0, sizeof(args));
 
-	sk->tree_id = 2;
+	sk->tree_id = BTRFS_EXTENT_TREE_OBJECTID;
 	sk->max_type = -1;
 	sk->min_type = 0;
 	sk->max_objectid = (u64)-1;
