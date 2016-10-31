@@ -4942,7 +4942,7 @@ static int check_fs_first_inode(struct btrfs_root *root, unsigned int ext_ref)
 	path = btrfs_alloc_path();
 	if (!path)
 		return -ENOMEM;
-	key.objectid = 256;
+	key.objectid = BTRFS_FIRST_FREE_OBJECTID;
 	key.type = BTRFS_INODE_ITEM_KEY;
 	key.offset = 0;
 
