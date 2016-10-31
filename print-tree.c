@@ -248,20 +248,38 @@ void print_chunk(struct extent_buffer *eb, struct btrfs_chunk *chunk)
 static void print_dev_item(struct extent_buffer *eb,
 			   struct btrfs_dev_item *dev_item)
 {
-	char disk_uuid_c[BTRFS_UUID_UNPARSED_SIZE];
-	u8 disk_uuid[BTRFS_UUID_SIZE];
+	char uuid_str[BTRFS_UUID_UNPARSED_SIZE];
+	char fsid_str[BTRFS_UUID_UNPARSED_SIZE];
+	u8 uuid[BTRFS_UUID_SIZE];
+	u8 fsid[BTRFS_UUID_SIZE];
 
-	read_extent_buffer(eb, disk_uuid,
+	read_extent_buffer(eb, uuid,
 			   (unsigned long)btrfs_device_uuid(dev_item),
 			   BTRFS_UUID_SIZE);
-	uuid_unparse(disk_uuid, disk_uuid_c);
-	printf("\t\tdev item devid %llu "
-	       "total_bytes %llu bytes used %Lu\n"
-	       "\t\tdev uuid %s\n",
+	uuid_unparse(uuid, uuid_str);
+	read_extent_buffer(eb, fsid,
+			   (unsigned long)btrfs_device_fsid(dev_item),
+			   BTRFS_UUID_SIZE);
+	uuid_unparse(fsid, fsid_str);
+	printf("\t\tdevid %llu total_bytes %llu bytes_used %Lu\n"
+	       "\t\tio_align %u io_width %u sector_size %u type %llu\n"
+	       "\t\tgeneration %llu start_offset %llu dev_group %u\n"
+	       "\t\tseek_speed %hhu bandwidth %hhu\n"
+	       "\t\tdev uuid %s\n"
+	       "\t\tfsid %s\n",
 	       (unsigned long long)btrfs_device_id(eb, dev_item),
 	       (unsigned long long)btrfs_device_total_bytes(eb, dev_item),
 	       (unsigned long long)btrfs_device_bytes_used(eb, dev_item),
-	       disk_uuid_c);
+	       btrfs_device_io_align(eb, dev_item),
+	       btrfs_device_io_width(eb, dev_item),
+	       btrfs_device_sector_size(eb, dev_item),
+	       (unsigned long long)btrfs_device_type(eb, dev_item),
+	       (unsigned long long)btrfs_device_generation(eb, dev_item),
+	       (unsigned long long)btrfs_device_start_offset(eb, dev_item),
+	       btrfs_device_group(eb, dev_item),
+	       btrfs_device_seek_speed(eb, dev_item),
+	       btrfs_device_bandwidth(eb, dev_item),
+	       uuid_str, fsid_str);
 }
 
 static void print_uuids(struct extent_buffer *eb)
