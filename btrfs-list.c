@@ -124,11 +124,6 @@ void btrfs_list_setup_print_column(enum btrfs_list_column_enum column)
 		btrfs_list_columns[i].need_print = 1;
 }
 
-static void root_lookup_init(struct root_lookup *tree)
-{
-	tree->root.rb_node = NULL;
-}
-
 static int comp_entry_with_rootid(struct root_info *entry1,
 				  struct root_info *entry2,
 				  int is_descending)
@@ -983,7 +978,7 @@ static int list_subvol_search(int fd, struct root_lookup *root_lookup)
 	u64 flags;
 	int i;
 
-	root_lookup_init(root_lookup);
+	root_lookup->root.rb_node = NULL;
 	memset(&args, 0, sizeof(args));
 
 	sk->tree_id = BTRFS_ROOT_TREE_OBJECTID;
@@ -1270,7 +1265,7 @@ static void filter_and_sort_subvol(struct root_lookup *all_subvols,
 	struct root_info *entry;
 	int ret;
 
-	root_lookup_init(sort_tree);
+	sort_tree->root.rb_node = NULL;
 
 	n = rb_last(&all_subvols->root);
 	while (n) {
