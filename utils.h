@@ -209,7 +209,7 @@ int is_vol_small(const char *file);
 int csum_tree_block(struct btrfs_root *root, struct extent_buffer *buf,
 			   int verify);
 int ask_user(const char *question);
-int lookup_ino_rootid(int fd, u64 *rootid);
+int lookup_path_rootid(int fd, u64 *rootid);
 int btrfs_scan_devices(void);
 int get_btrfs_mount(const char *dev, char *mp, size_t mp_size);
 int find_mount_root(const char *path, char **mount_root);

@@ -326,7 +326,7 @@ static int cmd_inspect_rootid(int argc, char **argv)
 		goto out;
 	}
 
-	ret = lookup_ino_rootid(fd, &rootid);
+	ret = lookup_path_rootid(fd, &rootid);
 	if (ret) {
 		error("failed to lookup root id: %s", strerror(-ret));
 		goto out;

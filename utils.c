@@ -2927,7 +2927,7 @@ path:
 	fd = open(p, O_RDONLY);
 	if (fd < 0)
 		goto err;
-	ret = lookup_ino_rootid(fd, &id);
+	ret = lookup_path_rootid(fd, &id);
 	if (ret)
 		error("failed to lookup root id: %s", strerror(-ret));
 	close(fd);
@@ -3609,7 +3609,7 @@ int ask_user(const char *question)
  * - BTRFS_EMPTY_SUBVOL_DIR_OBJECTID (directory with ino == 2) the result is
  *   undefined and function returns -1
  */
-int lookup_ino_rootid(int fd, u64 *rootid)
+int lookup_path_rootid(int fd, u64 *rootid)
 {
 	struct btrfs_ioctl_ino_lookup_args args;
 	int ret;

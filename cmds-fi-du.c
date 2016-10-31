@@ -459,7 +459,7 @@ static int du_add_file(const char *filename, int dirfd,
 		goto out;
 	}
 
-	ret = lookup_ino_rootid(fd, &subvol);
+	ret = lookup_path_rootid(fd, &subvol);
 	if (ret)
 		goto out_close;
 

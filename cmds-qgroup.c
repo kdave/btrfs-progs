@@ -366,7 +366,7 @@ static int cmd_qgroup_show(int argc, char **argv)
 	}
 
 	if (filter_flag) {
-		ret = lookup_ino_rootid(fd, &qgroupid);
+		ret = lookup_path_rootid(fd, &qgroupid);
 		if (ret < 0) {
 			error("cannot resolve rootid for %s: %s",
 					path, strerror(-ret));
