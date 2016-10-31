@@ -539,6 +539,7 @@ static void print_root(struct extent_buffer *leaf, int slot)
 	int len;
 	char uuid_str[BTRFS_UUID_UNPARSED_SIZE];
 	char flags_str[32] = {0};
+	struct btrfs_key drop_key;
 
 	ri = btrfs_item_ptr(leaf, slot, struct btrfs_root_item);
 	len = btrfs_item_size_nr(leaf, slot);
@@ -547,15 +548,18 @@ static void print_root(struct extent_buffer *leaf, int slot)
 	read_extent_buffer(leaf, &root_item, (unsigned long)ri, len);
 	root_flags_to_str(btrfs_root_flags(&root_item), flags_str);
 
-	printf("\t\troot data bytenr %llu level %d dirid %llu refs %u gen %llu lastsnap %llu\n",
+	printf("\t\tgeneration %llu root_dirid %llu bytenr %llu level %hhu refs %u\n",
+		(unsigned long long)btrfs_root_generation(&root_item),
+		(unsigned long long)btrfs_root_dirid(&root_item),
 		(unsigned long long)btrfs_root_bytenr(&root_item),
 		btrfs_root_level(&root_item),
-		(unsigned long long)btrfs_root_dirid(&root_item),
-		btrfs_root_refs(&root_item),
-		(unsigned long long)btrfs_root_generation(&root_item),
-		(unsigned long long)btrfs_root_last_snapshot(&root_item));
-	printf("\t\tflags 0x%llx(%s)\n", btrfs_root_flags(&root_item),
-	       flags_str);
+		btrfs_root_refs(&root_item));
+	printf("\t\tlastsnap %llu byte_limit %llu bytes_used %llu flags 0x%llx(%s)\n",
+		(unsigned long long)btrfs_root_last_snapshot(&root_item),
+		(unsigned long long)btrfs_root_limit(&root_item),
+		(unsigned long long)btrfs_root_used(&root_item),
+		(unsigned long long)btrfs_root_flags(&root_item),
+		flags_str);
 
 	if (root_item.generation == root_item.generation_v2) {
 		uuid_unparse(root_item.uuid, uuid_str);
@@ -576,14 +580,11 @@ static void print_root(struct extent_buffer *leaf, int slot)
 				btrfs_root_rtransid(&root_item));
 		}
 	}
-	if (btrfs_root_refs(&root_item) == 0) {
-		struct btrfs_key drop_key;
-		btrfs_disk_key_to_cpu(&drop_key,
-				      &root_item.drop_progress);
-		printf("\t\tdrop ");
-		btrfs_print_key(&root_item.drop_progress);
-		printf(" level %d\n", root_item.drop_level);
-	}
+
+	btrfs_disk_key_to_cpu(&drop_key, &root_item.drop_progress);
+	printf("\t\tdrop ");
+	btrfs_print_key(&root_item.drop_progress);
+	printf(" level %hhu\n", root_item.drop_level);
 }
 
 static void print_free_space_header(struct extent_buffer *leaf, int slot)
