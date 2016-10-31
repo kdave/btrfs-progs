@@ -394,7 +394,7 @@ static struct root_info *root_tree_search(struct root_lookup *root_tree,
 static int update_root(struct root_lookup *root_lookup,
 		       u64 root_id, u64 ref_tree, u64 root_offset, u64 flags,
 		       u64 dir_id, char *name, int name_len, u64 ogen, u64 gen,
-		       time_t ot, void *uuid, void *puuid, void *ruuid)
+		       time_t otime, void *uuid, void *puuid, void *ruuid)
 {
 	struct root_info *ri;
 
@@ -426,8 +426,8 @@ static int update_root(struct root_lookup *root_lookup,
 		ri->ogen = ogen;
 	if (!ri->ogen && root_offset)
 		ri->ogen = root_offset;
-	if (ot)
-		ri->otime = ot;
+	if (otime)
+		ri->otime = otime;
 	if (uuid)
 		memcpy(&ri->uuid, uuid, BTRFS_UUID_SIZE);
 	if (puuid)
@@ -449,7 +449,7 @@ static int update_root(struct root_lookup *root_lookup,
  * name_len: the length of name
  * ogen: the original generation of the root
  * gen: the current generation of the root
- * ot: the original time(create time) of the root
+ * otime: the original time (creation time) of the root
  * uuid: uuid of the root
  * puuid: uuid of the root parent if any
  * ruuid: uuid of the received subvol, if any
@@ -457,13 +457,13 @@ static int update_root(struct root_lookup *root_lookup,
 static int add_root(struct root_lookup *root_lookup,
 		    u64 root_id, u64 ref_tree, u64 root_offset, u64 flags,
 		    u64 dir_id, char *name, int name_len, u64 ogen, u64 gen,
-		    time_t ot, void *uuid, void *puuid, void *ruuid)
+		    time_t otime, void *uuid, void *puuid, void *ruuid)
 {
 	struct root_info *ri;
 	int ret;
 
 	ret = update_root(root_lookup, root_id, ref_tree, root_offset, flags,
-			  dir_id, name, name_len, ogen, gen, ot,
+			  dir_id, name, name_len, ogen, gen, otime,
 			  uuid, puuid, ruuid);
 	if (!ret)
 		return 0;
@@ -498,8 +498,8 @@ static int add_root(struct root_lookup *root_lookup,
 		ri->ogen = ogen;
 	if (!ri->ogen && root_offset)
 		ri->ogen = root_offset;
-	if (ot)
-		ri->otime = ot;
+	if (otime)
+		ri->otime = otime;
 
 	if (uuid)
 		memcpy(&ri->uuid, uuid, BTRFS_UUID_SIZE);
@@ -970,7 +970,6 @@ static int list_subvol_search(int fd, struct root_lookup *root_lookup)
 	u64 ogen;
 	u64 flags;
 	int i;
-	time_t t;
 	u8 uuid[BTRFS_UUID_SIZE];
 	u8 puuid[BTRFS_UUID_SIZE];
 	u8 ruuid[BTRFS_UUID_SIZE];
@@ -1014,18 +1013,20 @@ static int list_subvol_search(int fd, struct root_lookup *root_lookup)
 					 0, 0, dir_id, name, name_len, 0, 0, 0,
 					 NULL, NULL, NULL);
 			} else if (sh.type == BTRFS_ROOT_ITEM_KEY) {
+				time_t otime;
+
 				ri = (struct btrfs_root_item *)(args.buf + off);
 				gen = btrfs_root_generation(ri);
 				flags = btrfs_root_flags(ri);
 				if(sh.len >
 				   sizeof(struct btrfs_root_item_v0)) {
-					t = btrfs_stack_timespec_sec(&ri->otime);
+					otime = btrfs_stack_timespec_sec(&ri->otime);
 					ogen = btrfs_root_otransid(ri);
 					memcpy(uuid, ri->uuid, BTRFS_UUID_SIZE);
 					memcpy(puuid, ri->parent_uuid, BTRFS_UUID_SIZE);
 					memcpy(ruuid, ri->received_uuid, BTRFS_UUID_SIZE);
 				} else {
-					t = 0;
+					otime = 0;
 					ogen = 0;
 					memset(uuid, 0, BTRFS_UUID_SIZE);
 					memset(puuid, 0, BTRFS_UUID_SIZE);
@@ -1034,7 +1035,7 @@ static int list_subvol_search(int fd, struct root_lookup *root_lookup)
 
 				add_root(root_lookup, sh.objectid, 0,
 					 sh.offset, flags, 0, NULL, 0, ogen,
-					 gen, t, uuid, puuid, ruuid);
+					 gen, otime, uuid, puuid, ruuid);
 			}
 
 			off += sh.len;
