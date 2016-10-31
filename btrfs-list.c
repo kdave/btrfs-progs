@@ -519,6 +519,18 @@ static int add_root(struct root_lookup *root_lookup,
 	return 0;
 }
 
+/*
+ * Simplified add_root for back references, omits the uuid and original info
+ * parameters, root offset and flags.
+ */
+static int add_root_backref(struct root_lookup *root_lookup, u64 root_id,
+		u64 ref_tree, u64 dir_id, char *name, int name_len)
+{
+	return add_root(root_lookup, root_id, ref_tree, 0, 0, dir_id, name,
+			name_len, 0, 0, 0, NULL, NULL, NULL);
+}
+
+
 static void free_root_info(struct rb_node *node)
 {
 	struct root_info *ri;
@@ -1009,9 +1021,9 @@ static int list_subvol_search(int fd, struct root_lookup *root_lookup)
 				name = (char *)(ref + 1);
 				dir_id = btrfs_stack_root_ref_dirid(ref);
 
-				add_root(root_lookup, sh.objectid, sh.offset,
-					 0, 0, dir_id, name, name_len, 0, 0, 0,
-					 NULL, NULL, NULL);
+				add_root_backref(root_lookup, sh.objectid,
+						sh.offset, dir_id, name,
+						name_len);
 			} else if (sh.type == BTRFS_ROOT_ITEM_KEY) {
 				time_t otime;
 
