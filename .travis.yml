@@ -1,0 +1,61 @@
+#
+# Copyright (C) 2016 Roman Lebedev.
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public
+# License v2 as published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public
+# License along with this program; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+# Boston, MA 021110-1307, USA.
+#
+
+sudo: required
+
+language: c
+compiler:
+  - gcc
+  - clang
+
+git:
+  depth: 3
+
+dist: trusty
+group: unstable
+
+branches:
+  only:
+  - devel
+  - coverity_scan
+
+env:
+  global:
+   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+   #   via the "travis encrypt" command using the project repo's public key
+   - secure: "aOqVfsh0m0iR3ggfuqhri4RHZK1LkQPDfNvPPQLN6VwJnz9QrI7TvLovTM1JwfX+nkyNhRq33+OahQb7PEHWPctFo6o42CcN837syF2fg8ZhTmcU1abJL29GUN/bH3xZXJJoUNJUW79Bp098GEcEmypxJ29Fxs5FQKT57O2FnnJXQLZhsDvSC1tuHtHEnCU1EGmZ6g4QI+eaS3zxKr343WCwRX6xolKHaLZX/UsYMbIMJ1YBaK2zCyOpaXOflQbloI1gcrUcoalIFuwPVbYnu2oXqzsuzHV0ekN+zMAECDNYrTr/OEA0bLR57WC0krLiAr+tA6Rq5E1D6JHg3WxDE7tbuFmrhxW23S9x6xw4+L5KuwNdsIZEdybn4q6zCkkHH3PgOFRF8taxxHKsfJ9fWxZM/kvQa5CNClDrZmfso9U8yWrYgL6fi3fIcuVLE29N2K0v9LkWlsK0REn5/uiEKO5rJ25ytpzCoUg9IRRgMPJaoPtZhSrK+ywZlJqg3f5eRqA7W1A4AEK5cOmWGFW2MOGmTtzhHG/xY0yaPYxgB7u2b7ji8BQdOn3p0ttmBFBxbDChb3LUH+d21iORrYVTG3IDziQTdBLCn/ZUypcLlLXLkkgZMQ9kLhArRmuqlTqPoR2+GNVjRP/uxwZXcszvEb0TATI11rieJW6TN1inWgY="
+
+before_install:
+  - sudo apt-get update -qq
+  - sudo apt-get install -qq e2fslibs-dev gcc libacl1-dev libblkid-dev liblzo2-dev make pkg-config udev zlib1g-dev
+  - echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
+
+addons:
+  coverity_scan:
+    project:
+      name: "kdave/btrfs-progs"
+      description: "btrfs-progs"
+    notification_email: dsterba@suse.cz
+    build_command_prepend: "./autogen.sh && ./configure --disable-documentation"
+    build_command: "make"
+    branch_pattern: coverity_scan
+
+script:
+  - "./autogen.sh && ./configure --disable-documentation && make"
+  - "make test-cli"
+  - "make test-check"

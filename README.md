@@ -1,4 +1,4 @@
-Btrfs-progs
+Btrfs-progs [![build status](https://travis-ci.org/kdave/btrfs-progs.svg?branch=devel)](https://travis-ci.org/kdave/btrfs-progs)
 ===========
 
 Userspace utilities to manage btrfs filesystems.
