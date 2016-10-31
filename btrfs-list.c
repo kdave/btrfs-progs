@@ -962,7 +962,7 @@ static int list_subvol_search(int fd, struct root_lookup *root_lookup)
 	struct btrfs_ioctl_search_header sh;
 	struct btrfs_root_ref *ref;
 	struct btrfs_root_item *ri;
-	unsigned long off = 0;
+	unsigned long off;
 	int name_len;
 	char *name;
 	u64 dir_id;
@@ -980,17 +980,15 @@ static int list_subvol_search(int fd, struct root_lookup *root_lookup)
 
 	sk->tree_id = BTRFS_ROOT_TREE_OBJECTID;
 	/* Search both live and deleted subvolumes */
-	sk->max_type = BTRFS_ROOT_BACKREF_KEY;
 	sk->min_type = BTRFS_ROOT_ITEM_KEY;
-
+	sk->max_type = BTRFS_ROOT_BACKREF_KEY;
 	sk->min_objectid = BTRFS_FIRST_FREE_OBJECTID;
-
 	sk->max_objectid = BTRFS_LAST_FREE_OBJECTID;
 	sk->max_offset = (u64)-1;
 	sk->max_transid = (u64)-1;
-	sk->nr_items = 4096;
 
 	while(1) {
+		sk->nr_items = 4096;
 		ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &args);
 		if (ret < 0)
 			return ret;
@@ -1045,7 +1043,6 @@ static int list_subvol_search(int fd, struct root_lookup *root_lookup)
 			sk->min_type = sh.type;
 			sk->min_offset = sh.offset;
 		}
-		sk->nr_items = 4096;
 		sk->min_offset++;
 		if (!sk->min_offset)
 			sk->min_type++;
