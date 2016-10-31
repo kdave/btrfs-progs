@@ -529,11 +529,6 @@ static void __free_root_info(struct rb_node *node)
 	free(ri);
 }
 
-static inline void __free_all_subvolumn(struct root_lookup *root_tree)
-{
-	rb_free_nodes(&root_tree->root, __free_root_info);
-}
-
 /*
  * for a given root_info, search through the root_lookup tree to construct
  * the full path name to it.
@@ -1528,7 +1523,7 @@ int btrfs_list_subvols_print(int fd, struct btrfs_list_filter_set *filter_set,
 				 comp_set, top_id);
 
 	print_all_volume_info(&root_sort, layout, raw_prefix);
-	__free_all_subvolumn(&root_lookup);
+	rb_free_nodes(&root_lookup.root, __free_root_info);
 
 	return 0;
 }
@@ -1575,7 +1570,7 @@ int btrfs_get_subvol(int fd, struct root_info *the_ri)
 		}
 		rbn = rb_next(rbn);
 	}
-	__free_all_subvolumn(&rl);
+	rb_free_nodes(&rl.root, __free_root_info);
 	return ret;
 }
 
@@ -1794,7 +1789,7 @@ char *btrfs_list_path_for_root(int fd, u64 root)
 
 		n = rb_prev(n);
 	}
-	__free_all_subvolumn(&root_lookup);
+	rb_free_nodes(&root_lookup.root, __free_root_info);
 
 	return ret_path;
 }
