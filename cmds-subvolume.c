@@ -431,10 +431,10 @@ static int cmd_subvol_list(int argc, char **argv)
 	u64 top_id;
 	int ret = -1, uerr = 0;
 	char *subvol;
-	int is_tab_result = 0;
 	int is_list_all = 0;
 	int is_only_in_path = 0;
 	DIR *dirstream = NULL;
+	enum btrfs_list_layout layout = BTRFS_LIST_LAYOUT_DEFAULT;
 
 	filter_set = btrfs_list_alloc_filter_set();
 	comparer_set = btrfs_list_alloc_comparer_set();
@@ -473,7 +473,7 @@ static int cmd_subvol_list(int argc, char **argv)
 			is_only_in_path = 1;
 			break;
 		case 't':
-			is_tab_result = 1;
+			layout = BTRFS_LIST_LAYOUT_TABLE;
 			break;
 		case 's':
 			btrfs_list_setup_filter(&filter_set,
@@ -566,14 +566,8 @@ static int cmd_subvol_list(int argc, char **argv)
 	btrfs_list_setup_print_column(BTRFS_LIST_TOP_LEVEL);
 	btrfs_list_setup_print_column(BTRFS_LIST_PATH);
 
-	if (is_tab_result)
-		ret = btrfs_list_subvols_print(fd, filter_set, comparer_set,
-				BTRFS_LIST_LAYOUT_TABLE,
-				!is_list_all && !is_only_in_path, NULL);
-	else
-		ret = btrfs_list_subvols_print(fd, filter_set, comparer_set,
-				BTRFS_LIST_LAYOUT_DEFAULT,
-				!is_list_all && !is_only_in_path, NULL);
+	ret = btrfs_list_subvols_print(fd, filter_set, comparer_set,
+			layout, !is_list_all && !is_only_in_path, NULL);
 
 out:
 	close_file_or_dir(fd, dirstream);
