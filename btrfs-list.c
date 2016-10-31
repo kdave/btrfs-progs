@@ -979,32 +979,21 @@ static int list_subvol_search(int fd, struct root_lookup *root_lookup)
 	memset(&args, 0, sizeof(args));
 
 	sk->tree_id = BTRFS_ROOT_TREE_OBJECTID;
-
-	/*
-	 * set the min and max to backref keys.  The search will
-	 * only send back this type of key now.
-	 */
+	/* Search both live and deleted subvolumes */
 	sk->max_type = BTRFS_ROOT_BACKREF_KEY;
 	sk->min_type = BTRFS_ROOT_ITEM_KEY;
 
 	sk->min_objectid = BTRFS_FIRST_FREE_OBJECTID;
 
-	/*
-	 * set all the other params to the max, we'll take any objectid
-	 * and any trans
-	 */
 	sk->max_objectid = BTRFS_LAST_FREE_OBJECTID;
 	sk->max_offset = (u64)-1;
 	sk->max_transid = (u64)-1;
-
-	/* just a big number, doesn't matter much */
 	sk->nr_items = 4096;
 
 	while(1) {
 		ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &args);
 		if (ret < 0)
 			return ret;
-		/* the ioctl returns the number of item it found in nr_items */
 		if (sk->nr_items == 0)
 			break;
 
@@ -1052,17 +1041,13 @@ static int list_subvol_search(int fd, struct root_lookup *root_lookup)
 
 			off += sh.len;
 
-			/*
-			 * record the mins in sk so we can make sure the
-			 * next search doesn't repeat this root
-			 */
 			sk->min_objectid = sh.objectid;
 			sk->min_type = sh.type;
 			sk->min_offset = sh.offset;
 		}
 		sk->nr_items = 4096;
 		sk->min_offset++;
-		if (!sk->min_offset)	/* overflow */
+		if (!sk->min_offset)
 			sk->min_type++;
 		else
 			continue;
