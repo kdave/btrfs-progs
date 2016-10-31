@@ -1209,22 +1209,6 @@ int btrfs_show_qgroups(int fd,
 	return ret;
 }
 
-u64 btrfs_get_path_rootid(int fd)
-{
-	int  ret;
-	struct btrfs_ioctl_ino_lookup_args args;
-
-	memset(&args, 0, sizeof(args));
-	args.objectid = BTRFS_FIRST_FREE_OBJECTID;
-
-	ret = ioctl(fd, BTRFS_IOC_INO_LOOKUP, &args);
-	if (ret < 0) {
-		error("cannot perform the search: %s", strerror(errno));
-		return ret;
-	}
-	return args.treeid;
-}
-
 int btrfs_qgroup_parse_sort_string(const char *opt_arg,
 				   struct btrfs_qgroup_comparer_set **comps)
 {
