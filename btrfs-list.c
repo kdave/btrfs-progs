@@ -1888,19 +1888,12 @@ int btrfs_list_parse_filter_string(char *opt_arg,
 
 int btrfs_list_get_path_rootid(int fd, u64 *treeid)
 {
-	int  ret;
-	struct btrfs_ioctl_ino_lookup_args args;
+	int ret;
 
-	memset(&args, 0, sizeof(args));
-	args.objectid = BTRFS_FIRST_FREE_OBJECTID;
-
-	ret = ioctl(fd, BTRFS_IOC_INO_LOOKUP, &args);
-	if (ret < 0) {
-		fprintf(stderr,
-			"ERROR: can't perform the search - %s\n",
+	ret = lookup_path_rootid(fd, treeid);
+	if (ret < 0)
+		error("cannot resolve rootid for path: %s",
 			strerror(errno));
-		return ret;
-	}
-	*treeid = args.treeid;
-	return 0;
+
+	return ret;
 }

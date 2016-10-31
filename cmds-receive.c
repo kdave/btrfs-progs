@@ -1106,11 +1106,8 @@ static int do_receive(struct btrfs_receive *r, const char *tomnt,
 	 * subvols we want to receive in.
 	 */
 	ret = btrfs_list_get_path_rootid(r->mnt_fd, &subvol_id);
-	if (ret) {
-		error("cannot resolve our subvolid: %d",
-			ret);
+	if (ret)
 		goto out;
-	}
 
 	root_subvol_path[0] = 0;
 	ret = btrfs_subvolid_resolve(r->mnt_fd, root_subvol_path,

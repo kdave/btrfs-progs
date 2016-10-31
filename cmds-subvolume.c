@@ -548,10 +548,8 @@ static int cmd_subvol_list(int argc, char **argv)
 	}
 
 	ret = btrfs_list_get_path_rootid(fd, &top_id);
-	if (ret) {
-		error("can't get rootid for '%s'", subvol);
+	if (ret)
 		goto out;
-	}
 
 	if (is_list_all)
 		btrfs_list_setup_filter(&filter_set,

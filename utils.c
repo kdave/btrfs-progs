@@ -4161,10 +4161,8 @@ int get_subvol_info(const char *fullpath, struct root_info *get_ri)
 		goto out;
 
 	ret = btrfs_list_get_path_rootid(fd, &sv_id);
-	if (ret) {
-		error("can't get rootid for '%s'", fullpath);
+	if (ret)
 		goto out;
-	}
 
 	mntfd = btrfs_open_dir(mnt, &dirstream2, 1);
 	if (mntfd < 0)
