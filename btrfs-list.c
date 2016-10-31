@@ -1457,7 +1457,7 @@ static void print_all_volume_info_tab_head(void)
 }
 
 static void print_all_volume_info(struct root_lookup *sorted_tree,
-				  int layout, const char *raw_prefix)
+		  enum btrfs_list_layout layout, const char *raw_prefix)
 {
 	struct rb_node *n;
 	struct root_info *entry;
@@ -1504,7 +1504,8 @@ static int btrfs_list_subvols(int fd, struct root_lookup *root_lookup)
 
 int btrfs_list_subvols_print(int fd, struct btrfs_list_filter_set *filter_set,
 		       struct btrfs_list_comparer_set *comp_set,
-		       int layout, int full_path, const char *raw_prefix)
+		       enum btrfs_list_layout layout, int full_path,
+		       const char *raw_prefix)
 {
 	struct root_lookup root_lookup;
 	struct root_lookup root_sort;
