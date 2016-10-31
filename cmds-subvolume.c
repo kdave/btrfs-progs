@@ -530,10 +530,6 @@ static int cmd_subvol_list(int argc, char **argv)
 		}
 	}
 
-	if (flags)
-		btrfs_list_setup_filter(&filter_set, BTRFS_LIST_FILTER_FLAGS,
-					flags);
-
 	if (check_argc_exact(argc - optind, 1)) {
 		uerr = 1;
 		goto out;
@@ -546,6 +542,10 @@ static int cmd_subvol_list(int argc, char **argv)
 		error("can't access '%s'", subvol);
 		goto out;
 	}
+
+	if (flags)
+		btrfs_list_setup_filter(&filter_set, BTRFS_LIST_FILTER_FLAGS,
+					flags);
 
 	ret = btrfs_list_get_path_rootid(fd, &top_id);
 	if (ret)
