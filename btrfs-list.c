@@ -504,9 +504,9 @@ static int add_root(struct root_lookup *root_lookup,
 		memcpy(&ri->ruuid, ruuid, BTRFS_UUID_SIZE);
 
 	ret = root_tree_insert(root_lookup, ri);
-	if (ret) {
-		error("failed to insert tree %llu",
-				(unsigned long long)root_id);
+	if (ret < 0) {
+		error("failed to insert subvolume %llu to tree: %s",
+				(unsigned long long)root_id, strerror(-ret));
 		exit(1);
 	}
 	return 0;
