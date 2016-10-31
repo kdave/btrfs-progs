@@ -1197,7 +1197,11 @@ struct btrfs_list_filter_set *btrfs_list_alloc_filter_set(void)
 	return set;
 }
 
-int btrfs_list_setup_filter(struct btrfs_list_filter_set **filter_set,
+/*
+ * Setup list filters. Exit if there's not enough memory, as we can't continue
+ * without the structures set up properly.
+ */
+void btrfs_list_setup_filter(struct btrfs_list_filter_set **filter_set,
 			    enum btrfs_list_filter_enum filter, u64 data)
 {
 	struct btrfs_list_filter_set *set = *filter_set;
@@ -1235,7 +1239,6 @@ int btrfs_list_setup_filter(struct btrfs_list_filter_set **filter_set,
 	set->filters[set->nfilters].filter_func = all_filter_funcs[filter];
 	set->filters[set->nfilters].data = data;
 	set->nfilters++;
-	return 0;
 }
 
 static int filter_root(struct root_info *ri,

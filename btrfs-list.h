@@ -162,7 +162,7 @@ int btrfs_list_parse_filter_string(char *optarg,
 				   enum btrfs_list_filter_enum type);
 void btrfs_list_setup_print_column(enum btrfs_list_column_enum column);
 struct btrfs_list_filter_set *btrfs_list_alloc_filter_set(void);
-int btrfs_list_setup_filter(struct btrfs_list_filter_set **filter_set,
+void btrfs_list_setup_filter(struct btrfs_list_filter_set **filter_set,
 			    enum btrfs_list_filter_enum filter, u64 data);
 struct btrfs_list_comparer_set *btrfs_list_alloc_comparer_set(void);
 
