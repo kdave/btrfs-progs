@@ -512,7 +512,8 @@ static int add_root(struct root_lookup *root_lookup,
 
 	ret = root_tree_insert(root_lookup, ri);
 	if (ret) {
-		printf("failed to insert tree %llu\n", (unsigned long long)root_id);
+		error("failed to insert tree %llu",
+				(unsigned long long)root_id);
 		exit(1);
 	}
 	return 0;
@@ -638,9 +639,8 @@ static int lookup_ino_path(int fd, struct root_info *ri)
 			ri->ref_tree = 0;
 			return -ENOENT;
 		}
-		fprintf(stderr, "ERROR: Failed to lookup path for root %llu - %s\n",
-			(unsigned long long)ri->ref_tree,
-			strerror(errno));
+		error("failed to lookup path for root %llu: %s",
+			(unsigned long long)ri->ref_tree, strerror(errno));
 		return ret;
 	}
 
@@ -690,7 +690,7 @@ static u64 find_root_gen(int fd)
 	/* this ioctl fills in ino_args->treeid */
 	ret = ioctl(fd, BTRFS_IOC_INO_LOOKUP, &ino_args);
 	if (ret < 0) {
-		fprintf(stderr, "ERROR: Failed to lookup path for dirid %llu - %s\n",
+		error("failed to lookup path for dirid %llu: %s",
 			(unsigned long long)BTRFS_FIRST_FREE_OBJECTID,
 			strerror(errno));
 		return 0;
@@ -716,8 +716,7 @@ static u64 find_root_gen(int fd)
 	while (1) {
 		ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &args);
 		if (ret < 0) {
-			fprintf(stderr, "ERROR: can't perform the search - %s\n",
-				strerror(errno));
+			error("can't perform the search: %s", strerror(errno));
 			return 0;
 		}
 		/* the ioctl returns the number of item it found in nr_items */
@@ -777,7 +776,7 @@ static char *__ino_resolve(int fd, u64 dirid)
 
 	ret = ioctl(fd, BTRFS_IOC_INO_LOOKUP, &args);
 	if (ret < 0) {
-		fprintf(stderr, "ERROR: Failed to lookup path for dirid %llu - %s\n",
+		error("failed to lookup path for dirid %llu: %s",
 			(unsigned long long)dirid, strerror(errno));
 		return ERR_PTR(ret);
 	}
@@ -856,8 +855,7 @@ static char *ino_resolve(int fd, u64 ino, u64 *cache_dirid, char **cache_name)
 
 	ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &args);
 	if (ret < 0) {
-		fprintf(stderr, "ERROR: can't perform the search - %s\n",
-			strerror(errno));
+		error("can't perform the search: %s", strerror(errno));
 		return NULL;
 	}
 	/* the ioctl returns the number of item it found in nr_items */
@@ -1489,8 +1487,7 @@ static int btrfs_list_subvols(int fd, struct root_lookup *root_lookup)
 
 	ret = list_subvol_search(fd, root_lookup);
 	if (ret) {
-		fprintf(stderr, "ERROR: can't perform the search - %s\n",
-				strerror(errno));
+		error("can't perform the search: %s", strerror(errno));
 		return ret;
 	}
 
@@ -1618,8 +1615,8 @@ static int print_one_extent(int fd, struct btrfs_ioctl_search_header *sh,
 		disk_offset = 0;
 		len = btrfs_stack_file_extent_ram_bytes(item);
 	} else {
-		printf("unhandled extent type %d for inode %llu "
-		       "file offset %llu gen %llu\n",
+		error(
+	"unhandled extent type %d for inode %llu file offset %llu gen %llu",
 			type,
 			(unsigned long long)btrfs_search_header_objectid(sh),
 			(unsigned long long)btrfs_search_header_offset(sh),
@@ -1693,8 +1690,7 @@ int btrfs_list_find_updated_files(int fd, u64 root_id, u64 oldest_gen)
 	while(1) {
 		ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &args);
 		if (ret < 0) {
-			fprintf(stderr, "ERROR: can't perform the search - %s\n",
-				strerror(errno));
+			error("can't perform the search: %s", strerror(errno));
 			break;
 		}
 		/* the ioctl returns the number of item it found in nr_items */
