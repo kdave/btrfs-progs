@@ -1374,7 +1374,7 @@ static void print_subvolume_column(struct root_info *subv,
 	}
 }
 
-static void print_single_volume_info_raw(struct root_info *subv,
+static void print_one_subvol_info_raw(struct root_info *subv,
 		const char *raw_prefix)
 {
 	int i;
@@ -1391,7 +1391,7 @@ static void print_single_volume_info_raw(struct root_info *subv,
 	printf("\n");
 }
 
-static void print_single_volume_info_table(struct root_info *subv)
+static void print_one_subvol_info_table(struct root_info *subv)
 {
 	int i;
 
@@ -1410,7 +1410,7 @@ static void print_single_volume_info_table(struct root_info *subv)
 	printf("\n");
 }
 
-static void print_single_volume_info_default(struct root_info *subv)
+static void print_one_subvol_info_default(struct root_info *subv)
 {
 	int i;
 
@@ -1427,7 +1427,7 @@ static void print_single_volume_info_default(struct root_info *subv)
 	printf("\n");
 }
 
-static void print_all_volume_info_tab_head(void)
+static void print_all_subvol_info_tab_head(void)
 {
 	int i;
 	int len;
@@ -1456,27 +1456,27 @@ static void print_all_volume_info_tab_head(void)
 	}
 }
 
-static void print_all_volume_info(struct root_lookup *sorted_tree,
+static void print_all_subvol_info(struct root_lookup *sorted_tree,
 		  enum btrfs_list_layout layout, const char *raw_prefix)
 {
 	struct rb_node *n;
 	struct root_info *entry;
 
 	if (layout == BTRFS_LIST_LAYOUT_TABLE)
-		print_all_volume_info_tab_head();
+		print_all_subvol_info_tab_head();
 
 	n = rb_first(&sorted_tree->root);
 	while (n) {
 		entry = rb_entry(n, struct root_info, sort_node);
 		switch (layout) {
 		case BTRFS_LIST_LAYOUT_DEFAULT:
-			print_single_volume_info_default(entry);
+			print_one_subvol_info_default(entry);
 			break;
 		case BTRFS_LIST_LAYOUT_TABLE:
-			print_single_volume_info_table(entry);
+			print_one_subvol_info_table(entry);
 			break;
 		case BTRFS_LIST_LAYOUT_RAW:
-			print_single_volume_info_raw(entry, raw_prefix);
+			print_one_subvol_info_raw(entry, raw_prefix);
 			break;
 		}
 		n = rb_next(n);
@@ -1523,7 +1523,7 @@ int btrfs_list_subvols_print(int fd, struct btrfs_list_filter_set *filter_set,
 	filter_and_sort_subvol(&root_lookup, &root_sort, filter_set,
 				 comp_set, top_id);
 
-	print_all_volume_info(&root_sort, layout, raw_prefix);
+	print_all_subvol_info(&root_sort, layout, raw_prefix);
 	rb_free_nodes(&root_lookup.root, free_root_info);
 
 	return 0;
