@@ -983,7 +983,7 @@ static int list_subvol_search(int fd, struct root_lookup *root_lookup)
 	/* Search both live and deleted subvolumes */
 	sk->min_type = BTRFS_ROOT_ITEM_KEY;
 	sk->max_type = BTRFS_ROOT_BACKREF_KEY;
-	sk->min_objectid = BTRFS_FIRST_FREE_OBJECTID;
+	sk->min_objectid = BTRFS_FS_TREE_OBJECTID;
 	sk->max_objectid = BTRFS_LAST_FREE_OBJECTID;
 	sk->max_offset = (u64)-1;
 	sk->max_transid = (u64)-1;
@@ -1014,7 +1014,9 @@ static int list_subvol_search(int fd, struct root_lookup *root_lookup)
 				add_root_backref(root_lookup, sh.objectid,
 						sh.offset, dir_id, name,
 						name_len);
-			} else if (sh.type == BTRFS_ROOT_ITEM_KEY) {
+			} else if (sh.type == BTRFS_ROOT_ITEM_KEY &&
+				   (sh.objectid >= BTRFS_FIRST_FREE_OBJECTID ||
+				    sh.objectid == BTRFS_FS_TREE_OBJECTID)) {
 				time_t otime;
 				u8 uuid[BTRFS_UUID_SIZE];
 				u8 puuid[BTRFS_UUID_SIZE];
@@ -1522,6 +1524,37 @@ static char *strdup_or_null(const char *s)
 	if (!s)
 		return NULL;
 	return strdup(s);
+}
+
+int btrfs_get_toplevel_subvol(int fd, struct root_info *the_ri)
+{
+	int ret;
+	struct root_lookup rl;
+	struct rb_node *rbn;
+	struct root_info *ri;
+	u64 root_id;
+
+	ret = btrfs_list_get_path_rootid(fd, &root_id);
+	if (ret)
+		return ret;
+
+	ret = btrfs_list_subvols(fd, &rl);
+	if (ret)
+		return ret;
+
+	rbn = rb_first(&rl.root);
+	ri = rb_entry(rbn, struct root_info, rb_node);
+
+	if (ri->root_id != BTRFS_FS_TREE_OBJECTID)
+		return -ENOENT;
+
+	memcpy(the_ri, ri, offsetof(struct root_info, path));
+	the_ri->path = strdup_or_null("/");
+	the_ri->name = strdup_or_null("<FS_TREE>");
+	the_ri->full_path = strdup_or_null("/");
+	rb_free_nodes(&rl.root, free_root_info);
+
+	return ret;
 }
 
 int btrfs_get_subvol(int fd, struct root_info *the_ri)

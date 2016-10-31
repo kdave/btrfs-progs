@@ -921,15 +921,6 @@ static int cmd_subvol_show(int argc, char **argv)
 	}
 
 	ret = get_subvol_info(fullpath, &get_ri);
-	if (ret == 2) {
-		/*
-		 * Since the top level btrfs was given don't
-		 * take that as error
-		 */
-		printf("%s is toplevel subvolume\n", fullpath);
-		ret = 0;
-		goto out;
-	}
 	if (ret) {
 		if (ret < 0) {
 			error("Failed to get subvol info %s: %s\n",

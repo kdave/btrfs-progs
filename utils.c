@@ -4168,18 +4168,13 @@ int get_subvol_info(const char *fullpath, struct root_info *get_ri)
 	if (mntfd < 0)
 		goto out;
 
-	if (sv_id == BTRFS_FS_TREE_OBJECTID) {
-		ret = 2;
-		/*
-		 * So that caller may decide if thats an error or just fine.
-		 */
-		goto out;
-	}
-
 	memset(get_ri, 0, sizeof(*get_ri));
 	get_ri->root_id = sv_id;
 
-	ret = btrfs_get_subvol(mntfd, get_ri);
+	if (sv_id == BTRFS_FS_TREE_OBJECTID)
+		ret = btrfs_get_toplevel_subvol(mntfd, get_ri);
+	else
+		ret = btrfs_get_subvol(mntfd, get_ri);
 	if (ret)
 		error("can't find '%s': %d", svpath, ret);
 
