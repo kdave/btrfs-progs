@@ -1374,7 +1374,8 @@ static void print_subvolume_column(struct root_info *subv,
 	}
 }
 
-static void print_single_volume_info_raw(struct root_info *subv, char *raw_prefix)
+static void print_single_volume_info_raw(struct root_info *subv,
+		const char *raw_prefix)
 {
 	int i;
 
@@ -1456,7 +1457,7 @@ static void print_all_volume_info_tab_head(void)
 }
 
 static void print_all_volume_info(struct root_lookup *sorted_tree,
-				  int layout, char *raw_prefix)
+				  int layout, const char *raw_prefix)
 {
 	struct rb_node *n;
 	struct root_info *entry;
@@ -1503,7 +1504,7 @@ static int btrfs_list_subvols(int fd, struct root_lookup *root_lookup)
 
 int btrfs_list_subvols_print(int fd, struct btrfs_list_filter_set *filter_set,
 		       struct btrfs_list_comparer_set *comp_set,
-		       int layout, int full_path, char *raw_prefix)
+		       int layout, int full_path, const char *raw_prefix)
 {
 	struct root_lookup root_lookup;
 	struct root_lookup root_sort;
