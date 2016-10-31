@@ -908,6 +908,30 @@ static void inode_flags_to_str(u64 flags, char *ret)
 		strcat(ret, "none");
 }
 
+static void print_inode_item(struct extent_buffer *eb, struct btrfs_item *item,
+				struct btrfs_inode_item *ii)
+{
+	char flags_str[256];
+
+	memset(flags_str, 0, sizeof(flags_str));
+	inode_flags_to_str(btrfs_inode_flags(eb, ii), flags_str);
+	printf("\t\tinode generation %llu transid %llu size %llu nbytes %llu\n"
+	       "\t\tblock group %llu mode %o links %u uid %u gid %u\n"
+	       "\t\trdev %llu flags 0x%llx(%s)\n",
+	       (unsigned long long)btrfs_inode_generation(eb, ii),
+	       (unsigned long long)btrfs_inode_transid(eb, ii),
+	       (unsigned long long)btrfs_inode_size(eb, ii),
+	       (unsigned long long)btrfs_inode_nbytes(eb, ii),
+	       (unsigned long long)btrfs_inode_block_group(eb,ii),
+	       btrfs_inode_mode(eb, ii),
+	       btrfs_inode_nlink(eb, ii),
+	       btrfs_inode_uid(eb, ii),
+	       btrfs_inode_gid(eb, ii),
+	       (unsigned long long)btrfs_inode_rdev(eb,ii),
+	       (unsigned long long)btrfs_inode_flags(eb,ii),
+	       flags_str);
+}
+
 void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 {
 	int i;
@@ -959,24 +983,8 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 
 		switch (type) {
 		case BTRFS_INODE_ITEM_KEY:
-			memset(flags_str, 0, sizeof(flags_str));
 			ii = btrfs_item_ptr(l, i, struct btrfs_inode_item);
-			inode_flags_to_str(btrfs_inode_flags(l, ii), flags_str);
-			printf("\t\tinode generation %llu transid %llu size %llu nbytes %llu\n"
-			       "\t\tblock group %llu mode %o links %u uid %u gid %u\n"
-			       "\t\trdev %llu flags 0x%llx(%s)\n",
-			       (unsigned long long)btrfs_inode_generation(l, ii),
-			       (unsigned long long)btrfs_inode_transid(l, ii),
-			       (unsigned long long)btrfs_inode_size(l, ii),
-			       (unsigned long long)btrfs_inode_nbytes(l, ii),
-			       (unsigned long long)btrfs_inode_block_group(l,ii),
-			       btrfs_inode_mode(l, ii),
-			       btrfs_inode_nlink(l, ii),
-			       btrfs_inode_uid(l, ii),
-			       btrfs_inode_gid(l, ii),
-			       (unsigned long long)btrfs_inode_rdev(l,ii),
-			       (unsigned long long)btrfs_inode_flags(l,ii),
-			       flags_str);
+			print_inode_item(l, item, ii);
 			break;
 		case BTRFS_INODE_REF_KEY:
 			iref = btrfs_item_ptr(l, i, struct btrfs_inode_ref);
