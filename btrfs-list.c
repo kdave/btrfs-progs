@@ -277,7 +277,7 @@ static int sort_comp(struct root_info *entry1, struct root_info *entry2,
 	int i, ret = 0;
 
 	if (!set || !set->ncomps)
-		goto comp_rootid;
+		return comp_entry_with_rootid(entry1, entry2, 0);
 
 	for (i = 0; i < set->ncomps; i++) {
 		if (!set->comps[i].comp_func)
@@ -292,10 +292,8 @@ static int sort_comp(struct root_info *entry1, struct root_info *entry2,
 			rootid_compared = 1;
 	}
 
-	if (!rootid_compared) {
-comp_rootid:
+	if (!rootid_compared)
 		ret = comp_entry_with_rootid(entry1, entry2, 0);
-	}
 
 	return ret;
 }
