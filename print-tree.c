@@ -224,12 +224,17 @@ void print_chunk(struct extent_buffer *eb, struct btrfs_chunk *chunk)
 	char chunk_flags_str[32] = {0};
 
 	bg_flags_to_str(btrfs_chunk_type(eb, chunk), chunk_flags_str);
-	printf("\t\tchunk length %llu owner %llu stripe_len %llu\n",
+	printf("\t\tlength %llu owner %llu stripe_len %llu type %s\n",
 	       (unsigned long long)btrfs_chunk_length(eb, chunk),
 	       (unsigned long long)btrfs_chunk_owner(eb, chunk),
-	       (unsigned long long)btrfs_chunk_stripe_len(eb, chunk));
-	printf("\t\ttype %s num_stripes %d\n",
-	       chunk_flags_str, num_stripes);
+	       (unsigned long long)btrfs_chunk_stripe_len(eb, chunk),
+		chunk_flags_str);
+	printf("\t\tio_align %u io_width %u sector_size %u\n",
+			btrfs_chunk_io_align(eb, chunk),
+			btrfs_chunk_io_width(eb, chunk),
+			btrfs_chunk_sector_size(eb, chunk));
+	printf("\t\tnum_stripes %hu sub_stripes %hu\n", num_stripes,
+			btrfs_chunk_sub_stripes(eb, chunk));
 	for (i = 0 ; i < num_stripes ; i++) {
 		unsigned char dev_uuid[BTRFS_UUID_SIZE];
 		char str_dev_uuid[BTRFS_UUID_UNPARSED_SIZE];
