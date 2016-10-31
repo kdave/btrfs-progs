@@ -85,8 +85,10 @@ static int print_dir_item(struct extent_buffer *eb, struct btrfs_item *item,
 		data_len = btrfs_dir_data_len(eb, di);
 		len = (name_len <= sizeof(namebuf))? name_len: sizeof(namebuf);
 		read_extent_buffer(eb, namebuf, (unsigned long)(di + 1), len);
-		printf("\t\tnamelen %u datalen %u name: %.*s\n",
-		       name_len, data_len, len, namebuf);
+		printf("\t\ttransid %llu data_len %u name_len %u\n",
+				btrfs_dir_transid(eb, di),
+				data_len, name_len);
+		printf("\t\tname: %.*s\n", len, namebuf);
 		if (data_len) {
 			len = (data_len <= sizeof(namebuf))? data_len: sizeof(namebuf);
 			read_extent_buffer(eb, namebuf,
