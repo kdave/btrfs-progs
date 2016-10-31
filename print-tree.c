@@ -927,6 +927,7 @@ static void print_timespec(struct extent_buffer *eb,
 	printf("%s%llu.%u (%s)%s", prefix, (unsigned long long)tmp_u64, tmp_u32,
 			timestamp, suffix);
 }
+
 static void print_inode_item(struct extent_buffer *eb, struct btrfs_item *item,
 				struct btrfs_inode_item *ii)
 {
@@ -935,8 +936,8 @@ static void print_inode_item(struct extent_buffer *eb, struct btrfs_item *item,
 	memset(flags_str, 0, sizeof(flags_str));
 	inode_flags_to_str(btrfs_inode_flags(eb, ii), flags_str);
 	printf("\t\tinode generation %llu transid %llu size %llu nbytes %llu\n"
-	       "\t\tblock group %llu mode %o links %u uid %u gid %u\n"
-	       "\t\trdev %llu flags 0x%llx(%s)\n",
+	       "\t\tblock group %llu mode %o links %u uid %u gid %u rdev %llu\n"
+	       "\t\tsequence %llu flags 0x%llx(%s)\n",
 	       (unsigned long long)btrfs_inode_generation(eb, ii),
 	       (unsigned long long)btrfs_inode_transid(eb, ii),
 	       (unsigned long long)btrfs_inode_size(eb, ii),
@@ -948,7 +949,12 @@ static void print_inode_item(struct extent_buffer *eb, struct btrfs_item *item,
 	       btrfs_inode_gid(eb, ii),
 	       (unsigned long long)btrfs_inode_rdev(eb,ii),
 	       (unsigned long long)btrfs_inode_flags(eb,ii),
+	       (unsigned long long)btrfs_inode_sequence(eb, ii),
 	       flags_str);
+	print_timespec(eb, btrfs_inode_atime(ii), "\t\tatime ", "\n");
+	print_timespec(eb, btrfs_inode_ctime(ii), "\t\tctime ", "\n");
+	print_timespec(eb, btrfs_inode_mtime(ii), "\t\tmtime ", "\n");
+	print_timespec(eb, btrfs_inode_otime(ii), "\t\totime ", "\n");
 }
 
 void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
