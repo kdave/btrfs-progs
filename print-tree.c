@@ -933,6 +933,8 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 	u64 objectid;
 	u32 type;
 	char flags_str[256];
+	char uuid_str[BTRFS_UUID_UNPARSED_SIZE];
+	u8 uuid[BTRFS_UUID_SIZE];
 
 	printf("leaf %llu items %d free space %d generation %llu owner %llu\n",
 		(unsigned long long)btrfs_header_bytenr(l), nr,
@@ -1087,9 +1089,14 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 		case BTRFS_DEV_EXTENT_KEY:
 			dev_extent = btrfs_item_ptr(l, i,
 						    struct btrfs_dev_extent);
+			read_extent_buffer(l, uuid,
+				(unsigned long)btrfs_dev_extent_chunk_tree_uuid(dev_extent),
+				BTRFS_UUID_SIZE);
+			uuid_unparse(uuid, uuid_str);
 			printf("\t\tdev extent chunk_tree %llu\n"
 			       "\t\tchunk objectid %llu chunk offset %llu "
-			       "length %llu\n",
+			       "length %llu\n"
+			       "\t\tchunk_tree_uuid %s\n",
 			       (unsigned long long)
 			       btrfs_dev_extent_chunk_tree(l, dev_extent),
 			       (unsigned long long)
@@ -1097,7 +1104,8 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 			       (unsigned long long)
 			       btrfs_dev_extent_chunk_offset(l, dev_extent),
 			       (unsigned long long)
-			       btrfs_dev_extent_length(l, dev_extent));
+			       btrfs_dev_extent_length(l, dev_extent),
+			       uuid_str);
 			break;
 		case BTRFS_QGROUP_STATUS_KEY:
 			qg_status = btrfs_item_ptr(l, i,
