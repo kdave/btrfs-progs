@@ -788,6 +788,84 @@ struct btrfs_root_ref {
 	__le16 name_len;
 } __attribute__ ((__packed__));
 
+struct btrfs_disk_balance_args {
+	/*
+	 * profiles to operate on, single is denoted by
+	 * BTRFS_AVAIL_ALLOC_BIT_SINGLE
+	 */
+	__le64 profiles;
+
+	/*
+	 * usage filter
+	 * BTRFS_BALANCE_ARGS_USAGE with a single value means '0..N'
+	 * BTRFS_BALANCE_ARGS_USAGE_RANGE - range syntax, min..max
+	 */
+	union {
+		__le64 usage;
+		struct {
+			__le32 usage_min;
+			__le32 usage_max;
+		};
+	};
+
+	/* devid filter */
+	__le64 devid;
+
+	/* devid subset filter [pstart..pend) */
+	__le64 pstart;
+	__le64 pend;
+
+	/* btrfs virtual address space subset filter [vstart..vend) */
+	__le64 vstart;
+	__le64 vend;
+
+	/*
+	 * profile to convert to, single is denoted by
+	 * BTRFS_AVAIL_ALLOC_BIT_SINGLE
+	 */
+	__le64 target;
+
+	/* BTRFS_BALANCE_ARGS_* */
+	__le64 flags;
+
+	/*
+	 * BTRFS_BALANCE_ARGS_LIMIT with value 'limit'
+	 * BTRFS_BALANCE_ARGS_LIMIT_RANGE - the extend version can use minimum
+	 * and maximum
+	 */
+	union {
+		__le64 limit;
+		struct {
+			__le32 limit_min;
+			__le32 limit_max;
+		};
+	};
+
+	/*
+	 * Process chunks that cross stripes_min..stripes_max devices,
+	 * BTRFS_BALANCE_ARGS_STRIPES_RANGE
+	 */
+	__le32 stripes_min;
+	__le32 stripes_max;
+
+	__le64 unused[6];
+} __attribute__ ((__packed__));
+
+/*
+ * store balance parameters to disk so that balance can be properly
+ * resumed after crash or unmount
+ */
+struct btrfs_balance_item {
+	/* BTRFS_BALANCE_* */
+	__le64 flags;
+
+	struct btrfs_disk_balance_args data;
+	struct btrfs_disk_balance_args meta;
+	struct btrfs_disk_balance_args sys;
+
+	__le64 unused[4];
+} __attribute__ ((__packed__));
+
 #define BTRFS_FILE_EXTENT_INLINE 0
 #define BTRFS_FILE_EXTENT_REG 1
 #define BTRFS_FILE_EXTENT_PREALLOC 2
@@ -2224,6 +2302,36 @@ BTRFS_SETGET_STACK_FUNCS(stack_qgroup_limit_rsv_referenced,
 			 struct btrfs_qgroup_limit_item, rsv_referenced, 64);
 BTRFS_SETGET_STACK_FUNCS(stack_qgroup_limit_rsv_exclusive,
 			 struct btrfs_qgroup_limit_item, rsv_exclusive, 64);
+
+/* btrfs_balance_item */
+BTRFS_SETGET_FUNCS(balance_item_flags, struct btrfs_balance_item, flags, 64);
+
+static inline struct btrfs_disk_balance_args* btrfs_balance_item_data(
+		struct extent_buffer *eb, struct btrfs_balance_item *bi)
+{
+	unsigned long offset = (unsigned long)bi;
+	struct btrfs_balance_item *p;
+	p = (struct btrfs_balance_item *)(eb->data + offset);
+	return &p->data;
+}
+
+static inline struct btrfs_disk_balance_args* btrfs_balance_item_meta(
+		struct extent_buffer *eb, struct btrfs_balance_item *bi)
+{
+	unsigned long offset = (unsigned long)bi;
+	struct btrfs_balance_item *p;
+	p = (struct btrfs_balance_item *)(eb->data + offset);
+	return &p->meta;
+}
+
+static inline struct btrfs_disk_balance_args* btrfs_balance_item_sys(
+		struct extent_buffer *eb, struct btrfs_balance_item *bi)
+{
+	unsigned long offset = (unsigned long)bi;
+	struct btrfs_balance_item *p;
+	p = (struct btrfs_balance_item *)(eb->data + offset);
+	return &p->sys;
+}
 
 /*
  * this returns the number of bytes used by the item on disk, minus the
