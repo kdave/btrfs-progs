@@ -1235,6 +1235,19 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 						objectid);
 			}
 			break;
+		case BTRFS_TEMPORARY_ITEM_KEY:
+			printf("\t\ttemporary item objectid ");
+			print_objectid(stdout, objectid, BTRFS_TEMPORARY_ITEM_KEY);
+			printf(" offset %llu\n", (unsigned long long)offset);
+			switch (objectid) {
+			case BTRFS_BALANCE_OBJECTID:
+				printf("\t\tbalance status\n");
+				break;
+			default:
+				printf("\t\tunknown temporary item objectid %llu\n",
+						objectid);
+			}
+			break;
 		};
 		fflush(stdout);
 	}
