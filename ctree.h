@@ -1229,10 +1229,24 @@ struct btrfs_root {
 #define BTRFS_TEMPORARY_ITEM_KEY	248
 
 /*
- * Persistently stores the io stats in the device tree.
- * One key for all stats, (0, BTRFS_DEV_STATS_KEY, devid).
+ * Obsolete name, see BTRFS_PERSISTENT_ITEM_KEY
  */
-#define BTRFS_DEV_STATS_KEY	249
+#define BTRFS_DEV_STATS_KEY		249
+
+/*
+ * The key type for tree items that are stored persistently and usually exist
+ * for a long period, eg. filesystem lifetime. The item kinds can be status
+ * information, stats or preference values. The item can exist in any tree.
+ *
+ * [subtype, BTRFS_PERSISTENT_ITEM_KEY, data]
+ *
+ * Existing items:
+ *
+ * - device statistics, store IO stats in the device tree, one key for all
+ *   stats
+ *   (0, BTRFS_DEV_STATS_KEY, 0)
+ */
+#define BTRFS_PERSISTENT_ITEM_KEY	249
 
 /*
  * Persistently stores the device replace state in the device tree.
