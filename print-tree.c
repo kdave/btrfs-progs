@@ -997,6 +997,7 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 	u32 nr = btrfs_header_nritems(l);
 	u64 objectid;
 	u32 type;
+	u64 offset;
 	char flags_str[256];
 	char uuid_str[BTRFS_UUID_UNPARSED_SIZE];
 	u8 uuid[BTRFS_UUID_SIZE];
@@ -1013,6 +1014,7 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 		btrfs_item_key(l, &disk_key, i);
 		objectid = btrfs_disk_key_objectid(&disk_key);
 		type = btrfs_disk_key_type(&disk_key);
+		offset = btrfs_disk_key_offset(&disk_key);
 		printf("\titem %d ", i);
 		btrfs_print_key(&disk_key);
 		printf(" itemoff %d itemsize %d\n",
