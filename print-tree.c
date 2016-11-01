@@ -1222,8 +1222,18 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 			str = l->data + btrfs_item_ptr_offset(l, i);
 			printf("\t\titem data %.*s\n", btrfs_item_size(l, item), str);
 			break;
-		case BTRFS_DEV_STATS_KEY:
-			printf("\t\tdevice stats\n");
+		case BTRFS_PERSISTENT_ITEM_KEY:
+			printf("\t\tpersistent item objectid ");
+			print_objectid(stdout, objectid, BTRFS_PERSISTENT_ITEM_KEY);
+			printf(" offset %llu\n", (unsigned long long)offset);
+			switch (objectid) {
+			case BTRFS_DEV_STATS_OBJECTID:
+				printf("\t\tdevice stats\n");
+				break;
+			default:
+				printf("\t\tunknown persistent item objectid %llu\n",
+						objectid);
+			}
 			break;
 		};
 		fflush(stdout);
