@@ -1211,6 +1211,24 @@ struct btrfs_root {
 #define BTRFS_QGROUP_RELATION_KEY	246
 
 /*
+ * Obsolete name, see BTRFS_TEMPORARY_ITEM_KEY.
+ */
+#define BTRFS_BALANCE_ITEM_KEY	248
+
+/*
+ * The key type for tree items that are stored persistently, but do not need to
+ * exist for extended period of time. The items can exist in any tree.
+ *
+ * [subtype, BTRFS_TEMPORARY_ITEM_KEY, data]
+ *
+ * Existing items:
+ *
+ * - balance status item
+ *   (BTRFS_BALANCE_OBJECTID, BTRFS_TEMPORARY_ITEM_KEY, 0)
+ */
+#define BTRFS_TEMPORARY_ITEM_KEY	248
+
+/*
  * Persistently stores the io stats in the device tree.
  * One key for all stats, (0, BTRFS_DEV_STATS_KEY, devid).
  */
