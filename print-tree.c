@@ -973,6 +973,42 @@ static void print_inode_item(struct extent_buffer *eb, struct btrfs_item *item,
 	print_timespec(eb, btrfs_inode_otime(ii), "\t\totime ", "\n");
 }
 
+static void print_disk_balance_args(struct btrfs_disk_balance_args *ba)
+{
+	printf("\t\tprofiles %llu devid %llu target %llu flags %llu\n",
+			(unsigned long long)le64_to_cpu(ba->profiles),
+			(unsigned long long)le64_to_cpu(ba->devid),
+			(unsigned long long)le64_to_cpu(ba->target),
+			(unsigned long long)le64_to_cpu(ba->flags));
+	printf("\t\tusage_min %u usage_max %u pstart %llu pend %llu\n",
+			le32_to_cpu(ba->usage_min),
+			le32_to_cpu(ba->usage_max),
+			(unsigned long long)le64_to_cpu(ba->pstart),
+			(unsigned long long)le64_to_cpu(ba->pend));
+	printf("\t\tvstart %llu vend %llu limit_min %u limit_max %u\n",
+			(unsigned long long)le64_to_cpu(ba->vstart),
+			(unsigned long long)le64_to_cpu(ba->vend),
+			le32_to_cpu(ba->limit_min),
+			le32_to_cpu(ba->limit_max));
+	printf("\t\tstripes_min %u stripes_max %u\n",
+			le32_to_cpu(ba->stripes_min),
+			le32_to_cpu(ba->stripes_max));
+}
+
+static void print_balance_item(struct extent_buffer *eb,
+		struct btrfs_balance_item *bi)
+{
+	printf("\t\tbalance status flags %llu\n",
+			btrfs_balance_item_flags(eb, bi));
+
+	printf("\t\tDATA\n");
+	print_disk_balance_args(btrfs_balance_item_data(eb, bi));
+	printf("\t\tMETADATA\n");
+	print_disk_balance_args(btrfs_balance_item_meta(eb, bi));
+	printf("\t\tSYSTEM\n");
+	print_disk_balance_args(btrfs_balance_item_sys(eb, bi));
+}
+
 void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 {
 	int i;
@@ -1241,7 +1277,8 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 			printf(" offset %llu\n", (unsigned long long)offset);
 			switch (objectid) {
 			case BTRFS_BALANCE_OBJECTID:
-				printf("\t\tbalance status\n");
+				print_balance_item(l, btrfs_item_ptr(l, i,
+					struct btrfs_balance_item));
 				break;
 			default:
 				printf("\t\tunknown temporary item objectid %llu\n",
