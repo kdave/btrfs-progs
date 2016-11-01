@@ -85,6 +85,9 @@ struct btrfs_free_space_ctl;
 /* tracks free space in block groups. */
 #define BTRFS_FREE_SPACE_TREE_OBJECTID 10ULL
 
+/* device stats in the device tree */
+#define BTRFS_DEV_STATS_OBJECTID 0ULL
+
 /* for storing balance parameters in the root tree */
 #define BTRFS_BALANCE_OBJECTID -4ULL
 
@@ -1244,7 +1247,7 @@ struct btrfs_root {
  *
  * - device statistics, store IO stats in the device tree, one key for all
  *   stats
- *   (0, BTRFS_DEV_STATS_KEY, 0)
+ *   (BTRFS_DEV_STATS_OBJECTID, BTRFS_DEV_STATS_KEY, 0)
  */
 #define BTRFS_PERSISTENT_ITEM_KEY	249
 
