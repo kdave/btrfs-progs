@@ -428,10 +428,6 @@ test-ioctl: ioctl-test ioctl-test-32 ioctl-test-64
 	$(Q)./ioctl-test-32 > ioctl-test-32.log
 	$(Q)./ioctl-test-64 > ioctl-test-64.log
 
-send-test: $(objects) $(libs) send-test.o
-	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o send-test $(objects) $(libs) send-test.o $(LDFLAGS) $(LIBS)
-
 library-test: $(libs_shared) library-test.o
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o library-test library-test.o $(LDFLAGS) -lbtrfs
@@ -464,7 +460,7 @@ clean: $(CLEANDIRS)
 	@echo "Cleaning"
 	$(Q)$(RM) -f -- $(progs) cscope.out *.o *.o.d \
 		kernel-lib/*.o kernel-lib/*.o.d \
-	      dir-test ioctl-test quick-test send-test library-test library-test-static \
+	      dir-test ioctl-test quick-test library-test library-test-static \
 	      btrfs.static mkfs.btrfs.static \
 	      $(check_defs) \
 	      $(libs) $(lib_links) \
