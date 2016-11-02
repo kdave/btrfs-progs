@@ -225,21 +225,22 @@ static void *dump_thread(void *arg_)
 	int ret;
 	struct btrfs_send *s = (struct btrfs_send*)arg_;
 	char buf[SEND_BUFFER_SIZE];
-	int readed;
 
 	while (1) {
-		readed = read(s->send_fd, buf, sizeof(buf));
-		if (readed < 0) {
+		ssize_t rbytes;
+
+		rbytes = read(s->send_fd, buf, sizeof(buf));
+		if (rbytes < 0) {
 			ret = -errno;
 			error("failed to read stream from kernel: %s\n",
 				strerror(-ret));
 			goto out;
 		}
-		if (!readed) {
+		if (!rbytes) {
 			ret = 0;
 			goto out;
 		}
-		ret = write_buf(s->dump_fd, buf, readed);
+		ret = write_buf(s->dump_fd, buf, rbytes);
 		if (ret < 0)
 			goto out;
 	}
