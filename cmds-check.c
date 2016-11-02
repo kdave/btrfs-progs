@@ -10507,7 +10507,7 @@ static int recow_extent_buffer(struct btrfs_root *root, struct extent_buffer *eb
 
 static int delete_bad_item(struct btrfs_root *root, struct bad_item *bad)
 {
-	struct btrfs_path *path;
+	struct btrfs_path path;
 	struct btrfs_trans_handle *trans;
 	struct btrfs_key key;
 	int ret;
@@ -10525,26 +10525,21 @@ static int delete_bad_item(struct btrfs_root *root, struct bad_item *bad)
 		return PTR_ERR(root);
 	}
 
-	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
-
 	trans = btrfs_start_transaction(root, 1);
-	if (IS_ERR(trans)) {
-		btrfs_free_path(path);
+	if (IS_ERR(trans))
 		return PTR_ERR(trans);
-	}
 
-	ret = btrfs_search_slot(trans, root, &bad->key, path, -1, 1);
+	btrfs_init_path(&path);
+	ret = btrfs_search_slot(trans, root, &bad->key, &path, -1, 1);
 	if (ret) {
 		if (ret > 0)
 			ret = 0;
 		goto out;
 	}
-	ret = btrfs_del_item(trans, root, path);
+	ret = btrfs_del_item(trans, root, &path);
 out:
 	btrfs_commit_transaction(trans, root);
-	btrfs_free_path(path);
+	btrfs_release_path(&path);
 	return ret;
 }
 
