@@ -11020,7 +11020,7 @@ static int maybe_repair_root_item(struct btrfs_fs_info *info,
  */
 static int repair_root_items(struct btrfs_fs_info *info)
 {
-	struct btrfs_path *path = NULL;
+	struct btrfs_path path;
 	struct btrfs_key key;
 	struct extent_buffer *leaf;
 	struct btrfs_trans_handle *trans = NULL;
@@ -11028,15 +11028,11 @@ static int repair_root_items(struct btrfs_fs_info *info)
 	int bad_roots = 0;
 	int need_trans = 0;
 
+	btrfs_init_path(&path);
+
 	ret = build_roots_info_cache(info);
 	if (ret)
 		goto out;
-
-	path = btrfs_alloc_path();
-	if (!path) {
-		ret = -ENOMEM;
-		goto out;
-	}
 
 	key.objectid = BTRFS_FIRST_FREE_OBJECTID;
 	key.type = BTRFS_ROOT_ITEM_KEY;
@@ -11056,19 +11052,19 @@ again:
 		}
 	}
 
-	ret = btrfs_search_slot(trans, info->tree_root, &key, path,
+	ret = btrfs_search_slot(trans, info->tree_root, &key, &path,
 				0, trans ? 1 : 0);
 	if (ret < 0)
 		goto out;
-	leaf = path->nodes[0];
+	leaf = path.nodes[0];
 
 	while (1) {
 		struct btrfs_key found_key;
 
-		if (path->slots[0] >= btrfs_header_nritems(leaf)) {
-			int no_more_keys = find_next_key(path, &key);
+		if (path.slots[0] >= btrfs_header_nritems(leaf)) {
+			int no_more_keys = find_next_key(&path, &key);
 
-			btrfs_release_path(path);
+			btrfs_release_path(&path);
 			if (trans) {
 				ret = btrfs_commit_transaction(trans,
 							       info->tree_root);
@@ -11082,14 +11078,14 @@ again:
 			goto again;
 		}
 
-		btrfs_item_key_to_cpu(leaf, &found_key, path->slots[0]);
+		btrfs_item_key_to_cpu(leaf, &found_key, path.slots[0]);
 
 		if (found_key.type != BTRFS_ROOT_ITEM_KEY)
 			goto next;
 		if (found_key.objectid == BTRFS_TREE_RELOC_OBJECTID)
 			goto next;
 
-		ret = maybe_repair_root_item(info, path, &found_key,
+		ret = maybe_repair_root_item(info, &path, &found_key,
 					     trans ? 0 : 1);
 		if (ret < 0)
 			goto out;
@@ -11097,18 +11093,18 @@ again:
 			if (!trans && repair) {
 				need_trans = 1;
 				key = found_key;
-				btrfs_release_path(path);
+				btrfs_release_path(&path);
 				goto again;
 			}
 			bad_roots++;
 		}
 next:
-		path->slots[0]++;
+		path.slots[0]++;
 	}
 	ret = 0;
 out:
 	free_roots_info_cache();
-	btrfs_free_path(path);
+	btrfs_release_path(&path);
 	if (trans)
 		btrfs_commit_transaction(trans, info->tree_root);
 	if (ret < 0)
