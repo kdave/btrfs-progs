@@ -10471,7 +10471,7 @@ static int reinit_extent_tree(struct btrfs_trans_handle *trans,
 
 static int recow_extent_buffer(struct btrfs_root *root, struct extent_buffer *eb)
 {
-	struct btrfs_path *path;
+	struct btrfs_path path;
 	struct btrfs_trans_handle *trans;
 	struct btrfs_key key;
 	int ret;
@@ -10488,25 +10488,20 @@ static int recow_extent_buffer(struct btrfs_root *root, struct extent_buffer *eb
 		return PTR_ERR(root);
 	}
 
-	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
-
 	trans = btrfs_start_transaction(root, 1);
-	if (IS_ERR(trans)) {
-		btrfs_free_path(path);
+	if (IS_ERR(trans))
 		return PTR_ERR(trans);
-	}
 
-	path->lowest_level = btrfs_header_level(eb);
-	if (path->lowest_level)
+	btrfs_init_path(&path);
+	path.lowest_level = btrfs_header_level(eb);
+	if (path.lowest_level)
 		btrfs_node_key_to_cpu(eb, &key, 0);
 	else
 		btrfs_item_key_to_cpu(eb, &key, 0);
 
-	ret = btrfs_search_slot(trans, root, &key, path, 0, 1);
+	ret = btrfs_search_slot(trans, root, &key, &path, 0, 1);
 	btrfs_commit_transaction(trans, root);
-	btrfs_free_path(path);
+	btrfs_release_path(&path);
 	return ret;
 }
 
