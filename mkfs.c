@@ -365,7 +365,7 @@ static void print_usage(int ret)
 	exit(ret);
 }
 
-static u64 parse_profile(char *s)
+static u64 parse_profile(const char *s)
 {
 	if (strcasecmp(s, "raid0") == 0) {
 		return BTRFS_BLOCK_GROUP_RAID0;
@@ -389,7 +389,7 @@ static u64 parse_profile(char *s)
 	return 0;
 }
 
-static char *parse_label(char *input)
+static char *parse_label(const char *input)
 {
 	int len = strlen(input);
 
@@ -513,7 +513,7 @@ static void free_namelist(struct direct **files, int count)
 	free(files);
 }
 
-static u64 calculate_dir_inode_size(char *dirname)
+static u64 calculate_dir_inode_size(const char *dirname)
 {
 	int count, i;
 	struct direct **files, *cur_file;
@@ -534,7 +534,7 @@ static u64 calculate_dir_inode_size(char *dirname)
 
 static int add_inode_items(struct btrfs_trans_handle *trans,
 			   struct btrfs_root *root,
-			   struct stat *st, char *name,
+			   struct stat *st, const char *name,
 			   u64 self_objectid, ino_t parent_inum,
 			   int dir_index_cnt, struct btrfs_inode_item *inode_ret)
 {
@@ -774,7 +774,7 @@ end:
 	return ret;
 }
 
-static char *make_path(char *dir, char *name)
+static char *make_path(const char *dir, const char *name)
 {
 	char *path;
 
@@ -789,7 +789,7 @@ static char *make_path(char *dir, char *name)
 }
 
 static int traverse_directory(struct btrfs_trans_handle *trans,
-			      struct btrfs_root *root, char *dir_name,
+			      struct btrfs_root *root, const char *dir_name,
 			      struct directory_name_entry *dir_head, int out_fd)
 {
 	int ret = 0;
@@ -803,7 +803,7 @@ static int traverse_directory(struct btrfs_trans_handle *trans,
 	struct direct *cur_file;
 	ino_t parent_inum, cur_inum;
 	ino_t highest_inum = 0;
-	char *parent_dir_name;
+	const char *parent_dir_name;
 	char real_path[PATH_MAX];
 	struct btrfs_path path;
 	struct extent_buffer *leaf;
@@ -1018,7 +1018,8 @@ static int create_chunks(struct btrfs_trans_handle *trans,
 	return ret;
 }
 
-static int make_image(char *source_dir, struct btrfs_root *root, int out_fd)
+static int make_image(const char *source_dir, struct btrfs_root *root,
+		int out_fd)
 {
 	int ret;
 	struct btrfs_trans_handle *trans;
@@ -1078,7 +1079,7 @@ static int ftw_add_entry_size(const char *fpath, const struct stat *st,
 	return 0;
 }
 
-static u64 size_sourcedir(char *dir_name, u64 sectorsize,
+static u64 size_sourcedir(const char *dir_name, u64 sectorsize,
 			  u64 *num_of_meta_chunks_ret, u64 *size_of_data_ret)
 {
 	u64 dir_size = 0;
