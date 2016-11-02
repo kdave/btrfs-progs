@@ -558,44 +558,39 @@ out:
 static int copy_metadata(struct btrfs_root *root, int fd,
 		struct btrfs_key *key)
 {
-	struct btrfs_path *path;
+	struct btrfs_path path;
 	struct btrfs_inode_item *inode_item;
 	int ret;
 
-	path = btrfs_alloc_path();
-	if (!path) {
-		error("not enough memory");
-		return -ENOMEM;
-	}
-
-	ret = btrfs_lookup_inode(NULL, root, path, key, 0);
+	btrfs_init_path(&path);
+	ret = btrfs_lookup_inode(NULL, root, &path, key, 0);
 	if (ret == 0) {
 		struct btrfs_timespec *bts;
 		struct timespec times[2];
 
-		inode_item = btrfs_item_ptr(path->nodes[0], path->slots[0],
+		inode_item = btrfs_item_ptr(path.nodes[0], path.slots[0],
 				struct btrfs_inode_item);
 
-		ret = fchown(fd, btrfs_inode_uid(path->nodes[0], inode_item),
-				btrfs_inode_gid(path->nodes[0], inode_item));
+		ret = fchown(fd, btrfs_inode_uid(path.nodes[0], inode_item),
+				btrfs_inode_gid(path.nodes[0], inode_item));
 		if (ret) {
 			error("failed to change owner: %s", strerror(errno));
 			goto out;
 		}
 
-		ret = fchmod(fd, btrfs_inode_mode(path->nodes[0], inode_item));
+		ret = fchmod(fd, btrfs_inode_mode(path.nodes[0], inode_item));
 		if (ret) {
 			error("failed to change mode: %s", strerror(errno));
 			goto out;
 		}
 
 		bts = btrfs_inode_atime(inode_item);
-		times[0].tv_sec = btrfs_timespec_sec(path->nodes[0], bts);
-		times[0].tv_nsec = btrfs_timespec_nsec(path->nodes[0], bts);
+		times[0].tv_sec = btrfs_timespec_sec(path.nodes[0], bts);
+		times[0].tv_nsec = btrfs_timespec_nsec(path.nodes[0], bts);
 
 		bts = btrfs_inode_mtime(inode_item);
-		times[1].tv_sec = btrfs_timespec_sec(path->nodes[0], bts);
-		times[1].tv_nsec = btrfs_timespec_nsec(path->nodes[0], bts);
+		times[1].tv_sec = btrfs_timespec_sec(path.nodes[0], bts);
+		times[1].tv_nsec = btrfs_timespec_nsec(path.nodes[0], bts);
 
 		ret = futimens(fd, times);
 		if (ret) {
@@ -604,7 +599,7 @@ static int copy_metadata(struct btrfs_root *root, int fd,
 		}
 	}
 out:
-	btrfs_free_path(path);
+	btrfs_release_path(&path);
 	return ret;
 }
 
