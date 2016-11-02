@@ -44,6 +44,8 @@
 #include "send.h"
 #include "send-utils.h"
 
+#define SEND_BUFFER_SIZE	(64 * 1024)
+
 /*
  * Default is 1 for historical reasons, changing may break scripts that expect
  * the 'At subvol' message.
@@ -222,7 +224,7 @@ static void *dump_thread(void *arg_)
 {
 	int ret;
 	struct btrfs_send *s = (struct btrfs_send*)arg_;
-	char buf[4096];
+	char buf[SEND_BUFFER_SIZE];
 	int readed;
 
 	while (1) {
