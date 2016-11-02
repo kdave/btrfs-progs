@@ -86,7 +86,7 @@ struct btrfs_receive
 	int cached_capabilities_len;
 };
 
-static int finish_subvol(struct btrfs_receive *r)
+static int finish_subvol(struct btrfs_receive *rctx)
 {
 	int ret;
 	int subvol_fd = -1;
@@ -94,21 +94,21 @@ static int finish_subvol(struct btrfs_receive *r)
 	char uuid_str[BTRFS_UUID_UNPARSED_SIZE];
 	u64 flags;
 
-	if (r->cur_subvol_path[0] == 0)
+	if (rctx->cur_subvol_path[0] == 0)
 		return 0;
 
-	subvol_fd = openat(r->mnt_fd, r->cur_subvol_path,
-			O_RDONLY | O_NOATIME);
+	subvol_fd = openat(rctx->mnt_fd, rctx->cur_subvol_path,
+			   O_RDONLY | O_NOATIME);
 	if (subvol_fd < 0) {
 		ret = -errno;
 		error("cannot open %s: %s",
-				r->cur_subvol_path, strerror(-ret));
+				rctx->cur_subvol_path, strerror(-ret));
 		goto out;
 	}
 
 	memset(&rs_args, 0, sizeof(rs_args));
-	memcpy(rs_args.uuid, r->cur_subvol.received_uuid, BTRFS_UUID_SIZE);
-	rs_args.stransid = r->cur_subvol.stransid;
+	memcpy(rs_args.uuid, rctx->cur_subvol.received_uuid, BTRFS_UUID_SIZE);
+	rs_args.stransid = rctx->cur_subvol.stransid;
 
 	if (g_verbose >= 1) {
 		uuid_unparse((u8*)rs_args.uuid, uuid_str);
@@ -123,7 +123,7 @@ static int finish_subvol(struct btrfs_receive *r)
 				strerror(-ret));
 		goto out;
 	}
-	r->cur_subvol.rtransid = rs_args.rtransid;
+	rctx->cur_subvol.rtransid = rs_args.rtransid;
 
 	ret = ioctl(subvol_fd, BTRFS_IOC_SUBVOL_GETFLAGS, &flags);
 	if (ret < 0) {
@@ -146,8 +146,8 @@ static int finish_subvol(struct btrfs_receive *r)
 	ret = 0;
 
 out:
-	if (r->cur_subvol_path[0]) {
-		r->cur_subvol_path[0] = 0;
+	if (rctx->cur_subvol_path[0]) {
+		rctx->cur_subvol_path[0] = 0;
 	}
 	if (subvol_fd != -1)
 		close(subvol_fd);
@@ -158,38 +158,39 @@ static int process_subvol(const char *path, const u8 *uuid, u64 ctransid,
 			  void *user)
 {
 	int ret;
-	struct btrfs_receive *r = user;
+	struct btrfs_receive *rctx = user;
 	struct btrfs_ioctl_vol_args args_v1;
 	char uuid_str[BTRFS_UUID_UNPARSED_SIZE];
 
-	ret = finish_subvol(r);
+	ret = finish_subvol(rctx);
 	if (ret < 0)
 		goto out;
 
-	if (r->cur_subvol.path) {
+	if (rctx->cur_subvol.path) {
 		error("subvol: another one already started, path ptr: %s",
-				r->cur_subvol.path);
+				rctx->cur_subvol.path);
 		ret = -EINVAL;
 		goto out;
 	}
-	if (r->cur_subvol_path[0]) {
+	if (rctx->cur_subvol_path[0]) {
 		error("subvol: another one already started, path buf: %s",
-				r->cur_subvol.path);
+				rctx->cur_subvol.path);
 		ret = -EINVAL;
 		goto out;
 	}
 
-	if (*r->dest_dir_path == 0) {
-		strncpy_null(r->cur_subvol_path, path);
+	if (*rctx->dest_dir_path == 0) {
+		strncpy_null(rctx->cur_subvol_path, path);
 	} else {
-		ret = path_cat_out(r->cur_subvol_path, r->dest_dir_path, path);
+		ret = path_cat_out(rctx->cur_subvol_path, rctx->dest_dir_path,
+				   path);
 		if (ret < 0) {
 			error("subvol: path invalid: %s", path);
 			goto out;
 		}
 	}
-	ret = path_cat3_out(r->full_subvol_path, r->root_path,
-			r->dest_dir_path, path);
+	ret = path_cat3_out(rctx->full_subvol_path, rctx->root_path,
+			    rctx->dest_dir_path, path);
 	if (ret < 0) {
 		error("subvol: path invalid: %s", path);
 		goto out;
@@ -197,19 +198,19 @@ static int process_subvol(const char *path, const u8 *uuid, u64 ctransid,
 
 	fprintf(stderr, "At subvol %s\n", path);
 
-	memcpy(r->cur_subvol.received_uuid, uuid, BTRFS_UUID_SIZE);
-	r->cur_subvol.stransid = ctransid;
+	memcpy(rctx->cur_subvol.received_uuid, uuid, BTRFS_UUID_SIZE);
+	rctx->cur_subvol.stransid = ctransid;
 
 	if (g_verbose) {
-		uuid_unparse((u8*)r->cur_subvol.received_uuid, uuid_str);
+		uuid_unparse((u8*)rctx->cur_subvol.received_uuid, uuid_str);
 		fprintf(stderr, "receiving subvol %s uuid=%s, stransid=%llu\n",
 				path, uuid_str,
-				r->cur_subvol.stransid);
+				rctx->cur_subvol.stransid);
 	}
 
 	memset(&args_v1, 0, sizeof(args_v1));
 	strncpy_null(args_v1.name, path);
-	ret = ioctl(r->dest_dir_fd, BTRFS_IOC_SUBVOL_CREATE, &args_v1);
+	ret = ioctl(rctx->dest_dir_fd, BTRFS_IOC_SUBVOL_CREATE, &args_v1);
 	if (ret < 0) {
 		ret = -errno;
 		error("creating subvolume %s failed: %s", path, strerror(-ret));
@@ -225,39 +226,40 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 			    void *user)
 {
 	int ret;
-	struct btrfs_receive *r = user;
+	struct btrfs_receive *rctx = user;
 	char uuid_str[BTRFS_UUID_UNPARSED_SIZE];
 	struct btrfs_ioctl_vol_args_v2 args_v2;
 	struct subvol_info *parent_subvol = NULL;
 
-	ret = finish_subvol(r);
+	ret = finish_subvol(rctx);
 	if (ret < 0)
 		goto out;
 
-	if (r->cur_subvol.path) {
+	if (rctx->cur_subvol.path) {
 		error("snapshot: another one already started, path ptr: %s",
-				r->cur_subvol.path);
+				rctx->cur_subvol.path);
 		ret = -EINVAL;
 		goto out;
 	}
-	if (r->cur_subvol_path[0]) {
+	if (rctx->cur_subvol_path[0]) {
 		error("snapshot: another one already started, path buf: %s",
-				r->cur_subvol.path);
+				rctx->cur_subvol.path);
 		ret = -EINVAL;
 		goto out;
 	}
 
-	if (*r->dest_dir_path == 0) {
-		strncpy_null(r->cur_subvol_path, path);
+	if (*rctx->dest_dir_path == 0) {
+		strncpy_null(rctx->cur_subvol_path, path);
 	} else {
-		ret = path_cat_out(r->cur_subvol_path, r->dest_dir_path, path);
+		ret = path_cat_out(rctx->cur_subvol_path, rctx->dest_dir_path,
+				   path);
 		if (ret < 0) {
 			error("snapshot: path invalid: %s", path);
 			goto out;
 		}
 	}
-	ret = path_cat3_out(r->full_subvol_path, r->root_path,
-			r->dest_dir_path, path);
+	ret = path_cat3_out(rctx->full_subvol_path, rctx->root_path,
+			    rctx->dest_dir_path, path);
 	if (ret < 0) {
 		error("snapshot: path invalid: %s", path);
 		goto out;
@@ -265,14 +267,14 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 
 	fprintf(stdout, "At snapshot %s\n", path);
 
-	memcpy(r->cur_subvol.received_uuid, uuid, BTRFS_UUID_SIZE);
-	r->cur_subvol.stransid = ctransid;
+	memcpy(rctx->cur_subvol.received_uuid, uuid, BTRFS_UUID_SIZE);
+	rctx->cur_subvol.stransid = ctransid;
 
 	if (g_verbose) {
-		uuid_unparse((u8*)r->cur_subvol.received_uuid, uuid_str);
+		uuid_unparse((u8*)rctx->cur_subvol.received_uuid, uuid_str);
 		fprintf(stderr, "receiving snapshot %s uuid=%s, "
 				"ctransid=%llu ", path, uuid_str,
-				r->cur_subvol.stransid);
+				rctx->cur_subvol.stransid);
 		uuid_unparse(parent_uuid, uuid_str);
 		fprintf(stderr, "parent_uuid=%s, parent_ctransid=%llu\n",
 				uuid_str, parent_ctransid);
@@ -281,11 +283,13 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 	memset(&args_v2, 0, sizeof(args_v2));
 	strncpy_null(args_v2.name, path);
 
-	parent_subvol = subvol_uuid_search(&r->sus, 0, parent_uuid,
-			parent_ctransid, NULL, subvol_search_by_received_uuid);
+	parent_subvol = subvol_uuid_search(&rctx->sus, 0, parent_uuid,
+					   parent_ctransid, NULL,
+					   subvol_search_by_received_uuid);
 	if (!parent_subvol) {
-		parent_subvol = subvol_uuid_search(&r->sus, 0, parent_uuid,
-				parent_ctransid, NULL, subvol_search_by_uuid);
+		parent_subvol = subvol_uuid_search(&rctx->sus, 0, parent_uuid,
+						   parent_ctransid, NULL,
+						   subvol_search_by_uuid);
 	}
 	if (!parent_subvol) {
 		ret = -ENOENT;
@@ -298,16 +302,16 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 	 * subvolume under the root subvolume, so try and adjust the path to be
 	 * relative to our root path.
 	 */
-	if (r->full_root_path) {
+	if (rctx->full_root_path) {
 		size_t root_len;
 		size_t sub_len;
 
-		root_len = strlen(r->full_root_path);
+		root_len = strlen(rctx->full_root_path);
 		sub_len = strlen(parent_subvol->path);
 
 		/* First make sure the parent subvol is actually in our path */
 		if (sub_len < root_len ||
-		    strstr(parent_subvol->path, r->full_root_path) == NULL) {
+		    strstr(parent_subvol->path, rctx->full_root_path) == NULL) {
 			error(
 		"parent subvol is not reachable from inside the root subvol");
 			ret = -ENOENT;
@@ -344,10 +348,10 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 	}*/
 
 	if (*parent_subvol->path == 0)
-		args_v2.fd = dup(r->mnt_fd);
+		args_v2.fd = dup(rctx->mnt_fd);
 	else
-		args_v2.fd = openat(r->mnt_fd, parent_subvol->path,
-				O_RDONLY | O_NOATIME);
+		args_v2.fd = openat(rctx->mnt_fd, parent_subvol->path,
+				    O_RDONLY | O_NOATIME);
 	if (args_v2.fd < 0) {
 		ret = -errno;
 		if (errno != ENOENT)
@@ -362,7 +366,7 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 		goto out;
 	}
 
-	ret = ioctl(r->dest_dir_fd, BTRFS_IOC_SNAP_CREATE_V2, &args_v2);
+	ret = ioctl(rctx->dest_dir_fd, BTRFS_IOC_SNAP_CREATE_V2, &args_v2);
 	close(args_v2.fd);
 	if (ret < 0) {
 		ret = -errno;
@@ -382,10 +386,10 @@ out:
 static int process_mkfile(const char *path, void *user)
 {
 	int ret;
-	struct btrfs_receive *r = user;
+	struct btrfs_receive *rctx = user;
 	char full_path[PATH_MAX];
 
-	ret = path_cat_out(full_path, r->full_subvol_path, path);
+	ret = path_cat_out(full_path, rctx->full_subvol_path, path);
 	if (ret < 0) {
 		error("mkfile: path invalid: %s", path);
 		goto out;
@@ -410,10 +414,10 @@ out:
 static int process_mkdir(const char *path, void *user)
 {
 	int ret;
-	struct btrfs_receive *r = user;
+	struct btrfs_receive *rctx = user;
 	char full_path[PATH_MAX];
 
-	ret = path_cat_out(full_path, r->full_subvol_path, path);
+	ret = path_cat_out(full_path, rctx->full_subvol_path, path);
 	if (ret < 0) {
 		error("mkdir: path invalid: %s", path);
 		goto out;
@@ -435,10 +439,10 @@ out:
 static int process_mknod(const char *path, u64 mode, u64 dev, void *user)
 {
 	int ret;
-	struct btrfs_receive *r = user;
+	struct btrfs_receive *rctx = user;
 	char full_path[PATH_MAX];
 
-	ret = path_cat_out(full_path, r->full_subvol_path, path);
+	ret = path_cat_out(full_path, rctx->full_subvol_path, path);
 	if (ret < 0) {
 		error("mknod: path invalid: %s", path);
 		goto out;
@@ -461,10 +465,10 @@ out:
 static int process_mkfifo(const char *path, void *user)
 {
 	int ret;
-	struct btrfs_receive *r = user;
+	struct btrfs_receive *rctx = user;
 	char full_path[PATH_MAX];
 
-	ret = path_cat_out(full_path, r->full_subvol_path, path);
+	ret = path_cat_out(full_path, rctx->full_subvol_path, path);
 	if (ret < 0) {
 		error("mkfifo: path invalid: %s", path);
 		goto out;
@@ -486,10 +490,10 @@ out:
 static int process_mksock(const char *path, void *user)
 {
 	int ret;
-	struct btrfs_receive *r = user;
+	struct btrfs_receive *rctx = user;
 	char full_path[PATH_MAX];
 
-	ret = path_cat_out(full_path, r->full_subvol_path, path);
+	ret = path_cat_out(full_path, rctx->full_subvol_path, path);
 	if (ret < 0) {
 		error("mksock: path invalid: %s", path);
 		goto out;
@@ -511,10 +515,10 @@ out:
 static int process_symlink(const char *path, const char *lnk, void *user)
 {
 	int ret;
-	struct btrfs_receive *r = user;
+	struct btrfs_receive *rctx = user;
 	char full_path[PATH_MAX];
 
-	ret = path_cat_out(full_path, r->full_subvol_path, path);
+	ret = path_cat_out(full_path, rctx->full_subvol_path, path);
 	if (ret < 0) {
 		error("symlink: path invalid: %s", path);
 		goto out;
@@ -537,17 +541,17 @@ out:
 static int process_rename(const char *from, const char *to, void *user)
 {
 	int ret;
-	struct btrfs_receive *r = user;
+	struct btrfs_receive *rctx = user;
 	char full_from[PATH_MAX];
 	char full_to[PATH_MAX];
 
-	ret = path_cat_out(full_from, r->full_subvol_path, from);
+	ret = path_cat_out(full_from, rctx->full_subvol_path, from);
 	if (ret < 0) {
 		error("rename: source path invalid: %s", from);
 		goto out;
 	}
 
-	ret = path_cat_out(full_to, r->full_subvol_path, to);
+	ret = path_cat_out(full_to, rctx->full_subvol_path, to);
 	if (ret < 0) {
 		error("rename: target path invalid: %s", to);
 		goto out;
@@ -570,17 +574,17 @@ out:
 static int process_link(const char *path, const char *lnk, void *user)
 {
 	int ret;
-	struct btrfs_receive *r = user;
+	struct btrfs_receive *rctx = user;
 	char full_path[PATH_MAX];
 	char full_link_path[PATH_MAX];
 
-	ret = path_cat_out(full_path, r->full_subvol_path, path);
+	ret = path_cat_out(full_path, rctx->full_subvol_path, path);
 	if (ret < 0) {
 		error("link: source path invalid: %s", full_path);
 		goto out;
 	}
 
-	ret = path_cat_out(full_link_path, r->full_subvol_path, lnk);
+	ret = path_cat_out(full_link_path, rctx->full_subvol_path, lnk);
 	if (ret < 0) {
 		error("link: target path invalid: %s", full_link_path);
 		goto out;
@@ -603,10 +607,10 @@ out:
 static int process_unlink(const char *path, void *user)
 {
 	int ret;
-	struct btrfs_receive *r = user;
+	struct btrfs_receive *rctx = user;
 	char full_path[PATH_MAX];
 
-	ret = path_cat_out(full_path, r->full_subvol_path, path);
+	ret = path_cat_out(full_path, rctx->full_subvol_path, path);
 	if (ret < 0) {
 		error("unlink: path invalid: %s", path);
 		goto out;
@@ -628,10 +632,10 @@ out:
 static int process_rmdir(const char *path, void *user)
 {
 	int ret;
-	struct btrfs_receive *r = user;
+	struct btrfs_receive *rctx = user;
 	char full_path[PATH_MAX];
 
-	ret = path_cat_out(full_path, r->full_subvol_path, path);
+	ret = path_cat_out(full_path, rctx->full_subvol_path, path);
 	if (ret < 0) {
 		error("rmdir: path invalid: %s", path);
 		goto out;
@@ -650,60 +654,60 @@ out:
 	return ret;
 }
 
-static int open_inode_for_write(struct btrfs_receive *r, const char *path)
+static int open_inode_for_write(struct btrfs_receive *rctx, const char *path)
 {
 	int ret = 0;
 
-	if (r->write_fd != -1) {
-		if (strcmp(r->write_path, path) == 0)
+	if (rctx->write_fd != -1) {
+		if (strcmp(rctx->write_path, path) == 0)
 			goto out;
-		close(r->write_fd);
-		r->write_fd = -1;
+		close(rctx->write_fd);
+		rctx->write_fd = -1;
 	}
 
-	r->write_fd = open(path, O_RDWR);
-	if (r->write_fd < 0) {
+	rctx->write_fd = open(path, O_RDWR);
+	if (rctx->write_fd < 0) {
 		ret = -errno;
 		error("cannot open %s: %s", path, strerror(-ret));
 		goto out;
 	}
-	strncpy_null(r->write_path, path);
+	strncpy_null(rctx->write_path, path);
 
 out:
 	return ret;
 }
 
-static void close_inode_for_write(struct btrfs_receive *r)
+static void close_inode_for_write(struct btrfs_receive *rctx)
 {
-	if(r->write_fd == -1)
+	if(rctx->write_fd == -1)
 		return;
 
-	close(r->write_fd);
-	r->write_fd = -1;
-	r->write_path[0] = 0;
+	close(rctx->write_fd);
+	rctx->write_fd = -1;
+	rctx->write_path[0] = 0;
 }
 
 static int process_write(const char *path, const void *data, u64 offset,
 			 u64 len, void *user)
 {
 	int ret = 0;
-	struct btrfs_receive *r = user;
+	struct btrfs_receive *rctx = user;
 	char full_path[PATH_MAX];
 	u64 pos = 0;
 	int w;
 
-	ret = path_cat_out(full_path, r->full_subvol_path, path);
+	ret = path_cat_out(full_path, rctx->full_subvol_path, path);
 	if (ret < 0) {
 		error("write: path invalid: %s", path);
 		goto out;
 	}
 
-	ret = open_inode_for_write(r, full_path);
+	ret = open_inode_for_write(rctx, full_path);
 	if (ret < 0)
 		goto out;
 
 	while (pos < len) {
-		w = pwrite(r->write_fd, (char*)data + pos, len - pos,
+		w = pwrite(rctx->write_fd, (char*)data + pos, len - pos,
 				offset + pos);
 		if (w < 0) {
 			ret = -errno;
@@ -724,7 +728,7 @@ static int process_clone(const char *path, u64 offset, u64 len,
 			 void *user)
 {
 	int ret;
-	struct btrfs_receive *r = user;
+	struct btrfs_receive *rctx = user;
 	struct btrfs_ioctl_clone_range_args clone_args;
 	struct subvol_info *si = NULL;
 	char full_path[PATH_MAX];
@@ -732,23 +736,24 @@ static int process_clone(const char *path, u64 offset, u64 len,
 	char full_clone_path[PATH_MAX];
 	int clone_fd = -1;
 
-	ret = path_cat_out(full_path, r->full_subvol_path, path);
+	ret = path_cat_out(full_path, rctx->full_subvol_path, path);
 	if (ret < 0) {
 		error("clone: source path invalid: %s", path);
 		goto out;
 	}
 
-	ret = open_inode_for_write(r, full_path);
+	ret = open_inode_for_write(rctx, full_path);
 	if (ret < 0)
 		goto out;
 
-	si = subvol_uuid_search(&r->sus, 0, clone_uuid, clone_ctransid, NULL,
-			subvol_search_by_received_uuid);
+	si = subvol_uuid_search(&rctx->sus, 0, clone_uuid, clone_ctransid,
+				NULL,
+				subvol_search_by_received_uuid);
 	if (!si) {
-		if (memcmp(clone_uuid, r->cur_subvol.received_uuid,
+		if (memcmp(clone_uuid, rctx->cur_subvol.received_uuid,
 				BTRFS_UUID_SIZE) == 0) {
 			/* TODO check generation of extent */
-			subvol_path = strdup(r->cur_subvol_path);
+			subvol_path = strdup(rctx->cur_subvol_path);
 		} else {
 			ret = -ENOENT;
 			error("clone: did not find source subvol");
@@ -779,7 +784,7 @@ static int process_clone(const char *path, u64 offset, u64 len,
 		goto out;
 	}
 
-	clone_fd = openat(r->mnt_fd, full_clone_path, O_RDONLY | O_NOATIME);
+	clone_fd = openat(rctx->mnt_fd, full_clone_path, O_RDONLY | O_NOATIME);
 	if (clone_fd < 0) {
 		ret = -errno;
 		error("cannot open %s: %s", full_clone_path, strerror(-ret));
@@ -790,7 +795,7 @@ static int process_clone(const char *path, u64 offset, u64 len,
 	clone_args.src_offset = clone_offset;
 	clone_args.src_length = len;
 	clone_args.dest_offset = offset;
-	ret = ioctl(r->write_fd, BTRFS_IOC_CLONE_RANGE, &clone_args);
+	ret = ioctl(rctx->write_fd, BTRFS_IOC_CLONE_RANGE, &clone_args);
 	if (ret < 0) {
 		ret = -errno;
 		error("failed to clone extents to %s\n%s",
@@ -814,10 +819,10 @@ static int process_set_xattr(const char *path, const char *name,
 			     const void *data, int len, void *user)
 {
 	int ret = 0;
-	struct btrfs_receive *r = user;
+	struct btrfs_receive *rctx = user;
 	char full_path[PATH_MAX];
 
-	ret = path_cat_out(full_path, r->full_subvol_path, path);
+	ret = path_cat_out(full_path, rctx->full_subvol_path, path);
 	if (ret < 0) {
 		error("set_xattr: path invalid: %s", path);
 		goto out;
@@ -826,17 +831,17 @@ static int process_set_xattr(const char *path, const char *name,
 	if (strcmp("security.capability", name) == 0) {
 		if (g_verbose >= 3)
 			fprintf(stderr, "set_xattr: cache capabilities\n");
-		if (r->cached_capabilities_len)
+		if (rctx->cached_capabilities_len)
 			warning("capabilities set multiple times per file: %s",
 				full_path);
-		if (len > sizeof(r->cached_capabilities)) {
+		if (len > sizeof(rctx->cached_capabilities)) {
 			error("capabilities encoded to %d bytes, buffer too small",
 				len);
 			ret = -E2BIG;
 			goto out;
 		}
-		r->cached_capabilities_len = len;
-		memcpy(r->cached_capabilities, data, len);
+		rctx->cached_capabilities_len = len;
+		memcpy(rctx->cached_capabilities, data, len);
 	}
 
 	if (g_verbose >= 2) {
@@ -860,10 +865,10 @@ out:
 static int process_remove_xattr(const char *path, const char *name, void *user)
 {
 	int ret = 0;
-	struct btrfs_receive *r = user;
+	struct btrfs_receive *rctx = user;
 	char full_path[PATH_MAX];
 
-	ret = path_cat_out(full_path, r->full_subvol_path, path);
+	ret = path_cat_out(full_path, rctx->full_subvol_path, path);
 	if (ret < 0) {
 		error("remove_xattr: path invalid: %s", path);
 		goto out;
@@ -889,10 +894,10 @@ out:
 static int process_truncate(const char *path, u64 size, void *user)
 {
 	int ret = 0;
-	struct btrfs_receive *r = user;
+	struct btrfs_receive *rctx = user;
 	char full_path[PATH_MAX];
 
-	ret = path_cat_out(full_path, r->full_subvol_path, path);
+	ret = path_cat_out(full_path, rctx->full_subvol_path, path);
 	if (ret < 0) {
 		error("truncate: path invalid: %s", path);
 		goto out;
@@ -915,10 +920,10 @@ out:
 static int process_chmod(const char *path, u64 mode, void *user)
 {
 	int ret = 0;
-	struct btrfs_receive *r = user;
+	struct btrfs_receive *rctx = user;
 	char full_path[PATH_MAX];
 
-	ret = path_cat_out(full_path, r->full_subvol_path, path);
+	ret = path_cat_out(full_path, rctx->full_subvol_path, path);
 	if (ret < 0) {
 		error("chmod: path invalid: %s", path);
 		goto out;
@@ -941,10 +946,10 @@ out:
 static int process_chown(const char *path, u64 uid, u64 gid, void *user)
 {
 	int ret = 0;
-	struct btrfs_receive *r = user;
+	struct btrfs_receive *rctx = user;
 	char full_path[PATH_MAX];
 
-	ret = path_cat_out(full_path, r->full_subvol_path, path);
+	ret = path_cat_out(full_path, rctx->full_subvol_path, path);
 	if (ret < 0) {
 		error("chown: path invalid: %s", path);
 		goto out;
@@ -961,15 +966,15 @@ static int process_chown(const char *path, u64 uid, u64 gid, void *user)
 		goto out;
 	}
 
-	if (r->cached_capabilities_len) {
+	if (rctx->cached_capabilities_len) {
 		if (g_verbose >= 2)
 			fprintf(stderr, "chown: restore capabilities\n");
 		ret = lsetxattr(full_path, "security.capability",
-				r->cached_capabilities,
-				r->cached_capabilities_len, 0);
-		memset(r->cached_capabilities, 0,
-				sizeof(r->cached_capabilities));
-		r->cached_capabilities_len = 0;
+				rctx->cached_capabilities,
+				rctx->cached_capabilities_len, 0);
+		memset(rctx->cached_capabilities, 0,
+				sizeof(rctx->cached_capabilities));
+		rctx->cached_capabilities_len = 0;
 		if (ret < 0) {
 			ret = -errno;
 			error("restoring capabilities %s: %s",
@@ -987,11 +992,11 @@ static int process_utimes(const char *path, struct timespec *at,
 			  void *user)
 {
 	int ret = 0;
-	struct btrfs_receive *r = user;
+	struct btrfs_receive *rctx = user;
 	char full_path[PATH_MAX];
 	struct timespec tv[2];
 
-	ret = path_cat_out(full_path, r->full_subvol_path, path);
+	ret = path_cat_out(full_path, rctx->full_subvol_path, path);
 	if (ret < 0) {
 		error("utimes: path invalid: %s", path);
 		goto out;
@@ -1053,7 +1058,7 @@ static struct btrfs_send_ops send_ops = {
 	.update_extent = process_update_extent,
 };
 
-static int do_receive(struct btrfs_receive *r, const char *tomnt,
+static int do_receive(struct btrfs_receive *rctx, const char *tomnt,
 		      char *realmnt, int r_fd, u64 max_errors)
 {
 	u64 subvol_id;
@@ -1069,8 +1074,8 @@ static int do_receive(struct btrfs_receive *r, const char *tomnt,
 		error("realpath(%s) failed: %s", tomnt, strerror(-ret));
 		goto out;
 	}
-	r->dest_dir_fd = open(dest_dir_full_path, O_RDONLY | O_NOATIME);
-	if (r->dest_dir_fd < 0) {
+	rctx->dest_dir_fd = open(dest_dir_full_path, O_RDONLY | O_NOATIME);
+	if (rctx->dest_dir_fd < 0) {
 		ret = -errno;
 		error("cannot open destination directory %s: %s",
 			dest_dir_full_path, strerror(-ret));
@@ -1078,9 +1083,9 @@ static int do_receive(struct btrfs_receive *r, const char *tomnt,
 	}
 
 	if (realmnt[0]) {
-		r->root_path = realmnt;
+		rctx->root_path = realmnt;
 	} else {
-		ret = find_mount_root(dest_dir_full_path, &r->root_path);
+		ret = find_mount_root(dest_dir_full_path, &rctx->root_path);
 		if (ret < 0) {
 			error("failed to determine mount point for %s: %s",
 				dest_dir_full_path, strerror(-ret));
@@ -1094,10 +1099,10 @@ static int do_receive(struct btrfs_receive *r, const char *tomnt,
 			goto out;
 		}
 	}
-	r->mnt_fd = open(r->root_path, O_RDONLY | O_NOATIME);
-	if (r->mnt_fd < 0) {
+	rctx->mnt_fd = open(rctx->root_path, O_RDONLY | O_NOATIME);
+	if (rctx->mnt_fd < 0) {
 		ret = -errno;
-		error("cannot open %s: %s", r->root_path, strerror(-ret));
+		error("cannot open %s: %s", rctx->root_path, strerror(-ret));
 		goto out;
 	}
 
@@ -1106,12 +1111,12 @@ static int do_receive(struct btrfs_receive *r, const char *tomnt,
 	 * subvolume we're sitting in so that we can adjust the paths of any
 	 * subvols we want to receive in.
 	 */
-	ret = btrfs_list_get_path_rootid(r->mnt_fd, &subvol_id);
+	ret = btrfs_list_get_path_rootid(rctx->mnt_fd, &subvol_id);
 	if (ret)
 		goto out;
 
 	root_subvol_path[0] = 0;
-	ret = btrfs_subvolid_resolve(r->mnt_fd, root_subvol_path,
+	ret = btrfs_subvolid_resolve(rctx->mnt_fd, root_subvol_path,
 				     PATH_MAX, subvol_id);
 	if (ret) {
 		error("cannot resolve our subvol path");
@@ -1123,9 +1128,9 @@ static int do_receive(struct btrfs_receive *r, const char *tomnt,
 	 * actually set full_root_path.
 	 */
 	if (*root_subvol_path)
-		r->full_root_path = root_subvol_path;
+		rctx->full_root_path = root_subvol_path;
 
-	if (r->dest_dir_chroot) {
+	if (rctx->dest_dir_chroot) {
 		if (chroot(dest_dir_full_path)) {
 			ret = -errno;
 			error("failed to chroot to %s: %s",
@@ -1139,35 +1144,36 @@ static int do_receive(struct btrfs_receive *r, const char *tomnt,
 			goto out;
 		}
 		fprintf(stderr, "Chroot to %s\n", dest_dir_full_path);
-		r->root_path = strdup("/");
-		r->dest_dir_path = r->root_path;
+		rctx->root_path = strdup("/");
+		rctx->dest_dir_path = rctx->root_path;
 	} else {
 		/*
 		 * find_mount_root returns a root_path that is a subpath of
 		 * dest_dir_full_path. Now get the other part of root_path,
 		 * which is the destination dir relative to root_path.
 		 */
-		r->dest_dir_path = dest_dir_full_path + strlen(r->root_path);
-		while (r->dest_dir_path[0] == '/')
-			r->dest_dir_path++;
+		rctx->dest_dir_path = dest_dir_full_path + strlen(rctx->root_path);
+		while (rctx->dest_dir_path[0] == '/')
+			rctx->dest_dir_path++;
 	}
 
-	ret = subvol_uuid_search_init(r->mnt_fd, &r->sus);
+	ret = subvol_uuid_search_init(rctx->mnt_fd, &rctx->sus);
 	if (ret < 0)
 		goto out;
 
 	count = 0;
 	while (!end) {
-		if (r->cached_capabilities_len) {
+		if (rctx->cached_capabilities_len) {
 			if (g_verbose >= 3)
 				fprintf(stderr, "clear cached capabilities\n");
-			memset(r->cached_capabilities, 0,
-					sizeof(r->cached_capabilities));
-			r->cached_capabilities_len = 0;
+			memset(rctx->cached_capabilities, 0,
+					sizeof(rctx->cached_capabilities));
+			rctx->cached_capabilities_len = 0;
 		}
 
-		ret = btrfs_read_and_process_send_stream(r_fd, &send_ops, r,
-							 r->honor_end_cmd,
+		ret = btrfs_read_and_process_send_stream(r_fd, &send_ops,
+							 rctx,
+							 rctx->honor_end_cmd,
 							 max_errors);
 		if (ret < 0)
 			goto out;
@@ -1181,32 +1187,32 @@ static int do_receive(struct btrfs_receive *r, const char *tomnt,
 		if (ret)
 			end = 1;
 
-		close_inode_for_write(r);
-		ret = finish_subvol(r);
+		close_inode_for_write(rctx);
+		ret = finish_subvol(rctx);
 		if (ret < 0)
 			goto out;
 	}
 	ret = 0;
 
 out:
-	if (r->write_fd != -1) {
-		close(r->write_fd);
-		r->write_fd = -1;
+	if (rctx->write_fd != -1) {
+		close(rctx->write_fd);
+		rctx->write_fd = -1;
 	}
 
-	if (r->root_path != realmnt)
-		free(r->root_path);
-	r->root_path = NULL;
-	r->dest_dir_path = NULL;
+	if (rctx->root_path != realmnt)
+		free(rctx->root_path);
+	rctx->root_path = NULL;
+	rctx->dest_dir_path = NULL;
 	free(dest_dir_full_path);
-	subvol_uuid_search_finit(&r->sus);
-	if (r->mnt_fd != -1) {
-		close(r->mnt_fd);
-		r->mnt_fd = -1;
+	subvol_uuid_search_finit(&rctx->sus);
+	if (rctx->mnt_fd != -1) {
+		close(rctx->mnt_fd);
+		rctx->mnt_fd = -1;
 	}
-	if (r->dest_dir_fd != -1) {
-		close(r->dest_dir_fd);
-		r->dest_dir_fd = -1;
+	if (rctx->dest_dir_fd != -1) {
+		close(rctx->dest_dir_fd);
+		rctx->dest_dir_fd = -1;
 	}
 
 	return ret;
@@ -1217,16 +1223,16 @@ int cmd_receive(int argc, char **argv)
 	char *tomnt = NULL;
 	char fromfile[PATH_MAX];
 	char realmnt[PATH_MAX];
-	struct btrfs_receive r;
+	struct btrfs_receive rctx;
 	int receive_fd = fileno(stdin);
 	u64 max_errors = 1;
 	int ret = 0;
 
-	memset(&r, 0, sizeof(r));
-	r.mnt_fd = -1;
-	r.write_fd = -1;
-	r.dest_dir_fd = -1;
-	r.dest_dir_chroot = 0;
+	memset(&rctx, 0, sizeof(rctx));
+	rctx.mnt_fd = -1;
+	rctx.write_fd = -1;
+	rctx.dest_dir_fd = -1;
+	rctx.dest_dir_chroot = 0;
 	realmnt[0] = 0;
 	fromfile[0] = 0;
 
@@ -1255,10 +1261,10 @@ int cmd_receive(int argc, char **argv)
 			}
 			break;
 		case 'e':
-			r.honor_end_cmd = 1;
+			rctx.honor_end_cmd = 1;
 			break;
 		case 'C':
-			r.dest_dir_chroot = 1;
+			rctx.dest_dir_chroot = 1;
 			break;
 		case 'E':
 			max_errors = arg_strtou64(optarg);
@@ -1291,7 +1297,7 @@ int cmd_receive(int argc, char **argv)
 		}
 	}
 
-	ret = do_receive(&r, tomnt, realmnt, receive_fd, max_errors);
+	ret = do_receive(&rctx, tomnt, realmnt, receive_fd, max_errors);
 	if (receive_fd != fileno(stdin))
 		close(receive_fd);
 
