@@ -1075,7 +1075,7 @@ static struct btrfs_root* link_subvol(struct btrfs_root *root,
 	struct btrfs_fs_info *fs_info = root->fs_info;
 	struct btrfs_root *tree_root = fs_info->tree_root;
 	struct btrfs_root *new_root = NULL;
-	struct btrfs_path *path;
+	struct btrfs_path path;
 	struct btrfs_inode_item *inode_item;
 	struct extent_buffer *leaf;
 	struct btrfs_key key;
@@ -1090,28 +1090,25 @@ static struct btrfs_root* link_subvol(struct btrfs_root *root,
 	if (len == 0 || len > BTRFS_NAME_LEN)
 		return NULL;
 
-	path = btrfs_alloc_path();
-	if (!path)
-		return NULL;
-
+	btrfs_init_path(&path);
 	key.objectid = dirid;
 	key.type = BTRFS_DIR_INDEX_KEY;
 	key.offset = (u64)-1;
 
-	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
+	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
 	if (ret <= 0) {
 		error("search for DIR_INDEX dirid %llu failed: %d",
 				(unsigned long long)dirid, ret);
 		goto fail;
 	}
 
-	if (path->slots[0] > 0) {
-		path->slots[0]--;
-		btrfs_item_key_to_cpu(path->nodes[0], &key, path->slots[0]);
+	if (path.slots[0] > 0) {
+		path.slots[0]--;
+		btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
 		if (key.objectid == dirid && key.type == BTRFS_DIR_INDEX_KEY)
 			index = key.offset + 1;
 	}
-	btrfs_release_path(path);
+	btrfs_release_path(&path);
 
 	trans = btrfs_start_transaction(root, 1);
 	if (!trans) {
@@ -1123,14 +1120,14 @@ static struct btrfs_root* link_subvol(struct btrfs_root *root,
 	key.offset = 0;
 	key.type =  BTRFS_INODE_ITEM_KEY;
 
-	ret = btrfs_lookup_inode(trans, root, path, &key, 1);
+	ret = btrfs_lookup_inode(trans, root, &path, &key, 1);
 	if (ret) {
 		error("search for INODE_ITEM %llu failed: %d",
 				(unsigned long long)dirid, ret);
 		goto fail;
 	}
-	leaf = path->nodes[0];
-	inode_item = btrfs_item_ptr(leaf, path->slots[0],
+	leaf = path.nodes[0];
+	inode_item = btrfs_item_ptr(leaf, path.slots[0],
 				    struct btrfs_inode_item);
 
 	key.objectid = root_objectid;
@@ -1155,7 +1152,7 @@ static struct btrfs_root* link_subvol(struct btrfs_root *root,
 	btrfs_set_inode_size(leaf, inode_item, len * 2 +
 			     btrfs_inode_size(leaf, inode_item));
 	btrfs_mark_buffer_dirty(leaf);
-	btrfs_release_path(path);
+	btrfs_release_path(&path);
 
 	/* add the backref first */
 	ret = btrfs_add_root_ref(trans, tree_root, root_objectid,
@@ -1190,7 +1187,7 @@ static struct btrfs_root* link_subvol(struct btrfs_root *root,
 		new_root = NULL;
 	}
 fail:
-	btrfs_free_path(path);
+	btrfs_init_path(&path);
 	return new_root;
 }
 
