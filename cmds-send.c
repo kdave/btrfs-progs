@@ -251,7 +251,7 @@ out:
 }
 
 static int do_send(struct btrfs_send *send, u64 parent_root_id,
-		   int is_first_subvol, int is_last_subvol, char *subvol,
+		   int is_first_subvol, int is_last_subvol, const char *subvol,
 		   u64 flags)
 {
 	int ret;
@@ -378,7 +378,7 @@ out:
 
 }
 
-static int is_subvol_ro(struct btrfs_send *s, char *subvol)
+static int is_subvol_ro(struct btrfs_send *s, const char *subvol)
 {
 	int ret;
 	u64 flags;
