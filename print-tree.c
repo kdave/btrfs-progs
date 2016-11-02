@@ -1031,14 +1031,8 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 	int i;
 	char *str;
 	struct btrfs_item *item;
-	struct btrfs_dir_item *di;
-	struct btrfs_inode_item *ii;
-	struct btrfs_file_extent_item *fi;
-	struct btrfs_block_group_item *bi;
 	struct btrfs_extent_data_ref *dref;
 	struct btrfs_shared_data_ref *sref;
-	struct btrfs_inode_ref *iref;
-	struct btrfs_inode_extref *iref2;
 	struct btrfs_dev_extent *dev_extent;
 	struct btrfs_disk_key disk_key;
 	struct btrfs_block_group_item bg_item;
@@ -1064,9 +1058,12 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 	fflush(stdout);
 	for (i = 0 ; i < nr ; i++) {
 		u32 item_size;
+		void *ptr;
 
 		item = btrfs_item_nr(i);
 		item_size = btrfs_item_size(l, item);
+		/* Untyped extraction of slot from btrfs_item_ptr */
+		ptr = btrfs_item_ptr(l, i, void*);
 		btrfs_item_key(l, &disk_key, i);
 		objectid = btrfs_disk_key_objectid(&disk_key);
 		type = btrfs_disk_key_type(&disk_key);
@@ -1082,22 +1079,18 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 
 		switch (type) {
 		case BTRFS_INODE_ITEM_KEY:
-			ii = btrfs_item_ptr(l, i, struct btrfs_inode_item);
-			print_inode_item(l, ii);
+			print_inode_item(l, ptr);
 			break;
 		case BTRFS_INODE_REF_KEY:
-			iref = btrfs_item_ptr(l, i, struct btrfs_inode_ref);
-			print_inode_ref_item(l, item_size, iref);
+			print_inode_ref_item(l, item_size, ptr);
 			break;
 		case BTRFS_INODE_EXTREF_KEY:
-			iref2 = btrfs_item_ptr(l, i, struct btrfs_inode_extref);
-			print_inode_extref_item(l, item_size, iref2);
+			print_inode_extref_item(l, item_size, ptr);
 			break;
 		case BTRFS_DIR_ITEM_KEY:
 		case BTRFS_DIR_INDEX_KEY:
 		case BTRFS_XATTR_ITEM_KEY:
-			di = btrfs_item_ptr(l, i, struct btrfs_dir_item);
-			print_dir_item(l, item_size, di);
+			print_dir_item(l, item_size, ptr);
 			break;
 		case BTRFS_DIR_LOG_INDEX_KEY:
 		case BTRFS_DIR_LOG_ITEM_KEY:
@@ -1157,14 +1150,10 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 			printf("\t\textent csum item\n");
 			break;
 		case BTRFS_EXTENT_DATA_KEY:
-			fi = btrfs_item_ptr(l, i,
-					    struct btrfs_file_extent_item);
-			print_file_extent_item(l, item, i, fi);
+			print_file_extent_item(l, item, i, ptr);
 			break;
 		case BTRFS_BLOCK_GROUP_ITEM_KEY:
-			bi = btrfs_item_ptr(l, i,
-					    struct btrfs_block_group_item);
-			read_extent_buffer(l, &bg_item, (unsigned long)bi,
+			read_extent_buffer(l, &bg_item, (unsigned long)ptr,
 					   sizeof(bg_item));
 			memset(flags_str, 0, sizeof(flags_str));
 			bg_flags_to_str(btrfs_block_group_flags(&bg_item),
@@ -1187,11 +1176,10 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 			printf("\t\tfree space bitmap\n");
 			break;
 		case BTRFS_CHUNK_ITEM_KEY:
-			print_chunk(l, btrfs_item_ptr(l, i, struct btrfs_chunk));
+			print_chunk(l, ptr);
 			break;
 		case BTRFS_DEV_ITEM_KEY:
-			print_dev_item(l, btrfs_item_ptr(l, i,
-					struct btrfs_dev_item));
+			print_dev_item(l, ptr);
 			break;
 		case BTRFS_DEV_EXTENT_KEY:
 			dev_extent = btrfs_item_ptr(l, i,
@@ -1284,9 +1272,7 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 			printf(" offset %llu\n", (unsigned long long)offset);
 			switch (objectid) {
 			case BTRFS_DEV_STATS_OBJECTID:
-				print_dev_stats(l, btrfs_item_ptr(l, i,
-						struct btrfs_dev_stats_item),
-						item_size);
+				print_dev_stats(l, ptr, item_size);
 				break;
 			default:
 				printf("\t\tunknown persistent item objectid %llu\n",
@@ -1299,8 +1285,7 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 			printf(" offset %llu\n", (unsigned long long)offset);
 			switch (objectid) {
 			case BTRFS_BALANCE_OBJECTID:
-				print_balance_item(l, btrfs_item_ptr(l, i,
-					struct btrfs_balance_item));
+				print_balance_item(l, ptr);
 				break;
 			default:
 				printf("\t\tunknown temporary item objectid %llu\n",
