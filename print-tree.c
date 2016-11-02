@@ -1028,10 +1028,12 @@ static void print_dev_stats(struct extent_buffer *eb,
 
 void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *eb)
 {
-	int i;
 	struct btrfs_item *item;
 	struct btrfs_disk_key disk_key;
-	u32 nr = btrfs_header_nritems(eb);
+	u32 i;
+	u32 nr;
+
+	nr = btrfs_header_nritems(eb);
 
 	printf("leaf %llu items %d free space %d generation %llu owner %llu\n",
 		(unsigned long long)btrfs_header_bytenr(eb), nr,
@@ -1040,7 +1042,8 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *eb)
 		(unsigned long long)btrfs_header_owner(eb));
 	print_uuids(eb);
 	fflush(stdout);
-	for (i = 0 ; i < nr ; i++) {
+
+	for (i = 0; i < nr; i++) {
 		u32 item_size;
 		void *ptr;
 		u64 objectid;
@@ -1318,7 +1321,7 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *eb)
 
 void btrfs_print_tree(struct btrfs_root *root, struct extent_buffer *eb, int follow)
 {
-	int i;
+	u32 i;
 	u32 nr;
 	u32 size;
 	struct btrfs_disk_key disk_key;
