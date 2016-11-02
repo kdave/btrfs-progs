@@ -1534,26 +1534,21 @@ static int repair_qgroup_status(struct btrfs_fs_info *info)
 	int ret;
 	struct btrfs_root *root = info->quota_root;
 	struct btrfs_trans_handle *trans;
-	struct btrfs_path *path;
+	struct btrfs_path path;
 	struct btrfs_key key;
 	struct btrfs_qgroup_status_item *status_item;
 
 	printf("Repair qgroup status item\n");
 
-	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
-
 	trans = btrfs_start_transaction(root, 1);
-	if (IS_ERR(trans)) {
-		btrfs_free_path(path);
+	if (IS_ERR(trans))
 		return PTR_ERR(trans);
-	}
 
+	btrfs_init_path(&path);
 	key.objectid = 0;
 	key.type = BTRFS_QGROUP_STATUS_KEY;
 	key.offset = 0;
-	ret = btrfs_search_slot(trans, root, &key, path, 0, 1);
+	ret = btrfs_search_slot(trans, root, &key, &path, 0, 1);
 	if (ret) {
 		error("Could not find qgroup status item\n");
 		if (ret > 0)
@@ -1561,19 +1556,19 @@ static int repair_qgroup_status(struct btrfs_fs_info *info)
 		goto out;
 	}
 
-	status_item = btrfs_item_ptr(path->nodes[0], path->slots[0],
+	status_item = btrfs_item_ptr(path.nodes[0], path.slots[0],
 				     struct btrfs_qgroup_status_item);
-	btrfs_set_qgroup_status_flags(path->nodes[0], status_item,
+	btrfs_set_qgroup_status_flags(path.nodes[0], status_item,
 				      BTRFS_QGROUP_STATUS_FLAG_ON);
-	btrfs_set_qgroup_status_rescan(path->nodes[0], status_item, 0);
-	btrfs_set_qgroup_status_generation(path->nodes[0], status_item,
+	btrfs_set_qgroup_status_rescan(path.nodes[0], status_item, 0);
+	btrfs_set_qgroup_status_generation(path.nodes[0], status_item,
 					   trans->transid);
 
-	btrfs_mark_buffer_dirty(path->nodes[0]);
+	btrfs_mark_buffer_dirty(path.nodes[0]);
 
 out:
 	btrfs_commit_transaction(trans, root);
-	btrfs_free_path(path);
+	btrfs_release_path(&path);
 
 	return ret;
 }
