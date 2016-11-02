@@ -1328,7 +1328,7 @@ static int create_metadump(const char *input, FILE *out, int num_threads,
 			   int compress_level, int sanitize, int walk_trees)
 {
 	struct btrfs_root *root;
-	struct btrfs_path *path = NULL;
+	struct btrfs_path path;
 	struct metadump_struct metadump;
 	int ret;
 	int err = 0;
@@ -1355,12 +1355,7 @@ static int create_metadump(const char *input, FILE *out, int num_threads,
 		goto out;
 	}
 
-	path = btrfs_alloc_path();
-	if (!path) {
-		error("not enough memory to allocate path");
-		err = -ENOMEM;
-		goto out;
-	}
+	btrfs_init_path(&path);
 
 	if (walk_trees) {
 		ret = copy_tree_blocks(root, root->fs_info->chunk_root->node,
@@ -1377,20 +1372,20 @@ static int create_metadump(const char *input, FILE *out, int num_threads,
 			goto out;
 		}
 	} else {
-		ret = copy_from_extent_tree(&metadump, path);
+		ret = copy_from_extent_tree(&metadump, &path);
 		if (ret) {
 			err = ret;
 			goto out;
 		}
 	}
 
-	ret = copy_log_trees(root, &metadump, path);
+	ret = copy_log_trees(root, &metadump, &path);
 	if (ret) {
 		err = ret;
 		goto out;
 	}
 
-	ret = copy_space_cache(root, &metadump, path);
+	ret = copy_space_cache(root, &metadump, &path);
 out:
 	ret = flush_pending(&metadump, 1);
 	if (ret) {
@@ -1401,7 +1396,7 @@ out:
 
 	metadump_destroy(&metadump, num_threads);
 
-	btrfs_free_path(path);
+	btrfs_release_path(&path);
 	ret = close_ctree(root);
 	return err ? err : ret;
 }
