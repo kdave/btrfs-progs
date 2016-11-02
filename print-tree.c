@@ -516,15 +516,14 @@ static void print_root_ref(struct extent_buffer *leaf, int slot, char *tag)
 	       namelen, namebuf);
 }
 
-static int count_bytes(void *buf, int len, char b)
+static int empty_uuid(const u8 *uuid)
 {
-	int cnt = 0;
 	int i;
-	for (i = 0; i < len; i++) {
-		if (((char*)buf)[i] == b)
-			cnt++;
-	}
-	return cnt;
+
+	for (i = 0; i < BTRFS_UUID_SIZE; i++)
+		if (uuid[i])
+			return 0;
+	return 1;
 }
 
 /*
@@ -570,11 +569,11 @@ static void print_root(struct extent_buffer *leaf, int slot)
 	if (root_item.generation == root_item.generation_v2) {
 		uuid_unparse(root_item.uuid, uuid_str);
 		printf("\t\tuuid %s\n", uuid_str);
-		if (count_bytes(root_item.parent_uuid, BTRFS_UUID_SIZE, 0) != BTRFS_UUID_SIZE) {
+		if (!empty_uuid(root_item.parent_uuid)) {
 			uuid_unparse(root_item.parent_uuid, uuid_str);
 			printf("\t\tparent_uuid %s\n", uuid_str);
 		}
-		if (count_bytes(root_item.received_uuid, BTRFS_UUID_SIZE, 0) != BTRFS_UUID_SIZE) {
+		if (!empty_uuid(root_item.received_uuid)) {
 			uuid_unparse(root_item.received_uuid, uuid_str);
 			printf("\t\treceived_uuid %s\n", uuid_str);
 		}
