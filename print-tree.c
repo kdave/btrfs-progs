@@ -31,35 +31,21 @@ static void print_dir_item_type(struct extent_buffer *eb,
                                 struct btrfs_dir_item *di)
 {
 	u8 type = btrfs_dir_type(eb, di);
+	static const char* dir_item_str[] = {
+		[BTRFS_FT_REG_FILE]	= "FILE",
+		[BTRFS_FT_DIR] 		= "DIR",
+		[BTRFS_FT_CHRDEV]	= "CHRDEV",
+		[BTRFS_FT_BLKDEV]	= "BLKDEV",
+		[BTRFS_FT_FIFO]		= "FIFO",
+		[BTRFS_FT_SOCK]		= "SOCK",
+		[BTRFS_FT_SYMLINK]	= "SYMLINK",
+		[BTRFS_FT_XATTR]	= "XATTR"
+	};
 
-	switch (type) {
-	case BTRFS_FT_REG_FILE:
-		printf("FILE");
-		break;
-	case BTRFS_FT_DIR:
-		printf("DIR");
-		break;
-	case BTRFS_FT_CHRDEV:
-		printf("CHRDEV");
-		break;
-	case BTRFS_FT_BLKDEV:
-		printf("BLKDEV");
-		break;
-	case BTRFS_FT_FIFO:
-		printf("FIFO");
-		break;
-	case BTRFS_FT_SOCK:
-		printf("SOCK");
-		break;
-	case BTRFS_FT_SYMLINK:
-		printf("SYMLINK");
-		break;
-	case BTRFS_FT_XATTR:
-		printf("XATTR");
-		break;
-	default:
-		printf("%u", type);
-	}
+	if (type < ARRAY_SIZE(dir_item_str) && dir_item_str[type])
+		printf("%s", dir_item_str[type]);
+	else
+		printf("DIR_ITEM.%u", type);
 }
 
 static void print_dir_item(struct extent_buffer *eb, u32 size,
