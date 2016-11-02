@@ -1398,26 +1398,24 @@ static int rebuild_block_group(struct btrfs_trans_handle *trans,
 {
 	struct chunk_record *chunk_rec;
 	struct btrfs_key search_key;
-	struct btrfs_path *path;
+	struct btrfs_path path;
 	u64 used = 0;
 	int ret = 0;
 
 	if (list_empty(&rc->rebuild_chunks))
 		return 0;
 
-	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
+	btrfs_init_path(&path);
 	list_for_each_entry(chunk_rec, &rc->rebuild_chunks, list) {
 		search_key.objectid = chunk_rec->offset;
 		search_key.type = BTRFS_EXTENT_ITEM_KEY;
 		search_key.offset = 0;
 		ret = btrfs_search_slot(NULL, root->fs_info->extent_root,
-					&search_key, path, 0, 0);
+					&search_key, &path, 0, 0);
 		if (ret < 0)
 			goto out;
 		ret = calculate_bg_used(root->fs_info->extent_root,
-					chunk_rec, path, &used);
+					chunk_rec, &path, &used);
 		/*
 		 * Extent tree is damaged, better to rebuild the whole extent
 		 * tree. Currently, change the used to chunk's len to prevent
@@ -1432,7 +1430,7 @@ static int rebuild_block_group(struct btrfs_trans_handle *trans,
 				"Mark the block group full to prevent block rsv problems\n");
 			used = chunk_rec->length;
 		}
-		btrfs_release_path(path);
+		btrfs_release_path(&path);
 		ret = __insert_block_group(trans, chunk_rec,
 					   root->fs_info->extent_root,
 					   used);
@@ -1440,7 +1438,7 @@ static int rebuild_block_group(struct btrfs_trans_handle *trans,
 			goto out;
 	}
 out:
-	btrfs_free_path(path);
+	btrfs_release_path(&path);
 	return ret;
 }
 
