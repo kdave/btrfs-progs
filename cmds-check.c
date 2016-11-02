@@ -10815,7 +10815,7 @@ static int build_roots_info_cache(struct btrfs_fs_info *info)
 	int ret = 0;
 	struct btrfs_key key;
 	struct extent_buffer *leaf;
-	struct btrfs_path *path;
+	struct btrfs_path path;
 
 	if (!roots_info_cache) {
 		roots_info_cache = malloc(sizeof(*roots_info_cache));
@@ -10824,24 +10824,20 @@ static int build_roots_info_cache(struct btrfs_fs_info *info)
 		cache_tree_init(roots_info_cache);
 	}
 
-	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
-
+	btrfs_init_path(&path);
 	key.objectid = 0;
 	key.type = BTRFS_EXTENT_ITEM_KEY;
 	key.offset = 0;
-
-	ret = btrfs_search_slot(NULL, info->extent_root, &key, path, 0, 0);
+	ret = btrfs_search_slot(NULL, info->extent_root, &key, &path, 0, 0);
 	if (ret < 0)
 		goto out;
-	leaf = path->nodes[0];
+	leaf = path.nodes[0];
 
 	while (1) {
 		struct btrfs_key found_key;
 		struct btrfs_extent_item *ei;
 		struct btrfs_extent_inline_ref *iref;
-		int slot = path->slots[0];
+		int slot = path.slots[0];
 		int type;
 		u64 flags;
 		u64 root_id;
@@ -10850,18 +10846,18 @@ static int build_roots_info_cache(struct btrfs_fs_info *info)
 		struct root_item_info *rii;
 
 		if (slot >= btrfs_header_nritems(leaf)) {
-			ret = btrfs_next_leaf(info->extent_root, path);
+			ret = btrfs_next_leaf(info->extent_root, &path);
 			if (ret < 0) {
 				break;
 			} else if (ret) {
 				ret = 0;
 				break;
 			}
-			leaf = path->nodes[0];
-			slot = path->slots[0];
+			leaf = path.nodes[0];
+			slot = path.slots[0];
 		}
 
-		btrfs_item_key_to_cpu(leaf, &found_key, path->slots[0]);
+		btrfs_item_key_to_cpu(leaf, &found_key, path.slots[0]);
 
 		if (found_key.type != BTRFS_EXTENT_ITEM_KEY &&
 		    found_key.type != BTRFS_METADATA_ITEM_KEY)
@@ -10924,11 +10920,11 @@ static int build_roots_info_cache(struct btrfs_fs_info *info)
 			rii->node_count++;
 		}
 next:
-		path->slots[0]++;
+		path.slots[0]++;
 	}
 
 out:
-	btrfs_free_path(path);
+	btrfs_release_path(&path);
 
 	return ret;
 }
