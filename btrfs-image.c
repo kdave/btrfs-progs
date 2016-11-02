@@ -2411,23 +2411,16 @@ static int fixup_devices(struct btrfs_fs_info *fs_info,
 {
 	struct btrfs_trans_handle *trans;
 	struct btrfs_dev_item *dev_item;
-	struct btrfs_path *path;
+	struct btrfs_path path;
 	struct extent_buffer *leaf;
 	struct btrfs_root *root = fs_info->chunk_root;
 	struct btrfs_key key;
 	u64 devid, cur_devid;
 	int ret;
 
-	path = btrfs_alloc_path();
-	if (!path) {
-		error("not enough memory to allocate path");
-		return -ENOMEM;
-	}
-
 	trans = btrfs_start_transaction(fs_info->tree_root, 1);
 	if (IS_ERR(trans)) {
 		error("cannot starting transaction %ld", PTR_ERR(trans));
-		btrfs_free_path(path);
 		return PTR_ERR(trans);
 	}
 
@@ -2442,17 +2435,19 @@ static int fixup_devices(struct btrfs_fs_info *fs_info,
 	key.type = BTRFS_DEV_ITEM_KEY;
 	key.offset = 0;
 
+	btrfs_init_path(&path);
+
 again:
-	ret = btrfs_search_slot(trans, root, &key, path, -1, 1);
+	ret = btrfs_search_slot(trans, root, &key, &path, -1, 1);
 	if (ret < 0) {
 		error("search failed: %d", ret);
 		exit(1);
 	}
 
 	while (1) {
-		leaf = path->nodes[0];
-		if (path->slots[0] >= btrfs_header_nritems(leaf)) {
-			ret = btrfs_next_leaf(root, path);
+		leaf = path.nodes[0];
+		if (path.slots[0] >= btrfs_header_nritems(leaf)) {
+			ret = btrfs_next_leaf(root, &path);
 			if (ret < 0) {
 				error("cannot go to next leaf %d", ret);
 				exit(1);
@@ -2461,27 +2456,27 @@ again:
 				ret = 0;
 				break;
 			}
-			leaf = path->nodes[0];
+			leaf = path.nodes[0];
 		}
 
-		btrfs_item_key_to_cpu(leaf, &key, path->slots[0]);
+		btrfs_item_key_to_cpu(leaf, &key, path.slots[0]);
 		if (key.type > BTRFS_DEV_ITEM_KEY)
 			break;
 		if (key.type != BTRFS_DEV_ITEM_KEY) {
-			path->slots[0]++;
+			path.slots[0]++;
 			continue;
 		}
 
-		dev_item = btrfs_item_ptr(leaf, path->slots[0],
+		dev_item = btrfs_item_ptr(leaf, path.slots[0],
 					  struct btrfs_dev_item);
 		cur_devid = btrfs_device_id(leaf, dev_item);
 		if (devid != cur_devid) {
-			ret = btrfs_del_item(trans, root, path);
+			ret = btrfs_del_item(trans, root, &path);
 			if (ret) {
 				error("cannot delete item: %d", ret);
 				exit(1);
 			}
-			btrfs_release_path(path);
+			btrfs_release_path(&path);
 			goto again;
 		}
 
@@ -2489,10 +2484,10 @@ again:
 		btrfs_set_device_bytes_used(leaf, dev_item,
 					    mdres->alloced_chunks);
 		btrfs_mark_buffer_dirty(leaf);
-		path->slots[0]++;
+		path.slots[0]++;
 	}
 
-	btrfs_free_path(path);
+	btrfs_release_path(&path);
 	ret = btrfs_commit_transaction(trans, fs_info->tree_root);
 	if (ret) {
 		error("unable to commit transaction: %d", ret);
