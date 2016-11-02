@@ -5540,31 +5540,27 @@ static int check_cache_range(struct btrfs_root *root,
 static int verify_space_cache(struct btrfs_root *root,
 			      struct btrfs_block_group_cache *cache)
 {
-	struct btrfs_path *path;
+	struct btrfs_path path;
 	struct extent_buffer *leaf;
 	struct btrfs_key key;
 	u64 last;
 	int ret = 0;
 
-	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
-
 	root = root->fs_info->extent_root;
 
 	last = max_t(u64, cache->key.objectid, BTRFS_SUPER_INFO_OFFSET);
 
+	btrfs_init_path(&path);
 	key.objectid = last;
 	key.offset = 0;
 	key.type = BTRFS_EXTENT_ITEM_KEY;
-
-	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
+	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
 	if (ret < 0)
 		goto out;
 	ret = 0;
 	while (1) {
-		if (path->slots[0] >= btrfs_header_nritems(path->nodes[0])) {
-			ret = btrfs_next_leaf(root, path);
+		if (path.slots[0] >= btrfs_header_nritems(path.nodes[0])) {
+			ret = btrfs_next_leaf(root, &path);
 			if (ret < 0)
 				goto out;
 			if (ret > 0) {
@@ -5572,13 +5568,13 @@ static int verify_space_cache(struct btrfs_root *root,
 				break;
 			}
 		}
-		leaf = path->nodes[0];
-		btrfs_item_key_to_cpu(leaf, &key, path->slots[0]);
+		leaf = path.nodes[0];
+		btrfs_item_key_to_cpu(leaf, &key, path.slots[0]);
 		if (key.objectid >= cache->key.offset + cache->key.objectid)
 			break;
 		if (key.type != BTRFS_EXTENT_ITEM_KEY &&
 		    key.type != BTRFS_METADATA_ITEM_KEY) {
-			path->slots[0]++;
+			path.slots[0]++;
 			continue;
 		}
 
@@ -5587,7 +5583,7 @@ static int verify_space_cache(struct btrfs_root *root,
 				last = key.objectid + key.offset;
 			else
 				last = key.objectid + root->nodesize;
-			path->slots[0]++;
+			path.slots[0]++;
 			continue;
 		}
 
@@ -5599,7 +5595,7 @@ static int verify_space_cache(struct btrfs_root *root,
 			last = key.objectid + key.offset;
 		else
 			last = key.objectid + root->nodesize;
-		path->slots[0]++;
+		path.slots[0]++;
 	}
 
 	if (last < cache->key.objectid + cache->key.offset)
@@ -5608,7 +5604,7 @@ static int verify_space_cache(struct btrfs_root *root,
 					cache->key.offset - last);
 
 out:
-	btrfs_free_path(path);
+	btrfs_release_path(&path);
 
 	if (!ret &&
 	    !RB_EMPTY_ROOT(&cache->free_space_ctl->free_space_offset)) {
