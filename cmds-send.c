@@ -197,6 +197,7 @@ static int add_clone_source(struct btrfs_send *sctx, u64 root_id)
 	return 0;
 }
 
+#if 0
 static int write_buf(int fd, const char *buf, size_t size)
 {
 	int ret;
@@ -224,7 +225,7 @@ out:
 	return ret;
 }
 
-static void *dump_thread(void *arg)
+static void *dump_thread_copy(void *arg)
 {
 	int ret;
 	struct btrfs_send *sctx = (struct btrfs_send*)arg;
@@ -247,6 +248,37 @@ static void *dump_thread(void *arg)
 		ret = write_buf(sctx->dump_fd, buf, rbytes);
 		if (ret < 0)
 			goto out;
+	}
+
+out:
+	if (ret < 0)
+		exit(-ret);
+
+	return ERR_PTR(ret);
+}
+#endif
+
+static void* dump_thread(void *arg)
+{
+	int ret;
+	struct btrfs_send *sctx = (struct btrfs_send*)arg;
+
+	while (1) {
+		ssize_t sbytes;
+
+		/* Source is a pipe, output is either file or stdout */
+		sbytes = splice(sctx->send_fd, NULL, sctx->dump_fd,
+				NULL, SEND_BUFFER_SIZE, SPLICE_F_MORE);
+		if (sbytes < 0) {
+			ret = -errno;
+			error("failed to read stream from kernel: %s",
+				strerror(-ret));
+			goto out;
+		}
+		if (!sbytes) {
+			ret = 0;
+			goto out;
+		}
 	}
 
 out:
