@@ -7542,7 +7542,7 @@ static int fixup_extent_refs(struct btrfs_fs_info *info,
 {
 	struct btrfs_trans_handle *trans = NULL;
 	int ret;
-	struct btrfs_path *path;
+	struct btrfs_path path;
 	struct list_head *cur = rec->backrefs.next;
 	struct cache_extent *cache;
 	struct extent_backref *back;
@@ -7552,10 +7552,7 @@ static int fixup_extent_refs(struct btrfs_fs_info *info,
 	if (rec->flag_block_full_backref)
 		flags |= BTRFS_BLOCK_FLAG_FULL_BACKREF;
 
-	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
-
+	btrfs_init_path(&path);
 	if (rec->refs != rec->extent_item_refs && !rec->metadata) {
 		/*
 		 * Sometimes the backrefs themselves are so broken they don't
@@ -7564,13 +7561,13 @@ static int fixup_extent_refs(struct btrfs_fs_info *info,
 		 * them into the list if we find the backref so that
 		 * verify_backrefs can figure out what to do.
 		 */
-		ret = find_possible_backrefs(info, path, extent_cache, rec);
+		ret = find_possible_backrefs(info, &path, extent_cache, rec);
 		if (ret < 0)
 			goto out;
 	}
 
 	/* step one, make sure all of the backrefs agree */
-	ret = verify_backrefs(info, path, rec);
+	ret = verify_backrefs(info, &path, rec);
 	if (ret < 0)
 		goto out;
 
@@ -7581,7 +7578,7 @@ static int fixup_extent_refs(struct btrfs_fs_info *info,
 	}
 
 	/* step two, delete all the existing records */
-	ret = delete_extent_records(trans, info->extent_root, path,
+	ret = delete_extent_records(trans, info->extent_root, &path,
 				    rec->start, rec->max_size);
 
 	if (ret < 0)
@@ -7608,7 +7605,7 @@ static int fixup_extent_refs(struct btrfs_fs_info *info,
 			continue;
 
 		rec->bad_full_backref = 0;
-		ret = record_extent(trans, info, path, rec, back, allocated, flags);
+		ret = record_extent(trans, info, &path, rec, back, allocated, flags);
 		allocated = 1;
 
 		if (ret)
@@ -7621,7 +7618,7 @@ out:
 			ret = err;
 	}
 
-	btrfs_free_path(path);
+	btrfs_release_path(&path);
 	return ret;
 }
 
