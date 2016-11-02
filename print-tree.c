@@ -947,8 +947,8 @@ static void print_timespec(struct extent_buffer *eb,
 			timestamp, suffix);
 }
 
-static void print_inode_item(struct extent_buffer *eb, struct btrfs_item *item,
-				struct btrfs_inode_item *ii)
+static void print_inode_item(struct extent_buffer *eb,
+		struct btrfs_inode_item *ii)
 {
 	char flags_str[256];
 
@@ -1091,7 +1091,7 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 		switch (type) {
 		case BTRFS_INODE_ITEM_KEY:
 			ii = btrfs_item_ptr(l, i, struct btrfs_inode_item);
-			print_inode_item(l, item, ii);
+			print_inode_item(l, ii);
 			break;
 		case BTRFS_INODE_REF_KEY:
 			iref = btrfs_item_ptr(l, i, struct btrfs_inode_ref);
