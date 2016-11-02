@@ -10213,24 +10213,20 @@ static int pin_metadata_blocks(struct btrfs_fs_info *fs_info)
 static int reset_block_groups(struct btrfs_fs_info *fs_info)
 {
 	struct btrfs_block_group_cache *cache;
-	struct btrfs_path *path;
+	struct btrfs_path path;
 	struct extent_buffer *leaf;
 	struct btrfs_chunk *chunk;
 	struct btrfs_key key;
 	int ret;
 	u64 start;
 
-	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
-
+	btrfs_init_path(&path);
 	key.objectid = 0;
 	key.type = BTRFS_CHUNK_ITEM_KEY;
 	key.offset = 0;
-
-	ret = btrfs_search_slot(NULL, fs_info->chunk_root, &key, path, 0, 0);
+	ret = btrfs_search_slot(NULL, fs_info->chunk_root, &key, &path, 0, 0);
 	if (ret < 0) {
-		btrfs_free_path(path);
+		btrfs_release_path(&path);
 		return ret;
 	}
 
@@ -10245,10 +10241,10 @@ static int reset_block_groups(struct btrfs_fs_info *fs_info)
 
 	/* First we need to create the in-memory block groups */
 	while (1) {
-		if (path->slots[0] >= btrfs_header_nritems(path->nodes[0])) {
-			ret = btrfs_next_leaf(fs_info->chunk_root, path);
+		if (path.slots[0] >= btrfs_header_nritems(path.nodes[0])) {
+			ret = btrfs_next_leaf(fs_info->chunk_root, &path);
 			if (ret < 0) {
-				btrfs_free_path(path);
+				btrfs_release_path(&path);
 				return ret;
 			}
 			if (ret) {
@@ -10256,15 +10252,14 @@ static int reset_block_groups(struct btrfs_fs_info *fs_info)
 				break;
 			}
 		}
-		leaf = path->nodes[0];
-		btrfs_item_key_to_cpu(leaf, &key, path->slots[0]);
+		leaf = path.nodes[0];
+		btrfs_item_key_to_cpu(leaf, &key, path.slots[0]);
 		if (key.type != BTRFS_CHUNK_ITEM_KEY) {
-			path->slots[0]++;
+			path.slots[0]++;
 			continue;
 		}
 
-		chunk = btrfs_item_ptr(leaf, path->slots[0],
-				       struct btrfs_chunk);
+		chunk = btrfs_item_ptr(leaf, path.slots[0], struct btrfs_chunk);
 		btrfs_add_block_group(fs_info, 0,
 				      btrfs_chunk_type(leaf, chunk),
 				      key.objectid, key.offset,
@@ -10272,7 +10267,7 @@ static int reset_block_groups(struct btrfs_fs_info *fs_info)
 		set_extent_dirty(&fs_info->free_space_cache, key.offset,
 				 key.offset + btrfs_chunk_length(leaf, chunk),
 				 GFP_NOFS);
-		path->slots[0]++;
+		path.slots[0]++;
 	}
 	start = 0;
 	while (1) {
@@ -10283,7 +10278,7 @@ static int reset_block_groups(struct btrfs_fs_info *fs_info)
 		start = cache->key.objectid + cache->key.offset;
 	}
 
-	btrfs_free_path(path);
+	btrfs_release_path(&path);
 	return 0;
 }
 
