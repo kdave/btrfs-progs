@@ -461,7 +461,7 @@ static int set_file_xattrs(struct btrfs_root *root, u64 inode,
 			   int fd, const char *file_name)
 {
 	struct btrfs_key key;
-	struct btrfs_path *path;
+	struct btrfs_path path;
 	struct extent_buffer *leaf;
 	struct btrfs_dir_item *di;
 	u32 name_len = 0;
@@ -472,23 +472,19 @@ static int set_file_xattrs(struct btrfs_root *root, u64 inode,
 	char *data = NULL;
 	int ret = 0;
 
+	btrfs_init_path(&path);
 	key.objectid = inode;
 	key.type = BTRFS_XATTR_ITEM_KEY;
 	key.offset = 0;
-
-	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
-
-	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
+	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
 	if (ret < 0)
 		goto out;
 
-	leaf = path->nodes[0];
+	leaf = path.nodes[0];
 	while (1) {
-		if (path->slots[0] >= btrfs_header_nritems(leaf)) {
+		if (path.slots[0] >= btrfs_header_nritems(leaf)) {
 			do {
-				ret = next_leaf(root, path);
+				ret = next_leaf(root, &path);
 				if (ret < 0) {
 					error("searching for extended attributes: %d\n",
 						ret);
@@ -498,17 +494,17 @@ static int set_file_xattrs(struct btrfs_root *root, u64 inode,
 					ret = 0;
 					goto out;
 				}
-				leaf = path->nodes[0];
+				leaf = path.nodes[0];
 			} while (!leaf);
 			continue;
 		}
 
-		btrfs_item_key_to_cpu(leaf, &key, path->slots[0]);
+		btrfs_item_key_to_cpu(leaf, &key, path.slots[0]);
 		if (key.type != BTRFS_XATTR_ITEM_KEY || key.objectid != inode)
 			break;
 		cur = 0;
-		total_len = btrfs_item_size_nr(leaf, path->slots[0]);
-		di = btrfs_item_ptr(leaf, path->slots[0],
+		total_len = btrfs_item_size_nr(leaf, path.slots[0]);
+		di = btrfs_item_ptr(leaf, path.slots[0],
 				    struct btrfs_dir_item);
 
 		while (cur < total_len) {
@@ -548,11 +544,11 @@ static int set_file_xattrs(struct btrfs_root *root, u64 inode,
 			cur += len;
 			di = (struct btrfs_dir_item *)((char *)di + len);
 		}
-		path->slots[0]++;
+		path.slots[0]++;
 	}
 	ret = 0;
 out:
-	btrfs_free_path(path);
+	btrfs_release_path(&path);
 	free(name);
 	free(data);
 
