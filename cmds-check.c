@@ -5899,7 +5899,7 @@ out:
 
 static int check_csums(struct btrfs_root *root)
 {
-	struct btrfs_path *path;
+	struct btrfs_path path;
 	struct extent_buffer *leaf;
 	struct btrfs_key key;
 	u64 offset = 0, num_bytes = 0;
@@ -5915,28 +5915,24 @@ static int check_csums(struct btrfs_root *root)
 		return -ENOENT;
 	}
 
+	btrfs_init_path(&path);
 	key.objectid = BTRFS_EXTENT_CSUM_OBJECTID;
 	key.type = BTRFS_EXTENT_CSUM_KEY;
 	key.offset = 0;
-
-	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
-
-	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
+	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
 	if (ret < 0) {
 		fprintf(stderr, "Error searching csum tree %d\n", ret);
-		btrfs_free_path(path);
+		btrfs_release_path(&path);
 		return ret;
 	}
 
-	if (ret > 0 && path->slots[0])
-		path->slots[0]--;
+	if (ret > 0 && path.slots[0])
+		path.slots[0]--;
 	ret = 0;
 
 	while (1) {
-		if (path->slots[0] >= btrfs_header_nritems(path->nodes[0])) {
-			ret = btrfs_next_leaf(root, path);
+		if (path.slots[0] >= btrfs_header_nritems(path.nodes[0])) {
+			ret = btrfs_next_leaf(root, &path);
 			if (ret < 0) {
 				fprintf(stderr, "Error going to next leaf "
 					"%d\n", ret);
@@ -5945,19 +5941,19 @@ static int check_csums(struct btrfs_root *root)
 			if (ret)
 				break;
 		}
-		leaf = path->nodes[0];
+		leaf = path.nodes[0];
 
-		btrfs_item_key_to_cpu(leaf, &key, path->slots[0]);
+		btrfs_item_key_to_cpu(leaf, &key, path.slots[0]);
 		if (key.type != BTRFS_EXTENT_CSUM_KEY) {
-			path->slots[0]++;
+			path.slots[0]++;
 			continue;
 		}
 
-		data_len = (btrfs_item_size_nr(leaf, path->slots[0]) /
+		data_len = (btrfs_item_size_nr(leaf, path.slots[0]) /
 			      csum_size) * root->sectorsize;
 		if (!check_data_csum)
 			goto skip_csum_check;
-		leaf_offset = btrfs_item_ptr_offset(leaf, path->slots[0]);
+		leaf_offset = btrfs_item_ptr_offset(leaf, path.slots[0]);
 		ret = check_extent_csums(root, key.offset, data_len,
 					 leaf_offset, leaf);
 		if (ret)
@@ -5977,10 +5973,10 @@ skip_csum_check:
 			num_bytes = 0;
 		}
 		num_bytes += data_len;
-		path->slots[0]++;
+		path.slots[0]++;
 	}
 
-	btrfs_free_path(path);
+	btrfs_release_path(&path);
 	return errors;
 }
 
