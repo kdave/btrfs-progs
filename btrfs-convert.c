@@ -283,7 +283,7 @@ static int record_file_blocks(struct blk_iterate_data *data,
 	int ret = 0;
 	struct btrfs_root *root = data->root;
 	struct btrfs_root *convert_root = data->convert_root;
-	struct btrfs_path *path;
+	struct btrfs_path path;
 	u64 file_pos = file_block * root->sectorsize;
 	u64 old_disk_bytenr = disk_block * root->sectorsize;
 	u64 num_bytes = num_blocks * root->sectorsize;
@@ -295,9 +295,7 @@ static int record_file_blocks(struct blk_iterate_data *data,
 				data->objectid, data->inode, file_pos, 0,
 				num_bytes);
 
-	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
+	btrfs_init_path(&path);
 
 	/*
 	 * Search real disk bytenr from convert root
@@ -316,11 +314,11 @@ static int record_file_blocks(struct blk_iterate_data *data,
 		key.type = BTRFS_EXTENT_DATA_KEY;
 		key.offset = cur_off;
 
-		ret = btrfs_search_slot(NULL, convert_root, &key, path, 0, 0);
+		ret = btrfs_search_slot(NULL, convert_root, &key, &path, 0, 0);
 		if (ret < 0)
 			break;
 		if (ret > 0) {
-			ret = btrfs_previous_item(convert_root, path,
+			ret = btrfs_previous_item(convert_root, &path,
 						  data->convert_ino,
 						  BTRFS_EXTENT_DATA_KEY);
 			if (ret < 0)
@@ -330,8 +328,8 @@ static int record_file_blocks(struct blk_iterate_data *data,
 				break;
 			}
 		}
-		node = path->nodes[0];
-		slot = path->slots[0];
+		node = path.nodes[0];
+		slot = path.slots[0];
 		btrfs_item_key_to_cpu(node, &key, slot);
 		BUG_ON(key.type != BTRFS_EXTENT_DATA_KEY ||
 		       key.objectid != data->convert_ino ||
@@ -340,7 +338,7 @@ static int record_file_blocks(struct blk_iterate_data *data,
 		extent_disk_bytenr = btrfs_file_extent_disk_bytenr(node, fi);
 		extent_num_bytes = btrfs_file_extent_disk_num_bytes(node, fi);
 		BUG_ON(cur_off - key.offset >= extent_num_bytes);
-		btrfs_release_path(path);
+		btrfs_release_path(&path);
 
 		if (extent_disk_bytenr)
 			real_disk_bytenr = cur_off - key.offset +
@@ -363,7 +361,7 @@ static int record_file_blocks(struct blk_iterate_data *data,
 		 * need to waste CPU cycles now.
 		 */
 	}
-	btrfs_free_path(path);
+	btrfs_release_path(&path);
 	return ret;
 }
 
