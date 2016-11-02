@@ -2250,31 +2250,25 @@ static int delete_dir_index(struct btrfs_root *root,
 {
 	struct btrfs_trans_handle *trans;
 	struct btrfs_dir_item *di;
-	struct btrfs_path *path;
+	struct btrfs_path path;
 	int ret = 0;
 
-	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
-
 	trans = btrfs_start_transaction(root, 1);
-	if (IS_ERR(trans)) {
-		btrfs_free_path(path);
+	if (IS_ERR(trans))
 		return PTR_ERR(trans);
-	}
-
 
 	fprintf(stderr, "Deleting bad dir index [%llu,%u,%llu] root %llu\n",
 		(unsigned long long)backref->dir,
 		BTRFS_DIR_INDEX_KEY, (unsigned long long)backref->index,
 		(unsigned long long)root->objectid);
 
-	di = btrfs_lookup_dir_index(trans, root, path, backref->dir,
+	btrfs_init_path(&path);
+	di = btrfs_lookup_dir_index(trans, root, &path, backref->dir,
 				    backref->name, backref->namelen,
 				    backref->index, -1);
 	if (IS_ERR(di)) {
 		ret = PTR_ERR(di);
-		btrfs_free_path(path);
+		btrfs_release_path(&path);
 		btrfs_commit_transaction(trans, root);
 		if (ret == -ENOENT)
 			return 0;
@@ -2282,11 +2276,11 @@ static int delete_dir_index(struct btrfs_root *root,
 	}
 
 	if (!di)
-		ret = btrfs_del_item(trans, root, path);
+		ret = btrfs_del_item(trans, root, &path);
 	else
-		ret = btrfs_delete_one_dir_name(trans, root, path, di);
+		ret = btrfs_delete_one_dir_name(trans, root, &path, di);
 	BUG_ON(ret);
-	btrfs_free_path(path);
+	btrfs_release_path(&path);
 	btrfs_commit_transaction(trans, root);
 	return ret;
 }
