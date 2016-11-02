@@ -62,10 +62,9 @@ static void print_dir_item_type(struct extent_buffer *eb,
 	}
 }
 
-static int print_dir_item(struct extent_buffer *eb, struct btrfs_item *item,
+static int print_dir_item(struct extent_buffer *eb, u32 size,
 			  struct btrfs_dir_item *di)
 {
-	u32 total;
 	u32 cur = 0;
 	u32 len;
 	u32 name_len;
@@ -73,8 +72,7 @@ static int print_dir_item(struct extent_buffer *eb, struct btrfs_item *item,
 	char namebuf[BTRFS_NAME_LEN];
 	struct btrfs_disk_key location;
 
-	total = btrfs_item_size(eb, item);
-	while(cur < total) {
+	while (cur < size) {
 		btrfs_dir_item_key(eb, di, &location);
 		printf("\t\tlocation ");
 		btrfs_print_key(&location);
@@ -102,11 +100,9 @@ static int print_dir_item(struct extent_buffer *eb, struct btrfs_item *item,
 	return 0;
 }
 
-static int print_inode_extref_item(struct extent_buffer *eb,
-				   struct btrfs_item *item,
-				   struct btrfs_inode_extref *extref)
+static int print_inode_extref_item(struct extent_buffer *eb, u32 size,
+		struct btrfs_inode_extref *extref)
 {
-	u32 total;
 	u32 cur = 0;
 	u32 len;
 	u32 name_len = 0;
@@ -114,9 +110,7 @@ static int print_inode_extref_item(struct extent_buffer *eb,
 	u64 parent_objid;
 	char namebuf[BTRFS_NAME_LEN];
 
-	total = btrfs_item_size(eb, item);
-
-	while (cur < total) {
+	while (cur < size) {
 		index = btrfs_inode_extref_index(eb, extref);
 		name_len = btrfs_inode_extref_name_len(eb, extref);
 		parent_objid = btrfs_inode_extref_parent(eb, extref);
@@ -138,17 +132,16 @@ static int print_inode_extref_item(struct extent_buffer *eb,
 	return 0;
 }
 
-static int print_inode_ref_item(struct extent_buffer *eb, struct btrfs_item *item,
+static int print_inode_ref_item(struct extent_buffer *eb, u32 size,
 				struct btrfs_inode_ref *ref)
 {
-	u32 total;
 	u32 cur = 0;
 	u32 len;
 	u32 name_len;
 	u64 index;
 	char namebuf[BTRFS_NAME_LEN];
-	total = btrfs_item_size(eb, item);
-	while(cur < total) {
+
+	while (cur < size) {
 		name_len = btrfs_inode_ref_name_len(eb, ref);
 		index = btrfs_inode_ref_index(eb, ref);
 		len = (name_len <= sizeof(namebuf))? name_len: sizeof(namebuf);
@@ -1074,7 +1067,10 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 	print_uuids(l);
 	fflush(stdout);
 	for (i = 0 ; i < nr ; i++) {
+		u32 item_size;
+
 		item = btrfs_item_nr(i);
+		item_size = btrfs_item_size(l, item);
 		btrfs_item_key(l, &disk_key, i);
 		objectid = btrfs_disk_key_objectid(&disk_key);
 		type = btrfs_disk_key_type(&disk_key);
@@ -1095,17 +1091,17 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 			break;
 		case BTRFS_INODE_REF_KEY:
 			iref = btrfs_item_ptr(l, i, struct btrfs_inode_ref);
-			print_inode_ref_item(l, item, iref);
+			print_inode_ref_item(l, item_size, iref);
 			break;
 		case BTRFS_INODE_EXTREF_KEY:
 			iref2 = btrfs_item_ptr(l, i, struct btrfs_inode_extref);
-			print_inode_extref_item(l, item, iref2);
+			print_inode_extref_item(l, item_size, iref2);
 			break;
 		case BTRFS_DIR_ITEM_KEY:
 		case BTRFS_DIR_INDEX_KEY:
 		case BTRFS_XATTR_ITEM_KEY:
 			di = btrfs_item_ptr(l, i, struct btrfs_dir_item);
-			print_dir_item(l, item, di);
+			print_dir_item(l, item_size, di);
 			break;
 		case BTRFS_DIR_LOG_INDEX_KEY:
 		case BTRFS_DIR_LOG_ITEM_KEY:
@@ -1284,7 +1280,7 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 		case BTRFS_STRING_ITEM_KEY:
 			/* dirty, but it's simple */
 			str = l->data + btrfs_item_ptr_offset(l, i);
-			printf("\t\titem data %.*s\n", btrfs_item_size(l, item), str);
+			printf("\t\titem data %.*s\n", item_size, str);
 			break;
 		case BTRFS_PERSISTENT_ITEM_KEY:
 			printf("\t\tpersistent item objectid ");
@@ -1294,7 +1290,7 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 			case BTRFS_DEV_STATS_OBJECTID:
 				print_dev_stats(l, btrfs_item_ptr(l, i,
 						struct btrfs_dev_stats_item),
-						btrfs_item_size(l, item));
+						item_size);
 				break;
 			default:
 				printf("\t\tunknown persistent item objectid %llu\n",
