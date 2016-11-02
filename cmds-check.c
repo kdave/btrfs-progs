@@ -2683,48 +2683,46 @@ out:
  */
 static int find_normal_file_extent(struct btrfs_root *root, u64 ino)
 {
-	struct btrfs_path *path;
+	struct btrfs_path path;
 	struct btrfs_key key;
 	struct btrfs_key found_key;
 	struct btrfs_file_extent_item *fi;
 	u8 type;
 	int ret = 0;
 
-	path = btrfs_alloc_path();
-	if (!path)
-		goto out;
+	btrfs_init_path(&path);
 	key.objectid = ino;
 	key.type = BTRFS_EXTENT_DATA_KEY;
 	key.offset = 0;
 
-	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
+	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
 	if (ret < 0) {
 		ret = 0;
 		goto out;
 	}
-	if (ret && path->slots[0] >= btrfs_header_nritems(path->nodes[0])) {
-		ret = btrfs_next_leaf(root, path);
+	if (ret && path.slots[0] >= btrfs_header_nritems(path.nodes[0])) {
+		ret = btrfs_next_leaf(root, &path);
 		if (ret) {
 			ret = 0;
 			goto out;
 		}
 	}
 	while (1) {
-		btrfs_item_key_to_cpu(path->nodes[0], &found_key,
-				      path->slots[0]);
+		btrfs_item_key_to_cpu(path.nodes[0], &found_key,
+				      path.slots[0]);
 		if (found_key.objectid != ino ||
 		    found_key.type != BTRFS_EXTENT_DATA_KEY)
 			break;
-		fi = btrfs_item_ptr(path->nodes[0], path->slots[0],
+		fi = btrfs_item_ptr(path.nodes[0], path.slots[0],
 				    struct btrfs_file_extent_item);
-		type = btrfs_file_extent_type(path->nodes[0], fi);
+		type = btrfs_file_extent_type(path.nodes[0], fi);
 		if (type != BTRFS_FILE_EXTENT_INLINE) {
 			ret = 1;
 			goto out;
 		}
 	}
 out:
-	btrfs_free_path(path);
+	btrfs_release_path(&path);
 	return ret;
 }
 
