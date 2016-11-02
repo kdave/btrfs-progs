@@ -4300,7 +4300,7 @@ static int try_to_fix_bad_block(struct btrfs_root *root,
 	struct ulist *roots;
 	struct ulist_node *node;
 	struct btrfs_root *search_root;
-	struct btrfs_path *path;
+	struct btrfs_path path;
 	struct ulist_iterator iter;
 	struct btrfs_key root_key, key;
 	int ret;
@@ -4309,17 +4309,11 @@ static int try_to_fix_bad_block(struct btrfs_root *root,
 	    status != BTRFS_TREE_BLOCK_INVALID_OFFSETS)
 		return -EIO;
 
-	path = btrfs_alloc_path();
-	if (!path)
+	ret = btrfs_find_all_roots(NULL, root->fs_info, buf->start, 0, &roots);
+	if (ret)
 		return -EIO;
 
-	ret = btrfs_find_all_roots(NULL, root->fs_info, buf->start,
-				   0, &roots);
-	if (ret) {
-		btrfs_free_path(path);
-		return -EIO;
-	}
-
+	btrfs_init_path(&path);
 	ULIST_ITER_INIT(&iter);
 	while ((node = ulist_next(roots, &iter))) {
 		root_key.objectid = node->val;
@@ -4339,31 +4333,31 @@ static int try_to_fix_bad_block(struct btrfs_root *root,
 			break;
 		}
 
-		path->lowest_level = btrfs_header_level(buf);
-		path->skip_check_block = 1;
-		if (path->lowest_level)
+		path.lowest_level = btrfs_header_level(buf);
+		path.skip_check_block = 1;
+		if (path.lowest_level)
 			btrfs_node_key_to_cpu(buf, &key, 0);
 		else
 			btrfs_item_key_to_cpu(buf, &key, 0);
-		ret = btrfs_search_slot(trans, search_root, &key, path, 0, 1);
+		ret = btrfs_search_slot(trans, search_root, &key, &path, 0, 1);
 		if (ret) {
 			ret = -EIO;
 			btrfs_commit_transaction(trans, search_root);
 			break;
 		}
 		if (status == BTRFS_TREE_BLOCK_BAD_KEY_ORDER)
-			ret = fix_key_order(trans, search_root, path);
+			ret = fix_key_order(trans, search_root, &path);
 		else if (status == BTRFS_TREE_BLOCK_INVALID_OFFSETS)
-			ret = fix_item_offset(trans, search_root, path);
+			ret = fix_item_offset(trans, search_root, &path);
 		if (ret) {
 			btrfs_commit_transaction(trans, search_root);
 			break;
 		}
-		btrfs_release_path(path);
+		btrfs_release_path(&path);
 		btrfs_commit_transaction(trans, search_root);
 	}
 	ulist_free(roots);
-	btrfs_free_path(path);
+	btrfs_release_path(&path);
 	return ret;
 }
 
