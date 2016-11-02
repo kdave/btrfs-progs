@@ -48,8 +48,8 @@ static u64 index_cnt = 2;
 static int verbose = 1;
 
 struct directory_name_entry {
-	char *dir_name;
-	char *path;
+	const char *dir_name;
+	const char *path;
 	ino_t inum;
 	struct list_head list;
 };
