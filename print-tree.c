@@ -248,7 +248,7 @@ void print_chunk(struct extent_buffer *eb, struct btrfs_chunk *chunk)
 		printf("\t\t\tstripe %d devid %llu offset %llu\n", i,
 		      (unsigned long long)btrfs_stripe_devid_nr(eb, chunk, i),
 		      (unsigned long long)btrfs_stripe_offset_nr(eb, chunk, i));
-		printf("\t\t\tdev uuid: %s\n", str_dev_uuid);
+		printf("\t\t\tdev_uuid %s\n", str_dev_uuid);
 	}
 }
 
@@ -272,7 +272,7 @@ static void print_dev_item(struct extent_buffer *eb,
 	       "\t\tio_align %u io_width %u sector_size %u type %llu\n"
 	       "\t\tgeneration %llu start_offset %llu dev_group %u\n"
 	       "\t\tseek_speed %hhu bandwidth %hhu\n"
-	       "\t\tdev uuid %s\n"
+	       "\t\tuuid %s\n"
 	       "\t\tfsid %s\n",
 	       (unsigned long long)btrfs_device_id(eb, dev_item),
 	       (unsigned long long)btrfs_device_total_bytes(eb, dev_item),
@@ -353,10 +353,11 @@ static void print_file_extent_item(struct extent_buffer *eb,
 			extent_type, file_extent_type_to_str(extent_type));
 
 	if (extent_type == BTRFS_FILE_EXTENT_INLINE) {
-		printf("\t\tinline extent data size %u ram %u compress(%s)\n",
-		  btrfs_file_extent_inline_item_len(eb, item),
-		  btrfs_file_extent_inline_len(eb, slot, fi),
-		  compress_str);
+		printf("\t\tinline extent data size %u ram_bytes %u compression %hhu (%s)\n",
+				btrfs_file_extent_inline_item_len(eb, item),
+				btrfs_file_extent_inline_len(eb, slot, fi),
+				btrfs_file_extent_compression(eb, fi),
+				compress_str);
 		return;
 	}
 	if (extent_type == BTRFS_FILE_EXTENT_PREALLOC) {
@@ -375,7 +376,9 @@ static void print_file_extent_item(struct extent_buffer *eb,
 		(unsigned long long)btrfs_file_extent_offset(eb, fi),
 		(unsigned long long)btrfs_file_extent_num_bytes(eb, fi),
 		(unsigned long long)btrfs_file_extent_ram_bytes(eb, fi));
-	printf("\t\textent compression(%s)\n", compress_str);
+	printf("\t\textent compression %hhu (%s)\n",
+			btrfs_file_extent_compression(eb, fi),
+			compress_str);
 }
 
 /* Caller should ensure sizeof(*ret) >= 16("DATA|TREE_BLOCK") */
@@ -1206,7 +1209,7 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 				BTRFS_UUID_SIZE);
 			uuid_unparse(uuid, uuid_str);
 			printf("\t\tdev extent chunk_tree %llu\n"
-			       "\t\tchunk objectid %llu chunk offset %llu "
+			       "\t\tchunk_objectid %llu chunk_offset %llu "
 			       "length %llu\n"
 			       "\t\tchunk_tree_uuid %s\n",
 			       (unsigned long long)
@@ -1241,8 +1244,8 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 			qg_info = btrfs_item_ptr(l, i,
 						 struct btrfs_qgroup_info_item);
 			printf("\t\tgeneration %llu\n"
-			     "\t\treferenced %llu referenced compressed %llu\n"
-			     "\t\texclusive %llu exclusive compressed %llu\n",
+			     "\t\treferenced %llu referenced_compressed %llu\n"
+			     "\t\texclusive %llu exclusive_compressed %llu\n",
 			       (unsigned long long)
 			       btrfs_qgroup_info_generation(l, qg_info),
 			       (unsigned long long)
@@ -1260,8 +1263,8 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 			qg_limit = btrfs_item_ptr(l, i,
 					 struct btrfs_qgroup_limit_item);
 			printf("\t\tflags %llx\n"
-			     "\t\tmax referenced %lld max exclusive %lld\n"
-			     "\t\trsv referenced %lld rsv exclusive %lld\n",
+			     "\t\tmax_referenced %lld max_exclusive %lld\n"
+			     "\t\trsv_referenced %lld rsv_exclusive %lld\n",
 			       (unsigned long long)
 			       btrfs_qgroup_limit_flags(l, qg_limit),
 			       (long long)
