@@ -10650,7 +10650,7 @@ static int fill_csum_tree_from_fs(struct btrfs_trans_handle *trans,
 				  struct btrfs_root *csum_root)
 {
 	struct btrfs_fs_info *fs_info = csum_root->fs_info;
-	struct btrfs_path *path;
+	struct btrfs_path path;
 	struct btrfs_root *tree_root = fs_info->tree_root;
 	struct btrfs_root *cur_root;
 	struct extent_buffer *node;
@@ -10658,15 +10658,11 @@ static int fill_csum_tree_from_fs(struct btrfs_trans_handle *trans,
 	int slot = 0;
 	int ret = 0;
 
-	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
-
+	btrfs_init_path(&path);
 	key.objectid = BTRFS_FS_TREE_OBJECTID;
 	key.offset = 0;
 	key.type = BTRFS_ROOT_ITEM_KEY;
-
-	ret = btrfs_search_slot(NULL, tree_root, &key, path, 0, 0);
+	ret = btrfs_search_slot(NULL, tree_root, &key, &path, 0, 0);
 	if (ret < 0)
 		goto out;
 	if (ret > 0) {
@@ -10675,8 +10671,8 @@ static int fill_csum_tree_from_fs(struct btrfs_trans_handle *trans,
 	}
 
 	while (1) {
-		node = path->nodes[0];
-		slot = path->slots[0];
+		node = path.nodes[0];
+		slot = path.slots[0];
 		btrfs_item_key_to_cpu(node, &key, slot);
 		if (key.objectid > BTRFS_LAST_FREE_OBJECTID)
 			goto out;
@@ -10697,7 +10693,7 @@ static int fill_csum_tree_from_fs(struct btrfs_trans_handle *trans,
 		if (ret < 0)
 			goto out;
 next:
-		ret = btrfs_next_item(tree_root, path);
+		ret = btrfs_next_item(tree_root, &path);
 		if (ret > 0) {
 			ret = 0;
 			goto out;
@@ -10707,7 +10703,7 @@ next:
 	}
 
 out:
-	btrfs_free_path(path);
+	btrfs_release_path(&path);
 	return ret;
 }
 
