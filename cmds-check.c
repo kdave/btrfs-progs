@@ -7627,7 +7627,7 @@ static int fixup_extent_flags(struct btrfs_fs_info *fs_info,
 {
 	struct btrfs_trans_handle *trans;
 	struct btrfs_root *root = fs_info->extent_root;
-	struct btrfs_path *path;
+	struct btrfs_path path;
 	struct btrfs_extent_item *ei;
 	struct btrfs_key key;
 	u64 flags;
@@ -7642,32 +7642,27 @@ static int fixup_extent_flags(struct btrfs_fs_info *fs_info,
 		key.offset = rec->max_size;
 	}
 
-	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
-
 	trans = btrfs_start_transaction(root, 0);
-	if (IS_ERR(trans)) {
-		btrfs_free_path(path);
+	if (IS_ERR(trans))
 		return PTR_ERR(trans);
-	}
 
-	ret = btrfs_search_slot(trans, root, &key, path, 0, 1);
+	btrfs_init_path(&path);
+	ret = btrfs_search_slot(trans, root, &key, &path, 0, 1);
 	if (ret < 0) {
-		btrfs_free_path(path);
+		btrfs_release_path(&path);
 		btrfs_commit_transaction(trans, root);
 		return ret;
 	} else if (ret) {
 		fprintf(stderr, "Didn't find extent for %llu\n",
 			(unsigned long long)rec->start);
-		btrfs_free_path(path);
+		btrfs_release_path(&path);
 		btrfs_commit_transaction(trans, root);
 		return -ENOENT;
 	}
 
-	ei = btrfs_item_ptr(path->nodes[0], path->slots[0],
+	ei = btrfs_item_ptr(path.nodes[0], path.slots[0],
 			    struct btrfs_extent_item);
-	flags = btrfs_extent_flags(path->nodes[0], ei);
+	flags = btrfs_extent_flags(path.nodes[0], ei);
 	if (rec->flag_block_full_backref) {
 		fprintf(stderr, "setting full backref on %llu\n",
 			(unsigned long long)key.objectid);
@@ -7677,9 +7672,9 @@ static int fixup_extent_flags(struct btrfs_fs_info *fs_info,
 			(unsigned long long)key.objectid);
 		flags &= ~BTRFS_BLOCK_FLAG_FULL_BACKREF;
 	}
-	btrfs_set_extent_flags(path->nodes[0], ei, flags);
-	btrfs_mark_buffer_dirty(path->nodes[0]);
-	btrfs_free_path(path);
+	btrfs_set_extent_flags(path.nodes[0], ei, flags);
+	btrfs_mark_buffer_dirty(path.nodes[0]);
+	btrfs_release_path(&path);
 	return btrfs_commit_transaction(trans, root);
 }
 
