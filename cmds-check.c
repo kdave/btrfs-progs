@@ -7267,17 +7267,13 @@ static int delete_duplicate_records(struct btrfs_root *root,
 {
 	struct btrfs_trans_handle *trans;
 	LIST_HEAD(delete_list);
-	struct btrfs_path *path;
+	struct btrfs_path path;
 	struct extent_record *tmp, *good, *n;
 	int nr_del = 0;
 	int ret = 0, err;
 	struct btrfs_key key;
 
-	path = btrfs_alloc_path();
-	if (!path) {
-		ret = -ENOMEM;
-		goto out;
-	}
+	btrfs_init_path(&path);
 
 	good = rec;
 	/* Find the record that covers all of the duplicates. */
@@ -7329,16 +7325,16 @@ static int delete_duplicate_records(struct btrfs_root *root,
 			abort();
 		}
 
-		ret = btrfs_search_slot(trans, root, &key, path, -1, 1);
+		ret = btrfs_search_slot(trans, root, &key, &path, -1, 1);
 		if (ret) {
 			if (ret > 0)
 				ret = -EINVAL;
 			break;
 		}
-		ret = btrfs_del_item(trans, root, path);
+		ret = btrfs_del_item(trans, root, &path);
 		if (ret)
 			break;
-		btrfs_release_path(path);
+		btrfs_release_path(&path);
 		nr_del++;
 	}
 	err = btrfs_commit_transaction(trans, root);
@@ -7359,7 +7355,7 @@ out:
 		free(tmp);
 	}
 
-	btrfs_free_path(path);
+	btrfs_release_path(&path);
 
 	if (!ret && !nr_del)
 		rec->num_duplicates = 0;
