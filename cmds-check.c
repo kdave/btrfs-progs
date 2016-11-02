@@ -3485,7 +3485,7 @@ static int repair_btree(struct btrfs_root *root,
 			struct cache_tree *corrupt_blocks)
 {
 	struct btrfs_trans_handle *trans;
-	struct btrfs_path *path;
+	struct btrfs_path path;
 	struct btrfs_corrupt_block *corrupt;
 	struct cache_extent *cache;
 	struct btrfs_key key;
@@ -3496,23 +3496,20 @@ static int repair_btree(struct btrfs_root *root,
 	if (cache_tree_empty(corrupt_blocks))
 		return 0;
 
-	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
-
 	trans = btrfs_start_transaction(root, 1);
 	if (IS_ERR(trans)) {
 		ret = PTR_ERR(trans);
 		fprintf(stderr, "Error starting transaction: %s\n",
 			strerror(-ret));
-		goto out_free_path;
+		return ret;
 	}
+	btrfs_init_path(&path);
 	cache = first_cache_extent(corrupt_blocks);
 	while (cache) {
 		corrupt = container_of(cache, struct btrfs_corrupt_block,
 				       cache);
 		level = corrupt->level;
-		path->lowest_level = level;
+		path.lowest_level = level;
 		key.objectid = corrupt->key.objectid;
 		key.type = corrupt->key.type;
 		key.offset = corrupt->key.offset;
@@ -3523,22 +3520,22 @@ static int repair_btree(struct btrfs_root *root,
 		 * so ins_len set to 0 here.
 		 * Balance will be done after all corrupt node/leaf is deleted.
 		 */
-		ret = btrfs_search_slot(trans, root, &key, path, 0, 1);
+		ret = btrfs_search_slot(trans, root, &key, &path, 0, 1);
 		if (ret < 0)
 			goto out;
-		offset = btrfs_node_blockptr(path->nodes[level],
-					     path->slots[level]);
+		offset = btrfs_node_blockptr(path.nodes[level],
+					     path.slots[level]);
 
 		/* Remove the ptr */
-		ret = btrfs_del_ptr(trans, root, path, level,
-				    path->slots[level]);
+		ret = btrfs_del_ptr(trans, root, &path, level,
+				    path.slots[level]);
 		if (ret < 0)
 			goto out;
 		/*
 		 * Remove the corresponding extent
 		 * return value is not concerned.
 		 */
-		btrfs_release_path(path);
+		btrfs_release_path(&path);
 		ret = btrfs_free_extent(trans, root, offset, root->nodesize,
 					0, root->root_key.objectid,
 					level - 1, 0);
@@ -3551,18 +3548,17 @@ static int repair_btree(struct btrfs_root *root,
 		corrupt = container_of(cache, struct btrfs_corrupt_block,
 				       cache);
 		memcpy(&key, &corrupt->key, sizeof(key));
-		ret = btrfs_search_slot(trans, root, &key, path, -1, 1);
+		ret = btrfs_search_slot(trans, root, &key, &path, -1, 1);
 		if (ret < 0)
 			goto out;
 		/* return will always >0 since it won't find the item */
 		ret = 0;
-		btrfs_release_path(path);
+		btrfs_release_path(&path);
 		cache = next_cache_extent(cache);
 	}
 out:
 	btrfs_commit_transaction(trans, root);
-out_free_path:
-	btrfs_free_path(path);
+	btrfs_release_path(&path);
 	return ret;
 }
 
