@@ -44,6 +44,8 @@
 #define COMPRESS_NONE		0
 #define COMPRESS_ZLIB		1
 
+#define MAX_WORKER_THREADS	(32)
+
 struct meta_cluster_item {
 	__le64 bytenr;
 	__le32 size;
@@ -2761,9 +2763,10 @@ int main(int argc, char *argv[])
 			break;
 		case 't':
 			num_threads = arg_strtou64(optarg);
-			if (num_threads > 32) {
-				error("number of threads out of range: %llu",
-					(unsigned long long)num_threads);
+			if (num_threads > MAX_WORKER_THREADS) {
+				error("number of threads out of range: %llu > %d",
+					(unsigned long long)num_threads,
+					MAX_WORKER_THREADS);
 				return 1;
 			}
 			break;
