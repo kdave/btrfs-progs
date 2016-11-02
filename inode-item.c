@@ -106,8 +106,7 @@ out:
 	btrfs_free_path(path);
 
 	if (ret == -EMLINK) {
-		if (btrfs_fs_incompat(root->fs_info,
-				      BTRFS_FEATURE_INCOMPAT_EXTENDED_IREF))
+		if (btrfs_fs_incompat(root->fs_info, EXTENDED_IREF))
 			ret = btrfs_insert_inode_extref(trans, root, name,
 							name_len,
 							inode_objectid,
@@ -440,8 +439,7 @@ out:
 	btrfs_free_path(path);
 
 	if (search_ext_refs &&
-	    btrfs_fs_incompat(root->fs_info,
-		    BTRFS_FEATURE_INCOMPAT_EXTENDED_IREF)) {
+	    btrfs_fs_incompat(root->fs_info, EXTENDED_IREF)) {
 		/*
 		 * No refs were found, or we could not find the name in our ref
 		 * array. Find and remove the extended inode ref then.

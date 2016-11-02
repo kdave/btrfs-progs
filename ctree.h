@@ -2441,14 +2441,20 @@ static inline u32 btrfs_level_size(struct btrfs_root *root, int level) {
 	return root->nodesize;
 }
 
-static inline int btrfs_fs_incompat(struct btrfs_fs_info *fs_info, u64 flag)
+#define btrfs_fs_incompat(fs_info, opt) \
+	__btrfs_fs_incompat((fs_info), BTRFS_FEATURE_INCOMPAT_##opt)
+
+static inline int __btrfs_fs_incompat(struct btrfs_fs_info *fs_info, u64 flag)
 {
 	struct btrfs_super_block *disk_super;
 	disk_super = fs_info->super_copy;
 	return !!(btrfs_super_incompat_flags(disk_super) & flag);
 }
 
-static inline int btrfs_fs_compat_ro(struct btrfs_fs_info *fs_info, u64 flag)
+#define btrfs_fs_compat_ro(fs_info, opt) \
+	__btrfs_fs_compat_ro((fs_info), BTRFS_FEATURE_COMPAT_RO_##opt)
+
+static inline int __btrfs_fs_compat_ro(struct btrfs_fs_info *fs_info, u64 flag)
 {
 	struct btrfs_super_block *disk_super;
 	disk_super = fs_info->super_copy;

@@ -995,8 +995,7 @@ static int lookup_inline_extent_backref(struct btrfs_trans_handle *trans,
 	int ret;
 	int err = 0;
 	int skinny_metadata =
-		btrfs_fs_incompat(root->fs_info,
-				  BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA);
+		btrfs_fs_incompat(root->fs_info, SKINNY_METADATA);
 
 	key.objectid = bytenr;
 	key.type = BTRFS_EXTENT_ITEM_KEY;
@@ -1456,8 +1455,7 @@ int btrfs_lookup_extent_info(struct btrfs_trans_handle *trans,
 	u64 extent_flags;
 
 	if (metadata &&
-	    !btrfs_fs_incompat(root->fs_info,
-			       BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA)) {
+	    !btrfs_fs_incompat(root->fs_info, SKINNY_METADATA)) {
 		offset = root->nodesize;
 		metadata = 0;
 	}
@@ -1552,8 +1550,7 @@ int btrfs_set_block_flags(struct btrfs_trans_handle *trans,
 	struct btrfs_extent_item *item;
 	u32 item_size;
 	int skinny_metadata =
-		btrfs_fs_incompat(root->fs_info,
-				  BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA);
+		btrfs_fs_incompat(root->fs_info, SKINNY_METADATA);
 
 	path = btrfs_alloc_path();
 	if (!path)
@@ -2079,8 +2076,7 @@ static int finish_current_insert(struct btrfs_trans_handle *trans,
 	struct btrfs_key key;
 	int ret;
 	int skinny_metadata =
-		btrfs_fs_incompat(extent_root->fs_info,
-				  BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA);
+		btrfs_fs_incompat(extent_root->fs_info, SKINNY_METADATA);
 
 	while(1) {
 		ret = find_first_extent_bit(&info->extent_ins, 0, &start,
@@ -2193,8 +2189,7 @@ static int __free_extent(struct btrfs_trans_handle *trans,
 	u32 item_size;
 	u64 refs;
 	int skinny_metadata =
-		btrfs_fs_incompat(extent_root->fs_info,
-				  BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA);
+		btrfs_fs_incompat(extent_root->fs_info, SKINNY_METADATA);
 
 	if (root->fs_info->free_extent_hook) {
 		root->fs_info->free_extent_hook(trans, root, bytenr, num_bytes,
@@ -2726,9 +2721,7 @@ static int alloc_reserved_tree_block(struct btrfs_trans_handle *trans,
 	struct btrfs_path *path;
 	struct extent_buffer *leaf;
 	u32 size = sizeof(*extent_item) + sizeof(*iref);
-	int skinny_metadata =
-		btrfs_fs_incompat(fs_info,
-				  BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA);
+	int skinny_metadata = btrfs_fs_incompat(fs_info, SKINNY_METADATA);
 
 	if (!skinny_metadata)
 		size += sizeof(*block_info);
@@ -2800,8 +2793,7 @@ static int alloc_tree_block(struct btrfs_trans_handle *trans,
 		set_state_private(&root->fs_info->extent_ins,
 				  ins->objectid, (unsigned long)extent_op);
 	} else {
-		if (btrfs_fs_incompat(root->fs_info,
-				BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA)) {
+		if (btrfs_fs_incompat(root->fs_info, SKINNY_METADATA)) {
 			ins->offset = level;
 			ins->type = BTRFS_METADATA_ITEM_KEY;
 		}

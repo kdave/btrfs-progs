@@ -1063,7 +1063,7 @@ int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info, u64 root_tree_bytenr,
 	if (ret == 0)
 		fs_info->quota_enabled = 1;
 
-	if (btrfs_fs_compat_ro(fs_info, BTRFS_FEATURE_COMPAT_RO_FREE_SPACE_TREE)) {
+	if (btrfs_fs_compat_ro(fs_info, FREE_SPACE_TREE)) {
 		ret = find_and_setup_root(root, fs_info, BTRFS_FREE_SPACE_TREE_OBJECTID,
 					  fs_info->free_space_root);
 		if (ret) {
