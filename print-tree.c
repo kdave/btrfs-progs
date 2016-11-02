@@ -1009,6 +1009,31 @@ static void print_balance_item(struct extent_buffer *eb,
 	print_disk_balance_args(btrfs_balance_item_sys(eb, bi));
 }
 
+static void print_dev_stats(struct extent_buffer *eb,
+		struct btrfs_dev_stats_item *stats, u32 size)
+{
+	int i;
+	u32 known = BTRFS_DEV_STAT_VALUES_MAX * sizeof(__le64);
+	__le64 *values = btrfs_dev_stats_values(eb, stats);
+
+	printf("\t\tdevice stats\n");
+	printf("\t\twrite_errs %llu read_errs %llu flush_errs %llu corruption_errs %llu generation %llu\n",
+		(unsigned long long)le64_to_cpu(values[BTRFS_DEV_STAT_WRITE_ERRS]),
+		(unsigned long long)le64_to_cpu(values[BTRFS_DEV_STAT_READ_ERRS]),
+		(unsigned long long)le64_to_cpu(values[BTRFS_DEV_STAT_FLUSH_ERRS]),
+		(unsigned long long)le64_to_cpu(values[BTRFS_DEV_STAT_CORRUPTION_ERRS]),
+		(unsigned long long)le64_to_cpu(values[BTRFS_DEV_STAT_GENERATION_ERRS]));
+
+	if (known < size) {
+		printf("\t\tunknown stats item bytes %u", size - known);
+		for (i = BTRFS_DEV_STAT_VALUES_MAX; i * sizeof(__le64) < size; i++) {
+			printf("\t\tunknown item %u offset %lu value %llu\n",
+				i, i * sizeof(__le64),
+				(unsigned long long)le64_to_cpu(values[i]));
+		}
+	}
+}
+
 void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 {
 	int i;
@@ -1264,7 +1289,9 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *l)
 			printf(" offset %llu\n", (unsigned long long)offset);
 			switch (objectid) {
 			case BTRFS_DEV_STATS_OBJECTID:
-				printf("\t\tdevice stats\n");
+				print_dev_stats(l, btrfs_item_ptr(l, i,
+						struct btrfs_dev_stats_item),
+						btrfs_item_size(l, item));
 				break;
 			default:
 				printf("\t\tunknown persistent item objectid %llu\n",
