@@ -1029,18 +1029,8 @@ static void print_dev_stats(struct extent_buffer *eb,
 void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *eb)
 {
 	int i;
-	char *str;
 	struct btrfs_item *item;
-	struct btrfs_extent_data_ref *dref;
-	struct btrfs_shared_data_ref *sref;
-	struct btrfs_dev_extent *dev_extent;
 	struct btrfs_disk_key disk_key;
-	struct btrfs_block_group_item bg_item;
-	struct btrfs_free_space_info *free_info;
-	struct btrfs_dir_log_item *dlog;
-	struct btrfs_qgroup_info_item *qg_info;
-	struct btrfs_qgroup_limit_item *qg_limit;
-	struct btrfs_qgroup_status_item *qg_status;
 	u32 nr = btrfs_header_nritems(eb);
 	u64 objectid;
 	u32 type;
@@ -1093,11 +1083,14 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *eb)
 			print_dir_item(eb, item_size, ptr);
 			break;
 		case BTRFS_DIR_LOG_INDEX_KEY:
-		case BTRFS_DIR_LOG_ITEM_KEY:
+		case BTRFS_DIR_LOG_ITEM_KEY: {
+			struct btrfs_dir_log_item *dlog;
+
 			dlog = btrfs_item_ptr(eb, i, struct btrfs_dir_log_item);
 			printf("\t\tdir log end %Lu\n",
 			       (unsigned long long)btrfs_dir_log_end(eb, dlog));
-		       break;
+			break;
+			}
 		case BTRFS_ORPHAN_ITEM_KEY:
 			printf("\t\torphan item\n");
 			break;
@@ -1122,7 +1115,9 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *eb)
 		case BTRFS_SHARED_BLOCK_REF_KEY:
 			printf("\t\tshared block backref\n");
 			break;
-		case BTRFS_EXTENT_DATA_REF_KEY:
+		case BTRFS_EXTENT_DATA_REF_KEY: {
+			struct btrfs_extent_data_ref *dref;
+
 			dref = btrfs_item_ptr(eb, i, struct btrfs_extent_data_ref);
 			printf("\t\textent data backref root %llu "
 			       "objectid %llu offset %llu count %u\n",
@@ -1131,11 +1126,14 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *eb)
 			       (unsigned long long)btrfs_extent_data_ref_offset(eb, dref),
 			       btrfs_extent_data_ref_count(eb, dref));
 			break;
-		case BTRFS_SHARED_DATA_REF_KEY:
+			}
+		case BTRFS_SHARED_DATA_REF_KEY: {
+			struct btrfs_shared_data_ref *sref;
 			sref = btrfs_item_ptr(eb, i, struct btrfs_shared_data_ref);
 			printf("\t\tshared data backref count %u\n",
 			       btrfs_shared_data_ref_count(eb, sref));
 			break;
+			}
 		case BTRFS_EXTENT_REF_V0_KEY:
 #ifdef BTRFS_COMPAT_EXTENT_TREE_V0
 			print_extent_ref_v0(eb, i);
@@ -1152,7 +1150,9 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *eb)
 		case BTRFS_EXTENT_DATA_KEY:
 			print_file_extent_item(eb, item, i, ptr);
 			break;
-		case BTRFS_BLOCK_GROUP_ITEM_KEY:
+		case BTRFS_BLOCK_GROUP_ITEM_KEY: {
+			struct btrfs_block_group_item bg_item;
+
 			read_extent_buffer(eb, &bg_item, (unsigned long)ptr,
 					   sizeof(bg_item));
 			memset(flags_str, 0, sizeof(flags_str));
@@ -1163,12 +1163,16 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *eb)
 			       (unsigned long long)btrfs_block_group_chunk_objectid(&bg_item),
 			       flags_str);
 			break;
-		case BTRFS_FREE_SPACE_INFO_KEY:
+			}
+		case BTRFS_FREE_SPACE_INFO_KEY: {
+			struct btrfs_free_space_info *free_info;
+
 			free_info = btrfs_item_ptr(eb, i, struct btrfs_free_space_info);
 			printf("\t\tfree space info extent count %u flags %u\n",
 			       (unsigned)btrfs_free_space_extent_count(eb, free_info),
 			       (unsigned)btrfs_free_space_flags(eb, free_info));
 			break;
+			}
 		case BTRFS_FREE_SPACE_EXTENT_KEY:
 			printf("\t\tfree space extent\n");
 			break;
@@ -1181,7 +1185,9 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *eb)
 		case BTRFS_DEV_ITEM_KEY:
 			print_dev_item(eb, ptr);
 			break;
-		case BTRFS_DEV_EXTENT_KEY:
+		case BTRFS_DEV_EXTENT_KEY: {
+			struct btrfs_dev_extent *dev_extent;
+
 			dev_extent = btrfs_item_ptr(eb, i,
 						    struct btrfs_dev_extent);
 			read_extent_buffer(eb, uuid,
@@ -1202,7 +1208,10 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *eb)
 			       btrfs_dev_extent_length(eb, dev_extent),
 			       uuid_str);
 			break;
-		case BTRFS_QGROUP_STATUS_KEY:
+			}
+		case BTRFS_QGROUP_STATUS_KEY: {
+			struct btrfs_qgroup_status_item *qg_status;
+
 			qg_status = btrfs_item_ptr(eb, i,
 					struct btrfs_qgroup_status_item);
 			memset(flags_str, 0, sizeof(flags_str));
@@ -1218,9 +1227,12 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *eb)
 				(unsigned long long)
 				btrfs_qgroup_status_rescan(eb, qg_status));
 			break;
+			}
 		case BTRFS_QGROUP_RELATION_KEY:
 			break;
-		case BTRFS_QGROUP_INFO_KEY:
+		case BTRFS_QGROUP_INFO_KEY: {
+			struct btrfs_qgroup_info_item *qg_info;
+
 			qg_info = btrfs_item_ptr(eb, i,
 						 struct btrfs_qgroup_info_item);
 			printf("\t\tgeneration %llu\n"
@@ -1239,7 +1251,10 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *eb)
 			       btrfs_qgroup_info_exclusive_compressed(eb,
 								      qg_info));
 			break;
-		case BTRFS_QGROUP_LIMIT_KEY:
+			}
+		case BTRFS_QGROUP_LIMIT_KEY: {
+			struct btrfs_qgroup_limit_item *qg_limit;
+
 			qg_limit = btrfs_item_ptr(eb, i,
 					 struct btrfs_qgroup_limit_item);
 			printf("\t\tflags %llx\n"
@@ -1256,16 +1271,18 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *eb)
 			       (long long)
 			       btrfs_qgroup_limit_rsv_exclusive(eb, qg_limit));
 			break;
+			}
 		case BTRFS_UUID_KEY_SUBVOL:
 		case BTRFS_UUID_KEY_RECEIVED_SUBVOL:
 			print_uuid_item(eb, btrfs_item_ptr_offset(eb, i),
 					btrfs_item_size_nr(eb, i));
 			break;
-		case BTRFS_STRING_ITEM_KEY:
-			/* dirty, but it's simple */
-			str = eb->data + btrfs_item_ptr_offset(eb, i);
+		case BTRFS_STRING_ITEM_KEY: {
+			const char *str = eb->data + btrfs_item_ptr_offset(eb, i);
+
 			printf("\t\titem data %.*s\n", item_size, str);
 			break;
+			}
 		case BTRFS_PERSISTENT_ITEM_KEY:
 			printf("\t\tpersistent item objectid ");
 			print_objectid(stdout, objectid, BTRFS_PERSISTENT_ITEM_KEY);
