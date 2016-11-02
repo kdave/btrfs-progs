@@ -1171,7 +1171,7 @@ static int do_list_roots(struct btrfs_root *root)
 	struct btrfs_key key;
 	struct btrfs_key found_key;
 	struct btrfs_disk_key disk_key;
-	struct btrfs_path *path;
+	struct btrfs_path path;
 	struct extent_buffer *leaf;
 	struct btrfs_root_item ri;
 	unsigned long offset;
@@ -1179,38 +1179,33 @@ static int do_list_roots(struct btrfs_root *root)
 	int ret;
 
 	root = root->fs_info->tree_root;
-	path = btrfs_alloc_path();
-	if (!path) {
-		fprintf(stderr, "Failed to alloc path\n");
-		return -ENOMEM;
-	}
 
+	btrfs_init_path(&path);
 	key.offset = 0;
 	key.objectid = 0;
 	key.type = BTRFS_ROOT_ITEM_KEY;
-
-	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
+	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
 	if (ret < 0) {
 		fprintf(stderr, "Failed to do search %d\n", ret);
-		btrfs_free_path(path);
+		btrfs_release_path(&path);
 		return -1;
 	}
 
-	leaf = path->nodes[0];
+	leaf = path.nodes[0];
 
 	while (1) {
-		slot = path->slots[0];
+		slot = path.slots[0];
 		if (slot >= btrfs_header_nritems(leaf)) {
-			ret = btrfs_next_leaf(root, path);
+			ret = btrfs_next_leaf(root, &path);
 			if (ret)
 				break;
-			leaf = path->nodes[0];
-			slot = path->slots[0];
+			leaf = path.nodes[0];
+			slot = path.slots[0];
 		}
 		btrfs_item_key(leaf, &disk_key, slot);
 		btrfs_disk_key_to_cpu(&found_key, &disk_key);
 		if (found_key.type != BTRFS_ROOT_ITEM_KEY) {
-			path->slots[0]++;
+			path.slots[0]++;
 			continue;
 		}
 
@@ -1220,9 +1215,9 @@ static int do_list_roots(struct btrfs_root *root)
 		btrfs_print_key(&disk_key);
 		printf(" %Lu level %d\n", btrfs_root_bytenr(&ri),
 		       btrfs_root_level(&ri));
-		path->slots[0]++;
+		path.slots[0]++;
 	}
-	btrfs_free_path(path);
+	btrfs_release_path(&path);
 
 	return 0;
 }
