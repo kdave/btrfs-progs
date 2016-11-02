@@ -610,132 +610,58 @@ static void print_free_space_header(struct extent_buffer *leaf, int slot)
 
 void print_key_type(FILE *stream, u64 objectid, u8 type)
 {
+	static const char* key_to_str[256] = {
+		[BTRFS_INODE_ITEM_KEY]		= "INODE_ITEM",
+		[BTRFS_INODE_REF_KEY]		= "INODE_REF",
+		[BTRFS_INODE_EXTREF_KEY]	= "INODE_EXTREF",
+		[BTRFS_DIR_ITEM_KEY]		= "DIR_ITEM",
+		[BTRFS_DIR_INDEX_KEY]		= "DIR_INDEX",
+		[BTRFS_DIR_LOG_ITEM_KEY]	= "DIR_LOG_ITEM",
+		[BTRFS_DIR_LOG_INDEX_KEY]	= "DIR_LOG_INDEX",
+		[BTRFS_XATTR_ITEM_KEY]		= "XATTR_ITEM",
+		[BTRFS_ORPHAN_ITEM_KEY]		= "ORPHAN_ITEM",
+		[BTRFS_ROOT_ITEM_KEY]		= "ROOT_ITEM",
+		[BTRFS_ROOT_REF_KEY]		= "ROOT_REF",
+		[BTRFS_ROOT_BACKREF_KEY]	= "ROOT_BACKREF",
+		[BTRFS_EXTENT_ITEM_KEY]		= "EXTENT_ITEM",
+		[BTRFS_METADATA_ITEM_KEY]	= "METADATA_ITEM",
+		[BTRFS_TREE_BLOCK_REF_KEY]	= "TREE_BLOCK_REF",
+		[BTRFS_SHARED_BLOCK_REF_KEY]	= "SHARED_BLOCK_REF",
+		[BTRFS_EXTENT_DATA_REF_KEY]	= "EXTENT_DATA_REF",
+		[BTRFS_SHARED_DATA_REF_KEY]	= "SHARED_DATA_REF",
+		[BTRFS_EXTENT_REF_V0_KEY]	= "EXTENT_REF_V0",
+		[BTRFS_CSUM_ITEM_KEY]		= "CSUM_ITEM",
+		[BTRFS_EXTENT_CSUM_KEY]		= "EXTENT_CSUM",
+		[BTRFS_EXTENT_DATA_KEY]		= "EXTENT_DATA",
+		[BTRFS_BLOCK_GROUP_ITEM_KEY]	= "BLOCK_GROUP_ITEM",
+		[BTRFS_FREE_SPACE_INFO_KEY]	= "FREE_SPACE_INFO",
+		[BTRFS_FREE_SPACE_EXTENT_KEY]	= "FREE_SPACE_EXTENT",
+		[BTRFS_FREE_SPACE_BITMAP_KEY]	= "FREE_SPACE_BITMAP",
+		[BTRFS_CHUNK_ITEM_KEY]		= "CHUNK_ITEM",
+		[BTRFS_DEV_ITEM_KEY]		= "DEV_ITEM",
+		[BTRFS_DEV_EXTENT_KEY]		= "DEV_EXTENT",
+		[BTRFS_BALANCE_ITEM_KEY]	= "BALANCE_ITEM",
+		[BTRFS_DEV_REPLACE_KEY]		= "DEV_REPLACE",
+		[BTRFS_STRING_ITEM_KEY]		= "STRING_ITEM",
+		[BTRFS_QGROUP_STATUS_KEY]	= "QGROUP_STATUS",
+		[BTRFS_QGROUP_RELATION_KEY]	= "QGROUP_RELATION",
+		[BTRFS_QGROUP_INFO_KEY]		= "QGROUP_INFO",
+		[BTRFS_QGROUP_LIMIT_KEY]	= "QGROUP_LIMIT",
+		[BTRFS_DEV_STATS_KEY]		= "DEV_STATS",
+		[BTRFS_UUID_KEY_SUBVOL]		= "UUID_KEY_SUBVOL",
+		[BTRFS_UUID_KEY_RECEIVED_SUBVOL] = "UUID_KEY_RECEIVED_SUBVOL",
+	};
+
 	if (type == 0 && objectid == BTRFS_FREE_SPACE_OBJECTID) {
 		fprintf(stream, "UNTYPED");
 		return;
 	}
 
-	switch (type) {
-	case BTRFS_INODE_ITEM_KEY:
-		fprintf(stream, "INODE_ITEM");
-		break;
-	case BTRFS_INODE_REF_KEY:
-		fprintf(stream, "INODE_REF");
-		break;
-	case BTRFS_INODE_EXTREF_KEY:
-		fprintf(stream, "INODE_EXTREF");
-		break;
-	case BTRFS_DIR_ITEM_KEY:
-		fprintf(stream, "DIR_ITEM");
-		break;
-	case BTRFS_DIR_INDEX_KEY:
-		fprintf(stream, "DIR_INDEX");
-		break;
-	case BTRFS_DIR_LOG_ITEM_KEY:
-		fprintf(stream, "DIR_LOG_ITEM");
-		break;
-	case BTRFS_DIR_LOG_INDEX_KEY:
-		fprintf(stream, "DIR_LOG_INDEX");
-		break;
-	case BTRFS_XATTR_ITEM_KEY:
-		fprintf(stream, "XATTR_ITEM");
-		break;
-	case BTRFS_ORPHAN_ITEM_KEY:
-		fprintf(stream, "ORPHAN_ITEM");
-		break;
-	case BTRFS_ROOT_ITEM_KEY:
-		fprintf(stream, "ROOT_ITEM");
-		break;
-	case BTRFS_ROOT_REF_KEY:
-		fprintf(stream, "ROOT_REF");
-		break;
-	case BTRFS_ROOT_BACKREF_KEY:
-		fprintf(stream, "ROOT_BACKREF");
-		break;
-	case BTRFS_EXTENT_ITEM_KEY:
-		fprintf(stream, "EXTENT_ITEM");
-		break;
-	case BTRFS_METADATA_ITEM_KEY:
-		fprintf(stream, "METADATA_ITEM");
-		break;
-	case BTRFS_TREE_BLOCK_REF_KEY:
-		fprintf(stream, "TREE_BLOCK_REF");
-		break;
-	case BTRFS_SHARED_BLOCK_REF_KEY:
-		fprintf(stream, "SHARED_BLOCK_REF");
-		break;
-	case BTRFS_EXTENT_DATA_REF_KEY:
-		fprintf(stream, "EXTENT_DATA_REF");
-		break;
-	case BTRFS_SHARED_DATA_REF_KEY:
-		fprintf(stream, "SHARED_DATA_REF");
-		break;
-	case BTRFS_EXTENT_REF_V0_KEY:
-		fprintf(stream, "EXTENT_REF_V0");
-		break;
-	case BTRFS_CSUM_ITEM_KEY:
-		fprintf(stream, "CSUM_ITEM");
-		break;
-	case BTRFS_EXTENT_CSUM_KEY:
-		fprintf(stream, "EXTENT_CSUM");
-		break;
-	case BTRFS_EXTENT_DATA_KEY:
-		fprintf(stream, "EXTENT_DATA");
-		break;
-	case BTRFS_BLOCK_GROUP_ITEM_KEY:
-		fprintf(stream, "BLOCK_GROUP_ITEM");
-		break;
-	case BTRFS_FREE_SPACE_INFO_KEY:
-		fprintf(stream, "FREE_SPACE_INFO");
-		break;
-	case BTRFS_FREE_SPACE_EXTENT_KEY:
-		fprintf(stream, "FREE_SPACE_EXTENT");
-		break;
-	case BTRFS_FREE_SPACE_BITMAP_KEY:
-		fprintf(stream, "FREE_SPACE_BITMAP");
-		break;
-	case BTRFS_CHUNK_ITEM_KEY:
-		fprintf(stream, "CHUNK_ITEM");
-		break;
-	case BTRFS_DEV_ITEM_KEY:
-		fprintf(stream, "DEV_ITEM");
-		break;
-	case BTRFS_DEV_EXTENT_KEY:
-		fprintf(stream, "DEV_EXTENT");
-		break;
-	case BTRFS_BALANCE_ITEM_KEY:
-		fprintf(stream, "BALANCE_ITEM");
-		break;
-	case BTRFS_DEV_REPLACE_KEY:
-		fprintf(stream, "DEV_REPLACE");
-		break;
-	case BTRFS_STRING_ITEM_KEY:
-		fprintf(stream, "STRING_ITEM");
-		break;
-	case BTRFS_QGROUP_STATUS_KEY:
-		fprintf(stream, "QGROUP_STATUS");
-		break;
-	case BTRFS_QGROUP_RELATION_KEY:
-		fprintf(stream, "QGROUP_RELATION");
-		break;
-	case BTRFS_QGROUP_INFO_KEY:
-		fprintf(stream, "QGROUP_INFO");
-		break;
-	case BTRFS_QGROUP_LIMIT_KEY:
-		fprintf(stream, "QGROUP_LIMIT");
-		break;
-	case BTRFS_DEV_STATS_KEY:
-		fprintf(stream, "DEV_STATS");
-		break;
-	case BTRFS_UUID_KEY_SUBVOL:
-		fprintf(stream, "UUID_KEY_SUBVOL");
-		break;
-	case BTRFS_UUID_KEY_RECEIVED_SUBVOL:
-		fprintf(stream, "UUID_KEY_RECEIVED_SUBVOL");
-		break;
-	default:
+
+	if (key_to_str[type])
+		fputs(key_to_str[type], stream);
+	else
 		fprintf(stream, "UNKNOWN.%d", type);
-	};
 }
 
 void print_objectid(FILE *stream, u64 objectid, u8 type)
