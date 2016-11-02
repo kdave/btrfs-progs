@@ -4972,7 +4972,7 @@ out:
  */
 static int check_fs_root_v2(struct btrfs_root *root, unsigned int ext_ref)
 {
-	struct btrfs_path *path;
+	struct btrfs_path path;
 	struct node_refs nrefs;
 	struct btrfs_root_item *root_item = &root->root_item;
 	int ret, wret;
@@ -4988,38 +4988,35 @@ static int check_fs_root_v2(struct btrfs_root *root, unsigned int ext_ref)
 	if (ret < 0)
 		return ret;
 
-	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
-
 	memset(&nrefs, 0, sizeof(nrefs));
 	level = btrfs_header_level(root->node);
+	btrfs_init_path(&path);
 
 	if (btrfs_root_refs(root_item) > 0 ||
 	    btrfs_disk_key_objectid(&root_item->drop_progress) == 0) {
-		path->nodes[level] = root->node;
-		path->slots[level] = 0;
+		path.nodes[level] = root->node;
+		path.slots[level] = 0;
 		extent_buffer_get(root->node);
 	} else {
 		struct btrfs_key key;
 
 		btrfs_disk_key_to_cpu(&key, &root_item->drop_progress);
 		level = root_item->drop_level;
-		path->lowest_level = level;
-		ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
+		path.lowest_level = level;
+		ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
 		if (ret < 0)
 			goto out;
 		ret = 0;
 	}
 
 	while (1) {
-		wret = walk_down_tree_v2(root, path, &level, &nrefs, ext_ref);
+		wret = walk_down_tree_v2(root, &path, &level, &nrefs, ext_ref);
 		if (wret < 0)
 			ret = wret;
 		if (wret != 0)
 			break;
 
-		wret = walk_up_tree_v2(root, path, &level);
+		wret = walk_up_tree_v2(root, &path, &level);
 		if (wret < 0)
 			ret = wret;
 		if (wret != 0)
@@ -5027,7 +5024,7 @@ static int check_fs_root_v2(struct btrfs_root *root, unsigned int ext_ref)
 	}
 
 out:
-	btrfs_free_path(path);
+	btrfs_release_path(&path);
 	return ret;
 }
 
