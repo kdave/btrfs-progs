@@ -4934,19 +4934,17 @@ out:
 
 static int check_fs_first_inode(struct btrfs_root *root, unsigned int ext_ref)
 {
-	struct btrfs_path *path;
+	struct btrfs_path path;
 	struct btrfs_key key;
 	int err = 0;
 	int ret;
 
-	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
+	btrfs_init_path(&path);
 	key.objectid = BTRFS_FIRST_FREE_OBJECTID;
 	key.type = BTRFS_INODE_ITEM_KEY;
 	key.offset = 0;
 
-	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
+	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
 	if (ret < 0)
 		goto out;
 	if (ret > 0) {
@@ -4954,12 +4952,12 @@ static int check_fs_first_inode(struct btrfs_root *root, unsigned int ext_ref)
 		err |= INODE_ITEM_MISSING;
 	}
 
-	err |= check_inode_item(root, path, ext_ref);
+	err |= check_inode_item(root, &path, ext_ref);
 	err &= ~LAST_ITEM;
 	if (err && !ret)
 		ret = -EIO;
 out:
-	btrfs_free_path(path);
+	btrfs_release_path(&path);
 	return ret;
 }
 
