@@ -222,16 +222,16 @@ out:
 	return ret;
 }
 
-static void *dump_thread(void *arg_)
+static void *dump_thread(void *arg)
 {
 	int ret;
-	struct btrfs_send *s = (struct btrfs_send*)arg_;
+	struct btrfs_send *sctx = (struct btrfs_send*)arg;
 	char buf[SEND_BUFFER_SIZE];
 
 	while (1) {
 		ssize_t rbytes;
 
-		rbytes = read(s->send_fd, buf, sizeof(buf));
+		rbytes = read(sctx->send_fd, buf, sizeof(buf));
 		if (rbytes < 0) {
 			ret = -errno;
 			error("failed to read stream from kernel: %s\n",
@@ -242,15 +242,14 @@ static void *dump_thread(void *arg_)
 			ret = 0;
 			goto out;
 		}
-		ret = write_buf(s->dump_fd, buf, rbytes);
+		ret = write_buf(sctx->dump_fd, buf, rbytes);
 		if (ret < 0)
 			goto out;
 	}
 
 out:
-	if (ret < 0) {
+	if (ret < 0)
 		exit(-ret);
-	}
 
 	return ERR_PTR(ret);
 }
