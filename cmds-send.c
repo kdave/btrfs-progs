@@ -101,7 +101,6 @@ static int find_good_parent(struct btrfs_send *sctx, u64 root_id, u64 *found)
 	struct subvol_info *parent = NULL;
 	struct subvol_info *parent2 = NULL;
 	struct subvol_info *best_parent = NULL;
-	__s64 tmp;
 	u64 best_diff = (u64)-1;
 	int i;
 
@@ -120,6 +119,8 @@ static int find_good_parent(struct btrfs_send *sctx, u64 root_id, u64 *found)
 	}
 
 	for (i = 0; i < sctx->clone_sources_count; i++) {
+		s64 tmp;
+
 		parent2 = get_parent(sctx, sctx->clone_sources[i]);
 		if (!parent2)
 			continue;
@@ -142,7 +143,7 @@ static int find_good_parent(struct btrfs_send *sctx, u64 root_id, u64 *found)
 		}
 		tmp = parent2->ctransid - parent->ctransid;
 		if (tmp < 0)
-			tmp *= -1;
+			tmp = -tmp;
 		if (tmp < best_diff) {
 			if (best_parent) {
 				free(best_parent->path);
