@@ -2913,7 +2913,7 @@ out:
 static int try_repair_inode(struct btrfs_root *root, struct inode_record *rec)
 {
 	struct btrfs_trans_handle *trans;
-	struct btrfs_path *path;
+	struct btrfs_path path;
 	int ret = 0;
 
 	if (!(rec->errors & (I_ERR_DIR_ISIZE_WRONG |
@@ -2925,10 +2925,6 @@ static int try_repair_inode(struct btrfs_root *root, struct inode_record *rec)
 			     I_ERR_FILE_NBYTES_WRONG)))
 		return rec->errors;
 
-	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
-
 	/*
 	 * For nlink repair, it may create a dir and add link, so
 	 * 2 for parent(256)'s dir_index and dir_item
@@ -2937,27 +2933,26 @@ static int try_repair_inode(struct btrfs_root *root, struct inode_record *rec)
 	 * 2 for lost+found dir's dir_index and dir_item for the file
 	 */
 	trans = btrfs_start_transaction(root, 7);
-	if (IS_ERR(trans)) {
-		btrfs_free_path(path);
+	if (IS_ERR(trans))
 		return PTR_ERR(trans);
-	}
 
+	btrfs_init_path(&path);
 	if (rec->errors & I_ERR_NO_INODE_ITEM)
-		ret = repair_inode_no_item(trans, root, path, rec);
+		ret = repair_inode_no_item(trans, root, &path, rec);
 	if (!ret && rec->errors & I_ERR_FILE_EXTENT_ORPHAN)
-		ret = repair_inode_orphan_extent(trans, root, path, rec);
+		ret = repair_inode_orphan_extent(trans, root, &path, rec);
 	if (!ret && rec->errors & I_ERR_FILE_EXTENT_DISCOUNT)
-		ret = repair_inode_discount_extent(trans, root, path, rec);
+		ret = repair_inode_discount_extent(trans, root, &path, rec);
 	if (!ret && rec->errors & I_ERR_DIR_ISIZE_WRONG)
-		ret = repair_inode_isize(trans, root, path, rec);
+		ret = repair_inode_isize(trans, root, &path, rec);
 	if (!ret && rec->errors & I_ERR_NO_ORPHAN_ITEM)
-		ret = repair_inode_orphan_item(trans, root, path, rec);
+		ret = repair_inode_orphan_item(trans, root, &path, rec);
 	if (!ret && rec->errors & I_ERR_LINK_COUNT_WRONG)
-		ret = repair_inode_nlinks(trans, root, path, rec);
+		ret = repair_inode_nlinks(trans, root, &path, rec);
 	if (!ret && rec->errors & I_ERR_FILE_NBYTES_WRONG)
-		ret = repair_inode_nbytes(trans, root, path, rec);
+		ret = repair_inode_nbytes(trans, root, &path, rec);
 	btrfs_commit_transaction(trans, root);
-	btrfs_free_path(path);
+	btrfs_release_path(&path);
 	return ret;
 }
 
