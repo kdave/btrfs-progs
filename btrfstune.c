@@ -200,28 +200,26 @@ static int change_device_uuid(struct btrfs_root *root, struct extent_buffer *eb,
 static int change_devices_uuid(struct btrfs_fs_info *fs_info)
 {
 	struct btrfs_root *root = fs_info->chunk_root;
-	struct btrfs_path *path;
+	struct btrfs_path path;
 	struct btrfs_key key = {0, 0, 0};
 	int ret = 0;
 
-	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
+	btrfs_init_path(&path);
 	/* No transaction again */
-	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
+	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
 	if (ret < 0)
 		goto out;
 
 	while (1) {
-		btrfs_item_key_to_cpu(path->nodes[0], &key, path->slots[0]);
+		btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
 		if (key.type != BTRFS_DEV_ITEM_KEY ||
 		    key.objectid != BTRFS_DEV_ITEMS_OBJECTID)
 			goto next;
-		ret = change_device_uuid(root, path->nodes[0], path->slots[0]);
+		ret = change_device_uuid(root, path.nodes[0], path.slots[0]);
 		if (ret < 0)
 			goto out;
 next:
-		ret = btrfs_next_item(root, path);
+		ret = btrfs_next_item(root, &path);
 		if (ret < 0)
 			goto out;
 		if (ret > 0) {
@@ -230,7 +228,7 @@ next:
 		}
 	}
 out:
-	btrfs_free_path(path);
+	btrfs_release_path(&path);
 	return ret;
 }
 
