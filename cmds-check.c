@@ -2186,7 +2186,7 @@ static int add_missing_dir_index(struct btrfs_root *root,
 				 struct inode_record *rec,
 				 struct inode_backref *backref)
 {
-	struct btrfs_path *path;
+	struct btrfs_path path;
 	struct btrfs_trans_handle *trans;
 	struct btrfs_dir_item *dir_item;
 	struct extent_buffer *leaf;
@@ -2197,27 +2197,22 @@ static int add_missing_dir_index(struct btrfs_root *root,
 	u32 data_size = sizeof(*dir_item) + backref->namelen;
 	int ret;
 
-	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
-
 	trans = btrfs_start_transaction(root, 1);
-	if (IS_ERR(trans)) {
-		btrfs_free_path(path);
+	if (IS_ERR(trans))
 		return PTR_ERR(trans);
-	}
 
 	fprintf(stderr, "repairing missing dir index item for inode %llu\n",
 		(unsigned long long)rec->ino);
+
+	btrfs_init_path(&path);
 	key.objectid = backref->dir;
 	key.type = BTRFS_DIR_INDEX_KEY;
 	key.offset = backref->index;
-
-	ret = btrfs_insert_empty_item(trans, root, path, &key, data_size);
+	ret = btrfs_insert_empty_item(trans, root, &path, &key, data_size);
 	BUG_ON(ret);
 
-	leaf = path->nodes[0];
-	dir_item = btrfs_item_ptr(leaf, path->slots[0], struct btrfs_dir_item);
+	leaf = path.nodes[0];
+	dir_item = btrfs_item_ptr(leaf, path.slots[0], struct btrfs_dir_item);
 
 	disk_key.objectid = cpu_to_le64(rec->ino);
 	disk_key.type = BTRFS_INODE_ITEM_KEY;
@@ -2230,7 +2225,7 @@ static int add_missing_dir_index(struct btrfs_root *root,
 	name_ptr = (unsigned long)(dir_item + 1);
 	write_extent_buffer(leaf, backref->name, name_ptr, backref->namelen);
 	btrfs_mark_buffer_dirty(leaf);
-	btrfs_free_path(path);
+	btrfs_release_path(&path);
 	btrfs_commit_transaction(trans, root);
 
 	backref->found_dir_index = 1;
