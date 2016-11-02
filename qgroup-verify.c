@@ -1479,27 +1479,22 @@ static int repair_qgroup_info(struct btrfs_fs_info *info,
 	int ret;
 	struct btrfs_root *root = info->quota_root;
 	struct btrfs_trans_handle *trans;
-	struct btrfs_path *path;
+	struct btrfs_path path;
 	struct btrfs_qgroup_info_item *info_item;
 	struct btrfs_key key;
 
 	printf("Repair qgroup %llu/%llu\n", btrfs_qgroup_level(count->qgroupid),
 	       btrfs_qgroup_subvid(count->qgroupid));
 
-	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
-
 	trans = btrfs_start_transaction(root, 1);
-	if (IS_ERR(trans)) {
-		btrfs_free_path(path);
+	if (IS_ERR(trans))
 		return PTR_ERR(trans);
-	}
 
+	btrfs_init_path(&path);
 	key.objectid = 0;
 	key.type = BTRFS_QGROUP_INFO_KEY;
 	key.offset = count->qgroupid;
-	ret = btrfs_search_slot(trans, root, &key, path, 0, 1);
+	ret = btrfs_search_slot(trans, root, &key, &path, 0, 1);
 	if (ret) {
 		error("Could not find disk item for qgroup %llu/%llu.\n",
 		      btrfs_qgroup_level(count->qgroupid),
@@ -1509,27 +1504,27 @@ static int repair_qgroup_info(struct btrfs_fs_info *info,
 		goto out;
 	}
 
-	info_item = btrfs_item_ptr(path->nodes[0], path->slots[0],
+	info_item = btrfs_item_ptr(path.nodes[0], path.slots[0],
 				   struct btrfs_qgroup_info_item);
 
-	btrfs_set_qgroup_info_generation(path->nodes[0], info_item,
+	btrfs_set_qgroup_info_generation(path.nodes[0], info_item,
 					 trans->transid);
 
-	btrfs_set_qgroup_info_referenced(path->nodes[0], info_item,
+	btrfs_set_qgroup_info_referenced(path.nodes[0], info_item,
 					 count->info.referenced);
-	btrfs_set_qgroup_info_referenced_compressed(path->nodes[0], info_item,
+	btrfs_set_qgroup_info_referenced_compressed(path.nodes[0], info_item,
 					    count->info.referenced_compressed);
 
-	btrfs_set_qgroup_info_exclusive(path->nodes[0], info_item,
+	btrfs_set_qgroup_info_exclusive(path.nodes[0], info_item,
 					count->info.exclusive);
-	btrfs_set_qgroup_info_exclusive_compressed(path->nodes[0], info_item,
+	btrfs_set_qgroup_info_exclusive_compressed(path.nodes[0], info_item,
 					   count->info.exclusive_compressed);
 
-	btrfs_mark_buffer_dirty(path->nodes[0]);
+	btrfs_mark_buffer_dirty(path.nodes[0]);
 
 out:
 	btrfs_commit_transaction(trans, root);
-	btrfs_free_path(path);
+	btrfs_release_path(&path);
 
 	return ret;
 }
