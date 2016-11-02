@@ -187,7 +187,7 @@ struct inode_backref {
 	unsigned int found_inode_ref:1;
 	u8 filetype;
 	int errors;
-	unsigned int ref_type;
+	u8 ref_type;
 	u64 dir;
 	u64 index;
 	u16 namelen;
@@ -1067,7 +1067,7 @@ static struct inode_backref *get_inode_backref(struct inode_record *rec,
 static int add_inode_backref(struct cache_tree *inode_cache,
 			     u64 ino, u64 dir, u64 index,
 			     const char *name, int namelen,
-			     u8 filetype, int itemtype, int errors)
+			     u8 filetype, u8 itemtype, int errors)
 {
 	struct inode_record *rec;
 	struct inode_backref *backref;
