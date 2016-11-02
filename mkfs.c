@@ -1310,15 +1310,10 @@ static int cleanup_temp_chunks(struct btrfs_fs_info *fs_info,
 	struct btrfs_root *root = fs_info->extent_root;
 	struct btrfs_key key;
 	struct btrfs_key found_key;
-	struct btrfs_path *path;
+	struct btrfs_path path;
 	int ret = 0;
 
-	path = btrfs_alloc_path();
-	if (!path) {
-		ret = -ENOMEM;
-		goto out;
-	}
-
+	btrfs_init_path(&path);
 	trans = btrfs_start_transaction(root, 1);
 
 	key.objectid = 0;
@@ -1330,32 +1325,32 @@ static int cleanup_temp_chunks(struct btrfs_fs_info *fs_info,
 		 * as the rest of the loop may modify the tree, we need to
 		 * start a new search each time.
 		 */
-		ret = btrfs_search_slot(trans, root, &key, path, 0, 0);
+		ret = btrfs_search_slot(trans, root, &key, &path, 0, 0);
 		if (ret < 0)
 			goto out;
 
-		btrfs_item_key_to_cpu(path->nodes[0], &found_key,
-				      path->slots[0]);
+		btrfs_item_key_to_cpu(path.nodes[0], &found_key,
+				      path.slots[0]);
 		if (found_key.objectid < key.objectid)
 			goto out;
 		if (found_key.type != BTRFS_BLOCK_GROUP_ITEM_KEY) {
-			ret = next_block_group(root, path);
+			ret = next_block_group(root, &path);
 			if (ret < 0)
 				goto out;
 			if (ret > 0) {
 				ret = 0;
 				goto out;
 			}
-			btrfs_item_key_to_cpu(path->nodes[0], &found_key,
-					      path->slots[0]);
+			btrfs_item_key_to_cpu(path.nodes[0], &found_key,
+					      path.slots[0]);
 		}
 
-		bgi = btrfs_item_ptr(path->nodes[0], path->slots[0],
+		bgi = btrfs_item_ptr(path.nodes[0], path.slots[0],
 				     struct btrfs_block_group_item);
-		if (is_temp_block_group(path->nodes[0], bgi,
+		if (is_temp_block_group(path.nodes[0], bgi,
 					data_profile, meta_profile,
 					sys_profile)) {
-			u64 flags = btrfs_disk_block_group_flags(path->nodes[0],
+			u64 flags = btrfs_disk_block_group_flags(path.nodes[0],
 							     bgi);
 
 			ret = btrfs_free_block_group(trans, fs_info,
@@ -1377,13 +1372,13 @@ static int cleanup_temp_chunks(struct btrfs_fs_info *fs_info,
 				  BTRFS_BLOCK_GROUP_DATA))
 				alloc->mixed -= found_key.offset;
 		}
-		btrfs_release_path(path);
+		btrfs_release_path(&path);
 		key.objectid = found_key.objectid + found_key.offset;
 	}
 out:
 	if (trans)
 		btrfs_commit_transaction(trans, root);
-	btrfs_free_path(path);
+	btrfs_release_path(&path);
 	return ret;
 }
 
