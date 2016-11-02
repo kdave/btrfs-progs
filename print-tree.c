@@ -501,7 +501,7 @@ static void print_extent_ref_v0(struct extent_buffer *eb, int slot)
 }
 #endif
 
-static void print_root_ref(struct extent_buffer *leaf, int slot, char *tag)
+static void print_root_ref(struct extent_buffer *leaf, int slot, const char *tag)
 {
 	struct btrfs_root_ref *ref;
 	char namebuf[BTRFS_NAME_LEN];
