@@ -313,7 +313,7 @@ static int calc_root_size(struct btrfs_root *tree_root, struct btrfs_key *key,
 			  int find_inline)
 {
 	struct btrfs_root *root;
-	struct btrfs_path *path;
+	struct btrfs_path path;
 	struct rb_node *n;
 	struct timeval start, end, diff = {0};
 	struct root_stats stat;
@@ -327,31 +327,26 @@ static int calc_root_size(struct btrfs_root *tree_root, struct btrfs_key *key,
 		return 1;
 	}
 
-	path = btrfs_alloc_path();
-	if (!path) {
-		error("could not allocate path");
-		return 1;
-	}
-
+	btrfs_init_path(&path);
 	memset(&stat, 0, sizeof(stat));
 	level = btrfs_header_level(root->node);
 	stat.lowest_bytenr = btrfs_header_bytenr(root->node);
 	stat.highest_bytenr = stat.lowest_bytenr;
 	stat.min_cluster_size = (u64)-1;
 	stat.max_cluster_size = root->nodesize;
-	path->nodes[level] = root->node;
+	path.nodes[level] = root->node;
 	if (gettimeofday(&start, NULL)) {
 		error("cannot get time: %s", strerror(errno));
 		goto out;
 	}
 	if (!level) {
-		ret = walk_leaf(root, path, &stat, find_inline);
+		ret = walk_leaf(root, &path, &stat, find_inline);
 		if (ret)
 			goto out;
 		goto out_print;
 	}
 
-	ret = walk_nodes(root, path, &stat, level, find_inline);
+	ret = walk_nodes(root, &path, &stat, level, find_inline);
 	if (ret)
 		goto out;
 	if (gettimeofday(&end, NULL)) {
@@ -417,13 +412,11 @@ out:
 	}
 
 	/*
-	 * We only use path to save node data in iterating,
-	 * without holding eb's ref_cnt in path.
-	 * Don't use btrfs_free_path() here, it will free these
-	 * eb again, and cause many problems, as negative ref_cnt
-	 * or invalid memory access.
+	 * We only use path to save node data in iterating, without holding
+	 * eb's ref_cnt in path.  Don't use btrfs_release_path() here, it will
+	 * free these eb again, and cause many problems, as negative ref_cnt or
+	 * invalid memory access.
 	 */
-	free(path);
 	return ret;
 }
 
