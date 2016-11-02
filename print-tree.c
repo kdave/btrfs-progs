@@ -62,7 +62,7 @@ static void print_dir_item_type(struct extent_buffer *eb,
 	}
 }
 
-static int print_dir_item(struct extent_buffer *eb, u32 size,
+static void print_dir_item(struct extent_buffer *eb, u32 size,
 			  struct btrfs_dir_item *di)
 {
 	u32 cur = 0;
@@ -97,10 +97,9 @@ static int print_dir_item(struct extent_buffer *eb, u32 size,
 		di = (struct btrfs_dir_item *)((char *)di + len);
 		cur += len;
 	}
-	return 0;
 }
 
-static int print_inode_extref_item(struct extent_buffer *eb, u32 size,
+static void print_inode_extref_item(struct extent_buffer *eb, u32 size,
 		struct btrfs_inode_extref *extref)
 {
 	u32 cur = 0;
@@ -129,10 +128,9 @@ static int print_inode_extref_item(struct extent_buffer *eb, u32 size,
 		extref = (struct btrfs_inode_extref *)((char *)extref + len);
 		cur += len;
 	}
-	return 0;
 }
 
-static int print_inode_ref_item(struct extent_buffer *eb, u32 size,
+static void print_inode_ref_item(struct extent_buffer *eb, u32 size,
 				struct btrfs_inode_ref *ref)
 {
 	u32 cur = 0;
@@ -152,7 +150,6 @@ static int print_inode_ref_item(struct extent_buffer *eb, u32 size,
 		ref = (struct btrfs_inode_ref *)((char *)ref + len);
 		cur += len;
 	}
-	return 0;
 }
 
 /* Caller should ensure sizeof(*ret)>=21 "DATA|METADATA|RAID10" */
