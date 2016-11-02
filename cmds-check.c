@@ -10286,22 +10286,18 @@ static int reset_balance(struct btrfs_trans_handle *trans,
 			 struct btrfs_fs_info *fs_info)
 {
 	struct btrfs_root *root = fs_info->tree_root;
-	struct btrfs_path *path;
+	struct btrfs_path path;
 	struct extent_buffer *leaf;
 	struct btrfs_key key;
 	int del_slot, del_nr = 0;
 	int ret;
 	int found = 0;
 
-	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
-
+	btrfs_init_path(&path);
 	key.objectid = BTRFS_BALANCE_OBJECTID;
 	key.type = BTRFS_BALANCE_ITEM_KEY;
 	key.offset = 0;
-
-	ret = btrfs_search_slot(trans, root, &key, path, -1, 1);
+	ret = btrfs_search_slot(trans, root, &key, &path, -1, 1);
 	if (ret) {
 		if (ret > 0)
 			ret = 0;
@@ -10311,64 +10307,63 @@ static int reset_balance(struct btrfs_trans_handle *trans,
 			goto out;
 	}
 
-	ret = btrfs_del_item(trans, root, path);
+	ret = btrfs_del_item(trans, root, &path);
 	if (ret)
 		goto out;
-	btrfs_release_path(path);
+	btrfs_release_path(&path);
 
 	key.objectid = BTRFS_TREE_RELOC_OBJECTID;
 	key.type = BTRFS_ROOT_ITEM_KEY;
 	key.offset = 0;
-
-	ret = btrfs_search_slot(trans, root, &key, path, -1, 1);
+	ret = btrfs_search_slot(trans, root, &key, &path, -1, 1);
 	if (ret < 0)
 		goto out;
 	while (1) {
-		if (path->slots[0] >= btrfs_header_nritems(path->nodes[0])) {
+		if (path.slots[0] >= btrfs_header_nritems(path.nodes[0])) {
 			if (!found)
 				break;
 
 			if (del_nr) {
-				ret = btrfs_del_items(trans, root, path,
+				ret = btrfs_del_items(trans, root, &path,
 						      del_slot, del_nr);
 				del_nr = 0;
 				if (ret)
 					goto out;
 			}
 			key.offset++;
-			btrfs_release_path(path);
+			btrfs_release_path(&path);
 
 			found = 0;
-			ret = btrfs_search_slot(trans, root, &key, path,
+			ret = btrfs_search_slot(trans, root, &key, &path,
 						-1, 1);
 			if (ret < 0)
 				goto out;
 			continue;
 		}
 		found = 1;
-		leaf = path->nodes[0];
-		btrfs_item_key_to_cpu(leaf, &key, path->slots[0]);
+		leaf = path.nodes[0];
+		btrfs_item_key_to_cpu(leaf, &key, path.slots[0]);
 		if (key.objectid > BTRFS_TREE_RELOC_OBJECTID)
 			break;
 		if (key.objectid != BTRFS_TREE_RELOC_OBJECTID) {
-			path->slots[0]++;
+			path.slots[0]++;
 			continue;
 		}
 		if (!del_nr) {
-			del_slot = path->slots[0];
+			del_slot = path.slots[0];
 			del_nr = 1;
 		} else {
 			del_nr++;
 		}
-		path->slots[0]++;
+		path.slots[0]++;
 	}
 
 	if (del_nr) {
-		ret = btrfs_del_items(trans, root, path, del_slot, del_nr);
+		ret = btrfs_del_items(trans, root, &path, del_slot, del_nr);
 		if (ret)
 			goto out;
 	}
-	btrfs_release_path(path);
+	btrfs_release_path(&path);
 
 reinit_data_reloc:
 	key.objectid = BTRFS_DATA_RELOC_TREE_OBJECTID;
@@ -10386,7 +10381,7 @@ reinit_data_reloc:
 		goto out;
 	ret = btrfs_make_root_dir(trans, root, BTRFS_FIRST_FREE_OBJECTID);
 out:
-	btrfs_free_path(path);
+	btrfs_release_path(&path);
 	return ret;
 }
 
