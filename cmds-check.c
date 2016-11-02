@@ -185,7 +185,7 @@ struct inode_backref {
 	unsigned int found_dir_item:1;
 	unsigned int found_dir_index:1;
 	unsigned int found_inode_ref:1;
-	unsigned int filetype:8;
+	u8 filetype;
 	int errors;
 	unsigned int ref_type;
 	u64 dir;
@@ -936,7 +936,7 @@ static void maybe_free_inode_rec(struct cache_tree *inode_cache,
 	struct cache_extent *cache;
 	struct inode_backref *tmp, *backref;
 	struct ptr_node *node;
-	unsigned char filetype;
+	u8 filetype;
 
 	if (!rec->found_inode_item)
 		return;
@@ -1067,7 +1067,7 @@ static struct inode_backref *get_inode_backref(struct inode_record *rec,
 static int add_inode_backref(struct cache_tree *inode_cache,
 			     u64 ino, u64 dir, u64 index,
 			     const char *name, int namelen,
-			     int filetype, int itemtype, int errors)
+			     u8 filetype, int itemtype, int errors)
 {
 	struct inode_record *rec;
 	struct inode_backref *backref;
@@ -1470,7 +1470,7 @@ static int process_dir_item(struct btrfs_root *root,
 	u32 data_len;
 	int error;
 	int nritems = 0;
-	int filetype;
+	u8 filetype;
 	struct btrfs_dir_item *di;
 	struct inode_record *rec;
 	struct cache_tree *root_cache;
