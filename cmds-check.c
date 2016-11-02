@@ -186,8 +186,8 @@ struct inode_backref {
 	unsigned int found_dir_index:1;
 	unsigned int found_inode_ref:1;
 	u8 filetype;
-	int errors;
 	u8 ref_type;
+	int errors;
 	u64 dir;
 	u64 index;
 	u16 namelen;
