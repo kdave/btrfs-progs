@@ -1032,12 +1032,6 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *eb)
 	struct btrfs_item *item;
 	struct btrfs_disk_key disk_key;
 	u32 nr = btrfs_header_nritems(eb);
-	u64 objectid;
-	u32 type;
-	u64 offset;
-	char flags_str[256];
-	char uuid_str[BTRFS_UUID_UNPARSED_SIZE];
-	u8 uuid[BTRFS_UUID_SIZE];
 
 	printf("leaf %llu items %d free space %d generation %llu owner %llu\n",
 		(unsigned long long)btrfs_header_bytenr(eb), nr,
@@ -1049,15 +1043,23 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *eb)
 	for (i = 0 ; i < nr ; i++) {
 		u32 item_size;
 		void *ptr;
+		u64 objectid;
+		u32 type;
+		u64 offset;
+		char flags_str[256];
+		char uuid_str[BTRFS_UUID_UNPARSED_SIZE];
+		u8 uuid[BTRFS_UUID_SIZE];
 
 		item = btrfs_item_nr(i);
 		item_size = btrfs_item_size(eb, item);
 		/* Untyped extraction of slot from btrfs_item_ptr */
 		ptr = btrfs_item_ptr(eb, i, void*);
+
 		btrfs_item_key(eb, &disk_key, i);
 		objectid = btrfs_disk_key_objectid(&disk_key);
 		type = btrfs_disk_key_type(&disk_key);
 		offset = btrfs_disk_key_offset(&disk_key);
+
 		printf("\titem %d ", i);
 		btrfs_print_key(&disk_key);
 		printf(" itemoff %d itemsize %d\n",
