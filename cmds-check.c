@@ -10711,36 +10711,32 @@ static int fill_csum_tree_from_extent(struct btrfs_trans_handle *trans,
 				      struct btrfs_root *csum_root)
 {
 	struct btrfs_root *extent_root = csum_root->fs_info->extent_root;
-	struct btrfs_path *path;
+	struct btrfs_path path;
 	struct btrfs_extent_item *ei;
 	struct extent_buffer *leaf;
 	char *buf;
 	struct btrfs_key key;
 	int ret;
 
-	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
-
+	btrfs_init_path(&path);
 	key.objectid = 0;
 	key.type = BTRFS_EXTENT_ITEM_KEY;
 	key.offset = 0;
-
-	ret = btrfs_search_slot(NULL, extent_root, &key, path, 0, 0);
+	ret = btrfs_search_slot(NULL, extent_root, &key, &path, 0, 0);
 	if (ret < 0) {
-		btrfs_free_path(path);
+		btrfs_release_path(&path);
 		return ret;
 	}
 
 	buf = malloc(csum_root->sectorsize);
 	if (!buf) {
-		btrfs_free_path(path);
+		btrfs_release_path(&path);
 		return -ENOMEM;
 	}
 
 	while (1) {
-		if (path->slots[0] >= btrfs_header_nritems(path->nodes[0])) {
-			ret = btrfs_next_leaf(extent_root, path);
+		if (path.slots[0] >= btrfs_header_nritems(path.nodes[0])) {
+			ret = btrfs_next_leaf(extent_root, &path);
 			if (ret < 0)
 				break;
 			if (ret) {
@@ -10748,19 +10744,19 @@ static int fill_csum_tree_from_extent(struct btrfs_trans_handle *trans,
 				break;
 			}
 		}
-		leaf = path->nodes[0];
+		leaf = path.nodes[0];
 
-		btrfs_item_key_to_cpu(leaf, &key, path->slots[0]);
+		btrfs_item_key_to_cpu(leaf, &key, path.slots[0]);
 		if (key.type != BTRFS_EXTENT_ITEM_KEY) {
-			path->slots[0]++;
+			path.slots[0]++;
 			continue;
 		}
 
-		ei = btrfs_item_ptr(leaf, path->slots[0],
+		ei = btrfs_item_ptr(leaf, path.slots[0],
 				    struct btrfs_extent_item);
 		if (!(btrfs_extent_flags(leaf, ei) &
 		      BTRFS_EXTENT_FLAG_DATA)) {
-			path->slots[0]++;
+			path.slots[0]++;
 			continue;
 		}
 
@@ -10768,10 +10764,10 @@ static int fill_csum_tree_from_extent(struct btrfs_trans_handle *trans,
 				    key.offset);
 		if (ret)
 			break;
-		path->slots[0]++;
+		path.slots[0]++;
 	}
 
-	btrfs_free_path(path);
+	btrfs_release_path(&path);
 	free(buf);
 	return ret;
 }
