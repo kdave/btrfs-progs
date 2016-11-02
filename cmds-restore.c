@@ -795,7 +795,7 @@ static int overwrite_ok(const char * path)
 static int copy_symlink(struct btrfs_root *root, struct btrfs_key *key,
 		     const char *file)
 {
-	struct btrfs_path *path;
+	struct btrfs_path path;
 	struct extent_buffer *leaf;
 	struct btrfs_file_extent_item *extent_item;
 	struct btrfs_inode_item *inode_item;
@@ -819,29 +819,25 @@ static int copy_symlink(struct btrfs_root *root, struct btrfs_key *key,
 		}
 	}
 
+	btrfs_init_path(&path);
 	key->type = BTRFS_EXTENT_DATA_KEY;
 	key->offset = 0;
-
-	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
-
-	ret = btrfs_search_slot(NULL, root, key, path, 0, 0);
+	ret = btrfs_search_slot(NULL, root, key, &path, 0, 0);
 	if (ret < 0)
 		goto out;
 
-	leaf = path->nodes[0];
+	leaf = path.nodes[0];
 	if (!leaf) {
 		fprintf(stderr, "Error getting leaf for symlink '%s'\n", file);
 		ret = -1;
 		goto out;
 	}
 
-	extent_item = btrfs_item_ptr(leaf, path->slots[0],
+	extent_item = btrfs_item_ptr(leaf, path.slots[0],
 			struct btrfs_file_extent_item);
 
 	len = btrfs_file_extent_inline_item_len(leaf,
-			btrfs_item_nr(path->slots[0]));
+			btrfs_item_nr(path.slots[0]));
 	if (len >= PATH_MAX) {
 		fprintf(stderr, "Symlink '%s' target length %d is longer than PATH_MAX\n",
 				fs_name, len);
@@ -876,19 +872,19 @@ static int copy_symlink(struct btrfs_root *root, struct btrfs_key *key,
 	key->type = BTRFS_INODE_ITEM_KEY;
 	key->offset = 0;
 
-	btrfs_release_path(path);
+	btrfs_release_path(&path);
 
-	ret = btrfs_lookup_inode(NULL, root, path, key, 0);
+	ret = btrfs_lookup_inode(NULL, root, &path, key, 0);
 	if (ret) {
 		fprintf(stderr, "Failed to lookup inode for '%s'\n", file);
 		goto out;
 	}
 
-	inode_item = btrfs_item_ptr(path->nodes[0], path->slots[0],
+	inode_item = btrfs_item_ptr(path.nodes[0], path.slots[0],
 			struct btrfs_inode_item);
 
-	ret = fchownat(-1, file, btrfs_inode_uid(path->nodes[0], inode_item),
-				   btrfs_inode_gid(path->nodes[0], inode_item),
+	ret = fchownat(-1, file, btrfs_inode_uid(path.nodes[0], inode_item),
+				   btrfs_inode_gid(path.nodes[0], inode_item),
 				   AT_SYMLINK_NOFOLLOW);
 	if (ret) {
 		fprintf(stderr, "Failed to change owner: %s\n",
@@ -897,18 +893,18 @@ static int copy_symlink(struct btrfs_root *root, struct btrfs_key *key,
 	}
 
 	bts = btrfs_inode_atime(inode_item);
-	times[0].tv_sec  = btrfs_timespec_sec(path->nodes[0], bts);
-	times[0].tv_nsec = btrfs_timespec_nsec(path->nodes[0], bts);
+	times[0].tv_sec  = btrfs_timespec_sec(path.nodes[0], bts);
+	times[0].tv_nsec = btrfs_timespec_nsec(path.nodes[0], bts);
 
 	bts = btrfs_inode_mtime(inode_item);
-	times[1].tv_sec  = btrfs_timespec_sec(path->nodes[0], bts);
-	times[1].tv_nsec = btrfs_timespec_nsec(path->nodes[0], bts);
+	times[1].tv_sec  = btrfs_timespec_sec(path.nodes[0], bts);
+	times[1].tv_nsec = btrfs_timespec_nsec(path.nodes[0], bts);
 
 	ret = utimensat(-1, file, times, AT_SYMLINK_NOFOLLOW);
 	if (ret)
 		fprintf(stderr, "Failed to set times: %s\n", strerror(errno));
 out:
-	btrfs_free_path(path);
+	btrfs_release_path(&path);
 	return ret;
 }
 
