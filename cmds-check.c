@@ -10586,7 +10586,7 @@ static int fill_csum_tree_from_one_fs_root(struct btrfs_trans_handle *trans,
 				      struct btrfs_root *csum_root,
 				      struct btrfs_root *cur_root)
 {
-	struct btrfs_path *path;
+	struct btrfs_path path;
 	struct btrfs_key key;
 	struct extent_buffer *node;
 	struct btrfs_file_extent_item *fi;
@@ -10596,30 +10596,25 @@ static int fill_csum_tree_from_one_fs_root(struct btrfs_trans_handle *trans,
 	int slot = 0;
 	int ret = 0;
 
-	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
 	buf = malloc(cur_root->fs_info->csum_root->sectorsize);
-	if (!buf) {
-		ret = -ENOMEM;
-		goto out;
-	}
+	if (!buf)
+		return -ENOMEM;
 
+	btrfs_init_path(&path);
 	key.objectid = 0;
 	key.offset = 0;
 	key.type = 0;
-
-	ret = btrfs_search_slot(NULL, cur_root, &key, path, 0, 0);
+	ret = btrfs_search_slot(NULL, cur_root, &key, &path, 0, 0);
 	if (ret < 0)
 		goto out;
 	/* Iterate all regular file extents and fill its csum */
 	while (1) {
-		btrfs_item_key_to_cpu(path->nodes[0], &key, path->slots[0]);
+		btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
 
 		if (key.type != BTRFS_EXTENT_DATA_KEY)
 			goto next;
-		node = path->nodes[0];
-		slot = path->slots[0];
+		node = path.nodes[0];
+		slot = path.slots[0];
 		fi = btrfs_item_ptr(node, slot, struct btrfs_file_extent_item);
 		if (btrfs_file_extent_type(node, fi) != BTRFS_FILE_EXTENT_REG)
 			goto next;
@@ -10636,7 +10631,7 @@ next:
 		 * TODO: if next leaf is corrupted, jump to nearest next valid
 		 * leaf.
 		 */
-		ret = btrfs_next_item(cur_root, path);
+		ret = btrfs_next_item(cur_root, &path);
 		if (ret < 0)
 			goto out;
 		if (ret > 0) {
@@ -10646,7 +10641,7 @@ next:
 	}
 
 out:
-	btrfs_free_path(path);
+	btrfs_release_path(&path);
 	free(buf);
 	return ret;
 }
