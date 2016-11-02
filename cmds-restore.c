@@ -1288,36 +1288,30 @@ static struct btrfs_root *open_fs(const char *dev, u64 root_location,
 
 static int find_first_dir(struct btrfs_root *root, u64 *objectid)
 {
-	struct btrfs_path *path;
+	struct btrfs_path path;
 	struct btrfs_key found_key;
 	struct btrfs_key key;
 	int ret = -1;
 	int i;
 
+	btrfs_init_path(&path);
 	key.objectid = 0;
 	key.type = BTRFS_DIR_INDEX_KEY;
 	key.offset = 0;
-
-	path = btrfs_alloc_path();
-	if (!path) {
-		fprintf(stderr, "Ran out of memory\n");
-		return ret;
-	}
-
-	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
+	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
 	if (ret < 0) {
 		fprintf(stderr, "Error searching %d\n", ret);
 		goto out;
 	}
 
-	if (!path->nodes[0]) {
+	if (!path.nodes[0]) {
 		fprintf(stderr, "No leaf!\n");
 		goto out;
 	}
 again:
-	for (i = path->slots[0];
-	     i < btrfs_header_nritems(path->nodes[0]); i++) {
-		btrfs_item_key_to_cpu(path->nodes[0], &found_key, i);
+	for (i = path.slots[0];
+	     i < btrfs_header_nritems(path.nodes[0]); i++) {
+		btrfs_item_key_to_cpu(path.nodes[0], &found_key, i);
 		if (found_key.type != key.type)
 			continue;
 
@@ -1328,7 +1322,7 @@ again:
 		goto out;
 	}
 	do {
-		ret = next_leaf(root, path);
+		ret = next_leaf(root, &path);
 		if (ret < 0) {
 			fprintf(stderr, "Error getting next leaf %d\n",
 				ret);
@@ -1337,12 +1331,12 @@ again:
 			fprintf(stderr, "No more leaves\n");
 			goto out;
 		}
-	} while (!path->nodes[0]);
-	if (path->nodes[0])
+	} while (!path.nodes[0]);
+	if (path.nodes[0])
 		goto again;
 	printf("Couldn't find a dir index item\n");
 out:
-	btrfs_free_path(path);
+	btrfs_release_path(&path);
 	return ret;
 }
 
