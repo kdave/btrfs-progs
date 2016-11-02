@@ -195,24 +195,26 @@ static int add_clone_source(struct btrfs_send *s, u64 root_id)
 	return 0;
 }
 
-static int write_buf(int fd, const void *buf, int size)
+static int write_buf(int fd, const char *buf, size_t size)
 {
 	int ret;
-	int pos = 0;
+	size_t pos = 0;
 
 	while (pos < size) {
-		ret = write(fd, (char*)buf + pos, size - pos);
-		if (ret < 0) {
+		ssize_t wbytes;
+
+		wbytes = write(fd, buf + pos, size - pos);
+		if (wbytes < 0) {
 			ret = -errno;
 			error("failed to dump stream: %s", strerror(-ret));
 			goto out;
 		}
-		if (!ret) {
+		if (!wbytes) {
 			ret = -EIO;
 			error("failed to dump stream: %s", strerror(-ret));
 			goto out;
 		}
-		pos += ret;
+		pos += wbytes;
 	}
 	ret = 0;
 
