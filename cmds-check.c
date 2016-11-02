@@ -5761,33 +5761,28 @@ out:
 static int check_extent_exists(struct btrfs_root *root, u64 bytenr,
 			       u64 num_bytes)
 {
-	struct btrfs_path *path;
+	struct btrfs_path path;
 	struct extent_buffer *leaf;
 	struct btrfs_key key;
 	int ret;
 
-	path = btrfs_alloc_path();
-	if (!path) {
-		fprintf(stderr, "Error allocating path\n");
-		return -ENOMEM;
-	}
-
+	btrfs_init_path(&path);
 	key.objectid = bytenr;
 	key.type = BTRFS_EXTENT_ITEM_KEY;
 	key.offset = (u64)-1;
 
 again:
-	ret = btrfs_search_slot(NULL, root->fs_info->extent_root, &key, path,
+	ret = btrfs_search_slot(NULL, root->fs_info->extent_root, &key, &path,
 				0, 0);
 	if (ret < 0) {
 		fprintf(stderr, "Error looking up extent record %d\n", ret);
-		btrfs_free_path(path);
+		btrfs_release_path(&path);
 		return ret;
 	} else if (ret) {
-		if (path->slots[0] > 0) {
-			path->slots[0]--;
+		if (path.slots[0] > 0) {
+			path.slots[0]--;
 		} else {
-			ret = btrfs_prev_leaf(root, path);
+			ret = btrfs_prev_leaf(root, &path);
 			if (ret < 0) {
 				goto out;
 			} else if (ret > 0) {
@@ -5797,7 +5792,7 @@ again:
 		}
 	}
 
-	btrfs_item_key_to_cpu(path->nodes[0], &key, path->slots[0]);
+	btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
 
 	/*
 	 * Block group items come before extent items if they have the same
@@ -5808,10 +5803,10 @@ again:
 	 * EXTENT_ITEM_KEY please?
 	 */
 	while (key.type > BTRFS_EXTENT_ITEM_KEY) {
-		if (path->slots[0] > 0) {
-			path->slots[0]--;
+		if (path.slots[0] > 0) {
+			path.slots[0]--;
 		} else {
-			ret = btrfs_prev_leaf(root, path);
+			ret = btrfs_prev_leaf(root, &path);
 			if (ret < 0) {
 				goto out;
 			} else if (ret > 0) {
@@ -5819,29 +5814,29 @@ again:
 				goto out;
 			}
 		}
-		btrfs_item_key_to_cpu(path->nodes[0], &key, path->slots[0]);
+		btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
 	}
 
 	while (num_bytes) {
-		if (path->slots[0] >= btrfs_header_nritems(path->nodes[0])) {
-			ret = btrfs_next_leaf(root, path);
+		if (path.slots[0] >= btrfs_header_nritems(path.nodes[0])) {
+			ret = btrfs_next_leaf(root, &path);
 			if (ret < 0) {
 				fprintf(stderr, "Error going to next leaf "
 					"%d\n", ret);
-				btrfs_free_path(path);
+				btrfs_release_path(&path);
 				return ret;
 			} else if (ret) {
 				break;
 			}
 		}
-		leaf = path->nodes[0];
-		btrfs_item_key_to_cpu(leaf, &key, path->slots[0]);
+		leaf = path.nodes[0];
+		btrfs_item_key_to_cpu(leaf, &key, path.slots[0]);
 		if (key.type != BTRFS_EXTENT_ITEM_KEY) {
-			path->slots[0]++;
+			path.slots[0]++;
 			continue;
 		}
 		if (key.objectid + key.offset < bytenr) {
-			path->slots[0]++;
+			path.slots[0]++;
 			continue;
 		}
 		if (key.objectid > bytenr + num_bytes)
@@ -5874,7 +5869,7 @@ again:
 				 * in real life, but no harm in coding it up
 				 * anyway just in case.
 				 */
-				btrfs_release_path(path);
+				btrfs_release_path(&path);
 				ret = check_extent_exists(root, new_start,
 							  new_bytes);
 				if (ret) {
@@ -5887,7 +5882,7 @@ again:
 			}
 			num_bytes = key.objectid - bytenr;
 		}
-		path->slots[0]++;
+		path.slots[0]++;
 	}
 	ret = 0;
 
@@ -5898,7 +5893,7 @@ out:
 		ret = 1;
 	}
 
-	btrfs_free_path(path);
+	btrfs_release_path(&path);
 	return ret;
 }
 
