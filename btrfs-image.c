@@ -99,7 +99,7 @@ struct metadump_struct {
 
 	struct meta_cluster *cluster;
 
-	pthread_t *threads;
+	pthread_t threads[MAX_WORKER_THREADS];
 	size_t num_threads;
 	pthread_mutex_t mutex;
 	pthread_cond_t cond;
@@ -132,7 +132,7 @@ struct mdrestore_struct {
 	FILE *in;
 	FILE *out;
 
-	pthread_t *threads;
+	pthread_t threads[MAX_WORKER_THREADS];
 	size_t num_threads;
 	pthread_mutex_t mutex;
 	pthread_cond_t cond;
@@ -738,7 +738,6 @@ static void metadump_destroy(struct metadump_struct *md, int num_threads)
 		free(name->sub);
 		free(name);
 	}
-	free(md->threads);
 	free(md->cluster);
 }
 
@@ -752,11 +751,6 @@ static int metadump_init(struct metadump_struct *md, struct btrfs_root *root,
 	md->cluster = calloc(1, BLOCK_SIZE);
 	if (!md->cluster)
 		return -ENOMEM;
-	md->threads = calloc(num_threads, sizeof(pthread_t));
-	if (!md->threads) {
-		free(md->cluster);
-		return -ENOMEM;
-	}
 	INIT_LIST_HEAD(&md->list);
 	INIT_LIST_HEAD(&md->ordered);
 	md->root = root;
@@ -1841,7 +1835,6 @@ static void mdrestore_destroy(struct mdrestore_struct *mdres, int num_threads)
 
 	pthread_cond_destroy(&mdres->cond);
 	pthread_mutex_destroy(&mdres->mutex);
-	free(mdres->threads);
 }
 
 static int mdrestore_init(struct mdrestore_struct *mdres,
@@ -1871,11 +1864,8 @@ static int mdrestore_init(struct mdrestore_struct *mdres,
 		return 0;
 
 	mdres->num_threads = num_threads;
-	mdres->threads = calloc(num_threads, sizeof(pthread_t));
-	if (!mdres->threads)
-		return -ENOMEM;
 	for (i = 0; i < num_threads; i++) {
-		ret = pthread_create(mdres->threads + i, NULL, restore_worker,
+		ret = pthread_create(&mdres->threads[i], NULL, restore_worker,
 				     mdres);
 		if (ret) {
 			/* pthread_create returns errno directly */
