@@ -912,7 +912,7 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 		      const char *output_rootdir, const char *in_dir,
 		      const regex_t *mreg)
 {
-	struct btrfs_path *path;
+	struct btrfs_path path;
 	struct extent_buffer *leaf;
 	struct btrfs_dir_item *dir_item;
 	struct btrfs_key found_key, location;
@@ -924,16 +924,10 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 	int loops = 0;
 	u8 type;
 
-	path = btrfs_alloc_path();
-	if (!path) {
-		fprintf(stderr, "Ran out of memory\n");
-		return -ENOMEM;
-	}
-
+	btrfs_init_path(&path);
 	key->offset = 0;
 	key->type = BTRFS_DIR_INDEX_KEY;
-
-	ret = btrfs_search_slot(NULL, root, key, path, 0, 0);
+	ret = btrfs_search_slot(NULL, root, key, &path, 0, 0);
 	if (ret < 0) {
 		fprintf(stderr, "Error searching %d\n", ret);
 		goto out;
@@ -941,12 +935,12 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 
 	ret = 0;
 
-	leaf = path->nodes[0];
+	leaf = path.nodes[0];
 	while (!leaf) {
 		if (verbose > 1)
 			printf("No leaf after search, looking for the next "
 			       "leaf\n");
-		ret = next_leaf(root, path);
+		ret = next_leaf(root, &path);
 		if (ret < 0) {
 			fprintf(stderr, "Error getting next leaf %d\n",
 				ret);
@@ -959,7 +953,7 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 			ret = 0;
 			goto out;
 		}
-		leaf = path->nodes[0];
+		leaf = path.nodes[0];
 	}
 
 	while (leaf) {
@@ -970,9 +964,9 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 			break;
 		}
 
-		if (path->slots[0] >= btrfs_header_nritems(leaf)) {
+		if (path.slots[0] >= btrfs_header_nritems(leaf)) {
 			do {
-				ret = next_leaf(root, path);
+				ret = next_leaf(root, &path);
 				if (ret < 0) {
 					fprintf(stderr, "Error searching %d\n",
 						ret);
@@ -986,11 +980,11 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 					ret = 0;
 					goto out;
 				}
-				leaf = path->nodes[0];
+				leaf = path.nodes[0];
 			} while (!leaf);
 			continue;
 		}
-		btrfs_item_key_to_cpu(leaf, &found_key, path->slots[0]);
+		btrfs_item_key_to_cpu(leaf, &found_key, path.slots[0]);
 		if (found_key.objectid != key->objectid) {
 			if (verbose > 1)
 				printf("Found objectid=%Lu, key=%Lu\n",
@@ -1003,7 +997,7 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 				       found_key.type, key->type);
 			break;
 		}
-		dir_item = btrfs_item_ptr(leaf, path->slots[0],
+		dir_item = btrfs_item_ptr(leaf, path.slots[0],
 					  struct btrfs_dir_item);
 		name_ptr = (unsigned long)(dir_item + 1);
 		name_len = btrfs_dir_name_len(leaf, dir_item);
@@ -1135,12 +1129,12 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 			if (ret < 0) {
 				if (ignore_errors)
 					goto next;
-				btrfs_free_path(path);
+				btrfs_release_path(&path);
 				return ret;
 			}
 		}
 next:
-		path->slots[0]++;
+		path.slots[0]++;
 	}
 
 	if (restore_metadata) {
@@ -1168,7 +1162,7 @@ next:
 	if (verbose)
 		printf("Done searching %s\n", in_dir);
 out:
-	btrfs_free_path(path);
+	btrfs_release_path(&path);
 	return ret;
 }
 
