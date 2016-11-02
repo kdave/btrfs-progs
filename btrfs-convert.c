@@ -968,7 +968,7 @@ static int create_image(struct btrfs_root *root,
 {
 	struct btrfs_inode_item buf;
 	struct btrfs_trans_handle *trans;
-	struct btrfs_path *path = NULL;
+	struct btrfs_path path;
 	struct btrfs_key key;
 	struct cache_extent *cache;
 	struct cache_tree used_tmp;
@@ -985,6 +985,7 @@ static int create_image(struct btrfs_root *root,
 		return -ENOMEM;
 
 	cache_tree_init(&used_tmp);
+	btrfs_init_path(&path);
 
 	ret = btrfs_find_free_objectid(trans, root, BTRFS_FIRST_FREE_OBJECTID,
 				       &ino);
@@ -1001,24 +1002,19 @@ static int create_image(struct btrfs_root *root,
 	if (ret < 0)
 		goto out;
 
-	path = btrfs_alloc_path();
-	if (!path) {
-		ret = -ENOMEM;
-		goto out;
-	}
 	key.objectid = ino;
 	key.type = BTRFS_INODE_ITEM_KEY;
 	key.offset = 0;
 
-	ret = btrfs_search_slot(trans, root, &key, path, 0, 1);
+	ret = btrfs_search_slot(trans, root, &key, &path, 0, 1);
 	if (ret) {
 		ret = (ret > 0 ? -ENOENT : ret);
 		goto out;
 	}
-	read_extent_buffer(path->nodes[0], &buf,
-			btrfs_item_ptr_offset(path->nodes[0], path->slots[0]),
+	read_extent_buffer(path.nodes[0], &buf,
+			btrfs_item_ptr_offset(path.nodes[0], path.slots[0]),
 			sizeof(buf));
-	btrfs_release_path(path);
+	btrfs_release_path(&path);
 
 	/*
 	 * Create a new used space cache, which doesn't contain the reserved
@@ -1056,18 +1052,18 @@ static int create_image(struct btrfs_root *root,
 	key.objectid = ino;
 	key.type = BTRFS_INODE_ITEM_KEY;
 	key.offset = 0;
-	ret = btrfs_search_slot(trans, root, &key, path, 0, 1);
+	ret = btrfs_search_slot(trans, root, &key, &path, 0, 1);
 	if (ret) {
 		ret = (ret > 0 ? -ENOENT : ret);
 		goto out;
 	}
 	btrfs_set_stack_inode_size(&buf, cfg->num_bytes);
-	write_extent_buffer(path->nodes[0], &buf,
-			btrfs_item_ptr_offset(path->nodes[0], path->slots[0]),
+	write_extent_buffer(path.nodes[0], &buf,
+			btrfs_item_ptr_offset(path.nodes[0], path.slots[0]),
 			sizeof(buf));
 out:
 	free_extent_cache_tree(&used_tmp);
-	btrfs_free_path(path);
+	btrfs_release_path(&path);
 	btrfs_commit_transaction(trans, root);
 	return ret;
 }
