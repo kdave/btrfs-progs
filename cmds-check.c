@@ -7468,15 +7468,13 @@ static int record_orphan_data_extents(struct btrfs_fs_info *fs_info,
 	struct extent_backref *back;
 	struct data_backref *dback;
 	struct orphan_data_extent *orphan;
-	struct btrfs_path *path;
+	struct btrfs_path path;
 	int recorded_data_ref = 0;
 	int ret = 0;
 
 	if (rec->metadata)
 		return 1;
-	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
+	btrfs_init_path(&path);
 	list_for_each_entry(back, &rec->backrefs, list) {
 		if (back->full_backref || !back->is_data ||
 		    !back->found_extent_tree)
@@ -7498,8 +7496,8 @@ static int record_orphan_data_extents(struct btrfs_fs_info *fs_info,
 		key.type = BTRFS_EXTENT_DATA_KEY;
 		key.offset = dback->offset;
 
-		ret = btrfs_search_slot(NULL, dest_root, &key, path, 0, 0);
-		btrfs_release_path(path);
+		ret = btrfs_search_slot(NULL, dest_root, &key, &path, 0, 0);
+		btrfs_release_path(&path);
 		/*
 		 * For ret < 0, it's OK since the fs-tree may be corrupted,
 		 * we need to record it for inode/file extent rebuild.
@@ -7526,7 +7524,7 @@ static int record_orphan_data_extents(struct btrfs_fs_info *fs_info,
 		recorded_data_ref = 1;
 	}
 out:
-	btrfs_free_path(path);
+	btrfs_release_path(&path);
 	if (!ret)
 		return !recorded_data_ref;
 	else
