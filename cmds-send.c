@@ -225,7 +225,7 @@ out:
 	return ret;
 }
 
-static void *dump_thread_copy(void *arg)
+static void* read_sent_data_copy(void *arg)
 {
 	int ret;
 	struct btrfs_send *sctx = (struct btrfs_send*)arg;
@@ -258,7 +258,7 @@ out:
 }
 #endif
 
-static void* dump_thread(void *arg)
+static void *read_sent_data(void *arg)
 {
 	int ret;
 	struct btrfs_send *sctx = (struct btrfs_send*)arg;
@@ -318,8 +318,7 @@ static int do_send(struct btrfs_send *send, u64 parent_root_id,
 	send->send_fd = pipefd[0];
 
 	if (!ret)
-		ret = pthread_create(&t_read, NULL, dump_thread,
-					send);
+		ret = pthread_create(&t_read, NULL, read_sent_data, send);
 	if (ret) {
 		ret = -ret;
 		error("thread setup failed: %s", strerror(-ret));
