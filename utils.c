@@ -1098,8 +1098,7 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg,
 		}
 	} else {
 		uuid_generate(super.fsid);
-		if (cfg->fs_uuid)
-			uuid_unparse(super.fsid, cfg->fs_uuid);
+		uuid_unparse(super.fsid, cfg->fs_uuid);
 	}
 	uuid_generate(super.dev_item.uuid);
 	uuid_generate(chunk_tree_uuid);
