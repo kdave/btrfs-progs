@@ -555,8 +555,10 @@ struct btrfs_node {
 struct btrfs_path {
 	struct extent_buffer *nodes[BTRFS_MAX_LEVEL];
 	int slots[BTRFS_MAX_LEVEL];
-	/* if there is real range locking, this locks field will change */
+#if 0
+	/* The kernel locking sheme is not done in userspace. */
 	int locks[BTRFS_MAX_LEVEL];
+#endif
 	int reada;
 	/* keep some upper locks as we walk down */
 	int lowest_level;
