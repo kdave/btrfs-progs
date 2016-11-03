@@ -97,7 +97,10 @@ struct metadump_struct {
 	struct btrfs_root *root;
 	FILE *out;
 
-	struct meta_cluster *cluster;
+	union {
+		struct meta_cluster cluster;
+		char meta_cluster_bytes[BLOCK_SIZE];
+	};
 
 	pthread_t threads[MAX_WORKER_THREADS];
 	size_t num_threads;
@@ -705,7 +708,7 @@ static void meta_cluster_init(struct metadump_struct *md, u64 start)
 
 	md->num_items = 0;
 	md->num_ready = 0;
-	header = &md->cluster->header;
+	header = &md->cluster.header;
 	header->magic = cpu_to_le64(HEADER_MAGIC);
 	header->bytenr = cpu_to_le64(start);
 	header->nritems = cpu_to_le32(0);
@@ -738,7 +741,6 @@ static void metadump_destroy(struct metadump_struct *md, int num_threads)
 		free(name->sub);
 		free(name);
 	}
-	free(md->cluster);
 }
 
 static int metadump_init(struct metadump_struct *md, struct btrfs_root *root,
@@ -748,9 +750,6 @@ static int metadump_init(struct metadump_struct *md, struct btrfs_root *root,
 	int i, ret = 0;
 
 	memset(md, 0, sizeof(*md));
-	md->cluster = calloc(1, BLOCK_SIZE);
-	if (!md->cluster)
-		return -ENOMEM;
 	INIT_LIST_HEAD(&md->list);
 	INIT_LIST_HEAD(&md->ordered);
 	md->root = root;
@@ -790,7 +789,7 @@ static int write_zero(FILE *out, size_t size)
 
 static int write_buffers(struct metadump_struct *md, u64 *next)
 {
-	struct meta_cluster_header *header = &md->cluster->header;
+	struct meta_cluster_header *header = &md->cluster.header;
 	struct meta_cluster_item *item;
 	struct async_work *async;
 	u64 bytenr = 0;
@@ -820,14 +819,14 @@ static int write_buffers(struct metadump_struct *md, u64 *next)
 
 	/* setup and write index block */
 	list_for_each_entry(async, &md->ordered, ordered) {
-		item = md->cluster->items + nritems;
+		item = &md->cluster.items[nritems];
 		item->bytenr = cpu_to_le64(async->start);
 		item->size = cpu_to_le32(async->bufsize);
 		nritems++;
 	}
 	header->nritems = cpu_to_le32(nritems);
 
-	ret = fwrite(md->cluster, BLOCK_SIZE, 1, md->out);
+	ret = fwrite(&md->cluster, BLOCK_SIZE, 1, md->out);
 	if (ret != 1) {
 		error("unable to write out cluster: %s", strerror(errno));
 		return -errno;
