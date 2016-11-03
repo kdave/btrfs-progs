@@ -559,7 +559,7 @@ struct btrfs_path {
 	/* The kernel locking sheme is not done in userspace. */
 	int locks[BTRFS_MAX_LEVEL];
 #endif
-	int reada;
+	signed char reada;
 	/* keep some upper locks as we walk down */
 	int lowest_level;
 
