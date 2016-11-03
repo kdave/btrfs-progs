@@ -567,8 +567,8 @@ struct btrfs_path {
 	 * set by btrfs_split_item, tells search_slot to keep all locks
 	 * and to force calls to keep space in the nodes
 	 */
-	unsigned int search_for_split:1;
-	unsigned int skip_check_block:1;
+	u8 search_for_split;
+	u8 skip_check_block;
 };
 
 /*
