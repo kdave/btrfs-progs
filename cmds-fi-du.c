@@ -116,7 +116,7 @@ static void cleanup_shared_extents(struct rb_root *root)
 	}
 }
 
-#define dprintf(...)
+#define dbgprintf(...)
 
 /*
  * Find all extents which overlap 'n', calculate the space
@@ -128,7 +128,7 @@ static u64 count_unique_bytes(struct rb_root *root, struct shared_extent *n)
 	u64 wstart = n->start;
 	u64 wlast = n->last;
 
-	dprintf("Count overlaps:");
+	dbgprintf("Count overlaps:");
 
 	do {
 		/*
@@ -141,7 +141,7 @@ static u64 count_unique_bytes(struct rb_root *root, struct shared_extent *n)
 		if (wlast < n->last)
 			wlast = n->last;
 
-		dprintf(" (%llu, %llu)", n->start, n->last);
+		dbgprintf(" (%llu, %llu)", n->start, n->last);
 
 		tmp = n;
 		n = extent_tree_iter_next(n, wstart, wlast);
@@ -150,7 +150,7 @@ static u64 count_unique_bytes(struct rb_root *root, struct shared_extent *n)
 		free(tmp);
 	} while (n);
 
-	dprintf("; wstart: %llu wlast: %llu total: %llu\n", wstart,
+	dbgprintf("; wstart: %llu wlast: %llu total: %llu\n", wstart,
 		wlast, wlast - wstart + 1);
 
 	return wlast - wstart + 1;
