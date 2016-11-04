@@ -417,6 +417,37 @@ out:
 	return ret;
 }
 
+static int set_root_info(struct btrfs_send *sctx, const char *subvol,
+		u64 *root_id)
+{
+	int ret;
+
+	ret = init_root_path(sctx, subvol);
+	if (ret < 0)
+		goto out;
+
+	ret = get_root_id(sctx, subvol_strip_mountpoint(sctx->root_path, subvol),
+		root_id);
+	if (ret < 0) {
+		error("cannot resolve rootid for %s", subvol);
+		goto out;
+	}
+
+out:
+	return ret;
+}
+
+static void free_send_info(struct btrfs_send *sctx)
+{
+	if (sctx->mnt_fd >= 0) {
+		close(sctx->mnt_fd);
+		sctx->mnt_fd = -1;
+	}
+	free(sctx->root_path);
+	sctx->root_path = NULL;
+	subvol_uuid_search_finit(&sctx->sus);
+}
+
 int cmd_send(int argc, char **argv)
 {
 	char *subvol = NULL;
@@ -466,17 +497,9 @@ int cmd_send(int argc, char **argv)
 				goto out;
 			}
 
-			ret = init_root_path(&send, subvol);
+			ret = set_root_info(&send, subvol, &root_id);
 			if (ret < 0)
 				goto out;
-
-			ret = get_root_id(&send,
-				subvol_strip_mountpoint(send.root_path, subvol),
-				&root_id);
-			if (ret < 0) {
-				error("cannot resolve rootid for %s", subvol);
-				goto out;
-			}
 
 			ret = is_subvol_ro(&send, subvol);
 			if (ret < 0)
@@ -492,15 +515,9 @@ int cmd_send(int argc, char **argv)
 				error("cannot add clone source: %s", strerror(-ret));
 				goto out;
 			}
-			subvol_uuid_search_finit(&send.sus);
 			free(subvol);
 			subvol = NULL;
-			if (send.mnt_fd >= 0) {
-				close(send.mnt_fd);
-				send.mnt_fd = -1;
-			}
-			free(send.root_path);
-			send.root_path = NULL;
+			free_send_info(&send);
 			full_send = 0;
 			break;
 		case 'f':
@@ -657,6 +674,10 @@ int cmd_send(int argc, char **argv)
 		}
 
 		if (!full_send && root_id) {
+			ret = set_root_info(&send, subvol, &root_id);
+			if (ret < 0)
+				goto out;
+
 			ret = find_good_parent(&send, root_id, &parent_root_id);
 			if (ret < 0) {
 				error("parent determination failed for %lld",
@@ -686,6 +707,7 @@ int cmd_send(int argc, char **argv)
 				error("cannot add clone source: %s", strerror(-ret));
 				goto out;
 			}
+			free_send_info(&send);
 		}
 	}
 
@@ -695,10 +717,7 @@ out:
 	free(subvol);
 	free(snapshot_parent);
 	free(send.clone_sources);
-	if (send.mnt_fd >= 0)
-		close(send.mnt_fd);
-	free(send.root_path);
-	subvol_uuid_search_finit(&send.sus);
+	free_send_info(&send);
 	return !!ret;
 }
 
