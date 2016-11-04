@@ -494,11 +494,11 @@ static int fill_inode_item(struct btrfs_trans_handle *trans,
 
 static int directory_select(const struct direct *entry)
 {
-	if ((strncmp(entry->d_name, ".", entry->d_reclen) == 0) ||
-		(strncmp(entry->d_name, "..", entry->d_reclen) == 0))
+	if (entry->d_name[0] == '.' &&
+		(entry->d_name[1] == 0 ||
+		 (entry->d_name[1] == '.' && entry->d_name[2] == 0)))
 		return 0;
-	else
-		return 1;
+	return 1;
 }
 
 static void free_namelist(struct direct **files, int count)
