@@ -1080,9 +1080,12 @@ int btrfs_alloc_data_chunk(struct btrfs_trans_handle *trans,
 		key.offset = *start;
 		dev_offset = *start;
 	} else {
+		u64 tmp;
+
 		ret = find_next_chunk(chunk_root,
 				      BTRFS_FIRST_CHUNK_TREE_OBJECTID,
-				      &key.offset);
+				      &tmp);
+		key.offset = tmp;
 		if (ret)
 			return ret;
 	}
