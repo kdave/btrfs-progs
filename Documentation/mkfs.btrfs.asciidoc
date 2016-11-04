@@ -7,25 +7,7 @@ mkfs.btrfs - create a btrfs filesystem
 
 SYNOPSIS
 --------
-*mkfs.btrfs*
-$$[-A|--alloc-start <alloc-start>]$$
-$$[-b|--byte-count <byte-count>]$$
-$$[-d|--data <data-profile>]$$
-$$[-m|--metadata <metadata profile>]$$
-$$[-M|--mixed]$$
-$$[-l|--leafsize <leafsize>]$$
-$$[-n|--nodesize <nodesize>]$$
-$$[-s|--sectorsize <sectorsize>]$$
-$$[-L|--label <label>]$$
-$$[-K|--nodiscard]$$
-$$[-r|--rootdir <rootdir>]$$
-$$[-O|--features <feature1>[,<feature2>...]]$$
-$$[-U|--uuid <UUID>]$$
-$$[-f|--force]$$
-$$[-q|--quiet]$$
-$$[--help]$$
-$$[-V|--version]$$
-$$<device> [<device>...]$$
+*mkfs.btrfs* [options] <device> [<device>...]
 
 DESCRIPTION
 -----------

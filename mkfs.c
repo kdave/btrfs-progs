@@ -344,24 +344,30 @@ static int create_data_reloc_tree(struct btrfs_trans_handle *trans,
 
 static void print_usage(int ret)
 {
-	printf("usage: mkfs.btrfs [options] dev [ dev ... ]\n");
-	printf("options:\n");
-	printf("\t-A|--alloc-start START  the offset to start the FS\n");
-	printf("\t-b|--byte-count SIZE    total number of bytes in the FS\n");
+	printf("Usage: mkfs.btrfs [options] dev [ dev ... ]\n");
+	printf("Options:\n");
+	printf("  allocation profiles:\n");
 	printf("\t-d|--data PROFILE       data profile, raid0, raid1, raid5, raid6, raid10, dup or single\n");
-	printf("\t-f|--force              force overwrite of existing filesystem\n");
-	printf("\t-l|--leafsize SIZE      deprecated, alias for nodesize\n");
-	printf("\t-L|--label LABEL        set a label\n");
-	printf("\t-m|--metadata PROFILE   metadata profile, values like data profile\n");
+	printf("\t-m|--metadata PROFILE   metadata profile, values like for data profile\n");
 	printf("\t-M|--mixed              mix metadata and data together\n");
+	printf("  features:\n");
 	printf("\t-n|--nodesize SIZE      size of btree nodes\n");
-	printf("\t-s|--sectorsize SIZE    min block allocation (may not mountable by current kernel)\n");
-	printf("\t-r|--rootdir DIR        the source directory\n");
+	printf("\t-s|--sectorsize SIZE    data block size (may not be mountable by current kernel)\n");
+	printf("\t-O|--features LIST      comma separated list of filesystem features (use '-O list-all' to list features)\n");
+	printf("\t-L|--label LABEL        set the filesystem label\n");
+	printf("\t-U|--uuid UUID          specify the filesystem UUID (must be unique)\n");
+	printf("  creation:\n");
+	printf("\t-b|--byte-count SIZE    set filesystem size to SIZE (on the first device)\n");
+	printf("\t-r|--rootdir DIR        copy files from DIR to the image root directory\n");
 	printf("\t-K|--nodiscard          do not perform whole device TRIM\n");
-	printf("\t-O|--features LIST      comma separated list of filesystem features, use '-O list-all' to list features\n");
-	printf("\t-U|--uuid UUID          specify the filesystem UUID\n");
+	printf("\t-f|--force              force overwrite of existing filesystem\n");
+	printf("  general:\n");
 	printf("\t-q|--quiet              no messages except errors\n");
 	printf("\t-V|--version            print the mkfs.btrfs version and exit\n");
+	printf("\t--help                  print this help and exit\n");
+	printf("  deprecated:\n");
+	printf("\t-A|--alloc-start START  the offset to start the filesytem\n");
+	printf("\t-l|--leafsize SIZE      deprecated, alias for nodesize\n");
 	exit(ret);
 }
 
