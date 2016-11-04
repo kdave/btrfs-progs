@@ -6670,7 +6670,6 @@ static int record_extent(struct btrfs_trans_handle *trans,
 	struct extent_buffer *leaf;
 	struct btrfs_key ins_key;
 	struct btrfs_extent_item *ei;
-	struct tree_backref *tback;
 	struct data_backref *dback;
 	struct btrfs_tree_block_info *bi;
 
@@ -6706,7 +6705,6 @@ static int record_extent(struct btrfs_trans_handle *trans,
 		} else {
 			struct btrfs_disk_key copy_key;;
 
-			tback = to_tree_backref(back);
 			bi = (struct btrfs_tree_block_info *)(ei + 1);
 			memset_extent_buffer(leaf, 0, (unsigned long)bi,
 					     sizeof(*bi));
@@ -6772,6 +6770,7 @@ static int record_extent(struct btrfs_trans_handle *trans,
 				dback->found_ref);
 	} else {
 		u64 parent;
+		struct tree_backref *tback;
 
 		tback = to_tree_backref(back);
 		if (back->full_backref)
