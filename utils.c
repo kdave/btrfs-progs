@@ -3084,7 +3084,7 @@ int get_fs_info(const char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 	int fd = -1;
 	int ret = 0;
 	int ndevs = 0;
-	int i = 0;
+	u64 last_devid = 0;
 	int replacing = 0;
 	struct btrfs_fs_devices *fs_devices_mnt = NULL;
 	struct btrfs_ioctl_dev_info_args *di_args;
@@ -3097,7 +3097,6 @@ int get_fs_info(const char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 	if (is_block_device(path) == 1) {
 		struct btrfs_super_block *disk_super;
 		char buf[BTRFS_SUPER_INFO_SIZE];
-		u64 devid;
 
 		/* Ensure it's mounted, then set path to the mountpoint */
 		fd = open(path, O_RDONLY);
@@ -3125,10 +3124,8 @@ int get_fs_info(const char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 			ret = -EIO;
 			goto out;
 		}
-		devid = btrfs_stack_device_id(&disk_super->dev_item);
-
-		fi_args->max_id = devid;
-		i = devid;
+		last_devid = btrfs_stack_device_id(&disk_super->dev_item);
+		fi_args->max_id = last_devid;
 
 		memcpy(fi_args->fsid, fs_devices_mnt->fsid, BTRFS_FSID_SIZE);
 		close(fd);
@@ -3165,8 +3162,8 @@ int get_fs_info(const char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 			fi_args->num_devices++;
 			ndevs++;
 			replacing = 1;
-			if (i == 0)
-				i++;
+			if (last_devid == 0)
+				last_devid++;
 		}
 	}
 
@@ -3181,8 +3178,8 @@ int get_fs_info(const char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 
 	if (replacing)
 		memcpy(di_args, &tmp, sizeof(tmp));
-	for (; i <= fi_args->max_id; ++i) {
-		ret = get_device_info(fd, i, &di_args[ndevs]);
+	for (; last_devid <= fi_args->max_id; last_devid++) {
+		ret = get_device_info(fd, last_devid, &di_args[ndevs]);
 		if (ret == -ENODEV)
 			continue;
 		if (ret)
