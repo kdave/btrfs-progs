@@ -10,6 +10,8 @@ for i in *.txt; do
 			===\ Entering*) last="$line" ;;
 			*Assertion*failed*) echo "ASSERTION FAILED: $last" ;;
 			*runtime\ error*) echo "RUNTIME ERROR (sanitizer): $last" ;;
+			*AddressSanitizer*heap-use-after-free*) echo "RUNTIME ERROR (use after free): $last" ;;
+			*Warning:\ assertion*failed*) echo "ASSERTION WARNING: $last" ;;
 			*) : ;;
 		esac
 	done < "$i"
