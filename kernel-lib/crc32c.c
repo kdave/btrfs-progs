@@ -218,5 +218,9 @@ u32 __crc32c_le(u32 crc, unsigned char const *data, size_t length)
 
 u32 crc32c_le(u32 crc, unsigned char const *data, size_t length)
 {
+	/* Use by-byte access for unaligned buffers */
+	if ((unsigned long)data % sizeof(unsigned long))
+		return __crc32c_le(crc, data, length);
+
 	return crc_function(crc, data, length);
 }
