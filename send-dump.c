@@ -271,16 +271,15 @@ static int print_chown(const char *path, u64 uid, u64 gid, void *user)
 
 static int sprintf_timespec(struct timespec *ts, char *dest, int max_size)
 {
-	struct tm *tm;
+	struct tm tm;
 	int ret;
 
-	tm = localtime(&ts->tv_sec);
-	if (!tm) {
+	if (!localtime_r(&ts->tv_sec, &tm)) {
 		error("failed to convert time %lld.%.9ld to local time",
 		      (long long)ts->tv_sec, ts->tv_nsec);
 		return -EINVAL;
 	}
-	ret = strftime(dest, max_size, "%FT%T%z", tm);
+	ret = strftime(dest, max_size, "%FT%T%z", &tm);
 	if (ret == 0) {
 		error(
 		"time %lld.%ld is too long to convert into readable string",
