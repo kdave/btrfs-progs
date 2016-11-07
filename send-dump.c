@@ -28,6 +28,7 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <time.h>
+#include <ctype.h>
 #include <asm/types.h>
 #include <uuid/uuid.h>
 #include "utils.h"
@@ -44,6 +45,47 @@
 		return ret;						\
 	}								\
 })
+
+/*
+ * Print path and escape chaacters (in a C way) that could break the line.
+ * Returns the length of the escaped characters. Unprintable characters are
+ * escaped as octals.
+ */
+static int print_path_escaped(const char *path)
+{
+	size_t i;
+	size_t path_len = strlen(path);
+	int len = 0;
+
+	for (i = 0; i < path_len; i++) {
+		char c = path[i];
+
+		len++;
+		switch (c) {
+		case '\a': putchar('\\'); putchar('a'); len++; break;
+		case '\b': putchar('\\'); putchar('b'); len++; break;
+		case '\e': putchar('\\'); putchar('e'); len++; break;
+		case '\f': putchar('\\'); putchar('f'); len++; break;
+		case '\n': putchar('\\'); putchar('n'); len++; break;
+		case '\r': putchar('\\'); putchar('r'); len++; break;
+		case '\t': putchar('\\'); putchar('t'); len++; break;
+		case '\v': putchar('\\'); putchar('v'); len++; break;
+		case ' ':  putchar('\\'); putchar(' '); len++; break;
+		case '\\': putchar('\\'); putchar('\\'); len++; break;
+		default:
+			  if (!isprint(c)) {
+				  printf("\\%c%c%c",
+						  '0' + ((c & 0300) >> 6),
+						  '0' + ((c & 070) >> 3),
+						  '0' + (c & 07));
+				  len += 3;
+			  } else {
+				  putchar(c);
+			  }
+		}
+	}
+	return len;
+}
 
 /*
  * Underlying PRINT_DUMP, the only difference is how we handle
