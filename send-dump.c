@@ -110,7 +110,13 @@ static int __print_dump(int subvol, void *user, const char *path,
 	}
 
 	/* Unified header */
-	printf("%-16s%-32s", title, out_path);
+	printf("%-16s", title);
+	ret = print_path_escaped(out_path);
+	if (!fmt)
+		return 0;
+	/* Short paths ale aligned to 32 chars */
+	while (ret++ < 32)
+		putchar(' ');
 	va_start(args, fmt);
 	/* Operation specified ones */
 	vprintf(fmt, args);
