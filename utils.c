@@ -3825,6 +3825,10 @@ u64 get_partition_size(const char *dev)
 	return result;
 }
 
+/*
+ * Check if the BTRFS_IOC_TREE_SEARCH_V2 ioctl is supported on a given
+ * filesystem, opened at fd
+ */
 int btrfs_tree_search2_ioctl_supported(int fd)
 {
 	struct btrfs_ioctl_search_args_v2 *args2;
@@ -3832,10 +3836,6 @@ int btrfs_tree_search2_ioctl_supported(int fd)
 	int args2_size = 1024;
 	char args2_buf[args2_size];
 	int ret;
-	static int v2_supported = -1;
-
-	if (v2_supported != -1)
-		return v2_supported;
 
 	args2 = (struct btrfs_ioctl_search_args_v2 *)args2_buf;
 	sk = &(args2->key);
@@ -3856,13 +3856,10 @@ int btrfs_tree_search2_ioctl_supported(int fd)
 	args2->buf_size = args2_size - sizeof(struct btrfs_ioctl_search_args_v2);
 	ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH_V2, args2);
 	if (ret == -EOPNOTSUPP)
-		v2_supported = 0;
+		return 0;
 	else if (ret == 0)
-		v2_supported = 1;
-	else
-		return ret;
-
-	return v2_supported;
+		return 1;
+	return ret;
 }
 
 int btrfs_check_nodesize(u32 nodesize, u32 sectorsize, u64 features)
