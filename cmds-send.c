@@ -571,7 +571,20 @@ int cmd_send(int argc, char **argv)
 		usage(cmd_send_usage);
 
 	if (outname[0]) {
-		send.dump_fd = creat(outname, 0600);
+		int tmpfd;
+
+		/*
+		 * Try to use an existing file first. Even if send runs as
+		 * root, it might not have permissions to create file (eg. on a
+		 * NFS) but it should still be able to use a pre-created file.
+		 */
+		tmpfd = open(outname, O_WRONLY | O_TRUNC);
+		if (tmpfd < 0) {
+			if (errno == ENOENT)
+				tmpfd = open(outname,
+					O_CREAT | O_WRONLY | O_TRUNC, 0600);
+		}
+		send.dump_fd = tmpfd;
 		if (send.dump_fd == -1) {
 			ret = -errno;
 			error("cannot create '%s': %s", outname, strerror(-ret));
