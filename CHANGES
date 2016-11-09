@@ -1,3 +1,29 @@
+btrfs-progs-4.8.3 (2016-11-11)
+  * check:
+    * support for clearing space cache (v1)
+    * size reduction of inode backref structure
+  * send:
+    * fix handling of multiple snapshots (-p and -c options)
+    * transfer buffer increased (should reduce number of context switches)
+    * reuse existing file for output (-f), eg. when root cannot create files (NFS)
+  * dump-tree:
+    * print missing items for various structures
+    * new: dev stats, balance status item
+    * sync key names with kernel (the persistent items)
+  * subvol show: now able to print the toplevel subvolume -- the creation time
+    might be wrong though
+  * mkfs:
+    * store the creation time of toplevel root inode
+    * print UUID in the summary
+  * build: travis CI for devel
+  * other:
+    * lots of cleanups and refactoring
+    * switched to on-stack path structure
+    * fixes from coverity, asan, ubsan
+    * new tests
+    * updates in testing infrastructure
+    * fixed convert test 005
+
 btrfs-progs-4.8.2 (2016-10-26)
   * convert: also convert file attributes
   * convert: fix wrong tree block alignment for unalianged block group
