@@ -1,0 +1,37 @@
+Release checklist
+=================
+
+Last code touches:
+
+* make the code ready, collect patches queued for the release
+* look to mailinglist for any relevant last-minute fixes
+
+Pre-checks:
+
+* update package in OBS, (multi arch build checks)
+* submit sources to coverity
+* run all internal functional tests
+  * defaults
+  * D=asan
+  * D=ubsan
+* run all build tests
+* run with fstests
+
+Pre-release:
+
+* write CHANGES entry
+
+Release:
+
+* tag release, sign
+* make tar
+* build check of unpacked tar
+* upload tar to kernel.org
+* refresh git branches, push tags
+
+Post-release:
+
+* write and send announcement mail to mailinglist
+* update wiki://Main_page#News
+* update wiki://Changelog#btrfs-progs
+* update title on IRC

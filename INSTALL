@@ -31,26 +31,27 @@ Building from sources
 To build from git sources you need to generate the configure script using the
 autotools:
 
- $ ./autogen.sh
+    $ ./autogen.sh
 
 To build from the released tarballs:
 
- $ ./configure
- $ make
- $ make install
+    $ ./configure
+    $ make
+    $ make install
 
 You may disable building some parts like documentation, btrfs-convert or
 backtrace support. See ./configure --help for more.
 
 Specific CFLAGS or LDFLAGS should be set like
 
- $ CFLAGS=... LDFLAGS=... ./configure --prefix=/usr
+    $ CFLAGS=... LDFLAGS=... ./configure --prefix=/usr
 
 and not as arguments to make. You can specify additional flags to build via
 variables EXTRA_CFLAGS and EXTRA_LDFLAGS that get appended to the predefined
-values of the respective variables.
+values of the respective variables. There are further build tuning options
+documented in the Makefile.
 
- $ make EXTRA_CFLAGS=-ggdb3
+    $ make EXTRA_CFLAGS=-ggdb3
 
 The build utilizes autotools, dependencies for generating the configure
 scripts are:
@@ -60,18 +61,18 @@ scripts are:
 * pkg-config
 
 
-Staticly built binaries
------------------------
+Statically built binaries
+-------------------------
 
 The makefiles are ready to let you build static binaries of the utilities. This
 may be handy in rescue environments. Your system has to provide static version
 of the libraries.
 
-$ make static
-$ make btrfs.static
-$ make btrfs-convert.static
+    $ make static
+    $ make btrfs.static
+    $ make btrfs-convert.static
 
-The resulting static binaries have the '.static' suffix, the intermediate object
+The resulting binaries have the '.static' suffix, the intermediate object
 files do not conflict with the normal (dynamic) build.
 
 

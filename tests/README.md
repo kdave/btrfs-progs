@@ -1,7 +1,8 @@
 # Btrfs-progs tests
 
 A testsuite covering functionality of btrfs-progs, ie. the checker, image, mkfs
-and similar tools. There are no special requirements on kernel features, the
+and similar tools. There are no additional requirements on kernel features
+(other than `CONFIG_BTRFS_FS` built-in or module), the
 tests build on top of the core functionality like snapshots and device
 management. In some cases optional features are turned on by mkfs and the
 filesystem image could be mounted, such tests might fail if there's lack of
