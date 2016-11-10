@@ -1895,7 +1895,7 @@ raid_groups:
 		char features_buf[64];
 
 		printf("Label:              %s\n", label);
-		printf("UUID:               %s\n", fs_uuid);
+		printf("UUID:               %s\n", mkfs_cfg.fs_uuid);
 		printf("Node size:          %u\n", nodesize);
 		printf("Sector size:        %u\n", sectorsize);
 		printf("Filesystem size:    %s\n",
