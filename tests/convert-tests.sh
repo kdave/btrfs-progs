@@ -21,6 +21,8 @@ export TEST_DEV
 
 rm -f $RESULTS
 
+check_kernel_support
+
 run_one_test() {
 	local testdir
 	local testname

@@ -280,10 +280,20 @@ run_check_umount_test_dev()
 	run_check $SUDO_HELPER umount "$@" "$TEST_DEV"
 }
 
+check_kernel_support()
+{
+	if ! grep -iq 'btrfs' /proc/filesystems; then
+		echo "WARNING: btrfs filesystem not listed in /proc/filesystems, some tests might fail"
+		return 1
+	fi
+	return 0
+}
+
 init_env()
 {
 	TEST_MNT="${TEST_MNT:-$TOP/tests/mnt}"
 	export TEST_MNT
 	mkdir -p "$TEST_MNT" || { echo "Failed mkdir -p $TEST_MNT"; exit 1; }
+
 }
 init_env

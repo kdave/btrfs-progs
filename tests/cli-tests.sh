@@ -20,6 +20,7 @@ export TEST_DEV
 rm -f $RESULTS
 
 check_prereq btrfs
+check_kernel_support
 
 # The tests are driven by their custom script called 'test.sh'
 

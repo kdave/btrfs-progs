@@ -21,6 +21,7 @@ rm -f $RESULTS
 
 check_prereq mkfs.btrfs
 check_prereq btrfs
+check_kernel_support
 
 # The tests are driven by their custom script called 'test.sh'
 
