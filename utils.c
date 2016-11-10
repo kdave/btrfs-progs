@@ -1522,17 +1522,15 @@ void btrfs_list_all_fs_features(u64 mask_disallowed)
 
 	fprintf(stderr, "Filesystem features available:\n");
 	for (i = 0; i < ARRAY_SIZE(mkfs_features) - 1; i++) {
+		const struct btrfs_fs_feature *feat = &mkfs_features[i];
 		char *is_default = "";
 
-		if (mkfs_features[i].flag & mask_disallowed)
+		if (feat->flag & mask_disallowed)
 			continue;
-		if (mkfs_features[i].flag & BTRFS_MKFS_DEFAULT_FEATURES)
+		if (feat->flag & BTRFS_MKFS_DEFAULT_FEATURES)
 			is_default = ", default";
-		fprintf(stderr, "%-20s- %s (0x%llx%s)\n",
-				mkfs_features[i].name,
-				mkfs_features[i].desc,
-				mkfs_features[i].flag,
-				is_default);
+		fprintf(stderr, "%-20s- %s (0x%llx%s)\n", feat->name,
+				feat->desc, feat->flag, is_default);
 	}
 }
 
