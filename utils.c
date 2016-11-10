@@ -39,6 +39,7 @@
 #include <linux/magic.h>
 #include <getopt.h>
 #include <sys/utsname.h>
+#include <linux/version.h>
 
 #include "kerncompat.h"
 #include "radix-tree.h"
@@ -1450,6 +1451,9 @@ out:
 	return ret;
 }
 
+#define VERSION_TO_STRING3(a,b,c)	#a "." #b "." #c, KERNEL_VERSION(a,b,c)
+#define VERSION_TO_STRING2(a,b)		#a "." #b, KERNEL_VERSION(a,b,0)
+
 /*
  * Feature stability status and versions: compat <= safe <= default
  */
@@ -1460,33 +1464,46 @@ static const struct btrfs_fs_feature {
 	 * Compatibility with kernel of given version. Filesystem can be
 	 * mounted.
 	 */
-	const char *compat_ver;
+	const char *compat_str;
+	u32 compat_ver;
 	/*
 	 * Considered safe for use, but is not on by default, even if the
 	 * kernel supports the feature.
 	 */
-	const char *safe_ver;
+	const char *safe_str;
+	u32 safe_ver;
 	/*
 	 * Considered safe for use and will be turned on by default if
 	 * supported by the running kernel.
 	 */
-	const char *default_ver;
+	const char *default_str;
+	u32 default_ver;
 	const char *desc;
 } mkfs_features[] = {
 	{ "mixed-bg", BTRFS_FEATURE_INCOMPAT_MIXED_GROUPS,
-		"2.6.37", "2.6.37", NULL,
+		VERSION_TO_STRING3(2,6,37),
+		VERSION_TO_STRING3(2,6,37),
+		NULL, 0,
 		"mixed data and metadata block groups" },
 	{ "extref", BTRFS_FEATURE_INCOMPAT_EXTENDED_IREF,
-		"3.7", "3.12", "3.12",
+		VERSION_TO_STRING2(3,7),
+		VERSION_TO_STRING2(3,12),
+		VERSION_TO_STRING2(3,12),
 		"increased hardlink limit per file to 65536" },
 	{ "raid56", BTRFS_FEATURE_INCOMPAT_RAID56,
-		"3.9", NULL, NULL,
+		VERSION_TO_STRING2(3,9),
+		NULL, 0,
+		NULL, 0,
 		"raid56 extended format" },
 	{ "skinny-metadata", BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA,
-		"3.10", "3.18", "3.18",
+		VERSION_TO_STRING2(3,10),
+		VERSION_TO_STRING2(3,18),
+		VERSION_TO_STRING2(3,18),
 		"reduced-size metadata extent refs" },
 	{ "no-holes", BTRFS_FEATURE_INCOMPAT_NO_HOLES,
-		"3.14", "4.0", NULL,
+		VERSION_TO_STRING2(3,14),
+		VERSION_TO_STRING2(4,0),
+		NULL, 0,
 		"no explicit hole extents for files" },
 	/* Keep this one last */
 	{ "list-all", BTRFS_FEATURE_LIST_ALL, NULL }
@@ -1552,11 +1569,11 @@ void btrfs_list_all_fs_features(u64 mask_disallowed)
 		fprintf(stderr, "%-20s- %s (0x%llx", feat->name, feat->desc,
 				feat->flag);
 		if (feat->compat_ver)
-			fprintf(stderr, ", compat=%s", feat->compat_ver);
+			fprintf(stderr, ", compat=%s", feat->compat_str);
 		if (feat->safe_ver)
-			fprintf(stderr, ", safe=%s", feat->safe_ver);
+			fprintf(stderr, ", safe=%s", feat->safe_str);
 		if (feat->default_ver)
-			fprintf(stderr, ", default=%s", feat->default_ver);
+			fprintf(stderr, ", default=%s", feat->default_str);
 		fprintf(stderr, ")\n");
 	}
 }
