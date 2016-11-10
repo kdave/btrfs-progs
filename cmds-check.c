@@ -6808,17 +6808,22 @@ static struct extent_entry *find_most_right_entry(struct list_head *entries)
 	struct extent_entry *entry, *best = NULL, *prev = NULL;
 
 	list_for_each_entry(entry, entries, list) {
-		if (!prev) {
-			prev = entry;
-			continue;
-		}
-
 		/*
 		 * If there are as many broken entries as entries then we know
 		 * not to trust this particular entry.
 		 */
 		if (entry->broken == entry->count)
 			continue;
+
+		/*
+		 * Special case, when there are only two entries and 'best' is
+		 * the first one
+		 */
+		if (!prev) {
+			best = entry;
+			prev = entry;
+			continue;
+		}
 
 		/*
 		 * If our current entry == best then we can't be sure our best
