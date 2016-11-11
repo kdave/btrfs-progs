@@ -34,9 +34,10 @@ do_test() {
 	run_check_umount_test_dev
 
 	convert_test_do_convert "$features" "$nodesize"
-	convert_test_post_check "$CHECKSUMTMP"
 
 	run_check_mount_test_dev
+	convert_test_post_check_checksums "$CHECKSUMTMP"
+
 	here=$(pwd)
 	cd "$TEST_MNT" || _fail "cannot cd to TEST_MNT"
 	# ext2_saved/image must not be deleted
@@ -45,10 +46,16 @@ do_test() {
 	run_check $TOP/btrfs filesystem sync "$TEST_MNT"
 	run_check_umount_test_dev
 	convert_test_post_rollback
-	convert_test_post_check "$CHECKSUMTMP"
+
+	run_check_mount_test_dev
+	convert_test_post_check_checksums "$CHECKSUMTMP"
+	run_check_umount_test_dev
 
 	# mount again and verify checksums
-	convert_test_post_check "$CHECKSUMTMP"
+	run_check_mount_test_dev
+	convert_test_post_check_checksums "$CHECKSUMTMP"
+	run_check_umount_test_dev
+
 	rm "$CHECKSUMTMP"
 }
 

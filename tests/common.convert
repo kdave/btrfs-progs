@@ -223,11 +223,21 @@ convert_test_post_check_acl() {
 
 	rm -- $BTRFS_ACLTMP
 }
+
 # post conversion checks, verify md5sums
+convert_test_post_check_checksums() {
+	local CHECKSUMTMP
+
+	CHECKSUMTMP="$1"
+	run_check_stdout $SUDO_HELPER md5sum -c "$CHECKSUMTMP" |
+		grep -q 'FAILED' && _fail "file validation failed"
+}
+
+# post conversion checks, all three in one call, on an unmounted image
 # $1: file with checksums
 # $2: file with permissions.
 # $3: file with acl entries.
-convert_test_post_check() {
+convert_test_post_checks_all() {
 	local CHECKSUMTMP
 	local EXT_PERMTMP
 	local EXT_ACLTMP
@@ -235,10 +245,8 @@ convert_test_post_check() {
 	CHECKSUMTMP="$1"
 	EXT_PERMTMP="$2"
 	EXT_ACLTMP="$3"
-
 	run_check_mount_test_dev
-	run_check_stdout $SUDO_HELPER md5sum -c "$CHECKSUMTMP" |
-		grep -q 'FAILED' && _fail "file validation failed"
+	convert_test_post_check_checksums "$CHECKSUMTMP"
 	convert_test_post_check_permissions "$EXT_PERMTMP"
 	convert_test_post_check_acl "$EXT_ACLTMP"
 	run_check_umount_test_dev
@@ -280,7 +288,7 @@ convert_test() {
 	run_check_umount_test_dev
 
 	convert_test_do_convert "$features" "$nodesize"
-	convert_test_post_check "$CHECKSUMTMP" "$EXT_PERMTMP" "$EXT_ACLTMP"
+	convert_test_post_checks_all "$CHECKSUMTMP" "$EXT_PERMTMP" "$EXT_ACLTMP"
 	rm $CHECKSUMTMP
 	rm $EXT_PERMTMP
 	rm $EXT_ACLTMP
