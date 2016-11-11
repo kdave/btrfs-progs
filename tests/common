@@ -3,6 +3,24 @@
 # Common routines for all tests
 #
 
+# assert that argument is not empty and is an existing path (file or directory)
+_assert_path()
+{
+	local path
+
+	path="$1"
+	if [ -z "$path" ]; then
+		echo "ASSERTION FAIL: $path is not valid"
+		exit 1
+	fi
+
+	if [ -f "$path" -o -d "$path" -o -b "$path" ]; then
+		return 0
+	fi
+	echo "ASSERTION FAIL: $path is not valid"
+	exit 1
+}
+
 _fail()
 {
 	echo "$*" | tee -a $RESULTS
