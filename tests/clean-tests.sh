@@ -1,9 +1,9 @@
 #!/bin/bash
 # remove all intermediate files from tests
 
-SCRIPT_DIR=$(dirname $(readlink -f $0))
-TOP=$(readlink -f $SCRIPT_DIR/../)
-source $TOP/tests/common
+SCRIPT_DIR=$(dirname $(readlink -f "$0"))
+TOP=$(readlink -f "$SCRIPT_DIR/../")
+source "$TOP/tests/common"
 
 setup_root_helper
 
@@ -13,7 +13,7 @@ fi
 
 $SUDO_HELPER umount "$TEST_MNT" &>/dev/null
 
-if ! cd $TOP/tests; then
+if ! cd "$TOP/tests"; then
 	echo "ERROR: cannot cd to $TOP/tests"
 	exit 1
 fi
