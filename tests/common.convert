@@ -8,33 +8,35 @@ generate_dataset() {
 
 	dataset_type="$1"
 	dirpath=$TEST_MNT/$dataset_type
-	run_check $SUDO_HELPER mkdir -p $dirpath
+	run_check $SUDO_HELPER mkdir -p "$dirpath"
 
 	case $dataset_type in
 		small)
-			for num in $(seq 1 $DATASET_SIZE); do
-				run_check $SUDO_HELPER dd if=/dev/urandom of=$dirpath/$dataset_type.$num bs=10K \
+			for num in $(seq 1 "$DATASET_SIZE"); do
+				run_check $SUDO_HELPER dd if=/dev/urandom of="$dirpath/$dataset_type.$num" bs=10K \
 				count=1 >/dev/null 2>&1
 			done
 			;;
 
 		hardlink)
-			for num in $(seq 1 $DATASET_SIZE); do
+			for num in $(seq 1 "$DATASET_SIZE"); do
 				run_check $SUDO_HELPER touch $dirpath/$dataset_type.$num
-				run_check $SUDO_HELPER ln $dirpath/$dataset_type.$num $dirpath/hlink.$num
+				run_check $SUDO_HELPER ln "$dirpath/$dataset_type.$num" "$dirpath/hlink.$num"
 			done
 			;;
 
 		fast_symlink)
-			for num in $(seq 1 $DATASET_SIZE); do
+			for num in $(seq 1 "$DATASET_SIZE"); do
 				run_check $SUDO_HELPER touch $dirpath/$dataset_type.$num
-				run_check cd $dirpath && $SUDO_HELPER ln -s $dataset_type.$num $dirpath/slink.$num && cd /
+				run_check cd "$dirpath" && \
+					$SUDO_HELPER ln -s "$dataset_type.$num" "$dirpath/slink.$num" && \
+					cd /
 			done
 			;;
 
 		brokenlink)
-			for num in $(seq 1 $DATASET_SIZE); do
-				run_check $SUDO_HELPER ln -s $dirpath/$dataset_type.$num $dirpath/blink.$num
+			for num in $(seq 1 "$DATASET_SIZE"); do
+				run_check $SUDO_HELPER ln -s "$dirpath/$dataset_type.$num" "$dirpath/blink.$num"
 			done
 			;;
 
@@ -47,42 +49,42 @@ generate_dataset() {
 				then
 					continue;
 				else
-					run_check $SUDO_HELPER touch $dirpath/$dataset_type.$modes
-					run_check $SUDO_HELPER chmod $modes $dirpath/$dataset_type.$modes
+					run_check $SUDO_HELPER touch "$dirpath/$dataset_type.$modes"
+					run_check $SUDO_HELPER chmod "$modes" "$dirpath/$dataset_type.$modes"
 				fi
 			done
 			;;
 
 		sparse)
-			for num in $(seq 1 $DATASET_SIZE); do
-				run_check $SUDO_HELPER dd if=/dev/urandom of=$dirpath/$dataset_type.$num bs=10K \
+			for num in $(seq 1 "$DATASET_SIZE"); do
+				run_check $SUDO_HELPER dd if=/dev/urandom of="$dirpath/$dataset_type.$num" bs=10K \
 				count=1 >/dev/null 2>&1
-				run_check $SUDO_HELPER truncate -s 500K $dirpath/$dataset_type.$num
-				run_check $SUDO_HELPER dd if=/dev/urandom of=$dirpath/$dataset_type.$num bs=10K \
+				run_check $SUDO_HELPER truncate -s 500K "$dirpath/$dataset_type.$num"
+				run_check $SUDO_HELPER dd if=/dev/urandom of="$dirpath/$dataset_type.$num" bs=10K \
 				oflag=append conv=notrunc count=1 >/dev/null 2>&1
-				run_check $SUDO_HELPER truncate -s 800K $dirpath/$dataset_type.$num
+				run_check $SUDO_HELPER truncate -s 800K "$dirpath/$dataset_type.$num"
 			done
 			;;
 
 		acls)
-			for num in $(seq 1 $DATASET_SIZE); do
-				run_check $SUDO_HELPER touch $dirpath/$dataset_type.$num
-				run_check $SUDO_HELPER setfacl -m "u:root:x" $dirpath/$dataset_type.$num
-				run_check $SUDO_HELPER setfattr -n user.foo -v bar$num $dirpath/$dataset_type.$num
+			for num in $(seq 1 "$DATASET_SIZE"); do
+				run_check $SUDO_HELPER touch "$dirpath/$dataset_type.$num"
+				run_check $SUDO_HELPER setfacl -m "u:root:x" "$dirpath/$dataset_type.$num"
+				run_check $SUDO_HELPER setfattr -n user.foo -v "bar$num" "$dirpath/$dataset_type.$num"
 			done
 			;;
 
 		fifo)
-			for num in $(seq 1 $DATASET_SIZE); do
-				run_check $SUDO_HELPER mkfifo $dirpath/$dataset_type.$num
+			for num in $(seq 1 "$DATASET_SIZE"); do
+				run_check $SUDO_HELPER mkfifo "$dirpath/$dataset_type.$num"
 			done
 			;;
 
 		slow_symlink)
 			long_filename=`date +%s | sha256sum | cut -f1 -d'-'`
-			run_check $SUDO_HELPER touch $dirpath/$long_filename
-			for num in $(seq 1 $DATASET_SIZE); do
-				run_check $SUDO_HELPER ln -s $dirpath/$long_filename $dirpath/slow_slink.$num
+			run_check $SUDO_HELPER touch "$dirpath/$long_filename"
+			for num in $(seq 1 "$DATASET_SIZE"); do
+				run_check $SUDO_HELPER ln -s "$dirpath/$long_filename" "$dirpath/slow_slink.$num"
 			done
 			;;
 	esac
@@ -104,7 +106,7 @@ convert_test_preamble() {
 	msg="$2"
 	shift 3
 	echo "    [TEST/conv]     $msg, btrfs" "${features:-defaults}"
-	echo "creating ext image with: $@" >> $RESULTS
+	echo "creating ext image with: $@" >> "$RESULTS"
 }
 
 #  prepare TEST_DEV before conversion, create filesystem and mount it, image
@@ -113,10 +115,10 @@ convert_test_preamble() {
 convert_test_prep_fs() {
 	# TEST_DEV not removed as the file might have special permissions, eg.
 	# when test image is on NFS and would not be writable for root
-	run_check truncate -s 0 $TEST_DEV
+	run_check truncate -s 0 "$TEST_DEV"
 	# 256MB is the smallest acceptable btrfs image.
-	run_check truncate -s 512M $TEST_DEV
-	run_check "$@" -F $TEST_DEV
+	run_check truncate -s 512M "$TEST_DEV"
+	run_check "$@" -F "$TEST_DEV"
 
 	# create a file to check btrfs-convert can convert regular file correct
 	run_check_mount_test_dev
@@ -124,7 +126,7 @@ convert_test_prep_fs() {
 	# create a file inside the fs before convert, to make sure there is
 	# data covering btrfs backup superblock range (64M)
 	run_check $SUDO_HELPER dd if=/dev/zero bs=1M count=64 \
-		of=$TEST_MNT/convert_space_holder
+		of="$TEST_MNT/convert_space_holder"
 }
 
 # generate md5 checksums of files on $TEST_MNT
@@ -132,9 +134,9 @@ convert_test_prep_fs() {
 convert_test_gen_checksums() {
 	_assert_path "$1"
 
-	run_check $SUDO_HELPER dd if=/dev/zero of=$TEST_MNT/test bs=$nodesize \
+	run_check $SUDO_HELPER dd if=/dev/zero of="$TEST_MNT/test" "bs=$nodesize" \
 		count=1 >/dev/null 2>&1
-	run_check_stdout $SUDO_HELPER find $TEST_MNT -type f ! -name 'image' -exec md5sum {} \+ > "$1"
+	run_check_stdout $SUDO_HELPER find "$TEST_MNT" -type f ! -name 'image' -exec md5sum {} \+ > "$1"
 }
 # list $TEST_MNT data set file permissions.
 # $1: path where the permissions will be stored
@@ -145,15 +147,15 @@ convert_test_perm() {
 	PERMTMP="$1"
 	FILES_LIST=$(mktemp --tmpdir btrfs-progs-convert.fileslistXXXXXX)
 
-	run_check $SUDO_HELPER dd if=/dev/zero of=$TEST_MNT/test bs=$nodesize \
+	run_check $SUDO_HELPER dd if=/dev/zero of="$TEST_MNT/test" "bs=$nodesize" \
 		count=1 >/dev/null 2>&1
-	run_check_stdout $SUDO_HELPER find $TEST_MNT -type f ! -name 'image' -fprint $FILES_LIST
+	run_check_stdout $SUDO_HELPER find "$TEST_MNT" -type f ! -name 'image' -fprint "$FILES_LIST"
 	# Fix directory entries order
-	sort $FILES_LIST -o $FILES_LIST
-	for file in `cat $FILES_LIST` ;do
-		run_check_stdout $SUDO_HELPER getfacl --absolute-names $file >> "$PERMTMP"
+	sort "$FILES_LIST" -o "$FILES_LIST"
+	for file in `cat "$FILES_LIST"` ;do
+		run_check_stdout $SUDO_HELPER getfacl --absolute-names "$file" >> "$PERMTMP"
 	done
-	rm -- $FILES_LIST
+	rm -- "$FILES_LIST"
 }
 # list acls of files on $TEST_MNT
 # $1: path where the acls will be stored
@@ -162,22 +164,22 @@ convert_test_acl() {
 	ACLTMP="$1"
 	FILES_LIST=$(mktemp --tmpdir btrfs-progs-convert.fileslistXXXXXX)
 
-	run_check_stdout $SUDO_HELPER find $TEST_MNT/acls -type f -fprint $FILES_LIST
+	run_check_stdout $SUDO_HELPER find "$TEST_MNT/acls" -type f -fprint "$FILES_LIST"
 	# Fix directory entries order
-	sort $FILES_LIST -o $FILES_LIST
-	for file in `cat $FILES_LIST`;do
-		run_check_stdout $SUDO_HELPER getfattr --absolute-names -d $file >> "$ACLTMP"
+	sort "$FILES_LIST" -o "$FILES_LIST"
+	for file in `cat "$FILES_LIST"`;do
+		run_check_stdout $SUDO_HELPER getfattr --absolute-names -d "$file" >> "$ACLTMP"
 	done
-	rm -- $FILES_LIST
+	rm -- "$FILES_LIST"
 }
 
 # do conversion with given features and nodesize, fsck afterwards
 # $1: features, argument of -O, can be empty
 # $2: nodesize, argument of -N, can be empty
 convert_test_do_convert() {
-	run_check $TOP/btrfs-convert ${1:+-O "$1"} ${2:+-N "$2"} $TEST_DEV
-	run_check $TOP/btrfs check $TEST_DEV
-	run_check $TOP/btrfs inspect-internal dump-super -Ffa $TEST_DEV
+	run_check "$TOP/btrfs-convert" ${1:+-O "$1"} ${2:+-N "$2"} "$TEST_DEV"
+	run_check "$TOP/btrfs" check $TEST_DEV
+	run_check "$TOP/btrfs" inspect-internal dump-super -Ffa "$TEST_DEV"
 }
 
 # post conversion check, verify file permissions.
@@ -191,17 +193,17 @@ convert_test_post_check_permissions() {
 	BTRFS_PERMTMP=$(mktemp --tmpdir btrfs-progs-convert.permXXXXXX)
 	convert_test_perm "$BTRFS_PERMTMP"
 
-	btrfs_perm=`md5sum $BTRFS_PERMTMP | cut -f1 -d' '`
-	ext_perm=`md5sum $EXT_PERMTMP | cut -f1 -d' '`
+	btrfs_perm=`md5sum "$BTRFS_PERMTMP" | cut -f1 -d' '`
+	ext_perm=`md5sum "$EXT_PERMTMP" | cut -f1 -d' '`
 
 	if [ "$btrfs_perm" != "$ext_perm" ];
 	then
-		btrfs_perm_file=`md5sum $BTRFS_PERMTMP | cut -f2 -d' '`
-		ext_perm_file=`md5sum $EXT_PERMTMP | cut -f2 -d' '`
+		btrfs_perm_file=`md5sum "$BTRFS_PERMTMP" | cut -f2 -d' '`
+		ext_perm_file=`md5sum "$EXT_PERMTMP" | cut -f2 -d' '`
 		_fail "file permission failed. Mismatched BTRFS:$btrfs_perm_file:$btrfs_perm EXT:$ext_perm_file:$ext_perm"
 	fi
 
-	rm -- $BTRFS_PERMTMP
+	rm -- "$BTRFS_PERMTMP"
 }
 # post conversion check, compare BTRFS file acls against EXT.
 # $1: file with ext acls.
@@ -214,17 +216,17 @@ convert_test_post_check_acl() {
 	BTRFS_ACLTMP=$(mktemp --tmpdir btrfs-progs-convert.aclsXXXXXXX)
 	convert_test_acl "$BTRFS_ACLTMP"
 
-	btrfs_acl=`md5sum $BTRFS_ACLTMP | cut -f1 -d' '`
-	ext_acl=`md5sum $EXT_ACLTMP | cut -f1 -d' '`
+	btrfs_acl=`md5sum "$BTRFS_ACLTMP" | cut -f1 -d' '`
+	ext_acl=`md5sum "$EXT_ACLTMP" | cut -f1 -d' '`
 
 	if [ "$btrfs_acl" != "$ext_acl" ]
 	then
-		btrfs_acl_file=`md5sum $BTRFS_ACLTMP | cut -f2 -d' '`
-		ext_acl_file=`md5sum $EXT_ACLTMP | cut -f2 -d' '`
+		btrfs_acl_file=`md5sum "$BTRFS_ACLTMP" | cut -f2 -d' '`
+		ext_acl_file=`md5sum "$EXT_ACLTMP" | cut -f2 -d' '`
 		_fail "file acl failed. Mismatched BTRFS:$btrfs_acl_file:$btrfs_acl EXT:$ext_acl_file:$ext_acl"
 	fi
 
-	rm -- $BTRFS_ACLTMP
+	rm -- "$BTRFS_ACLTMP"
 }
 
 # post conversion checks, verify md5sums
@@ -252,8 +254,8 @@ convert_test_post_checks_all() {
 
 # do rollback and fsck
 convert_test_post_rollback() {
-	run_check $TOP/btrfs-convert --rollback $TEST_DEV
-	run_check fsck -n -t ext2,ext3,ext4 $TEST_DEV
+	run_check "$TOP/btrfs-convert" --rollback "$TEST_DEV"
+	run_check fsck -n -t ext2,ext3,ext4 "$TEST_DEV"
 }
 
 # simple wrapper for a convert test
@@ -287,9 +289,9 @@ convert_test() {
 
 	convert_test_do_convert "$features" "$nodesize"
 	convert_test_post_checks_all "$CHECKSUMTMP" "$EXT_PERMTMP" "$EXT_ACLTMP"
-	rm $CHECKSUMTMP
-	rm $EXT_PERMTMP
-	rm $EXT_ACLTMP
+	rm -- "$CHECKSUMTMP"
+	rm -- "$EXT_PERMTMP"
+	rm -- "$EXT_ACLTMP"
 
 	convert_test_post_rollback
 }
