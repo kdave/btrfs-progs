@@ -25,6 +25,7 @@ extern "C" {
 
 #include <asm/types.h>
 #include <linux/ioctl.h>
+#include <stddef.h>
 
 #ifndef __user
 #define __user
