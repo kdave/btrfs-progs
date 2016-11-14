@@ -74,6 +74,12 @@ enum btrfs_open_ctree_flags {
 
 	/* Allow to open a partially created filesystem */
 	OPEN_CTREE_FS_PARTIAL = (1U << 12),
+
+	/*
+	 * Invalidate the free space tree (i.e., clear the FREE_SPACE_TREE_VALID
+	 * compat_ro bit).
+	 */
+	OPEN_CTREE_INVALIDATE_FST = (1U << 13),
 };
 
 /*
@@ -128,7 +134,8 @@ int clean_tree_block(struct btrfs_trans_handle *trans,
 
 void btrfs_free_fs_info(struct btrfs_fs_info *fs_info);
 struct btrfs_fs_info *btrfs_new_fs_info(int writable, u64 sb_bytenr);
-int btrfs_check_fs_compatibility(struct btrfs_super_block *sb, int writable);
+int btrfs_check_fs_compatibility(struct btrfs_super_block *sb,
+				 unsigned int flags);
 int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info, u64 root_tree_bytenr,
 			  unsigned flags);
 void btrfs_release_all_roots(struct btrfs_fs_info *fs_info);

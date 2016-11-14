@@ -904,7 +904,8 @@ free_all:
 	return NULL;
 }
 
-int btrfs_check_fs_compatibility(struct btrfs_super_block *sb, int writable)
+int btrfs_check_fs_compatibility(struct btrfs_super_block *sb,
+				 unsigned int flags)
 {
 	u64 features;
 
@@ -923,13 +924,22 @@ int btrfs_check_fs_compatibility(struct btrfs_super_block *sb, int writable)
 		btrfs_set_super_incompat_flags(sb, features);
 	}
 
-	features = btrfs_super_compat_ro_flags(sb) &
-		~BTRFS_FEATURE_COMPAT_RO_SUPP;
-	if (writable && features) {
-		printk("couldn't open RDWR because of unsupported "
-		       "option features (%Lx).\n",
-		       (unsigned long long)features);
-		return -ENOTSUP;
+	features = btrfs_super_compat_ro_flags(sb);
+	if (flags & OPEN_CTREE_WRITES) {
+		if (flags & OPEN_CTREE_INVALIDATE_FST) {
+			/* Clear the FREE_SPACE_TREE_VALID bit on disk... */
+			features &= ~BTRFS_FEATURE_COMPAT_RO_FREE_SPACE_TREE_VALID;
+			btrfs_set_super_compat_ro_flags(sb, features);
+			/* ... and ignore the free space tree bit. */
+			features &= ~BTRFS_FEATURE_COMPAT_RO_FREE_SPACE_TREE;
+		}
+		if (features & ~BTRFS_FEATURE_COMPAT_RO_SUPP) {
+			printk("couldn't open RDWR because of unsupported "
+			       "option features (%Lx).\n",
+			       (unsigned long long)features);
+			return -ENOTSUP;
+		}
+
 	}
 	return 0;
 }
@@ -1320,8 +1330,7 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 
 	memcpy(fs_info->fsid, &disk_super->fsid, BTRFS_FSID_SIZE);
 
-	ret = btrfs_check_fs_compatibility(fs_info->super_copy,
-					   flags & OPEN_CTREE_WRITES);
+	ret = btrfs_check_fs_compatibility(fs_info->super_copy, flags);
 	if (ret)
 		goto out_devices;
 

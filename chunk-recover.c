@@ -1477,7 +1477,7 @@ open_ctree_with_broken_chunk(struct recover_control *rc)
 
 	memcpy(fs_info->fsid, &disk_super->fsid, BTRFS_FSID_SIZE);
 
-	ret = btrfs_check_fs_compatibility(disk_super, 1);
+	ret = btrfs_check_fs_compatibility(disk_super, OPEN_CTREE_WRITES);
 	if (ret)
 		goto out_devices;
 
