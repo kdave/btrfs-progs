@@ -1,0 +1,185 @@
+URL: https://bugzilla.kernel.org/show_bug.cgi?id=169301
+Lukas Lueg 2016-09-18 09:07:55 UTC
+
+parent transid verify failed on 4231168 wanted 274877906948 found 4
+Ignoring transid failure
+parent transid verify failed on 4222976 wanted 3472328296227680304 found 4
+parent transid verify failed on 4222976 wanted 3472328296227680304 found 4
+Ignoring transid failure
+checking extents
+Chunk[256, 228, 0]: length(4194304), offset(0), type(2) is not found in block group
+Chunk[256, 228, 0] stripe[1, 0] is not found in dev extent
+Chunk[256, 228, 4194304]: length(1638400), offset(4194304), type(5) is not found in block group
+Chunk[256, 228, 4194304] stripe[1, 4194304] is not found in dev extent
+Chunk[256, 228, 5832704]: length(1638400), offset(5832704), type(5) is not found in block group
+Chunk[256, 228, 5832704] stripe[1, 5832704] is not found in dev extent
+ref mismatch on [131072 4096] extent item 0, found 1
+Backref 131072 parent 3 root 3 not found in extent tree
+backpointer mismatch on [131072 4096]
+ref mismatch on [4194304 4096] extent item 0, found 1
+Backref 4194304 parent 5 root 5 not found in extent tree
+backpointer mismatch on [4194304 4096]
+ref mismatch on [4198400 4096] extent item 0, found 1
+Backref 4198400 parent 1 root 1 not found in extent tree
+backpointer mismatch on [4198400 4096]
+ref mismatch on [4231168 4096] extent item 0, found 1
+Backref 4231168 parent 7 root 7 not found in extent tree
+backpointer mismatch on [4231168 4096]
+ref mismatch on [3472328296227680304 3472328296227680304] extent item 0, found 1
+Backref 3472328296227680304 root 1 owner 2 offset 0 num_refs 0 not found in extent tree
+Incorrect local backref count on 3472328296227680304 root 1 owner 2 offset 0 found 1 wanted 0 back 0x60800000bc20
+backpointer mismatch on [3472328296227680304 3472328296227680304]
+Dev extent's total-byte(0) is not equal to byte-used(7471104) in dev[1, 216, 1]
+Errors found in extent allocation tree or chunk allocation
+checking free space cache
+checking fs roots
+checking csums
+checking root refs
+checking quota groups
+==23294==ERROR: AddressSanitizer failed to allocate 0xe4ff4000 (3841933312) bytes of LargeMmapAllocator (error code: 12)
+==23294==Process memory map follows:
+	0x000000400000-0x0000006a6000	/home/lukas/dev/btrfsfuzz/bin-asan/bin/btrfs
+	0x0000008a6000-0x0000008b9000	/home/lukas/dev/btrfsfuzz/bin-asan/bin/btrfs
+	0x0000008b9000-0x0000008ef000	/home/lukas/dev/btrfsfuzz/bin-asan/bin/btrfs
+	0x0000008ef000-0x000001567000	
+	0x00007fff7000-0x00008fff7000	
+	0x00008fff7000-0x02008fff7000	
+	0x02008fff7000-0x10007fff8000	
+	0x600000000000-0x602000000000	
+	0x602000000000-0x602000010000	
+	0x602000010000-0x603000000000	
+	0x603000000000-0x603000010000	
+	0x603000010000-0x604000000000	
+	0x604000000000-0x604000010000	
+	0x604000010000-0x606000000000	
+	0x606000000000-0x606000010000	
+	0x606000010000-0x607000000000	
+	0x607000000000-0x607000010000	
+	0x607000010000-0x608000000000	
+	0x608000000000-0x608000010000	
+	0x608000010000-0x60c000000000	
+	0x60c000000000-0x60c000010000	
+	0x60c000010000-0x60d000000000	
+	0x60d000000000-0x60d000010000	
+	0x60d000010000-0x60e000000000	
+	0x60e000000000-0x60e000010000	
+	0x60e000010000-0x611000000000	
+	0x611000000000-0x611000010000	
+	0x611000010000-0x616000000000	
+	0x616000000000-0x616000020000	
+	0x616000020000-0x619000000000	
+	0x619000000000-0x619000020000	
+	0x619000020000-0x621000000000	
+	0x621000000000-0x621000020000	
+	0x621000020000-0x624000000000	
+	0x624000000000-0x624000020000	
+	0x624000020000-0x629000000000	
+	0x629000000000-0x629000010000	
+	0x629000010000-0x640000000000	
+	0x640000000000-0x640000003000	
+	0x7f62fb97e000-0x7f62fdcd0000	
+	0x7f62fdcd0000-0x7f62fde89000	/usr/lib64/libc-2.23.so
+	0x7f62fde89000-0x7f62fe088000	/usr/lib64/libc-2.23.so
+	0x7f62fe088000-0x7f62fe08c000	/usr/lib64/libc-2.23.so
+	0x7f62fe08c000-0x7f62fe08e000	/usr/lib64/libc-2.23.so
+	0x7f62fe08e000-0x7f62fe092000	
+	0x7f62fe092000-0x7f62fe0a8000	/usr/lib64/libgcc_s-6.1.1-20160621.so.1
+	0x7f62fe0a8000-0x7f62fe2a7000	/usr/lib64/libgcc_s-6.1.1-20160621.so.1
+	0x7f62fe2a7000-0x7f62fe2a8000	/usr/lib64/libgcc_s-6.1.1-20160621.so.1
+	0x7f62fe2a8000-0x7f62fe2a9000	/usr/lib64/libgcc_s-6.1.1-20160621.so.1
+	0x7f62fe2a9000-0x7f62fe2ac000	/usr/lib64/libdl-2.23.so
+	0x7f62fe2ac000-0x7f62fe4ab000	/usr/lib64/libdl-2.23.so
+	0x7f62fe4ab000-0x7f62fe4ac000	/usr/lib64/libdl-2.23.so
+	0x7f62fe4ac000-0x7f62fe4ad000	/usr/lib64/libdl-2.23.so
+	0x7f62fe4ad000-0x7f62fe5b5000	/usr/lib64/libm-2.23.so
+	0x7f62fe5b5000-0x7f62fe7b4000	/usr/lib64/libm-2.23.so
+	0x7f62fe7b4000-0x7f62fe7b5000	/usr/lib64/libm-2.23.so
+	0x7f62fe7b5000-0x7f62fe7b6000	/usr/lib64/libm-2.23.so
+	0x7f62fe7b6000-0x7f62fe7bd000	/usr/lib64/librt-2.23.so
+	0x7f62fe7bd000-0x7f62fe9bc000	/usr/lib64/librt-2.23.so
+	0x7f62fe9bc000-0x7f62fe9bd000	/usr/lib64/librt-2.23.so
+	0x7f62fe9bd000-0x7f62fe9be000	/usr/lib64/librt-2.23.so
+	0x7f62fe9be000-0x7f62fe9d5000	/usr/lib64/libpthread-2.23.so
+	0x7f62fe9d5000-0x7f62febd4000	/usr/lib64/libpthread-2.23.so
+	0x7f62febd4000-0x7f62febd5000	/usr/lib64/libpthread-2.23.so
+	0x7f62febd5000-0x7f62febd6000	/usr/lib64/libpthread-2.23.so
+	0x7f62febd6000-0x7f62febda000	
+	0x7f62febda000-0x7f62febfc000	/usr/lib64/liblzo2.so.2.0.0
+	0x7f62febfc000-0x7f62fedfb000	/usr/lib64/liblzo2.so.2.0.0
+	0x7f62fedfb000-0x7f62fedfc000	/usr/lib64/liblzo2.so.2.0.0
+	0x7f62fedfc000-0x7f62fedfd000	
+	0x7f62fedfd000-0x7f62fee12000	/usr/lib64/libz.so.1.2.8
+	0x7f62fee12000-0x7f62ff011000	/usr/lib64/libz.so.1.2.8
+	0x7f62ff011000-0x7f62ff012000	/usr/lib64/libz.so.1.2.8
+	0x7f62ff012000-0x7f62ff013000	/usr/lib64/libz.so.1.2.8
+	0x7f62ff013000-0x7f62ff050000	/usr/lib64/libblkid.so.1.1.0
+	0x7f62ff050000-0x7f62ff250000	/usr/lib64/libblkid.so.1.1.0
+	0x7f62ff250000-0x7f62ff254000	/usr/lib64/libblkid.so.1.1.0
+	0x7f62ff254000-0x7f62ff255000	/usr/lib64/libblkid.so.1.1.0
+	0x7f62ff255000-0x7f62ff256000	
+	0x7f62ff256000-0x7f62ff25a000	/usr/lib64/libuuid.so.1.3.0
+	0x7f62ff25a000-0x7f62ff459000	/usr/lib64/libuuid.so.1.3.0
+	0x7f62ff459000-0x7f62ff45a000	/usr/lib64/libuuid.so.1.3.0
+	0x7f62ff45a000-0x7f62ff45b000	
+	0x7f62ff45b000-0x7f62ff45d000	/home/lukas/dev/afl_git/libdislocator/libdislocator.so
+	0x7f62ff45d000-0x7f62ff65c000	/home/lukas/dev/afl_git/libdislocator/libdislocator.so
+	0x7f62ff65c000-0x7f62ff65d000	/home/lukas/dev/afl_git/libdislocator/libdislocator.so
+	0x7f62ff65d000-0x7f62ff65e000	/home/lukas/dev/afl_git/libdislocator/libdislocator.so
+	0x7f62ff65e000-0x7f62ff682000	/usr/lib64/ld-2.23.so
+	0x7f62ff810000-0x7f62ff879000	
+	0x7f62ff879000-0x7f62ff881000	
+	0x7f62ff881000-0x7f62ff882000	/usr/lib64/ld-2.23.so
+	0x7f62ff882000-0x7f62ff883000	/usr/lib64/ld-2.23.so
+	0x7f62ff883000-0x7f62ff884000	
+	0x7fff5a065000-0x7fff5a086000	[stack]
+	0x7fff5a0c7000-0x7fff5a0ca000	[vvar]
+	0x7fff5a0ca000-0x7fff5a0cc000	[vdso]
+	0xffffffffff600000-0xffffffffff601000	[vsyscall]
+==23294==End of process memory map.
+==23294==AddressSanitizer CHECK failed: /builddir/build/BUILD/compiler-rt-3.8.0.src/lib/sanitizer_common/sanitizer_common.cc:183 "((0 && "unable to mmap")) != (0)" (0x0, 0x0)
+    #0 0x4c90cd in __asan::AsanCheckFailed(char const*, int, char const*, unsigned long long, unsigned long long) (/home/lukas/dev/btrfsfuzz/bin-asan/bin/btrfs+0x4c90cd)
+    #1 0x4cfa73 in __sanitizer::CheckFailed(char const*, int, char const*, unsigned long long, unsigned long long) (/home/lukas/dev/btrfsfuzz/bin-asan/bin/btrfs+0x4cfa73)
+    #2 0x4cfc61 in __sanitizer::ReportMmapFailureAndDie(unsigned long, char const*, char const*, int, bool) (/home/lukas/dev/btrfsfuzz/bin-asan/bin/btrfs+0x4cfc61)
+    #3 0x4d8922 in __sanitizer::MmapOrDie(unsigned long, char const*, bool) (/home/lukas/dev/btrfsfuzz/bin-asan/bin/btrfs+0x4d8922)
+    #4 0x42dbab in __asan::Allocator::Allocate(unsigned long, unsigned long, __sanitizer::BufferedStackTrace*, __asan::AllocType, bool) (/home/lukas/dev/btrfsfuzz/bin-asan/bin/btrfs+0x42dbab)
+    #5 0x4259fb in __asan::asan_calloc(unsigned long, unsigned long, __sanitizer::BufferedStackTrace*) (/home/lukas/dev/btrfsfuzz/bin-asan/bin/btrfs+0x4259fb)
+    #6 0x4bfd1a in calloc (/home/lukas/dev/btrfsfuzz/bin-asan/bin/btrfs+0x4bfd1a)
+    #7 0x5c181a in __alloc_extent_buffer /home/lukas/dev/btrfsfuzz/src-asan/extent_io.c:542:7
+    #8 0x5c1c76 in alloc_extent_buffer /home/lukas/dev/btrfsfuzz/src-asan/extent_io.c:646:8
+    #9 0x58e01c in btrfs_find_create_tree_block /home/lukas/dev/btrfsfuzz/src-asan/disk-io.c:193:9
+    #10 0x58ea90 in read_tree_block_fs_info /home/lukas/dev/btrfsfuzz/src-asan/disk-io.c:339:7
+    #11 0x5f2f84 in read_tree_block /home/lukas/dev/btrfsfuzz/src-asan/./disk-io.h:112:9
+    #12 0x5f2d62 in travel_tree /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:692:7
+    #13 0x5f2bab in add_refs_for_implied /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:748:8
+    #14 0x5eff59 in map_implied_refs /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:766:9
+    #15 0x5eefa9 in qgroup_verify_all /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:1366:8
+    #16 0x51f08f in cmd_check /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:11637:9
+    #17 0x4f0f81 in main /home/lukas/dev/btrfsfuzz/src-asan/btrfs.c:243:8
+    #18 0x7f62fdcf0730 in __libc_start_main (/lib64/libc.so.6+0x20730)
+    #19 0x4213f8 in _start (/home/lukas/dev/btrfsfuzz/bin-asan/bin/btrfs+0x4213f8)
+
+checking free space cache
+checking fs roots
+checking csums
+checking root refs
+checking quota groups
+ERROR: while mapping refs: -5
+checking extentsErrors found in extent allocation tree or chunk allocationfound 3472328296227696688 bytes used err is 0
+total csum bytes: 0
+total tree bytes: 16384
+total fs tree bytes: 4096
+total extent tree bytes: 0
+btree space waste bytes: 12674
+file data blocks allocated: 3472328296227680304
+ referenced 3472328296227680304
+extent_io.c:580: free_extent_buffer: Assertion `eb->refs < 0` failed.
+../btrfs[0x47a4a3]
+../btrfs[0x47a550]
+../btrfs(free_extent_buffer+0x6e)[0x47b73c]
+../btrfs(btrfs_release_all_roots+0x8c)[0x461cdf]
+../btrfs(close_ctree_fs_info+0x1f3)[0x46391a]
+../btrfs[0x424043]
+../btrfs(cmd_check+0xe1a)[0x43f352]
+../btrfs(main+0x12b)[0x40b581]
+/lib64/libc.so.6(__libc_start_main+0xf1)[0x7f970daf3291]
+../btrfs(_start+0x2a)[0x40afba]

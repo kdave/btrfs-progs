@@ -1,0 +1,42 @@
+URL: https://bugzilla.kernel.org/show_bug.cgi?id=161821
+Lukas Lueg 2016-09-16 20:45:58 UTC
+
+More news from the fuzzer. The attached image causes a segmentation fault when
+running btrfsck over it; using btrfs-progs v4.7.2-55-g2b7c507
+
+The juicy parts:
+
+==29097==ERROR: AddressSanitizer: SEGV on unknown address 0x000000000070 (pc 0x000000581939 bp 0x7fff1f168590 sp 0x7fff1f168590 T0)
+    #0 0x581938 in extent_buffer_get /home/lukas/dev/btrfsfuzz/src-asan/./extent_io.h:105:10
+    #1 0x583daf in btrfs_search_slot /home/lukas/dev/btrfsfuzz/src-asan/ctree.c:1118:2
+    #2 0x538652 in check_owner_ref /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:4043:8
+    #3 0x535ca5 in check_block /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:4433:10
+    #4 0x532464 in run_next_block /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:6292:8
+    #5 0x52f584 in deal_root_from_list /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:8391:10
+    #6 0x520f81 in check_chunks_and_extents /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:8558:8
+    #7 0x51e5a9 in cmd_check /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:11493:9
+    #8 0x4f0ee1 in main /home/lukas/dev/btrfsfuzz/src-asan/btrfs.c:243:8
+    #9 0x7f42d367b730 in __libc_start_main (/lib64/libc.so.6+0x20730)
+    #10 0x421358 in _start (/home/lukas/dev/btrfsfuzz/bin-asan/bin/btrfs+0x421358)
+
+parent transid verify failed on 4198400 wanted 14 found 1114126
+parent transid verify failed on 4198400 wanted 14 found 1114126
+Ignoring transid failure
+ASAN:DEADLYSIGNAL
+=================================================================
+==29097==ERROR: AddressSanitizer: SEGV on unknown address 0x000000000070 (pc 0x000000581939 bp 0x7fff1f168590 sp 0x7fff1f168590 T0)
+    #0 0x581938 in extent_buffer_get /home/lukas/dev/btrfsfuzz/src-asan/./extent_io.h:105:10
+    #1 0x583daf in btrfs_search_slot /home/lukas/dev/btrfsfuzz/src-asan/ctree.c:1118:2
+    #2 0x538652 in check_owner_ref /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:4043:8
+    #3 0x535ca5 in check_block /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:4433:10
+    #4 0x532464 in run_next_block /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:6292:8
+    #5 0x52f584 in deal_root_from_list /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:8391:10
+    #6 0x520f81 in check_chunks_and_extents /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:8558:8
+    #7 0x51e5a9 in cmd_check /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:11493:9
+    #8 0x4f0ee1 in main /home/lukas/dev/btrfsfuzz/src-asan/btrfs.c:243:8
+    #9 0x7f42d367b730 in __libc_start_main (/lib64/libc.so.6+0x20730)
+    #10 0x421358 in _start (/home/lukas/dev/btrfsfuzz/bin-asan/bin/btrfs+0x421358)
+
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV /home/lukas/dev/btrfsfuzz/src-asan/./extent_io.h:105:10 in extent_buffer_get
+==29097==ABORTING

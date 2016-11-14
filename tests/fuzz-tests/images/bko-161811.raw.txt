@@ -1,0 +1,81 @@
+URL: https://bugzilla.kernel.org/show_bug.cgi?id=161811
+Lukas Lueg 2016-09-16 20:03:35 UTC
+
+More news from the fuzzer. The attached image causes a global-buffer-overflow
+in btrfsck; using btrfs-progs v4.7-42-g56e9586. You need to compile with ASAN
+in order to reproduce.
+
+The juicy parts:
+
+==16657==ERROR: AddressSanitizer: global-buffer-overflow on address 0x00000064726f at pc 0x00000054eadd bp 0x7ffec6d9b980 sp 0x7ffec6d9b978
+READ of size 1 at 0x00000064726f thread T0
+    #0 0x54eadc in imode_to_type /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:635:9
+    #1 0x54673a in maybe_free_inode_rec /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:932:13
+    #2 0x54a79a in add_inode_backref /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:1104:2
+    #3 0x54b6d2 in process_inode_ref /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:1549:3
+    #4 0x5489e4 in process_one_leaf /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:1810:10
+    #5 0x54522e in walk_down_tree /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:1958:10
+    #6 0x54372e in check_fs_root /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:3668:10
+    #7 0x5224ef in check_fs_roots /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:3809:10
+    #8 0x51e772 in cmd_check /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:11533:8
+    #9 0x4f0ee1 in main /home/lukas/dev/btrfsfuzz/src-asan/btrfs.c:243:8
+    #10 0x7f4a5c29f730 in __libc_start_main (/lib64/libc.so.6+0x20730)
+    #11 0x421358 in _start (/home/lukas/dev/btrfsfuzz/bin-asan/bin/btrfs+0x421358)
+
+bad full backref, on [4198400]
+checking free space cache
+checking fs roots
+=================================================================
+==16657==ERROR: AddressSanitizer: global-buffer-overflow on address 0x00000064726f at pc 0x00000054eadd bp 0x7ffec6d9b980 sp 0x7ffec6d9b978
+READ of size 1 at 0x00000064726f thread T0
+    #0 0x54eadc in imode_to_type /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:635:9
+    #1 0x54673a in maybe_free_inode_rec /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:932:13
+    #2 0x54a79a in add_inode_backref /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:1104:2
+    #3 0x54b6d2 in process_inode_ref /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:1549:3
+    #4 0x5489e4 in process_one_leaf /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:1810:10
+    #5 0x54522e in walk_down_tree /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:1958:10
+    #6 0x54372e in check_fs_root /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:3668:10
+    #7 0x5224ef in check_fs_roots /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:3809:10
+    #8 0x51e772 in cmd_check /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:11533:8
+    #9 0x4f0ee1 in main /home/lukas/dev/btrfsfuzz/src-asan/btrfs.c:243:8
+    #10 0x7f4a5c29f730 in __libc_start_main (/lib64/libc.so.6+0x20730)
+    #11 0x421358 in _start (/home/lukas/dev/btrfsfuzz/bin-asan/bin/btrfs+0x421358)
+
+0x00000064726f is located 49 bytes to the left of global variable '<string literal>' defined in 'cmds-check.c:3051:2' (0x6472a0) of size 17
+  '<string literal>' is ascii string 'check_inode_recs'
+0x00000064726f is located 0 bytes to the right of global variable 'btrfs_type_by_mode' defined in 'cmds-check.c:625:23' (0x647260) of size 15
+SUMMARY: AddressSanitizer: global-buffer-overflow /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:635:9 in imode_to_type
+Shadow bytes around the buggy address:
+  0x0000800c0df0: f9 f9 f9 f9 00 00 05 f9 f9 f9 f9 f9 00 00 02 f9
+  0x0000800c0e00: f9 f9 f9 f9 00 00 f9 f9 f9 f9 f9 f9 00 07 f9 f9
+  0x0000800c0e10: f9 f9 f9 f9 00 00 00 00 f9 f9 f9 f9 00 00 00 01
+  0x0000800c0e20: f9 f9 f9 f9 00 00 f9 f9 f9 f9 f9 f9 00 00 01 f9
+  0x0000800c0e30: f9 f9 f9 f9 00 07 f9 f9 f9 f9 f9 f9 00 00 05 f9
+=>0x0000800c0e40: f9 f9 f9 f9 00 00 02 f9 f9 f9 f9 f9 00[07]f9 f9
+  0x0000800c0e50: f9 f9 f9 f9 00 00 01 f9 f9 f9 f9 f9 00 00 00 07
+  0x0000800c0e60: f9 f9 f9 f9 00 00 00 00 00 04 f9 f9 f9 f9 f9 f9
+  0x0000800c0e70: 00 00 00 00 03 f9 f9 f9 f9 f9 f9 f9 00 00 00 00
+  0x0000800c0e80: 00 00 00 00 00 05 f9 f9 f9 f9 f9 f9 00 00 00 00
+  0x0000800c0e90: 00 00 03 f9 f9 f9 f9 f9 00 00 06 f9 f9 f9 f9 f9
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Heap right redzone:      fb
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack partial redzone:   f4
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==16657==ABORTING

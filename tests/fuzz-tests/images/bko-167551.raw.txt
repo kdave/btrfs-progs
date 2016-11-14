@@ -1,0 +1,29 @@
+URL: https://bugzilla.kernel.org/show_bug.cgi?id=167551
+Lukas Lueg 2016-09-17 18:32:31 UTC
+
+More news from the fuzzer. The attached image causes btrfsck to enter what
+seems to be an endless loop; using btrfs-progs v4.7.2-55-g2b7c507
+
+Starting program: /home/lukas/dev/btrfsfuzz/bin/bin/btrfsck hang000022.img
+Missing separate debuginfos, use: dnf debuginfo-install glibc-2.23.1-10.fc24.x86_64
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib64/libthread_db.so.1".
+
+Program received signal SIGINT, Interrupt.
+0x00000000004576b7 in alloc_extent_buffer (tree=0x6b5420, bytenr=4198400, blocksize=4096) at extent_io.c:628
+628	{
+Missing separate debuginfos, use: dnf debuginfo-install libblkid-2.28.2-1.fc24.x86_64 libuuid-2.28.2-1.fc24.x86_64 lzo-2.08-8.fc24.x86_64 zlib-1.2.8-10.fc24.x86_64
+#0  0x00000000004576b7 in alloc_extent_buffer (tree=0x6b5420, bytenr=4198400, blocksize=4096) at extent_io.c:628
+#1  0x0000000000444be3 in read_tree_block_fs_info (fs_info=0x6b53a0, bytenr=4198400, blocksize=4096, parent_transid=14) at disk-io.c:339
+#2  0x0000000000440845 in btrfs_search_slot (trans=<optimized out>, root=<optimized out>, key=<optimized out>, p=<optimized out>, 
+    ins_len=<optimized out>, cow=<optimized out>) at ctree.c:1175
+#3  0x000000000044bf8a in find_first_block_group (root=0x6b5850, path=0x6b41d0, key=0x7fffffffde78) at extent-tree.c:3142
+#4  0x000000000044bd3a in btrfs_read_block_groups (root=0x6b5850) at extent-tree.c:3240
+#5  0x00000000004464b3 in btrfs_setup_all_roots (fs_info=0x6b53a0, root_tree_bytenr=4202496, flags=<optimized out>) at disk-io.c:1077
+#6  0x0000000000446fc5 in __open_ctree_fd (fp=<optimized out>, path=<optimized out>, sb_bytenr=65536, root_tree_bytenr=<optimized out>, 
+    chunk_root_bytenr=<optimized out>, flags=<optimized out>) at disk-io.c:1341
+#7  0x0000000000446d65 in open_ctree_fs_info (filename=0x7fffffffe4f5 "hang000022.img", sb_bytenr=0, root_tree_bytenr=0, 
+    chunk_root_bytenr=0, flags=64) at disk-io.c:1387
+#8  0x000000000041bbe2 in cmd_check (argc=<optimized out>, argv=<optimized out>) at cmds-check.c:11382
+#9  0x000000000040a10d in main (argc=<optimized out>, argv=0x7fffffffe218) at btrfs.c:243
+quit

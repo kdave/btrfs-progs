@@ -1,0 +1,83 @@
+URL: https://bugzilla.kernel.org/show_bug.cgi?id=156731
+Lukas Lueg 2016-09-13 19:53:59 UTC
+
+More news from the fuzzer. The attached image causes btrfsck to
+buffer-overflow. Using btrfs-progs v4.7-42-g56e9586, compiled with ASAN
+(doesn't crash without)
+
+==17647==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x621000017980 at pc 0x00000052dde3 bp 0x7ffecc974fe0 sp 0x7ffecc974fd8
+READ of size 4 at 0x621000017980 thread T0
+    #0 0x52dde2 in btrfs_extent_data_ref_count /home/lukas/dev/btrfsfuzz/src-asan/./ctree.h:1582:1
+    #1 0x5329ae in run_next_block /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:6380:6
+    #2 0x52f584 in deal_root_from_list /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:8391:10
+    #3 0x520f81 in check_chunks_and_extents /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:8558:8
+    #4 0x51e5a9 in cmd_check /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:11493:9
+    #5 0x4f0ee1 in main /home/lukas/dev/btrfsfuzz/src-asan/btrfs.c:243:8
+    #6 0x7faced2c8730 in __libc_start_main (/lib64/libc.so.6+0x20730)
+    #7 0x421358 in _start (/home/lukas/dev/btrfsfuzz/bin-asan/bin/btrfs+0x421358)
+
+cat crashing_images/id:000047,sig:11,src:000343+000051,op:splice,rep:4.log
+=================================================================
+==17647==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x621000017980 at pc 0x00000052dde3 bp 0x7ffecc974fe0 sp 0x7ffecc974fd8
+READ of size 4 at 0x621000017980 thread T0
+    #0 0x52dde2 in btrfs_extent_data_ref_count /home/lukas/dev/btrfsfuzz/src-asan/./ctree.h:1582:1
+    #1 0x5329ae in run_next_block /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:6380:6
+    #2 0x52f584 in deal_root_from_list /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:8391:10
+    #3 0x520f81 in check_chunks_and_extents /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:8558:8
+    #4 0x51e5a9 in cmd_check /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:11493:9
+    #5 0x4f0ee1 in main /home/lukas/dev/btrfsfuzz/src-asan/btrfs.c:243:8
+    #6 0x7faced2c8730 in __libc_start_main (/lib64/libc.so.6+0x20730)
+    #7 0x421358 in _start (/home/lukas/dev/btrfsfuzz/bin-asan/bin/btrfs+0x421358)
+
+0x621000017980 is located 0 bytes to the right of 4224-byte region [0x621000016900,0x621000017980)
+allocated by thread T0 here:
+    #0 0x4bfca0 in calloc (/home/lukas/dev/btrfsfuzz/bin-asan/bin/btrfs+0x4bfca0)
+    #1 0x5c16ca in __alloc_extent_buffer /home/lukas/dev/btrfsfuzz/src-asan/extent_io.c:542:7
+    #2 0x5c1b26 in alloc_extent_buffer /home/lukas/dev/btrfsfuzz/src-asan/extent_io.c:646:8
+    #3 0x58de0c in btrfs_find_create_tree_block /home/lukas/dev/btrfsfuzz/src-asan/disk-io.c:193:9
+    #4 0x58e880 in read_tree_block_fs_info /home/lukas/dev/btrfsfuzz/src-asan/disk-io.c:339:7
+    #5 0x5918a2 in read_tree_block /home/lukas/dev/btrfsfuzz/src-asan/./disk-io.h:112:9
+    #6 0x591712 in find_and_setup_root /home/lukas/dev/btrfsfuzz/src-asan/disk-io.c:647:15
+    #7 0x593243 in setup_root_or_create_block /home/lukas/dev/btrfsfuzz/src-asan/disk-io.c:966:8
+    #8 0x592850 in btrfs_setup_all_roots /home/lukas/dev/btrfsfuzz/src-asan/disk-io.c:1031:8
+    #9 0x5948fe in __open_ctree_fd /home/lukas/dev/btrfsfuzz/src-asan/disk-io.c:1341:8
+    #10 0x5942b5 in open_ctree_fs_info /home/lukas/dev/btrfsfuzz/src-asan/disk-io.c:1387:9
+    #11 0x51dff2 in cmd_check /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:11382:9
+    #12 0x4f0ee1 in main /home/lukas/dev/btrfsfuzz/src-asan/btrfs.c:243:8
+    #13 0x7faced2c8730 in __libc_start_main (/lib64/libc.so.6+0x20730)
+
+SUMMARY: AddressSanitizer: heap-buffer-overflow /home/lukas/dev/btrfsfuzz/src-asan/./ctree.h:1582:1 in btrfs_extent_data_ref_count
+Shadow bytes around the buggy address:
+  0x0c427fffaee0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c427fffaef0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c427fffaf00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c427fffaf10: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c427fffaf20: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x0c427fffaf30:[fa]fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c427fffaf40: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c427fffaf50: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c427fffaf60: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c427fffaf70: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c427fffaf80: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Heap right redzone:      fb
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack partial redzone:   f4
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==17647==ABORTING

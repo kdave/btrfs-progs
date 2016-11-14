@@ -1,0 +1,55 @@
+URL: https://bugzilla.kernel.org/show_bug.cgi?id=172811
+Lukas Lueg 2016-09-23 18:34:15 UTC
+
+More news from the fuzzer. The attached image causes a segmentation fault when
+running btrfsck over it; using btrfs-progs v4.7.2-55-g2b7c507
+
+This may be the same cause as 156721, the call-tree is different, though.
+
+The juicy parts:
+
+==19342==ERROR: AddressSanitizer: SEGV on unknown address 0x0000000000e5 (pc 0x7f3b12e1df50 bp 0x7ffeb50b4260 sp 0x7ffeb50b39e8 T0)
+    #0 0x7f3b12e1df4f in __memmove_avx_unaligned (/lib64/libc.so.6+0x149f4f)
+    #1 0x4a982c in __asan_memcpy (/home/lukas/dev/btrfsfuzz/bin-asan/bin/btrfs+0x4a982c)
+    #2 0x5c2d59 in read_extent_buffer /home/lukas/dev/btrfsfuzz/src-asan/extent_io.c:867:2
+    #3 0x52eaa6 in btrfs_node_key /home/lukas/dev/btrfsfuzz/src-asan/./ctree.h:1667:2
+    #4 0x5436c7 in check_fs_root /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:3661:3
+    #5 0x5224ef in check_fs_roots /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:3809:10
+    #6 0x51e772 in cmd_check /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:11533:8
+    #7 0x4f0ee1 in main /home/lukas/dev/btrfsfuzz/src-asan/btrfs.c:243:8
+    #8 0x7f3b12cf4730 in __libc_start_main (/lib64/libc.so.6+0x20730)
+    #9 0x421358 in _start (/home/lukas/dev/btrfsfuzz/bin-asan/bin/btrfs+0x421358)
+
+parent transid verify failed on 4198400 wanted 65305493131755520 found 14
+parent transid verify failed on 4198400 wanted 65305493131755520 found 14
+Ignoring transid failure
+ERROR: add_tree_backref failed: File exists
+ERROR: add_tree_backref failed: File exists
+parent transid verify failed on 131072 wanted 36283884678912 found 4
+parent transid verify failed on 131072 wanted 36283884678912 found 4
+Ignoring transid failure
+ERROR: tree block bytenr 1280 is not aligned to sectorsize 4096
+checking free space cache
+checking fs roots
+root 5 root dir 41471 not found
+parent transid verify failed on 4198400 wanted 4 found 14
+Ignoring transid failure
+parent transid verify failed on 131072 wanted 36283884678912 found 4
+Ignoring transid failure
+ASAN:DEADLYSIGNAL
+=================================================================
+==19342==ERROR: AddressSanitizer: SEGV on unknown address 0x0000000000e5 (pc 0x7f3b12e1df50 bp 0x7ffeb50b4260 sp 0x7ffeb50b39e8 T0)
+    #0 0x7f3b12e1df4f in __memmove_avx_unaligned (/lib64/libc.so.6+0x149f4f)
+    #1 0x4a982c in __asan_memcpy (/home/lukas/dev/btrfsfuzz/bin-asan/bin/btrfs+0x4a982c)
+    #2 0x5c2d59 in read_extent_buffer /home/lukas/dev/btrfsfuzz/src-asan/extent_io.c:867:2
+    #3 0x52eaa6 in btrfs_node_key /home/lukas/dev/btrfsfuzz/src-asan/./ctree.h:1667:2
+    #4 0x5436c7 in check_fs_root /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:3661:3
+    #5 0x5224ef in check_fs_roots /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:3809:10
+    #6 0x51e772 in cmd_check /home/lukas/dev/btrfsfuzz/src-asan/cmds-check.c:11533:8
+    #7 0x4f0ee1 in main /home/lukas/dev/btrfsfuzz/src-asan/btrfs.c:243:8
+    #8 0x7f3b12cf4730 in __libc_start_main (/lib64/libc.so.6+0x20730)
+    #9 0x421358 in _start (/home/lukas/dev/btrfsfuzz/bin-asan/bin/btrfs+0x421358)
+
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV (/lib64/libc.so.6+0x149f4f) in __memmove_avx_unaligned
+==19342==ABORTING

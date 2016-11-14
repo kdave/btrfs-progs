@@ -1,0 +1,55 @@
+URL: https://bugzilla.kernel.org/show_bug.cgi?id=167921
+Lukas Lueg 2016-09-17 19:16:19 UTC
+
+More news from the fuzzer. The attached image causes a call to abort() when
+running btrfsck over it; using btrfs-progs v4.7.2-55-g2b7c507
+
+Program received signal SIGABRT, Aborted.
+0x00007ffff6fae6f5 in raise () from /lib64/libc.so.6
+#0  0x00007ffff6fae6f5 in raise () from /lib64/libc.so.6
+#1  0x00007ffff6fb02fa in abort () from /lib64/libc.so.6
+#2  0x000000000042390b in run_next_block (root=<optimized out>, bits=<optimized out>, bits_nr=1024, last=<optimized out>, 
+    pending=<optimized out>, seen=<optimized out>, reada=<optimized out>, nodes=<optimized out>, extent_cache=<optimized out>, 
+    chunk_cache=<optimized out>, dev_cache=<optimized out>, block_group_cache=<optimized out>, dev_extent_cache=<optimized out>, 
+    ri=<optimized out>) at cmds-check.c:6424
+#3  0x0000000000421d9b in deal_root_from_list (list=<optimized out>, root=<optimized out>, bits=<optimized out>, bits_nr=1024, 
+    pending=<optimized out>, seen=<optimized out>, reada=<optimized out>, nodes=<optimized out>, extent_cache=<optimized out>, 
+    chunk_cache=<optimized out>, dev_cache=<optimized out>, block_group_cache=<optimized out>, dev_extent_cache=<optimized out>)
+    at cmds-check.c:8391
+#4  0x000000000041d1d2 in check_chunks_and_extents (root=<optimized out>) at cmds-check.c:8567
+#5  0x000000000041bf0b in cmd_check (argc=<optimized out>, argv=<optimized out>) at cmds-check.c:11493
+#6  0x000000000040a10d in main (argc=<optimized out>, argv=0x7fffffffe218) at btrfs.c:243
+
+parent transid verify failed on 4194304 wanted 65305493131755520 found 14
+parent transid verify failed on 4194304 wanted 65305493131755520 found 14
+Ignoring transid failure
+Checking filesystem on crashing_images/id:000162,sig:06,src:000059+001444,op:splice,rep:2.img
+UUID: 056b0872-c0a7-4121-8ac9-2263ffbee306
+checking extents/bin/sh: line 3:  3091 Aborted                 LD_LIBRARY_PATH=/home/lukas/dev/btrfsfuzz/bin-asan/lib LD_PRELOAD=/home/lukas/dev/afl_git/libdislocator/libdislocator.so ASAN_OPTIONS=detect_leaks=0 /home/lukas/dev/btrfsfuzz/bin-asan/bin/btrfsck crashing_images/id:000162,sig:06,src:000059+001444,op:splice,rep:2.img
+Starting program: /home/lukas/dev/btrfsfuzz/bin/bin/btrfsck crash000160.img
+Missing separate debuginfos, use: dnf debuginfo-install glibc-2.23.1-10.fc24.x86_64
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib64/libthread_db.so.1".
+[Inferior 1 (process 21730) exited with code 0376]
+Missing separate debuginfos, use: dnf debuginfo-install libblkid-2.28.2-1.fc24.x86_64 libuuid-2.28.2-1.fc24.x86_64 lzo-2.08-8.fc24.x86_64 zlib-1.2.8-10.fc24.x86_64
+No stack.
+Starting program: /home/lukas/dev/btrfsfuzz/bin/bin/btrfsck crash000162.img
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib64/libthread_db.so.1".
+
+Program received signal SIGABRT, Aborted.
+0x00007ffff6fae6f5 in raise () from /lib64/libc.so.6
+#0  0x00007ffff6fae6f5 in raise () from /lib64/libc.so.6
+#1  0x00007ffff6fb02fa in abort () from /lib64/libc.so.6
+#2  0x000000000042390b in run_next_block (root=<optimized out>, bits=<optimized out>, bits_nr=1024, last=<optimized out>, 
+    pending=<optimized out>, seen=<optimized out>, reada=<optimized out>, nodes=<optimized out>, extent_cache=<optimized out>, 
+    chunk_cache=<optimized out>, dev_cache=<optimized out>, block_group_cache=<optimized out>, dev_extent_cache=<optimized out>, 
+    ri=<optimized out>) at cmds-check.c:6424
+#3  0x0000000000421d9b in deal_root_from_list (list=<optimized out>, root=<optimized out>, bits=<optimized out>, bits_nr=1024, 
+    pending=<optimized out>, seen=<optimized out>, reada=<optimized out>, nodes=<optimized out>, extent_cache=<optimized out>, 
+    chunk_cache=<optimized out>, dev_cache=<optimized out>, block_group_cache=<optimized out>, dev_extent_cache=<optimized out>)
+    at cmds-check.c:8391
+#4  0x000000000041d1d2 in check_chunks_and_extents (root=<optimized out>) at cmds-check.c:8567
+#5  0x000000000041bf0b in cmd_check (argc=<optimized out>, argv=<optimized out>) at cmds-check.c:11493
+#6  0x000000000040a10d in main (argc=<optimized out>, argv=0x7fffffffe218) at btrfs.c:243
+quit

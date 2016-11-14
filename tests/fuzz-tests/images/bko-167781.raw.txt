@@ -1,0 +1,297 @@
+URL: https://bugzilla.kernel.org/show_bug.cgi?id=167781
+Lukas Lueg 2016-09-17 19:01:47 UTC
+
+More news from the fuzzer. The attached image causes btrfsck to overflow it's
+stack by what seems to be an infinite (or at least sufficiently deep) recursion
+in resolve_one_root(); using btrfs-progs v4.7-42-g56e9586.
+
+
+checking extents
+Chunk[256, 228, 0]: length(4194304), offset(0), type(2) is not found in block group
+Chunk[256, 228, 0] stripe[1, 0] is not found in dev extent
+Chunk[256, 228, 4194304]: length(1638400), offset(4194304), type(5) is not found in block group
+Chunk[256, 228, 4194304] stripe[1, 4194304] is not found in dev extent
+Chunk[256, 228, 5832704]: length(1638400), offset(5832704), type(5) is not found in block group
+Chunk[256, 228, 5832704] stripe[1, 5832704] is not found in dev extent
+ref mismatch on [131072 4096] extent item 0, found 1
+Backref 131072 parent 3 root 3 not found in extent tree
+backpointer mismatch on [131072 4096]
+bad extent [131072, 135168), type mismatch with chunk
+ref mismatch on [4194304 4096] extent item 0, found 1
+Backref 4194304 parent 5 root 5 not found in extent tree
+backpointer mismatch on [4194304 4096]
+ref mismatch on [4198400 4096] extent item 0, found 1
+Backref 4198400 parent 1 root 1 not found in extent tree
+backpointer mismatch on [4198400 4096]
+ref mismatch on [4231168 4096] extent item 0, found 1
+Backref 4231168 parent 7 root 7 not found in extent tree
+backpointer mismatch on [4231168 4096]
+ref mismatch on [3472328296227680304 3472328296227680304] extent item 0, found 1
+Backref 3472328296227680304 root 1 owner 2 offset 0 num_refs 0 not found in extent tree
+Incorrect local backref count on 3472328296227680304 root 1 owner 2 offset 0 found 1 wanted 0 back 0x60800000bd20
+backpointer mismatch on [3472328296227680304 3472328296227680304]
+Dev extent's total-byte(0) is not equal to byte-used(7471104) in dev[1, 216, 1]
+Errors found in extent allocation tree or chunk allocation
+checking free space cache
+checking fs roots
+checking csums
+checking root refs
+checking quota groups
+ASAN:DEADLYSIGNAL
+=================================================================
+==9638==ERROR: AddressSanitizer: stack-overflow on address 0x7ffc0e2d1ff8 (pc 0x0000005f2ed7 bp 0x7ffc0e2d2010 sp 0x7ffc0e2d2000 T0)
+    #0 0x5f2ed6 in find_ref_bytenr /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:253:46
+    #1 0x5f2cba in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:560:20
+    #2 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #3 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #4 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #5 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #6 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #7 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #8 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #9 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #10 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #11 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #12 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #13 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #14 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #15 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #16 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #17 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #18 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #19 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #20 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #21 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #22 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #23 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #24 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #25 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #26 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #27 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #28 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #29 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #30 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #31 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #32 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #33 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #34 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #35 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #36 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #37 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #38 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #39 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #40 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #41 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #42 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #43 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #44 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #45 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #46 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #47 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #48 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #49 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #50 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #51 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #52 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #53 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #54 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #55 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #56 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #57 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #58 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #59 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #60 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #61 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #62 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #63 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #64 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #65 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #66 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #67 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #68 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #69 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #70 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #71 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #72 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #73 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #74 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #75 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #76 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #77 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #78 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #79 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #80 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #81 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #82 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #83 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #84 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #85 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #86 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #87 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #88 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #89 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #90 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #91 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #92 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #93 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #94 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #95 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #96 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #97 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #98 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #99 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #100 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #101 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #102 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #103 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #104 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #105 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #106 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #107 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #108 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #109 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #110 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #111 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #112 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #113 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #114 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #115 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #116 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #117 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #118 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #119 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #120 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #121 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #122 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #123 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #124 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #125 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #126 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #127 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #128 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #129 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #130 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #131 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #132 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #133 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #134 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #135 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #136 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #137 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #138 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #139 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #140 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #141 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #142 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #143 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #144 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #145 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #146 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #147 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #148 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #149 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #150 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #151 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #152 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #153 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #154 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #155 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #156 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #157 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #158 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #159 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #160 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #161 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #162 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #163 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #164 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #165 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #166 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #167 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #168 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #169 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #170 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #171 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #172 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #173 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #174 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #175 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #176 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #177 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #178 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #179 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #180 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #181 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #182 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #183 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #184 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #185 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #186 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #187 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #188 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #189 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #190 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #191 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #192 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #193 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #194 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #195 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #196 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #197 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #198 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #199 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #200 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #201 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #202 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #203 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #204 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #205 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #206 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #207 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #208 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #209 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #210 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #211 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #212 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #213 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #214 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #215 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #216 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #217 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #218 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #219 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #220 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #221 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #222 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #223 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #224 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #225 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #226 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #227 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #228 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #229 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #230 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #231 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #232 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #233 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #234 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #235 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #236 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #237 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #238 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #239 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #240 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #241 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #242 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #243 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #244 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #245 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #246 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #247 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #248 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #249 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #250 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+    #251 0x5f2d1e in resolve_one_root /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:566:9
+
+SUMMARY: AddressSanitizer: stack-overflow /home/lukas/dev/btrfsfuzz/src-asan/qgroup-verify.c:253:46 in find_ref_bytenr
+==9638==ABORTING
