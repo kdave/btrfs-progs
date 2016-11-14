@@ -467,6 +467,14 @@ struct btrfs_super_block {
  * ones specified below then we will fail to mount
  */
 #define BTRFS_FEATURE_COMPAT_RO_FREE_SPACE_TREE	(1ULL << 0)
+/*
+ * Older kernels on big-endian systems produced broken free space tree bitmaps,
+ * and btrfs-progs also used to corrupt the free space tree. If this bit is
+ * clear, then the free space tree cannot be trusted. btrfs-progs can also
+ * intentionally clear this bit to ask the kernel to rebuild the free space
+ * tree.
+ */
+#define BTRFS_FEATURE_COMPAT_RO_FREE_SPACE_TREE_VALID	(1ULL << 1)
 
 #define BTRFS_FEATURE_INCOMPAT_MIXED_BACKREF	(1ULL << 0)
 #define BTRFS_FEATURE_INCOMPAT_DEFAULT_SUBVOL	(1ULL << 1)
@@ -493,6 +501,11 @@ struct btrfs_super_block {
 
 #define BTRFS_FEATURE_COMPAT_SUPP		0ULL
 
+/*
+ * The FREE_SPACE_TREE and FREE_SPACE_TREE_VALID compat_ro bits must not be
+ * added here until read-write support for the free space tree is implemented in
+ * btrfs-progs.
+ */
 #define BTRFS_FEATURE_COMPAT_RO_SUPP		0ULL
 
 #define BTRFS_FEATURE_INCOMPAT_SUPP			\
