@@ -20,6 +20,7 @@
 #include "disk-io.h"
 #include "free-space-cache.h"
 #include "free-space-tree.h"
+#include "transaction.h"
 
 static struct btrfs_free_space_info *
 search_free_space_info(struct btrfs_trans_handle *trans,
@@ -65,6 +66,91 @@ static int free_space_test_bit(struct btrfs_block_group_cache *block_group,
 	ptr = btrfs_item_ptr_offset(leaf, path->slots[0]);
 	i = (offset - found_start) / sectorsize;
 	return !!extent_buffer_test_bit(leaf, ptr, i);
+}
+
+static int clear_free_space_tree(struct btrfs_trans_handle *trans,
+				 struct btrfs_root *root)
+{
+	struct btrfs_path *path;
+	struct btrfs_key key;
+	int nr;
+	int ret;
+
+	path = btrfs_alloc_path();
+	if (!path)
+		return -ENOMEM;
+
+	key.objectid = 0;
+	key.type = 0;
+	key.offset = 0;
+
+	while (1) {
+		ret = btrfs_search_slot(trans, root, &key, path, -1, 1);
+		if (ret < 0)
+			goto out;
+
+		nr = btrfs_header_nritems(path->nodes[0]);
+		if (!nr)
+			break;
+
+		path->slots[0] = 0;
+		ret = btrfs_del_items(trans, root, path, 0, nr);
+		if (ret)
+			goto out;
+
+		btrfs_release_path(path);
+	}
+
+	ret = 0;
+out:
+	btrfs_free_path(path);
+	return ret;
+}
+
+int btrfs_clear_free_space_tree(struct btrfs_fs_info *fs_info)
+{
+	struct btrfs_trans_handle *trans;
+	struct btrfs_root *tree_root = fs_info->tree_root;
+	struct btrfs_root *free_space_root = fs_info->free_space_root;
+	int ret;
+	u64 features;
+
+	trans = btrfs_start_transaction(tree_root, 0);
+	if (IS_ERR(trans))
+		return PTR_ERR(trans);
+
+	features = btrfs_super_compat_ro_flags(fs_info->super_copy);
+	features &= ~(BTRFS_FEATURE_COMPAT_RO_FREE_SPACE_TREE_VALID |
+		      BTRFS_FEATURE_COMPAT_RO_FREE_SPACE_TREE);
+	btrfs_set_super_compat_ro_flags(fs_info->super_copy, features);
+	fs_info->free_space_root = NULL;
+
+	ret = clear_free_space_tree(trans, free_space_root);
+	if (ret)
+		goto abort;
+
+	ret = btrfs_del_root(trans, tree_root, &free_space_root->root_key);
+	if (ret)
+		goto abort;
+
+	list_del(&free_space_root->dirty_list);
+
+	ret = clean_tree_block(trans, tree_root, free_space_root->node);
+	if (ret)
+		goto abort;
+	ret = btrfs_free_tree_block(trans, free_space_root,
+				    free_space_root->node, 0, 1);
+	if (ret)
+		goto abort;
+
+	free_extent_buffer(free_space_root->node);
+	free_extent_buffer(free_space_root->commit_root);
+	kfree(free_space_root);
+
+	ret = btrfs_commit_transaction(trans, tree_root);
+
+abort:
+	return ret;
 }
 
 static int load_free_space_bitmaps(struct btrfs_fs_info *fs_info,

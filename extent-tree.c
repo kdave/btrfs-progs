@@ -2467,6 +2467,17 @@ static int del_pending_extents(struct btrfs_trans_handle *trans, struct
 	return err;
 }
 
+
+int btrfs_free_tree_block(struct btrfs_trans_handle *trans,
+			  struct btrfs_root *root,
+			  struct extent_buffer *buf,
+			  u64 parent, int last_ref)
+{
+	return btrfs_free_extent(trans, root, buf->start, buf->len, parent,
+				 root->root_key.objectid,
+				 btrfs_header_level(buf), 0);
+}
+
 /*
  * remove an extent from the root, returns 0 on success
  */

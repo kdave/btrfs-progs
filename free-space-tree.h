@@ -19,6 +19,7 @@
 #ifndef __BTRFS_FREE_SPACE_TREE_H__
 #define __BTRFS_FREE_SPACE_TREE_H__
 
+int btrfs_clear_free_space_tree(struct btrfs_fs_info *fs_info);
 int load_free_space_tree(struct btrfs_fs_info *fs_info,
 			 struct btrfs_block_group_cache *block_group);
 

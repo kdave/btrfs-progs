@@ -143,6 +143,31 @@ int btrfs_insert_root(struct btrfs_trans_handle *trans, struct btrfs_root
 	return ret;
 }
 
+/* drop the root item for 'key' from 'root' */
+int btrfs_del_root(struct btrfs_trans_handle *trans, struct btrfs_root *root,
+		   struct btrfs_key *key)
+{
+	struct btrfs_path *path;
+	int ret;
+
+	path = btrfs_alloc_path();
+	if (!path)
+		return -ENOMEM;
+	ret = btrfs_search_slot(trans, root, key, path, -1, 1);
+	if (ret < 0)
+		goto out;
+
+	if (ret != 0) {
+		ret = -ENOENT;
+		goto out;
+	}
+
+	ret = btrfs_del_item(trans, root, path);
+out:
+	btrfs_free_path(path);
+	return ret;
+}
+
 /*
  * add a btrfs_root_ref item.  type is either BTRFS_ROOT_REF_KEY
  * or BTRFS_ROOT_BACKREF_KEY.
