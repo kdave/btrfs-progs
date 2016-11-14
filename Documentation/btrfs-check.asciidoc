@@ -80,12 +80,16 @@ superblock is damaged.
 
 --clear-space-cache v1|v2::
 completely wipe all free space cache of given type
-
-NOTE: Only v1 free space cache supported is implemented.
 +
-Kernel mount option 'clear_cache' is only designed to rebuild free space cache
-which is modified during the lifetime of that mount option.  It doesn't rebuild
-all free space cache, nor clear them out.
+For free space cache 'v1', the 'clear_cache' kernel mount option only rebuilds
+the free space cache for block groups that are modified while the filesystem is
+mounted with that option. Thus, using this option with 'v1' makes it possible
+to actually clear the entire free space cache.
++
+For free space cache 'v2', the 'clear_cache' kernel mount option does destroy
+the entire free space cache. This option with 'v2' provides an alternative
+method of clearing the free space cache that doesn't require mounting the
+filesystem.
 
 
 DANGEROUS OPTIONS

@@ -11175,7 +11175,6 @@ const char * const cmd_check_usage[] = {
 	"--chunk-root <bytenr>       use the given bytenr for the chunk tree root",
 	"-p|--progress               indicate progress",
 	"--clear-space-cache v1|v2   clear space cache for v1 or v2",
-	"                            NOTE: v1 support implemented",
 	NULL
 };
 
@@ -11297,13 +11296,16 @@ int cmd_check(int argc, char **argv)
 				}
 				break;
 			case GETOPT_VAL_CLEAR_SPACE_CACHE:
-				if (strcmp(optarg, "v1") != 0) {
+				if (strcmp(optarg, "v1") == 0) {
+					clear_space_cache = 1;
+				} else if (strcmp(optarg, "v2") == 0) {
+					clear_space_cache = 2;
+					ctree_flags |= OPEN_CTREE_INVALIDATE_FST;
+				} else {
 					error(
-			"only v1 support implmented, unrecognized value %s",
-			optarg);
+		"invalid argument to --clear-space-cache, must be v1 or v2");
 					exit(1);
 				}
-				clear_space_cache = 1;
 				ctree_flags |= OPEN_CTREE_WRITES;
 				break;
 		}
@@ -11357,11 +11359,11 @@ int cmd_check(int argc, char **argv)
 
 	global_info = info;
 	root = info->fs_root;
-	if (clear_space_cache) {
+	if (clear_space_cache == 1) {
 		if (btrfs_fs_compat_ro(info,
 				BTRFS_FEATURE_COMPAT_RO_FREE_SPACE_TREE)) {
 			error(
-			"free space cache v2 detected, clearing not implemented");
+		"free space cache v2 detected, use --clear-space-cache v2");
 			ret = 1;
 			goto close_out;
 		}
@@ -11372,6 +11374,22 @@ int cmd_check(int argc, char **argv)
 			ret = 1;
 		} else {
 			printf("Free space cache cleared\n");
+		}
+		goto close_out;
+	} else if (clear_space_cache == 2) {
+		if (!btrfs_fs_compat_ro(info,
+					BTRFS_FEATURE_COMPAT_RO_FREE_SPACE_TREE)) {
+			printf("no free space cache v2 to clear\n");
+			ret = 0;
+			goto close_out;
+		}
+		printf("Clear free space cache v2\n");
+		ret = btrfs_clear_free_space_tree(info);
+		if (ret) {
+			error("failed to clear free space cache v2: %d", ret);
+			ret = 1;
+		} else {
+			printf("free space cache v2 cleared\n");
 		}
 		goto close_out;
 	}
