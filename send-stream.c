@@ -37,10 +37,10 @@ struct btrfs_send_stream {
 	void *user;
 };
 
-static int read_buf(struct btrfs_send_stream *sctx, void *buf, int len)
+static int read_buf(struct btrfs_send_stream *sctx, void *buf, size_t len)
 {
 	int ret;
-	int pos = 0;
+	size_t pos = 0;
 
 	while (pos < len) {
 		ret = read(sctx->fd, (char*)buf + pos, len - pos);
