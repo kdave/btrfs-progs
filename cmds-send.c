@@ -686,7 +686,7 @@ int cmd_send(int argc, char **argv)
 			goto out;
 		}
 
-		if (!full_send && root_id) {
+		if (!full_send && !snapshot_parent) {
 			ret = set_root_info(&send, subvol, &root_id);
 			if (ret < 0)
 				goto out;
@@ -713,7 +713,7 @@ int cmd_send(int argc, char **argv)
 		if (ret < 0)
 			goto out;
 
-		if (!full_send && root_id) {
+		if (!full_send && !snapshot_parent) {
 			/* done with this subvol, so add it to the clone sources */
 			ret = add_clone_source(&send, root_id);
 			if (ret < 0) {
