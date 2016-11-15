@@ -74,11 +74,8 @@ static int read_cmd(struct btrfs_send_stream *sctx)
 	int ret;
 	int cmd;
 	u32 cmd_len;
-	int tlv_type;
-	int tlv_len;
 	char *data;
 	u32 pos;
-	struct btrfs_tlv_header *tlv_hdr;
 	u32 crc;
 	u32 crc2;
 
@@ -129,13 +126,17 @@ static int read_cmd(struct btrfs_send_stream *sctx)
 
 	pos = 0;
 	while (pos < cmd_len) {
+		struct btrfs_tlv_header *tlv_hdr;
+		u16 tlv_type;
+		u16 tlv_len;
+
 		tlv_hdr = (struct btrfs_tlv_header *)data;
 		tlv_type = le16_to_cpu(tlv_hdr->tlv_type);
 		tlv_len = le16_to_cpu(tlv_hdr->tlv_len);
 
-		if (tlv_type <= 0 || tlv_type > BTRFS_SEND_A_MAX ||
-		    tlv_len < 0 || tlv_len > BTRFS_SEND_BUF_SIZE) {
-			error("invalid tlv in cmd tlv_type = %d, tlv_len = %d",
+		if (tlv_type == 0 || tlv_type > BTRFS_SEND_A_MAX
+		    || tlv_len > BTRFS_SEND_BUF_SIZE) {
+			error("invalid tlv in cmd tlv_type = %hu, tlv_len = %hu",
 					tlv_type, tlv_len);
 			ret = -EINVAL;
 			goto out;
