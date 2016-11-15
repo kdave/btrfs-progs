@@ -37,6 +37,13 @@ struct btrfs_send_stream {
 	void *user;
 };
 
+/*
+ * Read len bytes to buf.
+ * Return:
+ *   0 - success
+ * < 0 - negative errno in case of error
+ * > 0 - no data read, EOF
+ */
 static int read_buf(struct btrfs_send_stream *sctx, char *buf, size_t len)
 {
 	int ret;
@@ -68,6 +75,10 @@ out:
 /*
  * Reads a single command from kernel space and decodes the TLV's into
  * sctx->cmd_attrs
+ *
+ * Returns:
+ *   0 - success
+ * < 0 - an error in the command
  */
 static int read_cmd(struct btrfs_send_stream *sctx)
 {
