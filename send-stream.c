@@ -33,6 +33,12 @@ struct btrfs_send_stream {
 	struct btrfs_tlv_header *cmd_attrs[BTRFS_SEND_A_MAX + 1];
 	u32 version;
 
+	/*
+	 * end of last successful read, equivalent to start of current
+	 * malformated part of block
+	 */
+	size_t stream_pos;
+
 	struct btrfs_send_ops *ops;
 	void *user;
 };
@@ -71,6 +77,8 @@ out_eof:
 	if (pos < len) {
 		error("short read from stream: expected %zu read %zu", len, pos);
 		ret = -EIO;
+	} else {
+		sctx->stream_pos += pos;
 	}
 
 out:
@@ -478,6 +486,7 @@ int btrfs_read_and_process_send_stream(int fd,
 	sctx.fd = fd;
 	sctx.ops = ops;
 	sctx.user = user;
+	sctx.stream_pos = 0;
 
 	ret = read_buf(&sctx, (char*)&hdr, sizeof(hdr));
 	if (ret < 0)
