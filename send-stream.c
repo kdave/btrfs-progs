@@ -82,6 +82,7 @@ static int read_cmd(struct btrfs_send_stream *sctx)
 
 	memset(sctx->cmd_attrs, 0, sizeof(sctx->cmd_attrs));
 
+	ASSERT(sizeof(*sctx->cmd_hdr) <= sizeof(sctx->read_buf));
 	ret = read_buf(sctx, sctx->read_buf, sizeof(*sctx->cmd_hdr));
 	if (ret < 0)
 		goto out;
@@ -94,6 +95,13 @@ static int read_cmd(struct btrfs_send_stream *sctx)
 	sctx->cmd_hdr = (struct btrfs_cmd_header *)sctx->read_buf;
 	cmd = le16_to_cpu(sctx->cmd_hdr->cmd);
 	cmd_len = le32_to_cpu(sctx->cmd_hdr->len);
+
+	if (cmd_len + sizeof(*sctx->cmd_hdr) >= sizeof(sctx->read_buf)) {
+		ret = -EINVAL;
+		error("command length %d too big for buffer %zu",
+				cmd_len, sizeof(sctx->read_buf));
+		goto out;
+	}
 
 	data = sctx->read_buf + sizeof(*sctx->cmd_hdr);
 	ret = read_buf(sctx, data, cmd_len);
