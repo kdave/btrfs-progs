@@ -37,13 +37,13 @@ struct btrfs_send_stream {
 	void *user;
 };
 
-static int read_buf(struct btrfs_send_stream *s, void *buf, int len)
+static int read_buf(struct btrfs_send_stream *sctx, void *buf, int len)
 {
 	int ret;
 	int pos = 0;
 
 	while (pos < len) {
-		ret = read(s->fd, (char*)buf + pos, len - pos);
+		ret = read(sctx->fd, (char*)buf + pos, len - pos);
 		if (ret < 0) {
 			ret = -errno;
 			error("read from stream failed: %s",
@@ -65,9 +65,9 @@ out:
 
 /*
  * Reads a single command from kernel space and decodes the TLV's into
- * s->cmd_attrs
+ * sctx->cmd_attrs
  */
-static int read_cmd(struct btrfs_send_stream *s)
+static int read_cmd(struct btrfs_send_stream *sctx)
 {
 	int ret;
 	int cmd;
@@ -80,9 +80,9 @@ static int read_cmd(struct btrfs_send_stream *s)
 	u32 crc;
 	u32 crc2;
 
-	memset(s->cmd_attrs, 0, sizeof(s->cmd_attrs));
+	memset(sctx->cmd_attrs, 0, sizeof(sctx->cmd_attrs));
 
-	ret = read_buf(s, s->read_buf, sizeof(*s->cmd_hdr));
+	ret = read_buf(sctx, sctx->read_buf, sizeof(*sctx->cmd_hdr));
 	if (ret < 0)
 		goto out;
 	if (ret) {
@@ -91,12 +91,12 @@ static int read_cmd(struct btrfs_send_stream *s)
 		goto out;
 	}
 
-	s->cmd_hdr = (struct btrfs_cmd_header *)s->read_buf;
-	cmd = le16_to_cpu(s->cmd_hdr->cmd);
-	cmd_len = le32_to_cpu(s->cmd_hdr->len);
+	sctx->cmd_hdr = (struct btrfs_cmd_header *)sctx->read_buf;
+	cmd = le16_to_cpu(sctx->cmd_hdr->cmd);
+	cmd_len = le32_to_cpu(sctx->cmd_hdr->len);
 
-	data = s->read_buf + sizeof(*s->cmd_hdr);
-	ret = read_buf(s, data, cmd_len);
+	data = sctx->read_buf + sizeof(*sctx->cmd_hdr);
+	ret = read_buf(sctx, data, cmd_len);
 	if (ret < 0)
 		goto out;
 	if (ret) {
@@ -105,11 +105,11 @@ static int read_cmd(struct btrfs_send_stream *s)
 		goto out;
 	}
 
-	crc = le32_to_cpu(s->cmd_hdr->crc);
-	s->cmd_hdr->crc = 0;
+	crc = le32_to_cpu(sctx->cmd_hdr->crc);
+	sctx->cmd_hdr->crc = 0;
 
-	crc2 = crc32c(0, (unsigned char*)s->read_buf,
-			sizeof(*s->cmd_hdr) + cmd_len);
+	crc2 = crc32c(0, (unsigned char*)sctx->read_buf,
+			sizeof(*sctx->cmd_hdr) + cmd_len);
 
 	if (crc != crc2) {
 		ret = -EINVAL;
@@ -131,20 +131,20 @@ static int read_cmd(struct btrfs_send_stream *s)
 			goto out;
 		}
 
-		s->cmd_attrs[tlv_type] = tlv_hdr;
+		sctx->cmd_attrs[tlv_type] = tlv_hdr;
 
 		data += sizeof(*tlv_hdr) + tlv_len;
 		pos += sizeof(*tlv_hdr) + tlv_len;
 	}
 
-	s->cmd = cmd;
+	sctx->cmd = cmd;
 	ret = 0;
 
 out:
 	return ret;
 }
 
-static int tlv_get(struct btrfs_send_stream *s, int attr, void **data, int *len)
+static int tlv_get(struct btrfs_send_stream *sctx, int attr, void **data, int *len)
 {
 	int ret;
 	struct btrfs_tlv_header *h;
@@ -155,7 +155,7 @@ static int tlv_get(struct btrfs_send_stream *s, int attr, void **data, int *len)
 		goto out;
 	}
 
-	h = s->cmd_attrs[attr];
+	h = sctx->cmd_attrs[attr];
 	if (!h) {
 		error("attribute %d requested but not present", attr);
 		ret = -ENOENT;
@@ -209,13 +209,13 @@ out:
 #define TLV_GET_U32(s, attr, v) TLV_GET_INT(s, attr, 32, v)
 #define TLV_GET_U64(s, attr, v) TLV_GET_INT(s, attr, 64, v)
 
-static int tlv_get_string(struct btrfs_send_stream *s, int attr, char **str)
+static int tlv_get_string(struct btrfs_send_stream *sctx, int attr, char **str)
 {
 	int ret;
 	void *data;
 	int len = 0;
 
-	TLV_GET(s, attr, &data, &len);
+	TLV_GET(sctx, attr, &data, &len);
 
 	*str = malloc(len + 1);
 	if (!*str)
@@ -231,14 +231,14 @@ tlv_get_failed:
 #define TLV_GET_STRING(s, attr, str) \
 	__TLV_DO_WHILE_GOTO_FAIL(tlv_get_string(s, attr, str))
 
-static int tlv_get_timespec(struct btrfs_send_stream *s,
+static int tlv_get_timespec(struct btrfs_send_stream *sctx,
 			    int attr, struct timespec *ts)
 {
 	int ret;
 	int len;
 	struct btrfs_timespec *bts;
 
-	TLV_GET(s, attr, (void**)&bts, &len);
+	TLV_GET(sctx, attr, (void**)&bts, &len);
 	TLV_CHECK_LEN(sizeof(*bts), len);
 
 	ts->tv_sec = le64_to_cpu(bts->sec);
@@ -251,13 +251,13 @@ tlv_get_failed:
 #define TLV_GET_TIMESPEC(s, attr, ts) \
 	__TLV_DO_WHILE_GOTO_FAIL(tlv_get_timespec(s, attr, ts))
 
-static int tlv_get_uuid(struct btrfs_send_stream *s, int attr, u8 *uuid)
+static int tlv_get_uuid(struct btrfs_send_stream *sctx, int attr, u8 *uuid)
 {
 	int ret;
 	int len;
 	void *data;
 
-	TLV_GET(s, attr, &data, &len);
+	TLV_GET(sctx, attr, &data, &len);
 	TLV_CHECK_LEN(BTRFS_UUID_SIZE, len);
 	memcpy(uuid, data, BTRFS_UUID_SIZE);
 
@@ -269,7 +269,7 @@ tlv_get_failed:
 #define TLV_GET_UUID(s, attr, uuid) \
 	__TLV_DO_WHILE_GOTO_FAIL(tlv_get_uuid(s, attr, uuid))
 
-static int read_and_process_cmd(struct btrfs_send_stream *s)
+static int read_and_process_cmd(struct btrfs_send_stream *sctx)
 {
 	int ret;
 	char *path = NULL;
@@ -294,129 +294,129 @@ static int read_and_process_cmd(struct btrfs_send_stream *s)
 	int len;
 	int xattr_len;
 
-	ret = read_cmd(s);
+	ret = read_cmd(sctx);
 	if (ret)
 		goto out;
 
-	switch (s->cmd) {
+	switch (sctx->cmd) {
 	case BTRFS_SEND_C_SUBVOL:
-		TLV_GET_STRING(s, BTRFS_SEND_A_PATH, &path);
-		TLV_GET_UUID(s, BTRFS_SEND_A_UUID, uuid);
-		TLV_GET_U64(s, BTRFS_SEND_A_CTRANSID, &ctransid);
-		ret = s->ops->subvol(path, uuid, ctransid, s->user);
+		TLV_GET_STRING(sctx, BTRFS_SEND_A_PATH, &path);
+		TLV_GET_UUID(sctx, BTRFS_SEND_A_UUID, uuid);
+		TLV_GET_U64(sctx, BTRFS_SEND_A_CTRANSID, &ctransid);
+		ret = sctx->ops->subvol(path, uuid, ctransid, sctx->user);
 		break;
 	case BTRFS_SEND_C_SNAPSHOT:
-		TLV_GET_STRING(s, BTRFS_SEND_A_PATH, &path);
-		TLV_GET_UUID(s, BTRFS_SEND_A_UUID, uuid);
-		TLV_GET_U64(s, BTRFS_SEND_A_CTRANSID, &ctransid);
-		TLV_GET_UUID(s, BTRFS_SEND_A_CLONE_UUID, clone_uuid);
-		TLV_GET_U64(s, BTRFS_SEND_A_CLONE_CTRANSID, &clone_ctransid);
-		ret = s->ops->snapshot(path, uuid, ctransid, clone_uuid,
-				clone_ctransid, s->user);
+		TLV_GET_STRING(sctx, BTRFS_SEND_A_PATH, &path);
+		TLV_GET_UUID(sctx, BTRFS_SEND_A_UUID, uuid);
+		TLV_GET_U64(sctx, BTRFS_SEND_A_CTRANSID, &ctransid);
+		TLV_GET_UUID(sctx, BTRFS_SEND_A_CLONE_UUID, clone_uuid);
+		TLV_GET_U64(sctx, BTRFS_SEND_A_CLONE_CTRANSID, &clone_ctransid);
+		ret = sctx->ops->snapshot(path, uuid, ctransid, clone_uuid,
+				clone_ctransid, sctx->user);
 		break;
 	case BTRFS_SEND_C_MKFILE:
-		TLV_GET_STRING(s, BTRFS_SEND_A_PATH, &path);
-		ret = s->ops->mkfile(path, s->user);
+		TLV_GET_STRING(sctx, BTRFS_SEND_A_PATH, &path);
+		ret = sctx->ops->mkfile(path, sctx->user);
 		break;
 	case BTRFS_SEND_C_MKDIR:
-		TLV_GET_STRING(s, BTRFS_SEND_A_PATH, &path);
-		ret = s->ops->mkdir(path, s->user);
+		TLV_GET_STRING(sctx, BTRFS_SEND_A_PATH, &path);
+		ret = sctx->ops->mkdir(path, sctx->user);
 		break;
 	case BTRFS_SEND_C_MKNOD:
-		TLV_GET_STRING(s, BTRFS_SEND_A_PATH, &path);
-		TLV_GET_U64(s, BTRFS_SEND_A_MODE, &mode);
-		TLV_GET_U64(s, BTRFS_SEND_A_RDEV, &dev);
-		ret = s->ops->mknod(path, mode, dev, s->user);
+		TLV_GET_STRING(sctx, BTRFS_SEND_A_PATH, &path);
+		TLV_GET_U64(sctx, BTRFS_SEND_A_MODE, &mode);
+		TLV_GET_U64(sctx, BTRFS_SEND_A_RDEV, &dev);
+		ret = sctx->ops->mknod(path, mode, dev, sctx->user);
 		break;
 	case BTRFS_SEND_C_MKFIFO:
-		TLV_GET_STRING(s, BTRFS_SEND_A_PATH, &path);
-		ret = s->ops->mkfifo(path, s->user);
+		TLV_GET_STRING(sctx, BTRFS_SEND_A_PATH, &path);
+		ret = sctx->ops->mkfifo(path, sctx->user);
 		break;
 	case BTRFS_SEND_C_MKSOCK:
-		TLV_GET_STRING(s, BTRFS_SEND_A_PATH, &path);
-		ret = s->ops->mksock(path, s->user);
+		TLV_GET_STRING(sctx, BTRFS_SEND_A_PATH, &path);
+		ret = sctx->ops->mksock(path, sctx->user);
 		break;
 	case BTRFS_SEND_C_SYMLINK:
-		TLV_GET_STRING(s, BTRFS_SEND_A_PATH, &path);
-		TLV_GET_STRING(s, BTRFS_SEND_A_PATH_LINK, &path_to);
-		ret = s->ops->symlink(path, path_to, s->user);
+		TLV_GET_STRING(sctx, BTRFS_SEND_A_PATH, &path);
+		TLV_GET_STRING(sctx, BTRFS_SEND_A_PATH_LINK, &path_to);
+		ret = sctx->ops->symlink(path, path_to, sctx->user);
 		break;
 	case BTRFS_SEND_C_RENAME:
-		TLV_GET_STRING(s, BTRFS_SEND_A_PATH, &path);
-		TLV_GET_STRING(s, BTRFS_SEND_A_PATH_TO, &path_to);
-		ret = s->ops->rename(path, path_to, s->user);
+		TLV_GET_STRING(sctx, BTRFS_SEND_A_PATH, &path);
+		TLV_GET_STRING(sctx, BTRFS_SEND_A_PATH_TO, &path_to);
+		ret = sctx->ops->rename(path, path_to, sctx->user);
 		break;
 	case BTRFS_SEND_C_LINK:
-		TLV_GET_STRING(s, BTRFS_SEND_A_PATH, &path);
-		TLV_GET_STRING(s, BTRFS_SEND_A_PATH_LINK, &path_to);
-		ret = s->ops->link(path, path_to, s->user);
+		TLV_GET_STRING(sctx, BTRFS_SEND_A_PATH, &path);
+		TLV_GET_STRING(sctx, BTRFS_SEND_A_PATH_LINK, &path_to);
+		ret = sctx->ops->link(path, path_to, sctx->user);
 		break;
 	case BTRFS_SEND_C_UNLINK:
-		TLV_GET_STRING(s, BTRFS_SEND_A_PATH, &path);
-		ret = s->ops->unlink(path, s->user);
+		TLV_GET_STRING(sctx, BTRFS_SEND_A_PATH, &path);
+		ret = sctx->ops->unlink(path, sctx->user);
 		break;
 	case BTRFS_SEND_C_RMDIR:
-		TLV_GET_STRING(s, BTRFS_SEND_A_PATH, &path);
-		ret = s->ops->rmdir(path, s->user);
+		TLV_GET_STRING(sctx, BTRFS_SEND_A_PATH, &path);
+		ret = sctx->ops->rmdir(path, sctx->user);
 		break;
 	case BTRFS_SEND_C_WRITE:
-		TLV_GET_STRING(s, BTRFS_SEND_A_PATH, &path);
-		TLV_GET_U64(s, BTRFS_SEND_A_FILE_OFFSET, &offset);
-		TLV_GET(s, BTRFS_SEND_A_DATA, &data, &len);
-		ret = s->ops->write(path, data, offset, len, s->user);
+		TLV_GET_STRING(sctx, BTRFS_SEND_A_PATH, &path);
+		TLV_GET_U64(sctx, BTRFS_SEND_A_FILE_OFFSET, &offset);
+		TLV_GET(sctx, BTRFS_SEND_A_DATA, &data, &len);
+		ret = sctx->ops->write(path, data, offset, len, sctx->user);
 		break;
 	case BTRFS_SEND_C_CLONE:
-		TLV_GET_STRING(s, BTRFS_SEND_A_PATH, &path);
-		TLV_GET_U64(s, BTRFS_SEND_A_FILE_OFFSET, &offset);
-		TLV_GET_U64(s, BTRFS_SEND_A_CLONE_LEN, &len);
-		TLV_GET_UUID(s, BTRFS_SEND_A_CLONE_UUID, clone_uuid);
-		TLV_GET_U64(s, BTRFS_SEND_A_CLONE_CTRANSID, &clone_ctransid);
-		TLV_GET_STRING(s, BTRFS_SEND_A_CLONE_PATH, &clone_path);
-		TLV_GET_U64(s, BTRFS_SEND_A_CLONE_OFFSET, &clone_offset);
-		ret = s->ops->clone(path, offset, len, clone_uuid,
+		TLV_GET_STRING(sctx, BTRFS_SEND_A_PATH, &path);
+		TLV_GET_U64(sctx, BTRFS_SEND_A_FILE_OFFSET, &offset);
+		TLV_GET_U64(sctx, BTRFS_SEND_A_CLONE_LEN, &len);
+		TLV_GET_UUID(sctx, BTRFS_SEND_A_CLONE_UUID, clone_uuid);
+		TLV_GET_U64(sctx, BTRFS_SEND_A_CLONE_CTRANSID, &clone_ctransid);
+		TLV_GET_STRING(sctx, BTRFS_SEND_A_CLONE_PATH, &clone_path);
+		TLV_GET_U64(sctx, BTRFS_SEND_A_CLONE_OFFSET, &clone_offset);
+		ret = sctx->ops->clone(path, offset, len, clone_uuid,
 				clone_ctransid, clone_path, clone_offset,
-				s->user);
+				sctx->user);
 		break;
 	case BTRFS_SEND_C_SET_XATTR:
-		TLV_GET_STRING(s, BTRFS_SEND_A_PATH, &path);
-		TLV_GET_STRING(s, BTRFS_SEND_A_XATTR_NAME, &xattr_name);
-		TLV_GET(s, BTRFS_SEND_A_XATTR_DATA, &xattr_data, &xattr_len);
-		ret = s->ops->set_xattr(path, xattr_name, xattr_data,
-				xattr_len, s->user);
+		TLV_GET_STRING(sctx, BTRFS_SEND_A_PATH, &path);
+		TLV_GET_STRING(sctx, BTRFS_SEND_A_XATTR_NAME, &xattr_name);
+		TLV_GET(sctx, BTRFS_SEND_A_XATTR_DATA, &xattr_data, &xattr_len);
+		ret = sctx->ops->set_xattr(path, xattr_name, xattr_data,
+				xattr_len, sctx->user);
 		break;
 	case BTRFS_SEND_C_REMOVE_XATTR:
-		TLV_GET_STRING(s, BTRFS_SEND_A_PATH, &path);
-		TLV_GET_STRING(s, BTRFS_SEND_A_XATTR_NAME, &xattr_name);
-		ret = s->ops->remove_xattr(path, xattr_name, s->user);
+		TLV_GET_STRING(sctx, BTRFS_SEND_A_PATH, &path);
+		TLV_GET_STRING(sctx, BTRFS_SEND_A_XATTR_NAME, &xattr_name);
+		ret = sctx->ops->remove_xattr(path, xattr_name, sctx->user);
 		break;
 	case BTRFS_SEND_C_TRUNCATE:
-		TLV_GET_STRING(s, BTRFS_SEND_A_PATH, &path);
-		TLV_GET_U64(s, BTRFS_SEND_A_SIZE, &tmp);
-		ret = s->ops->truncate(path, tmp, s->user);
+		TLV_GET_STRING(sctx, BTRFS_SEND_A_PATH, &path);
+		TLV_GET_U64(sctx, BTRFS_SEND_A_SIZE, &tmp);
+		ret = sctx->ops->truncate(path, tmp, sctx->user);
 		break;
 	case BTRFS_SEND_C_CHMOD:
-		TLV_GET_STRING(s, BTRFS_SEND_A_PATH, &path);
-		TLV_GET_U64(s, BTRFS_SEND_A_MODE, &tmp);
-		ret = s->ops->chmod(path, tmp, s->user);
+		TLV_GET_STRING(sctx, BTRFS_SEND_A_PATH, &path);
+		TLV_GET_U64(sctx, BTRFS_SEND_A_MODE, &tmp);
+		ret = sctx->ops->chmod(path, tmp, sctx->user);
 		break;
 	case BTRFS_SEND_C_CHOWN:
-		TLV_GET_STRING(s, BTRFS_SEND_A_PATH, &path);
-		TLV_GET_U64(s, BTRFS_SEND_A_UID, &tmp);
-		TLV_GET_U64(s, BTRFS_SEND_A_GID, &tmp2);
-		ret = s->ops->chown(path, tmp, tmp2, s->user);
+		TLV_GET_STRING(sctx, BTRFS_SEND_A_PATH, &path);
+		TLV_GET_U64(sctx, BTRFS_SEND_A_UID, &tmp);
+		TLV_GET_U64(sctx, BTRFS_SEND_A_GID, &tmp2);
+		ret = sctx->ops->chown(path, tmp, tmp2, sctx->user);
 		break;
 	case BTRFS_SEND_C_UTIMES:
-		TLV_GET_STRING(s, BTRFS_SEND_A_PATH, &path);
-		TLV_GET_TIMESPEC(s, BTRFS_SEND_A_ATIME, &at);
-		TLV_GET_TIMESPEC(s, BTRFS_SEND_A_MTIME, &mt);
-		TLV_GET_TIMESPEC(s, BTRFS_SEND_A_CTIME, &ct);
-		ret = s->ops->utimes(path, &at, &mt, &ct, s->user);
+		TLV_GET_STRING(sctx, BTRFS_SEND_A_PATH, &path);
+		TLV_GET_TIMESPEC(sctx, BTRFS_SEND_A_ATIME, &at);
+		TLV_GET_TIMESPEC(sctx, BTRFS_SEND_A_MTIME, &mt);
+		TLV_GET_TIMESPEC(sctx, BTRFS_SEND_A_CTIME, &ct);
+		ret = sctx->ops->utimes(path, &at, &mt, &ct, sctx->user);
 		break;
 	case BTRFS_SEND_C_UPDATE_EXTENT:
-		TLV_GET_STRING(s, BTRFS_SEND_A_PATH, &path);
-		TLV_GET_U64(s, BTRFS_SEND_A_FILE_OFFSET, &offset);
-		TLV_GET_U64(s, BTRFS_SEND_A_SIZE, &tmp);
-		ret = s->ops->update_extent(path, offset, tmp, s->user);
+		TLV_GET_STRING(sctx, BTRFS_SEND_A_PATH, &path);
+		TLV_GET_U64(sctx, BTRFS_SEND_A_FILE_OFFSET, &offset);
+		TLV_GET_U64(sctx, BTRFS_SEND_A_SIZE, &tmp);
+		ret = sctx->ops->update_extent(path, offset, tmp, sctx->user);
 		break;
 	case BTRFS_SEND_C_END:
 		ret = 1;
@@ -443,16 +443,16 @@ int btrfs_read_and_process_send_stream(int fd,
 				       u64 max_errors)
 {
 	int ret;
-	struct btrfs_send_stream s;
+	struct btrfs_send_stream sctx;
 	struct btrfs_stream_header hdr;
 	u64 errors = 0;
 	int last_err = 0;
 
-	s.fd = fd;
-	s.ops = ops;
-	s.user = user;
+	sctx.fd = fd;
+	sctx.ops = ops;
+	sctx.user = user;
 
-	ret = read_buf(&s, &hdr, sizeof(hdr));
+	ret = read_buf(&sctx, &hdr, sizeof(hdr));
 	if (ret < 0)
 		goto out;
 	if (ret) {
@@ -466,16 +466,16 @@ int btrfs_read_and_process_send_stream(int fd,
 		goto out;
 	}
 
-	s.version = le32_to_cpu(hdr.version);
-	if (s.version > BTRFS_SEND_STREAM_VERSION) {
+	sctx.version = le32_to_cpu(hdr.version);
+	if (sctx.version > BTRFS_SEND_STREAM_VERSION) {
 		ret = -EINVAL;
 		error("stream version %d not supported, please use newer version",
-				s.version);
+				sctx.version);
 		goto out;
 	}
 
 	while (1) {
-		ret = read_and_process_cmd(&s);
+		ret = read_and_process_cmd(&sctx);
 		if (ret < 0) {
 			last_err = ret;
 			errors++;
