@@ -37,13 +37,13 @@ struct btrfs_send_stream {
 	void *user;
 };
 
-static int read_buf(struct btrfs_send_stream *sctx, void *buf, size_t len)
+static int read_buf(struct btrfs_send_stream *sctx, char *buf, size_t len)
 {
 	int ret;
 	size_t pos = 0;
 
 	while (pos < len) {
-		ret = read(sctx->fd, (char*)buf + pos, len - pos);
+		ret = read(sctx->fd, buf + pos, len - pos);
 		if (ret < 0) {
 			ret = -errno;
 			error("read from stream failed: %s",
@@ -452,7 +452,7 @@ int btrfs_read_and_process_send_stream(int fd,
 	sctx.ops = ops;
 	sctx.user = user;
 
-	ret = read_buf(&sctx, &hdr, sizeof(hdr));
+	ret = read_buf(&sctx, (char*)&hdr, sizeof(hdr));
 	if (ret < 0)
 		goto out;
 	if (ret) {
