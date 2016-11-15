@@ -158,7 +158,7 @@ out:
 static int tlv_get(struct btrfs_send_stream *sctx, int attr, void **data, int *len)
 {
 	int ret;
-	struct btrfs_tlv_header *h;
+	struct btrfs_tlv_header *hdr;
 
 	if (attr <= 0 || attr > BTRFS_SEND_A_MAX) {
 		error("invalid attribute requested, attr = %d", attr);
@@ -166,15 +166,15 @@ static int tlv_get(struct btrfs_send_stream *sctx, int attr, void **data, int *l
 		goto out;
 	}
 
-	h = sctx->cmd_attrs[attr];
-	if (!h) {
+	hdr = sctx->cmd_attrs[attr];
+	if (!hdr) {
 		error("attribute %d requested but not present", attr);
 		ret = -ENOENT;
 		goto out;
 	}
 
-	*len = le16_to_cpu(h->tlv_len);
-	*data = h + 1;
+	*len = le16_to_cpu(hdr->tlv_len);
+	*data = hdr + 1;
 
 	ret = 0;
 
