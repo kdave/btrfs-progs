@@ -71,11 +71,11 @@ static int read_cmd(struct btrfs_send_stream *sctx)
 {
 	int ret;
 	int cmd;
-	int cmd_len;
+	u32 cmd_len;
 	int tlv_type;
 	int tlv_len;
 	char *data;
-	int pos;
+	u32 pos;
 	struct btrfs_tlv_header *tlv_hdr;
 	u32 crc;
 	u32 crc2;
@@ -98,7 +98,7 @@ static int read_cmd(struct btrfs_send_stream *sctx)
 
 	if (cmd_len + sizeof(*sctx->cmd_hdr) >= sizeof(sctx->read_buf)) {
 		ret = -EINVAL;
-		error("command length %d too big for buffer %zu",
+		error("command length %u too big for buffer %zu",
 				cmd_len, sizeof(sctx->read_buf));
 		goto out;
 	}
