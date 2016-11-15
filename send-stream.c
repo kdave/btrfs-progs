@@ -43,18 +43,20 @@ static int read_buf(struct btrfs_send_stream *sctx, char *buf, size_t len)
 	size_t pos = 0;
 
 	while (pos < len) {
-		ret = read(sctx->fd, buf + pos, len - pos);
-		if (ret < 0) {
+		ssize_t rbytes;
+
+		rbytes = read(sctx->fd, buf + pos, len - pos);
+		if (rbytes < 0) {
 			ret = -errno;
 			error("read from stream failed: %s",
 					strerror(-ret));
 			goto out;
 		}
-		if (ret == 0) {
+		if (rbytes == 0) {
 			ret = 1;
 			goto out;
 		}
-		pos += ret;
+		pos += rbytes;
 	}
 
 	ret = 0;
