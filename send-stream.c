@@ -72,7 +72,7 @@ out:
 static int read_cmd(struct btrfs_send_stream *sctx)
 {
 	int ret;
-	int cmd;
+	u16 cmd;
 	u32 cmd_len;
 	char *data;
 	u32 pos;
