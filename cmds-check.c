@@ -11490,13 +11490,14 @@ int cmd_check(int argc, char **argv)
 	}
 
 	if (!ctx.progress_enabled)
-		printf("checking extents");
+		fprintf(stderr, "checking extents\n");
 	if (check_mode == CHECK_MODE_LOWMEM)
 		ret = check_chunks_and_extents_v2(root);
 	else
 		ret = check_chunks_and_extents(root);
 	if (ret)
-		printf("Errors found in extent allocation tree or chunk allocation");
+		error(
+		"errors found in extent allocation tree or chunk allocation");
 
 	ret = repair_root_items(info);
 	if (ret < 0)
