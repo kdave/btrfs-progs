@@ -480,7 +480,7 @@ int btrfs_qgroup_setup_comparer(struct btrfs_qgroup_comparer_set  **comp_set,
 		*comp_set = set;
 	}
 
-	ASSERT(set->comps[set->ncomps].comp_func != NULL);
+	ASSERT(set->comps[set->ncomps].comp_func == NULL);
 
 	set->comps[set->ncomps].comp_func = all_comp_funcs[comparer];
 	set->comps[set->ncomps].is_descending = is_descending;
@@ -847,7 +847,7 @@ int btrfs_qgroup_setup_filter(struct btrfs_qgroup_filter_set **filter_set,
 		*filter_set = set;
 	}
 
-	ASSERT(set->filters[set->nfilters].filter_func != NULL);
+	ASSERT(set->filters[set->nfilters].filter_func == NULL);
 	set->filters[set->nfilters].filter_func = all_filter_funcs[filter];
 	set->filters[set->nfilters].data = data;
 	set->nfilters++;
