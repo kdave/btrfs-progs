@@ -16,4 +16,4 @@ check_image() {
 	fi
 }
 
-check_all_images "."
+check_all_images

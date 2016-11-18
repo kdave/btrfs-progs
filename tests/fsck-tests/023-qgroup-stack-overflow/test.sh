@@ -14,4 +14,4 @@ check_image()
 	run_check $TOP/btrfs check "$1"
 }
 
-check_all_images "."
+check_all_images

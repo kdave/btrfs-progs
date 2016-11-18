@@ -202,6 +202,10 @@ check_all_images()
 	local extracted
 
 	dir="$1"
+	if [ -z "$dir" ]; then
+		dir=.
+	fi
+	_assert_path "$dir"
 	for image in $(find "$dir" \( -iname '*.img' -o	\
 				-iname '*.img.xz' -o 	\
 				-iname '*.raw' -o 	\

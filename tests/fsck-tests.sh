@@ -43,7 +43,7 @@ run_one_test() {
 		fi
 	else
 		# Type 1
-		check_all_images `pwd`
+		check_all_images
 	fi
 	cd "$TOP"
 }
