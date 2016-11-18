@@ -60,12 +60,12 @@ test_run()
 	run_check $SUDO_HELPER umount $TEST_MNT
 
 	test_image_dump
-	run_check $TOP/btrfs filesystem show $dev1
+	run_check $SUDO_HELPER $TOP/btrfs filesystem show $dev1
 	# create a degraded raid1 filesystem, check must succeed
 	# btrfs-image must not loop
 	run_mayfail wipefs -a $dev2
 	run_check $SUDO_HELPER losetup -d $dev2
-	run_check $TOP/btrfs filesystem show $dev1
+	run_check $SUDO_HELPER $TOP/btrfs filesystem show $dev1
 
 	test_image_dump
 }

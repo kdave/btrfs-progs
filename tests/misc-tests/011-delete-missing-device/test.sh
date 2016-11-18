@@ -38,16 +38,16 @@ cleanup_devices()
 test_do_mkfs()
 {
 	run_check $SUDO_HELPER $TOP/mkfs.btrfs -f $@ ${devs[@]}
-	run_check $TOP/btrfs inspect-internal dump-super $dev1
+	run_check $SUDO_HELPER $TOP/btrfs inspect-internal dump-super $dev1
 	run_check $SUDO_HELPER $TOP/btrfs check $dev1
-	run_check $TOP/btrfs filesystem show
+	run_check $SUDO_HELPER $TOP/btrfs filesystem show
 }
 
 test_wipefs()
 {
-	run_check wipefs -a $devtodel
+	run_check $SUDO_HELPER wipefs -a $devtodel
 	run_check $SUDO_HELPER losetup -d $devtodel
-	run_check losetup -a
+	run_check $SUDO_HELPER losetup --all
 	run_check $TOP/btrfs filesystem show
 }
 test_delete_missing()
