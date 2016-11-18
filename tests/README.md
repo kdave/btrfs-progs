@@ -108,9 +108,13 @@ the root helper).
 
 ### Verbosity
 
-Setting the variable `TEST_LOG=tty` will print all commands executed by some of
-the wrappers (`run_check` etc), other commands are not printed to the terminal
-(but the full output is in the log).
+* `TEST_LOG=tty` -- setting the variable will print all commands executed by
+  some of the wrappers (`run_check` etc), other commands are not printed to the
+  terminal (but the full output is in the log)
+
+* `TEST_LOG=dump` -- dump the entire testing log when a test fails
+
+Multiple values can be separated by `,`.
 
 ### Permissions
 

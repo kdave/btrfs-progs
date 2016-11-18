@@ -25,6 +25,11 @@
 #   EXTRA_CFLAGS   additional compiler flags
 #   EXTRA_LDFLAGS  additional linker flags
 #
+# Testing-specific options (see also tests/README.md):
+#   TEST=GLOB      run test(s) from directories matching GLOB
+#   TEST_LOG=tty   print name of a command run via the execution helpers
+#   TEST_LOG=dump  dump testing log file when a test fails
+#
 # Static checkers:
 #   CHECKER        static checker binary to be called (default: sparse)
 #   CHECKER_FLAGS  flags to pass to CHECKER, can override CFLAGS

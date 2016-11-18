@@ -33,6 +33,9 @@ do
 		echo "    [TEST/fuzz]   $name"
 		./test.sh
 		if [ $? -ne 0 ]; then
+			if [[ $TEST_LOG =~ dump ]]; then
+				cat "$RESULTS"
+			fi
 			_fail "test failed for case $(basename $i)"
 		fi
 	fi
