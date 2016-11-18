@@ -39,7 +39,7 @@ cleanup_devices()
 	for i in `seq $ndevs`; do
 		truncate -s0 img$i
 	done
-	run_check $SUDO_HELPER losetup --list
+	run_check $SUDO_HELPER losetup --all
 }
 
 test_image_dump()
