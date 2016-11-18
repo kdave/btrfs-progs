@@ -303,7 +303,7 @@ test-inst: all
 		$(MAKE) DESTDIR=$$tmpdest install && \
 		$(RM) -rf -- $$tmpdest
 
-test: test-fsck test-mkfs test-convert test-misc test-fuzz
+test: test-fsck test-mkfs test-convert test-misc test-fuzz test-cli
 
 #
 # NOTE: For static compiles, you need to have all the required libs
