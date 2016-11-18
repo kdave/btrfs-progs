@@ -23,8 +23,10 @@ compiler:
   - gcc
   - clang
 
+cache: ccache
+
 git:
-  depth: 3
+  depth: 2
 
 dist: trusty
 group: unstable
@@ -33,6 +35,8 @@ branches:
   only:
   - devel
   - coverity_scan
+  - master
+  - release-test
 
 env:
   global:
@@ -57,5 +61,6 @@ addons:
 
 script:
   - "./autogen.sh && ./configure --disable-documentation && make"
-  - "make test-cli"
-  - "make test-check"
+  - "make TEST_LOG=dump test-cli"
+  - "make TEST_LOG=dump test-check"
+  - "make TEST_LOG=dump test-misc"
