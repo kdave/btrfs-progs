@@ -42,7 +42,7 @@ _not_run()
 run_check()
 {
 	echo "############### $@" >> "$RESULTS" 2>&1
-	if [ "$TEST_LOG" = 'tty' ]; then echo "CMD: $@" > /dev/tty; fi
+	if [[ $TEST_LOG =~ tty ]]; then echo "CMD: $@" > /dev/tty; fi
 	if [ "$1" = 'root_helper' ]; then
 		"$@" >> "$RESULTS" 2>&1 || _fail "failed: $@"
 	else
@@ -55,7 +55,7 @@ run_check()
 run_check_stdout()
 {
 	echo "############### $@" >> "$RESULTS" 2>&1
-	if [ "$TEST_LOG" = 'tty' ]; then echo "CMD(stdout): $@" > /dev/tty; fi
+	if [[ $TEST_LOG =~ tty ]]; then echo "CMD(stdout): $@" > /dev/tty; fi
 	if [ "$1" = 'root_helper' ]; then
 		"$@" 2>&1 | tee -a "$RESULTS" || _fail "failed: $@"
 	else
@@ -71,7 +71,7 @@ run_mayfail()
 	local ret
 
 	echo "############### $@" >> "$RESULTS" 2>&1
-	if [ "$TEST_LOG" = 'tty' ]; then echo "CMD(mayfail): $@" > /dev/tty; fi
+	if [[ $TEST_LOG =~ tty ]]; then echo "CMD(mayfail): $@" > /dev/tty; fi
 	if [ "$1" = 'root_helper' ]; then
 		"$@" >> $RESULTS 2>&1
 	else
@@ -99,7 +99,7 @@ run_mustfail()
 	shift
 
 	echo "############### $@" >> "$RESULTS" 2>&1
-	if [ "$TEST_LOG" = 'tty' ]; then echo "CMD(mustfail): $@" > /dev/tty; fi
+	if [[ $TEST_LOG =~ tty ]]; then echo "CMD(mustfail): $@" > /dev/tty; fi
 	if [ "$1" = 'root_helper' ]; then
 		"$@" >> "$RESULTS" 2>&1
 	else
