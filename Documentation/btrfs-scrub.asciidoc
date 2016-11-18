@@ -34,7 +34,7 @@ saved position.
 SUBCOMMAND
 ----------
 *cancel* <path>|<device>::
-If a scrub is running on the filesystem identified by 'path>' cancel it.
+If a scrub is running on the filesystem identified by 'path' cancel it.
 +
 If a 'device' is specified, the corresponding filesystem is found and
 *btrfs scrub cancel* behaves as if it was called on that filesystem.
