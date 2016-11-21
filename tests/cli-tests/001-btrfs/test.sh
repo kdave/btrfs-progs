@@ -11,5 +11,8 @@ run_check $TOP/btrfs version
 run_check $TOP/btrfs version --
 run_check $TOP/btrfs help
 run_check $TOP/btrfs help --
+run_check $TOP/btrfs help --full
 run_check $TOP/btrfs --help
 run_check $TOP/btrfs --help --full
+run_check $TOP/btrfs --version
+run_check $TOP/btrfs --version --help
