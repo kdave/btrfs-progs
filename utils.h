@@ -368,6 +368,16 @@ int string_is_numerical(const char *str);
 		__warning_on((cond), (fmt), ##__VA_ARGS__);		\
 	} while (0)
 
+/*
+ * Global program state, configurable by command line and available to
+ * functions without extra context passing.
+ */
+struct btrfs_config {
+};
+extern struct btrfs_config bconf;
+
+void btrfs_config_init(void);
+
 __attribute__ ((format (printf, 1, 2)))
 static inline void __warning(const char *fmt, ...)
 {
