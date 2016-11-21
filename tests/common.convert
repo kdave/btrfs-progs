@@ -89,7 +89,7 @@ convert_test_acl() {
 # $2: nodesize, argument of -N, can be empty
 convert_test_do_convert() {
 	run_check "$TOP/btrfs-convert" ${1:+-O "$1"} ${2:+-N "$2"} "$TEST_DEV"
-	run_check "$TOP/btrfs" check $TEST_DEV
+	run_check "$TOP/btrfs" check "$TEST_DEV"
 	run_check "$TOP/btrfs" inspect-internal dump-super -Ffa "$TEST_DEV"
 }
 
