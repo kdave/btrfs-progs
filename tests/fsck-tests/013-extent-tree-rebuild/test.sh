@@ -15,7 +15,7 @@ test_extent_tree_rebuild()
 	run_check $SUDO_HELPER $TOP/mkfs.btrfs -f $TEST_DEV
 
 	run_check_mount_test_dev
-	run_check $SUDO_HELPER cp -aR /lib/modules/`uname -r`/ $TEST_MNT
+	generate_dataset small
 
 	for i in `seq 1 100`;do
 		run_check $SUDO_HELPER $TOP/btrfs sub snapshot $TEST_MNT \
