@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <getopt.h>
 
 #include "volumes.h"
 #include "crc32c.h"
@@ -163,24 +164,77 @@ static int cmd_version(int argc, char **argv)
 	return 0;
 }
 
-static void check_options(int argc, char **argv)
+/*
+ * Parse global options, between binary name and first non-option argument
+ * after processing all valid options (including those with arguments).
+ *
+ * Returns index to argv where parsting stopped, optind is reset to 1
+ */
+static int handle_global_options(int argc, char **argv)
 {
-	const char *arg;
+	enum { OPT_HELP = 256, OPT_VERSION, OPT_FULL };
+	static const struct option long_options[] = {
+		{ "help", no_argument, NULL, OPT_HELP },
+		{ "version", no_argument, NULL, OPT_VERSION },
+		{ "full", no_argument, NULL, OPT_FULL },
+		{ NULL, 0, NULL, 0}
+	};
+	int shift;
 
 	if (argc == 0)
-		return;
+		return 0;
 
-	arg = argv[0];
+	opterr = 0;
+	while (1) {
+		int c;
 
-	if (arg[0] != '-' ||
-	    !strcmp(arg, "--help") ||
-	    !strcmp(arg, "--version"))
-		return;
+		c = getopt_long(argc, argv, "+", long_options, NULL);
+		if (c < 0)
+			break;
 
-	fprintf(stderr, "Unknown option: %s\n", arg);
-	fprintf(stderr, "usage: %s\n",
-		btrfs_cmd_group.usagestr[0]);
-	exit(129);
+		switch (c) {
+		case OPT_HELP: break;
+		case OPT_VERSION: break;
+		case OPT_FULL: break;
+		default:
+			fprintf(stderr, "Unknown global option: %s\n",
+					argv[optind - 1]);
+			exit(129);
+		}
+	}
+
+	shift = optind;
+	optind = 1;
+
+	return shift;
+}
+
+void handle_special_globals(int shift, int argc, char **argv)
+{
+	int has_help = 0;
+	int has_full = 0;
+	int i;
+
+	for (i = 0; i < shift; i++) {
+		if (strcmp(argv[i], "--help") == 0)
+			has_help = 1;
+		else if (strcmp(argv[i], "--full") == 0)
+			has_full = 1;
+	}
+
+	if (has_help) {
+		if (has_full)
+			usage_command_group(&btrfs_cmd_group, 1, 0);
+		else
+			cmd_help(argc, argv);
+		exit(0);
+	}
+
+	for (i = 0; i < shift; i++)
+		if (strcmp(argv[i], "--version") == 0) {
+			cmd_version(argc, argv);
+			exit(0);
+		}
 }
 
 static const struct cmd_group btrfs_cmd_group = {
@@ -220,13 +274,15 @@ int main(int argc, char **argv)
 	if (!strcmp(bname, "btrfsck")) {
 		argv[0] = "check";
 	} else {
-		argc--;
-		argv++;
-		check_options(argc, argv);
-		if (argc > 0) {
-			if (!prefixcmp(argv[0], "--"))
-				argv[0] += 2;
-		} else {
+		int shift;
+
+		shift = handle_global_options(argc, argv);
+		handle_special_globals(shift, argc, argv);
+		while (shift-- > 0) {
+			argc--;
+			argv++;
+		}
+		if (argc == 0) {
 			usage_command_group_short(&btrfs_cmd_group);
 			exit(1);
 		}
