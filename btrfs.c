@@ -266,6 +266,8 @@ int main(int argc, char **argv)
 	const char *bname;
 	int ret;
 
+	btrfs_config_init();
+
 	if ((bname = strrchr(argv[0], '/')) != NULL)
 		bname++;
 	else

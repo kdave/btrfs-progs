@@ -63,6 +63,8 @@ static char argv0_buf[ARGV0_BUF_SIZE] = "btrfs";
 static int rand_seed_initlized = 0;
 static unsigned short rand_seed[3];
 
+struct btrfs_config bconf;
+
 const char *get_argv0_buf(void)
 {
 	return argv0_buf;
@@ -4265,4 +4267,8 @@ unsigned int rand_range(unsigned int upper)
 	 * distributed
 	 */
 	return (unsigned int)(jrand48(rand_seed) % upper);
+}
+
+void btrfs_config_init(void)
+{
 }
