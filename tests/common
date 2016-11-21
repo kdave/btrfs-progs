@@ -357,13 +357,8 @@ generate_dataset() {
 				1777 1775 1755 1750 1700 1666 1664 1644 1640 1600 1444 1440 1400 1000	\
 				2777 2775 2755 2750 2700 2666 2664 2644 2640 2600 2444 2440 2400 2000	\
 				4777 4775 4755 4750 4700 4666 4664 4644 4640 4600 4444 4440 4400 4000; do
-				if [[ "$modes" == *9* ]] || [[ "$modes" == *8* ]]
-				then
-					continue;
-				else
-					run_check $SUDO_HELPER touch "$dirpath/$dataset_type.$modes"
-					run_check $SUDO_HELPER chmod "$modes" "$dirpath/$dataset_type.$modes"
-				fi
+				run_check $SUDO_HELPER touch "$dirpath/$dataset_type.$modes"
+				run_check $SUDO_HELPER chmod "$modes" "$dirpath/$dataset_type.$modes"
 			done
 			;;
 
