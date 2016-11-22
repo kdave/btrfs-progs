@@ -39,8 +39,75 @@ _not_run()
 	exit 0
 }
 
+# debugging helper
+_dump_args()
+{
+	local i
+
+	i=1
+	echo "DUMP args for ${FUNCNAME[1]}:"
+	while [ $# -gt 0 ]; do
+		echo "ARG[$i]: $1"
+		i=$(($i+1))
+		shift
+	done
+}
+
+# read arguments, look if we're calling btrfs and if there's a known
+# subcommand, return argument index to insert, taking root helper into
+# consideration, returns 2 for unknown subcommand
+_get_spec_ins()
+{
+	if [ "$1" = 'root_helper' ]; then
+		if [[ $2 =~ /btrfs$ ]]; then
+			echo -n 4
+			return
+		fi
+	else
+		if [[ $1 =~ /btrfs$ ]]; then
+			echo -n 3
+			return
+		fi
+	fi
+	echo -n 2
+}
+
+# return command-specific arguments if enabled
+_cmd_spec()
+{
+	if [ "$TEST_ENABLE_OVERRIDE" = 'true' ]; then
+		# if defined via common.local, use it, otherwise pass make
+		# arguments
+		if [ "$(type -t _skip_spec)" = 'function' ]; then
+			if _skip_spec "$@"; then
+				return
+			fi
+		fi
+		case "$1" in
+	  		check) echo -n "$TEST_ARGS_CHECK" ;;
+		esac
+	fi
+}
+
+# Argument passing magic:
+# the command passed to run_* helpers is inspected, if there's 'btrfs command'
+# found and there are defined additional arguments, they're inserted just after
+# the command name, ie. any arguments in the test could override them.
+#
+# The root helper is recognized.  Unrecognized subcommands or external tools
+# are not affected.
+
 run_check()
 {
+	local spec
+	local ins
+	local cmd
+
+	ins=$(_get_spec_ins "$@")
+	spec=$(($ins-1))
+	cmd=$(eval echo "\${$spec}")
+	spec=$(_cmd_spec "$cmd")
+	set -- "${@:1:$(($ins-1))}" $spec "${@: $ins}"
 	echo "############### $@" >> "$RESULTS" 2>&1
 	if [[ $TEST_LOG =~ tty ]]; then echo "CMD: $@" > /dev/tty; fi
 	if [ "$1" = 'root_helper' ]; then
@@ -54,6 +121,15 @@ run_check()
 # can be processed further
 run_check_stdout()
 {
+	local spec
+	local ins
+	local cmd
+
+	ins=$(_get_spec_ins "$@")
+	spec=$(($ins-1))
+	cmd=$(eval echo "\${$spec}")
+	spec=$(_cmd_spec "$cmd")
+	set -- "${@:1:$(($ins-1))}" $spec "${@: $ins}"
 	echo "############### $@" >> "$RESULTS" 2>&1
 	if [[ $TEST_LOG =~ tty ]]; then echo "CMD(stdout): $@" > /dev/tty; fi
 	if [ "$1" = 'root_helper' ]; then
@@ -68,8 +144,16 @@ run_check_stdout()
 # output is logged
 run_mayfail()
 {
+	local spec
+	local ins
+	local cmd
 	local ret
 
+	ins=$(_get_spec_ins "$@")
+	spec=$(($ins-1))
+	cmd=$(eval echo "\${$spec}")
+	spec=$(_cmd_spec "$cmd")
+	set -- "${@:1:$(($ins-1))}" $spec "${@: $ins}"
 	echo "############### $@" >> "$RESULTS" 2>&1
 	if [[ $TEST_LOG =~ tty ]]; then echo "CMD(mayfail): $@" > /dev/tty; fi
 	if [ "$1" = 'root_helper' ]; then
@@ -93,11 +177,19 @@ run_mayfail()
 # same as run_check but expects the command to fail, output is logged
 run_mustfail()
 {
+	local spec
+	local ins
+	local cmd
 	local msg
 
 	msg="$1"
 	shift
 
+	ins=$(_get_spec_ins "$@")
+	spec=$(($ins-1))
+	cmd=$(eval echo "\${$spec}")
+	spec=$(_cmd_spec "$cmd")
+	set -- "${@:1:$(($ins-1))}" $spec "${@: $ins}"
 	echo "############### $@" >> "$RESULTS" 2>&1
 	if [[ $TEST_LOG =~ tty ]]; then echo "CMD(mustfail): $@" > /dev/tty; fi
 	if [ "$1" = 'root_helper' ]; then
@@ -403,5 +495,11 @@ init_env()
 	export TEST_MNT
 	mkdir -p "$TEST_MNT" || { echo "Failed mkdir -p $TEST_MNT"; exit 1; }
 
+	source $TOP/tests/common.local
+
+	if [ "$TEST_ENABLE_OVERRIDE" = 'true' -a -n "$RESULTS" ]; then
+		echo "INCLUDE common.local" >> "$RESULTS"
+		echo "  check: $TEST_ARGS_CHECK" >> "$RESULTS"
+	fi
 }
 init_env

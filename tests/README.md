@@ -107,13 +107,20 @@ are possible.
 Note: instrumentation is not applied to privileged commands (anything that uses
 the root helper).
 
-### Verbosity
+### Verbosity, test tuning
 
 * `TEST_LOG=tty` -- setting the variable will print all commands executed by
   some of the wrappers (`run_check` etc), other commands are not printed to the
   terminal (but the full output is in the log)
 
 * `TEST_LOG=dump` -- dump the entire testing log when a test fails
+
+* `TEST_ENABLE_OVERRIDE` -- defined either as make arguments or via
+  `tests/common.local` to enable additional arguments to some commands, using
+  the variable(s) below (default: false, enable by setting to 'true')
+
+* `TEST_ARGS_CHECK` -- user-defined arguments to `btrfs check`, before the
+  test-specific arguments
 
 Multiple values can be separated by `,`.
 

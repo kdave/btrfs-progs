@@ -1,0 +1,25 @@
+#!/bin/bash
+#
+# additional arguments to various commands
+
+# already defined, eg. via make argument
+if [ -n "$TEST_ENABLE_OVERRIDE" ]; then
+	return
+fi
+
+# set to 'true'
+TEST_ENABLE_OVERRIDE=false
+
+TEST_ARGS_CHECK=--mode=lowmem
+
+# gets arguments of a current command and can decide if the argument insertion
+# should happen, eg. if some option combination does not make sense or would
+# break tests
+_skip_spec()
+{
+	if echo "$TEST_CHECK" | grep -q 'mode=lowmem' &&
+	   echo "$@" | grep -q -- '--repair'; then
+		return 0
+	fi
+	return 1
+}
