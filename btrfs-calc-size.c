@@ -25,6 +25,9 @@ int main(int argc, char **argv)
 {
 	int ret;
 
+	warning(
+"\nthe tool has been deprecated, please use 'btrfs inspect-internal tree-stats' instead\n");
+
 	if (argc > 1 && !strcmp(argv[1], "--help"))
 		usage(cmd_inspect_tree_stats_usage);
 

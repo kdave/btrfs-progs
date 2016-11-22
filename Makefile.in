@@ -174,7 +174,7 @@ endif
 MAKEOPTS = --no-print-directory Q=$(Q)
 
 # build all by default
-progs = $(progs_install) btrfsck btrfs-corrupt-block btrfs-calc-size
+progs = $(progs_install) btrfsck btrfs-corrupt-block
 
 # install only selected
 progs_install = btrfs mkfs.btrfs btrfs-debug-tree \
@@ -182,7 +182,8 @@ progs_install = btrfs mkfs.btrfs btrfs-debug-tree \
 	btrfs-find-root btrfstune btrfs-show-super \
 	btrfs-select-super
 
-progs_extra = btrfs-fragments
+# other tools, not built by default
+progs_extra = btrfs-fragments btrfs-calc-size
 
 progs_static = $(foreach p,$(progs),$(p).static)
 
