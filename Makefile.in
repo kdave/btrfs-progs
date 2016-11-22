@@ -389,6 +389,15 @@ btrfstune.static: $(static_objects) btrfstune.static.o $(static_libbtrfs_objects
 	$(Q)$(CC) $(STATIC_CFLAGS) -o $@ btrfstune.static.o $(static_objects) \
 		$(static_libbtrfs_objects) $(STATIC_LDFLAGS) $(STATIC_LIBS)
 
+btrfs-image: $(objects) $(libs_static) image/main.o
+	@echo "    [LD]     $@"
+	$(Q)$(CC) $(CFLAGS) -I$(TOPDIR)/image -o btrfs-image $(objects) image/main.o $(libs_static) $(LDFLAGS) $(LIBS)
+
+btrfs-image.static: $(static_objects) image/main.static.o $(static_libbtrfs_objects)
+	@echo "    [LD]     $@"
+	$(Q)$(CC) $(STATIC_CFLAGS) -o $@ image/main.static.o $(static_objects) \
+		$(static_libbtrfs_objects) $(STATIC_LDFLAGS) $(STATIC_LIBS)
+
 dir-test: $(objects) $(libs) dir-test.o
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o dir-test $(objects) $(libs) dir-test.o $(LDFLAGS) $(LIBS)
@@ -465,6 +474,7 @@ clean: $(CLEANDIRS)
 	@echo "Cleaning"
 	$(Q)$(RM) -f -- $(progs) cscope.out *.o *.o.d \
 		kernel-lib/*.o kernel-lib/*.o.d \
+		image/*.o image/*.o.d \
 	      dir-test ioctl-test quick-test library-test library-test-static \
 	      btrfs.static mkfs.btrfs.static \
 	      $(check_defs) \
