@@ -179,11 +179,11 @@ progs = $(progs_install) btrfsck btrfs-corrupt-block
 # install only selected
 progs_install = btrfs mkfs.btrfs btrfs-debug-tree \
 	btrfs-map-logical btrfs-image btrfs-zero-log \
-	btrfs-find-root btrfstune btrfs-show-super \
+	btrfs-find-root btrfstune \
 	btrfs-select-super
 
 # other tools, not built by default
-progs_extra = btrfs-fragments btrfs-calc-size
+progs_extra = btrfs-fragments btrfs-calc-size btrfs-show-super
 
 progs_static = $(foreach p,$(progs),$(p).static)
 

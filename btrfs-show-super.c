@@ -27,6 +27,9 @@ int main(int argc, char **argv)
 
 	set_argv0(argv);
 
+	warning(
+"\nthe tool has been deprecated, please use 'btrfs inspect-internal dump-super' instead\n");
+
 	if (argc > 1 && !strcmp(argv[1], "--help"))
 		usage(cmd_inspect_dump_super_usage);
 
