@@ -931,7 +931,7 @@ static void print_dev_stats(struct extent_buffer *eb,
 	if (known < size) {
 		printf("\t\tunknown stats item bytes %u", size - known);
 		for (i = BTRFS_DEV_STAT_VALUES_MAX; i * sizeof(__le64) < size; i++) {
-			printf("\t\tunknown item %u offset %lu value %llu\n",
+			printf("\t\tunknown item %u offset %zu value %llu\n",
 				i, i * sizeof(__le64),
 				(unsigned long long)le64_to_cpu(values[i]));
 		}
