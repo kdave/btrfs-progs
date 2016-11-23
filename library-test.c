@@ -19,6 +19,7 @@
 #include "kerncompat.h"
 #include "version.h"
 #include "send-stream.h"
+#include "btrfs-list.h"
 
 /*
  * Reduced code snippet from snapper.git/snapper/Btrfs.cc
@@ -62,8 +63,15 @@ static int test_send_stream_api() {
 	return ret;
 }
 
+static int test_list_rootid() {
+	u64 treeid;
+
+	return btrfs_list_get_path_rootid(-1, &treeid);
+}
+
 int main() {
 	test_send_stream_api();
+	test_list_rootid();
 
 	return 0;
 }

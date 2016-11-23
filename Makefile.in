@@ -446,10 +446,14 @@ test-ioctl: ioctl-test ioctl-test-32 ioctl-test-64
 library-test: $(libs_shared) library-test.o
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o library-test library-test.o $(LDFLAGS) -lbtrfs
+	@echo "    [TEST]   $@"
+	$(Q)./$@
 
 library-test.static: $(libs_static) library-test.o
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o library-test-static library-test.o $(LDFLAGS) $(libs_static)
+	@echo "    [TEST]   $@"
+	$(Q)./$@
 
 test-build: test-build-pre test-build-real
 
