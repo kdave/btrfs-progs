@@ -2,9 +2,13 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <sys/ioctl.h>
+#include <ioctl.h>
 
 #if BTRFS_FLAT_INCLUDES
+#include "ctree.h"
 #else
+#include <btrfs/ctree.h>
 #endif /* BTRFS_FLAT_INCLUDES */
 
 /*
@@ -38,3 +42,29 @@ u64 arg_strtou64(const char *str)
 	}
 	return value;
 }
+
+/*
+ * For a given:
+ * - file or directory return the containing tree root id
+ * - subvolume return its own tree id
+ * - BTRFS_EMPTY_SUBVOL_DIR_OBJECTID (directory with ino == 2) the result is
+ *   undefined and function returns -1
+ */
+int lookup_path_rootid(int fd, u64 *rootid)
+{
+	struct btrfs_ioctl_ino_lookup_args args;
+	int ret;
+
+	memset(&args, 0, sizeof(args));
+	args.treeid = 0;
+	args.objectid = BTRFS_FIRST_FREE_OBJECTID;
+
+	ret = ioctl(fd, BTRFS_IOC_INO_LOOKUP, &args);
+	if (ret < 0)
+		return -errno;
+
+	*rootid = args.treeid;
+
+	return 0;
+}
+
