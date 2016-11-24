@@ -1,3 +1,21 @@
+btrfs-progs-4.8.4 (2016-11-25)
+  * check: support for clearing space cache v2 (free-space-tree)
+  * send:
+    * more sanity checks (with tests), cleanups
+    * fix for fstests/btrfs/038 and btrfs/117 failures
+  * build:
+    * fix compilation of standalone ioctl.h, pull NULL definition
+    * fix library link errors introduced in 4.8.3
+  * tests:
+    * add more fuzzed images from bugzilla
+    * add bogus send stream checks
+    * fixups and enhancements for CI environment builds
+    * misc refinements and updates of testing framework
+  * other:
+    * move sources for btrfs-image to own directory
+    * deprecated and not build by default: btrfs-calc-size, btrfs-show-super
+    * docs updates
+
 btrfs-progs-4.8.3 (2016-11-11)
   * check:
     * support for clearing space cache (v1)
