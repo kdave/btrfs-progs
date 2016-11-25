@@ -441,7 +441,7 @@ dump-super device* will dump a superblock, you can map the value of
 after mkfs, on a mounted filesystem::
 The features of a filesystem (with a given UUID) are listed in
 `/sys/fs/btrfs/UUID/features/`, one file per feature. The status of is stored
-insid the file. The value '1' is for enabled, '0' means the feature was had
+insid the file. The value '1' is for enabled, '0' means the feature had
 been enabled at the mount time and turned off afterwards.
 +
 Whether a particular feature can be turned on a mounted filesystem can be found
