@@ -166,6 +166,9 @@ root partition created with RAID1/10/5/6 profiles. The mount action can happen
 before all block devices are discovered. The waiting is usually done on the
 initramfs/initrd systems.
 
+As of kernel 4.9, RAID5/6 is still considered experimental and shouldn't be
+employed for production use.
+
 FILESYSTEM FEATURES
 -------------------
 
