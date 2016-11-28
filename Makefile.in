@@ -401,6 +401,16 @@ btrfs-image.static: $(static_objects) image/main.static.o $(static_libbtrfs_obje
 	$(Q)$(CC) $(STATIC_CFLAGS) -o $@ image/main.static.o $(static_objects) \
 		$(static_libbtrfs_objects) $(STATIC_LDFLAGS) $(STATIC_LIBS)
 
+btrfs-convert: $(objects) $(libs_static) convert/main.o
+	@echo "    [LD]     $@"
+	$(Q)$(CC) $(CFLAGS) -I$(TOPDIR)/convert -o btrfs-convert $(objects) convert/main.o $(libs_static) \
+		$(LDFLAGS) $(btrfs_convert_libs) $(LIBS)
+
+btrfs-convert.static: $(static_objects) convert/main.static.o $(static_libbtrfs_objects)
+	@echo "    [LD]     $@"
+	$(Q)$(CC) $(STATIC_CFLAGS) -o $@ convert/main.static.o $(static_objects) \
+		$(static_libbtrfs_objects) $(STATIC_LDFLAGS) $(btrfs_convert_libs) $(STATIC_LIBS)
+
 dir-test: $(objects) $(libs) dir-test.o
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o dir-test $(objects) $(libs) dir-test.o $(LDFLAGS) $(LIBS)
@@ -482,6 +492,7 @@ clean: $(CLEANDIRS)
 	$(Q)$(RM) -f -- $(progs) cscope.out *.o *.o.d \
 		kernel-lib/*.o kernel-lib/*.o.d \
 		image/*.o image/*.o.d \
+		convert/*.o convert/*.o.d \
 	      dir-test ioctl-test quick-test library-test library-test-static \
 	      btrfs.static mkfs.btrfs.static \
 	      $(check_defs) \
