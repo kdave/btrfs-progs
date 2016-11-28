@@ -257,11 +257,13 @@ endif
 	@$(check_echo) "    [SP]     $<"
 	$(Q)$(check) $(CFLAGS) $(CHECKER_FLAGS) $<
 	@echo "    [CC]     $@"
-	$(Q)$(CC) $(CFLAGS) -c $< -o $@ $($(subst -,_,$(@:%.o=%)-cflags))
+	$(Q)$(CC) $(CFLAGS) -c $< -o $@ $($(subst -,_,$(@:%.o=%)-cflags)) \
+		$($(subst -,_,btrfs-$(@:%/$(notdir $@)=%)-cflags))
 
 %.static.o: %.c
 	@echo "    [CC]     $@"
-	$(Q)$(CC) $(STATIC_CFLAGS) -c $< -o $@ $($(subst -,_,$(@:%.static.o=%)-cflags))
+	$(Q)$(CC) $(STATIC_CFLAGS) -c $< -o $@ $($(subst -,_,$(@:%.static.o=%)-cflags)) \
+		$($(subst -,_,btrfs-$(@:%/$(notdir $@)=%)-cflags))
 
 all: $(progs) $(BUILDDIRS)
 $(SUBDIRS): $(BUILDDIRS)
