@@ -374,13 +374,13 @@ btrfsck.static: btrfs.static
 	@echo "    [LN]     $@"
 	$(Q)$(LN_S) -f $^ $@
 
-mkfs.btrfs: $(objects) $(libs_static) mkfs.o
+mkfs.btrfs: $(objects) $(libs_static) mkfs/main.o
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o mkfs.btrfs $(objects) $(libs_static) mkfs.o $(LDFLAGS) $(LIBS)
+	$(Q)$(CC) $(CFLAGS) -o mkfs.btrfs $(objects) $(libs_static) mkfs/main.o $(LDFLAGS) $(LIBS)
 
-mkfs.btrfs.static: $(static_objects) mkfs.static.o $(static_libbtrfs_objects)
+mkfs.btrfs.static: $(static_objects) mkfs/main.static.o $(static_libbtrfs_objects)
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(STATIC_CFLAGS) -o mkfs.btrfs.static mkfs.static.o $(static_objects) \
+	$(Q)$(CC) $(STATIC_CFLAGS) -o mkfs.btrfs.static mkfs/main.static.o $(static_objects) \
 		$(static_libbtrfs_objects) $(STATIC_LDFLAGS) $(STATIC_LIBS)
 
 btrfstune: $(objects) $(libs_static) btrfstune.o
@@ -493,6 +493,7 @@ clean: $(CLEANDIRS)
 		kernel-lib/*.o kernel-lib/*.o.d \
 		image/*.o image/*.o.d \
 		convert/*.o convert/*.o.d \
+		mkfs/*.o mkfs/*.o.d \
 	      dir-test ioctl-test quick-test library-test library-test-static \
 	      btrfs.static mkfs.btrfs.static \
 	      $(check_defs) \
