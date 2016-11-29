@@ -74,7 +74,7 @@ static int read_buf(struct btrfs_send_stream *sctx, char *buf, size_t len)
 	ret = 0;
 
 out_eof:
-	if (pos < len) {
+	if (0 < pos && pos < len) {
 		error("short read from stream: expected %zu read %zu", len, pos);
 		ret = -EIO;
 	} else {
