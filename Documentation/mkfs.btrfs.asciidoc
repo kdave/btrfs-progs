@@ -258,7 +258,7 @@ There are the following block group types available:
 | RAID6   | 1            | 2              | 3 to N - 2 | 3/any ^(see note 3)^
 |=============================================================
 
-WARNING: It's not recommended to build btrfs with RAID0/1/10/5/6 prfiles on
+WARNING: It's not recommended to build btrfs with RAID0/1/10/5/6 profiles on
 partitions from the same device.  Neither redundancy nor performance will be
 improved.
 
