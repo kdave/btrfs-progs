@@ -1,3 +1,10 @@
+btrfs-progs-4.8.5 (2016-11-30)
+  * receive: fix detection of end of stream (error reported even for valid
+    streams)
+  * other:
+    * added test for the receive bug
+    * fix linking of library-test
+
 btrfs-progs-4.8.4 (2016-11-25)
   * check: support for clearing space cache v2 (free-space-tree)
   * send:
