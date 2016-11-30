@@ -3,6 +3,11 @@
 
 source $TOP/tests/common
 
+if ! losetup --help | grep -q 'partscan'; then
+	_not_run "losetup --partscan not available"
+	exit 0
+fi
+
 check_prereq mkfs.btrfs
 
 setup_root_helper
