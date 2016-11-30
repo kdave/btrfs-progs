@@ -445,7 +445,7 @@ test-ioctl: ioctl-test ioctl-test-32 ioctl-test-64
 
 library-test: $(libs_shared) library-test.o
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o library-test library-test.o $(LDFLAGS) -lbtrfs
+	$(Q)$(CC) $(CFLAGS) -o library-test library-test.o $(LDFLAGS) -Wl,-rpath=$(TOPDIR) -lbtrfs
 	@echo "    [TEST]   $@"
 	$(Q)./$@
 
