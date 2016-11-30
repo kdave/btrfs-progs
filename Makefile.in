@@ -449,9 +449,9 @@ library-test: $(libs_shared) library-test.o
 	@echo "    [TEST]   $@"
 	$(Q)./$@
 
-library-test.static: $(libs_static) library-test.o
+library-test.static: $(libs_static) library-test.static.o
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o library-test-static library-test.o $(LDFLAGS) $(libs_static)
+	$(Q)$(CC) $(STATIC_CFLAGS) -o library-test.static library-test.static.o $(STATIC_LDFLAGS) $(libs_static) $(STATIC_LIBS)
 	@echo "    [TEST]   $@"
 	$(Q)./$@
 
