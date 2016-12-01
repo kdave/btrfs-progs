@@ -1575,7 +1575,7 @@ out:
 
 int repair_qgroups(struct btrfs_fs_info *info, int *repaired)
 {
-	int ret;
+	int ret = 0;
 	struct qgroup_count *count, *tmpcount;
 
 	*repaired = 0;

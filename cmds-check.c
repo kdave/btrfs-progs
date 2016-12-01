@@ -8041,7 +8041,7 @@ static int record_extent(struct btrfs_trans_handle *trans,
 			 struct extent_backref *back,
 			 int allocated, u64 flags)
 {
-	int ret;
+	int ret = 0;
 	struct btrfs_root *extent_root = info->extent_root;
 	struct extent_buffer *leaf;
 	struct btrfs_key ins_key;
