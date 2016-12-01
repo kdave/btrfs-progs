@@ -8998,6 +8998,10 @@ out:
 			ret = err;
 	}
 
+	if (!ret)
+		fprintf(stderr, "Repaired extent references for %llu\n",
+				(unsigned long long)rec->start);
+
 	btrfs_release_path(&path);
 	return ret;
 }
@@ -9055,7 +9059,12 @@ static int fixup_extent_flags(struct btrfs_fs_info *fs_info,
 	btrfs_set_extent_flags(path.nodes[0], ei, flags);
 	btrfs_mark_buffer_dirty(path.nodes[0]);
 	btrfs_release_path(&path);
-	return btrfs_commit_transaction(trans, root);
+	ret = btrfs_commit_transaction(trans, root);
+	if (!ret)
+		fprintf(stderr, "Repaired extent flags for %llu\n",
+				(unsigned long long)rec->start);
+
+	return ret;
 }
 
 /* right now we only prune from the extent allocation tree */
@@ -9182,11 +9191,8 @@ static int check_extent_refs(struct btrfs_root *root,
 {
 	struct extent_record *rec;
 	struct cache_extent *cache;
-	int err = 0;
 	int ret = 0;
-	int fixed = 0;
 	int had_dups = 0;
-	int recorded = 0;
 
 	if (repair) {
 		/*
@@ -9255,9 +9261,8 @@ static int check_extent_refs(struct btrfs_root *root,
 
 	while(1) {
 		int cur_err = 0;
+		int fix = 0;
 
-		fixed = 0;
-		recorded = 0;
 		cache = search_cache_extent(extent_cache, 0);
 		if (!cache)
 			break;
@@ -9265,7 +9270,6 @@ static int check_extent_refs(struct btrfs_root *root,
 		if (rec->num_duplicates) {
 			fprintf(stderr, "extent item %llu has multiple extent "
 				"items\n", (unsigned long long)rec->start);
-			err = 1;
 			cur_err = 1;
 		}
 
@@ -9279,54 +9283,31 @@ static int check_extent_refs(struct btrfs_root *root,
 			ret = record_orphan_data_extents(root->fs_info, rec);
 			if (ret < 0)
 				goto repair_abort;
-			if (ret == 0) {
-				recorded = 1;
-			} else {
-				/*
-				 * we can't use the extent to repair file
-				 * extent, let the fallback method handle it.
-				 */
-				if (!fixed && repair) {
-					ret = fixup_extent_refs(
-							root->fs_info,
-							extent_cache, rec);
-					if (ret)
-						goto repair_abort;
-					fixed = 1;
-				}
-			}
-			err = 1;
+			fix = ret;
 			cur_err = 1;
 		}
 		if (all_backpointers_checked(rec, 1)) {
 			fprintf(stderr, "backpointer mismatch on [%llu %llu]\n",
 				(unsigned long long)rec->start,
 				(unsigned long long)rec->nr);
-
-			if (!fixed && !recorded && repair) {
-				ret = fixup_extent_refs(root->fs_info,
-							extent_cache, rec);
-				if (ret)
-					goto repair_abort;
-				fixed = 1;
-			}
+			fix = 1;
 			cur_err = 1;
-			err = 1;
 		}
 		if (!rec->owner_ref_checked) {
 			fprintf(stderr, "owner ref check failed [%llu %llu]\n",
 				(unsigned long long)rec->start,
 				(unsigned long long)rec->nr);
-			if (!fixed && !recorded && repair) {
-				ret = fixup_extent_refs(root->fs_info,
-							extent_cache, rec);
-				if (ret)
-					goto repair_abort;
-				fixed = 1;
-			}
-			err = 1;
+			fix = 1;
 			cur_err = 1;
 		}
+
+		if (repair && fix) {
+			ret = fixup_extent_refs(root->fs_info, extent_cache, rec);
+			if (ret)
+				goto repair_abort;
+		}
+
+
 		if (rec->bad_full_backref) {
 			fprintf(stderr, "bad full backref, on [%llu]\n",
 				(unsigned long long)rec->start);
@@ -9334,9 +9315,8 @@ static int check_extent_refs(struct btrfs_root *root,
 				ret = fixup_extent_flags(root->fs_info, rec);
 				if (ret)
 					goto repair_abort;
-				fixed = 1;
+				fix = 1;
 			}
-			err = 1;
 			cur_err = 1;
 		}
 		/*
@@ -9348,7 +9328,6 @@ static int check_extent_refs(struct btrfs_root *root,
 			fprintf(stderr,
 				"bad metadata [%llu, %llu) crossing stripe boundary\n",
 				rec->start, rec->start + rec->max_size);
-			err = 1;
 			cur_err = 1;
 		}
 
@@ -9356,13 +9335,12 @@ static int check_extent_refs(struct btrfs_root *root,
 			fprintf(stderr,
 				"bad extent [%llu, %llu), type mismatch with chunk\n",
 				rec->start, rec->start + rec->max_size);
-			err = 1;
 			cur_err = 1;
 		}
 
 		remove_cache_extent(extent_cache, cache);
 		free_all_extent_backrefs(rec);
-		if (!init_extent_tree && repair && (!cur_err || fixed))
+		if (!init_extent_tree && repair && (!cur_err || fix))
 			clear_extent_dirty(root->fs_info->excluded_extents,
 					   rec->start,
 					   rec->start + rec->max_size - 1,
@@ -9389,11 +9367,9 @@ repair_abort:
 			if (ret)
 				goto repair_abort;
 		}
-		if (err)
-			fprintf(stderr, "repaired damaged extent references\n");
 		return ret;
 	}
-	return err;
+	return 0;
 }
 
 u64 calc_stripe_length(u64 type, u64 length, int num_stripes)
