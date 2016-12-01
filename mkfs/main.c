@@ -1468,6 +1468,7 @@ int main(int argc, char **argv)
 				break;
 			case 'l':
 				warning("--leafsize is deprecated, use --nodesize");
+				/* fall through */
 			case 'n':
 				nodesize = parse_size(optarg);
 				nodesize_forced = 1;
