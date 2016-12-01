@@ -560,14 +560,18 @@ static int insert_temp_chunk_item(int fd, struct extent_buffer *buf,
 	 */
 	if (type & BTRFS_BLOCK_GROUP_SYSTEM) {
 		char *cur;
+		u32 array_size;
 
-		cur = (char *)sb->sys_chunk_array + sb->sys_chunk_array_size;
+		cur = (char *)sb->sys_chunk_array
+			+ btrfs_super_sys_array_size(sb);
 		memcpy(cur, &disk_key, sizeof(disk_key));
 		cur += sizeof(disk_key);
 		read_extent_buffer(buf, cur, (unsigned long int)chunk,
 				   btrfs_chunk_item_size(1));
-		sb->sys_chunk_array_size += btrfs_chunk_item_size(1) +
+		array_size = btrfs_super_sys_array_size(sb);
+		array_size += btrfs_chunk_item_size(1) +
 					    sizeof(disk_key);
+		btrfs_set_super_sys_array_size(sb, array_size);
 
 		ret = write_temp_super(fd, sb, cfg->super_bytenr);
 	}
