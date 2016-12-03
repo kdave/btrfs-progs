@@ -2581,7 +2581,7 @@ out:
  * Note: this function uses a static per-thread buffer. Do not call this
  * function more than 10 times within one argument list!
  */
-const char *pretty_size_mode(u64 size, unsigned mode)
+const char *pretty_size_mode(s64 size, unsigned mode)
 {
 	static __thread int ps_index = 0;
 	static __thread char ps_array[10][32];
@@ -2600,20 +2600,20 @@ static const char* unit_suffix_binary[] =
 static const char* unit_suffix_decimal[] =
 	{ "B", "kB", "MB", "GB", "TB", "PB", "EB"};
 
-int pretty_size_snprintf(u64 size, char *str, size_t str_size, unsigned unit_mode)
+int pretty_size_snprintf(s64 size, char *str, size_t str_size, unsigned unit_mode)
 {
 	int num_divs;
 	float fraction;
-	u64 base = 0;
+	s64 base = 0;
 	int mult = 0;
 	const char** suffix = NULL;
-	u64 last_size;
+	s64 last_size;
 
 	if (str_size == 0)
 		return 0;
 
 	if ((unit_mode & ~UNITS_MODE_MASK) == UNITS_RAW) {
-		snprintf(str, str_size, "%llu", size);
+		snprintf(str, str_size, "%lld", size);
 		return 0;
 	}
 
@@ -2648,7 +2648,7 @@ int pretty_size_snprintf(u64 size, char *str, size_t str_size, unsigned unit_mod
 			   num_divs = 0;
 			   break;
 	default:
-		while (size >= mult) {
+		while ((size < 0 ? -size : size) >= mult) {
 			last_size = size;
 			size /= mult;
 			num_divs++;
