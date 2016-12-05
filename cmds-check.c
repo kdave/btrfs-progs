@@ -10131,12 +10131,10 @@ static int check_extent_data_item(struct btrfs_root *root,
 	struct btrfs_extent_inline_ref *iref;
 	struct btrfs_extent_data_ref *dref;
 	u64 owner;
-	u64 file_extent_gen;
 	u64 disk_bytenr;
 	u64 disk_num_bytes;
 	u64 extent_num_bytes;
 	u64 extent_flags;
-	u64 extent_gen;
 	u32 item_size;
 	unsigned long end;
 	unsigned long ptr;
@@ -10148,7 +10146,6 @@ static int check_extent_data_item(struct btrfs_root *root,
 
 	btrfs_item_key_to_cpu(eb, &fi_key, slot);
 	fi = btrfs_item_ptr(eb, slot, struct btrfs_file_extent_item);
-	file_extent_gen = btrfs_file_extent_generation(eb, fi);
 
 	/* Nothing to check for hole and inline data extents */
 	if (btrfs_file_extent_type(eb, fi) == BTRFS_FILE_EXTENT_INLINE ||
@@ -10197,21 +10194,12 @@ static int check_extent_data_item(struct btrfs_root *root,
 	ei = btrfs_item_ptr(leaf, slot, struct btrfs_extent_item);
 
 	extent_flags = btrfs_extent_flags(leaf, ei);
-	extent_gen = btrfs_extent_generation(leaf, ei);
 
 	if (!(extent_flags & BTRFS_EXTENT_FLAG_DATA)) {
 		error(
 		    "extent[%llu %llu] backref type mismatch, wanted bit: %llx",
 		    disk_bytenr, disk_num_bytes,
 		    BTRFS_EXTENT_FLAG_DATA);
-		err |= BACKREF_MISMATCH;
-	}
-
-	if (file_extent_gen < extent_gen) {
-		error(
-"extent[%llu %llu] backref generation mismatch, wanted: <=%llu, have: %llu",
-			disk_bytenr, disk_num_bytes, file_extent_gen,
-			extent_gen);
 		err |= BACKREF_MISMATCH;
 	}
 
