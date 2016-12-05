@@ -98,7 +98,7 @@ remain as such. Reloading the kernel module will drop this information. There's
 an alternative way of mounting multiple-device filesystem without the need for
 prior scanning. See the mount option 'device'.
 
-*stats* [-z] <path>|<device>::
+*stats* [-zs] <path>|<device>::
 Read and print the device IO error statistics for all devices of the given
 filesystem identified by <path> or for a single <device>. See section *DEVICE
 STATS* for more information.
@@ -107,6 +107,9 @@ STATS* for more information.
 +
 -z::::
 Print the stats and reset the values to zero afterwards.
+
+-s::::
+Set bit 6 of the return-code if any error statistics are non-zero.
 
 *usage* [options] <path> [<path>...]::
 Show detailed information about internal allocations in devices.
@@ -230,6 +233,9 @@ EXIT STATUS
 -----------
 *btrfs device* returns a zero exit status if it succeeds. Non zero is
 returned in case of failure.
+
+If the '-s' option is used, *btrfs device stats* will add 64 to the
+exit status if any of the error counters is non-zero.
 
 AVAILABILITY
 ------------

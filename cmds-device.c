@@ -376,6 +376,7 @@ static const char * const cmd_device_stats_usage[] = {
 	"Show current device IO stats.",
 	"",
 	"-z                     show current stats and reset values to zero",
+	"-s                     return non-zero if any stat counter is not zero",
 	NULL
 };
 
@@ -389,13 +390,17 @@ static int cmd_device_stats(int argc, char **argv)
 	int i;
 	int c;
 	int err = 0;
+	int status = 0;
 	__u64 flags = 0;
 	DIR *dirstream = NULL;
 
-	while ((c = getopt(argc, argv, "z")) != -1) {
+	while ((c = getopt(argc, argv, "zs")) != -1) {
 		switch (c) {
 		case 'z':
 			flags = BTRFS_DEV_STATS_RESET;
+			break;
+		case 's':
+			status = 1;
 			break;
 		case '?':
 		default:
@@ -440,7 +445,7 @@ static int cmd_device_stats(int argc, char **argv)
 		if (ioctl(fdmnt, BTRFS_IOC_GET_DEV_STATS, &args) < 0) {
 			error("DEV_STATS ioctl failed on %s: %s",
 			      path, strerror(errno));
-			err = 1;
+			err |= 1;
 		} else {
 			char *canonical_path;
 
@@ -457,31 +462,51 @@ static int cmd_device_stats(int argc, char **argv)
 					 "devid:%llu", args.devid);
 			}
 
-			if (args.nr_items >= BTRFS_DEV_STAT_WRITE_ERRS + 1)
+			if (args.nr_items >= BTRFS_DEV_STAT_WRITE_ERRS + 1) {
 				printf("[%s].write_io_errs   %llu\n",
 				       canonical_path,
 				       (unsigned long long) args.values[
 					BTRFS_DEV_STAT_WRITE_ERRS]);
-			if (args.nr_items >= BTRFS_DEV_STAT_READ_ERRS + 1)
+				if ((status == 1) && (args.values[BTRFS_DEV_STAT_WRITE_ERRS] > 0)) {
+					err |= 64;
+				}
+			}
+			if (args.nr_items >= BTRFS_DEV_STAT_READ_ERRS + 1) {
 				printf("[%s].read_io_errs    %llu\n",
 				       canonical_path,
 				       (unsigned long long) args.values[
 					BTRFS_DEV_STAT_READ_ERRS]);
-			if (args.nr_items >= BTRFS_DEV_STAT_FLUSH_ERRS + 1)
+				if ((status == 1) && (args.values[BTRFS_DEV_STAT_READ_ERRS] > 0)) {
+					err |= 64;
+				}
+			}
+			if (args.nr_items >= BTRFS_DEV_STAT_FLUSH_ERRS + 1) {
 				printf("[%s].flush_io_errs   %llu\n",
 				       canonical_path,
 				       (unsigned long long) args.values[
 					BTRFS_DEV_STAT_FLUSH_ERRS]);
-			if (args.nr_items >= BTRFS_DEV_STAT_CORRUPTION_ERRS + 1)
+				if ((status == 1) && (args.values[BTRFS_DEV_STAT_FLUSH_ERRS] > 0)) {
+					err |= 64;
+				}
+			}
+			if (args.nr_items >= BTRFS_DEV_STAT_CORRUPTION_ERRS + 1) {
 				printf("[%s].corruption_errs %llu\n",
 				       canonical_path,
 				       (unsigned long long) args.values[
 					BTRFS_DEV_STAT_CORRUPTION_ERRS]);
-			if (args.nr_items >= BTRFS_DEV_STAT_GENERATION_ERRS + 1)
+				if ((status == 1) && (args.values[BTRFS_DEV_STAT_CORRUPTION_ERRS] > 0)) {
+					err |= 64;
+				}
+			}
+			if (args.nr_items >= BTRFS_DEV_STAT_GENERATION_ERRS + 1) {
 				printf("[%s].generation_errs %llu\n",
 				       canonical_path,
 				       (unsigned long long) args.values[
 					BTRFS_DEV_STAT_GENERATION_ERRS]);
+				if ((status == 1) && (args.values[BTRFS_DEV_STAT_GENERATION_ERRS] > 0)) {
+					err |= 64;
+				}
+			}
 
 			free(canonical_path);
 		}
