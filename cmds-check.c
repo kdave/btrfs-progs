@@ -11387,7 +11387,11 @@ static int check_chunks_and_extents_v2(struct btrfs_root *root)
 			goto next;
 		key.offset = (u64)-1;
 
-		cur_root = btrfs_read_fs_root(root->fs_info, &key);
+		if (key.objectid == BTRFS_TREE_RELOC_OBJECTID)
+			cur_root = btrfs_read_fs_root_no_cache(root->fs_info,
+					&key);
+		else
+			cur_root = btrfs_read_fs_root(root->fs_info, &key);
 		if (IS_ERR(cur_root) || !cur_root) {
 			error("failed to read tree: %lld", key.objectid);
 			goto next;
@@ -11396,6 +11400,8 @@ static int check_chunks_and_extents_v2(struct btrfs_root *root)
 		ret = traverse_tree_block(cur_root, cur_root->node);
 		err |= ret;
 
+		if (key.objectid == BTRFS_TREE_RELOC_OBJECTID)
+			btrfs_free_fs_root(cur_root);
 next:
 		ret = btrfs_next_item(root1, &path);
 		if (ret)
