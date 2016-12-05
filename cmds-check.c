@@ -10441,6 +10441,34 @@ out:
 }
 
 /*
+ * Check if tree block @eb is tree reloc root.
+ * Return 0 if it's not or any problem happens
+ * Return 1 if it's a tree reloc root
+ */
+static int is_tree_reloc_root(struct btrfs_fs_info *fs_info,
+				 struct extent_buffer *eb)
+{
+	struct btrfs_root *tree_reloc_root;
+	struct btrfs_key key;
+	u64 bytenr = btrfs_header_bytenr(eb);
+	u64 owner = btrfs_header_owner(eb);
+	int ret = 0;
+
+	key.objectid = BTRFS_TREE_RELOC_OBJECTID;
+	key.offset = owner;
+	key.type = BTRFS_ROOT_ITEM_KEY;
+
+	tree_reloc_root = btrfs_read_fs_root_no_cache(fs_info, &key);
+	if (IS_ERR(tree_reloc_root))
+		return 0;
+
+	if (bytenr == btrfs_header_bytenr(tree_reloc_root->node))
+		ret = 1;
+	btrfs_free_fs_root(tree_reloc_root);
+	return ret;
+}
+
+/*
  * Check referencer for shared block backref
  * If level == -1, this function will resolve the level.
  */
@@ -10461,6 +10489,13 @@ static int check_shared_block_backref(struct btrfs_fs_info *fs_info,
 		level = query_tree_block_level(fs_info, bytenr);
 	if (level < 0)
 		goto out;
+
+	/* It's possible it's a tree reloc root */
+	if (parent == bytenr) {
+		if (is_tree_reloc_root(fs_info, eb))
+			found_parent = 1;
+		goto out;
+	}
 
 	if (level + 1 != btrfs_header_level(eb))
 		goto out;
