@@ -9975,9 +9975,14 @@ static int check_tree_block_ref(struct btrfs_root *root,
 	u32 nodesize = root->nodesize;
 	u32 item_size;
 	u64 offset;
+	int tree_reloc_root = 0;
 	int found_ref = 0;
 	int err = 0;
 	int ret;
+
+	if (root->root_key.objectid == BTRFS_TREE_RELOC_OBJECTID &&
+	    btrfs_header_bytenr(root->node) == bytenr)
+		tree_reloc_root = 1;
 
 	btrfs_init_path(&path);
 	key.objectid = bytenr;
@@ -10066,9 +10071,16 @@ static int check_tree_block_ref(struct btrfs_root *root,
 			(offset == root->objectid || offset == owner)) {
 			found_ref = 1;
 		} else if (type == BTRFS_SHARED_BLOCK_REF_KEY) {
+			/*
+			 * Backref of tree reloc root points to itself, no need
+			 * to check backref any more.
+			 */
+			if (tree_reloc_root)
+				found_ref = 1;
+			else
 			/* Check if the backref points to valid referencer */
-			found_ref = !check_tree_block_ref(root, NULL, offset,
-							  level + 1, owner);
+				found_ref = !check_tree_block_ref(root, NULL,
+						offset, level + 1, owner);
 		}
 
 		if (found_ref)
