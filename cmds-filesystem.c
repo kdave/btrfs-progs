@@ -1136,21 +1136,13 @@ static int cmd_filesystem_defrag(int argc, char **argv)
 			close_file_or_dir(fd, dirstream);
 			continue;
 		}
-		if (recursive) {
-			if (S_ISDIR(st.st_mode)) {
-				ret = nftw(argv[i], defrag_callback, 10,
+		if (recursive && S_ISDIR(st.st_mode)) {
+			ret = nftw(argv[i], defrag_callback, 10,
 						FTW_MOUNT | FTW_PHYS);
-				if (ret == ENOTTY)
-					exit(1);
-				/* errors are handled in the callback */
-				ret = 0;
-			} else {
-				if (defrag_global_verbose)
-					printf("%s\n", argv[i]);
-				ret = do_defrag(fd, defrag_global_fancy_ioctl,
-						&defrag_global_range);
-				e = errno;
-			}
+			if (ret == ENOTTY)
+				exit(1);
+			/* errors are handled in the callback */
+			ret = 0;
 		} else {
 			if (defrag_global_verbose)
 				printf("%s\n", argv[i]);
