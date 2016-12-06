@@ -100,6 +100,8 @@ bytes and must not contain newline characters.
 
 *-K|--nodiscard*::
 Do not perform whole device TRIM operation on devices that are capable of that.
+This does not affect discard/trim operation when the filesystem is mounted.
+Please see the mount option 'discard' for that in `btrfs`(5).
 
 *-r|--rootdir <rootdir>*::
 Populate the toplevel subvolume with files from 'rootdir'.  This does not
