@@ -72,8 +72,14 @@ the patches meet some criteria (often lacking in github contributions):
 * the **Signed-off-by** line: this documents who authored the change, you can read
   more about the _The Developer's Certificate of Origin_ [here (chapter 11)](https://www.kernel.org/doc/Documentation/SubmittingPatches)
 
-**Exceptions**: documentation fixes or updates do not need much explanation so
-sticking to the above rules is not necessary. Github pull requests are OK.
+Documentation updates
+---------------------
+
+Documentation fixes or updates do not need much explanation so sticking to the
+code rules in the previous section is not necessary. Github pull requests are
+OK, patches could be sent to me directly and not required to be also in the
+mailinglist. Pointing out typos via IRC also works, although might get
+accidentally lost in the noise.
 
 References
 ----------
