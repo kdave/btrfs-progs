@@ -100,8 +100,9 @@ prior scanning. See the mount option 'device'.
 
 *stats* [-zs] <path>|<device>::
 Read and print the device IO error statistics for all devices of the given
-filesystem identified by <path> or for a single <device>. See section *DEVICE
-STATS* for more information.
+filesystem identified by <path> or for a single <device>. The filesystem must
+be mounted.  See section *DEVICE STATS* for more information about the reported
+statistics and the meaning.
 +
 `Options`
 +

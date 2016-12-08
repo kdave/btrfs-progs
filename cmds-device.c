@@ -372,8 +372,10 @@ out:
 }
 
 static const char * const cmd_device_stats_usage[] = {
-	"btrfs device stats [-z] <path>|<device>",
-	"Show current device IO stats.",
+	"btrfs device stats [options] <path>|<device>",
+	"Show device IO error statistics",
+	"Show device IO error statistics for all devices of the given filesystem",
+	"identified by PATH or DEVICE. The filesystem must be mounted.",
 	"",
 	"-z|--reset             show current stats and reset values to zero",
 	"-s                     return non-zero if any stat counter is not zero",
