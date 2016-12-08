@@ -419,7 +419,7 @@ static int cmd_device_stats(int argc, char **argv)
 
 	ret = get_fs_info(dev_path, &fi_args, &di_args);
 	if (ret) {
-		error("getting dev info for devstats failed: %s",
+		error("getting device info for %s failed: %s", dev_path,
 			strerror(-ret));
 		err = 1;
 		goto out;
@@ -443,7 +443,7 @@ static int cmd_device_stats(int argc, char **argv)
 		args.flags = flags;
 
 		if (ioctl(fdmnt, BTRFS_IOC_GET_DEV_STATS, &args) < 0) {
-			error("DEV_STATS ioctl failed on %s: %s",
+			error("device stats ioctl failed on %s: %s",
 			      path, strerror(errno));
 			err |= 1;
 		} else {
