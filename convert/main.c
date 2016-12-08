@@ -1525,6 +1525,9 @@ static int __ext2_add_one_block(ext2_filsys fs, char *bitmap,
 	offset /= EXT2FS_CLUSTER_RATIO(fs);
 	offset += group_nr * EXT2_CLUSTERS_PER_GROUP(fs->super);
 	for (i = 0; i < EXT2_CLUSTERS_PER_GROUP(fs->super); i++) {
+		if ((i + offset) >= ext2fs_blocks_count(fs->super))
+			break;
+
 		if (ext2fs_test_bit(i, bitmap)) {
 			u64 start;
 
