@@ -148,6 +148,8 @@ static void usage_command_group_internal(const struct cmd_group *grp, int full,
 
 			usage_command_internal(cmd->usagestr, cmd->token, full,
 					       1, cmd->flags & CMD_ALIAS, outf);
+			if (cmd->flags & CMD_ALIAS)
+				putchar('\n');
 			continue;
 		}
 
