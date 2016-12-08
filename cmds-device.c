@@ -432,11 +432,11 @@ static int cmd_device_stats(int argc, char **argv)
 
 	for (i = 0; i < fi_args.num_devices; i++) {
 		struct btrfs_ioctl_get_dev_stats args = {0};
-		__u8 path[BTRFS_DEVICE_PATH_NAME_MAX + 1];
+		char path[BTRFS_DEVICE_PATH_NAME_MAX + 1];
 
-		strncpy((char *)path, (char *)di_args[i].path,
+		strncpy(path, (char *)di_args[i].path,
 			BTRFS_DEVICE_PATH_NAME_MAX);
-		path[BTRFS_DEVICE_PATH_NAME_MAX] = '\0';
+		path[BTRFS_DEVICE_PATH_NAME_MAX] = 0;
 
 		args.devid = di_args[i].devid;
 		args.nr_items = BTRFS_DEV_STAT_VALUES_MAX;
@@ -449,7 +449,7 @@ static int cmd_device_stats(int argc, char **argv)
 		} else {
 			char *canonical_path;
 
-			canonical_path = canonicalize_path((char *)path);
+			canonical_path = canonicalize_path(path);
 
 			/* No path when device is missing. */
 			if (!canonical_path) {
