@@ -375,7 +375,7 @@ static const char * const cmd_device_stats_usage[] = {
 	"btrfs device stats [-z] <path>|<device>",
 	"Show current device IO stats.",
 	"",
-	"-z                     show current stats and reset values to zero",
+	"-z|--reset             show current stats and reset values to zero",
 	"-s                     return non-zero if any stat counter is not zero",
 	NULL
 };
@@ -388,13 +388,22 @@ static int cmd_device_stats(int argc, char **argv)
 	int ret;
 	int fdmnt;
 	int i;
-	int c;
 	int err = 0;
 	int status = 0;
 	__u64 flags = 0;
 	DIR *dirstream = NULL;
 
-	while ((c = getopt(argc, argv, "zs")) != -1) {
+	while (1) {
+		int c;
+		static const struct option long_options[] = {
+			{"reset", no_argument, NULL, 'z'},
+			{NULL, 0, NULL, 0}
+		};
+
+		c = getopt_long(argc, argv, "zs", long_options, NULL);
+		if (c < 0)
+			break;
+
 		switch (c) {
 		case 'z':
 			flags = BTRFS_DEV_STATS_RESET;
