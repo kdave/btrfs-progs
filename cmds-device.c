@@ -448,6 +448,19 @@ static int cmd_device_stats(int argc, char **argv)
 			err |= 1;
 		} else {
 			char *canonical_path;
+			int j;
+			static const struct {
+				const char name[32];
+				u64 num;
+			} dev_stats[] = {
+				{ "write_io_errs", BTRFS_DEV_STAT_WRITE_ERRS },
+				{ "read_io_errs", BTRFS_DEV_STAT_READ_ERRS },
+				{ "flush_io_errs", BTRFS_DEV_STAT_FLUSH_ERRS },
+				{ "corruption_errs",
+					BTRFS_DEV_STAT_CORRUPTION_ERRS },
+				{ "generation_errs",
+					BTRFS_DEV_STAT_GENERATION_ERRS },
+			};
 
 			canonical_path = canonicalize_path(path);
 
@@ -462,50 +475,17 @@ static int cmd_device_stats(int argc, char **argv)
 					 "devid:%llu", args.devid);
 			}
 
-			if (args.nr_items >= BTRFS_DEV_STAT_WRITE_ERRS + 1) {
-				printf("[%s].write_io_errs   %llu\n",
-				       canonical_path,
-				       (unsigned long long) args.values[
-					BTRFS_DEV_STAT_WRITE_ERRS]);
-				if ((status == 1) && (args.values[BTRFS_DEV_STAT_WRITE_ERRS] > 0)) {
+			for (j = 0; j < ARRAY_SIZE(dev_stats); j++) {
+				/* We got fewer items than we know */
+				if (args.nr_items < dev_stats[j].num + 1)
+					continue;
+				printf("[%s].%-16s %llu\n", canonical_path,
+					dev_stats[j].name,
+					(unsigned long long)
+					 args.values[dev_stats[j].num]);
+				if ((status == 1)
+				    && (args.values[dev_stats[j].num] > 0))
 					err |= 64;
-				}
-			}
-			if (args.nr_items >= BTRFS_DEV_STAT_READ_ERRS + 1) {
-				printf("[%s].read_io_errs    %llu\n",
-				       canonical_path,
-				       (unsigned long long) args.values[
-					BTRFS_DEV_STAT_READ_ERRS]);
-				if ((status == 1) && (args.values[BTRFS_DEV_STAT_READ_ERRS] > 0)) {
-					err |= 64;
-				}
-			}
-			if (args.nr_items >= BTRFS_DEV_STAT_FLUSH_ERRS + 1) {
-				printf("[%s].flush_io_errs   %llu\n",
-				       canonical_path,
-				       (unsigned long long) args.values[
-					BTRFS_DEV_STAT_FLUSH_ERRS]);
-				if ((status == 1) && (args.values[BTRFS_DEV_STAT_FLUSH_ERRS] > 0)) {
-					err |= 64;
-				}
-			}
-			if (args.nr_items >= BTRFS_DEV_STAT_CORRUPTION_ERRS + 1) {
-				printf("[%s].corruption_errs %llu\n",
-				       canonical_path,
-				       (unsigned long long) args.values[
-					BTRFS_DEV_STAT_CORRUPTION_ERRS]);
-				if ((status == 1) && (args.values[BTRFS_DEV_STAT_CORRUPTION_ERRS] > 0)) {
-					err |= 64;
-				}
-			}
-			if (args.nr_items >= BTRFS_DEV_STAT_GENERATION_ERRS + 1) {
-				printf("[%s].generation_errs %llu\n",
-				       canonical_path,
-				       (unsigned long long) args.values[
-					BTRFS_DEV_STAT_GENERATION_ERRS]);
-				if ((status == 1) && (args.values[BTRFS_DEV_STAT_GENERATION_ERRS] > 0)) {
-					err |= 64;
-				}
 			}
 
 			free(canonical_path);
