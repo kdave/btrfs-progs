@@ -287,13 +287,13 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 	parent_subvol = subvol_uuid_search(&rctx->sus, 0, parent_uuid,
 					   parent_ctransid, NULL,
 					   subvol_search_by_received_uuid);
-	if (!parent_subvol) {
+	if (IS_ERR(parent_subvol)) {
 		parent_subvol = subvol_uuid_search(&rctx->sus, 0, parent_uuid,
 						   parent_ctransid, NULL,
 						   subvol_search_by_uuid);
 	}
-	if (!parent_subvol) {
-		ret = -ENOENT;
+	if (IS_ERR(parent_subvol)) {
+		ret = PTR_ERR(parent_subvol);
 		error("cannot find parent subvolume");
 		goto out;
 	}
@@ -750,13 +750,13 @@ static int process_clone(const char *path, u64 offset, u64 len,
 	si = subvol_uuid_search(&rctx->sus, 0, clone_uuid, clone_ctransid,
 				NULL,
 				subvol_search_by_received_uuid);
-	if (!si) {
+	if (IS_ERR(si)) {
 		if (memcmp(clone_uuid, rctx->cur_subvol.received_uuid,
 				BTRFS_UUID_SIZE) == 0) {
 			/* TODO check generation of extent */
 			subvol_path = strdup(rctx->cur_subvol_path);
 		} else {
-			ret = -ENOENT;
+			ret = PTR_ERR(si);
 			error("clone: did not find source subvol");
 			goto out;
 		}

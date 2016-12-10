@@ -498,7 +498,7 @@ out:
 	if (ret && info) {
 		free(info->path);
 		free(info);
-		info = NULL;
+		return ERR_PTR(ret);
 	}
 
 	return info;
