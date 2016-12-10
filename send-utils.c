@@ -474,6 +474,10 @@ struct subvol_info *subvol_uuid_search(struct subvol_uuid_search *s,
 		goto out;
 
 	info = calloc(1, sizeof(*info));
+	if (!info) {
+		ret = -ENOMEM;
+		goto out;
+	}
 	info->root_id = root_id;
 	memcpy(info->uuid, root_item.uuid, BTRFS_UUID_SIZE);
 	memcpy(info->received_uuid, root_item.received_uuid, BTRFS_UUID_SIZE);
@@ -495,9 +499,11 @@ struct subvol_info *subvol_uuid_search(struct subvol_uuid_search *s,
 	}
 
 out:
-	if (ret && info) {
-		free(info->path);
-		free(info);
+	if (ret) {
+		if (info) {
+			free(info->path);
+			free(info);
+		}
 		return ERR_PTR(ret);
 	}
 
