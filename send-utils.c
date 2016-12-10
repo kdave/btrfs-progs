@@ -486,6 +486,10 @@ struct subvol_info *subvol_uuid_search(struct subvol_uuid_search *s,
 		info->path = strdup(path);
 	} else {
 		info->path = malloc(PATH_MAX);
+		if (!info->path) {
+			ret = -ENOMEM;
+			goto out;
+		}
 		ret = btrfs_subvolid_resolve(s->mnt_fd, info->path,
 					     PATH_MAX, root_id);
 	}
