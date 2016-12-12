@@ -1036,7 +1036,6 @@ static int cmd_filesystem_defrag(int argc, char **argv)
 	int i;
 	int recursive = 0;
 	int ret = 0;
-	int e = 0;
 	int compress_type = BTRFS_COMPRESS_NONE;
 	DIR *dirstream;
 
@@ -1112,6 +1111,7 @@ static int cmd_filesystem_defrag(int argc, char **argv)
 
 	for (i = optind; i < argc; i++) {
 		struct stat st;
+		int defrag_err = 0;
 
 		dirstream = NULL;
 		fd = open_file_or_dir(argv[i], &dirstream);
@@ -1148,10 +1148,10 @@ static int cmd_filesystem_defrag(int argc, char **argv)
 				printf("%s\n", argv[i]);
 			ret = do_defrag(fd, defrag_global_fancy_ioctl,
 					&defrag_global_range);
-			e = errno;
+			defrag_err = errno;
 		}
 		close_file_or_dir(fd, dirstream);
-		if (ret && e == ENOTTY && defrag_global_fancy_ioctl) {
+		if (ret && defrag_err == ENOTTY && defrag_global_fancy_ioctl) {
 			error("defrag range ioctl not "
 				"supported in this kernel, please try "
 				"without any options.");
@@ -1159,7 +1159,8 @@ static int cmd_filesystem_defrag(int argc, char **argv)
 			break;
 		}
 		if (ret) {
-			error("defrag failed on %s: %s", argv[i], strerror(e));
+			error("defrag failed on %s: %s", argv[i],
+					strerror(defrag_err));
 			defrag_global_errors++;
 		}
 	}
