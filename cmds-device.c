@@ -377,8 +377,8 @@ static const char * const cmd_device_stats_usage[] = {
 	"Show device IO error statistics for all devices of the given filesystem",
 	"identified by PATH or DEVICE. The filesystem must be mounted.",
 	"",
+	"-c|--check             return non-zero if any stat counter is not zero",
 	"-z|--reset             show current stats and reset values to zero",
-	"-s                     return non-zero if any stat counter is not zero",
 	NULL
 };
 
@@ -391,7 +391,7 @@ static int cmd_device_stats(int argc, char **argv)
 	int fdmnt;
 	int i;
 	int err = 0;
-	int status = 0;
+	int check = 0;
 	__u64 flags = 0;
 	DIR *dirstream = NULL;
 
@@ -402,16 +402,16 @@ static int cmd_device_stats(int argc, char **argv)
 			{NULL, 0, NULL, 0}
 		};
 
-		c = getopt_long(argc, argv, "zs", long_options, NULL);
+		c = getopt_long(argc, argv, "cz", long_options, NULL);
 		if (c < 0)
 			break;
 
 		switch (c) {
+		case 'c':
+			check = 1;
+			break;
 		case 'z':
 			flags = BTRFS_DEV_STATS_RESET;
-			break;
-		case 's':
-			status = 1;
 			break;
 		case '?':
 		default:
@@ -494,7 +494,7 @@ static int cmd_device_stats(int argc, char **argv)
 					dev_stats[j].name,
 					(unsigned long long)
 					 args.values[dev_stats[j].num]);
-				if ((status == 1)
+				if ((check == 1)
 				    && (args.values[dev_stats[j].num] > 0))
 					err |= 64;
 			}
