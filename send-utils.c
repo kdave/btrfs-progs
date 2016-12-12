@@ -501,6 +501,10 @@ struct subvol_info *subvol_uuid_search2(struct subvol_uuid_search *s,
 	info->rtransid = btrfs_root_rtransid(&root_item);
 	if (type == subvol_search_by_path) {
 		info->path = strdup(path);
+		if (!info->path) {
+			ret = -ENOMEM;
+			goto out;
+		}
 	} else {
 		info->path = malloc(PATH_MAX);
 		if (!info->path) {
