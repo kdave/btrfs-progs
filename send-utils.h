@@ -80,7 +80,22 @@ struct subvol_uuid_search {
 
 int subvol_uuid_search_init(int mnt_fd, struct subvol_uuid_search *s);
 void subvol_uuid_search_finit(struct subvol_uuid_search *s);
+/*
+ * Search for a subvolume by given type (received uuid, root id, path), returns
+ * pointer to newly allocated struct subvol_info or NULL in case it's not found
+ * or there was another error. This ambiguity of error value is fixed by
+ * subvol_uuid_search2 that returns a negative errno in case of an error, of a
+ * valid pointer otherwise.
+ *
+ * This function will be deprecated in the future, please consider using v2 in
+ * new code unless you need to keep backward compatibility with older
+ * btrfs-progs.
+ */
 struct subvol_info *subvol_uuid_search(struct subvol_uuid_search *s,
+				       u64 root_id, const u8 *uuid, u64 transid,
+				       const char *path,
+				       enum subvol_search_type type);
+struct subvol_info *subvol_uuid_search2(struct subvol_uuid_search *s,
 				       u64 root_id, const u8 *uuid, u64 transid,
 				       const char *path,
 				       enum subvol_search_type type);
