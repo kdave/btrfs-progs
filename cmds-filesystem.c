@@ -1109,6 +1109,35 @@ static int cmd_filesystem_defrag(int argc, char **argv)
 	if (flush)
 		defrag_global_range.flags |= BTRFS_DEFRAG_RANGE_START_IO;
 
+	/*
+	 * Look for directory arguments and warn if the recursive mode is not
+	 * requested, as this is not implemented as recursive defragmentation
+	 * in kernel. The stat errors are silent here as we check them below.
+	 */
+	if (!recursive) {
+		int found = 0;
+
+		for (i = optind; i < argc; i++) {
+			struct stat st;
+
+			if (stat(argv[i], &st))
+				continue;
+
+			if (S_ISDIR(st.st_mode)) {
+				warning(
+			"directory specified but recursive mode not requested: %s",
+					argv[i]);
+				found = 1;
+			}
+		}
+		if (found) {
+			warning(
+"a directory passed to the defrag ioctl will not process the files\n"
+"recursively but will defragment the subvolume tree and the extent tree.\n"
+"If this is not intended, please use option -r .");
+		}
+	}
+
 	for (i = optind; i < argc; i++) {
 		struct stat st;
 		int defrag_err = 0;
