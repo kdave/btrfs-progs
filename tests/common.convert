@@ -160,6 +160,9 @@ convert_test_post_checks_all() {
 	convert_test_post_check_checksums "$1"
 	convert_test_post_check_permissions "$2"
 	convert_test_post_check_acl "$3"
+
+	# Create a large file to trigger data chunk allocation
+	generate_dataset "large"
 	run_check_umount_test_dev
 }
 
