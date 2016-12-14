@@ -1,3 +1,21 @@
+btrfs-progs-4.9 (2016-12-20)
+  * check: many lowmem mode updates
+  * send: use splice syscall to copy buffer from kernel
+  * receive: new option to dump the stream in textual form
+  * convert:
+    * move sources to own directory
+    * prevent accounting of blocks beyond end of the device
+    * make it work with 64k sectorsize
+  * mkfs: move sources to own directory
+  * defrag: warns if directory used without -r
+  * dev stats:
+    * new option to check stats for non-zero values
+    * add long option for -z
+  * library: version bump to 0.1.2, added subvol_uuid_search2
+  * other:
+    * cleanups
+    * docs updates
+
 btrfs-progs-4.8.5 (2016-11-30)
   * receive: fix detection of end of stream (error reported even for valid
     streams)
