@@ -244,9 +244,14 @@ static inline long PTR_ERR(const void *ptr)
 	return (long) ptr;
 }
 
-static inline long IS_ERR(const void *ptr)
+static inline int IS_ERR(const void *ptr)
 {
 	return IS_ERR_VALUE((unsigned long)ptr);
+}
+
+static inline int IS_ERR_OR_NULL(const void *ptr)
+{
+	return !ptr || IS_ERR(ptr);
 }
 
 /*

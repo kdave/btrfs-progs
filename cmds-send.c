@@ -70,8 +70,12 @@ static int get_root_id(struct btrfs_send *sctx, const char *path, u64 *root_id)
 
 	si = subvol_uuid_search(&sctx->sus, 0, NULL, 0, path,
 			subvol_search_by_path);
-	if (IS_ERR(si))
-		return PTR_ERR(si);
+	if (IS_ERR_OR_NULL(si)) {
+		if (!si)
+			return -ENOENT;
+		else
+			return PTR_ERR(si);
+	}
 	*root_id = si->root_id;
 	free(si->path);
 	free(si);
@@ -85,7 +89,7 @@ static struct subvol_info *get_parent(struct btrfs_send *sctx, u64 root_id)
 
 	si_tmp = subvol_uuid_search(&sctx->sus, root_id, NULL, 0, NULL,
 			subvol_search_by_root_id);
-	if (IS_ERR(si_tmp))
+	if (IS_ERR_OR_NULL(si_tmp))
 		return si_tmp;
 
 	si = subvol_uuid_search(&sctx->sus, 0, si_tmp->parent_uuid, 0, NULL,
@@ -105,8 +109,11 @@ static int find_good_parent(struct btrfs_send *sctx, u64 root_id, u64 *found)
 	int i;
 
 	parent = get_parent(sctx, root_id);
-	if (IS_ERR(parent)) {
-		ret = PTR_ERR(parent);
+	if (IS_ERR_OR_NULL(parent)) {
+		if (!parent)
+			ret = -ENOENT;
+		else
+			ret = PTR_ERR(parent);
 		goto out;
 	}
 
@@ -122,7 +129,7 @@ static int find_good_parent(struct btrfs_send *sctx, u64 root_id, u64 *found)
 		s64 tmp;
 
 		parent2 = get_parent(sctx, sctx->clone_sources[i]);
-		if (IS_ERR(parent2))
+		if (IS_ERR_OR_NULL(parent2))
 			continue;
 		if (parent2->root_id != parent->root_id) {
 			free(parent2->path);
@@ -136,8 +143,11 @@ static int find_good_parent(struct btrfs_send *sctx, u64 root_id, u64 *found)
 		parent2 = subvol_uuid_search(&sctx->sus,
 				sctx->clone_sources[i], NULL, 0, NULL,
 				subvol_search_by_root_id);
-		if (IS_ERR(parent2)) {
-			ret = PTR_ERR(parent2);
+		if (IS_ERR_OR_NULL(parent2)) {
+			if (!parent2)
+				ret = -ENOENT;
+			else
+				ret = PTR_ERR(parent2);
 			goto out;
 		}
 		tmp = parent2->ctransid - parent->ctransid;
