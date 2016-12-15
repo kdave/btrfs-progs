@@ -312,10 +312,11 @@ static int cmd_qgroup_show(int argc, char **argv)
 	while (1) {
 		int c;
 		enum {
-			GETOPT_VAL_SYNC = 256
+			GETOPT_VAL_SORT = 256,
+			GETOPT_VAL_SYNC
 		};
 		static const struct option long_options[] = {
-			{"sort", required_argument, NULL, 'S'},
+			{"sort", required_argument, NULL, GETOPT_VAL_SORT},
 			{"sync", no_argument, NULL, GETOPT_VAL_SYNC},
 			{ NULL, 0, NULL, 0 }
 		};
@@ -346,7 +347,7 @@ static int cmd_qgroup_show(int argc, char **argv)
 		case 'f':
 			filter_flag |= 0x2;
 			break;
-		case 'S':
+		case GETOPT_VAL_SORT:
 			ret = btrfs_qgroup_parse_sort_string(optarg,
 							     &comparer_set);
 			if (ret)
