@@ -126,6 +126,10 @@ Prefix \'+' means ascending order and \'-' means descending order of <attr>.
 If no prefix is given, use ascending order by default.
 +
 If multiple <attr>s is given, use comma to separate.
++
+--sync::::
+To retrieve information after updating the state of qgroups,
+force sync of the filesystem identified by <path> before getting information.
 
 EXIT STATUS
 -----------

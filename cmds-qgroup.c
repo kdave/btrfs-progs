@@ -272,8 +272,7 @@ static int cmd_qgroup_destroy(int argc, char **argv)
 }
 
 static const char * const cmd_qgroup_show_usage[] = {
-	"btrfs qgroup show -pcreFf "
-	"[--sort=qgroupid,rfer,excl,max_rfer,max_excl] <path>",
+	"btrfs qgroup show [options] <path>",
 	"Show subvolume quota groups.",
 	"-p             print parent qgroup id",
 	"-c             print child qgroup id",
@@ -288,6 +287,7 @@ static const char * const cmd_qgroup_show_usage[] = {
 	"               list qgroups sorted by specified items",
 	"               you can use '+' or '-' in front of each item.",
 	"               (+:ascending, -:descending, ascending default)",
+	"--sync         force sync of the filesystem before getting info",
 	NULL
 };
 
@@ -300,6 +300,7 @@ static int cmd_qgroup_show(int argc, char **argv)
 	u64 qgroupid;
 	int filter_flag = 0;
 	unsigned unit_mode;
+	int sync = 0;
 
 	struct btrfs_qgroup_comparer_set *comparer_set;
 	struct btrfs_qgroup_filter_set *filter_set;
@@ -310,8 +311,12 @@ static int cmd_qgroup_show(int argc, char **argv)
 
 	while (1) {
 		int c;
+		enum {
+			GETOPT_VAL_SYNC = 256
+		};
 		static const struct option long_options[] = {
 			{"sort", required_argument, NULL, 'S'},
+			{"sync", no_argument, NULL, GETOPT_VAL_SYNC},
 			{ NULL, 0, NULL, 0 }
 		};
 
@@ -347,6 +352,9 @@ static int cmd_qgroup_show(int argc, char **argv)
 			if (ret)
 				usage(cmd_qgroup_show_usage);
 			break;
+		case GETOPT_VAL_SYNC:
+			sync = 1;
+			break;
 		default:
 			usage(cmd_qgroup_show_usage);
 		}
@@ -362,6 +370,16 @@ static int cmd_qgroup_show(int argc, char **argv)
 		free(filter_set);
 		free(comparer_set);
 		return 1;
+	}
+
+	if (sync) {
+		ret = ioctl(fd, BTRFS_IOC_SYNC);
+		if (ret < 0) {
+			error("sync ioctl failed on '%s': %s", path,
+			      strerror(errno));
+			close_file_or_dir(fd, dirstream);
+			goto out;
+		}
 	}
 
 	if (filter_flag) {
