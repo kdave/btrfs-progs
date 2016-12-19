@@ -36,10 +36,21 @@ int btrfs_insert_file_extent(struct btrfs_trans_handle *trans,
 			     u64 disk_num_bytes, u64 num_bytes)
 {
 	int ret = 0;
+	int is_hole = 0;
 	struct btrfs_file_extent_item *item;
 	struct btrfs_key file_key;
 	struct btrfs_path *path;
 	struct extent_buffer *leaf;
+
+	if (offset == 0)
+		is_hole = 1;
+	/* For NO_HOLES, we don't insert hole file extent */
+	if (btrfs_fs_incompat(root->fs_info, NO_HOLES) && is_hole)
+		return 0;
+
+	/* For hole, its disk_bytenr and disk_num_bytes must be 0 */
+	if (is_hole)
+		disk_num_bytes = 0;
 
 	path = btrfs_alloc_path();
 	if (!path)

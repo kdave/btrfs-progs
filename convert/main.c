@@ -336,7 +336,7 @@ static int record_file_blocks(struct blk_iterate_data *data,
 		       key.offset > cur_off);
 		fi = btrfs_item_ptr(node, slot, struct btrfs_file_extent_item);
 		extent_disk_bytenr = btrfs_file_extent_disk_bytenr(node, fi);
-		extent_num_bytes = btrfs_file_extent_disk_num_bytes(node, fi);
+		extent_num_bytes = btrfs_file_extent_num_bytes(node, fi);
 		BUG_ON(cur_off - key.offset >= extent_num_bytes);
 		btrfs_release_path(&path);
 
