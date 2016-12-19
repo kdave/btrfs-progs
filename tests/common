@@ -486,6 +486,10 @@ generate_dataset() {
 				run_check $SUDO_HELPER ln -s "$dirpath/$long_filename" "$dirpath/slow_slink.$num"
 			done
 			;;
+		large)
+			run_check $SUDO_HELPER dd if=/dev/urandom bs=32M count=1 \
+				of="$dirpath/$dataset_type" >/dev/null 2>&1
+			;;
 	esac
 }
 
