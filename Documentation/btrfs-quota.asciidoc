@@ -238,15 +238,19 @@ Disable subvolume quota support for a filesystem.
 *enable* <path>::
 Enable subvolume quota support for a filesystem.
 
-*rescan* [-s] <path>::
+*rescan* [-s|-w|-W] <path>::
 Trash all qgroup numbers and scan the metadata again with the current config.
 +
 `Options`
 +
 -s::::
-show status of a running rescan operation.
+Show status of a running rescan operation.
+
 -w::::
-wait for rescan operation to finish(can be already in progress).
+Start rescan operation and wait until it has finished before exiting.  If a rescan is already running, wait until it finishes and then exit without starting a new one.
+
+-W::::
+Wait for rescan operation to finish and then exit.  If a rescan is not already running, exit silently.
 
 EXIT STATUS
 -----------

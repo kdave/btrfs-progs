@@ -120,14 +120,20 @@ static int cmd_quota_rescan(int argc, char **argv)
 	int wait_for_completion = 0;
 
 	while (1) {
-		int c = getopt(argc, argv, "sw");
+		int c = getopt(argc, argv, "swW");
 		if (c < 0)
 			break;
 		switch (c) {
 		case 's':
 			ioctlnum = BTRFS_IOC_QUOTA_RESCAN_STATUS;
 			break;
+		case 'W':
+			ioctlnum = 0;
+			wait_for_completion = 1;
+			break;
 		case 'w':
+			/* Reset it in case the user did both -W and -w */
+			ioctlnum = BTRFS_IOC_QUOTA_RESCAN;
 			wait_for_completion = 1;
 			break;
 		default:
@@ -135,8 +141,8 @@ static int cmd_quota_rescan(int argc, char **argv)
 		}
 	}
 
-	if (ioctlnum != BTRFS_IOC_QUOTA_RESCAN && wait_for_completion) {
-		error("switch -w cannot be used with -s");
+	if (ioctlnum == BTRFS_IOC_QUOTA_RESCAN_STATUS && wait_for_completion) {
+		error("switches -w/-W cannot be used with -s");
 		return 1;
 	}
 
@@ -150,8 +156,10 @@ static int cmd_quota_rescan(int argc, char **argv)
 	if (fd < 0)
 		return 1;
 
-	ret = ioctl(fd, ioctlnum, &args);
-	e = errno;
+	if (ioctlnum) {
+		ret = ioctl(fd, ioctlnum, &args);
+		e = errno;
+	}
 
 	if (ioctlnum == BTRFS_IOC_QUOTA_RESCAN_STATUS) {
 		close_file_or_dir(fd, dirstream);
@@ -167,7 +175,7 @@ static int cmd_quota_rescan(int argc, char **argv)
 		return 0;
 	}
 
-	if (ret == 0) {
+	if (ioctlnum == BTRFS_IOC_QUOTA_RESCAN && ret == 0) {
 		printf("quota rescan started\n");
 		fflush(stdout);
 	} else if (ret < 0 && (!wait_for_completion || e != EINPROGRESS)) {
