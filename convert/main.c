@@ -2723,6 +2723,64 @@ static int is_range_intersection_of_reserved_ranges(u64 start, u64 len,
 	return 1;
 }
 
+/*
+ * Read out data in reserved_ranges and write them into @reloc_ranges
+ *
+ * This is mainly for old convert behavior.
+ * Which only relocs the super block (4K), while we now reloc 64K.
+ *
+ * So there is some range in reserved range but still mapped 1:1.
+ * We use this function to read them into @reloc_ranges
+ */
+static int record_reloc_data(struct btrfs_fs_info *fs_info,
+			     u64 old_offset, u64 disk_bytenr, u64 ram_len,
+			     char *reloc_ranges[3])
+{
+	/* Which reloc range we interests with, physical bytenr */
+	u64 reloc_start;
+	u64 reloc_len;
+
+	/*
+	 * File offset, which get truncated to above range,
+	 * Offset in image file
+	 */
+	u64 file_start;
+	u64 file_len;
+
+	/* Btrfs logical address, used for final reading*/
+	u64 logical_start;
+	u64 logical_len;
+	char *dest;
+	int nr;
+	int ret;
+
+	/* Check if the range intersects */
+	if (!is_range_intersection_of_reserved_ranges(old_offset, ram_len,
+						      &nr))
+		return 0;
+	reloc_start = reserved_range_starts[nr];
+	reloc_len = reserved_range_lens[nr];
+
+	/* Truncate the range to reserved ranges */
+	file_start = max(old_offset, reloc_start);
+	file_len = min(old_offset + ram_len, reloc_start + reloc_len) -
+			file_start;
+
+	/* Get btrfs logical address */
+	logical_start = file_start - old_offset + disk_bytenr;
+	logical_len = file_len;
+
+	dest = reloc_ranges[nr] + file_start - reloc_start;
+	ret = read_extent_data(fs_info->tree_root, dest, logical_start,
+				&logical_len, 0);
+	if (ret < 0)
+		return ret;
+	/* Short read, something went wrong */
+	if (logical_len != file_len)
+		return -EIO;
+	return 0;
+}
+
 static int do_rollback(const char *devname)
 {
 	int fd = -1;
