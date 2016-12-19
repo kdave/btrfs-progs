@@ -457,4 +457,23 @@ unsigned int rand_range(unsigned int upper);
 /* Also allow setting the seed manually */
 void init_rand_seed(u64 seed);
 
+/*
+ * Basic set operations
+ * Mainly used for ranges subset/intersect
+ */
+/* Check if [start1, start1 + len1) is subset of [start2, start2 + len2) */
+static inline int is_range_subset(u64 start1, u64 len1, u64 start2, u64 len2)
+{
+	if (start1 >= start2 && start1 + len1 <= start2 + len2)
+		return 1;
+	return 0;
+}
+
+/* Check if [start1, start1 + len1) intersects with [start2, start2 + len2) */
+static inline int is_range_intersect(u64 start1, u64 len1, u64 start2, u64 len2)
+{
+	if (start1 >= start2 + len2 || start1 + len1 <= start2)
+		return 0;
+	return 1;
+}
 #endif

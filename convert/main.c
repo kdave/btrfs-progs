@@ -61,6 +61,15 @@
 
 #define CONV_IMAGE_SUBVOL_OBJECTID BTRFS_FIRST_FREE_OBJECTID
 
+/*
+ * Btrfs reserved ranges.
+ * In these ranges, btrfs record superblocks, so old fs data in these
+ * range can be relocated to other physical location
+ */
+static u64 reserved_range_starts[3] = { 0, BTRFS_SB_MIRROR_OFFSET(1),
+					BTRFS_SB_MIRROR_OFFSET(2) };
+static u64 reserved_range_lens[3] = { 1024 * 1024, 64 * 1024, 64 * 1024 };
+
 struct task_ctx {
 	uint32_t max_copy_inodes;
 	uint32_t cur_copy_inodes;
@@ -2670,6 +2679,48 @@ next:
 	return 0;
 fail:
 	return -1;
+}
+
+/*
+ * Check if [start, start + len) is a subset of btrfs reserved ranges
+ */
+static int is_range_subset_of_reserved_ranges(u64 start, u64 len)
+{
+	int i;
+	int ret = 0;
+
+	for (i = 0; i < ARRAY_SIZE(reserved_range_starts); i++) {
+		if (is_range_subset(start, len, reserved_range_starts[i],
+				    reserved_range_lens[i])) {
+			ret = 1;
+			break;
+		}
+	}
+	return ret;
+}
+
+/*
+ * Check if [start, start + len) intersects with btrfs reserved ranges
+ * if intersects, record the first range it intersects with to @ret_index
+ */
+static int is_range_intersection_of_reserved_ranges(u64 start, u64 len,
+						    int *ret_index)
+{
+	int nr = -1;
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(reserved_range_starts); i++) {
+		if (is_range_intersect(start, len, reserved_range_starts[i],
+				       reserved_range_lens[i])) {
+			nr = i;
+			break;
+		}
+	}
+	if (nr == -1)
+		return 0;
+	if (ret_index)
+		*ret_index = nr;
+	return 1;
 }
 
 static int do_rollback(const char *devname)

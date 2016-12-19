@@ -97,11 +97,16 @@ enum btrfs_read_sb_flags {
 	SBREAD_PARTIAL		= (1 << 1),
 };
 
+/*
+ * Use macro to define mirror super block position
+ * So we can use it in static array initializtion
+ */
+#define BTRFS_SB_MIRROR_OFFSET(mirror)	((u64)(16 * 1024) << \
+					 (BTRFS_SUPER_MIRROR_SHIFT * (mirror)))
 static inline u64 btrfs_sb_offset(int mirror)
 {
-	u64 start = 16 * 1024;
 	if (mirror)
-		return start << (BTRFS_SUPER_MIRROR_SHIFT * mirror);
+		return BTRFS_SB_MIRROR_OFFSET(mirror);
 	return BTRFS_SUPER_INFO_OFFSET;
 }
 
