@@ -1177,7 +1177,6 @@ struct btrfs_root {
 
 
 	u32 type;
-	u64 highest_inode;
 	u64 last_inode_alloc;
 
 	/*
