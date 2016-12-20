@@ -494,7 +494,6 @@ void btrfs_setup_root(u32 nodesize, u32 leafsize, u32 sectorsize,
 	root->fs_info = fs_info;
 	root->objectid = objectid;
 	root->last_trans = 0;
-	root->highest_inode = 0;
 	root->last_inode_alloc = 0;
 
 	INIT_LIST_HEAD(&root->dirty_list);

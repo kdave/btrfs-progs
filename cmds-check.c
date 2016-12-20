@@ -2853,6 +2853,31 @@ out:
 	return ret;
 }
 
+static int get_highest_inode(struct btrfs_trans_handle *trans,
+				struct btrfs_root *root,
+				struct btrfs_path *path,
+				u64 *highest_ino)
+{
+	struct btrfs_key key, found_key;
+	int ret;
+
+	btrfs_init_path(path);
+	key.objectid = BTRFS_LAST_FREE_OBJECTID;
+	key.offset = -1;
+	key.type = BTRFS_INODE_ITEM_KEY;
+	ret = btrfs_search_slot(trans, root, &key, path, -1, 1);
+	if (ret == 1) {
+		btrfs_item_key_to_cpu(path->nodes[0], &found_key,
+				path->slots[0] - 1);
+		*highest_ino = found_key.objectid;
+		ret = 0;
+	}
+	if (*highest_ino >= BTRFS_LAST_FREE_OBJECTID)
+		ret = -EOVERFLOW;
+	btrfs_release_path(path);
+	return ret;
+}
+
 static int repair_inode_nlinks(struct btrfs_trans_handle *trans,
 			       struct btrfs_root *root,
 			       struct btrfs_path *path,
@@ -2898,11 +2923,9 @@ static int repair_inode_nlinks(struct btrfs_trans_handle *trans,
 	}
 
 	if (rec->found_link == 0) {
-		lost_found_ino = root->highest_inode;
-		if (lost_found_ino >= BTRFS_LAST_FREE_OBJECTID) {
-			ret = -EOVERFLOW;
+		ret = get_highest_inode(trans, root, path, &lost_found_ino);
+		if (ret < 0)
 			goto out;
-		}
 		lost_found_ino++;
 		ret = btrfs_mkdir(trans, root, dir_name, strlen(dir_name),
 				  BTRFS_FIRST_FREE_OBJECTID, &lost_found_ino,
@@ -3263,21 +3286,6 @@ static int check_inode_recs(struct btrfs_root *root,
 		if (!cache_tree_empty(inode_cache))
 			fprintf(stderr, "warning line %d\n", __LINE__);
 		return 0;
-	}
-
-	/*
-	 * We need to record the highest inode number for later 'lost+found'
-	 * dir creation.
-	 * We must select an ino not used/referred by any existing inode, or
-	 * 'lost+found' ino may be a missing ino in a corrupted leaf,
-	 * this may cause 'lost+found' dir has wrong nlinks.
-	 */
-	cache = last_cache_extent(inode_cache);
-	if (cache) {
-		node = container_of(cache, struct ptr_node, cache);
-		rec = node->data;
-		if (rec->ino > root->highest_inode)
-			root->highest_inode = rec->ino;
 	}
 
 	/*
