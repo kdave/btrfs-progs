@@ -4255,3 +4255,63 @@ u64 add_new_free_space(struct btrfs_block_group_cache *block_group,
 
 	return total_added;
 }
+
+/*
+ * Check if there is any extent(both data and metadata) in the range
+ * [@start, @start + @len)
+ *
+ * Return 0 for no extent found.
+ * Return >0 for found extent.
+ * Return <0 for fatal error.
+ */
+int btrfs_check_extent_exists(struct btrfs_fs_info *fs_info, u64 start,
+			      u64 len)
+{
+	struct btrfs_path *path;
+	struct btrfs_key key;
+	u64 extent_start;
+	u64 extent_len;
+	int ret;
+
+	path = btrfs_alloc_path();
+	if (!path)
+		return -ENOMEM;
+
+	key.objectid = start + len;
+	key.type = 0;
+	key.offset = 0;
+
+	ret = btrfs_search_slot(NULL, fs_info->extent_root, &key, path, 0, 0);
+	if (ret < 0)
+		goto out;
+	/*
+	 * Now we're pointing at slot whose key.object >= end, skip to previous
+	 * extent.
+	 */
+	ret = btrfs_previous_extent_item(fs_info->extent_root, path, 0);
+	if (ret < 0)
+		goto out;
+	if (ret > 0) {
+		ret = 0;
+		goto out;
+	}
+	btrfs_item_key_to_cpu(path->nodes[0], &key, path->slots[0]);
+	extent_start = key.objectid;
+	if (key.type == BTRFS_METADATA_ITEM_KEY)
+		extent_len = fs_info->nodesize;
+	else
+		extent_len = key.offset;
+
+	/*
+	 * search_slot() and previous_extent_item() has ensured that our
+	 * extent_start < start + len, we only need to care extent end.
+	 */
+	if (extent_start + extent_len <= start)
+		ret = 0;
+	else
+		ret = 1;
+
+out:
+	btrfs_free_path(path);
+	return ret;
+}
