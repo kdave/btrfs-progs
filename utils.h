@@ -28,6 +28,7 @@
 #include "btrfs-list.h"
 #include "sizes.h"
 #include "messages.h"
+#include "kerncompat.h"
 
 #define BTRFS_SCAN_MOUNTED	(1ULL << 0)
 #define BTRFS_SCAN_LBLKID	(1ULL << 1)
@@ -67,6 +68,11 @@ void units_set_base(unsigned *units, unsigned base);
 #define	PREP_DEVICE_ZERO_END	(1U << 0)
 #define	PREP_DEVICE_DISCARD	(1U << 1)
 #define	PREP_DEVICE_VERBOSE	(1U << 2)
+
+static inline int calculate_bitmap_len(int nsectors)
+{
+	return (DIV_ROUND_UP(nsectors, BITS_PER_LONG) * sizeof(long));
+}
 
 int btrfs_make_root_dir(struct btrfs_trans_handle *trans,
 			struct btrfs_root *root, u64 objectid);
