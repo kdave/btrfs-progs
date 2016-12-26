@@ -1738,6 +1738,107 @@ static int fill_full_map_block(struct map_lookup *map, u64 start, u64 length,
 	return 0;
 }
 
+static void del_one_stripe(struct btrfs_map_block *map_block, int i)
+{
+	int cur_nr = map_block->num_stripes;
+	int size_left = (cur_nr - 1 - i) * sizeof(struct btrfs_map_stripe);
+
+	memmove(&map_block->stripes[i], &map_block->stripes[i + 1], size_left);
+	map_block->num_stripes--;
+}
+
+static void remove_unrelated_stripes(struct map_lookup *map,
+				     int rw, u64 start, u64 length,
+				     struct btrfs_map_block *map_block)
+{
+	int i = 0;
+	/*
+	 * RAID5/6 write must use full stripe.
+	 * No need to do anything.
+	 */
+	if (map->type & (BTRFS_BLOCK_GROUP_RAID5 | BTRFS_BLOCK_GROUP_RAID6) &&
+	    rw == WRITE)
+		return;
+
+	/*
+	 * For RAID0/1/10/DUP, whatever read/write, we can remove unrelated
+	 * stripes without causing anything wrong.
+	 * RAID5/6 READ is just like RAID0, we don't care parity unless we need
+	 * to recovery.
+	 * For recovery, rw should be set to WRITE.
+	 */
+	while (i < map_block->num_stripes) {
+		struct btrfs_map_stripe *stripe;
+		u64 orig_logical; /* Original stripe logical start */
+		u64 orig_end; /* Original stripe logical end */
+
+		stripe = &map_block->stripes[i];
+
+		/*
+		 * For READ, we don't really care parity
+		 */
+		if (stripe->logical == BTRFS_RAID5_P_STRIPE ||
+		    stripe->logical == BTRFS_RAID6_Q_STRIPE) {
+			del_one_stripe(map_block, i);
+			continue;
+		}
+		/* Completely unrelated stripe */
+		if (stripe->logical >= start + length ||
+		    stripe->logical + stripe->length <= start) {
+			del_one_stripe(map_block, i);
+			continue;
+		}
+		/* Covered stripe, modify its logical and physical */
+		orig_logical = stripe->logical;
+		orig_end = stripe->logical + stripe->length;
+		if (start + length <= orig_end) {
+			/*
+			 * |<--range-->|
+			 *   |  stripe   |
+			 * Or
+			 *     |<range>|
+			 *   |  stripe   |
+			 */
+			stripe->logical = max(orig_logical, start);
+			stripe->length = start + length;
+			stripe->physical += stripe->logical - orig_logical;
+		} else if (start >= orig_logical) {
+			/*
+			 *     |<-range--->|
+			 * |  stripe     |
+			 * Or
+			 *     |<range>|
+			 * |  stripe     |
+			 */
+			stripe->logical = start;
+			stripe->length = min(orig_end, start + length);
+			stripe->physical += stripe->logical - orig_logical;
+		}
+		/*
+		 * Remaining case:
+		 * |<----range----->|
+		 *   | stripe |
+		 * No need to do any modification
+		 */
+		i++;
+	}
+
+	/* Recaculate map_block size */
+	map_block->start = 0;
+	map_block->length = 0;
+	for (i = 0; i < map_block->num_stripes; i++) {
+		struct btrfs_map_stripe *stripe;
+
+		stripe = &map_block->stripes[i];
+		if (stripe->logical > map_block->start)
+			map_block->start = stripe->logical;
+		if (stripe->logical + stripe->length >
+		    map_block->start + map_block->length)
+			map_block->length = stripe->logical + stripe->length -
+					    map_block->start;
+	}
+}
+
 int __btrfs_map_block_v2(struct btrfs_fs_info *fs_info, int rw, u64 logical,
 			 u64 length, struct btrfs_map_block **map_ret)
 {
@@ -1773,7 +1874,7 @@ int __btrfs_map_block_v2(struct btrfs_fs_info *fs_info, int rw, u64 logical,
 		free(map_block);
 		return ret;
 	}
-	/* TODO: Remove unrelated map_stripes for READ operation */
+	remove_unrelated_stripes(map, rw, logical, length, map_block);
 
 	*map_ret = map_block;
 	return 0;
