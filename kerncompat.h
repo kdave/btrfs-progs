@@ -299,7 +299,7 @@ static inline void assert_trace(const char *assertion, const char *filename,
 #else
 #define BUG_ON(c) assert(!(c))
 #define WARN_ON(c) warning_trace(#c, __FILE__, __func__, __LINE__, (long)(c))
-#define ASSERT(c) assert(!(c))
+#define ASSERT(c) assert((c))
 #define BUG() assert(0)
 #endif
 
