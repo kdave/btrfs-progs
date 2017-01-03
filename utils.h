@@ -95,6 +95,8 @@ void set_argv0(char **argv);
 #define UNITS_RAW			(1U << UNITS_MODE_SHIFT)
 #define UNITS_BINARY			(2U << UNITS_MODE_SHIFT)
 #define UNITS_DECIMAL			(3U << UNITS_MODE_SHIFT)
+/* Interpret the u64 value as s64 */
+#define UNITS_NEGATIVE			(4U << UNITS_MODE_SHIFT)
 #define UNITS_MODE_MASK			((1U << UNITS_MODE_SHIFT) - 1)
 #define UNITS_MODE_SHIFT		(8)
 #define UNITS_HUMAN_BINARY		(UNITS_BINARY)
@@ -174,9 +176,9 @@ int check_mounted_where(int fd, const char *file, char *where, int size,
 int btrfs_device_already_in_root(struct btrfs_root *root, int fd,
 				 int super_offset);
 
-int pretty_size_snprintf(s64 size, char *str, size_t str_bytes, unsigned unit_mode);
+int pretty_size_snprintf(u64 size, char *str, size_t str_bytes, unsigned unit_mode);
 #define pretty_size(size) 	pretty_size_mode(size, UNITS_DEFAULT)
-const char *pretty_size_mode(s64 size, unsigned mode);
+const char *pretty_size_mode(u64 size, unsigned mode);
 
 u64 parse_size(char *s);
 u64 parse_qgroupid(const char *p);
