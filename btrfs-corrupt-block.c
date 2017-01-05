@@ -309,6 +309,12 @@ enum btrfs_inode_field {
 	BTRFS_INODE_FIELD_ISIZE,
 	BTRFS_INODE_FIELD_NBYTES,
 	BTRFS_INODE_FIELD_NLINK,
+	BTRFS_INODE_FIELD_GENERATION,
+	BTRFS_INODE_FIELD_TRANSID,
+	BTRFS_INODE_FIELD_BLOCK_GROUP,
+	BTRFS_INODE_FIELD_MODE,
+	BTRFS_INODE_FIELD_UID,
+	BTRFS_INODE_FIELD_GID,
 	BTRFS_INODE_FIELD_BAD,
 };
 
@@ -349,6 +355,18 @@ static enum btrfs_inode_field convert_inode_field(char *field)
 		return BTRFS_INODE_FIELD_NBYTES;
 	if (!strncmp(field, "nlink", FIELD_BUF_LEN))
 		return BTRFS_INODE_FIELD_NLINK;
+	if (!strncmp(field, "generation", FIELD_BUF_LEN))
+		return BTRFS_INODE_FIELD_GENERATION;
+	if (!strncmp(field, "transid", FIELD_BUF_LEN))
+		return BTRFS_INODE_FIELD_TRANSID;
+	if (!strncmp(field, "block_group", FIELD_BUF_LEN))
+		return BTRFS_INODE_FIELD_BLOCK_GROUP;
+	if (!strncmp(field, "mode", FIELD_BUF_LEN))
+		return BTRFS_INODE_FIELD_MODE;
+	if (!strncmp(field, "uid", FIELD_BUF_LEN))
+		return BTRFS_INODE_FIELD_UID;
+	if (!strncmp(field, "gid", FIELD_BUF_LEN))
+		return BTRFS_INODE_FIELD_GID;
 	return BTRFS_INODE_FIELD_BAD;
 }
 
@@ -610,6 +628,36 @@ static int corrupt_inode(struct btrfs_trans_handle *trans,
 		orig = btrfs_inode_nlink(path->nodes[0], ei);
 		bogus = generate_u32(orig);
 		btrfs_set_inode_nlink(path->nodes[0], ei, bogus);
+		break;
+	case BTRFS_INODE_FIELD_GENERATION:
+		orig = btrfs_inode_generation(path->nodes[0], ei);
+		bogus = generate_u64(orig);
+		btrfs_set_inode_generation(path->nodes[0], ei, bogus);
+		break;
+	case BTRFS_INODE_FIELD_TRANSID:
+		orig = btrfs_inode_transid(path->nodes[0], ei);
+		bogus = generate_u64(orig);
+		btrfs_set_inode_transid(path->nodes[0], ei, bogus);
+		break;
+	case BTRFS_INODE_FIELD_BLOCK_GROUP:
+		orig = btrfs_inode_block_group(path->nodes[0], ei);
+		bogus = generate_u64(orig);
+		btrfs_set_inode_block_group(path->nodes[0], ei, bogus);
+		break;
+	case BTRFS_INODE_FIELD_MODE:
+		orig = btrfs_inode_mode(path->nodes[0], ei);
+		bogus = generate_u32(orig);
+		btrfs_set_inode_mode(path->nodes[0], ei, bogus);
+		break;
+	case BTRFS_INODE_FIELD_UID:
+		orig = btrfs_inode_uid(path->nodes[0], ei);
+		bogus = generate_u32(orig);
+		btrfs_set_inode_uid(path->nodes[0], ei, bogus);
+		break;
+	case BTRFS_INODE_FIELD_GID:
+		orig = btrfs_inode_gid(path->nodes[0], ei);
+		bogus = generate_u32(orig);
+		btrfs_set_inode_gid(path->nodes[0], ei, bogus);
 		break;
 	default:
 		ret = -EINVAL;
