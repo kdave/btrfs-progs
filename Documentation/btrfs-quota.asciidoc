@@ -16,7 +16,7 @@ of a btrfs filesystem. The quota groups (qgroups) are managed by the subcommand
 `btrfs qgroup`(8).
 
 NOTE: the qgroups are different than the traditional user quotas and designed
-to track shared and exlusive data per-subvolume.  Plese refer to the section
+to track shared and exclusive data per-subvolume.  Please refer to the section
 'HIERARCHICAL QUOTA GROUP CONCEPTS' for a detailed description.
 
 PERFORMANCE IMPLICATIONS
@@ -91,7 +91,7 @@ Qgroups of level 0 get created automatically when a subvolume/snapshot gets
 created.  The ID of the qgroup corresponds to the ID of the subvolume, so 0/5
 is the qgroup for the root subvolume.
 For the *btrfs qgroup* command, the path to the subvolume can also be used
-instead of '0/ID'.  For all higher levels, the ID can be choosen freely.
+instead of '0/ID'.  For all higher levels, the ID can be chosen freely.
 
 Each qgroup can contain a set of lower level qgroups, thus creating a hierarchy
 of qgroups. Figure 1 shows an example qgroup tree.

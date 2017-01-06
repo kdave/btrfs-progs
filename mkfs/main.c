@@ -366,7 +366,7 @@ static void print_usage(int ret)
 	printf("\t-V|--version            print the mkfs.btrfs version and exit\n");
 	printf("\t--help                  print this help and exit\n");
 	printf("  deprecated:\n");
-	printf("\t-A|--alloc-start START  the offset to start the filesytem\n");
+	printf("\t-A|--alloc-start START  the offset to start the filesystem\n");
 	printf("\t-l|--leafsize SIZE      deprecated, alias for nodesize\n");
 	exit(ret);
 }

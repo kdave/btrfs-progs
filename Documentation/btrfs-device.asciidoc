@@ -186,7 +186,7 @@ logial mappings).
 
 What changed:
 
-* available data space decreased by 3GiB, usable rougly (50 - 3) + (100 - 3) = 144 GiB
+* available data space decreased by 3GiB, usable roughly (50 - 3) + (100 - 3) = 144 GiB
 * metadata redundancy increased
 
 IOW, the unequal device sizes allow for combined space for data yet improved
