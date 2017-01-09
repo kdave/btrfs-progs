@@ -17,7 +17,7 @@ snapshots.
 SUBVOLUME AND SNAPSHOT
 ----------------------
 
-A subvolume is a part of filesystem with it's own and independent
+A subvolume is a part of filesystem with its own and independent
 file/directory hierarchy. Subvolumes can share file extents. A snapshot is
 also subvolume, but with a given initial content of the original subvolume.
 
