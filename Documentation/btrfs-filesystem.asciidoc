@@ -80,7 +80,7 @@ show sizes in TiB, or TB with --si
 If conflicting options are passed, the last one takes precedence.
 
 *defragment* [options] <file>|<dir> [<file>|<dir>...]::
-Defragment file data on a mounted filesystem.
+Defragment file data on a mounted filesystem. Requires kernel 2.6.33 and newer.
 +
 If '-r' is passed, files in dir will be defragmented recursively.
 The start position and the number of bytes to defragment can be specified by
