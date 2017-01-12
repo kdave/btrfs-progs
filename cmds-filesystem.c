@@ -972,20 +972,6 @@ static const char * const cmd_filesystem_defrag_usage[] = {
 	NULL
 };
 
-static int do_defrag(int fd, int fancy_ioctl,
-		struct btrfs_ioctl_defrag_range_args *range)
-{
-	int ret;
-
-	if (!fancy_ioctl)
-		ret = ioctl(fd, BTRFS_IOC_DEFRAG, NULL);
-	else
-		ret = ioctl(fd, BTRFS_IOC_DEFRAG_RANGE, range);
-
-	return ret;
-}
-
-static int defrag_global_fancy_ioctl;
 static struct btrfs_ioctl_defrag_range_args defrag_global_range;
 static int defrag_global_verbose;
 static int defrag_global_errors;
@@ -1004,12 +990,11 @@ static int defrag_callback(const char *fpath, const struct stat *sb,
 			err = errno;
 			goto error;
 		}
-		ret = do_defrag(fd, defrag_global_fancy_ioctl, &defrag_global_range);
+		ret = ioctl(fd, BTRFS_IOC_DEFRAG_RANGE, &defrag_global_range);
 		close(fd);
-		if (ret && errno == ENOTTY && defrag_global_fancy_ioctl) {
-			error("defrag range ioctl not "
-				"supported in this kernel, please try "
-				"without any options.");
+		if (ret && errno == ENOTTY) {
+			error(
+"defrag range ioctl not supported in this kernel version, 2.6.33 and newer is required");
 			defrag_global_errors++;
 			return ENOTTY;
 		}
@@ -1046,7 +1031,6 @@ static int cmd_filesystem_defrag(int argc, char **argv)
 	 * use the v2 defrag ioctl.
 	 */
 	thresh = 32 * 1024 * 1024;
-	defrag_global_fancy_ioctl = 1;
 
 	defrag_global_errors = 0;
 	defrag_global_verbose = 0;
@@ -1061,22 +1045,18 @@ static int cmd_filesystem_defrag(int argc, char **argv)
 			compress_type = BTRFS_COMPRESS_ZLIB;
 			if (optarg)
 				compress_type = parse_compress_type(optarg);
-			defrag_global_fancy_ioctl = 1;
 			break;
 		case 'f':
 			flush = 1;
-			defrag_global_fancy_ioctl = 1;
 			break;
 		case 'v':
 			defrag_global_verbose = 1;
 			break;
 		case 's':
 			start = parse_size(optarg);
-			defrag_global_fancy_ioctl = 1;
 			break;
 		case 'l':
 			len = parse_size(optarg);
-			defrag_global_fancy_ioctl = 1;
 			break;
 		case 't':
 			thresh = parse_size(optarg);
@@ -1086,7 +1066,6 @@ static int cmd_filesystem_defrag(int argc, char **argv)
 					thresh, (u32)-1);
 				thresh = (u32)-1;
 			}
-			defrag_global_fancy_ioctl = 1;
 			break;
 		case 'r':
 			recursive = 1;
@@ -1176,15 +1155,14 @@ static int cmd_filesystem_defrag(int argc, char **argv)
 		} else {
 			if (defrag_global_verbose)
 				printf("%s\n", argv[i]);
-			ret = do_defrag(fd, defrag_global_fancy_ioctl,
+			ret = ioctl(fd, BTRFS_IOC_DEFRAG_RANGE,
 					&defrag_global_range);
 			defrag_err = errno;
 		}
 		close_file_or_dir(fd, dirstream);
-		if (ret && defrag_err == ENOTTY && defrag_global_fancy_ioctl) {
-			error("defrag range ioctl not "
-				"supported in this kernel, please try "
-				"without any options.");
+		if (ret && defrag_err == ENOTTY) {
+			error(
+"defrag range ioctl not supported in this kernel version, 2.6.33 and newer is required");
 			defrag_global_errors++;
 			break;
 		}
