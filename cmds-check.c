@@ -4947,10 +4947,17 @@ static int check_fs_first_inode(struct btrfs_root *root, unsigned int ext_ref)
 	int err = 0;
 	int ret;
 
-	btrfs_init_path(&path);
 	key.objectid = BTRFS_FIRST_FREE_OBJECTID;
 	key.type = BTRFS_INODE_ITEM_KEY;
 	key.offset = 0;
+
+	/* For root being dropped, we don't need to check first inode */
+	if (btrfs_root_refs(&root->root_item) == 0 &&
+	    btrfs_disk_key_objectid(&root->root_item.drop_progress) >=
+	    key.objectid)
+		return 0;
+
+	btrfs_init_path(&path);
 
 	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
 	if (ret < 0)
