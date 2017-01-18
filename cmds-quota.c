@@ -154,28 +154,42 @@ static int cmd_quota_rescan(int argc, char **argv)
 	ret = ioctl(fd, ioctlnum, &args);
 	e = errno;
 
-	if (wait_for_completion && (ret == 0 || e == EINPROGRESS)) {
-		ret = ioctl(fd, BTRFS_IOC_QUOTA_RESCAN_WAIT, &args);
-		e = errno;
-	}
-	close_file_or_dir(fd, dirstream);
-
-	if (ioctlnum == BTRFS_IOC_QUOTA_RESCAN) {
+	if (ioctlnum == BTRFS_IOC_QUOTA_RESCAN_STATUS) {
+		close_file_or_dir(fd, dirstream);
 		if (ret < 0) {
-			error("quota rescan failed: %s", strerror(e));
+			error("could not obtain quota rescan status: %s",
+			      strerror(e));
 			return 1;
-		}  else {
-			printf("quota rescan started\n");
 		}
-	} else {
-		if (!args.flags) {
+		if (!args.flags)
 			printf("no rescan operation in progress\n");
-		} else {
+		else
 			printf("rescan operation running (current key %lld)\n",
 				args.progress);
+		return 0;
+	}
+
+	if (ret == 0) {
+		printf("quota rescan started\n");
+		fflush(stdout);
+	} else if (ret < 0 && (!wait_for_completion || e != EINPROGRESS)) {
+		error("quota rescan failed: %s", strerror(e));
+		close_file_or_dir(fd, dirstream);
+		return 1;
+	}
+
+	if (wait_for_completion) {
+		ret = ioctl(fd, BTRFS_IOC_QUOTA_RESCAN_WAIT, &args);
+		e = errno;
+		if (ret < 0) {
+			error("quota rescan wait failed: %s",
+			      strerror(e));
+			close_file_or_dir(fd, dirstream);
+			return 1;
 		}
 	}
 
+	close_file_or_dir(fd, dirstream);
 	return 0;
 }
 
