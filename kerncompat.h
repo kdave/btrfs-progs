@@ -291,17 +291,15 @@ static inline void assert_trace(const char *assertion, const char *filename,
 	abort();
 	exit(1);
 }
-
-#define BUG_ON(c) assert_trace(#c, __FILE__, __func__, __LINE__, (long)(c))
-#define WARN_ON(c) warning_trace(#c, __FILE__, __func__, __LINE__, (long)(c))
 #define	ASSERT(c) assert_trace(#c, __FILE__, __func__, __LINE__, (long)!(c))
-#define BUG() assert_trace(NULL, __FILE__, __func__, __LINE__, 1)
+#define BUG_ON(c) assert_trace(#c, __FILE__, __func__, __LINE__, (long)(c))
 #else
-#define BUG_ON(c) assert(!(c))
-#define WARN_ON(c) warning_trace(#c, __FILE__, __func__, __LINE__, (long)(c))
-#define ASSERT(c) assert(!(c))
-#define BUG() assert(0)
+#define ASSERT(c) assert(c)
+#define BUG_ON(c) ASSERT(!(c))
 #endif
+
+#define BUG() BUG_ON(1)
+#define WARN_ON(c) warning_trace(#c, __FILE__, __func__, __LINE__, (long)(c))
 
 #define container_of(ptr, type, member) ({                      \
         const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
