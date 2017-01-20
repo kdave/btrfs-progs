@@ -1067,7 +1067,7 @@ static int __qgroups_search(int fd, struct qgroup_lookup *qgroup_lookup)
 		if (ret < 0) {
 			error("cannot perform the search: %s",
 					strerror(errno));
-			return ret;
+			return -errno;
 		}
 		/* the ioctl returns the number of item it found in nr_items */
 		if (sk->nr_items == 0)

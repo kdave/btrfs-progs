@@ -296,7 +296,6 @@ static int cmd_qgroup_show(int argc, char **argv)
 	char *path;
 	int ret = 0;
 	int fd;
-	int e;
 	DIR *dirstream = NULL;
 	u64 qgroupid;
 	int filter_flag = 0;
@@ -383,10 +382,9 @@ static int cmd_qgroup_show(int argc, char **argv)
 					qgroupid);
 	}
 	ret = btrfs_show_qgroups(fd, filter_set, comparer_set);
-	e = errno;
 	close_file_or_dir(fd, dirstream);
 	if (ret < 0)
-		error("can't list qgroups: %s", strerror(e));
+		error("can't list qgroups: %s", strerror(-ret));
 
 out:
 	return !!ret;
