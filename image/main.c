@@ -550,7 +550,7 @@ static void sanitize_name(struct metadump_struct *md, u8 *dst,
 		return;
 	}
 
-	memcpy(eb->data, dst, eb->len);
+	memcpy(eb->data, src->data, src->len);
 
 	switch (key->type) {
 	case BTRFS_DIR_ITEM_KEY:
