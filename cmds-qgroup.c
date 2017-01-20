@@ -382,9 +382,11 @@ static int cmd_qgroup_show(int argc, char **argv)
 					qgroupid);
 	}
 	ret = btrfs_show_qgroups(fd, filter_set, comparer_set);
-	close_file_or_dir(fd, dirstream);
-	if (ret < 0)
+	if (ret == -ENOENT)
+		error("can't list qgroups: quotas not enabled");
+	else if (ret < 0)
 		error("can't list qgroups: %s", strerror(-ret));
+	close_file_or_dir(fd, dirstream);
 
 out:
 	return !!ret;
