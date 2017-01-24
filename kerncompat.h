@@ -93,14 +93,9 @@ static inline void warning_trace(const char *assertion, const char *filename,
 {
 	if (!val)
 		return;
-	if (assertion)
-		fprintf(stderr,
-			"%s:%d: %s: Warning: assertion `%s` failed, value %ld\n",
-			filename, line, func, assertion, val);
-	else
-		fprintf(stderr,
-			"%s:%d: %s: Warning: assertion failed, value %ld.\n",
-			filename, line, func, val);
+	fprintf(stderr,
+		"%s:%d: %s: Warning: assertion `%s` failed, value %ld\n",
+		filename, line, func, assertion, val);
 #ifndef BTRFS_DISABLE_BACKTRACE
 	print_trace();
 #endif
