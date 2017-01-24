@@ -299,13 +299,13 @@ static inline int IS_ERR_OR_NULL(const void *ptr)
 static inline void assert_trace(const char *assertion, const char *filename,
 			      const char *func, unsigned line, long val)
 {
-	if (!val)
+	if (val)
 		return;
 	warning_trace(assertion, filename, func, line, val);
 	abort();
 	exit(1);
 }
-#define	ASSERT(c) assert_trace(#c, __FILE__, __func__, __LINE__, (long)!(c))
+#define	ASSERT(c) assert_trace(#c, __FILE__, __func__, __LINE__, (long)(c))
 #else
 #define ASSERT(c) assert(c)
 #endif
