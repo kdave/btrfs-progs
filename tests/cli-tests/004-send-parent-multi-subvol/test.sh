@@ -16,13 +16,13 @@ run_check_mount_test_dev
 here=`pwd`
 cd "$TEST_MNT" || _fail "cannot chdir to TEST_MNT"
 
-run_check $SUDO_HELPER btrfs subvolume create subv-parent
+run_check $SUDO_HELPER "$TOP/btrfs" subvolume create subv-parent
 run_check $SUDO_HELPER dd if=/dev/urandom of=subv-parent/file bs=1M count=10
-run_check $SUDO_HELPER btrfs subvolume snapshot -r subv-parent subv-snap1
+run_check $SUDO_HELPER "$TOP/btrfs" subvolume snapshot -r subv-parent subv-snap1
 run_check $SUDO_HELPER dd if=/dev/urandom of=subv-parent/file bs=1M count=10
-run_check $SUDO_HELPER btrfs subvolume snapshot -r subv-parent subv-snap2
+run_check $SUDO_HELPER "$TOP/btrfs" subvolume snapshot -r subv-parent subv-snap2
 run_check $SUDO_HELPER dd if=/dev/urandom of=subv-parent/file bs=1M count=10
-run_check $SUDO_HELPER btrfs subvolume snapshot -r subv-parent subv-snap3
+run_check $SUDO_HELPER "$TOP/btrfs" subvolume snapshot -r subv-parent subv-snap3
 
 run_check truncate -s0 "$here"/send.stream
 run_check chmod a+w "$here"/send.stream
