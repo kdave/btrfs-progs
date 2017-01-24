@@ -301,7 +301,9 @@ static inline void assert_trace(const char *assertion, const char *filename,
 {
 	if (val)
 		return;
-	warning_trace(assertion, filename, func, line, val);
+	fprintf(stderr,
+		"%s:%d: %s: Assertion `%s` failed, value %ld\n",
+		filename, line, func, assertion, val);
 	abort();
 	exit(1);
 }
