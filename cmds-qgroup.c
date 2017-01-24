@@ -375,12 +375,9 @@ static int cmd_qgroup_show(int argc, char **argv)
 
 	if (sync) {
 		ret = ioctl(fd, BTRFS_IOC_SYNC);
-		if (ret < 0) {
-			error("sync ioctl failed on '%s': %s", path,
+		if (ret < 0)
+			warning("sync ioctl failed on '%s': %s", path,
 			      strerror(errno));
-			close_file_or_dir(fd, dirstream);
-			goto out;
-		}
 	}
 
 	if (filter_flag) {
