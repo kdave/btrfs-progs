@@ -134,7 +134,7 @@ static int discard_blocks(int fd, u64 start, u64 len)
 {
 	while (len > 0) {
 		/* 1G granularity */
-		u64 chunk_size = min_t(u64, len, 1*1024*1024*1024);
+		u64 chunk_size = min_t(u64, len, SZ_1G);
 		int ret;
 
 		ret = discard_range(fd, start, chunk_size);
@@ -542,7 +542,7 @@ static int insert_temp_chunk_item(int fd, struct extent_buffer *buf,
 	chunk = btrfs_item_ptr(buf, *slot, struct btrfs_chunk);
 	btrfs_set_chunk_length(buf, chunk, len);
 	btrfs_set_chunk_owner(buf, chunk, BTRFS_EXTENT_TREE_OBJECTID);
-	btrfs_set_chunk_stripe_len(buf, chunk, 64 * 1024);
+	btrfs_set_chunk_stripe_len(buf, chunk, BTRFS_STRIPE_LEN);
 	btrfs_set_chunk_type(buf, chunk, type);
 	btrfs_set_chunk_io_align(buf, chunk, cfg->sectorsize);
 	btrfs_set_chunk_io_width(buf, chunk, cfg->sectorsize);
@@ -1335,7 +1335,7 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 	chunk = btrfs_item_ptr(buf, nritems, struct btrfs_chunk);
 	btrfs_set_chunk_length(buf, chunk, BTRFS_MKFS_SYSTEM_GROUP_SIZE);
 	btrfs_set_chunk_owner(buf, chunk, BTRFS_EXTENT_TREE_OBJECTID);
-	btrfs_set_chunk_stripe_len(buf, chunk, 64 * 1024);
+	btrfs_set_chunk_stripe_len(buf, chunk, BTRFS_STRIPE_LEN);
 	btrfs_set_chunk_type(buf, chunk, BTRFS_BLOCK_GROUP_SYSTEM);
 	btrfs_set_chunk_io_align(buf, chunk, cfg->sectorsize);
 	btrfs_set_chunk_io_width(buf, chunk, cfg->sectorsize);
@@ -1684,7 +1684,7 @@ static int zero_blocks(int fd, off_t start, size_t len)
 	return ret;
 }
 
-#define ZERO_DEV_BYTES (2 * 1024 * 1024)
+#define ZERO_DEV_BYTES SZ_2M
 
 /* don't write outside the device by clamping the region to the device size */
 static int zero_dev_clamped(int fd, off_t start, ssize_t len, u64 dev_size)

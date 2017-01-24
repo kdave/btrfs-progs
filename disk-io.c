@@ -207,7 +207,7 @@ void readahead_tree_block(struct btrfs_root *root, u64 bytenr, u32 blocksize,
 			     bytenr, &length, &multi, 0, NULL)) {
 		device = multi->stripes[0].dev;
 		device->total_ios++;
-		blocksize = min(blocksize, (u32)(64 * 1024));
+		blocksize = min(blocksize, (u32)SZ_64K);
 		readahead(device->fd, multi->stripes[0].physical, blocksize);
 	}
 

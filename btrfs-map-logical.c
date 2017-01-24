@@ -30,7 +30,7 @@
 #include "list.h"
 #include "utils.h"
 
-#define BUFFER_SIZE (64 * 1024)
+#define BUFFER_SIZE SZ_64K
 
 /* we write the mirror info to stdout unless they are dumping the data
  * to stdout

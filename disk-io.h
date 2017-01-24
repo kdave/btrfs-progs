@@ -21,8 +21,9 @@
 
 #include "kerncompat.h"
 #include "ctree.h"
+#include "sizes.h"
 
-#define BTRFS_SUPER_INFO_OFFSET (64 * 1024)
+#define BTRFS_SUPER_INFO_OFFSET SZ_64K
 #define BTRFS_SUPER_INFO_SIZE 4096
 
 #define BTRFS_SUPER_MIRROR_MAX	 3
@@ -99,7 +100,7 @@ enum btrfs_read_sb_flags {
 
 static inline u64 btrfs_sb_offset(int mirror)
 {
-	u64 start = 16 * 1024;
+	u64 start = SZ_16K;
 	if (mirror)
 		return start << (BTRFS_SUPER_MIRROR_SHIFT * mirror);
 	return BTRFS_SUPER_INFO_OFFSET;

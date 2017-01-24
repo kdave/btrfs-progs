@@ -2691,7 +2691,7 @@ int btrfs_reserve_extent(struct btrfs_trans_handle *trans,
 			BUG_ON(ret);
 		}
 		ret = do_chunk_alloc(trans, root->fs_info->extent_root,
-				     num_bytes + 2 * 1024 * 1024, data);
+				     num_bytes + SZ_2M, data);
 		BUG_ON(ret);
 	}
 
@@ -2908,8 +2908,8 @@ static void noinline reada_walk_down(struct btrfs_root *root,
 
 	for (i = slot; i < nritems && skipped < 32; i++) {
 		bytenr = btrfs_node_blockptr(node, i);
-		if (last && ((bytenr > last && bytenr - last > 32 * 1024) ||
-			     (last > bytenr && last - bytenr > 32 * 1024))) {
+		if (last && ((bytenr > last && bytenr - last > SZ_32K) ||
+			     (last > bytenr && last - bytenr > SZ_32K))) {
 			skipped++;
 			continue;
 		}
@@ -3413,19 +3413,18 @@ int btrfs_make_block_groups(struct btrfs_trans_handle *trans,
 			group_type = BTRFS_BLOCK_GROUP_SYSTEM;
 			group_size /= 4;
 			group_size &= ~(group_align - 1);
-			group_size = max_t(u64, group_size, 8 * 1024 * 1024);
-			group_size = min_t(u64, group_size, 32 * 1024 * 1024);
+			group_size = max_t(u64, group_size, SZ_8M);
+			group_size = min_t(u64, group_size, SZ_32M);
 		} else {
 			group_size &= ~(group_align - 1);
 			if (total_data >= total_metadata * 2) {
 				group_type = BTRFS_BLOCK_GROUP_METADATA;
-				group_size = min_t(u64, group_size,
-						   1ULL * 1024 * 1024 * 1024);
+				group_size = min_t(u64, group_size, SZ_1G);
 				total_metadata += group_size;
 			} else {
 				group_type = BTRFS_BLOCK_GROUP_DATA;
 				group_size = min_t(u64, group_size,
-						   5ULL * 1024 * 1024 * 1024);
+						   5ULL * SZ_1G);
 				total_data += group_size;
 			}
 			if ((total_bytes - cur_start) * 4 < group_size * 5)

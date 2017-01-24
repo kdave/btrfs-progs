@@ -301,7 +301,7 @@ static void get_raid56_used(int fd, struct chunk_info *chunks, int chunkcount,
 	}
 }
 
-#define	MIN_UNALOCATED_THRESH	(16 * 1024 * 1024)
+#define	MIN_UNALOCATED_THRESH	SZ_16M
 static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 		int chunkcount, struct device_info *devinfo, int devcount,
 		char *path, unsigned unit_mode)

@@ -21,6 +21,7 @@
 #include "print-tree.h"
 #include "repair.h"
 #include "internal.h"
+#include "sizes.h"
 
 static int split_node(struct btrfs_trans_handle *trans, struct btrfs_root
 		      *root, struct btrfs_path *path, int level);
@@ -368,7 +369,7 @@ int btrfs_cow_block(struct btrfs_trans_handle *trans,
 		return 0;
 	}
 
-	search_start = buf->start & ~((u64)(1024 * 1024 * 1024) - 1);
+	search_start = buf->start & ~((u64)SZ_1G - 1);
 	ret = __btrfs_cow_block(trans, root, buf, parent,
 				 parent_slot, cow_ret, search_start, 0);
 	return ret;
@@ -1026,9 +1027,9 @@ void reada_for_search(struct btrfs_root *root, struct btrfs_path *path,
 			nread += blocksize;
 		}
 		nscan++;
-		if (path->reada < 2 && (nread > (256 * 1024) || nscan > 32))
+		if (path->reada < 2 && (nread > SZ_256K || nscan > 32))
 			break;
-		if(nread > (1024 * 1024) || nscan > 128)
+		if(nread > SZ_1M || nscan > 128)
 			break;
 
 		if (search < lowest_read)
