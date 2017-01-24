@@ -106,6 +106,20 @@ static inline void warning_trace(const char *assertion, const char *filename,
 #endif
 }
 
+static inline void bugon_trace(const char *assertion, const char *filename,
+			      const char *func, unsigned line, long val)
+{
+	if (!val)
+		return;
+	fprintf(stderr,
+		"%s:%d: %s: BUG_ON `%s` triggered, value %ld\n",
+		filename, line, func, assertion, val);
+#ifndef BTRFS_DISABLE_BACKTRACE
+	print_trace();
+#endif
+	abort();
+	exit(1);
+}
 
 #ifdef __CHECKER__
 #define __force    __attribute__((force))
@@ -292,12 +306,11 @@ static inline void assert_trace(const char *assertion, const char *filename,
 	exit(1);
 }
 #define	ASSERT(c) assert_trace(#c, __FILE__, __func__, __LINE__, (long)!(c))
-#define BUG_ON(c) assert_trace(#c, __FILE__, __func__, __LINE__, (long)(c))
 #else
 #define ASSERT(c) assert(c)
-#define BUG_ON(c) ASSERT(!(c))
 #endif
 
+#define BUG_ON(c) bugon_trace(#c, __FILE__, __func__, __LINE__, (long)(c))
 #define BUG() BUG_ON(1)
 #define WARN_ON(c) warning_trace(#c, __FILE__, __func__, __LINE__, (long)(c))
 
