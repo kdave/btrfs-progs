@@ -319,7 +319,7 @@ static int find_free_dev_extent_start(struct btrfs_trans_handle *trans,
 	 * used by the boot loader (grub for example), so we make sure to start
 	 * at an offset of at least 1MB.
 	 */
-	min_search_start = max(root->fs_info->alloc_start, 1024ull * 1024);
+	min_search_start = max(root->fs_info->alloc_start, (u64)SZ_1M);
 	search_start = max(search_start, min_search_start);
 
 	path = btrfs_alloc_path();
@@ -843,8 +843,8 @@ int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 	struct list_head *dev_list = &info->fs_devices->devices;
 	struct list_head *cur;
 	struct map_lookup *map;
-	int min_stripe_size = 1 * 1024 * 1024;
-	u64 calc_size = 8 * 1024 * 1024;
+	int min_stripe_size = SZ_1M;
+	u64 calc_size = SZ_8M;
 	u64 min_free;
 	u64 max_chunk_size = 4 * calc_size;
 	u64 avail = 0;
@@ -870,19 +870,19 @@ int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 		    BTRFS_BLOCK_GROUP_RAID10 |
 		    BTRFS_BLOCK_GROUP_DUP)) {
 		if (type & BTRFS_BLOCK_GROUP_SYSTEM) {
-			calc_size = 8 * 1024 * 1024;
+			calc_size = SZ_8M;
 			max_chunk_size = calc_size * 2;
-			min_stripe_size = 1 * 1024 * 1024;
+			min_stripe_size = SZ_1M;
 			max_stripes = BTRFS_MAX_DEVS_SYS_CHUNK;
 		} else if (type & BTRFS_BLOCK_GROUP_DATA) {
-			calc_size = 1024 * 1024 * 1024;
+			calc_size = SZ_1G;
 			max_chunk_size = 10 * calc_size;
-			min_stripe_size = 64 * 1024 * 1024;
+			min_stripe_size = SZ_64M;
 			max_stripes = BTRFS_MAX_DEVS(chunk_root);
 		} else if (type & BTRFS_BLOCK_GROUP_METADATA) {
-			calc_size = 1024 * 1024 * 1024;
+			calc_size = SZ_1G;
 			max_chunk_size = 4 * calc_size;
-			min_stripe_size = 32 * 1024 * 1024;
+			min_stripe_size = SZ_32M;
 			max_stripes = BTRFS_MAX_DEVS(chunk_root);
 		}
 	}
@@ -1108,7 +1108,7 @@ int btrfs_alloc_data_chunk(struct btrfs_trans_handle *trans,
 	struct list_head *dev_list = &info->fs_devices->devices;
 	struct list_head *cur;
 	struct map_lookup *map;
-	u64 calc_size = 8 * 1024 * 1024;
+	u64 calc_size = SZ_8M;
 	int num_stripes = 1;
 	int sub_stripes = 0;
 	int ret;

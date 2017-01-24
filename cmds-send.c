@@ -44,7 +44,7 @@
 #include "send.h"
 #include "send-utils.h"
 
-#define SEND_BUFFER_SIZE	(64 * 1024)
+#define SEND_BUFFER_SIZE	SZ_64K
 
 /*
  * Default is 1 for historical reasons, changing may break scripts that expect

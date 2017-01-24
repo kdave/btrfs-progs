@@ -22,7 +22,7 @@
 #include "kerncompat.h"
 #include "ctree.h"
 
-#define BTRFS_STRIPE_LEN	(64 * 1024)
+#define BTRFS_STRIPE_LEN	SZ_64K
 
 struct btrfs_device {
 	struct list_head dev_list;

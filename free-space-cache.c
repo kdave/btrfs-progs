@@ -33,7 +33,7 @@
  * filesystem
  */
 #define BITS_PER_BITMAP(sectorsize)		((sectorsize) * 8)
-#define MAX_CACHE_BYTES_PER_GIG	(32 * 1024)
+#define MAX_CACHE_BYTES_PER_GIG	SZ_32K
 
 static int link_free_space(struct btrfs_free_space_ctl *ctl,
 			   struct btrfs_free_space *info);
