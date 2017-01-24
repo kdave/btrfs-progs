@@ -2431,7 +2431,7 @@ static int do_convert(const char *devname, int datacsum, int packing,
 	memset(mkfs_cfg.chunk_uuid, 0, BTRFS_UUID_UNPARSED_SIZE);
 	memset(mkfs_cfg.fs_uuid, 0, BTRFS_UUID_UNPARSED_SIZE);
 
-	ret = make_btrfs(fd, &mkfs_cfg, &cctx);
+	ret = make_convert_btrfs(fd, &mkfs_cfg, &cctx);
 	if (ret) {
 		error("unable to create initial ctree: %s", strerror(-ret));
 		goto fail;

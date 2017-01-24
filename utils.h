@@ -155,8 +155,9 @@ struct btrfs_convert_context {
 #define	PREP_DEVICE_DISCARD	(1U << 1)
 #define	PREP_DEVICE_VERBOSE	(1U << 2)
 
-int make_btrfs(int fd, struct btrfs_mkfs_config *cfg,
-		struct btrfs_convert_context *cctx);
+int make_btrfs(int fd, struct btrfs_mkfs_config *cfg);
+int make_convert_btrfs(int fd, struct btrfs_mkfs_config *cfg,
+			      struct btrfs_convert_context *cctx);
 int btrfs_make_root_dir(struct btrfs_trans_handle *trans,
 			struct btrfs_root *root, u64 objectid);
 int btrfs_prepare_device(int fd, const char *file, u64 *block_count_ret,

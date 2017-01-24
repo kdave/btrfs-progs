@@ -1740,7 +1740,7 @@ int main(int argc, char **argv)
 	mkfs_cfg.stripesize = stripesize;
 	mkfs_cfg.features = features;
 
-	ret = make_btrfs(fd, &mkfs_cfg, NULL);
+	ret = make_btrfs(fd, &mkfs_cfg);
 	if (ret) {
 		error("error during mkfs: %s", strerror(-ret));
 		exit(1);
