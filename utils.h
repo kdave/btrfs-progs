@@ -94,36 +94,10 @@ void btrfs_parse_features_to_string(char *buf, u64 flags);
 void print_kernel_version(FILE *stream, u32 version);
 u32 get_running_kernel_version(void);
 
-struct btrfs_mkfs_config;
-
-struct btrfs_convert_context {
-	u32 blocksize;
-	u32 first_data_block;
-	u32 block_count;
-	u32 inodes_count;
-	u32 free_inodes_count;
-	u64 total_bytes;
-	char *volume_name;
-	const struct btrfs_convert_operations *convert_ops;
-
-	/* The accurate used space of old filesystem */
-	struct cache_tree used;
-
-	/* Batched ranges which must be covered by data chunks */
-	struct cache_tree data_chunks;
-
-	/* Free space which is not covered by data_chunks */
-	struct cache_tree free;
-
-	void *fs_data;
-};
-
 #define	PREP_DEVICE_ZERO_END	(1U << 0)
 #define	PREP_DEVICE_DISCARD	(1U << 1)
 #define	PREP_DEVICE_VERBOSE	(1U << 2)
 
-int make_convert_btrfs(int fd, struct btrfs_mkfs_config *cfg,
-			      struct btrfs_convert_context *cctx);
 int btrfs_make_root_dir(struct btrfs_trans_handle *trans,
 			struct btrfs_root *root, u64 objectid);
 int btrfs_prepare_device(int fd, const char *file, u64 *block_count_ret,
