@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#include <getopt.h>
 
 #include "commands.h"
 #include "utils.h"
@@ -27,6 +28,101 @@
 #define USAGE_LONG		2U
 #define USAGE_OPTIONS		4U
 #define USAGE_LISTING		8U
+
+static char argv0_buf[ARGV0_BUF_SIZE] = "btrfs";
+
+const char *get_argv0_buf(void)
+{
+	return argv0_buf;
+}
+
+void fixup_argv0(char **argv, const char *token)
+{
+	int len = strlen(argv0_buf);
+
+	snprintf(argv0_buf + len, sizeof(argv0_buf) - len, " %s", token);
+	argv[0] = argv0_buf;
+}
+
+void set_argv0(char **argv)
+{
+	strncpy(argv0_buf, argv[0], sizeof(argv0_buf));
+	argv0_buf[sizeof(argv0_buf) - 1] = 0;
+}
+
+int check_argc_exact(int nargs, int expected)
+{
+	if (nargs < expected)
+		fprintf(stderr, "%s: too few arguments\n", argv0_buf);
+	if (nargs > expected)
+		fprintf(stderr, "%s: too many arguments\n", argv0_buf);
+
+	return nargs != expected;
+}
+
+int check_argc_min(int nargs, int expected)
+{
+	if (nargs < expected) {
+		fprintf(stderr, "%s: too few arguments\n", argv0_buf);
+		return 1;
+	}
+
+	return 0;
+}
+
+int check_argc_max(int nargs, int expected)
+{
+	if (nargs > expected) {
+		fprintf(stderr, "%s: too many arguments\n", argv0_buf);
+		return 1;
+	}
+
+	return 0;
+}
+
+/*
+ * Preprocess @argv with getopt_long to reorder options and consume the "--"
+ * option separator.
+ * Unknown short and long options are reported, optionally the @usage is printed
+ * before exit.
+ */
+void clean_args_no_options(int argc, char *argv[], const char * const *usagestr)
+{
+	static const struct option long_options[] = {
+		{NULL, 0, NULL, 0}
+	};
+
+	while (1) {
+		int c = getopt_long(argc, argv, "", long_options, NULL);
+
+		if (c < 0)
+			break;
+
+		switch (c) {
+		default:
+			if (usagestr)
+				usage(usagestr);
+		}
+	}
+}
+
+/*
+ * Same as clean_args_no_options but pass through arguments that could look
+ * like short options. Eg. reisze which takes a negative resize argument like
+ * '-123M' .
+ *
+ * This accepts only two forms:
+ * - "-- option1 option2 ..."
+ * - "option1 option2 ..."
+ */
+void clean_args_no_options_relaxed(int argc, char *argv[], const char * const *usagestr)
+{
+	if (argc <= 1)
+		return;
+
+	if (strcmp(argv[1], "--") == 0)
+		optind = 2;
+}
 
 static int do_usage_one_command(const char * const *usagestr,
 				unsigned int flags, FILE *outf)
