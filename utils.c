@@ -50,6 +50,7 @@
 #include "volumes.h"
 #include "ioctl.h"
 #include "commands.h"
+#include "mkfs/common.h"
 
 #ifndef BLKDISCARD
 #define BLKDISCARD	_IO(0x12,119)
