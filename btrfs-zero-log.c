@@ -24,6 +24,7 @@
 #include "disk-io.h"
 #include "transaction.h"
 #include "utils.h"
+#include "help.h"
 
 __attribute__((noreturn)) static void print_usage(void)
 {

@@ -31,6 +31,7 @@
 #include "transaction.h"
 #include "list.h"
 #include "utils.h"
+#include "help.h"
 
 #define FIELD_BUF_LEN 80
 

@@ -29,6 +29,7 @@
 #include "transaction.h"
 #include "list.h"
 #include "utils.h"
+#include "help.h"
 
 #define BUFFER_SIZE SZ_64K
 

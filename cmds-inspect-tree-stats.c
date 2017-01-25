@@ -36,6 +36,7 @@
 #include "utils.h"
 #include "commands.h"
 #include "cmds-inspect-tree-stats.h"
+#include "help.h"
 
 static int verbose = 0;
 static int no_pretty = 0;

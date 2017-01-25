@@ -37,6 +37,7 @@
 #include "utils.h"
 #include "btrfs-list.h"
 #include "utils.h"
+#include "help.h"
 
 static int is_subvolume_cleaned(int fd, u64 subvolid)
 {
