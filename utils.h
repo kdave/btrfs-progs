@@ -94,20 +94,7 @@ void btrfs_parse_features_to_string(char *buf, u64 flags);
 void print_kernel_version(FILE *stream, u32 version);
 u32 get_running_kernel_version(void);
 
-struct btrfs_mkfs_config {
-	char *label;
-	char fs_uuid[BTRFS_UUID_UNPARSED_SIZE];
-	char chunk_uuid[BTRFS_UUID_UNPARSED_SIZE];
-	u64 blocks[8];
-	u64 num_bytes;
-	u32 nodesize;
-	u32 sectorsize;
-	u32 stripesize;
-	u64 features;
-
-	/* Super bytenr after make_btrfs */
-	u64 super_bytenr;
-};
+struct btrfs_mkfs_config;
 
 struct btrfs_convert_context {
 	u32 blocksize;
@@ -135,7 +122,6 @@ struct btrfs_convert_context {
 #define	PREP_DEVICE_DISCARD	(1U << 1)
 #define	PREP_DEVICE_VERBOSE	(1U << 2)
 
-int make_btrfs(int fd, struct btrfs_mkfs_config *cfg);
 int make_convert_btrfs(int fd, struct btrfs_mkfs_config *cfg,
 			      struct btrfs_convert_context *cctx);
 int btrfs_make_root_dir(struct btrfs_trans_handle *trans,
