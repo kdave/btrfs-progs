@@ -50,6 +50,7 @@
 #include "send-stream.h"
 #include "send-utils.h"
 #include "send-dump.h"
+#include "help.h"
 
 static int g_verbose = 0;
 

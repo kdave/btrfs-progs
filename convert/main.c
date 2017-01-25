@@ -37,6 +37,7 @@
 #include "crc32c.h"
 #include "utils.h"
 #include "task-utils.h"
+#include "help.h"
 
 #if BTRFSCONVERT_EXT2
 #include <ext2fs/ext2_fs.h>

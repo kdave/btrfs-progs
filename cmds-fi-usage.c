@@ -31,6 +31,7 @@
 #include "commands.h"
 
 #include "version.h"
+#include "help.h"
 
 /*
  * Add the chunk info to the chunk_info list

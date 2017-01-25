@@ -32,6 +32,7 @@
 
 #include "commands.h"
 #include "utils.h"
+#include "help.h"
 
 static const char * const balance_cmd_group_usage[] = {
 	"btrfs balance <command> [options] <path>",

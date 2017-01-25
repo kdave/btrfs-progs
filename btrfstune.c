@@ -32,6 +32,7 @@
 #include "transaction.h"
 #include "utils.h"
 #include "volumes.h"
+#include "help.h"
 
 static char *device;
 static int force = 0;

@@ -22,6 +22,7 @@
 #include "crc32c.h"
 #include "commands.h"
 #include "utils.h"
+#include "help.h"
 
 static const char * const btrfs_cmd_group_usage[] = {
 	"btrfs [--help] [--version] <group> [<group>...] <command> [<args>]",

@@ -26,6 +26,7 @@
 #include "props.h"
 #include "ctree.h"
 #include "utils.h"
+#include "help.h"
 
 static const char * const property_cmd_group_usage[] = {
 	"btrfs property get/set/list [-t <type>] <object> [<name>] [value]",

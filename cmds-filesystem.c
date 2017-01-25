@@ -38,6 +38,7 @@
 #include "list_sort.h"
 #include "disk-io.h"
 #include "cmds-fi-du.h"
+#include "help.h"
 
 /*
  * for btrfs fi show, we maintain a hash of fsids we've already printed.

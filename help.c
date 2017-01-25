@@ -21,6 +21,7 @@
 
 #include "commands.h"
 #include "utils.h"
+#include "help.h"
 
 #define USAGE_SHORT		1U
 #define USAGE_LONG		2U

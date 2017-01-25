@@ -51,6 +51,7 @@
 #include "volumes.h"
 #include "ioctl.h"
 #include "commands.h"
+#include "help.h"
 
 #ifndef BLKDISCARD
 #define BLKDISCARD	_IO(0x12,119)

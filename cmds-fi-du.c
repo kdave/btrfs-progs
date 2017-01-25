@@ -40,6 +40,7 @@
 #include "rbtree.h"
 
 #include "interval_tree_generic.h"
+#include "help.h"
 
 static int summarize = 0;
 static unsigned unit_mode = UNITS_RAW;

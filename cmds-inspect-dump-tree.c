@@ -32,6 +32,7 @@
 #include "commands.h"
 #include "utils.h"
 #include "cmds-inspect-dump-tree.h"
+#include "help.h"
 
 static void print_extents(struct btrfs_root *root, struct extent_buffer *eb)
 {

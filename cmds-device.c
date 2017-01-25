@@ -32,6 +32,7 @@
 #include "cmds-fi-usage.h"
 
 #include "commands.h"
+#include "help.h"
 
 static const char * const device_cmd_group_usage[] = {
 	"btrfs device <command> [<args>]",

@@ -42,6 +42,7 @@
 #include "backref.h"
 #include "ulist.h"
 #include "hash.h"
+#include "help.h"
 
 enum task_position {
 	TASK_EXTENTS,

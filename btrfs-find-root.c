@@ -35,6 +35,7 @@
 #include "crc32c.h"
 #include "extent-cache.h"
 #include "find-root.h"
+#include "help.h"
 
 static void find_root_usage(void)
 {

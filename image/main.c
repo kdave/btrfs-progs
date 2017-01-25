@@ -35,6 +35,7 @@
 #include "utils.h"
 #include "volumes.h"
 #include "extent_io.h"
+#include "help.h"
 
 #define HEADER_MAGIC		0xbd5c25e27295668bULL
 #define MAX_PENDING_SIZE	(256 * 1024)
