@@ -23,6 +23,7 @@
 #include "ctree.h"
 #include <dirent.h>
 #include <stdarg.h>
+#include "common-defs.h"
 #include "internal.h"
 #include "btrfs-list.h"
 #include "sizes.h"
@@ -61,8 +62,6 @@
 #define BTRFS_ARG_UUID		2
 #define BTRFS_ARG_BLKDEV	3
 #define BTRFS_ARG_REG		4
-
-#define BTRFS_UUID_UNPARSED_SIZE	37
 
 /*
  * Output modes of size
