@@ -37,7 +37,6 @@
 #include <sys/vfs.h>
 #include <sys/statfs.h>
 #include <linux/magic.h>
-#include <getopt.h>
 #include <sys/utsname.h>
 #include <linux/version.h>
 
@@ -51,7 +50,6 @@
 #include "volumes.h"
 #include "ioctl.h"
 #include "commands.h"
-#include "help.h"
 
 #ifndef BLKDISCARD
 #define BLKDISCARD	_IO(0x12,119)
@@ -59,62 +57,10 @@
 
 static int btrfs_scan_done = 0;
 
-static char argv0_buf[ARGV0_BUF_SIZE] = "btrfs";
-
 static int rand_seed_initlized = 0;
 static unsigned short rand_seed[3];
 
 struct btrfs_config bconf;
-
-const char *get_argv0_buf(void)
-{
-	return argv0_buf;
-}
-
-void fixup_argv0(char **argv, const char *token)
-{
-	int len = strlen(argv0_buf);
-
-	snprintf(argv0_buf + len, sizeof(argv0_buf) - len, " %s", token);
-	argv[0] = argv0_buf;
-}
-
-void set_argv0(char **argv)
-{
-	strncpy(argv0_buf, argv[0], sizeof(argv0_buf));
-	argv0_buf[sizeof(argv0_buf) - 1] = 0;
-}
-
-int check_argc_exact(int nargs, int expected)
-{
-	if (nargs < expected)
-		fprintf(stderr, "%s: too few arguments\n", argv0_buf);
-	if (nargs > expected)
-		fprintf(stderr, "%s: too many arguments\n", argv0_buf);
-
-	return nargs != expected;
-}
-
-int check_argc_min(int nargs, int expected)
-{
-	if (nargs < expected) {
-		fprintf(stderr, "%s: too few arguments\n", argv0_buf);
-		return 1;
-	}
-
-	return 0;
-}
-
-int check_argc_max(int nargs, int expected)
-{
-	if (nargs > expected) {
-		fprintf(stderr, "%s: too many arguments\n", argv0_buf);
-		return 1;
-	}
-
-	return 0;
-}
-
 
 /*
  * Discard the given range in one go
@@ -4068,50 +4014,6 @@ int string_is_numerical(const char *str)
 	if (*str != '\0')
 		return 0;
 	return 1;
-}
-
-/*
- * Preprocess @argv with getopt_long to reorder options and consume the "--"
- * option separator.
- * Unknown short and long options are reported, optionally the @usage is printed
- * before exit.
- */
-void clean_args_no_options(int argc, char *argv[], const char * const *usagestr)
-{
-	static const struct option long_options[] = {
-		{NULL, 0, NULL, 0}
-	};
-
-	while (1) {
-		int c = getopt_long(argc, argv, "", long_options, NULL);
-
-		if (c < 0)
-			break;
-
-		switch (c) {
-		default:
-			if (usagestr)
-				usage(usagestr);
-		}
-	}
-}
-
-/*
- * Same as clean_args_no_options but pass through arguments that could look
- * like short options. Eg. reisze which takes a negative resize argument like
- * '-123M' .
- *
- * This accepts only two forms:
- * - "-- option1 option2 ..."
- * - "option1 option2 ..."
- */
-void clean_args_no_options_relaxed(int argc, char *argv[], const char * const *usagestr)
-{
-	if (argc <= 1)
-		return;
-
-	if (strcmp(argv[1], "--") == 0)
-		optind = 2;
 }
 
 /* Subvolume helper functions */
