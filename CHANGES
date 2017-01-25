@@ -1,3 +1,18 @@
+btrfs-progs-4.9.1 (2017-01-27)
+  * check:
+    * use correct inode number for lost+found files
+    * lowmem mode: fix false alert on dropped leaf
+  * size reports: negative numbers might appear in size reports during device
+    deletes (previously in EiB units)
+  * mkfs: print device being trimmed
+  * defrag: v1 ioctl support dropped
+  * quota: print message before starting to wait for rescan
+  * qgroup show: new option to sync before printing the stats
+  * other:
+    * corrupt-block enhancements
+    * backtrace and co. cleanups
+    * doc fixes
+
 btrfs-progs-4.9 (2016-12-23)
   * check: many lowmem mode updates
   * send: use splice syscall to copy buffer from kernel
