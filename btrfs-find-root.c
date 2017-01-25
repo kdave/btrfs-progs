@@ -36,7 +36,7 @@
 #include "extent-cache.h"
 #include "find-root.h"
 
-static void usage(void)
+static void find_root_usage(void)
 {
 	fprintf(stderr, "Usage: find-roots [-a] [-o search_objectid] "
 		"[ -g search_generation ] [ -l search_level ] <device>\n");
@@ -179,14 +179,14 @@ int main(int argc, char **argv)
 			break;
 		case GETOPT_VAL_HELP:
 		default:
-			usage();
+			find_root_usage();
 			exit(c != GETOPT_VAL_HELP);
 		}
 	}
 
 	set_argv0(argv);
 	if (check_argc_min(argc - optind, 1)) {
-		usage();
+		find_root_usage();
 		exit(1);
 	}
 
