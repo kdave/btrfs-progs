@@ -30,27 +30,8 @@
 
 #define BTRFS_MKFS_SYSTEM_GROUP_SIZE SZ_4M
 #define BTRFS_MKFS_SMALL_VOLUME_SIZE SZ_1G
-#define BTRFS_MKFS_DEFAULT_NODE_SIZE SZ_16K
-#define BTRFS_MKFS_DEFAULT_FEATURES 				\
-		(BTRFS_FEATURE_INCOMPAT_EXTENDED_IREF		\
-		| BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA)
-
-/*
- * Avoid multi-device features (RAID56) and mixed block groups
- */
-#define BTRFS_CONVERT_ALLOWED_FEATURES				\
-	(BTRFS_FEATURE_INCOMPAT_MIXED_BACKREF			\
-	| BTRFS_FEATURE_INCOMPAT_DEFAULT_SUBVOL			\
-	| BTRFS_FEATURE_INCOMPAT_COMPRESS_LZO			\
-	| BTRFS_FEATURE_INCOMPAT_COMPRESS_LZOv2			\
-	| BTRFS_FEATURE_INCOMPAT_BIG_METADATA			\
-	| BTRFS_FEATURE_INCOMPAT_EXTENDED_IREF			\
-	| BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA		\
-	| BTRFS_FEATURE_INCOMPAT_NO_HOLES)
 
 #define BTRFS_CONVERT_META_GROUP_SIZE SZ_32M
-
-#define BTRFS_FEATURE_LIST_ALL		(1ULL << 63)
 
 #define BTRFS_SCAN_MOUNTED	(1ULL << 0)
 #define BTRFS_SCAN_LBLKID	(1ULL << 1)
@@ -86,13 +67,6 @@
 
 void units_set_mode(unsigned *units, unsigned mode);
 void units_set_base(unsigned *units, unsigned base);
-
-void btrfs_list_all_fs_features(u64 mask_disallowed);
-char* btrfs_parse_fs_features(char *namelist, u64 *flags);
-void btrfs_process_fs_features(u64 flags);
-void btrfs_parse_features_to_string(char *buf, u64 flags);
-void print_kernel_version(FILE *stream, u32 version);
-u32 get_running_kernel_version(void);
 
 #define	PREP_DEVICE_ZERO_END	(1U << 0)
 #define	PREP_DEVICE_DISCARD	(1U << 1)
@@ -223,7 +197,6 @@ static inline u64 div_factor(u64 num, int factor)
 }
 
 int btrfs_tree_search2_ioctl_supported(int fd);
-int btrfs_check_nodesize(u32 nodesize, u32 sectorsize, u64 features);
 
 unsigned int get_unit_mode_from_arg(int *argc, char *argv[], int df_mode);
 int string_is_numerical(const char *str);

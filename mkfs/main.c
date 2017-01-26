@@ -45,6 +45,7 @@
 #include "list_sort.h"
 #include "help.h"
 #include "mkfs/common.h"
+#include "fsfeatures.h"
 
 static u64 index_cnt = 2;
 static int verbose = 1;
