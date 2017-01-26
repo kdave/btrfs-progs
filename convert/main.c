@@ -40,6 +40,7 @@
 #include "help.h"
 #include "mkfs/common.h"
 #include "convert/common.h"
+#include "fsfeatures.h"
 
 #if BTRFSCONVERT_EXT2
 #include <ext2fs/ext2_fs.h>
