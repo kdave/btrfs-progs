@@ -41,28 +41,8 @@
 #include "mkfs/common.h"
 #include "convert/common.h"
 #include "convert/source-fs.h"
+#include "convert/source-ext2.h"
 #include "fsfeatures.h"
-
-#if BTRFSCONVERT_EXT2
-#include <ext2fs/ext2_fs.h>
-#include <ext2fs/ext2fs.h>
-#include <ext2fs/ext2_ext_attr.h>
-
-#define INO_OFFSET (BTRFS_FIRST_FREE_OBJECTID - EXT2_ROOT_INO)
-
-/*
- * Compatibility code for e2fsprogs 1.41 which doesn't support RO compat flag
- * BIGALLOC.
- * Unlike normal RO compat flag, BIGALLOC affects how e2fsprogs check used
- * space, and btrfs-convert heavily relies on it.
- */
-#ifdef HAVE_OLD_E2FSPROGS
-#define EXT2FS_CLUSTER_RATIO(fs)	(1)
-#define EXT2_CLUSTERS_PER_GROUP(s)	(EXT2_BLOCKS_PER_GROUP(s))
-#define EXT2FS_B2C(fs, blk)		(blk)
-#endif
-
-#endif
 
 static void *print_copied_inodes(void *p)
 {
@@ -1564,16 +1544,6 @@ static void ext2_close_fs(struct btrfs_convert_context *cctx)
 	ext2fs_close(cctx->fs_data);
 }
 
-struct dir_iterate_data {
-	struct btrfs_trans_handle *trans;
-	struct btrfs_root *root;
-	struct btrfs_inode_item *inode;
-	u64 objectid;
-	u64 index_cnt;
-	u64 parent;
-	int errcode;
-};
-
 static u8 ext2_filetype_conversion_table[EXT2_FT_MAX] = {
 	[EXT2_FT_UNKNOWN]	= BTRFS_FT_UNKNOWN,
 	[EXT2_FT_REG_FILE]	= BTRFS_FT_REG_FILE,
@@ -1816,37 +1786,6 @@ static int ext2_xattr_check_entry(struct ext2_ext_attr_entry *entry,
 	return 0;
 }
 
-#define EXT2_ACL_VERSION	0x0001
-
-/* 23.2.5 acl_tag_t values */
-
-#define ACL_UNDEFINED_TAG       (0x00)
-#define ACL_USER_OBJ            (0x01)
-#define ACL_USER                (0x02)
-#define ACL_GROUP_OBJ           (0x04)
-#define ACL_GROUP               (0x08)
-#define ACL_MASK                (0x10)
-#define ACL_OTHER               (0x20)
-
-/* 23.2.7 ACL qualifier constants */
-
-#define ACL_UNDEFINED_ID        ((id_t)-1)
-
-typedef struct {
-	__le16		e_tag;
-	__le16		e_perm;
-	__le32		e_id;
-} ext2_acl_entry;
-
-typedef struct {
-	__le16		e_tag;
-	__le16		e_perm;
-} ext2_acl_entry_short;
-
-typedef struct {
-	__le32		a_version;
-} ext2_acl_header;
-
 static inline int ext2_acl_count(size_t size)
 {
 	ssize_t s;
@@ -1862,19 +1801,6 @@ static inline int ext2_acl_count(size_t size)
 		return s / sizeof(ext2_acl_entry) + 4;
 	}
 }
-
-#define ACL_EA_VERSION		0x0002
-
-typedef struct {
-	__le16		e_tag;
-	__le16		e_perm;
-	__le32		e_id;
-} acl_ea_entry;
-
-typedef struct {
-	__le32		a_version;
-	acl_ea_entry	a_entries[0];
-} acl_ea_header;
 
 static inline size_t acl_ea_size(int count)
 {
