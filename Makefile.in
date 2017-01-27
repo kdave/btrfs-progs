@@ -367,13 +367,11 @@ btrfs-%: btrfs-%.o $(objects) $(standalone_deps) $(libs_static)
 
 btrfs: btrfs.o $(objects) $(cmds_objects) $(libs_static)
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o $@ btrfs.o $(cmds_objects) \
-		$(objects) $(libs_static) $(LDFLAGS) $(LIBS) $(LIBS_COMP)
+	$(Q)$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS) $(LIBS_COMP)
 
 btrfs.static: btrfs.static.o $(static_objects) $(static_cmds_objects) $(static_libbtrfs_objects)
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(STATIC_CFLAGS) -o $@ btrfs.static.o $(static_cmds_objects) \
-		$(static_objects) $(static_libbtrfs_objects) $(STATIC_LDFLAGS) $(STATIC_LIBS) $(STATIC_LIBS_COMP)
+	$(Q)$(CC) $(STATIC_CFLAGS) -o $@ $^ $(STATIC_LDFLAGS) $(STATIC_LIBS) $(STATIC_LIBS_COMP)
 
 # For backward compatibility, 'btrfs' changes behaviour to fsck if it's named 'btrfsck'
 btrfsck: btrfs
@@ -386,51 +384,43 @@ btrfsck.static: btrfs.static
 
 mkfs.btrfs: $(mkfs_objects) $(objects) $(libs_static)
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o $@ $(objects) $(libs_static) \
-		$(mkfs_objects) $(LDFLAGS) $(LIBS)
+	$(Q)$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
 
 mkfs.btrfs.static: $(static_mkfs_objects) $(static_objects) $(static_libbtrfs_objects)
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(STATIC_CFLAGS) -o $@ \
-		$(static_mkfs_objects) $(static_objects) \
-		$(static_libbtrfs_objects) $(STATIC_LDFLAGS) $(STATIC_LIBS)
+	$(Q)$(CC) $(STATIC_CFLAGS) -o $@ $^ $(STATIC_LDFLAGS) $(STATIC_LIBS)
 
 btrfstune: btrfstune.o $(objects) $(libs_static)
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o $@ $(objects) btrfstune.o $(libs_static) $(LDFLAGS) $(LIBS)
+	$(Q)$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
 
 btrfstune.static: btrfstune.static.o $(static_objects) $(static_libbtrfs_objects)
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(STATIC_CFLAGS) -o $@ btrfstune.static.o $(static_objects) \
-		$(static_libbtrfs_objects) $(STATIC_LDFLAGS) $(STATIC_LIBS)
+	$(Q)$(CC) $(STATIC_CFLAGS) -o $@ $^ $(STATIC_LDFLAGS) $(STATIC_LIBS)
 
 btrfs-image: image/main.o $(objects) $(libs_static)
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -I$(TOPDIR)/image -o $@ $(objects) image/main.o $(libs_static) $(LDFLAGS) $(LIBS) $(LIBS_COMP)
+	$(Q)$(CC) $(CFLAGS) -I$(TOPDIR)/image -o $@ $^ $(LDFLAGS) $(LIBS) $(LIBS_COMP)
 
 btrfs-image.static: image/main.static.o $(static_objects) $(static_libbtrfs_objects)
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(STATIC_CFLAGS) -o $@ image/main.static.o $(static_objects) \
-		$(static_libbtrfs_objects) $(STATIC_LDFLAGS) $(STATIC_LIBS) $(STATIC_LIBS_COMP)
+	$(Q)$(CC) $(STATIC_CFLAGS) -o $@ $^ $(STATIC_LDFLAGS) $(STATIC_LIBS) $(STATIC_LIBS_COMP)
 
 btrfs-convert: $(convert_objects) $(objects) $(libs_static)
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -I$(TOPDIR)/convert -o $@ $(objects) \
-		$(convert_objects) $(libs_static) \
-		$(LDFLAGS) $(btrfs_convert_libs) $(LIBS)
+	$(Q)$(CC) $(CFLAGS) -I$(TOPDIR)/convert -o $@ $^ $(LDFLAGS) $(btrfs_convert_libs) $(LIBS)
 
 btrfs-convert.static: $(static_convert_objects) $(static_objects) $(static_libbtrfs_objects)
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(STATIC_CFLAGS) -o $@ $(static_convert_objects) $(static_objects) \
-		$(static_libbtrfs_objects) $(STATIC_LDFLAGS) $(btrfs_convert_libs) $(STATIC_LIBS)
+	$(Q)$(CC) $(STATIC_CFLAGS) -o $@ $^ $(STATIC_LDFLAGS) $(btrfs_convert_libs) $(STATIC_LIBS)
 
 dir-test: dir-test.o $(objects) $(libs)
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o $@ $(objects) $(libs) dir-test.o $(LDFLAGS) $(LIBS)
+	$(Q)$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
 
 quick-test: quick-test.o $(objects) $(libs)
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o $@ $(objects) $(libs) quick-test.o $(LDFLAGS) $(LIBS)
+	$(Q)$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
 
 ioctl-test.o: ioctl-test.c ioctl.h kerncompat.h ctree.h
 	@echo "    [CC]   $@"
