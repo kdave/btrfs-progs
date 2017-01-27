@@ -115,6 +115,7 @@ libbtrfs_headers = send-stream.h send-utils.h send.h kernel-lib/rbtree.h btrfs-l
 	       extent_io.h ioctl.h ctree.h btrfsck.h version.h
 convert_objects = convert/main.o convert/common.o convert/source-fs.o \
 		  convert/source-ext2.o
+mkfs_objects = mkfs/main.o mkfs/common.o
 
 TESTS = fsck-tests.sh convert-tests.sh
 
@@ -229,6 +230,7 @@ static_objects = $(patsubst %.o, %.static.o, $(objects))
 static_cmds_objects = $(patsubst %.o, %.static.o, $(cmds_objects))
 static_libbtrfs_objects = $(patsubst %.o, %.static.o, $(libbtrfs_objects))
 static_convert_objects = $(patsubst %.o, %.static.o, $(convert_objects))
+static_mkfs_objects = $(patsubst %.o, %.static.o, $(mkfs_objects))
 
 libs_shared = libbtrfs.so.0.1
 libs_static = libbtrfs.a
@@ -379,15 +381,15 @@ btrfsck.static: btrfs.static
 	@echo "    [LN]     $@"
 	$(Q)$(LN_S) -f $^ $@
 
-mkfs.btrfs: $(objects) $(libs_static) mkfs/main.o mkfs/common.o
+mkfs.btrfs: $(objects) $(libs_static) $(mkfs_objects)
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o mkfs.btrfs $(objects) $(libs_static) \
-		mkfs/main.o mkfs/common.o $(LDFLAGS) $(LIBS)
+		$(mkfs_objects) $(LDFLAGS) $(LIBS)
 
-mkfs.btrfs.static: $(static_objects) mkfs/main.static.o mkfs/common.static.o $(static_libbtrfs_objects)
+mkfs.btrfs.static: $(static_objects) $(static_mkfs_objects) $(static_libbtrfs_objects)
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(STATIC_CFLAGS) -o mkfs.btrfs.static \
-		mkfs/main.static.o mkfs/common.static.o $(static_objects) \
+		$(static_mkfs_objects) $(static_objects) \
 		$(static_libbtrfs_objects) $(STATIC_LDFLAGS) $(STATIC_LIBS)
 
 btrfstune: $(objects) $(libs_static) btrfstune.o
