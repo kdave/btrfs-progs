@@ -40,6 +40,7 @@
 #include "help.h"
 #include "mkfs/common.h"
 #include "convert/common.h"
+#include "convert/source-fs.h"
 #include "fsfeatures.h"
 
 #if BTRFSCONVERT_EXT2
@@ -62,14 +63,6 @@
 #endif
 
 #endif
-
-#define CONV_IMAGE_SUBVOL_OBJECTID BTRFS_FIRST_FREE_OBJECTID
-
-struct task_ctx {
-	uint32_t max_copy_inodes;
-	uint32_t cur_copy_inodes;
-	struct task_info *info;
-};
 
 static void *print_copied_inodes(void *p)
 {
@@ -98,26 +91,14 @@ static int after_copied_inodes(void *p)
 	return 0;
 }
 
-struct btrfs_convert_context;
-struct btrfs_convert_operations {
-	const char *name;
-	int (*open_fs)(struct btrfs_convert_context *cctx, const char *devname);
-	int (*read_used_space)(struct btrfs_convert_context *cctx);
-	int (*copy_inodes)(struct btrfs_convert_context *cctx,
-			 struct btrfs_root *root, int datacsum,
-			 int packing, int noxattr, struct task_ctx *p);
-	void (*close_fs)(struct btrfs_convert_context *cctx);
-	int (*check_state)(struct btrfs_convert_context *cctx);
-};
-
-static void init_convert_context(struct btrfs_convert_context *cctx)
+void init_convert_context(struct btrfs_convert_context *cctx)
 {
 	cache_tree_init(&cctx->used);
 	cache_tree_init(&cctx->data_chunks);
 	cache_tree_init(&cctx->free);
 }
 
-static void clean_convert_context(struct btrfs_convert_context *cctx)
+void clean_convert_context(struct btrfs_convert_context *cctx)
 {
 	free_extent_cache_tree(&cctx->used);
 	free_extent_cache_tree(&cctx->data_chunks);
@@ -158,7 +139,7 @@ static int intersect_with_sb(u64 bytenr, u64 num_bytes)
 	return 0;
 }
 
-static int convert_insert_dirent(struct btrfs_trans_handle *trans,
+int convert_insert_dirent(struct btrfs_trans_handle *trans,
 				 struct btrfs_root *root,
 				 const char *name, size_t name_len,
 				 u64 dir, u64 objectid,
@@ -187,7 +168,7 @@ static int convert_insert_dirent(struct btrfs_trans_handle *trans,
 	return 0;
 }
 
-static int read_disk_extent(struct btrfs_root *root, u64 bytenr,
+int read_disk_extent(struct btrfs_root *root, u64 bytenr,
 		            u32 num_bytes, char *buffer)
 {
 	int ret;
@@ -232,22 +213,7 @@ static int csum_disk_extent(struct btrfs_trans_handle *trans,
 	return ret;
 }
 
-struct blk_iterate_data {
-	struct btrfs_trans_handle *trans;
-	struct btrfs_root *root;
-	struct btrfs_root *convert_root;
-	struct btrfs_inode_item *inode;
-	u64 convert_ino;
-	u64 objectid;
-	u64 first_block;
-	u64 disk_block;
-	u64 num_blocks;
-	u64 boundary;
-	int checksum;
-	int errcode;
-};
-
-static void init_blk_iterate_data(struct blk_iterate_data *data,
+void init_blk_iterate_data(struct blk_iterate_data *data,
 				  struct btrfs_trans_handle *trans,
 				  struct btrfs_root *root,
 				  struct btrfs_inode_item *inode,
@@ -281,7 +247,7 @@ static void init_blk_iterate_data(struct blk_iterate_data *data,
  * So here, we don't use disk_block directly but search convert_root
  * to get the real disk_bytenr.
  */
-static int record_file_blocks(struct blk_iterate_data *data,
+int record_file_blocks(struct blk_iterate_data *data,
 			      u64 file_block, u64 disk_block, u64 num_blocks)
 {
 	int ret = 0;
@@ -369,7 +335,7 @@ static int record_file_blocks(struct blk_iterate_data *data,
 	return ret;
 }
 
-static int block_iterate_proc(u64 disk_block, u64 file_block,
+int block_iterate_proc(u64 disk_block, u64 file_block,
 		              struct blk_iterate_data *idata)
 {
 	int ret = 0;
