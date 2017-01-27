@@ -400,7 +400,7 @@ btrfstune.static: btrfstune.static.o $(static_objects) $(static_libbtrfs_objects
 
 btrfs-image: image/main.o $(objects) $(libs_static)
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -I$(TOPDIR)/image -o $@ $^ $(LDFLAGS) $(LIBS) $(LIBS_COMP)
+	$(Q)$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS) $(LIBS_COMP)
 
 btrfs-image.static: image/main.static.o $(static_objects) $(static_libbtrfs_objects)
 	@echo "    [LD]     $@"
@@ -408,7 +408,7 @@ btrfs-image.static: image/main.static.o $(static_objects) $(static_libbtrfs_obje
 
 btrfs-convert: $(convert_objects) $(objects) $(libs_static)
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -I$(TOPDIR)/convert -o $@ $^ $(LDFLAGS) $(btrfs_convert_libs) $(LIBS)
+	$(Q)$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(btrfs_convert_libs) $(LIBS)
 
 btrfs-convert.static: $(static_convert_objects) $(static_objects) $(static_libbtrfs_objects)
 	@echo "    [LD]     $@"
