@@ -367,12 +367,12 @@ btrfs-%: btrfs-%.o $(objects) $(standalone_deps) $(libs_static)
 
 btrfs: btrfs.o $(objects) $(cmds_objects) $(libs_static)
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o btrfs btrfs.o $(cmds_objects) \
+	$(Q)$(CC) $(CFLAGS) -o $@ btrfs.o $(cmds_objects) \
 		$(objects) $(libs_static) $(LDFLAGS) $(LIBS) $(LIBS_COMP)
 
 btrfs.static: btrfs.static.o $(static_objects) $(static_cmds_objects) $(static_libbtrfs_objects)
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(STATIC_CFLAGS) -o btrfs.static btrfs.static.o $(static_cmds_objects) \
+	$(Q)$(CC) $(STATIC_CFLAGS) -o $@ btrfs.static.o $(static_cmds_objects) \
 		$(static_objects) $(static_libbtrfs_objects) $(STATIC_LDFLAGS) $(STATIC_LIBS) $(STATIC_LIBS_COMP)
 
 # For backward compatibility, 'btrfs' changes behaviour to fsck if it's named 'btrfsck'
@@ -386,18 +386,18 @@ btrfsck.static: btrfs.static
 
 mkfs.btrfs: $(mkfs_objects) $(objects) $(libs_static)
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o mkfs.btrfs $(objects) $(libs_static) \
+	$(Q)$(CC) $(CFLAGS) -o $@ $(objects) $(libs_static) \
 		$(mkfs_objects) $(LDFLAGS) $(LIBS)
 
 mkfs.btrfs.static: $(static_mkfs_objects) $(static_objects) $(static_libbtrfs_objects)
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(STATIC_CFLAGS) -o mkfs.btrfs.static \
+	$(Q)$(CC) $(STATIC_CFLAGS) -o $@ \
 		$(static_mkfs_objects) $(static_objects) \
 		$(static_libbtrfs_objects) $(STATIC_LDFLAGS) $(STATIC_LIBS)
 
 btrfstune: btrfstune.o $(objects) $(libs_static)
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o btrfstune $(objects) btrfstune.o $(libs_static) $(LDFLAGS) $(LIBS)
+	$(Q)$(CC) $(CFLAGS) -o $@ $(objects) btrfstune.o $(libs_static) $(LDFLAGS) $(LIBS)
 
 btrfstune.static: btrfstune.static.o $(static_objects) $(static_libbtrfs_objects)
 	@echo "    [LD]     $@"
@@ -406,7 +406,7 @@ btrfstune.static: btrfstune.static.o $(static_objects) $(static_libbtrfs_objects
 
 btrfs-image: image/main.o $(objects) $(libs_static)
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -I$(TOPDIR)/image -o btrfs-image $(objects) image/main.o $(libs_static) $(LDFLAGS) $(LIBS) $(LIBS_COMP)
+	$(Q)$(CC) $(CFLAGS) -I$(TOPDIR)/image -o $@ $(objects) image/main.o $(libs_static) $(LDFLAGS) $(LIBS) $(LIBS_COMP)
 
 btrfs-image.static: image/main.static.o $(static_objects) $(static_libbtrfs_objects)
 	@echo "    [LD]     $@"
@@ -415,7 +415,7 @@ btrfs-image.static: image/main.static.o $(static_objects) $(static_libbtrfs_obje
 
 btrfs-convert: $(convert_objects) $(objects) $(libs_static)
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -I$(TOPDIR)/convert -o btrfs-convert $(objects) \
+	$(Q)$(CC) $(CFLAGS) -I$(TOPDIR)/convert -o $@ $(objects) \
 		$(convert_objects) $(libs_static) \
 		$(LDFLAGS) $(btrfs_convert_libs) $(LIBS)
 
@@ -426,11 +426,11 @@ btrfs-convert.static: $(static_convert_objects) $(static_objects) $(static_libbt
 
 dir-test: dir-test.o $(objects) $(libs)
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o dir-test $(objects) $(libs) dir-test.o $(LDFLAGS) $(LIBS)
+	$(Q)$(CC) $(CFLAGS) -o $@ $(objects) $(libs) dir-test.o $(LDFLAGS) $(LIBS)
 
 quick-test: quick-test.o $(objects) $(libs)
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o quick-test $(objects) $(libs) quick-test.o $(LDFLAGS) $(LIBS)
+	$(Q)$(CC) $(CFLAGS) -o $@ $(objects) $(libs) quick-test.o $(LDFLAGS) $(LIBS)
 
 ioctl-test.o: ioctl-test.c ioctl.h kerncompat.h ctree.h
 	@echo "    [CC]   $@"
@@ -470,13 +470,13 @@ test-ioctl: ioctl-test ioctl-test-32 ioctl-test-64
 
 library-test: library-test.o $(libs_shared)
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o library-test library-test.o $(LDFLAGS) -Wl,-rpath=$(TOPDIR) -lbtrfs
+	$(Q)$(CC) $(CFLAGS) -o $@ library-test.o $(LDFLAGS) -Wl,-rpath=$(TOPDIR) -lbtrfs
 	@echo "    [TEST]   $@"
 	$(Q)./$@
 
 library-test.static: library-test.static.o $(libs_static)
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(STATIC_CFLAGS) -o library-test.static library-test.static.o $(STATIC_LDFLAGS) $(libs_static) $(STATIC_LIBS)
+	$(Q)$(CC) $(STATIC_CFLAGS) -o $@ library-test.static.o $(STATIC_LDFLAGS) $(libs_static) $(STATIC_LIBS)
 	@echo "    [TEST]   $@"
 	$(Q)./$@
 
