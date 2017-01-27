@@ -113,6 +113,9 @@ libbtrfs_headers = send-stream.h send-utils.h send.h kernel-lib/rbtree.h btrfs-l
 	       kernel-lib/crc32c.h kernel-lib/list.h kerncompat.h \
 	       kernel-lib/radix-tree.h extent-cache.h \
 	       extent_io.h ioctl.h ctree.h btrfsck.h version.h
+convert_objects = convert/main.o convert/common.o convert/source-fs.o \
+		  convert/source-ext2.o
+
 TESTS = fsck-tests.sh convert-tests.sh
 
 udev_rules = 64-btrfs-dm.rules
@@ -225,6 +228,7 @@ endif
 static_objects = $(patsubst %.o, %.static.o, $(objects))
 static_cmds_objects = $(patsubst %.o, %.static.o, $(cmds_objects))
 static_libbtrfs_objects = $(patsubst %.o, %.static.o, $(libbtrfs_objects))
+static_convert_objects = $(patsubst %.o, %.static.o, $(convert_objects))
 
 libs_shared = libbtrfs.so.0.1
 libs_static = libbtrfs.a
@@ -404,17 +408,15 @@ btrfs-image.static: $(static_objects) image/main.static.o $(static_libbtrfs_obje
 	$(Q)$(CC) $(STATIC_CFLAGS) -o $@ image/main.static.o $(static_objects) \
 		$(static_libbtrfs_objects) $(STATIC_LDFLAGS) $(STATIC_LIBS)
 
-btrfs-convert: $(objects) $(libs_static) convert/main.o convert/common.o convert/source-fs.o convert/source-ext2.o
+btrfs-convert: $(objects) $(libs_static) $(convert_objects)
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -I$(TOPDIR)/convert -o btrfs-convert $(objects) \
-		convert/main.o convert/common.o convert/source-fs.o convert/source-ext2.o $(libs_static) \
+		$(convert_objects) $(libs_static) \
 		$(LDFLAGS) $(btrfs_convert_libs) $(LIBS)
 
-btrfs-convert.static: $(static_objects) convert/main.static.o convert/common.static.o \
-		convert/source-fs.static.o convert/source-ext2.static. o $(static_libbtrfs_objects)
+btrfs-convert.static: $(static_objects) $(static_convert_objects) $(static_libbtrfs_objects)
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(STATIC_CFLAGS) -o $@ convert/main.static.o convert/common.static.o \
-		convert/source-fs.static.o convert/source-ext2.static.o $(static_objects) \
+	$(Q)$(CC) $(STATIC_CFLAGS) -o $@ $(static_convert_objects) $(static_objects) \
 		$(static_libbtrfs_objects) $(STATIC_LDFLAGS) $(btrfs_convert_libs) $(STATIC_LIBS)
 
 dir-test: $(objects) $(libs) dir-test.o
