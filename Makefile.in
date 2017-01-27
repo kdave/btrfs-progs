@@ -351,26 +351,26 @@ $(lib_links):
 # For static variants, use an extra $(subst) to get rid of the ".static"
 # from the target name before translating to list of libs
 
-btrfs-%.static: $(static_objects) btrfs-%.static.o $(static_libbtrfs_objects) $(patsubst %.o,%.static.o,$(standalone_deps))
+btrfs-%.static: btrfs-%.static.o $(static_objects) $(patsubst %.o,%.static.o,$(standalone_deps)) $(static_libbtrfs_objects)
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(STATIC_CFLAGS) -o $@ $@.o $(static_objects) \
 		$(patsubst %.o, %.static.o, $($(subst -,_,$(subst .static,,$@)-objects))) \
 		$(static_libbtrfs_objects) $(STATIC_LDFLAGS) \
 		$($(subst -,_,$(subst .static,,$@)-libs)) $(STATIC_LIBS)
 
-btrfs-%: $(objects) $(libs_static) btrfs-%.o $(standalone_deps)
+btrfs-%: btrfs-%.o $(objects) $(standalone_deps) $(libs_static)
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o $@ $(objects) $@.o \
 		$($(subst -,_,$@-objects)) \
 		$(libs_static) \
 		$(LDFLAGS) $(LIBS) $($(subst -,_,$@-libs))
 
-btrfs: $(objects) btrfs.o $(cmds_objects) $(libs_static)
+btrfs: btrfs.o $(objects) $(cmds_objects) $(libs_static)
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o btrfs btrfs.o $(cmds_objects) \
 		$(objects) $(libs_static) $(LDFLAGS) $(LIBS) $(LIBS_COMP)
 
-btrfs.static: $(static_objects) btrfs.static.o $(static_cmds_objects) $(static_libbtrfs_objects)
+btrfs.static: btrfs.static.o $(static_objects) $(static_cmds_objects) $(static_libbtrfs_objects)
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(STATIC_CFLAGS) -o btrfs.static btrfs.static.o $(static_cmds_objects) \
 		$(static_objects) $(static_libbtrfs_objects) $(STATIC_LDFLAGS) $(STATIC_LIBS) $(STATIC_LIBS_COMP)
@@ -384,51 +384,51 @@ btrfsck.static: btrfs.static
 	@echo "    [LN]     $@"
 	$(Q)$(LN_S) -f $^ $@
 
-mkfs.btrfs: $(objects) $(libs_static) $(mkfs_objects)
+mkfs.btrfs: $(mkfs_objects) $(objects) $(libs_static)
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o mkfs.btrfs $(objects) $(libs_static) \
 		$(mkfs_objects) $(LDFLAGS) $(LIBS)
 
-mkfs.btrfs.static: $(static_objects) $(static_mkfs_objects) $(static_libbtrfs_objects)
+mkfs.btrfs.static: $(static_mkfs_objects) $(static_objects) $(static_libbtrfs_objects)
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(STATIC_CFLAGS) -o mkfs.btrfs.static \
 		$(static_mkfs_objects) $(static_objects) \
 		$(static_libbtrfs_objects) $(STATIC_LDFLAGS) $(STATIC_LIBS)
 
-btrfstune: $(objects) $(libs_static) btrfstune.o
+btrfstune: btrfstune.o $(objects) $(libs_static)
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o btrfstune $(objects) btrfstune.o $(libs_static) $(LDFLAGS) $(LIBS)
 
-btrfstune.static: $(static_objects) btrfstune.static.o $(static_libbtrfs_objects)
+btrfstune.static: btrfstune.static.o $(static_objects) $(static_libbtrfs_objects)
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(STATIC_CFLAGS) -o $@ btrfstune.static.o $(static_objects) \
 		$(static_libbtrfs_objects) $(STATIC_LDFLAGS) $(STATIC_LIBS)
 
-btrfs-image: $(objects) $(libs_static) image/main.o
+btrfs-image: image/main.o $(objects) $(libs_static)
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -I$(TOPDIR)/image -o btrfs-image $(objects) image/main.o $(libs_static) $(LDFLAGS) $(LIBS) $(LIBS_COMP)
 
-btrfs-image.static: $(static_objects) image/main.static.o $(static_libbtrfs_objects)
+btrfs-image.static: image/main.static.o $(static_objects) $(static_libbtrfs_objects)
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(STATIC_CFLAGS) -o $@ image/main.static.o $(static_objects) \
 		$(static_libbtrfs_objects) $(STATIC_LDFLAGS) $(STATIC_LIBS) $(STATIC_LIBS_COMP)
 
-btrfs-convert: $(objects) $(libs_static) $(convert_objects)
+btrfs-convert: $(convert_objects) $(objects) $(libs_static)
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -I$(TOPDIR)/convert -o btrfs-convert $(objects) \
 		$(convert_objects) $(libs_static) \
 		$(LDFLAGS) $(btrfs_convert_libs) $(LIBS)
 
-btrfs-convert.static: $(static_objects) $(static_convert_objects) $(static_libbtrfs_objects)
+btrfs-convert.static: $(static_convert_objects) $(static_objects) $(static_libbtrfs_objects)
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(STATIC_CFLAGS) -o $@ $(static_convert_objects) $(static_objects) \
 		$(static_libbtrfs_objects) $(STATIC_LDFLAGS) $(btrfs_convert_libs) $(STATIC_LIBS)
 
-dir-test: $(objects) $(libs) dir-test.o
+dir-test: dir-test.o $(objects) $(libs)
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o dir-test $(objects) $(libs) dir-test.o $(LDFLAGS) $(LIBS)
 
-quick-test: $(objects) $(libs) quick-test.o
+quick-test: quick-test.o $(objects) $(libs)
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o quick-test $(objects) $(libs) quick-test.o $(LDFLAGS) $(LIBS)
 
@@ -468,13 +468,13 @@ test-ioctl: ioctl-test ioctl-test-32 ioctl-test-64
 	$(Q)./ioctl-test-32 > ioctl-test-32.log
 	$(Q)./ioctl-test-64 > ioctl-test-64.log
 
-library-test: $(libs_shared) library-test.o
+library-test: library-test.o $(libs_shared)
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o library-test library-test.o $(LDFLAGS) -Wl,-rpath=$(TOPDIR) -lbtrfs
 	@echo "    [TEST]   $@"
 	$(Q)./$@
 
-library-test.static: $(libs_static) library-test.static.o
+library-test.static: library-test.static.o $(libs_static)
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(STATIC_CFLAGS) -o library-test.static library-test.static.o $(STATIC_LDFLAGS) $(libs_static) $(STATIC_LIBS)
 	@echo "    [TEST]   $@"
