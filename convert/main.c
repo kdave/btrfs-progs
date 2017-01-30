@@ -55,14 +55,15 @@ static void *print_copied_inodes(void *p)
 {
 	struct task_ctx *priv = p;
 	const char work_indicator[] = { '.', 'o', 'O', 'o' };
-	uint32_t count = 0;
+	u64 count = 0;
 
 	task_period_start(priv->info, 1000 /* 1s */);
 	while (1) {
 		count++;
-		printf("copy inodes [%c] [%10d/%10d]\r",
-		       work_indicator[count % 4], priv->cur_copy_inodes,
-		       priv->max_copy_inodes);
+		printf("copy inodes [%c] [%10llu/%10llu]\r",
+		       work_indicator[count % 4],
+		       (unsigned long long)priv->cur_copy_inodes,
+		       (unsigned long long)priv->max_copy_inodes);
 		fflush(stdout);
 		task_period_wait(priv->info);
 	}

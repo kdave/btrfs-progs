@@ -22,8 +22,8 @@
 #define CONV_IMAGE_SUBVOL_OBJECTID BTRFS_FIRST_FREE_OBJECTID
 
 struct task_ctx {
-	uint32_t max_copy_inodes;
-	uint32_t cur_copy_inodes;
+	u64 max_copy_inodes;
+	u64 cur_copy_inodes;
 	struct task_info *info;
 };
 
