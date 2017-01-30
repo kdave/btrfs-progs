@@ -74,11 +74,10 @@ static int after_copied_inodes(void *p)
 }
 
 static inline int copy_inodes(struct btrfs_convert_context *cctx,
-			      struct btrfs_root *root, int datacsum,
-			      int packing, int noxattr, struct task_ctx *p)
+			      struct btrfs_root *root, u32 convert_flags,
+			      struct task_ctx *p)
 {
-	return cctx->convert_ops->copy_inodes(cctx, root, datacsum, packing,
-					     noxattr, p);
+	return cctx->convert_ops->copy_inodes(cctx, root, convert_flags, p);
 }
 
 static inline void convert_close_fs(struct btrfs_convert_context *cctx)
@@ -125,7 +124,7 @@ static int create_image_file_range(struct btrfs_trans_handle *trans,
 				      struct cache_tree *used,
 				      struct btrfs_inode_item *inode,
 				      u64 ino, u64 bytenr, u64 *ret_len,
-				      int datacsum)
+				      u32 convert_flags)
 {
 	struct cache_extent *cache;
 	struct btrfs_block_group_cache *bg_cache;
@@ -133,6 +132,7 @@ static int create_image_file_range(struct btrfs_trans_handle *trans,
 	u64 disk_bytenr;
 	int i;
 	int ret;
+	u32 datacsum = convert_flags & CONVERT_FLAG_DATACSUM;
 
 	if (bytenr != round_down(bytenr, root->sectorsize)) {
 		error("bytenr not sectorsize aligned: %llu",
@@ -259,7 +259,8 @@ static int migrate_one_reserved_range(struct btrfs_trans_handle *trans,
 				      struct btrfs_root *root,
 				      struct cache_tree *used,
 				      struct btrfs_inode_item *inode, int fd,
-				      u64 ino, u64 start, u64 len, int datacsum)
+				      u64 ino, u64 start, u64 len,
+				      u32 convert_flags)
 {
 	u64 cur_off = start;
 	u64 cur_len = len;
@@ -312,7 +313,7 @@ static int migrate_one_reserved_range(struct btrfs_trans_handle *trans,
 		if (ret < 0)
 			break;
 		/* Finally, insert csum items */
-		if (datacsum)
+		if (convert_flags & CONVERT_FLAG_DATACSUM)
 			ret = csum_disk_extent(trans, root, key.objectid,
 					       key.offset);
 
@@ -346,7 +347,7 @@ static int migrate_reserved_ranges(struct btrfs_trans_handle *trans,
 				   struct btrfs_root *root,
 				   struct cache_tree *used,
 				   struct btrfs_inode_item *inode, int fd,
-				   u64 ino, u64 total_bytes, int datacsum)
+				   u64 ino, u64 total_bytes, u32 convert_flags)
 {
 	u64 cur_off;
 	u64 cur_len;
@@ -356,7 +357,7 @@ static int migrate_reserved_ranges(struct btrfs_trans_handle *trans,
 	cur_off = 0;
 	cur_len = 1024 * 1024;
 	ret = migrate_one_reserved_range(trans, root, used, inode, fd, ino,
-					 cur_off, cur_len, datacsum);
+					 cur_off, cur_len, convert_flags);
 	if (ret < 0)
 		return ret;
 
@@ -366,7 +367,7 @@ static int migrate_reserved_ranges(struct btrfs_trans_handle *trans,
 	if (cur_off > total_bytes)
 		return ret;
 	ret = migrate_one_reserved_range(trans, root, used, inode, fd, ino,
-					 cur_off, cur_len, datacsum);
+					 cur_off, cur_len, convert_flags);
 	if (ret < 0)
 		return ret;
 
@@ -376,7 +377,7 @@ static int migrate_reserved_ranges(struct btrfs_trans_handle *trans,
 	if (cur_off > total_bytes)
 		return ret;
 	ret = migrate_one_reserved_range(trans, root, used, inode, fd, ino,
-					 cur_off, cur_len, datacsum);
+					 cur_off, cur_len, convert_flags);
 	return ret;
 }
 
@@ -670,7 +671,7 @@ static int convert_read_used_space(struct btrfs_convert_context *cctx)
 static int create_image(struct btrfs_root *root,
 			   struct btrfs_mkfs_config *cfg,
 			   struct btrfs_convert_context *cctx, int fd,
-			   u64 size, char *name, int datacsum)
+			   u64 size, char *name, u32 convert_flags)
 {
 	struct btrfs_inode_item buf;
 	struct btrfs_trans_handle *trans;
@@ -683,7 +684,7 @@ static int create_image(struct btrfs_root *root,
 	u64 flags = BTRFS_INODE_READONLY;
 	int ret;
 
-	if (!datacsum)
+	if (!(convert_flags & CONVERT_FLAG_DATACSUM))
 		flags |= BTRFS_INODE_NODATASUM;
 
 	trans = btrfs_start_transaction(root, 1);
@@ -745,15 +746,15 @@ static int create_image(struct btrfs_root *root,
 		u64 len = size - cur;
 
 		ret = create_image_file_range(trans, root, &used_tmp,
-						&buf, ino, cur, &len, datacsum);
+						&buf, ino, cur, &len,
+						convert_flags);
 		if (ret < 0)
 			goto out;
 		cur += len;
 	}
 	/* Handle the reserved ranges */
 	ret = migrate_reserved_ranges(trans, root, &cctx->used, &buf, fd, ino,
-				      cfg->num_bytes, datacsum);
-
+				      cfg->num_bytes, convert_flags);
 
 	key.objectid = ino;
 	key.type = BTRFS_INODE_ITEM_KEY;
@@ -997,8 +998,7 @@ static int make_convert_data_block_groups(struct btrfs_trans_handle *trans,
  * But the convert image subvolume is *NOT* linked to fs tree yet.
  */
 static int init_btrfs(struct btrfs_mkfs_config *cfg, struct btrfs_root *root,
-			 struct btrfs_convert_context *cctx, int datacsum,
-			 int packing, int noxattr)
+			 struct btrfs_convert_context *cctx, u32 convert_flags)
 {
 	struct btrfs_key location;
 	struct btrfs_trans_handle *trans;
@@ -1166,9 +1166,8 @@ static int convert_open_fs(const char *devname,
 	return -1;
 }
 
-static int do_convert(const char *devname, int datacsum, int packing,
-		int noxattr, u32 nodesize, int copylabel, const char *fslabel,
-		int progress, u64 features)
+static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
+		const char *fslabel, int progress, u64 features)
 {
 	int ret;
 	int fd = -1;
@@ -1239,7 +1238,7 @@ static int do_convert(const char *devname, int datacsum, int packing,
 		error("unable to open ctree");
 		goto fail;
 	}
-	ret = init_btrfs(&mkfs_cfg, root, &cctx, datacsum, packing, noxattr);
+	ret = init_btrfs(&mkfs_cfg, root, &cctx, convert_flags);
 	if (ret) {
 		error("unable to setup the root tree: %d", ret);
 		goto fail;
@@ -1257,7 +1256,8 @@ static int do_convert(const char *devname, int datacsum, int packing,
 		goto fail;
 	}
 	ret = create_image(image_root, &mkfs_cfg, &cctx, fd,
-			      mkfs_cfg.num_bytes, "image", datacsum);
+			      mkfs_cfg.num_bytes, "image",
+			      convert_flags);
 	if (ret) {
 		error("failed to create %s/image: %d", subvol_name, ret);
 		goto fail;
@@ -1272,7 +1272,7 @@ static int do_convert(const char *devname, int datacsum, int packing,
 				     &ctx);
 		task_start(ctx.info);
 	}
-	ret = copy_inodes(&cctx, root, datacsum, packing, noxattr, &ctx);
+	ret = copy_inodes(&cctx, root, convert_flags, &ctx);
 	if (ret) {
 		error("error during copy_inodes %d", ret);
 		goto fail;
@@ -1289,11 +1289,11 @@ static int do_convert(const char *devname, int datacsum, int packing,
 	}
 
 	memset(root->fs_info->super_copy->label, 0, BTRFS_LABEL_SIZE);
-	if (copylabel == 1) {
+	if (convert_flags & CONVERT_FLAG_COPY_LABEL) {
 		__strncpy_null(root->fs_info->super_copy->label,
 				cctx.volume_name, BTRFS_LABEL_SIZE - 1);
 		printf("copy label '%s'\n", root->fs_info->super_copy->label);
-	} else if (copylabel == -1) {
+	} else if (convert_flags & CONVERT_FLAG_SET_LABEL) {
 		strcpy(root->fs_info->super_copy->label, fslabel);
 		printf("set label to '%s'\n", fslabel);
 	}
@@ -1886,7 +1886,7 @@ int main(int argc, char *argv[])
 				rollback = 1;
 				break;
 			case 'l':
-				copylabel = -1;
+				copylabel = CONVERT_FLAG_SET_LABEL;
 				if (strlen(optarg) >= BTRFS_LABEL_SIZE) {
 					warning(
 					"label too long, trimmed to %d bytes",
@@ -1895,7 +1895,7 @@ int main(int argc, char *argv[])
 				__strncpy_null(fslabel, optarg, BTRFS_LABEL_SIZE - 1);
 				break;
 			case 'L':
-				copylabel = 1;
+				copylabel = CONVERT_FLAG_COPY_LABEL;
 				break;
 			case 'p':
 				progress = 1;
@@ -1968,8 +1968,13 @@ int main(int argc, char *argv[])
 	if (rollback) {
 		ret = do_rollback(file);
 	} else {
-		ret = do_convert(file, datacsum, packing, noxattr, nodesize,
-				copylabel, fslabel, progress, features);
+		u32 cf = 0;
+
+		cf |= datacsum ? CONVERT_FLAG_DATACSUM : 0;
+		cf |= packing ? CONVERT_FLAG_INLINE_DATA : 0;
+		cf |= noxattr ? 0 : CONVERT_FLAG_XATTR;
+		cf |= copylabel;
+		ret = do_convert(file, cf, nodesize, fslabel, progress, features);
 	}
 	if (ret)
 		return 1;
