@@ -18,23 +18,17 @@
 
 #include "kerncompat.h"
 
-#include <sys/ioctl.h>
-#include <sys/mount.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <uuid/uuid.h>
-#include <linux/limits.h>
 #include <getopt.h>
 
 #include "ctree.h"
 #include "disk-io.h"
 #include "volumes.h"
 #include "transaction.h"
-#include "crc32c.h"
 #include "utils.h"
 #include "task-utils.h"
 #include "help.h"
