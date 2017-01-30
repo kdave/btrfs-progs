@@ -1,4 +1,3 @@
-# btrfs-progs
 #
 # Basic build targets:
 #   all		all main tools
@@ -49,6 +48,7 @@ INSTALL = @INSTALL@
 DISABLE_DOCUMENTATION = @DISABLE_DOCUMENTATION@
 DISABLE_BTRFSCONVERT = @DISABLE_BTRFSCONVERT@
 BTRFSCONVERT_EXT2 = @BTRFSCONVERT_EXT2@
+TAGS_CMD := ctags
 
 EXTRA_CFLAGS :=
 EXTRA_LDFLAGS :=
@@ -227,6 +227,7 @@ endif
 .PHONY: $(TESTDIRS)
 .PHONY: $(CLEANDIRS)
 .PHONY: all install clean
+.PHONY: FORCE
 
 # Create all the static targets
 static_objects = $(patsubst %.o, %.static.o, $(objects))
@@ -487,6 +488,9 @@ test-build-real:
 manpages:
 	$(Q)$(MAKE) $(MAKEOPTS) -C Documentation
 
+tags: FORCE
+	@echo "    [TAGS]   $(TAGS_CMD)"
+	$(Q)$(TAGS_CMD) *.[ch] image/*.[ch] convert/*.[ch] mkfs/*.[ch]
 
 clean-all: clean clean-doc clean-gen
 
@@ -511,7 +515,7 @@ clean-gen:
 	@echo "Cleaning Generated Files"
 	$(Q)$(RM) -rf -- version.h config.status config.cache connfig.log \
 		configure.lineno config.status.lineno Makefile \
-		Documentation/Makefile \
+		Documentation/Makefile tags \
 		config.log config.h config.h.in~ aclocal.m4 \
 		configure autom4te.cache/ config/
 
