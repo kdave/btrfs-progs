@@ -37,18 +37,14 @@
 # Export all variables to sub-makes by default
 export
 
-include Makefile.extrawarn
+-include Makefile.inc
+ifneq ($(MAKEFILE_INC_INCLUDED),yes)
+$(error Makefile.inc not generated, please configure first)
+endif
 
-CC = @CC@
-LN_S = @LN_S@
-AR = @AR@
-RM = @RM@
-RMDIR = @RMDIR@
-INSTALL = @INSTALL@
-DISABLE_DOCUMENTATION = @DISABLE_DOCUMENTATION@
-DISABLE_BTRFSCONVERT = @DISABLE_BTRFSCONVERT@
-BTRFSCONVERT_EXT2 = @BTRFSCONVERT_EXT2@
 TAGS_CMD := ctags
+
+include Makefile.extrawarn
 
 EXTRA_CFLAGS :=
 EXTRA_LDFLAGS :=
@@ -60,7 +56,7 @@ DEBUG_CFLAGS :=
 TOPDIR := $(shell pwd)
 
 # Common build flags
-CFLAGS = @CFLAGS@ \
+CFLAGS = $(SUBST_CFLAGS) \
 	 -include config.h \
 	 -DBTRFS_FLAT_INCLUDES \
 	 -D_XOPEN_SOURCE=700  \
@@ -72,19 +68,15 @@ CFLAGS = @CFLAGS@ \
 	 $(DEBUG_CFLAGS_INTERNAL) \
 	 $(EXTRA_CFLAGS)
 
-LDFLAGS = @LDFLAGS@ \
+LDFLAGS = $(SUBST_LDFLAGS) \
 	  -rdynamic -L$(TOPDIR) $(EXTRA_LDFLAGS)
 
-LIBS_BASE = @UUID_LIBS@ @BLKID_LIBS@ -L. -pthread
-LIBS_COMP = @ZLIB_LIBS@ @LZO2_LIBS@
 LIBS = $(LIBS_BASE)
 LIBBTRFS_LIBS = $(LIBS_BASE)
 
 # Static compilation flags
 STATIC_CFLAGS = $(CFLAGS) -ffunction-sections -fdata-sections
 STATIC_LDFLAGS = -static -Wl,--gc-sections
-STATIC_LIBS_BASE = @UUID_LIBS_STATIC@ @BLKID_LIBS_STATIC@ -L. -pthread
-STATIC_LIBS_COMP = @ZLIB_LIBS_STATIC@ @LZO2_LIBS_STATIC@
 STATIC_LIBS = $(STATIC_LIBS_BASE)
 
 # don't use FORTIFY with sparse because glibc with FORTIFY can
@@ -123,14 +115,6 @@ mkfs_objects = mkfs/main.o mkfs/common.o
 TESTS = fsck-tests.sh convert-tests.sh
 
 udev_rules = 64-btrfs-dm.rules
-
-prefix ?= @prefix@
-exec_prefix = @exec_prefix@
-bindir = @bindir@
-libdir ?= @libdir@
-incdir = @includedir@/btrfs
-udevdir = @UDEVDIR@
-udevruledir = ${udevdir}/rules.d
 
 ifeq ("$(origin V)", "command line")
   BUILD_VERBOSE = $(V)
@@ -201,7 +185,6 @@ endif
 
 # external libs required by various binaries; for btrfs-foo,
 # specify btrfs_foo_libs = <list of libs>; see $($(subst...)) rules below
-btrfs_convert_libs = @EXT2FS_LIBS@ @COM_ERR_LIBS@
 btrfs_convert_cflags = -DBTRFSCONVERT_EXT2=$(BTRFSCONVERT_EXT2)
 btrfs_fragments_libs = -lgd -lpng -ljpeg -lfreetype
 btrfs_debug_tree_objects = cmds-inspect-dump-tree.o
@@ -514,7 +497,7 @@ clean-doc:
 clean-gen:
 	@echo "Cleaning Generated Files"
 	$(Q)$(RM) -rf -- version.h config.status config.cache connfig.log \
-		configure.lineno config.status.lineno Makefile \
+		configure.lineno config.status.lineno Makefile.inc \
 		Documentation/Makefile tags \
 		config.log config.h config.h.in~ aclocal.m4 \
 		configure autom4te.cache/ config/

@@ -198,7 +198,7 @@ AC_SUBST([LIBBTRFS_PATCHLEVEL])
 AC_CONFIG_HEADERS([config.h])
 
 AC_CONFIG_FILES([
-Makefile
+Makefile.inc
 Documentation/Makefile
 version.h
 ])
