@@ -1,6 +1,6 @@
 #
 # Basic build targets:
-#   all		all main tools
+#   all		all main tools and the shared library
 #   static      build static bnaries, requires static version of the libraries
 #   test        run the full testsuite
 #   install     install to default location (/usr/local)
@@ -260,7 +260,7 @@ endif
 	$(Q)$(CC) $(STATIC_CFLAGS) -c $< -o $@ $($(subst -,_,$(@:%.static.o=%)-cflags)) \
 		$($(subst -,_,btrfs-$(@:%/$(notdir $@)=%)-cflags))
 
-all: $(progs) $(BUILDDIRS)
+all: $(progs) libbtrfs $(BUILDDIRS)
 $(SUBDIRS): $(BUILDDIRS)
 $(BUILDDIRS):
 	@echo "Making all in $(patsubst build-%,%,$@)"
@@ -312,6 +312,8 @@ static: $(progs_static)
 version.h: version.sh version.h.in configure.ac
 	@echo "    [SH]     $@"
 	$(Q)bash ./config.status --silent $@
+
+libbtrfs: $(libs_shared) $(lib_links)
 
 $(libs_shared): $(libbtrfs_objects) $(lib_links) send.h
 	@echo "    [LD]     $@"
