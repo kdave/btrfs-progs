@@ -1159,8 +1159,6 @@ static int convert_open_fs(const char *devname,
 {
 	int i;
 
-	memset(cctx, 0, sizeof(*cctx));
-
 	for (i = 0; i < ARRAY_SIZE(convert_operations); i++) {
 		int ret = convert_operations[i]->open_fs(cctx, devname);
 

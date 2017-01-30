@@ -40,6 +40,8 @@ static int intersect_with_sb(u64 bytenr, u64 num_bytes)
 
 void init_convert_context(struct btrfs_convert_context *cctx)
 {
+	memset(cctx, 0, sizeof(*cctx));
+
 	cache_tree_init(&cctx->used);
 	cache_tree_init(&cctx->data_chunks);
 	cache_tree_init(&cctx->free);
