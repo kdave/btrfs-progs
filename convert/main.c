@@ -1184,7 +1184,7 @@ static int do_convert(const char *devname, int datacsum, int packing,
 	struct btrfs_root *image_root;
 	struct btrfs_convert_context cctx;
 	struct btrfs_key key;
-	char *subvol_name = NULL;
+	char subvol_name[SOURCE_FS_NAME_LEN + 8];
 	struct task_ctx ctx;
 	char features_buf[64];
 	struct btrfs_mkfs_config mkfs_cfg;
@@ -1252,12 +1252,8 @@ static int do_convert(const char *devname, int datacsum, int packing,
 	}
 
 	printf("creating %s image file\n", cctx.convert_ops->name);
-	ret = asprintf(&subvol_name, "%s_saved", cctx.convert_ops->name);
-	if (ret < 0) {
-		error("memory allocation failure for subvolume name: %s_saved",
+	snprintf(subvol_name, sizeof(subvol_name), "%s_saved",
 			cctx.convert_ops->name);
-		goto fail;
-	}
 	key.objectid = CONV_IMAGE_SUBVOL_OBJECTID;
 	key.offset = (u64)-1;
 	key.type = BTRFS_ROOT_ITEM_KEY;
@@ -1297,8 +1293,6 @@ static int do_convert(const char *devname, int datacsum, int packing,
 		error("unable to link subvolume %s", subvol_name);
 		goto fail;
 	}
-
-	free(subvol_name);
 
 	memset(root->fs_info->super_copy->label, 0, BTRFS_LABEL_SIZE);
 	if (copylabel == 1) {
