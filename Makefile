@@ -43,6 +43,7 @@ $(error Makefile.inc not generated, please configure first)
 endif
 
 TAGS_CMD := ctags
+CSCOPE_CMD := cscope -u -b -c -q
 
 include Makefile.extrawarn
 
@@ -475,11 +476,16 @@ tags: FORCE
 	@echo "    [TAGS]   $(TAGS_CMD)"
 	$(Q)$(TAGS_CMD) *.[ch] image/*.[ch] convert/*.[ch] mkfs/*.[ch]
 
+cscope: FORCE
+	@echo "    [CSCOPE] $(CSCOPE_CMD)"
+	$(Q)ls -1 *.[ch] image/*.[ch] convert/*.[ch] mkfs/*.[ch] > cscope.files
+	$(Q)$(CSCOPE_CMD)
+
 clean-all: clean clean-doc clean-gen
 
 clean: $(CLEANDIRS)
 	@echo "Cleaning"
-	$(Q)$(RM) -f -- $(progs) cscope.out *.o *.o.d \
+	$(Q)$(RM) -f -- $(progs) *.o *.o.d \
 		kernel-lib/*.o kernel-lib/*.o.d \
 		image/*.o image/*.o.d \
 		convert/*.o convert/*.o.d \
@@ -499,6 +505,7 @@ clean-gen:
 	$(Q)$(RM) -rf -- version.h config.status config.cache connfig.log \
 		configure.lineno config.status.lineno Makefile.inc \
 		Documentation/Makefile tags \
+		cscope.files cscope.out cscope.in.out cscope.po.out \
 		config.log config.h config.h.in~ aclocal.m4 \
 		configure autom4te.cache/ config/
 
