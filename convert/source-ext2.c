@@ -136,8 +136,11 @@ static int ext2_read_used_space(struct btrfs_convert_context *cctx)
 	int ret = 0;
 
 	block_nbytes = EXT2_CLUSTERS_PER_GROUP(fs->super) / 8;
-	/* Shouldn't happen */
-	BUG_ON(!fs->block_map);
+	if (!block_nbytes) {
+		error("EXT2_CLUSTERS_PER_GROUP too small: %llu",
+			(unsigned long long)(EXT2_CLUSTERS_PER_GROUP(fs->super)));
+		return -EINVAL;
+	}
 
 	block_bitmap = malloc(block_nbytes);
 	if (!block_bitmap)
