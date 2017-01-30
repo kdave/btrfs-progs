@@ -802,6 +802,13 @@ static int ext2_copy_single_inode(struct btrfs_trans_handle *trans,
 	return btrfs_insert_inode(trans, root, objectid, &btrfs_inode);
 }
 
+static int ext2_is_special_inode(ext2_ino_t ino)
+{
+	if (ino < EXT2_GOOD_OLD_FIRST_INO && ino != EXT2_ROOT_INO)
+		return 1;
+	return 0;
+}
+
 /*
  * scan ext2's inode bitmap and copy all used inodes.
  */
@@ -831,9 +838,7 @@ static int ext2_copy_inodes(struct btrfs_convert_context *cctx,
 		/* no more inodes */
 		if (ext2_ino == 0)
 			break;
-		/* skip special inode in ext2fs */
-		if (ext2_ino < EXT2_GOOD_OLD_FIRST_INO &&
-		    ext2_ino != EXT2_ROOT_INO)
+		if (ext2_is_special_inode(ext2_ino))
 			continue;
 		objectid = ext2_ino + INO_OFFSET;
 		ret = ext2_copy_single_inode(trans, root,
