@@ -43,6 +43,14 @@
 #include "convert/source-fs.h"
 #include "fsfeatures.h"
 
+const struct btrfs_convert_operations ext2_convert_ops;
+
+static const struct btrfs_convert_operations *convert_operations[] = {
+#if BTRFSCONVERT_EXT2
+	&ext2_convert_ops,
+#endif
+};
+
 static void *print_copied_inodes(void *p)
 {
 	struct task_ctx *priv = p;
@@ -1144,14 +1152,6 @@ static int prepare_system_chunk_sb(struct btrfs_super_block *super)
 	btrfs_set_super_sys_array_size(super, sizeof(*key) + sizeof(*chunk));
 	return 0;
 }
-
-const struct btrfs_convert_operations ext2_convert_ops;
-
-static const struct btrfs_convert_operations *convert_operations[] = {
-#if BTRFSCONVERT_EXT2
-	&ext2_convert_ops,
-#endif
-};
 
 static int convert_open_fs(const char *devname,
 			   struct btrfs_convert_context *cctx)
