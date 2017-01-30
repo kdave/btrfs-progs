@@ -31,8 +31,10 @@ struct task_ctx {
 
 struct btrfs_convert_context;
 
+#define SOURCE_FS_NAME_LEN	(16)
+
 struct btrfs_convert_operations {
-	const char *name;
+	const char name[SOURCE_FS_NAME_LEN];
 	int (*open_fs)(struct btrfs_convert_context *cctx, const char *devname);
 	int (*read_used_space)(struct btrfs_convert_context *cctx);
 	int (*copy_inodes)(struct btrfs_convert_context *cctx,
