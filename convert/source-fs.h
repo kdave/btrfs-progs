@@ -21,6 +21,8 @@
 
 #define CONV_IMAGE_SUBVOL_OBJECTID BTRFS_FIRST_FREE_OBJECTID
 
+struct task_info;
+
 struct task_ctx {
 	u64 max_copy_inodes;
 	u64 cur_copy_inodes;
@@ -28,9 +30,6 @@ struct task_ctx {
 };
 
 struct btrfs_convert_context;
-struct btrfs_root;
-struct btrfs_trans_handle;
-struct btrfs_inode_item;
 
 struct btrfs_convert_operations {
 	const char *name;
@@ -42,6 +41,10 @@ struct btrfs_convert_operations {
 	void (*close_fs)(struct btrfs_convert_context *cctx);
 	int (*check_state)(struct btrfs_convert_context *cctx);
 };
+
+struct btrfs_trans_handle;
+struct btrfs_root;
+struct btrfs_inode_item;
 
 struct blk_iterate_data {
 	struct btrfs_trans_handle *trans;
