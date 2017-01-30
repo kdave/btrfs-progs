@@ -33,13 +33,19 @@ struct btrfs_convert_context;
 
 #define SOURCE_FS_NAME_LEN	(16)
 
+#define CONVERT_FLAG_DATACSUM		(1U << 0)
+#define CONVERT_FLAG_INLINE_DATA	(1U << 1)
+#define CONVERT_FLAG_XATTR		(1U << 2)
+#define CONVERT_FLAG_COPY_LABEL		(1U << 3)
+#define CONVERT_FLAG_SET_LABEL		(1U << 4)
+
 struct btrfs_convert_operations {
 	const char name[SOURCE_FS_NAME_LEN];
 	int (*open_fs)(struct btrfs_convert_context *cctx, const char *devname);
 	int (*read_used_space)(struct btrfs_convert_context *cctx);
 	int (*copy_inodes)(struct btrfs_convert_context *cctx,
-			 struct btrfs_root *root, int datacsum,
-			 int packing, int noxattr, struct task_ctx *p);
+			 struct btrfs_root *root, u32 covert_flags,
+			 struct task_ctx *p);
 	void (*close_fs)(struct btrfs_convert_context *cctx);
 	int (*check_state)(struct btrfs_convert_context *cctx);
 };
