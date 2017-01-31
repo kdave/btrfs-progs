@@ -299,6 +299,9 @@ static inline void assert_trace(const char *assertion, const char *filename,
 	fprintf(stderr,
 		"%s:%d: %s: Assertion `%s` failed, value %ld\n",
 		filename, line, func, assertion, val);
+#ifndef BTRFS_DISABLE_BACKTRACE
+	print_trace();
+#endif
 	abort();
 	exit(1);
 }
