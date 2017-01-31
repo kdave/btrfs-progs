@@ -33,6 +33,7 @@
 
 #include "commands.h"
 #include "help.h"
+#include "mkfs/common.h"
 
 static const char * const device_cmd_group_usage[] = {
 	"btrfs device <command> [<args>]",

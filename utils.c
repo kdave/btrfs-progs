@@ -49,6 +49,7 @@
 #include "volumes.h"
 #include "ioctl.h"
 #include "commands.h"
+#include "mkfs/common.h"
 
 #ifndef BLKDISCARD
 #define BLKDISCARD	_IO(0x12,119)
@@ -1984,6 +1985,27 @@ int group_profile_max_safe_loss(u64 flags)
 	default:
 		return -1;
 	}
+}
+
+u64 btrfs_min_dev_size(u32 nodesize)
+{
+	return 2 * (BTRFS_MKFS_SYSTEM_GROUP_SIZE +
+		    btrfs_min_global_blk_rsv_size(nodesize));
+}
+
+/*
+ * Btrfs minimum size calculation is complicated, it should include at least:
+ * 1. system group size
+ * 2. minimum global block reserve
+ * 3. metadata used at mkfs
+ * 4. space reservation to create uuid for first mount.
+ * Also, raid factor should also be taken into consideration.
+ * To avoid the overkill calculation, (system group + global block rsv) * 2
+ * for *EACH* device should be good enough.
+ */
+u64 btrfs_min_global_blk_rsv_size(u32 nodesize)
+{
+	return (u64)nodesize << 10;
 }
 
 /*

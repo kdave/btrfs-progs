@@ -28,9 +28,6 @@
 #include "btrfs-list.h"
 #include "sizes.h"
 
-#define BTRFS_MKFS_SYSTEM_GROUP_SIZE SZ_4M
-#define BTRFS_MKFS_SMALL_VOLUME_SIZE SZ_1G
-
 #define BTRFS_CONVERT_META_GROUP_SIZE SZ_32M
 
 #define BTRFS_SCAN_MOUNTED	(1ULL << 0)
@@ -116,13 +113,9 @@ int btrfs_open_dir(const char *path, DIR **dirstream, int verbose);
 u64 btrfs_device_size(int fd, struct stat *st);
 /* Helper to always get proper size of the destination string */
 #define strncpy_null(dest, src) __strncpy_null(dest, src, sizeof(dest))
-int test_dev_for_mkfs(const char *file, int force_overwrite);
 int get_label_mounted(const char *mount_path, char *labelp);
 int get_label_unmounted(const char *dev, char *label);
-int test_num_disk_vs_raid(u64 metadata_profile, u64 data_profile,
-	u64 dev_cnt, int mixed, int ssd);
 int group_profile_max_safe_loss(u64 flags);
-int is_vol_small(const char *file);
 int csum_tree_block(struct btrfs_root *root, struct extent_buffer *buf,
 			   int verify);
 int ask_user(const char *question);
@@ -136,34 +129,12 @@ int test_uuid_unique(char *fs_uuid);
 u64 disk_size(const char *path);
 u64 get_partition_size(const char *dev);
 
-int test_minimum_size(const char *file, u32 nodesize);
 int test_issubvolname(const char *name);
 int test_issubvolume(const char *path);
 int test_isdir(const char *path);
 
 const char *subvol_strip_mountpoint(const char *mnt, const char *full_path);
 int get_subvol_info(const char *fullpath, struct root_info *get_ri);
-
-/*
- * Btrfs minimum size calculation is complicated, it should include at least:
- * 1. system group size
- * 2. minimum global block reserve
- * 3. metadata used at mkfs
- * 4. space reservation to create uuid for first mount.
- * Also, raid factor should also be taken into consideration.
- * To avoid the overkill calculation, (system group + global block rsv) * 2
- * for *EACH* device should be good enough.
- */
-static inline u64 btrfs_min_global_blk_rsv_size(u32 nodesize)
-{
-	return (u64)nodesize << 10;
-}
-
-static inline u64 btrfs_min_dev_size(u32 nodesize)
-{
-	return 2 * (BTRFS_MKFS_SYSTEM_GROUP_SIZE +
-		    btrfs_min_global_blk_rsv_size(nodesize));
-}
 
 int find_next_key(struct btrfs_path *path, struct btrfs_key *key);
 const char* btrfs_group_type_str(u64 flag);
