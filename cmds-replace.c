@@ -38,6 +38,7 @@
 
 #include "commands.h"
 #include "help.h"
+#include "mkfs/common.h"
 
 static int print_replace_status(int fd, const char *path, int once);
 static char *time2string(char *buf, size_t s, __u64 t);
