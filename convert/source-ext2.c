@@ -343,7 +343,7 @@ error:
 	return -1;
 }
 
-static int ext2_create_symbol_link(struct btrfs_trans_handle *trans,
+static int ext2_create_symlink(struct btrfs_trans_handle *trans,
 			      struct btrfs_root *root, u64 objectid,
 			      struct btrfs_inode_item *btrfs_inode,
 			      ext2_filsys ext2_fs, ext2_ino_t ext2_ino,
@@ -787,7 +787,7 @@ static int ext2_copy_single_inode(struct btrfs_trans_handle *trans,
 				&btrfs_inode, ext2_fs, ext2_ino);
 		break;
 	case S_IFLNK:
-		ret = ext2_create_symbol_link(trans, root, objectid,
+		ret = ext2_create_symlink(trans, root, objectid,
 				&btrfs_inode, ext2_fs, ext2_ino, ext2_inode);
 		break;
 	default:
