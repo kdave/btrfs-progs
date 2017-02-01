@@ -28,8 +28,6 @@
 #include "btrfs-list.h"
 #include "sizes.h"
 
-#define BTRFS_CONVERT_META_GROUP_SIZE SZ_32M
-
 #define BTRFS_SCAN_MOUNTED	(1ULL << 0)
 #define BTRFS_SCAN_LBLKID	(1ULL << 1)
 

@@ -22,6 +22,8 @@
 #include "mkfs/common.h"
 #include "convert/common.h"
 
+#define BTRFS_CONVERT_META_GROUP_SIZE SZ_32M
+
 /*
  * Reserve space from free_tree.
  * The algorithm is very simple, find the first cache_extent with enough space
