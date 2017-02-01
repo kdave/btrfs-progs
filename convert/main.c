@@ -567,9 +567,9 @@ static int wipe_reserved_ranges(struct cache_tree *tree, u64 min_stripe_size,
 
 static int calculate_available_space(struct btrfs_convert_context *cctx)
 {
-	struct cache_tree *used = &cctx->used;
+	struct cache_tree *used = &cctx->used_space;
 	struct cache_tree *data_chunks = &cctx->data_chunks;
-	struct cache_tree *free = &cctx->free;
+	struct cache_tree *free = &cctx->free_space;
 	struct cache_extent *cache;
 	u64 cur_off = 0;
 	/*
@@ -727,7 +727,7 @@ static int create_image(struct btrfs_root *root,
 	 * Create a new used space cache, which doesn't contain the reserved
 	 * range
 	 */
-	for (cache = first_cache_extent(&cctx->used); cache;
+	for (cache = first_cache_extent(&cctx->used_space); cache;
 	     cache = next_cache_extent(cache)) {
 		ret = add_cache_extent(&used_tmp, cache->start, cache->size);
 		if (ret < 0)
@@ -753,8 +753,8 @@ static int create_image(struct btrfs_root *root,
 		cur += len;
 	}
 	/* Handle the reserved ranges */
-	ret = migrate_reserved_ranges(trans, root, &cctx->used, &buf, fd, ino,
-				      cfg->num_bytes, convert_flags);
+	ret = migrate_reserved_ranges(trans, root, &cctx->used_space, &buf, fd,
+			ino, cfg->num_bytes, convert_flags);
 
 	key.objectid = ino;
 	key.type = BTRFS_INODE_ITEM_KEY;

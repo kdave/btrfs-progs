@@ -782,8 +782,8 @@ out:
 int make_convert_btrfs(int fd, struct btrfs_mkfs_config *cfg,
 			      struct btrfs_convert_context *cctx)
 {
-	struct cache_tree *free = &cctx->free;
-	struct cache_tree *used = &cctx->used;
+	struct cache_tree *free_space = &cctx->free_space;
+	struct cache_tree *used_space = &cctx->used_space;
 	u64 sys_chunk_start;
 	u64 meta_chunk_start;
 	/* chunk tree bytenr, in system chunk */
@@ -797,14 +797,14 @@ int make_convert_btrfs(int fd, struct btrfs_mkfs_config *cfg,
 	int ret;
 
 	/* Shouldn't happen */
-	BUG_ON(cache_tree_empty(used));
+	BUG_ON(cache_tree_empty(used_space));
 
 	/*
 	 * reserve space for temporary superblock first
 	 * Here we allocate a little larger space, to keep later
 	 * free space will be STRIPE_LEN aligned
 	 */
-	ret = reserve_free_space(free, BTRFS_STRIPE_LEN,
+	ret = reserve_free_space(free_space, BTRFS_STRIPE_LEN,
 				 &cfg->super_bytenr);
 	if (ret < 0)
 		goto out;
@@ -815,11 +815,11 @@ int make_convert_btrfs(int fd, struct btrfs_mkfs_config *cfg,
 	 * If using current 4M, it can only handle less than one TB for
 	 * worst case and then run out of sys space.
 	 */
-	ret = reserve_free_space(free, BTRFS_MKFS_SYSTEM_GROUP_SIZE,
+	ret = reserve_free_space(free_space, BTRFS_MKFS_SYSTEM_GROUP_SIZE,
 				 &sys_chunk_start);
 	if (ret < 0)
 		goto out;
-	ret = reserve_free_space(free, BTRFS_CONVERT_META_GROUP_SIZE,
+	ret = reserve_free_space(free_space, BTRFS_CONVERT_META_GROUP_SIZE,
 				 &meta_chunk_start);
 	if (ret < 0)
 		goto out;
