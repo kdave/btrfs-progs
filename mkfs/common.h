@@ -29,17 +29,24 @@
 #define BTRFS_MKFS_SMALL_VOLUME_SIZE SZ_1G
 
 struct btrfs_mkfs_config {
+	/* Label of the new filesystem */
 	char *label;
-	char fs_uuid[BTRFS_UUID_UNPARSED_SIZE];
-	char chunk_uuid[BTRFS_UUID_UNPARSED_SIZE];
-	u64 blocks[8];
-	u64 num_bytes;
+	/* Blck sizes */
 	u32 nodesize;
 	u32 sectorsize;
 	u32 stripesize;
+	/* Bitfield of incompat features, BTRFS_FEATURE_INCOMPAT_* */
 	u64 features;
+	/* Size of the filesystem in bytes */
+	u64 num_bytes;
+	/* Logical addresses of superblock [0] and other tree roots */
+	u64 blocks[8];
 
-	/* Super bytenr after make_btrfs */
+	/* Output fields, set during creation */
+	char fs_uuid[BTRFS_UUID_UNPARSED_SIZE];
+	char chunk_uuid[BTRFS_UUID_UNPARSED_SIZE];
+
+	/* Superblock offset after make_btrfs */
 	u64 super_bytenr;
 };
 
