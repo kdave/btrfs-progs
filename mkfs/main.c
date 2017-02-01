@@ -1400,7 +1400,6 @@ int main(int argc, char **argv)
 	char *label = NULL;
 	u64 block_count = 0;
 	u64 dev_block_count = 0;
-	u64 blocks[7];
 	u64 alloc_start = 0;
 	u64 metadata_profile = 0;
 	u64 data_profile = 0;
@@ -1723,12 +1722,6 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	blocks[0] = BTRFS_SUPER_INFO_OFFSET;
-	for (i = 1; i < 7; i++) {
-		blocks[i] = BTRFS_SUPER_INFO_OFFSET + 1024 * 1024 +
-			nodesize * i;
-	}
-
 	if (group_profile_max_safe_loss(metadata_profile) <
 		group_profile_max_safe_loss(data_profile)){
 		warning("metadata has lower redundancy than data!\n");
@@ -1736,7 +1729,6 @@ int main(int argc, char **argv)
 
 	mkfs_cfg.label = label;
 	memcpy(mkfs_cfg.fs_uuid, fs_uuid, sizeof(mkfs_cfg.fs_uuid));
-	memcpy(mkfs_cfg.blocks, blocks, sizeof(blocks));
 	mkfs_cfg.num_bytes = dev_block_count;
 	mkfs_cfg.nodesize = nodesize;
 	mkfs_cfg.sectorsize = sectorsize;

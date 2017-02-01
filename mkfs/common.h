@@ -39,10 +39,11 @@ struct btrfs_mkfs_config {
 	u64 features;
 	/* Size of the filesystem in bytes */
 	u64 num_bytes;
-	/* Logical addresses of superblock [0] and other tree roots */
-	u64 blocks[8];
 
 	/* Output fields, set during creation */
+
+	/* Logical addresses of superblock [0] and other tree roots */
+	u64 blocks[8];
 	char fs_uuid[BTRFS_UUID_UNPARSED_SIZE];
 	char chunk_uuid[BTRFS_UUID_UNPARSED_SIZE];
 
