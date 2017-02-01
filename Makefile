@@ -299,7 +299,7 @@ test-clean:
 test-inst: all
 	@tmpdest=`mktemp --tmpdir -d btrfs-inst.XXXXXX` && \
 		echo "Test installation to $$tmpdest" && \
-		$(MAKE) DESTDIR=$$tmpdest install && \
+		$(MAKE) $(MAKEOPTS) DESTDIR=$$tmpdest install && \
 		$(RM) -rf -- $$tmpdest
 
 test: test-fsck test-mkfs test-convert test-misc test-fuzz test-cli
@@ -461,16 +461,16 @@ library-test.static: library-test.static.o $(libs_static)
 test-build: test-build-pre test-build-real
 
 test-build-pre:
-	$(MAKE) clean-all
+	$(MAKE) $(MAKEOPTS) clean-all
 	./autogen.sh
 	./configure
 
 test-build-real:
-	$(MAKE) library-test
-	-$(MAKE) library-test.static
-	$(MAKE) -j 8 all
-	-$(MAKE) -j 8 static
-	$(MAKE) -j 8 $(progs_extra)
+	$(MAKE) $(MAKEOPTS) library-test
+	-$(MAKE) $(MAKEOPTS) library-test.static
+	$(MAKE) $(MAKEOPTS) -j 8 all
+	-$(MAKE) $(MAKEOPTS) -j 8 static
+	$(MAKE) $(MAKEOPTS) -j 8 $(progs_extra)
 
 manpages:
 	$(Q)$(MAKE) $(MAKEOPTS) -C Documentation
