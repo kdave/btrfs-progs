@@ -2266,6 +2266,32 @@ unsigned int get_unit_mode_from_arg(int *argc, char *argv[], int df_mode)
 	return unit_mode;
 }
 
+u64 div_factor(u64 num, int factor)
+{
+	if (factor == 10)
+		return num;
+	num *= factor;
+	num /= 10;
+	return num;
+}
+/*
+ * Get the length of the string converted from a u64 number.
+ *
+ * Result is equal to log10(num) + 1, but without the use of math library.
+ */
+int count_digits(u64 num)
+{
+	int ret = 0;
+
+	if (num == 0)
+		return 1;
+	while (num > 0) {
+		ret++;
+		num /= 10;
+	}
+	return ret;
+}
+
 int string_is_numerical(const char *str)
 {
 	if (!str)
@@ -2397,6 +2423,7 @@ out:
 	return ret;
 }
 
+/* Set the seed manually */
 void init_rand_seed(u64 seed)
 {
 	int i;
@@ -2446,6 +2473,7 @@ u32 rand_u32(void)
 	return (u32)jrand48(rand_seed);
 }
 
+/* Return random number in range [0, upper) */
 unsigned int rand_range(unsigned int upper)
 {
 	__init_seed();
@@ -2454,6 +2482,31 @@ unsigned int rand_range(unsigned int upper)
 	 * distributed
 	 */
 	return (unsigned int)(jrand48(rand_seed) % upper);
+}
+
+int rand_int(void)
+{
+	return (int)(rand_u32());
+}
+
+u64 rand_u64(void)
+{
+	u64 ret = 0;
+
+	ret += rand_u32();
+	ret <<= 32;
+	ret += rand_u32();
+	return ret;
+}
+
+u16 rand_u16(void)
+{
+	return (u16)(rand_u32());
+}
+
+u8 rand_u8(void)
+{
+	return (u8)(rand_u32());
 }
 
 void btrfs_config_init(void)
