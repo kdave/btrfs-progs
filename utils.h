@@ -27,6 +27,7 @@
 #include "internal.h"
 #include "btrfs-list.h"
 #include "sizes.h"
+#include "messages.h"
 
 #define BTRFS_SCAN_MOUNTED	(1ULL << 0)
 #define BTRFS_SCAN_LBLKID	(1ULL << 1)
@@ -146,59 +147,6 @@ int btrfs_tree_search2_ioctl_supported(int fd);
 unsigned int get_unit_mode_from_arg(int *argc, char *argv[], int df_mode);
 int string_is_numerical(const char *str);
 
-#if DEBUG_VERBOSE_ERROR
-#define	PRINT_VERBOSE_ERROR	fprintf(stderr, "%s:%d:", __FILE__, __LINE__)
-#else
-#define PRINT_VERBOSE_ERROR
-#endif
-
-#if DEBUG_TRACE_ON_ERROR
-#define PRINT_TRACE_ON_ERROR	print_trace()
-#else
-#define PRINT_TRACE_ON_ERROR
-#endif
-
-#if DEBUG_ABORT_ON_ERROR
-#define DO_ABORT_ON_ERROR	abort()
-#else
-#define DO_ABORT_ON_ERROR
-#endif
-
-#define error(fmt, ...)							\
-	do {								\
-		PRINT_TRACE_ON_ERROR;					\
-		PRINT_VERBOSE_ERROR;					\
-		__error((fmt), ##__VA_ARGS__);				\
-		DO_ABORT_ON_ERROR;					\
-	} while (0)
-
-#define error_on(cond, fmt, ...)					\
-	do {								\
-		if ((cond))						\
-			PRINT_TRACE_ON_ERROR;				\
-		if ((cond))						\
-			PRINT_VERBOSE_ERROR;				\
-		__error_on((cond), (fmt), ##__VA_ARGS__);		\
-		if ((cond))						\
-			DO_ABORT_ON_ERROR;				\
-	} while (0)
-
-#define warning(fmt, ...)						\
-	do {								\
-		PRINT_TRACE_ON_ERROR;					\
-		PRINT_VERBOSE_ERROR;					\
-		__warning((fmt), ##__VA_ARGS__);			\
-	} while (0)
-
-#define warning_on(cond, fmt, ...)					\
-	do {								\
-		if ((cond))						\
-			PRINT_TRACE_ON_ERROR;				\
-		if ((cond))						\
-			PRINT_VERBOSE_ERROR;				\
-		__warning_on((cond), (fmt), ##__VA_ARGS__);		\
-	} while (0)
-
 /*
  * Global program state, configurable by command line and available to
  * functions without extra context passing.
@@ -208,64 +156,6 @@ struct btrfs_config {
 extern struct btrfs_config bconf;
 
 void btrfs_config_init(void);
-
-__attribute__ ((format (printf, 1, 2)))
-static inline void __warning(const char *fmt, ...)
-{
-	va_list args;
-
-	fputs("WARNING: ", stderr);
-	va_start(args, fmt);
-	vfprintf(stderr, fmt, args);
-	va_end(args);
-	fputc('\n', stderr);
-}
-
-__attribute__ ((format (printf, 1, 2)))
-static inline void __error(const char *fmt, ...)
-{
-	va_list args;
-
-	fputs("ERROR: ", stderr);
-	va_start(args, fmt);
-	vfprintf(stderr, fmt, args);
-	va_end(args);
-	fputc('\n', stderr);
-}
-
-__attribute__ ((format (printf, 2, 3)))
-static inline int __warning_on(int condition, const char *fmt, ...)
-{
-	va_list args;
-
-	if (!condition)
-		return 0;
-
-	fputs("WARNING: ", stderr);
-	va_start(args, fmt);
-	vfprintf(stderr, fmt, args);
-	va_end(args);
-	fputc('\n', stderr);
-
-	return 1;
-}
-
-__attribute__ ((format (printf, 2, 3)))
-static inline int __error_on(int condition, const char *fmt, ...)
-{
-	va_list args;
-
-	if (!condition)
-		return 0;
-
-	fputs("ERROR: ", stderr);
-	va_start(args, fmt);
-	vfprintf(stderr, fmt, args);
-	va_end(args);
-	fputc('\n', stderr);
-
-	return 1;
-}
 
 /* Pseudo random number generator wrappers */
 int rand_int(void);
