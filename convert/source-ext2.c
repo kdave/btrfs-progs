@@ -129,7 +129,7 @@ static int ext2_read_used_space(struct btrfs_convert_context *cctx)
 {
 	ext2_filsys fs = (ext2_filsys)cctx->fs_data;
 	blk64_t blk_itr = EXT2FS_B2C(fs, fs->super->s_first_data_block);
-	struct cache_tree *used_tree = &cctx->used;
+	struct cache_tree *used_tree = &cctx->used_space;
 	char *block_bitmap = NULL;
 	unsigned long i;
 	int block_nbytes;

@@ -42,16 +42,16 @@ void init_convert_context(struct btrfs_convert_context *cctx)
 {
 	memset(cctx, 0, sizeof(*cctx));
 
-	cache_tree_init(&cctx->used);
+	cache_tree_init(&cctx->used_space);
 	cache_tree_init(&cctx->data_chunks);
-	cache_tree_init(&cctx->free);
+	cache_tree_init(&cctx->free_space);
 }
 
 void clean_convert_context(struct btrfs_convert_context *cctx)
 {
-	free_extent_cache_tree(&cctx->used);
+	free_extent_cache_tree(&cctx->used_space);
 	free_extent_cache_tree(&cctx->data_chunks);
-	free_extent_cache_tree(&cctx->free);
+	free_extent_cache_tree(&cctx->free_space);
 }
 
 int block_iterate_proc(u64 disk_block, u64 file_block,

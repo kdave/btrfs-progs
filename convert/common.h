@@ -39,13 +39,13 @@ struct btrfs_convert_context {
 	const struct btrfs_convert_operations *convert_ops;
 
 	/* The accurate used space of old filesystem */
-	struct cache_tree used;
+	struct cache_tree used_space;
 
 	/* Batched ranges which must be covered by data chunks */
 	struct cache_tree data_chunks;
 
 	/* Free space which is not covered by data_chunks */
-	struct cache_tree free;
+	struct cache_tree free_space;
 
 	void *fs_data;
 };
