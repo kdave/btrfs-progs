@@ -71,61 +71,15 @@
 	} while (0)
 
 __attribute__ ((format (printf, 1, 2)))
-static inline void __warning(const char *fmt, ...)
-{
-	va_list args;
-
-	fputs("WARNING: ", stderr);
-	va_start(args, fmt);
-	vfprintf(stderr, fmt, args);
-	va_end(args);
-	fputc('\n', stderr);
-}
+void __warning(const char *fmt, ...);
 
 __attribute__ ((format (printf, 1, 2)))
-static inline void __error(const char *fmt, ...)
-{
-	va_list args;
-
-	fputs("ERROR: ", stderr);
-	va_start(args, fmt);
-	vfprintf(stderr, fmt, args);
-	va_end(args);
-	fputc('\n', stderr);
-}
+void __error(const char *fmt, ...);
 
 __attribute__ ((format (printf, 2, 3)))
-static inline int __warning_on(int condition, const char *fmt, ...)
-{
-	va_list args;
-
-	if (!condition)
-		return 0;
-
-	fputs("WARNING: ", stderr);
-	va_start(args, fmt);
-	vfprintf(stderr, fmt, args);
-	va_end(args);
-	fputc('\n', stderr);
-
-	return 1;
-}
+int __warning_on(int condition, const char *fmt, ...);
 
 __attribute__ ((format (printf, 2, 3)))
-static inline int __error_on(int condition, const char *fmt, ...)
-{
-	va_list args;
-
-	if (!condition)
-		return 0;
-
-	fputs("ERROR: ", stderr);
-	va_start(args, fmt);
-	vfprintf(stderr, fmt, args);
-	va_end(args);
-	fputc('\n', stderr);
-
-	return 1;
-}
+int __error_on(int condition, const char *fmt, ...);
 
 #endif
