@@ -796,8 +796,8 @@ int make_convert_btrfs(int fd, struct btrfs_mkfs_config *cfg,
 	u64 csum_bytenr;
 	int ret;
 
-	/* Shouldn't happen */
-	BUG_ON(cache_tree_empty(used_space));
+	/* Source filesystem must be opened, checked and analyzed in advance */
+	ASSERT(!cache_tree_empty(used_space));
 
 	/*
 	 * reserve space for temporary superblock first
