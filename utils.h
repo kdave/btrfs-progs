@@ -138,32 +138,8 @@ int find_next_key(struct btrfs_path *path, struct btrfs_key *key);
 const char* btrfs_group_type_str(u64 flag);
 const char* btrfs_group_profile_str(u64 flag);
 
-/*
- * Get the length of the string converted from a u64 number.
- *
- * Result is equal to log10(num) + 1, but without the use of math library.
- */
-static inline int count_digits(u64 num)
-{
-	int ret = 0;
-
-	if (num == 0)
-		return 1;
-	while (num > 0) {
-		ret++;
-		num /= 10;
-	}
-	return ret;
-}
-
-static inline u64 div_factor(u64 num, int factor)
-{
-	if (factor == 10)
-		return num;
-	num *= factor;
-	num /= 10;
-	return num;
-}
+int count_digits(u64 num);
+u64 div_factor(u64 num, int factor);
 
 int btrfs_tree_search2_ioctl_supported(int fd);
 
@@ -292,37 +268,12 @@ static inline int __error_on(int condition, const char *fmt, ...)
 }
 
 /* Pseudo random number generator wrappers */
+int rand_int(void);
+u8 rand_u8(void);
+u16 rand_u16(void);
 u32 rand_u32(void);
-
-static inline int rand_int(void)
-{
-	return (int)(rand_u32());
-}
-
-static inline u64 rand_u64(void)
-{
-	u64 ret = 0;
-
-	ret += rand_u32();
-	ret <<= 32;
-	ret += rand_u32();
-	return ret;
-}
-
-static inline u16 rand_u16(void)
-{
-	return (u16)(rand_u32());
-}
-
-static inline u8 rand_u8(void)
-{
-	return (u8)(rand_u32());
-}
-
-/* Return random number in range [0, limit) */
+u64 rand_u64(void);
 unsigned int rand_range(unsigned int upper);
-
-/* Also allow setting the seed manually */
 void init_rand_seed(u64 seed);
 
 #endif
