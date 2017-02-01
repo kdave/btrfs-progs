@@ -30,7 +30,7 @@
 
 struct btrfs_mkfs_config {
 	/* Label of the new filesystem */
-	char *label;
+	const char *label;
 	/* Blck sizes */
 	u32 nodesize;
 	u32 sectorsize;
