@@ -92,6 +92,12 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 	uuid_generate(super.dev_item.uuid);
 	uuid_generate(chunk_tree_uuid);
 
+	cfg->blocks[0] = BTRFS_SUPER_INFO_OFFSET;
+	for (i = 1; i < 7; i++) {
+		cfg->blocks[i] = BTRFS_SUPER_INFO_OFFSET + 1024 * 1024 +
+			cfg->nodesize * i;
+	}
+
 	btrfs_set_super_bytenr(&super, cfg->blocks[0]);
 	btrfs_set_super_num_devices(&super, 1);
 	btrfs_set_super_magic(&super, BTRFS_MAGIC_PARTIAL);
