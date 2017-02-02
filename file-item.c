@@ -277,7 +277,7 @@ int btrfs_csum_file_block(struct btrfs_trans_handle *trans,
 		diff = diff - btrfs_item_size_nr(leaf, path->slots[0]);
 		if (diff != csum_size)
 			goto insert;
-		ret = btrfs_extend_item(trans, root, path, diff);
+		ret = btrfs_extend_item(root, path, diff);
 		BUG_ON(ret);
 		goto csum;
 	}

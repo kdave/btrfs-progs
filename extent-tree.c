@@ -574,7 +574,7 @@ static int convert_extent_item_v0(struct btrfs_trans_handle *trans,
 		return ret;
 	BUG_ON(ret);
 
-	ret = btrfs_extend_item(trans, root, path, new_size);
+	ret = btrfs_extend_item(root, path, new_size);
 	BUG_ON(ret);
 
 	leaf = path->nodes[0];
@@ -1188,7 +1188,7 @@ static int setup_inline_extent_backref(struct btrfs_trans_handle *trans,
 	type = extent_ref_type(parent, owner);
 	size = btrfs_extent_inline_ref_size(type);
 
-	ret = btrfs_extend_item(trans, root, path, size);
+	ret = btrfs_extend_item(root, path, size);
 	BUG_ON(ret);
 
 	ei = btrfs_item_ptr(leaf, path->slots[0], struct btrfs_extent_item);
