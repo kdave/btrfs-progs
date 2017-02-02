@@ -2390,8 +2390,7 @@ int btrfs_truncate_item(struct btrfs_root *root, struct btrfs_path *path,
 	return ret;
 }
 
-int btrfs_extend_item(struct btrfs_trans_handle *trans,
-		      struct btrfs_root *root, struct btrfs_path *path,
+int btrfs_extend_item(struct btrfs_root *root, struct btrfs_path *path,
 		      u32 data_size)
 {
 	int ret = 0;
