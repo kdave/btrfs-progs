@@ -758,8 +758,7 @@ static int balance_level(struct btrfs_trans_handle *trans,
 			wait_on_tree_block_writeback(root, right);
 			free_extent_buffer(right);
 			right = NULL;
-			wret = btrfs_del_ptr(trans, root, path,
-					     level + 1, pslot + 1);
+			wret = btrfs_del_ptr(root, path, level + 1, pslot + 1);
 			if (wret)
 				ret = wret;
 			wret = btrfs_free_extent(trans, root, bytenr,
@@ -806,7 +805,7 @@ static int balance_level(struct btrfs_trans_handle *trans,
 		wait_on_tree_block_writeback(root, mid);
 		free_extent_buffer(mid);
 		mid = NULL;
-		wret = btrfs_del_ptr(trans, root, path, level + 1, pslot);
+		wret = btrfs_del_ptr(root, path, level + 1, pslot);
 		if (wret)
 			ret = wret;
 		wret = btrfs_free_extent(trans, root, bytenr, blocksize,
@@ -2599,8 +2598,8 @@ int btrfs_insert_item(struct btrfs_trans_handle *trans, struct btrfs_root
  * continuing all the way the root if required.  The root is converted into
  * a leaf if all the nodes are emptied.
  */
-int btrfs_del_ptr(struct btrfs_trans_handle *trans, struct btrfs_root *root,
-		   struct btrfs_path *path, int level, int slot)
+int btrfs_del_ptr(struct btrfs_root *root, struct btrfs_path *path,
+		int level, int slot)
 {
 	struct extent_buffer *parent = path->nodes[level];
 	u32 nritems;
@@ -2648,7 +2647,7 @@ static noinline int btrfs_del_leaf(struct btrfs_trans_handle *trans,
 	int ret;
 
 	WARN_ON(btrfs_header_generation(leaf) != trans->transid);
-	ret = btrfs_del_ptr(trans, root, path, 1, path->slots[1]);
+	ret = btrfs_del_ptr(root, path, 1, path->slots[1]);
 	if (ret)
 		return ret;
 
