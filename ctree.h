@@ -2565,8 +2565,8 @@ u64 hash_extent_data_ref(u64 root_objectid, u64 owner, u64 offset);
 
 /* ctree.c */
 int btrfs_comp_cpu_keys(struct btrfs_key *k1, struct btrfs_key *k2);
-int btrfs_del_ptr(struct btrfs_trans_handle *trans, struct btrfs_root *root,
-		   struct btrfs_path *path, int level, int slot);
+int btrfs_del_ptr(struct btrfs_root *root, struct btrfs_path *path,
+		int level, int slot);
 enum btrfs_tree_block_status
 btrfs_check_node(struct btrfs_root *root, struct btrfs_disk_key *parent_key,
 		 struct extent_buffer *buf);
