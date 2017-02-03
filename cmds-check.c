@@ -7968,7 +7968,7 @@ out:
 static int delete_extent_records(struct btrfs_trans_handle *trans,
 				 struct btrfs_root *root,
 				 struct btrfs_path *path,
-				 u64 bytenr, u64 new_len)
+				 u64 bytenr)
 {
 	struct btrfs_key key;
 	struct btrfs_key found_key;
@@ -8974,7 +8974,7 @@ static int fixup_extent_refs(struct btrfs_fs_info *info,
 
 	/* step two, delete all the existing records */
 	ret = delete_extent_records(trans, info->extent_root, &path,
-				    rec->start, rec->max_size);
+				    rec->start);
 
 	if (ret < 0)
 		goto out;
