@@ -31,7 +31,7 @@ the stream, and print the stream metadata, one operation per line.
 
 3. default subvolume has changed or you didn't mount the filesystem at the toplevel subvolume
 
-A subvolume is made read-only after the receiving process finishes succesfully.
+A subvolume is made read-only after the receiving process finishes succesfully (see BUGS below).
 
 `Options`
 
@@ -67,6 +67,26 @@ tell us where this filesystem is mounted.
 dump the stream metadata, one line per operation
 +
 Does not require the 'path' parameter. The filesystem chanded.
+
+BUGS
+----
+*btrfs receive* sets the subvolume read-only after it completes
+successfully.  However, while the receive is in progress, users who have
+write access to files or directories in the receiving 'path' can add,
+remove, or modify files, in which case the resulting read-only subvolume
+will not be an exact copy of the sent subvolume.
+
+If the intention is to create an exact copy, the receiving 'path'
+should be protected from access by users until the receive operation
+has completed and the subvolume is set to read-only.
+
+Additionally, receive does not currently do a very good job of validating
+that an incremental send streams actually makes sense, and it is thus
+possible for a specially crafted send stream to create a subvolume with
+reflinks to arbitrary files in the same filesystem.  Because of this,
+users are advised to not use *btrfs receive* on send streams from
+untrusted sources, and to protect trusted streams when sending them
+across untrusted networks.
 
 EXIT STATUS
 -----------
