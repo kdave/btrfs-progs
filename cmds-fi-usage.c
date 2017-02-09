@@ -997,7 +997,7 @@ out:
 	return !!ret;
 }
 
-void print_device_chunks(int fd, struct device_info *devinfo,
+void print_device_chunks(struct device_info *devinfo,
 		struct chunk_info *chunks_info_ptr,
 		int chunks_info_count, unsigned unit_mode)
 {
