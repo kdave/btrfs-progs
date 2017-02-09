@@ -1006,7 +1006,7 @@ static int create_chunks(struct btrfs_trans_handle *trans,
 		if (ret)
 			return ret;
 		set_extent_dirty(&root->fs_info->free_space_cache,
-				 chunk_start, chunk_start + chunk_size - 1, 0);
+				 chunk_start, chunk_start + chunk_size - 1);
 	}
 
 	if (size_of_data < minimum_data_chunk_size)
@@ -1023,7 +1023,7 @@ static int create_chunks(struct btrfs_trans_handle *trans,
 	if (ret)
 		return ret;
 	set_extent_dirty(&root->fs_info->free_space_cache,
-			 chunk_start, chunk_start + size_of_data - 1, 0);
+			 chunk_start, chunk_start + size_of_data - 1);
 	return ret;
 }
 

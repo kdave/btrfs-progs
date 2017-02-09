@@ -149,8 +149,7 @@ static int cache_block_group(struct btrfs_root *root,
 			if (key.objectid > last) {
 				hole_size = key.objectid - last;
 				set_extent_dirty(free_space_cache, last,
-						 last + hole_size - 1,
-						 GFP_NOFS);
+						 last + hole_size - 1);
 			}
 			if (key.type == BTRFS_METADATA_ITEM_KEY)
 				last = key.objectid + root->nodesize;
@@ -165,8 +164,7 @@ next:
 	    block_group->key.offset > last) {
 		hole_size = block_group->key.objectid +
 			block_group->key.offset - last;
-		set_extent_dirty(free_space_cache, last,
-				 last + hole_size - 1, GFP_NOFS);
+		set_extent_dirty(free_space_cache, last, last + hole_size - 1);
 	}
 	remove_sb_from_cache(root, block_group);
 	block_group->cached = 1;
@@ -1976,8 +1974,7 @@ static int update_block_group(struct btrfs_trans_handle *trans,
 			cache->space_info->bytes_used -= num_bytes;
 			if (mark_free) {
 				set_extent_dirty(&info->free_space_cache,
-						 bytenr, bytenr + num_bytes - 1,
-						 GFP_NOFS);
+						bytenr, bytenr + num_bytes - 1);
 			}
 		}
 		btrfs_set_block_group_used(&cache->item, old_val);
@@ -1996,7 +1993,7 @@ static int update_pinned_extents(struct btrfs_root *root,
 
 	if (pin) {
 		set_extent_dirty(&fs_info->pinned_extents,
-				bytenr, bytenr + num - 1, GFP_NOFS);
+				bytenr, bytenr + num - 1);
 	} else {
 		clear_extent_dirty(&fs_info->pinned_extents,
 				bytenr, bytenr + num - 1, GFP_NOFS);
@@ -2043,7 +2040,7 @@ int btrfs_finish_extent_commit(struct btrfs_trans_handle *trans,
 			break;
 		update_pinned_extents(root, start, end + 1 - start, 0);
 		clear_extent_dirty(unpin, start, end, GFP_NOFS);
-		set_extent_dirty(free_space_cache, start, end, GFP_NOFS);
+		set_extent_dirty(free_space_cache, start, end);
 	}
 	return 0;
 }
