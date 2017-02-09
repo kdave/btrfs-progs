@@ -414,8 +414,7 @@ int set_extent_dirty(struct extent_io_tree *tree, u64 start, u64 end)
 	return set_extent_bits(tree, start, end, EXTENT_DIRTY);
 }
 
-int clear_extent_dirty(struct extent_io_tree *tree, u64 start, u64 end,
-		       gfp_t mask)
+int clear_extent_dirty(struct extent_io_tree *tree, u64 start, u64 end)
 {
 	return clear_extent_bits(tree, start, end, EXTENT_DIRTY);
 }
@@ -846,7 +845,7 @@ int clear_extent_buffer_dirty(struct extent_buffer *eb)
 	struct extent_io_tree *tree = eb->tree;
 	if (eb->flags & EXTENT_DIRTY) {
 		eb->flags &= ~EXTENT_DIRTY;
-		clear_extent_dirty(tree, eb->start, eb->start + eb->len - 1, 0);
+		clear_extent_dirty(tree, eb->start, eb->start + eb->len - 1);
 		free_extent_buffer(eb);
 	}
 	return 0;

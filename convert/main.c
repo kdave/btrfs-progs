@@ -1741,8 +1741,7 @@ next_extent:
 		ret = get_state_private(&io_tree, start, &bytenr);
 		BUG_ON(ret);
 
-		clear_extent_bits(&io_tree, start, end, EXTENT_LOCKED,
-				  GFP_NOFS);
+		clear_extent_bits(&io_tree, start, end, EXTENT_LOCKED);
 
 		while (start <= end) {
 			if (start == BTRFS_SUPER_INFO_OFFSET) {
