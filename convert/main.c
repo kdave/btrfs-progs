@@ -302,7 +302,7 @@ static int migrate_one_reserved_range(struct btrfs_trans_handle *trans,
 		eb->len = key.offset;
 
 		/* Write the data */
-		ret = write_and_map_eb(trans, root, eb);
+		ret = write_and_map_eb(root, eb);
 		free(eb);
 		if (ret < 0)
 			break;
