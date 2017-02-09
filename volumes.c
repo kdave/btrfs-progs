@@ -684,8 +684,7 @@ out:
 	return ret;
 }
 
-int btrfs_add_system_chunk(struct btrfs_trans_handle *trans,
-			   struct btrfs_root *root,
+int btrfs_add_system_chunk(struct btrfs_root *root,
 			   struct btrfs_key *key,
 			   struct btrfs_chunk *chunk, int item_size)
 {
@@ -1078,7 +1077,7 @@ again:
 	BUG_ON(ret);
 
 	if (type & BTRFS_BLOCK_GROUP_SYSTEM) {
-		ret = btrfs_add_system_chunk(trans, chunk_root, &key,
+		ret = btrfs_add_system_chunk(chunk_root, &key,
 				    chunk, btrfs_chunk_item_size(num_stripes));
 		BUG_ON(ret);
 	}

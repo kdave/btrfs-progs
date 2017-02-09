@@ -1309,7 +1309,7 @@ static int rebuild_sys_array(struct recover_control *rc,
 		key.type = BTRFS_CHUNK_ITEM_KEY;
 		key.offset = chunk_rec->offset;
 
-		ret = btrfs_add_system_chunk(NULL, root, &key, chunk,
+		ret = btrfs_add_system_chunk(root, &key, chunk,
 				btrfs_chunk_item_size(num_stripes));
 		free(chunk);
 		if (ret)
