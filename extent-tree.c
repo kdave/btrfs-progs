@@ -3639,7 +3639,7 @@ out:
 
 static int free_chunk_item(struct btrfs_trans_handle *trans,
 			   struct btrfs_fs_info *fs_info,
-			   u64 bytenr, u64 len)
+			   u64 bytenr)
 {
 	struct btrfs_path *path;
 	struct btrfs_key key;
@@ -3816,7 +3816,7 @@ int btrfs_free_block_group(struct btrfs_trans_handle *trans,
 		btrfs_unpin_extent(fs_info, bytenr, len);
 		goto out;
 	}
-	ret = free_chunk_item(trans, fs_info, bytenr, len);
+	ret = free_chunk_item(trans, fs_info, bytenr);
 	if (ret < 0) {
 		fprintf(stderr,
 			"failed to free chunk for [%llu,%llu)\n",
