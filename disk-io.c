@@ -617,7 +617,7 @@ commit_tree:
 	write_ctree_super(trans, root);
 	btrfs_finish_extent_commit(trans, fs_info->extent_root,
 			           &fs_info->pinned_extents);
-	btrfs_free_transaction(root, trans);
+	kfree(trans);
 	free_extent_buffer(root->commit_root);
 	root->commit_root = NULL;
 	fs_info->running_transaction = NULL;
@@ -1801,7 +1801,7 @@ int close_ctree_fs_info(struct btrfs_fs_info *fs_info)
 		ret = __commit_transaction(trans, root);
 		BUG_ON(ret);
 		write_ctree_super(trans, root);
-		btrfs_free_transaction(root, trans);
+		kfree(trans);
 	}
 
 	if (fs_info->finalize_on_close) {
