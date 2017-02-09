@@ -160,7 +160,7 @@ int btrfs_insert_inode(struct btrfs_trans_handle *trans, struct btrfs_root
 struct btrfs_inode_ref *btrfs_lookup_inode_ref(struct btrfs_trans_handle *trans,
 		struct btrfs_root *root, struct btrfs_path *path,
 		const char *name, int namelen, u64 ino, u64 parent_ino,
-		u64 index, int ins_len)
+		int ins_len)
 {
 	struct btrfs_key key;
 	struct btrfs_inode_ref *ret_inode_ref = NULL;
