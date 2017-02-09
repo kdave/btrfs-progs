@@ -27,7 +27,7 @@
 #include "disk-io.h"
 #include "print-tree.h"
 #include "utils.h"
-#include "ulist.h"
+#include "kernel-shared/ulist.h"
 #include "rbtree-utils.h"
 #include "transaction.h"
 #include "repair.h"

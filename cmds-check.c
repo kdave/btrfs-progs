@@ -40,7 +40,7 @@
 #include "qgroup-verify.h"
 #include "rbtree-utils.h"
 #include "backref.h"
-#include "ulist.h"
+#include "kernel-shared/ulist.h"
 #include "hash.h"
 #include "help.h"
 
