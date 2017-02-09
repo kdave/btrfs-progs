@@ -426,9 +426,7 @@ err:
 	return ret;
 }
 
-int write_and_map_eb(struct btrfs_trans_handle *trans,
-		     struct btrfs_root *root,
-		     struct extent_buffer *eb)
+int write_and_map_eb(struct btrfs_root *root, struct extent_buffer *eb)
 {
 	int ret;
 	int dev_nr;
@@ -475,7 +473,7 @@ int write_tree_block(struct btrfs_trans_handle *trans,
 	btrfs_set_header_flag(eb, BTRFS_HEADER_FLAG_WRITTEN);
 	csum_tree_block(root, eb, 0);
 
-	return write_and_map_eb(trans, root, eb);
+	return write_and_map_eb(root, eb);
 }
 
 void btrfs_setup_root(u32 nodesize, u32 leafsize, u32 sectorsize,

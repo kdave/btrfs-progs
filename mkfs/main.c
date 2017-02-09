@@ -754,7 +754,7 @@ again:
 		if (ret)
 			goto end;
 
-		ret = write_and_map_eb(trans, root, eb);
+		ret = write_and_map_eb(root, eb);
 		if (ret) {
 			error("failed to write %s", path_name);
 			goto end;
