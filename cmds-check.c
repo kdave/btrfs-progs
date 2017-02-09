@@ -2533,8 +2533,6 @@ static int add_missing_dir_index(struct btrfs_root *root,
 }
 
 static int delete_dir_index(struct btrfs_root *root,
-			    struct cache_tree *inode_cache,
-			    struct inode_record *rec,
 			    struct inode_backref *backref)
 {
 	struct btrfs_trans_handle *trans;
@@ -2657,7 +2655,7 @@ static int repair_inode_backrefs(struct btrfs_root *root,
 		    ((backref->found_dir_index && !backref->found_inode_ref) ||
 		     (backref->found_dir_index && backref->found_inode_ref &&
 		      (backref->errors & REF_ERR_INDEX_UNMATCH)))) {
-			ret = delete_dir_index(root, inode_cache, rec, backref);
+			ret = delete_dir_index(root, backref);
 			if (ret)
 				break;
 			repaired++;
