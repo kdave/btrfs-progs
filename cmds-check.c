@@ -5603,9 +5603,7 @@ static int delete_bogus_item(struct btrfs_root *root,
 	return 0;
 }
 
-static int fix_item_offset(struct btrfs_trans_handle *trans,
-			   struct btrfs_root *root,
-			   struct btrfs_path *path)
+static int fix_item_offset(struct btrfs_root *root, struct btrfs_path *path)
 {
 	struct extent_buffer *buf;
 	int i;
@@ -5730,7 +5728,7 @@ static int try_to_fix_bad_block(struct btrfs_root *root,
 		if (status == BTRFS_TREE_BLOCK_BAD_KEY_ORDER)
 			ret = fix_key_order(search_root, &path);
 		else if (status == BTRFS_TREE_BLOCK_INVALID_OFFSETS)
-			ret = fix_item_offset(trans, search_root, &path);
+			ret = fix_item_offset(search_root, &path);
 		if (ret) {
 			btrfs_commit_transaction(trans, search_root);
 			break;
