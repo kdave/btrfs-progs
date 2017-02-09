@@ -65,9 +65,6 @@ struct cmd_group {
 	const struct cmd_struct commands[];
 };
 
-/* btrfs.c */
-int prefixcmp(const char *str, const char *prefix);
-
 int handle_command_group(const struct cmd_group *grp, int argc,
 			 char **argv);
 
