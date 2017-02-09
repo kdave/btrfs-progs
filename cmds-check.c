@@ -5540,9 +5540,7 @@ static int swap_values(struct btrfs_root *root, struct btrfs_path *path,
 	return 0;
 }
 
-static int fix_key_order(struct btrfs_trans_handle *trans,
-			 struct btrfs_root *root,
-			 struct btrfs_path *path)
+static int fix_key_order(struct btrfs_root *root, struct btrfs_path *path)
 {
 	struct extent_buffer *buf;
 	struct btrfs_key k1, k2;
@@ -5733,7 +5731,7 @@ static int try_to_fix_bad_block(struct btrfs_root *root,
 			break;
 		}
 		if (status == BTRFS_TREE_BLOCK_BAD_KEY_ORDER)
-			ret = fix_key_order(trans, search_root, &path);
+			ret = fix_key_order(search_root, &path);
 		else if (status == BTRFS_TREE_BLOCK_INVALID_OFFSETS)
 			ret = fix_item_offset(trans, search_root, &path);
 		if (ret) {
