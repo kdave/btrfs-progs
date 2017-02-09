@@ -9186,8 +9186,7 @@ static void reset_cached_block_groups(struct btrfs_fs_info *fs_info)
 					    &start, &end, EXTENT_DIRTY);
 		if (ret)
 			break;
-		clear_extent_dirty(&fs_info->free_space_cache, start, end,
-				   GFP_NOFS);
+		clear_extent_dirty(&fs_info->free_space_cache, start, end);
 	}
 
 	start = 0;
@@ -9356,8 +9355,7 @@ static int check_extent_refs(struct btrfs_root *root,
 		if (!init_extent_tree && repair && (!cur_err || fix))
 			clear_extent_dirty(root->fs_info->excluded_extents,
 					   rec->start,
-					   rec->start + rec->max_size - 1,
-					   GFP_NOFS);
+					   rec->start + rec->max_size - 1);
 		free(rec);
 	}
 repair_abort:

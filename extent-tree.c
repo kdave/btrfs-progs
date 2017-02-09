@@ -80,7 +80,7 @@ static int remove_sb_from_cache(struct btrfs_root *root,
 		BUG_ON(ret);
 		while (nr--) {
 			clear_extent_dirty(free_space_cache, logical[nr],
-				logical[nr] + stripe_len - 1, GFP_NOFS);
+				logical[nr] + stripe_len - 1);
 		}
 		kfree(logical);
 	}
@@ -1996,7 +1996,7 @@ static int update_pinned_extents(struct btrfs_root *root,
 				bytenr, bytenr + num - 1);
 	} else {
 		clear_extent_dirty(&fs_info->pinned_extents,
-				bytenr, bytenr + num - 1, GFP_NOFS);
+				bytenr, bytenr + num - 1);
 	}
 	while (num > 0) {
 		cache = btrfs_lookup_block_group(fs_info, bytenr);
@@ -2039,7 +2039,7 @@ int btrfs_finish_extent_commit(struct btrfs_trans_handle *trans,
 		if (ret)
 			break;
 		update_pinned_extents(root, start, end + 1 - start, 0);
-		clear_extent_dirty(unpin, start, end, GFP_NOFS);
+		clear_extent_dirty(unpin, start, end);
 		set_extent_dirty(free_space_cache, start, end);
 	}
 	return 0;
@@ -2695,8 +2695,7 @@ int btrfs_reserve_extent(struct btrfs_trans_handle *trans,
 			       trans->alloc_exclude_nr, data);
 	BUG_ON(ret);
 	clear_extent_dirty(&root->fs_info->free_space_cache,
-			   ins->objectid, ins->objectid + ins->offset - 1,
-			   GFP_NOFS);
+			   ins->objectid, ins->objectid + ins->offset - 1);
 	return ret;
 }
 
@@ -3123,8 +3122,7 @@ int btrfs_free_block_groups(struct btrfs_fs_info *info)
 					    &start, &end, EXTENT_DIRTY);
 		if (ret)
 			break;
-		clear_extent_dirty(&info->free_space_cache, start,
-				   end, GFP_NOFS);
+		clear_extent_dirty(&info->free_space_cache, start, end);
 	}
 
 	while (!list_empty(&info->space_info)) {
