@@ -1772,7 +1772,7 @@ int btrfs_write_dirty_block_groups(struct btrfs_trans_handle *trans,
 		BUG_ON(ret);
 
 		clear_extent_bits(block_group_cache, start, end,
-				  BLOCK_GROUP_DIRTY, GFP_NOFS);
+				  BLOCK_GROUP_DIRTY);
 
 		cache = (struct btrfs_block_group_cache *)(unsigned long)ptr;
 		ret = write_one_cache_group(trans, root, path, cache);
@@ -2106,8 +2106,7 @@ static int finish_current_insert(struct btrfs_trans_handle *trans,
 			BUG_ON(1);
 		}
 
-		clear_extent_bits(&info->extent_ins, start, end, EXTENT_LOCKED,
-				  GFP_NOFS);
+		clear_extent_bits(&info->extent_ins, start, end, EXTENT_LOCKED);
 		kfree(extent_op);
 	}
 	return 0;
@@ -2429,8 +2428,7 @@ static int del_pending_extents(struct btrfs_trans_handle *trans, struct
 		BUG_ON(ret);
 		extent_op = (struct pending_extent_op *)(unsigned long)priv;
 
-		clear_extent_bits(pending_del, start, end, EXTENT_LOCKED,
-				  GFP_NOFS);
+		clear_extent_bits(pending_del, start, end, EXTENT_LOCKED);
 
 		if (!test_range_bit(extent_ins, start, end,
 				    EXTENT_LOCKED, 0)) {
@@ -2447,7 +2445,7 @@ static int del_pending_extents(struct btrfs_trans_handle *trans, struct
 							(unsigned long)priv;
 
 			clear_extent_bits(extent_ins, start, end,
-					  EXTENT_LOCKED, GFP_NOFS);
+					  EXTENT_LOCKED);
 
 			if (extent_op->type == PENDING_BACKREF_UPDATE)
 				BUG_ON(1);
@@ -3121,7 +3119,7 @@ int btrfs_free_block_groups(struct btrfs_fs_info *info)
 			kfree(cache);
 		}
 		clear_extent_bits(&info->block_group_cache, start,
-				  end, (unsigned int)-1, GFP_NOFS);
+				  end, (unsigned int)-1);
 	}
 	while(1) {
 		ret = find_first_extent_bit(&info->free_space_cache, 0,
@@ -3726,7 +3724,7 @@ static int free_block_group_cache(struct btrfs_trans_handle *trans,
 		kfree(cache->free_space_ctl);
 	}
 	clear_extent_bits(&fs_info->block_group_cache, bytenr, bytenr + len,
-			  (unsigned int)-1, GFP_NOFS);
+			  (unsigned int)-1);
 	ret = free_space_info(fs_info, flags, len, 0, NULL);
 	if (ret < 0)
 		goto out;
@@ -4155,7 +4153,7 @@ void free_excluded_extents(struct btrfs_root *root,
 	end = start + cache->key.offset - 1;
 
 	clear_extent_bits(&root->fs_info->pinned_extents,
-			  start, end, EXTENT_UPTODATE, GFP_NOFS);
+			  start, end, EXTENT_UPTODATE);
 }
 
 int exclude_super_stripes(struct btrfs_root *root,

@@ -192,8 +192,7 @@ static int clear_state_bit(struct extent_io_tree *tree,
 /*
  * clear some bits on a range in the tree.
  */
-int clear_extent_bits(struct extent_io_tree *tree, u64 start,
-		      u64 end, int bits, gfp_t mask)
+int clear_extent_bits(struct extent_io_tree *tree, u64 start, u64 end, int bits)
 {
 	struct extent_state *state;
 	struct extent_state *prealloc = NULL;
@@ -420,7 +419,7 @@ int set_extent_dirty(struct extent_io_tree *tree, u64 start, u64 end,
 int clear_extent_dirty(struct extent_io_tree *tree, u64 start, u64 end,
 		       gfp_t mask)
 {
-	return clear_extent_bits(tree, start, end, EXTENT_DIRTY, mask);
+	return clear_extent_bits(tree, start, end, EXTENT_DIRTY);
 }
 
 int find_first_extent_bit(struct extent_io_tree *tree, u64 start,
