@@ -179,7 +179,7 @@ static int corrupt_keys_in_block(struct btrfs_root *root, u64 bytenr)
 }
 
 static int corrupt_extent(struct btrfs_trans_handle *trans,
-			  struct btrfs_root *root, u64 bytenr, u64 copy)
+			  struct btrfs_root *root, u64 bytenr)
 {
 	struct btrfs_key key;
 	struct extent_buffer *leaf;
@@ -271,7 +271,7 @@ static void btrfs_corrupt_extent_leaf(struct btrfs_trans_handle *trans,
 
 	btrfs_item_key_to_cpu(eb, &key, victim);
 	objectid = key.objectid;
-	corrupt_extent(trans, root, objectid, 1);
+	corrupt_extent(trans, root, objectid);
 }
 
 static void btrfs_corrupt_extent_tree(struct btrfs_trans_handle *trans,
@@ -1226,7 +1226,7 @@ int main(int argc, char **argv)
 		if (logical == (u64)-1)
 			print_usage(1);
 		trans = btrfs_start_transaction(root, 1);
-		ret = corrupt_extent (trans, root, logical, 0);
+		ret = corrupt_extent(trans, root, logical);
 		btrfs_commit_transaction(trans, root);
 		goto out_close;
 	}
