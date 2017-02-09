@@ -5568,8 +5568,7 @@ static int fix_key_order(struct btrfs_root *root, struct btrfs_path *path)
 	return ret;
 }
 
-static int delete_bogus_item(struct btrfs_trans_handle *trans,
-			     struct btrfs_root *root,
+static int delete_bogus_item(struct btrfs_root *root,
 			     struct btrfs_path *path,
 			     struct extent_buffer *buf, int slot)
 {
@@ -5623,8 +5622,7 @@ again:
 		    BTRFS_LEAF_DATA_SIZE(root)) {
 			if (btrfs_item_end_nr(buf, i) >
 			    BTRFS_LEAF_DATA_SIZE(root)) {
-				ret = delete_bogus_item(trans, root, path,
-							buf, i);
+				ret = delete_bogus_item(root, path, buf, i);
 				if (!ret)
 					goto again;
 				fprintf(stderr, "item is off the end of the "
@@ -5638,8 +5636,7 @@ again:
 			   btrfs_item_offset_nr(buf, i - 1)) {
 			if (btrfs_item_end_nr(buf, i) >
 			    btrfs_item_offset_nr(buf, i - 1)) {
-				ret = delete_bogus_item(trans, root, path,
-							buf, i);
+				ret = delete_bogus_item(root, path, buf, i);
 				if (!ret)
 					goto again;
 				fprintf(stderr, "items overlap, can't fix\n");
