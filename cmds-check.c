@@ -12321,8 +12321,7 @@ out:
 	return ret;
 }
 
-static int maybe_repair_root_item(struct btrfs_fs_info *info,
-				  struct btrfs_path *path,
+static int maybe_repair_root_item(struct btrfs_path *path,
 				  const struct btrfs_key *root_key,
 				  const int read_only_mode)
 {
@@ -12477,8 +12476,7 @@ again:
 		if (found_key.objectid == BTRFS_TREE_RELOC_OBJECTID)
 			goto next;
 
-		ret = maybe_repair_root_item(info, &path, &found_key,
-					     trans ? 0 : 1);
+		ret = maybe_repair_root_item(&path, &found_key, trans ? 0 : 1);
 		if (ret < 0)
 			goto out;
 		if (ret) {
