@@ -1983,8 +1983,7 @@ static void reada_walk_down(struct btrfs_root *root,
  * which makes leaf owner check not so strong, key check should be
  * sufficient enough for that case.
  */
-static int check_child_node(struct btrfs_root *root,
-			    struct extent_buffer *parent, int slot,
+static int check_child_node(struct extent_buffer *parent, int slot,
 			    struct extent_buffer *child)
 {
 	struct btrfs_key parent_key;
@@ -2184,7 +2183,7 @@ static int walk_down_tree(struct btrfs_root *root, struct btrfs_path *path,
 			}
 		}
 
-		ret = check_child_node(root, cur, path->slots[*level], next);
+		ret = check_child_node(cur, path->slots[*level], next);
 		if (ret) {
 			err = ret;
 			goto out;
@@ -2292,7 +2291,7 @@ static int walk_down_tree_v2(struct btrfs_root *root, struct btrfs_path *path,
 			}
 		}
 
-		ret = check_child_node(root, cur, path->slots[*level], next);
+		ret = check_child_node(cur, path->slots[*level], next);
 		if (ret < 0) 
 			break;
 
