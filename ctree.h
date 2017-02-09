@@ -2039,31 +2039,10 @@ static inline unsigned long btrfs_header_chunk_tree_uuid(struct extent_buffer *e
 	return offsetof(struct btrfs_header, chunk_tree_uuid);
 }
 
-static inline u8 *btrfs_super_fsid(struct extent_buffer *eb)
-{
-	unsigned long ptr = offsetof(struct btrfs_super_block, fsid);
-	return (u8 *)ptr;
-}
-
 static inline u8 *btrfs_header_csum(struct extent_buffer *eb)
 {
 	unsigned long ptr = offsetof(struct btrfs_header, csum);
 	return (u8 *)ptr;
-}
-
-static inline struct btrfs_node *btrfs_buffer_node(struct extent_buffer *eb)
-{
-	return NULL;
-}
-
-static inline struct btrfs_leaf *btrfs_buffer_leaf(struct extent_buffer *eb)
-{
-	return NULL;
-}
-
-static inline struct btrfs_header *btrfs_buffer_header(struct extent_buffer *eb)
-{
-	return NULL;
 }
 
 static inline int btrfs_is_leaf(struct extent_buffer *eb)
