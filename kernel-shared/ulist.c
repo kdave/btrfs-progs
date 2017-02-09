@@ -208,9 +208,6 @@ int ulist_add_merge(struct ulist *ulist, u64 val, u64 aux,
 
 	node->val = val;
 	node->aux = aux;
-#ifdef CONFIG_BTRFS_DEBUG
-	node->seqnum = ulist->nnodes;
-#endif
 
 	ret = ulist_rbtree_insert(ulist, node);
 	ASSERT(!ret);
@@ -275,15 +272,7 @@ struct ulist_node *ulist_next(struct ulist *ulist, struct ulist_iterator *uiter)
 		uiter->cur_list = uiter->cur_list->next;
 	} else {
 		uiter->cur_list = ulist->nodes.next;
-#ifdef CONFIG_BTRFS_DEBUG
-		uiter->i = 0;
-#endif
 	}
 	node = list_entry(uiter->cur_list, struct ulist_node, list);
-#ifdef CONFIG_BTRFS_DEBUG
-	ASSERT(node->seqnum == uiter->i);
-	ASSERT(uiter->i >= 0 && uiter->i < ulist->nnodes);
-	uiter->i++;
-#endif
 	return node;
 }
