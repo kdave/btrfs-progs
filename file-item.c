@@ -336,8 +336,7 @@ fail:
  * This calls btrfs_truncate_item with the correct args based on the
  * overlap, and fixes up the key as required.
  */
-static noinline int truncate_one_csum(struct btrfs_trans_handle *trans,
-				      struct btrfs_root *root,
+static noinline int truncate_one_csum(struct btrfs_root *root,
 				      struct btrfs_path *path,
 				      struct btrfs_key *key,
 				      u64 bytenr, u64 len)
@@ -489,8 +488,7 @@ int btrfs_del_csums(struct btrfs_trans_handle *trans,
 
 			key.offset = end_byte - 1;
 		} else {
-			ret = truncate_one_csum(trans, root, path,
-						&key, bytenr, len);
+			ret = truncate_one_csum(root, path, &key, bytenr, len);
 			BUG_ON(ret);
 		}
 		btrfs_release_path(path);
