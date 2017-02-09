@@ -1827,12 +1827,6 @@ int clean_tree_block(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 	return clear_extent_buffer_dirty(eb);
 }
 
-int wait_on_tree_block_writeback(struct btrfs_root *root,
-				 struct extent_buffer *eb)
-{
-	return 0;
-}
-
 void btrfs_mark_buffer_dirty(struct extent_buffer *eb)
 {
 	set_extent_buffer_dirty(eb);
