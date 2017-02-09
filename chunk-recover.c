@@ -1911,7 +1911,7 @@ static int check_one_csum(int fd, u64 start, u32 len, u32 tree_csum)
 		goto out;
 	}
 	ret = 0;
-	csum_result = btrfs_csum_data(NULL, data, csum_result, len);
+	csum_result = btrfs_csum_data(data, csum_result, len);
 	btrfs_csum_final(csum_result, (u8 *)&csum_result);
 	if (csum_result != tree_csum)
 		ret = 1;
