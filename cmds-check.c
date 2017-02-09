@@ -2574,7 +2574,7 @@ static int delete_dir_index(struct btrfs_root *root,
 
 static int create_inode_item(struct btrfs_root *root,
 			     struct inode_record *rec,
-			     struct inode_backref *backref, int root_dir)
+			     int root_dir)
 {
 	struct btrfs_trans_handle *trans;
 	struct btrfs_inode_item inode_item;
@@ -2640,7 +2640,7 @@ static int repair_inode_backrefs(struct btrfs_root *root,
 	list_for_each_entry_safe(backref, tmp, &rec->backrefs, list) {
 		if (!delete && rec->ino == root_dirid) {
 			if (!rec->found_inode_item) {
-				ret = create_inode_item(root, rec, backref, 1);
+				ret = create_inode_item(root, rec, 1);
 				if (ret)
 					break;
 				repaired++;
@@ -2726,7 +2726,7 @@ static int repair_inode_backrefs(struct btrfs_root *root,
 				backref->found_dir_item &&
 				!(backref->errors & REF_ERR_INDEX_UNMATCH) &&
 				!rec->found_inode_item)) {
-			ret = create_inode_item(root, rec, backref, 0);
+			ret = create_inode_item(root, rec, 0);
 			if (ret)
 				break;
 			repaired++;
