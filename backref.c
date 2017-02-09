@@ -20,7 +20,7 @@
 #include "ctree.h"
 #include "disk-io.h"
 #include "backref.h"
-#include "ulist.h"
+#include "kernel-shared/ulist.h"
 #include "transaction.h"
 #include "internal.h"
 
