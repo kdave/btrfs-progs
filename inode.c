@@ -286,7 +286,7 @@ int btrfs_unlink(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 
 	/* check the ref and backref exists */
 	inode_ref = btrfs_lookup_inode_ref(trans, root, path, name, namelen,
-					   ino, parent_ino, index, 0);
+					   ino, parent_ino, 0);
 	if (IS_ERR(inode_ref)) {
 		ret = PTR_ERR(inode_ref);
 		goto out;
