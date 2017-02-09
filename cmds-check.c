@@ -7119,7 +7119,7 @@ again:
 			csum = ~(u32)0;
 			tmp = offset + data_checked;
 
-			csum = btrfs_csum_data(NULL, (char *)data + tmp,
+			csum = btrfs_csum_data((char *)data + tmp,
 					       csum, root->sectorsize);
 			btrfs_csum_final(csum, (u8 *)&csum);
 

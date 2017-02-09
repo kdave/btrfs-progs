@@ -188,7 +188,7 @@ int btrfs_buffer_uptodate(struct extent_buffer *buf, u64 parent_transid);
 int btrfs_set_buffer_uptodate(struct extent_buffer *buf);
 int wait_on_tree_block_writeback(struct btrfs_root *root,
 				 struct extent_buffer *buf);
-u32 btrfs_csum_data(struct btrfs_root *root, char *data, u32 seed, size_t len);
+u32 btrfs_csum_data(char *data, u32 seed, size_t len);
 void btrfs_csum_final(u32 crc, u8 *result);
 
 int btrfs_commit_transaction(struct btrfs_trans_handle *trans,
