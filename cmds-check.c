@@ -5341,8 +5341,7 @@ static int free_all_extent_backrefs(struct extent_record *rec)
 	return 0;
 }
 
-static void free_extent_record_cache(struct btrfs_fs_info *fs_info,
-				     struct cache_tree *extent_cache)
+static void free_extent_record_cache(struct cache_tree *extent_cache)
 {
 	struct cache_extent *cache;
 	struct extent_record *rec;
@@ -9945,7 +9944,7 @@ loop:
 	free_block_group_tree(&block_group_cache);
 	free_device_cache_tree(&dev_cache);
 	free_device_extent_tree(&dev_extent_cache);
-	free_extent_record_cache(root->fs_info, &extent_cache);
+	free_extent_record_cache(&extent_cache);
 	free_root_item_list(&normal_trees);
 	free_root_item_list(&dropping_trees);
 	extent_io_tree_cleanup(&excluded_extents);
