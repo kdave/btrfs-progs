@@ -161,8 +161,8 @@ err:
 	return ret;
 }
 
-static int make_root_dir(struct btrfs_trans_handle *trans, struct btrfs_root *root,
-		struct mkfs_allocation *allocation)
+static int make_root_dir(struct btrfs_trans_handle *trans,
+		struct btrfs_root *root)
 {
 	struct btrfs_key location;
 	int ret;
@@ -1769,7 +1769,7 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	ret = make_root_dir(trans, root, &allocation);
+	ret = make_root_dir(trans, root);
 	if (ret) {
 		error("failed to setup the root directory: %d", ret);
 		exit(1);
