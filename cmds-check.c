@@ -7394,8 +7394,7 @@ static int is_dropped_key(struct btrfs_key *key,
  * assumption and simply indicate that we _think_ that the FULL BACKREF needs to
  * be set or not and then we can check later once we've gathered all the refs.
  */
-static int calc_extent_flag(struct btrfs_root *root,
-			   struct cache_tree *extent_cache,
+static int calc_extent_flag(struct cache_tree *extent_cache,
 			   struct extent_buffer *buf,
 			   struct root_item_record *ri,
 			   u64 *flags)
@@ -7589,7 +7588,7 @@ static int run_next_block(struct btrfs_root *root,
 				       btrfs_header_level(buf), 1, NULL,
 				       &flags);
 		if (ret < 0) {
-			ret = calc_extent_flag(root, extent_cache, buf, ri, &flags);
+			ret = calc_extent_flag(extent_cache, buf, ri, &flags);
 			if (ret < 0) {
 				fprintf(stderr, "Couldn't calc extent flags\n");
 				flags |= BTRFS_BLOCK_FLAG_FULL_BACKREF;
@@ -7597,7 +7596,7 @@ static int run_next_block(struct btrfs_root *root,
 		}
 	} else {
 		flags = 0;
-		ret = calc_extent_flag(root, extent_cache, buf, ri, &flags);
+		ret = calc_extent_flag(extent_cache, buf, ri, &flags);
 		if (ret < 0) {
 			fprintf(stderr, "Couldn't calc extent flags\n");
 			flags |= BTRFS_BLOCK_FLAG_FULL_BACKREF;
