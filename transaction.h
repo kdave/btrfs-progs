@@ -54,11 +54,4 @@ btrfs_start_transaction(struct btrfs_root *root, int num_blocks)
 	return h;
 }
 
-static inline void btrfs_free_transaction(struct btrfs_root *root,
-					  struct btrfs_trans_handle *handle)
-{
-	memset(handle, 0, sizeof(*handle));
-	free(handle);
-}
-
 #endif
