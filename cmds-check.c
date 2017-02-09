@@ -1478,8 +1478,7 @@ out:
 	return has_parent ? 0 : 2;
 }
 
-static int process_dir_item(struct btrfs_root *root,
-			    struct extent_buffer *eb,
+static int process_dir_item(struct extent_buffer *eb,
 			    int slot, struct btrfs_key *key,
 			    struct shared_node *active_node)
 {
@@ -1836,7 +1835,7 @@ static int process_one_leaf(struct btrfs_root *root, struct extent_buffer *eb,
 		switch (key.type) {
 		case BTRFS_DIR_ITEM_KEY:
 		case BTRFS_DIR_INDEX_KEY:
-			ret = process_dir_item(root, eb, i, &key, active_node);
+			ret = process_dir_item(eb, i, &key, active_node);
 			break;
 		case BTRFS_INODE_REF_KEY:
 			ret = process_inode_ref(eb, i, &key, active_node);
