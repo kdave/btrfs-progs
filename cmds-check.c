@@ -8565,8 +8565,7 @@ out:
 	return ret;
 }
 
-static int process_duplicates(struct btrfs_root *root,
-			      struct cache_tree *extent_cache,
+static int process_duplicates(struct cache_tree *extent_cache,
 			      struct extent_record *rec)
 {
 	struct extent_record *good, *tmp;
@@ -9241,7 +9240,7 @@ static int check_extent_refs(struct btrfs_root *root,
 		 * process_duplicates() will return 0, otherwise it will return
 		 * 1 and we
 		 */
-		if (process_duplicates(root, extent_cache, rec))
+		if (process_duplicates(extent_cache, rec))
 			continue;
 		ret = delete_duplicate_records(root, rec);
 		if (ret < 0)
