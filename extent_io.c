@@ -286,8 +286,7 @@ search_again:
 /*
  * set some bits on a range in the tree.
  */
-int set_extent_bits(struct extent_io_tree *tree, u64 start,
-		    u64 end, int bits, gfp_t mask)
+int set_extent_bits(struct extent_io_tree *tree, u64 start, u64 end, int bits)
 {
 	struct extent_state *state;
 	struct extent_state *prealloc = NULL;
@@ -413,7 +412,7 @@ search_again:
 int set_extent_dirty(struct extent_io_tree *tree, u64 start, u64 end,
 		     gfp_t mask)
 {
-	return set_extent_bits(tree, start, end, EXTENT_DIRTY, mask);
+	return set_extent_bits(tree, start, end, EXTENT_DIRTY);
 }
 
 int clear_extent_dirty(struct extent_io_tree *tree, u64 start, u64 end,

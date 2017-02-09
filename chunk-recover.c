@@ -1115,7 +1115,7 @@ static int block_group_free_all_extent(struct btrfs_root *root,
 	end = start + cache->key.offset - 1;
 
 	set_extent_bits(&info->block_group_cache, start, end,
-			BLOCK_GROUP_DIRTY, GFP_NOFS);
+			BLOCK_GROUP_DIRTY);
 	set_extent_dirty(&info->free_space_cache, start, end, GFP_NOFS);
 
 	btrfs_set_block_group_used(&cache->item, 0);

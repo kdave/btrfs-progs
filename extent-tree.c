@@ -1963,7 +1963,7 @@ static int update_block_group(struct btrfs_trans_handle *trans,
 		start = cache->key.objectid;
 		end = start + cache->key.offset - 1;
 		set_extent_bits(&info->block_group_cache, start, end,
-				BLOCK_GROUP_DIRTY, GFP_NOFS);
+				BLOCK_GROUP_DIRTY);
 
 		old_val = btrfs_block_group_used(&cache->item);
 		num_bytes = min(total, cache->key.offset - byte_in_group);
@@ -2496,7 +2496,7 @@ int btrfs_free_extent(struct btrfs_trans_handle *trans,
 
 		set_extent_bits(&root->fs_info->pending_del,
 				bytenr, bytenr + num_bytes - 1,
-				EXTENT_LOCKED, GFP_NOFS);
+				EXTENT_LOCKED);
 		set_state_private(&root->fs_info->pending_del,
 				  bytenr, (unsigned long)extent_op);
 		return 0;
@@ -2785,7 +2785,7 @@ static int alloc_tree_block(struct btrfs_trans_handle *trans,
 
 		set_extent_bits(&root->fs_info->extent_ins, ins->objectid,
 				ins->objectid + ins->offset - 1,
-				EXTENT_LOCKED, GFP_NOFS);
+				EXTENT_LOCKED);
 		set_state_private(&root->fs_info->extent_ins,
 				  ins->objectid, (unsigned long)extent_op);
 	} else {
@@ -3295,7 +3295,7 @@ int btrfs_read_block_groups(struct btrfs_root *root)
 		/* use EXTENT_LOCKED to prevent merging */
 		set_extent_bits(block_group_cache, found_key.objectid,
 				found_key.objectid + found_key.offset - 1,
-				bit | EXTENT_LOCKED, GFP_NOFS);
+				bit | EXTENT_LOCKED);
 		set_state_private(block_group_cache, found_key.objectid,
 				  (unsigned long)cache);
 	}
@@ -3335,7 +3335,7 @@ btrfs_add_block_group(struct btrfs_fs_info *fs_info, u64 bytes_used, u64 type,
 	bit = block_group_state_bits(type);
 	ret = set_extent_bits(block_group_cache, chunk_offset,
 			      chunk_offset + size - 1,
-			      bit | EXTENT_LOCKED, GFP_NOFS);
+			      bit | EXTENT_LOCKED);
 	BUG_ON(ret);
 
 	ret = set_state_private(block_group_cache, chunk_offset,
@@ -3448,7 +3448,7 @@ int btrfs_make_block_groups(struct btrfs_trans_handle *trans,
 
 		set_extent_bits(block_group_cache, cur_start,
 				cur_start + group_size - 1,
-				bit | EXTENT_LOCKED, GFP_NOFS);
+				bit | EXTENT_LOCKED);
 		set_state_private(block_group_cache, cur_start,
 				  (unsigned long)cache);
 		cur_start += group_size;
@@ -3870,7 +3870,7 @@ int btrfs_fix_block_accounting(struct btrfs_trans_handle *trans,
 		set_extent_bits(&root->fs_info->block_group_cache,
 				cache->key.objectid,
 				cache->key.objectid + cache->key.offset -1,
-				BLOCK_GROUP_DIRTY, GFP_NOFS);
+				BLOCK_GROUP_DIRTY);
 	}
 
 	btrfs_init_path(&path);
@@ -4140,7 +4140,7 @@ static int add_excluded_extent(struct btrfs_root *root,
 {
 	u64 end = start + num_bytes - 1;
 	set_extent_bits(&root->fs_info->pinned_extents,
-			start, end, EXTENT_UPTODATE, GFP_NOFS);
+			start, end, EXTENT_UPTODATE);
 	return 0;
 }
 
