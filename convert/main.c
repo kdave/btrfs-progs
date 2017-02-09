@@ -1627,7 +1627,7 @@ static int do_rollback(const char *devname)
 			break;
 
 		set_extent_bits(&io_tree, offset, offset + num_bytes - 1,
-				EXTENT_LOCKED, GFP_NOFS);
+				EXTENT_LOCKED);
 		set_state_private(&io_tree, offset, bytenr);
 next_extent:
 		offset += btrfs_file_extent_num_bytes(leaf, fi);

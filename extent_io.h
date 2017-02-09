@@ -107,8 +107,7 @@ static inline void extent_buffer_get(struct extent_buffer *eb)
 
 void extent_io_tree_init(struct extent_io_tree *tree);
 void extent_io_tree_cleanup(struct extent_io_tree *tree);
-int set_extent_bits(struct extent_io_tree *tree, u64 start,
-		    u64 end, int bits, gfp_t mask);
+int set_extent_bits(struct extent_io_tree *tree, u64 start, u64 end, int bits);
 int clear_extent_bits(struct extent_io_tree *tree, u64 start, u64 end, int bits);
 int find_first_extent_bit(struct extent_io_tree *tree, u64 start,
 			  u64 *start_ret, u64 *end_ret, int bits);
