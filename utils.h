@@ -146,6 +146,7 @@ int btrfs_tree_search2_ioctl_supported(int fd);
 
 unsigned int get_unit_mode_from_arg(int *argc, char *argv[], int df_mode);
 int string_is_numerical(const char *str);
+int prefixcmp(const char *str, const char *prefix);
 
 /*
  * Global program state, configurable by command line and available to

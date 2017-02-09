@@ -2305,6 +2305,15 @@ int string_is_numerical(const char *str)
 	return 1;
 }
 
+int prefixcmp(const char *str, const char *prefix)
+{
+	for (; ; str++, prefix++)
+		if (!*prefix)
+			return 0;
+		else if (*str != *prefix)
+			return (unsigned char)*prefix - (unsigned char)*str;
+}
+
 /* Subvolume helper functions */
 /*
  * test if name is a correct subvolume name
