@@ -113,8 +113,7 @@ int find_first_extent_bit(struct extent_io_tree *tree, u64 start,
 			  u64 *start_ret, u64 *end_ret, int bits);
 int test_range_bit(struct extent_io_tree *tree, u64 start, u64 end,
 		   int bits, int filled);
-int set_extent_dirty(struct extent_io_tree *tree, u64 start,
-		     u64 end, gfp_t mask);
+int set_extent_dirty(struct extent_io_tree *tree, u64 start, u64 end);
 int clear_extent_dirty(struct extent_io_tree *tree, u64 start,
 		       u64 end, gfp_t mask);
 static inline int set_extent_buffer_uptodate(struct extent_buffer *eb)

@@ -9221,8 +9221,7 @@ static int check_extent_refs(struct btrfs_root *root,
 			rec = container_of(cache, struct extent_record, cache);
 			set_extent_dirty(root->fs_info->excluded_extents,
 					 rec->start,
-					 rec->start + rec->max_size - 1,
-					 GFP_NOFS);
+					 rec->start + rec->max_size - 1);
 			cache = next_cache_extent(cache);
 		}
 
@@ -9231,8 +9230,7 @@ static int check_extent_refs(struct btrfs_root *root,
 		while(cache) {
 			set_extent_dirty(root->fs_info->excluded_extents,
 					 cache->start,
-					 cache->start + cache->size - 1,
-					 GFP_NOFS);
+					 cache->start + cache->size - 1);
 			cache = next_cache_extent(cache);
 		}
 		prune_corrupt_blocks(root->fs_info);
@@ -11676,8 +11674,7 @@ static int reset_block_groups(struct btrfs_fs_info *fs_info)
 				      key.objectid, key.offset,
 				      btrfs_chunk_length(leaf, chunk));
 		set_extent_dirty(&fs_info->free_space_cache, key.offset,
-				 key.offset + btrfs_chunk_length(leaf, chunk),
-				 GFP_NOFS);
+				 key.offset + btrfs_chunk_length(leaf, chunk));
 		path.slots[0]++;
 	}
 	start = 0;
