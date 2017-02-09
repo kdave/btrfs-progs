@@ -1163,8 +1163,7 @@ out:
 	return err;
 }
 
-static int setup_inline_extent_backref(struct btrfs_trans_handle *trans,
-				struct btrfs_root *root,
+static int setup_inline_extent_backref(struct btrfs_root *root,
 				struct btrfs_path *path,
 				struct btrfs_extent_inline_ref *iref,
 				u64 parent, u64 root_objectid,
@@ -1332,7 +1331,7 @@ static int insert_inline_extent_backref(struct btrfs_trans_handle *trans,
 		ret = update_inline_extent_backref(trans, root, path, iref,
 						   refs_to_add);
 	} else if (ret == -ENOENT) {
-		ret = setup_inline_extent_backref(trans, root, path, iref,
+		ret = setup_inline_extent_backref(root, path, iref,
 						  parent, root_objectid,
 						  owner, offset, refs_to_add);
 	}
