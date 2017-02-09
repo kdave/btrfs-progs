@@ -544,8 +544,8 @@ static u64 calculate_dir_inode_size(const char *dirname)
 static int add_inode_items(struct btrfs_trans_handle *trans,
 			   struct btrfs_root *root,
 			   struct stat *st, const char *name,
-			   u64 self_objectid, ino_t parent_inum,
-			   int dir_index_cnt, struct btrfs_inode_item *inode_ret)
+			   u64 self_objectid,
+			   struct btrfs_inode_item *inode_ret)
 {
 	int ret;
 	struct btrfs_inode_item btrfs_inode;
@@ -904,7 +904,6 @@ static int traverse_directory(struct btrfs_trans_handle *trans,
 
 			ret = add_inode_items(trans, root, &st,
 					      cur_file->d_name, cur_inum,
-					      parent_inum, dir_index_cnt,
 					      &cur_inode);
 			if (ret == -EEXIST) {
 				if (st.st_nlink <= 1) {
