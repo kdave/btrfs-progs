@@ -645,8 +645,7 @@ fail:
 static int add_file_items(struct btrfs_trans_handle *trans,
 			  struct btrfs_root *root,
 			  struct btrfs_inode_item *btrfs_inode, u64 objectid,
-			  ino_t parent_inum, struct stat *st,
-			  const char *path_name, int out_fd)
+			  struct stat *st, const char *path_name)
 {
 	int ret = -1;
 	ssize_t ret_read;
@@ -943,8 +942,8 @@ static int traverse_directory(struct btrfs_trans_handle *trans,
 				list_add_tail(&dir_entry->list,	&dir_head->list);
 			} else if (S_ISREG(st.st_mode)) {
 				ret = add_file_items(trans, root, &cur_inode,
-						     cur_inum, parent_inum, &st,
-						     cur_file->d_name, out_fd);
+						     cur_inum, &st,
+						     cur_file->d_name);
 				if (ret) {
 					error("unable to add file items for %s: %d",
 						cur_file->d_name, ret);
