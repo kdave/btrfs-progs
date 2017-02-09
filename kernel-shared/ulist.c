@@ -4,8 +4,6 @@
  * Distributed under the GNU GPL license version 2.
  */
 
-//#include <linux/slab.h>
-#include <stdlib.h>
 #include "kerncompat.h"
 #include "ulist.h"
 #include "ctree.h"
