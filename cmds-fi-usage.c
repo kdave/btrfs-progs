@@ -1033,7 +1033,7 @@ void print_device_chunks(int fd, struct device_info *devinfo,
 			unit_mode | UNITS_NEGATIVE));
 }
 
-void print_device_sizes(int fd, struct device_info *devinfo, unsigned unit_mode)
+void print_device_sizes(struct device_info *devinfo, unsigned unit_mode)
 {
 	printf("   Device size: %*s%10s\n",
 		(int)(20 - strlen("Device size")), "",
