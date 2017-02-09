@@ -286,7 +286,7 @@ static struct btrfs_ioctl_space_args *load_space_info(int fd, char *path)
  * which compose the chunk, which could be different from the number of devices
  * if a disk is added later.
  */
-static void get_raid56_used(int fd, struct chunk_info *chunks, int chunkcount,
+static void get_raid56_used(struct chunk_info *chunks, int chunkcount,
 		u64 *raid5_used, u64 *raid6_used)
 {
 	struct chunk_info *info_ptr = chunks;
@@ -360,7 +360,7 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 		ret = 1;
 		goto exit;
 	}
-	get_raid56_used(fd, chunkinfo, chunkcount, &raid5_used, &raid6_used);
+	get_raid56_used(chunkinfo, chunkcount, &raid5_used, &raid6_used);
 
 	for (i = 0; i < sargs->total_spaces; i++) {
 		int ratio;
