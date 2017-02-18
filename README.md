@@ -41,7 +41,7 @@ feedback or work on a fix.
   report
 * to the mailing list *linux-btrfs@vger.kernel.org* -- (not required to
   subscribe), beware that the mail might get overlooked in other traffic
-* [github issue tracker](https://github.com/kdave/btrfs-sprogs/issues)
+* [github issue tracker](https://github.com/kdave/btrfs-progs/issues)
 * IRC (irc.freenode.net #btrfs) -- good for discussions eg. if a bug is already
   known, but reports could miss developers' attention
 
