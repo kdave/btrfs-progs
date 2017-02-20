@@ -446,15 +446,15 @@ test-ioctl: ioctl-test ioctl-test-32 ioctl-test-64
 	$(Q)./ioctl-test-32 > ioctl-test-32.log
 	$(Q)./ioctl-test-64 > ioctl-test-64.log
 
-library-test: library-test.o $(libs_shared)
+library-test: library-test.o messages.o $(libs_shared)
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o $@ library-test.o $(LDFLAGS) -Wl,-rpath=$(TOPDIR) -lbtrfs
+	$(Q)$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) -Wl,-rpath=$(TOPDIR) -lbtrfs
 	@echo "    [TEST]   $@"
 	$(Q)./$@
 
-library-test.static: library-test.static.o $(libs_static)
+library-test.static: library-test.static.o messages.static.o $(libs_static)
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(STATIC_CFLAGS) -o $@ library-test.static.o $(STATIC_LDFLAGS) $(libs_static) $(STATIC_LIBS)
+	$(Q)$(CC) $(STATIC_CFLAGS) -o $@ $^ $(STATIC_LDFLAGS) $(libs_static) $(STATIC_LIBS)
 	@echo "    [TEST]   $@"
 	$(Q)./$@
 
