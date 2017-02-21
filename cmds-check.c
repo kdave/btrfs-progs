@@ -4711,17 +4711,28 @@ static int check_file_extent(struct btrfs_root *root, struct btrfs_key *fkey,
 
 	fi = btrfs_item_ptr(node, slot, struct btrfs_file_extent_item);
 
+	/* Check inline extent */
 	extent_type = btrfs_file_extent_type(node, fi);
-	/* Skip if file extent is inline */
 	if (extent_type == BTRFS_FILE_EXTENT_INLINE) {
 		struct btrfs_item *e = btrfs_item_nr(slot);
 		u32 item_inline_len;
 
 		item_inline_len = btrfs_file_extent_inline_item_len(node, e);
 		extent_num_bytes = btrfs_file_extent_inline_len(node, slot, fi);
-		if (extent_num_bytes == 0 ||
-		    extent_num_bytes != item_inline_len)
+		compressed = btrfs_file_extent_compression(node, fi);
+		if (extent_num_bytes == 0) {
+			error(
+		"root %llu EXTENT_DATA[%llu %llu] has empty inline extent",
+				root->objectid, fkey->objectid, fkey->offset);
 			err |= FILE_EXTENT_ERROR;
+		}
+		if (!compressed && extent_num_bytes != item_inline_len) {
+			error(
+		"root %llu EXTENT_DATA[%llu %llu] wrong inline size, have: %llu, expected: %u",
+				root->objectid, fkey->objectid, fkey->offset,
+				extent_num_bytes, item_inline_len);
+			err |= FILE_EXTENT_ERROR;
+		}
 		*size += extent_num_bytes;
 		return err;
 	}
