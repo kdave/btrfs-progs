@@ -10573,6 +10573,8 @@ static int check_extent_data_backref(struct btrfs_fs_info *fs_info,
 		leaf = path.nodes[0];
 		slot = path.slots[0];
 
+		if (slot >= btrfs_header_nritems(leaf))
+			goto next;
 		btrfs_item_key_to_cpu(leaf, &key, slot);
 		if (key.objectid != objectid || key.type != BTRFS_EXTENT_DATA_KEY)
 			break;
@@ -10588,6 +10590,7 @@ static int check_extent_data_backref(struct btrfs_fs_info *fs_info,
 		    offset)
 			found_count++;
 
+next:
 		ret = btrfs_next_item(root, &path);
 		if (ret)
 			break;
@@ -10860,8 +10863,10 @@ static int check_dev_item(struct btrfs_fs_info *fs_info,
 
 	/* Iterate dev_extents to calculate the used space of a device */
 	while (1) {
-		btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
+		if (path.slots[0] >= btrfs_header_nritems(path.nodes[0]))
+			goto next;
 
+		btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
 		if (key.objectid > dev_id)
 			break;
 		if (key.type != BTRFS_DEV_EXTENT_KEY || key.objectid != dev_id)
@@ -10958,6 +10963,11 @@ static int check_block_group_item(struct btrfs_fs_info *fs_info,
 	/* Iterate extent tree to account used space */
 	while (1) {
 		leaf = path.nodes[0];
+
+		/* Search slot can point to the last item beyond leaf nritems */
+		if (path.slots[0] >= btrfs_header_nritems(leaf))
+			goto next;
+
 		btrfs_item_key_to_cpu(leaf, &extent_key, path.slots[0]);
 		if (extent_key.objectid >= bg_key.objectid + bg_key.offset)
 			break;
