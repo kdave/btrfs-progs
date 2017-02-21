@@ -4699,9 +4699,13 @@ static int check_file_extent(struct btrfs_root *root, struct btrfs_key *fkey,
 	u64 disk_bytenr;
 	u64 disk_num_bytes;
 	u64 extent_num_bytes;
-	u64 found;
+	u64 extent_offset;
+	u64 csum_found;		/* In byte size, sectorsize aligned */
+	u64 search_start;	/* Logical range start we search for csum */
+	u64 search_len;		/* Logical range len we search for csum */
 	unsigned int extent_type;
 	unsigned int is_hole;
+	int compressed = 0;
 	int ret;
 	int err = 0;
 
@@ -4735,24 +4739,45 @@ static int check_file_extent(struct btrfs_root *root, struct btrfs_key *fkey,
 	disk_bytenr = btrfs_file_extent_disk_bytenr(node, fi);
 	disk_num_bytes = btrfs_file_extent_disk_num_bytes(node, fi);
 	extent_num_bytes = btrfs_file_extent_num_bytes(node, fi);
+	extent_offset = btrfs_file_extent_offset(node, fi);
+	compressed = btrfs_file_extent_compression(node, fi);
 	is_hole = (disk_bytenr == 0) && (disk_num_bytes == 0);
 
-	/* Check EXTENT_DATA datasum */
-	ret = count_csum_range(root, disk_bytenr, disk_num_bytes, &found);
-	if (found > 0 && nodatasum) {
+	/*
+	 * Check EXTENT_DATA csum
+	 *
+	 * For plain (uncompressed) extent, we should only check the range
+	 * we're referring to, as it's possible that part of prealloc extent
+	 * has been written, and has csum:
+	 *
+	 * |<--- Original large preallocated extent A ---->|
+	 * |<- Prealloc File Extent ->|<- Regular Extent ->|
+	 *	No csum				Has csum
+	 *
+	 * For compressed extent, we should check the whole range.
+	 */
+	if (!compressed) {
+		search_start = disk_bytenr + extent_offset;
+		search_len = extent_num_bytes;
+	} else {
+		search_start = disk_bytenr;
+		search_len = disk_num_bytes;
+	}
+	ret = count_csum_range(root, search_start, search_len, &csum_found);
+	if (csum_found > 0 && nodatasum) {
 		err |= ODD_CSUM_ITEM;
 		error("root %llu EXTENT_DATA[%llu %llu] nodatasum shouldn't have datasum",
 		      root->objectid, fkey->objectid, fkey->offset);
 	} else if (extent_type == BTRFS_FILE_EXTENT_REG && !nodatasum &&
-		   !is_hole &&
-		   (ret < 0 || found == 0 || found < disk_num_bytes)) {
+		   !is_hole && (ret < 0 || csum_found < search_len)) {
 		err |= CSUM_ITEM_MISSING;
-		error("root %llu EXTENT_DATA[%llu %llu] datasum missing",
-		      root->objectid, fkey->objectid, fkey->offset);
-	} else if (extent_type == BTRFS_FILE_EXTENT_PREALLOC && found > 0) {
+		error("root %llu EXTENT_DATA[%llu %llu] csum missing, have: %llu, expected: %llu",
+		      root->objectid, fkey->objectid, fkey->offset,
+		      csum_found, search_len);
+	} else if (extent_type == BTRFS_FILE_EXTENT_PREALLOC && csum_found > 0) {
 		err |= ODD_CSUM_ITEM;
-		error("root %llu EXTENT_DATA[%llu %llu] prealloc shouldn't have datasum",
-		      root->objectid, fkey->objectid, fkey->offset);
+		error("root %llu EXTENT_DATA[%llu %llu] prealloc shouldn't have csum, but has: %llu",
+		      root->objectid, fkey->objectid, fkey->offset, csum_found);
 	}
 
 	/* Check EXTENT_DATA hole */
