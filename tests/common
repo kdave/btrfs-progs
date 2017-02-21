@@ -106,7 +106,7 @@ run_check()
 	ins=$(_get_spec_ins "$@")
 	spec=$(($ins-1))
 	cmd=$(eval echo "\${$spec}")
-	spec=$(_cmd_spec "$cmd")
+	spec=$(_cmd_spec "${@:$spec}")
 	set -- "${@:1:$(($ins-1))}" $spec "${@: $ins}"
 	echo "############### $@" >> "$RESULTS" 2>&1
 	if [[ $TEST_LOG =~ tty ]]; then echo "CMD: $@" > /dev/tty; fi
@@ -128,7 +128,7 @@ run_check_stdout()
 	ins=$(_get_spec_ins "$@")
 	spec=$(($ins-1))
 	cmd=$(eval echo "\${$spec}")
-	spec=$(_cmd_spec "$cmd")
+	spec=$(_cmd_spec "${@:$spec}")
 	set -- "${@:1:$(($ins-1))}" $spec "${@: $ins}"
 	echo "############### $@" >> "$RESULTS" 2>&1
 	if [[ $TEST_LOG =~ tty ]]; then echo "CMD(stdout): $@" > /dev/tty; fi
@@ -152,7 +152,7 @@ run_mayfail()
 	ins=$(_get_spec_ins "$@")
 	spec=$(($ins-1))
 	cmd=$(eval echo "\${$spec}")
-	spec=$(_cmd_spec "$cmd")
+	spec=$(_cmd_spec "${@:$spec}")
 	set -- "${@:1:$(($ins-1))}" $spec "${@: $ins}"
 	echo "############### $@" >> "$RESULTS" 2>&1
 	if [[ $TEST_LOG =~ tty ]]; then echo "CMD(mayfail): $@" > /dev/tty; fi
@@ -188,7 +188,7 @@ run_mustfail()
 	ins=$(_get_spec_ins "$@")
 	spec=$(($ins-1))
 	cmd=$(eval echo "\${$spec}")
-	spec=$(_cmd_spec "$cmd")
+	spec=$(_cmd_spec "${@:$spec}")
 	set -- "${@:1:$(($ins-1))}" $spec "${@: $ins}"
 	echo "############### $@" >> "$RESULTS" 2>&1
 	if [[ $TEST_LOG =~ tty ]]; then echo "CMD(mustfail): $@" > /dev/tty; fi

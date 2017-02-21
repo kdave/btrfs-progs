@@ -17,7 +17,7 @@ TEST_ARGS_CHECK=--mode=lowmem
 # break tests
 _skip_spec()
 {
-	if echo "$TEST_CHECK" | grep -q 'mode=lowmem' &&
+	if echo "$TEST_ARGS_CHECK" | grep -q 'mode=lowmem' &&
 	   echo "$@" | grep -q -- '--repair'; then
 		return 0
 	fi
