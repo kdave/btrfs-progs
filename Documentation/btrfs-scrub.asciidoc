@@ -25,11 +25,10 @@ default 'idle' so background scrub should not interfere with normal filesystem
 operation significantly.
 
 The scrubbing status is recorded in '/var/lib/btrfs/' in textual files named
-'scrub.status.UUID' for a filesystem identified by the given UUID. (An
-itermediate progress is communicated through a named pipe in file
-'scrub.progress.UUID' in the same directory.) The status file is updated
-periodically every 5 seconds. A resumed scrub will continue from the last
-saved position.
+'scrub.status.UUID' for a filesystem identified by the given UUID. (Progress
+state is communicated through a named pipe in file 'scrub.progress.UUID' in the
+same directory.) The status file is updated every 5 seconds. A resumed scrub
+will continue from the last saved position.
 
 SUBCOMMAND
 ----------

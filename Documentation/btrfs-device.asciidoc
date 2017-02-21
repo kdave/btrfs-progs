@@ -24,14 +24,14 @@ similarity, the RAID terminology is widely used in the documentation.  See
 constraints.
 
 The device management works on a mounted filesystem. Devices can be added,
-removed or replaced, by commands profided by *btrfs device* and *btrfs replace*.
+removed or replaced, by commands provided by *btrfs device* and *btrfs replace*.
 
 The profiles can be also changed, provided there's enough workspace to do the
 conversion, using the *btrfs balance* command and namely the filter 'convert'.
 
 Profile::
 A profile describes an allocation policy based on the redundancy/replication
-constrants in connection with the number of devices. The profile applies to
+constraints in connection with the number of devices. The profile applies to
 data and metadata block groups separately.
 
 RAID level::
@@ -182,7 +182,7 @@ blocks, the disk seeking is the key factor affecting performance.
 
 You'll note that the system block group has been also converted to RAID1, this
 normally happens as the system block group also holds metadata (the physical to
-logial mappings).
+logical mappings).
 
 What changed:
 

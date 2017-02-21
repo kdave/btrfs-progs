@@ -30,11 +30,11 @@ data structures satisfy the constraints, point to the right objects or are
 correctly connected together.
 
 There are several cross checks that can detect wrong reference counts of shared
-extents, backrefrences, missing extents of inodes, directory and inode
+extents, backreferences, missing extents of inodes, directory and inode
 connectivity etc.
 
 The amount of memory required can be high, depending on the size of the
-filesystem, smililarly the run time.
+filesystem, similarly the run time.
 
 SAFE OR ADVISORY OPTIONS
 ------------------------
@@ -49,7 +49,7 @@ verify checksums of data blocks
 +
 This expects that the filesystem is otherwise
 OK, so this is basically and offline 'scrub' but does not repair data from
-spare coipes.
+spare copies.
 
 --chunk-root <bytenr>::
 use the given offset 'bytenr' for the chunk tree root
@@ -111,7 +111,7 @@ NOTE: Do not use unless you know what you're doing.
 select mode of operation regarding memory and IO
 +
 The 'MODE' can be one of 'original' and 'lowmem'. The original mode is mostly
-unoptimized regarding memory consumpption and can lead to out-of-memory
+unoptimized regarding memory consumption and can lead to out-of-memory
 conditions on large filesystems. The possible workaround is to export the block
 device over network to a machine with enough memory. The low memory mode is
 supposed to address the memory consumption, at the cost of increased IO when it

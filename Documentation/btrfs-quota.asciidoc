@@ -84,7 +84,7 @@ from within this qgroup.
 SUBVOLUME QUOTA GROUPS
 ~~~~~~~~~~~~~~~~~~~~~~
 
-The basic notion of the Subvolume Quota feature is the qouta group, short
+The basic notion of the Subvolume Quota feature is the quota group, short
 qgroup.  Qgroups are notated as 'level/id', eg.  the qgroup 3/2 is a qgroup of
 level 3. For level 0, the leading '0/' can be omitted.
 Qgroups of level 0 get created automatically when a subvolume/snapshot gets
@@ -182,7 +182,7 @@ when the subvolume is deleted.
 
 When you have several users on a machine, with home directories probably under
 /home, you might want to restrict /home as a whole, while restricting every
-user to an indiviual limit as well.  This is easily accomplished by creating a
+user to an individual limit as well.  This is easily accomplished by creating a
 qgroup for /home , eg. 1/1, and assigning all user subvolumes to it.
 Restricting this qgroup will limit /home, while every user subvolume can get
 its own (lower) limit.

@@ -45,8 +45,8 @@ send an incremental stream from 'parent' to 'subvol'
 -c <clone-src>::
 use this snapshot as a clone source for an incremental send (multiple allowed)
 -f <outfile>::
-output is normally written to standard outout so it can be eg. piped to
-receive, use this option to write it to a file
+output is normally written to standard output so it can be, for example, piped
+to btrfs receive. Use this option to write it to a file instead.
 --no-data::
 send in 'NO_FILE_DATA' mode
 +
@@ -58,7 +58,7 @@ useful to show the differences in metadata.
 enable verbose output, print generated commands in a readable form, (each
 occurrence of this option increases the verbosity level)
 -q|--quiet::
-suppress all messagese except errors
+suppress all messages except errors
 
 EXIT STATUS
 -----------
