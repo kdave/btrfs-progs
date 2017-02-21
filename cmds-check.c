@@ -1868,6 +1868,11 @@ static int update_nodes_refs(struct btrfs_root *root, u64 bytenr,
 static int check_inode_item(struct btrfs_root *root, struct btrfs_path *path,
 			    unsigned int ext_ref);
 
+/*
+ * Returns >0  Found error, not fatal, should continue
+ * Returns <0  Fatal error, must exit the whole check
+ * Returns 0   No errors found
+ */
 static int process_one_leaf_v2(struct btrfs_root *root, struct btrfs_path *path,
 			       struct node_refs *nrefs, int *level, int ext_ref)
 {
@@ -1937,13 +1942,8 @@ again:
 	}
 out:
 	err &= ~LAST_ITEM;
-	/*
-	 * Convert any error bitmap to -EIO, as we should avoid
-	 * mixing positive and negative return value to represent
-	 * error
-	 */
 	if (err && !ret)
-		ret = -EIO;
+		ret = err;
 	return ret;
 }
 
@@ -2212,6 +2212,11 @@ out:
 static int check_inode_item(struct btrfs_root *root, struct btrfs_path *path,
 			    unsigned int ext_ref);
 
+/*
+ * Returns >0  Found error, should continue
+ * Returns <0  Fatal error, must exit the whole check
+ * Returns 0   No errors found
+ */
 static int walk_down_tree_v2(struct btrfs_root *root, struct btrfs_path *path,
 			     int *level, struct node_refs *nrefs, int ext_ref)
 {
@@ -5024,8 +5029,9 @@ static int check_fs_root_v2(struct btrfs_root *root, unsigned int ext_ref)
 	struct btrfs_path path;
 	struct node_refs nrefs;
 	struct btrfs_root_item *root_item = &root->root_item;
-	int ret, wret;
+	int ret;
 	int level;
+	int err = 0;
 
 	/*
 	 * We need to manually check the first inode item(256)
@@ -5059,17 +5065,21 @@ static int check_fs_root_v2(struct btrfs_root *root, unsigned int ext_ref)
 	}
 
 	while (1) {
-		wret = walk_down_tree_v2(root, &path, &level, &nrefs, ext_ref);
-		if (wret < 0)
-			ret = wret;
-		if (wret != 0)
-			break;
+		ret = walk_down_tree_v2(root, &path, &level, &nrefs, ext_ref);
+		err |= !!ret;
 
-		wret = walk_up_tree_v2(root, &path, &level);
-		if (wret < 0)
-			ret = wret;
-		if (wret != 0)
+		/* if ret is negative, walk shall stop */
+		if (ret < 0) {
+			ret = err;
 			break;
+		}
+
+		ret = walk_up_tree_v2(root, &path, &level);
+		if (ret != 0) {
+			/* Normal exit, reset ret to err */
+			ret = err;
+			break;
+		}
 	}
 
 out:
