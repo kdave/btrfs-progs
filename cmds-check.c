@@ -4997,6 +4997,8 @@ static int check_fs_first_inode(struct btrfs_root *root, unsigned int ext_ref)
 	if (ret > 0) {
 		ret = 0;
 		err |= INODE_ITEM_MISSING;
+		error("first inode item of root %llu is missing",
+		      root->objectid);
 	}
 
 	err |= check_inode_item(root, &path, ext_ref);
