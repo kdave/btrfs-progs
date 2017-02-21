@@ -14,7 +14,7 @@ DESCRIPTION
 *btrfs filesystem* is used to perform several whole filesystem level tasks,
 including all the regular filesystem operations like resizing, space stats,
 label setting/getting, and defragmentation. There are other whole filesystem
-taks like scrub or balance that are grouped in separate commands.
+tasks like scrub or balance that are grouped in separate commands.
 
 SUBCOMMAND
 ----------
@@ -120,7 +120,7 @@ defragment files recursively in given directories
 flush data for each file before going to the next file.
 +
 This will limit the amount of dirty data to current file, otherwise the amount
-cumulates from several files and will increase system load. This can also lead
+accumulates from several files and will increase system load. This can also lead
 to ENOSPC if there's too much dirty data to write and it's not possible to make
 the reservations for the new data (ie. how the COW design works).
 +
@@ -196,7 +196,7 @@ If the prefix '+' or '-' is present the size is increased or decreased
 by the quantity 'size'.
 If no units are specified, bytes are assumed for 'size'.
 Optionally, the size parameter may be suffixed by one of the following
-units designators: \'K', \'M', \'G', \'T', \'P', or \'E', which represent
+unit designators: \'K', \'M', \'G', \'T', \'P', or \'E', which represent
 KiB, MiB, GiB, TiB, PiB, or EiB, respectively (case does not matter).
 +
 If 'max' is passed, the filesystem will occupy all available space on the

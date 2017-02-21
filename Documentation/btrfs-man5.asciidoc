@@ -314,9 +314,10 @@ normally be needed.
 *skip_balance*::
 (since: 3.3, default: off)
 +
-Skip automatic resume of interrupted balance operation after mount.
-May be resumed with *btrfs balance resume* or the paused state can be removed
-by *btrfs balance cancel*. The default behaviour is to start interrutpd balance.
+Skip automatic resume of an interrupted balance operation. The operation can
+later be resumed with *btrfs balance resume*, or the paused state can be
+removed with *btrfs balance cancel*. The default behaviour is to resume an
+interrupted balance immediately after a volume is mounted.
 
 *space_cache*::
 *space_cache='version'*::
@@ -440,9 +441,9 @@ dump-super device* will dump a superblock, you can map the value of
 
 after mkfs, on a mounted filesystem::
 The features of a filesystem (with a given UUID) are listed in
-`/sys/fs/btrfs/UUID/features/`, one file per feature. The status of is stored
-insid the file. The value '1' is for enabled, '0' means the feature had
-been enabled at the mount time and turned off afterwards.
+`/sys/fs/btrfs/UUID/features/`, one file per feature. The status is stored
+inside the file. The value '1' is for enabled and active, while '0' means the
+feature was enabled at mount time but turned off afterwards.
 +
 Whether a particular feature can be turned on a mounted filesystem can be found
 in the directory `/sys/fs/btrfs/features/`, one file per feature. The value '1'
@@ -567,7 +568,7 @@ crw------- 1 root root 10, 234 Jan  1 12:00 /dev/btrfs-control
 --------------------
 
 The device accepts some ioctl calls that can perform following actions on the
-filesyste module:
+filesystem module:
 
 * scan devices for btrfs filesystem (ie. to let multi-device filesystems mount
   automatically) and register them with the kernel module

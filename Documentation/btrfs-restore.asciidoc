@@ -36,7 +36,7 @@ https://btrfs.wiki.kernel.org/index.php/Restore
 OPTIONS
 -------
 -s|--snapshots::
-get also snapshots that are skippped by default
+get also snapshots that are skipped by default
 
 -x|--xattr::
 get extended attributes

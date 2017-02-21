@@ -26,7 +26,7 @@ Show btrfs superblock information stored on given devices in textual form.
 By default the first superblock is printed, more details about all copies or
 additional backup data can be printed.
 +
-Besides verifictaion of the filesystem signature, there are no other sanity
+Besides verification of the filesystem signature, there are no other sanity
 checks. The superblock checksum status is reported, the device item and
 filesystem UUIDs are checked and reported.
 +
@@ -51,8 +51,8 @@ for debugging (disables the '-f' option)
 If there are multiple options specified, only the last one applies.
 +
 -F|--force::::
-attempt to print the superblock even if thre's no valid BTRFS signature found,
-the result may be completely wrong if the data do not resemble a superblock
+attempt to print the superblock even if a valid BTRFS signature is not found;
+the result may be completely wrong if the data does not resemble a superblock
 +
 -s|--super <bytenr>::::
 (see compatibility note above)

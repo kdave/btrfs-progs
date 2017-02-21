@@ -31,7 +31,7 @@ the stream, and print the stream metadata, one operation per line.
 
 3. default subvolume has changed or you didn't mount the filesystem at the toplevel subvolume
 
-A subvolume is made read-only after the receiving process finishes succesfully (see BUGS below).
+A subvolume is made read-only after the receiving process finishes successfully (see BUGS below).
 
 `Options`
 
@@ -66,7 +66,7 @@ tell us where this filesystem is mounted.
 --dump::
 dump the stream metadata, one line per operation
 +
-Does not require the 'path' parameter. The filesystem chanded.
+Does not require the 'path' parameter. The filesystem remains unchanged.
 
 BUGS
 ----
