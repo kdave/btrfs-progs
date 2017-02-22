@@ -69,7 +69,7 @@ both! But somebody else might not want to charge the snapshots to the users.
 
 Btrfs subvolume quota solves these problems by introducing groups of subvolumes
 and let the user put limits on them.  It is even possible to have groups of
-groups.  In the following, we refer to them as 'qgruops'.
+groups.  In the following, we refer to them as 'qgroups'.
 
 Each qgroup primarily tracks two numbers, the amount of total referenced
 space and the amount of exclusively referenced space.
