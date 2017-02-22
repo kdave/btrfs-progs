@@ -112,8 +112,10 @@ static int __print_dump(int subvol, void *user, const char *path,
 	/* Unified header */
 	printf("%-16s", title);
 	ret = print_path_escaped(out_path);
-	if (!fmt)
+	if (!fmt) {
+		putchar('\n');
 		return 0;
+	}
 	/* Short paths ale aligned to 32 chars */
 	while (ret++ < 32)
 		putchar(' ');
