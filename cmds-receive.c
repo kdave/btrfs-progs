@@ -783,7 +783,24 @@ static int process_clone(const char *path, u64 offset, u64 len,
 						r->subvol_parent_name);
 			}
 		}*/
-		subvol_path = strdup(si->path);
+
+		/* strip the subvolume that we are receiving to from the start of subvol_path */
+		if (rctx->full_root_path) {
+			size_t root_len = strlen(rctx->full_root_path);
+			size_t sub_len = strlen(si->path);
+
+			if (sub_len > root_len &&
+			    strstr(si->path, rctx->full_root_path) == si->path &&
+			    si->path[root_len] == '/') {
+				subvol_path = strdup(si->path + root_len + 1);
+			} else {
+				error("clone: source subvol path %s unreachable from %s",
+					si->path, rctx->full_root_path);
+				goto out;
+			}
+		} else {
+			subvol_path = strdup(si->path);
+		}
 	}
 
 	ret = path_cat_out(full_clone_path, subvol_path, clone_path);
