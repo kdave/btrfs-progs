@@ -21,6 +21,19 @@
 
 #define CONV_IMAGE_SUBVOL_OBJECTID BTRFS_FIRST_FREE_OBJECTID
 
+/*
+ * Reresents a simple contiguous range.
+ *
+ * For multiple or non-contiguous ranges, use extent_cache_tree from
+ * extent-cache.c
+ */
+struct simple_range {
+	u64 start;
+	u64 len;
+};
+
+extern struct simple_range btrfs_reserved_ranges[3];
+
 struct task_info;
 
 struct task_ctx {
@@ -88,5 +101,15 @@ int read_disk_extent(struct btrfs_root *root, u64 bytenr,
 		            u32 num_bytes, char *buffer);
 int record_file_blocks(struct blk_iterate_data *data,
 			      u64 file_block, u64 disk_block, u64 num_blocks);
+
+/*
+ * Simple range functions
+ *
+ * Get range end (exclusive)
+ */
+static inline u64 range_end(struct simple_range *range)
+{
+	return (range->start + range->len);
+}
 
 #endif

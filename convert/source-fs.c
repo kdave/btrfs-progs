@@ -22,6 +22,12 @@
 #include "convert/common.h"
 #include "convert/source-fs.h"
 
+struct simple_range btrfs_reserved_ranges[3] = {
+	{ 0,			     SZ_1M },
+	{ BTRFS_SB_MIRROR_OFFSET(1), SZ_64K },
+	{ BTRFS_SB_MIRROR_OFFSET(2), SZ_64K }
+};
+
 static int intersect_with_sb(u64 bytenr, u64 num_bytes)
 {
 	int i;
