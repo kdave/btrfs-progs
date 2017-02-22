@@ -16,6 +16,70 @@
  * Boston, MA 021110-1307, USA.
  */
 
+/*
+ * Btrfs convert design:
+ *
+ * The overall design of btrfs convert is like the following:
+ *
+ * |<------------------Old fs----------------------------->|
+ * |<- used ->| |<- used ->|                    |<- used ->|
+ *                           ||
+ *                           \/
+ * |<---------------Btrfs fs------------------------------>|
+ * |<-   Old data chunk  ->|< new chunk (D/M/S)>|<- ODC  ->|
+ * |<-Old-FE->| |<-Old-FE->|<- Btrfs extents  ->|<-Old-FE->|
+ *
+ * ODC    = Old data chunk, btrfs chunks containing old fs data
+ *          Mapped 1:1 (logical address == device offset)
+ * Old-FE = file extents pointing to old fs.
+ *
+ * So old fs used space is (mostly) kept as is, while btrfs will insert
+ * its chunk (Data/Meta/Sys) into large enough free space.
+ * In this way, we can create different profiles for metadata/data for
+ * converted fs.
+ *
+ * We must reserve and relocate 3 ranges for btrfs:
+ * * [0, 1M)                    - area never used for any data except the first
+ *                                superblock
+ * * [btrfs_sb_offset(1), +64K) - 1st superblock backup copy
+ * * [btrfs_sb_offset(2), +64K) - 2nd, dtto
+ *
+ * Most work is spent handling corner cases around these reserved ranges.
+ *
+ * Detailed workflow is:
+ * 1)   Scan old fs used space and calculate data chunk layout
+ * 1.1) Scan old fs
+ *      We can a map used space of old fs
+ *
+ * 1.2) Calculate data chunk layout - this is the hard part
+ *      New data chunks must meet 3 conditions using result fomr 1.1
+ *      a. Large enough to be a chunk
+ *      b. Doesn't intersect reserved ranges
+ *      c. Covers all the remaining old fs used space
+ *
+ *      NOTE: This can be simplified if we don't need to handle backup supers
+ *
+ * 1.3) Calculate usable space for new btrfs chunks
+ *      Btrfs chunk usable space must meet 3 conditions using result from 1.2
+ *      a. Large enough to be a chunk
+ *      b. Doesn't intersect reserved ranges
+ *      c. Doesn't cover any data chunks in 1.1
+ *
+ * 2)   Create basic btrfs filesystem structure
+ *      Initial metadata and sys chunks are inserted in the first availabe
+ *      space found in step 1.3
+ *      Then insert all data chunks into the basic btrfs
+ *
+ * 3)   Create convert image
+ *      We need to relocate reserved ranges here.
+ *      After this step, the convert image is done, and we can use the image
+ *      as reflink source to create old files
+ *
+ * 4)   Iterate old fs to create files
+ *      We just reflink file extents from old fs to newly created files on
+ *      btrfs.
+ */
+
 #include "kerncompat.h"
 
 #include <stdio.h>
