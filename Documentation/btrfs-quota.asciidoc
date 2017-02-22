@@ -52,7 +52,7 @@ On the other hand, the traditional approach has only a poor solution to
 restrict directories.
 At installation time, the harddisk can be partitioned so that every directory
 (eg. /usr, /var/, ...) that needs a limit gets its own partition.  The obvious
-problem is, that those limits cannot be changed without a reinstall ation.  The
+problem is, that those limits cannot be changed without a reinstallation.  The
 btrfs subvolume feature builds a bridge.  Subvolumes correspond in many ways to
 partitions, as every subvolume looks like its own filesystem.  With subvolume
 quota, it is now possible to restrict each subvolume like a partition, but keep
