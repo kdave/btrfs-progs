@@ -315,8 +315,8 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 		sub_len = strlen(parent_subvol->path);
 
 		/* First make sure the parent subvol is actually in our path */
-		if (sub_len < root_len ||
-		    strstr(parent_subvol->path, rctx->full_root_path) == NULL) {
+		if (strstr(parent_subvol->path, rctx->full_root_path) != parent_subvol->path ||
+		    (sub_len > root_len && parent_subvol->path[root_len] != '/')) {
 			error(
 		"parent subvol is not reachable from inside the root subvol");
 			ret = -ENOENT;
@@ -324,7 +324,7 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 		}
 
 		if (sub_len == root_len) {
-			parent_subvol->path[0] = '/';
+			parent_subvol->path[0] = '.';
 			parent_subvol->path[1] = '\0';
 		} else {
 			/*
