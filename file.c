@@ -180,8 +180,8 @@ out:
  * Return < 0 for fatal error during read.
  * Otherwise return the number of succesfully read data in bytes.
  */
-int btrfs_read_file_data(struct btrfs_root *root, u64 ino, u64 start, int len,
-			 char *dest)
+int btrfs_read_file(struct btrfs_root *root, u64 ino, u64 start, int len,
+		    char *dest)
 {
 	struct btrfs_key key;
 	struct btrfs_path path;

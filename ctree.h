@@ -2776,7 +2776,7 @@ int btrfs_get_extent(struct btrfs_trans_handle *trans,
 int btrfs_punch_hole(struct btrfs_trans_handle *trans,
 		     struct btrfs_root *root,
 		     u64 ino, u64 offset, u64 len);
-int btrfs_read_file(struct btrfs_root *root, u64 ino, u64 start, u64 len,
+int btrfs_read_file(struct btrfs_root *root, u64 ino, u64 start, int len,
 		    char *dest);
 
 #endif
