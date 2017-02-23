@@ -1513,6 +1513,36 @@ fail:
 	return -1;
 }
 
+/*
+ * Read out data of convert image which is in btrfs reserved ranges so we can
+ * use them to overwrite the ranges during rollback.
+ */
+static int read_reserved_ranges(struct btrfs_root *root, u64 ino,
+				u64 total_bytes, char *reserved_ranges[])
+{
+	int i;
+	int ret = 0;
+
+	for (i = 0; i < ARRAY_SIZE(btrfs_reserved_ranges); i++) {
+		struct simple_range *range = &btrfs_reserved_ranges[i];
+
+		if (range->start + range->len >= total_bytes)
+			break;
+		ret = btrfs_read_file(root, ino, range->start, range->len,
+				      reserved_ranges[i]);
+		if (ret < range->len) {
+			error(
+	"failed to read data of convert image, offset=%llu len=%llu ret=%d",
+			      range->start, range->len, ret);
+			if (ret >= 0)
+				ret = -EIO;
+			break;
+		}
+		ret = 0;
+	}
+	return ret;
+}
+
 static int do_rollback(const char *devname)
 {
 	int fd = -1;
