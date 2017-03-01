@@ -5,7 +5,7 @@ source $TOP/tests/common
 
 check_prereq btrfs
 check_prereq mkfs.btrfs
-check_global_prereq xfs_io
+check_global_prereq dd
 check_global_prereq fallocate
 
 setup_root_helper
@@ -20,7 +20,7 @@ test_paritical_write_into_prealloc()
 
 	run_check $SUDO_HELPER fallocate -l 128K "$TEST_MNT/file"
 	sync
-	run_check $SUDO_HELPER xfs_io -c "pwrite 0 64K" "$TEST_MNT/file"
+	run_check $SUDO_HELPER dd conv=notrunc if=/dev/zero of="$TEST_MNT/file" bs=1K count=64
 	run_check_umount_test_dev
 	run_check "$TOP/btrfs" check "$TEST_DEV"
 }
@@ -33,7 +33,7 @@ test_compressed_inline_extent()
 	run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f "$TEST_DEV"
 	run_check_mount_test_dev -o compress=lzo,max_inline=2048
 
-	run_check $SUDO_HELPER xfs_io -f -c "pwrite 0 1K" "$TEST_MNT/file"
+	run_check $SUDO_HELPER dd conv=notrunc if=/dev/null of="$TEST_MNT/file" bs=1K count=1
 	run_check_umount_test_dev
 	run_check "$TOP/btrfs" check "$TEST_DEV"
 }
