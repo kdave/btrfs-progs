@@ -1,3 +1,18 @@
+btrfs-progs-4.10 (2017-03-08)
+  * send: dump output fixes: missing newlies
+  * check: several fixes for the lowmem mode, improved error reporting
+  * build
+    * removed some library deps for binaries that not use them
+    * ctags, cscope
+    * split Makefile to the autotool generated part and the rest, not needed
+      to autogen.sh after adding a file
+  * shared code: sync easy parts with kernel sources
+  * other
+    * lots of cleanups
+    * source file reorganization: convert, mkfs, utils
+    * lots of spelling fixes in docs, other updates
+    * more tests
+
 btrfs-progs-4.9.1 (2017-01-27)
   * check:
     * use correct inode number for lost+found files
