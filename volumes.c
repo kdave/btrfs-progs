@@ -160,6 +160,7 @@ int btrfs_close_devices(struct btrfs_fs_devices *fs_devices)
 {
 	struct btrfs_fs_devices *seed_devices;
 	struct btrfs_device *device;
+	int ret = 0;
 
 again:
 	if (!fs_devices)
@@ -168,7 +169,11 @@ again:
 		device = list_entry(fs_devices->devices.next,
 				    struct btrfs_device, dev_list);
 		if (device->fd != -1) {
-			fsync(device->fd);
+			if (fsync(device->fd) == -1) {
+				warning("fsync on device %llu failed: %s",
+					device->devid, strerror(errno));
+				ret = -errno;
+			}
 			if (posix_fadvise(device->fd, 0, 0, POSIX_FADV_DONTNEED))
 				fprintf(stderr, "Warning, could not drop caches\n");
 			close(device->fd);
@@ -197,7 +202,7 @@ again:
 		free(fs_devices);
 	}
 
-	return 0;
+	return ret;
 }
 
 void btrfs_close_all_devices(void)

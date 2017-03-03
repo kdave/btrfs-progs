@@ -1815,10 +1815,10 @@ int close_ctree_fs_info(struct btrfs_fs_info *fs_info)
 	free_fs_roots_tree(&fs_info->fs_root_tree);
 
 	btrfs_release_all_roots(fs_info);
-	btrfs_close_devices(fs_info->fs_devices);
+	ret = btrfs_close_devices(fs_info->fs_devices);
 	btrfs_cleanup_all_caches(fs_info);
 	btrfs_free_fs_info(fs_info);
-	return 0;
+	return ret;
 }
 
 int clean_tree_block(struct btrfs_trans_handle *trans, struct btrfs_root *root,
