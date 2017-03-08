@@ -6,60 +6,38 @@
 # snapshot.
 
 # temporary, until the test gets adapted
-exit 0
+FSSUM_PROG=/bin/true
 
-seq=`basename $0`
-seqres=$RESULT_DIR/$seq
-echo "QA output created by $seq"
+source $TOP/tests/common
 
-tmp=/tmp/$$
-status=1    # failure is the default!
-trap "_cleanup; exit \$status" 0 1 2 3 15
+check_prereq mkfs.btrfs
+check_prereq btrfs
 
-_cleanup()
-{
-    cd /
-    rm -fr $send_files_dir
-    rm -f $tmp.*
-}
+setup_root_helper
+prepare_test_dev
 
-# get standard environment, filters and checks
-. ./common/rc
-. ./common/filter
+srcdir=./send-test-dir
+rm -rf "$srcdir"
+mkdir -p "$srcdir"
+run_check chmod a+rw "$srcdir"
 
-# real QA test starts here
-_supported_fs btrfs
-_supported_os Linux
-_require_test
-_require_scratch
-_require_cloner
-_require_fssum
+run_check "$TOP/mkfs.btrfs" -f "$TEST_DEV"
+run_check_mount_test_dev
 
-send_files_dir=$TEST_DIR/btrfs-test-$seq
+BLOCK_SIZE=$(stat -f -c %S "$TEST_MNT")
 
-rm -f $seqres.full
-rm -fr $send_files_dir
-mkdir $send_files_dir
+run_check $SUDO_HELPER "$TOP/btrfs" subvolume create "$TEST_MNT/foo"
+run_check $SUDO_HELPER "$TOP/btrfs" subvolume create "$TEST_MNT/bar"
+run_check $SUDO_HELPER "$TOP/btrfs" subvolume create "$TEST_MNT/baz"
+run_check $SUDO_HELPER "$TOP/btrfs" subvolume create "$TEST_MNT/snap"
 
-_scratch_mkfs >>$seqres.full 2>&1
-_scratch_mount
+tr '\000' 'A' < /dev/null |
+	run_check $SUDO_HELPER dd of=$TEST_MNT/foo/file_a bs=$BLOCK_SIZE count=32
+tr '\000' 'B' < /dev/null |
+	run_check $SUDO_HELPER dd of=$TEST_MNT/bar/file_b bs=$BLOCK_SIZE count=32
 
-BLOCK_SIZE=$(_get_block_size $SCRATCH_MNT)
-
-# create source fs
-
-$BTRFS_UTIL_PROG subvolume create $SCRATCH_MNT/foo | _filter_scratch
-$BTRFS_UTIL_PROG subvolume create $SCRATCH_MNT/bar | _filter_scratch
-$BTRFS_UTIL_PROG subvolume create $SCRATCH_MNT/baz | _filter_scratch
-$BTRFS_UTIL_PROG subvolume create $SCRATCH_MNT/snap | _filter_scratch
-
-$XFS_IO_PROG -s -f -c "pwrite -S 0xaa -b $((32 * $BLOCK_SIZE)) 0 $((32 * $BLOCK_SIZE))" \
-             $SCRATCH_MNT/foo/file_a | _filter_xfs_io_blocks_modified
-$XFS_IO_PROG -s -f -c "pwrite -S 0xbb -b $((32 * $BLOCK_SIZE)) 0 $((32 * $BLOCK_SIZE))" \
-             $SCRATCH_MNT/bar/file_b | _filter_xfs_io_blocks_modified
-
-$CLONER_PROG $SCRATCH_MNT/{foo/file_a,baz/file_a}
-$CLONER_PROG $SCRATCH_MNT/{bar/file_b,baz/file_b}
+run_check $SUDO_HELPER cp --reflink=always "$TEST_MNT/foo/file_a" "$TEST_MNT/baz/file_a"
+run_check $SUDO_HELPER cp --reflink=always "$TEST_MNT/bar/file_b" "$TEST_MNT/baz/file_b"
 
 # Filesystem looks like:
 #
@@ -76,44 +54,25 @@ $CLONER_PROG $SCRATCH_MNT/{bar/file_b,baz/file_b}
 
 # create snapshots and send streams
 
-$BTRFS_UTIL_PROG subvolume snapshot -r $SCRATCH_MNT/foo \
-    $SCRATCH_MNT/snap/foo.0 > /dev/null
+run_check $SUDO_HELPER "$TOP/btrfs" subvolume snapshot -r "$TEST_MNT/foo" "$TEST_MNT/snap/foo.0"
+run_check $SUDO_HELPER "$TOP/btrfs" send -f "$srcdir/foo.0.snap" "$TEST_MNT/snap/foo.0"
 
-$BTRFS_UTIL_PROG send $SCRATCH_MNT/snap/foo.0   \
-    -f $send_files_dir/foo.0.snap               \
-    2>&1 1>/dev/null | _filter_scratch
+run_check $SUDO_HELPER "$TOP/btrfs" subvolume snapshot -r "$TEST_MNT/bar" "$TEST_MNT/snap/bar.0"
+run_check $SUDO_HELPER "$TOP/btrfs" send -f "$srcdir/bar.0.snap" "$TEST_MNT/snap/bar.0"
 
-$BTRFS_UTIL_PROG subvolume snapshot -r          \
-    $SCRATCH_MNT/bar $SCRATCH_MNT/snap/bar.0    \
-    > /dev/null
+run_check $SUDO_HELPER cp --reflink=always "$TEST_MNT/foo/file_a" "$TEST_MNT/foo/file_a.clone"
+run_check $SUDO_HELPER rm -f -- "$TEST_MNT/foo/file_a"
 
-$BTRFS_UTIL_PROG send $SCRATCH_MNT/snap/bar.0   \
-    -f $send_files_dir/bar.0.snap               \
-    2>&1 1>/dev/null | _filter_scratch
+run_check $SUDO_HELPER "$TOP/btrfs" subvolume snapshot -r "$TEST_MNT/foo" \
+	"$TEST_MNT/snap/foo.1"
+run_check $SUDO_HELPER "$TOP/btrfs" send -p "$TEST_MNT/snap/foo.0" -f "$srcdir/foo.1.snap" \
+	"$TEST_MNT/snap/foo.1"
 
-$CLONER_PROG $SCRATCH_MNT/foo/file_a{,.clone}
-rm $SCRATCH_MNT/foo/file_a
-
-$BTRFS_UTIL_PROG subvolume snapshot -r          \
-    $SCRATCH_MNT/foo $SCRATCH_MNT/snap/foo.1    \
-    > /dev/null
-
-$BTRFS_UTIL_PROG send                           \
-    -p $SCRATCH_MNT/snap/foo.0                  \
-    -f $send_files_dir/foo.1.snap               \
-    $SCRATCH_MNT/snap/foo.1                     \
-    2>&1 1>/dev/null | _filter_scratch
-
-$BTRFS_UTIL_PROG subvolume snapshot -r          \
-    $SCRATCH_MNT/baz $SCRATCH_MNT/snap/baz.0    \
-    > /dev/null
-
-$BTRFS_UTIL_PROG send                           \
-    -p $SCRATCH_MNT/snap/foo.1                  \
-    -c $SCRATCH_MNT/snap/bar.0                  \
-    -f $send_files_dir/baz.0.snap               \
-    $SCRATCH_MNT/snap/baz.0                     \
-    2>&1 1>/dev/null | _filter_scratch
+run_check $SUDO_HELPER "$TOP/btrfs" subvolume snapshot -r "$TEST_MNT/baz" \
+	"$TEST_MNT/snap/baz.0"
+run_check $SUDO_HELPER "$TOP/btrfs" send -p "$TEST_MNT/snap/foo.1" \
+	-c "$TEST_MNT/snap/bar.0" -f "$srcdir/baz.0.snap" \
+	"$TEST_MNT/snap/baz.0"
 
 # Filesystem looks like:
 #
@@ -136,44 +95,32 @@ $BTRFS_UTIL_PROG send                           \
 #          |         |--- file_a
 #          |         |--- file_b
 
-run_check $FSSUM_PROG -A -f -w $send_files_dir/foo.0.fssum $SCRATCH_MNT/snap/foo.0
-run_check $FSSUM_PROG -A -f -w $send_files_dir/foo.1.fssum $SCRATCH_MNT/snap/foo.1
-run_check $FSSUM_PROG -A -f -w $send_files_dir/bar.0.fssum $SCRATCH_MNT/snap/bar.0
-run_check $FSSUM_PROG -A -f -w $send_files_dir/baz.0.fssum $SCRATCH_MNT/snap/baz.0
+run_check $FSSUM_PROG -A -f -w "$srcdir/foo.0.fssum" "$TEST_MNT/snap/foo.0"
+run_check $FSSUM_PROG -A -f -w "$srcdir/foo.1.fssum" "$TEST_MNT/snap/foo.1"
+run_check $FSSUM_PROG -A -f -w "$srcdir/bar.0.fssum" "$TEST_MNT/snap/bar.0"
+run_check $FSSUM_PROG -A -f -w "$srcdir/baz.0.fssum" "$TEST_MNT/snap/baz.0"
 
-_scratch_unmount
-_scratch_mkfs >>$seqres.full 2>&1
-_scratch_mount
-$BTRFS_UTIL_PROG subvolume create $SCRATCH_MNT/dest | _filter_scratch
-_scratch_unmount
-_scratch_mount -o subvol=/dest
+run_check_umount_test_dev
+run_check "$TOP/mkfs.btrfs" -f "$TEST_DEV"
+run_check_mount_test_dev
+run_check $SUDO_HELPER "$TOP/btrfs" subvolume create "$TEST_MNT/dest"
+run_check_umount_test_dev
+run_check_mount_test_dev -o subvol=/dest
 
-$BTRFS_UTIL_PROG receive            \
-    -f $send_files_dir/foo.0.snap   \
-    $SCRATCH_MNT                    \
-    2>&1 | _filter_scratch
-$BTRFS_UTIL_PROG receive            \
-    -f $send_files_dir/bar.0.snap   \
-    $SCRATCH_MNT                    \
-    2>&1 | _filter_scratch
+run_check $SUDO_HELPER "$TOP/btrfs" receive -f "$srcdir/foo.0.snap" "$TEST_MNT"
+run_check $SUDO_HELPER "$TOP/btrfs" receive -f "$srcdir/bar.0.snap" "$TEST_MNT"
 
-# if "dest/" is not correctly stripped from the beginning of the path to "foo.0" in the target fs,
-# we would get an error here because the clone source "foo.0/file_a" for "foo.1/file_a.clone" can't be found.
-$BTRFS_UTIL_PROG receive            \
-    -f $send_files_dir/foo.1.snap   \
-    $SCRATCH_MNT                    \
-    2>&1 | _filter_scratch
+# if "dest/" is not correctly stripped from the beginning of the path to
+# "foo.0" in the target fs, we would get an error here because the clone source
+# "foo.0/file_a" for "foo.1/file_a.clone" can't be found.
+run_check $SUDO_HELPER "$TOP/btrfs" receive -f "$srcdir/foo.1.snap" "$TEST_MNT"
 
 # same here, but with send -c instead of -p
-$BTRFS_UTIL_PROG receive            \
-    -f $send_files_dir/baz.0.snap   \
-    $SCRATCH_MNT                    \
-    2>&1 | _filter_scratch
+run_check $SUDO_HELPER "$TOP/btrfs" receive -f "$srcdir/baz.0.snap" "$TEST_MNT"
 
-run_check $FSSUM_PROG -r $send_files_dir/foo.0.fssum $SCRATCH_MNT/foo.0
-run_check $FSSUM_PROG -r $send_files_dir/foo.1.fssum $SCRATCH_MNT/foo.1
-run_check $FSSUM_PROG -r $send_files_dir/bar.0.fssum $SCRATCH_MNT/bar.0
-run_check $FSSUM_PROG -r $send_files_dir/baz.0.fssum $SCRATCH_MNT/baz.0
+run_check $FSSUM_PROG -r "$srcdir/foo.0.fssum" "$TEST_MNT/foo.0"
+run_check $FSSUM_PROG -r "$srcdir/foo.1.fssum" "$TEST_MNT/foo.1"
+run_check $FSSUM_PROG -r "$srcdir/bar.0.fssum" "$TEST_MNT/bar.0"
+run_check $FSSUM_PROG -r "$srcdir/baz.0.fssum" "$TEST_MNT/baz.0"
 
-status=0
-exit
+rm -rf -- "$srcdir"
