@@ -17,6 +17,7 @@
 #if BTRFSCONVERT_EXT2
 
 #include "kerncompat.h"
+#include <linux/limits.h>
 #include "disk-io.h"
 #include "transaction.h"
 #include "utils.h"

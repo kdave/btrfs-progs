@@ -18,6 +18,7 @@
 #include <uuid/uuid.h>
 #include <blkid/blkid.h>
 #include <fcntl.h>
+#include <limits.h>
 #include "ctree.h"
 #include "disk-io.h"
 #include "volumes.h"
