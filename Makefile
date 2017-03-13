@@ -446,17 +446,25 @@ test-ioctl: ioctl-test ioctl-test-32 ioctl-test-64
 	$(Q)./ioctl-test-32 > ioctl-test-32.log
 	$(Q)./ioctl-test-64 > ioctl-test-64.log
 
-library-test: library-test.o messages.o $(libs_shared)
-	@echo "    [LD]     $@"
-	$(Q)$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) -Wl,-rpath=$(TOPDIR) -lbtrfs
-	@echo "    [TEST]   $@"
-	$(Q)./$@
+library-test: library-test.c messages.o $(libs_shared)
+	@echo "    [TEST PREP]  $@"$(eval TMPD=$(shell mktemp -d))
+	$(Q)mkdir -p $(TMPD)/include/btrfs && \
+	cp $(libbtrfs_headers) $(TMPD)/include/btrfs && \
+	cd $(TMPD) && $(CC) -I$(TMPD)/include -o $@ $(addprefix $(TOPDIR)/,$^) -Wl,-rpath=$(TOPDIR) -lbtrfs
+	@echo "    [TEST RUN]   $@"
+	$(Q)cd $(TMPD) && ./$@
+	@echo "    [TEST CLEAN] $@"
+	$(Q)$(RM) -rf -- $(TMPD)
 
-library-test.static: library-test.static.o messages.static.o $(libs_static)
-	@echo "    [LD]     $@"
-	$(Q)$(CC) $(STATIC_CFLAGS) -o $@ $^ $(STATIC_LDFLAGS) $(libs_static) $(STATIC_LIBS)
-	@echo "    [TEST]   $@"
-	$(Q)./$@
+library-test.static: library-test.c messages.static.o $(libs_static)
+	@echo "    [TEST PREP]  $@"$(eval TMPD=$(shell mktemp -d))
+	$(Q)mkdir -p $(TMPD)/include/btrfs && \
+	cp $(libbtrfs_headers) $(TMPD)/include/btrfs && \
+	cd $(TMPD) && $(CC) -I$(TMPD)/include -o $@ $(addprefix $(TOPDIR)/,$^) $(STATIC_LDFLAGS) $(STATIC_LIBS)
+	@echo "    [TEST RUN]   $@"
+	$(Q)cd $(TMPD) && ./$@
+	@echo "    [TEST CLEAN] $@"
+	$(Q)$(RM) -rf -- $(TMPD)
 
 test-build: test-build-pre test-build-real
 
