@@ -6,7 +6,6 @@ source $TOP/tests/common
 
 check_prereq mkfs.btrfs
 
-run_check truncate -s 512M $IMAGE
-run_mayfail $TOP/mkfs.btrfs -f -M -s 4096 -n 16384 "$IMAGE" && _fail
+run_mayfail "$TOP/mkfs.btrfs" -b 512M -f -M -s 4096 -n 16384 "$TEST_DEV" && _fail
 
 exit 0

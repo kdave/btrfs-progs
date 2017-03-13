@@ -8,6 +8,5 @@ check_prereq mkfs.btrfs
 
 setup_root_helper
 
-run_check truncate -s 512M $IMAGE
-mixed=$(run_check_stdout $TOP/mkfs.btrfs -n 64k -f $IMAGE | egrep 'Data|Metadata')
+mixed=$(run_check_stdout "$TOP/mkfs.btrfs" -b 512M -n 64k -f "$TEST_DEV" | egrep 'Data|Metadata')
 echo "$mixed" | grep -q -v 'Data+Metadata:' || _fail "unexpected: created a mixed-bg filesystem"
