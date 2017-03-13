@@ -182,3 +182,37 @@ description of the problem or the stack trace.
 If you have a fix for the problem, please submit it prior to the test image, so
 the fuzz tests always succeed when run on random checked out. This helps
 bisectability.
+
+
+# Coding style, best practices
+
+## do
+
+* quote all variables by default, any path, even the TOP could need that, and
+  we use it everywhere
+  * there are exceptions:
+    * `$SUDO_HELPER` as it might be intentionally unset
+    * the variable is obviously set to a value that does not require it
+* use `#!/bin/bash` explicitly
+* check for all external dependencies (`check_prereq_global`)
+* check for internal dependencies (`check_prereq`), though the basic set is
+  always built when the tests are started through make
+* use functions instead of repeating code
+  * generic helpers could be factored to the `common` script
+* cleanup after successful test
+* use common helpers and variables
+
+## do not
+
+* pull external dependencies if we can find a way to replace them: example is
+  `xfs_io` that's conveniently used in fstests but we'd require `xfsprogs`,
+  so use `dd` instead
+* throw away (redirect to */dev/null*) output of commands unless it's justified
+  (ie. really too much text, unnecessary slowdown) -- the test output log is
+  regenerated all the time and we need to be able to analyze test failures or
+  just observe how the tests progress
+* cleanup after failed test -- the testsuite stops on first failure and the
+  developer can eg. access the environment that the test created and do further
+  debugging
+  * this might change in the future so the tests cover as much as possible, but
+    this would require to enhance all tests with a cleanup phase
