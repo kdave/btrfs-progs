@@ -9,9 +9,9 @@ check_prereq btrfs
 
 setup_root_helper
 
-run_check truncate -s 2G $IMAGE
-run_check $TOP/mkfs.btrfs -L BTRFS-TEST-LABEL -f $IMAGE
-run_check $SUDO_HELPER mount $IMAGE $TEST_MNT
+prepare_test_dev
+run_check "$TOP/mkfs.btrfs" -L BTRFS-TEST-LABEL -f "$TEST_DEV"
+run_check_mount_test_dev
 run_check $SUDO_HELPER chmod a+rw $TEST_MNT
 
 cd $TEST_MNT
@@ -66,4 +66,4 @@ run_check $SUDO_HELPER $TOP/btrfs filesystem label $TEST_MNT
 
 cd ..
 
-run_check $SUDO_HELPER umount $TEST_MNT
+run_check_umount_test_dev

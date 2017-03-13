@@ -9,9 +9,9 @@ check_prereq mkfs.btrfs
 check_prereq btrfs
 
 setup_root_helper
-prepare_test_dev 1g
 
-run_check $TOP/mkfs.btrfs -f $IMAGE
+prepare_test_dev 1g
+run_check "$TOP/mkfs.btrfs" -f "$TEST_DEV"
 run_check_mount_test_dev
 
 here=`pwd`

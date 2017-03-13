@@ -9,9 +9,9 @@ check_prereq btrfs
 
 setup_root_helper
 
-run_check truncate -s 2G $IMAGE
-run_check $TOP/mkfs.btrfs -f $IMAGE
-run_check $SUDO_HELPER mount $IMAGE $TEST_MNT
+prepare_test_dev
+run_check $TOP/mkfs.btrfs -f "$TEST_DEV"
+run_check_mount_test_dev
 run_check $SUDO_HELPER chmod a+rw $TEST_MNT
 
 cd $TEST_MNT
@@ -49,4 +49,4 @@ run_check $SUDO_HELPER $TOP/btrfs subvolume list -d .
 wait
 cd ..
 
-run_check $SUDO_HELPER umount $TEST_MNT
+run_check_umount_test_dev
