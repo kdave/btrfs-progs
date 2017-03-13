@@ -16,10 +16,21 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#if BTRFS_FLAT_INCLUDES
 #include "kerncompat.h"
 #include "version.h"
 #include "send-stream.h"
 #include "btrfs-list.h"
+#else
+/*
+ * This needs to include headers the same way as an external program but must
+ * not use the existing system headers, so we use "...".
+ */
+#include "btrfs/kerncompat.h"
+#include "btrfs/version.h"
+#include "btrfs/send-stream.h"
+#include "btrfs/btrfs-list.h"
+#endif
 
 /*
  * Reduced code snippet from snapper.git/snapper/Btrfs.cc
