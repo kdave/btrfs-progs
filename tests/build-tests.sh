@@ -63,6 +63,9 @@ function build_make_targets() {
 	# defaults, library
 	target="library-test"
 	buildme
+	# defaults, static library
+	target="library-test.static"
+	buildme
 }
 
 # main()
