@@ -34,7 +34,7 @@
 #include <btrfs/extent-cache.h>
 #include <btrfs/extent_io.h>
 #include <btrfs/ioctl.h>
-#include <linux/sizes.h>
+#include <btrfs/sizes.h>
 #endif /* BTRFS_FLAT_INCLUDES */
 
 struct btrfs_root;
