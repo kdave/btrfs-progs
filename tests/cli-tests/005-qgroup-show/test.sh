@@ -10,7 +10,7 @@ check_prereq btrfs
 setup_root_helper
 prepare_test_dev 2g
 
-run_check "$TOP/mkfs.btrfs" -f "$IMAGE"
+run_check "$TOP/mkfs.btrfs" -f "$TEST_DEV"
 run_check_mount_test_dev
 run_mayfail "$TOP/btrfs" qgroup show "$TEST_MNT"
 run_mayfail $SUDO_HELPER "$TOP/btrfs" qgroup show "$TEST_MNT"
