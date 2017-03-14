@@ -16,12 +16,6 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#define _BSD_SOURCE
-#define _LARGEFILE64_SOURCE
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
-
 #include "kerncompat.h"
 #include <stdio.h>
 #include <stdlib.h>
