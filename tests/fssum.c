@@ -21,6 +21,8 @@
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
+
+#include "kerncompat.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -41,12 +43,6 @@
 #ifndef SEEK_DATA
 #define SEEK_DATA 3
 #define SEEK_HOLE 4
-#endif
-
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-#define htonll(x)     __bswap_64 (x)
-#else
-#define htonll(x)     (x)
 #endif
 
 /* TODO: add hardlink recognition */
@@ -208,7 +204,7 @@ sum_add_sum(sum_t *dst, sum_t *src)
 void
 sum_add_u64(sum_t *dst, uint64_t val)
 {
-	uint64_t v = htonll(val);
+	uint64_t v = cpu_to_le64(val);
 	sum_add(dst, &v, sizeof(v));
 }
 
