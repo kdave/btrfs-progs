@@ -469,7 +469,7 @@ library-test.static: library-test.c messages.static.o $(libs_static)
 fssum: tests/fssum.c
 	@echo "    [LD]   $@"
 	# FIXME: no configure-time check for libcrypto from SSL
-	$(Q)$(CC) $(CFLAGS) -o $@ $< -D__LINUX__ $(LDFLAGS) -lcrypto
+	$(Q)$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS) -lcrypto
 
 test-build: test-build-pre test-build-real
 

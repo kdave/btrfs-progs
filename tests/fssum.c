@@ -15,12 +15,11 @@
  * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
  * Boston, MA 021110-1307, USA.
  */
-#ifdef __LINUX__
+
 #define _BSD_SOURCE
 #define _LARGEFILE64_SOURCE
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
-#endif
 #endif
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,9 +30,6 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#ifdef __SOLARIS__
-#include <sys/mkdev.h>
-#endif
 #include <openssl/md5.h>
 #include <netinet/in.h>
 #include <inttypes.h>
@@ -42,7 +38,6 @@
 #define CS_SIZE 16
 #define CHUNKS	128
 
-#ifdef __LINUX__
 #ifndef SEEK_DATA
 #define SEEK_DATA 3
 #define SEEK_HOLE 4
@@ -52,7 +47,6 @@
 #define htonll(x)     __bswap_64 (x)
 #else
 #define htonll(x)     (x)
-#endif
 #endif
 
 /* TODO: add hardlink recognition */
