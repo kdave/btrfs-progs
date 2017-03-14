@@ -371,21 +371,21 @@ again:
 	if (tree_id && tree_id == BTRFS_ROOT_TREE_OBJECTID) {
 		if (!info->tree_root->node) {
 			error("cannot print root tree, invalid pointer");
-			goto no_node;
+			goto close_root;
 		}
 		printf("root tree\n");
 		btrfs_print_tree(info->tree_root, info->tree_root->node, 1);
-		goto no_node;
+		goto close_root;
 	}
 
 	if (tree_id && tree_id == BTRFS_CHUNK_TREE_OBJECTID) {
 		if (!info->chunk_root->node) {
 			error("cannot print chunk tree, invalid pointer");
-			goto no_node;
+			goto close_root;
 		}
 		printf("chunk tree\n");
 		btrfs_print_tree(info->chunk_root, info->chunk_root->node, 1);
-		goto no_node;
+		goto close_root;
 	}
 
 	key.offset = 0;
