@@ -41,6 +41,7 @@ libbtrfs.so.0
 libbtrfs.so.0.1
 library-test
 library-test-static
+/fssum
 
 /tests/*-tests-results.txt
 /tests/test-console.txt

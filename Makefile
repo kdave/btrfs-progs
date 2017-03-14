@@ -466,6 +466,11 @@ library-test.static: library-test.c messages.static.o $(libs_static)
 	@echo "    [TEST CLEAN] $@"
 	$(Q)$(RM) -rf -- $(TMPD)
 
+fssum: tests/fssum.c
+	@echo "    [LD]   $@"
+	# FIXME: no configure-time check for libcrypto from SSL
+	$(Q)$(CC) $(CFLAGS) -o $@ $< -D__LINUX__ $(LDFLAGS) -lcrypto
+
 test-build: test-build-pre test-build-real
 
 test-build-pre:
@@ -502,7 +507,7 @@ clean: $(CLEANDIRS)
 		convert/*.o convert/*.o.d \
 		mkfs/*.o mkfs/*.o.d \
 	      dir-test ioctl-test quick-test library-test library-test-static \
-	      btrfs.static mkfs.btrfs.static \
+	      btrfs.static mkfs.btrfs.static fssum \
 	      $(check_defs) \
 	      $(libs) $(lib_links) \
 	      $(progs_static) $(progs_extra)
