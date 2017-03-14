@@ -344,6 +344,11 @@ int cmd_inspect_dump_tree(int argc, char **argv)
 			printf("chunk tree: %llu level %d\n",
 			     (unsigned long long)info->chunk_root->node->start,
 			     btrfs_header_level(info->chunk_root->node));
+			if (info->log_root_tree)
+				printf("log root tree: %llu level %d\n",
+				       info->log_root_tree->node->start,
+					btrfs_header_level(
+						info->log_root_tree->node));
 		} else {
 			if (info->tree_root->node) {
 				printf("root tree\n");
@@ -355,6 +360,12 @@ int cmd_inspect_dump_tree(int argc, char **argv)
 				printf("chunk tree\n");
 				btrfs_print_tree(info->chunk_root,
 						 info->chunk_root->node, 1);
+			}
+
+			if (info->log_root_tree) {
+				printf("log root tree\n");
+				btrfs_print_tree(info->log_root_tree,
+						info->log_root_tree->node, 1);
 			}
 		}
 	}
@@ -385,6 +396,17 @@ again:
 		}
 		printf("chunk tree\n");
 		btrfs_print_tree(info->chunk_root, info->chunk_root->node, 1);
+		goto close_root;
+	}
+
+	if (tree_id && tree_id == BTRFS_TREE_LOG_OBJECTID) {
+		if (!info->log_root_tree) {
+			error("cannot print log root tree, invalid pointer");
+			goto close_root;
+		}
+		printf("log root tree\n");
+		btrfs_print_tree(info->log_root_tree, info->log_root_tree->node,
+				 1);
 		goto close_root;
 	}
 
