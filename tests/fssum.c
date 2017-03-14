@@ -24,12 +24,11 @@
 #include <fcntl.h>
 #include <dirent.h>
 #include <errno.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <openssl/md5.h>
-#include <netinet/in.h>
-#include <inttypes.h>
 #include <assert.h>
+#include <time.h>
+#include <stdint.h>
 
 #define CS_SIZE 16
 #define CHUNKS	128
