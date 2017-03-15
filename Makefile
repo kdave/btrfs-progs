@@ -466,10 +466,9 @@ library-test.static: library-test.c messages.static.o $(libs_static)
 	@echo "    [TEST CLEAN] $@"
 	$(Q)$(RM) -rf -- $(TMPD)
 
-fssum: tests/fssum.c
+fssum: tests/fssum.c tests/sha224-256.c
 	@echo "    [LD]   $@"
-	# FIXME: no configure-time check for libcrypto from SSL
-	$(Q)$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS) -lcrypto
+	$(Q)$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 test-build: test-build-pre test-build-real
 

@@ -25,12 +25,12 @@
 #include <dirent.h>
 #include <errno.h>
 #include <sys/stat.h>
-#include <openssl/md5.h>
 #include <assert.h>
 #include <time.h>
 #include <stdint.h>
+#include "tests/sha.h"
 
-#define CS_SIZE 16
+#define CS_SIZE 32
 #define CHUNKS	128
 
 #ifndef SEEK_DATA
@@ -47,8 +47,8 @@ struct excludes {
 };
 
 typedef struct _sum {
-	MD5_CTX 	md5;
-	unsigned char	out[16];
+	SHA256Context   sha;
+	unsigned char	out[CS_SIZE];
 } sum_t;
 
 typedef int (*sum_file_data_t)(int fd, sum_t *dst);
@@ -173,19 +173,19 @@ alloc(size_t sz)
 void
 sum_init(sum_t *cs)
 {
-	MD5_Init(&cs->md5);
+	SHA256Reset(&cs->sha);
 }
 
 void
 sum_fini(sum_t *cs)
 {
-	MD5_Final(cs->out, &cs->md5);
+	SHA256Result(&cs->sha, cs->out);
 }
 
 void
 sum_add(sum_t *cs, void *buf, int size)
 {
-	MD5_Update(&cs->md5, buf, size);
+	SHA256Input(&cs->sha, buf, size);
 }
 
 void
