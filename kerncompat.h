@@ -317,11 +317,13 @@ static inline void assert_trace(const char *assertion, const char *filename,
 #define container_of(ptr, type, member) ({                      \
         const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
 	        (type *)( (char *)__mptr - offsetof(type,member) );})
+#ifndef __bitwise
 #ifdef __CHECKER__
 #define __bitwise __bitwise__
 #else
 #define __bitwise
-#endif
+#endif /* __CHECKER__ */
+#endif	/* __bitwise */
 
 /* Alignment check */
 #define IS_ALIGNED(x, a)                (((x) & ((typeof(x))(a) - 1)) == 0)
