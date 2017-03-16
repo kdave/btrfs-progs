@@ -1,3 +1,11 @@
+btrfs-progs-4.10.1 (2017-03-17)
+  * receive: handle subvolume in path clone
+  * convert: rollback fixed (rewrite was needed to address previous design issues)
+  * build: fix build of 3rd party tools, missing <linux/sizes.h>
+  * dump-tree: print log trees
+  * other
+    * new and updated tests
+
 btrfs-progs-4.10 (2017-03-08)
   * send: dump output fixes: missing newlies
   * check: several fixes for the lowmem mode, improved error reporting
