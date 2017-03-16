@@ -22,7 +22,7 @@
 #include "convert/common.h"
 #include "convert/source-fs.h"
 
-struct simple_range btrfs_reserved_ranges[3] = {
+const struct simple_range btrfs_reserved_ranges[3] = {
 	{ 0,			     SZ_1M },
 	{ BTRFS_SB_MIRROR_OFFSET(1), SZ_64K },
 	{ BTRFS_SB_MIRROR_OFFSET(2), SZ_64K }

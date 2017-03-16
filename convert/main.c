@@ -218,7 +218,7 @@ static int create_image_file_range(struct btrfs_trans_handle *trans,
 	 * migrate block will fail as there is already a file extent.
 	 */
 	for (i = 0; i < ARRAY_SIZE(btrfs_reserved_ranges); i++) {
-		struct simple_range *reserved = &btrfs_reserved_ranges[i];
+		const struct simple_range *reserved = &btrfs_reserved_ranges[i];
 
 		/*
 		 * |-- reserved --|
@@ -320,7 +320,7 @@ static int migrate_one_reserved_range(struct btrfs_trans_handle *trans,
 				      struct btrfs_root *root,
 				      struct cache_tree *used,
 				      struct btrfs_inode_item *inode, int fd,
-				      u64 ino, struct simple_range *range,
+				      u64 ino, const struct simple_range *range,
 				      u32 convert_flags)
 {
 	u64 cur_off = range->start;
@@ -423,7 +423,7 @@ static int migrate_reserved_ranges(struct btrfs_trans_handle *trans,
 	int ret = 0;
 
 	for (i = 0; i < ARRAY_SIZE(btrfs_reserved_ranges); i++) {
-		struct simple_range *range = &btrfs_reserved_ranges[i];
+		const struct simple_range *range = &btrfs_reserved_ranges[i];
 
 		if (range->start > total_bytes)
 			return ret;
@@ -609,7 +609,7 @@ static int wipe_reserved_ranges(struct cache_tree *tree, u64 min_stripe_size,
 	int ret;
 
 	for (i = 0; i < ARRAY_SIZE(btrfs_reserved_ranges); i++) {
-		struct simple_range *range = &btrfs_reserved_ranges[i];
+		const struct simple_range *range = &btrfs_reserved_ranges[i];
 
 		ret = wipe_one_reserved_range(tree, range->start, range->len,
 					      min_stripe_size, ensure_size);
@@ -1370,7 +1370,7 @@ static int read_reserved_ranges(struct btrfs_root *root, u64 ino,
 	int ret = 0;
 
 	for (i = 0; i < ARRAY_SIZE(btrfs_reserved_ranges); i++) {
-		struct simple_range *range = &btrfs_reserved_ranges[i];
+		const struct simple_range *range = &btrfs_reserved_ranges[i];
 
 		if (range->start + range->len >= total_bytes)
 			break;
@@ -1395,7 +1395,7 @@ static bool is_subset_of_reserved_ranges(u64 start, u64 len)
 	bool ret = false;
 
 	for (i = 0; i < ARRAY_SIZE(btrfs_reserved_ranges); i++) {
-		struct simple_range *range = &btrfs_reserved_ranges[i];
+		const struct simple_range *range = &btrfs_reserved_ranges[i];
 
 		if (start >= range->start && start + len <= range_end(range)) {
 			ret = true;
@@ -1620,7 +1620,7 @@ static int do_rollback(const char *devname)
 	int i;
 
 	for (i = 0; i < ARRAY_SIZE(btrfs_reserved_ranges); i++) {
-		struct simple_range *range = &btrfs_reserved_ranges[i];
+		const struct simple_range *range = &btrfs_reserved_ranges[i];
 
 		reserved_ranges[i] = calloc(1, range->len);
 		if (!reserved_ranges[i]) {
@@ -1730,7 +1730,7 @@ close_fs:
 
 	for (i = ARRAY_SIZE(btrfs_reserved_ranges) - 1; i >= 0; i--) {
 		u64 real_size;
-		struct simple_range *range = &btrfs_reserved_ranges[i];
+		const struct simple_range *range = &btrfs_reserved_ranges[i];
 
 		if (range_end(range) >= fsize)
 			continue;

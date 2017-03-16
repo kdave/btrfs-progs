@@ -32,7 +32,7 @@ struct simple_range {
 	u64 len;
 };
 
-extern struct simple_range btrfs_reserved_ranges[3];
+extern const struct simple_range btrfs_reserved_ranges[3];
 
 struct task_info;
 
@@ -107,7 +107,7 @@ int record_file_blocks(struct blk_iterate_data *data,
  *
  * Get range end (exclusive)
  */
-static inline u64 range_end(struct simple_range *range)
+static inline u64 range_end(const struct simple_range *range)
 {
 	return (range->start + range->len);
 }
