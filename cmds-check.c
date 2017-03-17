@@ -10229,10 +10229,8 @@ static int check_extent_data_item(struct btrfs_root *root,
 	dbref_key.offset = btrfs_file_extent_disk_num_bytes(eb, fi);
 
 	ret = btrfs_search_slot(NULL, extent_root, &dbref_key, &path, 0, 0);
-	if (ret) {
-		err |= BACKREF_MISSING;
-		goto error;
-	}
+	if (ret)
+		goto out;
 
 	leaf = path.nodes[0];
 	slot = path.slots[0];
@@ -10273,11 +10271,10 @@ static int check_extent_data_item(struct btrfs_root *root,
 		ptr += btrfs_extent_inline_ref_size(type);
 	}
 
-	/* Didn't found inlined data backref, try EXTENT_DATA_REF_KEY */
 	if (!found_dbackref) {
 		btrfs_release_path(&path);
 
-		btrfs_init_path(&path);
+		/* Didn't find inlined data backref, try EXTENT_DATA_REF_KEY */
 		dbref_key.objectid = btrfs_file_extent_disk_bytenr(eb, fi);
 		dbref_key.type = BTRFS_EXTENT_DATA_REF_KEY;
 		dbref_key.offset = hash_extent_data_ref(root->objectid,
@@ -10285,13 +10282,32 @@ static int check_extent_data_item(struct btrfs_root *root,
 
 		ret = btrfs_search_slot(NULL, root->fs_info->extent_root,
 					&dbref_key, &path, 0, 0);
-		if (!ret)
+		if (!ret) {
 			found_dbackref = 1;
+			goto out;
+		}
+
+		btrfs_release_path(&path);
+
+		/*
+		 * Neither inlined nor EXTENT_DATA_REF found, try
+		 * SHARED_DATA_REF as last chance.
+		 */
+		dbref_key.objectid = disk_bytenr;
+		dbref_key.type = BTRFS_SHARED_DATA_REF_KEY;
+		dbref_key.offset = eb->start;
+
+		ret = btrfs_search_slot(NULL, root->fs_info->extent_root,
+					&dbref_key, &path, 0, 0);
+		if (!ret) {
+			found_dbackref = 1;
+			goto out;
+		}
 	}
 
+out:
 	if (!found_dbackref)
 		err |= BACKREF_MISSING;
-error:
 	btrfs_release_path(&path);
 	if (err & BACKREF_MISSING) {
 		error("data extent[%llu %llu] backref lost",
