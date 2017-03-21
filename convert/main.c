@@ -1559,6 +1559,7 @@ next:
 			ret = -EINVAL;
 			error("inode %llu has some file extents not checked",
 				ino);
+			return ret;
 		}
 	}
 
