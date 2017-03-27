@@ -39,7 +39,7 @@
 	do {								\
 		PRINT_TRACE_ON_ERROR;					\
 		PRINT_VERBOSE_ERROR;					\
-		__error((fmt), ##__VA_ARGS__);				\
+		__btrfs_error((fmt), ##__VA_ARGS__);			\
 		DO_ABORT_ON_ERROR;					\
 	} while (0)
 
@@ -49,7 +49,7 @@
 			PRINT_TRACE_ON_ERROR;				\
 		if ((cond))						\
 			PRINT_VERBOSE_ERROR;				\
-		__error_on((cond), (fmt), ##__VA_ARGS__);		\
+		__btrfs_error_on((cond), (fmt), ##__VA_ARGS__);		\
 		if ((cond))						\
 			DO_ABORT_ON_ERROR;				\
 	} while (0)
@@ -58,7 +58,7 @@
 	do {								\
 		PRINT_TRACE_ON_ERROR;					\
 		PRINT_VERBOSE_ERROR;					\
-		__warning((fmt), ##__VA_ARGS__);			\
+		__btrfs_warning((fmt), ##__VA_ARGS__);			\
 	} while (0)
 
 #define warning_on(cond, fmt, ...)					\
@@ -67,19 +67,19 @@
 			PRINT_TRACE_ON_ERROR;				\
 		if ((cond))						\
 			PRINT_VERBOSE_ERROR;				\
-		__warning_on((cond), (fmt), ##__VA_ARGS__);		\
+		__btrfs_warning_on((cond), (fmt), ##__VA_ARGS__);	\
 	} while (0)
 
 __attribute__ ((format (printf, 1, 2)))
-void __warning(const char *fmt, ...);
+void __btrfs_warning(const char *fmt, ...);
 
 __attribute__ ((format (printf, 1, 2)))
-void __error(const char *fmt, ...);
+void __btrfs_error(const char *fmt, ...);
 
 __attribute__ ((format (printf, 2, 3)))
-int __warning_on(int condition, const char *fmt, ...);
+int __btrfs_warning_on(int condition, const char *fmt, ...);
 
 __attribute__ ((format (printf, 2, 3)))
-int __error_on(int condition, const char *fmt, ...);
+int __btrfs_error_on(int condition, const char *fmt, ...);
 
 #endif

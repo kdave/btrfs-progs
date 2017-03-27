@@ -19,7 +19,7 @@
 #include "messages.h"
 
 __attribute__ ((format (printf, 1, 2)))
-void __warning(const char *fmt, ...)
+void __btrfs_warning(const char *fmt, ...)
 {
 	va_list args;
 
@@ -31,7 +31,7 @@ void __warning(const char *fmt, ...)
 }
 
 __attribute__ ((format (printf, 1, 2)))
-void __error(const char *fmt, ...)
+void __btrfs_error(const char *fmt, ...)
 {
 	va_list args;
 
@@ -43,7 +43,7 @@ void __error(const char *fmt, ...)
 }
 
 __attribute__ ((format (printf, 2, 3)))
-int __warning_on(int condition, const char *fmt, ...)
+int __btrfs_warning_on(int condition, const char *fmt, ...)
 {
 	va_list args;
 
@@ -60,7 +60,7 @@ int __warning_on(int condition, const char *fmt, ...)
 }
 
 __attribute__ ((format (printf, 2, 3)))
-int __error_on(int condition, const char *fmt, ...)
+int __btrfs_error_on(int condition, const char *fmt, ...)
 {
 	va_list args;
 
