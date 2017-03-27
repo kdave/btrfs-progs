@@ -19,8 +19,20 @@
 #if BTRFS_FLAT_INCLUDES
 #include "kerncompat.h"
 #include "version.h"
-#include "send-stream.h"
+#include "rbtree.h"
+#include "radix-tree.h"
+#include "crc32c.h"
+#include "list.h"
+#include "sizes.h"
+#include "ctree.h"
+#include "extent_io.h"
+#include "ioctl.h"
 #include "btrfs-list.h"
+#include "btrfsck.h"
+#include "extent-cache.h"
+#include "send.h"
+#include "send-stream.h"
+#include "send-utils.h"
 #else
 /*
  * This needs to include headers the same way as an external program but must
@@ -28,8 +40,20 @@
  */
 #include "btrfs/kerncompat.h"
 #include "btrfs/version.h"
-#include "btrfs/send-stream.h"
+#include "btrfs/rbtree.h"
+#include "btrfs/radix-tree.h"
+#include "btrfs/crc32c.h"
+#include "btrfs/list.h"
+#include "btrfs/sizes.h"
+#include "btrfs/ctree.h"
+#include "btrfs/extent_io.h"
+#include "btrfs/ioctl.h"
 #include "btrfs/btrfs-list.h"
+#include "btrfs/btrfsck.h"
+#include "btrfs/extent-cache.h"
+#include "btrfs/send.h"
+#include "btrfs/send-stream.h"
+#include "btrfs/send-utils.h"
 #endif
 
 /*
