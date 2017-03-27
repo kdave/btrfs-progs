@@ -95,7 +95,7 @@ objects = ctree.o disk-io.o kernel-lib/radix-tree.o extent-tree.o print-tree.o \
 	  qgroup.o raid56.o free-space-cache.o kernel-lib/list_sort.o props.o \
 	  kernel-shared/ulist.o qgroup-verify.o backref.o string-table.o task-utils.o \
 	  inode.o file.o find-root.o free-space-tree.o help.o send-dump.o \
-	  fsfeatures.o messages.o
+	  fsfeatures.o
 cmds_objects = cmds-subvolume.o cmds-filesystem.o cmds-device.o cmds-scrub.o \
 	       cmds-inspect.o cmds-balance.o cmds-send.o cmds-receive.o \
 	       cmds-quota.o cmds-qgroup.o cmds-replace.o cmds-check.o \
@@ -104,7 +104,7 @@ cmds_objects = cmds-subvolume.o cmds-filesystem.o cmds-device.o cmds-scrub.o \
 	       cmds-inspect-dump-super.o cmds-inspect-tree-stats.o cmds-fi-du.o \
 	       mkfs/common.o
 libbtrfs_objects = send-stream.o send-utils.o kernel-lib/rbtree.o btrfs-list.o \
-		   kernel-lib/crc32c.o \
+		   kernel-lib/crc32c.o messages.o \
 		   uuid-tree.o utils-lib.o rbtree-utils.o
 libbtrfs_headers = send-stream.h send-utils.h send.h kernel-lib/rbtree.h btrfs-list.h \
 	       kernel-lib/crc32c.h kernel-lib/list.h kerncompat.h \
@@ -446,7 +446,7 @@ test-ioctl: ioctl-test ioctl-test-32 ioctl-test-64
 	$(Q)./ioctl-test-32 > ioctl-test-32.log
 	$(Q)./ioctl-test-64 > ioctl-test-64.log
 
-library-test: library-test.c messages.o $(libs_shared)
+library-test: library-test.c $(libs_shared)
 	@echo "    [TEST PREP]  $@"$(eval TMPD=$(shell mktemp -d))
 	$(Q)mkdir -p $(TMPD)/include/btrfs && \
 	cp $(libbtrfs_headers) $(TMPD)/include/btrfs && \
@@ -456,7 +456,7 @@ library-test: library-test.c messages.o $(libs_shared)
 	@echo "    [TEST CLEAN] $@"
 	$(Q)$(RM) -rf -- $(TMPD)
 
-library-test.static: library-test.c messages.static.o $(libs_static)
+library-test.static: library-test.c $(libs_static)
 	@echo "    [TEST PREP]  $@"$(eval TMPD=$(shell mktemp -d))
 	$(Q)mkdir -p $(TMPD)/include/btrfs && \
 	cp $(libbtrfs_headers) $(TMPD)/include/btrfs && \
