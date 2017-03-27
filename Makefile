@@ -502,6 +502,7 @@ clean: $(CLEANDIRS)
 	@echo "Cleaning"
 	$(Q)$(RM) -f -- $(progs) *.o *.o.d \
 		kernel-lib/*.o kernel-lib/*.o.d \
+		kernel-shared/*.o kernel-shared/*.o.d \
 		image/*.o image/*.o.d \
 		convert/*.o convert/*.o.d \
 		mkfs/*.o mkfs/*.o.d \
