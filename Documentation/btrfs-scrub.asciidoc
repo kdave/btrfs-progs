@@ -78,6 +78,15 @@ set IO priority classdata (see `ionice`(1) manpage)
 force starting new scrub even if a scrub is already running,
 this can useful when scrub status file is damaged and reports a running
 scrub although it is not, but should not normally be necessary
+--offline::::
+Do offline scrub.
+NOTE: it's experimental and repair is not supported yet.
+--progress::::
+Show progress status while doing offline scrub. (Default)
+NOTE: it's only useful with option --offline.
+--no-progress::::
+Don't show progress status while doing offline scrub.
+NOTE: it's only useful with option --offline.
 
 *status* [-d] <path>|<device>::
 Show status of a running scrub for the filesystem identified by 'path' or

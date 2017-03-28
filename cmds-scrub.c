@@ -36,12 +36,14 @@
 #include <signal.h>
 #include <stdarg.h>
 #include <limits.h>
+#include <getopt.h>
 
 #include "ctree.h"
 #include "ioctl.h"
 #include "utils.h"
 #include "volumes.h"
 #include "disk-io.h"
+#include "task-utils.h"
 
 #include "commands.h"
 #include "help.h"
@@ -215,6 +217,32 @@ static void add_to_fs_stat(struct btrfs_scrub_progress *p,
 	_SCRUB_FS_STAT_ZMAX(ss, duration, fs_stat);
 	_SCRUB_FS_STAT_ZMAX(ss, canceled, fs_stat);
 	_SCRUB_FS_STAT_MIN(ss, finished, fs_stat);
+}
+
+static void *print_offline_status(void *p)
+{
+	struct task_context *ctx = p;
+	const char work_indicator[] = {'.', 'o', 'O', 'o' };
+	uint32_t count = 0;
+
+	task_period_start(ctx->info, 1000 /* 1s */);
+
+	while (1) {
+		printf("Doing offline scrub [%c] [%llu/%llu]\r",
+		       work_indicator[count % 4], ctx->cur, ctx->all);
+		count++;
+		fflush(stdout);
+		task_period_wait(ctx->info);
+	}
+	return NULL;
+}
+
+static int print_offline_return(void *p)
+{
+	printf("\n");
+	fflush(stdout);
+
+	return 0;
 }
 
 static void init_fs_stat(struct scrub_fs_stat *fs_stat)
@@ -1100,7 +1128,7 @@ static const char * const cmd_scrub_resume_usage[];
 
 static int scrub_start(int argc, char **argv, int resume)
 {
-	int fdmnt;
+	int fdmnt = -1;
 	int prg_fd = -1;
 	int fdres = -1;
 	int ret;
@@ -1124,10 +1152,14 @@ static int scrub_start(int argc, char **argv, int resume)
 	int n_start = 0;
 	int n_skip = 0;
 	int n_resume = 0;
+	int offline = 0;
+	int progress_set = -1;
 	struct btrfs_ioctl_fs_info_args fi_args;
 	struct btrfs_ioctl_dev_info_args *di_args = NULL;
 	struct scrub_progress *sp = NULL;
 	struct scrub_fs_stat fs_stat;
+	struct task_context task = {0};
+	struct btrfs_fs_info *fs_info = NULL;
 	struct timeval tv;
 	struct sockaddr_un addr = {
 		.sun_family = AF_UNIX,
@@ -1147,7 +1179,18 @@ static int scrub_start(int argc, char **argv, int resume)
 	int force = 0;
 	int nothing_to_resume = 0;
 
-	while ((c = getopt(argc, argv, "BdqrRc:n:f")) != -1) {
+	enum { GETOPT_VAL_OFFLINE = 257,
+	       GETOPT_VAL_PROGRESS,
+	       GETOPT_VAL_NO_PROGRESS};
+	static const struct option long_options[] = {
+		{ "offline", no_argument, NULL, GETOPT_VAL_OFFLINE},
+		{ "progress", no_argument, NULL, GETOPT_VAL_PROGRESS},
+		{ "no-progress", no_argument, NULL, GETOPT_VAL_NO_PROGRESS},
+		{ NULL, 0, NULL, 0}
+	};
+
+	while ((c = getopt_long(argc, argv, "BdqrRc:n:f", long_options,
+				NULL)) != -1) {
 		switch (c) {
 		case 'B':
 			do_background = 0;
@@ -1175,6 +1218,15 @@ static int scrub_start(int argc, char **argv, int resume)
 		case 'f':
 			force = 1;
 			break;
+		case GETOPT_VAL_OFFLINE:
+			offline = 1;
+			break;
+		case GETOPT_VAL_PROGRESS:
+			progress_set = 1;
+			break;
+		case GETOPT_VAL_NO_PROGRESS:
+			progress_set = 0;
+			break;
 		case '?':
 		default:
 			usage(resume ? cmd_scrub_resume_usage :
@@ -1188,6 +1240,53 @@ static int scrub_start(int argc, char **argv, int resume)
 		usage(resume ? cmd_scrub_resume_usage :
 					cmd_scrub_start_usage);
 	}
+
+	if (progress_set != -1 && !offline)
+		warning("Option --no-progress and --progress only works for --offline, ignored.");
+
+	if (offline) {
+		unsigned ctree_flags = OPEN_CTREE_EXCLUSIVE;
+
+		ret = check_mounted(argv[optind]);
+		if (ret < 0) {
+			error("could not check mount status: %s", strerror(-ret));
+			err |= !!ret;
+			goto out;
+		} else if (ret) {
+			error("%s is currently mounted, aborting", argv[optind]);
+			ret = -EBUSY;
+			err |= !!ret;
+			goto out;
+		}
+
+		if (!do_background || do_wait || do_print ||
+		    do_stats_per_dev || do_quiet || print_raw ||
+		    ioprio_class != IOPRIO_CLASS_IDLE || ioprio_classdata ||
+		    force)
+			warning("Offline scrub doesn't support extra options other than -r");
+
+		if (!readonly)
+			ctree_flags |= OPEN_CTREE_WRITES;
+		fs_info = open_ctree_fs_info(argv[optind], 0, 0, 0, ctree_flags);
+		if (!fs_info) {
+			error("cannot open file system");
+			ret = -EIO;
+			err = 1;
+			goto out;
+		}
+
+		if (progress_set == 1) {
+			task.info = task_init(print_offline_status,
+					      print_offline_return, &task);
+			ret = btrfs_scrub(fs_info, &task, !readonly);
+			task_deinit(task.info);
+		} else {
+			ret = btrfs_scrub(fs_info, NULL, !readonly);
+		}
+
+		goto out;
+	}
+
 
 	spc.progress = NULL;
 	if (do_quiet && do_print)
@@ -1545,7 +1644,10 @@ out:
 		if (sock_path[0])
 			unlink(sock_path);
 	}
-	close_file_or_dir(fdmnt, dirstream);
+	if (fdmnt >= 0)
+		close_file_or_dir(fdmnt, dirstream);
+	if (fs_info)
+		close_ctree_fs_info(fs_info);
 
 	if (err)
 		return 1;
@@ -1563,9 +1665,10 @@ out:
 }
 
 static const char * const cmd_scrub_start_usage[] = {
-	"btrfs scrub start [-BdqrRf] [-c ioprio_class -n ioprio_classdata] <path>|<device>",
+	"btrfs scrub start [-BdqrRf] [-c ioprio_class -n ioprio_classdata] [--offline] [--progress][no-progress] <path>|<device>",
 	"Start a new scrub. If a scrub is already running, the new one fails.",
 	"",
+	"Online (kernel) scrub options:",
 	"-B     do not background",
 	"-d     stats per device (-B only)",
 	"-q     be quiet",
@@ -1575,6 +1678,11 @@ static const char * const cmd_scrub_start_usage[] = {
 	"-n     set ioprio classdata (see ionice(1) manpage)",
 	"-f     force starting new scrub even if a scrub is already running",
 	"       this is useful when scrub stats record file is damaged",
+	"",
+	"Offline scrub options:",
+	"--offline     start an offline scrub, not support other options",
+	"--progress    show progress status (default), only work with option --offline",
+	"--no-progress do not show progress status, only work only with option --offline",
 	NULL
 };
 

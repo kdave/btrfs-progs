@@ -2768,4 +2768,10 @@ int btrfs_read_file(struct btrfs_root *root, u64 ino, u64 start, int len,
 int btrfs_read_data_csums(struct btrfs_fs_info *fs_info, u64 start, u64 len,
 			  void *csum_ret, unsigned long *bitmap_ret);
 
+
+/* scrub.c */
+struct task_context;
+int btrfs_scrub(struct btrfs_fs_info *fs_info, struct task_context *ctx,
+		int write);
+
 #endif

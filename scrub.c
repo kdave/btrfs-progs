@@ -19,6 +19,7 @@
 #include "disk-io.h"
 #include "utils.h"
 #include "kernel-lib/bitops.h"
+#include "task-utils.h"
 #include "kernel-lib/raid56.h"
 
 /*
@@ -1288,5 +1289,75 @@ next:
 	}
 out:
 	btrfs_free_path(path);
+	return ret;
+}
+
+int btrfs_scrub(struct btrfs_fs_info *fs_info, struct task_context *task,
+		int write)
+{
+	u64 bg_nr = 0;
+	struct btrfs_block_group_cache *bg_cache;
+	struct btrfs_scrub_progress scrub_ctx = {0};
+	int ret = 0;
+
+	ASSERT(fs_info);
+
+	bg_cache = btrfs_lookup_first_block_group(fs_info, 0);
+	if (!bg_cache) {
+		error("no block group is found");
+		return -ENOENT;
+	}
+	++bg_nr;
+
+	if (task) {
+		/* get block group numbers for progress */
+		while (1) {
+			u64 bg_offset = bg_cache->key.objectid +
+				bg_cache->key.offset;
+			bg_cache = btrfs_lookup_first_block_group(fs_info,
+								  bg_offset);
+			if (!bg_cache)
+				break;
+			++bg_nr;
+		}
+		task->all = bg_nr;
+		task->cur = 1;
+		task_start(task->info);
+
+		bg_cache = btrfs_lookup_first_block_group(fs_info, 0);
+	}
+
+	while (1) {
+		ret = scrub_one_block_group(fs_info, &scrub_ctx, bg_cache,
+					    write);
+		if (ret < 0 && ret != -EIO)
+			break;
+		if (task)
+			task->cur++;
+
+		bg_cache = btrfs_lookup_first_block_group(fs_info,
+				bg_cache->key.objectid + bg_cache->key.offset);
+		if (!bg_cache)
+			break;
+	}
+
+	if (task)
+		task_stop(task->info);
+
+	printf("Scrub result:\n");
+	printf("Tree bytes scrubbed: %llu\n", scrub_ctx.tree_bytes_scrubbed);
+	printf("Tree extents scrubbed: %llu\n", scrub_ctx.tree_extents_scrubbed);
+	printf("Data bytes scrubbed: %llu\n", scrub_ctx.data_bytes_scrubbed);
+	printf("Data extents scrubbed: %llu\n", scrub_ctx.data_extents_scrubbed);
+	printf("Data bytes without csum: %llu\n", scrub_ctx.csum_discards *
+			fs_info->sectorsize);
+	printf("Read error: %llu\n", scrub_ctx.read_errors);
+	printf("Verify error: %llu\n", scrub_ctx.verify_errors);
+	printf("Csum error: %llu\n", scrub_ctx.csum_errors);
+	if (scrub_ctx.csum_errors || scrub_ctx.read_errors ||
+	    scrub_ctx.uncorrectable_errors || scrub_ctx.verify_errors)
+		ret = 1;
+	else
+		ret = 0;
 	return ret;
 }
