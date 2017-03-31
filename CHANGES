@@ -1,3 +1,8 @@
+btrfs-progs-4.10.2 (2017-03-31)
+  * check: lowmem mode fix for false alert about lost backrefs
+  * convert: minor bugfix
+  * library: fix build, misisng symbols, added tests
+
 btrfs-progs-4.10.1 (2017-03-17)
   * receive: handle subvolume in path clone
   * convert: rollback fixed (rewrite was needed to address previous design issues)
