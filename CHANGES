@@ -1,3 +1,12 @@
+btrfs-progs-4.11 (2017-05-18)
+  * receive: fix handling empty stream with -e (multi-stream)
+  * send dump: fix printing long file names
+  * stability fixes for: dump-super, print-tree, check
+  * option parser updates: global options are parsed before the subcommand name
+    (old xfstests will fail)
+  * new and updated tests
+  * documentation updates
+
 btrfs-progs-4.10.2 (2017-03-31)
   * check: lowmem mode fix for false alert about lost backrefs
   * convert: minor bugfix
