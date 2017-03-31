@@ -1,3 +1,14 @@
+btrfs-progs-4.12 (2017-07-26)
+  * subvol show: new options --rootid, --uuid to show subvol by the given spec
+  * convert: progress report fixes, found by tsan
+  * image: progress report fixes, found by tsan
+  * fix infinite looping in find-root, or when looking for free extents
+  * other:
+    * code refactoring
+    * docs updates
+    * build: ThreadSanitizer support
+    * tests: stricter checks for mounted filesystem
+
 btrfs-progs-4.11.1 (2017-06-30)
   * image: restoring from multiple devices
   * dev stats: make --check option work
