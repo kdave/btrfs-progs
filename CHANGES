@@ -1,3 +1,18 @@
+btrfs-progs-4.11.1 (2017-06-30)
+  * image: restoring from multiple devices
+  * dev stats: make --check option work
+  * check: fix false alert with extent hole on a NO_HOLE filesystem
+  * check: lowmem mode, fix false alert in case of mixed inline and compressed
+    extent
+  * convert: work with large filesystems (many TB)
+  * convert: fix overwriting of eb header flags
+  * convert: do not clear NODATASUM flag in inodes when run with --no-datasum
+  * docs updates
+  * build: sync Android.mk with Makefile
+  * tests:
+    * new tests
+    * fix 008 and 009, shell quotation mistake
+
 btrfs-progs-4.11 (2017-05-18)
   * receive: fix handling empty stream with -e (multi-stream)
   * send dump: fix printing long file names
