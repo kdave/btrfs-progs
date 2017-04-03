@@ -492,7 +492,7 @@ int btrfs_read_and_process_send_stream(int fd,
 	if (ret < 0)
 		goto out;
 	if (ret) {
-		ret = 1;
+		ret = -ENODATA;
 		goto out;
 	}
 

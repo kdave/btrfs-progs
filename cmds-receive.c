@@ -1091,7 +1091,6 @@ static int do_receive(struct btrfs_receive *rctx, const char *tomnt,
 	char *dest_dir_full_path;
 	char root_subvol_path[PATH_MAX];
 	int end = 0;
-	int count;
 
 	dest_dir_full_path = realpath(tomnt, NULL);
 	if (!dest_dir_full_path) {
@@ -1186,7 +1185,6 @@ static int do_receive(struct btrfs_receive *rctx, const char *tomnt,
 	if (ret < 0)
 		goto out;
 
-	count = 0;
 	while (!end) {
 		if (rctx->cached_capabilities_len) {
 			if (g_verbose >= 3)
@@ -1200,16 +1198,15 @@ static int do_receive(struct btrfs_receive *rctx, const char *tomnt,
 							 rctx,
 							 rctx->honor_end_cmd,
 							 max_errors);
-		if (ret < 0)
-			goto out;
-		/* Empty stream is invalid */
-		if (ret && count == 0) {
+		if (ret < 0 && ret == -ENODATA) {
+			/* Empty stream is invalid */
 			error("empty stream is not considered valid");
 			ret = -EINVAL;
 			goto out;
+		} else if (ret < 0) {
+			goto out;
 		}
-		count++;
-		if (ret)
+		if (ret > 0)
 			end = 1;
 
 		close_inode_for_write(rctx);
