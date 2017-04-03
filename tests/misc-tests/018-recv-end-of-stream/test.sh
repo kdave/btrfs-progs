@@ -13,6 +13,8 @@ prepare_test_dev 1g
 
 here=`pwd`
 
+# All helpers can exercise various options passed to 'btrfs receive'
+
 test_full_empty_stream() {
 	local str
 
@@ -34,7 +36,7 @@ test_full_empty_stream() {
 
 	run_check $TOP/mkfs.btrfs -f $TEST_DEV
 	run_check_mount_test_dev
-	run_check $SUDO_HELPER $TOP/btrfs receive -v -f "$str" "$TEST_MNT"
+	run_check $SUDO_HELPER $TOP/btrfs receive "$@" -v -f "$str" "$TEST_MNT"
 	run_check_umount_test_dev
 
 	run_check rm -f -- "$str"
@@ -65,7 +67,7 @@ test_full_simple_stream() {
 
 	run_check $TOP/mkfs.btrfs -f $TEST_DEV
 	run_check_mount_test_dev
-	run_check $SUDO_HELPER $TOP/btrfs receive -v -f "$str" "$TEST_MNT"
+	run_check $SUDO_HELPER $TOP/btrfs receive "$@" -v -f "$str" "$TEST_MNT"
 	run_check_umount_test_dev
 
 	run_check rm -f -- "$str"
@@ -96,8 +98,8 @@ test_incr_empty_stream() {
 
 	run_check $TOP/mkfs.btrfs -f $TEST_DEV
 	run_check_mount_test_dev
-	run_check $SUDO_HELPER $TOP/btrfs receive -v -f "$fstr" "$TEST_MNT"
-	run_check $SUDO_HELPER $TOP/btrfs receive -v -f "$istr" "$TEST_MNT"
+	run_check $SUDO_HELPER $TOP/btrfs receive "$@" -v -f "$fstr" "$TEST_MNT"
+	run_check $SUDO_HELPER $TOP/btrfs receive "$@" -v -f "$istr" "$TEST_MNT"
 	run_check_umount_test_dev
 
 	run_check rm -f -- "$fstr" "$istr"
@@ -136,8 +138,8 @@ test_incr_simple_stream() {
 
 	run_check $TOP/mkfs.btrfs -f $TEST_DEV
 	run_check_mount_test_dev
-	run_check $SUDO_HELPER $TOP/btrfs receive -v -f "$fstr" "$TEST_MNT"
-	run_check $SUDO_HELPER $TOP/btrfs receive -v -f "$istr" "$TEST_MNT"
+	run_check $SUDO_HELPER $TOP/btrfs receive "$@" -v -f "$fstr" "$TEST_MNT"
+	run_check $SUDO_HELPER $TOP/btrfs receive "$@" -v -f "$istr" "$TEST_MNT"
 	run_check_umount_test_dev
 
 	run_check rm -f -- "$fstr" "$istr"
@@ -147,3 +149,9 @@ test_full_empty_stream
 test_full_simple_stream
 test_incr_empty_stream
 test_incr_simple_stream
+
+extra_opt=-e
+test_full_empty_stream $extra_opt
+test_full_simple_stream $extra_opt
+test_incr_empty_stream $extra_opt
+test_incr_simple_stream $extra_opt
