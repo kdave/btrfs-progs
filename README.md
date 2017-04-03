@@ -33,17 +33,18 @@ Reporting bugs
 --------------
 
 There are several ways, each has its own specifics and audience that can give
-feedback or work on a fix.
+feedback or work on a fix. The following list is sorted in the order of
+preference:
 
+* [github issue tracker](https://github.com/kdave/btrfs-progs/issues)
+* to the mailing list *linux-btrfs@vger.kernel.org* -- (not required to
+  subscribe), beware that the mail might get overlooked in other traffic
+* IRC (irc.freenode.net #btrfs) -- good for discussions eg. if a bug is already
+  known, but reports could miss developers' attention
 * [bugzilla.kernel.org](https://bugzilla.kernel.org) -- (requires
   registration), set the product to Filesystems and component Btrfs, please put
   'btrfs-progs' into the subject so it's clear that it's not a kernel bug
   report
-* to the mailing list *linux-btrfs@vger.kernel.org* -- (not required to
-  subscribe), beware that the mail might get overlooked in other traffic
-* [github issue tracker](https://github.com/kdave/btrfs-progs/issues)
-* IRC (irc.freenode.net #btrfs) -- good for discussions eg. if a bug is already
-  known, but reports could miss developers' attention
 
 
 Development
