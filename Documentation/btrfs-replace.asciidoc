@@ -28,7 +28,7 @@ the data is built only using the RAID redundancy mechanisms.
 After completion of the operation, the source device is removed from the
 filesystem.
 If the <srcdev> is a numerical value, it is assumed to be the device id
-of the filesystem which is mounted at <path>, otherwise is is
+of the filesystem which is mounted at <path>, otherwise it is
 the path to the source device. If the source device is disconnected,
 from the system, you have to use the devid parameter format.
 The <targetdev> needs to be same size or larger than the <srcdev>.
