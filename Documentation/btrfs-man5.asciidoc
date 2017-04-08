@@ -456,6 +456,7 @@ big_metadata::
 (since: 3.4)
 +
 the filesystem uses 'nodesize' bigger than the page size
+
 compress_lzo::
 (since: 2.6.38)
 +
