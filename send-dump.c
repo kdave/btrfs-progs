@@ -116,9 +116,10 @@ static int __print_dump(int subvol, void *user, const char *path,
 		putchar('\n');
 		return 0;
 	}
-	/* Short paths ale aligned to 32 chars */
-	while (ret++ < 32)
+	/* Short paths are aligned to 32 chars; longer paths get a single space */
+	do {
 		putchar(' ');
+	} while (++ret < 32);
 	va_start(args, fmt);
 	/* Operation specified ones */
 	vprintf(fmt, args);
