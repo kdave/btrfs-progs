@@ -443,7 +443,7 @@ static int do_balance(const char *path, struct btrfs_ioctl_balance_args *args,
 		printf("WARNING:\n\n");
 		printf("\tFull balance without filters requested. This operation is very\n");
 		printf("\tintense and takes potentially very long. It is recommended to\n");
-		printf("\tuse the balance filters to narrow down the balanced data.\n");
+		printf("\tuse the balance filters to narrow down the scope of balance.\n");
 		printf("\tUse 'btrfs balance start --full-balance' option to skip this\n");
 		printf("\twarning. The operation will start in %d seconds.\n", delay);
 		printf("\tUse Ctrl-C to stop it.\n");
