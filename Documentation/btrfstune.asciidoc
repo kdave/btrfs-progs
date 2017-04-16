@@ -29,11 +29,13 @@ OPTIONS
 Enable seeding on a given device. Value 1 will enable seeding, 0 will disable it. +
 A seeding filesystem is forced to be mounted read-only. A new device can be added
 to the filesystem and will capture all writes keeping the seeding device intact.
+
 -r::
 (since kernel: 3.7)
 +
 Enable extended inode refs (hardlink limit per file in a directory is 65536),
 enabled by mkfs feature 'extref'.
+
 -x::
 (since kernel: 3.10)
 +
@@ -43,17 +45,21 @@ enabled by mkfs feature 'skinny-metadata'.
 All newly created extents will use the new representation. To completely switch
 the entire filesystem, run a full balance of the metadata. Please refer to
 `btrfs-balance`(8).
+
 -n::
 (since kernel: 3.14)
 +
 Enable no-holes feature (more efficient representation of file holes), enabled
 by mkfs feature 'no-holes'.
+
 -f::
 Allow dangerous changes, e.g. clear the seeding flag or change fsid. Make sure
 that you are aware of the dangers.
+
 -u::
 Change fsid to a randomly generated UUID or continue previous fsid change
 operation in case it was interrupted.
+
 -U <UUID>::
 Change fsid to 'UUID'.
 +
