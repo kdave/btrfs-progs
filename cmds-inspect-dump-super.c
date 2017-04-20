@@ -68,6 +68,7 @@ static void print_sys_chunk_array(struct btrfs_super_block *sb)
 		return;
 	}
 	write_extent_buffer(buf, sb, 0, sizeof(*sb));
+	buf->len = sizeof(*sb);
 	array_size = btrfs_super_sys_array_size(sb);
 
 	array_ptr = sb->sys_chunk_array;

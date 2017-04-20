@@ -199,7 +199,13 @@ void print_chunk(struct extent_buffer *eb, struct btrfs_chunk *chunk)
 {
 	int num_stripes = btrfs_chunk_num_stripes(eb, chunk);
 	int i;
+	u32 chunk_item_size = btrfs_chunk_item_size(num_stripes);
 	char chunk_flags_str[32] = {0};
+
+	if ((unsigned long)chunk + chunk_item_size > eb->len) {
+		printf("\t\tchunk item invalid\n");
+		return;
+	}
 
 	bg_flags_to_str(btrfs_chunk_type(eb, chunk), chunk_flags_str);
 	printf("\t\tlength %llu owner %llu stripe_len %llu type %s\n",
@@ -216,9 +222,21 @@ void print_chunk(struct extent_buffer *eb, struct btrfs_chunk *chunk)
 	for (i = 0 ; i < num_stripes ; i++) {
 		unsigned char dev_uuid[BTRFS_UUID_SIZE];
 		char str_dev_uuid[BTRFS_UUID_UNPARSED_SIZE];
+		u64 uuid_offset;
+		u64 stripe_offset;
+
+		uuid_offset = (unsigned long)btrfs_stripe_dev_uuid_nr(chunk, i);
+		stripe_offset = (unsigned long)btrfs_stripe_nr(chunk, i);
+
+		if (uuid_offset < stripe_offset ||
+			(uuid_offset + BTRFS_UUID_SIZE) >
+				(stripe_offset + sizeof(struct btrfs_stripe))) {
+			printf("\t\t\tstripe %d invalid\n", i);
+			break;
+		}
 
 		read_extent_buffer(eb, dev_uuid,
-			(unsigned long)btrfs_stripe_dev_uuid_nr(chunk, i),
+			uuid_offset,
 			BTRFS_UUID_SIZE);
 		uuid_unparse(dev_uuid, str_dev_uuid);
 		printf("\t\t\tstripe %d devid %llu offset %llu\n", i,
