@@ -65,13 +65,20 @@ static void print_sys_chunk_array(struct btrfs_super_block *sb)
 	buf = malloc(sizeof(*buf) + sizeof(*sb));
 	if (!buf) {
 		error("not enough memory");
-		goto out;
+		return;
 	}
 	write_extent_buffer(buf, sb, 0, sizeof(*sb));
 	array_size = btrfs_super_sys_array_size(sb);
 
 	array_ptr = sb->sys_chunk_array;
 	sb_array_offset = offsetof(struct btrfs_super_block, sys_chunk_array);
+
+	if (array_size > BTRFS_SYSTEM_CHUNK_ARRAY_SIZE) {
+		error("sys_array_size %u shouldn't exceed %u bytes",
+				array_size, BTRFS_SYSTEM_CHUNK_ARRAY_SIZE);
+		goto out;
+	}
+
 	cur_offset = 0;
 	item = 0;
 
@@ -124,8 +131,8 @@ static void print_sys_chunk_array(struct btrfs_super_block *sb)
 		item++;
 	}
 
-	free(buf);
 out:
+	free(buf);
 	return;
 
 out_short_read:
