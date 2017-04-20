@@ -452,35 +452,36 @@ means the feature can be enabled.
 
 List of features (see also `mkfs.btrfs`(8) section 'FILESYSTEM FEATURES'):
 
-big_metadata::
+*big_metadata*::
 (since: 3.4)
 +
-the filesystem uses 'nodesize' bigger than the page size
+the filesystem uses 'nodesize' for metadata blocks, this can be bigger than the
+page size
 
-compress_lzo::
+*compress_lzo*::
 (since: 2.6.38)
 +
 the 'lzo' compression has been used on the filesystem, either as a mount option
 or via *btrfs filesystem defrag*.
 
-default_subvol::
+*default_subvol*::
 (since: 2.6.34)
 +
 the default subvolume has been set on the filesystem
 
-extended_iref::
+*extended_iref*::
 (since: 3.7)
 +
 increased hardlink limit per file in a directory to 65536, older kernels
 supported a varying number of hardlinks depending on the sum of all file name
 sizes that can be stored into one metadata block
 
-mixed_backref::
+*mixed_backref*::
 (since: 2.6.31)
 +
-the last major disk format change, improved backreferences
+the last major disk format change, improved backreferences, now default
 
-mixed_groups::
+*mixed_groups*::
 (since: 2.6.37)
 +
 mixed data and metadata block groups, ie. the data and metadata are not
@@ -492,17 +493,18 @@ and vice versa)
 on the other hand, the final layout is quite unpredictable and possibly highly
 fragmented, which means worse performance
 
-no_holes::
+*no_holes*::
 (since: 3.14)
++
 improved representation of file extents where holes are not explicitly
 stored as an extent, saves a few percent of metadata if sparse files are used
 
-raid56::
+*raid56*::
 (since: 3.9)
 +
 the filesystem contains or contained a raid56 profile of block groups
-+
-skinny_metadata::
+
+*skinny_metadata*::
 (since: 3.10)
 +
 reduced-size metadata for extent references, saves a few percent of metadata
@@ -578,16 +580,16 @@ filesystem module:
   for a given filesystem
 * get the supported features (can be also found under '/sys/fs/btrfs/features')
 
-
-The device is usually created by ..., but can be created manually:
+The device is usually created by a system device node manager (eg. udev), but
+can be created manually:
 
 --------------------
 # mknod --mode=600 c 10 234 /dev/btrfs-control
 --------------------
 
-The device is not strictly required but the device scanning will not work and a
-workaround would need to be used to mount a multi-device filesystem. The mount
-option 'device' can trigger the device scanning during mount.
+The control device is not strictly required but the device scanning will not
+work and a workaround would need to be used to mount a multi-device filesystem.
+The mount option 'device' can trigger the device scanning during mount.
 
 SEE ALSO
 --------
