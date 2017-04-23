@@ -2,8 +2,8 @@
 # create a base image, convert to btrfs, remove all files, rollback the ext4 image
 # note: ext4 only
 
-source $TOP/tests/common
-source $TOP/tests/common.convert
+source "$TOP/tests/common"
+source "$TOP/tests/common.convert"
 
 setup_root_helper
 prepare_test_dev 512M
@@ -43,7 +43,7 @@ do_test() {
 	# ext2_saved/image must not be deleted
 	run_mayfail $SUDO_HELPER find "$TEST_MNT"/ -mindepth 1 -path '*ext2_saved' -prune -o -exec rm -vrf "{}" \;
 	cd "$here"
-	run_check $TOP/btrfs filesystem sync "$TEST_MNT"
+	run_check "$TOP/btrfs" filesystem sync "$TEST_MNT"
 	run_check_umount_test_dev
 	convert_test_post_rollback
 

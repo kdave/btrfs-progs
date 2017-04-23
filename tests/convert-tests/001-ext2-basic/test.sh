@@ -1,7 +1,7 @@
 #!/bin/bash
 
-source $TOP/tests/common
-source $TOP/tests/common.convert
+source "$TOP/tests/common"
+source "$TOP/tests/common.convert"
 
 setup_root_helper
 prepare_test_dev 512M
