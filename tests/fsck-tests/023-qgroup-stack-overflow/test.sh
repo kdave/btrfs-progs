@@ -5,13 +5,13 @@
 # Fixed by patch:
 # btrfs-progs: Fix stack overflow for checking qgroup on tree reloc tree
 
-source $TOP/tests/common
+source "$TOP/tests/common"
 
 check_prereq btrfs
 
 check_image()
 {
-	run_check $TOP/btrfs check "$1"
+	run_check "$TOP/btrfs" check "$1"
 }
 
 check_all_images

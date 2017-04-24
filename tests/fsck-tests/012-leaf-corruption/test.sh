@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source $TOP/tests/common
+source "$TOP/tests/common"
 
 check_prereq btrfs-image
 
@@ -37,16 +37,16 @@ leaf_no_data_ext_list=(
 generate_leaf_corrupt_no_data_ext()
 {
 	dest=$1
-	echo "generating leaf_corrupt_no_data_ext.btrfs-image" >> $RESULTS
+	echo "generating leaf_corrupt_no_data_ext.btrfs-image" >> "$RESULTS"
 	tar --no-same-owner -xJf ./no_data_extent.tar.xz || \
 		_fail "failed to extract leaf_corrupt_no_data_ext.btrfs-image"
-	$TOP/btrfs-image -r test.img.btrfs-image $dest || \
+	"$TOP/btrfs-image" -r test.img.btrfs-image "$dest" || \
 		_fail "failed to extract leaf_corrupt_no_data_ext.btrfs-image"
 
 	# leaf at 4206592 and 20905984 contains no regular data
 	# extent, clear its csum to corrupt the leaf.
 	for x in 4206592 20905984; do
-		dd if=/dev/zero of=$dest bs=1 count=32 conv=notrunc seek=$x \
+		dd if=/dev/zero of="$dest" bs=1 count=32 conv=notrunc seek="$x" \
 			1>/dev/null 2>&1
 	done
 }
@@ -60,21 +60,21 @@ check_inode()
 	name=$5
 
 	# Check whether the inode exists
-	exists=$($SUDO_HELPER find $path -inum $ino)
+	exists=$($SUDO_HELPER find "$path" -inum "$ino")
 	if [ -z "$exists" ]; then
 		_fail "inode $ino not recovered correctly"
 	fi
 
 	# Check inode type
-	found_mode=$(printf "%o" 0x$($SUDO_HELPER stat $exists -c %f))
-	if [ $found_mode -ne $mode ]; then
+	found_mode=$(printf "%o" 0x$($SUDO_HELPER stat "$exists" -c %f))
+	if [ "$found_mode" -ne "$mode" ]; then
 		echo "$found_mode"
 		_fail "inode $ino modes not recovered"
 	fi
 
 	# Check inode size
-	found_size=$($SUDO_HELPER stat $exists -c %s)
-	if [ $mode -ne 41700 -a $found_size -ne $size ]; then
+	found_size=$($SUDO_HELPER stat "$exists" -c %s)
+	if [ $mode -ne 41700 -a "$found_size" -ne "$size" ]; then
 		_fail "inode $ino size not recovered correctly"
 	fi
 
@@ -90,11 +90,11 @@ check_inode()
 check_leaf_corrupt_no_data_ext()
 {
 	image=$1
-	$SUDO_HELPER mount -o loop $image -o ro $TEST_MNT
+	$SUDO_HELPER mount -o loop "$image" -o ro "$TEST_MNT"
 
 	i=0
 	while [ $i -lt ${#leaf_no_data_ext_list[@]} ]; do
-		check_inode $TEST_MNT/lost+found \
+		check_inode "$TEST_MNT/lost+found" \
 			    ${leaf_no_data_ext_list[i]} \
 			    ${leaf_no_data_ext_list[i + 1]} \
 			    ${leaf_no_data_ext_list[i + 2]} \
@@ -102,7 +102,7 @@ check_leaf_corrupt_no_data_ext()
 			    ${leaf_no_data_ext_list[i + 4]}
 			    ((i+=4))
 	done
-	$SUDO_HELPER umount $TEST_MNT
+	$SUDO_HELPER umount "$TEST_MNT"
 }
 
 setup_root_helper

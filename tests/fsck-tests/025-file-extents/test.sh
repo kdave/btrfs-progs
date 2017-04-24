@@ -1,7 +1,7 @@
 #!/bin/bash
 # Confirm btrfs check can check file extents without causing false alert
 
-source $TOP/tests/common
+source "$TOP/tests/common"
 
 check_prereq btrfs
 check_prereq mkfs.btrfs

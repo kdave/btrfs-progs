@@ -11,12 +11,12 @@
 #
 # a buggy check leads to the above messages
 
-source $TOP/tests/common
+source "$TOP/tests/common"
 
 check_prereq btrfs
 
 image=$(extract_image "./default_case.img.xz")
-run_check_stdout $TOP/btrfs check "$image" 2>&1 |
+run_check_stdout "$TOP/btrfs" check "$image" 2>&1 |
 	grep -q "type mismatch with chunk" &&
 	_fail "unexpected error message in the output"
 

@@ -15,16 +15,16 @@
 #   the beginning of leaf.
 #   Which caused false alert for lowmem mode.
 
-source $TOP/tests/common
+source "$TOP/tests/common"
 
 check_prereq btrfs
 
 for img in *.img *.raw.xz
 do
-	image=$(extract_image $img)
+	image=$(extract_image "$img")
 
 	# Since the return value bug is already fixed, we don't need
 	# the old grep hack to detect bug.
-	run_check $TOP/btrfs check "$image"
+	run_check "$TOP/btrfs" check "$image"
 	rm -f "$image"
 done
