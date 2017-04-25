@@ -3250,6 +3250,7 @@ int btrfs_read_block_groups(struct btrfs_root *root)
 		}
 		leaf = path->nodes[0];
 		btrfs_item_key_to_cpu(leaf, &found_key, path->slots[0]);
+
 		cache = kzalloc(sizeof(*cache), GFP_NOFS);
 		if (!cache) {
 			ret = -ENOMEM;
@@ -3266,6 +3267,17 @@ int btrfs_read_block_groups(struct btrfs_root *root)
 		if (found_key.offset == 0)
 			key.objectid++;
 		btrfs_release_path(path);
+
+		/*
+		 * Skip 0 sized block group, don't insert them into block
+		 * group cache tree, as its length is 0, it won't get
+		 * freed at close_ctree() time.
+		 */
+		if (found_key.offset == 0) {
+			free(cache);
+			continue;
+		}
+
 		cache->flags = btrfs_block_group_flags(&cache->item);
 		bit = 0;
 		if (cache->flags & BTRFS_BLOCK_GROUP_DATA) {
