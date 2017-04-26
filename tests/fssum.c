@@ -420,6 +420,9 @@ check_manifest(char *fn, char *m, char *c, int last_call)
 	while ((l = getln(line, sizeof(line), in_fp))) {
 		rem_c = strrchr(l, ' ');
 		if (!rem_c) {
+			if (checksum)
+				free(checksum);
+
 			/* final cs */
 			checksum = strdup(l);
 			break;
@@ -503,6 +506,7 @@ sum(int dirfd, int level, sum_t *dircs, char *path_prefix, char *path_in)
 		}
 		++entries;
 	}
+
 	qsort(namelist, entries, sizeof(*namelist), namecmp);
 	for (i = 0; i < entries; ++i) {
 		struct stat64 st;
@@ -624,7 +628,11 @@ sum(int dirfd, int level, sum_t *dircs, char *path_prefix, char *path_in)
 		sum_add_sum(dircs, &meta);
 next:
 		free(path);
+		free(namelist[i]);
 	}
+
+	free(namelist);
+	closedir(d);
 }
 
 int
@@ -636,7 +644,9 @@ main(int argc, char *argv[])
 	char *path;
 	int fd;
 	sum_t cs;
+	char *sumstring;
 	char flagstring[sizeof(flchar)];
+	int ret = 0;
 	int i;
 	int plen;
 	int elen;
@@ -736,6 +746,9 @@ main(int argc, char *argv[])
 		} else if ((p = strchr(l, ':'))) {
 			*p++ = 0;
 			parse_flags(l);
+
+			if (checksum)
+				free(checksum);
 			checksum = strdup(p);
 		} else {
 			fprintf(stderr, "invalid input file format\n");
@@ -798,16 +811,28 @@ main(int argc, char *argv[])
 		if (!gen_manifest)
 			fprintf(out_fp, "%s:", flagstring);
 
-		fprintf(out_fp, "%s\n", sum_to_string(&cs));
+		sumstring = sum_to_string(&cs);
+		fprintf(out_fp, "%s\n", sumstring);
+		free(sumstring);
 	} else {
-		if (strcmp(checksum, sum_to_string(&cs)) == 0) {
+		sumstring = sum_to_string(&cs);
+		if (strcmp(checksum, sumstring) == 0) {
 			printf("OK\n");
-			exit(0);
+			ret = 0;
 		} else {
 			printf("FAIL\n");
-			exit(1);
+			ret = 1;
 		}
+
+		free(checksum);
+		free(sumstring);
 	}
 
-	exit(0);
+	if (in_fp)
+		fclose(in_fp);
+
+	if (out_fp != stdout)
+		fclose(out_fp);
+
+	exit(ret);
 }
