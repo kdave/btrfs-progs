@@ -6030,6 +6030,7 @@ static int add_extent_rec_nolookup(struct cache_tree *extent_cache,
 	struct extent_record *rec;
 	int ret = 0;
 
+	BUG_ON(tmpl->max_size == 0);
 	rec = malloc(sizeof(*rec));
 	if (!rec)
 		return -ENOMEM;
