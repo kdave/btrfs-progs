@@ -6833,14 +6833,16 @@ static int process_extent_item(struct btrfs_root *root,
 			ret = add_tree_backref(extent_cache, key.objectid,
 					0, offset, 0);
 			if (ret < 0)
-				error("add_tree_backref failed: %s",
+				error(
+			"add_tree_backref failed (extent items tree block): %s",
 				      strerror(-ret));
 			break;
 		case BTRFS_SHARED_BLOCK_REF_KEY:
 			ret = add_tree_backref(extent_cache, key.objectid,
 					offset, 0, 0);
 			if (ret < 0)
-				error("add_tree_backref failed: %s",
+				error(
+			"add_tree_backref failed (extent items shared block): %s",
 				      strerror(-ret));
 			break;
 		case BTRFS_EXTENT_DATA_REF_KEY:
@@ -7754,7 +7756,8 @@ static int run_next_block(struct btrfs_root *root,
 				ret = add_tree_backref(extent_cache,
 						key.objectid, 0, key.offset, 0);
 				if (ret < 0)
-					error("add_tree_backref failed: %s",
+					error(
+				"add_tree_backref failed (leaf tree block): %s",
 					      strerror(-ret));
 				continue;
 			}
@@ -7762,7 +7765,8 @@ static int run_next_block(struct btrfs_root *root,
 				ret = add_tree_backref(extent_cache,
 						key.objectid, key.offset, 0, 0);
 				if (ret < 0)
-					error("add_tree_backref failed: %s",
+					error(
+				"add_tree_backref failed (leaf shared block): %s",
 					      strerror(-ret));
 				continue;
 			}
@@ -7867,7 +7871,8 @@ static int run_next_block(struct btrfs_root *root,
 			ret = add_tree_backref(extent_cache, ptr, parent,
 					owner, 1);
 			if (ret < 0) {
-				error("add_tree_backref failed: %s",
+				error(
+				"add_tree_backref failed (non-leaf block): %s",
 				      strerror(-ret));
 				continue;
 			}
