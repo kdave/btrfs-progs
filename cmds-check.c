@@ -6194,6 +6194,7 @@ static int add_tree_backref(struct cache_tree *extent_cache, u64 bytenr,
 		tmpl.start = bytenr;
 		tmpl.nr = 1;
 		tmpl.metadata = 1;
+		tmpl.max_size = 1;
 
 		ret = add_extent_rec_nolookup(extent_cache, &tmpl);
 		if (ret)
