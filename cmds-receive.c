@@ -1091,6 +1091,7 @@ static int do_receive(struct btrfs_receive *rctx, const char *tomnt,
 	char *dest_dir_full_path;
 	char root_subvol_path[PATH_MAX];
 	int end = 0;
+	int iterations = 0;
 
 	dest_dir_full_path = realpath(tomnt, NULL);
 	if (!dest_dir_full_path) {
@@ -1198,13 +1199,18 @@ static int do_receive(struct btrfs_receive *rctx, const char *tomnt,
 							 rctx,
 							 rctx->honor_end_cmd,
 							 max_errors);
-		if (ret < 0 && ret == -ENODATA) {
+		if (ret < 0) {
+			if (ret != -ENODATA)
+				goto out;
+
 			/* Empty stream is invalid */
-			error("empty stream is not considered valid");
-			ret = -EINVAL;
-			goto out;
-		} else if (ret < 0) {
-			goto out;
+			if (iterations == 0) {
+				error("empty stream is not considered valid");
+				ret = -EINVAL;
+				goto out;
+			}
+
+			ret = 1;
 		}
 		if (ret > 0)
 			end = 1;
@@ -1213,6 +1219,8 @@ static int do_receive(struct btrfs_receive *rctx, const char *tomnt,
 		ret = finish_subvol(rctx);
 		if (ret < 0)
 			goto out;
+
+		iterations++;
 	}
 	ret = 0;
 
