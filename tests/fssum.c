@@ -24,6 +24,7 @@
 #include <fcntl.h>
 #include <dirent.h>
 #include <errno.h>
+#include <sys/sysmacros.h>
 #include <sys/stat.h>
 #include <assert.h>
 #include <time.h>
