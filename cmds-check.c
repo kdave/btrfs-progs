@@ -9972,6 +9972,8 @@ out:
 	free_extent_cache_tree(&pending);
 	free_extent_cache_tree(&reada);
 	free_extent_cache_tree(&nodes);
+	free_root_item_list(&normal_trees);
+	free_root_item_list(&dropping_trees);
 	return ret;
 loop:
 	free_corrupt_blocks_tree(root->fs_info->corrupt_blocks);
