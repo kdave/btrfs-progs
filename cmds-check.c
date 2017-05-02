@@ -2185,6 +2185,7 @@ static int walk_down_tree(struct btrfs_root *root, struct btrfs_path *path,
 
 		ret = check_child_node(cur, path->slots[*level], next);
 		if (ret) {
+			free_extent_buffer(next);
 			err = ret;
 			goto out;
 		}

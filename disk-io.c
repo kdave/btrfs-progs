@@ -815,7 +815,8 @@ struct btrfs_root *btrfs_read_fs_root(struct btrfs_fs_info *fs_info,
 	if (location->objectid == BTRFS_CSUM_TREE_OBJECTID)
 		return fs_info->csum_root;
 	if (location->objectid == BTRFS_QUOTA_TREE_OBJECTID)
-		return fs_info->quota_root;
+		return fs_info->quota_enabled ? fs_info->quota_root :
+				ERR_PTR(-ENOENT);
 
 	BUG_ON(location->objectid == BTRFS_TREE_RELOC_OBJECTID ||
 	       location->offset != (u64)-1);
@@ -837,12 +838,14 @@ struct btrfs_root *btrfs_read_fs_root(struct btrfs_fs_info *fs_info,
 
 void btrfs_free_fs_info(struct btrfs_fs_info *fs_info)
 {
+	if (fs_info->quota_root)
+		free(fs_info->quota_root);
+
 	free(fs_info->tree_root);
 	free(fs_info->extent_root);
 	free(fs_info->chunk_root);
 	free(fs_info->dev_root);
 	free(fs_info->csum_root);
-	free(fs_info->quota_root);
 	free(fs_info->free_space_root);
 	free(fs_info->super_copy);
 	free(fs_info->log_root_tree);
@@ -1057,8 +1060,12 @@ int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info, u64 root_tree_bytenr,
 
 	ret = find_and_setup_root(root, fs_info, BTRFS_QUOTA_TREE_OBJECTID,
 				  fs_info->quota_root);
-	if (ret == 0)
+	if (ret) {
+		free(fs_info->quota_root);
+		fs_info->quota_root = NULL;
+	} else {
 		fs_info->quota_enabled = 1;
+	}
 
 	if (btrfs_fs_compat_ro(fs_info, FREE_SPACE_TREE)) {
 		ret = find_and_setup_root(root, fs_info, BTRFS_FREE_SPACE_TREE_OBJECTID,
