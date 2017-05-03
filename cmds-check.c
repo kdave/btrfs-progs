@@ -2667,6 +2667,7 @@ static int repair_inode_backrefs(struct btrfs_root *root,
 			repaired++;
 			list_del(&backref->list);
 			free(backref);
+			continue;
 		}
 
 		if (!delete && !backref->found_dir_index &&
@@ -2677,12 +2678,12 @@ static int repair_inode_backrefs(struct btrfs_root *root,
 				break;
 			repaired++;
 			if (backref->found_dir_item &&
-			    backref->found_dir_index &&
 			    backref->found_dir_index) {
 				if (!backref->errors &&
 				    backref->found_inode_ref) {
 					list_del(&backref->list);
 					free(backref);
+					continue;
 				}
 			}
 		}
