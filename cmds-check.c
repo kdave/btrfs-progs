@@ -1512,13 +1512,19 @@ static int process_dir_item(struct extent_buffer *eb,
 		filetype = btrfs_dir_type(eb, di);
 
 		rec->found_size += name_len;
-		if (name_len <= BTRFS_NAME_LEN) {
+		if (cur + sizeof(*di) + name_len > total ||
+		    name_len > BTRFS_NAME_LEN) {
+			error = REF_ERR_NAME_TOO_LONG;
+
+			if (cur + sizeof(*di) > total)
+				break;
+			len = min_t(u32, total - cur - sizeof(*di),
+				    BTRFS_NAME_LEN);
+		} else {
 			len = name_len;
 			error = 0;
-		} else {
-			len = BTRFS_NAME_LEN;
-			error = REF_ERR_NAME_TOO_LONG;
 		}
+
 		read_extent_buffer(eb, namebuf, (unsigned long)(di + 1), len);
 
 		if (location.type == BTRFS_INODE_ITEM_KEY) {
@@ -4235,16 +4241,22 @@ static int find_dir_item(struct btrfs_root *root, struct btrfs_key *ref_key,
 		if (imode_to_type(mode) != filetype)
 			goto next;
 
-		if (name_len <= BTRFS_NAME_LEN) {
-			len = name_len;
-		} else {
-			len = BTRFS_NAME_LEN;
+		if (cur + sizeof(*di) + name_len > total ||
+		    name_len > BTRFS_NAME_LEN) {
 			warning("root %llu %s[%llu %llu] name too long %u, trimmed",
-			root->objectid,
-			key->type == BTRFS_DIR_ITEM_KEY ?
-			"DIR_ITEM" : "DIR_INDEX",
-			key->objectid, key->offset, name_len);
+				root->objectid,
+				key->type == BTRFS_DIR_ITEM_KEY ?
+				"DIR_ITEM" : "DIR_INDEX",
+				key->objectid, key->offset, name_len);
+
+			if (cur + sizeof(*di) > total)
+				break;
+			len = min_t(u32, total - cur - sizeof(*di),
+				    BTRFS_NAME_LEN);
+		} else {
+			len = name_len;
 		}
+
 		read_extent_buffer(node, namebuf, (unsigned long)(di + 1), len);
 		if (len != namelen || strncmp(namebuf, name, len))
 			goto next;
@@ -4632,15 +4644,20 @@ static int check_dir_item(struct btrfs_root *root, struct btrfs_key *key,
 			      key->objectid, key->offset, data_len);
 
 		name_len = btrfs_dir_name_len(node, di);
-		if (name_len <= BTRFS_NAME_LEN) {
-			len = name_len;
-		} else {
-			len = BTRFS_NAME_LEN;
+		if (cur + sizeof(*di) + name_len > total ||
+		    name_len > BTRFS_NAME_LEN) {
 			warning("root %llu %s[%llu %llu] name too long",
 				root->objectid,
 				key->type == BTRFS_DIR_ITEM_KEY ?
 				"DIR_ITEM" : "DIR_INDEX",
 				key->objectid, key->offset);
+
+			if (cur + sizeof(*di) > total)
+				break;
+			len = min_t(u32, total - cur - sizeof(*di),
+				    BTRFS_NAME_LEN);
+		} else {
+			len = name_len;
 		}
 		(*size) += name_len;
 
