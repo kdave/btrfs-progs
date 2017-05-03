@@ -1569,13 +1569,22 @@ static int process_inode_ref(struct extent_buffer *eb,
 	while (cur < total) {
 		name_len = btrfs_inode_ref_name_len(eb, ref);
 		index = btrfs_inode_ref_index(eb, ref);
-		if (name_len <= BTRFS_NAME_LEN) {
+
+		/* inode_ref + namelen should not cross item boundary */
+		if (cur + sizeof(*ref) + name_len > total ||
+		    name_len > BTRFS_NAME_LEN) {
+			if (total < cur + sizeof(*ref))
+				break;
+
+			/* Still try to read out the remaining part */
+			len = min_t(u32, total - cur - sizeof(*ref),
+				    BTRFS_NAME_LEN);
+			error = REF_ERR_NAME_TOO_LONG;
+		} else {
 			len = name_len;
 			error = 0;
-		} else {
-			len = BTRFS_NAME_LEN;
-			error = REF_ERR_NAME_TOO_LONG;
 		}
+
 		read_extent_buffer(eb, namebuf, (unsigned long)(ref + 1), len);
 		add_inode_backref(inode_cache, key->objectid, key->offset,
 				  index, namebuf, len, 0, key->type, error);
@@ -4296,12 +4305,16 @@ next:
 
 	index = btrfs_inode_ref_index(node, ref);
 	name_len = btrfs_inode_ref_name_len(node, ref);
-	if (name_len <= BTRFS_NAME_LEN) {
-		len = name_len;
-	} else {
-		len = BTRFS_NAME_LEN;
+	if (cur + sizeof(*ref) + name_len > total ||
+	    name_len > BTRFS_NAME_LEN) {
 		warning("root %llu INODE_REF[%llu %llu] name too long",
 			root->objectid, ref_key->objectid, ref_key->offset);
+
+		if (total < cur + sizeof(*ref))
+			goto out;
+		len = min_t(u32, total - cur - sizeof(*ref), BTRFS_NAME_LEN);
+	} else {
+		len = name_len;
 	}
 
 	read_extent_buffer(node, namebuf, (unsigned long)(ref + 1), len);
@@ -4334,6 +4347,7 @@ next:
 	if (cur < total)
 		goto next;
 
+out:
 	return err;
 }
 
@@ -4471,16 +4485,22 @@ static int find_inode_ref(struct btrfs_root *root, struct btrfs_key *key,
 		if (index != (u64)-1 && index != ref_index)
 			goto next_ref;
 
-		if (ref_namelen <= BTRFS_NAME_LEN) {
-			len = ref_namelen;
-		} else {
-			len = BTRFS_NAME_LEN;
+		if (cur + sizeof(*ref) + ref_namelen > total ||
+		    ref_namelen > BTRFS_NAME_LEN) {
 			warning("root %llu INODE %s[%llu %llu] name too long",
 				root->objectid,
 				key->type == BTRFS_INODE_REF_KEY ?
 					"REF" : "EXTREF",
 				key->objectid, key->offset);
+
+			if (cur + sizeof(*ref) > total)
+				break;
+			len = min_t(u32, total - cur - sizeof(*ref),
+				    BTRFS_NAME_LEN);
+		} else {
+			len = ref_namelen;
 		}
+
 		read_extent_buffer(node, ref_namebuf, (unsigned long)(ref + 1),
 				   len);
 
