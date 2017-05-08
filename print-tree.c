@@ -956,13 +956,35 @@ static void print_dev_stats(struct extent_buffer *eb,
 	}
 }
 
+/* Caller must ensure sizeof(*ret) >= 14 "WRITTEN|RELOC" */
+static void header_flags_to_str(u64 flags, char *ret)
+{
+	int empty = 1;
+
+	if (flags & BTRFS_HEADER_FLAG_WRITTEN) {
+		empty = 0;
+		strcpy(ret, "WRITTEN");
+	}
+	if (flags & BTRFS_HEADER_FLAG_RELOC) {
+		if (!empty)
+			strcat(ret, "|");
+		strcat(ret, "RELOC");
+	}
+}
+
 void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *eb)
 {
 	struct btrfs_item *item;
 	struct btrfs_disk_key disk_key;
+	char flags_str[128];
 	u32 i;
 	u32 nr;
+	u64 flags;
+	u8 backref_rev;
 
+	flags = btrfs_header_flags(eb) & ~BTRFS_BACKREF_REV_MASK;
+	backref_rev = btrfs_header_flags(eb) >> BTRFS_BACKREF_REV_SHIFT;
+	header_flags_to_str(flags, flags_str);
 	nr = btrfs_header_nritems(eb);
 
 	printf("leaf %llu items %d free space %d generation %llu owner %llu\n",
@@ -970,6 +992,8 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *eb)
 		btrfs_leaf_free_space(root, eb),
 		(unsigned long long)btrfs_header_generation(eb),
 		(unsigned long long)btrfs_header_owner(eb));
+	printf("leaf %llu flags 0x%llx(%s) backref revision %d\n",
+		btrfs_header_bytenr(eb), flags, flags_str, backref_rev);
 	print_uuids(eb);
 	fflush(stdout);
 
