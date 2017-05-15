@@ -1490,7 +1490,8 @@ static int insert_ptr(struct btrfs_trans_handle *trans, struct btrfs_root
 		BUG();
 	if (nritems == BTRFS_NODEPTRS_PER_BLOCK(root))
 		BUG();
-	if (slot != nritems) {
+	if (slot < nritems) {
+		/* shift the items */
 		memmove_extent_buffer(lower,
 			      btrfs_node_key_ptr_offset(slot + 1),
 			      btrfs_node_key_ptr_offset(slot),
@@ -2254,7 +2255,7 @@ split:
 
 	nritems = btrfs_header_nritems(leaf);
 
-	if (slot != nritems) {
+	if (slot < nritems) {
 		/* shift the items */
 		memmove_extent_buffer(leaf, btrfs_item_nr_offset(slot + 1),
 			      btrfs_item_nr_offset(slot),
@@ -2505,7 +2506,7 @@ int btrfs_insert_empty_items(struct btrfs_trans_handle *trans,
 	slot = path->slots[0];
 	BUG_ON(slot < 0);
 
-	if (slot != nritems) {
+	if (slot < nritems) {
 		unsigned int old_data = btrfs_item_end_nr(leaf, slot);
 
 		if (old_data < data_end) {
@@ -2608,7 +2609,8 @@ int btrfs_del_ptr(struct btrfs_root *root, struct btrfs_path *path,
 	int ret = 0;
 
 	nritems = btrfs_header_nritems(parent);
-	if (slot != nritems -1) {
+	if (slot < nritems - 1) {
+		/* shift the items */
 		memmove_extent_buffer(parent,
 			      btrfs_node_key_ptr_offset(slot),
 			      btrfs_node_key_ptr_offset(slot + 1),
