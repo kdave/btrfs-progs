@@ -122,4 +122,6 @@ run_check $FSSUM_PROG -r "$srcdir/foo.1.fssum" "$TEST_MNT/foo.1"
 run_check $FSSUM_PROG -r "$srcdir/bar.0.fssum" "$TEST_MNT/bar.0"
 run_check $FSSUM_PROG -r "$srcdir/baz.0.fssum" "$TEST_MNT/baz.0"
 
+run_check_umount_test_dev
+
 rm -rf -- "$srcdir"
