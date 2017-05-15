@@ -1685,6 +1685,7 @@ int btrfs_check_chunk_valid(struct btrfs_root *root,
 	u16 num_stripes;
 	u16 sub_stripes;
 	u64 type;
+	u32 chunk_ondisk_size;
 
 	length = btrfs_chunk_length(leaf, chunk);
 	stripe_len = btrfs_chunk_stripe_len(leaf, chunk);
@@ -1724,16 +1725,16 @@ int btrfs_check_chunk_valid(struct btrfs_root *root,
 			BTRFS_BLOCK_GROUP_PROFILE_MASK) & type);
 		return -EIO;
 	}
+
+	chunk_ondisk_size = btrfs_chunk_item_size(num_stripes);
 	/*
 	 * Btrfs_chunk contains at least one stripe, and for sys_chunk
 	 * it can't exceed the system chunk array size
 	 * For normal chunk, it should match its chunk item size.
 	 */
 	if (num_stripes < 1 ||
-	    (slot == -1 && sizeof(struct btrfs_stripe) * num_stripes >
-	     BTRFS_SYSTEM_CHUNK_ARRAY_SIZE) ||
-	    (slot >= 0 && sizeof(struct btrfs_stripe) * (num_stripes - 1) >
-	     btrfs_item_size_nr(leaf, slot))) {
+	    (slot == -1 && chunk_ondisk_size > BTRFS_SYSTEM_CHUNK_ARRAY_SIZE) ||
+	    (slot >= 0 && chunk_ondisk_size > btrfs_item_size_nr(leaf, slot))) {
 		error("invalid num_stripes: %u", num_stripes);
 		return -EIO;
 	}
