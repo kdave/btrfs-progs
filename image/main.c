@@ -1500,6 +1500,7 @@ static int update_super(struct mdrestore_struct *mdres, u8 *buffer)
 	flags |= BTRFS_SUPER_FLAG_METADUMP_V2;
 	btrfs_set_super_flags(super, flags);
 	btrfs_set_super_sys_array_size(super, new_array_size);
+	btrfs_set_super_num_devices(super, 1);
 	csum_block(buffer, BTRFS_SUPER_INFO_SIZE);
 
 	return 0;
