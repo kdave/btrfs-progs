@@ -1147,6 +1147,10 @@ struct btrfs_fs_info {
 	struct cache_tree *fsck_extent_cache;
 	struct cache_tree *corrupt_blocks;
 
+	/* Cached block sizes */
+	u32 nodesize;
+	u32 sectorsize;
+	u32 stripesize;
 };
 
 /*

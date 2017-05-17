@@ -1327,6 +1327,9 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 	}
 
 	memcpy(fs_info->fsid, &disk_super->fsid, BTRFS_FSID_SIZE);
+	fs_info->sectorsize = btrfs_super_sectorsize(disk_super);
+	fs_info->nodesize = btrfs_super_nodesize(disk_super);
+	fs_info->stripesize = btrfs_super_stripesize(disk_super);
 
 	ret = btrfs_check_fs_compatibility(fs_info->super_copy, flags);
 	if (ret)
