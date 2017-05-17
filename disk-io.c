@@ -476,7 +476,7 @@ int write_tree_block(struct btrfs_trans_handle *trans,
 	return write_and_map_eb(root, eb);
 }
 
-void btrfs_setup_root(u32 nodesize, u32 leafsize, u32 sectorsize,
+void btrfs_setup_root(u32 nodesize, u32 sectorsize,
 			u32 stripesize, struct btrfs_root *root,
 			struct btrfs_fs_info *fs_info, u64 objectid)
 {
@@ -484,7 +484,6 @@ void btrfs_setup_root(u32 nodesize, u32 leafsize, u32 sectorsize,
 	root->commit_root = NULL;
 	root->sectorsize = sectorsize;
 	root->nodesize = nodesize;
-	root->leafsize = leafsize;
 	root->stripesize = stripesize;
 	root->ref_cows = 0;
 	root->track_dirty = 0;
@@ -631,9 +630,8 @@ static int find_and_setup_root(struct btrfs_root *tree_root,
 	u32 blocksize;
 	u64 generation;
 
-	btrfs_setup_root(tree_root->nodesize, tree_root->leafsize,
-		     tree_root->sectorsize, tree_root->stripesize,
-		     root, fs_info, objectid);
+	btrfs_setup_root(tree_root->nodesize, tree_root->sectorsize,
+			 tree_root->stripesize, root, fs_info, objectid);
 	ret = btrfs_find_last_root(tree_root, objectid,
 				   &root->root_item, &root->root_key);
 	if (ret)
@@ -667,9 +665,9 @@ static int find_and_setup_log_root(struct btrfs_root *tree_root,
 
 	blocksize = tree_root->nodesize;
 
-	btrfs_setup_root(tree_root->nodesize, tree_root->leafsize,
-		     tree_root->sectorsize, tree_root->stripesize,
-		     log_root, fs_info, BTRFS_TREE_LOG_OBJECTID);
+	btrfs_setup_root(tree_root->nodesize, tree_root->sectorsize,
+			 tree_root->stripesize, log_root, fs_info,
+			 BTRFS_TREE_LOG_OBJECTID);
 
 	log_root->node = read_tree_block(tree_root, blocknr,
 				     blocksize,
@@ -731,9 +729,9 @@ struct btrfs_root *btrfs_read_fs_root_no_cache(struct btrfs_fs_info *fs_info,
 		goto insert;
 	}
 
-	btrfs_setup_root(tree_root->nodesize, tree_root->leafsize,
-		     tree_root->sectorsize, tree_root->stripesize,
-		     root, fs_info, location->objectid);
+	btrfs_setup_root(tree_root->nodesize, tree_root->sectorsize,
+			 tree_root->stripesize, root, fs_info,
+			 location->objectid);
 
 	path = btrfs_alloc_path();
 	if (!path) {
@@ -1000,19 +998,17 @@ int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info, u64 root_tree_bytenr,
 	struct btrfs_key key;
 	u32 sectorsize;
 	u32 nodesize;
-	u32 leafsize;
 	u32 stripesize;
 	u64 generation;
 	u32 blocksize;
 	int ret;
 
 	nodesize = btrfs_super_nodesize(sb);
-	leafsize = btrfs_super_leafsize(sb);
 	sectorsize = btrfs_super_sectorsize(sb);
 	stripesize = btrfs_super_stripesize(sb);
 
 	root = fs_info->tree_root;
-	btrfs_setup_root(nodesize, leafsize, sectorsize, stripesize,
+	btrfs_setup_root(nodesize, sectorsize, stripesize,
 		     root, fs_info, BTRFS_ROOT_TREE_OBJECTID);
 	blocksize = root->nodesize;
 	generation = btrfs_super_generation(sb);
@@ -1194,18 +1190,16 @@ int btrfs_setup_chunk_tree_and_device_map(struct btrfs_fs_info *fs_info,
 	struct btrfs_super_block *sb = fs_info->super_copy;
 	u32 sectorsize;
 	u32 nodesize;
-	u32 leafsize;
 	u32 blocksize;
 	u32 stripesize;
 	u64 generation;
 	int ret;
 
 	nodesize = btrfs_super_nodesize(sb);
-	leafsize = btrfs_super_leafsize(sb);
 	sectorsize = btrfs_super_sectorsize(sb);
 	stripesize = btrfs_super_stripesize(sb);
 
-	btrfs_setup_root(nodesize, leafsize, sectorsize, stripesize,
+	btrfs_setup_root(nodesize, sectorsize, stripesize,
 		     fs_info->chunk_root, fs_info, BTRFS_CHUNK_TREE_OBJECTID);
 
 	ret = btrfs_read_sys_array(fs_info->chunk_root);

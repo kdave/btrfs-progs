@@ -440,7 +440,7 @@ struct btrfs_super_block {
 	__le32 sectorsize;
 	__le32 nodesize;
 	/* Unused and must be equal to nodesize */
-	__le32 leafsize;
+	__le32 __unused_leafsize;
 	__le32 stripesize;
 	__le32 sys_chunk_array_size;
 	__le64 chunk_root_generation;
@@ -1167,9 +1167,6 @@ struct btrfs_root {
 
 	/* node allocations are done in nodesize units */
 	u32 nodesize;
-
-	/* Unused, equal to nodesize */
-	u32 leafsize;
 
 	/* leaf allocations are done in nodesize units */
 	u32 stripesize;
@@ -2159,8 +2156,6 @@ BTRFS_SETGET_STACK_FUNCS(super_sectorsize, struct btrfs_super_block,
 			 sectorsize, 32);
 BTRFS_SETGET_STACK_FUNCS(super_nodesize, struct btrfs_super_block,
 			 nodesize, 32);
-BTRFS_SETGET_STACK_FUNCS(super_leafsize, struct btrfs_super_block,
-			 leafsize, 32);
 BTRFS_SETGET_STACK_FUNCS(super_stripesize, struct btrfs_super_block,
 			 stripesize, 32);
 BTRFS_SETGET_STACK_FUNCS(super_root_dir, struct btrfs_super_block,
@@ -2408,17 +2403,6 @@ static inline u32 btrfs_file_extent_inline_len(struct extent_buffer *eb,
 
 	/* otherwise use the ram bytes field */
 	return btrfs_file_extent_ram_bytes(eb, fi);
-}
-
-/*
- * NOTE: Backward compatibility, do not use.
- * Replacement: read nodesize directly
- */
-__attribute__((deprecated))
-static inline u32 btrfs_level_size(struct btrfs_root *root, int level) {
-	if (level == 0)
-		return root->leafsize;
-	return root->nodesize;
 }
 
 #define btrfs_fs_incompat(fs_info, opt) \
