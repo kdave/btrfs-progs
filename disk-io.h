@@ -133,9 +133,8 @@ void readahead_tree_block(struct btrfs_root *root, u64 bytenr, u32 blocksize,
 struct extent_buffer* btrfs_find_create_tree_block(
 		struct btrfs_fs_info *fs_info, u64 bytenr, u32 blocksize);
 
-void btrfs_setup_root(u32 nodesize, u32 sectorsize,
-                        u32 stripesize, struct btrfs_root *root,
-                        struct btrfs_fs_info *fs_info, u64 objectid);
+void btrfs_setup_root(struct btrfs_root *root, struct btrfs_fs_info *fs_info,
+		      u64 objectid);
 int clean_tree_block(struct btrfs_trans_handle *trans,
 		     struct btrfs_root *root, struct extent_buffer *buf);
 
