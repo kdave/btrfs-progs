@@ -1448,9 +1448,6 @@ open_ctree_with_broken_chunk(struct recover_control *rc)
 	struct btrfs_fs_info *fs_info;
 	struct btrfs_super_block *disk_super;
 	struct extent_buffer *eb;
-	u32 sectorsize;
-	u32 nodesize;
-	u32 stripesize;
 	int ret;
 
 	fs_info = btrfs_new_fs_info(1, BTRFS_SUPER_INFO_OFFSET);
@@ -1483,12 +1480,8 @@ open_ctree_with_broken_chunk(struct recover_control *rc)
 	if (ret)
 		goto out_devices;
 
-	nodesize = btrfs_super_nodesize(disk_super);
-	sectorsize = btrfs_super_sectorsize(disk_super);
-	stripesize = btrfs_super_stripesize(disk_super);
-
-	btrfs_setup_root(nodesize, sectorsize, stripesize,
-		     fs_info->chunk_root, fs_info, BTRFS_CHUNK_TREE_OBJECTID);
+	btrfs_setup_root(fs_info->chunk_root, fs_info,
+			 BTRFS_CHUNK_TREE_OBJECTID);
 
 	ret = build_device_maps_by_chunk_records(rc, fs_info->chunk_root);
 	if (ret)
