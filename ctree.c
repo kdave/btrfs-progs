@@ -650,7 +650,7 @@ struct extent_buffer *read_node_slot(struct btrfs_root *root,
 		return NULL;
 
 	return read_tree_block(root, btrfs_node_blockptr(parent, slot),
-		       root->nodesize,
+		       root->fs_info->nodesize,
 		       btrfs_node_ptr_generation(parent, slot));
 }
 
@@ -987,7 +987,7 @@ void reada_for_search(struct btrfs_root *root, struct btrfs_path *path,
 
 	node = path->nodes[level];
 	search = btrfs_node_blockptr(node, slot);
-	blocksize = root->nodesize;
+	blocksize = root->fs_info->nodesize;
 	eb = btrfs_find_tree_block(root, search, blocksize);
 	if (eb) {
 		free_extent_buffer(eb);
@@ -1420,7 +1420,7 @@ static int noinline insert_new_root(struct btrfs_trans_handle *trans,
 	else
 		btrfs_node_key(lower, &lower_key, 0);
 
-	c = btrfs_alloc_free_block(trans, root, root->nodesize,
+	c = btrfs_alloc_free_block(trans, root, root->fs_info->nodesize,
 				   root->root_key.objectid, &lower_key, 
 				   level, root->node->start, 0);
 
@@ -1543,7 +1543,7 @@ static int split_node(struct btrfs_trans_handle *trans, struct btrfs_root
 	mid = (c_nritems + 1) / 2;
 	btrfs_node_key(c, &disk_key, mid);
 
-	split = btrfs_alloc_free_block(trans, root, root->nodesize,
+	split = btrfs_alloc_free_block(trans, root, root->fs_info->nodesize,
 					root->root_key.objectid,
 					&disk_key, level, c->start, 0);
 	if (IS_ERR(split))
@@ -2110,7 +2110,7 @@ again:
 	else
 		btrfs_item_key(l, &disk_key, mid);
 
-	right = btrfs_alloc_free_block(trans, root, root->nodesize,
+	right = btrfs_alloc_free_block(trans, root, root->fs_info->nodesize,
 					root->root_key.objectid,
 					&disk_key, 0, l->start, 0);
 	if (IS_ERR(right)) {
