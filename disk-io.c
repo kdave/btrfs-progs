@@ -481,9 +481,6 @@ void btrfs_setup_root(struct btrfs_root *root, struct btrfs_fs_info *fs_info,
 {
 	root->node = NULL;
 	root->commit_root = NULL;
-	root->sectorsize = fs_info->sectorsize;
-	root->nodesize = fs_info->nodesize;
-	root->stripesize = fs_info->stripesize;
 	root->ref_cows = 0;
 	root->track_dirty = 0;
 
