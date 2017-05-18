@@ -82,7 +82,7 @@ again:
 	}
 	logical = key.objectid;
 	if (key.type == BTRFS_METADATA_ITEM_KEY)
-		len = fs_info->tree_root->nodesize;
+		len = fs_info->nodesize;
 	else
 		len = key.offset;
 
@@ -286,7 +286,7 @@ int main(int argc, char **argv)
 	}
 
 	if (bytes == 0)
-		bytes = root->nodesize;
+		bytes = root->fs_info->nodesize;
 	cur_logical = logical;
 	cur_len = bytes;
 
