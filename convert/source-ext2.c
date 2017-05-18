@@ -289,7 +289,7 @@ static int ext2_create_file_extents(struct btrfs_trans_handle *trans,
 	char *buffer = NULL;
 	errcode_t err;
 	u32 last_block;
-	u32 sectorsize = root->sectorsize;
+	u32 sectorsize = root->fs_info->sectorsize;
 	u64 inode_size = btrfs_stack_inode_size(btrfs_inode);
 	struct blk_iterate_data data;
 
