@@ -378,7 +378,7 @@ int btrfs_make_root_dir(struct btrfs_trans_handle *trans,
 	btrfs_set_stack_inode_generation(&inode_item, trans->transid);
 	btrfs_set_stack_inode_size(&inode_item, 0);
 	btrfs_set_stack_inode_nlink(&inode_item, 1);
-	btrfs_set_stack_inode_nbytes(&inode_item, root->nodesize);
+	btrfs_set_stack_inode_nbytes(&inode_item, root->fs_info->nodesize);
 	btrfs_set_stack_inode_mode(&inode_item, S_IFDIR | 0755);
 	btrfs_set_stack_timespec_sec(&inode_item.atime, now);
 	btrfs_set_stack_timespec_nsec(&inode_item.atime, 0);
