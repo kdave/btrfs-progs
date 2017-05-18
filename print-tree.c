@@ -1297,7 +1297,7 @@ void btrfs_print_tree(struct btrfs_root *root, struct extent_buffer *eb, int fol
 		(unsigned long long)btrfs_header_owner(eb));
 	print_uuids(eb);
 	fflush(stdout);
-	size = root->nodesize;
+	size = root->fs_info->nodesize;
 	for (i = 0; i < nr; i++) {
 		u64 blocknr = btrfs_node_blockptr(eb, i);
 		btrfs_node_key(eb, &disk_key, i);
