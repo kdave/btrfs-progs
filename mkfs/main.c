@@ -451,7 +451,7 @@ static int fill_inode_item(struct btrfs_trans_handle *trans,
 			   struct btrfs_inode_item *dst, struct stat *src)
 {
 	u64 blocks = 0;
-	u64 sectorsize = root->sectorsize;
+	u64 sectorsize = root->fs_info->sectorsize;
 
 	/*
 	 * btrfs_inode_item has some reserved fields
@@ -652,7 +652,7 @@ static int add_file_items(struct btrfs_trans_handle *trans,
 	u64 bytes_read = 0;
 	struct btrfs_key key;
 	int blocks;
-	u32 sectorsize = root->sectorsize;
+	u32 sectorsize = root->fs_info->sectorsize;
 	u64 first_block = 0;
 	u64 file_pos = 0;
 	u64 cur_bytes;
