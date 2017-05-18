@@ -306,7 +306,7 @@ int read_whole_eb(struct btrfs_fs_info *info, struct extent_buffer *eb, int mirr
 	return 0;
 }
 
-struct extent_buffer* read_tree_block_fs_info(
+struct extent_buffer* read_tree_block(
 		struct btrfs_fs_info *fs_info, u64 bytenr, u32 blocksize,
 		u64 parent_transid)
 {
@@ -634,8 +634,9 @@ static int find_and_setup_root(struct btrfs_root *tree_root,
 
 	blocksize = fs_info->nodesize;
 	generation = btrfs_root_generation(&root->root_item);
-	root->node = read_tree_block(root, btrfs_root_bytenr(&root->root_item),
-				     blocksize, generation);
+	root->node = read_tree_block(fs_info,
+			btrfs_root_bytenr(&root->root_item),
+			blocksize, generation);
 	if (!extent_buffer_uptodate(root->node))
 		return -EIO;
 
@@ -663,7 +664,7 @@ static int find_and_setup_log_root(struct btrfs_root *tree_root,
 	btrfs_setup_root(log_root, fs_info,
 			 BTRFS_TREE_LOG_OBJECTID);
 
-	log_root->node = read_tree_block(tree_root, blocknr,
+	log_root->node = read_tree_block(fs_info, blocknr,
 				     blocksize,
 				     btrfs_super_generation(disk_super) + 1);
 
@@ -752,8 +753,9 @@ out:
 	}
 	generation = btrfs_root_generation(&root->root_item);
 	blocksize = fs_info->nodesize;
-	root->node = read_tree_block(root, btrfs_root_bytenr(&root->root_item),
-				     blocksize, generation);
+	root->node = read_tree_block(fs_info,
+			btrfs_root_bytenr(&root->root_item),
+			blocksize, generation);
 	if (!extent_buffer_uptodate(root->node)) {
 		free(root);
 		return ERR_PTR(-EIO);
@@ -1012,7 +1014,7 @@ int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info, u64 root_tree_bytenr,
 		generation = btrfs_backup_tree_root_gen(backup);
 	}
 
-	root->node = read_tree_block(root, root_tree_bytenr, blocksize,
+	root->node = read_tree_block(fs_info, root_tree_bytenr, blocksize,
 				     generation);
 	if (!extent_buffer_uptodate(root->node)) {
 		fprintf(stderr, "Couldn't read tree root\n");
@@ -1197,7 +1199,7 @@ int btrfs_setup_chunk_tree_and_device_map(struct btrfs_fs_info *fs_info,
 	else
 		generation = 0;
 
-	fs_info->chunk_root->node = read_tree_block(fs_info->chunk_root,
+	fs_info->chunk_root->node = read_tree_block(fs_info,
 						    chunk_root_bytenr,
 						    fs_info->nodesize,
 						    generation);
