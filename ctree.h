@@ -1166,15 +1166,6 @@ struct btrfs_root {
 	u64 objectid;
 	u64 last_trans;
 
-	/* data allocations are done in sectorsize units */
-	u32 sectorsize;
-
-	/* node allocations are done in nodesize units */
-	u32 nodesize;
-
-	/* leaf allocations are done in nodesize units */
-	u32 stripesize;
-
 	int ref_cows;
 	int track_dirty;
 
