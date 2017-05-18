@@ -1,0 +1,19 @@
+C style
+-------
+
+The kernel CodingStyle where applicable
+
+https://www.kernel.org/doc/html/latest/process/coding-style.html
+
+Error messages
+--------------
+
+* formatting:
+  * use `error("string ...")`
+  * no trailing newline
+  * small letter starts the first word
+  * no string splitting
+  * move string to new line if it's too long, un-indent to the left if it
+    exceeds 80 chars
+* contents:
+  * be descriptive

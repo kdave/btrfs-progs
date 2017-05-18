@@ -1,0 +1,39 @@
+Manual pages structure:
+
+- add references to all external commands mentioned anywhere in the text to the
+  'SEE ALSO' section
+  - also add related, not explicitly mentioned
+- the heading levels are validated
+  - mandatory, manual page ===
+  - mandatory, sections ---
+  - optional, sub-sections ~~~
+- command-specific examples are mostly free of restrictions but should be
+  readable in all output formats (manual page, html)
+
+- subcommands are in alphabetical order
+
+- long command output or shell examples: verbatim output
+  - a new paragraph, 2 spaces at the beginning of the line
+
+
+Quotation in subcommands:
+
+- exact syntax: monotype `usage=0`
+- reference to arguments etc: 'italics'
+- command reference: bold *btrfs fi show*
+- section references: italics 'EXAMPLES'
+
+- argument name in option desciption: caps in angle brackets <NAME>
+  - reference in help text: caps NAME
+    also possible: caps italics 'NAME'
+
+- command short description:
+  - command name: bold *command*
+  - optional unspecified: brackets [options]
+  - mandatory argument: angle brackets <path>
+  - optional parameter with argument: [-p <path>]
+
+
+Refrences:
+- full asciidoc syntax: http://asciidoc.org/userguide.html
+- cheatsheet: http://powerman.name/doc/asciidoc
