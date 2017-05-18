@@ -169,7 +169,7 @@ static int corrupt_keys_in_block(struct btrfs_root *root, u64 bytenr)
 {
 	struct extent_buffer *eb;
 
-	eb = read_tree_block(root, bytenr, root->nodesize, 0);
+	eb = read_tree_block(root, bytenr, root->fs_info->nodesize, 0);
 	if (!extent_buffer_uptodate(eb))
 		return -EIO;;
 
@@ -297,7 +297,7 @@ static void btrfs_corrupt_extent_tree(struct btrfs_trans_handle *trans,
 		struct extent_buffer *next;
 
 		next = read_tree_block(root, btrfs_node_blockptr(eb, i),
-				       root->nodesize,
+				       root->fs_info->nodesize,
 				       btrfs_node_ptr_generation(eb, i));
 		if (!extent_buffer_uptodate(next))
 			continue;
@@ -764,7 +764,7 @@ static int corrupt_metadata_block(struct btrfs_root *root, u64 block,
 		return -EINVAL;
 	}
 
-	eb = read_tree_block(root, block, root->nodesize, 0);
+	eb = read_tree_block(root, block, root->fs_info->nodesize, 0);
 	if (!extent_buffer_uptodate(eb)) {
 		fprintf(stderr, "Couldn't read in tree block %s\n", field);
 		return -EINVAL;
@@ -1352,10 +1352,9 @@ int main(int argc, char **argv)
 		print_usage(1);
 
 	if (bytes == 0)
-		bytes = root->sectorsize;
+		bytes = root->fs_info->sectorsize;
 
-	bytes = (bytes + root->sectorsize - 1) / root->sectorsize;
-	bytes *= root->sectorsize;
+	bytes = round_up(bytes, root->fs_info->sectorsize);
 
 	while (bytes > 0) {
 		if (corrupt_block_keys) {
@@ -1364,7 +1363,7 @@ int main(int argc, char **argv)
 			struct extent_buffer *eb;
 
 			eb = btrfs_find_create_tree_block(root->fs_info,
-					logical, root->sectorsize);
+					logical, root->fs_info->sectorsize);
 			if (!eb) {
 				error(
 		"not enough memory to allocate extent buffer for bytenr %llu",
@@ -1373,12 +1372,12 @@ int main(int argc, char **argv)
 				goto out_close;
 			}
 
-			debug_corrupt_block(eb, root, logical, root->sectorsize,
-					copy);
+			debug_corrupt_block(eb, root, logical,
+					    root->fs_info->sectorsize, copy);
 			free_extent_buffer(eb);
 		}
-		logical += root->sectorsize;
-		bytes -= root->sectorsize;
+		logical += root->fs_info->sectorsize;
+		bytes -= root->fs_info->sectorsize;
 	}
 	return ret;
 out_close:
