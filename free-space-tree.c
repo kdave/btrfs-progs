@@ -205,7 +205,7 @@ static int load_free_space_bitmaps(struct btrfs_fs_info *fs_info,
 		offset = key.objectid;
 		while (offset < key.objectid + key.offset) {
 			bit = free_space_test_bit(block_group, path, offset,
-						  root->sectorsize);
+						  fs_info->sectorsize);
 			if (prev_bit == 0 && bit == 1) {
 				extent_start = offset;
 			} else if (prev_bit == 1 && bit == 0) {
@@ -213,7 +213,7 @@ static int load_free_space_bitmaps(struct btrfs_fs_info *fs_info,
 				extent_count++;
 			}
 			prev_bit = bit;
-			offset += root->sectorsize;
+			offset += fs_info->sectorsize;
 		}
 	}
 
