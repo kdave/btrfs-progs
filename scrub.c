@@ -869,3 +869,47 @@ static int recover_from_parities(struct btrfs_fs_info *fs_info,
 	free(ptrs);
 	return ret;
 }
+
+/*
+ * Helper to write a full stripe to disk
+ * P/Q will be re-calculated.
+ */
+static int write_full_stripe(struct scrub_full_stripe *fstripe)
+{
+	void **ptrs;
+	int nr_stripes = fstripe->nr_stripes;
+	int stripe_len = BTRFS_STRIPE_LEN;
+	int i;
+	int ret = 0;
+
+	ptrs = malloc(sizeof(void *) * fstripe->nr_stripes);
+	if (!ptrs)
+		return -ENOMEM;
+
+	for (i = 0; i < fstripe->nr_stripes; i++)
+		ptrs[i] = fstripe->stripes[i].data;
+
+	if (fstripe->bg_type & BTRFS_BLOCK_GROUP_RAID6) {
+		raid6_gen_syndrome(nr_stripes, stripe_len, ptrs);
+	} else {
+		ret = raid5_gen_result(nr_stripes, stripe_len, nr_stripes - 1,
+					ptrs);
+		if (ret < 0)
+			goto out;
+	}
+
+	for (i = 0; i < fstripe->nr_stripes; i++) {
+		struct scrub_stripe *stripe = &fstripe->stripes[i];
+
+		ret = pwrite(stripe->fd, stripe->data, fstripe->stripe_len,
+			     stripe->physical);
+		if (ret != fstripe->stripe_len) {
+			ret = -EIO;
+			goto out;
+		}
+	}
+out:
+	free(ptrs);
+	return ret;
+
+}
