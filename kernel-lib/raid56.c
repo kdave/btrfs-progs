@@ -28,6 +28,7 @@
 #include "disk-io.h"
 #include "volumes.h"
 #include "utils.h"
+#include "kernel-lib/raid56.h"
 
 /*
  * This is the C data type to use
@@ -169,4 +170,72 @@ int raid5_gen_result(int nr_devs, size_t stripe_len, int dest, void **data)
 		xor_range(buf, data[i], stripe_len);
 	}
 	return 0;
+}
+
+/*
+ * Raid 6 recovery code copied from kernel lib/raid6/recov.c.
+ * With modifications:
+ * - rename from raid6_2data_recov_intx1
+ * - kfree/free modification for btrfs-progs
+ */
+int raid6_recov_data2(int nr_devs, size_t stripe_len, int dest1, int dest2,
+		      void **data)
+{
+	u8 *p, *q, *dp, *dq;
+	u8 px, qx, db;
+	const u8 *pbmul;	/* P multiplier table for B data */
+	const u8 *qmul;		/* Q multiplier table (for both) */
+	char *zero_mem1, *zero_mem2;
+	int ret = 0;
+
+	/* Early check */
+	if (dest1 < 0 || dest1 >= nr_devs - 2 ||
+	    dest2 < 0 || dest2 >= nr_devs - 2 || dest1 >= dest2)
+		return -EINVAL;
+
+	zero_mem1 = calloc(1, stripe_len);
+	zero_mem2 = calloc(1, stripe_len);
+	if (!zero_mem1 || !zero_mem2) {
+		free(zero_mem1);
+		free(zero_mem2);
+		return -ENOMEM;
+	}
+
+	p = (u8 *)data[nr_devs - 2];
+	q = (u8 *)data[nr_devs - 1];
+
+	/* Compute syndrome with zero for the missing data pages
+	   Use the dead data pages as temporary storage for
+	   delta p and delta q */
+	dp = (u8 *)data[dest1];
+	data[dest1] = (void *)zero_mem1;
+	data[nr_devs - 2] = dp;
+	dq = (u8 *)data[dest2];
+	data[dest2] = (void *)zero_mem2;
+	data[nr_devs - 1] = dq;
+
+	raid6_gen_syndrome(nr_devs, stripe_len, data);
+
+	/* Restore pointer table */
+	data[dest1]   = dp;
+	data[dest2]   = dq;
+	data[nr_devs - 2] = p;
+	data[nr_devs - 1] = q;
+
+	/* Now, pick the proper data tables */
+	pbmul = raid6_gfmul[raid6_gfexi[dest2 - dest1]];
+	qmul  = raid6_gfmul[raid6_gfinv[raid6_gfexp[dest1]^raid6_gfexp[dest2]]];
+
+	/* Now do it... */
+	while ( stripe_len-- ) {
+		px    = *p ^ *dp;
+		qx    = qmul[*q ^ *dq];
+		*dq++ = db = pbmul[px] ^ qx; /* Reconstructed B */
+		*dp++ = db ^ px; /* Reconstructed A */
+		p++; q++;
+	}
+
+	free(zero_mem1);
+	free(zero_mem2);
+	return ret;
 }
