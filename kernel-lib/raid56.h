@@ -25,4 +25,16 @@
 void raid6_gen_syndrome(int disks, size_t bytes, void **ptrs);
 int raid5_gen_result(int nr_devs, size_t stripe_len, int dest, void **data);
 
+/*
+ * Headers synchronized from kernel include/linux/raid/pq.h
+ * No modification at all.
+ *
+ * Galois field tables.
+ */
+extern const u8 raid6_gfmul[256][256] __attribute__((aligned(256)));
+extern const u8 raid6_vgfmul[256][32] __attribute__((aligned(256)));
+extern const u8 raid6_gfexp[256]      __attribute__((aligned(256)));
+extern const u8 raid6_gfinv[256]      __attribute__((aligned(256)));
+extern const u8 raid6_gfexi[256]      __attribute__((aligned(256)));
+
 #endif
