@@ -239,3 +239,44 @@ int raid6_recov_data2(int nr_devs, size_t stripe_len, int dest1, int dest2,
 	free(zero_mem2);
 	return ret;
 }
+
+/*
+ * Raid 6 recover code copied from kernel lib/raid6/recov.c
+ * - rename from raid6_datap_recov_intx1()
+ * - parameter changed from faila to dest1
+ */
+int raid6_recov_datap(int nr_devs, size_t stripe_len, int dest1, void **data)
+{
+	u8 *p, *q, *dq;
+	const u8 *qmul;		/* Q multiplier table */
+	char *zero_mem;
+
+	p = (u8 *)data[nr_devs - 2];
+	q = (u8 *)data[nr_devs - 1];
+
+	zero_mem = calloc(1, stripe_len);
+	if (!zero_mem)
+		return -ENOMEM;
+
+	/* Compute syndrome with zero for the missing data page
+	   Use the dead data page as temporary storage for delta q */
+	dq = (u8 *)data[dest1];
+	data[dest1] = (void *)zero_mem;
+	data[nr_devs - 1] = dq;
+
+	raid6_gen_syndrome(nr_devs, stripe_len, data);
+
+	/* Restore pointer table */
+	data[dest1]   = dq;
+	data[nr_devs - 1] = q;
+
+	/* Now, pick the proper data tables */
+	qmul  = raid6_gfmul[raid6_gfinv[raid6_gfexp[dest1]]];
+
+	/* Now do it... */
+	while ( stripe_len-- ) {
+		*p++ ^= *dq = qmul[*q ^ *dq];
+		q++; dq++;
+	}
+	return 0;
+}
