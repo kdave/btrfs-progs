@@ -28,6 +28,7 @@
 #include "print-tree.h"
 #include "volumes.h"
 #include "utils.h"
+#include "kernel-lib/raid56.h"
 
 struct stripe {
 	struct btrfs_device *dev;
