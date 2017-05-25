@@ -44,4 +44,15 @@ int raid6_recov_data2(int nr_devs, size_t stripe_len, int dest1, int dest2,
 /* Recover data and P */
 int raid6_recov_datap(int nr_devs, size_t stripe_len, int dest1, void **data);
 
+/*
+ * Recover raid56 data
+ * @dest1/2 can be -1 to indicate correct data
+ *
+ * Return >0 for unrecoverable case.
+ * Return 0 for recoverable case, And recovered data will be stored into @data
+ * Return <0 for fatal error
+ */
+int raid56_recov(int nr_devs, size_t stripe_len, u64 profile, int dest1,
+		 int dest2, void **data);
+
 #endif
