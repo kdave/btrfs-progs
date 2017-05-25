@@ -95,7 +95,7 @@ objects = ctree.o disk-io.o kernel-lib/radix-tree.o extent-tree.o print-tree.o \
 	  qgroup.o raid56.o free-space-cache.o kernel-lib/list_sort.o props.o \
 	  kernel-shared/ulist.o qgroup-verify.o backref.o string-table.o task-utils.o \
 	  inode.o file.o find-root.o free-space-tree.o help.o send-dump.o \
-	  fsfeatures.o
+	  fsfeatures.o kernel-lib/tables.o
 cmds_objects = cmds-subvolume.o cmds-filesystem.o cmds-device.o cmds-scrub.o \
 	       cmds-inspect.o cmds-balance.o cmds-send.o cmds-receive.o \
 	       cmds-quota.o cmds-qgroup.o cmds-replace.o cmds-check.o \
@@ -314,6 +314,14 @@ version.h: version.sh version.h.in configure.ac
 	@echo "    [SH]     $@"
 	$(Q)bash ./config.status --silent $@
 
+mktables: kernel-lib/mktables.c
+	@echo "    [CC]     $@"
+	$(Q)$(CC) $(CFLAGS) $< -o $@
+
+kernel-lib/tables.c: mktables
+	@echo "    [TABLE]  $@"
+	$(Q)./mktables > $@ || ($(RM) -f $@ && exit 1)
+
 libbtrfs: $(libs_shared) $(lib_links)
 
 $(libs_shared): $(libbtrfs_objects) $(lib_links) send.h
@@ -503,11 +511,12 @@ clean: $(CLEANDIRS)
 	$(Q)$(RM) -f -- $(progs) *.o *.o.d \
 		kernel-lib/*.o kernel-lib/*.o.d \
 		kernel-shared/*.o kernel-shared/*.o.d \
+		kernel-lib/tables.c \
 		image/*.o image/*.o.d \
 		convert/*.o convert/*.o.d \
 		mkfs/*.o mkfs/*.o.d \
 	      dir-test ioctl-test quick-test library-test library-test-static \
-	      btrfs.static mkfs.btrfs.static fssum \
+              mktables btrfs.static mkfs.btrfs.static fssum \
 	      $(check_defs) \
 	      $(libs) $(lib_links) \
 	      $(progs_static) $(progs_extra)
