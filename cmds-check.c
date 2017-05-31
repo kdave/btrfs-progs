@@ -11161,11 +11161,9 @@ static int check_chunk_item(struct btrfs_fs_info *fs_info,
 	struct btrfs_block_group_item *bi;
 	struct btrfs_block_group_item bg_item;
 	struct btrfs_dev_extent *ptr;
-	u32 sectorsize = btrfs_super_sectorsize(fs_info->super_copy);
 	u64 length;
 	u64 chunk_end;
 	u64 type;
-	u64 profile;
 	int num_stripes;
 	u64 offset;
 	u64 objectid;
@@ -11177,25 +11175,15 @@ static int check_chunk_item(struct btrfs_fs_info *fs_info,
 	chunk = btrfs_item_ptr(eb, slot, struct btrfs_chunk);
 	length = btrfs_chunk_length(eb, chunk);
 	chunk_end = chunk_key.offset + length;
-	if (!IS_ALIGNED(length, sectorsize)) {
-		error("chunk[%llu %llu) not aligned to %u",
-			chunk_key.offset, chunk_end, sectorsize);
-		err |= BYTES_UNALIGNED;
+	ret = btrfs_check_chunk_valid(extent_root, eb, chunk, slot,
+				      chunk_key.offset);
+	if (ret < 0) {
+		error("chunk[%llu %llu) is invalid", chunk_key.offset,
+			chunk_end);
+		err |= BYTES_UNALIGNED | UNKNOWN_TYPE;
 		goto out;
 	}
-
 	type = btrfs_chunk_type(eb, chunk);
-	profile = type & BTRFS_BLOCK_GROUP_PROFILE_MASK;
-	if (!(type & BTRFS_BLOCK_GROUP_TYPE_MASK)) {
-		error("chunk[%llu %llu) has no chunk type",
-			chunk_key.offset, chunk_end);
-		err |= UNKNOWN_TYPE;
-	}
-	if (profile && (profile & (profile - 1))) {
-		error("chunk[%llu %llu) multiple profiles detected: %llx",
-			chunk_key.offset, chunk_end, profile);
-		err |= UNKNOWN_TYPE;
-	}
 
 	bg_key.objectid = chunk_key.offset;
 	bg_key.type = BTRFS_BLOCK_GROUP_ITEM_KEY;
