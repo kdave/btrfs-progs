@@ -2287,3 +2287,47 @@ out:
 
 	return ret;
 }
+
+/*
+ * Get stripe length from chunk item and its stripe items
+ *
+ * Caller should only call this function after validating the chunk item
+ * by using btrfs_check_chunk_valid().
+ */
+u64 btrfs_stripe_length(struct btrfs_fs_info *fs_info,
+			struct extent_buffer *leaf,
+			struct btrfs_chunk *chunk)
+{
+	u64 stripe_len;
+	u64 chunk_len;
+	u32 num_stripes = btrfs_chunk_num_stripes(leaf, chunk);
+	u64 profile = btrfs_chunk_type(leaf, chunk) &
+		      BTRFS_BLOCK_GROUP_PROFILE_MASK;
+
+	chunk_len = btrfs_chunk_length(leaf, chunk);
+
+	switch (profile) {
+	case 0: /* Single profile */
+	case BTRFS_BLOCK_GROUP_RAID1:
+	case BTRFS_BLOCK_GROUP_DUP:
+		stripe_len = chunk_len;
+		break;
+	case BTRFS_BLOCK_GROUP_RAID0:
+		stripe_len = chunk_len / num_stripes;
+		break;
+	case BTRFS_BLOCK_GROUP_RAID5:
+		stripe_len = chunk_len / (num_stripes - 1);
+		break;
+	case BTRFS_BLOCK_GROUP_RAID6:
+		stripe_len = chunk_len / (num_stripes - 2);
+		break;
+	case BTRFS_BLOCK_GROUP_RAID10:
+		stripe_len = chunk_len / (num_stripes /
+				btrfs_chunk_sub_stripes(leaf, chunk));
+		break;
+	default:
+		/* Invalid chunk profile found */
+		BUG_ON(1);
+	}
+	return stripe_len;
+}
