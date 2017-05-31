@@ -42,19 +42,19 @@ verbose mode.
 
 *zero-log* <device>::
 clear the filesystem log tree
-
++
 This command will clear the filesystem log tree. This may fix a specific
 set of problem when the filesystem mount fails due to the log replay. See below
 for sample stacktraces that may show up in system log.
-
++
 The common case where this happens has been fixed a long time ago,
 so it is unlikely that you will see this particular problem, but the utility is
 kept around.
-
++
 NOTE: clearing the log may lead to loss of changes that were made since the
 last transaction commit. This may be up to 30 seconds (default commit period)
 or less if the commit was implied by other filesystem activity.
-
++
 One can determine whether *zero-log* is needed according to the kernel
 backtrace:
 ----
@@ -66,7 +66,7 @@ backtrace:
 ? btree_read_extent_buffer_pages+0x76/0xbc [btrfs]
 ? open_ctree+0xff6/0x132c [btrfs]
 ----
-
++
 If the errors are like above, then *zero-log* should be used to clear
 the log and the filesystem may be mounted normally again. The keywords to look
 for are 'open_ctree' which says that it's during mount and function names
