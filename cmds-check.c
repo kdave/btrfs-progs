@@ -10926,7 +10926,12 @@ static int check_dev_extent_item(struct btrfs_fs_info *fs_info,
 
 	l = path.nodes[0];
 	chunk = btrfs_item_ptr(l, path.slots[0], struct btrfs_chunk);
-	if (btrfs_chunk_length(l, chunk) != length)
+	ret = btrfs_check_chunk_valid(chunk_root, l, chunk, path.slots[0],
+				      chunk_key.offset);
+	if (ret < 0)
+		goto out;
+
+	if (btrfs_stripe_length(fs_info, l, chunk) != length)
 		goto out;
 
 	num_stripes = btrfs_chunk_num_stripes(l, chunk);
@@ -11166,6 +11171,7 @@ static int check_chunk_item(struct btrfs_fs_info *fs_info,
 	struct btrfs_dev_extent *ptr;
 	u64 length;
 	u64 chunk_end;
+	u64 stripe_len;
 	u64 type;
 	int num_stripes;
 	u64 offset;
@@ -11215,6 +11221,7 @@ static int check_chunk_item(struct btrfs_fs_info *fs_info,
 	}
 
 	num_stripes = btrfs_chunk_num_stripes(eb, chunk);
+	stripe_len = btrfs_stripe_length(fs_info, eb, chunk);
 	for (i = 0; i < num_stripes; i++) {
 		btrfs_release_path(&path);
 		btrfs_init_path(&path);
@@ -11234,7 +11241,7 @@ static int check_chunk_item(struct btrfs_fs_info *fs_info,
 		offset = btrfs_dev_extent_chunk_offset(leaf, ptr);
 		if (objectid != chunk_key.objectid ||
 		    offset != chunk_key.offset ||
-		    btrfs_dev_extent_length(leaf, ptr) != length)
+		    btrfs_dev_extent_length(leaf, ptr) != stripe_len)
 			goto not_match_dev;
 		continue;
 not_match_dev:
