@@ -28,14 +28,14 @@ A btrfs object, which is set by <object>, can be a btrfs filesystem
 itself, a btrfs subvolume, an inode(file or directory) inside btrfs,
 or a device on which a btrfs exists.
 +
-The '-t <type>' option can be used to explicitly
+The option '-t' can be used to explicitly
 specify what type of object you meant. This is only needed when a
 property could be set for more then one object type.
 +
 Possible types are 's[ubvol]', 'f[ilesystem]', 'i[node]' and 'd[evice]'.
 +
-Set the name of property by '<name>'. If no '<name>' is specified,
-all properties for the given object are printed. '<name>' is one of
+Set the name of property by 'name'. If no 'name' is specified,
+all properties for the given object are printed. 'name' is one of
 the followings.
 
 ro::::
