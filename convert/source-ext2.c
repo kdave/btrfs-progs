@@ -34,8 +34,9 @@ static int ext2_open_fs(struct btrfs_convert_context *cctx, const char *name)
 	ext2_filsys ext2_fs;
 	ext2_ino_t ino;
 	u32 ro_feature;
+	int open_flag = EXT2_FLAG_SOFTSUPP_FEATURES | EXT2_FLAG_64BITS;
 
-	ret = ext2fs_open(name, 0, 0, 0, unix_io_manager, &ext2_fs);
+	ret = ext2fs_open(name, open_flag, 0, 0, unix_io_manager, &ext2_fs);
 	if (ret) {
 		fprintf(stderr, "ext2fs_open: %s\n", error_message(ret));
 		return -1;
@@ -148,7 +149,7 @@ static int ext2_read_used_space(struct btrfs_convert_context *cctx)
 		return -ENOMEM;
 
 	for (i = 0; i < fs->group_desc_count; i++) {
-		ret = ext2fs_get_block_bitmap_range(fs->block_map, blk_itr,
+		ret = ext2fs_get_block_bitmap_range2(fs->block_map, blk_itr,
 						block_nbytes * 8, block_bitmap);
 		if (ret) {
 			error("fail to get bitmap from ext2, %s",
@@ -353,7 +354,7 @@ static int ext2_create_symlink(struct btrfs_trans_handle *trans,
 	int ret;
 	char *pathname;
 	u64 inode_size = btrfs_stack_inode_size(btrfs_inode);
-	if (ext2fs_inode_data_blocks(ext2_fs, ext2_inode)) {
+	if (ext2fs_inode_data_blocks2(ext2_fs, ext2_inode)) {
 		btrfs_set_stack_inode_size(btrfs_inode, inode_size + 1);
 		ret = ext2_create_file_extents(trans, root, objectid,
 				btrfs_inode, ext2_fs, ext2_ino,
@@ -627,9 +628,9 @@ static int ext2_copy_extended_attrs(struct btrfs_trans_handle *trans,
 		ret = -ENOMEM;
 		goto out;
 	}
-	err = ext2fs_read_ext_attr(ext2_fs, ext2_inode->i_file_acl, buffer);
+	err = ext2fs_read_ext_attr2(ext2_fs, ext2_inode->i_file_acl, buffer);
 	if (err) {
-		fprintf(stderr, "ext2fs_read_ext_attr: %s\n",
+		fprintf(stderr, "ext2fs_read_ext_attr2: %s\n",
 			error_message(err));
 		ret = -1;
 		goto out;
