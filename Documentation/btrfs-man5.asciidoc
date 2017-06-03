@@ -537,7 +537,7 @@ empty files.
 
 *d*::
 'no dump', makes sense with 3rd party tools like `dump`(8), on BTRFS the
-attribute can be set/unset on no other special handling is done
+attribute can be set/unset but no other special handling is done.
 
 *D*::
 'synchronous directory updates', for more details search `open`(2) for 'O_SYNC'
