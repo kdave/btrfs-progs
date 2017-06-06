@@ -3,7 +3,7 @@ btrfs-send(8)
 
 NAME
 ----
-btrfs-send - generate a stream of changes between two subvolumes
+btrfs-send - generate a stream of changes between two subvolume snapshots
 
 SYNOPSIS
 --------
@@ -13,20 +13,21 @@ DESCRIPTION
 -----------
 
 This command will generate a stream of instructions that describe changes
-between two subvolumes. The stream can be consumed by the *btrfs receive*
-command to replicate the sent subvolume on a different filesystem.
+between two subvolume snapshots. The stream can be consumed by the *btrfs
+receive* command to replicate the sent snapshot on a different filesystem.
 The command operates in two modes: full and incremental.
 
-All subvolumes involved in one send command must be read-only (ie. the
-read-only snapshots and this status cannot be changed if there's a running send
-operation that uses the subvolume).
+All snapshots involved in one send command must be read-only, and this status
+cannot be changed as long as there's a running send operation that uses the
+snapshot.
 
-In the full mode, the entire subvolume data and metadata will end up in the
+In the full mode, the entire snapshot data and metadata will end up in the
 stream.
 
-In the incremental mode (options '-p' and '-c'), there can be one or more
-parent subvolumes that will establish the base for determining the changes.
-The final stream will be smaller compared to the full mode.
+In the incremental mode (options '-p' and '-c'), previously sent snapshots that
+are available on both the sending and receiving side can be used to reduce the
+amount of information that has to be sent to reconstruct the sent snapshot on a
+different filesystem.
 
 It is allowed to omit the '-p <parent>' option when '-c <clone-src>' options
 are given, in which case *btrfs send* will determine a suitable parent among the
