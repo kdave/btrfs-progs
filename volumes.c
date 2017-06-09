@@ -1279,6 +1279,8 @@ int btrfs_next_bg(struct btrfs_fs_info *fs_info, u64 *logical,
 			*size = ce->size;
 			return 0;
 		}
+		if (!cur)
+			ce = next_cache_extent(ce);
 	}
 
 	return -ENOENT;
