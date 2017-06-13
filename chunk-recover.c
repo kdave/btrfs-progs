@@ -942,11 +942,12 @@ static int build_device_map_by_chunk_record(struct btrfs_root *root,
 	u64 devid;
 	u8 uuid[BTRFS_UUID_SIZE];
 	u16 num_stripes;
+	struct btrfs_fs_info *fs_info = root->fs_info;
 	struct btrfs_mapping_tree *map_tree;
 	struct map_lookup *map;
 	struct stripe *stripe;
 
-	map_tree = &root->fs_info->mapping_tree;
+	map_tree = &fs_info->mapping_tree;
 	num_stripes = chunk->num_stripes;
 	map = malloc(btrfs_map_lookup_size(num_stripes));
 	if (!map)
@@ -965,7 +966,7 @@ static int build_device_map_by_chunk_record(struct btrfs_root *root,
 		devid = stripe->devid;
 		memcpy(uuid, stripe->dev_uuid, BTRFS_UUID_SIZE);
 		map->stripes[i].physical = stripe->offset;
-		map->stripes[i].dev = btrfs_find_device(root, devid,
+		map->stripes[i].dev = btrfs_find_device(fs_info, devid,
 							uuid, NULL);
 		if (!map->stripes[i].dev) {
 			free(map);

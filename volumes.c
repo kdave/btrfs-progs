@@ -1601,17 +1601,17 @@ out:
 	return 0;
 }
 
-struct btrfs_device *btrfs_find_device(struct btrfs_root *root, u64 devid,
+struct btrfs_device *btrfs_find_device(struct btrfs_fs_info *fs_info, u64 devid,
 				       u8 *uuid, u8 *fsid)
 {
 	struct btrfs_device *device;
 	struct btrfs_fs_devices *cur_devices;
 
-	cur_devices = root->fs_info->fs_devices;
+	cur_devices = fs_info->fs_devices;
 	while (cur_devices) {
 		if (!fsid ||
 		    (!memcmp(cur_devices->fsid, fsid, BTRFS_UUID_SIZE) ||
-		     root->fs_info->ignore_fsid_mismatch)) {
+		     fs_info->ignore_fsid_mismatch)) {
 			device = __find_device(&cur_devices->devices,
 					       devid, uuid);
 			if (device)
@@ -1839,7 +1839,7 @@ static int read_one_chunk(struct btrfs_root *root, struct btrfs_key *key,
 		read_extent_buffer(leaf, uuid, (unsigned long)
 				   btrfs_stripe_dev_uuid_nr(chunk, i),
 				   BTRFS_UUID_SIZE);
-		map->stripes[i].dev = btrfs_find_device(root, devid, uuid,
+		map->stripes[i].dev = btrfs_find_device(fs_info, devid, uuid,
 							NULL);
 		if (!map->stripes[i].dev) {
 			map->stripes[i].dev = fill_missing_device(devid);
@@ -1876,12 +1876,12 @@ static int fill_device_from_item(struct extent_buffer *leaf,
 	return 0;
 }
 
-static int open_seed_devices(struct btrfs_root *root, u8 *fsid)
+static int open_seed_devices(struct btrfs_fs_info *fs_info, u8 *fsid)
 {
 	struct btrfs_fs_devices *fs_devices;
 	int ret;
 
-	fs_devices = root->fs_info->fs_devices->seed;
+	fs_devices = fs_info->fs_devices->seed;
 	while (fs_devices) {
 		if (!memcmp(fs_devices->fsid, fsid, BTRFS_UUID_SIZE)) {
 			ret = 0;
@@ -1907,8 +1907,8 @@ static int open_seed_devices(struct btrfs_root *root, u8 *fsid)
 	if (ret)
 		goto out;
 
-	fs_devices->seed = root->fs_info->fs_devices->seed;
-	root->fs_info->fs_devices->seed = fs_devices;
+	fs_devices->seed = fs_info->fs_devices->seed;
+	fs_info->fs_devices->seed = fs_devices;
 out:
 	return ret;
 }
@@ -1917,6 +1917,7 @@ static int read_one_dev(struct btrfs_root *root,
 			struct extent_buffer *leaf,
 			struct btrfs_dev_item *dev_item)
 {
+	struct btrfs_fs_info *fs_info = root->fs_info;
 	struct btrfs_device *device;
 	u64 devid;
 	int ret = 0;
@@ -1931,24 +1932,24 @@ static int read_one_dev(struct btrfs_root *root,
 			   (unsigned long)btrfs_device_fsid(dev_item),
 			   BTRFS_UUID_SIZE);
 
-	if (memcmp(fs_uuid, root->fs_info->fsid, BTRFS_UUID_SIZE)) {
-		ret = open_seed_devices(root, fs_uuid);
+	if (memcmp(fs_uuid, fs_info->fsid, BTRFS_UUID_SIZE)) {
+		ret = open_seed_devices(fs_info, fs_uuid);
 		if (ret)
 			return ret;
 	}
 
-	device = btrfs_find_device(root, devid, dev_uuid, fs_uuid);
+	device = btrfs_find_device(fs_info, devid, dev_uuid, fs_uuid);
 	if (!device) {
 		device = kzalloc(sizeof(*device), GFP_NOFS);
 		if (!device)
 			return -ENOMEM;
 		device->fd = -1;
 		list_add(&device->dev_list,
-			 &root->fs_info->fs_devices->devices);
+			 &fs_info->fs_devices->devices);
 	}
 
 	fill_device_from_item(leaf, dev_item, device);
-	device->dev_root = root->fs_info->dev_root;
+	device->dev_root = fs_info->dev_root;
 	return ret;
 }
 

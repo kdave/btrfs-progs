@@ -236,7 +236,7 @@ int btrfs_chunk_readonly(struct btrfs_root *root, u64 chunk_offset);
 struct btrfs_device *
 btrfs_find_device_by_devid(struct btrfs_fs_devices *fs_devices,
 			   u64 devid, int instance);
-struct btrfs_device *btrfs_find_device(struct btrfs_root *root, u64 devid,
+struct btrfs_device *btrfs_find_device(struct btrfs_fs_info *fs_info, u64 devid,
 				       u8 *uuid, u8 *fsid);
 int write_raid56_with_parity(struct btrfs_fs_info *info,
 			     struct extent_buffer *eb,
