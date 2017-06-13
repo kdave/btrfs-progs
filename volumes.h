@@ -187,18 +187,18 @@ int btrfs_map_block(struct btrfs_fs_info *fs_info, int rw,
 		    u64 logical, u64 *length,
 		    struct btrfs_multi_bio **multi_ret, int mirror_num,
 		    u64 **raid_map_ret);
-int btrfs_next_bg(struct btrfs_mapping_tree *map_tree, u64 *logical,
+int btrfs_next_bg(struct btrfs_fs_info *map_tree, u64 *logical,
 		     u64 *size, u64 type);
-static inline int btrfs_next_bg_metadata(struct btrfs_mapping_tree *map_tree,
-				      u64 *logical, u64 *size)
+static inline int btrfs_next_bg_metadata(struct btrfs_fs_info *fs_info,
+					 u64 *logical, u64 *size)
 {
-	return btrfs_next_bg(map_tree, logical, size,
+	return btrfs_next_bg(fs_info, logical, size,
 			BTRFS_BLOCK_GROUP_METADATA);
 }
-static inline int btrfs_next_bg_system(struct btrfs_mapping_tree *map_tree,
-				    u64 *logical, u64 *size)
+static inline int btrfs_next_bg_system(struct btrfs_fs_info *fs_info,
+				       u64 *logical, u64 *size)
 {
-	return btrfs_next_bg(map_tree, logical, size,
+	return btrfs_next_bg(fs_info, logical, size,
 			BTRFS_BLOCK_GROUP_SYSTEM);
 }
 int btrfs_rmap_block(struct btrfs_fs_info *fs_info,

@@ -1252,9 +1252,10 @@ int btrfs_num_copies(struct btrfs_fs_info *fs_info, u64 logical, u64 len)
 	return ret;
 }
 
-int btrfs_next_bg(struct btrfs_mapping_tree *map_tree, u64 *logical,
-		     u64 *size, u64 type)
+int btrfs_next_bg(struct btrfs_fs_info *fs_info, u64 *logical,
+		  u64 *size, u64 type)
 {
+	struct btrfs_mapping_tree *map_tree = &fs_info->mapping_tree;
 	struct cache_extent *ce;
 	struct map_lookup *map;
 	u64 cur = *logical;

@@ -118,11 +118,11 @@ int btrfs_find_root_search(struct btrfs_fs_info *fs_info,
 	fs_info->suppress_check_block_errors = 1;
 	while (1) {
 		if (filter->objectid != BTRFS_CHUNK_TREE_OBJECTID)
-			ret = btrfs_next_bg_metadata(&fs_info->mapping_tree,
+			ret = btrfs_next_bg_metadata(fs_info,
 						  &chunk_offset,
 						  &chunk_size);
 		else
-			ret = btrfs_next_bg_system(&fs_info->mapping_tree,
+			ret = btrfs_next_bg_system(fs_info,
 						&chunk_offset,
 						&chunk_size);
 		if (ret) {
