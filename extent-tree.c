@@ -2119,7 +2119,7 @@ static int pin_down_bytes(struct btrfs_trans_handle *trans,
 	if (is_data)
 		goto pinit;
 
-	buf = btrfs_find_tree_block(root, bytenr, num_bytes);
+	buf = btrfs_find_tree_block(root->fs_info, bytenr, num_bytes);
 	if (!buf)
 		goto pinit;
 

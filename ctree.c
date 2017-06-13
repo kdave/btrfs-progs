@@ -968,6 +968,7 @@ static int noinline push_nodes_for_insert(struct btrfs_trans_handle *trans,
 void reada_for_search(struct btrfs_root *root, struct btrfs_path *path,
 			     int level, int slot, u64 objectid)
 {
+	struct btrfs_fs_info *fs_info = root->fs_info;
 	struct extent_buffer *node;
 	struct btrfs_disk_key disk_key;
 	u32 nritems;
@@ -989,8 +990,8 @@ void reada_for_search(struct btrfs_root *root, struct btrfs_path *path,
 
 	node = path->nodes[level];
 	search = btrfs_node_blockptr(node, slot);
-	blocksize = root->fs_info->nodesize;
-	eb = btrfs_find_tree_block(root, search, blocksize);
+	blocksize = fs_info->nodesize;
+	eb = btrfs_find_tree_block(fs_info, search, blocksize);
 	if (eb) {
 		free_extent_buffer(eb);
 		return;

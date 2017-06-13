@@ -174,10 +174,10 @@ int csum_tree_block(struct btrfs_fs_info *fs_info,
 	return csum_tree_block_size(buf, csum_size, verify);
 }
 
-struct extent_buffer *btrfs_find_tree_block(struct btrfs_root *root,
+struct extent_buffer *btrfs_find_tree_block(struct btrfs_fs_info *fs_info,
 					    u64 bytenr, u32 blocksize)
 {
-	return find_extent_buffer(&root->fs_info->extent_cache,
+	return find_extent_buffer(&fs_info->extent_cache,
 				  bytenr, blocksize);
 }
 
@@ -195,7 +195,7 @@ void readahead_tree_block(struct btrfs_root *root, u64 bytenr, u32 blocksize,
 	struct btrfs_multi_bio *multi = NULL;
 	struct btrfs_device *device;
 
-	eb = btrfs_find_tree_block(root, bytenr, blocksize);
+	eb = btrfs_find_tree_block(root->fs_info, bytenr, blocksize);
 	if (!(eb && btrfs_buffer_uptodate(eb, parent_transid)) &&
 	    !btrfs_map_block(root->fs_info, READ, bytenr, &length, &multi, 0,
 			     NULL)) {
