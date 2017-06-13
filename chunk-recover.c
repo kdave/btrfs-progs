@@ -1287,13 +1287,14 @@ static int rebuild_chunk_tree(struct btrfs_trans_handle *trans,
 static int rebuild_sys_array(struct recover_control *rc,
 			     struct btrfs_root *root)
 {
+	struct btrfs_fs_info *fs_info = root->fs_info;
 	struct btrfs_chunk *chunk;
 	struct btrfs_key key;
 	struct chunk_record *chunk_rec;
 	int ret = 0;
 	u16 num_stripes;
 
-	btrfs_set_super_sys_array_size(root->fs_info->super_copy, 0);
+	btrfs_set_super_sys_array_size(fs_info->super_copy, 0);
 
 	list_for_each_entry(chunk_rec, &rc->good_chunks, list) {
 		if (!(chunk_rec->type_flags & BTRFS_BLOCK_GROUP_SYSTEM))
@@ -1310,7 +1311,7 @@ static int rebuild_sys_array(struct recover_control *rc,
 		key.type = BTRFS_CHUNK_ITEM_KEY;
 		key.offset = chunk_rec->offset;
 
-		ret = btrfs_add_system_chunk(root, &key, chunk,
+		ret = btrfs_add_system_chunk(fs_info, &key, chunk,
 				btrfs_chunk_item_size(num_stripes));
 		free(chunk);
 		if (ret)
