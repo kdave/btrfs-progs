@@ -585,7 +585,7 @@ error:
  * the btrfs_device struct should be fully filled in
  */
 int btrfs_add_device(struct btrfs_trans_handle *trans,
-		     struct btrfs_root *root,
+		     struct btrfs_fs_info *fs_info,
 		     struct btrfs_device *device)
 {
 	int ret;
@@ -593,10 +593,9 @@ int btrfs_add_device(struct btrfs_trans_handle *trans,
 	struct btrfs_dev_item *dev_item;
 	struct extent_buffer *leaf;
 	struct btrfs_key key;
+	struct btrfs_root *root = fs_info->chunk_root;
 	unsigned long ptr;
 	u64 free_devid = 0;
-
-	root = root->fs_info->chunk_root;
 
 	path = btrfs_alloc_path();
 	if (!path)
@@ -635,7 +634,7 @@ int btrfs_add_device(struct btrfs_trans_handle *trans,
 	ptr = (unsigned long)btrfs_device_uuid(dev_item);
 	write_extent_buffer(leaf, device->uuid, ptr, BTRFS_UUID_SIZE);
 	ptr = (unsigned long)btrfs_device_fsid(dev_item);
-	write_extent_buffer(leaf, root->fs_info->fsid, ptr, BTRFS_UUID_SIZE);
+	write_extent_buffer(leaf, fs_info->fsid, ptr, BTRFS_UUID_SIZE);
 	btrfs_mark_buffer_dirty(leaf);
 	ret = 0;
 

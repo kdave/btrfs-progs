@@ -179,7 +179,8 @@ int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 		      u32 sectorsize)
 {
 	struct btrfs_super_block *disk_super;
-	struct btrfs_super_block *super = root->fs_info->super_copy;
+	struct btrfs_fs_info *fs_info = root->fs_info;
+	struct btrfs_super_block *super = fs_info->super_copy;
 	struct btrfs_device *device;
 	struct btrfs_dev_item *dev_item;
 	char *buf = NULL;
@@ -214,7 +215,7 @@ int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 	device->total_bytes = device_total_bytes;
 	device->bytes_used = 0;
 	device->total_ios = 0;
-	device->dev_root = root->fs_info->dev_root;
+	device->dev_root = fs_info->dev_root;
 	device->name = strdup(path);
 	if (!device->name) {
 		ret = -ENOMEM;
@@ -222,7 +223,7 @@ int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 	}
 
 	INIT_LIST_HEAD(&device->dev_list);
-	ret = btrfs_add_device(trans, root, device);
+	ret = btrfs_add_device(trans, fs_info, device);
 	if (ret)
 		goto out;
 
@@ -248,8 +249,8 @@ int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 	BUG_ON(ret != sectorsize);
 
 	free(buf);
-	list_add(&device->dev_list, &root->fs_info->fs_devices->devices);
-	device->fs_devices = root->fs_info->fs_devices;
+	list_add(&device->dev_list, &fs_info->fs_devices->devices);
+	device->fs_devices = fs_info->fs_devices;
 	return 0;
 
 out:
