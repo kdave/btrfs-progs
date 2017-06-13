@@ -67,6 +67,7 @@ struct mkfs_allocation {
 static int create_metadata_block_groups(struct btrfs_root *root, int mixed,
 				struct mkfs_allocation *allocation)
 {
+	struct btrfs_fs_info *fs_info = root->fs_info;
 	struct btrfs_trans_handle *trans;
 	u64 bytes_used;
 	u64 chunk_start = 0;
@@ -74,10 +75,10 @@ static int create_metadata_block_groups(struct btrfs_root *root, int mixed,
 	int ret;
 
 	trans = btrfs_start_transaction(root, 1);
-	bytes_used = btrfs_super_bytes_used(root->fs_info->super_copy);
+	bytes_used = btrfs_super_bytes_used(fs_info->super_copy);
 
 	root->fs_info->system_allocs = 1;
-	ret = btrfs_make_block_group(trans, root, bytes_used,
+	ret = btrfs_make_block_group(trans, fs_info, bytes_used,
 				     BTRFS_BLOCK_GROUP_SYSTEM,
 				     BTRFS_FIRST_CHUNK_TREE_OBJECTID,
 				     0, BTRFS_MKFS_SYSTEM_GROUP_SIZE);
@@ -86,7 +87,7 @@ static int create_metadata_block_groups(struct btrfs_root *root, int mixed,
 		return ret;
 
 	if (mixed) {
-		ret = btrfs_alloc_chunk(trans, root->fs_info->extent_root,
+		ret = btrfs_alloc_chunk(trans, fs_info,
 					&chunk_start, &chunk_size,
 					BTRFS_BLOCK_GROUP_METADATA |
 					BTRFS_BLOCK_GROUP_DATA);
@@ -96,7 +97,7 @@ static int create_metadata_block_groups(struct btrfs_root *root, int mixed,
 		}
 		if (ret)
 			return ret;
-		ret = btrfs_make_block_group(trans, root, 0,
+		ret = btrfs_make_block_group(trans, fs_info, 0,
 					     BTRFS_BLOCK_GROUP_METADATA |
 					     BTRFS_BLOCK_GROUP_DATA,
 					     BTRFS_FIRST_CHUNK_TREE_OBJECTID,
@@ -105,7 +106,7 @@ static int create_metadata_block_groups(struct btrfs_root *root, int mixed,
 			return ret;
 		allocation->mixed += chunk_size;
 	} else {
-		ret = btrfs_alloc_chunk(trans, root->fs_info->extent_root,
+		ret = btrfs_alloc_chunk(trans, fs_info,
 					&chunk_start, &chunk_size,
 					BTRFS_BLOCK_GROUP_METADATA);
 		if (ret == -ENOSPC) {
@@ -114,7 +115,7 @@ static int create_metadata_block_groups(struct btrfs_root *root, int mixed,
 		}
 		if (ret)
 			return ret;
-		ret = btrfs_make_block_group(trans, root, 0,
+		ret = btrfs_make_block_group(trans, fs_info, 0,
 					     BTRFS_BLOCK_GROUP_METADATA,
 					     BTRFS_FIRST_CHUNK_TREE_OBJECTID,
 					     chunk_start, chunk_size);
@@ -134,12 +135,13 @@ static int create_data_block_groups(struct btrfs_trans_handle *trans,
 		struct btrfs_root *root, int mixed,
 		struct mkfs_allocation *allocation)
 {
+	struct btrfs_fs_info *fs_info = root->fs_info;
 	u64 chunk_start = 0;
 	u64 chunk_size = 0;
 	int ret = 0;
 
 	if (!mixed) {
-		ret = btrfs_alloc_chunk(trans, root->fs_info->extent_root,
+		ret = btrfs_alloc_chunk(trans, fs_info,
 					&chunk_start, &chunk_size,
 					BTRFS_BLOCK_GROUP_DATA);
 		if (ret == -ENOSPC) {
@@ -148,7 +150,7 @@ static int create_data_block_groups(struct btrfs_trans_handle *trans,
 		}
 		if (ret)
 			return ret;
-		ret = btrfs_make_block_group(trans, root, 0,
+		ret = btrfs_make_block_group(trans, fs_info, 0,
 					     BTRFS_BLOCK_GROUP_DATA,
 					     BTRFS_FIRST_CHUNK_TREE_OBJECTID,
 					     chunk_start, chunk_size);
@@ -244,11 +246,12 @@ static int create_one_raid_group(struct btrfs_trans_handle *trans,
 			      struct mkfs_allocation *allocation)
 
 {
+	struct btrfs_fs_info *fs_info = root->fs_info;
 	u64 chunk_start;
 	u64 chunk_size;
 	int ret;
 
-	ret = btrfs_alloc_chunk(trans, root->fs_info->extent_root,
+	ret = btrfs_alloc_chunk(trans, fs_info,
 				&chunk_start, &chunk_size, type);
 	if (ret == -ENOSPC) {
 		error("not enough free space to allocate chunk");
@@ -257,7 +260,7 @@ static int create_one_raid_group(struct btrfs_trans_handle *trans,
 	if (ret)
 		return ret;
 
-	ret = btrfs_make_block_group(trans, root->fs_info->extent_root, 0,
+	ret = btrfs_make_block_group(trans, fs_info, 0,
 				     type, BTRFS_FIRST_CHUNK_TREE_OBJECTID,
 				     chunk_start, chunk_size);
 
@@ -984,6 +987,7 @@ static int create_chunks(struct btrfs_trans_handle *trans,
 			 u64 size_of_data,
 			 struct mkfs_allocation *allocation)
 {
+	struct btrfs_fs_info *fs_info = root->fs_info;
 	u64 chunk_start;
 	u64 chunk_size;
 	u64 meta_type = BTRFS_BLOCK_GROUP_METADATA;
@@ -993,11 +997,11 @@ static int create_chunks(struct btrfs_trans_handle *trans,
 	int ret;
 
 	for (i = 0; i < num_of_meta_chunks; i++) {
-		ret = btrfs_alloc_chunk(trans, root->fs_info->extent_root,
+		ret = btrfs_alloc_chunk(trans, fs_info,
 					&chunk_start, &chunk_size, meta_type);
 		if (ret)
 			return ret;
-		ret = btrfs_make_block_group(trans, root->fs_info->extent_root, 0,
+		ret = btrfs_make_block_group(trans, fs_info, 0,
 					     meta_type, BTRFS_FIRST_CHUNK_TREE_OBJECTID,
 					     chunk_start, chunk_size);
 		allocation->metadata += chunk_size;
@@ -1010,11 +1014,11 @@ static int create_chunks(struct btrfs_trans_handle *trans,
 	if (size_of_data < minimum_data_chunk_size)
 		size_of_data = minimum_data_chunk_size;
 
-	ret = btrfs_alloc_data_chunk(trans, root->fs_info->extent_root,
+	ret = btrfs_alloc_data_chunk(trans, fs_info,
 				     &chunk_start, size_of_data, data_type, 0);
 	if (ret)
 		return ret;
-	ret = btrfs_make_block_group(trans, root->fs_info->extent_root, 0,
+	ret = btrfs_make_block_group(trans, fs_info, 0,
 				     data_type, BTRFS_FIRST_CHUNK_TREE_OBJECTID,
 				     chunk_start, size_of_data);
 	allocation->data += size_of_data;

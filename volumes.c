@@ -833,11 +833,11 @@ error:
 				/ sizeof(struct btrfs_stripe) + 1)
 
 int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
-		      struct btrfs_root *extent_root, u64 *start,
+		      struct btrfs_fs_info *info, u64 *start,
 		      u64 *num_bytes, u64 type)
 {
 	u64 dev_offset;
-	struct btrfs_fs_info *info = extent_root->fs_info;
+	struct btrfs_root *extent_root = info->extent_root;
 	struct btrfs_root *chunk_root = info->chunk_root;
 	struct btrfs_stripe *stripes;
 	struct btrfs_device *device = NULL;
@@ -1099,11 +1099,11 @@ again:
  * occupied.
  */
 int btrfs_alloc_data_chunk(struct btrfs_trans_handle *trans,
-			   struct btrfs_root *extent_root, u64 *start,
+			   struct btrfs_fs_info *info, u64 *start,
 			   u64 num_bytes, u64 type, int convert)
 {
 	u64 dev_offset;
-	struct btrfs_fs_info *info = extent_root->fs_info;
+	struct btrfs_root *extent_root = info->extent_root;
 	struct btrfs_root *chunk_root = info->chunk_root;
 	struct btrfs_stripe *stripes;
 	struct btrfs_device *device = NULL;
