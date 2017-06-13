@@ -449,12 +449,12 @@ int write_and_map_eb(struct btrfs_fs_info *fs_info, struct extent_buffer *eb)
 }
 
 int write_tree_block(struct btrfs_trans_handle *trans,
-		     struct btrfs_root *root,
+		     struct btrfs_fs_info *fs_info,
 		     struct extent_buffer *eb)
 {
-	if (check_tree_block(root->fs_info, eb)) {
-		print_tree_block_error(root->fs_info, eb,
-				check_tree_block(root->fs_info, eb));
+	if (check_tree_block(fs_info, eb)) {
+		print_tree_block_error(fs_info, eb,
+				check_tree_block(fs_info, eb));
 		BUG();
 	}
 
@@ -462,9 +462,9 @@ int write_tree_block(struct btrfs_trans_handle *trans,
 		BUG();
 
 	btrfs_set_header_flag(eb, BTRFS_HEADER_FLAG_WRITTEN);
-	csum_tree_block(root->fs_info, eb, 0);
+	csum_tree_block(fs_info, eb, 0);
 
-	return write_and_map_eb(root->fs_info, eb);
+	return write_and_map_eb(fs_info, eb);
 }
 
 void btrfs_setup_root(struct btrfs_root *root, struct btrfs_fs_info *fs_info,
@@ -548,8 +548,9 @@ static int __commit_transaction(struct btrfs_trans_handle *trans,
 {
 	u64 start;
 	u64 end;
+	struct btrfs_fs_info *fs_info = root->fs_info;
 	struct extent_buffer *eb;
-	struct extent_io_tree *tree = &root->fs_info->extent_cache;
+	struct extent_io_tree *tree = &fs_info->extent_cache;
 	int ret;
 
 	while(1) {
@@ -560,7 +561,7 @@ static int __commit_transaction(struct btrfs_trans_handle *trans,
 		while(start <= end) {
 			eb = find_first_extent_buffer(tree, start);
 			BUG_ON(!eb || eb->start != start);
-			ret = write_tree_block(trans, root, eb);
+			ret = write_tree_block(trans, fs_info, eb);
 			BUG_ON(ret);
 			start += eb->len;
 			clear_extent_buffer_dirty(eb);

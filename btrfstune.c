@@ -111,7 +111,7 @@ static int change_header_uuid(struct btrfs_root *root, struct extent_buffer *eb)
 		write_extent_buffer(eb, fs_info->new_chunk_tree_uuid,
 				    btrfs_header_chunk_tree_uuid(eb),
 				    BTRFS_UUID_SIZE);
-	ret = write_tree_block(NULL, root, eb);
+	ret = write_tree_block(NULL, fs_info, eb);
 
 	return ret;
 }
@@ -193,7 +193,7 @@ static int change_device_uuid(struct btrfs_root *root, struct extent_buffer *eb,
 	write_extent_buffer(eb, fs_info->new_fsid,
 			    (unsigned long)btrfs_device_fsid(di),
 			    BTRFS_FSID_SIZE);
-	ret = write_tree_block(NULL, root, eb);
+	ret = write_tree_block(NULL, fs_info, eb);
 
 	return ret;
 }
@@ -251,7 +251,7 @@ static int change_fsid_prepare(struct btrfs_fs_info *fs_info)
 	write_extent_buffer(tree_root->node, fs_info->new_chunk_tree_uuid,
 			    btrfs_header_chunk_tree_uuid(tree_root->node),
 			    BTRFS_UUID_SIZE);
-	return write_tree_block(NULL, tree_root, tree_root->node);
+	return write_tree_block(NULL, fs_info, tree_root->node);
 }
 
 static int change_fsid_done(struct btrfs_fs_info *fs_info)
