@@ -346,8 +346,8 @@ static int copy_one_extent(struct btrfs_root *root, int fd,
 	}
 again:
 	length = size_left;
-	ret = btrfs_map_block(&root->fs_info->mapping_tree, READ,
-			      bytenr, &length, &multi, mirror_num, NULL);
+	ret = btrfs_map_block(root->fs_info, READ, bytenr, &length, &multi,
+			      mirror_num, NULL);
 	if (ret) {
 		error("cannot map block logical %llu length %llu: %d",
 				(unsigned long long)bytenr,

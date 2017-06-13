@@ -109,9 +109,8 @@ static int __print_mapping_info(struct btrfs_fs_info *fs_info, u64 logical,
 		int i;
 
 		cur_len = len - cur_offset;
-		ret = btrfs_map_block(&fs_info->mapping_tree, READ,
-				logical + cur_offset, &cur_len,
-				&multi, mirror_num, NULL);
+		ret = btrfs_map_block(fs_info, READ, logical + cur_offset,
+				      &cur_len, &multi, mirror_num, NULL);
 		if (ret) {
 			fprintf(info_file,
 				"Error: fails to map mirror%d logical %llu: %s\n",

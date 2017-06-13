@@ -203,8 +203,8 @@ void readahead_tree_block(struct btrfs_root *root, u64 bytenr, u32 blocksize,
 
 	eb = btrfs_find_tree_block(root, bytenr, blocksize);
 	if (!(eb && btrfs_buffer_uptodate(eb, parent_transid)) &&
-	    !btrfs_map_block(&root->fs_info->mapping_tree, READ,
-			     bytenr, &length, &multi, 0, NULL)) {
+	    !btrfs_map_block(root->fs_info, READ, bytenr, &length, &multi, 0,
+			     NULL)) {
 		device = multi->stripes[0].dev;
 		device->total_ios++;
 		blocksize = min(blocksize, (u32)SZ_64K);
@@ -262,9 +262,8 @@ int read_whole_eb(struct btrfs_fs_info *info, struct extent_buffer *eb, int mirr
 
 		if (!info->on_restoring &&
 		    eb->start != BTRFS_SUPER_INFO_OFFSET) {
-			ret = btrfs_map_block(&info->mapping_tree, READ,
-					      eb->start + offset, &read_len, &multi,
-					      mirror, NULL);
+			ret = btrfs_map_block(info, READ, eb->start + offset,
+					      &read_len, &multi, mirror, NULL);
 			if (ret) {
 				printk("Couldn't map the block %Lu\n", eb->start + offset);
 				kfree(multi);
@@ -402,8 +401,7 @@ int read_extent_data(struct btrfs_root *root, char *data,
 	int ret = 0;
 	u64 max_len = *len;
 
-	ret = btrfs_map_block(&info->mapping_tree, READ, logical, len,
-			      &multi, mirror, NULL);
+	ret = btrfs_map_block(info, READ, logical, len, &multi, mirror, NULL);
 	if (ret) {
 		fprintf(stderr, "Couldn't map the block %llu\n",
 				logical + offset);
@@ -436,8 +434,8 @@ int write_and_map_eb(struct btrfs_root *root, struct extent_buffer *eb)
 
 	dev_nr = 0;
 	length = eb->len;
-	ret = btrfs_map_block(&root->fs_info->mapping_tree, WRITE,
-			      eb->start, &length, &multi, 0, &raid_map);
+	ret = btrfs_map_block(root->fs_info, WRITE, eb->start, &length,
+			      &multi, 0, &raid_map);
 
 	if (raid_map) {
 		ret = write_raid56_with_parity(root->fs_info, eb, multi,

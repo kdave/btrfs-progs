@@ -47,9 +47,8 @@ static int debug_corrupt_block(struct extent_buffer *eb,
 
 	length = blocksize;
 	while (1) {
-		ret = btrfs_map_block(&root->fs_info->mapping_tree, READ,
-				      eb->start, &length, &multi,
-				      mirror_num, NULL);
+		ret = btrfs_map_block(root->fs_info, READ, eb->start, &length,
+				      &multi, mirror_num, NULL);
 		if (ret) {
 			error("cannot map block %llu length %llu mirror %d: %d",
 					(unsigned long long)eb->start,

@@ -179,11 +179,11 @@ static inline int check_crossing_stripes(struct btrfs_fs_info *fs_info,
 		(bg_offset + len - 1) / BTRFS_STRIPE_LEN);
 }
 
-int __btrfs_map_block(struct btrfs_mapping_tree *map_tree, int rw,
+int __btrfs_map_block(struct btrfs_fs_info *fs_info, int rw,
 		      u64 logical, u64 *length, u64 *type,
 		      struct btrfs_multi_bio **multi_ret, int mirror_num,
 		      u64 **raid_map);
-int btrfs_map_block(struct btrfs_mapping_tree *map_tree, int rw,
+int btrfs_map_block(struct btrfs_fs_info *fs_info, int rw,
 		    u64 logical, u64 *length,
 		    struct btrfs_multi_bio **multi_ret, int mirror_num,
 		    u64 **raid_map_ret);
@@ -201,7 +201,7 @@ static inline int btrfs_next_bg_system(struct btrfs_mapping_tree *map_tree,
 	return btrfs_next_bg(map_tree, logical, size,
 			BTRFS_BLOCK_GROUP_SYSTEM);
 }
-int btrfs_rmap_block(struct btrfs_mapping_tree *map_tree,
+int btrfs_rmap_block(struct btrfs_fs_info *fs_info,
 		     u64 chunk_start, u64 physical, u64 devid,
 		     u64 **logical, int *naddrs, int *stripe_len);
 int btrfs_read_sys_array(struct btrfs_root *root);

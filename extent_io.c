@@ -698,8 +698,8 @@ int read_data_from_disk(struct btrfs_fs_info *info, void *buf, u64 offset,
 
 	while (bytes_left) {
 		read_len = bytes_left;
-		ret = btrfs_map_block(&info->mapping_tree, READ, offset,
-				      &read_len, &multi, mirror, NULL);
+		ret = btrfs_map_block(info, READ, offset, &read_len, &multi,
+				      mirror, NULL);
 		if (ret) {
 			fprintf(stderr, "Couldn't map the block %Lu\n",
 				offset);
@@ -752,8 +752,8 @@ int write_data_to_disk(struct btrfs_fs_info *info, void *buf, u64 offset,
 		this_len = bytes_left;
 		dev_nr = 0;
 
-		ret = btrfs_map_block(&info->mapping_tree, WRITE, offset,
-				      &this_len, &multi, mirror, &raid_map);
+		ret = btrfs_map_block(info, WRITE, offset, &this_len, &multi,
+				      mirror, &raid_map);
 		if (ret) {
 			fprintf(stderr, "Couldn't map the block %Lu\n",
 				offset);
