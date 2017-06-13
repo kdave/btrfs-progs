@@ -7214,8 +7214,7 @@ again:
 				fprintf(stderr, "mirror %d bytenr %llu csum %u expected csum %u\n",
 						mirror, bytenr + tmp,
 						csum, csum_expected);
-				num_copies = btrfs_num_copies(
-						&root->fs_info->mapping_tree,
+				num_copies = btrfs_num_copies(root->fs_info,
 						bytenr, num_bytes);
 				if (mirror < num_copies - 1) {
 					mirror += 1;

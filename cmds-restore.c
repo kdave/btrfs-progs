@@ -366,8 +366,7 @@ again:
 	done = pread(dev_fd, inbuf+count, length, dev_bytenr);
 	/* Need both checks, or we miss negative values due to u64 conversion */
 	if (done < 0 || done < length) {
-		num_copies = btrfs_num_copies(&root->fs_info->mapping_tree,
-					      bytenr, length);
+		num_copies = btrfs_num_copies(root->fs_info, bytenr, length);
 		mirror_num++;
 		/* mirror_num is 1-indexed, so num_copies is a valid mirror. */
 		if (mirror_num > num_copies) {
@@ -404,8 +403,7 @@ again:
 
 	ret = decompress(root, inbuf, outbuf, disk_size, &ram_size, compress);
 	if (ret) {
-		num_copies = btrfs_num_copies(&root->fs_info->mapping_tree,
-					      bytenr, length);
+		num_copies = btrfs_num_copies(root->fs_info, bytenr, length);
 		mirror_num++;
 		if (mirror_num >= num_copies) {
 			ret = -1;

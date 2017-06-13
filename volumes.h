@@ -228,7 +228,7 @@ int btrfs_update_device(struct btrfs_trans_handle *trans,
 int btrfs_scan_one_device(int fd, const char *path,
 			  struct btrfs_fs_devices **fs_devices_ret,
 			  u64 *total_devs, u64 super_offset, unsigned sbflags);
-int btrfs_num_copies(struct btrfs_mapping_tree *map_tree, u64 logical, u64 len);
+int btrfs_num_copies(struct btrfs_fs_info *fs_info, u64 logical, u64 len);
 struct list_head *btrfs_scanned_uuids(void);
 int btrfs_add_system_chunk(struct btrfs_root *root, struct btrfs_key *key,
 			   struct btrfs_chunk *chunk, int item_size);

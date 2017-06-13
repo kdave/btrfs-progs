@@ -149,7 +149,7 @@ static int print_mapping_info(struct btrfs_fs_info *fs_info, u64 logical,
 	int mirror_num;
 	int ret = 0;
 
-	num_copies = btrfs_num_copies(&fs_info->mapping_tree, logical, len);
+	num_copies = btrfs_num_copies(fs_info, logical, len);
 	for (mirror_num = 1; mirror_num <= num_copies; mirror_num++) {
 		ret = __print_mapping_info(fs_info, logical, len, mirror_num);
 		if (ret < 0)

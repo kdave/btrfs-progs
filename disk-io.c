@@ -370,8 +370,7 @@ struct extent_buffer* read_tree_block(
 			ret = -EIO;
 			break;
 		}
-		num_copies = btrfs_num_copies(&fs_info->mapping_tree,
-					      eb->start, eb->len);
+		num_copies = btrfs_num_copies(fs_info, eb->start, eb->len);
 		if (num_copies == 1) {
 			ignore = 1;
 			continue;

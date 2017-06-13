@@ -88,8 +88,8 @@ static int debug_corrupt_block(struct extent_buffer *eb,
 			fsync(eb->fd);
 		}
 
-		num_copies = btrfs_num_copies(&root->fs_info->mapping_tree,
-					      eb->start, eb->len);
+		num_copies = btrfs_num_copies(root->fs_info, eb->start,
+					      eb->len);
 		if (num_copies == 1)
 			break;
 
