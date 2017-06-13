@@ -191,6 +191,6 @@ int btrfs_read_buffer(struct extent_buffer *buf, u64 parent_transid);
 int write_tree_block(struct btrfs_trans_handle *trans,
 		     struct btrfs_root *root,
 		     struct extent_buffer *eb);
-int write_and_map_eb(struct btrfs_root *root, struct extent_buffer *eb);
+int write_and_map_eb(struct btrfs_fs_info *fs_info, struct extent_buffer *eb);
 
 #endif

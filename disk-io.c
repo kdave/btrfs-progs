@@ -417,7 +417,7 @@ err:
 	return ret;
 }
 
-int write_and_map_eb(struct btrfs_root *root, struct extent_buffer *eb)
+int write_and_map_eb(struct btrfs_fs_info *fs_info, struct extent_buffer *eb)
 {
 	int ret;
 	int dev_nr;
@@ -427,11 +427,11 @@ int write_and_map_eb(struct btrfs_root *root, struct extent_buffer *eb)
 
 	dev_nr = 0;
 	length = eb->len;
-	ret = btrfs_map_block(root->fs_info, WRITE, eb->start, &length,
+	ret = btrfs_map_block(fs_info, WRITE, eb->start, &length,
 			      &multi, 0, &raid_map);
 
 	if (raid_map) {
-		ret = write_raid56_with_parity(root->fs_info, eb, multi,
+		ret = write_raid56_with_parity(fs_info, eb, multi,
 					       length, raid_map);
 		BUG_ON(ret);
 	} else while (dev_nr < multi->num_stripes) {
@@ -464,7 +464,7 @@ int write_tree_block(struct btrfs_trans_handle *trans,
 	btrfs_set_header_flag(eb, BTRFS_HEADER_FLAG_WRITTEN);
 	csum_tree_block(root->fs_info, eb, 0);
 
-	return write_and_map_eb(root, eb);
+	return write_and_map_eb(root->fs_info, eb);
 }
 
 void btrfs_setup_root(struct btrfs_root *root, struct btrfs_fs_info *fs_info,

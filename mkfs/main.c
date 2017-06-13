@@ -753,7 +753,7 @@ again:
 		if (ret)
 			goto end;
 
-		ret = write_and_map_eb(root, eb);
+		ret = write_and_map_eb(root->fs_info, eb);
 		if (ret) {
 			error("failed to write %s", path_name);
 			goto end;
