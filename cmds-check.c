@@ -1967,6 +1967,7 @@ out:
 static void reada_walk_down(struct btrfs_root *root,
 			    struct extent_buffer *node, int slot)
 {
+	struct btrfs_fs_info *fs_info = root->fs_info;
 	u64 bytenr;
 	u64 ptr_gen;
 	u32 nritems;
@@ -1979,11 +1980,11 @@ static void reada_walk_down(struct btrfs_root *root,
 		return;
 
 	nritems = btrfs_header_nritems(node);
-	blocksize = root->fs_info->nodesize;
+	blocksize = fs_info->nodesize;
 	for (i = slot; i < nritems; i++) {
 		bytenr = btrfs_node_blockptr(node, i);
 		ptr_gen = btrfs_node_ptr_generation(node, i);
-		readahead_tree_block(root, bytenr, blocksize, ptr_gen);
+		readahead_tree_block(fs_info, bytenr, blocksize, ptr_gen);
 	}
 }
 
@@ -7610,6 +7611,7 @@ static int run_next_block(struct btrfs_root *root,
 			  struct device_extent_tree *dev_extent_cache,
 			  struct root_item_record *ri)
 {
+	struct btrfs_fs_info *fs_info = root->fs_info;
 	struct extent_buffer *buf;
 	struct extent_record *rec = NULL;
 	u64 bytenr;
@@ -7639,7 +7641,7 @@ static int run_next_block(struct btrfs_root *root,
 				continue;
 
 			/* fixme, get the parent transid */
-			readahead_tree_block(root, bits[i].start,
+			readahead_tree_block(fs_info, bits[i].start,
 					     bits[i].size, 0);
 		}
 	}

@@ -1021,7 +1021,7 @@ void reada_for_search(struct btrfs_root *root, struct btrfs_path *path,
 		if ((search >= lowest_read && search <= highest_read) ||
 		    (search < lowest_read && lowest_read - search <= 32768) ||
 		    (search > highest_read && search - highest_read <= 32768)) {
-			readahead_tree_block(root, search, blocksize,
+			readahead_tree_block(fs_info, search, blocksize,
 				     btrfs_node_ptr_generation(node, nr));
 			nread += blocksize;
 		}

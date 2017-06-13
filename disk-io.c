@@ -187,17 +187,17 @@ struct extent_buffer* btrfs_find_create_tree_block(
 	return alloc_extent_buffer(&fs_info->extent_cache, bytenr, blocksize);
 }
 
-void readahead_tree_block(struct btrfs_root *root, u64 bytenr, u32 blocksize,
-			  u64 parent_transid)
+void readahead_tree_block(struct btrfs_fs_info *fs_info, u64 bytenr,
+			  u32 blocksize, u64 parent_transid)
 {
 	struct extent_buffer *eb;
 	u64 length;
 	struct btrfs_multi_bio *multi = NULL;
 	struct btrfs_device *device;
 
-	eb = btrfs_find_tree_block(root->fs_info, bytenr, blocksize);
+	eb = btrfs_find_tree_block(fs_info, bytenr, blocksize);
 	if (!(eb && btrfs_buffer_uptodate(eb, parent_transid)) &&
-	    !btrfs_map_block(root->fs_info, READ, bytenr, &length, &multi, 0,
+	    !btrfs_map_block(fs_info, READ, bytenr, &length, &multi, 0,
 			     NULL)) {
 		device = multi->stripes[0].dev;
 		device->total_ios++;
