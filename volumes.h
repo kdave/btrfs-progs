@@ -204,8 +204,8 @@ static inline int btrfs_next_bg_system(struct btrfs_fs_info *fs_info,
 int btrfs_rmap_block(struct btrfs_fs_info *fs_info,
 		     u64 chunk_start, u64 physical, u64 devid,
 		     u64 **logical, int *naddrs, int *stripe_len);
-int btrfs_read_sys_array(struct btrfs_root *root);
-int btrfs_read_chunk_tree(struct btrfs_root *root);
+int btrfs_read_sys_array(struct btrfs_fs_info *fs_info);
+int btrfs_read_chunk_tree(struct btrfs_fs_info *fs_info);
 int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 		      struct btrfs_root *extent_root, u64 *start,
 		      u64 *num_bytes, u64 type);

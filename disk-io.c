@@ -1173,7 +1173,7 @@ int btrfs_setup_chunk_tree_and_device_map(struct btrfs_fs_info *fs_info,
 	btrfs_setup_root(fs_info->chunk_root, fs_info,
 			BTRFS_CHUNK_TREE_OBJECTID);
 
-	ret = btrfs_read_sys_array(fs_info->chunk_root);
+	ret = btrfs_read_sys_array(fs_info);
 	if (ret)
 		return ret;
 
@@ -1207,7 +1207,7 @@ int btrfs_setup_chunk_tree_and_device_map(struct btrfs_fs_info *fs_info,
 	}
 
 	if (!(btrfs_super_flags(sb) & BTRFS_SUPER_FLAG_METADUMP)) {
-		ret = btrfs_read_chunk_tree(fs_info->chunk_root);
+		ret = btrfs_read_chunk_tree(fs_info);
 		if (ret) {
 			fprintf(stderr, "Couldn't read chunk tree\n");
 			return ret;

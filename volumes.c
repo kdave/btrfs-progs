@@ -1783,11 +1783,10 @@ int btrfs_check_chunk_valid(struct btrfs_fs_info *fs_info,
  *
  * For sys chunk in superblock, pass -1 to indicate sys chunk.
  */
-static int read_one_chunk(struct btrfs_root *root, struct btrfs_key *key,
+static int read_one_chunk(struct btrfs_fs_info *fs_info, struct btrfs_key *key,
 			  struct extent_buffer *leaf,
 			  struct btrfs_chunk *chunk, int slot)
 {
-	struct btrfs_fs_info *fs_info = root->fs_info;
 	struct btrfs_mapping_tree *map_tree = &fs_info->mapping_tree;
 	struct map_lookup *map;
 	struct cache_extent *ce;
@@ -1846,7 +1845,7 @@ static int read_one_chunk(struct btrfs_root *root, struct btrfs_key *key,
 			printf("warning, device %llu is missing\n",
 			       (unsigned long long)devid);
 			list_add(&map->stripes[i].dev->dev_list,
-				 &root->fs_info->fs_devices->devices);
+				 &fs_info->fs_devices->devices);
 		}
 
 	}
@@ -1913,11 +1912,10 @@ out:
 	return ret;
 }
 
-static int read_one_dev(struct btrfs_root *root,
+static int read_one_dev(struct btrfs_fs_info *fs_info,
 			struct extent_buffer *leaf,
 			struct btrfs_dev_item *dev_item)
 {
-	struct btrfs_fs_info *fs_info = root->fs_info;
 	struct btrfs_device *device;
 	u64 devid;
 	int ret = 0;
@@ -1953,9 +1951,9 @@ static int read_one_dev(struct btrfs_root *root,
 	return ret;
 }
 
-int btrfs_read_sys_array(struct btrfs_root *root)
+int btrfs_read_sys_array(struct btrfs_fs_info *fs_info)
 {
-	struct btrfs_super_block *super_copy = root->fs_info->super_copy;
+	struct btrfs_super_block *super_copy = fs_info->super_copy;
 	struct extent_buffer *sb;
 	struct btrfs_disk_key *disk_key;
 	struct btrfs_chunk *chunk;
@@ -1968,7 +1966,7 @@ int btrfs_read_sys_array(struct btrfs_root *root)
 	u32 cur_offset;
 	struct btrfs_key key;
 
-	sb = btrfs_find_create_tree_block(root->fs_info,
+	sb = btrfs_find_create_tree_block(fs_info,
 					  BTRFS_SUPER_INFO_OFFSET,
 					  BTRFS_SUPER_INFO_SIZE);
 	if (!sb)
@@ -2016,7 +2014,7 @@ int btrfs_read_sys_array(struct btrfs_root *root)
 			if (cur_offset + len > array_size)
 				goto out_short_read;
 
-			ret = read_one_chunk(root, &key, sb, chunk, -1);
+			ret = read_one_chunk(fs_info, &key, sb, chunk, -1);
 			if (ret)
 				break;
 		} else {
@@ -2040,16 +2038,15 @@ out_short_read:
 	return -EIO;
 }
 
-int btrfs_read_chunk_tree(struct btrfs_root *root)
+int btrfs_read_chunk_tree(struct btrfs_fs_info *fs_info)
 {
 	struct btrfs_path *path;
 	struct extent_buffer *leaf;
 	struct btrfs_key key;
 	struct btrfs_key found_key;
+	struct btrfs_root *root = fs_info->chunk_root;
 	int ret;
 	int slot;
-
-	root = root->fs_info->chunk_root;
 
 	path = btrfs_alloc_path();
 	if (!path)
@@ -2083,12 +2080,12 @@ int btrfs_read_chunk_tree(struct btrfs_root *root)
 			struct btrfs_dev_item *dev_item;
 			dev_item = btrfs_item_ptr(leaf, slot,
 						  struct btrfs_dev_item);
-			ret = read_one_dev(root, leaf, dev_item);
+			ret = read_one_dev(fs_info, leaf, dev_item);
 			BUG_ON(ret);
 		} else if (found_key.type == BTRFS_CHUNK_ITEM_KEY) {
 			struct btrfs_chunk *chunk;
 			chunk = btrfs_item_ptr(leaf, slot, struct btrfs_chunk);
-			ret = read_one_chunk(root, &found_key, leaf, chunk,
+			ret = read_one_chunk(fs_info, &found_key, leaf, chunk,
 					     slot);
 			BUG_ON(ret);
 		}
