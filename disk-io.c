@@ -164,20 +164,14 @@ int verify_tree_block_csum_silent(struct extent_buffer *buf, u16 csum_size)
 	return __csum_tree_block_size(buf, csum_size, 1, 1);
 }
 
-static int csum_tree_block_fs_info(struct btrfs_fs_info *fs_info,
-				   struct extent_buffer *buf, int verify)
+int csum_tree_block(struct btrfs_fs_info *fs_info,
+		    struct extent_buffer *buf, int verify)
 {
 	u16 csum_size =
 		btrfs_super_csum_size(fs_info->super_copy);
 	if (verify && fs_info->suppress_check_block_errors)
 		return verify_tree_block_csum_silent(buf, csum_size);
 	return csum_tree_block_size(buf, csum_size, verify);
-}
-
-int csum_tree_block(struct btrfs_root *root, struct extent_buffer *buf,
-			   int verify)
-{
-	return csum_tree_block_fs_info(root->fs_info, buf, verify);
 }
 
 struct extent_buffer *btrfs_find_tree_block(struct btrfs_root *root,
@@ -345,7 +339,7 @@ struct extent_buffer* read_tree_block(
 
 	while (1) {
 		ret = read_whole_eb(fs_info, eb, mirror_num);
-		if (ret == 0 && csum_tree_block_fs_info(fs_info, eb, 1) == 0 &&
+		if (ret == 0 && csum_tree_block(fs_info, eb, 1) == 0 &&
 		    check_tree_block(fs_info, eb) == 0 &&
 		    verify_parent_transid(eb->tree, eb, parent_transid, ignore)
 		    == 0) {
@@ -468,7 +462,7 @@ int write_tree_block(struct btrfs_trans_handle *trans,
 		BUG();
 
 	btrfs_set_header_flag(eb, BTRFS_HEADER_FLAG_WRITTEN);
-	csum_tree_block(root, eb, 0);
+	csum_tree_block(root->fs_info, eb, 0);
 
 	return write_and_map_eb(root, eb);
 }

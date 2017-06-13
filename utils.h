@@ -115,8 +115,8 @@ u64 btrfs_device_size(int fd, struct stat *st);
 int get_label_mounted(const char *mount_path, char *labelp);
 int get_label_unmounted(const char *dev, char *label);
 int group_profile_max_safe_loss(u64 flags);
-int csum_tree_block(struct btrfs_root *root, struct extent_buffer *buf,
-			   int verify);
+int csum_tree_block(struct btrfs_fs_info *root, struct extent_buffer *buf,
+		    int verify);
 int ask_user(const char *question);
 int lookup_path_rootid(int fd, u64 *rootid);
 int btrfs_scan_devices(void);
