@@ -1636,11 +1636,11 @@ btrfs_find_device_by_devid(struct btrfs_fs_devices *fs_devices,
 	return NULL;
 }
 
-int btrfs_chunk_readonly(struct btrfs_root *root, u64 chunk_offset)
+int btrfs_chunk_readonly(struct btrfs_fs_info *fs_info, u64 chunk_offset)
 {
 	struct cache_extent *ce;
 	struct map_lookup *map;
-	struct btrfs_mapping_tree *map_tree = &root->fs_info->mapping_tree;
+	struct btrfs_mapping_tree *map_tree = &fs_info->mapping_tree;
 	int readonly = 0;
 	int i;
 
@@ -1649,7 +1649,7 @@ int btrfs_chunk_readonly(struct btrfs_root *root, u64 chunk_offset)
 	 * corresponding chunk, we will rebuild it later
 	 */
 	ce = search_cache_extent(&map_tree->cache_tree, chunk_offset);
-	if (!root->fs_info->is_chunk_recover)
+	if (!fs_info->is_chunk_recover)
 		BUG_ON(!ce);
 	else
 		return 0;

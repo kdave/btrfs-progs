@@ -3286,7 +3286,7 @@ int btrfs_read_block_groups(struct btrfs_root *root)
 			bit = BLOCK_GROUP_METADATA;
 		}
 		set_avail_alloc_bits(info, cache->flags);
-		if (btrfs_chunk_readonly(root, cache->key.objectid))
+		if (btrfs_chunk_readonly(info, cache->key.objectid))
 			cache->ro = 1;
 
 		account_super_bytes(info, cache);

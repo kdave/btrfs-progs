@@ -232,7 +232,7 @@ int btrfs_num_copies(struct btrfs_fs_info *fs_info, u64 logical, u64 len);
 struct list_head *btrfs_scanned_uuids(void);
 int btrfs_add_system_chunk(struct btrfs_fs_info *fs_info, struct btrfs_key *key,
 			   struct btrfs_chunk *chunk, int item_size);
-int btrfs_chunk_readonly(struct btrfs_root *root, u64 chunk_offset);
+int btrfs_chunk_readonly(struct btrfs_fs_info *fs_info, u64 chunk_offset);
 struct btrfs_device *
 btrfs_find_device_by_devid(struct btrfs_fs_devices *fs_devices,
 			   u64 devid, int instance);
