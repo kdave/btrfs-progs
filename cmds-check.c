@@ -7166,8 +7166,9 @@ static int check_extent_csums(struct btrfs_root *root, u64 bytenr,
 			u64 num_bytes, unsigned long leaf_offset,
 			struct extent_buffer *eb) {
 
+	struct btrfs_fs_info *fs_info = root->fs_info;
 	u64 offset = 0;
-	u16 csum_size = btrfs_super_csum_size(root->fs_info->super_copy);
+	u16 csum_size = btrfs_super_csum_size(fs_info->super_copy);
 	char *data;
 	unsigned long csum_offset;
 	u32 csum;
@@ -7179,7 +7180,7 @@ static int check_extent_csums(struct btrfs_root *root, u64 bytenr,
 	int mirror;
 	int num_copies;
 
-	if (num_bytes % root->fs_info->sectorsize)
+	if (num_bytes % fs_info->sectorsize)
 		return -EINVAL;
 
 	data = malloc(num_bytes);
@@ -7191,7 +7192,7 @@ static int check_extent_csums(struct btrfs_root *root, u64 bytenr,
 again:
 		read_len = num_bytes - offset;
 		/* read as much space once a time */
-		ret = read_extent_data(root, data + offset,
+		ret = read_extent_data(fs_info, data + offset,
 				bytenr + offset, &read_len, mirror);
 		if (ret)
 			goto out;
@@ -7202,11 +7203,11 @@ again:
 			tmp = offset + data_checked;
 
 			csum = btrfs_csum_data((char *)data + tmp,
-					       csum, root->fs_info->sectorsize);
+					       csum, fs_info->sectorsize);
 			btrfs_csum_final(csum, (u8 *)&csum);
 
 			csum_offset = leaf_offset +
-				 tmp / root->fs_info->sectorsize * csum_size;
+				 tmp / fs_info->sectorsize * csum_size;
 			read_extent_buffer(eb, (char *)&csum_expected,
 					   csum_offset, csum_size);
 			/* try another mirror */
@@ -7221,7 +7222,7 @@ again:
 					goto again;
 				}
 			}
-			data_checked += root->fs_info->sectorsize;
+			data_checked += fs_info->sectorsize;
 		}
 		offset += read_len;
 	}
@@ -12080,13 +12081,14 @@ static int populate_csum(struct btrfs_trans_handle *trans,
 			 struct btrfs_root *csum_root, char *buf, u64 start,
 			 u64 len)
 {
+	struct btrfs_fs_info *fs_info = csum_root->fs_info;
 	u64 offset = 0;
 	u64 sectorsize;
 	int ret = 0;
 
 	while (offset < len) {
-		sectorsize = csum_root->fs_info->sectorsize;
-		ret = read_extent_data(csum_root, buf, start + offset,
+		sectorsize = fs_info->sectorsize;
+		ret = read_extent_data(fs_info, buf, start + offset,
 				       &sectorsize, 0);
 		if (ret)
 			break;

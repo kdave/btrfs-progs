@@ -119,7 +119,7 @@ struct extent_buffer* read_tree_block(
 		struct btrfs_fs_info *fs_info, u64 bytenr, u32 blocksize,
 		u64 parent_transid);
 
-int read_extent_data(struct btrfs_root *root, char *data, u64 logical,
+int read_extent_data(struct btrfs_fs_info *fs_info, char *data, u64 logical,
 		     u64 *len, int mirror);
 void readahead_tree_block(struct btrfs_root *root, u64 bytenr, u32 blocksize,
 			  u64 parent_transid);

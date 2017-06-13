@@ -183,20 +183,21 @@ out:
 int btrfs_read_file(struct btrfs_root *root, u64 ino, u64 start, int len,
 		    char *dest)
 {
+	struct btrfs_fs_info *fs_info = root->fs_info;
 	struct btrfs_key key;
 	struct btrfs_path path;
 	struct extent_buffer *leaf;
 	struct btrfs_inode_item *ii;
 	u64 isize;
-	int no_holes = btrfs_fs_incompat(root->fs_info, NO_HOLES);
+	int no_holes = btrfs_fs_incompat(fs_info, NO_HOLES);
 	int slot;
 	int read = 0;
 	int ret;
 
-	if (!IS_ALIGNED(start, root->fs_info->sectorsize) ||
-	    !IS_ALIGNED(len, root->fs_info->sectorsize)) {
+	if (!IS_ALIGNED(start, fs_info->sectorsize) ||
+	    !IS_ALIGNED(len, fs_info->sectorsize)) {
 		warning("@start and @len must be aligned to %u for function %s",
-			root->fs_info->sectorsize, __func__);
+			fs_info->sectorsize, __func__);
 		return -EINVAL;
 	}
 
@@ -260,7 +261,7 @@ int btrfs_read_file(struct btrfs_root *root, u64 ino, u64 start, int len,
 				goto next;
 			read_extent_buffer(leaf, dest,
 				btrfs_file_extent_inline_start(fi), extent_len);
-			read += round_up(extent_len, root->fs_info->sectorsize);
+			read += round_up(extent_len, fs_info->sectorsize);
 			break;
 		}
 
@@ -283,7 +284,7 @@ int btrfs_read_file(struct btrfs_root *root, u64 ino, u64 start, int len,
 		disk_bytenr = btrfs_file_extent_disk_bytenr(leaf, fi) +
 			      btrfs_file_extent_offset(leaf, fi);
 		read_len_ret = read_len;
-		ret = read_extent_data(root, dest + read_start - start, disk_bytenr,
+		ret = read_extent_data(fs_info, dest + read_start - start, disk_bytenr,
 				       &read_len_ret, 0);
 		if (ret < 0)
 			break;
@@ -319,7 +320,7 @@ next:
 		ii = btrfs_item_ptr(path.nodes[0], path.slots[0],
 				    struct btrfs_inode_item);
 		isize = round_up(btrfs_inode_size(path.nodes[0], ii),
-				 root->fs_info->sectorsize);
+				 fs_info->sectorsize);
 		read = min_t(u64, isize - start, len);
 	}
 out:

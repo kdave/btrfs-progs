@@ -876,6 +876,7 @@ static int read_data_extent(struct metadump_struct *md,
 			    struct async_work *async)
 {
 	struct btrfs_root *root = md->root;
+	struct btrfs_fs_info *fs_info = root->fs_info;
 	u64 bytes_left = async->size;
 	u64 logical = async->start;
 	u64 offset = 0;
@@ -890,7 +891,7 @@ static int read_data_extent(struct metadump_struct *md,
 	for (cur_mirror = 0; cur_mirror < num_copies; cur_mirror++) {
 		while (bytes_left) {
 			read_len = bytes_left;
-			ret = read_extent_data(root,
+			ret = read_extent_data(fs_info,
 					(char *)(async->buffer + offset),
 					logical, &read_len, cur_mirror);
 			if (ret < 0)
