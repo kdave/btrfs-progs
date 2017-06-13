@@ -302,7 +302,7 @@ int btrfs_recover_superblocks(const char *dname,
 	}
 	/* reset super_bytenr in order that we will rewrite all supers */
 	root->fs_info->super_bytenr = BTRFS_SUPER_INFO_OFFSET;
-	ret = write_all_supers(root);
+	ret = write_all_supers(root->fs_info);
 	if (!ret)
 		ret = 2;
 	else

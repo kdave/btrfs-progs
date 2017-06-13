@@ -599,7 +599,7 @@ commit_tree:
 	BUG_ON(ret);
 	ret = __commit_transaction(trans, root);
 	BUG_ON(ret);
-	write_ctree_super(trans, root);
+	write_ctree_super(trans, fs_info);
 	btrfs_finish_extent_commit(trans, fs_info->extent_root,
 			           &fs_info->pinned_extents);
 	kfree(trans);
@@ -1631,7 +1631,7 @@ int btrfs_read_dev_super(int fd, struct btrfs_super_block *sb, u64 sb_bytenr,
 	return transid > 0 ? 0 : -1;
 }
 
-static int write_dev_supers(struct btrfs_root *root,
+static int write_dev_supers(struct btrfs_fs_info *fs_info,
 			    struct btrfs_super_block *sb,
 			    struct btrfs_device *device)
 {
@@ -1639,8 +1639,8 @@ static int write_dev_supers(struct btrfs_root *root,
 	u32 crc;
 	int i, ret;
 
-	if (root->fs_info->super_bytenr != BTRFS_SUPER_INFO_OFFSET) {
-		btrfs_set_super_bytenr(sb, root->fs_info->super_bytenr);
+	if (fs_info->super_bytenr != BTRFS_SUPER_INFO_OFFSET) {
+		btrfs_set_super_bytenr(sb, fs_info->super_bytenr);
 		crc = ~(u32)0;
 		crc = btrfs_csum_data((char *)sb + BTRFS_CSUM_SIZE, crc,
 				      BTRFS_SUPER_INFO_SIZE - BTRFS_CSUM_SIZE);
@@ -1650,9 +1650,9 @@ static int write_dev_supers(struct btrfs_root *root,
 		 * super_copy is BTRFS_SUPER_INFO_SIZE bytes and is
 		 * zero filled, we can use it directly
 		 */
-		ret = pwrite64(device->fd, root->fs_info->super_copy,
+		ret = pwrite64(device->fd, fs_info->super_copy,
 				BTRFS_SUPER_INFO_SIZE,
-				root->fs_info->super_bytenr);
+				fs_info->super_bytenr);
 		if (ret != BTRFS_SUPER_INFO_SIZE)
 			goto write_err;
 		return 0;
@@ -1674,7 +1674,7 @@ static int write_dev_supers(struct btrfs_root *root,
 		 * super_copy is BTRFS_SUPER_INFO_SIZE bytes and is
 		 * zero filled, we can use it directly
 		 */
-		ret = pwrite64(device->fd, root->fs_info->super_copy,
+		ret = pwrite64(device->fd, fs_info->super_copy,
 				BTRFS_SUPER_INFO_SIZE, bytenr);
 		if (ret != BTRFS_SUPER_INFO_SIZE)
 			goto write_err;
@@ -1691,17 +1691,17 @@ write_err:
 	return ret;
 }
 
-int write_all_supers(struct btrfs_root *root)
+int write_all_supers(struct btrfs_fs_info *fs_info)
 {
 	struct list_head *cur;
-	struct list_head *head = &root->fs_info->fs_devices->devices;
+	struct list_head *head = &fs_info->fs_devices->devices;
 	struct btrfs_device *dev;
 	struct btrfs_super_block *sb;
 	struct btrfs_dev_item *dev_item;
 	int ret;
 	u64 flags;
 
-	sb = root->fs_info->super_copy;
+	sb = fs_info->super_copy;
 	dev_item = &sb->dev_item;
 	list_for_each(cur, head) {
 		dev = list_entry(cur, struct btrfs_device, dev_list);
@@ -1722,36 +1722,36 @@ int write_all_supers(struct btrfs_root *root)
 		flags = btrfs_super_flags(sb);
 		btrfs_set_super_flags(sb, flags | BTRFS_HEADER_FLAG_WRITTEN);
 
-		ret = write_dev_supers(root, sb, dev);
+		ret = write_dev_supers(fs_info, sb, dev);
 		BUG_ON(ret);
 	}
 	return 0;
 }
 
 int write_ctree_super(struct btrfs_trans_handle *trans,
-		      struct btrfs_root *root)
+		      struct btrfs_fs_info *fs_info)
 {
 	int ret;
-	struct btrfs_root *tree_root = root->fs_info->tree_root;
-	struct btrfs_root *chunk_root = root->fs_info->chunk_root;
+	struct btrfs_root *tree_root = fs_info->tree_root;
+	struct btrfs_root *chunk_root = fs_info->chunk_root;
 
-	if (root->fs_info->readonly)
+	if (fs_info->readonly)
 		return 0;
 
-	btrfs_set_super_generation(root->fs_info->super_copy,
+	btrfs_set_super_generation(fs_info->super_copy,
 				   trans->transid);
-	btrfs_set_super_root(root->fs_info->super_copy,
+	btrfs_set_super_root(fs_info->super_copy,
 			     tree_root->node->start);
-	btrfs_set_super_root_level(root->fs_info->super_copy,
+	btrfs_set_super_root_level(fs_info->super_copy,
 				   btrfs_header_level(tree_root->node));
-	btrfs_set_super_chunk_root(root->fs_info->super_copy,
+	btrfs_set_super_chunk_root(fs_info->super_copy,
 				   chunk_root->node->start);
-	btrfs_set_super_chunk_root_level(root->fs_info->super_copy,
+	btrfs_set_super_chunk_root_level(fs_info->super_copy,
 					 btrfs_header_level(chunk_root->node));
-	btrfs_set_super_chunk_root_generation(root->fs_info->super_copy,
+	btrfs_set_super_chunk_root_generation(fs_info->super_copy,
 				btrfs_header_generation(chunk_root->node));
 
-	ret = write_all_supers(root);
+	ret = write_all_supers(fs_info);
 	if (ret)
 		fprintf(stderr, "failed to write new super block err %d\n", ret);
 	return ret;
@@ -1773,14 +1773,14 @@ int close_ctree_fs_info(struct btrfs_fs_info *fs_info)
 		BUG_ON(ret);
 		ret = __commit_transaction(trans, root);
 		BUG_ON(ret);
-		write_ctree_super(trans, root);
+		write_ctree_super(trans, fs_info);
 		kfree(trans);
 	}
 
 	if (fs_info->finalize_on_close) {
 		btrfs_set_super_magic(fs_info->super_copy, BTRFS_MAGIC);
 		root->fs_info->finalize_on_close = 0;
-		ret = write_all_supers(root);
+		ret = write_all_supers(fs_info);
 		if (ret)
 			fprintf(stderr,
 				"failed to write new super block err %d\n", ret);

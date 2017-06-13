@@ -161,9 +161,9 @@ static inline int close_ctree(struct btrfs_root *root)
 	return close_ctree_fs_info(root->fs_info);
 }
 
-int write_all_supers(struct btrfs_root *root);
+int write_all_supers(struct btrfs_fs_info *fs_info);
 int write_ctree_super(struct btrfs_trans_handle *trans,
-		      struct btrfs_root *root);
+		      struct btrfs_fs_info *fs_info);
 int btrfs_read_dev_super(int fd, struct btrfs_super_block *sb, u64 sb_bytenr,
 		unsigned sbflags);
 int btrfs_map_bh_to_logical(struct btrfs_root *root, struct extent_buffer *bh,

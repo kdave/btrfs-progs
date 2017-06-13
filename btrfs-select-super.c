@@ -93,7 +93,7 @@ int main(int argc, char **argv)
 
 	/* make the super writing code think we've read the first super */
 	root->fs_info->super_bytenr = BTRFS_SUPER_INFO_OFFSET;
-	ret = write_all_supers(root);
+	ret = write_all_supers(root->fs_info);
 
 	/* we don't close the ctree or anything, because we don't want a real
 	 * transaction commit.  We just want the super copy we pulled off the

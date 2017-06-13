@@ -242,7 +242,7 @@ static int change_fsid_prepare(struct btrfs_fs_info *fs_info)
 	btrfs_set_super_flags(fs_info->super_copy, flags);
 
 	memcpy(fs_info->super_copy->fsid, fs_info->new_fsid, BTRFS_FSID_SIZE);
-	ret = write_all_supers(tree_root);
+	ret = write_all_supers(fs_info);
 	if (ret < 0)
 		return ret;
 
@@ -260,7 +260,7 @@ static int change_fsid_done(struct btrfs_fs_info *fs_info)
 	flags &= ~BTRFS_SUPER_FLAG_CHANGING_FSID;
 	btrfs_set_super_flags(fs_info->super_copy, flags);
 
-	return write_all_supers(fs_info->tree_root);
+	return write_all_supers(fs_info);
 }
 
 /*
@@ -354,7 +354,7 @@ static int change_uuid(struct btrfs_fs_info *fs_info, const char *new_fsid_str)
 	       BTRFS_FSID_SIZE);
 	memcpy(fs_info->super_copy->fsid, fs_info->new_fsid,
 	       BTRFS_FSID_SIZE);
-	ret = write_all_supers(fs_info->tree_root);
+	ret = write_all_supers(fs_info);
 	if (ret < 0)
 		goto out;
 
