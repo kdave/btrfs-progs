@@ -6626,7 +6626,7 @@ static int process_chunk_item(struct cache_tree *chunk_cache,
 	 * wrong onwer(3) out of chunk tree, to pass both chunk tree check
 	 * and owner<->key_type check.
 	 */
-	ret = btrfs_check_chunk_valid(global_info->tree_root, eb, chunk, slot,
+	ret = btrfs_check_chunk_valid(global_info, eb, chunk, slot,
 				      key->offset);
 	if (ret < 0) {
 		error("chunk(%llu, %llu) is not valid, ignore it",
@@ -10927,7 +10927,7 @@ static int check_dev_extent_item(struct btrfs_fs_info *fs_info,
 
 	l = path.nodes[0];
 	chunk = btrfs_item_ptr(l, path.slots[0], struct btrfs_chunk);
-	ret = btrfs_check_chunk_valid(chunk_root, l, chunk, path.slots[0],
+	ret = btrfs_check_chunk_valid(fs_info, l, chunk, path.slots[0],
 				      chunk_key.offset);
 	if (ret < 0)
 		goto out;
@@ -11185,7 +11185,7 @@ static int check_chunk_item(struct btrfs_fs_info *fs_info,
 	chunk = btrfs_item_ptr(eb, slot, struct btrfs_chunk);
 	length = btrfs_chunk_length(eb, chunk);
 	chunk_end = chunk_key.offset + length;
-	ret = btrfs_check_chunk_valid(extent_root, eb, chunk, slot,
+	ret = btrfs_check_chunk_valid(fs_info, eb, chunk, slot,
 				      chunk_key.offset);
 	if (ret < 0) {
 		error("chunk[%llu %llu) is invalid", chunk_key.offset,
