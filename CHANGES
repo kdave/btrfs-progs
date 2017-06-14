@@ -206,7 +206,7 @@ btrfs-progs-4.7 (2016-07-29)
   * more tests
 
 btrfs-progs-4.6.1 (2016-06-24)
-  * fi resize: negative resize argument accepted again
+  * filesystem resize: negative resize argument accepted again
   * qgroup rescan: fix skipping when rescan is in progress
   * mkfs: initialize stripesize to correct value
   * testsuite updates, mostly convert tests
@@ -251,8 +251,8 @@ btrfs-progs-4.5.2 (2016-05-02)
   * check: catch when qgroup numbers mismatch
   * check: detect running quota rescan and report mismatches
   * balance start: add safety delay before doing a full balance
-  * fi sync: is now silent
-  * fi show: don't miss filesystems with partially matching uuids
+  * filesystem sync: is now silent
+  * filesystem show: don't miss filesystems with partially matching uuids
   * dev ready: accept only one argument for device
   * dev stats: print "devid:N" for a missing device instead of "(null)"
   * other:
@@ -269,7 +269,7 @@ btrfs-progs-4.5 (2016-03-20)
     * btrfs-debug-tree -> btrfs inspect-internal dump-tree
 
   New commands:
-    * btrfs fi du - calculate disk usage, including shared extents
+    * btrfs filesystem du - calculate disk usage, including shared extents
 
   Enhancements:
     * device delete - delete by id (needs kernel support, not merged to
@@ -362,7 +362,7 @@ btrfs-progs-4.3 (2015-11-06)
     * print version info earlier
     * print devices sorted by id
     * do not truncate target image with --rootsize
-  * fi usage:
+  * filesystem usage:
     * don't print global block reserve
     * print device id
     * minor output tuning
@@ -408,11 +408,11 @@ btrfs-progs-4.2.3 (2015-10-19)
   * restore: off-by-one symlink path check fix
 
 btrfs-progs-4.2.2 (2015-10-05)
-  * fi label: use fallback if the label ioctl is not available
+  * filesystem label: use fallback if the label ioctl is not available
   * convert: check nodesize constraints against commandline features (-O)
   * scrub: report status 'running' until all devices are finished
   * device scanning might crash in some scenarios
-  * fi usage: print summary for non-root users
+  * filesystem usage: print summary for non-root users
 
 btrfs-progs-4.2.1 (2015-09-20)
   * fix an off-by-one error in cross-stripe boundary check
@@ -571,7 +571,7 @@ btrfs-progs-3.19.1 (2015-03-25)
   * build fixes:
     * missing macro from public header, BTRFS_BUILD_VERSION
     * wrong handling of --enable-convert
-  * fi usage: reports correct space for degraded mounts
+  * filesystem usage: reports correct space for degraded mounts
   * other:
     * mkfs: help string updates
     * completion: added 'usage' subcommands
@@ -595,7 +595,7 @@ btrfs-progs-3.18.2 (2015-01-27)
   * qgroup show: print human readable sizes, options to say otherwise
   * check: new option to explicitly say no to writes
   * mkfs: message about trimming is not printed to stderr
-  * fi show: fixed return value
+  * filesystem show: fixed return value
   * tests: new infrastructure
   * btrfstune: force flag can be used together with seeding option
   * backtrace support is back
@@ -610,7 +610,7 @@ btrfs-progs-3.18 (2014-12-30)
   * mkfs - skinny-metadata feature is now on by default, first introduced in
     kernel 3.10
   * filesystem usage - give an overview of fs usage in a way that's more
-    comprehensible than existing 'fi df'
+    comprehensible than existing 'filesystem df'
   * device usage - more detailed information about per-device allocations
   * check
     * option to set a different tree root byte number
@@ -637,12 +637,12 @@ btrfs-progs-3.17.2 (2014-11-19)
   * zero-log: able to reset a fs with bogus log tree pointer (bug_72151)
 
 btrfs-progs-3.17.1 (2014-11-04)
-  * fi df: argument handling
+  * filesystem df: argument handling
   * fix linking with libbtrfs
   * replace: better error reporting
-  * fi show: fixed stall if run concurrently with balance
+  * filesystem show: fixed stall if run concurrently with balance
   * check: fixed argument parsing for --subvol-extents
-  * fi df: SI prefixes corrected
+  * filesystem df: SI prefixes corrected
 
 btrfs-progs-3.17 (2014-10-17)
   * check: --init-csum-tree actually does something useful, rebuilds the
@@ -657,7 +657,7 @@ btrfs-progs-3.16.2 (2014-10-01)
   * a few fixes in fsck and image tools
 
 btrfs-progs-3.16.1 (2014-09-15)
-  * print GlobalReserve in fi df output
+  * print GlobalReserve in filesystem df output
   * new option -R in subvol list
   * library version defines
   * static build is fixed
