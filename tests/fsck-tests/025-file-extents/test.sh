@@ -5,8 +5,10 @@ source "$TOP/tests/common"
 
 check_prereq btrfs
 check_prereq mkfs.btrfs
+check_prereq btrfstune
 check_global_prereq dd
 check_global_prereq fallocate
+check_global_prereq truncate
 
 setup_root_helper
 prepare_test_dev 128M
@@ -38,5 +40,21 @@ test_compressed_inline_extent()
 	run_check "$TOP/btrfs" check "$TEST_DEV"
 }
 
+# File extent hole with NO_HOLES incompat feature set.
+# Lowmem mode will cause a false alert as it doesn't allow any file hole
+# extents, while we can set NO_HOLES at anytime we want, it's definitely a
+# false alert
+test_hole_extent_with_no_holes_flag()
+{
+	run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f "$TEST_DEV"
+	run_check_mount_test_dev
+
+	run_check $SUDO_HELPER truncate -s 16K "$TEST_MNT/tmp"
+	run_check_umount_test_dev
+	run_check $SUDO_HELPER "$TOP/btrfstune" -n "$TEST_DEV"
+	run_check "$TOP/btrfs" check "$TEST_DEV"
+}
+
 test_paritical_write_into_prealloc
 test_compressed_inline_extent
+test_hole_extent_with_no_holes_flag
