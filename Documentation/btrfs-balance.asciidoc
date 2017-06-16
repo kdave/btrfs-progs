@@ -247,7 +247,7 @@ provided.
 Let's use the following real life example and start with the output:
 
 --------------------
-$ btrfs fi df /path
+$ btrfs filesystem df /path
 Data, single: total=75.81GiB, used=64.44GiB
 System, RAID1: total=32.00MiB, used=20.00KiB
 Metadata, RAID1: total=15.87GiB, used=8.84GiB
@@ -273,7 +273,7 @@ data and thus will be faster. A typical filter command would look like:
 # btrfs balance start -dusage=50 /path
 Done, had to relocate 2 out of 97 chunks
 
-$ btrfs fi df /path
+$ btrfs filesystem df /path
 Data, single: total=74.03GiB, used=64.43GiB
 System, RAID1: total=32.00MiB, used=20.00KiB
 Metadata, RAID1: total=15.87GiB, used=8.84GiB
@@ -288,7 +288,7 @@ usage filter.
 # btrfs balance start -dusage=85 /path
 Done, had to relocate 13 out of 95 chunks
 
-$ btrfs fi df /path
+$ btrfs filesystem df /path
 Data, single: total=68.03GiB, used=64.43GiB
 System, RAID1: total=32.00MiB, used=20.00KiB
 Metadata, RAID1: total=15.87GiB, used=8.85GiB
@@ -309,7 +309,7 @@ reflinks updated frequently.
 # btrfs balance start -musage=50 /path
 Done, had to relocate 4 out of 89 chunks
 
-$ btrfs fi df /path
+$ btrfs filesystem df /path
 Data, single: total=68.03GiB, used=64.43GiB
 System, RAID1: total=32.00MiB, used=20.00KiB
 Metadata, RAID1: total=14.87GiB, used=8.85GiB
@@ -327,7 +327,7 @@ further compaction:
 # btrfs balance start -musage=70 /path
 Done, had to relocate 13 out of 88 chunks
 
-$ btrfs fi df .
+$ btrfs filesystem df .
 Data, single: total=68.03GiB, used=64.43GiB
 System, RAID1: total=32.00MiB, used=20.00KiB
 Metadata, RAID1: total=11.97GiB, used=8.83GiB
@@ -351,7 +351,7 @@ can be used to reclaim unused block groups to make it available.
 # btrfs balance start -dusage=0 /path
 --------------------
 
-This should lead to decrease in the 'total' numbers in the *btrfs fi df* output.
+This should lead to decrease in the 'total' numbers in the *btrfs filesystem df* output.
 
 EXIT STATUS
 -----------
