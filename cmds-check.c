@@ -4836,11 +4836,7 @@ static int check_file_extent(struct btrfs_root *root, struct btrfs_key *fkey,
 	}
 
 	/* Check EXTENT_DATA hole */
-	if (no_holes && is_hole) {
-		err |= FILE_EXTENT_ERROR;
-		error("root %llu EXTENT_DATA[%llu %llu] shouldn't be hole",
-		      root->objectid, fkey->objectid, fkey->offset);
-	} else if (!no_holes && *end != fkey->offset) {
+	if (!no_holes && *end != fkey->offset) {
 		err |= FILE_EXTENT_ERROR;
 		error("root %llu EXTENT_DATA[%llu %llu] interrupt",
 		      root->objectid, fkey->objectid, fkey->offset);
