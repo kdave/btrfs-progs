@@ -141,7 +141,7 @@ files, it will report a count of total bytes, and exclusive (not
 shared) bytes. We also calculate a 'set shared' value which is
 described below.
 +
-Each argument to 'btrfs fi du' will have a 'set shared' value
+Each argument to 'btrfs filesystem du' will have a 'set shared' value
 calculated for it. We define each 'set' as those files found by a
 recursive search of an argument. The 'set shared' value
 then is a sum of all shared space referenced by the set.
@@ -262,7 +262,7 @@ root user (due to use of restricted ioctl). For both there's a summary section
 with information about space usage:
 +
 -------------------------
-$ btrfs fi usage /path
+$ btrfs filesystem usage /path
 WARNING: cannot read detailed chunk info, RAID5/6 numbers will be incorrect, run as root
 Overall:
     Device size:                   1.82TiB
