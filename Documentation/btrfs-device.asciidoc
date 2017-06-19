@@ -72,8 +72,9 @@ using the RAID1 profile. See the example section below.
 +
 The operation can take long as it needs to move all data from the device.
 +
-NOTE: It is not possible to delete the device that was used to mount the
-filesystem. This is a limitation given by the VFS.
+It is possible to delete the device that was used to mount the filesystem. The
+device entry in mount table will be replaced by another device name with the
+lowest device id.
 
 *delete* <dev>|<devid> [<dev>|<devid>...] <path>::
 Alias of remove kept for backward compatibility
