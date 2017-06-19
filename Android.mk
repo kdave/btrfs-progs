@@ -17,22 +17,27 @@ STATIC_LIBS := -luuid   -lblkid -luuid -lz   -llzo2 -L. -pthread
 btrfs_shared_libraries := libext2_uuid \
 			libext2_blkid
 
-objects := ctree.c disk-io.c radix-tree.c extent-tree.c print-tree.c \
+objects := ctree.c disk-io.c kernel-lib/radix-tree.c extent-tree.c print-tree.c \
           root-tree.c dir-item.c file-item.c inode-item.c inode-map.c \
           extent-cache.c extent_io.c volumes.c utils.c repair.c \
-          qgroup.c raid6.c free-space-cache.c list_sort.c props.c \
-          ulist.c qgroup-verify.c backref.c string-table.c task-utils.c \
-          inode.c file.c find-root.c
+          qgroup.c free-space-cache.c kernel-lib/list_sort.c props.c \
+          kernel-shared/ulist.c qgroup-verify.c backref.c string-table.c task-utils.c \
+          inode.c file.c find-root.c free-space-tree.c help.c send-dump.c \
+          fsfeatures.c kernel-lib/tables.c kernel-lib/raid56.c
 cmds_objects := cmds-subvolume.c cmds-filesystem.c cmds-device.c cmds-scrub.c \
                cmds-inspect.c cmds-balance.c cmds-send.c cmds-receive.c \
                cmds-quota.c cmds-qgroup.c cmds-replace.c cmds-check.c \
                cmds-restore.c cmds-rescue.c chunk-recover.c super-recover.c \
-               cmds-property.c cmds-fi-usage.c
-libbtrfs_objects := send-stream.c send-utils.c rbtree.c btrfs-list.c crc32c.c \
+               cmds-property.c cmds-fi-usage.c cmds-inspect-dump-tree.c \
+               cmds-inspect-dump-super.c cmds-inspect-tree-stats.c cmds-fi-du.c \
+               mkfs/common.c
+libbtrfs_objects := send-stream.c send-utils.c kernel-lib/rbtree.c btrfs-list.c \
+                   kernel-lib/crc32c.c messages.c \
                    uuid-tree.c utils-lib.c rbtree-utils.c
-libbtrfs_headers := send-stream.h send-utils.h send.h rbtree.h btrfs-list.h \
-                   crc32c.h list.h kerncompat.h radix-tree.h extent-cache.h \
-                   extent_io.h ioctl.h ctree.h btrfsck.h version.h
+libbtrfs_headers := send-stream.h send-utils.h send.h kernel-lib/rbtree.h btrfs-list.h \
+                   kernel-lib/crc32c.h kernel-lib/list.h kerncompat.h \
+                   kernel-lib/radix-tree.h kernel-lib/sizes.h kernel-lib/raid56.h \
+                   extent-cache.h extent_io.h ioctl.h ctree.h btrfsck.h version.h
 TESTS := fsck-tests.sh convert-tests.sh
 blkid_objects := partition/ superblocks/ topology/
 
@@ -75,7 +80,8 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := mkfs.btrfs
 LOCAL_SRC_FILES := \
                 $(objects) \
-                mkfs.c
+                mkfs/common.c \
+                mkfs/main.c
 
 LOCAL_C_INCLUDES := $(common_C_INCLUDES)
 LOCAL_CFLAGS := $(STATIC_CFLAGS)
