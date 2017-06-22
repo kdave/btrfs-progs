@@ -7,7 +7,7 @@ btrfstune - tune various filesystem parameters
 
 SYNOPSIS
 --------
-*btrfstune* [options] <dev> [<dev>...]
+*btrfstune* [options] <device> [<device>...]
 
 DESCRIPTION
 -----------
