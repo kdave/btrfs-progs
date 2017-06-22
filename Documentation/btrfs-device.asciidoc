@@ -43,7 +43,7 @@ See the section *TYPICAL USECASES* for some examples.
 
 SUBCOMMAND
 ----------
-*add* [-Kf] <dev> [<dev>...] <path>::
+*add* [-Kf] <device> [<device>...] <path>::
 Add device(s) to the filesystem identified by <path>.
 +
 If applicable, a whole device discard (TRIM) operation is performed prior to
@@ -62,7 +62,7 @@ do not perform discard (TRIM) by default
 -f|--force::::
 force overwrite of existing filesystem on the given disk(s)
 
-*remove* <dev>|<devid> [<dev>|<devid>...] <path>::
+*remove* <device>|<devid> [<device>|<devid>...] <path>::
 Remove device(s) from a filesystem identified by <path>
 +
 Device removal must satisfy the profile constraints, otherwise the command
@@ -76,7 +76,7 @@ It is possible to delete the device that was used to mount the filesystem. The
 device entry in mount table will be replaced by another device name with the
 lowest device id.
 
-*delete* <dev>|<devid> [<dev>|<devid>...] <path>::
+*delete* <device>|<devid> [<device>|<devid>...] <path>::
 Alias of remove kept for backward compatibility
 
 *ready* <device>::
