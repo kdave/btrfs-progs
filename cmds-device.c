@@ -400,6 +400,7 @@ static int cmd_device_stats(int argc, char **argv)
 	while (1) {
 		int c;
 		static const struct option long_options[] = {
+			{"check", no_argument, NULL, 'c'},
 			{"reset", no_argument, NULL, 'z'},
 			{NULL, 0, NULL, 0}
 		};
