@@ -167,7 +167,7 @@ static int setup_temp_extent_buffer(struct extent_buffer *buf,
 	btrfs_set_header_generation(buf, 1);
 	btrfs_set_header_backref_rev(buf, BTRFS_MIXED_BACKREF_REV);
 	btrfs_set_header_owner(buf, owner);
-	btrfs_set_header_flags(buf, BTRFS_HEADER_FLAG_WRITTEN);
+	btrfs_set_header_flag(buf, BTRFS_HEADER_FLAG_WRITTEN);
 	write_extent_buffer(buf, chunk_uuid, btrfs_header_chunk_tree_uuid(buf),
 			    BTRFS_UUID_SIZE);
 	write_extent_buffer(buf, fsid, btrfs_header_fsid(), BTRFS_FSID_SIZE);
