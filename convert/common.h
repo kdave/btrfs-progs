@@ -30,10 +30,10 @@ struct btrfs_mkfs_config;
 
 struct btrfs_convert_context {
 	u32 blocksize;
-	u32 first_data_block;
-	u32 block_count;
-	u32 inodes_count;
-	u32 free_inodes_count;
+	u64 first_data_block;
+	u64 block_count;
+	u64 inodes_count;
+	u64 free_inodes_count;
 	u64 total_bytes;
 	char *volume_name;
 	const struct btrfs_convert_operations *convert_ops;
