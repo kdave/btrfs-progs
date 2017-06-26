@@ -7,7 +7,7 @@ btrfs-find-root - filter to find btrfs root
 
 SYNOPSIS
 --------
-*btrfs-find-root* [options] <dev>
+*btrfs-find-root* [options] <device>
 
 DESCRIPTION
 -----------

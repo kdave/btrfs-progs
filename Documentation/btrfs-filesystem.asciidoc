@@ -170,7 +170,7 @@ show sizes in GiB, or GB with --si.
 --tbytes::::
 show sizes in TiB, or TB with --si.
 
-*label* [<dev>|<mountpoint>] [<newlabel>]::
+*label* [<device>|<mountpoint>] [<newlabel>]::
 Show or update the label of a filesystem. This works on a mounted filesystem or
 a filesystem image.
 +
