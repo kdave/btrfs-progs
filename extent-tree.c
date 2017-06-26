@@ -2611,8 +2611,9 @@ check_failed:
 				goto no_bg_cache;
 			bg_offset = ins->objectid - bg_cache->key.objectid;
 
-			search_start = round_up(bg_offset + num_bytes,
-						BTRFS_STRIPE_LEN) + bg_offset;
+			search_start = round_up(
+				bg_offset + num_bytes, BTRFS_STRIPE_LEN) +
+				bg_cache->key.objectid;
 			goto new_group;
 		}
 no_bg_cache:
