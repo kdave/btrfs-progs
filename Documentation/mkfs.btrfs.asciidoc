@@ -76,8 +76,8 @@ Alias for --nodesize. Deprecated.
 *-n|--nodesize <size>*::
 Specify the nodesize, the tree block size in which btrfs stores metadata. The
 default value is 16KiB (16384) or the page size, whichever is bigger. Must be a
-multiple of the sectorsize, but not larger than 64KiB (65536).  Leafsize always
-equals nodesize and the options are aliases.
+multiple of the sectorsize and a power of 2, but not larger than 64KiB (65536).
+Leafsize always equals nodesize and the options are aliases.
 +
 Smaller node size increases fragmentation but lead to higher b-trees which in
 turn leads to lower locking contention. Higher node sizes give better packing
