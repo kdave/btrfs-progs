@@ -28,6 +28,20 @@
 #define BTRFS_MKFS_SYSTEM_GROUP_SIZE SZ_4M
 #define BTRFS_MKFS_SMALL_VOLUME_SIZE SZ_1G
 
+/*
+ * Tree root blocks created during mkfs
+ */
+enum btrfs_mkfs_block {
+	MKFS_SUPER_BLOCK = 0,
+	MKFS_ROOT_TREE,
+	MKFS_EXTENT_TREE,
+	MKFS_CHUNK_TREE,
+	MKFS_DEV_TREE,
+	MKFS_FS_TREE,
+	MKFS_CSUM_TREE,
+	MKFS_BLOCK_COUNT
+};
+
 struct btrfs_mkfs_config {
 	/* Label of the new filesystem */
 	const char *label;
@@ -43,7 +57,7 @@ struct btrfs_mkfs_config {
 	/* Output fields, set during creation */
 
 	/* Logical addresses of superblock [0] and other tree roots */
-	u64 blocks[8];
+	u64 blocks[MKFS_BLOCK_COUNT + 1];
 	char fs_uuid[BTRFS_UUID_UNPARSED_SIZE];
 	char chunk_uuid[BTRFS_UUID_UNPARSED_SIZE];
 
