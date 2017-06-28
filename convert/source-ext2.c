@@ -743,7 +743,7 @@ static int ext2_check_state(struct btrfs_convert_context *cctx)
 static void ext2_convert_inode_flags(struct btrfs_inode_item *dst,
 				     struct ext2_inode *src)
 {
-	u64 flags = 0;
+	u64 flags = btrfs_stack_inode_flags(dst);
 
 	COPY_ONE_EXT2_FLAG(flags, src, APPEND);
 	COPY_ONE_EXT2_FLAG(flags, src, SYNC);
