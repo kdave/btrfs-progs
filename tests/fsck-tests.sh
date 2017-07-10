@@ -23,6 +23,7 @@ rm -f "$RESULTS"
 check_prereq btrfs-corrupt-block
 check_prereq btrfs-image
 check_prereq btrfs
+check_prereq btrfstune
 check_kernel_support
 
 run_one_test() {

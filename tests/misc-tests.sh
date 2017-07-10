@@ -24,6 +24,9 @@ check_prereq btrfs-corrupt-block
 check_prereq btrfs-image
 check_prereq btrfstune
 check_prereq btrfs
+check_prereq btrfs-zero-log
+check_prereq btrfs-find-root
+check_prereq btrfs-select-super
 check_kernel_support
 
 # The tests are driven by their custom script called 'test.sh'

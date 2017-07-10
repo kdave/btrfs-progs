@@ -272,11 +272,12 @@ test-convert: btrfs btrfs-convert
 	$(Q)bash tests/convert-tests.sh
 
 test-check: test-fsck
-test-fsck: btrfs btrfs-image btrfs-corrupt-block mkfs.btrfs
+test-fsck: btrfs btrfs-image btrfs-corrupt-block mkfs.btrfs btrfstune
 	@echo "    [TEST]   fsck-tests.sh"
 	$(Q)bash tests/fsck-tests.sh
 
-test-misc: btrfs btrfs-image btrfs-corrupt-block mkfs.btrfs btrfstune fssum
+test-misc: btrfs btrfs-image btrfs-corrupt-block mkfs.btrfs btrfstune fssum \
+		btrfs-zero-log btrfs-find-root btrfs-select-super
 	@echo "    [TEST]   misc-tests.sh"
 	$(Q)bash tests/misc-tests.sh
 
