@@ -891,8 +891,13 @@ static int cmd_subvol_find_new(int argc, char **argv)
 }
 
 static const char * const cmd_subvol_show_usage[] = {
-	"btrfs subvolume show <subvol-path>",
-	"Show more information of the subvolume",
+	"btrfs subvolume show [options] <subvol-path>|<mnt>",
+	"Show more information about the subvolume",
+	"-r|--rootid   rootid of the subvolume",
+	"-u|--uuid     uuid of the subvolume",
+	"",
+	"If no option is specified, <subvol-path> will be shown, otherwise",
+	"the rootid or uuid are resolved relative to the <mnt> path.",
 	NULL
 };
 
@@ -907,11 +912,45 @@ static int cmd_subvol_show(int argc, char **argv)
 	int fd = -1;
 	int ret = 1;
 	DIR *dirstream1 = NULL;
+	int by_rootid = 0;
+	int by_uuid = 0;
+	u64 rootid_arg;
+	u8 uuid_arg[BTRFS_UUID_SIZE];
 
-	clean_args_no_options(argc, argv, cmd_subvol_show_usage);
+	while (1) {
+		int c;
+		static const struct option long_options[] = {
+			{ "rootid", required_argument, NULL, 'r'},
+			{ "uuid", required_argument, NULL, 'u'},
+			{ NULL, 0, NULL, 0 }
+		};
+
+		c = getopt_long(argc, argv, "r:u:", long_options, NULL);
+		if (c < 0)
+			break;
+
+		switch (c) {
+		case 'r':
+			rootid_arg = arg_strtou64(optarg);
+			by_rootid = 1;
+			break;
+		case 'u':
+			uuid_parse(optarg, uuid_arg);
+			by_uuid = 1;
+			break;
+		default:
+			usage(cmd_subvol_show_usage);
+		}
+	}
 
 	if (check_argc_exact(argc - optind, 1))
 		usage(cmd_subvol_show_usage);
+
+	if (by_rootid && by_uuid) {
+		error(
+		"options --rootid and --uuid cannot be used at the same time");
+		usage(cmd_subvol_show_usage);
+	}
 
 	memset(&get_ri, 0, sizeof(get_ri));
 	fullpath = realpath(argv[optind], NULL);
@@ -921,7 +960,14 @@ static int cmd_subvol_show(int argc, char **argv)
 		goto out;
 	}
 
-	ret = get_subvol_info(fullpath, &get_ri);
+	if (by_rootid) {
+		ret = get_subvol_info_by_rootid(fullpath, &get_ri, rootid_arg);
+	} else if (by_uuid) {
+		ret = get_subvol_info_by_uuid(fullpath, &get_ri, uuid_arg);
+	} else {
+		ret = get_subvol_info(fullpath, &get_ri);
+	}
+
 	if (ret) {
 		if (ret < 0) {
 			error("Failed to get subvol info %s: %s",

@@ -2433,6 +2433,58 @@ out:
 	return ret;
 }
 
+int get_subvol_info_by_rootid(const char *mnt, struct root_info *get_ri, u64 r_id)
+{
+	int fd;
+	int ret;
+	DIR *dirstream = NULL;
+
+	fd = btrfs_open_dir(mnt, &dirstream, 1);
+	if (fd < 0)
+		return -EINVAL;
+
+	memset(get_ri, 0, sizeof(*get_ri));
+	get_ri->root_id = r_id;
+
+	if (r_id == BTRFS_FS_TREE_OBJECTID)
+		ret = btrfs_get_toplevel_subvol(fd, get_ri);
+	else
+		ret = btrfs_get_subvol(fd, get_ri);
+
+	if (ret)
+		error("can't find rootid '%llu' on '%s': %d", r_id, mnt, ret);
+
+	close_file_or_dir(fd, dirstream);
+
+	return ret;
+}
+
+int get_subvol_info_by_uuid(const char *mnt, struct root_info *get_ri, u8 *uuid_arg)
+{
+	int fd;
+	int ret;
+	DIR *dirstream = NULL;
+
+	fd = btrfs_open_dir(mnt, &dirstream, 1);
+	if (fd < 0)
+		return -EINVAL;
+
+	memset(get_ri, 0, sizeof(*get_ri));
+	uuid_copy(get_ri->uuid, uuid_arg);
+
+	ret = btrfs_get_subvol(fd, get_ri);
+	if (ret) {
+		char uuid_parsed[BTRFS_UUID_UNPARSED_SIZE];
+		uuid_unparse(uuid_arg, uuid_parsed);
+		error("can't find uuid '%s' on '%s': %d",
+					uuid_parsed, mnt, ret);
+	}
+
+	close_file_or_dir(fd, dirstream);
+
+	return ret;
+}
+
 /* Set the seed manually */
 void init_rand_seed(u64 seed)
 {

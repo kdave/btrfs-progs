@@ -1582,7 +1582,9 @@ int btrfs_get_subvol(int fd, struct root_info *the_ri)
 			rbn = rb_next(rbn);
 			continue;
 		}
-		if (!comp_entry_with_rootid(the_ri, ri, 0)) {
+
+		if (!comp_entry_with_rootid(the_ri, ri, 0) ||
+			!uuid_compare(the_ri->uuid, ri->uuid)) {
 			memcpy(the_ri, ri, offsetof(struct root_info, path));
 			the_ri->path = strdup_or_null(ri->path);
 			the_ri->name = strdup_or_null(ri->name);
