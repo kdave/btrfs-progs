@@ -1728,7 +1728,7 @@ static void *restore_worker(void *data)
 					 async->buffer, async->bufsize);
 			pthread_mutex_lock(&mdres->mutex);
 			if (ret != Z_OK) {
-				error("decompressiion failed with %d", ret);
+				error("decompression failed with %d", ret);
 				err = -EIO;
 			}
 			outbuf = buffer;
@@ -1904,7 +1904,7 @@ static int fill_mdres_info(struct mdrestore_struct *mdres,
 		ret = uncompress(buffer, (unsigned long *)&size,
 				 async->buffer, async->bufsize);
 		if (ret != Z_OK) {
-			error("decompressiion failed with %d", ret);
+			error("decompression failed with %d", ret);
 			free(buffer);
 			return -EIO;
 		}
@@ -2178,7 +2178,7 @@ static int search_for_chunk_blocks(struct mdrestore_struct *mdres,
 				continue;
 			}
 			error(
-	"unknown state after reading cluster at %llu, probably crrupted data",
+	"unknown state after reading cluster at %llu, probably corrupted data",
 					cluster_bytenr);
 			ret = -EIO;
 			break;
@@ -2227,7 +2227,7 @@ static int search_for_chunk_blocks(struct mdrestore_struct *mdres,
 						 (unsigned long *)&size, tmp,
 						 bufsize);
 				if (ret != Z_OK) {
-					error("decompressiion failed with %d",
+					error("decompression failed with %d",
 							ret);
 					ret = -EIO;
 					break;
@@ -2347,7 +2347,7 @@ static int build_chunk_tree(struct mdrestore_struct *mdres,
 		ret = uncompress(tmp, (unsigned long *)&size,
 				 buffer, le32_to_cpu(item->size));
 		if (ret != Z_OK) {
-			error("decompressiion failed with %d", ret);
+			error("decompression failed with %d", ret);
 			free(buffer);
 			free(tmp);
 			return -EIO;
