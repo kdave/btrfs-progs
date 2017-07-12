@@ -1720,12 +1720,13 @@ static void *restore_worker(void *data)
 		}
 		async = list_entry(mdres->list.next, struct async_work, list);
 		list_del_init(&async->list);
-		pthread_mutex_unlock(&mdres->mutex);
 
 		if (mdres->compress_method == COMPRESS_ZLIB) {
 			size = compress_size; 
+			pthread_mutex_unlock(&mdres->mutex);
 			ret = uncompress(buffer, (unsigned long *)&size,
 					 async->buffer, async->bufsize);
+			pthread_mutex_lock(&mdres->mutex);
 			if (ret != Z_OK) {
 				error("decompressiion failed with %d", ret);
 				err = -EIO;
@@ -1803,7 +1804,6 @@ error:
 		if (!mdres->multi_devices && async->start == BTRFS_SUPER_INFO_OFFSET)
 			write_backup_supers(outfd, outbuf);
 
-		pthread_mutex_lock(&mdres->mutex);
 		if (err && !mdres->error)
 			mdres->error = err;
 		mdres->num_items--;
@@ -1933,7 +1933,9 @@ static int add_cluster(struct meta_cluster *cluster,
 	u32 i, nritems;
 	int ret;
 
+	pthread_mutex_lock(&mdres->mutex);
 	mdres->compress_method = header->compress;
+	pthread_mutex_unlock(&mdres->mutex);
 
 	bytenr = le64_to_cpu(header->bytenr) + BLOCK_SIZE;
 	nritems = le32_to_cpu(header->nritems);
