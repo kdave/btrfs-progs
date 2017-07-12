@@ -18,6 +18,7 @@
 
 #include "kerncompat.h"
 #include <linux/limits.h>
+#include <pthread.h>
 #include "disk-io.h"
 #include "transaction.h"
 #include "utils.h"
@@ -850,7 +851,9 @@ static int ext2_copy_inodes(struct btrfs_convert_context *cctx,
 		ret = ext2_copy_single_inode(trans, root,
 					objectid, ext2_fs, ext2_ino,
 					&ext2_inode, convert_flags);
+		pthread_mutex_lock(&p->mutex);
 		p->cur_copy_inodes++;
+		pthread_mutex_unlock(&p->mutex);
 		if (ret)
 			return ret;
 		if (trans->blocks_used >= 4096) {

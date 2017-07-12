@@ -88,6 +88,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <getopt.h>
+#include <pthread.h>
 #include <stdbool.h>
 
 #include "ctree.h"
@@ -119,10 +120,12 @@ static void *print_copied_inodes(void *p)
 	task_period_start(priv->info, 1000 /* 1s */);
 	while (1) {
 		count++;
+		pthread_mutex_lock(&priv->mutex);
 		printf("copy inodes [%c] [%10llu/%10llu]\r",
 		       work_indicator[count % 4],
 		       (unsigned long long)priv->cur_copy_inodes,
 		       (unsigned long long)priv->max_copy_inodes);
+		pthread_mutex_unlock(&priv->mutex);
 		fflush(stdout);
 		task_period_wait(priv->info);
 	}
@@ -1287,6 +1290,11 @@ static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
 	}
 
 	printf("creating btrfs metadata");
+	ret = pthread_mutex_init(&ctx.mutex, NULL);
+	if (ret) {
+		error("failed to initialize mutex: %d", ret);
+		goto fail;
+	}
 	ctx.max_copy_inodes = (cctx.inodes_count - cctx.free_inodes_count);
 	ctx.cur_copy_inodes = 0;
 

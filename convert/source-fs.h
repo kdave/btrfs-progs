@@ -18,6 +18,8 @@
 #define __BTRFS_CONVERT_SOURCE_FS_H__
 
 #include "kerncompat.h"
+#include <pthread.h>
+
 
 #define CONV_IMAGE_SUBVOL_OBJECTID BTRFS_FIRST_FREE_OBJECTID
 
@@ -37,6 +39,7 @@ extern const struct simple_range btrfs_reserved_ranges[3];
 struct task_info;
 
 struct task_ctx {
+	pthread_mutex_t mutex;
 	u64 max_copy_inodes;
 	u64 cur_copy_inodes;
 	struct task_info *info;
