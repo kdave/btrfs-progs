@@ -387,7 +387,7 @@ run_check_mount_test_dev()
 		_fail "Invalid \$TEST_MNT: $TEST_MNT"
 	}
 
-	run_check $SUDO_HELPER mount $loop_opt "$@" "$TEST_DEV" "$TEST_MNT"
+	run_check $SUDO_HELPER mount -t btrfs $loop_opt "$@" "$TEST_DEV" "$TEST_MNT"
 }
 
 run_check_umount_test_dev()

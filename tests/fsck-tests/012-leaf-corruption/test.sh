@@ -90,7 +90,7 @@ check_inode()
 check_leaf_corrupt_no_data_ext()
 {
 	image=$1
-	$SUDO_HELPER mount -o loop "$image" -o ro "$TEST_MNT"
+	$SUDO_HELPER mount -o loop -t btrfs "$image" -o ro "$TEST_MNT"
 
 	i=0
 	while [ $i -lt ${#leaf_no_data_ext_list[@]} ]; do
