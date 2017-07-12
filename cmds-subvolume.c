@@ -934,7 +934,7 @@ static int cmd_subvol_show(int argc, char **argv)
 	}
 
 	/* print the info */
-	printf("%s\n", fullpath);
+	printf("%s\n", get_ri.full_path);
 	printf("\tName: \t\t\t%s\n", get_ri.name);
 
 	if (uuid_is_null(get_ri.uuid))
