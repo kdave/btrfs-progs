@@ -17,6 +17,7 @@
 #                  abort   - call abort() on first error (dumps core)
 #                  all     - shortcut for all of the above
 #                  asan    - enable address sanitizer compiler feature
+#                  tsan    - enable thread sanitizer compiler feature
 #                  ubsan   - undefined behaviour sanitizer compiler feature
 #                  bcheck  - extended build checks
 #   W=123          build with warnings (default: off)
@@ -155,6 +156,11 @@ endif
 
 ifneq (,$(findstring asan,$(D)))
   DEBUG_CFLAGS_INTERNAL += -fsanitize=address
+endif
+
+ifneq (,$(findstring tsan,$(D)))
+  DEBUG_CFLAGS_INTERNAL += -fsanitize=thread -fPIE
+  LD_FLAGS += -fsanitize=thread -ltsan -pie
 endif
 
 ifneq (,$(findstring ubsan,$(D)))
