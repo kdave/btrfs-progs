@@ -108,6 +108,51 @@ struct map_lookup {
 	struct btrfs_bio_stripe stripes[];
 };
 
+struct btrfs_map_stripe {
+	struct btrfs_device *dev;
+
+	/*
+	 * Logical address of the stripe start.
+	 * Caller should check if this logical is the desired map start.
+	 * It's possible that the logical is smaller or larger than desired
+	 * map range.
+	 *
+	 * For P/Q stipre, it will be BTRFS_RAID5_P_STRIPE
+	 * and BTRFS_RAID6_Q_STRIPE.
+	 */
+	u64 logical;
+
+	u64 physical;
+
+	/* The length of the stripe */
+	u64 length;
+};
+
+struct btrfs_map_block {
+	/*
+	 * The logical start of the whole map block.
+	 * For RAID5/6 it will be the bytenr of the full stripe start,
+	 * so it's possible that @start is smaller than desired map range
+	 * start.
+	 */
+	u64 start;
+
+	/*
+	 * The logical length of the map block.
+	 * For RAID5/6 it will be total data stripe size
+	 */
+	u64 length;
+
+	/* Block group type */
+	u64 type;
+
+	/* Stripe length, for non-stripped mode, it will be 0 */
+	u32 stripe_len;
+
+	int num_stripes;
+	struct btrfs_map_stripe stripes[];
+};
+
 #define btrfs_multi_bio_size(n) (sizeof(struct btrfs_multi_bio) + \
 			    (sizeof(struct btrfs_bio_stripe) * (n)))
 #define btrfs_map_lookup_size(n) (sizeof(struct map_lookup) + \
@@ -187,6 +232,39 @@ int btrfs_map_block(struct btrfs_fs_info *fs_info, int rw,
 		    u64 logical, u64 *length,
 		    struct btrfs_multi_bio **multi_ret, int mirror_num,
 		    u64 **raid_map_ret);
+
+/*
+ * TODO: Use this map_block_v2 to replace __btrfs_map_block()
+ *
+ * New btrfs_map_block(), unlike old one, each stripe will contain the
+ * physical offset *AND* logical address.
+ * So caller won't ever need to care about how the stripe/mirror is organized.
+ * Which makes csum check quite easy.
+ *
+ * Only P/Q based profile needs to care their P/Q stripe.
+ *
+ * @map_ret example:
+ * Raid1:
+ * Map block: logical=128M len=10M type=RAID1 stripe_len=0 nr_stripes=2
+ * Stripe 0: logical=128M physical=X len=10M dev=devid1
+ * Stripe 1: logical=128M physical=Y len=10M dev=devid2
+ *
+ * Raid10:
+ * Map block: logical=64K len=128K type=RAID10 stripe_len=64K nr_stripes=4
+ * Stripe 0: logical=64K physical=X len=64K dev=devid1
+ * Stripe 1: logical=64K physical=Y len=64K dev=devid2
+ * Stripe 2: logical=128K physical=Z len=64K dev=devid3
+ * Stripe 3: logical=128K physical=W len=64K dev=devid4
+ *
+ * Raid6:
+ * Map block: logical=64K len=128K type=RAID6 stripe_len=64K nr_stripes=4
+ * Stripe 0: logical=64K physical=X len=64K dev=devid1
+ * Stripe 1: logical=128K physical=Y len=64K dev=devid2
+ * Stripe 2: logical=RAID5_P physical=Z len=64K dev=devid3
+ * Stripe 3: logical=RAID6_Q physical=W len=64K dev=devid4
+ */
+int __btrfs_map_block_v2(struct btrfs_fs_info *fs_info, int rw, u64 logical,
+			 u64 length, struct btrfs_map_block **map_ret);
 int btrfs_next_bg(struct btrfs_fs_info *map_tree, u64 *logical,
 		     u64 *size, u64 type);
 static inline int btrfs_next_bg_metadata(struct btrfs_fs_info *fs_info,
