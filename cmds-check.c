@@ -1528,6 +1528,14 @@ static int process_dir_item(struct extent_buffer *eb,
 
 		read_extent_buffer(eb, namebuf, (unsigned long)(di + 1), len);
 
+		if (key->type == BTRFS_DIR_ITEM_KEY &&
+		    key->offset != btrfs_name_hash(namebuf, len)) {
+			rec->errors |= I_ERR_ODD_DIR_ITEM;
+			error("DIR_ITEM[%llu %llu] name %s namelen %u filetype %u mismatch with its hash, wanted %llu have %llu",
+			key->objectid, key->offset, namebuf, len, filetype,
+			key->offset, btrfs_name_hash(namebuf, len));
+		}
+
 		if (location.type == BTRFS_INODE_ITEM_KEY) {
 			add_inode_backref(inode_cache, location.objectid,
 					  key->objectid, key->offset, namebuf,
