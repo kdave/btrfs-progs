@@ -4680,6 +4680,15 @@ static int check_dir_item(struct btrfs_root *root, struct btrfs_key *key,
 		read_extent_buffer(node, namebuf, (unsigned long)(di + 1), len);
 		filetype = btrfs_dir_type(node, di);
 
+		if (key->type == BTRFS_DIR_ITEM_KEY &&
+		    key->offset != btrfs_name_hash(namebuf, len)) {
+			err |= -EIO;
+			error("root %llu DIR_ITEM[%llu %llu] name %s namelen %u filetype %u mismatch with its hash, wanted %llu have %llu",
+				root->objectid, key->objectid, key->offset,
+				namebuf, len, filetype, key->offset,
+				btrfs_name_hash(namebuf, len));
+		}
+
 		btrfs_init_path(&path);
 		btrfs_dir_item_key_to_cpu(node, di, &location);
 
