@@ -80,8 +80,11 @@ lowest device id.
 Alias of remove kept for backward compatibility
 
 *ready* <device>::
-Wait until all devices of a multiple-device filesystem are scanned and registered
-within the kernel module.
+Wait until all devices of a multiple-device filesystem are scanned and
+registered within the kernel module. This is to provide a way for automatic
+filesystem mounting tools to wait before the mount can start. The device scan
+is only one of the preconditions and the mount can fail for other reasons.
+Normal users usually do not need this command and may safely ignore it.
 
 *scan* [(--all-devices|-d)|<device> [<device>...]]::
 Scan devices for a btrfs filesystem and register them with the kernel module.
