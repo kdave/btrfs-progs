@@ -36,16 +36,6 @@ Enable/disable support for Posix Access Control Lists (ACLs).  See the
 The support for ACL is build-time configurable (BTRFS_FS_POSIX_ACL) and
 mount fails if 'acl' is requested but the feature is not compiled in.
 
-*alloc_start='bytes'*::
-(default: 1M, minimum: 1M)
-+
-Debugging option to force all block allocations above a certain
-byte threshold on each block device.  The value is specified in
-bytes, optionally with a K, M, or G suffix (case insensitive).
-+
-This option was used for testing and has no practical use, it's slated to be
-removed in the future.
-
 *autodefrag*::
 *noautodefrag*::
 (since: 3.0, default: off)
@@ -288,12 +278,6 @@ override the internal logic in favor of the metadata allocation if the expected
 workload is supposed to be metadata intense (snapshots, reflinks, xattrs,
 inlined files).
 
-*recovery*::
-(since: 3.2, default: off, deprecated since: 4.5)
-+
-NOTE: this option has been replaced by 'usebackuproot' and should not be used
-but will work on 4.5+ kernels.
-
 *norecovery*::
 (since: 4.5, default: off)
 +
@@ -376,12 +360,6 @@ This mount option overrides the default subvolume set for the given filesystem.
 NOTE: if both 'subvolid' and 'subvol' are specified, they must point at the
 same subvolume, otherwise mount will fail.
 
-*subvolrootid='objectid'*::
-(irrelevant since: 3.2, formally deprecated since: 3.10)
-+
-A workaround option from times (pre 3.2) when it was not possible to mount a
-subvolume that did not reside directly under the toplevel subvolume.
-
 *thread_pool='number'*::
 (default: min(NRCPUS + 2, 8) )
 +
@@ -420,6 +398,31 @@ NOTE: This option has replaced 'recovery'.
 +
 Allow subvolumes to be deleted by their respective owner. Otherwise, only the
 root user can do that.
+
+DEPRECATED MOUNT OPTIONS
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+List of mount options that have been removed, kept for backward compatibility.
+
+*alloc_start='bytes'*::
+(default: 1M, minimum: 1M, deprecated since: 4.13)
++
+Debugging option to force all block allocations above a certain
+byte threshold on each block device.  The value is specified in
+bytes, optionally with a K, M, or G suffix (case insensitive).
+
+*recovery*::
+(since: 3.2, default: off, deprecated since: 4.5)
++
+NOTE: this option has been replaced by 'usebackuproot' and should not be used
+but will work on 4.5+ kernels.
+
+*subvolrootid='objectid'*::
+(irrelevant since: 3.2, formally deprecated since: 3.10)
++
+A workaround option from times (pre 3.2) when it was not possible to mount a
+subvolume that did not reside directly under the toplevel subvolume.
+
 
 FILESYSTEM FEATURES
 -------------------
