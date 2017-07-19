@@ -66,10 +66,13 @@ If <subvolume> is not a subvolume, btrfs returns an error but continues if
 there are more arguments to process.
 +
 The corresponding directory is removed instantly but the data blocks are
-removed later.  The deletion does not involve full commit by default due to
-performance reasons (as a consequence, the subvolume may appear again after a
-crash).  Use one of the '--commit' options to wait until the operation is safely
-stored on the media.
+removed later in the background. The command returns immediatelly. See `btrfs
+subvolume sync` how to wait until the subvolume gets completely removed.
++
+The deletion does not involve full transaction commit by default due to
+performance reasons.  As a consequence, the subvolume may appear again after a
+crash.  Use one of the '--commit' options to wait until the operation is
+safely stored on the device.
 +
 `Options`
 +
