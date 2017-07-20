@@ -26,7 +26,7 @@ do_test() {
 	nodesize="$3"
 	shift 3
 	convert_test_preamble "$features" "$msg" "$nodesize" "$@"
-	convert_test_prep_fs "$@"
+	convert_test_prep_fs ext4 "$@"
 	populate_fs
 	CHECKSUMTMP=$(mktemp --tmpdir btrfs-progs-convert.XXXXXXXXXX)
 	convert_test_gen_checksums "$CHECKSUMTMP"

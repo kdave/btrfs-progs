@@ -11,7 +11,7 @@ check_prereq btrfs-convert
 fail=0
 default_mke2fs="mke2fs -t ext4 -b 4096"
 convert_test_preamble '' 'common inode flags test' 16k "$default_mke2fs"
-convert_test_prep_fs $default_mke2fs
+convert_test_prep_fs ext4 $default_mke2fs
 
 # create file with specific flags
 run_check $SUDO_HELPER touch "$TEST_MNT/flag_test"
