@@ -47,12 +47,12 @@ do_test() {
 	run_check_umount_test_dev
 	convert_test_post_rollback
 
-	run_check_mount_test_dev
+	run_check_mount_convert_dev ext4
 	convert_test_post_check_checksums "$CHECKSUMTMP"
 	run_check_umount_test_dev
 
 	# mount again and verify checksums
-	run_check_mount_test_dev
+	run_check_mount_convert_dev ext4
 	convert_test_post_check_checksums "$CHECKSUMTMP"
 	run_check_umount_test_dev
 

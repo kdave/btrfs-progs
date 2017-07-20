@@ -1,6 +1,39 @@
 #!/bin/bash
 # helpers for btrfs-convert tests
 
+# mount image of converted filesystem of a given type
+# $1: type of the filesystem
+run_check_mount_convert_dev()
+{
+	local fstype
+	local loop_opt
+
+	setup_root_helper
+
+	fstype="$1"
+	shift
+	if [ -z "$fstype" ]; then
+		_fail "Missing source filesystem type"
+	fi
+	if [ "$fstype" = 'btrfs' ]; then
+		_fail "Incorrect type for converted filesystem: btrfs"
+	fi
+
+	if [[ -b "$TEST_DEV" ]]; then
+		loop_opt=""
+	elif [[ -f "$TEST_DEV" ]]; then
+		loop_opt="-o loop"
+	else
+		_fail "Invalid \$TEST_DEV: $TEST_DEV"
+	fi
+
+	[[ -d "$TEST_MNT" ]] || {
+		_fail "Invalid \$TEST_MNT: $TEST_MNT"
+	}
+
+	run_check $SUDO_HELPER mount $loop_opt -t "$fstype" "$@" "$TEST_DEV" "$TEST_MNT"
+}
+
 populate_fs() {
 
         for dataset_type in 'small' 'hardlink' 'fast_symlink' 'brokenlink' 'perm' 'sparse' 'acls' 'fifo' 'slow_symlink'; do
@@ -37,7 +70,7 @@ convert_test_prep_fs() {
 	run_check "$@" -F "$TEST_DEV"
 
 	# create a file to check btrfs-convert can convert regular file correct
-	run_check_mount_test_dev
+	run_check_mount_convert_dev "$fstype"
 
 	# create a file inside the fs before convert, to make sure there is
 	# data covering btrfs backup superblock range (64M)
