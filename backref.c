@@ -130,6 +130,11 @@ struct __prelim_ref {
 	u64 wanted_disk_byte;
 };
 
+static struct __prelim_ref *list_first_pref(struct list_head *head)
+{
+	return list_first_entry(head, struct __prelim_ref, list);
+}
+
 struct pref_state {
 	struct list_head pending;
 };
@@ -803,8 +808,7 @@ static int find_parent_nodes(struct btrfs_trans_handle *trans,
 	__merge_refs(&prefstate, 2);
 
 	while (!list_empty(&prefstate.pending)) {
-		ref = list_first_entry(&prefstate.pending,
-				       struct __prelim_ref, list);
+		ref = list_first_pref(&prefstate.pending);
 		WARN_ON(ref->count < 0);
 		if (roots && ref->count && ref->root_id && ref->parent == 0) {
 			/* no parent == root of tree */
@@ -854,8 +858,7 @@ static int find_parent_nodes(struct btrfs_trans_handle *trans,
 out:
 	btrfs_free_path(path);
 	while (!list_empty(&prefstate.pending)) {
-		ref = list_first_entry(&prefstate.pending,
-				       struct __prelim_ref, list);
+		ref = list_first_pref(&prefstate.pending);
 		list_del(&ref->list);
 		kfree(ref);
 	}
