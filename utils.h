@@ -169,6 +169,8 @@ unsigned int get_unit_mode_from_arg(int *argc, char *argv[], int df_mode);
 int string_is_numerical(const char *str);
 int prefixcmp(const char *str, const char *prefix);
 
+unsigned long total_memory(void);
+
 /*
  * Global program state, configurable by command line and available to
  * functions without extra context passing.
