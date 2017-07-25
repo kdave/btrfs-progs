@@ -138,12 +138,14 @@ static struct __prelim_ref *list_first_pref(struct list_head *head)
 struct pref_state {
 	struct list_head pending;
 	struct list_head pending_missing_keys;
+	struct list_head pending_indirect_refs;
 };
 
 static void init_pref_state(struct pref_state *prefstate)
 {
 	INIT_LIST_HEAD(&prefstate->pending);
 	INIT_LIST_HEAD(&prefstate->pending_missing_keys);
+	INIT_LIST_HEAD(&prefstate->pending_indirect_refs);
 }
 
 /*
@@ -370,11 +372,10 @@ static int __resolve_indirect_refs(struct btrfs_fs_info *fs_info,
 				   struct btrfs_path *path, u64 time_seq,
 				   const u64 *extent_item_pos, u64 total_refs)
 {
-	struct list_head *head = &prefstate->pending;
+	struct list_head *head = &prefstate->pending_indirect_refs;
 	int err;
 	int ret = 0;
 	struct __prelim_ref *ref;
-	struct __prelim_ref *ref_safe;
 	struct __prelim_ref *new_ref;
 	struct ulist *parents;
 	struct ulist_node *node;
@@ -384,16 +385,11 @@ static int __resolve_indirect_refs(struct btrfs_fs_info *fs_info,
 	if (!parents)
 		return -ENOMEM;
 
-	/*
-	 * _safe allows us to insert directly after the current item without
-	 * iterating over the newly inserted items.
-	 * we're also allowed to re-assign ref during iteration.
-	 */
-	list_for_each_entry_safe(ref, ref_safe, head, list) {
-		if (ref->parent)	/* already direct */
-			continue;
-		if (ref->count == 0)
-			continue;
+	while (!list_empty(head)) {
+		ref = list_first_pref(head);
+		list_move(&ref->list, &prefstate->pending);
+		ASSERT(!ref->parent);	/* already direct */
+		ASSERT(ref->count);
 		err = __resolve_indirect_ref(fs_info, path, time_seq, ref,
 					     parents, extent_item_pos,
 					     total_refs);
@@ -426,7 +422,7 @@ static int __resolve_indirect_refs(struct btrfs_fs_info *fs_info,
 			new_ref->parent = node->val;
 			new_ref->inode_list = (struct extent_inode_elem *)
 							(uintptr_t)node->aux;
-			list_add(&new_ref->list, &ref->list);
+			list_add_tail(&new_ref->list, &prefstate->pending);
 		}
 		ulist_reinit(parents);
 	}
@@ -813,6 +809,7 @@ static int find_parent_nodes(struct btrfs_trans_handle *trans,
 	__merge_refs(&prefstate, 2);
 
 	BUG_ON(!list_empty(&prefstate.pending_missing_keys));
+	BUG_ON(!list_empty(&prefstate.pending_indirect_refs));
 
 	while (!list_empty(&prefstate.pending)) {
 		ref = list_first_pref(&prefstate.pending);
