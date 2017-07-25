@@ -1289,7 +1289,7 @@ static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
 		goto fail;
 	}
 
-	printf("creating btrfs metadata");
+	printf("creating btrfs metadata\n");
 	ret = pthread_mutex_init(&ctx.mutex, NULL);
 	if (ret) {
 		error("failed to initialize mutex: %d", ret);
@@ -1357,7 +1357,7 @@ static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
 	close_ctree(root);
 	close(fd);
 
-	printf("conversion complete");
+	printf("conversion complete\n");
 	return 0;
 fail:
 	clean_convert_context(&cctx);
