@@ -137,11 +137,13 @@ static struct __prelim_ref *list_first_pref(struct list_head *head)
 
 struct pref_state {
 	struct list_head pending;
+	struct list_head pending_missing_keys;
 };
 
 static void init_pref_state(struct pref_state *prefstate)
 {
 	INIT_LIST_HEAD(&prefstate->pending);
+	INIT_LIST_HEAD(&prefstate->pending_missing_keys);
 }
 
 /*
@@ -188,7 +190,7 @@ static int __add_prelim_ref(struct pref_state *prefstate, u64 root_id,
 			    u64 parent, u64 wanted_disk_byte, int count,
 			    gfp_t gfp_mask)
 {
-	struct list_head *head = &prefstate->pending;
+	struct list_head *head;
 	struct __prelim_ref *ref;
 
 	if (root_id == BTRFS_DATA_RELOC_TREE_OBJECTID)
@@ -199,16 +201,20 @@ static int __add_prelim_ref(struct pref_state *prefstate, u64 root_id,
 		return -ENOMEM;
 
 	ref->root_id = root_id;
-	if (key)
+	if (key) {
 		ref->key_for_search = *key;
-	else
+		head = &prefstate->pending;
+	} else {
 		memset(&ref->key_for_search, 0, sizeof(ref->key_for_search));
+		head = &prefstate->pending_missing_keys;
+	}
 
 	ref->inode_list = NULL;
 	ref->level = level;
 	ref->count = count;
 	ref->parent = parent;
 	ref->wanted_disk_byte = wanted_disk_byte;
+
 	list_add_tail(&ref->list, head);
 
 	return 0;
@@ -454,18 +460,16 @@ static inline int ref_for_same_block(struct __prelim_ref *ref1,
 static int __add_missing_keys(struct btrfs_fs_info *fs_info,
 			      struct pref_state *prefstate)
 {
-	struct list_head *head = &prefstate->pending;
-	struct list_head *pos;
 	struct extent_buffer *eb;
 
-	list_for_each(pos, head) {
+	while (!list_empty(&prefstate->pending_missing_keys)) {
 		struct __prelim_ref *ref;
-		ref = list_entry(pos, struct __prelim_ref, list);
 
-		if (ref->parent)
-			continue;
-		if (ref->key_for_search.type)
-			continue;
+		ref = list_first_pref(&prefstate->pending_missing_keys);
+
+		ASSERT(ref->root_id);
+		ASSERT(!ref->parent);
+		ASSERT(ref->key_for_search.type);
 		BUG_ON(!ref->wanted_disk_byte);
 		eb = read_tree_block(fs_info, ref->wanted_disk_byte, 0);
 		if (!extent_buffer_uptodate(eb)) {
@@ -477,6 +481,7 @@ static int __add_missing_keys(struct btrfs_fs_info *fs_info,
 		else
 			btrfs_node_key_to_cpu(eb, &ref->key_for_search, 0);
 		free_extent_buffer(eb);
+		list_move(&ref->list, &prefstate->pending);
 	}
 	return 0;
 }
@@ -806,6 +811,8 @@ static int find_parent_nodes(struct btrfs_trans_handle *trans,
 		goto out;
 
 	__merge_refs(&prefstate, 2);
+
+	BUG_ON(!list_empty(&prefstate.pending_missing_keys));
 
 	while (!list_empty(&prefstate.pending)) {
 		ref = list_first_pref(&prefstate.pending);
