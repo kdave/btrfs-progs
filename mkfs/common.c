@@ -95,7 +95,7 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 
 	cfg->blocks[MKFS_SUPER_BLOCK] = BTRFS_SUPER_INFO_OFFSET;
 	for (i = 1; i < MKFS_BLOCK_COUNT; i++) {
-		cfg->blocks[i] = BTRFS_SUPER_INFO_OFFSET + 1024 * 1024 +
+		cfg->blocks[i] = BTRFS_SUPER_INFO_OFFSET + SZ_1M +
 			cfg->nodesize * i;
 	}
 

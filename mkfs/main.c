@@ -719,7 +719,7 @@ again:
 	 * keep our extent size at 1MB max, this makes it easier to work inside
 	 * the tiny block groups created during mkfs
 	 */
-	cur_bytes = min(total_bytes, 1024ULL * 1024);
+	cur_bytes = min(total_bytes, (u64)SZ_1M);
 	ret = btrfs_reserve_extent(trans, root, cur_bytes, 0, 0, (u64)-1,
 				   &key, 1);
 	if (ret)
@@ -992,7 +992,7 @@ static int create_chunks(struct btrfs_trans_handle *trans,
 	u64 chunk_size;
 	u64 meta_type = BTRFS_BLOCK_GROUP_METADATA;
 	u64 data_type = BTRFS_BLOCK_GROUP_DATA;
-	u64 minimum_data_chunk_size = 8 * 1024 * 1024;
+	u64 minimum_data_chunk_size = SZ_8M;
 	u64 i;
 	int ret;
 
@@ -1095,9 +1095,9 @@ static u64 size_sourcedir(const char *dir_name, u64 sectorsize,
 	u64 dir_size = 0;
 	u64 total_size = 0;
 	int ret;
-	u64 default_chunk_size = 8 * 1024 * 1024;	/* 8MB */
-	u64 allocated_meta_size = 8 * 1024 * 1024;	/* 8MB */
-	u64 allocated_total_size = 20 * 1024 * 1024;	/* 20MB */
+	u64 default_chunk_size = SZ_8M;
+	u64 allocated_meta_size = SZ_8M;
+	u64 allocated_total_size = 20 * SZ_1M;	/* 20MB */
 	u64 num_of_meta_chunks = 0;
 	u64 num_of_data_chunks = 0;
 	u64 num_of_allocated_meta_chunks =

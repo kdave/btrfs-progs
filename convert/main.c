@@ -635,7 +635,7 @@ static int calculate_available_space(struct btrfs_convert_context *cctx)
 	 * Twice the minimal chunk size, to allow later wipe_reserved_ranges()
 	 * works without need to consider overlap
 	 */
-	u64 min_stripe_size = 2 * 16 * 1024 * 1024;
+	u64 min_stripe_size = SZ_32M;
 	int ret;
 
 	/* Calculate data_chunks */
@@ -800,7 +800,7 @@ static int create_image(struct btrfs_root *root,
 	 * Start from 1M, as 0~1M is reserved, and create_image_file_range()
 	 * can't handle bytenr 0(will consider it as a hole)
 	 */
-	cur = 1024 * 1024;
+	cur = SZ_1M;
 	while (cur < size) {
 		u64 len = size - cur;
 
@@ -1015,7 +1015,7 @@ static int make_convert_data_block_groups(struct btrfs_trans_handle *trans,
 	 * And for single chunk, don't create chunk larger than 1G.
 	 */
 	max_chunk_size = cfg->num_bytes / 10;
-	max_chunk_size = min((u64)(1024 * 1024 * 1024), max_chunk_size);
+	max_chunk_size = min((u64)(SZ_1G), max_chunk_size);
 	max_chunk_size = round_down(max_chunk_size,
 				    extent_root->fs_info->sectorsize);
 
@@ -1597,7 +1597,7 @@ next:
  * |   RSV 1   |  | Old  |   |    RSV 2  | | Old  | |   RSV 3   |
  * |   0~1M    |  | Fs   |   | SB2 + 64K | | Fs   | | SB3 + 64K |
  *
- * On the other hande, the converted fs image in btrfs is a completely 
+ * On the other hand, the converted fs image in btrfs is a completely
  * valid old fs.
  *
  * |<-----------------Converted fs image in btrfs-------------------->|
