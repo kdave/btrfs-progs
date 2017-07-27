@@ -343,10 +343,12 @@ static int migrate_one_reserved_range(struct btrfs_trans_handle *trans,
 	 * migrate ranges that covered by old fs data.
 	 */
 	while (cur_off < range_end(range)) {
-		cache = lookup_cache_extent(used, cur_off, cur_len);
+		cache = search_cache_extent(used, cur_off);
 		if (!cache)
 			break;
 		cur_off = max(cache->start, cur_off);
+		if (cur_off >= range_end(range))
+			break;
 		cur_len = min(cache->start + cache->size, range_end(range)) -
 			  cur_off;
 		BUG_ON(cur_len < root->fs_info->sectorsize);
