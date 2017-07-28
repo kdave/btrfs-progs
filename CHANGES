@@ -1,3 +1,16 @@
+btrfs-progs-4.13.2 (2017-10-06)
+  * subvol list:
+    * don't list toplevel subvolume among deleted (broken since 4.8.3)
+    * minor adjustments of uuid print format
+  * subvol delete:
+    * fix swapped behaviour of --commit-each and --commit-after
+    * fix potentially lost sync if subvolumes are from different filesystems
+  * check: add cache for metadata blocks, should improve performance
+  * other:
+    * new tests, testsuite updates
+    * doc updates
+    * cleanups
+
 btrfs-progs-4.13.1 (2017-09-25)
   * image: speed up generating the sanitized names, do not generate unprintable chars
   * completion: add missing commands, better mount point detection
