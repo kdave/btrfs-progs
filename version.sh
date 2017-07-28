@@ -6,7 +6,7 @@
 # Copyright 2008, Oracle
 # Released under the GNU GPLv2
 
-v="v4.11.1"
+v="v4.12"
 
 opt=$1
 
