@@ -1,3 +1,9 @@
+btrfs-progs-4.13.3 (2017-10-16)
+  * check: fix --force, wrong check for a mounted block device
+  * build: fix --with-convert parsing
+  * subvol list: don't list TOPLEVEL
+  * other: update tests
+
 btrfs-progs-4.13.2 (2017-10-06)
   * subvol list:
     * don't list toplevel subvolume among deleted (broken since 4.8.3)
