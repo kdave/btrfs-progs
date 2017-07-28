@@ -1,3 +1,20 @@
+btrfs-progs-4.13 (2017-09-08)
+  * convert: reiserfs support
+  * check: new option --force to allow check of a mounted filesystem (no repair)
+  * mkfs: --rootdir will now copy special files
+  * dump-tree: minor output changes
+  * inspect rootid: accept file as arugment
+  * dev usage: don't calculate slack space for missing devices
+  * fi du: don't print error on EMPTY_SUBVOL (inode number 2)
+  * build:
+    * fixed support for sanitization features on gcc (tsan, asan, ubsan)
+    * fix PIE build
+  * other:
+    * misc cleanups and stability fixes
+    * travis CI enhancements
+    * new tests, fuzzed images
+    * testsuite cleanups
+
 btrfs-progs-4.12.1 (2017-08-25)
   * build:
     * fix cross-compilation
