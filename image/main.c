@@ -387,12 +387,12 @@ static char *find_collision(struct metadump_struct *md, char *name,
 			break;
 		}
 
-		if (val->sub[i] == 127) {
+		if (val->sub[i] == 126) {
 			do {
 				i++;
 				if (i >= name_len)
 					break;
-			} while (val->sub[i] == 127);
+			} while (val->sub[i] == 126);
 
 			if (i >= name_len)
 				break;
