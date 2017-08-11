@@ -453,17 +453,25 @@ static int find_collision_is_suffix_valid(const char *suffix)
 	return 1;
 }
 
-static int find_collision_brute_force(struct name *val, u32 name_len)
+static int find_collision_reverse_crc32c(struct name *val, u32 name_len)
 {
 	unsigned long checksum;
+	unsigned long current_checksum;
 	int found = 0;
 	int i;
 
+	/* There are no same length collisions of 4 or less bytes */
+	if (name_len <= 4) return 0;
 	checksum = crc32c(~1, val->val, name_len);
+	name_len -= 4;
 	memset(val->sub, ' ', name_len);
 	i = 0;
 	while (1) {
-		if (crc32c(~1, val->sub, name_len) == checksum &&
+		current_checksum = crc32c(~1, val->sub, name_len);
+		find_collision_calc_suffix(current_checksum,
+					   checksum,
+					   val->sub + name_len);
+		if (find_collision_is_suffix_valid(val->sub + name_len) &&
 		    memcmp(val->sub, val->val, val->len)) {
 			found = 1;
 			break;
@@ -530,7 +538,7 @@ static char *find_collision(struct metadump_struct *md, char *name,
 		return NULL;
 	}
 
-	found = find_collision_brute_force(val, name_len);
+	found = find_collision_reverse_crc32c(val, name_len);
 
 	if (!found) {
 		warning(
