@@ -339,43 +339,11 @@ static u64 logical_to_physical(struct mdrestore_struct *mdres, u64 logical,
 }
 
 
-static char *find_collision(struct metadump_struct *md, char *name,
-			    u32 name_len)
+static int find_collision_brute_force(struct name *val, u32 name_len)
 {
-	struct name *val;
-	struct rb_node *entry;
-	struct name tmp;
 	unsigned long checksum;
 	int found = 0;
 	int i;
-
-	tmp.val = name;
-	tmp.len = name_len;
-	entry = tree_search(&md->name_tree, &tmp.n, name_cmp, 0);
-	if (entry) {
-		val = rb_entry(entry, struct name, n);
-		free(name);
-		return val->sub;
-	}
-
-	val = malloc(sizeof(struct name));
-	if (!val) {
-		error("cannot sanitize name, not enough memory");
-		free(name);
-		return NULL;
-	}
-
-	memset(val, 0, sizeof(*val));
-
-	val->val = name;
-	val->len = name_len;
-	val->sub = malloc(name_len);
-	if (!val->sub) {
-		error("cannot sanitize name, not enough memory");
-		free(val);
-		free(name);
-		return NULL;
-	}
 
 	checksum = crc32c(~1, val->val, name_len);
 	memset(val->sub, ' ', name_len);
@@ -408,6 +376,47 @@ static char *find_collision(struct metadump_struct *md, char *name,
 				val->sub[i]++;
 		}
 	}
+	return found;
+}
+
+static char *find_collision(struct metadump_struct *md, char *name,
+			    u32 name_len)
+{
+	struct name *val;
+	struct rb_node *entry;
+	struct name tmp;
+	int found;
+	int i;
+
+	tmp.val = name;
+	tmp.len = name_len;
+	entry = tree_search(&md->name_tree, &tmp.n, name_cmp, 0);
+	if (entry) {
+		val = rb_entry(entry, struct name, n);
+		free(name);
+		return val->sub;
+	}
+
+	val = malloc(sizeof(struct name));
+	if (!val) {
+		error("cannot sanitize name, not enough memory");
+		free(name);
+		return NULL;
+	}
+
+	memset(val, 0, sizeof(*val));
+
+	val->val = name;
+	val->len = name_len;
+	val->sub = malloc(name_len);
+	if (!val->sub) {
+		error("cannot sanitize name, not enough memory");
+		free(val);
+		free(name);
+		return NULL;
+	}
+
+	found = find_collision_brute_force(val, name_len);
 
 	if (!found) {
 		warning(
