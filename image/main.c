@@ -408,6 +408,29 @@ static const u32 crc32c_rev_table[256] = {
 	0x588982AFL,0x5D65F45EL,0x53516F4DL,0x56BD19BCL
 };
 
+/*
+ * Calculate a 4-byte suffix to match desired CRC32C
+ *
+ * @current_crc: CRC32C checksum of all bytes before the suffix
+ * @desired_crc: the checksum that we want to get after adding the suffix
+ *
+ * Outputs: @suffix: pointer to where the suffix will be written (4-bytes)
+ */
+static void find_collision_calc_suffix(unsigned long current_crc,
+				       unsigned long desired_crc,
+				       char *suffix)
+{
+	int i;
+
+	for(i = 3; i >= 0; i--) {
+		desired_crc = (desired_crc << 8)
+			    ^ crc32c_rev_table[desired_crc >> 24 & 0xFF]
+			    ^ ((current_crc >> i * 8) & 0xFF);
+	}
+	for (i = 0; i < 4; i++)
+		suffix[i] = (desired_crc >> i * 8) & 0xFF;
+}
+
 static int find_collision_brute_force(struct name *val, u32 name_len)
 {
 	unsigned long checksum;
