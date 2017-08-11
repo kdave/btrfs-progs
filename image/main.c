@@ -431,6 +431,22 @@ static void find_collision_calc_suffix(unsigned long current_crc,
 		suffix[i] = (desired_crc >> i * 8) & 0xFF;
 }
 
+/*
+ * Check if suffix is valid according to our file name conventions
+ */
+static int find_collision_is_suffix_valid(const char *suffix)
+{
+	int i;
+	char c;
+
+	for (i = 0; i < 4; i++) {
+		c = suffix[i];
+		if (c < ' ' || c > 126 || c == '/')
+			return 0;
+	}
+	return 1;
+}
+
 static int find_collision_brute_force(struct name *val, u32 name_len)
 {
 	unsigned long checksum;
