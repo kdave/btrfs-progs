@@ -325,7 +325,9 @@ mktables: kernel-lib/mktables.c
 	@echo "    [CC]     $@"
 	$(Q)$(CC) $(CFLAGS) $< -o $@
 
-kernel-lib/tables.c: mktables
+# the target can be regenerated manually using mktables, but a local copy is
+# kept so the build process is simpler
+kernel-lib/tables.c:
 	@echo "    [TABLE]  $@"
 	$(Q)./mktables > $@ || ($(RM) -f $@ && exit 1)
 
@@ -518,7 +520,6 @@ clean: $(CLEANDIRS)
 	$(Q)$(RM) -f -- $(progs) *.o *.o.d \
 		kernel-lib/*.o kernel-lib/*.o.d \
 		kernel-shared/*.o kernel-shared/*.o.d \
-		kernel-lib/tables.c \
 		image/*.o image/*.o.d \
 		convert/*.o convert/*.o.d \
 		mkfs/*.o mkfs/*.o.d \
