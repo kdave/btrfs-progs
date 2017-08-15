@@ -59,6 +59,7 @@ TOPDIR := $(shell pwd)
 
 # Common build flags
 CFLAGS = $(SUBST_CFLAGS) \
+	 -std=gnu90 \
 	 -include config.h \
 	 -DBTRFS_FLAT_INCLUDES \
 	 -D_XOPEN_SOURCE=700  \
