@@ -801,7 +801,7 @@ static char *make_path(const char *dir, const char *name)
 
 static int traverse_directory(struct btrfs_trans_handle *trans,
 			      struct btrfs_root *root, const char *dir_name,
-			      struct directory_name_entry *dir_head, int out_fd)
+			      struct directory_name_entry *dir_head)
 {
 	int ret = 0;
 
@@ -1029,8 +1029,7 @@ static int create_chunks(struct btrfs_trans_handle *trans,
 	return ret;
 }
 
-static int make_image(const char *source_dir, struct btrfs_root *root,
-		int out_fd)
+static int make_image(const char *source_dir, struct btrfs_root *root)
 {
 	int ret;
 	struct btrfs_trans_handle *trans;
@@ -1048,7 +1047,7 @@ static int make_image(const char *source_dir, struct btrfs_root *root,
 	INIT_LIST_HEAD(&dir_head.list);
 
 	trans = btrfs_start_transaction(root, 1);
-	ret = traverse_directory(trans, root, source_dir, &dir_head, out_fd);
+	ret = traverse_directory(trans, root, source_dir, &dir_head);
 	if (ret) {
 		error("unable to traverse directory %s: %d", source_dir, ret);
 		goto fail;
@@ -1876,7 +1875,7 @@ raid_groups:
 			goto out;
 		}
 
-		ret = make_image(source_dir, root, fd);
+		ret = make_image(source_dir, root);
 		if (ret) {
 			error("error wihle filling filesystem: %d", ret);
 			goto out;
