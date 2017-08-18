@@ -433,7 +433,6 @@ static int du_add_file(const char *filename, int dirfd,
 	u64 file_total = 0;
 	u64 file_shared = 0;
 	u64 dir_set_shared = 0;
-	u64 subvol;
 	int fd;
 	DIR *dirstream = NULL;
 
@@ -462,16 +461,24 @@ static int du_add_file(const char *filename, int dirfd,
 		goto out;
 	}
 
-	ret = lookup_path_rootid(fd, &subvol);
-	if (ret)
-		goto out_close;
+	/*
+	 * If st.st_ino == BTRFS_EMPTY_SUBVOL_DIR_OBJECTID ==2, there is no any
+	 * related tree
+	 */
+	if (st.st_ino != BTRFS_EMPTY_SUBVOL_DIR_OBJECTID) {
+		u64 subvol;
 
-	if (inode_seen(st.st_ino, subvol))
-		goto out_close;
+		ret = lookup_path_rootid(fd, &subvol);
+		if (ret)
+			goto out_close;
 
-	ret = mark_inode_seen(st.st_ino, subvol);
-	if (ret)
-		goto out_close;
+		if (inode_seen(st.st_ino, subvol))
+			goto out_close;
+
+		ret = mark_inode_seen(st.st_ino, subvol);
+		if (ret)
+			goto out_close;
+	}
 
 	if (S_ISREG(st.st_mode)) {
 		ret = du_calc_file_space(fd, shared_extents, &file_total,

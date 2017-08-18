@@ -138,6 +138,8 @@ struct btrfs_free_space_ctl;
  */
 #define BTRFS_DEV_ITEMS_OBJECTID 1ULL
 
+#define BTRFS_EMPTY_SUBVOL_DIR_OBJECTID 2ULL
+
 /*
  * the max metadata block size.  This limit is somewhat artificial,
  * but the memmove costs go through the roof for larger blocks.
