@@ -403,6 +403,7 @@ static int du_walk_dir(struct du_dir_ctxt *ctxt, struct rb_root *shared_extents)
 						  shared_extents, &tot, &shr,
 						  0);
 				if (ret == -ENOTTY) {
+					ret = 0;
 					continue;
 				} else if (ret) {
 					fprintf(stderr,
