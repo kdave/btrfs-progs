@@ -57,6 +57,7 @@ or less if the commit was implied by other filesystem activity.
 +
 One can determine whether *zero-log* is needed according to the kernel
 backtrace:
++
 ----
 ? replay_one_dir_item+0xb5/0xb5 [btrfs]
 ? walk_log_tree+0x9c/0x19d [btrfs]
