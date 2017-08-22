@@ -50,7 +50,7 @@ convert_test_preamble() {
 	msg="$2"
 	shift 3
 	echo "    [TEST/conv]     $msg, btrfs" "${features:-defaults}"
-	echo "creating ext image with: $@" >> "$RESULTS"
+	echo "creating test image with: $@" >> "$RESULTS"
 }
 
 #  prepare TEST_DEV before conversion, create filesystem and mount it, image
@@ -59,6 +59,8 @@ convert_test_preamble() {
 #  $2+: free form, command to create the filesystem, with appended -F
 convert_test_prep_fs() {
 	local fstype
+	local force
+	local mountopts
 
 	fstype="$1"
 	shift
@@ -67,10 +69,21 @@ convert_test_prep_fs() {
 	run_check truncate -s 0 "$TEST_DEV"
 	# 256MB is the smallest acceptable btrfs image.
 	run_check truncate -s 512M "$TEST_DEV"
-	run_check "$@" -F "$TEST_DEV"
+	force=
+	mountopts=
+	case "$fstype" in
+	ext[234])
+		force=-F ;;
+	reiserfs)
+		force=-ff
+		mountopts="-o acl,user_xattr,attrs" ;;
+	*)
+		_fail "unknown filesystem to convert: $fstype"
+	esac
+	run_check "$@" $force "$TEST_DEV"
 
 	# create a file to check btrfs-convert can convert regular file correct
-	run_check_mount_convert_dev "$fstype"
+	run_check_mount_convert_dev "$fstype" $mountopts
 
 	# create a file inside the fs before convert, to make sure there is
 	# data covering btrfs backup superblock range (64M)
