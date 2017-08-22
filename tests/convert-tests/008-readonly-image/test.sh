@@ -16,10 +16,10 @@ convert_test_do_convert
 run_check_mount_test_dev
 
 # It's expected to fail
-$SUDO_HELPER dd if=/dev/zero of="$TEST_MNT/ext2_save/image" bs=1M count=1 \
+$SUDO_HELPER dd if=/dev/zero of="$TEST_MNT/ext2_saved/image" bs=1M count=1 \
 	&> /dev/null
 if [ $? -ne 1 ]; then
-	echo "after convert ext2_save/image is not read-only"
+	echo "after convert ext2_saved/image is not read-only"
 	exit 1
 fi
 run_check_umount_test_dev
