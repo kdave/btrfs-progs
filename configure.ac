@@ -106,7 +106,7 @@ AC_SUBST([DISABLE_BTRFSCONVERT])
 
 AC_ARG_WITH([convert],
 	    AS_HELP_STRING([[[]--with-convert[[=auto]]]], [built-in filesystems for convert (default: auto)
-supported (comma separated list): ext2]),
+supported (comma separated list): ext2,reiserfs]),
   [], [with_convert=auto]
 )
 
@@ -120,6 +120,7 @@ fi
 
 convertfs=
 BTRFSCONVERT_EXT2=0
+BTRFSCONVERT_REISERFS=0
 if test "x$enable_convert" = xyes; then
 	if test "x$with_convert" = "xauto" || echo "$with_convert" | grep -q "ext2"; then
 		PKG_CHECK_MODULES(EXT2FS, [ext2fs >= 1.42],,
@@ -131,11 +132,23 @@ if test "x$enable_convert" = xyes; then
 		convertfs="${convertfs:+$convertfs,}ext2"
 		BTRFSCONVERT_EXT2=1
 	fi
+	if test "x$with_convert" = "xauto"; then
+		PKG_CHECK_MODULES(REISERFS, [reiserfscore >= 3.6.27],
+				  [BTRFSCONVERT_REISERFS=1],
+				  [BTRFSCONVERT_REISERFS=0])
+	elif echo "$with_convert" | grep -q "reiserfs"; then
+		PKG_CHECK_MODULES(REISERFS, [reiserfscore >= 3.6.27],
+				  [BTRFSCONVERT_REISERFS=1],[])
+	fi
+	if test "$BTRFSCONVERT_REISERFS" = 1; then
+		convertfs="${convertfs:+$convertfs,}reiserfs"
+	fi
 fi
 AC_SUBST([BTRFSCONVERT_EXT2])
+AC_SUBST([BTRFSCONVERT_REISERFS])
 
 # catch typos
-tmp=$(echo "$with_convert" | sed -e 's/auto//' | sed -e 's/ext2//' | sed -e 's/,\+/,/')
+tmp=$(echo "$with_convert" | sed -e 's/auto//' | sed -e 's/ext2//' | sed -e 's/reiserfs//' | sed -e 's/,\+/,/')
 if ! test "x$tmp" = "x"; then
 	AC_MSG_ERROR([unknown tokens for --with-convert: $tmp])
 fi

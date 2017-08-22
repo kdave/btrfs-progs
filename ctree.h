@@ -2707,7 +2707,7 @@ int btrfs_insert_file_extent(struct btrfs_trans_handle *trans,
 			     u64 num_bytes);
 int btrfs_insert_inline_extent(struct btrfs_trans_handle *trans,
 				struct btrfs_root *root, u64 objectid,
-				u64 offset, char *buffer, size_t size);
+				u64 offset, const char *buffer, size_t size);
 int btrfs_csum_file_block(struct btrfs_trans_handle *trans,
 			  struct btrfs_root *root, u64 alloc_end,
 			  u64 bytenr, char *data, size_t len);

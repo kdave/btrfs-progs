@@ -12,6 +12,7 @@ INSTALL = @INSTALL@
 DISABLE_DOCUMENTATION = @DISABLE_DOCUMENTATION@
 DISABLE_BTRFSCONVERT = @DISABLE_BTRFSCONVERT@
 BTRFSCONVERT_EXT2 = @BTRFSCONVERT_EXT2@
+BTRFSCONVERT_REISERFS = @BTRFSCONVERT_REISERFS@
 
 SUBST_CFLAGS = @CFLAGS@
 SUBST_LDFLAGS = @LDFLAGS@
@@ -31,6 +32,6 @@ udevruledir = ${udevdir}/rules.d
 
 # external libs required by various binaries; for btrfs-foo,
 # specify btrfs_foo_libs = <list of libs>; see $($(subst...)) rules in Makefile
-btrfs_convert_libs = @EXT2FS_LIBS@ @COM_ERR_LIBS@
+btrfs_convert_libs = @EXT2FS_LIBS@ @COM_ERR_LIBS@ @REISERFS_LIBS@
 
 MAKEFILE_INC_INCLUDED = yes

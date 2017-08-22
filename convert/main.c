@@ -103,11 +103,15 @@
 #include "convert/source-fs.h"
 #include "fsfeatures.h"
 
-const struct btrfs_convert_operations ext2_convert_ops;
+extern const struct btrfs_convert_operations ext2_convert_ops;
+extern const struct btrfs_convert_operations reiserfs_convert_ops;
 
 static const struct btrfs_convert_operations *convert_operations[] = {
 #if BTRFSCONVERT_EXT2
 	&ext2_convert_ops,
+#endif
+#if BTRFSCONVERT_REISERFS
+	&reiserfs_convert_ops,
 #endif
 };
 
@@ -416,7 +420,7 @@ static int migrate_one_reserved_range(struct btrfs_trans_handle *trans,
 }
 
 /*
- * Relocate the used ext2 data in reserved ranges
+ * Relocate the used source fs data in reserved ranges
  */
 static int migrate_reserved_ranges(struct btrfs_trans_handle *trans,
 				   struct btrfs_root *root,
@@ -1666,11 +1670,11 @@ static int do_rollback(const char *devname)
 	ret = btrfs_search_slot(NULL, fs_info->tree_root, &key, &path, 0, 0);
 	btrfs_release_path(&path);
 	if (ret > 0) {
-		error("unable to find ext2 image subvolume, is it deleted?");
+		error("unable to find source fs image subvolume, is it deleted?");
 		ret = -ENOENT;
 		goto close_fs;
 	} else if (ret < 0) {
-		error("failed to find ext2 image subvolume: %s",
+		error("failed to find source fs image subvolume: %s",
 			strerror(-ret));
 		goto close_fs;
 	}
@@ -1788,6 +1792,7 @@ static void print_usage(void)
 	printf("\n");
 	printf("Supported filesystems:\n");
 	printf("\text2/3/4: %s\n", BTRFSCONVERT_EXT2 ? "yes" : "no");
+	printf("\treiserfs: %s\n", BTRFSCONVERT_REISERFS ? "yes" : "no");
 }
 
 int main(int argc, char *argv[])

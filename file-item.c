@@ -86,7 +86,7 @@ out:
 
 int btrfs_insert_inline_extent(struct btrfs_trans_handle *trans,
 			       struct btrfs_root *root, u64 objectid,
-			       u64 offset, char *buffer, size_t size)
+			       u64 offset, const char *buffer, size_t size)
 {
 	struct btrfs_key key;
 	struct btrfs_path *path;
