@@ -1409,7 +1409,7 @@ int main(int argc, char **argv)
 	u32 sectorsize = 4096;
 	u32 stripesize = 4096;
 	int zero_end = 1;
-	int fd;
+	int fd = -1;
 	int ret;
 	int i;
 	int mixed = 0;
@@ -1495,12 +1495,12 @@ int main(int argc, char **argv)
 					error("unrecognized filesystem feature '%s'",
 							tmp);
 					free(orig);
-					exit(1);
+					goto error;
 				}
 				free(orig);
 				if (features & BTRFS_FEATURE_LIST_ALL) {
 					btrfs_list_all_fs_features(0);
-					exit(0);
+					goto success;
 				}
 				break;
 				}
@@ -1514,8 +1514,7 @@ int main(int argc, char **argv)
 			case 'V':
 				printf("mkfs.btrfs, part of %s\n",
 						PACKAGE_STRING);
-				exit(0);
-				break;
+				goto success;
 			case 'r':
 				source_dir = optarg;
 				source_dir_set = 1;
@@ -1550,7 +1549,7 @@ int main(int argc, char **argv)
 
 	if (source_dir_set && dev_cnt > 1) {
 		error("the option -r is limited to a single device");
-		exit(1);
+		goto error;
 	}
 
 	if (*fs_uuid) {
@@ -1558,11 +1557,11 @@ int main(int argc, char **argv)
 
 		if (uuid_parse(fs_uuid, dummy_uuid) != 0) {
 			error("could not parse UUID: %s", fs_uuid);
-			exit(1);
+			goto error;
 		}
 		if (!test_uuid_unique(fs_uuid)) {
 			error("non-unique UUID: %s", fs_uuid);
-			exit(1);
+			goto error;
 		}
 	}
 
@@ -1570,7 +1569,7 @@ int main(int argc, char **argv)
 		file = argv[optind++];
 		if (is_block_device(file) == 1)
 			if (test_dev_for_mkfs(file, force_overwrite))
-				exit(1);
+				goto error;
 	}
 
 	optind = saved_optind;
@@ -1605,7 +1604,7 @@ int main(int argc, char **argv)
 			if (metadata_profile != data_profile) {
 				error(
 	"with mixed block groups data and metadata profiles must be the same");
-				exit(1);
+				goto error;
 			}
 		}
 
@@ -1627,12 +1626,12 @@ int main(int argc, char **argv)
 
 	if (btrfs_check_nodesize(nodesize, sectorsize,
 				 features))
-		exit(1);
+		goto error;
 
 	if (sectorsize < sizeof(struct btrfs_super_block)) {
 		error("sectorsize smaller than superblock: %u < %zu",
 				sectorsize, sizeof(struct btrfs_super_block));
-		exit(1);
+		goto error;
 	}
 
 	/* Check device/block_count after the nodesize is determined */
@@ -1641,7 +1640,7 @@ int main(int argc, char **argv)
 			block_count);
 		error("minimum size for btrfs filesystem is %llu",
 			btrfs_min_dev_size(nodesize));
-		exit(1);
+		goto error;
 	}
 	for (i = saved_optind; i < saved_optind + dev_cnt; i++) {
 		char *path;
@@ -1651,20 +1650,20 @@ int main(int argc, char **argv)
 		if (ret < 0) {
 			error("failed to check size for %s: %s",
 				path, strerror(-ret));
-			exit (1);
+			goto error;
 		}
 		if (ret > 0) {
 			error("'%s' is too small to make a usable filesystem",
 				path);
 			error("minimum size for each btrfs device is %llu",
 				btrfs_min_dev_size(nodesize));
-			exit(1);
+			goto error;
 		}
 	}
 	ret = test_num_disk_vs_raid(metadata_profile, data_profile,
 			dev_cnt, mixed, ssd);
 	if (ret)
-		exit(1);
+		goto error;
 
 	dev_cnt--;
 
@@ -1677,7 +1676,7 @@ int main(int argc, char **argv)
 		fd = open(file, O_RDWR);
 		if (fd < 0) {
 			error("unable to open %s: %s", file, strerror(errno));
-			exit(1);
+			goto error;
 		}
 		ret = btrfs_prepare_device(fd, file, &dev_block_count,
 				block_count,
@@ -1685,22 +1684,21 @@ int main(int argc, char **argv)
 				(discard ? PREP_DEVICE_DISCARD : 0) |
 				(verbose ? PREP_DEVICE_VERBOSE : 0));
 		if (ret) {
-			close(fd);
-			exit(1);
+			goto error;
 		}
 		if (block_count && block_count > dev_block_count) {
 			error("%s is smaller than requested size, expected %llu, found %llu",
 					file,
 					(unsigned long long)block_count,
 					(unsigned long long)dev_block_count);
-			exit(1);
+			goto error;
 		}
 	} else {
 		fd = open(file, O_CREAT | O_RDWR,
 				S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH);
 		if (fd < 0) {
 			error("unable to open %s: %s", file, strerror(errno));
-			exit(1);
+			goto error;
 		}
 
 		source_dir_size = size_sourcedir(source_dir, sectorsize,
@@ -1710,7 +1708,7 @@ int main(int argc, char **argv)
 		ret = zero_output_file(fd, block_count);
 		if (ret) {
 			error("unable to zero the output file");
-			exit(1);
+			goto error;
 		}
 		/* our "device" is the new image file */
 		dev_block_count = block_count;
@@ -1720,7 +1718,7 @@ int main(int argc, char **argv)
 	if (dev_block_count < BTRFS_MKFS_SYSTEM_GROUP_SIZE) {
 		error("device is too small to make filesystem, must be at least %llu",
 				(unsigned long long)BTRFS_MKFS_SYSTEM_GROUP_SIZE);
-		exit(1);
+		goto error;
 	}
 
 	if (group_profile_max_safe_loss(metadata_profile) <
@@ -1739,41 +1737,42 @@ int main(int argc, char **argv)
 	ret = make_btrfs(fd, &mkfs_cfg);
 	if (ret) {
 		error("error during mkfs: %s", strerror(-ret));
-		exit(1);
+		goto error;
 	}
 
 	fs_info = open_ctree_fs_info(file, 0, 0, 0,
 			OPEN_CTREE_WRITES | OPEN_CTREE_FS_PARTIAL);
 	if (!fs_info) {
 		error("open ctree failed");
-		close(fd);
-		exit(1);
+		goto error;
 	}
+	close(fd);
+	fd = -1;
 	root = fs_info->fs_root;
 	fs_info->alloc_start = alloc_start;
 
 	ret = create_metadata_block_groups(root, mixed, &allocation);
 	if (ret) {
 		error("failed to create default block groups: %d", ret);
-		exit(1);
+		goto error;
 	}
 
 	trans = btrfs_start_transaction(root, 1);
 	if (!trans) {
 		error("failed to start transaction");
-		exit(1);
+		goto error;
 	}
 
 	ret = create_data_block_groups(trans, root, mixed, &allocation);
 	if (ret) {
 		error("failed to create default data block groups: %d", ret);
-		exit(1);
+		goto error;
 	}
 
 	ret = make_root_dir(trans, root);
 	if (ret) {
 		error("failed to setup the root directory: %d", ret);
-		exit(1);
+		goto error;
 	}
 
 	ret = btrfs_commit_transaction(trans, root);
@@ -1785,7 +1784,7 @@ int main(int argc, char **argv)
 	trans = btrfs_start_transaction(root, 1);
 	if (!trans) {
 		error("failed to start transaction");
-		exit(1);
+		goto error;
 	}
 
 	if (dev_cnt == 0)
@@ -1802,7 +1801,7 @@ int main(int argc, char **argv)
 		fd = open(file, O_RDWR);
 		if (fd < 0) {
 			error("unable to open %s: %s", file, strerror(errno));
-			exit(1);
+			goto error;
 		}
 		ret = btrfs_device_already_in_root(root, fd,
 						   BTRFS_SUPER_INFO_OFFSET);
@@ -1818,8 +1817,7 @@ int main(int argc, char **argv)
 				(zero_end ? PREP_DEVICE_ZERO_END : 0) |
 				(discard ? PREP_DEVICE_DISCARD : 0));
 		if (ret) {
-			close(fd);
-			exit(1);
+			goto error;
 		}
 
 		ret = btrfs_add_to_fsid(trans, root, fd, file, dev_block_count,
@@ -1943,4 +1941,12 @@ out:
 	free(label);
 
 	return !!ret;
+error:
+	if (fd > 0)
+		close(fd);
+
+	free(label);
+	exit(1);
+success:
+	exit(0);
 }
