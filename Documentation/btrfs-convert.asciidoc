@@ -3,7 +3,7 @@ btrfs-convert(8)
 
 NAME
 ----
-btrfs-convert - convert from ext2/3/4 filesystem to btrfs in-place
+btrfs-convert - convert from ext2/3/4 or reiserfs filesystem to btrfs in-place
 
 SYNOPSIS
 --------
@@ -11,13 +11,22 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-*btrfs-convert* is used to convert existing ext2/3/4 filesystem image to a
-btrfs filesystem in-place.  The original filesystem image is accessible
-subvolume named 'ext2_saved' as file 'image'.
+*btrfs-convert* is used to convert existing source filesystem image to a btrfs
+filesystem in-place.  The original filesystem image is accessible in subvolume
+named like 'ext2_saved' as file 'image'.
 
-WARNING: If you are going to perform rollback to ext2/3/4, you should not
-execute *btrfs balance* command on the converted filesystem. This will change
-the extent layout and make *btrfs-convert* unable to rollback.
+Supported filesystems:
+
+* ext2, ext3, ext4 -- original feature, always built in
+
+* reiserfs -- since version 4.13, opptinally built, requires libreiserfscore 3.6.27
+
+The list of supported source filesystem by a given binary is listed at the end
+of help (option '--help').
+
+WARNING: If you are going to perform rollback to the original filesystem, you
+should not execute *btrfs balance* command on the converted filesystem. This
+will change the extent layout and make *btrfs-convert* unable to rollback.
 
 The conversion utilizes free space of the original filesystem. The exact
 estimate of the required space cannot be foretold. The final btrfs metadata
@@ -38,8 +47,8 @@ NOTE: The source filesystem should be clean, you are encouraged to run the
 
 **REMOVE THE ORIGINAL FILESYSTEM METADATA**
 
-By removing the 'ext2_saved' subvolume, all metadata of the original filesystem
-will be removed:
+By removing the subvolume named like 'ext2_saved' or 'reiserfs_saved', all
+metadata of the original filesystem will be removed:
 
    # btrfs subvolume delete /mnt/ext2_saved
 
