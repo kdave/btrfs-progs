@@ -638,19 +638,10 @@ out:
 		free(ext2_inode);
 	return ret;
 }
-#define MINORBITS	20
-#define MKDEV(ma, mi)	(((ma) << MINORBITS) | (mi))
 
 static inline dev_t old_decode_dev(u16 val)
 {
 	return MKDEV((val >> 8) & 255, val & 255);
-}
-
-static inline dev_t new_decode_dev(u32 dev)
-{
-	unsigned major = (dev & 0xfff00) >> 8;
-	unsigned minor = (dev & 0xff) | ((dev >> 12) & 0xfff00);
-	return MKDEV(major, minor);
 }
 
 static void ext2_copy_inode_item(struct btrfs_inode_item *dst,
@@ -692,7 +683,7 @@ static void ext2_copy_inode_item(struct btrfs_inode_item *dst,
 				old_decode_dev(src->i_block[0]));
 		} else {
 			btrfs_set_stack_inode_rdev(dst,
-				new_decode_dev(src->i_block[1]));
+				decode_dev(src->i_block[1]));
 		}
 	}
 	memset(&dst->reserved, 0, sizeof(dst->reserved));

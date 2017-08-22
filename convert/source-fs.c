@@ -28,6 +28,14 @@ const struct simple_range btrfs_reserved_ranges[3] = {
 	{ BTRFS_SB_MIRROR_OFFSET(2), SZ_64K }
 };
 
+dev_t decode_dev(u32 dev)
+{
+	unsigned major = (dev & 0xfff00) >> 8;
+	unsigned minor = (dev & 0xff) | ((dev >> 12) & 0xfff00);
+
+	return MKDEV(major, minor);
+}
+
 int ext2_acl_count(size_t size)
 {
 	ssize_t s;

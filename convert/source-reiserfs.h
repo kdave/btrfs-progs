@@ -24,18 +24,9 @@
 #include <reiserfs/io.h>
 #include <reiserfs/reiserfs_lib.h>
 #include <reiserfs/reiserfs_fs.h>
-#include <linux/kdev_t.h>
 #include "convert/source-fs.h"
 
 #define REISERFS_ACL_VERSION	0x0001
-
-static inline dev_t new_decode_dev(u32 dev)
-{
-	unsigned major = (dev & 0xfff00) >> 8;
-	unsigned minor = (dev & 0xff) | ((dev >> 12) & 0xfff00);
-
-	return MKDEV(major, minor);
-}
 
 #endif	/* BTRFSCONVERT_REISERFS */
 

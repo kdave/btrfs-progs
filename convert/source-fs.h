@@ -18,8 +18,8 @@
 #define __BTRFS_CONVERT_SOURCE_FS_H__
 
 #include "kerncompat.h"
+#include <linux/kdev_t.h>
 #include <pthread.h>
-
 
 #define CONV_IMAGE_SUBVOL_OBJECTID BTRFS_FIRST_FREE_OBJECTID
 
@@ -103,6 +103,13 @@ static inline size_t acl_ea_size(int count)
 }
 
 int ext2_acl_count(size_t size);
+
+#ifndef MKDEV
+#define MINORBITS	20
+#define MKDEV(ma, mi)	(((ma) << MINORBITS) | (mi))
+#endif
+
+dev_t decode_dev(u32 dev);
 
 struct btrfs_convert_operations {
 	const char name[SOURCE_FS_NAME_LEN];

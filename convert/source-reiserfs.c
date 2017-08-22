@@ -251,7 +251,7 @@ static void reiserfs_copy_inode_item(struct btrfs_inode_item *inode,
 		btrfs_set_stack_timespec_sec(&inode->mtime, sd_v1_mtime(sd));
 
 		if (!S_ISREG(mode) && !S_ISDIR(mode) && !S_ISLNK(mode))
-			rdev = new_decode_dev(sd_v1_rdev(sd));
+			rdev = decode_dev(sd_v1_rdev(sd));
 	} else {
 		struct stat_data *sd = stat_data;
 
@@ -265,7 +265,7 @@ static void reiserfs_copy_inode_item(struct btrfs_inode_item *inode,
 		btrfs_set_stack_timespec_sec(&inode->mtime, sd_v2_mtime(sd));
 
 		if (!S_ISREG(mode) && !S_ISDIR(mode) && !S_ISLNK(mode))
-			rdev = new_decode_dev(sd_v2_rdev(sd));
+			rdev = decode_dev(sd_v2_rdev(sd));
 
 		if (copy_inode_flags)
 			reiserfs_convert_inode_flags(inode, sd);
