@@ -424,27 +424,6 @@ static int ext2_xattr_check_entry(struct ext2_ext_attr_entry *entry,
 	return 0;
 }
 
-static inline int ext2_acl_count(size_t size)
-{
-	ssize_t s;
-	size -= sizeof(ext2_acl_header);
-	s = size - 4 * sizeof(ext2_acl_entry_short);
-	if (s < 0) {
-		if (size % sizeof(ext2_acl_entry_short))
-			return -1;
-		return size / sizeof(ext2_acl_entry_short);
-	} else {
-		if (s % sizeof(ext2_acl_entry))
-			return -1;
-		return s / sizeof(ext2_acl_entry) + 4;
-	}
-}
-
-static inline size_t acl_ea_size(int count)
-{
-	return sizeof(acl_ea_header) + count * sizeof(acl_ea_entry);
-}
-
 static int ext2_acl_to_xattr(void *dst, const void *src,
 			     size_t dst_size, size_t src_size)
 {

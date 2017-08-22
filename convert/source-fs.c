@@ -28,6 +28,23 @@ const struct simple_range btrfs_reserved_ranges[3] = {
 	{ BTRFS_SB_MIRROR_OFFSET(2), SZ_64K }
 };
 
+int ext2_acl_count(size_t size)
+{
+	ssize_t s;
+
+	size -= sizeof(ext2_acl_header);
+	s = size - 4 * sizeof(ext2_acl_entry_short);
+	if (s < 0) {
+		if (size % sizeof(ext2_acl_entry_short))
+			return -1;
+		return size / sizeof(ext2_acl_entry_short);
+	} else {
+		if (s % sizeof(ext2_acl_entry))
+			return -1;
+		return s / sizeof(ext2_acl_entry) + 4;
+	}
+}
+
 static u64 intersect_with_reserved(u64 bytenr, u64 num_bytes)
 {
 	int i;

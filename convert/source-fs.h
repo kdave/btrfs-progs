@@ -102,6 +102,8 @@ static inline size_t acl_ea_size(int count)
 	return sizeof(acl_ea_header) + count * sizeof(acl_ea_entry);
 }
 
+int ext2_acl_count(size_t size);
+
 struct btrfs_convert_operations {
 	const char name[SOURCE_FS_NAME_LEN];
 	int (*open_fs)(struct btrfs_convert_context *cctx, const char *devname);
