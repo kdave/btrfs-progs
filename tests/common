@@ -21,6 +21,26 @@ _assert_path()
 	exit 1
 }
 
+# $1: this string gets matched to files, absolute or relative path, or a
+# systemwide command available via $PATH
+_is_file_or_command()
+{
+	local msg
+
+	msg="$1"
+	if [ -z "$msg" ]; then
+		return 1
+	fi
+
+	if [ -f "$msg" -o -d "$msg" -o -b "$msg" ]; then
+		return 0
+	fi
+	if [ -f $(type -p "$msg") ]; then
+		return 0
+	fi
+	return 1
+}
+
 _fail()
 {
 	echo "$*" | tee -a "$RESULTS"
@@ -184,6 +204,11 @@ run_mustfail()
 
 	msg="$1"
 	shift
+
+	if _is_file_or_command "$msg"; then
+		echo "ASSERTION FAIL: 1st argument of run_mustfail must be a message"
+		exit 1
+	fi
 
 	ins=$(_get_spec_ins "$@")
 	spec=$(($ins-1))
