@@ -12,6 +12,7 @@ for i in *.txt; do
 			*runtime\ error*) echo "RUNTIME ERROR (sanitizer): $last" ;;
 			*AddressSanitizer*heap-use-after-free*) echo "RUNTIME ERROR (use after free): $last" ;;
 			*Warning:\ assertion*failed*) echo "ASSERTION WARNING: $last" ;;
+			*command\ not\ found*) echo "COMMAND NOT FOUND: $last" ;;
 			*) : ;;
 		esac
 	done < "$i"
