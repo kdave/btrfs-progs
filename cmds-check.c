@@ -13072,12 +13072,10 @@ int cmd_check(int argc, char **argv)
 	}
 
 	/*
-	 * Not supported yet
+	 * experimental and dangerous
 	 */
-	if (repair && check_mode == CHECK_MODE_LOWMEM) {
-		error("low memory mode doesn't support repair yet");
-		exit(1);
-	}
+	if (repair && check_mode == CHECK_MODE_LOWMEM)
+		warning("low-memory mode repair support is only partial");
 
 	radix_tree_init();
 	cache_tree_init(&root_cache);
