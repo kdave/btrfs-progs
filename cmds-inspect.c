@@ -31,9 +31,6 @@
 #include "disk-io.h"
 #include "commands.h"
 #include "btrfs-list.h"
-#include "cmds-inspect-dump-tree.h"
-#include "cmds-inspect-dump-super.h"
-#include "cmds-inspect-tree-stats.h"
 #include "help.h"
 
 static const char * const inspect_cmd_group_usage[] = {

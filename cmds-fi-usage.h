@@ -22,9 +22,6 @@
 #include "kerncompat.h"
 #include "ioctl.h"
 
-extern const char * const cmd_filesystem_usage_usage[];
-int cmd_filesystem_usage(int argc, char **argv);
-
 struct device_info {
 	u64	devid;
 	char	path[BTRFS_DEVICE_PATH_NAME_MAX];

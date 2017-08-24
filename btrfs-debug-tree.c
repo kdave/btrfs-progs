@@ -20,7 +20,6 @@
 #include "volumes.h"
 #include "utils.h"
 #include "commands.h"
-#include "cmds-inspect-dump-tree.h"
 #include "help.h"
 
 int main(int argc, char **argv)
