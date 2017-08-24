@@ -1277,7 +1277,7 @@ int cmd_receive(int argc, char **argv)
 			{ NULL, 0, NULL, 0 }
 		};
 
-		c = getopt_long(argc, argv, "Cevf:m:", long_opts, NULL);
+		c = getopt_long(argc, argv, "Cevf:m:E:", long_opts, NULL);
 		if (c < 0)
 			break;
 
