@@ -60,7 +60,7 @@ show extent state for the given subvolume
 -p|--progress::
 indicate progress at various checking phases
 
---qgroup-report::
+-Q|--qgroup-report::
 verify qgroup accounting and compare against filesystem accounting
 
 -r|--tree-root <bytenr>::
