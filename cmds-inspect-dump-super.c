@@ -518,8 +518,10 @@ int cmd_inspect_dump_super(int argc, char **argv)
 
 	while (1) {
 		int c;
+		enum { GETOPT_VAL_BYTENR = 257 };
 		static const struct option long_options[] = {
 			{"all", no_argument, NULL, 'a'},
+			{"bytenr", required_argument, NULL, GETOPT_VAL_BYTENR },
 			{"full", no_argument, NULL, 'f'},
 			{"force", no_argument, NULL, 'F'},
 			{"super", required_argument, NULL, 's' },
@@ -562,6 +564,11 @@ int cmd_inspect_dump_super(int argc, char **argv)
 			} else {
 				sb_bytenr = btrfs_sb_offset(arg);
 			}
+			all = 0;
+			break;
+		case GETOPT_VAL_BYTENR:
+			arg = arg_strtou64(optarg);
+			sb_bytenr = arg;
 			all = 0;
 			break;
 		default:
