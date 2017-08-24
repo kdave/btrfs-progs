@@ -12762,7 +12762,7 @@ int cmd_check(int argc, char **argv)
 			{ NULL, 0, NULL, 0}
 		};
 
-		c = getopt_long(argc, argv, "as:br:p", long_options, NULL);
+		c = getopt_long(argc, argv, "as:br:pEQ", long_options, NULL);
 		if (c < 0)
 			break;
 		switch(c) {
