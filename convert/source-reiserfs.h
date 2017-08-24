@@ -28,6 +28,46 @@
 
 #define REISERFS_ACL_VERSION	0x0001
 
+#define OID_OFFSET (BTRFS_FIRST_FREE_OBJECTID - REISERFS_ROOT_OBJECTID)
+
+struct reiserfs_convert_info {
+	bool copy_attrs;
+	struct reiserfs_key privroot_key;
+	struct reiserfs_key xattr_key;
+
+	/* only set during copy_inodes */
+	struct task_ctx *progress;
+
+	/* used to track hardlinks */
+	unsigned used_slots;
+	unsigned alloced_slots;
+	u64 *objectids;
+};
+
+struct reiserfs_blk_iterate_data {
+	struct blk_iterate_data blk_data;
+	char *inline_data;
+	u64 inline_offset;
+	u32 inline_length;
+};
+
+struct reiserfs_dirent_data {
+	u64 index;
+	u32 convert_flags;
+	struct btrfs_inode_item *inode;
+	struct btrfs_root *root;
+};
+
+struct reiserfs_xattr_data {
+	struct btrfs_root *root;
+	struct btrfs_trans_handle *trans;
+	u64 target_oid;
+	const char *name;
+	size_t namelen;
+	void *body;
+	size_t len;
+};
+
 #endif	/* BTRFSCONVERT_REISERFS */
 
 #endif

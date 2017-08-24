@@ -44,20 +44,6 @@ static inline u8 mode_to_file_type(u32 mode)
 	return BTRFS_FT_UNKNOWN;
 }
 
-struct reiserfs_convert_info {
-	bool copy_attrs;
-	struct reiserfs_key privroot_key;
-	struct reiserfs_key xattr_key;
-
-	/* only set during copy_inodes */
-	struct task_ctx *progress;
-
-	/* used to track hardlinks */
-	unsigned used_slots;
-	unsigned alloced_slots;
-	u64 *objectids;
-};
-
 static u32 reiserfs_count_objectids(reiserfs_filsys_t fs)
 {
 	struct reiserfs_super_block *sb = fs->fs_ondisk_sb;
@@ -279,13 +265,6 @@ static void reiserfs_copy_inode_item(struct btrfs_inode_item *inode,
 	btrfs_set_stack_inode_rdev(inode, rdev);
 }
 
-struct reiserfs_blk_iterate_data {
-	struct blk_iterate_data blk_data;
-	char *inline_data;
-	u64 inline_offset;
-	u32 inline_length;
-};
-
 static void init_reiserfs_blk_iterate_data(
 				struct reiserfs_blk_iterate_data *data,
 				struct btrfs_trans_handle *trans,
@@ -485,17 +464,9 @@ fail:
 	return ret;
 }
 
-#define OID_OFFSET (BTRFS_FIRST_FREE_OBJECTID - REISERFS_ROOT_OBJECTID)
 static int reiserfs_copy_meta(reiserfs_filsys_t fs, struct btrfs_root *root,
 			      u32 convert_flags, u32 deh_dirid,
 			      u32 deh_objectid, u8 *type);
-
-struct reiserfs_dirent_data {
-	u64 index;
-	u32 convert_flags;
-	struct btrfs_inode_item *inode;
-	struct btrfs_root *root;
-};
 
 static int reiserfs_copy_dirent(reiserfs_filsys_t fs,
 				const struct reiserfs_key *dir_short_key,
@@ -695,16 +666,6 @@ fail:
 	pathrelse(&path);
 	return ret;
 }
-
-struct reiserfs_xattr_data {
-	struct btrfs_root *root;
-	struct btrfs_trans_handle *trans;
-	u64 target_oid;
-	const char *name;
-	size_t namelen;
-	void *body;
-	size_t len;
-};
 
 static int reiserfs_xattr_indirect_fn(reiserfs_filsys_t fs, u64 position,
 				      u64 size, int num_blocks,
