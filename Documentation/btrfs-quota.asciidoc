@@ -96,7 +96,23 @@ instead of '0/ID'.  For all higher levels, the ID can be chosen freely.
 Each qgroup can contain a set of lower level qgroups, thus creating a hierarchy
 of qgroups. Figure 1 shows an example qgroup tree.
 
-// TODO: insert Figure 1
+                          +---+
+                          |2/1|
+                          +---+
+                         /     \
+                   +---+/       \+---+
+                   |1/1|         |1/2|
+                   +---+         +---+
+                  /     \       /     \
+            +---+/       \+---+/       \+---+
+qgroups     |0/1|         |0/2|         |0/3|
+            +-+-+         +---+         +---+
+              |          /     \       /     \
+              |         /       \     /       \
+              |        /         \   /         \
+extents       1       2            3            4
+
+Figure1: Sample qgroup hierarchy
 
 At the bottom, some extents are depicted showing which qgroups reference which
 extents.  It is important to understand the notion of 'referenced' vs
