@@ -168,7 +168,7 @@ endif
 
 ifneq (,$(findstring tsan,$(D)))
   DEBUG_CFLAGS_INTERNAL += -fsanitize=thread -fPIE
-  LD_FLAGS += -fsanitize=thread -ltsan -pie
+  DEBUG_LDFLAGS_INTERNAL += -fsanitize=thread -ltsan -pie
 endif
 
 ifneq (,$(findstring ubsan,$(D)))
