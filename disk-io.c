@@ -1041,8 +1041,16 @@ int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info, u64 root_tree_bytenr,
 	fs_info->generation = generation;
 	fs_info->last_trans_committed = generation;
 	if (extent_buffer_uptodate(fs_info->extent_root->node) &&
-	    !(flags & OPEN_CTREE_NO_BLOCK_GROUPS))
-		btrfs_read_block_groups(fs_info->tree_root);
+	    !(flags & OPEN_CTREE_NO_BLOCK_GROUPS)) {
+		ret = btrfs_read_block_groups(fs_info->tree_root);
+		/*
+		 * If we don't find any blockgroups (ENOENT) we're either
+		 * restoring or creating the filesystem, where it's expected,
+		 * anything else is error
+		 */
+		if (ret != -ENOENT)
+			return -EIO;
+	}
 
 	key.objectid = BTRFS_FS_TREE_OBJECTID;
 	key.type = BTRFS_ROOT_ITEM_KEY;
