@@ -307,7 +307,6 @@ struct extent_buffer* read_tree_block(struct btrfs_fs_info *fs_info, u64 bytenr,
 	u64 best_transid = 0;
 	u32 sectorsize = fs_info->sectorsize;
 	u32 nodesize = fs_info->nodesize;
-	u32 blocksize = fs_info->nodesize;
 	int mirror_num = 0;
 	int good_mirror = 0;
 	int num_copies;
@@ -324,13 +323,8 @@ struct extent_buffer* read_tree_block(struct btrfs_fs_info *fs_info, u64 bytenr,
 		      bytenr, sectorsize);
 		return ERR_PTR(-EIO);
 	}
-	if (blocksize < nodesize || !IS_ALIGNED(blocksize, nodesize)) {
-		error("tree block size %u is not aligned to nodesize %u",
-		      blocksize, nodesize);
-		return ERR_PTR(-EIO);
-	}
 
-	eb = btrfs_find_create_tree_block(fs_info, bytenr, blocksize);
+	eb = btrfs_find_create_tree_block(fs_info, bytenr, nodesize);
 	if (!eb)
 		return ERR_PTR(-ENOMEM);
 
