@@ -1313,7 +1313,7 @@ void btrfs_print_tree(struct btrfs_root *root, struct extent_buffer *eb, int fol
 
 	for (i = 0; i < nr; i++) {
 		next = read_tree_block(root->fs_info,
-				btrfs_node_blockptr(eb, i), root->fs_info->nodesize,
+				btrfs_node_blockptr(eb, i),
 				btrfs_node_ptr_generation(eb, i));
 		if (!extent_buffer_uptodate(next)) {
 			fprintf(stderr, "failed to read %llu in tree %llu\n",

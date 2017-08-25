@@ -450,8 +450,7 @@ static int __add_missing_keys(struct btrfs_fs_info *fs_info,
 		if (ref->key_for_search.type)
 			continue;
 		BUG_ON(!ref->wanted_disk_byte);
-		eb = read_tree_block(fs_info, ref->wanted_disk_byte,
-				     fs_info->nodesize, 0);
+		eb = read_tree_block(fs_info, ref->wanted_disk_byte, 0);
 		if (!extent_buffer_uptodate(eb)) {
 			free_extent_buffer(eb);
 			return -EIO;
@@ -804,8 +803,7 @@ static int find_parent_nodes(struct btrfs_trans_handle *trans,
 			    ref->level == 0) {
 				struct extent_buffer *eb;
 
-				eb = read_tree_block(fs_info, ref->parent,
-						fs_info->nodesize, 0);
+				eb = read_tree_block(fs_info, ref->parent, 0);
 				if (!extent_buffer_uptodate(eb)) {
 					free_extent_buffer(eb);
 					ret = -EIO;

@@ -168,7 +168,7 @@ static int corrupt_keys_in_block(struct btrfs_fs_info *fs_info, u64 bytenr)
 {
 	struct extent_buffer *eb;
 
-	eb = read_tree_block(fs_info, bytenr, fs_info->nodesize, 0);
+	eb = read_tree_block(fs_info, bytenr, 0);
 	if (!extent_buffer_uptodate(eb))
 		return -EIO;;
 
@@ -297,7 +297,6 @@ static void btrfs_corrupt_extent_tree(struct btrfs_trans_handle *trans,
 		struct extent_buffer *next;
 
 		next = read_tree_block(fs_info, btrfs_node_blockptr(eb, i),
-				       fs_info->nodesize,
 				       btrfs_node_ptr_generation(eb, i));
 		if (!extent_buffer_uptodate(next))
 			continue;
@@ -765,7 +764,7 @@ static int corrupt_metadata_block(struct btrfs_fs_info *fs_info, u64 block,
 		return -EINVAL;
 	}
 
-	eb = read_tree_block(fs_info, block, fs_info->nodesize, 0);
+	eb = read_tree_block(fs_info, block, 0);
 	if (!extent_buffer_uptodate(eb)) {
 		fprintf(stderr, "Couldn't read in tree block %s\n", field);
 		return -EINVAL;

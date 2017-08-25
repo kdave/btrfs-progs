@@ -51,7 +51,7 @@ static void print_extents(struct btrfs_root *root, struct extent_buffer *eb)
 	for (i = 0; i < nr; i++) {
 		next = read_tree_block(root->fs_info,
 				btrfs_node_blockptr(eb, i),
-				root->fs_info->nodesize, btrfs_node_ptr_generation(eb, i));
+				btrfs_node_ptr_generation(eb, i));
 		if (!extent_buffer_uptodate(next))
 			continue;
 		if (btrfs_is_leaf(next) && btrfs_header_level(eb) != 1) {
@@ -310,21 +310,15 @@ int cmd_inspect_dump_tree(int argc, char **argv)
 
 	if (block_only) {
 		root = info->chunk_root;
-		leaf = read_tree_block(info,
-				      block_only,
-				      info->nodesize, 0);
-
+		leaf = read_tree_block(info, block_only, 0);
 		if (extent_buffer_uptodate(leaf) &&
 		    btrfs_header_level(leaf) != 0) {
 			free_extent_buffer(leaf);
 			leaf = NULL;
 		}
 
-		if (!leaf) {
-			leaf = read_tree_block(info,
-					      block_only,
-					      info->nodesize, 0);
-		}
+		if (!leaf)
+			leaf = read_tree_block(info, block_only, 0);
 		if (!extent_buffer_uptodate(leaf)) {
 			error("failed to read %llu",
 				(unsigned long long)block_only);
@@ -444,8 +438,7 @@ again:
 
 			offset = btrfs_item_ptr_offset(leaf, slot);
 			read_extent_buffer(leaf, &ri, offset, sizeof(ri));
-			buf = read_tree_block(info, btrfs_root_bytenr(&ri),
-					      info->nodesize, 0);
+			buf = read_tree_block(info, btrfs_root_bytenr(&ri), 0);
 			if (!extent_buffer_uptodate(buf))
 				goto next;
 			if (tree_id && found_key.objectid != tree_id) {
