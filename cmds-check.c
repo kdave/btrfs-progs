@@ -226,7 +226,6 @@ struct root_item_record {
 	u64 last_snapshot;
 	u8 level;
 	u8 drop_level;
-	int level_size;
 	struct btrfs_key drop_key;
 };
 
@@ -9739,7 +9738,7 @@ static int check_devices(struct rb_root *dev_cache,
 static int add_root_item_to_list(struct list_head *head,
 				  u64 objectid, u64 bytenr, u64 last_snapshot,
 				  u8 level, u8 drop_level,
-				  int level_size, struct btrfs_key *drop_key)
+				  struct btrfs_key *drop_key)
 {
 
 	struct root_item_record *ri_rec;
@@ -9749,7 +9748,6 @@ static int add_root_item_to_list(struct list_head *head,
 	ri_rec->bytenr = bytenr;
 	ri_rec->objectid = objectid;
 	ri_rec->level = level;
-	ri_rec->level_size = level_size;
 	ri_rec->drop_level = drop_level;
 	ri_rec->last_snapshot = last_snapshot;
 	if (drop_key)
@@ -9864,7 +9862,6 @@ static int check_chunks_and_extents(struct btrfs_root *root)
 	struct list_head normal_trees;
 	struct btrfs_root *root1;
 	u64 objectid;
-	u32 level_size;
 	u8 level;
 
 	dev_cache = RB_ROOT;
@@ -9905,15 +9902,13 @@ again:
 	root1 = root->fs_info->tree_root;
 	level = btrfs_header_level(root1->node);
 	ret = add_root_item_to_list(&normal_trees, root1->root_key.objectid,
-				    root1->node->start, 0, level, 0,
-				    root1->fs_info->nodesize, NULL);
+				    root1->node->start, 0, level, 0, NULL);
 	if (ret < 0)
 		goto out;
 	root1 = root->fs_info->chunk_root;
 	level = btrfs_header_level(root1->node);
 	ret = add_root_item_to_list(&normal_trees, root1->root_key.objectid,
-				    root1->node->start, 0, level, 0,
-				    root1->fs_info->nodesize, NULL);
+				    root1->node->start, 0, level, 0, NULL);
 	if (ret < 0)
 		goto out;
 	btrfs_init_path(&path);
@@ -9944,17 +9939,15 @@ again:
 			last_snapshot = btrfs_root_last_snapshot(&ri);
 			if (btrfs_disk_key_objectid(&ri.drop_progress) == 0) {
 				level = btrfs_root_level(&ri);
-				level_size = root->fs_info->nodesize;
 				ret = add_root_item_to_list(&normal_trees,
 						found_key.objectid,
 						btrfs_root_bytenr(&ri),
 						last_snapshot, level,
-						0, level_size, NULL);
+						0, NULL);
 				if (ret < 0)
 					goto out;
 			} else {
 				level = btrfs_root_level(&ri);
-				level_size = root->fs_info->nodesize;
 				objectid = found_key.objectid;
 				btrfs_disk_key_to_cpu(&found_key,
 						      &ri.drop_progress);
@@ -9962,8 +9955,7 @@ again:
 						objectid,
 						btrfs_root_bytenr(&ri),
 						last_snapshot, level,
-						ri.drop_level,
-						level_size, &found_key);
+						ri.drop_level, &found_key);
 				if (ret < 0)
 					goto out;
 			}
