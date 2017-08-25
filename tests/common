@@ -35,7 +35,8 @@ _is_file_or_command()
 	if [ -f "$msg" -o -d "$msg" -o -b "$msg" ]; then
 		return 0
 	fi
-	if [ -f $(type -p "$msg") ]; then
+	msg=$(type -p "$msg")
+	if [ -f "$msg" ]; then
 		return 0
 	fi
 	return 1
