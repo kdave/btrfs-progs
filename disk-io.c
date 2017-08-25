@@ -182,9 +182,10 @@ struct extent_buffer *btrfs_find_tree_block(struct btrfs_fs_info *fs_info,
 }
 
 struct extent_buffer* btrfs_find_create_tree_block(
-		struct btrfs_fs_info *fs_info, u64 bytenr, u32 blocksize)
+		struct btrfs_fs_info *fs_info, u64 bytenr)
 {
-	return alloc_extent_buffer(&fs_info->extent_cache, bytenr, blocksize);
+	return alloc_extent_buffer(&fs_info->extent_cache, bytenr,
+			fs_info->nodesize);
 }
 
 void readahead_tree_block(struct btrfs_fs_info *fs_info, u64 bytenr,
@@ -306,7 +307,6 @@ struct extent_buffer* read_tree_block(struct btrfs_fs_info *fs_info, u64 bytenr,
 	struct extent_buffer *eb;
 	u64 best_transid = 0;
 	u32 sectorsize = fs_info->sectorsize;
-	u32 nodesize = fs_info->nodesize;
 	int mirror_num = 0;
 	int good_mirror = 0;
 	int num_copies;
@@ -324,7 +324,7 @@ struct extent_buffer* read_tree_block(struct btrfs_fs_info *fs_info, u64 bytenr,
 		return ERR_PTR(-EIO);
 	}
 
-	eb = btrfs_find_create_tree_block(fs_info, bytenr, nodesize);
+	eb = btrfs_find_create_tree_block(fs_info, bytenr);
 	if (!eb)
 		return ERR_PTR(-ENOMEM);
 
@@ -937,9 +937,7 @@ static int setup_root_or_create_block(struct btrfs_fs_info *fs_info,
 				      struct btrfs_root *info_root,
 				      u64 objectid, char *str)
 {
-	struct btrfs_super_block *sb = fs_info->super_copy;
 	struct btrfs_root *root = fs_info->tree_root;
-	u32 nodesize = btrfs_super_nodesize(sb);
 	int ret;
 
 	ret = find_and_setup_root(root, fs_info, objectid, info_root);
@@ -952,7 +950,7 @@ static int setup_root_or_create_block(struct btrfs_fs_info *fs_info,
 		 * million of places that assume a root has a valid ->node
 		 */
 		info_root->node =
-			btrfs_find_create_tree_block(fs_info, 0, nodesize);
+			btrfs_find_create_tree_block(fs_info, 0);
 		if (!info_root->node)
 			return -ENOMEM;
 		clear_extent_buffer_uptodate(info_root->node);

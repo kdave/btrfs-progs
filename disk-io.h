@@ -123,7 +123,7 @@ int read_extent_data(struct btrfs_fs_info *fs_info, char *data, u64 logical,
 void readahead_tree_block(struct btrfs_fs_info *fs_info, u64 bytenr,
 			  u32 blocksize, u64 parent_transid);
 struct extent_buffer* btrfs_find_create_tree_block(
-		struct btrfs_fs_info *fs_info, u64 bytenr, u32 blocksize);
+		struct btrfs_fs_info *fs_info, u64 bytenr);
 
 void btrfs_setup_root(struct btrfs_root *root, struct btrfs_fs_info *fs_info,
 		      u64 objectid);

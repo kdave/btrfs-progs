@@ -1364,7 +1364,7 @@ int main(int argc, char **argv)
 			struct extent_buffer *eb;
 
 			eb = btrfs_find_create_tree_block(root->fs_info,
-					logical, root->fs_info->sectorsize);
+					logical);
 			if (!eb) {
 				error(
 		"not enough memory to allocate extent buffer for bytenr %llu",

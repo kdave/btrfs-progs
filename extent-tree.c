@@ -2818,8 +2818,7 @@ struct extent_buffer *btrfs_alloc_free_block(struct btrfs_trans_handle *trans,
 		return ERR_PTR(ret);
 	}
 
-	buf = btrfs_find_create_tree_block(root->fs_info, ins.objectid,
-					   blocksize);
+	buf = btrfs_find_create_tree_block(root->fs_info, ins.objectid);
 	if (!buf) {
 		btrfs_free_extent(trans, root, ins.objectid, ins.offset,
 				  0, root->root_key.objectid, level, 0);
