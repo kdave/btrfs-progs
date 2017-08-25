@@ -1989,8 +1989,7 @@ static void reada_walk_down(struct btrfs_root *root,
 	for (i = slot; i < nritems; i++) {
 		bytenr = btrfs_node_blockptr(node, i);
 		ptr_gen = btrfs_node_ptr_generation(node, i);
-		readahead_tree_block(fs_info, bytenr, fs_info->nodesize,
-				ptr_gen);
+		readahead_tree_block(fs_info, bytenr, ptr_gen);
 	}
 }
 
@@ -7650,8 +7649,7 @@ static int run_next_block(struct btrfs_root *root,
 				continue;
 
 			/* fixme, get the parent transid */
-			readahead_tree_block(fs_info, bits[i].start,
-					     bits[i].size, 0);
+			readahead_tree_block(fs_info, bits[i].start, 0);
 		}
 	}
 	*last = bits[0].start;

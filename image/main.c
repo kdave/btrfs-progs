@@ -1029,7 +1029,7 @@ static int add_extent(u64 start, u64 size, struct metadump_struct *md,
 			return ret;
 		md->pending_start = start;
 	}
-	readahead_tree_block(md->root->fs_info, start, size, 0);
+	readahead_tree_block(md->root->fs_info, start, 0);
 	md->pending_size += size;
 	md->data = data;
 	return 0;
