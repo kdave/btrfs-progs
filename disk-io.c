@@ -615,7 +615,6 @@ static int find_and_setup_root(struct btrfs_root *tree_root,
 			       u64 objectid, struct btrfs_root *root)
 {
 	int ret;
-	u32 blocksize;
 	u64 generation;
 
 	btrfs_setup_root(root, fs_info, objectid);
@@ -624,11 +623,10 @@ static int find_and_setup_root(struct btrfs_root *tree_root,
 	if (ret)
 		return ret;
 
-	blocksize = fs_info->nodesize;
 	generation = btrfs_root_generation(&root->root_item);
 	root->node = read_tree_block(fs_info,
 			btrfs_root_bytenr(&root->root_item),
-			blocksize, generation);
+			fs_info->nodesize, generation);
 	if (!extent_buffer_uptodate(root->node))
 		return -EIO;
 
@@ -639,7 +637,6 @@ static int find_and_setup_log_root(struct btrfs_root *tree_root,
 			       struct btrfs_fs_info *fs_info,
 			       struct btrfs_super_block *disk_super)
 {
-	u32 blocksize;
 	u64 blocknr = btrfs_super_log_root(disk_super);
 	struct btrfs_root *log_root = malloc(sizeof(struct btrfs_root));
 
@@ -651,13 +648,11 @@ static int find_and_setup_log_root(struct btrfs_root *tree_root,
 		return 0;
 	}
 
-	blocksize = fs_info->nodesize;
-
 	btrfs_setup_root(log_root, fs_info,
 			 BTRFS_TREE_LOG_OBJECTID);
 
 	log_root->node = read_tree_block(fs_info, blocknr,
-				     blocksize,
+				     fs_info->nodesize,
 				     btrfs_super_generation(disk_super) + 1);
 
 	fs_info->log_root_tree = log_root;
@@ -700,7 +695,6 @@ struct btrfs_root *btrfs_read_fs_root_no_cache(struct btrfs_fs_info *fs_info,
 	struct btrfs_path *path;
 	struct extent_buffer *l;
 	u64 generation;
-	u32 blocksize;
 	int ret = 0;
 
 	root = calloc(1, sizeof(*root));
@@ -744,10 +738,9 @@ out:
 		return ERR_PTR(ret);
 	}
 	generation = btrfs_root_generation(&root->root_item);
-	blocksize = fs_info->nodesize;
 	root->node = read_tree_block(fs_info,
 			btrfs_root_bytenr(&root->root_item),
-			blocksize, generation);
+			fs_info->nodesize, generation);
 	if (!extent_buffer_uptodate(root->node)) {
 		free(root);
 		return ERR_PTR(-EIO);
@@ -984,12 +977,10 @@ int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info, u64 root_tree_bytenr,
 	struct btrfs_root *root;
 	struct btrfs_key key;
 	u64 generation;
-	u32 blocksize;
 	int ret;
 
 	root = fs_info->tree_root;
 	btrfs_setup_root(root, fs_info, BTRFS_ROOT_TREE_OBJECTID);
-	blocksize = fs_info->nodesize;
 	generation = btrfs_super_generation(sb);
 
 	if (!root_tree_bytenr && !(flags & OPEN_CTREE_BACKUP_ROOT)) {
@@ -1006,7 +997,7 @@ int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info, u64 root_tree_bytenr,
 		generation = btrfs_backup_tree_root_gen(backup);
 	}
 
-	root->node = read_tree_block(fs_info, root_tree_bytenr, blocksize,
+	root->node = read_tree_block(fs_info, root_tree_bytenr, fs_info->nodesize,
 				     generation);
 	if (!extent_buffer_uptodate(root->node)) {
 		fprintf(stderr, "Couldn't read tree root\n");

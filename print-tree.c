@@ -1277,7 +1277,6 @@ void btrfs_print_tree(struct btrfs_root *root, struct extent_buffer *eb, int fol
 {
 	u32 i;
 	u32 nr;
-	u32 size;
 	struct btrfs_disk_key disk_key;
 	struct btrfs_key key;
 	struct extent_buffer *next;
@@ -1297,7 +1296,6 @@ void btrfs_print_tree(struct btrfs_root *root, struct extent_buffer *eb, int fol
 		(unsigned long long)btrfs_header_owner(eb));
 	print_uuids(eb);
 	fflush(stdout);
-	size = root->fs_info->nodesize;
 	for (i = 0; i < nr; i++) {
 		u64 blocknr = btrfs_node_blockptr(eb, i);
 		btrfs_node_key(eb, &disk_key, i);
@@ -1306,7 +1304,7 @@ void btrfs_print_tree(struct btrfs_root *root, struct extent_buffer *eb, int fol
 		btrfs_print_key(&disk_key);
 		printf(" block %llu (%llu) gen %llu\n",
 		       (unsigned long long)blocknr,
-		       (unsigned long long)blocknr / size,
+		       (unsigned long long)blocknr / root->fs_info->nodesize,
 		       (unsigned long long)btrfs_node_ptr_generation(eb, i));
 		fflush(stdout);
 	}
@@ -1315,7 +1313,7 @@ void btrfs_print_tree(struct btrfs_root *root, struct extent_buffer *eb, int fol
 
 	for (i = 0; i < nr; i++) {
 		next = read_tree_block(root->fs_info,
-				btrfs_node_blockptr(eb, i), size,
+				btrfs_node_blockptr(eb, i), root->fs_info->nodesize,
 				btrfs_node_ptr_generation(eb, i));
 		if (!extent_buffer_uptodate(next)) {
 			fprintf(stderr, "failed to read %llu in tree %llu\n",

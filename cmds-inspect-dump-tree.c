@@ -38,7 +38,6 @@ static void print_extents(struct btrfs_root *root, struct extent_buffer *eb)
 	struct extent_buffer *next;
 	int i;
 	u32 nr;
-	u32 size;
 
 	if (!eb)
 		return;
@@ -48,12 +47,11 @@ static void print_extents(struct btrfs_root *root, struct extent_buffer *eb)
 		return;
 	}
 
-	size = root->fs_info->nodesize;
 	nr = btrfs_header_nritems(eb);
 	for (i = 0; i < nr; i++) {
 		next = read_tree_block(root->fs_info,
 				btrfs_node_blockptr(eb, i),
-				size, btrfs_node_ptr_generation(eb, i));
+				root->fs_info->nodesize, btrfs_node_ptr_generation(eb, i));
 		if (!extent_buffer_uptodate(next))
 			continue;
 		if (btrfs_is_leaf(next) && btrfs_header_level(eb) != 1) {

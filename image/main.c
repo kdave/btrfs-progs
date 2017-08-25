@@ -919,7 +919,6 @@ static int flush_pending(struct metadump_struct *md, int done)
 {
 	struct async_work *async = NULL;
 	struct extent_buffer *eb;
-	u64 blocksize = md->root->fs_info->nodesize;
 	u64 start = 0;
 	u64 size;
 	size_t offset;
@@ -972,7 +971,9 @@ static int flush_pending(struct metadump_struct *md, int done)
 		}
 
 		while (!md->data && size > 0) {
-			u64 this_read = min(blocksize, size);
+			u64 this_read = min((u64)md->root->fs_info->nodesize,
+					size);
+
 			eb = read_tree_block(md->root->fs_info, start,
 					     this_read, 0);
 			if (!extent_buffer_uptodate(eb)) {
