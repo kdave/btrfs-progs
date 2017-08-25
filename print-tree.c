@@ -1233,9 +1233,16 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *eb)
 		case BTRFS_CSUM_ITEM_KEY:
 			printf("\t\tcsum item\n");
 			break;
-		case BTRFS_EXTENT_CSUM_KEY:
-			printf("\t\textent csum item\n");
+		case BTRFS_EXTENT_CSUM_KEY: {
+			u16 csum_size =
+				btrfs_super_csum_size(root->fs_info->super_copy);
+			u32 size = (item_size / csum_size) *
+				root->fs_info->sectorsize;
+			printf("\t\textent csum item range %llu-%llu\n",
+			       (unsigned long long)disk_key.offset,
+			       (unsigned long long)disk_key.offset + size);
 			break;
+			}
 		case BTRFS_EXTENT_DATA_KEY:
 			print_file_extent_item(eb, item, i, ptr);
 			break;
