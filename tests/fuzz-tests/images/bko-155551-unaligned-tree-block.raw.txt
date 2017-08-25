@@ -1,0 +1,49 @@
+URL: https://bugzilla.kernel.org/show_bug.cgi?id=155551
+Lukas Lueg 2016-08-29 20:44:04 UTC
+
+More news from the fuzzer. The attached image causes btrfsck to enter what
+seems to be an endless loop; using btrfs-progs v4.7-42-g56e9586.
+
+Couldn't map the block 18446744073709551607
+No mapping for 18446744073709551607-4087
+Couldn't map the block 18446744073709551607
+bytenr mismatch, want=18446744073709551607, have=0
+checking extents
+parent transid verify failed on 4194304 wanted 169 found 4
+Ignoring transid failure
+parent transid verify failed on 4194304 wanted 169 found 4
+Ignoring transid failure
+parent transid verify failed on 4194304 wanted 169 found 4
+Ignoring transid failure
+parent transid verify failed on 4194304 wanted 169 found 4
+Ignoring transid failure
+parent transid verify failed on 4194304 wanted 169 found 4
+Ignoring transid failure
+parent transid verify failed on 4194304 wanted 169 found 4
+Ignoring transid failure
+parent transid verify failed on 4194304 wanted 169 found 4
+Ignoring transid failure
+parent transid verify failed on 4194304 wanted 169 found 4
+Ignoring transid failure
+parent transid verify failed on 4194304 wanted 169 found 4
+Ignoring transid failure
+Couldn't map the block 419430592
+No mapping for 419430592-419434688
+Couldn't map the block 419430592
+bytenr mismatch, want=419430592, have=0
+Couldn't map the block 36283884701696
+No mapping for 36283884701696-36283884705792
+Couldn't map the block 36283884701696
+bytenr mismatch, want=36283884701696, have=0
+Couldn't map the block 18446744073709551607
+No mapping for 18446744073709551607-4087
+Couldn't map the block 18446744073709551607
+bytenr mismatch, want=18446744073709551607, have=0
+Couldn't map the block 18446744073709551607
+No mapping for 18446744073709551607-4087
+Couldn't map the block 18446744073709551607
+bytenr mismatch, want=18446744073709551607, have=0
+Couldn't map the block 18446744073709551607
+No mapping for 18446744073709551607-4087
+Couldn't map the block 18446744073709551607
+bytenr mismatch, want=18446744073709551607, have=0
