@@ -37,7 +37,7 @@ static inline struct btrfs_trans_handle *
 btrfs_start_transaction(struct btrfs_root *root, int num_blocks)
 {
 	struct btrfs_fs_info *fs_info = root->fs_info;
-	struct btrfs_trans_handle *h = malloc(sizeof(*h));
+	struct btrfs_trans_handle *h = kzalloc(sizeof(*h), GFP_NOFS);
 
 	if (!h)
 		return ERR_PTR(-ENOMEM);
@@ -54,11 +54,7 @@ btrfs_start_transaction(struct btrfs_root *root, int num_blocks)
 	fs_info->running_transaction = h;
 	fs_info->generation++;
 	h->transid = fs_info->generation;
-	h->alloc_exclude_start = 0;
-	h->alloc_exclude_nr = 0;
 	h->blocks_reserved = num_blocks;
-	h->blocks_used = 0;
-	h->block_group = NULL;
 	root->last_trans = h->transid;
 	root->commit_root = root->node;
 	extent_buffer_get(root->node);
