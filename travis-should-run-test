@@ -1,0 +1,24 @@
+#!/bin/sh
+
+if [ -z "$TRAVIS_BRANCH" ] ; then
+	# no branch? run anyway
+	exit 0
+fi
+
+# no tests
+if [ "$TRAVIS_BRANCH" = 'coverity_scan' ]; then
+	exit 1
+fi
+
+# quick tests
+if [ "$TRAVIS_BRANCH" = 'devel' -o "$TRAVIS_BRANCH" = 'master' ]; then
+	exit 0
+fi
+
+# all tests
+if [ "$TRAVIS_BRANCH" = 'release-test' ]; then
+	exit 0
+fi
+
+# branch not recognized
+exit 1

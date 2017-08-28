@@ -23,7 +23,8 @@ compiler:
   - gcc
   - clang
 
-cache: ccache
+cache:
+  ccache: true
 
 git:
   depth: 2
@@ -60,8 +61,19 @@ addons:
     branch_pattern: coverity_scan
 
 script:
+  - "mkdir tmp-reiser;
+     cd tmp-reiser;
+     wget https://www.kernel.org/pub/linux/kernel/people/jeffm/reiserfsprogs/v3.6.27/reiserfsprogs-3.6.27.tar.xz;
+     tar xf reiserfsprogs-3.6.27.tar.xz;
+     cd reiserfsprogs-3.6.27;
+     ./configure --prefix=/usr;
+     make all;
+     sudo make install;
+     cd ../..
+    "
   - "./autogen.sh && ./configure --disable-documentation && make"
-  - "make TEST_LOG=dump test-cli"
-  - "make TEST_LOG=dump test-mkfs"
-  - "make TEST_LOG=dump test-check"
-  - "make TEST_LOG=dump test-misc"
+  - "if ./travis-should-run-test; then make TEST_LOG=dump test-cli; fi"
+  - "if ./travis-should-run-test; then make TEST_LOG=dump test-mkfs; fi"
+  - "if ./travis-should-run-test; then make TEST_LOG=dump test-check; fi"
+  - "if ./travis-should-run-test; then make TEST_LOG=dump test-misc; fi"
+  - "if [ $TRAVIS_BRANCH = release-test ]; then make TEST_LOG=dump test-convert; fi"
