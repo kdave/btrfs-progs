@@ -15,6 +15,7 @@
  */
 
 #include "kerncompat.h"
+#include "disk-io.h"
 #include "transaction.h"
 
 #include "messages.h"
@@ -47,3 +48,127 @@ struct btrfs_trans_handle* btrfs_start_transaction(struct btrfs_root *root,
 
 	return h;
 }
+
+static int update_cowonly_root(struct btrfs_trans_handle *trans,
+			       struct btrfs_root *root)
+{
+	int ret;
+	u64 old_root_bytenr;
+	struct btrfs_root *tree_root = root->fs_info->tree_root;
+
+	btrfs_write_dirty_block_groups(trans, root);
+	while(1) {
+		old_root_bytenr = btrfs_root_bytenr(&root->root_item);
+		if (old_root_bytenr == root->node->start)
+			break;
+		btrfs_set_root_bytenr(&root->root_item,
+				       root->node->start);
+		btrfs_set_root_generation(&root->root_item,
+					  trans->transid);
+		root->root_item.level = btrfs_header_level(root->node);
+		ret = btrfs_update_root(trans, tree_root,
+					&root->root_key,
+					&root->root_item);
+		BUG_ON(ret);
+		btrfs_write_dirty_block_groups(trans, root);
+	}
+	return 0;
+}
+
+int commit_tree_roots(struct btrfs_trans_handle *trans,
+			     struct btrfs_fs_info *fs_info)
+{
+	struct btrfs_root *root;
+	struct list_head *next;
+	struct extent_buffer *eb;
+	int ret;
+
+	if (fs_info->readonly)
+		return 0;
+
+	eb = fs_info->tree_root->node;
+	extent_buffer_get(eb);
+	ret = btrfs_cow_block(trans, fs_info->tree_root, eb, NULL, 0, &eb);
+	free_extent_buffer(eb);
+	if (ret)
+		return ret;
+
+	while(!list_empty(&fs_info->dirty_cowonly_roots)) {
+		next = fs_info->dirty_cowonly_roots.next;
+		list_del_init(next);
+		root = list_entry(next, struct btrfs_root, dirty_list);
+		update_cowonly_root(trans, root);
+		free_extent_buffer(root->commit_root);
+		root->commit_root = NULL;
+	}
+
+	return 0;
+}
+
+int __commit_transaction(struct btrfs_trans_handle *trans,
+				struct btrfs_root *root)
+{
+	u64 start;
+	u64 end;
+	struct btrfs_fs_info *fs_info = root->fs_info;
+	struct extent_buffer *eb;
+	struct extent_io_tree *tree = &fs_info->extent_cache;
+	int ret;
+
+	while(1) {
+		ret = find_first_extent_bit(tree, 0, &start, &end,
+					    EXTENT_DIRTY);
+		if (ret)
+			break;
+		while(start <= end) {
+			eb = find_first_extent_buffer(tree, start);
+			BUG_ON(!eb || eb->start != start);
+			ret = write_tree_block(trans, fs_info, eb);
+			BUG_ON(ret);
+			start += eb->len;
+			clear_extent_buffer_dirty(eb);
+			free_extent_buffer(eb);
+		}
+	}
+	return 0;
+}
+
+int btrfs_commit_transaction(struct btrfs_trans_handle *trans,
+			     struct btrfs_root *root)
+{
+	u64 transid = trans->transid;
+	int ret = 0;
+	struct btrfs_fs_info *fs_info = root->fs_info;
+
+	if (root->commit_root == root->node)
+		goto commit_tree;
+	if (root == root->fs_info->tree_root)
+		goto commit_tree;
+	if (root == root->fs_info->chunk_root)
+		goto commit_tree;
+
+	free_extent_buffer(root->commit_root);
+	root->commit_root = NULL;
+
+	btrfs_set_root_bytenr(&root->root_item, root->node->start);
+	btrfs_set_root_generation(&root->root_item, trans->transid);
+	root->root_item.level = btrfs_header_level(root->node);
+	ret = btrfs_update_root(trans, root->fs_info->tree_root,
+				&root->root_key, &root->root_item);
+	BUG_ON(ret);
+commit_tree:
+	ret = commit_tree_roots(trans, fs_info);
+	BUG_ON(ret);
+	ret = __commit_transaction(trans, root);
+	BUG_ON(ret);
+	write_ctree_super(trans, fs_info);
+	btrfs_finish_extent_commit(trans, fs_info->extent_root,
+			           &fs_info->pinned_extents);
+	kfree(trans);
+	free_extent_buffer(root->commit_root);
+	root->commit_root = NULL;
+	fs_info->running_transaction = NULL;
+	fs_info->last_trans_committed = transid;
+	return 0;
+}
+
