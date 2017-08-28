@@ -4991,6 +4991,47 @@ out:
 }
 
 /*
+ * Wrapper function calls btrfs_add_orphan_item().
+ * Returns not 0  means on error.
+ * Returns  0     means success.
+ */
+static int repair_inode_orphan_item_lowmem(struct btrfs_root *root,
+					   struct btrfs_path *path, u64 ino)
+{
+	struct btrfs_trans_handle *trans;
+	struct btrfs_key research_key;
+	int ret;
+	int err = 0;
+
+	btrfs_item_key_to_cpu(path->nodes[0], &research_key, path->slots[0]);
+
+	trans = btrfs_start_transaction(root, 1);
+	if (IS_ERR(trans)) {
+		ret = PTR_ERR(trans);
+		err |= ret;
+		goto out;
+	}
+
+	btrfs_release_path(path);
+	ret = btrfs_add_orphan_item(trans, root, path, ino);
+	err |= ret;
+	btrfs_commit_transaction(trans, root);
+out:
+	if (ret)
+		error("failed to add inode %llu as orphan item root %llu",
+		      ino, root->root_key.objectid);
+	else
+		printf("Added inode %llu as orphan item root %llu\n",
+		       ino, root->root_key.objectid);
+
+	btrfs_release_path(path);
+	ret = btrfs_search_slot(NULL, root, &research_key, path, 0, 0);
+	err |= ret;
+
+	return err;
+}
+
+/*
  * Check INODE_ITEM and related ITEMs (the same inode number)
  * 1. check link count
  * 2. check inode ref/extref
@@ -5140,7 +5181,14 @@ out:
 			error("root %llu INODE[%llu] nlink(%llu) not equal to inode_refs(%llu)",
 			      root->objectid, inode_id, nlink, refs);
 		} else if (!nlink) {
-			err |= ORPHAN_ITEM;
+			if (repair)
+				ret = repair_inode_orphan_item_lowmem(root,
+							      path, inode_id);
+			if (!repair || ret) {
+				err |= ORPHAN_ITEM;
+				error("root %llu INODE[%llu] is orphan item",
+				      root->objectid, inode_id);
+			}
 		}
 
 		if (!nbytes && !no_holes && extent_end < isize) {
