@@ -87,5 +87,18 @@ build_make_targets
 conf='--disable-convert'
 build_make_targets
 
+# debugging builds, just the default targets
+target='D=1'
+buildme
+
+target='D=asan'
+buildme
+
+target='D=tsan'
+buildme
+
+target='D=ubsan'
+buildme
+
 echo "---------------------------------------------------"
 echo "$verdict"
