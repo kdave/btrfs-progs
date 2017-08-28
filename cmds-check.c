@@ -4541,20 +4541,21 @@ next:
 /*
  * Find INODE_REF/INODE_EXTREF for the given key and check it with the specified
  * DIR_ITEM/DIR_INDEX match.
+ * Return with @index_ret.
  *
  * @root:	the root of the fs/file tree
  * @key:	the key of the INODE_REF/INODE_EXTREF
  * @name:	the name in the INODE_REF/INODE_EXTREF
  * @namelen:	the length of name in the INODE_REF/INODE_EXTREF
- * @index:	the index in the INODE_REF/INODE_EXTREF, for DIR_ITEM set index
- * to (u64)-1
+ * @index_ret:	the index in the INODE_REF/INODE_EXTREF,
+ *              value (64)-1 means do not check index
  * @ext_ref:	the EXTENDED_IREF feature
  *
  * Return 0 if no error occurred.
  * Return >0 for error bitmap
  */
 static int find_inode_ref(struct btrfs_root *root, struct btrfs_key *key,
-			  char *name, int namelen, u64 index,
+			  char *name, int namelen, u64 *index_ret,
 			  unsigned int ext_ref)
 {
 	struct btrfs_path path;
@@ -4571,6 +4572,8 @@ static int find_inode_ref(struct btrfs_root *root, struct btrfs_key *key,
 	u64 dir_id;
 	int slot;
 	int ret;
+
+	ASSERT(index_ret);
 
 	btrfs_init_path(&path);
 	ret = btrfs_search_slot(NULL, root, key, &path, 0, 0);
@@ -4591,7 +4594,7 @@ static int find_inode_ref(struct btrfs_root *root, struct btrfs_key *key,
 
 		ref_namelen = btrfs_inode_ref_name_len(node, ref);
 		ref_index = btrfs_inode_ref_index(node, ref);
-		if (index != (u64)-1 && index != ref_index)
+		if (*index_ret != (u64)-1 && *index_ret != ref_index)
 			goto next_ref;
 
 		if (cur + sizeof(*ref) + ref_namelen > total ||
@@ -4616,6 +4619,7 @@ static int find_inode_ref(struct btrfs_root *root, struct btrfs_key *key,
 		if (len != namelen || strncmp(ref_namebuf, name, len))
 			goto next_ref;
 
+		*index_ret = ref_index;
 		ret = 0;
 		goto out;
 next_ref:
@@ -4656,7 +4660,7 @@ extref:
 		ref_namelen = btrfs_inode_extref_name_len(node, extref);
 		ref_index = btrfs_inode_extref_index(node, extref);
 		parent = btrfs_inode_extref_parent(node, extref);
-		if (index != (u64)-1 && index != ref_index)
+		if (*index_ret != (u64)-1 && *index_ret != ref_index)
 			goto next_extref;
 
 		if (parent != dir_id)
@@ -4678,6 +4682,7 @@ extref:
 		if (len != namelen || strncmp(ref_namebuf, name, len))
 			goto next_extref;
 
+		*index_ret = ref_index;
 		ret = 0;
 		goto out;
 
@@ -4805,7 +4810,7 @@ static int check_dir_item(struct btrfs_root *root, struct btrfs_key *key,
 		location.type = BTRFS_INODE_REF_KEY;
 		location.offset = key->objectid;
 		ret = find_inode_ref(root, &location, namebuf, len,
-				       index, ext_ref);
+				     &index, ext_ref);
 		err |= ret;
 		if (ret & INODE_REF_MISSING)
 			error("root %llu %s[%llu %llu] relative INODE_REF missing namelen %u filename %s filetype %d",
