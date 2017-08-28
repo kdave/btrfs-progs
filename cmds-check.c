@@ -2017,6 +2017,9 @@ static int process_one_leaf_v2(struct btrfs_root *root, struct btrfs_path *path,
 again:
 	err |= check_inode_item(root, path, ext_ref);
 
+	/* modify cur since check_inode_item may change path */
+	cur = path->nodes[0];
+
 	if (err & LAST_ITEM)
 		goto out;
 
@@ -2364,6 +2367,7 @@ static int walk_down_tree_v2(struct btrfs_root *root, struct btrfs_path *path,
 			}
 			ret = process_one_leaf_v2(root, path, nrefs,
 						  level, ext_ref);
+			cur = path->nodes[*level];
 			break;
 		} else {
 			ret = btrfs_check_node(root, NULL, cur);
@@ -4953,6 +4957,67 @@ static int check_file_extent(struct btrfs_root *root, struct btrfs_key *fkey,
 }
 
 /*
+ * Set inode item nbytes to @nbytes
+ *
+ * Returns  0     on success
+ * Returns  != 0  on error
+ */
+static int repair_inode_nbytes_lowmem(struct btrfs_root *root,
+				      struct btrfs_path *path,
+				      u64 ino, u64 nbytes)
+{
+	struct btrfs_trans_handle *trans;
+	struct btrfs_inode_item *ii;
+	struct btrfs_key key;
+	struct btrfs_key research_key;
+	int err = 0;
+	int ret;
+
+	btrfs_item_key_to_cpu(path->nodes[0], &research_key, path->slots[0]);
+
+	key.objectid = ino;
+	key.type = BTRFS_INODE_ITEM_KEY;
+	key.offset = 0;
+
+	trans = btrfs_start_transaction(root, 1);
+	if (IS_ERR(trans)) {
+		ret = PTR_ERR(trans);
+		err |= ret;
+		goto out;
+	}
+
+	btrfs_release_path(path);
+	ret = btrfs_search_slot(trans, root, &key, path, 0, 1);
+	if (ret > 0)
+		ret = -ENOENT;
+	if (ret) {
+		err |= ret;
+		goto fail;
+	}
+
+	ii = btrfs_item_ptr(path->nodes[0], path->slots[0],
+			    struct btrfs_inode_item);
+	btrfs_set_inode_nbytes(path->nodes[0], ii, nbytes);
+	btrfs_mark_buffer_dirty(path->nodes[0]);
+fail:
+	btrfs_commit_transaction(trans, root);
+out:
+	if (ret)
+		error("failed to set nbytes in inode %llu root %llu",
+		      ino, root->root_key.objectid);
+	else
+		printf("Set nbytes in inode item %llu root %llu\n to %llu", ino,
+		       root->root_key.objectid, nbytes);
+
+	/* research path */
+	btrfs_release_path(path);
+	ret = btrfs_search_slot(NULL, root, &research_key, path, 0, 0);
+	err |= ret;
+
+	return err;
+}
+
+/*
  * Check INODE_ITEM and related ITEMs (the same inode number)
  * 1. check link count
  * 2. check inode ref/extref
@@ -5107,9 +5172,16 @@ out:
 		}
 
 		if (nbytes != extent_size) {
-			err |= NBYTES_ERROR;
-			error("root %llu INODE[%llu] nbytes(%llu) not equal to extent_size(%llu)",
-			      root->objectid, inode_id, nbytes, extent_size);
+			if (repair)
+				ret = repair_inode_nbytes_lowmem(root, path,
+							 inode_id, extent_size);
+			if (!repair || ret) {
+				err |= NBYTES_ERROR;
+				error(
+	"root %llu INODE[%llu] nbytes %llu not equal to extent_size %llu",
+				      root->objectid, inode_id, nbytes,
+				      extent_size);
+			}
 		}
 	}
 
