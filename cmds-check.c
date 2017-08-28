@@ -2874,7 +2874,7 @@ static int reset_nlink(struct btrfs_trans_handle *trans,
 	list_for_each_entry(backref, &rec->backrefs, list) {
 		ret = btrfs_add_link(trans, root, rec->ino, backref->dir,
 				     backref->name, backref->namelen,
-				     backref->filetype, &backref->index, 1);
+				     backref->filetype, &backref->index, 1, 0);
 		if (ret < 0)
 			goto out;
 	}
@@ -2966,7 +2966,7 @@ static int repair_inode_nlinks(struct btrfs_trans_handle *trans,
 			goto out;
 		}
 		ret = btrfs_add_link(trans, root, rec->ino, lost_found_ino,
-				     namebuf, namelen, type, NULL, 1);
+				     namebuf, namelen, type, NULL, 1, 0);
 		/*
 		 * Add ".INO" suffix several times to handle case where
 		 * "FILENAME.INO" is already taken by another file.
@@ -2985,7 +2985,7 @@ static int repair_inode_nlinks(struct btrfs_trans_handle *trans,
 			namelen += count_digits(rec->ino) + 1;
 			ret = btrfs_add_link(trans, root, rec->ino,
 					     lost_found_ino, namebuf,
-					     namelen, type, NULL, 1);
+					     namelen, type, NULL, 1, 0);
 		}
 		if (ret < 0) {
 			fprintf(stderr,

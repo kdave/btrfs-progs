@@ -161,7 +161,7 @@ out:
  */
 int btrfs_add_link(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 		   u64 ino, u64 parent_ino, char *name, int namelen,
-		   u8 type, u64 *index, int add_backref)
+		   u8 type, u64 *index, int add_backref, int ignore_existed)
 {
 	struct btrfs_path *path;
 	struct btrfs_key key;
@@ -184,33 +184,37 @@ int btrfs_add_link(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 	}
 
 	ret = check_dir_conflict(root, name, namelen, parent_ino, ret_index);
-	if (ret < 0)
+	if (ret < 0 && !(ignore_existed && ret == -EEXIST))
 		goto out;
 
 	/* Add inode ref */
 	if (add_backref) {
 		ret = btrfs_insert_inode_ref(trans, root, name, namelen,
 					     ino, parent_ino, ret_index);
-		if (ret < 0)
+		if (ret < 0 && !(ignore_existed && ret == -EEXIST))
 			goto out;
 
-		/* Update nlinks for the inode */
-		key.objectid = ino;
-		key.type = BTRFS_INODE_ITEM_KEY;
-		key.offset = 0;
-		ret = btrfs_search_slot(trans, root, &key, path, 1, 1);
-		if (ret) {
-			if (ret > 0)
-				ret = -ENOENT;
-			goto out;
+		/* do not update nlinks if existed */
+		if (!ret) {
+			/* Update nlinks for the inode */
+			key.objectid = ino;
+			key.type = BTRFS_INODE_ITEM_KEY;
+			key.offset = 0;
+			ret = btrfs_search_slot(trans, root, &key, path, 1, 1);
+			if (ret) {
+				if (ret > 0)
+					ret = -ENOENT;
+				goto out;
+			}
+			inode_item = btrfs_item_ptr(path->nodes[0],
+				    path->slots[0], struct btrfs_inode_item);
+			nlink = btrfs_inode_nlink(path->nodes[0], inode_item);
+			nlink++;
+			btrfs_set_inode_nlink(path->nodes[0], inode_item,
+					      nlink);
+			btrfs_mark_buffer_dirty(path->nodes[0]);
+			btrfs_release_path(path);
 		}
-		inode_item = btrfs_item_ptr(path->nodes[0], path->slots[0],
-				    struct btrfs_inode_item);
-		nlink = btrfs_inode_nlink(path->nodes[0], inode_item);
-		nlink++;
-		btrfs_set_inode_nlink(path->nodes[0], inode_item, nlink);
-		btrfs_mark_buffer_dirty(path->nodes[0]);
-		btrfs_release_path(path);
 	}
 
 	/* Add dir_item and dir_index */
@@ -561,7 +565,7 @@ int btrfs_mkdir(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 	if (ret)
 		goto out;
 	ret = btrfs_add_link(trans, root, ret_ino, parent_ino, name, namelen,
-			     BTRFS_FT_DIR, NULL, 1);
+			     BTRFS_FT_DIR, NULL, 1, 0);
 	if (ret)
 		goto out;
 out:
