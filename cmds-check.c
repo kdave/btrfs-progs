@@ -4725,25 +4725,57 @@ out:
 	return ret;
 }
 
+static void print_dir_item_err(struct btrfs_root *root, struct btrfs_key *key,
+			       u64 ino, u64 index, const char *namebuf,
+			       int name_len, u8 filetype, int err)
+{
+	if (err & (DIR_ITEM_MISMATCH | DIR_ITEM_MISSING)) {
+		error("root %llu DIR ITEM[%llu %llu] name %s filetype %d %s",
+		      root->objectid, key->objectid, key->offset, namebuf,
+		      filetype,
+		      err & DIR_ITEM_MISMATCH ? "mismath" : "missing");
+	}
+
+	if (err & (DIR_INDEX_MISMATCH | DIR_INDEX_MISSING)) {
+		error("root %llu DIR INDEX[%llu %llu] name %s filetype %d %s",
+		      root->objectid, key->objectid, index, namebuf, filetype,
+		      err & DIR_ITEM_MISMATCH ? "mismath" : "missing");
+	}
+
+	if (err & (INODE_ITEM_MISSING | INODE_ITEM_MISMATCH)) {
+		error("root %llu INODE_ITEM[%llu] index %llu name %s filetype %d %s",
+		      root->objectid, ino, index, namebuf, filetype,
+		      err & INODE_ITEM_MISMATCH ? "mismath" : "missing");
+	}
+
+	if (err & INODE_REF_MISSING)
+		error("root %llu INODE REF[%llu, %llu] name %s filetype %u missing",
+		      root->objectid, ino, key->objectid, namebuf, filetype);
+
+}
+
 /*
  * Traverse the given DIR_ITEM/DIR_INDEX and check related INODE_ITEM and
  * call find_inode_ref() to check related INODE_REF/INODE_EXTREF.
  *
  * @root:	the root of the fs/file tree
  * @key:	the key of the INODE_REF/INODE_EXTREF
+ * @path:       the path
  * @size:	the st_size of the INODE_ITEM
  * @ext_ref:	the EXTENDED_IREF feature
  *
  * Return 0 if no error occurred.
  */
-static int check_dir_item(struct btrfs_root *root, struct btrfs_key *key,
-			  struct extent_buffer *node, int slot, u64 *size,
+static int check_dir_item(struct btrfs_root *root, struct btrfs_key *di_key,
+			  struct btrfs_path *path, u64 *size,
 			  unsigned int ext_ref)
 {
 	struct btrfs_dir_item *di;
 	struct btrfs_inode_item *ii;
-	struct btrfs_path path;
+	struct btrfs_key key;
 	struct btrfs_key location;
+	struct extent_buffer *node;
+	int slot;
 	char namebuf[BTRFS_NAME_LEN] = {0};
 	u32 total;
 	u32 cur = 0;
@@ -4755,110 +4787,121 @@ static int check_dir_item(struct btrfs_root *root, struct btrfs_key *key,
 	u64 index;
 	int ret;
 	int err = 0;
+	int tmp_err;
 
+	node = path->nodes[0];
+	slot = path->slots[0];
 	/*
 	 * For DIR_ITEM set index to (u64)-1, so that find_inode_ref
 	 * ignore index check.
 	 */
-	index = (key->type == BTRFS_DIR_INDEX_KEY) ? key->offset : (u64)-1;
+	if (di_key->type == BTRFS_DIR_INDEX_KEY)
+		index = di_key->offset;
+	else
+		index = (u64)-1;
 
 	di = btrfs_item_ptr(node, slot, struct btrfs_dir_item);
 	total = btrfs_item_size_nr(node, slot);
+	memset(namebuf, 0, sizeof(namebuf) / sizeof(*namebuf));
 
 	while (cur < total) {
 		data_len = btrfs_dir_data_len(node, di);
+		tmp_err = 0;
 		if (data_len)
 			error("root %llu %s[%llu %llu] data_len shouldn't be %u",
-			      root->objectid, key->type == BTRFS_DIR_ITEM_KEY ?
-			      "DIR_ITEM" : "DIR_INDEX",
-			      key->objectid, key->offset, data_len);
+			      root->objectid,
+	      di_key->type == BTRFS_DIR_ITEM_KEY ? "DIR_ITEM" : "DIR_INDEX",
+			      di_key->objectid, di_key->offset, data_len);
 
 		name_len = btrfs_dir_name_len(node, di);
-		if (cur + sizeof(*di) + name_len > total ||
-		    name_len > BTRFS_NAME_LEN) {
+		if (name_len <= BTRFS_NAME_LEN) {
+			len = name_len;
+		} else {
+			len = BTRFS_NAME_LEN;
 			warning("root %llu %s[%llu %llu] name too long",
 				root->objectid,
-				key->type == BTRFS_DIR_ITEM_KEY ?
-				"DIR_ITEM" : "DIR_INDEX",
-				key->objectid, key->offset);
-
-			if (cur + sizeof(*di) > total)
-				break;
-			len = min_t(u32, total - cur - sizeof(*di),
-				    BTRFS_NAME_LEN);
-		} else {
-			len = name_len;
+		di_key->type == BTRFS_DIR_ITEM_KEY ? "DIR_ITEM" : "DIR_INDEX",
+				di_key->objectid, di_key->offset);
 		}
 		(*size) += name_len;
-
-		read_extent_buffer(node, namebuf, (unsigned long)(di + 1), len);
+		read_extent_buffer(node, namebuf, (unsigned long)(di + 1),
+				   len);
 		filetype = btrfs_dir_type(node, di);
 
-		if (key->type == BTRFS_DIR_ITEM_KEY &&
-		    key->offset != btrfs_name_hash(namebuf, len)) {
+		if (di_key->type == BTRFS_DIR_ITEM_KEY &&
+		    di_key->offset != btrfs_name_hash(namebuf, len)) {
 			err |= -EIO;
 			error("root %llu DIR_ITEM[%llu %llu] name %s namelen %u filetype %u mismatch with its hash, wanted %llu have %llu",
-				root->objectid, key->objectid, key->offset,
-				namebuf, len, filetype, key->offset,
-				btrfs_name_hash(namebuf, len));
+			root->objectid, di_key->objectid, di_key->offset,
+			namebuf, len, filetype, di_key->offset,
+			btrfs_name_hash(namebuf, len));
 		}
 
-		btrfs_init_path(&path);
 		btrfs_dir_item_key_to_cpu(node, di, &location);
-
 		/* Ignore related ROOT_ITEM check */
 		if (location.type == BTRFS_ROOT_ITEM_KEY)
 			goto next;
 
+		btrfs_release_path(path);
 		/* Check relative INODE_ITEM(existence/filetype) */
-		ret = btrfs_search_slot(NULL, root, &location, &path, 0, 0);
+		ret = btrfs_search_slot(NULL, root, &location, path, 0, 0);
 		if (ret) {
-			err |= INODE_ITEM_MISSING;
-			error("root %llu %s[%llu %llu] couldn't find relative INODE_ITEM[%llu] namelen %u filename %s filetype %x",
-			      root->objectid, key->type == BTRFS_DIR_ITEM_KEY ?
-			      "DIR_ITEM" : "DIR_INDEX", key->objectid,
-			      key->offset, location.objectid, name_len,
-			      namebuf, filetype);
+			tmp_err |= INODE_ITEM_MISSING;
 			goto next;
 		}
 
-		ii = btrfs_item_ptr(path.nodes[0], path.slots[0],
+		ii = btrfs_item_ptr(path->nodes[0], path->slots[0],
 				    struct btrfs_inode_item);
-		mode = btrfs_inode_mode(path.nodes[0], ii);
-
+		mode = btrfs_inode_mode(path->nodes[0], ii);
 		if (imode_to_type(mode) != filetype) {
-			err |= INODE_ITEM_MISMATCH;
-			error("root %llu %s[%llu %llu] relative INODE_ITEM filetype mismatch namelen %u filename %s filetype %d",
-			      root->objectid, key->type == BTRFS_DIR_ITEM_KEY ?
-			      "DIR_ITEM" : "DIR_INDEX", key->objectid,
-			      key->offset, name_len, namebuf, filetype);
+			tmp_err |= INODE_ITEM_MISMATCH;
+			goto next;
 		}
 
 		/* Check relative INODE_REF/INODE_EXTREF */
-		location.type = BTRFS_INODE_REF_KEY;
-		location.offset = key->objectid;
-		ret = find_inode_ref(root, &location, namebuf, len,
-				     &index, ext_ref);
-		err |= ret;
-		if (ret & INODE_REF_MISSING)
-			error("root %llu %s[%llu %llu] relative INODE_REF missing namelen %u filename %s filetype %d",
-			      root->objectid, key->type == BTRFS_DIR_ITEM_KEY ?
-			      "DIR_ITEM" : "DIR_INDEX", key->objectid,
-			      key->offset, name_len, namebuf, filetype);
+		key.objectid = location.objectid;
+		key.type = BTRFS_INODE_REF_KEY;
+		key.offset = di_key->objectid;
+		tmp_err |= find_inode_ref(root, &key, namebuf, len,
+					  &index, ext_ref);
 
+		/* check relative INDEX/ITEM */
+		key.objectid = di_key->objectid;
+		if (key.type == BTRFS_DIR_ITEM_KEY) {
+			key.type = BTRFS_DIR_INDEX_KEY;
+			key.offset = index;
+		} else {
+			key.type = BTRFS_DIR_ITEM_KEY;
+			key.offset = btrfs_name_hash(namebuf, name_len);
+		}
+
+		tmp_err |= find_dir_item(root, &key, &location, namebuf,
+					 name_len, filetype);
+		/* find_dir_item may find index */
+		if (key.type == BTRFS_DIR_INDEX_KEY)
+			index = key.offset;
 next:
-		btrfs_release_path(&path);
+		btrfs_release_path(path);
+		print_dir_item_err(root, di_key, location.objectid, index,
+				   namebuf, name_len, filetype, tmp_err);
+		err |= tmp_err;
 		len = sizeof(*di) + name_len + data_len;
 		di = (struct btrfs_dir_item *)((char *)di + len);
 		cur += len;
 
-		if (key->type == BTRFS_DIR_INDEX_KEY && cur < total) {
+		if (di_key->type == BTRFS_DIR_INDEX_KEY && cur < total) {
 			error("root %llu DIR_INDEX[%llu %llu] should contain only one entry",
-			      root->objectid, key->objectid, key->offset);
+			      root->objectid, di_key->objectid,
+			      di_key->offset);
 			break;
 		}
 	}
 
+	/* research path */
+	btrfs_release_path(path);
+	ret = btrfs_search_slot(NULL, root, di_key, path, 0, 0);
+	if (ret)
+		err |= ret > 0 ? -ENOENT : ret;
 	return err;
 }
 
@@ -5245,7 +5288,7 @@ static int check_inode_item(struct btrfs_root *root, struct btrfs_path *path,
 					imode_to_type(mode), key.objectid,
 					key.offset);
 			}
-			ret = check_dir_item(root, &key, node, slot, &size,
+			ret = check_dir_item(root, &key, path, &size,
 					     ext_ref);
 			err |= ret;
 			break;
