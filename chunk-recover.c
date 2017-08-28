@@ -2389,6 +2389,7 @@ int btrfs_recover_chunk_tree(char *path, int verbose, int yes)
 	}
 
 	trans = btrfs_start_transaction(root, 1);
+	BUG_ON(IS_ERR(trans));
 	ret = remove_chunk_extent_item(trans, &rc, root);
 	BUG_ON(ret);
 

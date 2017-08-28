@@ -751,8 +751,8 @@ static int create_image(struct btrfs_root *root,
 		flags |= BTRFS_INODE_NODATASUM;
 
 	trans = btrfs_start_transaction(root, 1);
-	if (!trans)
-		return -ENOMEM;
+	if (IS_ERR(trans))
+		return PTR_ERR(trans);
 
 	cache_tree_init(&used_tmp);
 	btrfs_init_path(&path);
@@ -881,7 +881,7 @@ static struct btrfs_root* link_subvol(struct btrfs_root *root,
 	btrfs_release_path(&path);
 
 	trans = btrfs_start_transaction(root, 1);
-	if (!trans) {
+	if (IS_ERR(trans)) {
 		error("unable to start transaction");
 		goto fail;
 	}
@@ -1077,9 +1077,9 @@ static int init_btrfs(struct btrfs_mkfs_config *cfg, struct btrfs_root *root,
 	fs_info->avoid_sys_chunk_alloc = 1;
 	fs_info->avoid_meta_chunk_alloc = 1;
 	trans = btrfs_start_transaction(root, 1);
-	if (!trans) {
+	if (IS_ERR(trans)) {
 		error("unable to start transaction");
-		ret = -EINVAL;
+		ret = PTR_ERR(trans);
 		goto err;
 	}
 	ret = btrfs_fix_block_accounting(trans, root);

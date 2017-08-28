@@ -380,6 +380,7 @@ int main(int ac, char **av)
 	}
 	printf("initial fill\n");
 	trans = btrfs_start_transaction(root, 1);
+	BUG_ON(IS_ERR(trans));
 	ret = fill_tree(trans, root, &radix, init_fill_count);
 	printf("starting run\n");
 	if (ret) {

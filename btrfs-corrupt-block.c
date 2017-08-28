@@ -1226,13 +1226,16 @@ int main(int argc, char **argv)
 		if (logical == (u64)-1)
 			print_usage(1);
 		trans = btrfs_start_transaction(root, 1);
+		BUG_ON(IS_ERR(trans));
 		ret = corrupt_extent(trans, root, logical);
 		btrfs_commit_transaction(trans, root);
 		goto out_close;
 	}
 	if (extent_tree) {
 		struct btrfs_trans_handle *trans;
+
 		trans = btrfs_start_transaction(root, 1);
+		BUG_ON(IS_ERR(trans));
 		btrfs_corrupt_extent_tree(trans, root->fs_info->extent_root,
 					  root->fs_info->extent_root->node);
 		btrfs_commit_transaction(trans, root);
@@ -1258,6 +1261,7 @@ int main(int argc, char **argv)
 			goto out_close;
 		}
 		trans = btrfs_start_transaction(root, 1);
+		BUG_ON(IS_ERR(trans));
 		ret = corrupt_item_nocow(trans, root->fs_info->chunk_root,
 					 path, del);
 		if (ret < 0)
@@ -1267,7 +1271,9 @@ int main(int argc, char **argv)
 	}
 	if (chunk_tree) {
 		struct btrfs_trans_handle *trans;
+
 		trans = btrfs_start_transaction(root, 1);
+		BUG_ON(IS_ERR(trans));
 		ret = corrupt_chunk_tree(trans, root->fs_info->chunk_root);
 		if (ret < 0)
 			fprintf(stderr, "Failed to corrupt chunk tree\n");
@@ -1281,6 +1287,7 @@ int main(int argc, char **argv)
 			print_usage(1);
 
 		trans = btrfs_start_transaction(root, 1);
+		BUG_ON(IS_ERR(trans));
 		if (file_extent == (u64)-1) {
 			printf("corrupting inode\n");
 			ret = corrupt_inode(trans, root, inode, field);

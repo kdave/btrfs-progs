@@ -500,8 +500,8 @@ static int reiserfs_copy_dirent(reiserfs_filsys_t fs,
 		return ret;
 	}
 	trans = btrfs_start_transaction(root, 1);
-	if (!trans)
-		return -ENOMEM;
+	if (IS_ERR(trans))
+		return PTR_ERR(trans);
 
 	ret = convert_insert_dirent(trans, root, name, len, dir_objectid,
 				    objectid, type, dirent_data->index++,
@@ -613,8 +613,8 @@ static int reiserfs_copy_meta(reiserfs_filsys_t fs, struct btrfs_root *root,
 	switch (mode & S_IFMT) {
 	case S_IFREG:
 		trans = btrfs_start_transaction(root, 1);
-		if (!trans) {
-			ret = -ENOMEM;
+		if (IS_ERR(trans)) {
+			ret = PTR_ERR(trans);
 			goto fail;
 		}
 		ret = reiserfs_record_file_extents(fs, trans, root, objectid,
@@ -629,8 +629,8 @@ static int reiserfs_copy_meta(reiserfs_filsys_t fs, struct btrfs_root *root,
 		if (ret)
 			goto fail;
 		trans = btrfs_start_transaction(root, 1);
-		if (!trans) {
-			ret = -ENOMEM;
+		if (IS_ERR(trans)) {
+			ret = PTR_ERR(trans);
 			goto fail;
 		}
 
@@ -639,8 +639,8 @@ static int reiserfs_copy_meta(reiserfs_filsys_t fs, struct btrfs_root *root,
 		break;
 	case S_IFLNK:
 		trans = btrfs_start_transaction(root, 1);
-		if (!trans) {
-			ret = -ENOMEM;
+		if (IS_ERR(trans)) {
+			ret = PTR_ERR(trans);
 			goto fail;
 		}
 		ret = reiserfs_copy_symlink(trans, root, objectid,
@@ -650,8 +650,8 @@ static int reiserfs_copy_meta(reiserfs_filsys_t fs, struct btrfs_root *root,
 		break;
 	default:
 		trans = btrfs_start_transaction(root, 1);
-		if (!trans) {
-			ret = -ENOMEM;
+		if (IS_ERR(trans)) {
+			ret = PTR_ERR(trans);
 			goto fail;
 		}
 	}
@@ -872,8 +872,8 @@ static int reiserfs_copy_xattr_dir(reiserfs_filsys_t fs,
 	xa_data->target_oid += OID_OFFSET;
 
 	xa_data->trans = btrfs_start_transaction(xa_data->root, 1);
-	if (!xa_data->trans)
-		return -ENOMEM;
+	if (IS_ERR(xa_data->trans))
+		return PTR_ERR(xa_data->trans);
 
 	ret = reiserfs_iterate_dir(fs, &dir_key,
 				    reiserfs_copy_one_xattr, xa_data);

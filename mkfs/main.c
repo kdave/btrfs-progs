@@ -75,6 +75,7 @@ static int create_metadata_block_groups(struct btrfs_root *root, int mixed,
 	int ret;
 
 	trans = btrfs_start_transaction(root, 1);
+	BUG_ON(IS_ERR(trans));
 	bytes_used = btrfs_super_bytes_used(fs_info->super_copy);
 
 	root->fs_info->system_allocs = 1;
@@ -1047,6 +1048,7 @@ static int make_image(const char *source_dir, struct btrfs_root *root)
 	INIT_LIST_HEAD(&dir_head.list);
 
 	trans = btrfs_start_transaction(root, 1);
+	BUG_ON(IS_ERR(trans));
 	ret = traverse_directory(trans, root, source_dir, &dir_head);
 	if (ret) {
 		error("unable to traverse directory %s: %d", source_dir, ret);
@@ -1325,6 +1327,7 @@ static int cleanup_temp_chunks(struct btrfs_fs_info *fs_info,
 
 	btrfs_init_path(&path);
 	trans = btrfs_start_transaction(root, 1);
+	BUG_ON(IS_ERR(trans));
 
 	key.objectid = 0;
 	key.type = BTRFS_BLOCK_GROUP_ITEM_KEY;
@@ -1758,7 +1761,7 @@ int main(int argc, char **argv)
 	}
 
 	trans = btrfs_start_transaction(root, 1);
-	if (!trans) {
+	if (IS_ERR(trans)) {
 		error("failed to start transaction");
 		goto error;
 	}
@@ -1782,7 +1785,7 @@ int main(int argc, char **argv)
 	}
 
 	trans = btrfs_start_transaction(root, 1);
-	if (!trans) {
+	if (IS_ERR(trans)) {
 		error("failed to start transaction");
 		goto error;
 	}
@@ -1860,6 +1863,7 @@ raid_groups:
 
 	if (source_dir_set) {
 		trans = btrfs_start_transaction(root, 1);
+		BUG_ON(IS_ERR(trans));
 		ret = create_chunks(trans, root,
 				    num_of_meta_chunks, size_of_data,
 				    &allocation);

@@ -803,8 +803,8 @@ static int ext2_copy_inodes(struct btrfs_convert_context *cctx,
 	struct btrfs_trans_handle *trans;
 
 	trans = btrfs_start_transaction(root, 1);
-	if (!trans)
-		return -ENOMEM;
+	if (IS_ERR(trans))
+		return PTR_ERR(trans);
 	err = ext2fs_open_inode_scan(ext2_fs, 0, &ext2_scan);
 	if (err) {
 		fprintf(stderr, "ext2fs_open_inode_scan: %s\n", error_message(err));
@@ -830,7 +830,7 @@ static int ext2_copy_inodes(struct btrfs_convert_context *cctx,
 			ret = btrfs_commit_transaction(trans, root);
 			BUG_ON(ret);
 			trans = btrfs_start_transaction(root, 1);
-			BUG_ON(!trans);
+			BUG_ON(IS_ERR(trans));
 		}
 	}
 	if (err) {

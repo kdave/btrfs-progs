@@ -56,6 +56,7 @@ int main(int ac, char **av) {
 		exit(1);
 	}
 	trans = btrfs_start_transaction(root, 1);
+	BUG_ON(IS_ERR(trans));
 	srand(55);
 	ins.type = BTRFS_STRING_ITEM_KEY;
 	for (i = 0; i < run_size; i++) {
@@ -72,6 +73,7 @@ int main(int ac, char **av) {
 		if (i == run_size - 5) {
 			btrfs_commit_transaction(trans, root);
 			trans = btrfs_start_transaction(root, 1);
+			BUG_ON(IS_ERR(trans));
 		}
 	}
 	btrfs_commit_transaction(trans, root);
@@ -114,6 +116,7 @@ int main(int ac, char **av) {
 	i = 0;
 	srand(55);
 	trans = btrfs_start_transaction(root, 1);
+	BUG_ON(IS_ERR(trans));
 	for (i = 0 ; i < run_size/4; i++) {
 		num = next_key(i, max_key);
 		ins.objectid = num;
@@ -138,6 +141,7 @@ int main(int ac, char **av) {
 		exit(1);
 	}
 	trans = btrfs_start_transaction(root, 1);
+	BUG_ON(IS_ERR(trans));
 	srand(128);
 	for (i = 0; i < run_size; i++) {
 		num = next_key(i, max_key);
@@ -175,6 +179,7 @@ int main(int ac, char **av) {
 	}
 	printf("starting big long delete run\n");
 	trans = btrfs_start_transaction(root, 1);
+	BUG_ON(IS_ERR(trans));
 	while(root->node && btrfs_header_nritems(root->node) > 0) {
 		struct extent_buffer *leaf;
 		int slot;

@@ -1229,6 +1229,7 @@ static int set_label_unmounted(const char *dev, const char *label)
 		return -1;
 
 	trans = btrfs_start_transaction(root, 1);
+	BUG_ON(IS_ERR(trans));
 	__strncpy_null(root->fs_info->super_copy->label, label, BTRFS_LABEL_SIZE - 1);
 
 	btrfs_commit_transaction(trans, root);

@@ -1753,8 +1753,10 @@ int close_ctree_fs_info(struct btrfs_fs_info *fs_info)
 	    fs_info->generation) {
 		BUG_ON(!root);
 		trans = btrfs_start_transaction(root, 1);
+		BUG_ON(IS_ERR(trans));
 		btrfs_commit_transaction(trans, root);
 		trans = btrfs_start_transaction(root, 1);
+		BUG_ON(IS_ERR(trans));
 		ret = commit_tree_roots(trans, fs_info);
 		BUG_ON(ret);
 		ret = __commit_transaction(trans, root);
