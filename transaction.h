@@ -40,5 +40,6 @@ int commit_tree_roots(struct btrfs_trans_handle *trans,
 			     struct btrfs_fs_info *fs_info);
 int btrfs_commit_transaction(struct btrfs_trans_handle *trans,
 			     struct btrfs_root *root);
+void btrfs_abort_transaction(struct btrfs_trans_handle *trans, int error);
 
 #endif

@@ -173,3 +173,7 @@ commit_tree:
 	return 0;
 }
 
+void btrfs_abort_transaction(struct btrfs_trans_handle *trans, int error)
+{
+	trans->fs_info->transaction_aborted = error;
+}
