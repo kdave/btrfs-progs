@@ -23,6 +23,7 @@
 #include "ctree.h"
 
 struct btrfs_trans_handle {
+	struct btrfs_fs_info *fs_info;
 	u64 transid;
 	u64 alloc_exclude_start;
 	u64 alloc_exclude_nr;

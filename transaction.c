@@ -38,6 +38,7 @@ struct btrfs_trans_handle* btrfs_start_transaction(struct btrfs_root *root,
 		kfree(h);
 		return ERR_PTR(-EINVAL);
 	}
+	h->fs_info = fs_info;
 	fs_info->running_transaction = h;
 	fs_info->generation++;
 	h->transid = fs_info->generation;
