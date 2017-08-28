@@ -5443,6 +5443,72 @@ out:
 }
 
 /*
+ * Insert the missing inode item and inode ref.
+ *
+ * Normal INODE_ITEM_MISSING and INODE_REF_MISSING are handled in backref
+ * dir.
+ * Root dir should be handled specially because root dir is the root
+ * of fs.
+ *
+ * returns err(>0 or 0) after repair
+ */
+static int repair_fs_first_inode(struct btrfs_root *root, int err)
+{
+	struct btrfs_trans_handle *trans;
+	struct btrfs_key key;
+	struct btrfs_path path;
+	int filetype = BTRFS_FT_DIR;
+	int ret = 0;
+
+	btrfs_init_path(&path);
+
+	if (err & INODE_REF_MISSING) {
+		key.objectid = BTRFS_FIRST_FREE_OBJECTID;
+		key.type = BTRFS_INODE_REF_KEY;
+		key.offset = BTRFS_FIRST_FREE_OBJECTID;
+
+		trans = btrfs_start_transaction(root, 1);
+		if (IS_ERR(trans)) {
+			ret = PTR_ERR(trans);
+			goto out;
+		}
+
+		btrfs_release_path(&path);
+		ret = btrfs_search_slot(trans, root, &key, &path, 1, 1);
+		if (ret)
+			goto trans_fail;
+
+		ret = btrfs_insert_inode_ref(trans, root, "..", strlen(".."),
+					     BTRFS_FIRST_FREE_OBJECTID,
+					     BTRFS_FIRST_FREE_OBJECTID, 0);
+		if (ret)
+			goto trans_fail;
+
+		printf("Add INODE_REF[%llu %llu] name %s\n",
+		       BTRFS_FIRST_FREE_OBJECTID, BTRFS_FIRST_FREE_OBJECTID,
+		       "..");
+		err &= ~INODE_REF_MISSING;
+trans_fail:
+		if (ret)
+			error("fail to insert first inode's ref");
+		btrfs_commit_transaction(trans, root);
+	}
+
+	if (err & INODE_ITEM_MISSING) {
+		ret = repair_inode_item_missing(root,
+					BTRFS_FIRST_FREE_OBJECTID, filetype);
+		if (ret)
+			goto out;
+		err &= ~INODE_ITEM_MISSING;
+	}
+out:
+	if (ret)
+		error("fail to repair first inode");
+	btrfs_release_path(&path);
+	return err;
+}
+
+/*
  * check first root dir's inode_item and inode_ref
  *
  * returns 0 means no error
@@ -5497,6 +5563,10 @@ static int check_fs_first_inode(struct btrfs_root *root, unsigned int ext_ref)
 
 out:
 	btrfs_release_path(&path);
+
+	if (err && repair)
+		err = repair_fs_first_inode(root, err);
+
 	if (err & (INODE_ITEM_MISSING | INODE_ITEM_MISMATCH))
 		error("root dir INODE_ITEM is %s",
 		      err & INODE_ITEM_MISMATCH ? "mismatch" : "missing");
