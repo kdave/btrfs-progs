@@ -4350,6 +4350,37 @@ out:
 }
 
 /*
+ * Prints inode ref error message
+ */
+static void print_inode_ref_err(struct btrfs_root *root, struct btrfs_key *key,
+				u64 index, const char *namebuf, int name_len,
+				u8 filetype, int err)
+{
+	if (!err)
+		return;
+
+	/* root dir error */
+	if (key->objectid == BTRFS_FIRST_FREE_OBJECTID) {
+		error("root %llu root dir shouldn't have INODE REF[%llu %llu] name %s",
+		      root->objectid, key->objectid, key->offset, namebuf);
+		return;
+	}
+
+	/* normal error */
+	if (err & (DIR_ITEM_MISMATCH | DIR_ITEM_MISSING))
+		error("root %llu DIR ITEM[%llu %llu] %s name %s filetype %u",
+		      root->objectid, key->offset,
+		      btrfs_name_hash(namebuf, name_len),
+		      err & DIR_ITEM_MISMATCH ? "mismatch" : "missing",
+		      namebuf, filetype);
+	if (err & (DIR_INDEX_MISMATCH | DIR_INDEX_MISSING))
+		error("root %llu DIR INDEX[%llu %llu] %s name %s filetype %u",
+		      root->objectid, key->offset, index,
+		      err & DIR_ITEM_MISMATCH ? "mismatch" : "missing",
+		      namebuf, filetype);
+}
+
+/*
  * Traverse the given INODE_REF and call find_dir_item() to find related
  * DIR_ITEM/DIR_INDEX.
  *
@@ -4361,24 +4392,28 @@ out:
  * Return 0 if no error occurred.
  */
 static int check_inode_ref(struct btrfs_root *root, struct btrfs_key *ref_key,
-			   struct extent_buffer *node, int slot, u64 *refs,
-			   int mode)
+			   struct btrfs_path *path, char *name_ret,
+			   u32 *namelen_ret, u64 *refs, int mode)
 {
 	struct btrfs_key key;
 	struct btrfs_key location;
 	struct btrfs_inode_ref *ref;
+	struct extent_buffer *node;
 	char namebuf[BTRFS_NAME_LEN] = {0};
 	u32 total;
 	u32 cur = 0;
 	u32 len;
 	u32 name_len;
 	u64 index;
-	int ret;
 	int err = 0;
+	int tmp_err;
+	int slot;
 
 	location.objectid = ref_key->objectid;
 	location.type = BTRFS_INODE_ITEM_KEY;
 	location.offset = 0;
+	node = path->nodes[0];
+	slot = path->slots[0];
 
 	ref = btrfs_item_ptr(node, slot, struct btrfs_inode_ref);
 	total = btrfs_item_size_nr(node, slot);
@@ -4387,6 +4422,7 @@ next:
 	/* Update inode ref count */
 	(*refs)++;
 
+	tmp_err = 0;
 	index = btrfs_inode_ref_index(node, ref);
 	name_len = btrfs_inode_ref_name_len(node, ref);
 	if (cur + sizeof(*ref) + name_len > total ||
@@ -4403,28 +4439,40 @@ next:
 
 	read_extent_buffer(node, namebuf, (unsigned long)(ref + 1), len);
 
-	/* Check root dir ref name */
-	if (index == 0 && strncmp(namebuf, "..", name_len)) {
-		error("root %llu INODE_REF[%llu %llu] ROOT_DIR name shouldn't be %s",
-		      root->objectid, ref_key->objectid, ref_key->offset,
-		      namebuf);
-		err |= ROOT_DIR_ERROR;
+	/* copy the firt name found to name_ret */
+	if (*refs == 1 && name_ret) {
+		memcpy(name_ret, namebuf, len);
+		*namelen_ret = len;
+	}
+
+	/* Check root dir ref */
+	if (ref_key->objectid == BTRFS_FIRST_FREE_OBJECTID) {
+		if (index != 0 || len != strlen("..") ||
+		    strncmp("..", namebuf, len) ||
+		    ref_key->offset != BTRFS_FIRST_FREE_OBJECTID) {
+			/* set err bits then repair will delete the ref */
+			err |= DIR_INDEX_MISSING;
+			err |= DIR_ITEM_MISSING;
+		}
+		goto end;
 	}
 
 	/* Find related DIR_INDEX */
 	key.objectid = ref_key->offset;
 	key.type = BTRFS_DIR_INDEX_KEY;
 	key.offset = index;
-	ret = find_dir_item(root, &key, &location, namebuf, len, mode);
-	err |= ret;
+	tmp_err |= find_dir_item(root, &key, &location, namebuf, len, mode);
 
 	/* Find related dir_item */
 	key.objectid = ref_key->offset;
 	key.type = BTRFS_DIR_ITEM_KEY;
 	key.offset = btrfs_name_hash(namebuf, len);
-	ret = find_dir_item(root, &key, &location, namebuf, len, mode);
-	err |= ret;
+	tmp_err |= find_dir_item(root, &key, &location, namebuf, len, mode);
 
+end:
+	print_inode_ref_err(root, ref_key, index, namebuf, name_len,
+			    imode_to_type(mode), tmp_err);
+	err |= tmp_err;
 	len = sizeof(*ref) + name_len;
 	ref = (struct btrfs_inode_ref *)((char *)ref + len);
 	cur += len;
@@ -5134,6 +5182,8 @@ static int check_inode_item(struct btrfs_root *root, struct btrfs_path *path,
 	int slot;
 	int ret;
 	int err = 0;
+	char namebuf[BTRFS_NAME_LEN] = {0};
+	u32 name_len = 0;
 
 	node = path->nodes[0];
 	slot = path->slots[0];
@@ -5174,8 +5224,8 @@ static int check_inode_item(struct btrfs_root *root, struct btrfs_path *path,
 
 		switch (key.type) {
 		case BTRFS_INODE_REF_KEY:
-			ret = check_inode_ref(root, &key, node, slot, &refs,
-					      mode);
+			ret = check_inode_ref(root, &key, path, namebuf,
+					      &name_len, &refs, mode);
 			err |= ret;
 			break;
 		case BTRFS_INODE_EXTREF_KEY:
