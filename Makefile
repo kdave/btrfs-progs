@@ -164,6 +164,7 @@ endif
 
 ifneq (,$(findstring asan,$(D)))
   DEBUG_CFLAGS_INTERNAL += -fsanitize=address
+  DEBUG_LDFLAGS_INTERNAL += -fsanitize=address -lasan
 endif
 
 ifneq (,$(findstring tsan,$(D)))
@@ -173,6 +174,7 @@ endif
 
 ifneq (,$(findstring ubsan,$(D)))
   DEBUG_CFLAGS_INTERNAL += -fsanitize=undefined
+  DEBUG_LDFLAGS_INTERNAL += -fsanitize=undefined -lubsan
 endif
 
 ifneq (,$(findstring bcheck,$(D)))
