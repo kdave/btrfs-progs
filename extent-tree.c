@@ -2663,8 +2663,7 @@ int btrfs_reserve_extent(struct btrfs_trans_handle *trans,
 		alloc_profile = info->avail_data_alloc_bits &
 			        info->data_alloc_profile;
 		data = BTRFS_BLOCK_GROUP_DATA | alloc_profile;
-	} else if ((info->system_allocs > 0 || root == info->chunk_root) &&
-		   info->system_allocs >= 0) {
+	} else if (info->system_allocs == 1 || root == info->chunk_root) {
 		alloc_profile = info->avail_system_alloc_bits &
 			        info->system_alloc_profile;
 		data = BTRFS_BLOCK_GROUP_SYSTEM | alloc_profile;

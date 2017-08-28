@@ -1126,8 +1126,8 @@ struct btrfs_fs_info {
 
 	struct btrfs_fs_devices *fs_devices;
 	struct list_head space_info;
-	int system_allocs;
 
+	unsigned int system_allocs:1;
 	unsigned int readonly:1;
 	unsigned int on_restoring:1;
 	unsigned int is_chunk_recover:1;
