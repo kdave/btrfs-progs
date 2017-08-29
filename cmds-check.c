@@ -132,6 +132,7 @@ struct data_backref {
 #define ROOT_REF_MISMATCH	(1<<17)	/* ROOT_REF found but not match */
 #define DIR_INDEX_MISSING       (1<<18) /* INODE_INDEX not found */
 #define DIR_INDEX_MISMATCH      (1<<19) /* INODE_INDEX found but not match */
+#define DIR_COUNT_AGAIN         (1<<20) /* DIR isize should be recalculated */
 
 static inline struct data_backref* to_data_backref(struct extent_backref *back)
 {
@@ -4943,6 +4944,94 @@ static int repair_dir_item(struct btrfs_root *root, u64 dirid, u64 ino,
 	return err;
 }
 
+static int __count_dir_isize(struct btrfs_root *root, u64 ino,
+			 int type, u64 *size_ret)
+{
+	struct btrfs_key key;
+	struct btrfs_path path;
+	u32 len;
+	struct btrfs_dir_item *di;
+	int ret;
+	int cur = 0;
+	int total = 0;
+
+	ASSERT(size_ret);
+	*size_ret = 0;
+
+	key.objectid = ino;
+	key.type = type;
+	key.offset = (u64)-1;
+
+	btrfs_init_path(&path);
+	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
+	if (ret < 0) {
+		ret = -EIO;
+		goto out;
+	}
+	/* if found, go to spacial case */
+	if (ret == 0)
+		goto special_case;
+
+loop:
+	ret = btrfs_previous_item(root, &path, ino, type);
+
+	if (ret) {
+		ret = 0;
+		goto out;
+	}
+
+special_case:
+
+	di = btrfs_item_ptr(path.nodes[0], path.slots[0],
+			    struct btrfs_dir_item);
+	cur = 0;
+	total = btrfs_item_size_nr(path.nodes[0], path.slots[0]);
+
+	while (cur < total) {
+		len = btrfs_dir_name_len(path.nodes[0], di);
+		if (len > BTRFS_NAME_LEN)
+			len = BTRFS_NAME_LEN;
+		*size_ret += len;
+
+		len += btrfs_dir_data_len(path.nodes[0], di);
+		len += sizeof(*di);
+		di = (struct btrfs_dir_item *)((char *)di + len);
+		cur += len;
+	}
+	goto loop;
+
+out:
+	btrfs_release_path(&path);
+	return ret;
+}
+
+static int count_dir_isize(struct btrfs_root *root, u64 ino, u64 *size)
+{
+
+	u64 item_size;
+	u64 index_size;
+	int ret;
+
+	ASSERT(size);
+	ret = __count_dir_isize(root, ino, BTRFS_DIR_ITEM_KEY,
+				&item_size);
+	if (ret)
+		goto out;
+
+	ret = __count_dir_isize(root, ino, BTRFS_DIR_INDEX_KEY,
+			       &index_size);
+	if (ret)
+		goto out;
+
+	*size = item_size + index_size;
+
+out:
+	if (ret)
+		error("failed to count root %llu INODE[%llu] root size",
+		      root->objectid, ino);
+	return ret;
+}
+
 /*
  * Traverse the given DIR_ITEM/DIR_INDEX and check related INODE_ITEM and
  * call find_inode_ref() to check related INODE_REF/INODE_EXTREF.
@@ -4954,6 +5043,7 @@ static int repair_dir_item(struct btrfs_root *root, u64 dirid, u64 ino,
  * @ext_ref:	the EXTENDED_IREF feature
  *
  * Return 0 if no error occurred.
+ * Return DIR_COUNT_AGAIN if the isize of the inode should be recalculated.
  */
 static int check_dir_item(struct btrfs_root *root, struct btrfs_key *di_key,
 			  struct btrfs_path *path, u64 *size,
@@ -4994,6 +5084,7 @@ begin:
 	/* since after repair, path and the dir item may be changed */
 	if (need_research) {
 		need_research = 0;
+		err |= DIR_COUNT_AGAIN;
 		btrfs_release_path(path);
 		ret = btrfs_search_slot(NULL, root, di_key, path, 0, 0);
 		/* the item was deleted, let path point the last checked item */
@@ -5535,6 +5626,10 @@ static int check_inode_item(struct btrfs_root *root, struct btrfs_path *path,
 out:
 	/* verify INODE_ITEM nlink/isize/nbytes */
 	if (dir) {
+		if (repair && (err & DIR_COUNT_AGAIN)) {
+			err &= ~DIR_COUNT_AGAIN;
+			count_dir_isize(root, inode_id, &size);
+		}
 		if (nlink != 1) {
 			err |= LINK_COUNT_ERROR;
 			error("root %llu DIR INODE[%llu] shouldn't have more than one link(%llu)",
