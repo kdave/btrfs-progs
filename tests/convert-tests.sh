@@ -41,7 +41,9 @@ run_one_test() {
 		./test.sh
 		if [ $? -ne 0 ]; then
 			if [[ $TEST_LOG =~ dump ]]; then
-				cat "$RESULTS"
+				# the logs can be large and may exceed the
+				# limits, use 4MB for now
+				tail -c 3900000 "$RESULTS"
 			fi
 			_fail "test failed for case $testname"
 		fi
