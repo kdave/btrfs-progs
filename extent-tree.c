@@ -3840,7 +3840,7 @@ out:
 int btrfs_fix_block_accounting(struct btrfs_trans_handle *trans,
 			       struct btrfs_root *root)
 {
-	int ret;
+	int ret = 0;
 	int slot;
 	u64 start = 0;
 	u64 bytes_used = 0;
@@ -3904,13 +3904,16 @@ int btrfs_fix_block_accounting(struct btrfs_trans_handle *trans,
 			bytes_used += fs_info->nodesize;
 			ret = btrfs_update_block_group(trans, root,
 				  key.objectid, fs_info->nodesize, 1, 0);
-			BUG_ON(ret);
+			if (ret)
+				goto out;
 		}
 		path.slots[0]++;
 	}
 	btrfs_set_super_bytes_used(root->fs_info->super_copy, bytes_used);
+	ret = 0;
+out:
 	btrfs_release_path(&path);
-	return 0;
+	return ret;
 }
 
 static void __get_extent_size(struct btrfs_root *root, struct btrfs_path *path,

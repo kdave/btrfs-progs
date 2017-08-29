@@ -9467,7 +9467,9 @@ repair_abort:
 				goto repair_abort;
 			}
 
-			btrfs_fix_block_accounting(trans, root);
+			ret = btrfs_fix_block_accounting(trans, root);
+			if (ret)
+				goto repair_abort;
 			ret = btrfs_commit_transaction(trans, root);
 			if (ret)
 				goto repair_abort;
