@@ -4533,19 +4533,82 @@ out:
 }
 
 /*
+ * The ternary means dir item, dir index and relative inode ref.
+ * The function handles errs: INODE_MISSING, DIR_INDEX_MISSING
+ * DIR_INDEX_MISMATCH, DIR_ITEM_MISSING, DIR_ITEM_MISMATCH by the follow
+ * strategy:
+ * If two of three is missing or mismatched, delete the existing one.
+ * If one of three is missing or mismatched, add the missing one.
+ *
+ * returns 0 means success.
+ * returns not 0 means on error;
+ */
+int repair_ternary_lowmem(struct btrfs_root *root, u64 dir_ino, u64 ino,
+			  u64 index, char *name, int name_len, u8 filetype,
+			  int err)
+{
+	struct btrfs_trans_handle *trans;
+	int stage = 0;
+	int ret = 0;
+
+	/*
+	 * stage shall be one of following valild values:
+	 *	0: Fine, nothing to do.
+	 *	1: One of three is wrong, so add missing one.
+	 *	2: Two of three is wrong, so delete existed one.
+	 */
+	if (err & (DIR_INDEX_MISMATCH | DIR_INDEX_MISSING))
+		stage++;
+	if (err & (DIR_ITEM_MISMATCH | DIR_ITEM_MISSING))
+		stage++;
+	if (err & (INODE_REF_MISSING))
+		stage++;
+
+	/* stage must be smllarer than 3 */
+	ASSERT(stage < 3);
+
+	trans = btrfs_start_transaction(root, 1);
+	if (stage == 2) {
+		ret = btrfs_unlink(trans, root, ino, dir_ino, index, name,
+				   name_len, 0);
+		goto out;
+	}
+	if (stage == 1) {
+		ret = btrfs_add_link(trans, root, ino, dir_ino, name, name_len,
+			       filetype, &index, 1, 1);
+		goto out;
+	}
+out:
+	btrfs_commit_transaction(trans, root);
+
+	if (ret)
+		error("fail to repair inode %llu name %s filetype %u",
+		      ino, name, filetype);
+	else
+		printf("%s ref/dir_item of inode %llu name %s filetype %u\n",
+		       stage == 2 ? "Delete" : "Add",
+		       ino, name, filetype);
+
+	return ret;
+}
+
+/*
  * Traverse the given INODE_REF and call find_dir_item() to find related
  * DIR_ITEM/DIR_INDEX.
  *
  * @root:	the root of the fs/file tree
  * @ref_key:	the key of the INODE_REF
+ * @path        the path provides node and slot
  * @refs:	the count of INODE_REF
  * @mode:	the st_mode of INODE_ITEM
+ * @name_ret:   returns with the first ref's name
+ * @name_len_ret:    len of the name_ret
  *
  * Return 0 if no error occurred.
  */
 static int check_inode_ref(struct btrfs_root *root, struct btrfs_key *ref_key,
 			   struct btrfs_path *path, char *name_ret,
-			   u32 *namelen_ret, u64 *refs, int mode)
+			   u32 *namelen_ret, u64 *refs_ret, int mode)
 {
 	struct btrfs_key key;
 	struct btrfs_key location;
@@ -4557,9 +4620,33 @@ static int check_inode_ref(struct btrfs_root *root, struct btrfs_key *ref_key,
 	u32 len;
 	u32 name_len;
 	u64 index;
+	int ret;
 	int err = 0;
 	int tmp_err;
 	int slot;
+	int need_research = 0;
+	u64 refs;
+
+begin:
+	err = 0;
+	cur = 0;
+	refs = *refs_ret;
+
+	/* since after repair, path and the dir item may be changed */
+	if (need_research) {
+		need_research = 0;
+		btrfs_release_path(path);
+		ret = btrfs_search_slot(NULL, root, ref_key, path, 0, 0);
+		/* the item was deleted, let path point to the last checked item */
+		if (ret > 0) {
+			if (path->slots[0] == 0)
+				btrfs_prev_leaf(root, path);
+			else
+				path->slots[0]--;
+		}
+		if (ret)
+			goto out;
+	}
 
 	location.objectid = ref_key->objectid;
 	location.type = BTRFS_INODE_ITEM_KEY;
@@ -4567,32 +4654,29 @@ static int check_inode_ref(struct btrfs_root *root, struct btrfs_key *ref_key,
 	node = path->nodes[0];
 	slot = path->slots[0];
 
+	memset(namebuf, 0, sizeof(namebuf) / sizeof(*namebuf));
 	ref = btrfs_item_ptr(node, slot, struct btrfs_inode_ref);
 	total = btrfs_item_size_nr(node, slot);
 
 next:
 	/* Update inode ref count */
-	(*refs)++;
-
+	refs++;
 	tmp_err = 0;
 	index = btrfs_inode_ref_index(node, ref);
 	name_len = btrfs_inode_ref_name_len(node, ref);
-	if (cur + sizeof(*ref) + name_len > total ||
-	    name_len > BTRFS_NAME_LEN) {
+
+	if (name_len <= BTRFS_NAME_LEN) {
+		len = name_len;
+	} else {
+		len = BTRFS_NAME_LEN;
 		warning("root %llu INODE_REF[%llu %llu] name too long",
 			root->objectid, ref_key->objectid, ref_key->offset);
-
-		if (total < cur + sizeof(*ref))
-			goto out;
-		len = min_t(u32, total - cur - sizeof(*ref), BTRFS_NAME_LEN);
-	} else {
-		len = name_len;
 	}
 
 	read_extent_buffer(node, namebuf, (unsigned long)(ref + 1), len);
 
-	/* copy the fisrt name found to name_ret */
-	if (*refs == 1 && name_ret) {
+	/* copy the first name found to name_ret */
+	if (refs == 1 && name_ret) {
 		memcpy(name_ret, namebuf, len);
 		*namelen_ret = len;
 	}
@@ -4613,15 +4697,26 @@ next:
 	key.objectid = ref_key->offset;
 	key.type = BTRFS_DIR_INDEX_KEY;
 	key.offset = index;
-	tmp_err |= find_dir_item(root, &key, &location, namebuf, len, mode);
+	tmp_err |= find_dir_item(root, &key, &location, namebuf, len,
+			    imode_to_type(mode));
 
 	/* Find related dir_item */
 	key.objectid = ref_key->offset;
 	key.type = BTRFS_DIR_ITEM_KEY;
 	key.offset = btrfs_name_hash(namebuf, len);
-	tmp_err |= find_dir_item(root, &key, &location, namebuf, len, mode);
-
+	tmp_err |= find_dir_item(root, &key, &location, namebuf, len,
+			    imode_to_type(mode));
 end:
+	if (tmp_err && repair) {
+		ret = repair_ternary_lowmem(root, ref_key->offset,
+					    ref_key->objectid, index, namebuf,
+					    name_len, imode_to_type(mode),
+					    tmp_err);
+		if (!ret) {
+			need_research = 1;
+			goto begin;
+		}
+	}
 	print_inode_ref_err(root, ref_key, index, namebuf, name_len,
 			    imode_to_type(mode), tmp_err);
 	err |= tmp_err;
@@ -4632,6 +4727,7 @@ end:
 		goto next;
 
 out:
+	*refs_ret = refs;
 	return err;
 }
 
@@ -4909,6 +5005,35 @@ static void print_dir_item_err(struct btrfs_root *root, struct btrfs_key *key,
 }
 
 /*
+ * Call repair_inode_item_missing and repair_ternary_lowmem to repair
+ *
+ * Returns error after repair
+ */
+static int repair_dir_item(struct btrfs_root *root, u64 dirid, u64 ino,
+			   u64 index, u8 filetype, char *namebuf, u32 name_len,
+			   int err)
+{
+	int ret;
+
+	if (err & INODE_ITEM_MISSING) {
+		ret = repair_inode_item_missing(root, ino, filetype);
+		if (!ret)
+			err &= ~(INODE_ITEM_MISMATCH | INODE_ITEM_MISSING);
+	}
+
+	if (err & ~(INODE_ITEM_MISMATCH | INODE_ITEM_MISSING)) {
+		ret = repair_ternary_lowmem(root, dirid, ino, index, namebuf,
+					    name_len, filetype, err);
+		if (!ret) {
+			err &= ~(DIR_INDEX_MISMATCH | DIR_INDEX_MISSING);
+			err &= ~(DIR_ITEM_MISMATCH | DIR_ITEM_MISSING);
+			err &= ~(INODE_REF_MISSING);
+		}
+	}
+	return err;
+}
+
+/*
  * Traverse the given DIR_ITEM/DIR_INDEX and check related INODE_ITEM and
  * call find_inode_ref() to check related INODE_REF/INODE_EXTREF.
  *
@@ -4937,14 +5062,13 @@ static int check_dir_item(struct btrfs_root *root, struct btrfs_key *di_key,
 	u32 name_len;
 	u32 data_len;
 	u8 filetype;
-	u32 mode;
+	u32 mode = 0;
 	u64 index;
 	int ret;
-	int err = 0;
+	int err;
 	int tmp_err;
+	int need_research = 0;
 
-	node = path->nodes[0];
-	slot = path->slots[0];
 	/*
 	 * For DIR_ITEM set index to (u64)-1, so that find_inode_ref
 	 * ignore index check.
@@ -4953,6 +5077,28 @@ static int check_dir_item(struct btrfs_root *root, struct btrfs_key *di_key,
 		index = di_key->offset;
 	else
 		index = (u64)-1;
+begin:
+	err = 0;
+	cur = 0;
+
+	/* since after repair, path and the dir item may be changed */
+	if (need_research) {
+		need_research = 0;
+		btrfs_release_path(path);
+		ret = btrfs_search_slot(NULL, root, di_key, path, 0, 0);
+		/* the item was deleted, let path point the last checked item */
+		if (ret > 0) {
+			if (path->slots[0] == 0)
+				btrfs_prev_leaf(root, path);
+			else
+				path->slots[0]--;
+		}
+		if (ret)
+			goto out;
+	}
+
+	node = path->nodes[0];
+	slot = path->slots[0];
 
 	di = btrfs_item_ptr(node, slot, struct btrfs_dir_item);
 	total = btrfs_item_size_nr(node, slot);
@@ -5035,6 +5181,17 @@ static int check_dir_item(struct btrfs_root *root, struct btrfs_key *di_key,
 		if (key.type == BTRFS_DIR_INDEX_KEY)
 			index = key.offset;
 next:
+
+		if (tmp_err && repair) {
+			ret = repair_dir_item(root, di_key->objectid,
+					      location.objectid, index,
+					      imode_to_type(mode), namebuf,
+					      name_len, tmp_err);
+			if (ret != tmp_err) {
+				need_research = 1;
+				goto begin;
+			}
+		}
 		btrfs_release_path(path);
 		print_dir_item_err(root, di_key, location.objectid, index,
 				   namebuf, name_len, filetype, tmp_err);
@@ -5050,7 +5207,7 @@ next:
 			break;
 		}
 	}
-
+out:
 	/* research path */
 	btrfs_release_path(path);
 	ret = btrfs_search_slot(NULL, root, di_key, path, 0, 0);
