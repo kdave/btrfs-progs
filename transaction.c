@@ -26,6 +26,9 @@ struct btrfs_trans_handle* btrfs_start_transaction(struct btrfs_root *root,
 	struct btrfs_fs_info *fs_info = root->fs_info;
 	struct btrfs_trans_handle *h = kzalloc(sizeof(*h), GFP_NOFS);
 
+	if (fs_info->transaction_aborted)
+		return ERR_PTR(-EROFS);
+
 	if (!h)
 		return ERR_PTR(-ENOMEM);
 	if (root->commit_root) {
@@ -140,6 +143,9 @@ int btrfs_commit_transaction(struct btrfs_trans_handle *trans,
 	u64 transid = trans->transid;
 	int ret = 0;
 	struct btrfs_fs_info *fs_info = root->fs_info;
+
+	if (trans->fs_info->transaction_aborted)
+		return -EROFS;
 
 	if (root->commit_root == root->node)
 		goto commit_tree;
