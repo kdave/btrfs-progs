@@ -40,10 +40,10 @@ run_one_test() {
 		# Only support custom test scripts
 		./test.sh
 		if [ $? -ne 0 ]; then
-			_fail "test failed for case $testname"
 			if [[ $TEST_LOG =~ dump ]]; then
 				cat "$RESULTS"
 			fi
+			_fail "test failed for case $testname"
 		fi
 	else
 		_fail "custom test script not found"
