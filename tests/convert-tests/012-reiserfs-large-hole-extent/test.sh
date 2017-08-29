@@ -11,6 +11,7 @@ source "$TOP/tests/common.convert"
 setup_root_helper
 prepare_test_dev 512M
 check_prereq btrfs-convert
+check_global_prereq mkreiserfs
 
 default_mkfs="mkreiserfs -b 4096"
 convert_test_preamble '' 'large hole extent test' 16k "$default_mkfs"

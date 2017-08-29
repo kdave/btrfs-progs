@@ -7,6 +7,9 @@ source "$TOP/tests/common.convert"
 setup_root_helper
 prepare_test_dev 512M
 check_prereq btrfs-convert
+check_global_prereq mkreiserfs
+check_global_prereq chattr
+check_global_prereq lsattr
 
 fail=0
 default_mkfs="mkreiserfs -b 4096"

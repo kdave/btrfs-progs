@@ -6,6 +6,7 @@ source "$TOP/tests/common.convert"
 setup_root_helper
 prepare_test_dev 512M
 check_prereq btrfs-convert
+check_global_prereq mkreiserfs
 
 for feature in '' 'extref' 'skinny-metadata' 'no-holes'; do
 	convert_test reiserfs "$feature" "reiserfs 4k nodesize" 4096 mkreiserfs -b 4096

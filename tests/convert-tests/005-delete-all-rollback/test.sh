@@ -8,6 +8,7 @@ source "$TOP/tests/common.convert"
 setup_root_helper
 prepare_test_dev 512M
 check_prereq btrfs-convert
+check_global_prereq mke2fs
 
 # simple wrapper for a convert test
 # $1: btrfs features, argument to -O

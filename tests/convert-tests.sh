@@ -22,6 +22,10 @@ export TEST_DEV
 rm -f "$RESULTS"
 
 check_kernel_support
+# anything expected by common.convert
+check_global_prereq getfacl
+check_global_prereq setfacl
+check_global_prereq md5sum
 
 run_one_test() {
 	local testdir

@@ -13,6 +13,8 @@ setup_root_helper
 prepare_test_dev 512M
 check_prereq btrfs-convert
 check_global_prereq md5sum
+check_global_prereq mkreiserfs
+check_global_prereq perl
 
 perl -e "print 'a'x8192;" > input
 perl -e "print 'b'x8192;" > input2
