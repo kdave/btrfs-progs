@@ -5242,6 +5242,34 @@ out:
 }
 
 /*
+ * Wrapper function of btrfs_punch_hole.
+ *
+ * Returns 0 means success.
+ * Returns not 0 means error.
+ */
+static int punch_extent_hole(struct btrfs_root *root, u64 ino, u64 start,
+			     u64 len)
+{
+	struct btrfs_trans_handle *trans;
+	int ret = 0;
+
+	trans = btrfs_start_transaction(root, 1);
+	if (IS_ERR(trans))
+		return PTR_ERR(trans);
+
+	ret = btrfs_punch_hole(trans, root, ino, start, len);
+	if (ret)
+		error("failed to add hole [%llu, %llu] in inode [%llu]",
+		      start, len, ino);
+	else
+		printf("Add a hole [%llu, %llu] in inode [%llu]\n", start, len,
+		       ino);
+
+	btrfs_commit_transaction(trans, root);
+	return ret;
+}
+
+/*
  * Check file extent datasum/hole, update the size of the file extents,
  * check and update the last offset of the file extent.
  *
@@ -5356,9 +5384,14 @@ static int check_file_extent(struct btrfs_root *root, struct btrfs_key *fkey,
 
 	/* Check EXTENT_DATA hole */
 	if (!no_holes && *end != fkey->offset) {
-		err |= FILE_EXTENT_ERROR;
-		error("root %llu EXTENT_DATA[%llu %llu] interrupt",
-		      root->objectid, fkey->objectid, fkey->offset);
+		if (repair)
+			ret = punch_extent_hole(root, fkey->objectid,
+						*end, fkey->offset - *end);
+		if (!!repair || ret) {
+			err |= FILE_EXTENT_ERROR;
+			error("root %llu EXTENT_DATA[%llu %llu] interrupt",
+			      root->objectid, fkey->objectid, fkey->offset);
+		}
 	}
 
 	*end += extent_num_bytes;
@@ -5795,9 +5828,14 @@ out:
 		}
 
 		if (!nbytes && !no_holes && extent_end < isize) {
-			err |= NBYTES_ERROR;
-			error("root %llu INODE[%llu] size (%llu) should have a file extent hole",
-			      root->objectid, inode_id, isize);
+			if (repair)
+				ret = punch_extent_hole(root, inode_id,
+						extent_end, isize - extent_end);
+			if (!repair || ret) {
+				err |= NBYTES_ERROR;
+				error("root %llu INODE[%llu] size (%llu) should have a file extent hole",
+				      root->objectid, inode_id, isize);
+			}
 		}
 
 		if (nbytes != extent_size) {
