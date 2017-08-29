@@ -49,6 +49,17 @@ before_install:
   - sudo apt-get update -qq
   - sudo apt-get install -qq e2fslibs-dev gcc libacl1-dev libblkid-dev liblzo2-dev make pkg-config udev zlib1g-dev
   - echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
+  - "mkdir tmp-reiser;
+     cd tmp-reiser;
+     wget https://www.kernel.org/pub/linux/kernel/people/jeffm/reiserfsprogs/v3.6.27/reiserfsprogs-3.6.27.tar.xz;
+     tar xf reiserfsprogs-3.6.27.tar.xz;
+     cd reiserfsprogs-3.6.27;
+     ./configure --prefix=/usr;
+     make all;
+     sudo make install;
+     cd ../..
+    "
+  - "./autogen.sh && ./configure --disable-documentation && make"
 
 addons:
   coverity_scan:
@@ -61,17 +72,6 @@ addons:
     branch_pattern: coverity_scan
 
 script:
-  - "mkdir tmp-reiser;
-     cd tmp-reiser;
-     wget https://www.kernel.org/pub/linux/kernel/people/jeffm/reiserfsprogs/v3.6.27/reiserfsprogs-3.6.27.tar.xz;
-     tar xf reiserfsprogs-3.6.27.tar.xz;
-     cd reiserfsprogs-3.6.27;
-     ./configure --prefix=/usr;
-     make all;
-     sudo make install;
-     cd ../..
-    "
-  - "./autogen.sh && ./configure --disable-documentation && make"
   - "if ./travis-should-run-test; then make TEST_LOG=dump test-cli; fi"
   - "if ./travis-should-run-test; then make TEST_LOG=dump test-mkfs; fi"
   - "if ./travis-should-run-test; then make TEST_LOG=dump test-check; fi"
