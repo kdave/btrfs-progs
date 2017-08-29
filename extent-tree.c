@@ -284,7 +284,7 @@ out:
 	if (!cache) {
 		printk("Unable to find block group for %llu\n",
 			(unsigned long long)search_start);
-		WARN_ON(1);
+		return -ENOENT;
 	}
 	return -ENOSPC;
 
