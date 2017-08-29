@@ -1623,6 +1623,7 @@ int write_ctree_super(struct btrfs_trans_handle *trans,
 int close_ctree_fs_info(struct btrfs_fs_info *fs_info)
 {
 	int ret;
+	int err = 0;
 	struct btrfs_trans_handle *trans;
 	struct btrfs_root *root = fs_info->tree_root;
 
@@ -1630,7 +1631,10 @@ int close_ctree_fs_info(struct btrfs_fs_info *fs_info)
 	    fs_info->generation) {
 		BUG_ON(!root);
 		trans = btrfs_start_transaction(root, 1);
-		BUG_ON(IS_ERR(trans));
+		if (IS_ERR(trans)) {
+			err = PTR_ERR(trans);
+			goto skip_commit;
+		}
 		btrfs_commit_transaction(trans, root);
 		trans = btrfs_start_transaction(root, 1);
 		BUG_ON(IS_ERR(trans));
@@ -1650,6 +1654,8 @@ int close_ctree_fs_info(struct btrfs_fs_info *fs_info)
 			fprintf(stderr,
 				"failed to write new super block err %d\n", ret);
 	}
+
+skip_commit:
 	btrfs_free_block_groups(fs_info);
 
 	free_fs_roots_tree(&fs_info->fs_root_tree);
@@ -1658,7 +1664,9 @@ int close_ctree_fs_info(struct btrfs_fs_info *fs_info)
 	ret = btrfs_close_devices(fs_info->fs_devices);
 	btrfs_cleanup_all_caches(fs_info);
 	btrfs_free_fs_info(fs_info);
-	return ret;
+	if (!err)
+		err = ret;
+	return err;
 }
 
 int clean_tree_block(struct btrfs_trans_handle *trans, struct btrfs_root *root,
