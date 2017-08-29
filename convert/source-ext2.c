@@ -39,7 +39,8 @@ static int ext2_open_fs(struct btrfs_convert_context *cctx, const char *name)
 
 	ret = ext2fs_open(name, open_flag, 0, 0, unix_io_manager, &ext2_fs);
 	if (ret) {
-		fprintf(stderr, "ext2fs_open: %s\n", error_message(ret));
+		if (ret != EXT2_ET_BAD_MAGIC)
+			fprintf(stderr, "ext2fs_open: %s\n", error_message(ret));
 		return -1;
 	}
 	/*
