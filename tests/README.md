@@ -30,7 +30,7 @@ category, eg. `fsck-tests-results.txt`.
 
 ## Selective testing
 
-The test are prefixed by a number for ordering and uniqueness. To run a
+The tests are prefixed by a number for ordering and uniqueness. To run a
 particular test use:
 
 ```shell
@@ -76,8 +76,7 @@ will run the first test in fsck-tests subdirectory.
   * anything that does not fit to the above, the test driver script will only
     execute `./test.sh` in the test directory
 
-*tests/common:*
-*tests/common.convert:*
+*tests/common, tests/common.convert:*
 
   * script with shell helpers, separated by functionality
 
@@ -146,6 +145,13 @@ the loop devices as they are managed on a per-test basis.
 There's a script `test-console.sh` that will run shell commands in a loop and
 logs the output with the testing environment set up.
 
+### Runtime dependencies
+
+The tests use some common system utilities like `find`, `rm`, `dd`. Additionally,
+specific tests need the following packages installed: `acl`, `attr`,
+`e2fsprogs`, `reiserfsprogs`
+
+
 ## New test
 
 1. Pick the category for the new test or fallback to `misc-tests` if not sure. For
@@ -162,7 +168,7 @@ begining of `test.sh`. You don't need to add the file to git yet.
 
 4. Write the test commands, comment anything that's not obvious.
 
-5. Test your test. Use the `TEST` variable to jump right to your test:
+5. **Test your test.** Use the `TEST` variable to jump right to your test:
 ```shell
 $ make TEST=012\* tests-misc           # from top directory
 $ TEST=012\* ./misc-tests.sh           # from tests/
@@ -171,6 +177,7 @@ $ TEST=012\* ./misc-tests.sh           # from tests/
 6. The commit changelog should reference a commit that either introduced or
   fixed the bug (or both). Subject line of the shall mention the name of the
   new directory for ease of search, eg. `btrfs-progs: tests: add 012-subvolume-sync-must-wait`
+
 
 ### Crafted/fuzzed images
 
