@@ -4057,9 +4057,8 @@ static int check_fs_roots(struct btrfs_fs_info *fs_info,
 	struct btrfs_key key;
 	struct walk_control wc;
 	struct extent_buffer *leaf, *tree_node;
-	struct btrfs_root *root = fs_info->fs_root;
 	struct btrfs_root *tmp_root;
-	struct btrfs_root *tree_root = root->fs_info->tree_root;
+	struct btrfs_root *tree_root = fs_info->tree_root;
 	int ret;
 	int err = 0;
 
@@ -4073,7 +4072,7 @@ static int check_fs_roots(struct btrfs_fs_info *fs_info,
 	 * reflected into the free space cache yet.
 	 */
 	if (repair)
-		reset_cached_block_groups(root->fs_info);
+		reset_cached_block_groups(fs_info);
 	memset(&wc, 0, sizeof(wc));
 	cache_tree_init(&wc.shared);
 	btrfs_init_path(&path);
@@ -4109,11 +4108,11 @@ again:
 		    fs_root_objectid(key.objectid)) {
 			if (key.objectid == BTRFS_TREE_RELOC_OBJECTID) {
 				tmp_root = btrfs_read_fs_root_no_cache(
-						root->fs_info, &key);
+						fs_info, &key);
 			} else {
 				key.offset = (u64)-1;
 				tmp_root = btrfs_read_fs_root(
-						root->fs_info, &key);
+						fs_info, &key);
 			}
 			if (IS_ERR(tmp_root)) {
 				err = 1;
