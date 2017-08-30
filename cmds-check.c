@@ -11566,6 +11566,20 @@ out:
 	return err;
 }
 
+static int do_check_chunks_and_extents(struct btrfs_fs_info *fs_info)
+{
+	int ret;
+
+	if (!ctx.progress_enabled)
+		fprintf(stderr, "checking extents\n");
+	if (check_mode == CHECK_MODE_LOWMEM)
+		ret = check_chunks_and_extents_v2(fs_info);
+	else
+		ret = check_chunks_and_extents(fs_info);
+
+	return ret;
+}
+
 static int btrfs_fsck_reinit_root(struct btrfs_trans_handle *trans,
 			   struct btrfs_root *root, int overwrite)
 {
@@ -13026,12 +13040,7 @@ int cmd_check(int argc, char **argv)
 		goto close_out;
 	}
 
-	if (!ctx.progress_enabled)
-		fprintf(stderr, "checking extents\n");
-	if (check_mode == CHECK_MODE_LOWMEM)
-		ret = check_chunks_and_extents_v2(info);
-	else
-		ret = check_chunks_and_extents(info);
+	ret = do_check_chunks_and_extents(info);
 	err |= !!ret;
 	if (ret)
 		error(
