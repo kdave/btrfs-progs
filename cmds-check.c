@@ -12648,6 +12648,45 @@ static int clear_free_space_cache(struct btrfs_fs_info *fs_info)
 	return ret;
 }
 
+static int do_clear_free_space_cache(struct btrfs_fs_info *fs_info,
+		int clear_version)
+{
+	int ret = 0;
+
+	if (clear_version == 1) {
+		if (btrfs_fs_compat_ro(fs_info, FREE_SPACE_TREE)) {
+			error(
+		"free space cache v2 detected, use --clear-space-cache v2");
+			ret = 1;
+			goto close_out;
+		}
+		printf("Clearing free space cache\n");
+		ret = clear_free_space_cache(fs_info);
+		if (ret) {
+			error("failed to clear free space cache");
+			ret = 1;
+		} else {
+			printf("Free space cache cleared\n");
+		}
+	} else if (clear_version == 2) {
+		if (!btrfs_fs_compat_ro(fs_info, FREE_SPACE_TREE)) {
+			printf("no free space cache v2 to clear\n");
+			ret = 0;
+			goto close_out;
+		}
+		printf("Clear free space cache v2\n");
+		ret = btrfs_clear_free_space_tree(fs_info);
+		if (ret) {
+			error("failed to clear free space cache v2: %d", ret);
+			ret = 1;
+		} else {
+			printf("free space cache v2 cleared\n");
+		}
+	}
+close_out:
+	return ret;
+}
+
 const char * const cmd_check_usage[] = {
 	"btrfs check [options] <device>",
 	"Check structural integrity of a filesystem (unmounted).",
@@ -12864,36 +12903,10 @@ int cmd_check(int argc, char **argv)
 
 	global_info = info;
 	root = info->fs_root;
-	if (clear_space_cache == 1) {
-		if (btrfs_fs_compat_ro(info, FREE_SPACE_TREE)) {
-			error(
-		"free space cache v2 detected, use --clear-space-cache v2");
-			ret = 1;
-			goto close_out;
-		}
-		printf("Clearing free space cache\n");
-		ret = clear_free_space_cache(info);
-		if (ret) {
-			error("failed to clear free space cache");
-			ret = 1;
-		} else {
-			printf("Free space cache cleared\n");
-		}
-		goto close_out;
-	} else if (clear_space_cache == 2) {
-		if (!btrfs_fs_compat_ro(info, FREE_SPACE_TREE)) {
-			printf("no free space cache v2 to clear\n");
-			ret = 0;
-			goto close_out;
-		}
-		printf("Clear free space cache v2\n");
-		ret = btrfs_clear_free_space_tree(info);
-		if (ret) {
-			error("failed to clear free space cache v2: %d", ret);
-			ret = 1;
-		} else {
-			printf("free space cache v2 cleared\n");
-		}
+
+	if (clear_space_cache) {
+		ret = do_clear_free_space_cache(info, clear_space_cache);
+		err |= !!ret;
 		goto close_out;
 	}
 
