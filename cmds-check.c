@@ -66,7 +66,6 @@ static u64 total_extent_tree_bytes = 0;
 static u64 btree_space_waste = 0;
 static u64 data_bytes_allocated = 0;
 static u64 data_bytes_referenced = 0;
-static int found_old_backref = 0;
 static LIST_HEAD(duplicate_extents);
 static LIST_HEAD(delete_items);
 static int no_holes = 0;
@@ -7945,11 +7944,6 @@ static int run_next_block(struct btrfs_root *root,
 		total_fs_tree_bytes += buf->len;
 	if (btrfs_header_owner(buf) == BTRFS_EXTENT_TREE_OBJECTID)
 		total_extent_tree_bytes += buf->len;
-	if (!found_old_backref &&
-	    btrfs_header_owner(buf) == BTRFS_TREE_RELOC_OBJECTID &&
-	    btrfs_header_backref_rev(buf) == BTRFS_MIXED_BACKREF_REV &&
-	    !btrfs_header_flag(buf, BTRFS_HEADER_FLAG_RELOC))
-		found_old_backref = 1;
 out:
 	free_extent_buffer(buf);
 	return ret;
@@ -11456,11 +11450,6 @@ static int traverse_tree_block(struct btrfs_root *root,
 		total_fs_tree_bytes += node->len;
 	if (btrfs_header_owner(node) == BTRFS_EXTENT_TREE_OBJECTID)
 		total_extent_tree_bytes += node->len;
-	if (!found_old_backref &&
-	    btrfs_header_owner(node) == BTRFS_TREE_RELOC_OBJECTID &&
-	    btrfs_header_backref_rev(node) == BTRFS_MIXED_BACKREF_REV &&
-	    !btrfs_header_flag(node, BTRFS_HEADER_FLAG_RELOC))
-		found_old_backref = 1;
 
 	/* pre-order tranversal, check itself first */
 	level = btrfs_header_level(node);
@@ -13150,17 +13139,6 @@ int cmd_check(int argc, char **argv)
 		err |= !!ret;
 	}
 out:
-	if (found_old_backref) { /*
-		 * there was a disk format change when mixed
-		 * backref was in testing tree. The old format
-		 * existed about one week.
-		 */
-		printf("\n * Found old mixed backref format. "
-		       "The old format is not supported! *"
-		       "\n * Please mount the FS in readonly mode, "
-		       "backup data and re-format the FS. *\n\n");
-		err |= 1;
-	}
 	printf("found %llu bytes used, ",
 	       (unsigned long long)bytes_used);
 	if (err)
