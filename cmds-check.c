@@ -4050,13 +4050,14 @@ static int fs_root_objectid(u64 objectid)
 	return is_fstree(objectid);
 }
 
-static int check_fs_roots(struct btrfs_root *root,
+static int check_fs_roots(struct btrfs_fs_info *fs_info,
 			  struct cache_tree *root_cache)
 {
 	struct btrfs_path path;
 	struct btrfs_key key;
 	struct walk_control wc;
 	struct extent_buffer *leaf, *tree_node;
+	struct btrfs_root *root = fs_info->fs_root;
 	struct btrfs_root *tmp_root;
 	struct btrfs_root *tree_root = root->fs_info->tree_root;
 	int ret;
@@ -13094,7 +13095,7 @@ int cmd_check(int argc, char **argv)
 	if (check_mode == CHECK_MODE_LOWMEM)
 		ret = check_fs_roots_v2(root->fs_info);
 	else
-		ret = check_fs_roots(root, &root_cache);
+		ret = check_fs_roots(info, &root_cache);
 	err |= !!ret;
 	if (ret) {
 		error("errors found in fs roots");
