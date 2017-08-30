@@ -321,13 +321,12 @@ static int create_raid_groups(struct btrfs_trans_handle *trans,
 	return ret;
 }
 
-static int create_data_reloc_tree(struct btrfs_trans_handle *trans,
-				  struct btrfs_root *root)
+static int create_tree(struct btrfs_trans_handle *trans,
+			struct btrfs_root *root, u64 objectid)
 {
 	struct btrfs_key location;
 	struct btrfs_root_item root_item;
 	struct extent_buffer *tmp;
-	u64 objectid = BTRFS_DATA_RELOC_TREE_OBJECTID;
 	int ret;
 
 	ret = btrfs_copy_root(trans, root, root->node, &tmp, objectid);
@@ -1857,7 +1856,7 @@ raid_groups:
 		}
 	}
 
-	ret = create_data_reloc_tree(trans, root);
+	ret = create_tree(trans, root, BTRFS_DATA_RELOC_TREE_OBJECTID);
 	if (ret) {
 		error("unable to create data reloc tree: %d", ret);
 		goto out;
