@@ -11503,14 +11503,17 @@ static int traverse_tree_block(struct btrfs_root *root,
 /*
  * Low memory usage version check_chunks_and_extents.
  */
-static int check_chunks_and_extents_v2(struct btrfs_root *root)
+static int check_chunks_and_extents_v2(struct btrfs_fs_info *fs_info)
 {
 	struct btrfs_path path;
 	struct btrfs_key key;
 	struct btrfs_root *root1;
+	struct btrfs_root *root;
 	struct btrfs_root *cur_root;
 	int err = 0;
 	int ret;
+
+	root = fs_info->fs_root;
 
 	root1 = root->fs_info->chunk_root;
 	ret = traverse_tree_block(root1, root1->node);
@@ -13026,7 +13029,7 @@ int cmd_check(int argc, char **argv)
 	if (!ctx.progress_enabled)
 		fprintf(stderr, "checking extents\n");
 	if (check_mode == CHECK_MODE_LOWMEM)
-		ret = check_chunks_and_extents_v2(root);
+		ret = check_chunks_and_extents_v2(info);
 	else
 		ret = check_chunks_and_extents(info);
 	err |= !!ret;
