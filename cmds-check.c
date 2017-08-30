@@ -9876,10 +9876,10 @@ static int check_chunks_and_extents(struct btrfs_fs_info *fs_info)
 	INIT_LIST_HEAD(&normal_trees);
 
 	if (repair) {
-		root->fs_info->excluded_extents = &excluded_extents;
-		root->fs_info->fsck_extent_cache = &extent_cache;
-		root->fs_info->free_extent_hook = free_extent_hook;
-		root->fs_info->corrupt_blocks = &corrupt_blocks;
+		fs_info->excluded_extents = &excluded_extents;
+		fs_info->fsck_extent_cache = &extent_cache;
+		fs_info->free_extent_hook = free_extent_hook;
+		fs_info->corrupt_blocks = &corrupt_blocks;
 	}
 
 	bits_nr = 1024;
@@ -9895,13 +9895,13 @@ static int check_chunks_and_extents(struct btrfs_fs_info *fs_info)
 	}
 
 again:
-	root1 = root->fs_info->tree_root;
+	root1 = fs_info->tree_root;
 	level = btrfs_header_level(root1->node);
 	ret = add_root_item_to_list(&normal_trees, root1->root_key.objectid,
 				    root1->node->start, 0, level, 0, NULL);
 	if (ret < 0)
 		goto out;
-	root1 = root->fs_info->chunk_root;
+	root1 = fs_info->chunk_root;
 	level = btrfs_header_level(root1->node);
 	ret = add_root_item_to_list(&normal_trees, root1->root_key.objectid,
 				    root1->node->start, 0, level, 0, NULL);
@@ -9911,8 +9911,7 @@ again:
 	key.offset = 0;
 	key.objectid = 0;
 	key.type = BTRFS_ROOT_ITEM_KEY;
-	ret = btrfs_search_slot(NULL, root->fs_info->tree_root,
-					&key, &path, 0, 0);
+	ret = btrfs_search_slot(NULL, fs_info->tree_root, &key, &path, 0, 0);
 	if (ret < 0)
 		goto out;
 	while(1) {
@@ -10006,12 +10005,12 @@ again:
 out:
 	task_stop(ctx.info);
 	if (repair) {
-		free_corrupt_blocks_tree(root->fs_info->corrupt_blocks);
+		free_corrupt_blocks_tree(fs_info->corrupt_blocks);
 		extent_io_tree_cleanup(&excluded_extents);
-		root->fs_info->fsck_extent_cache = NULL;
-		root->fs_info->free_extent_hook = NULL;
-		root->fs_info->corrupt_blocks = NULL;
-		root->fs_info->excluded_extents = NULL;
+		fs_info->fsck_extent_cache = NULL;
+		fs_info->free_extent_hook = NULL;
+		fs_info->corrupt_blocks = NULL;
+		fs_info->excluded_extents = NULL;
 	}
 	free(bits);
 	free_chunk_cache_tree(&chunk_cache);
@@ -10026,7 +10025,7 @@ out:
 	free_root_item_list(&dropping_trees);
 	return ret;
 loop:
-	free_corrupt_blocks_tree(root->fs_info->corrupt_blocks);
+	free_corrupt_blocks_tree(fs_info->corrupt_blocks);
 	free_extent_cache_tree(&seen);
 	free_extent_cache_tree(&pending);
 	free_extent_cache_tree(&reada);
