@@ -12903,6 +12903,22 @@ int cmd_check(int argc, char **argv)
 
 	global_info = info;
 	root = info->fs_root;
+	uuid_unparse(info->super_copy->fsid, uuidbuf);
+
+	printf("Checking filesystem on %s\nUUID: %s\n", argv[optind], uuidbuf);
+
+	/*
+	 * Check the bare minimum before starting anything else that could rely
+	 * on it, namely the tree roots, any local consistency checks
+	 */
+	if (!extent_buffer_uptodate(info->tree_root->node) ||
+	    !extent_buffer_uptodate(info->dev_root->node) ||
+	    !extent_buffer_uptodate(info->chunk_root->node)) {
+		error("critical roots corrupted, unable to check the filesystem");
+		err |= !!ret;
+		ret = -EIO;
+		goto close_out;
+	}
 
 	if (clear_space_cache) {
 		ret = do_clear_free_space_cache(info, clear_space_cache);
@@ -12929,7 +12945,6 @@ int cmd_check(int argc, char **argv)
 		}
 	}
 
-	uuid_unparse(info->super_copy->fsid, uuidbuf);
 	if (qgroup_report) {
 		printf("Print quota groups for %s\nUUID: %s\n", argv[optind],
 		       uuidbuf);
@@ -12944,16 +12959,6 @@ int cmd_check(int argc, char **argv)
 		       subvolid, argv[optind], uuidbuf);
 		ret = print_extent_state(info, subvolid);
 		err |= !!ret;
-		goto close_out;
-	}
-	printf("Checking filesystem on %s\nUUID: %s\n", argv[optind], uuidbuf);
-
-	if (!extent_buffer_uptodate(info->tree_root->node) ||
-	    !extent_buffer_uptodate(info->dev_root->node) ||
-	    !extent_buffer_uptodate(info->chunk_root->node)) {
-		error("critical roots corrupted, unable to check the filesystem");
-		err |= !!ret;
-		ret = -EIO;
 		goto close_out;
 	}
 
