@@ -366,6 +366,7 @@ static void print_usage(int ret)
 	printf("\t-U|--uuid UUID          specify the filesystem UUID (must be unique)\n");
 	printf("  creation:\n");
 	printf("\t-b|--byte-count SIZE    set filesystem size to SIZE (on the first device)\n");
+	printf("\t-S|--subvol NAME        create a subvolume with NAME and copy files from ROOTDIR to the subvolume\n");
 	printf("\t-r|--rootdir DIR        copy files from DIR to the image root directory\n");
 	printf("\t-K|--nodiscard          do not perform whole device TRIM\n");
 	printf("\t-f|--force              force overwrite of existing filesystem\n");
@@ -410,6 +411,18 @@ static char *parse_label(const char *input)
 	if (len >= BTRFS_LABEL_SIZE) {
 		error("label %s is too long (max %d)", input,
 			BTRFS_LABEL_SIZE - 1);
+		exit(1);
+	}
+	return strdup(input);
+}
+
+static char *parse_subvol_name(const char *input)
+{
+	int len = strlen(input);
+
+	if (len >= BTRFS_SUBVOL_NAME_MAX) {
+		error("subvolume name %s is too long (max %d)",
+			input, BTRFS_SUBVOL_NAME_MAX - 1);
 		exit(1);
 	}
 	return strdup(input);
@@ -1448,6 +1461,8 @@ int main(int argc, char **argv)
 	int discard = 1;
 	int ssd = 0;
 	int force_overwrite = 0;
+	char *subvol_name = NULL;
+	int subvol_name_set = 0;
 	char *source_dir = NULL;
 	int source_dir_set = 0;
 	u64 num_of_meta_chunks = 0;
@@ -1475,6 +1490,7 @@ int main(int argc, char **argv)
 			{ "sectorsize", required_argument, NULL, 's' },
 			{ "data", required_argument, NULL, 'd' },
 			{ "version", no_argument, NULL, 'V' },
+			{ "subvol", required_argument, NULL, 'S'},
 			{ "rootdir", required_argument, NULL, 'r' },
 			{ "nodiscard", no_argument, NULL, 'K' },
 			{ "features", required_argument, NULL, 'O' },
@@ -1484,7 +1500,7 @@ int main(int argc, char **argv)
 			{ NULL, 0, NULL, 0}
 		};
 
-		c = getopt_long(argc, argv, "A:b:fl:n:s:m:d:L:O:r:U:VMKq",
+		c = getopt_long(argc, argv, "A:b:fl:n:s:m:d:L:O:S:r:U:VMKq",
 				long_options, NULL);
 		if (c < 0)
 			break;
@@ -1545,6 +1561,10 @@ int main(int argc, char **argv)
 				printf("mkfs.btrfs, part of %s\n",
 						PACKAGE_STRING);
 				goto success;
+			case 'S':
+				subvol_name = parse_subvol_name(optarg);
+				subvol_name_set = 1;
+				break;
 			case 'r':
 				source_dir = optarg;
 				source_dir_set = 1;
@@ -1563,6 +1583,11 @@ int main(int argc, char **argv)
 			default:
 				print_usage(c != GETOPT_VAL_HELP);
 		}
+	}
+
+	if (subvol_name_set && !source_dir_set) {
+		error("root directory needs to be set");
+		goto error;
 	}
 
 	if (verbose) {
@@ -1905,10 +1930,51 @@ raid_groups:
 			goto out;
 		}
 
-		ret = make_image(source_dir, root);
-		if (ret) {
-			error("error wihle filling filesystem: %d", ret);
-			goto out;
+		if (subvol_name_set) {
+			u64 dirid, objectid;
+			struct btrfs_root *file_root;
+
+			dirid = btrfs_root_dirid(&fs_info->tree_root->root_item);
+			ret = btrfs_find_free_objectid(NULL, fs_info->tree_root,
+					dirid, &objectid);
+			if (ret) {
+				error("unable to find a free objectid: %d", ret);
+				goto out;
+			}
+			trans = btrfs_start_transaction(root, 1);
+			if (!trans) {
+				error("unable to start transaction");
+				ret = -EINVAL;
+				goto out;
+			}
+			ret = create_tree(trans, root, objectid);
+			if (ret < 0) {
+				error("failed to create subvolume: %d", ret);
+				goto out;
+			}
+			ret = btrfs_commit_transaction(trans, root);
+			if (ret) {
+				error("unable to commit transaction: %d", ret);
+				goto out;
+			}
+			file_root = btrfs_mksubvol(root, subvol_name, objectid,
+					0);
+			if (!file_root) {
+				error("unable to link the subvolume %s",
+						subvol_name);
+				goto out;
+			}
+			ret = make_image(source_dir, file_root);
+			if (ret) {
+				error("error while filling filesystem: %d", ret);
+				goto out;
+			}
+		} else {
+			ret = make_image(source_dir, root);
+			if (ret) {
+				error("error while filling filesystem: %d", ret);
+				goto out;
+			}
 		}
 	}
 	ret = cleanup_temp_chunks(fs_info, &allocation, data_profile,
@@ -1971,6 +2037,7 @@ out:
 
 	btrfs_close_all_devices();
 	free(label);
+	free(subvol_name);
 
 	return !!ret;
 error:
@@ -1978,6 +2045,7 @@ error:
 		close(fd);
 
 	free(label);
+	free(subvol_name);
 	exit(1);
 success:
 	exit(0);
