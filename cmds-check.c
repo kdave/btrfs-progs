@@ -5314,6 +5314,21 @@ out:
 	return err;
 }
 
+static int do_check_fs_roots(struct btrfs_fs_info *fs_info,
+			  struct cache_tree *root_cache)
+{
+	int ret;
+
+	if (!ctx.progress_enabled)
+		fprintf(stderr, "checking fs roots\n");
+	if (check_mode == CHECK_MODE_LOWMEM)
+		ret = check_fs_roots_v2(fs_info);
+	else
+		ret = check_fs_roots(fs_info, root_cache);
+
+	return ret;
+}
+
 static int all_backpointers_checked(struct extent_record *rec, int print_errs)
 {
 	struct list_head *cur = rec->backrefs.next;
@@ -13089,12 +13104,7 @@ int cmd_check(int argc, char **argv)
 	 * ignore it when this happens.
 	 */
 	no_holes = btrfs_fs_incompat(root->fs_info, NO_HOLES);
-	if (!ctx.progress_enabled)
-		fprintf(stderr, "checking fs roots\n");
-	if (check_mode == CHECK_MODE_LOWMEM)
-		ret = check_fs_roots_v2(root->fs_info);
-	else
-		ret = check_fs_roots(info, &root_cache);
+	ret = do_check_fs_roots(info, &root_cache);
 	err |= !!ret;
 	if (ret) {
 		error("errors found in fs roots");
