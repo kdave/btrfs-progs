@@ -9830,7 +9830,7 @@ static int deal_root_from_list(struct list_head *list,
 	return ret;
 }
 
-static int check_chunks_and_extents(struct btrfs_root *root)
+static int check_chunks_and_extents(struct btrfs_fs_info *fs_info)
 {
 	struct rb_root dev_cache;
 	struct cache_tree chunk_cache;
@@ -9855,9 +9855,11 @@ static int check_chunks_and_extents(struct btrfs_root *root)
 	struct list_head dropping_trees;
 	struct list_head normal_trees;
 	struct btrfs_root *root1;
+	struct btrfs_root *root;
 	u64 objectid;
 	u8 level;
 
+	root = fs_info->fs_root;
 	dev_cache = RB_ROOT;
 	cache_tree_init(&chunk_cache);
 	block_group_tree_init(&block_group_cache);
@@ -13027,7 +13029,7 @@ int cmd_check(int argc, char **argv)
 	if (check_mode == CHECK_MODE_LOWMEM)
 		ret = check_chunks_and_extents_v2(root);
 	else
-		ret = check_chunks_and_extents(root);
+		ret = check_chunks_and_extents(info);
 	err |= !!ret;
 	if (ret)
 		error(
