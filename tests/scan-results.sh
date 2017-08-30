@@ -11,6 +11,7 @@ for i in *.txt; do
 			*Assertion*failed*) echo "ASSERTION FAILED: $last" ;;
 			*runtime\ error*) echo "RUNTIME ERROR (sanitizer): $last" ;;
 			*AddressSanitizer*heap-use-after-free*) echo "RUNTIME ERROR (use after free): $last" ;;
+			*LeakSanitizer:*leak*) echo "SANITIZER REPORT: memory leak: $last" ;;
 			*Warning:\ assertion*failed*) echo "ASSERTION WARNING: $last" ;;
 			*command\ not\ found*) echo "COMMAND NOT FOUND: $last" ;;
 			*) : ;;
