@@ -992,6 +992,16 @@ static void print_shared_data_ref(struct extent_buffer *eb, int slot)
 		btrfs_shared_data_ref_count(eb, sref));
 }
 
+static void print_free_space_info(struct extent_buffer *eb, int slot)
+{
+	struct btrfs_free_space_info *free_info;
+
+	free_info = btrfs_item_ptr(eb, slot, struct btrfs_free_space_info);
+	printf("\t\tfree space info extent count %u flags %u\n",
+		(unsigned)btrfs_free_space_extent_count(eb, free_info),
+		(unsigned)btrfs_free_space_flags(eb, free_info));
+}
+
 /* Caller must ensure sizeof(*ret) >= 14 "WRITTEN|RELOC" */
 static void header_flags_to_str(u64 flags, char *ret)
 {
@@ -1135,15 +1145,9 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *eb)
 		case BTRFS_BLOCK_GROUP_ITEM_KEY:
 			print_block_group_item(eb, ptr);
 			break;
-		case BTRFS_FREE_SPACE_INFO_KEY: {
-			struct btrfs_free_space_info *free_info;
-
-			free_info = btrfs_item_ptr(eb, i, struct btrfs_free_space_info);
-			printf("\t\tfree space info extent count %u flags %u\n",
-			       (unsigned)btrfs_free_space_extent_count(eb, free_info),
-			       (unsigned)btrfs_free_space_flags(eb, free_info));
+		case BTRFS_FREE_SPACE_INFO_KEY:
+			print_free_space_info(eb, i);
 			break;
-			}
 		case BTRFS_FREE_SPACE_EXTENT_KEY:
 			printf("\t\tfree space extent\n");
 			break;
