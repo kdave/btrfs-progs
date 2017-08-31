@@ -1102,6 +1102,18 @@ static void print_temporary_item(struct extent_buffer *eb, void *ptr,
 	}
 }
 
+static void print_extent_csum(struct extent_buffer *eb,
+		struct btrfs_fs_info *fs_info, u32 item_size, u64 start)
+{
+	u32 size;
+
+	size = (item_size / btrfs_super_csum_size(fs_info->super_copy)) *
+			fs_info->sectorsize;
+	printf("\t\trange start %llu end %llu length %u\n",
+			(unsigned long long)start,
+			(unsigned long long)start + size, size);
+}
+
 /* Caller must ensure sizeof(*ret) >= 14 "WRITTEN|RELOC" */
 static void header_flags_to_str(u64 flags, char *ret)
 {
@@ -1233,16 +1245,10 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *eb)
 		case BTRFS_CSUM_ITEM_KEY:
 			printf("\t\tcsum item\n");
 			break;
-		case BTRFS_EXTENT_CSUM_KEY: {
-			u16 csum_size =
-				btrfs_super_csum_size(root->fs_info->super_copy);
-			u32 size = (item_size / csum_size) *
-				root->fs_info->sectorsize;
-			printf("\t\textent csum item range %llu-%llu\n",
-			       (unsigned long long)disk_key.offset,
-			       (unsigned long long)disk_key.offset + size);
+		case BTRFS_EXTENT_CSUM_KEY:
+			print_extent_csum(eb, root->fs_info, item_size,
+					disk_key.offset);
 			break;
-			}
 		case BTRFS_EXTENT_DATA_KEY:
 			print_file_extent_item(eb, item, i, ptr);
 			break;
