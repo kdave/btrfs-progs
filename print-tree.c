@@ -1072,6 +1072,21 @@ static void print_qgroup_limit(struct extent_buffer *eb, int slot)
 		(long long)btrfs_qgroup_limit_rsv_exclusive(eb, qg_limit));
 }
 
+static void print_persistent_item(struct extent_buffer *eb, void *ptr,
+		u32 item_size, u64 objectid, u64 offset)
+{
+	printf("\t\tpersistent item objectid ");
+	print_objectid(stdout, objectid, BTRFS_PERSISTENT_ITEM_KEY);
+	printf(" offset %llu\n", (unsigned long long)offset);
+	switch (objectid) {
+	case BTRFS_DEV_STATS_OBJECTID:
+		print_dev_stats(eb, ptr, item_size);
+		break;
+	default:
+		printf("\t\tunknown persistent item objectid %llu\n", objectid);
+	}
+}
+
 /* Caller must ensure sizeof(*ret) >= 14 "WRITTEN|RELOC" */
 static void header_flags_to_str(u64 flags, char *ret)
 {
@@ -1253,17 +1268,8 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *eb)
 			break;
 			}
 		case BTRFS_PERSISTENT_ITEM_KEY:
-			printf("\t\tpersistent item objectid ");
-			print_objectid(stdout, objectid, BTRFS_PERSISTENT_ITEM_KEY);
-			printf(" offset %llu\n", (unsigned long long)offset);
-			switch (objectid) {
-			case BTRFS_DEV_STATS_OBJECTID:
-				print_dev_stats(eb, ptr, item_size);
-				break;
-			default:
-				printf("\t\tunknown persistent item objectid %llu\n",
-						objectid);
-			}
+			print_persistent_item(eb, ptr, item_size, objectid,
+					offset);
 			break;
 		case BTRFS_TEMPORARY_ITEM_KEY:
 			printf("\t\ttemporary item objectid ");
