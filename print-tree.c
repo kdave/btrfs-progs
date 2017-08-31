@@ -1087,6 +1087,21 @@ static void print_persistent_item(struct extent_buffer *eb, void *ptr,
 	}
 }
 
+static void print_temporary_item(struct extent_buffer *eb, void *ptr,
+		u64 objectid, u64 offset)
+{
+	printf("\t\ttemporary item objectid ");
+	print_objectid(stdout, objectid, BTRFS_TEMPORARY_ITEM_KEY);
+	printf(" offset %llu\n", (unsigned long long)offset);
+	switch (objectid) {
+	case BTRFS_BALANCE_OBJECTID:
+		print_balance_item(eb, ptr);
+		break;
+	default:
+		printf("\t\tunknown temporary item objectid %llu\n", objectid);
+	}
+}
+
 /* Caller must ensure sizeof(*ret) >= 14 "WRITTEN|RELOC" */
 static void header_flags_to_str(u64 flags, char *ret)
 {
@@ -1272,17 +1287,7 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *eb)
 					offset);
 			break;
 		case BTRFS_TEMPORARY_ITEM_KEY:
-			printf("\t\ttemporary item objectid ");
-			print_objectid(stdout, objectid, BTRFS_TEMPORARY_ITEM_KEY);
-			printf(" offset %llu\n", (unsigned long long)offset);
-			switch (objectid) {
-			case BTRFS_BALANCE_OBJECTID:
-				print_balance_item(eb, ptr);
-				break;
-			default:
-				printf("\t\tunknown temporary item objectid %llu\n",
-						objectid);
-			}
+			print_temporary_item(eb, ptr, objectid, offset);
 			break;
 		};
 		fflush(stdout);
