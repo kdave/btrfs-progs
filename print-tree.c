@@ -195,7 +195,7 @@ static void qgroup_flags_to_str(u64 flags, char *ret)
 		strcat(ret, "|INCONSISTENT");
 }
 
-void print_chunk(struct extent_buffer *eb, struct btrfs_chunk *chunk)
+void print_chunk_item(struct extent_buffer *eb, struct btrfs_chunk *chunk)
 {
 	u16 num_stripes = btrfs_chunk_num_stripes(eb, chunk);
 	int i;
@@ -541,7 +541,7 @@ static void root_flags_to_str(u64 flags, char *ret)
 		strcat(ret, "none");
 }
 
-static void print_root(struct extent_buffer *leaf, int slot)
+static void print_root_item(struct extent_buffer *leaf, int slot)
 {
 	struct btrfs_root_item *ri;
 	struct btrfs_root_item root_item;
@@ -1054,7 +1054,7 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *eb)
 			printf("\t\torphan item\n");
 			break;
 		case BTRFS_ROOT_ITEM_KEY:
-			print_root(eb, i);
+			print_root_item(eb, i);
 			break;
 		case BTRFS_ROOT_REF_KEY:
 			print_root_ref(eb, i, "ref");
@@ -1139,7 +1139,7 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *eb)
 			printf("\t\tfree space bitmap\n");
 			break;
 		case BTRFS_CHUNK_ITEM_KEY:
-			print_chunk(eb, ptr);
+			print_chunk_item(eb, ptr);
 			break;
 		case BTRFS_DEV_ITEM_KEY:
 			print_dev_item(eb, ptr);
