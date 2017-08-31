@@ -1040,6 +1040,7 @@ void print_device_sizes(struct device_info *devinfo, unsigned unit_mode)
 		pretty_size_mode(devinfo->device_size, unit_mode));
 	printf("   Device slack: %*s%10s\n",
 		(int)(20 - strlen("Device slack")), "",
-		pretty_size_mode(devinfo->device_size - devinfo->size,
+		pretty_size_mode(devinfo->device_size > 0 ?
+			devinfo->device_size - devinfo->size : 0,
 			unit_mode));
 }
