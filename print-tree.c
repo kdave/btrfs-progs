@@ -1057,6 +1057,21 @@ static void print_qgroup_info(struct extent_buffer *eb, int slot)
 								      qg_info));
 }
 
+static void print_qgroup_limit(struct extent_buffer *eb, int slot)
+{
+	struct btrfs_qgroup_limit_item *qg_limit;
+
+	qg_limit = btrfs_item_ptr(eb, slot, struct btrfs_qgroup_limit_item);
+	printf("\t\tflags %llx\n"
+		"\t\tmax_referenced %lld max_exclusive %lld\n"
+		"\t\trsv_referenced %lld rsv_exclusive %lld\n",
+		(unsigned long long)btrfs_qgroup_limit_flags(eb, qg_limit),
+		(long long)btrfs_qgroup_limit_max_referenced(eb, qg_limit),
+		(long long)btrfs_qgroup_limit_max_exclusive(eb, qg_limit),
+		(long long)btrfs_qgroup_limit_rsv_referenced(eb, qg_limit),
+		(long long)btrfs_qgroup_limit_rsv_exclusive(eb, qg_limit));
+}
+
 /* Caller must ensure sizeof(*ret) >= 14 "WRITTEN|RELOC" */
 static void header_flags_to_str(u64 flags, char *ret)
 {
@@ -1223,26 +1238,9 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *eb)
 		case BTRFS_QGROUP_INFO_KEY:
 			print_qgroup_info(eb, i);
 			break;
-		case BTRFS_QGROUP_LIMIT_KEY: {
-			struct btrfs_qgroup_limit_item *qg_limit;
-
-			qg_limit = btrfs_item_ptr(eb, i,
-					 struct btrfs_qgroup_limit_item);
-			printf("\t\tflags %llx\n"
-			     "\t\tmax_referenced %lld max_exclusive %lld\n"
-			     "\t\trsv_referenced %lld rsv_exclusive %lld\n",
-			       (unsigned long long)
-			       btrfs_qgroup_limit_flags(eb, qg_limit),
-			       (long long)
-			       btrfs_qgroup_limit_max_referenced(eb, qg_limit),
-			       (long long)
-			       btrfs_qgroup_limit_max_exclusive(eb, qg_limit),
-			       (long long)
-			       btrfs_qgroup_limit_rsv_referenced(eb, qg_limit),
-			       (long long)
-			       btrfs_qgroup_limit_rsv_exclusive(eb, qg_limit));
+		case BTRFS_QGROUP_LIMIT_KEY:
+			print_qgroup_limit(eb, i);
 			break;
-			}
 		case BTRFS_UUID_KEY_SUBVOL:
 		case BTRFS_UUID_KEY_RECEIVED_SUBVOL:
 			print_uuid_item(eb, btrfs_item_ptr_offset(eb, i),
