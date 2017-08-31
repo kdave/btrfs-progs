@@ -12730,6 +12730,7 @@ const char * const cmd_check_usage[] = {
 	"",
 	"-s|--super <superblock>     use this superblock copy",
 	"-b|--backup                 use the first valid backup root copy",
+	"--force                     skip mount checks, repair is not possible",
 	"--repair                    try to repair the filesystem",
 	"--readonly                  run in read-only mode (default)",
 	"--init-csum-tree            create a new CRC tree",
@@ -12761,7 +12762,7 @@ int cmd_check(int argc, char **argv)
 	u64 tree_root_bytenr = 0;
 	u64 chunk_root_bytenr = 0;
 	char uuidbuf[BTRFS_UUID_UNPARSED_SIZE];
-	int ret;
+	int ret = 0;
 	int err = 0;
 	u64 num;
 	int init_csum_tree = 0;
@@ -12770,13 +12771,15 @@ int cmd_check(int argc, char **argv)
 	int qgroup_report = 0;
 	int qgroups_repaired = 0;
 	unsigned ctree_flags = OPEN_CTREE_EXCLUSIVE;
+	int force = 0;
 
 	while(1) {
 		int c;
 		enum { GETOPT_VAL_REPAIR = 257, GETOPT_VAL_INIT_CSUM,
 			GETOPT_VAL_INIT_EXTENT, GETOPT_VAL_CHECK_CSUM,
 			GETOPT_VAL_READONLY, GETOPT_VAL_CHUNK_TREE,
-			GETOPT_VAL_MODE, GETOPT_VAL_CLEAR_SPACE_CACHE };
+			GETOPT_VAL_MODE, GETOPT_VAL_CLEAR_SPACE_CACHE,
+			GETOPT_VAL_FORCE };
 		static const struct option long_options[] = {
 			{ "super", required_argument, NULL, 's' },
 			{ "repair", no_argument, NULL, GETOPT_VAL_REPAIR },
@@ -12798,6 +12801,7 @@ int cmd_check(int argc, char **argv)
 				GETOPT_VAL_MODE },
 			{ "clear-space-cache", required_argument, NULL,
 				GETOPT_VAL_CLEAR_SPACE_CACHE},
+			{ "force", no_argument, NULL, GETOPT_VAL_FORCE },
 			{ NULL, 0, NULL, 0}
 		};
 
@@ -12882,6 +12886,9 @@ int cmd_check(int argc, char **argv)
 				}
 				ctree_flags |= OPEN_CTREE_WRITES;
 				break;
+			case GETOPT_VAL_FORCE:
+				force = 1;
+				break;
 		}
 	}
 
@@ -12910,15 +12917,36 @@ int cmd_check(int argc, char **argv)
 	radix_tree_init();
 	cache_tree_init(&root_cache);
 
-	if((ret = check_mounted(argv[optind])) < 0) {
-		error("could not check mount status: %s", strerror(-ret));
-		err |= !!ret;
-		goto err_out;
-	} else if(ret) {
-		error("%s is currently mounted, aborting", argv[optind]);
-		ret = -EBUSY;
-		err |= !!ret;
-		goto err_out;
+	ret = check_mounted(argv[optind]);
+	if (!force) {
+		if (ret < 0) {
+			error("could not check mount status: %s",
+					strerror(-ret));
+			err |= !!ret;
+			goto err_out;
+		} else if (ret) {
+			error(
+"%s is currently mounted, use --force if you really intend to check the filesystem",
+				argv[optind]);
+			ret = -EBUSY;
+			err |= !!ret;
+			goto err_out;
+		}
+	} else {
+		if (repair) {
+			error("repair and --force is not yet supported");
+			ret = 1;
+			err |= !!ret;
+			goto err_out;
+		}
+		if (ret < 0) {
+			warning(
+"cannot check mount status of %s, the filesystem could be mounted, continuing because of --force",
+				argv[optind]);
+		} else if (ret) {
+			warning(
+			"filesystem mounted, continuing because of --force");
+		}
 	}
 
 	/* only allow partial opening under repair mode */

@@ -3,7 +3,7 @@ btrfs-check(8)
 
 NAME
 ----
-btrfs-check - check or repair an unmounted btrfs filesystem
+btrfs-check - check or repair a btrfs filesystem
 
 SYNOPSIS
 --------
@@ -13,7 +13,9 @@ DESCRIPTION
 -----------
 
 The filesystem checker is used to verify structural integrity of a filesystem
-and attempt to repair it if requested. The filesystem must be unmounted.
+and attempt to repair it if requested.  It is recommended to unmount the
+filesystem prior to running the check, but it is possible to start checking a
+mounted filesystem (see '--force').
 
 By default, *btrfs check* will not modify the device but you can reaffirm that
 by the option '--readonly'.
@@ -119,6 +121,12 @@ needs to re-read blocks when needed. This may increase run time.
 
 NOTE: 'lowmem' mode does not work with '--repair' yet, and is still considered
 experimental.
+
+--force::
+allow to work on a mounted filesystem. Note that this should work fine on a
+quiescent or read-only mounted filesystem but may crash if the device is
+changed externally, eg. by the kernel module.  Repair without mount checks is
+not supported right now.
 
 EXIT STATUS
 -----------
