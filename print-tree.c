@@ -104,8 +104,7 @@ static void print_inode_extref_item(struct extent_buffer *eb, u32 size,
 
 		read_extent_buffer(eb, namebuf, (unsigned long)(extref->name), len);
 
-		printf("\t\tinode extref index %llu parent %llu namelen %u "
-		       "name: %.*s\n",
+		printf("\t\tindex %llu parent %llu namelen %u name: %.*s\n",
 		       (unsigned long long)index,
 		       (unsigned long long)parent_objid,
 		       name_len, len, namebuf);
@@ -130,7 +129,7 @@ static void print_inode_ref_item(struct extent_buffer *eb, u32 size,
 		index = btrfs_inode_ref_index(eb, ref);
 		len = (name_len <= sizeof(namebuf))? name_len: sizeof(namebuf);
 		read_extent_buffer(eb, namebuf, (unsigned long)(ref + 1), len);
-		printf("\t\tinode ref index %llu namelen %u name: %.*s\n",
+		printf("\t\tindex %llu namelen %u name: %.*s\n",
 		       (unsigned long long)index, name_len, len, namebuf);
 		len = sizeof(*ref) + name_len;
 		ref = (struct btrfs_inode_ref *)((char *)ref + len);
@@ -417,7 +416,7 @@ void print_extent_item(struct extent_buffer *eb, int slot, int metadata)
 		struct btrfs_extent_item_v0 *ei0;
 		BUG_ON(item_size != sizeof(*ei0));
 		ei0 = btrfs_item_ptr(eb, slot, struct btrfs_extent_item_v0);
-		printf("\t\textent refs %u\n",
+		printf("\t\trefs %u\n",
 		       btrfs_extent_refs_v0(eb, ei0));
 		return;
 #else
@@ -429,7 +428,7 @@ void print_extent_item(struct extent_buffer *eb, int slot, int metadata)
 	flags = btrfs_extent_flags(eb, ei);
 	extent_flags_to_str(flags, flags_str);
 
-	printf("\t\textent refs %llu gen %llu flags %s\n",
+	printf("\t\trefs %llu gen %llu flags %s\n",
 	       (unsigned long long)btrfs_extent_refs(eb, ei),
 	       (unsigned long long)btrfs_extent_generation(eb, ei),
 	       flags_str);
@@ -873,7 +872,7 @@ static void print_inode_item(struct extent_buffer *eb,
 
 	memset(flags_str, 0, sizeof(flags_str));
 	inode_flags_to_str(btrfs_inode_flags(eb, ii), flags_str);
-	printf("\t\tinode generation %llu transid %llu size %llu nbytes %llu\n"
+	printf("\t\tgeneration %llu transid %llu size %llu nbytes %llu\n"
 	       "\t\tblock group %llu mode %o links %u uid %u gid %u rdev %llu\n"
 	       "\t\tsequence %llu flags 0x%llx(%s)\n",
 	       (unsigned long long)btrfs_inode_generation(eb, ii),
