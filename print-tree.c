@@ -1024,6 +1024,22 @@ static void print_dev_extent(struct extent_buffer *eb, int slot)
 		uuid_str);
 }
 
+static void print_qgroup_status(struct extent_buffer *eb, int slot)
+{
+	struct btrfs_qgroup_status_item *qg_status;
+	char flags_str[256];
+
+	qg_status = btrfs_item_ptr(eb, slot, struct btrfs_qgroup_status_item);
+	memset(flags_str, 0, sizeof(flags_str));
+	qgroup_flags_to_str(btrfs_qgroup_status_flags(eb, qg_status),
+					flags_str);
+	printf("\t\tversion %llu generation %llu flags %s scan %lld\n",
+		(unsigned long long)btrfs_qgroup_status_version(eb, qg_status),
+		(unsigned long long)btrfs_qgroup_status_generation(eb, qg_status),
+		flags_str,
+		(unsigned long long)btrfs_qgroup_status_rescan(eb, qg_status));
+}
+
 /* Caller must ensure sizeof(*ret) >= 14 "WRITTEN|RELOC" */
 static void header_flags_to_str(u64 flags, char *ret)
 {
@@ -1071,7 +1087,6 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *eb)
 		u64 objectid;
 		u32 type;
 		u64 offset;
-		char flags_str[256];
 
 		item = btrfs_item_nr(i);
 		item_size = btrfs_item_size(eb, item);
@@ -1183,25 +1198,9 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *eb)
 		case BTRFS_DEV_EXTENT_KEY:
 			print_dev_extent(eb, i);
 			break;
-		case BTRFS_QGROUP_STATUS_KEY: {
-			struct btrfs_qgroup_status_item *qg_status;
-
-			qg_status = btrfs_item_ptr(eb, i,
-					struct btrfs_qgroup_status_item);
-			memset(flags_str, 0, sizeof(flags_str));
-			qgroup_flags_to_str(btrfs_qgroup_status_flags(eb, qg_status),
-					flags_str);
-			printf("\t\tversion %llu generation %llu flags %s "
-				"scan %lld\n",
-				(unsigned long long)
-				btrfs_qgroup_status_version(eb, qg_status),
-				(unsigned long long)
-				btrfs_qgroup_status_generation(eb, qg_status),
-				flags_str,
-				(unsigned long long)
-				btrfs_qgroup_status_rescan(eb, qg_status));
+		case BTRFS_QGROUP_STATUS_KEY:
+			print_qgroup_status(eb, i);
 			break;
-			}
 		case BTRFS_QGROUP_RELATION_KEY:
 			break;
 		case BTRFS_QGROUP_INFO_KEY: {
