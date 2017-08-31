@@ -970,6 +970,19 @@ static void print_block_group_item(struct extent_buffer *eb,
 		flags_str);
 }
 
+static void print_extent_data_ref(struct extent_buffer *eb, int slot)
+{
+	struct btrfs_extent_data_ref *dref;
+
+	dref = btrfs_item_ptr(eb, slot, struct btrfs_extent_data_ref);
+	printf("\t\textent data backref root %llu "
+		"objectid %llu offset %llu count %u\n",
+		(unsigned long long)btrfs_extent_data_ref_root(eb, dref),
+		(unsigned long long)btrfs_extent_data_ref_objectid(eb, dref),
+		(unsigned long long)btrfs_extent_data_ref_offset(eb, dref),
+		btrfs_extent_data_ref_count(eb, dref));
+}
+
 /* Caller must ensure sizeof(*ret) >= 14 "WRITTEN|RELOC" */
 static void header_flags_to_str(u64 flags, char *ret)
 {
@@ -1088,18 +1101,9 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *eb)
 		case BTRFS_SHARED_BLOCK_REF_KEY:
 			printf("\t\tshared block backref\n");
 			break;
-		case BTRFS_EXTENT_DATA_REF_KEY: {
-			struct btrfs_extent_data_ref *dref;
-
-			dref = btrfs_item_ptr(eb, i, struct btrfs_extent_data_ref);
-			printf("\t\textent data backref root %llu "
-			       "objectid %llu offset %llu count %u\n",
-			       (unsigned long long)btrfs_extent_data_ref_root(eb, dref),
-			       (unsigned long long)btrfs_extent_data_ref_objectid(eb, dref),
-			       (unsigned long long)btrfs_extent_data_ref_offset(eb, dref),
-			       btrfs_extent_data_ref_count(eb, dref));
+		case BTRFS_EXTENT_DATA_REF_KEY:
+			print_extent_data_ref(eb, i);
 			break;
-			}
 		case BTRFS_SHARED_DATA_REF_KEY: {
 			struct btrfs_shared_data_ref *sref;
 			sref = btrfs_item_ptr(eb, i, struct btrfs_shared_data_ref);
