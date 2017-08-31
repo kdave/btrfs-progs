@@ -1002,6 +1002,28 @@ static void print_free_space_info(struct extent_buffer *eb, int slot)
 		(unsigned)btrfs_free_space_flags(eb, free_info));
 }
 
+static void print_dev_extent(struct extent_buffer *eb, int slot)
+{
+	struct btrfs_dev_extent *dev_extent;
+	u8 uuid[BTRFS_UUID_SIZE];
+	char uuid_str[BTRFS_UUID_UNPARSED_SIZE];
+
+	dev_extent = btrfs_item_ptr(eb, slot, struct btrfs_dev_extent);
+	read_extent_buffer(eb, uuid,
+		(unsigned long)btrfs_dev_extent_chunk_tree_uuid(dev_extent),
+		BTRFS_UUID_SIZE);
+	uuid_unparse(uuid, uuid_str);
+	printf("\t\tdev extent chunk_tree %llu\n"
+		"\t\tchunk_objectid %llu chunk_offset %llu "
+		"length %llu\n"
+		"\t\tchunk_tree_uuid %s\n",
+		(unsigned long long)btrfs_dev_extent_chunk_tree(eb, dev_extent),
+		(unsigned long long)btrfs_dev_extent_chunk_objectid(eb, dev_extent),
+		(unsigned long long)btrfs_dev_extent_chunk_offset(eb, dev_extent),
+		(unsigned long long)btrfs_dev_extent_length(eb, dev_extent),
+		uuid_str);
+}
+
 /* Caller must ensure sizeof(*ret) >= 14 "WRITTEN|RELOC" */
 static void header_flags_to_str(u64 flags, char *ret)
 {
@@ -1050,8 +1072,6 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *eb)
 		u32 type;
 		u64 offset;
 		char flags_str[256];
-		char uuid_str[BTRFS_UUID_UNPARSED_SIZE];
-		u8 uuid[BTRFS_UUID_SIZE];
 
 		item = btrfs_item_nr(i);
 		item_size = btrfs_item_size(eb, item);
@@ -1160,30 +1180,9 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *eb)
 		case BTRFS_DEV_ITEM_KEY:
 			print_dev_item(eb, ptr);
 			break;
-		case BTRFS_DEV_EXTENT_KEY: {
-			struct btrfs_dev_extent *dev_extent;
-
-			dev_extent = btrfs_item_ptr(eb, i,
-						    struct btrfs_dev_extent);
-			read_extent_buffer(eb, uuid,
-				(unsigned long)btrfs_dev_extent_chunk_tree_uuid(dev_extent),
-				BTRFS_UUID_SIZE);
-			uuid_unparse(uuid, uuid_str);
-			printf("\t\tdev extent chunk_tree %llu\n"
-			       "\t\tchunk_objectid %llu chunk_offset %llu "
-			       "length %llu\n"
-			       "\t\tchunk_tree_uuid %s\n",
-			       (unsigned long long)
-			       btrfs_dev_extent_chunk_tree(eb, dev_extent),
-			       (unsigned long long)
-			       btrfs_dev_extent_chunk_objectid(eb, dev_extent),
-			       (unsigned long long)
-			       btrfs_dev_extent_chunk_offset(eb, dev_extent),
-			       (unsigned long long)
-			       btrfs_dev_extent_length(eb, dev_extent),
-			       uuid_str);
+		case BTRFS_DEV_EXTENT_KEY:
+			print_dev_extent(eb, i);
 			break;
-			}
 		case BTRFS_QGROUP_STATUS_KEY: {
 			struct btrfs_qgroup_status_item *qg_status;
 
