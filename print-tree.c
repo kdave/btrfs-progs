@@ -955,6 +955,21 @@ static void print_dev_stats(struct extent_buffer *eb,
 	}
 }
 
+static void print_block_group_item(struct extent_buffer *eb,
+		struct btrfs_block_group_item *bgi)
+{
+	struct btrfs_block_group_item bg_item;
+	char flags_str[256];
+
+	read_extent_buffer(eb, &bg_item, (unsigned long)bgi, sizeof(bg_item));
+	memset(flags_str, 0, sizeof(flags_str));
+	bg_flags_to_str(btrfs_block_group_flags(&bg_item), flags_str);
+	printf("\t\tblock group used %llu chunk_objectid %llu flags %s\n",
+		(unsigned long long)btrfs_block_group_used(&bg_item),
+		(unsigned long long)btrfs_block_group_chunk_objectid(&bg_item),
+		flags_str);
+}
+
 /* Caller must ensure sizeof(*ret) >= 14 "WRITTEN|RELOC" */
 static void header_flags_to_str(u64 flags, char *ret)
 {
@@ -1108,20 +1123,9 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *eb)
 		case BTRFS_EXTENT_DATA_KEY:
 			print_file_extent_item(eb, item, i, ptr);
 			break;
-		case BTRFS_BLOCK_GROUP_ITEM_KEY: {
-			struct btrfs_block_group_item bg_item;
-
-			read_extent_buffer(eb, &bg_item, (unsigned long)ptr,
-					   sizeof(bg_item));
-			memset(flags_str, 0, sizeof(flags_str));
-			bg_flags_to_str(btrfs_block_group_flags(&bg_item),
-					flags_str);
-			printf("\t\tblock group used %llu chunk_objectid %llu flags %s\n",
-			       (unsigned long long)btrfs_block_group_used(&bg_item),
-			       (unsigned long long)btrfs_block_group_chunk_objectid(&bg_item),
-			       flags_str);
+		case BTRFS_BLOCK_GROUP_ITEM_KEY:
+			print_block_group_item(eb, ptr);
 			break;
-			}
 		case BTRFS_FREE_SPACE_INFO_KEY: {
 			struct btrfs_free_space_info *free_info;
 
