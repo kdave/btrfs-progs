@@ -1040,6 +1040,23 @@ static void print_qgroup_status(struct extent_buffer *eb, int slot)
 		(unsigned long long)btrfs_qgroup_status_rescan(eb, qg_status));
 }
 
+static void print_qgroup_info(struct extent_buffer *eb, int slot)
+{
+	struct btrfs_qgroup_info_item *qg_info;
+
+	qg_info = btrfs_item_ptr(eb, slot, struct btrfs_qgroup_info_item);
+	printf("\t\tgeneration %llu\n"
+		"\t\treferenced %llu referenced_compressed %llu\n"
+		"\t\texclusive %llu exclusive_compressed %llu\n",
+		(unsigned long long)btrfs_qgroup_info_generation(eb, qg_info),
+		(unsigned long long)btrfs_qgroup_info_referenced(eb, qg_info),
+		(unsigned long long)btrfs_qgroup_info_referenced_compressed(eb,
+								       qg_info),
+		(unsigned long long)btrfs_qgroup_info_exclusive(eb, qg_info),
+		(unsigned long long)btrfs_qgroup_info_exclusive_compressed(eb,
+								      qg_info));
+}
+
 /* Caller must ensure sizeof(*ret) >= 14 "WRITTEN|RELOC" */
 static void header_flags_to_str(u64 flags, char *ret)
 {
@@ -1203,28 +1220,9 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *eb)
 			break;
 		case BTRFS_QGROUP_RELATION_KEY:
 			break;
-		case BTRFS_QGROUP_INFO_KEY: {
-			struct btrfs_qgroup_info_item *qg_info;
-
-			qg_info = btrfs_item_ptr(eb, i,
-						 struct btrfs_qgroup_info_item);
-			printf("\t\tgeneration %llu\n"
-			     "\t\treferenced %llu referenced_compressed %llu\n"
-			     "\t\texclusive %llu exclusive_compressed %llu\n",
-			       (unsigned long long)
-			       btrfs_qgroup_info_generation(eb, qg_info),
-			       (unsigned long long)
-			       btrfs_qgroup_info_referenced(eb, qg_info),
-			       (unsigned long long)
-			       btrfs_qgroup_info_referenced_compressed(eb,
-								       qg_info),
-			       (unsigned long long)
-			       btrfs_qgroup_info_exclusive(eb, qg_info),
-			       (unsigned long long)
-			       btrfs_qgroup_info_exclusive_compressed(eb,
-								      qg_info));
+		case BTRFS_QGROUP_INFO_KEY:
+			print_qgroup_info(eb, i);
 			break;
-			}
 		case BTRFS_QGROUP_LIMIT_KEY: {
 			struct btrfs_qgroup_limit_item *qg_limit;
 
