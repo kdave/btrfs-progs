@@ -983,6 +983,15 @@ static void print_extent_data_ref(struct extent_buffer *eb, int slot)
 		btrfs_extent_data_ref_count(eb, dref));
 }
 
+static void print_shared_data_ref(struct extent_buffer *eb, int slot)
+{
+	struct btrfs_shared_data_ref *sref;
+
+	sref = btrfs_item_ptr(eb, slot, struct btrfs_shared_data_ref);
+	printf("\t\tshared data backref count %u\n",
+		btrfs_shared_data_ref_count(eb, sref));
+}
+
 /* Caller must ensure sizeof(*ret) >= 14 "WRITTEN|RELOC" */
 static void header_flags_to_str(u64 flags, char *ret)
 {
@@ -1104,13 +1113,9 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *eb)
 		case BTRFS_EXTENT_DATA_REF_KEY:
 			print_extent_data_ref(eb, i);
 			break;
-		case BTRFS_SHARED_DATA_REF_KEY: {
-			struct btrfs_shared_data_ref *sref;
-			sref = btrfs_item_ptr(eb, i, struct btrfs_shared_data_ref);
-			printf("\t\tshared data backref count %u\n",
-			       btrfs_shared_data_ref_count(eb, sref));
+		case BTRFS_SHARED_DATA_REF_KEY:
+			print_shared_data_ref(eb, i);
 			break;
-			}
 		case BTRFS_EXTENT_REF_V0_KEY:
 #ifdef BTRFS_COMPAT_EXTENT_TREE_V0
 			print_extent_ref_v0(eb, i);
