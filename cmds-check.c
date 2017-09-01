@@ -12483,6 +12483,50 @@ out:
 }
 
 /*
+ * Add block group item to the extent tree if @err contains
+ * REFERENCER_MISSING.
+ * TO DO: repair error about dev_item.
+ *
+ * Returns error after repair.
+ */
+static int repair_chunk_item(struct btrfs_trans_handle *trans,
+			     struct btrfs_root *chunk_root,
+			     struct btrfs_path *path, int err)
+{
+	struct btrfs_chunk *chunk;
+	struct btrfs_key chunk_key;
+	struct extent_buffer *eb = path->nodes[0];
+	u64 length;
+	int slot = path->slots[0];
+	u64 type;
+	int ret = 0;
+
+	btrfs_item_key_to_cpu(eb, &chunk_key, slot);
+	if (chunk_key.type != BTRFS_CHUNK_ITEM_KEY)
+		return err;
+	chunk = btrfs_item_ptr(eb, slot, struct btrfs_chunk);
+	type = btrfs_chunk_type(path->nodes[0], chunk);
+	length = btrfs_chunk_length(eb, chunk);
+
+	if (err & REFERENCER_MISSING) {
+		ret = btrfs_make_block_group(trans, chunk_root->fs_info, 0,
+		     type, chunk_key.objectid, chunk_key.offset, length);
+		if (ret) {
+			error("fail to add block group item[%llu %llu]",
+			      chunk_key.offset, length);
+			goto out;
+		} else {
+			err &= ~REFERENCER_MISSING;
+			printf("Added block group item[%llu %llu]\n",
+			       chunk_key.offset, length);
+		}
+	}
+
+out:
+	return err;
+}
+
+/*
  * Check a chunk item.
  * Including checking all referred dev_extents and block group
  */
@@ -12669,6 +12713,8 @@ again:
 		break;
 	case BTRFS_CHUNK_ITEM_KEY:
 		ret = check_chunk_item(fs_info, eb, slot);
+		if (repair && ret)
+			ret = repair_chunk_item(trans, root, path, ret);
 		err |= ret;
 		break;
 	case BTRFS_DEV_EXTENT_KEY:
