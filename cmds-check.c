@@ -5748,6 +5748,7 @@ static int check_inode_item(struct btrfs_root *root, struct btrfs_path *path,
 	struct extent_buffer *node;
 	struct btrfs_inode_item *ii;
 	struct btrfs_key key;
+	struct btrfs_key last_key;
 	u64 inode_id;
 	u32 mode;
 	u64 nlink;
@@ -5787,6 +5788,7 @@ static int check_inode_item(struct btrfs_root *root, struct btrfs_path *path,
 	nodatasum = btrfs_inode_flags(node, ii) & BTRFS_INODE_NODATASUM;
 
 	while (1) {
+		btrfs_item_key_to_cpu(path->nodes[0], &last_key, path->slots[0]);
 		ret = btrfs_next_item(root, path);
 		if (ret < 0) {
 			/* out will fill 'err' rusing current statistics */
@@ -5848,6 +5850,13 @@ static int check_inode_item(struct btrfs_root *root, struct btrfs_path *path,
 	}
 
 out:
+	if (err & LAST_ITEM) {
+		btrfs_release_path(path);
+		ret = btrfs_search_slot(NULL, root, &last_key, path, 0, 0);
+		if (ret)
+			return err;
+	}
+
 	/* verify INODE_ITEM nlink/isize/nbytes */
 	if (dir) {
 		if (repair && (err & DIR_COUNT_AGAIN)) {
@@ -5937,6 +5946,8 @@ out:
 		}
 	}
 
+	if (err & LAST_ITEM)
+		btrfs_next_item(root, path);
 	return err;
 }
 
