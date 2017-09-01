@@ -7,30 +7,37 @@ source $TOP/tests/common
 check_prereq mkfs.btrfs
 check_prereq btrfs
 
-ndevs=4
-declare -a devs
-dev1=
-
 setup_root_helper
 
-prepare_devices()
+setup_loopdevs()
 {
-	for i in `seq $ndevs`; do
-		touch img$i
-		chmod a+rw img$i
-		truncate -s0 img$i
-		truncate -s2g img$i
-		devs[$i]=`run_check_stdout $SUDO_HELPER losetup --find --show img$i`
+	if [ -z "$1" ]; then
+		_fail "setup_loopdevs needs a number"
+	fi
+	nloopdevs="$1"
+	loopdev_prefix=img
+	declare -a loopdevs
+
+}
+
+prepare_loopdevs()
+{
+	for i in `seq $nloopdevs`; do
+		touch $loopdev_prefix$i
+		chmod a+rw $loopdev_prefix$i
+		truncate -s0 $loopdev_prefix$i
+		truncate -s2g $loopdev_prefix$i
+		loopdevs[$i]=`run_check_stdout $SUDO_HELPER losetup --find --show $loopdev_prefix$i`
 	done
 }
 
-cleanup_devices()
+cleanup_loopdevs()
 {
-	for dev in ${devs[@]}; do
+	for dev in ${loopdevs[@]}; do
 		run_check $SUDO_HELPER losetup -d $dev
 	done
-	for i in `seq $ndevs`; do
-		truncate -s0 img$i
+	for i in `seq $nloopdevs`; do
+		truncate -s0 $loopdev_prefix$i
 	done
 	run_check $SUDO_HELPER losetup --all
 }
@@ -58,12 +65,13 @@ test_mkfs_single()
 }
 test_mkfs_multi()
 {
-	test_do_mkfs $@ ${devs[@]}
+	test_do_mkfs $@ ${loopdevs[@]}
 	test_get_info
 }
 
-prepare_devices
-dev1=${devs[1]}
+setup_loopdevs 4
+prepare_loopdevs
+dev1=${loopdevs[1]}
 
 test_mkfs_single
 test_mkfs_single  -d  single  -m  single
@@ -89,4 +97,4 @@ test_mkfs_multi   -d  raid6   -m  raid6   --mixed
 test_mkfs_multi   -d  dup     -m  dup
 test_mkfs_multi   -d  dup     -m  dup     --mixed
 
-cleanup_devices
+cleanup_loopdevs
