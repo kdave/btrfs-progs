@@ -6,38 +6,11 @@ source $TOP/tests/common
 check_prereq mkfs.btrfs
 check_prereq btrfs
 
-ndevs=4
-declare -a devs
-dev1=
-devtodel=
-
 setup_root_helper
-
-prepare_devices()
-{
-	for i in `seq $ndevs`; do
-		touch img$i
-		chmod a+rw img$i
-		truncate -s0 img$i
-		truncate -s2g img$i
-		devs[$i]=`run_check_stdout $SUDO_HELPER losetup --find --show img$i`
-	done
-}
-
-cleanup_devices()
-{
-	for dev in ${devs[@]}; do
-		run_mayfail $SUDO_HELPER losetup -d $dev
-	done
-	for i in `seq $ndevs`; do
-		truncate -s0 img$i
-	done
-	run_check $SUDO_HELPER losetup --all
-}
 
 test_do_mkfs()
 {
-	run_check $SUDO_HELPER $TOP/mkfs.btrfs -f $@ ${devs[@]}
+	run_check $SUDO_HELPER $TOP/mkfs.btrfs -f $@ ${loopdevs[@]}
 	run_check $SUDO_HELPER $TOP/btrfs inspect-internal dump-super $dev1
 	run_check $SUDO_HELPER $TOP/btrfs check $dev1
 	run_check $SUDO_HELPER $TOP/btrfs filesystem show
@@ -47,6 +20,7 @@ test_wipefs()
 {
 	run_check $SUDO_HELPER wipefs -a $devtodel
 	run_check $SUDO_HELPER losetup -d $devtodel
+	unset loopdevs[3]
 	run_check $SUDO_HELPER losetup --all
 	run_check $TOP/btrfs filesystem show
 }
@@ -70,13 +44,14 @@ test_delete_missing()
 	run_check_umount_test_dev
 }
 
-prepare_devices
-dev1=${devs[1]}
-devtodel=${devs[3]}
+setup_loopdevs 4
+prepare_loopdevs
+dev1=${loopdevs[1]}
+devtodel=${loopdevs[3]}
 TEST_DEV=$dev1
 
 test_do_mkfs
 test_wipefs
 test_delete_missing
 
-cleanup_devices
+cleanup_loopdevs
