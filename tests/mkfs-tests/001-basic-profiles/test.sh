@@ -9,39 +9,6 @@ check_prereq btrfs
 
 setup_root_helper
 
-setup_loopdevs()
-{
-	if [ -z "$1" ]; then
-		_fail "setup_loopdevs needs a number"
-	fi
-	nloopdevs="$1"
-	loopdev_prefix=img
-	declare -a loopdevs
-
-}
-
-prepare_loopdevs()
-{
-	for i in `seq $nloopdevs`; do
-		touch $loopdev_prefix$i
-		chmod a+rw $loopdev_prefix$i
-		truncate -s0 $loopdev_prefix$i
-		truncate -s2g $loopdev_prefix$i
-		loopdevs[$i]=`run_check_stdout $SUDO_HELPER losetup --find --show $loopdev_prefix$i`
-	done
-}
-
-cleanup_loopdevs()
-{
-	for dev in ${loopdevs[@]}; do
-		run_check $SUDO_HELPER losetup -d $dev
-	done
-	for i in `seq $nloopdevs`; do
-		truncate -s0 $loopdev_prefix$i
-	done
-	run_check $SUDO_HELPER losetup --all
-}
-
 test_get_info()
 {
 	run_check $SUDO_HELPER $TOP/btrfs inspect-internal dump-super $dev1

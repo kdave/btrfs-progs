@@ -519,6 +519,47 @@ generate_dataset() {
 	esac
 }
 
+# prepare environment for loop devices, set up the following variables
+# - nloopdevs -- number of desired devices
+# - loopdevs  -- array containing paths to all devices (after prepare is called)
+# - loopdev_prefix -- file backed images starting with this string, 'img' by default
+#
+# $1: number of loop devices to be set up
+setup_loopdevs()
+{
+	if [ -z "$1" ]; then
+		_fail "setup_loopdevs needs a number"
+	fi
+	nloopdevs="$1"
+	loopdev_prefix=img
+	declare -a loopdevs
+
+}
+
+# create all loop devices from a given loopdev environment
+prepare_loopdevs()
+{
+	for i in `seq $nloopdevs`; do
+		touch $loopdev_prefix$i
+		chmod a+rw $loopdev_prefix$i
+		truncate -s0 $loopdev_prefix$i
+		truncate -s2g $loopdev_prefix$i
+		loopdevs[$i]=`run_check_stdout $SUDO_HELPER losetup --find --show $loopdev_prefix$i`
+	done
+}
+
+# detach loop devices and reset their size to 0, does not delete the files
+cleanup_loopdevs()
+{
+	for dev in ${loopdevs[@]}; do
+		run_check $SUDO_HELPER losetup -d $dev
+	done
+	for i in `seq $nloopdevs`; do
+		truncate -s0 $loopdev_prefix$i
+	done
+	run_check $SUDO_HELPER losetup --all
+}
+
 init_env()
 {
 	TEST_MNT="${TEST_MNT:-$TOP/tests/mnt}"
