@@ -436,6 +436,14 @@ static int add_directory_items(struct btrfs_trans_handle *trans,
 		filetype = BTRFS_FT_REG_FILE;
 	if (S_ISLNK(st->st_mode))
 		filetype = BTRFS_FT_SYMLINK;
+	if (S_ISSOCK(st->st_mode))
+		filetype = BTRFS_FT_SOCK;
+	if (S_ISCHR(st->st_mode))
+		filetype = BTRFS_FT_CHRDEV;
+	if (S_ISBLK(st->st_mode))
+		filetype = BTRFS_FT_BLKDEV;
+	if (S_ISFIFO(st->st_mode))
+		filetype = BTRFS_FT_FIFO;
 
 	ret = btrfs_insert_dir_item(trans, root, name, name_len,
 				    parent_inum, &location,
