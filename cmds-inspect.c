@@ -318,7 +318,7 @@ static int cmd_inspect_rootid(int argc, char **argv)
 	if (check_argc_exact(argc - optind, 1))
 		usage(cmd_inspect_rootid_usage);
 
-	fd = btrfs_open_dir(argv[optind], &dirstream, 1);
+	fd = btrfs_open_file_or_dir(argv[optind], &dirstream, 1);
 	if (fd < 0) {
 		ret = -ENOENT;
 		goto out;

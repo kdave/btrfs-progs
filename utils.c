@@ -568,9 +568,9 @@ int open_path_or_dev_mnt(const char *path, DIR **dirstream, int verbose)
 /*
  * Do the following checks before calling open_file_or_dir():
  * 1: path is in a btrfs filesystem
- * 2: path is a directory
+ * 2: path is a directory if dir_only is 1
  */
-int btrfs_open_dir(const char *path, DIR **dirstream, int verbose)
+int btrfs_open(const char *path, DIR **dirstream, int verbose, int dir_only)
 {
 	struct statfs stfs;
 	struct stat st;
@@ -593,7 +593,7 @@ int btrfs_open_dir(const char *path, DIR **dirstream, int verbose)
 		return -1;
 	}
 
-	if (!S_ISDIR(st.st_mode)) {
+	if (dir_only && !S_ISDIR(st.st_mode)) {
 		error_on(verbose, "not a directory: %s", path);
 		return -3;
 	}
@@ -605,6 +605,16 @@ int btrfs_open_dir(const char *path, DIR **dirstream, int verbose)
 	}
 
 	return ret;
+}
+
+int btrfs_open_dir(const char *path, DIR **dirstream, int verbose)
+{
+	return btrfs_open(path, dirstream, verbose, 1);
+}
+
+int btrfs_open_file_or_dir(const char *path, DIR **dirstream, int verbose)
+{
+	return btrfs_open(path, dirstream, verbose, 0);
 }
 
 /* checks if a device is a loop device */
