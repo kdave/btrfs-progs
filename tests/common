@@ -509,7 +509,7 @@ generate_dataset() {
 			;;
 
 		slow_symlink)
-			long_filename=`date +%s | sha256sum | cut -f1 -d'-'`
+			long_filename=`date +%s | sha256sum | cut -f1 -d ' '`
 			run_check $SUDO_HELPER touch "$dirpath/$long_filename"
 			for num in $(seq 1 "$DATASET_SIZE"); do
 				run_check $SUDO_HELPER ln -s "$dirpath/$long_filename" "$dirpath/slow_slink.$num"
