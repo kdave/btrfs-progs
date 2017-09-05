@@ -154,9 +154,12 @@ run_check_stdout()
 	echo "############### $@" >> "$RESULTS" 2>&1
 	if [[ $TEST_LOG =~ tty ]]; then echo "CMD(stdout): $@" > /dev/tty; fi
 	if [ "$1" = 'root_helper' ]; then
-		"$@" 2>&1 | tee -a "$RESULTS" || _fail "failed: $@"
+		"$@" 2>&1 | tee -a "$RESULTS"
 	else
-		$INSTRUMENT "$@" 2>&1 | tee -a "$RESULTS" || _fail "failed: $@"
+		$INSTRUMENT "$@" 2>&1 | tee -a "$RESULTS"
+	fi
+	if [ ${PIPESTATUS[0]} -ne 0 ]; then
+		_fail "failed: $@"
 	fi
 }
 
