@@ -22,6 +22,7 @@ export TEST_DEV
 rm -f "$RESULTS"
 
 check_kernel_support
+check_kernel_support_reiserfs
 # anything expected by common.convert
 check_global_prereq getfacl
 check_global_prereq setfacl
