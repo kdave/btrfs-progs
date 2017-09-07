@@ -218,9 +218,21 @@ convert_test_post_checks_all() {
 }
 
 # do rollback and fsck
+# $1: filesystem name or alias (ext2 includes ext3 and ext4),
 convert_test_post_rollback() {
+	local types
+
 	run_check "$TOP/btrfs-convert" --rollback "$TEST_DEV"
-	run_check fsck -n -t ext2,ext3,ext4 "$TEST_DEV"
+	if [ -z "$1" ]; then
+		_fail "missing filesystem type to check"
+	fi
+	case "$1" in
+		ext[234]) types=ext2,ext3,ext4 ;;
+		reiserfs) types=reiserfs ;;
+		*) _fail "unknown filesystem type to check: $1" ;;
+	esac
+
+	run_check fsck -n -t "$types" "$TEST_DEV"
 }
 
 # simple wrapper for a convert test
@@ -261,5 +273,5 @@ convert_test() {
 	rm -- "$EXT_PERMTMP"
 	rm -- "$EXT_ACLTMP"
 
-	convert_test_post_rollback
+	convert_test_post_rollback "$fstype"
 }

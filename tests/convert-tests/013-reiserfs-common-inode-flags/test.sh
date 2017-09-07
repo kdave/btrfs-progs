@@ -35,4 +35,4 @@ if [ $? -ne 0 ]; then
 fi
 
 run_check_umount_test_dev
-convert_test_post_rollback
+convert_test_post_rollback reiserfs

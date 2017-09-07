@@ -46,7 +46,7 @@ do_test() {
 	cd "$here"
 	run_check "$TOP/btrfs" filesystem sync "$TEST_MNT"
 	run_check_umount_test_dev
-	convert_test_post_rollback
+	convert_test_post_rollback ext4
 
 	run_check_mount_convert_dev ext4
 	convert_test_post_check_checksums "$CHECKSUMTMP"

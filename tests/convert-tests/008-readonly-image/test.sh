@@ -24,4 +24,4 @@ if [ $? -ne 1 ]; then
 	exit 1
 fi
 run_check_umount_test_dev
-convert_test_post_rollback
+convert_test_post_rollback ext4
