@@ -118,7 +118,7 @@ but a warning is printed if it's more than 300 seconds (5 minutes).
 (default: off)
 +
 Control BTRFS file data compression.  Type may be specified as 'zlib',
-'lzo' or 'no' (for no compression, used for remounting).  If no type
+'lzo', 'zstd' or 'no' (for no compression, used for remounting).  If no type
 is specified, 'zlib' is used.  If 'compress-force' is specified,
 the compression will allways be attempted, but the data may end up uncompressed
 if the compression would make them larger.
@@ -470,6 +470,12 @@ page size
 (since: 2.6.38)
 +
 the 'lzo' compression has been used on the filesystem, either as a mount option
+or via *btrfs filesystem defrag*.
+
+*compress_zstd*::
+(since: 4.14)
++
+the 'zstd' compression has been used on the filesystem, either as a mount option
 or via *btrfs filesystem defrag*.
 
 *default_subvol*::

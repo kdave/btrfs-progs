@@ -7,6 +7,7 @@ The Btrfs utility programs require the following libraries/tools to build:
 - libblkid - block device id library
 - liblzo2 - LZO data compression library
 - zlib - ZLIB data compression library
+- libzstd - ZSTD data compression library version >= 1.0.0 (optional)
 
 For the btrfs-convert utility:
 
