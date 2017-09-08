@@ -182,6 +182,23 @@ PKG_STATIC(UUID_LIBS_STATIC, [uuid])
 PKG_CHECK_MODULES(ZLIB, [zlib])
 PKG_STATIC(ZLIB_LIBS_STATIC, [zlib])
 
+AC_ARG_ENABLE([zstd],
+	AS_HELP_STRING([--enable-zstd@<:@=auto@:>@], [build with zstd support (default: auto)]),
+	[], [enable_zstd=auto]
+)
+
+if test "x$enable_zstd" = xauto; then
+	PKG_CHECK_EXISTS([libzstd >= 1.0.0], [enable_zstd=yes], [enable_zstd=no])
+fi
+
+if test "x$enable_zstd" = xyes; then
+	PKG_CHECK_MODULES(ZSTD, [libzstd >= 1.0.0])
+	PKG_STATIC(ZSTD_LIBS_STATIC, [libzstd])
+fi
+
+AS_IF([test "x$enable_zstd" = xyes], [BTRFSRESTORE_ZSTD=1], [BTRFSRESTORE_ZSTD=0])
+AC_SUBST(BTRFSRESTORE_ZSTD)
+
 # udev v190 introduced the btrfs builtin and a udev rule to use it.
 # Our udev rule gives us the friendly dm names but isn't required (or valid)
 # on earlier releases.
@@ -221,21 +238,21 @@ AC_OUTPUT
 AC_MSG_RESULT([
 	${PACKAGE_NAME} ${PACKAGE_VERSION}
 
-	prefix:            ${prefix}
-	exec prefix:       ${exec_prefix}
+	prefix:             ${prefix}
+	exec prefix:        ${exec_prefix}
 
-	bindir:            ${bindir}
-	libdir:            ${libdir}
-	includedir:        ${includedir}
+	bindir:             ${bindir}
+	libdir:             ${libdir}
+	includedir:         ${includedir}
 
-	compiler:          ${CC}
-	cflags:            ${CFLAGS}
-	ldflags:           ${LDFLAGS}
+	compiler:           ${CC}
+	cflags:             ${CFLAGS}
+	ldflags:            ${LDFLAGS}
 
-	documentation:     ${enable_documentation}
-	backtrace support: ${enable_backtrace}
-	btrfs-convert:     ${enable_convert} ${convertfs:+($convertfs)}
+	documentation:      ${enable_documentation}
+	backtrace support:  ${enable_backtrace}
+	btrfs-convert:      ${enable_convert} ${convertfs:+($convertfs)}
+	btrfs-restore zstd: ${enable_zstd}
 
 	Type 'make' to compile.
 ])
-
