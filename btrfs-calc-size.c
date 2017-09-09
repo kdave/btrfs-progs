@@ -19,7 +19,6 @@
 #include "volumes.h"
 #include "utils.h"
 #include "commands.h"
-#include "cmds-inspect-tree-stats.h"
 
 int main(int argc, char **argv)
 {
