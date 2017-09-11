@@ -23,7 +23,7 @@ objects := ctree.c disk-io.c kernel-lib/radix-tree.c extent-tree.c print-tree.c 
           qgroup.c free-space-cache.c kernel-lib/list_sort.c props.c \
           kernel-shared/ulist.c qgroup-verify.c backref.c string-table.c task-utils.c \
           inode.c file.c find-root.c free-space-tree.c help.c send-dump.c \
-          fsfeatures.c kernel-lib/tables.c kernel-lib/raid56.c
+          fsfeatures.c kernel-lib/tables.c kernel-lib/raid56.c transaction.c
 cmds_objects := cmds-subvolume.c cmds-filesystem.c cmds-device.c cmds-scrub.c \
                cmds-inspect.c cmds-balance.c cmds-send.c cmds-receive.c \
                cmds-quota.c cmds-qgroup.c cmds-replace.c cmds-check.c \
