@@ -1,0 +1,140 @@
+btrfs-ioctl(3)
+================
+
+NAME
+----
+
+btrfs-ioctl - documentation for the ioctl interface to btrfs
+
+DATA STRUCTURES AND DEFINITIONS
+-------------------------------
+
+[verse]
+struct btrfs_ioctl_vol_args {
+	__s64 fd;
+	char name[BTRFS_PATH_NAME_MAX + 1];
+};
+
+[verse]
+struct btrfs_ioctl_vol_args_v2 {
+	\__s64 fd;
+	\__u64 transid;
+	\__u64 flags;
+	union {
+		struct {
+			\__u64 size;
+			struct btrfs_qgroup_inherit \__user *qgroup_inherit;
+		};
+		__u64 unused[4];
+	};
+	char name[BTRFS_SUBVOL_NAME_MAX + 1];
+};
+
+[verse]
+BTRFS_SUBVOL_NAME_MAX = 4039
+BTRFS_PATH_NAME_MAX = 4087
+
+LIST OF IOCTLS
+--------------
+
+ BTRFS_IOC_SUBVOL_CREATE -- (obsolete) create a subvolume
+ BTRFS_IOC_SNAP_CREATE
+ BTRFS_IOC_DEFRAG
+ BTRFS_IOC_RESIZE
+ BTRFS_IOC_SCAN_DEV
+ BTRFS_IOC_TRANS_START
+ BTRFS_IOC_TRANS_END
+ BTRFS_IOC_SYNC
+ BTRFS_IOC_CLONE
+ BTRFS_IOC_ADD_DEV
+ BTRFS_IOC_RM_DEV
+ BTRFS_IOC_BALANCE
+ BTRFS_IOC_CLONE_RANGE
+ BTRFS_IOC_SUBVOL_CREATE
+ BTRFS_IOC_SNAP_DESTROY
+ BTRFS_IOC_DEFRAG_RANGE
+ BTRFS_IOC_TREE_SEARCH
+ BTRFS_IOC_TREE_SEARCH_V2
+ BTRFS_IOC_INO_LOOKUP
+ BTRFS_IOC_DEFAULT_SUBVOL
+ BTRFS_IOC_SPACE_INFO
+ BTRFS_IOC_START_SYNC
+ BTRFS_IOC_WAIT_SYNC
+ BTRFS_IOC_SNAP_CREATE_V2
+ BTRFS_IOC_SUBVOL_CREATE_V2 -- create a subvolume
+ BTRFS_IOC_SUBVOL_GETFLAGS
+ BTRFS_IOC_SUBVOL_SETFLAGS
+ BTRFS_IOC_SCRUB
+ BTRFS_IOC_SCRUB_CANCEL
+ BTRFS_IOC_SCRUB_PROGRESS
+ BTRFS_IOC_DEV_INFO
+ BTRFS_IOC_FS_INFO
+ BTRFS_IOC_BALANCE_V2
+ BTRFS_IOC_BALANCE_CTL
+ BTRFS_IOC_BALANCE_PROGRESS
+ BTRFS_IOC_INO_PATHS
+ BTRFS_IOC_LOGICAL_INO
+ BTRFS_IOC_SET_RECEIVED_SUBVOL
+ BTRFS_IOC_SEND
+ BTRFS_IOC_DEVICES_READY
+ BTRFS_IOC_QUOTA_CTL
+ BTRFS_IOC_QGROUP_ASSIGN
+ BTRFS_IOC_QGROUP_CREATE
+ BTRFS_IOC_QGROUP_LIMIT
+ BTRFS_IOC_QUOTA_RESCAN
+ BTRFS_IOC_QUOTA_RESCAN_STATUS
+ BTRFS_IOC_QUOTA_RESCAN_WAIT
+ BTRFS_IOC_GET_FSLABEL
+ BTRFS_IOC_SET_FSLABEL
+ BTRFS_IOC_GET_DEV_STATS
+ BTRFS_IOC_DEV_REPLACE
+ BTRFS_IOC_FILE_EXTENT_SAME
+ BTRFS_IOC_GET_FEATURES
+ BTRFS_IOC_SET_FEATURES
+ BTRFS_IOC_GET_SUPPORTED_FEATURES
+
+DETAILED DESCRIPTION
+--------------------
+
+BTRFS_IOC_SUBVOL_CREATE
+~~~~~~~~~~~~~~~~~~~~~~~
+NOTE: obsoleted by BTRFS_IOC_SUBVOL_CREATE_V2
+
+_(since: 3.0, obsoleted: 4.0)_ Create a subvolume.
+
+ioctl fd:: file descriptor of the parent directory of the new subvolume
+argument:: struct btrfs_ioctl_vol_args
+fd:: ignored
+name:: name of the subvolume, although the buffer can be almost 4k, the file
+size is limited by linux VFS to 255 characters and must not contain a slash
+('/')
+
+
+BTRFS_IOC_SUBVOL_CREATE_V2
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+NOTE: obsoletes BTRFS_IOC_SUBVOL_CREATE
+
+_(since: 3.6)_ Create a subvolume, qgroup inheritance can be specified.
+
+ioctl fd:: file descriptor of the parent directory of the new subvolume
+argument:: struct btrfs_ioctl_vol_args_v2
+fd:: ignored
+transid:: ignored
+flags:: ignored
+size:: ...
+qgroup_inherit:: ...
+name:: name of the subvolume, although the buffer can be almost 4k, the file
+size is limited by linux VFS to 255 characters and must not contain a slash
+('/')
+devid:: ...
+
+
+AVAILABILITY
+------------
+*btrfs* is part of btrfs-progs.
+Please refer to the btrfs wiki http://btrfs.wiki.kernel.org for
+further details.
+
+SEE ALSO
+--------
+`ioctl`(2)

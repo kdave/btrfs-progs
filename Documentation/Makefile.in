@@ -32,19 +32,19 @@ MAN8_TXT += btrfs-property.asciidoc
 # Category 5 manual page
 MAN5_TXT += btrfs-man5.asciidoc
 
-MAN_TXT = $(MAN8_TXT) $(MAN5_TXT)
+MAN3_TXT += btrfs-ioctl.asciidoc
+
+MAN_TXT = $(MAN3_TXT) $(MAN8_TXT) $(MAN5_TXT)
 MAN_XML = $(patsubst %.asciidoc,%.xml,$(MAN_TXT))
 MAN_HTML = $(patsubst %.asciidoc,%.html,$(MAN_TXT))
-
-DOC_MAN5 = $(patsubst %.asciidoc,%.5,$(MAN5_TXT))
+GZ_MAN3 = $(patsubst %.asciidoc,%.3.gz,$(MAN3_TXT))
 GZ_MAN5 = $(patsubst %.asciidoc,%.5.gz,$(MAN5_TXT))
-
-DOC_MAN8 = $(patsubst %.asciidoc,%.8,$(MAN8_TXT))
 GZ_MAN8 = $(patsubst %.asciidoc,%.8.gz,$(MAN8_TXT))
 
 mandir ?= $(prefix)/share/man
-man8dir = $(mandir)/man8
+man3dir = $(mandir)/man3
 man5dir = $(mandir)/man5
+man8dir = $(mandir)/man8
 
 ASCIIDOC = @ASCIIDOC@
 ASCIIDOC_EXTRA =
@@ -72,7 +72,8 @@ endif
 endif
 
 all: man
-man: man5 man8
+man: man3 man5 man8
+man3: $(GZ_MAN3)
 man5: $(GZ_MAN5)
 man8: $(GZ_MAN8)
 html: $(MAN_HTML)
@@ -99,11 +100,18 @@ uninstall:
 clean:
 	$(QUIET_RM)$(RM) -f *.xml *.xml+ *.5 *.5.gz *.8 *.8.gz *.html
 
+%.3.gz : %.3
+	$(QUIET_GZIP)$(GZIPCMD) -n -c $< > $@
+
 %.5.gz : %.5
 	$(QUIET_GZIP)$(GZIPCMD) -n -c $< > $@
 
 %.8.gz : %.8
 	$(QUIET_GZIP)$(GZIPCMD) -n -c $< > $@
+
+%.3 : %.xml
+	$(QUIET_XMLTO)$(RM) -f $@ && \
+	$(XMLTO) -m $(MANPAGE_XSL) $(XMLTO_EXTRA) man $<
 
 %.5 : %.xml
 	$(QUIET_XMLTO)$(RM) -f $@ && \
