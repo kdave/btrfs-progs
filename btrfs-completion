@@ -16,7 +16,7 @@ _btrfs_mnts()
 	local MNTS
 	MNTS=''
 	while read mnt; do MNTS+="$mnt "
-	done < <(mount | awk '{print $3}')
+	done < <(mount -t btrfs | awk '{print $3}')
 	COMPREPLY+=( $( compgen -W "$MNTS" -- "$cur" ) )
 }
 
@@ -31,11 +31,11 @@ _btrfs()
 
     commands='subvolume filesystem balance device scrub check rescue restore inspect-internal property send receive quota qgroup replace help version'
     commands_subvolume='create delete list snapshot find-new get-default set-default show sync'
-    commands_filesystem='defragment sync resize show df label usage'
+    commands_filesystem='defragment sync resize show df du label usage'
     commands_balance='start pause cancel resume status'
     commands_device='scan add delete remove ready stats usage'
     commands_scrub='start cancel resume status'
-    commands_rescue='chunk-recover super-recover'
+    commands_rescue='chunk-recover super-recover zero-log'
     commands_inspect_internal='inode-resolve logical-resolve subvolid-resolve rootid min-dev-size dump-tree dump-super tree-stats'
     commands_property='get set list'
     commands_quota='enable disable rescan'
@@ -114,6 +114,10 @@ _btrfs()
 						_filedir
 						return 0
 						;;
+					df|usage)
+						_btrfs_mnts
+						return 0
+						;;
 					label)
 						_btrfs_mnts
 						_btrfs_devs
@@ -125,6 +129,26 @@ _btrfs()
 				_btrfs_devs
                 return 0
                 ;;
+			inspect-internal)
+				case $prev in
+					min-dev-size)
+						_btrfs_mnts
+						return 0
+						;;
+					rootid)
+						_filedir
+						return 0
+						;;
+				esac
+				;;
+			receive)
+				case $prev in
+					-f)
+						_filedir
+						return 0
+						;;
+				esac
+				;;
             replace)
                 case $prev in
                     status|cancel)
@@ -137,12 +161,15 @@ _btrfs()
                         ;;
                 esac
                 ;;
+			subvolume)
+				case $prev in
+					list)
+						_btrfs_mnts
+						return 0
+						;;
+				esac
+				;;
         esac
-    fi
-
-    if [[ "$cmd" == "receive" && "$prev" == "-f" ]]; then
-        _filedir
-        return 0
     fi
 
     _filedir -d
