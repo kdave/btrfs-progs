@@ -505,8 +505,9 @@ err:
 	return ret;
 }
 
-static int find_next_chunk(struct btrfs_root *root, u64 objectid, u64 *offset)
+static int find_next_chunk(struct btrfs_fs_info *fs_info, u64 *offset)
 {
+	struct btrfs_root *root = fs_info->chunk_root;
 	struct btrfs_path *path;
 	int ret;
 	struct btrfs_key key;
@@ -517,7 +518,7 @@ static int find_next_chunk(struct btrfs_root *root, u64 objectid, u64 *offset)
 	if (!path)
 		return -ENOMEM;
 
-	key.objectid = objectid;
+	key.objectid = BTRFS_FIRST_CHUNK_TREE_OBJECTID;
 	key.offset = (u64)-1;
 	key.type = BTRFS_CHUNK_ITEM_KEY;
 
@@ -533,7 +534,7 @@ static int find_next_chunk(struct btrfs_root *root, u64 objectid, u64 *offset)
 	} else {
 		btrfs_item_key_to_cpu(path->nodes[0], &found_key,
 				      path->slots[0]);
-		if (found_key.objectid != objectid)
+		if (found_key.objectid != BTRFS_FIRST_CHUNK_TREE_OBJECTID)
 			*offset = 0;
 		else {
 			chunk = btrfs_item_ptr(path->nodes[0], path->slots[0],
@@ -995,8 +996,7 @@ again:
 		}
 		return -ENOSPC;
 	}
-	ret = find_next_chunk(chunk_root, BTRFS_FIRST_CHUNK_TREE_OBJECTID,
-			      &offset);
+	ret = find_next_chunk(info, &offset);
 	if (ret)
 		return ret;
 	key.objectid = BTRFS_FIRST_CHUNK_TREE_OBJECTID;
@@ -1129,9 +1129,7 @@ int btrfs_alloc_data_chunk(struct btrfs_trans_handle *trans,
 	} else {
 		u64 tmp;
 
-		ret = find_next_chunk(chunk_root,
-				      BTRFS_FIRST_CHUNK_TREE_OBJECTID,
-				      &tmp);
+		ret = find_next_chunk(info, &tmp);
 		key.offset = tmp;
 		if (ret)
 			return ret;
