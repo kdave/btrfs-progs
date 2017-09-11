@@ -71,7 +71,12 @@ the patches meet some criteria (often lacking in github contributions):
   effects of the bug or the fix, _how_ does an improvement help or the intended
   _usecase_
 * the **Signed-off-by** line: this documents who authored the change, you can read
-  more about the _The Developer's Certificate of Origin_ [here (chapter 11)](https://www.kernel.org/doc/Documentation/SubmittingPatches)
+  more about the
+  [The Developer's Certificate of Origin (chapter 11)](https://www.kernel.org/doc/html/latest/process/submitting-patches.html#sign-your-work-the-developer-s-certificate-of-origin)
+  * if you are not used to the signed-off style, your contributions won't be
+    rejected just because of it's missing, the _Author:_ tag will be added as a
+    substitute in order to allow contributions without much bothering with
+    formalities
 
 Documentation updates
 ---------------------
