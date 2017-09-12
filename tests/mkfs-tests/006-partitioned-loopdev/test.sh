@@ -29,3 +29,4 @@ done
 # cleanup
 run_check $SUDO_HELPER losetup -d $loopdev
 run_check truncate -s0 img
+rm img

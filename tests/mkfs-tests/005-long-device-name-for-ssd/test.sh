@@ -38,3 +38,4 @@ run_check $SUDO_HELPER $TOP/btrfs inspect-internal dump-super $dmdev
 run_check $SUDO_HELPER dmsetup remove $dmname
 run_mayfail $SUDO_HELPER losetup -d $loopdev
 run_check truncate -s0 img
+rm img
