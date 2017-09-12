@@ -551,7 +551,7 @@ prepare_loopdevs()
 	done
 }
 
-# detach loop devices and reset their size to 0, does not delete the files
+# detach loop devices and reset their size to 0, delete the files afterwards
 cleanup_loopdevs()
 {
 	for dev in ${loopdevs[@]}; do
@@ -559,6 +559,7 @@ cleanup_loopdevs()
 	done
 	for i in `seq $nloopdevs`; do
 		truncate -s0 $loopdev_prefix$i
+		rm -- "$loopdev_prefix$i"
 	done
 	run_check $SUDO_HELPER losetup --all
 }
