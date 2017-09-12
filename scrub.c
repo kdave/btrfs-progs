@@ -157,7 +157,7 @@ static int check_tree_mirror(struct btrfs_fs_info *fs_info,
 		return -EIO;
 	}
 
-	eb = btrfs_find_create_tree_block(fs_info, bytenr, nodesize);
+	eb = btrfs_find_create_tree_block(fs_info, bytenr);
 	if (!eb)
 		return -ENOMEM;
 	if (data) {
