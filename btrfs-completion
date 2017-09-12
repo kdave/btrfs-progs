@@ -6,8 +6,8 @@
 
 _btrfs_devs()
 {
-    local DEVS
-    DEVS=''; while read dev; do DEVS+="$dev "; done < <(lsblk -pnro name)
+	local DEVS
+	DEVS=''; while read dev; do DEVS+="$dev "; done < <(lsblk -pnro name)
 	COMPREPLY+=( $( compgen -W "$DEVS" -- "$cur" ) )
 }
 
@@ -23,92 +23,92 @@ _btrfs_mnts()
 _btrfs()
 {
 	local cur prev words cword
-    _init_completion || return
+	_init_completion || return
 
-    COMPREPLY=()
+	COMPREPLY=()
 
 	local cmd=${words[1]}
 
-    commands='subvolume filesystem balance device scrub check rescue restore inspect-internal property send receive quota qgroup replace help version'
-    commands_subvolume='create delete list snapshot find-new get-default set-default show sync'
-    commands_filesystem='defragment sync resize show df du label usage'
-    commands_balance='start pause cancel resume status'
-    commands_device='scan add delete remove ready stats usage'
-    commands_scrub='start cancel resume status'
-    commands_rescue='chunk-recover super-recover zero-log'
-    commands_inspect_internal='inode-resolve logical-resolve subvolid-resolve rootid min-dev-size dump-tree dump-super tree-stats'
-    commands_property='get set list'
-    commands_quota='enable disable rescan'
-    commands_qgroup='assign remove create destroy show limit'
-    commands_replace='start status cancel'
+	commands='subvolume filesystem balance device scrub check rescue restore inspect-internal property send receive quota qgroup replace help version'
+	commands_subvolume='create delete list snapshot find-new get-default set-default show sync'
+	commands_filesystem='defragment sync resize show df du label usage'
+	commands_balance='start pause cancel resume status'
+	commands_device='scan add delete remove ready stats usage'
+	commands_scrub='start cancel resume status'
+	commands_rescue='chunk-recover super-recover zero-log'
+	commands_inspect_internal='inode-resolve logical-resolve subvolid-resolve rootid min-dev-size dump-tree dump-super tree-stats'
+	commands_property='get set list'
+	commands_quota='enable disable rescan'
+	commands_qgroup='assign remove create destroy show limit'
+	commands_replace='start status cancel'
 
 	if [[ "$cur" == -* && $cword -le 3 && "$cmd" != "help" ]]; then
 		COMPREPLY=( $( compgen -W '--help' -- "$cur" ) )
 		return 0
 	fi
 
-    if [[ $cword -eq 1 ]]; then
-        COMPREPLY=( $( compgen -W "$commands" -- "$cur" ) )
-        return 0
-    elif [[ $cword -eq 2 ]]; then
-        case $cmd in
-            subvolume)
-                opts="$commands_subvolume"
-                ;;
-            filesystem)
-                opts="$commands_filesystem"
-                ;;
-            balance)
-                opts="$commands_balance"
-                ;;
-            device)
-                opts="$commands_device"
-                ;;
-            scrub)
-                opts="$commands_scrub"
-                ;;
-            check)
-                _btrfs_devs
+	if [[ $cword -eq 1 ]]; then
+		COMPREPLY=( $( compgen -W "$commands" -- "$cur" ) )
+		return 0
+	elif [[ $cword -eq 2 ]]; then
+		case $cmd in
+			subvolume)
+				opts="$commands_subvolume"
+				;;
+			filesystem)
+				opts="$commands_filesystem"
+				;;
+			balance)
+				opts="$commands_balance"
+				;;
+			device)
+				opts="$commands_device"
+				;;
+			scrub)
+				opts="$commands_scrub"
+				;;
+			check)
+				_btrfs_devs
 				return 0
-                ;;
-            rescue)
-                opts="$commands_rescue"
-                ;;
-            restore)
-                _btrfs_devs
+				;;
+			rescue)
+				opts="$commands_rescue"
+				;;
+			restore)
+				_btrfs_devs
 				return 0
-                ;;
-            inspect-internal)
-                opts="$commands_inspect_internal"
-                ;;
-            property)
-                opts="$commands_property"
-                ;;
-            send|receive)
-                _filedir -d
-                return 0
-                ;;
-            quota)
-                opts="$commands_quota"
-                ;;
-            qgroup)
-                opts="$commands_qgroup"
-                ;;
-            replace)
-                opts="$commands_replace"
-                ;;
-            help)
-                opts="--full"
-                ;;
-            version)
-                return 0
-                ;;
-        esac
-        COMPREPLY=( $( compgen -W "$opts" -- "$cur" ) )
-        return 0
-    elif [[ $cword -eq 3 ]]; then
-        case $cmd in
-            filesystem)
+				;;
+			inspect-internal)
+				opts="$commands_inspect_internal"
+				;;
+			property)
+				opts="$commands_property"
+				;;
+			send|receive)
+				_filedir -d
+				return 0
+				;;
+			quota)
+				opts="$commands_quota"
+				;;
+			qgroup)
+				opts="$commands_qgroup"
+				;;
+			replace)
+				opts="$commands_replace"
+				;;
+			help)
+				opts="--full"
+				;;
+			version)
+				return 0
+				;;
+		esac
+		COMPREPLY=( $( compgen -W "$opts" -- "$cur" ) )
+		return 0
+	elif [[ $cword -eq 3 ]]; then
+		case $cmd in
+			filesystem)
 				case $prev in
 					defragment)
 						_filedir
@@ -124,11 +124,11 @@ _btrfs()
 						return 0
 						;;
 				esac
-                ;;
-            device|rescue)
+				;;
+			device|rescue)
 				_btrfs_devs
-                return 0
-                ;;
+				return 0
+				;;
 			inspect-internal)
 				case $prev in
 					min-dev-size)
@@ -149,18 +149,18 @@ _btrfs()
 						;;
 				esac
 				;;
-            replace)
-                case $prev in
-                    status|cancel)
+			replace)
+				case $prev in
+					status|cancel)
 						_btrfs_mnts
-                        return 0
-                        ;;
-                    start)
+						return 0
+						;;
+					start)
 						_btrfs_devs
-                        return 0
-                        ;;
-                esac
-                ;;
+						return 0
+						;;
+				esac
+				;;
 			subvolume)
 				case $prev in
 					list)
@@ -169,11 +169,11 @@ _btrfs()
 						;;
 				esac
 				;;
-        esac
-    fi
+		esac
+	fi
 
-    _filedir -d
-    return 0
+	_filedir -d
+	return 0
 }
 
 complete -F _btrfs btrfs
