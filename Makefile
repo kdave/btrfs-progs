@@ -496,7 +496,7 @@ library-test.static: library-test.c $(libs_static)
 	$(Q)$(RM) -rf -- $(TMPD)
 
 fssum: tests/fssum.c tests/sha224-256.c
-	@echo "    [LD]   $@"
+	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 test-build: test-build-pre test-build-real
