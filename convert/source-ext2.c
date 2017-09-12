@@ -155,7 +155,8 @@ static int ext2_read_used_space(struct btrfs_convert_context *cctx)
 						block_nbytes * 8, block_bitmap);
 		if (ret) {
 			error("fail to get bitmap from ext2, %s",
-			      strerror(-ret));
+				error_message(ret));
+			ret = -EINVAL;
 			break;
 		}
 		ret = __ext2_add_one_block(fs, block_bitmap, i, used_tree);
