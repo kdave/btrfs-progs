@@ -133,6 +133,7 @@ struct data_backref {
 #define DIR_INDEX_MISSING       (1<<18) /* INODE_INDEX not found */
 #define DIR_INDEX_MISMATCH      (1<<19) /* INODE_INDEX found but not match */
 #define DIR_COUNT_AGAIN         (1<<20) /* DIR isize should be recalculated */
+#define BG_ACCOUNT_ERROR        (1<<21) /* Block group account error */
 
 static inline struct data_backref* to_data_backref(struct extent_backref *back)
 {
@@ -12739,7 +12740,7 @@ out:
 		error(
 		"block group[%llu %llu] used %llu but extent items used %llu",
 			bg_key.objectid, bg_key.offset, used, total);
-		err |= ACCOUNTING_MISMATCH;
+		err |= BG_ACCOUNT_ERROR;
 	}
 	return err;
 }
@@ -13134,6 +13135,8 @@ out:
 		ret = btrfs_fix_block_accounting(trans, root);
 		if (ret)
 			err |= ret;
+		else
+			err &= ~BG_ACCOUNT_ERROR;
 	}
 
 	if (trans)
