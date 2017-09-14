@@ -265,7 +265,7 @@ else
 endif
 
 %.o.d: %.c
-	$(Q)$(CC) -MD -MM -MG -MF $@ -MT $(@:.o.d=.o) -MT $(@:.o.d=.static.o) -MT $@ $(CFLAGS) $<
+	$(Q)$(CC) -MM -MG -MF $@ -MT $(@:.o.d=.o) -MT $(@:.o.d=.static.o) -MT $@ $(CFLAGS) $<
 
 #
 # Pick from per-file variables, btrfs_*_cflags
