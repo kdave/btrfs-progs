@@ -121,6 +121,9 @@ libbtrfs_headers = send-stream.h send-utils.h send.h kernel-lib/rbtree.h btrfs-l
 convert_objects = convert/main.o convert/common.o convert/source-fs.o \
 		  convert/source-ext2.o convert/source-reiserfs.o
 mkfs_objects = mkfs/main.o mkfs/common.o
+image_objects = image/main.o
+all_objects = $(objects) $(cmds_objects) $(libbtrfs_objects) $(convert_objects) \
+	      $(mkfs_objects) $(image_objects)
 
 TESTS = fsck-tests.sh convert-tests.sh
 
@@ -592,5 +595,5 @@ uninstall:
 	cd $(DESTDIR)$(bindir); $(RM) -f -- btrfsck fsck.btrfs $(progs_install)
 
 ifneq ($(MAKECMDGOALS),clean)
--include $(objects:.o=.o.d) $(cmds_objects:.o=.o.d) $(subst .btrfs,, $(filter-out btrfsck.o.d, $(progs:=.o.d)))
+-include $(all_objects:.o=.o.d) $(subst .btrfs,, $(filter-out btrfsck.o.d, $(progs:=.o.d)))
 endif
