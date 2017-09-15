@@ -2745,6 +2745,8 @@ int btrfs_add_orphan_item(struct btrfs_trans_handle *trans,
 			  u64 ino);
 int btrfs_mkdir(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 		char *name, int namelen, u64 parent_ino, u64 *ino, int mode);
+struct btrfs_root *btrfs_mksubvol(struct btrfs_root *root, const char *base,
+				  u64 root_objectid);
 
 /* file.c */
 int btrfs_get_extent(struct btrfs_trans_handle *trans,
