@@ -573,7 +573,8 @@ out:
 }
 
 struct btrfs_root *btrfs_mksubvol(struct btrfs_root *root,
-				  const char *base, u64 root_objectid)
+				  const char *base, u64 root_objectid,
+				  bool convert)
 {
 	struct btrfs_trans_handle *trans;
 	struct btrfs_fs_info *fs_info = root->fs_info;
@@ -639,16 +640,21 @@ struct btrfs_root *btrfs_mksubvol(struct btrfs_root *root,
 	key.type = BTRFS_ROOT_ITEM_KEY;
 
 	memcpy(buf, base, len);
-	for (i = 0; i < 1024; i++) {
-		ret = btrfs_insert_dir_item(trans, root, buf, len,
-					    dirid, &key, BTRFS_FT_DIR, index);
-		if (ret != -EEXIST)
-			break;
-		len = snprintf(buf, ARRAY_SIZE(buf), "%s%d", base, i);
-		if (len < 1 || len > BTRFS_NAME_LEN) {
-			ret = -EINVAL;
-			break;
+	if (convert) {
+		for (i = 0; i < 1024; i++) {
+			ret = btrfs_insert_dir_item(trans, root, buf, len,
+					dirid, &key, BTRFS_FT_DIR, index);
+			if (ret != -EEXIST)
+				break;
+			len = snprintf(buf, ARRAY_SIZE(buf), "%s%d", base, i);
+			if (len < 1 || len > BTRFS_NAME_LEN) {
+				ret = -EINVAL;
+				break;
+			}
 		}
+	} else {
+		ret = btrfs_insert_dir_item(trans, root, buf, len, dirid, &key,
+					    BTRFS_FT_DIR, index);
 	}
 	if (ret)
 		goto fail;
