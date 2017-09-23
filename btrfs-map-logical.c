@@ -190,7 +190,7 @@ static int write_extent_content(struct btrfs_fs_info *fs_info, int out_fd,
 	return ret;
 }
 
-static void print_usage(void) __attribute__((noreturn));
+__attribute__((noreturn))
 static void print_usage(void)
 {
 	printf("usage: btrfs-map-logical [options] device\n");

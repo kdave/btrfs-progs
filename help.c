@@ -218,6 +218,7 @@ void usage_command(const struct cmd_struct *cmd, int full, int err)
 	usage_command_usagestr(cmd->usagestr, cmd->token, full, err);
 }
 
+__attribute__((noreturn))
 void usage(const char * const *usagestr)
 {
 	usage_command_usagestr(usagestr, NULL, 1, 1);
@@ -325,6 +326,7 @@ void usage_command_group(const struct cmd_group *grp, int full, int err)
 		fprintf(outf, "%s\n", grp->infostr);
 }
 
+__attribute__((noreturn))
 void help_unknown_token(const char *arg, const struct cmd_group *grp)
 {
 	fprintf(stderr, "%s: unknown token '%s'\n", get_argv0_buf(), arg);
@@ -332,6 +334,7 @@ void help_unknown_token(const char *arg, const struct cmd_group *grp)
 	exit(1);
 }
 
+__attribute__((noreturn))
 void help_ambiguous_token(const char *arg, const struct cmd_group *grp)
 {
 	const struct cmd_struct *cmd = grp->commands;
