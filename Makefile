@@ -91,6 +91,7 @@ STATIC_LIBS = $(STATIC_LIBS_BASE)
 # don't use FORTIFY with sparse because glibc with FORTIFY can
 # generate so many sparse errors that sparse stops parsing,
 # which masks real errors that we want to see.
+# Note: additional flags might get added per-target later
 CHECKER := sparse
 check_defs := .cc-defines.h
 CHECKER_FLAGS := -include $(check_defs) -D__CHECKER__ \
@@ -213,6 +214,8 @@ btrfs_debug_tree_objects = cmds-inspect-dump-tree.o
 btrfs_show_super_objects = cmds-inspect-dump-super.o
 btrfs_calc_size_objects = cmds-inspect-tree-stats.o
 cmds_restore_cflags = -DBTRFSRESTORE_ZSTD=$(BTRFSRESTORE_ZSTD)
+
+CHECKER_FLAGS += $(btrfs_convert_cflags)
 
 # collect values of the variables above
 standalone_deps = $(foreach dep,$(patsubst %,%_objects,$(subst -,_,$(filter btrfs-%, $(progs)))),$($(dep)))
