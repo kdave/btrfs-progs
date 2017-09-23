@@ -918,7 +918,7 @@ int btrfs_clear_free_space_cache(struct btrfs_fs_info *fs_info,
 	slot = path.slots[0];
 	sc_header = btrfs_item_ptr(node, slot, struct btrfs_free_space_header);
 	btrfs_free_space_key(node, sc_header, &location);
-	ino = location.objectid;
+	ino = btrfs_disk_key_objectid(&location);
 
 	/* Delete the free space header, as we have the ino to continue */
 	ret = btrfs_del_item(trans, tree_root, &path);
