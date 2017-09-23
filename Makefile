@@ -62,8 +62,9 @@ DEBUG_LDFLAGS :=
 TOPDIR := $(shell pwd)
 
 # Common build flags
+CSTD = -std=gnu90
 CFLAGS = $(SUBST_CFLAGS) \
-	 -std=gnu90 \
+	 $(CSTD) \
 	 -include config.h \
 	 -DBTRFS_FLAT_INCLUDES \
 	 -D_XOPEN_SOURCE=700  \
@@ -262,6 +263,7 @@ ifdef C
 			grep -v __SIZE_TYPE__ > $(check_defs))
 	check = $(CHECKER)
 	check_echo = echo
+	CSTD = -std=gnu89
 else
 	check = true
 	check_echo = true
