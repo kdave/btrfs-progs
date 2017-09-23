@@ -17,19 +17,19 @@
 #ifndef __BTRFS_MESSAGES_H__
 #define __BTRFS_MESSAGES_H__
 
-#if DEBUG_VERBOSE_ERROR
+#ifdef DEBUG_VERBOSE_ERROR
 #define	PRINT_VERBOSE_ERROR	fprintf(stderr, "%s:%d:", __FILE__, __LINE__)
 #else
 #define PRINT_VERBOSE_ERROR
 #endif
 
-#if DEBUG_TRACE_ON_ERROR
+#ifdef DEBUG_TRACE_ON_ERROR
 #define PRINT_TRACE_ON_ERROR	print_trace()
 #else
 #define PRINT_TRACE_ON_ERROR
 #endif
 
-#if DEBUG_ABORT_ON_ERROR
+#ifdef DEBUG_ABORT_ON_ERROR
 #define DO_ABORT_ON_ERROR	abort()
 #else
 #define DO_ABORT_ON_ERROR
