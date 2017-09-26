@@ -75,6 +75,7 @@ struct extent_io_tree {
 	struct cache_tree cache;
 	struct list_head lru;
 	u64 cache_size;
+	u64 max_cache_size;
 };
 
 struct extent_state {
@@ -106,6 +107,8 @@ static inline void extent_buffer_get(struct extent_buffer *eb)
 }
 
 void extent_io_tree_init(struct extent_io_tree *tree);
+void extent_io_tree_init_cache_max(struct extent_io_tree *tree,
+				   u64 max_cache_size);
 void extent_io_tree_cleanup(struct extent_io_tree *tree);
 int set_extent_bits(struct extent_io_tree *tree, u64 start, u64 end, int bits);
 int clear_extent_bits(struct extent_io_tree *tree, u64 start, u64 end, int bits);
@@ -146,6 +149,7 @@ struct extent_buffer *alloc_extent_buffer(struct extent_io_tree *tree,
 					  u64 bytenr, u32 blocksize);
 struct extent_buffer *btrfs_clone_extent_buffer(struct extent_buffer *src);
 void free_extent_buffer(struct extent_buffer *eb);
+void free_extent_buffer_nocache(struct extent_buffer *eb);
 int read_extent_from_disk(struct extent_buffer *eb,
 			  unsigned long offset, unsigned long len);
 int write_extent_to_disk(struct extent_buffer *eb);

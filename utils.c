@@ -24,6 +24,7 @@
 #include <sys/mount.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/sysinfo.h>
 #include <uuid/uuid.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -2584,4 +2585,16 @@ u8 rand_u8(void)
 
 void btrfs_config_init(void)
 {
+}
+
+/* Returns total size of main memory in bytes, -1UL if error. */
+unsigned long total_memory(void)
+{
+        struct sysinfo si;
+
+        if (sysinfo(&si) < 0) {
+                error("can't determine memory size");
+                return -1UL;
+        }
+        return si.totalram * si.mem_unit;       /* bytes */
 }
