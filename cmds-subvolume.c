@@ -263,6 +263,9 @@ static int cmd_subvol_delete(int argc, char **argv)
 	DIR	*dirstream = NULL;
 	int verbose = 0;
 	int commit_mode = 0;
+	u8 fsid[BTRFS_FSID_SIZE];
+	char uuidbuf[BTRFS_UUID_UNPARSED_SIZE];
+	struct seen_fsid *seen_fsid_hash[SEEN_FSID_HASH_SIZE] = { NULL, };
 	enum { COMMIT_AFTER = 1, COMMIT_EACH = 2 };
 
 	while (1) {
@@ -358,31 +361,74 @@ again:
 				path, strerror(errno));
 			ret = 1;
 		}
+	} else if (commit_mode == COMMIT_AFTER) {
+		res = get_fsid(dname, fsid, 0);
+		if (res < 0) {
+			error("unable to get fsid for '%s': %s",
+				path, strerror(-res));
+			error(
+			"delete suceeded but commit may not be done in the end");
+			ret = 1;
+			goto out;
+		}
+
+		if (add_seen_fsid(fsid, seen_fsid_hash, fd, dirstream) == 0) {
+			if (verbose > 0) {
+				uuid_unparse(fsid, uuidbuf);
+				printf("  new fs is found for '%s', fsid: %s\n",
+						path, uuidbuf);
+			}
+			/*
+			 * This is the first time a subvolume on this
+			 * filesystem is deleted, keep fd in order to issue
+			 * SYNC ioctl in the end
+			 */
+			goto keep_fd;
+		}
 	}
 
 out:
+	close_file_or_dir(fd, dirstream);
+keep_fd:
+	fd = -1;
+	dirstream = NULL;
 	free(dupdname);
 	free(dupvname);
 	dupdname = NULL;
 	dupvname = NULL;
 	cnt++;
-	if (cnt < argc) {
-		close_file_or_dir(fd, dirstream);
-		/* avoid double free */
-		fd = -1;
-		dirstream = NULL;
+	if (cnt < argc)
 		goto again;
-	}
 
-	if (commit_mode == COMMIT_AFTER && fd != -1) {
-		res = wait_for_commit(fd);
-		if (res < 0) {
-			error("unable to do final sync after deletion: %s",
-				strerror(errno));
-			ret = 1;
+	if (commit_mode == COMMIT_AFTER) {
+		int slot;
+
+		/*
+		 * Traverse seen_fsid_hash and issue SYNC ioctl on each
+		 * filesystem
+		 */
+		for (slot = 0; slot < SEEN_FSID_HASH_SIZE; slot++) {
+			struct seen_fsid *seen = seen_fsid_hash[slot];
+
+			while (seen) {
+				res = wait_for_commit(seen->fd);
+				if (res < 0) {
+					uuid_unparse(seen->fsid, uuidbuf);
+					error(
+			"unable to do final sync after deletion: %s, fsid: %s",
+						strerror(errno), uuidbuf);
+					ret = 1;
+				} else if (verbose > 0) {
+					uuid_unparse(seen->fsid, uuidbuf);
+					printf("final sync is done for fsid: %s\n",
+						uuidbuf);
+				}
+				seen = seen->next;
+			}
 		}
+		/* fd will also be closed in free_seen_fsid */
+		free_seen_fsid(seen_fsid_hash);
 	}
-	close_file_or_dir(fd, dirstream);
 
 	return ret;
 }
