@@ -263,12 +263,13 @@ static int cmd_subvol_delete(int argc, char **argv)
 	DIR	*dirstream = NULL;
 	int verbose = 0;
 	int commit_mode = 0;
+	enum { COMMIT_AFTER = 1, COMMIT_EACH = 2 };
 
 	while (1) {
 		int c;
 		static const struct option long_options[] = {
-			{"commit-after", no_argument, NULL, 'c'},  /* commit mode 1 */
-			{"commit-each", no_argument, NULL, 'C'},  /* commit mode 2 */
+			{"commit-after", no_argument, NULL, 'c'},
+			{"commit-each", no_argument, NULL, 'C'},
 			{"verbose", no_argument, NULL, 'v'},
 			{NULL, 0, NULL, 0}
 		};
@@ -279,10 +280,10 @@ static int cmd_subvol_delete(int argc, char **argv)
 
 		switch(c) {
 		case 'c':
-			commit_mode = 1;
+			commit_mode = COMMIT_AFTER;
 			break;
 		case 'C':
-			commit_mode = 2;
+			commit_mode = COMMIT_EACH;
 			break;
 		case 'v':
 			verbose++;
@@ -298,7 +299,7 @@ static int cmd_subvol_delete(int argc, char **argv)
 	if (verbose > 0) {
 		printf("Transaction commit: %s\n",
 			!commit_mode ? "none (default)" :
-			commit_mode == 1 ? "at the end" : "after each");
+			commit_mode == COMMIT_AFTER ? "at the end" : "after each");
 	}
 
 	cnt = optind;
@@ -338,7 +339,7 @@ again:
 	}
 
 	printf("Delete subvolume (%s): '%s/%s'\n",
-		commit_mode == 2 || (commit_mode == 1 && cnt + 1 == argc)
+		commit_mode == COMMIT_EACH || (commit_mode == COMMIT_AFTER && cnt + 1 == argc)
 		? "commit" : "no-commit", dname, vname);
 	memset(&args, 0, sizeof(args));
 	strncpy_null(args.name, vname);
@@ -350,7 +351,7 @@ again:
 		goto out;
 	}
 
-	if (commit_mode == 1) {
+	if (commit_mode == COMMIT_EACH) {
 		res = wait_for_commit(fd);
 		if (res < 0) {
 			error("unable to wait for commit after '%s': %s",
@@ -373,7 +374,7 @@ out:
 		goto again;
 	}
 
-	if (commit_mode == 2 && fd != -1) {
+	if (commit_mode == COMMIT_AFTER && fd != -1) {
 		res = wait_for_commit(fd);
 		if (res < 0) {
 			error("unable to do final sync after deletion: %s",
