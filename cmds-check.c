@@ -14813,8 +14813,8 @@ int cmd_check(int argc, char **argv)
 
 	if (!init_extent_tree) {
 		ret = repair_root_items(info);
-		err |= !!ret;
 		if (ret < 0) {
+			err = !!ret;
 			error("failed to repair root items: %s", strerror(-ret));
 			goto close_out;
 		}
