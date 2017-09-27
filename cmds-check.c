@@ -10829,6 +10829,7 @@ static int check_extent_refs(struct btrfs_root *root,
 	struct cache_extent *cache;
 	int ret = 0;
 	int had_dups = 0;
+	int err = 0;
 
 	if (repair) {
 		/*
@@ -10972,6 +10973,7 @@ static int check_extent_refs(struct btrfs_root *root,
 			cur_err = 1;
 		}
 
+		err = cur_err;
 		remove_cache_extent(extent_cache, cache);
 		free_all_extent_backrefs(rec);
 		if (!init_extent_tree && repair && (!cur_err || fix))
@@ -11004,7 +11006,10 @@ repair_abort:
 		}
 		return ret;
 	}
-	return 0;
+
+	if (err)
+		err = -EIO;
+	return err;
 }
 
 u64 calc_stripe_length(u64 type, u64 length, int num_stripes)
