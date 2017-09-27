@@ -28,6 +28,7 @@
 #include "btrfs-list.h"
 #include "sizes.h"
 #include "messages.h"
+#include "ioctl.h"
 
 #define BTRFS_SCAN_MOUNTED	(1ULL << 0)
 #define BTRFS_SCAN_LBLKID	(1ULL << 1)
@@ -68,6 +69,12 @@ void units_set_base(unsigned *units, unsigned base);
 #define	PREP_DEVICE_DISCARD	(1U << 1)
 #define	PREP_DEVICE_VERBOSE	(1U << 2)
 
+#define SEEN_FSID_HASH_SIZE 256
+struct seen_fsid {
+	u8 fsid[BTRFS_FSID_SIZE];
+	struct seen_fsid *next;
+};
+
 int btrfs_make_root_dir(struct btrfs_trans_handle *trans,
 			struct btrfs_root *root, u64 objectid);
 int btrfs_prepare_device(int fd, const char *file, u64 *block_count_ret,
@@ -101,6 +108,11 @@ void close_file_or_dir(int fd, DIR *dirstream);
 int get_fs_info(const char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 		struct btrfs_ioctl_dev_info_args **di_ret);
 int get_fsid(const char *path, u8 *fsid, int silent);
+
+int is_seen_fsid(u8 *fsid, struct seen_fsid *seen_fsid_hash[]);
+int add_seen_fsid(u8 *fsid, struct seen_fsid *seen_fsid_hash[]);
+void free_seen_fsid(struct seen_fsid *seen_fsid_hash[]);
+
 int get_label(const char *btrfs_dev, char *label);
 int set_label(const char *btrfs_dev, const char *label);
 
