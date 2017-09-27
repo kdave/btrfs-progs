@@ -48,36 +48,6 @@ static int parse_prop(const char *arg, const struct prop_handler *props,
 	return -1;
 }
 
-static int get_fsid(const char *path, u8 *fsid, int silent)
-{
-	int ret;
-	int fd;
-	struct btrfs_ioctl_fs_info_args args;
-
-	fd = open(path, O_RDONLY);
-	if (fd < 0) {
-		ret = -errno;
-		if (!silent)
-			error("failed to open %s: %s", path,
-				strerror(-ret));
-		goto out;
-	}
-
-	ret = ioctl(fd, BTRFS_IOC_FS_INFO, &args);
-	if (ret < 0) {
-		ret = -errno;
-		goto out;
-	}
-
-	memcpy(fsid, args.fsid, BTRFS_FSID_SIZE);
-	ret = 0;
-
-out:
-	if (fd != -1)
-		close(fd);
-	return ret;
-}
-
 static int check_btrfs_object(const char *object)
 {
 	int ret;
