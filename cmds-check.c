@@ -11580,6 +11580,29 @@ loop:
 	goto again;
 }
 
+static int check_extent_inline_ref(struct extent_buffer *eb,
+		   struct btrfs_key *key, struct btrfs_extent_inline_ref *iref)
+{
+	int ret;
+	u8 type = btrfs_extent_inline_ref_type(eb, iref);
+
+	switch (type) {
+	case BTRFS_TREE_BLOCK_REF_KEY:
+	case BTRFS_EXTENT_DATA_REF_KEY:
+	case BTRFS_SHARED_BLOCK_REF_KEY:
+	case BTRFS_SHARED_DATA_REF_KEY:
+		ret = 0;
+		break;
+	default:
+		error("extent[%llu %u %llu] has unknown ref type: %d",
+		      key->objectid, key->type, key->offset, type);
+		ret = UNKNOWN_TYPE;
+		break;
+	}
+
+	return ret;
+}
+
 /*
  * Check backrefs of a tree block given by @bytenr or @eb.
  *
@@ -11714,6 +11737,11 @@ static int check_tree_block_ref(struct btrfs_root *root,
 		type = btrfs_extent_inline_ref_type(leaf, iref);
 		offset = btrfs_extent_inline_ref_offset(leaf, iref);
 
+		ret = check_extent_inline_ref(leaf, &key, iref);
+		if (ret) {
+			err |= ret;
+			break;
+		}
 		if (type == BTRFS_TREE_BLOCK_REF_KEY) {
 			if (offset == root->objectid)
 				found_ref = 1;
@@ -11991,6 +12019,11 @@ static int check_extent_data_item(struct btrfs_root *root,
 		type = btrfs_extent_inline_ref_type(leaf, iref);
 		dref = (struct btrfs_extent_data_ref *)(&iref->offset);
 
+		ret = check_extent_inline_ref(leaf, &dbref_key, iref);
+		if (ret) {
+			err |= ret;
+			break;
+		}
 		if (type == BTRFS_EXTENT_DATA_REF_KEY) {
 			ref_root = btrfs_extent_data_ref_root(leaf, dref);
 			if (ref_root == root->objectid)
