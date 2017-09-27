@@ -14811,31 +14811,33 @@ int cmd_check(int argc, char **argv)
 		goto close_out;
 	}
 
+	if (!init_extent_tree) {
+		ret = repair_root_items(info);
+		err |= !!ret;
+		if (ret < 0) {
+			error("failed to repair root items: %s", strerror(-ret));
+			goto close_out;
+		}
+		if (repair) {
+			fprintf(stderr, "Fixed %d roots.\n", ret);
+			ret = 0;
+		} else if (ret > 0) {
+			fprintf(stderr,
+				"Found %d roots with an outdated root item.\n",
+				ret);
+			fprintf(stderr,
+	"Please run a filesystem check with the option --repair to fix them.\n");
+			ret = 1;
+			err |= ret;
+			goto close_out;
+		}
+	}
+
 	ret = do_check_chunks_and_extents(info);
 	err |= !!ret;
 	if (ret)
 		error(
 		"errors found in extent allocation tree or chunk allocation");
-
-	ret = repair_root_items(info);
-	err |= !!ret;
-	if (ret < 0) {
-		error("failed to repair root items: %s", strerror(-ret));
-		goto close_out;
-	}
-	if (repair) {
-		fprintf(stderr, "Fixed %d roots.\n", ret);
-		ret = 0;
-	} else if (ret > 0) {
-		fprintf(stderr,
-		       "Found %d roots with an outdated root item.\n",
-		       ret);
-		fprintf(stderr,
-			"Please run a filesystem check with the option --repair to fix them.\n");
-		ret = 1;
-		err |= !!ret;
-		goto close_out;
-	}
 
 	if (!ctx.progress_enabled) {
 		if (btrfs_fs_compat_ro(info, FREE_SPACE_TREE))
