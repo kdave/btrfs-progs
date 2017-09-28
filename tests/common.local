@@ -3,14 +3,13 @@
 # additional arguments to various commands
 
 # already defined, eg. via make argument
-if [ -n "$TEST_ENABLE_OVERRIDE" ]; then
-	return
+if [ -z "$TEST_ENABLE_OVERRIDE" ]; then
+    # set to 'true'
+    TEST_ENABLE_OVERRIDE=false
+
+    TEST_ARGS_CHECK=--mode=lowmem
 fi
 
-# set to 'true'
-TEST_ENABLE_OVERRIDE=false
-
-TEST_ARGS_CHECK=--mode=lowmem
 
 # gets arguments of a current command and can decide if the argument insertion
 # should happen, eg. if some option combination does not make sense or would
