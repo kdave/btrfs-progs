@@ -45,29 +45,27 @@ COMPATIBILITY
 
 NOTE: The balance subcommand also exists under the *btrfs filesystem*
 namespace. This still works for backward compatibility but is deprecated and
-should not be used anymore.
+should not be used any more.
 
 NOTE: A short syntax *btrfs balance <path>* works due to backward compatibility
-but is deprecated and should not be used anymore. Use *btrfs balance start*
+but is deprecated and should not be used any more. Use *btrfs balance start*
 command instead.
 
 PERFORMANCE IMPLICATIONS
 ------------------------
 
-Balance operation is intense namely in the IO respect, but can be also CPU
-intense. It affects other actions on the filesystem. There are typically lots
-of data being copied from one location to another, and lots of metadata get
-updated.
+Balancing operations are very IO intensive and can also be quite CPU intensive,
+impacting other ongoing filesystem operations. Typically large amounts of data
+are copied from one location to another, with corresponding metadata updates.
 
-Depending on the actual block group layout, it can be also seek-heavy. The
-performance on rotational devices is noticeably worse than on SSDs or fast
-arrays.
+Depending upon the block group layout, it can also be seek heavy. Performance
+on rotational devices is noticeably worse compared to SSDs or fast arrays.
 
 SUBCOMMAND
 ----------
 *cancel* <path>::
-cancel running or paused balance, the command will block and wait until the
-actually processed blockgroup is finished
+cancels a running or paused balance, the command will block and wait until the
+current blockgroup being processed completes
 
 *pause* <path>::
 pause running balance operation, this will store the state of the balance
