@@ -795,20 +795,6 @@ end:
 	return ret;
 }
 
-static char *make_path(const char *dir, const char *name)
-{
-	char *path;
-
-	path = malloc(strlen(dir) + strlen(name) + 2);
-	if (!path)
-		return NULL;
-	strcpy(path, dir);
-	if (dir[strlen(dir) - 1] != '/')
-		strcat(path, "/");
-	strcat(path, name);
-	return path;
-}
-
 static int traverse_directory(struct btrfs_trans_handle *trans,
 			      struct btrfs_root *root, const char *dir_name,
 			      struct directory_name_entry *dir_head)
