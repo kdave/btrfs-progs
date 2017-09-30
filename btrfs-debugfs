@@ -356,8 +356,13 @@ def print_block_groups(mountpoint):
 
                 ctypes.memmove(ctypes.addressof(bg), p, ctypes.sizeof(bg))
                 if bg.flags & BTRFS_BLOCK_GROUP_DATA:
-                    print "block group offset %Lu len %Lu used %Lu chunk_objectid %Lu flags %Lu usage %.2f" %\
-                     (header.objectid, header.offset, bg.used, bg.chunk_objectid, bg.flags, float(bg.used) / float(header.offset))
+                    print "block group offset %s len %s used %s chunk_objectid %Lu flags %Lu usage %.2f" %\
+                     ('{:>14}'.format(header.objectid),
+                      '{:>10}'.format(header.offset),
+                      '{:>10}'.format(bg.used),
+                      bg.chunk_objectid,
+                      bg.flags,
+                      float(bg.used) / float(header.offset))
 
                     total_free += (header.offset - bg.used)
                     if min_used >= bg.used:
