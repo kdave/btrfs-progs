@@ -458,6 +458,7 @@ static const char * const cmd_subvol_list_usage[] = {
 	"",
 	"Type filtering:",
 	"-s           list only snapshots",
+	"-P           list parent subvolumes only",
 	"-r           list readonly subvolumes (including snapshots)",
 	"-d           list deleted subvolumes that are not yet cleaned",
 	"",
@@ -503,7 +504,7 @@ static int cmd_subvol_list(int argc, char **argv)
 		};
 
 		c = getopt_long(argc, argv,
-				    "acdgopqsurRG:C:t", long_options, NULL);
+				    "acdgopPqsurRG:C:t", long_options, NULL);
 		if (c < 0)
 			break;
 
@@ -530,6 +531,10 @@ static int cmd_subvol_list(int argc, char **argv)
 			break;
 		case 't':
 			layout = BTRFS_LIST_LAYOUT_TABLE;
+			break;
+		case 'P':
+			btrfs_list_setup_filter(&filter_set,
+					BTRFS_LIST_FILTER_PARENT_SUBVOL_ONLY, 0);
 			break;
 		case 's':
 			btrfs_list_setup_filter(&filter_set,
