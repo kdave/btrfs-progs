@@ -102,7 +102,7 @@ int task_period_start(struct task_info *info, unsigned int period_ms)
 	info->periodic.wakeups_missed = 0;
 
 	sec = period_ms / 1000;
-	ns = (period_ms - (sec * 1000)) * 1000;
+	ns = (period_ms - (sec * 1000)) * 1000 * 1000;
 	itval.it_interval.tv_sec = sec;
 	itval.it_interval.tv_nsec = ns;
 	itval.it_value.tv_sec = sec;
