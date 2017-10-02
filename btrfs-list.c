@@ -1340,21 +1340,21 @@ static void print_subvolume_column(struct root_info *subv,
 			strcpy(uuidparse, "-");
 		else
 			uuid_unparse(subv->uuid, uuidparse);
-		printf("%s", uuidparse);
+		printf("%-36s", uuidparse);
 		break;
 	case BTRFS_LIST_PUUID:
 		if (uuid_is_null(subv->puuid))
 			strcpy(uuidparse, "-");
 		else
 			uuid_unparse(subv->puuid, uuidparse);
-		printf("%s", uuidparse);
+		printf("%-36s", uuidparse);
 		break;
 	case BTRFS_LIST_RUUID:
 		if (uuid_is_null(subv->ruuid))
 			strcpy(uuidparse, "-");
 		else
 			uuid_unparse(subv->ruuid, uuidparse);
-		printf("%s", uuidparse);
+		printf("%-36s", uuidparse);
 		break;
 	case BTRFS_LIST_PATH:
 		BUG_ON(!subv->full_path);
