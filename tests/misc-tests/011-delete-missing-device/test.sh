@@ -50,7 +50,7 @@ dev1=${loopdevs[1]}
 devtodel=${loopdevs[3]}
 TEST_DEV=$dev1
 
-test_do_mkfs
+test_do_mkfs -m raid1 -d raid1
 test_wipefs
 test_delete_missing
 
