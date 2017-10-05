@@ -1273,8 +1273,18 @@ static void filter_and_sort_subvol(struct root_lookup *all_subvols,
 
 		ret = resolve_root(all_subvols, entry, top_id);
 		if (ret == -ENOENT) {
-			entry->full_path = strdup("DELETED");
-			entry->deleted = 1;
+			if (top_id != BTRFS_FS_TREE_OBJECTID) {
+				entry->full_path = strdup("DELETED");
+				entry->deleted = 1;
+			} else {
+				/*
+				 * The full path is not supposed to be printed,
+				 * but we don't want to print an empty string,
+				 * in case it appears somewhere.
+				 */
+				entry->full_path = strdup("TOPLEVEL");
+				entry->deleted = 0;
+			}
 		}
 		ret = filter_root(entry, filter_set);
 		if (ret)
@@ -1459,6 +1469,11 @@ static void print_all_subvol_info(struct root_lookup *sorted_tree,
 	n = rb_first(&sorted_tree->root);
 	while (n) {
 		entry = rb_entry(n, struct root_info, sort_node);
+
+		/* The toplevel subvolume is not listed by default */
+		if (entry->root_id == BTRFS_FS_TREE_OBJECTID)
+			goto next;
+
 		switch (layout) {
 		case BTRFS_LIST_LAYOUT_DEFAULT:
 			print_one_subvol_info_default(entry);
@@ -1470,6 +1485,7 @@ static void print_all_subvol_info(struct root_lookup *sorted_tree,
 			print_one_subvol_info_raw(entry, raw_prefix);
 			break;
 		}
+next:
 		n = rb_next(n);
 	}
 }
