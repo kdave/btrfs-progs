@@ -142,12 +142,13 @@ you can add \'\+' or \'-' in front of each items, \'+' means ascending,
 for --sort you can combine some items together by \',', just like
 --sort=+ogen,-gen,path,rootid.
 
-*set-default* <id> <path>::
-Set the subvolume of the filesystem <path> which is mounted as
-default.
+*set-default* [<subvolume>|<id> <path>]::
+Set the default subvolume of the (mounted) filesystem.
 +
-The subvolume is identified by <id>, which is returned by the *subvolume list*
-command.
+There are two ways how to specify the subvolume, by <id> or by the <subvolume>
+path.
+The id can be obtained from *btrfs subvolume list*, *btrfs subvolume show* or
+*btrfs inspect-internal rootid*.
 
 *show* <path>::
 Show information of a given subvolume in the <path>.
