@@ -858,8 +858,11 @@ out:
 }
 
 static const char * const cmd_subvol_set_default_usage[] = {
+	"btrfs subvolume set-default <subvolume>\n"
 	"btrfs subvolume set-default <subvolid> <path>",
-	"Set the default subvolume of a filesystem",
+	"Set the default subvolume of the filesystem mounted as default.",
+	"The subvolume can be specified by its path,",
+	"or the pair of subvolume id and path to the filesystem.",
 	NULL
 };
 
@@ -873,17 +876,43 @@ static int cmd_subvol_set_default(int argc, char **argv)
 
 	clean_args_no_options(argc, argv, cmd_subvol_set_default_usage);
 
-	if (check_argc_exact(argc - optind, 2))
+	if (check_argc_min(argc - optind, 1) ||
+			check_argc_max(argc - optind, 2))
 		usage(cmd_subvol_set_default_usage);
 
-	subvolid = argv[optind];
-	path = argv[optind + 1];
+	if (argc - optind == 1) {
+		/* path to the subvolume is specified */
+		path = argv[optind];
 
-	objectid = arg_strtou64(subvolid);
+		ret = test_issubvolume(path);
+		if (ret < 0) {
+			error("stat error: %s", strerror(-ret));
+			return 1;
+		} else if (!ret) {
+			error("'%s' is not a subvolume", path);
+			return 1;
+		}
 
-	fd = btrfs_open_dir(path, &dirstream, 1);
-	if (fd < 0)
-		return 1;
+		fd = btrfs_open_dir(path, &dirstream, 1);
+		if (fd < 0)
+			return 1;
+
+		ret = lookup_path_rootid(fd, &objectid);
+		if (ret) {
+			error("unable to get subvol id: %s", strerror(-ret));
+			close_file_or_dir(fd, dirstream);
+			return 1;
+		}
+	} else {
+		/* subvol id and path to the filesystem are specified */
+		subvolid = argv[optind];
+		path = argv[optind + 1];
+		objectid = arg_strtou64(subvolid);
+
+		fd = btrfs_open_dir(path, &dirstream, 1);
+		if (fd < 0)
+			return 1;
+	}
 
 	ret = ioctl(fd, BTRFS_IOC_DEFAULT_SUBVOL, &objectid);
 	e = errno;
