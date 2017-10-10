@@ -13112,6 +13112,8 @@ int cmd_check(int argc, char **argv)
 			warning(
 			"filesystem mounted, continuing because of --force");
 		}
+		/* A block device is mounted in exclusive mode by kernel */
+		ctree_flags &= ~OPEN_CTREE_EXCLUSIVE;
 	}
 
 	/* only allow partial opening under repair mode */
