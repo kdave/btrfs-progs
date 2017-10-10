@@ -11238,6 +11238,66 @@ static int check_device_used(struct device_record *dev_rec,
 	}
 }
 
+/*
+ * Extra (optional) check for dev_item size to report possbile problem on a new
+ * kernel.
+ */
+static void check_dev_size_alignment(u64 devid, u64 total_bytes, u32 sectorsize)
+{
+	if (!IS_ALIGNED(total_bytes, sectorsize)) {
+		warning(
+"unaligned total_bytes detected for devid %llu, have %llu should be aligned to %u",
+			devid, total_bytes, sectorsize);
+		warning(
+"this is OK for older kernel, but may cause kernel warning for newer kernels");
+		warning("this can be fixed by 'btrfs rescue fix-device-size'");
+	}
+}
+
+/*
+ * Unlike device size alignment check above, some super total_bytes check
+ * failure can lead to mount failure for newer kernel.
+ *
+ * So this function will return the error for a fatal super total_bytes problem.
+ */
+static bool is_super_size_valid(struct btrfs_fs_info *fs_info)
+{
+	struct btrfs_device *dev;
+	struct list_head *dev_list = &fs_info->fs_devices->devices;
+	u64 total_bytes = 0;
+	u64 super_bytes = btrfs_super_total_bytes(fs_info->super_copy);
+
+	list_for_each_entry(dev, dev_list, dev_list)
+		total_bytes += dev->total_bytes;
+
+	/* Important check, which can cause unmountable fs */
+	if (super_bytes < total_bytes) {
+		error("super total bytes %llu smaller than real device(s) size %llu",
+			super_bytes, total_bytes);
+		error("mounting this fs may fail for newer kernels");
+		error("this can be fixed by 'btrfs rescue fix-device-size'");
+		return false;
+	}
+
+	/*
+	 * Optional check, just to make everything aligned and match with each
+	 * other.
+	 *
+	 * For a btrfs-image restored fs, we don't need to check it anyway.
+	 */
+	if (btrfs_super_flags(fs_info->super_copy) &
+	    (BTRFS_SUPER_FLAG_METADUMP | BTRFS_SUPER_FLAG_METADUMP_V2))
+		return true;
+	if (!IS_ALIGNED(super_bytes, fs_info->sectorsize) ||
+	    !IS_ALIGNED(total_bytes, fs_info->sectorsize) ||
+	    super_bytes != total_bytes) {
+		warning("minor unaligned/mismatch device size detected");
+		warning(
+		"recommended to use 'btrfs rescue fix-device-size' to fix it");
+	}
+	return true;
+}
+
 /* check btrfs_dev_item -> btrfs_dev_extent */
 static int check_devices(struct rb_root *dev_cache,
 			 struct device_extent_tree *dev_extent_cache)
@@ -11255,6 +11315,8 @@ static int check_devices(struct rb_root *dev_cache,
 		if (err)
 			ret = err;
 
+		check_dev_size_alignment(dev_rec->devid, dev_rec->total_byte,
+					 global_info->sectorsize);
 		dev_node = rb_next(dev_node);
 	}
 	list_for_each_entry(dext_rec, &dev_extent_cache->no_device_orphans,
@@ -12757,6 +12819,7 @@ static int check_dev_item(struct btrfs_fs_info *fs_info,
 	struct btrfs_path path;
 	struct btrfs_key key;
 	struct btrfs_dev_extent *ptr;
+	u64 total_bytes;
 	u64 dev_id;
 	u64 used;
 	u64 total = 0;
@@ -12765,6 +12828,7 @@ static int check_dev_item(struct btrfs_fs_info *fs_info,
 	dev_item = btrfs_item_ptr(eb, slot, struct btrfs_dev_item);
 	dev_id = btrfs_device_id(eb, dev_item);
 	used = btrfs_device_bytes_used(eb, dev_item);
+	total_bytes = btrfs_device_total_bytes(eb, dev_item);
 
 	key.objectid = dev_id;
 	key.type = BTRFS_DEV_EXTENT_KEY;
@@ -12809,6 +12873,8 @@ next:
 			BTRFS_DEV_EXTENT_KEY, dev_id);
 		return ACCOUNTING_MISMATCH;
 	}
+	check_dev_size_alignment(dev_id, total_bytes, fs_info->sectorsize);
+
 	return 0;
 }
 
@@ -13353,6 +13419,12 @@ static int do_check_chunks_and_extents(struct btrfs_fs_info *fs_info)
 	else
 		ret = check_chunks_and_extents(fs_info);
 
+	/* Also repair device size related problems */
+	if (repair && !ret) {
+		ret = btrfs_fix_device_and_super_size(fs_info);
+		if (ret > 0)
+			ret = 0;
+	}
 	return ret;
 }
 
@@ -14871,6 +14943,9 @@ int cmd_check(int argc, char **argv)
 	if (ret)
 		error(
 		"errors found in extent allocation tree or chunk allocation");
+
+	/* Only re-check super size after we checked and repaired the fs */
+	err |= !is_super_size_valid(info);
 
 	if (!ctx.progress_enabled) {
 		if (btrfs_fs_compat_ro(info, FREE_SPACE_TREE))
