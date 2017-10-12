@@ -148,7 +148,7 @@ AC_SUBST([BTRFSCONVERT_EXT2])
 AC_SUBST([BTRFSCONVERT_REISERFS])
 
 # catch typos
-tmp=$(echo "$with_convert" | sed -e 's/auto//' | sed -e 's/ext2//' | sed -e 's/reiserfs//' | sed -e 's/,\+/,/')
+tmp=$(echo "$with_convert" | sed -e 's/auto//' | sed -e 's/ext2//' | sed -e 's/reiserfs//' | sed -e 's/,\+//')
 if ! test "x$tmp" = "x"; then
 	AC_MSG_ERROR([unknown tokens for --with-convert: $tmp])
 fi
