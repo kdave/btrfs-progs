@@ -60,7 +60,7 @@ DEBUG_LDFLAGS_INTERNAL =
 DEBUG_LDFLAGS :=
 
 ABSTOPDIR = $(shell pwd)
-TOPDIR := $(shell pwd)
+TOPDIR := .
 
 # Common build flags
 CSTD = -std=gnu90
