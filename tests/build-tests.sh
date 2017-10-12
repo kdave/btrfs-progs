@@ -87,6 +87,15 @@ build_make_targets
 conf='--disable-convert'
 build_make_targets
 
+conf='--with-convert=ext2'
+build_make_targets
+
+conf='--with-convert=ext2,reiserfs'
+build_make_targets
+
+conf='--enable-zstd'
+build_make_targets
+
 # debugging builds, just the default targets
 target='D=1'
 buildme
