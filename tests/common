@@ -236,6 +236,57 @@ run_mustfail()
 	fi
 }
 
+run_mustfail_stdout()
+{
+	local spec
+	local ins
+	local cmd
+	local msg
+	local ret
+
+	# We don't use pipefail to avoid disturbing other script, so here we
+	# use temporary output file.
+	# So it doesn't support pipeline in the @cmd
+	local tmp_output
+
+	tmp_output=$(mktemp --tmpdir btrfs-progs-test--mustfail-stdtout.XXXXXX)
+
+	msg="$1"
+	shift
+
+	if _is_file_or_command "$msg"; then
+		echo "ASSERTION FAIL: 1st argument of run_mustfail_stdout must be a message"
+		exit 1
+	fi
+
+	ins=$(_get_spec_ins "$@")
+	spec=$(($ins-1))
+	cmd=$(eval echo "\${$spec}")
+	spec=$(_cmd_spec "${@:$spec}")
+	set -- "${@:1:$(($ins-1))}" $spec "${@: $ins}"
+	echo "############### $@" >> "$RESULTS" 2>&1
+	if [[ $TEST_LOG =~ tty ]]; then echo "CMD(mustfail): $@" > /dev/tty; fi
+	if [ "$1" = 'root_helper' ]; then
+		"$@" 2>&1 > "$tmp_output"
+	else
+		$INSTRUMENT "$@" 2>&1 > "$tmp_output"
+	fi
+	ret=$?
+
+	cat "$tmp_output" >> "$RESULTS"
+	cat "$tmp_output"
+	rm "$tmp_output"
+
+	if [ "$ret" != 0 ]; then
+		echo "failed (expected): $@" >> "$RESULTS"
+		return 0
+	else
+		echo "succeeded (unexpected!): $@" >> "$RESULTS"
+		_fail "unexpected success: $msg"
+		return 1
+	fi
+}
+
 check_prereq()
 {
 	if ! [ -f "$TOP/$1" ]; then
@@ -389,7 +440,11 @@ prepare_test_dev()
 	# num[K/M/G/T...]
 	local size="$1"
 
-	[[ "$TEST_DEV" ]] && return
+	# Still truncate it to new size
+	if [[ "$TEST_DEV" ]]; then
+		truncate -s "$size" "$TEST_DEV"
+		return;
+	fi
 	[[ "$size" ]] || size='2G'
 
 	echo "\$TEST_DEV not given, use $TOP/test/test.img as fallback" >> \
