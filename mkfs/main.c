@@ -1664,7 +1664,8 @@ int main(int argc, char **argv)
 		goto error;
 	}
 
-	min_dev_size = btrfs_min_dev_size(nodesize);
+	min_dev_size = btrfs_min_dev_size(nodesize, mixed, metadata_profile,
+					  data_profile);
 	/* Check device/block_count after the nodesize is determined */
 	if (block_count && block_count < min_dev_size) {
 		error("size %llu is too small to make a usable filesystem",
