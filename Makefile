@@ -59,6 +59,7 @@ DEBUG_LDFLAGS_DEFAULT =
 DEBUG_LDFLAGS_INTERNAL =
 DEBUG_LDFLAGS :=
 
+ABSTOPDIR = $(shell pwd)
 TOPDIR := $(shell pwd)
 
 # Common build flags
@@ -487,7 +488,7 @@ library-test: library-test.c $(libs_shared)
 	@echo "    [TEST PREP]  $@"$(eval TMPD=$(shell mktemp -d))
 	$(Q)mkdir -p $(TMPD)/include/btrfs && \
 	cp $(libbtrfs_headers) $(TMPD)/include/btrfs && \
-	cd $(TMPD) && $(CC) -I$(TMPD)/include -o $@ $(addprefix $(TOPDIR)/,$^) -Wl,-rpath=$(TOPDIR) -lbtrfs
+	cd $(TMPD) && $(CC) -I$(TMPD)/include -o $@ $(addprefix $(ABSTOPDIR)/,$^) -Wl,-rpath=$(ABSTOPDIR) -lbtrfs
 	@echo "    [TEST RUN]   $@"
 	$(Q)cd $(TMPD) && ./$@
 	@echo "    [TEST CLEAN] $@"
@@ -497,7 +498,7 @@ library-test.static: library-test.c $(libs_static)
 	@echo "    [TEST PREP]  $@"$(eval TMPD=$(shell mktemp -d))
 	$(Q)mkdir -p $(TMPD)/include/btrfs && \
 	cp $(libbtrfs_headers) $(TMPD)/include/btrfs && \
-	cd $(TMPD) && $(CC) -I$(TMPD)/include -o $@ $(addprefix $(TOPDIR)/,$^) $(STATIC_LDFLAGS) $(STATIC_LIBS)
+	cd $(TMPD) && $(CC) -I$(TMPD)/include -o $@ $(addprefix $(ABSTOPDIR)/,$^) $(STATIC_LDFLAGS) $(STATIC_LIBS)
 	@echo "    [TEST RUN]   $@"
 	$(Q)cd $(TMPD) && ./$@
 	@echo "    [TEST CLEAN] $@"
