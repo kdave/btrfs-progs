@@ -1273,7 +1273,7 @@ static void filter_and_sort_subvol(struct root_lookup *all_subvols,
 
 		ret = resolve_root(all_subvols, entry, top_id);
 		if (ret == -ENOENT) {
-			if (top_id != BTRFS_FS_TREE_OBJECTID) {
+			if (entry->root_id != BTRFS_FS_TREE_OBJECTID) {
 				entry->full_path = strdup("DELETED");
 				entry->deleted = 1;
 			} else {
