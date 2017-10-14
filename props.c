@@ -142,10 +142,13 @@ static int prop_compression(enum prop_object_type type,
 	memcpy(xattr_name + XATTR_BTRFS_PREFIX_LEN, name, strlen(name));
 	xattr_name[XATTR_BTRFS_PREFIX_LEN + strlen(name)] = '\0';
 
-	if (value)
+	if (value) {
+		if (strcmp(value, "no") == 0)
+			value = "";
 		sret = fsetxattr(fd, xattr_name, value, strlen(value), 0);
-	else
+	} else {
 		sret = fgetxattr(fd, xattr_name, NULL, 0);
+	}
 	if (sret < 0) {
 		ret = -errno;
 		if (ret != -ENOATTR)
