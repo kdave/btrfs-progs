@@ -43,7 +43,8 @@ read-only flag of subvolume: true or false
 label::::
 label of device
 compression::::
-compression setting for an inode: lzo, zlib, zstd, no, or "" (empty string). Both no and "" are for disabling compression.
+compression algorithm for an inode, possible values: 'lzo', 'zlib', 'zstd'. To
+disable compression use "" (empty string), 'no' or 'none'.
 
 *list* [-t <type>] <object>::
 Lists available properties with their descriptions for the given object.
