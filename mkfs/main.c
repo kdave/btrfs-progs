@@ -758,6 +758,7 @@ int main(int argc, char **argv)
 	u64 num_of_meta_chunks = 0;
 	u64 size_of_data = 0;
 	u64 source_dir_size = 0;
+	u64 min_dev_size;
 	int dev_cnt = 0;
 	int saved_optind;
 	char fs_uuid[BTRFS_UUID_UNPARSED_SIZE] = { 0 };
@@ -978,19 +979,20 @@ int main(int argc, char **argv)
 		goto error;
 	}
 
+	min_dev_size = btrfs_min_dev_size(nodesize);
 	/* Check device/block_count after the nodesize is determined */
-	if (block_count && block_count < btrfs_min_dev_size(nodesize)) {
+	if (block_count && block_count < min_dev_size) {
 		error("size %llu is too small to make a usable filesystem",
 			block_count);
 		error("minimum size for btrfs filesystem is %llu",
-			btrfs_min_dev_size(nodesize));
+			min_dev_size);
 		goto error;
 	}
 	for (i = saved_optind; i < saved_optind + dev_cnt; i++) {
 		char *path;
 
 		path = argv[i];
-		ret = test_minimum_size(path, nodesize);
+		ret = test_minimum_size(path, min_dev_size);
 		if (ret < 0) {
 			error("failed to check size for %s: %s",
 				path, strerror(-ret));
@@ -1000,7 +1002,7 @@ int main(int argc, char **argv)
 			error("'%s' is too small to make a usable filesystem",
 				path);
 			error("minimum size for each btrfs device is %llu",
-				btrfs_min_dev_size(nodesize));
+				min_dev_size);
 			goto error;
 		}
 	}

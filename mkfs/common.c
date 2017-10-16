@@ -698,7 +698,7 @@ int is_vol_small(const char *file)
 	}
 }
 
-int test_minimum_size(const char *file, u32 nodesize)
+int test_minimum_size(const char *file, u64 min_dev_size)
 {
 	int fd;
 	struct stat statbuf;
@@ -710,7 +710,7 @@ int test_minimum_size(const char *file, u32 nodesize)
 		close(fd);
 		return -errno;
 	}
-	if (btrfs_device_size(fd, &statbuf) < btrfs_min_dev_size(nodesize)) {
+	if (btrfs_device_size(fd, &statbuf) < min_dev_size) {
 		close(fd);
 		return 1;
 	}
