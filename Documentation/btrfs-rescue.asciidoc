@@ -73,6 +73,35 @@ the log and the filesystem may be mounted normally again. The keywords to look
 for are 'open_ctree' which says that it's during mount and function names
 that contain 'replay', 'recover' or 'log_tree'.
 
+*fix-device-size* <device>::
+fix device size and super block total bytes
++
+This command will fix the following problems, by re-aligning all devices' total
+bytes and re-calculating super block total bytes.
++
+1. Newer kernel refuse to mount btrfs caused by mismatch super block total bytes
++
+----
+BTRFS error (device sdb): super_total_bytes 92017859088384 mismatch with fs_devices total_rw_bytes 92017859094528
+----
++
+2. Noisy kernel warning for newer kernels
++
+----
+WARNING: CPU: 3 PID: 439 at fs/btrfs/ctree.h:1559 btrfs_update_device+0x1c5/0x1d0 [btrfs]
+----
++
+And the corresponding line is the `WARN_ON()` line below:
++
+----
+{
+	BUILD_BUG_ON(sizeof(u64) !=
+		     sizeof(((struct btrfs_dev_item *)0))->total_bytes);
+	WARN_ON(!IS_ALIGNED(val, eb->fs_info->sectorsize));
+	btrfs_set_64(eb, s, offsetof(struct btrfs_dev_item, total_bytes), val);
+}
+----
+
 EXIT STATUS
 -----------
 *btrfs rescue* returns a zero exit status if it succeeds. Non zero is

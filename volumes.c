@@ -2477,3 +2477,60 @@ int btrfs_fix_super_size(struct btrfs_fs_info *fs_info)
 		old_bytes, total_bytes);
 	return 1;
 }
+
+/*
+ * Return 0 if all devices and super block sizes are good
+ * Return >0 if any device/super size problem was found, but fixed
+ * Return <0 if something wrong happened during fixing
+ */
+int btrfs_fix_device_and_super_size(struct btrfs_fs_info *fs_info)
+{
+	struct btrfs_device *device;
+	struct list_head *dev_list = &fs_info->fs_devices->devices;
+	bool have_bad_value = false;
+	int ret;
+
+	/* Seed device is not supported yet */
+	if (fs_info->fs_devices->seed) {
+		error("fixing device size with seed device is not supported yet");
+		return -EOPNOTSUPP;
+	}
+
+	/* All devices must be set up before repairing */
+	if (list_empty(dev_list)) {
+		error("no device found");
+		return -ENODEV;
+	}
+	list_for_each_entry(device, dev_list, dev_list) {
+		if (device->fd == -1 || !device->writeable) {
+			error("devid %llu is missing or not writeable",
+			      device->devid);
+			error(
+	"fixing device size needs all device(s) to be present and writeable");
+			return -ENODEV;
+		}
+	}
+
+	/* Repair total_bytes of each device */
+	list_for_each_entry(device, dev_list, dev_list) {
+		ret = btrfs_fix_device_size(fs_info, device);
+		if (ret < 0)
+			return ret;
+		if (ret > 0)
+			have_bad_value = true;
+	}
+
+	/* Repair super total_byte */
+	ret = btrfs_fix_super_size(fs_info);
+	if (ret > 0)
+		have_bad_value = true;
+	if (have_bad_value) {
+		printf(
+	"Fixed unaligned/mismatched total_bytes for super block and device items\n");
+		ret = 1;
+	} else {
+		printf("No device size related problem found\n");
+		ret = 0;
+	}
+	return ret;
+}

@@ -20,6 +20,7 @@
 
 #include <getopt.h>
 #include "ctree.h"
+#include "volumes.h"
 #include "transaction.h"
 #include "disk-io.h"
 #include "commands.h"
@@ -202,6 +203,51 @@ out:
 	return !!ret;
 }
 
+static const char * const cmd_rescue_fix_device_size_usage[] = {
+	"btrfs rescue fix-device-size <device>",
+	"Re-align device and super block sizes. Usable if newer kernel refuse to mount it due to mismatch super size",
+	"",
+	NULL
+};
+
+static int cmd_rescue_fix_device_size(int argc, char **argv)
+{
+	struct btrfs_fs_info *fs_info;
+	char *devname;
+	int ret;
+
+	clean_args_no_options(argc, argv, cmd_rescue_fix_device_size_usage);
+
+	if (check_argc_exact(argc, 2))
+		usage(cmd_rescue_fix_device_size_usage);
+
+	devname = argv[optind];
+	ret = check_mounted(devname);
+	if (ret < 0) {
+		error("could not check mount status: %s", strerror(-ret));
+		goto out;
+	} else if (ret) {
+		error("%s is currently mounted", devname);
+		ret = -EBUSY;
+		goto out;
+	}
+
+	fs_info = open_ctree_fs_info(devname, 0, 0, 0, OPEN_CTREE_WRITES |
+				     OPEN_CTREE_PARTIAL);
+	if (!fs_info) {
+		error("could not open btrfs");
+		ret = -EIO;
+		goto out;
+	}
+
+	ret = btrfs_fix_device_and_super_size(fs_info);
+	if (ret > 0)
+		ret = 0;
+	close_ctree(fs_info->tree_root);
+out:
+	return !!ret;
+}
+
 static const char rescue_cmd_group_info[] =
 "toolbox for specific rescue operations";
 
@@ -212,6 +258,8 @@ const struct cmd_group rescue_cmd_group = {
 		{ "super-recover", cmd_rescue_super_recover,
 			cmd_rescue_super_recover_usage, NULL, 0},
 		{ "zero-log", cmd_rescue_zero_log, cmd_rescue_zero_log_usage, NULL, 0},
+		{ "fix-device-size", cmd_rescue_fix_device_size,
+			cmd_rescue_fix_device_size_usage, NULL, 0},
 		NULL_CMD_STRUCT
 	}
 };
