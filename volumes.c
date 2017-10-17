@@ -2425,3 +2425,55 @@ err:
 	btrfs_release_path(&path);
 	return ret;
 }
+
+/*
+ * Return 0 if super block total_bytes matches all devices' total_bytes
+ * Return >0 if super block total_bytes mismatch but fixed without problem
+ * Return <0 if we failed to fix super block total_bytes
+ */
+int btrfs_fix_super_size(struct btrfs_fs_info *fs_info)
+{
+	struct btrfs_trans_handle *trans;
+	struct btrfs_device *device;
+	struct list_head *dev_list = &fs_info->fs_devices->devices;
+	u64 total_bytes = 0;
+	u64 old_bytes = btrfs_super_total_bytes(fs_info->super_copy);
+	int ret;
+
+	list_for_each_entry(device, dev_list, dev_list) {
+		/*
+		 * Caller should ensure this function is called after aligning
+		 * all devices' total_bytes.
+		 */
+		if (!IS_ALIGNED(device->total_bytes, fs_info->sectorsize)) {
+			error("device %llu total_bytes %llu not aligned to %u",
+				device->devid, device->total_bytes,
+				fs_info->sectorsize);
+			return -EUCLEAN;
+		}
+		total_bytes += device->total_bytes;
+	}
+
+	if (total_bytes == old_bytes)
+		return 0;
+
+	btrfs_set_super_total_bytes(fs_info->super_copy, total_bytes);
+
+	/* Commit transaction to update all super blocks */
+	trans = btrfs_start_transaction(fs_info->tree_root, 1);
+	if (IS_ERR(trans)) {
+		ret = PTR_ERR(trans);
+		error("error starting transaction:  %d (%s)",
+		      ret, strerror(-ret));
+		return ret;
+	}
+	ret = btrfs_commit_transaction(trans, fs_info->tree_root);
+	if (ret < 0) {
+		error("failed to commit current transaction: %d (%s)",
+			ret, strerror(-ret));
+		return ret;
+	}
+	printf("Fixed super total bytes, old size: %llu new size: %llu\n",
+		old_bytes, total_bytes);
+	return 1;
+}
