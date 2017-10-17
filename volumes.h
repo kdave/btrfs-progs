@@ -245,4 +245,6 @@ int btrfs_check_chunk_valid(struct btrfs_fs_info *fs_info,
 u64 btrfs_stripe_length(struct btrfs_fs_info *fs_info,
 			struct extent_buffer *leaf,
 			struct btrfs_chunk *chunk);
+int btrfs_fix_device_size(struct btrfs_fs_info *fs_info,
+			  struct btrfs_device *device);
 #endif
