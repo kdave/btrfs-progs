@@ -177,6 +177,7 @@ static int cmd_rescue_zero_log(int argc, char **argv)
 	} else if (ret) {
 		error("%s is currently mounted", devname);
 		ret = -EBUSY;
+		goto out;
 	}
 
 	root = open_ctree(devname, 0, OPEN_CTREE_WRITES | OPEN_CTREE_PARTIAL);
