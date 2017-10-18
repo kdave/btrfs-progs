@@ -27,4 +27,6 @@ struct directory_name_entry {
 
 int btrfs_mkfs_fill_dir(const char *source_dir, struct btrfs_root *root,
 			bool verbose);
+u64 btrfs_mkfs_size_dir(const char *dir_name, u64 sectorsize,
+			u64 *num_of_meta_chunks_ret, u64 *size_of_data_ret);
 #endif
