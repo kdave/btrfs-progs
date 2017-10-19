@@ -1086,6 +1086,19 @@ static int make_image(const char *source_dir, struct btrfs_root *root)
 		printf("Making image is completed.\n");
 	return 0;
 fail:
+	/*
+	 * Since we don't have btrfs_abort_transaction() yet, uncommitted trans
+	 * will trigger a BUG_ON().
+	 *
+	 * However before mkfs is fully finished, the magic number is invalid,
+	 * so even we commit transaction here, the fs still can't be mounted.
+	 *
+	 * To do a graceful error out, here we commit transaction as a
+	 * workaround.
+	 * Since we have already hit some problem, the return value doesn't
+	 * matter now.
+	 */
+	btrfs_commit_transaction(trans, root);
 	while (!list_empty(&dir_head.list)) {
 		dir_entry = list_entry(dir_head.list.next,
 				       struct directory_name_entry, list);
