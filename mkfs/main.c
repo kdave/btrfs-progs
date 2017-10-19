@@ -732,8 +732,6 @@ int main(int argc, char **argv)
 	int force_overwrite = 0;
 	char *source_dir = NULL;
 	int source_dir_set = 0;
-	u64 num_of_meta_chunks = 0;
-	u64 size_of_data = 0;
 	u64 source_dir_size = 0;
 	u64 min_dev_size;
 	int dev_cnt = 0;
@@ -952,6 +950,34 @@ int main(int argc, char **argv)
 
 	min_dev_size = btrfs_min_dev_size(nodesize, mixed, metadata_profile,
 					  data_profile);
+	/*
+	 * Enlarge the destination file or create a new one, using the size
+	 * calculated from source dir.
+	 *
+	 * This must be done before minimal device size checks.
+	 */
+	if (source_dir_set) {
+		fd = open(file, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR | S_IRGRP |
+			  S_IWGRP | S_IROTH);
+		if (fd < 0) {
+			error("unable to open %s: %s", file, strerror(errno));
+			goto error;
+		}
+
+		source_dir_size = btrfs_mkfs_size_dir(source_dir, sectorsize,
+				min_dev_size, metadata_profile, data_profile);
+		if (block_count < source_dir_size)
+			block_count = source_dir_size;
+		ret = zero_output_file(fd, block_count);
+		if (ret) {
+			error("unable to zero the output file");
+			close(fd);
+			goto error;
+		}
+		/* our "device" is the new image file */
+		dev_block_count = block_count;
+		close(fd);
+	}
 	/* Check device/block_count after the nodesize is determined */
 	if (block_count && block_count < min_dev_size) {
 		error("size %llu is too small to make a usable filesystem",
@@ -985,51 +1011,27 @@ int main(int argc, char **argv)
 
 	dev_cnt--;
 
-	if (!source_dir_set) {
-		/*
-		 * open without O_EXCL so that the problem should not
-		 * occur by the following processing.
-		 * (btrfs_register_one_device() fails if O_EXCL is on)
-		 */
-		fd = open(file, O_RDWR);
-		if (fd < 0) {
-			error("unable to open %s: %s", file, strerror(errno));
-			goto error;
-		}
-		ret = btrfs_prepare_device(fd, file, &dev_block_count,
-				block_count,
-				(zero_end ? PREP_DEVICE_ZERO_END : 0) |
-				(discard ? PREP_DEVICE_DISCARD : 0) |
-				(verbose ? PREP_DEVICE_VERBOSE : 0));
-		if (ret) {
-			goto error;
-		}
-		if (block_count && block_count > dev_block_count) {
-			error("%s is smaller than requested size, expected %llu, found %llu",
-					file,
-					(unsigned long long)block_count,
-					(unsigned long long)dev_block_count);
-			goto error;
-		}
-	} else {
-		fd = open(file, O_CREAT | O_RDWR,
-				S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH);
-		if (fd < 0) {
-			error("unable to open %s: %s", file, strerror(errno));
-			goto error;
-		}
-
-		source_dir_size = btrfs_mkfs_size_dir(source_dir, sectorsize,
-					&num_of_meta_chunks, &size_of_data);
-		if(block_count < source_dir_size)
-			block_count = source_dir_size;
-		ret = zero_output_file(fd, block_count);
-		if (ret) {
-			error("unable to zero the output file");
-			goto error;
-		}
-		/* our "device" is the new image file */
-		dev_block_count = block_count;
+	/*
+	 * Open without O_EXCL so that the problem should not occur by the
+	 * following operation in kernel:
+	 * (btrfs_register_one_device() fails if O_EXCL is on)
+	 */
+	fd = open(file, O_RDWR);
+	if (fd < 0) {
+		error("unable to open %s: %s", file, strerror(errno));
+		goto error;
+	}
+	ret = btrfs_prepare_device(fd, file, &dev_block_count, block_count,
+			(zero_end ? PREP_DEVICE_ZERO_END : 0) |
+			(discard ? PREP_DEVICE_DISCARD : 0) |
+			(verbose ? PREP_DEVICE_VERBOSE : 0));
+	if (ret)
+		goto error;
+	if (block_count && block_count > dev_block_count) {
+		error("%s is smaller than requested size, expected %llu, found %llu",
+		      file, (unsigned long long)block_count,
+		      (unsigned long long)dev_block_count);
+		goto error;
 	}
 
 	/* To create the first block group and chunk 0 in make_btrfs */
@@ -1155,13 +1157,11 @@ int main(int argc, char **argv)
 	}
 
 raid_groups:
-	if (!source_dir_set) {
-		ret = create_raid_groups(trans, root, data_profile,
-				 metadata_profile, mixed, &allocation);
-		if (ret) {
-			error("unable to create raid groups: %d", ret);
-			goto out;
-		}
+	ret = create_raid_groups(trans, root, data_profile,
+			 metadata_profile, mixed, &allocation);
+	if (ret) {
+		error("unable to create raid groups: %d", ret);
+		goto out;
 	}
 
 	ret = create_tree(trans, root, BTRFS_DATA_RELOC_TREE_OBJECTID);
