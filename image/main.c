@@ -37,6 +37,7 @@
 #include "extent_io.h"
 #include "help.h"
 #include "image/metadump.h"
+#include "image/sanitize.h"
 
 #define MAX_WORKER_THREADS	(32)
 
@@ -79,13 +80,6 @@ struct metadump_struct {
 	int sanitize_names;
 
 	int error;
-};
-
-struct name {
-	struct rb_node n;
-	char *val;
-	char *sub;
-	u32 len;
 };
 
 struct mdrestore_struct {
