@@ -41,4 +41,8 @@ enum sanitize_mode {
 	SANITIZE_COLLISIONS
 };
 
+void sanitize_name(enum sanitize_mode sanitize, struct rb_root *name_tree,
+		u8 *dst, struct extent_buffer *src, struct btrfs_key *key,
+		int slot);
+
 #endif
