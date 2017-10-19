@@ -615,9 +615,9 @@ static void sanitize_xattr(struct extent_buffer *eb, int slot)
 	memset_extent_buffer(eb, 0, data_ptr, data_len);
 }
 
-static void sanitize_name(struct metadump_struct *md, u8 *dst,
-			  struct extent_buffer *src, struct btrfs_key *key,
-			  int slot)
+static void sanitize_name(enum sanitize_mode sanitize, struct rb_root *name_tree,
+		u8 *dst, struct extent_buffer *src, struct btrfs_key *key,
+		int slot)
 {
 	struct extent_buffer *eb;
 
@@ -632,15 +632,13 @@ static void sanitize_name(struct metadump_struct *md, u8 *dst,
 	switch (key->type) {
 	case BTRFS_DIR_ITEM_KEY:
 	case BTRFS_DIR_INDEX_KEY:
-		sanitize_dir_item(md->sanitize_names, &md->name_tree, eb, slot);
+		sanitize_dir_item(sanitize, name_tree, eb, slot);
 		break;
 	case BTRFS_INODE_REF_KEY:
-		sanitize_inode_ref(md->sanitize_names, &md->name_tree, eb, slot,
-				0);
+		sanitize_inode_ref(sanitize, name_tree, eb, slot, 0);
 		break;
 	case BTRFS_INODE_EXTREF_KEY:
-		sanitize_inode_ref(md->sanitize_names, &md->name_tree, eb, slot,
-				1);
+		sanitize_inode_ref(sanitize, name_tree, eb, slot, 1);
 		break;
 	case BTRFS_XATTR_ITEM_KEY:
 		sanitize_xattr(eb, slot);
@@ -678,7 +676,8 @@ static void zero_items(struct metadump_struct *md, u8 *dst,
 		}
 
 		if (md->sanitize_names && has_name(&key)) {
-			sanitize_name(md, dst, src, &key, i);
+			sanitize_name(md->sanitize_names, &md->name_tree, dst,
+					src, &key, i);
 			continue;
 		}
 
