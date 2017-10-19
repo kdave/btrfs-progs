@@ -446,7 +446,7 @@ static int find_collision_reverse_crc32c(struct name *val, u32 name_len)
 	return found;
 }
 
-static char *find_collision(struct metadump_struct *md, char *name,
+static char *find_collision(struct rb_root *name_tree, char *name,
 			    u32 name_len)
 {
 	struct name *val;
@@ -457,7 +457,7 @@ static char *find_collision(struct metadump_struct *md, char *name,
 
 	tmp.val = name;
 	tmp.len = name_len;
-	entry = tree_search(&md->name_tree, &tmp.n, name_cmp, 0);
+	entry = tree_search(name_tree, &tmp.n, name_cmp, 0);
 	if (entry) {
 		val = rb_entry(entry, struct name, n);
 		free(name);
@@ -498,7 +498,7 @@ static char *find_collision(struct metadump_struct *md, char *name,
 		}
 	}
 
-	tree_insert(&md->name_tree, &val->n, name_cmp);
+	tree_insert(name_tree, &val->n, name_cmp);
 	return val->sub;
 }
 
@@ -531,7 +531,7 @@ static void sanitize_dir_item(struct metadump_struct *md, struct extent_buffer *
 				return;
 			}
 			read_extent_buffer(eb, buf, name_ptr, name_len);
-			garbage = find_collision(md, buf, name_len);
+			garbage = find_collision(&md->name_tree, buf, name_len);
 		} else {
 			garbage = generate_garbage(name_len);
 		}
@@ -585,7 +585,7 @@ static void sanitize_inode_ref(struct metadump_struct *md,
 				return;
 			}
 			read_extent_buffer(eb, buf, name_ptr, len);
-			garbage = find_collision(md, buf, len);
+			garbage = find_collision(&md->name_tree, buf, len);
 		} else {
 			garbage = generate_garbage(len);
 		}
