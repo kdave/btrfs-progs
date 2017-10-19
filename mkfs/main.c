@@ -31,7 +31,6 @@
 #include <uuid/uuid.h>
 #include <ctype.h>
 #include <blkid/blkid.h>
-#include <ftw.h>
 #include "ctree.h"
 #include "disk-io.h"
 #include "volumes.h"
@@ -459,67 +458,6 @@ static int create_chunks(struct btrfs_trans_handle *trans,
 	set_extent_dirty(&root->fs_info->free_space_cache,
 			 chunk_start, chunk_start + size_of_data - 1);
 	return ret;
-}
-
-/*
- * This ignores symlinks with unreadable targets and subdirs that can't
- * be read.  It's a best-effort to give a rough estimate of the size of
- * a subdir.  It doesn't guarantee that prepopulating btrfs from this
- * tree won't still run out of space.
- */
-static u64 global_total_size;
-static u64 fs_block_size;
-static int ftw_add_entry_size(const char *fpath, const struct stat *st,
-			      int type)
-{
-	if (type == FTW_F || type == FTW_D)
-		global_total_size += round_up(st->st_size, fs_block_size);
-
-	return 0;
-}
-
-static u64 size_sourcedir(const char *dir_name, u64 sectorsize,
-			  u64 *num_of_meta_chunks_ret, u64 *size_of_data_ret)
-{
-	u64 dir_size = 0;
-	u64 total_size = 0;
-	int ret;
-	u64 default_chunk_size = SZ_8M;
-	u64 allocated_meta_size = SZ_8M;
-	u64 allocated_total_size = 20 * SZ_1M;	/* 20MB */
-	u64 num_of_meta_chunks = 0;
-	u64 num_of_data_chunks = 0;
-	u64 num_of_allocated_meta_chunks =
-			allocated_meta_size / default_chunk_size;
-
-	global_total_size = 0;
-	fs_block_size = sectorsize;
-	ret = ftw(dir_name, ftw_add_entry_size, 10);
-	dir_size = global_total_size;
-	if (ret < 0) {
-		error("ftw subdir walk of %s failed: %s", dir_name,
-			strerror(errno));
-		exit(1);
-	}
-
-	num_of_data_chunks = (dir_size + default_chunk_size - 1) /
-		default_chunk_size;
-
-	num_of_meta_chunks = (dir_size / 2) / default_chunk_size;
-	if (((dir_size / 2) % default_chunk_size) != 0)
-		num_of_meta_chunks++;
-	if (num_of_meta_chunks <= num_of_allocated_meta_chunks)
-		num_of_meta_chunks = 0;
-	else
-		num_of_meta_chunks -= num_of_allocated_meta_chunks;
-
-	total_size = allocated_total_size +
-		     (num_of_data_chunks * default_chunk_size) +
-		     (num_of_meta_chunks * default_chunk_size);
-
-	*num_of_meta_chunks_ret = num_of_meta_chunks;
-	*size_of_data_ret = num_of_data_chunks * default_chunk_size;
-	return total_size;
 }
 
 static int zero_output_file(int out_fd, u64 size)
@@ -1109,8 +1047,8 @@ int main(int argc, char **argv)
 			goto error;
 		}
 
-		source_dir_size = size_sourcedir(source_dir, sectorsize,
-					     &num_of_meta_chunks, &size_of_data);
+		source_dir_size = btrfs_mkfs_size_dir(source_dir, sectorsize,
+					&num_of_meta_chunks, &size_of_data);
 		if(block_count < source_dir_size)
 			block_count = source_dir_size;
 		ret = zero_output_file(fd, block_count);
