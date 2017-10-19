@@ -32,18 +32,28 @@
 #include "transaction.h"
 #include "utils.h"
 #include "mkfs/rootdir.h"
+#include "mkfs/common.h"
 #include "send-utils.h"
 
-/*
- * This ignores symlinks with unreadable targets and subdirs that can't
- * be read.  It's a best-effort to give a rough estimate of the size of
- * a subdir.  It doesn't guarantee that prepopulating btrfs from this
- * tree won't still run out of space.
- */
-static u64 global_total_size;
-static u64 fs_block_size;
+static u32 fs_block_size;
 
 static u64 index_cnt = 2;
+
+/*
+ * Size estimate will be done using the following data:
+ * 1) Number of inodes
+ *    Since we will later shrink the fs, over-estimate is completely fine here
+ *    as long as our estimate ensure we can populate the image without ENOSPC.
+ *    So we only records how many inodes there is, and use the maximum space
+ *    usage for every inode.
+ *
+ * 2) Data space each (regular) inode uses
+ *    To estimate data chunk size.
+ *    Don't care if it can fit as inline extent.
+ *    Always round them up to sectorsize.
+ */
+static u64 ftw_meta_nr_inode;
+static u64 ftw_data_size;
 
 static int add_directory_items(struct btrfs_trans_handle *trans,
 			       struct btrfs_root *root, u64 objectid,
@@ -684,52 +694,79 @@ out:
 static int ftw_add_entry_size(const char *fpath, const struct stat *st,
 			      int type)
 {
-	if (type == FTW_F || type == FTW_D)
-		global_total_size += round_up(st->st_size, fs_block_size);
+	/*
+	 * Failed to read dir, mostly due to EPERM.
+	 * Abort ASAP, so we don't need to populate the fs
+	 */
+	if (type == FTW_DNR || type == FTW_NS)
+		return -EPERM;
+
+	if (S_ISREG(st->st_mode))
+		ftw_data_size += round_up(st->st_size, fs_block_size);
+	ftw_meta_nr_inode++;
 
 	return 0;
 }
 
-u64 btrfs_mkfs_size_dir(const char *dir_name, u64 sectorsize,
-			u64 *num_of_meta_chunks_ret, u64 *size_of_data_ret)
+u64 btrfs_mkfs_size_dir(const char *dir_name, u32 sectorsize, u64 min_dev_size,
+			u64 meta_profile, u64 data_profile)
 {
-	u64 dir_size = 0;
 	u64 total_size = 0;
 	int ret;
-	u64 default_chunk_size = SZ_8M;
-	u64 allocated_meta_size = SZ_8M;
-	u64 allocated_total_size = 20 * SZ_1M;	/* 20MB */
-	u64 num_of_meta_chunks = 0;
-	u64 num_of_data_chunks = 0;
-	u64 num_of_allocated_meta_chunks =
-			allocated_meta_size / default_chunk_size;
 
-	global_total_size = 0;
+	u64 meta_size = 0;	/* Based on @ftw_meta_nr_inode */
+	u64 meta_chunk_size = 0;/* Based on @meta_size */
+	u64 data_chunk_size = 0;/* Based on @ftw_data_size */
+
+	u64 meta_threshold = SZ_8M;
+	u64 data_threshold = SZ_8M;
+
+	int data_multipler = 1;
+	int meta_multipler = 1;
+
 	fs_block_size = sectorsize;
+	ftw_data_size = 0;
+	ftw_meta_nr_inode = 0;
 	ret = ftw(dir_name, ftw_add_entry_size, 10);
-	dir_size = global_total_size;
 	if (ret < 0) {
 		error("ftw subdir walk of %s failed: %s", dir_name,
 			strerror(errno));
 		exit(1);
 	}
 
-	num_of_data_chunks = (dir_size + default_chunk_size - 1) /
-		default_chunk_size;
+	/*
+	 * Maximum metadata useage for every inode, which will be PATH_MAX
+	 * for the following items:
+	 * 1) DIR_ITEM
+	 * 2) DIR_INDEX
+	 * 3) INODE_REF
+	 *
+	 * Plus possible inline extent size, which is sectorsize.
+	 */
+	meta_size = ftw_meta_nr_inode * (PATH_MAX * 3 + sectorsize);
 
-	num_of_meta_chunks = (dir_size / 2) / default_chunk_size;
-	if (((dir_size / 2) % default_chunk_size) != 0)
-		num_of_meta_chunks++;
-	if (num_of_meta_chunks <= num_of_allocated_meta_chunks)
-		num_of_meta_chunks = 0;
-	else
-		num_of_meta_chunks -= num_of_allocated_meta_chunks;
+	/* Minimal chunk size from btrfs_alloc_chunk(). */
+	if (meta_profile & BTRFS_BLOCK_GROUP_DUP) {
+		meta_threshold = SZ_32M;
+		meta_multipler = 2;
+	}
+	if (data_profile & BTRFS_BLOCK_GROUP_DUP) {
+		data_threshold = SZ_64M;
+		data_multipler = 2;
+	}
 
-	total_size = allocated_total_size +
-		     (num_of_data_chunks * default_chunk_size) +
-		     (num_of_meta_chunks * default_chunk_size);
+	/*
+	 * Only when the usage is larger than the minimal chunk size (threshold)
+	 * we need to allocate new chunk, or the initial chunk in the image is
+	 * large enough.
+	 */
+	if (meta_size > meta_threshold)
+		meta_chunk_size = (round_up(meta_size, meta_threshold) -
+				   meta_threshold) * meta_multipler;
+	if (ftw_data_size > data_threshold)
+		data_chunk_size = (round_up(ftw_data_size, data_threshold) -
+				   data_threshold) * data_multipler;
 
-	*num_of_meta_chunks_ret = num_of_meta_chunks;
-	*size_of_data_ret = num_of_data_chunks * default_chunk_size;
+	total_size = data_chunk_size + meta_chunk_size + min_dev_size;
 	return total_size;
 }
