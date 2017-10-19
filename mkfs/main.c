@@ -731,9 +731,11 @@ int main(int argc, char **argv)
 	int ssd = 0;
 	int force_overwrite = 0;
 	char *source_dir = NULL;
-	int source_dir_set = 0;
+	bool source_dir_set = false;
+	bool shrink_rootdir = false;
 	u64 source_dir_size = 0;
 	u64 min_dev_size;
+	u64 shrink_size;
 	int dev_cnt = 0;
 	int saved_optind;
 	char fs_uuid[BTRFS_UUID_UNPARSED_SIZE] = { 0 };
@@ -743,6 +745,7 @@ int main(int argc, char **argv)
 
 	while(1) {
 		int c;
+		enum { GETOPT_VAL_SHRINK = 257 };
 		static const struct option long_options[] = {
 			{ "alloc-start", required_argument, NULL, 'A'},
 			{ "byte-count", required_argument, NULL, 'b' },
@@ -760,6 +763,7 @@ int main(int argc, char **argv)
 			{ "features", required_argument, NULL, 'O' },
 			{ "uuid", required_argument, NULL, 'U' },
 			{ "quiet", 0, NULL, 'q' },
+			{ "shrink", no_argument, NULL, GETOPT_VAL_SHRINK },
 			{ "help", no_argument, NULL, GETOPT_VAL_HELP },
 			{ NULL, 0, NULL, 0}
 		};
@@ -827,7 +831,7 @@ int main(int argc, char **argv)
 				goto success;
 			case 'r':
 				source_dir = optarg;
-				source_dir_set = 1;
+				source_dir_set = true;
 				break;
 			case 'U':
 				strncpy(fs_uuid, optarg,
@@ -838,6 +842,10 @@ int main(int argc, char **argv)
 				break;
 			case 'q':
 				verbose = 0;
+				break;
+			case GETOPT_VAL_SHRINK:
+				shrink_rootdir = true;
+				break;
 				break;
 			case GETOPT_VAL_HELP:
 			default:
@@ -859,6 +867,10 @@ int main(int argc, char **argv)
 
 	if (source_dir_set && dev_cnt > 1) {
 		error("the option -r is limited to a single device");
+		goto error;
+	}
+	if (shrink_rootdir && !source_dir_set) {
+		error("the option --shrink can only be paired with -r");
 		goto error;
 	}
 
@@ -1186,10 +1198,13 @@ raid_groups:
 			error("error wihle filling filesystem: %d", ret);
 			goto out;
 		}
-		ret = btrfs_mkfs_shrink_fs(fs_info, NULL);
-		if (ret < 0) {
-			error("error while shrinking filesystem: %d", ret);
-			goto out;
+		if (shrink_rootdir) {
+			ret = btrfs_mkfs_shrink_fs(fs_info, &shrink_size,
+						   shrink_rootdir);
+			if (ret < 0) {
+				error("error while shrinking filesystem: %d", ret);
+				goto out;
+			}
 		}
 	}
 
