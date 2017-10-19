@@ -1426,6 +1426,7 @@ int main(int argc, char **argv)
 	int zero_end = 1;
 	int fd = -1;
 	int ret;
+	int close_ret;
 	int i;
 	int mixed = 0;
 	int nodesize_forced = 0;
@@ -1941,9 +1942,9 @@ raid_groups:
 	 */
 	fs_info->finalize_on_close = 1;
 out:
-	ret = close_ctree(root);
+	close_ret = close_ctree(root);
 
-	if (!ret) {
+	if (!close_ret) {
 		optind = saved_optind;
 		dev_cnt = argc - optind;
 		while (dev_cnt-- > 0) {
