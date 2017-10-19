@@ -77,7 +77,7 @@ struct metadump_struct {
 	int compress_level;
 	int done;
 	int data;
-	int sanitize_names;
+	enum sanitize_mode sanitize_names;
 
 	int error;
 };
@@ -513,7 +513,7 @@ static void sanitize_dir_item(struct metadump_struct *md, struct extent_buffer *
 	u32 cur = 0;
 	u32 this_len;
 	u32 name_len;
-	int free_garbage = (md->sanitize_names == 1);
+	int free_garbage = (md->sanitize_names == SANITIZE_NAMES);
 
 	dir_item = btrfs_item_ptr(eb, slot, struct btrfs_dir_item);
 	total_len = btrfs_item_size_nr(eb, slot);
@@ -524,7 +524,7 @@ static void sanitize_dir_item(struct metadump_struct *md, struct extent_buffer *
 		name_ptr = (unsigned long)(dir_item + 1);
 		name_len = btrfs_dir_name_len(eb, dir_item);
 
-		if (md->sanitize_names > 1) {
+		if (md->sanitize_names == SANITIZE_COLLISIONS) {
 			buf = malloc(name_len);
 			if (!buf) {
 				error("cannot sanitize name, not enough memory");
@@ -559,7 +559,7 @@ static void sanitize_inode_ref(struct metadump_struct *md,
 	u32 item_size;
 	u32 cur_offset = 0;
 	int len;
-	int free_garbage = (md->sanitize_names == 1);
+	int free_garbage = (md->sanitize_names == SANITIZE_NAMES);
 
 	item_size = btrfs_item_size_nr(eb, slot);
 	ptr = btrfs_item_ptr_offset(eb, slot);
@@ -578,7 +578,7 @@ static void sanitize_inode_ref(struct metadump_struct *md,
 		}
 		cur_offset += len;
 
-		if (md->sanitize_names > 1) {
+		if (md->sanitize_names == SANITIZE_COLLISIONS) {
 			buf = malloc(len);
 			if (!buf) {
 				error("cannot sanitize name, not enough memory");
@@ -822,7 +822,7 @@ static void metadump_destroy(struct metadump_struct *md, int num_threads)
 
 static int metadump_init(struct metadump_struct *md, struct btrfs_root *root,
 			 FILE *out, int num_threads, int compress_level,
-			 int sanitize_names)
+			 enum sanitize_mode sanitize_names)
 {
 	int i, ret = 0;
 
@@ -834,7 +834,7 @@ static int metadump_init(struct metadump_struct *md, struct btrfs_root *root,
 	md->pending_start = (u64)-1;
 	md->compress_level = compress_level;
 	md->sanitize_names = sanitize_names;
-	if (sanitize_names > 1)
+	if (sanitize_names == SANITIZE_COLLISIONS)
 		crc32c_optimization_init();
 
 	md->name_tree.rb_node = NULL;
@@ -1399,7 +1399,8 @@ static int copy_from_extent_tree(struct metadump_struct *metadump,
 }
 
 static int create_metadump(const char *input, FILE *out, int num_threads,
-			   int compress_level, int sanitize, int walk_trees)
+			   int compress_level, enum sanitize_mode sanitize,
+			   int walk_trees)
 {
 	struct btrfs_root *root;
 	struct btrfs_path path;
@@ -2815,7 +2816,7 @@ int main(int argc, char *argv[])
 	int walk_trees = 0;
 	int multi_devices = 0;
 	int ret;
-	int sanitize = 0;
+	enum sanitize_mode sanitize = SANITIZE_NONE;
 	int dev_cnt = 0;
 	int usage_error = 0;
 	FILE *out;
@@ -2853,7 +2854,10 @@ int main(int argc, char *argv[])
 			old_restore = 1;
 			break;
 		case 's':
-			sanitize++;
+			if (sanitize == SANITIZE_NONE)
+				sanitize = SANITIZE_NAMES;
+			else if (sanitize == SANITIZE_NAMES)
+				sanitize = SANITIZE_COLLISIONS;
 			break;
 		case 'w':
 			walk_trees = 1;
@@ -2881,7 +2885,7 @@ int main(int argc, char *argv[])
 			usage_error++;
 		}
 	} else {
-		if (walk_trees || sanitize || compress_level) {
+		if (walk_trees || sanitize != SANITIZE_NONE || compress_level) {
 			error(
 			"useing -w, -s, -c options for restore makes no sense");
 			usage_error++;
