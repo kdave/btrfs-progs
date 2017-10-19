@@ -1046,11 +1046,13 @@ again:
 			     info->chunk_root->root_key.objectid,
 			     BTRFS_FIRST_CHUNK_TREE_OBJECTID, key.offset,
 			     calc_size, &dev_offset, 0);
-		BUG_ON(ret);
+		if (ret < 0)
+			goto out_chunk_map;
 
 		device->bytes_used += calc_size;
 		ret = btrfs_update_device(trans, device);
-		BUG_ON(ret);
+		if (ret < 0)
+			goto out_chunk_map;
 
 		map->stripes[index].dev = device;
 		map->stripes[index].physical = dev_offset;
@@ -1089,14 +1091,22 @@ again:
 	map->ce.size = *num_bytes;
 
 	ret = insert_cache_extent(&info->mapping_tree.cache_tree, &map->ce);
-	BUG_ON(ret);
+	if (ret < 0)
+		goto out_chunk_map;
 
 	if (type & BTRFS_BLOCK_GROUP_SYSTEM) {
 		ret = btrfs_add_system_chunk(info, &key,
 				    chunk, btrfs_chunk_item_size(num_stripes));
-		BUG_ON(ret);
+		if (ret < 0)
+			goto out_chunk;
 	}
 
+	kfree(chunk);
+	return ret;
+
+out_chunk_map:
+	kfree(map);
+out_chunk:
 	kfree(chunk);
 	return ret;
 }
