@@ -1350,6 +1350,9 @@ static int cleanup_temp_chunks(struct btrfs_fs_info *fs_info,
 		ret = btrfs_search_slot(trans, root, &key, &path, 0, 0);
 		if (ret < 0)
 			goto out;
+		/* Don't pollute ret for >0 case */
+		if (ret > 0)
+			ret = 0;
 
 		btrfs_item_key_to_cpu(path.nodes[0], &found_key,
 				      path.slots[0]);
