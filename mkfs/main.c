@@ -1255,6 +1255,11 @@ raid_groups:
 				goto out;
 			}
 		}
+		ret = btrfs_mkfs_shrink_fs(fs_info, NULL);
+		if (ret < 0) {
+			error("error while shrinking filesystem: %d", ret);
+			goto out;
+		}
 	}
 
 	if (verbose) {
