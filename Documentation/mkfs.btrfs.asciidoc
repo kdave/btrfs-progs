@@ -106,6 +106,17 @@ Please see the mount option 'discard' for that in `btrfs`(5).
 *-r|--rootdir <rootdir>*::
 Populate the toplevel subvolume with files from 'rootdir'.  This does not
 require root permissions and does not mount the filesystem.
++
+NOTE: This option may enlarge the image or file to ensure it's large enough to
+contain the files from 'rootdir'.
+
+*--shrink*:
+Shrink the filesystem to its minimal size, only works with *-r|--rootdir*
+option.
++
+NOTE: If the destination is regular file, this option will also reduce the
+file size. Or it will only reduce the filesystem available space.
+Extra space will not be usable unless resized using 'btrfs filesystem resize'.
 
 *-O|--features <feature1>[,<feature2>...]*::
 A list of filesystem features turned on at mkfs time. Not all features are

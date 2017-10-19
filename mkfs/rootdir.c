@@ -899,11 +899,13 @@ err:
 	return ret;
 }
 
-int btrfs_mkfs_shrink_fs(struct btrfs_fs_info *fs_info, u64 *new_size_ret)
+int btrfs_mkfs_shrink_fs(struct btrfs_fs_info *fs_info, u64 *new_size_ret,
+			 bool shrink_file_size)
 {
 	u64 new_size;
 	struct btrfs_device *device;
 	struct list_head *cur;
+	struct stat64 file_stat;
 	int nr_devs = 0;
 	int ret;
 
@@ -931,5 +933,22 @@ int btrfs_mkfs_shrink_fs(struct btrfs_fs_info *fs_info, u64 *new_size_ret)
 		return ret;
 	if (new_size_ret)
 		*new_size_ret = new_size;
+
+	if (shrink_file_size) {
+		ret = fstat64(device->fd, &file_stat);
+		if (ret < 0) {
+			error("failed to stat devid %llu: %s", device->devid,
+				strerror(errno));
+			return ret;
+		}
+		if (!S_ISREG(file_stat.st_mode))
+			return ret;
+		ret = ftruncate64(device->fd, new_size);
+		if (ret < 0) {
+			error("failed to truncate device file of devid %llu: %s",
+				device->devid, strerror(errno));
+			return ret;
+		}
+	}
 	return ret;
 }
