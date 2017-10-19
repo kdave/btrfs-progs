@@ -413,53 +413,6 @@ static char *parse_subvol_name(const char *input)
 	return strdup(input);
 }
 
-static int create_chunks(struct btrfs_trans_handle *trans,
-			 struct btrfs_root *root, u64 num_of_meta_chunks,
-			 u64 size_of_data,
-			 struct mkfs_allocation *allocation)
-{
-	struct btrfs_fs_info *fs_info = root->fs_info;
-	u64 chunk_start;
-	u64 chunk_size;
-	u64 meta_type = BTRFS_BLOCK_GROUP_METADATA;
-	u64 data_type = BTRFS_BLOCK_GROUP_DATA;
-	u64 minimum_data_chunk_size = SZ_8M;
-	u64 i;
-	int ret;
-
-	for (i = 0; i < num_of_meta_chunks; i++) {
-		ret = btrfs_alloc_chunk(trans, fs_info,
-					&chunk_start, &chunk_size, meta_type);
-		if (ret)
-			return ret;
-		ret = btrfs_make_block_group(trans, fs_info, 0,
-					     meta_type, BTRFS_FIRST_CHUNK_TREE_OBJECTID,
-					     chunk_start, chunk_size);
-		allocation->metadata += chunk_size;
-		if (ret)
-			return ret;
-		set_extent_dirty(&root->fs_info->free_space_cache,
-				 chunk_start, chunk_start + chunk_size - 1);
-	}
-
-	if (size_of_data < minimum_data_chunk_size)
-		size_of_data = minimum_data_chunk_size;
-
-	ret = btrfs_alloc_data_chunk(trans, fs_info,
-				     &chunk_start, size_of_data, data_type, 0);
-	if (ret)
-		return ret;
-	ret = btrfs_make_block_group(trans, fs_info, 0,
-				     data_type, BTRFS_FIRST_CHUNK_TREE_OBJECTID,
-				     chunk_start, size_of_data);
-	allocation->data += size_of_data;
-	if (ret)
-		return ret;
-	set_extent_dirty(&root->fs_info->free_space_cache,
-			 chunk_start, chunk_start + size_of_data - 1);
-	return ret;
-}
-
 static int zero_output_file(int out_fd, u64 size)
 {
 	int loop_num;
@@ -1256,21 +1209,6 @@ raid_groups:
 	}
 
 	if (source_dir_set) {
-		trans = btrfs_start_transaction(root, 1);
-		BUG_ON(IS_ERR(trans));
-		ret = create_chunks(trans, root,
-				    num_of_meta_chunks, size_of_data,
-				    &allocation);
-		if (ret) {
-			error("unable to create chunks: %d", ret);
-			goto out;
-		}
-		ret = btrfs_commit_transaction(trans, root);
-		if (ret) {
-			error("transaction commit failed: %d", ret);
-			goto out;
-		}
-
 		if (subvol_name_set) {
 			u64 dirid, objectid;
 			struct btrfs_root *file_root;
