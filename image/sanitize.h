@@ -27,4 +27,18 @@ struct name {
 	u32 len;
 };
 
+/*
+ * Filenames and xattrs can be obfuscated so they don't appear in the image
+ * dump. In basic mode (NAMES) a random string will be generated but such names
+ * do not match the direntry hashes. The advanced mode (COLLISIONS) tries to
+ * generate names that appear random but also match the hashes. This however
+ * may take significantly more time than the basic mode. And may not even
+ * succeed.
+ */
+enum sanitize_mode {
+	SANITIZE_NONE,
+	SANITIZE_NAMES,
+	SANITIZE_COLLISIONS
+};
+
 #endif
