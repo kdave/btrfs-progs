@@ -822,3 +822,114 @@ out:
 
 	return ret;
 }
+
+/*
+ * Set device size to @new_size.
+ *
+ * Only used for --rootdir option.
+ * We will need to reset the following values:
+ * 1) dev item in chunk tree
+ * 2) super->dev_item
+ * 3) super->total_bytes
+ */
+static int set_device_size(struct btrfs_fs_info *fs_info,
+			   struct btrfs_device *device, u64 new_size)
+{
+	struct btrfs_root *chunk_root = fs_info->chunk_root;
+	struct btrfs_trans_handle *trans;
+	struct btrfs_dev_item *di;
+	struct btrfs_path path;
+	struct btrfs_key key;
+	int ret;
+
+	/*
+	 * Update in-meory device->total_bytes, so that at trans commit time,
+	 * super->dev_item will also get updated
+	 */
+	device->total_bytes = new_size;
+	btrfs_init_path(&path);
+
+	/* Update device item in chunk tree */
+	trans = btrfs_start_transaction(chunk_root, 1);
+	if (IS_ERR(trans)) {
+		ret = PTR_ERR(trans);
+		error("failed to start transaction: %d (%s)", ret,
+			strerror(-ret));
+		return ret;
+	}
+	key.objectid = BTRFS_DEV_ITEMS_OBJECTID;
+	key.type = BTRFS_DEV_ITEM_KEY;
+	key.offset = device->devid;
+
+	ret = btrfs_search_slot(trans, chunk_root, &key, &path, 0, 1);
+	if (ret < 0)
+		goto err;
+	if (ret > 0)
+		ret = -ENOENT;
+	di = btrfs_item_ptr(path.nodes[0], path.slots[0],
+			    struct btrfs_dev_item);
+	btrfs_set_device_total_bytes(path.nodes[0], di, new_size);
+	btrfs_mark_buffer_dirty(path.nodes[0]);
+
+	/*
+	 * Update super->total_bytes, since it's only used for --rootdir,
+	 * there is only one device, just use the @new_size.
+	 */
+	btrfs_set_super_total_bytes(fs_info->super_copy, new_size);
+
+	/*
+	 * Commit transaction to reflect the updated super->total_bytes and
+	 * super->dev_item
+	 */
+	ret = btrfs_commit_transaction(trans, chunk_root);
+	if (ret < 0)
+		error("failed to commit current transaction: %d (%s)",
+			ret, strerror(-ret));
+	btrfs_release_path(&path);
+	return ret;
+
+err:
+	btrfs_release_path(&path);
+	/*
+	 * Committing the transaction here won't cause problems since the fs
+	 * still has an invalid magic number, and something wrong already
+	 * happened, we don't care the return value anyway.
+	 */
+	btrfs_commit_transaction(trans, chunk_root);
+	return ret;
+}
+
+int btrfs_mkfs_shrink_fs(struct btrfs_fs_info *fs_info, u64 *new_size_ret)
+{
+	u64 new_size;
+	struct btrfs_device *device;
+	struct list_head *cur;
+	int nr_devs = 0;
+	int ret;
+
+	list_for_each(cur, &fs_info->fs_devices->devices)
+		nr_devs++;
+
+	if (nr_devs > 1) {
+		error("cannot shrink fs with more than 1 device");
+		return -ENOTTY;
+	}
+
+	ret = get_device_extent_end(fs_info, 1, &new_size);
+	if (ret < 0) {
+		error("failed to get minimal device size: %d (%s)",
+			ret, strerror(-ret));
+		return ret;
+	}
+
+	BUG_ON(!IS_ALIGNED(new_size, fs_info->sectorsize));
+
+	device = list_entry(fs_info->fs_devices->devices.next,
+			   struct btrfs_device, dev_list);
+	ret = set_device_size(fs_info, device, new_size);
+	if (ret < 0)
+		return ret;
+	if (new_size_ret)
+		*new_size_ret = new_size;
+	return ret;
+}
