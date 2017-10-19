@@ -502,8 +502,8 @@ static char *find_collision(struct rb_root *name_tree, char *name,
 	return val->sub;
 }
 
-static void sanitize_dir_item(struct metadump_struct *md, struct extent_buffer *eb,
-			      int slot)
+static void sanitize_dir_item(enum sanitize_mode sanitize,
+		struct rb_root *name_tree, struct extent_buffer *eb, int slot)
 {
 	struct btrfs_dir_item *dir_item;
 	char *buf;
@@ -513,7 +513,7 @@ static void sanitize_dir_item(struct metadump_struct *md, struct extent_buffer *
 	u32 cur = 0;
 	u32 this_len;
 	u32 name_len;
-	int free_garbage = (md->sanitize_names == SANITIZE_NAMES);
+	int free_garbage = (sanitize == SANITIZE_NAMES);
 
 	dir_item = btrfs_item_ptr(eb, slot, struct btrfs_dir_item);
 	total_len = btrfs_item_size_nr(eb, slot);
@@ -524,14 +524,14 @@ static void sanitize_dir_item(struct metadump_struct *md, struct extent_buffer *
 		name_ptr = (unsigned long)(dir_item + 1);
 		name_len = btrfs_dir_name_len(eb, dir_item);
 
-		if (md->sanitize_names == SANITIZE_COLLISIONS) {
+		if (sanitize == SANITIZE_COLLISIONS) {
 			buf = malloc(name_len);
 			if (!buf) {
 				error("cannot sanitize name, not enough memory");
 				return;
 			}
 			read_extent_buffer(eb, buf, name_ptr, name_len);
-			garbage = find_collision(&md->name_tree, buf, name_len);
+			garbage = find_collision(name_tree, buf, name_len);
 		} else {
 			garbage = generate_garbage(name_len);
 		}
@@ -632,7 +632,7 @@ static void sanitize_name(struct metadump_struct *md, u8 *dst,
 	switch (key->type) {
 	case BTRFS_DIR_ITEM_KEY:
 	case BTRFS_DIR_INDEX_KEY:
-		sanitize_dir_item(md, eb, slot);
+		sanitize_dir_item(md->sanitize_names, &md->name_tree, eb, slot);
 		break;
 	case BTRFS_INODE_REF_KEY:
 		sanitize_inode_ref(md->sanitize_names, &md->name_tree, eb, slot,
