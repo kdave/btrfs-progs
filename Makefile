@@ -246,6 +246,7 @@ static_cmds_objects = $(patsubst %.o, %.static.o, $(cmds_objects))
 static_libbtrfs_objects = $(patsubst %.o, %.static.o, $(libbtrfs_objects))
 static_convert_objects = $(patsubst %.o, %.static.o, $(convert_objects))
 static_mkfs_objects = $(patsubst %.o, %.static.o, $(mkfs_objects))
+static_image_objects = $(patsubst %.o, %.static.o, $(image_objects))
 
 libs_shared = libbtrfs.so.0.1
 libs_static = libbtrfs.a
@@ -424,11 +425,11 @@ btrfstune.static: btrfstune.static.o $(static_objects) $(static_libbtrfs_objects
 	@echo "    [LD]     $@"
 	$(Q)$(CC) -o $@ $^ $(STATIC_LDFLAGS) $(STATIC_LIBS)
 
-btrfs-image: image/main.o $(objects) $(libs_static)
+btrfs-image: $(image_objects) $(objects) $(libs_static)
 	@echo "    [LD]     $@"
 	$(Q)$(CC) -o $@ $^ $(LDFLAGS) $(LIBS) $(LIBS_COMP)
 
-btrfs-image.static: image/main.static.o $(static_objects) $(static_libbtrfs_objects)
+btrfs-image.static: $(static_image_objects) $(static_objects) $(static_libbtrfs_objects)
 	@echo "    [LD]     $@"
 	$(Q)$(CC) -o $@ $^ $(STATIC_LDFLAGS) $(STATIC_LIBS) $(STATIC_LIBS_COMP)
 
