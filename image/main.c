@@ -600,8 +600,7 @@ static void sanitize_inode_ref(struct metadump_struct *md,
 	}
 }
 
-static void sanitize_xattr(struct metadump_struct *md,
-			   struct extent_buffer *eb, int slot)
+static void sanitize_xattr(struct extent_buffer *eb, int slot)
 {
 	struct btrfs_dir_item *dir_item;
 	unsigned long data_ptr;
@@ -641,7 +640,7 @@ static void sanitize_name(struct metadump_struct *md, u8 *dst,
 		sanitize_inode_ref(md, eb, slot, 1);
 		break;
 	case BTRFS_XATTR_ITEM_KEY:
-		sanitize_xattr(md, eb, slot);
+		sanitize_xattr(eb, slot);
 		break;
 	default:
 		break;
