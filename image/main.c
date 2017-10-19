@@ -36,53 +36,9 @@
 #include "volumes.h"
 #include "extent_io.h"
 #include "help.h"
-
-#define HEADER_MAGIC		0xbd5c25e27295668bULL
-#define MAX_PENDING_SIZE	(256 * 1024)
-#define BLOCK_SIZE		1024
-#define BLOCK_MASK		(BLOCK_SIZE - 1)
-
-#define COMPRESS_NONE		0
-#define COMPRESS_ZLIB		1
+#include "image/metadump.h"
 
 #define MAX_WORKER_THREADS	(32)
-
-struct meta_cluster_item {
-	__le64 bytenr;
-	__le32 size;
-} __attribute__ ((__packed__));
-
-struct meta_cluster_header {
-	__le64 magic;
-	__le64 bytenr;
-	__le32 nritems;
-	u8 compress;
-} __attribute__ ((__packed__));
-
-/* cluster header + index items + buffers */
-struct meta_cluster {
-	struct meta_cluster_header header;
-	struct meta_cluster_item items[];
-} __attribute__ ((__packed__));
-
-#define ITEMS_PER_CLUSTER ((BLOCK_SIZE - sizeof(struct meta_cluster)) / \
-			   sizeof(struct meta_cluster_item))
-
-struct fs_chunk {
-	u64 logical;
-	u64 physical;
-	/*
-	 * physical_dup only store additonal physical for BTRFS_BLOCK_GROUP_DUP
-	 * currently restore only support single and DUP
-	 * TODO: modify this structure and the function related to this
-	 * structure for support RAID*
-	 */
-	u64 physical_dup;
-	u64 bytes;
-	struct rb_node l;
-	struct rb_node p;
-	struct list_head list;
-};
 
 struct async_work {
 	struct list_head list;
