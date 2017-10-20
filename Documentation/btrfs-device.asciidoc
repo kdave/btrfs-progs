@@ -68,13 +68,23 @@ Remove device(s) from a filesystem identified by <path>
 Device removal must satisfy the profile constraints, otherwise the command
 fails. The filesystem must be converted to profile(s) that would allow the
 removal. This can typically happen when going down from 2 devices to 1 and
-using the RAID1 profile. See the example section below.
+using the RAID1 profile. See the *TYPICAL USECASES* section below.
 +
 The operation can take long as it needs to move all data from the device.
 +
 It is possible to delete the device that was used to mount the filesystem. The
-device entry in mount table will be replaced by another device name with the
-lowest device id.
+device entry in the mount table will be replaced by another device name with
+the lowest device id.
++
+If the filesystem is mounted in degraded mode (-o degraded), special term
+'missing' can be used for 'device'. In that case, the first device that is
+described by the filesystem metadata, but not present at the mount time will be
+removed.
++
+NOTE: In most cases, there is only one missing device in degraded mode,
+otherwise mount fails. If there are two or more devices missing (e.g. possible
+in RAID6), you need specify 'missing' as many times as the number of missing
+devices to remove all of them.
 
 *delete* <device>|<devid> [<device>|<devid>...] <path>::
 Alias of remove kept for backward compatibility
@@ -205,6 +215,19 @@ data or the block groups occupy the whole first device.
 
 The device size of '/dev/sdb' as seen by the filesystem remains unchanged, but
 the logical space from 50-100GiB will be unused.
+
+==== REMOVE DEVICE ====
+
+Device removal must satisfy the profile constraints, otherwise the command
+fails. For example:
+
+ $ btrfs device remove /dev/sda /mnt
+ ERROR: error removing device '/dev/sda': unable to go below two devices on raid1
+
+In order to remove a device, you need to convert the profile in this case:
+
+ $ btrfs balance start -mconvert=dup -dconvert=single /mnt
+ $ btrfs device remove /dev/sda /mnt
 
 DEVICE STATS
 ------------

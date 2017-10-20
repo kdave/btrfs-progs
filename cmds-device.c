@@ -224,9 +224,16 @@ static int _cmd_device_remove(int argc, char **argv,
 	return !!ret;
 }
 
+#define COMMON_USAGE_REMOVE_DELETE					\
+	"If 'missing' is specified for <device>, the first device that is",	\
+	"described by the filesystem metadata, but not present at the mount",	\
+	"time will be removed. (only in degraded mode)"
+
 static const char * const cmd_device_remove_usage[] = {
 	"btrfs device remove <device>|<devid> [<device>|<devid>...] <path>",
 	"Remove a device from a filesystem",
+	"",
+	COMMON_USAGE_REMOVE_DELETE,
 	NULL
 };
 
@@ -238,6 +245,8 @@ static int cmd_device_remove(int argc, char **argv)
 static const char * const cmd_device_delete_usage[] = {
 	"btrfs device delete <device>|<devid> [<device>|<devid>...] <path>",
 	"Remove a device from a filesystem (alias of \"btrfs device remove\")",
+	"",
+	COMMON_USAGE_REMOVE_DELETE,
 	NULL
 };
 
