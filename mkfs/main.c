@@ -717,6 +717,38 @@ out:
 	return ret;
 }
 
+/*
+ * Just update chunk allocation info, since --rootdir may allocate new
+ * chunks which is not updated in @allocation structure.
+ */
+static void update_chunk_allocation(struct btrfs_fs_info *fs_info,
+				    struct mkfs_allocation *allocation)
+{
+	struct btrfs_block_group_cache *bg_cache;
+	const u64 mixed_flag = BTRFS_BLOCK_GROUP_DATA | BTRFS_BLOCK_GROUP_METADATA;
+	u64 search_start = 0;
+
+	allocation->mixed = 0;
+	allocation->data = 0;
+	allocation->metadata = 0;
+	allocation->system = 0;
+	while (1) {
+		bg_cache = btrfs_lookup_first_block_group(fs_info,
+							  search_start);
+		if (!bg_cache)
+			break;
+		if ((bg_cache->flags & mixed_flag) == mixed_flag)
+			allocation->mixed += bg_cache->key.offset;
+		else if (bg_cache->flags & BTRFS_BLOCK_GROUP_DATA)
+			allocation->data += bg_cache->key.offset;
+		else if (bg_cache->flags & BTRFS_BLOCK_GROUP_METADATA)
+			allocation->metadata += bg_cache->key.offset;
+		else
+			allocation->system += bg_cache->key.offset;
+		search_start = bg_cache->key.objectid + bg_cache->key.offset;
+	}
+}
+
 int main(int argc, char **argv)
 {
 	char *file;
@@ -1223,6 +1255,7 @@ raid_groups:
 	if (verbose) {
 		char features_buf[64];
 
+		update_chunk_allocation(fs_info, &allocation);
 		printf("Label:              %s\n", label);
 		printf("UUID:               %s\n", mkfs_cfg.fs_uuid);
 		printf("Node size:          %u\n", nodesize);
