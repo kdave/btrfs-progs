@@ -237,7 +237,7 @@ static int cmd_device_remove(int argc, char **argv)
 
 static const char * const cmd_device_delete_usage[] = {
 	"btrfs device delete <device>|<devid> [<device>|<devid>...] <path>",
-	"Remove a device from a filesystem",
+	"Remove a device from a filesystem (alias of \"btrfs device remove\")",
 	NULL
 };
 
