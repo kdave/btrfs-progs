@@ -26,6 +26,7 @@
 #include <fcntl.h>
 #include <ftw.h>
 #include "ctree.h"
+#include "volumes.h"
 #include "internal.h"
 #include "disk-io.h"
 #include "messages.h"
@@ -732,4 +733,47 @@ u64 btrfs_mkfs_size_dir(const char *dir_name, u64 sectorsize,
 	*num_of_meta_chunks_ret = num_of_meta_chunks;
 	*size_of_data_ret = num_of_data_chunks * default_chunk_size;
 	return total_size;
+}
+
+/*
+ * Get the end position of the last device extent for given @devid;
+ * @size_ret is exclsuive (means it should be aligned to sectorsize)
+ */
+static int get_device_extent_end(struct btrfs_fs_info *fs_info,
+				 u64 devid, u64 *size_ret)
+{
+	struct btrfs_root *dev_root = fs_info->dev_root;
+	struct btrfs_key key;
+	struct btrfs_path path;
+	struct btrfs_dev_extent *de;
+	int ret;
+
+	key.objectid = devid;
+	key.type = BTRFS_DEV_EXTENT_KEY;
+	key.offset = (u64)-1;
+
+	btrfs_init_path(&path);
+	ret = btrfs_search_slot(NULL, dev_root, &key, &path, 0, 0);
+	/* Not really possible */
+	BUG_ON(ret == 0);
+
+	ret = btrfs_previous_item(dev_root, &path, devid, BTRFS_DEV_EXTENT_KEY);
+	if (ret < 0)
+		goto out;
+
+	/* No dev_extent at all, not really possible for rootdir case */
+	if (ret > 0) {
+		*size_ret = 0;
+		ret = -EUCLEAN;
+		goto out;
+	}
+
+	btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
+	de = btrfs_item_ptr(path.nodes[0], path.slots[0],
+			    struct btrfs_dev_extent);
+	*size_ret = key.offset + btrfs_dev_extent_length(path.nodes[0], de);
+out:
+	btrfs_release_path(&path);
+
+	return ret;
 }
