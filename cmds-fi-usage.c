@@ -22,6 +22,7 @@
 #include <errno.h>
 #include <stdarg.h>
 #include <getopt.h>
+#include <fcntl.h>
 
 #include "utils.h"
 #include "kerncompat.h"
@@ -29,6 +30,7 @@
 #include "string-table.h"
 #include "cmds-fi-usage.h"
 #include "commands.h"
+#include "disk-io.h"
 
 #include "version.h"
 #include "help.h"
@@ -504,6 +506,33 @@ static int cmp_device_info(const void *a, const void *b)
 {
 	return strcmp(((struct device_info *)a)->path,
 			((struct device_info *)b)->path);
+}
+
+int dev_to_fsid(const char *dev, __u8 *fsid)
+{
+	struct btrfs_super_block *disk_super;
+	char buf[BTRFS_SUPER_INFO_SIZE];
+	int ret;
+	int fd;
+
+	fd = open(dev, O_RDONLY);
+	if (fd < 0) {
+		ret = -errno;
+		return ret;
+	}
+
+	disk_super = (struct btrfs_super_block *)buf;
+	ret = btrfs_read_dev_super(fd, disk_super,
+				   BTRFS_SUPER_INFO_OFFSET, SBREAD_DEFAULT);
+	if (ret)
+		goto out;
+
+	memcpy(fsid, disk_super->fsid, BTRFS_FSID_SIZE);
+	ret = 0;
+
+out:
+	close(fd);
+	return ret;
 }
 
 /*
