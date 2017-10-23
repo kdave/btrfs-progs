@@ -545,6 +545,7 @@ static int load_device_info(int fd, struct device_info **device_info_ptr,
 	struct btrfs_ioctl_fs_info_args fi_args;
 	struct btrfs_ioctl_dev_info_args dev_info;
 	struct device_info *info;
+	u8 fsid[BTRFS_UUID_SIZE];
 
 	*device_info_count = 0;
 	*device_info_ptr = NULL;
@@ -568,6 +569,8 @@ static int load_device_info(int fd, struct device_info **device_info_ptr,
 		if (ndevs >= fi_args.num_devices) {
 			error("unexpected number of devices: %d >= %llu", ndevs,
 				(unsigned long long)fi_args.num_devices);
+			error(
+		"if seed device is used, try running this command as root");
 			goto out;
 		}
 		memset(&dev_info, 0, sizeof(dev_info));
@@ -578,6 +581,19 @@ static int load_device_info(int fd, struct device_info **device_info_ptr,
 		if (ret) {
 			error("cannot get info about device devid=%d", i);
 			goto out;
+		}
+
+		/*
+		 * Skip seed device by checking device's fsid (requires root).
+		 * Ignore EACCES since if seed is not used this function works
+		 * correctly without root privileges.
+		 */
+		ret = dev_to_fsid((const char *)dev_info.path, fsid);
+		if (ret != -EACCES) {
+			if (ret)
+				goto out;
+			if (memcmp(fi_args.fsid, fsid, BTRFS_FSID_SIZE) != 0)
+				continue;
 		}
 
 		info[ndevs].devid = dev_info.devid;
