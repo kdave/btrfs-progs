@@ -431,33 +431,6 @@ out:
 	return !found;
 }
 
-static int dev_to_fsid(const char *dev, __u8 *fsid)
-{
-	struct btrfs_super_block *disk_super;
-	char buf[BTRFS_SUPER_INFO_SIZE];
-	int ret;
-	int fd;
-
-	fd = open(dev, O_RDONLY);
-	if (fd < 0) {
-		ret = -errno;
-		return ret;
-	}
-
-	disk_super = (struct btrfs_super_block *)buf;
-	ret = btrfs_read_dev_super(fd, disk_super,
-				   BTRFS_SUPER_INFO_OFFSET, SBREAD_DEFAULT);
-	if (ret)
-		goto out;
-
-	memcpy(fsid, disk_super->fsid, BTRFS_FSID_SIZE);
-	ret = 0;
-
-out:
-	close(fd);
-	return ret;
-}
-
 static void free_fs_devices(struct btrfs_fs_devices *fs_devices)
 {
 	struct btrfs_fs_devices *cur_seed, *next_seed;
