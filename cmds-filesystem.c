@@ -893,6 +893,11 @@ static const char * const cmd_filesystem_defrag_usage[] = {
 	"-s start            defragment only from byte onward",
 	"-l len              defragment only up to len bytes",
 	"-t size             target extent size hint (default: 32M)",
+	"",
+	"Warning: most Linux kernels will break up the ref-links of COW data",
+	"(e.g., files copied with 'cp --reflink', snapshots) which may cause",
+	"considerable increase of space usage. See btrfs-filesystem(8) for",
+	"more information.",
 	NULL
 };
 
