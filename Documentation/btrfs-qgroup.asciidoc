@@ -97,10 +97,14 @@ print child qgroup id.
 print limit of referenced size of qgroup.
 -e::::
 print limit of exclusive size of qgroup.
+-P::::
+print pathname to the root of the subvolume managed by qgroup.  For nested qgroups, the number of members will be printed unless -v is specified.
 -F::::
 list all qgroups which impact the given path(include ancestral qgroups)
 -f::::
 list all qgroups which impact the given path(exclude ancestral qgroups)
+-v::::
+Be more verbose.  Print pathnames of member qgroups when nested.
 --raw::::
 raw numbers in bytes, without the 'B' suffix.
 --human-readable::::

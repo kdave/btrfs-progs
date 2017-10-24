@@ -59,11 +59,13 @@ enum btrfs_qgroup_column_enum {
 	BTRFS_QGROUP_MAX_EXCL,
 	BTRFS_QGROUP_PARENT,
 	BTRFS_QGROUP_CHILD,
+	BTRFS_QGROUP_PATHNAME,
 	BTRFS_QGROUP_ALL,
 };
 
 enum btrfs_qgroup_comp_enum {
 	BTRFS_QGROUP_COMP_QGROUPID,
+	BTRFS_QGROUP_COMP_PATHNAME,
 	BTRFS_QGROUP_COMP_RFER,
 	BTRFS_QGROUP_COMP_EXCL,
 	BTRFS_QGROUP_COMP_MAX_RFER,
@@ -80,7 +82,7 @@ enum btrfs_qgroup_filter_enum {
 int btrfs_qgroup_parse_sort_string(const char *opt_arg,
 				struct btrfs_qgroup_comparer_set **comps);
 int btrfs_show_qgroups(int fd, struct btrfs_qgroup_filter_set *,
-		       struct btrfs_qgroup_comparer_set *);
+		       struct btrfs_qgroup_comparer_set *, bool verbose);
 void btrfs_qgroup_setup_print_column(enum btrfs_qgroup_column_enum column);
 void btrfs_qgroup_setup_units(unsigned unit_mode);
 struct btrfs_qgroup_filter_set *btrfs_qgroup_alloc_filter_set(void);

@@ -282,8 +282,11 @@ static const char * const cmd_qgroup_show_usage[] = {
 	"               (including ancestral qgroups)",
 	"-f             list all qgroups which impact the given path",
 	"               (excluding ancestral qgroups)",
+	"-P             print first-level qgroups using pathname",
+	"               - nested qgroups will be reported as a count",
+	"-v             verbose, prints pathnames for all nested qgroups",
 	HELPINFO_UNITS_LONG,
-	"--sort=qgroupid,rfer,excl,max_rfer,max_excl",
+	"--sort=qgroupid,rfer,excl,max_rfer,max_excl,pathname",
 	"               list qgroups sorted by specified items",
 	"               you can use '+' or '-' in front of each item.",
 	"               (+:ascending, -:descending, ascending default)",
@@ -302,6 +305,7 @@ static int cmd_qgroup_show(int argc, char **argv)
 	unsigned unit_mode;
 	int sync = 0;
 	enum btrfs_util_error err;
+	bool verbose = false;
 
 	struct btrfs_qgroup_comparer_set *comparer_set;
 	struct btrfs_qgroup_filter_set *filter_set;
@@ -319,16 +323,21 @@ static int cmd_qgroup_show(int argc, char **argv)
 		static const struct option long_options[] = {
 			{"sort", required_argument, NULL, GETOPT_VAL_SORT},
 			{"sync", no_argument, NULL, GETOPT_VAL_SYNC},
+			{"verbose", no_argument, NULL, 'v'},
 			{ NULL, 0, NULL, 0 }
 		};
 
-		c = getopt_long(argc, argv, "pcreFf", long_options, NULL);
+		c = getopt_long(argc, argv, "pPcreFfv", long_options, NULL);
 		if (c < 0)
 			break;
 		switch (c) {
 		case 'p':
 			btrfs_qgroup_setup_print_column(
 				BTRFS_QGROUP_PARENT);
+			break;
+		case 'P':
+			btrfs_qgroup_setup_print_column(
+				BTRFS_QGROUP_PATHNAME);
 			break;
 		case 'c':
 			btrfs_qgroup_setup_print_column(
@@ -356,6 +365,9 @@ static int cmd_qgroup_show(int argc, char **argv)
 			break;
 		case GETOPT_VAL_SYNC:
 			sync = 1;
+			break;
+		case 'v':
+			verbose = true;
 			break;
 		default:
 			usage(cmd_qgroup_show_usage);
@@ -398,7 +410,7 @@ static int cmd_qgroup_show(int argc, char **argv)
 					BTRFS_QGROUP_FILTER_PARENT,
 					qgroupid);
 	}
-	ret = btrfs_show_qgroups(fd, filter_set, comparer_set);
+	ret = btrfs_show_qgroups(fd, filter_set, comparer_set, verbose);
 	close_file_or_dir(fd, dirstream);
 	free(filter_set);
 	free(comparer_set);

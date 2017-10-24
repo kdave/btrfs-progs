@@ -21,6 +21,7 @@
 #include "ctree.h"
 #include "ioctl.h"
 #include "utils.h"
+#include "btrfsutil.h"
 #include <errno.h>
 
 #define BTRFS_QGROUP_NFILTERS_INCREASE (2 * BTRFS_QGROUP_FILTER_MAX)
@@ -39,6 +40,9 @@ struct btrfs_qgroup {
 	 */
 	struct rb_node all_parent_node;
 	u64 qgroupid;
+
+	/* NULL for qgroups with level > 0 */
+	const char *pathname;
 
 	/*
 	 * info_item
@@ -134,6 +138,13 @@ static struct {
 		.max_len	= 5,
 	},
 	{
+		.name		= "pathname",
+		.column_name	= "pathname",
+		.need_print	= 0,
+		.unit_mode	= 0,
+		.max_len	= 10,
+	},
+	{
 		.name		= NULL,
 		.column_name	= NULL,
 		.need_print	= 0,
@@ -210,8 +221,50 @@ static void print_qgroup_column_add_blank(enum btrfs_qgroup_column_enum column,
 		printf(" ");
 }
 
+void print_pathname_column(struct btrfs_qgroup *qgroup, bool verbose)
+{
+	struct btrfs_qgroup_list *list = NULL;
+
+	fputs("  ", stdout);
+	if (btrfs_qgroup_level(qgroup->qgroupid) > 0) {
+		int count = 0;
+
+		list_for_each_entry(list, &qgroup->qgroups,
+				    next_qgroup) {
+			if (verbose) {
+				struct btrfs_qgroup *member = list->qgroup;
+				u64 qgroupid = member->qgroupid;
+				u64 level = btrfs_qgroup_level(qgroupid);
+				u64 sid = btrfs_qgroup_subvid(qgroupid);
+
+				if (count)
+					fputs(" ", stdout);
+				if (level == 0) {
+					const char *path = member->pathname;
+
+					if (!path)
+						path = "<missing>";
+					fputs(path, stdout);
+				} else
+					printf("%llu/%llu", level, sid);
+			}
+			count++;
+		}
+		if (!count)
+			fputs("<empty>", stdout);
+		else if (!verbose)
+			printf("<%u member qgroup%c>", count,
+			       count != 1 ? 's' : '\0');
+	} else if (qgroup->pathname)
+		printf("<FS_ROOT>%s%s", *qgroup->pathname ? "/" : "",
+		       qgroup->pathname);
+	else
+		fputs("<missing>", stdout);
+}
+
 static void print_qgroup_column(struct btrfs_qgroup *qgroup,
-				enum btrfs_qgroup_column_enum column)
+				enum btrfs_qgroup_column_enum column,
+				bool verbose)
 {
 	int len;
 	int unit_mode = btrfs_qgroup_columns[column].unit_mode;
@@ -253,19 +306,22 @@ static void print_qgroup_column(struct btrfs_qgroup *qgroup,
 		len = print_child_column(qgroup);
 		print_qgroup_column_add_blank(BTRFS_QGROUP_CHILD, len);
 		break;
+	case BTRFS_QGROUP_PATHNAME:
+		print_pathname_column(qgroup, verbose);
+		break;
 	default:
 		break;
 	}
 }
 
-static void print_single_qgroup_table(struct btrfs_qgroup *qgroup)
+static void print_single_qgroup_table(struct btrfs_qgroup *qgroup, bool verbose)
 {
 	int i;
 
 	for (i = 0; i < BTRFS_QGROUP_ALL; i++) {
 		if (!btrfs_qgroup_columns[i].need_print)
 			continue;
-		print_qgroup_column(qgroup, i);
+		print_qgroup_column(qgroup, i, verbose);
 
 		if (i != BTRFS_QGROUP_ALL - 1)
 			printf(" ");
@@ -338,6 +394,47 @@ static int comp_entry_with_qgroupid(struct btrfs_qgroup *entry1,
 	return is_descending ? -ret : ret;
 }
 
+/* Sorts first-level qgroups by pathname and nested qgroups by qgroupid */
+static int comp_entry_with_pathname(struct btrfs_qgroup *entry1,
+				    struct btrfs_qgroup *entry2,
+				    int is_descending)
+{
+	int ret = 0;
+	const char *p1 = entry1->pathname;
+	const char *p2 = entry2->pathname;
+
+	u64 level1 = btrfs_qgroup_level(entry1->qgroupid);
+	u64 level2 = btrfs_qgroup_level(entry2->qgroupid);
+
+	if (level1 != level2) {
+		if (entry1->qgroupid > entry2->qgroupid)
+			ret = 1;
+		else if (entry1->qgroupid < entry2->qgroupid)
+			ret = -1;
+	}
+
+	if (ret)
+		goto out;
+
+	while (*p1 && *p2) {
+		if (*p1 != *p2)
+			break;
+		p1++;
+		p2++;
+	}
+
+	if (*p1 == '/')
+		ret = 1;
+	else if (*p2 == '/')
+		ret = -1;
+	else if (*p1 > *p2)
+		ret = 1;
+	else if (*p1 < *p2)
+		ret = -1;
+out:
+	return is_descending ? -ret : ret;
+}
+
 static int comp_entry_with_rfer(struct btrfs_qgroup *entry1,
 				struct btrfs_qgroup *entry2,
 				int is_descending)
@@ -404,6 +501,7 @@ static int comp_entry_with_max_excl(struct btrfs_qgroup *entry1,
 
 static btrfs_qgroup_comp_func all_comp_funcs[] = {
 	[BTRFS_QGROUP_COMP_QGROUPID]	= comp_entry_with_qgroupid,
+	[BTRFS_QGROUP_COMP_PATHNAME]	= comp_entry_with_pathname,
 	[BTRFS_QGROUP_COMP_RFER]	= comp_entry_with_rfer,
 	[BTRFS_QGROUP_COMP_EXCL]	= comp_entry_with_excl,
 	[BTRFS_QGROUP_COMP_MAX_RFER]	= comp_entry_with_max_rfer,
@@ -412,6 +510,7 @@ static btrfs_qgroup_comp_func all_comp_funcs[] = {
 
 static char *all_sort_items[] = {
 	[BTRFS_QGROUP_COMP_QGROUPID]	= "qgroupid",
+	[BTRFS_QGROUP_COMP_PATHNAME]	= "pathname",
 	[BTRFS_QGROUP_COMP_RFER]	= "rfer",
 	[BTRFS_QGROUP_COMP_EXCL]	= "excl",
 	[BTRFS_QGROUP_COMP_MAX_RFER]	= "max_rfer",
@@ -588,7 +687,7 @@ static struct btrfs_qgroup *qgroup_tree_search(struct qgroup_lookup *root_tree,
  * Return the pointer to the btrfs_qgroup if found or if inserted successfully.
  * Return ERR_PTR if any error occurred.
  */
-static struct btrfs_qgroup *get_or_add_qgroup(
+static struct btrfs_qgroup *get_or_add_qgroup(int fd,
 		struct qgroup_lookup *qgroup_lookup, u64 qgroupid)
 {
 	struct btrfs_qgroup *bq;
@@ -608,6 +707,23 @@ static struct btrfs_qgroup *get_or_add_qgroup(
 	INIT_LIST_HEAD(&bq->qgroups);
 	INIT_LIST_HEAD(&bq->members);
 
+	if (btrfs_qgroup_level(qgroupid) == 0) {
+		enum btrfs_util_error uret;
+		char *pathname;
+
+		uret = btrfs_util_subvolume_path_fd(fd, qgroupid, &pathname);
+		if (uret == BTRFS_UTIL_OK)
+			bq->pathname = pathname;
+		/* Ignore stale qgroup items */
+		else if (uret != BTRFS_UTIL_ERROR_SUBVOLUME_NOT_FOUND) {
+			error("%s", btrfs_util_strerror(uret));
+			if (uret == BTRFS_UTIL_ERROR_NO_MEMORY)
+				return ERR_PTR(-ENOMEM);
+			else
+				return ERR_PTR(-EIO);
+		}
+	}
+
 	ret = qgroup_tree_insert(qgroup_lookup, bq);
 	if (ret) {
 		error("failed to insert %llu into tree: %s",
@@ -619,12 +735,12 @@ static struct btrfs_qgroup *get_or_add_qgroup(
 	return bq;
 }
 
-static int update_qgroup_info(struct qgroup_lookup *qgroup_lookup, u64 qgroupid,
-			      struct btrfs_qgroup_info_item *info)
+static int update_qgroup_info(int fd, struct qgroup_lookup *qgroup_lookup,
+			      u64 qgroupid, struct btrfs_qgroup_info_item *info)
 {
 	struct btrfs_qgroup *bq;
 
-	bq = get_or_add_qgroup(qgroup_lookup, qgroupid);
+	bq = get_or_add_qgroup(fd, qgroup_lookup, qgroupid);
 	if (IS_ERR_OR_NULL(bq))
 		return PTR_ERR(bq);
 
@@ -637,13 +753,13 @@ static int update_qgroup_info(struct qgroup_lookup *qgroup_lookup, u64 qgroupid,
 	return 0;
 }
 
-static int update_qgroup_limit(struct qgroup_lookup *qgroup_lookup,
+static int update_qgroup_limit(int fd, struct qgroup_lookup *qgroup_lookup,
 			       u64 qgroupid,
 			       struct btrfs_qgroup_limit_item *limit)
 {
 	struct btrfs_qgroup *bq;
 
-	bq = get_or_add_qgroup(qgroup_lookup, qgroupid);
+	bq = get_or_add_qgroup(fd, qgroup_lookup, qgroupid);
 	if (IS_ERR_OR_NULL(bq))
 		return PTR_ERR(bq);
 
@@ -712,6 +828,8 @@ static void __free_btrfs_qgroup(struct btrfs_qgroup *bq)
 		list_del(&list->next_member);
 		free(list);
 	}
+	if (bq->pathname)
+		free((void *)bq->pathname);
 	free(bq);
 }
 
@@ -1107,7 +1225,7 @@ static int __qgroups_search(int fd, struct qgroup_lookup *qgroup_lookup)
 				info = (struct btrfs_qgroup_info_item *)
 				       (args.buf + off);
 
-				ret = update_qgroup_info(qgroup_lookup,
+				ret = update_qgroup_info(fd, qgroup_lookup,
 							 qgroupid, info);
 				break;
 			case BTRFS_QGROUP_LIMIT_KEY:
@@ -1115,7 +1233,7 @@ static int __qgroups_search(int fd, struct qgroup_lookup *qgroup_lookup)
 				limit = (struct btrfs_qgroup_limit_item *)
 					(args.buf + off);
 
-				ret = update_qgroup_limit(qgroup_lookup,
+				ret = update_qgroup_limit(fd, qgroup_lookup,
 							  qgroupid, limit);
 				break;
 			case BTRFS_QGROUP_RELATION_KEY:
@@ -1159,7 +1277,7 @@ static int __qgroups_search(int fd, struct qgroup_lookup *qgroup_lookup)
 	return ret;
 }
 
-static void print_all_qgroups(struct qgroup_lookup *qgroup_lookup)
+static void print_all_qgroups(struct qgroup_lookup *qgroup_lookup, bool verbose)
 {
 
 	struct rb_node *n;
@@ -1170,14 +1288,15 @@ static void print_all_qgroups(struct qgroup_lookup *qgroup_lookup)
 	n = rb_first(&qgroup_lookup->root);
 	while (n) {
 		entry = rb_entry(n, struct btrfs_qgroup, sort_node);
-		print_single_qgroup_table(entry);
+		print_single_qgroup_table(entry, verbose);
 		n = rb_next(n);
 	}
 }
 
 int btrfs_show_qgroups(int fd,
 		       struct btrfs_qgroup_filter_set *filter_set,
-		       struct btrfs_qgroup_comparer_set *comp_set)
+		       struct btrfs_qgroup_comparer_set *comp_set,
+		       bool verbose)
 {
 
 	struct qgroup_lookup qgroup_lookup;
@@ -1189,7 +1308,7 @@ int btrfs_show_qgroups(int fd,
 		return ret;
 	__filter_and_sort_qgroups(&qgroup_lookup, &sort_tree,
 				  filter_set, comp_set);
-	print_all_qgroups(&sort_tree);
+	print_all_qgroups(&sort_tree, verbose);
 
 	__free_all_qgroups(&qgroup_lookup);
 	return ret;

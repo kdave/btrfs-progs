@@ -29,6 +29,7 @@
 #include <stddef.h>
 #include <linux/types.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 #include <features.h>
 
