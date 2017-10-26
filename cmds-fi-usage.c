@@ -508,7 +508,7 @@ static int cmp_device_info(const void *a, const void *b)
 			((struct device_info *)b)->path);
 }
 
-int dev_to_fsid(const char *dev, __u8 *fsid)
+int dev_to_fsid(const char *dev, u8 *fsid)
 {
 	struct btrfs_super_block *disk_super;
 	char buf[BTRFS_SUPER_INFO_SIZE];
