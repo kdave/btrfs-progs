@@ -150,7 +150,7 @@ static int cmd_filesystem_df(int argc, char **argv)
 	return !!ret;
 }
 
-static int match_search_item_kernel(__u8 *fsid, char *mnt, char *label,
+static int match_search_item_kernel(u8 *fsid, char *mnt, char *label,
 					char *search)
 {
 	char uuidbuf[BTRFS_UUID_UNPARSED_SIZE];
@@ -678,7 +678,7 @@ static int cmd_filesystem_show(int argc, char **argv)
 	int type = 0;
 	char mp[PATH_MAX];
 	char path[PATH_MAX];
-	__u8 fsid[BTRFS_FSID_SIZE];
+	u8 fsid[BTRFS_FSID_SIZE];
 	char uuid_buf[BTRFS_UUID_UNPARSED_SIZE];
 	unsigned unit_mode;
 	int found = 0;

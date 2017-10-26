@@ -50,6 +50,6 @@ void print_device_chunks(struct device_info *devinfo,
 		struct chunk_info *chunks_info_ptr,
 		int chunks_info_count, unsigned unit_mode);
 void print_device_sizes(struct device_info *devinfo, unsigned unit_mode);
-int dev_to_fsid(const char *dev, __u8 *fsid);
+int dev_to_fsid(const char *dev, u8 *fsid);
 
 #endif
