@@ -428,8 +428,12 @@ run_check_umount_test_dev()
 check_kernel_support()
 {
 	if ! grep -iq 'btrfs' /proc/filesystems; then
-		echo "WARNING: btrfs filesystem not listed in /proc/filesystems, some tests might fail"
-		return 1
+		run_check $SUDO_HELPER modprobe btrfs
+			if ! grep -iq 'btrfs' /proc/filesystems; then
+				echo \
+"WARNING: btrfs filesystem not found in /proc/filesystems, some tests might fail"
+				return 1
+			fi
 	fi
 	return 0
 }
