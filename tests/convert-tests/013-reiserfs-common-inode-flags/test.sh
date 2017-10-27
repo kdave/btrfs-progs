@@ -9,7 +9,7 @@ if ! check_kernel_support_reiserfs >/dev/null; then
 fi
 
 setup_root_helper
-prepare_test_dev 512M
+prepare_test_dev
 check_prereq btrfs-convert
 check_global_prereq mkreiserfs
 check_global_prereq chattr

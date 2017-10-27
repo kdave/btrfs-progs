@@ -9,7 +9,7 @@ check_prereq mkfs.btrfs
 check_prereq btrfs
 
 setup_root_helper
-prepare_test_dev 1g
+prepare_test_dev
 
 here=`pwd`
 

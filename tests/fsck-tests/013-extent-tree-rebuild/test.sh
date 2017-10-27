@@ -7,7 +7,7 @@ check_prereq mkfs.btrfs
 check_prereq btrfs
 
 setup_root_helper
-prepare_test_dev 1G
+prepare_test_dev
 
 # test whether fsck can rebuild a corrupted extent tree
 test_extent_tree_rebuild()
