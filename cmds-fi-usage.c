@@ -22,6 +22,7 @@
 #include <errno.h>
 #include <stdarg.h>
 #include <getopt.h>
+#include <fcntl.h>
 
 #include "utils.h"
 #include "kerncompat.h"
@@ -29,6 +30,7 @@
 #include "string-table.h"
 #include "cmds-fi-usage.h"
 #include "commands.h"
+#include "disk-io.h"
 
 #include "version.h"
 #include "help.h"
@@ -506,6 +508,33 @@ static int cmp_device_info(const void *a, const void *b)
 			((struct device_info *)b)->path);
 }
 
+int dev_to_fsid(const char *dev, u8 *fsid)
+{
+	struct btrfs_super_block *disk_super;
+	char buf[BTRFS_SUPER_INFO_SIZE];
+	int ret;
+	int fd;
+
+	fd = open(dev, O_RDONLY);
+	if (fd < 0) {
+		ret = -errno;
+		return ret;
+	}
+
+	disk_super = (struct btrfs_super_block *)buf;
+	ret = btrfs_read_dev_super(fd, disk_super,
+				   BTRFS_SUPER_INFO_OFFSET, SBREAD_DEFAULT);
+	if (ret)
+		goto out;
+
+	memcpy(fsid, disk_super->fsid, BTRFS_FSID_SIZE);
+	ret = 0;
+
+out:
+	close(fd);
+	return ret;
+}
+
 /*
  *  This function loads the device_info structure and put them in an array
  */
@@ -516,6 +545,7 @@ static int load_device_info(int fd, struct device_info **device_info_ptr,
 	struct btrfs_ioctl_fs_info_args fi_args;
 	struct btrfs_ioctl_dev_info_args dev_info;
 	struct device_info *info;
+	u8 fsid[BTRFS_UUID_SIZE];
 
 	*device_info_count = 0;
 	*device_info_ptr = NULL;
@@ -539,6 +569,8 @@ static int load_device_info(int fd, struct device_info **device_info_ptr,
 		if (ndevs >= fi_args.num_devices) {
 			error("unexpected number of devices: %d >= %llu", ndevs,
 				(unsigned long long)fi_args.num_devices);
+			error(
+		"if seed device is used, try running this command as root");
 			goto out;
 		}
 		memset(&dev_info, 0, sizeof(dev_info));
@@ -549,6 +581,19 @@ static int load_device_info(int fd, struct device_info **device_info_ptr,
 		if (ret) {
 			error("cannot get info about device devid=%d", i);
 			goto out;
+		}
+
+		/*
+		 * Skip seed device by checking device's fsid (requires root).
+		 * Ignore EACCES since if seed is not used this function works
+		 * correctly without root privileges.
+		 */
+		ret = dev_to_fsid((const char *)dev_info.path, fsid);
+		if (ret != -EACCES) {
+			if (ret)
+				goto out;
+			if (memcmp(fi_args.fsid, fsid, BTRFS_FSID_SIZE) != 0)
+				continue;
 		}
 
 		info[ndevs].devid = dev_info.devid;

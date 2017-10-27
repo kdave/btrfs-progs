@@ -768,7 +768,7 @@ static int create_image(struct btrfs_root *root,
 	if (ret < 0)
 		goto out;
 	ret = btrfs_add_link(trans, root, ino, BTRFS_FIRST_FREE_OBJECTID, name,
-			     strlen(name), BTRFS_FT_REG_FILE, NULL, 1);
+			     strlen(name), BTRFS_FT_REG_FILE, NULL, 1, 0);
 	if (ret < 0)
 		goto out;
 
@@ -1529,7 +1529,13 @@ static int do_rollback(const char *devname)
 		goto free_mem;
 	}
 	fsize = lseek(fd, 0, SEEK_END);
-	root = open_ctree_fd(fd, devname, 0, OPEN_CTREE_WRITES);
+
+	/*
+	 * For rollback, we don't really need to write anything so open it
+	 * read-only.  The write part will happen after we close the
+	 * filesystem.
+	 */
+	root = open_ctree_fd(fd, devname, 0, 0);
 	if (!root) {
 		error("unable to open ctree");
 		ret = -EIO;

@@ -123,8 +123,8 @@ libbtrfs_headers = send-stream.h send-utils.h send.h kernel-lib/rbtree.h btrfs-l
 	       extent-cache.h extent_io.h ioctl.h ctree.h btrfsck.h version.h
 convert_objects = convert/main.o convert/common.o convert/source-fs.o \
 		  convert/source-ext2.o convert/source-reiserfs.o
-mkfs_objects = mkfs/main.o mkfs/common.o
-image_objects = image/main.o
+mkfs_objects = mkfs/main.o mkfs/common.o mkfs/rootdir.o
+image_objects = image/main.o image/sanitize.o
 all_objects = $(objects) $(cmds_objects) $(libbtrfs_objects) $(convert_objects) \
 	      $(mkfs_objects) $(image_objects)
 
@@ -246,6 +246,7 @@ static_cmds_objects = $(patsubst %.o, %.static.o, $(cmds_objects))
 static_libbtrfs_objects = $(patsubst %.o, %.static.o, $(libbtrfs_objects))
 static_convert_objects = $(patsubst %.o, %.static.o, $(convert_objects))
 static_mkfs_objects = $(patsubst %.o, %.static.o, $(mkfs_objects))
+static_image_objects = $(patsubst %.o, %.static.o, $(image_objects))
 
 libs_shared = libbtrfs.so.0.1
 libs_static = libbtrfs.a
@@ -424,11 +425,11 @@ btrfstune.static: btrfstune.static.o $(static_objects) $(static_libbtrfs_objects
 	@echo "    [LD]     $@"
 	$(Q)$(CC) -o $@ $^ $(STATIC_LDFLAGS) $(STATIC_LIBS)
 
-btrfs-image: image/main.o $(objects) $(libs_static)
+btrfs-image: $(image_objects) $(objects) $(libs_static)
 	@echo "    [LD]     $@"
 	$(Q)$(CC) -o $@ $^ $(LDFLAGS) $(LIBS) $(LIBS_COMP)
 
-btrfs-image.static: image/main.static.o $(static_objects) $(static_libbtrfs_objects)
+btrfs-image.static: $(static_image_objects) $(static_objects) $(static_libbtrfs_objects)
 	@echo "    [LD]     $@"
 	$(Q)$(CC) -o $@ $^ $(STATIC_LDFLAGS) $(STATIC_LIBS) $(STATIC_LIBS_COMP)
 

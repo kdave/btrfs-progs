@@ -150,7 +150,7 @@ static int cmd_filesystem_df(int argc, char **argv)
 	return !!ret;
 }
 
-static int match_search_item_kernel(__u8 *fsid, char *mnt, char *label,
+static int match_search_item_kernel(u8 *fsid, char *mnt, char *label,
 					char *search)
 {
 	char uuidbuf[BTRFS_UUID_UNPARSED_SIZE];
@@ -431,33 +431,6 @@ out:
 	return !found;
 }
 
-static int dev_to_fsid(const char *dev, __u8 *fsid)
-{
-	struct btrfs_super_block *disk_super;
-	char buf[BTRFS_SUPER_INFO_SIZE];
-	int ret;
-	int fd;
-
-	fd = open(dev, O_RDONLY);
-	if (fd < 0) {
-		ret = -errno;
-		return ret;
-	}
-
-	disk_super = (struct btrfs_super_block *)buf;
-	ret = btrfs_read_dev_super(fd, disk_super,
-				   BTRFS_SUPER_INFO_OFFSET, SBREAD_DEFAULT);
-	if (ret)
-		goto out;
-
-	memcpy(fsid, disk_super->fsid, BTRFS_FSID_SIZE);
-	ret = 0;
-
-out:
-	close(fd);
-	return ret;
-}
-
 static void free_fs_devices(struct btrfs_fs_devices *fs_devices)
 {
 	struct btrfs_fs_devices *cur_seed, *next_seed;
@@ -705,7 +678,7 @@ static int cmd_filesystem_show(int argc, char **argv)
 	int type = 0;
 	char mp[PATH_MAX];
 	char path[PATH_MAX];
-	__u8 fsid[BTRFS_FSID_SIZE];
+	u8 fsid[BTRFS_FSID_SIZE];
 	char uuid_buf[BTRFS_UUID_UNPARSED_SIZE];
 	unsigned unit_mode;
 	int found = 0;
@@ -893,6 +866,11 @@ static const char * const cmd_filesystem_defrag_usage[] = {
 	"-s start            defragment only from byte onward",
 	"-l len              defragment only up to len bytes",
 	"-t size             target extent size hint (default: 32M)",
+	"",
+	"Warning: most Linux kernels will break up the ref-links of COW data",
+	"(e.g., files copied with 'cp --reflink', snapshots) which may cause",
+	"considerable increase of space usage. See btrfs-filesystem(8) for",
+	"more information.",
 	NULL
 };
 

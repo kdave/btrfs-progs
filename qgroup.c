@@ -1222,7 +1222,8 @@ int btrfs_qgroup_parse_sort_string(const char *opt_arg,
 	if (!opt_tmp)
 		return -ENOMEM;
 
-	while ((p = strtok(opt_tmp, ",")) != NULL) {
+	p = strtok(opt_tmp, ",");
+	while (p) {
 		flag = 0;
 		ptr_argv = all_sort_items;
 
@@ -1262,8 +1263,7 @@ int btrfs_qgroup_parse_sort_string(const char *opt_arg,
 			}
 			btrfs_qgroup_setup_comparer(comps, what_to_sort, order);
 		}
-		free(opt_tmp);
-		opt_tmp = NULL;
+		p = strtok(NULL, ",");
 	}
 
 out:

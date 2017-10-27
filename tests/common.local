@@ -14,11 +14,24 @@ fi
 # gets arguments of a current command and can decide if the argument insertion
 # should happen, eg. if some option combination does not make sense or would
 # break tests
+#
+# Return 0 if we need to skip option override
+# Return 1 if we don't need to skip option override
 _skip_spec()
 {
+	local beacon
+
+	beacon=.lowmem_repairable
+
+	# For lowmem repair, only support fs tree repair for now
+	# So we place lowmem repair beacon in the same dir of the test case
 	if echo "$TEST_ARGS_CHECK" | grep -q 'mode=lowmem' &&
 	   echo "$@" | grep -q -- '--repair'; then
-		return 0
+		dir="$(dirname ${@: -1})"
+		if [ -f ${dir}/${beacon} ]; then
+			return 1;
+		fi
+		return 0;
 	fi
 	return 1
 }

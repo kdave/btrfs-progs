@@ -138,7 +138,21 @@ static int device_list_add(const char *path,
 		list_add(&device->dev_list, &fs_devices->devices);
 		device->fs_devices = fs_devices;
 	} else if (!device->name || strcmp(device->name, path)) {
-		char *name = strdup(path);
+		char *name;
+
+		/*
+		 * The existing device has newer generation, so this one could
+		 * be a stale one, don't add it.
+		 */
+		if (found_transid < device->generation) {
+			warning(
+	"adding device %s gen %llu but found an existing device %s gen %llu",
+				path, found_transid, device->name,
+				device->generation);
+			return -EEXIST;
+		}
+
+		name = strdup(path);
                 if (!name)
                         return -ENOMEM;
                 kfree(device->name);
@@ -1032,11 +1046,13 @@ again:
 			     info->chunk_root->root_key.objectid,
 			     BTRFS_FIRST_CHUNK_TREE_OBJECTID, key.offset,
 			     calc_size, &dev_offset, 0);
-		BUG_ON(ret);
+		if (ret < 0)
+			goto out_chunk_map;
 
 		device->bytes_used += calc_size;
 		ret = btrfs_update_device(trans, device);
-		BUG_ON(ret);
+		if (ret < 0)
+			goto out_chunk_map;
 
 		map->stripes[index].dev = device;
 		map->stripes[index].physical = dev_offset;
@@ -1075,14 +1091,22 @@ again:
 	map->ce.size = *num_bytes;
 
 	ret = insert_cache_extent(&info->mapping_tree.cache_tree, &map->ce);
-	BUG_ON(ret);
+	if (ret < 0)
+		goto out_chunk_map;
 
 	if (type & BTRFS_BLOCK_GROUP_SYSTEM) {
 		ret = btrfs_add_system_chunk(info, &key,
 				    chunk, btrfs_chunk_item_size(num_stripes));
-		BUG_ON(ret);
+		if (ret < 0)
+			goto out_chunk;
 	}
 
+	kfree(chunk);
+	return ret;
+
+out_chunk_map:
+	kfree(map);
+out_chunk:
 	kfree(chunk);
 	return ret;
 }
