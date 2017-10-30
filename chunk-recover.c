@@ -1492,7 +1492,7 @@ out:
 	return ERR_PTR(ret);
 }
 
-static int recover_prepare(struct recover_control *rc, char *path)
+static int recover_prepare(struct recover_control *rc, const char *path)
 {
 	int ret;
 	int fd;
@@ -2296,7 +2296,7 @@ static void validate_rebuild_chunks(struct recover_control *rc)
 /*
  * Return 0 when successful, < 0 on error and > 0 if aborted by user
  */
-int btrfs_recover_chunk_tree(char *path, int verbose, int yes)
+int btrfs_recover_chunk_tree(const char *path, int verbose, int yes)
 {
 	int ret = 0;
 	struct btrfs_root *root = NULL;
