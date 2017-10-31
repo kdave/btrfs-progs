@@ -38,7 +38,6 @@ libbtrfs_headers := send-stream.h send-utils.h send.h kernel-lib/rbtree.h btrfs-
                    kernel-lib/crc32c.h kernel-lib/list.h kerncompat.h \
                    kernel-lib/radix-tree.h kernel-lib/sizes.h kernel-lib/raid56.h \
                    extent-cache.h extent_io.h ioctl.h ctree.h btrfsck.h version.h
-TESTS := fsck-tests.sh convert-tests.sh
 blkid_objects := partition/ superblocks/ topology/
 
 

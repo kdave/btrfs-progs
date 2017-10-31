@@ -128,8 +128,6 @@ image_objects = image/main.o image/sanitize.o
 all_objects = $(objects) $(cmds_objects) $(libbtrfs_objects) $(convert_objects) \
 	      $(mkfs_objects) $(image_objects)
 
-TESTS = fsck-tests.sh convert-tests.sh
-
 udev_rules = 64-btrfs-dm.rules
 
 ifeq ("$(origin V)", "command line")
