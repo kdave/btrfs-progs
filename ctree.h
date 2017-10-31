@@ -2072,6 +2072,38 @@ BTRFS_SETGET_STACK_FUNCS(root_stransid, struct btrfs_root_item,
 BTRFS_SETGET_STACK_FUNCS(root_rtransid, struct btrfs_root_item,
 			 rtransid, 64);
 
+static inline struct btrfs_timespec* btrfs_root_ctime(
+		struct btrfs_root_item *root_item)
+{
+	unsigned long ptr = (unsigned long)root_item;
+	ptr += offsetof(struct btrfs_root_item, ctime);
+	return (struct btrfs_timespec *)ptr;
+}
+
+static inline struct btrfs_timespec* btrfs_root_otime(
+		struct btrfs_root_item *root_item)
+{
+	unsigned long ptr = (unsigned long)root_item;
+	ptr += offsetof(struct btrfs_root_item, otime);
+	return (struct btrfs_timespec *)ptr;
+}
+
+static inline struct btrfs_timespec* btrfs_root_stime(
+		struct btrfs_root_item *root_item)
+{
+	unsigned long ptr = (unsigned long)root_item;
+	ptr += offsetof(struct btrfs_root_item, stime);
+	return (struct btrfs_timespec *)ptr;
+}
+
+static inline struct btrfs_timespec* btrfs_root_rtime(
+		struct btrfs_root_item *root_item)
+{
+	unsigned long ptr = (unsigned long)root_item;
+	ptr += offsetof(struct btrfs_root_item, rtime);
+	return (struct btrfs_timespec *)ptr;
+}
+
 /* struct btrfs_root_backup */
 BTRFS_SETGET_STACK_FUNCS(backup_tree_root, struct btrfs_root_backup,
 		   tree_root, 64);

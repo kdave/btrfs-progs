@@ -551,6 +551,26 @@ static void root_flags_to_str(u64 flags, char *ret)
 		strcat(ret, "none");
 }
 
+static void print_timespec(struct extent_buffer *eb,
+		struct btrfs_timespec *timespec, const char *prefix,
+		const char *suffix)
+{
+	struct tm tm;
+	u64 tmp_u64;
+	u32 tmp_u32;
+	time_t tmp_time;
+	char timestamp[256];
+
+	tmp_u64 = btrfs_timespec_sec(eb, timespec);
+	tmp_u32 = btrfs_timespec_nsec(eb, timespec);
+	tmp_time = tmp_u64;
+	localtime_r(&tmp_time, &tm);
+	strftime(timestamp, sizeof(timestamp),
+			"%Y-%m-%d %H:%M:%S", &tm);
+	printf("%s%llu.%u (%s)%s", prefix, (unsigned long long)tmp_u64, tmp_u32,
+			timestamp, suffix);
+}
+
 static void print_root_item(struct extent_buffer *leaf, int slot)
 {
 	struct btrfs_root_item *ri;
@@ -598,6 +618,18 @@ static void print_root_item(struct extent_buffer *leaf, int slot)
 				btrfs_root_stransid(&root_item),
 				btrfs_root_rtransid(&root_item));
 		}
+		if (btrfs_timespec_sec(leaf, btrfs_root_ctime(ri)))
+			print_timespec(leaf, btrfs_root_ctime(ri),
+					"\t\tctime ", "\n");
+		if (btrfs_timespec_sec(leaf, btrfs_root_otime(ri)))
+			print_timespec(leaf, btrfs_root_otime(ri),
+					"\t\totime ", "\n");
+		if (btrfs_timespec_sec(leaf, btrfs_root_stime(ri)))
+			print_timespec(leaf, btrfs_root_stime(ri),
+					"\t\tstime ", "\n");
+		if (btrfs_timespec_sec(leaf, btrfs_root_rtime(ri)))
+			print_timespec(leaf, btrfs_root_rtime(ri),
+					"\t\trtime ", "\n");
 	}
 
 	btrfs_disk_key_to_cpu(&drop_key, &root_item.drop_progress);
@@ -865,26 +897,6 @@ static void inode_flags_to_str(u64 flags, char *ret)
 	STRCAT_ONE_INODE_FLAG(flags, COMPRESS, empty, ret);
 	if (empty)
 		strcat(ret, "none");
-}
-
-static void print_timespec(struct extent_buffer *eb,
-		struct btrfs_timespec *timespec, const char *prefix,
-		const char *suffix)
-{
-	struct tm tm;
-	u64 tmp_u64;
-	u32 tmp_u32;
-	time_t tmp_time;
-	char timestamp[256];
-
-	tmp_u64 = btrfs_timespec_sec(eb, timespec);
-	tmp_u32 = btrfs_timespec_nsec(eb, timespec);
-	tmp_time = tmp_u64;
-	localtime_r(&tmp_time, &tm);
-	strftime(timestamp, sizeof(timestamp),
-			"%Y-%m-%d %H:%M:%S", &tm);
-	printf("%s%llu.%u (%s)%s", prefix, (unsigned long long)tmp_u64, tmp_u32,
-			timestamp, suffix);
 }
 
 static void print_inode_item(struct extent_buffer *eb,
