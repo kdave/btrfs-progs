@@ -1921,8 +1921,7 @@ static int do_chunk_alloc(struct btrfs_trans_handle *trans,
 	return 0;
 }
 
-static int update_block_group(struct btrfs_trans_handle *trans,
-			      struct btrfs_root *root,
+static int update_block_group(struct btrfs_root *root,
 			      u64 bytenr, u64 num_bytes, int alloc,
 			      int mark_free)
 {
@@ -2387,7 +2386,7 @@ static int __free_extent(struct btrfs_trans_handle *trans,
 			BUG_ON(ret);
 		}
 
-		update_block_group(trans, root, bytenr, num_bytes, 0, mark_free);
+		update_block_group(root, bytenr, num_bytes, 0, mark_free);
 	}
 fail:
 	btrfs_free_path(path);
@@ -2747,7 +2746,7 @@ static int alloc_reserved_tree_block(struct btrfs_trans_handle *trans,
 	btrfs_mark_buffer_dirty(leaf);
 	btrfs_free_path(path);
 
-	ret = update_block_group(trans, root, ins->objectid, fs_info->nodesize,
+	ret = update_block_group(root, ins->objectid, fs_info->nodesize,
 				 1, 0);
 	return ret;
 }
@@ -3474,12 +3473,11 @@ int btrfs_make_block_groups(struct btrfs_trans_handle *trans,
 	return 0;
 }
 
-int btrfs_update_block_group(struct btrfs_trans_handle *trans,
-			     struct btrfs_root *root,
+int btrfs_update_block_group(struct btrfs_root *root,
 			     u64 bytenr, u64 num_bytes, int alloc,
 			     int mark_free)
 {
-	return update_block_group(trans, root, bytenr, num_bytes,
+	return update_block_group(root, bytenr, num_bytes,
 				  alloc, mark_free);
 }
 
@@ -3898,12 +3896,12 @@ int btrfs_fix_block_accounting(struct btrfs_trans_handle *trans,
 		btrfs_item_key_to_cpu(leaf, &key, slot);
 		if (key.type == BTRFS_EXTENT_ITEM_KEY) {
 			bytes_used += key.offset;
-			ret = btrfs_update_block_group(trans, root,
+			ret = btrfs_update_block_group(root,
 				  key.objectid, key.offset, 1, 0);
 			BUG_ON(ret);
 		} else if (key.type == BTRFS_METADATA_ITEM_KEY) {
 			bytes_used += fs_info->nodesize;
-			ret = btrfs_update_block_group(trans, root,
+			ret = btrfs_update_block_group(root,
 				  key.objectid, fs_info->nodesize, 1, 0);
 			if (ret)
 				goto out;
@@ -4058,7 +4056,7 @@ static int __btrfs_record_file_extent(struct btrfs_trans_handle *trans,
 					       BTRFS_EXTENT_FLAG_DATA);
 			btrfs_mark_buffer_dirty(leaf);
 
-			ret = btrfs_update_block_group(trans, root, disk_bytenr,
+			ret = btrfs_update_block_group(root, disk_bytenr,
 						       num_bytes, 1, 0);
 			if (ret)
 				goto fail;

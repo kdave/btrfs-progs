@@ -2536,8 +2536,7 @@ int btrfs_make_block_group(struct btrfs_trans_handle *trans,
 			   u64 size);
 int btrfs_make_block_groups(struct btrfs_trans_handle *trans,
 			    struct btrfs_fs_info *fs_info);
-int btrfs_update_block_group(struct btrfs_trans_handle *trans,
-			     struct btrfs_root *root, u64 bytenr, u64 num,
+int btrfs_update_block_group(struct btrfs_root *root, u64 bytenr, u64 num,
 			     int alloc, int mark_free);
 int btrfs_record_file_extent(struct btrfs_trans_handle *trans,
 			      struct btrfs_root *root, u64 objectid,
