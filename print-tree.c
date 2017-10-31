@@ -794,6 +794,17 @@ void btrfs_print_key(struct btrfs_disk_key *disk_key)
 	case BTRFS_UUID_KEY_RECEIVED_SUBVOL:
 		printf(" 0x%016llx)", (unsigned long long)offset);
 		break;
+
+	/*
+	 * Key offsets of ROOT_ITEM point to tree root, print them in human
+	 * readable format.  Especially useful for trees like data/tree reloc
+	 * tree, whose tree id can be negative.
+	 */
+	case BTRFS_ROOT_ITEM_KEY:
+		printf(" ");
+		print_objectid(stdout, offset, type);
+		printf(")");
+		break;
 	default:
 		if (offset == (u64)-1)
 			printf(" -1)");
