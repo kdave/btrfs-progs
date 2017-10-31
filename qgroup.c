@@ -578,6 +578,47 @@ static struct btrfs_qgroup *qgroup_tree_search(struct qgroup_lookup *root_tree,
 	return NULL;
 }
 
+/*
+ * Lookup or insert btrfs_qgroup into qgroup_lookup.
+ *
+ * Search a btrfs_qgroup with @qgroupid from the @qgroup_lookup. If not found,
+ * initialize a btrfs_qgroup with the given qgroupid and insert it to the
+ * @qgroup_lookup.
+ *
+ * Return the pointer to the btrfs_qgroup if found or if inserted successfully.
+ * Return ERR_PTR if any error occurred.
+ */
+static struct btrfs_qgroup *get_or_add_qgroup(
+		struct qgroup_lookup *qgroup_lookup, u64 qgroupid)
+{
+	struct btrfs_qgroup *bq;
+	int ret;
+
+	bq = qgroup_tree_search(qgroup_lookup, qgroupid);
+	if (bq)
+		return bq;
+
+	bq = calloc(1, sizeof(*bq));
+	if (!bq) {
+		error("memory allocation failed");
+		return ERR_PTR(-ENOMEM);
+	}
+
+	bq->qgroupid = qgroupid;
+	INIT_LIST_HEAD(&bq->qgroups);
+	INIT_LIST_HEAD(&bq->members);
+
+	ret = qgroup_tree_insert(qgroup_lookup, bq);
+	if (ret) {
+		error("failed to insert %llu into tree: %s",
+		       (unsigned long long)bq->qgroupid, strerror(-ret));
+		free(bq);
+		return ERR_PTR(ret);
+	}
+
+	return bq;
+}
+
 static int update_qgroup(struct qgroup_lookup *qgroup_lookup, u64 qgroupid,
 			 u64 generation, u64 rfer, u64 rfer_cmpr, u64 excl,
 			 u64 excl_cmpr, u64 flags, u64 max_rfer, u64 max_excl,
@@ -587,9 +628,9 @@ static int update_qgroup(struct qgroup_lookup *qgroup_lookup, u64 qgroupid,
 	struct btrfs_qgroup *bq;
 	struct btrfs_qgroup_list *list;
 
-	bq = qgroup_tree_search(qgroup_lookup, qgroupid);
-	if (!bq || bq->qgroupid != qgroupid)
-		return -ENOENT;
+	bq = get_or_add_qgroup(qgroup_lookup, qgroupid);
+	if (IS_ERR_OR_NULL(bq))
+		return PTR_ERR(bq);
 
 	if (generation)
 		bq->generation = generation;
@@ -613,7 +654,7 @@ static int update_qgroup(struct qgroup_lookup *qgroup_lookup, u64 qgroupid,
 		list = malloc(sizeof(*list));
 		if (!list) {
 			error("memory allocation failed");
-			exit(1);
+			return -ENOMEM;
 		}
 		list->qgroup = pa;
 		list->member = child;
@@ -621,70 +662,6 @@ static int update_qgroup(struct qgroup_lookup *qgroup_lookup, u64 qgroupid,
 		list_add_tail(&list->next_member, &pa->members);
 	}
 	return 0;
-}
-
-static int add_qgroup(struct qgroup_lookup *qgroup_lookup, u64 qgroupid,
-		      u64 generation, u64 rfer, u64 rfer_cmpr, u64 excl,
-		      u64 excl_cmpr, u64 flags, u64 max_rfer, u64 max_excl,
-		      u64 rsv_rfer, u64 rsv_excl, struct btrfs_qgroup *parent,
-		      struct btrfs_qgroup *child)
-{
-	struct btrfs_qgroup *bq;
-	struct btrfs_qgroup_list *list;
-	int ret;
-
-	ret = update_qgroup(qgroup_lookup, qgroupid, generation, rfer,
-			    rfer_cmpr, excl, excl_cmpr, flags, max_rfer,
-			    max_excl, rsv_rfer, rsv_excl, parent, child);
-	if (!ret)
-		return 0;
-
-	bq = calloc(1, sizeof(*bq));
-	if (!bq) {
-		error("memory allocation failed");
-		exit(1);
-	}
-	if (qgroupid) {
-		bq->qgroupid = qgroupid;
-		INIT_LIST_HEAD(&bq->qgroups);
-		INIT_LIST_HEAD(&bq->members);
-	}
-	if (generation)
-		bq->generation = generation;
-	if (rfer)
-		bq->rfer = rfer;
-	if (rfer_cmpr)
-		bq->rfer_cmpr = rfer_cmpr;
-	if (excl)
-		bq->excl = excl;
-	if (excl_cmpr)
-		bq->excl_cmpr = excl_cmpr;
-	if (flags)
-		bq->flags = flags;
-	if (max_rfer)
-		bq->max_rfer = max_rfer;
-	if (max_excl)
-		bq->max_excl = max_excl;
-	if (rsv_rfer)
-		bq->rsv_rfer = rsv_rfer;
-	if (parent && child) {
-		list = malloc(sizeof(*list));
-		if (!list) {
-			error("memory allocation failed");
-			exit(1);
-		}
-		list->qgroup = parent;
-		list->member = child;
-		list_add_tail(&list->next_qgroup, &child->qgroups);
-		list_add_tail(&list->next_member, &parent->members);
-	}
-	ret = qgroup_tree_insert(qgroup_lookup, bq);
-	if (ret) {
-		error("failed to insert %llu into tree: %s",
-		       (unsigned long long)bq->qgroupid, strerror(-ret));
-		exit(1);
-	}
-	return ret;
 }
 
 static void __free_btrfs_qgroup(struct btrfs_qgroup *bq)
@@ -1103,7 +1080,7 @@ static int __qgroups_search(int fd, struct qgroup_lookup *qgroup_lookup)
 				a5 =
 				  btrfs_stack_qgroup_info_exclusive_compressed
 				  (info);
-				add_qgroup(qgroup_lookup,
+				update_qgroup(qgroup_lookup,
 					btrfs_search_header_offset(sh), a1,
 					a2, a3, a4, a5, 0, 0, 0, 0, 0, NULL,
 					NULL);
@@ -1121,7 +1098,7 @@ static int __qgroups_search(int fd, struct qgroup_lookup *qgroup_lookup)
 				     (limit);
 				a5 = btrfs_stack_qgroup_limit_rsv_exclusive
 				     (limit);
-				add_qgroup(qgroup_lookup,
+				update_qgroup(qgroup_lookup,
 					   btrfs_search_header_offset(sh), 0,
 					   0, 0, 0, 0, a1, a2, a3, a4, a5,
 					   NULL, NULL);
@@ -1138,7 +1115,7 @@ static int __qgroups_search(int fd, struct qgroup_lookup *qgroup_lookup)
 					 btrfs_search_header_objectid(sh));
 				if (!bq1)
 					goto skip;
-				add_qgroup(qgroup_lookup,
+				update_qgroup(qgroup_lookup,
 					   btrfs_search_header_offset(sh), 0,
 					   0, 0, 0, 0, 0, 0, 0, 0, 0, bq, bq1);
 			} else
