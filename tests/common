@@ -441,8 +441,12 @@ prepare_test_dev()
 	# num[K/M/G/T...]
 	local size="$1"
 
-	[[ "$TEST_DEV" ]] && return
 	[[ "$size" ]] || size='2G'
+	# Still truncate it to new size
+	if [ -n "$TEST_DEV" ]; then
+		truncate -s "$size" "$TEST_DEV"
+		return;
+	fi
 
 	echo "\$TEST_DEV not given, use $TOP/test/test.img as fallback" >> \
 		"$RESULTS"
