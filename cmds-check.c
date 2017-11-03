@@ -5867,8 +5867,9 @@ static int check_file_extent(struct btrfs_root *root, struct btrfs_key *fkey,
 						*end, fkey->offset - *end);
 		if (!repair || ret) {
 			err |= FILE_EXTENT_ERROR;
-			error("root %llu EXTENT_DATA[%llu %llu] interrupt",
-			      root->objectid, fkey->objectid, fkey->offset);
+			error(
+		"root %llu EXTENT_DATA[%llu %llu] interrupt, should start at %llu",
+			root->objectid, fkey->objectid, fkey->offset, *end);
 		}
 	}
 
