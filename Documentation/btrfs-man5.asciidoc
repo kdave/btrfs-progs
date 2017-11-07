@@ -26,6 +26,13 @@ This section describes mount options specific to BTRFS.  For the generic mount
 options please refer to `mount`(8) manpage. The options are sorted alphabetically
 (discarding the 'no' prefix).
 
+NOTE: most mount options apply to the whole filesystem and only options in the
+first mounted subvolume will take effect. This is due to lack of implementation
+and may change in the future. This means that (for example) you can't set
+per-subvolume 'nodatacow', 'nodatasum', or 'compress' using mount options. This
+should eventually be fixed, but it has proved to be difficult to implement
+correctly within the Linux VFS framework.
+
 *acl*::
 *noacl*::
 (default: on)
