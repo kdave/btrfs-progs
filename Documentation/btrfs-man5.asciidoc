@@ -479,6 +479,25 @@ but will work on 4.5+ kernels.
 A workaround option from times (pre 3.2) when it was not possible to mount a
 subvolume that did not reside directly under the toplevel subvolume.
 
+NOTES ON GENERIC MOUNT OPTIONS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Some of the general mount options from `mount`(8) that affect BTRFS and are
+worth mentioning.
+
+*noatime*::
+under read intensive work-loads, specifying 'noatime' significantly improves
+performance because no new access time information needs to be written. Without
+this option, the default is 'relatime', which only reduces the number of
+inode atime updates in comparison to the traditional 'strictatime'. The worst
+case for atime updates under 'relatime' occurs when many files are read whose
+atime is older than 24 h and which are freshly snapshotted. In that case the
+atime is updated 'and' COW happens - for each file - in bulk. See also
+https://lwn.net/Articles/499293/ - 'Atime and btrfs: a bad combination? (LWN, 2012-05-31)'.
++
+Note that 'noatime' may break applications that rely on atime uptimes like
+the venerable Mutt (unless you use maildir mailboxes).
+
 
 FILESYSTEM FEATURES
 -------------------
