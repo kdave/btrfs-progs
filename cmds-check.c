@@ -5873,8 +5873,9 @@ static int check_file_extent(struct btrfs_root *root, struct btrfs_key *fkey,
 		if (!repair || ret) {
 			err |= FILE_EXTENT_ERROR;
 			error(
-		"root %llu EXTENT_DATA[%llu %llu] interrupt, should start at %llu",
-			root->objectid, fkey->objectid, fkey->offset, *end);
+"root %llu EXTENT_DATA[%llu %llu] gap exists, expected: EXTENT_DATA[%llu %llu]",
+				root->objectid, fkey->objectid, fkey->offset,
+				fkey->objectid, *end);
 		}
 	}
 
