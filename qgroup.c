@@ -1046,8 +1046,10 @@ static int __qgroups_search(int fd, struct qgroup_lookup *qgroup_lookup)
 	struct btrfs_ioctl_search_header *sh;
 	unsigned long off = 0;
 	unsigned int i;
+	struct btrfs_qgroup_status_item *si;
 	struct btrfs_qgroup_info_item *info;
 	struct btrfs_qgroup_limit_item *limit;
+	u64 flags;
 	u64 qgroupid;
 	u64 qgroupid1;
 
@@ -1092,44 +1094,47 @@ static int __qgroups_search(int fd, struct qgroup_lookup *qgroup_lookup)
 								  off);
 			off += sizeof(*sh);
 
-			if (btrfs_search_header_type(sh)
-			    == BTRFS_QGROUP_STATUS_KEY) {
-				struct btrfs_qgroup_status_item *si;
-				u64 flags;
-
+			switch (btrfs_search_header_type(sh)) {
+			case BTRFS_QGROUP_STATUS_KEY:
 				si = (struct btrfs_qgroup_status_item *)
 				     (args.buf + off);
 				flags = btrfs_stack_qgroup_status_flags(si);
+
 				print_status_flag_warning(flags);
-			} else if (btrfs_search_header_type(sh)
-				   == BTRFS_QGROUP_INFO_KEY) {
+				break;
+			case BTRFS_QGROUP_INFO_KEY:
 				qgroupid = btrfs_search_header_offset(sh);
 				info = (struct btrfs_qgroup_info_item *)
 				       (args.buf + off);
 
-				update_qgroup_info(qgroup_lookup, qgroupid,
-						   info);
-			} else if (btrfs_search_header_type(sh)
-				   == BTRFS_QGROUP_LIMIT_KEY) {
+				ret = update_qgroup_info(qgroup_lookup,
+							 qgroupid, info);
+				break;
+			case BTRFS_QGROUP_LIMIT_KEY:
 				qgroupid = btrfs_search_header_offset(sh);
 				limit = (struct btrfs_qgroup_limit_item *)
 					(args.buf + off);
 
-				update_qgroup_limit(qgroup_lookup, qgroupid,
-						    limit);
-			} else if (btrfs_search_header_type(sh)
-				   == BTRFS_QGROUP_RELATION_KEY) {
+				ret = update_qgroup_limit(qgroup_lookup,
+							  qgroupid, limit);
+				break;
+			case BTRFS_QGROUP_RELATION_KEY:
 				qgroupid = btrfs_search_header_offset(sh);
 				qgroupid1 = btrfs_search_header_objectid(sh);
 
 				if (qgroupid < qgroupid1)
-					goto skip;
+					break;
 
-				update_qgroup_relation(qgroup_lookup, qgroupid,
-						       qgroupid1);
-			} else
-				goto done;
-skip:
+				ret = update_qgroup_relation(qgroup_lookup,
+							qgroupid, qgroupid1);
+				break;
+			default:
+				return ret;
+			}
+
+			if (ret)
+				return ret;
+
 			off += btrfs_search_header_len(sh);
 
 			/*
@@ -1151,7 +1156,6 @@ skip:
 			break;
 	}
 
-done:
 	return ret;
 }
 
