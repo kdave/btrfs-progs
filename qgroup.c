@@ -1065,8 +1065,18 @@ static int __qgroups_search(int fd, struct qgroup_lookup *qgroup_lookup)
 
 	while (1) {
 		ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &args);
-		if (ret < 0)
-			return -errno;
+		if (ret < 0) {
+			if (errno == ENOENT) {
+				error("can't list qgroups: quotas not enabled");
+				ret = -ENOTTY;
+			} else {
+				error("can't list qgroups: %s",
+				       strerror(errno));
+				ret = -errno;
+			}
+
+			break;
+		}
 
 		/* the ioctl returns the number of item it found in nr_items */
 		if (sk->nr_items == 0)
