@@ -1,3 +1,15 @@
+btrfs-progs-4.15.1 (2018-02-16)
+  * build
+    * fix build on musl
+    * support asciidoctor for doc generation
+  * cleanups
+    * sync some code with kernel
+    * check: move code to own directory, split to more files
+  * tests
+    * more build tests in travis
+    * tests now pass with asan and ubsan
+    * testsuite can be exported and used separately
+
 btrfs-progs-4.15 (2018-02-01)
   * mkfs --rootdir reworked, does not minimize the final image but can be still
     done using a new option --shrink
