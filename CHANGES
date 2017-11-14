@@ -1,3 +1,15 @@
+btrfs-progs-4.14 (2017-11-16)
+  * build: libzstd now required by default
+  * check: more lowmem mode repair enhancements
+  * subvol set-default: also accept path
+  * prop set: compression accepts no/none, same as ""
+  * filesystem usage: enable for filesystem on top of a seed device
+  * rescue: new command fix-device-size
+  * other
+    * new tests
+    * cleanups and refactoring
+    * doc updates
+
 btrfs-progs-4.13.3 (2017-10-16)
   * check: fix --force, wrong check for a mounted block device
   * build: fix --with-convert parsing
