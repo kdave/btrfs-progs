@@ -1,3 +1,37 @@
+btrfs-progs-4.16 (2018-04-06)
+  * libbtrfsutil - new LGPL library to wrap userspace functionality
+    * several 'btrfs' commands converted to use it:
+      * properties
+      * filesystem sync
+      * subvolume set-default/get-default/delete/show/sync
+    * python bindings, tests
+  * build
+    * use configured pkg-config path
+    * CI: add python, musl/clang, built dependencies caching
+    * convert: build fix for e2fsprogs 1.44+
+    * don't install library links with wrong permissions
+  * fixes
+    * prevent incorrect use of subvol_strip_mountpoint
+    * dump-super: don't verify csum for unknown type
+    * convert: fix inline extent creation condition
+  * check:
+    * lowmem: fix false alert for 'data extent backref lost for snapshot'
+    * lowmem: fix false alert for orphan inode
+    * lowmem: fix false alert for shared prealloc extents
+  * mkfs:
+    * add UUID and otime to root of FS_TREE - with the uuid, snapshots will
+      be now linked to the toplevel subvol by the parent UUID
+    * don't follow symlinks when calculating size
+    * pre-create the UUID tree
+    * fix --rootdir with selinux enabled
+  * dump-tree: add option to print only children nodes of a given block
+  * image: handle missing device for RAID1
+  * other
+    * new tests
+    * test script cleanups (quoting, helpers)
+    * tool to edit superblocks
+    * updated docs
+
 btrfs-progs-4.15.1 (2018-02-16)
   * build
     * fix build on musl
