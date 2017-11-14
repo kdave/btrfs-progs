@@ -183,8 +183,8 @@ PKG_CHECK_MODULES(ZLIB, [zlib])
 PKG_STATIC(ZLIB_LIBS_STATIC, [zlib])
 
 AC_ARG_ENABLE([zstd],
-	AS_HELP_STRING([--enable-zstd@<:@=auto@:>@], [build with zstd support (default: auto)]),
-	[], [enable_zstd=auto]
+	AS_HELP_STRING([--disable-zstd@<:@=yes@:>@], [build with zstd support (default: yes)]),
+	[], [enable_zstd=yes]
 )
 
 if test "x$enable_zstd" = xauto; then
