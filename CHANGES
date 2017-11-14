@@ -1,3 +1,14 @@
+btrfs-progs-4.14.1 (2018-01-05)
+  * dump-tree: print times of root items
+  * check: fix several lowmem mode bugs
+  * convert: fix rollback after balance
+  * other
+    * new and updated tests, enabled lowmem mode in CI
+    * docs updates
+    * fix travis CI build
+    * build fixes
+    * cleanups
+
 btrfs-progs-4.14 (2017-11-16)
   * build: libzstd now required by default
   * check: more lowmem mode repair enhancements
