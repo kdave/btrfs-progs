@@ -1,3 +1,26 @@
+btrfs-progs-4.17 (2018-06-14)
+  * check
+    * many lowmem mode improvements
+    * properly report qgroup mismatch errors
+    * check symlinks with append/immutable flags
+  * fi usage
+    * correctly calculate allocated/unallocated for raid10
+    * minor output updates
+  * mkfs
+    * detect ENOSPC on thinly provisioned devices
+    * fix spurious EEXIST during directory traversal
+  * restore: fix relative path for restore target
+  * dump-tree: print symbolic tree names for backrefs
+  * send: fix regression preventing send -p with subvolumes mounted on "/"
+  * corrupt-tree: refactoring and command line updates
+  * build
+    * make it work with e2fsprogs < 1.42 again
+    * restore support for autoconf 2.63
+    * detect if -std=gnu90 is supported
+  * other
+    * new tests
+    * cleanups
+
 btrfs-progs-4.16.1 (2018-04-24)
   * remove obsolete tools: btrfs-debug-tree, btrfs-zero-log, btrfs-show-super,
     btrfs-calc-size
