@@ -2149,7 +2149,12 @@ static int need_check(struct btrfs_root *root, struct ulist *roots)
 	struct rb_node *node;
 	struct ulist_node *u;
 
-	if (roots->nnodes == 1)
+	/*
+	 * @roots can be empty if it belongs to tree reloc tree
+	 * In that case, we should always check the leaf, as we can't use
+	 * the tree owner to ensure some other root will check it.
+	 */
+	if (roots->nnodes == 1 || roots->nnodes == 0)
 		return 1;
 
 	node = rb_first(&roots->root);
