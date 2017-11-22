@@ -12518,11 +12518,17 @@ static int check_extent_data_backref(struct btrfs_fs_info *fs_info,
 		 * Except normal disk bytenr and disk num bytes, we still
 		 * need to do extra check on dbackref offset as
 		 * dbackref offset = file_offset - file_extent_offset
+		 *
+		 * Also, we must check the leaf owner.
+		 * In case of shared tree blocks (snapshots) we can inherit
+		 * leaves from source snapshot.
+		 * In that case, reference from source snapshot should not
+		 * count.
 		 */
 		if (btrfs_file_extent_disk_bytenr(leaf, fi) == bytenr &&
 		    btrfs_file_extent_disk_num_bytes(leaf, fi) == len &&
 		    (u64)(key.offset - btrfs_file_extent_offset(leaf, fi)) ==
-		    offset)
+		    offset && btrfs_header_owner(leaf) == root_id)
 			found_count++;
 
 next:
