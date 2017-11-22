@@ -11700,16 +11700,12 @@ static int check_tree_block_ref(struct btrfs_root *root,
 	u32 nodesize = root->fs_info->nodesize;
 	u32 item_size;
 	u64 offset;
-	int tree_reloc_root = 0;
 	int found_ref = 0;
 	int err = 0;
 	int ret;
 	int strict = 1;
 	int parent = 0;
 
-	if (root->root_key.objectid == BTRFS_TREE_RELOC_OBJECTID &&
-	    btrfs_header_bytenr(root->node) == bytenr)
-		tree_reloc_root = 1;
 	btrfs_init_path(&path);
 	key.objectid = bytenr;
 	if (btrfs_fs_incompat(root->fs_info, SKINNY_METADATA))
@@ -11817,8 +11813,12 @@ static int check_tree_block_ref(struct btrfs_root *root,
 			/*
 			 * Backref of tree reloc root points to itself, no need
 			 * to check backref any more.
+			 *
+			 * This may be an error of loop backref, but extent tree
+			 * checker should have already handled it.
+			 * Here we only need to avoid infinite iteration.
 			 */
-			if (tree_reloc_root) {
+			if (offset == bytenr) {
 				found_ref = 1;
 			} else {
 				/*
