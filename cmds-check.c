@@ -6623,8 +6623,6 @@ out:
 	return ret;
 }
 
-static int pin_metadata_blocks(struct btrfs_fs_info *fs_info);
-
 /*
  * Iterate all items in the tree and call check_inode_item() to check.
  *
@@ -13306,8 +13304,6 @@ out:
 	return err;
 }
 
-static int pin_metadata_blocks(struct btrfs_fs_info *fs_info);
-
 /*
  * Low memory usage version check_chunks_and_extents.
  */
@@ -13326,12 +13322,6 @@ static int check_chunks_and_extents_v2(struct btrfs_fs_info *fs_info)
 	root = fs_info->fs_root;
 
 	if (repair) {
-		/* pin every tree block to avoid extent overwrite */
-		ret = pin_metadata_blocks(fs_info);
-		if (ret) {
-			error("failed to pin metadata blocks");
-			return ret;
-		}
 		trans = btrfs_start_transaction(fs_info->extent_root, 1);
 		if (IS_ERR(trans)) {
 			error("failed to start transaction before check");
