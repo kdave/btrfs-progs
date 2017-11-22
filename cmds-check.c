@@ -1635,8 +1635,9 @@ static int process_dir_item(struct extent_buffer *eb,
 					  namebuf, len, filetype,
 					  key->type, error);
 		} else {
-			fprintf(stderr, "invalid location in dir item %u\n",
-				location.type);
+			fprintf(stderr,
+				"unknown location type %d in DIR_ITEM[%llu %llu]\n",
+				location.type, key->objectid, key->offset);
 			add_inode_backref(inode_cache, BTRFS_MULTIPLE_OBJECTIDS,
 					  key->objectid, key->offset, namebuf,
 					  len, filetype, key->type, error);
