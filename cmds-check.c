@@ -12005,11 +12005,11 @@ static int check_extent_data_item(struct btrfs_root *root,
 	u64 disk_num_bytes;
 	u64 extent_num_bytes;
 	u64 extent_flags;
+	u64 offset;
 	u32 item_size;
 	unsigned long end;
 	unsigned long ptr;
 	int type;
-	u64 ref_root;
 	int found_dbackref = 0;
 	int slot = pathp->slots[0];
 	int err = 0;
@@ -12027,6 +12027,7 @@ static int check_extent_data_item(struct btrfs_root *root,
 	disk_bytenr = btrfs_file_extent_disk_bytenr(eb, fi);
 	disk_num_bytes = btrfs_file_extent_disk_num_bytes(eb, fi);
 	extent_num_bytes = btrfs_file_extent_num_bytes(eb, fi);
+	offset = btrfs_file_extent_offset(eb, fi);
 
 	/* Check unaligned disk_num_bytes and num_bytes */
 	if (!IS_ALIGNED(disk_num_bytes, root->fs_info->sectorsize)) {
@@ -12081,6 +12082,11 @@ static int check_extent_data_item(struct btrfs_root *root,
 	strict = should_check_extent_strictly(root, nrefs, -1);
 
 	while (ptr < end) {
+		u64 ref_root;
+		u64 ref_objectid;
+		u64 ref_offset;
+		bool match = false;
+
 		iref = (struct btrfs_extent_inline_ref *)ptr;
 		type = btrfs_extent_inline_ref_type(leaf, iref);
 		dref = (struct btrfs_extent_data_ref *)(&iref->offset);
@@ -12092,9 +12098,15 @@ static int check_extent_data_item(struct btrfs_root *root,
 		}
 		if (type == BTRFS_EXTENT_DATA_REF_KEY) {
 			ref_root = btrfs_extent_data_ref_root(leaf, dref);
-			if (ref_root == root->objectid)
+			ref_objectid = btrfs_extent_data_ref_objectid(leaf, dref);
+			ref_offset = btrfs_extent_data_ref_offset(leaf, dref);
+
+			if (ref_objectid == fi_key.objectid &&
+			    ref_offset == fi_key.offset - offset)
+				match = true;
+			if (ref_root == root->objectid && match)
 				found_dbackref = 1;
-			else if (!strict && owner == ref_root)
+			else if (!strict && owner == ref_root && match)
 				found_dbackref = 1;
 		} else if (type == BTRFS_SHARED_DATA_REF_KEY) {
 			found_dbackref = !check_tree_block_ref(root, NULL,
