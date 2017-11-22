@@ -206,6 +206,9 @@ static int __add_prelim_ref(struct pref_state *prefstate, u64 root_id,
 	if (key) {
 		ref->key_for_search = *key;
 		head = &prefstate->pending;
+	} else if (parent) {
+		memset(&ref->key_for_search, 0, sizeof(ref->key_for_search));
+		head = &prefstate->pending;
 	} else {
 		memset(&ref->key_for_search, 0, sizeof(ref->key_for_search));
 		head = &prefstate->pending_missing_keys;
