@@ -11850,6 +11850,30 @@ static int check_tree_block_ref(struct btrfs_root *root,
 		if (!ret)
 			found_ref = 1;
 	}
+	/*
+	 * Finally check SHARED BLOCK REF, any found will be good
+	 * Here we're not doing comprehensive extent backref checking,
+	 * only need to ensure there is some extent referring to this
+	 * tree block.
+	 */
+	if (!found_ref) {
+		btrfs_release_path(&path);
+		key.objectid = bytenr;
+		key.type = BTRFS_SHARED_BLOCK_REF_KEY;
+		key.offset = (u64)-1;
+
+		ret = btrfs_search_slot(NULL, extent_root, &key, &path, 0, 0);
+		if (ret < 0) {
+			err |= BACKREF_MISSING;
+			goto out;
+		}
+		ret = btrfs_previous_extent_item(extent_root, &path, bytenr);
+		if (ret) {
+			err |= BACKREF_MISSING;
+			goto out;
+		}
+		found_ref = 1;
+	}
 	if (!found_ref)
 		err |= BACKREF_MISSING;
 out:
