@@ -632,23 +632,9 @@ int test_dev_for_mkfs(const char *file, int force_overwrite)
 		error("%s is a swap device", file);
 		return 1;
 	}
-	if (!force_overwrite) {
-		if (check_overwrite(file)) {
-			error("use the -f option to force overwrite of %s",
-					file);
-			return 1;
-		}
-	}
-	ret = check_mounted(file);
-	if (ret < 0) {
-		error("cannot check mount status of %s: %s", file,
-				strerror(-ret));
+	ret = test_status_for_mkfs(file, force_overwrite);
+	if (ret)
 		return 1;
-	}
-	if (ret == 1) {
-		error("%s is mounted", file);
-		return 1;
-	}
 	/* check if the device is busy */
 	fd = open(file, O_RDWR|O_EXCL);
 	if (fd < 0) {
@@ -666,6 +652,34 @@ int test_dev_for_mkfs(const char *file, int force_overwrite)
 		return 1;
 	}
 	close(fd);
+	return 0;
+}
+
+/*
+ * check if the file (device) is formatted or mounted
+ */
+int test_status_for_mkfs(const char *file, bool force_overwrite)
+{
+	int ret;
+
+	if (!force_overwrite) {
+		if (check_overwrite(file)) {
+			error("use the -f option to force overwrite of %s",
+					file);
+			return 1;
+		}
+	}
+	ret = check_mounted(file);
+	if (ret < 0) {
+		error("cannot check mount status of %s: %s", file,
+				strerror(-ret));
+		return 1;
+	}
+	if (ret == 1) {
+		error("%s is mounted", file);
+		return 1;
+	}
+
 	return 0;
 }
 

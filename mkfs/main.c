@@ -913,8 +913,12 @@ int main(int argc, char **argv)
 	while (dev_cnt-- > 0) {
 		file = argv[optind++];
 		if (is_block_device(file) == 1)
-			if (test_dev_for_mkfs(file, force_overwrite))
-				goto error;
+			ret = test_dev_for_mkfs(file, force_overwrite);
+		else
+			ret = test_status_for_mkfs(file, force_overwrite);
+
+		if (ret)
+			goto error;
 	}
 
 	optind = saved_optind;
