@@ -81,8 +81,8 @@ addons:
     branch_pattern: coverity_scan
 
 script:
-  - "if ./travis-should-run-test; then make TEST_LOG=dump test-cli; fi"
-  - "if ./travis-should-run-test; then make TEST_LOG=dump test-mkfs; fi"
-  - "if ./travis-should-run-test; then make TEST_LOG=dump test-check; fi"
-  - "if ./travis-should-run-test; then make TEST_LOG=dump test-misc; fi"
+  - "if travis/should-run-test; then make TEST_LOG=dump test-cli; fi"
+  - "if travis/should-run-test; then make TEST_LOG=dump test-mkfs; fi"
+  - "if travis/should-run-test; then make TEST_LOG=dump test-check; fi"
+  - "if travis/should-run-test; then make TEST_LOG=dump test-misc; fi"
   - "if [ $TRAVIS_BRANCH = release-test ]; then make TEST_LOG=dump test-convert; fi"
