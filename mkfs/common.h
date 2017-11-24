@@ -72,6 +72,7 @@ int test_minimum_size(const char *file, u64 min_dev_size);
 int is_vol_small(const char *file);
 int test_num_disk_vs_raid(u64 metadata_profile, u64 data_profile,
 	u64 dev_cnt, int mixed, int ssd);
+int test_status_for_mkfs(const char *file, bool force_overwrite);
 int test_dev_for_mkfs(const char *file, int force_overwrite);
 
 #endif
