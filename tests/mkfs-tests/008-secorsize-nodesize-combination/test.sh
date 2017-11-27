@@ -19,7 +19,7 @@ do_test()
 {
 	sectorsize=$1
 	nodesize=$2
-	run_mayfail $TOP/mkfs.btrfs -O $features -n $nodesize -s $sectorsize \
+	run_mayfail $TOP/mkfs.btrfs -f -O $features -n $nodesize -s $sectorsize \
 		$TEST_DEV
 	ret=$?
 	if [ $ret == 0 ]; then
