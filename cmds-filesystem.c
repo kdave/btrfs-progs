@@ -1029,23 +1029,22 @@ static int cmd_filesystem_defrag(int argc, char **argv)
 		if (fd < 0) {
 			error("cannot open %s: %s", argv[i],
 					strerror(errno));
-			defrag_global_errors++;
-			close_file_or_dir(fd, dirstream);
-			continue;
+			ret = -errno;
+			goto next;
 		}
-		if (fstat(fd, &st)) {
+
+		ret = fstat(fd, &st);
+		if (ret) {
 			error("failed to stat %s: %s",
 					argv[i], strerror(errno));
-			defrag_global_errors++;
-			close_file_or_dir(fd, dirstream);
-			continue;
+			ret = -errno;
+			goto next;
 		}
 		if (!(S_ISDIR(st.st_mode) || S_ISREG(st.st_mode))) {
 			error("%s is not a directory or a regular file",
 					argv[i]);
-			defrag_global_errors++;
-			close_file_or_dir(fd, dirstream);
-			continue;
+			ret = -EINVAL;
+			goto next;
 		}
 		if (recursive && S_ISDIR(st.st_mode)) {
 			ret = nftw(argv[i], defrag_callback, 10,
@@ -1060,20 +1059,25 @@ static int cmd_filesystem_defrag(int argc, char **argv)
 			ret = ioctl(fd, BTRFS_IOC_DEFRAG_RANGE,
 					&defrag_global_range);
 			defrag_err = errno;
-		}
-		close_file_or_dir(fd, dirstream);
-		if (ret && defrag_err == ENOTTY) {
-			error(
+			if (ret && defrag_err == ENOTTY) {
+				error(
 "defrag range ioctl not supported in this kernel version, 2.6.33 and newer is required");
-			defrag_global_errors++;
-			break;
+				defrag_global_errors++;
+				close_file_or_dir(fd, dirstream);
+				break;
+			}
+			if (ret) {
+				error("defrag failed on %s: %s", argv[i],
+				      strerror(defrag_err));
+				goto next;
+			}
 		}
-		if (ret) {
-			error("defrag failed on %s: %s", argv[i],
-					strerror(defrag_err));
+next:
+		if (ret)
 			defrag_global_errors++;
-		}
+		close_file_or_dir(fd, dirstream);
 	}
+
 	if (defrag_global_errors)
 		fprintf(stderr, "total %d failures\n", defrag_global_errors);
 
