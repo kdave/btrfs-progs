@@ -995,13 +995,31 @@ int main(int argc, char **argv)
 	 * This must be done before minimal device size checks.
 	 */
 	if (source_dir_set) {
-		fd = open(file, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR | S_IRGRP |
-			  S_IWGRP | S_IROTH);
+		int oflags = O_RDWR;
+		struct stat statbuf;
+
+		if (is_path_exist(file) == 0)
+			oflags |= O_CREAT;
+
+		fd = open(file, oflags, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP |
+					 S_IROTH);
 		if (fd < 0) {
 			error("unable to open %s: %s", file, strerror(errno));
 			goto error;
 		}
+		ret = fstat(fd, &statbuf);
+		if (ret < 0) {
+			error("unable to stat %s: %s", file, strerror(errno));
+			ret = -errno;
+			goto error;
+		}
 
+		/*
+		 * Block_count not specified, use file/device size first.
+		 * Or we will always use source_dir_size calculated for mkfs.
+		 */
+		if (!block_count)
+			block_count = btrfs_device_size(fd, &statbuf);
 		source_dir_size = btrfs_mkfs_size_dir(source_dir, sectorsize,
 				min_dev_size, metadata_profile, data_profile);
 		if (block_count < source_dir_size)

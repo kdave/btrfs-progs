@@ -447,7 +447,7 @@ int is_mount_point(const char *path)
 	return ret;
 }
 
-static int is_reg_file(const char *path)
+int is_reg_file(const char *path)
 {
 	struct stat statbuf;
 
