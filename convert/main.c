@@ -1443,6 +1443,8 @@ next:
 		}
 	}
 	btrfs_release_path(&path);
+	if (ret)
+		return ret;
 	/*
 	 * For HOLES mode (without NO_HOLES), we must ensure file extents
 	 * cover the whole range of the image
