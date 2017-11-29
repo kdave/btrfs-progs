@@ -1248,6 +1248,13 @@ raid_groups:
 		goto out;
 	}
 
+	ret = cleanup_temp_chunks(fs_info, &allocation, data_profile,
+				  metadata_profile, metadata_profile);
+	if (ret < 0) {
+		error("failed to cleanup temporary chunks: %d", ret);
+		goto out;
+	}
+
 	if (source_dir_set) {
 		trans = btrfs_start_transaction(root, 1);
 		BUG_ON(IS_ERR(trans));
@@ -1310,12 +1317,6 @@ raid_groups:
 				goto out;
 			}
 		}
-	}
-	ret = cleanup_temp_chunks(fs_info, &allocation, data_profile,
-				  metadata_profile, metadata_profile);
-	if (ret < 0) {
-		error("failed to cleanup temporary chunks: %d", ret);
-		goto out;
 	}
 
 	if (verbose) {
