@@ -456,6 +456,21 @@ static int is_reg_file(const char *path)
 	return S_ISREG(statbuf.st_mode);
 }
 
+int is_path_exist(const char *path)
+{
+	struct stat statbuf;
+	int ret;
+
+	ret = stat(path, &statbuf);
+	if (ret < 0) {
+		if (errno == ENOENT)
+			return 0;
+		else
+			return -errno;
+	}
+	return 1;
+}
+
 /*
  * This function checks if the given input parameter is
  * an uuid or a path
