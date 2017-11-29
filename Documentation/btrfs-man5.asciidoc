@@ -129,7 +129,7 @@ seconds (5 minutes). Use with care.
 Control BTRFS file data compression.  Type may be specified as 'zlib',
 'lzo', 'zstd' or 'no' (for no compression, used for remounting).  If no type
 is specified, 'zlib' is used.  If 'compress-force' is specified,
-the compression will allways be attempted, but the data may end up uncompressed
+the compression will always be attempted, but the data may end up uncompressed
 if the compression would make them larger.
 +
 Otherwise some simple heuristics are applied to detect an incompressible file.
