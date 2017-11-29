@@ -733,7 +733,7 @@ int main(int argc, char **argv)
 	u32 stripesize = 4096;
 	int zero_end = 1;
 	int fd = -1;
-	int ret;
+	int ret = 0;
 	int close_ret;
 	int i;
 	int mixed = 0;
@@ -913,7 +913,9 @@ int main(int argc, char **argv)
 
 	while (dev_cnt-- > 0) {
 		file = argv[optind++];
-		if (is_block_device(file) == 1)
+		if (source_dir_set && is_path_exist(file) == 0)
+			ret = 0;
+		else if (is_block_device(file) == 1)
 			ret = test_dev_for_mkfs(file, force_overwrite);
 		else
 			ret = test_status_for_mkfs(file, force_overwrite);

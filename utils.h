@@ -122,6 +122,7 @@ int set_label(const char *btrfs_dev, const char *label);
 char *__strncpy_null(char *dest, const char *src, size_t n);
 int is_block_device(const char *file);
 int is_mount_point(const char *file);
+int is_path_exist(const char *file);
 int check_arg_type(const char *input);
 int open_path_or_dev_mnt(const char *path, DIR **dirstream, int verbose);
 int btrfs_open(const char *path, DIR **dirstream, int verbose, int dir_only);
