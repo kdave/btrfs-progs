@@ -12,7 +12,7 @@ The Btrfs utility programs require the following libraries/tools to build:
 For the btrfs-convert utility:
 
 - e2fsprogs - ext2/ext3/ext4 file system libraries, or called e2fslibs
-- libreiserfscore - reiserfs file system library
+- libreiserfscore - reiserfs file system library version >= 3.6.27
 
 Generating documentation:
 
