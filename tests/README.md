@@ -164,7 +164,9 @@ how to do mkfs, mount, unmount, check, etc.
 and join by dashes `-`. This will become the directory name, eg. `012-subvolume-sync-must-wait`.
 
 3. Write a short description of the bug and how it's tested to the comment at the
-begining of `test.sh`. You don't need to add the file to git yet.
+begining of `test.sh`. You don't need to add the file to git yet. Don't forget
+to make the file executable, otherwise it's not going to be executed by the
+infrastructure.
 
 4. Write the test commands, comment anything that's not obvious.
 
