@@ -1419,6 +1419,23 @@ error_out:
 	return -EIO;
 }
 
+/*
+ * btrfs_read_dev_super - read a valid superblock from a block device
+ * @fd:		file descriptor of the device
+ * @sb:		buffer where the superblock is going to be read in
+ * @sb_bytenr:  offset of the particular superblock copy we want
+ * @sbflags:	flags controlling how the superblock is read
+ *
+ * This function is used by various btrfs comands to obtain a valid superblock.
+ *
+ * It's mode of operation is controlled by the @sb_bytenr and @sbdflags
+ * parameters. If SBREAD_RECOVER flag is set and @sb_bytenr is
+ * BTRFS_SUPER_INFO_OFFSET then the function reads all 3 superblock copies and
+ * returns the newest one. If SBREAD_RECOVER is not set then only a single
+ * copy is read, which one is decided by @sb_bytenr. If @sb_bytenr !=
+ * BTRFS_SUPER_INFO_OFFSET then the @sbflags is effectively ignored and only a
+ * single copy is read.
+ */
 int btrfs_read_dev_super(int fd, struct btrfs_super_block *sb, u64 sb_bytenr,
 			 unsigned sbflags)
 {
