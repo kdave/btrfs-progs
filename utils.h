@@ -173,6 +173,9 @@ int prefixcmp(const char *str, const char *prefix);
 
 unsigned long total_memory(void);
 
+void print_device_info(struct btrfs_device *device, char *prefix);
+void print_all_devices(struct list_head *devices);
+
 /*
  * Global program state, configurable by command line and available to
  * functions without extra context passing.

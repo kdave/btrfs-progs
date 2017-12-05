@@ -2716,3 +2716,21 @@ unsigned long total_memory(void)
         }
         return si.totalram * si.mem_unit;       /* bytes */
 }
+
+void print_device_info(struct btrfs_device *device, char *prefix)
+{
+	if (prefix)
+		printf("%s", prefix);
+	printf("Device: id = %llu, name = %s\n",
+	       device->devid, device->name);
+}
+
+void print_all_devices(struct list_head *devices)
+{
+	struct btrfs_device *dev;
+
+	printf("All Devices:\n");
+	list_for_each_entry(dev, devices, dev_list)
+		print_device_info(dev, "\t");
+	printf("\n");
+}

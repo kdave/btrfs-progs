@@ -186,19 +186,6 @@ static struct super_block_record *recover_get_good_super(
 	return record;
 }
 
-static void print_all_devices(struct list_head *devices)
-{
-	struct btrfs_device *dev;
-
-	printf("All Devices:\n");
-	list_for_each_entry(dev, devices, dev_list) {
-		printf("\t");
-		printf("Device: id = %llu, name = %s\n",
-			dev->devid, dev->name);
-	}
-	printf("\n");
-}
-
 static void print_super_info(struct super_block_record *record)
 {
 	printf("\t\tdevice name = %s\n", record->device_name);
