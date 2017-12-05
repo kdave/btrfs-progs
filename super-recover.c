@@ -136,7 +136,7 @@ read_dev_supers(char *filename, struct btrfs_recover_superblock *recover)
 			max_gen = btrfs_super_generation(sb);
 			if (max_gen > recover->max_generation)
 				recover->max_generation = max_gen;
-		} else if (ret == -EIO){
+		} else if (ret != -ENOENT){
 			/*
 			 * Skip superblock which doesn't exist, only adds
 			 * really corrupted superblock
