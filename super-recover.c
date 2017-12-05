@@ -177,15 +177,6 @@ static int read_fs_supers(struct btrfs_recover_superblock *recover)
 	return 0;
 }
 
-static struct super_block_record *recover_get_good_super(
-				struct btrfs_recover_superblock *recover)
-{
-	struct super_block_record *record;
-	record = list_entry(recover->good_supers.next,
-				struct super_block_record, list);
-	return record;
-}
-
 static void print_super_info(struct super_block_record *record)
 {
 	printf("\t\tdevice name = %s\n", record->device_name);
@@ -280,7 +271,9 @@ int btrfs_recover_superblocks(const char *dname,
 			goto no_recover;
 		}
 	}
-	record = recover_get_good_super(&recover);
+	record = list_first_entry(&recover.good_supers,
+				  struct super_block_record, list);
+
 	root = open_ctree(record->device_name, record->bytenr,
 			  OPEN_CTREE_RECOVER_SUPER | OPEN_CTREE_WRITES);
 	if (!root) {
