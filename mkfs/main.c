@@ -352,6 +352,7 @@ static void print_usage(int ret)
 	printf("  creation:\n");
 	printf("\t-b|--byte-count SIZE    set filesystem size to SIZE (on the first device)\n");
 	printf("\t-r|--rootdir DIR        copy files from DIR to the image root directory\n");
+	printf("\t--shrink                (with --rootdir) shrink the filled filesystem to minimal size\n");
 	printf("\t-K|--nodiscard          do not perform whole device TRIM\n");
 	printf("\t-f|--force              force overwrite of existing filesystem\n");
 	printf("  general:\n");
