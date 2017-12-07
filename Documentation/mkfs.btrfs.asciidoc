@@ -21,11 +21,6 @@ mount option. See section *MULTIPLE DEVICES* for more details.
 
 OPTIONS
 -------
-*-A|--alloc-start <offset>*::
-(An option to help debugging chunk allocator.)
-Specify the (physical) offset from the start of the device at which allocations
-start.  The default value is zero.
-
 *-b|--byte-count <size>*::
 Specify the size of the filesystem. If this option is not used,
 mkfs.btrfs uses the entire device space for the filesystem.
@@ -134,6 +129,12 @@ Print the *mkfs.btrfs* version and exit.
 
 *--help*::
 Print help.
+
+*-A|--alloc-start <offset>*::
+*deprecated, will be removed*
+(An option to help debugging chunk allocator.)
+Specify the (physical) offset from the start of the device at which allocations
+start.  The default value is zero.
 
 SIZE UNITS
 ----------
