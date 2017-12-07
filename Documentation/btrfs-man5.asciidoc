@@ -58,17 +58,17 @@ location.
 +
 WARNING: Defragmenting with Linux kernel versions < 3.9 or ≥ 3.14-rc2 as
 well as with Linux stable kernel versions ≥ 3.10.31, ≥ 3.12.12 or
-≥ 3.13.4 will break up the ref-links of CoW data (for example files
+≥ 3.13.4 will break up the reflinks of COW data (for example files
 copied with `cp --reflink`, snapshots or de-duplicated data).
 This may cause considerable increase of space usage depending on the
-broken up ref-links.
+broken up reflinks.
 
 *barrier*::
 *nobarrier*::
 (default: on)
 +
 Ensure that all IO write operations make it through the device cache and are stored
-permanently when the filesystem is at it's consistency checkpoint. This
+permanently when the filesystem is at its consistency checkpoint. This
 typically means that a flush command is sent to the device that will
 synchronize all pending data and ordinary metadata blocks, then writes the
 superblock and issues another flush.
@@ -129,7 +129,7 @@ seconds (5 minutes). Use with care.
 Control BTRFS file data compression.  Type may be specified as 'zlib',
 'lzo', 'zstd' or 'no' (for no compression, used for remounting).  If no type
 is specified, 'zlib' is used.  If 'compress-force' is specified,
-the compression will always be attempted, but the data may end up uncompressed
+then compression will always be attempted, but the data may end up uncompressed
 if the compression would make them larger.
 +
 Otherwise some simple heuristics are applied to detect an incompressible file.
@@ -205,12 +205,20 @@ system at that point.
 *nodiscard*::
 (default: off)
 +
-Enable discarding of freed file blocks using the TRIM operation.  This is useful
-for SSD devices, thinly provisioned LUNs or virtual machine images where the
-backing device understands the operation. Depending on support of the
-underlying device, the operation may severely hurt performance in case the TRIM
-operation is synchronous (eg. with SATA devices up to revision 3.0).
-+
+Enable discarding of freed file blocks.  This is useful for SSD devices, thinly
+provisioned LUNs, or virtual machine images; however, every storage layer must
+support discard for it to work. if the backing device does not support
+asynchronous queued TRIM, then this operation can severly degrade performance,
+because a synchronous TRIM operation will be attempted instead. Queued TRIM
+requires newer than SATA revision 3.1 chipsets and devices.
+
+If it is not necessary to immediately discard freed blocks, then the `fstrim`
+tool can be used to discard all free blocks in a batch. Scheduling a TRIM
+during a period of low system activity will prevent latent interference with
+the performance of other operations. Also, a device may ignore the TRIM command
+if the range is too small, so running a batch discard has a greater probability
+of actually discarding the blocks.
+
 If discarding is not necessary to be done at the block freeing time, there's
 `fstrim`(8) tool that lets the filesystem discard all free blocks in a batch,
 possibly not much interfering with other operations. Also, the the device may
@@ -643,8 +651,8 @@ long as this attribute is set (obviously the exception is unsetting the attribut
 'O_DSYNC'
 
 *X*::
-'no compression', permanently turn off compression on the given file, other
-compression mount options will not affect that
+'no compression', permanently turn off compression on the given file. Any
+compression mount options will not affect this file.
 +
 When set on a directory, all newly created files will inherit this attribute.
 

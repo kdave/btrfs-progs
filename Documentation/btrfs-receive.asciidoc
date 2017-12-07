@@ -81,7 +81,7 @@ should be protected from access by users until the receive operation
 has completed and the subvolume is set to read-only.
 
 Additionally, receive does not currently do a very good job of validating
-that an incremental send streams actually makes sense, and it is thus
+that an incremental send stream actually makes sense, and it is thus
 possible for a specially crafted send stream to create a subvolume with
 reflinks to arbitrary files in the same filesystem.  Because of this,
 users are advised to not use *btrfs receive* on send streams from

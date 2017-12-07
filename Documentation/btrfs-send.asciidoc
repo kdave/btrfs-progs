@@ -29,12 +29,13 @@ are available on both the sending and receiving side can be used to reduce the
 amount of information that has to be sent to reconstruct the sent snapshot on a
 different filesystem.
 
-It is allowed to omit the '-p <parent>' option when '-c <clone-src>' options
-are given, in which case *btrfs send* will determine a suitable parent among the
-clone sources itself.
+The '-p <parent>' option can be omitted when '-c <clone-src>' options are
+given, in which case *btrfs send* will determine a suitable parent from among
+the clone sources.
 
 You must not specify clone sources unless you guarantee that these snapshots
-are exactly in the same state on both sides, the sender and the receiver.
+are exactly in the same state on both sides--both for the sender and the
+receiver.
 
 `Options`
 
@@ -53,7 +54,7 @@ send in 'NO_FILE_DATA' mode
 +
 The output stream does not contain any file
 data and thus cannot be used to transfer changes. This mode is faster and
-useful to show the differences in metadata.
+is useful to show the differences in metadata.
 
 -v|--verbose::
 enable verbose output, print generated commands in a readable form, (each

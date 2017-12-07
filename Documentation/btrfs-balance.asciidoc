@@ -21,8 +21,8 @@ filesystem.
 The balance operation is cancellable by the user. The on-disk state of the
 filesystem is always consistent so an unexpected interruption (eg. system crash,
 reboot) does not corrupt the filesystem. The progress of the balance operation
-is temporarily stored and will be resumed upon mount, unless the mount option
-'skip_balance' is specified.
+is temporarily stored as an internal state and will be resumed upon mount,
+unless the mount option 'skip_balance' is specified.
 
 WARNING: running balance without filters will take a lot of time as it basically
 rewrites the entire filesystem and needs to update all block pointers.
@@ -201,10 +201,11 @@ ENOSPC
 ------
 
 The way balance operates, it usually needs to temporarily create a new block
-group and move the old data there. For that it needs work space, otherwise
-it fails for ENOSPC reasons.
+group and move the old data there, before the old block group can be removed.
+For that it needs the work space, otherwise it fails for ENOSPC reasons.
 This is not the same ENOSPC as if the free space is exhausted. This refers to
-the space on the level of block groups.
+the space on the level of block groups, which are bigger parts of the filesytem
+that contain many file extents.
 
 The free work space can be calculated from the output of the *btrfs filesystem show*
 command:
@@ -227,7 +228,7 @@ space. After that it might be possible to run other filters.
 
 Conversion to profiles based on striping (RAID0, RAID5/6) require the work
 space on each device. An interrupted balance may leave partially filled block
-groups that might consume the work space.
+groups that consume the work space.
 
 EXAMPLES
 --------
@@ -238,7 +239,7 @@ can be found in section 'TYPICAL USECASES' of `btrfs-device`(8).
 MAKING BLOCK GROUP LAYOUT MORE COMPACT
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The layout of block groups is not normally visible, most tools report only
+The layout of block groups is not normally visible; most tools report only
 summarized numbers of free or used space, but there are still some hints
 provided.
 
@@ -298,7 +299,7 @@ data to the remaining blockgroups, ie. the 6GiB are now free of filesystem
 structures, and can be reused for new data or metadata block groups.
 
 We can do a similar exercise with the metadata block groups, but this should
-not be typically necessary, unless the used/total ration is really off. Here
+not typically be necessary, unless the used/total ratio is really off. Here
 the ratio is roughly 50% but the difference as an absolute number is "a few
 gigabytes", which can be considered normal for a workload with snapshots or
 reflinks updated frequently.

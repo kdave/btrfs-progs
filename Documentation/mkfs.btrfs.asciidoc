@@ -22,7 +22,7 @@ mount option. See section *MULTIPLE DEVICES* for more details.
 OPTIONS
 -------
 *-b|--byte-count <size>*::
-Specify the size of the filesystem. If this option is not used,
+Specify the size of the filesystem. If this option is not used, then
 mkfs.btrfs uses the entire device space for the filesystem.
 
 *-d|--data <profile>*::
@@ -74,7 +74,7 @@ default value is 16KiB (16384) or the page size, whichever is bigger. Must be a
 multiple of the sectorsize and a power of 2, but not larger than 64KiB (65536).
 Leafsize always equals nodesize and the options are aliases.
 +
-Smaller node size increases fragmentation but leads to higher b-trees which in
+Smaller node size increases fragmentation but leads to taller b-trees which in
 turn leads to lower locking contention. Higher node sizes give better packing
 and less fragmentation at the cost of more expensive memory operations while
 updating the metadata blocks.
@@ -167,7 +167,7 @@ root partition created with RAID1/10/5/6 profiles. The mount action can happen
 before all block devices are discovered. The waiting is usually done on the
 initramfs/initrd systems.
 
-As of kernel 4.9, RAID5/6 is still considered experimental and shouldn't be
+As of kernel 4.14, RAID5/6 is still considered experimental and shouldn't be
 employed for production use.
 
 FILESYSTEM FEATURES
@@ -282,9 +282,9 @@ The mkfs utility will let the user create a filesystem with profiles that write
 the logical blocks to 2 physical locations. Whether there are really 2
 physical copies highly depends on the underlying device type.
 
-For example, a SSD drive can remap the blocks internally to a single copy thus
+For example, a SSD drive can remap the blocks internally to a single copy--thus
 deduplicating them. This negates the purpose of increased redundancy and just
-wastes filesystem space without the expected level of redundancy.
+wastes filesystem space without providing the expected level of redundancy.
 
 The duplicated data/metadata may still be useful to statistically improve the
 chances on a device that might perform some internal optimizations. The actual

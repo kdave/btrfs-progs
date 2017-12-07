@@ -34,7 +34,7 @@ from the system, you have to use the devid parameter format.
 The <targetdev> needs to be same size or larger than the <srcdev>.
 +
 NOTE: the filesystem has to be resized to fully take advantage of a
-larger target device, this can be achieved with
+larger target device; this can be achieved with
 `btrfs filesystem resize <devid>:max /path`
 +
 `Options`
@@ -45,10 +45,10 @@ only read from <srcdev> if no other zero-defect mirror exists.
 slow)
 -f::::
 force using and overwriting <targetdev> even if it looks like
-containing a valid btrfs filesystem.
+it contains a valid btrfs filesystem.
 +
 A valid filesystem is assumed if a btrfs superblock is found which contains a
-correct checksum. Devices which are currently mounted are
+correct checksum. Devices that are currently mounted are
 never allowed to be used as the <targetdev>.
 +
 -B::::

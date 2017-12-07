@@ -17,7 +17,7 @@ NOTE: To use qgroup you need to enable quota first using *btrfs quota enable*
 command.
 
 WARNING: Qgroup is not stable yet and will impact performance in current mainline
-kernel (v3.14 so far).
+kernel (v4.14).
 
 QGROUP
 ------
@@ -56,13 +56,13 @@ Explicitly ask not to do a rescan.
 Create a subvolume quota group.
 +
 For the '0/<subvolume id>' qgroup, a qgroup can be created even before the
-subvolume created.
+subvolume is created.
 
 *destroy* <qgroupid> <path>::
 Destroy a qgroup.
 +
-If a qgroup is no isolated,which means it is a parent or child qgroup, it
-can't be destroyed.
+If a qgroup is not isolated, meaning it is a parent or child qgroup, then it
+can only be destroyed after the relationship is removed.
 
 *limit* [options] <size>|none [<qgroupid>] <path>::
 Limit the size of a qgroup to <size> or no limit in the btrfs filesystem

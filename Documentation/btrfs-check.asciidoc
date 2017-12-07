@@ -22,10 +22,10 @@ by the option '--readonly'.
 
 *btrfsck* is an alias of *btrfs check* command and is now deprecated.
 
-WARNING: Do not use '--repair' unless you are advised to by a developer, an
-experienced user or accept the fact that 'fsck' cannot possibly fix all sorts
-of damage that could happen to a filesystem because of software and hardware
-bugs.
+WARNING: Do not use '--repair' unless you are advised to do so by a developer
+or an experienced user, and then only after having accepted that no 'fsck'
+successfully repair all types of filesystem corruption. Eg. some other software
+or hardware bugs can fatally damage a volume.
 
 The structural integrity check verifies if internal filesystem objects or
 data structures satisfy the constraints, point to the right objects or are
@@ -49,9 +49,8 @@ This can be combined with '--super' if some of the superblocks are damaged.
 --check-data-csum::
 verify checksums of data blocks
 +
-This expects that the filesystem is otherwise
-OK, so this is basically and offline 'scrub' but does not repair data from
-spare copies.
+This expects that the filesystem is otherwise OK, and is basically and offline
+'scrub' but does not repair data from spare copies.
 
 --chunk-root <bytenr>::
 use the given offset 'bytenr' for the chunk tree root
@@ -88,8 +87,8 @@ the free space cache for block groups that are modified while the filesystem is
 mounted with that option. Thus, using this option with 'v1' makes it possible
 to actually clear the entire free space cache.
 +
-For free space cache 'v2', the 'clear_cache' kernel mount option does destroy
-the entire free space cache. This option with 'v2' provides an alternative
+For free space cache 'v2', the 'clear_cache' kernel mount option destroys
+the entire free space cache. This option, with 'v2' provides an alternative
 method of clearing the free space cache that doesn't require mounting the
 filesystem.
 

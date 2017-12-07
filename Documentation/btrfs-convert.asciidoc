@@ -19,7 +19,7 @@ Supported filesystems:
 
 * ext2, ext3, ext4 -- original feature, always built in
 
-* reiserfs -- since version 4.13, opptinally built, requires libreiserfscore 3.6.27
+* reiserfs -- since version 4.13, optionally built, requires libreiserfscore 3.6.27
 
 The list of supported source filesystem by a given binary is listed at the end
 of help (option '--help').
@@ -32,13 +32,14 @@ The conversion utilizes free space of the original filesystem. The exact
 estimate of the required space cannot be foretold. The final btrfs metadata
 might occupy several gigabytes on a hundreds-gigabyte filesystem.
 
-If you decide not to rollback anymore, it is recommended to perform a few more
-steps to transform the btrfs filesystem to a more compact layout. The
-conversion inherits the original data block fragmentation and the metadata
-blocks are bound to the original free space layout.
+If the ability to rollback is no longer important, the it is recommended to
+perform a few more steps to transition the btrfs filesystem to a more compact
+layout. This is because the conversion inherits the original data blocks'
+fragmentation, and also because the metadata blocks are bound to the original
+free space layout.
 
-Due to different constraints, it's possible to convert only filesystem that
-have supported data block size (ie. the same that would be valid for
+Due to different constraints, it is only possible to convert filesystems that
+have a supported data block size (ie. the same that would be valid for
 'mkfs.btrfs'). This is typically the system page size (4KiB on x86_64
 machines).
 
@@ -52,8 +53,8 @@ metadata of the original filesystem will be removed:
 
    # btrfs subvolume delete /mnt/ext2_saved
 
-At this point it's not possible to do rollback. The filesystem is usable but may
-be impacted by the fragmentation inherited from the original filesystem.
+At this point it is not possible to do a rollback. The filesystem is usable but
+may be impacted by the fragmentation inherited from the original filesystem.
 
 **MAKE FILE DATA MORE CONTIGUOUS**
 
@@ -102,7 +103,7 @@ set filesystem label during conversion
 -L|--copy-label::
 use label from the converted filesystem
 -O|--features <feature1>[,<feature2>...]::
-A list of filesystem features turned on at conversion time. Not all features
+A list of filesystem features enabled the at time of conversion. Not all features
 are supported by old kernels. To disable a feature, prefix it with '^'.
 Description of the features is in section 'FILESYSTEM FEATURES' of
 `mkfs.btrfs`(8).

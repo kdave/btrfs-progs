@@ -3,7 +3,7 @@ btrfs-filesystem(8)
 
 NAME
 ----
-btrfs-filesystem - command group of btrfs that usually work on the whole filesystem
+btrfs-filesystem - command group othat primarily does work on the whole filesystems
 
 SYNOPSIS
 --------
@@ -53,8 +53,9 @@ not total size of filesystem.
 when the filesystem is full. Its 'total' size is dynamic based on the
 filesystem size, usually not larger than 512MiB, 'used' may fluctuate.
 +
-The global block reserve is accounted within Metadata. In case the filesystem
-metadata are exhausted, 'GlobalReserve/total + Metadata/used = Metadata/total'.
+The GlobalReserve is a portion of Metadata. In case the filesystem metadata is
+exhausted, 'GlobalReserve/total + Metadata/used = Metadata/total'. Otherwise
+there appears to be some unused space of Metadata.
 +
 `Options`
 +
@@ -93,10 +94,10 @@ You can also turn on compression in defragment operations.
 +
 WARNING: Defragmenting with Linux kernel versions < 3.9 or ≥ 3.14-rc2 as well as
 with Linux stable kernel versions ≥ 3.10.31, ≥ 3.12.12 or ≥ 3.13.4 will break up
-the ref-links of COW data (for example files copied with `cp --reflink`,
+the reflinks of COW data (for example files copied with `cp --reflink`,
 snapshots or de-duplicated data).
 This may cause considerable increase of space usage depending on the broken up
-ref-links.
+reflinks.
 +
 NOTE: Directory arguments without '-r' do not defragment files recursively but will
 defragment certain internal trees (extent tree and the subvolume tree). This has been
@@ -174,7 +175,7 @@ show sizes in TiB, or TB with --si.
 Show or update the label of a filesystem. This works on a mounted filesystem or
 a filesystem image.
 +
-The 'newlabel' argument is optional. Current label is printed if the the argument
+The 'newlabel' argument is optional. Current label is printed if the argument
 is omitted.
 +
 NOTE: the maximum allowable length shall be less than 256 chars and must not contain
@@ -359,9 +360,9 @@ specify the devid though.
 
 *$ btrfs filesystem resize 1:max /path*
 
-Let's assume that devid 1 exists, the filesystem does not occupy the whole block
-device, eg. it has been enlarged and we wan the grow the filesystem. Simply using
-'max' as size we will achieve that.
+Let's assume that devid 1 exists and the filesystem does not occupy the whole
+block device, eg. it has been enlarged and we wan the grow the filesystem. By
+simply using 'max' as size we will achieve that.
 
 NOTE: There are two ways to minimize the filesystem on a given device. The
 *btrfs inspect-internal min-dev-size* command, or iteratively shrink in steps.

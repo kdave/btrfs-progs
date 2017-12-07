@@ -12,7 +12,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 *btrfs-map-logical* can be used to find out what the physical offsets are
-on the mirrors, the result is dumped into stdout in default.
+on the mirrors, the result is dumped to stdout by default.
 
 Mainly used for debug purpose.
 

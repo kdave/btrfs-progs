@@ -136,16 +136,16 @@ resize operation, this may be useful before executing the actual resize operatio
 specify the device 'id' to query, default is 1 if this option is not used
 
 *rootid* <path>::
-for a given file or directory, return the containing tree root id, for a
-subvolume itself return it's own tree id (ie. subvol id)
+for a given file or directory, return the containing tree root id, but for a
+subvolume itself return its own tree id (ie. subvol id)
 +
 NOTE: The result is undefined for the so-called empty subvolumes (identified by
-inode number 2), but such subvolume does not contain any files anyway
+inode number 2), but such a subvolume does not contain any files anyway
 
 *subvolid-resolve* <subvolid> <path>::
 (needs root privileges)
 +
-resolve the absolute path of a the subvolume id 'subvolid'
+resolve the absolute path of the subvolume id 'subvolid'
 
 *tree-stats* [options] <device>::
 (needs root privileges)

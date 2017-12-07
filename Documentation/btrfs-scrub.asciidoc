@@ -21,8 +21,8 @@ structural damage in the filesystem.
 The user is supposed to run it manually or via a periodic system service. The
 recommended period is a month but could be less. The estimated device bandwidth
 utilization is about 80% on an idle filesystem. The IO priority class is by
-default 'idle' so background scrub should not interfere with normal filesystem
-operation significantly.
+default 'idle' so background scrub should not significantly interfere with
+normal filesystem operation.
 
 The scrubbing status is recorded in '/var/lib/btrfs/' in textual files named
 'scrub.status.UUID' for a filesystem identified by the given UUID. (Progress
