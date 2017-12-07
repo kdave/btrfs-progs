@@ -819,14 +819,9 @@ static int blk_file_in_dev_list(struct btrfs_fs_devices* fs_devices,
 		const char* file)
 {
 	int ret;
-	struct list_head *head;
-	struct list_head *cur;
 	struct btrfs_device *device;
 
-	head = &fs_devices->devices;
-	list_for_each(cur, head) {
-		device = list_entry(cur, struct btrfs_device, dev_list);
-
+	list_for_each_entry(device, &fs_devices->devices, dev_list) {
 		if((ret = is_same_loop_file(device->name, file)))
 			return ret;
 	}
