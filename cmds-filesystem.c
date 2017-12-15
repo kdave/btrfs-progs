@@ -840,7 +840,9 @@ static int cmd_filesystem_sync(int argc, char **argv)
 
 static int parse_compress_type(char *s)
 {
-	if (strcmp(optarg, "zlib") == 0)
+	if (strcmp(optarg, "none") == 0 || strcmp(optarg, "no") == 0)
+		return BTRFS_COMPRESS_NONE;
+	else if (strcmp(optarg, "zlib") == 0)
 		return BTRFS_COMPRESS_ZLIB;
 	else if (strcmp(optarg, "lzo") == 0)
 		return BTRFS_COMPRESS_LZO;
@@ -856,13 +858,13 @@ static const char * const cmd_filesystem_defrag_usage[] = {
 	"btrfs filesystem defragment [options] <file>|<dir> [<file>|<dir>...]",
 	"Defragment a file or a directory",
 	"",
-	"-v                  be verbose",
-	"-r                  defragment files recursively",
-	"-c[zlib,lzo,zstd]   compress the file while defragmenting",
-	"-f                  flush data to disk immediately after defragmenting",
-	"-s start            defragment only from byte onward",
-	"-l len              defragment only up to len bytes",
-	"-t size             target extent size hint (default: 32M)",
+	"-v                   be verbose",
+	"-r                   defragment files recursively",
+	"-c[zlib,lzo,zstd,no] compress the file while defragmenting",
+	"-f                   flush data to disk immediately after defragmenting",
+	"-s start             defragment only from byte onward",
+	"-l len               defragment only up to len bytes",
+	"-t size              target extent size hint (default: 32M)",
 	"",
 	"Warning: most Linux kernels will break up the ref-links of COW data",
 	"(e.g., files copied with 'cp --reflink', snapshots) which may cause",
@@ -918,6 +920,7 @@ static int cmd_filesystem_defrag(int argc, char **argv)
 	int recursive = 0;
 	int ret = 0;
 	int compress_type = BTRFS_COMPRESS_NONE;
+	int change_compress = 0;
 	DIR *dirstream;
 
 	/*
@@ -938,6 +941,7 @@ static int cmd_filesystem_defrag(int argc, char **argv)
 
 		switch(c) {
 		case 'c':
+			change_compress = 1;
 			compress_type = BTRFS_COMPRESS_ZLIB;
 			if (optarg)
 				compress_type = parse_compress_type(optarg);
@@ -978,7 +982,7 @@ static int cmd_filesystem_defrag(int argc, char **argv)
 	defrag_global_range.start = start;
 	defrag_global_range.len = len;
 	defrag_global_range.extent_thresh = (u32)thresh;
-	if (compress_type) {
+	if (change_compress) {
 		defrag_global_range.flags |= BTRFS_DEFRAG_RANGE_COMPRESS;
 		defrag_global_range.compress_type = compress_type;
 	}

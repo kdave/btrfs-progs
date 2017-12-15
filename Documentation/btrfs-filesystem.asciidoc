@@ -112,9 +112,8 @@ KiB, MiB, GiB, TiB, PiB, or EiB, respectively (case does not matter).
 -v::::
 be verbose, print file names as they're submitted for defragmentation
 -c[<algo>]::::
-compress file contents while defragmenting. Optional argument selects the compression
-algorithm, 'zlib' (default), 'lzo' or 'zstd'. Currently it's not possible to select no
-compression. See also section 'EXAMPLES'.
+change compression type of file contents while defragmenting. Optional argument selects the compression
+algorithm, 'zlib' (default), 'lzo', 'zstd' or 'none'. See also section 'EXAMPLES'.
 -r::::
 defragment files recursively in given directories
 -f::::
