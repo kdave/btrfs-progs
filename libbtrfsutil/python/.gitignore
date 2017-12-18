@@ -1,0 +1,7 @@
+__pycache__
+*.pyc
+/btrfsutil.egg-info
+/btrfsutil*.so
+/build
+/constants.c
+/dist

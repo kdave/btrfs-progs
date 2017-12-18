@@ -3,7 +3,8 @@ libbtrfsutil
 
 libbtrfsutil is a library for managing Btrfs filesystems. It is licensed under
 the LGPL. libbtrfsutil provides interfaces for a subset of the operations
-offered by the `btrfs` command line utility.
+offered by the `btrfs` command line utility. It also includes official Python
+bindings (Python 3 only).
 
 Development
 -----------
@@ -33,3 +34,5 @@ A few guidelines:
   type specific to `libbtrfsutil`)
 * Preserve API and ABI compatability at all times (i.e., we don't want to bump
   the library major version if we don't have to)
+* Include Python bindings for all interfaces
+* Write tests for all interfaces

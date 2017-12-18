@@ -41,6 +41,10 @@ To build from the released tarballs:
     $ make
     $ make install
 
+To install the libbtrfsutil Python bindings:
+
+    $ make install_python
+
 You may disable building some parts like documentation, btrfs-convert or
 backtrace support. See ./configure --help for more.
 

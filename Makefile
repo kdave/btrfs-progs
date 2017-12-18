@@ -154,8 +154,10 @@ endif
 
 ifeq ($(BUILD_VERBOSE),1)
   Q =
+  SETUP_PY_Q =
 else
   Q = @
+  SETUP_PY_Q = -q
 endif
 
 ifeq ("$(origin D)", "command line")
@@ -302,6 +304,9 @@ endif
 		$($(subst -,_,btrfs-$(@:%/$(notdir $@)=%)-cflags))
 
 all: $(progs) $(libs) $(lib_links) $(BUILDDIRS)
+ifeq ($(PYTHON_BINDINGS),1)
+all: libbtrfsutil_python
+endif
 $(SUBDIRS): $(BUILDDIRS)
 $(BUILDDIRS):
 	@echo "Making all in $(patsubst build-%,%,$@)"
@@ -348,6 +353,16 @@ test: test-fsck test-mkfs test-misc test-cli test-convert test-fuzz
 testsuite: btrfs-corrupt-block fssum
 	@echo "Export tests as a package"
 	$(Q)cd tests && ./export-testsuite.sh
+
+ifeq ($(PYTHON_BINDINGS),1)
+test-libbtrfsutil: libbtrfsutil_python
+	$(Q)cd libbtrfsutil/python; \
+		LD_LIBRARY_PATH=../.. $(PYTHON) -m unittest discover -v tests
+
+.PHONY: test-libbtrfsutil
+
+test: test-libbtrfsutil
+endif
 
 #
 # NOTE: For static compiles, you need to have all the required libs
@@ -398,6 +413,15 @@ libbtrfsutil.a: $(libbtrfsutil_objects)
 libbtrfsutil.so.$(libbtrfsutil_major) libbtrfsutil.so: libbtrfsutil.so.$(libbtrfsutil_version)
 	@echo "    [LN]     $@"
 	$(Q)$(LN_S) -f $< $@
+
+ifeq ($(PYTHON_BINDINGS),1)
+libbtrfsutil_python: libbtrfsutil.so libbtrfsutil/btrfsutil.h
+	@echo "    [PY]     libbtrfsutil"
+	$(Q)cd libbtrfsutil/python; \
+		CFLAGS= LDFLAGS= $(PYTHON) setup.py $(SETUP_PY_Q) build_ext -i build
+
+.PHONY: libbtrfsutil_python
+endif
 
 # keep intermediate files from the below implicit rules around
 .PRECIOUS: $(addsuffix .o,$(progs))
@@ -582,6 +606,10 @@ clean: $(CLEANDIRS)
 	      $(libs) $(lib_links) \
 	      $(progs_static) $(progs_extra) \
 	      libbtrfsutil/*.o libbtrfsutil/*.o.d
+ifeq ($(PYTHON_BINDINGS),1)
+	$(Q)cd libbtrfsutil/python; \
+		$(PYTHON) setup.py $(SETUP_PY_Q) clean -a
+endif
 
 clean-doc:
 	@echo "Cleaning Documentation"
@@ -615,6 +643,14 @@ install: $(libs) $(progs_install) $(INSTALLDIRS)
 ifneq ($(udevdir),)
 	$(INSTALL) -m755 -d $(DESTDIR)$(udevruledir)
 	$(INSTALL) -m644 $(udev_rules) $(DESTDIR)$(udevruledir)
+endif
+
+ifeq ($(PYTHON_BINDINGS),1)
+install_python: libbtrfsutil_python
+	$(Q)cd libbtrfsutil/python; \
+		$(PYTHON) setup.py install --skip-build $(if $(DESTDIR),--root $(DESTDIR)) --prefix $(prefix)
+
+.PHONY: install_python
 endif
 
 install-static: $(progs_static) $(INSTALLDIRS)

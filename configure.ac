@@ -210,6 +210,19 @@ fi
 AS_IF([test "x$enable_zstd" = xyes], [BTRFSRESTORE_ZSTD=1], [BTRFSRESTORE_ZSTD=0])
 AC_SUBST(BTRFSRESTORE_ZSTD)
 
+AC_ARG_ENABLE([python],
+	AS_HELP_STRING([--disable-python], [do not build libbtrfsutil Python bindings]),
+	[], [enable_python=yes]
+)
+
+if test "x$enable_python" = xyes; then
+	AM_PATH_PYTHON([3.4])
+fi
+
+AS_IF([test "x$enable_python" = xyes], [PYTHON_BINDINGS=1], [PYTHON_BINDINGS=0])
+AC_SUBST(PYTHON_BINDINGS)
+AC_SUBST(PYTHON)
+
 # udev v190 introduced the btrfs builtin and a udev rule to use it.
 # Our udev rule gives us the friendly dm names but isn't required (or valid)
 # on earlier releases.
@@ -265,6 +278,8 @@ AC_MSG_RESULT([
 	backtrace support:  ${enable_backtrace}
 	btrfs-convert:      ${enable_convert} ${convertfs:+($convertfs)}
 	btrfs-restore zstd: ${enable_zstd}
+	Python bindings:    ${enable_python}
+	Python interpreter: ${PYTHON}
 
 	Type 'make' to compile.
 ])
