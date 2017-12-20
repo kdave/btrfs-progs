@@ -153,11 +153,6 @@ int test_issubvolume(const char *path);
 int test_isdir(const char *path);
 
 const char *subvol_strip_mountpoint(const char *mnt, const char *full_path);
-int get_subvol_info(const char *fullpath, struct root_info *get_ri);
-int get_subvol_info_by_rootid(const char *mnt, struct root_info *get_ri,
-							u64 rootid_arg);
-int get_subvol_info_by_uuid(const char *mnt, struct root_info *get_ri,
-							u8 *uuid_arg);
 int find_next_key(struct btrfs_path *path, struct btrfs_key *key);
 const char* btrfs_group_type_str(u64 flag);
 const char* btrfs_group_profile_str(u64 flag);

@@ -954,19 +954,20 @@ static const char * const cmd_subvol_show_usage[] = {
 
 static int cmd_subvol_show(int argc, char **argv)
 {
-	struct root_info get_ri;
-	struct btrfs_list_filter_set *filter_set = NULL;
 	char tstr[256];
 	char uuidparse[BTRFS_UUID_UNPARSED_SIZE];
 	char *fullpath = NULL;
-	char raw_prefix[] = "\t\t\t\t";
 	int fd = -1;
 	int ret = 1;
 	DIR *dirstream1 = NULL;
 	int by_rootid = 0;
 	int by_uuid = 0;
-	u64 rootid_arg;
+	u64 rootid_arg = 0;
 	u8 uuid_arg[BTRFS_UUID_SIZE];
+	struct btrfs_util_subvolume_iterator *iter;
+	struct btrfs_util_subvolume_info subvol;
+	char *subvol_path = NULL;
+	enum btrfs_util_error err;
 
 	while (1) {
 		int c;
@@ -1003,96 +1004,142 @@ static int cmd_subvol_show(int argc, char **argv)
 		usage(cmd_subvol_show_usage);
 	}
 
-	memset(&get_ri, 0, sizeof(get_ri));
 	fullpath = realpath(argv[optind], NULL);
 	if (!fullpath) {
 		error("cannot find real path for '%s': %m", argv[optind]);
 		goto out;
 	}
 
-	if (by_rootid) {
-		ret = get_subvol_info_by_rootid(fullpath, &get_ri, rootid_arg);
-	} else if (by_uuid) {
-		ret = get_subvol_info_by_uuid(fullpath, &get_ri, uuid_arg);
-	} else {
-		ret = get_subvol_info(fullpath, &get_ri);
+	fd = open_file_or_dir(fullpath, &dirstream1);
+	if (fd < 0) {
+		error("can't access '%s'", fullpath);
+		goto out;
 	}
 
-	if (ret) {
-		if (ret < 0) {
-			error("Failed to get subvol info %s: %s",
-					fullpath, strerror(-ret));
-		} else {
-			error("Failed to get subvol info %s: %d",
-					fullpath, ret);
+	if (by_uuid) {
+		err = btrfs_util_create_subvolume_iterator_fd(fd,
+							      BTRFS_FS_TREE_OBJECTID,
+							      0, &iter);
+		if (err) {
+			error_btrfs_util(err);
+			goto out;
 		}
-		return ret;
+
+		for (;;) {
+			err = btrfs_util_subvolume_iterator_next_info(iter,
+								      &subvol_path,
+								      &subvol);
+			if (err == BTRFS_UTIL_ERROR_STOP_ITERATION) {
+				uuid_unparse(uuid_arg, uuidparse);
+				error("can't find uuid '%s' on '%s'", uuidparse,
+				      fullpath);
+				btrfs_util_destroy_subvolume_iterator(iter);
+				goto out;
+			} else if (err) {
+				error_btrfs_util(err);
+				btrfs_util_destroy_subvolume_iterator(iter);
+				goto out;
+			}
+
+			if (uuid_compare(subvol.uuid, uuid_arg) == 0)
+				break;
+
+			free(subvol_path);
+		}
+		btrfs_util_destroy_subvolume_iterator(iter);
+	} else {
+		/*
+		 * If !by_rootid, rootid_arg = 0, which means find the
+		 * subvolume ID of the fd and use that.
+		 */
+		err = btrfs_util_subvolume_info_fd(fd, rootid_arg, &subvol);
+		if (err) {
+			error_btrfs_util(err);
+			goto out;
+		}
+
+		err = btrfs_util_subvolume_path_fd(fd, subvol.id, &subvol_path);
+		if (err) {
+			error_btrfs_util(err);
+			goto out;
+		}
+
 	}
 
 	/* print the info */
-	printf("%s\n", get_ri.full_path);
-	printf("\tName: \t\t\t%s\n", get_ri.name);
+	printf("%s\n", subvol.id == BTRFS_FS_TREE_OBJECTID ? "/" : subvol_path);
+	printf("\tName: \t\t\t%s\n",
+	       (subvol.id == BTRFS_FS_TREE_OBJECTID ? "<FS_TREE>" :
+		basename(subvol_path)));
 
-	if (uuid_is_null(get_ri.uuid))
+	if (uuid_is_null(subvol.uuid))
 		strcpy(uuidparse, "-");
 	else
-		uuid_unparse(get_ri.uuid, uuidparse);
+		uuid_unparse(subvol.uuid, uuidparse);
 	printf("\tUUID: \t\t\t%s\n", uuidparse);
 
-	if (uuid_is_null(get_ri.puuid))
+	if (uuid_is_null(subvol.parent_uuid))
 		strcpy(uuidparse, "-");
 	else
-		uuid_unparse(get_ri.puuid, uuidparse);
+		uuid_unparse(subvol.parent_uuid, uuidparse);
 	printf("\tParent UUID: \t\t%s\n", uuidparse);
 
-	if (uuid_is_null(get_ri.ruuid))
+	if (uuid_is_null(subvol.received_uuid))
 		strcpy(uuidparse, "-");
 	else
-		uuid_unparse(get_ri.ruuid, uuidparse);
+		uuid_unparse(subvol.received_uuid, uuidparse);
 	printf("\tReceived UUID: \t\t%s\n", uuidparse);
 
-	if (get_ri.otime) {
+	if (subvol.otime.tv_sec) {
 		struct tm tm;
 
-		localtime_r(&get_ri.otime, &tm);
+		localtime_r(&subvol.otime.tv_sec, &tm);
 		strftime(tstr, 256, "%Y-%m-%d %X %z", &tm);
 	} else
 		strcpy(tstr, "-");
 	printf("\tCreation time: \t\t%s\n", tstr);
 
-	printf("\tSubvolume ID: \t\t%llu\n", get_ri.root_id);
-	printf("\tGeneration: \t\t%llu\n", get_ri.gen);
-	printf("\tGen at creation: \t%llu\n", get_ri.ogen);
-	printf("\tParent ID: \t\t%llu\n", get_ri.ref_tree);
-	printf("\tTop level ID: \t\t%llu\n", get_ri.top_id);
+	printf("\tSubvolume ID: \t\t%" PRIu64 "\n", subvol.id);
+	printf("\tGeneration: \t\t%" PRIu64 "\n", subvol.generation);
+	printf("\tGen at creation: \t%" PRIu64 "\n", subvol.otransid);
+	printf("\tParent ID: \t\t%" PRIu64 "\n", subvol.parent_id);
+	printf("\tTop level ID: \t\t%" PRIu64 "\n", subvol.parent_id);
 
-	if (get_ri.flags & BTRFS_ROOT_SUBVOL_RDONLY)
+	if (subvol.flags & BTRFS_ROOT_SUBVOL_RDONLY)
 		printf("\tFlags: \t\t\treadonly\n");
 	else
 		printf("\tFlags: \t\t\t-\n");
 
 	/* print the snapshots of the given subvol if any*/
 	printf("\tSnapshot(s):\n");
-	filter_set = btrfs_list_alloc_filter_set();
-	btrfs_list_setup_filter(&filter_set, BTRFS_LIST_FILTER_BY_PARENT,
-				(u64)(unsigned long)get_ri.uuid);
-	btrfs_list_setup_print_column(BTRFS_LIST_PATH);
 
-	fd = open_file_or_dir(fullpath, &dirstream1);
-	if (fd < 0) {
-		fprintf(stderr, "ERROR: can't access '%s'\n", fullpath);
-		goto out;
+	err = btrfs_util_create_subvolume_iterator_fd(fd,
+						      BTRFS_FS_TREE_OBJECTID, 0,
+						      &iter);
+
+	for (;;) {
+		struct btrfs_util_subvolume_info subvol2;
+		char *path;
+
+		err = btrfs_util_subvolume_iterator_next_info(iter, &path, &subvol2);
+		if (err == BTRFS_UTIL_ERROR_STOP_ITERATION) {
+			break;
+		} else if (err) {
+			error_btrfs_util(err);
+			btrfs_util_destroy_subvolume_iterator(iter);
+			goto out;
+		}
+
+		if (uuid_compare(subvol2.parent_uuid, subvol.uuid) == 0)
+			printf("\t\t\t\t%s\n", path);
+
+		free(path);
 	}
-	btrfs_list_subvols_print(fd, filter_set, NULL, BTRFS_LIST_LAYOUT_RAW,
-			1, raw_prefix);
+	btrfs_util_destroy_subvolume_iterator(iter);
 
+	ret = 0;
 out:
-	/* clean up */
-	free(get_ri.path);
-	free(get_ri.name);
-	free(get_ri.full_path);
-	free(filter_set);
-
+	free(subvol_path);
 	close_file_or_dir(fd, dirstream1);
 	free(fullpath);
 	return !!ret;
