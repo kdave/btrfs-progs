@@ -19,6 +19,7 @@
 #include "volumes.h"
 #include "utils.h"
 #include "commands.h"
+#include "help.h"
 
 int main(int argc, char **argv)
 {
