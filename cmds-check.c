@@ -8366,7 +8366,13 @@ static int process_extent_item(struct btrfs_root *root,
 	if (item_size < sizeof(*ei)) {
 #ifdef BTRFS_COMPAT_EXTENT_TREE_V0
 		struct btrfs_extent_item_v0 *ei0;
-		BUG_ON(item_size != sizeof(*ei0));
+		if (item_size != sizeof(*ei0)) {
+			error(
+	"invalid extent item format: ITEM[%llu %u %llu] leaf: %llu slot: %d",
+				key.objectid, key.type, key.offset,
+				btrfs_header_bytenr(eb), slot);
+			BUG();
+		}
 		ei0 = btrfs_item_ptr(eb, slot, struct btrfs_extent_item_v0);
 		refs = btrfs_extent_refs_v0(eb, ei0);
 #else
