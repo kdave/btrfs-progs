@@ -2651,36 +2651,37 @@ int btrfs_reserve_extent(struct btrfs_trans_handle *trans,
 			 struct btrfs_root *root,
 			 u64 num_bytes, u64 empty_size,
 			 u64 hint_byte, u64 search_end,
-			 struct btrfs_key *ins, int data)
+			 struct btrfs_key *ins, bool is_data)
 {
 	int ret;
 	u64 search_start = 0;
 	u64 alloc_profile;
+	u64 profile;
 	struct btrfs_fs_info *info = root->fs_info;
 
-	if (data) {
+	if (is_data) {
 		alloc_profile = info->avail_data_alloc_bits &
 			        info->data_alloc_profile;
-		data = BTRFS_BLOCK_GROUP_DATA | alloc_profile;
+		profile = BTRFS_BLOCK_GROUP_DATA | alloc_profile;
 	} else if (info->system_allocs == 1 || root == info->chunk_root) {
 		alloc_profile = info->avail_system_alloc_bits &
 			        info->system_alloc_profile;
-		data = BTRFS_BLOCK_GROUP_SYSTEM | alloc_profile;
+		profile = BTRFS_BLOCK_GROUP_SYSTEM | alloc_profile;
 	} else {
 		alloc_profile = info->avail_metadata_alloc_bits &
 			        info->metadata_alloc_profile;
-		data = BTRFS_BLOCK_GROUP_METADATA | alloc_profile;
+		profile = BTRFS_BLOCK_GROUP_METADATA | alloc_profile;
 	}
 
 	if (root->ref_cows) {
-		if (!(data & BTRFS_BLOCK_GROUP_METADATA)) {
+		if (!(profile & BTRFS_BLOCK_GROUP_METADATA)) {
 			ret = do_chunk_alloc(trans, info,
 					     num_bytes,
 					     BTRFS_BLOCK_GROUP_METADATA);
 			BUG_ON(ret);
 		}
 		ret = do_chunk_alloc(trans, info,
-				     num_bytes + SZ_2M, data);
+				     num_bytes + SZ_2M, profile);
 		BUG_ON(ret);
 	}
 
@@ -2688,7 +2689,7 @@ int btrfs_reserve_extent(struct btrfs_trans_handle *trans,
 	ret = find_free_extent(trans, root, num_bytes, empty_size,
 			       search_start, search_end, hint_byte, ins,
 			       trans->alloc_exclude_start,
-			       trans->alloc_exclude_nr, data);
+			       trans->alloc_exclude_nr, profile);
 	if (ret < 0)
 		return ret;
 	clear_extent_dirty(&info->free_space_cache,
