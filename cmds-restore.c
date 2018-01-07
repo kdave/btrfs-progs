@@ -442,7 +442,7 @@ again:
 				      pos+total);
 			if (done < 0) {
 				ret = -1;
-				error("cannot write data: %d %s", errno, strerror(errno));
+				error("cannot write data: %d %m", errno);
 				goto out;
 			}
 			total += done;
@@ -587,8 +587,8 @@ static int set_file_xattrs(struct btrfs_root *root, u64 inode,
 			data_len = len;
 
 			if (fsetxattr(fd, name, data, data_len, 0))
-				error("setting extended attribute %s on file %s: %s",
-					name, file_name, strerror(errno));
+				error("setting extended attribute %s on file %s: %m",
+					name, file_name);
 
 			len = sizeof(*di) + name_len + data_len;
 			cur += len;
@@ -624,13 +624,13 @@ static int copy_metadata(struct btrfs_root *root, int fd,
 		ret = fchown(fd, btrfs_inode_uid(path.nodes[0], inode_item),
 				btrfs_inode_gid(path.nodes[0], inode_item));
 		if (ret) {
-			error("failed to change owner: %s", strerror(errno));
+			error("failed to change owner: %m");
 			goto out;
 		}
 
 		ret = fchmod(fd, btrfs_inode_mode(path.nodes[0], inode_item));
 		if (ret) {
-			error("failed to change mode: %s", strerror(errno));
+			error("failed to change mode: %m");
 			goto out;
 		}
 
@@ -644,7 +644,7 @@ static int copy_metadata(struct btrfs_root *root, int fd,
 
 		ret = futimens(fd, times);
 		if (ret) {
-			error("failed to set times: %s", strerror(errno));
+			error("failed to set times: %m");
 			goto out;
 		}
 	}
@@ -904,8 +904,8 @@ static int copy_symlink(struct btrfs_root *root, struct btrfs_key *key,
 	if (!dry_run) {
 		ret = symlink(symlink_target, path_name);
 		if (ret < 0) {
-			fprintf(stderr, "Failed to restore symlink '%s': %s\n",
-					path_name, strerror(errno));
+			fprintf(stderr, "Failed to restore symlink '%s': %m\n",
+					path_name);
 			goto out;
 		}
 	}
@@ -937,8 +937,7 @@ static int copy_symlink(struct btrfs_root *root, struct btrfs_key *key,
 				   btrfs_inode_gid(path.nodes[0], inode_item),
 				   AT_SYMLINK_NOFOLLOW);
 	if (ret) {
-		fprintf(stderr, "Failed to change owner: %s\n",
-				strerror(errno));
+		fprintf(stderr, "Failed to change owner: %m\n");
 		goto out;
 	}
 
@@ -952,7 +951,7 @@ static int copy_symlink(struct btrfs_root *root, struct btrfs_key *key,
 
 	ret = utimensat(-1, file, times, AT_SYMLINK_NOFOLLOW);
 	if (ret)
-		fprintf(stderr, "Failed to set times: %s\n", strerror(errno));
+		fprintf(stderr, "Failed to set times: %m\n");
 out:
 	btrfs_release_path(&path);
 	return ret;

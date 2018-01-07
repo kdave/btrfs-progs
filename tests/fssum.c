@@ -532,8 +532,8 @@ sum(int dirfd, int level, sum_t *dircs, char *path_prefix, char *path_in)
 		}
 		ret = lstat64(namelist[i], &st);
 		if (ret) {
-			fprintf(stderr, "stat failed for %s/%s: %s\n",
-				path_prefix, path, strerror(errno));
+			fprintf(stderr, "stat failed for %s/%s: %m\n",
+				path_prefix, path);
 			exit(-1);
 		}
 		sum_add_u64(&meta, level);
@@ -557,8 +557,8 @@ sum(int dirfd, int level, sum_t *dircs, char *path_prefix, char *path_in)
 			if (fd == -1 && flags[FLAG_OPEN_ERROR]) {
 				sum_add_u64(&meta, errno);
 			} else if (fd == -1) {
-				fprintf(stderr, "open failed for %s/%s: %s\n",
-					path_prefix, path, strerror(errno));
+				fprintf(stderr, "open failed for %s/%s: %m\n",
+					path_prefix, path);
 				exit(-1);
 			} else {
 				sum(fd, level + 1, &cs, path_prefix, path);
@@ -575,9 +575,8 @@ sum(int dirfd, int level, sum_t *dircs, char *path_prefix, char *path_in)
 					sum_add_u64(&meta, errno);
 				} else if (fd == -1) {
 					fprintf(stderr,
-						"open failed for %s/%s: %s\n",
-						path_prefix, path,
-						strerror(errno));
+						"open failed for %s/%s: %m\n",
+						path_prefix, path);
 					exit(-1);
 				}
 				if (fd != -1) {
@@ -585,9 +584,8 @@ sum(int dirfd, int level, sum_t *dircs, char *path_prefix, char *path_in)
 					if (ret < 0) {
 						fprintf(stderr,
 							"read failed for "
-							"%s/%s: %s\n",
-							path_prefix, path,
-							strerror(errno));
+							"%s/%s: %m\n",
+							path_prefix, path);
 						exit(-1);
 					}
 					close(fd);
@@ -693,8 +691,7 @@ main(int argc, char *argv[])
 			out_fp = fopen(optarg, "w");
 			if (!out_fp) {
 				fprintf(stderr,
-					"failed to open output file: %s\n",
-					strerror(errno));
+					"failed to open output file: %m\n");
 				exit(-1);
 			}
 			break;
@@ -702,8 +699,7 @@ main(int argc, char *argv[])
 			in_fp = fopen(optarg, "r");
 			if (!in_fp) {
 				fprintf(stderr,
-					"failed to open input file: %s\n",
-					strerror(errno));
+					"failed to open input file: %m\n");
 				exit(-1);
 			}
 			break;
@@ -788,8 +784,7 @@ main(int argc, char *argv[])
 
 	fd = open(path, O_RDONLY);
 	if (fd == -1) {
-		fprintf(stderr, "failed to open %s: %s\n", path,
-			strerror(errno));
+		fprintf(stderr, "failed to open %s: %m\n", path);
 		exit(-1);
 	}
 

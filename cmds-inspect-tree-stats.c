@@ -336,7 +336,7 @@ static int calc_root_size(struct btrfs_root *tree_root, struct btrfs_key *key,
 	stat.max_cluster_size = root->fs_info->nodesize;
 	path.nodes[level] = root->node;
 	if (gettimeofday(&start, NULL)) {
-		error("cannot get time: %s", strerror(errno));
+		error("cannot get time: %m");
 		goto out;
 	}
 	if (!level) {
@@ -350,7 +350,7 @@ static int calc_root_size(struct btrfs_root *tree_root, struct btrfs_key *key,
 	if (ret)
 		goto out;
 	if (gettimeofday(&end, NULL)) {
-		error("cannot get time: %s", strerror(errno));
+		error("cannot get time: %m");
 		goto out;
 	}
 	timeval_subtract(&diff, &end, &start);

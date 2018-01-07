@@ -96,7 +96,7 @@ static int _cmd_qgroup_assign(int assign, int argc, char **argv,
 
 	ret = ioctl(fd, BTRFS_IOC_QGROUP_ASSIGN, &args);
 	if (ret < 0) {
-		error("unable to assign quota group: %s", strerror(errno));
+		error("unable to assign quota group: %m");
 		close_file_or_dir(fd, dirstream);
 		return 1;
 	}
@@ -117,8 +117,7 @@ static int _cmd_qgroup_assign(int assign, int argc, char **argv,
 			memset(&qargs, 0, sizeof(qargs));
 			ret = ioctl(fd, BTRFS_IOC_QUOTA_RESCAN, &qargs);
 			if (ret < 0)
-				error("quota rescan failed: %s",
-					strerror(errno));
+				error("quota rescan failed: %m");
 		} else {
 			warning("quotas may be inconsistent, rescan needed");
 		}
@@ -131,7 +130,6 @@ static int _cmd_qgroup_create(int create, int argc, char **argv)
 {
 	int ret = 0;
 	int fd;
-	int e;
 	char *path;
 	struct btrfs_ioctl_qgroup_create_args args;
 	DIR *dirstream = NULL;
@@ -149,11 +147,10 @@ static int _cmd_qgroup_create(int create, int argc, char **argv)
 		return 1;
 
 	ret = ioctl(fd, BTRFS_IOC_QGROUP_CREATE, &args);
-	e = errno;
 	close_file_or_dir(fd, dirstream);
 	if (ret < 0) {
-		error("unable to %s quota group: %s",
-			create ? "create":"destroy", strerror(e));
+		error("unable to %s quota group: %m",
+			create ? "create":"destroy");
 		return 1;
 	}
 	return 0;
@@ -377,8 +374,7 @@ static int cmd_qgroup_show(int argc, char **argv)
 	if (sync) {
 		ret = ioctl(fd, BTRFS_IOC_SYNC);
 		if (ret < 0)
-			warning("sync ioctl failed on '%s': %s", path,
-			      strerror(errno));
+			warning("sync ioctl failed on '%s': %m", path);
 	}
 
 	if (filter_flag) {
@@ -419,7 +415,6 @@ static int cmd_qgroup_limit(int argc, char **argv)
 {
 	int ret = 0;
 	int fd;
-	int e;
 	char *path = NULL;
 	struct btrfs_ioctl_qgroup_limit_args args;
 	unsigned long long size;
@@ -490,10 +485,9 @@ static int cmd_qgroup_limit(int argc, char **argv)
 		return 1;
 
 	ret = ioctl(fd, BTRFS_IOC_QGROUP_LIMIT, &args);
-	e = errno;
 	close_file_or_dir(fd, dirstream);
 	if (ret < 0) {
-		error("unable to limit requested quota group: %s", strerror(e));
+		error("unable to limit requested quota group: %m");
 		return 1;
 	}
 	return 0;

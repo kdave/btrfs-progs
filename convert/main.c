@@ -1115,7 +1115,7 @@ static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
 		goto fail;
 	fd = open(devname, O_RDWR);
 	if (fd < 0) {
-		error("unable to open %s: %s", devname, strerror(errno));
+		error("unable to open %s: %m", devname);
 		goto fail;
 	}
 	btrfs_parse_features_to_string(features_buf, features);
@@ -1526,7 +1526,7 @@ static int do_rollback(const char *devname)
 	}
 	fd = open(devname, O_RDWR);
 	if (fd < 0) {
-		error("unable to open %s: %s", devname, strerror(errno));
+		error("unable to open %s: %m", devname);
 		ret = -EIO;
 		goto free_mem;
 	}

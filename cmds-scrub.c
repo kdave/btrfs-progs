@@ -849,8 +849,7 @@ static void *scrub_one_dev(void *ctx)
 		      IOPRIO_PRIO_VALUE(sp->ioprio_class,
 					sp->ioprio_classdata));
 	if (ret)
-		warning("setting ioprio failed: %s (ignored)",
-			strerror(errno));
+		warning("setting ioprio failed: %m (ignored)");
 
 	ret = ioctl(sp->fd, BTRFS_IOC_SCRUB, &sp->scrub_args);
 	gettimeofday(&tv, NULL);
@@ -1195,8 +1194,8 @@ static int scrub_start(int argc, char **argv, int resume)
 
 	if (mkdir_p(datafile)) {
 		warning_on(!do_quiet,
-    "cannot create scrub data file, mkdir %s failed: %s. Status recording disabled",
-			datafile, strerror(errno));
+    "cannot create scrub data file, mkdir %s failed: %m. Status recording disabled",
+			datafile);
 		do_record = 0;
 	}
 	free(datafile);
@@ -1267,7 +1266,7 @@ static int scrub_start(int argc, char **argv, int resume)
 	spc.progress = calloc(fi_args.num_devices * 2, sizeof(*spc.progress));
 
 	if (!t_devs || !sp || !spc.progress) {
-		error_on(!do_quiet, "scrub failed: %s", strerror(errno));
+		error_on(!do_quiet, "scrub failed: %m");
 		err = 1;
 		goto out;
 	}
@@ -1346,9 +1345,9 @@ static int scrub_start(int argc, char **argv, int resume)
 		ret = listen(prg_fd, 100);
 	if (ret == -1) {
 		warning_on(!do_quiet,
-   "failed to open the progress status socket at %s: %s. Progress cannot be queried",
+   "failed to open the progress status socket at %s: %m. Progress cannot be queried",
 			sock_path[0] ? sock_path :
-			SCRUB_PROGRESS_SOCKET_PATH, strerror(errno));
+			SCRUB_PROGRESS_SOCKET_PATH);
 		if (prg_fd != -1) {
 			close(prg_fd);
 			prg_fd = -1;
@@ -1372,8 +1371,7 @@ static int scrub_start(int argc, char **argv, int resume)
 	if (do_background) {
 		pid = fork();
 		if (pid == -1) {
-			error_on(!do_quiet, "cannot scrub, fork failed: %s",
-				strerror(errno));
+			error_on(!do_quiet, "cannot scrub, fork failed: %m");
 			err = 1;
 			goto out;
 		}
@@ -1391,8 +1389,8 @@ static int scrub_start(int argc, char **argv, int resume)
 			}
 			ret = wait(&stat);
 			if (ret != pid) {
-				error_on(!do_quiet, "wait failed (ret=%d): %s",
-					ret, strerror(errno));
+				error_on(!do_quiet, "wait failed (ret=%d): %m",
+					ret);
 				err = 1;
 				goto out;
 			}
@@ -1720,8 +1718,7 @@ static int cmd_scrub_status(int argc, char **argv)
 
 	fdres = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (fdres == -1) {
-		error("failed to create socket to receive progress information: %s",
-			strerror(errno));
+		error("failed to create socket to receive progress information: %m");
 		err = 1;
 		goto out;
 	}

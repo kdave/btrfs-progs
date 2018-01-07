@@ -181,8 +181,8 @@ again:
 				    struct btrfs_device, dev_list);
 		if (device->fd != -1) {
 			if (fsync(device->fd) == -1) {
-				warning("fsync on device %llu failed: %s",
-					device->devid, strerror(errno));
+				warning("fsync on device %llu failed: %m",
+					device->devid);
 				ret = -errno;
 			}
 			if (posix_fadvise(device->fd, 0, 0, POSIX_FADV_DONTNEED))
@@ -242,8 +242,7 @@ int btrfs_open_devices(struct btrfs_fs_devices *fs_devices, int flags)
 		fd = open(device->name, flags);
 		if (fd < 0) {
 			ret = -errno;
-			error("cannot open device '%s': %s", device->name,
-					strerror(errno));
+			error("cannot open device '%s': %m", device->name);
 			goto fail;
 		}
 

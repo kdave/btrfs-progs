@@ -472,7 +472,7 @@ static int load_and_dump_sb(char *filename, int fd, u64 sb_bytenr, int full,
 
 		error("failed to read the superblock on %s at %llu",
 				filename, (unsigned long long)sb_bytenr);
-		error("error = '%s', errno = %d", strerror(errno), errno);
+		error("error = '%m', errno = %d", errno);
 		return 1;
 	}
 	printf("superblock: bytenr=%llu, device=%s\n", sb_bytenr, filename);
@@ -583,7 +583,7 @@ int cmd_inspect_dump_super(int argc, char **argv)
 		filename = argv[i];
 		fd = open(filename, O_RDONLY);
 		if (fd < 0) {
-			error("cannot open %s: %s", filename, strerror(errno));
+			error("cannot open %s: %m", filename);
 			ret = 1;
 			goto out;
 		}

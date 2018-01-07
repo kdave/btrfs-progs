@@ -164,8 +164,7 @@ static int load_chunk_info(int fd, struct chunk_info **info_ptr, int *info_count
 			return -e;
 
 		if (ret < 0) {
-			error("cannot look up chunk tree info: %s",
-				strerror(e));
+			error("cannot look up chunk tree info: %m");
 			return 1;
 		}
 		/* the ioctl returns the number of item it found in nr_items */
@@ -244,8 +243,7 @@ static struct btrfs_ioctl_space_args *load_space_info(int fd, char *path)
 
 	ret = ioctl(fd, BTRFS_IOC_SPACE_INFO, sargs);
 	if (ret < 0) {
-		error("cannot get space info on '%s': %s", path,
-			strerror(errno));
+		error("cannot get space info on '%s': %m", path);
 		free(sargs);
 		return NULL;
 	}
@@ -270,8 +268,8 @@ static struct btrfs_ioctl_space_args *load_space_info(int fd, char *path)
 
 	ret = ioctl(fd, BTRFS_IOC_SPACE_INFO, sargs);
 	if (ret < 0) {
-		error("cannot get space info with %u slots: %s",
-			count, strerror(errno));
+		error("cannot get space info with %u slots: %m",
+			count);
 		free(sargs);
 		return NULL;
 	}
@@ -356,8 +354,7 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 	}
 
 	if (r_total_size == 0) {
-		error("cannot get space info on '%s': %s",
-			path, strerror(errno));
+		error("cannot get space info on '%s': %m", path);
 
 		ret = 1;
 		goto exit;
@@ -554,8 +551,7 @@ static int load_device_info(int fd, struct device_info **device_info_ptr,
 	if (ret < 0) {
 		if (errno == EPERM)
 			return -errno;
-		error("cannot get filesystem info: %s",
-				strerror(errno));
+		error("cannot get filesystem info: %m");
 		return 1;
 	}
 

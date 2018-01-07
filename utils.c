@@ -298,7 +298,7 @@ static int btrfs_wipe_existing_sb(int fd)
 	memset(buf, 0, len);
 	ret = pwrite(fd, buf, len, offset);
 	if (ret < 0) {
-		error("cannot wipe existing superblock: %s", strerror(errno));
+		error("cannot wipe existing superblock: %m");
 		ret = -1;
 	} else if (ret != len) {
 		error("cannot wipe existing superblock: wrote %d of %zd", ret, len);
@@ -320,7 +320,7 @@ int btrfs_prepare_device(int fd, const char *file, u64 *block_count_ret,
 
 	ret = fstat(fd, &st);
 	if (ret < 0) {
-		error("unable to stat %s: %s", file, strerror(errno));
+		error("unable to stat %s: %m", file);
 		return 1;
 	}
 
@@ -534,7 +534,7 @@ int get_btrfs_mount(const char *dev, char *mp, size_t mp_size)
 	fd = open(dev, O_RDONLY);
 	if (fd < 0) {
 		ret = -errno;
-		error("cannot open %s: %s", dev, strerror(errno));
+		error("cannot open %s: %m", dev);
 		goto out;
 	}
 
@@ -572,8 +572,8 @@ int open_path_or_dev_mnt(const char *path, DIR **dirstream, int verbose)
 			return -1;
 		}
 		ret = open_file_or_dir(mp, dirstream);
-		error_on(verbose && ret < 0, "can't access '%s': %s",
-			 path, strerror(errno));
+		error_on(verbose && ret < 0, "can't access '%s': %m",
+			 path);
 	} else {
 		ret = btrfs_open_dir(path, dirstream, 1);
 	}
@@ -593,8 +593,7 @@ int btrfs_open(const char *path, DIR **dirstream, int verbose, int dir_only)
 	int ret;
 
 	if (statfs(path, &stfs) != 0) {
-		error_on(verbose, "cannot access '%s': %s", path,
-				strerror(errno));
+		error_on(verbose, "cannot access '%s': %m", path);
 		return -1;
 	}
 
@@ -604,8 +603,7 @@ int btrfs_open(const char *path, DIR **dirstream, int verbose, int dir_only)
 	}
 
 	if (stat(path, &st) != 0) {
-		error_on(verbose, "cannot access '%s': %s", path,
-				strerror(errno));
+		error_on(verbose, "cannot access '%s': %m", path);
 		return -1;
 	}
 
@@ -616,8 +614,7 @@ int btrfs_open(const char *path, DIR **dirstream, int verbose, int dir_only)
 
 	ret = open_file_or_dir(path, dirstream);
 	if (ret < 0) {
-		error_on(verbose, "cannot access '%s': %s", path,
-				strerror(errno));
+		error_on(verbose, "cannot access '%s': %m", path);
 	}
 
 	return ret;
@@ -898,8 +895,7 @@ int check_mounted(const char* file)
 
 	fd = open(file, O_RDONLY);
 	if (fd < 0) {
-		error("mount check: cannot open %s: %s", file,
-				strerror(errno));
+		error("mount check: cannot open %s: %m", file);
 		return -errno;
 	}
 
@@ -988,16 +984,14 @@ int btrfs_register_one_device(const char *fname)
 	fd = open("/dev/btrfs-control", O_RDWR);
 	if (fd < 0) {
 		warning(
-	"failed to open /dev/btrfs-control, skipping device registration: %s",
-			strerror(errno));
+	"failed to open /dev/btrfs-control, skipping device registration: %m");
 		return -errno;
 	}
 	memset(&args, 0, sizeof(args));
 	strncpy_null(args.name, fname);
 	ret = ioctl(fd, BTRFS_IOC_SCAN_DEV, &args);
 	if (ret < 0) {
-		error("device scan failed on '%s': %s", fname,
-				strerror(errno));
+		error("device scan failed on '%s': %m", fname);
 		ret = -errno;
 	}
 	close(fd);
@@ -1267,15 +1261,14 @@ static int set_label_mounted(const char *mount_path, const char *labelp)
 
 	fd = open(mount_path, O_RDONLY | O_NOATIME);
 	if (fd < 0) {
-		error("unable to access %s: %s", mount_path, strerror(errno));
+		error("unable to access %s: %m", mount_path);
 		return -1;
 	}
 
 	memset(label, 0, sizeof(label));
 	__strncpy_null(label, labelp, BTRFS_LABEL_SIZE - 1);
 	if (ioctl(fd, BTRFS_IOC_SET_FSLABEL, label) < 0) {
-		error("unable to set label of %s: %s", mount_path,
-				strerror(errno));
+		error("unable to set label of %s: %m", mount_path);
 		close(fd);
 		return -1;
 	}
@@ -1323,7 +1316,7 @@ int get_label_mounted(const char *mount_path, char *labelp)
 
 	fd = open(mount_path, O_RDONLY | O_NOATIME);
 	if (fd < 0) {
-		error("unable to access %s: %s", mount_path, strerror(errno));
+		error("unable to access %s: %m", mount_path);
 		return -1;
 	}
 
@@ -1331,8 +1324,7 @@ int get_label_mounted(const char *mount_path, char *labelp)
 	ret = ioctl(fd, BTRFS_IOC_GET_FSLABEL, label);
 	if (ret < 0) {
 		if (errno != ENOTTY)
-			error("unable to get label of %s: %s", mount_path,
-					strerror(errno));
+			error("unable to get label of %s: %m", mount_path);
 		ret = -errno;
 		close(fd);
 		return ret;
@@ -1676,7 +1668,7 @@ int get_fs_info(const char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 		fd = open(path, O_RDONLY);
 		if (fd < 0) {
 			ret = -errno;
-			error("cannot open %s: %s", path, strerror(errno));
+			error("cannot open %s: %m", path);
 			goto out;
 		}
 		ret = check_mounted_where(fd, path, mp, sizeof(mp),
@@ -1996,7 +1988,7 @@ int btrfs_scan_devices(void)
 
 		fd = open(path, O_RDONLY);
 		if (fd < 0) {
-			error("cannot open %s: %s", path, strerror(errno));
+			error("cannot open %s: %m", path);
 			continue;
 		}
 		ret = btrfs_scan_one_device(fd, path, &tmp_devices,

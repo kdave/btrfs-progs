@@ -514,7 +514,7 @@ static int write_buffers(struct metadump_struct *md, u64 *next)
 
 	ret = fwrite(&md->cluster, BLOCK_SIZE, 1, md->out);
 	if (ret != 1) {
-		error("unable to write out cluster: %s", strerror(errno));
+		error("unable to write out cluster: %m");
 		return -errno;
 	}
 
@@ -530,8 +530,7 @@ static int write_buffers(struct metadump_struct *md, u64 *next)
 			ret = fwrite(async->buffer, async->bufsize, 1,
 				     md->out);
 		if (ret != 1) {
-			error("unable to write out cluster: %s",
-				strerror(errno));
+			error("unable to write out cluster: %m");
 			err = -errno;
 			ret = 0;
 		}
@@ -547,8 +546,7 @@ static int write_buffers(struct metadump_struct *md, u64 *next)
 		bytenr += size;
 		ret = write_zero(md->out, size);
 		if (ret != 1) {
-			error("unable to zero out buffer: %s",
-				strerror(errno));
+			error("unable to zero out buffer: %m");
 			err = -errno;
 		}
 	}
@@ -646,9 +644,8 @@ static int flush_pending(struct metadump_struct *md, int done)
 			if (ret < size) {
 				free(async->buffer);
 				free(async);
-				error("unable to read superblock at %llu: %s",
-						(unsigned long long)start,
-						strerror(errno));
+				error("unable to read superblock at %llu: %m",
+						(unsigned long long)start);
 				return -errno;
 			}
 			size = 0;
@@ -1341,8 +1338,7 @@ static void write_backup_supers(int fd, u8 *buf)
 
 	if (fstat(fd, &st)) {
 		error(
-	"cannot stat restore point, won't be able to write backup supers: %s",
-			strerror(errno));
+	"cannot stat restore point, won't be able to write backup supers: %m");
 		return;
 	}
 
@@ -1358,8 +1354,7 @@ static void write_backup_supers(int fd, u8 *buf)
 		if (ret < BTRFS_SUPER_INFO_SIZE) {
 			if (ret < 0)
 				error(
-				"problem writing out backup super block %d: %s",
-						i, strerror(errno));
+				"problem writing out backup super block %d: %m", i);
 			else
 				error("short write writing out backup super block");
 			break;
@@ -1467,8 +1462,7 @@ static void *restore_worker(void *data)
 
 error:
 				if (ret < 0) {
-					error("unable to write to device: %s",
-							strerror(errno));
+					error("unable to write to device: %m");
 					err = errno;
 				} else {
 					error("short write");
@@ -1640,7 +1634,7 @@ static int add_cluster(struct meta_cluster *cluster,
 		}
 		ret = fread(async->buffer, async->bufsize, 1, mdres->in);
 		if (ret != 1) {
-			error("unable to read buffer: %s", strerror(errno));
+			error("unable to read buffer: %m");
 			free(async->buffer);
 			free(async);
 			return -EIO;
@@ -1670,7 +1664,7 @@ static int add_cluster(struct meta_cluster *cluster,
 		bytenr += size;
 		ret = fread(buffer, size, 1, mdres->in);
 		if (ret != 1) {
-			error("failed to read buffer: %s", strerror(errno));
+			error("failed to read buffer: %m");
 			return -EIO;
 		}
 	}
@@ -1848,7 +1842,7 @@ static int search_for_chunk_blocks(struct mdrestore_struct *mdres,
 	bytenr = current_cluster;
 	while (1) {
 		if (fseek(mdres->in, current_cluster, SEEK_SET)) {
-			error("seek failed: %s", strerror(errno));
+			error("seek failed: %m");
 			ret = -EIO;
 			break;
 		}
@@ -1867,9 +1861,8 @@ static int search_for_chunk_blocks(struct mdrestore_struct *mdres,
 			ret = -EIO;
 			break;
 		} else if (ret < 0) {
-			error("unable to read image at %llu: %s",
-					(unsigned long long)cluster_bytenr,
-					strerror(errno));
+			error("unable to read image at %llu: %m",
+					(unsigned long long)cluster_bytenr);
 			break;
 		}
 		ret = 0;
@@ -1901,7 +1894,7 @@ static int search_for_chunk_blocks(struct mdrestore_struct *mdres,
 			if (mdres->compress_method == COMPRESS_ZLIB) {
 				ret = fread(tmp, bufsize, 1, mdres->in);
 				if (ret != 1) {
-					error("read error: %s", strerror(errno));
+					error("read error: %m");
 					ret = -EIO;
 					break;
 				}
@@ -1919,8 +1912,7 @@ static int search_for_chunk_blocks(struct mdrestore_struct *mdres,
 			} else {
 				ret = fread(buffer, bufsize, 1, mdres->in);
 				if (ret != 1) {
-					error("read error: %s",
-							strerror(errno));
+					error("read error: %m");
 					ret = -EIO;
 					break;
 				}
@@ -1973,7 +1965,7 @@ static int build_chunk_tree(struct mdrestore_struct *mdres,
 
 	ret = fread(cluster, BLOCK_SIZE, 1, mdres->in);
 	if (ret <= 0) {
-		error("unable to read cluster: %s", strerror(errno));
+		error("unable to read cluster: %m");
 		return -EIO;
 	}
 	ret = 0;
@@ -1995,7 +1987,7 @@ static int build_chunk_tree(struct mdrestore_struct *mdres,
 			break;
 		bytenr += le32_to_cpu(item->size);
 		if (fseek(mdres->in, le32_to_cpu(item->size), SEEK_CUR)) {
-			error("seek failed: %s", strerror(errno));
+			error("seek failed: %m");
 			return -EIO;
 		}
 	}
@@ -2014,7 +2006,7 @@ static int build_chunk_tree(struct mdrestore_struct *mdres,
 
 	ret = fread(buffer, le32_to_cpu(item->size), 1, mdres->in);
 	if (ret != 1) {
-		error("unable to read buffer: %s", strerror(errno));
+		error("unable to read buffer: %m");
 		free(buffer);
 		return -EIO;
 	}
@@ -2196,8 +2188,7 @@ static int restore_metadump(const char *input, FILE *out, int old_restore,
 	} else {
 		in = fopen(input, "r");
 		if (!in) {
-			error("unable to open metadump image: %s",
-					strerror(errno));
+			error("unable to open metadump image: %m");
 			return 1;
 		}
 	}
@@ -2238,7 +2229,7 @@ static int restore_metadump(const char *input, FILE *out, int old_restore,
 	}
 
 	if (in != stdin && fseek(in, 0, SEEK_SET)) {
-		error("seek failed: %s", strerror(errno));
+		error("seek failed: %m");
 		goto out;
 	}
 
@@ -2278,7 +2269,7 @@ static int restore_metadump(const char *input, FILE *out, int old_restore,
 		info = root->fs_info;
 
 		if (stat(target, &st)) {
-			error("stat %s failed: %s", target, strerror(errno));
+			error("stat %s failed: %m", target);
 			close_ctree(info->chunk_root);
 			free(cluster);
 			return 1;
@@ -2359,7 +2350,7 @@ static int update_disk_super_on_device(struct btrfs_fs_info *info,
 	/* update other devices' super block */
 	fp = open(other_dev, O_CREAT | O_RDWR, 0600);
 	if (fp < 0) {
-		error("could not open %s: %s", other_dev, strerror(errno));
+		error("could not open %s: %m", other_dev);
 		ret = -EIO;
 		goto out;
 	}
@@ -2554,8 +2545,7 @@ int main(int argc, char *argv[])
 				       0, target, multi_devices);
 	}
 	if (ret) {
-		error("%s failed: %s", (create) ? "create" : "restore",
-		       strerror(errno));
+		error("%s failed: %m", (create) ? "create" : "restore");
 		goto out;
 	}
 
@@ -2613,8 +2603,8 @@ out:
 
 			unlink_ret = unlink(target);
 			if (unlink_ret)
-				error("unlink output file %s failed: %s",
-						target, strerror(errno));
+				error("unlink output file %s failed: %m",
+						target);
 		}
 	}
 

@@ -83,8 +83,7 @@ static int btrfs_read_root_item_raw(int mnt_fd, u64 root_id, size_t buf_len,
 		ret = ioctl(mnt_fd, BTRFS_IOC_TREE_SEARCH, &args);
 		if (ret < 0) {
 			fprintf(stderr,
-				"ERROR: can't perform the search - %s\n",
-				strerror(errno));
+				"ERROR: can't perform the search - %m\n");
 			return 0;
 		}
 		/* the ioctl returns the number of item it found in nr_items */
@@ -267,8 +266,8 @@ static int btrfs_subvolid_resolve_sub(int fd, char *path, size_t *path_len,
 	ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &search_arg);
 	if (ret < 0) {
 		fprintf(stderr,
-			"ioctl(BTRFS_IOC_TREE_SEARCH, subvol_id %llu) ret=%d, error: %s\n",
-			(unsigned long long)subvol_id, ret, strerror(errno));
+			"ioctl(BTRFS_IOC_TREE_SEARCH, subvol_id %llu) ret=%d, error: %m\n",
+			(unsigned long long)subvol_id, ret);
 		return ret;
 	}
 
@@ -306,8 +305,8 @@ static int btrfs_subvolid_resolve_sub(int fd, char *path, size_t *path_len,
 		ret = ioctl(fd, BTRFS_IOC_INO_LOOKUP, &ino_lookup_arg);
 		if (ret < 0) {
 			fprintf(stderr,
-				"ioctl(BTRFS_IOC_INO_LOOKUP) ret=%d, error: %s\n",
-				ret, strerror(errno));
+				"ioctl(BTRFS_IOC_INO_LOOKUP) ret=%d, error: %m\n",
+				ret);
 			return ret;
 		}
 
@@ -586,8 +585,7 @@ int subvol_uuid_search_init(int mnt_fd, struct subvol_uuid_search *s)
 	ret = is_uuid_tree_supported(mnt_fd);
 	if (ret < 0) {
 		fprintf(stderr,
-			"ERROR: check if we support uuid tree fails - %s\n",
-			strerror(errno));
+			"ERROR: check if we support uuid tree fails - %m\n");
 		return ret;
 	} else if (ret) {
 		/* uuid tree is supported */
@@ -608,8 +606,7 @@ int subvol_uuid_search_init(int mnt_fd, struct subvol_uuid_search *s)
 	while (1) {
 		ret = ioctl(mnt_fd, BTRFS_IOC_TREE_SEARCH, &args);
 		if (ret < 0) {
-			fprintf(stderr, "ERROR: can't perform the search - %s\n",
-				strerror(errno));
+			fprintf(stderr, "ERROR: can't perform the search - %m\n");
 			return ret;
 		}
 		if (sk->nr_items == 0)

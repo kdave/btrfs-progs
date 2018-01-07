@@ -1212,7 +1212,7 @@ struct btrfs_fs_info *open_ctree_fs_info(const char *filename,
 
 	ret = stat(filename, &st);
 	if (ret < 0) {
-		error("cannot stat '%s': %s", filename, strerror(errno));
+		error("cannot stat '%s': %m", filename);
 		return NULL;
 	}
 	if (!(((st.st_mode & S_IFMT) == S_IFREG) || ((st.st_mode & S_IFMT) == S_IFBLK))) {
@@ -1225,7 +1225,7 @@ struct btrfs_fs_info *open_ctree_fs_info(const char *filename,
 
 	fp = open(filename, oflags);
 	if (fp < 0) {
-		error("cannot open '%s': %s", filename, strerror(errno));
+		error("cannot open '%s': %m", filename);
 		return NULL;
 	}
 	info = __open_ctree_fd(fp, filename, sb_bytenr, root_tree_bytenr,
@@ -1566,8 +1566,7 @@ write_err:
 	if (ret > 0)
 		fprintf(stderr, "WARNING: failed to write all sb data\n");
 	else
-		fprintf(stderr, "WARNING: failed to write sb: %s\n",
-			strerror(errno));
+		fprintf(stderr, "WARNING: failed to write sb: %m\n");
 	return ret;
 }
 

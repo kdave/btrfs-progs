@@ -52,7 +52,7 @@ static int __ino_to_path_fd(u64 inum, int fd, int verbose, const char *prepend)
 
 	ret = ioctl(fd, BTRFS_IOC_INO_PATHS, &ipa);
 	if (ret < 0) {
-		error("ino paths ioctl: %s", strerror(errno));
+		error("ino paths ioctl: %m");
 		goto out;
 	}
 
@@ -189,7 +189,7 @@ static int cmd_inspect_logical_resolve(int argc, char **argv)
 
 	ret = ioctl(fd, BTRFS_IOC_LOGICAL_INO, &loi);
 	if (ret < 0) {
-		error("logical ino ioctl: %s", strerror(errno));
+		error("logical ino ioctl: %m");
 		goto out;
 	}
 
@@ -524,7 +524,7 @@ static int print_min_dev_size(int fd, u64 devid)
 
 		ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &args);
 		if (ret < 0) {
-			error("tree search ioctl: %s", strerror(errno));
+			error("tree search ioctl: %m");
 			ret = 1;
 			goto out;
 		}

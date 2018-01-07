@@ -713,11 +713,11 @@ int test_dev_for_mkfs(const char *file, int force_overwrite)
 	/* check if the device is busy */
 	fd = open(file, O_RDWR|O_EXCL);
 	if (fd < 0) {
-		error("unable to open %s: %s", file, strerror(errno));
+		error("unable to open %s: %m", file);
 		return 1;
 	}
 	if (fstat(fd, &st)) {
-		error("unable to stat %s: %s", file, strerror(errno));
+		error("unable to stat %s: %m", file);
 		close(fd);
 		return 1;
 	}

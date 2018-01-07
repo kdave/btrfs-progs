@@ -60,9 +60,9 @@ static int btrfs_uuid_tree_lookup_any(int fd, const u8 *uuid, u8 type,
 	ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &search_arg);
 	if (ret < 0) {
 		fprintf(stderr,
-			"ioctl(BTRFS_IOC_TREE_SEARCH, uuid, key %016llx, UUID_KEY, %016llx) ret=%d, error: %s\n",
+			"ioctl(BTRFS_IOC_TREE_SEARCH, uuid, key %016llx, UUID_KEY, %016llx) ret=%d, error: %m\n",
 			(unsigned long long)key_objectid,
-			(unsigned long long)key_offset, ret, strerror(errno));
+			(unsigned long long)key_offset, ret);
 		ret = -ENOENT;
 		goto out;
 	}

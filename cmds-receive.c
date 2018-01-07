@@ -1330,7 +1330,7 @@ int cmd_receive(int argc, char **argv)
 	if (fromfile[0]) {
 		receive_fd = open(fromfile, O_RDONLY | O_NOATIME);
 		if (receive_fd < 0) {
-			error("cannot open %s: %s", fromfile, strerror(errno));
+			error("cannot open %s: %m", fromfile);
 			goto out;
 		}
 	}

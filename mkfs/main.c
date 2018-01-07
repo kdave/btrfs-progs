@@ -985,12 +985,13 @@ int main(int argc, char **argv)
 		fd = open(file, oflags, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP |
 					 S_IROTH);
 		if (fd < 0) {
-			error("unable to open %s: %s", file, strerror(errno));
+			error("unable to open %s: %m", file);
 			goto error;
 		}
+
 		ret = fstat(fd, &statbuf);
 		if (ret < 0) {
-			error("unable to stat %s: %s", file, strerror(errno));
+			error("unable to stat %s: %m", file);
 			ret = -errno;
 			goto error;
 		}
@@ -1029,8 +1030,7 @@ int main(int argc, char **argv)
 		path = argv[i];
 		ret = test_minimum_size(path, min_dev_size);
 		if (ret < 0) {
-			error("failed to check size for %s: %s",
-				path, strerror(-ret));
+			error("failed to check size for %s: %m", path);
 			goto error;
 		}
 		if (ret > 0) {
@@ -1055,7 +1055,7 @@ int main(int argc, char **argv)
 	 */
 	fd = open(file, O_RDWR);
 	if (fd < 0) {
-		error("unable to open %s: %s", file, strerror(errno));
+		error("unable to open %s: %m", file);
 		goto error;
 	}
 	ret = btrfs_prepare_device(fd, file, &dev_block_count, block_count,
@@ -1157,7 +1157,7 @@ int main(int argc, char **argv)
 		 */
 		fd = open(file, O_RDWR);
 		if (fd < 0) {
-			error("unable to open %s: %s", file, strerror(errno));
+			error("unable to open %s: %m", file);
 			goto error;
 		}
 		ret = btrfs_device_already_in_root(root, fd,
