@@ -448,7 +448,7 @@ prepare_test_dev()
 		return;
 	fi
 
-	echo "\$TEST_DEV not given, use $TOP/test/test.img as fallback" >> \
+	echo "\$TEST_DEV not given, using $TOP/tests/test.img as fallback" >> \
 		"$RESULTS"
 	TEST_DEV="$TOP/tests/test.img"
 
