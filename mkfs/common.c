@@ -100,6 +100,21 @@ static int btrfs_create_tree_root(int fd, struct btrfs_mkfs_config *cfg,
  *
  * The superblock signature is not valid, denotes a partially created
  * filesystem, needs to be finalized.
+ *
+ * The temporary fs will have the following chunk layout:
+ * Device extent:
+ * 0		1M				5M	......
+ * | Reserved	| dev extent for SYS chunk      |
+ *
+ * And chunk mapping will be:
+ * Chunk mapping:
+ * 0		1M				5M
+ * |		| System chunk, 1:1 mapped	|
+ *
+ * That's to say, there will only be *ONE* system chunk, mapped to
+ * [1M, 5M) physical offset.
+ * And the only chunk is also in logical address [1M, 5M), containing
+ * all essential tree blocks.
  */
 int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 {
@@ -154,8 +169,8 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 
 	cfg->blocks[MKFS_SUPER_BLOCK] = BTRFS_SUPER_INFO_OFFSET;
 	for (i = 1; i < MKFS_BLOCK_COUNT; i++) {
-		cfg->blocks[i] = BTRFS_SUPER_INFO_OFFSET + SZ_1M +
-			cfg->nodesize * i;
+		cfg->blocks[i] = BTRFS_BLOCK_RESERVED_1M_FOR_SUPER +
+			cfg->nodesize * (i - 1);
 	}
 
 	btrfs_set_super_bytenr(&super, cfg->blocks[MKFS_SUPER_BLOCK]);
@@ -309,7 +324,7 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 
 	/* then we have chunk 0 */
 	btrfs_set_disk_key_objectid(&disk_key, BTRFS_FIRST_CHUNK_TREE_OBJECTID);
-	btrfs_set_disk_key_offset(&disk_key, 0);
+	btrfs_set_disk_key_offset(&disk_key, BTRFS_BLOCK_RESERVED_1M_FOR_SUPER);
 	btrfs_set_disk_key_type(&disk_key, BTRFS_CHUNK_ITEM_KEY);
 	btrfs_set_item_key(buf, &disk_key, nritems);
 	btrfs_set_item_offset(buf, btrfs_item_nr(nritems), itemoff);
@@ -325,7 +340,8 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 	btrfs_set_chunk_sector_size(buf, chunk, cfg->sectorsize);
 	btrfs_set_chunk_num_stripes(buf, chunk, 1);
 	btrfs_set_stripe_devid_nr(buf, chunk, 0, 1);
-	btrfs_set_stripe_offset_nr(buf, chunk, 0, 0);
+	btrfs_set_stripe_offset_nr(buf, chunk, 0,
+				   BTRFS_BLOCK_RESERVED_1M_FOR_SUPER);
 	nritems++;
 
 	write_extent_buffer(buf, super.dev_item.uuid,
@@ -363,7 +379,7 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 		sizeof(struct btrfs_dev_extent);
 
 	btrfs_set_disk_key_objectid(&disk_key, 1);
-	btrfs_set_disk_key_offset(&disk_key, 0);
+	btrfs_set_disk_key_offset(&disk_key, BTRFS_BLOCK_RESERVED_1M_FOR_SUPER);
 	btrfs_set_disk_key_type(&disk_key, BTRFS_DEV_EXTENT_KEY);
 	btrfs_set_item_key(buf, &disk_key, nritems);
 	btrfs_set_item_offset(buf, btrfs_item_nr(nritems), itemoff);
@@ -374,7 +390,8 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 					BTRFS_CHUNK_TREE_OBJECTID);
 	btrfs_set_dev_extent_chunk_objectid(buf, dev_extent,
 					BTRFS_FIRST_CHUNK_TREE_OBJECTID);
-	btrfs_set_dev_extent_chunk_offset(buf, dev_extent, 0);
+	btrfs_set_dev_extent_chunk_offset(buf, dev_extent,
+					  BTRFS_BLOCK_RESERVED_1M_FOR_SUPER);
 
 	write_extent_buffer(buf, chunk_tree_uuid,
 		    (unsigned long)btrfs_dev_extent_chunk_tree_uuid(dev_extent),
@@ -466,6 +483,8 @@ u64 btrfs_min_dev_size(u32 nodesize, int mixed, u64 meta_profile,
 
 	/*
 	 * Minimal size calculation is complex due to several factors:
+	 * 0) Reserved 1M range.
+	 *
 	 * 1) Temporary chunk reuse
 	 *    If specified chunk profile is SINGLE, we can reuse
 	 *    temporary chunks, no need to allocate new chunks.
@@ -484,7 +503,8 @@ u64 btrfs_min_dev_size(u32 nodesize, int mixed, u64 meta_profile,
 	 * The latter two are all 8M, accroding to @calc_size of
 	 * btrfs_alloc_chunk().
 	 */
-	reserved += BTRFS_MKFS_SYSTEM_GROUP_SIZE + SZ_8M * 2;
+	reserved += BTRFS_BLOCK_RESERVED_1M_FOR_SUPER +
+		    BTRFS_MKFS_SYSTEM_GROUP_SIZE + SZ_8M * 2;
 
 	/*
 	 * For real chunks, we need to select different sizes:

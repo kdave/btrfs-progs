@@ -66,10 +66,15 @@ static int create_metadata_block_groups(struct btrfs_root *root, int mixed,
 	bytes_used = btrfs_super_bytes_used(fs_info->super_copy);
 
 	root->fs_info->system_allocs = 1;
+	/*
+	 * First temporary system chunk must match the chunk layout
+	 * created in make_btrfs().
+	 */
 	ret = btrfs_make_block_group(trans, fs_info, bytes_used,
 				     BTRFS_BLOCK_GROUP_SYSTEM,
 				     BTRFS_FIRST_CHUNK_TREE_OBJECTID,
-				     0, BTRFS_MKFS_SYSTEM_GROUP_SIZE);
+				     BTRFS_BLOCK_RESERVED_1M_FOR_SUPER,
+				     BTRFS_MKFS_SYSTEM_GROUP_SIZE);
 	allocation->system += BTRFS_MKFS_SYSTEM_GROUP_SIZE;
 	if (ret)
 		return ret;
