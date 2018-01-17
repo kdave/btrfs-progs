@@ -635,6 +635,10 @@ int repair_ternary_lowmem(struct btrfs_root *root, u64 dir_ino, u64 ino,
 		goto out;
 	}
 	if (stage == 1) {
+		ret = btrfs_unlink(trans, root, ino, dir_ino, index, name,
+				name_len, 0);
+		if (ret)
+			goto out;
 		ret = btrfs_add_link(trans, root, ino, dir_ino, name, name_len,
 			       filetype, &index, 1, 1);
 		goto out;
