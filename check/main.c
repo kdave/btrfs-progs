@@ -1668,28 +1668,6 @@ out:
 	return ret;
 }
 
-static void reada_walk_down(struct btrfs_root *root,
-			    struct extent_buffer *node, int slot)
-{
-	struct btrfs_fs_info *fs_info = root->fs_info;
-	u64 bytenr;
-	u64 ptr_gen;
-	u32 nritems;
-	int i;
-	int level;
-
-	level = btrfs_header_level(node);
-	if (level != 1)
-		return;
-
-	nritems = btrfs_header_nritems(node);
-	for (i = slot; i < nritems; i++) {
-		bytenr = btrfs_node_blockptr(node, i);
-		ptr_gen = btrfs_node_ptr_generation(node, i);
-		readahead_tree_block(fs_info, bytenr, ptr_gen);
-	}
-}
-
 /*
  * Check the child node/leaf by the following condition:
  * 1. the first item key of the node/leaf should be the same with the one
