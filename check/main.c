@@ -412,8 +412,6 @@ static void free_file_extent_holes(struct rb_root *holes)
 	}
 }
 
-static void reset_cached_block_groups(struct btrfs_fs_info *fs_info);
-
 static void record_root_in_trans(struct btrfs_trans_handle *trans,
 				 struct btrfs_root *root)
 {
@@ -10200,31 +10198,6 @@ static int prune_corrupt_blocks(struct btrfs_fs_info *info)
 	if (trans)
 		return btrfs_commit_transaction(trans, info->extent_root);
 	return 0;
-}
-
-static void reset_cached_block_groups(struct btrfs_fs_info *fs_info)
-{
-	struct btrfs_block_group_cache *cache;
-	u64 start, end;
-	int ret;
-
-	while (1) {
-		ret = find_first_extent_bit(&fs_info->free_space_cache, 0,
-					    &start, &end, EXTENT_DIRTY);
-		if (ret)
-			break;
-		clear_extent_dirty(&fs_info->free_space_cache, start, end);
-	}
-
-	start = 0;
-	while (1) {
-		cache = btrfs_lookup_first_block_group(fs_info, start);
-		if (!cache)
-			break;
-		if (cache->cached)
-			cache->cached = 0;
-		start = cache->key.objectid + cache->key.offset;
-	}
 }
 
 static int check_extent_refs(struct btrfs_root *root,

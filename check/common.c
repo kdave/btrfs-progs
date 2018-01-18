@@ -324,3 +324,28 @@ int check_child_node(struct extent_buffer *parent, int slot,
 	}
 	return ret;
 }
+
+void reset_cached_block_groups(struct btrfs_fs_info *fs_info)
+{
+	struct btrfs_block_group_cache *cache;
+	u64 start, end;
+	int ret;
+
+	while (1) {
+		ret = find_first_extent_bit(&fs_info->free_space_cache, 0,
+					    &start, &end, EXTENT_DIRTY);
+		if (ret)
+			break;
+		clear_extent_dirty(&fs_info->free_space_cache, start, end);
+	}
+
+	start = 0;
+	while (1) {
+		cache = btrfs_lookup_first_block_group(fs_info, start);
+		if (!cache)
+			break;
+		if (cache->cached)
+			cache->cached = 0;
+		start = cache->key.objectid + cache->key.offset;
+	}
+}
