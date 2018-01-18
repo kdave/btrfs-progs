@@ -10715,22 +10715,6 @@ static int check_device_used(struct device_record *dev_rec,
 }
 
 /*
- * Extra (optional) check for dev_item size to report possbile problem on a new
- * kernel.
- */
-static void check_dev_size_alignment(u64 devid, u64 total_bytes, u32 sectorsize)
-{
-	if (!IS_ALIGNED(total_bytes, sectorsize)) {
-		warning(
-"unaligned total_bytes detected for devid %llu, have %llu should be aligned to %u",
-			devid, total_bytes, sectorsize);
-		warning(
-"this is OK for older kernel, but may cause kernel warning for newer kernels");
-		warning("this can be fixed by 'btrfs rescue fix-device-size'");
-	}
-}
-
-/*
  * Unlike device size alignment check above, some super total_bytes check
  * failure can lead to mount failure for newer kernel.
  *

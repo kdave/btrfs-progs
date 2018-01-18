@@ -90,5 +90,6 @@ int link_inode_to_lostfound(struct btrfs_trans_handle *trans,
 			    struct btrfs_path *path,
 			    u64 ino, char *namebuf, u32 name_len,
 			    u8 filetype, u64 *ref_count);
+void check_dev_size_alignment(u64 devid, u64 total_bytes, u32 sectorsize);
 
 #endif

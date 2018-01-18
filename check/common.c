@@ -237,3 +237,18 @@ out:
 	return ret;
 }
 
+/*
+ * Extra (optional) check for dev_item size to report possbile problem on a new
+ * kernel.
+ */
+void check_dev_size_alignment(u64 devid, u64 total_bytes, u32 sectorsize)
+{
+	if (!IS_ALIGNED(total_bytes, sectorsize)) {
+		warning(
+"unaligned total_bytes detected for devid %llu, have %llu should be aligned to %u",
+			devid, total_bytes, sectorsize);
+		warning(
+"this is OK for older kernel, but may cause kernel warning for newer kernels");
+		warning("this can be fixed by 'btrfs rescue fix-device-size'");
+	}
+}
