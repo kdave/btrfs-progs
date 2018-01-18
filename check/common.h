@@ -93,5 +93,7 @@ int link_inode_to_lostfound(struct btrfs_trans_handle *trans,
 void check_dev_size_alignment(u64 devid, u64 total_bytes, u32 sectorsize);
 void reada_walk_down(struct btrfs_root *root, struct extent_buffer *node,
 		     int slot);
+int check_child_node(struct extent_buffer *parent, int slot,
+		     struct extent_buffer *child);
 
 #endif
