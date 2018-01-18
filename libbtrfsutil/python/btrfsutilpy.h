@@ -37,6 +37,7 @@ typedef struct {
 extern PyTypeObject BtrfsUtilError_type;
 extern PyStructSequence_Desc SubvolumeInfo_desc;
 extern PyTypeObject SubvolumeInfo_type;
+extern PyTypeObject SubvolumeIterator_type;
 extern PyTypeObject QgroupInherit_type;
 
 /*

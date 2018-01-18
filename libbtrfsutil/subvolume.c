@@ -691,3 +691,322 @@ PUBLIC enum btrfs_util_error btrfs_util_create_subvolume_fd(int parent_fd,
 
 	return BTRFS_UTIL_OK;
 }
+
+#define BTRFS_UTIL_SUBVOLUME_ITERATOR_CLOSE_FD (1 << 30)
+
+struct search_stack_entry {
+	struct btrfs_ioctl_search_args search;
+	size_t items_pos, buf_off;
+	size_t path_len;
+};
+
+struct btrfs_util_subvolume_iterator {
+	int fd;
+	int flags;
+
+	struct search_stack_entry *search_stack;
+	size_t search_stack_len;
+	size_t search_stack_capacity;
+
+	char *cur_path;
+	size_t cur_path_capacity;
+};
+
+static enum btrfs_util_error append_to_search_stack(struct btrfs_util_subvolume_iterator *iter,
+						    uint64_t tree_id,
+						    size_t path_len)
+{
+	struct search_stack_entry *entry;
+
+	if (iter->search_stack_len >= iter->search_stack_capacity) {
+		size_t new_capacity = iter->search_stack_capacity * 2;
+		struct search_stack_entry *new_search_stack;
+
+		new_search_stack = reallocarray(iter->search_stack,
+						new_capacity,
+						sizeof(*iter->search_stack));
+		if (!new_search_stack)
+			return BTRFS_UTIL_ERROR_NO_MEMORY;
+
+		iter->search_stack_capacity = new_capacity;
+		iter->search_stack = new_search_stack;
+	}
+
+	entry = &iter->search_stack[iter->search_stack_len++];
+
+	memset(&entry->search, 0, sizeof(entry->search));
+	entry->search.key.tree_id = BTRFS_ROOT_TREE_OBJECTID;
+	entry->search.key.min_objectid = tree_id;
+	entry->search.key.max_objectid = tree_id;
+	entry->search.key.min_type = BTRFS_ROOT_REF_KEY;
+	entry->search.key.max_type = BTRFS_ROOT_REF_KEY;
+	entry->search.key.min_offset = 0;
+	entry->search.key.max_offset = UINT64_MAX;
+	entry->search.key.min_transid = 0;
+	entry->search.key.max_transid = UINT64_MAX;
+	entry->search.key.nr_items = 0;
+
+	entry->items_pos = 0;
+	entry->buf_off = 0;
+
+	entry->path_len = path_len;
+
+	return BTRFS_UTIL_OK;
+}
+
+PUBLIC enum btrfs_util_error btrfs_util_create_subvolume_iterator(const char *path,
+								  uint64_t top,
+								  int flags,
+								  struct btrfs_util_subvolume_iterator **ret)
+{
+	enum btrfs_util_error err;
+	int fd;
+
+	fd = open(path, O_RDONLY);
+	if (fd == -1)
+		return BTRFS_UTIL_ERROR_OPEN_FAILED;
+
+	err = btrfs_util_create_subvolume_iterator_fd(fd, top, flags, ret);
+	if (err)
+		SAVE_ERRNO_AND_CLOSE(fd);
+	else
+		(*ret)->flags |= BTRFS_UTIL_SUBVOLUME_ITERATOR_CLOSE_FD;
+
+	return err;
+}
+
+PUBLIC enum btrfs_util_error btrfs_util_create_subvolume_iterator_fd(int fd,
+								     uint64_t top,
+								     int flags,
+								     struct btrfs_util_subvolume_iterator **ret)
+{
+	struct btrfs_util_subvolume_iterator *iter;
+	enum btrfs_util_error err;
+
+	if (flags & ~BTRFS_UTIL_SUBVOLUME_ITERATOR_MASK) {
+		errno = EINVAL;
+		return BTRFS_UTIL_ERROR_INVALID_ARGUMENT;
+	}
+
+	if (top == 0) {
+		err = btrfs_util_is_subvolume_fd(fd);
+		if (err)
+			return err;
+
+		err = btrfs_util_subvolume_id_fd(fd, &top);
+		if (err)
+			return err;
+	}
+
+	iter = malloc(sizeof(*iter));
+	if (!iter)
+		return BTRFS_UTIL_ERROR_NO_MEMORY;
+
+	iter->fd = fd;
+	iter->flags = flags;
+
+	iter->search_stack_len = 0;
+	iter->search_stack_capacity = 4;
+	iter->search_stack = malloc(sizeof(*iter->search_stack) *
+				    iter->search_stack_capacity);
+	if (!iter->search_stack) {
+		err = BTRFS_UTIL_ERROR_NO_MEMORY;
+		goto out_iter;
+	}
+
+	iter->cur_path_capacity = 256;
+	iter->cur_path = malloc(iter->cur_path_capacity);
+	if (!iter->cur_path) {
+		err = BTRFS_UTIL_ERROR_NO_MEMORY;
+		goto out_search_stack;
+	}
+
+	err = append_to_search_stack(iter, top, 0);
+	if (err)
+		goto out_cur_path;
+
+	*ret = iter;
+
+	return BTRFS_UTIL_OK;
+
+out_cur_path:
+	free(iter->cur_path);
+out_search_stack:
+	free(iter->search_stack);
+out_iter:
+	free(iter);
+	return err;
+}
+
+PUBLIC void btrfs_util_destroy_subvolume_iterator(struct btrfs_util_subvolume_iterator *iter)
+{
+	if (iter) {
+		free(iter->cur_path);
+		free(iter->search_stack);
+		if (iter->flags & BTRFS_UTIL_SUBVOLUME_ITERATOR_CLOSE_FD)
+			SAVE_ERRNO_AND_CLOSE(iter->fd);
+		free(iter);
+	}
+}
+
+PUBLIC int btrfs_util_subvolume_iterator_fd(const struct btrfs_util_subvolume_iterator *iter)
+{
+	return iter->fd;
+}
+
+static struct search_stack_entry *top_search_stack_entry(struct btrfs_util_subvolume_iterator *iter)
+{
+	return &iter->search_stack[iter->search_stack_len - 1];
+}
+
+static enum btrfs_util_error build_subvol_path(struct btrfs_util_subvolume_iterator *iter,
+					       const struct btrfs_ioctl_search_header *header,
+					       const struct btrfs_root_ref *ref,
+					       const char *name,
+					       size_t *path_len_ret)
+{
+	struct btrfs_ioctl_ino_lookup_args lookup = {
+		.treeid = header->objectid,
+		.objectid = le64_to_cpu(ref->dirid),
+	};
+	struct search_stack_entry *top = top_search_stack_entry(iter);
+	size_t dir_len, name_len, path_len;
+	char *p;
+	int ret;
+
+	ret = ioctl(iter->fd, BTRFS_IOC_INO_LOOKUP, &lookup);
+	if (ret == -1)
+		return BTRFS_UTIL_ERROR_INO_LOOKUP_FAILED;
+
+	dir_len = strlen(lookup.name);
+	name_len = le16_to_cpu(ref->name_len);
+
+	path_len = top->path_len;
+	/*
+	 * We need a joining slash if we have a current path and a subdirectory.
+	 */
+	if (top->path_len && dir_len)
+		path_len++;
+	path_len += dir_len;
+	/*
+	 * We need another joining slash if we have a current path and a name,
+	 * but not if we have a subdirectory, because the lookup ioctl includes
+	 * a trailing slash.
+	 */
+	if (top->path_len && !dir_len && name_len)
+		path_len++;
+	path_len += name_len;
+
+	if (path_len > iter->cur_path_capacity) {
+		char *tmp = realloc(iter->cur_path, path_len);
+
+		if (!tmp)
+			return BTRFS_UTIL_ERROR_NO_MEMORY;
+		iter->cur_path = tmp;
+		iter->cur_path_capacity = path_len;
+	}
+
+	p = iter->cur_path + top->path_len;
+	if (top->path_len && dir_len)
+		*p++ = '/';
+	memcpy(p, lookup.name, dir_len);
+	p += dir_len;
+	if (top->path_len && !dir_len && name_len)
+		*p++ = '/';
+	memcpy(p, name, name_len);
+	p += name_len;
+
+	*path_len_ret = path_len;
+
+	return BTRFS_UTIL_OK;
+}
+
+PUBLIC enum btrfs_util_error btrfs_util_subvolume_iterator_next(struct btrfs_util_subvolume_iterator *iter,
+								char **path_ret,
+								uint64_t *id_ret)
+{
+	struct search_stack_entry *top;
+	const struct btrfs_ioctl_search_header *header;
+	const struct btrfs_root_ref *ref;
+	const char *name;
+	enum btrfs_util_error err;
+	size_t path_len;
+	int ret;
+
+	for (;;) {
+		for (;;) {
+			if (iter->search_stack_len == 0)
+				return BTRFS_UTIL_ERROR_STOP_ITERATION;
+
+			top = top_search_stack_entry(iter);
+			if (top->items_pos < top->search.key.nr_items) {
+				break;
+			} else {
+				top->search.key.nr_items = 4096;
+				ret = ioctl(iter->fd, BTRFS_IOC_TREE_SEARCH, &top->search);
+				if (ret == -1)
+					return BTRFS_UTIL_ERROR_SEARCH_FAILED;
+				top->items_pos = 0;
+				top->buf_off = 0;
+
+				if (top->search.key.nr_items == 0) {
+					iter->search_stack_len--;
+					if ((iter->flags & BTRFS_UTIL_SUBVOLUME_ITERATOR_POST_ORDER) &&
+					    iter->search_stack_len)
+						goto out;
+				}
+			}
+		}
+
+		header = (struct btrfs_ioctl_search_header *)(top->search.buf + top->buf_off);
+
+		top->items_pos++;
+		top->buf_off += sizeof(*header) + header->len;
+		top->search.key.min_offset = header->offset + 1;
+
+		/* This shouldn't happen, but handle it just in case. */
+		if (header->type != BTRFS_ROOT_REF_KEY)
+			continue;
+
+		ref = (struct btrfs_root_ref *)(header + 1);
+		name = (const char *)(ref + 1);
+		err = build_subvol_path(iter, header, ref, name, &path_len);
+		if (err)
+			return err;
+
+		err = append_to_search_stack(iter, header->offset, path_len);
+		if (err)
+			return err;
+
+		if (!(iter->flags & BTRFS_UTIL_SUBVOLUME_ITERATOR_POST_ORDER)) {
+			top = top_search_stack_entry(iter);
+			goto out;
+		}
+	}
+
+out:
+	if (path_ret) {
+		*path_ret = malloc(top->path_len + 1);
+		if (!*path_ret)
+			return BTRFS_UTIL_ERROR_NO_MEMORY;
+		memcpy(*path_ret, iter->cur_path, top->path_len);
+		(*path_ret)[top->path_len] = '\0';
+	}
+	if (id_ret)
+		*id_ret = top->search.key.min_objectid;
+	return BTRFS_UTIL_OK;
+}
+
+PUBLIC enum btrfs_util_error btrfs_util_subvolume_iterator_next_info(struct btrfs_util_subvolume_iterator *iter,
+								     char **path_ret,
+								     struct btrfs_util_subvolume_info *subvol)
+{
+	enum btrfs_util_error err;
+	uint64_t id;
+
+	err = btrfs_util_subvolume_iterator_next(iter, path_ret, &id);
+	if (err)
+		return err;
+
+	return btrfs_util_subvolume_info_fd(iter->fd, id, subvol);
+}

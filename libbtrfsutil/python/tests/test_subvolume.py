@@ -214,3 +214,59 @@ class TestSubvolume(BtrfsTestCase):
         wstatus = os.waitpid(pid, 0)[1]
         self.assertTrue(os.WIFEXITED(wstatus))
         self.assertEqual(os.WEXITSTATUS(wstatus), 0)
+
+    def test_subvolume_iterator(self):
+        pwd = os.getcwd()
+        try:
+            os.chdir(self.mountpoint)
+            btrfsutil.create_subvolume('foo')
+
+            path, subvol = next(btrfsutil.SubvolumeIterator('.', info=True))
+            self.assertEqual(path, 'foo')
+            self.assertIsInstance(subvol, btrfsutil.SubvolumeInfo)
+            self.assertEqual(subvol.id, 256)
+            self.assertEqual(subvol.parent_id, 5)
+
+            btrfsutil.create_subvolume('foo/bar')
+            btrfsutil.create_subvolume('foo/bar/baz')
+
+            subvols = [
+                ('foo', 256),
+                ('foo/bar', 257),
+                ('foo/bar/baz', 258),
+            ]
+
+            for arg in self.path_or_fd('.'):
+                with self.subTest(type=type(arg)):
+                    self.assertEqual(list(btrfsutil.SubvolumeIterator(arg)), subvols)
+            self.assertEqual(list(btrfsutil.SubvolumeIterator('.', top=0)), subvols)
+
+            self.assertEqual(list(btrfsutil.SubvolumeIterator('.', post_order=True)),
+                             [('foo/bar/baz', 258),
+                              ('foo/bar', 257),
+                              ('foo', 256)])
+
+            subvols = [
+                ('bar', 257),
+                ('bar/baz', 258),
+            ]
+
+            self.assertEqual(list(btrfsutil.SubvolumeIterator('.', top=256)), subvols)
+            self.assertEqual(list(btrfsutil.SubvolumeIterator('foo', top=0)), subvols)
+
+            os.rename('foo/bar/baz', 'baz')
+            self.assertEqual(sorted(btrfsutil.SubvolumeIterator('.')),
+                             [('baz', 258),
+                              ('foo', 256),
+                              ('foo/bar', 257)])
+
+            with btrfsutil.SubvolumeIterator('.') as it:
+                self.assertGreaterEqual(it.fileno(), 0)
+                it.close()
+                with self.assertRaises(ValueError):
+                    next(iter(it))
+                with self.assertRaises(ValueError):
+                    it.fileno()
+                it.close()
+        finally:
+            os.chdir(pwd)

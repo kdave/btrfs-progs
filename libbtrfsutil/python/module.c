@@ -239,6 +239,10 @@ PyInit_btrfsutil(void)
 	if (PyStructSequence_InitType2(&SubvolumeInfo_type, &SubvolumeInfo_desc) < 0)
 		return NULL;
 
+	SubvolumeIterator_type.tp_new = PyType_GenericNew;
+	if (PyType_Ready(&SubvolumeIterator_type) < 0)
+		return NULL;
+
 	QgroupInherit_type.tp_new = PyType_GenericNew;
 	if (PyType_Ready(&QgroupInherit_type) < 0)
 		return NULL;
@@ -253,6 +257,10 @@ PyInit_btrfsutil(void)
 
 	Py_INCREF(&SubvolumeInfo_type);
 	PyModule_AddObject(m, "SubvolumeInfo", (PyObject *)&SubvolumeInfo_type);
+
+	Py_INCREF(&SubvolumeIterator_type);
+	PyModule_AddObject(m, "SubvolumeIterator",
+			   (PyObject *)&SubvolumeIterator_type);
 
 	Py_INCREF(&QgroupInherit_type);
 	PyModule_AddObject(m, "QgroupInherit",

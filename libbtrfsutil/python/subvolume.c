@@ -348,3 +348,214 @@ PyObject *create_subvolume(PyObject *self, PyObject *args, PyObject *kwds)
 	else
 		Py_RETURN_NONE;
 }
+
+typedef struct {
+	PyObject_HEAD
+	struct btrfs_util_subvolume_iterator *iter;
+	bool info;
+} SubvolumeIterator;
+
+static void SubvolumeIterator_dealloc(SubvolumeIterator *self)
+{
+	btrfs_util_destroy_subvolume_iterator(self->iter);
+	Py_TYPE(self)->tp_free((PyObject *)self);
+}
+
+static PyObject *SubvolumeIterator_next(SubvolumeIterator *self)
+{
+	enum btrfs_util_error err;
+	PyObject *ret, *tmp;
+	char *path;
+
+	if (!self->iter) {
+		PyErr_SetString(PyExc_ValueError,
+				"operation on closed iterator");
+		return NULL;
+	}
+
+	if (self->info) {
+		struct btrfs_util_subvolume_info subvol;
+
+		err = btrfs_util_subvolume_iterator_next_info(self->iter, &path,
+							      &subvol);
+		if (err == BTRFS_UTIL_ERROR_STOP_ITERATION) {
+			PyErr_SetNone(PyExc_StopIteration);
+			return NULL;
+		} else if (err) {
+			SetFromBtrfsUtilError(err);
+			return NULL;
+		}
+
+		tmp = subvolume_info_to_object(&subvol);
+	} else {
+		uint64_t id;
+
+		err = btrfs_util_subvolume_iterator_next(self->iter, &path, &id);
+		if (err == BTRFS_UTIL_ERROR_STOP_ITERATION) {
+			PyErr_SetNone(PyExc_StopIteration);
+			return NULL;
+		} else if (err) {
+			SetFromBtrfsUtilError(err);
+			return NULL;
+		}
+
+		tmp = PyLong_FromUnsignedLongLong(id);
+
+	}
+	if (tmp) {
+		ret = Py_BuildValue("O&O", PyUnicode_DecodeFSDefault, path,
+				    tmp);
+		Py_DECREF(tmp);
+		free(path);
+	} else {
+		ret = NULL;
+	}
+	return ret;
+}
+
+static int SubvolumeIterator_init(SubvolumeIterator *self, PyObject *args,
+				  PyObject *kwds)
+{
+	static char *keywords[] = {"path", "top", "info", "post_order", NULL};
+	struct path_arg path = {.allow_fd = true};
+	enum btrfs_util_error err;
+	unsigned long long top = 5;
+	int info = 0;
+	int post_order = 0;
+	int flags = 0;
+
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|Kpp:SubvolumeIterator",
+					 keywords, &path_converter, &path, &top,
+					 &info, &post_order))
+		return -1;
+
+	if (post_order)
+		flags |= BTRFS_UTIL_SUBVOLUME_ITERATOR_POST_ORDER;
+
+	if (path.path) {
+		err = btrfs_util_create_subvolume_iterator(path.path, top,
+							   flags, &self->iter);
+	} else {
+		err = btrfs_util_create_subvolume_iterator_fd(path.fd, top,
+							      flags,
+							      &self->iter);
+	}
+	if (err) {
+		SetFromBtrfsUtilErrorWithPath(err, &path);
+		path_cleanup(&path);
+		return -1;
+	}
+
+	self->info = info;
+
+	return 0;
+}
+
+static PyObject *SubvolumeIterator_close(SubvolumeIterator *self)
+{
+	if (self->iter) {
+		btrfs_util_destroy_subvolume_iterator(self->iter);
+		self->iter = NULL;
+	}
+	Py_RETURN_NONE;
+}
+
+static PyObject *SubvolumeIterator_fileno(SubvolumeIterator *self)
+{
+	if (!self->iter) {
+		PyErr_SetString(PyExc_ValueError,
+				"operation on closed iterator");
+		return NULL;
+	}
+	return PyLong_FromLong(btrfs_util_subvolume_iterator_fd(self->iter));
+}
+
+static PyObject *SubvolumeIterator_enter(SubvolumeIterator *self)
+{
+	Py_INCREF((PyObject *)self);
+	return (PyObject *)self;
+}
+
+static PyObject *SubvolumeIterator_exit(SubvolumeIterator *self, PyObject *args,
+				       PyObject *kwds)
+{
+	static char *keywords[] = {"exc_type", "exc_value", "traceback", NULL};
+	PyObject *exc_type, *exc_value, *traceback;
+
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "OOO:__exit__", keywords,
+					 &exc_type, &exc_value, &traceback))
+		return NULL;
+
+	return SubvolumeIterator_close(self);
+}
+
+#define SubvolumeIterator_DOC	\
+	 "SubvolumeIterator(path, top=0, info=False, post_order=False) -> new subvolume iterator\n\n"	\
+	 "Create a new iterator that produces tuples of (path, ID) representing\n"	\
+	 "subvolumes on a filesystem.\n\n"						\
+	 "Arguments:\n"									\
+	 "path -- string, bytes, path-like object, or open file descriptor in\n"	\
+	 "filesystem to list\n"								\
+	 "top -- if not zero, instead of only listing subvolumes beneath the\n"		\
+	 "given path, list subvolumes beneath the subvolume with this ID; passing\n"	\
+	 "BTRFS_FS_TREE_OBJECTID (5) here lists all subvolumes. The subvolumes\n"	\
+	 "are listed relative to the subvolume with this ID.\n"				\
+	 "info -- bool indicating the iterator should yield SubvolumeInfo instead of\n"	\
+	 "the subvolume ID\n"								\
+	 "post_order -- bool indicating whether to yield parent subvolumes before\n"	\
+	 "child subvolumes (e.g., 'foo/bar' before 'foo')"
+
+static PyMethodDef SubvolumeIterator_methods[] = {
+	{"close", (PyCFunction)SubvolumeIterator_close,
+	 METH_NOARGS,
+	 "close()\n\n"
+	 "Close this iterator."},
+	{"fileno", (PyCFunction)SubvolumeIterator_fileno,
+	 METH_NOARGS,
+	 "fileno() -> int\n\n"
+	 "Get the file descriptor associated with this iterator."},
+	{"__enter__", (PyCFunction)SubvolumeIterator_enter,
+	 METH_NOARGS, ""},
+	{"__exit__", (PyCFunction)SubvolumeIterator_exit,
+	 METH_VARARGS | METH_KEYWORDS, ""},
+	{},
+};
+
+PyTypeObject SubvolumeIterator_type = {
+	PyVarObject_HEAD_INIT(NULL, 0)
+	"btrfsutil.SubvolumeIterator",		/* tp_name */
+	sizeof(SubvolumeIterator),		/* tp_basicsize */
+	0,					/* tp_itemsize */
+	(destructor)SubvolumeIterator_dealloc,	/* tp_dealloc */
+	NULL,					/* tp_print */
+	NULL,					/* tp_getattr */
+	NULL,					/* tp_setattr */
+	NULL,					/* tp_as_async */
+	NULL,					/* tp_repr */
+	NULL,					/* tp_as_number */
+	NULL,					/* tp_as_sequence */
+	NULL,					/* tp_as_mapping */
+	NULL,					/* tp_hash  */
+	NULL,					/* tp_call */
+	NULL,					/* tp_str */
+	NULL,					/* tp_getattro */
+	NULL,					/* tp_setattro */
+	NULL,					/* tp_as_buffer */
+	Py_TPFLAGS_DEFAULT,			/* tp_flags */
+	SubvolumeIterator_DOC,			/* tp_doc */
+	NULL,					/* tp_traverse */
+	NULL,					/* tp_clear */
+	NULL,					/* tp_richcompare */
+	0,					/* tp_weaklistoffset */
+	PyObject_SelfIter,			/* tp_iter */
+	(iternextfunc)SubvolumeIterator_next,	/* tp_iternext */
+	SubvolumeIterator_methods,		/* tp_methods */
+	NULL,					/* tp_members */
+	NULL,					/* tp_getset */
+	NULL,					/* tp_base */
+	NULL,					/* tp_dict */
+	NULL,					/* tp_descr_get */
+	NULL,					/* tp_descr_set */
+	0,					/* tp_dictoffset */
+	(initproc)SubvolumeIterator_init,	/* tp_init */
+};

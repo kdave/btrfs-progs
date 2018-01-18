@@ -391,6 +391,103 @@ enum btrfs_util_error btrfs_util_create_subvolume_fd(int parent_fd,
 						     uint64_t *async_transid,
 						     struct btrfs_util_qgroup_inherit *qgroup_inherit);
 
+struct btrfs_util_subvolume_iterator;
+
+/**
+ * BTRFS_UTIL_SUBVOLUME_ITERATOR_POST_ORDER - Iterate post-order. The default
+ * behavior is pre-order, e.g., foo will be yielded before foo/bar. If this flag
+ * is specified, foo/bar will be yielded before foo.
+ */
+#define BTRFS_UTIL_SUBVOLUME_ITERATOR_POST_ORDER (1 << 0)
+#define BTRFS_UTIL_SUBVOLUME_ITERATOR_MASK ((1 << 1) - 1)
+
+/**
+ * btrfs_util_create_subvolume_iterator() - Create an iterator over subvolumes
+ * in a Btrfs filesystem.
+ * @path: Path in a Btrfs filesystem. This may be any path in the filesystem; it
+ * does not have to refer to a subvolume unless @top is zero.
+ * @top: List subvolumes beneath (but not including) the subvolume with this ID.
+ * If zero is given, the subvolume ID of @path is used. To list all subvolumes,
+ * pass %BTRFS_FS_TREE_OBJECTID (i.e., 5). The returned paths are relative to
+ * the subvolume with this ID.
+ * @flags: Bitmask of BTRFS_UTIL_SUBVOLUME_ITERATOR_* flags.
+ * @ret: Returned iterator.
+ *
+ * The returned iterator must be freed with
+ * btrfs_util_destroy_subvolume_iterator().
+ *
+ * Return: %BTRFS_UTIL_OK on success, non-zero error code on failure.
+ */
+enum btrfs_util_error btrfs_util_create_subvolume_iterator(const char *path,
+							   uint64_t top,
+							   int flags,
+							   struct btrfs_util_subvolume_iterator **ret);
+
+/**
+ * btrfs_util_create_subvolume_iterator_fd() - See
+ * btrfs_util_create_subvolume_iterator().
+ */
+enum btrfs_util_error btrfs_util_create_subvolume_iterator_fd(int fd,
+							      uint64_t top,
+							      int flags,
+							      struct btrfs_util_subvolume_iterator **ret);
+
+/**
+ * btrfs_util_destroy_subvolume_iterator() - Destroy a subvolume iterator
+ * previously created by btrfs_util_create_subvolume_iterator().
+ * @iter: Iterator to destroy.
+ */
+void btrfs_util_destroy_subvolume_iterator(struct btrfs_util_subvolume_iterator *iter);
+
+/**
+ * btrfs_util_subvolume_iterator_fd() - Get the file descriptor associated with
+ * a subvolume iterator.
+ * @iter: Iterator to get.
+ *
+ * This can be used to get the file descriptor opened by
+ * btrfs_util_create_subvolume_iterator() in order to use it for other
+ * functions.
+ *
+ * Return: File descriptor.
+ */
+int btrfs_util_subvolume_iterator_fd(const struct btrfs_util_subvolume_iterator *iter);
+
+/**
+ * btrfs_util_subvolume_iterator_next() - Get the next subvolume from a
+ * subvolume iterator.
+ * @iter: Subvolume iterator.
+ * @path_ret: Returned subvolume path, relative to the subvolume ID used to
+ * create the iterator. May be %NULL.
+ * Must be freed with free().
+ * @id_ret: Returned subvolume ID. May be %NULL.
+ *
+ * This requires appropriate privilege (CAP_SYS_ADMIN).
+ *
+ * Return: %BTRFS_UTIL_OK on success, %BTRFS_UTIL_ERROR_STOP_ITERATION if there
+ * are no more subvolumes, non-zero error code on failure.
+ */
+enum btrfs_util_error btrfs_util_subvolume_iterator_next(struct btrfs_util_subvolume_iterator *iter,
+							 char **path_ret,
+							 uint64_t *id_ret);
+
+/**
+ * btrfs_util_subvolume_iterator_next_info() - Get information about the next
+ * subvolume for a subvolume iterator.
+ * @iter: Subvolume iterator.
+ * @path_ret: See btrfs_util_subvolume_iterator_next().
+ * @subvol: Returned subvolume information.
+ *
+ * This convenience function basically combines
+ * btrfs_util_subvolume_iterator_next() and btrfs_util_subvolume_info().
+ *
+ * This requires appropriate privilege (CAP_SYS_ADMIN).
+ *
+ * Return: See btrfs_util_subvolume_iterator_next().
+ */
+enum btrfs_util_error btrfs_util_subvolume_iterator_next_info(struct btrfs_util_subvolume_iterator *iter,
+							      char **path_ret,
+							      struct btrfs_util_subvolume_info *subvol);
+
 /**
  * btrfs_util_create_qgroup_inherit() - Create a qgroup inheritance specifier
  * for btrfs_util_create_subvolume() or btrfs_util_create_snapshot().
