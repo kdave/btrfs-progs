@@ -838,6 +838,173 @@ out_iter:
 	return err;
 }
 
+static enum btrfs_util_error snapshot_subvolume_children(int fd, int parent_fd,
+							 const char *name,
+							 uint64_t *async_transid)
+{
+	struct btrfs_util_subvolume_iterator *iter;
+	enum btrfs_util_error err;
+	int dstfd;
+
+	dstfd = openat(parent_fd, name, O_RDONLY);
+	if (dstfd == -1)
+		return BTRFS_UTIL_ERROR_OPEN_FAILED;
+
+	err = btrfs_util_create_subvolume_iterator_fd(fd, 0, 0, &iter);
+	if (err)
+		goto out;
+
+	for (;;) {
+		char child_name[BTRFS_SUBVOL_NAME_MAX + 1];
+		char *child_path;
+		int child_fd, new_parent_fd;
+		uint64_t tmp_transid;
+
+		err = btrfs_util_subvolume_iterator_next(iter, &child_path,
+							 NULL);
+		if (err) {
+			if (err == BTRFS_UTIL_ERROR_STOP_ITERATION)
+				err = BTRFS_UTIL_OK;
+			break;
+		}
+
+		/* Remove the placeholder directory. */
+		if (unlinkat(dstfd, child_path, AT_REMOVEDIR) == -1) {
+			free(child_path);
+			err = BTRFS_UTIL_ERROR_RMDIR_FAILED;
+			break;
+		}
+
+		child_fd = openat(fd, child_path, O_RDONLY);
+		if (child_fd == -1) {
+			free(child_path);
+			err = BTRFS_UTIL_ERROR_OPEN_FAILED;
+			break;
+		}
+
+		err = openat_parent_and_name(dstfd, child_path, child_name,
+					     sizeof(child_name),
+					     &new_parent_fd);
+		free(child_path);
+		if (err) {
+			SAVE_ERRNO_AND_CLOSE(child_fd);
+			break;
+		}
+
+		err = btrfs_util_create_snapshot_fd2(child_fd, new_parent_fd,
+						     child_name, 0,
+						     async_transid ? &tmp_transid : NULL,
+						     NULL);
+		SAVE_ERRNO_AND_CLOSE(child_fd);
+		SAVE_ERRNO_AND_CLOSE(new_parent_fd);
+		if (err)
+			break;
+		if (async_transid && tmp_transid > *async_transid)
+			*async_transid = tmp_transid;
+	}
+
+	btrfs_util_destroy_subvolume_iterator(iter);
+out:
+	SAVE_ERRNO_AND_CLOSE(dstfd);
+	return err;
+}
+
+PUBLIC enum btrfs_util_error btrfs_util_create_snapshot(const char *source,
+							const char *path,
+							int flags,
+							uint64_t *async_transid,
+							struct btrfs_util_qgroup_inherit *qgroup_inherit)
+{
+	enum btrfs_util_error err;
+	int fd;
+
+	fd = open(source, O_RDONLY);
+	if (fd == -1)
+		return BTRFS_UTIL_ERROR_OPEN_FAILED;
+
+	err = btrfs_util_create_snapshot_fd(fd, path, flags, async_transid,
+					    qgroup_inherit);
+	SAVE_ERRNO_AND_CLOSE(fd);
+	return err;
+}
+
+PUBLIC enum btrfs_util_error btrfs_util_create_snapshot_fd(int fd,
+							   const char *path,
+							   int flags,
+							   uint64_t *async_transid,
+							   struct btrfs_util_qgroup_inherit *qgroup_inherit)
+{
+	char name[BTRFS_SUBVOL_NAME_MAX + 1];
+	enum btrfs_util_error err;
+	int parent_fd;
+
+	err = openat_parent_and_name(AT_FDCWD, path, name, sizeof(name),
+				     &parent_fd);
+	if (err)
+		return err;
+
+	err = btrfs_util_create_snapshot_fd2(fd, parent_fd, name, flags,
+					     async_transid, qgroup_inherit);
+	SAVE_ERRNO_AND_CLOSE(parent_fd);
+	return err;
+}
+
+PUBLIC enum btrfs_util_error btrfs_util_create_snapshot_fd2(int fd,
+							    int parent_fd,
+							    const char *name,
+							    int flags,
+							    uint64_t *async_transid,
+							    struct btrfs_util_qgroup_inherit *qgroup_inherit)
+{
+	struct btrfs_ioctl_vol_args_v2 args = {.fd = fd};
+	enum btrfs_util_error err;
+	size_t len;
+	int ret;
+
+	if ((flags & ~BTRFS_UTIL_CREATE_SNAPSHOT_MASK) ||
+	    ((flags & BTRFS_UTIL_CREATE_SNAPSHOT_READ_ONLY) &&
+	     (flags & BTRFS_UTIL_CREATE_SNAPSHOT_RECURSIVE))) {
+		errno = EINVAL;
+		return BTRFS_UTIL_ERROR_INVALID_ARGUMENT;
+	}
+
+	if (flags & BTRFS_UTIL_CREATE_SNAPSHOT_READ_ONLY)
+		args.flags |= BTRFS_SUBVOL_RDONLY;
+	if (async_transid)
+		args.flags |= BTRFS_SUBVOL_CREATE_ASYNC;
+	if (qgroup_inherit) {
+		args.flags |= BTRFS_SUBVOL_QGROUP_INHERIT;
+		args.qgroup_inherit = (struct btrfs_qgroup_inherit *)qgroup_inherit;
+		args.size = (sizeof(*args.qgroup_inherit) +
+			     args.qgroup_inherit->num_qgroups *
+			     sizeof(args.qgroup_inherit->qgroups[0]));
+	}
+
+	len = strlen(name);
+	if (len >= sizeof(args.name)) {
+		errno = ENAMETOOLONG;
+		return BTRFS_UTIL_ERROR_INVALID_ARGUMENT;
+	}
+	memcpy(args.name, name, len);
+	args.name[len] = '\0';
+
+	ret = ioctl(parent_fd, BTRFS_IOC_SNAP_CREATE_V2, &args);
+	if (ret == -1)
+		return BTRFS_UTIL_ERROR_SUBVOL_CREATE_FAILED;
+
+	if (async_transid)
+		*async_transid = args.transid;
+
+	if (flags & BTRFS_UTIL_CREATE_SNAPSHOT_RECURSIVE) {
+		err = snapshot_subvolume_children(fd, parent_fd, name,
+						  async_transid);
+		if (err)
+			return err;
+	}
+
+	return BTRFS_UTIL_OK;
+}
+
 PUBLIC void btrfs_util_destroy_subvolume_iterator(struct btrfs_util_subvolume_iterator *iter)
 {
 	if (iter) {

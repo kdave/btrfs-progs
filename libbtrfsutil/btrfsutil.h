@@ -391,6 +391,65 @@ enum btrfs_util_error btrfs_util_create_subvolume_fd(int parent_fd,
 						     uint64_t *async_transid,
 						     struct btrfs_util_qgroup_inherit *qgroup_inherit);
 
+/**
+ * BTRFS_UTIL_CREATE_SNAPSHOT_RECURSIVE - Also snapshot subvolumes beneath the
+ * source subvolume onto the same location on the new snapshot.
+ *
+ * Note that this is currently implemented in userspace non-atomically. Because
+ * it modifies the newly-created snapshot, it cannot be combined with
+ * %BTRFS_UTIL_CREATE_SNAPSHOT_READ_ONLY. It requires appropriate privilege
+ * (CAP_SYS_ADMIN).
+ */
+#define BTRFS_UTIL_CREATE_SNAPSHOT_RECURSIVE (1 << 0)
+/**
+ * BTRFS_UTIL_CREATE_SNAPSHOT_READ_ONLY - Create a read-only snapshot.
+ */
+#define BTRFS_UTIL_CREATE_SNAPSHOT_READ_ONLY (1 << 1)
+#define BTRFS_UTIL_CREATE_SNAPSHOT_MASK ((1 << 2) - 1)
+
+/**
+ * btrfs_util_create_snapshot() - Create a new snapshot from a source subvolume
+ * path.
+ * @source: Path of the existing subvolume to snapshot.
+ * @path: Where to create the snapshot.
+ * @flags: Bitmask of BTRFS_UTIL_CREATE_SNAPSHOT_* flags.
+ * @async_transid: See btrfs_util_create_subvolume(). If
+ * %BTRFS_UTIL_CREATE_SNAPSHOT_RECURSIVE was in @flags, then this will contain
+ * the largest transaction ID of all created subvolumes.
+ * @qgroup_inherit: See btrfs_util_create_subvolume().
+ *
+ * Return: %BTRFS_UTIL_OK on success, non-zero error code on failure.
+ */
+enum btrfs_util_error btrfs_util_create_snapshot(const char *source,
+						 const char *path, int flags,
+						 uint64_t *async_transid,
+						 struct btrfs_util_qgroup_inherit *qgroup_inherit);
+
+/**
+ * btrfs_util_create_snapshot_fd() - See btrfs_util_create_snapshot().
+ */
+enum btrfs_util_error btrfs_util_create_snapshot_fd(int fd, const char *path,
+						    int flags,
+						    uint64_t *async_transid,
+						    struct btrfs_util_qgroup_inherit *qgroup_inherit);
+
+/**
+ * btrfs_util_create_snapshot_fd2() - Create a new snapshot from a source
+ * subvolume file descriptor and a target parent file descriptor and name.
+ * @fd: File descriptor of the existing subvolume to snapshot.
+ * @parent_fd: File descriptor of the parent directory where the snapshot should
+ * be created.
+ * @name: Name of the snapshot to create.
+ * @flags: See btrfs_util_create_snapshot().
+ * @async_transid: See btrfs_util_create_snapshot().
+ * @qgroup_inherit: See btrfs_util_create_snapshot().
+ */
+enum btrfs_util_error btrfs_util_create_snapshot_fd2(int fd, int parent_fd,
+						     const char *name,
+						     int flags,
+						     uint64_t *async_transid,
+						     struct btrfs_util_qgroup_inherit *qgroup_inherit);
+
 struct btrfs_util_subvolume_iterator;
 
 /**

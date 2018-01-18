@@ -216,6 +216,17 @@ static PyMethodDef btrfsutil_methods[] = {
 	 "path -- string, bytes, or path-like object\n"
 	 "async -- create the subvolume without waiting for it to commit to\n"
 	 "disk and return the transaction ID"},
+	{"create_snapshot", (PyCFunction)create_snapshot,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "create_snapshot(source, path, recursive=False, read_only=False, async=False)\n\n"
+	 "Create a new snapshot.\n\n"
+	 "Arguments:\n"
+	 "source -- string, bytes, path-like object, or open file descriptor\n"
+	 "path -- string, bytes, or path-like object\n"
+	 "recursive -- also snapshot child subvolumes\n"
+	 "read_only -- create a read-only snapshot\n"
+	 "async -- create the subvolume without waiting for it to commit to\n"
+	 "disk and return the transaction ID"},
 	{},
 };
 

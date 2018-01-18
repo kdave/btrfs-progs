@@ -73,6 +73,7 @@ PyObject *set_subvolume_read_only(PyObject *self, PyObject *args, PyObject *kwds
 PyObject *get_default_subvolume(PyObject *self, PyObject *args, PyObject *kwds);
 PyObject *set_default_subvolume(PyObject *self, PyObject *args, PyObject *kwds);
 PyObject *create_subvolume(PyObject *self, PyObject *args, PyObject *kwds);
+PyObject *create_snapshot(PyObject *self, PyObject *args, PyObject *kwds);
 
 void add_module_constants(PyObject *m);
 

@@ -349,6 +349,55 @@ PyObject *create_subvolume(PyObject *self, PyObject *args, PyObject *kwds)
 		Py_RETURN_NONE;
 }
 
+PyObject *create_snapshot(PyObject *self, PyObject *args, PyObject *kwds)
+{
+	static char *keywords[] = {
+		"source", "path", "recursive", "read_only", "async",
+		"qgroup_inherit", NULL,
+	};
+	struct path_arg src = {.allow_fd = true}, dst = {.allow_fd = false};
+	enum btrfs_util_error err;
+	int recursive = 0, read_only = 0, async = 0;
+	int flags = 0;
+	QgroupInherit *inherit = NULL;
+	uint64_t transid;
+
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&O&|pppO!:create_snapshot",
+					 keywords, &path_converter, &src,
+					 &path_converter, &dst, &recursive,
+					 &read_only, &async,
+					 &QgroupInherit_type, &inherit))
+		return NULL;
+
+	if (recursive)
+		flags |= BTRFS_UTIL_CREATE_SNAPSHOT_RECURSIVE;
+	if (read_only)
+		flags |= BTRFS_UTIL_CREATE_SNAPSHOT_READ_ONLY;
+
+	if (src.path) {
+		err = btrfs_util_create_snapshot(src.path, dst.path, flags,
+						 async ? &transid : NULL,
+						 inherit ? inherit->inherit : NULL);
+	} else {
+		err = btrfs_util_create_snapshot_fd(src.fd, dst.path, flags,
+						    async ? &transid : NULL,
+						    inherit ? inherit->inherit : NULL);
+	}
+	if (err) {
+		SetFromBtrfsUtilErrorWithPaths(err, &src, &dst);
+		path_cleanup(&src);
+		path_cleanup(&dst);
+		return NULL;
+	}
+
+	path_cleanup(&src);
+	path_cleanup(&dst);
+	if (async)
+		return PyLong_FromUnsignedLongLong(transid);
+	else
+		Py_RETURN_NONE;
+}
+
 typedef struct {
 	PyObject_HEAD
 	struct btrfs_util_subvolume_iterator *iter;

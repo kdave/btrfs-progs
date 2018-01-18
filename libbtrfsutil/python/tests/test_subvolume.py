@@ -129,6 +129,13 @@ class TestSubvolume(BtrfsTestCase):
         self.assertEqual(info.stime, 0)
         self.assertEqual(info.rtime, 0)
 
+        subvol_uuid = info.uuid
+        snapshot = os.path.join(self.mountpoint, 'snapshot')
+        btrfsutil.create_snapshot(subvol, snapshot)
+
+        info = btrfsutil.subvolume_info(snapshot)
+        self.assertEqual(info.parent_uuid, subvol_uuid)
+
         # TODO: test received_uuid, stransid, rtransid, stime, and rtime
 
         for arg in self.path_or_fd(self.mountpoint):
@@ -214,6 +221,54 @@ class TestSubvolume(BtrfsTestCase):
         wstatus = os.waitpid(pid, 0)[1]
         self.assertTrue(os.WIFEXITED(wstatus))
         self.assertEqual(os.WEXITSTATUS(wstatus), 0)
+
+    def test_create_snapshot(self):
+        subvol = os.path.join(self.mountpoint, 'subvol')
+
+        btrfsutil.create_subvolume(subvol)
+        os.mkdir(os.path.join(subvol, 'dir'))
+
+        for i, arg in enumerate(self.path_or_fd(subvol)):
+            with self.subTest(type=type(arg)):
+                snapshots_dir = os.path.join(self.mountpoint, 'snapshots{}'.format(i))
+                os.mkdir(snapshots_dir)
+                snapshot = os.path.join(snapshots_dir, 'snapshot')
+
+                btrfsutil.create_snapshot(subvol, snapshot + '1')
+                self.assertTrue(btrfsutil.is_subvolume(snapshot + '1'))
+                self.assertTrue(os.path.exists(os.path.join(snapshot + '1', 'dir')))
+
+                btrfsutil.create_snapshot(subvol, (snapshot + '2').encode())
+                self.assertTrue(btrfsutil.is_subvolume(snapshot + '2'))
+                self.assertTrue(os.path.exists(os.path.join(snapshot + '2', 'dir')))
+
+                if HAVE_PATH_LIKE:
+                    btrfsutil.create_snapshot(subvol, PurePath(snapshot + '3'))
+                    self.assertTrue(btrfsutil.is_subvolume(snapshot + '3'))
+                    self.assertTrue(os.path.exists(os.path.join(snapshot + '3', 'dir')))
+
+        nested_subvol = os.path.join(subvol, 'nested')
+        more_nested_subvol = os.path.join(nested_subvol, 'more_nested')
+        btrfsutil.create_subvolume(nested_subvol)
+        btrfsutil.create_subvolume(more_nested_subvol)
+        os.mkdir(os.path.join(more_nested_subvol, 'nested_dir'))
+
+        snapshot = os.path.join(self.mountpoint, 'snapshot')
+
+        btrfsutil.create_snapshot(subvol, snapshot + '1')
+        # Dummy subvolume.
+        self.assertEqual(os.stat(os.path.join(snapshot + '1', 'nested')).st_ino, 2)
+        self.assertFalse(os.path.exists(os.path.join(snapshot + '1', 'nested', 'more_nested')))
+
+        btrfsutil.create_snapshot(subvol, snapshot + '2', recursive=True)
+        self.assertTrue(os.path.exists(os.path.join(snapshot + '2', 'nested/more_nested/nested_dir')))
+
+        transid = btrfsutil.create_snapshot(subvol, snapshot + '3', recursive=True, async=True)
+        self.assertTrue(os.path.exists(os.path.join(snapshot + '3', 'nested/more_nested/nested_dir')))
+        self.assertGreater(transid, 0)
+
+        btrfsutil.create_snapshot(subvol, snapshot + '4', read_only=True)
+        self.assertTrue(btrfsutil.get_subvolume_read_only(snapshot + '4'))
 
     def test_subvolume_iterator(self):
         pwd = os.getcwd()
