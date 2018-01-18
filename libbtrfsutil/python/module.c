@@ -194,6 +194,20 @@ static PyMethodDef btrfsutil_methods[] = {
 	 "Arguments:\n"
 	 "path -- string, bytes, path-like object, or open file descriptor\n"
 	 "read_only -- bool flag value"},
+	{"get_default_subvolume", (PyCFunction)get_default_subvolume,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "get_default_subvolume(path) -> int\n\n"
+	 "Get the ID of the default subvolume of a filesystem.\n\n"
+	 "Arguments:\n"
+	 "path -- string, bytes, path-like object, or open file descriptor"},
+	{"set_default_subvolume", (PyCFunction)set_default_subvolume,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "set_default_subvolume(path, id=0)\n\n"
+	 "Set the default subvolume of a filesystem.\n\n"
+	 "Arguments:\n"
+	 "path -- string, bytes, path-like object, or open file descriptor\n"
+	 "id -- if not zero, set the default subvolume to the subvolume with\n"
+	 "this ID instead of the given path"},
 	{"create_subvolume", (PyCFunction)create_subvolume,
 	 METH_VARARGS | METH_KEYWORDS,
 	 "create_subvolume(path, async=False)\n\n"

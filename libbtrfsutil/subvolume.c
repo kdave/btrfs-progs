@@ -465,6 +465,119 @@ PUBLIC enum btrfs_util_error btrfs_util_set_subvolume_read_only_fd(int fd,
 	return BTRFS_UTIL_OK;
 }
 
+PUBLIC enum btrfs_util_error btrfs_util_get_default_subvolume(const char *path,
+							      uint64_t *id_ret)
+{
+	enum btrfs_util_error err;
+	int fd;
+
+	fd = open(path, O_RDONLY);
+	if (fd == -1)
+		return BTRFS_UTIL_ERROR_OPEN_FAILED;
+
+	err = btrfs_util_get_default_subvolume_fd(fd, id_ret);
+	SAVE_ERRNO_AND_CLOSE(fd);
+	return err;
+}
+
+PUBLIC enum btrfs_util_error btrfs_util_get_default_subvolume_fd(int fd,
+								 uint64_t *id_ret)
+{
+	struct btrfs_ioctl_search_args search = {
+		.key = {
+			.tree_id = BTRFS_ROOT_TREE_OBJECTID,
+			.min_objectid = BTRFS_ROOT_TREE_DIR_OBJECTID,
+			.max_objectid = BTRFS_ROOT_TREE_DIR_OBJECTID,
+			.min_type = BTRFS_DIR_ITEM_KEY,
+			.max_type = BTRFS_DIR_ITEM_KEY,
+			.min_offset = 0,
+			.max_offset = UINT64_MAX,
+			.min_transid = 0,
+			.max_transid = UINT64_MAX,
+			.nr_items = 0,
+		},
+	};
+	size_t items_pos = 0, buf_off = 0;
+	int ret;
+
+	for (;;) {
+		const struct btrfs_ioctl_search_header *header;
+
+		if (items_pos >= search.key.nr_items) {
+			search.key.nr_items = 4096;
+			ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &search);
+			if (ret == -1)
+				return BTRFS_UTIL_ERROR_SEARCH_FAILED;
+			items_pos = 0;
+			buf_off = 0;
+
+			if (search.key.nr_items == 0) {
+				errno = ENOENT;
+				return BTRFS_UTIL_ERROR_SUBVOLUME_NOT_FOUND;
+			}
+		}
+
+		header = (struct btrfs_ioctl_search_header *)(search.buf + buf_off);
+		if (header->type == BTRFS_DIR_ITEM_KEY) {
+			const struct btrfs_dir_item *dir;
+			const char *name;
+			uint16_t name_len;
+
+			dir = (struct btrfs_dir_item *)(header + 1);
+			name = (const char *)(dir + 1);
+			name_len = le16_to_cpu(dir->name_len);
+			if (strncmp(name, "default", name_len) == 0) {
+				*id_ret = le64_to_cpu(dir->location.objectid);
+				break;
+			}
+		}
+
+		items_pos++;
+		buf_off += sizeof(*header) + header->len;
+		search.key.min_offset = header->offset + 1;
+	}
+
+	return BTRFS_UTIL_OK;
+}
+
+PUBLIC enum btrfs_util_error btrfs_util_set_default_subvolume(const char *path,
+							      uint64_t id)
+{
+	enum btrfs_util_error err;
+	int fd;
+
+	fd = open(path, O_RDONLY);
+	if (fd == -1)
+		return BTRFS_UTIL_ERROR_OPEN_FAILED;
+
+	err = btrfs_util_set_default_subvolume_fd(fd, id);
+	SAVE_ERRNO_AND_CLOSE(fd);
+	return err;
+}
+
+PUBLIC enum btrfs_util_error btrfs_util_set_default_subvolume_fd(int fd,
+								 uint64_t id)
+{
+	enum btrfs_util_error err;
+	int ret;
+
+	if (id == 0) {
+		err = btrfs_util_is_subvolume_fd(fd);
+		if (err)
+			return err;
+
+		err = btrfs_util_subvolume_id_fd(fd, &id);
+		if (err)
+			return err;
+	}
+
+	ret = ioctl(fd, BTRFS_IOC_DEFAULT_SUBVOL, &id);
+	if (ret == -1)
+		return BTRFS_UTIL_ERROR_DEFAULT_SUBVOL_FAILED;
+
+	return BTRFS_UTIL_OK;
+}
+
 static enum btrfs_util_error openat_parent_and_name(int dirfd, const char *path,
 						    char *name, size_t name_len,
 						    int *fd)

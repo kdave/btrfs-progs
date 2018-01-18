@@ -300,6 +300,8 @@ enum btrfs_util_error btrfs_util_get_subvolume_read_only_fd(int fd, bool *ret);
  * @path: Subvolume path.
  * @read_only: New value of read-only flag.
  *
+ * This requires appropriate privilege (CAP_SYS_ADMIN).
+ *
  * Return: %BTRFS_UTIL_OK on success, non-zero error code on failure.
  */
 enum btrfs_util_error btrfs_util_set_subvolume_read_only(const char *path,
@@ -311,6 +313,47 @@ enum btrfs_util_error btrfs_util_set_subvolume_read_only(const char *path,
  */
 enum btrfs_util_error btrfs_util_set_subvolume_read_only_fd(int fd,
 							    bool read_only);
+
+/**
+ * btrfs_util_get_default_subvolume() - Get the default subvolume for a
+ * filesystem.
+ * @path: Path on a Btrfs filesystem.
+ * @id_ret: Returned subvolume ID.
+ *
+ * This requires appropriate privilege (CAP_SYS_ADMIN).
+ *
+ * Return: %BTRFS_UTIL_OK on success, non-zero error code on failure.
+ */
+enum btrfs_util_error btrfs_util_get_default_subvolume(const char *path,
+						       uint64_t *id_ret);
+
+/**
+ * btrfs_util_get_default_subvolume_fd() - See
+ * btrfs_util_get_default_subvolume().
+ */
+enum btrfs_util_error btrfs_util_get_default_subvolume_fd(int fd,
+							  uint64_t *id_ret);
+
+/**
+ * btrfs_util_set_default_subvolume() - Set the default subvolume for a
+ * filesystem.
+ * @path: Path in a Btrfs filesystem. This may be any path in the filesystem; it
+ * does not have to refer to a subvolume unless @id is zero.
+ * @id: ID of subvolume to set as the default. If zero is given, the subvolume
+ * ID of @path is used.
+ *
+ * This requires appropriate privilege (CAP_SYS_ADMIN).
+ *
+ * Return: %BTRFS_UTIL_OK on success, non-zero error code on failure.
+ */
+enum btrfs_util_error btrfs_util_set_default_subvolume(const char *path,
+						       uint64_t id);
+
+/**
+ * btrfs_util_set_default_subvolume_fd() - See
+ * btrfs_util_set_default_subvolume().
+ */
+enum btrfs_util_error btrfs_util_set_default_subvolume_fd(int fd, uint64_t id);
 
 struct btrfs_util_qgroup_inherit;
 

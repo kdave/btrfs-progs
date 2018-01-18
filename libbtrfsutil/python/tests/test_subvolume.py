@@ -154,6 +154,20 @@ class TestSubvolume(BtrfsTestCase):
 
                 btrfsutil.set_subvolume_read_only(arg, False)
 
+    def test_default_subvolume(self):
+        for arg in self.path_or_fd(self.mountpoint):
+            with self.subTest(type=type(arg)):
+                self.assertEqual(btrfsutil.get_default_subvolume(arg), 5)
+
+        subvol = os.path.join(self.mountpoint, 'subvol')
+        btrfsutil.create_subvolume(subvol)
+        for arg in self.path_or_fd(subvol):
+            with self.subTest(type=type(arg)):
+                btrfsutil.set_default_subvolume(arg)
+                self.assertEqual(btrfsutil.get_default_subvolume(arg), 256)
+                btrfsutil.set_default_subvolume(arg, 5)
+                self.assertEqual(btrfsutil.get_default_subvolume(arg), 5)
+
     def test_create_subvolume(self):
         subvol = os.path.join(self.mountpoint, 'subvol')
 

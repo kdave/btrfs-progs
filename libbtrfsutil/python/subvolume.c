@@ -270,6 +270,56 @@ PyObject *set_subvolume_read_only(PyObject *self, PyObject *args, PyObject *kwds
 	Py_RETURN_NONE;
 }
 
+PyObject *get_default_subvolume(PyObject *self, PyObject *args, PyObject *kwds)
+{
+	static char *keywords[] = {"path", NULL};
+	struct path_arg path = {.allow_fd = true};
+	enum btrfs_util_error err;
+	uint64_t id;
+
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&:get_default_subvolume",
+					 keywords, &path_converter, &path))
+		return NULL;
+
+	if (path.path)
+		err = btrfs_util_get_default_subvolume(path.path, &id);
+	else
+		err = btrfs_util_get_default_subvolume_fd(path.fd, &id);
+	if (err) {
+		SetFromBtrfsUtilErrorWithPath(err, &path);
+		path_cleanup(&path);
+		return NULL;
+	}
+
+	path_cleanup(&path);
+	return PyLong_FromUnsignedLongLong(id);
+}
+
+PyObject *set_default_subvolume(PyObject *self, PyObject *args, PyObject *kwds)
+{
+	static char *keywords[] = {"path", "id", NULL};
+	struct path_arg path = {.allow_fd = true};
+	enum btrfs_util_error err;
+	uint64_t id = 0;
+
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|K:set_default_subvolume",
+					 keywords, &path_converter, &path, &id))
+		return NULL;
+
+	if (path.path)
+		err = btrfs_util_set_default_subvolume(path.path, id);
+	else
+		err = btrfs_util_set_default_subvolume_fd(path.fd, id);
+	if (err) {
+		SetFromBtrfsUtilErrorWithPath(err, &path);
+		path_cleanup(&path);
+		return NULL;
+	}
+
+	path_cleanup(&path);
+	Py_RETURN_NONE;
+}
+
 PyObject *create_subvolume(PyObject *self, PyObject *args, PyObject *kwds)
 {
 	static char *keywords[] = {"path", "async", "qgroup_inherit", NULL};
