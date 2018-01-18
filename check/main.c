@@ -45,6 +45,7 @@
 #include "help.h"
 #include "check/original.h"
 #include "check/lowmem.h"
+#include "check/common.h"
 
 enum task_position {
 	TASK_EXTENTS,
@@ -1667,16 +1668,6 @@ static int process_one_leaf(struct btrfs_root *root, struct extent_buffer *eb,
 	}
 	return ret;
 }
-
-struct node_refs {
-	u64 bytenr[BTRFS_MAX_LEVEL];
-	u64 refs[BTRFS_MAX_LEVEL];
-	int need_check[BTRFS_MAX_LEVEL];
-	/* field for checking all trees */
-	int checked[BTRFS_MAX_LEVEL];
-	/* the corresponding extent should be marked as full backref or not */
-	int full_backref[BTRFS_MAX_LEVEL];
-};
 
 static int update_nodes_refs(struct btrfs_root *root, u64 bytenr,
 			     struct extent_buffer *eb, struct node_refs *nrefs,
