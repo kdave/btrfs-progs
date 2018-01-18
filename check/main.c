@@ -61,22 +61,22 @@ struct task_ctx {
 	struct task_info *info;
 };
 
-static u64 bytes_used = 0;
-static u64 total_csum_bytes = 0;
-static u64 total_btree_bytes = 0;
-static u64 total_fs_tree_bytes = 0;
-static u64 total_extent_tree_bytes = 0;
-static u64 btree_space_waste = 0;
-static u64 data_bytes_allocated = 0;
-static u64 data_bytes_referenced = 0;
-static LIST_HEAD(duplicate_extents);
-static LIST_HEAD(delete_items);
-static int no_holes = 0;
-static int init_extent_tree = 0;
-static int check_data_csum = 0;
-static struct btrfs_fs_info *global_info;
-static struct task_ctx ctx = { 0 };
-static struct cache_tree *roots_info_cache = NULL;
+u64 bytes_used = 0;
+u64 total_csum_bytes = 0;
+u64 total_btree_bytes = 0;
+u64 total_fs_tree_bytes = 0;
+u64 total_extent_tree_bytes = 0;
+u64 btree_space_waste = 0;
+u64 data_bytes_allocated = 0;
+u64 data_bytes_referenced = 0;
+LIST_HEAD(duplicate_extents);
+LIST_HEAD(delete_items);
+int no_holes = 0;
+int init_extent_tree = 0;
+int check_data_csum = 0;
+struct btrfs_fs_info *global_info;
+struct task_ctx ctx = { 0 };
+struct cache_tree *roots_info_cache = NULL;
 
 enum btrfs_check_mode {
 	CHECK_MODE_ORIGINAL,

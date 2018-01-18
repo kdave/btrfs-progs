@@ -36,4 +36,21 @@ struct node_refs {
 	int full_backref[BTRFS_MAX_LEVEL];
 };
 
+extern u64 bytes_used;
+extern u64 total_csum_bytes;
+extern u64 total_btree_bytes;
+extern u64 total_fs_tree_bytes;
+extern u64 total_extent_tree_bytes;
+extern u64 btree_space_waste;
+extern u64 data_bytes_allocated;
+extern u64 data_bytes_referenced;
+extern struct list_head duplicate_extents;
+extern struct list_head delete_items;
+extern int no_holes;
+extern int init_extent_tree;
+extern int check_data_csum;
+extern struct btrfs_fs_info *global_info;
+extern struct task_ctx ctx;
+extern struct cache_tree *roots_info_cache;
+
 #endif
