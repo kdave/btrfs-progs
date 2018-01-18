@@ -80,4 +80,7 @@ static inline int fs_root_objectid(u64 objectid)
 	return is_fstree(objectid);
 }
 
+int count_csum_range(struct btrfs_fs_info *fs_info, u64 start,
+		     u64 len, u64 *found);
+
 #endif

@@ -1424,78 +1424,6 @@ static int process_inode_extref(struct extent_buffer *eb,
 
 }
 
-static int count_csum_range(struct btrfs_root *root, u64 start,
-			    u64 len, u64 *found)
-{
-	struct btrfs_key key;
-	struct btrfs_path path;
-	struct extent_buffer *leaf;
-	int ret;
-	size_t size;
-	*found = 0;
-	u64 csum_end;
-	u16 csum_size = btrfs_super_csum_size(root->fs_info->super_copy);
-
-	btrfs_init_path(&path);
-
-	key.objectid = BTRFS_EXTENT_CSUM_OBJECTID;
-	key.offset = start;
-	key.type = BTRFS_EXTENT_CSUM_KEY;
-
-	ret = btrfs_search_slot(NULL, root->fs_info->csum_root,
-				&key, &path, 0, 0);
-	if (ret < 0)
-		goto out;
-	if (ret > 0 && path.slots[0] > 0) {
-		leaf = path.nodes[0];
-		btrfs_item_key_to_cpu(leaf, &key, path.slots[0] - 1);
-		if (key.objectid == BTRFS_EXTENT_CSUM_OBJECTID &&
-		    key.type == BTRFS_EXTENT_CSUM_KEY)
-			path.slots[0]--;
-	}
-
-	while (len > 0) {
-		leaf = path.nodes[0];
-		if (path.slots[0] >= btrfs_header_nritems(leaf)) {
-			ret = btrfs_next_leaf(root->fs_info->csum_root, &path);
-			if (ret > 0)
-				break;
-			else if (ret < 0)
-				goto out;
-			leaf = path.nodes[0];
-		}
-
-		btrfs_item_key_to_cpu(leaf, &key, path.slots[0]);
-		if (key.objectid != BTRFS_EXTENT_CSUM_OBJECTID ||
-		    key.type != BTRFS_EXTENT_CSUM_KEY)
-			break;
-
-		btrfs_item_key_to_cpu(leaf, &key, path.slots[0]);
-		if (key.offset >= start + len)
-			break;
-
-		if (key.offset > start)
-			start = key.offset;
-
-		size = btrfs_item_size_nr(leaf, path.slots[0]);
-		csum_end = key.offset + (size / csum_size) *
-			   root->fs_info->sectorsize;
-		if (csum_end > start) {
-			size = min(csum_end - start, len);
-			len -= size;
-			start += size;
-			*found += size;
-		}
-
-		path.slots[0]++;
-	}
-out:
-	btrfs_release_path(&path);
-	if (ret < 0)
-		return ret;
-	return 0;
-}
-
 static int process_file_extent(struct btrfs_root *root,
 				struct extent_buffer *eb,
 				int slot, struct btrfs_key *key,
@@ -1575,7 +1503,8 @@ static int process_file_extent(struct btrfs_root *root,
 		else
 			disk_bytenr += extent_offset;
 
-		ret = count_csum_range(root, disk_bytenr, num_bytes, &found);
+		ret = count_csum_range(root->fs_info, disk_bytenr, num_bytes,
+				       &found);
 		if (ret < 0)
 			return ret;
 		if (extent_type == BTRFS_FILE_EXTENT_REG) {
@@ -5508,7 +5437,7 @@ static int check_file_extent(struct btrfs_root *root, struct btrfs_key *fkey,
 		search_start = disk_bytenr;
 		search_len = disk_num_bytes;
 	}
-	ret = count_csum_range(root, search_start, search_len, &csum_found);
+	ret = count_csum_range(root->fs_info, search_start, search_len, &csum_found);
 	if (csum_found > 0 && nodatasum) {
 		err |= ODD_CSUM_ITEM;
 		error("root %llu EXTENT_DATA[%llu %llu] nodatasum shouldn't have datasum",
