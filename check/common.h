@@ -20,6 +20,8 @@
  */
 #ifndef __BTRFS_CHECK_COMMON_H__
 #define __BTRFS_CHECK_COMMON_H__
+
+#include <sys/stat.h>
 #include "ctree.h"
 
 /*
@@ -52,5 +54,22 @@ extern int check_data_csum;
 extern struct btrfs_fs_info *global_info;
 extern struct task_ctx ctx;
 extern struct cache_tree *roots_info_cache;
+
+static inline u8 imode_to_type(u32 imode)
+{
+#define S_SHIFT 12
+	static unsigned char btrfs_type_by_mode[S_IFMT >> S_SHIFT] = {
+		[S_IFREG >> S_SHIFT]	= BTRFS_FT_REG_FILE,
+		[S_IFDIR >> S_SHIFT]	= BTRFS_FT_DIR,
+		[S_IFCHR >> S_SHIFT]	= BTRFS_FT_CHRDEV,
+		[S_IFBLK >> S_SHIFT]	= BTRFS_FT_BLKDEV,
+		[S_IFIFO >> S_SHIFT]	= BTRFS_FT_FIFO,
+		[S_IFSOCK >> S_SHIFT]	= BTRFS_FT_SOCK,
+		[S_IFLNK >> S_SHIFT]	= BTRFS_FT_SYMLINK,
+	};
+
+	return btrfs_type_by_mode[(imode & S_IFMT) >> S_SHIFT];
+#undef S_SHIFT
+}
 
 #endif

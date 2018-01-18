@@ -425,23 +425,6 @@ static void record_root_in_trans(struct btrfs_trans_handle *trans,
 	}
 }
 
-static u8 imode_to_type(u32 imode)
-{
-#define S_SHIFT 12
-	static unsigned char btrfs_type_by_mode[S_IFMT >> S_SHIFT] = {
-		[S_IFREG >> S_SHIFT]	= BTRFS_FT_REG_FILE,
-		[S_IFDIR >> S_SHIFT]	= BTRFS_FT_DIR,
-		[S_IFCHR >> S_SHIFT]	= BTRFS_FT_CHRDEV,
-		[S_IFBLK >> S_SHIFT]	= BTRFS_FT_BLKDEV,
-		[S_IFIFO >> S_SHIFT]	= BTRFS_FT_FIFO,
-		[S_IFSOCK >> S_SHIFT]	= BTRFS_FT_SOCK,
-		[S_IFLNK >> S_SHIFT]	= BTRFS_FT_SYMLINK,
-	};
-
-	return btrfs_type_by_mode[(imode & S_IFMT) >> S_SHIFT];
-#undef S_SHIFT
-}
-
 static int device_record_compare(struct rb_node *node1, struct rb_node *node2)
 {
 	struct device_record *rec1;
