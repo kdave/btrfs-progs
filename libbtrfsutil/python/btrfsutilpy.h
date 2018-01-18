@@ -35,6 +35,8 @@ typedef struct {
 } QgroupInherit;
 
 extern PyTypeObject BtrfsUtilError_type;
+extern PyStructSequence_Desc SubvolumeInfo_desc;
+extern PyTypeObject SubvolumeInfo_type;
 extern PyTypeObject QgroupInherit_type;
 
 /*
@@ -64,6 +66,7 @@ PyObject *wait_sync(PyObject *self, PyObject *args, PyObject *kwds);
 PyObject *is_subvolume(PyObject *self, PyObject *args, PyObject *kwds);
 PyObject *subvolume_id(PyObject *self, PyObject *args, PyObject *kwds);
 PyObject *subvolume_path(PyObject *self, PyObject *args, PyObject *kwds);
+PyObject *subvolume_info(PyObject *self, PyObject *args, PyObject *kwds);
 PyObject *create_subvolume(PyObject *self, PyObject *args, PyObject *kwds);
 
 void add_module_constants(PyObject *m);

@@ -173,6 +173,14 @@ static PyMethodDef btrfsutil_methods[] = {
 	 "path -- string, bytes, path-like object, or open file descriptor\n"
 	 "id -- if not zero, instead of returning the subvolume path of the\n"
 	 "given path, return the path of the subvolume with this ID"},
+	{"subvolume_info", (PyCFunction)subvolume_info,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "subvolume_info(path, id=0) -> SubvolumeInfo\n\n"
+	 "Get information about a subvolume.\n\n"
+	 "Arguments:\n"
+	 "path -- string, bytes, path-like object, or open file descriptor\n"
+	 "id -- if not zero, instead of returning information about the\n"
+	 "given path, return information about the subvolume with this ID"},
 	{"create_subvolume", (PyCFunction)create_subvolume,
 	 METH_VARARGS | METH_KEYWORDS,
 	 "create_subvolume(path, async=False)\n\n"
@@ -201,6 +209,9 @@ PyInit_btrfsutil(void)
 	if (PyType_Ready(&BtrfsUtilError_type) < 0)
 		return NULL;
 
+	if (PyStructSequence_InitType2(&SubvolumeInfo_type, &SubvolumeInfo_desc) < 0)
+		return NULL;
+
 	QgroupInherit_type.tp_new = PyType_GenericNew;
 	if (PyType_Ready(&QgroupInherit_type) < 0)
 		return NULL;
@@ -212,6 +223,9 @@ PyInit_btrfsutil(void)
 	Py_INCREF(&BtrfsUtilError_type);
 	PyModule_AddObject(m, "BtrfsUtilError",
 			   (PyObject *)&BtrfsUtilError_type);
+
+	Py_INCREF(&SubvolumeInfo_type);
+	PyModule_AddObject(m, "SubvolumeInfo", (PyObject *)&SubvolumeInfo_type);
 
 	Py_INCREF(&QgroupInherit_type);
 	PyModule_AddObject(m, "QgroupInherit",

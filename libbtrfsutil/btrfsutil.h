@@ -20,8 +20,10 @@
 #ifndef BTRFS_UTIL_H
 #define BTRFS_UTIL_H
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <sys/time.h>
 
 #define BTRFS_UTIL_VERSION_MAJOR 1
 #define BTRFS_UTIL_VERSION_MINOR 0
@@ -167,6 +169,115 @@ enum btrfs_util_error btrfs_util_subvolume_path(const char *path, uint64_t id,
  */
 enum btrfs_util_error btrfs_util_subvolume_path_fd(int fd, uint64_t id,
 						   char **path_ret);
+
+/**
+ * struct btrfs_util_subvolume_info - Information about a Btrfs subvolume.
+ */
+struct btrfs_util_subvolume_info {
+	/** @id: ID of this subvolume, unique across the filesystem. */
+	uint64_t id;
+
+	/**
+	 * @parent_id: ID of the subvolume which contains this subvolume, or
+	 * zero for the root subvolume (BTRFS_FS_TREE_OBJECTID) or orphaned
+	 * subvolumes (i.e., subvolumes which have been deleted but not yet
+	 * cleaned up).
+	 */
+	uint64_t parent_id;
+
+	/**
+	 * @dir_id: Inode number of the directory containing this subvolume in
+	 * the parent subvolume, or zero for the root subvolume
+	 * (BTRFS_FS_TREE_OBJECTID) or orphaned subvolumes.
+	 */
+	uint64_t dir_id;
+
+	/** @flags: On-disk root item flags. */
+	uint64_t flags;
+
+	/** @uuid: UUID of this subvolume. */
+	uint8_t uuid[16];
+
+	/**
+	 * @parent_uuid: UUID of the subvolume this subvolume is a snapshot of,
+	 * or all zeroes if this subvolume is not a snapshot.
+	 */
+	uint8_t parent_uuid[16];
+
+	/**
+	 * @received_uuid: UUID of the subvolume this subvolume was received
+	 * from, or all zeroes if this subvolume was not received. Note that
+	 * this field, @stransid, @rtransid, @stime, and @rtime are set manually
+	 * by userspace after a subvolume is received.
+	 */
+	uint8_t received_uuid[16];
+
+	/** @generation: Transaction ID of the subvolume root. */
+	uint64_t generation;
+
+	/**
+	 * @ctransid: Transaction ID when an inode in this subvolume was last
+	 * changed.
+	 */
+	uint64_t ctransid;
+
+	/** @otransid: Transaction ID when this subvolume was created. */
+	uint64_t otransid;
+
+	/**
+	 * @stransid: Transaction ID of the sent subvolume this subvolume was
+	 * received from, or zero if this subvolume was not received. See the
+	 * note on @received_uuid.
+	 */
+	uint64_t stransid;
+
+	/**
+	 * @rtransid: Transaction ID when this subvolume was received, or zero
+	 * if this subvolume was not received. See the note on @received_uuid.
+	 */
+	uint64_t rtransid;
+
+	/** @ctime: Time when an inode in this subvolume was last changed. */
+	struct timespec ctime;
+
+	/** @otime: Time when this subvolume was created. */
+	struct timespec otime;
+
+	/**
+	 * @stime: Not well-defined, usually zero unless it was set otherwise.
+	 * See the note on @received_uuid.
+	 */
+	struct timespec stime;
+
+	/**
+	 * @rtime: Time when this subvolume was received, or zero if this
+	 * subvolume was not received. See the note on @received_uuid.
+	 */
+	struct timespec rtime;
+};
+
+/**
+ * btrfs_util_subvolume_info() - Get information about a subvolume.
+ * @path: Path in a Btrfs filesystem. This may be any path in the filesystem; it
+ * does not have to refer to a subvolume unless @id is zero.
+ * @id: ID of subvolume to get information about. If zero is given, the
+ * subvolume ID of @path is used.
+ * @subvol: Returned subvolume information. This can be %NULL if you just want
+ * to check whether the subvolume exists; %BTRFS_UTIL_ERROR_SUBVOLUME_NOT_FOUND
+ * will be returned if it does not.
+ *
+ * This requires appropriate privilege (CAP_SYS_ADMIN).
+ *
+ * Return: %BTRFS_UTIL_OK on success, non-zero error code on failure.
+ */
+enum btrfs_util_error btrfs_util_subvolume_info(const char *path, uint64_t id,
+						struct btrfs_util_subvolume_info *subvol);
+
+/**
+ * btrfs_util_subvolume_info_fd() - See btrfs_util_subvolume_info().
+ */
+enum btrfs_util_error btrfs_util_subvolume_info_fd(int fd, uint64_t id,
+						   struct btrfs_util_subvolume_info *subvol);
 
 struct btrfs_util_qgroup_inherit;
 

@@ -87,6 +87,56 @@ class TestSubvolume(BtrfsTestCase):
         finally:
             os.chdir(pwd)
 
+    def test_subvolume_info(self):
+        for arg in self.path_or_fd(self.mountpoint):
+            with self.subTest(type=type(arg)):
+                info = btrfsutil.subvolume_info(arg)
+                self.assertEqual(info.id, 5)
+                self.assertEqual(info.parent_id, 0)
+                self.assertEqual(info.dir_id, 0)
+                self.assertEqual(info.flags, 0)
+                self.assertEqual(info.uuid, bytes(16))
+                self.assertEqual(info.parent_uuid, bytes(16))
+                self.assertEqual(info.received_uuid, bytes(16))
+                self.assertNotEqual(info.generation, 0)
+                self.assertEqual(info.ctransid, 0)
+                self.assertEqual(info.otransid, 0)
+                self.assertEqual(info.stransid, 0)
+                self.assertEqual(info.rtransid, 0)
+                self.assertEqual(info.ctime, 0)
+                self.assertEqual(info.otime, 0)
+                self.assertEqual(info.stime, 0)
+                self.assertEqual(info.rtime, 0)
+
+        subvol = os.path.join(self.mountpoint, 'subvol')
+        btrfsutil.create_subvolume(subvol)
+
+        info = btrfsutil.subvolume_info(subvol)
+        self.assertEqual(info.id, 256)
+        self.assertEqual(info.parent_id, 5)
+        self.assertEqual(info.dir_id, 256)
+        self.assertEqual(info.flags, 0)
+        self.assertIsInstance(info.uuid, bytes)
+        self.assertEqual(info.parent_uuid, bytes(16))
+        self.assertEqual(info.received_uuid, bytes(16))
+        self.assertNotEqual(info.generation, 0)
+        self.assertNotEqual(info.ctransid, 0)
+        self.assertNotEqual(info.otransid, 0)
+        self.assertEqual(info.stransid, 0)
+        self.assertEqual(info.rtransid, 0)
+        self.assertNotEqual(info.ctime, 0)
+        self.assertNotEqual(info.otime, 0)
+        self.assertEqual(info.stime, 0)
+        self.assertEqual(info.rtime, 0)
+
+        # TODO: test received_uuid, stransid, rtransid, stime, and rtime
+
+        for arg in self.path_or_fd(self.mountpoint):
+            with self.subTest(type=type(arg)):
+                with self.assertRaises(btrfsutil.BtrfsUtilError) as e:
+                    # BTRFS_EXTENT_TREE_OBJECTID
+                    btrfsutil.subvolume_info(arg, 2)
+
     def test_create_subvolume(self):
         subvol = os.path.join(self.mountpoint, 'subvol')
 

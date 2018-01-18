@@ -251,6 +251,154 @@ PUBLIC enum btrfs_util_error btrfs_util_subvolume_path_fd(int fd, uint64_t id,
 	return BTRFS_UTIL_OK;
 }
 
+static void copy_timespec(struct timespec *timespec,
+			  const struct btrfs_timespec *btrfs_timespec)
+{
+	timespec->tv_sec = le64_to_cpu(btrfs_timespec->sec);
+	timespec->tv_nsec = le32_to_cpu(btrfs_timespec->nsec);
+}
+
+static void copy_root_item(struct btrfs_util_subvolume_info *subvol,
+			   const struct btrfs_root_item *root)
+{
+	subvol->flags = le64_to_cpu(root->flags);
+	memcpy(subvol->uuid, root->uuid, sizeof(subvol->uuid));
+	memcpy(subvol->parent_uuid, root->parent_uuid,
+	       sizeof(subvol->parent_uuid));
+	memcpy(subvol->received_uuid, root->received_uuid,
+	       sizeof(subvol->received_uuid));
+	subvol->generation = le64_to_cpu(root->generation);
+	subvol->ctransid = le64_to_cpu(root->ctransid);
+	subvol->otransid = le64_to_cpu(root->otransid);
+	subvol->stransid = le64_to_cpu(root->stransid);
+	subvol->rtransid = le64_to_cpu(root->rtransid);
+	copy_timespec(&subvol->ctime, &root->ctime);
+	copy_timespec(&subvol->otime, &root->otime);
+	copy_timespec(&subvol->stime, &root->stime);
+	copy_timespec(&subvol->rtime, &root->rtime);
+}
+
+PUBLIC enum btrfs_util_error btrfs_util_subvolume_info(const char *path,
+						       uint64_t id,
+						       struct btrfs_util_subvolume_info *subvol)
+{
+	enum btrfs_util_error err;
+	int fd;
+
+	fd = open(path, O_RDONLY);
+	if (fd == -1)
+		return BTRFS_UTIL_ERROR_OPEN_FAILED;
+
+	err = btrfs_util_subvolume_info_fd(fd, id, subvol);
+	SAVE_ERRNO_AND_CLOSE(fd);
+	return err;
+}
+
+PUBLIC enum btrfs_util_error btrfs_util_subvolume_info_fd(int fd, uint64_t id,
+							  struct btrfs_util_subvolume_info *subvol)
+{
+	struct btrfs_ioctl_search_args search = {
+		.key = {
+			.tree_id = BTRFS_ROOT_TREE_OBJECTID,
+			.min_type = BTRFS_ROOT_ITEM_KEY,
+			.max_type = BTRFS_ROOT_BACKREF_KEY,
+			.min_offset = 0,
+			.max_offset = UINT64_MAX,
+			.min_transid = 0,
+			.max_transid = UINT64_MAX,
+			.nr_items = 0,
+		},
+	};
+	enum btrfs_util_error err;
+	size_t items_pos = 0, buf_off = 0;
+	bool need_root_item = true, need_root_backref = true;
+	int ret;
+
+	if (id == 0) {
+		err = btrfs_util_is_subvolume_fd(fd);
+		if (err)
+			return err;
+
+		err = btrfs_util_subvolume_id_fd(fd, &id);
+		if (err)
+			return err;
+	}
+
+	if ((id < BTRFS_FIRST_FREE_OBJECTID && id != BTRFS_FS_TREE_OBJECTID) ||
+	    id > BTRFS_LAST_FREE_OBJECTID) {
+		errno = ENOENT;
+		return BTRFS_UTIL_ERROR_SUBVOLUME_NOT_FOUND;
+	}
+
+	search.key.min_objectid = search.key.max_objectid = id;
+
+	if (subvol) {
+		subvol->id = id;
+		subvol->parent_id = 0;
+		subvol->dir_id = 0;
+		if (id == BTRFS_FS_TREE_OBJECTID)
+			need_root_backref = false;
+	} else {
+		/*
+		 * We only need the backref for filling in the subvolume info.
+		 */
+		need_root_backref = false;
+	}
+
+	/* Don't bother searching for the backref if we don't need it. */
+	if (!need_root_backref)
+		search.key.max_type = BTRFS_ROOT_ITEM_KEY;
+
+	while (need_root_item || need_root_backref) {
+		const struct btrfs_ioctl_search_header *header;
+
+		if (items_pos >= search.key.nr_items) {
+			search.key.nr_items = 4096;
+			ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &search);
+			if (ret == -1)
+				return BTRFS_UTIL_ERROR_SEARCH_FAILED;
+			items_pos = 0;
+			buf_off = 0;
+
+			if (search.key.nr_items == 0) {
+				if (need_root_item) {
+					errno = ENOENT;
+					return BTRFS_UTIL_ERROR_SUBVOLUME_NOT_FOUND;
+				} else {
+					break;
+				}
+			}
+		}
+
+		header = (struct btrfs_ioctl_search_header *)(search.buf + buf_off);
+		if (header->type == BTRFS_ROOT_ITEM_KEY) {
+			if (subvol) {
+				const struct btrfs_root_item *root;
+
+				root = (const struct btrfs_root_item *)(header + 1);
+				copy_root_item(subvol, root);
+			}
+			need_root_item = false;
+			search.key.min_type = BTRFS_ROOT_BACKREF_KEY;
+		} else if (header->type == BTRFS_ROOT_BACKREF_KEY) {
+			if (subvol) {
+				const struct btrfs_root_ref *ref;
+
+				ref = (const struct btrfs_root_ref *)(header + 1);
+				subvol->parent_id = header->offset;
+				subvol->dir_id = le64_to_cpu(ref->dirid);
+			}
+			need_root_backref = false;
+			search.key.min_type = UINT32_MAX;
+		}
+
+		items_pos++;
+		buf_off += sizeof(*header) + header->len;
+	}
+
+	return BTRFS_UTIL_OK;
+}
+
 static enum btrfs_util_error openat_parent_and_name(int dirfd, const char *path,
 						    char *name, size_t name_len,
 						    int *fd)
