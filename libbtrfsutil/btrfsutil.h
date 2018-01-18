@@ -150,6 +150,40 @@ enum btrfs_util_error btrfs_util_subvolume_id_fd(int fd, uint64_t *id_ret);
 struct btrfs_util_qgroup_inherit;
 
 /**
+ * btrfs_util_create_subvolume() - Create a new subvolume.
+ * @path: Where to create the subvolume.
+ * @flags: Must be zero.
+ * @async_transid: If not NULL, create the subvolume asynchronously (i.e.,
+ * without waiting for it to commit it to disk) and return the transaction ID
+ * that it was created in. This transaction ID can be waited on with
+ * btrfs_util_wait_sync().
+ * @qgroup_inherit: Qgroups to inherit from, or NULL.
+ *
+ * Return: %BTRFS_UTIL_OK on success, non-zero error code on failure.
+ */
+enum btrfs_util_error btrfs_util_create_subvolume(const char *path, int flags,
+						  uint64_t *async_transid,
+						  struct btrfs_util_qgroup_inherit *qgroup_inherit);
+
+/**
+ * btrfs_util_create_subvolume_fd() - Create a new subvolume given its parent
+ * and name.
+ * @parent_fd: File descriptor of the parent directory where the subvolume
+ * should be created.
+ * @name: Name of the subvolume to create.
+ * @flags: See btrfs_util_create_subvolume().
+ * @async_transid: See btrfs_util_create_subvolume().
+ * @qgroup_inherit: See btrfs_util_create_subvolume().
+ *
+ * Return: %BTRFS_UTIL_OK on success, non-zero error code on failure.
+ */
+enum btrfs_util_error btrfs_util_create_subvolume_fd(int parent_fd,
+						     const char *name,
+						     int flags,
+						     uint64_t *async_transid,
+						     struct btrfs_util_qgroup_inherit *qgroup_inherit);
+
+/**
  * btrfs_util_create_qgroup_inherit() - Create a qgroup inheritance specifier
  * for btrfs_util_create_subvolume() or btrfs_util_create_snapshot().
  * @flags: Must be zero.

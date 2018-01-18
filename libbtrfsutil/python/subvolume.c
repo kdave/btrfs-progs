@@ -71,3 +71,32 @@ PyObject *subvolume_id(PyObject *self, PyObject *args, PyObject *kwds)
 	path_cleanup(&path);
 	return PyLong_FromUnsignedLongLong(id);
 }
+
+PyObject *create_subvolume(PyObject *self, PyObject *args, PyObject *kwds)
+{
+	static char *keywords[] = {"path", "async", "qgroup_inherit", NULL};
+	struct path_arg path = {.allow_fd = false};
+	enum btrfs_util_error err;
+	int async = 0;
+	QgroupInherit *inherit = NULL;
+	uint64_t transid;
+
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|pO!:create_subvolume",
+					 keywords, &path_converter, &path,
+					 &async, &QgroupInherit_type, &inherit))
+		return NULL;
+
+	err = btrfs_util_create_subvolume(path.path, 0, async ? &transid : NULL,
+					  inherit ? inherit->inherit : NULL);
+	if (err) {
+		SetFromBtrfsUtilErrorWithPath(err, &path);
+		path_cleanup(&path);
+		return NULL;
+	}
+
+	path_cleanup(&path);
+	if (async)
+		return PyLong_FromUnsignedLongLong(transid);
+	else
+		Py_RETURN_NONE;
+}

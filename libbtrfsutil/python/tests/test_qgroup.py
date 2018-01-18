@@ -19,6 +19,17 @@ import os
 import unittest
 
 import btrfsutil
+from tests import BtrfsTestCase
+
+
+class TestQgroup(BtrfsTestCase):
+    def test_subvolume_inherit(self):
+        subvol = os.path.join(self.mountpoint, 'subvol')
+
+        inherit = btrfsutil.QgroupInherit()
+        inherit.add_group(5)
+
+        btrfsutil.create_subvolume(subvol, qgroup_inherit=inherit)
 
 
 class TestQgroupInherit(unittest.TestCase):

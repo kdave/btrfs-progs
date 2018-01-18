@@ -165,6 +165,14 @@ static PyMethodDef btrfsutil_methods[] = {
 	 "Get the ID of the subvolume containing a file.\n\n"
 	 "Arguments:\n"
 	 "path -- string, bytes, path-like object, or open file descriptor"},
+	{"create_subvolume", (PyCFunction)create_subvolume,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "create_subvolume(path, async=False)\n\n"
+	 "Create a new subvolume.\n\n"
+	 "Arguments:\n"
+	 "path -- string, bytes, or path-like object\n"
+	 "async -- create the subvolume without waiting for it to commit to\n"
+	 "disk and return the transaction ID"},
 	{},
 };
 

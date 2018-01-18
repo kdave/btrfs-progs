@@ -23,7 +23,7 @@ from pathlib import PurePath
 import traceback
 
 import btrfsutil
-from tests import BtrfsTestCase
+from tests import BtrfsTestCase, HAVE_PATH_LIKE
 
 
 class TestSubvolume(BtrfsTestCase):
@@ -55,3 +55,50 @@ class TestSubvolume(BtrfsTestCase):
         for arg in self.path_or_fd(dir):
             with self.subTest(type=type(arg)):
                 self.assertEqual(btrfsutil.subvolume_id(arg), 5)
+
+    def test_create_subvolume(self):
+        subvol = os.path.join(self.mountpoint, 'subvol')
+
+        btrfsutil.create_subvolume(subvol + '1')
+        self.assertTrue(btrfsutil.is_subvolume(subvol + '1'))
+        btrfsutil.create_subvolume((subvol + '2').encode())
+        self.assertTrue(btrfsutil.is_subvolume(subvol + '2'))
+        if HAVE_PATH_LIKE:
+            btrfsutil.create_subvolume(PurePath(subvol + '3'))
+            self.assertTrue(btrfsutil.is_subvolume(subvol + '3'))
+
+        pwd = os.getcwd()
+        try:
+            os.chdir(self.mountpoint)
+            btrfsutil.create_subvolume('subvol4')
+            self.assertTrue(btrfsutil.is_subvolume('subvol4'))
+        finally:
+            os.chdir(pwd)
+
+        btrfsutil.create_subvolume(subvol + '5/')
+        self.assertTrue(btrfsutil.is_subvolume(subvol + '5'))
+
+        btrfsutil.create_subvolume(subvol + '6//')
+        self.assertTrue(btrfsutil.is_subvolume(subvol + '6'))
+
+        transid = btrfsutil.create_subvolume(subvol + '7', async=True)
+        self.assertTrue(btrfsutil.is_subvolume(subvol + '7'))
+        self.assertGreater(transid, 0)
+
+        # Test creating subvolumes under '/' in a chroot.
+        pid = os.fork()
+        if pid == 0:
+            try:
+                os.chroot(self.mountpoint)
+                os.chdir('/')
+                btrfsutil.create_subvolume('/subvol8')
+                self.assertTrue(btrfsutil.is_subvolume('/subvol8'))
+                with self.assertRaises(btrfsutil.BtrfsUtilError):
+                    btrfsutil.create_subvolume('/')
+                os._exit(0)
+            except Exception:
+                traceback.print_exc()
+                os._exit(1)
+        wstatus = os.waitpid(pid, 0)[1]
+        self.assertTrue(os.WIFEXITED(wstatus))
+        self.assertEqual(os.WEXITSTATUS(wstatus), 0)
