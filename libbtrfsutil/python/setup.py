@@ -93,6 +93,7 @@ module = Extension(
         'filesystem.c',
         'module.c',
         'qgroup.c',
+        'subvolume.c',
     ],
     include_dirs=['..'],
     library_dirs=['../..'],
