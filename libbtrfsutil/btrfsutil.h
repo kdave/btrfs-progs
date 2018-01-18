@@ -279,6 +279,39 @@ enum btrfs_util_error btrfs_util_subvolume_info(const char *path, uint64_t id,
 enum btrfs_util_error btrfs_util_subvolume_info_fd(int fd, uint64_t id,
 						   struct btrfs_util_subvolume_info *subvol);
 
+/**
+ * btrfs_util_get_subvolume_read_only() - Get whether a subvolume is read-only.
+ * @path: Subvolume path.
+ * @ret: Returned read-only flag.
+ *
+ * Return: %BTRFS_UTIL_OK on success, non-zero error code on failure.
+ */
+enum btrfs_util_error btrfs_util_get_subvolume_read_only(const char *path,
+							 bool *ret);
+
+/**
+ * btrfs_util_get_subvolume_read_only_fd() - See
+ * btrfs_util_get_subvolume_read_only().
+ */
+enum btrfs_util_error btrfs_util_get_subvolume_read_only_fd(int fd, bool *ret);
+
+/**
+ * btrfs_util_set_subvolume_read_only() - Set whether a subvolume is read-only.
+ * @path: Subvolume path.
+ * @read_only: New value of read-only flag.
+ *
+ * Return: %BTRFS_UTIL_OK on success, non-zero error code on failure.
+ */
+enum btrfs_util_error btrfs_util_set_subvolume_read_only(const char *path,
+							 bool read_only);
+
+/**
+ * btrfs_util_set_subvolume_read_only_fd() - See
+ * btrfs_util_set_subvolume_read_only().
+ */
+enum btrfs_util_error btrfs_util_set_subvolume_read_only_fd(int fd,
+							    bool read_only);
+
 struct btrfs_util_qgroup_inherit;
 
 /**

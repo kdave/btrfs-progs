@@ -181,6 +181,19 @@ static PyMethodDef btrfsutil_methods[] = {
 	 "path -- string, bytes, path-like object, or open file descriptor\n"
 	 "id -- if not zero, instead of returning information about the\n"
 	 "given path, return information about the subvolume with this ID"},
+	{"get_subvolume_read_only", (PyCFunction)get_subvolume_read_only,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "get_subvolume_read_only(path) -> bool\n\n"
+	 "Get whether a subvolume is read-only.\n\n"
+	 "Arguments:\n"
+	 "path -- string, bytes, path-like object, or open file descriptor"},
+	{"set_subvolume_read_only", (PyCFunction)set_subvolume_read_only,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "set_subvolume_read_only(path, read_only=True)\n\n"
+	 "Set whether a subvolume is read-only.\n\n"
+	 "Arguments:\n"
+	 "path -- string, bytes, path-like object, or open file descriptor\n"
+	 "read_only -- bool flag value"},
 	{"create_subvolume", (PyCFunction)create_subvolume,
 	 METH_VARARGS | METH_KEYWORDS,
 	 "create_subvolume(path, async=False)\n\n"

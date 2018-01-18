@@ -137,6 +137,23 @@ class TestSubvolume(BtrfsTestCase):
                     # BTRFS_EXTENT_TREE_OBJECTID
                     btrfsutil.subvolume_info(arg, 2)
 
+    def test_read_only(self):
+        for arg in self.path_or_fd(self.mountpoint):
+            with self.subTest(type=type(arg)):
+                btrfsutil.set_subvolume_read_only(arg)
+                self.assertTrue(btrfsutil.get_subvolume_read_only(arg))
+                self.assertTrue(btrfsutil.subvolume_info(arg).flags & 1)
+
+                btrfsutil.set_subvolume_read_only(arg, False)
+                self.assertFalse(btrfsutil.get_subvolume_read_only(arg))
+                self.assertFalse(btrfsutil.subvolume_info(arg).flags & 1)
+
+                btrfsutil.set_subvolume_read_only(arg, True)
+                self.assertTrue(btrfsutil.get_subvolume_read_only(arg))
+                self.assertTrue(btrfsutil.subvolume_info(arg).flags & 1)
+
+                btrfsutil.set_subvolume_read_only(arg, False)
+
     def test_create_subvolume(self):
         subvol = os.path.join(self.mountpoint, 'subvol')
 

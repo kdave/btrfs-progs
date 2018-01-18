@@ -215,6 +215,61 @@ PyStructSequence_Desc SubvolumeInfo_desc = {
 
 PyTypeObject SubvolumeInfo_type;
 
+PyObject *get_subvolume_read_only(PyObject *self, PyObject *args, PyObject *kwds)
+{
+	static char *keywords[] = {"path", NULL};
+	struct path_arg path = {.allow_fd = true};
+	enum btrfs_util_error err;
+	bool read_only;
+
+	if (!PyArg_ParseTupleAndKeywords(args, kwds,
+					 "O&:get_subvolume_read_only",
+					 keywords, &path_converter, &path))
+		return NULL;
+
+	if (path.path) {
+		err = btrfs_util_get_subvolume_read_only(path.path, &read_only);
+	} else {
+		err = btrfs_util_get_subvolume_read_only_fd(path.fd,
+							    &read_only);
+	}
+	if (err) {
+		SetFromBtrfsUtilErrorWithPath(err, &path);
+		path_cleanup(&path);
+		return NULL;
+	}
+
+	path_cleanup(&path);
+	return PyBool_FromLong(read_only);
+}
+
+PyObject *set_subvolume_read_only(PyObject *self, PyObject *args, PyObject *kwds)
+{
+	static char *keywords[] = {"path", "read_only", NULL};
+	struct path_arg path = {.allow_fd = true};
+	enum btrfs_util_error err;
+	int read_only = 1;
+
+	if (!PyArg_ParseTupleAndKeywords(args, kwds,
+					 "O&|p:set_subvolume_read_only",
+					 keywords, &path_converter, &path,
+					 &read_only))
+		return NULL;
+
+	if (path.path)
+		err = btrfs_util_set_subvolume_read_only(path.path, read_only);
+	else
+		err = btrfs_util_set_subvolume_read_only_fd(path.fd, read_only);
+	if (err) {
+		SetFromBtrfsUtilErrorWithPath(err, &path);
+		path_cleanup(&path);
+		return NULL;
+	}
+
+	path_cleanup(&path);
+	Py_RETURN_NONE;
+}
+
 PyObject *create_subvolume(PyObject *self, PyObject *args, PyObject *kwds)
 {
 	static char *keywords[] = {"path", "async", "qgroup_inherit", NULL};

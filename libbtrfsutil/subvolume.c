@@ -399,6 +399,72 @@ PUBLIC enum btrfs_util_error btrfs_util_subvolume_info_fd(int fd, uint64_t id,
 	return BTRFS_UTIL_OK;
 }
 
+PUBLIC enum btrfs_util_error btrfs_util_get_subvolume_read_only_fd(int fd,
+								   bool *read_only_ret)
+{
+	uint64_t flags;
+	int ret;
+
+	ret = ioctl(fd, BTRFS_IOC_SUBVOL_GETFLAGS, &flags);
+	if (ret == -1)
+		return BTRFS_UTIL_ERROR_SUBVOL_GETFLAGS_FAILED;
+
+	*read_only_ret = flags & BTRFS_SUBVOL_RDONLY;
+	return BTRFS_UTIL_OK;
+}
+
+PUBLIC enum btrfs_util_error btrfs_util_get_subvolume_read_only(const char *path,
+								bool *ret)
+{
+	enum btrfs_util_error err;
+	int fd;
+
+	fd = open(path, O_RDONLY);
+	if (fd == -1)
+		return BTRFS_UTIL_ERROR_OPEN_FAILED;
+
+	err = btrfs_util_get_subvolume_read_only_fd(fd, ret);
+	SAVE_ERRNO_AND_CLOSE(fd);
+	return err;
+}
+
+PUBLIC enum btrfs_util_error btrfs_util_set_subvolume_read_only(const char *path,
+								bool read_only)
+{
+	enum btrfs_util_error err;
+	int fd;
+
+	fd = open(path, O_RDONLY);
+	if (fd == -1)
+		return BTRFS_UTIL_ERROR_OPEN_FAILED;
+
+	err = btrfs_util_set_subvolume_read_only_fd(fd, read_only);
+	SAVE_ERRNO_AND_CLOSE(fd);
+	return err;
+}
+
+PUBLIC enum btrfs_util_error btrfs_util_set_subvolume_read_only_fd(int fd,
+								   bool read_only)
+{
+	uint64_t flags;
+	int ret;
+
+	ret = ioctl(fd, BTRFS_IOC_SUBVOL_GETFLAGS, &flags);
+	if (ret == -1)
+		return BTRFS_UTIL_ERROR_SUBVOL_GETFLAGS_FAILED;
+
+	if (read_only)
+		flags |= BTRFS_SUBVOL_RDONLY;
+	else
+		flags &= ~BTRFS_SUBVOL_RDONLY;
+
+	ret = ioctl(fd, BTRFS_IOC_SUBVOL_SETFLAGS, &flags);
+	if (ret == -1)
+		return BTRFS_UTIL_ERROR_SUBVOL_SETFLAGS_FAILED;
+
+	return BTRFS_UTIL_OK;
+}
+
 static enum btrfs_util_error openat_parent_and_name(int dirfd, const char *path,
 						    char *name, size_t name_len,
 						    int *fd)
