@@ -1005,6 +1005,108 @@ PUBLIC enum btrfs_util_error btrfs_util_create_snapshot_fd2(int fd,
 	return BTRFS_UTIL_OK;
 }
 
+static enum btrfs_util_error delete_subvolume_children(int parent_fd,
+						       const char *name)
+{
+	struct btrfs_util_subvolume_iterator *iter;
+	enum btrfs_util_error err;
+	int fd;
+
+	fd = openat(parent_fd, name, O_RDONLY);
+	if (fd == -1)
+		return BTRFS_UTIL_ERROR_OPEN_FAILED;
+
+	err = btrfs_util_create_subvolume_iterator_fd(fd, 0,
+						      BTRFS_UTIL_SUBVOLUME_ITERATOR_POST_ORDER,
+						      &iter);
+	if (err)
+		goto out;
+
+	for (;;) {
+		char child_name[BTRFS_PATH_NAME_MAX + 1];
+		char *child_path;
+		int child_parent_fd;
+
+		err = btrfs_util_subvolume_iterator_next(iter, &child_path,
+							 NULL);
+		if (err) {
+			if (err == BTRFS_UTIL_ERROR_STOP_ITERATION)
+				err = BTRFS_UTIL_OK;
+			break;
+		}
+
+		err = openat_parent_and_name(fd, child_path, child_name,
+					     sizeof(child_name),
+					     &child_parent_fd);
+		free(child_path);
+		if (err)
+			break;
+
+		err = btrfs_util_delete_subvolume_fd(child_parent_fd,
+						     child_name, 0);
+		SAVE_ERRNO_AND_CLOSE(child_parent_fd);
+		if (err)
+			break;
+	}
+
+	btrfs_util_destroy_subvolume_iterator(iter);
+out:
+	SAVE_ERRNO_AND_CLOSE(fd);
+	return err;
+}
+
+PUBLIC enum btrfs_util_error btrfs_util_delete_subvolume(const char *path,
+							 int flags)
+{
+	char name[BTRFS_PATH_NAME_MAX + 1];
+	enum btrfs_util_error err;
+	int parent_fd;
+
+	err = openat_parent_and_name(AT_FDCWD, path, name, sizeof(name),
+				     &parent_fd);
+	if (err)
+		return err;
+
+	err = btrfs_util_delete_subvolume_fd(parent_fd, name, flags);
+	SAVE_ERRNO_AND_CLOSE(parent_fd);
+	return err;
+}
+
+PUBLIC enum btrfs_util_error btrfs_util_delete_subvolume_fd(int parent_fd,
+							    const char *name,
+							    int flags)
+{
+	struct btrfs_ioctl_vol_args args = {};
+	enum btrfs_util_error err;
+	size_t len;
+	int ret;
+
+	if (flags & ~BTRFS_UTIL_DELETE_SUBVOLUME_MASK) {
+		errno = EINVAL;
+		return BTRFS_UTIL_ERROR_INVALID_ARGUMENT;
+	}
+
+	if (flags & BTRFS_UTIL_DELETE_SUBVOLUME_RECURSIVE) {
+		err = delete_subvolume_children(parent_fd, name);
+		if (err)
+			return err;
+	}
+
+	len = strlen(name);
+	if (len >= sizeof(args.name)) {
+		errno = ENAMETOOLONG;
+		return BTRFS_UTIL_ERROR_INVALID_ARGUMENT;
+	}
+	memcpy(args.name, name, len);
+	args.name[len] = '\0';
+
+	ret = ioctl(parent_fd, BTRFS_IOC_SNAP_DESTROY, &args);
+	if (ret == -1)
+		return BTRFS_UTIL_ERROR_SNAP_DESTROY_FAILED;
+
+	return BTRFS_UTIL_OK;
+}
+
 PUBLIC void btrfs_util_destroy_subvolume_iterator(struct btrfs_util_subvolume_iterator *iter)
 {
 	if (iter) {

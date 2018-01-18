@@ -398,6 +398,33 @@ PyObject *create_snapshot(PyObject *self, PyObject *args, PyObject *kwds)
 		Py_RETURN_NONE;
 }
 
+PyObject *delete_subvolume(PyObject *self, PyObject *args, PyObject *kwds)
+{
+	static char *keywords[] = {"path", "recursive", NULL};
+	struct path_arg path = {.allow_fd = false};
+	enum btrfs_util_error err;
+	int recursive = 0;
+	int flags = 0;
+
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|p:delete_subvolume",
+					 keywords, &path_converter, &path,
+					 &recursive))
+		return NULL;
+
+	if (recursive)
+		flags |= BTRFS_UTIL_DELETE_SUBVOLUME_RECURSIVE;
+
+	err = btrfs_util_delete_subvolume(path.path, flags);
+	if (err) {
+		SetFromBtrfsUtilErrorWithPath(err, &path);
+		path_cleanup(&path);
+		return NULL;
+	}
+
+	path_cleanup(&path);
+	Py_RETURN_NONE;
+}
+
 typedef struct {
 	PyObject_HEAD
 	struct btrfs_util_subvolume_iterator *iter;

@@ -450,6 +450,39 @@ enum btrfs_util_error btrfs_util_create_snapshot_fd2(int fd, int parent_fd,
 						     uint64_t *async_transid,
 						     struct btrfs_util_qgroup_inherit *qgroup_inherit);
 
+/**
+ * BTRFS_UTIL_DELETE_SUBVOLUME_RECURSIVE - Delete subvolumes beneath the given
+ * subvolume before attempting to delete the given subvolume.
+ *
+ * If this flag is not used, deleting a subvolume with child subvolumes is an
+ * error. Note that this is currently implemented in userspace non-atomically.
+ * It requires appropriate privilege (CAP_SYS_ADMIN).
+ */
+#define BTRFS_UTIL_DELETE_SUBVOLUME_RECURSIVE (1 << 0)
+#define BTRFS_UTIL_DELETE_SUBVOLUME_MASK ((1 << 1) - 1)
+
+/**
+ * btrfs_util_delete_subvolume() - Delete a subvolume or snapshot.
+ * @path: Path of the subvolume to delete.
+ * @flags: Bitmask of BTRFS_UTIL_DELETE_SUBVOLUME_* flags.
+ *
+ * Return: %BTRFS_UTIL_OK on success, non-zero error code on failure.
+ */
+enum btrfs_util_error btrfs_util_delete_subvolume(const char *path, int flags);
+
+/**
+ * btrfs_util_delete_subvolume_fd() - Delete a subvolume or snapshot given its
+ * parent and name.
+ * @parent_fd: File descriptor of the subvolume's parent directory.
+ * @name: Name of the subvolume.
+ * @flags: See btrfs_util_delete_subvolume().
+ *
+ * Return: %BTRFS_UTIL_OK on success, non-zero error code on failure.
+ */
+enum btrfs_util_error btrfs_util_delete_subvolume_fd(int parent_fd,
+						     const char *name,
+						     int flags);
+
 struct btrfs_util_subvolume_iterator;
 
 /**

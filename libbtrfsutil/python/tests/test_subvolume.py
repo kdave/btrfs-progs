@@ -270,6 +270,54 @@ class TestSubvolume(BtrfsTestCase):
         btrfsutil.create_snapshot(subvol, snapshot + '4', read_only=True)
         self.assertTrue(btrfsutil.get_subvolume_read_only(snapshot + '4'))
 
+    def test_delete_subvolume(self):
+        subvol = os.path.join(self.mountpoint, 'subvol')
+        btrfsutil.create_subvolume(subvol + '1')
+        self.assertTrue(os.path.exists(subvol + '1'))
+        btrfsutil.create_subvolume(subvol + '2')
+        self.assertTrue(os.path.exists(subvol + '2'))
+        btrfsutil.create_subvolume(subvol + '3')
+        self.assertTrue(os.path.exists(subvol + '3'))
+
+        btrfsutil.delete_subvolume(subvol + '1')
+        self.assertFalse(os.path.exists(subvol + '1'))
+        btrfsutil.delete_subvolume((subvol + '2').encode())
+        self.assertFalse(os.path.exists(subvol + '2'))
+        if HAVE_PATH_LIKE:
+            btrfsutil.delete_subvolume(PurePath(subvol + '3'))
+            self.assertFalse(os.path.exists(subvol + '3'))
+
+        # Test deleting subvolumes under '/' in a chroot.
+        pid = os.fork()
+        if pid == 0:
+            try:
+                os.chroot(self.mountpoint)
+                os.chdir('/')
+                btrfsutil.create_subvolume('/subvol4')
+                self.assertTrue(os.path.exists('/subvol4'))
+                btrfsutil.delete_subvolume('/subvol4')
+                self.assertFalse(os.path.exists('/subvol4'))
+                with self.assertRaises(btrfsutil.BtrfsUtilError):
+                    btrfsutil.delete_subvolume('/')
+                os._exit(0)
+            except Exception:
+                traceback.print_exc()
+                os._exit(1)
+        wstatus = os.waitpid(pid, 0)[1]
+        self.assertTrue(os.WIFEXITED(wstatus))
+        self.assertEqual(os.WEXITSTATUS(wstatus), 0)
+
+        btrfsutil.create_subvolume(subvol + '5')
+        btrfsutil.create_subvolume(subvol + '5/foo')
+        btrfsutil.create_subvolume(subvol + '5/bar')
+        btrfsutil.create_subvolume(subvol + '5/bar/baz')
+        btrfsutil.create_subvolume(subvol + '5/bar/qux')
+        btrfsutil.create_subvolume(subvol + '5/quux')
+        with self.assertRaises(btrfsutil.BtrfsUtilError):
+            btrfsutil.delete_subvolume(subvol + '5')
+        btrfsutil.delete_subvolume(subvol + '5', recursive=True)
+        self.assertFalse(os.path.exists(subvol + '5'))
+
     def test_subvolume_iterator(self):
         pwd = os.getcwd()
         try:

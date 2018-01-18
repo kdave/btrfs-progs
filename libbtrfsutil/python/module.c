@@ -227,6 +227,14 @@ static PyMethodDef btrfsutil_methods[] = {
 	 "read_only -- create a read-only snapshot\n"
 	 "async -- create the subvolume without waiting for it to commit to\n"
 	 "disk and return the transaction ID"},
+	{"delete_subvolume", (PyCFunction)delete_subvolume,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "delete_subvolume(path, recursive=False)\n\n"
+	 "Delete a subvolume or snapshot.\n\n"
+	 "Arguments:\n"
+	 "path -- string, bytes, or path-like object\n"
+	 "recursive -- if the given subvolume has child subvolumes, delete\n"
+	 "them instead of failing"},
 	{},
 };
 
