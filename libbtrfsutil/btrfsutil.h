@@ -20,6 +20,9 @@
 #ifndef BTRFS_UTIL_H
 #define BTRFS_UTIL_H
 
+#include <stddef.h>
+#include <stdint.h>
+
 #define BTRFS_UTIL_VERSION_MAJOR 1
 #define BTRFS_UTIL_VERSION_MINOR 0
 #define BTRFS_UTIL_VERSION_PATCH 0
@@ -68,6 +71,81 @@ enum btrfs_util_error {
  * Return: Error description.
  */
 const char *btrfs_util_strerror(enum btrfs_util_error err);
+
+/**
+ * btrfs_util_is_subvolume() - Return whether a given path is a Btrfs subvolume.
+ * @path: Path to check.
+ *
+ * Return: %BTRFS_UTIL_OK if @path is a Btrfs subvolume,
+ * %BTRFS_UTIL_ERROR_NOT_BTRFS if @path is not on a Btrfs filesystem,
+ * %BTRFS_UTIL_ERROR_NOT_SUBVOLUME if @path is not a subvolume, non-zero error
+ * code on any other failure.
+ */
+enum btrfs_util_error btrfs_util_is_subvolume(const char *path);
+
+/**
+ * btrfs_util_is_subvolume_fd() - See btrfs_util_is_subvolume().
+ */
+enum btrfs_util_error btrfs_util_is_subvolume_fd(int fd);
+
+/**
+ * btrfs_util_subvolume_id() - Get the ID of the subvolume containing a path.
+ * @path: Path on a Btrfs filesystem.
+ * @id_ret: Returned subvolume ID.
+ *
+ * Return: %BTRFS_UTIL_OK on success, non-zero error code on failure.
+ */
+enum btrfs_util_error btrfs_util_subvolume_id(const char *path,
+					      uint64_t *id_ret);
+
+/**
+ * btrfs_util_subvolume_id_fd() - See btrfs_util_subvolume_id().
+ */
+enum btrfs_util_error btrfs_util_subvolume_id_fd(int fd, uint64_t *id_ret);
+
+struct btrfs_util_qgroup_inherit;
+
+/**
+ * btrfs_util_create_qgroup_inherit() - Create a qgroup inheritance specifier
+ * for btrfs_util_create_subvolume() or btrfs_util_create_snapshot().
+ * @flags: Must be zero.
+ * @ret: Returned qgroup inheritance specifier.
+ *
+ * The returned structure must be freed with
+ * btrfs_util_destroy_qgroup_inherit().
+ *
+ * Return: %BTRFS_UTIL_OK on success, non-zero error code on failure.
+ */
+enum btrfs_util_error btrfs_util_create_qgroup_inherit(int flags,
+						       struct btrfs_util_qgroup_inherit **ret);
+
+/**
+ * btrfs_util_destroy_qgroup_inherit() - Destroy a qgroup inheritance specifier
+ * previously created with btrfs_util_create_qgroup_inherit().
+ * @inherit: Specifier to destroy.
+ */
+void btrfs_util_destroy_qgroup_inherit(struct btrfs_util_qgroup_inherit *inherit);
+
+/**
+ * btrfs_util_qgroup_inherit_add_group() - Add inheritance from a qgroup to a
+ * qgroup inheritance specifier.
+ * @inherit: Specifier to modify. May be reallocated.
+ * @qgroupid: ID of qgroup to inherit from.
+ *
+ * Return: %BTRFS_UTIL_OK on success, non-zero error code on failure.
+ */
+enum btrfs_util_error btrfs_util_qgroup_inherit_add_group(struct btrfs_util_qgroup_inherit **inherit,
+							  uint64_t qgroupid);
+
+/**
+ * btrfs_util_qgroup_inherit_get_groups() - Get the qgroups a qgroup inheritance
+ * specifier contains.
+ * @inherit: Qgroup inheritance specifier.
+ * @groups: Returned array of qgroup IDs.
+ * @n: Returned number of entries in the @groups array.
+ */
+void btrfs_util_qgroup_inherit_get_groups(const struct btrfs_util_qgroup_inherit *inherit,
+					  const uint64_t **groups, size_t *n);
 
 #ifdef __cplusplus
 }

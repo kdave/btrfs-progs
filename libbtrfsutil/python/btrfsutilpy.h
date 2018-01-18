@@ -29,7 +29,13 @@
 
 #include <btrfsutil.h>
 
+typedef struct {
+	PyObject_HEAD
+	struct btrfs_util_qgroup_inherit *inherit;
+} QgroupInherit;
+
 extern PyTypeObject BtrfsUtilError_type;
+extern PyTypeObject QgroupInherit_type;
 
 /*
  * Helpers for path arguments based on posixmodule.c in CPython.

@@ -91,6 +91,7 @@ module = Extension(
         'constants.c',
         'error.c',
         'module.c',
+        'qgroup.c',
     ],
     include_dirs=['..'],
     library_dirs=['../..'],

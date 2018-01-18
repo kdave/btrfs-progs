@@ -152,6 +152,10 @@ PyInit_btrfsutil(void)
 	if (PyType_Ready(&BtrfsUtilError_type) < 0)
 		return NULL;
 
+	QgroupInherit_type.tp_new = PyType_GenericNew;
+	if (PyType_Ready(&QgroupInherit_type) < 0)
+		return NULL;
+
 	m = PyModule_Create(&btrfsutilmodule);
 	if (!m)
 		return NULL;
@@ -159,6 +163,10 @@ PyInit_btrfsutil(void)
 	Py_INCREF(&BtrfsUtilError_type);
 	PyModule_AddObject(m, "BtrfsUtilError",
 			   (PyObject *)&BtrfsUtilError_type);
+
+	Py_INCREF(&QgroupInherit_type);
+	PyModule_AddObject(m, "QgroupInherit",
+			   (PyObject *)&QgroupInherit_type);
 
 	add_module_constants(m);
 
