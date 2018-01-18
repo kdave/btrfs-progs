@@ -85,5 +85,10 @@ int count_csum_range(struct btrfs_fs_info *fs_info, u64 start,
 int insert_inode_item(struct btrfs_trans_handle *trans,
 		      struct btrfs_root *root, u64 ino, u64 size,
 		      u64 nbytes, u64 nlink, u32 mode);
+int link_inode_to_lostfound(struct btrfs_trans_handle *trans,
+			    struct btrfs_root *root,
+			    struct btrfs_path *path,
+			    u64 ino, char *namebuf, u32 name_len,
+			    u8 filetype, u64 *ref_count);
 
 #endif
