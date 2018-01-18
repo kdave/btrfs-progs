@@ -82,5 +82,8 @@ static inline int fs_root_objectid(u64 objectid)
 
 int count_csum_range(struct btrfs_fs_info *fs_info, u64 start,
 		     u64 len, u64 *found);
+int insert_inode_item(struct btrfs_trans_handle *trans,
+		      struct btrfs_root *root, u64 ino, u64 size,
+		      u64 nbytes, u64 nlink, u32 mode);
 
 #endif

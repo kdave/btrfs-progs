@@ -14,8 +14,11 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include <time.h>
 #include "ctree.h"
 #include "internal.h"
+#include "messages.h"
+#include "transaction.h"
 #include "check/common.h"
 
 /*
@@ -99,3 +102,45 @@ out:
 	return 0;
 }
 
+/*
+ * Wrapper to insert one inode item into given @root
+ * Timestamp will be set to current time.
+ *
+ * @root:	the root to insert inode item into
+ * @ino:	inode number
+ * @size:	inode size
+ * @nbytes:	nbytes (real used size, without hole)
+ * @nlink:	number of links
+ * @mode:	file mode, including S_IF* bits
+ */
+int insert_inode_item(struct btrfs_trans_handle *trans,
+		      struct btrfs_root *root, u64 ino, u64 size,
+		      u64 nbytes, u64 nlink, u32 mode)
+{
+	struct btrfs_inode_item ii;
+	time_t now = time(NULL);
+	int ret;
+
+	btrfs_set_stack_inode_size(&ii, size);
+	btrfs_set_stack_inode_nbytes(&ii, nbytes);
+	btrfs_set_stack_inode_nlink(&ii, nlink);
+	btrfs_set_stack_inode_mode(&ii, mode);
+	btrfs_set_stack_inode_generation(&ii, trans->transid);
+	btrfs_set_stack_timespec_nsec(&ii.atime, 0);
+	btrfs_set_stack_timespec_sec(&ii.ctime, now);
+	btrfs_set_stack_timespec_nsec(&ii.ctime, 0);
+	btrfs_set_stack_timespec_sec(&ii.mtime, now);
+	btrfs_set_stack_timespec_nsec(&ii.mtime, 0);
+	btrfs_set_stack_timespec_sec(&ii.otime, 0);
+	btrfs_set_stack_timespec_nsec(&ii.otime, 0);
+
+	ret = btrfs_insert_inode(trans, root, ino, &ii);
+	ASSERT(!ret);
+
+	warning("root %llu inode %llu recreating inode item, this may "
+		"be incomplete, please check permissions and content after "
+		"the fsck completes.\n", (unsigned long long)root->objectid,
+		(unsigned long long)ino);
+
+	return 0;
+}

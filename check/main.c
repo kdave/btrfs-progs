@@ -2691,45 +2691,13 @@ static int delete_dir_index(struct btrfs_root *root,
 	return ret;
 }
 
-static int __create_inode_item(struct btrfs_trans_handle *trans,
-			       struct btrfs_root *root, u64 ino, u64 size,
-			       u64 nbytes, u64 nlink, u32 mode)
-{
-	struct btrfs_inode_item ii;
-	time_t now = time(NULL);
-	int ret;
-
-	btrfs_set_stack_inode_size(&ii, size);
-	btrfs_set_stack_inode_nbytes(&ii, nbytes);
-	btrfs_set_stack_inode_nlink(&ii, nlink);
-	btrfs_set_stack_inode_mode(&ii, mode);
-	btrfs_set_stack_inode_generation(&ii, trans->transid);
-	btrfs_set_stack_timespec_nsec(&ii.atime, 0);
-	btrfs_set_stack_timespec_sec(&ii.ctime, now);
-	btrfs_set_stack_timespec_nsec(&ii.ctime, 0);
-	btrfs_set_stack_timespec_sec(&ii.mtime, now);
-	btrfs_set_stack_timespec_nsec(&ii.mtime, 0);
-	btrfs_set_stack_timespec_sec(&ii.otime, 0);
-	btrfs_set_stack_timespec_nsec(&ii.otime, 0);
-
-	ret = btrfs_insert_inode(trans, root, ino, &ii);
-	ASSERT(!ret);
-
-	warning("root %llu inode %llu recreating inode item, this may "
-		"be incomplete, please check permissions and content after "
-		"the fsck completes.\n", (unsigned long long)root->objectid,
-		(unsigned long long)ino);
-
-	return 0;
-}
-
 static int create_inode_item_lowmem(struct btrfs_trans_handle *trans,
 				    struct btrfs_root *root, u64 ino,
 				    u8 filetype)
 {
 	u32 mode = (filetype == BTRFS_FT_DIR ? S_IFDIR : S_IFREG) | 0755;
 
-	return __create_inode_item(trans, root, ino, 0, 0, 0, mode);
+	return insert_inode_item(trans, root, ino, 0, 0, 0, mode);
 }
 
 static int create_inode_item(struct btrfs_root *root,
@@ -2762,7 +2730,7 @@ static int create_inode_item(struct btrfs_root *root,
 		mode =  S_IFREG | 0755;
 	}
 
-	ret = __create_inode_item(trans, root, rec->ino, size, rec->nbytes,
+	ret = insert_inode_item(trans, root, rec->ino, size, rec->nbytes,
 				  nlink, mode);
 	btrfs_commit_transaction(trans, root);
 	return 0;
