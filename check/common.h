@@ -72,4 +72,12 @@ static inline u8 imode_to_type(u32 imode)
 #undef S_SHIFT
 }
 
+static inline int fs_root_objectid(u64 objectid)
+{
+	if (objectid == BTRFS_TREE_RELOC_OBJECTID ||
+	    objectid == BTRFS_DATA_RELOC_TREE_OBJECTID)
+		return 1;
+	return is_fstree(objectid);
+}
+
 #endif

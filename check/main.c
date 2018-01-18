@@ -2168,8 +2168,6 @@ out:
 	return err;
 }
 
-static int fs_root_objectid(u64 objectid);
-
 /*
  * Update global fs information.
  */
@@ -4248,14 +4246,6 @@ skip_walking:
 	root->fs_info->corrupt_blocks = NULL;
 	free_orphan_data_extents(&root->orphan_data_extents);
 	return ret;
-}
-
-static int fs_root_objectid(u64 objectid)
-{
-	if (objectid == BTRFS_TREE_RELOC_OBJECTID ||
-	    objectid == BTRFS_DATA_RELOC_TREE_OBJECTID)
-		return 1;
-	return is_fstree(objectid);
 }
 
 static int check_fs_roots(struct btrfs_fs_info *fs_info,
