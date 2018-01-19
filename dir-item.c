@@ -263,7 +263,6 @@ int btrfs_delete_one_dir_name(struct btrfs_trans_handle *trans,
 			      struct btrfs_path *path,
 			      struct btrfs_dir_item *di)
 {
-
 	struct extent_buffer *leaf;
 	u32 sub_item_len;
 	u32 item_len;
@@ -273,7 +272,15 @@ int btrfs_delete_one_dir_name(struct btrfs_trans_handle *trans,
 	sub_item_len = sizeof(*di) + btrfs_dir_name_len(leaf, di) +
 		btrfs_dir_data_len(leaf, di);
 	item_len = btrfs_item_size_nr(leaf, path->slots[0]);
-	if (sub_item_len == item_len) {
+
+	/*
+	 * If @sub_item_len is longer than @item_len, then it means the
+	 * name_len is just corrupted.
+	 * No good idea to know if there is anything we can recover from
+	 * the corrupted item.
+	 * Just delete the item.
+	 */
+	if (sub_item_len >= item_len) {
 		ret = btrfs_del_item(trans, root, path);
 	} else {
 		unsigned long ptr = (unsigned long)di;
