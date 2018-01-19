@@ -3465,7 +3465,7 @@ static int do_check_fs_roots(struct btrfs_fs_info *fs_info,
 	if (!ctx.progress_enabled)
 		fprintf(stderr, "checking fs roots\n");
 	if (check_mode == CHECK_MODE_LOWMEM)
-		ret = check_fs_roots_v2(fs_info);
+		ret = check_fs_roots_lowmem(fs_info);
 	else
 		ret = check_fs_roots(fs_info, root_cache);
 
@@ -8257,7 +8257,7 @@ static int do_check_chunks_and_extents(struct btrfs_fs_info *fs_info)
 	if (!ctx.progress_enabled)
 		fprintf(stderr, "checking extents\n");
 	if (check_mode == CHECK_MODE_LOWMEM)
-		ret = check_chunks_and_extents_v2(fs_info);
+		ret = check_chunks_and_extents_lowmem(fs_info);
 	else
 		ret = check_chunks_and_extents(fs_info);
 
