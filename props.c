@@ -21,6 +21,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include <btrfsutil.h>
+
 #include "ctree.h"
 #include "commands.h"
 #include "utils.h"
@@ -41,56 +43,35 @@ static int prop_read_only(enum prop_object_type type,
 			  const char *name,
 			  const char *value)
 {
-	int ret = 0;
-	int fd = -1;
-	u64 flags = 0;
+	enum btrfs_util_error err;
+	bool read_only;
 
-	fd = open(object, O_RDONLY);
-	if (fd < 0) {
-		ret = -errno;
-		error("failed to open %s: %s", object, strerror(-ret));
-		goto out;
-	}
+	if (value) {
+		if (!strcmp(value, "true")) {
+			read_only = true;
+		} else if (!strcmp(value, "false")) {
+			read_only = false;
+		} else {
+			error("invalid value for property: %s", value);
+			return -EINVAL;
+		}
 
-	ret = ioctl(fd, BTRFS_IOC_SUBVOL_GETFLAGS, &flags);
-	if (ret < 0) {
-		ret = -errno;
-		error("failed to get flags for %s: %s", object,
-				strerror(-ret));
-		goto out;
-	}
-
-	if (!value) {
-		if (flags & BTRFS_SUBVOL_RDONLY)
-			fprintf(stdout, "ro=true\n");
-		else
-			fprintf(stdout, "ro=false\n");
-		ret = 0;
-		goto out;
-	}
-
-	if (!strcmp(value, "true")) {
-		flags |= BTRFS_SUBVOL_RDONLY;
-	} else if (!strcmp(value, "false")) {
-		flags = flags & ~BTRFS_SUBVOL_RDONLY;
+		err = btrfs_util_set_subvolume_read_only(object, read_only);
+		if (err) {
+			error_btrfs_util(err);
+			return -errno;
+		}
 	} else {
-		ret = -EINVAL;
-		error("invalid value for property: %s", value);
-		goto out;
+		err = btrfs_util_get_subvolume_read_only(object, &read_only);
+		if (err) {
+			error_btrfs_util(err);
+			return -errno;
+		}
+
+		printf("ro=%s\n", read_only ? "true" : "false");
 	}
 
-	ret = ioctl(fd, BTRFS_IOC_SUBVOL_SETFLAGS, &flags);
-	if (ret < 0) {
-		ret = -errno;
-		error("failed to set flags for %s: %s", object,
-				strerror(-ret));
-		goto out;
-	}
-
-out:
-	if (fd != -1)
-		close(fd);
-	return ret;
+	return 0;
 }
 
 static int prop_label(enum prop_object_type type,

@@ -54,6 +54,19 @@
 			DO_ABORT_ON_ERROR;				\
 	} while (0)
 
+#define error_btrfs_util(err)						\
+	do {								\
+		const char *errno_str = strerror(errno);		\
+		const char *lib_str = btrfs_util_strerror(err);		\
+		PRINT_TRACE_ON_ERROR;					\
+		PRINT_VERBOSE_ERROR;					\
+		if (lib_str && strcmp(errno_str, lib_str) != 0)		\
+			__btrfs_error("%s: %s", lib_str, errno_str);	\
+		else							\
+			__btrfs_error("%s", errno_str);			\
+		DO_ABORT_ON_ERROR;					\
+	} while (0)
+
 #define warning(fmt, ...)						\
 	do {								\
 		PRINT_TRACE_ON_ERROR;					\
