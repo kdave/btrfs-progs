@@ -264,7 +264,6 @@ static int cmd_subvol_delete(int argc, char **argv)
 	int res, ret = 0;
 	int cnt;
 	int fd = -1;
-	struct btrfs_ioctl_vol_args	args;
 	char	*dname, *vname, *cpath;
 	char	*dupdname = NULL;
 	char	*dupvname = NULL;
@@ -276,6 +275,7 @@ static int cmd_subvol_delete(int argc, char **argv)
 	char uuidbuf[BTRFS_UUID_UNPARSED_SIZE];
 	struct seen_fsid *seen_fsid_hash[SEEN_FSID_HASH_SIZE] = { NULL, };
 	enum { COMMIT_AFTER = 1, COMMIT_EACH = 2 };
+	enum btrfs_util_error err;
 
 	while (1) {
 		int c;
@@ -319,14 +319,9 @@ static int cmd_subvol_delete(int argc, char **argv)
 again:
 	path = argv[cnt];
 
-	res = test_issubvolume(path);
-	if (res < 0) {
-		error("cannot access subvolume %s: %s", path, strerror(-res));
-		ret = 1;
-		goto out;
-	}
-	if (!res) {
-		error("not a subvolume: %s", path);
+	err = btrfs_util_is_subvolume(path);
+	if (err) {
+		error_btrfs_util(err);
 		ret = 1;
 		goto out;
 	}
@@ -352,11 +347,10 @@ again:
 	printf("Delete subvolume (%s): '%s/%s'\n",
 		commit_mode == COMMIT_EACH || (commit_mode == COMMIT_AFTER && cnt + 1 == argc)
 		? "commit" : "no-commit", dname, vname);
-	memset(&args, 0, sizeof(args));
-	strncpy_null(args.name, vname);
-	res = ioctl(fd, BTRFS_IOC_SNAP_DESTROY, &args);
-	if(res < 0 ){
-		error("cannot delete '%s/%s': %m", dname, vname);
+
+	err = btrfs_util_delete_subvolume_fd(fd, vname, 0);
+	if (err) {
+		error_btrfs_util(err);
 		ret = 1;
 		goto out;
 	}
