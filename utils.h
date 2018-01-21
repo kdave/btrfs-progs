@@ -149,7 +149,6 @@ u64 disk_size(const char *path);
 u64 get_partition_size(const char *dev);
 
 int test_issubvolname(const char *name);
-int test_issubvolume(const char *path);
 int test_isdir(const char *path);
 
 const char *subvol_strip_mountpoint(const char *mnt, const char *full_path);

@@ -40,6 +40,8 @@
 #include <linux/magic.h>
 #include <getopt.h>
 
+#include <btrfsutil.h>
+
 #include "kerncompat.h"
 #include "radix-tree.h"
 #include "ctree.h"
@@ -1453,6 +1455,7 @@ u64 parse_qgroupid(const char *p)
 	char *s = strchr(p, '/');
 	const char *ptr_src_end = p + strlen(p);
 	char *ptr_parse_end = NULL;
+	enum btrfs_util_error err;
 	u64 level;
 	u64 id;
 	int fd;
@@ -1480,8 +1483,8 @@ u64 parse_qgroupid(const char *p)
 
 path:
 	/* Path format like subv at 'my_subvol' is the fallback case */
-	ret = test_issubvolume(p);
-	if (ret < 0 || !ret)
+	err = btrfs_util_is_subvolume(p);
+	if (err)
 		goto err;
 	fd = open(p, O_RDONLY);
 	if (fd < 0)
@@ -2449,33 +2452,6 @@ int test_issubvolname(const char *name)
 {
 	return name[0] != '\0' && !strchr(name, '/') &&
 		strcmp(name, ".") && strcmp(name, "..");
-}
-
-/*
- * Test if path is a subvolume
- * Returns:
- *   0 - path exists but it is not a subvolume
- *   1 - path exists and it is  a subvolume
- * < 0 - error
- */
-int test_issubvolume(const char *path)
-{
-	struct stat	st;
-	struct statfs stfs;
-	int		res;
-
-	res = stat(path, &st);
-	if (res < 0)
-		return -errno;
-
-	if (st.st_ino != BTRFS_FIRST_FREE_OBJECTID || !S_ISDIR(st.st_mode))
-		return 0;
-
-	res = statfs(path, &stfs);
-	if (res < 0)
-		return -errno;
-
-	return (int)stfs.f_type == BTRFS_SUPER_MAGIC;
 }
 
 const char *subvol_strip_mountpoint(const char *mnt, const char *full_path)

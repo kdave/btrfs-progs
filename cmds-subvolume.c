@@ -630,6 +630,7 @@ static int cmd_subvol_snapshot(int argc, char **argv)
 	char	*dupdir = NULL;
 	char	*newname;
 	char	*dstdir;
+	enum btrfs_util_error err;
 	struct btrfs_ioctl_vol_args_v2	args;
 	struct btrfs_qgroup_inherit *inherit = NULL;
 	DIR *dirstream1 = NULL, *dirstream2 = NULL;
@@ -677,13 +678,9 @@ static int cmd_subvol_snapshot(int argc, char **argv)
 	dst = argv[optind + 1];
 
 	retval = 1;	/* failure */
-	res = test_issubvolume(subvol);
-	if (res < 0) {
-		error("cannot access subvolume %s: %s", subvol, strerror(-res));
-		goto out;
-	}
-	if (!res) {
-		error("not a subvolume: %s", subvol);
+	err = btrfs_util_is_subvolume(subvol);
+	if (err) {
+		error_btrfs_util(err);
 		goto out;
 	}
 
@@ -886,13 +883,9 @@ static int cmd_subvol_find_new(int argc, char **argv)
 	subvol = argv[optind];
 	last_gen = arg_strtou64(argv[optind + 1]);
 
-	ret = test_issubvolume(subvol);
-	if (ret < 0) {
-		error("cannot access subvolume %s: %s", subvol, strerror(-ret));
-		return 1;
-	}
-	if (!ret) {
-		error("not a subvolume: %s", subvol);
+	err = btrfs_util_is_subvolume(subvol);
+	if (err) {
+		error_btrfs_util(err);
 		return 1;
 	}
 

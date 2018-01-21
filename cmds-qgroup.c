@@ -427,6 +427,7 @@ static int cmd_qgroup_limit(int argc, char **argv)
 	int compressed = 0;
 	int exclusive = 0;
 	DIR *dirstream = NULL;
+	enum btrfs_util_error err;
 
 	while (1) {
 		int c = getopt(argc, argv, "ce");
@@ -467,13 +468,9 @@ static int cmd_qgroup_limit(int argc, char **argv)
 	if (argc - optind == 2) {
 		args.qgroupid = 0;
 		path = argv[optind + 1];
-		ret = test_issubvolume(path);
-		if (ret < 0) {
-			error("cannot access '%s': %s", path, strerror(-ret));
-			return 1;
-		}
-		if (!ret) {
-			error("'%s' is not a subvolume", path);
+		err = btrfs_util_is_subvolume(path);
+		if (err) {
+			error_btrfs_util(err);
 			return 1;
 		}
 		/*
