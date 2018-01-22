@@ -361,7 +361,7 @@ specify the devid though.
 *$ btrfs filesystem resize 1:max /path*
 
 Let's assume that devid 1 exists and the filesystem does not occupy the whole
-block device, eg. it has been enlarged and we wan the grow the filesystem. By
+block device, eg. it has been enlarged and we want to grow the filesystem. By
 simply using 'max' as size we will achieve that.
 
 NOTE: There are two ways to minimize the filesystem on a given device. The
