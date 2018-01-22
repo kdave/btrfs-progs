@@ -294,12 +294,6 @@ static int verify_dir_item(struct btrfs_root *root,
 	u16 namelen = BTRFS_NAME_LEN;
 	u8 type = btrfs_dir_type(leaf, dir_item);
 
-	if (type >= BTRFS_FT_MAX) {
-		fprintf(stderr, "invalid dir item type: %d\n",
-		       (int)type);
-		return 1;
-	}
-
 	if (type == BTRFS_FT_XATTR)
 		namelen = XATTR_NAME_MAX;
 
