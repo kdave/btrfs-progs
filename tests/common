@@ -444,6 +444,7 @@ prepare_test_dev()
 	[[ "$size" ]] || size='2G'
 	# Still truncate it to new size
 	if [ -n "$TEST_DEV" ]; then
+		truncate -s 0 "$TEST_DEV"
 		truncate -s "$size" "$TEST_DEV"
 		return;
 	fi
@@ -452,6 +453,7 @@ prepare_test_dev()
 		"$RESULTS"
 	TEST_DEV="$TOP/tests/test.img"
 
+	truncate -s 0 "$TEST_DEV"
 	truncate -s "$size" "$TEST_DEV" || _not_run "create file for loop device failed"
 }
 
