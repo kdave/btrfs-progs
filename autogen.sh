@@ -61,7 +61,6 @@ echo "   autoconf:   $(autoconf --version | head -1)"
 echo "   autoheader: $(autoheader --version | head -1)"
 echo "   automake:   $(automake --version | head -1)"
 
-chmod +x version.sh
 rm -rf autom4te.cache
 
 aclocal -I m4 $AL_OPTS &&

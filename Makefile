@@ -337,7 +337,7 @@ test: test-fsck test-mkfs test-convert test-misc test-fuzz test-cli
 #
 static: $(progs_static)
 
-version.h: version.sh version.h.in configure.ac
+version.h: version.h.in configure.ac
 	@echo "    [SH]     $@"
 	$(Q)bash ./config.status --silent $@
 

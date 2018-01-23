@@ -1,5 +1,5 @@
 AC_INIT([btrfs-progs],
-	m4_esyscmd([./version.sh --configure]),
+	m4_chomp(m4_include([VERSION])),
 	[linux-btrfs@vger.kernel.org],,
 	[http://btrfs.wiki.kernel.org])
 
