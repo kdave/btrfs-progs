@@ -4,7 +4,7 @@
 #
 # Other profiles will cause mkfs.btrfs to allocate new meta/sys chunks
 # using btrfs_alloc_chunk() which won't use the 0~1M range, so other profiles
-# are safe.
+# are safe, but we test them nevertheless.
 
 source "$TOP/tests/common"
 
@@ -36,3 +36,9 @@ do_one_test ()
 
 do_one_test --mixed
 do_one_test -m single
+
+do_one_test
+do_one_test -m dup
+do_one_test -d dup
+do_one_test -m dup -d dup
+do_one_test --mixed -m dup -d dup
