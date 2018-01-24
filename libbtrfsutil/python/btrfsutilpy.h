@@ -54,6 +54,8 @@ struct path_arg {
 int path_converter(PyObject *o, void *p);
 void path_cleanup(struct path_arg *path);
 
+PyObject *list_from_uint64_array(const uint64_t *arr, size_t n);
+
 void SetFromBtrfsUtilError(enum btrfs_util_error err);
 void SetFromBtrfsUtilErrorWithPath(enum btrfs_util_error err,
 				   struct path_arg *path);
@@ -75,6 +77,7 @@ PyObject *set_default_subvolume(PyObject *self, PyObject *args, PyObject *kwds);
 PyObject *create_subvolume(PyObject *self, PyObject *args, PyObject *kwds);
 PyObject *create_snapshot(PyObject *self, PyObject *args, PyObject *kwds);
 PyObject *delete_subvolume(PyObject *self, PyObject *args, PyObject *kwds);
+PyObject *deleted_subvolumes(PyObject *self, PyObject *args, PyObject *kwds);
 
 void add_module_constants(PyObject *m);
 

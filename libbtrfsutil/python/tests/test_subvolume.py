@@ -318,6 +318,14 @@ class TestSubvolume(BtrfsTestCase):
         btrfsutil.delete_subvolume(subvol + '5', recursive=True)
         self.assertFalse(os.path.exists(subvol + '5'))
 
+    def test_deleted_subvolumes(self):
+        subvol = os.path.join(self.mountpoint, 'subvol')
+        btrfsutil.create_subvolume(subvol + '1')
+        btrfsutil.delete_subvolume(subvol + '1')
+        for arg in self.path_or_fd(self.mountpoint):
+            with self.subTest(type=type(arg)):
+                self.assertEqual(btrfsutil.deleted_subvolumes(arg), [256])
+
     def test_subvolume_iterator(self):
         pwd = os.getcwd()
         try:

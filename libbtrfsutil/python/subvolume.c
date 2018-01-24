@@ -425,6 +425,36 @@ PyObject *delete_subvolume(PyObject *self, PyObject *args, PyObject *kwds)
 	Py_RETURN_NONE;
 }
 
+PyObject *deleted_subvolumes(PyObject *self, PyObject *args, PyObject *kwds)
+{
+	static char *keywords[] = {"path", NULL};
+	struct path_arg path = {.allow_fd = true};
+	PyObject *ret;
+	uint64_t *ids;
+	size_t n;
+	enum btrfs_util_error err;
+
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&:deleted_subvolumes",
+					 keywords, &path_converter, &path))
+		return NULL;
+
+	if (path.path)
+		err = btrfs_util_deleted_subvolumes(path.path, &ids, &n);
+	else
+		err = btrfs_util_deleted_subvolumes_fd(path.fd, &ids, &n);
+	if (err) {
+		SetFromBtrfsUtilErrorWithPath(err, &path);
+		path_cleanup(&path);
+		return NULL;
+	}
+
+	path_cleanup(&path);
+
+	ret = list_from_uint64_array(ids, n);
+	free(ids);
+	return ret;
+}
+
 typedef struct {
 	PyObject_HEAD
 	struct btrfs_util_subvolume_iterator *iter;

@@ -581,6 +581,27 @@ enum btrfs_util_error btrfs_util_subvolume_iterator_next_info(struct btrfs_util_
 							      struct btrfs_util_subvolume_info *subvol);
 
 /**
+ * btrfs_util_deleted_subvolumes() - Get a list of subvolume which have been
+ * deleted but not yet cleaned up.
+ * @path: Path on a Btrfs filesystem.
+ * @ids: Returned array of subvolume IDs.
+ * @n: Returned number of IDs in the @ids array.
+ *
+ * This requires appropriate privilege (CAP_SYS_ADMIN).
+ *
+ * Return: %BTRFS_UTIL_OK on success, non-zero error code on failure.
+ */
+enum btrfs_util_error btrfs_util_deleted_subvolumes(const char *path,
+						    uint64_t **ids,
+						    size_t *n);
+
+/**
+ * btrfs_util_deleted_subvolumes_fd() - See btrfs_util_deleted_subvolumes().
+ */
+enum btrfs_util_error btrfs_util_deleted_subvolumes_fd(int fd, uint64_t **ids,
+						       size_t *n);
+
+/**
  * btrfs_util_create_qgroup_inherit() - Create a qgroup inheritance specifier
  * for btrfs_util_create_subvolume() or btrfs_util_create_snapshot().
  * @flags: Must be zero.

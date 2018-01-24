@@ -125,6 +125,29 @@ err:
 	return 0;
 }
 
+PyObject *list_from_uint64_array(const uint64_t *arr, size_t n)
+{
+    PyObject *ret;
+    size_t i;
+
+    ret = PyList_New(n);
+    if (!ret)
+	    return NULL;
+
+    for (i = 0; i < n; i++) {
+	    PyObject *tmp;
+
+	    tmp = PyLong_FromUnsignedLongLong(arr[i]);
+	    if (!tmp) {
+		    Py_DECREF(ret);
+		    return NULL;
+	    }
+	    PyList_SET_ITEM(ret, i, tmp);
+    }
+
+    return ret;
+}
+
 void path_cleanup(struct path_arg *path)
 {
 	Py_CLEAR(path->object);
@@ -235,6 +258,13 @@ static PyMethodDef btrfsutil_methods[] = {
 	 "path -- string, bytes, or path-like object\n"
 	 "recursive -- if the given subvolume has child subvolumes, delete\n"
 	 "them instead of failing"},
+	{"deleted_subvolumes", (PyCFunction)deleted_subvolumes,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "deleted_subvolumes(path)\n\n"
+	 "Get the list of subvolume IDs which have been deleted but not yet\n"
+	 "cleaned up\n\n"
+	 "Arguments:\n"
+	 "path -- string, bytes, path-like object, or open file descriptor"},
 	{},
 };
 

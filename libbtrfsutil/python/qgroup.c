@@ -55,25 +55,12 @@ static PyObject *QgroupInherit_getattro(QgroupInherit *self, PyObject *nameobj)
     }
 
     if (strcmp(name, "groups") == 0) {
-	    PyObject *ret, *tmp;
 	    const uint64_t *arr;
-	    size_t n, i;
+	    size_t n;
 
 	    btrfs_util_qgroup_inherit_get_groups(self->inherit, &arr, &n);
-	    ret = PyList_New(n);
-	    if (!ret)
-		    return NULL;
 
-	    for (i = 0; i < n; i++) {
-		    tmp = PyLong_FromUnsignedLongLong(arr[i]);
-		    if (!tmp) {
-			    Py_DECREF(ret);
-			    return NULL;
-		    }
-		    PyList_SET_ITEM(ret, i, tmp);
-	    }
-
-	    return ret;
+	    return list_from_uint64_array(arr, n);
     } else {
 	    return PyObject_GenericGetAttr((PyObject *)self, nameobj);
     }
