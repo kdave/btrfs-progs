@@ -13088,7 +13088,7 @@ static int repair_chunk_item(struct btrfs_trans_handle *trans,
 
 	if (err & REFERENCER_MISSING) {
 		ret = btrfs_make_block_group(trans, chunk_root->fs_info, 0,
-		     type, chunk_key.objectid, chunk_key.offset, length);
+					     type, chunk_key.offset, length);
 		if (ret) {
 			error("fail to add block group item[%llu %llu]",
 			      chunk_key.offset, length);
@@ -13680,8 +13680,7 @@ static int reset_block_groups(struct btrfs_fs_info *fs_info)
 
 		chunk = btrfs_item_ptr(leaf, path.slots[0], struct btrfs_chunk);
 		btrfs_add_block_group(fs_info, 0,
-				      btrfs_chunk_type(leaf, chunk),
-				      key.objectid, key.offset,
+				      btrfs_chunk_type(leaf, chunk), key.offset,
 				      btrfs_chunk_length(leaf, chunk));
 		set_extent_dirty(&fs_info->free_space_cache, key.offset,
 				 key.offset + btrfs_chunk_length(leaf, chunk));

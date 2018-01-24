@@ -1916,7 +1916,7 @@ static int do_chunk_alloc(struct btrfs_trans_handle *trans,
 	BUG_ON(ret);
 
 	ret = btrfs_make_block_group(trans, fs_info, 0, space_info->flags,
-		     BTRFS_FIRST_CHUNK_TREE_OBJECTID, start, num_bytes);
+				     start, num_bytes);
 	BUG_ON(ret);
 	return 0;
 }
@@ -3311,7 +3311,7 @@ error:
 
 struct btrfs_block_group_cache *
 btrfs_add_block_group(struct btrfs_fs_info *fs_info, u64 bytes_used, u64 type,
-		      u64 chunk_objectid, u64 chunk_offset, u64 size)
+		      u64 chunk_offset, u64 size)
 {
 	int ret;
 	int bit = 0;
@@ -3327,7 +3327,8 @@ btrfs_add_block_group(struct btrfs_fs_info *fs_info, u64 bytes_used, u64 type,
 
 	cache->key.type = BTRFS_BLOCK_GROUP_ITEM_KEY;
 	btrfs_set_block_group_used(&cache->item, bytes_used);
-	btrfs_set_block_group_chunk_objectid(&cache->item, chunk_objectid);
+	btrfs_set_block_group_chunk_objectid(&cache->item,
+					     BTRFS_FIRST_CHUNK_TREE_OBJECTID);
 	cache->flags = type;
 	btrfs_set_block_group_flags(&cache->item, type);
 
@@ -3352,15 +3353,14 @@ btrfs_add_block_group(struct btrfs_fs_info *fs_info, u64 bytes_used, u64 type,
 
 int btrfs_make_block_group(struct btrfs_trans_handle *trans,
 			   struct btrfs_fs_info *fs_info, u64 bytes_used,
-			   u64 type, u64 chunk_objectid, u64 chunk_offset,
-			   u64 size)
+			   u64 type, u64 chunk_offset, u64 size)
 {
 	int ret;
 	struct btrfs_root *extent_root = fs_info->extent_root;
 	struct btrfs_block_group_cache *cache;
 
-	cache = btrfs_add_block_group(fs_info, bytes_used, type,
-				      chunk_objectid, chunk_offset, size);
+	cache = btrfs_add_block_group(fs_info, bytes_used, type, chunk_offset,
+				      size);
 	ret = btrfs_insert_item(trans, extent_root, &cache->key, &cache->item,
 				sizeof(cache->item));
 	BUG_ON(ret);

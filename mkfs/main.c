@@ -72,7 +72,6 @@ static int create_metadata_block_groups(struct btrfs_root *root, int mixed,
 	 */
 	ret = btrfs_make_block_group(trans, fs_info, bytes_used,
 				     BTRFS_BLOCK_GROUP_SYSTEM,
-				     BTRFS_FIRST_CHUNK_TREE_OBJECTID,
 				     BTRFS_BLOCK_RESERVED_1M_FOR_SUPER,
 				     BTRFS_MKFS_SYSTEM_GROUP_SIZE);
 	allocation->system += BTRFS_MKFS_SYSTEM_GROUP_SIZE;
@@ -93,7 +92,6 @@ static int create_metadata_block_groups(struct btrfs_root *root, int mixed,
 		ret = btrfs_make_block_group(trans, fs_info, 0,
 					     BTRFS_BLOCK_GROUP_METADATA |
 					     BTRFS_BLOCK_GROUP_DATA,
-					     BTRFS_FIRST_CHUNK_TREE_OBJECTID,
 					     chunk_start, chunk_size);
 		if (ret)
 			return ret;
@@ -110,7 +108,6 @@ static int create_metadata_block_groups(struct btrfs_root *root, int mixed,
 			return ret;
 		ret = btrfs_make_block_group(trans, fs_info, 0,
 					     BTRFS_BLOCK_GROUP_METADATA,
-					     BTRFS_FIRST_CHUNK_TREE_OBJECTID,
 					     chunk_start, chunk_size);
 		allocation->metadata += chunk_size;
 		if (ret)
@@ -145,7 +142,6 @@ static int create_data_block_groups(struct btrfs_trans_handle *trans,
 			return ret;
 		ret = btrfs_make_block_group(trans, fs_info, 0,
 					     BTRFS_BLOCK_GROUP_DATA,
-					     BTRFS_FIRST_CHUNK_TREE_OBJECTID,
 					     chunk_start, chunk_size);
 		allocation->data += chunk_size;
 		if (ret)
@@ -254,8 +250,7 @@ static int create_one_raid_group(struct btrfs_trans_handle *trans,
 		return ret;
 
 	ret = btrfs_make_block_group(trans, fs_info, 0,
-				     type, BTRFS_FIRST_CHUNK_TREE_OBJECTID,
-				     chunk_start, chunk_size);
+				     type, chunk_start, chunk_size);
 
 	type &= BTRFS_BLOCK_GROUP_TYPE_MASK;
 	if (type == BTRFS_BLOCK_GROUP_DATA) {

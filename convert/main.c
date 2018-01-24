@@ -916,9 +916,7 @@ static int make_convert_data_block_groups(struct btrfs_trans_handle *trans,
 			if (ret < 0)
 				break;
 			ret = btrfs_make_block_group(trans, fs_info, 0,
-					BTRFS_BLOCK_GROUP_DATA,
-					BTRFS_FIRST_CHUNK_TREE_OBJECTID,
-					cur, len);
+					BTRFS_BLOCK_GROUP_DATA, cur, len);
 			if (ret < 0)
 				break;
 			cur += len;
