@@ -1549,10 +1549,16 @@ int open_file_or_dir(const char *fname, DIR **dirstream)
 
 void close_file_or_dir(int fd, DIR *dirstream)
 {
-	if (dirstream)
+	int old_errno;
+
+	old_errno = errno;
+	if (dirstream) {
 		closedir(dirstream);
-	else if (fd >= 0)
+	} else if (fd >= 0) {
 		close(fd);
+	}
+
+	errno = old_errno;
 }
 
 int get_device_info(int fd, u64 devid,
