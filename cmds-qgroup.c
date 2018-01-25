@@ -20,6 +20,8 @@
 #include <unistd.h>
 #include <getopt.h>
 
+#include <btrfsutil.h>
+
 #include "ctree.h"
 #include "ioctl.h"
 
@@ -299,6 +301,7 @@ static int cmd_qgroup_show(int argc, char **argv)
 	int filter_flag = 0;
 	unsigned unit_mode;
 	int sync = 0;
+	enum btrfs_util_error err;
 
 	struct btrfs_qgroup_comparer_set *comparer_set;
 	struct btrfs_qgroup_filter_set *filter_set;
@@ -372,9 +375,10 @@ static int cmd_qgroup_show(int argc, char **argv)
 	}
 
 	if (sync) {
-		ret = ioctl(fd, BTRFS_IOC_SYNC);
-		if (ret < 0)
-			warning("sync ioctl failed on '%s': %m", path);
+		err = btrfs_util_sync_fd(fd);
+		if (err)
+			warning("sync ioctl failed on '%s': %s", path,
+				strerror(errno));
 	}
 
 	if (filter_flag) {

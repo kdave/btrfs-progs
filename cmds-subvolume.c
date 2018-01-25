@@ -28,6 +28,8 @@
 #include <uuid/uuid.h>
 #include <linux/magic.h>
 
+#include <btrfsutil.h>
+
 #include "kerncompat.h"
 #include "ioctl.h"
 #include "qgroup.h"
@@ -226,12 +228,18 @@ out:
 
 static int wait_for_commit(int fd)
 {
-	int ret;
+	enum btrfs_util_error err;
+	uint64_t transid;
 
-	ret = ioctl(fd, BTRFS_IOC_START_SYNC, NULL);
-	if (ret < 0)
-		return ret;
-	return ioctl(fd, BTRFS_IOC_WAIT_SYNC, NULL);
+	err = btrfs_util_start_sync_fd(fd, &transid);
+	if (err)
+		return -1;
+
+	err = btrfs_util_wait_sync_fd(fd, transid);
+	if (err)
+		return -1;
+
+	return 0;
 }
 
 static const char * const cmd_subvol_delete_usage[] = {
@@ -932,6 +940,7 @@ static int cmd_subvol_find_new(int argc, char **argv)
 	char *subvol;
 	u64 last_gen;
 	DIR *dirstream = NULL;
+	enum btrfs_util_error err;
 
 	clean_args_no_options(argc, argv, cmd_subvol_find_new_usage);
 
@@ -955,9 +964,9 @@ static int cmd_subvol_find_new(int argc, char **argv)
 	if (fd < 0)
 		return 1;
 
-	ret = ioctl(fd, BTRFS_IOC_SYNC);
-	if (ret < 0) {
-		error("sync ioctl failed on '%s': %m", subvol);
+	err = btrfs_util_sync_fd(fd);
+	if (err) {
+		error_btrfs_util(err);
 		close_file_or_dir(fd, dirstream);
 		return 1;
 	}
