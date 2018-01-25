@@ -90,6 +90,7 @@ module = Extension(
     sources=[
         'constants.c',
         'error.c',
+        'filesystem.c',
         'module.c',
         'qgroup.c',
     ],

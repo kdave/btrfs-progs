@@ -73,6 +73,50 @@ enum btrfs_util_error {
 const char *btrfs_util_strerror(enum btrfs_util_error err);
 
 /**
+ * btrfs_util_sync() - Force a sync on a specific Btrfs filesystem.
+ * @path: Path on a Btrfs filesystem.
+ *
+ * Return: %BTRFS_UTIL_OK on success, non-zero error code on failure.
+ */
+enum btrfs_util_error btrfs_util_sync(const char *path);
+
+/**
+ * btrfs_util_sync_fd() - See btrfs_util_sync().
+ */
+enum btrfs_util_error btrfs_util_sync_fd(int fd);
+
+/**
+ * btrfs_util_start_sync() - Start a sync on a specific Btrfs filesystem but
+ * don't wait for it.
+ * @path: Path on a Btrfs filesystem.
+ * @transid: Returned transaction ID which can be waited on with
+ * btrfs_util_wait_sync(). This can be %NULL.
+ *
+ * Return: %BTRFS_UTIL_OK on success, non-zero error code on failure.
+ */
+enum btrfs_util_error btrfs_util_start_sync(const char *path,
+					    uint64_t *transid);
+
+/**
+ * btrfs_util_start_sync_fd() - See btrfs_util_start_sync().
+ */
+enum btrfs_util_error btrfs_util_start_sync_fd(int fd, uint64_t *transid);
+
+/**
+ * btrfs_util_wait_sync() - Wait for a transaction with a given ID to sync.
+ * @path: Path on a Btrfs filesystem.
+ * @transid: Transaction ID to wait for, or zero for the current transaction.
+ *
+ * Return: %BTRFS_UTIL_OK on success, non-zero error code on failure.
+ */
+enum btrfs_util_error btrfs_util_wait_sync(const char *path, uint64_t transid);
+
+/**
+ * btrfs_util_wait_sync_fd() - See btrfs_util_wait_sync().
+ */
+enum btrfs_util_error btrfs_util_wait_sync_fd(int fd, uint64_t transid);
+
+/**
  * btrfs_util_is_subvolume() - Return whether a given path is a Btrfs subvolume.
  * @path: Path to check.
  *

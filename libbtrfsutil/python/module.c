@@ -132,6 +132,27 @@ void path_cleanup(struct path_arg *path)
 }
 
 static PyMethodDef btrfsutil_methods[] = {
+	{"sync", (PyCFunction)filesystem_sync,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "sync(path)\n\n"
+	 "Sync a specific Btrfs filesystem.\n\n"
+	 "Arguments:\n"
+	 "path -- string, bytes, path-like object, or open file descriptor"},
+	{"start_sync", (PyCFunction)start_sync,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "start_sync(path) -> int\n\n"
+	 "Start a sync on a specific Btrfs filesystem and return the\n"
+	 "transaction ID.\n\n"
+	 "Arguments:\n"
+	 "path -- string, bytes, path-like object, or open file descriptor"},
+	{"wait_sync", (PyCFunction)wait_sync,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "wait_sync(path, transid=0)\n\n"
+	 "Wait for a transaction to sync.\n"
+	 "Arguments:\n"
+	 "path -- string, bytes, path-like object, or open file descriptor\n"
+	 "transid -- int transaction ID to wait for, or zero for the current\n"
+	 "transaction"},
 	{},
 };
 
