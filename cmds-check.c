@@ -7233,9 +7233,9 @@ again:
 		unsigned int shift = 0, offset;
 
 		if (i == 0 && btrfs_item_end_nr(buf, i) !=
-		    BTRFS_LEAF_DATA_SIZE(root)) {
+		    BTRFS_LEAF_DATA_SIZE(root->fs_info)) {
 			if (btrfs_item_end_nr(buf, i) >
-			    BTRFS_LEAF_DATA_SIZE(root)) {
+			    BTRFS_LEAF_DATA_SIZE(root->fs_info)) {
 				ret = delete_bogus_item(root, path, buf, i);
 				if (!ret)
 					goto again;
@@ -7244,7 +7244,7 @@ again:
 				ret = -EIO;
 				break;
 			}
-			shift = BTRFS_LEAF_DATA_SIZE(root) -
+			shift = BTRFS_LEAF_DATA_SIZE(root->fs_info) -
 				btrfs_item_end_nr(buf, i);
 		} else if (i > 0 && btrfs_item_end_nr(buf, i) !=
 			   btrfs_item_offset_nr(buf, i - 1)) {
