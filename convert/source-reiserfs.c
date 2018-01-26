@@ -376,7 +376,7 @@ static int reiserfs_convert_tail(struct btrfs_trans_handle *trans,
 	u64 isize;
 	int ret;
 
-	if (length >= BTRFS_MAX_INLINE_DATA_SIZE(root))
+	if (length >= BTRFS_MAX_INLINE_DATA_SIZE(root->fs_info))
 		return convert_direct(trans, root, objectid, inode, body,
 				      length, offset, convert_flags);
 

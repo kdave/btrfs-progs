@@ -139,7 +139,7 @@ static int fill_inode_item(struct btrfs_trans_handle *trans,
 	}
 	if (S_ISREG(src->st_mode)) {
 		btrfs_set_stack_inode_size(dst, (u64)src->st_size);
-		if (src->st_size <= BTRFS_MAX_INLINE_DATA_SIZE(root))
+		if (src->st_size <= BTRFS_MAX_INLINE_DATA_SIZE(root->fs_info))
 			btrfs_set_stack_inode_nbytes(dst, src->st_size);
 		else {
 			blocks = src->st_size / sectorsize;
@@ -327,7 +327,7 @@ static int add_file_items(struct btrfs_trans_handle *trans,
 	if (st->st_size % sectorsize)
 		blocks += 1;
 
-	if (st->st_size <= BTRFS_MAX_INLINE_DATA_SIZE(root)) {
+	if (st->st_size <= BTRFS_MAX_INLINE_DATA_SIZE(root->fs_info)) {
 		char *buffer = malloc(st->st_size);
 
 		if (!buffer) {
