@@ -110,7 +110,7 @@ int main(int ac, char **av) {
 	printf("node %p level %d total ptrs %d free spc %lu\n", root->node,
 	        btrfs_header_level(root->node),
 		btrfs_header_nritems(root->node),
-		(unsigned long)BTRFS_NODEPTRS_PER_BLOCK(root) -
+		(unsigned long)BTRFS_NODEPTRS_PER_BLOCK(root->fs_info) -
 		btrfs_header_nritems(root->node));
 	printf("all searches good, deleting some items\n");
 	i = 0;

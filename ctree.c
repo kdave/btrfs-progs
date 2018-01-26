@@ -427,7 +427,7 @@ btrfs_check_node(struct btrfs_root *root, struct btrfs_disk_key *parent_key,
 	u32 nritems = btrfs_header_nritems(buf);
 	enum btrfs_tree_block_status ret = BTRFS_TREE_BLOCK_INVALID_NRITEMS;
 
-	if (nritems == 0 || nritems > BTRFS_NODEPTRS_PER_BLOCK(root))
+	if (nritems == 0 || nritems > BTRFS_NODEPTRS_PER_BLOCK(root->fs_info))
 		goto fail;
 
 	ret = BTRFS_TREE_BLOCK_INVALID_PARENT_KEY;
@@ -714,7 +714,7 @@ static int balance_level(struct btrfs_trans_handle *trans,
 		return ret;
 	}
 	if (btrfs_header_nritems(mid) >
-	    BTRFS_NODEPTRS_PER_BLOCK(root) / 4)
+	    BTRFS_NODEPTRS_PER_BLOCK(fs_info) / 4)
 		return 0;
 
 	left = read_node_slot(fs_info, parent, pslot - 1);
@@ -882,7 +882,7 @@ static int noinline push_nodes_for_insert(struct btrfs_trans_handle *trans,
 	if (extent_buffer_uptodate(left)) {
 		u32 left_nr;
 		left_nr = btrfs_header_nritems(left);
-		if (left_nr >= BTRFS_NODEPTRS_PER_BLOCK(root) - 1) {
+		if (left_nr >= BTRFS_NODEPTRS_PER_BLOCK(fs_info) - 1) {
 			wret = 1;
 		} else {
 			ret = btrfs_cow_block(trans, root, left, parent,
@@ -925,7 +925,7 @@ static int noinline push_nodes_for_insert(struct btrfs_trans_handle *trans,
 	if (extent_buffer_uptodate(right)) {
 		u32 right_nr;
 		right_nr = btrfs_header_nritems(right);
-		if (right_nr >= BTRFS_NODEPTRS_PER_BLOCK(root) - 1) {
+		if (right_nr >= BTRFS_NODEPTRS_PER_BLOCK(root->fs_info) - 1) {
 			wret = 1;
 		} else {
 			ret = btrfs_cow_block(trans, root, right,
@@ -1144,7 +1144,7 @@ again:
 			p->slots[level] = slot;
 			if ((p->search_for_split || ins_len > 0) &&
 			    btrfs_header_nritems(b) >=
-			    BTRFS_NODEPTRS_PER_BLOCK(root) - 3) {
+			    BTRFS_NODEPTRS_PER_BLOCK(fs_info) - 3) {
 				int sret = split_node(trans, root, p, level);
 				BUG_ON(sret > 0);
 				if (sret)
@@ -1290,7 +1290,7 @@ static int push_node_left(struct btrfs_trans_handle *trans,
 
 	src_nritems = btrfs_header_nritems(src);
 	dst_nritems = btrfs_header_nritems(dst);
-	push_items = BTRFS_NODEPTRS_PER_BLOCK(root) - dst_nritems;
+	push_items = BTRFS_NODEPTRS_PER_BLOCK(root->fs_info) - dst_nritems;
 	WARN_ON(btrfs_header_generation(src) != trans->transid);
 	WARN_ON(btrfs_header_generation(dst) != trans->transid);
 
@@ -1360,7 +1360,7 @@ static int balance_node_right(struct btrfs_trans_handle *trans,
 
 	src_nritems = btrfs_header_nritems(src);
 	dst_nritems = btrfs_header_nritems(dst);
-	push_items = BTRFS_NODEPTRS_PER_BLOCK(root) - dst_nritems;
+	push_items = BTRFS_NODEPTRS_PER_BLOCK(root->fs_info) - dst_nritems;
 	if (push_items <= 0) {
 		return 1;
 	}
@@ -1488,7 +1488,7 @@ static int insert_ptr(struct btrfs_trans_handle *trans, struct btrfs_root
 	nritems = btrfs_header_nritems(lower);
 	if (slot > nritems)
 		BUG();
-	if (nritems == BTRFS_NODEPTRS_PER_BLOCK(root))
+	if (nritems == BTRFS_NODEPTRS_PER_BLOCK(root->fs_info))
 		BUG();
 	if (slot < nritems) {
 		/* shift the items */
@@ -1537,7 +1537,7 @@ static int split_node(struct btrfs_trans_handle *trans, struct btrfs_root
 		ret = push_nodes_for_insert(trans, root, path, level);
 		c = path->nodes[level];
 		if (!ret && btrfs_header_nritems(c) <
-		    BTRFS_NODEPTRS_PER_BLOCK(root) - 3)
+		    BTRFS_NODEPTRS_PER_BLOCK(root->fs_info) - 3)
 			return 0;
 		if (ret < 0)
 			return ret;

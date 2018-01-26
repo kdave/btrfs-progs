@@ -2518,7 +2518,7 @@ static void account_bytes(struct btrfs_root *root, struct btrfs_path *path,
 	if (level == 0) {
 		btree_space_waste += btrfs_leaf_free_space(root, eb);
 	} else {
-		free_nrs = (BTRFS_NODEPTRS_PER_BLOCK(root) -
+		free_nrs = (BTRFS_NODEPTRS_PER_BLOCK(root->fs_info) -
 			    btrfs_header_nritems(eb));
 		btree_space_waste += free_nrs * sizeof(struct btrfs_key_ptr);
 	}
@@ -9480,7 +9480,7 @@ static int run_next_block(struct btrfs_root *root,
 				add_pending(pending, seen, ptr, size);
 			}
 		}
-		btree_space_waste += (BTRFS_NODEPTRS_PER_BLOCK(root) -
+		btree_space_waste += (BTRFS_NODEPTRS_PER_BLOCK(fs_info) -
 				      nritems) * sizeof(struct btrfs_key_ptr);
 	}
 	total_btree_bytes += buf->len;

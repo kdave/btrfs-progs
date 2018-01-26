@@ -356,9 +356,6 @@ struct btrfs_header {
 	u8 level;
 } __attribute__ ((__packed__));
 
-#define BTRFS_NODEPTRS_PER_BLOCK(r) (((r)->fs_info->nodesize - \
-			        sizeof(struct btrfs_header)) / \
-			        sizeof(struct btrfs_key_ptr))
 #define __BTRFS_LEAF_DATA_SIZE(bs) ((bs) - sizeof(struct btrfs_header))
 #define BTRFS_LEAF_DATA_SIZE(fs_info) \
 				(__BTRFS_LEAF_DATA_SIZE(fs_info->nodesize))
@@ -1190,6 +1187,11 @@ struct btrfs_root {
 	struct list_head dirty_list;
 	struct rb_node rb_node;
 };
+
+static inline u32 BTRFS_NODEPTRS_PER_BLOCK(const struct btrfs_fs_info *info)
+{
+	return BTRFS_LEAF_DATA_SIZE(info) / sizeof(struct btrfs_key_ptr);
+}
 
 /*
  * inode items have the data typically returned from stat and store other
