@@ -1005,7 +1005,6 @@ static int lookup_inline_extent_backref(struct btrfs_trans_handle *trans,
 		extra_size = -1;
 
 	if (owner < BTRFS_FIRST_FREE_OBJECTID && skinny_metadata) {
-		skinny_metadata = 1;
 		key.type = BTRFS_METADATA_ITEM_KEY;
 		key.offset = owner;
 	} else if (skinny_metadata) {
