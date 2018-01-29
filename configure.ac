@@ -183,13 +183,9 @@ PKG_CHECK_MODULES(ZLIB, [zlib])
 PKG_STATIC(ZLIB_LIBS_STATIC, [zlib])
 
 AC_ARG_ENABLE([zstd],
-	AS_HELP_STRING([--disable-zstd@<:@=yes@:>@], [build with zstd support (default: yes)]),
+	AS_HELP_STRING([--disable-zstd], [build without zstd support]),
 	[], [enable_zstd=yes]
 )
-
-if test "x$enable_zstd" = xauto; then
-	PKG_CHECK_EXISTS([libzstd >= 1.0.0], [enable_zstd=yes], [enable_zstd=no])
-fi
 
 if test "x$enable_zstd" = xyes; then
 	PKG_CHECK_MODULES(ZSTD, [libzstd >= 1.0.0])
