@@ -98,7 +98,7 @@ uninstall:
 	$(RMDIR) -p --ignore-fail-on-non-empty $(DESTDIR)$(man8dir)
 
 clean:
-	$(QUIET_RM)$(RM) -f *.xml *.xml+ *.5 *.5.gz *.8 *.8.gz *.html
+	$(QUIET_RM)$(RM) -f *.xml *.xml+ *.3 *.3.gz *.5 *.5.gz *.8 *.8.gz *.html
 
 %.3.gz : %.3
 	$(QUIET_GZIP)$(GZIPCMD) -n -c $< > $@
