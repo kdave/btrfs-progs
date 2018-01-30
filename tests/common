@@ -477,10 +477,14 @@ run_check_mount_test_dev()
 	run_check $SUDO_HELPER mount -t btrfs $loop_opt "$@" "$TEST_DEV" "$TEST_MNT"
 }
 
+# $1-$n: optional paths to unmount, otherwise fallback to TEST_DEV
 run_check_umount_test_dev()
 {
 	setup_root_helper
-	run_check $SUDO_HELPER umount "$@" "$TEST_DEV"
+	if [ "$#" = 0 ]; then
+		set -- "$TEST_DEV"
+	fi
+	run_check $SUDO_HELPER umount "$@"
 }
 
 check_kernel_support()
