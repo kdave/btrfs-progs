@@ -21,7 +21,7 @@
 #include "transaction.h"
 #include "utils.h"
 #include "disk-io.h"
-#include "check/common.h"
+#include "check/mode-common.h"
 
 /*
  * Search in csum tree to find how many bytes of range [@start, @start + @len)

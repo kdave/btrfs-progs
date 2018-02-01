@@ -18,8 +18,8 @@
  * Defines and function declarations for code shared by both lowmem and
  * original mode
  */
-#ifndef __BTRFS_CHECK_COMMON_H__
-#define __BTRFS_CHECK_COMMON_H__
+#ifndef __BTRFS_CHECK_MODE_COMMON_H__
+#define __BTRFS_CHECK_MODE_COMMON_H__
 
 #include <sys/stat.h>
 #include "ctree.h"

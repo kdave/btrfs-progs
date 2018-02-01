@@ -17,10 +17,10 @@
 /*
  * Defines and function declarations for lowmem mode check.
  */
-#ifndef __BTRFS_CHECK_LOWMEM_H__
-#define __BTRFS_CHECK_LOWMEM_H__
+#ifndef __BTRFS_CHECK_MODE_LOWMEM_H__
+#define __BTRFS_CHECK_MODE_LOWMEM_H__
 
-#include "check/common.h"
+#include "check/mode-common.h"
 
 #define ROOT_DIR_ERROR		(1<<1)	/* bad ROOT_DIR */
 #define DIR_ITEM_MISSING	(1<<2)	/* DIR_ITEM not found */

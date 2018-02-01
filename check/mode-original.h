@@ -18,8 +18,9 @@
  * Defines and function declarations for original mode check.
  */
 
-#ifndef __BTRFS_CHECK_ORIGINAL_H__
-#define __BTRFS_CHECK_ORIGINAL_H__
+#ifndef __BTRFS_CHECK_MODE_ORIGINAL_H__
+#define __BTRFS_CHECK_MODE_ORIGINAL_H__
+
 #include "rbtree-utils.h"
 
 struct extent_backref {

@@ -43,9 +43,9 @@
 #include "kernel-shared/ulist.h"
 #include "hash.h"
 #include "help.h"
-#include "check/original.h"
-#include "check/lowmem.h"
-#include "check/common.h"
+#include "check/mode-common.h"
+#include "check/mode-original.h"
+#include "check/mode-lowmem.h"
 
 enum task_position {
 	TASK_EXTENTS,

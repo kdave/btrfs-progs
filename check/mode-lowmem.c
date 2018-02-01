@@ -25,8 +25,8 @@
 #include "internal.h"
 #include "utils.h"
 #include "volumes.h"
-#include "check/common.h"
-#include "check/lowmem.h"
+#include "check/mode-common.h"
+#include "check/mode-lowmem.h"
 
 static int calc_extent_flag(struct btrfs_root *root, struct extent_buffer *eb,
 			    u64 *flags_ret)
