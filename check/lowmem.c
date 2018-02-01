@@ -730,7 +730,10 @@ begin:
 		need_research = 0;
 		btrfs_release_path(path);
 		ret = btrfs_search_slot(NULL, root, ref_key, path, 0, 0);
-		/* the item was deleted, let path point to the last checked item */
+		/*
+		 * The item was deleted, let the path point to the last checked
+		 * item.
+		 */
 		if (ret > 0) {
 			if (path->slots[0] == 0)
 				btrfs_prev_leaf(root, path);
@@ -1486,7 +1489,8 @@ static int check_file_extent(struct btrfs_root *root, struct btrfs_key *fkey,
 		search_start = disk_bytenr;
 		search_len = disk_num_bytes;
 	}
-	ret = count_csum_range(root->fs_info, search_start, search_len, &csum_found);
+	ret = count_csum_range(root->fs_info, search_start, search_len,
+			       &csum_found);
 	if (csum_found > 0 && nodatasum) {
 		err |= ODD_CSUM_ITEM;
 		error("root %llu EXTENT_DATA[%llu %llu] nodatasum shouldn't have datasum",
@@ -1497,7 +1501,8 @@ static int check_file_extent(struct btrfs_root *root, struct btrfs_key *fkey,
 		error("root %llu EXTENT_DATA[%llu %llu] csum missing, have: %llu, expected: %llu",
 		      root->objectid, fkey->objectid, fkey->offset,
 		      csum_found, search_len);
-	} else if (extent_type == BTRFS_FILE_EXTENT_PREALLOC && csum_found > 0) {
+	} else if (extent_type == BTRFS_FILE_EXTENT_PREALLOC &&
+		   csum_found > 0) {
 		err |= ODD_CSUM_ITEM;
 		error("root %llu EXTENT_DATA[%llu %llu] prealloc shouldn't have csum, but has: %llu",
 		      root->objectid, fkey->objectid, fkey->offset, csum_found);
@@ -2360,9 +2365,8 @@ static int check_tree_block_ref(struct btrfs_root *root,
 				 * Check if the backref points to valid
 				 * referencer
 				 */
-				found_ref = !check_tree_block_ref( root, NULL,
-						offset, level + 1, owner,
-						NULL);
+				found_ref = !check_tree_block_ref(root, NULL,
+						offset, level + 1, owner, NULL);
 			}
 		}
 
@@ -2657,7 +2661,8 @@ static int check_extent_data_item(struct btrfs_root *root,
 		}
 		if (type == BTRFS_EXTENT_DATA_REF_KEY) {
 			ref_root = btrfs_extent_data_ref_root(leaf, dref);
-			ref_objectid = btrfs_extent_data_ref_objectid(leaf, dref);
+			ref_objectid = btrfs_extent_data_ref_objectid(leaf,
+								      dref);
 			ref_offset = btrfs_extent_data_ref_offset(leaf, dref);
 
 			if (ref_objectid == fi_key.objectid &&
@@ -2820,8 +2825,8 @@ static int check_block_group_item(struct btrfs_fs_info *fs_info,
 			if (!(bg_flags & BTRFS_BLOCK_GROUP_DATA)) {
 				error(
 			"bad extent[%llu, %llu) type mismatch with chunk",
-					extent_key.objectid,
-					extent_key.objectid + extent_key.offset);
+				      extent_key.objectid,
+				      extent_key.objectid + extent_key.offset);
 				err |= CHUNK_TYPE_MISMATCH;
 			}
 		} else if (flags & BTRFS_EXTENT_FLAG_TREE_BLOCK) {
@@ -3175,7 +3180,8 @@ static int check_extent_data_backref(struct btrfs_fs_info *fs_info,
 		    btrfs_header_owner(leaf) != root_id)
 			goto next;
 		btrfs_item_key_to_cpu(leaf, &key, slot);
-		if (key.objectid != objectid || key.type != BTRFS_EXTENT_DATA_KEY)
+		if (key.objectid != objectid ||
+		    key.type != BTRFS_EXTENT_DATA_KEY)
 			break;
 		fi = btrfs_item_ptr(leaf, slot, struct btrfs_file_extent_item);
 		/*
@@ -3205,7 +3211,8 @@ out:
 	if (found_count != count) {
 		error(
 "extent[%llu, %llu] referencer count mismatch (root: %llu, owner: %llu, offset: %llu) wanted: %u, have: %u",
-			bytenr, len, root_id, objectid, offset, count, found_count);
+			bytenr, len, root_id, objectid, offset, count,
+			found_count);
 		return REFERENCER_MISSING;
 	}
 	return 0;
@@ -3975,13 +3982,12 @@ static int walk_down_tree(struct btrfs_trans_handle *trans,
 					       nrefs, account_file_data);
 			err |= ret;
 			break;
-		} else {
-			if (check || !check_all) {
-				ret = btrfs_check_node(root, NULL, cur);
-				if (ret != BTRFS_TREE_BLOCK_CLEAN) {
-					err |= -EIO;
-					break;
-				}
+		}
+		if (check || !check_all) {
+			ret = btrfs_check_node(root, NULL, cur);
+			if (ret != BTRFS_TREE_BLOCK_CLEAN) {
+				err |= -EIO;
+				break;
 			}
 		}
 
@@ -4022,7 +4028,7 @@ static int walk_down_tree(struct btrfs_trans_handle *trans,
 
 		ret = check_child_node(cur, path->slots[*level], next);
 		err |= ret;
-		if (ret < 0) 
+		if (ret < 0)
 			break;
 
 		if (btrfs_is_leaf(next))
@@ -4058,11 +4064,10 @@ static int walk_up_tree(struct btrfs_root *root, struct btrfs_path *path,
 			path->slots[i]++;
 			*level = i;
 			return 0;
-		} else {
-			free_extent_buffer(path->nodes[*level]);
-			path->nodes[*level] = NULL;
-			*level = i + 1;
 		}
+		free_extent_buffer(path->nodes[*level]);
+		path->nodes[*level] = NULL;
+		*level = i + 1;
 	}
 	return 1;
 }
