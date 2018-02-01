@@ -20,6 +20,8 @@
 #ifndef __BTRFS_CHECK_LOWMEM_H__
 #define __BTRFS_CHECK_LOWMEM_H__
 
+#include "check/common.h"
+
 #define ROOT_DIR_ERROR		(1<<1)	/* bad ROOT_DIR */
 #define DIR_ITEM_MISSING	(1<<2)	/* DIR_ITEM not found */
 #define DIR_ITEM_MISMATCH	(1<<3)	/* DIR_ITEM found but not match */
@@ -58,5 +60,8 @@
 #define UNKNOWN_TYPE		(1 << 6) /* Unknown type */
 #define ACCOUNTING_MISMATCH	(1 << 7) /* Used space accounting error */
 #define CHUNK_TYPE_MISMATCH	(1 << 8)
+
+int check_fs_roots_v2(struct btrfs_fs_info *fs_info);
+int check_chunks_and_extents_v2(struct btrfs_fs_info *fs_info);
 
 #endif
