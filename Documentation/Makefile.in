@@ -46,8 +46,21 @@ man3dir = $(mandir)/man3
 man5dir = $(mandir)/man5
 man8dir = $(mandir)/man8
 
+ifeq (@ASCIIDOC_TOOL@,asciidoc)
 ASCIIDOC = @ASCIIDOC@
-ASCIIDOC_EXTRA =
+ASCIIDOC_ARGS = -abtrfs_version=$(BTRFS_VERSION) -f asciidoc.conf
+ASCIIDOC_HTML = html
+ASCIIDOC_DOCBOOK = docbook
+ASCIIDOC_DEPS = asciidoc.conf
+endif
+ifeq (@ASCIIDOC_TOOL@,asciidoctor)
+ASCIIDOC = @ASCIIDOCTOR@
+ASCIIDOC_ARGS = -abtrfs_version=$(BTRFS_VERSION)
+ASCIIDOC_HTML = xhtml5
+ASCIIDOC_DOCBOOK = docbook45
+ASCIIDOC_DEPS = 
+endif
+
 MANPAGE_XSL = manpage-normal.xsl
 XMLTO = @XMLTO@
 XMLTO_EXTRA =
@@ -121,16 +134,12 @@ clean:
 	$(QUIET_XMLTO)$(RM) -f $@ && \
 	$(XMLTO) -m $(MANPAGE_XSL) $(XMLTO_EXTRA) man $<
 
-%.xml : %.asciidoc asciidoc.conf
+%.xml : %.asciidoc $(ASCIIDOC_DEPS)
 	$(QUIET_ASCIIDOC)$(RM) -f $@+ $@ && \
-	$(ASCIIDOC) -b docbook -d manpage -f asciidoc.conf \
-		$(ASCIIDOC_EXTRA) -abtrfs_version=$(BTRFS_VERSION) \
-		-o $@+ $< && \
+	$(ASCIIDOC) $(ASCIIDOC_ARGS) -b $(ASCIIDOC_DOCBOOK) -d manpage -o $@+ $< && \
 	$(MV) $@+ $@
 
-%.html : %.asciidoc asciidoc.conf
+%.html : %.asciidoc $(ASCIIDOC_DEPS)
 	$(QUIET_ASCIIDOC)$(RM) -f $@+ $@ && \
-	$(ASCIIDOC) -b html -d article -f asciidoc.conf \
-		$(ASCIIDOC_EXTRA) -abtrfs_version=$(BTRFS_VERSION) \
-		-o $@+ $< && \
+	$(ASCIIDOC) $(ASCIIDOC_ARGS) -b $(ASCIIDOC_HTML) -d article -o $@+ $< && \
 	$(MV) $@+ $@

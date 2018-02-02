@@ -39,6 +39,7 @@ AC_CHECK_TOOL([AR], [ar])
 AC_PATH_PROG([RM], [rm], [rm])
 AC_PATH_PROG([RMDIR], [rmdir], [rmdir])
 
+
 AC_CHECK_FUNCS([openat], [],
 	[AC_MSG_ERROR([cannot find openat() function])])
 
@@ -88,13 +89,27 @@ AS_IF([test "x$enable_documentation" = xyes], [DISABLE_DOCUMENTATION=0], [DISABL
 AC_SUBST([DISABLE_DOCUMENTATION])
 
 dnl detect tools to build documentation
+ASCIIDOC_TOOL="none"
 if test "x$enable_documentation" = xyes; then
-	AC_PATH_PROG([ASCIIDOC], [asciidoc], [asciidoc])
 	AC_PATH_PROG([XMLTO], [xmlto], [xmlto])
 	AC_PATH_PROG([GZIP], [gzip], [gzip])
 	AC_PATH_PROG([MV], [mv], [mv])
 	AC_PROG_SED
+	AC_PATH_PROG([ASCIIDOC], [asciidoc])
+	AC_PATH_PROG([ASCIIDOCTOR], [asciidoctor])
+
+	dnl asciidoc is preferred
+	if test -n "$ASCIIDOC"; then
+		ASCIIDOC_TOOL="asciidoc"
+	else
+		if test -n "$ASCIIDOCTOR"; then
+			ASCIIDOC_TOOL="asciidoctor"
+		else
+			AC_MSG_ERROR([cannot find asciidoc or asciidoctor, cannot build documentation])
+		fi
+	fi
 fi
+AC_SUBST([ASCIIDOC_TOOL])
 
 AC_ARG_ENABLE([convert],
 	      AS_HELP_STRING([--disable-convert], [do not build btrfs-convert]),
@@ -246,6 +261,7 @@ AC_MSG_RESULT([
 	ldflags:            ${LDFLAGS}
 
 	documentation:      ${enable_documentation}
+	doc generator:      ${ASCIIDOC_TOOL}
 	backtrace support:  ${enable_backtrace}
 	btrfs-convert:      ${enable_convert} ${convertfs:+($convertfs)}
 	btrfs-restore zstd: ${enable_zstd}
