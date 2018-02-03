@@ -26,6 +26,7 @@
 #include <stdlib.h>
 /* #include <sys/dir.h> included via androidcompat.h */
 #include <fcntl.h>
+#include <limits.h>
 #include <unistd.h>
 #include <getopt.h>
 #include <uuid/uuid.h>
