@@ -21,6 +21,7 @@
 #include <linux/kdev_t.h>
 #include <sys/types.h>
 #include <pthread.h>
+#include <sys/types.h>
 
 #define CONV_IMAGE_SUBVOL_OBJECTID BTRFS_FIRST_FREE_OBJECTID
 
