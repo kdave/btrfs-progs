@@ -82,3 +82,4 @@ stamp-h.in
 stamp-h1
 config/*
 
+*.patch
