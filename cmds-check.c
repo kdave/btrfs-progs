@@ -16,32 +16,15 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
 #include <getopt.h>
 #include <uuid/uuid.h>
-#include "ctree.h"
 #include "volumes.h"
 #include "repair.h"
 #include "disk-io.h"
-#include "print-tree.h"
 #include "task-utils.h"
 #include "transaction.h"
 #include "utils.h"
-#include "commands.h"
-#include "free-space-cache.h"
-#include "free-space-tree.h"
-#include "btrfsck.h"
 #include "qgroup-verify.h"
-#include "rbtree-utils.h"
-#include "backref.h"
-#include "kernel-shared/ulist.h"
-#include "hash.h"
 #include "help.h"
 #include "check/mode-common.h"
 #include "check/mode-original.h"
