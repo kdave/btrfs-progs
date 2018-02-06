@@ -21,3 +21,5 @@ run_check "$TOP/btrfs" check "$TEST_DEV"
 # mount test
 run_check_mount_test_dev
 run_check_umount_test_dev "$TEST_MNT"
+# remove restored image
+rm -- "$TEST_DEV"
