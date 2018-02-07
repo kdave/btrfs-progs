@@ -331,7 +331,7 @@ extract_image()
 	case "$image" in
 	*.img)
 		rm -f "$image.restored"
-		: ;;
+		;;
 	*.img.xz)
 		xz --decompress --keep "$image" || \
 			_fail "failed to decompress image $image" >&2
