@@ -5,7 +5,7 @@
 # Fixed by patch:
 # btrfs-progs: Fix stack overflow for checking qgroup on tree reloc tree
 
-source "$TOP/tests/common"
+source "$TEST_TOP/common"
 
 check_prereq btrfs
 

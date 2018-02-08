@@ -2,7 +2,7 @@
 #
 # Mixed mode needs equal sectorsize and nodesize
 
-source $TOP/tests/common
+source "$TEST_TOP/common"
 
 check_prereq mkfs.btrfs
 

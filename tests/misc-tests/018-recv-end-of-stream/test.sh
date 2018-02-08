@@ -3,7 +3,7 @@
 # end of stream conditions: test that no instructions in a stream are still
 # received, at least the header must be present
 
-source $TOP/tests/common
+source "$TEST_TOP/common"
 
 check_prereq mkfs.btrfs
 check_prereq btrfs

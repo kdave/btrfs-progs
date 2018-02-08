@@ -15,7 +15,7 @@
 #   the beginning of leaf.
 #   Which caused false alert for lowmem mode.
 
-source "$TOP/tests/common"
+source "$TEST_TOP/common"
 
 check_prereq btrfs
 

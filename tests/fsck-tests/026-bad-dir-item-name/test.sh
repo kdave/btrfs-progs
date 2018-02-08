@@ -2,7 +2,7 @@
 #
 # confirm whether check detects name and hash mismatch in dir_item
 
-source "$TOP/tests/common"
+source "$TEST_TOP/common"
 
 check_prereq btrfs
 

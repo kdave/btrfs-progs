@@ -11,7 +11,7 @@
 #
 # a buggy check leads to the above messages
 
-source "$TOP/tests/common"
+source "$TEST_TOP/common"
 
 check_prereq btrfs
 

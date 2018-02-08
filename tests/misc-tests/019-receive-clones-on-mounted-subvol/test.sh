@@ -5,7 +5,7 @@
 # have an entry with the same name that corresponds to different inodes in each
 # snapshot.
 
-source $TOP/tests/common
+source "$TEST_TOP/common"
 
 check_prereq mkfs.btrfs
 check_prereq btrfs
@@ -14,7 +14,7 @@ check_prereq fssum
 setup_root_helper
 prepare_test_dev
 
-FSSUM_PROG="$TOP/fssum"
+FSSUM_PROG="$INTERNAL_BIN/fssum"
 srcdir=./send-test-dir
 rm -rf "$srcdir"
 mkdir -p "$srcdir"

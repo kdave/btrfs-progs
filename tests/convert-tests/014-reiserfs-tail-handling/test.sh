@@ -6,8 +6,8 @@
 # We use separate inputs for tails and real blocks so we can determine
 # if there was a failure in copying either.
 
-source "$TOP/tests/common"
-source "$TOP/tests/common.convert"
+source "$TEST_TOP/common"
+source "$TEST_TOP/common.convert"
 
 if ! check_kernel_support_reiserfs >/dev/null; then
 	_not_run "no reiserfs support"

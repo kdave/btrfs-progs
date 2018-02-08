@@ -2,7 +2,7 @@
 
 # iterate over all fuzzed images and run 'btrfs-image'
 
-source $TOP/tests/common
+source "$TEST_TOP/common"
 
 setup_root_helper
 check_prereq btrfs-image
@@ -17,7 +17,7 @@ check_image() {
 	truncate -s0 target
 }
 
-check_all_images $TOP/tests/fuzz-tests/images
+check_all_images $TEST_TOP/fuzz-tests/images
 
 rm -- target
 

@@ -4,7 +4,7 @@
 # - btrfs-image must not loop indefinetelly
 # - btrfs-image will expectedly fail to produce the dump
 
-source $TOP/tests/common
+source "$TEST_TOP/common"
 
 check_prereq btrfs-image
 check_prereq mkfs.btrfs

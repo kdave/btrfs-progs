@@ -4,13 +4,20 @@
 
 LANG=C
 SCRIPT_DIR=$(dirname $(readlink -f "$0"))
+INTERNAL_BIN=$(readlink -f "$SCRIPT_DIR/../")
+TEST_TOP=$(readlink -f "$SCRIPT_DIR/../tests/")
 TOP=$(readlink -f "$SCRIPT_DIR/../")
+if ! [ -f "$TOP/btrfs" ];then
+	TOP=$(dirname `which btrfs`)
+fi
 TEST_DEV=${TEST_DEV:-}
-RESULTS="$TOP/tests/fsck-tests-results.txt"
-IMAGE="$TOP/tests/test.img"
+RESULTS="$TEST_TOP/fsck-tests-results.txt"
+IMAGE="$TEST_TOP/test.img"
 
-source "$TOP/tests/common"
+source "$TEST_TOP/common"
 
+export INTERNAL_BIN
+export TEST_TOP
 export TOP
 export RESULTS
 export LANG
@@ -46,7 +53,7 @@ run_one_test() {
 		# Type 1
 		check_all_images
 	fi
-	cd "$TOP"
+	cd "$TEST_TOP"
 }
 
 # Each dir contains one type of error for btrfsck test.
@@ -62,7 +69,7 @@ run_one_test() {
 #    This is for case btrfs-image can't dump or case needs extra
 #    check/verify
 
-for i in $(find "$TOP/tests/fsck-tests" -maxdepth 1 -mindepth 1 -type d	\
+for i in $(find "$TEST_TOP/fsck-tests" -maxdepth 1 -mindepth 1 -type d	\
 	${TEST:+-name "$TEST"} | sort)
 do
 	run_one_test "$i"

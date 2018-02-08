@@ -3,7 +3,7 @@
 # An image with mis-aligned superblock total_bytes, that will be found and
 # fixed by 'check' or fixed by 'rescue fix-device-size'
 
-source "$TOP/tests/common"
+source "$TEST_TOP/common"
 
 check_prereq btrfs
 setup_root_helper

@@ -3,7 +3,7 @@
 # Verify that subvolume sync waits until the subvolume is cleaned and does not
 # crash at the end
 
-source $TOP/tests/common
+source "$TEST_TOP/common"
 
 check_prereq mkfs.btrfs
 check_prereq btrfs

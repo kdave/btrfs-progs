@@ -1,7 +1,7 @@
 #!/bin/bash
 # make sure that 'missing' is accepted for device deletion
 
-source $TOP/tests/common
+source "$TEST_TOP/common"
 
 check_prereq mkfs.btrfs
 check_prereq btrfs

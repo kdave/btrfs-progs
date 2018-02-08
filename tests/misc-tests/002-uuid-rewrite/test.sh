@@ -1,7 +1,7 @@
 #!/bin/bash
 # test btrfstune uuid rewriting options
 
-source $TOP/tests/common
+source "$TEST_TOP/common"
 
 check_prereq mkfs.btrfs
 check_prereq btrfstune
@@ -25,7 +25,7 @@ test_uuid_random()
 
 	run_check $SUDO_HELPER $TOP/mkfs.btrfs -f \
 		--uuid $origuuid \
-		--rootdir $TOP/Documentation \
+		--rootdir $INTERNAL_BIN/Documentation \
 		$TEST_DEV
 	run_check $TOP/btrfs inspect-internal dump-super "$TEST_DEV"
 	currentfsid=$(run_check_stdout $TOP/btrfstune -f -u $TEST_DEV | \
@@ -47,7 +47,7 @@ test_uuid_user()
 
 	run_check $SUDO_HELPER $TOP/mkfs.btrfs -f \
 		--uuid $origuuid \
-		--rootdir $TOP/Documentation \
+		--rootdir $INTERNAL_BIN/Documentation \
 		$TEST_DEV
 	run_check $TOP/btrfs inspect-internal dump-super "$TEST_DEV"
 	run_check $TOP/btrfstune -f -U $newuuid \

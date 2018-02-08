@@ -10,7 +10,7 @@
 # 4) Overlap file extents
 # 5) Unable to rollback
 
-source "$TOP/tests/common"
+source "$TEST_TOP/common"
 
 check_prereq btrfs-convert
 check_prereq btrfs

@@ -290,8 +290,12 @@ run_mustfail_stdout()
 
 check_prereq()
 {
-	if ! [ -f "$TOP/$1" ]; then
-		_fail "Failed prerequisites: $1";
+	if [ "$1" = "btrfs-corrupt-block" -o "$1" = "fssum" ]; then
+		if ! [ -f "$INTERNAL_BIN/$1" ]; then
+			_fail "Failed prerequisites: $INTERNAL_BIN/$1";
+		fi
+	elif ! [ -f "$TOP/$1" ]; then
+		_fail "Failed prerequisites: $TOP/$1";
 	fi
 }
 
@@ -449,9 +453,9 @@ prepare_test_dev()
 		return;
 	fi
 
-	echo "\$TEST_DEV not given, using $TOP/tests/test.img as fallback" >> \
+	echo "\$TEST_DEV not given, using $TEST_TOP/test.img as fallback" >> \
 		"$RESULTS"
-	TEST_DEV="$TOP/tests/test.img"
+	TEST_DEV="$TEST_TOP/test.img"
 
 	truncate -s 0 "$TEST_DEV"
 	truncate -s "$size" "$TEST_DEV" || _not_run "create file for loop device failed"
@@ -632,11 +636,11 @@ cleanup_loopdevs()
 
 init_env()
 {
-	TEST_MNT="${TEST_MNT:-$TOP/tests/mnt}"
+	TEST_MNT="${TEST_MNT:-$TEST_TOP/mnt}"
 	export TEST_MNT
 	mkdir -p "$TEST_MNT" || { echo "Failed mkdir -p $TEST_MNT"; exit 1; }
 
-	source $TOP/tests/common.local
+	source $TEST_TOP/common.local
 
 	if [ "$TEST_ENABLE_OVERRIDE" = 'true' -a -n "$RESULTS" ]; then
 		echo "INCLUDE common.local" >> "$RESULTS"

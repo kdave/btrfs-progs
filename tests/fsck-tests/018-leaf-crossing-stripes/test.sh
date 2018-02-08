@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source "$TOP/tests/common"
+source "$TEST_TOP/common"
 
 check_prereq btrfs
 

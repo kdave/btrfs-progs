@@ -4,13 +4,18 @@
 
 LANG=C
 SCRIPT_DIR=$(dirname $(readlink -f "$0"))
+TEST_TOP=$(readlink -f "$SCRIPT_DIR/../tests/")
 TOP=$(readlink -f "$SCRIPT_DIR/../")
+if ! [ -f "$TOP/btrfs" ];then
+	TOP=$(dirname `which btrfs`)
+fi
 TEST_DEV=${TEST_DEV:-}
-RESULTS="$TOP/tests/cli-tests-results.txt"
-IMAGE="$TOP/tests/test.img"
+RESULTS="$TEST_TOP/cli-tests-results.txt"
+IMAGE="$TEST_TOP/test.img"
 
-source "$TOP/tests/common"
+source "$TEST_TOP/common"
 
+export TEST_TOP
 export TOP
 export RESULTS
 export LANG
@@ -24,7 +29,7 @@ check_kernel_support
 
 # The tests are driven by their custom script called 'test.sh'
 
-for i in $(find "$TOP/tests/cli-tests" -maxdepth 1 -mindepth 1 -type d	\
+for i in $(find "$TEST_TOP/cli-tests" -maxdepth 1 -mindepth 1 -type d	\
 	${TEST:+-name "$TEST"} | sort)
 do
 	name=$(basename "$i")
@@ -40,5 +45,5 @@ do
 			_fail "test failed for case $(basename $i)"
 		fi
 	fi
-	cd "$TOP"
+	cd "$TEST_TOP"
 done

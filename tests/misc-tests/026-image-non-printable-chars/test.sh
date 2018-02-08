@@ -2,7 +2,7 @@
 # check that sanitized names with matching crc do not contain unprintable
 # characters, namely 0x7f
 
-source "$TOP/tests/common"
+source "$TEST_TOP/common"
 
 check_prereq mkfs.btrfs
 check_prereq btrfs

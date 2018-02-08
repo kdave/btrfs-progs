@@ -1,7 +1,7 @@
 #!/bin/bash
 
-source "$TOP/tests/common"
-source "$TOP/tests/common.convert"
+source "$TEST_TOP/common"
+source "$TEST_TOP/common.convert"
 
 setup_root_helper
 prepare_test_dev

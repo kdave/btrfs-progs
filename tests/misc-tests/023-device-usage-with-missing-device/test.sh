@@ -1,7 +1,7 @@
 #!/bin/bash
 # check if 'device slack' is reported as zero when a device is missing
 
-source "$TOP/tests/common"
+source "$TEST_TOP/common"
 
 check_prereq btrfs-image
 check_prereq mkfs.btrfs

@@ -1,7 +1,7 @@
 #!/bin/bash
 # a long device name must pass the SSD test
 
-source $TOP/tests/common
+source "$TEST_TOP/common"
 
 check_prereq mkfs.btrfs
 

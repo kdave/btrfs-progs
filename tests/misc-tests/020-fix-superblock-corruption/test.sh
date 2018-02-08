@@ -2,7 +2,7 @@
 #
 # Corrupt primary superblock and restore it using backup superblock.
 
-source "$TOP/tests/common"
+source "$TEST_TOP/common"
 
 check_prereq btrfs-select-super
 check_prereq btrfs

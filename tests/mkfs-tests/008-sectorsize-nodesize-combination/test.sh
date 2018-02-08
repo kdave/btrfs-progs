@@ -4,7 +4,7 @@
 # only do mkfs and fsck check, no mounting as
 # sub/multi-pagesize is not supported yet
 
-source $TOP/tests/common
+source "$TEST_TOP/common"
 
 check_prereq mkfs.btrfs
 check_prereq btrfs

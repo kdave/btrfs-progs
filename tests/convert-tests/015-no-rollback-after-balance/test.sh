@@ -2,8 +2,8 @@
 # Check if btrfs-convert refuses to rollback the filesystem, and leave the fs
 # and the convert image untouched
 
-source "$TOP/tests/common"
-source "$TOP/tests/common.convert"
+source "$TEST_TOP/common"
+source "$TEST_TOP/common.convert"
 
 setup_root_helper
 prepare_test_dev

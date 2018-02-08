@@ -1,7 +1,7 @@
 #!/bin/bash
 # test zero-log
 
-source $TOP/tests/common
+source "$TEST_TOP/common"
 
 check_prereq mkfs.btrfs
 check_prereq btrfs
@@ -27,7 +27,7 @@ test_zero_log()
 {
 	# FIXME: we need an image with existing log_root
 	run_check $SUDO_HELPER $TOP/mkfs.btrfs -f \
-		--rootdir $TOP/Documentation \
+		--rootdir $INTERNAL_BIN/Documentation \
 		$TEST_DEV
 	run_check $TOP/btrfs inspect-internal dump-super $TEST_DEV
 	if [ "$1" = 'standalone' ]; then

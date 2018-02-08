@@ -1,7 +1,7 @@
 #!/bin/bash
 # test if btrfs-convert creates a filesystem without leaf crossing stripes
 
-source $TOP/tests/common
+source "$TEST_TOP/common"
 
 check_prereq btrfs-convert
 check_prereq btrfs

@@ -2,7 +2,7 @@
 #
 # Verify that we do not force mixed block groups on small volumes anymore
 
-source $TOP/tests/common
+source "$TEST_TOP/common"
 
 check_prereq mkfs.btrfs
 

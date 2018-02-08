@@ -2,7 +2,7 @@
 #
 # Verify that subvolume sync waits until the subvolume is cleaned
 
-source $TOP/tests/common
+source "$TEST_TOP/common"
 
 check_prereq mkfs.btrfs
 check_prereq btrfs

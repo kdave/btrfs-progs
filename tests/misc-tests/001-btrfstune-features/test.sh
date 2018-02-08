@@ -1,7 +1,7 @@
 #!/bin/bash
 # test btrfstune options that enable filesystem features
 
-source $TOP/tests/common
+source "$TEST_TOP/common"
 
 check_prereq mkfs.btrfs
 check_prereq btrfstune

@@ -1,7 +1,7 @@
 #!/bin/bash
 # make sure that mkfs.btrfs --rootsize does not change size of the image
 
-source $TOP/tests/common
+source "$TEST_TOP/common"
 
 check_prereq mkfs.btrfs
 
@@ -16,7 +16,7 @@ test_mkfs_with_size() {
 	run_check truncate -s$size $TEST_DEV
 	imgsize=$(run_check_stdout stat --format=%s $TEST_DEV)
 	run_check $SUDO_HELPER $TOP/mkfs.btrfs -f \
-		--rootdir $TOP/Documentation \
+		--rootdir $INTERNAL_BIN/Documentation \
 		$TEST_DEV
 	tmp=$(run_check_stdout stat --format=%s $TEST_DEV)
 	if ! [ "$imgsize" = "$tmp" ]; then

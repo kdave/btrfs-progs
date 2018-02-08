@@ -1,7 +1,7 @@
 #!/bin/bash
 # test commands of btrfs
 
-source "$TOP/tests/common"
+source "$TEST_TOP/common"
 
 check_prereq btrfs
 

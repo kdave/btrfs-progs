@@ -2,7 +2,7 @@
 # confirm whether 'btrfs check' supports check ing of a partially dropped
 # snapshot
 
-source "$TOP/tests/common"
+source "$TEST_TOP/common"
 
 check_prereq btrfs
 

@@ -2,7 +2,7 @@
 # test various blockgroup profile combinations, use loop devices as block
 # devices
 
-source $TOP/tests/common
+source "$TEST_TOP/common"
 
 check_prereq mkfs.btrfs
 check_prereq btrfs
