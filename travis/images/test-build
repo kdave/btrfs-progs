@@ -1,0 +1,15 @@
+#!/bin/sh
+# usage: $0 [branch name] [configure parameters]
+
+urlbase="https://github.com/kdave/btrfs-progs/archive/"
+branch=${1:-devel}
+url=${urlbase}${branch}.tar.gz
+
+shift
+
+echo "btrfs-progs build test of branch ${branch}"
+cd /tmp
+wget "$url" -O ${branch}.tar.gz
+tar xf ${branch}.tar.gz
+cd btrfs-progs-${branch}
+travis/build-default "$@"
