@@ -201,6 +201,31 @@ the fuzz tests always succeed when run on random checked out. This helps
 bisectability.
 
 
+# Exported testsuite
+
+The tests are typically run from git on binaries built from the git sources. It
+is possible to extract only the testsuite files and run it independently. Use
+
+```shell
+$ make testsuite
+```
+
+This will gather scripts and generate `tests/btrfs-progs-tests.tar.gz`. The
+files inside the tar are in the top level directory, make sure you extract
+the contents to an empty directory. From there you can start the tests as
+described above (the non-make variant).
+
+By default the binaries found in `$PATH` are used, this will normally mean the
+system binaries. You can also override the `$TOP` shell variable and this
+path will be used as prefix for all btrfs binaries inside the tests.
+
+There are some utilities that are not distributed but are necessary for the
+tests. They are in the top level directory of the testsuite and their path
+cannot be set.
+
+The tests assume write acesss to their directories.
+
+
 # Coding style, best practices
 
 ## do
