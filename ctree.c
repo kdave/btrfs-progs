@@ -22,6 +22,7 @@
 #include "repair.h"
 #include "internal.h"
 #include "sizes.h"
+#include "messages.h"
 
 static int split_node(struct btrfs_trans_handle *trans, struct btrfs_root
 		      *root, struct btrfs_path *path, int level);
@@ -642,7 +643,9 @@ static int bin_search(struct extent_buffer *eb, struct btrfs_key *key,
 struct extent_buffer *read_node_slot(struct btrfs_fs_info *fs_info,
 				   struct extent_buffer *parent, int slot)
 {
+	struct extent_buffer *ret;
 	int level = btrfs_header_level(parent);
+
 	if (slot < 0)
 		return NULL;
 	if (slot >= btrfs_header_nritems(parent))
@@ -651,8 +654,20 @@ struct extent_buffer *read_node_slot(struct btrfs_fs_info *fs_info,
 	if (level == 0)
 		return NULL;
 
-	return read_tree_block(fs_info, btrfs_node_blockptr(parent, slot),
+	ret = read_tree_block(fs_info, btrfs_node_blockptr(parent, slot),
 		       btrfs_node_ptr_generation(parent, slot));
+	if (!extent_buffer_uptodate(ret))
+		return ERR_PTR(-EIO);
+
+	if (btrfs_header_level(ret) != level - 1) {
+		error(
+"child eb corrupted: parent bytenr=%llu item=%d parent level=%d child level=%d",
+		      btrfs_header_bytenr(parent), slot,
+		      btrfs_header_level(parent), btrfs_header_level(ret));
+		free_extent_buffer(ret);
+		return ERR_PTR(-EIO);
+	}
+	return ret;
 }
 
 static int balance_level(struct btrfs_trans_handle *trans,
