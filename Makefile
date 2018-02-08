@@ -333,7 +333,7 @@ test: test-fsck test-mkfs test-convert test-misc test-fuzz test-cli
 
 testsuite: btrfs-corrupt-block fssum
 	@echo "Export tests as a package"
-	$(Q)bash tests/export-tests.sh
+	$(Q)cd tests && ./export-testsuite.sh
 
 #
 # NOTE: For static compiles, you need to have all the required libs
