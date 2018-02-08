@@ -72,7 +72,7 @@ before_install:
      sudo make install PREFIX=/usr;
      cd ../..
     "
-  - "./autogen.sh && ./configure --disable-documentation && make"
+  - travis/build-default --disable-documentation
 
 addons:
   coverity_scan:
