@@ -2535,6 +2535,11 @@ static int repair_extent_data_item(struct btrfs_trans_handle *trans,
 	extent_offset = btrfs_file_extent_offset(eb, fi);
 	offset = file_offset - extent_offset;
 
+	if (nrefs->full_backref[0])
+		parent = btrfs_header_bytenr(eb);
+	else
+		parent = 0;
+
 	/* now repair only adds backref */
 	if ((err & BACKREF_MISSING) == 0)
 		return err;
@@ -2575,11 +2580,6 @@ static int repair_extent_data_item(struct btrfs_trans_handle *trans,
 					       num_bytes, 1, 0);
 		btrfs_release_path(&path);
 	}
-
-	if (nrefs->full_backref[0])
-		parent = btrfs_header_bytenr(eb);
-	else
-		parent = 0;
 
 	ret = btrfs_inc_extent_ref(trans, root, disk_bytenr, num_bytes, parent,
 				   root->objectid,
