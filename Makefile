@@ -315,7 +315,7 @@ test-fuzz: btrfs
 	@echo "    [TEST]   fuzz-tests.sh"
 	$(Q)bash tests/fuzz-tests.sh
 
-test-cli: btrfs
+test-cli: btrfs mkfs.btrfs
 	@echo "    [TEST]   cli-tests.sh"
 	$(Q)bash tests/cli-tests.sh
 
