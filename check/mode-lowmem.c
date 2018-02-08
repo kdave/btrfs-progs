@@ -4276,7 +4276,7 @@ out:
  *                otherwise means check fs tree(s) items relationship and
  *		  @root MUST be a fs tree root.
  * Returns 0      represents OK.
- * Returns not 0  represents error.
+ * Returns >0     represents error bits.
  */
 static int check_btrfs_root(struct btrfs_trans_handle *trans,
 			    struct btrfs_root *root, unsigned int ext_ref,
@@ -4299,7 +4299,7 @@ static int check_btrfs_root(struct btrfs_trans_handle *trans,
 		 */
 		ret = check_fs_first_inode(root, ext_ref);
 		if (ret < 0)
-			return ret;
+			return FATAL_ERROR;
 	}
 
 
@@ -4327,11 +4327,11 @@ static int check_btrfs_root(struct btrfs_trans_handle *trans,
 		ret = walk_down_tree(trans, root, &path, &level, &nrefs,
 				     ext_ref, check_all);
 
-		err |= !!ret;
-
+		if (ret > 0)
+			err |= ret;
 		/* if ret is negative, walk shall stop */
 		if (ret < 0) {
-			ret = err;
+			ret = err | FATAL_ERROR;
 			break;
 		}
 
