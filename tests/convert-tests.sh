@@ -5,10 +5,26 @@
 
 LANG=C
 SCRIPT_DIR=$(dirname $(readlink -f "$0"))
-TEST_TOP=$(readlink -f "$SCRIPT_DIR/../tests/")
-TOP=$(readlink -f "$SCRIPT_DIR/../")
-if ! [ -f "$TOP/btrfs" ];then
-	TOP=$(dirname `which btrfs`)
+if [ -z "$TOP" ]; then
+	TOP=$(readlink -f "$SCRIPT_DIR/../")
+	if [ -f "$TOP/configure.ac" ]; then
+		# inside git
+		TEST_TOP="$TOP/tests/"
+		INTERNAL_BIN="$TOP"
+	else
+		# external, defaults to system binaries
+		TOP=$(dirname `which btrfs`)
+		TEST_TOP="$SCRIPT_DIR"
+		INTERNAL_BIN="$TEST_TOP"
+	fi
+else
+	# assume external, TOP set from commandline
+	TEST_TOP="$SCRIPT_DIR"
+	INTERNAL_BIN="$TEST_TOP"
+fi
+if ! [ -x "$TOP/btrfs" ]; then
+	echo "ERROR: cannot execute btrfs from TOP=$TOP"
+	exit 1
 fi
 TEST_DEV=${TEST_DEV:-}
 RESULTS="$TEST_TOP/convert-tests-results.txt"
@@ -17,6 +33,7 @@ IMAGE="$TEST_TOP/test.img"
 source "$TEST_TOP/common"
 source "$TEST_TOP/common.convert"
 
+export INTERNAL_BIN
 export TEST_TOP
 export TOP
 export RESULTS
