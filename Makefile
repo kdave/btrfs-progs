@@ -311,7 +311,7 @@ test-mkfs: btrfs mkfs.btrfs
 	@echo "    [TEST]   mkfs-tests.sh"
 	$(Q)bash tests/mkfs-tests.sh
 
-test-fuzz: btrfs
+test-fuzz: btrfs btrfs-image
 	@echo "    [TEST]   fuzz-tests.sh"
 	$(Q)bash tests/fuzz-tests.sh
 
