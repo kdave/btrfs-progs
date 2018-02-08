@@ -27,7 +27,7 @@ cache:
   ccache: true
 
 git:
-  depth: 2
+  depth: 1
 
 dist: trusty
 group: unstable
