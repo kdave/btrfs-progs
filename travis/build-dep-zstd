@@ -1,0 +1,14 @@
+#!/bin/sh
+# download, build and install the zstd library
+
+version=1.3.3
+
+set -e
+
+mkdir tmp-zstd
+cd tmp-zstd
+wget https://github.com/facebook/zstd/archive/v${version}.tar.gz
+tar xf v${version}.tar.gz
+cd zstd-${version}
+make
+sudo make install PREFIX=/usr

@@ -1,0 +1,15 @@
+#!/bin/sh
+# download, build and install reiserfs library
+
+version=3.6.27
+
+set -e
+
+mkdir tmp-reiser
+cd tmp-reiser
+wget https://www.kernel.org/pub/linux/kernel/people/jeffm/reiserfsprogs/v${version}/reiserfsprogs-${version}.tar.xz
+tar xf reiserfsprogs-${version}.tar.xz
+cd reiserfsprogs-${version}
+./configure --prefix=/usr
+make all
+sudo make install

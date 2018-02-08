@@ -53,25 +53,8 @@ before_install:
   - sudo apt-get install -qq e2fslibs-dev gcc libacl1-dev libblkid-dev liblzo2-dev make pkg-config udev zlib1g-dev acl attr reiserfsprogs
   - echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
   - docker pull kdave/ci-musl-x86_64
-  - "mkdir tmp-reiser;
-     cd tmp-reiser;
-     wget https://www.kernel.org/pub/linux/kernel/people/jeffm/reiserfsprogs/v3.6.27/reiserfsprogs-3.6.27.tar.xz;
-     tar xf reiserfsprogs-3.6.27.tar.xz;
-     cd reiserfsprogs-3.6.27;
-     ./configure --prefix=/usr;
-     make all;
-     sudo make install;
-     cd ../..
-    "
-  - "mkdir tmp-zstd;
-     cd tmp-zstd;
-     wget https://github.com/facebook/zstd/archive/v1.3.3.tar.gz;
-     tar xf v1.3.3.tar.gz;
-     cd zstd-1.3.3;
-     make;
-     sudo make install PREFIX=/usr;
-     cd ../..
-    "
+  - travis/build-dep-reiserfs
+  - travis/build-dep-zstd
   - travis/build-default --disable-documentation
 
 addons:
