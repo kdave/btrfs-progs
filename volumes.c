@@ -516,10 +516,10 @@ out:
 }
 
 static int find_free_dev_extent(struct btrfs_device *device, u64 num_bytes,
-				u64 *start)
+				u64 *start, u64 *len)
 {
 	/* FIXME use last free of some kind */
-	return find_free_dev_extent_start(device, num_bytes, 0, start, NULL);
+	return find_free_dev_extent_start(device, num_bytes, 0, start, len);
 }
 
 static int btrfs_alloc_dev_extent(struct btrfs_trans_handle *trans,
@@ -543,7 +543,7 @@ static int btrfs_alloc_dev_extent(struct btrfs_trans_handle *trans,
 	 * is responsible to make sure it's free.
 	 */
 	if (!convert) {
-		ret = find_free_dev_extent(device, num_bytes, start);
+		ret = find_free_dev_extent(device, num_bytes, start, NULL);
 		if (ret)
 			goto err;
 	}
