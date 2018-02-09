@@ -7638,28 +7638,6 @@ repair_abort:
 	return err;
 }
 
-u64 calc_stripe_length(u64 type, u64 length, int num_stripes)
-{
-	u64 stripe_size;
-
-	if (type & BTRFS_BLOCK_GROUP_RAID0) {
-		stripe_size = length;
-		stripe_size /= num_stripes;
-	} else if (type & BTRFS_BLOCK_GROUP_RAID10) {
-		stripe_size = length * 2;
-		stripe_size /= num_stripes;
-	} else if (type & BTRFS_BLOCK_GROUP_RAID5) {
-		stripe_size = length;
-		stripe_size /= (num_stripes - 1);
-	} else if (type & BTRFS_BLOCK_GROUP_RAID6) {
-		stripe_size = length;
-		stripe_size /= (num_stripes - 2);
-	} else {
-		stripe_size = length;
-	}
-	return stripe_size;
-}
-
 /*
  * Check the chunk with its block group/dev list ref:
  * Return 0 if all refs seems valid.
