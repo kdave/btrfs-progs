@@ -919,8 +919,8 @@ static void print_inode_item(struct extent_buffer *eb,
 	       btrfs_inode_uid(eb, ii),
 	       btrfs_inode_gid(eb, ii),
 	       (unsigned long long)btrfs_inode_rdev(eb,ii),
-	       (unsigned long long)btrfs_inode_flags(eb,ii),
 	       (unsigned long long)btrfs_inode_sequence(eb, ii),
+	       (unsigned long long)btrfs_inode_flags(eb,ii),
 	       flags_str);
 	print_timespec(eb, btrfs_inode_atime(ii), "\t\tatime ", "\n");
 	print_timespec(eb, btrfs_inode_ctime(ii), "\t\tctime ", "\n");
