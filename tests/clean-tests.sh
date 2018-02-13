@@ -28,7 +28,7 @@ TEST_DEV=${TEST_DEV:-}
 RESULTS="$TEST_TOP/cli-tests-results.txt"
 IMAGE="$TEST_TOP/test.img"
 
-source "$TEST_TOP/tests/common"
+source "$TEST_TOP/common"
 
 setup_root_helper
 
@@ -38,8 +38,8 @@ fi
 
 $SUDO_HELPER umount "$TEST_MNT" &>/dev/null
 
-if ! cd "$TOP/tests"; then
-	echo "ERROR: cannot cd to $TOP/tests"
+if ! cd "$TEST_TOP"; then
+	echo "ERROR: cannot cd to $TEST_TOP"
 	exit 1
 fi
 
