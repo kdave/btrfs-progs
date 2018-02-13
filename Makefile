@@ -329,7 +329,7 @@ test-inst: all
 		$(MAKE) $(MAKEOPTS) DESTDIR=$$tmpdest install && \
 		$(RM) -rf -- $$tmpdest
 
-test: test-fsck test-mkfs test-convert test-misc test-fuzz test-cli
+test: test-fsck test-mkfs test-misc test-cli test-convert test-fuzz
 
 testsuite: btrfs-corrupt-block fssum
 	@echo "Export tests as a package"
