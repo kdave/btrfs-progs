@@ -453,7 +453,6 @@ static int traverse_directory(struct btrfs_trans_handle *trans,
 	ino_t parent_inum, cur_inum;
 	ino_t highest_inum = 0;
 	const char *parent_dir_name;
-	char real_path[PATH_MAX];
 	struct btrfs_path path;
 	struct extent_buffer *leaf;
 	struct btrfs_key root_dir_key;
@@ -464,7 +463,7 @@ static int traverse_directory(struct btrfs_trans_handle *trans,
 	if (!dir_entry)
 		return -ENOMEM;
 	dir_entry->dir_name = dir_name;
-	dir_entry->path = realpath(dir_name, real_path);
+	dir_entry->path = realpath(dir_name, NULL);
 	if (!dir_entry->path) {
 		error("realpath  failed for %s: %s", dir_name, strerror(errno));
 		ret = -1;
@@ -616,6 +615,7 @@ static int traverse_directory(struct btrfs_trans_handle *trans,
 		}
 
 		free_namelist(files, count);
+		free(parent_dir_entry->path);
 		free(parent_dir_entry);
 
 		index_cnt = 2;
@@ -686,6 +686,7 @@ fail:
 		dir_entry = list_entry(dir_head.list.next,
 				       struct directory_name_entry, list);
 		list_del(&dir_entry->list);
+		free(dir_entry->path);
 		free(dir_entry);
 	}
 out:

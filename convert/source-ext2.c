@@ -95,6 +95,7 @@ static int ext2_open_fs(struct btrfs_convert_context *cctx, const char *name)
 	return 0;
 fail:
 	ext2fs_close(ext2_fs);
+	ext2fs_free(ext2_fs);
 	return -1;
 }
 
@@ -179,6 +180,7 @@ static void ext2_close_fs(struct btrfs_convert_context *cctx)
 		cctx->volume_name = NULL;
 	}
 	ext2fs_close(cctx->fs_data);
+	ext2fs_free(cctx->fs_data);
 }
 
 static u8 ext2_filetype_conversion_table[EXT2_FT_MAX] = {

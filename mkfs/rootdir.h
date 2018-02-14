@@ -23,7 +23,7 @@
 
 struct directory_name_entry {
 	const char *dir_name;
-	const char *path;
+	char *path;
 	ino_t inum;
 	struct list_head list;
 };
