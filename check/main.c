@@ -9054,6 +9054,7 @@ static int build_roots_info_cache(struct btrfs_fs_info *info)
 		struct btrfs_key found_key;
 		struct btrfs_extent_item *ei;
 		struct btrfs_extent_inline_ref *iref;
+		unsigned long item_end;
 		int slot = path.slots[0];
 		int type;
 		u64 flags;
@@ -9082,6 +9083,7 @@ static int build_roots_info_cache(struct btrfs_fs_info *info)
 
 		ei = btrfs_item_ptr(leaf, slot, struct btrfs_extent_item);
 		flags = btrfs_extent_flags(leaf, ei);
+		item_end = (unsigned long)ei + btrfs_item_size_nr(leaf, slot);
 
 		if (found_key.type == BTRFS_EXTENT_ITEM_KEY &&
 		    !(flags & BTRFS_EXTENT_FLAG_TREE_BLOCK))
@@ -9097,6 +9099,15 @@ static int build_roots_info_cache(struct btrfs_fs_info *info)
 			iref = (struct btrfs_extent_inline_ref *)(binfo + 1);
 			level = btrfs_tree_block_level(leaf, binfo);
 		}
+
+		/*
+		 * It's a valid extent/metadata item that has no inline ref,
+		 * but SHARED_BLOCK_REF or other shared references.
+		 * So we need to do extra check to avoid reading beyond leaf
+		 * boudnary.
+		 */
+		if ((unsigned long)iref >= item_end)
+			goto next;
 
 		/*
 		 * For a root extent, it must be of the following type and the
