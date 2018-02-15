@@ -42,6 +42,8 @@ libbtrfs.so.0
 libbtrfs.so.0.1
 library-test
 library-test-static
+/libbtrfsutil.so*
+/libbtrfsutil.a
 /fssum
 testsuite-id
 

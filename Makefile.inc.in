@@ -27,7 +27,7 @@ prefix ?= @prefix@
 exec_prefix = @exec_prefix@
 bindir = @bindir@
 libdir ?= @libdir@
-incdir = @includedir@/btrfs
+incdir = @includedir@
 udevdir = @UDEVDIR@
 udevruledir = ${udevdir}/rules.d
 
