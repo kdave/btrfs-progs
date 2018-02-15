@@ -56,6 +56,37 @@ class TestSubvolume(BtrfsTestCase):
             with self.subTest(type=type(arg)):
                 self.assertEqual(btrfsutil.subvolume_id(arg), 5)
 
+    def test_subvolume_path(self):
+        btrfsutil.create_subvolume(os.path.join(self.mountpoint, 'subvol1'))
+        os.mkdir(os.path.join(self.mountpoint, 'dir1'))
+        os.mkdir(os.path.join(self.mountpoint, 'dir1/dir2'))
+        btrfsutil.create_subvolume(os.path.join(self.mountpoint, 'dir1/dir2/subvol2'))
+        btrfsutil.create_subvolume(os.path.join(self.mountpoint, 'dir1/dir2/subvol2/subvol3'))
+        os.mkdir(os.path.join(self.mountpoint, 'subvol1/dir3'))
+        btrfsutil.create_subvolume(os.path.join(self.mountpoint, 'subvol1/dir3/subvol4'))
+
+        for arg in self.path_or_fd(self.mountpoint):
+            with self.subTest(type=type(arg)):
+                self.assertEqual(btrfsutil.subvolume_path(arg), '')
+                self.assertEqual(btrfsutil.subvolume_path(arg, 5), '')
+                self.assertEqual(btrfsutil.subvolume_path(arg, 256), 'subvol1')
+                self.assertEqual(btrfsutil.subvolume_path(arg, 257), 'dir1/dir2/subvol2')
+                self.assertEqual(btrfsutil.subvolume_path(arg, 258), 'dir1/dir2/subvol2/subvol3')
+                self.assertEqual(btrfsutil.subvolume_path(arg, 259), 'subvol1/dir3/subvol4')
+
+        pwd = os.getcwd()
+        try:
+            os.chdir(self.mountpoint)
+            path = ''
+            for i in range(26):
+                name = chr(ord('a') + i) * 255
+                path = os.path.join(path, name)
+                btrfsutil.create_subvolume(name)
+                os.chdir(name)
+            self.assertEqual(btrfsutil.subvolume_path('.'), path)
+        finally:
+            os.chdir(pwd)
+
     def test_create_subvolume(self):
         subvol = os.path.join(self.mountpoint, 'subvol')
 

@@ -72,6 +72,36 @@ PyObject *subvolume_id(PyObject *self, PyObject *args, PyObject *kwds)
 	return PyLong_FromUnsignedLongLong(id);
 }
 
+PyObject *subvolume_path(PyObject *self, PyObject *args, PyObject *kwds)
+{
+	static char *keywords[] = {"path", "id", NULL};
+	struct path_arg path = {.allow_fd = true};
+	enum btrfs_util_error err;
+	uint64_t id = 0;
+	char *subvol_path;
+	PyObject *ret;
+
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|K:subvolume_path",
+					 keywords, &path_converter, &path, &id))
+		return NULL;
+
+	if (path.path)
+		err = btrfs_util_subvolume_path(path.path, id, &subvol_path);
+	else
+		err = btrfs_util_subvolume_path_fd(path.fd, id, &subvol_path);
+	if (err) {
+		SetFromBtrfsUtilErrorWithPath(err, &path);
+		path_cleanup(&path);
+		return NULL;
+	}
+
+	path_cleanup(&path);
+
+	ret = PyUnicode_DecodeFSDefault(subvol_path);
+	free(subvol_path);
+	return ret;
+}
+
 PyObject *create_subvolume(PyObject *self, PyObject *args, PyObject *kwds)
 {
 	static char *keywords[] = {"path", "async", "qgroup_inherit", NULL};

@@ -147,6 +147,27 @@ enum btrfs_util_error btrfs_util_subvolume_id(const char *path,
  */
 enum btrfs_util_error btrfs_util_subvolume_id_fd(int fd, uint64_t *id_ret);
 
+/**
+ * btrfs_util_subvolume_path() - Get the path of the subvolume with a given ID
+ * relative to the filesystem root.
+ * @path: Path on a Btrfs filesystem.
+ * @id: ID of subvolume to set as the default. If zero is given, the subvolume
+ * ID of @path is used.
+ * @path_ret: Returned path.
+ *
+ * This requires appropriate privilege (CAP_SYS_ADMIN).
+ *
+ * Return: %BTRFS_UTIL_OK on success, non-zero error code on failure.
+ */
+enum btrfs_util_error btrfs_util_subvolume_path(const char *path, uint64_t id,
+						char **path_ret);
+
+/**
+ * btrfs_util_subvolume_path_fd() - See btrfs_util_subvolume_path().
+ */
+enum btrfs_util_error btrfs_util_subvolume_path_fd(int fd, uint64_t id,
+						   char **path_ret);
+
 struct btrfs_util_qgroup_inherit;
 
 /**

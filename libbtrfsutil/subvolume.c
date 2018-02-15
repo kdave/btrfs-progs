@@ -126,6 +126,131 @@ PUBLIC enum btrfs_util_error btrfs_util_subvolume_id_fd(int fd,
 	return BTRFS_UTIL_OK;
 }
 
+PUBLIC enum btrfs_util_error btrfs_util_subvolume_path(const char *path,
+						       uint64_t id,
+						       char **path_ret)
+{
+	enum btrfs_util_error err;
+	int fd;
+
+	fd = open(path, O_RDONLY);
+	if (fd == -1)
+		return BTRFS_UTIL_ERROR_OPEN_FAILED;
+
+	err = btrfs_util_subvolume_path_fd(fd, id, path_ret);
+	SAVE_ERRNO_AND_CLOSE(fd);
+	return err;
+}
+
+PUBLIC enum btrfs_util_error btrfs_util_subvolume_path_fd(int fd, uint64_t id,
+							  char **path_ret)
+{
+	char *path, *p;
+	size_t capacity = 4096;
+
+	if (id == 0) {
+		enum btrfs_util_error err;
+
+		err = btrfs_util_is_subvolume_fd(fd);
+		if (err)
+			return err;
+
+		err = btrfs_util_subvolume_id_fd(fd, &id);
+		if (err)
+			return err;
+	}
+
+	path = malloc(capacity);
+	if (!path)
+		return BTRFS_UTIL_ERROR_NO_MEMORY;
+	p = path + capacity - 1;
+	p[0] = '\0';
+
+	while (id != BTRFS_FS_TREE_OBJECTID) {
+		struct btrfs_ioctl_search_args search = {
+			.key = {
+				.tree_id = BTRFS_ROOT_TREE_OBJECTID,
+				.min_objectid = id,
+				.max_objectid = id,
+				.min_type = BTRFS_ROOT_BACKREF_KEY,
+				.max_type = BTRFS_ROOT_BACKREF_KEY,
+				.min_offset = 0,
+				.max_offset = UINT64_MAX,
+				.min_transid = 0,
+				.max_transid = UINT64_MAX,
+				.nr_items = 1,
+			},
+		};
+		struct btrfs_ioctl_ino_lookup_args lookup;
+		const struct btrfs_ioctl_search_header *header;
+		const struct btrfs_root_ref *ref;
+		const char *name;
+		uint16_t name_len;
+		size_t lookup_len;
+		size_t total_len;
+		int ret;
+
+		ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &search);
+		if (ret == -1) {
+			free(path);
+			return BTRFS_UTIL_ERROR_SEARCH_FAILED;
+		}
+
+		if (search.key.nr_items == 0) {
+			free(path);
+			errno = ENOENT;
+			return BTRFS_UTIL_ERROR_SUBVOLUME_NOT_FOUND;
+		}
+
+		header = (struct btrfs_ioctl_search_header *)search.buf;
+		ref = (struct btrfs_root_ref *)(header + 1);
+		name = (char *)(ref + 1);
+		name_len = le16_to_cpu(ref->name_len);
+
+		id = header->offset;
+
+		lookup.treeid = id;
+		lookup.objectid = le64_to_cpu(ref->dirid);
+		ret = ioctl(fd, BTRFS_IOC_INO_LOOKUP, &lookup);
+		if (ret == -1) {
+			free(path);
+			return BTRFS_UTIL_ERROR_SEARCH_FAILED;
+		}
+		lookup_len = strlen(lookup.name);
+
+		total_len = name_len + lookup_len + (id != BTRFS_FS_TREE_OBJECTID);
+		if (p - total_len < path) {
+			char *new_path, *new_p;
+			size_t new_capacity = capacity * 2;
+
+			new_path = malloc(new_capacity);
+			if (!new_path) {
+				free(path);
+				return BTRFS_UTIL_ERROR_NO_MEMORY;
+			}
+			new_p = new_path + new_capacity - (path + capacity - p);
+			memcpy(new_p, p, path + capacity - p);
+			free(path);
+			path = new_path;
+			p = new_p;
+			capacity = new_capacity;
+		}
+		p -= name_len;
+		memcpy(p, name, name_len);
+		p -= lookup_len;
+		memcpy(p, lookup.name, lookup_len);
+		if (id != BTRFS_FS_TREE_OBJECTID)
+			*--p = '/';
+	}
+
+	if (p != path)
+		memmove(path, p, path + capacity - p);
+
+	*path_ret = path;
+
+	return BTRFS_UTIL_OK;
+}
+
 static enum btrfs_util_error openat_parent_and_name(int dirfd, const char *path,
 						    char *name, size_t name_len,
 						    int *fd)

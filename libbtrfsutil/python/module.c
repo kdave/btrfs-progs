@@ -165,6 +165,14 @@ static PyMethodDef btrfsutil_methods[] = {
 	 "Get the ID of the subvolume containing a file.\n\n"
 	 "Arguments:\n"
 	 "path -- string, bytes, path-like object, or open file descriptor"},
+	{"subvolume_path", (PyCFunction)subvolume_path,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "subvolume_path(path, id=0) -> int\n\n"
+	 "Get the path of a subvolume relative to the filesystem root.\n\n"
+	 "Arguments:\n"
+	 "path -- string, bytes, path-like object, or open file descriptor\n"
+	 "id -- if not zero, instead of returning the subvolume path of the\n"
+	 "given path, return the path of the subvolume with this ID"},
 	{"create_subvolume", (PyCFunction)create_subvolume,
 	 METH_VARARGS | METH_KEYWORDS,
 	 "create_subvolume(path, async=False)\n\n"
