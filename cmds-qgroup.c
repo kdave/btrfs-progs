@@ -396,6 +396,8 @@ static int cmd_qgroup_show(int argc, char **argv)
 	}
 	ret = btrfs_show_qgroups(fd, filter_set, comparer_set);
 	close_file_or_dir(fd, dirstream);
+	free(filter_set);
+	free(comparer_set);
 
 out:
 	return !!ret;

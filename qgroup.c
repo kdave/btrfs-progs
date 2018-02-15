@@ -1192,8 +1192,6 @@ int btrfs_show_qgroups(int fd,
 	print_all_qgroups(&sort_tree);
 
 	__free_all_qgroups(&qgroup_lookup);
-	free(filter_set);
-	free(comp_set);
 	return ret;
 }
 
