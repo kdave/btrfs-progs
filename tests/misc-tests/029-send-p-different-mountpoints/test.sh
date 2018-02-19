@@ -31,7 +31,7 @@ run_check $SUDO_HELPER "$TOP/btrfs" subvolume snapshot -r \
 run_mustfail_stdout "send -p on 2 mount points" \
 	$SUDO_HELPER "$TOP/btrfs" send -f /dev/null -p \
 	"$SUBVOL_MNT/test-subvol-mnt-subvol" "$TOPLEVEL_MNT/test-subvol-mnt-root" \
-	| tee -a "$RESULTS" \
+	| _log_stdout \
 	| grep -q "not on mount point.*/toplevel" \
 	|| _fail "expected output not found, please check the logs"
 

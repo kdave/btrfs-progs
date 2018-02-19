@@ -54,6 +54,13 @@ _log()
 	echo "$*" | tee -a "$RESULTS"
 }
 
+# copy stdout to log and pass to stdout, eg. another stdout consumer, commands
+# should redirect stderr to stdout if this is consmed by further commands
+_log_stdout()
+{
+	tee -a "$RESULTS"
+}
+
 _not_run()
 {
 	echo "    [NOTRUN] $*"
