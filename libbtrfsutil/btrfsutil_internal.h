@@ -23,6 +23,8 @@
 #include <asm/byteorder.h>
 
 #include "btrfsutil.h"
+#include "btrfs.h"
+#include "btrfs_tree.h"
 
 #define PUBLIC __attribute__((visibility("default")))
 

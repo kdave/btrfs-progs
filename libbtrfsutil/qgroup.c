@@ -21,7 +21,6 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
-#include <linux/btrfs.h>
 
 #include "btrfsutil_internal.h"
 

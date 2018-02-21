@@ -21,7 +21,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
-#include <linux/btrfs.h>
 
 #include "btrfsutil_internal.h"
 
