@@ -43,6 +43,8 @@ AC_PATH_PROG([RMDIR], [rmdir], [rmdir])
 AC_CHECK_FUNCS([openat], [],
 	[AC_MSG_ERROR([cannot find openat() function])])
 
+AC_CHECK_FUNCS([reallocarray])
+
 m4_ifndef([PKG_PROG_PKG_CONFIG],
   [m4_fatal([Could not locate the pkg-config autoconf
     macros. These are usually located in /usr/share/aclocal/pkg.m4.

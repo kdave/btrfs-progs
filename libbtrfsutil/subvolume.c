@@ -27,6 +27,7 @@
 #include <sys/types.h>
 #include <sys/vfs.h>
 #include <linux/magic.h>
+#include "stubs.h"
 
 #include "btrfsutil_internal.h"
 
