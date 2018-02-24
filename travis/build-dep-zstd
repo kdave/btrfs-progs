@@ -2,13 +2,27 @@
 # download, build and install the zstd library
 
 version=1.3.3
+dir=tmp-cached-zstd
+stamp="$dir/.last-build-zstd"
+here=`pwd`
 
 set -e
 
-mkdir tmp-zstd
-cd tmp-zstd
+if [ -d "$dir" -a -f "$stamp" ]; then
+	echo "Using valid cache for $dir, built" `cat "$stamp"`
+	cd "$dir"
+	cd zstd-${version}
+	sudo make install PREFIX=/usr
+	exit 0
+fi
+
+echo "No or stale cache for $dir, rebuilding"
+rm -rf "$dir"
+mkdir "$dir"
+cd "$dir"
 wget https://github.com/facebook/zstd/archive/v${version}.tar.gz
 tar xf v${version}.tar.gz
 cd zstd-${version}
 make
 sudo make install PREFIX=/usr
+date > "$here/$stamp"

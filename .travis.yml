@@ -25,6 +25,9 @@ compiler:
 
 cache:
   ccache: true
+  directories:
+    - tmp-cached-reiser
+    - tmp-cached-zstd
 
 git:
   depth: 1
