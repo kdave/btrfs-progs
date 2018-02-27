@@ -219,6 +219,7 @@ AC_ARG_ENABLE([python],
 
 if test "x$enable_python" = xyes; then
 	AM_PATH_PYTHON([3.4])
+	PKG_CHECK_MODULES(PYTHON, [python3])
 fi
 
 AS_IF([test "x$enable_python" = xyes], [PYTHON_BINDINGS=1], [PYTHON_BINDINGS=0])
