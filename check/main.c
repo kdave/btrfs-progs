@@ -5381,6 +5381,13 @@ static int check_space_cache(struct btrfs_root *root)
 	return error ? -EINVAL : 0;
 }
 
+/*
+ * Check data checksum for [@bytenr, @bytenr + @num_bytes).
+ *
+ * Return <0 for fatal error (fails to read checksum/data or allocate memory).
+ * Return >0 for csum mismatch for any copy.
+ * Return 0 if everything is OK.
+ */
 static int check_extent_csums(struct btrfs_root *root, u64 bytenr,
 			u64 num_bytes, unsigned long leaf_offset,
 			struct extent_buffer *eb)
@@ -5398,6 +5405,7 @@ static int check_extent_csums(struct btrfs_root *root, u64 bytenr,
 	int ret = 0;
 	int mirror;
 	int num_copies;
+	bool csum_mismatch = false;
 
 	if (num_bytes % fs_info->sectorsize)
 		return -EINVAL;
@@ -5435,11 +5443,13 @@ static int check_extent_csums(struct btrfs_root *root, u64 bytenr,
 					 tmp / fs_info->sectorsize * csum_size;
 				read_extent_buffer(eb, (char *)&csum_expected,
 						   csum_offset, csum_size);
-				if (csum != csum_expected)
+				if (csum != csum_expected) {
+					csum_mismatch = true;
 					fprintf(stderr,
 			"mirror %d bytenr %llu csum %u expected csum %u\n",
 						mirror, bytenr + tmp,
 						csum, csum_expected);
+				}
 				data_checked += fs_info->sectorsize;
 			}
 		}
@@ -5447,6 +5457,8 @@ static int check_extent_csums(struct btrfs_root *root, u64 bytenr,
 	}
 out:
 	free(data);
+	if (!ret && csum_mismatch)
+		ret = 1;
 	return ret;
 }
 
@@ -5666,6 +5678,8 @@ static int check_csums(struct btrfs_root *root)
 		 */
 		if (ret < 0)
 			break;
+		if (ret > 0)
+			errors++;
 skip_csum_check:
 		if (!num_bytes) {
 			offset = key.offset;
