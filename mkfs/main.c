@@ -1203,6 +1203,11 @@ raid_groups:
 		goto out;
 	}
 
+	ret = create_tree(trans, root, BTRFS_UUID_TREE_OBJECTID);
+	if (ret)
+		warning(
+	"unable to create uuid tree, will be created after mount: %d", ret);
+
 	ret = btrfs_commit_transaction(trans, root);
 	if (ret) {
 		error("unable to commit transaction: %d", ret);
