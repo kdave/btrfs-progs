@@ -9859,7 +9859,11 @@ int cmd_check(int argc, char **argv)
 		goto out;
 	}
 
-	fprintf(stderr, "checking csums\n");
+	if (check_data_csum)
+		fprintf(stderr, "checking csums against data\n");
+	else
+		fprintf(stderr,
+			"checking only csum items (without verifying data)\n");
 	ret = check_csums(root);
 	/*
 	 * Data csum error is not fatal, and it may indicate more serious
