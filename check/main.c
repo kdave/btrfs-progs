@@ -9861,11 +9861,13 @@ int cmd_check(int argc, char **argv)
 
 	fprintf(stderr, "checking csums\n");
 	ret = check_csums(root);
-	err |= !!ret;
-	if (ret) {
+	/*
+	 * Data csum error is not fatal, and it may indicate more serious
+	 * corruption, continue checking.
+	 */
+	if (ret)
 		error("errors found in csum tree");
-		goto out;
-	}
+	err |= !!ret;
 
 	fprintf(stderr, "checking root refs\n");
 	/* For low memory mode, check_fs_roots_v2 handles root refs */
