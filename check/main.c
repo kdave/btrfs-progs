@@ -5406,42 +5406,42 @@ static int check_extent_csums(struct btrfs_root *root, u64 bytenr,
 	if (!data)
 		return -ENOMEM;
 
+	num_copies = btrfs_num_copies(root->fs_info, bytenr, num_bytes);
 	while (offset < num_bytes) {
-		mirror = 0;
-again:
-		read_len = num_bytes - offset;
-		/* read as much space once a time */
-		ret = read_extent_data(fs_info, data + offset,
-				bytenr + offset, &read_len, mirror);
-		if (ret)
-			goto out;
-		data_checked = 0;
-		/* verify every 4k data's checksum */
-		while (data_checked < read_len) {
-			csum = ~(u32)0;
-			tmp = offset + data_checked;
+		/*
+		 * Mirror 0 means 'read from any valid copy', so it's skipped.
+		 * The indexes 1-N represent the n-th copy for levels with
+		 * redundancy.
+		 */
+		for (mirror = 1; mirror <= num_copies; mirror++) {
+			read_len = num_bytes - offset;
+			/* read as much space once a time */
+			ret = read_extent_data(fs_info, data + offset,
+					bytenr + offset, &read_len, mirror);
+			if (ret)
+				goto out;
 
-			csum = btrfs_csum_data((char *)data + tmp,
-					       csum, fs_info->sectorsize);
-			btrfs_csum_final(csum, (u8 *)&csum);
+			data_checked = 0;
+			/* verify every 4k data's checksum */
+			while (data_checked < read_len) {
+				csum = ~(u32)0;
+				tmp = offset + data_checked;
 
-			csum_offset = leaf_offset +
-				 tmp / fs_info->sectorsize * csum_size;
-			read_extent_buffer(eb, (char *)&csum_expected,
-					   csum_offset, csum_size);
-			/* try another mirror */
-			if (csum != csum_expected) {
-				fprintf(stderr, "mirror %d bytenr %llu csum %u expected csum %u\n",
+				csum = btrfs_csum_data((char *)data + tmp,
+						csum, fs_info->sectorsize);
+				btrfs_csum_final(csum, (u8 *)&csum);
+
+				csum_offset = leaf_offset +
+					 tmp / fs_info->sectorsize * csum_size;
+				read_extent_buffer(eb, (char *)&csum_expected,
+						   csum_offset, csum_size);
+				if (csum != csum_expected)
+					fprintf(stderr,
+			"mirror %d bytenr %llu csum %u expected csum %u\n",
 						mirror, bytenr + tmp,
 						csum, csum_expected);
-				num_copies = btrfs_num_copies(root->fs_info,
-						bytenr, num_bytes);
-				if (mirror < num_copies - 1) {
-					mirror += 1;
-					goto again;
-				}
+				data_checked += fs_info->sectorsize;
 			}
-			data_checked += fs_info->sectorsize;
 		}
 		offset += read_len;
 	}
@@ -5660,7 +5660,11 @@ static int check_csums(struct btrfs_root *root)
 		leaf_offset = btrfs_item_ptr_offset(leaf, path.slots[0]);
 		ret = check_extent_csums(root, key.offset, data_len,
 					 leaf_offset, leaf);
-		if (ret)
+		/*
+		 * Only break for fatal errors, if mismatch is found, continue
+		 * checking until all extents are checked.
+		 */
+		if (ret < 0)
 			break;
 skip_csum_check:
 		if (!num_bytes) {
