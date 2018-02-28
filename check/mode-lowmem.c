@@ -2689,8 +2689,8 @@ static int check_extent_data_item(struct btrfs_root *root,
 		/* Didn't find inlined data backref, try EXTENT_DATA_REF_KEY */
 		dbref_key.objectid = btrfs_file_extent_disk_bytenr(eb, fi);
 		dbref_key.type = BTRFS_EXTENT_DATA_REF_KEY;
-		dbref_key.offset = hash_extent_data_ref(root->objectid,
-				fi_key.objectid, fi_key.offset - offset);
+		dbref_key.offset = hash_extent_data_ref(owner, fi_key.objectid,
+							fi_key.offset - offset);
 
 		ret = btrfs_search_slot(NULL, root->fs_info->extent_root,
 					&dbref_key, &path, 0, 0);
