@@ -2631,9 +2631,9 @@ static int check_extent_data_item(struct btrfs_root *root,
 
 	if (!(extent_flags & BTRFS_EXTENT_FLAG_DATA)) {
 		error(
-		    "extent[%llu %llu] backref type mismatch, wanted bit: %llx",
-		    disk_bytenr, disk_num_bytes,
-		    BTRFS_EXTENT_FLAG_DATA);
+"file extent[%llu %llu] root %llu owner %llu backref type mismatch, wanted bit: %llx",
+			fi_key.objectid, fi_key.offset, root->objectid, owner,
+			BTRFS_EXTENT_FLAG_DATA);
 		err |= BACKREF_MISMATCH;
 	}
 
@@ -2722,8 +2722,9 @@ out:
 		err |= BACKREF_MISSING;
 	btrfs_release_path(&path);
 	if (err & BACKREF_MISSING) {
-		error("data extent[%llu %llu] backref lost",
-		      disk_bytenr, disk_num_bytes);
+		error(
+		"file extent[%llu %llu] root %llu owner %llu backref lost",
+			fi_key.objectid, fi_key.offset, root->objectid, owner);
 	}
 	return err;
 }
