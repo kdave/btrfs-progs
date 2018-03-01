@@ -560,6 +560,8 @@ static void print_inode_error(struct btrfs_root *root, struct inode_record *rec)
 		fprintf(stderr, ", bad file extent");
 	if (errors & I_ERR_FILE_EXTENT_OVERLAP)
 		fprintf(stderr, ", file extent overlap");
+	if (errors & I_ERR_FILE_EXTENT_TOO_LARGE)
+		fprintf(stderr, ", inline file extent too large");
 	if (errors & I_ERR_FILE_EXTENT_DISCOUNT)
 		fprintf(stderr, ", file extent discount");
 	if (errors & I_ERR_DIR_ISIZE_WRONG)
@@ -1461,6 +1463,8 @@ static int process_file_extent(struct btrfs_root *root,
 		num_bytes = btrfs_file_extent_inline_len(eb, slot, fi);
 		if (num_bytes == 0)
 			rec->errors |= I_ERR_BAD_FILE_EXTENT;
+		if (num_bytes > BTRFS_MAX_INLINE_DATA_SIZE(root->fs_info))
+			rec->errors |= I_ERR_FILE_EXTENT_TOO_LARGE;
 		rec->found_size += num_bytes;
 		num_bytes = (num_bytes + mask) & ~mask;
 	} else if (extent_type == BTRFS_FILE_EXTENT_REG ||
