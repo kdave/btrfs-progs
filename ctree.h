@@ -20,6 +20,7 @@
 #define __BTRFS_CTREE_H__
 
 #include <stdbool.h>
+#include "internal.h"
 
 #if BTRFS_FLAT_INCLUDES
 #include "list.h"
@@ -1205,8 +1206,14 @@ static inline u32 BTRFS_NODEPTRS_PER_BLOCK(const struct btrfs_fs_info *info)
 	(offsetof(struct btrfs_file_extent_item, disk_bytenr))
 static inline u32 BTRFS_MAX_INLINE_DATA_SIZE(const struct btrfs_fs_info *info)
 {
-	return BTRFS_MAX_ITEM_SIZE(info) -
-		BTRFS_FILE_EXTENT_INLINE_DATA_START;
+	/*
+	 * Inline extent larger than pagesize could lead to kernel unexpected
+	 * error when dropping extents, so we need to limit the inline extent
+	 * size to less than sectorsize.
+	 */
+	return min_t(u32, info->sectorsize - 1,
+		     BTRFS_MAX_ITEM_SIZE(info) -
+		     BTRFS_FILE_EXTENT_INLINE_DATA_START);
 }
 
 static inline u32 BTRFS_MAX_XATTR_SIZE(const struct btrfs_fs_info *info)
