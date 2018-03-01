@@ -1417,6 +1417,7 @@ static int check_file_extent(struct btrfs_root *root, struct btrfs_key *fkey,
 	u64 csum_found;		/* In byte size, sectorsize aligned */
 	u64 search_start;	/* Logical range start we search for csum */
 	u64 search_len;		/* Logical range len we search for csum */
+	u32 max_inline_extent_size = BTRFS_MAX_INLINE_DATA_SIZE(root->fs_info);
 	unsigned int extent_type;
 	unsigned int is_hole;
 	int compressed = 0;
@@ -1438,6 +1439,13 @@ static int check_file_extent(struct btrfs_root *root, struct btrfs_key *fkey,
 			error(
 		"root %llu EXTENT_DATA[%llu %llu] has empty inline extent",
 				root->objectid, fkey->objectid, fkey->offset);
+			err |= FILE_EXTENT_ERROR;
+		}
+		if (extent_num_bytes > max_inline_extent_size) {
+			error(
+"root %llu EXTENT_DATA[%llu %llu] too large inline extent size, have %llu, max: %u",
+				root->objectid, fkey->objectid, fkey->offset,
+				extent_num_bytes, max_inline_extent_size);
 			err |= FILE_EXTENT_ERROR;
 		}
 		if (!compressed && extent_num_bytes != item_inline_len) {
