@@ -87,6 +87,12 @@ struct btrfs_qgroup_info {
 	u64 exclusive_compressed;
 };
 
+struct btrfs_qgroup_stats {
+	u64 qgroupid;
+	struct btrfs_qgroup_info info;
+	struct btrfs_qgroup_limit limit;
+};
+
 int btrfs_qgroup_parse_sort_string(const char *opt_arg,
 				struct btrfs_qgroup_comparer_set **comps);
 int btrfs_show_qgroups(int fd, struct btrfs_qgroup_filter_set *,
@@ -105,4 +111,5 @@ int qgroup_inherit_add_group(struct btrfs_qgroup_inherit **inherit, char *arg);
 int qgroup_inherit_add_copy(struct btrfs_qgroup_inherit **inherit, char *arg,
 			    int type);
 
+int btrfs_qgroup_query(int fd, u64 qgroupid, struct btrfs_qgroup_stats *stats);
 #endif
