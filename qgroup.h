@@ -79,6 +79,14 @@ enum btrfs_qgroup_filter_enum {
 	BTRFS_QGROUP_FILTER_MAX,
 };
 
+struct btrfs_qgroup_info {
+	u64 generation;
+	u64 referenced;
+	u64 referenced_compressed;
+	u64 exclusive;
+	u64 exclusive_compressed;
+};
+
 int btrfs_qgroup_parse_sort_string(const char *opt_arg,
 				struct btrfs_qgroup_comparer_set **comps);
 int btrfs_show_qgroups(int fd, struct btrfs_qgroup_filter_set *,
