@@ -60,8 +60,8 @@ void usage_unknown_option(const char * const *usagestr, char **argv);
 
 __attribute__((noreturn))
 void usage(const char * const *usagestr);
-void usage_command(const struct cmd_struct *cmd, int full, int err);
-void usage_command_group(const struct cmd_group *grp, int all, int err);
+void usage_command(const struct cmd_struct *cmd, bool full, bool err);
+void usage_command_group(const struct cmd_group *grp, bool all, bool err);
 void usage_command_group_short(const struct cmd_group *grp);
 
 __attribute__((noreturn))
