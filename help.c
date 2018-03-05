@@ -196,8 +196,8 @@ static int do_usage_one_command(const char * const *usagestr,
 }
 
 static int usage_command_internal(const char * const *usagestr,
-				  const char *token, int full, int lst,
-				  int alias, FILE *outf)
+				  const char *token, bool full, bool lst,
+				  bool alias, FILE *outf)
 {
 	unsigned int flags = 0;
 	int ret;
@@ -223,17 +223,17 @@ static int usage_command_internal(const char * const *usagestr,
 }
 
 static void usage_command_usagestr(const char * const *usagestr,
-				   const char *token, int full, int err)
+				   const char *token, bool full, bool err)
 {
 	FILE *outf = err ? stderr : stdout;
 	int ret;
 
-	ret = usage_command_internal(usagestr, token, full, 0, 0, outf);
+	ret = usage_command_internal(usagestr, token, full, false, false, outf);
 	if (!ret)
 		fputc('\n', outf);
 }
 
-void usage_command(const struct cmd_struct *cmd, int full, int err)
+void usage_command(const struct cmd_struct *cmd, bool full, bool err)
 {
 	usage_command_usagestr(cmd->usagestr, cmd->token, full, err);
 }
@@ -241,11 +241,11 @@ void usage_command(const struct cmd_struct *cmd, int full, int err)
 __attribute__((noreturn))
 void usage(const char * const *usagestr)
 {
-	usage_command_usagestr(usagestr, NULL, 1, 1);
+	usage_command_usagestr(usagestr, NULL, true, true);
 	exit(1);
 }
 
-static void usage_command_group_internal(const struct cmd_group *grp, int full,
+static void usage_command_group_internal(const struct cmd_group *grp, bool full,
 					 FILE *outf)
 {
 	const struct cmd_struct *cmd = grp->commands;
@@ -265,7 +265,8 @@ static void usage_command_group_internal(const struct cmd_group *grp, int full,
 			}
 
 			usage_command_internal(cmd->usagestr, cmd->token, full,
-					       1, cmd->flags & CMD_ALIAS, outf);
+					       true, cmd->flags & CMD_ALIAS,
+					       outf);
 			if (cmd->flags & CMD_ALIAS)
 				putchar('\n');
 			continue;
@@ -327,7 +328,7 @@ void usage_command_group_short(const struct cmd_group *grp)
 	fprintf(stderr, "All command groups have their manual page named 'btrfs-<group>'.\n");
 }
 
-void usage_command_group(const struct cmd_group *grp, int full, int err)
+void usage_command_group(const struct cmd_group *grp, bool full, bool err)
 {
 	const char * const *usagestr = grp->usagestr;
 	FILE *outf = err ? stderr : stdout;
@@ -350,7 +351,7 @@ __attribute__((noreturn))
 void help_unknown_token(const char *arg, const struct cmd_group *grp)
 {
 	fprintf(stderr, "%s: unknown token '%s'\n", get_argv0_buf(), arg);
-	usage_command_group(grp, 0, 1);
+	usage_command_group(grp, false, true);
 	exit(1);
 }
 
@@ -372,13 +373,13 @@ void help_ambiguous_token(const char *arg, const struct cmd_group *grp)
 
 void help_command_group(const struct cmd_group *grp, int argc, char **argv)
 {
-	int full = 0;
+	bool full = false;
 
 	if (argc > 1) {
 		if (!strcmp(argv[1], "--full"))
 			full = 1;
 	}
 
-	usage_command_group(grp, full, 0);
+	usage_command_group(grp, full, false);
 }
 

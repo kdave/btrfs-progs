@@ -109,7 +109,7 @@ static void handle_help_options_next_level(const struct cmd_struct *cmd,
 			argv++;
 			help_command_group(cmd->next, argc, argv);
 		} else {
-			usage_command(cmd, 1, 0);
+			usage_command(cmd, true, false);
 		}
 
 		exit(0);
@@ -125,7 +125,7 @@ int handle_command_group(const struct cmd_group *grp, int argc,
 	argc--;
 	argv++;
 	if (argc < 1) {
-		usage_command_group(grp, 0, 0);
+		usage_command_group(grp, false, false);
 		exit(1);
 	}
 
@@ -212,20 +212,20 @@ static int handle_global_options(int argc, char **argv)
 
 void handle_special_globals(int shift, int argc, char **argv)
 {
-	int has_help = 0;
-	int has_full = 0;
+	bool has_help = false;
+	bool has_full = false;
 	int i;
 
 	for (i = 0; i < shift; i++) {
 		if (strcmp(argv[i], "--help") == 0)
-			has_help = 1;
+			has_help = true;
 		else if (strcmp(argv[i], "--full") == 0)
-			has_full = 1;
+			has_full = true;
 	}
 
 	if (has_help) {
 		if (has_full)
-			usage_command_group(&btrfs_cmd_group, 1, 0);
+			usage_command_group(&btrfs_cmd_group, true, false);
 		else
 			cmd_help(argc, argv);
 		exit(0);
