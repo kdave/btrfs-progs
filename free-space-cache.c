@@ -54,8 +54,7 @@ static int io_ctl_init(struct io_ctl *io_ctl, u64 size, u64 ino,
 		       struct btrfs_root *root)
 {
 	memset(io_ctl, 0, sizeof(struct io_ctl));
-	io_ctl->num_pages = (size + root->fs_info->sectorsize - 1) /
-				root->fs_info->sectorsize;
+	io_ctl->num_pages = DIV_ROUND_UP(size, root->fs_info->sectorsize);
 	io_ctl->buffer = kzalloc(size, GFP_NOFS);
 	if (!io_ctl->buffer)
 		return -ENOMEM;
