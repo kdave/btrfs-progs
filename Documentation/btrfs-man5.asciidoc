@@ -14,9 +14,11 @@ tools.  Currently covers:
 
 2. filesystem features
 
-3. file attributes
+3. filesystem limits
 
-4. control device
+4. file attributes
+
+5. control device
 
 
 MOUNT OPTIONS
@@ -607,6 +609,40 @@ the filesystem contains or contained a raid56 profile of block groups
 (since: 3.10)
 +
 reduced-size metadata for extent references, saves a few percent of metadata
+
+
+FILESYSTEM LIMITS
+-----------------
+
+maximum file name length::
+255
+
+maximum symlink target length::
+depends on the 'nodesize' value, for 4k it's 3949 bytes, for larger nodesize
+it's 4095
++
+The symlink target may not be a valid path, ie the path name components
+can exceed the limits, there's no content validation at `symlink`(3) creation.
+
+maximum number of inodes::
+2^64^ but depends on the available metadata space as the inodes are created
+dynamically
+
+inode numbers::
+minimum number: 256 (for subvolumes), regular files and directories: 257
+
+maximum file length::
+inherent limit of btrfs is 2^64^ (16 EiB) but the linux VFS limit is 2^63^ (8 EiB)
+
+maximum number of subvolumes::
+2^64^ but depends on the available metadata space, the space consumed by all
+subvolume metadata includes bookeeping of the shared extents can be large (MiB,
+GiB)
+
+maximum number of hardlinks of a file in a directory::
+65536 when the `extref` feature is turned on during mkfs (default), roughly
+100 otherwise
+
 
 FILE ATTRIBUTES
 ---------------
