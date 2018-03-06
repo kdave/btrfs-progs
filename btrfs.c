@@ -26,7 +26,7 @@
 #include "common/help.h"
 
 static const char * const btrfs_cmd_group_usage[] = {
-	"btrfs [--help] [--version] <group> [<group>...] <command> [<args>]",
+	"btrfs [--help] [--version] [--format <format>] <group> [<group>...] <command> [<args>]",
 	NULL
 };
 
@@ -98,6 +98,19 @@ parse_command_token(const char *arg, const struct cmd_group *grp)
 	return cmd;
 }
 
+static void check_output_format(const struct cmd_struct *cmd)
+{
+	if (cmd->next)
+		return;
+
+	if (!(cmd->flags & bconf.output_format & CMD_FORMAT_MASK)) {
+		fprintf(stderr,
+			"ERROR: output format %s is unsupported for this command\n",
+			output_format_name(bconf.output_format));
+		exit(1);
+	}
+}
+
 static void handle_help_options_next_level(const struct cmd_struct *cmd,
 		int argc, char **argv)
 {
@@ -132,6 +145,7 @@ int handle_command_group(const struct cmd_struct *cmd, int argc,
 	subcmd = parse_command_token(argv[0], cmd->next);
 
 	handle_help_options_next_level(subcmd, argc, argv);
+	check_output_format(subcmd);
 
 	fixup_argv0(argv, subcmd->token);
 	return cmd_execute(subcmd, argc, argv);
@@ -168,6 +182,39 @@ static int cmd_version(const struct cmd_struct *unused, int argc, char **argv)
 }
 static DEFINE_SIMPLE_COMMAND(version, "version");
 
+static void print_output_formats(FILE *outf)
+{
+	int i;
+
+	fputs("Options for --format are:", outf);
+	for (i = 0; i < ARRAY_SIZE(output_formats); i++)
+		fprintf(outf, "%s%s", i ? ", " : " ", output_formats[i].name);
+	fputs("\n", outf);
+}
+
+static void handle_output_format(const char *format)
+{
+	int i;
+	bool found = false;
+
+	for (i = 0; i < ARRAY_SIZE(output_formats); i++) {
+		if (!strcasecmp(format, output_formats[i].name)) {
+			bconf.output_format = output_formats[i].value;
+			found = true;
+			break;
+		}
+	}
+
+	/* Print error for invalid format */
+	if (!found) {
+		bconf.output_format = CMD_FORMAT_TEXT;
+		fprintf(stderr, "error: invalid output format \"%s\"\n\n",
+			format);
+		print_output_formats(stderr);
+		exit(1);
+	}
+}
+
 /*
  * Parse global options, between binary name and first non-option argument
  * after processing all valid options (including those with arguments).
@@ -176,10 +223,11 @@ static DEFINE_SIMPLE_COMMAND(version, "version");
  */
 static int handle_global_options(int argc, char **argv)
 {
-	enum { OPT_HELP = 256, OPT_VERSION, OPT_FULL };
+	enum { OPT_HELP = 256, OPT_VERSION, OPT_FULL, OPT_FORMAT };
 	static const struct option long_options[] = {
 		{ "help", no_argument, NULL, OPT_HELP },
 		{ "version", no_argument, NULL, OPT_VERSION },
+		{ "format", required_argument, NULL, OPT_FORMAT },
 		{ "full", no_argument, NULL, OPT_FULL },
 		{ NULL, 0, NULL, 0}
 	};
@@ -200,6 +248,9 @@ static int handle_global_options(int argc, char **argv)
 		case OPT_HELP: break;
 		case OPT_VERSION: break;
 		case OPT_FULL: break;
+		case OPT_FORMAT:
+			handle_output_format(optarg);
+			break;
 		default:
 			fprintf(stderr, "Unknown global option: %s\n",
 					argv[optind - 1]);
@@ -231,6 +282,7 @@ static void handle_special_globals(int shift, int argc, char **argv)
 			usage_command_group(&btrfs_cmd_group, true, false);
 		else
 			cmd_execute(&cmd_struct_help, argc, argv);
+		print_output_formats(stdout);
 		exit(0);
 	}
 

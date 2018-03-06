@@ -55,6 +55,18 @@
 struct cmd_struct;
 struct cmd_group;
 
+/*
+ * Descriptor of output format
+ */
+struct format_desc {
+	unsigned int value;
+	char name[8];
+};
+
+extern const struct format_desc output_formats[1];
+
+const char *output_format_name(unsigned int value);
+
 __attribute__((noreturn))
 void usage_unknown_option(const struct cmd_struct *cmd, char **argv);
 

@@ -20,7 +20,10 @@
 enum {
 	CMD_HIDDEN = (1 << 0),	/* should not be in help listings */
 	CMD_ALIAS = (1 << 1),	/* alias of next command in cmd_group */
+	CMD_FORMAT_TEXT = (1 << 2),	/* output as plain text */
 };
+
+#define CMD_FORMAT_MASK		(CMD_FORMAT_TEXT)
 
 struct cmd_struct {
 	const char *token;
@@ -72,7 +75,7 @@ struct cmd_struct {
 			.fn = (_fn),					\
 			.usagestr = (_usagestr),			\
 			.next = (_group),				\
-			.flags = (_flags),				\
+			.flags = CMD_FORMAT_TEXT | (_flags),		\
 		}
 
 /*

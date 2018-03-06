@@ -28,6 +28,11 @@
 #define USAGE_LONG		2U
 #define USAGE_OPTIONS		4U
 #define USAGE_LISTING		8U
+#define USAGE_FORMAT		16U
+
+const struct format_desc output_formats[1] = {
+	{ .value = CMD_FORMAT_TEXT,	.name = "text" },
+};
 
 static char argv0_buf[ARGV0_BUF_SIZE] = "btrfs";
 
@@ -124,8 +129,21 @@ void clean_args_no_options_relaxed(const struct cmd_struct *cmd,
 		optind = 2;
 }
 
+const char *output_format_name(unsigned int value)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(output_formats); i++) {
+		if (output_formats[i].value == value)
+			return output_formats[i].name;
+	}
+
+	return "UNKNOWN";
+}
+
 static int do_usage_one_command(const char * const *usagestr,
-				unsigned int flags, FILE *outf)
+				unsigned int flags, unsigned int cmd_flags,
+				FILE *outf)
 {
 	int pad = 4;
 	const char *prefix = "usage: ";
@@ -196,8 +214,9 @@ static int do_usage_one_command(const char * const *usagestr,
 }
 
 static int usage_command_internal(const char * const *usagestr,
-				  const char *token, bool full, bool lst,
-				  bool alias, FILE *outf)
+				  const char *token, unsigned cmd_flags,
+				  bool full,
+				  bool lst, bool alias, FILE *outf)
 {
 	unsigned int flags = 0;
 	int ret;
@@ -205,11 +224,11 @@ static int usage_command_internal(const char * const *usagestr,
 	if (!alias)
 		flags |= USAGE_SHORT;
 	if (full)
-		flags |= USAGE_LONG | USAGE_OPTIONS;
+		flags |= USAGE_LONG | USAGE_OPTIONS | USAGE_FORMAT;
 	if (lst)
 		flags |= USAGE_LISTING;
 
-	ret = do_usage_one_command(usagestr, flags, outf);
+	ret = do_usage_one_command(usagestr, flags, cmd_flags, outf);
 	switch (ret) {
 	case -1:
 		fprintf(outf, "No usage for '%s'\n", token);
@@ -223,19 +242,22 @@ static int usage_command_internal(const char * const *usagestr,
 }
 
 static void usage_command_usagestr(const char * const *usagestr,
-				   const char *token, bool full, bool err)
+				   const char *token, unsigned int flags,
+				   bool full, bool err)
 {
 	FILE *outf = err ? stderr : stdout;
 	int ret;
 
-	ret = usage_command_internal(usagestr, token, full, false, false, outf);
+	ret = usage_command_internal(usagestr, token, flags,
+				     full, false, false, outf);
 	if (!ret)
 		fputc('\n', outf);
 }
 
 void usage_command(const struct cmd_struct *cmd, bool full, bool err)
 {
-	usage_command_usagestr(cmd->usagestr, cmd->token, full, err);
+	usage_command_usagestr(cmd->usagestr, cmd->token,
+			       cmd->flags, full, err);
 }
 
 __attribute__((noreturn))
@@ -286,7 +308,7 @@ void usage_unknown_option(const struct cmd_struct *cmd, char **argv)
 __attribute__((noreturn))
 void usage(const struct cmd_struct *cmd)
 {
-	usage_command_usagestr(cmd->usagestr, NULL, true, true);
+	usage_command_usagestr(cmd->usagestr, NULL, 0, true, true);
 	exit(1);
 }
 
@@ -310,7 +332,8 @@ static void usage_command_group_internal(const struct cmd_group *grp, bool full,
 				do_sep = 0;
 			}
 
-			usage_command_internal(cmd->usagestr, cmd->token, full,
+			usage_command_internal(cmd->usagestr, cmd->token,
+					       cmd->flags, full,
 					       true, cmd->flags & CMD_ALIAS,
 					       outf);
 			if (cmd->flags & CMD_ALIAS)

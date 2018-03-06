@@ -177,6 +177,7 @@ void print_all_devices(struct list_head *devices);
  * functions without extra context passing.
  */
 struct btrfs_config {
+	unsigned int output_format;
 };
 extern struct btrfs_config bconf;
 

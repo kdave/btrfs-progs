@@ -2610,6 +2610,7 @@ u8 rand_u8(void)
 
 void btrfs_config_init(void)
 {
+	bconf.output_format = CMD_FORMAT_TEXT;
 }
 
 /* Returns total size of main memory in bytes, -1UL if error. */
