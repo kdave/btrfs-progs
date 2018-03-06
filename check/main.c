@@ -9392,7 +9392,8 @@ static const char * const cmd_check_usage[] = {
 	NULL
 };
 
-static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
+static int cmd_check(const struct cmd_struct *cmd,
+		     const struct cmd_context *cmdcxt, int argc, char **argv)
 {
 	struct cache_tree root_cache;
 	struct btrfs_root *root;

@@ -1569,7 +1569,9 @@ static const char * const cmd_scrub_start_usage[] = {
 	NULL
 };
 
-static int cmd_scrub_start(const struct cmd_struct *cmd, int argc, char **argv)
+static int cmd_scrub_start(const struct cmd_struct *cmd,
+			   const struct cmd_context *cmdcxt,
+			   int argc, char **argv)
 {
 	return scrub_start(cmd, argc, argv, false);
 }
@@ -1581,7 +1583,9 @@ static const char * const cmd_scrub_cancel_usage[] = {
 	NULL
 };
 
-static int cmd_scrub_cancel(const struct cmd_struct *cmd, int argc, char **argv)
+static int cmd_scrub_cancel(const struct cmd_struct *cmd,
+			    const struct cmd_context *cmdcxt,
+			    int argc, char **argv)
 {
 	char *path;
 	int ret;
@@ -1636,7 +1640,9 @@ static const char * const cmd_scrub_resume_usage[] = {
 	NULL
 };
 
-static int cmd_scrub_resume(const struct cmd_struct *cmd, int argc, char **argv)
+static int cmd_scrub_resume(const struct cmd_struct *cmd,
+			    const struct cmd_context *cmdcxt,
+			    int argc, char **argv)
 {
 	return scrub_start(cmd, argc, argv, true);
 }
@@ -1651,7 +1657,9 @@ static const char * const cmd_scrub_status_usage[] = {
 	NULL
 };
 
-static int cmd_scrub_status(const struct cmd_struct *cmd, int argc, char **argv)
+static int cmd_scrub_status(const struct cmd_struct *cmd,
+			    const struct cmd_context *cmdcxt,
+			    int argc, char **argv)
 {
 	char *path;
 	struct btrfs_ioctl_fs_info_args fi_args;
@@ -1797,9 +1805,10 @@ static const struct cmd_group scrub_cmd_group = {
 	}
 };
 
-static int cmd_scrub(const struct cmd_struct *unused, int argc, char **argv)
+static int cmd_scrub(const struct cmd_struct *unused,
+		     const struct cmd_context *cmdcxt, int argc, char **argv)
 {
-	return handle_command_group(&scrub_cmd_group, argc, argv);
+	return handle_command_group(&scrub_cmd_group, cmdcxt, argc, argv);
 }
 
 DEFINE_GROUP_COMMAND_TOKEN(scrub);

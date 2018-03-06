@@ -55,6 +55,8 @@
 struct cmd_struct;
 struct cmd_group;
 
+extern const char *cmd_outputs[];
+
 __attribute__((noreturn))
 void usage(const struct cmd_struct *cmd);
 void usage_command(const struct cmd_struct *cmd, bool full, bool err);

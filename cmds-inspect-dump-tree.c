@@ -204,6 +204,7 @@ static const char * const cmd_inspect_dump_tree_usage[] = {
 };
 
 static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
+				 const struct cmd_context *cmdcxt,
 				 int argc, char **argv)
 {
 	struct btrfs_root *root;

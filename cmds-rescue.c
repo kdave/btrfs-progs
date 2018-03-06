@@ -46,6 +46,7 @@ static const char * const cmd_rescue_chunk_recover_usage[] = {
 };
 
 static int cmd_rescue_chunk_recover(const struct cmd_struct *cmd,
+				    const struct cmd_context *cmdcxt,
 				    int argc, char *argv[])
 {
 	int ret = 0;
@@ -115,6 +116,7 @@ static const char * const cmd_rescue_super_recover_usage[] = {
  *   4 : Abort to recover bad superblocks
  */
 static int cmd_rescue_super_recover(const struct cmd_struct *cmd,
+				    const struct cmd_context *cmdcxt,
 				    int argc, char **argv)
 {
 	int ret;
@@ -162,6 +164,7 @@ static const char * const cmd_rescue_zero_log_usage[] = {
 };
 
 static int cmd_rescue_zero_log(const struct cmd_struct *cmd,
+			       const struct cmd_context *cmdcxt,
 			       int argc, char **argv)
 {
 	struct btrfs_root *root;
@@ -217,6 +220,7 @@ static const char * const cmd_rescue_fix_device_size_usage[] = {
 };
 
 static int cmd_rescue_fix_device_size(const struct cmd_struct *cmd,
+				      const struct cmd_context *cmdcxt,
 				      int argc, char **argv)
 {
 	struct btrfs_fs_info *fs_info;
@@ -269,8 +273,9 @@ static const struct cmd_group rescue_cmd_group = {
 	}
 };
 
-static int cmd_rescue(const struct cmd_struct *unused, int argc, char **argv)
+static int cmd_rescue(const struct cmd_struct *unused,
+		      const struct cmd_context *cmdcxt, int argc, char **argv)
 {
-	return handle_command_group(&rescue_cmd_group, argc, argv);
+	return handle_command_group(&rescue_cmd_group, cmdcxt, argc, argv);
 }
 DEFINE_GROUP_COMMAND_TOKEN(rescue);

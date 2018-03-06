@@ -17,6 +17,17 @@
 #ifndef __BTRFS_COMMANDS_H__
 #define __BTRFS_COMMANDS_H__
 
+enum cmd_output {
+	CMD_OUTPUT_TEXT = 0,
+	CMD_OUTPUT_MAX,
+};
+
+#define CMD_OUTPUT_FLAG(x)	(1 << (CMD_OUTPUT_##x))
+
+struct cmd_context {
+	enum cmd_output output_mode;
+};
+
 enum {
 	CMD_HIDDEN = (1 << 0),	/* should not be in help listings */
 	CMD_ALIAS = (1 << 1),	/* alias of next command in cmd_group */
@@ -24,7 +35,8 @@ enum {
 
 struct cmd_struct {
 	const char *token;
-	int (*fn)(const struct cmd_struct *cmd, int argc, char **argv);
+	int (*fn)(const struct cmd_struct *cmd,
+		  const struct cmd_context *cmdcxt, int argc, char **argv);
 
 	/*
 	 * Usage strings
@@ -54,6 +66,8 @@ struct cmd_struct {
 
 	/* CMD_* flags above */
 	int flags;
+
+	unsigned int cmd_format_flags;
 };
 
 /*
@@ -65,7 +79,8 @@ struct cmd_struct {
 	extern const struct cmd_struct __CMD_NAME(name)
 
 /* Define a command with all members specified */
-#define DEFINE_COMMAND(name, _token, _fn, _usagestr, _group, _flags)	\
+#define DEFINE_COMMAND(name, _token, _fn, _usagestr, _group, _flags,	\
+		       _cmd_format_flags)				\
 	const struct cmd_struct __CMD_NAME(name) =			\
 		{							\
 			.token = (_token),				\
@@ -73,6 +88,7 @@ struct cmd_struct {
 			.usagestr = (_usagestr),			\
 			.next = (_group),				\
 			.flags = (_flags),				\
+			.cmd_format_flags = (_cmd_format_flags),	\
 		}
 
 /*
@@ -82,7 +98,7 @@ struct cmd_struct {
  */
 #define DEFINE_SIMPLE_COMMAND(name, token)				\
 	DEFINE_COMMAND(name, token, cmd_ ##name,			\
-		       cmd_ ##name ##_usage, NULL, 0)
+		       cmd_ ##name ##_usage, NULL, 0, 0)
 
 /*
  * Define a command group callback.
@@ -91,7 +107,7 @@ struct cmd_struct {
  */
 #define DEFINE_GROUP_COMMAND(name, token)				\
 	DEFINE_COMMAND(name, token, cmd_ ##name,			\
-		       NULL, &(name ## _cmd_group), 0)
+		       NULL, &(name ## _cmd_group), 0, 0)
 
 /*
  * Define a command group callback when the name and the string are
@@ -108,13 +124,15 @@ struct cmd_group {
 };
 
 static inline int cmd_execute(const struct cmd_struct *cmd,
+			      const struct cmd_context *cmdcxt,
 			      int argc, char **argv)
 {
-	return cmd->fn(cmd, argc, argv);
+	return cmd->fn(cmd, cmdcxt, argc, argv);
 }
 
-int handle_command_group(const struct cmd_group *grp, int argc,
-			 char **argv);
+int handle_command_group(const struct cmd_group *grp,
+			 const struct cmd_context *cmdcxt,
+			 int argc, char **argv);
 
 extern const char * const generic_cmd_help_usage[];
 

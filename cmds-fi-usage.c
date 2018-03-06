@@ -965,6 +965,7 @@ static const char * const cmd_filesystem_usage_usage[] = {
 };
 
 static int cmd_filesystem_usage(const struct cmd_struct *cmd,
+				const struct cmd_context *cmdcxt,
 				int argc, char **argv)
 {
 	int ret = 0;

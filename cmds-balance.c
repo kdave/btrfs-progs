@@ -516,6 +516,7 @@ static const char * const cmd_balance_start_usage[] = {
 };
 
 static int cmd_balance_start(const struct cmd_struct *cmd,
+			     const struct cmd_context *cmdcxt,
 			     int argc, char **argv)
 {
 	struct btrfs_ioctl_balance_args args;
@@ -682,6 +683,7 @@ static const char * const cmd_balance_pause_usage[] = {
 };
 
 static int cmd_balance_pause(const struct cmd_struct *cmd,
+			     const struct cmd_context *cmdcxt,
 			     int argc, char **argv)
 {
 	const char *path;
@@ -722,6 +724,7 @@ static const char * const cmd_balance_cancel_usage[] = {
 };
 
 static int cmd_balance_cancel(const struct cmd_struct *cmd,
+			      const struct cmd_context *cmdcxt,
 			      int argc, char **argv)
 {
 	const char *path;
@@ -762,6 +765,7 @@ static const char * const cmd_balance_resume_usage[] = {
 };
 
 static int cmd_balance_resume(const struct cmd_struct *cmd,
+			      const struct cmd_context *cmdcxt,
 			      int argc, char **argv)
 {
 	struct btrfs_ioctl_balance_args args;
@@ -831,6 +835,7 @@ static const char * const cmd_balance_status_usage[] = {
  *   0 : When there is no pending balance or completed
  */
 static int cmd_balance_status(const struct cmd_struct *cmd,
+			      const struct cmd_context *cmdcxt,
 			      int argc, char **argv)
 {
 	struct btrfs_ioctl_balance_args args;
@@ -909,7 +914,9 @@ out:
 }
 static DEFINE_SIMPLE_COMMAND(balance_status, "status");
 
-static int cmd_balance_full(const struct cmd_struct *cmd, int argc, char **argv)
+static int cmd_balance_full(const struct cmd_struct *cmd,
+			    const struct cmd_context *cmdcxt,
+			    int argc, char **argv)
 {
 	struct btrfs_ioctl_balance_args args;
 
@@ -919,7 +926,7 @@ static int cmd_balance_full(const struct cmd_struct *cmd, int argc, char **argv)
 	return do_balance(argv[1], &args, BALANCE_START_NOWARN);
 }
 static DEFINE_COMMAND(balance_full, "--full-balance", cmd_balance_full,
-		      NULL, NULL, CMD_HIDDEN);
+		      NULL, NULL, CMD_HIDDEN, 0);
 
 static const char balance_cmd_group_info[] =
 "balance data across devices, or change block groups using filters";
@@ -936,7 +943,8 @@ static const struct cmd_group balance_cmd_group = {
 	}
 };
 
-static int cmd_balance(const struct cmd_struct *unused, int argc, char **argv)
+static int cmd_balance(const struct cmd_struct *unused,
+		       const struct cmd_context *cmdcxt, int argc, char **argv)
 {
 	if (argc == 2 && strcmp("start", argv[1]) != 0) {
 		/* old 'btrfs filesystem balance <path>' syntax */
@@ -948,7 +956,7 @@ static int cmd_balance(const struct cmd_struct *unused, int argc, char **argv)
 		return do_balance(argv[1], &args, 0);
 	}
 
-	return handle_command_group(&balance_cmd_group, argc, argv);
+	return handle_command_group(&balance_cmd_group, cmdcxt, argc, argv);
 }
 
 DEFINE_GROUP_COMMAND(balance, "balance");

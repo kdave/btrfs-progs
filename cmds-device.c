@@ -49,6 +49,7 @@ static const char * const cmd_device_add_usage[] = {
 };
 
 static int cmd_device_add(const struct cmd_struct *cmd,
+			  const struct cmd_context *cmdcxt,
 			  int argc, char **argv)
 {
 	char	*mntpnt;
@@ -144,6 +145,7 @@ error_out:
 static DEFINE_SIMPLE_COMMAND(device_add, "add");
 
 static int _cmd_device_remove(const struct cmd_struct *cmd,
+			      const struct cmd_context *cmdcxt,
 			      int argc, char **argv)
 {
 	char	*mntpnt;
@@ -238,9 +240,10 @@ static const char * const cmd_device_remove_usage[] = {
 };
 
 static int cmd_device_remove(const struct cmd_struct *cmd,
+			     const struct cmd_context *cmdcxt,
 			     int argc, char **argv)
 {
-	return _cmd_device_remove(cmd, argc, argv);
+	return _cmd_device_remove(cmd, cmdcxt, argc, argv);
 }
 static DEFINE_SIMPLE_COMMAND(device_remove, "remove");
 
@@ -253,12 +256,13 @@ static const char * const cmd_device_delete_usage[] = {
 };
 
 static int cmd_device_delete(const struct cmd_struct *cmd,
+			     const struct cmd_context *cmdcxt,
 			     int argc, char **argv)
 {
-	return _cmd_device_remove(cmd, argc, argv);
+	return _cmd_device_remove(cmd, cmdcxt, argc, argv);
 }
 static DEFINE_COMMAND(device_delete, "delete", cmd_device_delete,
-		      cmd_device_delete_usage, NULL, CMD_ALIAS);
+		      cmd_device_delete_usage, NULL, CMD_ALIAS, 0);
 
 static const char * const cmd_device_scan_usage[] = {
 	"btrfs device scan [(-d|--all-devices)|<device> [<device>...]]",
@@ -267,7 +271,9 @@ static const char * const cmd_device_scan_usage[] = {
 	NULL
 };
 
-static int cmd_device_scan(const struct cmd_struct *cmd, int argc, char **argv)
+static int cmd_device_scan(const struct cmd_struct *cmd,
+			   const struct cmd_context *cmdcxt,
+			   int argc, char **argv)
 {
 	int i;
 	int devstart;
@@ -340,7 +346,9 @@ static const char * const cmd_device_ready_usage[] = {
 	NULL
 };
 
-static int cmd_device_ready(const struct cmd_struct *cmd, int argc, char **argv)
+static int cmd_device_ready(const struct cmd_struct *cmd,
+			    const struct cmd_context *cmdcxt,
+			    int argc, char **argv)
 {
 	struct	btrfs_ioctl_vol_args args;
 	int	fd;
@@ -399,7 +407,9 @@ static const char * const cmd_device_stats_usage[] = {
 	NULL
 };
 
-static int cmd_device_stats(const struct cmd_struct *cmd, int argc, char **argv)
+static int cmd_device_stats(const struct cmd_struct *cmd,
+			    const struct cmd_context *cmdcxt,
+			    int argc, char **argv)
 {
 	char *dev_path;
 	struct btrfs_ioctl_fs_info_args fi_args;
@@ -565,7 +575,9 @@ out:
 	return ret;
 }
 
-static int cmd_device_usage(const struct cmd_struct *cmd, int argc, char **argv)
+static int cmd_device_usage(const struct cmd_struct *cmd,
+			    const struct cmd_context *cmdcxt,
+			    int argc, char **argv)
 {
 	unsigned unit_mode;
 	int ret = 0;
@@ -618,8 +630,9 @@ static const struct cmd_group device_cmd_group = {
 	}
 };
 
-static int cmd_device(const struct cmd_struct *unused, int argc, char **argv)
+static int cmd_device(const struct cmd_struct *unused,
+		      const struct cmd_context *cmdcxt, int argc, char **argv)
 {
-	return handle_command_group(&device_cmd_group, argc, argv);
+	return handle_command_group(&device_cmd_group, cmdcxt, argc, argv);
 }
 DEFINE_GROUP_COMMAND_TOKEN(device);

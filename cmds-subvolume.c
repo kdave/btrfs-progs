@@ -91,6 +91,7 @@ static const char * const cmd_subvol_create_usage[] = {
 };
 
 static int cmd_subvol_create(const struct cmd_struct *cmd,
+			     const struct cmd_context *cmdcxt,
 			     int argc, char **argv)
 {
 	int	retval, res, len;
@@ -233,6 +234,7 @@ static const char * const cmd_subvol_delete_usage[] = {
 };
 
 static int cmd_subvol_delete(const struct cmd_struct *cmd,
+			     const struct cmd_context *cmdcxt,
 			     int argc, char **argv)
 {
 	int res, ret = 0;
@@ -453,7 +455,9 @@ static const char * const cmd_subvol_list_usage[] = {
 	NULL,
 };
 
-static int cmd_subvol_list(const struct cmd_struct *cmd, int argc, char **argv)
+static int cmd_subvol_list(const struct cmd_struct *cmd,
+			   const struct cmd_context *cmdcxt,
+			   int argc, char **argv)
 {
 	struct btrfs_list_filter_set *filter_set;
 	struct btrfs_list_comparer_set *comparer_set;
@@ -626,6 +630,7 @@ static const char * const cmd_subvol_snapshot_usage[] = {
 };
 
 static int cmd_subvol_snapshot(const struct cmd_struct *cmd,
+			       const struct cmd_context *cmdcxt,
 			       int argc, char **argv)
 {
 	char	*subvol, *dst;
@@ -774,6 +779,7 @@ static const char * const cmd_subvol_get_default_usage[] = {
 };
 
 static int cmd_subvol_get_default(const struct cmd_struct *cmd,
+				  const struct cmd_context *cmdcxt,
 				  int argc, char **argv)
 {
 	int fd = -1;
@@ -840,6 +846,7 @@ static const char * const cmd_subvol_set_default_usage[] = {
 };
 
 static int cmd_subvol_set_default(const struct cmd_struct *cmd,
+				  const struct cmd_context *cmdcxt,
 				  int argc, char **argv)
 {
 	u64 objectid;
@@ -878,6 +885,7 @@ static const char * const cmd_subvol_find_new_usage[] = {
 };
 
 static int cmd_subvol_find_new(const struct cmd_struct *cmd,
+			       const struct cmd_context *cmdcxt,
 			       int argc, char **argv)
 {
 	int fd;
@@ -930,7 +938,9 @@ static const char * const cmd_subvol_show_usage[] = {
 	NULL
 };
 
-static int cmd_subvol_show(const struct cmd_struct *cmd, int argc, char **argv)
+static int cmd_subvol_show(const struct cmd_struct *cmd,
+			   const struct cmd_context *cmdcxt,
+			   int argc, char **argv)
 {
 	char tstr[256];
 	char uuidparse[BTRFS_UUID_UNPARSED_SIZE];
@@ -1185,7 +1195,9 @@ static const char * const cmd_subvol_sync_usage[] = {
 	NULL
 };
 
-static int cmd_subvol_sync(const struct cmd_struct *cmd, int argc, char **argv)
+static int cmd_subvol_sync(const struct cmd_struct *cmd,
+			   const struct cmd_context *cmdcxt,
+			   int argc, char **argv)
 {
 	int fd = -1;
 	int ret = 1;
@@ -1295,9 +1307,9 @@ static const struct cmd_group subvolume_cmd_group = {
 	}
 };
 
-static int cmd_subvolume(const struct cmd_struct *unused,
-			 int argc, char **argv)
+int cmd_subvolume(const struct cmd_struct *unused,
+		  const struct cmd_context *cmdcxt, int argc, char **argv)
 {
-	return handle_command_group(&subvolume_cmd_group, argc, argv);
+	return handle_command_group(&subvolume_cmd_group, cmdcxt, argc, argv);
 }
 DEFINE_GROUP_COMMAND_TOKEN(subvolume);

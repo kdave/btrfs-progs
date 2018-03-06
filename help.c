@@ -28,6 +28,11 @@
 #define USAGE_LONG		2U
 #define USAGE_OPTIONS		4U
 #define USAGE_LISTING		8U
+#define USAGE_FORMAT		16U
+
+const char *cmd_outputs[CMD_OUTPUT_MAX] = {
+	"text",
+};
 
 static char argv0_buf[ARGV0_BUF_SIZE] = "btrfs";
 
@@ -126,6 +131,7 @@ void clean_args_no_options_relaxed(const struct cmd_struct *cmd,
 }
 
 static int do_usage_one_command(const char * const *usagestr,
+				unsigned int format_flags,
 				unsigned int flags, FILE *outf)
 {
 	int pad = 4;
@@ -193,12 +199,32 @@ static int do_usage_one_command(const char * const *usagestr,
 	while (*usagestr)
 		fprintf(outf, "%*s%s\n", pad, "", *usagestr++);
 
+	if (flags & USAGE_FORMAT) {
+		/* We always support text */
+		format_flags |= (1 << CMD_OUTPUT_TEXT);
+
+		fputs("\n\tThis command supports output in ", outf);
+		if (format_flags == (1 << CMD_OUTPUT_TEXT))
+			fputs("text mode only.\n", outf);
+		else {
+			int i;
+
+			fputs("the following formats:", outf);
+			for (i = 0; i < CMD_OUTPUT_MAX; i++) {
+				if (format_flags & (1 << i))
+					fprintf(outf, " %s", cmd_outputs[i]);
+			}
+			fputs("\n", outf);
+		}
+	}
+
 	return 0;
 }
 
 static int usage_command_internal(const char * const *usagestr,
-				  const char *token, bool full, bool lst,
-				  bool alias, FILE *outf)
+				  const char *token,
+				  unsigned int format_flags, bool full,
+				  bool lst, bool alias, FILE *outf)
 {
 	unsigned int flags = 0;
 	int ret;
@@ -206,11 +232,11 @@ static int usage_command_internal(const char * const *usagestr,
 	if (!alias)
 		flags |= USAGE_SHORT;
 	if (full)
-		flags |= USAGE_LONG | USAGE_OPTIONS;
+		flags |= USAGE_LONG | USAGE_OPTIONS | USAGE_FORMAT;
 	if (lst)
 		flags |= USAGE_LISTING;
 
-	ret = do_usage_one_command(usagestr, flags, outf);
+	ret = do_usage_one_command(usagestr, format_flags, flags, outf);
 	switch (ret) {
 	case -1:
 		fprintf(outf, "No usage for '%s'\n", token);
@@ -224,25 +250,28 @@ static int usage_command_internal(const char * const *usagestr,
 }
 
 static void usage_command_usagestr(const char * const *usagestr,
-				   const char *token, bool full, bool err)
+				   const char *token, unsigned int format_flags,
+				   bool full, bool err)
 {
 	FILE *outf = err ? stderr : stdout;
 	int ret;
 
-	ret = usage_command_internal(usagestr, token, full, false, false, outf);
+	ret = usage_command_internal(usagestr, token, format_flags,
+				     full, false, false, outf);
 	if (!ret)
 		fputc('\n', outf);
 }
 
 void usage_command(const struct cmd_struct *cmd, bool full, bool err)
 {
-	usage_command_usagestr(cmd->usagestr, cmd->token, full, err);
+	usage_command_usagestr(cmd->usagestr, cmd->token,
+			       cmd->cmd_format_flags, full, err);
 }
 
 __attribute__((noreturn))
 void usage(const struct cmd_struct *cmd)
 {
-	usage_command_usagestr(cmd->usagestr, NULL, true, true);
+	usage_command_usagestr(cmd->usagestr, NULL, 0, true, true);
 	exit(1);
 }
 
@@ -266,7 +295,8 @@ static void usage_command_group_internal(const struct cmd_group *grp, bool full,
 				do_sep = 0;
 			}
 
-			usage_command_internal(cmd->usagestr, cmd->token, full,
+			usage_command_internal(cmd->usagestr, cmd->token,
+					       cmd->cmd_format_flags, full,
 					       true, cmd->flags & CMD_ALIAS,
 					       outf);
 			if (cmd->flags & CMD_ALIAS)
@@ -377,7 +407,8 @@ void help_ambiguous_token(const char *arg, const struct cmd_group *grp)
 	exit(1);
 }
 
-void help_command_group(const struct cmd_group *grp, int argc, char **argv)
+void help_command_group(const struct cmd_group *grp, int argc,
+			char **argv)
 {
 	bool full = false;
 

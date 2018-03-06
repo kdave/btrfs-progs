@@ -218,6 +218,7 @@ static const char * const cmd_qgroup_assign_usage[] = {
 };
 
 static int cmd_qgroup_assign(const struct cmd_struct *cmd,
+			     const struct cmd_context *cmdcxt,
 			     int argc, char **argv)
 {
 	return _cmd_qgroup_assign(cmd, 1, argc, argv);
@@ -231,6 +232,7 @@ static const char * const cmd_qgroup_remove_usage[] = {
 };
 
 static int cmd_qgroup_remove(const struct cmd_struct *cmd,
+			     const struct cmd_context *cmdcxt,
 			     int argc, char **argv)
 {
 	return _cmd_qgroup_assign(cmd, 0, argc, argv);
@@ -244,6 +246,7 @@ static const char * const cmd_qgroup_create_usage[] = {
 };
 
 static int cmd_qgroup_create(const struct cmd_struct *cmd,
+			     const struct cmd_context *cmdcxt,
 			     int argc, char **argv)
 {
 	int ret;
@@ -265,6 +268,7 @@ static const char * const cmd_qgroup_destroy_usage[] = {
 };
 
 static int cmd_qgroup_destroy(const struct cmd_struct *cmd,
+			      const struct cmd_context *cmdcxt,
 			      int argc, char **argv)
 {
 	int ret;
@@ -302,7 +306,9 @@ static const char * const cmd_qgroup_show_usage[] = {
 	NULL
 };
 
-static int cmd_qgroup_show(const struct cmd_struct *cmd, int argc, char **argv)
+static int cmd_qgroup_show(const struct cmd_struct *cmd,
+			   const struct cmd_context *cmdcxt,
+			   int argc, char **argv)
 {
 	char *path;
 	int ret = 0;
@@ -438,7 +444,9 @@ static const char * const cmd_qgroup_limit_usage[] = {
 	NULL
 };
 
-static int cmd_qgroup_limit(const struct cmd_struct *cmd, int argc, char **argv)
+static int cmd_qgroup_limit(const struct cmd_struct *cmd,
+			    const struct cmd_context *cmdcxt,
+			    int argc, char **argv)
 {
 	int ret = 0;
 	int fd;
@@ -533,8 +541,9 @@ static const struct cmd_group qgroup_cmd_group = {
 	}
 };
 
-static int cmd_qgroup(const struct cmd_struct *unused, int argc, char **argv)
+static int cmd_qgroup(const struct cmd_struct *unused,
+		      const struct cmd_context *cmdcxt, int argc, char **argv)
 {
-	return handle_command_group(&qgroup_cmd_group, argc, argv);
+	return handle_command_group(&qgroup_cmd_group, cmdcxt, argc, argv);
 }
 DEFINE_GROUP_COMMAND_TOKEN(qgroup);

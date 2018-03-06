@@ -523,7 +523,8 @@ static const char * const cmd_send_usage[] = {
 	NULL
 };
 
-static int cmd_send(const struct cmd_struct *cmd, int argc, char **argv)
+static int cmd_send(const struct cmd_struct *cmd,
+		    const struct cmd_context *cmdcxt, int argc, char **argv)
 {
 	char *subvol = NULL;
 	int ret;

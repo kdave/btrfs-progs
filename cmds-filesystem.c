@@ -118,6 +118,7 @@ static void print_df(struct btrfs_ioctl_space_args *sargs, unsigned unit_mode)
 }
 
 static int cmd_filesystem_df(const struct cmd_struct *cmd,
+			     const struct cmd_context *cmdcxt,
 			     int argc, char **argv)
 {
 	struct btrfs_ioctl_space_args *sargs = NULL;
@@ -670,6 +671,7 @@ static const char * const cmd_filesystem_show_usage[] = {
 };
 
 static int cmd_filesystem_show(const struct cmd_struct *cmd,
+			       const struct cmd_context *cmdcxt,
 			       int argc, char **argv)
 {
 	LIST_HEAD(all_uuids);
@@ -818,6 +820,7 @@ static const char * const cmd_filesystem_sync_usage[] = {
 };
 
 static int cmd_filesystem_sync(const struct cmd_struct *cmd,
+			       const struct cmd_context *cmdcxt,
 			       int argc, char **argv)
 {
 	enum btrfs_util_error err;
@@ -907,6 +910,7 @@ error:
 }
 
 static int cmd_filesystem_defrag(const struct cmd_struct *cmd,
+				 const struct cmd_context *cmdcxt,
 				 int argc, char **argv)
 {
 	int fd;
@@ -1087,6 +1091,7 @@ static const char * const cmd_filesystem_resize_usage[] = {
 };
 
 static int cmd_filesystem_resize(const struct cmd_struct *cmd,
+				 const struct cmd_context *cmdcxt,
 				 int argc, char **argv)
 {
 	struct btrfs_ioctl_vol_args	args;
@@ -1166,6 +1171,7 @@ static const char * const cmd_filesystem_label_usage[] = {
 };
 
 static int cmd_filesystem_label(const struct cmd_struct *cmd,
+				const struct cmd_context *cmdcxt,
 				int argc, char **argv)
 {
 	clean_args_no_options(cmd, argc, argv);
@@ -1196,9 +1202,10 @@ static const char * const cmd_filesystem_balance_usage[] = {
 };
 
 static int cmd_filesystem_balance(const struct cmd_struct *unused,
+				  const struct cmd_context *cmdcxt,
 				  int argc, char **argv)
 {
-	return cmd_execute(&cmd_struct_balance, argc, argv);
+	return cmd_execute(&cmd_struct_balance, cmdcxt, argc, argv);
 }
 
 /*
@@ -1208,7 +1215,7 @@ static int cmd_filesystem_balance(const struct cmd_struct *unused,
  * for historical compatibility and is hidden.
  */
 static DEFINE_COMMAND(filesystem_balance, "balance", cmd_filesystem_balance,
-		      cmd_filesystem_balance_usage, NULL, CMD_HIDDEN);
+		      cmd_filesystem_balance_usage, NULL, CMD_HIDDEN, 0);
 
 static const char filesystem_cmd_group_info[] =
 "overall filesystem tasks and information";
@@ -1229,8 +1236,9 @@ static const struct cmd_group filesystem_cmd_group = {
 };
 
 static int cmd_filesystem(const struct cmd_struct *unused,
+			  const struct cmd_context *cmdcxt,
 			  int argc, char **argv)
 {
-	return handle_command_group(&filesystem_cmd_group, argc, argv);
+	return handle_command_group(&filesystem_cmd_group, cmdcxt, argc, argv);
 }
 DEFINE_GROUP_COMMAND_TOKEN(filesystem);

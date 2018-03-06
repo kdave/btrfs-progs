@@ -508,6 +508,7 @@ static const char * const cmd_inspect_dump_super_usage[] = {
 };
 
 static int cmd_inspect_dump_super(const struct cmd_struct *cmd,
+				  const struct cmd_context *cmdcxt,
 				  int argc, char **argv)
 {
 	int all = 0;

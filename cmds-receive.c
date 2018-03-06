@@ -1279,7 +1279,8 @@ static const char * const cmd_receive_usage[] = {
 	NULL
 };
 
-static int cmd_receive(const struct cmd_struct *cmd, int argc, char **argv)
+static int cmd_receive(const struct cmd_struct *cmd,
+		       const struct cmd_context *cmdcxt, int argc, char **argv)
 {
 	char *tomnt = NULL;
 	char fromfile[PATH_MAX];

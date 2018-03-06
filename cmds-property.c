@@ -341,6 +341,7 @@ static const char * const cmd_property_get_usage[] = {
 };
 
 static int cmd_property_get(const struct cmd_struct *cmd,
+			    const struct cmd_context *cmdcxt,
 			    int argc, char **argv)
 {
 	int ret;
@@ -368,6 +369,7 @@ static const char * const cmd_property_set_usage[] = {
 };
 
 static int cmd_property_set(const struct cmd_struct *cmd,
+			    const struct cmd_context *cmdcxt,
 			    int argc, char **argv)
 {
 	int ret;
@@ -393,6 +395,7 @@ static const char * const cmd_property_list_usage[] = {
 };
 
 static int cmd_property_list(const struct cmd_struct *cmd,
+			     const struct cmd_context *cmdcxt,
 			     int argc, char **argv)
 {
 	int ret;
@@ -420,8 +423,9 @@ static const struct cmd_group property_cmd_group = {
 };
 
 static int cmd_property(const struct cmd_struct *unused,
+			const struct cmd_context *cmdcxt,
 			int argc, char **argv)
 {
-	return handle_command_group(&property_cmd_group, argc, argv);
+	return handle_command_group(&property_cmd_group, cmdcxt, argc, argv);
 }
 DEFINE_GROUP_COMMAND_TOKEN(property);

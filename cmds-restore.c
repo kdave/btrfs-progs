@@ -1422,7 +1422,8 @@ static const char * const cmd_restore_usage[] = {
 	NULL
 };
 
-static int cmd_restore(const struct cmd_struct *cmd, int argc, char **argv)
+static int cmd_restore(const struct cmd_struct *cmd,
+		       const struct cmd_context *cmdcxt, int argc, char **argv)
 {
 	struct btrfs_root *root;
 	struct btrfs_key key;
