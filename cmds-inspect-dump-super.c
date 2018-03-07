@@ -576,12 +576,12 @@ static int cmd_inspect_dump_super(const struct cmd_struct *cmd,
 			all = 0;
 			break;
 		default:
-			usage(cmd_inspect_dump_super_usage);
+			usage(cmd);
 		}
 	}
 
 	if (check_argc_min(argc - optind, 1))
-		usage(cmd_inspect_dump_super_usage);
+		usage(cmd);
 
 	for (i = optind; i < argc; i++) {
 		filename = argv[i];

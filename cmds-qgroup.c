@@ -76,7 +76,7 @@ static int _cmd_qgroup_assign(const struct cmd_struct *cmd, int assign,
 	}
 
 	if (check_argc_exact(argc - optind, 3))
-		usage(cmd->usagestr);
+		usage(cmd);
 
 	memset(&args, 0, sizeof(args));
 	args.assign = assign;
@@ -253,7 +253,7 @@ static int cmd_qgroup_create(const struct cmd_struct *cmd,
 	ret = _cmd_qgroup_create(1, argc, argv);
 
 	if (ret < 0)
-		usage(cmd_qgroup_create_usage);
+		usage(cmd);
 	return ret;
 }
 static DEFINE_SIMPLE_COMMAND(qgroup_create, "create");
@@ -274,7 +274,7 @@ static int cmd_qgroup_destroy(const struct cmd_struct *cmd,
 	ret = _cmd_qgroup_create(0, argc, argv);
 
 	if (ret < 0)
-		usage(cmd_qgroup_destroy_usage);
+		usage(cmd);
 	return ret;
 }
 static DEFINE_SIMPLE_COMMAND(qgroup_destroy, "destroy");
@@ -369,7 +369,7 @@ static int cmd_qgroup_show(const struct cmd_struct *cmd, int argc, char **argv)
 			ret = btrfs_qgroup_parse_sort_string(optarg,
 							     &comparer_set);
 			if (ret)
-				usage(cmd_qgroup_show_usage);
+				usage(cmd);
 			break;
 		case GETOPT_VAL_SYNC:
 			sync = 1;
@@ -378,13 +378,13 @@ static int cmd_qgroup_show(const struct cmd_struct *cmd, int argc, char **argv)
 			verbose = true;
 			break;
 		default:
-			usage(cmd_qgroup_show_usage);
+			usage(cmd);
 		}
 	}
 	btrfs_qgroup_setup_units(unit_mode);
 
 	if (check_argc_exact(argc - optind, 1))
-		usage(cmd_qgroup_show_usage);
+		usage(cmd);
 
 	path = argv[optind];
 	fd = btrfs_open_dir(path, &dirstream, 1);
@@ -462,12 +462,12 @@ static int cmd_qgroup_limit(const struct cmd_struct *cmd, int argc, char **argv)
 			exclusive = 1;
 			break;
 		default:
-			usage(cmd_qgroup_limit_usage);
+			usage(cmd);
 		}
 	}
 
 	if (check_argc_min(argc - optind, 2))
-		usage(cmd_qgroup_limit_usage);
+		usage(cmd);
 
 	if (!parse_limit(argv[optind], &size)) {
 		error("invalid size argument: %s", argv[optind]);
@@ -502,7 +502,7 @@ static int cmd_qgroup_limit(const struct cmd_struct *cmd, int argc, char **argv)
 		args.qgroupid = parse_qgroupid(argv[optind + 1]);
 		path = argv[optind + 2];
 	} else
-		usage(cmd_qgroup_limit_usage);
+		usage(cmd);
 
 	fd = btrfs_open_dir(path, &dirstream, 1);
 	if (fd < 0)

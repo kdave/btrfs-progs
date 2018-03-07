@@ -585,12 +585,12 @@ static int cmd_balance_start(const struct cmd_struct *cmd,
 			background = 1;
 			break;
 		default:
-			usage(cmd_balance_start_usage);
+			usage(cmd);
 		}
 	}
 
 	if (check_argc_exact(argc - optind, 1))
-		usage(cmd_balance_start_usage);
+		usage(cmd);
 
 	/*
 	 * allow -s only under --force, otherwise do with system chunks
@@ -692,7 +692,7 @@ static int cmd_balance_pause(const struct cmd_struct *cmd,
 	clean_args_no_options(cmd, argc, argv);
 
 	if (check_argc_exact(argc - optind, 1))
-		usage(cmd_balance_pause_usage);
+		usage(cmd);
 
 	path = argv[optind];
 
@@ -732,7 +732,7 @@ static int cmd_balance_cancel(const struct cmd_struct *cmd,
 	clean_args_no_options(cmd, argc, argv);
 
 	if (check_argc_exact(argc - optind, 1))
-		usage(cmd_balance_cancel_usage);
+		usage(cmd);
 
 	path = argv[optind];
 
@@ -773,7 +773,7 @@ static int cmd_balance_resume(const struct cmd_struct *cmd,
 	clean_args_no_options(cmd, argc, argv);
 
 	if (check_argc_exact(argc - optind, 1))
-		usage(cmd_balance_resume_usage);
+		usage(cmd);
 
 	path = argv[optind];
 
@@ -856,12 +856,12 @@ static int cmd_balance_status(const struct cmd_struct *cmd,
 			verbose = 1;
 			break;
 		default:
-			usage(cmd_balance_status_usage);
+			usage(cmd);
 		}
 	}
 
 	if (check_argc_exact(argc - optind, 1))
-		usage(cmd_balance_status_usage);
+		usage(cmd);
 
 	path = argv[optind];
 

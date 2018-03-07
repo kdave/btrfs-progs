@@ -56,7 +56,7 @@ struct cmd_struct;
 struct cmd_group;
 
 __attribute__((noreturn))
-void usage(const char * const *usagestr);
+void usage(const struct cmd_struct *cmd);
 void usage_command(const struct cmd_struct *cmd, bool full, bool err);
 void usage_command_group(const struct cmd_group *grp, bool all, bool err);
 void usage_command_group_short(const struct cmd_group *grp);

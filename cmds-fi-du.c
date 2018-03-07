@@ -580,12 +580,12 @@ static int cmd_filesystem_du(const struct cmd_struct *cmd,
 			summarize = 1;
 			break;
 		default:
-			usage(cmd_filesystem_du_usage);
+			usage(cmd);
 		}
 	}
 
 	if (check_argc_min(argc - optind, 1))
-		usage(cmd_filesystem_du_usage);
+		usage(cmd);
 
 	kernel_version = get_running_kernel_version();
 

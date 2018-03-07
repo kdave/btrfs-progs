@@ -132,7 +132,7 @@ static int cmd_filesystem_df(const struct cmd_struct *cmd,
 	clean_args_no_options(cmd, argc, argv);
 
 	if (check_argc_exact(argc - optind, 1))
-		usage(cmd_filesystem_df_usage);
+		usage(cmd);
 
 	path = argv[optind];
 
@@ -707,17 +707,17 @@ static int cmd_filesystem_show(const struct cmd_struct *cmd,
 			where = BTRFS_SCAN_MOUNTED;
 			break;
 		default:
-			usage(cmd_filesystem_show_usage);
+			usage(cmd);
 		}
 	}
 
 	if (check_argc_max(argc, optind + 1))
-		usage(cmd_filesystem_show_usage);
+		usage(cmd);
 
 	if (argc > optind) {
 		search = argv[optind];
 		if (*search == 0)
-			usage(cmd_filesystem_show_usage);
+			usage(cmd);
 		type = check_arg_type(search);
 
 		/*
@@ -825,7 +825,7 @@ static int cmd_filesystem_sync(const struct cmd_struct *cmd,
 	clean_args_no_options(cmd, argc, argv);
 
 	if (check_argc_exact(argc - optind, 1))
-		usage(cmd_filesystem_sync_usage);
+		usage(cmd);
 
 	err = btrfs_util_sync(argv[optind]);
 	if (err) {
@@ -967,12 +967,12 @@ static int cmd_filesystem_defrag(const struct cmd_struct *cmd,
 			recursive = 1;
 			break;
 		default:
-			usage(cmd_filesystem_defrag_usage);
+			usage(cmd);
 		}
 	}
 
 	if (check_argc_min(argc - optind, 1))
-		usage(cmd_filesystem_defrag_usage);
+		usage(cmd);
 
 	memset(&defrag_global_range, 0, sizeof(defrag_global_range));
 	defrag_global_range.start = start;
@@ -1098,7 +1098,7 @@ static int cmd_filesystem_resize(const struct cmd_struct *cmd,
 	clean_args_no_options_relaxed(cmd, argc, argv);
 
 	if (check_argc_exact(argc - optind, 2))
-		usage(cmd_filesystem_resize_usage);
+		usage(cmd);
 
 	amount = argv[optind];
 	path = argv[optind + 1];
@@ -1172,7 +1172,7 @@ static int cmd_filesystem_label(const struct cmd_struct *cmd,
 
 	if (check_argc_min(argc - optind, 1) ||
 			check_argc_max(argc - optind, 2))
-		usage(cmd_filesystem_label_usage);
+		usage(cmd);
 
 	if (argc - optind > 1) {
 		return set_label(argv[optind], argv[optind + 1]);

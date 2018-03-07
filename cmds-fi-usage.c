@@ -987,12 +987,12 @@ static int cmd_filesystem_usage(const struct cmd_struct *cmd,
 			tabular = 1;
 			break;
 		default:
-			usage(cmd_filesystem_usage_usage);
+			usage(cmd);
 		}
 	}
 
 	if (check_argc_min(argc - optind, 1))
-		usage(cmd_filesystem_usage_usage);
+		usage(cmd);
 
 	for (i = optind; i < argc; i++) {
 		int fd;

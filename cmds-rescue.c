@@ -66,12 +66,12 @@ static int cmd_rescue_chunk_recover(const struct cmd_struct *cmd,
 			break;
 		case 'h':
 		default:
-			usage(cmd_rescue_chunk_recover_usage);
+			usage(cmd);
 		}
 	}
 
 	if (check_argc_exact(argc - optind, 1))
-		usage(cmd_rescue_chunk_recover_usage);
+		usage(cmd);
 
 	file = argv[optind];
 
@@ -134,11 +134,11 @@ static int cmd_rescue_super_recover(const struct cmd_struct *cmd,
 			yes = 1;
 			break;
 		default:
-			usage(cmd_rescue_super_recover_usage);
+			usage(cmd);
 		}
 	}
 	if (check_argc_exact(argc - optind, 1))
-		usage(cmd_rescue_super_recover_usage);
+		usage(cmd);
 
 	dname = argv[optind];
 	ret = check_mounted(dname);
@@ -173,7 +173,7 @@ static int cmd_rescue_zero_log(const struct cmd_struct *cmd,
 	clean_args_no_options(cmd, argc, argv);
 
 	if (check_argc_exact(argc, 2))
-		usage(cmd_rescue_zero_log_usage);
+		usage(cmd);
 
 	devname = argv[optind];
 	ret = check_mounted(devname);
@@ -226,7 +226,7 @@ static int cmd_rescue_fix_device_size(const struct cmd_struct *cmd,
 	clean_args_no_options(cmd, argc, argv);
 
 	if (check_argc_exact(argc, 2))
-		usage(cmd_rescue_fix_device_size_usage);
+		usage(cmd);
 
 	devname = argv[optind];
 	ret = check_mounted(devname);

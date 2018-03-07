@@ -1092,10 +1092,8 @@ static int is_scrub_running_in_kernel(int fd,
 	return 0;
 }
 
-static const char * const cmd_scrub_start_usage[];
-static const char * const cmd_scrub_resume_usage[];
-
-static int scrub_start(int argc, char **argv, bool resume)
+static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
+		       bool resume)
 {
 	int fdmnt;
 	int prg_fd = -1;
@@ -1174,17 +1172,14 @@ static int scrub_start(int argc, char **argv, bool resume)
 			break;
 		case '?':
 		default:
-			usage(resume ? cmd_scrub_resume_usage :
-						cmd_scrub_start_usage);
+			usage(cmd);
 		}
 	}
 
 	/* try to catch most error cases before forking */
 
-	if (check_argc_exact(argc - optind, 1)) {
-		usage(resume ? cmd_scrub_resume_usage :
-					cmd_scrub_start_usage);
-	}
+	if (check_argc_exact(argc - optind, 1))
+		usage(cmd);
 
 	spc.progress = NULL;
 	if (do_quiet && do_print)
@@ -1576,7 +1571,7 @@ static const char * const cmd_scrub_start_usage[] = {
 
 static int cmd_scrub_start(const struct cmd_struct *cmd, int argc, char **argv)
 {
-	return scrub_start(argc, argv, false);
+	return scrub_start(cmd, argc, argv, false);
 }
 static DEFINE_SIMPLE_COMMAND(scrub_start, "start");
 
@@ -1596,7 +1591,7 @@ static int cmd_scrub_cancel(const struct cmd_struct *cmd, int argc, char **argv)
 	clean_args_no_options(cmd, argc, argv);
 
 	if (check_argc_exact(argc - optind, 1))
-		usage(cmd_scrub_cancel_usage);
+		usage(cmd);
 
 	path = argv[optind];
 
@@ -1643,7 +1638,7 @@ static const char * const cmd_scrub_resume_usage[] = {
 
 static int cmd_scrub_resume(const struct cmd_struct *cmd, int argc, char **argv)
 {
-	return scrub_start(argc, argv, true);
+	return scrub_start(cmd, argc, argv, true);
 }
 static DEFINE_SIMPLE_COMMAND(scrub_resume, "resume");
 
@@ -1689,12 +1684,12 @@ static int cmd_scrub_status(const struct cmd_struct *cmd, int argc, char **argv)
 			break;
 		case '?':
 		default:
-			usage(cmd_scrub_status_usage);
+			usage(cmd);
 		}
 	}
 
 	if (check_argc_exact(argc - optind, 1))
-		usage(cmd_scrub_status_usage);
+		usage(cmd);
 
 	path = argv[optind];
 

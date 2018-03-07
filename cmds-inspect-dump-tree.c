@@ -304,12 +304,12 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 			follow = true;
 			break;
 		default:
-			usage(cmd_inspect_dump_tree_usage);
+			usage(cmd);
 		}
 	}
 
 	if (check_argc_exact(argc - optind, 1))
-		usage(cmd_inspect_dump_tree_usage);
+		usage(cmd);
 
 	ret = check_arg_type(argv[optind]);
 	if (ret != BTRFS_ARG_BLKDEV && ret != BTRFS_ARG_REG) {

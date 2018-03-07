@@ -256,8 +256,7 @@ out:
 
 }
 
-static void parse_args(int argc, char **argv,
-		       const char * const *usage_str,
+static void parse_args(const struct cmd_struct *cmd, int argc, char **argv,
 		       int *types, char **object,
 		       char **name, char **value, int min_nonopt_args)
 {
@@ -276,7 +275,7 @@ static void parse_args(int argc, char **argv,
 			type_str = optarg;
 			break;
 		default:
-			usage(usage_str);
+			usage(cmd);
 		}
 	}
 
@@ -287,7 +286,7 @@ static void parse_args(int argc, char **argv,
 
 	if (check_argc_min(argc - optind, min_nonopt_args) ||
 	    check_argc_max(argc - optind, max_nonopt_args))
-		usage(usage_str);
+		usage(cmd);
 
 	*types = 0;
 	if (type_str) {
@@ -304,7 +303,7 @@ static void parse_args(int argc, char **argv,
 			*types = prop_object_dev;
 		} else {
 			error("invalid object type: %s", type_str);
-			usage(usage_str);
+			usage(cmd);
 		}
 	}
 
@@ -319,11 +318,11 @@ static void parse_args(int argc, char **argv,
 		if (ret < 0) {
 			error("failed to detect object type: %s",
 				strerror(-ret));
-			usage(usage_str);
+			usage(cmd);
 		}
 		if (!*types) {
 			error("object is not a btrfs object: %s", *object);
-			usage(usage_str);
+			usage(cmd);
 		}
 	}
 }
@@ -349,8 +348,7 @@ static int cmd_property_get(const struct cmd_struct *cmd,
 	char *name = NULL;
 	int types = 0;
 
-	parse_args(argc, argv, cmd_property_get_usage, &types, &object, &name,
-		   NULL, 1);
+	parse_args(cmd, argc, argv, &types, &object, &name, NULL, 1);
 
 	if (name)
 		ret = setget_prop(types, object, name, NULL);
@@ -378,8 +376,7 @@ static int cmd_property_set(const struct cmd_struct *cmd,
 	char *value = NULL;
 	int types = 0;
 
-	parse_args(argc, argv, cmd_property_set_usage, &types,
-		   &object, &name, &value, 3);
+	parse_args(cmd, argc, argv, &types, &object, &name, &value, 3);
 
 	ret = setget_prop(types, object, name, value);
 
@@ -402,8 +399,7 @@ static int cmd_property_list(const struct cmd_struct *cmd,
 	char *object = NULL;
 	int types = 0;
 
-	parse_args(argc, argv, cmd_property_list_usage,
-		   &types, &object, NULL, NULL, 1);
+	parse_args(cmd, argc, argv, &types, &object, NULL, NULL, 1);
 
 	ret = dump_props(types, object, 1);
 

@@ -77,12 +77,12 @@ static int cmd_device_add(const struct cmd_struct *cmd,
 			force = 1;
 			break;
 		default:
-			usage(cmd_device_add_usage);
+			usage(cmd);
 		}
 	}
 
 	if (check_argc_min(argc - optind, 2))
-		usage(cmd_device_add_usage);
+		usage(cmd);
 
 	last_dev = argc - 1;
 	mntpnt = argv[last_dev];
@@ -149,12 +149,11 @@ static int _cmd_device_remove(const struct cmd_struct *cmd,
 	char	*mntpnt;
 	int i, fdmnt, ret = 0;
 	DIR	*dirstream = NULL;
-	const char * const *usagestr = cmd->usagestr;
 
 	clean_args_no_options(cmd, argc, argv);
 
 	if (check_argc_min(argc - optind, 2))
-		usage(usagestr);
+		usage(cmd);
 
 	mntpnt = argv[argc - 1];
 
@@ -290,13 +289,13 @@ static int cmd_device_scan(const struct cmd_struct *cmd, int argc, char **argv)
 			all = 1;
 			break;
 		default:
-			usage(cmd_device_scan_usage);
+			usage(cmd);
 		}
 	}
 	devstart = optind;
 
 	if (all && check_argc_max(argc - optind, 1))
-		usage(cmd_device_scan_usage);
+		usage(cmd);
 
 	if (all || argc - optind == 0) {
 		printf("Scanning for Btrfs filesystems\n");
@@ -351,7 +350,7 @@ static int cmd_device_ready(const struct cmd_struct *cmd, int argc, char **argv)
 	clean_args_no_options(cmd, argc, argv);
 
 	if (check_argc_exact(argc - optind, 1))
-		usage(cmd_device_ready_usage);
+		usage(cmd);
 
 	fd = open("/dev/btrfs-control", O_RDWR);
 	if (fd < 0) {
@@ -434,12 +433,12 @@ static int cmd_device_stats(const struct cmd_struct *cmd, int argc, char **argv)
 			break;
 		case '?':
 		default:
-			usage(cmd_device_stats_usage);
+			usage(cmd);
 		}
 	}
 
 	if (check_argc_exact(argc - optind, 1))
-		usage(cmd_device_stats_usage);
+		usage(cmd);
 
 	dev_path = argv[optind];
 
@@ -577,7 +576,7 @@ static int cmd_device_usage(const struct cmd_struct *cmd, int argc, char **argv)
 	clean_args_no_options(cmd, argc, argv);
 
 	if (check_argc_min(argc - optind, 1))
-		usage(cmd_device_usage_usage);
+		usage(cmd);
 
 	for (i = optind; i < argc; i++) {
 		int fd;

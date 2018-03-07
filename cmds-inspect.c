@@ -105,12 +105,12 @@ static int cmd_inspect_inode_resolve(const struct cmd_struct *cmd,
 			verbose = 1;
 			break;
 		default:
-			usage(cmd_inspect_inode_resolve_usage);
+			usage(cmd);
 		}
 	}
 
 	if (check_argc_exact(argc - optind, 2))
-		usage(cmd_inspect_inode_resolve_usage);
+		usage(cmd);
 
 	fd = btrfs_open_dir(argv[optind + 1], &dirstream, 1);
 	if (fd < 0)
@@ -167,12 +167,12 @@ static int cmd_inspect_logical_resolve(const struct cmd_struct *cmd,
 			size = arg_strtou64(optarg);
 			break;
 		default:
-			usage(cmd_inspect_logical_resolve_usage);
+			usage(cmd);
 		}
 	}
 
 	if (check_argc_exact(argc - optind, 2))
-		usage(cmd_inspect_logical_resolve_usage);
+		usage(cmd);
 
 	size = min(size, (u64)SZ_64K);
 	inodes = malloc(size);
@@ -280,7 +280,7 @@ static int cmd_inspect_subvolid_resolve(const struct cmd_struct *cmd,
 	clean_args_no_options(cmd, argc, argv);
 
 	if (check_argc_exact(argc - optind, 2))
-		usage(cmd_inspect_subvolid_resolve_usage);
+		usage(cmd);
 
 	fd = btrfs_open_dir(argv[optind + 1], &dirstream, 1);
 	if (fd < 0) {
@@ -323,7 +323,7 @@ static int cmd_inspect_rootid(const struct cmd_struct *cmd,
 	clean_args_no_options(cmd, argc, argv);
 
 	if (check_argc_exact(argc - optind, 1))
-		usage(cmd_inspect_rootid_usage);
+		usage(cmd);
 
 	fd = btrfs_open_file_or_dir(argv[optind], &dirstream, 1);
 	if (fd < 0) {
@@ -617,11 +617,11 @@ static int cmd_inspect_min_dev_size(const struct cmd_struct *cmd,
 			devid = arg_strtou64(optarg);
 			break;
 		default:
-			usage(cmd_inspect_min_dev_size_usage);
+			usage(cmd);
 		}
 	}
 	if (check_argc_exact(argc - optind, 1))
-		usage(cmd_inspect_min_dev_size_usage);
+		usage(cmd);
 
 	fd = btrfs_open_dir(argv[optind], &dirstream, 1);
 	if (fd < 0) {

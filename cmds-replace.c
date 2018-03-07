@@ -148,7 +148,7 @@ static int cmd_replace_start(const struct cmd_struct *cmd,
 			break;
 		case '?':
 		default:
-			usage(cmd_replace_start_usage);
+			usage(cmd);
 		}
 	}
 
@@ -157,7 +157,7 @@ static int cmd_replace_start(const struct cmd_struct *cmd,
 		 BTRFS_IOCTL_DEV_REPLACE_CONT_READING_FROM_SRCDEV_MODE_AVOID :
 		 BTRFS_IOCTL_DEV_REPLACE_CONT_READING_FROM_SRCDEV_MODE_ALWAYS;
 	if (check_argc_exact(argc - optind, 3))
-		usage(cmd_replace_start_usage);
+		usage(cmd);
 	path = argv[optind + 2];
 
 	fdmnt = open_path_or_dev_mnt(path, &dirstream, 1);
@@ -343,12 +343,12 @@ static int cmd_replace_status(const struct cmd_struct *cmd,
 			break;
 		case '?':
 		default:
-			usage(cmd_replace_status_usage);
+			usage(cmd);
 		}
 	}
 
 	if (check_argc_exact(argc - optind, 1))
-		usage(cmd_replace_status_usage);
+		usage(cmd);
 
 	path = argv[optind];
 	fd = btrfs_open_dir(path, &dirstream, 1);
@@ -510,12 +510,12 @@ static int cmd_replace_cancel(const struct cmd_struct *cmd,
 		switch (c) {
 		case '?':
 		default:
-			usage(cmd_replace_cancel_usage);
+			usage(cmd);
 		}
 	}
 
 	if (check_argc_exact(argc - optind, 1))
-		usage(cmd_replace_cancel_usage);
+		usage(cmd);
 
 	path = argv[optind];
 	fd = btrfs_open_dir(path, &dirstream, 1);

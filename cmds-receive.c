@@ -1352,9 +1352,9 @@ static int cmd_receive(const struct cmd_struct *cmd, int argc, char **argv)
 	}
 
 	if (dump && check_argc_exact(argc - optind, 0))
-		usage(cmd_receive_usage);
+		usage(cmd);
 	if (!dump && check_argc_exact(argc - optind, 1))
-		usage(cmd_receive_usage);
+		usage(cmd);
 
 	tomnt = argv[optind];
 

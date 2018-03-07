@@ -643,7 +643,7 @@ static int cmd_send(const struct cmd_struct *cmd, int argc, char **argv)
 	}
 
 	if (check_argc_min(argc - optind, 1))
-		usage(cmd_send_usage);
+		usage(cmd);
 
 	if (outname[0]) {
 		int tmpfd;

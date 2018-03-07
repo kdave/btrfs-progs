@@ -444,12 +444,12 @@ static int cmd_inspect_tree_stats(const struct cmd_struct *cmd,
 			no_pretty = 1;
 			break;
 		default:
-			usage(cmd_inspect_tree_stats_usage);
+			usage(cmd);
 		}
 	}
 
 	if (check_argc_exact(argc - optind, 1)) {
-		usage(cmd_inspect_tree_stats_usage);
+		usage(cmd);
 	}
 
 	ret = check_mounted(argv[optind]);

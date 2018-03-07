@@ -124,12 +124,12 @@ static int cmd_subvol_create(const struct cmd_struct *cmd,
 			}
 			break;
 		default:
-			usage(cmd_subvol_create_usage);
+			usage(cmd);
 		}
 	}
 
 	if (check_argc_exact(argc - optind, 1))
-		usage(cmd_subvol_create_usage);
+		usage(cmd);
 
 	dst = argv[optind];
 
@@ -275,12 +275,12 @@ static int cmd_subvol_delete(const struct cmd_struct *cmd,
 			verbose++;
 			break;
 		default:
-			usage(cmd_subvol_delete_usage);
+			usage(cmd);
 		}
 	}
 
 	if (check_argc_min(argc - optind, 1))
-		usage(cmd_subvol_delete_usage);
+		usage(cmd);
 
 	if (verbose > 0) {
 		printf("Transaction commit: %s\n",
@@ -607,7 +607,7 @@ out:
 	if (comparer_set)
 		free(comparer_set);
 	if (uerr)
-		usage(cmd_subvol_list_usage);
+		usage(cmd);
 	return !!ret;
 }
 static DEFINE_SIMPLE_COMMAND(subvol_list, "list");
@@ -673,12 +673,12 @@ static int cmd_subvol_snapshot(const struct cmd_struct *cmd,
 			}
 			break;
 		default:
-			usage(cmd_subvol_snapshot_usage);
+			usage(cmd);
 		}
 	}
 
 	if (check_argc_exact(argc - optind, 2))
-		usage(cmd_subvol_snapshot_usage);
+		usage(cmd);
 
 	subvol = argv[optind];
 	dst = argv[optind + 1];
@@ -787,7 +787,7 @@ static int cmd_subvol_get_default(const struct cmd_struct *cmd,
 	clean_args_no_options(cmd, argc, argv);
 
 	if (check_argc_exact(argc - optind, 1))
-		usage(cmd_subvol_get_default_usage);
+		usage(cmd);
 
 	fd = btrfs_open_dir(argv[1], &dirstream, 1);
 	if (fd < 0)
@@ -850,7 +850,7 @@ static int cmd_subvol_set_default(const struct cmd_struct *cmd,
 
 	if (check_argc_min(argc - optind, 1) ||
 			check_argc_max(argc - optind, 2))
-		usage(cmd_subvol_set_default_usage);
+		usage(cmd);
 
 	if (argc - optind == 1) {
 		/* path to the subvolume is specified */
@@ -890,7 +890,7 @@ static int cmd_subvol_find_new(const struct cmd_struct *cmd,
 	clean_args_no_options(cmd, argc, argv);
 
 	if (check_argc_exact(argc - optind, 2))
-		usage(cmd_subvol_find_new_usage);
+		usage(cmd);
 
 	subvol = argv[optind];
 	last_gen = arg_strtou64(argv[optind + 1]);
@@ -976,17 +976,17 @@ static int cmd_subvol_show(const struct cmd_struct *cmd, int argc, char **argv)
 			by_uuid = 1;
 			break;
 		default:
-			usage(cmd_subvol_show_usage);
+			usage(cmd);
 		}
 	}
 
 	if (check_argc_exact(argc - optind, 1))
-		usage(cmd_subvol_show_usage);
+		usage(cmd);
 
 	if (by_rootid && by_uuid) {
 		error(
 		"options --rootid and --uuid cannot be used at the same time");
-		usage(cmd_subvol_show_usage);
+		usage(cmd);
 	}
 
 	fullpath = realpath(argv[optind], NULL);
@@ -1211,12 +1211,12 @@ static int cmd_subvol_sync(const struct cmd_struct *cmd, int argc, char **argv)
 			}
 			break;
 		default:
-			usage(cmd_subvol_sync_usage);
+			usage(cmd);
 		}
 	}
 
 	if (check_argc_min(argc - optind, 1))
-		usage(cmd_subvol_sync_usage);
+		usage(cmd);
 
 	fd = btrfs_open_dir(argv[optind], &dirstream, 1);
 	if (fd < 0) {
