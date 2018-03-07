@@ -173,7 +173,7 @@ static int cmd_rescue_zero_log(const struct cmd_struct *cmd,
 	char *devname;
 	int ret;
 
-	clean_args_no_options(argc, argv, cmd_rescue_zero_log_usage);
+	clean_args_no_options(cmd, argc, argv);
 
 	if (check_argc_exact(argc, 2))
 		return 1;
@@ -227,7 +227,7 @@ static int cmd_rescue_fix_device_size(const struct cmd_struct *cmd,
 	char *devname;
 	int ret;
 
-	clean_args_no_options(argc, argv, cmd_rescue_fix_device_size_usage);
+	clean_args_no_options(cmd, argc, argv);
 
 	if (check_argc_exact(argc, 2))
 		return 1;

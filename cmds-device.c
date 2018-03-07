@@ -151,8 +151,9 @@ static int _cmd_device_remove(const struct cmd_struct *cmd,
 	char	*mntpnt;
 	int i, fdmnt, ret = 0;
 	DIR	*dirstream = NULL;
+	const char * const *usagestr = cmd->usagestr;
 
-	clean_args_no_options(argc, argv, cmd->usagestr);
+	clean_args_no_options(cmd, argc, argv);
 
 	if (check_argc_min(argc - optind, 2))
 		return 1;
@@ -410,7 +411,7 @@ static int cmd_device_ready(const struct cmd_struct *cmd, int argc, char **argv)
 	int	ret;
 	char	*path;
 
-	clean_args_no_options(argc, argv, cmd->usagestr);
+	clean_args_no_options(cmd, argc, argv);
 
 	if (check_argc_exact(argc - optind, 1))
 		return 1;
@@ -636,7 +637,7 @@ static int cmd_device_usage(const struct cmd_struct *cmd, int argc, char **argv)
 
 	unit_mode = get_unit_mode_from_arg(&argc, argv, 1);
 
-	clean_args_no_options(argc, argv, cmd->usagestr);
+	clean_args_no_options(cmd, argc, argv);
 
 	if (check_argc_min(argc - optind, 1))
 		return 1;

@@ -85,7 +85,7 @@ int check_argc_max(int nargs, int expected)
  * Unknown short and long options are reported, optionally the @usage is printed
  * before exit.
  */
-void clean_args_no_options(int argc, char *argv[], const char * const *usagestr)
+void clean_args_no_options(const struct cmd_struct *cmd, int argc, char *argv[])
 {
 	static const struct option long_options[] = {
 		{NULL, 0, NULL, 0}
@@ -99,8 +99,8 @@ void clean_args_no_options(int argc, char *argv[], const char * const *usagestr)
 
 		switch (c) {
 		default:
-			if (usagestr)
-				usage(usagestr);
+			if (cmd->usagestr)
+				usage(cmd->usagestr);
 		}
 	}
 }
@@ -114,7 +114,8 @@ void clean_args_no_options(int argc, char *argv[], const char * const *usagestr)
  * - "-- option1 option2 ..."
  * - "option1 option2 ..."
  */
-void clean_args_no_options_relaxed(int argc, char *argv[])
+void clean_args_no_options_relaxed(const struct cmd_struct *cmd,
+				   int argc, char *argv[])
 {
 	if (argc <= 1)
 		return;

@@ -1095,8 +1095,7 @@ static int is_scrub_running_in_kernel(int fd,
 static const char * const cmd_scrub_start_usage[];
 static const char * const cmd_scrub_resume_usage[];
 
-static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
-		       bool resume)
+static int scrub_start(int argc, char **argv, bool resume)
 {
 	int fdmnt;
 	int prg_fd = -1;
@@ -1586,7 +1585,7 @@ static const char * const cmd_scrub_start_usage[] = {
 
 static int cmd_scrub_start(const struct cmd_struct *cmd, int argc, char **argv)
 {
-	return scrub_start(cmd, argc, argv, false);
+	return scrub_start(argc, argv, false);
 }
 static DEFINE_SIMPLE_COMMAND(scrub_start, "start");
 
@@ -1603,7 +1602,7 @@ static int cmd_scrub_cancel(const struct cmd_struct *cmd, int argc, char **argv)
 	int fdmnt = -1;
 	DIR *dirstream = NULL;
 
-	clean_args_no_options(argc, argv, cmd_scrub_cancel_usage);
+	clean_args_no_options(cmd, argc, argv);
 
 	if (check_argc_exact(argc - optind, 1))
 		return 1;
@@ -1653,7 +1652,7 @@ static const char * const cmd_scrub_resume_usage[] = {
 
 static int cmd_scrub_resume(const struct cmd_struct *cmd, int argc, char **argv)
 {
-	return scrub_start(cmd, argc, argv, true);
+	return scrub_start(argc, argv, true);
 }
 static DEFINE_SIMPLE_COMMAND(scrub_resume, "resume");
 
