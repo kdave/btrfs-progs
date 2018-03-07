@@ -35,8 +35,8 @@ static const char * const qgroup_cmd_group_usage[] = {
 	NULL
 };
 
-static int _cmd_qgroup_assign(int assign, int argc, char **argv,
-		const char * const *usage_str)
+static int _cmd_qgroup_assign(const struct cmd_struct *cmd, int assign,
+			      int argc, char **argv)
 {
 	int ret = 0;
 	int fd;
@@ -72,11 +72,11 @@ static int _cmd_qgroup_assign(int assign, int argc, char **argv,
 			}
 		}
 	} else {
-		clean_args_no_options(argc, argv, usage_str);
+		clean_args_no_options(cmd, argc, argv);
 	}
 
 	if (check_argc_exact(argc - optind, 3))
-		usage(usage_str);
+		usage(cmd->usagestr);
 
 	memset(&args, 0, sizeof(args));
 	args.assign = assign;
@@ -220,7 +220,7 @@ static const char * const cmd_qgroup_assign_usage[] = {
 static int cmd_qgroup_assign(const struct cmd_struct *cmd,
 			     int argc, char **argv)
 {
-	return _cmd_qgroup_assign(1, argc, argv, cmd_qgroup_assign_usage);
+	return _cmd_qgroup_assign(cmd, 1, argc, argv);
 }
 static DEFINE_SIMPLE_COMMAND(qgroup_assign, "assign");
 
@@ -233,7 +233,7 @@ static const char * const cmd_qgroup_remove_usage[] = {
 static int cmd_qgroup_remove(const struct cmd_struct *cmd,
 			     int argc, char **argv)
 {
-	return _cmd_qgroup_assign(0, argc, argv, cmd_qgroup_remove_usage);
+	return _cmd_qgroup_assign(cmd, 0, argc, argv);
 }
 static DEFINE_SIMPLE_COMMAND(qgroup_remove, "remove");
 
@@ -248,7 +248,7 @@ static int cmd_qgroup_create(const struct cmd_struct *cmd,
 {
 	int ret;
 
-	clean_args_no_options(argc, argv, cmd_qgroup_create_usage);
+	clean_args_no_options(cmd, argc, argv);
 
 	ret = _cmd_qgroup_create(1, argc, argv);
 
@@ -269,7 +269,7 @@ static int cmd_qgroup_destroy(const struct cmd_struct *cmd,
 {
 	int ret;
 
-	clean_args_no_options(argc, argv, cmd_qgroup_destroy_usage);
+	clean_args_no_options(cmd, argc, argv);
 
 	ret = _cmd_qgroup_create(0, argc, argv);
 

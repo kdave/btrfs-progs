@@ -129,7 +129,7 @@ static int cmd_filesystem_df(const struct cmd_struct *cmd,
 
 	unit_mode = get_unit_mode_from_arg(&argc, argv, 1);
 
-	clean_args_no_options(argc, argv, cmd_filesystem_df_usage);
+	clean_args_no_options(cmd, argc, argv);
 
 	if (check_argc_exact(argc - optind, 1))
 		usage(cmd_filesystem_df_usage);
@@ -822,7 +822,7 @@ static int cmd_filesystem_sync(const struct cmd_struct *cmd,
 {
 	enum btrfs_util_error err;
 
-	clean_args_no_options(argc, argv, cmd_filesystem_sync_usage);
+	clean_args_no_options(cmd, argc, argv);
 
 	if (check_argc_exact(argc - optind, 1))
 		usage(cmd_filesystem_sync_usage);
@@ -1095,7 +1095,7 @@ static int cmd_filesystem_resize(const struct cmd_struct *cmd,
 	DIR	*dirstream = NULL;
 	struct stat st;
 
-	clean_args_no_options_relaxed(argc, argv);
+	clean_args_no_options_relaxed(cmd, argc, argv);
 
 	if (check_argc_exact(argc - optind, 2))
 		usage(cmd_filesystem_resize_usage);
@@ -1168,7 +1168,7 @@ static const char * const cmd_filesystem_label_usage[] = {
 static int cmd_filesystem_label(const struct cmd_struct *cmd,
 				int argc, char **argv)
 {
-	clean_args_no_options(argc, argv, cmd_filesystem_label_usage);
+	clean_args_no_options(cmd, argc, argv);
 
 	if (check_argc_min(argc - optind, 1) ||
 			check_argc_max(argc - optind, 2))

@@ -71,8 +71,10 @@ void help_command_group(const struct cmd_group *grp, int argc, char **argv);
 int check_argc_exact(int nargs, int expected);
 int check_argc_min(int nargs, int expected);
 int check_argc_max(int nargs, int expected);
-void clean_args_no_options(int argc, char *argv[], const char * const *usage);
-void clean_args_no_options_relaxed(int argc, char *argv[]);
+void clean_args_no_options(const struct cmd_struct *cmd,
+			   int argc, char *argv[]);
+void clean_args_no_options_relaxed(const struct cmd_struct *cmd,
+				   int argc, char *argv[]);
 
 void fixup_argv0(char **argv, const char *token);
 void set_argv0(char **argv);

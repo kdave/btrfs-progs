@@ -689,7 +689,7 @@ static int cmd_balance_pause(const struct cmd_struct *cmd,
 	int ret;
 	DIR *dirstream = NULL;
 
-	clean_args_no_options(argc, argv, cmd_balance_pause_usage);
+	clean_args_no_options(cmd, argc, argv);
 
 	if (check_argc_exact(argc - optind, 1))
 		usage(cmd_balance_pause_usage);
@@ -729,7 +729,7 @@ static int cmd_balance_cancel(const struct cmd_struct *cmd,
 	int ret;
 	DIR *dirstream = NULL;
 
-	clean_args_no_options(argc, argv, cmd_balance_cancel_usage);
+	clean_args_no_options(cmd, argc, argv);
 
 	if (check_argc_exact(argc - optind, 1))
 		usage(cmd_balance_cancel_usage);
@@ -770,7 +770,7 @@ static int cmd_balance_resume(const struct cmd_struct *cmd,
 	int fd;
 	int ret;
 
-	clean_args_no_options(argc, argv, cmd_balance_resume_usage);
+	clean_args_no_options(cmd, argc, argv);
 
 	if (check_argc_exact(argc - optind, 1))
 		usage(cmd_balance_resume_usage);

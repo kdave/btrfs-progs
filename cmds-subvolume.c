@@ -784,7 +784,7 @@ static int cmd_subvol_get_default(const struct cmd_struct *cmd,
 	struct btrfs_util_subvolume_info subvol;
 	char *path;
 
-	clean_args_no_options(argc, argv, cmd_subvol_get_default_usage);
+	clean_args_no_options(cmd, argc, argv);
 
 	if (check_argc_exact(argc - optind, 1))
 		usage(cmd_subvol_get_default_usage);
@@ -846,7 +846,7 @@ static int cmd_subvol_set_default(const struct cmd_struct *cmd,
 	char *path;
 	enum btrfs_util_error err;
 
-	clean_args_no_options(argc, argv, cmd_subvol_set_default_usage);
+	clean_args_no_options(cmd, argc, argv);
 
 	if (check_argc_min(argc - optind, 1) ||
 			check_argc_max(argc - optind, 2))
@@ -887,7 +887,7 @@ static int cmd_subvol_find_new(const struct cmd_struct *cmd,
 	DIR *dirstream = NULL;
 	enum btrfs_util_error err;
 
-	clean_args_no_options(argc, argv, cmd_subvol_find_new_usage);
+	clean_args_no_options(cmd, argc, argv);
 
 	if (check_argc_exact(argc - optind, 2))
 		usage(cmd_subvol_find_new_usage);

@@ -277,7 +277,7 @@ static int cmd_inspect_subvolid_resolve(const struct cmd_struct *cmd,
 	char path[PATH_MAX];
 	DIR *dirstream = NULL;
 
-	clean_args_no_options(argc, argv, cmd_inspect_subvolid_resolve_usage);
+	clean_args_no_options(cmd, argc, argv);
 
 	if (check_argc_exact(argc - optind, 2))
 		usage(cmd_inspect_subvolid_resolve_usage);
@@ -320,7 +320,7 @@ static int cmd_inspect_rootid(const struct cmd_struct *cmd,
 	u64 rootid;
 	DIR *dirstream = NULL;
 
-	clean_args_no_options(argc, argv, cmd_inspect_rootid_usage);
+	clean_args_no_options(cmd, argc, argv);
 
 	if (check_argc_exact(argc - optind, 1))
 		usage(cmd_inspect_rootid_usage);
