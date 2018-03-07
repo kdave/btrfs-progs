@@ -1203,6 +1203,18 @@ static int cmd_filesystem_label(int argc, char **argv)
 	}
 }
 
+static const char * const cmd_filesystem_balance_usage[] = {
+	"btrfs filesystem balance [args...] (alias of \"btrfs balance\")",
+	"Please see \"btrfs balance --help\" for more information.",
+	NULL
+};
+
+/* Compatible old "btrfs filesystem balance" command */
+static int cmd_filesystem_balance(int argc, char **argv)
+{
+	return cmd_balance(argc, argv);
+}
+
 static const char filesystem_cmd_group_info[] =
 "overall filesystem tasks and information";
 
@@ -1216,8 +1228,9 @@ const struct cmd_group filesystem_cmd_group = {
 			0 },
 		{ "defragment", cmd_filesystem_defrag,
 			cmd_filesystem_defrag_usage, NULL, 0 },
-		{ "balance", cmd_balance, NULL, &balance_cmd_group,
-			CMD_HIDDEN },
+		{ "balance", cmd_filesystem_balance,
+		   cmd_filesystem_balance_usage, &balance_cmd_group,
+		   CMD_HIDDEN },
 		{ "resize", cmd_filesystem_resize, cmd_filesystem_resize_usage,
 			NULL, 0 },
 		{ "label", cmd_filesystem_label, cmd_filesystem_label_usage,
