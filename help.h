@@ -56,7 +56,7 @@ struct cmd_struct;
 struct cmd_group;
 
 __attribute__((noreturn))
-void usage_unknown_option(const char * const *usagestr, char **argv);
+void usage_unknown_option(const struct cmd_struct *cmd, char **argv);
 
 __attribute__((noreturn))
 void usage(const struct cmd_struct *cmd);

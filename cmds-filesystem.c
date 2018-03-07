@@ -714,7 +714,7 @@ static int cmd_filesystem_show(const struct cmd_struct *cmd,
 			where = BTRFS_SCAN_MOUNTED;
 			break;
 		default:
-			usage_unknown_option(cmd_filesystem_show_usage, argv);
+			usage_unknown_option(cmd, argv);
 		}
 	}
 
@@ -993,7 +993,7 @@ static int cmd_filesystem_defrag(const struct cmd_struct *cmd,
 			recursive = 1;
 			break;
 		default:
-			usage_unknown_option(cmd_filesystem_defrag_usage, argv);
+			usage_unknown_option(cmd, argv);
 		}
 	}
 

@@ -64,8 +64,7 @@ static int cmd_rescue_chunk_recover(const struct cmd_struct *cmd,
 			verbose = 1;
 			break;
 		default:
-			usage_unknown_option(cmd_rescue_chunk_recover_usage,
-					argv);
+			usage_unknown_option(cmd, argv);
 		}
 	}
 
@@ -135,8 +134,7 @@ static int cmd_rescue_super_recover(const struct cmd_struct *cmd,
 			yes = 1;
 			break;
 		default:
-			usage_unknown_option(cmd_rescue_super_recover_usage,
-					argv);
+			usage_unknown_option(cmd, argv);
 		}
 	}
 	if (check_argc_exact(argc - optind, 1))

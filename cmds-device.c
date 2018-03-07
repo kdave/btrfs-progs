@@ -79,7 +79,7 @@ static int cmd_device_add(const struct cmd_struct *cmd,
 			force = 1;
 			break;
 		default:
-			usage_unknown_option(cmd_device_add_usage, argv);
+			usage_unknown_option(cmd, argv);
 		}
 	}
 
@@ -331,7 +331,7 @@ static int cmd_device_scan(const struct cmd_struct *cmd, int argc, char **argv)
 			forget = 1;
 			break;
 		default:
-			usage_unknown_option(cmd_device_scan_usage, argv);
+			usage_unknown_option(cmd, argv);
 		}
 	}
 	devstart = optind;
@@ -496,7 +496,7 @@ static int cmd_device_stats(const struct cmd_struct *cmd, int argc, char **argv)
 			flags = BTRFS_DEV_STATS_RESET;
 			break;
 		default:
-			usage_unknown_option(cmd_device_stats_usage, argv);
+			usage_unknown_option(cmd, argv);
 		}
 	}
 

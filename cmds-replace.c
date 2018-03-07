@@ -148,7 +148,7 @@ static int cmd_replace_start(const struct cmd_struct *cmd,
 			force_using_targetdev = 1;
 			break;
 		default:
-			usage_unknown_option(cmd_replace_start_usage, argv);
+			usage_unknown_option(cmd, argv);
 		}
 	}
 
@@ -348,7 +348,7 @@ static int cmd_replace_status(const struct cmd_struct *cmd,
 			once = 1;
 			break;
 		default:
-			usage_unknown_option(cmd_replace_status_usage, argv);
+			usage_unknown_option(cmd, argv);
 		}
 	}
 
@@ -516,7 +516,7 @@ static int cmd_replace_cancel(const struct cmd_struct *cmd,
 		switch (c) {
 		case '?':
 		default:
-			usage_unknown_option(cmd_replace_cancel_usage, argv);
+			usage_unknown_option(cmd, argv);
 		}
 	}
 

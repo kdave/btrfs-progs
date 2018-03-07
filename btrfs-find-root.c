@@ -192,7 +192,7 @@ int main(int argc, char **argv)
 			usage_command(&btrfs_find_root_cmd, 0, 0);
 			return 0;
 		default:
-			usage_unknown_option(btrfs_find_root_usage, argv);
+			usage_unknown_option(&btrfs_find_root_cmd, argv);
 		}
 	}
 

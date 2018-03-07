@@ -1352,7 +1352,7 @@ static int cmd_receive(const struct cmd_struct *cmd, int argc, char **argv)
 			dump = 1;
 			break;
 		default:
-			usage_unknown_option(cmd_receive_usage, argv);
+			usage_unknown_option(cmd, argv);
 		}
 	}
 

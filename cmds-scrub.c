@@ -1171,7 +1171,7 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 			force = 1;
 			break;
 		default:
-			usage_unknown_option(cmd->usagestr, argv);
+			usage_unknown_option(cmd, argv);
 		}
 	}
 
@@ -1694,7 +1694,7 @@ static int cmd_scrub_status(const struct cmd_struct *cmd, int argc, char **argv)
 			print_raw = 1;
 			break;
 		default:
-			usage_unknown_option(cmd_scrub_status_usage, argv);
+			usage_unknown_option(cmd, argv);
 		}
 	}
 

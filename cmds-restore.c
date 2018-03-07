@@ -1527,7 +1527,7 @@ static int cmd_restore(const struct cmd_struct *cmd, int argc, char **argv)
 				get_xattrs = 1;
 				break;
 			default:
-				usage_unknown_option(cmd_restore_usage, argv);
+				usage_unknown_option(cmd, argv);
 		}
 	}
 

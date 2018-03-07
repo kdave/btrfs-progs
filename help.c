@@ -239,7 +239,7 @@ void usage_command(const struct cmd_struct *cmd, bool full, bool err)
 }
 
 __attribute__((noreturn))
-void usage_unknown_option(const char * const *usagestr, char **argv)
+void usage_unknown_option(const struct cmd_struct *cmd, char **argv)
 {
 	int i;
 	int c;
@@ -251,7 +251,7 @@ void usage_unknown_option(const char * const *usagestr, char **argv)
 	 */
 	i = 0;
 	do {
-		c = usagestr[0][i];
+		c = cmd->usagestr[0][i];
 		if (c == '<' || c == '[' || (prev == ' ' && c == '-')) {
 			i--;
 			break;
@@ -268,7 +268,7 @@ void usage_unknown_option(const char * const *usagestr, char **argv)
 	 * Try 'btrfs device add --help' for more information
 	 */
 
-	fprintf(stderr, "%.*s: ", i, usagestr[0]);
+	fprintf(stderr, "%.*s: ", i, cmd->usagestr[0]);
 	if (!optopt) {
 		/*
 		 * There's no better way to get the exact unrecognized token
@@ -278,7 +278,8 @@ void usage_unknown_option(const char * const *usagestr, char **argv)
 	} else {
 		fprintf(stderr, "invalid option '%c'\n", optopt);
 	}
-	fprintf(stderr, "Try '%.*s --help' for more information\n", i, usagestr[0]);
+	fprintf(stderr, "Try '%.*s --help' for more information\n", i,
+			cmd->usagestr[0]);
 	exit(1);
 }
 

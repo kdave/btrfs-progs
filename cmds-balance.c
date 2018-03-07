@@ -587,7 +587,7 @@ static int cmd_balance_start(const struct cmd_struct *cmd,
 			background = 1;
 			break;
 		default:
-			usage_unknown_option(cmd_balance_start_usage, argv);
+			usage_unknown_option(cmd, argv);
 		}
 	}
 
@@ -859,7 +859,7 @@ static int cmd_balance_status(const struct cmd_struct *cmd,
 			verbose = 1;
 			break;
 		default:
-			usage_unknown_option(cmd_balance_status_usage, argv);
+			usage_unknown_option(cmd, argv);
 		}
 	}
 

@@ -592,7 +592,7 @@ static int cmd_inspect_dump_super(const struct cmd_struct *cmd,
 			all = 0;
 			break;
 		default:
-			usage_unknown_option(cmd_inspect_dump_super_usage, argv);
+			usage_unknown_option(cmd, argv);
 		}
 	}
 

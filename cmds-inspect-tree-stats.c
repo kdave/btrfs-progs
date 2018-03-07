@@ -445,7 +445,7 @@ static int cmd_inspect_tree_stats(const struct cmd_struct *cmd,
 			no_pretty = 1;
 			break;
 		default:
-			usage_unknown_option(cmd_inspect_tree_stats_usage, argv);
+			usage_unknown_option(cmd, argv);
 		}
 	}
 

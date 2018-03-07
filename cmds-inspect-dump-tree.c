@@ -401,7 +401,7 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 			traverse = BTRFS_PRINT_TREE_BFS;
 			break;
 		default:
-			usage_unknown_option(cmd_inspect_dump_tree_usage, argv);
+			usage_unknown_option(cmd, argv);
 		}
 	}
 

@@ -135,7 +135,7 @@ static int cmd_quota_rescan(const struct cmd_struct *cmd, int argc, char **argv)
 			wait_for_completion = 1;
 			break;
 		default:
-			usage_unknown_option(cmd_quota_rescan_usage, argv);
+			usage_unknown_option(cmd, argv);
 		}
 	}
 

@@ -272,7 +272,7 @@ static int parse_args(const struct cmd_struct *cmd, int argc, char **argv,
 			type_str = optarg;
 			break;
 		default:
-			usage_unknown_option(cmd->usagestr, argv);
+			usage_unknown_option(cmd, argv);
 		}
 	}
 

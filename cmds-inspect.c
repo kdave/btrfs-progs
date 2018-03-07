@@ -106,8 +106,7 @@ static int cmd_inspect_inode_resolve(const struct cmd_struct *cmd,
 			verbose = 1;
 			break;
 		default:
-			usage_unknown_option(cmd_inspect_inode_resolve_usage,
-					argv);
+			usage_unknown_option(cmd, argv);
 		}
 	}
 
@@ -170,8 +169,7 @@ static int cmd_inspect_logical_resolve(const struct cmd_struct *cmd,
 			size = arg_strtou64(optarg);
 			break;
 		default:
-			usage_unknown_option(cmd_inspect_logical_resolve_usage,
-					argv);
+			usage_unknown_option(cmd, argv);
 		}
 	}
 
@@ -626,8 +624,7 @@ static int cmd_inspect_min_dev_size(const struct cmd_struct *cmd,
 			devid = arg_strtou64(optarg);
 			break;
 		default:
-			usage_unknown_option(cmd_inspect_min_dev_size_usage,
-					argv);
+			usage_unknown_option(cmd, argv);
 		}
 	}
 	if (check_argc_exact(argc - optind, 1))

@@ -988,7 +988,7 @@ static int cmd_filesystem_usage(const struct cmd_struct *cmd,
 			tabular = 1;
 			break;
 		default:
-			usage_unknown_option(cmd_filesystem_usage_usage, argv);
+			usage_unknown_option(cmd, argv);
 		}
 	}
 

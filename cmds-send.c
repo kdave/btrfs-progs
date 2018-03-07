@@ -637,7 +637,7 @@ static int cmd_send(const struct cmd_struct *cmd, int argc, char **argv)
 			send_flags |= BTRFS_SEND_FLAG_NO_FILE_DATA;
 			break;
 		default:
-			usage_unknown_option(cmd_send_usage, argv);
+			usage_unknown_option(cmd, argv);
 		}
 	}
 

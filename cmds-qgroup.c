@@ -68,7 +68,7 @@ static int _cmd_qgroup_assign(const struct cmd_struct *cmd, int assign,
 				rescan = false;
 				break;
 			default:
-				usage_unknown_option(cmd->usagestr, argv);
+				usage_unknown_option(cmd, argv);
 			}
 		}
 	} else {
@@ -363,7 +363,7 @@ static int cmd_qgroup_show(const struct cmd_struct *cmd, int argc, char **argv)
 			sync = 1;
 			break;
 		default:
-			usage_unknown_option(cmd_qgroup_show_usage, argv);
+			usage_unknown_option(cmd, argv);
 		}
 	}
 	btrfs_qgroup_setup_units(unit_mode);
@@ -447,7 +447,7 @@ static int cmd_qgroup_limit(const struct cmd_struct *cmd, int argc, char **argv)
 			exclusive = 1;
 			break;
 		default:
-			usage_unknown_option(cmd_qgroup_limit_usage, argv);
+			usage_unknown_option(cmd, argv);
 		}
 	}
 

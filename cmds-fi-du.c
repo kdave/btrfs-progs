@@ -582,7 +582,7 @@ static int cmd_filesystem_du(const struct cmd_struct *cmd,
 			summarize = 1;
 			break;
 		default:
-			usage_unknown_option(cmd_filesystem_du_usage, argv);
+			usage_unknown_option(cmd, argv);
 		}
 	}
 
