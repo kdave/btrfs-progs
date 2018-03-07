@@ -630,9 +630,4 @@ static const struct cmd_group device_cmd_group = {
 	}
 };
 
-static int cmd_device(const struct cmd_struct *unused,
-		      const struct cmd_context *cmdcxt, int argc, char **argv)
-{
-	return handle_command_group(&device_cmd_group, cmdcxt, argc, argv);
-}
 DEFINE_GROUP_COMMAND_TOKEN(device);

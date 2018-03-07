@@ -943,7 +943,7 @@ static const struct cmd_group balance_cmd_group = {
 	}
 };
 
-static int cmd_balance(const struct cmd_struct *unused,
+static int cmd_balance(const struct cmd_struct *cmd,
 		       const struct cmd_context *cmdcxt, int argc, char **argv)
 {
 	if (argc == 2 && strcmp("start", argv[1]) != 0) {
@@ -956,7 +956,7 @@ static int cmd_balance(const struct cmd_struct *unused,
 		return do_balance(argv[1], &args, 0);
 	}
 
-	return handle_command_group(&balance_cmd_group, cmdcxt, argc, argv);
+	return handle_command_group(cmd, cmdcxt, argc, argv);
 }
 
-DEFINE_GROUP_COMMAND(balance, "balance");
+DEFINE_COMMAND(balance, "balance", cmd_balance, NULL, &balance_cmd_group, 0, 0);

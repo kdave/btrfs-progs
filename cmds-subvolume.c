@@ -1307,9 +1307,4 @@ static const struct cmd_group subvolume_cmd_group = {
 	}
 };
 
-int cmd_subvolume(const struct cmd_struct *unused,
-		  const struct cmd_context *cmdcxt, int argc, char **argv)
-{
-	return handle_command_group(&subvolume_cmd_group, cmdcxt, argc, argv);
-}
 DEFINE_GROUP_COMMAND_TOKEN(subvolume);

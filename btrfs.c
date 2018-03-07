@@ -140,26 +140,26 @@ static void handle_help_options_next_level(const struct cmd_struct *cmd,
 	}
 }
 
-int handle_command_group(const struct cmd_group *grp,
+int handle_command_group(const struct cmd_struct *cmd,
 			 const struct cmd_context *cmdcxt,
 			 int argc, char **argv)
 
 {
-	const struct cmd_struct *cmd;
+	const struct cmd_struct *subcmd;
 
 	argc--;
 	argv++;
 	if (argc < 1) {
-		usage_command_group(grp, false, false);
+		usage_command_group(cmd->next, false, false);
 		exit(1);
 	}
 
-	cmd = parse_command_token(argv[0], grp);
+	subcmd = parse_command_token(argv[0], cmd->next);
 
-	handle_help_options_next_level(cmd, cmdcxt, argc, argv);
+	handle_help_options_next_level(subcmd, cmdcxt, argc, argv);
 
-	fixup_argv0(argv, cmd->token);
-	return cmd_execute(cmd, cmdcxt, argc, argv);
+	fixup_argv0(argv, subcmd->token);
+	return cmd_execute(subcmd, cmdcxt, argc, argv);
 }
 
 static const struct cmd_group btrfs_cmd_group;

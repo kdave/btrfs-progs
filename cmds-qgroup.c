@@ -541,9 +541,4 @@ static const struct cmd_group qgroup_cmd_group = {
 	}
 };
 
-static int cmd_qgroup(const struct cmd_struct *unused,
-		      const struct cmd_context *cmdcxt, int argc, char **argv)
-{
-	return handle_command_group(&qgroup_cmd_group, cmdcxt, argc, argv);
-}
 DEFINE_GROUP_COMMAND_TOKEN(qgroup);
