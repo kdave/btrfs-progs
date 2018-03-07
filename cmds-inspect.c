@@ -87,7 +87,8 @@ static const char * const cmd_inspect_inode_resolve_usage[] = {
 	NULL
 };
 
-static int cmd_inspect_inode_resolve(int argc, char **argv)
+static int cmd_inspect_inode_resolve(const struct cmd_struct *cmd,
+				     int argc, char **argv)
 {
 	int fd;
 	int verbose = 0;
@@ -134,7 +135,8 @@ static const char * const cmd_inspect_logical_resolve_usage[] = {
 	NULL
 };
 
-static int cmd_inspect_logical_resolve(int argc, char **argv)
+static int cmd_inspect_logical_resolve(const struct cmd_struct *cmd,
+				       int argc, char **argv)
 {
 	int ret;
 	int fd;
@@ -266,7 +268,8 @@ static const char * const cmd_inspect_subvolid_resolve_usage[] = {
 	NULL
 };
 
-static int cmd_inspect_subvolid_resolve(int argc, char **argv)
+static int cmd_inspect_subvolid_resolve(const struct cmd_struct *cmd,
+					int argc, char **argv)
 {
 	int ret;
 	int fd = -1;
@@ -309,7 +312,8 @@ static const char* const cmd_inspect_rootid_usage[] = {
 	NULL
 };
 
-static int cmd_inspect_rootid(int argc, char **argv)
+static int cmd_inspect_rootid(const struct cmd_struct *cmd,
+			      int argc, char **argv)
 {
 	int ret;
 	int fd = -1;
@@ -588,7 +592,8 @@ out:
 	return ret;
 }
 
-static int cmd_inspect_min_dev_size(int argc, char **argv)
+static int cmd_inspect_min_dev_size(const struct cmd_struct *cmd,
+				    int argc, char **argv)
 {
 	int ret;
 	int fd = -1;
@@ -648,7 +653,7 @@ static const struct cmd_group inspect_cmd_group = {
 	}
 };
 
-static int cmd_inspect(int argc, char **argv)
+static int cmd_inspect(const struct cmd_struct *unused, int argc, char **argv)
 {
 	return handle_command_group(&inspect_cmd_group, argc, argv);
 }

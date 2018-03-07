@@ -148,7 +148,7 @@ static const char * const cmd_help_usage[] = {
 	NULL
 };
 
-static int cmd_help(int argc, char **argv)
+static int cmd_help(const struct cmd_struct *unused, int argc, char **argv)
 {
 	help_command_group(&btrfs_cmd_group, argc, argv);
 	return 0;
@@ -162,7 +162,7 @@ static const char * const cmd_version_usage[] = {
 	NULL
 };
 
-static int cmd_version(int argc, char **argv)
+static int cmd_version(const struct cmd_struct *unused, int argc, char **argv)
 {
 	printf("%s\n", PACKAGE_STRING);
 	return 0;
@@ -231,13 +231,13 @@ void handle_special_globals(int shift, int argc, char **argv)
 		if (has_full)
 			usage_command_group(&btrfs_cmd_group, true, false);
 		else
-			cmd_help(argc, argv);
+			cmd_execute(&cmd_struct_help, argc, argv);
 		exit(0);
 	}
 
 	for (i = 0; i < shift; i++)
 		if (strcmp(argv[i], "--version") == 0) {
-			cmd_version(argc, argv);
+			cmd_execute(&cmd_struct_version, argc, argv);
 			exit(0);
 		}
 }

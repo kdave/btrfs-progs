@@ -67,7 +67,7 @@ static const char * const cmd_quota_enable_usage[] = {
 	NULL
 };
 
-static int cmd_quota_enable(int argc, char **argv)
+static int cmd_quota_enable(const struct cmd_struct *cmd, int argc, char **argv)
 {
 	int ret;
 
@@ -87,7 +87,8 @@ static const char * const cmd_quota_disable_usage[] = {
 	NULL
 };
 
-static int cmd_quota_disable(int argc, char **argv)
+static int cmd_quota_disable(const struct cmd_struct *cmd,
+			     int argc, char **argv)
 {
 	int ret;
 
@@ -110,7 +111,7 @@ static const char * const cmd_quota_rescan_usage[] = {
 	NULL
 };
 
-static int cmd_quota_rescan(int argc, char **argv)
+static int cmd_quota_rescan(const struct cmd_struct *cmd, int argc, char **argv)
 {
 	int ret = 0;
 	int fd;
@@ -213,7 +214,7 @@ static const struct cmd_group quota_cmd_group = {
 	}
 };
 
-static int cmd_quota(int argc, char **argv)
+static int cmd_quota(const struct cmd_struct *unused, int argc, char **argv)
 {
 	return handle_command_group(&quota_cmd_group, argc, argv);
 }

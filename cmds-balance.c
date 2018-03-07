@@ -515,7 +515,8 @@ static const char * const cmd_balance_start_usage[] = {
 	NULL
 };
 
-static int cmd_balance_start(int argc, char **argv)
+static int cmd_balance_start(const struct cmd_struct *cmd,
+			     int argc, char **argv)
 {
 	struct btrfs_ioctl_balance_args args;
 	struct btrfs_balance_args *ptrs[] = { &args.data, &args.sys,
@@ -680,7 +681,8 @@ static const char * const cmd_balance_pause_usage[] = {
 	NULL
 };
 
-static int cmd_balance_pause(int argc, char **argv)
+static int cmd_balance_pause(const struct cmd_struct *cmd,
+			     int argc, char **argv)
 {
 	const char *path;
 	int fd;
@@ -719,7 +721,8 @@ static const char * const cmd_balance_cancel_usage[] = {
 	NULL
 };
 
-static int cmd_balance_cancel(int argc, char **argv)
+static int cmd_balance_cancel(const struct cmd_struct *cmd,
+			      int argc, char **argv)
 {
 	const char *path;
 	int fd;
@@ -758,7 +761,8 @@ static const char * const cmd_balance_resume_usage[] = {
 	NULL
 };
 
-static int cmd_balance_resume(int argc, char **argv)
+static int cmd_balance_resume(const struct cmd_struct *cmd,
+			      int argc, char **argv)
 {
 	struct btrfs_ioctl_balance_args args;
 	const char *path;
@@ -826,7 +830,8 @@ static const char * const cmd_balance_status_usage[] = {
  *   1 : Successful to know status of a pending balance
  *   0 : When there is no pending balance or completed
  */
-static int cmd_balance_status(int argc, char **argv)
+static int cmd_balance_status(const struct cmd_struct *cmd,
+			      int argc, char **argv)
 {
 	struct btrfs_ioctl_balance_args args;
 	const char *path;
@@ -904,7 +909,7 @@ out:
 }
 static DEFINE_SIMPLE_COMMAND(balance_status, "status");
 
-static int cmd_balance_full(int argc, char **argv)
+static int cmd_balance_full(const struct cmd_struct *cmd, int argc, char **argv)
 {
 	struct btrfs_ioctl_balance_args args;
 
@@ -931,7 +936,7 @@ static const struct cmd_group balance_cmd_group = {
 	}
 };
 
-static int cmd_balance(int argc, char **argv)
+static int cmd_balance(const struct cmd_struct *unused, int argc, char **argv)
 {
 	if (argc == 2 && strcmp("start", argv[1]) != 0) {
 		/* old 'btrfs filesystem balance <path>' syntax */

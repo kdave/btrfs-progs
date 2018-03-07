@@ -114,7 +114,8 @@ static const char *const cmd_replace_start_usage[] = {
 	NULL
 };
 
-static int cmd_replace_start(int argc, char **argv)
+static int cmd_replace_start(const struct cmd_struct *cmd,
+			     int argc, char **argv)
 {
 	struct btrfs_ioctl_dev_replace_args start_args = {0};
 	struct btrfs_ioctl_dev_replace_args status_args = {0};
@@ -325,7 +326,8 @@ static const char *const cmd_replace_status_usage[] = {
 	NULL
 };
 
-static int cmd_replace_status(int argc, char **argv)
+static int cmd_replace_status(const struct cmd_struct *cmd,
+			      int argc, char **argv)
 {
 	int fd;
 	int c;
@@ -494,7 +496,8 @@ static const char *const cmd_replace_cancel_usage[] = {
 	NULL
 };
 
-static int cmd_replace_cancel(int argc, char **argv)
+static int cmd_replace_cancel(const struct cmd_struct *cmd,
+			      int argc, char **argv)
 {
 	struct btrfs_ioctl_dev_replace_args args = {0};
 	int ret;
@@ -554,7 +557,7 @@ static const struct cmd_group replace_cmd_group = {
 	}
 };
 
-static int cmd_replace(int argc, char **argv)
+static int cmd_replace(const struct cmd_struct *unused, int argc, char **argv)
 {
 	return handle_command_group(&replace_cmd_group, argc, argv);
 }

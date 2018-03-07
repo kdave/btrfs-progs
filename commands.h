@@ -24,7 +24,7 @@ enum {
 
 struct cmd_struct {
 	const char *token;
-	int (*fn)(int, char **);
+	int (*fn)(const struct cmd_struct *cmd, int argc, char **argv);
 
 	/*
 	 * Usage strings
@@ -110,7 +110,7 @@ struct cmd_group {
 static inline int cmd_execute(const struct cmd_struct *cmd,
 			      int argc, char **argv)
 {
-	return cmd->fn(argc, argv);
+	return cmd->fn(cmd, argc, argv);
 }
 
 int handle_command_group(const struct cmd_group *grp, int argc,

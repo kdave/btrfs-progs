@@ -341,7 +341,8 @@ static const char * const cmd_property_get_usage[] = {
 	NULL
 };
 
-static int cmd_property_get(int argc, char **argv)
+static int cmd_property_get(const struct cmd_struct *cmd,
+			    int argc, char **argv)
 {
 	int ret;
 	char *object = NULL;
@@ -368,7 +369,8 @@ static const char * const cmd_property_set_usage[] = {
 	NULL
 };
 
-static int cmd_property_set(int argc, char **argv)
+static int cmd_property_set(const struct cmd_struct *cmd,
+			    int argc, char **argv)
 {
 	int ret;
 	char *object = NULL;
@@ -393,7 +395,8 @@ static const char * const cmd_property_list_usage[] = {
 	NULL
 };
 
-static int cmd_property_list(int argc, char **argv)
+static int cmd_property_list(const struct cmd_struct *cmd,
+			     int argc, char **argv)
 {
 	int ret;
 	char *object = NULL;
@@ -420,7 +423,8 @@ static const struct cmd_group property_cmd_group = {
 	}
 };
 
-static int cmd_property(int argc, char **argv)
+static int cmd_property(const struct cmd_struct *unused,
+			int argc, char **argv)
 {
 	return handle_command_group(&property_cmd_group, argc, argv);
 }
