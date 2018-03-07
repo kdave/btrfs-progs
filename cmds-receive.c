@@ -1248,6 +1248,37 @@ out:
 	return ret;
 }
 
+const char * const cmd_receive_usage[] = {
+	"btrfs receive [options] <mount>\n"
+	"btrfs receive --dump [options]",
+	"Receive subvolumes from a stream",
+	"Receives one or more subvolumes that were previously",
+	"sent with btrfs send. The received subvolumes are stored",
+	"into MOUNT.",
+	"The receive will fail in case the receiving subvolume",
+	"already exists. It will also fail in case a previously",
+	"received subvolume has been changed after it was received.",
+	"After receiving a subvolume, it is immediately set to",
+	"read-only.",
+	"",
+	"-v               increase verbosity about performed actions",
+	"-f FILE          read the stream from FILE instead of stdin",
+	"-e               terminate after receiving an <end cmd> marker in the stream.",
+	"                 Without this option the receiver side terminates only in case",
+	"                 of an error on end of file.",
+	"-C|--chroot      confine the process to <mount> using chroot",
+	"-E|--max-errors NERR",
+	"                 terminate as soon as NERR errors occur while",
+	"                 stream processing commands from the stream.",
+	"                 Default value is 1. A value of 0 means no limit.",
+	"-m ROOTMOUNT     the root mount point of the destination filesystem.",
+	"                 If /proc is not accessible, use this to tell us where",
+	"                 this file system is mounted.",
+	"--dump           dump stream metadata, one line per operation,",
+	"                 does not require the MOUNT parameter",
+	NULL
+};
+
 int cmd_receive(int argc, char **argv)
 {
 	char *tomnt = NULL;
@@ -1357,34 +1388,3 @@ out:
 
 	return !!ret;
 }
-
-const char * const cmd_receive_usage[] = {
-	"btrfs receive [options] <mount>\n"
-	"btrfs receive --dump [options]",
-	"Receive subvolumes from a stream",
-	"Receives one or more subvolumes that were previously",
-	"sent with btrfs send. The received subvolumes are stored",
-	"into MOUNT.",
-	"The receive will fail in case the receiving subvolume",
-	"already exists. It will also fail in case a previously",
-	"received subvolume has been changed after it was received.",
-	"After receiving a subvolume, it is immediately set to",
-	"read-only.",
-	"",
-	"-v               increase verbosity about performed actions",
-	"-f FILE          read the stream from FILE instead of stdin",
-	"-e               terminate after receiving an <end cmd> marker in the stream.",
-	"                 Without this option the receiver side terminates only in case",
-	"                 of an error on end of file.",
-	"-C|--chroot      confine the process to <mount> using chroot",
-	"-E|--max-errors NERR",
-	"                 terminate as soon as NERR errors occur while",
-	"                 stream processing commands from the stream.",
-	"                 Default value is 1. A value of 0 means no limit.",
-	"-m ROOTMOUNT     the root mount point of the destination filesystem.",
-	"                 If /proc is not accessible, use this to tell us where",
-	"                 this file system is mounted.",
-	"--dump           dump stream metadata, one line per operation,",
-	"                 does not require the MOUNT parameter",
-	NULL
-};

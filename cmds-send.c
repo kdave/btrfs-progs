@@ -489,6 +489,41 @@ static void free_send_info(struct btrfs_send *sctx)
 	subvol_uuid_search_finit(&sctx->sus);
 }
 
+
+const char * const cmd_send_usage[] = {
+	"btrfs send [-ve] [-p <parent>] [-c <clone-src>] [-f <outfile>] <subvol> [<subvol>...]",
+	"Send the subvolume(s) to stdout.",
+	"Sends the subvolume(s) specified by <subvol> to stdout.",
+	"<subvol> should be read-only here.",
+	"By default, this will send the whole subvolume. To do an incremental",
+	"send, use '-p <parent>'. If you want to allow btrfs to clone from",
+	"any additional local snapshots, use '-c <clone-src>' (multiple times",
+	"where applicable). You must not specify clone sources unless you",
+	"guarantee that these snapshots are exactly in the same state on both",
+	"sides, the sender and the receiver. It is allowed to omit the",
+	"'-p <parent>' option when '-c <clone-src>' options are given, in",
+	"which case 'btrfs send' will determine a suitable parent among the",
+	"clone sources itself.",
+	"\n",
+	"-e               If sending multiple subvols at once, use the new",
+	"                 format and omit the end-cmd between the subvols.",
+	"-p <parent>      Send an incremental stream from <parent> to",
+	"                 <subvol>.",
+	"-c <clone-src>   Use this snapshot as a clone source for an ",
+	"                 incremental send (multiple allowed)",
+	"-f <outfile>     Output is normally written to stdout. To write to",
+	"                 a file, use this option. An alternative would be to",
+	"                 use pipes.",
+	"--no-data        send in NO_FILE_DATA mode, Note: the output stream",
+	"                 does not contain any file data and thus cannot be used",
+	"                 to transfer changes. This mode is faster and useful to",
+	"                 show the differences in metadata.",
+	"-v|--verbose     enable verbose output to stderr, each occurrence of",
+	"                 this option increases verbosity",
+	"-q|--quiet       suppress all messages, except errors",
+	NULL
+};
+
 int cmd_send(int argc, char **argv)
 {
 	char *subvol = NULL;
@@ -774,37 +809,3 @@ out:
 	free_send_info(&send);
 	return !!ret;
 }
-
-const char * const cmd_send_usage[] = {
-	"btrfs send [-ve] [-p <parent>] [-c <clone-src>] [-f <outfile>] <subvol> [<subvol>...]",
-	"Send the subvolume(s) to stdout.",
-	"Sends the subvolume(s) specified by <subvol> to stdout.",
-	"<subvol> should be read-only here.",
-	"By default, this will send the whole subvolume. To do an incremental",
-	"send, use '-p <parent>'. If you want to allow btrfs to clone from",
-	"any additional local snapshots, use '-c <clone-src>' (multiple times",
-	"where applicable). You must not specify clone sources unless you",
-	"guarantee that these snapshots are exactly in the same state on both",
-	"sides, the sender and the receiver. It is allowed to omit the",
-	"'-p <parent>' option when '-c <clone-src>' options are given, in",
-	"which case 'btrfs send' will determine a suitable parent among the",
-	"clone sources itself.",
-	"\n",
-	"-e               If sending multiple subvols at once, use the new",
-	"                 format and omit the end-cmd between the subvols.",
-	"-p <parent>      Send an incremental stream from <parent> to",
-	"                 <subvol>.",
-	"-c <clone-src>   Use this snapshot as a clone source for an ",
-	"                 incremental send (multiple allowed)",
-	"-f <outfile>     Output is normally written to stdout. To write to",
-	"                 a file, use this option. An alternative would be to",
-	"                 use pipes.",
-	"--no-data        send in NO_FILE_DATA mode, Note: the output stream",
-	"                 does not contain any file data and thus cannot be used",
-	"                 to transfer changes. This mode is faster and useful to",
-	"                 show the differences in metadata.",
-	"-v|--verbose     enable verbose output to stderr, each occurrence of",
-	"                 this option increases verbosity",
-	"-q|--quiet       suppress all messages, except errors",
-	NULL
-};
