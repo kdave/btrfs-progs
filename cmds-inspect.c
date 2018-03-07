@@ -660,8 +660,4 @@ static const struct cmd_group inspect_cmd_group = {
 	}
 };
 
-static int cmd_inspect(const struct cmd_struct *unused, int argc, char **argv)
-{
-	return handle_command_group(&inspect_cmd_group, argc, argv);
-}
 DEFINE_GROUP_COMMAND(inspect, "inspect-internal");

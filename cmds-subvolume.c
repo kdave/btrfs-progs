@@ -1305,9 +1305,4 @@ static const struct cmd_group subvolume_cmd_group = {
 	}
 };
 
-static int cmd_subvolume(const struct cmd_struct *unused,
-			 int argc, char **argv)
-{
-	return handle_command_group(&subvolume_cmd_group, argc, argv);
-}
 DEFINE_GROUP_COMMAND_TOKEN(subvolume);

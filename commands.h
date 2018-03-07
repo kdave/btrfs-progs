@@ -90,7 +90,7 @@ struct cmd_struct {
  * struct cmd_group is called <name>_cmd_group.
  */
 #define DEFINE_GROUP_COMMAND(name, token)				\
-	DEFINE_COMMAND(name, token, cmd_ ##name,			\
+	DEFINE_COMMAND(name, token, handle_command_group,		\
 		       NULL, &(name ## _cmd_group), 0)
 
 /*
@@ -113,8 +113,7 @@ static inline int cmd_execute(const struct cmd_struct *cmd,
 	return cmd->fn(cmd, argc, argv);
 }
 
-int handle_command_group(const struct cmd_group *grp, int argc,
-			 char **argv);
+int handle_command_group(const struct cmd_struct *cmd, int argc, char **argv);
 
 extern const char * const generic_cmd_help_usage[];
 

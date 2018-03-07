@@ -1254,9 +1254,4 @@ static const struct cmd_group filesystem_cmd_group = {
 	}
 };
 
-static int cmd_filesystem(const struct cmd_struct *unused,
-			  int argc, char **argv)
-{
-	return handle_command_group(&filesystem_cmd_group, argc, argv);
-}
 DEFINE_GROUP_COMMAND_TOKEN(filesystem);

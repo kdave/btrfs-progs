@@ -939,7 +939,7 @@ static const struct cmd_group balance_cmd_group = {
 	}
 };
 
-static int cmd_balance(const struct cmd_struct *unused, int argc, char **argv)
+static int cmd_balance(const struct cmd_struct *cmd, int argc, char **argv)
 {
 	if (argc == 2 && strcmp("start", argv[1]) != 0) {
 		/* old 'btrfs filesystem balance <path>' syntax */
@@ -951,7 +951,7 @@ static int cmd_balance(const struct cmd_struct *unused, int argc, char **argv)
 		return do_balance(argv[1], &args, 0);
 	}
 
-	return handle_command_group(&balance_cmd_group, argc, argv);
+	return handle_command_group(cmd, argc, argv);
 }
 
-DEFINE_GROUP_COMMAND(balance, "balance");
+DEFINE_COMMAND(balance, "balance", cmd_balance, NULL, &balance_cmd_group, 0);

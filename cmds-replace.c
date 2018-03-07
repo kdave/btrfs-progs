@@ -563,8 +563,4 @@ static const struct cmd_group replace_cmd_group = {
 	}
 };
 
-static int cmd_replace(const struct cmd_struct *unused, int argc, char **argv)
-{
-	return handle_command_group(&replace_cmd_group, argc, argv);
-}
 DEFINE_GROUP_COMMAND_TOKEN(replace);
