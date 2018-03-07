@@ -1578,6 +1578,7 @@ static int cmd_scrub_start(int argc, char **argv)
 {
 	return scrub_start(argc, argv, 0);
 }
+static DEFINE_SIMPLE_COMMAND(scrub_start, "start");
 
 static const char * const cmd_scrub_cancel_usage[] = {
 	"btrfs scrub cancel <path>|<device>",
@@ -1624,6 +1625,7 @@ out:
 	close_file_or_dir(fdmnt, dirstream);
 	return ret;
 }
+static DEFINE_SIMPLE_COMMAND(scrub_cancel, "cancel");
 
 static const char * const cmd_scrub_resume_usage[] = {
 	"btrfs scrub resume [-BdqrR] [-c ioprio_class -n ioprio_classdata] <path>|<device>",
@@ -1643,6 +1645,7 @@ static int cmd_scrub_resume(int argc, char **argv)
 {
 	return scrub_start(argc, argv, 1);
 }
+static DEFINE_SIMPLE_COMMAND(scrub_resume, "resume");
 
 static const char * const cmd_scrub_status_usage[] = {
 	"btrfs scrub status [-dR] <path>|<device>",
@@ -1784,21 +1787,24 @@ out:
 
 	return !!err;
 }
+static DEFINE_SIMPLE_COMMAND(scrub_status, "status");
 
 static const char scrub_cmd_group_info[] =
 "verify checksums of data and metadata";
 
-const struct cmd_group scrub_cmd_group = {
+static const struct cmd_group scrub_cmd_group = {
 	scrub_cmd_group_usage, scrub_cmd_group_info, {
-		{ "start", cmd_scrub_start, cmd_scrub_start_usage, NULL, 0 },
-		{ "cancel", cmd_scrub_cancel, cmd_scrub_cancel_usage, NULL, 0 },
-		{ "resume", cmd_scrub_resume, cmd_scrub_resume_usage, NULL, 0 },
-		{ "status", cmd_scrub_status, cmd_scrub_status_usage, NULL, 0 },
-		NULL_CMD_STRUCT
+		&cmd_struct_scrub_start,
+		&cmd_struct_scrub_cancel,
+		&cmd_struct_scrub_resume,
+		&cmd_struct_scrub_status,
+		NULL
 	}
 };
 
-int cmd_scrub(int argc, char **argv)
+static int cmd_scrub(int argc, char **argv)
 {
 	return handle_command_group(&scrub_cmd_group, argc, argv);
 }
+
+DEFINE_GROUP_COMMAND_TOKEN(scrub);

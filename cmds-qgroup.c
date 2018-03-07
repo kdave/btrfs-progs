@@ -221,6 +221,7 @@ static int cmd_qgroup_assign(int argc, char **argv)
 {
 	return _cmd_qgroup_assign(1, argc, argv, cmd_qgroup_assign_usage);
 }
+static DEFINE_SIMPLE_COMMAND(qgroup_assign, "assign");
 
 static const char * const cmd_qgroup_remove_usage[] = {
 	"btrfs qgroup remove <src> <dst> <path>",
@@ -232,6 +233,7 @@ static int cmd_qgroup_remove(int argc, char **argv)
 {
 	return _cmd_qgroup_assign(0, argc, argv, cmd_qgroup_remove_usage);
 }
+static DEFINE_SIMPLE_COMMAND(qgroup_remove, "remove");
 
 static const char * const cmd_qgroup_create_usage[] = {
 	"btrfs qgroup create <qgroupid> <path>",
@@ -251,6 +253,7 @@ static int cmd_qgroup_create(int argc, char **argv)
 		usage(cmd_qgroup_create_usage);
 	return ret;
 }
+static DEFINE_SIMPLE_COMMAND(qgroup_create, "create");
 
 static const char * const cmd_qgroup_destroy_usage[] = {
 	"btrfs qgroup destroy <qgroupid> <path>",
@@ -270,6 +273,7 @@ static int cmd_qgroup_destroy(int argc, char **argv)
 		usage(cmd_qgroup_destroy_usage);
 	return ret;
 }
+static DEFINE_SIMPLE_COMMAND(qgroup_destroy, "destroy");
 
 static const char * const cmd_qgroup_show_usage[] = {
 	"btrfs qgroup show [options] <path>",
@@ -418,6 +422,7 @@ static int cmd_qgroup_show(int argc, char **argv)
 out:
 	return !!ret;
 }
+static DEFINE_SIMPLE_COMMAND(qgroup_show, "show");
 
 static const char * const cmd_qgroup_limit_usage[] = {
 	"btrfs qgroup limit [options] <size>|none [<qgroupid>] <path>",
@@ -507,29 +512,25 @@ static int cmd_qgroup_limit(int argc, char **argv)
 	}
 	return 0;
 }
+static DEFINE_SIMPLE_COMMAND(qgroup_limit, "limit");
 
 static const char qgroup_cmd_group_info[] =
 "manage quota groups";
 
-const struct cmd_group qgroup_cmd_group = {
+static const struct cmd_group qgroup_cmd_group = {
 	qgroup_cmd_group_usage, qgroup_cmd_group_info, {
-		{ "assign", cmd_qgroup_assign, cmd_qgroup_assign_usage,
-		   NULL, 0 },
-		{ "remove", cmd_qgroup_remove, cmd_qgroup_remove_usage,
-		   NULL, 0 },
-		{ "create", cmd_qgroup_create, cmd_qgroup_create_usage,
-		   NULL, 0 },
-		{ "destroy", cmd_qgroup_destroy, cmd_qgroup_destroy_usage,
-		   NULL, 0 },
-		{ "show", cmd_qgroup_show, cmd_qgroup_show_usage,
-		   NULL, 0 },
-		{ "limit", cmd_qgroup_limit, cmd_qgroup_limit_usage,
-		   NULL, 0 },
-		NULL_CMD_STRUCT
+		&cmd_struct_qgroup_assign,
+		&cmd_struct_qgroup_remove,
+		&cmd_struct_qgroup_create,
+		&cmd_struct_qgroup_destroy,
+		&cmd_struct_qgroup_show,
+		&cmd_struct_qgroup_limit,
+		NULL
 	}
 };
 
-int cmd_qgroup(int argc, char **argv)
+static int cmd_qgroup(int argc, char **argv)
 {
 	return handle_command_group(&qgroup_cmd_group, argc, argv);
 }
+DEFINE_GROUP_COMMAND_TOKEN(qgroup);

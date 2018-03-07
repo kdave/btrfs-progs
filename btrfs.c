@@ -42,10 +42,11 @@ static inline const char *skip_prefix(const char *str, const char *prefix)
 static int parse_one_token(const char *arg, const struct cmd_group *grp,
 			   const struct cmd_struct **cmd_ret)
 {
-	const struct cmd_struct *cmd = grp->commands;
 	const struct cmd_struct *abbrev_cmd = NULL, *ambiguous_cmd = NULL;
+	int i = 0;
 
-	for (; cmd->token; cmd++) {
+	for (i = 0; grp->commands[i]; i++) {
+		const struct cmd_struct *cmd = grp->commands[i];
 		const char *rest;
 
 		rest = skip_prefix(arg, cmd->token);
@@ -134,7 +135,7 @@ int handle_command_group(const struct cmd_group *grp, int argc,
 	handle_help_options_next_level(cmd, argc, argv);
 
 	fixup_argv0(argv, cmd->token);
-	return cmd->fn(argc, argv);
+	return cmd_execute(cmd, argc, argv);
 }
 
 static const struct cmd_group btrfs_cmd_group;
@@ -153,6 +154,8 @@ static int cmd_help(int argc, char **argv)
 	return 0;
 }
 
+static DEFINE_SIMPLE_COMMAND(help, "help");
+
 static const char * const cmd_version_usage[] = {
 	"btrfs version",
 	"Display btrfs-progs version",
@@ -164,6 +167,7 @@ static int cmd_version(int argc, char **argv)
 	printf("%s\n", PACKAGE_STRING);
 	return 0;
 }
+static DEFINE_SIMPLE_COMMAND(version, "version");
 
 /*
  * Parse global options, between binary name and first non-option argument
@@ -240,24 +244,24 @@ void handle_special_globals(int shift, int argc, char **argv)
 
 static const struct cmd_group btrfs_cmd_group = {
 	btrfs_cmd_group_usage, btrfs_cmd_group_info, {
-		{ "subvolume", cmd_subvolume, NULL, &subvolume_cmd_group, 0 },
-		{ "filesystem", cmd_filesystem, NULL, &filesystem_cmd_group, 0 },
-		{ "balance", cmd_balance, NULL, &balance_cmd_group, 0 },
-		{ "device", cmd_device, NULL, &device_cmd_group, 0 },
-		{ "scrub", cmd_scrub, NULL, &scrub_cmd_group, 0 },
-		{ "check", cmd_check, cmd_check_usage, NULL, 0 },
-		{ "rescue", cmd_rescue, NULL, &rescue_cmd_group, 0 },
-		{ "restore", cmd_restore, cmd_restore_usage, NULL, 0 },
-		{ "inspect-internal", cmd_inspect, NULL, &inspect_cmd_group, 0 },
-		{ "property", cmd_property, NULL, &property_cmd_group, 0 },
-		{ "send", cmd_send, cmd_send_usage, NULL, 0 },
-		{ "receive", cmd_receive, cmd_receive_usage, NULL, 0 },
-		{ "quota", cmd_quota, NULL, &quota_cmd_group, 0 },
-		{ "qgroup", cmd_qgroup, NULL, &qgroup_cmd_group, 0 },
-		{ "replace", cmd_replace, NULL, &replace_cmd_group, 0 },
-		{ "help", cmd_help, cmd_help_usage, NULL, 0 },
-		{ "version", cmd_version, cmd_version_usage, NULL, 0 },
-		NULL_CMD_STRUCT
+		&cmd_struct_subvolume,
+		&cmd_struct_filesystem,
+		&cmd_struct_balance,
+		&cmd_struct_device,
+		&cmd_struct_scrub,
+		&cmd_struct_check,
+		&cmd_struct_rescue,
+		&cmd_struct_restore,
+		&cmd_struct_inspect,
+		&cmd_struct_property,
+		&cmd_struct_send,
+		&cmd_struct_receive,
+		&cmd_struct_quota,
+		&cmd_struct_qgroup,
+		&cmd_struct_replace,
+		&cmd_struct_help,
+		&cmd_struct_version,
+		NULL
 	},
 };
 
@@ -299,7 +303,7 @@ int main(int argc, char **argv)
 
 	fixup_argv0(argv, cmd->token);
 
-	ret = cmd->fn(argc, argv);
+	ret = cmd_execute(cmd, argc, argv);
 
 	btrfs_close_all_devices();
 

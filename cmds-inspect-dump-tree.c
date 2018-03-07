@@ -184,7 +184,7 @@ static u64 treeid_from_string(const char *str, const char **end)
 	return id;
 }
 
-const char * const cmd_inspect_dump_tree_usage[] = {
+static const char * const cmd_inspect_dump_tree_usage[] = {
 	"btrfs inspect-internal dump-tree [options] device",
 	"Dump tree structures from a given device",
 	"Dump tree structures from a given device in textual form, expand keys to human",
@@ -203,7 +203,7 @@ const char * const cmd_inspect_dump_tree_usage[] = {
 	NULL
 };
 
-int cmd_inspect_dump_tree(int argc, char **argv)
+static int cmd_inspect_dump_tree(int argc, char **argv)
 {
 	struct btrfs_root *root;
 	struct btrfs_fs_info *info;
@@ -597,3 +597,4 @@ close_root:
 out:
 	return !!ret;
 }
+DEFINE_SIMPLE_COMMAND(inspect_dump_tree, "dump-tree");

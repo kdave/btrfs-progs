@@ -420,14 +420,14 @@ out:
 	return ret;
 }
 
-const char * const cmd_inspect_tree_stats_usage[] = {
+static const char * const cmd_inspect_tree_stats_usage[] = {
 	"btrfs inspect-internal tree-stats [options] <device>",
 	"Print various stats for trees",
 	"-b		raw numbers in bytes",
 	NULL
 };
 
-int cmd_inspect_tree_stats(int argc, char **argv)
+static int cmd_inspect_tree_stats(int argc, char **argv)
 {
 	struct btrfs_key key;
 	struct btrfs_root *root;
@@ -494,3 +494,4 @@ out:
 	close_ctree(root);
 	return ret;
 }
+DEFINE_SIMPLE_COMMAND(inspect_tree_stats, "tree-stats");

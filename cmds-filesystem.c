@@ -151,6 +151,7 @@ static int cmd_filesystem_df(int argc, char **argv)
 	close_file_or_dir(fd, dirstream);
 	return !!ret;
 }
+static DEFINE_SIMPLE_COMMAND(filesystem_df, "df");
 
 static int match_search_item_kernel(u8 *fsid, char *mnt, char *label,
 					char *search)
@@ -806,6 +807,7 @@ out:
 	free_seen_fsid(seen_fsid_hash);
 	return ret;
 }
+static DEFINE_SIMPLE_COMMAND(filesystem_show, "show");
 
 static const char * const cmd_filesystem_sync_usage[] = {
 	"btrfs filesystem sync <path>",
@@ -830,6 +832,7 @@ static int cmd_filesystem_sync(int argc, char **argv)
 
 	return 0;
 }
+static DEFINE_SIMPLE_COMMAND(filesystem_sync, "sync");
 
 static int parse_compress_type(char *s)
 {
@@ -1068,6 +1071,7 @@ next:
 
 	return !!defrag_global_errors;
 }
+static DEFINE_SIMPLE_COMMAND(filesystem_defrag, "defragment");
 
 static const char * const cmd_filesystem_resize_usage[] = {
 	"btrfs filesystem resize [devid:][+/-]<newsize>[kKmMgGtTpPeE]|[devid:]max <path>",
@@ -1146,6 +1150,7 @@ static int cmd_filesystem_resize(int argc, char **argv)
 	}
 	return 0;
 }
+static DEFINE_SIMPLE_COMMAND(filesystem_resize, "resize");
 
 static const char * const cmd_filesystem_label_usage[] = {
 	"btrfs filesystem label [<device>|<mount_point>] [<newlabel>]",
@@ -1176,6 +1181,7 @@ static int cmd_filesystem_label(int argc, char **argv)
 		return ret;
 	}
 }
+static DEFINE_SIMPLE_COMMAND(filesystem_label, "label");
 
 static const char * const cmd_filesystem_balance_usage[] = {
 	"btrfs filesystem balance [args...] (alias of \"btrfs balance\")",
@@ -1183,40 +1189,40 @@ static const char * const cmd_filesystem_balance_usage[] = {
 	NULL
 };
 
-/* Compatible old "btrfs filesystem balance" command */
 static int cmd_filesystem_balance(int argc, char **argv)
 {
-	return cmd_balance(argc, argv);
+	return cmd_execute(&cmd_struct_balance, argc, argv);
 }
+
+/*
+ * Compatible old "btrfs filesystem balance" command
+ *
+ * We can't use cmd_struct_balance directly here since this alias is
+ * for historical compatibility and is hidden.
+ */
+static DEFINE_COMMAND(filesystem_balance, "balance", cmd_filesystem_balance,
+		      cmd_filesystem_balance_usage, NULL, CMD_HIDDEN);
 
 static const char filesystem_cmd_group_info[] =
 "overall filesystem tasks and information";
 
-const struct cmd_group filesystem_cmd_group = {
+static const struct cmd_group filesystem_cmd_group = {
 	filesystem_cmd_group_usage, filesystem_cmd_group_info, {
-		{ "df", cmd_filesystem_df, cmd_filesystem_df_usage, NULL, 0 },
-		{ "du", cmd_filesystem_du, cmd_filesystem_du_usage, NULL, 0 },
-		{ "show", cmd_filesystem_show, cmd_filesystem_show_usage, NULL,
-			0 },
-		{ "sync", cmd_filesystem_sync, cmd_filesystem_sync_usage, NULL,
-			0 },
-		{ "defragment", cmd_filesystem_defrag,
-			cmd_filesystem_defrag_usage, NULL, 0 },
-		{ "balance", cmd_filesystem_balance,
-		   cmd_filesystem_balance_usage, &balance_cmd_group,
-		   CMD_HIDDEN },
-		{ "resize", cmd_filesystem_resize, cmd_filesystem_resize_usage,
-			NULL, 0 },
-		{ "label", cmd_filesystem_label, cmd_filesystem_label_usage,
-			NULL, 0 },
-		{ "usage", cmd_filesystem_usage,
-			cmd_filesystem_usage_usage, NULL, 0 },
-
-		NULL_CMD_STRUCT
+		&cmd_struct_filesystem_df,
+		&cmd_struct_filesystem_du,
+		&cmd_struct_filesystem_show,
+		&cmd_struct_filesystem_sync,
+		&cmd_struct_filesystem_defrag,
+		&cmd_struct_filesystem_balance,
+		&cmd_struct_filesystem_resize,
+		&cmd_struct_filesystem_label,
+		&cmd_struct_filesystem_usage,
+		NULL
 	}
 };
 
-int cmd_filesystem(int argc, char **argv)
+static int cmd_filesystem(int argc, char **argv)
 {
 	return handle_command_group(&filesystem_cmd_group, argc, argv);
 }
+DEFINE_GROUP_COMMAND_TOKEN(filesystem);

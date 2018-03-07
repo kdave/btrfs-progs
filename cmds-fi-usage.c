@@ -956,7 +956,7 @@ out:
 	return ret;
 }
 
-const char * const cmd_filesystem_usage_usage[] = {
+static const char * const cmd_filesystem_usage_usage[] = {
 	"btrfs filesystem usage [options] <path> [<path>..]",
 	"Show detailed information about internal filesystem usage .",
 	HELPINFO_UNITS_SHORT_LONG,
@@ -964,7 +964,7 @@ const char * const cmd_filesystem_usage_usage[] = {
 	NULL
 };
 
-int cmd_filesystem_usage(int argc, char **argv)
+static int cmd_filesystem_usage(int argc, char **argv)
 {
 	int ret = 0;
 	unsigned unit_mode;
@@ -1034,6 +1034,7 @@ cleanup:
 out:
 	return !!ret;
 }
+DEFINE_SIMPLE_COMMAND(filesystem_usage, "usage");
 
 void print_device_chunks(struct device_info *devinfo,
 		struct chunk_info *chunks_info_ptr,

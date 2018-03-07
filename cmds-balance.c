@@ -672,6 +672,7 @@ static int cmd_balance_start(int argc, char **argv)
 
 	return do_balance(argv[optind], &args, start_flags);
 }
+static DEFINE_SIMPLE_COMMAND(balance_start, "start");
 
 static const char * const cmd_balance_pause_usage[] = {
 	"btrfs balance pause <path>",
@@ -710,6 +711,7 @@ static int cmd_balance_pause(int argc, char **argv)
 	close_file_or_dir(fd, dirstream);
 	return ret;
 }
+static DEFINE_SIMPLE_COMMAND(balance_pause, "pause");
 
 static const char * const cmd_balance_cancel_usage[] = {
 	"btrfs balance cancel <path>",
@@ -748,6 +750,7 @@ static int cmd_balance_cancel(int argc, char **argv)
 	close_file_or_dir(fd, dirstream);
 	return ret;
 }
+static DEFINE_SIMPLE_COMMAND(balance_cancel, "cancel");
 
 static const char * const cmd_balance_resume_usage[] = {
 	"btrfs balance resume <path>",
@@ -807,6 +810,7 @@ static int cmd_balance_resume(int argc, char **argv)
 	close_file_or_dir(fd, dirstream);
 	return ret;
 }
+static DEFINE_SIMPLE_COMMAND(balance_resume, "resume");
 
 static const char * const cmd_balance_status_usage[] = {
 	"btrfs balance status [-v] <path>",
@@ -898,6 +902,7 @@ out:
 	close_file_or_dir(fd, dirstream);
 	return ret;
 }
+static DEFINE_SIMPLE_COMMAND(balance_status, "status");
 
 static int cmd_balance_full(int argc, char **argv)
 {
@@ -908,23 +913,25 @@ static int cmd_balance_full(int argc, char **argv)
 
 	return do_balance(argv[1], &args, BALANCE_START_NOWARN);
 }
+static DEFINE_COMMAND(balance_full, "--full-balance", cmd_balance_full,
+		      NULL, NULL, CMD_HIDDEN);
 
 static const char balance_cmd_group_info[] =
 "balance data across devices, or change block groups using filters";
 
-const struct cmd_group balance_cmd_group = {
+static const struct cmd_group balance_cmd_group = {
 	balance_cmd_group_usage, balance_cmd_group_info, {
-		{ "start", cmd_balance_start, cmd_balance_start_usage, NULL, 0 },
-		{ "pause", cmd_balance_pause, cmd_balance_pause_usage, NULL, 0 },
-		{ "cancel", cmd_balance_cancel, cmd_balance_cancel_usage, NULL, 0 },
-		{ "resume", cmd_balance_resume, cmd_balance_resume_usage, NULL, 0 },
-		{ "status", cmd_balance_status, cmd_balance_status_usage, NULL, 0 },
-		{ "--full-balance", cmd_balance_full, NULL, NULL, 1 },
-		NULL_CMD_STRUCT
+		&cmd_struct_balance_start,
+		&cmd_struct_balance_pause,
+		&cmd_struct_balance_cancel,
+		&cmd_struct_balance_resume,
+		&cmd_struct_balance_status,
+		&cmd_struct_balance_full,
+		NULL
 	}
 };
 
-int cmd_balance(int argc, char **argv)
+static int cmd_balance(int argc, char **argv)
 {
 	if (argc == 2 && strcmp("start", argv[1]) != 0) {
 		/* old 'btrfs filesystem balance <path>' syntax */
@@ -938,3 +945,5 @@ int cmd_balance(int argc, char **argv)
 
 	return handle_command_group(&balance_cmd_group, argc, argv);
 }
+
+DEFINE_GROUP_COMMAND(balance, "balance");

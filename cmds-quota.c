@@ -79,6 +79,7 @@ static int cmd_quota_enable(int argc, char **argv)
 		usage(cmd_quota_enable_usage);
 	return ret;
 }
+static DEFINE_SIMPLE_COMMAND(quota_enable, "enable");
 
 static const char * const cmd_quota_disable_usage[] = {
 	"btrfs quota disable <path>",
@@ -98,6 +99,7 @@ static int cmd_quota_disable(int argc, char **argv)
 		usage(cmd_quota_disable_usage);
 	return ret;
 }
+static DEFINE_SIMPLE_COMMAND(quota_disable, "disable");
 
 static const char * const cmd_quota_rescan_usage[] = {
 	"btrfs quota rescan [-sw] <path>",
@@ -197,21 +199,22 @@ static int cmd_quota_rescan(int argc, char **argv)
 	close_file_or_dir(fd, dirstream);
 	return 0;
 }
+static DEFINE_SIMPLE_COMMAND(quota_rescan, "rescan");
 
 static const char quota_cmd_group_info[] =
 "manage filesystem quota settings";
 
-const struct cmd_group quota_cmd_group = {
+static const struct cmd_group quota_cmd_group = {
 	quota_cmd_group_usage, quota_cmd_group_info, {
-		{ "enable", cmd_quota_enable, cmd_quota_enable_usage, NULL, 0 },
-		{ "disable", cmd_quota_disable, cmd_quota_disable_usage,
-		   NULL, 0 },
-		{ "rescan", cmd_quota_rescan, cmd_quota_rescan_usage, NULL, 0 },
-		NULL_CMD_STRUCT
+		&cmd_struct_quota_enable,
+		&cmd_struct_quota_disable,
+		&cmd_struct_quota_rescan,
+		NULL
 	}
 };
 
-int cmd_quota(int argc, char **argv)
+static int cmd_quota(int argc, char **argv)
 {
 	return handle_command_group(&quota_cmd_group, argc, argv);
 }
+DEFINE_GROUP_COMMAND_TOKEN(quota);

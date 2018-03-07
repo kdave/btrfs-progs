@@ -56,69 +56,92 @@ struct cmd_struct {
 	int flags;
 };
 
-#define NULL_CMD_STRUCT {NULL, NULL, NULL, NULL, 0}
+/*
+ * These macros will create cmd_struct structures with a standard name:
+ * cmd_struct_<name>.
+ */
+#define __CMD_NAME(name)	cmd_struct_ ##name
+#define DECLARE_COMMAND(name)						\
+	extern const struct cmd_struct __CMD_NAME(name)
+
+/* Define a command with all members specified */
+#define DEFINE_COMMAND(name, _token, _fn, _usagestr, _group, _flags)	\
+	const struct cmd_struct __CMD_NAME(name) =			\
+		{							\
+			.token = (_token),				\
+			.fn = (_fn),					\
+			.usagestr = (_usagestr),			\
+			.next = (_group),				\
+			.flags = (_flags),				\
+		}
+
+/*
+ * Define a command for the common case - just a name and string.
+ * It's assumed that the callback is called cmd_<name> and the usage
+ * array is named cmd_<name>_usage.
+ */
+#define DEFINE_SIMPLE_COMMAND(name, token)				\
+	DEFINE_COMMAND(name, token, cmd_ ##name,			\
+		       cmd_ ##name ##_usage, NULL, 0)
+
+/*
+ * Define a command group callback.
+ * It's assumed that the callback is called cmd_<name> and the
+ * struct cmd_group is called <name>_cmd_group.
+ */
+#define DEFINE_GROUP_COMMAND(name, token)				\
+	DEFINE_COMMAND(name, token, cmd_ ##name,			\
+		       NULL, &(name ## _cmd_group), 0)
+
+/*
+ * Define a command group callback when the name and the string are
+ * the same.
+ */
+#define DEFINE_GROUP_COMMAND_TOKEN(name)				\
+	DEFINE_GROUP_COMMAND(name, #name)
 
 struct cmd_group {
 	const char * const *usagestr;
 	const char *infostr;
 
-	const struct cmd_struct commands[];
+	const struct cmd_struct * const commands[];
 };
+
+static inline int cmd_execute(const struct cmd_struct *cmd,
+			      int argc, char **argv)
+{
+	return cmd->fn(argc, argv);
+}
 
 int handle_command_group(const struct cmd_group *grp, int argc,
 			 char **argv);
 
 extern const char * const generic_cmd_help_usage[];
 
-extern const struct cmd_group subvolume_cmd_group;
-extern const struct cmd_group filesystem_cmd_group;
-extern const struct cmd_group balance_cmd_group;
-extern const struct cmd_group device_cmd_group;
-extern const struct cmd_group scrub_cmd_group;
-extern const struct cmd_group inspect_cmd_group;
-extern const struct cmd_group property_cmd_group;
-extern const struct cmd_group quota_cmd_group;
-extern const struct cmd_group qgroup_cmd_group;
-extern const struct cmd_group replace_cmd_group;
-extern const struct cmd_group rescue_cmd_group;
-
-extern const char * const cmd_send_usage[];
-extern const char * const cmd_receive_usage[];
-extern const char * const cmd_check_usage[];
-extern const char * const cmd_chunk_recover_usage[];
-extern const char * const cmd_super_recover_usage[];
-extern const char * const cmd_restore_usage[];
-extern const char * const cmd_rescue_usage[];
-extern const char * const cmd_inspect_dump_super_usage[];
-extern const char * const cmd_inspect_dump_tree_usage[];
-extern const char * const cmd_inspect_tree_stats_usage[];
-extern const char * const cmd_filesystem_du_usage[];
-extern const char * const cmd_filesystem_usage_usage[];
-
-int cmd_subvolume(int argc, char **argv);
-int cmd_filesystem(int argc, char **argv);
-int cmd_filesystem_du(int argc, char **argv);
-int cmd_filesystem_usage(int argc, char **argv);
-int cmd_balance(int argc, char **argv);
-int cmd_device(int argc, char **argv);
-int cmd_scrub(int argc, char **argv);
-int cmd_check(int argc, char **argv);
-int cmd_chunk_recover(int argc, char **argv);
-int cmd_super_recover(int argc, char **argv);
-int cmd_inspect(int argc, char **argv);
-int cmd_inspect_dump_super(int argc, char **argv);
-int cmd_inspect_dump_tree(int argc, char **argv);
-int cmd_inspect_tree_stats(int argc, char **argv);
-int cmd_property(int argc, char **argv);
-int cmd_send(int argc, char **argv);
-int cmd_receive(int argc, char **argv);
-int cmd_quota(int argc, char **argv);
-int cmd_qgroup(int argc, char **argv);
-int cmd_replace(int argc, char **argv);
-int cmd_restore(int argc, char **argv);
-int cmd_select_super(int argc, char **argv);
-int cmd_dump_super(int argc, char **argv);
-int cmd_debug_tree(int argc, char **argv);
-int cmd_rescue(int argc, char **argv);
+DECLARE_COMMAND(subvolume);
+DECLARE_COMMAND(filesystem);
+DECLARE_COMMAND(filesystem_du);
+DECLARE_COMMAND(filesystem_usage);
+DECLARE_COMMAND(balance);
+DECLARE_COMMAND(device);
+DECLARE_COMMAND(scrub);
+DECLARE_COMMAND(check);
+DECLARE_COMMAND(chunk_recover);
+DECLARE_COMMAND(super_recover);
+DECLARE_COMMAND(inspect);
+DECLARE_COMMAND(inspect_dump_super);
+DECLARE_COMMAND(inspect_dump_tree);
+DECLARE_COMMAND(inspect_tree_stats);
+DECLARE_COMMAND(property);
+DECLARE_COMMAND(send);
+DECLARE_COMMAND(receive);
+DECLARE_COMMAND(quota);
+DECLARE_COMMAND(qgroup);
+DECLARE_COMMAND(replace);
+DECLARE_COMMAND(restore);
+DECLARE_COMMAND(select_super);
+DECLARE_COMMAND(dump_super);
+DECLARE_COMMAND(debug_tree);
+DECLARE_COMMAND(rescue);
 
 #endif

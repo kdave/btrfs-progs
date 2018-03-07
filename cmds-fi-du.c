@@ -549,7 +549,7 @@ out:
 	return ret;
 }
 
-const char * const cmd_filesystem_du_usage[] = {
+static const char * const cmd_filesystem_du_usage[] = {
 	"btrfs filesystem du [options] <path> [<path>..]",
 	"Summarize disk usage of each file.",
 	"-s|--summarize     display only a total for each argument",
@@ -557,7 +557,7 @@ const char * const cmd_filesystem_du_usage[] = {
 	NULL
 };
 
-int cmd_filesystem_du(int argc, char **argv)
+static int cmd_filesystem_du(int argc, char **argv)
 {
 	int ret = 0, err = 0;
 	int i;
@@ -611,3 +611,4 @@ int cmd_filesystem_du(int argc, char **argv)
 
 	return err;
 }
+DEFINE_SIMPLE_COMMAND(filesystem_du, "du");

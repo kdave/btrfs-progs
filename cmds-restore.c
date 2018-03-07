@@ -1396,7 +1396,7 @@ out:
 	return ret;
 }
 
-const char * const cmd_restore_usage[] = {
+static const char * const cmd_restore_usage[] = {
 	"btrfs restore [options] <device> <path> | -l <device>",
 	"Try to restore files from a damaged filesystem (unmounted)",
 	"",
@@ -1422,7 +1422,7 @@ const char * const cmd_restore_usage[] = {
 	NULL
 };
 
-int cmd_restore(int argc, char **argv)
+static int cmd_restore(int argc, char **argv)
 {
 	struct btrfs_root *root;
 	struct btrfs_key key;
@@ -1628,3 +1628,4 @@ out:
 	close_ctree(root);
 	return !!ret;
 }
+DEFINE_SIMPLE_COMMAND(restore, "restore");

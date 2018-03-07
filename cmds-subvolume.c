@@ -197,6 +197,7 @@ out:
 
 	return retval;
 }
+static DEFINE_SIMPLE_COMMAND(subvol_create, "create");
 
 static int wait_for_commit(int fd)
 {
@@ -403,6 +404,7 @@ keep_fd:
 
 	return ret;
 }
+static DEFINE_SIMPLE_COMMAND(subvol_delete, "delete");
 
 /*
  * Naming of options:
@@ -606,6 +608,7 @@ out:
 		usage(cmd_subvol_list_usage);
 	return !!ret;
 }
+static DEFINE_SIMPLE_COMMAND(subvol_list, "list");
 
 static const char * const cmd_subvol_snapshot_usage[] = {
 	"btrfs subvolume snapshot [-r] [-i <qgroupid>] <source> <dest>|[<dest>/]<name>",
@@ -759,6 +762,7 @@ out:
 
 	return retval;
 }
+static DEFINE_SIMPLE_COMMAND(subvol_snapshot, "snapshot");
 
 static const char * const cmd_subvol_get_default_usage[] = {
 	"btrfs subvolume get-default <path>",
@@ -820,6 +824,7 @@ out:
 	close_file_or_dir(fd, dirstream);
 	return ret;
 }
+static DEFINE_SIMPLE_COMMAND(subvol_get_default, "get-default");
 
 static const char * const cmd_subvol_set_default_usage[] = {
 	"btrfs subvolume set-default <subvolume>\n"
@@ -859,6 +864,7 @@ static int cmd_subvol_set_default(int argc, char **argv)
 	}
 	return 0;
 }
+static DEFINE_SIMPLE_COMMAND(subvol_set_default, "set-default");
 
 static const char * const cmd_subvol_find_new_usage[] = {
 	"btrfs subvolume find-new <path> <lastgen>",
@@ -904,6 +910,7 @@ static int cmd_subvol_find_new(int argc, char **argv)
 	close_file_or_dir(fd, dirstream);
 	return !!ret;
 }
+static DEFINE_SIMPLE_COMMAND(subvol_find_new, "find-new");
 
 static const char * const cmd_subvol_show_usage[] = {
 	"btrfs subvolume show [options] <subvol-path>|<mnt>",
@@ -1157,6 +1164,7 @@ out:
 	free(fullpath);
 	return !!ret;
 }
+static DEFINE_SIMPLE_COMMAND(subvol_show, "show");
 
 static const char * const cmd_subvol_sync_usage[] = {
 	"btrfs subvolume sync <path> [<subvol-id>...]",
@@ -1261,30 +1269,28 @@ out:
 
 	return !!ret;
 }
+static DEFINE_SIMPLE_COMMAND(subvol_sync, "sync");
 
 static const char subvolume_cmd_group_info[] =
 "manage subvolumes: create, delete, list, etc";
 
-const struct cmd_group subvolume_cmd_group = {
+static const struct cmd_group subvolume_cmd_group = {
 	subvolume_cmd_group_usage, subvolume_cmd_group_info, {
-		{ "create", cmd_subvol_create, cmd_subvol_create_usage, NULL, 0 },
-		{ "delete", cmd_subvol_delete, cmd_subvol_delete_usage, NULL, 0 },
-		{ "list", cmd_subvol_list, cmd_subvol_list_usage, NULL, 0 },
-		{ "snapshot", cmd_subvol_snapshot, cmd_subvol_snapshot_usage,
-			NULL, 0 },
-		{ "get-default", cmd_subvol_get_default,
-			cmd_subvol_get_default_usage, NULL, 0 },
-		{ "set-default", cmd_subvol_set_default,
-			cmd_subvol_set_default_usage, NULL, 0 },
-		{ "find-new", cmd_subvol_find_new, cmd_subvol_find_new_usage,
-			NULL, 0 },
-		{ "show", cmd_subvol_show, cmd_subvol_show_usage, NULL, 0 },
-		{ "sync", cmd_subvol_sync, cmd_subvol_sync_usage, NULL, 0 },
-		NULL_CMD_STRUCT
+		&cmd_struct_subvol_create,
+		&cmd_struct_subvol_delete,
+		&cmd_struct_subvol_list,
+		&cmd_struct_subvol_snapshot,
+		&cmd_struct_subvol_get_default,
+		&cmd_struct_subvol_set_default,
+		&cmd_struct_subvol_find_new,
+		&cmd_struct_subvol_show,
+		&cmd_struct_subvol_sync,
+		NULL
 	}
 };
 
-int cmd_subvolume(int argc, char **argv)
+static int cmd_subvolume(int argc, char **argv)
 {
 	return handle_command_group(&subvolume_cmd_group, argc, argv);
 }
+DEFINE_GROUP_COMMAND_TOKEN(subvolume);

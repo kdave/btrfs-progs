@@ -313,6 +313,7 @@ leave_with_error:
 		close(fddstdev);
 	return 1;
 }
+static DEFINE_SIMPLE_COMMAND(replace_start, "start");
 
 static const char *const cmd_replace_status_usage[] = {
 	"btrfs replace status [-1] <mount_point>",
@@ -356,6 +357,7 @@ static int cmd_replace_status(int argc, char **argv)
 	close_file_or_dir(fd, dirstream);
 	return !!ret;
 }
+static DEFINE_SIMPLE_COMMAND(replace_status, "status");
 
 static int print_replace_status(int fd, const char *path, int once)
 {
@@ -538,23 +540,22 @@ static int cmd_replace_cancel(int argc, char **argv)
 	}
 	return 0;
 }
+static DEFINE_SIMPLE_COMMAND(replace_cancel, "cancel");
 
 static const char replace_cmd_group_info[] =
 "replace a device in the filesystem";
 
-const struct cmd_group replace_cmd_group = {
+static const struct cmd_group replace_cmd_group = {
 	replace_cmd_group_usage, replace_cmd_group_info, {
-		{ "start", cmd_replace_start, cmd_replace_start_usage, NULL,
-		  0 },
-		{ "status", cmd_replace_status, cmd_replace_status_usage, NULL,
-		  0 },
-		{ "cancel", cmd_replace_cancel, cmd_replace_cancel_usage, NULL,
-		  0 },
-		NULL_CMD_STRUCT
+		&cmd_struct_replace_start,
+		&cmd_struct_replace_status,
+		&cmd_struct_replace_cancel,
+		NULL
 	}
 };
 
-int cmd_replace(int argc, char **argv)
+static int cmd_replace(int argc, char **argv)
 {
 	return handle_command_group(&replace_cmd_group, argc, argv);
 }
+DEFINE_GROUP_COMMAND_TOKEN(replace);

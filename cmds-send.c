@@ -489,8 +489,7 @@ static void free_send_info(struct btrfs_send *sctx)
 	subvol_uuid_search_finit(&sctx->sus);
 }
 
-
-const char * const cmd_send_usage[] = {
+static const char * const cmd_send_usage[] = {
 	"btrfs send [-ve] [-p <parent>] [-c <clone-src>] [-f <outfile>] <subvol> [<subvol>...]",
 	"Send the subvolume(s) to stdout.",
 	"Sends the subvolume(s) specified by <subvol> to stdout.",
@@ -524,7 +523,7 @@ const char * const cmd_send_usage[] = {
 	NULL
 };
 
-int cmd_send(int argc, char **argv)
+static int cmd_send(int argc, char **argv)
 {
 	char *subvol = NULL;
 	int ret;
@@ -809,3 +808,4 @@ out:
 	free_send_info(&send);
 	return !!ret;
 }
+DEFINE_SIMPLE_COMMAND(send, "send");
