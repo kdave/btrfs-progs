@@ -120,7 +120,8 @@ static void print_df(struct btrfs_ioctl_space_args *sargs, unsigned unit_mode)
 	}
 }
 
-static int cmd_filesystem_df(int argc, char **argv)
+static int cmd_filesystem_df(const struct cmd_struct *cmd,
+			     int argc, char **argv)
 {
 	struct btrfs_ioctl_space_args *sargs = NULL;
 	int ret;
@@ -674,7 +675,8 @@ static const char * const cmd_filesystem_show_usage[] = {
 	NULL
 };
 
-static int cmd_filesystem_show(int argc, char **argv)
+static int cmd_filesystem_show(const struct cmd_struct *cmd,
+			       int argc, char **argv)
 {
 	LIST_HEAD(all_uuids);
 	struct btrfs_fs_devices *fs_devices;
@@ -833,7 +835,8 @@ static const char * const cmd_filesystem_sync_usage[] = {
 	NULL
 };
 
-static int cmd_filesystem_sync(int argc, char **argv)
+static int cmd_filesystem_sync(const struct cmd_struct *cmd,
+			       int argc, char **argv)
 {
 	enum btrfs_util_error err;
 
@@ -921,7 +924,8 @@ error:
 	return 0;
 }
 
-static int cmd_filesystem_defrag(int argc, char **argv)
+static int cmd_filesystem_defrag(const struct cmd_struct *cmd,
+				 int argc, char **argv)
 {
 	int fd;
 	int flush = 0;
@@ -1108,7 +1112,8 @@ static const char * const cmd_filesystem_resize_usage[] = {
 	NULL
 };
 
-static int cmd_filesystem_resize(int argc, char **argv)
+static int cmd_filesystem_resize(const struct cmd_struct *cmd,
+				 int argc, char **argv)
 {
 	struct btrfs_ioctl_vol_args	args;
 	int	fd, res, len, e;
@@ -1186,7 +1191,8 @@ static const char * const cmd_filesystem_label_usage[] = {
 	NULL
 };
 
-static int cmd_filesystem_label(int argc, char **argv)
+static int cmd_filesystem_label(const struct cmd_struct *cmd,
+				int argc, char **argv)
 {
 	clean_args_no_options(argc, argv, cmd_filesystem_label_usage);
 
@@ -1215,7 +1221,8 @@ static const char * const cmd_filesystem_balance_usage[] = {
 	NULL
 };
 
-static int cmd_filesystem_balance(int argc, char **argv)
+static int cmd_filesystem_balance(const struct cmd_struct *unused,
+				  int argc, char **argv)
 {
 	return cmd_execute(&cmd_struct_balance, argc, argv);
 }
@@ -1247,7 +1254,8 @@ static const struct cmd_group filesystem_cmd_group = {
 	}
 };
 
-static int cmd_filesystem(int argc, char **argv)
+static int cmd_filesystem(const struct cmd_struct *unused,
+			  int argc, char **argv)
 {
 	return handle_command_group(&filesystem_cmd_group, argc, argv);
 }

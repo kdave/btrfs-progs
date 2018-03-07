@@ -284,7 +284,8 @@ next:
 	return ret;
 }
 
-static int cmd_inspect_dump_tree(int argc, char **argv)
+static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
+				 int argc, char **argv)
 {
 	struct btrfs_root *root;
 	struct btrfs_fs_info *info;

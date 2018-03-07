@@ -558,7 +558,8 @@ static const char * const cmd_filesystem_du_usage[] = {
 	NULL
 };
 
-static int cmd_filesystem_du(int argc, char **argv)
+static int cmd_filesystem_du(const struct cmd_struct *cmd,
+			     int argc, char **argv)
 {
 	int ret = 0, err = 0;
 	int i;

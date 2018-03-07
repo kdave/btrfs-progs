@@ -43,7 +43,8 @@ static const char * const cmd_rescue_chunk_recover_usage[] = {
 	NULL
 };
 
-static int cmd_rescue_chunk_recover(int argc, char *argv[])
+static int cmd_rescue_chunk_recover(const struct cmd_struct *cmd,
+				    int argc, char *argv[])
 {
 	int ret = 0;
 	char *file;
@@ -113,7 +114,8 @@ static const char * const cmd_rescue_super_recover_usage[] = {
  *   3 : Fail to Recover bad superblocks
  *   4 : Abort to recover bad superblocks
  */
-static int cmd_rescue_super_recover(int argc, char **argv)
+static int cmd_rescue_super_recover(const struct cmd_struct *cmd,
+				    int argc, char **argv)
 {
 	int ret;
 	int verbose = 0;
@@ -162,7 +164,8 @@ static const char * const cmd_rescue_zero_log_usage[] = {
 	NULL
 };
 
-static int cmd_rescue_zero_log(int argc, char **argv)
+static int cmd_rescue_zero_log(const struct cmd_struct *cmd,
+			       int argc, char **argv)
 {
 	struct btrfs_root *root;
 	struct btrfs_trans_handle *trans;
@@ -217,7 +220,8 @@ static const char * const cmd_rescue_fix_device_size_usage[] = {
 	NULL
 };
 
-static int cmd_rescue_fix_device_size(int argc, char **argv)
+static int cmd_rescue_fix_device_size(const struct cmd_struct *cmd,
+				      int argc, char **argv)
 {
 	struct btrfs_fs_info *fs_info;
 	char *devname;
@@ -270,7 +274,7 @@ static const struct cmd_group rescue_cmd_group = {
 	}
 };
 
-static int cmd_rescue(int argc, char **argv)
+static int cmd_rescue(const struct cmd_struct *unused, int argc, char **argv)
 {
 	return handle_command_group(&rescue_cmd_group, argc, argv);
 }

@@ -964,7 +964,8 @@ static const char * const cmd_filesystem_usage_usage[] = {
 	NULL
 };
 
-static int cmd_filesystem_usage(int argc, char **argv)
+static int cmd_filesystem_usage(const struct cmd_struct *cmd,
+				int argc, char **argv)
 {
 	int ret = 0;
 	unsigned unit_mode;

@@ -218,7 +218,8 @@ static const char * const cmd_qgroup_assign_usage[] = {
 	NULL
 };
 
-static int cmd_qgroup_assign(int argc, char **argv)
+static int cmd_qgroup_assign(const struct cmd_struct *cmd,
+			     int argc, char **argv)
 {
 	return _cmd_qgroup_assign(1, argc, argv, cmd_qgroup_assign_usage);
 }
@@ -230,7 +231,8 @@ static const char * const cmd_qgroup_remove_usage[] = {
 	NULL
 };
 
-static int cmd_qgroup_remove(int argc, char **argv)
+static int cmd_qgroup_remove(const struct cmd_struct *cmd,
+			     int argc, char **argv)
 {
 	return _cmd_qgroup_assign(0, argc, argv, cmd_qgroup_remove_usage);
 }
@@ -242,7 +244,8 @@ static const char * const cmd_qgroup_create_usage[] = {
 	NULL
 };
 
-static int cmd_qgroup_create(int argc, char **argv)
+static int cmd_qgroup_create(const struct cmd_struct *cmd,
+			     int argc, char **argv)
 {
 	clean_args_no_options(argc, argv, cmd_qgroup_create_usage);
 
@@ -256,7 +259,8 @@ static const char * const cmd_qgroup_destroy_usage[] = {
 	NULL
 };
 
-static int cmd_qgroup_destroy(int argc, char **argv)
+static int cmd_qgroup_destroy(const struct cmd_struct *cmd,
+			      int argc, char **argv)
 {
 	clean_args_no_options(argc, argv, cmd_qgroup_destroy_usage);
 
@@ -284,7 +288,7 @@ static const char * const cmd_qgroup_show_usage[] = {
 	NULL
 };
 
-static int cmd_qgroup_show(int argc, char **argv)
+static int cmd_qgroup_show(const struct cmd_struct *cmd, int argc, char **argv)
 {
 	char *path;
 	int ret = 0;
@@ -418,7 +422,7 @@ static const char * const cmd_qgroup_limit_usage[] = {
 	NULL
 };
 
-static int cmd_qgroup_limit(int argc, char **argv)
+static int cmd_qgroup_limit(const struct cmd_struct *cmd, int argc, char **argv)
 {
 	int ret = 0;
 	int fd;
@@ -514,7 +518,7 @@ static const struct cmd_group qgroup_cmd_group = {
 	}
 };
 
-static int cmd_qgroup(int argc, char **argv)
+static int cmd_qgroup(const struct cmd_struct *unused, int argc, char **argv)
 {
 	return handle_command_group(&qgroup_cmd_group, argc, argv);
 }
