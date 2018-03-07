@@ -1423,7 +1423,7 @@ static const char * const cmd_restore_usage[] = {
 	NULL
 };
 
-static int cmd_restore(const struct cmd_struct *unused, int argc, char **argv)
+static int cmd_restore(const struct cmd_struct *cmd, int argc, char **argv)
 {
 	struct btrfs_root *root;
 	struct btrfs_key key;
@@ -1532,9 +1532,9 @@ static int cmd_restore(const struct cmd_struct *unused, int argc, char **argv)
 	}
 
 	if (!list_roots && check_argc_min(argc - optind, 2))
-		usage(cmd_restore_usage);
+		usage(cmd);
 	else if (list_roots && check_argc_min(argc - optind, 1))
-		usage(cmd_restore_usage);
+		usage(cmd);
 
 	if (fs_location && root_objectid) {
 		fprintf(stderr, "don't use -f and -r at the same time.\n");

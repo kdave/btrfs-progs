@@ -487,7 +487,7 @@ static int cmd_qgroup_limit(const struct cmd_struct *cmd, int argc, char **argv)
 		args.qgroupid = parse_qgroupid(argv[optind + 1]);
 		path = argv[optind + 2];
 	} else
-		usage(cmd_qgroup_limit_usage);
+		usage(cmd);
 
 	fd = btrfs_open_dir(path, &dirstream, 1);
 	if (fd < 0)

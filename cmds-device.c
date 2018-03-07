@@ -151,7 +151,6 @@ static int _cmd_device_remove(const struct cmd_struct *cmd,
 	char	*mntpnt;
 	int i, fdmnt, ret = 0;
 	DIR	*dirstream = NULL;
-	const char * const *usagestr = cmd->usagestr;
 
 	clean_args_no_options(cmd, argc, argv);
 
@@ -338,10 +337,10 @@ static int cmd_device_scan(const struct cmd_struct *cmd, int argc, char **argv)
 	devstart = optind;
 
 	if (all && forget)
-		usage(cmd_device_scan_usage);
+		usage(cmd);
 
 	if (all && check_argc_max(argc - optind, 1))
-		usage(cmd_device_scan_usage);
+		usage(cmd);
 
 	if (all || argc - optind == 0) {
 		if (forget) {

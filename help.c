@@ -100,7 +100,7 @@ void clean_args_no_options(const struct cmd_struct *cmd, int argc, char *argv[])
 		switch (c) {
 		default:
 			if (cmd->usagestr)
-				usage(cmd->usagestr);
+				usage(cmd);
 		}
 	}
 }
@@ -283,9 +283,9 @@ void usage_unknown_option(const char * const *usagestr, char **argv)
 }
 
 __attribute__((noreturn))
-void usage(const char * const *usagestr)
+void usage(const struct cmd_struct *cmd)
 {
-	usage_command_usagestr(usagestr, NULL, true, true);
+	usage_command_usagestr(cmd->usagestr, NULL, true, true);
 	exit(1);
 }
 

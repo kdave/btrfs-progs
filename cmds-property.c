@@ -253,8 +253,7 @@ static int setget_prop(int types, const char *object,
 
 }
 
-static int parse_args(int argc, char **argv,
-		       const char * const *usage_str,
+static int parse_args(const struct cmd_struct *cmd, int argc, char **argv,
 		       int *types, char **object,
 		       char **name, char **value, int min_nonopt_args)
 {
@@ -273,7 +272,7 @@ static int parse_args(int argc, char **argv,
 			type_str = optarg;
 			break;
 		default:
-			usage_unknown_option(usage_str, argv);
+			usage_unknown_option(cmd->usagestr, argv);
 		}
 	}
 
@@ -348,8 +347,7 @@ static int cmd_property_get(const struct cmd_struct *cmd,
 	char *name = NULL;
 	int types = 0;
 
-	if (parse_args(argc, argv, cmd_property_get_usage, &types, &object,
-				&name, NULL, 1))
+	if (parse_args(cmd, argc, argv, &types, &object, &name, NULL, 1))
 		return 1;
 
 	if (name)
@@ -378,8 +376,7 @@ static int cmd_property_set(const struct cmd_struct *cmd,
 	char *value = NULL;
 	int types = 0;
 
-	if (parse_args(argc, argv, cmd_property_set_usage, &types, &object,
-				&name, &value, 3))
+	if (parse_args(cmd, argc, argv, &types, &object, &name, &value, 3))
 		return 1;
 
 	ret = setget_prop(types, object, name, value);
@@ -403,8 +400,7 @@ static int cmd_property_list(const struct cmd_struct *cmd,
 	char *object = NULL;
 	int types = 0;
 
-	if (parse_args(argc, argv, cmd_property_list_usage, &types, &object,
-				NULL, NULL, 1))
+	if (parse_args(cmd, argc, argv, &types, &object, NULL, NULL, 1))
 		return 1;
 
 	ret = dump_props(types, object, 1);

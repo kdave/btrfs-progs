@@ -1092,10 +1092,8 @@ static int is_scrub_running_in_kernel(int fd,
 	return 0;
 }
 
-static const char * const cmd_scrub_start_usage[];
-static const char * const cmd_scrub_resume_usage[];
-
-static int scrub_start(int argc, char **argv, bool resume)
+static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
+		       bool resume)
 {
 	int fdmnt;
 	int prg_fd = -1;
@@ -1173,8 +1171,7 @@ static int scrub_start(int argc, char **argv, bool resume)
 			force = 1;
 			break;
 		default:
-			usage_unknown_option(resume ? cmd_scrub_resume_usage :
-						cmd_scrub_start_usage, argv);
+			usage_unknown_option(cmd->usagestr, argv);
 		}
 	}
 
@@ -1585,7 +1582,7 @@ static const char * const cmd_scrub_start_usage[] = {
 
 static int cmd_scrub_start(const struct cmd_struct *cmd, int argc, char **argv)
 {
-	return scrub_start(argc, argv, false);
+	return scrub_start(cmd, argc, argv, false);
 }
 static DEFINE_SIMPLE_COMMAND(scrub_start, "start");
 
@@ -1652,7 +1649,7 @@ static const char * const cmd_scrub_resume_usage[] = {
 
 static int cmd_scrub_resume(const struct cmd_struct *cmd, int argc, char **argv)
 {
-	return scrub_start(argc, argv, true);
+	return scrub_start(cmd, argc, argv, true);
 }
 static DEFINE_SIMPLE_COMMAND(scrub_resume, "resume");
 

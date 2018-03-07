@@ -76,7 +76,7 @@ static int cmd_quota_enable(const struct cmd_struct *cmd, int argc, char **argv)
 	ret = quota_ctl(BTRFS_QUOTA_CTL_ENABLE, argc, argv);
 
 	if (ret < 0)
-		usage(cmd_quota_enable_usage);
+		usage(cmd);
 	return ret;
 }
 static DEFINE_SIMPLE_COMMAND(quota_enable, "enable");
@@ -97,7 +97,7 @@ static int cmd_quota_disable(const struct cmd_struct *cmd,
 	ret = quota_ctl(BTRFS_QUOTA_CTL_DISABLE, argc, argv);
 
 	if (ret < 0)
-		usage(cmd_quota_disable_usage);
+		usage(cmd);
 	return ret;
 }
 static DEFINE_SIMPLE_COMMAND(quota_disable, "disable");

@@ -611,7 +611,7 @@ out:
 	if (comparer_set)
 		free(comparer_set);
 	if (uerr)
-		usage(cmd_subvol_list_usage);
+		usage(cmd);
 	return !!ret;
 }
 static DEFINE_SIMPLE_COMMAND(subvol_list, "list");
@@ -995,7 +995,7 @@ static int cmd_subvol_show(const struct cmd_struct *cmd, int argc, char **argv)
 	if (by_rootid && by_uuid) {
 		error(
 		"options --rootid and --uuid cannot be used at the same time");
-		usage(cmd_subvol_show_usage);
+		usage(cmd);
 	}
 
 	fullpath = realpath(argv[optind], NULL);
