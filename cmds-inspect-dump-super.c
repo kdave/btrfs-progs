@@ -505,7 +505,7 @@ static int load_and_dump_sb(char *filename, int fd, u64 sb_bytenr, int full,
 	return 0;
 }
 
-const char * const cmd_inspect_dump_super_usage[] = {
+static const char * const cmd_inspect_dump_super_usage[] = {
 	"btrfs inspect-internal dump-super [options] device [device...]",
 	"Dump superblock from a device in a textual form",
 	"-f|--full             print full superblock information, backup roots etc.",
@@ -523,7 +523,7 @@ const char * const cmd_inspect_dump_super_usage[] = {
 	NULL
 };
 
-int cmd_inspect_dump_super(int argc, char **argv)
+static int cmd_inspect_dump_super(int argc, char **argv)
 {
 	int all = 0;
 	int full = 0;
@@ -631,3 +631,4 @@ int cmd_inspect_dump_super(int argc, char **argv)
 out:
 	return ret;
 }
+DEFINE_SIMPLE_COMMAND(inspect_dump_super, "dump-super");

@@ -142,6 +142,7 @@ error_out:
 	close_file_or_dir(fdmnt, dirstream);
 	return !!ret;
 }
+static DEFINE_SIMPLE_COMMAND(device_add, "add");
 
 static int _cmd_device_remove(int argc, char **argv,
 		const char * const *usagestr)
@@ -244,6 +245,7 @@ static int cmd_device_remove(int argc, char **argv)
 {
 	return _cmd_device_remove(argc, argv, cmd_device_remove_usage);
 }
+static DEFINE_SIMPLE_COMMAND(device_remove, "remove");
 
 static const char * const cmd_device_delete_usage[] = {
 	"btrfs device delete <device>|<devid> [<device>|<devid>...] <path>",
@@ -257,6 +259,8 @@ static int cmd_device_delete(int argc, char **argv)
 {
 	return _cmd_device_remove(argc, argv, cmd_device_delete_usage);
 }
+static DEFINE_COMMAND(device_delete, "delete", cmd_device_delete,
+		      cmd_device_delete_usage, NULL, CMD_ALIAS);
 
 static int btrfs_forget_devices(const char *path)
 {
@@ -388,6 +392,7 @@ static int cmd_device_scan(int argc, char **argv)
 out:
 	return !!ret;
 }
+static DEFINE_SIMPLE_COMMAND(device_scan, "scan");
 
 static const char * const cmd_device_ready_usage[] = {
 	"btrfs device ready <device>",
@@ -441,6 +446,7 @@ out:
 	close(fd);
 	return ret;
 }
+static DEFINE_SIMPLE_COMMAND(device_ready, "ready");
 
 static const char * const cmd_device_stats_usage[] = {
 	"btrfs device stats [options] <path>|<device>",
@@ -581,6 +587,7 @@ out:
 
 	return err;
 }
+static DEFINE_SIMPLE_COMMAND(device_stats, "stats");
 
 static const char * const cmd_device_usage_usage[] = {
 	"btrfs device usage [options] <path> [<path>..]",
@@ -653,26 +660,26 @@ static int cmd_device_usage(int argc, char **argv)
 
 	return !!ret;
 }
+static DEFINE_SIMPLE_COMMAND(device_usage, "usage");
 
 static const char device_cmd_group_info[] =
 "manage and query devices in the filesystem";
 
-const struct cmd_group device_cmd_group = {
+static const struct cmd_group device_cmd_group = {
 	device_cmd_group_usage, device_cmd_group_info, {
-		{ "add", cmd_device_add, cmd_device_add_usage, NULL, 0 },
-		{ "delete", cmd_device_delete, cmd_device_delete_usage, NULL,
-			CMD_ALIAS },
-		{ "remove", cmd_device_remove, cmd_device_remove_usage, NULL, 0 },
-		{ "scan", cmd_device_scan, cmd_device_scan_usage, NULL, 0 },
-		{ "ready", cmd_device_ready, cmd_device_ready_usage, NULL, 0 },
-		{ "stats", cmd_device_stats, cmd_device_stats_usage, NULL, 0 },
-		{ "usage", cmd_device_usage,
-			cmd_device_usage_usage, NULL, 0 },
-		NULL_CMD_STRUCT
+		&cmd_struct_device_add,
+		&cmd_struct_device_delete,
+		&cmd_struct_device_remove,
+		&cmd_struct_device_scan,
+		&cmd_struct_device_ready,
+		&cmd_struct_device_stats,
+		&cmd_struct_device_usage,
+		NULL
 	}
 };
 
-int cmd_device(int argc, char **argv)
+static int cmd_device(int argc, char **argv)
 {
 	return handle_command_group(&device_cmd_group, argc, argv);
 }
+DEFINE_GROUP_COMMAND_TOKEN(device);

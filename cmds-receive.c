@@ -1249,7 +1249,7 @@ out:
 	return ret;
 }
 
-const char * const cmd_receive_usage[] = {
+static const char * const cmd_receive_usage[] = {
 	"btrfs receive [options] <mount>\n"
 	"btrfs receive --dump [options]",
 	"Receive subvolumes from a stream",
@@ -1281,7 +1281,7 @@ const char * const cmd_receive_usage[] = {
 	NULL
 };
 
-int cmd_receive(int argc, char **argv)
+static int cmd_receive(int argc, char **argv)
 {
 	char *tomnt = NULL;
 	char fromfile[PATH_MAX];
@@ -1394,3 +1394,4 @@ out:
 
 	return !!ret;
 }
+DEFINE_SIMPLE_COMMAND(receive, "receive");

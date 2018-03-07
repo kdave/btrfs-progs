@@ -358,6 +358,7 @@ static int cmd_property_get(int argc, char **argv)
 
 	return ret;
 }
+static DEFINE_SIMPLE_COMMAND(property_get, "get");
 
 static const char * const cmd_property_set_usage[] = {
 	"btrfs property set [-t <type>] <object> <name> <value>",
@@ -383,6 +384,7 @@ static int cmd_property_set(int argc, char **argv)
 
 	return ret;
 }
+static DEFINE_SIMPLE_COMMAND(property_set, "set");
 
 static const char * const cmd_property_list_usage[] = {
 	"btrfs property list [-t <type>] <object>",
@@ -406,23 +408,22 @@ static int cmd_property_list(int argc, char **argv)
 
 	return ret;
 }
+static DEFINE_SIMPLE_COMMAND(property_list, "list");
 
 static const char property_cmd_group_info[] =
 "modify properties of filesystem objects";
 
-const struct cmd_group property_cmd_group = {
+static const struct cmd_group property_cmd_group = {
 	property_cmd_group_usage, property_cmd_group_info, {
-		{ "get", cmd_property_get,
-			cmd_property_get_usage, NULL, 0 },
-		{ "set", cmd_property_set,
-			cmd_property_set_usage, NULL, 0 },
-		{ "list", cmd_property_list,
-			cmd_property_list_usage, NULL, 0 },
-		NULL_CMD_STRUCT
+		&cmd_struct_property_get,
+		&cmd_struct_property_set,
+		&cmd_struct_property_list,
+		NULL
 	}
 };
 
-int cmd_property(int argc, char **argv)
+static int cmd_property(int argc, char **argv)
 {
 	return handle_command_group(&property_cmd_group, argc, argv);
 }
+DEFINE_GROUP_COMMAND_TOKEN(property);

@@ -9831,7 +9831,7 @@ out:
 	return ret ? -EINVAL : 0;
 }
 
-const char * const cmd_check_usage[] = {
+static const char * const cmd_check_usage[] = {
 	"btrfs check [options] <device>",
 	"Check structural integrity of a filesystem (unmounted).",
 	"Check structural integrity of an unmounted filesystem. Verify internal",
@@ -9869,7 +9869,7 @@ const char * const cmd_check_usage[] = {
 	NULL
 };
 
-int cmd_check(int argc, char **argv)
+static int cmd_check(int argc, char **argv)
 {
 	struct cache_tree root_cache;
 	struct btrfs_root *root;
@@ -10423,3 +10423,4 @@ err_out:
 
 	return err;
 }
+DEFINE_SIMPLE_COMMAND(check, "check");

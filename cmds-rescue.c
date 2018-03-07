@@ -94,6 +94,7 @@ static int cmd_rescue_chunk_recover(int argc, char *argv[])
 	}
 	return ret;
 }
+static DEFINE_SIMPLE_COMMAND(rescue_chunk_recover, "chunk-recover");
 
 static const char * const cmd_rescue_super_recover_usage[] = {
 	"btrfs rescue super-recover [options] <device>",
@@ -152,6 +153,7 @@ static int cmd_rescue_super_recover(int argc, char **argv)
 	ret = btrfs_recover_superblocks(dname, verbose, yes);
 	return ret;
 }
+static DEFINE_SIMPLE_COMMAND(rescue_super_recover, "super-recover");
 
 static const char * const cmd_rescue_zero_log_usage[] = {
 	"btrfs rescue zero-log <device>",
@@ -206,6 +208,7 @@ static int cmd_rescue_zero_log(int argc, char **argv)
 out:
 	return !!ret;
 }
+static DEFINE_SIMPLE_COMMAND(rescue_zero_log, "zero-log");
 
 static const char * const cmd_rescue_fix_device_size_usage[] = {
 	"btrfs rescue fix-device-size <device>",
@@ -252,24 +255,23 @@ static int cmd_rescue_fix_device_size(int argc, char **argv)
 out:
 	return !!ret;
 }
+static DEFINE_SIMPLE_COMMAND(rescue_fix_device_size, "fix-device-size");
 
 static const char rescue_cmd_group_info[] =
 "toolbox for specific rescue operations";
 
-const struct cmd_group rescue_cmd_group = {
+static const struct cmd_group rescue_cmd_group = {
 	rescue_cmd_group_usage, rescue_cmd_group_info, {
-		{ "chunk-recover", cmd_rescue_chunk_recover,
-			cmd_rescue_chunk_recover_usage, NULL, 0},
-		{ "super-recover", cmd_rescue_super_recover,
-			cmd_rescue_super_recover_usage, NULL, 0},
-		{ "zero-log", cmd_rescue_zero_log, cmd_rescue_zero_log_usage, NULL, 0},
-		{ "fix-device-size", cmd_rescue_fix_device_size,
-			cmd_rescue_fix_device_size_usage, NULL, 0},
-		NULL_CMD_STRUCT
+		&cmd_struct_rescue_chunk_recover,
+		&cmd_struct_rescue_super_recover,
+		&cmd_struct_rescue_zero_log,
+		&cmd_struct_rescue_fix_device_size,
+		NULL
 	}
 };
 
-int cmd_rescue(int argc, char **argv)
+static int cmd_rescue(int argc, char **argv)
 {
 	return handle_command_group(&rescue_cmd_group, argc, argv);
 }
+DEFINE_GROUP_COMMAND_TOKEN(rescue);

@@ -291,14 +291,15 @@ void usage(const char * const *usagestr)
 static void usage_command_group_internal(const struct cmd_group *grp, bool full,
 					 FILE *outf)
 {
-	const struct cmd_struct *cmd = grp->commands;
+	int i;
 	int do_sep = 0;
 
-	for (; cmd->token; cmd++) {
+	for (i = 0; grp->commands[i]; i++) {
+		const struct cmd_struct *cmd = grp->commands[i];
 		if (cmd->flags & CMD_HIDDEN)
 			continue;
 
-		if (full && cmd != grp->commands)
+		if (full && i)
 			fputc('\n', outf);
 
 		if (!cmd->next) {
@@ -317,7 +318,7 @@ static void usage_command_group_internal(const struct cmd_group *grp, bool full,
 
 		/* this is an entry point to a nested command group */
 
-		if (!full && cmd != grp->commands)
+		if (!full && i)
 			fputc('\n', outf);
 
 		usage_command_group_internal(cmd->next, full, outf);
@@ -332,6 +333,7 @@ void usage_command_group_short(const struct cmd_group *grp)
 	const char * const *usagestr = grp->usagestr;
 	FILE *outf = stdout;
 	const struct cmd_struct *cmd;
+	int i;
 
 	if (usagestr && *usagestr) {
 		fprintf(outf, "usage: %s\n", *usagestr++);
@@ -342,7 +344,8 @@ void usage_command_group_short(const struct cmd_group *grp)
 	fputc('\n', outf);
 
 	fprintf(outf, "Command groups:\n");
-	for (cmd = grp->commands; cmd->token; cmd++) {
+	for (i = 0; grp->commands[i]; i++) {
+		cmd = grp->commands[i];
 		if (cmd->flags & CMD_HIDDEN)
 			continue;
 
@@ -353,7 +356,8 @@ void usage_command_group_short(const struct cmd_group *grp)
 	}
 
 	fprintf(outf, "\nCommands:\n");
-	for (cmd = grp->commands; cmd->token; cmd++) {
+	for (i = 0; grp->commands[i]; i++) {
+		cmd = grp->commands[i];
 		if (cmd->flags & CMD_HIDDEN)
 			continue;
 
@@ -401,12 +405,13 @@ void help_unknown_token(const char *arg, const struct cmd_group *grp)
 __attribute__((noreturn))
 void help_ambiguous_token(const char *arg, const struct cmd_group *grp)
 {
-	const struct cmd_struct *cmd = grp->commands;
+	int i;
 
 	fprintf(stderr, "%s: ambiguous token '%s'\n", argv0_buf, arg);
 	fprintf(stderr, "\nDid you mean one of these ?\n");
 
-	for (; cmd->token; cmd++) {
+	for (i = 0; grp->commands[i]; i++) {
+		const struct cmd_struct *cmd = grp->commands[i];
 		if (!prefixcmp(cmd->token, arg))
 			fprintf(stderr, "\t%s\n", cmd->token);
 	}

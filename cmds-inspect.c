@@ -123,6 +123,7 @@ static int cmd_inspect_inode_resolve(int argc, char **argv)
 	return !!ret;
 
 }
+static DEFINE_SIMPLE_COMMAND(inspect_inode_resolve, "inode-resolve");
 
 static const char * const cmd_inspect_logical_resolve_usage[] = {
 	"btrfs inspect-internal logical-resolve [-Pv] [-s bufsize] <logical> <path>",
@@ -263,6 +264,7 @@ out:
 	free(inodes);
 	return !!ret;
 }
+static DEFINE_SIMPLE_COMMAND(inspect_logical_resolve, "logical-resolve");
 
 static const char * const cmd_inspect_subvolid_resolve_usage[] = {
 	"btrfs inspect-internal subvolid-resolve <subvolid> <path>",
@@ -305,6 +307,7 @@ out:
 	close_file_or_dir(fd, dirstream);
 	return !!ret;
 }
+static DEFINE_SIMPLE_COMMAND(inspect_subvolid_resolve, "subvolid-resolve");
 
 static const char* const cmd_inspect_rootid_usage[] = {
 	"btrfs inspect-internal rootid <path>",
@@ -343,6 +346,7 @@ out:
 
 	return !!ret;
 }
+static DEFINE_SIMPLE_COMMAND(inspect_rootid, "rootid");
 
 static const char* const cmd_inspect_min_dev_size_usage[] = {
 	"btrfs inspect-internal min-dev-size [options] <path>",
@@ -635,33 +639,27 @@ static int cmd_inspect_min_dev_size(int argc, char **argv)
 out:
 	return !!ret;
 }
+static DEFINE_SIMPLE_COMMAND(inspect_min_dev_size, "min-dev-size");
 
 static const char inspect_cmd_group_info[] =
 "query various internal information";
 
-const struct cmd_group inspect_cmd_group = {
+static const struct cmd_group inspect_cmd_group = {
 	inspect_cmd_group_usage, inspect_cmd_group_info, {
-		{ "inode-resolve", cmd_inspect_inode_resolve,
-			cmd_inspect_inode_resolve_usage, NULL, 0 },
-		{ "logical-resolve", cmd_inspect_logical_resolve,
-			cmd_inspect_logical_resolve_usage, NULL, 0 },
-		{ "subvolid-resolve", cmd_inspect_subvolid_resolve,
-			cmd_inspect_subvolid_resolve_usage, NULL, 0 },
-		{ "rootid", cmd_inspect_rootid, cmd_inspect_rootid_usage, NULL,
-			0 },
-		{ "min-dev-size", cmd_inspect_min_dev_size,
-			cmd_inspect_min_dev_size_usage, NULL, 0 },
-		{ "dump-tree", cmd_inspect_dump_tree,
-				cmd_inspect_dump_tree_usage, NULL, 0 },
-		{ "dump-super", cmd_inspect_dump_super,
-				cmd_inspect_dump_super_usage, NULL, 0 },
-		{ "tree-stats", cmd_inspect_tree_stats,
-				cmd_inspect_tree_stats_usage, NULL, 0 },
-		NULL_CMD_STRUCT
+		&cmd_struct_inspect_inode_resolve,
+		&cmd_struct_inspect_logical_resolve,
+		&cmd_struct_inspect_subvolid_resolve,
+		&cmd_struct_inspect_rootid,
+		&cmd_struct_inspect_min_dev_size,
+		&cmd_struct_inspect_dump_tree,
+		&cmd_struct_inspect_dump_super,
+		&cmd_struct_inspect_tree_stats,
+		NULL
 	}
 };
 
-int cmd_inspect(int argc, char **argv)
+static int cmd_inspect(int argc, char **argv)
 {
 	return handle_command_group(&inspect_cmd_group, argc, argv);
 }
+DEFINE_GROUP_COMMAND(inspect, "inspect-internal");
