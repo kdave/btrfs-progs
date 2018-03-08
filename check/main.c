@@ -5343,7 +5343,9 @@ static int check_space_cache(struct btrfs_root *root)
 			error += ret;
 		} else {
 			ret = load_free_space_cache(root->fs_info, cache);
-			if (!ret)
+			if (ret < 0)
+				error++;
+			if (ret <= 0)
 				continue;
 		}
 
