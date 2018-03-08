@@ -438,7 +438,8 @@ int load_free_space_cache(struct btrfs_fs_info *fs_info,
 	struct btrfs_path *path;
 	u64 used = btrfs_block_group_used(&block_group->item);
 	int ret = 0;
-	int matched;
+	u64 bg_free;
+	s64 diff;
 
 	path = btrfs_alloc_path();
 	if (!path)
@@ -448,18 +449,33 @@ int load_free_space_cache(struct btrfs_fs_info *fs_info,
 				      block_group->key.objectid);
 	btrfs_free_path(path);
 
-	matched = (ctl->free_space == (block_group->key.offset - used -
-				       block_group->bytes_super));
-	if (ret == 1 && !matched) {
-		__btrfs_remove_free_space_cache(ctl);
+	bg_free = block_group->key.offset - used - block_group->bytes_super;
+	diff = ctl->free_space - bg_free;
+	if (ret == 1 && diff) {
 		fprintf(stderr,
-		       "block group %llu has wrong amount of free space\n",
-		       block_group->key.objectid);
+		       "block group %llu has wrong amount of free space, free space cache has %llu block group has %llu\n",
+		       block_group->key.objectid, ctl->free_space, bg_free);
+		__btrfs_remove_free_space_cache(ctl);
+		/*
+		 * Due to btrfs_reserve_extent() can happen out of a
+		 * transaction, but all btrfs_release_extent() happens inside
+		 * a transaction, so under heavy race it's possible that free
+		 * space cache has less free space, and both kernel just discard
+		 * such cache. But if we find some case where free space cache
+		 * has more free space, this means under certain case such
+		 * cache can be loaded and cause double allocate.
+		 *
+		 * Detect such possibility here.
+		 */
+		if (diff > 0)
+			error(
+"free space cache has more free space than block group item, this could leads to serious corruption, please contact btrfs developers");
 		ret = -1;
 	}
 
 	if (ret < 0) {
-		ret = 0;
+		if (diff <= 0)
+			ret = 0;
 
 		fprintf(stderr,
 		       "failed to load free space cache for block group %llu\n",
