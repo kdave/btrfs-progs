@@ -1,7 +1,7 @@
 #!/bin/bash
 # Test if mkfs.btrfs --rootdir will skip shrinking correctly
 
-source "$TOP/tests/common"
+source "$TEST_TOP/common"
 
 check_prereq mkfs.btrfs
 

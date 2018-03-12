@@ -3,7 +3,7 @@
 # Expected behavior: it should create a new file if destination doesn't exist
 # Regression 460e93f25754 ("btrfs-progs: mkfs: check the status of file at mkfs")
 
-source "$TOP/tests/common"
+source "$TEST_TOP/common"
 
 check_prereq mkfs.btrfs
 

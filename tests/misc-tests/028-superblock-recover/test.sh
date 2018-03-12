@@ -1,7 +1,7 @@
 #!/bin/bash
 # Test that any superblock is correctly detected and fixed by btrfs rescue
 
-source "$TOP/tests/common"
+source "$TEST_TOP/common"
 
 check_prereq btrfs
 check_prereq mkfs.btrfs
