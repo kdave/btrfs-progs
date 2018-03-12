@@ -5,7 +5,7 @@
 # Also due to the short life span of reloc tree, save the as dump example for
 # later usage.
 
-source "$TOP/tests/common"
+source "$TEST_TOP/common"
 
 check_prereq btrfs
 

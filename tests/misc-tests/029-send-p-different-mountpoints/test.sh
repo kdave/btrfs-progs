@@ -2,7 +2,7 @@
 # test that send -p does not corrupt paths when send is using 2 different mount
 # points
 
-source "$TOP/tests/common"
+source "$TEST_TOP/common"
 
 check_prereq btrfs
 check_prereq mkfs.btrfs

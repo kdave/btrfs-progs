@@ -6,7 +6,7 @@
 # using btrfs_alloc_chunk() which won't use the 0~1M range, so other profiles
 # are safe, but we test them nevertheless.
 
-source "$TOP/tests/common"
+source "$TEST_TOP/common"
 
 check_prereq mkfs.btrfs
 check_prereq btrfs
