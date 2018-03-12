@@ -1435,6 +1435,8 @@ static int process_file_extent(struct btrfs_root *root,
 	u64 disk_bytenr = 0;
 	u64 extent_offset = 0;
 	u64 mask = root->fs_info->sectorsize - 1;
+	u32 max_inline_size = min_t(u32, mask,
+				BTRFS_MAX_INLINE_DATA_SIZE(root->fs_info));
 	int extent_type;
 	int ret;
 
@@ -1460,11 +1462,30 @@ static int process_file_extent(struct btrfs_root *root,
 	extent_type = btrfs_file_extent_type(eb, fi);
 
 	if (extent_type == BTRFS_FILE_EXTENT_INLINE) {
+		u8 compression = btrfs_file_extent_compression(eb, fi);
+		struct btrfs_item *item = btrfs_item_nr(slot);
+
 		num_bytes = btrfs_file_extent_inline_len(eb, slot, fi);
 		if (num_bytes == 0)
 			rec->errors |= I_ERR_BAD_FILE_EXTENT;
-		if (num_bytes > BTRFS_MAX_INLINE_DATA_SIZE(root->fs_info))
-			rec->errors |= I_ERR_FILE_EXTENT_TOO_LARGE;
+		/*
+		 * Here is the hassle.
+		 * For compressed inline file extent, we allow ram_bytes to
+		 * be as large as sectorsize, and only limit its on-disk
+		 * data size below sectorsize.
+		 * But for uncompressed inline file extent, we limit
+		 * the ram_bytes to below sectorsize.
+		 */
+		if (compression) {
+			if (btrfs_file_extent_inline_item_len(eb, item) >
+			    max_inline_size ||
+			    num_bytes > root->fs_info->sectorsize)
+				rec->errors |= I_ERR_FILE_EXTENT_TOO_LARGE;
+		} else {
+			if (num_bytes > max_inline_size)
+				rec->errors |= I_ERR_FILE_EXTENT_TOO_LARGE;
+		}
+
 		rec->found_size += num_bytes;
 		num_bytes = (num_bytes + mask) & ~mask;
 	} else if (extent_type == BTRFS_FILE_EXTENT_REG ||
