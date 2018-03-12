@@ -22,6 +22,7 @@
 #define __BTRFS_CHECK_MODE_ORIGINAL_H__
 
 #include "rbtree-utils.h"
+#include "extent-cache.h"
 
 struct extent_backref {
 	struct rb_node node;
@@ -282,4 +283,27 @@ struct extent_entry {
 	struct list_head list;
 };
 
+static void free_root_record(struct cache_extent *cache)
+{
+	struct root_record *rec;
+	struct root_backref *backref;
+
+	rec = container_of(cache, struct root_record, cache);
+	while (!list_empty(&rec->backrefs)) {
+		backref = to_root_backref(rec->backrefs.next);
+		list_del(&backref->list);
+		free(backref);
+	}
+
+	free(rec);
+}
+
+FREE_EXTENT_CACHE_BASED_TREE(root_recs, free_root_record);
+
+int check_chunks_and_extents(struct btrfs_fs_info *fs_info);
+int check_fs_roots(struct btrfs_fs_info *fs_info,
+		   struct cache_tree *root_cache);
+int check_root_refs(struct btrfs_root *root,
+		    struct cache_tree *root_cache);
+int delete_bad_item(struct btrfs_root *root, struct bad_item *bad);
 #endif
