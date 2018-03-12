@@ -159,7 +159,6 @@ static inline int check_num_stripes(u64 type, int num_stripes)
 	return 0;
 }
 
-u64 calc_stripe_length(u64 type, u64 length, int num_stripes);
 /* For block group tree */
 static inline void block_group_tree_init(struct block_group_tree *tree)
 {
