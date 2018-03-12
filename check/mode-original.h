@@ -282,14 +282,4 @@ struct extent_entry {
 	struct list_head list;
 };
 
-struct root_item_info {
-	/* level of the root */
-	u8 level;
-	/* number of nodes at this level, must be 1 for a root */
-	int node_count;
-	u64 bytenr;
-	u64 gen;
-	struct cache_extent cache_extent;
-};
-
 #endif

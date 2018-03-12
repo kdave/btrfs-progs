@@ -38,6 +38,30 @@ struct node_refs {
 	int full_backref[BTRFS_MAX_LEVEL];
 };
 
+struct root_item_info {
+	/* level of the root */
+	u8 level;
+	/* number of nodes at this level, must be 1 for a root */
+	int node_count;
+	u64 bytenr;
+	u64 gen;
+	struct cache_extent cache_extent;
+};
+
+enum task_position {
+	TASK_EXTENTS,
+	TASK_FREE_SPACE,
+	TASK_FS_ROOTS,
+	TASK_NOTHING, /* have to be the last element */
+};
+
+struct task_ctx {
+	int progress_enabled;
+	enum task_position tp;
+
+	struct task_info *info;
+};
+
 extern u64 bytes_used;
 extern u64 total_csum_bytes;
 extern u64 total_btree_bytes;
@@ -96,5 +120,19 @@ void reada_walk_down(struct btrfs_root *root, struct extent_buffer *node,
 int check_child_node(struct extent_buffer *parent, int slot,
 		     struct extent_buffer *child);
 void reset_cached_block_groups(struct btrfs_fs_info *fs_info);
+int zero_log_tree(struct btrfs_root *root);
+int reinit_extent_tree(struct btrfs_trans_handle *trans,
+		       struct btrfs_fs_info *fs_info);
+int btrfs_fsck_reinit_root(struct btrfs_trans_handle *trans,
+			   struct btrfs_root *root, int overwrite);
+int fill_csum_tree(struct btrfs_trans_handle *trans,
+		   struct btrfs_root *csum_root, int search_fs_tree);
+int repair_root_items(struct btrfs_fs_info *info);
+int do_clear_free_space_cache(struct btrfs_fs_info *fs_info,
+			      int clear_version);
+bool is_super_size_valid(struct btrfs_fs_info *fs_info);
+int check_space_cache(struct btrfs_root *root);
+int check_csums(struct btrfs_root *root);
+int recow_extent_buffer(struct btrfs_root *root, struct extent_buffer *eb);
 
 #endif
