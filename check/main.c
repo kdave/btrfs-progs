@@ -560,6 +560,8 @@ static void print_inode_error(struct btrfs_root *root, struct inode_record *rec)
 		fprintf(stderr, ", bad file extent");
 	if (errors & I_ERR_FILE_EXTENT_OVERLAP)
 		fprintf(stderr, ", file extent overlap");
+	if (errors & I_ERR_FILE_EXTENT_TOO_LARGE)
+		fprintf(stderr, ", inline file extent too large");
 	if (errors & I_ERR_FILE_EXTENT_DISCOUNT)
 		fprintf(stderr, ", file extent discount");
 	if (errors & I_ERR_DIR_ISIZE_WRONG)
@@ -1433,6 +1435,8 @@ static int process_file_extent(struct btrfs_root *root,
 	u64 disk_bytenr = 0;
 	u64 extent_offset = 0;
 	u64 mask = root->fs_info->sectorsize - 1;
+	u32 max_inline_size = min_t(u32, mask,
+				BTRFS_MAX_INLINE_DATA_SIZE(root->fs_info));
 	int extent_type;
 	int ret;
 
@@ -1458,9 +1462,21 @@ static int process_file_extent(struct btrfs_root *root,
 	extent_type = btrfs_file_extent_type(eb, fi);
 
 	if (extent_type == BTRFS_FILE_EXTENT_INLINE) {
+		u8 compression = btrfs_file_extent_compression(eb, fi);
+		struct btrfs_item *item = btrfs_item_nr(slot);
+
 		num_bytes = btrfs_file_extent_inline_len(eb, slot, fi);
 		if (num_bytes == 0)
 			rec->errors |= I_ERR_BAD_FILE_EXTENT;
+		if (compression) {
+			if (btrfs_file_extent_inline_item_len(eb, item) >
+			    max_inline_size ||
+			    num_bytes > root->fs_info->sectorsize)
+				rec->errors |= I_ERR_FILE_EXTENT_TOO_LARGE;
+		} else {
+			if (num_bytes > max_inline_size)
+				rec->errors |= I_ERR_FILE_EXTENT_TOO_LARGE;
+		}
 		rec->found_size += num_bytes;
 		num_bytes = (num_bytes + mask) & ~mask;
 	} else if (extent_type == BTRFS_FILE_EXTENT_REG ||
