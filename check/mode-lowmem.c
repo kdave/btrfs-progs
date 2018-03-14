@@ -1503,9 +1503,17 @@ static int check_file_extent(struct btrfs_root *root, struct btrfs_key *fkey,
 		      csum_found, search_len);
 	} else if (extent_type == BTRFS_FILE_EXTENT_PREALLOC &&
 		   csum_found > 0) {
-		err |= ODD_CSUM_ITEM;
-		error("root %llu EXTENT_DATA[%llu %llu] prealloc shouldn't have csum, but has: %llu",
-		      root->objectid, fkey->objectid, fkey->offset, csum_found);
+		ret = check_prealloc_extent_written(root->fs_info,
+						    disk_bytenr, disk_num_bytes);
+		if (ret < 0)
+			return ret;
+		if (ret == 0) {
+			err |= ODD_CSUM_ITEM;
+			error(
+"root %llu EXTENT_DATA[%llu %llu] prealloc shouldn't have csum, but has: %llu",
+			      root->objectid, fkey->objectid, fkey->offset,
+			      csum_found);
+		}
 	}
 
 	/* Check EXTENT_DATA hole */

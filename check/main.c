@@ -1511,8 +1511,15 @@ static int process_file_extent(struct btrfs_root *root,
 			if (found < num_bytes)
 				rec->some_csum_missing = 1;
 		} else if (extent_type == BTRFS_FILE_EXTENT_PREALLOC) {
-			if (found > 0)
-				rec->errors |= I_ERR_ODD_CSUM_ITEM;
+			if (found > 0) {
+				ret = check_prealloc_extent_written(root->fs_info,
+								    disk_bytenr,
+								    num_bytes);
+				if (ret < 0)
+					return ret;
+				if (ret == 0)
+					rec->errors |= I_ERR_ODD_CSUM_ITEM;
+			}
 		}
 	}
 	return 0;
