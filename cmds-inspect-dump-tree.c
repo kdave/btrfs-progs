@@ -198,6 +198,7 @@ const char * const cmd_inspect_dump_tree_usage[] = {
 	"-u|--uuid              print only the uuid tree",
 	"-b|--block <block_num> print info from the specified block only",
 	"-t|--tree <tree_id>    print only tree with the given id (string or number)",
+	"--follow               use with -b, to show all children tree blocks of <block_num>",
 	NULL
 };
 
@@ -223,9 +224,11 @@ int cmd_inspect_dump_tree(int argc, char **argv)
 	u64 block_only = 0;
 	struct btrfs_root *tree_root_scan;
 	u64 tree_id = 0;
+	bool follow = false;
 
 	while (1) {
 		int c;
+		enum { GETOPT_VAL_FOLLOW = 256 };
 		static const struct option long_options[] = {
 			{ "extents", no_argument, NULL, 'e'},
 			{ "device", no_argument, NULL, 'd'},
@@ -234,6 +237,7 @@ int cmd_inspect_dump_tree(int argc, char **argv)
 			{ "uuid", no_argument, NULL, 'u'},
 			{ "block", required_argument, NULL, 'b'},
 			{ "tree", required_argument, NULL, 't'},
+			{ "follow", no_argument, NULL, GETOPT_VAL_FOLLOW },
 			{ NULL, 0, NULL, 0 }
 		};
 
@@ -286,6 +290,9 @@ int cmd_inspect_dump_tree(int argc, char **argv)
 			}
 			break;
 			}
+		case GETOPT_VAL_FOLLOW:
+			follow = true;
+			break;
 		default:
 			usage(cmd_inspect_dump_tree_usage);
 		}
@@ -324,7 +331,7 @@ int cmd_inspect_dump_tree(int argc, char **argv)
 				(unsigned long long)block_only);
 			goto close_root;
 		}
-		btrfs_print_tree(root, leaf, 0);
+		btrfs_print_tree(root, leaf, follow);
 		free_extent_buffer(leaf);
 		goto close_root;
 	}

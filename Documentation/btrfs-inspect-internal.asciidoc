@@ -87,6 +87,8 @@ the respective tree root block offset
 print only the uuid tree information, empty output if the tree does not exist
 -b <block_num>::::
 print info of the specified block only
+--follow::::
+use with '-b', print all children tree blocks of '<block_num>'
 -t <tree_id>::::
 print only the tree with the specified ID, where the ID can be numerical or
 common name in a flexible human readable form
