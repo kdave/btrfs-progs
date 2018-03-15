@@ -1398,19 +1398,16 @@ void btrfs_print_tree(struct btrfs_root *root, struct extent_buffer *eb, int fol
 				(unsigned long long)btrfs_header_owner(eb));
 			continue;
 		}
-		if (btrfs_is_leaf(next) && btrfs_header_level(eb) != 1) {
-			warning(
-	"eb corrupted: item %d eb level %d next level %d, skipping the rest",
-				i, btrfs_header_level(next),
-				btrfs_header_level(eb));
-			goto out;
-		}
 		if (btrfs_header_level(next) != btrfs_header_level(eb) - 1) {
 			warning(
-	"eb corrupted: item %d eb level %d next level %d, skipping the rest",
-				i, btrfs_header_level(next),
-				btrfs_header_level(eb));
-			goto out;
+"eb corrupted: parent bytenr %llu slot %d level %d child bytenr %llu level has %d expect %d, skipping the slot",
+				btrfs_header_bytenr(eb), i,
+				btrfs_header_level(eb),
+				btrfs_header_bytenr(next),
+				btrfs_header_level(next),
+				btrfs_header_level(eb) - 1);
+			free_extent_buffer(next);
+			continue;
 		}
 		btrfs_print_tree(root, next, 1);
 		free_extent_buffer(next);
@@ -1418,6 +1415,5 @@ void btrfs_print_tree(struct btrfs_root *root, struct extent_buffer *eb, int fol
 
 	return;
 
-out:
 	free_extent_buffer(next);
 }
