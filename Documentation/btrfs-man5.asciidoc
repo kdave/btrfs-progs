@@ -210,7 +210,7 @@ system at that point.
 Enable discarding of freed file blocks.  This is useful for SSD devices, thinly
 provisioned LUNs, or virtual machine images; however, every storage layer must
 support discard for it to work. if the backing device does not support
-asynchronous queued TRIM, then this operation can severly degrade performance,
+asynchronous queued TRIM, then this operation can severely degrade performance,
 because a synchronous TRIM operation will be attempted instead. Queued TRIM
 requires newer than SATA revision 3.1 chipsets and devices.
 
@@ -223,7 +223,7 @@ of actually discarding the blocks.
 
 If discarding is not necessary to be done at the block freeing time, there's
 `fstrim`(8) tool that lets the filesystem discard all free blocks in a batch,
-possibly not much interfering with other operations. Also, the the device may
+possibly not much interfering with other operations. Also, the device may
 ignore the TRIM command if the range is too small, so running the batch discard
 can actually discard the blocks.
 
@@ -289,7 +289,7 @@ checksums don't fit inside a single page.
 +
 Don't use this option unless you really need it. The inode number limit
 on 64bit system is 2^64^, which is practically enough for the whole filesystem
-lifetime. Due to implemention of linux VFS layer, the inode numbers on 32bit
+lifetime. Due to implementation of linux VFS layer, the inode numbers on 32bit
 systems are only 32 bits wide. This lowers the limit significantly and makes
 it possible to reach it. In such case, this mount option will help.
 Alternatively, files with high inode numbers can be copied to a new subvolume
@@ -415,7 +415,7 @@ will disable all SSD options.
 
 *subvol='path'*::
 Mount subvolume from 'path' rather than the toplevel subvolume. The
-'path' is always treated as relative to the the toplevel subvolume.
+'path' is always treated as relative to the toplevel subvolume.
 This mount option overrides the default subvolume set for the given filesystem.
 
 *subvolid='subvolid'*::
