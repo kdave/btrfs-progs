@@ -122,7 +122,7 @@ NOTE: 'lowmem' mode does not work with '--repair' yet, and is still considered
 experimental.
 
 --force::
-allow to work on a mounted filesystem. Note that this should work fine on a
+allow work on a mounted filesystem. Note that this should work fine on a
 quiescent or read-only mounted filesystem but may crash if the device is
 changed externally, eg. by the kernel module.  Repair without mount checks is
 not supported right now.

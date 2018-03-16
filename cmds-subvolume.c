@@ -338,7 +338,7 @@ again:
 			error("unable to get fsid for '%s': %s",
 				path, strerror(-res));
 			error(
-			"delete suceeded but commit may not be done in the end");
+			"delete succeeded but commit may not be done in the end");
 			ret = 1;
 			goto out;
 		}

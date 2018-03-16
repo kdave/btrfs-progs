@@ -204,7 +204,7 @@ The way balance operates, it usually needs to temporarily create a new block
 group and move the old data there, before the old block group can be removed.
 For that it needs the work space, otherwise it fails for ENOSPC reasons.
 This is not the same ENOSPC as if the free space is exhausted. This refers to
-the space on the level of block groups, which are bigger parts of the filesytem
+the space on the level of block groups, which are bigger parts of the filesystem
 that contain many file extents.
 
 The free work space can be calculated from the output of the *btrfs filesystem show*
