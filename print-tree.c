@@ -834,7 +834,16 @@ void btrfs_print_key(struct btrfs_disk_key *disk_key)
 	 */
 	case BTRFS_ROOT_ITEM_KEY:
 		printf(" ");
-		print_objectid(stdout, offset, type);
+		/*
+		 * Normally offset of ROOT_ITEM should present the generation
+		 * of creation time of the root.
+		 * However if this is reloc tree, offset is the subvolume
+		 * id of its source. Here we do extra check on this.
+		 */
+		if (objectid == BTRFS_TREE_RELOC_OBJECTID)
+			print_objectid(stdout, offset, type);
+		else
+			printf("%lld", offset);
 		printf(")");
 		break;
 	default:
