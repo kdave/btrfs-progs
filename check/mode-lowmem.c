@@ -1417,6 +1417,8 @@ static int check_file_extent(struct btrfs_root *root, struct btrfs_key *fkey,
 	u64 csum_found;		/* In byte size, sectorsize aligned */
 	u64 search_start;	/* Logical range start we search for csum */
 	u64 search_len;		/* Logical range len we search for csum */
+	u32 max_inline_extent_size = min_t(u32, root->fs_info->sectorsize - 1,
+				BTRFS_MAX_INLINE_DATA_SIZE(root->fs_info));
 	unsigned int extent_type;
 	unsigned int is_hole;
 	int compressed = 0;
@@ -1439,6 +1441,32 @@ static int check_file_extent(struct btrfs_root *root, struct btrfs_key *fkey,
 		"root %llu EXTENT_DATA[%llu %llu] has empty inline extent",
 				root->objectid, fkey->objectid, fkey->offset);
 			err |= FILE_EXTENT_ERROR;
+		}
+		if (compressed) {
+			if (extent_num_bytes > root->fs_info->sectorsize) {
+				error(
+"root %llu EXTENT_DATA[%llu %llu] too large inline extent ram size, have %llu, max: %u",
+					root->objectid, fkey->objectid,
+					fkey->offset, extent_num_bytes,
+					root->fs_info->sectorsize - 1);
+				err |= FILE_EXTENT_ERROR;
+			}
+			if (item_inline_len > max_inline_extent_size) {
+				error(
+"root %llu EXTENT_DATA[%llu %llu] too large inline extent on-disk size, have %u, max: %u",
+					root->objectid, fkey->objectid,
+					fkey->offset, item_inline_len,
+					max_inline_extent_size);
+				err |= FILE_EXTENT_ERROR;
+			}
+		} else {
+			if (extent_num_bytes > max_inline_extent_size) {
+ 			error(
+ "root %llu EXTENT_DATA[%llu %llu] too large inline extent size, have %llu, max: %u",
+ 				root->objectid, fkey->objectid, fkey->offset,
+ 				extent_num_bytes, max_inline_extent_size);
+				err |= FILE_EXTENT_ERROR;
+			}
 		}
 		if (!compressed && extent_num_bytes != item_inline_len) {
 			error(
