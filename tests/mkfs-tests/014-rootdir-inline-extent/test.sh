@@ -4,7 +4,6 @@
 
 source "$TEST_TOP/common"
 
-check_global_prereq fallocate
 check_prereq mkfs.btrfs
 
 prepare_test_dev
@@ -16,7 +15,7 @@ create_file()
 {
 	local size=$1
 	# Reuse size as filename
-	run_check fallocate -l $size "$tmp/$size"
+	eval printf "%0.sx" {1..$size} > "$tmp/$size"
 }
 
 test_mkfs_rootdir()
