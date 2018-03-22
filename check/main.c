@@ -6103,12 +6103,7 @@ static int run_next_block(struct btrfs_root *root,
 		}
 	} else {
 		int level;
-		struct btrfs_key first_key;
 
-		first_key.objectid = 0;
-
-		if (nritems > 0)
-			btrfs_item_key_to_cpu(buf, &first_key, 0);
 		level = btrfs_header_level(buf);
 		for (i = 0; i < nritems; i++) {
 			struct extent_record tmpl;
