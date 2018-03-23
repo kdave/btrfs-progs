@@ -11,10 +11,10 @@ check_image() {
 
 	image=$1
 	run_check cp "$image" "$image".scratch
-	run_mayfail $TOP/btrfs rescue zero-log "$image".scratch
+	run_mayfail "$TOP/btrfs" rescue zero-log "$image".scratch
 	rm -- "$image".scratch
 }
 
-check_all_images $TEST_TOP/fuzz-tests/images
+check_all_images "$TEST_TOP/fuzz-tests/images"
 
 exit 0
