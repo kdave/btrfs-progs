@@ -22,14 +22,14 @@ do_one_test ()
 		dump-tree -t device "$TEST_DEV" | \
 		grep -oP '(?<=DEV_EXTENT )[[:digit:]]*' | head -n1)
 
-	if [ -z $first_dev_extent ]; then
+	if [ -z "$first_dev_extent" ]; then
 		_fail "failed to get first device extent"
 	fi
 
 	echo "first dev extent starts at $first_dev_extent" >> "$RESULTS"
 	echo "reserved range is [0, $(( 1024 * 1024)))" >> "$RESULTS"
 	# First device extent should not start below 1M
-	if [ $first_dev_extent -lt $(( 1024 * 1024 )) ]; then
+	if [ "$first_dev_extent" -lt $(( 1024 * 1024 )) ]; then
 		_fail "first device extent occupies reserved 0~1M range"
 	fi
 }
