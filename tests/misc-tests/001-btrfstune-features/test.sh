@@ -21,21 +21,22 @@ test_feature()
 	local tuneopt
 	local sbflag
 
-	mkfsfeatures=${1:+-O ^$1}
+	mkfsfeatures=$1
 	tuneopt="$2"
 	sbflag="$3"
 
-	run_check $SUDO_HELPER $TOP/mkfs.btrfs -f $mkfsfeatures $TEST_DEV
-	if run_check_stdout $TOP/btrfs inspect-internal dump-super $TEST_DEV | \
+	run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f \
+		${mkfsfeatures:+-O ^"$mkfsfeatures"} "$TEST_DEV"
+	if run_check_stdout "$TOP/btrfs" inspect-internal dump-super "$TEST_DEV" | \
 			grep -q "$sbflag"; then
 		_fail "FAIL: feature $sbflag must not be set on the base image"
 	fi
-	run_check $TOP/btrfstune $tuneopt $TEST_DEV
-	if ! run_check_stdout $TOP/btrfs inspect-internal dump-super $TEST_DEV | \
+	run_check "$TOP/btrfstune" "$tuneopt" "$TEST_DEV"
+	if ! run_check_stdout "$TOP/btrfs" inspect-internal dump-super "$TEST_DEV" | \
 			grep -q "$sbflag"; then
 		_fail "FAIL: feature $sbflag not set"
 	fi
-	run_check $SUDO_HELPER $TOP/btrfs check $TEST_DEV
+	run_check $SUDO_HELPER "$TOP/btrfs" check "$TEST_DEV"
 }
 
 test_feature extref -r EXTENDED_IREF

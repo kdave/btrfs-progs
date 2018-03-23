@@ -15,8 +15,8 @@ A_PRIME_NUM=17
 for ((size = SIZE_FROM; size <= SIZE_END; size += A_PRIME_NUM)); do
 	run_check truncate -s "$size"M "$IMAGE"
 	run_check mkfs.ext4 -F "$IMAGE"
-	run_check $TOP/btrfs-convert "$IMAGE"
-	run_check_stdout $TOP/btrfs check "$IMAGE" 2>&1 |
+	run_check "$TOP/btrfs-convert" "$IMAGE"
+	run_check_stdout "$TOP/btrfs" check "$IMAGE" 2>&1 |
 		grep -q "crossing stripe boundary" &&
 		_fail "leaf crossing stripes after btrfs-convert"
 done

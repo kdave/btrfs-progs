@@ -14,29 +14,29 @@ setup_root_helper
 
 test_image_dump()
 {
-	run_check $SUDO_HELPER $TOP/btrfs check $dev1
+	run_check $SUDO_HELPER "$TOP/btrfs" check "$dev1"
 	# the output file will be deleted
-	run_mayfail $SUDO_HELPER $TOP/btrfs-image $dev1 /tmp/test-img.dump
+	run_mayfail $SUDO_HELPER "$TOP/btrfs-image" "$dev1" /tmp/test-img.dump
 }
 
 test_run()
 {
-	run_check $SUDO_HELPER $TOP/mkfs.btrfs -f -d raid1 -m raid1 $dev1 $dev2
+	run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f -d raid1 -m raid1 "$dev1" "$dev2"
 
 	# we need extents to trigger reading from all devices
-	run_check $SUDO_HELPER mount $dev1 $TEST_MNT
-	run_check $SUDO_HELPER dd if=/dev/zero of=$TEST_MNT/a bs=1M count=10
-	run_check $SUDO_HELPER dd if=/dev/zero of=$TEST_MNT/b bs=4k count=1000 conv=sync
-	run_check $SUDO_HELPER umount $TEST_MNT
+	run_check $SUDO_HELPER mount "$dev1" "$TEST_MNT"
+	run_check $SUDO_HELPER dd if=/dev/zero of="$TEST_MNT/a" bs=1M count=10
+	run_check $SUDO_HELPER dd if=/dev/zero of="$TEST_MNT/b" bs=4k count=1000 conv=sync
+	run_check $SUDO_HELPER umount "$TEST_MNT"
 
 	test_image_dump
-	run_check $SUDO_HELPER $TOP/btrfs filesystem show $dev1
+	run_check $SUDO_HELPER "$TOP/btrfs" filesystem show "$dev1"
 	# create a degraded raid1 filesystem, check must succeed
 	# btrfs-image must not loop
-	run_mayfail wipefs -a $dev2
-	run_check $SUDO_HELPER losetup -d $dev2
+	run_mayfail wipefs -a "$dev2"
+	run_check $SUDO_HELPER losetup -d "$dev2"
 	unset loopdevs[2]
-	run_check $SUDO_HELPER $TOP/btrfs filesystem show $dev1
+	run_check $SUDO_HELPER "$TOP/btrfs" filesystem show "$dev1"
 
 	test_image_dump
 }
