@@ -36,15 +36,15 @@ id6=$(run_check_stdout "$TOP/btrfs" inspect-internal rootid dir/file2) \
 id7=$(run_check_stdout "$TOP/btrfs" inspect-internal rootid sub/file3) \
 	|| { echo $id7; exit 1; }
 
-if ! ([ $id1 -ne $id2 ] && [ $id1 -ne $id3 ] && [ $id2 -ne $id3 ]); then
+if ! ([ "$id1" -ne "$id2" ] && [ "$id1" -ne "$id3" ] && [ "$id2" -ne "$id3" ]); then
 	_fail "inspect-internal rootid: each subvolume must have different id"
 fi
 
-if ! ([ $id1 -eq $id4 ] && [ $id1 -eq $id5 ] && [ $id1 -eq $id6 ]); then
+if ! ([ "$id1" -eq "$id4" ] && [ "$id1" -eq "$id5" ] && [ "$id1" -eq "$id6" ]); then
 	_fail "inspect-internal rootid: rootid mismatch found"
 fi
 
-if ! ([ $id2 -eq $id7 ]); then
+if ! ([ "$id2" -eq "$id7" ]); then
 	_fail "inspect-internal rootid: rootid mismatch found"
 fi
 

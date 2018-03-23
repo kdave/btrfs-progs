@@ -25,9 +25,9 @@ function check_corruption {
 	run_check $SUDO_HELPER dd bs=1K count=1 seek=$(($sb_offset + 1)) if=/dev/zero of="$TEST_DEV" conv=notrunc
 
 	# if corrupting one of the sb copies, copy it over the initial superblock
-	if [ ! -z $source_sb ]; then
+	if [ ! -z "$source_sb" ]; then
 		local shift_val=$((16 << $source_sb * 12 ))
-		run_check $SUDO_HELPER dd bs=1K count=4 seek=64 skip=$shift_val if="$TEST_DEV" of="$TEST_DEV" conv=notrunc
+		run_check $SUDO_HELPER dd bs=1K count=4 seek=64 skip="$shift_val" if="$TEST_DEV" of="$TEST_DEV" conv=notrunc
 	fi
 
 	# we can't use our mount helper, the following works for file image and

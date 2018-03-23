@@ -31,9 +31,9 @@ run_check $SUDO_HELPER "$TOP/btrfs" subvolume create "$TEST_MNT/baz"
 run_check $SUDO_HELPER "$TOP/btrfs" subvolume create "$TEST_MNT/snap"
 
 tr '\000' 'A' < /dev/null |
-	run_check $SUDO_HELPER dd of=$TEST_MNT/foo/file_a bs=$BLOCK_SIZE count=32
+	run_check $SUDO_HELPER dd of="$TEST_MNT/foo/file_a" bs="$BLOCK_SIZE" count=32
 tr '\000' 'B' < /dev/null |
-	run_check $SUDO_HELPER dd of=$TEST_MNT/bar/file_b bs=$BLOCK_SIZE count=32
+	run_check $SUDO_HELPER dd of="$TEST_MNT/bar/file_b" bs="$BLOCK_SIZE" count=32
 
 run_check $SUDO_HELPER cp --reflink=always "$TEST_MNT/foo/file_a" "$TEST_MNT/baz/file_a"
 run_check $SUDO_HELPER cp --reflink=always "$TEST_MNT/bar/file_b" "$TEST_MNT/baz/file_b"
