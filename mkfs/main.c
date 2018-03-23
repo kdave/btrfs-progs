@@ -315,6 +315,7 @@ static int create_tree(struct btrfs_trans_handle *trans,
 	struct btrfs_key location;
 	struct btrfs_root_item root_item;
 	struct extent_buffer *tmp;
+	u8 uuid[BTRFS_UUID_SIZE] = {0};
 	int ret;
 
 	ret = btrfs_copy_root(trans, root, root->node, &tmp, objectid);
@@ -325,6 +326,10 @@ static int create_tree(struct btrfs_trans_handle *trans,
 	btrfs_set_root_bytenr(&root_item, tmp->start);
 	btrfs_set_root_level(&root_item, btrfs_header_level(tmp));
 	btrfs_set_root_generation(&root_item, trans->transid);
+	/* clear uuid and o/ctime of source tree */
+	memcpy(root_item.uuid, uuid, BTRFS_UUID_SIZE);
+	btrfs_set_stack_timespec_sec(&root_item.otime, 0);
+	btrfs_set_stack_timespec_sec(&root_item.ctime, 0);
 	free_extent_buffer(tmp);
 
 	location.objectid = objectid;
