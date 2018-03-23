@@ -44,6 +44,7 @@ static int btrfs_create_tree_root(int fd, struct btrfs_mkfs_config *cfg,
 	u32 itemoff;
 	int ret = 0;
 	int blk;
+	u8 uuid[BTRFS_UUID_SIZE];
 
 	memset(buf->data + sizeof(struct btrfs_header), 0,
 		cfg->nodesize - sizeof(struct btrfs_header));
@@ -77,6 +78,19 @@ static int btrfs_create_tree_root(int fd, struct btrfs_mkfs_config *cfg,
 		btrfs_set_item_offset(buf, btrfs_item_nr(nritems), itemoff);
 		btrfs_set_item_size(buf, btrfs_item_nr(nritems),
 				sizeof(root_item));
+		if (blk == MKFS_FS_TREE) {
+			time_t now = time(NULL);
+
+			uuid_generate(uuid);
+			memcpy(root_item.uuid, uuid, BTRFS_UUID_SIZE);
+			btrfs_set_stack_timespec_sec(&root_item.otime, now);
+			btrfs_set_stack_timespec_sec(&root_item.ctime, now);
+		} else {
+			memset(uuid, 0, BTRFS_UUID_SIZE);
+			memcpy(root_item.uuid, uuid, BTRFS_UUID_SIZE);
+			btrfs_set_stack_timespec_sec(&root_item.otime, 0);
+			btrfs_set_stack_timespec_sec(&root_item.ctime, 0);
+		}
 		write_extent_buffer(buf, &root_item,
 			btrfs_item_ptr_offset(buf, nritems),
 			sizeof(root_item));
