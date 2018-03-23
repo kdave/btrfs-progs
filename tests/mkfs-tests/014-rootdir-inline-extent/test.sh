@@ -21,7 +21,7 @@ create_file()
 test_mkfs_rootdir()
 {
 	nodesize=$1
-	run_check "$TOP/mkfs.btrfs" --nodesize $nodesize -f --rootdir "$tmp" \
+	run_check "$TOP/mkfs.btrfs" --nodesize "$nodesize" -f --rootdir "$tmp" \
 		"$TEST_DEV"
 	run_check $SUDO_HELPER "$TOP/btrfs" check "$TEST_DEV"
 }
@@ -39,8 +39,8 @@ for i in 512 1024 2048 4096 8192 16384 32768; do
 done
 
 for nodesize in 4096 8192 16384 32768 65536; do
-	if [ $nodesize -ge $pagesize ]; then
-		test_mkfs_rootdir $nodesize
+	if [ "$nodesize" -ge "$pagesize" ]; then
+		test_mkfs_rootdir "$nodesize"
 	fi
 done
 rm -rf -- "$tmp"

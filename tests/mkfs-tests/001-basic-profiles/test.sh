@@ -11,28 +11,27 @@ setup_root_helper
 
 test_get_info()
 {
-	run_check $SUDO_HELPER $TOP/btrfs inspect-internal dump-super $dev1
-	run_check $SUDO_HELPER $TOP/btrfs check $dev1
-	run_check $SUDO_HELPER mount $dev1 $TEST_MNT
-	run_check $TOP/btrfs filesystem df $TEST_MNT
-	run_check $SUDO_HELPER $TOP/btrfs filesystem usage $TEST_MNT
-	run_check $SUDO_HELPER $TOP/btrfs device usage $TEST_MNT
+	run_check $SUDO_HELPER "$TOP/btrfs" inspect-internal dump-super "$dev1"
+	run_check $SUDO_HELPER "$TOP/btrfs" check "$dev1"
+	run_check $SUDO_HELPER mount "$dev1" "$TEST_MNT"
+	run_check "$TOP/btrfs" filesystem df "$TEST_MNT"
+	run_check $SUDO_HELPER "$TOP/btrfs" filesystem usage "$TEST_MNT"
+	run_check $SUDO_HELPER "$TOP/btrfs" device usage "$TEST_MNT"
 	run_check $SUDO_HELPER umount "$TEST_MNT"
 }
 test_do_mkfs()
 {
-	run_check $SUDO_HELPER $TOP/mkfs.btrfs -f	\
-		$@
+	run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f "$@"
 }
 
 test_mkfs_single()
 {
-	test_do_mkfs $@ $dev1
+	test_do_mkfs "$@" "$dev1"
 	test_get_info
 }
 test_mkfs_multi()
 {
-	test_do_mkfs $@ ${loopdevs[@]}
+	test_do_mkfs "$@" ${loopdevs[@]}
 	test_get_info
 }
 
