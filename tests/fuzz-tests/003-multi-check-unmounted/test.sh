@@ -21,6 +21,6 @@ check_image() {
 	run_mayfail $TOP/btrfs check --repair "$image"
 }
 
-check_all_images $TEST_TOP/fuzz-tests/images
+check_all_images "$TEST_TOP/fuzz-tests/images"
 
 exit 0

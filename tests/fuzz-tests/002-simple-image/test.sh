@@ -13,11 +13,11 @@ check_image() {
 
 	image=$1
 	truncate -s0 target
-	run_mayfail $TOP/btrfs-image "$image" target
+	run_mayfail "$TOP/btrfs-image" "$image" target
 	truncate -s0 target
 }
 
-check_all_images $TEST_TOP/fuzz-tests/images
+check_all_images "$TEST_TOP/fuzz-tests/images"
 
 rm -- target
 
