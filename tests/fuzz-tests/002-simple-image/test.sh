@@ -9,11 +9,8 @@ check_prereq btrfs-image
 
 # redefine the one provided by common
 check_image() {
-	local image
-
-	image=$1
 	truncate -s0 target
-	run_mayfail "$TOP/btrfs-image" "$image" target
+	run_mayfail "$TOP/btrfs-image" "$1" target
 	truncate -s0 target
 }
 

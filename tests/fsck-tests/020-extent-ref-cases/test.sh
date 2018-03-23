@@ -20,10 +20,7 @@ source "$TEST_TOP/common"
 check_prereq btrfs
 
 check_image() {
-	local image
-
-	image=$1
-	run_check "$TOP/btrfs" check "$image"
+	run_check "$TOP/btrfs" check "$1"
 }
 
 check_all_images

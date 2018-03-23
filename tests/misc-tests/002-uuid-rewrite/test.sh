@@ -10,10 +10,7 @@ check_prereq btrfs
 prepare_test_dev
 
 get_fs_uuid() {
-	local image
-
-	image="$1"
-	run_check_stdout $TOP/btrfs inspect-internal dump-super "$image" | \
+	run_check_stdout $TOP/btrfs inspect-internal dump-super "$1" | \
 		grep '^fsid' | awk '{print $2}'
 }
 
