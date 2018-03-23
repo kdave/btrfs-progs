@@ -1561,14 +1561,6 @@ static int check_dir_item(struct btrfs_root *root, struct btrfs_key *di_key,
 	int tmp_err;
 	int need_research = 0;
 
-	/*
-	 * For DIR_ITEM set index to (u64)-1, so that find_inode_ref
-	 * ignore index check.
-	 */
-	if (di_key->type == BTRFS_DIR_INDEX_KEY)
-		index = di_key->offset;
-	else
-		index = (u64)-1;
 begin:
 	err = 0;
 	cur = 0;
@@ -1598,6 +1590,15 @@ begin:
 	memset(namebuf, 0, sizeof(namebuf) / sizeof(*namebuf));
 
 	while (cur < total) {
+		/*
+		 * For DIR_ITEM set index to (u64)-1, so that find_inode_ref
+		 * ignore index check.
+		 */
+		if (di_key->type == BTRFS_DIR_INDEX_KEY)
+			index = di_key->offset;
+		else
+			index = (u64)-1;
+
 		data_len = btrfs_dir_data_len(node, di);
 		tmp_err = 0;
 		if (data_len)
