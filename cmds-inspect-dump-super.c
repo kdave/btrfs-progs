@@ -339,7 +339,8 @@ static void dump_superblock(struct btrfs_super_block *sb, int full)
 	printf("csum\t\t\t0x");
 	for (i = 0, p = sb->csum; i < csum_size; i++)
 		printf("%02x", p[i]);
-	if (csum_type != BTRFS_CSUM_TYPE_CRC32 || csum_size != BTRFS_CRC32_SIZE)
+	if (csum_type != BTRFS_CSUM_TYPE_CRC32 ||
+	    csum_size != btrfs_csum_sizes[BTRFS_CSUM_TYPE_CRC32])
 		printf(" [UNKNOWN CSUM TYPE OR SIZE]");
 	else if (check_csum_sblock(sb, csum_size))
 		printf(" [match]");
