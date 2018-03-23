@@ -9,17 +9,11 @@ prepare_test_dev
 
 get_log_root()
 {
-	local image
-
-	image="$1"
-	$TOP/btrfs inspect-internal dump-super "$image" | \
+	$TOP/btrfs inspect-internal dump-super "$1" | \
 		grep '^log_root\>' | awk '{print $2}'
 }
 get_log_root_level() {
-	local image
-
-	image="$1"
-	$TOP/btrfs inspect-internal dump-super "$image" | \
+	$TOP/btrfs inspect-internal dump-super "$1" | \
 		grep '^log_root_level' | awk '{print $2}'
 }
 

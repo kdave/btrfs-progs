@@ -7,10 +7,7 @@ check_prereq btrfs
 
 # redefine the one provided by common
 check_image() {
-	local image
-
-	image=$1
-	run_mayfail "$TOP/btrfs" inspect-internal tree-stats "$image"
+	run_mayfail "$TOP/btrfs" inspect-internal tree-stats "$1"
 }
 
 check_all_images "$TEST_TOP/fuzz-tests/images"
