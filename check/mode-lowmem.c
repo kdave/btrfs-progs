@@ -4736,12 +4736,11 @@ out:
  * Iterate all items in the tree and call check_inode_item() to check.
  *
  * @root:	the root of the tree to be checked.
- * @ext_ref:	the EXTENDED_IREF feature
  *
  * Return 0 if no error found.
  * Return <0 for error.
  */
-static int check_fs_root(struct btrfs_root *root, unsigned int ext_ref)
+static int check_fs_root(struct btrfs_root *root)
 {
 	reset_cached_block_groups(root->fs_info);
 	return check_btrfs_root(root, 0);
@@ -4897,7 +4896,7 @@ int check_fs_roots_lowmem(struct btrfs_fs_info *fs_info)
 				goto next;
 			}
 
-			ret = check_fs_root(cur_root, ext_ref);
+			ret = check_fs_root(cur_root);
 			err |= ret;
 
 			if (key.objectid == BTRFS_TREE_RELOC_OBJECTID)
