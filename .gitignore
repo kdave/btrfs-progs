@@ -13,7 +13,6 @@ btrfs.static
 btrfs-map-logical
 btrfs-fragments
 btrfsck
-calc-size
 ioctl-test
 dir-test
 send-test
@@ -29,7 +28,6 @@ btrfs-find-root.static
 btrfs-image
 btrfs-corrupt-block
 btrfs-select-super
-btrfs-calc-size
 btrfs-crc
 btrfstune
 mktables

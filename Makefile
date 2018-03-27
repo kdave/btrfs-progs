@@ -215,7 +215,7 @@ progs_install = btrfs mkfs.btrfs btrfs-map-logical btrfs-image \
 	btrfs-select-super
 
 # other tools, not built by default
-progs_extra = btrfs-fragments btrfs-calc-size
+progs_extra = btrfs-fragments
 
 progs_static = $(foreach p,$(progs),$(p).static)
 
@@ -228,7 +228,6 @@ endif
 btrfs_convert_cflags = -DBTRFSCONVERT_EXT2=$(BTRFSCONVERT_EXT2)
 btrfs_convert_cflags += -DBTRFSCONVERT_REISERFS=$(BTRFSCONVERT_REISERFS)
 btrfs_fragments_libs = -lgd -lpng -ljpeg -lfreetype
-btrfs_calc_size_objects = cmds-inspect-tree-stats.o
 cmds_restore_cflags = -DBTRFSRESTORE_ZSTD=$(BTRFSRESTORE_ZSTD)
 
 CHECKER_FLAGS += $(btrfs_convert_cflags)
