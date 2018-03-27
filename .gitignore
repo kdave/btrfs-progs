@@ -10,7 +10,6 @@ Documentation/*.gz
 Documentation/*.html
 btrfs
 btrfs.static
-btrfs-debug-tree
 btrfs-map-logical
 btrfs-fragments
 btrfsck

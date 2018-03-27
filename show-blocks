@@ -108,7 +108,7 @@ def loaddata(fh,delimiter=None, converters=None):
     return X
 
 def run_debug_tree(device):
-    p = os.popen('btrfs-debug-tree -e ' + device)
+    p = os.popen('btrfs inspect-internal dump-tree -e ' + device)
     data = loaddata(p)
     return data
 
