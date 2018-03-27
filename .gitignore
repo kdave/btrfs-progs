@@ -27,7 +27,6 @@ btrfs-convert
 btrfs-find-root
 btrfs-find-root.static
 btrfs-image
-btrfs-show-super
 btrfs-corrupt-block
 btrfs-select-super
 btrfs-calc-size
