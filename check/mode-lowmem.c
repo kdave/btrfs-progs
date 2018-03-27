@@ -4356,8 +4356,7 @@ out:
  * Returns 0   No errors found
  */
 static int walk_down_tree(struct btrfs_root *root, struct btrfs_path *path,
-			  int *level, struct node_refs *nrefs, int ext_ref,
-			  int check_all)
+			  int *level, struct node_refs *nrefs, int check_all)
 {
 	enum btrfs_tree_block_status status;
 	u64 bytenr;
@@ -4712,8 +4711,7 @@ static int check_btrfs_root(struct btrfs_root *root, unsigned int ext_ref,
 	}
 
 	while (1) {
-		ret = walk_down_tree(root, &path, &level, &nrefs,
-				     ext_ref, check_all);
+		ret = walk_down_tree(root, &path, &level, &nrefs, check_all);
 
 		if (ret > 0)
 			err |= ret;
