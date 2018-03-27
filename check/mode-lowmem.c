@@ -1265,14 +1265,13 @@ next:
  * @namelen:	the length of name in the INODE_REF/INODE_EXTREF
  * @index_ret:	the index in the INODE_REF/INODE_EXTREF,
  *              value (64)-1 means do not check index
- * @ext_ref:	the EXTENDED_IREF feature
  *
  * Return 0 if no error occurred.
  * Return >0 for error bitmap
  */
 static int find_inode_ref(struct btrfs_root *root, struct btrfs_key *key,
-			  char *name, int namelen, u64 *index_ret,
-			  unsigned int ext_ref)
+			  char *name, int namelen, u64 *index_ret)
+
 {
 	struct btrfs_path path;
 	struct btrfs_inode_ref *ref;
@@ -1345,8 +1344,9 @@ next_ref:
 	}
 
 extref:
+
 	/* Skip if not support EXTENDED_IREF feature */
-	if (!ext_ref)
+	if (!btrfs_fs_incompat(root->fs_info, EXTENDED_IREF))
 		goto out;
 
 	btrfs_release_path(&path);
@@ -1656,8 +1656,7 @@ begin:
 		key.objectid = location.objectid;
 		key.type = BTRFS_INODE_REF_KEY;
 		key.offset = di_key->objectid;
-		tmp_err |= find_inode_ref(root, &key, namebuf, len,
-					  &index, ext_ref);
+		tmp_err |= find_inode_ref(root, &key, namebuf, len, &index);
 
 		/* check relative INDEX/ITEM */
 		key.objectid = di_key->objectid;
@@ -4638,7 +4637,7 @@ static int check_fs_first_inode(struct btrfs_root *root, unsigned int ext_ref)
 	/* special index value */
 	index = 0;
 
-	ret = find_inode_ref(root, &key, "..", strlen(".."), &index, ext_ref);
+	ret = find_inode_ref(root, &key, "..", strlen(".."), &index);
 	if (ret < 0)
 		goto out;
 	err |= ret;
