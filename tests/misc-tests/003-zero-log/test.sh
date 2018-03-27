@@ -24,11 +24,7 @@ test_zero_log()
 		--rootdir "$INTERNAL_BIN/Documentation" \
 		"$TEST_DEV"
 	run_check "$TOP/btrfs" inspect-internal dump-super "$TEST_DEV"
-	if [ "$1" = 'standalone' ]; then
-		run_check "$TOP/btrfs" rescue zero-log "$TEST_DEV"
-	else
-		run_check "$TOP/btrfs-zero-log" "$TEST_DEV"
-	fi
+	run_check "$TOP/btrfs" rescue zero-log "$TEST_DEV"
 	log_root=$(get_log_root "$TEST_DEV")
 	log_root_level=$(get_log_root "$TEST_DEV")
 	if [ "$log_root" != 0 ]; then
