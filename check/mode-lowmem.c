@@ -1532,14 +1532,12 @@ static void print_dir_item_err(struct btrfs_root *root, struct btrfs_key *key,
  * @key:	the key of the INODE_REF/INODE_EXTREF
  * @path:       the path
  * @size:	the st_size of the INODE_ITEM
- * @ext_ref:	the EXTENDED_IREF feature
  *
  * Return 0 if no error occurred.
  * Return DIR_COUNT_AGAIN if the isize of the inode should be recalculated.
  */
 static int check_dir_item(struct btrfs_root *root, struct btrfs_key *di_key,
-			  struct btrfs_path *path, u64 *size,
-			  unsigned int ext_ref)
+			  struct btrfs_path *path, u64 *size)
 {
 	struct btrfs_dir_item *di;
 	struct btrfs_inode_item *ii;
@@ -2356,7 +2354,7 @@ static int check_inode_item(struct btrfs_root *root, struct btrfs_path *path,
 					imode_to_type(mode), key.objectid,
 					key.offset);
 			}
-			ret = check_dir_item(root, &key, path, &size, ext_ref);
+			ret = check_dir_item(root, &key, path, &size);
 			err |= ret;
 			break;
 		case BTRFS_EXTENT_DATA_KEY:
