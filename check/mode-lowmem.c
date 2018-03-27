@@ -4659,15 +4659,13 @@ out:
  * blocks and integrity of fs tree items.
  *
  * @root:         the root of the tree to be checked.
- * @ext_ref       feature EXTENDED_IREF is enable or not.
  * @account       if NOT 0 means check the tree (including tree)'s treeblocks.
  *                otherwise means check fs tree(s) items relationship and
  *		  @root MUST be a fs tree root.
  * Returns 0      represents OK.
  * Returns >0     represents error bits.
  */
-static int check_btrfs_root(struct btrfs_root *root, unsigned int ext_ref,
-			    int check_all)
+static int check_btrfs_root(struct btrfs_root *root, int check_all)
 {
 	struct btrfs_path path;
 	struct node_refs nrefs;
@@ -4746,7 +4744,7 @@ out:
 static int check_fs_root(struct btrfs_root *root, unsigned int ext_ref)
 {
 	reset_cached_block_groups(root->fs_info);
-	return check_btrfs_root(root, ext_ref, 0);
+	return check_btrfs_root(root, 0);
 }
 
 /*
@@ -4941,11 +4939,11 @@ int check_chunks_and_extents_lowmem(struct btrfs_fs_info *fs_info)
 	root = fs_info->fs_root;
 
 	root1 = root->fs_info->chunk_root;
-	ret = check_btrfs_root(root1, 0, 1);
+	ret = check_btrfs_root(root1, 1);
 	err |= ret;
 
 	root1 = root->fs_info->tree_root;
-	ret = check_btrfs_root(root1, 0, 1);
+	ret = check_btrfs_root(root1, 1);
 	err |= ret;
 
 	btrfs_init_path(&path);
@@ -4976,7 +4974,7 @@ int check_chunks_and_extents_lowmem(struct btrfs_fs_info *fs_info)
 			goto next;
 		}
 
-		ret = check_btrfs_root(cur_root, 0, 1);
+		ret = check_btrfs_root(cur_root, 1);
 		err |= ret;
 
 		if (key.objectid == BTRFS_TREE_RELOC_OBJECTID)
