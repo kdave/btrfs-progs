@@ -4852,12 +4852,9 @@ int check_fs_roots_lowmem(struct btrfs_fs_info *fs_info)
 	struct btrfs_path path;
 	struct btrfs_key key;
 	struct extent_buffer *node;
-	unsigned int ext_ref;
 	int slot;
 	int ret;
 	int err = 0;
-
-	ext_ref = btrfs_fs_incompat(fs_info, EXTENDED_IREF);
 
 	btrfs_init_path(&path);
 	key.objectid = BTRFS_FS_TREE_OBJECTID;
