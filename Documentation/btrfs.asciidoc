@@ -123,7 +123,7 @@ Deprecated and obsolete tools:
 *btrfs-debug-tree*:: moved to *btrfs inspect-internal dump-tree*. Removed from
 source distribution.
 *btrfs-show-super*:: moved to *btrfs inspect-internal dump-super*
-*btrfs-zero-log*:: moved to *btrfs rescue zero-log*
+*btrfs-zero-log*:: moved to *btrfs rescue zero-log*, standalone removed.
 
 EXIT STATUS
 -----------

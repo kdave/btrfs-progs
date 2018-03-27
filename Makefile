@@ -210,7 +210,7 @@ MAKEOPTS = --no-print-directory Q=$(Q)
 progs = $(progs_install) btrfsck btrfs-corrupt-block
 
 # install only selected
-progs_install = btrfs mkfs.btrfs btrfs-map-logical btrfs-image btrfs-zero-log \
+progs_install = btrfs mkfs.btrfs btrfs-map-logical btrfs-image \
 	btrfs-find-root btrfstune \
 	btrfs-select-super
 
@@ -322,7 +322,7 @@ test-fsck: btrfs btrfs-image btrfs-corrupt-block mkfs.btrfs btrfstune
 	$(Q)bash tests/fsck-tests.sh
 
 test-misc: btrfs btrfs-image btrfs-corrupt-block mkfs.btrfs btrfstune fssum \
-		btrfs-zero-log btrfs-find-root btrfs-select-super btrfs-convert
+		btrfs-find-root btrfs-select-super btrfs-convert
 	@echo "    [TEST]   misc-tests.sh"
 	$(Q)bash tests/misc-tests.sh
 
