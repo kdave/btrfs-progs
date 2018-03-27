@@ -210,8 +210,7 @@ MAKEOPTS = --no-print-directory Q=$(Q)
 progs = $(progs_install) btrfsck btrfs-corrupt-block
 
 # install only selected
-progs_install = btrfs mkfs.btrfs btrfs-debug-tree \
-	btrfs-map-logical btrfs-image btrfs-zero-log \
+progs_install = btrfs mkfs.btrfs btrfs-map-logical btrfs-image btrfs-zero-log \
 	btrfs-find-root btrfstune \
 	btrfs-select-super
 
@@ -229,7 +228,6 @@ endif
 btrfs_convert_cflags = -DBTRFSCONVERT_EXT2=$(BTRFSCONVERT_EXT2)
 btrfs_convert_cflags += -DBTRFSCONVERT_REISERFS=$(BTRFSCONVERT_REISERFS)
 btrfs_fragments_libs = -lgd -lpng -ljpeg -lfreetype
-btrfs_debug_tree_objects = cmds-inspect-dump-tree.o
 btrfs_show_super_objects = cmds-inspect-dump-super.o
 btrfs_calc_size_objects = cmds-inspect-tree-stats.o
 cmds_restore_cflags = -DBTRFSRESTORE_ZSTD=$(BTRFSRESTORE_ZSTD)
