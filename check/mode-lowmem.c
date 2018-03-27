@@ -2486,7 +2486,7 @@ out:
  * Returns 0   No errors found
  */
 static int process_one_leaf(struct btrfs_root *root, struct btrfs_path *path,
-			    struct node_refs *nrefs, int *level, int ext_ref)
+			    struct node_refs *nrefs, int *level)
 {
 	struct extent_buffer *cur = path->nodes[0];
 	struct btrfs_key key;
@@ -4427,8 +4427,7 @@ static int walk_down_tree(struct btrfs_root *root, struct btrfs_path *path,
 
 			ret = 0;
 			if (!check_all)
-				ret = process_one_leaf(root, path, nrefs,
-						       level, ext_ref);
+				ret = process_one_leaf(root, path, nrefs, level);
 			else
 				ret = check_leaf_items(root, path,
 					       nrefs, account_file_data);
