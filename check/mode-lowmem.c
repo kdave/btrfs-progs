@@ -4594,7 +4594,7 @@ out:
  * returns >0 means error
  * returns <0 means fatal error
  */
-static int check_fs_first_inode(struct btrfs_root *root, unsigned int ext_ref)
+static int check_fs_first_inode(struct btrfs_root *root)
 {
 	struct btrfs_path path;
 	struct btrfs_key key;
@@ -4685,7 +4685,7 @@ static int check_btrfs_root(struct btrfs_root *root, unsigned int ext_ref,
 		 * the first inode item in the leaf, if inode item (256) is
 		 * missing we will skip it forever.
 		 */
-		ret = check_fs_first_inode(root, ext_ref);
+		ret = check_fs_first_inode(root);
 		if (ret < 0)
 			return FATAL_ERROR;
 	}
