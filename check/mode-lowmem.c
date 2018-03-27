@@ -2263,13 +2263,10 @@ static bool has_orphan_item(struct btrfs_root *root, u64 ino)
  * 2. check inode ref/extref
  * 3. check dir item/index
  *
- * @ext_ref:	the EXTENDED_IREF feature
- *
  * Return 0 if no error occurred.
  * Return >0 for error or hit the traversal is done(by error bitmap)
  */
-static int check_inode_item(struct btrfs_root *root, struct btrfs_path *path,
-			    unsigned int ext_ref)
+static int check_inode_item(struct btrfs_root *root, struct btrfs_path *path)
 {
 	struct extent_buffer *node;
 	struct btrfs_inode_item *ii;
@@ -2338,6 +2335,9 @@ static int check_inode_item(struct btrfs_root *root, struct btrfs_path *path,
 			err |= ret;
 			break;
 		case BTRFS_INODE_EXTREF_KEY:
+		{
+			bool ext_ref = btrfs_fs_incompat(root->fs_info,
+							 EXTENDED_IREF);
 			if (key.type == BTRFS_INODE_EXTREF_KEY && !ext_ref)
 				warning("root %llu EXTREF[%llu %llu] isn't supported",
 					root->objectid, key.objectid,
@@ -2346,6 +2346,7 @@ static int check_inode_item(struct btrfs_root *root, struct btrfs_path *path,
 						 mode);
 			err |= ret;
 			break;
+		}
 		case BTRFS_DIR_ITEM_KEY:
 		case BTRFS_DIR_INDEX_KEY:
 			if (!dir) {
@@ -2516,7 +2517,7 @@ static int process_one_leaf(struct btrfs_root *root, struct btrfs_path *path,
 	path->slots[0] = i;
 
 again:
-	err |= check_inode_item(root, path, ext_ref);
+	err |= check_inode_item(root, path);
 
 	/* modify cur since check_inode_item may change path */
 	cur = path->nodes[0];
