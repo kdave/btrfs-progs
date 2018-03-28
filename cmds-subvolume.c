@@ -637,14 +637,17 @@ out:
 }
 
 static const char * const cmd_subvol_snapshot_usage[] = {
-	"btrfs subvolume snapshot [-r] [-i <qgroupid>] <source> <dest>|[<dest>/]<name>",
-	"Create a snapshot of the subvolume",
-	"Create a writable/readonly snapshot of the subvolume <source> with",
-	"the name <name> in the <dest> directory.  If only <dest> is given,",
-	"the subvolume will be named the basename of <source>.",
+	"btrfs subvolume snapshot [-r] [-i <qgroupid>] <subvolume> <subdir>/<name>",
+    	"btrfs subvolume snapshot [-r] [-i <qgroupid>] <subvolume> <subdir>",
 	"",
-	"-r             create a readonly snapshot",
-	"-i <qgroupid>  add the newly created snapshot to a qgroup. This",
+	"Create a snapshot of a <subvolume>. Call it <name> and place it in the <subdir>.",
+	"",
+	"When only <subdir> is given, the subvolume will be named using the basename of <subvolume>.",
+	"",
+	"(<subvolume> looks like a sub-directory, but is actually a btrfs subvolume rather than a subdirectory.)",
+	"",
+	"-r             Make the new snapshot readonly.",
+	"-i <qgroupid>  Add the new snapshot to a qgroup (a quota group). This",
 	"               option can be given multiple times.",
 	NULL
 };
