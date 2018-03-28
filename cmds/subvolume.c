@@ -506,14 +506,16 @@ keep_fd:
 static DEFINE_SIMPLE_COMMAND(subvol_delete, "delete");
 
 static const char * const cmd_subvol_snapshot_usage[] = {
-	"btrfs subvolume snapshot [-r] [-i <qgroupid>] <source> <dest>|[<dest>/]<name>",
-	"Create a snapshot of the subvolume",
-	"Create a writable/readonly snapshot of the subvolume <source> with",
-	"the name <name> in the <dest> directory.  If only <dest> is given,",
-	"the subvolume will be named the basename of <source>.",
+	"btrfs subvolume snapshot [-r] [-i <qgroupid>] <subvolume> { <subdir>/<name> | <subdir> }",
 	"",
-	"-r             create a readonly snapshot",
-	"-i <qgroupid>  add the newly created snapshot to a qgroup. This",
+	"Create a snapshot of a <subvolume>. Call it <name> and place it in the <subdir>.",
+	"(<subvolume> will look like a new sub-directory, but is actually a btrfs subvolume",
+	"not a sub-directory.)",
+	"",
+	"When only <subdir> is given, the subvolume will be named the basename of <subvolume>.",
+	"",
+	"-r             Make the new snapshot readonly.",
+	"-i <qgroupid>  Add the new snapshot to a qgroup (a quota group). This",
 	"               option can be given multiple times.",
 	HELPINFO_INSERT_GLOBALS,
 	HELPINFO_INSERT_QUIET,
