@@ -696,7 +696,7 @@ out:
 }
 
 static int ftw_add_entry_size(const char *fpath, const struct stat *st,
-			      int type)
+			      int type, struct FTW *ftwbuf)
 {
 	/*
 	 * Failed to read the directory, mostly due to EPERM.  Abort ASAP, so
@@ -731,7 +731,12 @@ u64 btrfs_mkfs_size_dir(const char *dir_name, u32 sectorsize, u64 min_dev_size,
 	fs_block_size = sectorsize;
 	ftw_data_size = 0;
 	ftw_meta_nr_inode = 0;
-	ret = ftw(dir_name, ftw_add_entry_size, 10);
+
+	/*
+	 * Symbolic link is not followed when creating files, so no need to
+	 * follow them here.
+	 */
+	ret = nftw(dir_name, ftw_add_entry_size, 10, FTW_PHYS);
 	if (ret < 0) {
 		error("ftw subdir walk of %s failed: %s", dir_name,
 			strerror(errno));
