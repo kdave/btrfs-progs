@@ -629,7 +629,7 @@ int load_chunk_and_device_info(int fd, struct chunk_info **chunkinfo,
 	ret = load_chunk_info(fd, chunkinfo, chunkcount);
 	if (ret == -EPERM) {
 		warning(
-"cannot read detailed chunk info, RAID5/6 numbers will be incorrect, run as root");
+"cannot read detailed chunk info, per-device usage will not be shown, run as root");
 	} else if (ret) {
 		return ret;
 	}
