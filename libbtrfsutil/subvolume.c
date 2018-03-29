@@ -1353,8 +1353,10 @@ PUBLIC enum btrfs_util_error btrfs_util_deleted_subvolumes_fd(int fd,
 				new_capacity = capacity ? capacity * 2 : 1;
 				new_ids = reallocarray(*ids, new_capacity,
 						       sizeof(**ids));
-				if (!new_ids)
-					return BTRFS_UTIL_ERROR_NO_MEMORY;
+				if (!new_ids) {
+					err = BTRFS_UTIL_ERROR_NO_MEMORY;
+					goto out;
+				}
 
 				*ids = new_ids;
 				capacity = new_capacity;
