@@ -923,9 +923,11 @@ static void _cmd_filesystem_usage_linear(unsigned unit_mode,
 		printf("\n");
 	}
 
-	printf("Unallocated:\n");
-	print_unused(info_ptr, info_count, device_info_ptr, device_info_count,
-			unit_mode | UNITS_NEGATIVE);
+	if (info_count) {
+		printf("Unallocated:\n");
+		print_unused(info_ptr, info_count, device_info_ptr,
+				device_info_count, unit_mode | UNITS_NEGATIVE);
+	}
 }
 
 static int print_filesystem_usage_by_chunk(int fd,
@@ -935,9 +937,6 @@ static int print_filesystem_usage_by_chunk(int fd,
 {
 	struct btrfs_ioctl_space_args *sargs;
 	int ret = 0;
-
-	if (!chunkinfo)
-		return 0;
 
 	sargs = load_space_info(fd, path);
 	if (!sargs) {
