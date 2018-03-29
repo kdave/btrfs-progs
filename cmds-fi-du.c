@@ -449,7 +449,7 @@ static int du_add_file(const char *filename, int dirfd,
 	}
 
 	pathtmp = pathp;
-	if (pathp == path)
+	if (pathp == path || *(pathp - 1) == '/')
 		ret = sprintf(pathp, "%s", filename);
 	else
 		ret = sprintf(pathp, "/%s", filename);
