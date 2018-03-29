@@ -37,8 +37,12 @@ class BtrfsTestCase(unittest.TestCase):
             os.rmdir(self.mountpoint)
             raise e
 
+        if os.path.exists('../../mkfs.btrfs'):
+            mkfs = '../../mkfs.btrfs'
+        else:
+            mkfs = 'mkfs.btrfs'
         try:
-            subprocess.check_call(['mkfs.btrfs', '-q', self.image])
+            subprocess.check_call([mkfs, '-q', self.image])
             subprocess.check_call(['mount', '-o', 'loop', '--', self.image, self.mountpoint])
         except Exception as e:
             os.remove(self.image)

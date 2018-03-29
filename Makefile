@@ -357,7 +357,7 @@ testsuite: btrfs-corrupt-block fssum
 	$(Q)cd tests && ./export-testsuite.sh
 
 ifeq ($(PYTHON_BINDINGS),1)
-test-libbtrfsutil: libbtrfsutil_python
+test-libbtrfsutil: libbtrfsutil_python mkfs.btrfs
 	$(Q)cd libbtrfsutil/python; \
 		LD_LIBRARY_PATH=../.. $(PYTHON) -m unittest discover -v tests
 
