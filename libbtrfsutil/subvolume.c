@@ -1339,20 +1339,30 @@ PUBLIC enum btrfs_util_error btrfs_util_deleted_subvolumes_fd(int fd,
 		}
 
 		header = (struct btrfs_ioctl_search_header *)(search.buf + buf_off);
-		if (*n >= capacity) {
-			size_t new_capacity = capacity ? capacity * 2 : 1;
-			uint64_t *new_ids;
 
-			new_ids = reallocarray(*ids, new_capacity,
-					       sizeof(**ids));
-			if (!new_ids)
-				return BTRFS_UTIL_ERROR_NO_MEMORY;
+		/*
+		 * The orphan item might be for a free space cache inode, so
+		 * check if there's a matching root item.
+		 */
+		err = btrfs_util_subvolume_info_fd(fd, header->offset, NULL);
+		if (!err) {
+			if (*n >= capacity) {
+				size_t new_capacity;
+				uint64_t *new_ids;
 
-			*ids = new_ids;
-			capacity = new_capacity;
+				new_capacity = capacity ? capacity * 2 : 1;
+				new_ids = reallocarray(*ids, new_capacity,
+						       sizeof(**ids));
+				if (!new_ids)
+					return BTRFS_UTIL_ERROR_NO_MEMORY;
+
+				*ids = new_ids;
+				capacity = new_capacity;
+			}
+			(*ids)[(*n)++] = header->offset;
+		} else if (err != BTRFS_UTIL_ERROR_SUBVOLUME_NOT_FOUND) {
+			goto out;
 		}
-
-		(*ids)[(*n)++] = header->offset;
 
 		items_pos++;
 		buf_off += sizeof(*header) + header->len;
