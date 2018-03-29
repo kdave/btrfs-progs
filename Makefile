@@ -417,7 +417,7 @@ libbtrfsutil.so.$(libbtrfsutil_major) libbtrfsutil.so: libbtrfsutil.so.$(libbtrf
 	$(Q)$(LN_S) -f $< $@
 
 ifeq ($(PYTHON_BINDINGS),1)
-libbtrfsutil_python: libbtrfsutil.so libbtrfsutil/btrfsutil.h
+libbtrfsutil_python: libbtrfsutil.so.$(libbtrfsutil_major) libbtrfsutil.so libbtrfsutil/btrfsutil.h
 	@echo "    [PY]     libbtrfsutil"
 	$(Q)cd libbtrfsutil/python; \
 		CFLAGS= LDFLAGS= $(PYTHON) setup.py $(SETUP_PY_Q) build_ext -i build
