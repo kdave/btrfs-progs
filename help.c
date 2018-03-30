@@ -115,7 +115,7 @@ void clean_args_no_options(int argc, char *argv[], const char * const *usagestr)
  * - "-- option1 option2 ..."
  * - "option1 option2 ..."
  */
-void clean_args_no_options_relaxed(int argc, char *argv[], const char * const *usagestr)
+void clean_args_no_options_relaxed(int argc, char *argv[])
 {
 	if (argc <= 1)
 		return;
