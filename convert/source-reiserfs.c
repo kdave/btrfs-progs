@@ -350,8 +350,7 @@ static int convert_direct(struct btrfs_trans_handle *trans,
 	if (ret)
 		return ret;
 
-	eb = alloc_extent_buffer(&root->fs_info->extent_cache, key.objectid,
-				 sectorsize);
+	eb = alloc_extent_buffer(root->fs_info, key.objectid, sectorsize);
 
 	if (!eb)
 		return -ENOMEM;
