@@ -3,7 +3,7 @@ btrfs-filesystem(8)
 
 NAME
 ----
-btrfs-filesystem - command group othat primarily does work on the whole filesystems
+btrfs-filesystem - command group that primarily does work on the whole filesystems
 
 SYNOPSIS
 --------

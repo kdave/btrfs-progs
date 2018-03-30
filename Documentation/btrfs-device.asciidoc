@@ -124,7 +124,7 @@ statistics and the meaning.
 Print the stats and reset the values to zero afterwards.
 
 -c|--check::::
-Check if the stats are all zeros and return 0 it this is so. Set bit 6 of the
+Check if the stats are all zeros and return 0 if it is so. Set bit 6 of the
 return code if any of the statistics is no-zero. The error values is 65 if
 reading stats from at least one device failed, otherwise it's 64.
 
@@ -190,7 +190,7 @@ there's enough workspace for the conversion process, we can do:
 
  $ btrfs balance start -mconvert=raid1 /mnt
 
-This operation can take a while, because al  metadata have to be moved and all
+This operation can take a while, because all metadata have to be moved and all
 block pointers updated. Depending on the physical locations of the old and new
 blocks, the disk seeking is the key factor affecting performance.
 
