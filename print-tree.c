@@ -1190,7 +1190,7 @@ void btrfs_print_leaf(struct btrfs_root *root, struct extent_buffer *eb)
 
 	printf("leaf %llu items %d free space %d generation %llu owner ",
 		(unsigned long long)btrfs_header_bytenr(eb), nr,
-		btrfs_leaf_free_space(root, eb),
+		btrfs_leaf_free_space(root->fs_info, eb),
 		(unsigned long long)btrfs_header_generation(eb));
 	print_objectid(stdout, btrfs_header_owner(eb), 0);
 	printf("\n");

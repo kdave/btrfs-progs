@@ -5970,7 +5970,7 @@ static int run_next_block(struct btrfs_root *root,
 		goto out;
 
 	if (btrfs_is_leaf(buf)) {
-		btree_space_waste += btrfs_leaf_free_space(root, buf);
+		btree_space_waste += btrfs_leaf_free_space(fs_info, buf);
 		for (i = 0; i < nritems; i++) {
 			struct btrfs_file_extent_item *fi;
 
