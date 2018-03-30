@@ -545,7 +545,7 @@ out:
 	return ret;
 }
 
-static struct extent_buffer *__alloc_extent_buffer(struct extent_io_tree *tree,
+static struct extent_buffer *__alloc_extent_buffer(struct btrfs_fs_info *info,
 						   u64 bytenr, u32 blocksize)
 {
 	struct extent_buffer *eb;
@@ -558,12 +558,14 @@ static struct extent_buffer *__alloc_extent_buffer(struct extent_io_tree *tree,
 	eb->len = blocksize;
 	eb->refs = 1;
 	eb->flags = 0;
-	eb->tree = tree;
 	eb->fd = -1;
 	eb->dev_bytenr = (u64)-1;
 	eb->cache_node.start = bytenr;
 	eb->cache_node.size = blocksize;
+	eb->fs_info = info;
+	eb->tree = &info->extent_cache;
 	INIT_LIST_HEAD(&eb->recow);
+	INIT_LIST_HEAD(&eb->lru);
 
 	return eb;
 }
@@ -572,9 +574,11 @@ struct extent_buffer *btrfs_clone_extent_buffer(struct extent_buffer *src)
 {
 	struct extent_buffer *new;
 
-	new = __alloc_extent_buffer(NULL, src->start, src->len);
+	new = __alloc_extent_buffer(src->fs_info, src->start, src->len);
 	if (!new)
 		return NULL;
+	/* cloned eb is not linked into fs_info->extent_cache */
+	new->tree = NULL;
 
 	copy_extent_buffer(new, src, 0, 0, src->len);
 	new->flags |= EXTENT_BUFFER_DUMMY;
@@ -587,7 +591,7 @@ static void free_extent_buffer_final(struct extent_buffer *eb)
 	struct extent_io_tree *tree = eb->tree;
 
 	BUG_ON(eb->refs);
-	BUG_ON(tree->cache_size < eb->len);
+	BUG_ON(tree && tree->cache_size < eb->len);
 	list_del_init(&eb->lru);
 	if (!(eb->flags & EXTENT_BUFFER_DUMMY)) {
 		remove_cache_extent(&tree->cache, &eb->cache_node);
@@ -664,10 +668,11 @@ static void trim_extent_buffer_cache(struct extent_io_tree *tree)
 	}
 }
 
-struct extent_buffer *alloc_extent_buffer(struct extent_io_tree *tree,
+struct extent_buffer *alloc_extent_buffer(struct btrfs_fs_info *fs_info,
 					  u64 bytenr, u32 blocksize)
 {
 	struct extent_buffer *eb;
+	struct extent_io_tree *tree = &fs_info->extent_cache;
 	struct cache_extent *cache;
 
 	cache = lookup_cache_extent(&tree->cache, bytenr, blocksize);
@@ -684,7 +689,7 @@ struct extent_buffer *alloc_extent_buffer(struct extent_io_tree *tree,
 					  cache_node);
 			free_extent_buffer(eb);
 		}
-		eb = __alloc_extent_buffer(tree, bytenr, blocksize);
+		eb = __alloc_extent_buffer(fs_info, bytenr, blocksize);
 		if (!eb)
 			return NULL;
 		ret = insert_cache_extent(&tree->cache, &eb->cache_node);

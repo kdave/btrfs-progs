@@ -571,7 +571,7 @@ static int read_data_extent(struct metadump_struct *md,
 	num_copies = btrfs_num_copies(root->fs_info, logical, bytes_left);
 
 	/* Try our best to read data, just like read_tree_block() */
-	for (cur_mirror = 0; cur_mirror < num_copies; cur_mirror++) {
+	for (cur_mirror = 1; cur_mirror <= num_copies; cur_mirror++) {
 		while (bytes_left) {
 			read_len = bytes_left;
 			ret = read_extent_data(fs_info,

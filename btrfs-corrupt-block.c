@@ -726,7 +726,7 @@ out:
 static void shift_items(struct btrfs_root *root, struct extent_buffer *eb)
 {
 	int nritems = btrfs_header_nritems(eb);
-	int shift_space = btrfs_leaf_free_space(root, eb) / 2;
+	int shift_space = btrfs_leaf_free_space(root->fs_info, eb) / 2;
 	int slot = nritems / 2;
 	int i = 0;
 	unsigned int data_end = btrfs_item_offset_nr(eb, nritems - 1);

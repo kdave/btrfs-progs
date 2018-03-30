@@ -2662,7 +2662,8 @@ static inline int btrfs_next_item(struct btrfs_root *root,
 }
 
 int btrfs_prev_leaf(struct btrfs_root *root, struct btrfs_path *path);
-int btrfs_leaf_free_space(struct btrfs_root *root, struct extent_buffer *leaf);
+int btrfs_leaf_free_space(struct btrfs_fs_info *fs_info,
+			  struct extent_buffer *leaf);
 void btrfs_fixup_low_keys(struct btrfs_root *root, struct btrfs_path *path,
 			  struct btrfs_disk_key *key, int level);
 int btrfs_set_item_key_safe(struct btrfs_root *root, struct btrfs_path *path,

@@ -390,7 +390,7 @@ static void account_bytes(struct btrfs_root *root, struct btrfs_path *path,
 		total_extent_tree_bytes += eb->len;
 
 	if (level == 0) {
-		btree_space_waste += btrfs_leaf_free_space(root, eb);
+		btree_space_waste += btrfs_leaf_free_space(root->fs_info, eb);
 	} else {
 		free_nrs = (BTRFS_NODEPTRS_PER_BLOCK(root->fs_info) -
 			    btrfs_header_nritems(eb));
