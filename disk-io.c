@@ -396,10 +396,12 @@ int read_extent_data(struct btrfs_fs_info *fs_info, char *data, u64 logical,
 	}
 	device = multi->stripes[0].dev;
 
-	if (device->fd <= 0)
-		goto err;
 	if (*len > max_len)
 		*len = max_len;
+	if (device->fd < 0) {
+		ret = -EIO;
+		goto err;
+	}
 
 	ret = pread64(device->fd, data, *len, multi->stripes[0].physical);
 	if (ret != *len)
