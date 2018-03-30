@@ -184,8 +184,7 @@ struct extent_buffer *btrfs_find_tree_block(struct btrfs_fs_info *fs_info,
 struct extent_buffer* btrfs_find_create_tree_block(
 		struct btrfs_fs_info *fs_info, u64 bytenr)
 {
-	return alloc_extent_buffer(&fs_info->extent_cache, bytenr,
-			fs_info->nodesize);
+	return alloc_extent_buffer(fs_info, bytenr, fs_info->nodesize);
 }
 
 void readahead_tree_block(struct btrfs_fs_info *fs_info, u64 bytenr,
