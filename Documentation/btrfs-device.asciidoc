@@ -124,7 +124,7 @@ statistics and the meaning.
 Print the stats and reset the values to zero afterwards.
 
 -c|--check::::
-Check if the stats are all zeros and return 0 it this is so. Set bit 6 of the
+Check if the stats are all zeros and return 0 if it is so. Set bit 6 of the
 return code if any of the statistics is no-zero. The error values is 65 if
 reading stats from at least one device failed, otherwise it's 64.
 
