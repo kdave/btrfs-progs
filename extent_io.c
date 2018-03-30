@@ -587,7 +587,7 @@ static void free_extent_buffer_final(struct extent_buffer *eb)
 	struct extent_io_tree *tree = eb->tree;
 
 	BUG_ON(eb->refs);
-	BUG_ON(tree->cache_size < eb->len);
+	BUG_ON(tree && tree->cache_size < eb->len);
 	list_del_init(&eb->lru);
 	if (!(eb->flags & EXTENT_BUFFER_DUMMY)) {
 		remove_cache_extent(&tree->cache, &eb->cache_node);
