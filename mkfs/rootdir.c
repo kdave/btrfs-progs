@@ -249,7 +249,7 @@ static int add_xattr_item(struct btrfs_trans_handle *trans,
 		cur_name_len = strlen(cur_name);
 		next_location += cur_name_len + 1;
 
-		ret = getxattr(file_name, cur_name, cur_value, XATTR_SIZE_MAX);
+		ret = lgetxattr(file_name, cur_name, cur_value, XATTR_SIZE_MAX);
 		if (ret < 0) {
 			if (errno == ENOTSUP)
 				return 0;
