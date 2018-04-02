@@ -591,8 +591,6 @@ again:
 			ret = 0;
 			_SCRUB_KVREAD(ret, &i, data_extents_scrubbed, avail, l,
 					&p[curr]->p);
-			_SCRUB_KVREAD(ret, &i, data_extents_scrubbed, avail, l,
-					&p[curr]->p);
 			_SCRUB_KVREAD(ret, &i, tree_extents_scrubbed, avail, l,
 					&p[curr]->p);
 			_SCRUB_KVREAD(ret, &i, data_bytes_scrubbed, avail, l,
