@@ -1295,6 +1295,12 @@ out:
 		}
 	}
 
+	if (!ret && close_ret) {
+		ret = close_ret;
+		error("failed to close ctree, the filesystem may be inconsistent: %d",
+		      ret);
+	}
+
 	btrfs_close_all_devices();
 	free(label);
 
