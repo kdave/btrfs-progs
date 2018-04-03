@@ -5601,6 +5601,7 @@ static int check_csums(struct btrfs_root *root)
 	int ret;
 	u64 data_len;
 	unsigned long leaf_offset;
+	bool verify_csum = !!check_data_csum;
 
 	root = root->fs_info->csum_root;
 	if (!extent_buffer_uptodate(root->node)) {
@@ -5623,6 +5624,16 @@ static int check_csums(struct btrfs_root *root)
 		path.slots[0]--;
 	ret = 0;
 
+	/*
+	 * For metadata dump (btrfs-image) all data is wiped so verifying data
+	 * csum is meaningless and will always report csum error.
+	 */
+	if (check_data_csum && (btrfs_super_flags(root->fs_info->super_copy) &
+	    (BTRFS_SUPER_FLAG_METADUMP | BTRFS_SUPER_FLAG_METADUMP_V2))) {
+		printf("skip data csum verification for metadata dump\n");
+		verify_csum = false;
+	}
+
 	while (1) {
 		if (path.slots[0] >= btrfs_header_nritems(path.nodes[0])) {
 			ret = btrfs_next_leaf(root, &path);
@@ -5644,7 +5655,7 @@ static int check_csums(struct btrfs_root *root)
 
 		data_len = (btrfs_item_size_nr(leaf, path.slots[0]) /
 			      csum_size) * root->fs_info->sectorsize;
-		if (!check_data_csum)
+		if (!verify_csum)
 			goto skip_csum_check;
 		leaf_offset = btrfs_item_ptr_offset(leaf, path.slots[0]);
 		ret = check_extent_csums(root, key.offset, data_len,
