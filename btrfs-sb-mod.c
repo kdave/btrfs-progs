@@ -124,6 +124,7 @@ struct sb_field {
 	{ .name = "chunk_root_generation", .type = TYPE_U64 },
 	{ .name = "cache_generation", .type = TYPE_U64 },
 	{ .name = "uuid_tree_generation", .type = TYPE_U64 },
+	{ .name = "csum_type", .type = TYPE_U16 },
 };
 
 #define MOD_FIELD_XX(fname, set, val, bits, f_dec, f_hex, f_type)	\
@@ -168,6 +169,7 @@ static void mod_field_by_name(struct btrfs_super_block *sb, int set, const char 
 		MOD_FIELD(chunk_root_generation, set, val)
 		MOD_FIELD(cache_generation, set, val)
 		MOD_FIELD(uuid_tree_generation, set, val)
+		MOD_FIELD16(csum_type, set, val)
 	else {
 		printf("ERROR: unhandled field: %s\n", name);
 		exit(1);
