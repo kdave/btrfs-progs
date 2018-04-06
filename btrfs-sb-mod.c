@@ -110,6 +110,7 @@ struct fspec {
 enum field_type {
 	TYPE_UNKNOWN,
 	TYPE_U64,
+	TYPE_U16,
 };
 
 struct sb_field {
@@ -125,18 +126,36 @@ struct sb_field {
 	{ .name = "uuid_tree_generation", .type = TYPE_U64 },
 };
 
-#define MOD_FIELD(fname, set, val)					\
+#define MOD_FIELD_XX(fname, set, val, bits, f_dec, f_hex, f_type)	\
 	else if (strcmp(name, #fname) == 0) {				\
 		if (set) {						\
-			printf("SET: %s %llu (0x%llx)\n", #fname,	\
-			(unsigned long long)*val, (unsigned long long)*val);	\
-			sb->fname = cpu_to_le64(*val);			\
+			printf("SET: "#fname" "f_dec" (0x"f_hex")\n", \
+			(f_type)*val, (f_type)*val);				\
+			sb->fname = cpu_to_le##bits(*val);			\
 		} else {							\
-			*val = le64_to_cpu(sb->fname);			\
-			printf("GET: %s %llu (0x%llx)\n", #fname, 	\
-			(unsigned long long)*val, (unsigned long long)*val);	\
+			*val = le##bits##_to_cpu(sb->fname);			\
+			printf("GET: "#fname" "f_dec" (0x"f_hex")\n", 	\
+			(f_type)*val, (f_type)*val);			\
 		}							\
 	}
+
+#define MOD_FIELD64(fname, set, val)					\
+	MOD_FIELD_XX(fname, set, val, 64, "%llu", "%llx", unsigned long long)
+
+/* Alias for u64 */
+#define MOD_FIELD(fname, set, val)	MOD_FIELD64(fname, set, val)
+
+/*
+ * Support only GET and SET properly, ADD and SUB may work
+ */
+#define MOD_FIELD32(fname, set, val)					\
+	MOD_FIELD_XX(fname, set, val, 32, "%u", "%x", unsigned int)
+
+#define MOD_FIELD16(fname, set, val)					\
+	MOD_FIELD_XX(fname, set, val, 16, "%hu", "%hx", unsigned short int)
+
+#define MOD_FIELD8(fname, set, val)					\
+	MOD_FIELD_XX(fname, set, val, 8, "%hhu", "%hhx", unsigned char)
 
 static void mod_field_by_name(struct btrfs_super_block *sb, int set, const char *name,
 		u64 *val)
