@@ -1458,6 +1458,4 @@ void btrfs_print_tree(struct extent_buffer *eb, int follow)
 	}
 
 	return;
-
-	free_extent_buffer(next);
 }
