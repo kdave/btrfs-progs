@@ -91,10 +91,10 @@ struct extent_buffer {
 	struct cache_extent cache_node;
 	u64 start;
 	u64 dev_bytenr;
-	u32 len;
 	struct extent_io_tree *tree;
 	struct list_head lru;
 	struct list_head recow;
+	u32 len;
 	int refs;
 	u32 flags;
 	int fd;
