@@ -757,18 +757,6 @@ int path_cat_out(char *out, const char *p1, const char *p2)
 	return 0;
 }
 
-__attribute__((deprecated))
-char *path_cat(const char *p1, const char *p2)
-{
-	int p1_len = strlen(p1);
-	int p2_len = strlen(p2);
-	char *new = malloc(p1_len + p2_len + 2);
-
-	path_cat_out(new, p1, p2);
-
-	return new;
-}
-
 int path_cat3_out(char *out, const char *p1, const char *p2, const char *p3)
 {
 	int p1_len = strlen(p1);
@@ -787,17 +775,4 @@ int path_cat3_out(char *out, const char *p1, const char *p2, const char *p3)
 	sprintf(out, "%.*s/%.*s/%.*s", p1_len, p1, p2_len, p2, p3_len, p3);
 
 	return 0;
-}
-
-__attribute__((deprecated))
-char *path_cat3(const char *p1, const char *p2, const char *p3)
-{
-	int p1_len = strlen(p1);
-	int p2_len = strlen(p2);
-	int p3_len = strlen(p3);
-	char *new = malloc(p1_len + p2_len + p3_len + 3);
-
-	path_cat3_out(new, p1, p2, p3);
-
-	return new;
 }
