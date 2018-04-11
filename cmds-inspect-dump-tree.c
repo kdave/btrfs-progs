@@ -221,12 +221,20 @@ int cmd_inspect_dump_tree(int argc, char **argv)
 	int uuid_tree_only = 0;
 	int roots_only = 0;
 	int root_backups = 0;
-	unsigned open_ctree_flags = OPEN_CTREE_PARTIAL;
+	unsigned open_ctree_flags;
 	u64 block_only = 0;
 	struct btrfs_root *tree_root_scan;
 	u64 tree_id = 0;
 	bool follow = false;
 
+	/*
+	 * For debug-tree, we care nothing about extent tree (it's just backref
+	 * and usage accounting, only makes sense for RW operations).
+	 * Use NO_BLOCK_GROUPS here could also speedup open_ctree() and allow us
+	 * to inspect fs with corrupted extent tree blocks, and show as many good
+	 * tree blocks as possible.
+	 */
+	open_ctree_flags = OPEN_CTREE_PARTIAL | OPEN_CTREE_NO_BLOCK_GROUPS;
 	while (1) {
 		int c;
 		enum { GETOPT_VAL_FOLLOW = 256 };
