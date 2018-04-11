@@ -1140,7 +1140,7 @@ static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
 	}
 
 	root = open_ctree_fd(fd, devname, mkfs_cfg.super_bytenr,
-			     OPEN_CTREE_WRITES | OPEN_CTREE_FS_PARTIAL);
+			     OPEN_CTREE_WRITES | OPEN_CTREE_TEMPORARY_SUPER);
 	if (!root) {
 		error("unable to open ctree");
 		goto fail;
@@ -1230,7 +1230,7 @@ static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
 	}
 
 	root = open_ctree_fd(fd, devname, 0,
-			OPEN_CTREE_WRITES | OPEN_CTREE_FS_PARTIAL);
+			     OPEN_CTREE_WRITES | OPEN_CTREE_TEMPORARY_SUPER);
 	if (!root) {
 		error("unable to open ctree for finalization");
 		goto fail;

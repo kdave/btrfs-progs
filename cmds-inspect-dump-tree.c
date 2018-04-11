@@ -221,7 +221,7 @@ int cmd_inspect_dump_tree(int argc, char **argv)
 	int uuid_tree_only = 0;
 	int roots_only = 0;
 	int root_backups = 0;
-	unsigned open_ctree_flags = OPEN_CTREE_FS_PARTIAL;
+	unsigned open_ctree_flags = OPEN_CTREE_PARTIAL;
 	u64 block_only = 0;
 	struct btrfs_root *tree_root_scan;
 	u64 tree_id = 0;

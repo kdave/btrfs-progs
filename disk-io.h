@@ -73,8 +73,12 @@ enum btrfs_open_ctree_flags {
 	 */
 	OPEN_CTREE_IGNORE_CHUNK_TREE_ERROR = (1U << 11),
 
-	/* Allow to open a partially created filesystem */
-	OPEN_CTREE_FS_PARTIAL = (1U << 12),
+	/*
+	 * Allow to open fs with temporary superblock (BTRFS_MAGIC_PARTIAL),
+	 * such fs contains very basic tree layout, just able to be opened.
+	 * Such temporary super is used for mkfs or convert.
+	 */
+	OPEN_CTREE_TEMPORARY_SUPER = (1U << 12),
 
 	/*
 	 * Invalidate the free space tree (i.e., clear the FREE_SPACE_TREE_VALID
@@ -95,7 +99,7 @@ enum btrfs_read_sb_flags {
 	 * Read superblock with the fake signature, cannot be used with
 	 * SBREAD_RECOVER
 	 */
-	SBREAD_PARTIAL		= (1 << 1),
+	SBREAD_TEMPORARY = (1 << 1),
 };
 
 /*

@@ -1050,7 +1050,7 @@ int btrfs_device_already_in_root(struct btrfs_root *root, int fd,
 	 * structures.
 	 */
 	if (btrfs_super_magic(disk_super) != BTRFS_MAGIC &&
-			btrfs_super_magic(disk_super) != BTRFS_MAGIC_PARTIAL)
+			btrfs_super_magic(disk_super) != BTRFS_MAGIC_TEMPORARY)
 		goto brelse;
 
 	if (!memcmp(disk_super->fsid, root->fs_info->super_copy->fsid,

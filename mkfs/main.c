@@ -1099,7 +1099,7 @@ int main(int argc, char **argv)
 	}
 
 	fs_info = open_ctree_fs_info(file, 0, 0, 0,
-			OPEN_CTREE_WRITES | OPEN_CTREE_FS_PARTIAL);
+			OPEN_CTREE_WRITES | OPEN_CTREE_TEMPORARY_SUPER);
 	if (!fs_info) {
 		error("open ctree failed");
 		goto error;

@@ -45,10 +45,12 @@ struct btrfs_free_space_ctl;
 #define BTRFS_MAGIC 0x4D5F53665248425FULL /* ascii _BHRfS_M, no null */
 
 /*
- * Fake signature for an unfinalized filesystem, structures might be partially
- * created or missing.
+ * Fake signature for an unfinalized filesystem, which only has barebone tree
+ * structures (normally 6 near empty trees, on SINGLE meta/sys temporary chunks)
+ *
+ * ascii !BHRfS_M, no null
  */
-#define BTRFS_MAGIC_PARTIAL 0x4D5F536652484221ULL /* ascii !BHRfS_M, no null */
+#define BTRFS_MAGIC_TEMPORARY 0x4D5F536652484221ULL
 
 #define BTRFS_MAX_MIRRORS 3
 
