@@ -93,7 +93,11 @@ AC_SUBST([DISABLE_DOCUMENTATION])
 dnl detect tools to build documentation
 ASCIIDOC_TOOL="none"
 if test "x$enable_documentation" = xyes; then
-	AC_PATH_PROG([XMLTO], [xmlto], [xmlto])
+	AC_PATH_PROG([XMLTO], [xmlto])
+	if test -z "$XMLTO"; then
+		AC_MSG_ERROR([cannot find xmlto, cannot build documentation])
+	fi
+
 	AC_PATH_PROG([GZIP], [gzip], [gzip])
 	AC_PATH_PROG([MV], [mv], [mv])
 	AC_PROG_SED
