@@ -1116,14 +1116,14 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 		fs_info->ignore_chunk_tree_error = 1;
 
 	if ((flags & OPEN_CTREE_RECOVER_SUPER)
-	     && (flags & OPEN_CTREE_FS_PARTIAL)) {
+	     && (flags & OPEN_CTREE_TEMPORARY_SUPER)) {
 		fprintf(stderr,
-		    "cannot open a partially created filesystem for recovery");
+	"cannot open a filesystem with temporary super block for recovery");
 		goto out;
 	}
 
-	if (flags & OPEN_CTREE_FS_PARTIAL)
-		sbflags = SBREAD_PARTIAL;
+	if (flags & OPEN_CTREE_TEMPORARY_SUPER)
+		sbflags = SBREAD_TEMPORARY;
 
 	ret = btrfs_scan_fs_devices(fp, path, &fs_devices, sb_bytenr, sbflags,
 			(flags & OPEN_CTREE_NO_DEVICES));
@@ -1284,8 +1284,8 @@ static int check_super(struct btrfs_super_block *sb, unsigned sbflags)
 	int csum_size;
 
 	if (btrfs_super_magic(sb) != BTRFS_MAGIC) {
-		if (btrfs_super_magic(sb) == BTRFS_MAGIC_PARTIAL) {
-			if (!(sbflags & SBREAD_PARTIAL)) {
+		if (btrfs_super_magic(sb) == BTRFS_MAGIC_TEMPORARY) {
+			if (!(sbflags & SBREAD_TEMPORARY)) {
 				error("superblock magic doesn't match");
 				return -EIO;
 			}
