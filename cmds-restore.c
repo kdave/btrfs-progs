@@ -825,7 +825,7 @@ static int overwrite_ok(const char * path)
 	int ret;
 
 	/* don't be fooled by symlinks */
-	ret = fstatat(-1, path_name, &st, AT_SYMLINK_NOFOLLOW);
+	ret = fstatat(AT_FDCWD, path_name, &st, AT_SYMLINK_NOFOLLOW);
 
 	if (!ret) {
 		if (overwrite)
