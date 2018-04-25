@@ -553,6 +553,7 @@ static int traverse_directory(struct btrfs_trans_handle *trans,
 						(unsigned long)st.st_nlink);
 					goto fail;
 				}
+				ret = 0;
 				continue;
 			}
 			if (ret) {
