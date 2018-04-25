@@ -505,6 +505,12 @@ static void __merge_refs(struct pref_state *prefstate, int mode)
 				if (!ref_for_same_block(ref1, ref2))
 					continue;
 			} else {
+				/*
+				 * Parent == 0 means that the ref is tree block
+				 * backref or its parent is unresolved.
+				 */
+				if (!ref1->parent || !ref2->parent)
+					continue;
 				if (ref1->parent != ref2->parent)
 					continue;
 			}
