@@ -4,6 +4,7 @@
 export
 
 CC = @CC@
+CSTD = @CSTD@
 LN_S = @LN_S@
 AR = @AR@
 RM = @RM@
