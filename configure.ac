@@ -140,11 +140,7 @@ BTRFSCONVERT_EXT2=0
 BTRFSCONVERT_REISERFS=0
 if test "x$enable_convert" = xyes; then
 	if test "x$with_convert" = "xauto" || echo "$with_convert" | grep -q "ext2"; then
-		PKG_CHECK_MODULES(EXT2FS, [ext2fs >= 1.42],,
-			[PKG_CHECK_MODULES(EXT2FS, [ext2fs],
-				[AC_DEFINE([HAVE_OLD_E2FSPROGS], [1],
-					  [E2fsprogs does not support BIGALLOC])]
-				)])
+		PKG_CHECK_MODULES(EXT2FS, [ext2fs])
 		PKG_CHECK_MODULES(COM_ERR, [com_err])
 		convertfs="${convertfs:+$convertfs,}ext2"
 		BTRFSCONVERT_EXT2=1
