@@ -1,5 +1,5 @@
 AC_INIT([btrfs-progs],
-	m4_chomp(m4_include([VERSION])),
+	m4_flatten(m4_include([VERSION])),
 	[linux-btrfs@vger.kernel.org],,
 	[http://btrfs.wiki.kernel.org])
 
@@ -30,6 +30,8 @@ AC_CANONICAL_HOST
 AC_C_CONST
 AC_C_VOLATILE
 AC_C_BIGENDIAN
+AX_CHECK_COMPILE_FLAG([-std=gnu90],[CSTD=-std=gnu90],[CSTD=-std=gnu89])
+AC_SUBST([CSTD])
 
 AC_SYS_LARGEFILE
 
@@ -140,11 +142,7 @@ BTRFSCONVERT_EXT2=0
 BTRFSCONVERT_REISERFS=0
 if test "x$enable_convert" = xyes; then
 	if test "x$with_convert" = "xauto" || echo "$with_convert" | grep -q "ext2"; then
-		PKG_CHECK_MODULES(EXT2FS, [ext2fs >= 1.42],,
-			[PKG_CHECK_MODULES(EXT2FS, [ext2fs],
-				[AC_DEFINE([HAVE_OLD_E2FSPROGS], [1],
-					  [E2fsprogs does not support BIGALLOC])]
-				)])
+		PKG_CHECK_MODULES(EXT2FS, [ext2fs])
 		PKG_CHECK_MODULES(COM_ERR, [com_err])
 		convertfs="${convertfs:+$convertfs,}ext2"
 		BTRFSCONVERT_EXT2=1
