@@ -63,7 +63,6 @@ ABSTOPDIR = $(shell pwd)
 TOPDIR := .
 
 # Common build flags
-CSTD = -std=gnu90
 CFLAGS = $(SUBST_CFLAGS) \
 	 $(CSTD) \
 	 -include config.h \
