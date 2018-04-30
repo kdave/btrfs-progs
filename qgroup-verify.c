@@ -1298,10 +1298,19 @@ static int report_qgroup_difference(struct qgroup_count *count, int verbose)
 	return is_different;
 }
 
-void report_qgroups(int all)
+/*
+ * Report qgroups errors
+ * Return 0 if nothing wrong.
+ * Return <0 if any qgroup is inconsistent.
+ *
+ * @all:	if set, all qgroup will be checked and reported even already
+ * 		inconsistent or under rescan.
+ */
+int report_qgroups(int all)
 {
 	struct rb_node *node;
 	struct qgroup_count *c;
+	bool found_err = false;
 
 	if (!repair && counts.rescan_running) {
 		if (all) {
@@ -1310,7 +1319,7 @@ void report_qgroups(int all)
 		} else {
 			printf(
 	"Qgroup rescan is running, qgroups will not be printed.\n");
-			return;
+			return 0;
 		}
 	}
 	if (counts.qgroup_inconsist && !counts.rescan_running)
@@ -1319,11 +1328,16 @@ void report_qgroups(int all)
 	while (node) {
 		c = rb_entry(node, struct qgroup_count, rb_node);
 
-		if (report_qgroup_difference(c, all))
+		if (report_qgroup_difference(c, all)) {
 			list_add_tail(&c->bad_list, &bad_qgroups);
+			found_err = true;
+		}
 
 		node = rb_next(node);
 	}
+	if (found_err)
+		return -EUCLEAN;
+	return 0;
 }
 
 void free_qgroup_counts(void)
