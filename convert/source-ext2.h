@@ -33,8 +33,18 @@
  * BIGALLOC.
  * Unlike normal RO compat flag, BIGALLOC affects how e2fsprogs check used
  * space, and btrfs-convert heavily relies on it.
+ *
+ * e2fsprogs 1.42 also introduced the 64-bit API.  Any file system
+ * that requires it will have EXT4_FEATURE_INCOMPAT_64BIT set and
+ * will fail to open with earlier releases.  We can map it to the
+ * older API without risk of corruption.
  */
-#ifdef HAVE_OLD_E2FSPROGS
+#ifndef EXT2_FLAG_64BITS
+#define EXT2_FLAG_64BITS		(0)
+#define ext2fs_get_block_bitmap_range2 ext2fs_get_block_bitmap_range
+#define ext2fs_inode_data_blocks2 ext2fs_inode_data_blocks
+#define ext2fs_read_ext_attr2 ext2fs_read_ext_attr
+#define ext2fs_blocks_count(s)		((s)->s_blocks_count)
 #define EXT2FS_CLUSTER_RATIO(fs)	(1)
 #define EXT2_CLUSTERS_PER_GROUP(s)	(EXT2_BLOCKS_PER_GROUP(s))
 #define EXT2FS_B2C(fs, blk)		(blk)
