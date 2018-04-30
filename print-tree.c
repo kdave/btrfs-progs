@@ -1150,6 +1150,14 @@ static void print_extent_csum(struct extent_buffer *eb,
 {
 	u32 size;
 
+	/*
+	 * If we don't have fs_info, only output its start position as we
+	 * don't have sectorsize for the calculation
+	 */
+	if (!fs_info) {
+		printf("\t\trange start %llu\n", (unsigned long long)start);
+		return;
+	}
 	size = (item_size / btrfs_super_csum_size(fs_info->super_copy)) *
 			fs_info->sectorsize;
 	printf("\t\trange start %llu end %llu length %u\n",
@@ -1389,7 +1397,7 @@ void btrfs_print_tree(struct extent_buffer *eb, int follow)
 	printf("node %llu level %d items %d free %u generation %llu owner ",
 	       (unsigned long long)eb->start,
 	        btrfs_header_level(eb), nr,
-		(u32)BTRFS_NODEPTRS_PER_BLOCK(fs_info) - nr,
+		(u32)BTRFS_NODEPTRS_PER_EXTENT_BUFFER(eb) - nr,
 		(unsigned long long)btrfs_header_generation(eb));
 	print_objectid(stdout, btrfs_header_owner(eb), 0);
 	printf("\n");
@@ -1403,11 +1411,14 @@ void btrfs_print_tree(struct extent_buffer *eb, int follow)
 		btrfs_print_key(&disk_key);
 		printf(" block %llu (%llu) gen %llu\n",
 		       (unsigned long long)blocknr,
-		       (unsigned long long)blocknr / fs_info->nodesize,
+		       (unsigned long long)blocknr / eb->len,
 		       (unsigned long long)btrfs_node_ptr_generation(eb, i));
 		fflush(stdout);
 	}
 	if (!follow)
+		return;
+
+	if (follow && !fs_info)
 		return;
 
 	for (i = 0; i < nr; i++) {
