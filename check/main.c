@@ -9410,6 +9410,7 @@ int cmd_check(int argc, char **argv)
 	int clear_space_cache = 0;
 	int qgroup_report = 0;
 	int qgroups_repaired = 0;
+	int qgroup_report_ret;
 	unsigned ctree_flags = OPEN_CTREE_EXCLUSIVE;
 	int force = 0;
 
@@ -9652,7 +9653,7 @@ int cmd_check(int argc, char **argv)
 		ret = qgroup_verify_all(info);
 		err |= !!ret;
 		if (ret == 0)
-			report_qgroups(1);
+			err |= !!report_qgroups(1);
 		goto close_out;
 	}
 	if (subvolid) {
@@ -9844,13 +9845,14 @@ int cmd_check(int argc, char **argv)
 			error("failed to check quota groups");
 			goto out;
 		}
-		report_qgroups(0);
+		qgroup_report_ret = report_qgroups(0);
 		ret = repair_qgroups(info, &qgroups_repaired);
-		err |= !!ret;
-		if (err) {
+		if (ret) {
 			error("failed to repair quota groups");
 			goto out;
 		}
+		if (qgroup_report_ret && (!qgroups_repaired || ret))
+			err |= qgroup_report_ret;
 		ret = 0;
 	}
 
