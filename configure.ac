@@ -1,5 +1,5 @@
 AC_INIT([btrfs-progs],
-	m4_chomp(m4_include([VERSION])),
+	m4_flatten(m4_include([VERSION])),
 	[linux-btrfs@vger.kernel.org],,
 	[http://btrfs.wiki.kernel.org])
 
