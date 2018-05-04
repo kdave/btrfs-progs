@@ -75,7 +75,7 @@ static int remove_sb_from_cache(struct btrfs_root *root,
 	free_space_cache = &fs_info->free_space_cache;
 	for (i = 0; i < BTRFS_SUPER_MIRROR_MAX; i++) {
 		bytenr = btrfs_sb_offset(i);
-		ret = btrfs_rmap_block(fs_info, cache->key.objectid, bytenr, 0,
+		ret = btrfs_rmap_block(fs_info, cache->key.objectid, bytenr,
 				       &logical, &nr, &stripe_len);
 		BUG_ON(ret);
 		while (nr--) {
@@ -699,7 +699,7 @@ again:
 		if (key.objectid != bytenr ||
 		    key.type != BTRFS_EXTENT_DATA_REF_KEY)
 			goto fail;
-		
+
 		ref = btrfs_item_ptr(leaf, path->slots[0],
 				     struct btrfs_extent_data_ref);
 
@@ -1403,7 +1403,7 @@ int btrfs_inc_extent_ref(struct btrfs_trans_handle *trans,
 		err = ret;
 		goto out;
 	}
-	
+
 	leaf = path->nodes[0];
 	item = btrfs_item_ptr(leaf, path->slots[0], struct btrfs_extent_item);
 	refs = btrfs_extent_refs(leaf, item);
@@ -1666,7 +1666,7 @@ static int __btrfs_mod_ref(struct btrfs_trans_handle *trans,
 			bytenr = btrfs_file_extent_disk_bytenr(buf, fi);
 			if (bytenr == 0)
 				continue;
-			
+
 			num_bytes = btrfs_file_extent_disk_num_bytes(buf, fi);
 			key.offset -= btrfs_file_extent_offset(buf, fi);
 			ret = process_func(trans, root, bytenr, num_bytes,
@@ -3181,7 +3181,7 @@ static void account_super_bytes(struct btrfs_fs_info *fs_info,
 		bytenr = btrfs_sb_offset(i);
 		ret = btrfs_rmap_block(fs_info,
 				       cache->key.objectid, bytenr,
-				       0, &logical, &nr, &stripe_len);
+				       &logical, &nr, &stripe_len);
 		if (ret)
 			return;
 
@@ -4180,7 +4180,7 @@ int exclude_super_stripes(struct btrfs_root *root,
 		bytenr = btrfs_sb_offset(i);
 		ret = btrfs_rmap_block(root->fs_info,
 				       cache->key.objectid, bytenr,
-				       0, &logical, &nr, &stripe_len);
+				       &logical, &nr, &stripe_len);
 		if (ret)
 			return ret;
 

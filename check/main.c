@@ -5147,7 +5147,7 @@ static int check_cache_range(struct btrfs_root *root,
 	for (i = 0; i < BTRFS_SUPER_MIRROR_MAX; i++) {
 		bytenr = btrfs_sb_offset(i);
 		ret = btrfs_rmap_block(root->fs_info,
-				       cache->key.objectid, bytenr, 0,
+				       cache->key.objectid, bytenr,
 				       &logical, &nr, &stripe_len);
 		if (ret)
 			return ret;
