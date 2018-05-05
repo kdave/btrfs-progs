@@ -4,6 +4,7 @@
 export
 
 CC = @CC@
+CSTD = @BTRFS_CSTD_FLAGS@
 LN_S = @LN_S@
 AR = @AR@
 RM = @RM@
