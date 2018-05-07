@@ -1179,6 +1179,7 @@ void btrfs_print_leaf(struct extent_buffer *eb)
 	struct btrfs_item *item;
 	struct btrfs_disk_key disk_key;
 	char flags_str[128];
+	u32 leaf_data_size = BTRFS_LEAF_DATA_SIZE(fs_info);
 	u32 i;
 	u32 nr;
 	u64 flags;
@@ -1207,6 +1208,23 @@ void btrfs_print_leaf(struct extent_buffer *eb)
 		u32 type;
 		u64 offset;
 
+		/*
+		 * Extra check on item pointers
+		 * Here we don't need to be as strict as kernel leaf check.
+		 * Only need to ensure all pointers are pointing range inside
+		 * the leaf, thus no segfault.
+		 */
+		if (btrfs_item_offset_nr(eb, i) > leaf_data_size ||
+		    btrfs_item_size_nr(eb, i) + btrfs_item_offset_nr(eb, i) >
+		    leaf_data_size) {
+			error(
+"leaf %llu slot %u pointer invalid, offset %u size %u leaf data limit %u",
+			      btrfs_header_bytenr(eb), i,
+			      btrfs_item_offset_nr(eb, i),
+			      btrfs_item_size_nr(eb, i), leaf_data_size);
+			error("skip remaining slots");
+			break;
+		}
 		item = btrfs_item_nr(i);
 		item_size = btrfs_item_size(eb, item);
 		/* Untyped extraction of slot from btrfs_item_ptr */
