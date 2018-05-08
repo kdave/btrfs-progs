@@ -4933,7 +4933,6 @@ out:
  */
 int check_chunks_and_extents_lowmem(struct btrfs_fs_info *fs_info)
 {
-	struct btrfs_trans_handle *trans = NULL;
 	struct btrfs_path path;
 	struct btrfs_key old_key;
 	struct btrfs_key key;
@@ -4944,14 +4943,6 @@ int check_chunks_and_extents_lowmem(struct btrfs_fs_info *fs_info)
 	int ret;
 
 	root = fs_info->fs_root;
-
-	if (repair) {
-		trans = btrfs_start_transaction(fs_info->extent_root, 1);
-		if (IS_ERR(trans)) {
-			error("failed to start transaction before check");
-			return PTR_ERR(trans);
-		}
-	}
 
 	root1 = root->fs_info->chunk_root;
 	ret = check_btrfs_root(root1, 0, 1);
@@ -5022,10 +5013,6 @@ out:
 			err &= ~BG_ACCOUNTING_ERROR;
 	}
 
-	if (trans)
-		btrfs_commit_transaction(trans, root->fs_info->extent_root);
-
 	btrfs_release_path(&path);
-
 	return err;
 }
