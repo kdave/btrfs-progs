@@ -234,6 +234,99 @@ static int update_nodes_refs(struct btrfs_root *root, u64 bytenr,
 }
 
 /*
+ * Mark all extents unfree in the block group. And set @block_group->cached
+ * according to @cache.
+ */
+static int modify_block_group_cache(struct btrfs_fs_info *fs_info,
+		    struct btrfs_block_group_cache *block_group, int cache)
+{
+	struct extent_io_tree *free_space_cache = &fs_info->free_space_cache;
+	u64 start = block_group->key.objectid;
+	u64 end = start + block_group->key.offset;
+
+	if (cache && !block_group->cached) {
+		block_group->cached = 1;
+		clear_extent_dirty(free_space_cache, start, end - 1);
+	}
+
+	if (!cache && block_group->cached) {
+		block_group->cached = 0;
+		clear_extent_dirty(free_space_cache, start, end - 1);
+	}
+	return 0;
+}
+
+/*
+ * Modify block groups which have @flags unfree in free space cache.
+ *
+ * @cache: if 0, clear block groups cache state;
+ *         not 0, mark blocks groups cached.
+ */
+static int modify_block_groups_cache(struct btrfs_fs_info *fs_info, u64 flags,
+				     int cache)
+{
+	struct btrfs_root *root = fs_info->extent_root;
+	struct btrfs_key key;
+	struct btrfs_path path;
+	struct btrfs_block_group_cache *bg_cache;
+	struct btrfs_block_group_item *bi;
+	struct btrfs_block_group_item bg_item;
+	struct extent_buffer *eb;
+	int slot;
+	int ret;
+
+	key.objectid = 0;
+	key.type = BTRFS_BLOCK_GROUP_ITEM_KEY;
+	key.offset = 0;
+
+	btrfs_init_path(&path);
+	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
+	if (ret < 0) {
+		error("fail to search block groups due to %s", strerror(-ret));
+		goto out;
+	}
+
+	while (1) {
+		eb = path.nodes[0];
+		slot = path.slots[0];
+		btrfs_item_key_to_cpu(eb, &key, slot);
+		bg_cache = btrfs_lookup_block_group(fs_info, key.objectid);
+		if (!bg_cache) {
+			ret = -ENOENT;
+			goto out;
+		}
+
+		bi = btrfs_item_ptr(eb, slot, struct btrfs_block_group_item);
+		read_extent_buffer(eb, &bg_item, (unsigned long)bi,
+				   sizeof(bg_item));
+		if (btrfs_block_group_flags(&bg_item) & flags)
+			modify_block_group_cache(fs_info, bg_cache, cache);
+
+		ret = btrfs_next_item(root, &path);
+		if (ret > 0) {
+			ret = 0;
+			goto out;
+		}
+		if (ret < 0)
+			goto out;
+	}
+
+out:
+	btrfs_release_path(&path);
+	return ret;
+}
+
+static int mark_block_groups_full(struct btrfs_fs_info *fs_info, u64 flags)
+{
+	return modify_block_groups_cache(fs_info, flags, 1);
+}
+
+static int clear_block_groups_full(struct btrfs_fs_info *fs_info, u64 flags)
+{
+	return modify_block_groups_cache(fs_info, flags, 0);
+}
+
+/*
  * This function only handles BACKREF_MISSING,
  * If corresponding extent item exists, increase the ref, else insert an extent
  * item and backref.
