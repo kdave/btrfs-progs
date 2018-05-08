@@ -4087,13 +4087,14 @@ out:
  *
  * Returns error after repair.
  */
-static int repair_chunk_item(struct btrfs_trans_handle *trans,
-			     struct btrfs_root *chunk_root,
+static int repair_chunk_item(struct btrfs_root *chunk_root,
 			     struct btrfs_path *path, int err)
 {
 	struct btrfs_chunk *chunk;
 	struct btrfs_key chunk_key;
 	struct extent_buffer *eb = path->nodes[0];
+	struct btrfs_root *extent_root = chunk_root->fs_info->extent_root;
+	struct btrfs_trans_handle *trans;
 	u64 length;
 	int slot = path->slots[0];
 	u64 type;
@@ -4106,21 +4107,36 @@ static int repair_chunk_item(struct btrfs_trans_handle *trans,
 	type = btrfs_chunk_type(path->nodes[0], chunk);
 	length = btrfs_chunk_length(eb, chunk);
 
-	if (err & REFERENCER_MISSING) {
-		ret = btrfs_make_block_group(trans, chunk_root->fs_info, 0,
-					     type, chunk_key.offset, length);
-		if (ret) {
-			error("fail to add block group item[%llu %llu]",
-			      chunk_key.offset, length);
-			goto out;
-		} else {
-			err &= ~REFERENCER_MISSING;
-			printf("Added block group item[%llu %llu]\n",
-			       chunk_key.offset, length);
-		}
+	/* now repair only adds block group */
+	if ((err & REFERENCER_MISSING) == 0)
+		return err;
+
+	ret = avoid_extents_overwrite(chunk_root->fs_info);
+	if (ret)
+		return ret;
+
+	trans = btrfs_start_transaction(extent_root, 1);
+	if (IS_ERR(trans)) {
+		ret = PTR_ERR(trans);
+		error("fail to start transaction %s", strerror(-ret));
+		return ret;
 	}
 
-out:
+	ret = btrfs_make_block_group(trans, chunk_root->fs_info, 0, type,
+				     chunk_key.offset, length);
+	if (ret) {
+		error("fail to add block group item [%llu %llu]",
+		      chunk_key.offset, length);
+	} else {
+		err &= ~REFERENCER_MISSING;
+		printf("Added block group item[%llu %llu]\n", chunk_key.offset,
+		       length);
+	}
+
+	btrfs_commit_transaction(trans, extent_root);
+	if (ret)
+		error("fail to repair item(s) related to chunk item [%llu %llu]",
+		      chunk_key.objectid, chunk_key.offset);
 	return err;
 }
 
@@ -4219,7 +4235,7 @@ again:
 	case BTRFS_CHUNK_ITEM_KEY:
 		ret = check_chunk_item(fs_info, eb, slot);
 		if (repair && ret)
-			ret = repair_chunk_item(trans, root, path, ret);
+			ret = repair_chunk_item(root, path, ret);
 		err |= ret;
 		break;
 	case BTRFS_DEV_EXTENT_KEY:
