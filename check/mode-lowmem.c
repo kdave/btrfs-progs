@@ -4200,8 +4200,7 @@ out:
 /*
  * Main entry function to check known items and update related accounting info
  */
-static int check_leaf_items(struct btrfs_trans_handle *trans,
-			    struct btrfs_root *root, struct btrfs_path *path,
+static int check_leaf_items(struct btrfs_root *root, struct btrfs_path *path,
 			    struct node_refs *nrefs, int account_bytes)
 {
 	struct btrfs_fs_info *fs_info = root->fs_info;
@@ -4397,7 +4396,7 @@ static int walk_down_tree(struct btrfs_trans_handle *trans,
 				ret = process_one_leaf(root, path, nrefs,
 						       level, ext_ref);
 			else
-				ret = check_leaf_items(trans, root, path,
+				ret = check_leaf_items(root, path,
 					       nrefs, account_file_data);
 			err |= ret;
 			break;
