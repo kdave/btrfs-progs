@@ -544,11 +544,11 @@ static int end_avoid_extents_overwrite(struct btrfs_fs_info *fs_info)
  *
  * Returns error bits after repair.
  */
-static int repair_tree_block_ref(struct btrfs_trans_handle *trans,
-				 struct btrfs_root *root,
+static int repair_tree_block_ref(struct btrfs_root *root,
 				 struct extent_buffer *node,
 				 struct node_refs *nrefs, int level, int err)
 {
+	struct btrfs_trans_handle *trans = NULL;
 	struct btrfs_fs_info *fs_info = root->fs_info;
 	struct btrfs_root *extent_root = fs_info->extent_root;
 	struct btrfs_path path;
@@ -598,6 +598,16 @@ static int repair_tree_block_ref(struct btrfs_trans_handle *trans,
 	if (nrefs->full_backref[level] != 0)
 		flags |= BTRFS_BLOCK_FLAG_FULL_BACKREF;
 
+	ret = avoid_extents_overwrite(root->fs_info);
+	if (ret)
+		goto out;
+	trans = btrfs_start_transaction(extent_root, 1);
+	if (IS_ERR(trans)) {
+		ret = PTR_ERR(trans);
+		trans = NULL;
+		error("fail to start transaction %s", strerror(-ret));
+		goto out;
+	}
 	/* insert an extent item */
 	if (insert_extent) {
 		struct btrfs_disk_key copy_key;
@@ -663,6 +673,8 @@ static int repair_tree_block_ref(struct btrfs_trans_handle *trans,
 
 	nrefs->refs[level]++;
 out:
+	if (trans)
+		btrfs_commit_transaction(trans, extent_root);
 	btrfs_release_path(&path);
 	if (ret) {
 		error(
@@ -4365,7 +4377,7 @@ static int walk_down_tree(struct btrfs_trans_handle *trans,
 			   btrfs_header_owner(cur), nrefs);
 
 			if (repair && ret)
-				ret = repair_tree_block_ref(trans, root,
+				ret = repair_tree_block_ref(root,
 				    path->nodes[*level], nrefs, *level, ret);
 			err |= ret;
 
