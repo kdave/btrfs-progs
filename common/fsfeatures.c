@@ -104,6 +104,9 @@ static const struct btrfs_feature mkfs_features[] = {
 };
 
 static const struct btrfs_feature runtime_features[] = {
+	{ "quota", BTRFS_RUNTIME_FEATURE_QUOTA, NULL,
+		VERSION_TO_STRING2(3, 4), NULL, 0, NULL, 0,
+		"quota support (qgroups)" },
 	/* Keep this one last */
 	{ "list-all", BTRFS_FEATURE_LIST_ALL, NULL }
 };

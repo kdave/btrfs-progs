@@ -244,6 +244,12 @@ option or by an ioctl. Some of them can be enabled early, at mkfs time.  This
 applies to features that need to be enabled once and then the status is
 permanent, this does not replace mount options.
 
+*quota*::
+(kernel support since 3.4)
++
+Enable quota support (qgroups). The qgroup accounting will be consistent,
+can be used together with '--rootdir'.  See also `btrfs-quota`(8).
+
 BLOCK GROUPS, CHUNKS, RAID
 --------------------------
 

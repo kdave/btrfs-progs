@@ -1484,6 +1484,13 @@ raid_groups:
 		}
 	}
 
+	if (runtime_features & BTRFS_RUNTIME_FEATURE_QUOTA) {
+		ret = setup_quota_root(fs_info);
+		if (ret < 0) {
+			error("failed to initialize quota: %d (%m)", ret);
+			goto out;
+		}
+	}
 	if (verbose) {
 		char features_buf[64];
 
