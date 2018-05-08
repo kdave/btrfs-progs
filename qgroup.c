@@ -1051,7 +1051,7 @@ static int __qgroups_search(int fd, struct qgroup_lookup *qgroup_lookup)
 	struct btrfs_qgroup_limit_item *limit;
 	u64 flags;
 	u64 qgroupid;
-	u64 qgroupid1;
+	u64 child, parent;
 
 	memset(&args, 0, sizeof(args));
 
@@ -1119,14 +1119,14 @@ static int __qgroups_search(int fd, struct qgroup_lookup *qgroup_lookup)
 							  qgroupid, limit);
 				break;
 			case BTRFS_QGROUP_RELATION_KEY:
-				qgroupid = btrfs_search_header_offset(sh);
-				qgroupid1 = btrfs_search_header_objectid(sh);
+				child = btrfs_search_header_offset(sh);
+				parent = btrfs_search_header_objectid(sh);
 
-				if (qgroupid < qgroupid1)
+				if (parent <= child)
 					break;
 
 				ret = update_qgroup_relation(qgroup_lookup,
-							qgroupid, qgroupid1);
+							     child, parent);
 				break;
 			default:
 				return ret;
