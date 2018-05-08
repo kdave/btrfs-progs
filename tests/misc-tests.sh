@@ -57,7 +57,7 @@ for i in $(find "$TEST_TOP/misc-tests" -maxdepth 1 -mindepth 1 -type d	\
 do
 	echo "    [TEST/misc]   $(basename $i)"
 	cd "$i"
-	echo "=== Entering $i" >> "$RESULTS"
+	echo "=== START TEST $i" >> "$RESULTS"
 	if [ -x test.sh ]; then
 		./test.sh
 		if [ $? -ne 0 ]; then

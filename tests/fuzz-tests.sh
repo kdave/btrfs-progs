@@ -51,7 +51,7 @@ do
 	name=$(basename "$i")
 	cd $i
 	if [ -x test.sh ]; then
-		echo "=== Entering $i" >> "$RESULTS"
+		echo "=== START TEST $i" >> "$RESULTS"
 		echo "    [TEST/fuzz]   $name"
 		./test.sh
 		if [ $? -ne 0 ]; then

@@ -54,7 +54,7 @@ run_one_test() {
 	testname="$1"
 	echo "    [TEST/fsck]   $(basename $testname)"
 	cd "$testname"
-	echo "=== Entering $testname" >> "$RESULTS"
+	echo "=== START TEST $testname" >> "$RESULTS"
 	if [ -x test.sh ]; then
 		# Type 2
 		./test.sh

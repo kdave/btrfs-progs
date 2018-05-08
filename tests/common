@@ -136,7 +136,7 @@ run_check()
 	cmd=$(eval echo "\${$spec}")
 	spec=$(_cmd_spec "${@:$spec}")
 	set -- "${@:1:$(($ins-1))}" $spec "${@: $ins}"
-	echo "############### $@" >> "$RESULTS" 2>&1
+	echo "====== RUN CHECK $@" >> "$RESULTS" 2>&1
 	if [[ $TEST_LOG =~ tty ]]; then echo "CMD: $@" > /dev/tty; fi
 	if [ "$1" = 'root_helper' ]; then
 		"$@" >> "$RESULTS" 2>&1 || _fail "failed: $@"
@@ -158,7 +158,7 @@ run_check_stdout()
 	cmd=$(eval echo "\${$spec}")
 	spec=$(_cmd_spec "${@:$spec}")
 	set -- "${@:1:$(($ins-1))}" $spec "${@: $ins}"
-	echo "############### $@" >> "$RESULTS" 2>&1
+	echo "====== RUN CHECK $@" >> "$RESULTS" 2>&1
 	if [[ $TEST_LOG =~ tty ]]; then echo "CMD(stdout): $@" > /dev/tty; fi
 	if [ "$1" = 'root_helper' ]; then
 		"$@" 2>&1 | tee -a "$RESULTS"
@@ -185,7 +185,7 @@ run_mayfail()
 	cmd=$(eval echo "\${$spec}")
 	spec=$(_cmd_spec "${@:$spec}")
 	set -- "${@:1:$(($ins-1))}" $spec "${@: $ins}"
-	echo "############### $@" >> "$RESULTS" 2>&1
+	echo "====== RUN MAYFAIL $@" >> "$RESULTS" 2>&1
 	if [[ $TEST_LOG =~ tty ]]; then echo "CMD(mayfail): $@" > /dev/tty; fi
 	if [ "$1" = 'root_helper' ]; then
 		"$@" >> "$RESULTS" 2>&1
@@ -226,7 +226,7 @@ run_mustfail()
 	cmd=$(eval echo "\${$spec}")
 	spec=$(_cmd_spec "${@:$spec}")
 	set -- "${@:1:$(($ins-1))}" $spec "${@: $ins}"
-	echo "############### $@" >> "$RESULTS" 2>&1
+	echo "====== RUN MUSTFAIL $@" >> "$RESULTS" 2>&1
 	if [[ $TEST_LOG =~ tty ]]; then echo "CMD(mustfail): $@" > /dev/tty; fi
 	if [ "$1" = 'root_helper' ]; then
 		"$@" >> "$RESULTS" 2>&1
@@ -272,7 +272,7 @@ run_mustfail_stdout()
 	cmd=$(eval echo "\${$spec}")
 	spec=$(_cmd_spec "${@:$spec}")
 	set -- "${@:1:$(($ins-1))}" $spec "${@: $ins}"
-	echo "############### $@" >> "$RESULTS" 2>&1
+	echo "====== RUN MUSTFAIL $@" >> "$RESULTS" 2>&1
 	if [[ $TEST_LOG =~ tty ]]; then echo "CMD(mustfail): $@" > /dev/tty; fi
 	if [ "$1" = 'root_helper' ]; then
 		"$@" 2>&1 > "$tmp_output"
