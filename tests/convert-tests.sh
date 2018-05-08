@@ -58,7 +58,7 @@ run_one_test() {
 	testname=$(basename "$testdir")
 	echo "    [TEST/conv]   $testname"
 	cd "$testdir"
-	echo "=== Entering $testname" >> "$RESULTS"
+	echo "=== START TEST $testname" >> "$RESULTS"
 	if [ -x test.sh ]; then
 		# Only support custom test scripts
 		./test.sh
