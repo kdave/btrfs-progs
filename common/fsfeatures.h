@@ -40,9 +40,13 @@
 #define BTRFS_FEATURE_LIST_ALL		(1ULL << 63)
 
 void btrfs_list_all_fs_features(u64 mask_disallowed);
-char* btrfs_parse_fs_features(char *namelist, u64 *flags);
+void btrfs_list_all_runtime_features(u64 mask_disallowed);
+char *btrfs_parse_fs_features(char *namelist, u64 *flags);
+char *btrfs_parse_runtime_features(char *namelist, u64 *flags);
 void btrfs_process_fs_features(u64 flags);
-void btrfs_parse_features_to_string(char *buf, u64 flags);
+void btrfs_process_runtime_features(u64 flags);
+void btrfs_parse_fs_features_to_string(char *buf, u64 flags);
+void btrfs_parse_runtime_features_to_string(char *buf, u64 flags);
 void print_kernel_version(FILE *stream, u32 version);
 u32 get_running_kernel_version(void);
 int btrfs_check_nodesize(u32 nodesize, u32 sectorsize, u64 features);

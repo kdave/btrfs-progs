@@ -1489,7 +1489,7 @@ raid_groups:
 			btrfs_group_profile_str(metadata_profile),
 			pretty_size(allocation.system));
 		printf("SSD detected:       %s\n", ssd ? "yes" : "no");
-		btrfs_parse_features_to_string(features_buf, features);
+		btrfs_parse_fs_features_to_string(features_buf, features);
 		printf("Incompat features:  %s\n", features_buf);
 		printf("Checksum:           %s",
 		       btrfs_super_csum_name(mkfs_cfg.csum_type));

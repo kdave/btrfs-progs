@@ -29,10 +29,15 @@
 #define VERSION_TO_STRING3(a,b,c)	#a "." #b "." #c, KERNEL_VERSION(a,b,c)
 #define VERSION_TO_STRING2(a,b)		#a "." #b, KERNEL_VERSION(a,b,0)
 
+enum feature_source {
+	FS_FEATURES,
+	RUNTIME_FEATURES,
+};
+
 /*
  * Feature stability status and versions: compat <= safe <= default
  */
-static const struct btrfs_fs_feature {
+struct btrfs_feature {
 	const char *name;
 	u64 flag;
 	const char *sysfs_name;
@@ -55,7 +60,9 @@ static const struct btrfs_fs_feature {
 	const char *default_str;
 	u32 default_ver;
 	const char *desc;
-} mkfs_features[] = {
+};
+
+static const struct btrfs_feature mkfs_features[] = {
 	{ "mixed-bg", BTRFS_FEATURE_INCOMPAT_MIXED_GROUPS,
 		"mixed_groups",
 		VERSION_TO_STRING3(2,6,37),
@@ -96,18 +103,44 @@ static const struct btrfs_fs_feature {
 	{ "list-all", BTRFS_FEATURE_LIST_ALL, NULL }
 };
 
-static int parse_one_fs_feature(const char *name, u64 *flags)
+static const struct btrfs_feature runtime_features[] = {
+	/* Keep this one last */
+	{ "list-all", BTRFS_FEATURE_LIST_ALL, NULL }
+};
+
+static size_t get_feature_array_size(enum feature_source source)
 {
+	if (source == FS_FEATURES)
+		return ARRAY_SIZE(mkfs_features);
+	if (source == RUNTIME_FEATURES)
+		return ARRAY_SIZE(runtime_features);
+	return 0;
+}
+
+static const struct btrfs_feature *get_feature(int i, enum feature_source source)
+{
+	if (source == FS_FEATURES)
+		return &mkfs_features[i];
+	if (source == RUNTIME_FEATURES)
+		return &runtime_features[i];
+	return NULL;
+}
+
+static int parse_one_fs_feature(const char *name, u64 *flags,
+				enum feature_source source)
+{
+	const int array_size = get_feature_array_size(source);
 	int i;
 	int found = 0;
 
-	for (i = 0; i < ARRAY_SIZE(mkfs_features); i++) {
-		if (name[0] == '^' &&
-			!strcmp(mkfs_features[i].name, name + 1)) {
-			*flags &= ~ mkfs_features[i].flag;
+	for (i = 0; i < array_size; i++) {
+		const struct btrfs_feature *feat = get_feature(i, source);
+
+		if (name[0] == '^' && !strcmp(feat->name, name + 1)) {
+			*flags &= ~feat->flag;
 			found = 1;
-		} else if (!strcmp(mkfs_features[i].name, name)) {
-			*flags |= mkfs_features[i].flag;
+		} else if (!strcmp(feat->name, name)) {
+			*flags |= feat->flag;
 			found = 1;
 		}
 	}
@@ -115,41 +148,76 @@ static int parse_one_fs_feature(const char *name, u64 *flags)
 	return !found;
 }
 
-void btrfs_parse_features_to_string(char *buf, u64 flags)
+static void parse_features_to_string(char *buf, u64 flags,
+				     enum feature_source source)
 {
+	const int array_size = get_feature_array_size(source);
 	int i;
 
 	buf[0] = 0;
 
-	for (i = 0; i < ARRAY_SIZE(mkfs_features); i++) {
-		if (flags & mkfs_features[i].flag) {
+	for (i = 0; i < array_size; i++) {
+		const struct btrfs_feature *feat = get_feature(i, source);
+
+		if (flags & feat->flag) {
 			if (*buf)
 				strcat(buf, ", ");
-			strcat(buf, mkfs_features[i].name);
+			strcat(buf, feat->name);
+		}
+	}
+}
+
+void btrfs_parse_fs_features_to_string(char *buf, u64 flags)
+{
+	parse_features_to_string(buf, flags, FS_FEATURES);
+}
+
+void btrfs_parse_runtime_features_to_string(char *buf, u64 flags)
+{
+	parse_features_to_string(buf, flags, RUNTIME_FEATURES);
+}
+
+static void process_features(u64 flags, enum feature_source source)
+{
+	const int array_size = get_feature_array_size(source);
+	int i;
+
+	for (i = 0; i < array_size; i++) {
+		const struct btrfs_feature *feat = get_feature(i, source);
+
+		if (flags & feat->flag) {
+			printf("Turning ON incompat feature '%s': %s\n",
+				feat->name, feat->desc);
 		}
 	}
 }
 
 void btrfs_process_fs_features(u64 flags)
 {
-	int i;
-
-	for (i = 0; i < ARRAY_SIZE(mkfs_features); i++) {
-		if (flags & mkfs_features[i].flag) {
-			printf("Turning ON incompat feature '%s': %s\n",
-				mkfs_features[i].name,
-				mkfs_features[i].desc);
-		}
-	}
+	process_features(flags, FS_FEATURES);
 }
 
-void btrfs_list_all_fs_features(u64 mask_disallowed)
+void btrfs_process_runtime_features(u64 flags)
 {
-	int i;
+	process_features(flags, RUNTIME_FEATURES);
+}
 
-	fprintf(stderr, "Filesystem features available:\n");
-	for (i = 0; i < ARRAY_SIZE(mkfs_features) - 1; i++) {
-		const struct btrfs_fs_feature *feat = &mkfs_features[i];
+static void list_all_features(u64 mask_disallowed, enum feature_source source)
+{
+	const int array_size = get_feature_array_size(source);
+	int i;
+	char *prefix;
+
+	if (source == FS_FEATURES)
+		prefix = "Filesystem";
+	else if (source == RUNTIME_FEATURES)
+		prefix = "Runtime";
+	else
+		prefix = "UNKNOWN";
+
+	fprintf(stderr, "%s features available:\n", prefix);
+	for (i = 0; i < array_size - 1; i++) {
+		const struct btrfs_feature *feat = get_feature(i, source);
 
 		if (feat->flag & mask_disallowed)
 			continue;
@@ -165,11 +233,22 @@ void btrfs_list_all_fs_features(u64 mask_disallowed)
 	}
 }
 
+void btrfs_list_all_fs_features(u64 mask_disallowed)
+{
+	list_all_features(mask_disallowed, FS_FEATURES);
+}
+
+void btrfs_list_all_runtime_features(u64 mask_disallowed)
+{
+	list_all_features(mask_disallowed, RUNTIME_FEATURES);
+}
+
 /*
  * Return NULL if all features were parsed fine, otherwise return the name of
  * the first unparsed.
  */
-char* btrfs_parse_fs_features(char *namelist, u64 *flags)
+static char *parse_features(char *namelist, u64 *flags,
+			    enum feature_source source)
 {
 	char *this_char;
 	char *save_ptr = NULL; /* Satisfy static checkers */
@@ -177,11 +256,21 @@ char* btrfs_parse_fs_features(char *namelist, u64 *flags)
 	for (this_char = strtok_r(namelist, ",", &save_ptr);
 	     this_char != NULL;
 	     this_char = strtok_r(NULL, ",", &save_ptr)) {
-		if (parse_one_fs_feature(this_char, flags))
+		if (parse_one_fs_feature(this_char, flags, source))
 			return this_char;
 	}
 
 	return NULL;
+}
+
+char *btrfs_parse_fs_features(char *namelist, u64 *flags)
+{
+	return parse_features(namelist, flags, FS_FEATURES);
+}
+
+char *btrfs_parse_runtime_features(char *namelist, u64 *flags)
+{
+	return parse_features(namelist, flags, RUNTIME_FEATURES);
 }
 
 void print_kernel_version(FILE *stream, u32 version)

@@ -1152,7 +1152,7 @@ static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
 		error("unable to open %s: %m", devname);
 		goto fail;
 	}
-	btrfs_parse_features_to_string(features_buf, features);
+	btrfs_parse_fs_features_to_string(features_buf, features);
 	if (features == BTRFS_MKFS_DEFAULT_FEATURES)
 		strcat(features_buf, " (default)");
 
@@ -1817,7 +1817,7 @@ int BOX_MAIN(convert)(int argc, char *argv[])
 				if (features & ~BTRFS_CONVERT_ALLOWED_FEATURES) {
 					char buf[64];
 
-					btrfs_parse_features_to_string(buf,
+					btrfs_parse_fs_features_to_string(buf,
 						features & ~BTRFS_CONVERT_ALLOWED_FEATURES);
 					error("features not allowed for convert: %s",
 						buf);
