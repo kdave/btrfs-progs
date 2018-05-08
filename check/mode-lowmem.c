@@ -4921,8 +4921,14 @@ next:
 	}
 out:
 
-	/* if repair, update block accounting */
 	if (repair) {
+		ret = end_avoid_extents_overwrite(fs_info);
+		if (ret < 0)
+			ret = FATAL_ERROR;
+		err |= ret;
+
+		reset_cached_block_groups(fs_info);
+		/* update block accounting */
 		ret = btrfs_fix_block_accounting(trans, root);
 		if (ret)
 			err |= ret;
