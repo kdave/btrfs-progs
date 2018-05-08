@@ -98,5 +98,6 @@ void reada_walk_down(struct btrfs_root *root, struct extent_buffer *node,
 int check_child_node(struct extent_buffer *parent, int slot,
 		     struct extent_buffer *child);
 void reset_cached_block_groups(struct btrfs_fs_info *fs_info);
+int pin_metadata_blocks(struct btrfs_fs_info *fs_info);
 
 #endif
