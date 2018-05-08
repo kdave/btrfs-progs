@@ -28,6 +28,8 @@
 #include "check/mode-common.h"
 #include "check/mode-lowmem.h"
 
+static u64 last_allocated_chunk;
+
 static int calc_extent_flag(struct btrfs_root *root, struct extent_buffer *eb,
 			    u64 *flags_ret)
 {
@@ -488,6 +490,50 @@ static int try_to_force_cow_in_new_chunk(struct btrfs_fs_info *fs_info,
 			return ret;
 	}
 	ret = force_cow_in_new_chunk(fs_info, new_start);
+	return ret;
+}
+
+static int avoid_extents_overwrite(struct btrfs_fs_info *fs_info)
+{
+	int ret;
+	int mixed = btrfs_fs_incompat(fs_info, MIXED_GROUPS);
+
+	if (fs_info->excluded_extents)
+		return 0;
+
+	if (last_allocated_chunk != (u64)-1) {
+		ret = try_to_force_cow_in_new_chunk(fs_info,
+			last_allocated_chunk, &last_allocated_chunk);
+		if (!ret)
+			goto out;
+		/*
+		 * If failed, do not try to allocate chunk again in
+		 * next call.
+		 * If there is no space left to allocate, try to exclude all
+		 * metadata blocks. Mixed filesystem is unsupported.
+		 */
+		last_allocated_chunk = (u64)-1;
+		if (ret != -ENOSPC || mixed)
+			goto out;
+	}
+
+	printf(
+	"Try to exclude all metadata blcoks and extents, it may be slow\n");
+	ret = exclude_metadata_blocks(fs_info);
+out:
+	if (ret)
+		error("failed to avoid extents overwrite %s", strerror(-ret));
+	return ret;
+}
+
+static int end_avoid_extents_overwrite(struct btrfs_fs_info *fs_info)
+{
+	int ret = 0;
+
+	cleanup_excluded_extents(fs_info);
+	if (last_allocated_chunk)
+		ret = clear_block_groups_full(fs_info,
+					BTRFS_BLOCK_GROUP_METADATA);
 	return ret;
 }
 
