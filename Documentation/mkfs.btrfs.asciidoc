@@ -131,6 +131,17 @@ features that mkfs.btrfs supports run:
 +
 +mkfs.btrfs -O list-all+
 
+*-R|--runtime-features <feature1>[,<feature2>...]*::
+A list of features that be can enabled at mkfs time, otherwise would have
+to be turned on a mounted filesystem.
+Although no runtime feature is enabled by default,
+to disable a feature, prefix it with '^'.
++
+See section *RUNTIME FEATURES* for more details.  To see all available
+runtime features that mkfs.btrfs supports run:
++
++mkfs.btrfs -R list-all+
+
 *-f|--force*::
 Forcibly overwrite the block devices when an existing filesystem is detected.
 By default, mkfs.btrfs will utilize 'libblkid' to check for any known
@@ -224,6 +235,14 @@ reduced-size metadata for extent references, saves a few percent of metadata
 +
 improved representation of file extents where holes are not explicitly
 stored as an extent, saves a few percent of metadata if sparse files are used
+
+RUNTIME FEATURES
+----------------
+
+Features that are typically enabled on a mounted filesystem, eg. by a mount
+option or by an ioctl. Some of them can be enabled early, at mkfs time.  This
+applies to features that need to be enabled once and then the status is
+permanent, this does not replace mount options.
 
 BLOCK GROUPS, CHUNKS, RAID
 --------------------------

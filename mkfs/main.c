@@ -338,30 +338,31 @@ static void print_usage(int ret)
 	printf("Usage: mkfs.btrfs [options] dev [ dev ... ]\n");
 	printf("Options:\n");
 	printf("  allocation profiles:\n");
-	printf("\t-d|--data PROFILE       data profile, raid0, raid1, raid1c3, raid1c4, raid5, raid6, raid10, dup or single\n");
-	printf("\t-m|--metadata PROFILE   metadata profile, values like for data profile\n");
-	printf("\t-M|--mixed              mix metadata and data together\n");
+	printf("\t-d|--data PROFILE           data profile, raid0, raid1, raid1c3, raid1c4, raid5, raid6, raid10, dup or single\n");
+	printf("\t-m|--metadata PROFILE       metadata profile, values like for data profile\n");
+	printf("\t-M|--mixed                  mix metadata and data together\n");
 	printf("  features:\n");
 	printf("\t--csum TYPE\n");
-	printf("\t--checksum TYPE         checksum algorithm to use (default: crc32c)\n");
-	printf("\t-n|--nodesize SIZE      size of btree nodes\n");
-	printf("\t-s|--sectorsize SIZE    data block size (may not be mountable by current kernel)\n");
-	printf("\t-O|--features LIST      comma separated list of filesystem features (use '-O list-all' to list features)\n");
-	printf("\t-L|--label LABEL        set the filesystem label\n");
-	printf("\t-U|--uuid UUID          specify the filesystem UUID (must be unique)\n");
+	printf("\t--checksum TYPE             checksum algorithm to use (default: crc32c)\n");
+	printf("\t-n|--nodesize SIZE          size of btree nodes\n");
+	printf("\t-s|--sectorsize SIZE        data block size (may not be mountable by current kernel)\n");
+	printf("\t-O|--features LIST          comma separated list of filesystem features (use '-O list-all' to list features)\n");
+	printf("\t-R|--runtime-features LIST  comma separated list of runtime features (use '-R list-all' to list runtime features)\n");
+	printf("\t-L|--label LABEL            set the filesystem label\n");
+	printf("\t-U|--uuid UUID              specify the filesystem UUID (must be unique)\n");
 	printf("  creation:\n");
-	printf("\t-b|--byte-count SIZE    set filesystem size to SIZE (on the first device)\n");
-	printf("\t-r|--rootdir DIR        copy files from DIR to the image root directory\n");
-	printf("\t--shrink                (with --rootdir) shrink the filled filesystem to minimal size\n");
-	printf("\t-K|--nodiscard          do not perform whole device TRIM\n");
-	printf("\t-f|--force              force overwrite of existing filesystem\n");
+	printf("\t-b|--byte-count SIZE        set filesystem size to SIZE (on the first device)\n");
+	printf("\t-r|--rootdir DIR            copy files from DIR to the image root directory\n");
+	printf("\t--shrink                    (with --rootdir) shrink the filled filesystem to minimal size\n");
+	printf("\t-K|--nodiscard              do not perform whole device TRIM\n");
+	printf("\t-f|--force                  force overwrite of existing filesystem\n");
 	printf("  general:\n");
-	printf("\t-q|--quiet              no messages except errors\n");
-	printf("\t-V|--version            print the mkfs.btrfs version and exit\n");
-	printf("\t--help                  print this help and exit\n");
+	printf("\t-q|--quiet                  no messages except errors\n");
+	printf("\t-V|--version                print the mkfs.btrfs version and exit\n");
+	printf("\t--help                      print this help and exit\n");
 	printf("  deprecated:\n");
-	printf("\t-A|--alloc-start START  the offset to start the filesystem\n");
-	printf("\t-l|--leafsize SIZE      deprecated, alias for nodesize\n");
+	printf("\t-A|--alloc-start START      the offset to start the filesystem\n");
+	printf("\t-l|--leafsize SIZE          deprecated, alias for nodesize\n");
 	exit(ret);
 }
 
@@ -948,6 +949,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	int saved_optind;
 	char fs_uuid[BTRFS_UUID_UNPARSED_SIZE] = { 0 };
 	u64 features = BTRFS_MKFS_DEFAULT_FEATURES;
+	u64 runtime_features = 0;
 	struct mkfs_allocation allocation = { 0 };
 	struct btrfs_mkfs_config mkfs_cfg;
 	enum btrfs_csum_type csum_type = BTRFS_CSUM_TYPE_CRC32;
@@ -976,6 +978,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			{ "rootdir", required_argument, NULL, 'r' },
 			{ "nodiscard", no_argument, NULL, 'K' },
 			{ "features", required_argument, NULL, 'O' },
+			{ "runtime-features", required_argument, NULL, 'R' },
 			{ "uuid", required_argument, NULL, 'U' },
 			{ "quiet", 0, NULL, 'q' },
 			{ "shrink", no_argument, NULL, GETOPT_VAL_SHRINK },
@@ -983,7 +986,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			{ NULL, 0, NULL, 0}
 		};
 
-		c = getopt_long(argc, argv, "A:b:fl:n:s:m:d:L:O:r:U:VMKq",
+		c = getopt_long(argc, argv, "A:b:fl:n:s:m:d:L:R:O:r:U:VMKq",
 				long_options, NULL);
 		if (c < 0)
 			break;
@@ -1029,6 +1032,25 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 				free(orig);
 				if (features & BTRFS_FEATURE_LIST_ALL) {
 					btrfs_list_all_fs_features(0);
+					goto success;
+				}
+				break;
+				}
+			case 'R': {
+				char *orig = strdup(optarg);
+				char *tmp = orig;
+
+				tmp = btrfs_parse_runtime_features(tmp,
+						&runtime_features);
+				if (tmp) {
+					error("unrecognized runtime feature '%s'",
+					      tmp);
+					free(orig);
+					goto error;
+				}
+				free(orig);
+				if (runtime_features & BTRFS_FEATURE_LIST_ALL) {
+					btrfs_list_all_runtime_features(0);
 					goto success;
 				}
 				break;
@@ -1491,6 +1513,9 @@ raid_groups:
 		printf("SSD detected:       %s\n", ssd ? "yes" : "no");
 		btrfs_parse_fs_features_to_string(features_buf, features);
 		printf("Incompat features:  %s\n", features_buf);
+		btrfs_parse_runtime_features_to_string(features_buf,
+				runtime_features);
+		printf("Runtime features:   %s\n", features_buf);
 		printf("Checksum:           %s",
 		       btrfs_super_csum_name(mkfs_cfg.csum_type));
 		printf("\n");
