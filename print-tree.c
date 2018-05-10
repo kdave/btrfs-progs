@@ -1382,6 +1382,7 @@ void btrfs_print_tree(struct extent_buffer *eb, int follow)
 {
 	u32 i;
 	u32 nr;
+	u32 ptr_num;
 	struct btrfs_fs_info *fs_info = eb->fs_info;
 	struct btrfs_disk_key disk_key;
 	struct btrfs_key key;
@@ -1394,6 +1395,11 @@ void btrfs_print_tree(struct extent_buffer *eb, int follow)
 		btrfs_print_leaf(eb);
 		return;
 	}
+	/* We are crossing eb boundary, this node must be corrupted */
+	if (nr > BTRFS_NODEPTRS_PER_EXTENT_BUFFER(eb))
+		warning(
+		"node nr_items corrupted, has %u limit %u, continue anyway",
+			nr, BTRFS_NODEPTRS_PER_EXTENT_BUFFER(eb));
 	printf("node %llu level %d items %d free %u generation %llu owner ",
 	       (unsigned long long)eb->start,
 	        btrfs_header_level(eb), nr,
@@ -1403,8 +1409,10 @@ void btrfs_print_tree(struct extent_buffer *eb, int follow)
 	printf("\n");
 	print_uuids(eb);
 	fflush(stdout);
-	for (i = 0; i < nr; i++) {
+	ptr_num = BTRFS_NODEPTRS_PER_EXTENT_BUFFER(eb);
+	for (i = 0; i < nr && i < ptr_num; i++) {
 		u64 blocknr = btrfs_node_blockptr(eb, i);
+
 		btrfs_node_key(eb, &disk_key, i);
 		btrfs_disk_key_to_cpu(&key, &disk_key);
 		printf("\t");
