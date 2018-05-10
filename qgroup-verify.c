@@ -622,7 +622,7 @@ static void free_tree_blocks(void)
 	ULIST_ITER_INIT(&uiter);
 	while ((unode = ulist_next(tree_blocks, &uiter)))
 		free(unode_tree_block(unode));
-	ulist_free(tree_blocks);	
+	ulist_free(tree_blocks);
 	tree_blocks = NULL;
 }
 
@@ -1160,7 +1160,7 @@ static int scan_extents(struct btrfs_fs_info *info,
 		fprintf(stderr, "ERROR: Couldn't search slot: %d\n", ret);
 		goto out;
 	}
-	path.reada = 1;
+	path.reada = READA_BACK;
 
 	while (1) {
 		leaf = path.nodes[0];
