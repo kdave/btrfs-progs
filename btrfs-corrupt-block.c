@@ -118,7 +118,7 @@ static void print_usage(int ret)
 	printf("\t-f   The field in the item to corrupt\n");
 	printf("\t-I <u64,u8,u64> Corrupt an item corresponding to the passed key triplet (must also specify the field to corrupt and root for the item)\n");
 	printf("\t-D   Corrupt a dir item, must specify key and field\n");
-	printf("\t-d   Delete this item (must specify -K)\n");
+	printf("\t-d <u64,u8,u64> Delete item corresponding to passed key triplet\n");
 	printf("\t-r   Operate on this root (only works with -d)\n");
 	printf("\t-C   Delete a csum for the specified bytenr.  When used with -b it'll delete that many bytes, otherwise it's just sectorsize\n");
 	exit(ret);
@@ -1165,7 +1165,7 @@ int main(int argc, char **argv)
 			{ NULL, 0, NULL, 0 }
 		};
 
-		c = getopt_long(argc, argv, "l:c:b:eEkuUi:f:x:m:K:I:Ddr:C:",
+		c = getopt_long(argc, argv, "l:c:b:eEkuUi:f:x:m:K:I:Dd:r:C:",
 				long_options, NULL);
 		if (c < 0)
 			break;
@@ -1219,6 +1219,7 @@ int main(int argc, char **argv)
 				break;
 			case 'd':
 				delete = 1;
+				parse_key(&key.objectid, &key.type, &key.offset);
 				break;
 			case 'r':
 				root_objectid = arg_strtou64(optarg);
