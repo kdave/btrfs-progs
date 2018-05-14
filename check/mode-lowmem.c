@@ -2274,6 +2274,7 @@ static int check_inode_item(struct btrfs_root *root, struct btrfs_path *path)
 	struct btrfs_key last_key;
 	u64 inode_id;
 	u32 mode;
+	u64 flags;
 	u64 nlink;
 	u64 nbytes;
 	u64 isize;
@@ -2307,9 +2308,18 @@ static int check_inode_item(struct btrfs_root *root, struct btrfs_path *path)
 	isize = btrfs_inode_size(node, ii);
 	nbytes = btrfs_inode_nbytes(node, ii);
 	mode = btrfs_inode_mode(node, ii);
+	flags = btrfs_inode_flags(node, ii);
 	dir = imode_to_type(mode) == BTRFS_FT_DIR;
 	nlink = btrfs_inode_nlink(node, ii);
 	nodatasum = btrfs_inode_flags(node, ii) & BTRFS_INODE_NODATASUM;
+
+	if (mode & BTRFS_FT_SYMLINK &&
+	    flags & (BTRFS_INODE_IMMUTABLE | BTRFS_INODE_APPEND)) {
+		err |= INODE_FLAGS_ERROR;
+		error(
+"symlinks must never have immutable/append flags set, root %llu inode item %llu flags %llu may be corrupted",
+		      root->objectid, inode_id, flags);
+	}
 
 	while (1) {
 		btrfs_item_key_to_cpu(path->nodes[0], &last_key, path->slots[0]);
