@@ -116,7 +116,7 @@ static void print_usage(int ret)
 	printf("\t-m   The metadata block to corrupt (must also specify -f for the field to corrupt)\n");
 	printf("\t-K   The key to corrupt in the format <num>,<num>,<num> (must also specify -f for the field)\n");
 	printf("\t-f   The field in the item to corrupt\n");
-	printf("\t-I   An item to corrupt (must also specify the field to corrupt and a root+key for the item)\n");
+	printf("\t-I <u64,u8,u64> Corrupt an item corresponding to the passed key triplet (must also specify the field to corrupt and root for the item)\n");
 	printf("\t-D   Corrupt a dir item, must specify key and field\n");
 	printf("\t-d   Delete this item (must specify -K)\n");
 	printf("\t-r   Operate on this root (only works with -d)\n");
@@ -1165,7 +1165,7 @@ int main(int argc, char **argv)
 			{ NULL, 0, NULL, 0 }
 		};
 
-		c = getopt_long(argc, argv, "l:c:b:eEkuUi:f:x:m:K:IDdr:C:",
+		c = getopt_long(argc, argv, "l:c:b:eEkuUi:f:x:m:K:I:Ddr:C:",
 				long_options, NULL);
 		if (c < 0)
 			break;
@@ -1222,6 +1222,7 @@ int main(int argc, char **argv)
 				break;
 			case 'I':
 				corrupt_item = 1;
+				parse_key(&key.objectid, &key.type, &key.offset);
 				break;
 			case 'd':
 				delete = 1;
@@ -1356,6 +1357,7 @@ int main(int argc, char **argv)
 		target = open_root(root->fs_info, root_objectid);
 
 		ret = corrupt_btrfs_item(target, &key, field);
+		goto out_close;
 	}
 	if (delete) {
 		struct btrfs_root *target = root;
