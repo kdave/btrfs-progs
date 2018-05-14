@@ -1081,6 +1081,16 @@ out:
 
 }
 
+static void parse_key(u64 *objectid, u8 *type, u64 *offset)
+{
+
+	int ret = sscanf(optarg, "%llu,%hhu,%llu", objectid, type, offset);
+	if (ret != 3) {
+	        fprintf(stderr, "error parsing key '%s': %d\n", optarg, errno);
+	        print_usage(1);
+	}
+}
+
 static struct btrfs_root *open_root(struct btrfs_fs_info *fs_info,
 				    u64 root_objectid)
 {
