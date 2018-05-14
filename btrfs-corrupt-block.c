@@ -1080,6 +1080,26 @@ out:
 	return ret;
 
 }
+
+static struct btrfs_root *open_root(struct btrfs_fs_info *fs_info,
+				    u64 root_objectid)
+{
+
+	struct btrfs_key root_key;
+	struct btrfs_root *root;
+
+	root_key.objectid = root_objectid;
+	root_key.type = BTRFS_ROOT_ITEM_KEY;
+	root_key.offset = (u64)-1;
+
+	root = btrfs_read_fs_root(fs_info, &root_key);
+	if (IS_ERR(root)) {
+		fprintf(stderr, "couldn't find root %llu\n", root_objectid);
+		print_usage(1);
+	}
+
+	return root;
+}
 int main(int argc, char **argv)
 {
 	struct cache_tree root_cache;
@@ -1326,20 +1346,9 @@ int main(int argc, char **argv)
 
 		if (!key.objectid)
 			print_usage(1);
-		if (root_objectid) {
-			struct btrfs_key root_key;
+		if (root_objectid)
+			target = open_root(root->fs_info, root_objectid);
 
-			root_key.objectid = root_objectid;
-			root_key.type = BTRFS_ROOT_ITEM_KEY;
-			root_key.offset = (u64)-1;
-
-			target = btrfs_read_fs_root(root->fs_info, &root_key);
-			if (IS_ERR(target)) {
-				fprintf(stderr, "Couldn't find root %llu\n",
-					(unsigned long long)root_objectid);
-				print_usage(1);
-			}
-		}
 		ret = delete_item(target, &key);
 		goto out_close;
 	}
