@@ -114,7 +114,7 @@ static void print_usage(int ret)
 	printf("\t-i   The inode item to corrupt (must also specify the field to corrupt)\n");
 	printf("\t-x   The file extent item to corrupt (must also specify -i for the inode and -f for the field to corrupt)\n");
 	printf("\t-m   The metadata block to corrupt (must also specify -f for the field to corrupt)\n");
-	printf("\t-K <u64,u8,u64> Corrupt the given key (must also specify -f for the field)\n");
+	printf("\t-K <u64,u8,u64> Corrupt the given key (must also specify -f for the field and optionally -r for the root)\n");
 	printf("\t-f   The field in the item to corrupt\n");
 	printf("\t-I <u64,u8,u64> Corrupt an item corresponding to the passed key triplet (must also specify the field to corrupt and root for the item)\n");
 	printf("\t-D   Corrupt a dir item, must specify key and field\n");
@@ -449,7 +449,6 @@ static int corrupt_key(struct btrfs_root *root, struct btrfs_key *key,
 	struct btrfs_trans_handle *trans;
 	int ret;
 
-	root = root->fs_info->fs_root;
 	if (corrupt_field == BTRFS_KEY_BAD) {
 		fprintf(stderr, "Invalid field %s\n", field);
 		return -EINVAL;
@@ -1364,7 +1363,8 @@ int main(int argc, char **argv)
 	if (should_corrupt_key) {
 		if (*field == 0)
 			print_usage(1);
-		ret = corrupt_key(root, &key, field);
+
+		ret = corrupt_key(target_root, &key, field);
 		goto out_close;
 	}
 	/*
