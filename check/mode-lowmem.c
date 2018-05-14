@@ -1959,6 +1959,24 @@ static int check_file_extent(struct btrfs_root *root, struct btrfs_path *path,
 			      csum_found);
 		}
 	}
+	/*
+	 * Extra check for compressed extents.
+	 * Btrfs doesn't allow NODATASUM and compressed extent co-exist, thus
+	 * all compressed extent should have csum.
+	 */
+	if (compressed && csum_found < search_len) {
+		error(
+"root %llu EXTENT_DATA[%llu %llu] compressed extent must have csum, but only %llu bytes has csum, expect %llu",
+		      root->objectid, fkey.objectid, fkey.offset, csum_found,
+		      search_len);
+		err |= CSUM_ITEM_MISSING;
+	}
+	if (compressed && nodatasum) {
+		error(
+"root %llu EXTENT_DATA[%llu %llu] is compressed, but inode flag doesn't allow it",
+		      root->objectid, fkey.objectid, fkey.offset);
+		err |= FILE_EXTENT_ERROR;
+	}
 
 	/* Check EXTENT_DATA hole */
 	if (!no_holes && *end != fkey.offset) {
