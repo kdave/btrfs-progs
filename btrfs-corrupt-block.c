@@ -1337,9 +1337,15 @@ int main(int argc, char **argv)
 		goto out_close;
 	}
 	if (corrupt_item) {
+		struct btrfs_root *target;
 		if (!key.objectid)
 			print_usage(1);
-		ret = corrupt_btrfs_item(root, &key, field);
+		if (!root_objectid)
+			print_usage(1);
+
+		target = open_root(root->fs_info, root_objectid);
+
+		ret = corrupt_btrfs_item(target, &key, field);
 	}
 	if (delete) {
 		struct btrfs_root *target = root;
