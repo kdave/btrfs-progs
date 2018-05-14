@@ -117,7 +117,7 @@ static void print_usage(int ret)
 	printf("\t-K <u64,u8,u64> Corrupt the given key (must also specify -f for the field and optionally -r for the root)\n");
 	printf("\t-f   The field in the item to corrupt\n");
 	printf("\t-I <u64,u8,u64> Corrupt an item corresponding to the passed key triplet (must also specify the field to corrupt and root for the item)\n");
-	printf("\t-D   Corrupt a dir item, must specify key and field\n");
+	printf("\t-D <u64,u8,u64> Corrupt a dir item corresponding to the passed key triplet, must also specify a field\n");
 	printf("\t-d <u64,u8,u64> Delete item corresponding to passed key triplet\n");
 	printf("\t-r   Operate on this root (only works with -d)\n");
 	printf("\t-C   Delete a csum for the specified bytenr.  When used with -b it'll delete that many bytes, otherwise it's just sectorsize\n");
@@ -1165,7 +1165,7 @@ int main(int argc, char **argv)
 			{ NULL, 0, NULL, 0 }
 		};
 
-		c = getopt_long(argc, argv, "l:c:b:eEkuUi:f:x:m:K:I:Dd:r:C:",
+		c = getopt_long(argc, argv, "l:c:b:eEkuUi:f:x:m:K:I:D:d:r:C:",
 				long_options, NULL);
 		if (c < 0)
 			break;
@@ -1212,6 +1212,7 @@ int main(int argc, char **argv)
 				break;
 			case 'D':
 				corrupt_di = 1;
+				parse_key(&key.objectid, &key.type, &key.offset);
 				break;
 			case 'I':
 				corrupt_item = 1;
@@ -1338,7 +1339,7 @@ int main(int argc, char **argv)
 	if (corrupt_di) {
 		if (!key.objectid || *field == 0)
 			print_usage(1);
-		ret = corrupt_dir_item(root, &key, field);
+		ret = corrupt_dir_item(target_root, &key, field);
 		goto out_close;
 	}
 	if (csum_bytenr) {
