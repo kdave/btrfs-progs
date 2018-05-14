@@ -1517,6 +1517,7 @@ static int process_file_extent(struct btrfs_root *root,
 	u64 mask = root->fs_info->sectorsize - 1;
 	u32 max_inline_size = min_t(u32, mask,
 				BTRFS_MAX_INLINE_DATA_SIZE(root->fs_info));
+	u8 compression;
 	int extent_type;
 	int ret;
 
@@ -1540,9 +1541,9 @@ static int process_file_extent(struct btrfs_root *root,
 
 	fi = btrfs_item_ptr(eb, slot, struct btrfs_file_extent_item);
 	extent_type = btrfs_file_extent_type(eb, fi);
+	compression = btrfs_file_extent_compression(eb, fi);
 
 	if (extent_type == BTRFS_FILE_EXTENT_INLINE) {
-		u8 compression = btrfs_file_extent_compression(eb, fi);
 		struct btrfs_item *item = btrfs_item_nr(slot);
 
 		num_bytes = btrfs_file_extent_ram_bytes(eb, fi);
@@ -1577,6 +1578,8 @@ static int process_file_extent(struct btrfs_root *root,
 		     btrfs_file_extent_encryption(eb, fi) ||
 		     btrfs_file_extent_other_encoding(eb, fi)))
 			rec->errors |= I_ERR_BAD_FILE_EXTENT;
+		if (compression && rec->nodatasum)
+			rec->errors |= I_ERR_BAD_FILE_EXTENT;
 		if (disk_bytenr > 0)
 			rec->found_size += num_bytes;
 	} else {
@@ -1595,7 +1598,8 @@ static int process_file_extent(struct btrfs_root *root,
 	if (disk_bytenr > 0 &&
 	    btrfs_header_owner(eb) != BTRFS_DATA_RELOC_TREE_OBJECTID) {
 		u64 found;
-		if (btrfs_file_extent_compression(eb, fi))
+
+		if (compression)
 			num_bytes = btrfs_file_extent_disk_num_bytes(eb, fi);
 		else
 			disk_bytenr += extent_offset;
@@ -1609,6 +1613,8 @@ static int process_file_extent(struct btrfs_root *root,
 				rec->found_csum_item = 1;
 			if (found < num_bytes)
 				rec->some_csum_missing = 1;
+			if (compression && found < num_bytes)
+				rec->errors |= I_ERR_SOME_CSUM_MISSING;
 		} else if (extent_type == BTRFS_FILE_EXTENT_PREALLOC) {
 			if (found > 0) {
 				ret = check_prealloc_extent_written(root->fs_info,
