@@ -2460,7 +2460,7 @@ const char *subvol_strip_mountpoint(const char *mnt, const char *full_path)
 	if (!len)
 		return full_path;
 
-	if ((strncmp(mnt, full_path, len) != 0) || (full_path[len] != '/')) {
+	if ((strncmp(mnt, full_path, len) != 0) || ((len > 1) && (full_path[len] != '/'))) {
 		error("not on mount point: %s", mnt);
 		exit(1);
 	}
