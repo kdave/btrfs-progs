@@ -313,6 +313,13 @@ static void print_qgroup_column(struct btrfs_qgroup *qgroup,
 	}
 }
 
+static bool qgroup_target_exists(const struct btrfs_qgroup *qgroup)
+{
+	if (btrfs_qgroup_level(qgroup->qgroupid) > 0)
+		return true;
+	return qgroup->pathname != NULL;
+}
+
 static void print_single_qgroup_table(struct btrfs_qgroup *qgroup, bool verbose)
 {
 	int i;
@@ -1369,7 +1376,8 @@ static void print_all_qgroups(struct qgroup_lookup *qgroup_lookup, bool verbose)
 	n = rb_first(&qgroup_lookup->root);
 	while (n) {
 		entry = rb_entry(n, struct btrfs_qgroup, sort_node);
-		print_single_qgroup_table(entry, verbose);
+		if (qgroup_target_exists(entry) || verbose)
+			print_single_qgroup_table(entry, verbose);
 		n = rb_next(n);
 	}
 }
