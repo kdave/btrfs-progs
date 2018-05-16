@@ -227,7 +227,7 @@ static int cmp_btrfs_ioctl_space_info(const void *a, const void *b)
 /*
  * This function load all the information about the space usage
  */
-static struct btrfs_ioctl_space_args *load_space_info(int fd, char *path)
+static struct btrfs_ioctl_space_args *load_space_info(int fd, const char *path)
 {
 	struct btrfs_ioctl_space_args *sargs = NULL, *sargs_orig = NULL;
 	int ret, count;
@@ -305,7 +305,7 @@ static void get_raid56_used(struct chunk_info *chunks, int chunkcount,
 #define	MIN_UNALOCATED_THRESH	SZ_16M
 static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 		int chunkcount, struct device_info *devinfo, int devcount,
-		char *path, unsigned unit_mode)
+		const char *path, unsigned unit_mode)
 {
 	struct btrfs_ioctl_space_args *sargs = NULL;
 	int i;
@@ -933,7 +933,7 @@ static void _cmd_filesystem_usage_linear(unsigned unit_mode,
 static int print_filesystem_usage_by_chunk(int fd,
 		struct chunk_info *chunkinfo, int chunkcount,
 		struct device_info *devinfo, int devcount,
-		char *path, unsigned unit_mode, int tabular)
+		const char *path, unsigned unit_mode, int tabular)
 {
 	struct btrfs_ioctl_space_args *sargs;
 	int ret = 0;

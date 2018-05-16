@@ -526,7 +526,7 @@ static const char * const cmd_device_usage_usage[] = {
 	NULL
 };
 
-static int _cmd_device_usage(int fd, char *path, unsigned unit_mode)
+static int _cmd_device_usage(int fd, const char *path, unsigned unit_mode)
 {
 	int i;
 	int ret = 0;

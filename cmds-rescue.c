@@ -32,8 +32,8 @@ static const char * const rescue_cmd_group_usage[] = {
 	NULL
 };
 
-int btrfs_recover_chunk_tree(char *path, int verbose, int yes);
-int btrfs_recover_superblocks(char *path, int verbose, int yes);
+int btrfs_recover_chunk_tree(const char *path, int verbose, int yes);
+int btrfs_recover_superblocks(const char *path, int verbose, int yes);
 
 static const char * const cmd_rescue_chunk_recover_usage[] = {
 	"btrfs rescue chunk-recover [options] <device>",
