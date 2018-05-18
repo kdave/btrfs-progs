@@ -84,6 +84,7 @@ LIBBTRFSUTIL_CFLAGS = $(SUBST_CFLAGS) \
 		      -fvisibility=hidden \
 		      -I$(TOPDIR)/libbtrfsutil \
 		      $(EXTRAWARN_CFLAGS) \
+		      $(DEBUG_CFLAGS_INTERNAL) \
 		      $(EXTRA_CFLAGS)
 
 LDFLAGS = $(SUBST_LDFLAGS) \
