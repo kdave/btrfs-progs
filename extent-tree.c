@@ -1529,18 +1529,17 @@ out:
 	return ret;
 }
 
-int btrfs_set_block_flags(struct btrfs_trans_handle *trans,
-			  struct btrfs_root *root,
-			  u64 bytenr, int level, u64 flags)
+int btrfs_set_block_flags(struct btrfs_trans_handle *trans, u64 bytenr,
+			  int level, u64 flags)
 {
+	struct btrfs_fs_info *fs_info = trans->fs_info;
 	struct btrfs_path *path;
 	int ret;
 	struct btrfs_key key;
 	struct extent_buffer *l;
 	struct btrfs_extent_item *item;
 	u32 item_size;
-	int skinny_metadata =
-		btrfs_fs_incompat(root->fs_info, SKINNY_METADATA);
+	int skinny_metadata = btrfs_fs_incompat(fs_info, SKINNY_METADATA);
 
 	path = btrfs_alloc_path();
 	if (!path)
@@ -1552,13 +1551,12 @@ int btrfs_set_block_flags(struct btrfs_trans_handle *trans,
 		key.offset = level;
 		key.type = BTRFS_METADATA_ITEM_KEY;
 	} else {
-		key.offset = root->fs_info->nodesize;
+		key.offset = fs_info->nodesize;
 		key.type = BTRFS_EXTENT_ITEM_KEY;
 	}
 
 again:
-	ret = btrfs_search_slot(trans, root->fs_info->extent_root, &key, path,
-				0, 0);
+	ret = btrfs_search_slot(trans, fs_info->extent_root, &key, path, 0, 0);
 	if (ret < 0)
 		goto out;
 
@@ -1569,13 +1567,13 @@ again:
 			btrfs_item_key_to_cpu(path->nodes[0], &key,
 					      path->slots[0]);
 			if (key.objectid == bytenr &&
-			    key.offset == root->fs_info->nodesize &&
+			    key.offset == fs_info->nodesize &&
 			    key.type == BTRFS_EXTENT_ITEM_KEY)
 				ret = 0;
 		}
 		if (ret) {
 			btrfs_release_path(path);
-			key.offset = root->fs_info->nodesize;
+			key.offset = fs_info->nodesize;
 			key.type = BTRFS_EXTENT_ITEM_KEY;
 			goto again;
 		}
@@ -1591,8 +1589,8 @@ again:
 	item_size = btrfs_item_size_nr(l, path->slots[0]);
 #ifdef BTRFS_COMPAT_EXTENT_TREE_V0
 	if (item_size < sizeof(*item)) {
-		ret = convert_extent_item_v0(trans, root->fs_info->extent_root,
-					     path, (u64)-1, 0);
+		ret = convert_extent_item_v0(trans, fs_info->extent_root, path,
+					     (u64)-1, 0);
 		if (ret < 0)
 			goto out;
 
