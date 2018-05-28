@@ -1606,10 +1606,10 @@ int write_all_supers(struct btrfs_fs_info *fs_info)
 	return 0;
 }
 
-int write_ctree_super(struct btrfs_trans_handle *trans,
-		      struct btrfs_fs_info *fs_info)
+int write_ctree_super(struct btrfs_trans_handle *trans)
 {
 	int ret;
+	struct btrfs_fs_info *fs_info = trans->fs_info;
 	struct btrfs_root *tree_root = fs_info->tree_root;
 	struct btrfs_root *chunk_root = fs_info->chunk_root;
 
@@ -1657,7 +1657,7 @@ int close_ctree_fs_info(struct btrfs_fs_info *fs_info)
 		BUG_ON(ret);
 		ret = __commit_transaction(trans, root);
 		BUG_ON(ret);
-		write_ctree_super(trans, fs_info);
+		write_ctree_super(trans);
 		kfree(trans);
 	}
 
