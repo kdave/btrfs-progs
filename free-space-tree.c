@@ -135,7 +135,7 @@ int btrfs_clear_free_space_tree(struct btrfs_fs_info *fs_info)
 
 	list_del(&free_space_root->dirty_list);
 
-	ret = clean_tree_block(trans, tree_root, free_space_root->node);
+	ret = clean_tree_block(free_space_root->node);
 	if (ret)
 		goto abort;
 	ret = btrfs_free_tree_block(trans, free_space_root,

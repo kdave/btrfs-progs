@@ -251,7 +251,7 @@ static noinline int update_ref_for_cow(struct btrfs_trans_handle *trans,
 			ret = btrfs_dec_ref(trans, root, buf, 1);
 			BUG_ON(ret);
 		}
-		clean_tree_block(trans, root, buf);
+		clean_tree_block(buf);
 	}
 	return 0;
 }
@@ -717,7 +717,7 @@ static int balance_level(struct btrfs_trans_handle *trans,
 		root->node = child;
 		add_root_to_dirty_list(root);
 		path->nodes[level] = NULL;
-		clean_tree_block(trans, root, mid);
+		clean_tree_block(mid);
 		/* once for the path */
 		free_extent_buffer(mid);
 
@@ -770,7 +770,7 @@ static int balance_level(struct btrfs_trans_handle *trans,
 			u64 bytenr = right->start;
 			u32 blocksize = right->len;
 
-			clean_tree_block(trans, root, right);
+			clean_tree_block(right);
 			free_extent_buffer(right);
 			right = NULL;
 			wret = btrfs_del_ptr(root, path, level + 1, pslot + 1);
@@ -816,7 +816,7 @@ static int balance_level(struct btrfs_trans_handle *trans,
 		/* we've managed to empty the middle node, drop it */
 		u64 bytenr = mid->start;
 		u32 blocksize = mid->len;
-		clean_tree_block(trans, root, mid);
+		clean_tree_block(mid);
 		free_extent_buffer(mid);
 		mid = NULL;
 		wret = btrfs_del_ptr(root, path, level + 1, pslot);
@@ -2739,7 +2739,7 @@ int btrfs_del_items(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 		if (leaf == root->node) {
 			btrfs_set_header_level(leaf, 0);
 		} else {
-			clean_tree_block(trans, root, leaf);
+			clean_tree_block(leaf);
 			wret = btrfs_del_leaf(trans, root, path, leaf);
 			BUG_ON(ret);
 			if (wret)
@@ -2775,7 +2775,7 @@ int btrfs_del_items(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 			}
 
 			if (btrfs_header_nritems(leaf) == 0) {
-				clean_tree_block(trans, root, leaf);
+				clean_tree_block(leaf);
 				path->slots[1] = slot;
 				ret = btrfs_del_leaf(trans, root, path, leaf);
 				BUG_ON(ret);
