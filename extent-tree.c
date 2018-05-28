@@ -1699,13 +1699,12 @@ int btrfs_dec_ref(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 }
 
 static int write_one_cache_group(struct btrfs_trans_handle *trans,
-				 struct btrfs_root *root,
 				 struct btrfs_path *path,
 				 struct btrfs_block_group_cache *cache)
 {
 	int ret;
 	int pending_ret;
-	struct btrfs_root *extent_root = root->fs_info->extent_root;
+	struct btrfs_root *extent_root = trans->fs_info->extent_root;
 	unsigned long bi;
 	struct extent_buffer *leaf;
 
@@ -1765,7 +1764,7 @@ int btrfs_write_dirty_block_groups(struct btrfs_trans_handle *trans,
 				  BLOCK_GROUP_DIRTY);
 
 		cache = (struct btrfs_block_group_cache *)(unsigned long)ptr;
-		ret = write_one_cache_group(trans, root, path, cache);
+		ret = write_one_cache_group(trans, path, cache);
 	}
 	btrfs_free_path(path);
 	return 0;
