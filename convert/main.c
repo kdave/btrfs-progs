@@ -957,7 +957,7 @@ static int init_btrfs(struct btrfs_mkfs_config *cfg, struct btrfs_root *root,
 		ret = PTR_ERR(trans);
 		goto err;
 	}
-	ret = btrfs_fix_block_accounting(trans, root);
+	ret = btrfs_fix_block_accounting(trans);
 	if (ret)
 		goto err;
 	ret = make_convert_data_block_groups(trans, fs_info, cfg, cctx);
