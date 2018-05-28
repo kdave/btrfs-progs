@@ -1979,12 +1979,11 @@ static int update_block_group(struct btrfs_root *root,
 	return 0;
 }
 
-static int update_pinned_extents(struct btrfs_root *root,
+static int update_pinned_extents(struct btrfs_fs_info *fs_info,
 				u64 bytenr, u64 num, int pin)
 {
 	u64 len;
 	struct btrfs_block_group_cache *cache;
-	struct btrfs_fs_info *fs_info = root->fs_info;
 
 	if (pin) {
 		set_extent_dirty(&fs_info->pinned_extents,
@@ -2033,7 +2032,8 @@ int btrfs_finish_extent_commit(struct btrfs_trans_handle *trans,
 					    EXTENT_DIRTY);
 		if (ret)
 			break;
-		update_pinned_extents(root, start, end + 1 - start, 0);
+		update_pinned_extents(trans->fs_info, start, end + 1 - start,
+				      0);
 		clear_extent_dirty(unpin, start, end);
 		set_extent_dirty(free_space_cache, start, end);
 	}
@@ -2136,7 +2136,7 @@ static int pin_down_bytes(struct btrfs_trans_handle *trans,
 	}
 	free_extent_buffer(buf);
 pinit:
-	update_pinned_extents(root, bytenr, num_bytes, 1);
+	update_pinned_extents(trans->fs_info, bytenr, num_bytes, 1);
 
 	BUG_ON(err < 0);
 	return 0;
@@ -2145,13 +2145,13 @@ pinit:
 void btrfs_pin_extent(struct btrfs_fs_info *fs_info,
 		       u64 bytenr, u64 num_bytes)
 {
-	update_pinned_extents(fs_info->extent_root, bytenr, num_bytes, 1);
+	update_pinned_extents(fs_info, bytenr, num_bytes, 1);
 }
 
 void btrfs_unpin_extent(struct btrfs_fs_info *fs_info,
 			u64 bytenr, u64 num_bytes)
 {
-	update_pinned_extents(fs_info->extent_root, bytenr, num_bytes, 0);
+	update_pinned_extents(fs_info, bytenr, num_bytes, 0);
 }
 
 /*
