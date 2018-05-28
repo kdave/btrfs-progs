@@ -186,8 +186,8 @@ static int update_nodes_refs(struct btrfs_root *root, u64 bytenr,
 
 	if (bytenr != (u64)-1) {
 		/* the return value of this function seems a mistake */
-		ret = btrfs_lookup_extent_info(NULL, root, bytenr,
-				       level, 1, &refs, &flags);
+		ret = btrfs_lookup_extent_info(NULL, root->fs_info, bytenr,
+					       level, 1, &refs, &flags);
 		/* temporary fix */
 		if (ret < 0 && !check_all)
 			return ret;

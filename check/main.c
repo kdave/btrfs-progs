@@ -1622,9 +1622,9 @@ static int walk_down_tree(struct btrfs_root *root, struct btrfs_path *path,
 		refs = nrefs->refs[*level];
 		ret = 0;
 	} else {
-		ret = btrfs_lookup_extent_info(NULL, root,
-				       path->nodes[*level]->start,
-				       *level, 1, &refs, NULL);
+		ret = btrfs_lookup_extent_info(NULL, fs_info,
+					       path->nodes[*level]->start,
+					       *level, 1, &refs, NULL);
 		if (ret < 0) {
 			err = ret;
 			goto out;
@@ -1664,7 +1664,7 @@ static int walk_down_tree(struct btrfs_root *root, struct btrfs_path *path,
 		if (bytenr == nrefs->bytenr[*level - 1]) {
 			refs = nrefs->refs[*level - 1];
 		} else {
-			ret = btrfs_lookup_extent_info(NULL, root, bytenr,
+			ret = btrfs_lookup_extent_info(NULL, fs_info, bytenr,
 					*level - 1, 1, &refs, NULL);
 			if (ret < 0) {
 				refs = 0;
@@ -5928,7 +5928,7 @@ static int run_next_block(struct btrfs_root *root,
 
 	flags = 0;
 	if (!init_extent_tree) {
-		ret = btrfs_lookup_extent_info(NULL, root, bytenr,
+		ret = btrfs_lookup_extent_info(NULL, fs_info, bytenr,
 				       btrfs_header_level(buf), 1, NULL,
 				       &flags);
 		if (ret < 0) {

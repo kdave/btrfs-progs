@@ -2517,7 +2517,7 @@ struct extent_buffer *btrfs_alloc_free_block(struct btrfs_trans_handle *trans,
 					struct btrfs_disk_key *key, int level,
 					u64 hint, u64 empty_size);
 int btrfs_lookup_extent_info(struct btrfs_trans_handle *trans,
-			     struct btrfs_root *root, u64 bytenr,
+			     struct btrfs_fs_info *fs_info, u64 bytenr,
 			     u64 offset, int metadata, u64 *refs, u64 *flags);
 int btrfs_set_block_flags(struct btrfs_trans_handle *trans,
 			  struct btrfs_root *root,
