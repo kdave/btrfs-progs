@@ -1684,8 +1684,7 @@ skip_commit:
 	return err;
 }
 
-int clean_tree_block(struct btrfs_trans_handle *trans, struct btrfs_root *root,
-		     struct extent_buffer *eb)
+int clean_tree_block(struct extent_buffer *eb)
 {
 	return clear_extent_buffer_dirty(eb);
 }
