@@ -556,7 +556,7 @@ static int repair_block_accounting(struct btrfs_fs_info *fs_info)
 		return ret;
 	}
 
-	ret = btrfs_fix_block_accounting(trans, root);
+	ret = btrfs_fix_block_accounting(trans);
 	btrfs_commit_transaction(trans, root);
 	return ret;
 }

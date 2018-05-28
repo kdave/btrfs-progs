@@ -3788,8 +3788,7 @@ out:
  * Fixup block accounting. The initial block accounting created by
  * make_block_groups isn't accuracy in this case.
  */
-int btrfs_fix_block_accounting(struct btrfs_trans_handle *trans,
-			       struct btrfs_root *root)
+int btrfs_fix_block_accounting(struct btrfs_trans_handle *trans)
 {
 	int ret = 0;
 	int slot;
@@ -3799,9 +3798,8 @@ int btrfs_fix_block_accounting(struct btrfs_trans_handle *trans,
 	struct btrfs_key key;
 	struct extent_buffer *leaf;
 	struct btrfs_block_group_cache *cache;
-	struct btrfs_fs_info *fs_info = root->fs_info;
-
-	root = root->fs_info->extent_root;
+	struct btrfs_fs_info *fs_info = trans->fs_info;
+	struct btrfs_root *root = fs_info->extent_root;
 
 	while(extent_root_pending_ops(fs_info)) {
 		ret = finish_current_insert(trans, root);
