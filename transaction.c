@@ -168,7 +168,7 @@ commit_tree:
 	BUG_ON(ret);
 	ret = __commit_transaction(trans, root);
 	BUG_ON(ret);
-	write_ctree_super(trans, fs_info);
+	write_ctree_super(trans);
 	btrfs_finish_extent_commit(trans, fs_info->extent_root,
 			           &fs_info->pinned_extents);
 	kfree(trans);
