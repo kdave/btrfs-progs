@@ -8626,7 +8626,7 @@ again:
 			fprintf(stderr, "Error adding block group\n");
 			return ret;
 		}
-		btrfs_extent_post_op(trans, fs_info->extent_root);
+		btrfs_extent_post_op(trans);
 	}
 
 	ret = reset_balance(trans, fs_info);

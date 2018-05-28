@@ -1426,8 +1426,7 @@ out:
 	return err;
 }
 
-int btrfs_extent_post_op(struct btrfs_trans_handle *trans,
-			 struct btrfs_root *root)
+int btrfs_extent_post_op(struct btrfs_trans_handle *trans)
 {
 	finish_current_insert(trans);
 	del_pending_extents(trans);
@@ -4012,7 +4011,7 @@ static int __btrfs_record_file_extent(struct btrfs_trans_handle *trans,
 		} else if (ret != -EEXIST) {
 			goto fail;
 		}
-		btrfs_extent_post_op(trans, extent_root);
+		btrfs_extent_post_op(trans);
 		extent_bytenr = disk_bytenr;
 		extent_num_bytes = num_bytes;
 		extent_offset = 0;
