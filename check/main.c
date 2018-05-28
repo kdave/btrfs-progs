@@ -6295,10 +6295,10 @@ out:
 }
 
 static int delete_extent_records(struct btrfs_trans_handle *trans,
-				 struct btrfs_root *root,
 				 struct btrfs_path *path,
 				 u64 bytenr)
 {
+	struct btrfs_fs_info *fs_info = trans->fs_info;
 	struct btrfs_key key;
 	struct btrfs_key found_key;
 	struct extent_buffer *leaf;
@@ -6311,8 +6311,8 @@ static int delete_extent_records(struct btrfs_trans_handle *trans,
 	key.offset = (u64)-1;
 
 	while (1) {
-		ret = btrfs_search_slot(trans, root->fs_info->extent_root,
-					&key, path, 0, 1);
+		ret = btrfs_search_slot(trans, fs_info->extent_root, &key,
+					path, 0, 1);
 		if (ret < 0)
 			break;
 
@@ -6354,7 +6354,7 @@ static int delete_extent_records(struct btrfs_trans_handle *trans,
 			"repair deleting extent record: key [%llu,%u,%llu]\n",
 			found_key.objectid, found_key.type, found_key.offset);
 
-		ret = btrfs_del_item(trans, root->fs_info->extent_root, path);
+		ret = btrfs_del_item(trans, fs_info->extent_root, path);
 		if (ret)
 			break;
 		btrfs_release_path(path);
@@ -6362,10 +6362,10 @@ static int delete_extent_records(struct btrfs_trans_handle *trans,
 		if (found_key.type == BTRFS_EXTENT_ITEM_KEY ||
 		    found_key.type == BTRFS_METADATA_ITEM_KEY) {
 			u64 bytes = (found_key.type == BTRFS_EXTENT_ITEM_KEY) ?
-				found_key.offset : root->fs_info->nodesize;
+				found_key.offset : fs_info->nodesize;
 
-			ret = btrfs_update_block_group(root, bytenr,
-						       bytes, 0, 0);
+			ret = btrfs_update_block_group(fs_info->extent_root,
+						       bytenr, bytes, 0, 0);
 			if (ret)
 				break;
 		}
@@ -7293,8 +7293,7 @@ static int fixup_extent_refs(struct btrfs_fs_info *info,
 	}
 
 	/* step two, delete all the existing records */
-	ret = delete_extent_records(trans, info->extent_root, &path,
-				    rec->start);
+	ret = delete_extent_records(trans, &path, rec->start);
 
 	if (ret < 0)
 		goto out;
