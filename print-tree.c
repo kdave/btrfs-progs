@@ -470,8 +470,9 @@ void print_extent_item(struct extent_buffer *eb, int slot, int metadata)
 		offset = btrfs_extent_inline_ref_offset(eb, iref);
 		switch (type) {
 		case BTRFS_TREE_BLOCK_REF_KEY:
-			printf("\t\ttree block backref root %llu\n",
-			       (unsigned long long)offset);
+			printf("\t\ttree block backref root ");
+			print_objectid(stdout, offset, 0);
+			printf("\n");
 			break;
 		case BTRFS_SHARED_BLOCK_REF_KEY:
 			printf("\t\tshared block backref parent %llu\n",
@@ -479,9 +480,10 @@ void print_extent_item(struct extent_buffer *eb, int slot, int metadata)
 			break;
 		case BTRFS_EXTENT_DATA_REF_KEY:
 			dref = (struct btrfs_extent_data_ref *)(&iref->offset);
-			printf("\t\textent data backref root %llu "
-			       "objectid %llu offset %lld count %u\n",
-			       (unsigned long long)btrfs_extent_data_ref_root(eb, dref),
+			printf("\t\textent data backref root ");
+			print_objectid(stdout,
+		(unsigned long long)btrfs_extent_data_ref_root(eb, dref), 0);
+			printf(" objectid %llu offset %lld count %u\n",
 			       (unsigned long long)btrfs_extent_data_ref_objectid(eb, dref),
 			       btrfs_extent_data_ref_offset(eb, dref),
 			       btrfs_extent_data_ref_count(eb, dref));
@@ -1018,9 +1020,10 @@ static void print_extent_data_ref(struct extent_buffer *eb, int slot)
 	struct btrfs_extent_data_ref *dref;
 
 	dref = btrfs_item_ptr(eb, slot, struct btrfs_extent_data_ref);
-	printf("\t\textent data backref root %llu "
-		"objectid %llu offset %llu count %u\n",
-		(unsigned long long)btrfs_extent_data_ref_root(eb, dref),
+	printf("\t\textent data backref root ");
+	print_objectid(stdout,
+		(unsigned long long)btrfs_extent_data_ref_root(eb, dref), 0);
+	printf(" objectid %llu offset %llu count %u\n",
 		(unsigned long long)btrfs_extent_data_ref_objectid(eb, dref),
 		(unsigned long long)btrfs_extent_data_ref_offset(eb, dref),
 		btrfs_extent_data_ref_count(eb, dref));
