@@ -480,10 +480,10 @@ void print_extent_item(struct extent_buffer *eb, int slot, int metadata)
 		case BTRFS_EXTENT_DATA_REF_KEY:
 			dref = (struct btrfs_extent_data_ref *)(&iref->offset);
 			printf("\t\textent data backref root %llu "
-			       "objectid %llu offset %llu count %u\n",
+			       "objectid %llu offset %lld count %u\n",
 			       (unsigned long long)btrfs_extent_data_ref_root(eb, dref),
 			       (unsigned long long)btrfs_extent_data_ref_objectid(eb, dref),
-			       (unsigned long long)btrfs_extent_data_ref_offset(eb, dref),
+			       btrfs_extent_data_ref_offset(eb, dref),
 			       btrfs_extent_data_ref_count(eb, dref));
 			break;
 		case BTRFS_SHARED_DATA_REF_KEY:
