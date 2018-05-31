@@ -576,6 +576,8 @@ static void print_inode_error(struct btrfs_root *root, struct inode_record *rec)
 		fprintf(stderr, ", link count wrong");
 	if (errors & I_ERR_FILE_EXTENT_ORPHAN)
 		fprintf(stderr, ", orphan file extent");
+	if (errors & I_ERR_ODD_INODE_FLAGS)
+		fprintf(stderr, ", odd inode flags");
 	fprintf(stderr, "\n");
 	/* Print the orphan extents if needed */
 	if (errors & I_ERR_FILE_EXTENT_ORPHAN)
@@ -805,6 +807,7 @@ static int process_inode_item(struct extent_buffer *eb,
 {
 	struct inode_record *rec;
 	struct btrfs_inode_item *item;
+	u64 flags;
 
 	rec = active_node->current;
 	BUG_ON(rec->ino != key->objectid || rec->refs > 1);
@@ -822,6 +825,10 @@ static int process_inode_item(struct extent_buffer *eb,
 	rec->found_inode_item = 1;
 	if (rec->nlink == 0)
 		rec->errors |= I_ERR_NO_ORPHAN_ITEM;
+	flags = btrfs_inode_flags(eb, item);
+	if (rec->imode & BTRFS_FT_SYMLINK &&
+	    flags & (BTRFS_INODE_IMMUTABLE | BTRFS_INODE_APPEND))
+		rec->errors |= I_ERR_ODD_INODE_FLAGS;
 	maybe_free_inode_rec(&active_node->inode_cache, rec);
 	return 0;
 }

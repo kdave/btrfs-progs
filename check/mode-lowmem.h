@@ -44,6 +44,7 @@
 #define DIR_COUNT_AGAIN         (1<<20) /* DIR isize should be recalculated */
 #define BG_ACCOUNTING_ERROR     (1<<21) /* Block group accounting error */
 #define FATAL_ERROR             (1<<22) /* Fatal bit for errno */
+#define INODE_FLAGS_ERROR	(1<<23) /* Invalid inode flags */
 
 /*
  * Error bit for low memory mode check.
