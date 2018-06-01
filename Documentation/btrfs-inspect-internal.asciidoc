@@ -86,7 +86,7 @@ the respective tree root block offset
 -u|--uuid::::
 print only the uuid tree information, empty output if the tree does not exist
 -b <block_num>::::
-print info of the specified block only
+print info of the specified block only, can be specified multiple times
 --follow::::
 use with '-b', print all children tree blocks of '<block_num>'
 --dfs::::
