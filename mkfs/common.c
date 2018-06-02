@@ -514,7 +514,7 @@ u64 btrfs_min_dev_size(u32 nodesize, int mixed, u64 meta_profile,
 	 *
 	 * Temporary chunks sizes are always fixed:
 	 * One initial sys chunk, one SINGLE meta, and one SINGLE data.
-	 * The latter two are all 8M, accroding to @calc_size of
+	 * The latter two are all 8M, according to @calc_size of
 	 * btrfs_alloc_chunk().
 	 */
 	reserved += BTRFS_BLOCK_RESERVED_1M_FOR_SUPER +

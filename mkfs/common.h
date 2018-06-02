@@ -16,7 +16,7 @@
 
 /*
  * Defines and function declarations for users of the mkfs API, no internal
- * defintions.
+ * definitions.
  */
 
 #ifndef __BTRFS_MKFS_COMMON_H__
@@ -45,7 +45,7 @@ enum btrfs_mkfs_block {
 struct btrfs_mkfs_config {
 	/* Label of the new filesystem */
 	const char *label;
-	/* Blck sizes */
+	/* Block sizes */
 	u32 nodesize;
 	u32 sectorsize;
 	u32 stripesize;

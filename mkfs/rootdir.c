@@ -253,7 +253,7 @@ static int add_xattr_item(struct btrfs_trans_handle *trans,
 		if (ret < 0) {
 			if (errno == ENOTSUP)
 				return 0;
-			error("gettig a xattr value failed for %s attr %s: %s",
+			error("getting a xattr value failed for %s attr %s: %s",
 				file_name, cur_name, strerror(errno));
 			return ret;
 		}
@@ -467,7 +467,7 @@ static int traverse_directory(struct btrfs_trans_handle *trans,
 	dir_entry->dir_name = dir_name;
 	dir_entry->path = realpath(dir_name, NULL);
 	if (!dir_entry->path) {
-		error("realpath  failed for %s: %s", dir_name, strerror(errno));
+		error("realpath failed for %s: %s", dir_name, strerror(errno));
 		ret = -1;
 		goto fail_no_dir;
 	}
@@ -746,7 +746,7 @@ u64 btrfs_mkfs_size_dir(const char *dir_name, u32 sectorsize, u64 min_dev_size,
 
 
 	/*
-	 * Maximum metadata useage for every inode, which will be PATH_MAX
+	 * Maximum metadata usage for every inode, which will be PATH_MAX
 	 * for the following items:
 	 * 1) DIR_ITEM
 	 * 2) DIR_INDEX
@@ -791,7 +791,7 @@ u64 btrfs_mkfs_size_dir(const char *dir_name, u32 sectorsize, u64 min_dev_size,
 
 /*
  * Get the end position of the last device extent for given @devid;
- * @size_ret is exclsuive (means it should be aligned to sectorsize)
+ * @size_ret is exclusive (means it should be aligned to sectorsize)
  */
 static int get_device_extent_end(struct btrfs_fs_info *fs_info,
 				 u64 devid, u64 *size_ret)
@@ -852,7 +852,7 @@ static int set_device_size(struct btrfs_fs_info *fs_info,
 	int ret;
 
 	/*
-	 * Update in-meory device->total_bytes, so that at trans commit time,
+	 * Update in-memory device->total_bytes, so that at trans commit time,
 	 * super->dev_item will also get updated
 	 */
 	device->total_bytes = new_size;

@@ -1229,7 +1229,7 @@ raid_groups:
 	if (source_dir_set) {
 		ret = btrfs_mkfs_fill_dir(source_dir, root, verbose);
 		if (ret) {
-			error("error wihle filling filesystem: %d", ret);
+			error("error while filling filesystem: %d", ret);
 			goto out;
 		}
 		if (shrink_rootdir) {
