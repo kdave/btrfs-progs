@@ -276,7 +276,7 @@ static int load_free_space_extents(struct btrfs_fs_info *fs_info,
 		if (key.objectid + key.offset > end) {
 			fprintf(stderr,
 	"free space extent ends at %llu, beyond end of block group %llu-%llu\n",
-				key.objectid, start, end);
+				key.objectid + key.offset, start, end);
 			(*errors)++;
 			break;
 		}
