@@ -254,7 +254,7 @@ again:
 		device = list_entry(fs_devices->devices.next,
 				    struct btrfs_device, dev_list);
 		if (device->fd != -1) {
-			if (fsync(device->fd) == -1) {
+			if (device->writeable && fsync(device->fd) == -1) {
 				warning("fsync on device %llu failed: %m",
 					device->devid);
 				ret = -errno;
