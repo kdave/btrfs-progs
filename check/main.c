@@ -1472,7 +1472,7 @@ static int process_file_extent(struct btrfs_root *root,
 		u8 compression = btrfs_file_extent_compression(eb, fi);
 		struct btrfs_item *item = btrfs_item_nr(slot);
 
-		num_bytes = btrfs_file_extent_inline_len(eb, slot, fi);
+		num_bytes = btrfs_file_extent_ram_bytes(eb, fi);
 		if (num_bytes == 0)
 			rec->errors |= I_ERR_BAD_FILE_EXTENT;
 		if (compression) {

@@ -1776,7 +1776,7 @@ static int check_file_extent(struct btrfs_root *root, struct btrfs_key *fkey,
 		u32 item_inline_len;
 
 		item_inline_len = btrfs_file_extent_inline_item_len(node, e);
-		extent_num_bytes = btrfs_file_extent_inline_len(node, slot, fi);
+		extent_num_bytes = btrfs_file_extent_ram_bytes(node, fi);
 		compressed = btrfs_file_extent_compression(node, fi);
 		if (extent_num_bytes == 0) {
 			error(

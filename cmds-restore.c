@@ -302,7 +302,7 @@ static int copy_one_inline(struct btrfs_root *root, int fd,
 	fi = btrfs_item_ptr(leaf, path->slots[0],
 			    struct btrfs_file_extent_item);
 	ptr = btrfs_file_extent_inline_start(fi);
-	len = btrfs_file_extent_inline_len(leaf, path->slots[0], fi);
+	len = btrfs_file_extent_ram_bytes(leaf, fi);
 	inline_item_len = btrfs_file_extent_inline_item_len(leaf, btrfs_item_nr(path->slots[0]));
 	read_extent_buffer(leaf, buf, ptr, inline_item_len);
 

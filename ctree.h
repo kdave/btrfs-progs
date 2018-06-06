@@ -2443,28 +2443,6 @@ static inline u32 btrfs_search_header_len(struct btrfs_ioctl_search_header *sh)
 	return get_unaligned_32(&sh->len);
 }
 
-/* this returns the number of file bytes represented by the inline item.
- * If an item is compressed, this is the uncompressed size
- */
-static inline u32 btrfs_file_extent_inline_len(struct extent_buffer *eb,
-					       int slot,
-					       struct btrfs_file_extent_item *fi)
-{
-	/*
-	 * return the space used on disk if this item isn't
-	 * compressed or encoded
-	 */
-	if (btrfs_file_extent_compression(eb, fi) == 0 &&
-	    btrfs_file_extent_encryption(eb, fi) == 0 &&
-	    btrfs_file_extent_other_encoding(eb, fi) == 0) {
-		return btrfs_file_extent_inline_item_len(eb,
-							 btrfs_item_nr(slot));
-	}
-
-	/* otherwise use the ram bytes field */
-	return btrfs_file_extent_ram_bytes(eb, fi);
-}
-
 #define btrfs_fs_incompat(fs_info, opt) \
 	__btrfs_fs_incompat((fs_info), BTRFS_FEATURE_INCOMPAT_##opt)
 

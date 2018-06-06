@@ -255,8 +255,7 @@ int btrfs_read_file(struct btrfs_root *root, u64 ino, u64 start, int len,
 		/* Inline extent, one inode should only one inline extent */
 		if (btrfs_file_extent_type(leaf, fi) ==
 		    BTRFS_FILE_EXTENT_INLINE) {
-			extent_len = btrfs_file_extent_inline_len(leaf, slot,
-								  fi);
+			extent_len = btrfs_file_extent_ram_bytes(leaf, fi);
 			if (extent_start + extent_len <= start)
 				goto next;
 			read_extent_buffer(leaf, dest,
