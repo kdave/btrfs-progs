@@ -324,7 +324,8 @@ static int copy_one_inline(struct btrfs_root *root, int fd,
 		return -ENOMEM;
 	}
 
-	ret = decompress(root, buf, outbuf, len, &ram_size, compress);
+	ret = decompress(root, buf, outbuf, inline_item_len, &ram_size,
+			 compress);
 	if (ret) {
 		free(outbuf);
 		return ret;
