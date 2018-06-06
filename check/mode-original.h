@@ -187,6 +187,7 @@ struct file_extent_hole {
 #define I_ERR_FILE_EXTENT_ORPHAN	(1 << 14)
 #define I_ERR_FILE_EXTENT_TOO_LARGE	(1 << 15)
 #define I_ERR_ODD_INODE_FLAGS		(1 << 16)
+#define I_ERR_INLINE_RAM_BYTES_WRONG	(1 << 17)
 
 struct inode_record {
 	struct list_head backrefs;
