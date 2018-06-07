@@ -39,7 +39,7 @@
 static FILE *info_file;
 
 static int map_one_extent(struct btrfs_fs_info *fs_info,
-			  u64 *logical_ret, u64 *len_ret, int search_foward)
+			  u64 *logical_ret, u64 *len_ret, int search_forward)
 {
 	struct btrfs_path *path;
 	struct btrfs_key key;
@@ -67,11 +67,11 @@ static int map_one_extent(struct btrfs_fs_info *fs_info,
 
 again:
 	btrfs_item_key_to_cpu(path->nodes[0], &key, path->slots[0]);
-	if ((search_foward && key.objectid < logical) ||
-	    (!search_foward && key.objectid > logical) ||
+	if ((search_forward && key.objectid < logical) ||
+	    (!search_forward && key.objectid > logical) ||
 	    (key.type != BTRFS_EXTENT_ITEM_KEY &&
 	     key.type != BTRFS_METADATA_ITEM_KEY)) {
-		if (!search_foward)
+		if (!search_forward)
 			ret = btrfs_previous_extent_item(fs_info->extent_root,
 							 path, 0);
 		else
