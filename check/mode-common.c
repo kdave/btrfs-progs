@@ -379,18 +379,14 @@ int insert_inode_item(struct btrfs_trans_handle *trans,
 	time_t now = time(NULL);
 	int ret;
 
+	memset(&ii, 0, sizeof(ii));
 	btrfs_set_stack_inode_size(&ii, size);
 	btrfs_set_stack_inode_nbytes(&ii, nbytes);
 	btrfs_set_stack_inode_nlink(&ii, nlink);
 	btrfs_set_stack_inode_mode(&ii, mode);
 	btrfs_set_stack_inode_generation(&ii, trans->transid);
-	btrfs_set_stack_timespec_nsec(&ii.atime, 0);
 	btrfs_set_stack_timespec_sec(&ii.ctime, now);
-	btrfs_set_stack_timespec_nsec(&ii.ctime, 0);
 	btrfs_set_stack_timespec_sec(&ii.mtime, now);
-	btrfs_set_stack_timespec_nsec(&ii.mtime, 0);
-	btrfs_set_stack_timespec_sec(&ii.otime, 0);
-	btrfs_set_stack_timespec_nsec(&ii.otime, 0);
 
 	ret = btrfs_insert_inode(trans, root, ino, &ii);
 	ASSERT(!ret);
