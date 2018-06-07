@@ -75,7 +75,8 @@ again:
 			ret = btrfs_previous_extent_item(fs_info->extent_root,
 							 path, 0);
 		else
-			ret = btrfs_next_item(fs_info->extent_root, path);
+			ret = btrfs_next_extent_item(fs_info->extent_root,
+						     path, 0);
 		if (ret)
 			goto out;
 		goto again;
