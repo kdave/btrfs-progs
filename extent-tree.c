@@ -2961,7 +2961,7 @@ static int noinline walk_down_tree(struct btrfs_trans_handle *trans,
 			path->slots[*level]++;
 			ret = btrfs_free_extent(trans, root, bytenr, blocksize,
 						parent->start, root_owner,
-						root_gen, *level - 1, 1);
+						root_gen, *level - 1, 0);
 			BUG_ON(ret);
 			continue;
 		}
@@ -3003,7 +3003,7 @@ out:
 	root_gen = btrfs_header_generation(parent);
 	ret = btrfs_free_extent(trans, root, path->nodes[*level]->start,
 				path->nodes[*level]->len, parent->start,
-				root_owner, root_gen, *level, 1);
+				root_owner, root_gen, *level, 0);
 	free_extent_buffer(path->nodes[*level]);
 	path->nodes[*level] = NULL;
 	*level += 1;
@@ -3054,7 +3054,7 @@ static int noinline walk_up_tree(struct btrfs_trans_handle *trans,
 						path->nodes[*level]->start,
 						path->nodes[*level]->len,
 						parent->start, root_owner,
-						root_gen, *level, 1);
+						root_gen, *level, 0);
 			BUG_ON(ret);
 			free_extent_buffer(path->nodes[*level]);
 			path->nodes[*level] = NULL;

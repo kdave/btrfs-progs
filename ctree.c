@@ -334,7 +334,7 @@ int __btrfs_cow_block(struct btrfs_trans_handle *trans,
 		WARN_ON(btrfs_header_generation(parent) != trans->transid);
 
 		btrfs_free_extent(trans, root, buf->start, buf->len,
-				  0, root->root_key.objectid, level, 1);
+				  0, root->root_key.objectid, level, 0);
 	}
 	if (!list_empty(&buf->recow)) {
 		list_del_init(&buf->recow);
@@ -738,7 +738,7 @@ static int balance_level(struct btrfs_trans_handle *trans,
 
 		ret = btrfs_free_extent(trans, root, mid->start, mid->len,
 					0, root->root_key.objectid,
-					level, 1);
+					level, 0);
 		/* once for the root ptr */
 		free_extent_buffer(mid);
 		return ret;
