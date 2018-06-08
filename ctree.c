@@ -76,6 +76,18 @@ void add_root_to_dirty_list(struct btrfs_root *root)
 	}
 }
 
+static void root_add_used(struct btrfs_root *root, u32 size)
+{
+        btrfs_set_root_used(&root->root_item,
+                            btrfs_root_used(&root->root_item) + size);
+}
+
+static void root_sub_used(struct btrfs_root *root, u32 size)
+{
+        btrfs_set_root_used(&root->root_item,
+                            btrfs_root_used(&root->root_item) - size);
+}
+
 int btrfs_copy_root(struct btrfs_trans_handle *trans,
 		      struct btrfs_root *root,
 		      struct extent_buffer *buf,
