@@ -263,6 +263,14 @@ static inline int IS_ERR_OR_NULL(const void *ptr)
 	return !ptr || IS_ERR(ptr);
 }
 
+/**
+ * swap - swap values of @a and @b
+ * @a: first value
+ * @b: second value
+ */
+#define swap(a, b) \
+        do { typeof(a) __tmp = (a); (a) = (b); (b) = __tmp; } while (0)
+
 /*
  * This looks more complex than it should be. But we need to
  * get the type for the ~ right in round_down (it needs to be

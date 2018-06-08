@@ -2790,4 +2790,7 @@ int btrfs_punch_hole(struct btrfs_trans_handle *trans,
 int btrfs_read_file(struct btrfs_root *root, u64 ino, u64 start, int len,
 		    char *dest);
 
+/* extent-tree.c */
+int btrfs_run_delayed_refs(struct btrfs_trans_handle *trans, unsigned long nr);
+
 #endif

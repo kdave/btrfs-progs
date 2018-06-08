@@ -21,6 +21,7 @@
 
 #include "kerncompat.h"
 #include "ctree.h"
+#include "delayed-ref.h"
 
 struct btrfs_trans_handle {
 	struct btrfs_fs_info *fs_info;
@@ -28,9 +29,12 @@ struct btrfs_trans_handle {
 	u64 alloc_exclude_start;
 	u64 alloc_exclude_nr;
 	bool reinit_extent_tree;
+	u64 delayed_ref_updates;
 	unsigned long blocks_reserved;
 	unsigned long blocks_used;
 	struct btrfs_block_group_cache *block_group;
+	struct btrfs_delayed_ref_root delayed_refs;
+
 };
 
 struct btrfs_trans_handle* btrfs_start_transaction(struct btrfs_root *root,

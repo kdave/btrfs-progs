@@ -4219,3 +4219,229 @@ u64 add_new_free_space(struct btrfs_block_group_cache *block_group,
 
 	return total_added;
 }
+
+static void cleanup_extent_op(struct btrfs_trans_handle *trans,
+			     struct btrfs_fs_info *fs_info,
+			     struct btrfs_delayed_ref_head *head)
+{
+	struct btrfs_delayed_extent_op *extent_op = head->extent_op;
+
+	if (!extent_op)
+		return;
+	head->extent_op = NULL;
+	btrfs_free_delayed_extent_op(extent_op);
+}
+
+static void unselect_delayed_ref_head(struct btrfs_delayed_ref_root *delayed_refs,
+				      struct btrfs_delayed_ref_head *head)
+{
+	head->processing = 0;
+	delayed_refs->num_heads_ready++;
+}
+
+static int cleanup_ref_head(struct btrfs_trans_handle *trans,
+			    struct btrfs_fs_info *fs_info,
+			    struct btrfs_delayed_ref_head *head)
+{
+	struct btrfs_delayed_ref_root *delayed_refs;
+
+	delayed_refs = &trans->delayed_refs;
+
+	cleanup_extent_op(trans, fs_info, head);
+
+	/*
+	 * Need to drop our head ref lock and re-acquire the delayed ref lock
+	 * and then re-check to make sure nobody got added.
+	 */
+	if (!RB_EMPTY_ROOT(&head->ref_tree) || head->extent_op)
+		return 1;
+
+	delayed_refs->num_heads--;
+	rb_erase(&head->href_node, &delayed_refs->href_root);
+	RB_CLEAR_NODE(&head->href_node);
+
+	if (head->must_insert_reserved)
+		btrfs_pin_extent(fs_info, head->bytenr, head->num_bytes);
+
+	btrfs_put_delayed_ref_head(head);
+	return 0;
+}
+
+static inline struct btrfs_delayed_ref_node *
+select_delayed_ref(struct btrfs_delayed_ref_head *head)
+{
+	struct btrfs_delayed_ref_node *ref;
+
+	if (RB_EMPTY_ROOT(&head->ref_tree))
+		return NULL;
+	/*
+	 * Select a delayed ref of type BTRFS_ADD_DELAYED_REF first.
+	 * This is to prevent a ref count from going down to zero, which deletes
+	 * the extent item from the extent tree, when there still are references
+	 * to add, which would fail because they would not find the extent item.
+	 */
+	if (!list_empty(&head->ref_add_list))
+		return list_first_entry(&head->ref_add_list,
+					struct btrfs_delayed_ref_node,
+					add_list);
+	ref = rb_entry(rb_first(&head->ref_tree),
+		       struct btrfs_delayed_ref_node, ref_node);
+	ASSERT(list_empty(&ref->add_list));
+	return ref;
+}
+
+
+static int run_delayed_tree_ref(struct btrfs_trans_handle *trans,
+				struct btrfs_fs_info *fs_info,
+				struct btrfs_delayed_ref_node *node,
+				struct btrfs_delayed_extent_op *extent_op,
+				int insert_reserved)
+{
+	int ret = 0;
+	struct btrfs_delayed_tree_ref *ref;
+	u64 parent = 0;
+	u64 ref_root = 0;
+
+	ref = btrfs_delayed_node_to_tree_ref(node);
+
+	if (node->type == BTRFS_SHARED_BLOCK_REF_KEY)
+			parent = ref->parent;
+	ref_root = ref->root;
+
+	if (node->ref_mod != 1) {
+		printf("btree block(%llu) has %d references rather than 1: action %d ref_root %llu parent %llu",
+			node->bytenr, node->ref_mod, node->action, ref_root,
+			parent);
+		return -EIO;
+	}
+	if (node->action == BTRFS_ADD_DELAYED_REF && insert_reserved) {
+		BUG_ON(!extent_op || !extent_op->update_flags);
+		ret = alloc_reserved_tree_block2(trans, node, extent_op);
+	} else if (node->action == BTRFS_DROP_DELAYED_REF) {
+		ret = __free_extent2(trans, node, extent_op);
+	} else {
+		BUG();
+	}
+
+	return ret;
+}
+
+/* helper function to actually process a single delayed ref entry */
+static int run_one_delayed_ref(struct btrfs_trans_handle *trans,
+			       struct btrfs_fs_info *fs_info,
+			       struct btrfs_delayed_ref_node *node,
+			       struct btrfs_delayed_extent_op *extent_op,
+			       int insert_reserved)
+{
+	int ret = 0;
+
+	if (node->type == BTRFS_TREE_BLOCK_REF_KEY ||
+		node->type == BTRFS_SHARED_BLOCK_REF_KEY) {
+		ret = run_delayed_tree_ref(trans, fs_info, node, extent_op,
+					   insert_reserved);
+	} else
+		BUG();
+	return ret;
+}
+
+int btrfs_run_delayed_refs(struct btrfs_trans_handle *trans, unsigned long nr)
+{
+	struct btrfs_fs_info *fs_info = trans->fs_info;
+	struct btrfs_delayed_ref_root *delayed_refs;
+	struct btrfs_delayed_ref_node *ref;
+	struct btrfs_delayed_ref_head *locked_ref = NULL;
+	struct btrfs_delayed_extent_op *extent_op;
+	int ret;
+	int must_insert_reserved = 0;
+
+	delayed_refs = &trans->delayed_refs;
+	while (1) {
+		if (!locked_ref) {
+			locked_ref = btrfs_select_ref_head(trans);
+			if (!locked_ref)
+				break;
+		}
+		/*
+		 * We need to try and merge add/drops of the same ref since we
+		 * can run into issues with relocate dropping the implicit ref
+		 * and then it being added back again before the drop can
+		 * finish.	If we merged anything we need to re-loop so we can
+		 * get a good ref.
+		 * Or we can get node references of the same type that weren't
+		 * merged when created due to bumps in the tree mod seq, and
+		 * we need to merge them to prevent adding an inline extent
+		 * backref before dropping it (triggering a BUG_ON at
+		 * insert_inline_extent_backref()).
+		 */
+		btrfs_merge_delayed_refs(trans, delayed_refs, locked_ref);
+		ref = select_delayed_ref(locked_ref);
+		/*
+		 * We're done processing refs in this ref_head, clean everything
+		 * up and move on to the next ref_head.
+		 */
+		if (!ref) {
+			ret = cleanup_ref_head(trans, fs_info, locked_ref);
+			if (ret > 0 ) {
+				/* We dropped our lock, we need to loop. */
+				ret = 0;
+				continue;
+			} else if (ret) {
+				return ret;
+			}
+			locked_ref = NULL;
+			continue;
+		}
+
+		ref->in_tree = 0;
+		rb_erase(&ref->ref_node, &locked_ref->ref_tree);
+		RB_CLEAR_NODE(&ref->ref_node);
+		if (!list_empty(&ref->add_list))
+				list_del(&ref->add_list);
+		/*
+		 * When we play the delayed ref, also correct the ref_mod on
+		 * head
+		 */
+		switch (ref->action) {
+		case BTRFS_ADD_DELAYED_REF:
+		case BTRFS_ADD_DELAYED_EXTENT:
+			locked_ref->ref_mod -= ref->ref_mod;
+			break;
+		case BTRFS_DROP_DELAYED_REF:
+			locked_ref->ref_mod += ref->ref_mod;
+			break;
+		default:
+			WARN_ON(1);
+		}
+
+		/*
+		 * Record the must-insert_reserved flag before we drop the spin
+		 * lock.
+		 */
+		must_insert_reserved = locked_ref->must_insert_reserved;
+		locked_ref->must_insert_reserved = 0;
+
+		extent_op = locked_ref->extent_op;
+		locked_ref->extent_op = NULL;
+
+		ret = run_one_delayed_ref(trans, fs_info, ref, extent_op,
+					  must_insert_reserved);
+
+		btrfs_free_delayed_extent_op(extent_op);
+		/*
+		 * If we are re-initing extent tree in this transaction
+		 * failure in freeing old roots are expected (because we don't
+		 * have the old extent tree, hence backref resolution will
+		 * return -EIO).
+		 */
+		if (ret && (!trans->reinit_extent_tree ||
+		     ref->action != BTRFS_DROP_DELAYED_REF)) {
+			unselect_delayed_ref_head(delayed_refs, locked_ref);
+			btrfs_put_delayed_ref(ref);
+			return ret;
+		}
+
+		btrfs_put_delayed_ref(ref);
+	}
+
+	return 0;
+}
