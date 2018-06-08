@@ -46,6 +46,7 @@ struct btrfs_trans_handle* btrfs_start_transaction(struct btrfs_root *root,
 	fs_info->generation++;
 	h->transid = fs_info->generation;
 	h->blocks_reserved = num_blocks;
+	h->reinit_extent_tree = false;
 	root->last_trans = h->transid;
 	root->commit_root = root->node;
 	extent_buffer_get(root->node);

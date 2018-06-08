@@ -27,6 +27,7 @@ struct btrfs_trans_handle {
 	u64 transid;
 	u64 alloc_exclude_start;
 	u64 alloc_exclude_nr;
+	bool reinit_extent_tree;
 	unsigned long blocks_reserved;
 	unsigned long blocks_used;
 	struct btrfs_block_group_cache *block_group;
