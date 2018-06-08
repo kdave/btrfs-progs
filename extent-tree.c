@@ -1912,12 +1912,10 @@ static int do_chunk_alloc(struct btrfs_trans_handle *trans,
 	return 0;
 }
 
-static int update_block_group(struct btrfs_root *root,
-			      u64 bytenr, u64 num_bytes, int alloc,
-			      int mark_free)
+static int update_block_group(struct btrfs_fs_info *info, u64 bytenr,
+			      u64 num_bytes, int alloc, int mark_free)
 {
 	struct btrfs_block_group_cache *cache;
-	struct btrfs_fs_info *info = root->fs_info;
 	u64 total = num_bytes;
 	u64 old_val;
 	u64 byte_in_group;
@@ -2368,7 +2366,8 @@ static int __free_extent(struct btrfs_trans_handle *trans,
 			BUG_ON(ret);
 		}
 
-		update_block_group(root, bytenr, num_bytes, 0, mark_free);
+		update_block_group(trans->fs_info, bytenr, num_bytes, 0,
+				   mark_free);
 	}
 fail:
 	btrfs_free_path(path);
@@ -2730,7 +2729,7 @@ static int alloc_reserved_tree_block(struct btrfs_trans_handle *trans,
 	btrfs_mark_buffer_dirty(leaf);
 	btrfs_free_path(path);
 
-	ret = update_block_group(root, ins->objectid, fs_info->nodesize,
+	ret = update_block_group(fs_info, ins->objectid, fs_info->nodesize,
 				 1, 0);
 	return ret;
 }
@@ -3413,7 +3412,7 @@ int btrfs_update_block_group(struct btrfs_root *root,
 			     u64 bytenr, u64 num_bytes, int alloc,
 			     int mark_free)
 {
-	return update_block_group(root, bytenr, num_bytes,
+	return update_block_group(root->fs_info, bytenr, num_bytes,
 				  alloc, mark_free);
 }
 
