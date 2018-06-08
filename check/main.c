@@ -6275,8 +6275,7 @@ static int add_root_to_pending(struct extent_buffer *buf,
  * we're tracking for repair.  This hook makes sure we
  * remove any backrefs for blocks as we are fixing them.
  */
-static int free_extent_hook(struct btrfs_trans_handle *trans,
-			    struct btrfs_root *root,
+static int free_extent_hook(struct btrfs_fs_info *fs_info,
 			    u64 bytenr, u64 num_bytes, u64 parent,
 			    u64 root_objectid, u64 owner, u64 offset,
 			    int refs_to_drop)
@@ -6284,7 +6283,7 @@ static int free_extent_hook(struct btrfs_trans_handle *trans,
 	struct extent_record *rec;
 	struct cache_extent *cache;
 	int is_data;
-	struct cache_tree *extent_cache = root->fs_info->fsck_extent_cache;
+	struct cache_tree *extent_cache = fs_info->fsck_extent_cache;
 
 	is_data = owner >= BTRFS_FIRST_FREE_OBJECTID;
 	cache = lookup_cache_extent(extent_cache, bytenr, num_bytes);

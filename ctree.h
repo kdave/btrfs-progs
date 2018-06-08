@@ -1143,8 +1143,7 @@ struct btrfs_fs_info {
 
 	int transaction_aborted;
 
-	int (*free_extent_hook)(struct btrfs_trans_handle *trans,
-				struct btrfs_root *root,
+	int (*free_extent_hook)(struct btrfs_fs_info *fs_info,
 				u64 bytenr, u64 num_bytes, u64 parent,
 				u64 root_objectid, u64 owner, u64 offset,
 				int refs_to_drop);
