@@ -926,7 +926,7 @@ static int delete_csum(struct btrfs_root *root, u64 bytenr, u64 bytes)
 		return PTR_ERR(trans);
 	}
 
-	ret = btrfs_del_csums(trans, root, bytenr, bytes);
+	ret = btrfs_del_csums(trans, bytenr, bytes);
 	if (ret)
 		fprintf(stderr, "Error deleting csums %d\n", ret);
 	btrfs_commit_transaction(trans, root);

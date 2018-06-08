@@ -2730,8 +2730,7 @@ int btrfs_del_inode_ref(struct btrfs_trans_handle *trans,
 			u64 ino, u64 parent_ino, u64 *index);
 
 /* file-item.c */
-int btrfs_del_csums(struct btrfs_trans_handle *trans,
-		    struct btrfs_root *root, u64 bytenr, u64 len);
+int btrfs_del_csums(struct btrfs_trans_handle *trans, u64 bytenr, u64 len);
 int btrfs_insert_file_extent(struct btrfs_trans_handle *trans,
 			     struct btrfs_root *root,
 			     u64 objectid, u64 pos, u64 offset,

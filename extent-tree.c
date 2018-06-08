@@ -2372,7 +2372,7 @@ static int __free_extent(struct btrfs_trans_handle *trans,
 		btrfs_release_path(path);
 
 		if (is_data) {
-			ret = btrfs_del_csums(trans, root, bytenr, num_bytes);
+			ret = btrfs_del_csums(trans, bytenr, num_bytes);
 			BUG_ON(ret);
 		}
 
