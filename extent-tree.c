@@ -50,7 +50,6 @@ static int alloc_reserved_tree_block(struct btrfs_trans_handle *trans,
 				     u64 flags, struct btrfs_disk_key *key,
 				     int level, struct btrfs_key *ins);
 static int __free_extent(struct btrfs_trans_handle *trans,
-			 struct btrfs_root *root,
 			 u64 bytenr, u64 num_bytes, u64 parent,
 			 u64 root_objectid, u64 owner_objectid,
 			 u64 owner_offset, int refs_to_drop);
@@ -2141,7 +2140,6 @@ void btrfs_unpin_extent(struct btrfs_fs_info *fs_info,
  * remove an extent from the root, returns 0 on success
  */
 static int __free_extent(struct btrfs_trans_handle *trans,
-			 struct btrfs_root *root,
 			 u64 bytenr, u64 num_bytes, u64 parent,
 			 u64 root_objectid, u64 owner_objectid,
 			 u64 owner_offset, int refs_to_drop)
@@ -2149,7 +2147,7 @@ static int __free_extent(struct btrfs_trans_handle *trans,
 
 	struct btrfs_key key;
 	struct btrfs_path *path;
-	struct btrfs_root *extent_root = root->fs_info->extent_root;
+	struct btrfs_root *extent_root = trans->fs_info->extent_root;
 	struct extent_buffer *leaf;
 	struct btrfs_extent_item *ei;
 	struct btrfs_extent_inline_ref *iref;
@@ -2409,8 +2407,7 @@ static int del_pending_extents(struct btrfs_trans_handle *trans)
 
 		if (!test_range_bit(extent_ins, start, end,
 				    EXTENT_LOCKED, 0)) {
-			ret = __free_extent(trans, extent_root,
-					    start, end + 1 - start, 0,
+			ret = __free_extent(trans, start, end + 1 - start, 0,
 					    extent_root->root_key.objectid,
 					    extent_op->level, 0, 1);
 			kfree(extent_op);
@@ -2478,7 +2475,7 @@ int btrfs_free_extent(struct btrfs_trans_handle *trans,
 				  bytenr, (unsigned long)extent_op);
 		return 0;
 	}
-	ret = __free_extent(trans, root, bytenr, num_bytes, parent,
+	ret = __free_extent(trans, bytenr, num_bytes, parent,
 			    root_objectid, owner, offset, 1);
 	pending_ret = del_pending_extents(trans);
 	return ret ? ret : pending_ret;
