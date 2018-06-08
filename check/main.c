@@ -8718,7 +8718,7 @@ again:
 			fprintf(stderr, "Error adding block group\n");
 			return ret;
 		}
-		btrfs_extent_post_op(trans);
+		btrfs_run_delayed_refs(trans, -1);
 	}
 
 	ret = reset_balance(trans, fs_info);
@@ -9775,6 +9775,7 @@ int cmd_check(int argc, char **argv)
 			goto close_out;
 		}
 
+		trans->reinit_extent_tree = true;
 		if (init_extent_tree) {
 			printf("Creating a new extent tree\n");
 			ret = reinit_extent_tree(trans, info,

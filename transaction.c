@@ -61,7 +61,6 @@ static int update_cowonly_root(struct btrfs_trans_handle *trans,
 	u64 old_root_bytenr;
 	struct btrfs_root *tree_root = root->fs_info->tree_root;
 
-	btrfs_write_dirty_block_groups(trans);
 	while(1) {
 		old_root_bytenr = btrfs_root_bytenr(&root->root_item);
 		if (old_root_bytenr == root->node->start)
@@ -96,6 +95,17 @@ int commit_tree_roots(struct btrfs_trans_handle *trans,
 	extent_buffer_get(eb);
 	ret = btrfs_cow_block(trans, fs_info->tree_root, eb, NULL, 0, &eb);
 	free_extent_buffer(eb);
+	if (ret)
+		return ret;
+
+	/*
+	 * If the above CoW is the first one to dirty the current tree_root,
+	 * delayed refs for it won't be run until after this function has
+	 * finished executing, meaning we won't process the extent tree root,
+	 * which will have been added to ->dirty_cowonly_roots.  So run
+	 * delayed refs here as well.
+	 */
+	ret = btrfs_run_delayed_refs(trans, -1);
 	if (ret)
 		return ret;
 
@@ -150,6 +160,12 @@ int btrfs_commit_transaction(struct btrfs_trans_handle *trans,
 
 	if (trans->fs_info->transaction_aborted)
 		return -EROFS;
+	/*
+	 * Flush all accumulated delayed refs so that root-tree updates are
+	 * consistent
+	 */
+	ret = btrfs_run_delayed_refs(trans, -1);
+	BUG_ON(ret);
 
 	if (root->commit_root == root->node)
 		goto commit_tree;
@@ -167,10 +183,18 @@ int btrfs_commit_transaction(struct btrfs_trans_handle *trans,
 	ret = btrfs_update_root(trans, root->fs_info->tree_root,
 				&root->root_key, &root->root_item);
 	BUG_ON(ret);
+
 commit_tree:
 	ret = commit_tree_roots(trans, fs_info);
 	BUG_ON(ret);
-	ret = __commit_transaction(trans, root);
+	/*
+	 * Ensure that all comitted roots are properly accounted in the
+	 * extent tree
+	 */
+	ret = btrfs_run_delayed_refs(trans, -1);
+	BUG_ON(ret);
+	btrfs_write_dirty_block_groups(trans);
+	__commit_transaction(trans, root);
 	if (ret < 0)
 		goto out;
 	write_ctree_super(trans);
