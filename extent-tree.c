@@ -45,7 +45,6 @@ struct pending_extent_op {
 };
 
 static int alloc_reserved_tree_block(struct btrfs_trans_handle *trans,
-				     struct btrfs_root *root,
 				     u64 root_objectid, u64 generation,
 				     u64 flags, struct btrfs_disk_key *key,
 				     int level, struct btrfs_key *ins);
@@ -2070,7 +2069,8 @@ static int finish_current_insert(struct btrfs_trans_handle *trans)
 				key.offset = extent_op->num_bytes;
 				key.type = BTRFS_EXTENT_ITEM_KEY;
 			}
-			ret = alloc_reserved_tree_block(trans, extent_root,
+
+			ret = alloc_reserved_tree_block(trans,
 						extent_root->root_key.objectid,
 						trans->transid,
 						extent_op->flags,
@@ -2677,13 +2677,12 @@ int btrfs_reserve_extent(struct btrfs_trans_handle *trans,
 }
 
 static int alloc_reserved_tree_block(struct btrfs_trans_handle *trans,
-				     struct btrfs_root *root,
 				     u64 root_objectid, u64 generation,
 				     u64 flags, struct btrfs_disk_key *key,
 				     int level, struct btrfs_key *ins)
 {
 	int ret;
-	struct btrfs_fs_info *fs_info = root->fs_info;
+	struct btrfs_fs_info *fs_info = trans->fs_info;
 	struct btrfs_extent_item *extent_item;
 	struct btrfs_tree_block_info *block_info;
 	struct btrfs_extent_inline_ref *iref;
@@ -2766,7 +2765,7 @@ static int alloc_tree_block(struct btrfs_trans_handle *trans,
 			ins->offset = level;
 			ins->type = BTRFS_METADATA_ITEM_KEY;
 		}
-		ret = alloc_reserved_tree_block(trans, root, root_objectid,
+		ret = alloc_reserved_tree_block(trans, root_objectid,
 						generation, flags,
 						key, level, ins);
 		finish_current_insert(trans);
