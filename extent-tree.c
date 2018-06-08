@@ -2098,9 +2098,8 @@ static int finish_current_insert(struct btrfs_trans_handle *trans)
 	return 0;
 }
 
-static int pin_down_bytes(struct btrfs_trans_handle *trans,
-			  struct btrfs_root *root,
-			  u64 bytenr, u64 num_bytes, int is_data)
+static int pin_down_bytes(struct btrfs_trans_handle *trans, u64 bytenr,
+			  u64 num_bytes, int is_data)
 {
 	int err = 0;
 	struct extent_buffer *buf;
@@ -2108,7 +2107,7 @@ static int pin_down_bytes(struct btrfs_trans_handle *trans,
 	if (is_data)
 		goto pinit;
 
-	buf = btrfs_find_tree_block(root->fs_info, bytenr, num_bytes);
+	buf = btrfs_find_tree_block(trans->fs_info, bytenr, num_bytes);
 	if (!buf)
 		goto pinit;
 
@@ -2360,7 +2359,7 @@ static int __free_extent(struct btrfs_trans_handle *trans,
 		}
 
 		if (pin) {
-			ret = pin_down_bytes(trans, root, bytenr, num_bytes,
+			ret = pin_down_bytes(trans, bytenr, num_bytes,
 					     is_data);
 			if (ret > 0)
 				mark_free = 1;
