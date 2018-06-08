@@ -734,6 +734,8 @@ static int balance_level(struct btrfs_trans_handle *trans,
 		/* once for the path */
 		free_extent_buffer(mid);
 
+		root_sub_used(root, mid->len);
+
 		ret = btrfs_free_extent(trans, root, mid->start, mid->len,
 					0, root->root_key.objectid,
 					level, 1);
@@ -789,6 +791,8 @@ static int balance_level(struct btrfs_trans_handle *trans,
 			wret = btrfs_del_ptr(root, path, level + 1, pslot + 1);
 			if (wret)
 				ret = wret;
+
+			root_sub_used(root, right->len);
 			wret = btrfs_free_extent(trans, root, bytenr,
 						 blocksize, 0,
 						 root->root_key.objectid,
@@ -835,6 +839,8 @@ static int balance_level(struct btrfs_trans_handle *trans,
 		wret = btrfs_del_ptr(root, path, level + 1, pslot);
 		if (wret)
 			ret = wret;
+
+		root_sub_used(root, blocksize);
 		wret = btrfs_free_extent(trans, root, bytenr, blocksize,
 					 0, root->root_key.objectid,
 					 level, 0);
@@ -1466,6 +1472,8 @@ static int noinline insert_new_root(struct btrfs_trans_handle *trans,
 	btrfs_set_header_backref_rev(c, BTRFS_MIXED_BACKREF_REV);
 	btrfs_set_header_owner(c, root->root_key.objectid);
 
+	root_add_used(root, root->fs_info->nodesize);
+
 	write_extent_buffer(c, root->fs_info->fsid,
 			    btrfs_header_fsid(), BTRFS_FSID_SIZE);
 
@@ -1593,6 +1601,7 @@ static int split_node(struct btrfs_trans_handle *trans, struct btrfs_root
 			    btrfs_header_chunk_tree_uuid(split),
 			    BTRFS_UUID_SIZE);
 
+	root_add_used(root, root->fs_info->nodesize);
 
 	copy_extent_buffer(split, c,
 			   btrfs_node_key_ptr_offset(0),
@@ -2175,6 +2184,8 @@ again:
 			    btrfs_header_chunk_tree_uuid(right),
 			    BTRFS_UUID_SIZE);
 
+	root_add_used(root, root->fs_info->nodesize);
+
 	if (split == 0) {
 		if (mid <= slot) {
 			btrfs_set_header_nritems(right, 0);
@@ -2693,6 +2704,8 @@ static noinline int btrfs_del_leaf(struct btrfs_trans_handle *trans,
 	ret = btrfs_del_ptr(root, path, 1, path->slots[1]);
 	if (ret)
 		return ret;
+
+	root_sub_used(root, leaf->len);
 
 	ret = btrfs_free_extent(trans, root, leaf->start, leaf->len,
 				0, root->root_key.objectid, 0, 0);
