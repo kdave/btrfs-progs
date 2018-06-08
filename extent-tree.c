@@ -2687,6 +2687,30 @@ int btrfs_reserve_extent(struct btrfs_trans_handle *trans,
 	return ret;
 }
 
+static int alloc_reserved_tree_block2(struct btrfs_trans_handle *trans,
+				      struct btrfs_delayed_ref_node *node,
+				      struct btrfs_delayed_extent_op *extent_op)
+{
+
+	struct btrfs_delayed_tree_ref *ref = btrfs_delayed_node_to_tree_ref(node);
+	struct btrfs_key ins;
+	bool skinny_metadata = btrfs_fs_incompat(trans->fs_info, SKINNY_METADATA);
+
+	ins.objectid = node->bytenr;
+	if (skinny_metadata) {
+		ins.offset = ref->level;
+		ins.type = BTRFS_METADATA_ITEM_KEY;
+	} else {
+		ins.offset = node->num_bytes;
+		ins.type = BTRFS_EXTENT_ITEM_KEY;
+	}
+
+	return alloc_reserved_tree_block(trans, ref->root, trans->transid,
+					 extent_op->flags_to_set,
+					 &extent_op->key, ref->level, &ins);
+
+}
+
 static int alloc_reserved_tree_block(struct btrfs_trans_handle *trans,
 				     u64 root_objectid, u64 generation,
 				     u64 flags, struct btrfs_disk_key *key,
