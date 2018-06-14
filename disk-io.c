@@ -94,6 +94,10 @@ static void print_tree_block_error(struct btrfs_fs_info *fs_info,
 	char found_uuid[BTRFS_UUID_UNPARSED_SIZE] = {'\0'};
 	u8 buf[BTRFS_UUID_SIZE];
 
+	if (!err)
+		return;
+
+	fprintf(stderr, "bad tree block %llu, ", eb->start);
 	switch (err) {
 	case BTRFS_BAD_FSID:
 		read_extent_buffer(eb, buf, btrfs_header_fsid(),
