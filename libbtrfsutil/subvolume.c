@@ -295,8 +295,8 @@ PUBLIC enum btrfs_util_error btrfs_util_subvolume_info(const char *path,
 	return err;
 }
 
-PUBLIC enum btrfs_util_error btrfs_util_subvolume_info_fd(int fd, uint64_t id,
-							  struct btrfs_util_subvolume_info *subvol)
+static enum btrfs_util_error get_subvolume_info_root(int fd, uint64_t id,
+						     struct btrfs_util_subvolume_info *subvol)
 {
 	struct btrfs_ioctl_search_args search = {
 		.key = {
@@ -310,26 +310,9 @@ PUBLIC enum btrfs_util_error btrfs_util_subvolume_info_fd(int fd, uint64_t id,
 			.nr_items = 0,
 		},
 	};
-	enum btrfs_util_error err;
 	size_t items_pos = 0, buf_off = 0;
 	bool need_root_item = true, need_root_backref = true;
 	int ret;
-
-	if (id == 0) {
-		err = btrfs_util_is_subvolume_fd(fd);
-		if (err)
-			return err;
-
-		err = btrfs_util_subvolume_id_fd(fd, &id);
-		if (err)
-			return err;
-	}
-
-	if ((id < BTRFS_FIRST_FREE_OBJECTID && id != BTRFS_FS_TREE_OBJECTID) ||
-	    id > BTRFS_LAST_FREE_OBJECTID) {
-		errno = ENOENT;
-		return BTRFS_UTIL_ERROR_SUBVOLUME_NOT_FOUND;
-	}
 
 	search.key.min_objectid = search.key.max_objectid = id;
 
@@ -398,6 +381,30 @@ PUBLIC enum btrfs_util_error btrfs_util_subvolume_info_fd(int fd, uint64_t id,
 	}
 
 	return BTRFS_UTIL_OK;
+}
+
+PUBLIC enum btrfs_util_error btrfs_util_subvolume_info_fd(int fd, uint64_t id,
+							  struct btrfs_util_subvolume_info *subvol)
+{
+	enum btrfs_util_error err;
+
+	if (id == 0) {
+		err = btrfs_util_is_subvolume_fd(fd);
+		if (err)
+			return err;
+
+		err = btrfs_util_subvolume_id_fd(fd, &id);
+		if (err)
+			return err;
+	}
+
+	if ((id < BTRFS_FIRST_FREE_OBJECTID && id != BTRFS_FS_TREE_OBJECTID) ||
+	    id > BTRFS_LAST_FREE_OBJECTID) {
+		errno = ENOENT;
+		return BTRFS_UTIL_ERROR_SUBVOLUME_NOT_FOUND;
+	}
+
+	return get_subvolume_info_root(fd, id, subvol);
 }
 
 PUBLIC enum btrfs_util_error btrfs_util_get_subvolume_read_only_fd(int fd,
