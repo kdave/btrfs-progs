@@ -8163,7 +8163,7 @@ again:
 		leaf = path.nodes[0];
 		slot = path.slots[0];
 		if (slot >= btrfs_header_nritems(path.nodes[0])) {
-			ret = btrfs_next_leaf(root, &path);
+			ret = btrfs_next_leaf(fs_info->tree_root, &path);
 			if (ret != 0)
 				break;
 			leaf = path.nodes[0];
