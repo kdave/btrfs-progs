@@ -540,7 +540,7 @@ int get_btrfs_mount(const char *dev, char *mp, size_t mp_size)
 		goto out;
 	}
 
-	ret = check_mounted_where(fd, dev, mp, mp_size, NULL);
+	ret = check_mounted_where(fd, dev, mp, mp_size, NULL, SBREAD_DEFAULT);
 	if (!ret) {
 		ret = -EINVAL;
 	} else { /* mounted, all good */
@@ -901,14 +901,14 @@ int check_mounted(const char* file)
 		return -errno;
 	}
 
-	ret =  check_mounted_where(fd, file, NULL, 0, NULL);
+	ret =  check_mounted_where(fd, file, NULL, 0, NULL, SBREAD_DEFAULT);
 	close(fd);
 
 	return ret;
 }
 
 int check_mounted_where(int fd, const char *file, char *where, int size,
-			struct btrfs_fs_devices **fs_dev_ret)
+			struct btrfs_fs_devices **fs_dev_ret, unsigned sbflags)
 {
 	int ret;
 	u64 total_devs = 1;
@@ -919,7 +919,7 @@ int check_mounted_where(int fd, const char *file, char *where, int size,
 
 	/* scan the initial device */
 	ret = btrfs_scan_one_device(fd, file, &fs_devices_mnt,
-		    &total_devs, BTRFS_SUPER_INFO_OFFSET, SBREAD_DEFAULT);
+		    &total_devs, BTRFS_SUPER_INFO_OFFSET, sbflags);
 	is_btrfs = (ret >= 0);
 
 	/* scan other devices */
@@ -1675,7 +1675,7 @@ int get_fs_info(const char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 			goto out;
 		}
 		ret = check_mounted_where(fd, path, mp, sizeof(mp),
-					  &fs_devices_mnt);
+					  &fs_devices_mnt, SBREAD_DEFAULT);
 		if (!ret) {
 			ret = -EINVAL;
 			goto out;
