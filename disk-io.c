@@ -1383,9 +1383,14 @@ static int check_super(struct btrfs_super_block *sb, unsigned sbflags)
 
 		uuid_unparse(sb->fsid, fsid);
 		uuid_unparse(sb->dev_item.fsid, dev_fsid);
-		error("dev_item UUID does not match fsid: %s != %s",
-			dev_fsid, fsid);
-		goto error_out;
+		if (sbflags & SBREAD_IGNORE_FSID_MISMATCH) {
+			warning("ignored: dev_item fsid mismatch: %s != %s",
+					dev_fsid, fsid);
+		} else {
+			error("dev_item UUID does not match fsid: %s != %s",
+					dev_fsid, fsid);
+			goto error_out;
+		}
 	}
 
 	/*

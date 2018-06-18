@@ -474,7 +474,8 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	ret = check_mounted_where(fd, device, NULL, 0, NULL, SBREAD_DEFAULT);
+	ret = check_mounted_where(fd, device, NULL, 0, NULL,
+			SBREAD_IGNORE_FSID_MISMATCH);
 	if (ret < 0) {
 		error("could not check mount status of %s: %s", device,
 			strerror(-ret));
@@ -521,9 +522,9 @@ int main(int argc, char *argv[])
 	if (random_fsid || new_fsid_str) {
 		if (!force) {
 			warning(
-	"it's highly recommended to run 'btrfs check' before this operation");
-			warning(
-	"also canceling running UUID change progress may cause corruption");
+"it's recommended to run 'btrfs check --readonly' before this operation.\n"
+"\tThe whole operation must finish before the filesystem can be mounted again.\n"
+"\tIf cancelled or interrupted, run 'btrfstune -u' to restart.");
 			ret = ask_user("We are going to change UUID, are your sure?");
 			if (!ret) {
 				fprintf(stderr, "UUID change canceled\n");
