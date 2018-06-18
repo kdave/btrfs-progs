@@ -394,6 +394,7 @@ int main(int argc, char *argv[])
 	char *new_fsid_str = NULL;
 	int ret;
 	u64 super_flags = 0;
+	int fd = -1;
 
 	while(1) {
 		static const struct option long_options[] = {
@@ -467,17 +468,25 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	ret = check_mounted(device);
-	if (ret < 0) {
-		error("could not check mount status of %s: %s", device,
-			strerror(-ret));
-		return 1;
-	} else if (ret) {
-		error("%s is mounted", device);
+	fd = open(device, O_RDWR);
+	if (fd < 0) {
+		error("mount check: cannot open %s: %m", device);
 		return 1;
 	}
 
-	root = open_ctree(device, 0, ctree_flags);
+	ret = check_mounted_where(fd, device, NULL, 0, NULL, SBREAD_DEFAULT);
+	if (ret < 0) {
+		error("could not check mount status of %s: %s", device,
+			strerror(-ret));
+		close(fd);
+		return 1;
+	} else if (ret) {
+		error("%s is mounted", device);
+		close(fd);
+		return 1;
+	}
+
+	root = open_ctree_fd(fd, device, 0, ctree_flags);
 
 	if (!root) {
 		error("open ctree failed");
