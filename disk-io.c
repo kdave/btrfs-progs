@@ -1125,6 +1125,9 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 	if (flags & OPEN_CTREE_TEMPORARY_SUPER)
 		sbflags = SBREAD_TEMPORARY;
 
+	if (flags & OPEN_CTREE_IGNORE_FSID_MISMATCH)
+		sbflags |= SBREAD_IGNORE_FSID_MISMATCH;
+
 	ret = btrfs_scan_fs_devices(fp, path, &fs_devices, sb_bytenr, sbflags,
 			(flags & OPEN_CTREE_NO_DEVICES));
 	if (ret)

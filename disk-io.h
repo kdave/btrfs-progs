@@ -100,6 +100,12 @@ enum btrfs_read_sb_flags {
 	 * SBREAD_RECOVER
 	 */
 	SBREAD_TEMPORARY = (1 << 1),
+
+	/*
+	 * Equivalent of OPEN_CTREE_IGNORE_FSID_MISMATCH, allow to read
+	 * superblock that has mismatched sb::fsid and sb::dev_item.fsid
+	 */
+	SBREAD_IGNORE_FSID_MISMATCH = (1 << 2),
 };
 
 /*
