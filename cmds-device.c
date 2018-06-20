@@ -57,6 +57,7 @@ static int cmd_device_add(int argc, char **argv)
 	int force = 0;
 	int last_dev;
 
+	optind = 0;
 	while (1) {
 		int c;
 		static const struct option long_options[] = {
@@ -267,6 +268,7 @@ static int cmd_device_scan(int argc, char **argv)
 	int all = 0;
 	int ret = 0;
 
+	optind = 0;
 	while (1) {
 		int c;
 		static const struct option long_options[] = {
@@ -403,6 +405,7 @@ static int cmd_device_stats(int argc, char **argv)
 	__u64 flags = 0;
 	DIR *dirstream = NULL;
 
+	optind = 0;
 	while (1) {
 		int c;
 		static const struct option long_options[] = {

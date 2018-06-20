@@ -46,6 +46,7 @@ static int _cmd_qgroup_assign(int assign, int argc, char **argv,
 	DIR *dirstream = NULL;
 
 	if (assign) {
+		optind = 0;
 		while (1) {
 			enum { GETOPT_VAL_RESCAN = 256, GETOPT_VAL_NO_RESCAN };
 			static const struct option long_options[] = {
@@ -310,6 +311,7 @@ static int cmd_qgroup_show(int argc, char **argv)
 
 	unit_mode = get_unit_mode_from_arg(&argc, argv, 0);
 
+	optind = 0;
 	while (1) {
 		int c;
 		enum {
@@ -429,6 +431,7 @@ static int cmd_qgroup_limit(int argc, char **argv)
 	DIR *dirstream = NULL;
 	enum btrfs_util_error err;
 
+	optind = 0;
 	while (1) {
 		int c = getopt(argc, argv, "ce");
 		if (c < 0)

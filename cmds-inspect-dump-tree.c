@@ -235,6 +235,7 @@ int cmd_inspect_dump_tree(int argc, char **argv)
 	 * tree blocks as possible.
 	 */
 	open_ctree_flags = OPEN_CTREE_PARTIAL | OPEN_CTREE_NO_BLOCK_GROUPS;
+	optind = 0;
 	while (1) {
 		int c;
 		enum { GETOPT_VAL_FOLLOW = 256 };

@@ -102,6 +102,7 @@ static int cmd_subvol_create(int argc, char **argv)
 	struct btrfs_qgroup_inherit *inherit = NULL;
 	DIR	*dirstream = NULL;
 
+	optind = 0;
 	while (1) {
 		int c = getopt(argc, argv, "c:i:");
 		if (c < 0)
@@ -248,6 +249,7 @@ static int cmd_subvol_delete(int argc, char **argv)
 	enum { COMMIT_AFTER = 1, COMMIT_EACH = 2 };
 	enum btrfs_util_error err;
 
+	optind = 0;
 	while (1) {
 		int c;
 		static const struct option long_options[] = {
@@ -466,6 +468,7 @@ static int cmd_subvol_list(int argc, char **argv)
 	filter_set = btrfs_list_alloc_filter_set();
 	comparer_set = btrfs_list_alloc_comparer_set();
 
+	optind = 0;
 	while(1) {
 		int c;
 		static const struct option long_options[] = {
@@ -636,6 +639,7 @@ static int cmd_subvol_snapshot(int argc, char **argv)
 	DIR *dirstream1 = NULL, *dirstream2 = NULL;
 
 	memset(&args, 0, sizeof(args));
+	optind = 0;
 	while (1) {
 		int c = getopt(argc, argv, "c:i:r");
 		if (c < 0)
@@ -933,6 +937,7 @@ static int cmd_subvol_show(int argc, char **argv)
 	char *subvol_path = NULL;
 	enum btrfs_util_error err;
 
+	optind = 0;
 	while (1) {
 		int c;
 		static const struct option long_options[] = {
@@ -1132,6 +1137,7 @@ static int cmd_subvol_sync(int argc, char **argv)
 	int sleep_interval = 1;
 	enum btrfs_util_error err;
 
+	optind = 0;
 	while (1) {
 		int c = getopt(argc, argv, "s:");
 

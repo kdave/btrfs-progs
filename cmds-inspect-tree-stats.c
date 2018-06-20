@@ -434,6 +434,7 @@ int cmd_inspect_tree_stats(int argc, char **argv)
 	int opt;
 	int ret = 0;
 
+	optind = 0;
 	while ((opt = getopt(argc, argv, "vb")) != -1) {
 		switch (opt) {
 		case 'v':

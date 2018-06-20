@@ -119,6 +119,7 @@ static int cmd_quota_rescan(int argc, char **argv)
 	DIR *dirstream = NULL;
 	int wait_for_completion = 0;
 
+	optind = 0;
 	while (1) {
 		int c = getopt(argc, argv, "sw");
 		if (c < 0)

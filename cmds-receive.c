@@ -1267,6 +1267,7 @@ int cmd_receive(int argc, char **argv)
 	realmnt[0] = 0;
 	fromfile[0] = 0;
 
+	optind = 0;
 	while (1) {
 		int c;
 		enum { GETOPT_VAL_DUMP = 257 };

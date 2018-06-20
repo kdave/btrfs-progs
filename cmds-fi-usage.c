@@ -974,6 +974,7 @@ int cmd_filesystem_usage(int argc, char **argv)
 
 	unit_mode = get_unit_mode_from_arg(&argc, argv, 1);
 
+	optind = 0;
 	while (1) {
 		int c;
 

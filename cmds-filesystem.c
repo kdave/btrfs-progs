@@ -685,6 +685,7 @@ static int cmd_filesystem_show(int argc, char **argv)
 
 	unit_mode = get_unit_mode_from_arg(&argc, argv, 0);
 
+	optind = 0;
 	while (1) {
 		int c;
 		static const struct option long_options[] = {
@@ -924,6 +925,7 @@ static int cmd_filesystem_defrag(int argc, char **argv)
 	defrag_global_errors = 0;
 	defrag_global_verbose = 0;
 	defrag_global_errors = 0;
+	optind = 0;
 	while(1) {
 		int c = getopt(argc, argv, "vrc::fs:l:t:");
 		if (c < 0)

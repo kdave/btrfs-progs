@@ -1440,6 +1440,7 @@ int cmd_restore(int argc, char **argv)
 	regex_t match_reg, *mreg = NULL;
 	char reg_err[256];
 
+	optind = 0;
 	while (1) {
 		int opt;
 		enum { GETOPT_VAL_PATH_REGEX = 256 };

@@ -52,6 +52,7 @@ static int cmd_rescue_chunk_recover(int argc, char *argv[])
 	int yes = 0;
 	int verbose = 0;
 
+	optind = 0;
 	while (1) {
 		int c = getopt(argc, argv, "yvh");
 		if (c < 0)
@@ -119,6 +120,7 @@ static int cmd_rescue_super_recover(int argc, char **argv)
 	int yes = 0;
 	char *dname;
 
+	optind = 0;
 	while (1) {
 		int c = getopt(argc, argv, "vy");
 		if (c < 0)

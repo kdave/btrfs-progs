@@ -508,6 +508,7 @@ int cmd_send(int argc, char **argv)
 	send.dump_fd = fileno(stdout);
 	outname[0] = 0;
 
+	optind = 0;
 	while (1) {
 		enum { GETOPT_VAL_SEND_NO_DATA = 256 };
 		static const struct option long_options[] = {

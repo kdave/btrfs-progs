@@ -94,6 +94,7 @@ static int cmd_inspect_inode_resolve(int argc, char **argv)
 	int ret;
 	DIR *dirstream = NULL;
 
+	optind = 0;
 	while (1) {
 		int c = getopt(argc, argv, "v");
 		if (c < 0)
@@ -148,6 +149,7 @@ static int cmd_inspect_logical_resolve(int argc, char **argv)
 	char *path_ptr;
 	DIR *dirstream = NULL;
 
+	optind = 0;
 	while (1) {
 		int c = getopt(argc, argv, "Pvs:");
 		if (c < 0)
@@ -591,6 +593,7 @@ static int cmd_inspect_min_dev_size(int argc, char **argv)
 	DIR *dirstream = NULL;
 	u64 devid = 1;
 
+	optind = 0;
 	while (1) {
 		int c;
 		enum { GETOPT_VAL_DEVID = 256 };

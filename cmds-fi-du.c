@@ -565,6 +565,7 @@ int cmd_filesystem_du(int argc, char **argv)
 
 	unit_mode = get_unit_mode_from_arg(&argc, argv, 1);
 
+	optind = 0;
 	while (1) {
 		static const struct option long_options[] = {
 			{ "summarize", no_argument, NULL, 's'},
