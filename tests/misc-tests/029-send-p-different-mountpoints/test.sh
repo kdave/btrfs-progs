@@ -14,7 +14,7 @@ prepare_test_dev
 SUBVOL_MNT="$TEST_MNT/subvol"
 TOPLEVEL_MNT="$TEST_MNT/toplevel"
 TEST_MNT="$TOPLEVEL_MNT"
-mkdir -p "$TOPLEVEL_MNT" "$SUBVOL_MNT"
+run_check $SUDO_HELPER mkdir -p "$TOPLEVEL_MNT" "$SUBVOL_MNT"
 
 run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f "$TEST_DEV"
 run_check_mount_test_dev
@@ -47,5 +47,5 @@ run_mustfail_stdout "send -p on 2 mount points" \
 run_check_umount_test_dev "$SUBVOL_MNT"
 run_check_umount_test_dev "$TOPLEVEL_MNT"
 
-rmdir "$SUBVOL_MNT"
-rmdir "$TOPLEVEL_MNT"
+run_check $SUDO_HELPER rmdir "$SUBVOL_MNT"
+run_check $SUDO_HELPER rmdir "$TOPLEVEL_MNT"
