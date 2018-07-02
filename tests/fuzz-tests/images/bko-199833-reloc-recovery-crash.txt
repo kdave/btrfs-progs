@@ -1,0 +1,113 @@
+URL: https://bugzilla.kernel.org/show_bug.cgi?id=199833
+Wen Xu 2018-05-26 02:27:26 UTC
+
+The (compressed) crafted image which causes crash
+
+- Overview
+Invalid pointer dereference in __del_reloc_root() when mounting a crafted btrfs image
+
+- Reproduce 
+# mkdir mnt
+# mount -t btrfs 82.img mnt
+(Reproduced on Linux 4.17-rc5)
+
+- Comment
+https://elixir.bootlin.com/linux/v4.17-rc5/source/fs/btrfs/relocation.c#L1324
+
+static void __del_reloc_root(struct btrfs_root *root)
+{
+	struct btrfs_fs_info *fs_info = root->fs_info;
+	struct rb_node *rb_node;
+	struct mapping_node *node = NULL;
+	struct reloc_control *rc = fs_info->reloc_ctl;
+
+	spin_lock(&rc->reloc_root_tree.lock);
+
+rc can be NULL, which means that reloc_ctl may be not initialized
+
+- Kernel message
+[  208.623313] BUG: unable to handle kernel NULL pointer dereference at 0000000000000570
+[  208.624890] PGD 80000001e9495067 P4D 80000001e9495067 PUD 1f0d81067 PMD 0
+[  208.626285] Oops: 0002 [#1] SMP KASAN PTI
+[  208.632054] BTRFS info (device loop0): delayed_refs has NO entry
+[  208.636502] CPU: 1 PID: 1330 Comm: mount Tainted: G    B   W         4.17.0-rc5+ #6
+[  208.639306] Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS Ubuntu-1.8.2-1ubuntu1 04/01/2014
+[  208.641177] RIP: 0010:_raw_spin_lock+0x1e/0x40
+[  208.642200] RSP: 0018:ffff8801df437338 EFLAGS: 00010246
+[  208.643240] RAX: 0000000000000000 RBX: 0000000000000570 RCX: 0000000000000000
+[  208.644643] RDX: 0000000000000001 RSI: 0000000000000297 RDI: 0000000000000297
+[  208.646058] RBP: ffff8801df437340 R08: ffffed003ee23ebb R09: ffffed003ee23ebb
+[  208.647464] R10: 0000000000000001 R11: ffffed003ee23eba R12: ffff8801f2e8c400
+[  208.648870] R13: 0000000000000000 R14: ffff8801e3a28000 R15: 0000000000000568
+[  208.650286] FS:  00007fd41a0a7840(0000) GS:ffff8801f7100000(0000) knlGS:0000000000000000
+[  208.651872] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[  208.653006] CR2: 0000000000000570 CR3: 00000001e16e6000 CR4: 00000000000006e0
+[  208.654449] Call Trace:
+[  208.654961]  __del_reloc_root+0x5a/0x190
+[  208.655755]  free_reloc_roots+0x40/0xb0
+[  208.656531]  btrfs_recover_relocation+0x2fa/0x750
+[  208.657487]  ? btrfs_cleanup_fs_roots+0x351/0x3b0
+[  208.658428]  ? btrfs_relocate_block_group+0x370/0x370
+[  208.659433]  ? qgroup_reserve+0x650/0x650
+[  208.660237]  ? migrate_swap_stop+0x2e0/0x2e0
+[  208.661090]  ? btrfs_check_rw_degradable+0xb0/0x240
+[  208.662077]  open_ctree+0x37c4/0x3ce9
+[  208.662822]  ? close_ctree+0x4a0/0x4a0
+[  208.663580]  ? bdi_register_va+0x44/0x50
+[  208.664371]  ? super_setup_bdi_name+0x11b/0x1a0
+[  208.665302]  ? kill_block_super+0x80/0x80
+[  208.666111]  ? snprintf+0x96/0xd0
+[  208.666787]  btrfs_mount_root+0xae6/0xc60
+[  208.667596]  ? btrfs_mount_root+0xae6/0xc60
+[  208.668449]  ? pcpu_block_update_hint_alloc+0x1f5/0x2a0
+[  208.669505]  ? btrfs_decode_error+0x40/0x40
+[  208.670345]  ? find_next_bit+0x57/0x90
+[  208.671101]  ? cpumask_next+0x1a/0x20
+[  208.671837]  ? pcpu_alloc+0x449/0x8c0
+[  208.672577]  ? pcpu_free_area+0x410/0x410
+[  208.673393]  ? memcg_kmem_put_cache+0x1b/0xa0
+[  208.674267]  ? memcpy+0x45/0x50
+[  208.674905]  mount_fs+0x60/0x1a0
+[  208.675562]  ? btrfs_decode_error+0x40/0x40
+[  208.676399]  ? mount_fs+0x60/0x1a0
+[  208.677088]  ? alloc_vfsmnt+0x309/0x360
+[  208.677880]  vfs_kern_mount+0x6b/0x1a0
+[  208.678634]  ? entry_SYSCALL_64_after_hwframe+0x44/0xa9
+[  208.679671]  btrfs_mount+0x209/0xb71
+[  208.680390]  ? pcpu_block_update_hint_alloc+0x1f5/0x2a0
+[  208.681442]  ? btrfs_remount+0x8e0/0x8e0
+[  208.682247]  ? find_next_zero_bit+0x2c/0xa0
+[  208.683119]  ? find_next_bit+0x57/0x90
+[  208.683876]  ? cpumask_next+0x1a/0x20
+[  208.684619]  ? pcpu_alloc+0x449/0x8c0
+[  208.685371]  ? pcpu_free_area+0x410/0x410
+[  208.686177]  ? memcg_kmem_put_cache+0x1b/0xa0
+[  208.687046]  ? memcpy+0x45/0x50
+[  208.687685]  mount_fs+0x60/0x1a0
+[  208.688337]  ? btrfs_remount+0x8e0/0x8e0
+[  208.689121]  ? mount_fs+0x60/0x1a0
+[  208.689828]  ? alloc_vfsmnt+0x309/0x360
+[  208.690599]  vfs_kern_mount+0x6b/0x1a0
+[  208.691352]  do_mount+0x34a/0x18a0
+[  208.692039]  ? lockref_put_or_lock+0xcf/0x160
+[  208.692909]  ? copy_mount_string+0x20/0x20
+[  208.693742]  ? memcg_kmem_put_cache+0x1b/0xa0
+[  208.694615]  ? kasan_check_write+0x14/0x20
+[  208.695437]  ? _copy_from_user+0x6a/0x90
+[  208.696226]  ? memdup_user+0x42/0x60
+[  208.696948]  ksys_mount+0x83/0xd0
+[  208.697631]  __x64_sys_mount+0x67/0x80
+[  208.698385]  do_syscall_64+0x78/0x170
+[  208.699122]  entry_SYSCALL_64_after_hwframe+0x44/0xa9
+[  208.700124] RIP: 0033:0x7fd419987b9a
+[  208.700842] RSP: 002b:00007fff30668b88 EFLAGS: 00000206 ORIG_RAX: 00000000000000a5
+[  208.702345] RAX: ffffffffffffffda RBX: 0000000001829030 RCX: 00007fd419987b9a
+[  208.703742] RDX: 0000000001829210 RSI: 000000000182af30 RDI: 0000000001831ec0
+[  208.705134] RBP: 0000000000000000 R08: 0000000000000000 R09: 0000000000000014
+[  208.706533] R10: 00000000c0ed0000 R11: 0000000000000206 R12: 0000000001831ec0
+[  208.707931] R13: 0000000001829210 R14: 0000000000000000 R15: 0000000000000003
+[  208.713050] RIP: _raw_spin_lock+0x1e/0x40 RSP: ffff8801df437338
+[  208.714238] CR2: 0000000000000570
+[  208.714985] ---[ end trace be56bf4112c4e5e3 ]---
+
+Found by Wen Xu and Po-Ning Tseng from SSLab, Gatech.
