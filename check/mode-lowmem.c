@@ -3677,6 +3677,18 @@ static int check_extent_data_backref(struct btrfs_fs_info *fs_info,
 		if (slot >= btrfs_header_nritems(leaf) ||
 		    btrfs_header_owner(leaf) != root_id)
 			goto next;
+		/*
+		 * For tree blocks have been relocated, data backref are
+		 * shared instead of keyed. Do not account it.
+		 */
+		if (btrfs_header_flag(leaf, BTRFS_HEADER_FLAG_RELOC)) {
+			/*
+			 * skip the leaf to speed up.
+			 */
+			slot = btrfs_header_nritems(leaf);
+			goto next;
+		}
+
 		btrfs_item_key_to_cpu(leaf, &key, slot);
 		if (key.objectid != objectid ||
 		    key.type != BTRFS_EXTENT_DATA_KEY)
