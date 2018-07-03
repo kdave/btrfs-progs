@@ -2158,13 +2158,15 @@ int btrfs_read_chunk_tree(struct btrfs_fs_info *fs_info)
 			dev_item = btrfs_item_ptr(leaf, slot,
 						  struct btrfs_dev_item);
 			ret = read_one_dev(fs_info, leaf, dev_item);
-			BUG_ON(ret);
+			if (ret < 0)
+				goto error;
 		} else if (found_key.type == BTRFS_CHUNK_ITEM_KEY) {
 			struct btrfs_chunk *chunk;
 			chunk = btrfs_item_ptr(leaf, slot, struct btrfs_chunk);
 			ret = read_one_chunk(fs_info, &found_key, leaf, chunk,
 					     slot);
-			BUG_ON(ret);
+			if (ret < 0)
+				goto error;
 		}
 		path->slots[0]++;
 	}
