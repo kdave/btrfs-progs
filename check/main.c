@@ -9458,7 +9458,7 @@ const char * const cmd_check_usage[] = {
 	"                            original - read inodes and extents to memory (requires",
 	"                                       more memory, does less IO)",
 	"                            lowmem   - try to use less memory but read blocks again",
-	"                                       when needed",
+	"                                       when needed (experimental)",
 	"--check-data-csum           verify checksums of data blocks",
 	"-Q|--qgroup-report          print a report on qgroup consistency",
 	"-E|--subvol-extents <subvolid>",
