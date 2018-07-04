@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <time.h>
 
 #include "task-utils.h"
 
@@ -37,7 +38,7 @@ struct task_info *task_init(void *(*threadfn)(void *), int (*postfn)(void *),
 	return info;
 }
 
-int task_start(struct task_info *info)
+int task_start(struct task_info *info, time_t *start_time, u64 *item_count)
 {
 	int ret;
 
@@ -46,6 +47,11 @@ int task_start(struct task_info *info)
 
 	if (!info->threadfn)
 		return -1;
+
+	if (start_time)
+		*start_time = time(NULL);
+	if (item_count)
+		*item_count = 0;
 
 	ret = pthread_create(&info->id, NULL, info->threadfn,
 			     info->private_data);
@@ -102,7 +108,7 @@ int task_period_start(struct task_info *info, unsigned int period_ms)
 	info->periodic.wakeups_missed = 0;
 
 	sec = period_ms / 1000;
-	ns = (period_ms - (sec * 1000)) * 1000;
+	ns = (period_ms - (sec * 1000)) * 1000 * 1000;
 	itval.it_interval.tv_sec = sec;
 	itval.it_interval.tv_nsec = ns;
 	itval.it_value.tv_sec = sec;
