@@ -138,8 +138,10 @@ Otherwise some simple heuristics are applied to detect an incompressible file.
 If the first blocks written to a file are not compressible, the whole file is
 permanently marked to skip compression. As this is too simple, the
 'compress-force' is a workaround that will compress most of the files at the
-cost of some wasted CPU cycles on failed attempts. The heuristics of 'compress'
-will improve in the future so this will not be necessary.
+cost of some wasted CPU cycles on failed attempts.
+Since kernel 4.15, a set of heuristic algorithms have been improved by using
+frequency sampling, repeated pattern detection and Shannon entropy calculation
+to avoid that.
 +
 NOTE: If compression is enabled, 'nodatacow' and 'nodatasum' are disabled.
 
@@ -300,6 +302,7 @@ which will effectively start the inode numbers from the beginning again.
 (default: on, even read-only)
 +
 Enable/disable log replay at mount time. See also 'treelog'.
+Note that 'nologreplay' is the same as 'norecovery'.
 +
 WARNING: currently, the tree log is replayed even with a read-only mount! To
 disable that behaviour, mount also with 'nologreplay'.
@@ -336,7 +339,8 @@ inlined files).
 (since: 4.5, default: off)
 +
 Do not attempt any data recovery at mount time. This will disable 'logreplay'
-and avoids other write operations.
+and avoids other write operations. Note that this option is the same as
+'nologreplay'.
 +
 NOTE: The opposite option 'recovery' used to have different meaning but was
 changed for consistency with other filesystems, where 'norecovery' is used for
@@ -388,12 +392,13 @@ chosen, which is 'v1'.
 *ssd*::
 *ssd_spread*::
 *nossd*::
+*nossd_spread*::
 (default: SSD autodetected)
 +
 Options to control SSD allocation schemes.  By default, BTRFS will
 enable or disable SSD optimizations depending on status of a device with
 respect to rotational or non-rotational type. This is determined by the
-contents of '/sys/block/DEV/queue/rotational'). If it is 1, the 'ssd' option is
+contents of '/sys/block/DEV/queue/rotational'). If it is 0, the 'ssd' option is
 turned on.  The option 'nossd' will disable the autodetection.
 +
 The optimizations make use of the absence of the seek penalty that's inherent
@@ -411,7 +416,7 @@ fragmentation. The layout tuning has been kept intact for the option
 The 'ssd_spread' mount option attempts to allocate into bigger and aligned
 chunks of unused space, and may perform better on low-end SSDs.  'ssd_spread'
 implies 'ssd', enabling all other SSD heuristics as well. The option 'nossd'
-will disable all SSD options.
+will disable all SSD options while 'nossd_spread' only disables 'ssd_spread'.
 
 *subvol='path'*::
 Mount subvolume from 'path' rather than the toplevel subvolume. The
@@ -470,7 +475,10 @@ root user can do that.
 NOTE: historically, any user could create a snapshot even if he was not owner
 of the source subvolume, the subvolume deletion has been restricted for that
 reason. The subvolume creation has been restricted but this mount option is
-still required. This is a usability issue and will be addressed in the future.
+still required. This is a usability issue.
+Since 4.18, the `rmdir`(2) syscall can delete an empty subvolume just like an
+ordinary directory. Whether this is possible can be detected at runtime, see
+'rmdir_subvol' feature in 'FILESYSTEM FEATURES'.
 
 DEPRECATED MOUNT OPTIONS
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -605,11 +613,16 @@ stored as an extent, saves a few percent of metadata if sparse files are used
 +
 the filesystem contains or contained a raid56 profile of block groups
 
+*rmdir_subvol*::
+(since: 4.18)
++
+indicate that `rmdir`(2) syscall can delete an empty subvolume just like an
+ordinary directory. Note that this feature only depends on the kernel version.
+
 *skinny_metadata*::
 (since: 3.10)
 +
 reduced-size metadata for extent references, saves a few percent of metadata
-
 
 FILESYSTEM LIMITS
 -----------------
