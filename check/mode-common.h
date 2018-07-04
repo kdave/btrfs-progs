@@ -38,6 +38,26 @@ struct node_refs {
 	int full_backref[BTRFS_MAX_LEVEL];
 };
 
+enum task_position {
+	TASK_ROOT_ITEMS,
+	TASK_EXTENTS,
+	TASK_FREE_SPACE,
+	TASK_FS_ROOTS,
+	TASK_CSUMS,
+	TASK_ROOT_REFS,
+	TASK_QGROUPS,
+	TASK_NOTHING, /* has to be the last element */
+};
+
+struct task_ctx {
+	int progress_enabled;
+	enum task_position tp;
+	time_t start_time;
+	u64 item_count;
+
+	struct task_info *info;
+};
+
 extern u64 bytes_used;
 extern u64 total_csum_bytes;
 extern u64 total_btree_bytes;

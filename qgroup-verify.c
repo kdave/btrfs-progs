@@ -34,6 +34,13 @@
 
 #include "qgroup-verify.h"
 
+static u64 *qgroup_item_count;
+
+void qgroup_set_item_count_ptr(u64 *item_count_ptr)
+{
+	qgroup_item_count = item_count_ptr;
+}
+
 /*#define QGROUP_VERIFY_DEBUG*/
 static unsigned long tot_extents_scanned = 0;
 
@@ -735,6 +742,7 @@ static int travel_tree(struct btrfs_fs_info *info, struct btrfs_root *root,
 	 */
 	nr = btrfs_header_nritems(eb);
 	for (i = 0; i < nr; i++) {
+		(*qgroup_item_count)++;
 		new_bytenr = btrfs_node_blockptr(eb, i);
 		new_num_bytes = info->nodesize;
 
