@@ -30,4 +30,6 @@ int print_extent_state(struct btrfs_fs_info *info, u64 subvol);
 
 void free_qgroup_counts(void);
 
+void qgroup_set_item_count_ptr(u64 *item_count_ptr);
+
 #endif

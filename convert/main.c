@@ -1182,7 +1182,7 @@ static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
 	if (progress) {
 		ctx.info = task_init(print_copied_inodes, after_copied_inodes,
 				     &ctx);
-		task_start(ctx.info);
+		task_start(ctx.info, NULL, NULL);
 	}
 	ret = copy_inodes(&cctx, root, convert_flags, &ctx);
 	if (ret) {

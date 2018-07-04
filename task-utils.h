@@ -18,6 +18,7 @@
 #define __TASK_UTILS_H__
 
 #include <pthread.h>
+#include "kerncompat.h"
 
 struct periodic_info {
 	int timer_fd;
@@ -35,7 +36,7 @@ struct task_info {
 /* task life cycle */
 struct task_info *task_init(void *(*threadfn)(void *), int (*postfn)(void *),
 			    void *thread_private);
-int task_start(struct task_info *info);
+int task_start(struct task_info *info, time_t *start_time, u64 *item_count);
 void task_stop(struct task_info *info);
 void task_deinit(struct task_info *info);
 
