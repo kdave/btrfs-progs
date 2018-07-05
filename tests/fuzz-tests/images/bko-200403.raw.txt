@@ -1,0 +1,93 @@
+Link: https://bugzilla.kernel.org/show_bug.cgi?id=200403
+Wen Xu 2018-07-04 17:21:58 UTC
+
+Created attachment 277167 [details]
+The (compressed) crafted image which causes crash
+
+- Reproduce
+# mkdir mnt
+# mount -t btrfs 0.img mnt
+# gcc -o poc poc.c
+# ./poc ./mnt
+# umount mnt
+
+- Kernel message
+[  230.611533] BTRFS: device fsid 3381d111-94a3-4ac7-8f39-611bbbdab7e6 devid 1 transid 8 /dev/loop0
+[  230.632922] BTRFS info (device loop0): disk space caching is enabled
+[  230.632935] BTRFS info (device loop0): has skinny extents
+[  230.647496] BTRFS info (device loop0): creating UUID tree
+[  237.692643] ------------[ cut here ]------------
+[  237.692654] kernel BUG at fs/btrfs/volumes.c:1625!
+[  237.693822] invalid opcode: 0000 [#1] SMP KASAN PTI
+[  237.694867] CPU: 1 PID: 1387 Comm: umount Not tainted 4.18.0-rc1+ #8
+[  237.696177] Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS Ubuntu-1.8.2-1ubuntu1 04/01/2014
+[  237.698177] RIP: 0010:btrfs_remove_chunk+0x37a/0xd60
+[  237.699209] Code: e0 48 39 85 28 ff ff ff 77 20 0f b6 85 27 ff ff ff 4d 89 6f 80 4c 89 f7 4d 89 67 89 41 88 47 88 e8 0b 01 f7 ff e9 f5 fe ff ff <0f> 0b 0f 85 5c 08 00 00 4d 8d 66 40 4c 89 f7 e8 42 f9 b6 ff 4c 89
+[  237.703034] RSP: 0018:ffff8801f0b0fad8 EFLAGS: 00010206
+[  237.704122] RAX: 0000000008000000 RBX: ffff8801ef4d7c38 RCX: 0000000000000000
+[  237.705572] RDX: ffffed003e161f30 RSI: 0000000000000e70 RDI: ffff8801f2a6ae70
+[  237.707035] RBP: ffff8801f0b0fc38 R08: ffff8801f0b0f9e0 R09: ffff8801f0b0fa20
+[  237.708485] R10: 0000000000000003 R11: ffffed003e161f7c R12: 0000000007400000
+[  237.709929] R13: 0000000000000001 R14: ffff8801f2bf0a50 R15: ffff8801f0b0fc10
+[  237.711391] FS:  00007f691b770840(0000) GS:ffff8801f6f00000(0000) knlGS:0000000000000000
+[  237.713034] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[  237.714206] CR2: 0000000000cb0348 CR3: 00000001f26f8000 CR4: 00000000000006e0
+[  237.719741] Call Trace:
+[  237.720274]  ? btrfs_grow_device+0x240/0x240
+[  237.721193]  ? kasan_check_read+0x11/0x20
+[  237.722080]  ? mutex_lock+0x99/0xf0
+[  237.722854]  btrfs_delete_unused_bgs+0x4b6/0x5c0
+[  237.723836]  close_ctree+0x40a/0x460
+[  237.724586]  ? transaction_kthread+0x250/0x250
+[  237.725523]  ? dispose_list+0xa0/0xa0
+[  237.726303]  btrfs_put_super+0x25/0x30
+[  237.727110]  generic_shutdown_super+0xb9/0x1c0
+[  237.728032]  kill_anon_super+0x24/0x40
+[  237.728814]  btrfs_kill_super+0x31/0x220
+[  237.729630]  deactivate_locked_super+0x6f/0xa0
+[  237.730548]  deactivate_super+0x5e/0x80
+[  237.731352]  cleanup_mnt+0x61/0xa0
+[  237.732060]  __cleanup_mnt+0x12/0x20
+[  237.732835]  task_work_run+0xc8/0xf0
+[  237.733605]  exit_to_usermode_loop+0x125/0x130
+[  237.734530]  do_syscall_64+0x138/0x170
+[  237.735331]  entry_SYSCALL_64_after_hwframe+0x44/0xa9
+[  237.736676] RIP: 0033:0x7f691b050487
+[  237.737457] Code: 83 c8 ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 31 f6 e9 09 00 00 00 66 0f 1f 84 00 00 00 00 00 b8 a6 00 00 00 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 8b 0d e1 c9 2b 00 f7 d8 64 89 01 48
+[  237.741327] RSP: 002b:00007ffdf3a06d98 EFLAGS: 00000246 ORIG_RAX: 00000000000000a6
+[  237.742889] RAX: 0000000000000000 RBX: 0000000000ca7030 RCX: 00007f691b050487
+[  237.744351] RDX: 0000000000000001 RSI: 0000000000000000 RDI: 0000000000cae1e0
+[  237.745814] RBP: 0000000000cae1e0 R08: 0000000000000000 R09: 0000000000000015
+[  237.747289] R10: 00000000000006b2 R11: 0000000000000246 R12: 00007f691b55983c
+[  237.748750] R13: 0000000000000000 R14: 0000000000ca7210 R15: 00007ffdf3a07020
+[  237.750224] Modules linked in: snd_hda_codec_generic snd_hda_intel snd_hda_codec snd_hwdep snd_hda_core snd_pcm snd_timer snd mac_hid i2c_piix4 soundcore ib_iser rdma_cm iw_cm ib_cm ib_core iscsi_tcp libiscsi_tcp libiscsi scsi_transport_iscsi raid10 raid456 async_raid6_recov async_memcpy async_pq async_xor async_tx raid1 raid0 multipath linear 8139too qxl drm_kms_helper crct10dif_pclmul syscopyarea sysfillrect sysimgblt fb_sys_fops ttm crc32_pclmul aesni_intel drm aes_x86_64 crypto_simd cryptd glue_helper 8139cp mii pata_acpi floppy
+[  237.760666] ---[ end trace 2e85051acb5f6dc1 ]---
+[  237.761718] RIP: 0010:btrfs_remove_chunk+0x37a/0xd60
+[  237.762827] Code: e0 48 39 85 28 ff ff ff 77 20 0f b6 85 27 ff ff ff 4d 89 6f 80 4c 89 f7 4d 89 67 89 41 88 47 88 e8 0b 01 f7 ff e9 f5 fe ff ff <0f> 0b 0f 85 5c 08 00 00 4d 8d 66 40 4c 89 f7 e8 42 f9 b6 ff 4c 89
+[  237.766977] RSP: 0018:ffff8801f0b0fad8 EFLAGS: 00010206
+[  237.768157] RAX: 0000000008000000 RBX: ffff8801ef4d7c38 RCX: 0000000000000000
+[  237.769672] RDX: ffffed003e161f30 RSI: 0000000000000e70 RDI: ffff8801f2a6ae70
+[  237.771147] RBP: ffff8801f0b0fc38 R08: ffff8801f0b0f9e0 R09: ffff8801f0b0fa20
+[  237.772650] R10: 0000000000000003 R11: ffffed003e161f7c R12: 0000000007400000
+[  237.774119] R13: 0000000000000001 R14: ffff8801f2bf0a50 R15: ffff8801f0b0fc10
+[  237.775598] FS:  00007f691b770840(0000) GS:ffff8801f6f00000(0000) knlGS:0000000000000000
+[  237.777297] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[  237.778496] CR2: 0000000000cb0348 CR3: 00000001f26f8000 CR4: 00000000000006e0
+
+
+===== Extra info for btrfs-progs ======
+It has one corrupted root item, (41 ROOT_ITEM 0) referring tree block
+29364224, which is also UUID tree root.
+It would cause original mode to hit BUG_ON().
+Checking filesystem on /home/adam/btrfs/crafted_images/runtime/0.img
+UUID: 3381d111-94a3-4ac7-8f39-611bbbdab7e6
+checking extents
+check/main.c:3677: check_owner_ref: BUG_ON `rec->is_root` triggered, value 1
+btrfs(+0x572c2)[0x562d65da72c2]
+btrfs(+0x6098d)[0x562d65db098d]
+btrfs(+0x60bb6)[0x562d65db0bb6]
+btrfs(+0x6179b)[0x562d65db179b]
+btrfs(cmd_check+0x1199)[0x562d65db5589]
+btrfs(main+0x88)[0x562d65d62768]
+/usr/lib/libc.so.6(__libc_start_main+0xeb)[0x7f4fcbb1b06b]
+btrfs(_start+0x2a)[0x562d65d6288a]
