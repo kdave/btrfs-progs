@@ -3398,6 +3398,7 @@ static int check_fs_roots(struct btrfs_fs_info *fs_info,
 	struct extent_buffer *leaf, *tree_node;
 	struct btrfs_root *tmp_root;
 	struct btrfs_root *tree_root = fs_info->tree_root;
+	u64 skip_root = 0;
 	int ret;
 	int err = 0;
 
@@ -3413,7 +3414,10 @@ static int check_fs_roots(struct btrfs_fs_info *fs_info,
 
 again:
 	key.offset = 0;
-	key.objectid = 0;
+	if (skip_root)
+		key.objectid = skip_root + 1;
+	else
+		key.objectid = 0;
 	key.type = BTRFS_ROOT_ITEM_KEY;
 	ret = btrfs_search_slot(NULL, tree_root, &key, &path, 0, 0);
 	if (ret < 0) {
@@ -3422,6 +3426,7 @@ again:
 	}
 	tree_node = tree_root->node;
 	while (1) {
+
 		if (tree_node != tree_root->node) {
 			free_root_recs_tree(root_cache);
 			btrfs_release_path(&path);
@@ -3458,8 +3463,18 @@ again:
 				btrfs_release_path(&path);
 				goto again;
 			}
-			if (ret)
+			if (ret) {
 				err = 1;
+
+				/*
+				 * We failed to repair this root but modified
+				 * tree root, after again: label we will still
+				 * hit this root and fail to repair, so we must
+				 * skip it to avoid infinite loop.
+				 */
+				if (repair)
+					skip_root = key.objectid;
+			}
 			if (key.objectid == BTRFS_TREE_RELOC_OBJECTID)
 				btrfs_free_fs_root(tmp_root);
 		} else if (key.type == BTRFS_ROOT_REF_KEY ||
