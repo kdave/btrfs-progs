@@ -1,0 +1,198 @@
+URL: https://bugzilla.kernel.org/show_bug.cgi?id=199839
+Wen Xu 2018-05-26 04:18:45 UTC
+
+Created attachment 276197 [details]
+The (compressed) crafted image which causes crash
+
+- Overview
+use-after-free in try_merge_free_space() when mounting a crafted btrfs image
+
+- Reproduce (4.17 KASAN build)
+# mkdir mnt
+# mount -t btrfs 8.img mnt
+
+- Kernel Message
+[  449.751861] BTRFS: device fsid 12b338de-a2e9-40fa-a4b0-90e53b7c5773 devid 1 transid 8 /dev/loop0
+[  449.757216] BTRFS info (device loop0): disk space caching is enabled
+[  449.757221] BTRFS info (device loop0): has skinny extents
+[  449.785096] BTRFS error (device loop0): bad tree block start 0 29396992
+[  449.788629] BTRFS info (device loop0): read error corrected: ino 0 off 29396992 (dev /dev/loop0 sector 73800)
+[  449.792965] BTRFS error (device loop0): bad fsid on block 29409280
+[  449.795193] BTRFS info (device loop0): read error corrected: ino 0 off 29409280 (dev /dev/loop0 sector 73824)
+[  449.795401] BTRFS info (device loop0): creating UUID tree
+[  449.883426] ==================================================================
+[  449.886228] BUG: KASAN: use-after-free in try_merge_free_space+0xc0/0x2e0
+[  449.888344] Read of size 8 at addr ffff8801ed10f030 by task mount/1291
+
+[  449.889947] CPU: 1 PID: 1291 Comm: mount Not tainted 4.17.0-rc5+ #6
+[  449.889951] Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS Ubuntu-1.8.2-1ubuntu1 04/01/2014
+[  449.889953] Call Trace:
+[  449.889976]  dump_stack+0x7b/0xb5
+[  449.890274]  print_address_description+0x70/0x290
+[  449.890286]  kasan_report+0x291/0x390
+[  449.890296]  ? try_merge_free_space+0xc0/0x2e0
+[  449.890303]  __asan_load8+0x54/0x90
+[  449.890310]  try_merge_free_space+0xc0/0x2e0
+[  449.890318]  __btrfs_add_free_space+0x96/0x5e0
+[  449.890324]  ? kasan_check_write+0x14/0x20
+[  449.890331]  ? btrfs_get_block_group+0x1e/0x30
+[  449.890337]  ? block_group_cache_tree_search+0xef/0x150
+[  449.890343]  unpin_extent_range+0x376/0x670
+[  449.890350]  ? __exclude_logged_extent+0x160/0x160
+[  449.890358]  btrfs_finish_extent_commit+0x15b/0x490
+[  449.890371]  ? __find_get_block+0x106/0x400
+[  449.890378]  ? btrfs_prepare_extent_commit+0x1a0/0x1a0
+[  449.890384]  ? write_all_supers+0x714/0x1420
+[  449.890394]  btrfs_commit_transaction+0xaf4/0xfa0
+[  449.890402]  ? btrfs_apply_pending_changes+0xa0/0xa0
+[  449.890407]  ? start_transaction+0x153/0x640
+[  449.890414]  btrfs_create_uuid_tree+0x6a/0x170
+[  449.890419]  open_ctree+0x3b26/0x3ce9
+[  449.890429]  ? close_ctree+0x4a0/0x4a0
+[  449.890441]  ? bdi_register_va+0x44/0x50
+[  449.890451]  ? super_setup_bdi_name+0x11b/0x1a0
+[  449.890457]  ? kill_block_super+0x80/0x80
+[  449.890468]  ? snprintf+0x96/0xd0
+[  449.890479]  btrfs_mount_root+0xae6/0xc60
+[  449.890485]  ? btrfs_mount_root+0xae6/0xc60
+[  449.890491]  ? pcpu_block_update_hint_alloc+0x1f5/0x2a0
+[  449.890498]  ? btrfs_decode_error+0x40/0x40
+[  449.890510]  ? find_next_bit+0x57/0x90
+[  449.890517]  ? cpumask_next+0x1a/0x20
+[  449.890522]  ? pcpu_alloc+0x449/0x8c0
+[  449.890528]  ? pcpu_free_area+0x410/0x410
+[  449.890534]  ? memcg_kmem_put_cache+0x1b/0xa0
+[  449.890540]  ? memcpy+0x45/0x50
+[  449.890547]  mount_fs+0x60/0x1a0
+[  449.890553]  ? btrfs_decode_error+0x40/0x40
+[  449.890558]  ? mount_fs+0x60/0x1a0
+[  449.890565]  ? alloc_vfsmnt+0x309/0x360
+[  449.890570]  vfs_kern_mount+0x6b/0x1a0
+[  449.890576]  ? entry_SYSCALL_64_after_hwframe+0x44/0xa9
+[  449.890583]  btrfs_mount+0x209/0xb71
+[  449.890589]  ? pcpu_block_update_hint_alloc+0x1f5/0x2a0
+[  449.890595]  ? btrfs_remount+0x8e0/0x8e0
+[  449.890601]  ? find_next_zero_bit+0x2c/0xa0
+[  449.890608]  ? find_next_bit+0x57/0x90
+[  449.890613]  ? cpumask_next+0x1a/0x20
+[  449.890617]  ? pcpu_alloc+0x449/0x8c0
+[  449.890624]  ? pcpu_free_area+0x410/0x410
+[  449.890629]  ? memcg_kmem_put_cache+0x1b/0xa0
+[  449.890634]  ? memcpy+0x45/0x50
+[  449.890641]  mount_fs+0x60/0x1a0
+[  449.890646]  ? btrfs_remount+0x8e0/0x8e0
+[  449.890652]  ? mount_fs+0x60/0x1a0
+[  449.890656]  ? alloc_vfsmnt+0x309/0x360
+[  449.890662]  vfs_kern_mount+0x6b/0x1a0
+[  449.890668]  do_mount+0x34a/0x18a0
+[  449.890673]  ? lockref_put_or_lock+0xcf/0x160
+[  449.890680]  ? copy_mount_string+0x20/0x20
+[  449.890685]  ? memcg_kmem_put_cache+0x1b/0xa0
+[  449.890691]  ? kasan_check_write+0x14/0x20
+[  449.890696]  ? _copy_from_user+0x6a/0x90
+[  449.890702]  ? memdup_user+0x42/0x60
+[  449.890708]  ksys_mount+0x83/0xd0
+[  449.890714]  __x64_sys_mount+0x67/0x80
+[  449.890723]  do_syscall_64+0x78/0x170
+[  449.890729]  entry_SYSCALL_64_after_hwframe+0x44/0xa9
+[  449.890734] RIP: 0033:0x7fc36964fb9a
+[  449.890737] RSP: 002b:00007ffd268892f8 EFLAGS: 00000202 ORIG_RAX: 00000000000000a5
+[  449.890744] RAX: ffffffffffffffda RBX: 0000000000e7f030 RCX: 00007fc36964fb9a
+[  449.890747] RDX: 0000000000e7f210 RSI: 0000000000e80f30 RDI: 0000000000e87ec0
+[  449.890750] RBP: 0000000000000000 R08: 0000000000000000 R09: 0000000000000014
+[  449.890753] R10: 00000000c0ed0000 R11: 0000000000000202 R12: 0000000000e87ec0
+[  449.890756] R13: 0000000000e7f210 R14: 0000000000000000 R15: 0000000000000003
+
+[  449.891109] Allocated by task 1291:
+[  449.891832]  save_stack+0x46/0xd0
+[  449.891838]  kasan_kmalloc+0xad/0xe0
+[  449.891843]  kasan_slab_alloc+0x11/0x20
+[  449.891848]  kmem_cache_alloc+0xd1/0x1e0
+[  449.891854]  __btrfs_add_free_space+0x43/0x5e0
+[  449.891859]  add_new_free_space+0x22b/0x240
+[  449.891864]  btrfs_read_block_groups+0xae3/0xc60
+[  449.891868]  open_ctree+0x2cfc/0x3ce9
+[  449.891873]  btrfs_mount_root+0xae6/0xc60
+[  449.891878]  mount_fs+0x60/0x1a0
+[  449.891883]  vfs_kern_mount+0x6b/0x1a0
+[  449.891888]  btrfs_mount+0x209/0xb71
+[  449.891893]  mount_fs+0x60/0x1a0
+[  449.891897]  vfs_kern_mount+0x6b/0x1a0
+[  449.891902]  do_mount+0x34a/0x18a0
+[  449.891906]  ksys_mount+0x83/0xd0
+[  449.891911]  __x64_sys_mount+0x67/0x80
+[  449.891916]  do_syscall_64+0x78/0x170
+[  449.891921]  entry_SYSCALL_64_after_hwframe+0x44/0xa9
+
+[  449.892235] Freed by task 1291:
+[  449.892866]  save_stack+0x46/0xd0
+[  449.892872]  __kasan_slab_free+0x13c/0x1a0
+[  449.892877]  kasan_slab_free+0xe/0x10
+[  449.892882]  kmem_cache_free+0x89/0x1e0
+[  449.892888]  try_merge_free_space+0x274/0x2e0
+[  449.892894]  __btrfs_add_free_space+0x96/0x5e0
+[  449.892898]  unpin_extent_range+0x376/0x670
+[  449.892904]  btrfs_finish_extent_commit+0x15b/0x490
+[  449.892909]  btrfs_commit_transaction+0xaf4/0xfa0
+[  449.892913]  btrfs_create_uuid_tree+0x6a/0x170
+[  449.892917]  open_ctree+0x3b26/0x3ce9
+[  449.892922]  btrfs_mount_root+0xae6/0xc60
+[  449.892927]  mount_fs+0x60/0x1a0
+[  449.892932]  vfs_kern_mount+0x6b/0x1a0
+[  449.892937]  btrfs_mount+0x209/0xb71
+[  449.892942]  mount_fs+0x60/0x1a0
+[  449.892946]  vfs_kern_mount+0x6b/0x1a0
+[  449.892951]  do_mount+0x34a/0x18a0
+[  449.892955]  ksys_mount+0x83/0xd0
+[  449.892960]  __x64_sys_mount+0x67/0x80
+[  449.892965]  do_syscall_64+0x78/0x170
+[  449.892970]  entry_SYSCALL_64_after_hwframe+0x44/0xa9
+
+[  449.893286] The buggy address belongs to the object at ffff8801ed10f000
+                which belongs to the cache btrfs_free_space of size 72
+[  449.895793] The buggy address is located 48 bytes inside of
+                72-byte region [ffff8801ed10f000, ffff8801ed10f048)
+[  449.898035] The buggy address belongs to the page:
+[  449.898979] page:ffffea0007b443c0 count:1 mapcount:0 mapping:0000000000000000 index:0x0
+[  449.900562] flags: 0x2ffff0000000100(slab)
+[  449.901379] raw: 02ffff0000000100 0000000000000000 0000000000000000 0000000180270027
+[  449.902881] raw: dead000000000100 dead000000000200 ffff8801e0a676c0 0000000000000000
+[  449.904396] page dumped because: kasan: bad access detected
+
+[  449.905800] Memory state around the buggy address:
+[  449.906748]  ffff8801ed10ef00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[  449.908165]  ffff8801ed10ef80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[  449.909577] >ffff8801ed10f000: fb fb fb fb fb fb fb fb fb fc fc fc fc fc fc fc
+[  449.910969]                                      ^
+[  449.911933]  ffff8801ed10f080: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
+[  449.913328]  ffff8801ed10f100: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
+[  449.914720] ==================================================================
+[  449.916119] Disabling lock debugging due to kernel taint
+
+No kernel crash on plain kernel.
+
+- Reason
+https://elixir.bootlin.com/linux/v4.17-rc5/source/fs/btrfs/free-space-cache.c#L2161
+
+	if (left_info && !left_info->bitmap &&
+	    left_info->offset + left_info->bytes == offset) {
+		if (update_stat)
+			unlink_free_space(ctl, left_info);
+		else
+			__unlink_free_space(ctl, left_info);
+		info->offset = left_info->offset;
+		info->bytes += left_info->bytes;
+		kmem_cache_free(btrfs_free_space_cachep, left_info);
+		merged = true;
+	}
+
+	return merged;
+
+Regarding KASAN report, left_info is already freed but referenced (->bitmap). It is in fact freed just several lines after, namely kmem_cache_free(btrfs_free_space_cachep, left_info);
+
+Found by Wen Xu and Po-Ning Tseng from SSLab, Gatech.
+
+===== Extra info for btrfs-progs =====
+This image could cause btrfs-progs to BUG_ON() when opening the image.
+Fixed by "btrfs-progs: Don't BUG_ON() if we failed to load one device or one
+chunk".
