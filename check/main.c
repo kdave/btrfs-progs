@@ -3724,7 +3724,12 @@ static int check_owner_ref(struct btrfs_root *root,
 		if (btrfs_header_owner(buf) == back->root)
 			return 0;
 	}
-	BUG_ON(rec->is_root);
+	/*
+	 * Some unexpected root item referring to this one, return 1 to
+	 * indicate owner not found
+	 */
+	if (rec->is_root)
+		return 1;
 
 	/* try to find the block by search corresponding fs tree */
 	key.objectid = btrfs_header_owner(buf);
