@@ -8380,7 +8380,7 @@ static int do_check_chunks_and_extents(struct btrfs_fs_info *fs_info)
 }
 
 static int btrfs_fsck_reinit_root(struct btrfs_trans_handle *trans,
-			   struct btrfs_root *root, int overwrite)
+				  struct btrfs_root *root)
 {
 	struct extent_buffer *c;
 	struct extent_buffer *old = root->node;
@@ -8390,21 +8390,13 @@ static int btrfs_fsck_reinit_root(struct btrfs_trans_handle *trans,
 
 	level = 0;
 
-	if (overwrite) {
-		c = old;
-		extent_buffer_get(c);
-		goto init;
-	}
 	c = btrfs_alloc_free_block(trans, root,
 				   root->fs_info->nodesize,
 				   root->root_key.objectid,
 				   &disk_key, level, 0, 0);
-	if (IS_ERR(c)) {
-		c = old;
-		extent_buffer_get(c);
-		overwrite = 1;
-	}
-init:
+	if (IS_ERR(c))
+		return PTR_ERR(c);
+
 	memset_extent_buffer(c, 0, 0, sizeof(struct btrfs_header));
 	btrfs_set_header_level(c, level);
 	btrfs_set_header_bytenr(c, c->start);
@@ -8423,9 +8415,7 @@ init:
 	/*
 	 * this case can happen in the following case:
 	 *
-	 * 1.overwrite previous root.
-	 *
-	 * 2.reinit reloc data root, this is because we skip pin
+	 * reinit reloc data root, this is because we skip pin
 	 * down reloc data tree before which means we can allocate
 	 * same block bytenr here.
 	 */
@@ -8610,7 +8600,7 @@ reinit_data_reloc:
 		goto out;
 	}
 	record_root_in_trans(trans, root);
-	ret = btrfs_fsck_reinit_root(trans, root, 0);
+	ret = btrfs_fsck_reinit_root(trans, root);
 	if (ret)
 		goto out;
 	ret = btrfs_make_root_dir(trans, root, BTRFS_FIRST_FREE_OBJECTID);
@@ -8676,7 +8666,7 @@ again:
 	}
 
 	/* Ok we can allocate now, reinit the extent root */
-	ret = btrfs_fsck_reinit_root(trans, fs_info->extent_root, 0);
+	ret = btrfs_fsck_reinit_root(trans, fs_info->extent_root);
 	if (ret) {
 		fprintf(stderr, "extent root initialization failed\n");
 		/*
@@ -9768,7 +9758,7 @@ int cmd_check(int argc, char **argv)
 
 		if (init_csum_tree) {
 			printf("Reinitialize checksum tree\n");
-			ret = btrfs_fsck_reinit_root(trans, info->csum_root, 0);
+			ret = btrfs_fsck_reinit_root(trans, info->csum_root);
 			if (ret) {
 				error("checksum tree initialization failed: %d",
 						ret);
