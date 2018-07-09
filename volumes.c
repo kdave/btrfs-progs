@@ -1924,9 +1924,12 @@ static int read_one_chunk(struct btrfs_fs_info *fs_info, struct btrfs_key *key,
 
 	}
 	ret = insert_cache_extent(&map_tree->cache_tree, &map->ce);
-	BUG_ON(ret);
+	if (ret < 0) {
+		error("failed to add chunk map start=%llu len=%llu: %d (%s)",
+		      map->ce.start, map->ce.size, ret, strerror(-ret));
+	}
 
-	return 0;
+	return ret;
 }
 
 static int fill_device_from_item(struct extent_buffer *leaf,
