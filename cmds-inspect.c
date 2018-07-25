@@ -211,6 +211,7 @@ static int cmd_inspect_logical_resolve(int argc, char **argv)
 		error("path buffer too small: %d bytes", bytes_left);
 		goto out;
 	}
+	ret = 0;
 
 	for (i = 0; i < inodes->elem_cnt; i += 3) {
 		u64 inum = inodes->val[i];
@@ -245,7 +246,8 @@ static int cmd_inspect_logical_resolve(int argc, char **argv)
 					goto out;
 				}
 			}
-			__ino_to_path_fd(inum, path_fd, verbose, full_path);
+			ret = __ino_to_path_fd(inum, path_fd, verbose,
+						full_path);
 			if (path_fd != fd)
 				close_file_or_dir(path_fd, dirs);
 		} else {
