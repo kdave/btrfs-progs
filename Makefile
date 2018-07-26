@@ -206,21 +206,29 @@ endif
 
 MAKEOPTS = --no-print-directory Q=$(Q)
 
-# build all by default
-progs = $(progs_install) btrfsck btrfs-corrupt-block
 
-# install only selected
+# Programs to install.
 progs_install = btrfs mkfs.btrfs btrfs-map-logical btrfs-image \
-	btrfs-find-root btrfstune \
-	btrfs-select-super
+		btrfs-find-root btrfstune btrfs-select-super
 
-# other tools, not built by default
-progs_extra = btrfs-fragments
+# Programs to build.
+progs_build = $(progs_install) btrfsck btrfs-corrupt-block
 
-progs_static = $(foreach p,$(progs),$(p).static)
+# All programs. Use := instead of = so that this is expanded before we reassign
+# progs_build below.
+progs := $(progs_build) btrfs-convert btrfs-fragments
 
 ifneq ($(DISABLE_BTRFSCONVERT),1)
 progs_install += btrfs-convert
+endif
+
+# Static programs to build. Use := instead of = because `make static` should
+# still build everything even if --disable-programs was passed to ./configure.
+progs_static := $(foreach p,$(progs_build),$(p).static)
+
+ifneq ($(BUILD_PROGRAMS),1)
+progs_install =
+progs_build =
 endif
 
 # external libs required by various binaries; for btrfs-foo,
@@ -233,7 +241,7 @@ cmds_restore_cflags = -DBTRFSRESTORE_ZSTD=$(BTRFSRESTORE_ZSTD)
 CHECKER_FLAGS += $(btrfs_convert_cflags)
 
 # collect values of the variables above
-standalone_deps = $(foreach dep,$(patsubst %,%_objects,$(subst -,_,$(filter btrfs-%, $(progs) $(progs_extra)))),$($(dep)))
+standalone_deps = $(foreach dep,$(patsubst %,%_objects,$(subst -,_,$(filter btrfs-%, $(progs)))),$($(dep)))
 
 SUBDIRS =
 BUILDDIRS = $(patsubst %,build-%,$(SUBDIRS))
@@ -302,7 +310,7 @@ endif
 	$(Q)$(CC) $(STATIC_CFLAGS) -c $< -o $@ $($(subst -,_,$(@:%.static.o=%)-cflags)) \
 		$($(subst -,_,btrfs-$(@:%/$(notdir $@)=%)-cflags))
 
-all: $(progs) $(libs) $(lib_links) $(BUILDDIRS)
+all: $(progs_build) $(libs) $(lib_links) $(BUILDDIRS)
 ifeq ($(PYTHON_BINDINGS),1)
 all: libbtrfsutil_python
 endif
@@ -569,9 +577,8 @@ test-build-pre:
 test-build-real:
 	$(MAKE) $(MAKEOPTS) library-test
 	-$(MAKE) $(MAKEOPTS) library-test.static
-	$(MAKE) $(MAKEOPTS) -j 8 all
+	$(MAKE) $(MAKEOPTS) -j 8 $(progs) $(libs) $(lib_links) $(BUILDDIRS)
 	-$(MAKE) $(MAKEOPTS) -j 8 static
-	$(MAKE) $(MAKEOPTS) -j 8 $(progs_extra)
 
 manpages:
 	$(Q)$(MAKE) $(MAKEOPTS) -C Documentation
@@ -603,7 +610,7 @@ clean: $(CLEANDIRS)
               mktables btrfs.static mkfs.btrfs.static fssum \
 	      $(check_defs) \
 	      $(libs) $(lib_links) \
-	      $(progs_static) $(progs_extra) \
+	      $(progs_static) \
 	      libbtrfsutil/*.o libbtrfsutil/*.o.d
 ifeq ($(PYTHON_BINDINGS),1)
 	$(Q)cd libbtrfsutil/python; \
@@ -628,21 +635,23 @@ $(CLEANDIRS):
 	$(Q)$(MAKE) $(MAKEOPTS) -C $(patsubst clean-%,%,$@) clean
 
 install: $(libs) $(progs_install) $(INSTALLDIRS)
+ifeq ($(BUILD_PROGRAMS),1)
 	$(INSTALL) -m755 -d $(DESTDIR)$(bindir)
 	$(INSTALL) $(progs_install) $(DESTDIR)$(bindir)
 	$(INSTALL) fsck.btrfs $(DESTDIR)$(bindir)
 	# btrfsck is a link to btrfs in the src tree, make it so for installed file as well
 	$(LN_S) -f btrfs $(DESTDIR)$(bindir)/btrfsck
+ifneq ($(udevdir),)
+	$(INSTALL) -m755 -d $(DESTDIR)$(udevruledir)
+	$(INSTALL) -m644 $(udev_rules) $(DESTDIR)$(udevruledir)
+endif
+endif
 	$(INSTALL) -m755 -d $(DESTDIR)$(libdir)
 	$(INSTALL) $(libs) $(DESTDIR)$(libdir)
 	cp -d $(lib_links) $(DESTDIR)$(libdir)
 	$(INSTALL) -m755 -d $(DESTDIR)$(incdir)/btrfs
 	$(INSTALL) -m644 $(libbtrfs_headers) $(DESTDIR)$(incdir)/btrfs
 	$(INSTALL) -m644 libbtrfsutil/btrfsutil.h $(DESTDIR)$(incdir)
-ifneq ($(udevdir),)
-	$(INSTALL) -m755 -d $(DESTDIR)$(udevruledir)
-	$(INSTALL) -m644 $(udev_rules) $(DESTDIR)$(udevruledir)
-endif
 
 ifeq ($(PYTHON_BINDINGS),1)
 install_python: libbtrfsutil_python

@@ -118,9 +118,16 @@ if test "x$enable_documentation" = xyes; then
 fi
 AC_SUBST([ASCIIDOC_TOOL])
 
+AC_ARG_ENABLE([programs],
+	      AS_HELP_STRING([--disable-programs], [do not build utility programs]),
+	      [], [enable_programs=yes]
+)
+AS_IF([test "x$enable_programs" = xyes], [BUILD_PROGRAMS=1], [BUILD_PROGRAMS=0])
+AC_SUBST([BUILD_PROGRAMS])
+
 AC_ARG_ENABLE([convert],
 	      AS_HELP_STRING([--disable-convert], [do not build btrfs-convert]),
-  [], [enable_convert=yes]
+  [], [enable_convert=$enable_programs]
 )
 
 AS_IF([test "x$enable_convert" = xyes], [DISABLE_BTRFSCONVERT=0], [DISABLE_BTRFSCONVERT=1])
@@ -277,6 +284,7 @@ AC_MSG_RESULT([
 	cflags:             ${CFLAGS}
 	ldflags:            ${LDFLAGS}
 
+	programs:           ${enable_programs}
 	documentation:      ${enable_documentation}
 	doc generator:      ${ASCIIDOC_TOOL}
 	backtrace support:  ${enable_backtrace}
