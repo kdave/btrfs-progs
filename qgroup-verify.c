@@ -84,6 +84,7 @@ static struct counts_tree {
 	unsigned int		num_groups;
 	unsigned int		rescan_running:1;
 	unsigned int		qgroup_inconsist:1;
+	u64			scan_progress;
 } counts = { .root = RB_ROOT };
 
 static LIST_HEAD(bad_qgroups);
@@ -922,6 +923,7 @@ static void read_qgroup_status(struct extent_buffer *eb, int slot,
 	counts->qgroup_inconsist = !!(flags &
 			BTRFS_QGROUP_STATUS_FLAG_INCONSISTENT);
 	counts->rescan_running = !!(flags & BTRFS_QGROUP_STATUS_FLAG_RESCAN);
+	counts->scan_progress = btrfs_qgroup_status_rescan(eb, status_item);
 }
 
 static int load_quota_info(struct btrfs_fs_info *info)
@@ -1319,6 +1321,7 @@ int report_qgroups(int all)
 	struct rb_node *node;
 	struct qgroup_count *c;
 	bool found_err = false;
+	bool skip_err = false;
 
 	if (!repair && counts.rescan_running) {
 		if (all) {
@@ -1329,6 +1332,15 @@ int report_qgroups(int all)
 	"Qgroup rescan is running, qgroups will not be printed.\n");
 			return 0;
 		}
+	}
+	/*
+	 * It's possible that rescan hasn't been initialized yet.
+	 */
+	if (counts.qgroup_inconsist && !counts.rescan_running &&
+	    counts.rescan_running == 0) {
+		printf(
+"Rescan hasn't been initialzied, a difference in qgroup accounting is expected\n");
+		skip_err = true;
 	}
 	if (counts.qgroup_inconsist && !counts.rescan_running)
 		fprintf(stderr, "Qgroup are marked as inconsistent.\n");
@@ -1343,7 +1355,7 @@ int report_qgroups(int all)
 
 		node = rb_next(node);
 	}
-	if (found_err)
+	if (found_err && !skip_err)
 		return -EUCLEAN;
 	return 0;
 }
