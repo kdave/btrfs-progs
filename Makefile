@@ -274,6 +274,13 @@ libs_shared = libbtrfs.so.0.1 libbtrfsutil.so.$(libbtrfsutil_version)
 libs_static = libbtrfs.a libbtrfsutil.a
 libs = $(libs_shared) $(libs_static)
 lib_links = libbtrfs.so.0 libbtrfs.so libbtrfsutil.so.$(libbtrfsutil_major) libbtrfsutil.so
+libs_build =
+ifeq ($(BUILD_SHARED_LIBRARIES),1)
+libs_build += $(libs_shared) $(lib_links)
+endif
+ifeq ($(BUILD_STATIC_LIBRARIES),1)
+libs_build += $(libs_static)
+endif
 
 # make C=1 to enable sparse
 ifdef C
@@ -310,7 +317,7 @@ endif
 	$(Q)$(CC) $(STATIC_CFLAGS) -c $< -o $@ $($(subst -,_,$(@:%.static.o=%)-cflags)) \
 		$($(subst -,_,btrfs-$(@:%/$(notdir $@)=%)-cflags))
 
-all: $(progs_build) $(libs) $(lib_links) $(BUILDDIRS)
+all: $(progs_build) $(libs_build) $(BUILDDIRS)
 ifeq ($(PYTHON_BINDINGS),1)
 all: libbtrfsutil_python
 endif
@@ -634,7 +641,7 @@ $(CLEANDIRS):
 	@echo "Cleaning $(patsubst clean-%,%,$@)"
 	$(Q)$(MAKE) $(MAKEOPTS) -C $(patsubst clean-%,%,$@) clean
 
-install: $(libs) $(progs_install) $(INSTALLDIRS)
+install: $(libs_build) $(progs_install) $(INSTALLDIRS)
 ifeq ($(BUILD_PROGRAMS),1)
 	$(INSTALL) -m755 -d $(DESTDIR)$(bindir)
 	$(INSTALL) $(progs_install) $(DESTDIR)$(bindir)
@@ -646,12 +653,16 @@ ifneq ($(udevdir),)
 	$(INSTALL) -m644 $(udev_rules) $(DESTDIR)$(udevruledir)
 endif
 endif
+ifneq ($(libs_build),)
 	$(INSTALL) -m755 -d $(DESTDIR)$(libdir)
-	$(INSTALL) $(libs) $(DESTDIR)$(libdir)
+	$(INSTALL) $(libs_build) $(DESTDIR)$(libdir)
+ifeq ($(BUILD_SHARED_LIBRARIES),1)
 	cp -d $(lib_links) $(DESTDIR)$(libdir)
+endif
 	$(INSTALL) -m755 -d $(DESTDIR)$(incdir)/btrfs
 	$(INSTALL) -m644 $(libbtrfs_headers) $(DESTDIR)$(incdir)/btrfs
 	$(INSTALL) -m644 libbtrfsutil/btrfsutil.h $(DESTDIR)$(incdir)
+endif
 
 ifeq ($(PYTHON_BINDINGS),1)
 install_python: libbtrfsutil_python

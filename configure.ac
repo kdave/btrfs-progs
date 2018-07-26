@@ -125,6 +125,20 @@ AC_ARG_ENABLE([programs],
 AS_IF([test "x$enable_programs" = xyes], [BUILD_PROGRAMS=1], [BUILD_PROGRAMS=0])
 AC_SUBST([BUILD_PROGRAMS])
 
+AC_ARG_ENABLE([shared],
+	      AS_HELP_STRING([--disable-shared], [do not build shared libraries]),
+	      [], [enable_shared=yes]
+)
+AS_IF([test "x$enable_shared" = xyes], [BUILD_SHARED_LIBRARIES=1], [BUILD_SHARED_LIBRARIES=0])
+AC_SUBST([BUILD_SHARED_LIBRARIES])
+
+AC_ARG_ENABLE([static],
+	      AS_HELP_STRING([--disable-static], [do not build static libraries]),
+	      [], [enable_static=yes]
+)
+AS_IF([test "x$enable_static" = xyes], [BUILD_STATIC_LIBRARIES=1], [BUILD_STATIC_LIBRARIES=0])
+AC_SUBST([BUILD_STATIC_LIBRARIES])
+
 AC_ARG_ENABLE([convert],
 	      AS_HELP_STRING([--disable-convert], [do not build btrfs-convert]),
   [], [enable_convert=$enable_programs]
@@ -222,7 +236,7 @@ AC_SUBST(BTRFSRESTORE_ZSTD)
 
 AC_ARG_ENABLE([python],
 	AS_HELP_STRING([--disable-python], [do not build libbtrfsutil Python bindings]),
-	[], [enable_python=yes]
+	[], [enable_python=$enable_shared]
 )
 
 if test "x$enable_python" = xyes; then
@@ -285,6 +299,8 @@ AC_MSG_RESULT([
 	ldflags:            ${LDFLAGS}
 
 	programs:           ${enable_programs}
+	shared libraries:   ${enable_shared}
+	static libraries:   ${enable_static}
 	documentation:      ${enable_documentation}
 	doc generator:      ${ASCIIDOC_TOOL}
 	backtrace support:  ${enable_backtrace}
