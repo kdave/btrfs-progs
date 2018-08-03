@@ -2740,7 +2740,8 @@ static int alloc_tree_block(struct btrfs_trans_handle *trans,
 	int ret;
 	ret = btrfs_reserve_extent(trans, root, num_bytes, empty_size,
 				   hint_byte, search_end, ins, 0);
-	BUG_ON(ret);
+	if (ret < 0)
+		return ret;
 
 	if (root_objectid == BTRFS_EXTENT_TREE_OBJECTID) {
 		struct pending_extent_op *extent_op;
