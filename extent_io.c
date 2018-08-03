@@ -608,7 +608,11 @@ static void free_extent_buffer_internal(struct extent_buffer *eb, bool free_now)
 	eb->refs--;
 	BUG_ON(eb->refs < 0);
 	if (eb->refs == 0) {
-		BUG_ON(eb->flags & EXTENT_DIRTY);
+		if (eb->flags & EXTENT_DIRTY) {
+			warning(
+			"dirty eb leak (aborted trans): start %llu len %u",
+				eb->start, eb->len);
+		}
 		list_del_init(&eb->recow);
 		if (eb->flags & EXTENT_BUFFER_DUMMY || free_now)
 			free_extent_buffer_final(eb);
