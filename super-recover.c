@@ -292,9 +292,6 @@ int btrfs_recover_superblocks(const char *dname,
 no_recover:
 	recover_err_str(ret);
 	free_recover_superblock(&recover);
-	/* check if we have freed fs_devices in close_ctree() */
-	if (!root)
-		btrfs_close_devices(recover.fs_devices);
 	return ret;
 }
 
