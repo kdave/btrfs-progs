@@ -2735,7 +2735,10 @@ static int check_inode_recs(struct btrfs_root *root,
 				(unsigned long long)root->objectid);
 
 			ret = btrfs_make_root_dir(trans, root, root_dirid);
-			BUG_ON(ret);
+			if (ret < 0) {
+				btrfs_abort_transaction(trans, ret);
+				return ret;
+			}
 
 			btrfs_commit_transaction(trans, root);
 			return -EAGAIN;
