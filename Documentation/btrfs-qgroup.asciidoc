@@ -47,8 +47,8 @@ identified by <path>.
 `Options`
 +
 --rescan::::
-Automatically schedule quota rescan if the new qgroup assignment leads to
-quota inconsistency.
+(default since: 4.19) Automatically schedule quota rescan if the new qgroup
+assignment would lead to quota inconsistency.
 --no-rescan::::
 Explicitly ask not to do a rescan.
 
