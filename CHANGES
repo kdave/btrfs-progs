@@ -1,3 +1,19 @@
+btrfs-progs-4.19.1 (2018-12-05)
+  * build fixes
+    * big-endian builds fail due to bswap helper clashes
+    * 'swap' macro is too generic, renamed to prevent build failures
+  * libbtrfs
+    * minor version update to 1.1.0
+    * fix default search to top=0 as documented
+    * rename 'async' to avoid future python binding problems
+    * add support for unprivileged subvolume listing ioctls
+    * added tests, API docs
+  * other
+    * lot of typos fixed
+    * warning cleanups
+    * doc formatting updates
+    * CI tests against zstd 1.3.7
+
 btrfs-progs-4.19 (2018-11-03)
   * check: support repair of fs with free-space-tree feature
   * core:
