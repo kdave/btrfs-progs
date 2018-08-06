@@ -1,3 +1,23 @@
+btrfs-progs-4.17.1 (2018-08-06)
+  * check:
+    * add ability to fix wrong ram_bytes for compressed inline files
+    * beautify progress output
+  * btrfstune: allow to continue uuid change after unclean interruption
+  * several fuzz fixes:
+    * detect overalpping chunks
+    * chunk loading error handling
+    * don't crash with unexpected root refs to extents
+  * relax option parsing again to allow mixing options and non-options
+    arguments
+  * fix qgroup rescan status reporting
+  * build:
+    * drop obsolete dir-test
+    * new configure option to disable building of tools
+    * add compatibility options --disable-static and --disable-shared
+  * other:
+    * cleanups and preparatory work
+    * new test images
+
 btrfs-progs-4.17 (2018-06-14)
   * check
     * many lowmem mode improvements
