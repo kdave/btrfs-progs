@@ -1,3 +1,23 @@
+btrfs-progs-4.20 (2019-01-19)
+  * new feature: metadata uuid
+    * lightweight change of UUID without rewriting all metadata
+      (incompatible change)
+    * done by btrfstune -m/-M
+    * needs kernel support, 5.0+
+  * image:
+    * fix block groups when restoring from multi-device image
+    * only enlarge result image if it's a regular file
+  * check
+    * more device extent checks and fixes
+    * can repair dir item with mismatched hash
+  * mkfs: uuid tree created with proper contents
+  * fix mount point detection due to partial prefix match
+  * other:
+    * new tests
+    * libbtrfsutil: fix tests if kernel lacks support for new subvolume ioctls
+    * build fixes
+    * doc fixes
+
 btrfs-progs-4.19.1 (2018-12-05)
   * build fixes
     * big-endian builds fail due to bswap helper clashes
