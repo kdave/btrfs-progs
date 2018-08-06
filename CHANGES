@@ -1,3 +1,21 @@
+btrfs-progs-4.19 (2018-11-03)
+  * check: support repair of fs with free-space-tree feature
+  * core:
+    * port delayed ref infrastructure from kernel
+    * support write to free space tree
+  * dump-tree: new options for BFS and DFS enumeration of b-trees
+  * quota: rescan is now done automatically after 'assign'
+  * btrfstune: incomplete fix to uuid change
+  * subvol: fix 255 char limit checks
+  * completion: complete block devices and now regular files too
+  * docs:
+    * ship uncompressed manual pages
+    * btrfsck uses a manual page link instead of symlink
+  * other
+    * improved error handling
+    * docs
+    * new tests
+
 btrfs-progs-4.17.1 (2018-08-06)
   * check:
     * add ability to fix wrong ram_bytes for compressed inline files
