@@ -48,9 +48,12 @@ identified by <path>.
 +
 --rescan::::
 (default since: 4.19) Automatically schedule quota rescan if the new qgroup
-assignment would lead to quota inconsistency.
+assignment would lead to quota inconsistency. See 'QUOTA RESCAN' for more
+information.
 --no-rescan::::
-Explicitly ask not to do a rescan.
+Explicitly ask not to do a rescan, even if the assignment will make the quotas
+inconsitent. This may be useful for repeated calls where the rescan would add
+unnecessary overhead.
 
 *create* <qgroupid> <path>::
 Create a subvolume quota group.
@@ -83,6 +86,10 @@ limit space exclusively assigned to this qgroup.
 *remove* <src> <dst> <path>::
 Remove the relationship between child qgroup <src> and parent qgroup <dst> in
 the btrfs filesystem identified by <path>.
++
+`Options`
++
+The same as *assign* subcommand.
 
 *show* [options] <path>::
 Show all qgroups in the btrfs filesystem identified by <path>.
@@ -130,6 +137,21 @@ If multiple <attr>s is given, use comma to separate.
 --sync::::
 To retrieve information after updating the state of qgroups,
 force sync of the filesystem identified by <path> before getting information.
+
+QUOTA RESCAN
+------------
+The rescan reads all extent sharing metadata and updates the respective qgoups
+accordingly.
+
+The information consists of bytes owned exclusively ('excl') or shared/referred
+to ('rfer'). There's no explicit information about which extents are shared or
+owned exclusively.  This means when qgroup relationship changes, extent owners
+change and qgroup numbers are no longer consistent unless we do a full rescan.
+
+However there are cases where we can avoid a full rescan, if a subvolume whose
+'rfer' number equals its 'excl' number, which means all bytes are exclusively
+owned, then assigning/removing this subvolume only needs to add/subtract 'rfer'
+number from its parent qgroup. This can speed up the rescan.
 
 EXIT STATUS
 -----------
