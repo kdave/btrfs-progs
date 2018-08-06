@@ -40,7 +40,7 @@ static int _cmd_qgroup_assign(int assign, int argc, char **argv,
 {
 	int ret = 0;
 	int fd;
-	int rescan = 0;
+	bool rescan = false;
 	char *path;
 	struct btrfs_ioctl_qgroup_assign_args args;
 	DIR *dirstream = NULL;
@@ -62,10 +62,10 @@ static int _cmd_qgroup_assign(int assign, int argc, char **argv,
 				break;
 			switch (c) {
 			case GETOPT_VAL_RESCAN:
-				rescan = 1;
+				rescan = true;
 				break;
 			case GETOPT_VAL_NO_RESCAN:
-				rescan = 0;
+				rescan = false;
 				break;
 			default:
 				/* Usage printed by the caller */
