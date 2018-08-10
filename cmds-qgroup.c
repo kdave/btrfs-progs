@@ -123,6 +123,7 @@ static int _cmd_qgroup_assign(int assign, int argc, char **argv,
 				error("quota rescan failed: %m");
 		} else {
 			warning("quotas may be inconsistent, rescan needed");
+			ret = 0;
 		}
 	}
 	close_file_or_dir(fd, dirstream);
