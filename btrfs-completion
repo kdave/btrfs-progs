@@ -128,7 +128,7 @@ _btrfs()
 						_btrfs_mnts
 						return 0
 						;;
-					rootid)
+					dump-tree|dump-super|rootid|inode-resolve)
 						_filedir
 						return 0
 						;;
