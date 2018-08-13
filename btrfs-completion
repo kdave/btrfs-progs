@@ -4,13 +4,6 @@
 # (http://lists.alioth.debian.org/pipermail/bash-completion-devel/2013-June/004868.html)
 # edited by John C F <john.ch.fr at gmail.com> on 2015-02-02
 
-_btrfs_devs()
-{
-	local DEVS
-	DEVS=''; while read dev; do DEVS+="$dev "; done < <(lsblk -pnro name)
-	COMPREPLY+=( $( compgen -W "$DEVS" -- "$cur" ) )
-}
-
 _btrfs_mnts()
 {
 	local MNTS
@@ -68,14 +61,14 @@ _btrfs()
 				opts="$commands_scrub"
 				;;
 			check)
-				_btrfs_devs
+				_filedir
 				return 0
 				;;
 			rescue)
 				opts="$commands_rescue"
 				;;
 			restore)
-				_btrfs_devs
+				_filedir
 				return 0
 				;;
 			inspect-internal)
@@ -120,13 +113,13 @@ _btrfs()
 						;;
 					label)
 						_btrfs_mnts
-						_btrfs_devs
+						_filedir
 						return 0
 						;;
 				esac
 				;;
 			device|rescue)
-				_btrfs_devs
+				_filedir
 				return 0
 				;;
 			inspect-internal)
@@ -156,7 +149,7 @@ _btrfs()
 						return 0
 						;;
 					start)
-						_btrfs_devs
+						_filedir
 						return 0
 						;;
 				esac
