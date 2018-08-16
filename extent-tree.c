@@ -2052,17 +2052,6 @@ void btrfs_unpin_extent(struct btrfs_fs_info *fs_info,
 	update_pinned_extents(fs_info, bytenr, num_bytes, 0);
 }
 
-static int __free_extent2(struct btrfs_trans_handle *trans,
-			  struct btrfs_delayed_ref_node *node,
-			  struct btrfs_delayed_extent_op *extent_op)
-{
-
-	struct btrfs_delayed_tree_ref *ref = btrfs_delayed_node_to_tree_ref(node);
-
-	return __free_extent(trans, node->bytenr, node->num_bytes,
-			     ref->parent, ref->root, ref->level, 0, 1);
-}
-
 /*
  * remove an extent from the root, returns 0 on success
  */
@@ -4184,7 +4173,9 @@ static int run_delayed_tree_ref(struct btrfs_trans_handle *trans,
 		BUG_ON(!extent_op || !extent_op->update_flags);
 		ret = alloc_reserved_tree_block2(trans, node, extent_op);
 	} else if (node->action == BTRFS_DROP_DELAYED_REF) {
-		ret = __free_extent2(trans, node, extent_op);
+		struct btrfs_delayed_tree_ref *ref = btrfs_delayed_node_to_tree_ref(node);
+		ret =  __free_extent(trans, node->bytenr, node->num_bytes,
+			     ref->parent, ref->root, ref->level, 0, 1);
 	} else {
 		BUG();
 	}
