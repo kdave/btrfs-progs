@@ -2523,8 +2523,7 @@ int btrfs_update_extent_ref(struct btrfs_trans_handle *trans,
 			    u64 orig_parent, u64 parent,
 			    u64 root_objectid, u64 ref_generation,
 			    u64 owner_objectid);
-int btrfs_write_dirty_block_groups(struct btrfs_trans_handle *trans,
-				    struct btrfs_root *root);
+int btrfs_write_dirty_block_groups(struct btrfs_trans_handle *trans);
 int btrfs_free_block_groups(struct btrfs_fs_info *info);
 int btrfs_read_block_groups(struct btrfs_root *root);
 struct btrfs_block_group_cache *

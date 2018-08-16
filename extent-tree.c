@@ -1727,8 +1727,7 @@ fail:
 
 }
 
-int btrfs_write_dirty_block_groups(struct btrfs_trans_handle *trans,
-				   struct btrfs_root *root)
+int btrfs_write_dirty_block_groups(struct btrfs_trans_handle *trans)
 {
 	struct extent_io_tree *block_group_cache;
 	struct btrfs_block_group_cache *cache;
@@ -1739,7 +1738,7 @@ int btrfs_write_dirty_block_groups(struct btrfs_trans_handle *trans,
 	u64 end;
 	u64 ptr;
 
-	block_group_cache = &root->fs_info->block_group_cache;
+	block_group_cache = &trans->fs_info->block_group_cache;
 	path = btrfs_alloc_path();
 	if (!path)
 		return -ENOMEM;
