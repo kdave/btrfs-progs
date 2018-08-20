@@ -91,9 +91,9 @@ static int set_super_incompat_flags(struct btrfs_root *root, u64 flags)
 	return ret;
 }
 
-static int change_header_uuid(struct btrfs_root *root, struct extent_buffer *eb)
+static int change_buffer_header_uuid(struct extent_buffer *eb)
 {
-	struct btrfs_fs_info *fs_info = root->fs_info;
+	struct btrfs_fs_info *fs_info = eb->fs_info;
 	int same_fsid = 1;
 	int same_chunk_tree_uuid = 1;
 	int ret;
@@ -157,7 +157,7 @@ static int change_extents_uuid(struct btrfs_fs_info *fs_info)
 			ret = PTR_ERR(eb);
 			goto out;
 		}
-		ret = change_header_uuid(root, eb);
+		ret = change_buffer_header_uuid(eb);
 		free_extent_buffer(eb);
 		if (ret < 0) {
 			error("failed to change uuid of tree block: %llu",
