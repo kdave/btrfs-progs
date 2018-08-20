@@ -179,10 +179,10 @@ out:
 	return ret;
 }
 
-static int change_device_uuid(struct btrfs_fs_info *fs_info, struct extent_buffer *eb,
-			      int slot)
+static int change_device_uuid(struct extent_buffer *eb, int slot)
 {
 	struct btrfs_dev_item *di;
+	struct btrfs_fs_info *fs_info = eb->fs_info;
 	int ret = 0;
 
 	di = btrfs_item_ptr(eb, slot, struct btrfs_dev_item);
@@ -217,7 +217,7 @@ static int change_devices_uuid(struct btrfs_fs_info *fs_info)
 		if (key.type != BTRFS_DEV_ITEM_KEY ||
 		    key.objectid != BTRFS_DEV_ITEMS_OBJECTID)
 			goto next;
-		ret = change_device_uuid(fs_info, path.nodes[0], path.slots[0]);
+		ret = change_device_uuid(path.nodes[0], path.slots[0]);
 		if (ret < 0)
 			goto out;
 next:
