@@ -1420,9 +1420,8 @@ void btrfs_print_tree(struct extent_buffer *eb, int follow)
 		btrfs_disk_key_to_cpu(&key, &disk_key);
 		printf("\t");
 		btrfs_print_key(&disk_key);
-		printf(" block %llu (%llu) gen %llu\n",
+		printf(" block %llu gen %llu\n",
 		       (unsigned long long)blocknr,
-		       (unsigned long long)blocknr / eb->len,
 		       (unsigned long long)btrfs_node_ptr_generation(eb, i));
 		fflush(stdout);
 	}
