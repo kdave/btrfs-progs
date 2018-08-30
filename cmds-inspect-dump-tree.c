@@ -313,7 +313,12 @@ int cmd_inspect_dump_tree(int argc, char **argv)
 
 	ret = check_arg_type(argv[optind]);
 	if (ret != BTRFS_ARG_BLKDEV && ret != BTRFS_ARG_REG) {
-		error("not a block device or regular file: %s", argv[optind]);
+		if (ret < 0)
+			error("invalid argument %s: %s", argv[optind],
+			      strerror(-ret));
+		else
+			error("not a block device or regular file: %s",
+			      argv[optind]);
 		goto out;
 	}
 

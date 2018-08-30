@@ -502,6 +502,8 @@ int check_arg_type(const char *input)
 			return BTRFS_ARG_REG;
 
 		return BTRFS_ARG_UNKNOWN;
+	} else {
+		return -errno;
 	}
 
 	if (strlen(input) == (BTRFS_UUID_UNPARSED_SIZE - 1) &&
