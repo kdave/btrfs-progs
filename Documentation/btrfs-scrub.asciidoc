@@ -69,7 +69,7 @@ be quiet, omit error messages and statistics
 run in read-only mode, do not attempt to correct anything, can be run on a read-only
 filesystem
 -R::::
-print raw statistics per-device instead of a summary
+raw print mode, print full data instead of summary
 -c <ioprio_class>::::
 set IO priority class (see `ionice`(1) manpage)
 -n <ioprio_classdata>::::
