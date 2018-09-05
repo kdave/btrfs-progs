@@ -229,7 +229,7 @@ EXIT STATUS
 **btrfs device** returns a zero exit status if it succeeds. Non zero is
 returned in case of failure.
 
-If the *-s* option is used, *btrfs device stats* will add 64 to the
+If the *-c* option is used, *btrfs device stats* will add 64 to the
 exit status if any of the error counters is non-zero.
 
 AVAILABILITY
