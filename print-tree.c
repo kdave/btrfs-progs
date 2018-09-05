@@ -1381,6 +1381,78 @@ void btrfs_print_leaf(struct extent_buffer *eb)
 	}
 }
 
+/* Helper function to reach the leftmost tree block at @path->lowest_level */
+static int search_leftmost_tree_block(struct btrfs_fs_info *fs_info,
+				      struct btrfs_path *path, int root_level)
+{
+	int i;
+	int ret = 0;
+
+	/* Release all nodes except path->nodes[root_level] */
+	for (i = 0; i < root_level; i++) {
+		path->slots[i] = 0;
+		if (!path->nodes[i])
+			continue;
+		free_extent_buffer(path->nodes[i]);
+	}
+
+	/* Reach the leftmost tree block by always reading out slot 0 */
+	for (i = root_level; i > path->lowest_level; i--) {
+		struct extent_buffer *eb;
+
+		path->slots[i] = 0;
+		eb = read_node_slot(fs_info, path->nodes[i], 0);
+		if (!extent_buffer_uptodate(eb)) {
+			ret = -EIO;
+			goto out;
+		}
+		path->nodes[i - 1] = eb;
+	}
+out:
+	return ret;
+}
+
+static void bfs_print_children(struct extent_buffer *root_eb)
+{
+	struct btrfs_fs_info *fs_info = root_eb->fs_info;
+	struct btrfs_path path;
+	int root_level = btrfs_header_level(root_eb);
+	int cur_level;
+	int ret;
+
+	if (root_level < 1)
+		return;
+
+	btrfs_init_path(&path);
+	/* For path */
+	extent_buffer_get(root_eb);
+	path.nodes[root_level] = root_eb;
+
+	for (cur_level = root_level - 1; cur_level >= 0; cur_level--) {
+		path.lowest_level = cur_level;
+
+		/* Use the leftmost tree block as a starting point */
+		ret = search_leftmost_tree_block(fs_info, &path, root_level);
+		if (ret < 0)
+			goto out;
+
+		/* Print all sibling tree blocks */
+		while (1) {
+			btrfs_print_tree(path.nodes[cur_level], 0);
+			ret = btrfs_next_sibling_tree_block(fs_info, &path);
+			if (ret < 0)
+				goto out;
+			if (ret > 0) {
+				ret = 0;
+				break;
+			}
+		}
+	}
+out:
+	btrfs_release_path(&path);
+	return;
+}
+
 void btrfs_print_tree(struct extent_buffer *eb, int follow)
 {
 	u32 i;
