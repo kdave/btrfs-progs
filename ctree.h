@@ -2647,7 +2647,22 @@ static inline int btrfs_insert_empty_item(struct btrfs_trans_handle *trans,
 	return btrfs_insert_empty_items(trans, root, path, key, &data_size, 1);
 }
 
-int btrfs_next_leaf(struct btrfs_root *root, struct btrfs_path *path);
+int btrfs_next_sibling_tree_block(struct btrfs_fs_info *fs_info,
+				  struct btrfs_path *path);
+
+/*
+ * Walk up the tree as far as necessary to find the next leaf.
+ *
+ * returns 0 if it found something or 1 if there are no greater leaves.
+ * returns < 0 on io errors.
+ */
+static inline int btrfs_next_leaf(struct btrfs_root *root,
+				  struct btrfs_path *path)
+{
+	path->lowest_level = 0;
+	return btrfs_next_sibling_tree_block(root->fs_info, path);
+}
+
 static inline int btrfs_next_item(struct btrfs_root *root,
 				  struct btrfs_path *p)
 {

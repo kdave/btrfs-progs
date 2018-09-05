@@ -2950,18 +2950,22 @@ int btrfs_prev_leaf(struct btrfs_root *root, struct btrfs_path *path)
 }
 
 /*
- * walk up the tree as far as required to find the next leaf.
+ * Walk up the tree as far as necessary to find the next sibling tree block.
+ * More generic version of btrfs_next_leaf(), as it could find sibling nodes
+ * if @path->lowest_level is not 0.
+ *
  * returns 0 if it found something or 1 if there are no greater leaves.
  * returns < 0 on io errors.
  */
-int btrfs_next_leaf(struct btrfs_root *root, struct btrfs_path *path)
+int btrfs_next_sibling_tree_block(struct btrfs_fs_info *fs_info,
+				  struct btrfs_path *path)
 {
 	int slot;
-	int level = 1;
+	int level = path->lowest_level + 1;
 	struct extent_buffer *c;
 	struct extent_buffer *next = NULL;
-	struct btrfs_fs_info *fs_info = root->fs_info;
 
+	BUG_ON(path->lowest_level + 1 >= BTRFS_MAX_LEVEL);
 	while(level < BTRFS_MAX_LEVEL) {
 		if (!path->nodes[level])
 			return 1;
@@ -2990,7 +2994,7 @@ int btrfs_next_leaf(struct btrfs_root *root, struct btrfs_path *path)
 		free_extent_buffer(c);
 		path->nodes[level] = next;
 		path->slots[level] = 0;
-		if (!level)
+		if (level == path->lowest_level)
 			break;
 		if (path->reada)
 			reada_for_search(fs_info, path, level, 0, 0);
