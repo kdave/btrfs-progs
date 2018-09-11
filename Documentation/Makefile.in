@@ -106,7 +106,7 @@ uninstall:
 	$(RMDIR) -p --ignore-fail-on-non-empty $(DESTDIR)$(man8dir)
 
 clean:
-	$(QUIET_RM)$(RM) -f *.xml *.xml+ *.3 *.5 *.8 *.html
+	$(QUIET_RM)$(RM) -f $(MAN_XML) *.xml+ $(MAN3) $(MAN5) $(MAN8) $(MAN_HTML)
 
 %.3 : %.xml
 	$(QUIET_XMLTO)$(RM) -f $@ && \
