@@ -65,7 +65,6 @@ MANPAGE_XSL = manpage-normal.xsl
 XMLTO = @XMLTO@
 XMLTO_EXTRA =
 XMLTO_EXTRA = -m manpage-bold-literal.xsl
-GZIPCMD = @GZIP@
 INSTALL = @INSTALL@
 RM = @RM@
 RMDIR = @RMDIR@
@@ -80,7 +79,6 @@ ifndef V
 	QUIET_RM	= @
 	QUIET_ASCIIDOC	= @echo "    [ASCII]  $@";
 	QUIET_XMLTO	= @echo "    [XMLTO]  $@";
-	QUIET_GZIP	= @echo "    [GZ]     $@";
 endif
 endif
 
@@ -108,16 +106,7 @@ uninstall:
 	$(RMDIR) -p --ignore-fail-on-non-empty $(DESTDIR)$(man8dir)
 
 clean:
-	$(QUIET_RM)$(RM) -f *.xml *.xml+ *.3 *.3.gz *.5 *.5.gz *.8 *.8.gz *.html
-
-%.3.gz : %.3
-	$(QUIET_GZIP)$(GZIPCMD) -n -c $< > $@
-
-%.5.gz : %.5
-	$(QUIET_GZIP)$(GZIPCMD) -n -c $< > $@
-
-%.8.gz : %.8
-	$(QUIET_GZIP)$(GZIPCMD) -n -c $< > $@
+	$(QUIET_RM)$(RM) -f *.xml *.xml+ *.3 *.5 *.8 *.html
 
 %.3 : %.xml
 	$(QUIET_XMLTO)$(RM) -f $@ && \

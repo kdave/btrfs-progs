@@ -99,7 +99,6 @@ if test "x$enable_documentation" = xyes; then
 		AC_MSG_ERROR([cannot find xmlto, cannot build documentation])
 	fi
 
-	AC_PATH_PROG([GZIP], [gzip], [gzip])
 	AC_PATH_PROG([MV], [mv], [mv])
 	AC_PROG_SED
 	AC_PATH_PROG([ASCIIDOC], [asciidoc])
