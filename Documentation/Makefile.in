@@ -101,7 +101,7 @@ install-man: man
 	# want to keep the code generic
 	$(MV) $(DESTDIR)$(man5dir)/btrfs-man5.5.gz $(DESTDIR)$(man5dir)/btrfs.5.gz
 	$(INSTALL) -m 644 $(GZ_MAN8) $(DESTDIR)$(man8dir)
-	$(LN_S) -f btrfs-check.8.gz $(DESTDIR)$(man8dir)/btrfsck.8.gz
+	$(INSTALL) -m 644 btrfsck.8 $(DESTDIR)$(man8dir)
 
 uninstall:
 	cd $(DESTDIR)$(man8dir); rm -f btrfs-check.8.gz $(GZ_MAN8)
