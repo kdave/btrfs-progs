@@ -380,8 +380,7 @@ static int cmd_qgroup_show(int argc, char **argv)
 	if (sync) {
 		err = btrfs_util_sync_fd(fd);
 		if (err)
-			warning("sync ioctl failed on '%s': %s", path,
-				strerror(errno));
+			warning("sync ioctl failed on '%s': %m", path);
 	}
 
 	if (filter_flag) {

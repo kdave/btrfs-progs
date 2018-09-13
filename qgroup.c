@@ -1072,8 +1072,7 @@ static int __qgroups_search(int fd, struct qgroup_lookup *qgroup_lookup)
 				error("can't list qgroups: quotas not enabled");
 				ret = -ENOTTY;
 			} else {
-				error("can't list qgroups: %s",
-				       strerror(errno));
+				error("can't list qgroups: %m");
 				ret = -errno;
 			}
 

@@ -61,9 +61,9 @@
 		PRINT_TRACE_ON_ERROR;					\
 		PRINT_VERBOSE_ERROR;					\
 		if (lib_str && strcmp(errno_str, lib_str) != 0)		\
-			__btrfs_error("%s: %s", lib_str, errno_str);	\
+			__btrfs_error("%s: %m", lib_str);		\
 		else							\
-			__btrfs_error("%s", errno_str);			\
+			__btrfs_error("%m");				\
 		DO_ABORT_ON_ERROR;					\
 	} while (0)
 

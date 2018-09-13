@@ -237,8 +237,7 @@ static int add_xattr_item(struct btrfs_trans_handle *trans,
 	if (ret < 0) {
 		if (errno == ENOTSUP)
 			return 0;
-		error("getting a list of xattr failed for %s: %s", file_name,
-				strerror(errno));
+		error("getting a list of xattr failed for %s: %m", file_name);
 		return ret;
 	}
 	if (ret == 0)
@@ -253,8 +252,8 @@ static int add_xattr_item(struct btrfs_trans_handle *trans,
 		if (ret < 0) {
 			if (errno == ENOTSUP)
 				return 0;
-			error("getting a xattr value failed for %s attr %s: %s",
-				file_name, cur_name, strerror(errno));
+			error("getting a xattr value failed for %s attr %s: %m",
+				file_name, cur_name);
 			return ret;
 		}
 
@@ -281,7 +280,7 @@ static int add_symbolic_link(struct btrfs_trans_handle *trans,
 
 	ret = readlink(path_name, buf, sizeof(buf));
 	if (ret <= 0) {
-		error("readlink failed for %s: %s", path_name, strerror(errno));
+		error("readlink failed for %s: %m", path_name);
 		goto fail;
 	}
 	if (ret >= sizeof(buf)) {
@@ -320,7 +319,7 @@ static int add_file_items(struct btrfs_trans_handle *trans,
 
 	fd = open(path_name, O_RDONLY);
 	if (fd == -1) {
-		error("cannot open %s: %s", path_name, strerror(errno));
+		error("cannot open %s: %m", path_name);
 		return ret;
 	}
 
@@ -339,10 +338,9 @@ static int add_file_items(struct btrfs_trans_handle *trans,
 
 		ret_read = pread64(fd, buffer, st->st_size, bytes_read);
 		if (ret_read == -1) {
-			error("cannot read %s at offset %llu length %llu: %s",
+			error("cannot read %s at offset %llu length %llu: %m",
 				path_name, (unsigned long long)bytes_read,
-				(unsigned long long)st->st_size,
-				strerror(errno));
+				(unsigned long long)st->st_size);
 			free(buffer);
 			goto end;
 		}
@@ -388,11 +386,10 @@ again:
 		ret_read = pread64(fd, eb->data, sectorsize, file_pos +
 				   bytes_read);
 		if (ret_read == -1) {
-			error("cannot read %s at offset %llu length %llu: %s",
+			error("cannot read %s at offset %llu length %llu: %m",
 				path_name,
 				(unsigned long long)file_pos + bytes_read,
-				(unsigned long long)sectorsize,
-				strerror(errno));
+				(unsigned long long)sectorsize);
 			goto end;
 		}
 
@@ -467,7 +464,7 @@ static int traverse_directory(struct btrfs_trans_handle *trans,
 	dir_entry->dir_name = dir_name;
 	dir_entry->path = realpath(dir_name, NULL);
 	if (!dir_entry->path) {
-		error("realpath failed for %s: %s", dir_name, strerror(errno));
+		error("realpath failed for %s: %m", dir_name);
 		ret = -1;
 		goto fail_no_dir;
 	}
@@ -506,8 +503,8 @@ static int traverse_directory(struct btrfs_trans_handle *trans,
 		parent_inum = parent_dir_entry->inum;
 		parent_dir_name = parent_dir_entry->dir_name;
 		if (chdir(parent_dir_entry->path)) {
-			error("chdir failed for %s: %s",
-				parent_dir_name, strerror(errno));
+			error("chdir failed for %s: %m",
+				parent_dir_name);
 			ret = -1;
 			goto fail_no_files;
 		}
@@ -515,8 +512,8 @@ static int traverse_directory(struct btrfs_trans_handle *trans,
 		count = scandir(parent_dir_entry->path, &files,
 				directory_select, NULL);
 		if (count == -1) {
-			error("scandir failed for %s: %s",
-				parent_dir_name, strerror(errno));
+			error("scandir failed for %s: %m",
+				parent_dir_name);
 			ret = -1;
 			goto fail;
 		}
@@ -525,8 +522,8 @@ static int traverse_directory(struct btrfs_trans_handle *trans,
 			cur_file = files[i];
 
 			if (lstat(cur_file->d_name, &st) == -1) {
-				error("lstat failed for %s: %s",
-					cur_file->d_name, strerror(errno));
+				error("lstat failed for %s: %m",
+					cur_file->d_name);
 				ret = -1;
 				goto fail;
 			}
@@ -648,7 +645,7 @@ int btrfs_mkfs_fill_dir(const char *source_dir, struct btrfs_root *root,
 
 	ret = lstat(source_dir, &root_st);
 	if (ret) {
-		error("unable to lstat %s: %s", source_dir, strerror(errno));
+		error("unable to lstat %s: %m", source_dir);
 		ret = -errno;
 		goto out;
 	}
@@ -739,8 +736,7 @@ u64 btrfs_mkfs_size_dir(const char *dir_name, u32 sectorsize, u64 min_dev_size,
 	 */
 	ret = nftw(dir_name, ftw_add_entry_size, 10, FTW_PHYS);
 	if (ret < 0) {
-		error("ftw subdir walk of %s failed: %s", dir_name,
-			strerror(errno));
+		error("ftw subdir walk of %s failed: %m", dir_name);
 		exit(1);
 	}
 
@@ -946,16 +942,15 @@ int btrfs_mkfs_shrink_fs(struct btrfs_fs_info *fs_info, u64 *new_size_ret,
 	if (shrink_file_size) {
 		ret = fstat64(device->fd, &file_stat);
 		if (ret < 0) {
-			error("failed to stat devid %llu: %s", device->devid,
-				strerror(errno));
+			error("failed to stat devid %llu: %m", device->devid);
 			return ret;
 		}
 		if (!S_ISREG(file_stat.st_mode))
 			return ret;
 		ret = ftruncate64(device->fd, new_size);
 		if (ret < 0) {
-			error("failed to truncate device file of devid %llu: %s",
-				device->devid, strerror(errno));
+			error("failed to truncate device file of devid %llu: %m",
+				device->devid);
 			return ret;
 		}
 	}
