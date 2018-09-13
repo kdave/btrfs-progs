@@ -1908,20 +1908,21 @@ static int check_file_extent(struct btrfs_root *root, struct btrfs_path *path,
 
 	btrfs_item_key_to_cpu(node, &fkey, slot);
 	fi = btrfs_item_ptr(node, slot, struct btrfs_file_extent_item);
-
-	/* Check inline extent */
 	extent_type = btrfs_file_extent_type(node, fi);
-	if (extent_type == BTRFS_FILE_EXTENT_INLINE)
-		return check_file_extent_inline(root, path, size, end);
 
 	/* Check extent type */
 	if (extent_type != BTRFS_FILE_EXTENT_REG &&
-			extent_type != BTRFS_FILE_EXTENT_PREALLOC) {
+	    extent_type != BTRFS_FILE_EXTENT_PREALLOC &&
+	    extent_type != BTRFS_FILE_EXTENT_INLINE) {
 		err |= FILE_EXTENT_ERROR;
 		error("root %llu EXTENT_DATA[%llu %llu] type bad",
 		      root->objectid, fkey.objectid, fkey.offset);
 		return err;
 	}
+
+	/* Check inline extent */
+	if (extent_type == BTRFS_FILE_EXTENT_INLINE)
+		return check_file_extent_inline(root, path, size, end);
 
 	/* Check REG_EXTENT/PREALLOC_EXTENT */
 	disk_bytenr = btrfs_file_extent_disk_bytenr(node, fi);
