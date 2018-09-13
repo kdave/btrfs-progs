@@ -1853,20 +1853,20 @@ static int check_file_extent_inline(struct btrfs_root *root,
 				extent_num_bytes, max_inline_extent_size);
 			err |= FILE_EXTENT_ERROR;
 		}
-	}
 
-	if (!compressed && extent_num_bytes != item_inline_len) {
-		error(
+		if (extent_num_bytes != item_inline_len) {
+			error(
 "root %llu EXTENT_DATA[%llu %llu] wrong inline size, have: %llu, expected: %u",
 				root->objectid, fkey.objectid, fkey.offset,
 				extent_num_bytes, item_inline_len);
-		if (repair) {
-			ret = repair_inline_ram_bytes(root, path,
-						      &extent_num_bytes);
-			if (ret)
+			if (repair) {
+				ret = repair_inline_ram_bytes(root, path,
+							      &extent_num_bytes);
+				if (ret)
+					err |= FILE_EXTENT_ERROR;
+			} else {
 				err |= FILE_EXTENT_ERROR;
-		} else {
-			err |= FILE_EXTENT_ERROR;
+			}
 		}
 	}
 	*end += extent_num_bytes;
