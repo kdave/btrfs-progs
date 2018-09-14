@@ -290,10 +290,16 @@ static int create_image_file_range(struct btrfs_trans_handle *trans,
 	if (disk_bytenr) {
 		/* Check if the range is in a data block group */
 		bg_cache = btrfs_lookup_block_group(root->fs_info, bytenr);
-		if (!bg_cache)
+		if (!bg_cache) {
+			error("missing data block for bytenr %llu", bytenr);
 			return -ENOENT;
-		if (!(bg_cache->flags & BTRFS_BLOCK_GROUP_DATA))
+		}
+		if (!(bg_cache->flags & BTRFS_BLOCK_GROUP_DATA)) {
+			error(
+	"data bytenr %llu is covered by non-data block group %llu flags 0x%llu",
+			      bytenr, bg_cache->key.objectid, bg_cache->flags);
 			return -EINVAL;
+		}
 
 		/* The extent should never cross block group boundary */
 		len = min_t(u64, len, bg_cache->key.objectid +
@@ -310,8 +316,13 @@ static int create_image_file_range(struct btrfs_trans_handle *trans,
 	if (ret < 0)
 		return ret;
 
-	if (datacsum)
+	if (datacsum) {
 		ret = csum_disk_extent(trans, root, bytenr, len);
+		if (ret < 0)
+			error(
+		"failed to calculate csum for bytenr %llu len %llu: %s",
+			      bytenr, len, strerror(-ret));
+	}
 	*ret_len = len;
 	return ret;
 }
@@ -759,18 +770,30 @@ static int create_image(struct btrfs_root *root,
 
 	ret = btrfs_find_free_objectid(trans, root, BTRFS_FIRST_FREE_OBJECTID,
 				       &ino);
-	if (ret < 0)
+	if (ret < 0) {
+		error("failed to find free objectid for root %llu: %s",
+			root->root_key.objectid, strerror(-ret));
 		goto out;
+	}
 	ret = btrfs_new_inode(trans, root, ino, 0400 | S_IFREG);
-	if (ret < 0)
+	if (ret < 0) {
+		error("failed to create new inode for root %llu: %s",
+			root->root_key.objectid, strerror(-ret));
 		goto out;
+	}
 	ret = btrfs_change_inode_flags(trans, root, ino, flags);
-	if (ret < 0)
+	if (ret < 0) {
+		error("failed to change inode flag for ino %llu root %llu: %s",
+			ino, root->root_key.objectid, strerror(-ret));
 		goto out;
+	}
 	ret = btrfs_add_link(trans, root, ino, BTRFS_FIRST_FREE_OBJECTID, name,
 			     strlen(name), BTRFS_FT_REG_FILE, NULL, 1, 0);
-	if (ret < 0)
+	if (ret < 0) {
+		error("failed to link ino %llu to '/%s' in root %llu: %s",
+			ino, name, root->root_key.objectid, strerror(-ret));
 		goto out;
+	}
 
 	key.objectid = ino;
 	key.type = BTRFS_INODE_ITEM_KEY;
