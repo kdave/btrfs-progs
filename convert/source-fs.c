@@ -201,7 +201,7 @@ int read_disk_extent(struct btrfs_root *root, u64 bytenr,
 	ret = 0;
 fail:
 	if (ret > 0)
-		ret = -1;
+		ret = -EIO;
 	return ret;
 }
 
