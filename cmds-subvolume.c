@@ -155,7 +155,7 @@ static int cmd_subvol_create(int argc, char **argv)
 	}
 
 	len = strlen(newname);
-	if (len == 0 || len >= BTRFS_VOL_NAME_MAX) {
+	if (len > BTRFS_VOL_NAME_MAX) {
 		error("subvolume name too long: %s", newname);
 		goto out;
 	}
@@ -715,7 +715,7 @@ static int cmd_subvol_snapshot(int argc, char **argv)
 	}
 
 	len = strlen(newname);
-	if (len == 0 || len >= BTRFS_VOL_NAME_MAX) {
+	if (len > BTRFS_VOL_NAME_MAX) {
 		error("snapshot name too long '%s'", newname);
 		goto out;
 	}
