@@ -89,6 +89,12 @@ print only the uuid tree information, empty output if the tree does not exist
 print info of the specified block only
 --follow::::
 use with '-b', print all children tree blocks of '<block_num>'
+--dfs::::
+use depth-first search to print trees. (default) the nodes and leaves are
+intermixed in the output
+--bfs::::
+use breadth-first search to print trees. the nodes are printed before all
+leaves
 -t <tree_id>::::
 print only the tree with the specified ID, where the ID can be numerical or
 common name in a flexible human readable form
