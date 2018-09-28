@@ -384,20 +384,20 @@ int cmd_inspect_dump_tree(int argc, char **argv)
 		} else {
 			if (info->tree_root->node) {
 				printf("root tree\n");
-				btrfs_print_tree(info->tree_root->node, 1,
+				btrfs_print_tree(info->tree_root->node, true,
 						 traverse);
 			}
 
 			if (info->chunk_root->node) {
 				printf("chunk tree\n");
-				btrfs_print_tree(info->chunk_root->node, 1,
+				btrfs_print_tree(info->chunk_root->node, true,
 						 traverse);
 			}
 
 			if (info->log_root_tree) {
 				printf("log root tree\n");
-				btrfs_print_tree(info->log_root_tree->node, 1,
-						 traverse);
+				btrfs_print_tree(info->log_root_tree->node,
+						 true, traverse);
 			}
 		}
 	}
@@ -417,7 +417,7 @@ again:
 			goto close_root;
 		}
 		printf("root tree\n");
-		btrfs_print_tree(info->tree_root->node, 1, traverse);
+		btrfs_print_tree(info->tree_root->node, true, traverse);
 		goto close_root;
 	}
 
@@ -427,7 +427,7 @@ again:
 			goto close_root;
 		}
 		printf("chunk tree\n");
-		btrfs_print_tree(info->chunk_root->node, 1, traverse);
+		btrfs_print_tree(info->chunk_root->node, true, traverse);
 		goto close_root;
 	}
 
@@ -437,7 +437,7 @@ again:
 			goto close_root;
 		}
 		printf("log root tree\n");
-		btrfs_print_tree(info->log_root_tree->node, 1, traverse);
+		btrfs_print_tree(info->log_root_tree->node, true, traverse);
 		goto close_root;
 	}
 
@@ -583,7 +583,7 @@ again:
 					       btrfs_header_level(buf));
 				} else {
 					printf(" \n");
-					btrfs_print_tree(buf, 1, traverse);
+					btrfs_print_tree(buf, true, traverse);
 				}
 			}
 			free_extent_buffer(buf);

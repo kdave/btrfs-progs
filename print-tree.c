@@ -1485,7 +1485,7 @@ static void dfs_print_children(struct extent_buffer *root_eb)
 	}
 }
 
-void btrfs_print_tree(struct extent_buffer *eb, int follow, int traverse)
+void btrfs_print_tree(struct extent_buffer *eb, bool follow, int traverse)
 {
 	u32 i;
 	u32 nr;
