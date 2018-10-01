@@ -322,19 +322,19 @@ PyObject *set_default_subvolume(PyObject *self, PyObject *args, PyObject *kwds)
 
 PyObject *create_subvolume(PyObject *self, PyObject *args, PyObject *kwds)
 {
-	static char *keywords[] = {"path", "async", "qgroup_inherit", NULL};
+	static char *keywords[] = {"path", "no_wait", "qgroup_inherit", NULL};
 	struct path_arg path = {.allow_fd = false};
 	enum btrfs_util_error err;
-	int async = 0;
+	int no_wait = 0;
 	QgroupInherit *inherit = NULL;
 	uint64_t transid;
 
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|pO!:create_subvolume",
 					 keywords, &path_converter, &path,
-					 &async, &QgroupInherit_type, &inherit))
+					 &no_wait, &QgroupInherit_type, &inherit))
 		return NULL;
 
-	err = btrfs_util_create_subvolume(path.path, 0, async ? &transid : NULL,
+	err = btrfs_util_create_subvolume(path.path, 0, no_wait ? &transid : NULL,
 					  inherit ? inherit->inherit : NULL);
 	if (err) {
 		SetFromBtrfsUtilErrorWithPath(err, &path);
@@ -343,7 +343,7 @@ PyObject *create_subvolume(PyObject *self, PyObject *args, PyObject *kwds)
 	}
 
 	path_cleanup(&path);
-	if (async)
+	if (no_wait)
 		return PyLong_FromUnsignedLongLong(transid);
 	else
 		Py_RETURN_NONE;
@@ -352,12 +352,12 @@ PyObject *create_subvolume(PyObject *self, PyObject *args, PyObject *kwds)
 PyObject *create_snapshot(PyObject *self, PyObject *args, PyObject *kwds)
 {
 	static char *keywords[] = {
-		"source", "path", "recursive", "read_only", "async",
+		"source", "path", "recursive", "read_only", "no_wait",
 		"qgroup_inherit", NULL,
 	};
 	struct path_arg src = {.allow_fd = true}, dst = {.allow_fd = false};
 	enum btrfs_util_error err;
-	int recursive = 0, read_only = 0, async = 0;
+	int recursive = 0, read_only = 0, no_wait = 0;
 	int flags = 0;
 	QgroupInherit *inherit = NULL;
 	uint64_t transid;
@@ -365,7 +365,7 @@ PyObject *create_snapshot(PyObject *self, PyObject *args, PyObject *kwds)
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&O&|pppO!:create_snapshot",
 					 keywords, &path_converter, &src,
 					 &path_converter, &dst, &recursive,
-					 &read_only, &async,
+					 &read_only, &no_wait,
 					 &QgroupInherit_type, &inherit))
 		return NULL;
 
@@ -376,11 +376,11 @@ PyObject *create_snapshot(PyObject *self, PyObject *args, PyObject *kwds)
 
 	if (src.path) {
 		err = btrfs_util_create_snapshot(src.path, dst.path, flags,
-						 async ? &transid : NULL,
+						 no_wait ? &transid : NULL,
 						 inherit ? inherit->inherit : NULL);
 	} else {
 		err = btrfs_util_create_snapshot_fd(src.fd, dst.path, flags,
-						    async ? &transid : NULL,
+						    no_wait ? &transid : NULL,
 						    inherit ? inherit->inherit : NULL);
 	}
 	if (err) {
@@ -392,7 +392,7 @@ PyObject *create_snapshot(PyObject *self, PyObject *args, PyObject *kwds)
 
 	path_cleanup(&src);
 	path_cleanup(&dst);
-	if (async)
+	if (no_wait)
 		return PyLong_FromUnsignedLongLong(transid);
 	else
 		Py_RETURN_NONE;
