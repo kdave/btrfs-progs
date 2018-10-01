@@ -2,6 +2,7 @@
 #define _PERF_LINUX_BITOPS_H_
 
 #include <linux/kernel.h>
+#include <endian.h>
 #include "internal.h"
 
 #ifndef DIV_ROUND_UP
@@ -170,5 +171,86 @@ static inline unsigned long find_next_zero_bit(const unsigned long *addr,
 }
 
 #define find_first_bit(addr, size) find_next_bit((addr), (size), 0)
+#define find_first_zero_bit(addr, size) find_next_zero_bit((addr), (size), 0)
+
+#if __BYTE_ORDER == __BIG_ENDIAN
+
+static inline unsigned long ext2_swab(const unsigned long y)
+{
+#if BITS_PER_LONG == 64
+	return (unsigned long) bswap64((u64) y);
+#elif BITS_PER_LONG == 32
+	return (unsigned long) bswap32((u32) y);
+#else
+#error BITS_PER_LONG not defined
+#endif
+}
+
+static inline unsigned long _find_next_bit_le(const unsigned long *addr1,
+		const unsigned long *addr2, unsigned long nbits,
+		unsigned long start, unsigned long invert)
+{
+	unsigned long tmp;
+
+	if (start >= nbits)
+		return nbits;
+
+	tmp = addr1[start / BITS_PER_LONG];
+	if (addr2)
+		tmp &= addr2[start / BITS_PER_LONG];
+	tmp ^= invert;
+
+	/* Handle 1st word. */
+	tmp &= ext2_swab(BITMAP_FIRST_WORD_MASK(start));
+	start = round_down(start, BITS_PER_LONG);
+
+	while (!tmp) {
+		start += BITS_PER_LONG;
+		if (start >= nbits)
+			return nbits;
+
+		tmp = addr1[start / BITS_PER_LONG];
+		if (addr2)
+			tmp &= addr2[start / BITS_PER_LONG];
+		tmp ^= invert;
+	}
+
+	return min(start + __ffs(ext2_swab(tmp)), nbits);
+}
+
+unsigned long find_next_zero_bit_le(const void *addr, unsigned long size,
+		unsigned long offset)
+{
+	return _find_next_bit_le(addr, NULL, size, offset, ~0UL);
+}
+
+
+unsigned long find_next_bit_le(const void *addr, unsigned long size,
+		unsigned long offset)
+{
+	return _find_next_bit_le(addr, NULL, size, offset, 0UL);
+}
+
+#else
+
+static inline unsigned long find_next_zero_bit_le(const void *addr,
+                unsigned long size, unsigned long offset)
+{
+        return find_next_zero_bit(addr, size, offset);
+}
+
+static inline unsigned long find_next_bit_le(const void *addr,
+                unsigned long size, unsigned long offset)
+{
+        return find_next_bit(addr, size, offset);
+}
+
+static inline unsigned long find_first_zero_bit_le(const void *addr,
+                unsigned long size)
+{
+        return find_first_zero_bit(addr, size);
+}
+
+#endif
 
 #endif
