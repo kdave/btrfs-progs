@@ -29,6 +29,7 @@
 #include "crc32c.h"
 #include "volumes.h"
 #include "free-space-cache.h"
+#include "free-space-tree.h"
 #include "utils.h"
 
 #define PENDING_EXTENT_INSERT 0
@@ -2276,6 +2277,11 @@ static int __free_extent(struct btrfs_trans_handle *trans,
 			BUG_ON(ret);
 		}
 
+		ret = add_to_free_space_tree(trans, bytenr, num_bytes);
+		if (ret) {
+			goto fail;
+		}
+
 		update_block_group(trans->fs_info, bytenr, num_bytes, 0,
 				   mark_free);
 	}
@@ -2594,6 +2600,10 @@ static int alloc_reserved_tree_block(struct btrfs_trans_handle *trans,
 
 	btrfs_mark_buffer_dirty(leaf);
 	btrfs_free_path(path);
+
+	ret = remove_from_free_space_tree(trans, ins.objectid, fs_info->nodesize);
+	if (ret)
+		return ret;
 
 	ret = update_block_group(fs_info, ins.objectid, fs_info->nodesize, 1,
 				 0);
