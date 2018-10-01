@@ -5400,14 +5400,6 @@ static int check_space_cache(struct btrfs_root *root)
 	int ret;
 	int error = 0;
 
-	if (btrfs_super_cache_generation(root->fs_info->super_copy) != -1ULL &&
-	    btrfs_super_generation(root->fs_info->super_copy) !=
-	    btrfs_super_cache_generation(root->fs_info->super_copy)) {
-		printf("cache and super generation don't match, space cache "
-		       "will be invalidated\n");
-		return 0;
-	}
-
 	while (1) {
 		ctx.item_count++;
 		cache = btrfs_lookup_first_block_group(root->fs_info, start);
@@ -9425,7 +9417,6 @@ static int do_clear_free_space_cache(struct btrfs_fs_info *fs_info,
 			ret = 1;
 			goto close_out;
 		}
-		printf("Clearing free space cache\n");
 		ret = clear_free_space_cache(fs_info);
 		if (ret) {
 			error("failed to clear free space cache");
@@ -9450,6 +9441,34 @@ static int do_clear_free_space_cache(struct btrfs_fs_info *fs_info,
 	}
 close_out:
 	return ret;
+}
+
+static int validate_free_space_cache(struct btrfs_root *root)
+{
+	int ret;
+
+	if (btrfs_super_cache_generation(root->fs_info->super_copy) != -1ULL &&
+	    btrfs_super_generation(root->fs_info->super_copy) !=
+	    btrfs_super_cache_generation(root->fs_info->super_copy)) {
+		printf(
+"cache and super generation don't match, space cache will be invalidated\n");
+		return 0;
+	}
+
+	ret = check_space_cache(root);
+	if (ret && btrfs_fs_compat_ro(global_info, FREE_SPACE_TREE) &&
+	    repair) {
+		ret = do_clear_free_space_cache(global_info, 2);
+		if (ret)
+			goto out;
+
+		ret = btrfs_create_free_space_tree(global_info);
+		if (ret)
+			error("couldn't repair freespace tree");
+	}
+
+out:
+	return ret ? -EINVAL : 0;
 }
 
 const char * const cmd_check_usage[] = {
@@ -9885,16 +9904,9 @@ int cmd_check(int argc, char **argv)
 		task_start(ctx.info, &ctx.start_time, &ctx.item_count);
 	}
 
-	ret = check_space_cache(root);
+	ret = validate_free_space_cache(root);
 	task_stop(ctx.info);
 	err |= !!ret;
-	if (ret) {
-		if (is_free_space_tree)
-			error("errors found in free space tree");
-		else
-			error("errors found in free space cache");
-		goto out;
-	}
 
 	/*
 	 * We used to have to have these hole extents in between our real
