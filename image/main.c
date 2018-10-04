@@ -2093,6 +2093,10 @@ static int fixup_devices(struct btrfs_fs_info *fs_info,
 	u64 devid, cur_devid;
 	int ret;
 
+	if (btrfs_super_log_root(fs_info->super_copy)) {
+		warning(
+		"log tree detected, its generation will not match superblock");
+	}
 	trans = btrfs_start_transaction(fs_info->tree_root, 1);
 	if (IS_ERR(trans)) {
 		error("cannot starting transaction %ld", PTR_ERR(trans));
