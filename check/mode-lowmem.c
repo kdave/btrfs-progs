@@ -4095,6 +4095,8 @@ static int check_dev_item(struct btrfs_fs_info *fs_info,
 	u64 dev_id;
 	u64 used;
 	u64 total = 0;
+	u64 prev_devid = 0;
+	u64 prev_dev_ext_end = 0;
 	int ret;
 
 	dev_item = btrfs_item_ptr(eb, slot, struct btrfs_dev_item);
@@ -4116,8 +4118,16 @@ static int check_dev_item(struct btrfs_fs_info *fs_info,
 		return REFERENCER_MISSING;
 	}
 
-	/* Iterate dev_extents to calculate the used space of a device */
+	/*
+	 * Iterate dev_extents to calculate the used space of a device
+	 *
+	 * Also make sure no dev extents overlap and end beyond device boundary
+	 */
 	while (1) {
+		u64 devid;
+		u64 physical_offset;
+		u64 physical_len;
+
 		if (path.slots[0] >= btrfs_header_nritems(path.nodes[0]))
 			goto next;
 
@@ -4129,7 +4139,27 @@ static int check_dev_item(struct btrfs_fs_info *fs_info,
 
 		ptr = btrfs_item_ptr(path.nodes[0], path.slots[0],
 				     struct btrfs_dev_extent);
-		total += btrfs_dev_extent_length(path.nodes[0], ptr);
+		devid = key.objectid;
+		physical_offset = key.offset;
+		physical_len = btrfs_dev_extent_length(path.nodes[0], ptr);
+
+		if (prev_devid == devid && physical_offset < prev_dev_ext_end) {
+			error(
+"dev extent devid %llu offset %llu len %llu overlap with previous dev extent end %llu",
+			      devid, physical_offset, physical_len,
+			      prev_dev_ext_end);
+			return ACCOUNTING_MISMATCH;
+		}
+		if (physical_offset + physical_len > total_bytes) {
+			error(
+"dev extent devid %llu offset %llu len %llu is beyond device boundary %llu",
+			      devid, physical_offset, physical_len,
+			      total_bytes);
+			return ACCOUNTING_MISMATCH;
+		}
+		prev_devid = devid;
+		prev_dev_ext_end = physical_offset + physical_len;
+		total += physical_len;
 next:
 		ret = btrfs_next_item(dev_root, &path);
 		if (ret)
