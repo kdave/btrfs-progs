@@ -7944,6 +7944,13 @@ static int check_device_used(struct device_record *dev_rec,
 	struct device_extent_record *dev_extent_rec;
 	u64 total_byte = 0;
 
+	if (dev_rec->byte_used > dev_rec->total_byte) {
+		error(
+		"device %llu has incorrect used bytes %llu > total bytes %llu",
+		      dev_rec->devid, dev_rec->byte_used, dev_rec->total_byte);
+		return -EUCLEAN;
+	}
+
 	cache = search_cache_extent2(&dext_cache->tree, dev_rec->devid, 0);
 	while (cache) {
 		dev_extent_rec = container_of(cache,
