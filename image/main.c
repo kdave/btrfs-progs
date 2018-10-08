@@ -2092,30 +2092,71 @@ static void remap_overlapping_chunks(struct mdrestore_struct *mdres)
 }
 
 static int fixup_device_size(struct btrfs_trans_handle *trans,
-			     struct mdrestore_struct *mdres,
-			     off_t dev_size)
+			     struct mdrestore_struct *mdres, int out_fd)
 {
 	struct btrfs_fs_info *fs_info = trans->fs_info;
 	struct btrfs_dev_item *dev_item;
+	struct btrfs_dev_extent *dev_ext;
 	struct btrfs_path path;
 	struct extent_buffer *leaf;
 	struct btrfs_root *root = fs_info->chunk_root;
 	struct btrfs_key key;
 	u64 devid, cur_devid;
+	u64 dev_size; /* Get from last dev extents */
 	int ret;
 
 	dev_item = &fs_info->super_copy->dev_item;
 
+	btrfs_init_path(&path);
 	devid = btrfs_stack_device_id(dev_item);
+
+	key.objectid = devid;
+	key.type = BTRFS_DEV_EXTENT_KEY;
+	key.offset = (u64)-1;
+
+	ret = btrfs_search_slot(NULL, fs_info->dev_root, &key, &path, 0, 0);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to locate last dev extent of devid %llu: %m",
+			devid);
+		btrfs_release_path(&path);
+		return ret;
+	}
+	if (ret == 0) {
+		error("found invalid dev extent devid %llu offset -1", devid);
+		btrfs_release_path(&path);
+		return -EUCLEAN;
+	}
+	ret = btrfs_previous_item(fs_info->dev_root, &path, devid,
+				  BTRFS_DEV_EXTENT_KEY);
+	if (ret > 0)
+		ret = -ENOENT;
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to locate last dev extent of devid %llu: %m",
+			devid);
+		btrfs_release_path(&path);
+		return ret;
+	}
+
+	btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
+	dev_ext = btrfs_item_ptr(path.nodes[0], path.slots[0],
+				 struct btrfs_dev_extent);
+	dev_size = key.offset + btrfs_dev_extent_length(path.nodes[0], dev_ext);
+	btrfs_release_path(&path);
 
 	btrfs_set_stack_device_total_bytes(dev_item, dev_size);
 	btrfs_set_stack_device_bytes_used(dev_item, mdres->alloced_chunks);
+	/* Don't forget to enlarge the real file */
+	ret = ftruncate64(out_fd, dev_size);
+	if (ret < 0) {
+		error("failed to enlarge result image: %m");
+		return -errno;
+	}
 
 	key.objectid = BTRFS_DEV_ITEMS_OBJECTID;
 	key.type = BTRFS_DEV_ITEM_KEY;
 	key.offset = 0;
-
-	btrfs_init_path(&path);
 
 again:
 	ret = btrfs_search_slot(trans, root, &key, &path, -1, 1);
@@ -2318,7 +2359,7 @@ out:
 }
 
 static int fixup_chunks_and_devices(struct btrfs_fs_info *fs_info,
-			 struct mdrestore_struct *mdres, off_t dev_size)
+			 struct mdrestore_struct *mdres, int out_fd)
 {
 	struct btrfs_trans_handle *trans;
 	int ret;
@@ -2338,7 +2379,7 @@ static int fixup_chunks_and_devices(struct btrfs_fs_info *fs_info,
 	if (ret < 0)
 		goto error;
 
-	ret = fixup_device_size(trans, mdres, dev_size);
+	ret = fixup_device_size(trans, mdres, out_fd);
 	if (ret < 0)
 		goto error;
 
@@ -2460,7 +2501,7 @@ static int restore_metadump(const char *input, FILE *out, int old_restore,
 			return 1;
 		}
 
-		ret = fixup_chunks_and_devices(info, &mdrestore, st.st_size);
+		ret = fixup_chunks_and_devices(info, &mdrestore, fileno(out));
 		close_ctree(info->chunk_root);
 		if (ret)
 			goto out;
