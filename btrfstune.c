@@ -309,9 +309,8 @@ static int change_device_uuid(struct extent_buffer *eb, int slot,
 	return ret;
 }
 
-static int change_devices_uuid(struct btrfs_fs_info *fs_info, uuid_t new_fsid)
+static int change_devices_uuid(struct btrfs_root *root, uuid_t new_fsid)
 {
-	struct btrfs_root *root = fs_info->chunk_root;
 	struct btrfs_path path;
 	struct btrfs_key key = {0, 0, 0};
 	int ret = 0;
@@ -438,7 +437,7 @@ static int change_uuid(struct btrfs_fs_info *fs_info, const char *new_fsid_str)
 
 	/* Then devices */
 	printf("Change fsid on devices\n");
-	ret = change_devices_uuid(fs_info, new_fsid);
+	ret = change_devices_uuid(fs_info->chunk_root, new_fsid);
 	if (ret < 0) {
 		error("failed to change UUID of devices: %d", ret);
 		goto out;
