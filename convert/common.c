@@ -107,9 +107,11 @@ static int setup_temp_super(int fd, struct btrfs_mkfs_config *cfg,
 			ret = -EINVAL;
 			goto out;
 		}
+		uuid_copy(super->metadata_uuid, super->fsid);
 	} else {
 		uuid_generate(super->fsid);
 		uuid_unparse(super->fsid, cfg->fs_uuid);
+		uuid_copy(super->metadata_uuid, super->fsid);
 	}
 	uuid_generate(chunk_uuid);
 	uuid_unparse(chunk_uuid, cfg->chunk_uuid);

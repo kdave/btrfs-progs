@@ -228,7 +228,8 @@ static struct readable_flag_entry incompat_flags_array[] = {
 	DEF_INCOMPAT_FLAG_ENTRY(EXTENDED_IREF),
 	DEF_INCOMPAT_FLAG_ENTRY(RAID56),
 	DEF_INCOMPAT_FLAG_ENTRY(SKINNY_METADATA),
-	DEF_INCOMPAT_FLAG_ENTRY(NO_HOLES)
+	DEF_INCOMPAT_FLAG_ENTRY(NO_HOLES),
+	DEF_INCOMPAT_FLAG_ENTRY(METADATA_UUID)
 };
 static const int incompat_flags_num = sizeof(incompat_flags_array) /
 				      sizeof(struct readable_flag_entry);
@@ -319,6 +320,10 @@ static void dump_superblock(struct btrfs_super_block *sb, int full)
 	u8 *p;
 	u32 csum_size;
 	u16 csum_type;
+	bool metadata_uuid_present = (btrfs_super_incompat_flags(sb) &
+		BTRFS_FEATURE_INCOMPAT_METADATA_UUID);
+	int cmp_res = 0;
+
 
 	csum_type = btrfs_super_csum_type(sb);
 	csum_size = BTRFS_CSUM_SIZE;
@@ -365,6 +370,12 @@ static void dump_superblock(struct btrfs_super_block *sb, int full)
 
 	uuid_unparse(sb->fsid, buf);
 	printf("fsid\t\t\t%s\n", buf);
+	if (metadata_uuid_present) {
+		uuid_unparse(sb->metadata_uuid, buf);
+		printf("metadata_uuid\t\t%s\n", buf);
+	} else {
+		printf("metadata_uuid\t\t%s\n", buf);
+	}
 
 	printf("label\t\t\t");
 	s = sb->label;
@@ -424,9 +435,14 @@ static void dump_superblock(struct btrfs_super_block *sb, int full)
 	printf("dev_item.uuid\t\t%s\n", buf);
 
 	uuid_unparse(sb->dev_item.fsid, buf);
+	if (metadata_uuid_present) {
+		cmp_res = !memcmp(sb->dev_item.fsid, sb->metadata_uuid,
+				 BTRFS_FSID_SIZE);
+	} else {
+		cmp_res = !memcmp(sb->dev_item.fsid, sb->fsid, BTRFS_FSID_SIZE);
+	}
 	printf("dev_item.fsid\t\t%s %s\n", buf,
-		!memcmp(sb->dev_item.fsid, sb->fsid, BTRFS_FSID_SIZE) ?
-			"[match]" : "[DON'T MATCH]");
+	       cmp_res ? "[match]" : "[DON'T MATCH]");
 
 	printf("dev_item.type\t\t%llu\n", (unsigned long long)
 	       btrfs_stack_device_type(&sb->dev_item));

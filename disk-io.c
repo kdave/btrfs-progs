@@ -55,8 +55,9 @@ static int check_tree_block(struct btrfs_fs_info *fs_info,
 			    struct extent_buffer *buf)
 {
 
-	struct btrfs_fs_devices *fs_devices;
+	struct btrfs_fs_devices *fs_devices = fs_info->fs_devices;
 	u32 nodesize = fs_info->nodesize;
+	bool fsid_match = false;
 	int ret = BTRFS_BAD_FSID;
 
 	if (buf->start != btrfs_header_bytenr(buf))
@@ -72,12 +73,26 @@ static int check_tree_block(struct btrfs_fs_info *fs_info,
 	    btrfs_header_level(buf) != 0)
 		return BTRFS_BAD_NRITEMS;
 
-	fs_devices = fs_info->fs_devices;
 	while (fs_devices) {
-		if (fs_info->ignore_fsid_mismatch ||
-		    !memcmp_extent_buffer(buf, fs_devices->fsid,
-					  btrfs_header_fsid(),
-					  BTRFS_FSID_SIZE)) {
+	         /*
+                 * Checking the incompat flag is only valid for the current
+                 * fs. For seed devices it's forbidden to have their uuid
+                 * changed so reading ->fsid in this case is fine
+                 */
+		if (fs_devices == fs_info->fs_devices &&
+		    btrfs_fs_incompat(fs_info, METADATA_UUID))
+			fsid_match = !memcmp_extent_buffer(buf,
+						   fs_devices->metadata_uuid,
+						   btrfs_header_fsid(),
+						   BTRFS_FSID_SIZE);
+		else
+			fsid_match = !memcmp_extent_buffer(buf,
+						    fs_devices->fsid,
+						    btrfs_header_fsid(),
+						    BTRFS_FSID_SIZE);
+
+
+		if (fs_info->ignore_fsid_mismatch || fsid_match) {
 			ret = 0;
 			break;
 		}
@@ -103,7 +118,7 @@ static void print_tree_block_error(struct btrfs_fs_info *fs_info,
 		read_extent_buffer(eb, buf, btrfs_header_fsid(),
 				   BTRFS_UUID_SIZE);
 		uuid_unparse(buf, found_uuid);
-		uuid_unparse(fs_info->fsid, fs_uuid);
+		uuid_unparse(fs_info->metadata_uuid, fs_uuid);
 		fprintf(stderr, "fsid mismatch, want=%s, have=%s\n",
 			fs_uuid, found_uuid);
 		break;
@@ -1170,6 +1185,12 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 	}
 
 	memcpy(fs_info->fsid, &disk_super->fsid, BTRFS_FSID_SIZE);
+	if (btrfs_fs_incompat(fs_info, METADATA_UUID)) {
+		memcpy(fs_info->metadata_uuid, disk_super->metadata_uuid,
+		       BTRFS_FSID_SIZE);
+	} else {
+		memcpy(fs_info->metadata_uuid, fs_info->fsid, BTRFS_FSID_SIZE);
+	}
 	fs_info->sectorsize = btrfs_super_sectorsize(disk_super);
 	fs_info->nodesize = btrfs_super_nodesize(disk_super);
 	fs_info->stripesize = btrfs_super_stripesize(disk_super);
@@ -1290,6 +1311,7 @@ static int check_super(struct btrfs_super_block *sb, unsigned sbflags)
 	u32 crc;
 	u16 csum_type;
 	int csum_size;
+	u8 *metadata_uuid;
 
 	if (btrfs_super_magic(sb) != BTRFS_MAGIC) {
 		if (btrfs_super_magic(sb) == BTRFS_MAGIC_TEMPORARY) {
@@ -1378,11 +1400,16 @@ static int check_super(struct btrfs_super_block *sb, unsigned sbflags)
 		goto error_out;
 	}
 
-	if (memcmp(sb->fsid, sb->dev_item.fsid, BTRFS_UUID_SIZE) != 0) {
+	if (btrfs_super_incompat_flags(sb) & BTRFS_FEATURE_INCOMPAT_METADATA_UUID)
+		metadata_uuid = sb->metadata_uuid;
+	else
+		metadata_uuid = sb->fsid;
+
+	if (memcmp(metadata_uuid, sb->dev_item.fsid, BTRFS_FSID_SIZE) != 0) {
 		char fsid[BTRFS_UUID_UNPARSED_SIZE];
 		char dev_fsid[BTRFS_UUID_UNPARSED_SIZE];
 
-		uuid_unparse(sb->fsid, fsid);
+		uuid_unparse(sb->metadata_uuid, fsid);
 		uuid_unparse(sb->dev_item.fsid, dev_fsid);
 		if (sbflags & SBREAD_IGNORE_FSID_MISMATCH) {
 			warning("ignored: dev_item fsid mismatch: %s != %s",
@@ -1454,6 +1481,7 @@ int btrfs_read_dev_super(int fd, struct btrfs_super_block *sb, u64 sb_bytenr,
 			 unsigned sbflags)
 {
 	u8 fsid[BTRFS_FSID_SIZE];
+	u8 metadata_uuid[BTRFS_FSID_SIZE];
 	int fsid_is_initialized = 0;
 	char tmp[BTRFS_SUPER_INFO_SIZE];
 	struct btrfs_super_block *buf = (struct btrfs_super_block *)tmp;
@@ -1461,6 +1489,7 @@ int btrfs_read_dev_super(int fd, struct btrfs_super_block *sb, u64 sb_bytenr,
 	int ret;
 	int max_super = sbflags & SBREAD_RECOVER ? BTRFS_SUPER_MIRROR_MAX : 1;
 	u64 transid = 0;
+	bool metadata_uuid_set = false;
 	u64 bytenr;
 
 	if (sb_bytenr != BTRFS_SUPER_INFO_OFFSET) {
@@ -1505,9 +1534,18 @@ int btrfs_read_dev_super(int fd, struct btrfs_super_block *sb, u64 sb_bytenr,
 			continue;
 
 		if (!fsid_is_initialized) {
+			if (btrfs_super_incompat_flags(buf) &
+			    BTRFS_FEATURE_INCOMPAT_METADATA_UUID) {
+				metadata_uuid_set = true;
+				memcpy(metadata_uuid, buf->metadata_uuid,
+				       sizeof(metadata_uuid));
+			}
 			memcpy(fsid, buf->fsid, sizeof(fsid));
 			fsid_is_initialized = 1;
-		} else if (memcmp(fsid, buf->fsid, sizeof(fsid))) {
+		} else if (memcmp(fsid, buf->fsid, sizeof(fsid)) ||
+			   (metadata_uuid_set && memcmp(metadata_uuid,
+							buf->metadata_uuid,
+							sizeof(metadata_uuid)))) {
 			/*
 			 * the superblocks (the original one and
 			 * its backups) contain data of different
@@ -1608,7 +1646,7 @@ int write_all_supers(struct btrfs_fs_info *fs_info)
 		btrfs_set_stack_device_io_width(dev_item, dev->io_width);
 		btrfs_set_stack_device_sector_size(dev_item, dev->sector_size);
 		memcpy(dev_item->uuid, dev->uuid, BTRFS_UUID_SIZE);
-		memcpy(dev_item->fsid, dev->fs_devices->fsid, BTRFS_UUID_SIZE);
+		memcpy(dev_item->fsid, fs_info->metadata_uuid, BTRFS_FSID_SIZE);
 
 		flags = btrfs_super_flags(sb);
 		btrfs_set_super_flags(sb, flags | BTRFS_HEADER_FLAG_WRITTEN);

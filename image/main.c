@@ -1404,7 +1404,7 @@ static void *restore_worker(void *data)
 		list_del_init(&async->list);
 
 		if (mdres->compress_method == COMPRESS_ZLIB) {
-			size = compress_size; 
+			size = compress_size;
 			pthread_mutex_unlock(&mdres->mutex);
 			ret = uncompress(buffer, (unsigned long *)&size,
 					 async->buffer, async->bufsize);
@@ -1596,9 +1596,12 @@ static int fill_mdres_info(struct mdrestore_struct *mdres,
 
 	super = (struct btrfs_super_block *)outbuf;
 	mdres->nodesize = btrfs_super_nodesize(super);
-	memcpy(mdres->fsid, super->fsid, BTRFS_FSID_SIZE);
-	memcpy(mdres->uuid, super->dev_item.uuid,
-		       BTRFS_UUID_SIZE);
+	if (btrfs_super_incompat_flags(super) &
+	    BTRFS_FEATURE_INCOMPAT_METADATA_UUID)
+		memcpy(mdres->fsid, super->metadata_uuid, BTRFS_FSID_SIZE);
+	else
+		memcpy(mdres->fsid, super->fsid, BTRFS_FSID_SIZE);
+	memcpy(mdres->uuid, super->dev_item.uuid, BTRFS_UUID_SIZE);
 	mdres->devid = le64_to_cpu(super->dev_item.devid);
 	free(buffer);
 	return 0;
@@ -1725,7 +1728,7 @@ static int read_chunk_block(struct mdrestore_struct *mdres, u8 *buffer,
 
 	if (memcmp(mdres->fsid, eb->data + offsetof(struct btrfs_header, fsid),
 		   BTRFS_FSID_SIZE)) {
-		error("filesystem UUID of eb %llu does not match",
+		error("filesystem metadata UUID of eb %llu does not match",
 				(unsigned long long)bytenr);
 		ret = -EIO;
 		goto out;
@@ -2039,9 +2042,13 @@ static int build_chunk_tree(struct mdrestore_struct *mdres,
 	super = (struct btrfs_super_block *)buffer;
 	chunk_root_bytenr = btrfs_super_chunk_root(super);
 	mdres->nodesize = btrfs_super_nodesize(super);
-	memcpy(mdres->fsid, super->fsid, BTRFS_FSID_SIZE);
-	memcpy(mdres->uuid, super->dev_item.uuid,
-		       BTRFS_UUID_SIZE);
+	if (btrfs_super_incompat_flags(super) &
+	    BTRFS_FEATURE_INCOMPAT_METADATA_UUID)
+		memcpy(mdres->fsid, super->metadata_uuid, BTRFS_FSID_SIZE);
+	else
+		memcpy(mdres->fsid, super->fsid, BTRFS_FSID_SIZE);
+
+	memcpy(mdres->uuid, super->dev_item.uuid, BTRFS_UUID_SIZE);
 	mdres->devid = le64_to_cpu(super->dev_item.devid);
 	free(buffer);
 	pthread_mutex_unlock(&mdres->mutex);
@@ -2492,7 +2499,7 @@ static int update_disk_super_on_device(struct btrfs_fs_info *info,
 	key.offset = cur_devid;
 
 	btrfs_init_path(&path);
-	ret = btrfs_search_slot(NULL, info->chunk_root, &key, &path, 0, 0); 
+	ret = btrfs_search_slot(NULL, info->chunk_root, &key, &path, 0, 0);
 	if (ret) {
 		error("search key failed: %d", ret);
 		ret = -EIO;

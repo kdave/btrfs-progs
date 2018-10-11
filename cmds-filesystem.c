@@ -173,6 +173,7 @@ static int match_search_item_kernel(u8 *fsid, char *mnt, char *label,
 	return 0;
 }
 
+/* Search for user visible uuid 'search' in registered filesystems */
 static int uuid_search(struct btrfs_fs_devices *fs_devices, const char *search)
 {
 	char uuidbuf[BTRFS_UUID_UNPARSED_SIZE];
@@ -498,6 +499,7 @@ static int copy_fs_devices(struct btrfs_fs_devices *dst,
 	int ret = 0;
 
 	memcpy(dst->fsid, src->fsid, BTRFS_FSID_SIZE);
+	memcpy(dst->metadata_uuid, src->metadata_uuid, BTRFS_FSID_SIZE);
 	INIT_LIST_HEAD(&dst->devices);
 	dst->seed = NULL;
 

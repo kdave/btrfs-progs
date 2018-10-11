@@ -759,7 +759,7 @@ static int scan_one_device(void *dev_scan_struct)
 		    rc->nodesize)
 			break;
 
-		if (memcmp_extent_buffer(buf, rc->fs_devices->fsid,
+		if (memcmp_extent_buffer(buf, rc->fs_devices->metadata_uuid,
 					 btrfs_header_fsid(),
 					 BTRFS_FSID_SIZE)) {
 			bytenr += rc->sectorsize;
@@ -1155,7 +1155,7 @@ static int __rebuild_chunk_root(struct btrfs_trans_handle *trans,
 	btrfs_set_header_level(cow, 0);
 	btrfs_set_header_backref_rev(cow, BTRFS_MIXED_BACKREF_REV);
 	btrfs_set_header_owner(cow, BTRFS_CHUNK_TREE_OBJECTID);
-	write_extent_buffer(cow, root->fs_info->fsid,
+	write_extent_buffer(cow, root->fs_info->metadata_uuid,
 			btrfs_header_fsid(), BTRFS_FSID_SIZE);
 
 	write_extent_buffer(cow, root->fs_info->chunk_tree_uuid,
@@ -1192,7 +1192,8 @@ static int __rebuild_device_items(struct btrfs_trans_handle *trans,
 		btrfs_set_stack_device_io_width(dev_item, dev->io_width);
 		btrfs_set_stack_device_sector_size(dev_item, dev->sector_size);
 		memcpy(dev_item->uuid, dev->uuid, BTRFS_UUID_SIZE);
-		memcpy(dev_item->fsid, dev->fs_devices->fsid, BTRFS_UUID_SIZE);
+		memcpy(dev_item->fsid, dev->fs_devices->metadata_uuid,
+		       BTRFS_FSID_SIZE);
 
 		ret = btrfs_insert_item(trans, root, &key,
 					dev_item, sizeof(*dev_item));
@@ -1432,6 +1433,7 @@ open_ctree_with_broken_chunk(struct recover_control *rc)
 	struct btrfs_fs_info *fs_info;
 	struct btrfs_super_block *disk_super;
 	struct extent_buffer *eb;
+	u64 features;
 	int ret;
 
 	fs_info = btrfs_new_fs_info(1, BTRFS_SUPER_INFO_OFFSET);
@@ -1463,6 +1465,14 @@ open_ctree_with_broken_chunk(struct recover_control *rc)
 	ret = btrfs_check_fs_compatibility(disk_super, OPEN_CTREE_WRITES);
 	if (ret)
 		goto out_devices;
+
+	features = btrfs_super_incompat_flags(disk_super);
+
+	if (features & BTRFS_FEATURE_INCOMPAT_METADATA_UUID)
+		memcpy(fs_info->metadata_uuid, disk_super->metadata_uuid,
+		       BTRFS_FSID_SIZE);
+	else
+		memcpy(fs_info->metadata_uuid, fs_info->fsid, BTRFS_FSID_SIZE);
 
 	btrfs_setup_root(fs_info->chunk_root, fs_info,
 			 BTRFS_CHUNK_TREE_OBJECTID);

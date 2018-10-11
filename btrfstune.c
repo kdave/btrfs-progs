@@ -248,6 +248,9 @@ static int change_fsid_prepare(struct btrfs_fs_info *fs_info)
 	if (ret < 0)
 		return ret;
 
+	/* Also need to change the metadatauuid of the fs info */
+	memcpy(fs_info->metadata_uuid, fs_info->new_fsid, BTRFS_FSID_SIZE);
+
 	/* also restore new chunk_tree_id into tree_root for restore */
 	write_extent_buffer(tree_root->node, fs_info->new_chunk_tree_uuid,
 			    btrfs_header_chunk_tree_uuid(tree_root->node),

@@ -142,13 +142,19 @@ static struct btrfs_device *find_device(struct btrfs_fs_devices *fs_devices,
 	return NULL;
 }
 
-static struct btrfs_fs_devices *find_fsid(u8 *fsid)
+static struct btrfs_fs_devices *find_fsid(u8 *fsid, u8 *metadata_uuid)
 {
 	struct btrfs_fs_devices *fs_devices;
 
 	list_for_each_entry(fs_devices, &fs_uuids, list) {
-		if (memcmp(fsid, fs_devices->fsid, BTRFS_FSID_SIZE) == 0)
+		if (metadata_uuid && (memcmp(fsid, fs_devices->fsid,
+					     BTRFS_FSID_SIZE) == 0) &&
+		    (memcmp(metadata_uuid, fs_devices->metadata_uuid,
+			    BTRFS_FSID_SIZE) == 0)) {
 			return fs_devices;
+		} else if (memcmp(fsid, fs_devices->fsid, BTRFS_FSID_SIZE) == 0){
+			return fs_devices;
+		}
 	}
 	return NULL;
 }
@@ -160,8 +166,15 @@ static int device_list_add(const char *path,
 	struct btrfs_device *device;
 	struct btrfs_fs_devices *fs_devices;
 	u64 found_transid = btrfs_super_generation(disk_super);
+	bool metadata_uuid = (btrfs_super_incompat_flags(disk_super) &
+		BTRFS_FEATURE_INCOMPAT_METADATA_UUID);
 
-	fs_devices = find_fsid(disk_super->fsid);
+	if (metadata_uuid)
+		fs_devices = find_fsid(disk_super->fsid,
+				       disk_super->metadata_uuid);
+	else
+		fs_devices = find_fsid(disk_super->fsid, NULL);
+
 	if (!fs_devices) {
 		fs_devices = kzalloc(sizeof(*fs_devices), GFP_NOFS);
 		if (!fs_devices)
@@ -169,6 +182,13 @@ static int device_list_add(const char *path,
 		INIT_LIST_HEAD(&fs_devices->devices);
 		list_add(&fs_devices->list, &fs_uuids);
 		memcpy(fs_devices->fsid, disk_super->fsid, BTRFS_FSID_SIZE);
+		if (metadata_uuid)
+			memcpy(fs_devices->metadata_uuid,
+			       disk_super->metadata_uuid, BTRFS_FSID_SIZE);
+		else
+			memcpy(fs_devices->metadata_uuid, fs_devices->fsid,
+			       BTRFS_FSID_SIZE);
+
 		fs_devices->latest_devid = devid;
 		fs_devices->latest_trans = found_transid;
 		fs_devices->lowest_devid = (u64)-1;
@@ -721,7 +741,7 @@ int btrfs_add_device(struct btrfs_trans_handle *trans,
 	ptr = (unsigned long)btrfs_device_uuid(dev_item);
 	write_extent_buffer(leaf, device->uuid, ptr, BTRFS_UUID_SIZE);
 	ptr = (unsigned long)btrfs_device_fsid(dev_item);
-	write_extent_buffer(leaf, fs_info->fsid, ptr, BTRFS_UUID_SIZE);
+	write_extent_buffer(leaf, fs_info->metadata_uuid, ptr, BTRFS_UUID_SIZE);
 	btrfs_mark_buffer_dirty(leaf);
 	ret = 0;
 
@@ -1698,7 +1718,7 @@ struct btrfs_device *btrfs_find_device(struct btrfs_fs_info *fs_info, u64 devid,
 	cur_devices = fs_info->fs_devices;
 	while (cur_devices) {
 		if (!fsid ||
-		    (!memcmp(cur_devices->fsid, fsid, BTRFS_UUID_SIZE) ||
+		    (!memcmp(cur_devices->metadata_uuid, fsid, BTRFS_FSID_SIZE) ||
 		     fs_info->ignore_fsid_mismatch)) {
 			device = find_device(cur_devices, devid, uuid);
 			if (device)
@@ -1980,7 +2000,7 @@ static int open_seed_devices(struct btrfs_fs_info *fs_info, u8 *fsid)
 		fs_devices = fs_devices->seed;
 	}
 
-	fs_devices = find_fsid(fsid);
+	fs_devices = find_fsid(fsid, NULL);
 	if (!fs_devices) {
 		/* missing all seed devices */
 		fs_devices = kzalloc(sizeof(*fs_devices), GFP_NOFS);
@@ -2019,7 +2039,7 @@ static int read_one_dev(struct btrfs_fs_info *fs_info,
 			   BTRFS_UUID_SIZE);
 	read_extent_buffer(leaf, fs_uuid,
 			   (unsigned long)btrfs_device_fsid(dev_item),
-			   BTRFS_UUID_SIZE);
+			   BTRFS_FSID_SIZE);
 
 	if (memcmp(fs_uuid, fs_info->fsid, BTRFS_UUID_SIZE)) {
 		ret = open_seed_devices(fs_info, fs_uuid);
