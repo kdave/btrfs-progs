@@ -1155,7 +1155,7 @@ static int __rebuild_chunk_root(struct btrfs_trans_handle *trans,
 	btrfs_set_header_level(cow, 0);
 	btrfs_set_header_backref_rev(cow, BTRFS_MIXED_BACKREF_REV);
 	btrfs_set_header_owner(cow, BTRFS_CHUNK_TREE_OBJECTID);
-	write_extent_buffer(cow, root->fs_info->metadata_uuid,
+	write_extent_buffer(cow, root->fs_info->fs_devices->metadata_uuid,
 			btrfs_header_fsid(), BTRFS_FSID_SIZE);
 
 	write_extent_buffer(cow, root->fs_info->chunk_tree_uuid,
@@ -1457,7 +1457,7 @@ open_ctree_with_broken_chunk(struct recover_control *rc)
 		goto out_devices;
 	}
 
-	memcpy(fs_info->fsid, &disk_super->fsid, BTRFS_FSID_SIZE);
+	ASSERT(!memcmp(disk_super->fsid, rc->fs_devices->fsid, BTRFS_FSID_SIZE));
 	fs_info->sectorsize = btrfs_super_sectorsize(disk_super);
 	fs_info->nodesize = btrfs_super_nodesize(disk_super);
 	fs_info->stripesize = btrfs_super_stripesize(disk_super);
@@ -1469,10 +1469,9 @@ open_ctree_with_broken_chunk(struct recover_control *rc)
 	features = btrfs_super_incompat_flags(disk_super);
 
 	if (features & BTRFS_FEATURE_INCOMPAT_METADATA_UUID)
-		memcpy(fs_info->metadata_uuid, disk_super->metadata_uuid,
-		       BTRFS_FSID_SIZE);
-	else
-		memcpy(fs_info->metadata_uuid, fs_info->fsid, BTRFS_FSID_SIZE);
+		ASSERT(!memcmp(disk_super->metadata_uuid,
+			       fs_info->fs_devices->metadata_uuid,
+			       BTRFS_FSID_SIZE));
 
 	btrfs_setup_root(fs_info->chunk_root, fs_info,
 			 BTRFS_CHUNK_TREE_OBJECTID);

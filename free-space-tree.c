@@ -20,6 +20,7 @@
 #include "disk-io.h"
 #include "free-space-cache.h"
 #include "free-space-tree.h"
+#include "volumes.h"
 #include "transaction.h"
 #include "bitops.h"
 #include "internal.h"
@@ -1453,8 +1454,8 @@ static struct btrfs_root *btrfs_create_tree(struct btrfs_trans_handle *trans,
 	btrfs_set_header_backref_rev(leaf, BTRFS_MIXED_BACKREF_REV);
 	btrfs_set_header_owner(leaf, objectid);
 	root->node = leaf;
-	write_extent_buffer(leaf, fs_info->metadata_uuid, btrfs_header_fsid(),
-			    BTRFS_FSID_SIZE);
+	write_extent_buffer(leaf, fs_info->fs_devices->metadata_uuid,
+			    btrfs_header_fsid(), BTRFS_FSID_SIZE);
 	write_extent_buffer(leaf, fs_info->chunk_tree_uuid,
 			    btrfs_header_chunk_tree_uuid(leaf),
 			    BTRFS_UUID_SIZE);

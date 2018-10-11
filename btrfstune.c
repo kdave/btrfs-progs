@@ -359,7 +359,8 @@ static int change_fsid_prepare(struct btrfs_fs_info *fs_info)
 		return ret;
 
 	/* Also need to change the metadatauuid of the fs info */
-	memcpy(fs_info->metadata_uuid, fs_info->new_fsid, BTRFS_FSID_SIZE);
+	memcpy(fs_info->fs_devices->metadata_uuid, fs_info->new_fsid,
+	       BTRFS_FSID_SIZE);
 
 	/* also restore new chunk_tree_id into tree_root for restore */
 	write_extent_buffer(tree_root->node, fs_info->new_chunk_tree_uuid,
@@ -416,7 +417,7 @@ static int change_uuid(struct btrfs_fs_info *fs_info, const char *new_fsid_str)
 	fs_info->new_fsid = new_fsid;
 	fs_info->new_chunk_tree_uuid = new_chunk_id;
 
-	memcpy(old_fsid, (const char*)fs_info->fsid, BTRFS_UUID_SIZE);
+	memcpy(old_fsid, (const char*)fs_info->fs_devices->fsid, BTRFS_UUID_SIZE);
 	uuid_unparse(old_fsid, uuid_buf);
 	printf("Current fsid: %s\n", uuid_buf);
 

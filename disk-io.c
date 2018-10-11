@@ -118,7 +118,7 @@ static void print_tree_block_error(struct btrfs_fs_info *fs_info,
 		read_extent_buffer(eb, buf, btrfs_header_fsid(),
 				   BTRFS_UUID_SIZE);
 		uuid_unparse(buf, found_uuid);
-		uuid_unparse(fs_info->metadata_uuid, fs_uuid);
+		uuid_unparse(fs_info->fs_devices->metadata_uuid, fs_uuid);
 		fprintf(stderr, "fsid mismatch, want=%s, have=%s\n",
 			fs_uuid, found_uuid);
 		break;
@@ -1184,13 +1184,12 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 		goto out_devices;
 	}
 
-	memcpy(fs_info->fsid, &disk_super->fsid, BTRFS_FSID_SIZE);
-	if (btrfs_fs_incompat(fs_info, METADATA_UUID)) {
-		memcpy(fs_info->metadata_uuid, disk_super->metadata_uuid,
-		       BTRFS_FSID_SIZE);
-	} else {
-		memcpy(fs_info->metadata_uuid, fs_info->fsid, BTRFS_FSID_SIZE);
-	}
+	ASSERT(!memcmp(disk_super->fsid, fs_devices->fsid, BTRFS_FSID_SIZE));
+	ASSERT(!memcmp(disk_super->fsid, fs_devices->fsid, BTRFS_FSID_SIZE));
+	if (btrfs_fs_incompat(fs_info, METADATA_UUID))
+		ASSERT(!memcmp(disk_super->metadata_uuid,
+			       fs_devices->metadata_uuid, BTRFS_FSID_SIZE));
+
 	fs_info->sectorsize = btrfs_super_sectorsize(disk_super);
 	fs_info->nodesize = btrfs_super_nodesize(disk_super);
 	fs_info->stripesize = btrfs_super_stripesize(disk_super);
@@ -1646,7 +1645,8 @@ int write_all_supers(struct btrfs_fs_info *fs_info)
 		btrfs_set_stack_device_io_width(dev_item, dev->io_width);
 		btrfs_set_stack_device_sector_size(dev_item, dev->sector_size);
 		memcpy(dev_item->uuid, dev->uuid, BTRFS_UUID_SIZE);
-		memcpy(dev_item->fsid, fs_info->metadata_uuid, BTRFS_FSID_SIZE);
+		memcpy(dev_item->fsid, fs_info->fs_devices->metadata_uuid,
+		       BTRFS_FSID_SIZE);
 
 		flags = btrfs_super_flags(sb);
 		btrfs_set_super_flags(sb, flags | BTRFS_HEADER_FLAG_WRITTEN);

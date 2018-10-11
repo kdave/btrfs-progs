@@ -1093,8 +1093,6 @@ struct btrfs_block_group_cache {
 struct btrfs_device;
 struct btrfs_fs_devices;
 struct btrfs_fs_info {
-	u8 fsid[BTRFS_FSID_SIZE];
-	u8 metadata_uuid[BTRFS_FSID_SIZE];
 	u8 *new_fsid;
 	u8 chunk_tree_uuid[BTRFS_UUID_SIZE];
 	u8 *new_chunk_tree_uuid;
