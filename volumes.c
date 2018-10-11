@@ -741,7 +741,8 @@ int btrfs_add_device(struct btrfs_trans_handle *trans,
 	ptr = (unsigned long)btrfs_device_uuid(dev_item);
 	write_extent_buffer(leaf, device->uuid, ptr, BTRFS_UUID_SIZE);
 	ptr = (unsigned long)btrfs_device_fsid(dev_item);
-	write_extent_buffer(leaf, fs_info->metadata_uuid, ptr, BTRFS_UUID_SIZE);
+	write_extent_buffer(leaf, fs_info->fs_devices->metadata_uuid, ptr,
+			    BTRFS_UUID_SIZE);
 	btrfs_mark_buffer_dirty(leaf);
 	ret = 0;
 
@@ -2041,7 +2042,7 @@ static int read_one_dev(struct btrfs_fs_info *fs_info,
 			   (unsigned long)btrfs_device_fsid(dev_item),
 			   BTRFS_FSID_SIZE);
 
-	if (memcmp(fs_uuid, fs_info->fsid, BTRFS_UUID_SIZE)) {
+	if (memcmp(fs_uuid, fs_info->fs_devices->fsid, BTRFS_UUID_SIZE)) {
 		ret = open_seed_devices(fs_info, fs_uuid);
 		if (ret)
 			return ret;
