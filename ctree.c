@@ -27,7 +27,7 @@
 static int split_node(struct btrfs_trans_handle *trans, struct btrfs_root
 		      *root, struct btrfs_path *path, int level);
 static int split_leaf(struct btrfs_trans_handle *trans, struct btrfs_root
-		      *root, struct btrfs_key *ins_key,
+		      *root, const struct btrfs_key *ins_key,
 		      struct btrfs_path *path, int data_size, int extend);
 static int push_node_left(struct btrfs_trans_handle *trans,
 			  struct btrfs_root *root, struct extent_buffer *dst,
@@ -389,7 +389,7 @@ int btrfs_cow_block(struct btrfs_trans_handle *trans,
 	return ret;
 }
 
-int btrfs_comp_cpu_keys(struct btrfs_key *k1, struct btrfs_key *k2)
+int btrfs_comp_cpu_keys(const struct btrfs_key *k1, const struct btrfs_key *k2)
 {
 	if (k1->objectid > k2->objectid)
 		return 1;
@@ -409,7 +409,8 @@ int btrfs_comp_cpu_keys(struct btrfs_key *k1, struct btrfs_key *k2)
 /*
  * compare two keys in a memcmp fashion
  */
-static int btrfs_comp_keys(struct btrfs_disk_key *disk, struct btrfs_key *k2)
+static int btrfs_comp_keys(struct btrfs_disk_key *disk,
+		const struct btrfs_key *k2)
 {
 	struct btrfs_key k1;
 
@@ -602,7 +603,7 @@ static int noinline check_block(struct btrfs_root *root,
  * slot may point to max if the key is bigger than all of the keys
  */
 static int generic_bin_search(struct extent_buffer *eb, unsigned long p,
-			      int item_size, struct btrfs_key *key,
+			      int item_size, const struct btrfs_key *key,
 			      int max, int *slot)
 {
 	int low = 0;
@@ -636,7 +637,7 @@ static int generic_bin_search(struct extent_buffer *eb, unsigned long p,
  * simple bin_search frontend that does the right thing for
  * leaves vs nodes
  */
-static int bin_search(struct extent_buffer *eb, struct btrfs_key *key,
+static int bin_search(struct extent_buffer *eb, const struct btrfs_key *key,
 		      int level, int *slot)
 {
 	if (level == 0)
@@ -1129,9 +1130,9 @@ out:
  * tree.  if ins_len < 0, nodes will be merged as we walk down the tree (if
  * possible)
  */
-int btrfs_search_slot(struct btrfs_trans_handle *trans, struct btrfs_root
-		      *root, struct btrfs_key *key, struct btrfs_path *p, int
-		      ins_len, int cow)
+int btrfs_search_slot(struct btrfs_trans_handle *trans,
+		struct btrfs_root *root, const struct btrfs_key *key,
+		struct btrfs_path *p, int ins_len, int cow)
 {
 	struct extent_buffer *b;
 	int slot;
@@ -2147,7 +2148,7 @@ static noinline int copy_for_split(struct btrfs_trans_handle *trans,
  */
 static noinline int split_leaf(struct btrfs_trans_handle *trans,
 			       struct btrfs_root *root,
-			       struct btrfs_key *ins_key,
+			       const struct btrfs_key *ins_key,
 			       struct btrfs_path *path, int data_size,
 			       int extend)
 {

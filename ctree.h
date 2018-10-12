@@ -1984,7 +1984,7 @@ static inline void btrfs_disk_key_to_cpu(struct btrfs_key *cpu,
 }
 
 static inline void btrfs_cpu_key_to_disk(struct btrfs_disk_key *disk,
-					 struct btrfs_key *cpu)
+					 const struct btrfs_key *cpu)
 {
 	disk->offset = cpu_to_le64(cpu->offset);
 	disk->type = cpu->type;
@@ -2563,7 +2563,7 @@ u64 add_new_free_space(struct btrfs_block_group_cache *block_group,
 u64 hash_extent_data_ref(u64 root_objectid, u64 owner, u64 offset);
 
 /* ctree.c */
-int btrfs_comp_cpu_keys(struct btrfs_key *k1, struct btrfs_key *k2);
+int btrfs_comp_cpu_keys(const struct btrfs_key *k1, const struct btrfs_key *k2);
 int btrfs_del_ptr(struct btrfs_root *root, struct btrfs_path *path,
 		int level, int slot);
 enum btrfs_tree_block_status
@@ -2606,9 +2606,9 @@ int btrfs_split_item(struct btrfs_trans_handle *trans,
 		     struct btrfs_path *path,
 		     struct btrfs_key *new_key,
 		     unsigned long split_offset);
-int btrfs_search_slot(struct btrfs_trans_handle *trans, struct btrfs_root
-		      *root, struct btrfs_key *key, struct btrfs_path *p, int
-		      ins_len, int cow);
+int btrfs_search_slot(struct btrfs_trans_handle *trans,
+		struct btrfs_root *root, const struct btrfs_key *key,
+		struct btrfs_path *p, int ins_len, int cow);
 int btrfs_search_slot_for_read(struct btrfs_root *root,
                                const struct btrfs_key *key,
                                struct btrfs_path *p, int find_higher,
