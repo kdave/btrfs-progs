@@ -1347,7 +1347,7 @@ int cmd_receive(int argc, char **argv)
 		dump_args.full_subvol_path[0] = '.';
 		dump_args.full_subvol_path[1] = '\0';
 		ret = btrfs_read_and_process_send_stream(receive_fd,
-				&btrfs_print_send_ops, &dump_args, 0, 0);
+			&btrfs_print_send_ops, &dump_args, 0, max_errors);
 		if (ret < 0) {
 			errno = -ret;
 			error("failed to dump the send stream: %m");
