@@ -50,6 +50,11 @@ corrupt_fst_item()
 		-f offset "$TEST_DEV"
 }
 
+if ! [ -f "/sys/fs/btrfs/features/free_space_tree" ]; then
+	_not_run "kernel does not support free-space-tree feature"
+	exit
+fi
+
 run_check "$TOP/mkfs.btrfs" -n 4k -f "$TEST_DEV"
 run_check_mount_test_dev -oclear_cache,space_cache=v2
 
