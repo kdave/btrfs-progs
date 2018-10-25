@@ -188,6 +188,7 @@ struct file_extent_hole {
 #define I_ERR_FILE_EXTENT_TOO_LARGE	(1 << 15)
 #define I_ERR_ODD_INODE_FLAGS		(1 << 16)
 #define I_ERR_INLINE_RAM_BYTES_WRONG	(1 << 17)
+#define I_ERR_MISMATCH_DIR_HASH		(1 << 18)
 
 struct inode_record {
 	struct list_head backrefs;
@@ -213,8 +214,21 @@ struct inode_record {
 	u64 extent_end;
 	struct rb_root holes;
 	struct list_head orphan_extents;
+	struct list_head mismatch_dir_hash;
 
 	u32 refs;
+};
+
+/*
+ * To record one dir_item with mismatch hash.
+ *
+ * Since the hash is incorrect, we must record the hash (key).
+ */
+struct mismatch_dir_hash_record {
+	struct list_head list;
+	struct btrfs_key key;
+	int namelen;
+	/* namebuf follows here */
 };
 
 struct root_backref {
