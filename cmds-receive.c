@@ -103,8 +103,7 @@ static int finish_subvol(struct btrfs_receive *rctx)
 			   O_RDONLY | O_NOATIME);
 	if (subvol_fd < 0) {
 		ret = -errno;
-		error("cannot open %s: %s",
-				rctx->cur_subvol_path, strerror(-ret));
+		error("cannot open %s: %m", rctx->cur_subvol_path);
 		goto out;
 	}
 
@@ -121,8 +120,7 @@ static int finish_subvol(struct btrfs_receive *rctx)
 	ret = ioctl(subvol_fd, BTRFS_IOC_SET_RECEIVED_SUBVOL, &rs_args);
 	if (ret < 0) {
 		ret = -errno;
-		error("ioctl BTRFS_IOC_SET_RECEIVED_SUBVOL failed: %s",
-				strerror(-ret));
+		error("ioctl BTRFS_IOC_SET_RECEIVED_SUBVOL failed: %m");
 		goto out;
 	}
 	rctx->cur_subvol.rtransid = rs_args.rtransid;
@@ -130,8 +128,7 @@ static int finish_subvol(struct btrfs_receive *rctx)
 	ret = ioctl(subvol_fd, BTRFS_IOC_SUBVOL_GETFLAGS, &flags);
 	if (ret < 0) {
 		ret = -errno;
-		error("ioctl BTRFS_IOC_SUBVOL_GETFLAGS failed: %s",
-				strerror(-ret));
+		error("ioctl BTRFS_IOC_SUBVOL_GETFLAGS failed: %m");
 		goto out;
 	}
 
@@ -140,8 +137,7 @@ static int finish_subvol(struct btrfs_receive *rctx)
 	ret = ioctl(subvol_fd, BTRFS_IOC_SUBVOL_SETFLAGS, &flags);
 	if (ret < 0) {
 		ret = -errno;
-		error("failed to make subvolume read only: %s",
-				strerror(-ret));
+		error("failed to make subvolume read only: %m");
 		goto out;
 	}
 
@@ -215,7 +211,7 @@ static int process_subvol(const char *path, const u8 *uuid, u64 ctransid,
 	ret = ioctl(rctx->dest_dir_fd, BTRFS_IOC_SUBVOL_CREATE, &args_v1);
 	if (ret < 0) {
 		ret = -errno;
-		error("creating subvolume %s failed: %s", path, strerror(-ret));
+		error("creating subvolume %s failed: %m", path);
 		goto out;
 	}
 
@@ -360,8 +356,7 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 	if (args_v2.fd < 0) {
 		ret = -errno;
 		if (errno != ENOENT)
-			error("cannot open %s: %s",
-					parent_subvol->path, strerror(-ret));
+			error("cannot open %s: %m", parent_subvol->path);
 		else
 			fprintf(stderr,
 				"It seems that you have changed your default "
@@ -375,8 +370,8 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 	close(args_v2.fd);
 	if (ret < 0) {
 		ret = -errno;
-		error("creating snapshot %s -> %s failed: %s",
-				parent_subvol->path, path, strerror(-ret));
+		error("creating snapshot %s -> %s failed: %m",
+				parent_subvol->path, path);
 		goto out;
 	}
 
@@ -406,7 +401,7 @@ static int process_mkfile(const char *path, void *user)
 	ret = creat(full_path, 0600);
 	if (ret < 0) {
 		ret = -errno;
-		error("mkfile %s failed: %s", path, strerror(-ret));
+		error("mkfile %s failed: %m", path);
 		goto out;
 	}
 	close(ret);
@@ -434,7 +429,7 @@ static int process_mkdir(const char *path, void *user)
 	ret = mkdir(full_path, 0700);
 	if (ret < 0) {
 		ret = -errno;
-		error("mkdir %s failed: %s", path, strerror(-ret));
+		error("mkdir %s failed: %m", path);
 	}
 
 out:
@@ -460,7 +455,7 @@ static int process_mknod(const char *path, u64 mode, u64 dev, void *user)
 	ret = mknod(full_path, mode & S_IFMT, dev);
 	if (ret < 0) {
 		ret = -errno;
-		error("mknod %s failed: %s", path, strerror(-ret));
+		error("mknod %s failed: %m", path);
 	}
 
 out:
@@ -485,7 +480,7 @@ static int process_mkfifo(const char *path, void *user)
 	ret = mkfifo(full_path, 0600);
 	if (ret < 0) {
 		ret = -errno;
-		error("mkfifo %s failed: %s", path, strerror(-ret));
+		error("mkfifo %s failed: %m", path);
 	}
 
 out:
@@ -510,7 +505,7 @@ static int process_mksock(const char *path, void *user)
 	ret = mknod(full_path, 0600 | S_IFSOCK, 0);
 	if (ret < 0) {
 		ret = -errno;
-		error("mknod %s failed: %s", path, strerror(-ret));
+		error("mknod %s failed: %m", path);
 	}
 
 out:
@@ -535,8 +530,7 @@ static int process_symlink(const char *path, const char *lnk, void *user)
 	ret = symlink(lnk, full_path);
 	if (ret < 0) {
 		ret = -errno;
-		error("symlink %s -> %s failed: %s", path,
-				lnk, strerror(-ret));
+		error("symlink %s -> %s failed: %m", path, lnk);
 	}
 
 out:
@@ -568,8 +562,7 @@ static int process_rename(const char *from, const char *to, void *user)
 	ret = rename(full_from, full_to);
 	if (ret < 0) {
 		ret = -errno;
-		error("rename %s -> %s failed: %s", from,
-				to, strerror(-ret));
+		error("rename %s -> %s failed: %m", from, to);
 	}
 
 out:
@@ -601,7 +594,7 @@ static int process_link(const char *path, const char *lnk, void *user)
 	ret = link(full_link_path, full_path);
 	if (ret < 0) {
 		ret = -errno;
-		error("link %s -> %s failed: %s", path, lnk, strerror(-ret));
+		error("link %s -> %s failed: %m", path, lnk);
 	}
 
 out:
@@ -627,7 +620,7 @@ static int process_unlink(const char *path, void *user)
 	ret = unlink(full_path);
 	if (ret < 0) {
 		ret = -errno;
-		error("unlink %s failed. %s", path, strerror(-ret));
+		error("unlink %s failed: %m", path);
 	}
 
 out:
@@ -652,7 +645,7 @@ static int process_rmdir(const char *path, void *user)
 	ret = rmdir(full_path);
 	if (ret < 0) {
 		ret = -errno;
-		error("rmdir %s failed: %s", path, strerror(-ret));
+		error("rmdir %s failed: %m", path);
 	}
 
 out:
@@ -673,7 +666,7 @@ static int open_inode_for_write(struct btrfs_receive *rctx, const char *path)
 	rctx->write_fd = open(path, O_RDWR);
 	if (rctx->write_fd < 0) {
 		ret = -errno;
-		error("cannot open %s: %s", path, strerror(-ret));
+		error("cannot open %s: %m", path);
 		goto out;
 	}
 	strncpy_null(rctx->write_path, path);
@@ -716,8 +709,7 @@ static int process_write(const char *path, const void *data, u64 offset,
 				offset + pos);
 		if (w < 0) {
 			ret = -errno;
-			error("writing to %s failed: %s",
-					path, strerror(-ret));
+			error("writing to %s failed: %m", path);
 			goto out;
 		}
 		pos += w;
@@ -812,7 +804,7 @@ static int process_clone(const char *path, u64 offset, u64 len,
 	clone_fd = openat(rctx->mnt_fd, full_clone_path, O_RDONLY | O_NOATIME);
 	if (clone_fd < 0) {
 		ret = -errno;
-		error("cannot open %s: %s", full_clone_path, strerror(-ret));
+		error("cannot open %s: %m", full_clone_path);
 		goto out;
 	}
 
@@ -823,8 +815,7 @@ static int process_clone(const char *path, u64 offset, u64 len,
 	ret = ioctl(rctx->write_fd, BTRFS_IOC_CLONE_RANGE, &clone_args);
 	if (ret < 0) {
 		ret = -errno;
-		error("failed to clone extents to %s\n%s",
-				path, strerror(-ret));
+		error("failed to clone extents to %s: %m", path);
 		goto out;
 	}
 
@@ -878,8 +869,8 @@ static int process_set_xattr(const char *path, const char *name,
 	ret = lsetxattr(full_path, name, data, len, 0);
 	if (ret < 0) {
 		ret = -errno;
-		error("lsetxattr %s %s=%.*s failed: %s",
-				path, name, len, (char*)data, strerror(-ret));
+		error("lsetxattr %s %s=%.*s failed: %m",
+				path, name, len, (char*)data);
 		goto out;
 	}
 
@@ -907,8 +898,7 @@ static int process_remove_xattr(const char *path, const char *name, void *user)
 	ret = lremovexattr(full_path, name);
 	if (ret < 0) {
 		ret = -errno;
-		error("lremovexattr %s %s failed: %s",
-				path, name, strerror(-ret));
+		error("lremovexattr %s %s failed: %m", path, name);
 		goto out;
 	}
 
@@ -934,7 +924,7 @@ static int process_truncate(const char *path, u64 size, void *user)
 	ret = truncate(full_path, size);
 	if (ret < 0) {
 		ret = -errno;
-		error("truncate %s failed: %s", path, strerror(-ret));
+		error("truncate %s failed: %m", path);
 		goto out;
 	}
 
@@ -960,7 +950,7 @@ static int process_chmod(const char *path, u64 mode, void *user)
 	ret = chmod(full_path, mode);
 	if (ret < 0) {
 		ret = -errno;
-		error("chmod %s failed: %s", path, strerror(-ret));
+		error("chmod %s failed: %m", path);
 		goto out;
 	}
 
@@ -987,7 +977,7 @@ static int process_chown(const char *path, u64 uid, u64 gid, void *user)
 	ret = lchown(full_path, uid, gid);
 	if (ret < 0) {
 		ret = -errno;
-		error("chown %s failed: %s", path, strerror(-ret));
+		error("chown %s failed: %m", path);
 		goto out;
 	}
 
@@ -1002,8 +992,7 @@ static int process_chown(const char *path, u64 uid, u64 gid, void *user)
 		rctx->cached_capabilities_len = 0;
 		if (ret < 0) {
 			ret = -errno;
-			error("restoring capabilities %s: %s",
-					path, strerror(-ret));
+			error("restoring capabilities %s: %m", path);
 			goto out;
 		}
 	}
@@ -1035,8 +1024,7 @@ static int process_utimes(const char *path, struct timespec *at,
 	ret = utimensat(AT_FDCWD, full_path, tv, AT_SYMLINK_NOFOLLOW);
 	if (ret < 0) {
 		ret = -errno;
-		error("utimes %s failed: %s",
-				path, strerror(-ret));
+		error("utimes %s failed: %m", path);
 		goto out;
 	}
 
@@ -1096,14 +1084,14 @@ static int do_receive(struct btrfs_receive *rctx, const char *tomnt,
 	dest_dir_full_path = realpath(tomnt, NULL);
 	if (!dest_dir_full_path) {
 		ret = -errno;
-		error("realpath(%s) failed: %s", tomnt, strerror(-ret));
+		error("realpath(%s) failed: %m", tomnt);
 		goto out;
 	}
 	rctx->dest_dir_fd = open(dest_dir_full_path, O_RDONLY | O_NOATIME);
 	if (rctx->dest_dir_fd < 0) {
 		ret = -errno;
-		error("cannot open destination directory %s: %s",
-			dest_dir_full_path, strerror(-ret));
+		error("cannot open destination directory %s: %m",
+			dest_dir_full_path);
 		goto out;
 	}
 
@@ -1112,8 +1100,9 @@ static int do_receive(struct btrfs_receive *rctx, const char *tomnt,
 	} else {
 		ret = find_mount_root(dest_dir_full_path, &rctx->root_path);
 		if (ret < 0) {
-			error("failed to determine mount point for %s: %s",
-				dest_dir_full_path, strerror(-ret));
+			errno = -ret;
+			error("failed to determine mount point for %s: %m",
+				dest_dir_full_path);
 			ret = -EINVAL;
 			goto out;
 		}
@@ -1127,7 +1116,7 @@ static int do_receive(struct btrfs_receive *rctx, const char *tomnt,
 	rctx->mnt_fd = open(rctx->root_path, O_RDONLY | O_NOATIME);
 	if (rctx->mnt_fd < 0) {
 		ret = -errno;
-		error("cannot open %s: %s", rctx->root_path, strerror(-ret));
+		error("cannot open %s: %m", rctx->root_path);
 		goto out;
 	}
 
@@ -1158,14 +1147,12 @@ static int do_receive(struct btrfs_receive *rctx, const char *tomnt,
 	if (rctx->dest_dir_chroot) {
 		if (chroot(dest_dir_full_path)) {
 			ret = -errno;
-			error("failed to chroot to %s: %s",
-				dest_dir_full_path, strerror(-ret));
+			error("failed to chroot to %s: %m", dest_dir_full_path);
 			goto out;
 		}
 		if (chdir("/")) {
 			ret = -errno;
-			error("failed to chdir to / after chroot: %s",
-				strerror(-ret));
+			error("failed to chdir to / after chroot: %m");
 			goto out;
 		}
 		fprintf(stderr, "Chroot to %s\n", dest_dir_full_path);
@@ -1345,9 +1332,10 @@ int cmd_receive(int argc, char **argv)
 		dump_args.full_subvol_path[1] = '\0';
 		ret = btrfs_read_and_process_send_stream(receive_fd,
 				&btrfs_print_send_ops, &dump_args, 0, 0);
-		if (ret < 0)
-			error("failed to dump the send stream: %s",
-			      strerror(-ret));
+		if (ret < 0) {
+			errno = -ret;
+			error("failed to dump the send stream: %m");
+		}
 	} else {
 		ret = do_receive(&rctx, tomnt, realmnt, receive_fd, max_errors);
 	}

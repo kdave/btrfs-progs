@@ -208,7 +208,8 @@ static int cmd_replace_start(int argc, char **argv)
 
 		ret = get_fs_info(path, &fi_args, &di_args);
 		if (ret) {
-			error("failed to get device info: %s", strerror(-ret));
+			errno = -ret;
+			error("failed to get device info: %m");
 			free(di_args);
 			goto leave_with_error;
 		}

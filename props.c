@@ -110,7 +110,7 @@ static int prop_compression(enum prop_object_type type,
 	fd = open_file_or_dir3(object, &dirstream, open_flags);
 	if (fd == -1) {
 		ret = -errno;
-		error("failed to open %s: %s", object, strerror(-ret));
+		error("failed to open %s: %m", object);
 		goto out;
 	}
 
@@ -133,8 +133,8 @@ static int prop_compression(enum prop_object_type type,
 	if (sret < 0) {
 		ret = -errno;
 		if (ret != -ENOATTR)
-			error("failed to %s compression for %s: %s",
-			      value ? "set" : "get", object, strerror(-ret));
+			error("failed to %s compression for %s: %m",
+			      value ? "set" : "get", object);
 		else
 			ret = 0;
 		goto out;
@@ -150,8 +150,7 @@ static int prop_compression(enum prop_object_type type,
 		sret = fgetxattr(fd, xattr_name, buf, len);
 		if (sret < 0) {
 			ret = -errno;
-			error("failed to get compression for %s: %s",
-			      object, strerror(-ret));
+			error("failed to get compression for %s: %m", object);
 			goto out;
 		}
 		fprintf(stdout, "compression=%.*s\n", (int)len, buf);

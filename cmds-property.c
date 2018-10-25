@@ -91,7 +91,8 @@ static int check_is_root(const char *object)
 
 	ret = get_fsid(object, fsid, 0);
 	if (ret < 0) {
-		error("get_fsid for %s failed: %s", object, strerror(-ret));
+		errno = -ret;
+		error("get_fsid for %s failed: %m", object);
 		goto out;
 	}
 
@@ -103,7 +104,8 @@ static int check_is_root(const char *object)
 		ret = 1;
 		goto out;
 	} else if (ret < 0) {
-		error("get_fsid for %s failed: %s", tmp, strerror(-ret));
+		errno = -ret;
+		error("get_fsid for %s failed: %m", tmp);
 		goto out;
 	}
 
@@ -317,8 +319,8 @@ static void parse_args(int argc, char **argv,
 	if (!*types) {
 		ret = autodetect_object_types(*object, types);
 		if (ret < 0) {
-			error("failed to detect object type: %s",
-				strerror(-ret));
+			errno = -ret;
+			error("failed to detect object type: %m");
 			usage(usage_str);
 		}
 		if (!*types) {

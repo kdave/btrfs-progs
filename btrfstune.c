@@ -477,8 +477,8 @@ int main(int argc, char *argv[])
 	ret = check_mounted_where(fd, device, NULL, 0, NULL,
 			SBREAD_IGNORE_FSID_MISMATCH);
 	if (ret < 0) {
-		error("could not check mount status of %s: %s", device,
-			strerror(-ret));
+		errno = -ret;
+		error("could not check mount status of %s: %m", device);
 		close(fd);
 		return 1;
 	} else if (ret) {

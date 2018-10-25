@@ -386,8 +386,8 @@ static int cmd_qgroup_show(int argc, char **argv)
 	if (filter_flag) {
 		ret = lookup_path_rootid(fd, &qgroupid);
 		if (ret < 0) {
-			error("cannot resolve rootid for %s: %s",
-					path, strerror(-ret));
+			errno = -ret;
+			error("cannot resolve rootid for %s: %m", path);
 			close_file_or_dir(fd, dirstream);
 			goto out;
 		}

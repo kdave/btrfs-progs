@@ -1206,9 +1206,9 @@ static int scrub_start(int argc, char **argv, int resume)
 
 	ret = get_fs_info(path, &fi_args, &di_args);
 	if (ret) {
+		errno = -ret;
 		error_on(!do_quiet,
-			"getting dev info for scrub failed: %s",
-			 strerror(-ret));
+			"getting dev info for scrub failed: %m");
 		err = 1;
 		goto out;
 	}
@@ -1221,13 +1221,14 @@ static int scrub_start(int argc, char **argv, int resume)
 	uuid_unparse(fi_args.fsid, fsid);
 	fdres = scrub_open_file_r(SCRUB_DATA_FILE, fsid);
 	if (fdres < 0 && fdres != -ENOENT) {
-		warning_on(!do_quiet, "failed to open status file: %s",
-			strerror(-fdres));
+		errno = -fdres;
+		warning_on(!do_quiet, "failed to open status file: %m");
 	} else if (fdres >= 0) {
 		past_scrubs = scrub_read_file(fdres, !do_quiet);
-		if (IS_ERR(past_scrubs))
-			warning_on(!do_quiet, "failed to read status file: %s",
-				strerror(-PTR_ERR(past_scrubs)));
+		if (IS_ERR(past_scrubs)) {
+			errno = -PTR_ERR(past_scrubs);
+			warning_on(!do_quiet, "failed to read status file: %m");
+		}
 		close(fdres);
 	}
 
@@ -1273,8 +1274,8 @@ static int scrub_start(int argc, char **argv, int resume)
 		devid = di_args[i].devid;
 		ret = pthread_mutex_init(&sp[i].progress_mutex, NULL);
 		if (ret) {
-			error_on(!do_quiet, "pthread_mutex_init failed: %s",
-				strerror(ret));
+			errno = ret;
+			error_on(!do_quiet, "pthread_mutex_init failed: %m");
 			err = 1;
 			goto out;
 		}
@@ -1359,9 +1360,9 @@ static int scrub_start(int argc, char **argv, int resume)
 		ret = scrub_write_progress(&spc_write_mutex, fsid, sp,
 					   fi_args.num_devices);
 		if (ret) {
+			errno = -ret;
 			warning_on(!do_quiet,
-   "failed to write the progress status file: %s. Status recording disabled",
-				strerror(-ret));
+   "failed to write the progress status file: %m. Status recording disabled");
 			do_record = 0;
 		}
 	}
@@ -1418,9 +1419,12 @@ static int scrub_start(int argc, char **argv, int resume)
 		ret = pthread_create(&t_devs[i], NULL,
 					scrub_one_dev, &sp[i]);
 		if (ret) {
-			if (do_print)
-			error("creating scrub_one_dev[%llu] thread failed: %s",
-				devid, strerror(ret));
+			if (do_print) {
+				errno = ret;
+				error(
+				"creating scrub_one_dev[%llu] thread failed: %m",
+					devid);
+			}
 			err = 1;
 			goto out;
 		}
@@ -1434,9 +1438,10 @@ static int scrub_start(int argc, char **argv, int resume)
 	spc.fi = &fi_args;
 	ret = pthread_create(&t_prog, NULL, scrub_progress_cycle, &spc);
 	if (ret) {
-		if (do_print)
-			error("creating progress thread failed: %s",
-				strerror(ret));
+		if (do_print) {
+			errno = ret;
+			error("creating progress thread failed: %m");
+		}
 		err = 1;
 		goto out;
 	}
@@ -1448,9 +1453,12 @@ static int scrub_start(int argc, char **argv, int resume)
 		devid = di_args[i].devid;
 		ret = pthread_join(t_devs[i], NULL);
 		if (ret) {
-			if (do_print)
-			  error("pthread_join failed for scrub_one_dev[%llu]: %s",
-				devid, strerror(ret));
+			if (do_print) {
+				errno = ret;
+				error(
+				"pthread_join failed for scrub_one_dev[%llu]: %m",
+					devid);
+			}
 			++err;
 			continue;
 		}
@@ -1465,11 +1473,13 @@ static int scrub_start(int argc, char **argv, int resume)
 				++err;
 				break;
 			default:
-				if (do_print)
-		error("scrubbing %s failed for device id %lld: ret=%d, errno=%d (%s)",
-					path, devid,
-					sp[i].ret, sp[i].ioctl_errno,
-					strerror(sp[i].ioctl_errno));
+				if (do_print) {
+					errno = sp[i].ioctl_errno;
+					error(
+		"scrubbing %s failed for device id %lld: ret=%d, errno=%d (%m)",
+						path, devid, sp[i].ret,
+						sp[i].ioctl_errno);
+				}
 				++err;
 				continue;
 			}
@@ -1511,21 +1521,23 @@ static int scrub_start(int argc, char **argv, int resume)
 
 	/* check for errors from the handling of the progress thread */
 	if (do_print && ret) {
-		error("progress thread handling failed: %s",
-			strerror(ret));
+		errno = ret;
+		error("progress thread handling failed: %m");
 	}
 
 	/* check for errors returned from the progress thread itself */
-	if (do_print && terr && terr != PTHREAD_CANCELED)
-		error("recording progress failed: %s",
-			strerror(-PTR_ERR(terr)));
+	if (do_print && terr && terr != PTHREAD_CANCELED) {
+		errno = -PTR_ERR(terr);
+		error("recording progress failed: %m");
+	}
 
 	if (do_record) {
 		ret = scrub_write_progress(&spc_write_mutex, fsid, sp,
 					   fi_args.num_devices);
-		if (ret && do_print)
-			error("failed to record the result: %s",
-				strerror(-ret));
+		if (ret && do_print) {
+			errno = -ret;
+			error("failed to record the result: %m");
+		}
 	}
 
 	scrub_handle_sigint_child(-1);
@@ -1701,8 +1713,8 @@ static int cmd_scrub_status(int argc, char **argv)
 
 	ret = get_fs_info(path, &fi_args, &di_args);
 	if (ret) {
-		error("getting dev info for scrub failed: %s",
-			strerror(-ret));
+		errno = -ret;
+		error("getting dev info for scrub failed: %m");
 		err = 1;
 		goto out;
 	}
@@ -1729,8 +1741,8 @@ static int cmd_scrub_status(int argc, char **argv)
 		close(fdres);
 		fdres = scrub_open_file_r(SCRUB_DATA_FILE, fsid);
 		if (fdres < 0 && fdres != -ENOENT) {
-			warning("failed to open status file: %s",
-				strerror(-fdres));
+			errno = -fdres;
+			warning("failed to open status file: %m");
 			err = 1;
 			goto out;
 		}
@@ -1738,9 +1750,10 @@ static int cmd_scrub_status(int argc, char **argv)
 
 	if (fdres >= 0) {
 		past_scrubs = scrub_read_file(fdres, 1);
-		if (IS_ERR(past_scrubs))
-			warning("failed to read status: %s",
-				strerror(-PTR_ERR(past_scrubs)));
+		if (IS_ERR(past_scrubs)) {
+			errno = -PTR_ERR(past_scrubs);
+			warning("failed to read status: %m");
+		}
 	}
 	in_progress = is_scrub_running_in_kernel(fdmnt, di_args, fi_args.num_devices);
 

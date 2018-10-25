@@ -493,10 +493,10 @@ static int reiserfs_copy_dirent(reiserfs_filsys_t fs,
 	ret = reiserfs_copy_meta(fs, root, dirent_data->convert_flags,
 				 deh_dirid, deh_objectid, &type);
 	if (ret) {
+		errno = -ret;
 		error(
-	"an error occured while converting \"%.*s\", reiserfs key [%u %u]: %s",
-			(int)len, name, deh_dirid, deh_objectid,
-			strerror(-ret));
+	"an error occured while converting \"%.*s\", reiserfs key [%u %u]: %m",
+			(int)len, name, deh_dirid, deh_objectid);
 		return ret;
 	}
 	trans = btrfs_start_transaction(root, 1);

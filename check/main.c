@@ -2291,9 +2291,9 @@ static int repair_inode_nlinks(struct btrfs_trans_handle *trans,
 
 	ret = reset_nlink(trans, root, path, rec);
 	if (ret < 0) {
+		errno = -ret;
 		fprintf(stderr,
-			"Failed to reset nlink for inode %llu: %s\n",
-			rec->ino, strerror(-ret));
+			"Failed to reset nlink for inode %llu: %m\n", rec->ino);
 		goto out;
 	}
 
@@ -3170,8 +3170,8 @@ static int repair_btree(struct btrfs_root *root,
 	trans = btrfs_start_transaction(root, 1);
 	if (IS_ERR(trans)) {
 		ret = PTR_ERR(trans);
-		fprintf(stderr, "Error starting transaction: %s\n",
-			strerror(-ret));
+		errno = -ret;
+		fprintf(stderr, "Error starting transaction: %m\n");
 		return ret;
 	}
 	btrfs_init_path(&path);
@@ -3363,8 +3363,8 @@ skip_walking:
 			       root->root_key.objectid);
 			ret = repair_btree(root, &corrupt_blocks);
 			if (ret < 0)
-				fprintf(stderr, "Failed to repair btree: %s\n",
-					strerror(-ret));
+				errno = -ret;
+				fprintf(stderr, "Failed to repair btree: %m\n");
 			if (!ret)
 				printf("Btree for root %llu is fixed\n",
 				       root->root_key.objectid);
@@ -5177,18 +5177,20 @@ static int process_extent_item(struct btrfs_root *root,
 		case BTRFS_TREE_BLOCK_REF_KEY:
 			ret = add_tree_backref(extent_cache, key.objectid,
 					0, offset, 0);
-			if (ret < 0)
+			if (ret < 0) {
+				errno = -ret;
 				error(
-			"add_tree_backref failed (extent items tree block): %s",
-				      strerror(-ret));
+			"add_tree_backref failed (extent items tree block): %m");
+			}
 			break;
 		case BTRFS_SHARED_BLOCK_REF_KEY:
 			ret = add_tree_backref(extent_cache, key.objectid,
 					offset, 0, 0);
-			if (ret < 0)
+			if (ret < 0) {
+				errno = -ret;
 				error(
-			"add_tree_backref failed (extent items shared block): %s",
-				      strerror(-ret));
+		"add_tree_backref failed (extent items shared block): %m");
+			}
 			break;
 		case BTRFS_EXTENT_DATA_REF_KEY:
 			dref = (struct btrfs_extent_data_ref *)(&iref->offset);
@@ -5420,16 +5422,18 @@ static int check_space_cache(struct btrfs_root *root)
 		if (btrfs_fs_compat_ro(root->fs_info, FREE_SPACE_TREE)) {
 			ret = exclude_super_stripes(root, cache);
 			if (ret) {
-				fprintf(stderr, "could not exclude super stripes: %s\n",
-					strerror(-ret));
+				errno = -ret;
+				fprintf(stderr,
+					"could not exclude super stripes: %m\n");
 				error++;
 				continue;
 			}
 			ret = load_free_space_tree(root->fs_info, cache);
 			free_excluded_extents(root, cache);
 			if (ret < 0) {
-				fprintf(stderr, "could not load free space tree: %s\n",
-					strerror(-ret));
+				errno = -ret;
+				fprintf(stderr,
+					"could not load free space tree: %m\n");
 				error++;
 				continue;
 			}
@@ -6122,19 +6126,21 @@ static int run_next_block(struct btrfs_root *root,
 			if (key.type == BTRFS_TREE_BLOCK_REF_KEY) {
 				ret = add_tree_backref(extent_cache,
 						key.objectid, 0, key.offset, 0);
-				if (ret < 0)
+				if (ret < 0) {
+					errno = -ret;
 					error(
-				"add_tree_backref failed (leaf tree block): %s",
-					      strerror(-ret));
+				"add_tree_backref failed (leaf tree block): %m");
+				}
 				continue;
 			}
 			if (key.type == BTRFS_SHARED_BLOCK_REF_KEY) {
 				ret = add_tree_backref(extent_cache,
 						key.objectid, key.offset, 0, 0);
-				if (ret < 0)
+				if (ret < 0) {
+					errno = -ret;
 					error(
-				"add_tree_backref failed (leaf shared block): %s",
-					      strerror(-ret));
+			"add_tree_backref failed (leaf shared block): %m");
+				}
 				continue;
 			}
 			if (key.type == BTRFS_EXTENT_DATA_REF_KEY) {
@@ -6236,9 +6242,9 @@ static int run_next_block(struct btrfs_root *root,
 			ret = add_tree_backref(extent_cache, ptr, parent,
 					owner, 1);
 			if (ret < 0) {
+				errno = -ret;
 				error(
-				"add_tree_backref failed (non-leaf block): %s",
-				      strerror(-ret));
+				"add_tree_backref failed (non-leaf block): %m");
 				continue;
 			}
 
@@ -9678,8 +9684,8 @@ int cmd_check(int argc, char **argv)
 	ret = check_mounted(argv[optind]);
 	if (!force) {
 		if (ret < 0) {
-			error("could not check mount status: %s",
-					strerror(-ret));
+			errno = -ret;
+			error("could not check mount status: %m");
 			err |= !!ret;
 			goto err_out;
 		} else if (ret) {
@@ -9856,7 +9862,8 @@ int cmd_check(int argc, char **argv)
 		task_stop(ctx.info);
 		if (ret < 0) {
 			err = !!ret;
-			error("failed to repair root items: %s", strerror(-ret));
+			errno = -ret;
+			error("failed to repair root items: %m");
 			goto close_out;
 		}
 		if (repair) {

@@ -1542,8 +1542,8 @@ int cmd_restore(int argc, char **argv)
 	}
 
 	if ((ret = check_mounted(argv[optind])) < 0) {
-		fprintf(stderr, "Could not check mount status: %s\n",
-			strerror(-ret));
+		errno = -ret;
+		fprintf(stderr, "Could not check mount status: %m\n");
 		return 1;
 	} else if (ret) {
 		fprintf(stderr, "%s is currently mounted.  Aborting.\n", argv[optind]);
@@ -1591,8 +1591,9 @@ int cmd_restore(int argc, char **argv)
 		key.offset = (u64)-1;
 		root = btrfs_read_fs_root(orig_root->fs_info, &key);
 		if (IS_ERR(root)) {
-			fprintf(stderr, "fail to read root %llu: %s\n",
-					root_objectid, strerror(-PTR_ERR(root)));
+			errno = -PTR_ERR(root);
+			fprintf(stderr, "fail to read root %llu: %m\n",
+					root_objectid);
 			root = orig_root;
 			ret = 1;
 			goto out;

@@ -70,9 +70,9 @@ static int debug_corrupt_block(struct extent_buffer *eb,
 		if (!copy || mirror_num == copy) {
 			ret = read_extent_from_disk(eb, 0, eb->len);
 			if (ret < 0) {
-				error("cannot read eb bytenr %llu: %s",
-						(unsigned long long)eb->dev_bytenr,
-						strerror(-ret));
+				errno = -ret;
+				error("cannot read eb bytenr %llu: %m",
+					(unsigned long long)eb->dev_bytenr);
 				return ret;
 			}
 			printf("corrupting %llu copy %d\n", eb->start,
@@ -80,9 +80,9 @@ static int debug_corrupt_block(struct extent_buffer *eb,
 			memset(eb->data, 0, eb->len);
 			ret = write_extent_to_disk(eb);
 			if (ret < 0) {
-				error("cannot write eb bytenr %llu: %s",
-						(unsigned long long)eb->dev_bytenr,
-						strerror(-ret));
+				errno = -ret;
+				error("cannot write eb bytenr %llu: %m",
+					(unsigned long long)eb->dev_bytenr);
 				return ret;
 			}
 			fsync(eb->fd);

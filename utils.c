@@ -357,7 +357,8 @@ int btrfs_prepare_device(int fd, const char *file, u64 *block_count_ret,
 				       ZERO_DEV_BYTES, block_count);
 
 	if (ret < 0) {
-		error("failed to zero device '%s': %s", file, strerror(-ret));
+		errno = -ret;
+		error("failed to zero device '%s': %m", file);
 		return 1;
 	}
 
@@ -530,7 +531,8 @@ int get_btrfs_mount(const char *dev, char *mp, size_t mp_size)
 			error("not a block device: %s", dev);
 			ret = -EINVAL;
 		} else {
-			error("cannot check %s: %s", dev, strerror(-ret));
+			errno = -ret;
+			error("cannot check %s: %m", dev);
 		}
 		goto out;
 	}
@@ -1492,8 +1494,10 @@ path:
 	if (fd < 0)
 		goto err;
 	ret = lookup_path_rootid(fd, &id);
-	if (ret)
-		error("failed to lookup root id: %s", strerror(-ret));
+	if (ret) {
+		errno = -ret;
+		error("failed to lookup root id: %m");
+	}
 	close(fd);
 	if (ret < 0)
 		goto err;
@@ -1782,8 +1786,7 @@ int get_fsid(const char *path, u8 *fsid, int silent)
 	if (fd < 0) {
 		ret = -errno;
 		if (!silent)
-			error("failed to open %s: %s", path,
-				strerror(-ret));
+			error("failed to open %s: %m", path);
 		goto out;
 	}
 
@@ -2000,7 +2003,8 @@ int btrfs_scan_devices(void)
 				&num_devices, BTRFS_SUPER_INFO_OFFSET,
 				SBREAD_DEFAULT);
 		if (ret) {
-			error("cannot scan %s: %s", path, strerror(-ret));
+			errno = -ret;
+			error("cannot scan %s: %m", path);
 			close (fd);
 			continue;
 		}

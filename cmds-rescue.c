@@ -77,7 +77,8 @@ static int cmd_rescue_chunk_recover(int argc, char *argv[])
 
 	ret = check_mounted(file);
 	if (ret < 0) {
-		error("could not check mount status: %s", strerror(-ret));
+		errno = -ret;
+		error("could not check mount status: %m");
 		return 1;
 	} else if (ret) {
 		error("the device is busy");
@@ -142,7 +143,8 @@ static int cmd_rescue_super_recover(int argc, char **argv)
 	dname = argv[optind];
 	ret = check_mounted(dname);
 	if (ret < 0) {
-		error("could not check mount status: %s", strerror(-ret));
+		errno = -ret;
+		error("could not check mount status: %m");
 		return 1;
 	} else if (ret) {
 		error("the device is busy");
@@ -175,7 +177,8 @@ static int cmd_rescue_zero_log(int argc, char **argv)
 	devname = argv[optind];
 	ret = check_mounted(devname);
 	if (ret < 0) {
-		error("could not check mount status: %s", strerror(-ret));
+		errno = -ret;
+		error("could not check mount status: %m");
 		goto out;
 	} else if (ret) {
 		error("%s is currently mounted", devname);
@@ -226,7 +229,8 @@ static int cmd_rescue_fix_device_size(int argc, char **argv)
 	devname = argv[optind];
 	ret = check_mounted(devname);
 	if (ret < 0) {
-		error("could not check mount status: %s", strerror(-ret));
+		errno = -ret;
+		error("could not check mount status: %m");
 		goto out;
 	} else if (ret) {
 		error("%s is currently mounted", devname);

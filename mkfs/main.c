@@ -1094,7 +1094,8 @@ int main(int argc, char **argv)
 
 	ret = make_btrfs(fd, &mkfs_cfg);
 	if (ret) {
-		error("error during mkfs: %s", strerror(-ret));
+		errno = -ret;
+		error("error during mkfs: %m");
 		goto error;
 	}
 

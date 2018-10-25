@@ -442,8 +442,8 @@ static int cmd_device_stats(int argc, char **argv)
 
 	ret = get_fs_info(dev_path, &fi_args, &di_args);
 	if (ret) {
-		error("getting device info for %s failed: %s", dev_path,
-			strerror(-ret));
+		errno = -ret;
+		error("getting device info for %s failed: %m", dev_path);
 		err = 1;
 		goto out;
 	}

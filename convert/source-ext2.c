@@ -162,8 +162,8 @@ static int ext2_read_used_space(struct btrfs_convert_context *cctx)
 		}
 		ret = __ext2_add_one_block(fs, block_bitmap, i, used_tree);
 		if (ret < 0) {
-			error("fail to build used space tree, %s",
-			      strerror(-ret));
+			errno = -ret;
+			error("fail to build used space tree, %m");
 			break;
 		}
 		blk_itr += EXT2_CLUSTERS_PER_GROUP(fs->super);

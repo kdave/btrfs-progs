@@ -318,10 +318,12 @@ static int create_image_file_range(struct btrfs_trans_handle *trans,
 
 	if (datacsum) {
 		ret = csum_disk_extent(trans, root, bytenr, len);
-		if (ret < 0)
+		if (ret < 0) {
+			errno = -ret;
 			error(
-		"failed to calculate csum for bytenr %llu len %llu: %s",
-			      bytenr, len, strerror(-ret));
+		"failed to calculate csum for bytenr %llu len %llu: %m",
+			      bytenr, len);
+		}
 	}
 	*ret_len = len;
 	return ret;
@@ -771,27 +773,31 @@ static int create_image(struct btrfs_root *root,
 	ret = btrfs_find_free_objectid(trans, root, BTRFS_FIRST_FREE_OBJECTID,
 				       &ino);
 	if (ret < 0) {
-		error("failed to find free objectid for root %llu: %s",
-			root->root_key.objectid, strerror(-ret));
+		errno = -ret;
+		error("failed to find free objectid for root %llu: %m",
+			root->root_key.objectid);
 		goto out;
 	}
 	ret = btrfs_new_inode(trans, root, ino, 0400 | S_IFREG);
 	if (ret < 0) {
-		error("failed to create new inode for root %llu: %s",
-			root->root_key.objectid, strerror(-ret));
+		errno = -ret;
+		error("failed to create new inode for root %llu: %m",
+			root->root_key.objectid);
 		goto out;
 	}
 	ret = btrfs_change_inode_flags(trans, root, ino, flags);
 	if (ret < 0) {
-		error("failed to change inode flag for ino %llu root %llu: %s",
-			ino, root->root_key.objectid, strerror(-ret));
+		errno = -ret;
+		error("failed to change inode flag for ino %llu root %llu: %m",
+			ino, root->root_key.objectid);
 		goto out;
 	}
 	ret = btrfs_add_link(trans, root, ino, BTRFS_FIRST_FREE_OBJECTID, name,
 			     strlen(name), BTRFS_FT_REG_FILE, NULL, 1, 0);
 	if (ret < 0) {
-		error("failed to link ino %llu to '/%s' in root %llu: %s",
-			ino, name, root->root_key.objectid, strerror(-ret));
+		errno = -ret;
+		error("failed to link ino %llu to '/%s' in root %llu: %m",
+			ino, name, root->root_key.objectid);
 		goto out;
 	}
 
@@ -1158,7 +1164,8 @@ static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
 
 	ret = make_convert_btrfs(fd, &mkfs_cfg, &cctx);
 	if (ret) {
-		error("unable to create initial ctree: %s", strerror(-ret));
+		errno = -ret;
+		error("unable to create initial ctree: %m");
 		goto fail;
 	}
 
@@ -1376,8 +1383,8 @@ static int check_convert_image(struct btrfs_root *image_root, u64 ino,
 	 * So we only need to check if ret < 0
 	 */
 	if (ret < 0) {
-		error("failed to iterate file extents at offset 0: %s",
-			strerror(-ret));
+		errno = -ret;
+		error("failed to iterate file extents at offset 0: %m");
 		btrfs_release_path(&path);
 		return ret;
 	}
@@ -1581,8 +1588,8 @@ static int do_rollback(const char *devname)
 		ret = -ENOENT;
 		goto close_fs;
 	} else if (ret < 0) {
-		error("failed to find source fs image subvolume: %s",
-			strerror(-ret));
+		errno = -ret;
+		error("failed to find source fs image subvolume: %m");
 		goto close_fs;
 	}
 
@@ -1593,8 +1600,8 @@ static int do_rollback(const char *devname)
 	image_root = btrfs_read_fs_root(fs_info, &key);
 	if (IS_ERR(image_root)) {
 		ret = PTR_ERR(image_root);
-		error("failed to open convert image subvolume: %s",
-			strerror(-ret));
+		errno = -ret;
+		error("failed to open convert image subvolume: %m");
 		goto close_fs;
 	}
 
@@ -1609,8 +1616,8 @@ static int do_rollback(const char *devname)
 			ret = PTR_ERR(dir);
 		else
 			ret = -ENOENT;
-		error("failed to locate file %s: %s", image_name,
-			strerror(-ret));
+		errno = -ret;
+		error("failed to locate file %s: %m", image_name);
 		goto close_fs;
 	}
 	btrfs_dir_item_key_to_cpu(path.nodes[0], dir, &key);
@@ -1623,7 +1630,8 @@ static int do_rollback(const char *devname)
 
 	if (ret < 0) {
 		btrfs_release_path(&path);
-		error("unable to find inode %llu: %s", ino, strerror(-ret));
+		errno = -ret;
+		error("unable to find inode %llu: %m", ino);
 		goto close_fs;
 	}
 	inode_item = btrfs_item_ptr(path.nodes[0], path.slots[0],
@@ -1665,8 +1673,9 @@ close_fs:
 				ret = -errno;
 			else
 				ret = -EIO;
-			error("failed to recover range [%llu, %llu): %s",
-			      range->start, real_size, strerror(-ret));
+			errno = -ret;
+			error("failed to recover range [%llu, %llu): %m",
+			      range->start, real_size);
 			goto free_mem;
 		}
 		ret = 0;
@@ -1828,7 +1837,8 @@ int main(int argc, char *argv[])
 	file = argv[optind];
 	ret = check_mounted(file);
 	if (ret < 0) {
-		error("could not check mount status: %s", strerror(-ret));
+		errno = -ret;
+		error("could not check mount status: %m");
 		return 1;
 	} else if (ret) {
 		error("%s is mounted", file);

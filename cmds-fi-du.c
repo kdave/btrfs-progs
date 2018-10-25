@@ -406,9 +406,10 @@ static int du_walk_dir(struct du_dir_ctxt *ctxt, struct rb_root *shared_extents)
 					ret = 0;
 					continue;
 				} else if (ret) {
+					errno = -ret;
 					fprintf(stderr,
-						"failed to walk dir/file: %s :%s\n",
-						entry->d_name, strerror(-ret));
+					"failed to walk dir/file: %s : %m\n",
+						entry->d_name);
 					break;
 				}
 
@@ -601,8 +602,8 @@ int cmd_filesystem_du(int argc, char **argv)
 	for (i = optind; i < argc; i++) {
 		ret = du_add_file(argv[i], AT_FDCWD, NULL, NULL, NULL, 1);
 		if (ret) {
-			error("cannot check space of '%s': %s", argv[i],
-					strerror(-ret));
+			errno = -ret;
+			error("cannot check space of '%s': %m", argv[i]);
 			err = 1;
 		}
 

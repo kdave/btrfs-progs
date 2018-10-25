@@ -261,8 +261,9 @@ static int add_xattr_item(struct btrfs_trans_handle *trans,
 					      cur_name_len, cur_value,
 					      ret, objectid);
 		if (ret) {
-			error("inserting a xattr item failed for %s: %s",
-					file_name, strerror(-ret));
+			errno = -ret;
+			error("inserting a xattr item failed for %s: %m",
+					file_name);
 		}
 
 		cur_name = strtok(next_location, &delimiter);
@@ -858,8 +859,8 @@ static int set_device_size(struct btrfs_fs_info *fs_info,
 	trans = btrfs_start_transaction(chunk_root, 1);
 	if (IS_ERR(trans)) {
 		ret = PTR_ERR(trans);
-		error("failed to start transaction: %d (%s)", ret,
-			strerror(-ret));
+		errno = -ret;
+		error("failed to start transaction: %d (%m)", ret);
 		return ret;
 	}
 	key.objectid = BTRFS_DEV_ITEMS_OBJECTID;
@@ -887,9 +888,10 @@ static int set_device_size(struct btrfs_fs_info *fs_info,
 	 * super->dev_item
 	 */
 	ret = btrfs_commit_transaction(trans, chunk_root);
-	if (ret < 0)
-		error("failed to commit current transaction: %d (%s)",
-			ret, strerror(-ret));
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to commit current transaction: %d (%m)", ret);
+	}
 	btrfs_release_path(&path);
 	return ret;
 
@@ -924,8 +926,8 @@ int btrfs_mkfs_shrink_fs(struct btrfs_fs_info *fs_info, u64 *new_size_ret,
 
 	ret = get_device_extent_end(fs_info, 1, &new_size);
 	if (ret < 0) {
-		error("failed to get minimal device size: %d (%s)",
-			ret, strerror(-ret));
+		errno = -ret;
+		error("failed to get minimal device size: %d (%m)", ret);
 		return ret;
 	}
 

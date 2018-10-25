@@ -284,7 +284,8 @@ static int modify_block_groups_cache(struct btrfs_fs_info *fs_info, u64 flags,
 	btrfs_init_path(&path);
 	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
 	if (ret < 0) {
-		error("fail to search block groups due to %s", strerror(-ret));
+		errno = -ret;
+		error("fail to search block groups due to %m");
 		goto out;
 	}
 
@@ -341,19 +342,22 @@ static int create_chunk_and_block_group(struct btrfs_fs_info *fs_info,
 	trans = btrfs_start_transaction(root, 1);
 	if (IS_ERR(trans)) {
 		ret = PTR_ERR(trans);
-		error("error starting transaction %s", strerror(-ret));
+		errno = -ret;
+		error("error starting transaction %m");
 		return ret;
 	}
 	ret = btrfs_alloc_chunk(trans, fs_info, start, nbytes, flags);
 	if (ret) {
-		error("fail to allocate new chunk %s", strerror(-ret));
+		errno = -ret;
+		error("fail to allocate new chunk %m");
 		goto out;
 	}
 	ret = btrfs_make_block_group(trans, fs_info, 0, flags, *start,
 				     *nbytes);
 	if (ret) {
-		error("fail to make block group for chunk %llu %llu %s",
-		      *start, *nbytes, strerror(-ret));
+		errno = -ret;
+		error("fail to make block group for chunk %llu %llu %m",
+		      *start, *nbytes);
 		goto out;
 	}
 out:
@@ -521,8 +525,10 @@ static int avoid_extents_overwrite(struct btrfs_fs_info *fs_info)
 	"Try to exclude all metadata blcoks and extents, it may be slow\n");
 	ret = exclude_metadata_blocks(fs_info);
 out:
-	if (ret)
-		error("failed to avoid extents overwrite %s", strerror(-ret));
+	if (ret) {
+		errno = -ret;
+		error("failed to avoid extents overwrite %m");
+	}
 	return ret;
 }
 
@@ -552,7 +558,8 @@ static int repair_block_accounting(struct btrfs_fs_info *fs_info)
 	trans = btrfs_start_transaction(root, 1);
 	if (IS_ERR(trans)) {
 		ret = PTR_ERR(trans);
-		error("fail to start transaction %s", strerror(-ret));
+		errno = -ret;
+		error("fail to start transaction: %m");
 		return ret;
 	}
 
@@ -629,7 +636,8 @@ static int repair_tree_block_ref(struct btrfs_root *root,
 	if (IS_ERR(trans)) {
 		ret = PTR_ERR(trans);
 		trans = NULL;
-		error("fail to start transaction %s", strerror(-ret));
+		errno = -ret;
+		error("fail to start transaction: %m");
 		goto out;
 	}
 	/* insert an extent item */
@@ -701,9 +709,10 @@ out:
 		btrfs_commit_transaction(trans, extent_root);
 	btrfs_release_path(&path);
 	if (ret) {
+		errno = -ret;
 		error(
-	"failed to repair tree block ref start %llu root %llu due to %s",
-		      bytenr, root->objectid, strerror(-ret));
+	"failed to repair tree block ref start %llu root %llu due to %m",
+		      bytenr, root->objectid);
 	} else {
 		printf("Added one tree block ref start %llu %s %llu\n",
 		       bytenr, parent ? "parent" : "root",
@@ -3006,7 +3015,8 @@ static int repair_extent_data_item(struct btrfs_root *root,
 	if (IS_ERR(trans)) {
 		ret = PTR_ERR(trans);
 		trans = NULL;
-		error("fail to start transaction %s", strerror(-ret));
+		errno = -ret;
+		error("fail to start transaction: %m");
 		goto out;
 	}
 	/* insert an extent item */
@@ -3820,7 +3830,8 @@ static int repair_extent_item(struct btrfs_root *root, struct btrfs_path *path,
 	trans = btrfs_start_transaction(extent_root, 1);
 	if (IS_ERR(trans)) {
 		ret = PTR_ERR(trans);
-		error("fail to start transaction %s", strerror(-ret));
+		errno = -ret;
+		error("fail to start transaction: %m");
 		/* nothing happened */
 		ret = 0;
 		goto out;
@@ -4281,7 +4292,8 @@ static int repair_chunk_item(struct btrfs_root *chunk_root,
 	trans = btrfs_start_transaction(extent_root, 1);
 	if (IS_ERR(trans)) {
 		ret = PTR_ERR(trans);
-		error("fail to start transaction %s", strerror(-ret));
+		errno = -ret;
+		error("fail to start transaction: %m");
 		return ret;
 	}
 
@@ -4316,7 +4328,8 @@ static int delete_extent_tree_item(struct btrfs_root *root,
 	trans = btrfs_start_transaction(root, 1);
 	if (IS_ERR(trans)) {
 		ret = PTR_ERR(trans);
-		error("fail to start transaction %s", strerror(-ret));
+		errno = -ret;
+		error("fail to start transaction: %m");
 		goto out;
 	}
 	btrfs_item_key_to_cpu(path->nodes[0], &key, path->slots[0]);

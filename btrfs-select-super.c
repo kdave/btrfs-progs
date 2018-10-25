@@ -77,7 +77,8 @@ int main(int argc, char **argv)
 	radix_tree_init();
 
 	if((ret = check_mounted(argv[optind])) < 0) {
-		error("cannot check mount status: %s", strerror(-ret));
+		errno = -ret;
+		error("cannot check mount status: %m");
 		return ret;
 	} else if(ret) {
 		error("%s is currently mounted, aborting", argv[optind]);

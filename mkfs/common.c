@@ -714,7 +714,8 @@ int test_dev_for_mkfs(const char *file, int force_overwrite)
 
 	ret = is_swap_device(file);
 	if (ret < 0) {
-		error("checking status of %s: %s", file, strerror(-ret));
+		errno = -ret;
+		error("checking status of %s: %m", file);
 		return 1;
 	}
 	if (ret == 1) {
@@ -760,8 +761,8 @@ int test_status_for_mkfs(const char *file, bool force_overwrite)
 	}
 	ret = check_mounted(file);
 	if (ret < 0) {
-		error("cannot check mount status of %s: %s", file,
-				strerror(-ret));
+		errno = -ret;
+		error("cannot check mount status of %s: %m", file);
 		return 1;
 	}
 	if (ret == 1) {

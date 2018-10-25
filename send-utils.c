@@ -40,8 +40,7 @@ static int btrfs_get_root_id_by_sub_path(int mnt_fd, const char *sub_path,
 	subvol_fd = openat(mnt_fd, sub_path, O_RDONLY);
 	if (subvol_fd < 0) {
 		ret = -errno;
-		fprintf(stderr, "ERROR: open %s failed. %s\n", sub_path,
-			strerror(-ret));
+		fprintf(stderr, "ERROR: open %s failed: %m\n", sub_path);
 		return ret;
 	}
 

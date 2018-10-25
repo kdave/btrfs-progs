@@ -313,12 +313,13 @@ int cmd_inspect_dump_tree(int argc, char **argv)
 
 	ret = check_arg_type(argv[optind]);
 	if (ret != BTRFS_ARG_BLKDEV && ret != BTRFS_ARG_REG) {
-		if (ret < 0)
-			error("invalid argument %s: %s", argv[optind],
-			      strerror(-ret));
-		else
+		if (ret < 0) {
+			errno = -ret;
+			error("invalid argument %s: %m", argv[optind]);
+		} else {
 			error("not a block device or regular file: %s",
 			      argv[optind]);
+		}
 		goto out;
 	}
 
@@ -432,9 +433,9 @@ again:
 	key.type = BTRFS_ROOT_ITEM_KEY;
 	ret = btrfs_search_slot(NULL, tree_root_scan, &key, &path, 0, 0);
 	if (ret < 0) {
-		error("cannot read ROOT_ITEM from tree %llu: %s",
-			(unsigned long long)tree_root_scan->root_key.objectid,
-			strerror(-ret));
+		errno = -ret;
+		error("cannot read ROOT_ITEM from tree %llu: %m",
+			(unsigned long long)tree_root_scan->root_key.objectid);
 		goto close_root;
 	}
 	while (1) {

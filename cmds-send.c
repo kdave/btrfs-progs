@@ -281,8 +281,7 @@ static void *read_sent_data(void *arg)
 				NULL, SEND_BUFFER_SIZE, SPLICE_F_MORE);
 		if (sbytes < 0) {
 			ret = -errno;
-			error("failed to read stream from kernel: %s",
-				strerror(-ret));
+			error("failed to read stream from kernel: %m");
 			goto out;
 		}
 		if (!sbytes) {
@@ -312,14 +311,14 @@ static int do_send(struct btrfs_send *send, u64 parent_root_id,
 	subvol_fd = openat(send->mnt_fd, subvol, O_RDONLY | O_NOATIME);
 	if (subvol_fd < 0) {
 		ret = -errno;
-		error("cannot open %s: %s", subvol, strerror(-ret));
+		error("cannot open %s: %m", subvol);
 		goto out;
 	}
 
 	ret = pipe(pipefd);
 	if (ret < 0) {
 		ret = -errno;
-		error("pipe failed: %s", strerror(-ret));
+		error("pipe failed: %m");
 		goto out;
 	}
 
@@ -331,7 +330,8 @@ static int do_send(struct btrfs_send *send, u64 parent_root_id,
 		ret = pthread_create(&t_read, NULL, read_sent_data, send);
 	if (ret) {
 		ret = -ret;
-		error("thread setup failed: %s", strerror(-ret));
+		errno = -ret;
+		error("thread setup failed: %m");
 		goto out;
 	}
 
@@ -346,7 +346,7 @@ static int do_send(struct btrfs_send *send, u64 parent_root_id,
 	ret = ioctl(subvol_fd, BTRFS_IOC_SEND, &io_send);
 	if (ret < 0) {
 		ret = -errno;
-		error("send ioctl failed with %d: %s", ret, strerror(-ret));
+		error("send ioctl failed with %d: %m", ret);
 		if (ret == -EINVAL && (!is_first_subvol || !is_last_subvol))
 			fprintf(stderr,
 				"Try upgrading your kernel or don't use -e.\n");
@@ -364,7 +364,8 @@ static int do_send(struct btrfs_send *send, u64 parent_root_id,
 	ret = pthread_join(t_read, &t_err);
 	if (ret) {
 		ret = -ret;
-		error("pthread_join failed: %s", strerror(-ret));
+		errno = -ret;
+		error("pthread_join failed: %m");
 		goto out;
 	}
 	if (t_err) {
@@ -395,8 +396,8 @@ static int init_root_path(struct btrfs_send *sctx, const char *subvol)
 
 	ret = find_mount_root(subvol, &sctx->root_path);
 	if (ret < 0) {
-		error("failed to determine mount point for %s: %s",
-			subvol, strerror(-ret));
+		errno = -ret;
+		error("failed to determine mount point for %s: %m", subvol);
 		ret = -EINVAL;
 		goto out;
 	}
@@ -409,14 +410,14 @@ static int init_root_path(struct btrfs_send *sctx, const char *subvol)
 	sctx->mnt_fd = open(sctx->root_path, O_RDONLY | O_NOATIME);
 	if (sctx->mnt_fd < 0) {
 		ret = -errno;
-		error("cannot open '%s': %s", sctx->root_path, strerror(-ret));
+		error("cannot open '%s': %m", sctx->root_path);
 		goto out;
 	}
 
 	ret = subvol_uuid_search_init(sctx->mnt_fd, &sctx->sus);
 	if (ret < 0) {
-		error("failed to initialize subvol search: %s",
-			strerror(-ret));
+		errno = -ret;
+		error("failed to initialize subvol search: %m");
 		goto out;
 	}
 
@@ -434,15 +435,14 @@ static int is_subvol_ro(struct btrfs_send *sctx, const char *subvol)
 	fd = openat(sctx->mnt_fd, subvol, O_RDONLY | O_NOATIME);
 	if (fd < 0) {
 		ret = -errno;
-		error("cannot open %s: %s", subvol, strerror(-ret));
+		error("cannot open %s: %m", subvol);
 		goto out;
 	}
 
 	ret = ioctl(fd, BTRFS_IOC_SUBVOL_GETFLAGS, &flags);
 	if (ret < 0) {
 		ret = -errno;
-		error("failed to get flags for subvolume %s: %s",
-			subvol, strerror(-ret));
+		error("failed to get flags for subvolume %s: %m", subvol);
 		goto out;
 	}
 
@@ -535,7 +535,7 @@ int cmd_send(int argc, char **argv)
 			subvol = realpath(optarg, NULL);
 			if (!subvol) {
 				ret = -errno;
-				error("realpath %s failed: %s\n", optarg, strerror(-ret));
+				error("realpath %s failed: %m\n", optarg);
 				goto out;
 			}
 
@@ -554,7 +554,8 @@ int cmd_send(int argc, char **argv)
 
 			ret = add_clone_source(&send, root_id);
 			if (ret < 0) {
-				error("cannot add clone source: %s", strerror(-ret));
+				errno = -ret;
+				error("cannot add clone source: %m");
 				goto out;
 			}
 			free(subvol);
@@ -578,7 +579,7 @@ int cmd_send(int argc, char **argv)
 			snapshot_parent = realpath(optarg, NULL);
 			if (!snapshot_parent) {
 				ret = -errno;
-				error("realpath %s failed: %s", optarg, strerror(-ret));
+				error("realpath %s failed: %m", optarg);
 				goto out;
 			}
 
@@ -629,7 +630,7 @@ int cmd_send(int argc, char **argv)
 		send.dump_fd = tmpfd;
 		if (send.dump_fd == -1) {
 			ret = -errno;
-			error("cannot create '%s': %s", outname, strerror(-ret));
+			error("cannot create '%s': %m", outname);
 			goto out;
 		}
 	}
@@ -664,7 +665,8 @@ int cmd_send(int argc, char **argv)
 
 		ret = add_clone_source(&send, parent_root_id);
 		if (ret < 0) {
-			error("cannot add clone source: %s", strerror(-ret));
+			errno = -ret;
+			error("cannot add clone source: %m");
 			goto out;
 		}
 	}
@@ -680,8 +682,8 @@ int cmd_send(int argc, char **argv)
 
 		ret = find_mount_root(subvol, &mount_root);
 		if (ret < 0) {
-			error("find_mount_root failed on %s: %s", subvol,
-				strerror(-ret));
+			errno = -ret;
+			error("find_mount_root failed on %s: %m", subvol);
 			goto out;
 		}
 		if (ret > 0) {
@@ -724,7 +726,7 @@ int cmd_send(int argc, char **argv)
 		subvol = realpath(subvol, NULL);
 		if (!subvol) {
 			ret = -errno;
-			error("realpath %s failed: %s", argv[i], strerror(-ret));
+			error("realpath %s failed: %m", argv[i]);
 			goto out;
 		}
 
@@ -759,7 +761,8 @@ int cmd_send(int argc, char **argv)
 			/* done with this subvol, so add it to the clone sources */
 			ret = add_clone_source(&send, root_id);
 			if (ret < 0) {
-				error("cannot add clone source: %s", strerror(-ret));
+				errno = -ret;
+				error("cannot add clone source: %m");
 				goto out;
 			}
 			free_send_info(&send);

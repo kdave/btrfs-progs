@@ -204,8 +204,8 @@ int main(int argc, char **argv)
 			       &filter.match_gen, &filter.match_level);
 	ret = btrfs_find_root_search(fs_info, &filter, &result, &found);
 	if (ret < 0) {
-		fprintf(stderr, "Fail to search the tree root: %s\n",
-			strerror(-ret));
+		errno = -ret;
+		fprintf(stderr, "Fail to search the tree root: %m\n");
 		goto out;
 	}
 	if (ret > 0) {

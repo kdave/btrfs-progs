@@ -515,8 +515,9 @@ static int add_root(struct root_lookup *root_lookup,
 
 	ret = root_tree_insert(root_lookup, ri);
 	if (ret < 0) {
-		error("failed to insert subvolume %llu to tree: %s",
-				(unsigned long long)root_id, strerror(-ret));
+		errno = -ret;
+		error("failed to insert subvolume %llu to tree: %m",
+				(unsigned long long)root_id);
 		exit(1);
 	}
 	return 0;

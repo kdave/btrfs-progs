@@ -145,7 +145,8 @@ static int cmd_filesystem_df(int argc, char **argv)
 		print_df(sargs, unit_mode);
 		free(sargs);
 	} else {
-		error("get_df failed %s", strerror(-ret));
+		errno = -ret;
+		error("get_df failed: %m");
 	}
 
 	close_file_or_dir(fd, dirstream);
@@ -1054,8 +1055,8 @@ static int cmd_filesystem_defrag(int argc, char **argv)
 				break;
 			}
 			if (ret) {
-				error("defrag failed on %s: %s", argv[i],
-				      strerror(defrag_err));
+				errno = defrag_err;
+				error("defrag failed on %s: %m", argv[i]);
 				goto next;
 			}
 		}

@@ -450,7 +450,8 @@ int link_inode_to_lostfound(struct btrfs_trans_handle *trans,
 			  BTRFS_FIRST_FREE_OBJECTID, &lost_found_ino,
 			  mode);
 	if (ret < 0) {
-		error("failed to create '%s' dir: %s", dir_name, strerror(-ret));
+		errno = -ret;
+		error("failed to create '%s' dir: %m", dir_name);
 		goto out;
 	}
 	ret = btrfs_add_link(trans, root, ino, lost_found_ino,
@@ -474,8 +475,9 @@ int link_inode_to_lostfound(struct btrfs_trans_handle *trans,
 				     name_len, filetype, NULL, 1, 0);
 	}
 	if (ret < 0) {
-		error("failed to link the inode %llu to %s dir: %s",
-		      ino, dir_name, strerror(-ret));
+		errno = -ret;
+		error("failed to link the inode %llu to %s dir: %m",
+		      ino, dir_name);
 		goto out;
 	}
 

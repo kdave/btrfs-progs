@@ -330,7 +330,8 @@ static int cmd_inspect_rootid(int argc, char **argv)
 
 	ret = lookup_path_rootid(fd, &rootid);
 	if (ret) {
-		error("failed to lookup root id: %s", strerror(-ret));
+		errno = -ret;
+		error("failed to lookup root id: %m");
 		goto out;
 	}
 
@@ -565,7 +566,8 @@ static int print_min_dev_size(int fd, u64 devid)
 				ret = add_dev_extent(&holes, last_pos,
 					btrfs_search_header_offset(sh) - 1, 1);
 			if (ret) {
-				error("add device extent: %s", strerror(-ret));
+				errno = -ret;
+				error("add device extent: %m");
 				ret = 1;
 				goto out;
 			}

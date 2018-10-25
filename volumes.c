@@ -1926,8 +1926,9 @@ static int read_one_chunk(struct btrfs_fs_info *fs_info, struct btrfs_key *key,
 	}
 	ret = insert_cache_extent(&map_tree->cache_tree, &map->ce);
 	if (ret < 0) {
-		error("failed to add chunk map start=%llu len=%llu: %d (%s)",
-		      map->ce.start, map->ce.size, ret, strerror(-ret));
+		errno = -ret;
+		error("failed to add chunk map start=%llu len=%llu: %d (%m)",
+		      map->ce.start, map->ce.size, ret);
 	}
 
 	return ret;
@@ -2448,8 +2449,8 @@ int btrfs_fix_device_size(struct btrfs_fs_info *fs_info,
 	trans = btrfs_start_transaction(chunk_root, 1);
 	if (IS_ERR(trans)) {
 		ret = PTR_ERR(trans);
-		error("error starting transaction: %d (%s)",
-		      ret, strerror(-ret));
+		errno = -ret;
+		error("error starting transaction: %d (%m)", ret);
 		return ret;
 	}
 
@@ -2461,8 +2462,8 @@ int btrfs_fix_device_size(struct btrfs_fs_info *fs_info,
 		goto err;
 	}
 	if (ret < 0) {
-		error("failed to search chunk root: %d (%s)",
-			ret, strerror(-ret));
+		errno = -ret;
+		error("failed to search chunk root: %d (%m)", ret);
 		goto err;
 	}
 	di = btrfs_item_ptr(path.nodes[0], path.slots[0], struct btrfs_dev_item);
@@ -2470,8 +2471,8 @@ int btrfs_fix_device_size(struct btrfs_fs_info *fs_info,
 	btrfs_mark_buffer_dirty(path.nodes[0]);
 	ret = btrfs_commit_transaction(trans, chunk_root);
 	if (ret < 0) {
-		error("failed to commit current transaction: %d (%s)",
-			ret, strerror(-ret));
+		errno = -ret;
+		error("failed to commit current transaction: %d (%m)", ret);
 		btrfs_release_path(&path);
 		return ret;
 	}
@@ -2524,14 +2525,14 @@ int btrfs_fix_super_size(struct btrfs_fs_info *fs_info)
 	trans = btrfs_start_transaction(fs_info->tree_root, 1);
 	if (IS_ERR(trans)) {
 		ret = PTR_ERR(trans);
-		error("error starting transaction:  %d (%s)",
-		      ret, strerror(-ret));
+		errno = -ret;
+		error("error starting transaction: %d (%m)", ret);
 		return ret;
 	}
 	ret = btrfs_commit_transaction(trans, fs_info->tree_root);
 	if (ret < 0) {
-		error("failed to commit current transaction: %d (%s)",
-			ret, strerror(-ret));
+		errno = -ret;
+		error("failed to commit current transaction: %d (%m)", ret);
 		return ret;
 	}
 	printf("Fixed super total bytes, old size: %llu new size: %llu\n",
