@@ -1,0 +1,41 @@
+"default_case.img.xz" contains the fs with the following tree dump of fs tree:
+
+  [snip]
+	item 2 key (256 DIR_ITEM 751495445) itemoff 16019 itemsize 92
+		location key (259 INODE_ITEM 0) type FILE
+		transid 9 data_len 0 name_len 13
+		name: foor.WvG1c1Td
+		      ^^^^^^^^^^^^^ Hash doesn't match with key
+		location key (260 INODE_ITEM 0) type FILE
+		transid 12 data_len 0 name_len 19
+		name: user.J3__T_Km3dVsW_
+	item 3 key (256 DIR_INDEX 4) itemoff 15976 itemsize 43
+		location key (259 INODE_ITEM 0) type FILE
+		transid 9 data_len 0 name_len 13
+		name: foor.WvG1c1Td
+	item 4 key (256 DIR_INDEX 5) itemoff 15927 itemsize 49
+		location key (260 INODE_ITEM 0) type FILE
+		transid 12 data_len 0 name_len 19
+		name: user.J3__T_Km3dVsW_
+	item 5 key (259 INODE_ITEM 0) itemoff 15767 itemsize 160
+		generation 9 transid 9 size 0 nbytes 0
+		block group 0 mode 100644 links 1 uid 0 gid 0 rdev 0
+		sequence 1 flags 0x0(none)
+		atime 1499844359.341125147 (2017-07-12 15:25:59)
+		ctime 1499844359.341125147 (2017-07-12 15:25:59)
+		mtime 1499844359.341125147 (2017-07-12 15:25:59)
+		otime 1499844359.341125147 (2017-07-12 15:25:59)
+	item 6 key (259 INODE_REF 256) itemoff 15744 itemsize 23
+		index 4 namelen 13 name: foor.WvG1c1Td
+	item 7 key (260 INODE_ITEM 0) itemoff 15584 itemsize 160
+		generation 12 transid 12 size 0 nbytes 0
+		block group 0 mode 100644 links 1 uid 0 gid 0 rdev 0
+		sequence 1 flags 0x0(none)
+		atime 1499844544.931130070 (2017-07-12 15:29:04)
+		ctime 1499844544.931130070 (2017-07-12 15:29:04)
+		mtime 1499844544.931130070 (2017-07-12 15:29:04)
+		otime 1499844544.931130070 (2017-07-12 15:29:04)
+	item 8 key (260 INODE_REF 256) itemoff 15555 itemsize 29
+		index 5 namelen 19 name: user.J3__T_Km3dVsW_
+
+Test case is going to check if btrfs check can detect and repair it.
