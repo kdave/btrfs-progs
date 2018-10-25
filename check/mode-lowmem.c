@@ -1474,16 +1474,52 @@ out:
 }
 
 /*
+ * A wrapper for delete_corrupted_dir_item(), with support part like
+ * start/commit transaction.
+ */
+static int lowmem_delete_corrupted_dir_item(struct btrfs_root *root,
+					    struct btrfs_key *di_key,
+					    char *namebuf, u32 name_len)
+{
+	struct btrfs_trans_handle *trans;
+	int ret;
+
+	trans = btrfs_start_transaction(root, 1);
+	if (IS_ERR(trans)) {
+		ret = PTR_ERR(trans);
+		error("failed to start transaction: %d", ret);
+		return ret;
+	}
+
+	ret = delete_corrupted_dir_item(trans, root, di_key, namebuf, name_len);
+	if (ret < 0) {
+		btrfs_abort_transaction(trans, ret);
+	} else {
+		ret = btrfs_commit_transaction(trans, root);
+		if (ret < 0)
+			error("failed to commit transaction: %d", ret);
+	}
+	return ret;
+}
+
+/*
  * Call repair_inode_item_missing and repair_ternary_lowmem to repair
  *
  * Returns error after repair
  */
-static int repair_dir_item(struct btrfs_root *root, u64 dirid, u64 ino,
-			   u64 index, u8 filetype, char *namebuf, u32 name_len,
-			   int err)
+static int repair_dir_item(struct btrfs_root *root, struct btrfs_key *di_key,
+			   u64 ino, u64 index, u8 filetype, char *namebuf,
+			   u32 name_len, int err)
 {
+	u64 dirid = di_key->objectid;
 	int ret;
 
+	if (err & (DIR_ITEM_HASH_MISMATCH)) {
+		ret = lowmem_delete_corrupted_dir_item(root, di_key, namebuf,
+						       name_len);
+		if (!ret)
+			err &= ~(DIR_ITEM_HASH_MISMATCH);
+	}
 	if (err & INODE_ITEM_MISSING) {
 		ret = repair_inode_item_missing(root, ino, filetype);
 		if (!ret)
@@ -1631,11 +1667,12 @@ begin:
 
 		if (di_key->type == BTRFS_DIR_ITEM_KEY &&
 		    di_key->offset != btrfs_name_hash(namebuf, len)) {
-			err |= -EIO;
 			error("root %llu DIR_ITEM[%llu %llu] name %s namelen %u filetype %u mismatch with its hash, wanted %llu have %llu",
 			root->objectid, di_key->objectid, di_key->offset,
 			namebuf, len, filetype, di_key->offset,
 			btrfs_name_hash(namebuf, len));
+			tmp_err |= DIR_ITEM_HASH_MISMATCH;
+			goto next;
 		}
 
 		btrfs_dir_item_key_to_cpu(node, di, &location);
@@ -1683,7 +1720,7 @@ begin:
 next:
 
 		if (tmp_err && repair) {
-			ret = repair_dir_item(root, di_key->objectid,
+			ret = repair_dir_item(root, di_key,
 					      location.objectid, index,
 					      imode_to_type(mode), namebuf,
 					      name_len, tmp_err);

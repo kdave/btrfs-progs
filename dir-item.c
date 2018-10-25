@@ -22,10 +22,6 @@
 #include "hash.h"
 #include "transaction.h"
 
-static struct btrfs_dir_item *btrfs_match_dir_item_name(struct btrfs_root *root,
-			      struct btrfs_path *path,
-			      const char *name, int name_len);
-
 static struct btrfs_dir_item *insert_with_overflow(struct btrfs_trans_handle
 						   *trans,
 						   struct btrfs_root *root,
@@ -323,7 +319,7 @@ static int verify_dir_item(struct btrfs_root *root,
 	return 0;
 }
 
-static struct btrfs_dir_item *btrfs_match_dir_item_name(struct btrfs_root *root,
+struct btrfs_dir_item *btrfs_match_dir_item_name(struct btrfs_root *root,
 			      struct btrfs_path *path,
 			      const char *name, int name_len)
 {

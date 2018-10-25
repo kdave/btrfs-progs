@@ -744,3 +744,54 @@ void cleanup_excluded_extents(struct btrfs_fs_info *fs_info)
 	}
 	fs_info->excluded_extents = NULL;
 }
+
+/*
+ * Delete one corrupted dir item whose hash doesn't match its name.
+ *
+ * Since its hash is incorrect, we can't use btrfs_name_hash() to calculate
+ * the search key, but rely on @di_key parameter to do the search.
+ */
+int delete_corrupted_dir_item(struct btrfs_trans_handle *trans,
+			      struct btrfs_root *root,
+			      struct btrfs_key *di_key, char *namebuf,
+			      u32 namelen)
+{
+	struct btrfs_dir_item *di_item;
+	struct btrfs_path path;
+	int ret;
+
+	btrfs_init_path(&path);
+	ret = btrfs_search_slot(trans, root, di_key, &path, 0, 1);
+	if (ret > 0) {
+		error("key (%llu %u %llu) doesn't exist in root %llu",
+			di_key->objectid, di_key->type, di_key->offset,
+			root->root_key.objectid);
+		ret = -ENOENT;
+		goto out;
+	}
+	if (ret < 0) {
+		error("failed to search root %llu: %d",
+			root->root_key.objectid, ret);
+		goto out;
+	}
+
+	di_item = btrfs_match_dir_item_name(root, &path, namebuf, namelen);
+	if (!di_item) {
+		/*
+		 * This is possible if the dir_item has incorrect namelen.
+		 * But in that case, we shouldn't reach repair path here.
+		 */
+		error("no dir item named '%s' found with key (%llu %u %llu)",
+			namebuf, di_key->objectid, di_key->type,
+			di_key->offset);
+		ret = -ENOENT;
+		goto out;
+	}
+	ret = btrfs_delete_one_dir_name(trans, root, &path, di_item);
+	if (ret < 0)
+		error("failed to delete one dir name: %d", ret);
+
+out:
+	btrfs_release_path(&path);
+	return ret;
+}
