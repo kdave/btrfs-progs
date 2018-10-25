@@ -2658,6 +2658,41 @@ out:
 	return ret;
 }
 
+static int repair_mismatch_dir_hash(struct btrfs_trans_handle *trans,
+				    struct btrfs_root *root,
+				    struct inode_record *rec)
+{
+	struct mismatch_dir_hash_record *hash;
+	int ret;
+
+	printf(
+	"Deleting bad dir items with invalid hash for root %llu ino %llu\n",
+		root->root_key.objectid, rec->ino);
+	while (!list_empty(&rec->mismatch_dir_hash)) {
+		char *namebuf;
+
+		hash = list_entry(rec->mismatch_dir_hash.next,
+				struct mismatch_dir_hash_record, list);
+		namebuf = (char *)(hash + 1);
+
+		ret = delete_corrupted_dir_item(trans, root, &hash->key,
+						namebuf, hash->namelen);
+		if (ret < 0)
+			break;
+
+		/* Also reduce dir isize */
+		rec->found_size -= hash->namelen;
+		list_del(&hash->list);
+		free(hash);
+	}
+	if (!ret) {
+		rec->errors &= ~I_ERR_MISMATCH_DIR_HASH;
+		/* We rely on later dir isize repair to reset dir isize */
+		rec->errors |= I_ERR_DIR_ISIZE_WRONG;
+	}
+	return ret;
+}
+
 static int try_repair_inode(struct btrfs_root *root, struct inode_record *rec)
 {
 	struct btrfs_trans_handle *trans;
@@ -2671,7 +2706,8 @@ static int try_repair_inode(struct btrfs_root *root, struct inode_record *rec)
 			     I_ERR_FILE_EXTENT_ORPHAN |
 			     I_ERR_FILE_EXTENT_DISCOUNT |
 			     I_ERR_FILE_NBYTES_WRONG |
-			     I_ERR_INLINE_RAM_BYTES_WRONG)))
+			     I_ERR_INLINE_RAM_BYTES_WRONG |
+			     I_ERR_MISMATCH_DIR_HASH)))
 		return rec->errors;
 
 	/*
@@ -2686,6 +2722,8 @@ static int try_repair_inode(struct btrfs_root *root, struct inode_record *rec)
 		return PTR_ERR(trans);
 
 	btrfs_init_path(&path);
+	if (!ret && rec->errors & I_ERR_MISMATCH_DIR_HASH)
+		ret = repair_mismatch_dir_hash(trans, root, rec);
 	if (rec->errors & I_ERR_NO_INODE_ITEM)
 		ret = repair_inode_no_item(trans, root, &path, rec);
 	if (!ret && rec->errors & I_ERR_FILE_EXTENT_ORPHAN)
@@ -2780,6 +2818,11 @@ static int check_inode_recs(struct btrfs_root *root,
 	rec = get_inode_rec(inode_cache, root_dirid, 0);
 	BUG_ON(IS_ERR(rec));
 	if (rec) {
+		if (repair) {
+			ret = try_repair_inode(root, rec);
+			if (ret < 0)
+				error++;
+		}
 		ret = check_root_dir(rec);
 		if (ret) {
 			fprintf(stderr, "root %llu root dir %llu error\n",
