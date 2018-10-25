@@ -462,6 +462,8 @@ static struct inode_record *clone_inode_rec(struct inode_record *orig_rec)
 	struct inode_backref *tmp;
 	struct orphan_data_extent *src_orphan;
 	struct orphan_data_extent *dst_orphan;
+	struct mismatch_dir_hash_record *hash_record;
+	struct mismatch_dir_hash_record *new_record;
 	struct rb_node *rb;
 	size_t size;
 	int ret;
@@ -473,6 +475,7 @@ static struct inode_record *clone_inode_rec(struct inode_record *orig_rec)
 	rec->refs = 1;
 	INIT_LIST_HEAD(&rec->backrefs);
 	INIT_LIST_HEAD(&rec->orphan_extents);
+	INIT_LIST_HEAD(&rec->mismatch_dir_hash);
 	rec->holes = RB_ROOT;
 
 	list_for_each_entry(orig, &orig_rec->backrefs, list) {
@@ -493,6 +496,16 @@ static struct inode_record *clone_inode_rec(struct inode_record *orig_rec)
 		}
 		memcpy(dst_orphan, src_orphan, sizeof(*src_orphan));
 		list_add_tail(&dst_orphan->list, &rec->orphan_extents);
+	}
+	list_for_each_entry(hash_record, &orig_rec->mismatch_dir_hash, list) {
+		size = sizeof(*hash_record) + hash_record->namelen;
+		new_record = malloc(size);
+		if (!new_record) {
+			ret = -ENOMEM;
+			goto cleanup;
+		}
+		memcpy(&new_record, hash_record, size);
+		list_add_tail(&new_record->list, &rec->mismatch_dir_hash);
 	}
 	ret = copy_file_extent_holes(&rec->holes, &orig_rec->holes);
 	if (ret < 0)
@@ -522,6 +535,13 @@ cleanup:
 			list_del(&orig->list);
 			free(orig);
 		}
+	if (!list_empty(&rec->mismatch_dir_hash)) {
+		list_for_each_entry_safe(hash_record, new_record,
+				&rec->mismatch_dir_hash, list) {
+			list_del(&hash_record->list);
+			free(hash_record);
+		}
+	}
 
 	free(rec);
 
@@ -621,6 +641,25 @@ static void print_inode_error(struct btrfs_root *root, struct inode_record *rec)
 				round_up(rec->isize,
 					 root->fs_info->sectorsize));
 	}
+
+	/* Print dir item with mismatch hash */
+	if (errors & I_ERR_MISMATCH_DIR_HASH) {
+		struct mismatch_dir_hash_record *hash_record;
+
+		fprintf(stderr, "Dir items with mismatch hash:\n");
+		list_for_each_entry(hash_record, &rec->mismatch_dir_hash,
+				list) {
+			char *namebuf = (char *)(hash_record + 1);
+			u32 crc;
+
+			crc = btrfs_name_hash(namebuf, hash_record->namelen);
+			fprintf(stderr,
+			"\tname: %.*s namelen: %u wanted 0x%08x has 0x%08llx\n",
+				hash_record->namelen, namebuf,
+				hash_record->namelen, crc,
+				hash_record->key.offset);
+		}
+	}
 }
 
 static void print_ref_error(int errors)
@@ -682,6 +721,7 @@ static struct inode_record *get_inode_rec(struct cache_tree *inode_cache,
 		rec->refs = 1;
 		INIT_LIST_HEAD(&rec->backrefs);
 		INIT_LIST_HEAD(&rec->orphan_extents);
+		INIT_LIST_HEAD(&rec->mismatch_dir_hash);
 		rec->holes = RB_ROOT;
 
 		node = malloc(sizeof(*node));
@@ -718,6 +758,8 @@ static void free_orphan_data_extents(struct list_head *orphan_extents)
 static void free_inode_rec(struct inode_record *rec)
 {
 	struct inode_backref *backref;
+	struct mismatch_dir_hash_record *hash;
+	struct mismatch_dir_hash_record *next;
 
 	if (--rec->refs > 0)
 		return;
@@ -727,6 +769,8 @@ static void free_inode_rec(struct inode_record *rec)
 		list_del(&backref->list);
 		free(backref);
 	}
+	list_for_each_entry_safe(hash, next, &rec->mismatch_dir_hash, list)
+		free(hash);
 	free_orphan_data_extents(&rec->orphan_extents);
 	free_file_extent_holes(&rec->holes);
 	free(rec);
@@ -1273,6 +1317,25 @@ out:
 	return has_parent ? 0 : 2;
 }
 
+static int add_mismatch_dir_hash(struct inode_record *dir_rec,
+				 struct btrfs_key *key, const char *namebuf,
+				 int namelen)
+{
+	struct mismatch_dir_hash_record *hash_record;
+
+	hash_record = malloc(sizeof(*hash_record) + namelen);
+	if (!hash_record) {
+		error("failed to allocate memory for mismatch dir hash rec");
+		return -ENOMEM;
+	}
+	memcpy(&hash_record->key, key, sizeof(*key));
+	memcpy(hash_record + 1, namebuf, namelen);
+	hash_record->namelen = namelen;
+
+	list_add(&hash_record->list, &dir_rec->mismatch_dir_hash);
+	return 0;
+}
+
 static int process_dir_item(struct extent_buffer *eb,
 			    int slot, struct btrfs_key *key,
 			    struct shared_node *active_node)
@@ -1300,6 +1363,8 @@ static int process_dir_item(struct extent_buffer *eb,
 	di = btrfs_item_ptr(eb, slot, struct btrfs_dir_item);
 	total = btrfs_item_size_nr(eb, slot);
 	while (cur < total) {
+		int ret;
+
 		nritems++;
 		btrfs_dir_item_key_to_cpu(eb, di, &location);
 		name_len = btrfs_dir_name_len(eb, di);
@@ -1324,10 +1389,12 @@ static int process_dir_item(struct extent_buffer *eb,
 
 		if (key->type == BTRFS_DIR_ITEM_KEY &&
 		    key->offset != btrfs_name_hash(namebuf, len)) {
-			rec->errors |= I_ERR_ODD_DIR_ITEM;
-			error("DIR_ITEM[%llu %llu] name %s namelen %u filetype %u mismatch with its hash, wanted %llu have %llu",
-			key->objectid, key->offset, namebuf, len, filetype,
-			key->offset, btrfs_name_hash(namebuf, len));
+			rec->errors |= I_ERR_MISMATCH_DIR_HASH;
+			ret = add_mismatch_dir_hash(rec, key, namebuf, len);
+			/* Fatal error, ENOMEM */
+			if (ret < 0)
+				return ret;
+			goto next;
 		}
 
 		if (location.type == BTRFS_INODE_ITEM_KEY) {
@@ -1348,6 +1415,7 @@ static int process_dir_item(struct extent_buffer *eb,
 					  len, filetype, key->type, error);
 		}
 
+next:
 		len = sizeof(*di) + name_len + data_len;
 		di = (struct btrfs_dir_item *)((char *)di + len);
 		cur += len;
