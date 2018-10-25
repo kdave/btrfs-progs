@@ -121,5 +121,8 @@ void reset_cached_block_groups(struct btrfs_fs_info *fs_info);
 int pin_metadata_blocks(struct btrfs_fs_info *fs_info);
 int exclude_metadata_blocks(struct btrfs_fs_info *fs_info);
 void cleanup_excluded_extents(struct btrfs_fs_info *fs_info);
-
+int delete_corrupted_dir_item(struct btrfs_trans_handle *trans,
+			      struct btrfs_root *root,
+			      struct btrfs_key *di_key, char *namebuf,
+			      u32 namelen);
 #endif
