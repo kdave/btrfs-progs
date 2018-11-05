@@ -67,7 +67,7 @@ void task_stop(struct task_info *info)
 	if (!info)
 		return;
 
-	if (info->id > 0) {
+	if (info->id) {
 		pthread_cancel(info->id);
 		pthread_join(info->id, NULL);
 		info->id = 0;
