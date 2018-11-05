@@ -178,9 +178,9 @@ static inline unsigned long find_next_zero_bit(const unsigned long *addr,
 static inline unsigned long ext2_swab(const unsigned long y)
 {
 #if BITS_PER_LONG == 64
-	return (unsigned long) bswap64((u64) y);
+	return (unsigned long) bswap_64((u64) y);
 #elif BITS_PER_LONG == 32
-	return (unsigned long) bswap32((u32) y);
+	return (unsigned long) bswap_32((u32) y);
 #else
 #error BITS_PER_LONG not defined
 #endif
@@ -218,14 +218,14 @@ static inline unsigned long _find_next_bit_le(const unsigned long *addr1,
 	return min(start + __ffs(ext2_swab(tmp)), nbits);
 }
 
-unsigned long find_next_zero_bit_le(const void *addr, unsigned long size,
+static inline unsigned long find_next_zero_bit_le(const void *addr, unsigned long size,
 		unsigned long offset)
 {
 	return _find_next_bit_le(addr, NULL, size, offset, ~0UL);
 }
 
 
-unsigned long find_next_bit_le(const void *addr, unsigned long size,
+static inline unsigned long find_next_bit_le(const void *addr, unsigned long size,
 		unsigned long offset)
 {
 	return _find_next_bit_le(addr, NULL, size, offset, 0UL);
