@@ -19,6 +19,7 @@
 
 #include <stdlib.h>
 #include <errno.h>
+#include "stubs.h"
 
 void *reallocarray(void *ptr, size_t nmemb, size_t size)
 {

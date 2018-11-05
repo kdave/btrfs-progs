@@ -3749,7 +3749,7 @@ static void __get_extent_size(struct btrfs_root *root, struct btrfs_path *path,
  * Return >0 for not found.
  * Return <0 for err
  */
-int btrfs_search_overlap_extent(struct btrfs_root *root,
+static int btrfs_search_overlap_extent(struct btrfs_root *root,
 				struct btrfs_path *path, u64 bytenr, u64 len)
 {
 	struct btrfs_key key;

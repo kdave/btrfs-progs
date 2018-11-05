@@ -29,6 +29,7 @@
 #include "sizes.h"
 #include "messages.h"
 #include "ioctl.h"
+#include "fsfeatures.h"
 
 #define BTRFS_SCAN_MOUNTED	(1ULL << 0)
 #define BTRFS_SCAN_LBLKID	(1ULL << 1)

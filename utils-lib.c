@@ -5,6 +5,8 @@
 #include <sys/ioctl.h>
 #include <ioctl.h>
 
+#include "utils.h"
+
 #if BTRFS_FLAT_INCLUDES
 #include "ctree.h"
 #else

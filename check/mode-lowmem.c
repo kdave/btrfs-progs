@@ -953,7 +953,7 @@ out:
  * returns 0 means success.
  * returns not 0 means on error;
  */
-int repair_ternary_lowmem(struct btrfs_root *root, u64 dir_ino, u64 ino,
+static int repair_ternary_lowmem(struct btrfs_root *root, u64 dir_ino, u64 ino,
 			  u64 index, char *name, int name_len, u8 filetype,
 			  int err)
 {

@@ -24,7 +24,7 @@
 #include "bitops.h"
 #include "internal.h"
 
-void set_free_space_tree_thresholds(struct btrfs_block_group_cache *cache,
+static inline void set_free_space_tree_thresholds(struct btrfs_block_group_cache *cache,
 				    u64 sectorsize)
 {
 	u32 bitmap_range;
@@ -202,7 +202,7 @@ static void le_bitmap_set(unsigned long *map, unsigned int start, int len)
 	}
 }
 
-int convert_free_space_to_bitmaps(struct btrfs_trans_handle *trans,
+static int convert_free_space_to_bitmaps(struct btrfs_trans_handle *trans,
 				  struct btrfs_block_group_cache *block_group,
 				  struct btrfs_path *path)
 {
@@ -341,7 +341,7 @@ out:
 	return ret;
 }
 
-int convert_free_space_to_extents(struct btrfs_trans_handle *trans,
+static int convert_free_space_to_extents(struct btrfs_trans_handle *trans,
 				  struct btrfs_block_group_cache *block_group,
 				  struct btrfs_path *path)
 {
@@ -780,7 +780,7 @@ out:
 	return ret;
 }
 
-int __remove_from_free_space_tree(struct btrfs_trans_handle *trans,
+static int __remove_from_free_space_tree(struct btrfs_trans_handle *trans,
 				  struct btrfs_block_group_cache *block_group,
 				  struct btrfs_path *path, u64 start, u64 size)
 {
@@ -960,7 +960,7 @@ out:
 	return ret;
 }
 
-int __add_to_free_space_tree(struct btrfs_trans_handle *trans,
+static int __add_to_free_space_tree(struct btrfs_trans_handle *trans,
 			     struct btrfs_block_group_cache *block_group,
 			     struct btrfs_path *path, u64 start, u64 size)
 {
@@ -1420,7 +1420,7 @@ out:
 	return ret;
 }
 
-struct btrfs_root *btrfs_create_tree(struct btrfs_trans_handle *trans,
+static struct btrfs_root *btrfs_create_tree(struct btrfs_trans_handle *trans,
 				     struct btrfs_fs_info *fs_info,
 				     u64 objectid)
 {
