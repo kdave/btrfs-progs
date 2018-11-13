@@ -201,7 +201,7 @@ static bool merge_ref(struct btrfs_trans_handle *trans,
 			mod = next->ref_mod;
 		} else {
 			if (ref->ref_mod < next->ref_mod) {
-				swap(ref, next);
+				__swap(ref, next);
 				done = true;
 			}
 			mod = -next->ref_mod;
