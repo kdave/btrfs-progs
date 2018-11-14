@@ -334,11 +334,13 @@ class TestSubvolume(BtrfsTestCase):
             os.chdir(self.mountpoint)
             btrfsutil.create_subvolume('foo')
 
-            path, subvol = next(btrfsutil.SubvolumeIterator('.', info=True))
-            self.assertEqual(path, 'foo')
-            self.assertIsInstance(subvol, btrfsutil.SubvolumeInfo)
-            self.assertEqual(subvol.id, 256)
-            self.assertEqual(subvol.parent_id, 5)
+            with btrfsutil.SubvolumeIterator('.', info=True) as it:
+                path, subvol = next(it)
+                self.assertEqual(path, 'foo')
+                self.assertIsInstance(subvol, btrfsutil.SubvolumeInfo)
+                self.assertEqual(subvol.id, 256)
+                self.assertEqual(subvol.parent_id, 5)
+                self.assertRaises(StopIteration, next, it)
 
             btrfsutil.create_subvolume('foo/bar')
             btrfsutil.create_subvolume('foo/bar/baz')
@@ -350,30 +352,37 @@ class TestSubvolume(BtrfsTestCase):
             ]
 
             for arg in self.path_or_fd('.'):
-                with self.subTest(type=type(arg)):
-                    self.assertEqual(list(btrfsutil.SubvolumeIterator(arg)), subvols)
-            self.assertEqual(list(btrfsutil.SubvolumeIterator('.', top=0)), subvols)
-            self.assertEqual(list(btrfsutil.SubvolumeIterator('foo', top=5)), subvols)
+                with self.subTest(type=type(arg)), btrfsutil.SubvolumeIterator(arg) as it:
+                    self.assertEqual(list(it), subvols)
+            with btrfsutil.SubvolumeIterator('.', top=0) as it:
+                self.assertEqual(list(it), subvols)
+            with btrfsutil.SubvolumeIterator('foo', top=5) as it:
+                self.assertEqual(list(it), subvols)
 
-            self.assertEqual(list(btrfsutil.SubvolumeIterator('.', post_order=True)),
-                             [('foo/bar/baz', 258),
-                              ('foo/bar', 257),
-                              ('foo', 256)])
+            with btrfsutil.SubvolumeIterator('.', post_order=True) as it:
+                self.assertEqual(list(it),
+                                 [('foo/bar/baz', 258),
+                                  ('foo/bar', 257),
+                                  ('foo', 256)])
 
             subvols = [
                 ('bar', 257),
                 ('bar/baz', 258),
             ]
 
-            self.assertEqual(list(btrfsutil.SubvolumeIterator('.', top=256)), subvols)
-            self.assertEqual(list(btrfsutil.SubvolumeIterator('foo')), subvols)
-            self.assertEqual(list(btrfsutil.SubvolumeIterator('foo', top=0)), subvols)
+            with btrfsutil.SubvolumeIterator('.', top=256) as it:
+                self.assertEqual(list(it), subvols)
+            with btrfsutil.SubvolumeIterator('foo') as it:
+                self.assertEqual(list(it), subvols)
+            with btrfsutil.SubvolumeIterator('foo', top=0) as it:
+                self.assertEqual(list(it), subvols)
 
             os.rename('foo/bar/baz', 'baz')
-            self.assertEqual(sorted(btrfsutil.SubvolumeIterator('.')),
-                             [('baz', 258),
-                              ('foo', 256),
-                              ('foo/bar', 257)])
+            with btrfsutil.SubvolumeIterator('.') as it:
+                self.assertEqual(sorted(it),
+                                 [('baz', 258),
+                                  ('foo', 256),
+                                  ('foo/bar', 257)])
 
             with btrfsutil.SubvolumeIterator('.') as it:
                 self.assertGreaterEqual(it.fileno(), 0)
