@@ -31,6 +31,11 @@
 
 #include "btrfsutil_internal.h"
 
+static bool is_root(void)
+{
+	return geteuid() == 0;
+}
+
 /*
  * This intentionally duplicates btrfs_util_is_subvolume_fd() instead of opening
  * a file descriptor and calling it, because fstat() and fstatfs() don't accept
@@ -295,8 +300,8 @@ PUBLIC enum btrfs_util_error btrfs_util_subvolume_info(const char *path,
 	return err;
 }
 
-static enum btrfs_util_error get_subvolume_info_root(int fd, uint64_t id,
-						     struct btrfs_util_subvolume_info *subvol)
+static enum btrfs_util_error get_subvolume_info_privileged(int fd, uint64_t id,
+							   struct btrfs_util_subvolume_info *subvol)
 {
 	struct btrfs_ioctl_search_args search = {
 		.key = {
@@ -383,6 +388,45 @@ static enum btrfs_util_error get_subvolume_info_root(int fd, uint64_t id,
 	return BTRFS_UTIL_OK;
 }
 
+static enum btrfs_util_error get_subvolume_info_unprivileged(int fd,
+							     struct btrfs_util_subvolume_info *subvol)
+{
+	struct btrfs_ioctl_get_subvol_info_args info;
+	int ret;
+
+	ret = ioctl(fd, BTRFS_IOC_GET_SUBVOL_INFO, &info);
+	if (ret == -1)
+		return BTRFS_UTIL_ERROR_GET_SUBVOL_INFO_FAILED;
+
+	subvol->id = info.treeid;
+	subvol->parent_id = info.parent_id;
+	subvol->dir_id = info.dirid;
+	subvol->flags = info.flags;
+	subvol->generation = info.generation;
+
+	memcpy(subvol->uuid, info.uuid, sizeof(subvol->uuid));
+	memcpy(subvol->parent_uuid, info.parent_uuid,
+	       sizeof(subvol->parent_uuid));
+	memcpy(subvol->received_uuid, info.received_uuid,
+	       sizeof(subvol->received_uuid));
+
+	subvol->ctransid = info.ctransid;
+	subvol->otransid = info.otransid;
+	subvol->stransid = info.stransid;
+	subvol->rtransid = info.rtransid;
+
+	subvol->ctime.tv_sec = info.ctime.sec;
+	subvol->ctime.tv_nsec = info.ctime.nsec;
+	subvol->otime.tv_sec = info.otime.sec;
+	subvol->otime.tv_nsec = info.otime.nsec;
+	subvol->stime.tv_sec = info.stime.sec;
+	subvol->stime.tv_nsec = info.stime.nsec;
+	subvol->rtime.tv_sec = info.rtime.sec;
+	subvol->rtime.tv_nsec = info.rtime.nsec;
+
+	return BTRFS_UTIL_OK;
+}
+
 PUBLIC enum btrfs_util_error btrfs_util_subvolume_info_fd(int fd, uint64_t id,
 							  struct btrfs_util_subvolume_info *subvol)
 {
@@ -392,6 +436,9 @@ PUBLIC enum btrfs_util_error btrfs_util_subvolume_info_fd(int fd, uint64_t id,
 		err = btrfs_util_is_subvolume_fd(fd);
 		if (err)
 			return err;
+
+		if (!is_root())
+			return get_subvolume_info_unprivileged(fd, subvol);
 
 		err = btrfs_util_subvolume_id_fd(fd, &id);
 		if (err)
@@ -404,7 +451,7 @@ PUBLIC enum btrfs_util_error btrfs_util_subvolume_info_fd(int fd, uint64_t id,
 		return BTRFS_UTIL_ERROR_SUBVOLUME_NOT_FOUND;
 	}
 
-	return get_subvolume_info_root(fd, id, subvol);
+	return get_subvolume_info_privileged(fd, id, subvol);
 }
 
 PUBLIC enum btrfs_util_error btrfs_util_get_subvolume_read_only_fd(int fd,

@@ -23,7 +23,12 @@ from pathlib import PurePath
 import traceback
 
 import btrfsutil
-from tests import BtrfsTestCase, HAVE_PATH_LIKE
+from tests import (
+    BtrfsTestCase,
+    drop_privs,
+    HAVE_PATH_LIKE,
+    skipUnlessHaveNobody,
+)
 
 
 class TestSubvolume(BtrfsTestCase):
@@ -87,7 +92,7 @@ class TestSubvolume(BtrfsTestCase):
         finally:
             os.chdir(pwd)
 
-    def test_subvolume_info(self):
+    def _test_subvolume_info(self, subvol, snapshot):
         for arg in self.path_or_fd(self.mountpoint):
             with self.subTest(type=type(arg)):
                 info = btrfsutil.subvolume_info(arg)
@@ -100,7 +105,7 @@ class TestSubvolume(BtrfsTestCase):
                 self.assertEqual(info.parent_uuid, bytes(16))
                 self.assertEqual(info.received_uuid, bytes(16))
                 self.assertNotEqual(info.generation, 0)
-                self.assertEqual(info.ctransid, 0)
+                self.assertGreaterEqual(info.ctransid, 0)
                 self.assertEqual(info.otransid, 0)
                 self.assertEqual(info.stransid, 0)
                 self.assertEqual(info.rtransid, 0)
@@ -108,9 +113,6 @@ class TestSubvolume(BtrfsTestCase):
                 self.assertIsInstance(info.otime, float)
                 self.assertEqual(info.stime, 0)
                 self.assertEqual(info.rtime, 0)
-
-        subvol = os.path.join(self.mountpoint, 'subvol')
-        btrfsutil.create_subvolume(subvol)
 
         info = btrfsutil.subvolume_info(subvol)
         self.assertEqual(info.id, 256)
@@ -132,19 +134,43 @@ class TestSubvolume(BtrfsTestCase):
         self.assertEqual(info.rtime, 0)
 
         subvol_uuid = info.uuid
-        snapshot = os.path.join(self.mountpoint, 'snapshot')
-        btrfsutil.create_snapshot(subvol, snapshot)
 
         info = btrfsutil.subvolume_info(snapshot)
         self.assertEqual(info.parent_uuid, subvol_uuid)
 
         # TODO: test received_uuid, stransid, rtransid, stime, and rtime
 
+    def test_subvolume_info(self):
+        subvol = os.path.join(self.mountpoint, 'subvol')
+        btrfsutil.create_subvolume(subvol)
+        snapshot = os.path.join(self.mountpoint, 'snapshot')
+        btrfsutil.create_snapshot(subvol, snapshot)
+
+        self._test_subvolume_info(subvol, snapshot)
+
         for arg in self.path_or_fd(self.mountpoint):
             with self.subTest(type=type(arg)):
                 with self.assertRaises(btrfsutil.BtrfsUtilError) as e:
                     # BTRFS_EXTENT_TREE_OBJECTID
                     btrfsutil.subvolume_info(arg, 2)
+                self.assertEqual(e.exception.btrfsutilerror,
+                                 btrfsutil.ERROR_SUBVOLUME_NOT_FOUND)
+
+    @skipUnlessHaveNobody
+    def test_subvolume_info_unprivileged(self):
+        subvol = os.path.join(self.mountpoint, 'subvol')
+        btrfsutil.create_subvolume(subvol)
+        snapshot = os.path.join(self.mountpoint, 'snapshot')
+        btrfsutil.create_snapshot(subvol, snapshot)
+
+        with drop_privs():
+            try:
+                self._test_subvolume_info(subvol, snapshot)
+            except OSError as e:
+                if e.errno == errno.ENOTTY:
+                    self.skipTest('BTRFS_IOC_GET_SUBVOL_INFO is not available')
+                else:
+                    raise
 
     def test_read_only(self):
         for arg in self.path_or_fd(self.mountpoint):

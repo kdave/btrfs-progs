@@ -45,6 +45,8 @@ static const char * const error_messages[] = {
 	[BTRFS_UTIL_ERROR_SYNC_FAILED] = "Could not sync filesystem",
 	[BTRFS_UTIL_ERROR_START_SYNC_FAILED] = "Could not start filesystem sync",
 	[BTRFS_UTIL_ERROR_WAIT_SYNC_FAILED] = "Could not wait for filesystem sync",
+	[BTRFS_UTIL_ERROR_GET_SUBVOL_INFO_FAILED] =
+		"Could not get subvolume information with BTRFS_IOC_GET_SUBVOL_INFO",
 };
 
 PUBLIC const char *btrfs_util_strerror(enum btrfs_util_error err)
