@@ -15,14 +15,44 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with libbtrfsutil.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 import os
 from pathlib import PurePath
+import pwd
 import subprocess
 import tempfile
 import unittest
 
 
 HAVE_PATH_LIKE = hasattr(PurePath, '__fspath__')
+try:
+    NOBODY_UID = pwd.getpwnam('nobody').pw_uid
+    skipUnlessHaveNobody = lambda func: func
+except KeyError:
+    NOBODY_UID = None
+    skipUnlessHaveNobody = unittest.skip('must have nobody user')
+
+
+@contextlib.contextmanager
+def drop_privs():
+    try:
+        os.seteuid(NOBODY_UID)
+        yield
+    finally:
+        os.seteuid(0)
+
+
+@contextlib.contextmanager
+def regain_privs():
+    uid = os.geteuid()
+    if uid:
+        try:
+            os.seteuid(0)
+            yield
+        finally:
+            os.seteuid(uid)
+    else:
+        yield
 
 
 @unittest.skipIf(os.geteuid() != 0, 'must be run as root')
@@ -67,4 +97,3 @@ class BtrfsTestCase(unittest.TestCase):
             yield fd
         finally:
             os.close(fd)
-
