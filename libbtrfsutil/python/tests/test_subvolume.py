@@ -353,6 +353,7 @@ class TestSubvolume(BtrfsTestCase):
                 with self.subTest(type=type(arg)):
                     self.assertEqual(list(btrfsutil.SubvolumeIterator(arg)), subvols)
             self.assertEqual(list(btrfsutil.SubvolumeIterator('.', top=0)), subvols)
+            self.assertEqual(list(btrfsutil.SubvolumeIterator('foo', top=5)), subvols)
 
             self.assertEqual(list(btrfsutil.SubvolumeIterator('.', post_order=True)),
                              [('foo/bar/baz', 258),
@@ -365,6 +366,7 @@ class TestSubvolume(BtrfsTestCase):
             ]
 
             self.assertEqual(list(btrfsutil.SubvolumeIterator('.', top=256)), subvols)
+            self.assertEqual(list(btrfsutil.SubvolumeIterator('foo')), subvols)
             self.assertEqual(list(btrfsutil.SubvolumeIterator('foo', top=0)), subvols)
 
             os.rename('foo/bar/baz', 'baz')

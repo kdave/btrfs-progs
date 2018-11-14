@@ -525,7 +525,7 @@ static int SubvolumeIterator_init(SubvolumeIterator *self, PyObject *args,
 	static char *keywords[] = {"path", "top", "info", "post_order", NULL};
 	struct path_arg path = {.allow_fd = true};
 	enum btrfs_util_error err;
-	unsigned long long top = 5;
+	unsigned long long top = 0;
 	int info = 0;
 	int post_order = 0;
 	int flags = 0;
