@@ -322,7 +322,7 @@ PyObject *set_default_subvolume(PyObject *self, PyObject *args, PyObject *kwds)
 
 PyObject *create_subvolume(PyObject *self, PyObject *args, PyObject *kwds)
 {
-	static char *keywords[] = {"path", "async", "qgroup_inherit", NULL};
+	static char *keywords[] = {"path", "async_", "qgroup_inherit", NULL};
 	struct path_arg path = {.allow_fd = false};
 	enum btrfs_util_error err;
 	int async = 0;
@@ -352,7 +352,7 @@ PyObject *create_subvolume(PyObject *self, PyObject *args, PyObject *kwds)
 PyObject *create_snapshot(PyObject *self, PyObject *args, PyObject *kwds)
 {
 	static char *keywords[] = {
-		"source", "path", "recursive", "read_only", "async",
+		"source", "path", "recursive", "read_only", "async_",
 		"qgroup_inherit", NULL,
 	};
 	struct path_arg src = {.allow_fd = true}, dst = {.allow_fd = false};
