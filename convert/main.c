@@ -724,7 +724,7 @@ out:
 
 /*
  * Read used space, and since we have the used space,
- * calcuate data_chunks and free for later mkfs
+ * calculate data_chunks and free for later mkfs
  */
 static int convert_read_used_space(struct btrfs_convert_context *cctx)
 {
