@@ -301,7 +301,7 @@ next:
 
 	/*
 	 * Special trick for no_holes, since for no_holes we don't have good
-	 * method to account skipped and tailling holes, we used
+	 * method to account skipped and tailing holes, we used
 	 * min(inode size, len) as return value
 	 */
 	if (no_holes) {
