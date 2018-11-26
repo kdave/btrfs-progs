@@ -724,8 +724,8 @@ u64 btrfs_mkfs_size_dir(const char *dir_name, u32 sectorsize, u64 min_dev_size,
 	u64 meta_threshold = SZ_8M;
 	u64 data_threshold = SZ_8M;
 
-	float data_multipler = 1;
-	float meta_multipler = 1;
+	float data_multiplier = 1;
+	float meta_multiplier = 1;
 
 	fs_block_size = sectorsize;
 	ftw_data_size = 0;
@@ -763,11 +763,11 @@ u64 btrfs_mkfs_size_dir(const char *dir_name, u32 sectorsize, u64 min_dev_size,
 	/* Minimal chunk size from btrfs_alloc_chunk(). */
 	if (meta_profile & BTRFS_BLOCK_GROUP_DUP) {
 		meta_threshold = SZ_32M;
-		meta_multipler = 2;
+		meta_multiplier = 2;
 	}
 	if (data_profile & BTRFS_BLOCK_GROUP_DUP) {
 		data_threshold = SZ_64M;
-		data_multipler = 2;
+		data_multiplier = 2;
 	}
 
 	/*
@@ -777,10 +777,10 @@ u64 btrfs_mkfs_size_dir(const char *dir_name, u32 sectorsize, u64 min_dev_size,
 	 */
 	if (meta_size > meta_threshold)
 		meta_chunk_size = (round_up(meta_size, meta_threshold) -
-				   meta_threshold) * meta_multipler;
+				   meta_threshold) * meta_multiplier;
 	if (ftw_data_size > data_threshold)
 		data_chunk_size = (round_up(ftw_data_size, data_threshold) -
-				   data_threshold) * data_multipler;
+				   data_threshold) * data_multiplier;
 
 	total_size = data_chunk_size + meta_chunk_size + min_dev_size;
 	return total_size;
