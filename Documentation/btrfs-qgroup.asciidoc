@@ -52,7 +52,7 @@ assignment would lead to quota inconsistency. See 'QUOTA RESCAN' for more
 information.
 --no-rescan::::
 Explicitly ask not to do a rescan, even if the assignment will make the quotas
-inconsitent. This may be useful for repeated calls where the rescan would add
+inconsistent. This may be useful for repeated calls where the rescan would add
 unnecessary overhead.
 
 *create* <qgroupid> <path>::

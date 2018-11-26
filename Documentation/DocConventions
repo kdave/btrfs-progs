@@ -23,7 +23,7 @@ Quotation in subcommands:
 - command reference: bold *btrfs fi show*
 - section references: italics 'EXAMPLES'
 
-- argument name in option desciption: caps in angle brackets <NAME>
+- argument name in option description: caps in angle brackets <NAME>
   - reference in help text: caps NAME
     also possible: caps italics 'NAME'
 
@@ -34,6 +34,6 @@ Quotation in subcommands:
   - optional parameter with argument: [-p <path>]
 
 
-Refrences:
+References:
 - full asciidoc syntax: http://asciidoc.org/userguide.html
 - cheatsheet: http://powerman.name/doc/asciidoc

@@ -156,7 +156,7 @@ under 'nodatacow' are also set the NOCOW file attribute (see `chattr`(1)).
 NOTE: If 'nodatacow' or 'nodatasum' are enabled, compression is disabled.
 +
 Updates in-place improve performance for workloads that do frequent overwrites,
-at the cost of potential partial writes, in case the write is interruted
+at the cost of potential partial writes, in case the write is interrupted
 (system crash, device failure).
 
 *datasum*::
@@ -171,7 +171,7 @@ corresponding file attribute (see `chattr`(1)).
 NOTE: If 'nodatacow' or 'nodatasum' are enabled, compression is disabled.
 +
 There is a slight performance gain when checksums are turned off, the
-correspoinding metadata blocks holding the checksums do not need to updated.
+corresponding metadata blocks holding the checksums do not need to updated.
 The cost of checksumming of the blocks in memory is much lower than the IO,
 modern CPUs feature hardware support of the checksumming algorithm.
 
@@ -185,7 +185,7 @@ missing, for example if a stripe member is completely missing from RAID0.
 Since 4.14, the constraint checks have been improved and are verified on the
 chunk level, not an the device level. This allows degraded mounts of
 filesystems with mixed RAID profiles for data and metadata, even if the
-device number constraints would not be satisfied for some of the prifles.
+device number constraints would not be satisfied for some of the profiles.
 +
 Example: metadata -- raid1, data -- single, devices -- /dev/sda, /dev/sdb
 +
@@ -649,7 +649,7 @@ inherent limit of btrfs is 2^64^ (16 EiB) but the linux VFS limit is 2^63^ (8 Ei
 
 maximum number of subvolumes::
 2^64^ but depends on the available metadata space, the space consumed by all
-subvolume metadata includes bookeeping of the shared extents can be large (MiB,
+subvolume metadata includes bookkeeping of the shared extents can be large (MiB,
 GiB)
 
 maximum number of hardlinks of a file in a directory::
