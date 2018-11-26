@@ -9484,7 +9484,7 @@ const char * const cmd_check_usage[] = {
 	"trees' consistency and item connectivity. In the repair mode try to",
 	"fix the problems found. ",
 	"WARNING: the repair mode is considered dangerous and should not be used",
-	"         without prior analysis of problems found on the flesystem."
+	"         without prior analysis of problems found on the filesystem."
 	"",
 	"Options:",
 	"  starting point selection:",
