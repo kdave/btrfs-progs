@@ -1,7 +1,7 @@
 #
 # Basic build targets:
 #   all		all main tools and the shared library
-#   static      build static bnaries, requires static version of the libraries
+#   static      build static binaries, requires static version of the libraries
 #   test        run the full testsuite
 #   install     install to default location (/usr/local)
 #   clean       clean built binaries (not the documentation)
