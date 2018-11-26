@@ -1339,7 +1339,7 @@ int report_qgroups(int all)
 	if (counts.qgroup_inconsist && !counts.rescan_running &&
 	    counts.rescan_running == 0) {
 		printf(
-"Rescan hasn't been initialzied, a difference in qgroup accounting is expected\n");
+"Rescan hasn't been initialized, a difference in qgroup accounting is expected\n");
 		skip_err = true;
 	}
 	if (counts.qgroup_inconsist && !counts.rescan_running)
