@@ -2674,7 +2674,7 @@ out:
 
 /*
  * @level           if @level == -1 means extent data item
- *                  else normal treeblocl.
+ *                  else normal treeblock.
  */
 static int should_check_extent_strictly(struct btrfs_root *root,
 					struct node_refs *nrefs, int level)
