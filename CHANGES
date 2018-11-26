@@ -355,7 +355,7 @@ btrfs-progs-4.8.3 (2016-11-11)
 
 btrfs-progs-4.8.2 (2016-10-26)
   * convert: also convert file attributes
-  * convert: fix wrong tree block alignment for unalianged block group
+  * convert: fix wrong tree block alignment for unaligned block group
   * check: quota verify fixes, handle reloc tree
   * build: add stub for FIEMAP_EXTENT_SHARED, compiles on ancient kernels
   * build: add stub for BUILD_ASSERT when ioctl.h is included
