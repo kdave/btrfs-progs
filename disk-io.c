@@ -1440,7 +1440,7 @@ error_out:
  * @sb_bytenr:  offset of the particular superblock copy we want
  * @sbflags:	flags controlling how the superblock is read
  *
- * This function is used by various btrfs comands to obtain a valid superblock.
+ * This function is used by various btrfs commands to obtain a valid superblock.
  *
  * It's mode of operation is controlled by the @sb_bytenr and @sbdflags
  * parameters. If SBREAD_RECOVER flag is set and @sb_bytenr is
