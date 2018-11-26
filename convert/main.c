@@ -66,7 +66,7 @@
  *      c. Doesn't cover any data chunks in 1.1
  *
  * 2)   Create basic btrfs filesystem structure
- *      Initial metadata and sys chunks are inserted in the first availabe
+ *      Initial metadata and sys chunks are inserted in the first available
  *      space found in step 1.3
  *      Then insert all data chunks into the basic btrfs
  *
