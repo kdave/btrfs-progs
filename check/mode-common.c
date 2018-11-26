@@ -493,7 +493,7 @@ out:
 }
 
 /*
- * Extra (optional) check for dev_item size to report possbile problem on a new
+ * Extra (optional) check for dev_item size to report possible problem on a new
  * kernel.
  */
 void check_dev_size_alignment(u64 devid, u64 total_bytes, u32 sectorsize)
