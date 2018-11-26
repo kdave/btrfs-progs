@@ -119,7 +119,7 @@ struct btrfs_free_space_ctl;
 #define BTRFS_FREE_SPACE_OBJECTID -11ULL
 
 /*
- * The inode number assigned to the special inode for sotring
+ * The inode number assigned to the special inode for storing
  * free ino cache
  */
 #define BTRFS_FREE_INO_OBJECTID -12ULL
