@@ -1356,7 +1356,7 @@ out:
  * Iterate all file extents of the convert image.
  *
  * All file extents except ones in btrfs_reserved_ranges must be mapped 1:1
- * on disk. (Means thier file_offset must match their on disk bytenr)
+ * on disk. (Means their file_offset must match their on disk bytenr)
  *
  * File extents in reserved ranges can be relocated to other place, and in
  * that case we will read them out for later use.
