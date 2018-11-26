@@ -171,7 +171,7 @@ run_check_stdout()
 }
 
 # same as run_check but does not fail the test if it's handled gracefully by
-# the tool, unexpected failure like segfault or abor will exit forcibly
+# the tool, unexpected failure like segfault or abort will exit forcibly
 # output is logged
 run_mayfail()
 {
