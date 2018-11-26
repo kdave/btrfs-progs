@@ -6871,7 +6871,7 @@ static int verify_backrefs(struct btrfs_fs_info *info, struct btrfs_path *path,
 		goto out;
 
 	fprintf(stderr,
-		"attempting to repair backref discrepency for bytenr %llu\n",
+		"attempting to repair backref discrepancy for bytenr %llu\n",
 		rec->start);
 
 	/*
