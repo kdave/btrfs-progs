@@ -4,7 +4,7 @@
 # low probability.
 #
 # This test case verifies a special case when 'btrfs check' does not report
-# qgroup accounting differece as an error, thus no false alert for btrfs/166.
+# qgroup accounting difference as an error, thus no false alert for btrfs/166.
 
 source "$TEST_TOP/common"
 
