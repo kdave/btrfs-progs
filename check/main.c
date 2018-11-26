@@ -7851,7 +7851,7 @@ static int check_chunk_refs(struct chunk_record *chunk_rec,
 			    dev_extent_rec->length != length) {
 				if (!silent)
 					fprintf(stderr,
-						"Chunk[%llu, %u, %llu] stripe[%llu, %llu] dismatch dev extent[%llu, %llu, %llu]\n",
+						"Chunk[%llu, %u, %llu] stripe[%llu, %llu] mismatch dev extent[%llu, %llu, %llu]\n",
 						chunk_rec->objectid,
 						chunk_rec->type,
 						chunk_rec->offset,
