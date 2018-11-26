@@ -36,7 +36,7 @@ enum btrfs_open_ctree_flags {
 	OPEN_CTREE_PARTIAL		= (1U << 1),
 	/* If primary root pinters are invalid, try backup copies */
 	OPEN_CTREE_BACKUP_ROOT		= (1U << 2),
-	/* Allow reading all superblock sopies if the primary is damaged */
+	/* Allow reading all superblock copies if the primary is damaged */
 	OPEN_CTREE_RECOVER_SUPER	= (1U << 3),
 	/* Restoring filesystem image */
 	OPEN_CTREE_RESTORE		= (1U << 4),
