@@ -1,5 +1,5 @@
 #!/bin/bash
-# To check if "btrfs check" can detect metadata dump (restored by btrfs-iamge)
+# To check if "btrfs check" can detect metadata dump (restored by btrfs-image)
 # and ignore --check-data-csum option
 
 source "$TEST_TOP/common"
