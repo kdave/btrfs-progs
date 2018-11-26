@@ -111,7 +111,7 @@ static const char * const cmd_rescue_super_recover_usage[] = {
  *   0 : All superblocks are valid, no need to recover
  *   1 : Usage or syntax error
  *   2 : Recover all bad superblocks successfully
- *   3 : Fail to Recover bad supeblocks
+ *   3 : Fail to Recover bad superblocks
  *   4 : Abort to recover bad superblocks
  */
 static int cmd_rescue_super_recover(int argc, char **argv)
