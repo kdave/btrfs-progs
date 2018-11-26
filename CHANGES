@@ -22,7 +22,7 @@ btrfs-progs-4.17.1 (2018-08-06)
     * beautify progress output
   * btrfstune: allow to continue uuid change after unclean interruption
   * several fuzz fixes:
-    * detect overalpping chunks
+    * detect overlapping chunks
     * chunk loading error handling
     * don't crash with unexpected root refs to extents
   * relax option parsing again to allow mixing options and non-options
@@ -181,7 +181,7 @@ btrfs-progs-4.13 (2017-09-08)
   * check: new option --force to allow check of a mounted filesystem (no repair)
   * mkfs: --rootdir will now copy special files
   * dump-tree: minor output changes
-  * inspect rootid: accept file as arugment
+  * inspect rootid: accept file as argument
   * dev usage: don't calculate slack space for missing devices
   * fi du: don't print error on EMPTY_SUBVOL (inode number 2)
   * build:
@@ -244,7 +244,7 @@ btrfs-progs-4.11 (2017-05-18)
 btrfs-progs-4.10.2 (2017-03-31)
   * check: lowmem mode fix for false alert about lost backrefs
   * convert: minor bugfix
-  * library: fix build, misisng symbols, added tests
+  * library: fix build, missing symbols, added tests
 
 btrfs-progs-4.10.1 (2017-03-17)
   * receive: handle subvolume in path clone
@@ -355,7 +355,7 @@ btrfs-progs-4.8.3 (2016-11-11)
 
 btrfs-progs-4.8.2 (2016-10-26)
   * convert: also convert file attributes
-  * convert: fix wrong tree block alignment for unalianged block group
+  * convert: fix wrong tree block alignment for unaligned block group
   * check: quota verify fixes, handle reloc tree
   * build: add stub for FIEMAP_EXTENT_SHARED, compiles on ancient kernels
   * build: add stub for BUILD_ASSERT when ioctl.h is included
@@ -630,7 +630,7 @@ btrfs-progs-4.3 (2015-11-06)
     * test for broken 'subvolume sync'
     * basic tests for mkfs, raid option combinations
     * basic tests for fuzzed images (check)
-    * command intrumentation (eg valgrind)
+    * command instrumentation (eg valgrind)
     * print commands if requested
     * add README for tests
 

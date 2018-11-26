@@ -452,7 +452,7 @@ A few guidelines:
 * Don't require the Btrfs UAPI headers for any interfaces (e.g., instead of
   directly exposing a type from `linux/btrfs_tree.h`, abstract it away in a
   type specific to `libbtrfsutil`)
-* Preserve API and ABI compatability at all times (i.e., we don't want to bump
+* Preserve API and ABI compatibility at all times (i.e., we don't want to bump
   the library major version if we don't have to)
 * Include Python bindings for all interfaces
 * Write tests for all interfaces
