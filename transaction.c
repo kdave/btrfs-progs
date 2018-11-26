@@ -188,7 +188,7 @@ commit_tree:
 	ret = commit_tree_roots(trans, fs_info);
 	BUG_ON(ret);
 	/*
-	 * Ensure that all comitted roots are properly accounted in the
+	 * Ensure that all committed roots are properly accounted in the
 	 * extent tree
 	 */
 	ret = btrfs_run_delayed_refs(trans, -1);
