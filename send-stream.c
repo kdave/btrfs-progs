@@ -35,7 +35,7 @@ struct btrfs_send_stream {
 
 	/*
 	 * end of last successful read, equivalent to start of current
-	 * malformated part of block
+	 * malformed part of block
 	 */
 	size_t stream_pos;
 
