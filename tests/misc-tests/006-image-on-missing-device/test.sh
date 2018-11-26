@@ -1,7 +1,7 @@
 #!/bin/bash
 # test btrfs-image with a missing device (uses loop devices)
 #
-# - btrfs-image must not loop indefinetelly
+# - btrfs-image must not loop indefinitely
 # - btrfs-image will expectedly fail to produce the dump
 
 source "$TEST_TOP/common"
