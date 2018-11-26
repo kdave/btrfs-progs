@@ -975,7 +975,7 @@ static int init_btrfs(struct btrfs_mkfs_config *cfg, struct btrfs_root *root,
 
 	/*
 	 * Don't alloc any metadata/system chunk, as we don't want
-	 * any meta/sys chunk allcated before all data chunks are inserted.
+	 * any meta/sys chunk allocated before all data chunks are inserted.
 	 * Or we screw up the chunk layout just like the old implement.
 	 */
 	fs_info->avoid_sys_chunk_alloc = 1;
