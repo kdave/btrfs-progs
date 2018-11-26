@@ -82,7 +82,7 @@ Documentation updates
 ---------------------
 
 Documentation fixes or updates do not need much explanation so sticking to the
-code rules in the previous section is not necessary. Github pull requests are
+code rules in the previous section is not necessary. GitHub pull requests are
 OK, patches could be sent to me directly and not required to be also in the
 mailinglist. Pointing out typos via IRC also works, although might get
 accidentally lost in the noise.
