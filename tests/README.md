@@ -194,7 +194,7 @@ $ TEST=012\* ./misc-tests.sh           # from tests/
 
 Most tests should be able to create the test images from scratch, using regular
 commands and file operation. The commands also document the testcase and use
-the teste code and kernel of the environment.
+the test code and kernel of the environment.
 
 In other cases, a pre-created image may be the right way if the above does not
 work (eg. comparing output, requesting an exact layout or some intermediate
