@@ -330,7 +330,7 @@ int raid56_recov(int nr_devs, size_t stripe_len, u64 profile, int dest1,
 			return 0;
 		}
 
-		/* Regerneate data from P */
+		/* Regenerate data from P */
 		return raid5_gen_result(nr_devs - 1, stripe_len, dest1, data);
 	}
 
