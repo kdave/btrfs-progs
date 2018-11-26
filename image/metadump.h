@@ -55,7 +55,7 @@ struct fs_chunk {
 	u64 logical;
 	u64 physical;
 	/*
-	 * physical_dup only store additonal physical for BTRFS_BLOCK_GROUP_DUP
+	 * physical_dup only store additional physical for BTRFS_BLOCK_GROUP_DUP
 	 * currently restore only support single and DUP
 	 * TODO: modify this structure and the function related to this
 	 * structure for support RAID*
