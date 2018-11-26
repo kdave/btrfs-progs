@@ -10,7 +10,7 @@ check_prereq btrfs
 setup_root_helper
 
 # we need to use a real block device, because the check opens the device in
-# exclusive mode, that unfortunatelly behaves differently for direct file
+# exclusive mode, that unfortunately behaves differently for direct file
 # access and for the real /dev/loop0 device
 setup_loopdevs 1
 prepare_loopdevs
