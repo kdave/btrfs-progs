@@ -10,7 +10,7 @@ check_prereq mkfs.btrfs
 setup_root_helper
 prepare_test_dev
 
-# we need two mount points, cannot nest the subvoolume under TEST_MNT
+# we need two mount points, cannot nest the subvolume under TEST_MNT
 SUBVOL_MNT="$TEST_MNT/subvol"
 TOPLEVEL_MNT="$TEST_MNT/toplevel"
 TEST_MNT="$TOPLEVEL_MNT"
