@@ -4052,7 +4052,7 @@ static int try_to_fix_bad_block(struct btrfs_root *root,
 	btrfs_init_path(&path);
 	ULIST_ITER_INIT(&iter);
 	/*
-	 * If we found no roots referrening to this tree block, there is no
+	 * If we found no roots referencing to this tree block, there is no
 	 * chance to fix. So our default ret is -EIO.
 	 */
 	ret = -EIO;
