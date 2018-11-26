@@ -60,7 +60,7 @@
 
 static int btrfs_scan_done = 0;
 
-static int rand_seed_initlized = 0;
+static int rand_seed_initialized = 0;
 static unsigned short rand_seed[3];
 
 struct btrfs_config bconf;
@@ -2487,7 +2487,7 @@ void init_rand_seed(u64 seed)
 		rand_seed[i] = (unsigned short)(seed ^ (unsigned short)(-1));
 		seed >>= 16;
 	}
-	rand_seed_initlized = 1;
+	rand_seed_initialized = 1;
 }
 
 static void __init_seed(void)
@@ -2496,7 +2496,7 @@ static void __init_seed(void)
 	int ret;
 	int fd;
 
-	if(rand_seed_initlized)
+	if(rand_seed_initialized)
 		return;
 	/* Use urandom as primary seed source. */
 	fd = open("/dev/urandom", O_RDONLY);
@@ -2514,7 +2514,7 @@ fallback:
 		rand_seed[1] = getppid() ^ (tv.tv_usec & 0xFFFF);
 		rand_seed[2] = (tv.tv_sec ^ tv.tv_usec) >> 16;
 	}
-	rand_seed_initlized = 1;
+	rand_seed_initialized = 1;
 }
 
 u32 rand_u32(void)
