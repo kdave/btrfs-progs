@@ -171,7 +171,7 @@ corresponding file attribute (see `chattr`(1)).
 NOTE: If 'nodatacow' or 'nodatasum' are enabled, compression is disabled.
 +
 There is a slight performance gain when checksums are turned off, the
-correspoinding metadata blocks holding the checksums do not need to updated.
+corresponding metadata blocks holding the checksums do not need to updated.
 The cost of checksumming of the blocks in memory is much lower than the IO,
 modern CPUs feature hardware support of the checksumming algorithm.
 
