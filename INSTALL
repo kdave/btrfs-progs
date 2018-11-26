@@ -62,7 +62,7 @@ documented in the Makefile.
 The build utilizes autotools, dependencies for generating the configure
 scripts are:
 
-* autconf, autoheader
+* autoconf, autoheader
 * automake, aclocal
 * pkg-config
 
