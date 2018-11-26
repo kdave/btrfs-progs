@@ -8654,7 +8654,7 @@ static int reinit_extent_tree(struct btrfs_trans_handle *trans,
 	 * first we need to walk all of the trees except the extent tree and pin
 	 * down/exclude the bytes that are in use so we don't overwrite any
 	 * existing metadata.
-	 * If pinnned, unpin will be done in the end of transaction.
+	 * If pinned, unpin will be done in the end of transaction.
 	 * If excluded, cleanup will be done in check_chunks_and_extents_lowmem.
 	 */
 again:
