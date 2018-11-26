@@ -6871,7 +6871,7 @@ static int verify_backrefs(struct btrfs_fs_info *info, struct btrfs_path *path,
 		goto out;
 
 	fprintf(stderr,
-		"attempting to repair backref discrepency for bytenr %llu\n",
+		"attempting to repair backref discrepancy for bytenr %llu\n",
 		rec->start);
 
 	/*
@@ -7851,7 +7851,7 @@ static int check_chunk_refs(struct chunk_record *chunk_rec,
 			    dev_extent_rec->length != length) {
 				if (!silent)
 					fprintf(stderr,
-						"Chunk[%llu, %u, %llu] stripe[%llu, %llu] dismatch dev extent[%llu, %llu, %llu]\n",
+"Chunk[%llu, %u, %llu] stripe[%llu, %llu] mismatch dev extent[%llu, %llu, %llu]\n",
 						chunk_rec->objectid,
 						chunk_rec->type,
 						chunk_rec->offset,
@@ -9484,7 +9484,7 @@ const char * const cmd_check_usage[] = {
 	"trees' consistency and item connectivity. In the repair mode try to",
 	"fix the problems found. ",
 	"WARNING: the repair mode is considered dangerous and should not be used",
-	"         without prior analysis of problems found on the flesystem."
+	"         without prior analysis of problems found on the filesystem."
 	"",
 	"Options:",
 	"  starting point selection:",

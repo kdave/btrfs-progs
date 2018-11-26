@@ -98,7 +98,7 @@ static int setup_temp_super(int fd, struct btrfs_mkfs_config *cfg,
 
 	if (*cfg->fs_uuid) {
 		if (uuid_parse(cfg->fs_uuid, super->fsid) != 0) {
-			error("cound not parse UUID: %s", cfg->fs_uuid);
+			error("could not parse UUID: %s", cfg->fs_uuid);
 			ret = -EINVAL;
 			goto out;
 		}

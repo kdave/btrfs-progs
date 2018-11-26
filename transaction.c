@@ -32,7 +32,7 @@ struct btrfs_trans_handle* btrfs_start_transaction(struct btrfs_root *root,
 	if (!h)
 		return ERR_PTR(-ENOMEM);
 	if (root->commit_root) {
-		error("commit_root aleady set when starting transaction");
+		error("commit_root already set when starting transaction");
 		kfree(h);
 		return ERR_PTR(-EINVAL);
 	}
