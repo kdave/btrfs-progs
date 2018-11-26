@@ -649,7 +649,7 @@ inherent limit of btrfs is 2^64^ (16 EiB) but the linux VFS limit is 2^63^ (8 Ei
 
 maximum number of subvolumes::
 2^64^ but depends on the available metadata space, the space consumed by all
-subvolume metadata includes bookeeping of the shared extents can be large (MiB,
+subvolume metadata includes bookkeeping of the shared extents can be large (MiB,
 GiB)
 
 maximum number of hardlinks of a file in a directory::
