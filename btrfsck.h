@@ -113,7 +113,7 @@ struct device_extent_record {
 	u8  type;
 	u64 offset;
 
-	u64 chunk_objecteid;
+	u64 chunk_objectid;
 	u64 chunk_offset;
 	u64 length;
 };

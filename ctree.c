@@ -3043,7 +3043,7 @@ int btrfs_previous_item(struct btrfs_root *root,
 
 /*
  * search in extent tree to find a previous Metadata/Data extent item with
- * min objecitd.
+ * min objectid.
  *
  * returns 0 if something is found, 1 if nothing was found and < 0 on error
  */

@@ -5043,7 +5043,7 @@ btrfs_new_device_extent_record(struct extent_buffer *leaf,
 	rec->offset = key->offset;
 
 	ptr = btrfs_item_ptr(leaf, slot, struct btrfs_dev_extent);
-	rec->chunk_objecteid =
+	rec->chunk_objectid =
 		btrfs_dev_extent_chunk_objectid(leaf, ptr);
 	rec->chunk_offset =
 		btrfs_dev_extent_chunk_offset(leaf, ptr);
