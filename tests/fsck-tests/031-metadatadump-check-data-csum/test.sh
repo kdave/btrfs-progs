@@ -21,7 +21,7 @@ chmod a+w restored_image
 run_check $SUDO_HELPER "$TOP/btrfs-image" "$TEST_DEV" "restored_image"
 
 # use prepare_test_dev() to wipe all existing data on $TEST_DEV
-# so there is no way that restored image could have mathcing data csum
+# so there is no way that restored image could have matching data csum
 prepare_test_dev
 
 run_check $SUDO_HELPER "$TOP/btrfs-image" -r "restored_image" "$TEST_DEV"
