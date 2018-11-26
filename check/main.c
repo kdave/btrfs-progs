@@ -9146,7 +9146,7 @@ static int build_roots_info_cache(struct btrfs_fs_info *info)
 		 * It's a valid extent/metadata item that has no inline ref,
 		 * but SHARED_BLOCK_REF or other shared references.
 		 * So we need to do extra check to avoid reading beyond leaf
-		 * boudnary.
+		 * boundary.
 		 */
 		if ((unsigned long)iref >= item_end)
 			goto next;
