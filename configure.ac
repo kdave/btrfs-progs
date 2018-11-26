@@ -85,7 +85,7 @@ fi
 
 
 AC_ARG_ENABLE([documentation],
-	      AS_HELP_STRING([--disable-documentation], [do not build domumentation]),
+	      AS_HELP_STRING([--disable-documentation], [do not build documentation]),
   [], [enable_documentation=yes]
 )
 AS_IF([test "x$enable_documentation" = xyes], [DISABLE_DOCUMENTATION=0], [DISABLE_DOCUMENTATION=1])
