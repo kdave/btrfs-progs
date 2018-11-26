@@ -1344,7 +1344,7 @@ static bool is_chunk_direct_mapped(struct btrfs_fs_info *fs_info, u64 start)
 	if (map->num_stripes != 1)
 		goto out;
 
-	/* Chunk's logical doesn't match with phisical, not 1:1 mapped */
+	/* Chunk's logical doesn't match with physical, not 1:1 mapped */
 	if (map->ce.start != map->stripes[0].physical)
 		goto out;
 	ret = true;
