@@ -244,7 +244,7 @@ There are some utilities that are not distributed but are necessary for the
 tests. They are in the top level directory of the testsuite and their path
 cannot be set.
 
-The tests assume write acesss to their directories.
+The tests assume write access to their directories.
 
 
 # Coding style, best practices
