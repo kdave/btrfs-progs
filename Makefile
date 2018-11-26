@@ -631,7 +631,7 @@ clean-doc:
 
 clean-gen:
 	@echo "Cleaning Generated Files"
-	$(Q)$(RM) -rf -- version.h config.status config.cache connfig.log \
+	$(Q)$(RM) -rf -- version.h config.status config.cache config.log \
 		configure.lineno config.status.lineno Makefile.inc \
 		Documentation/Makefile tags \
 		cscope.files cscope.out cscope.in.out cscope.po.out \
