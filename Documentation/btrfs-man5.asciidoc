@@ -156,7 +156,7 @@ under 'nodatacow' are also set the NOCOW file attribute (see `chattr`(1)).
 NOTE: If 'nodatacow' or 'nodatasum' are enabled, compression is disabled.
 +
 Updates in-place improve performance for workloads that do frequent overwrites,
-at the cost of potential partial writes, in case the write is interruted
+at the cost of potential partial writes, in case the write is interrupted
 (system crash, device failure).
 
 *datasum*::
