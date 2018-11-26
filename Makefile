@@ -1,7 +1,7 @@
 #
 # Basic build targets:
 #   all		all main tools and the shared library
-#   static      build static bnaries, requires static version of the libraries
+#   static      build static binaries, requires static version of the libraries
 #   test        run the full testsuite
 #   install     install to default location (/usr/local)
 #   clean       clean built binaries (not the documentation)
@@ -631,7 +631,7 @@ clean-doc:
 
 clean-gen:
 	@echo "Cleaning Generated Files"
-	$(Q)$(RM) -rf -- version.h config.status config.cache connfig.log \
+	$(Q)$(RM) -rf -- version.h config.status config.cache config.log \
 		configure.lineno config.status.lineno Makefile.inc \
 		Documentation/Makefile tags \
 		cscope.files cscope.out cscope.in.out cscope.po.out \
