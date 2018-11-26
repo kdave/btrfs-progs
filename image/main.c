@@ -2496,7 +2496,7 @@ int main(int argc, char *argv[])
 	} else {
 		if (walk_trees || sanitize != SANITIZE_NONE || compress_level) {
 			error(
-			"useing -w, -s, -c options for restore makes no sense");
+			"using -w, -s, -c options for restore makes no sense");
 			usage_error++;
 		}
 		if (multi_devices && dev_cnt < 2) {
