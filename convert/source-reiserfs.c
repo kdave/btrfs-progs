@@ -301,7 +301,7 @@ static int reiserfs_record_indirect_extent(reiserfs_filsys_t fs, u64 position,
 
 /*
  * Unlike btrfs inline extents, reiserfs can have multiple inline extents.
- * This handles concatanating multiple tails into one inline extent
+ * This handles concatenating multiple tails into one inline extent
  * for insertion.
  */
 static int reiserfs_record_direct_extent(reiserfs_filsys_t fs, __u64 position,
