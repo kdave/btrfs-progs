@@ -15,7 +15,7 @@ prepare_test_dev 128M
 
 # Do some write into a large prealloc range
 # Lowmem mode can report missing csum due to wrong csum range
-test_paritical_write_into_prealloc()
+test_partial_write_into_prealloc()
 {
 	run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f "$TEST_DEV"
 	run_check_mount_test_dev
@@ -55,6 +55,6 @@ test_hole_extent_with_no_holes_flag()
 	run_check "$TOP/btrfs" check "$TEST_DEV"
 }
 
-test_paritical_write_into_prealloc
+test_partial_write_into_prealloc
 test_compressed_inline_extent
 test_hole_extent_with_no_holes_flag
