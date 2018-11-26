@@ -682,7 +682,7 @@ static int calculate_available_space(struct btrfs_convert_context *cctx)
 	cur_off = 0;
 	/*
 	 * Calculate free space
-	 * Always round up the start bytenr, to avoid metadata extent corss
+	 * Always round up the start bytenr, to avoid metadata extent cross
 	 * stripe boundary, as later mkfs_convert() won't have all the extent
 	 * allocation check
 	 */
