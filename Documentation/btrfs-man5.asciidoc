@@ -185,7 +185,7 @@ missing, for example if a stripe member is completely missing from RAID0.
 Since 4.14, the constraint checks have been improved and are verified on the
 chunk level, not an the device level. This allows degraded mounts of
 filesystems with mixed RAID profiles for data and metadata, even if the
-device number constraints would not be satisfied for some of the prifles.
+device number constraints would not be satisfied for some of the profiles.
 +
 Example: metadata -- raid1, data -- single, devices -- /dev/sda, /dev/sdb
 +
