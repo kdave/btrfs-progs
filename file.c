@@ -178,7 +178,7 @@ out:
  * 3) data read out is also aligned to sectorsize, not truncated to inode size
  *
  * Return < 0 for fatal error during read.
- * Otherwise return the number of succesfully read data in bytes.
+ * Otherwise return the number of successfully read data in bytes.
  */
 int btrfs_read_file(struct btrfs_root *root, u64 ino, u64 start, int len,
 		    char *dest)
