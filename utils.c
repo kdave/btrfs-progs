@@ -2521,7 +2521,7 @@ u32 rand_u32(void)
 {
 	__init_seed();
 	/*
-	 * Don't use nrand48, its range is [0,2^31) The highest bit will alwasy
+	 * Don't use nrand48, its range is [0,2^31) The highest bit will always
 	 * be 0.  Use jrand48 to include the highest bit.
 	 */
 	return (u32)jrand48(rand_seed);
