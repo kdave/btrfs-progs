@@ -301,7 +301,7 @@ static int reiserfs_record_indirect_extent(reiserfs_filsys_t fs, u64 position,
 
 /*
  * Unlike btrfs inline extents, reiserfs can have multiple inline extents.
- * This handles concatanating multiple tails into one inline extent
+ * This handles concatenating multiple tails into one inline extent
  * for insertion.
  */
 static int reiserfs_record_direct_extent(reiserfs_filsys_t fs, __u64 position,
@@ -564,7 +564,7 @@ static int reiserfs_copy_meta(reiserfs_filsys_t fs, struct btrfs_root *root,
 	};
 
 	/* The root directory's dirid in reiserfs points to an object
-	 * that does't exist.  In btrfs it's self-referential.
+	 * that doens't exist.  In btrfs it's self-referential.
 	 */
 	if (deh_dirid == REISERFS_ROOT_PARENT_OBJECTID)
 		parent = objectid;

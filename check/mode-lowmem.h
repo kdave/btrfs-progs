@@ -56,7 +56,7 @@
 #define BACKREF_MISMATCH	(1 << 1) /* Backref exists but does not match */
 #define BYTES_UNALIGNED		(1 << 2) /* Some bytes are not aligned */
 #define REFERENCER_MISSING	(1 << 3) /* Referencer not found */
-#define REFERENCER_MISMATCH	(1 << 4) /* Referenceer found but does not match */
+#define REFERENCER_MISMATCH	(1 << 4) /* Referencer found but does not match */
 #define CROSSING_STRIPE_BOUNDARY (1 << 4) /* For kernel scrub workaround */
 #define ITEM_SIZE_MISMATCH	(1 << 5) /* Bad item size */
 #define UNKNOWN_TYPE		(1 << 6) /* Unknown type */

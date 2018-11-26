@@ -887,7 +887,7 @@ static void print_uuid_item(struct extent_buffer *l, unsigned long offset,
 })
 
 /*
- * Caller should ensure sizeof(*ret) >= 102: all charactors plus '|' of
+ * Caller should ensure sizeof(*ret) >= 102: all characters plus '|' of
  * BTRFS_INODE_* flags
  */
 static void inode_flags_to_str(u64 flags, char *ret)

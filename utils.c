@@ -835,7 +835,7 @@ static int blk_file_in_dev_list(struct btrfs_fs_devices* fs_devices,
 /*
  * Resolve a pathname to a device mapper node to /dev/mapper/<name>
  * Returns NULL on invalid input or malloc failure; Other failures
- * will be handled by the caller using the input pathame.
+ * will be handled by the caller using the input pathname.
  */
 char *canonicalize_dm_name(const char *ptname)
 {
@@ -866,7 +866,7 @@ char *canonicalize_dm_name(const char *ptname)
  * Resolve a pathname to a canonical device node, e.g. /dev/sda1 or
  * to a device mapper pathname.
  * Returns NULL on invalid input or malloc failure; Other failures
- * will be handled by the caller using the input pathame.
+ * will be handled by the caller using the input pathname.
  */
 char *canonicalize_path(const char *path)
 {
@@ -2521,7 +2521,7 @@ u32 rand_u32(void)
 {
 	__init_seed();
 	/*
-	 * Don't use nrand48, its range is [0,2^31) The highest bit will alwasy
+	 * Don't use nrand48, its range is [0,2^31) The highest bit will always
 	 * be 0.  Use jrand48 to include the highest bit.
 	 */
 	return (u32)jrand48(rand_seed);

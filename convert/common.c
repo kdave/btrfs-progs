@@ -76,7 +76,7 @@ static inline int write_temp_super(int fd, struct btrfs_super_block *sb,
 }
 
 /*
- * Setup temporary superblock at cfg->super_bynter
+ * Setup temporary superblock at cfg->super_bytenr
  * Needed info are extracted from cfg, and root_bytenr, chunk_bytenr
  *
  * For now sys chunk array will be empty and dev_item is empty too.

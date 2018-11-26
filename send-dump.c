@@ -47,7 +47,7 @@
 })
 
 /*
- * Print path and escape chaacters (in a C way) that could break the line.
+ * Print path and escape characters (in a C way) that could break the line.
  * Returns the length of the escaped characters. Unprintable characters are
  * escaped as octals.
  */

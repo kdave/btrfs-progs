@@ -97,7 +97,7 @@ struct btrfs_free_space_ctl;
 /* for storing balance parameters in the root tree */
 #define BTRFS_BALANCE_OBJECTID -4ULL
 
-/* oprhan objectid for tracking unlinked/truncated files */
+/* orphan objectid for tracking unlinked/truncated files */
 #define BTRFS_ORPHAN_OBJECTID -5ULL
 
 /* does write ahead logging to speed up fsyncs */
@@ -119,7 +119,7 @@ struct btrfs_free_space_ctl;
 #define BTRFS_FREE_SPACE_OBJECTID -11ULL
 
 /*
- * The inode number assigned to the special inode for sotring
+ * The inode number assigned to the special inode for storing
  * free ino cache
  */
 #define BTRFS_FREE_INO_OBJECTID -12ULL
@@ -2404,7 +2404,7 @@ static inline struct btrfs_disk_balance_args* btrfs_balance_item_sys(
 
 /*
  * btrfs_dev_stats_item helper, returns pointer to the raw array, do the
- * endiannes conversion, @dsi is offset to eb data
+ * endianness conversion, @dsi is offset to eb data
  */
 static inline __le64* btrfs_dev_stats_values(struct extent_buffer *eb,
 		struct btrfs_dev_stats_item *dsi)

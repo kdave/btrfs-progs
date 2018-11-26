@@ -66,7 +66,7 @@
  *      c. Doesn't cover any data chunks in 1.1
  *
  * 2)   Create basic btrfs filesystem structure
- *      Initial metadata and sys chunks are inserted in the first availabe
+ *      Initial metadata and sys chunks are inserted in the first available
  *      space found in step 1.3
  *      Then insert all data chunks into the basic btrfs
  *
@@ -682,7 +682,7 @@ static int calculate_available_space(struct btrfs_convert_context *cctx)
 	cur_off = 0;
 	/*
 	 * Calculate free space
-	 * Always round up the start bytenr, to avoid metadata extent corss
+	 * Always round up the start bytenr, to avoid metadata extent cross
 	 * stripe boundary, as later mkfs_convert() won't have all the extent
 	 * allocation check
 	 */
@@ -724,7 +724,7 @@ out:
 
 /*
  * Read used space, and since we have the used space,
- * calcuate data_chunks and free for later mkfs
+ * calculate data_chunks and free for later mkfs
  */
 static int convert_read_used_space(struct btrfs_convert_context *cctx)
 {
@@ -975,7 +975,7 @@ static int init_btrfs(struct btrfs_mkfs_config *cfg, struct btrfs_root *root,
 
 	/*
 	 * Don't alloc any metadata/system chunk, as we don't want
-	 * any meta/sys chunk allcated before all data chunks are inserted.
+	 * any meta/sys chunk allocated before all data chunks are inserted.
 	 * Or we screw up the chunk layout just like the old implement.
 	 */
 	fs_info->avoid_sys_chunk_alloc = 1;
@@ -1344,7 +1344,7 @@ static bool is_chunk_direct_mapped(struct btrfs_fs_info *fs_info, u64 start)
 	if (map->num_stripes != 1)
 		goto out;
 
-	/* Chunk's logical doesn't match with phisical, not 1:1 mapped */
+	/* Chunk's logical doesn't match with physical, not 1:1 mapped */
 	if (map->ce.start != map->stripes[0].physical)
 		goto out;
 	ret = true;
@@ -1356,7 +1356,7 @@ out:
  * Iterate all file extents of the convert image.
  *
  * All file extents except ones in btrfs_reserved_ranges must be mapped 1:1
- * on disk. (Means thier file_offset must match their on disk bytenr)
+ * on disk. (Means their file_offset must match their on disk bytenr)
  *
  * File extents in reserved ranges can be relocated to other place, and in
  * that case we will read them out for later use.

@@ -4052,7 +4052,7 @@ static int try_to_fix_bad_block(struct btrfs_root *root,
 	btrfs_init_path(&path);
 	ULIST_ITER_INIT(&iter);
 	/*
-	 * If we found no roots referrening to this tree block, there is no
+	 * If we found no roots referencing to this tree block, there is no
 	 * chance to fix. So our default ret is -EIO.
 	 */
 	ret = -EIO;
@@ -8654,7 +8654,7 @@ static int reinit_extent_tree(struct btrfs_trans_handle *trans,
 	 * first we need to walk all of the trees except the extent tree and pin
 	 * down/exclude the bytes that are in use so we don't overwrite any
 	 * existing metadata.
-	 * If pinnned, unpin will be done in the end of transaction.
+	 * If pinned, unpin will be done in the end of transaction.
 	 * If excluded, cleanup will be done in check_chunks_and_extents_lowmem.
 	 */
 again:
@@ -9146,7 +9146,7 @@ static int build_roots_info_cache(struct btrfs_fs_info *info)
 		 * It's a valid extent/metadata item that has no inline ref,
 		 * but SHARED_BLOCK_REF or other shared references.
 		 * So we need to do extra check to avoid reading beyond leaf
-		 * boudnary.
+		 * boundary.
 		 */
 		if ((unsigned long)iref >= item_end)
 			goto next;

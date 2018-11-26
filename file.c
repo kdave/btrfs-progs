@@ -178,7 +178,7 @@ out:
  * 3) data read out is also aligned to sectorsize, not truncated to inode size
  *
  * Return < 0 for fatal error during read.
- * Otherwise return the number of succesfully read data in bytes.
+ * Otherwise return the number of successfully read data in bytes.
  */
 int btrfs_read_file(struct btrfs_root *root, u64 ino, u64 start, int len,
 		    char *dest)
@@ -301,7 +301,7 @@ next:
 
 	/*
 	 * Special trick for no_holes, since for no_holes we don't have good
-	 * method to account skipped and tailling holes, we used
+	 * method to account skipped and tailing holes, we used
 	 * min(inode size, len) as return value
 	 */
 	if (no_holes) {

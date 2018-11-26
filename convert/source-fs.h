@@ -26,7 +26,7 @@
 #define CONV_IMAGE_SUBVOL_OBJECTID BTRFS_FIRST_FREE_OBJECTID
 
 /*
- * Reresents a simple contiguous range.
+ * Represents a simple contiguous range.
  *
  * For multiple or non-contiguous ranges, use extent_cache_tree from
  * extent-cache.c
