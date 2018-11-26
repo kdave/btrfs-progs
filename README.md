@@ -14,6 +14,9 @@ This repository hosts following utilities:
 * **btrfs** &mdash; the main administration tool ([manual page](https://btrfs.wiki.kernel.org/index.php/Manpage/btrfs))
 * **mkfs.btrfs** &mdash; utility to create the filesystem ([manual page](https://btrfs.wiki.kernel.org/index.php/Manpage/mkfs.btrfs))
 
+The C and python 3 bindings are provided by a LGPL library **libbtrfsutil** see
+[libbtrfsutil/README.md](libbtrfsutil/README.md) for more.
+
 See [INSTALL](INSTALL) for build instructions and [tests/README.md](tests/README.md) for
 testing information.
 
