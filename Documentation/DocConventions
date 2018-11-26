@@ -34,6 +34,6 @@ Quotation in subcommands:
   - optional parameter with argument: [-p <path>]
 
 
-Refrences:
+References:
 - full asciidoc syntax: http://asciidoc.org/userguide.html
 - cheatsheet: http://powerman.name/doc/asciidoc
