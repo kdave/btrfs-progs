@@ -268,6 +268,9 @@ int btrfs_open_devices(struct btrfs_fs_devices *fs_devices,
 		       int flags);
 int btrfs_close_devices(struct btrfs_fs_devices *fs_devices);
 void btrfs_close_all_devices(void);
+int btrfs_insert_dev_extent(struct btrfs_trans_handle *trans,
+			    struct btrfs_device *device,
+			    u64 chunk_offset, u64 num_bytes, u64 start);
 int btrfs_add_device(struct btrfs_trans_handle *trans,
 		     struct btrfs_fs_info *fs_info,
 		     struct btrfs_device *device);

@@ -530,10 +530,12 @@ static int find_free_dev_extent(struct btrfs_device *device, u64 num_bytes,
 	return find_free_dev_extent_start(device, num_bytes, 0, start, len);
 }
 
-static int btrfs_alloc_dev_extent(struct btrfs_trans_handle *trans,
-				  struct btrfs_device *device,
-				  u64 chunk_offset, u64 num_bytes, u64 *start,
-				  int convert)
+/*
+ * Insert one device extent into the fs.
+ */
+int btrfs_insert_dev_extent(struct btrfs_trans_handle *trans,
+			    struct btrfs_device *device,
+			    u64 chunk_offset, u64 num_bytes, u64 start)
 {
 	int ret;
 	struct btrfs_path *path;
@@ -546,18 +548,8 @@ static int btrfs_alloc_dev_extent(struct btrfs_trans_handle *trans,
 	if (!path)
 		return -ENOMEM;
 
-	/*
-	 * For convert case, just skip search free dev_extent, as caller
-	 * is responsible to make sure it's free.
-	 */
-	if (!convert) {
-		ret = find_free_dev_extent(device, num_bytes, start, NULL);
-		if (ret)
-			goto err;
-	}
-
 	key.objectid = device->devid;
-	key.offset = *start;
+	key.offset = start;
 	key.type = BTRFS_DEV_EXTENT_KEY;
 	ret = btrfs_insert_empty_item(trans, root, path, &key,
 				      sizeof(*extent));
@@ -581,6 +573,22 @@ static int btrfs_alloc_dev_extent(struct btrfs_trans_handle *trans,
 err:
 	btrfs_free_path(path);
 	return ret;
+}
+
+/*
+ * Allocate one free dev extent and insert it into the fs.
+ */
+static int btrfs_alloc_dev_extent(struct btrfs_trans_handle *trans,
+				  struct btrfs_device *device,
+				  u64 chunk_offset, u64 num_bytes, u64 *start)
+{
+	int ret;
+
+	ret = find_free_dev_extent(device, num_bytes, start, NULL);
+	if (ret)
+		return ret;
+	return btrfs_insert_dev_extent(trans, device, chunk_offset, num_bytes,
+					*start);
 }
 
 static int find_next_chunk(struct btrfs_fs_info *fs_info, u64 *offset)
@@ -1107,7 +1115,7 @@ again:
 			list_move_tail(&device->dev_list, dev_list);
 
 		ret = btrfs_alloc_dev_extent(trans, device, key.offset,
-			     calc_size, &dev_offset, 0);
+			     calc_size, &dev_offset);
 		if (ret < 0)
 			goto out_chunk_map;
 
@@ -1241,8 +1249,12 @@ int btrfs_alloc_data_chunk(struct btrfs_trans_handle *trans,
 	while (index < num_stripes) {
 		struct btrfs_stripe *stripe;
 
-		ret = btrfs_alloc_dev_extent(trans, device, key.offset,
-			     calc_size, &dev_offset, convert);
+		if (convert)
+			ret = btrfs_insert_dev_extent(trans, device, key.offset,
+					calc_size, dev_offset);
+		else
+			ret = btrfs_alloc_dev_extent(trans, device, key.offset,
+					calc_size, &dev_offset);
 		BUG_ON(ret);
 
 		device->bytes_used += calc_size;
