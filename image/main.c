@@ -2084,10 +2084,11 @@ static void remap_overlapping_chunks(struct mdrestore_struct *mdres)
 	}
 }
 
-static int fixup_devices(struct btrfs_fs_info *fs_info,
-			 struct mdrestore_struct *mdres, off_t dev_size)
+static int fixup_device_size(struct btrfs_trans_handle *trans,
+			     struct mdrestore_struct *mdres,
+			     off_t dev_size)
 {
-	struct btrfs_trans_handle *trans;
+	struct btrfs_fs_info *fs_info = trans->fs_info;
 	struct btrfs_dev_item *dev_item;
 	struct btrfs_path path;
 	struct extent_buffer *leaf;
@@ -2095,16 +2096,6 @@ static int fixup_devices(struct btrfs_fs_info *fs_info,
 	struct btrfs_key key;
 	u64 devid, cur_devid;
 	int ret;
-
-	if (btrfs_super_log_root(fs_info->super_copy)) {
-		warning(
-		"log tree detected, its generation will not match superblock");
-	}
-	trans = btrfs_start_transaction(fs_info->tree_root, 1);
-	if (IS_ERR(trans)) {
-		error("cannot starting transaction %ld", PTR_ERR(trans));
-		return PTR_ERR(trans);
-	}
 
 	dev_item = &fs_info->super_copy->dev_item;
 
@@ -2123,7 +2114,7 @@ again:
 	ret = btrfs_search_slot(trans, root, &key, &path, -1, 1);
 	if (ret < 0) {
 		error("search failed: %d", ret);
-		exit(1);
+		return ret;
 	}
 
 	while (1) {
@@ -2170,12 +2161,41 @@ again:
 	}
 
 	btrfs_release_path(&path);
+	return 0;
+}
+
+static int fixup_chunks_and_devices(struct btrfs_fs_info *fs_info,
+			 struct mdrestore_struct *mdres, off_t dev_size)
+{
+	struct btrfs_trans_handle *trans;
+	int ret;
+
+	if (btrfs_super_log_root(fs_info->super_copy)) {
+		warning(
+		"log tree detected, its generation will not match superblock");
+	}
+	trans = btrfs_start_transaction(fs_info->tree_root, 1);
+	if (IS_ERR(trans)) {
+		error("cannot start transaction %ld", PTR_ERR(trans));
+		return PTR_ERR(trans);
+	}
+
+	ret = fixup_device_size(trans, mdres, dev_size);
+	if (ret < 0)
+		goto error;
+
 	ret = btrfs_commit_transaction(trans, fs_info->tree_root);
 	if (ret) {
 		error("unable to commit transaction: %d", ret);
 		return ret;
 	}
 	return 0;
+error:
+	errno = -ret;
+	error(
+"failed to fix chunks and devices mapping, the fs may not be mountable: %m");
+	btrfs_abort_transaction(trans, ret);
+	return ret;
 }
 
 static int restore_metadump(const char *input, FILE *out, int old_restore,
@@ -2282,7 +2302,7 @@ static int restore_metadump(const char *input, FILE *out, int old_restore,
 			return 1;
 		}
 
-		ret = fixup_devices(info, &mdrestore, st.st_size);
+		ret = fixup_chunks_and_devices(info, &mdrestore, st.st_size);
 		close_ctree(info->chunk_root);
 		if (ret)
 			goto out;
