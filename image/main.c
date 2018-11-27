@@ -2209,6 +2209,107 @@ static void fixup_block_groups(struct btrfs_fs_info *fs_info)
 	}
 }
 
+static int remove_all_dev_extents(struct btrfs_trans_handle *trans)
+{
+	struct btrfs_fs_info *fs_info = trans->fs_info;
+	struct btrfs_root *root = fs_info->dev_root;
+	struct btrfs_path path;
+	struct btrfs_key key;
+	struct extent_buffer *leaf;
+	int slot;
+	int ret;
+
+	key.objectid = 1;
+	key.type = BTRFS_DEV_EXTENT_KEY;
+	key.offset = 0;
+	btrfs_init_path(&path);
+
+	ret = btrfs_search_slot(trans, root, &key, &path, -1, 1);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to search dev tree: %m");
+		return ret;
+	}
+
+	while (1) {
+		slot = path.slots[0];
+		leaf = path.nodes[0];
+		if (slot >= btrfs_header_nritems(leaf)) {
+			ret = btrfs_next_leaf(root, &path);
+			if (ret < 0) {
+				errno = -ret;
+				error("failed to search dev tree: %m");
+				goto out;
+			}
+			if (ret > 0) {
+				ret = 0;
+				goto out;
+			}
+		}
+
+		btrfs_item_key_to_cpu(leaf, &key, slot);
+		if (key.type != BTRFS_DEV_EXTENT_KEY)
+			break;
+		ret = btrfs_del_item(trans, root, &path);
+		if (ret < 0) {
+			errno = -ret;
+			error("failed to delete dev extent %llu, %llu: %m",
+				key.objectid, key.offset);
+			goto out;
+		}
+	}
+out:
+	btrfs_release_path(&path);
+	return ret;
+}
+
+static int fixup_dev_extents(struct btrfs_trans_handle *trans)
+{
+	struct btrfs_fs_info *fs_info = trans->fs_info;
+	struct btrfs_mapping_tree *map_tree = &fs_info->mapping_tree;
+	struct btrfs_device *dev;
+	struct cache_extent *ce;
+	struct map_lookup *map;
+	u64 devid = btrfs_stack_device_id(&fs_info->super_copy->dev_item);
+	int i;
+	int ret;
+
+	ret = remove_all_dev_extents(trans);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to remove all existing dev extents: %m");
+	}
+
+	dev = btrfs_find_device(fs_info, devid, NULL, NULL);
+	if (!dev) {
+		error("faild to find devid %llu", devid);
+		return -ENODEV;
+	}
+
+	/* Rebuild all dev extents using chunk maps */
+	for (ce = search_cache_extent(&map_tree->cache_tree, 0); ce;
+	     ce = next_cache_extent(ce)) {
+		u64 stripe_len;
+
+		map = container_of(ce, struct map_lookup, ce);
+		stripe_len = calc_stripe_length(map->type, ce->size,
+						map->num_stripes);
+		for (i = 0; i < map->num_stripes; i++) {
+			ret = btrfs_insert_dev_extent(trans, dev, ce->start,
+					stripe_len, map->stripes[i].physical);
+			if (ret < 0) {
+				errno = -ret;
+				error(
+				"failed to insert dev extent %llu %llu: %m",
+					devid, map->stripes[i].physical);
+				goto out;
+			}
+		}
+	}
+out:
+	return ret;
+}
+
 static int fixup_chunks_and_devices(struct btrfs_fs_info *fs_info,
 			 struct mdrestore_struct *mdres, off_t dev_size)
 {
@@ -2226,6 +2327,10 @@ static int fixup_chunks_and_devices(struct btrfs_fs_info *fs_info,
 	}
 
 	fixup_block_groups(fs_info);
+	ret = fixup_dev_extents(trans);
+	if (ret < 0)
+		goto error;
+
 	ret = fixup_device_size(trans, mdres, dev_size);
 	if (ret < 0)
 		goto error;
