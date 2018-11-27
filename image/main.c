@@ -2164,6 +2164,51 @@ again:
 	return 0;
 }
 
+static void fixup_block_groups(struct btrfs_fs_info *fs_info)
+{
+	struct btrfs_block_group_cache *bg;
+	struct btrfs_mapping_tree *map_tree = &fs_info->mapping_tree;
+	struct cache_extent *ce;
+	struct map_lookup *map;
+	u64 extra_flags;
+
+	for (ce = search_cache_extent(&map_tree->cache_tree, 0); ce;
+	     ce = next_cache_extent(ce)) {
+		map = container_of(ce, struct map_lookup, ce);
+
+		bg = btrfs_lookup_block_group(fs_info, ce->start);
+		if (!bg) {
+			warning(
+		"cannot find block group %llu, filesystem may not be mountable",
+				ce->start);
+			continue;
+		}
+		extra_flags = map->type & BTRFS_BLOCK_GROUP_PROFILE_MASK;
+
+		if (bg->flags == map->type)
+			continue;
+
+		/* Update the block group item and mark the bg dirty */
+		bg->flags = map->type;
+		btrfs_set_block_group_flags(&bg->item, bg->flags);
+		set_extent_bits(&fs_info->block_group_cache, ce->start,
+				ce->start + ce->size - 1, BLOCK_GROUP_DIRTY);
+
+		/*
+		 * Chunk and bg flags can be different, changing bg flags
+		 * without update avail_data/meta_alloc_bits will lead to
+		 * ENOSPC.
+		 * So here we set avail_*_alloc_bits to match chunk types.
+		 */
+		if (map->type & BTRFS_BLOCK_GROUP_DATA)
+			fs_info->avail_data_alloc_bits = extra_flags;
+		if (map->type & BTRFS_BLOCK_GROUP_METADATA)
+			fs_info->avail_metadata_alloc_bits = extra_flags;
+		if (map->type & BTRFS_BLOCK_GROUP_SYSTEM)
+			fs_info->avail_system_alloc_bits = extra_flags;
+	}
+}
+
 static int fixup_chunks_and_devices(struct btrfs_fs_info *fs_info,
 			 struct mdrestore_struct *mdres, off_t dev_size)
 {
@@ -2180,6 +2225,7 @@ static int fixup_chunks_and_devices(struct btrfs_fs_info *fs_info,
 		return PTR_ERR(trans);
 	}
 
+	fixup_block_groups(fs_info);
 	ret = fixup_device_size(trans, mdres, dev_size);
 	if (ret < 0)
 		goto error;
