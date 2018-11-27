@@ -37,6 +37,9 @@ run_check $SUDO_HELPER wipefs -a "$loop2"
 
 run_check $SUDO_HELPER "$TOP/btrfs-image" -r "$IMAGE" "$loop1"
 
+# Run check to make sure there is nothing wrong for the recovered image
+run_check "$TOP/btrfs" check "$loop1"
+
 run_check $SUDO_HELPER mount "$loop1" "$TEST_MNT"
 new_md5=$(run_check_stdout md5sum "$TEST_MNT/foobar" | cut -d ' ' -f 1)
 run_check $SUDO_HELPER umount "$TEST_MNT"
