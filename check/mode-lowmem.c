@@ -2142,7 +2142,7 @@ out:
 		error("failed to set nbytes in inode %llu root %llu",
 		      ino, root->root_key.objectid);
 	else
-		printf("Set nbytes in inode item %llu root %llu\n to %llu", ino,
+		printf("Set nbytes in inode item %llu root %llu to %llu\n", ino,
 		       root->root_key.objectid, nbytes);
 
 	/* research path */
