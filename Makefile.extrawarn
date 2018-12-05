@@ -19,6 +19,11 @@ try-run = $(shell set -e;               \
  cc-option = $(call try-run,\
          $(CC) $(CFLAGS) $(1) -c -x c /dev/null -o "$$TMP",$(1),$(2))
 
+# cc-disable-warning
+# Usage: cflags-y += $(call cc-disable-warning,unused-but-set-variable)
+cc-disable-warning = $(call try-run, \
+	$(CC) -Werror $(CFLAGS) -W$(strip $(1)) -c -x c /dev/null -o "$$TMP",-Wno-$(strip $(1)))
+
 # From linux.git/scripts/Makefile.extrawarn
 # ==========================================================================
 #
