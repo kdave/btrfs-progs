@@ -62,6 +62,10 @@ DEBUG_LDFLAGS :=
 ABSTOPDIR = $(shell pwd)
 TOPDIR := .
 
+# Disable certain GCC 8 + glibc 2.28 warning for snprintf()
+# where string truncation for snprintf() is expected.
+DISABLE_WARNING_FLAGS := $(call cc-disable-warning, format-truncation)
+
 # Common build flags
 CFLAGS = $(SUBST_CFLAGS) \
 	 $(CSTD) \
@@ -73,6 +77,7 @@ CFLAGS = $(SUBST_CFLAGS) \
 	 -I$(TOPDIR) \
 	 -I$(TOPDIR)/kernel-lib \
 	 -I$(TOPDIR)/libbtrfsutil \
+	 $(DISABLE_WARNING_FLAGS) \
 	 $(EXTRAWARN_CFLAGS) \
 	 $(DEBUG_CFLAGS_INTERNAL) \
 	 $(EXTRA_CFLAGS)
