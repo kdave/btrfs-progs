@@ -225,3 +225,26 @@ u32 get_running_kernel_version(void)
 	return version;
 }
 
+int btrfs_check_nodesize(u32 nodesize, u32 sectorsize, u64 features)
+{
+	if (nodesize < sectorsize) {
+		error("illegal nodesize %u (smaller than %u)",
+				nodesize, sectorsize);
+		return -1;
+	} else if (nodesize > BTRFS_MAX_METADATA_BLOCKSIZE) {
+		error("illegal nodesize %u (larger than %u)",
+			nodesize, BTRFS_MAX_METADATA_BLOCKSIZE);
+		return -1;
+	} else if (nodesize & (sectorsize - 1)) {
+		error("illegal nodesize %u (not aligned to %u)",
+			nodesize, sectorsize);
+		return -1;
+	} else if (features & BTRFS_FEATURE_INCOMPAT_MIXED_GROUPS &&
+		   nodesize != sectorsize) {
+		error(
+		"illegal nodesize %u (not equal to %u for mixed block group)",
+			nodesize, sectorsize);
+		return -1;
+	}
+	return 0;
+}
