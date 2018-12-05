@@ -157,8 +157,7 @@ static int read_cmd(struct btrfs_send_stream *sctx)
 		tlv_type = le16_to_cpu(tlv_hdr->tlv_type);
 		tlv_len = le16_to_cpu(tlv_hdr->tlv_len);
 
-		if (tlv_type == 0 || tlv_type > BTRFS_SEND_A_MAX
-		    || tlv_len > BTRFS_SEND_BUF_SIZE) {
+		if (tlv_type == 0 || tlv_type > BTRFS_SEND_A_MAX) {
 			error("invalid tlv in cmd tlv_type = %hu, tlv_len = %hu",
 					tlv_type, tlv_len);
 			ret = -EINVAL;
