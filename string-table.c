@@ -48,6 +48,7 @@ struct string_table *table_create(int columns, int rows)
  * '>' the text is right aligned. If fmt is equal to '=' the text will
  * be replaced by a '=====' dimensioned on the basis of the column width
  */
+__attribute__ ((format (printf, 4, 0)))
 char *table_vprintf(struct string_table *tab, int column, int row,
 			  const char *fmt, va_list ap)
 {
