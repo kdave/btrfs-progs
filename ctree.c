@@ -2967,7 +2967,7 @@ int btrfs_next_sibling_tree_block(struct btrfs_fs_info *fs_info,
 	struct extent_buffer *next = NULL;
 
 	BUG_ON(path->lowest_level + 1 >= BTRFS_MAX_LEVEL);
-	while(level < BTRFS_MAX_LEVEL) {
+	do {
 		if (!path->nodes[level])
 			return 1;
 
@@ -2987,7 +2987,7 @@ int btrfs_next_sibling_tree_block(struct btrfs_fs_info *fs_info,
 		if (!extent_buffer_uptodate(next))
 			return -EIO;
 		break;
-	}
+	} while (level < BTRFS_MAX_LEVEL);
 	path->slots[level] = slot;
 	while(1) {
 		level--;
