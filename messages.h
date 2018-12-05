@@ -26,13 +26,13 @@
 #ifdef DEBUG_TRACE_ON_ERROR
 #define PRINT_TRACE_ON_ERROR	print_trace()
 #else
-#define PRINT_TRACE_ON_ERROR
+#define PRINT_TRACE_ON_ERROR	do { } while (0)
 #endif
 
 #ifdef DEBUG_ABORT_ON_ERROR
 #define DO_ABORT_ON_ERROR	abort()
 #else
-#define DO_ABORT_ON_ERROR
+#define DO_ABORT_ON_ERROR	do { } while (0)
 #endif
 
 #define error(fmt, ...)							\
