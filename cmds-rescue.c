@@ -26,14 +26,12 @@
 #include "commands.h"
 #include "utils.h"
 #include "help.h"
+#include "rescue.h"
 
 static const char * const rescue_cmd_group_usage[] = {
 	"btrfs rescue <command> [options] <path>",
 	NULL
 };
-
-int btrfs_recover_chunk_tree(const char *path, int verbose, int yes);
-int btrfs_recover_superblocks(const char *path, int verbose, int yes);
 
 static const char * const cmd_rescue_chunk_recover_usage[] = {
 	"btrfs rescue chunk-recover [options] <device>",
