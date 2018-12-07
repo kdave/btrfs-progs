@@ -168,12 +168,13 @@ class TestSubvolume(BtrfsTestCase):
 
         with drop_privs():
             try:
-                self._test_subvolume_info(subvol, snapshot)
+                btrfsutil.subvolume_info(self.mountpoint)
             except OSError as e:
                 if e.errno == errno.ENOTTY:
                     self.skipTest('BTRFS_IOC_GET_SUBVOL_INFO is not available')
                 else:
                     raise
+            self._test_subvolume_info(subvol, snapshot)
 
     def test_read_only(self):
         for arg in self.path_or_fd(self.mountpoint):
@@ -487,6 +488,13 @@ class TestSubvolume(BtrfsTestCase):
         try:
             os.chdir(self.mountpoint)
             with drop_privs():
+                try:
+                    list(btrfsutil.SubvolumeIterator('.'))
+                except OSError as e:
+                    if e.errno == errno.ENOTTY:
+                        self.skipTest('BTRFS_IOC_GET_SUBVOL_ROOTREF is not available')
+                    else:
+                        raise
                 self._test_subvolume_iterator()
         finally:
             os.chdir(pwd)
