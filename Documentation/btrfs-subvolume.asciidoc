@@ -172,7 +172,8 @@ The id can be obtained from *btrfs subvolume list*, *btrfs subvolume show* or
 *btrfs inspect-internal rootid*.
 
 *show* [options] <path>|<mnt>::
-Show information of a given subvolume in the <path>.
+Show information of a given subvolume in the <path>, such as e.g. the creation time.
+Other observations are these disk usage results
 +
 `Options`
 +
