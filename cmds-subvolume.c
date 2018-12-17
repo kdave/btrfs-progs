@@ -912,13 +912,13 @@ static int cmd_subvol_find_new(int argc, char **argv)
 }
 
 static const char * const cmd_subvol_show_usage[] = {
-	"btrfs subvolume show [options] <subvol-path>|<mnt>",
-	"Show more information about the subvolume",
+	"btrfs subvolume show [options] <path>",
+	"Show more information about the subvolume (UUIDs, generations, times, snapshots)",
 	"-r|--rootid   rootid of the subvolume",
 	"-u|--uuid     uuid of the subvolume",
 	"",
-	"If no option is specified, <subvol-path> will be shown, otherwise",
-	"the rootid or uuid are resolved relative to the <mnt> path.",
+	"If no option is specified, subvolume at <path> will be shown, otherwise",
+	"the rootid or uuid are resolved relative to the <path>.",
 	NULL
 };
 
