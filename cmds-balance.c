@@ -508,7 +508,7 @@ static const char * const cmd_balance_start_usage[] = {
 	"-m[filters]    act on metadata chunks",
 	"-s[filters]    act on system chunks (only under -f)",
 	"-v             be verbose",
-	"-f             force reducing of metadata integrity",
+	"-f             force a reduction of metadata integrity",
 	"--full-balance do not print warning and do not delay start",
 	"--background|--bg",
 	"               run the balance as a background process",
