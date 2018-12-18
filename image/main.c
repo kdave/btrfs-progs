@@ -2101,6 +2101,7 @@ static int fixup_device_size(struct btrfs_trans_handle *trans,
 	struct extent_buffer *leaf;
 	struct btrfs_root *root = fs_info->chunk_root;
 	struct btrfs_key key;
+	struct stat buf;
 	u64 devid, cur_devid;
 	u64 dev_size; /* Get from last dev extents */
 	int ret;
@@ -2147,11 +2148,18 @@ static int fixup_device_size(struct btrfs_trans_handle *trans,
 
 	btrfs_set_stack_device_total_bytes(dev_item, dev_size);
 	btrfs_set_stack_device_bytes_used(dev_item, mdres->alloced_chunks);
-	/* Don't forget to enlarge the real file */
-	ret = ftruncate64(out_fd, dev_size);
+	ret = fstat(out_fd, &buf);
 	if (ret < 0) {
-		error("failed to enlarge result image: %m");
+		error("failed to stat result image: %m");
 		return -errno;
+	}
+	if (S_ISREG(buf.st_mode)) {
+		/* Don't forget to enlarge the real file */
+		ret = ftruncate64(out_fd, dev_size);
+		if (ret < 0) {
+			error("failed to enlarge result image: %m");
+			return -errno;
+		}
 	}
 
 	key.objectid = BTRFS_DEV_ITEMS_OBJECTID;
