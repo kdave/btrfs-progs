@@ -59,8 +59,11 @@ run_check "$TOP/mkfs.btrfs" -n 4k -f "$TEST_DEV"
 run_check_mount_test_dev -oclear_cache,space_cache=v2
 
 # create files which will populate the FST
-for i in {1..3000}; do
-	run_check $SUDO_HELPER fallocate -l 4k "$TEST_MNT/file.$i"
+for i in {0..9}; do
+	for j in {1..300}; do
+		run_check $SUDO_HELPER fallocate -l 4k "$TEST_MNT/file.$j$i" &
+	done
+	wait
 done
 
 run_check_umount_test_dev
