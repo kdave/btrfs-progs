@@ -23,6 +23,7 @@
 #include "transaction.h"
 #include "disk-io.h"
 #include "print-tree.h"
+#include "utils.h"
 
 
 static void btrfs_uuid_to_key(const u8 *uuid, u64 *key_objectid,
@@ -32,8 +33,11 @@ static void btrfs_uuid_to_key(const u8 *uuid, u64 *key_objectid,
 	*key_offset = get_unaligned_le64(uuid + sizeof(u64));
 }
 
-
-/* return -ENOENT for !found, < 0 for errors, or 0 if an item was found */
+/*
+ * Search uuid tree of a *MOUNTED* btrfs (online)
+ *
+ * return -ENOENT for !found, < 0 for errors, or 0 if an item was found
+ */
 static int btrfs_uuid_tree_lookup_any(int fd, const u8 *uuid, u8 type,
 				      u64 *subid)
 {
@@ -102,4 +106,69 @@ int btrfs_lookup_uuid_received_subvol_item(int fd, const u8 *uuid,
 	return btrfs_uuid_tree_lookup_any(fd, uuid,
 					  BTRFS_UUID_KEY_RECEIVED_SUBVOL,
 					  subvol_id);
+}
+
+/*
+ * Search uuid tree of an *UNMOUNTED* btrfs (offline)
+ *
+ * return -ENOENT for !found, < 0 for errors, or 0 if an item was found
+ */
+static int btrfs_uuid_tree_lookup(struct btrfs_root *uuid_root, u8 *uuid,
+				  u8 type, u64 subid)
+{
+	int ret;
+	struct btrfs_path *path = NULL;
+	struct extent_buffer *eb;
+	int slot;
+	u32 item_size;
+	unsigned long offset;
+	struct btrfs_key key;
+
+	if (!uuid_root) {
+		ret = -ENOENT;
+		goto out;
+	}
+
+	path = btrfs_alloc_path();
+	if (!path) {
+		ret = -ENOMEM;
+		goto out;
+	}
+
+	btrfs_uuid_to_key(uuid, &key.objectid, &key.offset);
+	key.type = type;
+	ret = btrfs_search_slot(NULL, uuid_root, &key, path, 0, 0);
+	if (ret < 0) {
+		goto out;
+	} else if (ret > 0) {
+		ret = -ENOENT;
+		goto out;
+	}
+
+	eb = path->nodes[0];
+	slot = path->slots[0];
+	item_size = btrfs_item_size_nr(eb, slot);
+	offset = btrfs_item_ptr_offset(eb, slot);
+	ret = -ENOENT;
+
+	if (!IS_ALIGNED(item_size, sizeof(u64))) {
+		warning("uuid item with illegal size %lu!",
+			(unsigned long)item_size);
+		goto out;
+	}
+	while (item_size) {
+		__le64 data;
+
+		read_extent_buffer(eb, &data, offset, sizeof(data));
+		if (le64_to_cpu(data) == subid) {
+			ret = 0;
+			break;
+		}
+		offset += sizeof(data);
+		item_size -= sizeof(data);
+	}
+
+out:
+	btrfs_free_path(path);
+	return ret;
 }
