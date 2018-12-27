@@ -1101,6 +1101,7 @@ struct btrfs_fs_info {
 	struct btrfs_root *csum_root;
 	struct btrfs_root *quota_root;
 	struct btrfs_root *free_space_root;
+	struct btrfs_root *uuid_root;
 
 	struct rb_root fs_root_tree;
 
@@ -2774,10 +2775,14 @@ int btrfs_csum_truncate(struct btrfs_trans_handle *trans,
 			struct btrfs_root *root, struct btrfs_path *path,
 			u64 isize);
 
-/* uuid-tree.c */
+/* uuid-tree.c, mounted fs (online) interface */
 int btrfs_lookup_uuid_subvol_item(int fd, const u8 *uuid, u64 *subvol_id);
 int btrfs_lookup_uuid_received_subvol_item(int fd, const u8 *uuid,
 					   u64 *subvol_id);
+
+/* uuid-tree.c, unmounted fs (offline) interface */
+int btrfs_uuid_tree_add(struct btrfs_trans_handle *trans, u8 *uuid, u8 type,
+			u64 subid_cpu);
 
 static inline int is_fstree(u64 rootid)
 {

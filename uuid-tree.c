@@ -172,3 +172,68 @@ out:
 	btrfs_free_path(path);
 	return ret;
 }
+
+int btrfs_uuid_tree_add(struct btrfs_trans_handle *trans, u8 *uuid, u8 type,
+			u64 subid_cpu)
+{
+	struct btrfs_fs_info *fs_info = trans->fs_info;
+	struct btrfs_root *uuid_root = fs_info->uuid_root;
+	int ret;
+	struct btrfs_path *path = NULL;
+	struct btrfs_key key;
+	struct extent_buffer *eb;
+	int slot;
+	unsigned long offset;
+	__le64 subid_le;
+
+	if (!uuid_root) {
+		warning("%s: uuid root is not initialized", __func__);
+		return -EINVAL;
+	}
+
+	ret = btrfs_uuid_tree_lookup(uuid_root, uuid, type, subid_cpu);
+	if (ret != -ENOENT)
+		return ret;
+
+	key.type = type;
+	btrfs_uuid_to_key(uuid, &key.objectid, &key.offset);
+
+	path = btrfs_alloc_path();
+	if (!path) {
+		ret = -ENOMEM;
+		goto out;
+	}
+
+	ret = btrfs_insert_empty_item(trans, uuid_root, path, &key,
+				      sizeof(subid_le));
+	if (ret >= 0) {
+		/* Add an item for the type for the first time */
+		eb = path->nodes[0];
+		slot = path->slots[0];
+		offset = btrfs_item_ptr_offset(eb, slot);
+	} else if (ret == -EEXIST) {
+		/*
+		 * An item with that type already exists.
+		 * Extend the item and store the new subid at the end.
+		 */
+		btrfs_extend_item(uuid_root, path, sizeof(subid_le));
+		eb = path->nodes[0];
+		slot = path->slots[0];
+		offset = btrfs_item_ptr_offset(eb, slot);
+		offset += btrfs_item_size_nr(eb, slot) - sizeof(subid_le);
+	} else if (ret < 0) {
+		warning("insert uuid item failed %d (0x%016llx, 0x%016llx) type %u!",
+			ret, (unsigned long long)key.objectid,
+			(unsigned long long)key.offset, type);
+		goto out;
+	}
+
+	ret = 0;
+	subid_le = cpu_to_le64(subid_cpu);
+	write_extent_buffer(eb, &subid_le, offset, sizeof(subid_le));
+	btrfs_mark_buffer_dirty(eb);
+
+out:
+	btrfs_free_path(path);
+	return ret;
+}
