@@ -197,5 +197,8 @@ int write_tree_block(struct btrfs_trans_handle *trans,
 		     struct btrfs_fs_info *fs_info,
 		     struct extent_buffer *eb);
 int write_and_map_eb(struct btrfs_fs_info *fs_info, struct extent_buffer *eb);
+struct btrfs_root *btrfs_create_tree(struct btrfs_trans_handle *trans,
+				     struct btrfs_fs_info *fs_info,
+				     u64 objectid);
 
 #endif
