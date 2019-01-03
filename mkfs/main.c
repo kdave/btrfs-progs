@@ -310,38 +310,6 @@ static int create_raid_groups(struct btrfs_trans_handle *trans,
 	return ret;
 }
 
-static int create_tree(struct btrfs_trans_handle *trans,
-			struct btrfs_root *root, u64 objectid)
-{
-	struct btrfs_key location;
-	struct btrfs_root_item root_item;
-	struct extent_buffer *tmp;
-	u8 uuid[BTRFS_UUID_SIZE] = {0};
-	int ret;
-
-	ret = btrfs_copy_root(trans, root, root->node, &tmp, objectid);
-	if (ret)
-		return ret;
-
-	memcpy(&root_item, &root->root_item, sizeof(root_item));
-	btrfs_set_root_bytenr(&root_item, tmp->start);
-	btrfs_set_root_level(&root_item, btrfs_header_level(tmp));
-	btrfs_set_root_generation(&root_item, trans->transid);
-	/* clear uuid and o/ctime of source tree */
-	memcpy(root_item.uuid, uuid, BTRFS_UUID_SIZE);
-	btrfs_set_stack_timespec_sec(&root_item.otime, 0);
-	btrfs_set_stack_timespec_sec(&root_item.ctime, 0);
-	free_extent_buffer(tmp);
-
-	location.objectid = objectid;
-	location.type = BTRFS_ROOT_ITEM_KEY;
-	location.offset = 0;
-	ret = btrfs_insert_root(trans, root->fs_info->tree_root,
-				&location, &root_item);
-
-	return ret;
-}
-
 static void print_usage(int ret)
 {
 	printf("Usage: mkfs.btrfs [options] dev [ dev ... ]\n");
@@ -772,6 +740,33 @@ static int create_data_reloc_tree(struct btrfs_trans_handle *trans)
 	btrfs_mark_buffer_dirty(path.nodes[0]);
 	btrfs_release_path(&path);
 	return 0;
+out:
+	btrfs_abort_transaction(trans, ret);
+	return ret;
+}
+
+static int create_uuid_tree(struct btrfs_trans_handle *trans)
+{
+	struct btrfs_fs_info *fs_info = trans->fs_info;
+	struct btrfs_root *root;
+	int ret;
+
+	ASSERT(fs_info->uuid_root == NULL);
+	root = btrfs_create_tree(trans, fs_info, BTRFS_UUID_TREE_OBJECTID);
+	if (IS_ERR(root)) {
+		ret = PTR_ERR(root);
+		goto out;
+	}
+
+	add_root_to_dirty_list(root);
+	fs_info->uuid_root = root;
+	ret = btrfs_uuid_tree_add(trans, fs_info->fs_root->root_item.uuid,
+				  BTRFS_UUID_KEY_SUBVOL,
+				  fs_info->fs_root->root_key.objectid);
+	if (ret < 0)
+		goto out;
+	return 0;
+
 out:
 	btrfs_abort_transaction(trans, ret);
 	return ret;
@@ -1277,7 +1272,7 @@ raid_groups:
 		goto out;
 	}
 
-	ret = create_tree(trans, root, BTRFS_UUID_TREE_OBJECTID);
+	ret = create_uuid_tree(trans);
 	if (ret)
 		warning(
 	"unable to create uuid tree, will be created after mount: %d", ret);
