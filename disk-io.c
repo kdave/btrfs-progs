@@ -638,8 +638,7 @@ static int btrfs_fs_roots_compare_objectids(struct rb_node *node,
 		return 0;
 }
 
-static int btrfs_fs_roots_compare_roots(struct rb_node *node1,
-					struct rb_node *node2)
+int btrfs_fs_roots_compare_roots(struct rb_node *node1, struct rb_node *node2)
 {
 	struct btrfs_root *root;
 

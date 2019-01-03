@@ -39,6 +39,7 @@
 #include "utils.h"
 #include "list_sort.h"
 #include "help.h"
+#include "rbtree-utils.h"
 #include "mkfs/common.h"
 #include "mkfs/rootdir.h"
 #include "fsfeatures.h"
@@ -709,6 +710,73 @@ static void update_chunk_allocation(struct btrfs_fs_info *fs_info,
 	}
 }
 
+static int create_data_reloc_tree(struct btrfs_trans_handle *trans)
+{
+	struct btrfs_fs_info *fs_info = trans->fs_info;
+	struct btrfs_inode_item *inode;
+	struct btrfs_root *root;
+	struct btrfs_path path;
+	struct btrfs_key key;
+	u64 ino = BTRFS_FIRST_FREE_OBJECTID;
+	char *name = "..";
+	int ret;
+
+	root = btrfs_create_tree(trans, fs_info, BTRFS_DATA_RELOC_TREE_OBJECTID);
+	if (IS_ERR(root)) {
+		ret = PTR_ERR(root);
+		goto out;
+	}
+	/* Update dirid as created tree has default dirid 0 */
+	btrfs_set_root_dirid(&root->root_item, ino);
+	ret = btrfs_update_root(trans, fs_info->tree_root, &root->root_key,
+				&root->root_item);
+	if (ret < 0)
+		goto out;
+
+	/* Cache this tree so it can be cleaned up at close_ctree() */
+	ret = rb_insert(&fs_info->fs_root_tree, &root->rb_node,
+			btrfs_fs_roots_compare_roots);
+	if (ret < 0)
+		goto out;
+
+	/* Insert INODE_ITEM */
+	ret = btrfs_new_inode(trans, root, ino, 0755 | S_IFDIR);
+	if (ret < 0)
+		goto out;
+
+	/* then INODE_REF */
+	ret = btrfs_insert_inode_ref(trans, root, name, strlen(name), ino, ino,
+				     0);
+	if (ret < 0)
+		goto out;
+
+	/* Update nlink of that inode item */
+	key.objectid = ino;
+	key.type = BTRFS_INODE_ITEM_KEY;
+	key.offset = 0;
+	btrfs_init_path(&path);
+
+	ret = btrfs_search_slot(trans, root, &key, &path, 0, 1);
+	if (ret > 0) {
+		ret = -ENOENT;
+		btrfs_release_path(&path);
+		goto out;
+	}
+	if (ret < 0) {
+		btrfs_release_path(&path);
+		goto out;
+	}
+	inode = btrfs_item_ptr(path.nodes[0], path.slots[0],
+			       struct btrfs_inode_item);
+	btrfs_set_inode_nlink(path.nodes[0], inode, 1);
+	btrfs_mark_buffer_dirty(path.nodes[0]);
+	btrfs_release_path(&path);
+	return 0;
+out:
+	btrfs_abort_transaction(trans, ret);
+	return ret;
+}
+
 int main(int argc, char **argv)
 {
 	char *file;
@@ -1203,7 +1271,7 @@ raid_groups:
 		goto out;
 	}
 
-	ret = create_tree(trans, root, BTRFS_DATA_RELOC_TREE_OBJECTID);
+	ret = create_data_reloc_tree(trans);
 	if (ret) {
 		error("unable to create data reloc tree: %d", ret);
 		goto out;
