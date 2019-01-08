@@ -16,9 +16,11 @@ tools.  Currently covers:
 
 3. filesystem limits
 
-4. file attributes
+4. bootloader support
 
-5. control device
+5. file attributes
+
+6. control device
 
 
 MOUNT OPTIONS
@@ -655,6 +657,16 @@ GiB)
 maximum number of hardlinks of a file in a directory::
 65536 when the `extref` feature is turned on during mkfs (default), roughly
 100 otherwise
+
+
+BOOTLOADER SUPPORT
+------------------
+
+GRUB2 (https://www.gnu.org/software/grub) has the most advanced support of
+booting from BTRFS with respect to features.
+
+EXTLINUX (from the https://syslinux.org project) can boot but does not support
+all features. Please check the upstream documentation before you use it.
 
 
 FILE ATTRIBUTES
