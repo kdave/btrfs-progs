@@ -44,6 +44,7 @@ $(error Makefile.inc not generated, please configure first)
 endif
 
 TAGS_CMD := ctags
+ETAGS_CMD := etags
 CSCOPE_CMD := cscope -u -b -c -q
 
 include Makefile.extrawarn
@@ -602,6 +603,12 @@ tags: FORCE
 		check/*.[ch] kernel-lib/*.[ch] kernel-shared/*.[ch] \
 		libbtrfsutil/*.[ch]
 
+etags: FORCE
+	@echo "    [ETAGS]   $(ETAGS_CMD)"
+	$(Q)$(ETAGS_CMD) *.[ch] image/*.[ch] convert/*.[ch] mkfs/*.[ch] \
+		check/*.[ch] kernel-lib/*.[ch] kernel-shared/*.[ch] \
+		libbtrfsutil/*.[ch]
+
 cscope: FORCE
 	@echo "    [CSCOPE] $(CSCOPE_CMD)"
 	$(Q)ls -1 *.[ch] image/*.[ch] convert/*.[ch] mkfs/*.[ch] check/*.[ch] \
@@ -638,7 +645,7 @@ clean-gen:
 	@echo "Cleaning Generated Files"
 	$(Q)$(RM) -rf -- version.h config.status config.cache config.log \
 		configure.lineno config.status.lineno Makefile.inc \
-		Documentation/Makefile tags \
+		Documentation/Makefile tags TAGS \
 		cscope.files cscope.out cscope.in.out cscope.po.out \
 		config.log config.h config.h.in~ aclocal.m4 \
 		configure autom4te.cache/ config/
