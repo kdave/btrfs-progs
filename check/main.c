@@ -3473,9 +3473,10 @@ skip_walking:
 			printf("Try to repair the btree for root %llu\n",
 			       root->root_key.objectid);
 			ret = repair_btree(root, &corrupt_blocks);
-			if (ret < 0)
+			if (ret < 0) {
 				errno = -ret;
 				fprintf(stderr, "Failed to repair btree: %m\n");
+			}
 			if (!ret)
 				printf("Btree for root %llu is fixed\n",
 				       root->root_key.objectid);
