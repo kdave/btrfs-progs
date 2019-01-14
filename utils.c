@@ -2062,7 +2062,7 @@ int find_mount_root(const char *path, char **mount_root)
 	int fd;
 	struct mntent *ent;
 	int len;
-	int ret;
+	int ret = 0;
 	int not_btrfs = 1;
 	int longest_matchlen = 0;
 	char *longest_match = NULL;
@@ -2085,12 +2085,18 @@ int find_mount_root(const char *path, char **mount_root)
 				free(longest_match);
 				longest_matchlen = len;
 				longest_match = strdup(ent->mnt_dir);
+				if (!longest_match) {
+					ret = -errno;
+					break;
+				}
 				not_btrfs = strcmp(ent->mnt_type, "btrfs");
 			}
 		}
 	}
 	endmntent(mnttab);
 
+	if (ret)
+		return ret;
 	if (!longest_match)
 		return -ENOENT;
 	if (not_btrfs) {
