@@ -633,6 +633,47 @@ ordinary directory. Note that this feature only depends on the kernel version.
 +
 reduced-size metadata for extent references, saves a few percent of metadata
 
+SWAPFILE SUPPORT
+~~~~~~~~~~~~~~~~
+
+The swapfile is supported since kernel 5.0. Use `swapon`(8) to activate the
+swapfile. There are some limitations of the implementation in btrfs and linux
+swap subystem:
++
+* filesystem - must be only single device
+* swapfile - the containing subvolume cannot be snapshotted
+* swapfile - must be preallocated
+* swapfile - must be nodatacow (ie. also nodatasum)
+* swapfile - must not be compressed
++
+The limitations come namely from the COW-based design and mapping layer of
+blocks that allows the advanced features like relocation and multi-device
+filesystems. However, the swap subsystem expects simpler mapping and no
+background changes of the file blocks once they've been attached to swap.
++
+With active swapfiles, the following whole-filesystem operations will skip
+swapfile extents or may fail:
+* balance - block groups with swapfile extents are skipped and reported, the rest will be processed normally
+* resize grow - unaffected
+* resize shrink - works as long as the extents are outside of the shrunk range
+* device add - a new device does not interfere with existing swapfile and this operation will work, though no new swapfile can be activated afterwards
+* device delete - if the device has been added as above, it can be also deleted
+* device replace - dtto
++
+When there are no active swapfiles and a whole-filesystem exclusive operation
+is running (ie. balance, device delete, shrink), the swapfiles cannot be
+temporarily activated. The operation must finish first.
++
+--------------------
+# truncate -s 0 swapfile
+# chattr +C swapfile
+# fallocate -l 2G swapfile
+# chmod 0600 swapfile
+# mkswap swapfile
+# swapon swapfile
+--------------------
+
+
 FILESYSTEM LIMITS
 -----------------
 
@@ -769,4 +810,5 @@ SEE ALSO
 `fstrim`(8),
 `ioctl`(2),
 `mkfs.btrfs`(8),
-`mount`(8)
+`mount`(8),
+`swapon`(8)
