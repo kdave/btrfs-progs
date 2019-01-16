@@ -30,6 +30,25 @@ OPTIONS
 Allow dangerous changes, e.g. clear the seeding flag or change fsid. Make sure
 that you are aware of the dangers.
 
+-m::
+(since kernel: 5.0)
++
+change fsid stored as 'metadata_uuid' to a randomly generated UUID,
+see also '-U'
+
+-M <UUID>::
+(since kernel: 5.0)
++
+change fsid stored as 'metadata_uuid' to a given UUID, see also '-U'
++
+The metadata_uuid is stored only in the superblock and is a backward
+incompatible change. The fsid in metadata blocks remains unchanged and
+is not overwritten, thus the whole operation is significantly faster than
+'-U'.
++
+The new metadata_uuid can be used for mount by UUID and is also used to
+identify devices of a multi-device filesystem.
+
 -n::
 (since kernel: 3.14)
 +
@@ -60,16 +79,19 @@ Change fsid to a randomly generated UUID or continue previous fsid change
 operation in case it was interrupted.
 
 -U <UUID>::
-Change fsid to 'UUID'.
+Change fsid to 'UUID' in all metadata blocks.
 +
 The 'UUID' should be a 36 bytes string in `printf`(3) format
 '"%08x-%04x-%04x-%04x-%012x"'.
 If there is a previous unfinished fsid change, it will continue only if the
 'UUID' matches the unfinished one or if you use the option '-u'.
 +
+All metadata blocks are rewritten, this may take some time, but the final
+filesystem compatibility is unaffected, unlike '-M'.
++
 WARNING: Cancelling or interrupting a UUID change operation will make the
-filesystem temporarily unmountable.  To fix it, rerun 'btrfstune -u' to restore
-the UUID and let it complete.
+filesystem temporarily unmountable.  To fix it, rerun 'btrfstune -u' and let
+it complete.
 
 -x::
 (since kernel: 3.10)
