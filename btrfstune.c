@@ -462,15 +462,22 @@ out:
 static void print_usage(void)
 {
 	printf("usage: btrfstune [options] device\n");
-	printf("\t-S value\tpositive value will enable seeding, zero to disable, negative is not allowed\n");
-	printf("\t-r \t\tenable extended inode refs\n");
-	printf("\t-x \t\tenable skinny metadata extent refs\n");
-	printf("\t-n \t\tenable no-holes feature (more efficient sparse file representation)\n");
-	printf("\t-f \t\tforce to do dangerous operation, make sure that you are aware of the dangers\n");
-	printf("\t-u \t\trewrite fsid, use a random one\n");
-	printf("\t-U UUID\t\trewrite fsid to UUID\n");
-	printf("\t-m \t\tchange only metadata uuid (more lightweight than -u|-U)\n");
-	printf("\t-M UUID\t\tchange fsid to UUID\n");
+	printf("Tune settings of filesystem features on an unmounted device\n\n");
+	printf("Options:\n");
+	printf("  change feature status:\n");
+	printf("\t-r          enable extended inode refs (mkfs: extref, for hardlink limits)\n");
+	printf("\t-x          enable skinny metadata extent refs (mkfs: skinny-metadata)\n");
+	printf("\t-n          enable no-holes feature (mkfs: no-holes, more efficient sparse file representation)\n");
+	printf("\t-S <0|1>    set/unset seeding status of a device\n");
+	printf("  uuid changes:\n");
+	printf("\t-u          rewrite fsid, use a random one\n");
+	printf("\t-U UUID     rewrite fsid to UUID\n");
+	printf("\t-m          change fsid in metadata_uuid to a random UUID\n");
+	printf("\t            (incompat change, more lightweight than -u|-U)\n");
+	printf("\t-M UUID     change fsid in metadata_uuid to UUID\n");
+	printf("  general:\n");
+	printf("\t-f          allow dangerous operations, make sure that you are aware of the dangers\n");
+	printf("\t--help      print this help\n");
 }
 
 int main(int argc, char *argv[])
