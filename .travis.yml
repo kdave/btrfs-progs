@@ -58,7 +58,7 @@ before_install:
   - docker pull kdave/ci-musl-x86_64
   - travis/build-dep-reiserfs
   - travis/build-dep-zstd
-  - travis/build-default --disable-documentation
+  - travis/build-default --disable-documentation --with-convert=ext2,reiserfs
 
 addons:
   coverity_scan:
