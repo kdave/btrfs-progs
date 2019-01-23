@@ -2798,6 +2798,8 @@ static inline int is_fstree(u64 rootid)
 	return 0;
 }
 
+void btrfs_uuid_to_key(const u8 *uuid, u64 *key_objectid, u64 *key_offset);
+
 /* inode.c */
 int check_dir_conflict(struct btrfs_root *root, char *name, int namelen,
 		u64 dir, u64 index);
