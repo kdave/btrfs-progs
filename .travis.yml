@@ -32,7 +32,7 @@ cache:
 git:
   depth: 1
 
-dist: trusty
+dist: xenial
 group: unstable
 
 branches:
