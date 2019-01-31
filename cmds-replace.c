@@ -295,8 +295,8 @@ static int cmd_replace_start(int argc, char **argv)
 			goto leave_with_error;
 		}
 
-		if (start_args.result !=
-		    BTRFS_IOCTL_DEV_REPLACE_RESULT_NO_ERROR) {
+		if (start_args.result != BTRFS_IOCTL_DEV_REPLACE_RESULT_NO_RESULT &&
+		    start_args.result != BTRFS_IOCTL_DEV_REPLACE_RESULT_NO_ERROR) {
 			error("ioctl(DEV_REPLACE_START) on '%s' returns error: %s",
 				path,
 				replace_dev_result2string(start_args.result));
