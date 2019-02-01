@@ -410,7 +410,7 @@ static void dump_superblock(struct btrfs_super_block *sb, int full)
 	       (unsigned long long)btrfs_super_sectorsize(sb));
 	printf("nodesize\t\t%llu\n",
 	       (unsigned long long)btrfs_super_nodesize(sb));
-	printf("leafsize (deprecated)\t\t%u\n",
+	printf("leafsize (deprecated)\t%u\n",
 	       le32_to_cpu(sb->__unused_leafsize));
 	printf("stripesize\t\t%llu\n",
 	       (unsigned long long)btrfs_super_stripesize(sb));
