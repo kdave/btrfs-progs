@@ -744,6 +744,7 @@ int btrfs_add_device(struct btrfs_trans_handle *trans,
 	write_extent_buffer(leaf, fs_info->fs_devices->metadata_uuid, ptr,
 			    BTRFS_UUID_SIZE);
 	btrfs_mark_buffer_dirty(leaf);
+	fs_info->fs_devices->total_rw_bytes += device->total_bytes;
 	ret = 0;
 
 out:
@@ -2060,6 +2061,8 @@ static int read_one_dev(struct btrfs_fs_info *fs_info,
 
 	fill_device_from_item(leaf, dev_item, device);
 	device->dev_root = fs_info->dev_root;
+	fs_info->fs_devices->total_rw_bytes +=
+		btrfs_device_total_bytes(leaf, dev_item);
 	return ret;
 }
 
