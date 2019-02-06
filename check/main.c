@@ -6319,15 +6319,28 @@ static int run_next_block(struct btrfs_root *root,
 		int level;
 
 		level = btrfs_header_level(buf);
-		for (i = 0; i < nritems; i++) {
+		i = 0;
+
+		/*
+		 * If we have a drop key we need to not walk down any slots we
+		 * would have ignored when mounting the fs.  These blocks are
+		 * technically unreferenced and don't need to be worried about.
+		 */
+		if (ri != NULL && ri->drop_level && level > ri->drop_level) {
+			ret = btrfs_bin_search(buf, &ri->drop_key, level, &i);
+			if (ret && i > 0)
+				i--;
+		}
+
+		for (; i < nritems; i++) {
 			struct extent_record tmpl;
 
 			ptr = btrfs_node_blockptr(buf, i);
 			size = root->fs_info->nodesize;
 			btrfs_node_key_to_cpu(buf, &key, i);
 			if (ri != NULL) {
-				if ((level == ri->drop_level)
-				    && is_dropped_key(&key, &ri->drop_key)) {
+				if ((level == ri->drop_level) &&
+				    is_dropped_key(&key, &ri->drop_key)) {
 					continue;
 				}
 			}
