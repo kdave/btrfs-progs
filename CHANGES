@@ -1,3 +1,15 @@
+btrfs-progs-5.1.1 (2019-06-11)
+  * convert and mkfs will try to use optimized crc32c
+  * fi show: accept a file-backed image
+  * fi show: fix possible crash when device is deleted in parallel
+  * build:
+    * support extra flags for python bindings
+    * separate LDFLAGS for libbtrfsutil
+  * other:
+    * space reservation fixes or debugging improvements
+    * V0 extent code removed
+    * more tests and cleanups
+
 btrfs-progs-5.1 (2019-05-17)
   * (version 5.0 skipped)
   * check:
