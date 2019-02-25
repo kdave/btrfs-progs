@@ -1,3 +1,9 @@
+btrfs-progs-4.20.2 (2019-02-25)
+  * ci: use newer distro for builds
+  * dump-super: minor output fixup
+  * revert fix for prefix detection of receive path, this is temporary and
+    unbreaks existing user setups
+
 btrfs-progs-4.20.1 (2019-01-23)
   * libbtrfs: fix build of external tools due to missing symbols
   * ci: enable library test
