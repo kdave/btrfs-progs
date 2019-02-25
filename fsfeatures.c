@@ -216,11 +216,9 @@ u32 get_running_kernel_version(void)
 		return (u32)-1;
 	version |= atoi(tmp) << 8;
 	tmp = strtok_r(NULL, ".", &saveptr);
-	if (tmp) {
-		if (!string_is_numerical(tmp))
-			return (u32)-1;
+	/* Relaxed format accepts eg. 1.2.3+ */
+	if (tmp && string_is_numerical(tmp))
 		version |= atoi(tmp);
-	}
 
 	return version;
 }
