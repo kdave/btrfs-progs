@@ -1,3 +1,13 @@
+btrfs-progs-5.2.1 (2019-07-26)
+  * scrub status: fix ETA calculation after resume
+  * check: fix crash when using -Q
+  * restore: fix symlink owner restoration
+  * mkfs: fix regression with mixed block groups
+  * core: fix commit to process all delayed refs
+  * other:
+    * minor cleanups
+    * test updates
+
 btrfs-progs-5.2 (2019-07-05)
   * subvol show: print qgroup information when available
   * scrub:
