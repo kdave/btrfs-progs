@@ -1,3 +1,30 @@
+btrfs-progs-5.2 (2019-07-05)
+  * subvol show: print qgroup information when available
+  * scrub:
+    * status: show ETA, revamp the whole output
+    * fix reading/writing of last position on resume/cancel, potentially
+      skipping part of the filesystem on next resume
+  * dump-tree: add new option --noscan to use only devices given on the
+    commandline
+  * all-in-one binary (busybox style) with mkfs.btrfs, btrfs-image,
+    btrfs-convert, btrfstune
+  * image: fix hang when there are more than 32 cpus online and compression is
+    requested
+  * convert: fix some false ENOSPC errors when --rootdir is used
+  * build: fix gcc9 warnings
+  * core changes
+    * command handling cleanups
+    * dead code removal
+    * cmds-* files moved to cmds/
+    * other shared userspace files moved to common/
+    * utils.c split into more files
+    * preparatory work for more output formats
+    * libbtrfsutil: fix unaligned access
+  * other
+    * new and updated tests
+    * fix tests so CI passes again
+    * sb-mod can modify more superblock items
+
 btrfs-progs-5.1.1 (2019-06-11)
   * convert and mkfs will try to use optimized crc32c
   * fi show: accept a file-backed image
