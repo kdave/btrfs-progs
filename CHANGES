@@ -1,3 +1,33 @@
+btrfs-progs-5.1 (2019-05-17)
+  * (version 5.0 skipped)
+  * check:
+    * repair: flush/FUA support to avoid breaking metadata COW
+    * file extents repair no longer relies on data in extent tree
+    * lowmem: fix false error reports about gaps between extents
+    * add inode mode check and repair for various objects
+    * add check for invalid combination of nocow/compressed extents
+  * device scan: new option to forget scanned devices
+  * mkfs: use same chunk size as kernel for initial creation
+  * dev-replace: better report when other exclusive operation is running
+  * help: for syntax errors on command line, print only the relevant messages,
+    not the whole help text
+  * receive:
+    * new option for quiet mode
+    * on -vv print information about written ranges
+    * fix endless loop with --dump on an invalid stream
+  * defrag: able open files in RO mode (needs kernel support to work)
+  * dump-tree: --block can be specified multiple times
+  * libbtrfsutil: fix: don't close fd on error in btrfs_util_subvolume_id_fd
+  * core:
+    * add sync before superblock write
+    * better error handling on the transaction commit path
+    * try to find best copy when reading tree blocks
+    * update backup roots on commit transaction
+  * other:
+    * fuzz tests pass and are enabled in CI
+    * cleanups
+    * new tests
+
 btrfs-progs-4.20.2 (2019-02-25)
   * ci: use newer distro for builds
   * dump-super: minor output fixup
