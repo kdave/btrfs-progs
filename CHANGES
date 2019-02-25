@@ -1,3 +1,15 @@
+btrfs-progs-5.2.2 (2019-09-05)
+  * check:
+    * fix false report of wrong byte count for orphan inodes
+    * option -E was not handled correctly
+    * new check and repair for root item generation
+  * balance: check for full-balance before background fork
+  * mkfs: check that total device size does not overflow 16EiB
+  * dump-tree: print DEV_STATS key type
+  * other:
+    * new and updated tests
+    * doc fixups and updates
+
 btrfs-progs-5.2.1 (2019-07-26)
   * scrub status: fix ETA calculation after resume
   * check: fix crash when using -Q
