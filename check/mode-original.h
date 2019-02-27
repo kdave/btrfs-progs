@@ -155,6 +155,16 @@ struct file_extent_hole {
 	u64 len;
 };
 
+struct unaligned_extent_rec_t {
+	struct list_head list;
+
+	u64 objectid;
+	u64 owner;
+	u64 offset;
+
+	u64 bytenr;
+};
+
 #define I_ERR_NO_INODE_ITEM		(1 << 0)
 #define I_ERR_NO_ORPHAN_ITEM		(1 << 1)
 #define I_ERR_DUP_INODE_ITEM		(1 << 2)
@@ -169,6 +179,7 @@ struct file_extent_hole {
 #define I_ERR_ODD_CSUM_ITEM		(1 << 11)
 #define I_ERR_SOME_CSUM_MISSING		(1 << 12)
 #define I_ERR_LINK_COUNT_WRONG		(1 << 13)
+#define I_ERR_UNALIGNED_EXTENT_REC	(1 << 14)
 #define I_ERR_FILE_EXTENT_TOO_LARGE	(1 << 15)
 #define I_ERR_ODD_INODE_FLAGS		(1 << 16)
 #define I_ERR_INLINE_RAM_BYTES_WRONG	(1 << 17)
@@ -185,6 +196,8 @@ struct inode_record {
 	unsigned int some_csum_missing:1;
 	unsigned int nodatasum:1;
 	int errors;
+
+	struct list_head unaligned_extent_recs;
 
 	u64 ino;
 	u32 nlink;

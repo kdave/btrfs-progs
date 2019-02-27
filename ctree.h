@@ -1191,6 +1191,8 @@ struct btrfs_root {
 	u32 type;
 	u64 last_inode_alloc;
 
+	struct list_head unaligned_extent_recs;
+
 	/* the dirty list is only used by non-reference counted roots */
 	struct list_head dirty_list;
 	struct rb_node rb_node;
