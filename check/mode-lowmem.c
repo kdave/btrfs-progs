@@ -2606,6 +2606,22 @@ out:
 			}
 		}
 
+		if (nbytes != extent_size) {
+			if (repair) {
+				ret = repair_inode_nbytes_lowmem(root, path,
+							 inode_id, extent_size);
+				if (!ret)
+					nbytes = extent_size;
+			}
+			if (!repair || ret) {
+				err |= NBYTES_ERROR;
+				error(
+	"root %llu INODE[%llu] nbytes %llu not equal to extent_size %llu",
+				      root->objectid, inode_id, nbytes,
+				      extent_size);
+			}
+		}
+
 		if (!nbytes && !no_holes && extent_end < isize) {
 			if (repair)
 				ret = punch_extent_hole(root, path, inode_id,
@@ -2615,19 +2631,6 @@ out:
 				error(
 	"root %llu INODE[%llu] size %llu should have a file extent hole",
 				      root->objectid, inode_id, isize);
-			}
-		}
-
-		if (nbytes != extent_size) {
-			if (repair)
-				ret = repair_inode_nbytes_lowmem(root, path,
-							 inode_id, extent_size);
-			if (!repair || ret) {
-				err |= NBYTES_ERROR;
-				error(
-	"root %llu INODE[%llu] nbytes %llu not equal to extent_size %llu",
-				      root->objectid, inode_id, nbytes,
-				      extent_size);
 			}
 		}
 	}
