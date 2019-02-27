@@ -1636,6 +1636,83 @@ write_err:
 	return ret;
 }
 
+/*
+ * copy all the root pointers into the super backup array.
+ * this will bump the backup pointer by one when it is
+ * done
+ */
+static void backup_super_roots(struct btrfs_fs_info *info)
+{
+	struct btrfs_root_backup *root_backup;
+	int next_backup;
+	int last_backup;
+
+	last_backup = find_best_backup_root(info->super_copy);
+	next_backup = (last_backup + 1) % BTRFS_NUM_BACKUP_ROOTS;
+
+	/* just overwrite the last backup if we're at the same generation */
+	root_backup = info->super_copy->super_roots + last_backup;
+	if (btrfs_backup_tree_root_gen(root_backup) ==
+	    btrfs_header_generation(info->tree_root->node))
+		next_backup = last_backup;
+
+	root_backup = info->super_copy->super_roots + next_backup;
+
+	/*
+	 * make sure all of our padding and empty slots get zero filled
+	 * regardless of which ones we use today
+	 */
+	memset(root_backup, 0, sizeof(*root_backup));
+	btrfs_set_backup_tree_root(root_backup, info->tree_root->node->start);
+	btrfs_set_backup_tree_root_gen(root_backup,
+			       btrfs_header_generation(info->tree_root->node));
+	btrfs_set_backup_tree_root_level(root_backup,
+			       btrfs_header_level(info->tree_root->node));
+
+	btrfs_set_backup_chunk_root(root_backup, info->chunk_root->node->start);
+	btrfs_set_backup_chunk_root_gen(root_backup,
+			       btrfs_header_generation(info->chunk_root->node));
+	btrfs_set_backup_chunk_root_level(root_backup,
+			       btrfs_header_level(info->chunk_root->node));
+
+	btrfs_set_backup_extent_root(root_backup, info->extent_root->node->start);
+	btrfs_set_backup_extent_root_gen(root_backup,
+			       btrfs_header_generation(info->extent_root->node));
+	btrfs_set_backup_extent_root_level(root_backup,
+			       btrfs_header_level(info->extent_root->node));
+	/*
+	 * we might commit during log recovery, which happens before we set
+	 * the fs_root.  Make sure it is valid before we fill it in.
+	 */
+	if (info->fs_root && info->fs_root->node) {
+		btrfs_set_backup_fs_root(root_backup,
+					 info->fs_root->node->start);
+		btrfs_set_backup_fs_root_gen(root_backup,
+			       btrfs_header_generation(info->fs_root->node));
+		btrfs_set_backup_fs_root_level(root_backup,
+			       btrfs_header_level(info->fs_root->node));
+	}
+
+	btrfs_set_backup_dev_root(root_backup, info->dev_root->node->start);
+	btrfs_set_backup_dev_root_gen(root_backup,
+			       btrfs_header_generation(info->dev_root->node));
+	btrfs_set_backup_dev_root_level(root_backup,
+				       btrfs_header_level(info->dev_root->node));
+
+	btrfs_set_backup_csum_root(root_backup, info->csum_root->node->start);
+	btrfs_set_backup_csum_root_gen(root_backup,
+			       btrfs_header_generation(info->csum_root->node));
+	btrfs_set_backup_csum_root_level(root_backup,
+			       btrfs_header_level(info->csum_root->node));
+
+	btrfs_set_backup_total_bytes(root_backup,
+			     btrfs_super_total_bytes(info->super_copy));
+	btrfs_set_backup_bytes_used(root_backup,
+			     btrfs_super_bytes_used(info->super_copy));
+	btrfs_set_backup_num_devices(root_backup,
+			     btrfs_super_num_devices(info->super_copy));
+};
+
 int write_all_supers(struct btrfs_fs_info *fs_info)
 {
 	struct list_head *head = &fs_info->fs_devices->devices;
@@ -1645,6 +1722,7 @@ int write_all_supers(struct btrfs_fs_info *fs_info)
 	int ret;
 	u64 flags;
 
+	backup_super_roots(fs_info);
 	sb = fs_info->super_copy;
 	dev_item = &sb->dev_item;
 	list_for_each_entry(dev, head, dev_list) {
