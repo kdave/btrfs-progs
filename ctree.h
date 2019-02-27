@@ -1191,16 +1191,6 @@ struct btrfs_root {
 	u32 type;
 	u64 last_inode_alloc;
 
-	/*
-	 * Record orphan data extent ref
-	 *
-	 * TODO: Don't restore things in btrfs_root.
-	 * Directly record it into inode_record, which needs a lot of
-	 * infrastructure change to allow cooperation between extent
-	 * and fs tree scan.
-	 */
-	struct list_head orphan_data_extents;
-
 	/* the dirty list is only used by non-reference counted roots */
 	struct list_head dirty_list;
 	struct rb_node rb_node;
