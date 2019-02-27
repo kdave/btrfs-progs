@@ -544,6 +544,54 @@ static int end_avoid_extents_overwrite(struct btrfs_fs_info *fs_info)
 }
 
 /*
+ * Delete the item @path point to. A wrapper of btrfs_del_item().
+ *
+ * If deleted successfully, @path will point to the previous item of the
+ * deleted item.
+ */
+static int delete_item(struct btrfs_root *root, struct btrfs_path *path)
+{
+	struct btrfs_key key;
+	struct btrfs_trans_handle *trans;
+	int ret = 0;
+
+	ret = avoid_extents_overwrite(root->fs_info);
+	if (ret)
+		return ret;
+	trans = btrfs_start_transaction(root, 1);
+	if (IS_ERR(trans)) {
+		ret = PTR_ERR(trans);
+		error("fail to start transaction %s", strerror(-ret));
+		goto out;
+	}
+	btrfs_item_key_to_cpu(path->nodes[0], &key, path->slots[0]);
+	btrfs_release_path(path);
+	ret = btrfs_search_slot(trans, root, &key, path, -1, 1);
+	if (ret) {
+		ret = -ENOENT;
+		goto out;
+	}
+
+	ret = btrfs_del_item(trans, root, path);
+	if (ret)
+		goto out;
+
+	if (path->slots[0] == 0)
+		btrfs_prev_leaf(root, path);
+	else
+		path->slots[0]--;
+out:
+	btrfs_commit_transaction(trans, root);
+	if (ret)
+		error("failed to delete root %llu item[%llu, %u, %llu]",
+		      root->objectid, key.objectid, key.type, key.offset);
+	else
+		printf("Deleted root %llu item[%llu, %u, %llu]\n",
+		       root->objectid, key.objectid, key.type, key.offset);
+	return ret;
+}
+
+/*
  * Wrapper function for btrfs_fix_block_accounting().
  *
  * Returns 0     on success.
@@ -4433,50 +4481,6 @@ static int repair_chunk_item(struct btrfs_root *chunk_root,
 	return err;
 }
 
-static int delete_extent_tree_item(struct btrfs_root *root,
-				   struct btrfs_path *path)
-{
-	struct btrfs_key key;
-	struct btrfs_trans_handle *trans;
-	int ret = 0;
-
-	ret = avoid_extents_overwrite(root->fs_info);
-	if (ret)
-		return ret;
-	trans = btrfs_start_transaction(root, 1);
-	if (IS_ERR(trans)) {
-		ret = PTR_ERR(trans);
-		errno = -ret;
-		error("fail to start transaction: %m");
-		goto out;
-	}
-	btrfs_item_key_to_cpu(path->nodes[0], &key, path->slots[0]);
-	btrfs_release_path(path);
-	ret = btrfs_search_slot(trans, root, &key, path, -1, 1);
-	if (ret) {
-		ret = -ENOENT;
-		goto out;
-	}
-
-	ret = btrfs_del_item(trans, root, path);
-	if (ret)
-		goto out;
-
-	if (path->slots[0] == 0)
-		btrfs_prev_leaf(root, path);
-	else
-		path->slots[0]--;
-out:
-	btrfs_commit_transaction(trans, root);
-	if (ret)
-		error("failed to delete root %llu item[%llu, %u, %llu]",
-		      root->objectid, key.objectid, key.type, key.offset);
-	else
-		printf("Deleted root %llu item[%llu, %u, %llu]\n",
-		       root->objectid, key.objectid, key.type, key.offset);
-	return ret;
-}
-
 /*
  * Main entry function to check known items and update related accounting info
  */
@@ -4518,7 +4522,7 @@ again:
 		ret = check_block_group_item(fs_info, eb, slot);
 		if (repair &&
 		    ret & REFERENCER_MISSING)
-			ret = delete_extent_tree_item(root, path);
+			ret = delete_item(root, path);
 		err |= ret;
 		break;
 	case BTRFS_DEV_ITEM_KEY:
@@ -4549,7 +4553,7 @@ again:
 					       key.objectid, -1);
 		if (repair &&
 		    ret & (REFERENCER_MISMATCH | REFERENCER_MISSING))
-			ret = delete_extent_tree_item(root, path);
+			ret = delete_item(root, path);
 		err |= ret;
 		break;
 	case BTRFS_EXTENT_DATA_REF_KEY:
@@ -4562,7 +4566,7 @@ again:
 				btrfs_extent_data_ref_count(eb, dref));
 		if (repair &&
 		    ret & (REFERENCER_MISMATCH | REFERENCER_MISSING))
-			ret = delete_extent_tree_item(root, path);
+			ret = delete_item(root, path);
 		err |= ret;
 		break;
 	case BTRFS_SHARED_BLOCK_REF_KEY:
@@ -4570,7 +4574,7 @@ again:
 						 key.objectid, -1);
 		if (repair &&
 		    ret & (REFERENCER_MISMATCH | REFERENCER_MISSING))
-			ret = delete_extent_tree_item(root, path);
+			ret = delete_item(root, path);
 		err |= ret;
 		break;
 	case BTRFS_SHARED_DATA_REF_KEY:
@@ -4578,7 +4582,7 @@ again:
 						key.objectid);
 		if (repair &&
 		    ret & (REFERENCER_MISMATCH | REFERENCER_MISSING))
-			ret = delete_extent_tree_item(root, path);
+			ret = delete_item(root, path);
 		err |= ret;
 		break;
 	default:
