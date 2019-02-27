@@ -3037,6 +3037,7 @@ out:
 }
 
 /*
+ * If @err contains BYTES_UNALIGNED then delete the extent data item.
  * If @err contains BACKREF_MISSING then add extent of the
  * file_extent_data_item.
  *
@@ -3087,6 +3088,13 @@ static int repair_extent_data_item(struct btrfs_root *root,
 		parent = btrfs_header_bytenr(eb);
 	else
 		parent = 0;
+
+	if (err & BYTES_UNALIGNED) {
+		ret = delete_item(root, pathp);
+		if (!ret)
+			err = 0;
+		goto out;
+	}
 
 	/* now repair only adds backref */
 	if ((err & BACKREF_MISSING) == 0)
