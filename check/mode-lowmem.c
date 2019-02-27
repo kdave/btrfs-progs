@@ -3167,7 +3167,14 @@ static int check_extent_data_item(struct btrfs_root *root,
 	extent_num_bytes = btrfs_file_extent_num_bytes(eb, fi);
 	offset = btrfs_file_extent_offset(eb, fi);
 
-	/* Check unaligned disk_num_bytes and num_bytes */
+	/* Check unaligned disk_bytenr, disk_num_bytes and num_bytes */
+	if (!IS_ALIGNED(disk_bytenr, root->fs_info->sectorsize)) {
+		error(
+"file extent [%llu, %llu] has unaligned disk bytenr: %llu, should be aligned to %u",
+			fi_key.objectid, fi_key.offset, disk_bytenr,
+			root->fs_info->sectorsize);
+		err |= BYTES_UNALIGNED;
+	}
 	if (!IS_ALIGNED(disk_num_bytes, root->fs_info->sectorsize)) {
 		error(
 "file extent [%llu, %llu] has unaligned disk num bytes: %llu, should be aligned to %u",
