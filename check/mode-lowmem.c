@@ -1756,28 +1756,37 @@ out:
 /*
  * Wrapper function of btrfs_punch_hole.
  *
+ * @path:	The path holder, will point to the same key after hole punching.
+ *
  * Returns 0 means success.
  * Returns not 0 means error.
  */
-static int punch_extent_hole(struct btrfs_root *root, u64 ino, u64 start,
-			     u64 len)
+static int punch_extent_hole(struct btrfs_root *root, struct btrfs_path *path,
+			     u64 ino, u64 start, u64 len)
 {
 	struct btrfs_trans_handle *trans;
-	int ret = 0;
+	struct btrfs_key key;
+	int ret;
 
+	btrfs_item_key_to_cpu(path->nodes[0], &key, path->slots[0]);
 	trans = btrfs_start_transaction(root, 1);
 	if (IS_ERR(trans))
 		return PTR_ERR(trans);
 
 	ret = btrfs_punch_hole(trans, root, ino, start, len);
-	if (ret)
+	if (ret) {
 		error("failed to add hole [%llu, %llu] in inode [%llu]",
 		      start, len, ino);
-	else
-		printf("Add a hole [%llu, %llu] in inode [%llu]\n", start, len,
-		       ino);
-
+		btrfs_abort_transaction(trans, ret);
+		return ret;
+	}
+	printf("Add a hole [%llu, %llu] in inode [%llu]\n", start, len, ino);
 	btrfs_commit_transaction(trans, root);
+
+	btrfs_release_path(path);
+	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
+	if (ret > 0)
+		ret = -ENOENT;
 	return ret;
 }
 
@@ -2028,7 +2037,7 @@ static int check_file_extent(struct btrfs_root *root, struct btrfs_path *path,
 	/* Check EXTENT_DATA hole */
 	if (!no_holes && *end != fkey.offset) {
 		if (repair)
-			ret = punch_extent_hole(root, fkey.objectid,
+			ret = punch_extent_hole(root, path, fkey.objectid,
 						*end, fkey.offset - *end);
 		if (!repair || ret) {
 			err |= FILE_EXTENT_ERROR;
@@ -2599,7 +2608,7 @@ out:
 
 		if (!nbytes && !no_holes && extent_end < isize) {
 			if (repair)
-				ret = punch_extent_hole(root, inode_id,
+				ret = punch_extent_hole(root, path, inode_id,
 						extent_end, isize - extent_end);
 			if (!repair || ret) {
 				err |= NBYTES_ERROR;
