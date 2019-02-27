@@ -2663,7 +2663,7 @@ static int repair_mismatch_dir_hash(struct btrfs_trans_handle *trans,
 				    struct inode_record *rec)
 {
 	struct mismatch_dir_hash_record *hash;
-	int ret;
+	int ret = -EUCLEAN;
 
 	printf(
 	"Deleting bad dir items with invalid hash for root %llu ino %llu\n",
