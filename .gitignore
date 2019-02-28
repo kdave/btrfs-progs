@@ -64,7 +64,7 @@
 /cscope.files
 /cscope.in.out
 /cscope.po.out
-.clang_complete
+.*
 
 /Documentation/Makefile
 /Documentation/*.html
