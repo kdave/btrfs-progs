@@ -334,15 +334,17 @@ static int cmd_device_scan(int argc, char **argv)
 	if (all || argc - optind == 0) {
 		if (forget) {
 			ret = btrfs_forget_devices(NULL);
-			error_on(ret, "'%s', forget failed",
-				 strerror(-ret));
+			if (ret < 0) {
+				errno = -ret;
+				error("cannot unregister devices: %m");
+			}
 		} else {
 			printf("Scanning for Btrfs filesystems\n");
 			ret = btrfs_scan_devices();
 			error_on(ret, "error %d while scanning", ret);
 			ret = btrfs_register_all_devices();
 			error_on(ret,
-				"there are %d errors while registering devices",
+				"there were %d errors while registering devices",
 				ret);
 		}
 		goto out;
@@ -364,12 +366,12 @@ static int cmd_device_scan(int argc, char **argv)
 		}
 		if (forget) {
 			ret = btrfs_forget_devices(path);
-			if (ret)
-				error("Can't forget '%s': %s",
-							path, strerror(-ret));
+			if (ret < 0) {
+				errno = -ret;
+				error("cannot unregister device '%s': %m", path);
+			}
 		} else {
-			printf("Scanning for Btrfs filesystems in '%s'\n",
-									path);
+			printf("Scanning for btrfs filesystems on '%s'\n", path);
 			if (btrfs_register_one_device(path) != 0) {
 				ret = 1;
 				free(path);
