@@ -275,8 +275,8 @@ static int btrfs_forget_devices(const char *path)
 }
 
 static const char * const cmd_device_scan_usage[] = {
-	"btrfs device scan [(-d|--all-devices)|(-u|--forget)|<device> "\
-							"[<device>...]]",
+	"btrfs device scan [-d|--all-devices] <device> [<device>...]\n"
+	"btrfs device scan -u|--forget [<device>...]",
 	"Scan or forget (deregister) devices for a btrfs filesystem",
 	" -d|--all-devices (deprecated)",
 	" -u|--forget [<device> ..]",
