@@ -254,7 +254,7 @@ static int cmd_device_delete(int argc, char **argv)
 	return _cmd_device_remove(argc, argv, cmd_device_delete_usage);
 }
 
-static int btrfs_forget_devices(char *path)
+static int btrfs_forget_devices(const char *path)
 {
 	struct btrfs_ioctl_vol_args args;
 	int ret;
