@@ -96,7 +96,7 @@ filesystem mounting tools to wait before the mount can start. The device scan
 is only one of the preconditions and the mount can fail for other reasons.
 Normal users usually do not need this command and may safely ignore it.
 
-*scan* [(--all-devices|-d)|<device> [<device>...]]::
+*scan* [options] [<device> [<device>...]]::
 Scan devices for a btrfs filesystem and register them with the kernel module.
 This allows mounting multiple-device filesystem by specifying just one from the
 whole group.
@@ -104,13 +104,22 @@ whole group.
 If no devices are passed, all block devices that blkid reports to contain btrfs
 are scanned.
 +
-The options '--all-devices' or '-d' are deprecated and kept for backward compatibility.
-If used, behavior is the same as if no devices are passed.
+The options '--all-devices' or '-d' can be used as a fallback in case blkid is
+not available.  If used, behavior is the same as if no devices are passed.
 +
 The command can be run repeatedly. Devices that have been already registered
 remain as such. Reloading the kernel module will drop this information. There's
 an alternative way of mounting multiple-device filesystem without the need for
 prior scanning. See the mount option 'device'.
++
+`Options`
++
+-d|--all-devices::::
+Enumerate and register all devices, use as a fallback in case blkid is not
+available.
+-u|--forget::::
+Unregister a given device or all stale devices if no path is given, the device
+must be unmounted otherwise it's an error.
 
 *stats* [options] <path>|<device>::
 Read and print the device IO error statistics for all devices of the given
