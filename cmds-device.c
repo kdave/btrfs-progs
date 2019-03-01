@@ -42,8 +42,9 @@ static const char * const device_cmd_group_usage[] = {
 
 static const char * const cmd_device_add_usage[] = {
 	"btrfs device add [options] <device> [<device>...] <path>",
-	"Add a device to a filesystem",
-	"-K|--nodiscard    do not perform whole device TRIM",
+	"Add one or more devices to a mounted filesystem.",
+	"",
+	"-K|--nodiscard    do not perform whole device TRIM on devices that report such capability",
 	"-f|--force        force overwrite existing filesystem on the disk",
 	NULL
 };
@@ -224,6 +225,9 @@ static int _cmd_device_remove(int argc, char **argv,
 }
 
 #define COMMON_USAGE_REMOVE_DELETE					\
+	"Remove a device from a filesystem, specified by a path to the device or", \
+	"as a device id in the filesystem. The btrfs signature is removed from",   \
+	"the device.",								\
 	"If 'missing' is specified for <device>, the first device that is",	\
 	"described by the filesystem metadata, but not present at the mount",	\
 	"time will be removed. (only in degraded mode)"
@@ -387,7 +391,7 @@ out:
 
 static const char * const cmd_device_ready_usage[] = {
 	"btrfs device ready <device>",
-	"Check device to see if it has all of its devices in cache for mounting",
+	"Check and wait until a group of devices of a filesystem is ready for mount",
 	NULL
 };
 
