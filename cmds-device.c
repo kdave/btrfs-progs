@@ -277,9 +277,18 @@ static int btrfs_forget_devices(const char *path)
 static const char * const cmd_device_scan_usage[] = {
 	"btrfs device scan [-d|--all-devices] <device> [<device>...]\n"
 	"btrfs device scan -u|--forget [<device>...]",
-	"Scan or forget (deregister) devices for a btrfs filesystem",
-	" -d|--all-devices (deprecated)",
-	" -u|--forget [<device> ..]",
+	"Scan or forget (unregister) devices of btrfs filesystems",
+	"Scan or forget (unregister) devices of btrfs filesystems. Multi-device",
+	"filesystems need to scan devices before mount. The blkid provides list",
+	"of devices in case no path is given. If blkid is no available, there's",
+	"a fallback to manual enumeration of device nodes.",
+	"",
+	"The reverse is done by the forget option, such devices must be unmounted.",
+	"No argument will unregister all devices that are not part of a mounted filesystem.",
+	"",
+	" -d|--all-devices            enumerate and register all devices, use as a fallback",
+	"                             if blkid is not available",
+	" -u|--forget [<device>...]   unregister a given device or all stale devices if no path ",
 	NULL
 };
 
