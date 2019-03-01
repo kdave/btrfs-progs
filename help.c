@@ -239,6 +239,50 @@ void usage_command(const struct cmd_struct *cmd, int full, int err)
 }
 
 __attribute__((noreturn))
+void usage_unknown_option(const char * const *usagestr, char **argv)
+{
+	int i;
+	int c;
+	int prev = 0;
+
+	/*
+	 * Guess the command prefix, until the first option or argument
+	 * specifier
+	 */
+	i = 0;
+	do {
+		c = usagestr[0][i];
+		if (c == '<' || c == '[' || (prev == ' ' && c == '-')) {
+			i--;
+			break;
+		}
+		prev = c;
+		i++;
+	} while (c);
+
+	/*
+	 * Example:
+	 *
+	 * $ btrfs device add --unknown device path
+	 * btrfs device add: unrecognized option '--unknown'
+	 * Try 'btrfs device add --help' for more information
+	 */
+
+	fprintf(stderr, "%.*s: ", i, usagestr[0]);
+	if (!optopt) {
+		/*
+		 * There's no better way to get the exact unrecognized token
+		 * from getopt
+		 */
+		fprintf(stderr, "unrecognized option '%s'\n", argv[optind - 1]);
+	} else {
+		fprintf(stderr, "invalid option '%c'\n", optopt);
+	}
+	fprintf(stderr, "Try '%.*s --help' for more information\n", i, usagestr[0]);
+	exit(1);
+}
+
+__attribute__((noreturn))
 void usage(const char * const *usagestr)
 {
 	usage_command_usagestr(usagestr, NULL, 1, 1);
