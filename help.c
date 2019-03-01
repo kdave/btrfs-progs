@@ -52,10 +52,10 @@ void set_argv0(char **argv)
 
 int check_argc_exact(int nargs, int expected)
 {
-	if (nargs < expected)
-		fprintf(stderr, "%s: too few arguments\n", argv0_buf);
-	if (nargs > expected)
-		fprintf(stderr, "%s: too many arguments\n", argv0_buf);
+	if (nargs != expected)
+		fprintf(stderr, "%s: exactly %d argument%s expected, %d given\n",
+				argv0_buf, expected,
+				expected > 1 ? "s" : "", nargs);
 
 	return nargs != expected;
 }
@@ -63,7 +63,9 @@ int check_argc_exact(int nargs, int expected)
 int check_argc_min(int nargs, int expected)
 {
 	if (nargs < expected) {
-		fprintf(stderr, "%s: too few arguments\n", argv0_buf);
+		fprintf(stderr,
+			"%s: not enough arguments: %d but at least %d expected\n",
+			argv0_buf, nargs, expected);
 		return 1;
 	}
 
@@ -73,7 +75,9 @@ int check_argc_min(int nargs, int expected)
 int check_argc_max(int nargs, int expected)
 {
 	if (nargs > expected) {
-		fprintf(stderr, "%s: too many arguments\n", argv0_buf);
+		fprintf(stderr,
+			"%s: too many arguments: %d but at most %d expected\n",
+			argv0_buf, nargs, expected);
 		return 1;
 	}
 
