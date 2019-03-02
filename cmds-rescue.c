@@ -62,9 +62,9 @@ static int cmd_rescue_chunk_recover(int argc, char *argv[])
 		case 'v':
 			verbose = 1;
 			break;
-		case 'h':
 		default:
-			usage(cmd_rescue_chunk_recover_usage);
+			usage_unknown_option(cmd_rescue_chunk_recover_usage,
+					argv);
 		}
 	}
 
@@ -132,7 +132,8 @@ static int cmd_rescue_super_recover(int argc, char **argv)
 			yes = 1;
 			break;
 		default:
-			usage(cmd_rescue_super_recover_usage);
+			usage_unknown_option(cmd_rescue_super_recover_usage,
+					argv);
 		}
 	}
 	if (check_argc_exact(argc - optind, 1))

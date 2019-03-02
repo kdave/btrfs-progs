@@ -105,7 +105,8 @@ static int cmd_inspect_inode_resolve(int argc, char **argv)
 			verbose = 1;
 			break;
 		default:
-			usage(cmd_inspect_inode_resolve_usage);
+			usage_unknown_option(cmd_inspect_inode_resolve_usage,
+					argv);
 		}
 	}
 
@@ -166,7 +167,8 @@ static int cmd_inspect_logical_resolve(int argc, char **argv)
 			size = arg_strtou64(optarg);
 			break;
 		default:
-			usage(cmd_inspect_logical_resolve_usage);
+			usage_unknown_option(cmd_inspect_logical_resolve_usage,
+					argv);
 		}
 	}
 
@@ -615,7 +617,8 @@ static int cmd_inspect_min_dev_size(int argc, char **argv)
 			devid = arg_strtou64(optarg);
 			break;
 		default:
-			usage(cmd_inspect_min_dev_size_usage);
+			usage_unknown_option(cmd_inspect_min_dev_size_usage,
+					argv);
 		}
 	}
 	if (check_argc_exact(argc - optind, 1))

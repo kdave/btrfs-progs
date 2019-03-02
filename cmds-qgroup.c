@@ -250,7 +250,7 @@ static int cmd_qgroup_create(int argc, char **argv)
 	ret = _cmd_qgroup_create(1, argc, argv);
 
 	if (ret < 0)
-		usage(cmd_qgroup_create_usage);
+		usage_unknown_option(cmd_qgroup_create_usage, argv);
 	return ret;
 }
 
@@ -269,7 +269,7 @@ static int cmd_qgroup_destroy(int argc, char **argv)
 	ret = _cmd_qgroup_create(0, argc, argv);
 
 	if (ret < 0)
-		usage(cmd_qgroup_destroy_usage);
+		usage_unknown_option(cmd_qgroup_destroy_usage, argv);
 	return ret;
 }
 
@@ -361,7 +361,7 @@ static int cmd_qgroup_show(int argc, char **argv)
 			sync = 1;
 			break;
 		default:
-			usage(cmd_qgroup_show_usage);
+			usage_unknown_option(cmd_qgroup_show_usage, argv);
 		}
 	}
 	btrfs_qgroup_setup_units(unit_mode);
@@ -444,7 +444,7 @@ static int cmd_qgroup_limit(int argc, char **argv)
 			exclusive = 1;
 			break;
 		default:
-			usage(cmd_qgroup_limit_usage);
+			usage_unknown_option(cmd_qgroup_limit_usage, argv);
 		}
 	}
 

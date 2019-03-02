@@ -581,7 +581,7 @@ int cmd_filesystem_du(int argc, char **argv)
 			summarize = 1;
 			break;
 		default:
-			usage(cmd_filesystem_du_usage);
+			usage_unknown_option(cmd_filesystem_du_usage, argv);
 		}
 	}
 

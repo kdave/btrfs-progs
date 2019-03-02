@@ -278,7 +278,7 @@ static void parse_args(int argc, char **argv,
 			type_str = optarg;
 			break;
 		default:
-			usage(usage_str);
+			usage_unknown_option(usage_str, argv);
 		}
 	}
 

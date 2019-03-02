@@ -586,7 +586,7 @@ static int cmd_balance_start(int argc, char **argv)
 			background = 1;
 			break;
 		default:
-			usage(cmd_balance_start_usage);
+			usage_unknown_option(cmd_balance_start_usage, argv);
 		}
 	}
 
@@ -850,7 +850,7 @@ static int cmd_balance_status(int argc, char **argv)
 			verbose = 1;
 			break;
 		default:
-			usage(cmd_balance_status_usage);
+			usage_unknown_option(cmd_balance_status_usage, argv);
 		}
 	}
 

@@ -602,11 +602,8 @@ int cmd_send(int argc, char **argv)
 		case GETOPT_VAL_SEND_NO_DATA:
 			send_flags |= BTRFS_SEND_FLAG_NO_FILE_DATA;
 			break;
-		case '?':
 		default:
-			error("send arguments invalid");
-			ret = 1;
-			goto out;
+			usage_unknown_option(cmd_send_usage, argv);
 		}
 	}
 

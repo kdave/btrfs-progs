@@ -78,7 +78,7 @@ static int cmd_device_add(int argc, char **argv)
 			force = 1;
 			break;
 		default:
-			usage(cmd_device_add_usage);
+			usage_unknown_option(cmd_device_add_usage, argv);
 		}
 	}
 
@@ -324,7 +324,7 @@ static int cmd_device_scan(int argc, char **argv)
 			forget = 1;
 			break;
 		default:
-			usage(cmd_device_scan_usage);
+			usage_unknown_option(cmd_device_scan_usage, argv);
 		}
 	}
 	devstart = optind;
@@ -486,9 +486,8 @@ static int cmd_device_stats(int argc, char **argv)
 		case 'z':
 			flags = BTRFS_DEV_STATS_RESET;
 			break;
-		case '?':
 		default:
-			usage(cmd_device_stats_usage);
+			usage_unknown_option(cmd_device_stats_usage, argv);
 		}
 	}
 

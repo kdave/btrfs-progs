@@ -124,7 +124,7 @@ static int cmd_subvol_create(int argc, char **argv)
 			}
 			break;
 		default:
-			usage(cmd_subvol_create_usage);
+			usage_unknown_option(cmd_subvol_create_usage, argv);
 		}
 	}
 
@@ -275,7 +275,7 @@ static int cmd_subvol_delete(int argc, char **argv)
 			verbose++;
 			break;
 		default:
-			usage(cmd_subvol_delete_usage);
+			usage_unknown_option(cmd_subvol_delete_usage, argv);
 		}
 	}
 
@@ -672,7 +672,7 @@ static int cmd_subvol_snapshot(int argc, char **argv)
 			}
 			break;
 		default:
-			usage(cmd_subvol_snapshot_usage);
+			usage_unknown_option(cmd_subvol_snapshot_usage, argv);
 		}
 	}
 
@@ -962,7 +962,7 @@ static int cmd_subvol_show(int argc, char **argv)
 			by_uuid = 1;
 			break;
 		default:
-			usage(cmd_subvol_show_usage);
+			usage_unknown_option(cmd_subvol_show_usage, argv);
 		}
 	}
 
@@ -1156,7 +1156,7 @@ static int cmd_subvol_sync(int argc, char **argv)
 			}
 			break;
 		default:
-			usage(cmd_subvol_sync_usage);
+			usage_unknown_option(cmd_subvol_sync_usage, argv);
 		}
 	}
 

@@ -1527,7 +1527,7 @@ int cmd_restore(int argc, char **argv)
 				get_xattrs = 1;
 				break;
 			default:
-				usage(cmd_restore_usage);
+				usage_unknown_option(cmd_restore_usage, argv);
 		}
 	}
 

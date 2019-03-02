@@ -314,7 +314,7 @@ int cmd_inspect_dump_tree(int argc, char **argv)
 			traverse = BTRFS_PRINT_TREE_BFS;
 			break;
 		default:
-			usage(cmd_inspect_dump_tree_usage);
+			usage_unknown_option(cmd_inspect_dump_tree_usage, argv);
 		}
 	}
 

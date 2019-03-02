@@ -146,9 +146,8 @@ static int cmd_replace_start(int argc, char **argv)
 		case 'f':
 			force_using_targetdev = 1;
 			break;
-		case '?':
 		default:
-			usage(cmd_replace_start_usage);
+			usage_unknown_option(cmd_replace_start_usage, argv);
 		}
 	}
 
@@ -345,9 +344,8 @@ static int cmd_replace_status(int argc, char **argv)
 		case '1':
 			once = 1;
 			break;
-		case '?':
 		default:
-			usage(cmd_replace_status_usage);
+			usage_unknown_option(cmd_replace_status_usage, argv);
 		}
 	}
 
@@ -513,7 +511,7 @@ static int cmd_replace_cancel(int argc, char **argv)
 		switch (c) {
 		case '?':
 		default:
-			usage(cmd_replace_cancel_usage);
+			usage_unknown_option(cmd_replace_cancel_usage, argv);
 		}
 	}
 

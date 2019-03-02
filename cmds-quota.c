@@ -132,7 +132,7 @@ static int cmd_quota_rescan(int argc, char **argv)
 			wait_for_completion = 1;
 			break;
 		default:
-			usage(cmd_quota_rescan_usage);
+			usage_unknown_option(cmd_quota_rescan_usage, argv);
 		}
 	}
 

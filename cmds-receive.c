@@ -1301,10 +1301,8 @@ int cmd_receive(int argc, char **argv)
 		case GETOPT_VAL_DUMP:
 			dump = 1;
 			break;
-		case '?':
 		default:
-			error("receive args invalid");
-			return 1;
+			usage_unknown_option(cmd_receive_usage, argv);
 		}
 	}
 

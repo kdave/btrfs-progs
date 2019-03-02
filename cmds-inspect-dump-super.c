@@ -591,7 +591,7 @@ int cmd_inspect_dump_super(int argc, char **argv)
 			all = 0;
 			break;
 		default:
-			usage(cmd_inspect_dump_super_usage);
+			usage_unknown_option(cmd_inspect_dump_super_usage, argv);
 		}
 	}
 

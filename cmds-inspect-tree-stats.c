@@ -444,7 +444,7 @@ int cmd_inspect_tree_stats(int argc, char **argv)
 			no_pretty = 1;
 			break;
 		default:
-			usage(cmd_inspect_tree_stats_usage);
+			usage_unknown_option(cmd_inspect_tree_stats_usage, argv);
 		}
 	}
 

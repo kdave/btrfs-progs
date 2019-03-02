@@ -987,7 +987,7 @@ int cmd_filesystem_usage(int argc, char **argv)
 			tabular = 1;
 			break;
 		default:
-			usage(cmd_filesystem_usage_usage);
+			usage_unknown_option(cmd_filesystem_usage_usage, argv);
 		}
 	}
 

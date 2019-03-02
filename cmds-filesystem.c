@@ -708,7 +708,7 @@ static int cmd_filesystem_show(int argc, char **argv)
 			where = BTRFS_SCAN_MOUNTED;
 			break;
 		default:
-			usage(cmd_filesystem_show_usage);
+			usage_unknown_option(cmd_filesystem_show_usage, argv);
 		}
 	}
 
@@ -965,7 +965,7 @@ static int cmd_filesystem_defrag(int argc, char **argv)
 			recursive = 1;
 			break;
 		default:
-			usage(cmd_filesystem_defrag_usage);
+			usage_unknown_option(cmd_filesystem_defrag_usage, argv);
 		}
 	}
 

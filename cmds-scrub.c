@@ -1172,10 +1172,9 @@ static int scrub_start(int argc, char **argv, int resume)
 		case 'f':
 			force = 1;
 			break;
-		case '?':
 		default:
-			usage(resume ? cmd_scrub_resume_usage :
-						cmd_scrub_start_usage);
+			usage_unknown_option(resume ? cmd_scrub_resume_usage :
+						cmd_scrub_start_usage, argv);
 		}
 	}
 
@@ -1696,9 +1695,8 @@ static int cmd_scrub_status(int argc, char **argv)
 		case 'R':
 			print_raw = 1;
 			break;
-		case '?':
 		default:
-			usage(cmd_scrub_status_usage);
+			usage_unknown_option(cmd_scrub_status_usage, argv);
 		}
 	}
 
