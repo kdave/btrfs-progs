@@ -193,17 +193,15 @@ int main(int argc, char **argv)
 	}
 
 	set_argv0(argv);
-	if (check_argc_min(argc - optind, 1)) {
-		find_root_usage();
-		exit(1);
-	}
+	if (check_argc_min(argc - optind, 1))
+		return 1;
 
 	fs_info = open_ctree_fs_info(argv[optind], 0, 0, 0,
 			OPEN_CTREE_CHUNK_ROOT_ONLY |
 			OPEN_CTREE_IGNORE_CHUNK_TREE_ERROR);
 	if (!fs_info) {
 		error("open ctree failed");
-		exit(1);
+		return 1;
 	}
 	cache_tree_init(&result);
 
