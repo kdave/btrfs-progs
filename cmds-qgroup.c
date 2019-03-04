@@ -346,6 +346,10 @@ static int cmd_qgroup_show(int argc, char **argv)
 				error("cannot parse sort string: %m");
 				return 1;
 			}
+			if (ret > 0) {
+				error("unrecognized format of sort string");
+				return 1;
+			}
 			break;
 		case GETOPT_VAL_SYNC:
 			sync = 1;
