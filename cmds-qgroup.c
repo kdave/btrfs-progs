@@ -138,7 +138,7 @@ static int _cmd_qgroup_create(int create, int argc, char **argv)
 	DIR *dirstream = NULL;
 
 	if (check_argc_exact(argc - optind, 2))
-		return -1;
+		return 1;
 
 	memset(&args, 0, sizeof(args));
 	args.create = create;
@@ -242,15 +242,9 @@ static const char * const cmd_qgroup_create_usage[] = {
 
 static int cmd_qgroup_create(int argc, char **argv)
 {
-	int ret;
-
 	clean_args_no_options(argc, argv, cmd_qgroup_create_usage);
 
-	ret = _cmd_qgroup_create(1, argc, argv);
-
-	if (ret < 0)
-		usage_unknown_option(cmd_qgroup_create_usage, argv);
-	return ret;
+	return _cmd_qgroup_create(1, argc, argv);
 }
 
 static const char * const cmd_qgroup_destroy_usage[] = {
@@ -261,15 +255,9 @@ static const char * const cmd_qgroup_destroy_usage[] = {
 
 static int cmd_qgroup_destroy(int argc, char **argv)
 {
-	int ret;
-
 	clean_args_no_options(argc, argv, cmd_qgroup_destroy_usage);
 
-	ret = _cmd_qgroup_create(0, argc, argv);
-
-	if (ret < 0)
-		usage_unknown_option(cmd_qgroup_destroy_usage, argv);
-	return ret;
+	return _cmd_qgroup_create(0, argc, argv);
 }
 
 static const char * const cmd_qgroup_show_usage[] = {
