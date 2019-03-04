@@ -143,6 +143,11 @@ static void print_find_root_result(struct cache_tree *result,
 	}
 }
 
+/* Stub usage for the common helpers */
+static const char * btrfs_find_root_usage[] = {
+	"btrfs-find-usage",
+};
+
 int main(int argc, char **argv)
 {
 	struct btrfs_fs_info *fs_info;
@@ -155,6 +160,7 @@ int main(int argc, char **argv)
 	filter.objectid = BTRFS_ROOT_TREE_OBJECTID;
 	filter.match_gen = (u64)-1;
 	filter.match_level = (u8)-1;
+	opterr = 0;
 	while (1) {
 		static const struct option long_options[] = {
 			{ "help", no_argument, NULL, GETOPT_VAL_HELP},
@@ -179,9 +185,10 @@ int main(int argc, char **argv)
 			filter.level = arg_strtou64(optarg);
 			break;
 		case GETOPT_VAL_HELP:
-		default:
 			find_root_usage();
-			exit(c != GETOPT_VAL_HELP);
+			return 0;
+		default:
+			usage_unknown_option(btrfs_find_root_usage, argv);
 		}
 	}
 
