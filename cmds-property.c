@@ -201,7 +201,7 @@ static int dump_props(int types, const char *object, int name_and_help)
 		for (j = 1; j < __prop_object_max; j <<= 1) {
 			ret = dump_prop(prop, object, types, j, name_and_help);
 			if (ret < 0) {
-				ret = 50;
+				ret = 1;
 				goto out;
 			}
 		}
@@ -222,38 +222,33 @@ static int setget_prop(int types, const char *object,
 	ret = parse_prop(name, prop_handlers, &prop);
 	if (ret == -1) {
 		error("unknown property: %s", name);
-		ret = 40;
-		goto out;
+		return 1;
 	}
 
 	types &= prop->types;
 	if (!types) {
 		error("object is not compatible with property: %s", prop->name);
-		ret = 47;
-		goto out;
+		return 1;
 	}
 
 	if (count_bits(types) > 1) {
 		error("type of object is ambiguous, please use option -t");
-		ret = 48;
-		goto out;
+		return 1;
 	}
 
 	if (value && prop->read_only) {
 		error("property is read-only property: %s",
 				prop->name);
-		ret = 51;
-		goto out;
+		return 1;
 	}
 
 	ret = prop->handler(types, object, name, value);
 
 	if (ret < 0)
-		ret = 50;
+		ret = 1;
 	else
 		ret = 0;
 
-out:
 	return ret;
 
 }
