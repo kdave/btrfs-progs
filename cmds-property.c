@@ -306,7 +306,7 @@ static int parse_args(int argc, char **argv,
 			*types = prop_object_dev;
 		} else {
 			error("invalid object type: %s", type_str);
-			usage(usage_str);
+			return 1;
 		}
 	}
 
@@ -321,11 +321,11 @@ static int parse_args(int argc, char **argv,
 		if (ret < 0) {
 			errno = -ret;
 			error("failed to detect object type: %m");
-			usage(usage_str);
+			return 1;
 		}
 		if (!*types) {
 			error("object is not a btrfs object: %s", *object);
-			usage(usage_str);
+			return 1;
 		}
 	}
 
