@@ -468,9 +468,8 @@ int btrfs_qgroup_setup_comparer(struct btrfs_qgroup_comparer_set  **comp_set,
 		tmp = set;
 		set = realloc(set, size);
 		if (!set) {
-			error("memory allocation failed");
 			free(tmp);
-			exit(1);
+			return -ENOMEM;
 		}
 
 		memset(&set->comps[set->total], 0,
@@ -1211,7 +1210,7 @@ int btrfs_qgroup_parse_sort_string(const char *opt_arg,
 	char **ptr_argv;
 	int what_to_sort;
 	char *opt_tmp;
-	int ret = 0;
+	int ret = 0, ret2;
 
 	opt_tmp = strdup(opt_arg);
 	if (!opt_tmp)
@@ -1256,7 +1255,12 @@ int btrfs_qgroup_parse_sort_string(const char *opt_arg,
 				ret = 1;
 				goto out;
 			}
-			btrfs_qgroup_setup_comparer(comps, what_to_sort, order);
+			ret2 = btrfs_qgroup_setup_comparer(comps, what_to_sort,
+					order);
+			if (ret2 < 0) {
+				ret = ret2;
+				goto out;
+			}
 		}
 		p = strtok(NULL, ",");
 	}
