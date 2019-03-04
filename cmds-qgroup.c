@@ -68,8 +68,7 @@ static int _cmd_qgroup_assign(int assign, int argc, char **argv,
 				rescan = false;
 				break;
 			default:
-				/* Usage printed by the caller */
-				return -1;
+				usage_unknown_option(usage_str, argv);
 			}
 		}
 	} else {
