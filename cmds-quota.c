@@ -142,7 +142,7 @@ static int cmd_quota_rescan(int argc, char **argv)
 	}
 
 	if (check_argc_exact(argc - optind, 1))
-		usage(cmd_quota_rescan_usage);
+		return 1;
 
 	memset(&args, 0, sizeof(args));
 

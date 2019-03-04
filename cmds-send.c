@@ -608,7 +608,7 @@ int cmd_send(int argc, char **argv)
 	}
 
 	if (check_argc_min(argc - optind, 1))
-		usage(cmd_send_usage);
+		return 1;
 
 	if (outname[0]) {
 		int tmpfd;

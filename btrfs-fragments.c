@@ -442,7 +442,7 @@ int main(int argc, char **argv)
 
 	set_argv0(argv);
 	if (check_argc_min(argc - optind, 1))
-		fragments_usage();
+		return 1;
 
 	path = argv[optind++];
 

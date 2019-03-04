@@ -156,7 +156,7 @@ static int cmd_replace_start(int argc, char **argv)
 		 BTRFS_IOCTL_DEV_REPLACE_CONT_READING_FROM_SRCDEV_MODE_AVOID :
 		 BTRFS_IOCTL_DEV_REPLACE_CONT_READING_FROM_SRCDEV_MODE_ALWAYS;
 	if (check_argc_exact(argc - optind, 3))
-		usage(cmd_replace_start_usage);
+		return 1;
 	path = argv[optind + 2];
 
 	fdmnt = open_path_or_dev_mnt(path, &dirstream, 1);
@@ -350,7 +350,7 @@ static int cmd_replace_status(int argc, char **argv)
 	}
 
 	if (check_argc_exact(argc - optind, 1))
-		usage(cmd_replace_status_usage);
+		return 1;
 
 	path = argv[optind];
 	fd = btrfs_open_dir(path, &dirstream, 1);
@@ -516,7 +516,7 @@ static int cmd_replace_cancel(int argc, char **argv)
 	}
 
 	if (check_argc_exact(argc - optind, 1))
-		usage(cmd_replace_cancel_usage);
+		return 1;
 
 	path = argv[optind];
 	fd = btrfs_open_dir(path, &dirstream, 1);

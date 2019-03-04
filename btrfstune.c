@@ -547,10 +547,8 @@ int main(int argc, char *argv[])
 
 	set_argv0(argv);
 	device = argv[optind];
-	if (check_argc_exact(argc - optind, 1)) {
-		print_usage();
+	if (check_argc_exact(argc - optind, 1))
 		return 1;
-	}
 
 	if (random_fsid && new_fsid_str) {
 		error("random fsid can't be used with specified fsid");

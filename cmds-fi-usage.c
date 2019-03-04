@@ -992,7 +992,7 @@ int cmd_filesystem_usage(int argc, char **argv)
 	}
 
 	if (check_argc_min(argc - optind, 1))
-		usage(cmd_filesystem_usage_usage);
+		return 1;
 
 	for (i = optind; i < argc; i++) {
 		int fd;

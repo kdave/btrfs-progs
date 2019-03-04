@@ -289,7 +289,7 @@ static void parse_args(int argc, char **argv,
 
 	if (check_argc_min(argc - optind, min_nonopt_args) ||
 	    check_argc_max(argc - optind, max_nonopt_args))
-		usage(usage_str);
+		exit(1);
 
 	*types = 0;
 	if (type_str) {

@@ -70,13 +70,13 @@ int main(int argc, char **argv)
 
 	if (!loop) {
 		if (check_argc_exact(argc - optind, 1))
-			print_usage(255);
+			return 1;
 
 		printf("%12u - %s\n", crc32c(~1, str, strlen(str)), str);
 		return 0;
 	}
 	if (check_argc_exact(argc - optind, 0))
-		print_usage(255);
+		return 1;
 
 	buf = malloc(length);
 	if (!buf)

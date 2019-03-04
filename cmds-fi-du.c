@@ -586,7 +586,7 @@ int cmd_filesystem_du(int argc, char **argv)
 	}
 
 	if (check_argc_min(argc - optind, 1))
-		usage(cmd_filesystem_du_usage);
+		return 1;
 
 	kernel_version = get_running_kernel_version();
 

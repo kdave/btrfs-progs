@@ -319,7 +319,7 @@ int cmd_inspect_dump_tree(int argc, char **argv)
 	}
 
 	if (check_argc_exact(argc - optind, 1))
-		usage(cmd_inspect_dump_tree_usage);
+		return 1;
 
 	ret = check_arg_type(argv[optind]);
 	if (ret != BTRFS_ARG_BLKDEV && ret != BTRFS_ARG_REG) {

@@ -131,7 +131,7 @@ static int cmd_filesystem_df(int argc, char **argv)
 	clean_args_no_options(argc, argv, cmd_filesystem_df_usage);
 
 	if (check_argc_exact(argc - optind, 1))
-		usage(cmd_filesystem_df_usage);
+		return 1;
 
 	path = argv[optind];
 
@@ -713,7 +713,7 @@ static int cmd_filesystem_show(int argc, char **argv)
 	}
 
 	if (check_argc_max(argc, optind + 1))
-		usage(cmd_filesystem_show_usage);
+		return 1;
 
 	if (argc > optind) {
 		search = argv[optind];
@@ -824,7 +824,7 @@ static int cmd_filesystem_sync(int argc, char **argv)
 	clean_args_no_options(argc, argv, cmd_filesystem_sync_usage);
 
 	if (check_argc_exact(argc - optind, 1))
-		usage(cmd_filesystem_sync_usage);
+		return 1;
 
 	err = btrfs_util_sync(argv[optind]);
 	if (err) {
@@ -970,7 +970,7 @@ static int cmd_filesystem_defrag(int argc, char **argv)
 	}
 
 	if (check_argc_min(argc - optind, 1))
-		usage(cmd_filesystem_defrag_usage);
+		return 1;
 
 	memset(&defrag_global_range, 0, sizeof(defrag_global_range));
 	defrag_global_range.start = start;
@@ -1094,7 +1094,7 @@ static int cmd_filesystem_resize(int argc, char **argv)
 	clean_args_no_options_relaxed(argc, argv);
 
 	if (check_argc_exact(argc - optind, 2))
-		usage(cmd_filesystem_resize_usage);
+		return 1;
 
 	amount = argv[optind];
 	path = argv[optind + 1];
@@ -1166,7 +1166,7 @@ static int cmd_filesystem_label(int argc, char **argv)
 
 	if (check_argc_min(argc - optind, 1) ||
 			check_argc_max(argc - optind, 2))
-		usage(cmd_filesystem_label_usage);
+		return 1;
 
 	if (argc - optind > 1) {
 		return set_label(argv[optind], argv[optind + 1]);

@@ -83,7 +83,7 @@ static int cmd_device_add(int argc, char **argv)
 	}
 
 	if (check_argc_min(argc - optind, 2))
-		usage(cmd_device_add_usage);
+		return 1;
 
 	last_dev = argc - 1;
 	mntpnt = argv[last_dev];
@@ -153,7 +153,7 @@ static int _cmd_device_remove(int argc, char **argv,
 	clean_args_no_options(argc, argv, usagestr);
 
 	if (check_argc_min(argc - optind, 2))
-		usage(usagestr);
+		return 1;
 
 	mntpnt = argv[argc - 1];
 
@@ -405,7 +405,7 @@ static int cmd_device_ready(int argc, char **argv)
 	clean_args_no_options(argc, argv, cmd_device_ready_usage);
 
 	if (check_argc_exact(argc - optind, 1))
-		usage(cmd_device_ready_usage);
+		return 1;
 
 	fd = open("/dev/btrfs-control", O_RDWR);
 	if (fd < 0) {
@@ -492,7 +492,7 @@ static int cmd_device_stats(int argc, char **argv)
 	}
 
 	if (check_argc_exact(argc - optind, 1))
-		usage(cmd_device_stats_usage);
+		return 1;
 
 	dev_path = argv[optind];
 
@@ -629,7 +629,7 @@ static int cmd_device_usage(int argc, char **argv)
 	clean_args_no_options(argc, argv, cmd_device_usage_usage);
 
 	if (check_argc_min(argc - optind, 1))
-		usage(cmd_device_usage_usage);
+		return 1;
 
 	for (i = optind; i < argc; i++) {
 		int fd;

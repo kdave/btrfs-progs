@@ -1180,10 +1180,8 @@ static int scrub_start(int argc, char **argv, int resume)
 
 	/* try to catch most error cases before forking */
 
-	if (check_argc_exact(argc - optind, 1)) {
-		usage(resume ? cmd_scrub_resume_usage :
-					cmd_scrub_start_usage);
-	}
+	if (check_argc_exact(argc - optind, 1))
+		return 1;
 
 	spc.progress = NULL;
 	if (do_quiet && do_print)
@@ -1606,7 +1604,7 @@ static int cmd_scrub_cancel(int argc, char **argv)
 	clean_args_no_options(argc, argv, cmd_scrub_cancel_usage);
 
 	if (check_argc_exact(argc - optind, 1))
-		usage(cmd_scrub_cancel_usage);
+		return 1;
 
 	path = argv[optind];
 
@@ -1701,7 +1699,7 @@ static int cmd_scrub_status(int argc, char **argv)
 	}
 
 	if (check_argc_exact(argc - optind, 1))
-		usage(cmd_scrub_status_usage);
+		return 1;
 
 	path = argv[optind];
 

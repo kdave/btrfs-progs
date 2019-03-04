@@ -128,8 +128,10 @@ static int cmd_subvol_create(int argc, char **argv)
 		}
 	}
 
-	if (check_argc_exact(argc - optind, 1))
-		usage(cmd_subvol_create_usage);
+	if (check_argc_exact(argc - optind, 1)) {
+		retval = 1;
+		goto out;
+	}
 
 	dst = argv[optind];
 
@@ -280,7 +282,7 @@ static int cmd_subvol_delete(int argc, char **argv)
 	}
 
 	if (check_argc_min(argc - optind, 1))
-		usage(cmd_subvol_delete_usage);
+		return 1;
 
 	if (verbose > 0) {
 		printf("Transaction commit: %s\n",
@@ -561,10 +563,8 @@ static int cmd_subvol_list(int argc, char **argv)
 		}
 	}
 
-	if (check_argc_exact(argc - optind, 1)) {
-		uerr = 1;
+	if (check_argc_exact(argc - optind, 1))
 		goto out;
-	}
 
 	subvol = argv[optind];
 	fd = btrfs_open_dir(subvol, &dirstream, 1);
@@ -676,8 +676,10 @@ static int cmd_subvol_snapshot(int argc, char **argv)
 		}
 	}
 
-	if (check_argc_exact(argc - optind, 2))
-		usage(cmd_subvol_snapshot_usage);
+	if (check_argc_exact(argc - optind, 2)) {
+		retval = 1;
+		goto out;
+	}
 
 	subvol = argv[optind];
 	dst = argv[optind + 1];
@@ -785,7 +787,7 @@ static int cmd_subvol_get_default(int argc, char **argv)
 	clean_args_no_options(argc, argv, cmd_subvol_get_default_usage);
 
 	if (check_argc_exact(argc - optind, 1))
-		usage(cmd_subvol_get_default_usage);
+		return 1;
 
 	fd = btrfs_open_dir(argv[1], &dirstream, 1);
 	if (fd < 0)
@@ -846,7 +848,7 @@ static int cmd_subvol_set_default(int argc, char **argv)
 
 	if (check_argc_min(argc - optind, 1) ||
 			check_argc_max(argc - optind, 2))
-		usage(cmd_subvol_set_default_usage);
+		return 1;
 
 	if (argc - optind == 1) {
 		/* path to the subvolume is specified */
@@ -884,7 +886,7 @@ static int cmd_subvol_find_new(int argc, char **argv)
 	clean_args_no_options(argc, argv, cmd_subvol_find_new_usage);
 
 	if (check_argc_exact(argc - optind, 2))
-		usage(cmd_subvol_find_new_usage);
+		return 1;
 
 	subvol = argv[optind];
 	last_gen = arg_strtou64(argv[optind + 1]);
@@ -967,7 +969,7 @@ static int cmd_subvol_show(int argc, char **argv)
 	}
 
 	if (check_argc_exact(argc - optind, 1))
-		usage(cmd_subvol_show_usage);
+		return 1;
 
 	if (by_rootid && by_uuid) {
 		error(
@@ -1161,7 +1163,7 @@ static int cmd_subvol_sync(int argc, char **argv)
 	}
 
 	if (check_argc_min(argc - optind, 1))
-		usage(cmd_subvol_sync_usage);
+		return 1;
 
 	fd = btrfs_open_dir(argv[optind], &dirstream, 1);
 	if (fd < 0) {

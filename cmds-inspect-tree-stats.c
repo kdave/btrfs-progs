@@ -448,9 +448,8 @@ int cmd_inspect_tree_stats(int argc, char **argv)
 		}
 	}
 
-	if (check_argc_exact(argc - optind, 1)) {
-		usage(cmd_inspect_tree_stats_usage);
-	}
+	if (check_argc_exact(argc - optind, 1))
+		return 1;
 
 	ret = check_mounted(argv[optind]);
 	if (ret < 0) {

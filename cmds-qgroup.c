@@ -77,7 +77,7 @@ static int _cmd_qgroup_assign(int assign, int argc, char **argv,
 	}
 
 	if (check_argc_exact(argc - optind, 3))
-		usage(usage_str);
+		return 1;
 
 	memset(&args, 0, sizeof(args));
 	args.assign = assign;
@@ -367,7 +367,7 @@ static int cmd_qgroup_show(int argc, char **argv)
 	btrfs_qgroup_setup_units(unit_mode);
 
 	if (check_argc_exact(argc - optind, 1))
-		usage(cmd_qgroup_show_usage);
+		return 1;
 
 	path = argv[optind];
 	fd = btrfs_open_dir(path, &dirstream, 1);
@@ -449,7 +449,7 @@ static int cmd_qgroup_limit(int argc, char **argv)
 	}
 
 	if (check_argc_min(argc - optind, 2))
-		usage(cmd_qgroup_limit_usage);
+		return 1;
 
 	if (!parse_limit(argv[optind], &size)) {
 		error("invalid size argument: %s", argv[optind]);

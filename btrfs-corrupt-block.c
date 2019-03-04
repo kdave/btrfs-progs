@@ -1235,7 +1235,7 @@ int main(int argc, char **argv)
 	}
 	set_argv0(argv);
 	if (check_argc_min(argc - optind, 1))
-		print_usage(1);
+		return 1;
 	dev = argv[optind];
 
 	radix_tree_init();

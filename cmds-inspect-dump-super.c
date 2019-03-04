@@ -596,7 +596,7 @@ int cmd_inspect_dump_super(int argc, char **argv)
 	}
 
 	if (check_argc_min(argc - optind, 1))
-		usage(cmd_inspect_dump_super_usage);
+		return 1;
 
 	for (i = optind; i < argc; i++) {
 		filename = argv[i];

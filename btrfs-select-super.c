@@ -67,7 +67,7 @@ int main(int argc, char **argv)
 	}
 	set_argv0(argv);
 	if (check_argc_exact(argc - optind, 1))
-		print_usage();
+		return 1;
 
 	if (bytenr == 0) {
 		fprintf(stderr, "Please select the super copy with -s\n");
