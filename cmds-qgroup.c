@@ -341,8 +341,11 @@ static int cmd_qgroup_show(int argc, char **argv)
 		case GETOPT_VAL_SORT:
 			ret = btrfs_qgroup_parse_sort_string(optarg,
 							     &comparer_set);
-			if (ret)
-				usage(cmd_qgroup_show_usage);
+			if (ret < 0) {
+				errno = -ret;
+				error("cannot parse sort string: %m");
+				return 1;
+			}
 			break;
 		case GETOPT_VAL_SYNC:
 			sync = 1;
