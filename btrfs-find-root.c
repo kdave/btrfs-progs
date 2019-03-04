@@ -36,12 +36,7 @@
 #include "extent-cache.h"
 #include "find-root.h"
 #include "help.h"
-
-static void find_root_usage(void)
-{
-	fprintf(stderr, "Usage: find-roots [-a] [-o search_objectid] "
-		"[ -g search_generation ] [ -l search_level ] <device>\n");
-}
+#include "commands.h"
 
 /*
  * Get reliable generation and level for given root.
@@ -143,9 +138,18 @@ static void print_find_root_result(struct cache_tree *result,
 	}
 }
 
-/* Stub usage for the common helpers */
 static const char * btrfs_find_root_usage[] = {
-	"btrfs-find-usage",
+	"btrfs-find-usage [options] <device>",
+	"Attempt to find tree roots on the device",
+	"",
+	"  -a              search through all metadata even if the root has been found",
+	"  -o OBJECTID     filter by the tree's object id",
+	"  -l LEVEL        filter by tree level, (default: 0)",
+	"  -g GENERATION   filter by tree generation",
+};
+
+static const struct cmd_struct btrfs_find_root_cmd = {
+	"btrfs-find-root", NULL, btrfs_find_root_usage, NULL, 0,
 };
 
 int main(int argc, char **argv)
@@ -185,7 +189,7 @@ int main(int argc, char **argv)
 			filter.level = arg_strtou64(optarg);
 			break;
 		case GETOPT_VAL_HELP:
-			find_root_usage();
+			usage_command(&btrfs_find_root_cmd, 0, 0);
 			return 0;
 		default:
 			usage_unknown_option(btrfs_find_root_usage, argv);
