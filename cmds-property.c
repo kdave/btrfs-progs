@@ -258,7 +258,7 @@ out:
 
 }
 
-static void parse_args(int argc, char **argv,
+static int parse_args(int argc, char **argv,
 		       const char * const *usage_str,
 		       int *types, char **object,
 		       char **name, char **value, int min_nonopt_args)
@@ -289,7 +289,7 @@ static void parse_args(int argc, char **argv,
 
 	if (check_argc_min(argc - optind, min_nonopt_args) ||
 	    check_argc_max(argc - optind, max_nonopt_args))
-		exit(1);
+		return 1;
 
 	*types = 0;
 	if (type_str) {
@@ -328,6 +328,8 @@ static void parse_args(int argc, char **argv,
 			usage(usage_str);
 		}
 	}
+
+	return 0;
 }
 
 static const char * const cmd_property_get_usage[] = {
@@ -350,8 +352,9 @@ static int cmd_property_get(int argc, char **argv)
 	char *name = NULL;
 	int types = 0;
 
-	parse_args(argc, argv, cmd_property_get_usage, &types, &object, &name,
-		   NULL, 1);
+	if (parse_args(argc, argv, cmd_property_get_usage, &types, &object,
+				&name, NULL, 1))
+		return 1;
 
 	if (name)
 		ret = setget_prop(types, object, name, NULL);
@@ -377,8 +380,9 @@ static int cmd_property_set(int argc, char **argv)
 	char *value = NULL;
 	int types = 0;
 
-	parse_args(argc, argv, cmd_property_set_usage, &types,
-		   &object, &name, &value, 3);
+	if (parse_args(argc, argv, cmd_property_set_usage, &types, &object,
+				&name, &value, 3))
+		return 1;
 
 	ret = setget_prop(types, object, name, value);
 
@@ -399,8 +403,9 @@ static int cmd_property_list(int argc, char **argv)
 	char *object = NULL;
 	int types = 0;
 
-	parse_args(argc, argv, cmd_property_list_usage,
-		   &types, &object, NULL, NULL, 1);
+	if (parse_args(argc, argv, cmd_property_list_usage, &types, &object,
+				NULL, NULL, 1))
+		return 1;
 
 	ret = dump_props(types, object, 1);
 
