@@ -38,6 +38,9 @@ A subvolume is made read-only after the receiving process finishes successfully 
 -v::
 increase verbosity about performed actions, print details about each operation
 
+-q|--quiet::
+suppress all messages except errors
+
 -f <FILE>::
 read the stream from <FILE> instead of stdin,
 
