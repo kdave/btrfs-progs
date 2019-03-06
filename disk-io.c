@@ -392,7 +392,11 @@ struct extent_buffer* read_tree_block(struct btrfs_fs_info *fs_info, u64 bytenr,
 			continue;
 		}
 	}
-	free_extent_buffer(eb);
+	/*
+	 * We failed to read this tree block, it be should deleted right now
+	 * to avoid stale cache populate the cache.
+	 */
+	free_extent_buffer_nocache(eb);
 	return ERR_PTR(ret);
 }
 
