@@ -327,6 +327,7 @@ struct extent_buffer* read_tree_block(struct btrfs_fs_info *fs_info, u64 bytenr,
 	u32 sectorsize = fs_info->sectorsize;
 	int mirror_num = 1;
 	int good_mirror = 0;
+	int candidate_mirror = 0;
 	int num_copies;
 	int ignore = 0;
 
@@ -362,10 +363,30 @@ struct extent_buffer* read_tree_block(struct btrfs_fs_info *fs_info, u64 bytenr,
 					      &fs_info->recow_ebs);
 				eb->refs++;
 			}
-			btrfs_set_buffer_uptodate(eb);
-			return eb;
+
+			/*
+			 * check_tree_block() is less strict to allow btrfs
+			 * check to get raw eb with bad key order and fix it.
+			 * But we still need to try to get a good copy if
+			 * possible, or bad key order can go into tools like
+			 * btrfs ins dump-tree.
+			 */
+			if (btrfs_header_level(eb))
+				ret = btrfs_check_node(fs_info, NULL, eb);
+			else
+				ret = btrfs_check_leaf(fs_info, NULL, eb);
+			if (!ret || candidate_mirror == mirror_num) {
+				btrfs_set_buffer_uptodate(eb);
+				return eb;
+			}
+			if (candidate_mirror <= 0)
+				candidate_mirror = mirror_num;
 		}
 		if (ignore) {
+			if (candidate_mirror > 0) {
+				mirror_num = candidate_mirror;
+				continue;
+			}
 			if (check_tree_block(fs_info, eb)) {
 				if (!fs_info->suppress_check_block_errors)
 					print_tree_block_error(fs_info, eb,
@@ -387,7 +408,10 @@ struct extent_buffer* read_tree_block(struct btrfs_fs_info *fs_info, u64 bytenr,
 		}
 		mirror_num++;
 		if (mirror_num > num_copies) {
-			mirror_num = good_mirror;
+			if (candidate_mirror > 0)
+				mirror_num = candidate_mirror;
+			else
+				mirror_num = good_mirror;
 			ignore = 1;
 			continue;
 		}
