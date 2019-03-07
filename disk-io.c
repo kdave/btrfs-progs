@@ -325,7 +325,7 @@ struct extent_buffer* read_tree_block(struct btrfs_fs_info *fs_info, u64 bytenr,
 	struct extent_buffer *eb;
 	u64 best_transid = 0;
 	u32 sectorsize = fs_info->sectorsize;
-	int mirror_num = 0;
+	int mirror_num = 1;
 	int good_mirror = 0;
 	int num_copies;
 	int ignore = 0;
@@ -381,7 +381,7 @@ struct extent_buffer* read_tree_block(struct btrfs_fs_info *fs_info, u64 bytenr,
 			ignore = 1;
 			continue;
 		}
-		if (btrfs_header_generation(eb) > best_transid && mirror_num) {
+		if (btrfs_header_generation(eb) > best_transid) {
 			best_transid = btrfs_header_generation(eb);
 			good_mirror = mirror_num;
 		}
