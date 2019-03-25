@@ -122,10 +122,8 @@ PUBLIC enum btrfs_util_error btrfs_util_subvolume_id_fd(int fd,
 	int ret;
 
 	ret = ioctl(fd, BTRFS_IOC_INO_LOOKUP, &args);
-	if (ret == -1) {
-		close(fd);
+	if (ret == -1)
 		return BTRFS_UTIL_ERROR_INO_LOOKUP_FAILED;
-	}
 
 	*id_ret = args.treeid;
 

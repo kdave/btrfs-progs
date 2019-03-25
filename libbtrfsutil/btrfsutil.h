@@ -27,7 +27,7 @@
 
 #define BTRFS_UTIL_VERSION_MAJOR 1
 #define BTRFS_UTIL_VERSION_MINOR 1
-#define BTRFS_UTIL_VERSION_PATCH 0
+#define BTRFS_UTIL_VERSION_PATCH 1
 
 #ifdef __cplusplus
 extern "C" {

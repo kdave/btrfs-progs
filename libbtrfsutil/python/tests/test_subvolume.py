@@ -64,6 +64,18 @@ class TestSubvolume(BtrfsTestCase):
             with self.subTest(type=type(arg)):
                 self.assertEqual(btrfsutil.subvolume_id(arg), 5)
 
+    def test_subvolume_id_error(self):
+        fd = os.open('/dev/null', os.O_RDONLY)
+        try:
+            btrfsutil.subvolume_id(fd)
+        except Exception:
+            pass
+        finally:
+            # btrfs_util_subvolume_id_fd() had a bug that would erroneously
+            # close the provided file descriptor. In that case, this will fail
+            # with EBADF.
+            os.close(fd)
+
     def test_subvolume_path(self):
         btrfsutil.create_subvolume(os.path.join(self.mountpoint, 'subvol1'))
         os.mkdir(os.path.join(self.mountpoint, 'dir1'))
