@@ -1613,6 +1613,17 @@ static int write_dev_supers(struct btrfs_fs_info *fs_info,
 	u32 crc;
 	int i, ret;
 
+	/*
+	 * We need to write super block after all metadata written.
+	 * This is the equivalent of kernel pre-flush for FUA.
+	 */
+	ret = fsync(device->fd);
+	if (ret < 0) {
+		error(
+		"failed to write super block for devid %llu: flush error: %m",
+			device->devid);
+		return -errno;
+	}
 	if (fs_info->super_bytenr != BTRFS_SUPER_INFO_OFFSET) {
 		btrfs_set_super_bytenr(sb, fs_info->super_bytenr);
 		crc = ~(u32)0;
@@ -1633,6 +1644,13 @@ static int write_dev_supers(struct btrfs_fs_info *fs_info,
 		"failed to write super block for devid %llu: write error: %m",
 				device->devid);
 			return -EIO;
+		}
+		ret = fsync(device->fd);
+		if (ret < 0) {
+			error(
+		"failed to write super block for devid %llu: flush error: %m",
+				device->devid);
+			return -errno;
 		}
 		return 0;
 	}
@@ -1661,6 +1679,19 @@ static int write_dev_supers(struct btrfs_fs_info *fs_info,
 		"failed to write super block for devid %llu: write error: %m",
 				device->devid);
 			return -errno;
+		}
+		/*
+		 * Flush after the primary sb write, this is the equivalent of
+		 * kernel post-flush for FUA write.
+		 */
+		if (i == 0) {
+			ret = fsync(device->fd);
+			if (ret < 0) {
+				error(
+		"failed to write super block for devid %llu: flush error: %m",
+					device->devid);
+				return -errno;
+			}
 		}
 	}
 
