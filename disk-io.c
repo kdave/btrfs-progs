@@ -1627,8 +1627,13 @@ static int write_dev_supers(struct btrfs_fs_info *fs_info,
 		ret = pwrite64(device->fd, fs_info->super_copy,
 				BTRFS_SUPER_INFO_SIZE,
 				fs_info->super_bytenr);
-		if (ret != BTRFS_SUPER_INFO_SIZE)
-			goto write_err;
+		if (ret != BTRFS_SUPER_INFO_SIZE) {
+			errno = EIO;
+			error(
+		"failed to write super block for devid %llu: write error: %m",
+				device->devid);
+			return -EIO;
+		}
 		return 0;
 	}
 
@@ -1650,18 +1655,16 @@ static int write_dev_supers(struct btrfs_fs_info *fs_info,
 		 */
 		ret = pwrite64(device->fd, fs_info->super_copy,
 				BTRFS_SUPER_INFO_SIZE, bytenr);
-		if (ret != BTRFS_SUPER_INFO_SIZE)
-			goto write_err;
+		if (ret != BTRFS_SUPER_INFO_SIZE) {
+			errno = EIO;
+			error(
+		"failed to write super block for devid %llu: write error: %m",
+				device->devid);
+			return -errno;
+		}
 	}
 
 	return 0;
-
-write_err:
-	if (ret > 0)
-		fprintf(stderr, "WARNING: failed to write all sb data\n");
-	else
-		fprintf(stderr, "WARNING: failed to write sb: %m\n");
-	return ret;
 }
 
 /*
