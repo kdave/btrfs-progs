@@ -1994,9 +1994,11 @@ int btrfs_scan_devices(void)
 	if (btrfs_scan_done)
 		return 0;
 
-	if (blkid_get_cache(&cache, NULL) < 0) {
-		error("blkid cache get failed");
-		return 1;
+	ret = blkid_get_cache(&cache, NULL);
+	if (ret < 0) {
+		errno = -ret;
+		error("blkid cache get failed: %m");
+		return ret;
 	}
 	blkid_probe_all(cache);
 	iter = blkid_dev_iterate_begin(cache);
