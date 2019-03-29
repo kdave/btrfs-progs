@@ -709,6 +709,10 @@ static int process_write(const char *path, const void *data, u64 offset,
 	if (ret < 0)
 		goto out;
 
+	if (g_verbose >= 2)
+		fprintf(stderr, "write %s - offset=%llu length=%llu\n",
+			path, offset, len);
+
 	while (pos < len) {
 		w = pwrite(rctx->write_fd, (char*)data + pos, len - pos,
 				offset + pos);
@@ -812,6 +816,11 @@ static int process_clone(const char *path, u64 offset, u64 len,
 		error("cannot open %s: %m", full_clone_path);
 		goto out;
 	}
+
+	if (g_verbose >= 2)
+		fprintf(stderr,
+			"clone %s - source=%s source offset=%llu offset=%llu length=%llu\n",
+			path, clone_path, clone_offset, offset, len);
 
 	clone_args.src_fd = clone_fd;
 	clone_args.src_offset = clone_offset;
