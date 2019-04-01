@@ -2743,6 +2743,30 @@ static int repair_unaligned_extent_recs(struct btrfs_trans_handle *trans,
 	return ret;
 }
 
+static int repair_imode_original(struct btrfs_trans_handle *trans,
+				 struct btrfs_root *root,
+				 struct btrfs_path *path,
+				 struct inode_record *rec)
+{
+	int ret;
+	u32 imode;
+
+	if (root->root_key.objectid != BTRFS_ROOT_TREE_OBJECTID)
+		return -ENOTTY;
+	if (rec->ino != BTRFS_ROOT_TREE_DIR_OBJECTID || !is_fstree(rec->ino))
+		return -ENOTTY;
+
+	if (rec->ino == BTRFS_ROOT_TREE_DIR_OBJECTID)
+		imode = 040755;
+	else
+		imode = 0100600;
+	ret = reset_imode(trans, root, path, rec->ino, imode);
+	if (ret < 0)
+		return ret;
+	rec->errors &= ~I_ERR_INVALID_IMODE;
+	return ret;
+}
+
 static int try_repair_inode(struct btrfs_root *root, struct inode_record *rec)
 {
 	struct btrfs_trans_handle *trans;
@@ -2796,6 +2820,8 @@ static int try_repair_inode(struct btrfs_root *root, struct inode_record *rec)
 		ret = repair_inline_ram_bytes(trans, root, &path, rec);
 	if (!ret && rec->errors & I_ERR_UNALIGNED_EXTENT_REC)
 		ret = repair_unaligned_extent_recs(trans, root, &path, rec);
+	if (!ret && rec->errors & I_ERR_INVALID_IMODE)
+		ret = repair_imode_original(trans, root, &path, rec);
 	btrfs_commit_transaction(trans, root);
 	btrfs_release_path(&path);
 	return ret;
