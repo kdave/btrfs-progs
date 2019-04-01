@@ -601,6 +601,9 @@ static void print_inode_error(struct btrfs_root *root, struct inode_record *rec)
 		fprintf(stderr, ", odd inode flags");
 	if (errors & I_ERR_INLINE_RAM_BYTES_WRONG)
 		fprintf(stderr, ", invalid inline ram bytes");
+	if (errors & I_ERR_INVALID_IMODE)
+		fprintf(stderr, ", invalid inode mode bit 0%o",
+			rec->imode & ~07777);
 	fprintf(stderr, "\n");
 
 	/* Print the holes if needed */
@@ -793,6 +796,8 @@ static void maybe_free_inode_rec(struct cache_tree *inode_cache,
 	if (!rec->checked || rec->merging)
 		return;
 
+	if (!is_valid_imode(rec->imode))
+		rec->errors |= I_ERR_INVALID_IMODE;
 	if (S_ISDIR(rec->imode)) {
 		if (rec->found_size != rec->isize)
 			rec->errors |= I_ERR_DIR_ISIZE_WRONG;
