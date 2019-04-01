@@ -2511,7 +2511,13 @@ static int check_inode_item(struct btrfs_root *root, struct btrfs_path *path)
 
 	if (!is_valid_imode(mode)) {
 		error("invalid imode mode bits: 0%o", mode);
-		err |= INODE_MODE_ERROR;
+		if (repair) {
+			ret = repair_imode_common(root, path);
+			if (ret < 0)
+				err |= INODE_MODE_ERROR;
+		} else {
+			err |= INODE_MODE_ERROR;
+		}
 	}
 
 	if (S_ISLNK(mode) &&
