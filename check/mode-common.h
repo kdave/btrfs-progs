@@ -126,4 +126,28 @@ int delete_corrupted_dir_item(struct btrfs_trans_handle *trans,
 			      struct btrfs_key *di_key, char *namebuf,
 			      u32 namelen);
 
+/*
+ * Check if the inode mode @imode is valid
+ *
+ * This check focuses on S_FTMT bits and unused bits.
+ * Sticky/setuid/setgid and regular owner/group/other bits won't cause
+ * any problem.
+ */
+static inline bool is_valid_imode(u32 imode)
+{
+	if (imode & ~(S_IFMT | 07777))
+		return false;
+
+	/*
+	 * S_IFMT is not bitmap, nor pure numbering sequence. Need per valid
+	 * number check.
+	 */
+	imode &= S_IFMT;
+	if (imode != S_IFDIR && imode != S_IFCHR && imode != S_IFBLK &&
+	    imode != S_IFREG && imode != S_IFIFO && imode != S_IFLNK &&
+	    imode != S_IFSOCK)
+		return false;
+	return true;
+}
+
 #endif

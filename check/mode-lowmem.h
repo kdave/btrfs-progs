@@ -46,6 +46,7 @@
 #define FATAL_ERROR             (1<<22) /* Fatal bit for errno */
 #define INODE_FLAGS_ERROR	(1<<23) /* Invalid inode flags */
 #define DIR_ITEM_HASH_MISMATCH	(1<<24) /* Dir item hash mismatch */
+#define INODE_MODE_ERROR	(1<<25) /* Bad inode mode */
 
 /*
  * Error bit for low memory mode check.

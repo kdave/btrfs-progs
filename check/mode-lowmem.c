@@ -2509,6 +2509,11 @@ static int check_inode_item(struct btrfs_root *root, struct btrfs_path *path)
 	nlink = btrfs_inode_nlink(node, ii);
 	nodatasum = btrfs_inode_flags(node, ii) & BTRFS_INODE_NODATASUM;
 
+	if (!is_valid_imode(mode)) {
+		error("invalid imode mode bits: 0%o", mode);
+		err |= INODE_MODE_ERROR;
+	}
+
 	if (S_ISLNK(mode) &&
 	    flags & (BTRFS_INODE_IMMUTABLE | BTRFS_INODE_APPEND)) {
 		err |= INODE_FLAGS_ERROR;
