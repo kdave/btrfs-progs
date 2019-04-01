@@ -3686,6 +3686,17 @@ again:
 			   key.type == BTRFS_ROOT_BACKREF_KEY) {
 			process_root_ref(leaf, path.slots[0], &key,
 					 root_cache);
+		} else if (key.type == BTRFS_INODE_ITEM_KEY &&
+			   is_fstree(key.objectid)) {
+			ret = check_repair_free_space_inode(fs_info, &path);
+			if (ret < 0 && !path.nodes[0]) {
+				err = 1;
+				goto out;
+			}
+			if (ret < 0 && path.nodes[0]) {
+				err = 1;
+				goto next;
+			}
 		}
 next:
 		path.slots[0]++;
