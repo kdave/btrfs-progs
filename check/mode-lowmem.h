@@ -67,5 +67,7 @@
 
 int check_fs_roots_lowmem(struct btrfs_fs_info *fs_info);
 int check_chunks_and_extents_lowmem(struct btrfs_fs_info *fs_info);
+int check_repair_free_space_inode(struct btrfs_fs_info *fs_info,
+				  struct btrfs_path *path);
 
 #endif

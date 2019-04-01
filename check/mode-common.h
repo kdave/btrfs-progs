@@ -24,6 +24,7 @@
 #include <sys/stat.h>
 #include "ctree.h"
 
+#define FREE_SPACE_CACHE_INODE_MODE	(0100600)
 /*
  * Use for tree walk to walk through trees whose leaves/nodes can be shared
  * between different trees. (Namely subvolume/fs trees)
@@ -128,7 +129,8 @@ int delete_corrupted_dir_item(struct btrfs_trans_handle *trans,
 int reset_imode(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 		struct btrfs_path *path, u64 ino, u32 mode);
 int repair_imode_common(struct btrfs_root *root, struct btrfs_path *path);
-
+int check_repair_free_space_inode(struct btrfs_fs_info *fs_info,
+				  struct btrfs_path *path);
 /*
  * Check if the inode mode @imode is valid
  *

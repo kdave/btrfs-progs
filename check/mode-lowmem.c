@@ -5145,6 +5145,17 @@ int check_fs_roots_lowmem(struct btrfs_fs_info *fs_info)
 		btrfs_item_key_to_cpu(node, &key, slot);
 		if (key.objectid > BTRFS_LAST_FREE_OBJECTID)
 			goto out;
+		if (key.type == BTRFS_INODE_ITEM_KEY &&
+		    is_fstree(key.objectid)) {
+			ret = check_repair_free_space_inode(fs_info, &path);
+			/* Check if we still have a valid path to continue */
+			if (ret < 0 && path.nodes[0]) {
+				err |= ret;
+				goto next;
+			}
+			if (ret < 0 && !path.nodes[0])
+				goto out;
+		}
 		if (key.type == BTRFS_ROOT_ITEM_KEY &&
 		    fs_root_objectid(key.objectid)) {
 			if (key.objectid == BTRFS_TREE_RELOC_OBJECTID) {

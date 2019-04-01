@@ -21,6 +21,7 @@
 #include "transaction.h"
 #include "utils.h"
 #include "disk-io.h"
+#include "repair.h"
 #include "check/mode-common.h"
 
 /*
@@ -888,4 +889,38 @@ int repair_imode_common(struct btrfs_root *root, struct btrfs_path *path)
 abort:
 	btrfs_abort_transaction(trans, ret);
  	return ret;
+}
+
+/*
+ * For free space inodes, we can't call check_inode_item() as free space
+ * cache inode doesn't have INODE_REF.
+ * We just check its inode mode.
+ */
+int check_repair_free_space_inode(struct btrfs_fs_info *fs_info,
+				  struct btrfs_path *path)
+{
+	struct btrfs_inode_item *iitem;
+	struct btrfs_key key;
+	u32 mode;
+	int ret = 0;
+
+	btrfs_item_key_to_cpu(path->nodes[0], &key, path->slots[0]);
+	ASSERT(key.type == BTRFS_INODE_ITEM_KEY && is_fstree(key.objectid));
+	iitem = btrfs_item_ptr(path->nodes[0], path->slots[0],
+			       struct btrfs_inode_item);
+	mode = btrfs_inode_mode(path->nodes[0], iitem);
+	if (mode != FREE_SPACE_CACHE_INODE_MODE) {
+		error(
+	"free space cache inode %llu has invalid mode: has 0%o expect 0%o",
+			key.objectid, mode, FREE_SPACE_CACHE_INODE_MODE);
+		ret = -EUCLEAN;
+		if (repair) {
+			ret = repair_imode_common(fs_info->tree_root,
+						  path);
+			if (ret < 0)
+				return ret;
+			return ret;
+		}
+	}
+	return ret;
 }
