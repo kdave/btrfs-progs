@@ -7634,9 +7634,13 @@ static int fixup_extent_flags(struct btrfs_fs_info *fs_info,
 	struct btrfs_key key;
 	u64 flags;
 	int ret = 0;
+	bool metadata_item = rec->metadata;
 
+	if (!btrfs_fs_incompat(root->fs_info, SKINNY_METADATA))
+		metadata_item = false;
+retry:
 	key.objectid = rec->start;
-	if (rec->metadata) {
+	if (metadata_item) {
 		key.type = BTRFS_METADATA_ITEM_KEY;
 		key.offset = rec->info_level;
 	} else {
@@ -7655,6 +7659,10 @@ static int fixup_extent_flags(struct btrfs_fs_info *fs_info,
 		btrfs_commit_transaction(trans, root);
 		return ret;
 	} else if (ret) {
+		if (key.type == BTRFS_METADATA_ITEM_KEY) {
+			metadata_item = false;
+			goto retry;
+		}
 		fprintf(stderr, "Didn't find extent for %llu\n",
 			(unsigned long long)rec->start);
 		btrfs_release_path(&path);
