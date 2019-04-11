@@ -1807,7 +1807,8 @@ int write_all_supers(struct btrfs_fs_info *fs_info)
 		btrfs_set_super_flags(sb, flags | BTRFS_HEADER_FLAG_WRITTEN);
 
 		ret = write_dev_supers(fs_info, sb, dev);
-		BUG_ON(ret);
+		if (ret < 0)
+			return ret;
 	}
 	return 0;
 }
@@ -1863,8 +1864,12 @@ int close_ctree_fs_info(struct btrfs_fs_info *fs_info)
 		BUG_ON(ret);
 		ret = __commit_transaction(trans, root);
 		BUG_ON(ret);
-		write_ctree_super(trans);
+		ret = write_ctree_super(trans);
 		kfree(trans);
+		if (ret) {
+			err = ret;
+			goto skip_commit;
+		}
 	}
 
 	if (fs_info->finalize_on_close) {
