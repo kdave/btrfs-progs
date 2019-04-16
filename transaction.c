@@ -17,6 +17,7 @@
 #include "kerncompat.h"
 #include "disk-io.h"
 #include "transaction.h"
+#include "delayed-ref.h"
 
 #include "messages.h"
 
@@ -165,7 +166,8 @@ int btrfs_commit_transaction(struct btrfs_trans_handle *trans,
 	 * consistent
 	 */
 	ret = btrfs_run_delayed_refs(trans, -1);
-	BUG_ON(ret);
+	if (ret < 0)
+		goto error;
 
 	if (root->commit_root == root->node)
 		goto commit_tree;
@@ -182,21 +184,24 @@ int btrfs_commit_transaction(struct btrfs_trans_handle *trans,
 	root->root_item.level = btrfs_header_level(root->node);
 	ret = btrfs_update_root(trans, root->fs_info->tree_root,
 				&root->root_key, &root->root_item);
-	BUG_ON(ret);
+	if (ret < 0)
+		goto error;
 
 commit_tree:
 	ret = commit_tree_roots(trans, fs_info);
-	BUG_ON(ret);
+	if (ret < 0)
+		goto error;
 	/*
 	 * Ensure that all committed roots are properly accounted in the
 	 * extent tree
 	 */
 	ret = btrfs_run_delayed_refs(trans, -1);
-	BUG_ON(ret);
+	if (ret < 0)
+		goto error;
 	btrfs_write_dirty_block_groups(trans);
 	__commit_transaction(trans, root);
 	if (ret < 0)
-		goto out;
+		goto error;
 	ret = write_ctree_super(trans);
 	btrfs_finish_extent_commit(trans);
 	kfree(trans);
@@ -204,7 +209,10 @@ commit_tree:
 	root->commit_root = NULL;
 	fs_info->running_transaction = NULL;
 	fs_info->last_trans_committed = transid;
-out:
+	return ret;
+error:
+	btrfs_destroy_delayed_refs(trans);
+	free(trans);
 	return ret;
 }
 

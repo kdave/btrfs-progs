@@ -605,3 +605,27 @@ free_ref:
 
 	return -ENOMEM;
 }
+
+void btrfs_destroy_delayed_refs(struct btrfs_trans_handle *trans)
+{
+	struct btrfs_fs_info *fs_info = trans->fs_info;
+	struct rb_node *node;
+	struct btrfs_delayed_ref_root *delayed_refs;
+
+	delayed_refs = &trans->delayed_refs;
+	if (RB_EMPTY_ROOT(&delayed_refs->href_root))
+		return;
+	while ((node = rb_first(&delayed_refs->href_root)) != NULL) {
+		struct btrfs_delayed_ref_head *head;
+		struct btrfs_delayed_ref_node *ref;
+		struct rb_node *n;
+
+		head = rb_entry(node, struct btrfs_delayed_ref_head, href_node);
+		while ((n = rb_first(&head->ref_tree)) != NULL) {
+			ref = rb_entry(n, struct btrfs_delayed_ref_node,
+				       ref_node);
+			drop_delayed_ref(trans, delayed_refs, head, ref);
+		}
+		ASSERT(cleanup_ref_head(trans, fs_info, head) == 0);
+	}
+}

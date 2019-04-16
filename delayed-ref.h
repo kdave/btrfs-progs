@@ -205,4 +205,10 @@ btrfs_delayed_node_to_tree_ref(struct btrfs_delayed_ref_node *node)
 {
 	return container_of(node, struct btrfs_delayed_tree_ref, node);
 }
+
+int cleanup_ref_head(struct btrfs_trans_handle *trans,
+		     struct btrfs_fs_info *fs_info,
+		     struct btrfs_delayed_ref_head *head);
+void btrfs_destroy_delayed_refs(struct btrfs_trans_handle *trans);
+
 #endif

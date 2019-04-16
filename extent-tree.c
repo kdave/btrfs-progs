@@ -4085,9 +4085,9 @@ static void unselect_delayed_ref_head(struct btrfs_delayed_ref_root *delayed_ref
 	delayed_refs->num_heads_ready++;
 }
 
-static int cleanup_ref_head(struct btrfs_trans_handle *trans,
-			    struct btrfs_fs_info *fs_info,
-			    struct btrfs_delayed_ref_head *head)
+int cleanup_ref_head(struct btrfs_trans_handle *trans,
+		     struct btrfs_fs_info *fs_info,
+		     struct btrfs_delayed_ref_head *head)
 {
 	struct btrfs_delayed_ref_root *delayed_refs;
 
