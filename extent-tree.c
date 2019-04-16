@@ -2335,7 +2335,13 @@ int btrfs_reserve_extent(struct btrfs_trans_handle *trans,
 		profile = BTRFS_BLOCK_GROUP_METADATA | alloc_profile;
 	}
 
-	if (root->ref_cows) {
+	/*
+	 * Also preallocate metadata for csum tree and fs trees (root->ref_cows
+	 * already set), as they can consume a lot of metadata space.
+	 * Pre-allocate to avoid unexpected ENOSPC.
+	 */
+	if (root->ref_cows ||
+	    root->root_key.objectid == BTRFS_CSUM_TREE_OBJECTID) {
 		if (!(profile & BTRFS_BLOCK_GROUP_METADATA)) {
 			ret = do_chunk_alloc(trans, info,
 					     num_bytes,
