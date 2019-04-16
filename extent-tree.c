@@ -4235,8 +4235,6 @@ int btrfs_run_delayed_refs(struct btrfs_trans_handle *trans, unsigned long nr)
 				/* We dropped our lock, we need to loop. */
 				ret = 0;
 				continue;
-			} else if (ret) {
-				return ret;
 			}
 			locked_ref = NULL;
 			continue;
