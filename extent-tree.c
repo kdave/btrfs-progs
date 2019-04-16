@@ -1717,10 +1717,20 @@ static int do_chunk_alloc(struct btrfs_trans_handle *trans,
 	    (flags & BTRFS_BLOCK_GROUP_SYSTEM))
 		return 0;
 
+	/*
+	 * We're going to allocate new chunk, during the process, we will
+	 * allocate new tree blocks, which can trigger new chunk allocation
+	 * again. Avoid the recursion.
+	 */
+	if (trans->allocating_chunk)
+		return 0;
+	trans->allocating_chunk = 1;
+
 	ret = btrfs_alloc_chunk(trans, fs_info, &start, &num_bytes,
 	                        space_info->flags);
 	if (ret == -ENOSPC) {
 		space_info->full = 1;
+		trans->allocating_chunk = 0;
 		return 0;
 	}
 
@@ -1729,6 +1739,7 @@ static int do_chunk_alloc(struct btrfs_trans_handle *trans,
 	ret = btrfs_make_block_group(trans, fs_info, 0, space_info->flags,
 				     start, num_bytes);
 	BUG_ON(ret);
+	trans->allocating_chunk = 0;
 	return 0;
 }
 
