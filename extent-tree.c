@@ -1977,27 +1977,25 @@ next:
 	return 0;
 }
 
-int btrfs_finish_extent_commit(struct btrfs_trans_handle *trans,
-			       struct btrfs_root *root,
-			       struct extent_io_tree *unpin)
+void btrfs_finish_extent_commit(struct btrfs_trans_handle *trans)
 {
 	u64 start;
 	u64 end;
 	int ret;
-	struct extent_io_tree *free_space_cache;
-	free_space_cache = &root->fs_info->free_space_cache;
+	struct btrfs_fs_info *fs_info = trans->fs_info;
+	struct extent_io_tree *free_space_cache = &fs_info->free_space_cache;
+	struct extent_io_tree *pinned_extents = &fs_info->pinned_extents;
 
 	while(1) {
-		ret = find_first_extent_bit(unpin, 0, &start, &end,
+		ret = find_first_extent_bit(pinned_extents, 0, &start, &end,
 					    EXTENT_DIRTY);
 		if (ret)
 			break;
 		update_pinned_extents(trans->fs_info, start, end + 1 - start,
 				      0);
-		clear_extent_dirty(unpin, start, end);
+		clear_extent_dirty(pinned_extents, start, end);
 		set_extent_dirty(free_space_cache, start, end);
 	}
-	return 0;
 }
 
 static int pin_down_bytes(struct btrfs_trans_handle *trans, u64 bytenr,

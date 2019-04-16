@@ -198,8 +198,7 @@ commit_tree:
 	if (ret < 0)
 		goto out;
 	ret = write_ctree_super(trans);
-	btrfs_finish_extent_commit(trans, fs_info->extent_root,
-			           &fs_info->pinned_extents);
+	btrfs_finish_extent_commit(trans);
 	kfree(trans);
 	free_extent_buffer(root->commit_root);
 	root->commit_root = NULL;
