@@ -325,8 +325,9 @@ struct extent_buffer* read_tree_block(struct btrfs_fs_info *fs_info, u64 bytenr,
 	struct extent_buffer *eb;
 	u64 best_transid = 0;
 	u32 sectorsize = fs_info->sectorsize;
-	int mirror_num = 0;
+	int mirror_num = 1;
 	int good_mirror = 0;
+	int candidate_mirror = 0;
 	int num_copies;
 	int ignore = 0;
 
@@ -349,6 +350,7 @@ struct extent_buffer* read_tree_block(struct btrfs_fs_info *fs_info, u64 bytenr,
 	if (btrfs_buffer_uptodate(eb, parent_transid))
 		return eb;
 
+	num_copies = btrfs_num_copies(fs_info, eb->start, eb->len);
 	while (1) {
 		ret = read_whole_eb(fs_info, eb, mirror_num);
 		if (ret == 0 && csum_tree_block(fs_info, eb, 1) == 0 &&
@@ -361,10 +363,30 @@ struct extent_buffer* read_tree_block(struct btrfs_fs_info *fs_info, u64 bytenr,
 					      &fs_info->recow_ebs);
 				eb->refs++;
 			}
-			btrfs_set_buffer_uptodate(eb);
-			return eb;
+
+			/*
+			 * check_tree_block() is less strict to allow btrfs
+			 * check to get raw eb with bad key order and fix it.
+			 * But we still need to try to get a good copy if
+			 * possible, or bad key order can go into tools like
+			 * btrfs ins dump-tree.
+			 */
+			if (btrfs_header_level(eb))
+				ret = btrfs_check_node(fs_info, NULL, eb);
+			else
+				ret = btrfs_check_leaf(fs_info, NULL, eb);
+			if (!ret || candidate_mirror == mirror_num) {
+				btrfs_set_buffer_uptodate(eb);
+				return eb;
+			}
+			if (candidate_mirror <= 0)
+				candidate_mirror = mirror_num;
 		}
 		if (ignore) {
+			if (candidate_mirror > 0) {
+				mirror_num = candidate_mirror;
+				continue;
+			}
 			if (check_tree_block(fs_info, eb)) {
 				if (!fs_info->suppress_check_block_errors)
 					print_tree_block_error(fs_info, eb,
@@ -376,23 +398,29 @@ struct extent_buffer* read_tree_block(struct btrfs_fs_info *fs_info, u64 bytenr,
 			ret = -EIO;
 			break;
 		}
-		num_copies = btrfs_num_copies(fs_info, eb->start, eb->len);
 		if (num_copies == 1) {
 			ignore = 1;
 			continue;
 		}
-		if (btrfs_header_generation(eb) > best_transid && mirror_num) {
+		if (btrfs_header_generation(eb) > best_transid) {
 			best_transid = btrfs_header_generation(eb);
 			good_mirror = mirror_num;
 		}
 		mirror_num++;
 		if (mirror_num > num_copies) {
-			mirror_num = good_mirror;
+			if (candidate_mirror > 0)
+				mirror_num = candidate_mirror;
+			else
+				mirror_num = good_mirror;
 			ignore = 1;
 			continue;
 		}
 	}
-	free_extent_buffer(eb);
+	/*
+	 * We failed to read this tree block, it be should deleted right now
+	 * to avoid stale cache populate the cache.
+	 */
+	free_extent_buffer_nocache(eb);
 	return ERR_PTR(ret);
 }
 
@@ -495,7 +523,7 @@ void btrfs_setup_root(struct btrfs_root *root, struct btrfs_fs_info *fs_info,
 	root->last_inode_alloc = 0;
 
 	INIT_LIST_HEAD(&root->dirty_list);
-	INIT_LIST_HEAD(&root->orphan_data_extents);
+	INIT_LIST_HEAD(&root->unaligned_extent_recs);
 	memset(&root->root_key, 0, sizeof(root->root_key));
 	memset(&root->root_item, 0, sizeof(root->root_item));
 	root->root_key.objectid = objectid;
@@ -1585,6 +1613,17 @@ static int write_dev_supers(struct btrfs_fs_info *fs_info,
 	u32 crc;
 	int i, ret;
 
+	/*
+	 * We need to write super block after all metadata written.
+	 * This is the equivalent of kernel pre-flush for FUA.
+	 */
+	ret = fsync(device->fd);
+	if (ret < 0) {
+		error(
+		"failed to write super block for devid %llu: flush error: %m",
+			device->devid);
+		return -errno;
+	}
 	if (fs_info->super_bytenr != BTRFS_SUPER_INFO_OFFSET) {
 		btrfs_set_super_bytenr(sb, fs_info->super_bytenr);
 		crc = ~(u32)0;
@@ -1599,8 +1638,20 @@ static int write_dev_supers(struct btrfs_fs_info *fs_info,
 		ret = pwrite64(device->fd, fs_info->super_copy,
 				BTRFS_SUPER_INFO_SIZE,
 				fs_info->super_bytenr);
-		if (ret != BTRFS_SUPER_INFO_SIZE)
-			goto write_err;
+		if (ret != BTRFS_SUPER_INFO_SIZE) {
+			errno = EIO;
+			error(
+		"failed to write super block for devid %llu: write error: %m",
+				device->devid);
+			return -EIO;
+		}
+		ret = fsync(device->fd);
+		if (ret < 0) {
+			error(
+		"failed to write super block for devid %llu: flush error: %m",
+				device->devid);
+			return -errno;
+		}
 		return 0;
 	}
 
@@ -1622,19 +1673,107 @@ static int write_dev_supers(struct btrfs_fs_info *fs_info,
 		 */
 		ret = pwrite64(device->fd, fs_info->super_copy,
 				BTRFS_SUPER_INFO_SIZE, bytenr);
-		if (ret != BTRFS_SUPER_INFO_SIZE)
-			goto write_err;
+		if (ret != BTRFS_SUPER_INFO_SIZE) {
+			errno = EIO;
+			error(
+		"failed to write super block for devid %llu: write error: %m",
+				device->devid);
+			return -errno;
+		}
+		/*
+		 * Flush after the primary sb write, this is the equivalent of
+		 * kernel post-flush for FUA write.
+		 */
+		if (i == 0) {
+			ret = fsync(device->fd);
+			if (ret < 0) {
+				error(
+		"failed to write super block for devid %llu: flush error: %m",
+					device->devid);
+				return -errno;
+			}
+		}
 	}
 
 	return 0;
-
-write_err:
-	if (ret > 0)
-		fprintf(stderr, "WARNING: failed to write all sb data\n");
-	else
-		fprintf(stderr, "WARNING: failed to write sb: %m\n");
-	return ret;
 }
+
+/*
+ * copy all the root pointers into the super backup array.
+ * this will bump the backup pointer by one when it is
+ * done
+ */
+static void backup_super_roots(struct btrfs_fs_info *info)
+{
+	struct btrfs_root_backup *root_backup;
+	int next_backup;
+	int last_backup;
+
+	last_backup = find_best_backup_root(info->super_copy);
+	next_backup = (last_backup + 1) % BTRFS_NUM_BACKUP_ROOTS;
+
+	/* just overwrite the last backup if we're at the same generation */
+	root_backup = info->super_copy->super_roots + last_backup;
+	if (btrfs_backup_tree_root_gen(root_backup) ==
+	    btrfs_header_generation(info->tree_root->node))
+		next_backup = last_backup;
+
+	root_backup = info->super_copy->super_roots + next_backup;
+
+	/*
+	 * make sure all of our padding and empty slots get zero filled
+	 * regardless of which ones we use today
+	 */
+	memset(root_backup, 0, sizeof(*root_backup));
+	btrfs_set_backup_tree_root(root_backup, info->tree_root->node->start);
+	btrfs_set_backup_tree_root_gen(root_backup,
+			       btrfs_header_generation(info->tree_root->node));
+	btrfs_set_backup_tree_root_level(root_backup,
+			       btrfs_header_level(info->tree_root->node));
+
+	btrfs_set_backup_chunk_root(root_backup, info->chunk_root->node->start);
+	btrfs_set_backup_chunk_root_gen(root_backup,
+			       btrfs_header_generation(info->chunk_root->node));
+	btrfs_set_backup_chunk_root_level(root_backup,
+			       btrfs_header_level(info->chunk_root->node));
+
+	btrfs_set_backup_extent_root(root_backup, info->extent_root->node->start);
+	btrfs_set_backup_extent_root_gen(root_backup,
+			       btrfs_header_generation(info->extent_root->node));
+	btrfs_set_backup_extent_root_level(root_backup,
+			       btrfs_header_level(info->extent_root->node));
+	/*
+	 * we might commit during log recovery, which happens before we set
+	 * the fs_root.  Make sure it is valid before we fill it in.
+	 */
+	if (info->fs_root && info->fs_root->node) {
+		btrfs_set_backup_fs_root(root_backup,
+					 info->fs_root->node->start);
+		btrfs_set_backup_fs_root_gen(root_backup,
+			       btrfs_header_generation(info->fs_root->node));
+		btrfs_set_backup_fs_root_level(root_backup,
+			       btrfs_header_level(info->fs_root->node));
+	}
+
+	btrfs_set_backup_dev_root(root_backup, info->dev_root->node->start);
+	btrfs_set_backup_dev_root_gen(root_backup,
+			       btrfs_header_generation(info->dev_root->node));
+	btrfs_set_backup_dev_root_level(root_backup,
+				       btrfs_header_level(info->dev_root->node));
+
+	btrfs_set_backup_csum_root(root_backup, info->csum_root->node->start);
+	btrfs_set_backup_csum_root_gen(root_backup,
+			       btrfs_header_generation(info->csum_root->node));
+	btrfs_set_backup_csum_root_level(root_backup,
+			       btrfs_header_level(info->csum_root->node));
+
+	btrfs_set_backup_total_bytes(root_backup,
+			     btrfs_super_total_bytes(info->super_copy));
+	btrfs_set_backup_bytes_used(root_backup,
+			     btrfs_super_bytes_used(info->super_copy));
+	btrfs_set_backup_num_devices(root_backup,
+			     btrfs_super_num_devices(info->super_copy));
+};
 
 int write_all_supers(struct btrfs_fs_info *fs_info)
 {
@@ -1645,6 +1784,7 @@ int write_all_supers(struct btrfs_fs_info *fs_info)
 	int ret;
 	u64 flags;
 
+	backup_super_roots(fs_info);
 	sb = fs_info->super_copy;
 	dev_item = &sb->dev_item;
 	list_for_each_entry(dev, head, dev_list) {
@@ -1667,7 +1807,8 @@ int write_all_supers(struct btrfs_fs_info *fs_info)
 		btrfs_set_super_flags(sb, flags | BTRFS_HEADER_FLAG_WRITTEN);
 
 		ret = write_dev_supers(fs_info, sb, dev);
-		BUG_ON(ret);
+		if (ret < 0)
+			return ret;
 	}
 	return 0;
 }
@@ -1723,8 +1864,12 @@ int close_ctree_fs_info(struct btrfs_fs_info *fs_info)
 		BUG_ON(ret);
 		ret = __commit_transaction(trans, root);
 		BUG_ON(ret);
-		write_ctree_super(trans);
+		ret = write_ctree_super(trans);
 		kfree(trans);
+		if (ret) {
+			err = ret;
+			goto skip_commit;
+		}
 	}
 
 	if (fs_info->finalize_on_close) {

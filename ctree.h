@@ -1191,15 +1191,7 @@ struct btrfs_root {
 	u32 type;
 	u64 last_inode_alloc;
 
-	/*
-	 * Record orphan data extent ref
-	 *
-	 * TODO: Don't restore things in btrfs_root.
-	 * Directly record it into inode_record, which needs a lot of
-	 * infrastructure change to allow cooperation between extent
-	 * and fs tree scan.
-	 */
-	struct list_head orphan_data_extents;
+	struct list_head unaligned_extent_recs;
 
 	/* the dirty list is only used by non-reference counted roots */
 	struct list_head dirty_list;
@@ -2570,11 +2562,11 @@ int btrfs_comp_cpu_keys(const struct btrfs_key *k1, const struct btrfs_key *k2);
 int btrfs_del_ptr(struct btrfs_root *root, struct btrfs_path *path,
 		int level, int slot);
 enum btrfs_tree_block_status
-btrfs_check_node(struct btrfs_root *root, struct btrfs_disk_key *parent_key,
-		 struct extent_buffer *buf);
+btrfs_check_node(struct btrfs_fs_info *fs_info,
+		 struct btrfs_disk_key *parent_key, struct extent_buffer *buf);
 enum btrfs_tree_block_status
-btrfs_check_leaf(struct btrfs_root *root, struct btrfs_disk_key *parent_key,
-		 struct extent_buffer *buf);
+btrfs_check_leaf(struct btrfs_fs_info *fs_info,
+		 struct btrfs_disk_key *parent_key, struct extent_buffer *buf);
 void reada_for_search(struct btrfs_fs_info *fs_info, struct btrfs_path *path,
 		      int level, int slot, u64 objectid);
 struct extent_buffer *read_node_slot(struct btrfs_fs_info *fs_info,

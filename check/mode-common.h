@@ -24,6 +24,7 @@
 #include <sys/stat.h>
 #include "ctree.h"
 
+#define FREE_SPACE_CACHE_INODE_MODE	(0100600)
 /*
  * Use for tree walk to walk through trees whose leaves/nodes can be shared
  * between different trees. (Namely subvolume/fs trees)
@@ -125,5 +126,33 @@ int delete_corrupted_dir_item(struct btrfs_trans_handle *trans,
 			      struct btrfs_root *root,
 			      struct btrfs_key *di_key, char *namebuf,
 			      u32 namelen);
+int reset_imode(struct btrfs_trans_handle *trans, struct btrfs_root *root,
+		struct btrfs_path *path, u64 ino, u32 mode);
+int repair_imode_common(struct btrfs_root *root, struct btrfs_path *path);
+int check_repair_free_space_inode(struct btrfs_fs_info *fs_info,
+				  struct btrfs_path *path);
+/*
+ * Check if the inode mode @imode is valid
+ *
+ * This check focuses on S_FTMT bits and unused bits.
+ * Sticky/setuid/setgid and regular owner/group/other bits won't cause
+ * any problem.
+ */
+static inline bool is_valid_imode(u32 imode)
+{
+	if (imode & ~(S_IFMT | 07777))
+		return false;
+
+	/*
+	 * S_IFMT is not bitmap, nor pure numbering sequence. Need per valid
+	 * number check.
+	 */
+	imode &= S_IFMT;
+	if (imode != S_IFDIR && imode != S_IFCHR && imode != S_IFBLK &&
+	    imode != S_IFREG && imode != S_IFIFO && imode != S_IFLNK &&
+	    imode != S_IFSOCK)
+		return false;
+	return true;
+}
 
 #endif

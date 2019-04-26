@@ -21,6 +21,7 @@
 #include "transaction.h"
 #include "utils.h"
 #include "disk-io.h"
+#include "repair.h"
 #include "check/mode-common.h"
 
 /*
@@ -793,5 +794,133 @@ int delete_corrupted_dir_item(struct btrfs_trans_handle *trans,
 
 out:
 	btrfs_release_path(&path);
+	return ret;
+}
+
+/*
+ * Reset the mode of inode (specified by @root and @ino) to @mode.
+ *
+ * Caller should ensure @path is not populated, the @path is mainly for caller
+ * to grab the correct new path of the inode.
+ *
+ * Return 0 if repair is done, @path will point to the correct inode item.
+ * Return <0 for errors.
+ */
+int reset_imode(struct btrfs_trans_handle *trans, struct btrfs_root *root,
+		struct btrfs_path *path, u64 ino, u32 mode)
+{
+	struct btrfs_inode_item *iitem;
+	struct extent_buffer *leaf;
+	struct btrfs_key key;
+	int slot;
+	int ret;
+
+	key.objectid = ino;
+	key.type = BTRFS_INODE_ITEM_KEY;
+	key.offset = 0;
+
+	ret = btrfs_search_slot(trans, root, &key, path, 0, 1);
+	if (ret > 0)
+		ret = -ENOENT;
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to search tree %llu: %m",
+		      root->root_key.objectid);
+		return ret;
+	}
+	leaf = path->nodes[0];
+	slot = path->slots[0];
+	iitem = btrfs_item_ptr(leaf, slot, struct btrfs_inode_item);
+	btrfs_set_inode_mode(leaf, iitem, mode);
+	btrfs_mark_buffer_dirty(leaf);
+	return ret;
+}
+
+/*
+ * Reset the inode mode of the inode specified by @path.
+ *
+ * Caller should ensure the @path is pointing to an INODE_ITEM and root is tree
+ * root. Repair imode for other trees is not supported yet.
+ *
+ * Return 0 if repair is successful.
+ * Return <0 if error happens.
+ */
+int repair_imode_common(struct btrfs_root *root, struct btrfs_path *path)
+{
+	struct btrfs_trans_handle *trans;
+	struct btrfs_key key;
+	u32 imode;
+	int ret;
+
+	if (root->root_key.objectid != BTRFS_ROOT_TREE_OBJECTID) {
+		error(
+		"repair inode mode outside of root tree is not supported yet");
+		return -ENOTTY;
+	}
+	btrfs_item_key_to_cpu(path->nodes[0], &key, path->slots[0]);
+	ASSERT(key.type == BTRFS_INODE_ITEM_KEY);
+	if (key.objectid != BTRFS_ROOT_TREE_DIR_OBJECTID &&
+	    !is_fstree(key.objectid)) {
+		error("unsupported ino %llu", key.objectid);
+		return -ENOTTY;
+	}
+	if (key.objectid == BTRFS_ROOT_TREE_DIR_OBJECTID)
+		imode = 040755;
+	else
+		imode = 0100600;
+
+	trans = btrfs_start_transaction(root, 1);
+	if (IS_ERR(trans)) {
+		ret = PTR_ERR(trans);
+		errno = -ret;
+		error("failed to start transaction: %m");
+		return ret;
+	}
+	btrfs_release_path(path);
+
+	ret = reset_imode(trans, root, path, key.objectid, imode);
+	if (ret < 0)
+		goto abort;
+	ret = btrfs_commit_transaction(trans, root);
+	if (!ret)
+		printf("reset mode for inode %llu root %llu\n",
+			key.objectid, root->root_key.objectid);
+	return ret;
+abort:
+	btrfs_abort_transaction(trans, ret);
+ 	return ret;
+}
+
+/*
+ * For free space inodes, we can't call check_inode_item() as free space
+ * cache inode doesn't have INODE_REF.
+ * We just check its inode mode.
+ */
+int check_repair_free_space_inode(struct btrfs_fs_info *fs_info,
+				  struct btrfs_path *path)
+{
+	struct btrfs_inode_item *iitem;
+	struct btrfs_key key;
+	u32 mode;
+	int ret = 0;
+
+	btrfs_item_key_to_cpu(path->nodes[0], &key, path->slots[0]);
+	ASSERT(key.type == BTRFS_INODE_ITEM_KEY && is_fstree(key.objectid));
+	iitem = btrfs_item_ptr(path->nodes[0], path->slots[0],
+			       struct btrfs_inode_item);
+	mode = btrfs_inode_mode(path->nodes[0], iitem);
+	if (mode != FREE_SPACE_CACHE_INODE_MODE) {
+		error(
+	"free space cache inode %llu has invalid mode: has 0%o expect 0%o",
+			key.objectid, mode, FREE_SPACE_CACHE_INODE_MODE);
+		ret = -EUCLEAN;
+		if (repair) {
+			ret = repair_imode_common(fs_info->tree_root,
+						  path);
+			if (ret < 0)
+				return ret;
+			return ret;
+		}
+	}
 	return ret;
 }
