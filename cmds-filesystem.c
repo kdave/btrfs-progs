@@ -774,7 +774,18 @@ static int cmd_filesystem_show(int argc, char **argv)
 		goto out;
 
 devs_only:
-	ret = btrfs_scan_devices();
+	if (type == BTRFS_ARG_REG) {
+		/*
+		 * We don't close the fs_info because it will free the device,
+		 * this is not a long-running process so it's fine
+		 */
+		if (open_ctree(search, btrfs_sb_offset(0), 0))
+			ret = 0;
+		else
+			ret = 1;
+	} else {
+		ret = btrfs_scan_devices();
+	}
 
 	if (ret) {
 		error("blkid device scan returned %d", ret);
