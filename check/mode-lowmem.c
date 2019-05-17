@@ -5203,6 +5203,27 @@ int check_fs_roots_lowmem(struct btrfs_fs_info *fs_info)
 			err |= ret;
 		}
 next:
+		/*
+		 * In repair mode, our path is no longer reliable as CoW can
+		 * happen.  We need to reset our path.
+		 */
+		if (repair) {
+			btrfs_release_path(&path);
+			ret = btrfs_search_slot(NULL, tree_root, &key, &path,
+						0, 0);
+			if (ret < 0) {
+				if (!err)
+					err = ret;
+				goto out;
+			}
+			if (ret > 0) {
+				/* Key not found, but already at next item */
+				if (path.slots[0] <
+				    btrfs_header_nritems(path.nodes[0]))
+					continue;
+				/* falls through to next leaf */
+			}
+		}
 		ret = btrfs_next_item(tree_root, &path);
 		if (ret > 0)
 			goto out;
