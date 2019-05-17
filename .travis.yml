@@ -80,5 +80,6 @@ script:
   - "if travis/should-run-test; then make TEST_LOG=dump test-check; fi"
   - "if travis/should-run-test; then make TEST_LOG=dump TEST_ENABLE_OVERRIDE=true TEST_ARGS_CHECK=--mode=lowmem test-check; fi"
   - "if travis/should-run-test; then make TEST_LOG=dump test-misc; fi"
+  - "if travis/should-run-test; then make TEST_LOG=dump test-fuzz; fi"
   # long running tests
   - "if [ $TRAVIS_BRANCH = release-test ]; then make TEST_LOG=dump test-convert; fi"
