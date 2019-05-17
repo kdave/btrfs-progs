@@ -4,6 +4,11 @@
 
 source "$TEST_TOP/common"
 
+# fix reverted in v4.20.2 due to reported breakage, the bug fixed by
+# "Btrfs-progs: fix mount point detection due to partial prefix match" is still
+# present
+_not_run "fix not available"
+
 check_prereq btrfs
 check_prereq mkfs.btrfs
 
