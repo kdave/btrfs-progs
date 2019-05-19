@@ -102,6 +102,11 @@ LDFLAGS = $(SUBST_LDFLAGS) \
 	  $(DEBUG_LDFLAGS_INTERNAL) \
 	  $(EXTRA_LDFLAGS)
 
+LIBBTRFSUTIL_LDFLAGS = $(SUBST_LDFLAGS) \
+		       -rdynamic -L$(TOPDIR) \
+		       $(DEBUG_LDFLAGS_INTERNAL) \
+		       $(EXTRA_LDFLAGS)
+
 LIBS = $(LIBS_BASE)
 LIBBTRFS_LIBS = $(LIBS_BASE)
 
@@ -428,7 +433,7 @@ libbtrfsutil/%.o: libbtrfsutil/%.c
 
 libbtrfsutil.so.$(libbtrfsutil_version): $(libbtrfsutil_objects)
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(LIBBTRFSUTIL_CFLAGS) $(libbtrfsutil_objects) \
+	$(Q)$(CC) $(LIBBTRFSUTIL_CFLAGS) $(libbtrfsutil_objects) $(LIBBTRFSUTIL_LDFLAGS) \
 		-shared -Wl,-soname,libbtrfsutil.so.$(libbtrfsutil_major) -o $@
 
 libbtrfsutil.a: $(libbtrfsutil_objects)
