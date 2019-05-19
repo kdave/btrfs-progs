@@ -424,7 +424,7 @@ libbtrfsutil/%.o: libbtrfsutil/%.c
 
 libbtrfsutil.so.$(libbtrfsutil_version): $(libbtrfsutil_objects)
 	@echo "    [LD]     $@"
-	$(Q)$(CC) $(LIBBTRFSUTIL_CFLAGS) $(libbtrfsutil_objects) \
+	$(Q)$(CC) $(LIBBTRFSUTIL_CFLAGS) $(libbtrfsutil_objects) $(LDFLAGS) \
 		-shared -Wl,-soname,libbtrfsutil.so.$(libbtrfsutil_major) -o $@
 
 libbtrfsutil.a: $(libbtrfsutil_objects)
