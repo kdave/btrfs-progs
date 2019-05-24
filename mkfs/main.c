@@ -59,10 +59,21 @@ static int create_metadata_block_groups(struct btrfs_root *root, int mixed,
 {
 	struct btrfs_fs_info *fs_info = root->fs_info;
 	struct btrfs_trans_handle *trans;
+	struct btrfs_space_info *sinfo;
 	u64 bytes_used;
 	u64 chunk_start = 0;
 	u64 chunk_size = 0;
 	int ret;
+
+	/* Create needed space info to trace extents reservation */
+	ret = update_space_info(fs_info, BTRFS_BLOCK_GROUP_METADATA,
+				0, 0, &sinfo);
+	if (ret < 0)
+		return ret;
+	ret = update_space_info(fs_info, BTRFS_BLOCK_GROUP_DATA,
+				0, 0, &sinfo);
+	if (ret < 0)
+		return ret;
 
 	trans = btrfs_start_transaction(root, 1);
 	BUG_ON(IS_ERR(trans));

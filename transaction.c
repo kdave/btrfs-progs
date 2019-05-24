@@ -159,6 +159,7 @@ int btrfs_commit_transaction(struct btrfs_trans_handle *trans,
 	u64 transid = trans->transid;
 	int ret = 0;
 	struct btrfs_fs_info *fs_info = root->fs_info;
+	struct btrfs_space_info *sinfo;
 
 	if (trans->fs_info->transaction_aborted)
 		return -EROFS;
@@ -210,6 +211,13 @@ commit_tree:
 	root->commit_root = NULL;
 	fs_info->running_transaction = NULL;
 	fs_info->last_trans_committed = transid;
+	list_for_each_entry(sinfo, &fs_info->space_info, list) {
+		if (sinfo->bytes_reserved) {
+			warning(
+	"reserved space leaked, transid=%llu flag=0x%llx bytes_reserved=%llu",
+				transid, sinfo->flags, sinfo->bytes_reserved);
+		}
+	}
 	return ret;
 error:
 	btrfs_destroy_delayed_refs(trans);
