@@ -36,7 +36,7 @@ if [ "$BUILD_VERBOSE" = 1 ]; then
 	verbose=-print
 fi
 
-$SUDO_HELPER umount "$TEST_MNT" &>/dev/null
+$SUDO_HELPER umount -R "$TEST_MNT" &>/dev/null
 
 if ! cd "$TEST_TOP"; then
 	echo "ERROR: cannot cd to $TEST_TOP"
