@@ -24,6 +24,10 @@
 #   DEBUG_CFLAGS   additional compiler flags for debugging build
 #   EXTRA_CFLAGS   additional compiler flags
 #   EXTRA_LDFLAGS  additional linker flags
+#   EXTRA_PYTHON_CFLAGS   additional compiler flags to pass when building Python
+#                         library
+#   EXTRA_PYTHON_LDFLAGS  additional linker flags to pass when building Python
+#                         library
 #
 # Testing-specific options (see also tests/README.md):
 #   TEST=GLOB      run test(s) from directories matching GLOB
@@ -439,7 +443,7 @@ ifeq ($(PYTHON_BINDINGS),1)
 libbtrfsutil_python: libbtrfsutil.so.$(libbtrfsutil_major) libbtrfsutil.so libbtrfsutil/btrfsutil.h
 	@echo "    [PY]     libbtrfsutil"
 	$(Q)cd libbtrfsutil/python; \
-		CFLAGS= LDFLAGS= $(PYTHON) setup.py $(SETUP_PY_Q) build_ext -i build
+		CFLAGS="$(EXTRA_PYTHON_CFLAGS)" LDFLAGS="$(EXTRA_PYTHON_LDFLAGS)" $(PYTHON) setup.py $(SETUP_PY_Q) build_ext -i build
 
 .PHONY: libbtrfsutil_python
 endif
