@@ -829,7 +829,18 @@ static int ext2_copy_inodes(struct btrfs_convert_context *cctx,
 		pthread_mutex_unlock(&p->mutex);
 		if (ret)
 			return ret;
-		if (trans->blocks_used >= 4096) {
+		/*
+		 * blocks_used is the number of new tree blocks allocated in
+		 * current transaction.
+		 * Use a small amount of it to workaround a bug where delayed
+		 * ref may fail to locate tree blocks in extent tree.
+		 *
+		 * 2M is the threshold to kick chunk preallocator into work,
+		 * For default (16K) nodesize it will be 128 tree blocks,
+		 * large enough to contain over 300 inlined files or
+		 * around 26k file extents. Which should be good enough.
+		 */
+		if (trans->blocks_used >= SZ_2M / root->fs_info->nodesize) {
 			ret = btrfs_commit_transaction(trans, root);
 			BUG_ON(ret);
 			trans = btrfs_start_transaction(root, 1);
