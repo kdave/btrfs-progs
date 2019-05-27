@@ -101,6 +101,7 @@
 #include "mkfs/common.h"
 #include "convert/common.h"
 #include "convert/source-fs.h"
+#include "kernel-lib/crc32c.h"
 #include "fsfeatures.h"
 
 extern const struct btrfs_convert_operations ext2_convert_ops;
@@ -1726,6 +1727,8 @@ int main(int argc, char *argv[])
 	char *file;
 	char fslabel[BTRFS_LABEL_SIZE];
 	u64 features = BTRFS_MKFS_DEFAULT_FEATURES;
+
+	crc32c_optimization_init();
 
 	while(1) {
 		enum { GETOPT_VAL_NO_PROGRESS = 256 };

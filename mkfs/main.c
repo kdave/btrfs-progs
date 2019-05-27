@@ -42,6 +42,7 @@
 #include "rbtree-utils.h"
 #include "mkfs/common.h"
 #include "mkfs/rootdir.h"
+#include "kernel-lib/crc32c.h"
 #include "fsfeatures.h"
 
 static int verbose = 1;
@@ -810,6 +811,8 @@ int main(int argc, char **argv)
 	u64 features = BTRFS_MKFS_DEFAULT_FEATURES;
 	struct mkfs_allocation allocation = { 0 };
 	struct btrfs_mkfs_config mkfs_cfg;
+
+	crc32c_optimization_init();
 
 	while(1) {
 		int c;
