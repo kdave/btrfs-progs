@@ -2176,6 +2176,8 @@ static int __free_extent(struct btrfs_trans_handle *trans,
 		       (unsigned long long)root_objectid,
 		       (unsigned long long)owner_objectid,
 		       (unsigned long long)owner_offset);
+		printf("path->slots[0]: %u path->nodes[0]:\n", path->slots[0]);
+		btrfs_print_leaf(path->nodes[0]);
 		ret = -EIO;
 		goto fail;
 	}
