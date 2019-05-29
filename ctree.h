@@ -56,8 +56,6 @@ struct btrfs_free_space_ctl;
 
 #define BTRFS_MAX_LEVEL 8
 
-#define BTRFS_COMPAT_EXTENT_TREE_V0
-
 /* holds pointers to all of the tree roots */
 #define BTRFS_ROOT_TREE_OBJECTID 1ULL
 

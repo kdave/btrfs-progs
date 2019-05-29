@@ -5048,27 +5048,6 @@ void free_device_extent_tree(struct device_extent_tree *tree)
 	cache_tree_free_extents(&tree->tree, free_device_extent_record);
 }
 
-#ifdef BTRFS_COMPAT_EXTENT_TREE_V0
-static int process_extent_ref_v0(struct cache_tree *extent_cache,
-				 struct extent_buffer *leaf, int slot)
-{
-	struct btrfs_extent_ref_v0 *ref0;
-	struct btrfs_key key;
-	int ret;
-
-	btrfs_item_key_to_cpu(leaf, &key, slot);
-	ref0 = btrfs_item_ptr(leaf, slot, struct btrfs_extent_ref_v0);
-	if (btrfs_ref_objectid_v0(leaf, ref0) < BTRFS_FIRST_FREE_OBJECTID) {
-		ret = add_tree_backref(extent_cache, key.objectid, key.offset,
-				0, 0);
-	} else {
-		ret = add_data_backref(extent_cache, key.objectid, key.offset,
-				0, 0, 0, btrfs_ref_count_v0(leaf, ref0), 0, 0);
-	}
-	return ret;
-}
-#endif
-
 struct chunk_record *btrfs_new_chunk_record(struct extent_buffer *leaf,
 					    struct btrfs_key *key,
 					    int slot)
@@ -5331,30 +5310,10 @@ static int process_extent_item(struct btrfs_root *root,
 		return -EIO;
 	}
 	if (item_size < sizeof(*ei)) {
-#ifdef BTRFS_COMPAT_EXTENT_TREE_V0
-		struct btrfs_extent_item_v0 *ei0;
-
-		if (item_size != sizeof(*ei0)) {
-			error(
-	"invalid extent item format: ITEM[%llu %u %llu] leaf: %llu slot: %d",
-				key.objectid, key.type, key.offset,
-				btrfs_header_bytenr(eb), slot);
-			BUG();
-		}
-		ei0 = btrfs_item_ptr(eb, slot, struct btrfs_extent_item_v0);
-		refs = btrfs_extent_refs_v0(eb, ei0);
-#else
-		BUG();
-#endif
-		memset(&tmpl, 0, sizeof(tmpl));
-		tmpl.start = key.objectid;
-		tmpl.nr = num_bytes;
-		tmpl.extent_item_refs = refs;
-		tmpl.metadata = metadata;
-		tmpl.found_rec = 1;
-		tmpl.max_size = num_bytes;
-
-		return add_extent_rec(extent_cache, &tmpl);
+		error(
+"corrupted or unsupported extent item found, item size=%u expect minimal size=%lu",
+		      item_size, sizeof(*ei));
+		return -EIO;
 	}
 
 	ei = btrfs_item_ptr(eb, slot, struct btrfs_extent_item);
@@ -6334,14 +6293,10 @@ static int run_next_block(struct btrfs_root *root,
 				continue;
 
 			}
-			if (key.type == BTRFS_EXTENT_REF_V0_KEY) {
-#ifdef BTRFS_COMPAT_EXTENT_TREE_V0
-				process_extent_ref_v0(extent_cache, buf, i);
-#else
-				BUG();
-#endif
+
+			/* Skip deprecated extent ref */
+			if (key.type == BTRFS_EXTENT_REF_V0_KEY)
 				continue;
-			}
 
 			if (key.type == BTRFS_TREE_BLOCK_REF_KEY) {
 				ret = add_tree_backref(extent_cache,

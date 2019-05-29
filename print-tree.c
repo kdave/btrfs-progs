@@ -422,18 +422,8 @@ void print_extent_item(struct extent_buffer *eb, int slot, int metadata)
 	u64 offset;
 	char flags_str[32] = {0};
 
-	if (item_size < sizeof(*ei)) {
-#ifdef BTRFS_COMPAT_EXTENT_TREE_V0
-		struct btrfs_extent_item_v0 *ei0;
-		BUG_ON(item_size != sizeof(*ei0));
-		ei0 = btrfs_item_ptr(eb, slot, struct btrfs_extent_item_v0);
-		printf("\t\trefs %u\n",
-		       btrfs_extent_refs_v0(eb, ei0));
+	if (item_size < sizeof(*ei))
 		return;
-#else
-		BUG();
-#endif
-	}
 
 	ei = btrfs_item_ptr(eb, slot, struct btrfs_extent_item);
 	flags = btrfs_extent_flags(eb, ei);
@@ -501,21 +491,6 @@ void print_extent_item(struct extent_buffer *eb, int slot, int metadata)
 	}
 	WARN_ON(ptr > end);
 }
-
-#ifdef BTRFS_COMPAT_EXTENT_TREE_V0
-static void print_extent_ref_v0(struct extent_buffer *eb, int slot)
-{
-	struct btrfs_extent_ref_v0 *ref0;
-
-	ref0 = btrfs_item_ptr(eb, slot, struct btrfs_extent_ref_v0);
-	printf("\t\textent back ref root %llu gen %llu "
-		"owner %llu num_refs %lu\n",
-		(unsigned long long)btrfs_ref_root_v0(eb, ref0),
-		(unsigned long long)btrfs_ref_generation_v0(eb, ref0),
-		(unsigned long long)btrfs_ref_objectid_v0(eb, ref0),
-		(unsigned long)btrfs_ref_count_v0(eb, ref0));
-}
-#endif
 
 static void print_root_ref(struct extent_buffer *leaf, int slot, const char *tag)
 {
@@ -1310,11 +1285,7 @@ void btrfs_print_leaf(struct extent_buffer *eb)
 			print_shared_data_ref(eb, i);
 			break;
 		case BTRFS_EXTENT_REF_V0_KEY:
-#ifdef BTRFS_COMPAT_EXTENT_TREE_V0
-			print_extent_ref_v0(eb, i);
-#else
-			BUG();
-#endif
+			printf("\t\textent ref v0 (deprecated)\n");
 			break;
 		case BTRFS_CSUM_ITEM_KEY:
 			printf("\t\tcsum item\n");

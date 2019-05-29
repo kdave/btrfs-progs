@@ -720,43 +720,6 @@ static int add_extent(u64 start, u64 size, struct metadump_struct *md,
 	return 0;
 }
 
-#ifdef BTRFS_COMPAT_EXTENT_TREE_V0
-static int is_tree_block(struct btrfs_root *extent_root,
-			 struct btrfs_path *path, u64 bytenr)
-{
-	struct extent_buffer *leaf;
-	struct btrfs_key key;
-	u64 ref_objectid;
-	int ret;
-
-	leaf = path->nodes[0];
-	while (1) {
-		struct btrfs_extent_ref_v0 *ref_item;
-		path->slots[0]++;
-		if (path->slots[0] >= btrfs_header_nritems(leaf)) {
-			ret = btrfs_next_leaf(extent_root, path);
-			if (ret < 0)
-				return ret;
-			if (ret > 0)
-				break;
-			leaf = path->nodes[0];
-		}
-		btrfs_item_key_to_cpu(leaf, &key, path->slots[0]);
-		if (key.objectid != bytenr)
-			break;
-		if (key.type != BTRFS_EXTENT_REF_V0_KEY)
-			continue;
-		ref_item = btrfs_item_ptr(leaf, path->slots[0],
-					  struct btrfs_extent_ref_v0);
-		ref_objectid = btrfs_ref_objectid_v0(leaf, ref_item);
-		if (ref_objectid < BTRFS_FIRST_FREE_OBJECTID)
-			return 1;
-		break;
-	}
-	return 0;
-}
-#endif
-
 static int copy_tree_blocks(struct btrfs_root *root, struct extent_buffer *eb,
 			    struct metadump_struct *metadump, int root_tree)
 {
@@ -974,30 +937,10 @@ static int copy_from_extent_tree(struct metadump_struct *metadump,
 				}
 			}
 		} else {
-#ifdef BTRFS_COMPAT_EXTENT_TREE_V0
-			ret = is_tree_block(extent_root, path, bytenr);
-			if (ret < 0) {
-				error("failed to check tree block %llu: %d",
-					(unsigned long long)bytenr, ret);
-				break;
-			}
-
-			if (ret) {
-				ret = add_extent(bytenr, num_bytes, metadump,
-						 0);
-				if (ret) {
-					error("unable to add block %llu: %d",
-						(unsigned long long)bytenr, ret);
-					break;
-				}
-			}
-			ret = 0;
-#else
 			error(
-	"either extent tree is corrupted or you haven't built with V0 support");
+	"either extent tree is corrupted or deprecated extent ref format");
 			ret = -EIO;
 			break;
-#endif
 		}
 		bytenr += num_bytes;
 	}
