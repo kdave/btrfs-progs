@@ -58,6 +58,7 @@ static int ignore_errors = 0;
 static int overwrite = 0;
 static int get_xattrs = 0;
 static int dry_run = 0;
+static int skip_loops = 0;
 
 #define LZO_LEN 4
 #define lzo1x_worst_compress(x) ((x) + ((x) / 16) + 64 + 3)
@@ -483,7 +484,8 @@ out:
 enum loop_response {
 	LOOP_STOP,
 	LOOP_CONTINUE,
-	LOOP_DONTASK
+	LOOP_DONTASK,
+        LOOP_SKIP
 };
 
 static enum loop_response ask_to_continue(const char *file)
@@ -492,13 +494,17 @@ static enum loop_response ask_to_continue(const char *file)
 	char *ret;
 
 	printf("We seem to be looping a lot on %s, do you want to keep going "
-	       "on ? (y/N/a): ", file);
+	       "on ? (y/N/a/I): ", file);
 again:
 	ret = fgets(buf, 2, stdin);
 	if (*ret == '\n' || tolower(*ret) == 'n')
 		return LOOP_STOP;
 	if (tolower(*ret) == 'a')
 		return LOOP_DONTASK;
+	if (tolower(*ret) == 'i') {
+		skip_loops = 1;
+		return LOOP_SKIP;
+	}
 	if (tolower(*ret) != 'y') {
 		printf("Please enter one of 'y', 'n', or 'a': ");
 		goto again;
@@ -729,7 +735,7 @@ static int copy_file(struct btrfs_root *root, int fd, struct btrfs_key *key,
 	}
 
 	while (1) {
-		if (loops >= 0 && loops++ >= 1024) {
+		if (loops >= 0 && loops++ >= 1024 && skip_loops == 0) {
 			enum loop_response resp;
 
 			resp = ask_to_continue(file);
