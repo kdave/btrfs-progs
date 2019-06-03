@@ -1763,7 +1763,8 @@ int get_fs_info(const char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 
 	if (replacing)
 		memcpy(di_args, &tmp, sizeof(tmp));
-	for (; last_devid <= fi_args->max_id; last_devid++) {
+	for (; last_devid <= fi_args->max_id && ndevs < fi_args->num_devices;
+	     last_devid++) {
 		ret = get_device_info(fd, last_devid, &di_args[ndevs]);
 		if (ret == -ENODEV)
 			continue;
