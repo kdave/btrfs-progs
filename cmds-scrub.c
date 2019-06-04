@@ -134,10 +134,19 @@ static void print_scrub_full(struct btrfs_scrub_progress *sp)
 		printf(" %s=%llu", desc, test);	\
 } while (0)
 
-static void print_scrub_summary(struct btrfs_scrub_progress *p)
+static void print_scrub_summary(struct btrfs_scrub_progress *p, struct scrub_stats *s, u64 bytes_total)
 {
 	u64 err_cnt;
 	u64 err_cnt2;
+	u64 bytes_scrubbed;
+	u64 bytes_per_sec = 0;
+	u64 sec_left = 0;
+
+	bytes_scrubbed = p->data_bytes_scrubbed + p->tree_bytes_scrubbed;
+	if (s->duration > 0)
+		bytes_per_sec = bytes_scrubbed / s->duration;
+	if (bytes_per_sec > 0)
+		sec_left = (bytes_total - bytes_scrubbed) / bytes_per_sec;
 
 	err_cnt = p->read_errors +
 			p->csum_errors +
@@ -150,9 +159,18 @@ static void print_scrub_summary(struct btrfs_scrub_progress *p)
 		printf("*** WARNING: memory allocation failed while scrubbing. "
 		       "results may be inaccurate\n");
 
-	printf("\ttotal bytes scrubbed: %s with %llu errors\n",
-		pretty_size(p->data_bytes_scrubbed + p->tree_bytes_scrubbed),
-		max(err_cnt, err_cnt2));
+	if (s->in_progress) {
+		printf(
+		"\ttotal %s scrubbed at rate %s/s, time left: %llu:%02llu:%02llu\n",
+			pretty_size(bytes_scrubbed),
+			pretty_size(bytes_per_sec),
+			sec_left / 3600, (sec_left / 60) % 60, sec_left % 60);
+	} else {
+		printf("\ttotal %s scrubbed at rate %s/s\n",
+			pretty_size(bytes_scrubbed),
+			pretty_size(bytes_per_sec));
+	}
+
 
 	if (err_cnt || err_cnt2) {
 		printf("\terror details:");
@@ -164,6 +182,8 @@ static void print_scrub_summary(struct btrfs_scrub_progress *p)
 		printf("\tcorrected errors: %llu, uncorrectable errors: %llu, "
 			"unverified errors: %llu\n", p->corrected_errors,
 			p->uncorrectable_errors, p->unverified_errors);
+	} else {
+		printf("\tno errors found\n");
 	}
 }
 
@@ -251,13 +271,13 @@ static void _print_scrub_ss(struct scrub_stats *ss)
 	gmtime_r(&seconds, &tm);
 	strftime(t, sizeof(t), "%M:%S", &tm);
 	if (ss->in_progress)
-		printf(", running for %02u:%s\n", hours, t);
+		printf(", running for %u:%s\n", hours, t);
 	else if (ss->canceled)
-		printf(" and was aborted after %02u:%s\n", hours, t);
+		printf(" and was aborted after %u:%s\n", hours, t);
 	else if (ss->finished)
-		printf(" and finished after %02u:%s\n", hours, t);
+		printf(" and finished after %u:%s\n", hours, t);
 	else
-		printf(", interrupted after %02u:%s, not running\n",
+		printf(", interrupted after %u:%s, not running\n",
 		       hours, t);
 }
 
@@ -274,18 +294,18 @@ static void print_scrub_dev(struct btrfs_ioctl_dev_info_args *di,
 		if (raw)
 			print_scrub_full(p);
 		else
-			print_scrub_summary(p);
+			print_scrub_summary(p, ss, di->bytes_used);
 	}
 }
 
-static void print_fs_stat(struct scrub_fs_stat *fs_stat, int raw)
+static void print_fs_stat(struct scrub_fs_stat *fs_stat, int raw, u64 bytes_total)
 {
 	_print_scrub_ss(&fs_stat->s);
 
 	if (raw)
 		print_scrub_full(&fs_stat->p);
 	else
-		print_scrub_summary(&fs_stat->p);
+		print_scrub_summary(&fs_stat->p, &fs_stat->s, bytes_total);
 }
 
 static void free_history(struct scrub_file_record **last_scrubs)
@@ -1487,6 +1507,8 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 
 	if (do_print) {
 		const char *append = "done";
+		u64 total_bytes_used = 0;
+
 		if (!do_stats_per_dev)
 			init_fs_stat(&fs_stat);
 		for (i = 0; i < fi_args.num_devices; ++i) {
@@ -1502,10 +1524,11 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 				add_to_fs_stat(&sp[i].scrub_args.progress,
 						&sp[i].stats, &fs_stat);
 			}
+			total_bytes_used += di_args[i].bytes_used;
 		}
 		if (!do_stats_per_dev) {
 			printf("scrub %s for %s\n", append, fsid);
-			print_fs_stat(&fs_stat, print_raw);
+			print_fs_stat(&fs_stat, print_raw, total_bytes_used);
 		}
 	}
 
@@ -1771,6 +1794,8 @@ static int cmd_scrub_status(const struct cmd_struct *cmd, int argc, char **argv)
 					&last_scrub->stats);
 		}
 	} else {
+		u64 total_bytes_used = 0;
+
 		init_fs_stat(&fs_stat);
 		fs_stat.s.in_progress = in_progress;
 		for (i = 0; i < fi_args.num_devices; ++i) {
@@ -1780,8 +1805,9 @@ static int cmd_scrub_status(const struct cmd_struct *cmd, int argc, char **argv)
 				continue;
 			add_to_fs_stat(&last_scrub->p, &last_scrub->stats,
 					&fs_stat);
+			total_bytes_used += di_args[i].bytes_used;
 		}
-		print_fs_stat(&fs_stat, print_raw);
+		print_fs_stat(&fs_stat, print_raw, total_bytes_used);
 	}
 
 out:
