@@ -468,6 +468,23 @@ prepare_test_dev()
 	truncate -s "$size" "$TEST_DEV" || _not_run "create file for loop device failed"
 }
 
+# Create filesystem on $TEST_DEV with given options,
+# do not use for multi-device filesystem
+# $1-$n: optional, default is -f
+run_check_mkfs_test_dev()
+{
+	setup_root_helper
+
+	# check accidental files/devices passed
+	for opt in "$@"; do
+		if [ -f "$opt" -o -b "$opt" ]; then
+			_fail "ERROR: unexpected option for run_check_mkfs_test_dev: device"
+		fi
+	done
+
+	run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f "$@" "$TEST_DEV"
+}
+
 run_check_mount_test_dev()
 {
 	setup_root_helper
