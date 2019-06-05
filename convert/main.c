@@ -102,6 +102,7 @@
 #include "convert/common.h"
 #include "convert/source-fs.h"
 #include "fsfeatures.h"
+#include "crc32c.h"
 
 extern const struct btrfs_convert_operations ext2_convert_ops;
 extern const struct btrfs_convert_operations reiserfs_convert_ops;
@@ -138,6 +139,36 @@ static void *print_copied_inodes(void *p)
 }
 
 static int after_copied_inodes(void *p)
+{
+	printf("\n");
+	fflush(stdout);
+
+	return 0;
+}
+
+static void *print_image_progress(void *p)
+{
+	struct image_task_ctx *priv = p;
+	const char work_indicator[] = { '.', 'o', 'O', 'o' };
+	u64 count = 0;
+
+	task_period_start(priv->info, 1000 /* 1s */);
+	while (1) {
+		count++;
+		pthread_mutex_lock(&priv->mutex);
+		printf("create filesystem image [%c] [%10lluGiB/%10lluGiB]\r",
+		       work_indicator[count % 4],
+		       ((unsigned long long)priv->cur_image_bytes)>>30,
+		       ((unsigned long long)priv->max_image_bytes)>>30);
+		pthread_mutex_unlock(&priv->mutex);
+		fflush(stdout);
+		task_period_wait(priv->info);
+	}
+
+	return NULL;
+}
+
+static int after_image_progress(void *p)
 {
 	printf("\n");
 	fflush(stdout);
@@ -747,7 +778,8 @@ static int convert_read_used_space(struct btrfs_convert_context *cctx)
 static int create_image(struct btrfs_root *root,
 			   struct btrfs_mkfs_config *cfg,
 			   struct btrfs_convert_context *cctx, int fd,
-			   u64 size, char *name, u32 convert_flags)
+			   u64 size, char *name, u32 convert_flags,
+			   struct image_task_ctx *ctx)
 {
 	struct btrfs_inode_item buf;
 	struct btrfs_trans_handle *trans;
@@ -843,6 +875,10 @@ static int create_image(struct btrfs_root *root,
 		if (ret < 0)
 			goto out;
 		cur += len;
+
+		pthread_mutex_lock(&ctx->mutex);
+		ctx->cur_image_bytes = cur;
+		pthread_mutex_unlock(&ctx->mutex);
 	}
 	/* Handle the reserved ranges */
 	ret = migrate_reserved_ranges(trans, root, &cctx->used_space, &buf, fd,
@@ -1117,6 +1153,7 @@ static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
 	struct btrfs_key key;
 	char subvol_name[SOURCE_FS_NAME_LEN + 8];
 	struct task_ctx ctx;
+	struct image_task_ctx image_ctx;
 	char features_buf[64];
 	struct btrfs_mkfs_config mkfs_cfg;
 
@@ -1192,12 +1229,23 @@ static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
 		error("unable to create image subvolume");
 		goto fail;
 	}
+	ret = pthread_mutex_init(&image_ctx.mutex, NULL);
+	if (progress) {
+		image_ctx.info = task_init(print_image_progress, after_image_progress,
+				           &image_ctx);
+		image_ctx.max_image_bytes = mkfs_cfg.num_bytes;
+		task_start(image_ctx.info, NULL, NULL);
+	}
 	ret = create_image(image_root, &mkfs_cfg, &cctx, fd,
 			      mkfs_cfg.num_bytes, "image",
-			      convert_flags);
+			      convert_flags, &image_ctx);
 	if (ret) {
 		error("failed to create %s/image: %d", subvol_name, ret);
 		goto fail;
+	}
+	if (progress) {
+		task_stop(image_ctx.info);
+		task_deinit(image_ctx.info);
 	}
 
 	printf("creating btrfs metadata\n");
@@ -1844,6 +1892,8 @@ int main(int argc, char *argv[])
 		error("%s is mounted", file);
 		return 1;
 	}
+
+	crc32c_optimization_init();
 
 	if (rollback) {
 		ret = do_rollback(file);

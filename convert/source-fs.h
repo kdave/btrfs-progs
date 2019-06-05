@@ -47,6 +47,13 @@ struct task_ctx {
 	struct task_info *info;
 };
 
+struct image_task_ctx {
+	pthread_mutex_t mutex;
+	u64 max_image_bytes;
+	u64 cur_image_bytes;
+	struct task_info *info;
+};
+
 struct btrfs_convert_context;
 
 #define SOURCE_FS_NAME_LEN	(16)
