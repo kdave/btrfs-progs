@@ -17,7 +17,7 @@ prepare_test_dev
 #         otime 1521656113.0 (2018-03-21 19:15:13)
 #         drop key (0 UNKNOWN.0 0) level 0
 
-run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f "$@" "$TEST_DEV"
+run_check_mkfs_test_dev
 # match not-all-zeros in the first part
 uuid=$(run_check_stdout $SUDO_HELPER "$TOP/btrfs" inspect-internal dump-tree -t root "$TEST_DEV" | \
 	grep -A 3 "FS_TREE ROOT_ITEM 0" | grep 'uuid ')

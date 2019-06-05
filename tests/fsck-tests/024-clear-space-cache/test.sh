@@ -9,7 +9,7 @@ check_prereq mkfs.btrfs
 setup_root_helper
 prepare_test_dev
 
-run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f "$TEST_DEV"
+run_check_mkfs_test_dev
 run_check_mount_test_dev
 
 # Create files that takes at least 3 data chunks, while

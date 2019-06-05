@@ -19,7 +19,7 @@ test_full_empty_stream() {
 	local str
 
 	str="$here/stream-full-empty.stream"
-	run_check "$TOP/mkfs.btrfs" -f "$TEST_DEV"
+	run_check_mkfs_test_dev
 	run_check_mount_test_dev
 
 	cd "$TEST_MNT" || _fail "cannot chdir to TEST_MNT"
@@ -34,7 +34,7 @@ test_full_empty_stream() {
 	cd "$here" || _fail "cannot chdir back to test directory"
 	run_check_umount_test_dev
 
-	run_check "$TOP/mkfs.btrfs" -f "$TEST_DEV"
+	run_check_mkfs_test_dev
 	run_check_mount_test_dev
 	run_check $SUDO_HELPER "$TOP/btrfs" receive "$@" -v -f "$str" "$TEST_MNT"
 	run_check_umount_test_dev
@@ -46,7 +46,7 @@ test_full_simple_stream() {
 	local str
 
 	str="$here/stream-full-simple.stream"
-	run_check "$TOP/mkfs.btrfs" -f $TEST_DEV
+	run_check_mkfs_test_dev
 	run_check_mount_test_dev
 
 	cd "$TEST_MNT" || _fail "cannot chdir to TEST_MNT"
@@ -65,7 +65,7 @@ test_full_simple_stream() {
 	cd "$here" || _fail "cannot chdir back to test directory"
 	run_check_umount_test_dev
 
-	run_check "$TOP/mkfs.btrfs" -f "$TEST_DEV"
+	run_check_mkfs_test_dev
 	run_check_mount_test_dev
 	run_check $SUDO_HELPER "$TOP/btrfs" receive "$@" -v -f "$str" "$TEST_MNT"
 	run_check_umount_test_dev
@@ -79,7 +79,7 @@ test_incr_empty_stream() {
 
 	fstr="$here/stream-full-empty.stream"
 	istr="$here/stream-incr-empty.stream"
-	run_check "$TOP/mkfs.btrfs" -f "$TEST_DEV"
+	run_check_mkfs_test_dev
 	run_check_mount_test_dev
 
 	cd "$TEST_MNT" || _fail "cannot chdir to TEST_MNT"
@@ -96,7 +96,7 @@ test_incr_empty_stream() {
 	cd "$here" || _fail "cannot chdir back to test directory"
 	run_check_umount_test_dev
 
-	run_check "$TOP/mkfs.btrfs" -f "$TEST_DEV"
+	run_check_mkfs_test_dev
 	run_check_mount_test_dev
 	run_check $SUDO_HELPER "$TOP/btrfs" receive "$@" -v -f "$fstr" "$TEST_MNT"
 	run_check $SUDO_HELPER "$TOP/btrfs" receive "$@" -v -f "$istr" "$TEST_MNT"
@@ -110,7 +110,7 @@ test_incr_simple_stream() {
 
 	fstr="$here/stream-full-simple.stream"
 	istr="$here/stream-incr-simple.stream"
-	run_check "$TOP/mkfs.btrfs" -f "$TEST_DEV"
+	run_check_mkfs_test_dev
 	run_check_mount_test_dev
 
 	cd "$TEST_MNT" || _fail "cannot chdir to TEST_MNT"
@@ -136,7 +136,7 @@ test_incr_simple_stream() {
 	cd "$here" || _fail "cannot chdir back to test directory"
 	run_check_umount_test_dev
 
-	run_check "$TOP/mkfs.btrfs" -f "$TEST_DEV"
+	run_check_mkfs_test_dev
 	run_check_mount_test_dev
 	run_check $SUDO_HELPER "$TOP/btrfs" receive "$@" -v -f "$fstr" "$TEST_MNT"
 	run_check $SUDO_HELPER "$TOP/btrfs" receive "$@" -v -f "$istr" "$TEST_MNT"

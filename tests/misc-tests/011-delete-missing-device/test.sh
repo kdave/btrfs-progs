@@ -48,7 +48,7 @@ test_missing_error()
 {
 	local out
 
-	run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f "$TEST_DEV"
+	run_check_mkfs_test_dev
 	run_check_mount_test_dev
 	out=$(run_mustfail_stdout "device remove succeeded" \
 		$SUDO_HELPER "$TOP/btrfs" device remove missing "$TEST_MNT")

@@ -10,7 +10,7 @@ check_prereq btrfs-image
 setup_root_helper
 prepare_test_dev
 
-run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f "$TEST_DEV"
+run_check_mkfs_test_dev
 run_check_mount_test_dev
 
 run_check $SUDO_HELPER dd if=/dev/urandom of="$TEST_MNT/file" bs=4k count=16

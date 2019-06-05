@@ -11,7 +11,7 @@ check_prereq btrfs
 setup_root_helper
 
 prepare_test_dev
-run_check "$TOP/mkfs.btrfs" -f "$TEST_DEV"
+run_check_mkfs_test_dev
 run_check_mount_test_dev
 run_check $SUDO_HELPER chmod a+rw "$TEST_MNT"
 

@@ -12,7 +12,7 @@ check_prereq btrfs
 setup_root_helper
 prepare_test_dev
 
-run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f "$TEST_DEV"
+run_check_mkfs_test_dev
 run_check_mount_test_dev
 
 # to check following thing in both 1 and multiple subvolume case:

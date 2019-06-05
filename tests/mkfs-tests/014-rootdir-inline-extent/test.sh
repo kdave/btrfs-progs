@@ -21,8 +21,7 @@ create_file()
 test_mkfs_rootdir()
 {
 	nodesize=$1
-	run_check "$TOP/mkfs.btrfs" --nodesize "$nodesize" -f --rootdir "$tmp" \
-		"$TEST_DEV"
+	run_check_mkfs_test_dev --nodesize "$nodesize" --rootdir "$tmp"
 	run_check $SUDO_HELPER "$TOP/btrfs" check "$TEST_DEV"
 }
 

@@ -39,17 +39,17 @@ function check_btrfstune {
 		$SUDO_HELPER "$TOP/btrfstune" -S 1 "$TEST_DEV"
 
 	# test that setting both seed and -m|M is forbidden
-	run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f "$TEST_DEV"
+	run_check_mkfs_test_dev
 	run_mustfail "Succeeded setting seed and changing fs uuid" \
 		$SUDO_HELPER "$TOP/btrfstune" -S 1 -m "$TEST_DEV"
 
 	# test that having -m|-M on seed device is forbidden
-	run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f "$TEST_DEV"
+	run_check_mkfs_test_dev
 	run_check $SUDO_HELPER "$TOP/btrfstune" -S 1 "$TEST_DEV"
 	run_mustfail "Succeded changing fsid on a seed device" $SUDO_HELPER "$TOP/btrfstune" -m "$TEST_DEV"
 
 	# test that using -U|-u on an fs with METADATA_UUID flag is forbidden
-	run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f "$TEST_DEV"
+	run_check_mkfs_test_dev
 	run_check $SUDO_HELPER "$TOP/btrfstune" -m "$TEST_DEV"
 	run_mustfail "Succeeded triggering FSID rewrite while METADATA_UUID is active" \
 		$SUDO_HELPER "$TOP/btrfstune" -u  "$TEST_DEV"
@@ -113,14 +113,14 @@ function check_image_restore {
 	local metadata_uuid_restored
 
 	echo "TESTING btrfs-image restore" >> "$RESULTS"
-	run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f "$TEST_DEV"
+	run_check_mkfs_test_dev
 	run_check $SUDO_HELPER "$TOP/btrfstune" -m "$TEST_DEV"
 	fsid=$(read_fsid "$TEST_DEV")
 	metadata_uuid=$(read_metadata_uuid "$TEST_DEV")
 	run_mayfail $SUDO_HELPER "$TOP/btrfs-image" "$TEST_DEV" /tmp/test-img.dump
 	# erase the fs by creating a new one, wipefs is not sufficient as it just
 	# deletes the fs magic string
-	run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f "$TEST_DEV"
+	run_check_mkfs_test_dev
 	run_check $SUDO_HELPER "$TOP/btrfs-image" -r /tmp/test-img.dump "$TEST_DEV"
 	fsid_restored=$(read_fsid "$TEST_DEV")
 	metadata_uuid_restored=$(read_metadata_uuid "$TEST_DEV")
@@ -191,13 +191,13 @@ modinfo btrfs > /dev/null 2>&1 || _not_run "btrfs must be a module"
 modprobe -r btrfs || _not_run "btrfs must be unloadable"
 modprobe btrfs || _not_run "loading btrfs module failed"
 
-run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f "$TEST_DEV"
+run_check_mkfs_test_dev
 check_btrfstune
 
-run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f "$TEST_DEV"
+run_check_mkfs_test_dev
 check_dump_super_output
 
-run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f "$TEST_DEV"
+run_check_mkfs_test_dev
 check_image_restore
 
 # disk1 is an image which has no metadata uuid flags set and disk2 is part of

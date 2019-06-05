@@ -29,7 +29,7 @@ run_check $SUDO_HELPER mknod "$tmp/char" c 1 1
 run_check $SUDO_HELPER mknod "$tmp/block" b 1 1
 run_check dd if=/dev/zero bs=1M count=1 of="$tmp/regular"
 
-run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f -r "$tmp" "$TEST_DEV"
+run_check_mkfs_test_dev -r "$tmp"
 
 rm -rf -- "$tmp"
 

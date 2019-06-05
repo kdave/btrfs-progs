@@ -17,7 +17,7 @@ prepare_test_dev 128M
 # Lowmem mode can report missing csum due to wrong csum range
 test_partial_write_into_prealloc()
 {
-	run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f "$TEST_DEV"
+	run_check_mkfs_test_dev
 	run_check_mount_test_dev
 
 	run_check $SUDO_HELPER fallocate -l 128K "$TEST_MNT/file"
@@ -32,7 +32,7 @@ test_partial_write_into_prealloc()
 # due to too restrict check on inline extent size
 test_compressed_inline_extent()
 {
-	run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f "$TEST_DEV"
+	run_check_mkfs_test_dev
 	run_check_mount_test_dev -o compress=lzo,max_inline=2048
 
 	run_check $SUDO_HELPER dd conv=notrunc if=/dev/null of="$TEST_MNT/file" bs=1K count=1
@@ -46,7 +46,7 @@ test_compressed_inline_extent()
 # false alert
 test_hole_extent_with_no_holes_flag()
 {
-	run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f "$TEST_DEV"
+	run_check_mkfs_test_dev
 	run_check_mount_test_dev
 
 	run_check $SUDO_HELPER truncate -s 16K "$TEST_MNT/tmp"

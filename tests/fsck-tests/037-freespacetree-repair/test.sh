@@ -55,7 +55,7 @@ if ! [ -f "/sys/fs/btrfs/features/free_space_tree" ]; then
 	exit
 fi
 
-run_check "$TOP/mkfs.btrfs" -n 4k -f "$TEST_DEV"
+run_check_mkfs_test_dev -n 4k
 run_check_mount_test_dev -oclear_cache,space_cache=v2
 
 # create files which will populate the FST

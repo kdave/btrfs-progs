@@ -16,7 +16,7 @@ setup_loopdevs 1
 prepare_loopdevs
 TEST_DEV=${loopdevs[1]}
 
-run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f "$TEST_DEV"
+run_check_mkfs_test_dev
 run_check_mount_test_dev
 run_mustfail "checking mounted filesystem without --force" \
 	$SUDO_HELPER "$TOP/btrfs" check "$TEST_DEV"

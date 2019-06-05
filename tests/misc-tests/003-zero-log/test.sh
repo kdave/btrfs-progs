@@ -20,9 +20,7 @@ get_log_root_level() {
 test_zero_log()
 {
 	# FIXME: we need an image with existing log_root
-	run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f \
-		--rootdir "$INTERNAL_BIN/Documentation" \
-		"$TEST_DEV"
+	run_check_mkfs_test_dev --rootdir "$INTERNAL_BIN/Documentation"
 	run_check "$TOP/btrfs" inspect-internal dump-super "$TEST_DEV"
 	run_check "$TOP/btrfs" rescue zero-log "$TEST_DEV"
 	log_root=$(get_log_root "$TEST_DEV")

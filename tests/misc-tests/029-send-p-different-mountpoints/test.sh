@@ -16,7 +16,7 @@ TOPLEVEL_MNT="$TEST_MNT/toplevel"
 TEST_MNT="$TOPLEVEL_MNT"
 run_check $SUDO_HELPER mkdir -p "$TOPLEVEL_MNT" "$SUBVOL_MNT"
 
-run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f "$TEST_DEV"
+run_check_mkfs_test_dev
 run_check_mount_test_dev
 
 run_check $SUDO_HELPER "$TOP/btrfs" subvolume create "$TOPLEVEL_MNT/subv1"

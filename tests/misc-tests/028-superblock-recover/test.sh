@@ -10,8 +10,7 @@ check_prereq btrfs-select-super
 setup_root_helper
 prepare_test_dev 260G
 
-# Create the test file system.
-run_check $SUDO_HELPER "$TOP"/mkfs.btrfs -f "$TEST_DEV"
+run_check_mkfs_test_dev
 
 function check_corruption {
 	local sb_offset=$1

@@ -15,7 +15,7 @@ prepare_test_dev
 
 do_one_test ()
 {
-	run_check "$TOP/mkfs.btrfs" -f "$@" "$TEST_DEV"
+	run_check_mkfs_test_dev "$@"
 
 	# Use dev-extent tree to find first device extent
 	first_dev_extent=$(run_check_stdout "$TOP/btrfs" inspect-internal \

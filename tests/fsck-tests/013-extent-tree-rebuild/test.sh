@@ -12,8 +12,7 @@ prepare_test_dev
 # test whether fsck can rebuild a corrupted extent tree
 test_extent_tree_rebuild()
 {
-	run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f "$TEST_DEV"
-
+	run_check_mkfs_test_dev
 	run_check_mount_test_dev
 	generate_dataset small
 
