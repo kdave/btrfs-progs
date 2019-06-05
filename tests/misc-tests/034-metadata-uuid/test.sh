@@ -182,14 +182,14 @@ function failure_recovery {
 }
 
 function reload_btrfs {
-	rmmod btrfs
-	modprobe btrfs
+	run_check $SUDO_HELPER rmmod btrfs
+	run_check $SUDO_HELPER modprobe btrfs
 }
 
 # for full coverage we need btrfs to actually be a module
 modinfo btrfs > /dev/null 2>&1 || _not_run "btrfs must be a module"
-modprobe -r btrfs || _not_run "btrfs must be unloadable"
-modprobe btrfs || _not_run "loading btrfs module failed"
+run_mayfail $SUDO_HELPER modprobe -r btrfs || _not_run "btrfs must be unloadable"
+run_mayfail $SUDO_HELPER modprobe btrfs || _not_run "loading btrfs module failed"
 
 run_check_mkfs_test_dev
 check_btrfstune
