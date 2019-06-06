@@ -642,7 +642,7 @@ library-test.static: library-test.c $(libs_static)
 	@echo "    [TEST CLEAN] $@"
 	$(Q)$(RM) -rf -- $(TMPD)
 
-fssum: tests/fssum.c tests/sha224-256.c
+fssum: tests/fssum.c crypto/sha224-256.c
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
