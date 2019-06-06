@@ -2701,6 +2701,7 @@ int main(int argc, char *argv[])
 
 			if (tmp <= 0)
 				tmp = 1;
+			tmp = min_t(long, tmp, MAX_WORKER_THREADS);
 			num_threads = tmp;
 		}
 	} else {
