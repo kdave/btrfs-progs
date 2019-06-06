@@ -1107,7 +1107,7 @@ int pretty_size_snprintf(u64 size, char *str, size_t str_size, unsigned unit_mod
 
 	if ((unit_mode & ~UNITS_MODE_MASK) == UNITS_RAW) {
 		if (negative)
-			snprintf(str, str_size, "%lld", size);
+			snprintf(str, str_size, "%llu", size);
 		else
 			snprintf(str, str_size, "%llu", size);
 		return 0;
@@ -1125,7 +1125,7 @@ int pretty_size_snprintf(u64 size, char *str, size_t str_size, unsigned unit_mod
 
 	/* Unknown mode */
 	if (!base) {
-		fprintf(stderr, "INTERNAL ERROR: unknown unit base, mode %d\n",
+		fprintf(stderr, "INTERNAL ERROR: unknown unit base, mode %u\n",
 				unit_mode);
 		assert(0);
 		return -1;

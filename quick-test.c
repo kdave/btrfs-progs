@@ -107,7 +107,7 @@ int main(int ac, char **av) {
 		fprintf(stderr, "Open ctree failed\n");
 		exit(1);
 	}
-	printf("node %p level %d total ptrs %d free spc %lu\n", root->node,
+	printf("node %p level %d total ptrs %u free spc %lu\n", root->node,
 	        btrfs_header_level(root->node),
 		btrfs_header_nritems(root->node),
 		(unsigned long)BTRFS_NODEPTRS_PER_BLOCK(root->fs_info) -

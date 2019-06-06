@@ -4155,7 +4155,7 @@ static int run_delayed_tree_ref(struct btrfs_trans_handle *trans,
 	ref_root = ref->root;
 
 	if (node->ref_mod != 1) {
-		printf("btree block(%llu) has %d references rather than 1: action %d ref_root %llu parent %llu",
+		printf("btree block(%llu) has %d references rather than 1: action %u ref_root %llu parent %llu",
 			node->bytenr, node->ref_mod, node->action, ref_root,
 			parent);
 		return -EIO;

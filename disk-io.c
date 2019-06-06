@@ -127,7 +127,7 @@ static void print_tree_block_error(struct btrfs_fs_info *fs_info,
 			eb->start, btrfs_header_bytenr(eb));
 		break;
 	case BTRFS_BAD_LEVEL:
-		fprintf(stderr, "bad level, %u > %u\n",
+		fprintf(stderr, "bad level, %u > %l\n",
 			btrfs_header_level(eb), BTRFS_MAX_LEVEL);
 		break;
 	case BTRFS_BAD_NRITEMS:
@@ -813,7 +813,7 @@ int btrfs_check_fs_compatibility(struct btrfs_super_block *sb,
 		   ~BTRFS_FEATURE_INCOMPAT_SUPP;
 	if (features) {
 		printk("couldn't open because of unsupported "
-		       "option features (%Lx).\n",
+		       "option features (%llu).\n",
 		       (unsigned long long)features);
 		return -ENOTSUP;
 	}
@@ -835,7 +835,7 @@ int btrfs_check_fs_compatibility(struct btrfs_super_block *sb,
 		}
 		if (features & ~BTRFS_FEATURE_COMPAT_RO_SUPP) {
 			printk("couldn't open RDWR because of unsupported "
-			       "option features (%Lx).\n",
+			       "option features (%llu).\n",
 			       (unsigned long long)features);
 			return -ENOTSUP;
 		}

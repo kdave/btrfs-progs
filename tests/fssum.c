@@ -272,7 +272,7 @@ sum_file_data_permissive(int fd, sum_t *dst)
 			for (old = i; buf[i] != 0 && i < ret; ++i)
 				;
 			if (verbose >= 2)
-				fprintf(stderr, "adding %u non-zeros to sum\n",
+				fprintf(stderr, "adding %d non-zeros to sum\n",
 					i - (int)old);
 			sum_add(dst, buf + old, i - old);
 		}
@@ -450,7 +450,7 @@ malformed:
 			excess_file(fn);
 			prev_fn = strdup(l);
 			prev_m = strdup(rem_m);
-			prev_c = strdup(rem_c); 
+			prev_c = strdup(rem_c);
 			return;
 		}
 		missing_file(l);

@@ -2545,7 +2545,7 @@ int btrfs_extend_item(struct btrfs_root *root, struct btrfs_path *path,
 	BUG_ON(slot < 0);
 	if (slot >= nritems) {
 		btrfs_print_leaf(leaf);
-		printk("slot %d too large, nritems %d\n", slot, nritems);
+		printk("slot %d too large, nritems %lu\n", slot, nritems);
 		BUG_ON(1);
 	}
 
@@ -2636,7 +2636,7 @@ int btrfs_insert_empty_items(struct btrfs_trans_handle *trans,
 
 		if (old_data < data_end) {
 			btrfs_print_leaf(leaf);
-			printk("slot %d old_data %d data_end %d\n",
+			printk("slot %d old_data %lu data_end %lu\n",
 			       slot, old_data, data_end);
 			BUG_ON(1);
 		}

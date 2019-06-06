@@ -58,7 +58,7 @@ static int __ino_to_path_fd(u64 inum, int fd, int verbose, const char *prepend)
 
 	if (verbose)
 		printf("ioctl ret=%d, bytes_left=%lu, bytes_missing=%lu, "
-			"cnt=%d, missed=%d\n", ret,
+			"cnt=%lu, missed=%lu\n", ret,
 			(unsigned long)fspath->bytes_left,
 			(unsigned long)fspath->bytes_missing,
 			fspath->elem_cnt, fspath->elem_missed);
@@ -199,7 +199,7 @@ static int cmd_inspect_logical_resolve(int argc, char **argv)
 
 	if (verbose)
 		printf("ioctl ret=%d, total_size=%llu, bytes_left=%lu, "
-			"bytes_missing=%lu, cnt=%d, missed=%d\n",
+			"bytes_missing=%lu, cnt=%lu, missed=%lu\n",
 			ret, size,
 			(unsigned long)inodes->bytes_left,
 			(unsigned long)inodes->bytes_missing,
