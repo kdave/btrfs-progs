@@ -1137,15 +1137,15 @@ int pretty_size_snprintf(u64 size, char *str, size_t str_size, unsigned unit_mod
 	case UNITS_TBYTES:
 		base *= mult;
 		num_divs++;
-		__attribute__ ((fallthrough));
+		__attribute__ ((fallthrough))
 	case UNITS_GBYTES:
 		base *= mult;
 		num_divs++;
-		__attribute__ ((fallthrough));
+		__attribute__ ((fallthrough))
 	case UNITS_MBYTES:
 		base *= mult;
 		num_divs++;
-		__attribute__ ((fallthrough));
+		__attribute__ ((fallthrough))
 	case UNITS_KBYTES:
 		num_divs++;
 		break;
@@ -1917,17 +1917,17 @@ int test_num_disk_vs_raid(u64 metadata_profile, u64 data_profile,
 	default:
 	case 4:
 		allowed |= BTRFS_BLOCK_GROUP_RAID10;
-		__attribute__ ((fallthrough));
+		__attribute__ ((fallthrough))
 	case 3:
 		allowed |= BTRFS_BLOCK_GROUP_RAID6;
-		__attribute__ ((fallthrough));
+		__attribute__ ((fallthrough))
 	case 2:
 		allowed |= BTRFS_BLOCK_GROUP_RAID0 | BTRFS_BLOCK_GROUP_RAID1 |
 			BTRFS_BLOCK_GROUP_RAID5;
-		__attribute__ ((fallthrough));
+		__attribute__ ((fallthrough))
 	case 1:
 		allowed |= BTRFS_BLOCK_GROUP_DUP;
-		__attribute__ ((fallthrough));
+		__attribute__ ((fallthrough))
 	}
 
 	if (dev_cnt > 1 && profile & BTRFS_BLOCK_GROUP_DUP) {

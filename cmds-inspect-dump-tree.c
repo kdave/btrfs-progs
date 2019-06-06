@@ -70,11 +70,10 @@ static void print_extents(struct extent_buffer *eb)
 			print_extents(next);
 			free_extent_buffer(next);
 		}
+out:
+		free_extent_buffer(next);
 	}
 	return;
-
-out:
-	free_extent_buffer(next);
 }
 
 static void print_old_roots(struct btrfs_super_block *super)
