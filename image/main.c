@@ -1983,6 +1983,11 @@ static int build_chunk_tree(struct mdrestore_struct *mdres,
 
 	pthread_mutex_lock(&mdres->mutex);
 	super = (struct btrfs_super_block *)buffer;
+	ret = btrfs_check_super(super, 0);
+	if (ret < 0) {
+		error("invalid superblock");
+		return ret;
+	}
 	chunk_root_bytenr = btrfs_super_chunk_root(super);
 	mdres->nodesize = btrfs_super_nodesize(super);
 	if (btrfs_super_incompat_flags(super) &

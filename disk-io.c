@@ -1347,7 +1347,7 @@ struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
  * - number of devices   - something sane
  * - sys array size      - maximum
  */
-static int check_super(struct btrfs_super_block *sb, unsigned sbflags)
+int btrfs_check_super(struct btrfs_super_block *sb, unsigned sbflags)
 {
 	u8 result[BTRFS_CSUM_SIZE];
 	u32 crc;
@@ -1547,7 +1547,7 @@ int btrfs_read_dev_super(int fd, struct btrfs_super_block *sb, u64 sb_bytenr,
 		if (btrfs_super_bytenr(buf) != sb_bytenr)
 			return -EIO;
 
-		ret = check_super(buf, sbflags);
+		ret = btrfs_check_super(buf, sbflags);
 		if (ret < 0)
 			return ret;
 		memcpy(sb, buf, BTRFS_SUPER_INFO_SIZE);
@@ -1572,7 +1572,7 @@ int btrfs_read_dev_super(int fd, struct btrfs_super_block *sb, u64 sb_bytenr,
 		/* if magic is NULL, the device was removed */
 		if (btrfs_super_magic(buf) == 0 && i == 0)
 			break;
-		if (check_super(buf, sbflags))
+		if (btrfs_check_super(buf, sbflags))
 			continue;
 
 		if (!fsid_is_initialized) {
