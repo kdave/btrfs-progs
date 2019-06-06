@@ -37,17 +37,19 @@ static void print_extents(struct extent_buffer *eb)
 {
 	if (eb) {
 
-		if (btrfs_is_leaf(eb)) {
-			btrfs_print_leaf(eb);
-			goto out;
-		}
-
 		struct btrfs_fs_info *fs_info = eb->fs_info;
 		struct extent_buffer *next;
 		int i;
 		u32 nr;
 
+		next = malloc(sizeof(*next));
 		nr = btrfs_header_nritems(eb);
+
+		if (btrfs_is_leaf(eb)) {
+			btrfs_print_leaf(eb);
+			goto out;
+		}
+
 		for (i = 0; i < nr; i++) {
 			next = read_tree_block(fs_info,
 					btrfs_node_blockptr(eb, i),
@@ -72,8 +74,7 @@ static void print_extents(struct extent_buffer *eb)
 			free_extent_buffer(next);
 		}
 out:
-		if(next)
-			free_extent_buffer(next);
+		free_extent_buffer(next);
 	}
 }
 
