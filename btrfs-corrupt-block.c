@@ -46,7 +46,7 @@ static int debug_corrupt_block(struct extent_buffer *eb,
 	length = blocksize;
 	while (1) {
 		ret = btrfs_map_block(root->fs_info, READ, eb->start, &length,
-				      &multi, mirror_num, NULL);
+						&multi, mirror_num, NULL);
 		if (ret) {
 			error("cannot map block %llu length %llu mirror %d: %d",
 					(unsigned long long)eb->start,
@@ -74,7 +74,7 @@ static int debug_corrupt_block(struct extent_buffer *eb,
 				return ret;
 			}
 			printf("corrupting %llu copy %d\n", eb->start,
-			       mirror_num);
+					mirror_num);
 			memset(eb->data, 0, eb->len);
 			ret = write_extent_to_disk(eb);
 			if (ret < 0) {
@@ -87,7 +87,7 @@ static int debug_corrupt_block(struct extent_buffer *eb,
 		}
 
 		num_copies = btrfs_num_copies(root->fs_info, eb->start,
-					      eb->len);
+								eb->len);
 		if (num_copies == 1)
 			break;
 
@@ -214,12 +214,12 @@ static int corrupt_extent(struct btrfs_trans_handle *trans,
 			break;
 
 		if (key.type != BTRFS_EXTENT_ITEM_KEY &&
-		    key.type != BTRFS_METADATA_ITEM_KEY &&
-		    key.type != BTRFS_TREE_BLOCK_REF_KEY &&
-		    key.type != BTRFS_EXTENT_DATA_REF_KEY &&
-		    key.type != BTRFS_EXTENT_REF_V0_KEY &&
-		    key.type != BTRFS_SHARED_BLOCK_REF_KEY &&
-		    key.type != BTRFS_SHARED_DATA_REF_KEY)
+			key.type != BTRFS_METADATA_ITEM_KEY &&
+			key.type != BTRFS_TREE_BLOCK_REF_KEY &&
+			key.type != BTRFS_EXTENT_DATA_REF_KEY &&
+			key.type != BTRFS_EXTENT_REF_V0_KEY &&
+			key.type != BTRFS_SHARED_BLOCK_REF_KEY &&
+			key.type != BTRFS_SHARED_DATA_REF_KEY)
 			goto next;
 
 		if (should_del) {
@@ -231,7 +231,7 @@ static int corrupt_extent(struct btrfs_trans_handle *trans,
 				/* make sure this extent doesn't get
 				 * reused for other purposes */
 				btrfs_pin_extent(root->fs_info,
-						 key.objectid, key.offset);
+							key.objectid, key.offset);
 			}
 
 			btrfs_del_item(trans, root, path);
@@ -295,7 +295,7 @@ static void btrfs_corrupt_extent_tree(struct btrfs_trans_handle *trans,
 		struct extent_buffer *next;
 
 		next = read_tree_block(fs_info, btrfs_node_blockptr(eb, i),
-				       btrfs_node_ptr_generation(eb, i));
+						btrfs_node_ptr_generation(eb, i));
 		if (!extent_buffer_uptodate(next))
 			continue;
 		btrfs_corrupt_extent_tree(trans, root, next);
@@ -535,7 +535,7 @@ static int corrupt_dir_item(struct btrfs_root *root, struct btrfs_key *key,
 	}
 
 	di = btrfs_item_ptr(path->nodes[0], path->slots[0],
-			    struct btrfs_dir_item);
+					struct btrfs_dir_item);
 
 	switch (corrupt_field) {
 	case BTRFS_DIR_ITEM_NAME:
@@ -609,7 +609,7 @@ static int corrupt_inode(struct btrfs_trans_handle *trans,
 	}
 
 	ei = btrfs_item_ptr(path->nodes[0], path->slots[0],
-			    struct btrfs_inode_item);
+					struct btrfs_inode_item);
 	switch (corrupt_field) {
 	case BTRFS_INODE_FIELD_ISIZE:
 		orig = btrfs_inode_size(path->nodes[0], ei);
@@ -703,7 +703,7 @@ static int corrupt_file_extent(struct btrfs_trans_handle *trans,
 	}
 
 	fi = btrfs_item_ptr(path->nodes[0], path->slots[0],
-			    struct btrfs_file_extent_item);
+					struct btrfs_file_extent_item);
 	switch (corrupt_field) {
 	case BTRFS_FILE_EXTENT_DISK_BYTENR:
 		orig = btrfs_file_extent_disk_bytenr(path->nodes[0], fi);
@@ -730,8 +730,8 @@ static void shift_items(struct btrfs_root *root, struct extent_buffer *eb)
 
 	/* Shift the item data up to and including slot back by shift space */
 	memmove_extent_buffer(eb, btrfs_leaf_data(eb) + data_end - shift_space,
-			      btrfs_leaf_data(eb) + data_end,
-			      btrfs_item_offset_nr(eb, slot - 1) - data_end);
+					btrfs_leaf_data(eb) + data_end,
+					btrfs_item_offset_nr(eb, slot - 1) - data_end);
 
 	/* Now update the item pointers. */
 	for (i = nritems - 1; i >= slot; i--) {
@@ -865,7 +865,7 @@ static int corrupt_btrfs_item(struct btrfs_root *root, struct btrfs_key *key,
 		orig = btrfs_item_offset_nr(path->nodes[0], path->slots[0]);
 		bogus = generate_u32(orig);
 		btrfs_set_item_offset(path->nodes[0],
-				      btrfs_item_nr(path->slots[0]), bogus);
+			btrfs_item_nr(path->slots[0]), bogus);
 		break;
 	default:
 		ret = -EINVAL;
@@ -937,8 +937,7 @@ static int delete_csum(struct btrfs_root *root, u64 bytenr, u64 bytes)
  * which is still OK but we want to check the ability to rebuild chunk
  * not only restore the old ones */
 static int corrupt_item_nocow(struct btrfs_trans_handle *trans,
-		       struct btrfs_root *root, struct btrfs_path *path,
-		       int del)
+		       struct btrfs_root *root, struct btrfs_path *path, int del)
 {
 	int ret = 0;
 	struct btrfs_key key;
@@ -1083,13 +1082,13 @@ static void parse_key(u64 *objectid, u8 *type, u64 *offset)
 
 	int ret = sscanf(optarg, "%llu,%hhu,%llu", objectid, type, offset);
 	if (ret != 3) {
-	        fprintf(stderr, "error parsing key '%s': %d\n", optarg, errno);
-	        print_usage(1);
+			fprintf(stderr, "error parsing key '%s': %d\n", optarg, errno);
+			print_usage(1);
 	}
 }
 
 static struct btrfs_root *open_root(struct btrfs_fs_info *fs_info,
-				    u64 root_objectid)
+			u64 root_objectid)
 {
 
 	struct btrfs_key root_key;
@@ -1132,9 +1131,14 @@ int main(int argc, char **argv)
 	u64 file_extent = (u64)-1;
 	u64 root_objectid = 0;
 	u64 csum_bytenr = 0;
-	char field[];
 
-	strcpy(field,'\0');
+	/*
+		'field' was originally set by a define, and strncmp's were used.
+		This is an attempt to resolve cppcheck complaints about those practices.
+	*/
+	char field[80];
+	field = strdup('\0');
+
 	memset(&key, 0, sizeof(key));
 
 	while(1) {
@@ -1265,7 +1269,7 @@ int main(int argc, char **argv)
 		trans = btrfs_start_transaction(root, 1);
 		BUG_ON(IS_ERR(trans));
 		btrfs_corrupt_extent_tree(trans, root->fs_info->extent_root,
-					  root->fs_info->extent_root->node);
+						root->fs_info->extent_root->node);
 		btrfs_commit_transaction(trans, root);
 		goto out_close;
 	}
@@ -1284,14 +1288,14 @@ int main(int argc, char **argv)
 		}
 
 		if (find_chunk_offset(root->fs_info->chunk_root, path,
-				      logical) != 0) {
+						logical) != 0) {
 			btrfs_free_path(path);
 			goto out_close;
 		}
 		trans = btrfs_start_transaction(root, 1);
 		BUG_ON(IS_ERR(trans));
 		ret = corrupt_item_nocow(trans, root->fs_info->chunk_root,
-					 path, del);
+						path, del);
 		if (ret < 0)
 			fprintf(stderr, "Failed to corrupt chunk record\n");
 		btrfs_commit_transaction(trans, root);
@@ -1322,7 +1326,7 @@ int main(int argc, char **argv)
 		} else {
 			printf("corrupting file extent\n");
 			ret = corrupt_file_extent(trans, root, inode,
-						  file_extent, field);
+						file_extent, field);
 		}
 		btrfs_commit_transaction(trans, root);
 		goto out_close;
@@ -1331,7 +1335,7 @@ int main(int argc, char **argv)
 		if (*field == 0)
 			print_usage(1);
 		ret = corrupt_metadata_block(root->fs_info, metadata_block,
-					     field);
+						field);
 		goto out_close;
 	}
 	if (corrupt_di) {
@@ -1399,7 +1403,7 @@ int main(int argc, char **argv)
 			}
 
 			debug_corrupt_block(eb, root, logical,
-					    root->fs_info->sectorsize, copy);
+						root->fs_info->sectorsize, copy);
 			free_extent_buffer(eb);
 		}
 		logical += root->fs_info->sectorsize;

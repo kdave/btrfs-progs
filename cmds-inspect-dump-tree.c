@@ -71,7 +71,8 @@ static void print_extents(struct extent_buffer *eb)
 			free_extent_buffer(next);
 		}
 out:
-		free_extent_buffer(next);
+		if(next)
+			free_extent_buffer(next);
 	}
 	return;
 }
