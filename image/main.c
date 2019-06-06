@@ -2645,7 +2645,7 @@ int main(int argc, char *argv[])
 			create = 0;
 			multi_devices = 1;
 			break;
-			case GETOPT_VAL_HELP:
+		case GETOPT_VAL_HELP:
 		default:
 			print_usage(c != GETOPT_VAL_HELP);
 		}
