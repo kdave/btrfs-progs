@@ -1120,9 +1120,8 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 				if (IS_ERR(search_root)) {
 					free(dir);
 					fprintf(stderr,
-						"Error reading subvolume %s: %l\n",
-						path_name,
-						PTR_ERR(search_root));
+						"Error reading subvolume %s: %x\n",
+						path_name, PTR_ERR(search_root));
 					if (ignore_errors)
 						goto next;
 					ret = PTR_ERR(search_root);
