@@ -1041,10 +1041,9 @@ static enum btrfs_util_error snapshot_subvolume_children(int fd, int parent_fd,
 		char child_name[BTRFS_SUBVOL_NAME_MAX + 1];
 		char *child_path;
 		int child_fd, new_parent_fd;
-		uint64_t tmp_transid;
+		uint64_t tmp_transid = 0;
 
-		err = btrfs_util_subvolume_iterator_next(iter, &child_path,
-							 NULL);
+		err = btrfs_util_subvolume_iterator_next(iter, &child_path, NULL);
 		if (err) {
 			if (err == BTRFS_UTIL_ERROR_STOP_ITERATION)
 				err = BTRFS_UTIL_OK;
@@ -1066,8 +1065,8 @@ static enum btrfs_util_error snapshot_subvolume_children(int fd, int parent_fd,
 		}
 
 		err = openat_parent_and_name(dstfd, child_path, child_name,
-					     sizeof(child_name),
-					     &new_parent_fd);
+				sizeof(child_name),
+				&new_parent_fd);
 		free(child_path);
 		if (err) {
 			SAVE_ERRNO_AND_CLOSE(child_fd);
@@ -1075,9 +1074,9 @@ static enum btrfs_util_error snapshot_subvolume_children(int fd, int parent_fd,
 		}
 
 		err = btrfs_util_create_snapshot_fd2(child_fd, new_parent_fd,
-						     child_name, 0,
-						     async_transid ? &tmp_transid : NULL,
-						     NULL);
+				child_name, 0,
+				async_transid ? &tmp_transid : NULL,
+				NULL);
 		SAVE_ERRNO_AND_CLOSE(child_fd);
 		SAVE_ERRNO_AND_CLOSE(new_parent_fd);
 		if (err)

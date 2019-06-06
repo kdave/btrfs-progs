@@ -459,8 +459,8 @@ static void print_scan_result(struct recover_control *rc)
 
 	printf("DEVICE SCAN RESULT:\n");
 	printf("Filesystem Information:\n");
-	printf("\tsectorsize: %lu\n", rc->sectorsize);
-	printf("\tnodesize: %lu\n", rc->nodesize);
+	printf("\tsectorsize: %u\n", rc->sectorsize);
+	printf("\tnodesize: %u\n", rc->nodesize);
 	printf("\ttree root generation: %llu\n", rc->generation);
 	printf("\tchunk root generation: %llu\n", rc->chunk_root_generation);
 	printf("\n");

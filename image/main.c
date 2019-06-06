@@ -1875,7 +1875,7 @@ static int search_for_chunk_blocks(struct mdrestore_struct *mdres,
 
 		header = &cluster->header;
 		if (le64_to_cpu(header->magic) != HEADER_MAGIC ||
-		    le64_to_cpu(header->bytenr) != current_cluster) {
+			le64_to_cpu(header->bytenr) != current_cluster) {
 			error("bad header in metadump image");
 			ret = -EIO;
 			break;
@@ -1898,22 +1898,22 @@ static int search_for_chunk_blocks(struct mdrestore_struct *mdres,
 			}
 
 			if (mdres->compress_method == COMPRESS_ZLIB) {
-				ret = fread(tmp, bufsize, 1, mdres->in);
-				if (ret != 1) {
-					error("read error: %m");
+				if(tmp){
+					ret = fread(tmp, bufsize, 1, mdres->in);
+					if (ret != 1) {
+						error("read error: %m");
+						ret = -EIO;
+						break;
+					}
+					size = max_size;
+					ret = uncompress(buffer,
+						(unsigned long *)&size, tmp,
+						bufsize);
+					if (ret != Z_OK) {
+						error("decompression failed with %d", ret);
 					ret = -EIO;
 					break;
-				}
-
-				size = max_size;
-				ret = uncompress(buffer,
-						 (unsigned long *)&size, tmp,
-						 bufsize);
-				if (ret != Z_OK) {
-					error("decompression failed with %d",
-							ret);
-					ret = -EIO;
-					break;
+					}
 				}
 			} else {
 				ret = fread(buffer, bufsize, 1, mdres->in);
@@ -1927,10 +1927,9 @@ static int search_for_chunk_blocks(struct mdrestore_struct *mdres,
 			ret = 0;
 
 			if (item_bytenr <= search &&
-			    item_bytenr + size > search) {
+				item_bytenr + size > search) {
 				ret = read_chunk_block(mdres, buffer, search,
-						       item_bytenr, size,
-						       current_cluster);
+						item_bytenr, size, current_cluster);
 				if (!ret)
 					ret = 1;
 				break;

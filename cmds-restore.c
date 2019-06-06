@@ -896,7 +896,7 @@ static int copy_symlink(struct btrfs_root *root, struct btrfs_key *key,
 	len = btrfs_file_extent_inline_item_len(leaf,
 			btrfs_item_nr(path.slots[0]));
 	if (len >= PATH_MAX) {
-		fprintf(stderr, "Symlink '%s' target length %d is longer than PATH_MAX\n",
+		fprintf(stderr, "Symlink '%s' target length %u is longer than PATH_MAX\n",
 				fs_name, len);
 		ret = -1;
 		goto out;
@@ -1128,7 +1128,7 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 				if (IS_ERR(search_root)) {
 					free(dir);
 					fprintf(stderr, "Error reading "
-						"subvolume %s: %u\n",
+						"subvolume %s: %l\n",
 						path_name,
 						PTR_ERR(search_root));
 					if (ignore_errors)

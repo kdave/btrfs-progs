@@ -94,7 +94,7 @@ static inline void warning_trace(const char *assertion, const char *filename,
 	if (!val)
 		return;
 	fprintf(stderr,
-		"%s:%lu: %s: Warning: assertion `%s` failed, value %ld\n",
+		"%s:%u: %s: Warning: assertion `%s` failed, value %ld\n",
 		filename, line, func, assertion, val);
 #ifndef BTRFS_DISABLE_BACKTRACE
 	print_trace();
@@ -107,7 +107,7 @@ static inline void bugon_trace(const char *assertion, const char *filename,
 	if (!val)
 		return;
 	fprintf(stderr,
-		"%s:%lu: %s: BUG_ON `%s` triggered, value %ld\n",
+		"%s:%u: %s: BUG_ON `%s` triggered, value %ld\n",
 		filename, line, func, assertion, val);
 #ifndef BTRFS_DISABLE_BACKTRACE
 	print_trace();
@@ -311,7 +311,7 @@ static inline void assert_trace(const char *assertion, const char *filename,
 	if (val)
 		return;
 	fprintf(stderr,
-		"%s:%d: %s: Assertion `%s` failed, value %ld\n",
+		"%s:%u: %s: Assertion `%s` failed, value %ld\n",
 		filename, line, func, assertion, val);
 #ifndef BTRFS_DISABLE_BACKTRACE
 	print_trace();

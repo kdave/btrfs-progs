@@ -240,37 +240,40 @@ static struct btrfs_ioctl_space_args *load_space_info(int fd, const char *path)
 
 	sargs->space_slots = 0;
 	sargs->total_spaces = 0;
-
 	ret = ioctl(fd, BTRFS_IOC_SPACE_INFO, sargs);
+
 	if (ret < 0) {
 		error("cannot get space info on '%s': %m", path);
 		free(sargs);
+		free(sargs_orig);
 		return NULL;
 	}
+
 	if (!sargs->total_spaces) {
-		free(sargs);
 		printf("No chunks found\n");
+		free(sargs);
+		free(sargs_orig);
 		return NULL;
 	}
 
 	count = sargs->total_spaces;
-
 	sargs = realloc(sargs, sizeof(struct btrfs_ioctl_space_args) +
 			(count * sizeof(struct btrfs_ioctl_space_info)));
 	if (!sargs) {
-		free(sargs_orig);
 		error("not enough memory");
+		free(sargs);
+		free(sargs_orig);
 		return NULL;
 	}
 
 	sargs->space_slots = count;
 	sargs->total_spaces = 0;
-
 	ret = ioctl(fd, BTRFS_IOC_SPACE_INFO, sargs);
 	if (ret < 0) {
 		error("cannot get space info with %u slots: %m",
 			count);
 		free(sargs);
+		free(sargs_orig);
 		return NULL;
 	}
 

@@ -61,6 +61,7 @@ PUBLIC enum btrfs_util_error btrfs_util_qgroup_inherit_add_group(struct btrfs_ut
 	tmp = realloc(tmp, sizeof(*tmp) +
 		      (tmp->num_qgroups + 1) * sizeof(tmp->qgroups[0]));
 	if (!tmp)
+		free(tmp);
 		return BTRFS_UTIL_ERROR_NO_MEMORY;
 
 	tmp->qgroups[tmp->num_qgroups++] = qgroupid;

@@ -118,15 +118,17 @@ void table_dump(struct string_table *tab)
 
 			if (!cell || !strlen(cell)) {
 				printf("%*s", sizes[i], "");
-			} else if (cell && cell[0] == '*' && cell[1]) {
-				int k = sizes[i];
-
-				while (k--)
-					putchar(cell[1]);
-			} else {
-				printf("%*s",
-					cell[0] == '<' ? -sizes[i] : sizes[i],
-					cell + 1);
+			}
+			else {
+				if (cell[0] == '*' && cell[1]) {
+					int k = sizes[i];
+					while (k--)
+						putchar(cell[1]);
+				}
+				else {
+					printf("%*s",
+						cell[0] == '<' ? -sizes[i] : sizes[i], cell + 1);
+				}
 			}
 			if (i != (tab->ncols - 1))
 				putchar(' ');

@@ -347,30 +347,30 @@ enum btrfs_key_field {
 
 static enum btrfs_inode_field convert_inode_field(char *field)
 {
-	if (!strncmp(field, "isize", sizeof field))
+	if (strcmp(field, "isize") == 0)
 		return BTRFS_INODE_FIELD_ISIZE;
-	if (!strncmp(field, "nbytes", sizeof field))
+	if (strcmp(field, "nbytes") == 0)
 		return BTRFS_INODE_FIELD_NBYTES;
-	if (!strncmp(field, "nlink", sizeof field))
+	if (strcmp(field, "nlink") == 0)
 		return BTRFS_INODE_FIELD_NLINK;
-	if (!strncmp(field, "generation", sizeof field))
+	if (strcmp(field, "generation") == 0)
 		return BTRFS_INODE_FIELD_GENERATION;
-	if (!strncmp(field, "transid", sizeof field))
+	if (strcmp(field, "transid") == 0)
 		return BTRFS_INODE_FIELD_TRANSID;
-	if (!strncmp(field, "block_group", sizeof field))
+	if (strcmp(field, "block_group") == 0)
 		return BTRFS_INODE_FIELD_BLOCK_GROUP;
-	if (!strncmp(field, "mode", sizeof field))
+	if (strcmp(field, "mode") == 0)
 		return BTRFS_INODE_FIELD_MODE;
-	if (!strncmp(field, "uid", sizeof field))
+	if (strcmp(field, "uid") == 0)
 		return BTRFS_INODE_FIELD_UID;
-	if (!strncmp(field, "gid", sizeof field))
+	if (strcmp(field, "gid") == 0)
 		return BTRFS_INODE_FIELD_GID;
 	return BTRFS_INODE_FIELD_BAD;
 }
 
 static enum btrfs_file_extent_field convert_file_extent_field(char *field)
 {
-	if (!strncmp(field, "disk_bytenr", sizeof field))
+	if (strcmp(field, "disk_bytenr") == 0)
 		return BTRFS_FILE_EXTENT_DISK_BYTENR;
 	return BTRFS_FILE_EXTENT_BAD;
 }
@@ -378,36 +378,36 @@ static enum btrfs_file_extent_field convert_file_extent_field(char *field)
 static enum btrfs_metadata_block_field
 convert_metadata_block_field(char *field)
 {
-	if (!strncmp(field, "generation", sizeof field))
+	if (strcmp(field, "generation") == 0)
 		return BTRFS_METADATA_BLOCK_GENERATION;
-	if (!strncmp(field, "shift_items", sizeof field))
+	if (strcmp(field, "shift_items") == 0)
 		return BTRFS_METADATA_BLOCK_SHIFT_ITEMS;
 	return BTRFS_METADATA_BLOCK_BAD;
 }
 
 static enum btrfs_key_field convert_key_field(char *field)
 {
-	if (!strncmp(field, "objectid", sizeof field))
+	if (strcmp(field, "objectid") == 0)
 		return BTRFS_KEY_OBJECTID;
-	if (!strncmp(field, "type", sizeof field))
+	if (strcmp(field, "type") == 0)
 		return BTRFS_KEY_TYPE;
-	if (!strncmp(field, "offset", sizeof field))
+	if (strcmp(field, "offset") == 0)
 		return BTRFS_KEY_OFFSET;
 	return BTRFS_KEY_BAD;
 }
 
 static enum btrfs_item_field convert_item_field(char *field)
 {
-	if (!strncmp(field, "offset", sizeof field))
+	if (strcmp(field, "offset") == 0)
 		return BTRFS_ITEM_OFFSET;
 	return BTRFS_ITEM_BAD;
 }
 
 static enum btrfs_dir_item_field convert_dir_item_field(char *field)
 {
-	if (!strncmp(field, "name", sizeof field))
+	if (strcmp(field, "name") == 0)
 		return BTRFS_DIR_ITEM_NAME;
-	if (!strncmp(field, "location_objectid", sizeof field))
+	if (strcmp(field, "location_objectid") == 0)
 		return BTRFS_DIR_ITEM_LOCATION_OBJECTID;
 	return BTRFS_DIR_ITEM_BAD;
 }
@@ -1134,7 +1134,7 @@ int main(int argc, char **argv)
 	u64 csum_bytenr = 0;
 	char field[];
 
-	field[0] = '\0';
+	strcpy(field,'\0');
 	memset(&key, 0, sizeof(key));
 
 	while(1) {

@@ -1487,14 +1487,14 @@ static void dfs_print_children(struct extent_buffer *root_eb)
 
 void btrfs_print_tree(struct extent_buffer *eb, bool follow, int traverse)
 {
-	u32 i;
-	u32 nr;
-	u32 ptr_num;
-	struct btrfs_fs_info *fs_info = eb->fs_info;
-	struct btrfs_disk_key disk_key;
-	struct btrfs_key key;
-
 	if (eb) {
+		u32 i;
+		u32 nr;
+		u32 ptr_num;
+		struct btrfs_fs_info *fs_info = eb->fs_info;
+		struct btrfs_disk_key disk_key;
+		struct btrfs_key key;
+
 		if (traverse != BTRFS_PRINT_TREE_DFS && traverse != BTRFS_PRINT_TREE_BFS)
 			traverse = BTRFS_PRINT_TREE_DEFAULT;
 

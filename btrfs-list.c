@@ -1562,16 +1562,16 @@ int btrfs_get_toplevel_subvol(int fd, struct root_info *the_ri)
 	{
 		rbn = rb_first(&rl.root);
 		ri = to_root_info(rbn);
-	}
-	if (ri->root_id != BTRFS_FS_TREE_OBJECTID)
-		ret = -ENOENT;
-	if (ret != -ENOENT)
-	{
-		memcpy(the_ri, ri, offsetof(struct root_info, path));
-		the_ri->path = strdup_or_null("/");
-		the_ri->name = strdup_or_null("<FS_TREE>");
-		the_ri->full_path = strdup_or_null("/");
-		rb_free_nodes(&rl.root, free_root_info);
+		if (ri->root_id != BTRFS_FS_TREE_OBJECTID)
+			ret = -ENOENT;
+		if (ret != -ENOENT)
+		{
+			memcpy(the_ri, ri, offsetof(struct root_info, path));
+			the_ri->path = strdup_or_null("/");
+			the_ri->name = strdup_or_null("<FS_TREE>");
+			the_ri->full_path = strdup_or_null("/");
+			rb_free_nodes(&rl.root, free_root_info);
+		}
 	}
 
 	return ret;

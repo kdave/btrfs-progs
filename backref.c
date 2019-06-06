@@ -302,6 +302,7 @@ static int __resolve_indirect_ref(struct btrfs_fs_info *fs_info,
 				  struct ulist *parents,
 				  const u64 *extent_item_pos, u64 total_refs)
 {
+	struct btrfs_trans_handle *trans = NULL;
 	struct btrfs_root *root;
 	struct btrfs_key root_key;
 	struct extent_buffer *eb;
@@ -325,13 +326,13 @@ static int __resolve_indirect_ref(struct btrfs_fs_info *fs_info,
 		goto out;
 
 	path->lowest_level = level;
-	ret = btrfs_search_slot(NULL, root, &ref->key_for_search, path, 0, 0);
+	ret = btrfs_search_slot(trans, root, &ref->key_for_search, path, 0, 0);
 
 	pr_debug("search slot in root %llu (level %d, ref count %d) returned "
-		 "%d for key (%llu %u %llu)\n",
-		 ref->root_id, level, ref->count, ret,
-		 ref->key_for_search.objectid, ref->key_for_search.type,
-		 ref->key_for_search.offset);
+		"%d for key (%llu %u %llu)\n",
+		ref->root_id, level, ref->count, ret,
+		ref->key_for_search.objectid, ref->key_for_search.type,
+		ref->key_for_search.offset);
 	if (ret < 0)
 		goto out;
 
@@ -347,7 +348,7 @@ static int __resolve_indirect_ref(struct btrfs_fs_info *fs_info,
 	}
 
 	ret = add_all_parents(root, path, parents, ref, level, time_seq,
-			      extent_item_pos, total_refs);
+		extent_item_pos, total_refs);
 out:
 	path->lowest_level = 0;
 	btrfs_release_path(path);
@@ -381,8 +382,7 @@ static int __resolve_indirect_refs(struct btrfs_fs_info *fs_info,
 		ASSERT(!ref->parent);	/* already direct */
 		ASSERT(ref->count);
 		err = __resolve_indirect_ref(fs_info, path, time_seq, ref,
-					     parents, extent_item_pos,
-					     total_refs);
+			parents, extent_item_pos, total_refs);
 		/*
 		 * we can only tolerate ENOENT,otherwise,we should catch error
 		 * and return directly.

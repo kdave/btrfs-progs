@@ -447,23 +447,20 @@ static int account_one_extent(struct ulist *roots, u64 bytenr, u64 num_bytes)
 		while ((tmp_unode = ulist_next(tmp, &tmp_uiter))) {
 			/* Bump the refcount on a node every time we see it. */
 			count = u64_to_ptr(tmp_unode->aux);
-			update_cur_refcnt(count);
-
-			list_for_each_entry(glist, &count->groups, next_group) {
-				struct qgroup_count *parent;
-				parent = glist->group;
-				id = parent->qgroupid;
-
-				BUG_ON(!count);
-
-				ret = ulist_add(counts, id, ptr_to_u64(parent),
-						0);
-				if (ret < 0)
-					goto out;
-				ret = ulist_add(tmp, id, ptr_to_u64(parent),
-						0);
-				if (ret < 0)
-					goto out;
+			if(count){
+				update_cur_refcnt(count);
+				list_for_each_entry(glist, &count->groups, next_group) {
+					struct qgroup_count *parent;
+					parent = glist->group;
+					id = parent->qgroupid;
+					BUG_ON(!count);
+					ret = ulist_add(counts, id, ptr_to_u64(parent), 0);
+					if (ret < 0)
+						goto out;
+					ret = ulist_add(tmp, id, ptr_to_u64(parent), 0);
+					if (ret < 0)
+						goto out;
+				}
 			}
 		}
 	}

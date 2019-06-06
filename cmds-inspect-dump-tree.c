@@ -35,12 +35,12 @@
 
 static void print_extents(struct extent_buffer *eb)
 {
-	struct btrfs_fs_info *fs_info = eb->fs_info;
-	struct extent_buffer *next;
-	int i;
-	u32 nr;
-
 	if (eb) {
+		struct btrfs_fs_info *fs_info = eb->fs_info;
+		struct extent_buffer *next;
+		int i;
+		u32 nr;
+
 		if (btrfs_is_leaf(eb)) {
 			btrfs_print_leaf(eb);
 			return;
@@ -132,7 +132,7 @@ static u64 treeid_from_string(const char *str, const char **end)
 {
 	int match = 0;
 	int i;
-	u64 id;
+	u64 id = 0;
 	static struct treename {
 		const char *name;
 		u64 id;
