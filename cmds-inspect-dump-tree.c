@@ -36,15 +36,16 @@
 static void print_extents(struct extent_buffer *eb)
 {
 	if (eb) {
+
+		if (btrfs_is_leaf(eb)) {
+			btrfs_print_leaf(eb);
+			goto out;
+		}
+
 		struct btrfs_fs_info *fs_info = eb->fs_info;
 		struct extent_buffer *next;
 		int i;
 		u32 nr;
-
-		if (btrfs_is_leaf(eb)) {
-			btrfs_print_leaf(eb);
-			return;
-		}
 
 		nr = btrfs_header_nritems(eb);
 		for (i = 0; i < nr; i++) {
@@ -71,10 +72,9 @@ static void print_extents(struct extent_buffer *eb)
 			free_extent_buffer(next);
 		}
 out:
-		if(next != NULL)
+		if(next)
 			free_extent_buffer(next);
 	}
-	return;
 }
 
 static void print_old_roots(struct btrfs_super_block *super)

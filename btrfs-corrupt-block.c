@@ -1137,7 +1137,6 @@ int main(int argc, char **argv)
 		This is an attempt to resolve cppcheck complaints about those practices.
 	*/
 	char field[80];
-	strcpy(field, '\0');
 
 	memset(&key, 0, sizeof(key));
 
