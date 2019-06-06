@@ -29,7 +29,7 @@
 #include <assert.h>
 #include <time.h>
 #include <stdint.h>
-#include "tests/sha.h"
+#include "crypto/sha.h"
 
 #define CS_SIZE 32
 #define CHUNKS	128
