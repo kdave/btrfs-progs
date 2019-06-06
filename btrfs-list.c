@@ -295,14 +295,12 @@ static int sort_comp(struct root_info *entry1, struct root_info *entry2,
 
 		ret = set->comps[i].comp_func(entry1, entry2,
 					      set->comps[i].is_descending);
-		if (ret)
-			return ret;
-
-		if (set->comps[i].comp_func == comp_entry_with_rootid)
-			rootid_compared = 1;
+		if (!ret)
+			if (set->comps[i].comp_func == comp_entry_with_rootid)
+				rootid_compared = 1;
 	}
 
-	if (!rootid_compared)
+	if (!rootid_compared && !ret)
 		ret = comp_entry_with_rootid(entry1, entry2, 0);
 
 	return ret;
@@ -1530,19 +1528,16 @@ int btrfs_list_subvols_print(int fd, struct btrfs_list_filter_set *filter_set,
 
 	if (full_path)
 		ret = btrfs_list_get_path_rootid(fd, &top_id);
-	if (ret)
-		return ret;
+	if (!ret)
+		ret = btrfs_list_subvols(fd, &root_lookup);
+	if (!ret)
+	{
+		filter_and_sort_subvol(&root_lookup, &root_sort, filter_set, comp_set, top_id);
+		print_all_subvol_info(&root_sort, layout, raw_prefix);
+		rb_free_nodes(&root_lookup.root, free_root_info);
+	}
 
-	ret = btrfs_list_subvols(fd, &root_lookup);
-	if (ret)
-		return ret;
-	filter_and_sort_subvol(&root_lookup, &root_sort, filter_set,
-				 comp_set, top_id);
-
-	print_all_subvol_info(&root_sort, layout, raw_prefix);
-	rb_free_nodes(&root_lookup.root, free_root_info);
-
-	return 0;
+	return ret;
 }
 
 static char *strdup_or_null(const char *s)
@@ -1561,24 +1556,23 @@ int btrfs_get_toplevel_subvol(int fd, struct root_info *the_ri)
 	u64 root_id;
 
 	ret = btrfs_list_get_path_rootid(fd, &root_id);
-	if (ret)
-		return ret;
-
-	ret = btrfs_list_subvols(fd, &rl);
-	if (ret)
-		return ret;
-
-	rbn = rb_first(&rl.root);
-	ri = to_root_info(rbn);
-
+	if (!ret)
+		ret = btrfs_list_subvols(fd, &rl);
+	if (!ret)
+	{
+		rbn = rb_first(&rl.root);
+		ri = to_root_info(rbn);
+	}
 	if (ri->root_id != BTRFS_FS_TREE_OBJECTID)
-		return -ENOENT;
-
-	memcpy(the_ri, ri, offsetof(struct root_info, path));
-	the_ri->path = strdup_or_null("/");
-	the_ri->name = strdup_or_null("<FS_TREE>");
-	the_ri->full_path = strdup_or_null("/");
-	rb_free_nodes(&rl.root, free_root_info);
+		ret = -ENOENT;
+	if (ret != -ENOENT)
+	{
+		memcpy(the_ri, ri, offsetof(struct root_info, path));
+		the_ri->path = strdup_or_null("/");
+		the_ri->name = strdup_or_null("<FS_TREE>");
+		the_ri->full_path = strdup_or_null("/");
+		rb_free_nodes(&rl.root, free_root_info);
+	}
 
 	return ret;
 }
@@ -1592,35 +1586,32 @@ int btrfs_get_subvol(int fd, struct root_info *the_ri)
 	u64 root_id;
 
 	ret = btrfs_list_get_path_rootid(fd, &root_id);
-	if (ret)
-		return ret;
-
-	ret = btrfs_list_subvols(fd, &rl);
-	if (ret)
-		return ret;
-
-	rbn = rb_first(&rl.root);
-	while(rbn) {
-		ri = to_root_info(rbn);
-		rr = resolve_root(&rl, ri, root_id);
-		if (rr == -ENOENT) {
-			ret = -ENOENT;
+	if (!ret)
+		ret = btrfs_list_subvols(fd, &rl);
+	if (!ret)
+	{
+		rbn = rb_first(&rl.root);
+		while(rbn) {
+			ri = to_root_info(rbn);
+			rr = resolve_root(&rl, ri, root_id);
+			if (rr == -ENOENT) {
+				ret = -ENOENT;
+				rbn = rb_next(rbn);
+				continue;
+			}
+			if (!comp_entry_with_rootid(the_ri, ri, 0) ||
+				!uuid_compare(the_ri->uuid, ri->uuid)) {
+				memcpy(the_ri, ri, offsetof(struct root_info, path));
+				the_ri->path = strdup_or_null(ri->path);
+				the_ri->name = strdup_or_null(ri->name);
+				the_ri->full_path = strdup_or_null(ri->full_path);
+				ret = 0;
+				break;
+			}
 			rbn = rb_next(rbn);
-			continue;
 		}
-
-		if (!comp_entry_with_rootid(the_ri, ri, 0) ||
-			!uuid_compare(the_ri->uuid, ri->uuid)) {
-			memcpy(the_ri, ri, offsetof(struct root_info, path));
-			the_ri->path = strdup_or_null(ri->path);
-			the_ri->name = strdup_or_null(ri->name);
-			the_ri->full_path = strdup_or_null(ri->full_path);
-			ret = 0;
-			break;
-		}
-		rbn = rb_next(rbn);
+		rb_free_nodes(&rl.root, free_root_info);
 	}
-	rb_free_nodes(&rl.root, free_root_info);
 	return ret;
 }
 

@@ -40,39 +40,37 @@ static void print_extents(struct extent_buffer *eb)
 	int i;
 	u32 nr;
 
-	if (!eb)
-		return;
-
-	if (btrfs_is_leaf(eb)) {
-		btrfs_print_leaf(eb);
-		return;
-	}
-
-	nr = btrfs_header_nritems(eb);
-	for (i = 0; i < nr; i++) {
-		next = read_tree_block(fs_info,
-				btrfs_node_blockptr(eb, i),
-				btrfs_node_ptr_generation(eb, i));
-		if (!extent_buffer_uptodate(next))
-			continue;
-		if (btrfs_is_leaf(next) && btrfs_header_level(eb) != 1) {
-			warning(
-	"eb corrupted: item %d eb level %d next level %d, skipping the rest",
-				i, btrfs_header_level(next),
-				btrfs_header_level(eb));
-			goto out;
+	if (eb) {
+		if (btrfs_is_leaf(eb)) {
+			btrfs_print_leaf(eb);
+			return;
 		}
-		if (btrfs_header_level(next) != btrfs_header_level(eb) - 1) {
-			warning(
-	"eb corrupted: item %d eb level %d next level %d, skipping the rest",
-				i, btrfs_header_level(next),
-				btrfs_header_level(eb));
-			goto out;
-		}
-		print_extents(next);
-		free_extent_buffer(next);
-	}
 
+		nr = btrfs_header_nritems(eb);
+		for (i = 0; i < nr; i++) {
+			next = read_tree_block(fs_info,
+					btrfs_node_blockptr(eb, i),
+					btrfs_node_ptr_generation(eb, i));
+			if (!extent_buffer_uptodate(next))
+				continue;
+			if (btrfs_is_leaf(next) && btrfs_header_level(eb) != 1) {
+				warning(
+					"eb corrupted: item %d eb level %d next level %d, skipping the rest",
+					i, btrfs_header_level(next),
+					btrfs_header_level(eb));
+				goto out;
+			}
+			if (btrfs_header_level(next) != btrfs_header_level(eb) - 1) {
+				warning(
+					"eb corrupted: item %d eb level %d next level %d, skipping the rest",
+					i, btrfs_header_level(next),
+					btrfs_header_level(eb));
+				goto out;
+			}
+			print_extents(next);
+			free_extent_buffer(next);
+		}
+	}
 	return;
 
 out:

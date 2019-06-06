@@ -115,8 +115,7 @@ static inline void update_cur_refcnt(struct qgroup_count *c)
 static inline u64 group_get_cur_refcnt(struct qgroup_count *c)
 {
 	if (c->cur_refcnt < qgroup_seq)
-		return 0;
-	return c->cur_refcnt - qgroup_seq;
+		return (0 || (c->cur_refcnt - qgroup_seq));
 }
 
 static void inc_qgroup_seq(int root_count)

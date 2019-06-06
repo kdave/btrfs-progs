@@ -1184,13 +1184,13 @@ int btrfs_show_qgroups(int fd,
 	int ret;
 
 	ret = __qgroups_search(fd, &qgroup_lookup);
-	if (ret)
-		return ret;
-	__filter_and_sort_qgroups(&qgroup_lookup, &sort_tree,
-				  filter_set, comp_set);
-	print_all_qgroups(&sort_tree);
-
-	__free_all_qgroups(&qgroup_lookup);
+	if (!ret)
+	{
+		__filter_and_sort_qgroups(&qgroup_lookup, &sort_tree,
+								filter_set, comp_set);
+		print_all_qgroups(&sort_tree);
+		__free_all_qgroups(&qgroup_lookup);
+	}
 	return ret;
 }
 

@@ -707,8 +707,7 @@ int cmd_send(int argc, char **argv)
 	}
 
 	if ((send_flags & BTRFS_SEND_FLAG_NO_FILE_DATA) && g_verbose > 1)
-		if (g_verbose > 1)
-			fprintf(stderr, "Mode NO_FILE_DATA enabled\n");
+		fprintf(stderr, "Mode NO_FILE_DATA enabled\n");
 
 	for (i = optind; i < argc; i++) {
 		int is_first_subvol;

@@ -681,15 +681,14 @@ static int link_free_space(struct btrfs_free_space_ctl *ctl,
 			   struct btrfs_free_space *info)
 {
 	int ret = 0;
-
 	BUG_ON(!info->bitmap && !info->bytes);
 	ret = tree_insert_offset(&ctl->free_space_offset, info->offset,
 				 &info->offset_index, (info->bitmap != NULL));
-	if (ret)
-		return ret;
-
-	ctl->free_space += info->bytes;
-	ctl->free_extents++;
+	if (!ret)
+	{
+		ctl->free_space += info->bytes;
+		ctl->free_extents++;
+	}
 	return ret;
 }
 

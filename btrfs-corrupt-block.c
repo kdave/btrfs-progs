@@ -33,8 +33,6 @@
 #include "utils.h"
 #include "help.h"
 
-#define FIELD_BUF_LEN 80
-
 static int debug_corrupt_block(struct extent_buffer *eb,
 		struct btrfs_root *root, u64 bytenr, u32 blocksize, u64 copy)
 {
@@ -349,30 +347,30 @@ enum btrfs_key_field {
 
 static enum btrfs_inode_field convert_inode_field(char *field)
 {
-	if (!strncmp(field, "isize", FIELD_BUF_LEN))
+	if (!strncmp(field, "isize", sizeof field))
 		return BTRFS_INODE_FIELD_ISIZE;
-	if (!strncmp(field, "nbytes", FIELD_BUF_LEN))
+	if (!strncmp(field, "nbytes", sizeof field))
 		return BTRFS_INODE_FIELD_NBYTES;
-	if (!strncmp(field, "nlink", FIELD_BUF_LEN))
+	if (!strncmp(field, "nlink", sizeof field))
 		return BTRFS_INODE_FIELD_NLINK;
-	if (!strncmp(field, "generation", FIELD_BUF_LEN))
+	if (!strncmp(field, "generation", sizeof field))
 		return BTRFS_INODE_FIELD_GENERATION;
-	if (!strncmp(field, "transid", FIELD_BUF_LEN))
+	if (!strncmp(field, "transid", sizeof field))
 		return BTRFS_INODE_FIELD_TRANSID;
-	if (!strncmp(field, "block_group", FIELD_BUF_LEN))
+	if (!strncmp(field, "block_group", sizeof field))
 		return BTRFS_INODE_FIELD_BLOCK_GROUP;
-	if (!strncmp(field, "mode", FIELD_BUF_LEN))
+	if (!strncmp(field, "mode", sizeof field))
 		return BTRFS_INODE_FIELD_MODE;
-	if (!strncmp(field, "uid", FIELD_BUF_LEN))
+	if (!strncmp(field, "uid", sizeof field))
 		return BTRFS_INODE_FIELD_UID;
-	if (!strncmp(field, "gid", FIELD_BUF_LEN))
+	if (!strncmp(field, "gid", sizeof field))
 		return BTRFS_INODE_FIELD_GID;
 	return BTRFS_INODE_FIELD_BAD;
 }
 
 static enum btrfs_file_extent_field convert_file_extent_field(char *field)
 {
-	if (!strncmp(field, "disk_bytenr", FIELD_BUF_LEN))
+	if (!strncmp(field, "disk_bytenr", sizeof field))
 		return BTRFS_FILE_EXTENT_DISK_BYTENR;
 	return BTRFS_FILE_EXTENT_BAD;
 }
@@ -380,36 +378,36 @@ static enum btrfs_file_extent_field convert_file_extent_field(char *field)
 static enum btrfs_metadata_block_field
 convert_metadata_block_field(char *field)
 {
-	if (!strncmp(field, "generation", FIELD_BUF_LEN))
+	if (!strncmp(field, "generation", sizeof field))
 		return BTRFS_METADATA_BLOCK_GENERATION;
-	if (!strncmp(field, "shift_items", FIELD_BUF_LEN))
+	if (!strncmp(field, "shift_items", sizeof field))
 		return BTRFS_METADATA_BLOCK_SHIFT_ITEMS;
 	return BTRFS_METADATA_BLOCK_BAD;
 }
 
 static enum btrfs_key_field convert_key_field(char *field)
 {
-	if (!strncmp(field, "objectid", FIELD_BUF_LEN))
+	if (!strncmp(field, "objectid", sizeof field))
 		return BTRFS_KEY_OBJECTID;
-	if (!strncmp(field, "type", FIELD_BUF_LEN))
+	if (!strncmp(field, "type", sizeof field))
 		return BTRFS_KEY_TYPE;
-	if (!strncmp(field, "offset", FIELD_BUF_LEN))
+	if (!strncmp(field, "offset", sizeof field))
 		return BTRFS_KEY_OFFSET;
 	return BTRFS_KEY_BAD;
 }
 
 static enum btrfs_item_field convert_item_field(char *field)
 {
-	if (!strncmp(field, "offset", FIELD_BUF_LEN))
+	if (!strncmp(field, "offset", sizeof field))
 		return BTRFS_ITEM_OFFSET;
 	return BTRFS_ITEM_BAD;
 }
 
 static enum btrfs_dir_item_field convert_dir_item_field(char *field)
 {
-	if (!strncmp(field, "name", FIELD_BUF_LEN))
+	if (!strncmp(field, "name", sizeof field))
 		return BTRFS_DIR_ITEM_NAME;
-	if (!strncmp(field, "location_objectid", FIELD_BUF_LEN))
+	if (!strncmp(field, "location_objectid", sizeof field))
 		return BTRFS_DIR_ITEM_LOCATION_OBJECTID;
 	return BTRFS_DIR_ITEM_BAD;
 }
@@ -1134,7 +1132,7 @@ int main(int argc, char **argv)
 	u64 file_extent = (u64)-1;
 	u64 root_objectid = 0;
 	u64 csum_bytenr = 0;
-	char field[FIELD_BUF_LEN];
+	char field[];
 
 	field[0] = '\0';
 	memset(&key, 0, sizeof(key));
@@ -1198,7 +1196,7 @@ int main(int argc, char **argv)
 				inode = arg_strtou64(optarg);
 				break;
 			case 'f':
-				strncpy(field, optarg, FIELD_BUF_LEN);
+				strncpy(field, optarg, sizeof field - 1);
 				break;
 			case 'x':
 				file_extent = arg_strtou64(optarg);

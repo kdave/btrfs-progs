@@ -1988,7 +1988,6 @@ static int build_chunk_tree(struct mdrestore_struct *mdres,
 	nritems = le32_to_cpu(header->nritems);
 	for (i = 0; i < nritems; i++) {
 		item = &cluster->items[i];
-
 		if (le64_to_cpu(item->bytenr) == BTRFS_SUPER_INFO_OFFSET)
 			break;
 		bytenr += le32_to_cpu(item->size);
@@ -1998,7 +1997,12 @@ static int build_chunk_tree(struct mdrestore_struct *mdres,
 		}
 	}
 
-	if (!item || le64_to_cpu(item->bytenr) != BTRFS_SUPER_INFO_OFFSET) {
+	if (!item) {
+		error("did not find superblock");
+		return -EINVAL;
+	}
+
+	if (le64_to_cpu(item->bytenr) != BTRFS_SUPER_INFO_OFFSET) {
 		error("did not find superblock at %llu",
 				le64_to_cpu(item->bytenr));
 		return -EINVAL;

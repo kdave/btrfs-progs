@@ -1226,13 +1226,13 @@ void btrfs_print_leaf(struct extent_buffer *eb)
 		 * the leaf, thus no segfault.
 		 */
 		if (btrfs_item_offset_nr(eb, i) > leaf_data_size ||
-		    btrfs_item_size_nr(eb, i) + btrfs_item_offset_nr(eb, i) >
-		    leaf_data_size) {
+            btrfs_item_size_nr(eb, i) + btrfs_item_offset_nr(eb, i) >
+            leaf_data_size) {
 			error(
-"leaf %llu slot %u pointer invalid, offset %u size %u leaf data limit %u",
-			      btrfs_header_bytenr(eb), i,
-			      btrfs_item_offset_nr(eb, i),
-			      btrfs_item_size_nr(eb, i), leaf_data_size);
+                "leaf %llu slot %u pointer invalid, offset %u size %u leaf data limit %u",
+                btrfs_header_bytenr(eb), i,
+                btrfs_item_offset_nr(eb, i),
+                btrfs_item_size_nr(eb, i), leaf_data_size);
 			error("skip remaining slots");
 			break;
 		}
@@ -1276,7 +1276,7 @@ void btrfs_print_leaf(struct extent_buffer *eb)
 
 			dlog = btrfs_item_ptr(eb, i, struct btrfs_dir_log_item);
 			printf("\t\tdir log end %Lu\n",
-			       (unsigned long long)btrfs_dir_log_end(eb, dlog));
+                (unsigned long long)btrfs_dir_log_end(eb, dlog));
 			break;
 			}
 		case BTRFS_ORPHAN_ITEM_KEY:
@@ -1439,7 +1439,7 @@ static void bfs_print_children(struct extent_buffer *root_eb)
 		/* Print all sibling tree blocks */
 		while (1) {
 			btrfs_print_tree(path.nodes[cur_level], 0,
-					 BTRFS_PRINT_TREE_BFS);
+                            BTRFS_PRINT_TREE_BFS);
 			ret = btrfs_next_sibling_tree_block(fs_info, &path);
 			if (ret < 0)
 				goto out;
@@ -1494,52 +1494,48 @@ void btrfs_print_tree(struct extent_buffer *eb, bool follow, int traverse)
 	struct btrfs_disk_key disk_key;
 	struct btrfs_key key;
 
-	if (!eb)
-		return;
-	if (traverse != BTRFS_PRINT_TREE_DFS && traverse != BTRFS_PRINT_TREE_BFS)
-		traverse = BTRFS_PRINT_TREE_DEFAULT;
+	if (eb) {
+		if (traverse != BTRFS_PRINT_TREE_DFS && traverse != BTRFS_PRINT_TREE_BFS)
+			traverse = BTRFS_PRINT_TREE_DEFAULT;
 
-	nr = btrfs_header_nritems(eb);
-	if (btrfs_is_leaf(eb)) {
-		btrfs_print_leaf(eb);
-		return;
-	}
-	/* We are crossing eb boundary, this node must be corrupted */
-	if (nr > BTRFS_NODEPTRS_PER_EXTENT_BUFFER(eb))
-		warning(
-		"node nr_items corrupted, has %u limit %u, continue anyway",
-			nr, BTRFS_NODEPTRS_PER_EXTENT_BUFFER(eb));
-	printf("node %llu level %d items %u free %u generation %llu owner ",
-	       (unsigned long long)eb->start,
-	        btrfs_header_level(eb), nr,
-		(u32)BTRFS_NODEPTRS_PER_EXTENT_BUFFER(eb) - nr,
-		(unsigned long long)btrfs_header_generation(eb));
-	print_objectid(stdout, btrfs_header_owner(eb), 0);
-	printf("\n");
-	print_uuids(eb);
-	fflush(stdout);
-	ptr_num = BTRFS_NODEPTRS_PER_EXTENT_BUFFER(eb);
-	for (i = 0; i < nr && i < ptr_num; i++) {
-		u64 blocknr = btrfs_node_blockptr(eb, i);
+		nr = btrfs_header_nritems(eb);
+		if (btrfs_is_leaf(eb)) {
+			btrfs_print_leaf(eb);
+			return;
+		}
 
-		btrfs_node_key(eb, &disk_key, i);
-		btrfs_disk_key_to_cpu(&key, &disk_key);
-		printf("\t");
-		btrfs_print_key(&disk_key);
-		printf(" block %llu gen %llu\n",
-		       (unsigned long long)blocknr,
-		       (unsigned long long)btrfs_node_ptr_generation(eb, i));
+		/* We are crossing eb boundary, this node must be corrupted */
+		if (nr > BTRFS_NODEPTRS_PER_EXTENT_BUFFER(eb))
+			warning(
+			"node nr_items corrupted, has %u limit %u, continue anyway",
+				nr, BTRFS_NODEPTRS_PER_EXTENT_BUFFER(eb));
+        printf("node %llu level %d items %u free %u generation %llu owner ",
+            (unsigned long long)eb->start,
+            btrfs_header_level(eb), nr,
+            (u32)BTRFS_NODEPTRS_PER_EXTENT_BUFFER(eb) - nr,
+            (unsigned long long)btrfs_header_generation(eb));
+		print_objectid(stdout, btrfs_header_owner(eb), 0);
+		printf("\n");
+		print_uuids(eb);
 		fflush(stdout);
-	}
-	if (!follow)
-		return;
-
-	if (follow && !fs_info)
-		return;
-
-	if (traverse == BTRFS_PRINT_TREE_DFS)
-		dfs_print_children(eb);
-	else
-		bfs_print_children(eb);
+		ptr_num = BTRFS_NODEPTRS_PER_EXTENT_BUFFER(eb);
+		for (i = 0; i < nr && i < ptr_num; i++) {
+			u64 blocknr = btrfs_node_blockptr(eb, i);
+			btrfs_node_key(eb, &disk_key, i);
+			btrfs_disk_key_to_cpu(&key, &disk_key);
+			printf("\t");
+			btrfs_print_key(&disk_key);
+			printf(" block %llu gen %llu\n",
+                (unsigned long long)blocknr,
+                (unsigned long long)btrfs_node_ptr_generation(eb, i));
+                fflush(stdout);
+        }
+		if (follow && fs_info) {
+            if (traverse == BTRFS_PRINT_TREE_DFS)
+                dfs_print_children(eb);
+            else
+                bfs_print_children(eb);
+        }
+    }
 	return;
 }
