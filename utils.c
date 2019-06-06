@@ -58,11 +58,19 @@
 #define BLKDISCARD	_IO(0x12,119)
 #endif
 
-static int btrfs_scan_done = 0;
+/*
+	https://stackoverflow.com/questions/45349079/how-to-use-attribute-fallthrough-correctly-in-gcc
+	http://www.unixwiz.net/techtips/gnu-c-attributes.html
+*/
+#if defined(__GNUC__) && __GNUC__ >= 7
+	#define FALL_THROUGH __attribute__ ((fallthrough))
+#else
+	#define FALL_THROUGH ((void)0)
+#endif /* __GNUC__ >= 7 */
 
+static int btrfs_scan_done = 0;
 static int rand_seed_initialized = 0;
 static unsigned short rand_seed[3];
-
 struct btrfs_config bconf;
 
 /*
@@ -1137,15 +1145,15 @@ int pretty_size_snprintf(u64 size, char *str, size_t str_size, unsigned unit_mod
 	case UNITS_TBYTES:
 		base *= mult;
 		num_divs++;
-		__attribute__ ((fallthrough))
+		FALL_THROUGH;
 	case UNITS_GBYTES:
 		base *= mult;
 		num_divs++;
-		__attribute__ ((fallthrough))
+		FALL_THROUGH;
 	case UNITS_MBYTES:
 		base *= mult;
 		num_divs++;
-		__attribute__ ((fallthrough))
+		FALL_THROUGH;
 	case UNITS_KBYTES:
 		num_divs++;
 		break;
@@ -1917,17 +1925,17 @@ int test_num_disk_vs_raid(u64 metadata_profile, u64 data_profile,
 	default:
 	case 4:
 		allowed |= BTRFS_BLOCK_GROUP_RAID10;
-		__attribute__ ((fallthrough))
+		FALL_THROUGH;
 	case 3:
 		allowed |= BTRFS_BLOCK_GROUP_RAID6;
-		__attribute__ ((fallthrough))
+		FALL_THROUGH;
 	case 2:
 		allowed |= BTRFS_BLOCK_GROUP_RAID0 | BTRFS_BLOCK_GROUP_RAID1 |
 			BTRFS_BLOCK_GROUP_RAID5;
-		__attribute__ ((fallthrough))
+		FALL_THROUGH;
 	case 1:
 		allowed |= BTRFS_BLOCK_GROUP_DUP;
-		__attribute__ ((fallthrough))
+		FALL_THROUGH;
 	}
 
 	if (dev_cnt > 1 && profile & BTRFS_BLOCK_GROUP_DUP) {
