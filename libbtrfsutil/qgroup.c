@@ -57,17 +57,17 @@ PUBLIC enum btrfs_util_error btrfs_util_qgroup_inherit_add_group(struct btrfs_ut
 													uint64_t qgroupid)
 {
 	struct btrfs_qgroup_inherit *tmp = (struct btrfs_qgroup_inherit *)*inherit;
-
 	tmp = realloc(tmp, sizeof(*tmp) +
 		      (tmp->num_qgroups + 1) * sizeof(tmp->qgroups[0]));
 
-	if (!tmp) {
+	if (NULL == tmp) {
 		free(tmp);
 		return BTRFS_UTIL_ERROR_NO_MEMORY;
 	}
-
-	tmp->qgroups[tmp->num_qgroups++] = qgroupid;
-	*inherit = (struct btrfs_util_qgroup_inherit *)tmp;
+	else {
+		tmp->qgroups[tmp->num_qgroups++] = qgroupid;
+		*inherit = (struct btrfs_util_qgroup_inherit *)tmp;
+	}
 
 	return BTRFS_UTIL_OK;
 }

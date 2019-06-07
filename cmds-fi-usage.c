@@ -259,26 +259,28 @@ static struct btrfs_ioctl_space_args *load_space_info(int fd, const char *path)
 	count = sargs->total_spaces;
 	sargs = realloc(sargs, sizeof(struct btrfs_ioctl_space_args) +
 			(count * sizeof(struct btrfs_ioctl_space_info)));
-	if (!sargs) {
+	if (NULL == sargs) {
 		error("not enough memory");
 		free(sargs);
 		free(sargs_orig);
 		return NULL;
 	}
-
-	sargs->space_slots = count;
-	sargs->total_spaces = 0;
-	ret = ioctl(fd, BTRFS_IOC_SPACE_INFO, sargs);
-	if (ret < 0) {
-		error("cannot get space info with %u slots: %m",
-			count);
-		free(sargs);
-		free(sargs_orig);
-		return NULL;
+	else {
+		sargs->space_slots = count;
+		sargs->total_spaces = 0;
+		ret = ioctl(fd, BTRFS_IOC_SPACE_INFO, sargs);
+		if (ret < 0) {
+			error("cannot get space info with %u slots: %m",
+				count);
+			free(sargs);
+			free(sargs_orig);
+			return NULL;
+		}
+		else {
+			qsort(&(sargs->spaces), count, sizeof(struct btrfs_ioctl_space_info),
+				cmp_btrfs_ioctl_space_info);
+		}
 	}
-
-	qsort(&(sargs->spaces), count, sizeof(struct btrfs_ioctl_space_info),
-		cmp_btrfs_ioctl_space_info);
 
 	return sargs;
 }

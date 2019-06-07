@@ -127,7 +127,7 @@ static void print_tree_block_error(struct btrfs_fs_info *fs_info,
 			eb->start, btrfs_header_bytenr(eb));
 		break;
 	case BTRFS_BAD_LEVEL:
-		fprintf(stderr, "bad level, %u > %u\n",
+		fprintf(stderr, "bad level, %u > %s\n",
 			btrfs_header_level(eb), BTRFS_MAX_LEVEL);
 		break;
 	case BTRFS_BAD_NRITEMS:
