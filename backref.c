@@ -295,8 +295,6 @@ next:
 /*
  * resolve an indirect backref in the form (root_id, key, level)
  * to a logical address
- *
- * June 2019: *trans was NULL until now; out-of-place vs other uses.
  */
 static int __resolve_indirect_ref(struct btrfs_fs_info *fs_info,
 				  struct btrfs_path *path, u64 time_seq,
@@ -311,6 +309,8 @@ static int __resolve_indirect_ref(struct btrfs_fs_info *fs_info,
 	int ret = 0;
 	int root_level;
 	int level = ref->level;
+
+	trans = malloc(sizeof(trans));
 
 	root_key.objectid = ref->root_id;
 	root_key.type = BTRFS_ROOT_ITEM_KEY;
@@ -1337,6 +1337,8 @@ int iterate_extent_inodes(struct btrfs_fs_info *fs_info,
 	struct ulist_node *root_node = NULL;
 	struct ulist_iterator ref_uiter;
 	struct ulist_iterator root_uiter;
+
+	trans = malloc(sizeof(trans));
 
 	pr_debug("resolving all inodes for extent %llu\n",
 			extent_item_objectid);
