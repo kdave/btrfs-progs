@@ -295,6 +295,8 @@ next:
 /*
  * resolve an indirect backref in the form (root_id, key, level)
  * to a logical address
+ *
+ * June 2019: *trans was NULL until now; out-of-place vs other uses.
  */
 static int __resolve_indirect_ref(struct btrfs_fs_info *fs_info,
 				  struct btrfs_path *path, u64 time_seq,
@@ -302,7 +304,7 @@ static int __resolve_indirect_ref(struct btrfs_fs_info *fs_info,
 				  struct ulist *parents,
 				  const u64 *extent_item_pos, u64 total_refs)
 {
-	struct btrfs_trans_handle *trans = NULL;
+	struct btrfs_trans_handle *trans;
 	struct btrfs_root *root;
 	struct btrfs_key root_key;
 	struct extent_buffer *eb;
@@ -1328,7 +1330,7 @@ int iterate_extent_inodes(struct btrfs_fs_info *fs_info,
 				iterate_extent_inodes_t *iterate, void *ctx)
 {
 	int ret;
-	struct btrfs_trans_handle *trans = NULL;
+	struct btrfs_trans_handle *trans;
 	struct ulist *refs = NULL;
 	struct ulist *roots = NULL;
 	struct ulist_node *ref_node = NULL;
