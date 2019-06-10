@@ -646,6 +646,10 @@ fssum: tests/fssum.c crypto/sha224-256.c
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
+hash-speedtest: crypto/hash-speedtest.c $(objects) $(libs_static)
+	@echo "    [LD]     $@"
+	$(Q)$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
+
 test-build: test-build-pre test-build-real
 
 test-build-pre:
