@@ -2396,19 +2396,6 @@ static inline struct btrfs_disk_balance_args* btrfs_balance_item_sys(
 }
 
 /*
- * btrfs_dev_stats_item helper, returns pointer to the raw array, do the
- * endianness conversion, @dsi is offset to eb data
- */
-static inline __le64* btrfs_dev_stats_values(struct extent_buffer *eb,
-		struct btrfs_dev_stats_item *dsi)
-{
-	unsigned long offset = (unsigned long)dsi;
-	struct btrfs_dev_stats_item *p;
-	p = (struct btrfs_dev_stats_item *)(eb->data + offset);
-	return p->values;
-}
-
-/*
  * this returns the number of bytes used by the item on disk, minus the
  * size of any extent headers.  If a file is compressed on disk, this is
  * the compressed size
