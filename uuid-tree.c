@@ -25,10 +25,14 @@
 #include "print-tree.h"
 #include "utils.h"
 
-void btrfs_uuid_to_key(const u8 *uuid, u64 *key_objectid, u64 *key_offset)
+void btrfs_uuid_to_key(const u8 *uuid, struct btrfs_key *key)
 {
-	*key_objectid = get_unaligned_le64(uuid);
-	*key_offset = get_unaligned_le64(uuid + sizeof(u64));
+	u64 tmp;
+
+	tmp = get_unaligned_le64(uuid);
+	put_unaligned_64(tmp, &key->objectid);
+	tmp = get_unaligned_le64(uuid + sizeof(u64));
+	put_unaligned_64(tmp, &key->offset);
 }
 
 /*
@@ -40,31 +44,31 @@ static int btrfs_uuid_tree_lookup_any(int fd, const u8 *uuid, u8 type,
 				      u64 *subid)
 {
 	int ret;
-	u64 key_objectid = 0;
-	u64 key_offset;
 	struct btrfs_ioctl_search_args search_arg;
 	struct btrfs_ioctl_search_header *search_header;
 	u32 item_size;
 	__le64 lesubid;
+	struct btrfs_key key;
 
-	btrfs_uuid_to_key(uuid, &key_objectid, &key_offset);
+	key.type = type;
+	btrfs_uuid_to_key(uuid, &key);
 
 	memset(&search_arg, 0, sizeof(search_arg));
 	search_arg.key.tree_id = BTRFS_UUID_TREE_OBJECTID;
-	search_arg.key.min_objectid = key_objectid;
-	search_arg.key.max_objectid = key_objectid;
+	search_arg.key.min_objectid = key.objectid;
+	search_arg.key.max_objectid = key.objectid;
 	search_arg.key.min_type = type;
 	search_arg.key.max_type = type;
-	search_arg.key.min_offset = key_offset;
-	search_arg.key.max_offset = key_offset;
+	search_arg.key.min_offset = key.offset;
+	search_arg.key.max_offset = key.offset;
 	search_arg.key.max_transid = (u64)-1;
 	search_arg.key.nr_items = 1;
 	ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &search_arg);
 	if (ret < 0) {
 		fprintf(stderr,
 			"ioctl(BTRFS_IOC_TREE_SEARCH, uuid, key %016llx, UUID_KEY, %016llx) ret=%d, error: %m\n",
-			(unsigned long long)key_objectid,
-			(unsigned long long)key_offset, ret);
+			(unsigned long long)key.objectid,
+			(unsigned long long)key.offset, ret);
 		ret = -ENOENT;
 		goto out;
 	}

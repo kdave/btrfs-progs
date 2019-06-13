@@ -3130,7 +3130,7 @@ static int btrfs_uuid_tree_lookup(struct btrfs_root *uuid_root, u8 *uuid,
 		goto out;
 	}
 
-	btrfs_uuid_to_key(uuid, &key.objectid, &key.offset);
+	btrfs_uuid_to_key(uuid, &key);
 	key.type = type;
 	ret = btrfs_search_slot(NULL, uuid_root, &key, path, 0, 0);
 	if (ret < 0) {
@@ -3191,7 +3191,7 @@ int btrfs_uuid_tree_add(struct btrfs_trans_handle *trans, u8 *uuid, u8 type,
 		return ret;
 
 	key.type = type;
-	btrfs_uuid_to_key(uuid, &key.objectid, &key.offset);
+	btrfs_uuid_to_key(uuid, &key);
 
 	path = btrfs_alloc_path();
 	if (!path) {
