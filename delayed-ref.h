@@ -161,7 +161,7 @@ btrfs_free_delayed_extent_op(struct btrfs_delayed_extent_op *op)
 static inline void btrfs_put_delayed_ref(struct btrfs_delayed_ref_node *ref)
 {
 	WARN_ON(ref->refs == 0);
-	if (--ref->refs) {
+	if (--ref->refs == 0) {
 		WARN_ON(ref->in_tree);
 		switch (ref->type) {
 		case BTRFS_TREE_BLOCK_REF_KEY:
@@ -180,7 +180,7 @@ static inline void btrfs_put_delayed_ref(struct btrfs_delayed_ref_node *ref)
 
 static inline void btrfs_put_delayed_ref_head(struct btrfs_delayed_ref_head *head)
 {
-	if (--head->refs)
+	if (--head->refs == 0)
 		kfree(head);
 }
 
