@@ -69,7 +69,9 @@ TOPDIR := .
 
 # Disable certain GCC 8 + glibc 2.28 warning for snprintf()
 # where string truncation for snprintf() is expected.
-DISABLE_WARNING_FLAGS := $(call cc-disable-warning, format-truncation)
+# For GCC9 disable address-of-packed (under W=1)
+DISABLE_WARNING_FLAGS := $(call cc-disable-warning, format-truncation) \
+	$(call cc-disable-warning, address-of-packed-member)
 
 # Common build flags
 CFLAGS = $(SUBST_CFLAGS) \
