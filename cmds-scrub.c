@@ -141,6 +141,7 @@ static void print_scrub_summary(struct btrfs_scrub_progress *p, struct scrub_sta
 	u64 bytes_scrubbed;
 	u64 bytes_per_sec = 0;
 	u64 sec_left = 0;
+	time_t sec_eta;
 
 	bytes_scrubbed = p->data_bytes_scrubbed + p->tree_bytes_scrubbed;
 	if (s->duration > 0)
@@ -160,30 +161,41 @@ static void print_scrub_summary(struct btrfs_scrub_progress *p, struct scrub_sta
 		       "results may be inaccurate\n");
 
 	if (s->in_progress) {
-		printf(
-		"\ttotal %s scrubbed at rate %s/s, time left: %llu:%02llu:%02llu\n",
-			pretty_size(bytes_scrubbed),
-			pretty_size(bytes_per_sec),
+		char t[4096];
+		struct tm tm;
+
+		if (s->t_resumed)
+			sec_eta = s->t_resumed;
+		else
+			sec_eta = s->t_start;
+		sec_eta += sec_left;
+		localtime_r(&sec_eta, &tm);
+		t[sizeof(t) - 1] = '\0';
+		strftime(t, sizeof(t), "%c", &tm);
+
+		printf("Time left:        %llu:%02llu:%02llu\n",
 			sec_left / 3600, (sec_left / 60) % 60, sec_left % 60);
+		printf("ETA:              %s\n", t);
+		printf("Total to scrub:   %s\n", pretty_size(bytes_total));
+		printf("Bytes scrubbed:   %s\n", pretty_size(bytes_scrubbed));
+		printf("Rate:             %s/s\n", pretty_size(bytes_per_sec));
 	} else {
-		printf("\ttotal %s scrubbed at rate %s/s\n",
-			pretty_size(bytes_scrubbed),
-			pretty_size(bytes_per_sec));
+		printf("Total to scrub:   %s\n", pretty_size(bytes_total));
+		printf("Rate:             %s/s\n", pretty_size(bytes_per_sec));
 	}
 
-
+	printf("Error summary:   ");
 	if (err_cnt || err_cnt2) {
-		printf("\terror details:");
 		PRINT_SCRUB_ERROR(p->read_errors, "read");
 		PRINT_SCRUB_ERROR(p->super_errors, "super");
 		PRINT_SCRUB_ERROR(p->verify_errors, "verify");
 		PRINT_SCRUB_ERROR(p->csum_errors, "csum");
 		printf("\n");
-		printf("\tcorrected errors: %llu, uncorrectable errors: %llu, "
-			"unverified errors: %llu\n", p->corrected_errors,
-			p->uncorrectable_errors, p->unverified_errors);
+		printf("  Corrected:      %llu\n", p->corrected_errors);
+		printf("  Uncorrectable:  %llu\n", p->uncorrectable_errors);
+		printf("  Unverified:     %llu\n", p->unverified_errors);
 	} else {
-		printf("\tno errors found\n");
+		printf(" no errors found\n");
 	}
 }
 
@@ -258,27 +270,23 @@ static void _print_scrub_ss(struct scrub_stats *ss)
 		localtime_r(&ss->t_resumed, &tm);
 		strftime(t, sizeof(t), "%c", &tm);
 		t[sizeof(t) - 1] = '\0';
-		printf("\tscrub resumed at %s", t);
+		printf("Scrub resumed:   %s\n", t);
 	} else {
 		localtime_r(&ss->t_start, &tm);
 		strftime(t, sizeof(t), "%c", &tm);
 		t[sizeof(t) - 1] = '\0';
-		printf("\tscrub started at %s", t);
+		printf("Scrub started:    %s\n", t);
 	}
 
 	seconds = ss->duration;
 	hours = ss->duration / (60 * 60);
 	gmtime_r(&seconds, &tm);
 	strftime(t, sizeof(t), "%M:%S", &tm);
-	if (ss->in_progress)
-		printf(", running for %u:%s\n", hours, t);
-	else if (ss->canceled)
-		printf(" and was aborted after %u:%s\n", hours, t);
-	else if (ss->finished)
-		printf(" and finished after %u:%s\n", hours, t);
-	else
-		printf(", interrupted after %u:%s, not running\n",
-		       hours, t);
+	printf("Status:           %s\n",
+			(ss->in_progress ? "running" :
+			 (ss->canceled ? "aborted" :
+			  (ss->finished ? "finished" : "interrupted"))));
+	printf("Duration:         %u:%s\n", hours, t);
 }
 
 static void print_scrub_dev(struct btrfs_ioctl_dev_info_args *di,
@@ -1690,6 +1698,7 @@ static int cmd_scrub_status(const struct cmd_struct *cmd, int argc, char **argv)
 	char *path;
 	struct btrfs_ioctl_fs_info_args fi_args;
 	struct btrfs_ioctl_dev_info_args *di_args = NULL;
+	struct btrfs_ioctl_space_args *si_args = NULL;
 	struct scrub_file_record **past_scrubs = NULL;
 	struct scrub_file_record *last_scrub;
 	struct scrub_fs_stat fs_stat;
@@ -1742,6 +1751,13 @@ static int cmd_scrub_status(const struct cmd_struct *cmd, int argc, char **argv)
 		err = 1;
 		goto out;
 	}
+	ret = get_df(fdmnt, &si_args);
+	if (ret) {
+		errno = -ret;
+		error("cannot get space info: %m");
+		err = 1;
+		goto out;
+	}
 
 	uuid_unparse(fi_args.fsid, fsid);
 
@@ -1776,7 +1792,7 @@ static int cmd_scrub_status(const struct cmd_struct *cmd, int argc, char **argv)
 	}
 	in_progress = is_scrub_running_in_kernel(fdmnt, di_args, fi_args.num_devices);
 
-	printf("scrub status for %s\n", fsid);
+	printf("UUID:             %s\n", fsid);
 
 	if (do_stats_per_dev) {
 		for (i = 0; i < fi_args.num_devices; ++i) {
@@ -1795,6 +1811,7 @@ static int cmd_scrub_status(const struct cmd_struct *cmd, int argc, char **argv)
 		}
 	} else {
 		u64 total_bytes_used = 0;
+		struct btrfs_ioctl_space_info *sp = si_args->spaces;
 
 		init_fs_stat(&fs_stat);
 		fs_stat.s.in_progress = in_progress;
@@ -1805,7 +1822,13 @@ static int cmd_scrub_status(const struct cmd_struct *cmd, int argc, char **argv)
 				continue;
 			add_to_fs_stat(&last_scrub->p, &last_scrub->stats,
 					&fs_stat);
-			total_bytes_used += di_args[i].bytes_used;
+		}
+		for (i = 0; i < si_args->total_spaces; i++, sp++) {
+			const int index = btrfs_bg_flags_to_raid_index(sp->flags);
+			const int factor = btrfs_raid_array[index].ncopies;
+
+			/* This is still slightly off for RAID56 */
+			total_bytes_used += sp->used_bytes * factor;
 		}
 		print_fs_stat(&fs_stat, print_raw, total_bytes_used);
 	}
@@ -1813,6 +1836,7 @@ static int cmd_scrub_status(const struct cmd_struct *cmd, int argc, char **argv)
 out:
 	free_history(past_scrubs);
 	free(di_args);
+	free(si_args);
 	if (fdres > -1)
 		close(fdres);
 	close_file_or_dir(fdmnt, dirstream);
