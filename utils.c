@@ -1928,7 +1928,6 @@ int test_num_disk_vs_raid(u64 metadata_profile, u64 data_profile,
 		__attribute__ ((fallthrough));
 	case 1:
 		allowed |= BTRFS_BLOCK_GROUP_DUP;
-		__attribute__ ((fallthrough));
 	}
 
 	if (dev_cnt > 1 && profile & BTRFS_BLOCK_GROUP_DUP) {
