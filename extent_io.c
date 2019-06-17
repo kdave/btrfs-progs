@@ -963,13 +963,13 @@ int clear_extent_buffer_dirty(struct extent_buffer *eb)
 	return 0;
 }
 
-int memcmp_extent_buffer(struct extent_buffer *eb, const void *ptrv,
+int memcmp_extent_buffer(const struct extent_buffer *eb, const void *ptrv,
 			 unsigned long start, unsigned long len)
 {
 	return memcmp(eb->data + start, ptrv, len);
 }
 
-void read_extent_buffer(struct extent_buffer *eb, void *dst,
+void read_extent_buffer(const struct extent_buffer *eb, void *dst,
 			unsigned long start, unsigned long len)
 {
 	memcpy(dst, eb->data + start, len);
