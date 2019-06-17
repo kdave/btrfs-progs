@@ -953,32 +953,23 @@ static void print_balance_item(struct extent_buffer *eb,
 static void print_dev_stats(struct extent_buffer *eb,
 		struct btrfs_dev_stats_item *stats, u32 size)
 {
-	struct btrfs_dev_stats_item *item;
-	const unsigned long offset = (unsigned long)stats;
 	u32 known = BTRFS_DEV_STAT_VALUES_MAX * sizeof(__le64);
 	int i;
 
-	item = (struct btrfs_dev_stats_item *)(eb->data + offset);
-
 	printf("\t\tdevice stats\n");
 	printf("\t\twrite_errs %llu read_errs %llu flush_errs %llu corruption_errs %llu generation %llu\n",
-		(unsigned long long)get_unaligned_le64(
-				&item->values[BTRFS_DEV_STAT_WRITE_ERRS]),
-		(unsigned long long)get_unaligned_le64(
-				&item->values[BTRFS_DEV_STAT_READ_ERRS]),
-		(unsigned long long)get_unaligned_le64(
-				&item->values[BTRFS_DEV_STAT_FLUSH_ERRS]),
-		(unsigned long long)get_unaligned_le64(
-				&item->values[BTRFS_DEV_STAT_CORRUPTION_ERRS]),
-		(unsigned long long)get_unaligned_le64(
-				&item->values[BTRFS_DEV_STAT_GENERATION_ERRS]));
+	      btrfs_dev_stats_value(eb, stats, BTRFS_DEV_STAT_WRITE_ERRS),
+	      btrfs_dev_stats_value(eb, stats, BTRFS_DEV_STAT_READ_ERRS),
+	      btrfs_dev_stats_value(eb, stats, BTRFS_DEV_STAT_FLUSH_ERRS),
+	      btrfs_dev_stats_value(eb, stats, BTRFS_DEV_STAT_CORRUPTION_ERRS),
+	      btrfs_dev_stats_value(eb, stats, BTRFS_DEV_STAT_GENERATION_ERRS));
 
 	if (known < size) {
 		printf("\t\tunknown stats item bytes %u", size - known);
 		for (i = BTRFS_DEV_STAT_VALUES_MAX; i * sizeof(__le64) < size; i++) {
 			printf("\t\tunknown item %u offset %zu value %llu\n",
 				i, i * sizeof(__le64),
-				(unsigned long long)le64_to_cpu(&item->values[i]));
+				btrfs_dev_stats_value(eb, stats, i));
 		}
 	}
 }
