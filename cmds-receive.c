@@ -176,7 +176,7 @@ static int process_subvol(const char *path, const u8 *uuid, u64 ctransid,
 	}
 	if (rctx->cur_subvol_path[0]) {
 		error("subvol: another one already started, path buf: %s",
-				rctx->cur_subvol.path);
+				rctx->cur_subvol_path);
 		ret = -EINVAL;
 		goto out;
 	}
@@ -246,7 +246,7 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 	}
 	if (rctx->cur_subvol_path[0]) {
 		error("snapshot: another one already started, path buf: %s",
-				rctx->cur_subvol.path);
+				rctx->cur_subvol_path);
 		ret = -EINVAL;
 		goto out;
 	}
