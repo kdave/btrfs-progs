@@ -139,6 +139,7 @@ further details.
 
 SEE ALSO
 --------
+`btrfs`(5),
 `btrfs-balance`(8),
 `btrfs-check`(8),
 `btrfs-convert`(8),
