@@ -203,6 +203,10 @@ static void print_scrub_summary(struct btrfs_scrub_progress *p, struct scrub_sta
 	fs_stat->p.name += p->name;		\
 } while (0)
 
+#define _SCRUB_FS_STAT_COPY(p, name, fs_stat) do {	\
+	fs_stat->p.name = p->name;		\
+} while (0)
+
 #define _SCRUB_FS_STAT_MIN(ss, name, fs_stat)	\
 do {						\
 	if (fs_stat->s.name > ss->name) {	\
@@ -241,7 +245,7 @@ static void add_to_fs_stat(struct btrfs_scrub_progress *p,
 	_SCRUB_FS_STAT(p, malloc_errors, fs_stat);
 	_SCRUB_FS_STAT(p, uncorrectable_errors, fs_stat);
 	_SCRUB_FS_STAT(p, corrected_errors, fs_stat);
-	_SCRUB_FS_STAT(p, last_physical, fs_stat);
+	_SCRUB_FS_STAT_COPY(p, last_physical, fs_stat);
 	_SCRUB_FS_STAT_ZMIN(ss, t_start, fs_stat);
 	_SCRUB_FS_STAT_ZMIN(ss, t_resumed, fs_stat);
 	_SCRUB_FS_STAT_ZMAX(ss, duration, fs_stat);
@@ -711,6 +715,8 @@ static int scrub_writev(int fd, char *buf, int max, const char *fmt, ...)
 
 #define _SCRUB_SUM(dest, data, name) dest->scrub_args.progress.name =	\
 			data->resumed->p.name + data->scrub_args.progress.name
+#define _SCRUB_COPY(dest, data, name) dest->scrub_args.progress.name =	\
+			data->scrub_args.progress.name
 
 static struct scrub_progress *scrub_resumed_stats(struct scrub_progress *data,
 						  struct scrub_progress *dest)
@@ -731,7 +737,7 @@ static struct scrub_progress *scrub_resumed_stats(struct scrub_progress *data,
 	_SCRUB_SUM(dest, data, malloc_errors);
 	_SCRUB_SUM(dest, data, uncorrectable_errors);
 	_SCRUB_SUM(dest, data, corrected_errors);
-	_SCRUB_SUM(dest, data, last_physical);
+	_SCRUB_COPY(dest, data, last_physical);
 	dest->stats.canceled = data->stats.canceled;
 	dest->stats.finished = data->stats.finished;
 	dest->stats.t_resumed = data->stats.t_start;
