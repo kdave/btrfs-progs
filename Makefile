@@ -136,12 +136,12 @@ objects = ctree.o disk-io.o kernel-lib/radix-tree.o extent-tree.o print-tree.o \
 	  fsfeatures.o kernel-lib/tables.o kernel-lib/raid56.o transaction.o \
 	  delayed-ref.o
 cmds_objects = cmds/subvolume.o cmds-filesystem.o cmds/device.o cmds/scrub.o \
-	       cmds-inspect.o cmds/balance.o cmds-send.o cmds/receive.o \
+	       cmds/inspect.o cmds/balance.o cmds-send.o cmds/receive.o \
 	       cmds/quota.o cmds/qgroup.o cmds/replace.o check/main.o \
 	       cmds/restore.o cmds/rescue.o cmds/rescue-chunk-recover.o \
 	       cmds/rescue-super-recover.o \
-	       cmds/property.o cmds-fi-usage.o cmds-inspect-dump-tree.o \
-	       cmds-inspect-dump-super.o cmds-inspect-tree-stats.o cmds-fi-du.o \
+	       cmds/property.o cmds-fi-usage.o cmds/inspect-dump-tree.o \
+	       cmds/inspect-dump-super.o cmds/inspect-tree-stats.o cmds-fi-du.o \
 	       mkfs/common.o check/mode-common.o check/mode-lowmem.o
 libbtrfs_objects = send-stream.o send-utils.o kernel-lib/rbtree.o btrfs-list.o \
 		   kernel-lib/crc32c.o messages.o \
