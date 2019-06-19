@@ -137,7 +137,7 @@ objects = ctree.o disk-io.o kernel-lib/radix-tree.o extent-tree.o print-tree.o \
 	  delayed-ref.o
 cmds_objects = cmds-subvolume.o cmds-filesystem.o cmds-device.o cmds-scrub.o \
 	       cmds-inspect.o cmds-balance.o cmds-send.o cmds-receive.o \
-	       cmds-quota.o cmds-qgroup.o cmds-replace.o check/main.o \
+	       cmds/quota.o cmds-qgroup.o cmds-replace.o check/main.o \
 	       cmds-restore.o cmds-rescue.o chunk-recover.o super-recover.o \
 	       cmds-property.o cmds-fi-usage.o cmds-inspect-dump-tree.o \
 	       cmds-inspect-dump-super.o cmds-inspect-tree-stats.o cmds-fi-du.o \
@@ -612,18 +612,21 @@ tags: FORCE
 	@echo "    [TAGS]   $(TAGS_CMD)"
 	$(Q)$(TAGS_CMD) *.[ch] image/*.[ch] convert/*.[ch] mkfs/*.[ch] \
 		check/*.[ch] kernel-lib/*.[ch] kernel-shared/*.[ch] \
+		cmds/*.[ch] \
 		libbtrfsutil/*.[ch]
 
 etags: FORCE
 	@echo "    [ETAGS]   $(ETAGS_CMD)"
 	$(Q)$(ETAGS_CMD) *.[ch] image/*.[ch] convert/*.[ch] mkfs/*.[ch] \
 		check/*.[ch] kernel-lib/*.[ch] kernel-shared/*.[ch] \
+		cmds/*.[ch] \
 		libbtrfsutil/*.[ch]
 
 cscope: FORCE
 	@echo "    [CSCOPE] $(CSCOPE_CMD)"
 	$(Q)ls -1 *.[ch] image/*.[ch] convert/*.[ch] mkfs/*.[ch] check/*.[ch] \
 		kernel-lib/*.[ch] kernel-shared/*.[ch] libbtrfsutil/*.[ch] \
+		cmds/*.[ch] \
 		> cscope.files
 	$(Q)$(CSCOPE_CMD)
 
@@ -637,6 +640,7 @@ clean: $(CLEANDIRS)
 		image/*.o image/*.o.d \
 		convert/*.o convert/*.o.d \
 		mkfs/*.o mkfs/*.o.d check/*.o check/*.o.d \
+		cmds/*.o cmds/*.o.d \
 	      ioctl-test quick-test library-test library-test-static \
               mktables btrfs.static mkfs.btrfs.static fssum \
 	      $(check_defs) \
