@@ -17,7 +17,7 @@
 #include "kerncompat.h"
 #include <sys/utsname.h>
 #include <linux/version.h>
-#include "fsfeatures.h"
+#include "common/fsfeatures.h"
 #include "ctree.h"
 #include "utils.h"
 

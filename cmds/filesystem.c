@@ -40,7 +40,7 @@
 #include "list_sort.h"
 #include "disk-io.h"
 #include "common/help.h"
-#include "fsfeatures.h"
+#include "common/fsfeatures.h"
 
 /*
  * for btrfs fi show, we maintain a hash of fsids we've already printed.

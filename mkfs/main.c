@@ -43,7 +43,7 @@
 #include "mkfs/common.h"
 #include "mkfs/rootdir.h"
 #include "kernel-lib/crc32c.h"
-#include "fsfeatures.h"
+#include "common/fsfeatures.h"
 
 static int verbose = 1;
 

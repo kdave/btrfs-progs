@@ -102,7 +102,7 @@
 #include "convert/common.h"
 #include "convert/source-fs.h"
 #include "kernel-lib/crc32c.h"
-#include "fsfeatures.h"
+#include "common/fsfeatures.h"
 
 extern const struct btrfs_convert_operations ext2_convert_ops;
 extern const struct btrfs_convert_operations reiserfs_convert_ops;
