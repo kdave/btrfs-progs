@@ -42,7 +42,7 @@
 #include "ctree.h"
 #include "ioctl.h"
 #include "cmds/commands.h"
-#include "utils.h"
+#include "common/utils.h"
 #include "list.h"
 #include "btrfs-list.h"
 

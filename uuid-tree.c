@@ -23,7 +23,7 @@
 #include "transaction.h"
 #include "disk-io.h"
 #include "print-tree.h"
-#include "utils.h"
+#include "common/utils.h"
 
 void btrfs_uuid_to_key(const u8 *uuid, struct btrfs_key *key)
 {

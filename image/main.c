@@ -32,7 +32,7 @@
 #include "ctree.h"
 #include "disk-io.h"
 #include "transaction.h"
-#include "utils.h"
+#include "common/utils.h"
 #include "volumes.h"
 #include "extent_io.h"
 #include "common/help.h"

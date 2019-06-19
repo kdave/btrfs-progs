@@ -22,7 +22,7 @@
 #include "send.h"
 #include "send-stream.h"
 #include "crc32c.h"
-#include "utils.h"
+#include "common/utils.h"
 
 struct btrfs_send_stream {
 	int fd;

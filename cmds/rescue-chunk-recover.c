@@ -37,7 +37,7 @@
 #include "volumes.h"
 #include "transaction.h"
 #include "crc32c.h"
-#include "utils.h"
+#include "common/utils.h"
 #include "btrfsck.h"
 #include "cmds/commands.h"
 #include "cmds/rescue.h"

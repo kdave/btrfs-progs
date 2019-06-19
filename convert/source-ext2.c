@@ -21,7 +21,7 @@
 #include <pthread.h>
 #include "disk-io.h"
 #include "transaction.h"
-#include "utils.h"
+#include "common/utils.h"
 #include "convert/common.h"
 #include "convert/source-ext2.h"
 

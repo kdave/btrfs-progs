@@ -25,7 +25,7 @@
 #include "crc32c.h"
 #include "bitops.h"
 #include "common/internal.h"
-#include "utils.h"
+#include "common/utils.h"
 
 /*
  * Kernel always uses PAGE_CACHE_SIZE for sectorsize, but we don't have

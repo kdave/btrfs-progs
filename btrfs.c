@@ -22,7 +22,7 @@
 #include "volumes.h"
 #include "crc32c.h"
 #include "cmds/commands.h"
-#include "utils.h"
+#include "common/utils.h"
 #include "common/help.h"
 
 static const char * const btrfs_cmd_group_usage[] = {

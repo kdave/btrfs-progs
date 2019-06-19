@@ -35,7 +35,7 @@
 #include "kerncompat.h"
 #include "ctree.h"
 #include "ioctl.h"
-#include "utils.h"
+#include "common/utils.h"
 
 static int use_color;
 static void

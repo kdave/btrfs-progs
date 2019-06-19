@@ -23,7 +23,7 @@
 #include "backref.h"
 #include "hash.h"
 #include "common/internal.h"
-#include "utils.h"
+#include "common/utils.h"
 #include "volumes.h"
 #include "check/mode-common.h"
 #include "check/mode-lowmem.h"

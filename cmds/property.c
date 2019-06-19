@@ -25,7 +25,7 @@
 #include "cmds/commands.h"
 #include "props.h"
 #include "ctree.h"
-#include "utils.h"
+#include "common/utils.h"
 #include "common/help.h"
 
 static const char * const property_cmd_group_usage[] = {

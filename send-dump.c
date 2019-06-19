@@ -31,7 +31,7 @@
 #include <ctype.h>
 #include <asm/types.h>
 #include <uuid/uuid.h>
-#include "utils.h"
+#include "common/utils.h"
 #include "cmds/commands.h"
 #include "send-utils.h"
 #include "send-stream.h"

@@ -21,7 +21,7 @@
 #include <getopt.h>
 
 #include "cmds/commands.h"
-#include "utils.h"
+#include "common/utils.h"
 #include "common/help.h"
 
 #define USAGE_SHORT		1U

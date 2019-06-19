@@ -27,7 +27,7 @@
 #include "transaction.h"
 #include "print-tree.h"
 #include "volumes.h"
-#include "utils.h"
+#include "common/utils.h"
 #include "kernel-lib/raid56.h"
 
 const struct btrfs_raid_attr btrfs_raid_array[BTRFS_NR_RAID_TYPES] = {

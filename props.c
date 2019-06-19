@@ -25,7 +25,7 @@
 
 #include "ctree.h"
 #include "cmds/commands.h"
-#include "utils.h"
+#include "common/utils.h"
 #include "props.h"
 
 #define XATTR_BTRFS_PREFIX     "btrfs."

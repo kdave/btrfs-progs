@@ -23,7 +23,7 @@
 #include "ioctl.h"
 
 #include "cmds/commands.h"
-#include "utils.h"
+#include "common/utils.h"
 #include "common/help.h"
 
 static const char * const quota_cmd_group_usage[] = {

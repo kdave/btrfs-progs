@@ -31,7 +31,7 @@
 #include "disk-io.h"
 #include "common/messages.h"
 #include "transaction.h"
-#include "utils.h"
+#include "common/utils.h"
 #include "mkfs/rootdir.h"
 #include "mkfs/common.h"
 #include "send-utils.h"

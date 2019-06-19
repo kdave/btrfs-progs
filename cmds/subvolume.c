@@ -37,9 +37,8 @@
 
 #include "ctree.h"
 #include "cmds/commands.h"
-#include "utils.h"
+#include "common/utils.h"
 #include "btrfs-list.h"
-#include "utils.h"
 #include "common/help.h"
 
 static int wait_for_subvolume_cleaning(int fd, size_t count, uint64_t *ids,

@@ -24,7 +24,7 @@
 #include <getopt.h>
 #include <fcntl.h>
 
-#include "utils.h"
+#include "common/utils.h"
 #include "kerncompat.h"
 #include "ctree.h"
 #include "common/string-table.h"

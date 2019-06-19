@@ -24,8 +24,7 @@
 #include "ctree.h"
 #include "disk-io.h"
 #include "print-tree.h"
-#include "utils.h"
-
+#include "common/utils.h"
 
 static void print_dir_item_type(struct extent_buffer *eb,
                                 struct btrfs_dir_item *di)

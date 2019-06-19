@@ -28,7 +28,7 @@
 #include <libgen.h>
 #include "ctree.h"
 #include "transaction.h"
-#include "utils.h"
+#include "common/utils.h"
 #include "ioctl.h"
 #include <uuid/uuid.h>
 #include "btrfs-list.h"

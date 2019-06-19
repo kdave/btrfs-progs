@@ -30,7 +30,7 @@
 #include "volumes.h"
 #include "free-space-cache.h"
 #include "free-space-tree.h"
-#include "utils.h"
+#include "common/utils.h"
 
 #define PENDING_EXTENT_INSERT 0
 #define PENDING_EXTENT_DELETE 1

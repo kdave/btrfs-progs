@@ -18,7 +18,7 @@
 
 #include "ctree.h"
 #include "extent-cache.h"
-#include "utils.h"
+#include "common/utils.h"
 #include "repair.h"
 
 int repair = 0;

@@ -20,7 +20,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "crc32c.h"
-#include "utils.h"
+#include "common/utils.h"
 
 void print_usage(int status)
 {

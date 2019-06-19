@@ -21,7 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "ctree.h"
-#include "utils.h"
+#include "common/utils.h"
 #include "find-root.h"
 #include "volumes.h"
 #include "disk-io.h"

@@ -48,7 +48,7 @@
 #include "disk-io.h"
 #include "transaction.h"
 #include "crc32c.h"
-#include "utils.h"
+#include "common/utils.h"
 #include "volumes.h"
 #include "ioctl.h"
 #include "cmds/commands.h"

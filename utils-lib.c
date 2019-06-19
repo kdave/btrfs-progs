@@ -1,12 +1,10 @@
 #include "kerncompat.h"
-#include "utils.h"
+#include "common/utils.h"
 #include <unistd.h>
 #include <stdlib.h>
 #include <limits.h>
 #include <sys/ioctl.h>
 #include <ioctl.h>
-
-#include "utils.h"
 
 #if BTRFS_FLAT_INCLUDES
 #include "ctree.h"

@@ -27,7 +27,7 @@
 #include "ctree.h"
 #include "disk-io.h"
 #include "volumes.h"
-#include "utils.h"
+#include "common/utils.h"
 #include "kernel-lib/raid56.h"
 
 /*

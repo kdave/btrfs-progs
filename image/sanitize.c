@@ -17,7 +17,7 @@
 #include "kerncompat.h"
 #include "common/internal.h"
 #include "common/messages.h"
-#include "utils.h"
+#include "common/utils.h"
 #include "kernel-lib/crc32c.h"
 #include "image/sanitize.h"
 #include "extent_io.h"

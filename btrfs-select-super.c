@@ -28,7 +28,7 @@
 #include "print-tree.h"
 #include "transaction.h"
 #include "list.h"
-#include "utils.h"
+#include "common/utils.h"
 #include "common/help.h"
 
 static void print_usage(void)
