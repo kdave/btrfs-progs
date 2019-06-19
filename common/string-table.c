@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-#include "string-table.h"
+#include "common/string-table.h"
 
 /*
  *  This function create an array of char * which will represent a table
