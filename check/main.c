@@ -34,7 +34,7 @@
 #include "common/task-utils.h"
 #include "transaction.h"
 #include "utils.h"
-#include "commands.h"
+#include "cmds/commands.h"
 #include "free-space-cache.h"
 #include "free-space-tree.h"
 #include "btrfsck.h"

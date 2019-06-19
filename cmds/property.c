@@ -22,7 +22,7 @@
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 
-#include "commands.h"
+#include "cmds/commands.h"
 #include "props.h"
 #include "ctree.h"
 #include "utils.h"

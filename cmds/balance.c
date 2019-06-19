@@ -30,7 +30,7 @@
 #include "ioctl.h"
 #include "volumes.h"
 
-#include "commands.h"
+#include "cmds/commands.h"
 #include "utils.h"
 #include "common/help.h"
 

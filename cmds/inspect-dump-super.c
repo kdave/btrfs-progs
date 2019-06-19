@@ -31,7 +31,7 @@
 #include "transaction.h"
 #include "list.h"
 #include "utils.h"
-#include "commands.h"
+#include "cmds/commands.h"
 #include "crc32c.h"
 #include "common/help.h"
 

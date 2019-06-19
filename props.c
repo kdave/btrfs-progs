@@ -24,7 +24,7 @@
 #include <btrfsutil.h>
 
 #include "ctree.h"
-#include "commands.h"
+#include "cmds/commands.h"
 #include "utils.h"
 #include "props.h"
 

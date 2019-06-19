@@ -35,7 +35,7 @@
 #include "ctree.h"
 #include "utils.h"
 #include "volumes.h"
-#include "commands.h"
+#include "cmds/commands.h"
 #include "cmds/filesystem-usage.h"
 #include "list_sort.h"
 #include "disk-io.h"

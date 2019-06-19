@@ -51,7 +51,7 @@
 #include "utils.h"
 #include "volumes.h"
 #include "ioctl.h"
-#include "commands.h"
+#include "cmds/commands.h"
 #include "mkfs/common.h"
 
 #ifndef BLKDISCARD

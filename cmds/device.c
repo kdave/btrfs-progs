@@ -31,7 +31,7 @@
 #include "volumes.h"
 #include "cmds/filesystem-usage.h"
 
-#include "commands.h"
+#include "cmds/commands.h"
 #include "common/help.h"
 #include "mkfs/common.h"
 

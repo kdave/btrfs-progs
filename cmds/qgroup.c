@@ -25,7 +25,7 @@
 #include "ctree.h"
 #include "ioctl.h"
 
-#include "commands.h"
+#include "cmds/commands.h"
 #include "qgroup.h"
 #include "utils.h"
 #include "common/help.h"

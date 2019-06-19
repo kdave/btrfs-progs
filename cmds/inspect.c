@@ -29,7 +29,7 @@
 #include "ctree.h"
 #include "send-utils.h"
 #include "disk-io.h"
-#include "commands.h"
+#include "cmds/commands.h"
 #include "btrfs-list.h"
 #include "common/help.h"
 

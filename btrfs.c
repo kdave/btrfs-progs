@@ -21,7 +21,7 @@
 
 #include "volumes.h"
 #include "crc32c.h"
-#include "commands.h"
+#include "cmds/commands.h"
 #include "utils.h"
 #include "common/help.h"
 

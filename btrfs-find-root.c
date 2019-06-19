@@ -36,7 +36,7 @@
 #include "extent-cache.h"
 #include "find-root.h"
 #include "common/help.h"
-#include "commands.h"
+#include "cmds/commands.h"
 
 /*
  * Get reliable generation and level for given root.

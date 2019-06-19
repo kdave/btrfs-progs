@@ -35,7 +35,7 @@
 #endif
 
 #include "utils.h"
-#include "commands.h"
+#include "cmds/commands.h"
 #include "kerncompat.h"
 #include "rbtree.h"
 

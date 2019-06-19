@@ -29,7 +29,7 @@
 #include "ctree.h"
 #include "string-table.h"
 #include "cmds/filesystem-usage.h"
-#include "commands.h"
+#include "cmds/commands.h"
 #include "disk-io.h"
 
 #include "version.h"

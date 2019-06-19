@@ -36,7 +36,7 @@
 #include "volumes.h"
 #include "disk-io.h"
 
-#include "commands.h"
+#include "cmds/commands.h"
 #include "common/help.h"
 #include "mkfs/common.h"
 

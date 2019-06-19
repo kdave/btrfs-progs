@@ -44,7 +44,7 @@
 #include "list.h"
 #include "volumes.h"
 #include "utils.h"
-#include "commands.h"
+#include "cmds/commands.h"
 #include "common/help.h"
 
 static char fs_name[PATH_MAX];
