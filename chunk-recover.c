@@ -40,7 +40,7 @@
 #include "utils.h"
 #include "btrfsck.h"
 #include "commands.h"
-#include "rescue.h"
+#include "cmds/rescue.h"
 
 struct recover_control {
 	int verbose;

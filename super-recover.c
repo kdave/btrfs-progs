@@ -34,7 +34,7 @@
 #include "crc32c.h"
 #include "volumes.h"
 #include "commands.h"
-#include "rescue.h"
+#include "cmds/rescue.h"
 
 struct btrfs_recover_superblock {
 	struct btrfs_fs_devices *fs_devices;
