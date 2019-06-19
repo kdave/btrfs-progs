@@ -22,7 +22,7 @@
 #include "disk-io.h"
 #include "backref.h"
 #include "hash.h"
-#include "internal.h"
+#include "common/internal.h"
 #include "utils.h"
 #include "volumes.h"
 #include "check/mode-common.h"

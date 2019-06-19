@@ -3,7 +3,7 @@
 
 #include <linux/kernel.h>
 #include <endian.h>
-#include "internal.h"
+#include "common/internal.h"
 
 #ifndef DIV_ROUND_UP
 #define DIV_ROUND_UP(n, d) (((n) + (d) - 1) / (d))

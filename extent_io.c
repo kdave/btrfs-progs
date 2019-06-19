@@ -29,7 +29,7 @@
 #include "ctree.h"
 #include "volumes.h"
 #include "utils.h"
-#include "internal.h"
+#include "common/internal.h"
 
 void extent_io_tree_init(struct extent_io_tree *tree)
 {

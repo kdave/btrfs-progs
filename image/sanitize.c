@@ -15,7 +15,7 @@
  */
 
 #include "kerncompat.h"
-#include "internal.h"
+#include "common/internal.h"
 #include "messages.h"
 #include "utils.h"
 #include "kernel-lib/crc32c.h"

@@ -27,7 +27,7 @@
 #include <ftw.h>
 #include "ctree.h"
 #include "volumes.h"
-#include "internal.h"
+#include "common/internal.h"
 #include "disk-io.h"
 #include "messages.h"
 #include "transaction.h"

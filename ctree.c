@@ -20,7 +20,7 @@
 #include "transaction.h"
 #include "print-tree.h"
 #include "repair.h"
-#include "internal.h"
+#include "common/internal.h"
 #include "sizes.h"
 #include "messages.h"
 #include "volumes.h"

@@ -24,7 +24,7 @@
 #include "extent_io.h"
 #include "crc32c.h"
 #include "bitops.h"
-#include "internal.h"
+#include "common/internal.h"
 #include "utils.h"
 
 /*

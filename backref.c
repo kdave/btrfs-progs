@@ -22,7 +22,7 @@
 #include "backref.h"
 #include "kernel-shared/ulist.h"
 #include "transaction.h"
-#include "internal.h"
+#include "common/internal.h"
 
 #define pr_debug(...) do { } while (0)
 
