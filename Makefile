@@ -135,7 +135,7 @@ objects = ctree.o disk-io.o kernel-lib/radix-tree.o extent-tree.o print-tree.o \
 	  inode.o file.o find-root.o free-space-tree.o help.o send-dump.o \
 	  fsfeatures.o kernel-lib/tables.o kernel-lib/raid56.o transaction.o \
 	  delayed-ref.o
-cmds_objects = cmds-subvolume.o cmds-filesystem.o cmds/device.o cmds/scrub.o \
+cmds_objects = cmds/subvolume.o cmds-filesystem.o cmds/device.o cmds/scrub.o \
 	       cmds-inspect.o cmds/balance.o cmds-send.o cmds/receive.o \
 	       cmds/quota.o cmds/qgroup.o cmds/replace.o check/main.o \
 	       cmds/restore.o cmds/rescue.o cmds/rescue-chunk-recover.o \
