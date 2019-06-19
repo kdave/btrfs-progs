@@ -27,7 +27,7 @@
 #include "common/internal.h"
 #include "btrfs-list.h"
 #include "sizes.h"
-#include "messages.h"
+#include "common/messages.h"
 #include "ioctl.h"
 #include "fsfeatures.h"
 

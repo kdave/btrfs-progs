@@ -19,7 +19,7 @@
 #include "transaction.h"
 #include "delayed-ref.h"
 
-#include "messages.h"
+#include "common/messages.h"
 
 struct btrfs_trans_handle* btrfs_start_transaction(struct btrfs_root *root,
 		int num_blocks)

@@ -28,7 +28,7 @@
 #include "transaction.h"
 #include "disk-io.h"
 #include "time.h"
-#include "messages.h"
+#include "common/messages.h"
 
 /*
  * Find a free inode index for later btrfs_add_link().

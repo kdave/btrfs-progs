@@ -22,7 +22,7 @@
 #include "repair.h"
 #include "common/internal.h"
 #include "sizes.h"
-#include "messages.h"
+#include "common/messages.h"
 #include "volumes.h"
 
 static int split_node(struct btrfs_trans_handle *trans, struct btrfs_root

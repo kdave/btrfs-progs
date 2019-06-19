@@ -17,7 +17,7 @@
 #include <time.h>
 #include "ctree.h"
 #include "common/internal.h"
-#include "messages.h"
+#include "common/messages.h"
 #include "transaction.h"
 #include "utils.h"
 #include "disk-io.h"

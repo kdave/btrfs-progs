@@ -16,7 +16,7 @@
 
 #include <stdio.h>
 #include <stdarg.h>
-#include "messages.h"
+#include "common/messages.h"
 
 __attribute__ ((format (printf, 1, 2)))
 void __btrfs_warning(const char *fmt, ...)

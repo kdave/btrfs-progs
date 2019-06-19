@@ -16,7 +16,7 @@
 
 #include "kerncompat.h"
 #include "common/internal.h"
-#include "messages.h"
+#include "common/messages.h"
 #include "utils.h"
 #include "kernel-lib/crc32c.h"
 #include "image/sanitize.h"

@@ -18,7 +18,7 @@
 #include "ctree.h"
 #include "repair.h"
 #include "transaction.h"
-#include "messages.h"
+#include "common/messages.h"
 #include "disk-io.h"
 #include "backref.h"
 #include "hash.h"

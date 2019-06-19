@@ -29,7 +29,7 @@
 #include "volumes.h"
 #include "common/internal.h"
 #include "disk-io.h"
-#include "messages.h"
+#include "common/messages.h"
 #include "transaction.h"
 #include "utils.h"
 #include "mkfs/rootdir.h"
