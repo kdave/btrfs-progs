@@ -32,7 +32,7 @@
 #include "ioctl.h"
 #include <uuid/uuid.h>
 #include "btrfs-list.h"
-#include "rbtree-utils.h"
+#include "common/rbtree-utils.h"
 
 #define BTRFS_LIST_NFILTERS_INCREASE	(2 * BTRFS_LIST_FILTER_MAX)
 #define BTRFS_LIST_NCOMPS_INCREASE	(2 * BTRFS_LIST_COMP_MAX)

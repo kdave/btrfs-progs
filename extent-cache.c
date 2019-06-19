@@ -19,7 +19,7 @@
 #include <stdlib.h>
 #include "kerncompat.h"
 #include "extent-cache.h"
-#include "rbtree-utils.h"
+#include "common/rbtree-utils.h"
 
 struct cache_extent_search_range {
 	u64 objectid;

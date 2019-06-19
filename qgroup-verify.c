@@ -28,7 +28,7 @@
 #include "print-tree.h"
 #include "common/utils.h"
 #include "kernel-shared/ulist.h"
-#include "rbtree-utils.h"
+#include "common/rbtree-utils.h"
 #include "transaction.h"
 #include "repair.h"
 

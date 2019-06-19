@@ -21,7 +21,7 @@
 #ifndef __BTRFS_CHECK_MODE_ORIGINAL_H__
 #define __BTRFS_CHECK_MODE_ORIGINAL_H__
 
-#include "rbtree-utils.h"
+#include "common/rbtree-utils.h"
 
 struct extent_backref {
 	struct rb_node node;

@@ -32,7 +32,7 @@
 #include "kernel-lib/crc32c.h"
 #include "common/utils.h"
 #include "print-tree.h"
-#include "rbtree-utils.h"
+#include "common/rbtree-utils.h"
 
 /* specified errno for check_tree_block */
 #define BTRFS_BAD_BYTENR		(-1)

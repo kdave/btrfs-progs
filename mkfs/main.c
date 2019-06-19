@@ -39,7 +39,7 @@
 #include "common/utils.h"
 #include "kernel-lib/list_sort.h"
 #include "common/help.h"
-#include "rbtree-utils.h"
+#include "common/rbtree-utils.h"
 #include "mkfs/common.h"
 #include "mkfs/rootdir.h"
 #include "kernel-lib/crc32c.h"
