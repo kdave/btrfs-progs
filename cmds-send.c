@@ -207,67 +207,6 @@ static int add_clone_source(struct btrfs_send *sctx, u64 root_id)
 	return 0;
 }
 
-#if 0
-static int write_buf(int fd, const char *buf, size_t size)
-{
-	int ret;
-	size_t pos = 0;
-
-	while (pos < size) {
-		ssize_t wbytes;
-
-		wbytes = write(fd, buf + pos, size - pos);
-		if (wbytes < 0) {
-			ret = -errno;
-			error("failed to dump stream: %s", strerror(-ret));
-			goto out;
-		}
-		if (!wbytes) {
-			ret = -EIO;
-			error("failed to dump stream: %s", strerror(-ret));
-			goto out;
-		}
-		pos += wbytes;
-	}
-	ret = 0;
-
-out:
-	return ret;
-}
-
-static void* read_sent_data_copy(void *arg)
-{
-	int ret;
-	struct btrfs_send *sctx = (struct btrfs_send*)arg;
-	char buf[SEND_BUFFER_SIZE];
-
-	while (1) {
-		ssize_t rbytes;
-
-		rbytes = read(sctx->send_fd, buf, sizeof(buf));
-		if (rbytes < 0) {
-			ret = -errno;
-			error("failed to read stream from kernel: %s",
-				strerror(-ret));
-			goto out;
-		}
-		if (!rbytes) {
-			ret = 0;
-			goto out;
-		}
-		ret = write_buf(sctx->dump_fd, buf, rbytes);
-		if (ret < 0)
-			goto out;
-	}
-
-out:
-	if (ret < 0)
-		exit(-ret);
-
-	return ERR_PTR(ret);
-}
-#endif
-
 static void *read_sent_data(void *arg)
 {
 	int ret;
