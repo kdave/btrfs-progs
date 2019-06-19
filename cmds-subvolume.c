@@ -956,9 +956,6 @@ static int cmd_subvol_show(const struct cmd_struct *cmd, int argc, char **argv)
 	enum btrfs_util_error err;
 	struct btrfs_qgroup_stats stats;
 	unsigned int unit_mode;
-	const char *referenced_size;
-	const char *referenced_limit_size = "-";
-	unsigned int field_width = 0;
 
 	unit_mode = get_unit_mode_from_arg(&argc, argv, 1);
 
@@ -1139,8 +1136,6 @@ static int cmd_subvol_show(const struct cmd_struct *cmd, int argc, char **argv)
 		goto out;
 	}
 
-	printf("\tQuota Usage:\t\t");
-	fflush(stdout);
 	if (ret) {
 		if (ret == -ENOTTY)
 			printf("quotas not enabled\n");
@@ -1148,30 +1143,19 @@ static int cmd_subvol_show(const struct cmd_struct *cmd, int argc, char **argv)
 			printf("quotas not available\n");
 		goto out;
 	}
+	printf("\tQuota group:\t\t0/%" PRIu64 "\n", subvol.id);
+	fflush(stdout);
 
-	referenced_size = pretty_size_mode(stats.info.referenced, unit_mode);
-	if (stats.limit.max_referenced)
-		referenced_limit_size = pretty_size_mode(
-						stats.limit.max_referenced,
-						unit_mode);
-	field_width = max(strlen(referenced_size),
-			  strlen(referenced_limit_size));
-
-	printf("%-*s referenced, %s exclusive\n ", field_width,
-	       referenced_size,
-	       pretty_size_mode(stats.info.exclusive, unit_mode));
-
-	printf("\tQuota Limits:\t\t");
-	if (stats.limit.max_referenced || stats.limit.max_exclusive) {
-		const char *excl = "-";
-
-		if (stats.limit.max_exclusive)
-			excl = pretty_size_mode(stats.limit.max_exclusive,
-						unit_mode);
-		printf("%-*s referenced, %s exclusive\n", field_width,
-		       referenced_limit_size, excl);
-	} else
-		printf("None\n");
+	printf("\t  Limit referenced:\t%s\n",
+			stats.limit.max_referenced == 0 ? "-" :
+			pretty_size_mode(stats.limit.max_referenced, unit_mode));
+	printf("\t  Limit exclusive:\t%s\n",
+			stats.limit.max_exclusive == 0 ? "-" :
+			pretty_size_mode(stats.limit.max_exclusive, unit_mode));
+	printf("\t  Usage referenced:\t%s\n",
+			pretty_size_mode(stats.info.referenced, unit_mode));
+	printf("\t  Usage exclusive:\t%s\n",
+			pretty_size_mode(stats.info.exclusive, unit_mode));
 
 out:
 	free(subvol_path);
