@@ -1584,6 +1584,52 @@ int get_device_info(int fd, u64 devid,
 	return ret < 0 ? -errno : 0;
 }
 
+int get_df(int fd, struct btrfs_ioctl_space_args **sargs_ret)
+{
+	u64 count = 0;
+	int ret;
+	struct btrfs_ioctl_space_args *sargs;
+
+	sargs = malloc(sizeof(struct btrfs_ioctl_space_args));
+	if (!sargs)
+		return -ENOMEM;
+
+	sargs->space_slots = 0;
+	sargs->total_spaces = 0;
+
+	ret = ioctl(fd, BTRFS_IOC_SPACE_INFO, sargs);
+	if (ret < 0) {
+		error("cannot get space info: %m");
+		free(sargs);
+		return -errno;
+	}
+	/* This really should never happen */
+	if (!sargs->total_spaces) {
+		free(sargs);
+		return -ENOENT;
+	}
+	count = sargs->total_spaces;
+	free(sargs);
+
+	sargs = malloc(sizeof(struct btrfs_ioctl_space_args) +
+			(count * sizeof(struct btrfs_ioctl_space_info)));
+	if (!sargs)
+		return -ENOMEM;
+
+	sargs->space_slots = count;
+	sargs->total_spaces = 0;
+	ret = ioctl(fd, BTRFS_IOC_SPACE_INFO, sargs);
+	if (ret < 0) {
+		error("cannot get space info with %llu slots: %m",
+				count);
+		free(sargs);
+		return -errno;
+	}
+	*sargs_ret = sargs;
+	return 0;
+}
+
+
 static u64 find_max_device_id(struct btrfs_ioctl_search_args *search_args,
 			      int nr_items)
 {
