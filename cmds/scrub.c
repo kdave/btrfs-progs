@@ -44,7 +44,7 @@
 #include "disk-io.h"
 
 #include "commands.h"
-#include "help.h"
+#include "common/help.h"
 
 static const char * const scrub_cmd_group_usage[] = {
 	"btrfs scrub <command> [options] <path>|<device>",

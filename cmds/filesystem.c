@@ -39,7 +39,7 @@
 #include "cmds/filesystem-usage.h"
 #include "list_sort.h"
 #include "disk-io.h"
-#include "help.h"
+#include "common/help.h"
 #include "fsfeatures.h"
 
 /*

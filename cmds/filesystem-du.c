@@ -40,7 +40,7 @@
 #include "rbtree.h"
 
 #include "interval_tree_generic.h"
-#include "help.h"
+#include "common/help.h"
 #include "fsfeatures.h"
 
 static int summarize = 0;

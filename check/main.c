@@ -43,7 +43,7 @@
 #include "backref.h"
 #include "kernel-shared/ulist.h"
 #include "hash.h"
-#include "help.h"
+#include "common/help.h"
 #include "check/mode-common.h"
 #include "check/mode-original.h"
 #include "check/mode-lowmem.h"

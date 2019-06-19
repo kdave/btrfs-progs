@@ -50,7 +50,7 @@
 #include "send-stream.h"
 #include "send-utils.h"
 #include "send-dump.h"
-#include "help.h"
+#include "common/help.h"
 
 /*
  * Default is 1 for historical reasons, changing may break scripts that expect

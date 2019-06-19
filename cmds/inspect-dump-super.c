@@ -33,7 +33,7 @@
 #include "utils.h"
 #include "commands.h"
 #include "crc32c.h"
-#include "help.h"
+#include "common/help.h"
 
 static int check_csum_sblock(void *sb, int csum_size)
 {

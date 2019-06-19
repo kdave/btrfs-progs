@@ -31,7 +31,7 @@
 #include "volumes.h"
 #include "commands.h"
 #include "utils.h"
-#include "help.h"
+#include "common/help.h"
 
 static void print_extents(struct extent_buffer *eb)
 {

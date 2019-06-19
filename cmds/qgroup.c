@@ -28,7 +28,7 @@
 #include "commands.h"
 #include "qgroup.h"
 #include "utils.h"
-#include "help.h"
+#include "common/help.h"
 
 static const char * const qgroup_cmd_group_usage[] = {
 	"btrfs qgroup <command> [options] <path>",

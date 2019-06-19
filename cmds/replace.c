@@ -37,7 +37,7 @@
 #include "disk-io.h"
 
 #include "commands.h"
-#include "help.h"
+#include "common/help.h"
 #include "mkfs/common.h"
 
 static int print_replace_status(int fd, const char *path, int once);

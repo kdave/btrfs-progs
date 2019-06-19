@@ -38,7 +38,7 @@
 #include "transaction.h"
 #include "utils.h"
 #include "list_sort.h"
-#include "help.h"
+#include "common/help.h"
 #include "rbtree-utils.h"
 #include "mkfs/common.h"
 #include "mkfs/rootdir.h"

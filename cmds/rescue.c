@@ -25,7 +25,7 @@
 #include "disk-io.h"
 #include "commands.h"
 #include "utils.h"
-#include "help.h"
+#include "common/help.h"
 #include "cmds/rescue.h"
 
 static const char * const rescue_cmd_group_usage[] = {

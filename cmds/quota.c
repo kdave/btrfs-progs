@@ -24,7 +24,7 @@
 
 #include "commands.h"
 #include "utils.h"
-#include "help.h"
+#include "common/help.h"
 
 static const char * const quota_cmd_group_usage[] = {
 	"btrfs quota <command> [options] <path>",

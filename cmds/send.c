@@ -43,7 +43,7 @@
 
 #include "send.h"
 #include "send-utils.h"
-#include "help.h"
+#include "common/help.h"
 
 #define SEND_BUFFER_SIZE	SZ_64K
 

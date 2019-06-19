@@ -40,7 +40,7 @@
 #include "utils.h"
 #include "btrfs-list.h"
 #include "utils.h"
-#include "help.h"
+#include "common/help.h"
 
 static int wait_for_subvolume_cleaning(int fd, size_t count, uint64_t *ids,
 				       int sleep_interval)

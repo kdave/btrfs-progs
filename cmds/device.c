@@ -32,7 +32,7 @@
 #include "cmds/filesystem-usage.h"
 
 #include "commands.h"
-#include "help.h"
+#include "common/help.h"
 #include "mkfs/common.h"
 
 static const char * const device_cmd_group_usage[] = {

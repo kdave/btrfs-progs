@@ -31,7 +31,7 @@
 #include "disk-io.h"
 #include "commands.h"
 #include "btrfs-list.h"
-#include "help.h"
+#include "common/help.h"
 
 static const char * const inspect_cmd_group_usage[] = {
 	"btrfs inspect-internal <command> <args>",

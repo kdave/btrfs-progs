@@ -35,7 +35,7 @@
 #include "crc32c.h"
 #include "extent-cache.h"
 #include "find-root.h"
-#include "help.h"
+#include "common/help.h"
 #include "commands.h"
 
 /*

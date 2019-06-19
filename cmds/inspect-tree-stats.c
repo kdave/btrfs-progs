@@ -35,7 +35,7 @@
 #include "volumes.h"
 #include "utils.h"
 #include "commands.h"
-#include "help.h"
+#include "common/help.h"
 
 static int verbose = 0;
 static int no_pretty = 0;

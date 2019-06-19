@@ -22,7 +22,7 @@
 
 #include "commands.h"
 #include "utils.h"
-#include "help.h"
+#include "common/help.h"
 
 #define USAGE_SHORT		1U
 #define USAGE_LONG		2U
