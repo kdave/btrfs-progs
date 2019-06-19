@@ -1129,20 +1129,23 @@ static int cmd_subvol_show(const struct cmd_struct *cmd, int argc, char **argv)
 	btrfs_util_destroy_subvolume_iterator(iter);
 
 	ret = btrfs_qgroup_query(fd, subvol.id, &stats);
-	if (ret && ret != -ENOTTY && ret != -ENODATA) {
-		fprintf(stderr,
-			"\nERROR: BTRFS_IOC_QUOTA_QUERY failed: %s\n",
-			strerror(-ret));
+	if (ret == -ENOTTY) {
+		/* Quotas not enabled */
+		ret = 0;
+		goto out;
+	}
+	if (ret == -ENOTTY) {
+		/* Quota information not available, not fatal */
+		printf("\tQuota group:\t\tn/a\n");
+		ret = 0;
 		goto out;
 	}
 
 	if (ret) {
-		if (ret == -ENOTTY)
-			printf("quotas not enabled\n");
-		else
-			printf("quotas not available\n");
+		fprintf(stderr, "ERROR: quota query failed: %m");
 		goto out;
 	}
+
 	printf("\tQuota group:\t\t0/%" PRIu64 "\n", subvol.id);
 	fflush(stdout);
 
