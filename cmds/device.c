@@ -29,7 +29,7 @@
 #include "ioctl.h"
 #include "utils.h"
 #include "volumes.h"
-#include "cmds-fi-usage.h"
+#include "cmds/filesystem-usage.h"
 
 #include "commands.h"
 #include "help.h"
