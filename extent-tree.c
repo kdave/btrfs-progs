@@ -2075,7 +2075,6 @@ static int __free_extent(struct btrfs_trans_handle *trans,
 		}
 	} else {
 		int mark_free = 0;
-		int pin = 1;
 
 		if (found_extent) {
 			BUG_ON(is_data && refs_to_drop !=
@@ -2089,13 +2088,11 @@ static int __free_extent(struct btrfs_trans_handle *trans,
 			}
 		}
 
-		if (pin) {
-			ret = pin_down_bytes(trans, bytenr, num_bytes,
-					     is_data);
-			if (ret > 0)
-				mark_free = 1;
-			BUG_ON(ret < 0);
-		}
+		ret = pin_down_bytes(trans, bytenr, num_bytes,
+				     is_data);
+		if (ret > 0)
+			mark_free = 1;
+		BUG_ON(ret < 0);
 
 		ret = btrfs_del_items(trans, extent_root, path, path->slots[0],
 				      num_to_del);
