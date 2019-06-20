@@ -89,6 +89,14 @@ struct cmd_struct {
 		       cmd_ ##name ##_usage, NULL, 0)
 
 /*
+ * Define a command with flags, eg. with the additional output formats.
+ * See CMD_* .
+ */
+#define DEFINE_COMMAND_WITH_FLAGS(name, token, flags)			\
+	DEFINE_COMMAND(name, token, cmd_ ##name,			\
+		       cmd_ ##name ##_usage, NULL, (flags))
+
+/*
  * Define a command group callback.
  * It's assumed that the callback is called cmd_<name> and the
  * struct cmd_group is called <name>_cmd_group.
