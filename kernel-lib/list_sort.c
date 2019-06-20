@@ -4,8 +4,8 @@
  */
 
 #include "kerncompat.h"
-#include "list_sort.h"
-#include "list.h"
+#include "kernel-lib/list_sort.h"
+#include "kernel-lib/list.h"
 
 #define MAX_LIST_LENGTH_BITS 20
 

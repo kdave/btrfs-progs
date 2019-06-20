@@ -21,7 +21,7 @@
 
 #if BTRFS_FLAT_INCLUDES
 #include "kerncompat.h"
-#include "rbtree.h"
+#include "kernel-lib/rbtree.h"
 #else
 #include <btrfs/kerncompat.h>
 #include <btrfs/rbtree.h>

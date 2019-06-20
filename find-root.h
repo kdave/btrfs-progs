@@ -22,7 +22,7 @@
 #include "kerncompat.h"
 
 #include "ctree.h"
-#include "list.h"
+#include "kernel-lib/list.h"
 #include "extent-cache.h"
 
 /*

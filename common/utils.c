@@ -43,11 +43,11 @@
 #include <btrfsutil.h>
 
 #include "kerncompat.h"
-#include "radix-tree.h"
+#include "kernel-lib/radix-tree.h"
 #include "ctree.h"
 #include "disk-io.h"
 #include "transaction.h"
-#include "crc32c.h"
+#include "kernel-lib/crc32c.h"
 #include "common/utils.h"
 #include "volumes.h"
 #include "ioctl.h"

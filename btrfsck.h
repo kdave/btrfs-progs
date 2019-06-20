@@ -24,7 +24,7 @@
 #include "kerncompat.h"
 #include "ctree.h"
 #include "extent-cache.h"
-#include "list.h"
+#include "kernel-lib/list.h"
 #else
 #include <btrfs/kerncompat.h>
 #include <btrfs/ctree.h>

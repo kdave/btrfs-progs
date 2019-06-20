@@ -21,12 +21,12 @@
 #include <stdint.h>
 #include <math.h>
 #include "kerncompat.h"
-#include "radix-tree.h"
+#include "kernel-lib/radix-tree.h"
 #include "ctree.h"
 #include "disk-io.h"
 #include "print-tree.h"
 #include "transaction.h"
-#include "crc32c.h"
+#include "kernel-lib/crc32c.h"
 #include "volumes.h"
 #include "free-space-cache.h"
 #include "free-space-tree.h"

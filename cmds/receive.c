@@ -43,7 +43,7 @@
 #include "ioctl.h"
 #include "cmds/commands.h"
 #include "common/utils.h"
-#include "list.h"
+#include "kernel-lib/list.h"
 #include "btrfs-list.h"
 
 #include "send.h"

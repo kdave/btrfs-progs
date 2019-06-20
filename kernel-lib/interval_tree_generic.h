@@ -20,8 +20,7 @@
 */
 
 #include <stdbool.h>
-
-#include "rbtree_augmented.h"
+#include "kernel-lib/rbtree_augmented.h"
 
 /*
  * Template for implementing interval trees

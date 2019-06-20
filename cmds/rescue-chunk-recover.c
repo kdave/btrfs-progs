@@ -29,14 +29,14 @@
 #include <uuid/uuid.h>
 #include <pthread.h>
 
-#include "list.h"
-#include "radix-tree.h"
+#include "kernel-lib/list.h"
+#include "kernel-lib/radix-tree.h"
 #include "ctree.h"
 #include "extent-cache.h"
 #include "disk-io.h"
 #include "volumes.h"
 #include "transaction.h"
-#include "crc32c.h"
+#include "kernel-lib/crc32c.h"
 #include "common/utils.h"
 #include "btrfsck.h"
 #include "cmds/commands.h"

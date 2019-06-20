@@ -21,7 +21,7 @@
 
 #include "kerncompat.h"
 #include "ctree.h"
-#include "sizes.h"
+#include "kernel-lib/sizes.h"
 
 #define BTRFS_SUPER_INFO_OFFSET SZ_64K
 #define BTRFS_SUPER_INFO_SIZE 4096

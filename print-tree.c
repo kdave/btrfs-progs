@@ -20,7 +20,7 @@
 #include <stdlib.h>
 #include <uuid/uuid.h>
 #include "kerncompat.h"
-#include "radix-tree.h"
+#include "kernel-lib/radix-tree.h"
 #include "ctree.h"
 #include "disk-io.h"
 #include "print-tree.h"

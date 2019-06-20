@@ -21,7 +21,7 @@
 
 #include "kerncompat.h"
 #include "ctree.h"
-#include "rbtree.h"
+#include "kernel-lib/rbtree.h"
 
 struct btrfs_free_space {
 	struct rb_node offset_index;

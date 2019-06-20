@@ -21,7 +21,7 @@
 #include "print-tree.h"
 #include "repair.h"
 #include "common/internal.h"
-#include "sizes.h"
+#include "kernel-lib/sizes.h"
 #include "common/messages.h"
 #include "volumes.h"
 

@@ -37,9 +37,9 @@
 #include "common/utils.h"
 #include "cmds/commands.h"
 #include "kerncompat.h"
-#include "rbtree.h"
+#include "kernel-lib/rbtree.h"
 
-#include "interval_tree_generic.h"
+#include "kernel-lib/interval_tree_generic.h"
 #include "common/help.h"
 #include "common/fsfeatures.h"
 

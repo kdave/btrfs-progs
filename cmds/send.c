@@ -38,7 +38,7 @@
 #include "ctree.h"
 #include "ioctl.h"
 #include "cmds/commands.h"
-#include "list.h"
+#include "kernel-lib/list.h"
 #include "common/utils.h"
 
 #include "send.h"

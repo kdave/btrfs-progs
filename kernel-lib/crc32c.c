@@ -8,7 +8,7 @@
  *
  */
 #include "kerncompat.h"
-#include "crc32c.h"
+#include "kernel-lib/crc32c.h"
 #include <inttypes.h>
 #include <string.h>
 #include <unistd.h>

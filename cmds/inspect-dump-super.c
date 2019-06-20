@@ -29,10 +29,10 @@
 #include "disk-io.h"
 #include "print-tree.h"
 #include "transaction.h"
-#include "list.h"
+#include "kernel-lib/list.h"
 #include "common/utils.h"
 #include "cmds/commands.h"
-#include "crc32c.h"
+#include "kernel-lib/crc32c.h"
 #include "common/help.h"
 
 static int check_csum_sblock(void *sb, int csum_size)

@@ -19,7 +19,7 @@
 #ifndef __RBTREE_UTILS__
 #define __RBTREE_UTILS__
 
-#include "rbtree.h"
+#include "kernel-lib/rbtree.h"
 
 #ifdef __cplusplus
 extern "C" {

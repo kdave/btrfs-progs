@@ -25,7 +25,7 @@
 #include <stdbool.h>
 #include "kerncompat.h"
 #include "extent_io.h"
-#include "list.h"
+#include "kernel-lib/list.h"
 #include "ctree.h"
 #include "volumes.h"
 #include "common/utils.h"

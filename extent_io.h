@@ -22,7 +22,7 @@
 #if BTRFS_FLAT_INCLUDES
 #include "kerncompat.h"
 #include "extent-cache.h"
-#include "list.h"
+#include "kernel-lib/list.h"
 #else
 #include <btrfs/kerncompat.h>
 #include <btrfs/extent-cache.h>

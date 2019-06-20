@@ -22,13 +22,13 @@
 #include <stdbool.h>
 
 #if BTRFS_FLAT_INCLUDES
-#include "list.h"
+#include "kernel-lib/list.h"
 #include "kerncompat.h"
-#include "radix-tree.h"
+#include "kernel-lib/radix-tree.h"
 #include "extent-cache.h"
 #include "extent_io.h"
 #include "ioctl.h"
-#include "sizes.h"
+#include "kernel-lib/sizes.h"
 #else
 #include <btrfs/list.h>
 #include <btrfs/kerncompat.h>

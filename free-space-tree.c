@@ -22,7 +22,7 @@
 #include "free-space-tree.h"
 #include "volumes.h"
 #include "transaction.h"
-#include "bitops.h"
+#include "kernel-lib/bitops.h"
 #include "common/internal.h"
 
 static struct btrfs_free_space_info *

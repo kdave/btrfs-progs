@@ -82,7 +82,6 @@ CFLAGS = $(SUBST_CFLAGS) \
 	 -fno-strict-aliasing \
 	 -fPIC \
 	 -I$(TOPDIR) \
-	 -I$(TOPDIR)/kernel-lib \
 	 -I$(TOPDIR)/libbtrfsutil \
 	 $(DISABLE_WARNING_FLAGS) \
 	 $(EXTRAWARN_CFLAGS) \

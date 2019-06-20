@@ -9,8 +9,8 @@
 #define __ULIST_H__
 
 #include "kerncompat.h"
-#include "list.h"
-#include "rbtree.h"
+#include "kernel-lib/list.h"
+#include "kernel-lib/rbtree.h"
 
 /*
  * ulist is a generic data structure to hold a collection of unique u64

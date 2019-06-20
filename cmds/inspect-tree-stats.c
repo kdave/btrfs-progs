@@ -31,7 +31,7 @@
 #include "disk-io.h"
 #include "print-tree.h"
 #include "transaction.h"
-#include "list.h"
+#include "kernel-lib/list.h"
 #include "volumes.h"
 #include "common/utils.h"
 #include "cmds/commands.h"
