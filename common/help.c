@@ -30,8 +30,9 @@
 #define USAGE_LISTING		8U
 #define USAGE_FORMAT		16U
 
-const struct format_desc output_formats[1] = {
+const struct format_desc output_formats[2] = {
 	{ .value = CMD_FORMAT_TEXT,	.name = "text" },
+	{ .value = CMD_FORMAT_JSON,	.name = "json" },
 };
 
 static char argv0_buf[ARGV0_BUF_SIZE] = "btrfs";

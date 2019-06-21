@@ -21,9 +21,10 @@ enum {
 	CMD_HIDDEN = (1 << 0),	/* should not be in help listings */
 	CMD_ALIAS = (1 << 1),	/* alias of next command in cmd_group */
 	CMD_FORMAT_TEXT = (1 << 2),	/* output as plain text */
+	CMD_FORMAT_JSON = (1 << 3),	/* output in json */
 };
 
-#define CMD_FORMAT_MASK		(CMD_FORMAT_TEXT)
+#define CMD_FORMAT_MASK		(CMD_FORMAT_TEXT | CMD_FORMAT_JSON)
 
 struct cmd_struct {
 	const char *token;

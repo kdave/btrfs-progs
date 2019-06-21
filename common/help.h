@@ -70,7 +70,7 @@ struct format_desc {
 	char name[8];
 };
 
-extern const struct format_desc output_formats[1];
+extern const struct format_desc output_formats[2];
 
 const char *output_format_name(unsigned int value);
 
