@@ -52,6 +52,13 @@
 	"-g|--gbytes        show sizes in GiB, or GB with --si",		\
 	"-t|--tbytes        show sizes in TiB, or TB with --si"
 
+/*
+ * Special marker in the help strings that will preemptively insert the global
+ * options and then continue with the following text that possibly follows
+ * after the regular options
+ */
+#define HELPINFO_INSERT_GLOBALS		"INSERT_GLOBALS"
+
 struct cmd_struct;
 struct cmd_group;
 

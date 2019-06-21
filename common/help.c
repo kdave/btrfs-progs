@@ -205,10 +205,31 @@ static int do_usage_one_command(const char * const *usagestr,
 	 * description) be prepended with an empty line, skip it
 	 */
 	usagestr++;
-
 	fputc('\n', outf);
-	while (*usagestr)
-		fprintf(outf, "%*s%s\n", pad, "", *usagestr++);
+
+	while (*usagestr) {
+		if (strcmp(*usagestr, HELPINFO_INSERT_GLOBALS) == 0) {
+			int i;
+
+			fputc('\n', outf);
+			/*
+			 * We always support text, that's on by default for all
+			 * commands
+			 */
+			fprintf(outf, "%*sGlobal options:\n", pad, "");
+			fprintf(outf, "%*s--format TYPE      where TYPE is: %s",
+					pad, "", output_formats[0].name);
+			for (i = 1; i < ARRAY_SIZE(output_formats); i++) {
+				if (cmd_flags & output_formats[i].value)
+					fprintf(outf, ", %s",
+						output_formats[i].name);
+			}
+			fputc('\n', outf);
+		} else {
+			fprintf(outf, "%*s%s\n", pad, "", *usagestr);
+		}
+		usagestr++;
+	}
 
 	return 0;
 }
