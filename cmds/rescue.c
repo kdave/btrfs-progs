@@ -158,7 +158,6 @@ static DEFINE_SIMPLE_COMMAND(rescue_super_recover, "super-recover");
 static const char * const cmd_rescue_zero_log_usage[] = {
 	"btrfs rescue zero-log <device>",
 	"Clear the tree log. Usable if it's corrupted and prevents mount.",
-	"",
 	NULL
 };
 
@@ -214,7 +213,6 @@ static DEFINE_SIMPLE_COMMAND(rescue_zero_log, "zero-log");
 static const char * const cmd_rescue_fix_device_size_usage[] = {
 	"btrfs rescue fix-device-size <device>",
 	"Re-align device and super block sizes. Usable if newer kernel refuse to mount it due to mismatch super size",
-	"",
 	NULL
 };
 

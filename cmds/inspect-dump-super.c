@@ -508,6 +508,7 @@ static int load_and_dump_sb(char *filename, int fd, u64 sb_bytenr, int full,
 static const char * const cmd_inspect_dump_super_usage[] = {
 	"btrfs inspect-internal dump-super [options] device [device...]",
 	"Dump superblock from a device in a textual form",
+	"",
 	"-f|--full             print full superblock information, backup roots etc.",
 	"-a|--all              print information about all superblocks",
 	"-s|--super <super>    specify which copy to print out (values: 0, 1, 2)",

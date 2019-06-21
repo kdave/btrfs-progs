@@ -57,6 +57,7 @@ static const char * const filesystem_cmd_group_usage[] = {
 static const char * const cmd_filesystem_df_usage[] = {
 	"btrfs filesystem df [options] <path>",
 	"Show space usage information for a mount point",
+	"",
 	HELPINFO_UNITS_SHORT_LONG,
 	NULL
 };
@@ -623,6 +624,7 @@ fail_out:
 static const char * const cmd_filesystem_show_usage[] = {
 	"btrfs filesystem show [options] [<path>|<uuid>|<device>|label]",
 	"Show the structure of a filesystem",
+	"",
 	"-d|--all-devices   show only disks under /dev containing btrfs filesystem",
 	"-m|--mounted       show only mounted btrfs",
 	HELPINFO_UNITS_LONG,

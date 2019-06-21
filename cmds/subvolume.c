@@ -928,6 +928,7 @@ static DEFINE_SIMPLE_COMMAND(subvol_find_new, "find-new");
 static const char * const cmd_subvol_show_usage[] = {
 	"btrfs subvolume show [options] <path>",
 	"Show more information about the subvolume (UUIDs, generations, times, snapshots)",
+	"",
 	"-r|--rootid   rootid of the subvolume",
 	"-u|--uuid     uuid of the subvolume",
 	HELPINFO_UNITS_SHORT_LONG,

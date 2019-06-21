@@ -237,8 +237,8 @@ static int _cmd_device_remove(const struct cmd_struct *cmd,
 static const char * const cmd_device_remove_usage[] = {
 	"btrfs device remove <device>|<devid> [<device>|<devid>...] <path>",
 	"Remove a device from a filesystem",
-	"",
 	COMMON_USAGE_REMOVE_DELETE,
+	"",
 	NULL
 };
 
@@ -252,8 +252,8 @@ static DEFINE_SIMPLE_COMMAND(device_remove, "remove");
 static const char * const cmd_device_delete_usage[] = {
 	"btrfs device delete <device>|<devid> [<device>|<devid>...] <path>",
 	"Remove a device from a filesystem (alias of \"btrfs device remove\")",
-	"",
 	COMMON_USAGE_REMOVE_DELETE,
+	"",
 	NULL
 };
 
@@ -595,6 +595,7 @@ static DEFINE_SIMPLE_COMMAND(device_stats, "stats");
 static const char * const cmd_device_usage_usage[] = {
 	"btrfs device usage [options] <path> [<path>..]",
 	"Show detailed information about internal allocations in devices.",
+	"",
 	HELPINFO_UNITS_SHORT_LONG,
 	NULL
 };

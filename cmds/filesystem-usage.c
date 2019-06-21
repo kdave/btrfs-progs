@@ -959,6 +959,7 @@ out:
 static const char * const cmd_filesystem_usage_usage[] = {
 	"btrfs filesystem usage [options] <path> [<path>..]",
 	"Show detailed information about internal filesystem usage .",
+	"",
 	HELPINFO_UNITS_SHORT_LONG,
 	"-T                 show data in tabular format",
 	NULL

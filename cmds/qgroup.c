@@ -271,6 +271,7 @@ static DEFINE_SIMPLE_COMMAND(qgroup_destroy, "destroy");
 static const char * const cmd_qgroup_show_usage[] = {
 	"btrfs qgroup show [options] <path>",
 	"Show subvolume quota groups.",
+	"",
 	"-p             print parent qgroup id",
 	"-c             print child qgroup id",
 	"-r             print limit of referenced size of qgroup",

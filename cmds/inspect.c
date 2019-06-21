@@ -128,6 +128,7 @@ static DEFINE_SIMPLE_COMMAND(inspect_inode_resolve, "inode-resolve");
 static const char * const cmd_inspect_logical_resolve_usage[] = {
 	"btrfs inspect-internal logical-resolve [-Pv] [-s bufsize] <logical> <path>",
 	"Get file system paths for the given logical address",
+	"",
 	"-P          skip the path resolving and print the inodes instead",
 	"-v          verbose mode",
 	"-s bufsize  set inode container's size. This is used to increase inode",
@@ -354,6 +355,7 @@ static const char* const cmd_inspect_min_dev_size_usage[] = {
 	"btrfs inspect-internal min-dev-size [options] <path>",
 	"Get the minimum size the device can be shrunk to. The",
 	"device id 1 is used by default.",
+	"",
 	"--id DEVID   specify the device id to query",
 	NULL
 };

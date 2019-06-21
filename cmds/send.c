@@ -442,7 +442,7 @@ static const char * const cmd_send_usage[] = {
 	"'-p <parent>' option when '-c <clone-src>' options are given, in",
 	"which case 'btrfs send' will determine a suitable parent among the",
 	"clone sources itself.",
-	"\n",
+	"",
 	"-e               If sending multiple subvols at once, use the new",
 	"                 format and omit the end-cmd between the subvols.",
 	"-p <parent>      Send an incremental stream from <parent> to",

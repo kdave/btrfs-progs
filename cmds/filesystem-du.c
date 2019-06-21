@@ -553,6 +553,7 @@ out:
 static const char * const cmd_filesystem_du_usage[] = {
 	"btrfs filesystem du [options] <path> [<path>..]",
 	"Summarize disk usage of each file.",
+	"",
 	"-s|--summarize     display only a total for each argument",
 	HELPINFO_UNITS_LONG,
 	NULL
