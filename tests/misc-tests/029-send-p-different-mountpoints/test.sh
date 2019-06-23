@@ -49,3 +49,6 @@ run_check_umount_test_dev "$TEST_MNT"
 
 run_mayfail $SUDO_HELPER rmdir "$SUBVOL_MNT"
 run_mayfail rmdir "$SUBVOL_MNT"
+
+# don't propagate any potential error from run_mayfail()
+exit 0
