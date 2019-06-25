@@ -481,15 +481,25 @@ out:
 }
 
 enum loop_response {
+	LOOP_NONE = 0,
 	LOOP_STOP,
 	LOOP_CONTINUE,
 	LOOP_DONTASK
 };
+static enum loop_response default_loop_response = LOOP_NONE;
 
 static enum loop_response ask_to_continue(const char *file)
 {
 	char buf[1024];
 	const char *ret;
+
+	if (default_loop_response > LOOP_NONE) {
+		printf("We seem to be looping a lot on %s -- %s\n",
+		       file, (default_loop_response == LOOP_STOP
+			      ? "stopping"
+			      : "continuing"));
+		return default_loop_response;
+	}
 
 	printf("We seem to be looping a lot on %s, do you want to keep going "
 	       "on ? (y/N/a): ", file);
@@ -1420,6 +1430,9 @@ const char * const cmd_restore_usage[] = {
 	"                     you have to use following syntax (possibly quoted):",
 	"                     ^/(|home(|/username(|/Desktop(|/.*))))$",
 	"-c                   ignore case (--path-regex only)",
+	"--looping stop|continue",
+	"                     action to take when we are spending too much time",
+	"                     looking up file contents (will ask if not specified)",
 	NULL
 };
 
@@ -1444,7 +1457,7 @@ int cmd_restore(int argc, char **argv)
 	optind = 0;
 	while (1) {
 		int opt;
-		enum { GETOPT_VAL_PATH_REGEX = 256 };
+		enum { GETOPT_VAL_PATH_REGEX = 256, GETOPT_VAL_LOOPING };
 		static const struct option long_options[] = {
 			{ "path-regex", required_argument, NULL,
 				GETOPT_VAL_PATH_REGEX },
@@ -1459,6 +1472,7 @@ int cmd_restore(int argc, char **argv)
 			{ "super", required_argument, NULL, 'u'},
 			{ "root", required_argument, NULL, 'r'},
 			{ "list-roots", no_argument, NULL, 'l'},
+			{ "looping", required_argument, NULL, GETOPT_VAL_LOOPING },
 			{ NULL, 0, NULL, 0}
 		};
 
@@ -1526,6 +1540,17 @@ int cmd_restore(int argc, char **argv)
 			case 'x':
 				get_xattrs = 1;
 				break;
+			case GETOPT_VAL_LOOPING:
+				if (!strcasecmp(optarg, "stop"))
+					default_loop_response = LOOP_STOP;
+				else if (!strcasecmp(optarg, "continue"))
+					default_loop_response = LOOP_DONTASK;
+				else {
+					fprintf(stderr, "Bad --looping argument: '%s' (specify either --looping stop or --looping continue)", optarg);
+					exit(1);
+				}
+				break;
+
 			default:
 				usage_unknown_option(cmd_restore_usage, argv);
 		}
