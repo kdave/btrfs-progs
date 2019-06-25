@@ -488,23 +488,23 @@ enum loop_response {
 
 static enum loop_response ask_to_continue(const char *file)
 {
-	char buf[2];
-	char *ret;
+	char buf[1024];
+	const char *ret;
 
 	printf("We seem to be looping a lot on %s, do you want to keep going "
 	       "on ? (y/N/a): ", file);
 again:
-	ret = fgets(buf, 2, stdin);
-	if (*ret == '\n' || tolower(*ret) == 'n')
+	ret = fgets(buf, 1024, stdin);
+	if (!strcmp(ret, "") || !strcmp(ret, "\n") || !strcasecmp(ret, "n\n"))
 		return LOOP_STOP;
-	if (tolower(*ret) == 'a')
+	if (!strcasecmp(ret, "n\n"))
+		return LOOP_STOP;
+	if (!strcasecmp(ret, "a\n"))
 		return LOOP_DONTASK;
-	if (tolower(*ret) != 'y') {
-		printf("Please enter one of 'y', 'n', or 'a': ");
-		goto again;
-	}
-
-	return LOOP_CONTINUE;
+	if (!strcasecmp(ret, "y\n"))
+		return LOOP_CONTINUE;
+	printf("Please enter one of 'y', 'n', 'a' or press Enter for default ('n'): ");
+	goto again;
 }
 
 
