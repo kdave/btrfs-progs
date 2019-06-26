@@ -21,6 +21,7 @@
 #include <unistd.h>
 #include <uuid/uuid.h>
 #include <getopt.h>
+#include <fcntl.h>
 
 #include "kerncompat.h"
 #include "kernel-lib/radix-tree.h"
@@ -186,7 +187,7 @@ static u64 treeid_from_string(const char *str, const char **end)
 }
 
 static const char * const cmd_inspect_dump_tree_usage[] = {
-	"btrfs inspect-internal dump-tree [options] device",
+	"btrfs inspect-internal dump-tree [options] <device> [<device> ..]",
 	"Dump tree structures from a given device",
 	"Dump tree structures from a given device in textual form, expand keys to human",
 	"readable equivalents where possible.",
@@ -202,6 +203,7 @@ static const char * const cmd_inspect_dump_tree_usage[] = {
 	"                       can be specified multiple times",
 	"-t|--tree <tree_id>    print only tree with the given id (string or number)",
 	"--follow               use with -b, to show all children tree blocks of <block_num>",
+	"--noscan               do not scan the devices from the filesystem, use only the listed ones",
 	NULL
 };
 
@@ -298,7 +300,7 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 	struct btrfs_key found_key;
 	struct cache_tree block_root;	/* for multiple --block parameters */
 	char uuidbuf[BTRFS_UUID_UNPARSED_SIZE];
-	int ret;
+	int ret = 0;
 	int slot;
 	int extent_only = 0;
 	int device_only = 0;
@@ -306,6 +308,7 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 	int roots_only = 0;
 	int root_backups = 0;
 	int traverse = BTRFS_PRINT_TREE_DEFAULT;
+	int dev_optind;
 	unsigned open_ctree_flags;
 	u64 block_bytenr;
 	struct btrfs_root *tree_root_scan;
@@ -324,8 +327,8 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 	optind = 0;
 	while (1) {
 		int c;
-		enum { GETOPT_VAL_FOLLOW = 256, GETOPT_VAL_DFS,
-		       GETOPT_VAL_BFS };
+		enum { GETOPT_VAL_FOLLOW = 256, GETOPT_VAL_DFS, GETOPT_VAL_BFS,
+		       GETOPT_VAL_NOSCAN};
 		static const struct option long_options[] = {
 			{ "extents", no_argument, NULL, 'e'},
 			{ "device", no_argument, NULL, 'd'},
@@ -337,6 +340,7 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 			{ "follow", no_argument, NULL, GETOPT_VAL_FOLLOW },
 			{ "bfs", no_argument, NULL, GETOPT_VAL_BFS },
 			{ "dfs", no_argument, NULL, GETOPT_VAL_DFS },
+			{ "noscan", no_argument, NULL, GETOPT_VAL_NOSCAN },
 			{ NULL, 0, NULL, 0 }
 		};
 
@@ -401,24 +405,49 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 		case GETOPT_VAL_BFS:
 			traverse = BTRFS_PRINT_TREE_BFS;
 			break;
+		case GETOPT_VAL_NOSCAN:
+			open_ctree_flags |= OPEN_CTREE_NO_DEVICES;
+			break;
 		default:
 			usage_unknown_option(cmd, argv);
 		}
 	}
 
-	if (check_argc_exact(argc - optind, 1))
+	if (check_argc_min(argc - optind, 1))
 		return 1;
 
-	ret = check_arg_type(argv[optind]);
-	if (ret != BTRFS_ARG_BLKDEV && ret != BTRFS_ARG_REG) {
+	dev_optind = optind;
+	while (dev_optind < argc) {
+		int fd;
+		struct btrfs_fs_devices *fs_devices;
+		u64 num_devices;
+
+		ret = check_arg_type(argv[optind]);
+		if (ret != BTRFS_ARG_BLKDEV && ret != BTRFS_ARG_REG) {
+			if (ret < 0) {
+				errno = -ret;
+				error("invalid argument %s: %m", argv[dev_optind]);
+			} else {
+				error("not a block device or regular file: %s",
+				       argv[dev_optind]);
+			}
+		}
+		fd = open(argv[dev_optind], O_RDONLY);
+		if (fd < 0) {
+			error("cannot open %s: %m", argv[dev_optind]);
+			return -EINVAL;
+		}
+		ret = btrfs_scan_one_device(fd, argv[dev_optind], &fs_devices,
+					    &num_devices,
+					    BTRFS_SUPER_INFO_OFFSET,
+					    SBREAD_DEFAULT);
+		close(fd);
 		if (ret < 0) {
 			errno = -ret;
-			error("invalid argument %s: %m", argv[optind]);
-		} else {
-			error("not a block device or regular file: %s",
-			      argv[optind]);
+			error("device scan %s: %m", argv[dev_optind]);
+			return ret;
 		}
-		goto out;
+		dev_optind++;
 	}
 
 	printf("%s\n", PACKAGE_STRING);

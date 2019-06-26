@@ -61,7 +61,7 @@ specify which mirror to print, valid values are 0, 1 and 2 and the superblock
 must be present on the device with a valid signature, can be used together with
 '--force'
 
-*dump-tree* [options] <device>::
+*dump-tree* [options] <device> [device...]::
 (replaces the standalone tool *btrfs-debug-tree*)
 +
 Dump tree structures from a given device in textual form, expand keys to human
@@ -95,6 +95,9 @@ intermixed in the output
 --bfs::::
 use breadth-first search to print trees. the nodes are printed before all
 leaves
+--noscan::::
+do not automatically scan the system for other devices from the same
+filesystem, only use the devices provided as the arguments
 -t <tree_id>::::
 print only the tree with the specified ID, where the ID can be numerical or
 common name in a flexible human readable form
