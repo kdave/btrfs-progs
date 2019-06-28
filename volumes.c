@@ -1109,7 +1109,7 @@ again:
 			return ret;
 		cur = cur->next;
 		if (avail >= min_free) {
-			list_move_tail(&device->dev_list, &private_devs);
+			list_move(&device->dev_list, &private_devs);
 			index++;
 			if (type & BTRFS_BLOCK_GROUP_DUP)
 				index++;
@@ -1166,7 +1166,7 @@ again:
 		/* loop over this device again if we're doing a dup group */
 		if (!(type & BTRFS_BLOCK_GROUP_DUP) ||
 		    (index == num_stripes - 1))
-			list_move_tail(&device->dev_list, dev_list);
+			list_move(&device->dev_list, dev_list);
 
 		ret = btrfs_alloc_dev_extent(trans, device, key.offset,
 			     calc_size, &dev_offset);
