@@ -263,7 +263,7 @@ int is_same_loop_file(const char *a, const char *b)
 }
 
 /* Checks if a file exists and is a block or regular file*/
-int is_existing_blk_or_reg_file(const char *filename)
+int path_is_reg_or_block_device(const char *filename)
 {
 	struct stat st_buf;
 

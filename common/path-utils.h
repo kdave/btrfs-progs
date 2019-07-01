@@ -33,7 +33,7 @@ int path_is_mount_point(const char *file);
 int path_exists(const char *file);
 int path_is_reg_file(const char *path);
 int is_same_loop_file(const char *a, const char *b);
-int is_existing_blk_or_reg_file(const char *filename);
+int path_is_reg_or_block_device(const char *filename);
 
 int test_issubvolname(const char *name);
 int test_isdir(const char *path);

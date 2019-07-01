@@ -647,7 +647,7 @@ int check_mounted_where(int fd, const char *file, char *where, int size,
 		} else {
 			/* ignore entries in the mount table that are not
 			   associated with a file*/
-			if((ret = is_existing_blk_or_reg_file(mnt->mnt_fsname)) < 0)
+			if((ret = path_is_reg_or_block_device(mnt->mnt_fsname)) < 0)
 				goto out_mntloop_err;
 			else if(!ret)
 				continue;
@@ -1036,7 +1036,7 @@ int get_label(const char *btrfs_dev, char *label)
 {
 	int ret;
 
-	ret = is_existing_blk_or_reg_file(btrfs_dev);
+	ret = path_is_reg_or_block_device(btrfs_dev);
 	if (!ret)
 		ret = get_label_mounted(btrfs_dev, label);
 	else if (ret > 0)
@@ -1052,7 +1052,7 @@ int set_label(const char *btrfs_dev, const char *label)
 	if (check_label(label))
 		return -1;
 
-	ret = is_existing_blk_or_reg_file(btrfs_dev);
+	ret = path_is_reg_or_block_device(btrfs_dev);
 	if (!ret)
 		ret = set_label_mounted(btrfs_dev, label);
 	else if (ret > 0)
