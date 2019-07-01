@@ -89,8 +89,6 @@ int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 int btrfs_scan_for_fsid(int run_ioctls);
 int btrfs_register_one_device(const char *fname);
 int btrfs_register_all_devices(void);
-char *canonicalize_dm_name(const char *ptname);
-char *canonicalize_path(const char *path);
 int check_mounted(const char *devicename);
 int check_mounted_where(int fd, const char *file, char *where, int size,
 		struct btrfs_fs_devices **fs_devices_mnt, unsigned sbflags);
@@ -104,7 +102,6 @@ const char *pretty_size_mode(u64 size, unsigned mode);
 u64 parse_size(char *s);
 u64 parse_qgroupid(const char *p);
 u64 arg_strtou64(const char *str);
-int arg_copy_path(char *dest, const char *src, int destlen);
 int open_file_or_dir(const char *fname, DIR **dirstream);
 int open_file_or_dir3(const char *fname, DIR **dirstream, int open_flags);
 void close_file_or_dir(int fd, DIR *dirstream);
@@ -120,19 +117,12 @@ void free_seen_fsid(struct seen_fsid *seen_fsid_hash[]);
 int get_label(const char *btrfs_dev, char *label);
 int set_label(const char *btrfs_dev, const char *label);
 
-char *__strncpy_null(char *dest, const char *src, size_t n);
-int is_block_device(const char *file);
-int is_mount_point(const char *file);
-int is_path_exist(const char *file);
-int is_reg_file(const char *path);
 int check_arg_type(const char *input);
 int open_path_or_dev_mnt(const char *path, DIR **dirstream, int verbose);
 int btrfs_open(const char *path, DIR **dirstream, int verbose, int dir_only);
 int btrfs_open_dir(const char *path, DIR **dirstream, int verbose);
 int btrfs_open_file_or_dir(const char *path, DIR **dirstream, int verbose);
 u64 btrfs_device_size(int fd, struct stat *st);
-/* Helper to always get proper size of the destination string */
-#define strncpy_null(dest, src) __strncpy_null(dest, src, sizeof(dest))
 int get_label_mounted(const char *mount_path, char *labelp);
 int get_label_unmounted(const char *dev, char *label);
 int group_profile_max_safe_loss(u64 flags);
@@ -149,9 +139,6 @@ int get_df(int fd, struct btrfs_ioctl_space_args **sargs_ret);
 int test_uuid_unique(char *fs_uuid);
 u64 disk_size(const char *path);
 u64 get_partition_size(const char *dev);
-
-int test_issubvolname(const char *name);
-int test_isdir(const char *path);
 
 const char *subvol_strip_mountpoint(const char *mnt, const char *full_path);
 int find_next_key(struct btrfs_path *path, struct btrfs_key *key);

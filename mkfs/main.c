@@ -37,6 +37,7 @@
 #include "volumes.h"
 #include "transaction.h"
 #include "common/utils.h"
+#include "common/path-utils.h"
 #include "kernel-lib/list_sort.h"
 #include "common/help.h"
 #include "common/rbtree-utils.h"

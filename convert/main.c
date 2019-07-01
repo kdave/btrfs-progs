@@ -97,6 +97,7 @@
 #include "transaction.h"
 #include "common/utils.h"
 #include "common/task-utils.h"
+#include "common/path-utils.h"
 #include "common/help.h"
 #include "mkfs/common.h"
 #include "convert/common.h"
