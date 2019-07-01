@@ -973,7 +973,7 @@ int main(int argc, char **argv)
 		file = argv[optind++];
 		if (source_dir_set && is_path_exist(file) == 0)
 			ret = 0;
-		else if (is_block_device(file) == 1)
+		else if (path_is_block_device(file) == 1)
 			ret = test_dev_for_mkfs(file, force_overwrite);
 		else
 			ret = test_status_for_mkfs(file, force_overwrite);
@@ -1367,7 +1367,7 @@ out:
 		dev_cnt = argc - optind;
 		while (dev_cnt-- > 0) {
 			file = argv[optind++];
-			if (is_block_device(file) == 1)
+			if (path_is_block_device(file) == 1)
 				btrfs_register_one_device(file);
 		}
 	}

@@ -174,7 +174,7 @@ static int _cmd_device_remove(const struct cmd_struct *cmd,
 			argv2.devid = arg_strtou64(argv[i]);
 			argv2.flags = BTRFS_DEVICE_SPEC_BY_ID;
 			is_devid = 1;
-		} else if (is_block_device(argv[i]) == 1 ||
+		} else if (path_is_block_device(argv[i]) == 1 ||
 				strcmp(argv[i], "missing") == 0) {
 			strncpy_null(argv2.name, argv[i]);
 		} else {
@@ -365,7 +365,7 @@ static int cmd_device_scan(const struct cmd_struct *cmd, int argc, char **argv)
 	for( i = devstart ; i < argc ; i++ ){
 		char *path;
 
-		if (is_block_device(argv[i]) != 1) {
+		if (path_is_block_device(argv[i]) != 1) {
 			error("not a block device: %s", argv[i]);
 			ret = 1;
 			goto out;
@@ -430,7 +430,7 @@ static int cmd_device_ready(const struct cmd_struct *cmd, int argc, char **argv)
 		goto out;
 	}
 
-	if (is_block_device(path) != 1) {
+	if (path_is_block_device(path) != 1) {
 		error("not a block device: %s", path);
 		ret = 1;
 		goto out;

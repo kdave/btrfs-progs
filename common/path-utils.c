@@ -32,11 +32,13 @@
 #include "common/path-utils.h"
 
 /*
- * checks if a path is a block device node
- * Returns negative errno on failure, otherwise
- * returns 1 for blockdev, 0 for not-blockdev
+ * Check if @path is a block device node
+ * Returns:
+ * 1  - path is a block device
+ * 0  - not a block device
+ * <0 - negative errno
  */
-int is_block_device(const char *path)
+int path_is_block_device(const char *path)
 {
 	struct stat statbuf;
 

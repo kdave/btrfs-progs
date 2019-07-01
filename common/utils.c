@@ -431,7 +431,7 @@ int check_arg_type(const char *input)
 		return -EINVAL;
 
 	if (realpath(input, path)) {
-		if (is_block_device(path) == 1)
+		if (path_is_block_device(path) == 1)
 			return BTRFS_ARG_BLKDEV;
 
 		if (is_mount_point(path) == 1)
@@ -463,7 +463,7 @@ int get_btrfs_mount(const char *dev, char *mp, size_t mp_size)
 	int ret;
 	int fd = -1;
 
-	ret = is_block_device(dev);
+	ret = path_is_block_device(dev);
 	if (ret <= 0) {
 		if (!ret) {
 			error("not a block device: %s", dev);
@@ -506,7 +506,7 @@ int open_path_or_dev_mnt(const char *path, DIR **dirstream, int verbose)
 	char mp[PATH_MAX];
 	int ret;
 
-	if (is_block_device(path)) {
+	if (path_is_block_device(path)) {
 		ret = get_btrfs_mount(path, mp, sizeof(mp));
 		if (ret < 0) {
 			/* not a mounted btrfs dev */
@@ -1406,7 +1406,7 @@ int get_fs_info(const char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 
 	memset(fi_args, 0, sizeof(*fi_args));
 
-	if (is_block_device(path) == 1) {
+	if (path_is_block_device(path) == 1) {
 		struct btrfs_super_block *disk_super;
 		char buf[BTRFS_SUPER_INFO_SIZE];
 

@@ -230,7 +230,7 @@ static int cmd_replace_start(const struct cmd_struct *cmd,
 				srcdev, path);
 			goto leave_with_error;
 		}
-	} else if (is_block_device(srcdev) > 0) {
+	} else if (path_is_block_device(srcdev) > 0) {
 		strncpy((char *)start_args.start.srcdev_name, srcdev,
 			BTRFS_DEVICE_PATH_NAME_MAX);
 		start_args.start.srcdevid = 0;
