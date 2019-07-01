@@ -33,6 +33,7 @@
 #include "common/utils.h"
 #include "print-tree.h"
 #include "common/rbtree-utils.h"
+#include "common/device-scan.h"
 
 /* specified errno for check_tree_block */
 #define BTRFS_BAD_BYTENR		(-1)

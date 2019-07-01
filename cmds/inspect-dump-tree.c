@@ -32,6 +32,7 @@
 #include "cmds/commands.h"
 #include "common/utils.h"
 #include "common/help.h"
+#include "common/device-scan.h"
 
 static void print_extents(struct extent_buffer *eb)
 {

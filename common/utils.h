@@ -31,17 +31,6 @@
 #include "ioctl.h"
 #include "common/fsfeatures.h"
 
-#define BTRFS_SCAN_MOUNTED	(1ULL << 0)
-#define BTRFS_SCAN_LBLKID	(1ULL << 1)
-
-#define BTRFS_UPDATE_KERNEL	1
-
-#define BTRFS_ARG_UNKNOWN	0
-#define BTRFS_ARG_MNTPOINT	1
-#define BTRFS_ARG_UUID		2
-#define BTRFS_ARG_BLKDEV	3
-#define BTRFS_ARG_REG		4
-
 /*
  * Output modes of size
  */
@@ -66,28 +55,11 @@
 void units_set_mode(unsigned *units, unsigned mode);
 void units_set_base(unsigned *units, unsigned base);
 
-#define SEEN_FSID_HASH_SIZE 256
-struct seen_fsid {
-	u8 fsid[BTRFS_FSID_SIZE];
-	struct seen_fsid *next;
-	DIR *dirstream;
-	int fd;
-};
-
 int btrfs_make_root_dir(struct btrfs_trans_handle *trans,
 			struct btrfs_root *root, u64 objectid);
-int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
-		      struct btrfs_root *root, int fd, const char *path,
-		      u64 block_count, u32 io_width, u32 io_align,
-		      u32 sectorsize);
-int btrfs_scan_for_fsid(int run_ioctls);
-int btrfs_register_one_device(const char *fname);
-int btrfs_register_all_devices(void);
 int check_mounted(const char *devicename);
 int check_mounted_where(int fd, const char *file, char *where, int size,
 		struct btrfs_fs_devices **fs_devices_mnt, unsigned sbflags);
-int btrfs_device_already_in_root(struct btrfs_root *root, int fd,
-				 int super_offset);
 
 int pretty_size_snprintf(u64 size, char *str, size_t str_bytes, unsigned unit_mode);
 #define pretty_size(size) 	pretty_size_mode(size, UNITS_DEFAULT)
@@ -102,11 +74,6 @@ void close_file_or_dir(int fd, DIR *dirstream);
 int get_fs_info(const char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 		struct btrfs_ioctl_dev_info_args **di_ret);
 int get_fsid(const char *path, u8 *fsid, int silent);
-
-int is_seen_fsid(u8 *fsid, struct seen_fsid *seen_fsid_hash[]);
-int add_seen_fsid(u8 *fsid, struct seen_fsid *seen_fsid_hash[],
-		int fd, DIR *dirstream);
-void free_seen_fsid(struct seen_fsid *seen_fsid_hash[]);
 
 int get_label(const char *btrfs_dev, char *label);
 int set_label(const char *btrfs_dev, const char *label);
@@ -123,7 +90,6 @@ int csum_tree_block(struct btrfs_fs_info *root, struct extent_buffer *buf,
 		    int verify);
 int ask_user(const char *question);
 int lookup_path_rootid(int fd, u64 *rootid);
-int btrfs_scan_devices(void);
 int get_btrfs_mount(const char *dev, char *mp, size_t mp_size);
 int find_mount_root(const char *path, char **mount_root);
 int get_device_info(int fd, u64 devid,
