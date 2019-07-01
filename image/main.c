@@ -36,6 +36,7 @@
 #include "volumes.h"
 #include "extent_io.h"
 #include "common/help.h"
+#include "common/device-utils.h"
 #include "image/metadump.h"
 #include "image/sanitize.h"
 

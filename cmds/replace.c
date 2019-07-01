@@ -39,6 +39,7 @@
 #include "cmds/commands.h"
 #include "common/help.h"
 #include "common/path-utils.h"
+#include "common/device-utils.h"
 #include "mkfs/common.h"
 
 static int print_replace_status(int fd, const char *path, int once);

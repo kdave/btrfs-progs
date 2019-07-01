@@ -34,6 +34,7 @@
 #include "cmds/commands.h"
 #include "common/help.h"
 #include "common/path-utils.h"
+#include "common/device-utils.h"
 #include "mkfs/common.h"
 
 static const char * const device_cmd_group_usage[] = {

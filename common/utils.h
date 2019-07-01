@@ -66,10 +66,6 @@
 void units_set_mode(unsigned *units, unsigned mode);
 void units_set_base(unsigned *units, unsigned base);
 
-#define	PREP_DEVICE_ZERO_END	(1U << 0)
-#define	PREP_DEVICE_DISCARD	(1U << 1)
-#define	PREP_DEVICE_VERBOSE	(1U << 2)
-
 #define SEEN_FSID_HASH_SIZE 256
 struct seen_fsid {
 	u8 fsid[BTRFS_FSID_SIZE];
@@ -80,8 +76,6 @@ struct seen_fsid {
 
 int btrfs_make_root_dir(struct btrfs_trans_handle *trans,
 			struct btrfs_root *root, u64 objectid);
-int btrfs_prepare_device(int fd, const char *file, u64 *block_count_ret,
-		u64 max_block_count, unsigned opflags);
 int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 		      struct btrfs_root *root, int fd, const char *path,
 		      u64 block_count, u32 io_width, u32 io_align,
@@ -122,7 +116,6 @@ int open_path_or_dev_mnt(const char *path, DIR **dirstream, int verbose);
 int btrfs_open(const char *path, DIR **dirstream, int verbose, int dir_only);
 int btrfs_open_dir(const char *path, DIR **dirstream, int verbose);
 int btrfs_open_file_or_dir(const char *path, DIR **dirstream, int verbose);
-u64 btrfs_device_size(int fd, struct stat *st);
 int get_label_mounted(const char *mount_path, char *labelp);
 int get_label_unmounted(const char *dev, char *label);
 int group_profile_max_safe_loss(u64 flags);
@@ -137,8 +130,6 @@ int get_device_info(int fd, u64 devid,
 		struct btrfs_ioctl_dev_info_args *di_args);
 int get_df(int fd, struct btrfs_ioctl_space_args **sargs_ret);
 int test_uuid_unique(char *fs_uuid);
-u64 disk_size(const char *path);
-u64 get_partition_size(const char *dev);
 
 const char *subvol_strip_mountpoint(const char *mnt, const char *full_path);
 int find_next_key(struct btrfs_path *path, struct btrfs_key *key);

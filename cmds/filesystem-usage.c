@@ -34,6 +34,7 @@
 
 #include "version.h"
 #include "common/help.h"
+#include "common/device-utils.h"
 
 /*
  * Add the chunk info to the chunk_info list
