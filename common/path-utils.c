@@ -81,7 +81,7 @@ int path_is_reg_file(const char *path)
 	return S_ISREG(statbuf.st_mode);
 }
 
-int is_path_exist(const char *path)
+int path_exists(const char *path)
 {
 	struct stat statbuf;
 	int ret;

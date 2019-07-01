@@ -971,7 +971,7 @@ int main(int argc, char **argv)
 
 	while (dev_cnt-- > 0) {
 		file = argv[optind++];
-		if (source_dir_set && is_path_exist(file) == 0)
+		if (source_dir_set && path_exists(file) == 0)
 			ret = 0;
 		else if (path_is_block_device(file) == 1)
 			ret = test_dev_for_mkfs(file, force_overwrite);
@@ -1056,7 +1056,7 @@ int main(int argc, char **argv)
 		int oflags = O_RDWR;
 		struct stat statbuf;
 
-		if (is_path_exist(file) == 0)
+		if (path_exists(file) == 0)
 			oflags |= O_CREAT;
 
 		fd = open(file, oflags, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP |
