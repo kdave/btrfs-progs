@@ -362,7 +362,7 @@ char *__strncpy_null(char *dest, const char *src, size_t n)
  *   1 - path exists and it is a directory
  * < 0 - error
  */
-int test_isdir(const char *path)
+int path_is_dir(const char *path)
 {
 	struct stat st;
 	int ret;

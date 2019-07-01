@@ -137,7 +137,7 @@ static int cmd_subvol_create(const struct cmd_struct *cmd,
 	dst = argv[optind];
 
 	retval = 1;	/* failure */
-	res = test_isdir(dst);
+	res = path_is_dir(dst);
 	if (res < 0 && res != -ENOENT) {
 		errno = -res;
 		error("cannot access %s: %m", dst);
@@ -697,7 +697,7 @@ static int cmd_subvol_snapshot(const struct cmd_struct *cmd,
 		goto out;
 	}
 
-	res = test_isdir(dst);
+	res = path_is_dir(dst);
 	if (res < 0 && res != -ENOENT) {
 		errno = -res;
 		error("cannot access %s: %m", dst);
