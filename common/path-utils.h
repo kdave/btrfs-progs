@@ -31,7 +31,7 @@ char *__strncpy_null(char *dest, const char *src, size_t n);
 int path_is_block_device(const char *file);
 int is_mount_point(const char *file);
 int is_path_exist(const char *file);
-int is_reg_file(const char *path);
+int path_is_reg_file(const char *path);
 int is_same_loop_file(const char *a, const char *b);
 int is_existing_blk_or_reg_file(const char *filename);
 

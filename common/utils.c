@@ -437,7 +437,7 @@ int check_arg_type(const char *input)
 		if (is_mount_point(path) == 1)
 			return BTRFS_ARG_MNTPOINT;
 
-		if (is_reg_file(path))
+		if (path_is_reg_file(path))
 			return BTRFS_ARG_REG;
 
 		return BTRFS_ARG_UNKNOWN;
