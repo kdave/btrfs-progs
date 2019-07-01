@@ -52,7 +52,7 @@ int path_is_block_device(const char *path)
  * check if given path is a mount point
  * return 1 if yes. 0 if no. -1 for error
  */
-int is_mount_point(const char *path)
+int path_is_mount_point(const char *path)
 {
 	FILE *f;
 	struct mntent *mnt;

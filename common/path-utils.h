@@ -29,7 +29,7 @@ char *__strncpy_null(char *dest, const char *src, size_t n);
 #define strncpy_null(dest, src) __strncpy_null(dest, src, sizeof(dest))
 
 int path_is_block_device(const char *file);
-int is_mount_point(const char *file);
+int path_is_mount_point(const char *file);
 int is_path_exist(const char *file);
 int path_is_reg_file(const char *path);
 int is_same_loop_file(const char *a, const char *b);
