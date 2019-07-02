@@ -146,8 +146,9 @@ described below.
 +
 Each argument to 'btrfs filesystem du' will have a 'set shared' value
 calculated for it. We define each 'set' as those files found by a
-recursive search of an argument. The 'set shared' value
-then is a sum of all shared space referenced by the set.
+recursive search of an argument (recursion descends to subvolumes but not
+mount points). The 'set shared' value then is a sum of all shared space
+referenced by the set.
 +
 'set shared' takes into account overlapping shared extents, hence it
 isn't as simple as adding up shared extents.
