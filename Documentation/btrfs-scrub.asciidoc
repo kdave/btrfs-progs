@@ -16,7 +16,7 @@ and metadata blocks from all devices and verify checksums. Automatically repair
 corrupted blocks if there's a correct copy available.
 
 NOTE: Scrub is not a filesystem checker (fsck) and does not verify nor repair
-structural damage in the filesystem. It really only checks checksums of of data
+structural damage in the filesystem. It really only checks checksums of data
 and tree blocks, it doesn't ensure the content of tree blocks is valid and
 consistent. There's some validation performed when metadata blocks are read
 from disk but it's not extensive and cannot substitute full 'btrfs check' run.
