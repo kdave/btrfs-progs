@@ -12,4 +12,4 @@ cd /tmp
 wget "$url" -O ${branch}.tar.gz
 tar xf ${branch}.tar.gz
 cd btrfs-progs-${branch}
-travis/build-default "$@"
+ci/build-default "$@"

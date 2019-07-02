@@ -56,9 +56,9 @@ before_install:
   - sudo apt-get install -qq e2fslibs-dev gcc libacl1-dev libblkid-dev liblzo2-dev make pkg-config udev zlib1g-dev acl attr reiserfsprogs python3-setuptools
   - echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
   - docker pull kdave/ci-musl-x86_64
-  - travis/build-dep-reiserfs
-  - travis/build-dep-zstd
-  - travis/build-default --disable-documentation --with-convert=ext2,reiserfs
+  - ci/build-dep-reiserfs
+  - ci/build-dep-zstd
+  - ci/build-default --disable-documentation --with-convert=ext2,reiserfs
 
 addons:
   coverity_scan:
@@ -72,14 +72,14 @@ addons:
 
 script:
   # quick build tests
-  - "if travis/should-run-test; then docker run -it --env CC=$CC kdave/ci-musl-x86_64 ./test-build $TRAVIS_BRANCH --disable-documentation --disable-backtrace; fi"
-  - "if travis/should-run-test; then make TEST_LOG=dump library-test; fi"
+  - "if ci/should-run-test; then docker run -it --env CC=$CC kdave/ci-musl-x86_64 ./test-build $TRAVIS_BRANCH --disable-documentation --disable-backtrace; fi"
+  - "if ci/should-run-test; then make TEST_LOG=dump library-test; fi"
   # real tests
-  - "if travis/should-run-test; then make TEST_LOG=dump test-cli; fi"
-  - "if travis/should-run-test; then make TEST_LOG=dump test-mkfs; fi"
-  - "if travis/should-run-test; then make TEST_LOG=dump test-check; fi"
-  - "if travis/should-run-test; then make TEST_LOG=dump TEST_ENABLE_OVERRIDE=true TEST_ARGS_CHECK=--mode=lowmem test-check; fi"
-  - "if travis/should-run-test; then make TEST_LOG=dump test-misc; fi"
-  - "if travis/should-run-test; then make TEST_LOG=dump test-fuzz; fi"
+  - "if ci/should-run-test; then make TEST_LOG=dump test-cli; fi"
+  - "if ci/should-run-test; then make TEST_LOG=dump test-mkfs; fi"
+  - "if ci/should-run-test; then make TEST_LOG=dump test-check; fi"
+  - "if ci/should-run-test; then make TEST_LOG=dump TEST_ENABLE_OVERRIDE=true TEST_ARGS_CHECK=--mode=lowmem test-check; fi"
+  - "if ci/should-run-test; then make TEST_LOG=dump test-misc; fi"
+  - "if ci/should-run-test; then make TEST_LOG=dump test-fuzz; fi"
   # long running tests
   - "if [ $TRAVIS_BRANCH = release-test ]; then make TEST_LOG=dump test-convert; fi"
