@@ -563,7 +563,7 @@ generate_dataset() {
 		small)
 			for num in $(seq 1 "$DATASET_SIZE"); do
 				run_check $SUDO_HELPER dd if=/dev/urandom of="$dirpath/$dataset_type.$num" bs=10K \
-				count=1 >/dev/null 2>&1
+				count=1 status=noxfer >/dev/null 2>&1
 			done
 			;;
 
@@ -602,10 +602,10 @@ generate_dataset() {
 		sparse)
 			for num in $(seq 1 "$DATASET_SIZE"); do
 				run_check $SUDO_HELPER dd if=/dev/urandom of="$dirpath/$dataset_type.$num" bs=10K \
-				count=1 >/dev/null 2>&1
+				count=1 status=noxfer >/dev/null 2>&1
 				run_check $SUDO_HELPER truncate -s 500K "$dirpath/$dataset_type.$num"
 				run_check $SUDO_HELPER dd if=/dev/urandom of="$dirpath/$dataset_type.$num" bs=10K \
-				oflag=append conv=notrunc count=1 >/dev/null 2>&1
+				oflag=append conv=notrunc count=1 status=noxfer >/dev/null 2>&1
 				run_check $SUDO_HELPER truncate -s 800K "$dirpath/$dataset_type.$num"
 			done
 			;;
@@ -633,7 +633,7 @@ generate_dataset() {
 			;;
 		large)
 			run_check $SUDO_HELPER dd if=/dev/urandom bs=32M count=1 \
-				of="$dirpath/$dataset_type" >/dev/null 2>&1
+				of="$dirpath/$dataset_type" status=noxfer >/dev/null 2>&1
 			;;
 	esac
 }

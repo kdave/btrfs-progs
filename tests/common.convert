@@ -88,7 +88,7 @@ convert_test_prep_fs() {
 	# create a file inside the fs before convert, to make sure there is
 	# data covering btrfs backup superblock range (64M)
 	run_check $SUDO_HELPER dd if=/dev/zero bs=1M count=64 \
-		of="$TEST_MNT/convert_space_holder"
+		of="$TEST_MNT/convert_space_holder" status=noxfer
 }
 
 # generate md5 checksums of files on $TEST_MNT
@@ -97,7 +97,7 @@ convert_test_gen_checksums() {
 	_assert_path "$1"
 
 	run_check $SUDO_HELPER dd if=/dev/zero of="$TEST_MNT/test" "bs=$nodesize" \
-		count=1 >/dev/null 2>&1
+		count=1 status=noxfer >/dev/null 2>&1
 	run_check_stdout $SUDO_HELPER find "$TEST_MNT" -type f ! -name 'image' -exec md5sum {} \+ > "$1"
 }
 # list $TEST_MNT data set file permissions.
@@ -110,7 +110,7 @@ convert_test_perm() {
 	FILES_LIST=$(mktemp --tmpdir btrfs-progs-convert.fileslistXXXXXX)
 
 	run_check $SUDO_HELPER dd if=/dev/zero of="$TEST_MNT/test" "bs=$nodesize" \
-		count=1 >/dev/null 2>&1
+		count=1 status=noxfer >/dev/null 2>&1
 	run_check_stdout $SUDO_HELPER find "$TEST_MNT" -type f ! -name 'image' -fprint "$FILES_LIST"
 	# Fix directory entries order
 	sort "$FILES_LIST" -o "$FILES_LIST"
