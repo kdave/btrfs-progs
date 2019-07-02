@@ -82,5 +82,22 @@ The resulting binaries have the '.static' suffix, the intermediate object
 files do not conflict with the normal (dynamic) build.
 
 
+All-in-one binary (busybox style)
+---------------------------------
+
+Since version 5.2 it's possible to build a single binary that can act as other
+standalone tools, based on the file name:
+
+    $ make btrfs.box
+    $ mv btrfs.box btrfs
+    $ ln -s btrfs mkfs.btrfs
+
+The list of built-ins can be obtained by
+
+    $ btrfs help --box
+
+The basic set will always contain: mkfs.btrfs, btrfs-image, btrfs-convert.
+
+
 References:
 * https://btrfs.wiki.kernel.org

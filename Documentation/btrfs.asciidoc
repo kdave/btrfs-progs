@@ -126,6 +126,11 @@ source distribution.
 removed.
 *btrfs-zero-log*:: moved to *btrfs rescue zero-log*, standalone removed.
 
+For space-constrained environments, it's possible to build a single binary with
+functionality of several standalone tools. This is following the concept of
+busybox where the file name selects the functionality. This works for symlinks
+or hardlinks. The full list can be obtained by *btrfs help --box*.
+
 EXIT STATUS
 -----------
 *btrfs* returns a zero exit status if it succeeds. Non zero is returned in

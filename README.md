@@ -13,6 +13,7 @@ This repository hosts following utilities:
 
 * **btrfs** &mdash; the main administration tool ([manual page](https://btrfs.wiki.kernel.org/index.php/Manpage/btrfs))
 * **mkfs.btrfs** &mdash; utility to create the filesystem ([manual page](https://btrfs.wiki.kernel.org/index.php/Manpage/mkfs.btrfs))
+* all-in-one binary in the busybox style with mkfs.btrfs, btrfs-image and other tools built-in ([standalone tools](https://github.com/kdave/btrfs-progs/blob/master/Documentation/btrfs.asciidoc#standalone-tools))
 
 The C and python 3 bindings are provided by a LGPL library **libbtrfsutil** see
 [libbtrfsutil/README.md](libbtrfsutil/README.md) for more.
