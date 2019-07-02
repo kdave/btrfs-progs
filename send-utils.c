@@ -151,10 +151,21 @@ static int btrfs_read_root_item(int mnt_fd, u64 root_id,
 		return ret;
 
 	if (read_len < sizeof(*item) ||
-	    btrfs_root_generation(item) != btrfs_root_generation_v2(item))
-		memset(&item->generation_v2, 0,
+	    btrfs_root_generation(item) != btrfs_root_generation_v2(item)) {
+		/*
+		 * Workaround for gcc9 that warns that memset over
+		 * generation_v2 overflows, which is what we want but would
+		 * be otherwise a bug
+		 *
+		 * The below is &item->generation_v2
+		 */
+		char *start = (char *)item + offsetof(struct btrfs_root_item,
+						      generation_v2);
+
+		memset(start, 0,
 			sizeof(*item) - offsetof(struct btrfs_root_item,
 						 generation_v2));
+	}
 
 	return 0;
 }
