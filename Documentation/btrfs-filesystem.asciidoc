@@ -83,7 +83,8 @@ If conflicting options are passed, the last one takes precedence.
 *defragment* [options] <file>|<dir> [<file>|<dir>...]::
 Defragment file data on a mounted filesystem. Requires kernel 2.6.33 and newer.
 +
-If '-r' is passed, files in dir will be defragmented recursively.
+If '-r' is passed, files in dir will be defragmented recursively (not
+descending to subvolumes and mount points).
 The start position and the number of bytes to defragment can be specified by
 start and length using '-s' and '-l' options below.
 Extents bigger than value given by '-t' will be skipped, otherwise this value
@@ -116,7 +117,8 @@ compress file contents while defragmenting. Optional argument selects the compre
 algorithm, 'zlib' (default), 'lzo' or 'zstd'. Currently it's not possible to select no
 compression. See also section 'EXAMPLES'.
 -r::::
-defragment files recursively in given directories
+defragment files recursively in given directories, does not descend to
+subvolumes or mount points
 -f::::
 flush data for each file before going to the next file.
 +
