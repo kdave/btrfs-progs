@@ -10,13 +10,10 @@ check_prereq btrfs
 
 setup_root_helper
 
-rm -f dev1 dev2
-run_check truncate -s 2G dev1
-run_check truncate -s 2G dev2
-chmod a+w dev1 dev2
-
-loop1=$(run_check_stdout $SUDO_HELPER losetup --find --show dev1)
-loop2=$(run_check_stdout $SUDO_HELPER losetup --find --show dev2)
+setup_loopdevs 2
+prepare_loopdevs
+loop1=${loopdevs[1]}
+loop2=${loopdevs[2]}
 
 # Create the test file system.
 
@@ -44,10 +41,7 @@ run_check $SUDO_HELPER mount "$loop1" "$TEST_MNT"
 new_md5=$(run_check_stdout md5sum "$TEST_MNT/foobar" | cut -d ' ' -f 1)
 run_check $SUDO_HELPER umount "$TEST_MNT"
 
-# Cleanup loop devices.
-run_check $SUDO_HELPER losetup -d "$loop1"
-run_check $SUDO_HELPER losetup -d "$loop2"
-rm -f dev1 dev2
+cleanup_loopdevs
 
 # Compare the file digests.
 [ "$orig_md5" == "$new_md5" ] || _fail "File digests do not match"
