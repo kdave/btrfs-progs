@@ -12,7 +12,7 @@ prepare_test_dev 260G
 
 run_check_mkfs_test_dev
 
-function check_corruption {
+check_corruption() {
 	local sb_offset=$1
 	local source_sb=$2
 

@@ -10,21 +10,21 @@ check_prereq btrfs-image
 setup_root_helper
 prepare_test_dev
 
-function read_fsid {
+read_fsid() {
 	local dev="$1"
 
 	echo $(run_check_stdout $SUDO_HELPER "$TOP/btrfs" inspect-internal \
 		dump-super "$dev" | awk '/fsid/ {print $2}' | head -n 1)
 }
 
-function read_metadata_uuid {
+read_metadata_uuid() {
 	local dev="$1"
 
 	echo $(run_check_stdout $SUDO_HELPER "$TOP/btrfs" inspect-internal \
 		dump-super "$dev" | awk '/metadata_uuid/ {print $2}')
 }
 
-function check_btrfstune {
+check_btrfstune() {
 	local fsid
 
 	_log "Checking btrfstune logic"
@@ -56,7 +56,7 @@ function check_btrfstune {
 		$SUDO_HELPER "$TOP/btrfstune" -u  "$TEST_DEV"
 }
 
-function check_dump_super_output {
+check_dump_super_output() {
 	local fsid
 	local metadata_uuid
 	local dev_item_match
@@ -106,7 +106,7 @@ function check_dump_super_output {
 	[ $? -eq 1 ] || _fail "METADATA_UUID feature still shown as enabled"
 }
 
-function check_image_restore {
+check_image_restore() {
 	local metadata_uuid
 	local fsid
 	local fsid_restored
@@ -129,7 +129,7 @@ function check_image_restore {
 	[ "$metadata_uuid" = "$metadata_uuid_restored" ] || _fail "metadata_uuids don't match after restore"
 }
 
-function check_inprogress_flag {
+check_inprogress_flag() {
 	# check the flag is indeed cleared
 	run_check_stdout $SUDO_HELPER "$TOP/btrfs" inspect-internal dump-super \
 		"$1" | grep -q 0x1000000001
@@ -140,7 +140,7 @@ function check_inprogress_flag {
 	[ $? -eq 1 ] || _fail "Found BTRFS_SUPER_FLAG_CHANGING_FSID_V2 set for $2"
 }
 
-function check_completed {
+check_completed() {
 	# check that metadata uuid is indeed completed
 	run_check_stdout $SUDO_HELPER "$TOP/btrfs" inspect-internal dump-super \
 		"$1" | grep -q METADATA_UUID
@@ -151,12 +151,12 @@ function check_completed {
 	[ $? -eq 0 ] || _fail "metadata_uuid not set on $2"
 }
 
-function check_multi_fsid_change {
+check_multi_fsid_change() {
 	check_inprogress_flag "$1" "$2"
 	check_completed "$1" "$2"
 }
 
-function failure_recovery {
+failure_recovery() {
 	local image1
 	local image2
 	local loop1
@@ -181,7 +181,7 @@ function failure_recovery {
 	rm -f -- "$image1" "$image2"
 }
 
-function reload_btrfs {
+reload_btrfs() {
 	run_check $SUDO_HELPER rmmod btrfs
 	run_check $SUDO_HELPER modprobe btrfs
 }

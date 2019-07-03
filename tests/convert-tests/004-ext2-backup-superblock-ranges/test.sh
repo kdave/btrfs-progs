@@ -21,7 +21,7 @@ setup_root_helper
 prepare_test_dev
 
 # override common function
-function check_image() {
+check_image() {
 	TEST_DEV="$1"
 	run_check e2fsck -n -f "$TEST_DEV"
 	run_check "$TOP/btrfs-convert" "$TEST_DEV"
