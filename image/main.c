@@ -1523,9 +1523,14 @@ static int fill_mdres_info(struct mdrestore_struct *mdres,
 		return 0;
 
 	if (mdres->compress_method == COMPRESS_ZLIB) {
-		size_t size = MAX_PENDING_SIZE * 2;
+		/*
+		 * We know this item is superblock, its should only be 4K.
+		 * Don't need to waste memory following max_pending_size as it
+		 * can be as large as 256M.
+		 */
+		size_t size = BTRFS_SUPER_INFO_SIZE;
 
-		buffer = malloc(MAX_PENDING_SIZE * 2);
+		buffer = malloc(size);
 		if (!buffer)
 			return -ENOMEM;
 		ret = uncompress(buffer, (unsigned long *)&size,
@@ -1964,10 +1969,10 @@ static int build_chunk_tree(struct mdrestore_struct *mdres,
 	}
 
 	if (mdres->compress_method == COMPRESS_ZLIB) {
-		size_t size = MAX_PENDING_SIZE * 2;
+		size_t size = BTRFS_SUPER_INFO_SIZE;
 		u8 *tmp;
 
-		tmp = malloc(MAX_PENDING_SIZE * 2);
+		tmp = malloc(size);
 		if (!tmp) {
 			free(buffer);
 			return -ENOMEM;
