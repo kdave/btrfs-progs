@@ -21,8 +21,7 @@ else
 	INTERNAL_BIN="$TEST_TOP"
 fi
 if ! [ -x "$TOP/btrfs" ]; then
-	echo "ERROR: cannot execute btrfs from TOP=$TOP"
-	exit 1
+	echo "WARNING: cannot find btrfs in TOP=$TOP"
 fi
 TEST_DEV=${TEST_DEV:-}
 RESULTS="$TEST_TOP/cli-tests-results.txt"
