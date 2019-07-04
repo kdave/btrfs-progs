@@ -358,7 +358,7 @@ static enum btrfs_util_error get_subvolume_info_privileged(int fd, uint64_t id,
 		}
 
 		header = (struct btrfs_ioctl_search_header *)(search.buf + buf_off);
-		if (header->type == BTRFS_ROOT_ITEM_KEY) {
+		if (btrfs_search_header_type(header) == BTRFS_ROOT_ITEM_KEY) {
 			if (subvol) {
 				const struct btrfs_root_item *root;
 
@@ -367,12 +367,12 @@ static enum btrfs_util_error get_subvolume_info_privileged(int fd, uint64_t id,
 			}
 			need_root_item = false;
 			search.key.min_type = BTRFS_ROOT_BACKREF_KEY;
-		} else if (header->type == BTRFS_ROOT_BACKREF_KEY) {
+		} else if (btrfs_search_header_type(header) == BTRFS_ROOT_BACKREF_KEY) {
 			if (subvol) {
 				const struct btrfs_root_ref *ref;
 
 				ref = (const struct btrfs_root_ref *)(header + 1);
-				subvol->parent_id = header->offset;
+				subvol->parent_id = btrfs_search_header_offset(header);
 				subvol->dir_id = le64_to_cpu(ref->dirid);
 			}
 			need_root_backref = false;
@@ -380,7 +380,7 @@ static enum btrfs_util_error get_subvolume_info_privileged(int fd, uint64_t id,
 		}
 
 		items_pos++;
-		buf_off += sizeof(*header) + header->len;
+		buf_off += sizeof(*header) + btrfs_search_header_len(header);
 	}
 
 	return BTRFS_UTIL_OK;
@@ -1366,7 +1366,7 @@ static enum btrfs_util_error build_subvol_path_privileged(struct btrfs_util_subv
 							  size_t *path_len_ret)
 {
 	struct btrfs_ioctl_ino_lookup_args lookup = {
-		.treeid = header->objectid,
+		.treeid = btrfs_search_header_objectid(header),
 		.objectid = le64_to_cpu(ref->dirid),
 	};
 	int ret;
@@ -1442,11 +1442,11 @@ static enum btrfs_util_error subvolume_iterator_next_tree_search(struct btrfs_ut
 		header = (struct btrfs_ioctl_search_header *)(top->search.buf + top->buf_off);
 
 		top->items_pos++;
-		top->buf_off += sizeof(*header) + header->len;
-		top->search.key.min_offset = header->offset + 1;
+		top->buf_off += sizeof(*header) + btrfs_search_header_len(header);
+		top->search.key.min_offset = btrfs_search_header_offset(header) + 1;
 
 		/* This shouldn't happen, but handle it just in case. */
-		if (header->type != BTRFS_ROOT_REF_KEY)
+		if (btrfs_search_header_type(header) != BTRFS_ROOT_REF_KEY)
 			continue;
 
 		ref = (struct btrfs_root_ref *)(header + 1);
@@ -1456,7 +1456,8 @@ static enum btrfs_util_error subvolume_iterator_next_tree_search(struct btrfs_ut
 		if (err)
 			return err;
 
-		err = append_to_search_stack(iter, header->offset, path_len);
+		err = append_to_search_stack(iter,
+				btrfs_search_header_offset(header), path_len);
 		if (err)
 			return err;
 
