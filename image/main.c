@@ -123,8 +123,6 @@ struct mdrestore_struct {
 	struct btrfs_fs_info *info;
 };
 
-static int search_for_chunk_blocks(struct mdrestore_struct *mdres,
-				   u64 search, u64 cluster_bytenr);
 static struct extent_buffer *alloc_dummy_eb(u64 bytenr, u32 size);
 
 static void csum_block(u8 *buf, size_t len)
@@ -1706,49 +1704,10 @@ static bool is_in_sys_chunks(struct mdrestore_struct *mdres, u64 start, u64 len)
 	return false;
 }
 
-static int read_chunk_block(struct mdrestore_struct *mdres, u8 *buffer,
-			    u64 bytenr, u64 item_bytenr, u32 bufsize,
-			    u64 cluster_bytenr)
+static int read_chunk_tree_block(struct mdrestore_struct *mdres,
+				 struct extent_buffer *eb)
 {
-	struct extent_buffer *eb;
-	int ret = 0;
 	int i;
-
-	eb = alloc_dummy_eb(bytenr, mdres->nodesize);
-	if (!eb) {
-		ret = -ENOMEM;
-		goto out;
-	}
-
-	while (item_bytenr != bytenr) {
-		buffer += mdres->nodesize;
-		item_bytenr += mdres->nodesize;
-	}
-
-	memcpy(eb->data, buffer, mdres->nodesize);
-	if (btrfs_header_bytenr(eb) != bytenr) {
-		error("eb bytenr does not match found bytenr: %llu != %llu",
-				(unsigned long long)btrfs_header_bytenr(eb),
-				(unsigned long long)bytenr);
-		ret = -EIO;
-		goto out;
-	}
-
-	if (memcmp(mdres->fsid, eb->data + offsetof(struct btrfs_header, fsid),
-		   BTRFS_FSID_SIZE)) {
-		error("filesystem metadata UUID of eb %llu does not match",
-				(unsigned long long)bytenr);
-		ret = -EIO;
-		goto out;
-	}
-
-	if (btrfs_header_owner(eb) != BTRFS_CHUNK_TREE_OBJECTID) {
-		error("wrong eb %llu owner %llu",
-				(unsigned long long)bytenr,
-				(unsigned long long)btrfs_header_owner(eb));
-		ret = -EIO;
-		goto out;
-	}
 
 	for (i = 0; i < btrfs_header_nritems(eb); i++) {
 		struct btrfs_chunk *chunk;
@@ -1756,17 +1715,6 @@ static int read_chunk_block(struct mdrestore_struct *mdres, u8 *buffer,
 		struct btrfs_key key;
 		u64 type;
 
-		if (btrfs_header_level(eb)) {
-			u64 blockptr = btrfs_node_blockptr(eb, i);
-
-			ret = search_for_chunk_blocks(mdres, blockptr,
-						      cluster_bytenr);
-			if (ret)
-				break;
-			continue;
-		}
-
-		/* Yay a leaf!  We loves leafs! */
 		btrfs_item_key_to_cpu(eb, &key, i);
 		if (key.type != BTRFS_CHUNK_ITEM_KEY)
 			continue;
@@ -1774,8 +1722,7 @@ static int read_chunk_block(struct mdrestore_struct *mdres, u8 *buffer,
 		fs_chunk = malloc(sizeof(struct fs_chunk));
 		if (!fs_chunk) {
 			error("not enough memory to allocate chunk");
-			ret = -ENOMEM;
-			break;
+			return -ENOMEM;
 		}
 		memset(fs_chunk, 0, sizeof(*fs_chunk));
 		chunk = btrfs_item_ptr(eb, i, struct btrfs_chunk);
@@ -1784,19 +1731,18 @@ static int read_chunk_block(struct mdrestore_struct *mdres, u8 *buffer,
 		fs_chunk->physical = btrfs_stripe_offset_nr(eb, chunk, 0);
 		fs_chunk->bytes = btrfs_chunk_length(eb, chunk);
 		INIT_LIST_HEAD(&fs_chunk->list);
+
 		if (tree_search(&mdres->physical_tree, &fs_chunk->p,
 				physical_cmp, 1) != NULL)
 			list_add(&fs_chunk->list, &mdres->overlapping_chunks);
 		else
 			tree_insert(&mdres->physical_tree, &fs_chunk->p,
 				    physical_cmp);
-
 		type = btrfs_chunk_type(eb, chunk);
 		if (type & BTRFS_BLOCK_GROUP_DUP) {
 			fs_chunk->physical_dup =
 					btrfs_stripe_offset_nr(eb, chunk, 1);
 		}
-
 		if (fs_chunk->physical_dup + fs_chunk->bytes >
 		    mdres->last_physical_offset)
 			mdres->last_physical_offset = fs_chunk->physical_dup +
@@ -1811,19 +1757,79 @@ static int read_chunk_block(struct mdrestore_struct *mdres, u8 *buffer,
 			mdres->alloced_chunks += fs_chunk->bytes;
 		tree_insert(&mdres->chunk_tree, &fs_chunk->l, chunk_cmp);
 	}
-out:
+	return 0;
+}
+
+static int read_chunk_block(struct mdrestore_struct *mdres, u8 *buffer,
+			    u64 item_bytenr, u32 bufsize,
+			    u64 cluster_bytenr)
+{
+	struct extent_buffer *eb;
+	u32 nodesize = mdres->nodesize;
+	u64 bytenr;
+	size_t cur_offset;
+	int ret = 0;
+
+	eb = alloc_dummy_eb(0, mdres->nodesize);
+	if (!eb)
+		return -ENOMEM;
+
+	for (cur_offset = 0; cur_offset < bufsize; cur_offset += nodesize) {
+		bytenr = item_bytenr + cur_offset;
+		if (!is_in_sys_chunks(mdres, bytenr, nodesize))
+			continue;
+		memcpy(eb->data, buffer + cur_offset, nodesize);
+		if (btrfs_header_bytenr(eb) != bytenr) {
+			error(
+			"eb bytenr does not match found bytenr: %llu != %llu",
+				(unsigned long long)btrfs_header_bytenr(eb),
+				(unsigned long long)bytenr);
+			ret = -EUCLEAN;
+			break;
+		}
+		if (memcmp(mdres->fsid, eb->data +
+			   offsetof(struct btrfs_header, fsid),
+			   BTRFS_FSID_SIZE)) {
+			error(
+			"filesystem metadata UUID of eb %llu does not match",
+				bytenr);
+			ret = -EUCLEAN;
+			break;
+		}
+		if (btrfs_header_owner(eb) != BTRFS_CHUNK_TREE_OBJECTID) {
+			error("wrong eb %llu owner %llu",
+				(unsigned long long)bytenr,
+				(unsigned long long)btrfs_header_owner(eb));
+			ret = -EUCLEAN;
+			break;
+		}
+		/*
+		 * No need to search node, as we will iterate all tree blocks
+		 * in chunk tree, only need to bother leaves.
+		 */
+		if (btrfs_header_level(eb))
+			continue;
+		ret = read_chunk_tree_block(mdres, eb);
+		if (ret < 0)
+			break;
+	}
 	free(eb);
 	return ret;
 }
 
-/* If you have to ask you aren't worthy */
-static int search_for_chunk_blocks(struct mdrestore_struct *mdres,
-				   u64 search, u64 cluster_bytenr)
+/*
+ * This function will try to find all chunk items in the dump image.
+ *
+ * This function will iterate all clusters, and find any item inside system
+ * chunk ranges.  For such item, it will try to read them as tree blocks, and
+ * find CHUNK_ITEMs, add them to @mdres.
+ */
+static int search_for_chunk_blocks(struct mdrestore_struct *mdres)
 {
 	struct meta_cluster *cluster;
 	struct meta_cluster_header *header;
 	struct meta_cluster_item *item;
-	u64 current_cluster = cluster_bytenr, bytenr;
+	u64 current_cluster = 0, bytenr;
 	u64 item_bytenr;
 	u32 bufsize, nritems, i;
 	u32 max_size = MAX_PENDING_SIZE * 2;
@@ -1854,30 +1860,27 @@ static int search_for_chunk_blocks(struct mdrestore_struct *mdres,
 	}
 
 	bytenr = current_cluster;
+	/* Main loop, iterating all clusters */
 	while (1) {
 		if (fseek(mdres->in, current_cluster, SEEK_SET)) {
 			error("seek failed: %m");
 			ret = -EIO;
-			break;
+			goto out;
 		}
 
 		ret = fread(cluster, BLOCK_SIZE, 1, mdres->in);
 		if (ret == 0) {
-			if (cluster_bytenr != 0) {
-				cluster_bytenr = 0;
-				current_cluster = 0;
-				bytenr = 0;
-				continue;
-			}
+			if (feof(mdres->in))
+				goto out;
 			error(
 	"unknown state after reading cluster at %llu, probably corrupted data",
-					cluster_bytenr);
+					current_cluster);
 			ret = -EIO;
-			break;
+			goto out;
 		} else if (ret < 0) {
 			error("unable to read image at %llu: %m",
-					(unsigned long long)cluster_bytenr);
-			break;
+					current_cluster);
+			goto out;
 		}
 		ret = 0;
 
@@ -1886,11 +1889,17 @@ static int search_for_chunk_blocks(struct mdrestore_struct *mdres,
 		    le64_to_cpu(header->bytenr) != current_cluster) {
 			error("bad header in metadump image");
 			ret = -EIO;
-			break;
+			goto out;
 		}
+
+		/* We're already over the system chunk end, no need to search*/
+		if (current_cluster > mdres->sys_chunk_end)
+			goto out;
 
 		bytenr += BLOCK_SIZE;
 		nritems = le32_to_cpu(header->nritems);
+
+		/* Search items for tree blocks in sys chunks */
 		for (i = 0; i < nritems; i++) {
 			size_t size;
 
@@ -1898,11 +1907,22 @@ static int search_for_chunk_blocks(struct mdrestore_struct *mdres,
 			bufsize = le32_to_cpu(item->size);
 			item_bytenr = le64_to_cpu(item->bytenr);
 
-			if (bufsize > max_size) {
-				error("item %u too big: %u > %u", i, bufsize,
-						max_size);
-				ret = -EIO;
-				break;
+			/*
+			 * Only data extent/free space cache can be that big,
+			 * adjacent tree blocks won't be able to be merged
+			 * beyond max_size.  Also, we can skip super block.
+			 */
+			if (bufsize > max_size ||
+			    !is_in_sys_chunks(mdres, item_bytenr, bufsize) ||
+			    item_bytenr == BTRFS_SUPER_INFO_OFFSET) {
+				ret = fseek(mdres->in, bufsize, SEEK_CUR);
+				if (ret < 0) {
+					error("failed to seek: %m");
+					ret = -errno;
+					goto out;
+				}
+				bytenr += bufsize;
+				continue;
 			}
 
 			if (mdres->compress_method == COMPRESS_ZLIB) {
@@ -1910,7 +1930,7 @@ static int search_for_chunk_blocks(struct mdrestore_struct *mdres,
 				if (ret != 1) {
 					error("read error: %m");
 					ret = -EIO;
-					break;
+					goto out;
 				}
 
 				size = max_size;
@@ -1921,40 +1941,35 @@ static int search_for_chunk_blocks(struct mdrestore_struct *mdres,
 					error("decompression failed with %d",
 							ret);
 					ret = -EIO;
-					break;
+					goto out;
 				}
 			} else {
 				ret = fread(buffer, bufsize, 1, mdres->in);
 				if (ret != 1) {
 					error("read error: %m");
 					ret = -EIO;
-					break;
+					goto out;
 				}
 				size = bufsize;
 			}
 			ret = 0;
 
-			if (item_bytenr <= search &&
-			    item_bytenr + size > search) {
-				ret = read_chunk_block(mdres, buffer, search,
-						       item_bytenr, size,
-						       current_cluster);
-				if (!ret)
-					ret = 1;
-				break;
+			ret = read_chunk_block(mdres, buffer, item_bytenr, size,
+					       current_cluster);
+			if (ret < 0) {
+				error(
+			"failed to search tree blocks in item bytenr %llu size %lu",
+					item_bytenr, size);
+				goto out;
 			}
 			bytenr += bufsize;
-		}
-		if (ret) {
-			if (ret > 0)
-				ret = 0;
-			break;
 		}
 		if (bytenr & BLOCK_MASK)
 			bytenr += BLOCK_SIZE - (bytenr & BLOCK_MASK);
 		current_cluster = bytenr;
 	}
 
+out:
 	free(tmp);
 	free(buffer);
 	free(cluster);
@@ -2052,7 +2067,6 @@ static int build_chunk_tree(struct mdrestore_struct *mdres,
 	struct btrfs_super_block *super;
 	struct meta_cluster_header *header;
 	struct meta_cluster_item *item = NULL;
-	u64 chunk_root_bytenr = 0;
 	u32 i, nritems;
 	u64 bytenr = 0;
 	u8 *buffer;
@@ -2145,7 +2159,6 @@ static int build_chunk_tree(struct mdrestore_struct *mdres,
 		pthread_mutex_unlock(&mdres->mutex);
 		return ret;
 	}
-	chunk_root_bytenr = btrfs_super_chunk_root(super);
 	mdres->nodesize = btrfs_super_nodesize(super);
 	if (btrfs_super_incompat_flags(super) &
 	    BTRFS_FEATURE_INCOMPAT_METADATA_UUID)
@@ -2158,7 +2171,7 @@ static int build_chunk_tree(struct mdrestore_struct *mdres,
 	free(buffer);
 	pthread_mutex_unlock(&mdres->mutex);
 
-	return search_for_chunk_blocks(mdres, chunk_root_bytenr, 0);
+	return search_for_chunk_blocks(mdres);
 }
 
 static int range_contains_super(u64 physical, u64 bytes)
