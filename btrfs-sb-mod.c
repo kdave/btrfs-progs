@@ -119,17 +119,32 @@ struct sb_field {
 	const char *name;
 	enum field_type type;
 } known_fields[] = {
-	{ .name = "total_bytes", .type = TYPE_U64 },
-	{ .name = "root", .type = TYPE_U64 },
-	{ .name = "generation", .type = TYPE_U64 },
-	{ .name = "chunk_root", .type = TYPE_U64 },
-	{ .name = "chunk_root_generation", .type = TYPE_U64 },
-	{ .name = "cache_generation", .type = TYPE_U64 },
-	{ .name = "uuid_tree_generation", .type = TYPE_U64 },
-	{ .name = "compat_flags", .type = TYPE_U64 },
-	{ .name = "compat_ro_flags", .type = TYPE_U64 },
-	{ .name = "incompat_flags", .type = TYPE_U64 },
-	{ .name = "csum_type", .type = TYPE_U16 },
+	{ .name = "bytenr",			.type = TYPE_U64 },
+	{ .name = "flags",			.type = TYPE_U64 },
+	{ .name = "magic",			.type = TYPE_U64 },
+	{ .name = "generation",			.type = TYPE_U64 },
+	{ .name = "root",			.type = TYPE_U64 },
+	{ .name = "chunk_root",			.type = TYPE_U64 },
+	{ .name = "log_root",			.type = TYPE_U64 },
+	{ .name = "log_root_transid",		.type = TYPE_U64 },
+	{ .name = "total_bytes",		.type = TYPE_U64 },
+	{ .name = "bytes_used",			.type = TYPE_U64 },
+	{ .name = "root_dir_objectid",		.type = TYPE_U64 },
+	{ .name = "num_devices",		.type = TYPE_U64 },
+	{ .name = "sectorsize",			.type = TYPE_U32 },
+	{ .name = "nodesize",			.type = TYPE_U32 },
+	{ .name = "stripesize",			.type = TYPE_U32 },
+	{ .name = "sys_chunk_array_size",	.type = TYPE_U32 },
+	{ .name = "chunk_root_generation",	.type = TYPE_U64 },
+	{ .name = "compat_flags",		.type = TYPE_U64 },
+	{ .name = "compat_ro_flags",		.type = TYPE_U64 },
+	{ .name = "incompat_flags",		.type = TYPE_U64 },
+	{ .name = "csum_type",			.type = TYPE_U16 },
+	{ .name = "root_level",			.type = TYPE_U8 },
+	{ .name = "chunk_root_level",		.type = TYPE_U8 },
+	{ .name = "log_root_level",		.type = TYPE_U8 },
+	{ .name = "cache_generation",		.type = TYPE_U64 },
+	{ .name = "uuid_tree_generation",	.type = TYPE_U64 },
 };
 
 #define MOD_FIELD_XX(fname, set, val, bits, f_dec, f_hex, f_type)	\
@@ -167,17 +182,32 @@ static void mod_field_by_name(struct btrfs_super_block *sb, int set, const char 
 		u64 *val)
 {
 	if (0) { }
-		MOD_FIELD(total_bytes, set, val)
-		MOD_FIELD(root, set, val)
+		MOD_FIELD(bytenr, set, val)
+		MOD_FIELD(flags, set, val)
+		MOD_FIELD(magic, set, val)
 		MOD_FIELD(generation, set, val)
+		MOD_FIELD(root, set, val)
 		MOD_FIELD(chunk_root, set, val)
+		MOD_FIELD(log_root, set, val)
+		MOD_FIELD(log_root_transid, set, val)
+		MOD_FIELD(total_bytes, set, val)
+		MOD_FIELD(bytes_used, set, val)
+		MOD_FIELD(root_dir_objectid, set, val)
+		MOD_FIELD(num_devices, set, val)
+		MOD_FIELD32(sectorsize, set, val)
+		MOD_FIELD32(nodesize, set, val)
+		MOD_FIELD32(stripesize, set, val)
+		MOD_FIELD32(sys_chunk_array_size, set, val)
 		MOD_FIELD(chunk_root_generation, set, val)
-		MOD_FIELD(cache_generation, set, val)
-		MOD_FIELD(uuid_tree_generation, set, val)
 		MOD_FIELD(compat_flags, set, val)
 		MOD_FIELD(compat_ro_flags, set, val)
 		MOD_FIELD(incompat_flags, set, val)
 		MOD_FIELD16(csum_type, set, val)
+		MOD_FIELD8(root_level, set, val)
+		MOD_FIELD8(chunk_root_level, set, val)
+		MOD_FIELD8(log_root_level, set, val)
+		MOD_FIELD(cache_generation, set, val)
+		MOD_FIELD(uuid_tree_generation, set, val)
 	else {
 		printf("ERROR: unhandled field: %s\n", name);
 		exit(1);
