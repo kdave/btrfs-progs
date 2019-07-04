@@ -35,6 +35,7 @@
 #include "common/utils.h"
 #include "volumes.h"
 #include "extent_io.h"
+#include "extent-cache.h"
 #include "common/help.h"
 #include "common/device-utils.h"
 #include "image/metadump.h"
@@ -93,6 +94,11 @@ struct mdrestore_struct {
 	pthread_mutex_t mutex;
 	pthread_cond_t cond;
 
+	/*
+	 * Records system chunk ranges, so restore can use this to determine
+	 * if an item is in chunk tree range.
+	 */
+	struct cache_tree sys_chunks;
 	struct rb_root chunk_tree;
 	struct rb_root physical_tree;
 	struct list_head list;
@@ -102,6 +108,8 @@ struct mdrestore_struct {
 	u64 devid;
 	u64 alloced_chunks;
 	u64 last_physical_offset;
+	/* An quicker checker for if a item is in sys chunk range */
+	u64 sys_chunk_end;
 	u8 uuid[BTRFS_UUID_SIZE];
 	u8 fsid[BTRFS_FSID_SIZE];
 
@@ -1457,6 +1465,7 @@ static void mdrestore_destroy(struct mdrestore_struct *mdres, int num_threads)
 		rb_erase(&entry->p, &mdres->physical_tree);
 		free(entry);
 	}
+	free_extent_cache_tree(&mdres->sys_chunks);
 	pthread_mutex_lock(&mdres->mutex);
 	mdres->done = 1;
 	pthread_cond_broadcast(&mdres->cond);
@@ -1481,6 +1490,7 @@ static int mdrestore_init(struct mdrestore_struct *mdres,
 	pthread_mutex_init(&mdres->mutex, NULL);
 	INIT_LIST_HEAD(&mdres->list);
 	INIT_LIST_HEAD(&mdres->overlapping_chunks);
+	cache_tree_init(&mdres->sys_chunks);
 	mdres->in = in;
 	mdres->out = out;
 	mdres->old_restore = old_restore;
@@ -1904,6 +1914,91 @@ static int search_for_chunk_blocks(struct mdrestore_struct *mdres,
 	return ret;
 }
 
+/*
+ * Add system chunks in super blocks into mdres->sys_chunks, so later we can
+ * determine if an item is a chunk tree block.
+ */
+static int add_sys_array(struct mdrestore_struct *mdres,
+			 struct btrfs_super_block *sb)
+{
+	struct btrfs_disk_key *disk_key;
+	struct btrfs_key key;
+	struct btrfs_chunk *chunk;
+	struct cache_extent *cache;
+	u32 cur_offset;
+	u32 len = 0;
+	u32 array_size;
+	u8 *array_ptr;
+	int ret = 0;
+
+	array_size = btrfs_super_sys_array_size(sb);
+	array_ptr = sb->sys_chunk_array;
+	cur_offset = 0;
+
+	while (cur_offset < array_size) {
+		u32 num_stripes;
+
+		disk_key = (struct btrfs_disk_key *)array_ptr;
+		len = sizeof(*disk_key);
+		if (cur_offset + len > array_size)
+			goto out_short_read;
+		btrfs_disk_key_to_cpu(&key, disk_key);
+
+		array_ptr += len;
+		cur_offset += len;
+
+		if (key.type != BTRFS_CHUNK_ITEM_KEY) {
+			error("unexpected item type %u in sys_array offset %u",
+			      key.type, cur_offset);
+			ret = -EUCLEAN;
+			break;
+		}
+		chunk = (struct btrfs_chunk *)array_ptr;
+
+		/*
+		 * At least one btrfs_chunk with one stripe must be present,
+		 * exact stripe count check comes afterwards
+		 */
+		len = btrfs_chunk_item_size(1);
+		if (cur_offset + len > array_size)
+			goto out_short_read;
+		num_stripes = btrfs_stack_chunk_num_stripes(chunk);
+		if (!num_stripes) {
+			error(
+			"invalid number of stripes %u in sys_array at offset %u",
+				num_stripes, cur_offset);
+			ret = -EIO;
+			break;
+		}
+		len = btrfs_chunk_item_size(num_stripes);
+		if (cur_offset + len > array_size)
+			goto out_short_read;
+		if (btrfs_stack_chunk_type(chunk) &
+		    BTRFS_BLOCK_GROUP_SYSTEM) {
+			ret = add_merge_cache_extent(&mdres->sys_chunks,
+				key.offset,
+				btrfs_stack_chunk_length(chunk));
+			if (ret < 0)
+				break;
+		}
+		array_ptr += len;
+		cur_offset += len;
+	}
+
+	/* Get the last system chunk end as a quicker check */
+	cache = last_cache_extent(&mdres->sys_chunks);
+	if (!cache) {
+		error("no system chunk found in super block");
+		return -EUCLEAN;
+	}
+	mdres->sys_chunk_end = cache->start + cache->size - 1;
+	return ret;
+out_short_read:
+	error("sys_array too short to read %u bytes at offset %u",
+		len, cur_offset);
+	return -EUCLEAN;
+}
+
 static int build_chunk_tree(struct mdrestore_struct *mdres,
 			    struct meta_cluster *cluster)
 {
@@ -1994,6 +2089,13 @@ static int build_chunk_tree(struct mdrestore_struct *mdres,
 	ret = btrfs_check_super(super, 0);
 	if (ret < 0) {
 		error("invalid superblock");
+		return ret;
+	}
+	ret = add_sys_array(mdres, super);
+	if (ret < 0) {
+		error("failed to read system chunk array");
+		free(buffer);
+		pthread_mutex_unlock(&mdres->mutex);
 		return ret;
 	}
 	chunk_root_bytenr = btrfs_super_chunk_root(super);
