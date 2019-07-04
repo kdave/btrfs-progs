@@ -1659,6 +1659,53 @@ static int wait_for_worker(struct mdrestore_struct *mdres)
 	return ret;
 }
 
+/*
+ * Check if a range [start, start + len] has ANY bytes covered by system chunk
+ * ranges.
+ */
+static bool is_in_sys_chunks(struct mdrestore_struct *mdres, u64 start, u64 len)
+{
+	struct rb_node *node = mdres->sys_chunks.root.rb_node;
+	struct cache_extent *entry;
+	struct cache_extent *next;
+	struct cache_extent *prev;
+
+	if (start > mdres->sys_chunk_end)
+		return false;
+
+	while (node) {
+		entry = rb_entry(node, struct cache_extent, rb_node);
+		if (start > entry->start) {
+			if (!node->rb_right)
+				break;
+			node = node->rb_right;
+		} else if (start < entry->start) {
+			if (!node->rb_left)
+				break;
+			node = node->rb_left;
+		} else {
+			/* Already in a system chunk */
+			return true;
+		}
+	}
+	if (!node)
+		return false;
+	entry = rb_entry(node, struct cache_extent, rb_node);
+	/* Now we have entry which is the nearst chunk around @start */
+	if (start > entry->start) {
+		prev = entry;
+		next = next_cache_extent(entry);
+	} else {
+		prev = prev_cache_extent(entry);
+		next = entry;
+	}
+	if (prev && prev->start + prev->size > start)
+		return true;
+	if (next && start + len > next->start)
+		return true;
+	return false;
+}
+
 static int read_chunk_block(struct mdrestore_struct *mdres, u8 *buffer,
 			    u64 bytenr, u64 item_bytenr, u32 bufsize,
 			    u64 cluster_bytenr)
