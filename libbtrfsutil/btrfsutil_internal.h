@@ -21,6 +21,7 @@
 #define BTRFS_UTIL_INTERNAL_H
 
 #include <asm/byteorder.h>
+#include <string.h>
 
 #include "btrfsutil.h"
 #include "btrfs.h"
@@ -38,5 +39,44 @@
 	close(fd);			\
 	errno = saved_errno;		\
 } while (0)
+
+/*
+ * Accessors of search header that is commonly mapped to a byte buffer so the
+ * alignment is not guraranteed
+ */
+static inline __u64 btrfs_search_header_transid(const struct btrfs_ioctl_search_header *sh)
+{
+	__u64 tmp;
+	memcpy(&tmp, &sh->transid, sizeof(__u64));
+	return tmp;
+}
+
+static inline __u64 btrfs_search_header_objectid(const struct btrfs_ioctl_search_header *sh)
+{
+	__u64 tmp;
+	memcpy(&tmp, &sh->objectid, sizeof(__u64));
+	return tmp;
+}
+
+static inline __u64 btrfs_search_header_offset(const struct btrfs_ioctl_search_header *sh)
+{
+	__u64 tmp;
+	memcpy(&tmp, &sh->offset, sizeof(__u64));
+	return tmp;
+}
+
+static inline __u32 btrfs_search_header_type(const struct btrfs_ioctl_search_header *sh)
+{
+	__u32 tmp;
+	memcpy(&tmp, &sh->type, sizeof(__u32));
+	return tmp;
+}
+
+static inline __u32 btrfs_search_header_len(const struct btrfs_ioctl_search_header *sh)
+{
+	__u32 tmp;
+	memcpy(&tmp, &sh->len, sizeof(__u32));
+	return tmp;
+}
 
 #endif /* BTRFS_UTIL_INTERNAL_H */
