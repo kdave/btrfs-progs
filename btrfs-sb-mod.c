@@ -109,8 +109,10 @@ struct fspec {
 
 enum field_type {
 	TYPE_UNKNOWN,
-	TYPE_U64,
+	TYPE_U8,
 	TYPE_U16,
+	TYPE_U32,
+	TYPE_U64,
 };
 
 struct sb_field {
