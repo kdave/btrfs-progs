@@ -2735,7 +2735,7 @@ int BOX_MAIN(image)(int argc, char *argv[])
 				       0, target, multi_devices);
 	}
 	if (ret) {
-		error("%s failed: %m", (create) ? "create" : "restore");
+		error("%s failed: %d", (create) ? "create" : "restore", ret);
 		goto out;
 	}
 
