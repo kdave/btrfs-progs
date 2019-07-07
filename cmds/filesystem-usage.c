@@ -973,6 +973,7 @@ static int cmd_filesystem_usage(const struct cmd_struct *cmd,
 	unsigned unit_mode;
 	int i;
 	int more_than_one = 0;
+	int all_devices = 0;
 	int tabular = 0;
 
 	unit_mode = get_unit_mode_from_arg(&argc, argv, 1);
@@ -981,11 +982,14 @@ static int cmd_filesystem_usage(const struct cmd_struct *cmd,
 	while (1) {
 		int c;
 
-		c = getopt(argc, argv, "T");
+		c = getopt(argc, argv, "dT");
 		if (c < 0)
 			break;
 
 		switch (c) {
+		case 'd':
+			all_devices = 1;
+			break;
 		case 'T':
 			tabular = 1;
 			break;
@@ -1022,9 +1026,11 @@ static int cmd_filesystem_usage(const struct cmd_struct *cmd,
 				devinfo, devcount, argv[i], unit_mode);
 		if (ret)
 			goto cleanup;
-		printf("\n");
-		ret = print_filesystem_usage_by_chunk(fd, chunkinfo, chunkcount,
-				devinfo, devcount, argv[i], unit_mode, tabular);
+		if (all_devices) {
+			printf("\n");
+			ret = print_filesystem_usage_by_chunk(fd, chunkinfo, chunkcount,
+					devinfo, devcount, argv[i], unit_mode, tabular);
+		}
 cleanup:
 		close_file_or_dir(fd, dirstream);
 		free(chunkinfo);
