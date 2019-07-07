@@ -271,7 +271,7 @@ static void _print_scrub_ss(struct scrub_stats *ss)
 		localtime_r(&ss->t_resumed, &tm);
 		strftime(t, sizeof(t), "%c", &tm);
 		t[sizeof(t) - 1] = '\0';
-		printf("Scrub resumed:   %s\n", t);
+		printf("Scrub resumed:    %s\n", t);
 	} else {
 		localtime_r(&ss->t_start, &tm);
 		strftime(t, sizeof(t), "%c", &tm);
