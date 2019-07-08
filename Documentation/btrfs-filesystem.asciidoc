@@ -267,20 +267,28 @@ with information about space usage:
 +
 -------------------------
 $ btrfs filesystem usage /path
-WARNING: cannot read detailed chunk info, RAID5/6 numbers will be incorrect, run as root
 Overall:
-    Device size:                   1.82TiB
-    Device allocated:              1.17TiB
-    Device unallocated:          669.99GiB
+    Device size:                  10.92TiB
+    Device allocated:              5.92TiB
+    Device unallocated:            5.00TiB
+    Device data used:              5.91TiB
+    Device metadata used:         11.92GiB
+    Device system used:          672.00KiB
+    Device total used:             5.92TiB
     Device missing:                  0.00B
-    Used:                          1.14TiB
-    Free (estimated):            692.57GiB      (min: 692.57GiB)
-    Data ratio:                       1.00
-    Metadata ratio:                   1.00
+    User total size:               5.46TiB
+    User data used:                2.95TiB
+    User metadata used:            7.00GiB
+    User system used:             64.00MiB
+    User total used:               2.96TiB
+    User free (estimated):         2.50TiB      (min: 2.50TiB)
+    Data ratio:                       2.00
+    Metadata ratio:                   2.00
     Global reserve:              512.00MiB      (used: 0.00B)
 -------------------------
 +
-The root user will also see stats broken down by block group types:
+The root user will also see stats broken down by block group types,
+if flag -d is provided:
 +
 -------------------------
 Data,single: Size:1.15TiB, Used:1.13TiB
@@ -300,6 +308,8 @@ Unallocated:
 +
 -b|--raw::::
 raw numbers in bytes, without the 'B' suffix
+-d::::
+show usage stats per device
 -h|--human-readable::::
 print human friendly numbers, base 1024, this is the default
 -H::::
@@ -316,6 +326,8 @@ show sizes in MiB, or MB with --si
 show sizes in GiB, or GB with --si
 -t|--tbytes::::
 show sizes in TiB, or TB with --si
+-P::::
+show user usage stats per profile
 -T::::
 show data in tabular format
 +
