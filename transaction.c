@@ -193,17 +193,31 @@ commit_tree:
 	ret = commit_tree_roots(trans, fs_info);
 	if (ret < 0)
 		goto error;
+
 	/*
-	 * Ensure that all committed roots are properly accounted in the
-	 * extent tree
+	 * btrfs_write_dirty_block_groups() can cause COW thus new delayed
+	 * tree refs, while run such delayed tree refs can dirty block groups
+	 * again, we need to exhause both dirty blocks and delayed refs
 	 */
-	ret = btrfs_run_delayed_refs(trans, -1);
-	if (ret < 0)
-		goto error;
-	btrfs_write_dirty_block_groups(trans);
+	while (!RB_EMPTY_ROOT(&trans->delayed_refs.href_root) ||
+	       test_range_bit(&fs_info->block_group_cache, 0, (u64)-1,
+			      BLOCK_GROUP_DIRTY, 0)) {
+		ret = btrfs_write_dirty_block_groups(trans);
+		if (ret < 0)
+			goto error;
+		ret = btrfs_run_delayed_refs(trans, -1);
+		if (ret < 0)
+			goto error;
+	}
 	__commit_transaction(trans, root);
 	if (ret < 0)
 		goto error;
+
+	/* There should be no pending delayed refs now */
+	if (!RB_EMPTY_ROOT(&trans->delayed_refs.href_root)) {
+		error("uncommitted delayed refs detected");
+		goto error;
+	}
 	ret = write_ctree_super(trans);
 	btrfs_finish_extent_commit(trans);
 	kfree(trans);
