@@ -31,6 +31,7 @@
 #include "cmds/filesystem-usage.h"
 #include "cmds/commands.h"
 #include "disk-io.h"
+#include "volumes.h"
 
 #include "version.h"
 #include "common/help.h"
@@ -306,7 +307,7 @@ static void get_raid56_used(struct chunk_info *chunks, int chunkcount,
 #define	MIN_UNALOCATED_THRESH	SZ_16M
 static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 		int chunkcount, struct device_info *devinfo, int devcount,
-		const char *path, unsigned unit_mode)
+		const char *path, unsigned unit_mode, int profiles)
 {
 	struct btrfs_ioctl_space_args *sargs = NULL;
 	int i;
@@ -340,6 +341,14 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 	u64 free_min = 0;
 	int max_data_ratio = 1;
 	int mixed = 0;
+	u64 user_total_size = 0;
+	u64 user_data_total = 0;
+	u64 user_meta_total = 0;
+	u64 user_system_total = 0;
+	u64 user_total_used = 0;
+	u64 user_meta_used[BTRFS_NR_RAID_TYPES] = { 0 };
+	u64 user_data_used[BTRFS_NR_RAID_TYPES] = { 0 };
+	u64 user_system_used[BTRFS_NR_RAID_TYPES] = { 0 };
 
 	sargs = load_space_info(fd, path);
 	if (!sargs) {
@@ -364,7 +373,9 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 
 	for (i = 0; i < sargs->total_spaces; i++) {
 		int ratio;
+		int dup = 1;
 		u64 flags = sargs->spaces[i].flags;
+		int index = btrfs_bg_flags_to_raid_index(flags);
 
 		/*
 		 * The raid5/raid6 ratio depends by the stripes number
@@ -378,8 +389,10 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 			ratio = 0;
 		else if (flags & BTRFS_BLOCK_GROUP_RAID6)
 			ratio = 0;
-		else if (flags & BTRFS_BLOCK_GROUP_DUP)
+		else if (flags & BTRFS_BLOCK_GROUP_DUP) {
 			ratio = 2;
+			dup = 2;
+		}
 		else if (flags & BTRFS_BLOCK_GROUP_RAID10)
 			ratio = 2;
 		else
@@ -391,6 +404,13 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 		if (ratio > max_data_ratio)
 			max_data_ratio = ratio;
 
+		/*
+		 * Count DUP twice for user's used space, since it lays on
+		 * the same device.
+		 *
+		 * Count total_bytes for METADATA and SYSTEM groups, since
+		 * it cannot be used by user.
+		 */
 		if (flags & BTRFS_SPACE_INFO_GLOBAL_RSV) {
 			l_global_reserve = sargs->spaces[i].total_bytes;
 			l_global_reserve_used = sargs->spaces[i].used_bytes;
@@ -403,15 +423,18 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 			r_data_used += sargs->spaces[i].used_bytes * ratio;
 			r_data_chunks += sargs->spaces[i].total_bytes * ratio;
 			l_data_chunks += sargs->spaces[i].total_bytes;
+			user_data_used[index] += sargs->spaces[i].used_bytes * dup;
 		}
 		if (flags & BTRFS_BLOCK_GROUP_METADATA) {
 			r_metadata_used += sargs->spaces[i].used_bytes * ratio;
 			r_metadata_chunks += sargs->spaces[i].total_bytes * ratio;
 			l_metadata_chunks += sargs->spaces[i].total_bytes;
+			user_meta_used[index] += sargs->spaces[i].total_bytes * dup;
 		}
 		if (flags & BTRFS_BLOCK_GROUP_SYSTEM) {
 			r_system_used += sargs->spaces[i].used_bytes * ratio;
 			r_system_chunks += sargs->spaces[i].total_bytes * ratio;
+			user_system_used[index] += sargs->spaces[i].total_bytes * dup;
 		}
 	}
 
@@ -462,6 +485,22 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 		free_min += r_total_unused / max_data_ratio;
 	}
 
+	for (i = 0; i < BTRFS_NR_RAID_TYPES; i++) {
+		if (user_data_used[i]) {
+			user_data_total += user_data_used[i];
+			user_total_used += user_data_used[i];
+		}
+		if (user_meta_used[i] && !mixed) {
+			user_meta_total += user_meta_used[i];
+			user_total_used += user_meta_used[i];
+		}
+		if (user_system_used[i]) {
+			user_system_total += user_system_used[i];
+			user_total_used += user_system_used[i];
+		}
+	};
+	user_total_size = user_total_used + free_estimated;
+
 	if (unit_mode != UNITS_HUMAN)
 		width = 18;
 
@@ -473,11 +512,58 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 		pretty_size_mode(r_total_chunks, unit_mode));
 	printf("    Device unallocated:\t\t%*s\n", width,
 		pretty_size_mode(r_total_unused, unit_mode | UNITS_NEGATIVE));
+	printf("    Device data used:\t\t%*s\n", width,
+		pretty_size_mode(r_data_used, unit_mode));
+	if (!mixed) {
+		printf("    Device metadata used:\t%*s\n", width,
+			pretty_size_mode(r_metadata_used, unit_mode));
+	}
+	printf("    Device system used:\t\t%*s\n", width,
+		pretty_size_mode(r_system_used, unit_mode));
+	printf("    Device total used:\t\t%*s\n", width,
+		pretty_size_mode(r_total_used, unit_mode));
 	printf("    Device missing:\t\t%*s\n", width,
 		pretty_size_mode(r_total_missing, unit_mode));
-	printf("    Used:\t\t\t%*s\n", width,
-		pretty_size_mode(r_total_used, unit_mode));
-	printf("    Free (estimated):\t\t%*s\t(",
+	printf("    User total size:\t\t%*s\n", width,
+		pretty_size_mode(user_total_size, unit_mode));
+	printf("    User data used:\t\t%*s\n", width,
+		pretty_size_mode(user_data_total, unit_mode));
+	if (profiles) {
+		for (i = 0; i < BTRFS_NR_RAID_TYPES; i++) {
+			if (user_data_used[i]) {
+				printf("        %s:\t\t\t%*s\n",
+					btrfs_raid_array[i].raid_name, width,
+					pretty_size_mode(user_data_used[i], unit_mode));
+			};
+		};
+	};
+	if (!mixed) {
+		printf("    User metadata used:\t\t%*s\n", width,
+			pretty_size_mode(user_meta_total, unit_mode));
+		if (profiles) {
+			for (i = 0; i < BTRFS_NR_RAID_TYPES; i++) {
+				if (user_meta_used[i]) {
+					printf("        %s:\t\t\t%*s\n",
+						btrfs_raid_array[i].raid_name, width,
+						pretty_size_mode(user_meta_used[i], unit_mode));
+				};
+			};
+		};
+	};
+	printf("    User system used:\t\t%*s\n", width,
+		pretty_size_mode(user_system_total, unit_mode));
+	if (profiles) {
+		for (i = 0; i < BTRFS_NR_RAID_TYPES; i++) {
+			if (user_system_used[i]) {
+				printf("        %s:\t\t\t%*s\n",
+					btrfs_raid_array[i].raid_name, width,
+					pretty_size_mode(user_system_used[i], unit_mode));
+			};
+		};
+	};
+	printf("    User total used:\t\t%*s\n", width,
+		pretty_size_mode(user_total_used, unit_mode));
+	printf("    User free (estimated):\t%*s\t(",
 		width,
 		pretty_size_mode(free_estimated, unit_mode));
 	printf("min: %s)\n", pretty_size_mode(free_min, unit_mode));
@@ -974,6 +1060,7 @@ static int cmd_filesystem_usage(const struct cmd_struct *cmd,
 	int i;
 	int more_than_one = 0;
 	int all_devices = 0;
+	int profiles = 0;
 	int tabular = 0;
 
 	unit_mode = get_unit_mode_from_arg(&argc, argv, 1);
@@ -982,13 +1069,16 @@ static int cmd_filesystem_usage(const struct cmd_struct *cmd,
 	while (1) {
 		int c;
 
-		c = getopt(argc, argv, "dT");
+		c = getopt(argc, argv, "dPT");
 		if (c < 0)
 			break;
 
 		switch (c) {
 		case 'd':
 			all_devices = 1;
+			break;
+		case 'P':
+			profiles = 1;
 			break;
 		case 'T':
 			tabular = 1;
@@ -1023,7 +1113,7 @@ static int cmd_filesystem_usage(const struct cmd_struct *cmd,
 			goto cleanup;
 
 		ret = print_filesystem_usage_overall(fd, chunkinfo, chunkcount,
-				devinfo, devcount, argv[i], unit_mode);
+				devinfo, devcount, argv[i], unit_mode, profiles);
 		if (ret)
 			goto cleanup;
 		if (all_devices) {
