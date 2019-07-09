@@ -269,15 +269,15 @@ with information about space usage:
 $ btrfs filesystem usage /path
 Overall:
     Device size:                  10.92TiB
-    Device allocated:              5.92TiB
-    Device unallocated:            5.00TiB
+    Device allocated:              5.93TiB
+    Device unallocated:            4.99TiB
     Device data used:              5.91TiB
-    Device metadata used:         11.92GiB
+    Device metadata used:         12.23GiB
     Device system used:          672.00KiB
     Device total used:             5.92TiB
     Device missing:                  0.00B
     User total size:               5.46TiB
-    User data used:                2.95TiB
+    User data used:                2.96TiB
     User metadata used:            7.00GiB
     User system used:             64.00MiB
     User total used:               2.96TiB
@@ -291,17 +291,29 @@ The root user will also see stats broken down by block group types,
 if flag -d is provided:
 +
 -------------------------
-Data,single: Size:1.15TiB, Used:1.13TiB
-   /dev/sdb        1.15TiB
+Data,RAID10: Size:2.96TiB, Used:2.96TiB
+   /dev/sdb        1.48TiB
+   /dev/sdc        1.48TiB
+   /dev/sdd        1.48TiB
+   /dev/sde        1.48TiB
 
-Metadata,single: Size:12.00GiB, Used:6.45GiB
-   /dev/sdb       12.00GiB
+Metadata,RAID10: Size:7.00GiB, Used:6.12GiB
+   /dev/sdb        3.50GiB
+   /dev/sdc        3.50GiB
+   /dev/sdd        3.50GiB
+   /dev/sde        3.50GiB
 
-System,single: Size:32.00MiB, Used:144.00KiB
+System,RAID10: Size:64.00MiB, Used:336.00KiB
    /dev/sdb       32.00MiB
+   /dev/sdc       32.00MiB
+   /dev/sdd       32.00MiB
+   /dev/sde       32.00MiB
 
 Unallocated:
-   /dev/sdb      669.99GiB
+   /dev/sdb        1.25TiB
+   /dev/sdc        1.25TiB
+   /dev/sdd        1.25TiB
+   /dev/sde        1.25TiB
 -------------------------
 +
 `Options`
