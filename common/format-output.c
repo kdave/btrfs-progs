@@ -280,7 +280,7 @@ void fmt_print(struct format_ctx *fctx, const char* key, ...)
 
 			localtime_r(&ts, &tm);
 			strftime(tstr, 256, "%Y-%m-%d %X %z", &tm);
-			printf(tstr);
+			printf("%s", tstr);
 		} else {
 			putchar('-');
 		}
