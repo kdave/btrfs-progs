@@ -739,7 +739,7 @@ static int process_clone(const char *path, u64 offset, u64 len,
 	struct btrfs_ioctl_clone_range_args clone_args;
 	struct subvol_info *si = NULL;
 	char full_path[PATH_MAX];
-	char *subvol_path = NULL;
+	const char *subvol_path;
 	char full_clone_path[PATH_MAX];
 	int clone_fd = -1;
 
@@ -760,7 +760,7 @@ static int process_clone(const char *path, u64 offset, u64 len,
 		if (memcmp(clone_uuid, rctx->cur_subvol.received_uuid,
 				BTRFS_UUID_SIZE) == 0) {
 			/* TODO check generation of extent */
-			subvol_path = strdup(rctx->cur_subvol_path);
+			subvol_path = rctx->cur_subvol_path;
 		} else {
 			if (!si)
 				ret = -ENOENT;
@@ -794,14 +794,14 @@ static int process_clone(const char *path, u64 offset, u64 len,
 			if (sub_len > root_len &&
 			    strstr(si->path, rctx->full_root_path) == si->path &&
 			    si->path[root_len] == '/') {
-				subvol_path = strdup(si->path + root_len + 1);
+				subvol_path = si->path + root_len + 1;
 			} else {
 				error("clone: source subvol path %s unreachable from %s",
 					si->path, rctx->full_root_path);
 				goto out;
 			}
 		} else {
-			subvol_path = strdup(si->path);
+			subvol_path = si->path;
 		}
 	}
 
@@ -839,7 +839,6 @@ out:
 		free(si->path);
 		free(si);
 	}
-	free(subvol_path);
 	if (clone_fd != -1)
 		close(clone_fd);
 	return ret;
