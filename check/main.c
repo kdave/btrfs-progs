@@ -9978,6 +9978,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 
 	radix_tree_init();
 	cache_tree_init(&root_cache);
+	qgroup_set_item_count_ptr(&ctx.item_count);
 
 	ret = check_mounted(argv[optind]);
 	if (!force) {
@@ -10304,7 +10305,6 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 	}
 
 	if (info->quota_enabled) {
-		qgroup_set_item_count_ptr(&ctx.item_count);
 		if (!ctx.progress_enabled) {
 			fprintf(stderr, "[7/7] checking quota groups\n");
 		} else {
