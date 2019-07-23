@@ -328,14 +328,19 @@ static int parse_args(const struct cmd_struct *cmd, int argc, char **argv,
 
 static const char * const cmd_property_get_usage[] = {
 	"btrfs property get [-t <type>] <object> [<name>]",
-	"Gets a property from a btrfs object.",
-	"If no name is specified, all properties for the given object are",
-	"printed.",
-	"A filesystem object can be a the filesystem itself, a subvolume,",
-	"an inode or a device. The '-t <type>' option can be used to explicitly",
+	"Get a property value of a btrfs object",
+	"Get a property value of a btrfs object. If no name is specified, all",
+	"properties for the given object are printed.",
+	"A filesystem object can be the filesystem itself, a subvolume,",
+	"an inode or a device. The option -t can be used to explicitly",
 	"specify what type of object you meant. This is only needed when a",
-	"property could be set for more then one object type. Possible types",
-	"are s[ubvol], f[ilesystem], i[node] and d[evice].",
+	"property could be set for more then one object type.",
+	"",
+	"Possible values for type are: inode, subvol, filesystem, device.",
+	"They can be abbreviated to the first letter, i/s/f/d",
+	"",
+	"-t <TYPE>       list properties for the given object type (inode, subvol,",
+	"                filesystem, device)",
 	NULL
 };
 
@@ -361,9 +366,12 @@ static DEFINE_SIMPLE_COMMAND(property_get, "get");
 
 static const char * const cmd_property_set_usage[] = {
 	"btrfs property set [-t <type>] <object> <name> <value>",
-	"Sets a property on a btrfs object.",
-	"Please see the help of 'btrfs property get' for a description of",
-	"objects and object types.",
+	"Set a property on a btrfs object",
+	"Set a property on a btrfs object where object is a path to file or",
+	"directory and can also represent the filesystem or device based on the type",
+	"",
+	"-t <TYPE>       list properties for the given object type (inode, subvol,",
+	"                filesystem, device)",
 	NULL
 };
 
@@ -387,9 +395,13 @@ static DEFINE_SIMPLE_COMMAND(property_set, "set");
 
 static const char * const cmd_property_list_usage[] = {
 	"btrfs property list [-t <type>] <object>",
-	"Lists available properties with their descriptions for the given object.",
-	"Please see the help of 'btrfs property get' for a description of",
+	"Lists available properties with their descriptions for the given object",
+	"Lists available properties with their descriptions for the given object",
+	"See the help of 'btrfs property get' for a description of",
 	"objects and object types.",
+	"",
+	"-t <TYPE>       list properties for the given object type (inode, subvol,",
+	"                filesystem, device)",
 	NULL
 };
 
