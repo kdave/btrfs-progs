@@ -51,7 +51,7 @@ _fail()
 # log a message to the results file
 _log()
 {
-	echo "$*" | tee -a "$RESULTS"
+	echo "$*" >> "$RESULTS"
 }
 
 # copy stdout to log and pass to stdout, eg. another stdout consumer, commands
