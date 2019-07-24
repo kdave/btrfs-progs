@@ -16,7 +16,7 @@ shrink_test()
 {
 	min_size=$(run_check_stdout $SUDO_HELPER "$TOP/btrfs" inspect-internal min-dev-size ${1:+--id "$1"}  "$TEST_MNT")
 	min_size=$(echo "$min_size" | cut -d ' ' -f 1)
-	echo "min size = ${min_size}" >> "$RESULTS"
+	_log "min size = ${min_size}"
 	if [ -z "$min_size" ]; then
 		_fail "Failed to parse minimum size"
 	fi

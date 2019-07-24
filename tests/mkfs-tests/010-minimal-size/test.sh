@@ -18,7 +18,7 @@ do_test()
 	good_size=$(echo "$output" | grep -oP "(?<=is )\d+")
 
 	prepare_test_dev "$good_size"
-	echo "Minimal device size is $good_size" >> "$RESULTS"
+	_log "Minimal device size is $good_size"
 	run_check_mkfs_test_dev "$@"
 	run_check_mount_test_dev
 	run_check_umount_test_dev

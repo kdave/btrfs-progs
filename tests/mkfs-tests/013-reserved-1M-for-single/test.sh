@@ -26,8 +26,8 @@ do_one_test ()
 		_fail "failed to get first device extent"
 	fi
 
-	echo "first dev extent starts at $first_dev_extent" >> "$RESULTS"
-	echo "reserved range is [0, $(( 1024 * 1024)))" >> "$RESULTS"
+	_log "first dev extent starts at $first_dev_extent"
+	_log "reserved range is [0, $(( 1024 * 1024)))"
 	# First device extent should not start below 1M
 	if [ "$first_dev_extent" -lt $(( 1024 * 1024 )) ]; then
 		_fail "first device extent occupies reserved 0~1M range"

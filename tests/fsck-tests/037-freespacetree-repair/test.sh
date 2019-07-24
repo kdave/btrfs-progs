@@ -32,7 +32,7 @@ corrupt_fst_item()
 		offset=$("$TOP/btrfs" inspect-internal dump-tree -t 10 "$TEST_DEV" | \
 			grep -o "[[:digit:]]* FREE_SPACE_BITMAP [[:digit:]]*" | \
 			cut -d' ' -f3 | tail -2 | head -1)
-		echo "Corrupting $objectid,FREE_SPACE_BITMAP,$offset" >> "$RESULTS"
+		_log "Corrupting $objectid,FREE_SPACE_BITMAP,$offset"
 	elif [[ $type == "extent" ]]; then
 		type=199
 		objectid=$("$TOP/btrfs" inspect-internal dump-tree -t 10 "$TEST_DEV" | \
@@ -41,7 +41,7 @@ corrupt_fst_item()
 		offset=$("$TOP/btrfs" inspect-internal dump-tree -t 10 "$TEST_DEV" | \
 			grep -o "[[:digit:]]* FREE_SPACE_EXTENT [[:digit:]]*" | \
 			cut -d' ' -f3 | tail -2 | head -1)
-		echo "Corrupting $objectid,FREE_SPACE_EXTENT,$offset" >> "$RESULTS"
+		_log "Corrupting $objectid,FREE_SPACE_EXTENT,$offset"
 	else
 		_fail "Unknown item type for corruption"
 	fi
