@@ -218,7 +218,8 @@ static void insert_temp_root_item(struct extent_buffer *buf,
  * Setup an extent buffer for tree block.
  */
 static inline int write_temp_extent_buffer(int fd, struct extent_buffer *buf,
-					   u64 bytenr)
+					   u64 bytenr,
+					   struct btrfs_mkfs_config *cfg)
 {
 	int ret;
 
@@ -281,7 +282,7 @@ static int setup_temp_root_tree(int fd, struct btrfs_mkfs_config *cfg,
 	insert_temp_root_item(buf, cfg, &slot, &itemoff,
 			      BTRFS_CSUM_TREE_OBJECTID, csum_bytenr);
 
-	ret = write_temp_extent_buffer(fd, buf, root_bytenr);
+	ret = write_temp_extent_buffer(fd, buf, root_bytenr, cfg);
 out:
 	free(buf);
 	return ret;
@@ -456,7 +457,7 @@ static int setup_temp_chunk_tree(int fd, struct btrfs_mkfs_config *cfg,
 				     BTRFS_BLOCK_GROUP_METADATA);
 	if (ret < 0)
 		goto out;
-	ret = write_temp_extent_buffer(fd, buf, chunk_bytenr);
+	ret = write_temp_extent_buffer(fd, buf, chunk_bytenr, cfg);
 
 out:
 	free(buf);
@@ -515,7 +516,7 @@ static int setup_temp_dev_tree(int fd, struct btrfs_mkfs_config *cfg,
 			       BTRFS_MKFS_SYSTEM_GROUP_SIZE);
 	insert_temp_dev_extent(buf, &slot, &itemoff, meta_chunk_start,
 			       BTRFS_CONVERT_META_GROUP_SIZE);
-	ret = write_temp_extent_buffer(fd, buf, dev_bytenr);
+	ret = write_temp_extent_buffer(fd, buf, dev_bytenr, cfg);
 out:
 	free(buf);
 	return ret;
@@ -537,7 +538,7 @@ static int setup_temp_fs_tree(int fd, struct btrfs_mkfs_config *cfg,
 	/*
 	 * Temporary fs tree is completely empty.
 	 */
-	ret = write_temp_extent_buffer(fd, buf, fs_bytenr);
+	ret = write_temp_extent_buffer(fd, buf, fs_bytenr, cfg);
 out:
 	free(buf);
 	return ret;
@@ -559,7 +560,7 @@ static int setup_temp_csum_tree(int fd, struct btrfs_mkfs_config *cfg,
 	/*
 	 * Temporary csum tree is completely empty.
 	 */
-	ret = write_temp_extent_buffer(fd, buf, csum_bytenr);
+	ret = write_temp_extent_buffer(fd, buf, csum_bytenr, cfg);
 out:
 	free(buf);
 	return ret;
@@ -765,7 +766,7 @@ static int setup_temp_extent_tree(int fd, struct btrfs_mkfs_config *cfg,
 	if (ret < 0)
 		goto out;
 
-	ret = write_temp_extent_buffer(fd, buf, extent_bytenr);
+	ret = write_temp_extent_buffer(fd, buf, extent_bytenr, cfg);
 out:
 	free(buf);
 	return ret;
