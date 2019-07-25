@@ -156,7 +156,7 @@ static int __csum_tree_block_size(struct extent_buffer *buf, u16 csum_size,
 	u32 crc = ~(u32)0;
 
 	len = buf->len - BTRFS_CSUM_SIZE;
-	crc = crc32c(crc, buf->data + BTRFS_CSUM_SIZE, len);
+	crc = btrfs_csum_data(buf->data + BTRFS_CSUM_SIZE, crc, len);
 	btrfs_csum_final(crc, result);
 
 	if (verify) {
