@@ -934,7 +934,7 @@ static int copy_symlink(struct btrfs_root *root, struct btrfs_key *key,
 	inode_item = btrfs_item_ptr(path.nodes[0], path.slots[0],
 			struct btrfs_inode_item);
 
-	ret = fchownat(-1, file, btrfs_inode_uid(path.nodes[0], inode_item),
+	ret = fchownat(AT_FDCWD, file, btrfs_inode_uid(path.nodes[0], inode_item),
 				   btrfs_inode_gid(path.nodes[0], inode_item),
 				   AT_SYMLINK_NOFOLLOW);
 	if (ret) {
@@ -950,7 +950,7 @@ static int copy_symlink(struct btrfs_root *root, struct btrfs_key *key,
 	times[1].tv_sec  = btrfs_timespec_sec(path.nodes[0], bts);
 	times[1].tv_nsec = btrfs_timespec_nsec(path.nodes[0], bts);
 
-	ret = utimensat(-1, file, times, AT_SYMLINK_NOFOLLOW);
+	ret = utimensat(AT_FDCWD, file, times, AT_SYMLINK_NOFOLLOW);
 	if (ret)
 		fprintf(stderr, "Failed to set times: %m\n");
 out:
