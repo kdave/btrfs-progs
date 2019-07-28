@@ -9867,7 +9867,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 			{ NULL, 0, NULL, 0}
 		};
 
-		c = getopt_long(argc, argv, "as:br:pEQ", long_options, NULL);
+		c = getopt_long(argc, argv, "as:br:pE:Q", long_options, NULL);
 		if (c < 0)
 			break;
 		switch(c) {
