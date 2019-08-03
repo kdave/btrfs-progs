@@ -43,7 +43,8 @@ the following:
 ro::::
 read-only flag of subvolume: true or false
 label::::
-label of device
+label of the filesystem. For an unmounted filesystem, provide a path to a block
+device as object. For a mounted filesystem, specify a mount point.
 compression::::
 compression algorithm set for an inode, possible values: 'lzo', 'zlib', 'zstd'.
 To disable compression use "" (empty string), 'no' or 'none'.
