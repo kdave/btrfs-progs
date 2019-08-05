@@ -10,8 +10,8 @@ check_prereq btrfs-image
 setup_root_helper
 prepare_test_dev
 
-if ! check_min_kernel_version 5.0; then
-	_not_run "kernel too old, METADATA_UUID support needed"
+if [ ! -f /sys/fs/btrfs/features/metadata_uuid ] ; then
+	_not_run "METADATA_UUID feature not supported"
 fi
 
 read_fsid() {
