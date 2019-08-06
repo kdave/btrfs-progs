@@ -217,14 +217,14 @@ support discard for it to work. if the backing device does not support
 asynchronous queued TRIM, then this operation can severely degrade performance,
 because a synchronous TRIM operation will be attempted instead. Queued TRIM
 requires newer than SATA revision 3.1 chipsets and devices.
-
++
 If it is not necessary to immediately discard freed blocks, then the `fstrim`
 tool can be used to discard all free blocks in a batch. Scheduling a TRIM
 during a period of low system activity will prevent latent interference with
 the performance of other operations. Also, a device may ignore the TRIM command
 if the range is too small, so running a batch discard has a greater probability
 of actually discarding the blocks.
-
++
 If discarding is not necessary to be done at the block freeing time, there's
 `fstrim`(8) tool that lets the filesystem discard all free blocks in a batch,
 possibly not much interfering with other operations. Also, the device may
@@ -639,31 +639,32 @@ SWAPFILE SUPPORT
 The swapfile is supported since kernel 5.0. Use `swapon`(8) to activate the
 swapfile. There are some limitations of the implementation in btrfs and linux
 swap subystem:
-+
+ 
 * filesystem - must be only single device
 * swapfile - the containing subvolume cannot be snapshotted
 * swapfile - must be preallocated
 * swapfile - must be nodatacow (ie. also nodatasum)
 * swapfile - must not be compressed
-+
+ 
 The limitations come namely from the COW-based design and mapping layer of
 blocks that allows the advanced features like relocation and multi-device
 filesystems. However, the swap subsystem expects simpler mapping and no
 background changes of the file blocks once they've been attached to swap.
-+
+ 
 With active swapfiles, the following whole-filesystem operations will skip
 swapfile extents or may fail:
+ 
 * balance - block groups with swapfile extents are skipped and reported, the rest will be processed normally
 * resize grow - unaffected
 * resize shrink - works as long as the extents are outside of the shrunk range
 * device add - a new device does not interfere with existing swapfile and this operation will work, though no new swapfile can be activated afterwards
 * device delete - if the device has been added as above, it can be also deleted
 * device replace - dtto
-+
+ 
 When there are no active swapfiles and a whole-filesystem exclusive operation
 is running (ie. balance, device delete, shrink), the swapfiles cannot be
 temporarily activated. The operation must finish first.
-+
+ 
 --------------------
 # truncate -s 0 swapfile
 # chattr +C swapfile
