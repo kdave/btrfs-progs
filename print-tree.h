@@ -31,7 +31,7 @@ void btrfs_print_leaf(struct extent_buffer *l);
  */
 #define BTRFS_PRINT_TREE_DFS		0
 #define BTRFS_PRINT_TREE_BFS		1
-#define BTRFS_PRINT_TREE_DEFAULT	BTRFS_PRINT_TREE_DFS
+#define BTRFS_PRINT_TREE_DEFAULT	BTRFS_PRINT_TREE_BFS
 void btrfs_print_tree(struct extent_buffer *eb, bool follow, int traverse);
 
 void btrfs_print_key(struct btrfs_disk_key *disk_key);
