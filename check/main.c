@@ -806,7 +806,8 @@ static void maybe_free_inode_rec(struct cache_tree *inode_cache,
 	} else if (S_ISREG(rec->imode) || S_ISLNK(rec->imode)) {
 		if (rec->found_dir_item)
 			rec->errors |= I_ERR_ODD_DIR_ITEM;
-		if (rec->found_size != rec->nbytes)
+		/* Orphan inodes don't have correct nbytes */
+		if (rec->nlink > 0 && rec->found_size != rec->nbytes)
 			rec->errors |= I_ERR_FILE_NBYTES_WRONG;
 		if (rec->nlink > 0 && !no_holes &&
 		    (rec->extent_end < rec->isize ||
