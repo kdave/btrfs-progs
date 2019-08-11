@@ -398,7 +398,7 @@ int main(int ac, char **av)
 			fflush(stdout);
 		}
 		if (i && i % 5000 == 0) {
-			printf("open & close, root level %d nritems %d\n",
+			printf("open & close, root level %d nritems %u\n",
 				btrfs_header_level(&root->node->node.header),
 				btrfs_header_nritems(&root->node->node.header));
 			close_ctree(root, &super);

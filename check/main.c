@@ -5280,7 +5280,7 @@ static int process_extent_item(struct btrfs_root *root,
 	}
 	if (item_size < sizeof(*ei)) {
 		error(
-"corrupted or unsupported extent item found, item size=%u expect minimal size=%lu",
+"corrupted or unsupported extent item found, item size=%u expect minimal size=%zu",
 		      item_size, sizeof(*ei));
 		return -EIO;
 	}

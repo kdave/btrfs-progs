@@ -1422,7 +1422,7 @@ again:
 	item_size = btrfs_item_size_nr(l, path->slots[0]);
 	if (item_size < sizeof(*item)) {
 		error(
-"unsupported or corrupted extent item, item size=%u expect minimal size=%lu",
+"unsupported or corrupted extent item, item size=%u expect minimal size=%zu",
 			item_size, sizeof(*item));
 		ret = -EUCLEAN;
 		goto out;
@@ -2027,7 +2027,7 @@ static int __free_extent(struct btrfs_trans_handle *trans,
 		       (unsigned long long)root_objectid,
 		       (unsigned long long)owner_objectid,
 		       (unsigned long long)owner_offset);
-		printf("path->slots[0]: %u path->nodes[0]:\n", path->slots[0]);
+		printf("path->slots[0]: %d path->nodes[0]:\n", path->slots[0]);
 		btrfs_print_leaf(path->nodes[0]);
 		ret = -EIO;
 		goto fail;
@@ -2037,7 +2037,7 @@ static int __free_extent(struct btrfs_trans_handle *trans,
 	item_size = btrfs_item_size_nr(leaf, extent_slot);
 	if (item_size < sizeof(*ei)) {
 		error(
-"unsupported or corrupted extent item, item size=%u expect minimal size=%lu",
+"unsupported or corrupted extent item, item size=%u expect minimal size=%zu",
 			item_size, sizeof(*ei));
 		ret = -EUCLEAN;
 		goto fail;
@@ -3766,7 +3766,7 @@ static int run_delayed_tree_ref(struct btrfs_trans_handle *trans,
 	ref_root = ref->root;
 
 	if (node->ref_mod != 1) {
-		printf("btree block(%llu) has %d references rather than 1: action %d ref_root %llu parent %llu",
+		printf("btree block(%llu) has %d references rather than 1: action %u ref_root %llu parent %llu",
 			node->bytenr, node->ref_mod, node->action, ref_root,
 			parent);
 		return -EIO;
