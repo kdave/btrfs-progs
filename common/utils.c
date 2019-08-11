@@ -389,7 +389,7 @@ int pretty_size_snprintf(u64 size, char *str, size_t str_size, unsigned unit_mod
 
 	/* Unknown mode */
 	if (!base) {
-		fprintf(stderr, "INTERNAL ERROR: unknown unit base, mode %d\n",
+		fprintf(stderr, "INTERNAL ERROR: unknown unit base, mode %u\n",
 				unit_mode);
 		assert(0);
 		return -1;

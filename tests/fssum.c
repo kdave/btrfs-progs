@@ -272,7 +272,7 @@ sum_file_data_permissive(int fd, sum_t *dst)
 			for (old = i; buf[i] != 0 && i < ret; ++i)
 				;
 			if (verbose >= 2)
-				fprintf(stderr, "adding %u non-zeros to sum\n",
+				fprintf(stderr, "adding %d non-zeros to sum\n",
 					i - (int)old);
 			sum_add(dst, buf + old, i - old);
 		}

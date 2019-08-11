@@ -52,7 +52,7 @@ int main(int argc, char **argv)
 			length = atol(optarg);
 			break;
 		case 'c':
-			sscanf(optarg, "%li", &checksum);
+			sscanf(optarg, "%lu", &checksum);
 			loop = 1;
 			break;
 		case 's':
