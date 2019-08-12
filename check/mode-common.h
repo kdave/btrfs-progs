@@ -155,4 +155,5 @@ static inline bool is_valid_imode(u32 imode)
 	return true;
 }
 
+int recow_extent_buffer(struct btrfs_root *root, struct extent_buffer *eb);
 #endif

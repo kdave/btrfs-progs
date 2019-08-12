@@ -924,3 +924,39 @@ int check_repair_free_space_inode(struct btrfs_fs_info *fs_info,
 	}
 	return ret;
 }
+
+int recow_extent_buffer(struct btrfs_root *root, struct extent_buffer *eb)
+{
+	struct btrfs_path path;
+	struct btrfs_trans_handle *trans;
+	struct btrfs_key key;
+	int ret;
+
+	printf("Recowing metadata block %llu\n", eb->start);
+	key.objectid = btrfs_header_owner(eb);
+	key.type = BTRFS_ROOT_ITEM_KEY;
+	key.offset = (u64)-1;
+
+	root = btrfs_read_fs_root(root->fs_info, &key);
+	if (IS_ERR(root)) {
+		fprintf(stderr, "Couldn't find owner root %llu\n",
+			key.objectid);
+		return PTR_ERR(root);
+	}
+
+	trans = btrfs_start_transaction(root, 1);
+	if (IS_ERR(trans))
+		return PTR_ERR(trans);
+
+	btrfs_init_path(&path);
+	path.lowest_level = btrfs_header_level(eb);
+	if (path.lowest_level)
+		btrfs_node_key_to_cpu(eb, &key, 0);
+	else
+		btrfs_item_key_to_cpu(eb, &key, 0);
+
+	ret = btrfs_search_slot(trans, root, &key, &path, 0, 1);
+	btrfs_commit_transaction(trans, root);
+	btrfs_release_path(&path);
+	return ret;
+}

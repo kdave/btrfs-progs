@@ -4957,6 +4957,7 @@ static int check_btrfs_root(struct btrfs_root *root, int check_all)
 	struct btrfs_path path;
 	struct node_refs nrefs;
 	struct btrfs_root_item *root_item = &root->root_item;
+	u64 super_generation = btrfs_super_generation(root->fs_info->super_copy);
 	int ret;
 	int level;
 	int err = 0;
@@ -4978,6 +4979,22 @@ static int check_btrfs_root(struct btrfs_root *root, int check_all)
 	level = btrfs_header_level(root->node);
 	btrfs_init_path(&path);
 
+	if (btrfs_root_generation(root_item) > super_generation + 1) {
+		error(
+	"invalid root generation for root %llu, have %llu expect (0, %llu)",
+		      root->root_key.objectid, btrfs_root_generation(root_item),
+		      super_generation + 1);
+		err |= INVALID_GENERATION;
+		if (repair) {
+			root->node->flags |= EXTENT_BAD_TRANSID;
+			ret = recow_extent_buffer(root, root->node);
+			if (!ret) {
+				printf("Reset generation for root %llu\n",
+					root->root_key.objectid);
+				err &= ~INVALID_GENERATION;
+			}
+		}
+	}
 	if (btrfs_root_refs(root_item) > 0 ||
 	    btrfs_disk_key_objectid(&root_item->drop_progress) == 0) {
 		path.nodes[level] = root->node;

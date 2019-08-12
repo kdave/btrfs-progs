@@ -47,6 +47,7 @@
 #define INODE_FLAGS_ERROR	(1<<23) /* Invalid inode flags */
 #define DIR_ITEM_HASH_MISMATCH	(1<<24) /* Dir item hash mismatch */
 #define INODE_MODE_ERROR	(1<<25) /* Bad inode mode */
+#define INVALID_GENERATION	(1<<26)	/* Generation is too new */
 
 /*
  * Error bit for low memory mode check.
