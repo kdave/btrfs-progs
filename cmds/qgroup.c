@@ -159,56 +159,6 @@ static int _cmd_qgroup_create(int create, int argc, char **argv)
 	return 0;
 }
 
-static int parse_limit(const char *p, unsigned long long *s)
-{
-	char *endptr;
-	unsigned long long size;
-	unsigned long long CLEAR_VALUE = -1;
-
-	if (strcasecmp(p, "none") == 0) {
-		*s = CLEAR_VALUE;
-		return 1;
-	}
-
-	if (p[0] == '-')
-		return 0;
-
-	size = strtoull(p, &endptr, 10);
-	if (p == endptr)
-		return 0;
-
-	switch (*endptr) {
-	case 'T':
-	case 't':
-		size *= 1024;
-		/* fallthrough */
-	case 'G':
-	case 'g':
-		size *= 1024;
-		/* fallthrough */
-	case 'M':
-	case 'm':
-		size *= 1024;
-		/* fallthrough */
-	case 'K':
-	case 'k':
-		size *= 1024;
-		++endptr;
-		break;
-	case 0:
-		break;
-	default:
-		return 0;
-	}
-
-	if (*endptr)
-		return 0;
-
-	*s = size;
-
-	return 1;
-}
-
 static const char * const cmd_qgroup_assign_usage[] = {
 	"btrfs qgroup assign [options] <src> <dst> <path>",
 	"Assign SRC as the child qgroup of DST",
@@ -455,10 +405,10 @@ static int cmd_qgroup_limit(const struct cmd_struct *cmd, int argc, char **argv)
 	if (check_argc_min(argc - optind, 2))
 		return 1;
 
-	if (!parse_limit(argv[optind], &size)) {
-		error("invalid size argument: %s", argv[optind]);
-		return 1;
-	}
+	if (!strcasecmp(argv[optind], "none"))
+		size = -1ULL;
+	else
+		size = parse_size(argv[optind]);
 
 	memset(&args, 0, sizeof(args));
 	if (compressed)
