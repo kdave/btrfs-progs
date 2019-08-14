@@ -26,6 +26,7 @@
 #include <linux/limits.h>
 #include <blkid/blkid.h>
 #include <uuid/uuid.h>
+#include "kernel-lib/overflow.h"
 #include "common/path-utils.h"
 #include "common/device-scan.h"
 #include "common/messages.h"
@@ -118,7 +119,8 @@ int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 	struct btrfs_device *device;
 	struct btrfs_dev_item *dev_item;
 	char *buf = NULL;
-	u64 fs_total_bytes;
+	const u64 old_size = btrfs_super_total_bytes(super);
+	u64 new_size;
 	u64 num_devs;
 	int ret;
 
@@ -156,13 +158,20 @@ int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 		goto out;
 	}
 
+	if (check_add_overflow(old_size, device_total_bytes, &new_size)) {
+		error(
+		"adding device of %llu bytes would exceed max file system size",
+		      device->total_bytes);
+		ret = -EOVERFLOW;
+		goto out;
+	}
+
 	INIT_LIST_HEAD(&device->dev_list);
 	ret = btrfs_add_device(trans, fs_info, device);
 	if (ret)
 		goto out;
 
-	fs_total_bytes = btrfs_super_total_bytes(super) + device_total_bytes;
-	btrfs_set_super_total_bytes(super, fs_total_bytes);
+	btrfs_set_super_total_bytes(super, new_size);
 
 	num_devs = btrfs_super_num_devices(super) + 1;
 	btrfs_set_super_num_devices(super, num_devs);
