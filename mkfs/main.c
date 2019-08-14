@@ -1268,7 +1268,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 					sectorsize, sectorsize, sectorsize);
 		if (ret) {
 			error("unable to add %s to filesystem: %d", file, ret);
-			goto out;
+			goto error;
 		}
 		if (verbose >= 2) {
 			struct btrfs_device *device;
