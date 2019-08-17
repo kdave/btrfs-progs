@@ -16,21 +16,29 @@ run_check_mount_test_dev
 # missing the one of the required arguments
 for sep in '' '--'; do
 	run_check_stdout "$TOP/btrfs" filesystem resize $sep |
-		grep -q "btrfs filesystem resize: too few arguments"
+		grep -q "btrfs filesystem resize: exactly 2 arguments expected, 0 given" ||
+		_fail "no expected error message in the output"
 	run_check_stdout "$TOP/btrfs" filesystem resize $sep "$TEST_MNT" |
-		grep -q "btrfs filesystem resize: too few arguments"
+		grep -q "btrfs filesystem resize: exactly 2 arguments expected, 1 given" ||
+		_fail "no expected error message in the output"
 	run_check_stdout "$TOP/btrfs" filesystem resize $sep -128M |
-		grep -q "btrfs filesystem resize: too few arguments"
+		grep -q "btrfs filesystem resize: exactly 2 arguments expected, 1 given" ||
+		_fail "no expected error message in the output"
 	run_check_stdout "$TOP/btrfs" filesystem resize $sep +128M |
-		grep -q "btrfs filesystem resize: too few arguments"
+		grep -q "btrfs filesystem resize: exactly 2 arguments expected, 1 given" ||
+		_fail "no expected error message in the output"
 	run_check_stdout "$TOP/btrfs" filesystem resize $sep 512M |
-		grep -q "btrfs filesystem resize: too few arguments"
+		grep -q "btrfs filesystem resize: exactly 2 arguments expected, 1 given" ||
+		_fail "no expected error message in the output"
 	run_check_stdout "$TOP/btrfs" filesystem resize $sep 1:-128M |
-		grep -q "btrfs filesystem resize: too few arguments"
+		grep -q "btrfs filesystem resize: exactly 2 arguments expected, 1 given" ||
+		_fail "no expected error message in the output"
 	run_check_stdout "$TOP/btrfs" filesystem resize $sep 1:512M |
-		grep -q "btrfs filesystem resize: too few arguments"
+		grep -q "btrfs filesystem resize: exactly 2 arguments expected, 1 given" ||
+		_fail "no expected error message in the output"
 	run_check_stdout "$TOP/btrfs" filesystem resize $sep 1:+128M |
-		grep -q "btrfs filesystem resize: too few arguments"
+		grep -q "btrfs filesystem resize: exactly 2 arguments expected, 1 given" ||
+		_fail "no expected error message in the output"
 done
 
 # valid resize
