@@ -437,24 +437,6 @@ static int do_balance(const char *path, struct btrfs_ioctl_balance_args *args,
 	if (fd < 0)
 		return 1;
 
-	if (!(flags & BALANCE_START_FILTERS) && !(flags & BALANCE_START_NOWARN)) {
-		int delay = 10;
-
-		printf("WARNING:\n\n");
-		printf("\tFull balance without filters requested. This operation is very\n");
-		printf("\tintense and takes potentially very long. It is recommended to\n");
-		printf("\tuse the balance filters to narrow down the scope of balance.\n");
-		printf("\tUse 'btrfs balance start --full-balance' option to skip this\n");
-		printf("\twarning. The operation will start in %d seconds.\n", delay);
-		printf("\tUse Ctrl-C to stop it.\n");
-		while (delay) {
-			printf("%2d", delay--);
-			fflush(stdout);
-			sleep(1);
-		}
-		printf("\nStarting balance without any filters.\n");
-	}
-
 	ret = ioctl(fd, BTRFS_IOC_BALANCE_V2, args);
 	if (ret < 0) {
 		/*
@@ -632,6 +614,24 @@ static int cmd_balance_start(const struct cmd_struct *cmd,
 			error("'soft' option can be used only when converting profiles");
 			return 1;
 		}
+	}
+
+	if (!(start_flags & BALANCE_START_FILTERS) && !(start_flags & BALANCE_START_NOWARN)) {
+		int delay = 10;
+
+		printf("WARNING:\n\n");
+		printf("\tFull balance without filters requested. This operation is very\n");
+		printf("\tintense and takes potentially very long. It is recommended to\n");
+		printf("\tuse the balance filters to narrow down the scope of balance.\n");
+		printf("\tUse 'btrfs balance start --full-balance' option to skip this\n");
+		printf("\twarning. The operation will start in %d seconds.\n", delay);
+		printf("\tUse Ctrl-C to stop it.\n");
+		while (delay) {
+			printf("%2d", delay--);
+			fflush(stdout);
+			sleep(1);
+		}
+		printf("\nStarting balance without any filters.\n");
 	}
 
 	if (force)

@@ -18,4 +18,10 @@ run_check $SUDO_HELPER "$TOP/btrfs" balance start "$TEST_MNT"
 run_check $SUDO_HELPER "$TOP/btrfs" balance --full-balance "$TEST_MNT"
 run_check $SUDO_HELPER "$TOP/btrfs" balance "$TEST_MNT"
 
+# grep below can't use -q else this could lead to SIGPIPE
+run_check_stdout $SUDO_HELPER "$TOP/btrfs" balance start --background "$TEST_MNT" |
+	grep -F "Full balance without filters requested." >/dev/null ||
+	_fail "full balance warning not in the output"
+run_mayfail $SUDO_HELPER "$TOP/btrfs" balance cancel "$TEST_MNT"
+
 run_check_umount_test_dev
