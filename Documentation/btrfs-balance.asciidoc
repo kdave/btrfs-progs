@@ -354,8 +354,16 @@ This should lead to decrease in the 'total' numbers in the *btrfs filesystem df*
 
 EXIT STATUS
 -----------
-*btrfs balance* returns a zero exit status if it succeeds. Non zero is
-returned in case of failure.
+Unless indicated otherwise below, all *btrfs balance* subcommands
+return a zero exit status if they succeed, and non zero in case of
+failure.
+
+The *pause*, *cancel*, and *resume* subcommands exit with a status of
+*2* if they fail because a balance operation was not running.
+
+The *status* subcommand exits with a status of *0* if a balance
+operation is not running, *1* if the command-line usage is incorrect
+or a balance operation is still running, and *2* on other errors.
 
 AVAILABILITY
 ------------
