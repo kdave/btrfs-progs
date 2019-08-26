@@ -204,6 +204,8 @@ static const char * const cmd_inspect_dump_tree_usage[] = {
 	"-t|--tree <tree_id>    print only tree with the given id (string or number)",
 	"--follow               use with -b, to show all children tree blocks of <block_num>",
 	"--noscan               do not scan the devices from the filesystem, use only the listed ones",
+	"--bfs                  breadth-first traversal of the trees, print nodes, then leaves (default)",
+	"--dfs                  depth-first traversal of the trees",
 	NULL
 };
 

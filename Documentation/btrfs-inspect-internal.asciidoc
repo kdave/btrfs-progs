@@ -90,10 +90,14 @@ print info of the specified block only, can be specified multiple times
 --follow::::
 use with '-b', print all children tree blocks of '<block_num>'
 --dfs::::
-use depth-first search to print trees. (default) the nodes and leaves are
+(default up to 5.2)
++
+use depth-first search to print trees, the nodes and leaves are
 intermixed in the output
 --bfs::::
-use breadth-first search to print trees. the nodes are printed before all
+(default since 5.3)
++
+use breadth-first search to print trees, the nodes are printed before all
 leaves
 --noscan::::
 do not automatically scan the system for other devices from the same
