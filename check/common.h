@@ -20,17 +20,10 @@
 #ifndef __BTRFS_CHECK_COMMON_H__
 #define __BTRFS_CHECK_COMMON_H__
 
-#if BTRFS_FLAT_INCLUDES
 #include "kerncompat.h"
 #include "ctree.h"
 #include "extent-cache.h"
 #include "kernel-lib/list.h"
-#else
-#include <btrfs/kerncompat.h>
-#include <btrfs/ctree.h>
-#include <btrfs/extent-cache.h>
-#include <btrfs/list.h>
-#endif /* BTRFS_FLAT_INCLUDES */
 
 struct block_group_record {
 	struct cache_extent cache;
