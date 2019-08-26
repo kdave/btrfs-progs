@@ -75,6 +75,22 @@ enum btrfs_check_mode {
 
 static enum btrfs_check_mode check_mode = CHECK_MODE_DEFAULT;
 
+struct device_record {
+	struct rb_node node;
+	u64 devid;
+
+	u64 generation;
+
+	u64 objectid;
+	u8  type;
+	u64 offset;
+
+	u64 total_byte;
+	u64 byte_used;
+
+	u64 real_used;
+};
+
 static int compare_data_backref(struct rb_node *node1, struct rb_node *node2)
 {
 	struct extent_backref *ext1 = rb_node_to_extent_backref(node1);

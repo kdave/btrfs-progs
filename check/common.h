@@ -44,22 +44,6 @@ struct block_group_tree {
 	struct list_head block_groups;
 };
 
-struct device_record {
-	struct rb_node node;
-	u64 devid;
-
-	u64 generation;
-
-	u64 objectid;
-	u8  type;
-	u64 offset;
-
-	u64 total_byte;
-	u64 byte_used;
-
-	u64 real_used;
-};
-
 struct stripe {
 	u64 devid;
 	u64 offset;
