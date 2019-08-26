@@ -38,7 +38,6 @@
 #include "free-space-cache.h"
 #include "free-space-tree.h"
 #include "btrfsck.h"
-#include "qgroup-verify.h"
 #include "common/rbtree-utils.h"
 #include "backref.h"
 #include "kernel-shared/ulist.h"
@@ -47,6 +46,7 @@
 #include "check/mode-common.h"
 #include "check/mode-original.h"
 #include "check/mode-lowmem.h"
+#include "check/qgroup-verify.h"
 
 u64 bytes_used = 0;
 u64 total_csum_bytes = 0;

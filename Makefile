@@ -135,7 +135,7 @@ objects = ctree.o disk-io.o kernel-lib/radix-tree.o extent-tree.o print-tree.o \
 	  root-tree.o dir-item.o file-item.o inode-item.o inode-map.o \
 	  extent-cache.o extent_io.o volumes.o common/utils.o repair.o \
 	  qgroup.o free-space-cache.o kernel-lib/list_sort.o props.o \
-	  kernel-shared/ulist.o qgroup-verify.o backref.o common/string-table.o \
+	  kernel-shared/ulist.o check/qgroup-verify.o backref.o common/string-table.o \
 	  common/task-utils.o \
 	  inode.o file.o find-root.o free-space-tree.o common/help.o send-dump.o \
 	  common/fsfeatures.o kernel-lib/tables.o kernel-lib/raid56.o transaction.o \
