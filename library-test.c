@@ -28,7 +28,7 @@
 #include "extent_io.h"
 #include "ioctl.h"
 #include "btrfs-list.h"
-#include "btrfsck.h"
+#include "check/btrfsck.h"
 #include "extent-cache.h"
 #include "send.h"
 #include "send-stream.h"

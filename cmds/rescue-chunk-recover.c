@@ -38,7 +38,7 @@
 #include "transaction.h"
 #include "kernel-lib/crc32c.h"
 #include "common/utils.h"
-#include "btrfsck.h"
+#include "check/common.h"
 #include "cmds/commands.h"
 #include "cmds/rescue.h"
 
