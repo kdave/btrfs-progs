@@ -160,8 +160,8 @@ int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 
 	if (check_add_overflow(old_size, device_total_bytes, &new_size)) {
 		error(
-		"adding device of %llu bytes would exceed max file system size",
-		      device->total_bytes);
+		"adding device of %llu (%s) bytes would exceed max file system size",
+		      device->total_bytes, pretty_size(device->total_bytes));
 		ret = -EOVERFLOW;
 		goto out;
 	}
