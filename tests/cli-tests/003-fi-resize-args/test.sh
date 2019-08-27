@@ -49,6 +49,9 @@ for sep in '' '--'; do
 	run_check $SUDO_HELPER "$TOP/btrfs" filesystem resize $sep 1:-128M "$TEST_MNT"
 	run_check $SUDO_HELPER "$TOP/btrfs" filesystem resize $sep 1:512M "$TEST_MNT"
 	run_check $SUDO_HELPER "$TOP/btrfs" filesystem resize $sep 1:+128M "$TEST_MNT"
+	run_check $SUDO_HELPER "$TOP/btrfs" filesystem resize $sep max "$TEST_MNT"
+	run_check $SUDO_HELPER "$TOP/btrfs" filesystem resize $sep -128M "$TEST_MNT"
+	run_check $SUDO_HELPER "$TOP/btrfs" filesystem resize $sep 1:max "$TEST_MNT"
 done
 
 run_check_umount_test_dev
