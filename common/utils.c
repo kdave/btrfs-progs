@@ -638,7 +638,7 @@ static int fls64(u64 x)
 	return 64 - i;
 }
 
-u64 parse_size(char *s)
+u64 parse_size(const char *s)
 {
 	char c;
 	char *endptr;
