@@ -711,6 +711,11 @@ void print_objectid(FILE *stream, u64 objectid, u8 type)
 
 	switch (objectid) {
 	case BTRFS_ROOT_TREE_OBJECTID:
+		/*
+		 * BTRFS_ROOT_TREE_OBJECTID and BTRFS_DEV_ITEMS_OBJECTID are
+		 * defined with the same value 1, we need to distinguish them
+		 * by the type.
+		 */
 		if (type == BTRFS_DEV_ITEM_KEY)
 			fprintf(stream, "DEV_ITEMS");
 		else
