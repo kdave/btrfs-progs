@@ -689,6 +689,12 @@ void print_key_type(FILE *stream, u64 objectid, u8 type)
 void print_objectid(FILE *stream, u64 objectid, u8 type)
 {
 	switch (type) {
+	case BTRFS_PERSISTENT_ITEM_KEY:
+		if (objectid == BTRFS_DEV_STATS_OBJECTID)
+			fprintf(stream, "DEV_STATS");
+		else
+			fprintf(stream, "%llu", (unsigned long long)objectid);
+		return;
 	case BTRFS_DEV_EXTENT_KEY:
 		/* device id */
 		fprintf(stream, "%llu", (unsigned long long)objectid);
