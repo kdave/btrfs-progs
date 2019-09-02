@@ -2519,6 +2519,7 @@ static int check_inode_item(struct btrfs_root *root, struct btrfs_path *path)
 		return err;
 	}
 
+	is_orphan = has_orphan_item(root, inode_id);
 	ii = btrfs_item_ptr(node, slot, struct btrfs_inode_item);
 	isize = btrfs_inode_size(node, ii);
 	nbytes = btrfs_inode_nbytes(node, ii);
@@ -2672,19 +2673,22 @@ out:
 		"root %llu INODE[%llu] nlink(%llu) not equal to inode_refs(%llu)",
 				      root->objectid, inode_id, nlink, refs);
 			}
-		} else if (!nlink) {
-			is_orphan = has_orphan_item(root, inode_id);
-			if (!is_orphan && repair)
+		} else if (!nlink && !is_orphan) {
+			if (repair)
 				ret = repair_inode_orphan_item_lowmem(root,
 							      path, inode_id);
-			if (!is_orphan && (!repair || ret)) {
+			if (!repair || ret) {
 				err |= ORPHAN_ITEM;
 				error("root %llu INODE[%llu] is orphan item",
 				      root->objectid, inode_id);
 			}
 		}
 
-		if (nbytes != extent_size) {
+		/*
+		 * For orhpan inode, updating nbytes/size is just a waste of
+		 * time, so skip such repair and don't report them as error.
+		 */
+		if (nbytes != extent_size && !is_orphan) {
 			if (repair) {
 				ret = repair_inode_nbytes_lowmem(root, path,
 							 inode_id, extent_size);
