@@ -149,7 +149,7 @@ void btrfs_csum_final(u32 crc, u8 *result)
 }
 
 static int __csum_tree_block_size(struct extent_buffer *buf, u16 csum_size,
-				  int verify, int silent)
+				  int verify, int silent, u16 csum_type)
 {
 	u8 result[BTRFS_CSUM_SIZE];
 	u32 len;
@@ -174,24 +174,27 @@ static int __csum_tree_block_size(struct extent_buffer *buf, u16 csum_size,
 	return 0;
 }
 
-int csum_tree_block_size(struct extent_buffer *buf, u16 csum_size, int verify)
+int csum_tree_block_size(struct extent_buffer *buf, u16 csum_size, int verify,
+			 u16 csum_type)
 {
-	return __csum_tree_block_size(buf, csum_size, verify, 0);
+	return __csum_tree_block_size(buf, csum_size, verify, 0, csum_type);
 }
 
-int verify_tree_block_csum_silent(struct extent_buffer *buf, u16 csum_size)
+int verify_tree_block_csum_silent(struct extent_buffer *buf, u16 csum_size,
+				  u16 csum_type)
 {
-	return __csum_tree_block_size(buf, csum_size, 1, 1);
+	return __csum_tree_block_size(buf, csum_size, 1, 1, csum_type);
 }
 
 int csum_tree_block(struct btrfs_fs_info *fs_info,
 		    struct extent_buffer *buf, int verify)
 {
-	u16 csum_size =
-		btrfs_super_csum_size(fs_info->super_copy);
+	u16 csum_size = btrfs_super_csum_size(fs_info->super_copy);
+	u16 csum_type = btrfs_super_csum_type(fs_info->super_copy);
+
 	if (verify && fs_info->suppress_check_block_errors)
-		return verify_tree_block_csum_silent(buf, csum_size);
-	return csum_tree_block_size(buf, csum_size, verify);
+		return verify_tree_block_csum_silent(buf, csum_size, csum_type);
+	return csum_tree_block_size(buf, csum_size, verify, csum_type);
 }
 
 struct extent_buffer *btrfs_find_tree_block(struct btrfs_fs_info *fs_info,

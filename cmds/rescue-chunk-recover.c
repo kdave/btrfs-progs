@@ -768,7 +768,8 @@ static int scan_one_device(void *dev_scan_struct)
 			continue;
 		}
 
-		if (verify_tree_block_csum_silent(buf, rc->csum_size)) {
+		if (verify_tree_block_csum_silent(buf, rc->csum_size,
+						  rc->csum_type)) {
 			bytenr += rc->sectorsize;
 			continue;
 		}

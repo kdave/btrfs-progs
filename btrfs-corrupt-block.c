@@ -158,7 +158,8 @@ static void corrupt_keys(struct btrfs_trans_handle *trans,
 	if (!trans) {
 		u16 csum_size =
 			btrfs_super_csum_size(fs_info->super_copy);
-		csum_tree_block_size(eb, csum_size, 0);
+		u16 csum_type = btrfs_super_csum_type(fs_info->super_copy);
+		csum_tree_block_size(eb, csum_size, 0, csum_type);
 		write_extent_to_disk(eb);
 	}
 }
