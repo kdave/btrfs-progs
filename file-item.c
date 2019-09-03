@@ -202,6 +202,9 @@ int btrfs_csum_file_block(struct btrfs_trans_handle *trans,
 	u16 csum_size =
 		btrfs_super_csum_size(root->fs_info->super_copy);
 
+	u16 csum_type =
+		btrfs_super_csum_type(root->fs_info->super_copy);
+
 	path = btrfs_alloc_path();
 	if (!path)
 		return -ENOMEM;
@@ -312,8 +315,8 @@ csum:
 	item = (struct btrfs_csum_item *)((unsigned char *)item +
 					  csum_offset * csum_size);
 found:
-	csum_result = btrfs_csum_data(data, (u8 *)&csum_result, len);
-	btrfs_csum_final(csum_result, (u8 *)&csum_result);
+	csum_result = btrfs_csum_data(csum_type, data, (u8 *)&csum_result, len);
+	btrfs_csum_final(csum_type, csum_result, (u8 *)&csum_result);
 	if (csum_result == 0) {
 		printk("csum result is 0 for block %llu\n",
 		       (unsigned long long)bytenr);

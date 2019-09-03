@@ -124,7 +124,7 @@ static void csum_block(u8 *buf, size_t len)
 	u8 result[btrfs_csum_sizes[BTRFS_CSUM_TYPE_CRC32]];
 	u32 crc = ~(u32)0;
 	crc = crc32c(crc, buf + BTRFS_CSUM_SIZE, len - BTRFS_CSUM_SIZE);
-	btrfs_csum_final(crc, result);
+	put_unaligned_le32(~crc, result);
 	memcpy(buf, result, btrfs_csum_sizes[BTRFS_CSUM_TYPE_CRC32]);
 }
 

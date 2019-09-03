@@ -5619,6 +5619,7 @@ static int check_extent_csums(struct btrfs_root *root, u64 bytenr,
 	struct btrfs_fs_info *fs_info = root->fs_info;
 	u64 offset = 0;
 	u16 csum_size = btrfs_super_csum_size(fs_info->super_copy);
+	u16 csum_type = btrfs_super_csum_type(fs_info->super_copy);
 	char *data;
 	unsigned long csum_offset;
 	u32 csum;
@@ -5659,9 +5660,10 @@ static int check_extent_csums(struct btrfs_root *root, u64 bytenr,
 				csum = ~(u32)0;
 				tmp = offset + data_checked;
 
-				csum = btrfs_csum_data((char *)data + tmp,
+				csum = btrfs_csum_data(csum_type,
+						       (char *)data + tmp,
 						(u8 *)&csum, fs_info->sectorsize);
-				btrfs_csum_final(csum, (u8 *)&csum);
+				btrfs_csum_final(csum_type, csum, (u8 *)&csum);
 
 				csum_offset = leaf_offset +
 					 tmp / fs_info->sectorsize * csum_size;

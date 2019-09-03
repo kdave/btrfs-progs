@@ -1887,7 +1887,8 @@ static u64 calc_data_offset(struct btrfs_key *key,
 	return dev_offset + data_offset;
 }
 
-static int check_one_csum(int fd, u64 start, u32 len, u32 tree_csum)
+static int check_one_csum(int fd, u64 start, u32 len, u32 tree_csum,
+			  u16 csum_type)
 {
 	char *data;
 	int ret = 0;
@@ -1902,8 +1903,8 @@ static int check_one_csum(int fd, u64 start, u32 len, u32 tree_csum)
 		goto out;
 	}
 	ret = 0;
-	csum_result = btrfs_csum_data(data, (u8 *)&csum_result, len);
-	btrfs_csum_final(csum_result, (u8 *)&csum_result);
+	csum_result = btrfs_csum_data(csum_type, data, (u8 *)&csum_result, len);
+	btrfs_csum_final(csum_type, csum_result, (u8 *)&csum_result);
 	if (csum_result != tree_csum)
 		ret = 1;
 out:
@@ -2102,7 +2103,8 @@ next_csum:
 						  devext->objectid, 1));
 
 		ret = check_one_csum(dev->fd, data_offset, blocksize,
-				     tree_csum);
+				     tree_csum,
+				     btrfs_super_csum_type(root->fs_info->super_copy));
 		if (ret < 0)
 			goto fail_out;
 		else if (ret > 0)

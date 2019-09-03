@@ -138,14 +138,26 @@ static void print_tree_block_error(struct btrfs_fs_info *fs_info,
 	}
 }
 
-u32 btrfs_csum_data(char *data, u8 *seed, size_t len)
+u32 btrfs_csum_data(u16 csum_type, char *data, u8 *seed, size_t len)
 {
-	return crc32c(*(u32*)seed, data, len);
+	switch (csum_type) {
+	case BTRFS_CSUM_TYPE_CRC32:
+		return crc32c(*(u32*)seed, data, len);
+	default: /* Not reached */
+		return ~(u32)0;
+	}
+
 }
 
-void btrfs_csum_final(u32 crc, u8 *result)
+void btrfs_csum_final(u16 csum_type, u32 crc, u8 *result)
 {
-	put_unaligned_le32(~crc, result);
+	switch (csum_type) {
+	case BTRFS_CSUM_TYPE_CRC32:
+		put_unaligned_le32(~crc, result);
+		break;
+	default: /* Not reached */
+		break;
+	}
 }
 
 static int __csum_tree_block_size(struct extent_buffer *buf, u16 csum_size,
@@ -156,8 +168,9 @@ static int __csum_tree_block_size(struct extent_buffer *buf, u16 csum_size,
 	u32 crc = ~(u32)0;
 
 	len = buf->len - BTRFS_CSUM_SIZE;
-	crc = btrfs_csum_data(buf->data + BTRFS_CSUM_SIZE, (u8 *)&crc, len);
-	btrfs_csum_final(crc, result);
+	crc = btrfs_csum_data(csum_type, buf->data + BTRFS_CSUM_SIZE,
+			      (u8 *)&crc, len);
+	btrfs_csum_final(csum_type, crc, result);
 
 	if (verify) {
 		if (memcmp_extent_buffer(buf, result, 0, csum_size)) {
@@ -1376,9 +1389,10 @@ int btrfs_check_super(struct btrfs_super_block *sb, unsigned sbflags)
 	csum_size = btrfs_csum_sizes[csum_type];
 
 	crc = ~(u32)0;
-	crc = btrfs_csum_data((char *)sb + BTRFS_CSUM_SIZE, (u8 *)&crc,
+	crc = btrfs_csum_data(csum_type,(char *)sb + BTRFS_CSUM_SIZE,
+			      (u8 *)&crc,
 			      BTRFS_SUPER_INFO_SIZE - BTRFS_CSUM_SIZE);
-	btrfs_csum_final(crc, result);
+	btrfs_csum_final(csum_type, crc, result);
 
 	if (memcmp(result, sb->csum, csum_size)) {
 		error("superblock checksum mismatch");
@@ -1616,6 +1630,7 @@ static int write_dev_supers(struct btrfs_fs_info *fs_info,
 	u64 bytenr;
 	u32 crc;
 	int i, ret;
+	u16 csum_type = btrfs_super_csum_type(sb);
 
 	/*
 	 * We need to write super block after all metadata written.
@@ -1631,9 +1646,9 @@ static int write_dev_supers(struct btrfs_fs_info *fs_info,
 	if (fs_info->super_bytenr != BTRFS_SUPER_INFO_OFFSET) {
 		btrfs_set_super_bytenr(sb, fs_info->super_bytenr);
 		crc = ~(u32)0;
-		crc = btrfs_csum_data((char *)sb + BTRFS_CSUM_SIZE, (u8 *)&crc,
+		crc = btrfs_csum_data(csum_type, (char *)sb + BTRFS_CSUM_SIZE, (u8 *)&crc,
 				      BTRFS_SUPER_INFO_SIZE - BTRFS_CSUM_SIZE);
-		btrfs_csum_final(crc, &sb->csum[0]);
+		btrfs_csum_final(csum_type, crc, &sb->csum[0]);
 
 		/*
 		 * super_copy is BTRFS_SUPER_INFO_SIZE bytes and is
@@ -1667,9 +1682,9 @@ static int write_dev_supers(struct btrfs_fs_info *fs_info,
 		btrfs_set_super_bytenr(sb, bytenr);
 
 		crc = ~(u32)0;
-		crc = btrfs_csum_data((char *)sb + BTRFS_CSUM_SIZE, (u8 *)&crc,
+		crc = btrfs_csum_data(csum_type, (char *)sb + BTRFS_CSUM_SIZE, (u8 *)&crc,
 				      BTRFS_SUPER_INFO_SIZE - BTRFS_CSUM_SIZE);
-		btrfs_csum_final(crc, &sb->csum[0]);
+		btrfs_csum_final(csum_type, crc, &sb->csum[0]);
 
 		/*
 		 * super_copy is BTRFS_SUPER_INFO_SIZE bytes and is

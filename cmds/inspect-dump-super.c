@@ -35,15 +35,15 @@
 #include "kernel-lib/crc32c.h"
 #include "common/help.h"
 
-static int check_csum_sblock(void *sb, int csum_size)
+static int check_csum_sblock(void *sb, int csum_size, u16 csum_type)
 {
 	u8 result[BTRFS_CSUM_SIZE];
 	u32 crc = ~(u32)0;
 
-	crc = btrfs_csum_data((char *)sb + BTRFS_CSUM_SIZE,
+	crc = btrfs_csum_data(csum_type, (char *)sb + BTRFS_CSUM_SIZE,
 				(u8 *)&crc,
 				BTRFS_SUPER_INFO_SIZE - BTRFS_CSUM_SIZE);
-	btrfs_csum_final(crc, result);
+	btrfs_csum_final(csum_type, crc, result);
 
 	return !memcmp(sb, &result, csum_size);
 }
@@ -348,7 +348,7 @@ static void dump_superblock(struct btrfs_super_block *sb, int full)
 	if (csum_type != BTRFS_CSUM_TYPE_CRC32 ||
 	    csum_size != btrfs_csum_sizes[BTRFS_CSUM_TYPE_CRC32])
 		printf(" [UNKNOWN CSUM TYPE OR SIZE]");
-	else if (check_csum_sblock(sb, csum_size))
+	else if (check_csum_sblock(sb, csum_size, csum_type))
 		printf(" [match]");
 	else
 		printf(" [DON'T MATCH]");
