@@ -38,14 +38,11 @@
 static int check_csum_sblock(void *sb, int csum_size, u16 csum_type)
 {
 	u8 result[BTRFS_CSUM_SIZE];
-	u32 crc = ~(u32)0;
 
-	crc = btrfs_csum_data(csum_type, (char *)sb + BTRFS_CSUM_SIZE,
-				(u8 *)&crc,
-				BTRFS_SUPER_INFO_SIZE - BTRFS_CSUM_SIZE);
-	btrfs_csum_final(csum_type, crc, result);
+	btrfs_csum_data(csum_type, (u8 *)sb + BTRFS_CSUM_SIZE,
+			result, BTRFS_SUPER_INFO_SIZE - BTRFS_CSUM_SIZE);
 
-	return !memcmp(sb, &result, csum_size);
+	return !memcmp(sb, result, csum_size);
 }
 
 static void print_sys_chunk_array(struct btrfs_super_block *sb)

@@ -195,7 +195,7 @@ int btrfs_csum_file_block(struct btrfs_trans_handle *trans,
 	struct btrfs_csum_item *item;
 	struct extent_buffer *leaf = NULL;
 	u64 csum_offset;
-	u32 csum_result = ~(u32)0;
+	u8 csum_result[BTRFS_CSUM_SIZE];
 	u32 sectorsize = root->fs_info->sectorsize;
 	u32 nritems;
 	u32 ins_size;
@@ -315,14 +315,14 @@ csum:
 	item = (struct btrfs_csum_item *)((unsigned char *)item +
 					  csum_offset * csum_size);
 found:
-	csum_result = btrfs_csum_data(csum_type, data, (u8 *)&csum_result, len);
-	btrfs_csum_final(csum_type, csum_result, (u8 *)&csum_result);
+	btrfs_csum_data(csum_type, (u8 *)data, csum_result, len);
+	/* FIXME: does not make sense for non-crc32c */
 	if (csum_result == 0) {
 		printk("csum result is 0 for block %llu\n",
 		       (unsigned long long)bytenr);
 	}
 
-	write_extent_buffer(leaf, &csum_result, (unsigned long)item,
+	write_extent_buffer(leaf, csum_result, (unsigned long)item,
 			    csum_size);
 	btrfs_mark_buffer_dirty(path->nodes[0]);
 fail:

@@ -1892,7 +1892,11 @@ static int check_one_csum(int fd, u64 start, u32 len, u32 tree_csum,
 {
 	char *data;
 	int ret = 0;
-	u32 csum_result = ~(u32)0;
+	u8 result[BTRFS_CSUM_SIZE];
+	int csum_size = 0;
+	u8 expected_csum[BTRFS_CSUM_SIZE];
+
+	ASSERT(0);
 
 	data = malloc(len);
 	if (!data)
@@ -1903,9 +1907,9 @@ static int check_one_csum(int fd, u64 start, u32 len, u32 tree_csum,
 		goto out;
 	}
 	ret = 0;
-	csum_result = btrfs_csum_data(csum_type, data, (u8 *)&csum_result, len);
-	btrfs_csum_final(csum_type, csum_result, (u8 *)&csum_result);
-	if (csum_result != tree_csum)
+	put_unaligned_le32(tree_csum, expected_csum);
+	btrfs_csum_data(csum_type, (u8 *)data, result, len);
+	if (memcmp(result, expected_csum, csum_size) != 0)
 		ret = 1;
 out:
 	free(data);

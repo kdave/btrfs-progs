@@ -5620,10 +5620,10 @@ static int check_extent_csums(struct btrfs_root *root, u64 bytenr,
 	u64 offset = 0;
 	u16 csum_size = btrfs_super_csum_size(fs_info->super_copy);
 	u16 csum_type = btrfs_super_csum_type(fs_info->super_copy);
-	char *data;
+	u8 *data;
 	unsigned long csum_offset;
-	u32 csum;
-	u32 csum_expected;
+	u8 result[BTRFS_CSUM_SIZE];
+	u8 csum_expected[BTRFS_CSUM_SIZE];
 	u64 read_len;
 	u64 data_checked = 0;
 	u64 tmp;
@@ -5649,7 +5649,7 @@ static int check_extent_csums(struct btrfs_root *root, u64 bytenr,
 		for (mirror = 1; mirror <= num_copies; mirror++) {
 			read_len = num_bytes - offset;
 			/* read as much space once a time */
-			ret = read_extent_data(fs_info, data + offset,
+			ret = read_extent_data(fs_info, (char *)data + offset,
 					bytenr + offset, &read_len, mirror);
 			if (ret)
 				goto out;
@@ -5657,24 +5657,22 @@ static int check_extent_csums(struct btrfs_root *root, u64 bytenr,
 			data_checked = 0;
 			/* verify every 4k data's checksum */
 			while (data_checked < read_len) {
-				csum = ~(u32)0;
 				tmp = offset + data_checked;
 
-				csum = btrfs_csum_data(csum_type,
-						       (char *)data + tmp,
-						(u8 *)&csum, fs_info->sectorsize);
-				btrfs_csum_final(csum_type, csum, (u8 *)&csum);
+				btrfs_csum_data(csum_type, data + tmp,
+						result, fs_info->sectorsize);
 
 				csum_offset = leaf_offset +
 					 tmp / fs_info->sectorsize * csum_size;
 				read_extent_buffer(eb, (char *)&csum_expected,
 						   csum_offset, csum_size);
-				if (csum != csum_expected) {
+				if (memcmp(result, csum_expected, csum_size) != 0) {
 					csum_mismatch = true;
+					/* FIXME: format of the checksum value */
 					fprintf(stderr,
 			"mirror %d bytenr %llu csum %u expected csum %u\n",
 						mirror, bytenr + tmp,
-						csum, csum_expected);
+						result[0], csum_expected[0]);
 				}
 				data_checked += fs_info->sectorsize;
 			}

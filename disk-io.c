@@ -138,26 +138,23 @@ static void print_tree_block_error(struct btrfs_fs_info *fs_info,
 	}
 }
 
-u32 btrfs_csum_data(u16 csum_type, char *data, u8 *seed, size_t len)
+int btrfs_csum_data(u16 csum_type, const u8 *data, u8 *out, size_t len)
 {
+	u32 crc = ~(u32)0;
+
+	memset(out, 0, BTRFS_CSUM_SIZE);
+
 	switch (csum_type) {
 	case BTRFS_CSUM_TYPE_CRC32:
-		return crc32c(*(u32*)seed, data, len);
-	default: /* Not reached */
-		return ~(u32)0;
+		crc = crc32c(crc, data, len);
+		put_unaligned_le32(~crc, out);
+		return 0;
+	default:
+		fprintf(stderr, "ERROR: unknown csum type: %d\n", csum_type);
+		ASSERT(0);
 	}
 
-}
-
-void btrfs_csum_final(u16 csum_type, u32 crc, u8 *result)
-{
-	switch (csum_type) {
-	case BTRFS_CSUM_TYPE_CRC32:
-		put_unaligned_le32(~crc, result);
-		break;
-	default: /* Not reached */
-		break;
-	}
+	return -1;
 }
 
 static int __csum_tree_block_size(struct extent_buffer *buf, u16 csum_size,
@@ -165,20 +162,19 @@ static int __csum_tree_block_size(struct extent_buffer *buf, u16 csum_size,
 {
 	u8 result[BTRFS_CSUM_SIZE];
 	u32 len;
-	u32 crc = ~(u32)0;
 
 	len = buf->len - BTRFS_CSUM_SIZE;
-	crc = btrfs_csum_data(csum_type, buf->data + BTRFS_CSUM_SIZE,
-			      (u8 *)&crc, len);
-	btrfs_csum_final(csum_type, crc, result);
+	btrfs_csum_data(csum_type, (u8 *)buf->data + BTRFS_CSUM_SIZE,
+			result, len);
 
 	if (verify) {
 		if (memcmp_extent_buffer(buf, result, 0, csum_size)) {
+			/* FIXME: format */
 			if (!silent)
 				printk("checksum verify failed on %llu found %08X wanted %08X\n",
 				       (unsigned long long)buf->start,
-				       *((u32 *)result),
-				       *((u32*)(char *)buf->data));
+				       result[0],
+				       buf->data[0]);
 			return 1;
 		}
 	} else {
@@ -1367,7 +1363,6 @@ struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
 int btrfs_check_super(struct btrfs_super_block *sb, unsigned sbflags)
 {
 	u8 result[BTRFS_CSUM_SIZE];
-	u32 crc;
 	u16 csum_type;
 	int csum_size;
 	u8 *metadata_uuid;
@@ -1388,11 +1383,8 @@ int btrfs_check_super(struct btrfs_super_block *sb, unsigned sbflags)
 	}
 	csum_size = btrfs_csum_sizes[csum_type];
 
-	crc = ~(u32)0;
-	crc = btrfs_csum_data(csum_type,(char *)sb + BTRFS_CSUM_SIZE,
-			      (u8 *)&crc,
-			      BTRFS_SUPER_INFO_SIZE - BTRFS_CSUM_SIZE);
-	btrfs_csum_final(csum_type, crc, result);
+	btrfs_csum_data(csum_type, (u8 *)sb + BTRFS_CSUM_SIZE,
+			result, BTRFS_SUPER_INFO_SIZE - BTRFS_CSUM_SIZE);
 
 	if (memcmp(result, sb->csum, csum_size)) {
 		error("superblock checksum mismatch");
@@ -1628,7 +1620,7 @@ static int write_dev_supers(struct btrfs_fs_info *fs_info,
 			    struct btrfs_device *device)
 {
 	u64 bytenr;
-	u32 crc;
+	u8 result[BTRFS_CSUM_SIZE];
 	int i, ret;
 	u16 csum_type = btrfs_super_csum_type(sb);
 
@@ -1645,10 +1637,9 @@ static int write_dev_supers(struct btrfs_fs_info *fs_info,
 	}
 	if (fs_info->super_bytenr != BTRFS_SUPER_INFO_OFFSET) {
 		btrfs_set_super_bytenr(sb, fs_info->super_bytenr);
-		crc = ~(u32)0;
-		crc = btrfs_csum_data(csum_type, (char *)sb + BTRFS_CSUM_SIZE, (u8 *)&crc,
-				      BTRFS_SUPER_INFO_SIZE - BTRFS_CSUM_SIZE);
-		btrfs_csum_final(csum_type, crc, &sb->csum[0]);
+		btrfs_csum_data(csum_type, (u8 *)sb + BTRFS_CSUM_SIZE, result,
+				BTRFS_SUPER_INFO_SIZE - BTRFS_CSUM_SIZE);
+		memcpy(&sb->csum[0], result, BTRFS_CSUM_SIZE);
 
 		/*
 		 * super_copy is BTRFS_SUPER_INFO_SIZE bytes and is
@@ -1681,10 +1672,9 @@ static int write_dev_supers(struct btrfs_fs_info *fs_info,
 
 		btrfs_set_super_bytenr(sb, bytenr);
 
-		crc = ~(u32)0;
-		crc = btrfs_csum_data(csum_type, (char *)sb + BTRFS_CSUM_SIZE, (u8 *)&crc,
+		btrfs_csum_data(csum_type, (u8 *)sb + BTRFS_CSUM_SIZE, result,
 				      BTRFS_SUPER_INFO_SIZE - BTRFS_CSUM_SIZE);
-		btrfs_csum_final(csum_type, crc, &sb->csum[0]);
+		memcpy(&sb->csum[0], result, BTRFS_CSUM_SIZE);
 
 		/*
 		 * super_copy is BTRFS_SUPER_INFO_SIZE bytes and is
