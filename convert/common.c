@@ -65,7 +65,8 @@ static inline int write_temp_super(int fd, struct btrfs_super_block *sb,
        u32 crc = ~(u32)0;
        int ret;
 
-       crc = btrfs_csum_data((char *)sb + BTRFS_CSUM_SIZE, crc,
+       crc = btrfs_csum_data((char *)sb + BTRFS_CSUM_SIZE,
+			     (u8 *)&crc,
                              BTRFS_SUPER_INFO_SIZE - BTRFS_CSUM_SIZE);
        btrfs_csum_final(crc, &sb->csum[0]);
        ret = pwrite(fd, sb, BTRFS_SUPER_INFO_SIZE, sb_bytenr);

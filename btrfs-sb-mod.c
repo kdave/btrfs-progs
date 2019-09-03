@@ -37,7 +37,8 @@ static int check_csum_superblock(void *sb)
 	u32 crc = ~(u32)0;
 
 	crc = btrfs_csum_data((char *)sb + BTRFS_CSUM_SIZE,
-				crc, BTRFS_SUPER_INFO_SIZE - BTRFS_CSUM_SIZE);
+				(u8 *)&crc,
+				BTRFS_SUPER_INFO_SIZE - BTRFS_CSUM_SIZE);
 	btrfs_csum_final(crc, result);
 
 	return !memcmp(sb, &result, csum_size);
@@ -50,10 +51,12 @@ static void update_block_csum(void *block, int is_sb)
 	u32 crc = ~(u32)0;
 
 	if (is_sb) {
-		crc = btrfs_csum_data((char *)block + BTRFS_CSUM_SIZE, crc,
+		crc = btrfs_csum_data((char *)block + BTRFS_CSUM_SIZE,
+				      (u8 *)&crc,
 				BTRFS_SUPER_INFO_SIZE - BTRFS_CSUM_SIZE);
 	} else {
-		crc = btrfs_csum_data((char *)block + BTRFS_CSUM_SIZE, crc,
+		crc = btrfs_csum_data((char *)block + BTRFS_CSUM_SIZE,
+				      (u8 *)&crc,
 				BLOCKSIZE - BTRFS_CSUM_SIZE);
 	}
 	btrfs_csum_final(crc, result);
