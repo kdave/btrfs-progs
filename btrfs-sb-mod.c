@@ -46,24 +46,17 @@ static int check_csum_superblock(void *sb)
 	return !memcmp(sb, &result, csum_size);
 }
 
-static void update_block_csum(void *block, int is_sb)
+static void update_block_csum(void *block)
 {
 	u8 result[csum_size];
 	struct btrfs_header *hdr;
 	u32 crc = ~(u32)0;
 	u16 csum_type = btrfs_super_csum_type(block);
 
-	if (is_sb) {
-		crc = btrfs_csum_data(csum_type,
-				      (char *)block + BTRFS_CSUM_SIZE,
-				      (u8 *)&crc,
-				BTRFS_SUPER_INFO_SIZE - BTRFS_CSUM_SIZE);
-	} else {
-		crc = btrfs_csum_data(csum_type,
-				      (char *)block + BTRFS_CSUM_SIZE,
-				      (u8 *)&crc,
-				BLOCKSIZE - BTRFS_CSUM_SIZE);
-	}
+	crc = btrfs_csum_data(csum_type, (char *)block + BTRFS_CSUM_SIZE,
+			      (u8 *)&crc,
+			      BTRFS_SUPER_INFO_SIZE - BTRFS_CSUM_SIZE);
+
 	btrfs_csum_final(csum_type, crc, result);
 	memset(block, 0, BTRFS_CSUM_SIZE);
 	hdr = (struct btrfs_header *)block;
@@ -354,7 +347,7 @@ int main(int argc, char **argv) {
 
 	if (changed) {
 		printf("Update csum\n");
-		update_block_csum(buf, 1);
+		update_block_csum(buf);
 		ret = pwrite(fd, buf, BLOCKSIZE, off);
 		if (ret <= 0) {
 			printf("pwrite error %d at offset %llu\n",
