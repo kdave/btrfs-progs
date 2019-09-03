@@ -341,6 +341,8 @@ static void print_usage(int ret)
 	printf("\t-m|--metadata PROFILE   metadata profile, values like for data profile\n");
 	printf("\t-M|--mixed              mix metadata and data together\n");
 	printf("  features:\n");
+	printf("\t--csum TYPE\n");
+	printf("\t--checksum TYPE         checksum algorithm to use (default: crc32c)\n");
 	printf("\t-n|--nodesize SIZE      size of btree nodes\n");
 	printf("\t-s|--sectorsize SIZE    data block size (may not be mountable by current kernel)\n");
 	printf("\t-O|--features LIST      comma separated list of filesystem features (use '-O list-all' to list features)\n");
@@ -380,6 +382,18 @@ static u64 parse_profile(const char *s)
 		return 0;
 	} else {
 		error("unknown profile %s", s);
+		exit(1);
+	}
+	/* not reached */
+	return 0;
+}
+
+static enum btrfs_csum_type parse_csum_type(const char *s)
+{
+	if (strcasecmp(s, "crc32c") == 0) {
+		return BTRFS_CSUM_TYPE_CRC32;
+	} else {
+		error("unknown csum type %s", s);
 		exit(1);
 	}
 	/* not reached */
@@ -832,15 +846,20 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	u64 features = BTRFS_MKFS_DEFAULT_FEATURES;
 	struct mkfs_allocation allocation = { 0 };
 	struct btrfs_mkfs_config mkfs_cfg;
+	enum btrfs_csum_type csum_type = BTRFS_CSUM_TYPE_CRC32;
 
 	crc32c_optimization_init();
 
 	while(1) {
 		int c;
-		enum { GETOPT_VAL_SHRINK = 257 };
+		enum { GETOPT_VAL_SHRINK = 257, GETOPT_VAL_CHECKSUM };
 		static const struct option long_options[] = {
 			{ "alloc-start", required_argument, NULL, 'A'},
 			{ "byte-count", required_argument, NULL, 'b' },
+			{ "csum", required_argument, NULL,
+				GETOPT_VAL_CHECKSUM },
+			{ "checksum", required_argument, NULL,
+				GETOPT_VAL_CHECKSUM },
 			{ "force", no_argument, NULL, 'f' },
 			{ "leafsize", required_argument, NULL, 'l' },
 			{ "label", required_argument, NULL, 'L'},
@@ -937,6 +956,9 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 				break;
 			case GETOPT_VAL_SHRINK:
 				shrink_rootdir = true;
+				break;
+			case GETOPT_VAL_CHECKSUM:
+				csum_type = parse_csum_type(optarg);
 				break;
 			case GETOPT_VAL_HELP:
 			default:
@@ -1177,6 +1199,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	mkfs_cfg.sectorsize = sectorsize;
 	mkfs_cfg.stripesize = stripesize;
 	mkfs_cfg.features = features;
+	mkfs_cfg.csum_type = csum_type;
 
 	ret = make_btrfs(fd, &mkfs_cfg);
 	if (ret) {
