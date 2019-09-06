@@ -228,10 +228,9 @@ static int add_xattr_item(struct btrfs_trans_handle *trans,
 	int ret;
 	int cur_name_len;
 	char xattr_list[XATTR_LIST_MAX];
+	char *xattr_list_end;
 	char *cur_name;
 	char cur_value[XATTR_SIZE_MAX];
-	char delimiter = '\0';
-	char *next_location = xattr_list;
 
 	ret = llistxattr(file_name, xattr_list, XATTR_LIST_MAX);
 	if (ret < 0) {
@@ -243,10 +242,10 @@ static int add_xattr_item(struct btrfs_trans_handle *trans,
 	if (ret == 0)
 		return ret;
 
-	cur_name = strtok(xattr_list, &delimiter);
-	while (cur_name != NULL) {
+	xattr_list_end = xattr_list + ret;
+	cur_name = xattr_list;
+	while (cur_name < xattr_list_end) {
 		cur_name_len = strlen(cur_name);
-		next_location += cur_name_len + 1;
 
 		ret = lgetxattr(file_name, cur_name, cur_value, XATTR_SIZE_MAX);
 		if (ret < 0) {
@@ -266,7 +265,7 @@ static int add_xattr_item(struct btrfs_trans_handle *trans,
 					file_name);
 		}
 
-		cur_name = strtok(next_location, &delimiter);
+		cur_name += cur_name_len + 1;
 	}
 
 	return ret;
