@@ -57,7 +57,7 @@ ifeq (@ASCIIDOC_TOOL@,asciidoctor)
 ASCIIDOC = @ASCIIDOCTOR@
 ASCIIDOC_ARGS = -abtrfs_version=$(BTRFS_VERSION)
 ASCIIDOC_HTML = xhtml5
-ASCIIDOC_DOCBOOK = docbook45
+ASCIIDOC_DOCBOOK = docbook5
 ASCIIDOC_DEPS = 
 endif
 
