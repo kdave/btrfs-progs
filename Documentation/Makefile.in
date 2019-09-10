@@ -46,6 +46,9 @@ man3dir = $(mandir)/man3
 man5dir = $(mandir)/man5
 man8dir = $(mandir)/man8
 
+XMLTO = @XMLTO@
+XMLTO_EXTRA = -m manpage-bold-literal.xsl
+
 ifeq (@ASCIIDOC_TOOL@,asciidoc)
 ASCIIDOC = @ASCIIDOC@
 ASCIIDOC_ARGS = -abtrfs_version=$(BTRFS_VERSION) -f asciidoc.conf
@@ -57,14 +60,13 @@ ifeq (@ASCIIDOC_TOOL@,asciidoctor)
 ASCIIDOC = @ASCIIDOCTOR@
 ASCIIDOC_ARGS = -abtrfs_version=$(BTRFS_VERSION)
 ASCIIDOC_HTML = xhtml5
-ASCIIDOC_DOCBOOK = docbook45
+ASCIIDOC_DOCBOOK = docbook5
+XMLTO_EXTRA += --skip-validation
 ASCIIDOC_DEPS = 
 endif
 
 MANPAGE_XSL = manpage-normal.xsl
-XMLTO = @XMLTO@
 XMLTO_EXTRA =
-XMLTO_EXTRA = -m manpage-bold-literal.xsl
 INSTALL = @INSTALL@
 RM = @RM@
 RMDIR = @RMDIR@
