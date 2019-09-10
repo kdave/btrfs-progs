@@ -52,17 +52,18 @@ ASCIIDOC_ARGS = -abtrfs_version=$(BTRFS_VERSION) -f asciidoc.conf
 ASCIIDOC_HTML = html
 ASCIIDOC_DOCBOOK = docbook
 ASCIIDOC_DEPS = asciidoc.conf
+XMLTO = @XMLTO@
 endif
 ifeq (@ASCIIDOC_TOOL@,asciidoctor)
 ASCIIDOC = @ASCIIDOCTOR@
 ASCIIDOC_ARGS = -abtrfs_version=$(BTRFS_VERSION)
 ASCIIDOC_HTML = xhtml5
 ASCIIDOC_DOCBOOK = docbook5
-ASCIIDOC_DEPS = 
+ASCIIDOC_DEPS =
+XMLTO = @XMLTO@ --skip-validation
 endif
 
 MANPAGE_XSL = manpage-normal.xsl
-XMLTO = @XMLTO@
 XMLTO_EXTRA =
 XMLTO_EXTRA = -m manpage-bold-literal.xsl
 INSTALL = @INSTALL@
