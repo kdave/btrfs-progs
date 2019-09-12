@@ -965,7 +965,7 @@ static int find_file_type(struct btrfs_root *root, u64 ino, u64 dirid,
 				       imode_ret);
 }
 
-static int detect_imode(struct btrfs_root *root, struct btrfs_path *path,
+int detect_imode(struct btrfs_root *root, struct btrfs_path *path,
 			u32 *imode_ret)
 {
 	struct btrfs_key key;

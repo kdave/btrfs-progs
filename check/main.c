@@ -2756,22 +2756,40 @@ static int repair_imode_original(struct btrfs_trans_handle *trans,
 				 struct btrfs_path *path,
 				 struct inode_record *rec)
 {
+	struct btrfs_key key;
 	int ret;
 	u32 imode;
 
-	if (root->root_key.objectid != BTRFS_ROOT_TREE_OBJECTID)
-		return -ENOTTY;
-	if (rec->ino != BTRFS_ROOT_TREE_DIR_OBJECTID || !is_fstree(rec->ino))
-		return -ENOTTY;
+	key.objectid = rec->ino;
+	key.type = BTRFS_INODE_ITEM_KEY;
+	key.offset = 0;
 
-	if (rec->ino == BTRFS_ROOT_TREE_DIR_OBJECTID)
-		imode = 040755;
-	else
-		imode = 0100600;
+	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
+	if (ret > 0)
+		ret = -ENOENT;
+	if (ret < 0)
+		return ret;
+
+	if (root->objectid == BTRFS_ROOT_TREE_OBJECTID) {
+		/* In root tree we only have two possible imode */
+		if (rec->ino == BTRFS_ROOT_TREE_OBJECTID)
+			imode = S_IFDIR | 0755;
+		else
+			imode = S_IFREG | 0600;
+	} else {
+		ret = detect_imode(root, path, &imode);
+		if (ret < 0) {
+			btrfs_release_path(path);
+			return ret;
+		}
+	}
+	btrfs_release_path(path);
 	ret = reset_imode(trans, root, path, rec->ino, imode);
+	btrfs_release_path(path);
 	if (ret < 0)
 		return ret;
 	rec->errors &= ~I_ERR_INVALID_IMODE;
+	rec->imode = imode;
 	return ret;
 }
 
@@ -2795,7 +2813,8 @@ static int try_repair_inode(struct btrfs_root *root, struct inode_record *rec)
 			     I_ERR_FILE_NBYTES_WRONG |
 			     I_ERR_INLINE_RAM_BYTES_WRONG |
 			     I_ERR_MISMATCH_DIR_HASH |
-			     I_ERR_UNALIGNED_EXTENT_REC)))
+			     I_ERR_UNALIGNED_EXTENT_REC |
+			     I_ERR_INVALID_IMODE)))
 		return rec->errors;
 
 	/*
@@ -2812,6 +2831,8 @@ static int try_repair_inode(struct btrfs_root *root, struct inode_record *rec)
 	btrfs_init_path(&path);
 	if (!ret && rec->errors & I_ERR_MISMATCH_DIR_HASH)
 		ret = repair_mismatch_dir_hash(trans, root, rec);
+	if (!ret && rec->errors & I_ERR_INVALID_IMODE)
+		ret = repair_imode_original(trans, root, &path, rec);
 	if (rec->errors & I_ERR_NO_INODE_ITEM)
 		ret = repair_inode_no_item(trans, root, &path, rec);
 	if (!ret && rec->errors & I_ERR_FILE_EXTENT_DISCOUNT)
@@ -2828,8 +2849,6 @@ static int try_repair_inode(struct btrfs_root *root, struct inode_record *rec)
 		ret = repair_inline_ram_bytes(trans, root, &path, rec);
 	if (!ret && rec->errors & I_ERR_UNALIGNED_EXTENT_REC)
 		ret = repair_unaligned_extent_recs(trans, root, &path, rec);
-	if (!ret && rec->errors & I_ERR_INVALID_IMODE)
-		ret = repair_imode_original(trans, root, &path, rec);
 	btrfs_commit_transaction(trans, root);
 	btrfs_release_path(&path);
 	return ret;
