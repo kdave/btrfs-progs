@@ -16,6 +16,7 @@
 
 #include <time.h>
 #include "ctree.h"
+#include "hash.h"
 #include "common/internal.h"
 #include "common/messages.h"
 #include "transaction.h"
@@ -834,6 +835,134 @@ int reset_imode(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 	btrfs_set_inode_mode(leaf, iitem, mode);
 	btrfs_mark_buffer_dirty(leaf);
 	return ret;
+}
+
+static int find_file_type_dir_index(struct btrfs_root *root, u64 ino, u64 dirid,
+				    u64 index, const char *name, u32 name_len,
+				    u32 *imode_ret)
+{
+	struct btrfs_path path;
+	struct btrfs_key key;
+	struct btrfs_key location;
+	struct btrfs_dir_item *di;
+	char namebuf[BTRFS_NAME_LEN] = {0};
+	bool found = false;
+	u8 filetype;
+	u32 len;
+	int ret;
+
+	btrfs_init_path(&path);
+	key.objectid = dirid;
+	key.offset = index;
+	key.type = BTRFS_DIR_INDEX_KEY;
+
+	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
+	if (ret > 0) {
+		ret = -ENOENT;
+		goto out;
+	}
+	if (ret < 0)
+		goto out;
+	di = btrfs_item_ptr(path.nodes[0], path.slots[0],
+			    struct btrfs_dir_item);
+	btrfs_dir_item_key_to_cpu(path.nodes[0], di, &location);
+
+	/* Various basic check */
+	if (location.objectid != ino || location.type != BTRFS_INODE_ITEM_KEY ||
+	    location.offset != 0)
+		goto out;
+	filetype = btrfs_dir_type(path.nodes[0], di);
+	if (filetype >= BTRFS_FT_MAX || filetype == BTRFS_FT_UNKNOWN)
+		goto out;
+	len = min_t(u32, BTRFS_NAME_LEN,
+		btrfs_item_size_nr(path.nodes[0], path.slots[0]) - sizeof(*di));
+	len = min_t(u32, len, btrfs_dir_name_len(path.nodes[0], di));
+	read_extent_buffer(path.nodes[0], namebuf, (unsigned long)(di + 1), len);
+	if (name_len != len || memcmp(namebuf, name, len))
+		goto out;
+	found = true;
+	*imode_ret = btrfs_type_to_imode(filetype);
+out:
+	btrfs_release_path(&path);
+	if (!found && !ret)
+		ret = -ENOENT;
+	return ret;
+}
+
+static int find_file_type_dir_item(struct btrfs_root *root, u64 ino, u64 dirid,
+				   const char *name, u32 name_len,
+				   u32 *imode_ret)
+{
+	struct btrfs_path path;
+	struct btrfs_key key;
+	struct btrfs_key location;
+	struct btrfs_dir_item *di;
+	char namebuf[BTRFS_NAME_LEN] = {0};
+	bool found = false;
+	unsigned long cur;
+	unsigned long end;
+	u8 filetype;
+	u32 len;
+	int ret;
+
+	btrfs_init_path(&path);
+	key.objectid = dirid;
+	key.offset = btrfs_name_hash(name, name_len);
+	key.type = BTRFS_DIR_INDEX_KEY;
+
+	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
+	if (ret > 0) {
+		ret = -ENOENT;
+		goto out;
+	}
+	if (ret < 0)
+		goto out;
+
+	cur = btrfs_item_ptr_offset(path.nodes[0], path.slots[0]);
+	end = cur + btrfs_item_size_nr(path.nodes[0], path.slots[0]);
+	while (cur < end) {
+		di = (struct btrfs_dir_item *)cur;
+		cur += btrfs_dir_name_len(path.nodes[0], di) + sizeof(*di);
+
+		btrfs_dir_item_key_to_cpu(path.nodes[0], di, &location);
+		/* Various basic check */
+		if (location.objectid != ino ||
+		    location.type != BTRFS_INODE_ITEM_KEY ||
+		    location.offset != 0)
+			continue;
+		filetype = btrfs_dir_type(path.nodes[0], di);
+		if (filetype >= BTRFS_FT_MAX || filetype == BTRFS_FT_UNKNOWN)
+			continue;
+		len = min_t(u32, BTRFS_NAME_LEN,
+			    btrfs_item_size_nr(path.nodes[0], path.slots[0]) -
+			    sizeof(*di));
+		len = min_t(u32, len, btrfs_dir_name_len(path.nodes[0], di));
+		read_extent_buffer(path.nodes[0], namebuf,
+				   (unsigned long)(di + 1), len);
+		if (name_len != len || memcmp(namebuf, name, len))
+			continue;
+		*imode_ret = btrfs_type_to_imode(filetype);
+		found = true;
+		goto out;
+	}
+out:
+	btrfs_release_path(&path);
+	if (!found && !ret)
+		ret = -ENOENT;
+	return ret;
+}
+
+static int find_file_type(struct btrfs_root *root, u64 ino, u64 dirid,
+			  u64 index, const char *name, u32 name_len,
+			  u32 *imode_ret)
+{
+	int ret;
+	ret = find_file_type_dir_index(root, ino, dirid, index, name, name_len,
+				       imode_ret);
+	if (ret == 0)
+		return ret;
+	return find_file_type_dir_item(root, ino, dirid, name, name_len,
+				       imode_ret);
 }
 
 /*
