@@ -1550,6 +1550,35 @@ static int lowmem_delete_corrupted_dir_item(struct btrfs_root *root,
 	return ret;
 }
 
+static int try_repair_imode(struct btrfs_root *root, u64 ino)
+{
+	struct btrfs_inode_item *iitem;
+	struct btrfs_path path;
+	struct btrfs_key key;
+	int ret;
+
+	key.objectid = ino;
+	key.type = BTRFS_INODE_ITEM_KEY;
+	key.offset = 0;
+	btrfs_init_path(&path);
+
+	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
+	if (ret > 0)
+		ret = -ENOENT;
+	if (ret < 0)
+		goto out;
+	iitem = btrfs_item_ptr(path.nodes[0], path.slots[0],
+			       struct btrfs_inode_item);
+	if (!is_valid_imode(btrfs_inode_mode(path.nodes[0], iitem))) {
+		ret = repair_imode_common(root, &path);
+	} else {
+		ret = -ENOTTY;
+	}
+out:
+	btrfs_release_path(&path);
+	return ret;
+}
+
 /*
  * Call repair_inode_item_missing and repair_ternary_lowmem to repair
  *
@@ -1572,6 +1601,16 @@ static int repair_dir_item(struct btrfs_root *root, struct btrfs_key *di_key,
 		ret = repair_inode_item_missing(root, ino, filetype);
 		if (!ret)
 			err &= ~(INODE_ITEM_MISMATCH | INODE_ITEM_MISSING);
+	}
+
+	if (err & INODE_ITEM_MISMATCH) {
+		/*
+		 * INODE_ITEM mismatch can be caused by bad imode, so check if
+		 * it's a bad imode, then repair if possible.
+		 */
+		ret = try_repair_imode(root, ino);
+		if (!ret)
+			err &= ~INODE_ITEM_MISMATCH;
 	}
 
 	if (err & ~(INODE_ITEM_MISMATCH | INODE_ITEM_MISSING)) {
