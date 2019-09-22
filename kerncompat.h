@@ -32,7 +32,7 @@
 
 #include <features.h>
 
-#ifndef __GLIBC__
+#if !defined(__GLIBC__) || defined(__UCLIBC__)
 #ifndef BTRFS_DISABLE_BACKTRACE
 #define BTRFS_DISABLE_BACKTRACE
 #endif
