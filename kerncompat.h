@@ -32,7 +32,11 @@
 
 #include <features.h>
 
-#ifndef __GLIBC__
+/*
+ * Glibc supports backtrace, some other libc implementations don't but need to
+ * be more careful detecting proper glibc.
+ */
+#if !defined(__GLIBC__) || defined(__UCLIBC__)
 #ifndef BTRFS_DISABLE_BACKTRACE
 #define BTRFS_DISABLE_BACKTRACE
 #endif
