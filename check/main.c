@@ -620,6 +620,8 @@ static void print_inode_error(struct btrfs_root *root, struct inode_record *rec)
 	if (errors & I_ERR_INVALID_IMODE)
 		fprintf(stderr, ", invalid inode mode bit 0%o",
 			rec->imode & ~07777);
+	if (errors & I_ERR_INVALID_GEN)
+		fprintf(stderr, ", invalid inode generation");
 	fprintf(stderr, "\n");
 
 	/* Print the holes if needed */
@@ -873,6 +875,7 @@ static int process_inode_item(struct extent_buffer *eb,
 {
 	struct inode_record *rec;
 	struct btrfs_inode_item *item;
+	u64 gen_uplimit;
 	u64 flags;
 
 	rec = active_node->current;
@@ -895,6 +898,13 @@ static int process_inode_item(struct extent_buffer *eb,
 	if (S_ISLNK(rec->imode) &&
 	    flags & (BTRFS_INODE_IMMUTABLE | BTRFS_INODE_APPEND))
 		rec->errors |= I_ERR_ODD_INODE_FLAGS;
+	/*
+	 * We don't have accurate root info to determine the correct
+	 * inode generation uplimit, use super_generation + 1 anyway
+	 */
+	gen_uplimit = btrfs_super_generation(global_info->super_copy) + 1;
+	if (btrfs_inode_generation(eb, item) > gen_uplimit)
+		rec->errors |= I_ERR_INVALID_GEN;
 	maybe_free_inode_rec(&active_node->inode_cache, rec);
 	return 0;
 }
@@ -2793,6 +2803,41 @@ static int repair_imode_original(struct btrfs_trans_handle *trans,
 	return ret;
 }
 
+static int repair_inode_gen_original(struct btrfs_trans_handle *trans,
+				     struct btrfs_root *root,
+				     struct btrfs_path *path,
+				     struct inode_record *rec)
+{
+	struct btrfs_inode_item *ii;
+	struct btrfs_key key;
+	int ret;
+
+	key.objectid = rec->ino;
+	key.offset = 0;
+	key.type = BTRFS_INODE_ITEM_KEY;
+
+	ret = btrfs_search_slot(trans, root, &key, path, 0, 1);
+	if (ret > 0) {
+		ret = -ENOENT;
+		error("no inode item found for ino %llu", rec->ino);
+		return ret;
+	}
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to search inode item for ino %llu: %m", rec->ino);
+		return ret;
+	}
+	ii = btrfs_item_ptr(path->nodes[0], path->slots[0],
+			    struct btrfs_inode_item);
+	btrfs_set_inode_generation(path->nodes[0], ii, trans->transid);
+	btrfs_mark_buffer_dirty(path->nodes[0]);
+	btrfs_release_path(path);
+	printf("resetting inode generation to %llu for ino %llu\n",
+		trans->transid, rec->ino);
+	rec->errors &= ~I_ERR_INVALID_GEN;
+	return 0;
+}
+
 static int try_repair_inode(struct btrfs_root *root, struct inode_record *rec)
 {
 	struct btrfs_trans_handle *trans;
@@ -2814,7 +2859,8 @@ static int try_repair_inode(struct btrfs_root *root, struct inode_record *rec)
 			     I_ERR_INLINE_RAM_BYTES_WRONG |
 			     I_ERR_MISMATCH_DIR_HASH |
 			     I_ERR_UNALIGNED_EXTENT_REC |
-			     I_ERR_INVALID_IMODE)))
+			     I_ERR_INVALID_IMODE |
+			     I_ERR_INVALID_GEN)))
 		return rec->errors;
 
 	/*
@@ -2849,6 +2895,8 @@ static int try_repair_inode(struct btrfs_root *root, struct inode_record *rec)
 		ret = repair_inline_ram_bytes(trans, root, &path, rec);
 	if (!ret && rec->errors & I_ERR_UNALIGNED_EXTENT_REC)
 		ret = repair_unaligned_extent_recs(trans, root, &path, rec);
+	if (!ret && rec->errors & I_ERR_INVALID_GEN)
+		ret = repair_inode_gen_original(trans, root, &path, rec);
 	btrfs_commit_transaction(trans, root);
 	btrfs_release_path(&path);
 	return ret;

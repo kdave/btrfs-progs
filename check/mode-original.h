@@ -185,6 +185,7 @@ struct unaligned_extent_rec_t {
 #define I_ERR_INLINE_RAM_BYTES_WRONG	(1 << 17)
 #define I_ERR_MISMATCH_DIR_HASH		(1 << 18)
 #define I_ERR_INVALID_IMODE		(1 << 19)
+#define I_ERR_INVALID_GEN		(1 << 20)
 
 struct inode_record {
 	struct list_head backrefs;
