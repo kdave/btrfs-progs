@@ -1169,6 +1169,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		warning("metadata has lower redundancy than data!\n");
 	}
 
+	mkfs_cfg.csum_type = BTRFS_CSUM_TYPE_CRC32;
 	mkfs_cfg.label = label;
 	memcpy(mkfs_cfg.fs_uuid, fs_uuid, sizeof(mkfs_cfg.fs_uuid));
 	mkfs_cfg.num_bytes = dev_block_count;

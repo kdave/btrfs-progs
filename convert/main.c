@@ -1158,6 +1158,7 @@ static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
 	printf("\tfeatures:  %s\n", features_buf);
 
 	memset(&mkfs_cfg, 0, sizeof(mkfs_cfg));
+	mkfs_cfg.csum_type = BTRFS_CSUM_TYPE_CRC32;
 	mkfs_cfg.label = cctx.volume_name;
 	mkfs_cfg.num_bytes = total_bytes;
 	mkfs_cfg.nodesize = nodesize;

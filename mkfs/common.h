@@ -53,6 +53,8 @@ struct btrfs_mkfs_config {
 	u64 features;
 	/* Size of the filesystem in bytes */
 	u64 num_bytes;
+	/* checksum algorithm to use */
+	enum btrfs_csum_type csum_type;
 
 	/* Output fields, set during creation */
 
