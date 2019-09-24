@@ -2511,6 +2511,58 @@ static bool has_orphan_item(struct btrfs_root *root, u64 ino)
 	return false;
 }
 
+static int repair_inode_gen_lowmem(struct btrfs_root *root,
+				   struct btrfs_path *path)
+{
+	struct btrfs_trans_handle *trans;
+	struct btrfs_inode_item *ii;
+	struct btrfs_key key;
+	u64 transid;
+	int ret;
+
+	trans = btrfs_start_transaction(root, 1);
+	if (IS_ERR(trans)) {
+		ret = PTR_ERR(trans);
+		errno = -ret;
+		error("failed to start transaction for inode gen repair: %m");
+		return ret;
+	}
+	transid = trans->transid;
+	btrfs_item_key_to_cpu(path->nodes[0], &key, path->slots[0]);
+	ASSERT(key.type == BTRFS_INODE_ITEM_KEY);
+
+	btrfs_release_path(path);
+
+	ret = btrfs_search_slot(trans, root, &key, path, 0, 1);
+	if (ret > 0) {
+		ret = -ENOENT;
+		error("no inode item found for ino %llu", key.objectid);
+		goto error;
+	}
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to find inode item for ino %llu: %m", key.objectid);
+		goto error;
+	}
+	ii = btrfs_item_ptr(path->nodes[0], path->slots[0],
+			    struct btrfs_inode_item);
+	btrfs_set_inode_generation(path->nodes[0], ii, trans->transid);
+	btrfs_mark_buffer_dirty(path->nodes[0]);
+	ret = btrfs_commit_transaction(trans, root);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to commit transaction: %m");
+		goto error;
+	}
+	printf("reseting inode generation to %llu for ino %llu\n",
+		transid, key.objectid);
+	return ret;
+
+error:
+	btrfs_abort_transaction(trans, ret);
+	return ret;
+}
+
 /*
  * Check INODE_ITEM and related ITEMs (the same inode number)
  * 1. check link count
@@ -2526,6 +2578,7 @@ static int check_inode_item(struct btrfs_root *root, struct btrfs_path *path)
 	struct btrfs_inode_item *ii;
 	struct btrfs_key key;
 	struct btrfs_key last_key;
+	struct btrfs_super_block *super = root->fs_info->super_copy;
 	u64 inode_id;
 	u32 mode;
 	u64 flags;
@@ -2536,6 +2589,8 @@ static int check_inode_item(struct btrfs_root *root, struct btrfs_path *path)
 	u64 refs = 0;
 	u64 extent_end = 0;
 	u64 extent_size = 0;
+	u64 generation;
+	u64 gen_uplimit;
 	unsigned int dir;
 	unsigned int nodatasum;
 	bool is_orphan = false;
@@ -2566,6 +2621,7 @@ static int check_inode_item(struct btrfs_root *root, struct btrfs_path *path)
 	flags = btrfs_inode_flags(node, ii);
 	dir = imode_to_type(mode) == BTRFS_FT_DIR;
 	nlink = btrfs_inode_nlink(node, ii);
+	generation = btrfs_inode_generation(node, ii);
 	nodatasum = btrfs_inode_flags(node, ii) & BTRFS_INODE_NODATASUM;
 
 	if (!is_valid_imode(mode)) {
@@ -2579,6 +2635,25 @@ static int check_inode_item(struct btrfs_root *root, struct btrfs_path *path)
 		}
 	}
 
+	if (btrfs_super_log_root(super) != 0 &&
+	    root->objectid == BTRFS_TREE_LOG_OBJECTID)
+		gen_uplimit = btrfs_super_generation(super) + 1;
+	else
+		gen_uplimit = btrfs_super_generation(super);
+
+	if (generation > gen_uplimit) {
+		error(
+	"invalid inode generation for ino %llu, have %llu expect [0, %llu)",
+		      inode_id, generation, gen_uplimit);
+		if (repair) {
+			ret = repair_inode_gen_lowmem(root, path);
+			if (ret < 0)
+				err |= INVALID_GENERATION;
+		} else {
+			err |= INVALID_GENERATION;
+		}
+
+	}
 	if (S_ISLNK(mode) &&
 	    flags & (BTRFS_INODE_IMMUTABLE | BTRFS_INODE_APPEND)) {
 		err |= INODE_FLAGS_ERROR;
