@@ -38,9 +38,9 @@ static int balance_node_right(struct btrfs_trans_handle *trans,
 			      struct extent_buffer *dst_buf,
 			      struct extent_buffer *src_buf);
 
-static struct btrfs_csum {
+static const struct btrfs_csum {
 	u16 size;
-	const char *name;
+	const char name[14];
 } btrfs_csums[] = {
 	[BTRFS_CSUM_TYPE_CRC32]		= {  4, "crc32c" },
 	[BTRFS_CSUM_TYPE_XXHASH]	= {  8, "xxhash64" },
