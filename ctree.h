@@ -167,6 +167,7 @@ struct btrfs_free_space_ctl;
 /* csum types */
 enum btrfs_csum_type {
 	BTRFS_CSUM_TYPE_CRC32		= 0,
+	BTRFS_CSUM_TYPE_XXHASH		= 1,
 };
 
 #define BTRFS_EMPTY_DIR_SIZE 0
