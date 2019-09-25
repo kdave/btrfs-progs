@@ -1381,7 +1381,9 @@ raid_groups:
 			pretty_size(allocation.system));
 		printf("SSD detected:       %s\n", ssd ? "yes" : "no");
 		btrfs_parse_features_to_string(features_buf, features);
-		printf("Incompat features:  %s", features_buf);
+		printf("Incompat features:  %s\n", features_buf);
+		printf("Checksum:           %s",
+		       btrfs_super_csum_name(mkfs_cfg.csum_type));
 		printf("\n");
 
 		list_all_devices(root);
