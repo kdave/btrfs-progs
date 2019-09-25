@@ -20,7 +20,7 @@
 #include <getopt.h>
 
 #include "volumes.h"
-#include "kernel-lib/crc32c.h"
+#include "crypto/crc32c.h"
 #include "cmds/commands.h"
 #include "common/utils.h"
 #include "common/help.h"

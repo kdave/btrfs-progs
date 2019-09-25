@@ -29,7 +29,7 @@
 #include "disk-io.h"
 #include "volumes.h"
 #include "transaction.h"
-#include "kernel-lib/crc32c.h"
+#include "crypto/crc32c.h"
 #include "common/utils.h"
 #include "print-tree.h"
 #include "common/rbtree-utils.h"

@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "kernel-lib/crc32c.h"
+#include "crypto/crc32c.h"
 #include "common/utils.h"
 
 void print_usage(int status)

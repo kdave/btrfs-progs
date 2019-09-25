@@ -26,7 +26,7 @@
 #include "disk-io.h"
 #include "print-tree.h"
 #include "transaction.h"
-#include "kernel-lib/crc32c.h"
+#include "crypto/crc32c.h"
 #include "volumes.h"
 #include "free-space-cache.h"
 #include "free-space-tree.h"

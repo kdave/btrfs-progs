@@ -24,7 +24,7 @@
 #include "disk-io.h"
 #include "transaction.h"
 #include "print-tree.h"
-#include "kernel-lib/crc32c.h"
+#include "crypto/crc32c.h"
 #include "common/internal.h"
 
 #define MAX_CSUM_ITEMS(r, size) ((((BTRFS_LEAF_DATA_SIZE(r->fs_info) - \

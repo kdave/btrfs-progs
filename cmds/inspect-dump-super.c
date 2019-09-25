@@ -32,7 +32,7 @@
 #include "kernel-lib/list.h"
 #include "common/utils.h"
 #include "cmds/commands.h"
-#include "kernel-lib/crc32c.h"
+#include "crypto/crc32c.h"
 #include "common/help.h"
 
 static int check_csum_sblock(void *sb, int csum_size, u16 csum_type)

@@ -45,7 +45,7 @@
 #include "common/rbtree-utils.h"
 #include "mkfs/common.h"
 #include "mkfs/rootdir.h"
-#include "kernel-lib/crc32c.h"
+#include "crypto/crc32c.h"
 #include "common/fsfeatures.h"
 #include "common/box.h"
 

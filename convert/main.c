@@ -102,7 +102,7 @@
 #include "mkfs/common.h"
 #include "convert/common.h"
 #include "convert/source-fs.h"
-#include "kernel-lib/crc32c.h"
+#include "crypto/crc32c.h"
 #include "common/fsfeatures.h"
 #include "common/box.h"
 

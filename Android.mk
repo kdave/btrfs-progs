@@ -32,10 +32,10 @@ cmds_objects := cmds-subvolume.c cmds-filesystem.c cmds-device.c cmds-scrub.c \
                cmds-inspect-dump-super.c cmds-inspect-tree-stats.c cmds-fi-du.c \
                mkfs/common.c
 libbtrfs_objects := send-stream.c send-utils.c kernel-lib/rbtree.c btrfs-list.c \
-                   kernel-lib/crc32c.c messages.c \
+                   crypto/crc32c.c messages.c \
                    uuid-tree.c utils-lib.c rbtree-utils.c
 libbtrfs_headers := send-stream.h send-utils.h send.h kernel-lib/rbtree.h btrfs-list.h \
-                   kernel-lib/crc32c.h kernel-lib/list.h kerncompat.h \
+                   crypto/crc32c.h kernel-lib/list.h kerncompat.h \
                    kernel-lib/radix-tree.h kernel-lib/sizes.h kernel-lib/raid56.h \
                    extent-cache.h extent_io.h ioctl.h ctree.h btrfsck.h version.h
 blkid_objects := partition/ superblocks/ topology/
