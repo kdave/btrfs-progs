@@ -1377,11 +1377,11 @@ int btrfs_check_super(struct btrfs_super_block *sb, unsigned sbflags)
 	}
 
 	csum_type = btrfs_super_csum_type(sb);
-	if (csum_type >= ARRAY_SIZE(btrfs_csum_sizes)) {
+	if (csum_type >= btrfs_super_num_csums()) {
 		error("unsupported checksum algorithm %u", csum_type);
 		return -EIO;
 	}
-	csum_size = btrfs_csum_sizes[csum_type];
+	csum_size = btrfs_super_csum_size(sb);
 
 	btrfs_csum_data(csum_type, (u8 *)sb + BTRFS_CSUM_SIZE,
 			result, BTRFS_SUPER_INFO_SIZE - BTRFS_CSUM_SIZE);

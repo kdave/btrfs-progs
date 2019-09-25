@@ -38,6 +38,35 @@ static int balance_node_right(struct btrfs_trans_handle *trans,
 			      struct extent_buffer *dst_buf,
 			      struct extent_buffer *src_buf);
 
+static struct btrfs_csum {
+	u16 size;
+	const char *name;
+} btrfs_csums[] = {
+	[BTRFS_CSUM_TYPE_CRC32]		= {  4, "crc32c" },
+};
+
+u16 btrfs_super_csum_size(const struct btrfs_super_block *sb)
+{
+	const u16 csum_type = btrfs_super_csum_type(sb);
+
+	return btrfs_csums[csum_type].size;
+}
+
+const char *btrfs_super_csum_name(u16 csum_type)
+{
+	return btrfs_csums[csum_type].name;
+}
+
+size_t btrfs_super_num_csums(void)
+{
+	return ARRAY_SIZE(btrfs_csums);
+}
+
+u16 btrfs_csum_type_size(u16 csum_type)
+{
+	return btrfs_csums[csum_type].size;
+}
+
 inline void btrfs_init_path(struct btrfs_path *p)
 {
 	memset(p, 0, sizeof(*p));

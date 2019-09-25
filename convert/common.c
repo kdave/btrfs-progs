@@ -224,7 +224,7 @@ static inline int write_temp_extent_buffer(int fd, struct extent_buffer *buf,
 {
 	int ret;
 
-	csum_tree_block_size(buf, btrfs_csum_sizes[cfg->csum_type], 0,
+	csum_tree_block_size(buf, btrfs_csum_type_size(cfg->csum_type), 0,
 			     cfg->csum_type);
 
 	/* Temporary extent buffer is always mapped 1:1 on disk */
