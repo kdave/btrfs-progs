@@ -141,15 +141,11 @@ static void print_tree_block_error(struct btrfs_fs_info *fs_info,
 
 int btrfs_csum_data(u16 csum_type, const u8 *data, u8 *out, size_t len)
 {
-	u32 crc = ~(u32)0;
-
 	memset(out, 0, BTRFS_CSUM_SIZE);
 
 	switch (csum_type) {
 	case BTRFS_CSUM_TYPE_CRC32:
-		crc = crc32c(crc, data, len);
-		put_unaligned_le32(~crc, out);
-		return 0;
+		return hash_crc32c(data, len, out);
 	case BTRFS_CSUM_TYPE_XXHASH:
 		return hash_xxhash(data, len, out);
 	default:
