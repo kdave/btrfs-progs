@@ -18,7 +18,7 @@
 #include "common/internal.h"
 #include "common/messages.h"
 #include "common/utils.h"
-#include "kernel-lib/crc32c.h"
+#include "crypto/crc32c.h"
 #include "image/sanitize.h"
 #include "extent_io.h"
 

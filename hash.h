@@ -19,7 +19,7 @@
 #ifndef __BTRFS_HASH_H__
 #define __BTRFS_HASH_H__
 
-#include "kernel-lib/crc32c.h"
+#include "crypto/crc32c.h"
 
 static inline u64 btrfs_name_hash(const char *name, int len)
 {

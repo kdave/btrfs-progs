@@ -28,7 +28,7 @@
 #include <getopt.h>
 
 #include "kerncompat.h"
-#include "kernel-lib/crc32c.h"
+#include "crypto/crc32c.h"
 #include "ctree.h"
 #include "disk-io.h"
 #include "transaction.h"

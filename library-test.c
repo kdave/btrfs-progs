@@ -21,7 +21,7 @@
 #include "version.h"
 #include "kernel-lib/rbtree.h"
 #include "kernel-lib/radix-tree.h"
-#include "kernel-lib/crc32c.h"
+#include "crypto/crc32c.h"
 #include "kernel-lib/list.h"
 #include "kernel-lib/sizes.h"
 #include "ctree.h"

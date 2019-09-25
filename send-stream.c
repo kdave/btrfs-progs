@@ -21,7 +21,7 @@
 
 #include "send.h"
 #include "send-stream.h"
-#include "kernel-lib/crc32c.h"
+#include "crypto/crc32c.h"
 #include "common/utils.h"
 
 struct btrfs_send_stream {

@@ -47,7 +47,7 @@
 #include "ctree.h"
 #include "disk-io.h"
 #include "transaction.h"
-#include "kernel-lib/crc32c.h"
+#include "crypto/crc32c.h"
 #include "common/utils.h"
 #include "common/path-utils.h"
 #include "common/device-scan.h"

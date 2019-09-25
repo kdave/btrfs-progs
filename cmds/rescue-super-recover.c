@@ -31,7 +31,7 @@
 #include "disk-io.h"
 #include "kernel-lib/list.h"
 #include "common/utils.h"
-#include "kernel-lib/crc32c.h"
+#include "crypto/crc32c.h"
 #include "volumes.h"
 #include "cmds/commands.h"
 #include "cmds/rescue.h"

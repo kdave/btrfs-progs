@@ -24,7 +24,7 @@
 #include <string.h>
 #include <limits.h>
 #include <byteswap.h>
-#include "kernel-lib/crc32c.h"
+#include "crypto/crc32c.h"
 #include "disk-io.h"
 
 #define BLOCKSIZE (4096)
