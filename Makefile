@@ -438,7 +438,7 @@ endif
 # NOTE: For static compiles, you need to have all the required libs
 # 	static equivalent available
 #
-static: $(progs_static)
+static: $(progs_static) $(libs_static)
 
 version.h: version.h.in configure.ac
 	@echo "    [SH]     $@"
@@ -769,6 +769,10 @@ install-static: $(progs_static) $(INSTALLDIRS)
 	$(INSTALL) $(progs_static) $(DESTDIR)$(bindir)
 	# btrfsck is a link to btrfs in the src tree, make it so for installed file as well
 	$(LN_S) -f btrfs.static $(DESTDIR)$(bindir)/btrfsck.static
+	$(INSTALL) -m755 -d $(DESTDIR)$(libdir)
+	$(INSTALL) $(libs_static) $(DESTDIR)$(libdir)
+	$(INSTALL) -m755 -d $(DESTDIR)$(incdir)/btrfs
+	$(INSTALL) -m644 $(libbtrfs_headers) $(DESTDIR)$(incdir)/btrfs
 
 $(INSTALLDIRS):
 	@echo "Making install in $(patsubst install-%,%,$@)"
