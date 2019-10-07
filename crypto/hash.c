@@ -2,6 +2,7 @@
 #include "crypto/crc32c.h"
 #include "crypto/xxhash.h"
 #include "crypto/sha.h"
+#include "crypto/blake2.h"
 
 int hash_crc32c(const u8* buf, size_t length, u8 *out)
 {
@@ -34,6 +35,17 @@ int hash_sha256(const u8 *buf, size_t len, u8 *out)
 	SHA256Reset(&context);
 	SHA256Input(&context, buf, len);
 	SHA256Result(&context, out);
+
+	return 0;
+}
+
+int hash_blake2b(const u8 *buf, size_t len, u8 *out)
+{
+	blake2b_state S;
+
+	blake2b_init(&S, CRYPTO_HASH_SIZE_MAX);
+	blake2b_update(&S, buf, len);
+	blake2b_final(&S, out, CRYPTO_HASH_SIZE_MAX);
 
 	return 0;
 }
