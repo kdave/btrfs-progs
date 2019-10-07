@@ -317,6 +317,7 @@ static bool is_valid_csum_type(u16 csum_type)
 	case BTRFS_CSUM_TYPE_CRC32:
 	case BTRFS_CSUM_TYPE_XXHASH:
 	case BTRFS_CSUM_TYPE_SHA256:
+	case BTRFS_CSUM_TYPE_BLAKE2:
 		return true;
 	default:
 		return false;

@@ -397,6 +397,9 @@ static enum btrfs_csum_type parse_csum_type(const char *s)
 		return BTRFS_CSUM_TYPE_XXHASH;
 	} else if (strcasecmp(s, "sha256") == 0) {
 		return BTRFS_CSUM_TYPE_SHA256;
+	} else if (strcasecmp(s, "blake2b") == 0 ||
+		   strcasecmp(s, "blake2") == 0) {
+		return BTRFS_CSUM_TYPE_BLAKE2;
 	} else {
 		error("unknown csum type %s", s);
 		exit(1);
