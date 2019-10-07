@@ -1,6 +1,7 @@
 #include "crypto/hash.h"
 #include "crypto/crc32c.h"
 #include "crypto/xxhash.h"
+#include "crypto/sha.h"
 
 int hash_crc32c(const u8* buf, size_t length, u8 *out)
 {
@@ -22,6 +23,17 @@ int hash_xxhash(const u8 *buf, size_t length, u8 *out)
 	 * be compatible with the kernel implementation!
 	 */
 	memcpy(out, &hash, 8);
+
+	return 0;
+}
+
+int hash_sha256(const u8 *buf, size_t len, u8 *out)
+{
+	SHA256Context context;
+
+	SHA256Reset(&context);
+	SHA256Input(&context, buf, len);
+	SHA256Result(&context, out);
 
 	return 0;
 }

@@ -44,6 +44,7 @@ static const struct btrfs_csum {
 } btrfs_csums[] = {
 	[BTRFS_CSUM_TYPE_CRC32]		= {  4, "crc32c" },
 	[BTRFS_CSUM_TYPE_XXHASH]	= {  8, "xxhash64" },
+	[BTRFS_CSUM_TYPE_SHA256]	= { 32, "sha256" },
 };
 
 u16 btrfs_super_csum_size(const struct btrfs_super_block *sb)
