@@ -2,6 +2,7 @@
 #include "crypto/hash.h"
 #include "crypto/crc32c.h"
 #include "crypto/sha.h"
+#include "crypto/blake2.h"
 
 #ifndef __x86_64__
 #error "Only x86_64 supported"
@@ -62,6 +63,7 @@ int main(int argc, char **argv) {
 		{ .name = "CRC32C", .digest = hash_crc32c, .digest_size = 4 },
 		{ .name = "XXHASH", .digest = hash_xxhash, .digest_size = 8 },
 		{ .name = "SHA256", .digest = hash_sha256, .digest_size = 32 },
+		{ .name = "BLAKE2b", .digest = hash_blake2b, .digest_size = 32 },
 	};
 
 	if (argc > 1) {
