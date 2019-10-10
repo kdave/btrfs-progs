@@ -2545,7 +2545,7 @@ int update_space_info(struct btrfs_fs_info *info, u64 flags,
 		      u64 total_bytes, u64 bytes_used,
 		      struct btrfs_space_info **space_info);
 int btrfs_free_block_groups(struct btrfs_fs_info *info);
-int btrfs_read_block_groups(struct btrfs_root *root);
+int btrfs_read_block_groups(struct btrfs_fs_info *info);
 struct btrfs_block_group_cache *
 btrfs_add_block_group(struct btrfs_fs_info *fs_info, u64 bytes_used, u64 type,
 		      u64 chunk_offset, u64 size);
