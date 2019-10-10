@@ -5620,7 +5620,7 @@ static int check_space_cache(struct btrfs_root *root)
 		}
 
 		if (btrfs_fs_compat_ro(root->fs_info, FREE_SPACE_TREE)) {
-			ret = exclude_super_stripes(root, cache);
+			ret = exclude_super_stripes(root->fs_info, cache);
 			if (ret) {
 				errno = -ret;
 				fprintf(stderr,
@@ -5629,7 +5629,7 @@ static int check_space_cache(struct btrfs_root *root)
 				continue;
 			}
 			ret = load_free_space_tree(root->fs_info, cache);
-			free_excluded_extents(root, cache);
+			free_excluded_extents(root->fs_info, cache);
 			if (ret < 0) {
 				errno = -ret;
 				fprintf(stderr,
