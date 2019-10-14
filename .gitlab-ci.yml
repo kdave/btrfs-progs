@@ -1,0 +1,157 @@
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public
+# License v2 as published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public
+# License along with this program; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+# Boston, MA 021110-1307, USA.
+#
+
+image: docker:18.09.7
+
+services:
+    - docker:18.09.7-dind
+
+# To enable or disable Kernel Build set BUILD_KERNEL: "1" or BUILD_KERNEL: "0"
+# If you disable Kernel Build, make sure PREBUILT_KERNEL_ID points to previously built the kernel job id.
+# To enable or disable image build update BUILD_IMAGE value to "1" or "0".
+# If you disable Image Build, make sure PREBUILT_IMAGE_ID points to previously built rootfs job id.
+
+variables:
+  DOCKER_DRIVER: overlay2
+  IMAGE_TAG: registry.gitlab.com/$CI_PROJECT_NAMESPACE/btrfs-progs:gitlab-ci
+  BUILD_KERNEL: "1"
+  PREBUILT_KERNEL_ID: "320566224"
+  BUILD_IMAGE: "1"
+  PREBUILT_IMAGE_ID: "288506168"
+
+stages:
+  - build
+  - btrfs-progs build
+  - test
+
+before_script:
+   - docker login --username $CI_REGISTRY_USER --password $CI_REGISTRY_PASSWORD $CI_REGISTRY
+
+docker build:
+  stage: build
+  script:
+    - cd ci/gitlab
+    - docker pull $IMAGE_TAG > /dev/null && echo "Downloaded image" || ( docker build -t $IMAGE_TAG . && docker push $IMAGE_TAG )
+
+
+kernel build:
+  before_script:
+    - apk add curl unzip
+  stage: build
+  script:
+     - if [ "$BUILD_KERNEL" == "1" ]; then
+         docker run --cap-add SYS_PTRACE --cap-add sys_admin --privileged --device=/dev/kvm -v $PWD:/repo $IMAGE_TAG /repo/ci/gitlab/kernel_build.sh;
+       else
+         curl -o bzImage.zip --location --header "JOB-TOKEN:$CI_JOB_TOKEN"  "https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/jobs/$PREBUILT_KERNEL_ID/artifacts" && unzip bzImage.zip;
+       fi;
+  artifacts:
+    when: always
+    paths:
+      - bzImage
+
+
+image build:
+  before_script:
+    - apk add curl unzip
+  stage: build
+  script:
+     - if [ "$BUILD_IMAGE" == "1" ]; then
+          docker run --cap-add SYS_PTRACE --cap-add sys_admin --privileged --device=/dev/kvm -v $PWD:/repo $IMAGE_TAG /repo/ci/gitlab/setup_image.sh;
+       else
+          curl  -o qemu-image.img.zip --location --header "JOB-TOKEN:$CI_JOB_TOKEN" "https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/jobs/$PREBUILT_IMAGE_ID/artifacts" && unzip qemu-image.img.zip;
+       fi;
+  artifacts:
+    when: always
+    paths:
+      - qemu-image.img
+
+btrfs-progs build:
+  stage: btrfs-progs build
+  script:
+     - docker run --cap-add SYS_PTRACE --cap-add sys_admin --privileged --device=/dev/kvm -v $PWD:/repo $IMAGE_TAG /repo/ci/gitlab/run_tests.sh
+  artifacts:
+    expire_in: 1 week
+    when: always
+    paths:
+      - qemu-image.img
+
+cli tests:
+  stage: test
+  script:
+     - echo "./cli-tests.sh" > $PWD/cmd
+     - docker run --cap-add SYS_PTRACE --cap-add sys_admin --privileged --device=/dev/kvm -v $PWD:/repo $IMAGE_TAG /repo/ci/gitlab/run_tests.sh
+     - test -e "result" || exit 1 # If result doesn't exists, job failed.
+  artifacts:
+    when: always
+    paths:
+      - "*tests-results.txt"
+
+convert tests:
+  only:
+    - devel
+  stage: test
+  script:
+     - echo "./convert-tests.sh" > $PWD/cmd
+     - docker run --cap-add SYS_PTRACE --cap-add sys_admin --privileged --device=/dev/kvm -v $PWD:/repo $IMAGE_TAG /repo/ci/gitlab/run_tests.sh
+     - test -e "result" || exit 1
+  artifacts:
+    when: always
+    paths:
+      - "*tests-results.txt"
+
+fsck tests:
+  stage: test
+  script:
+     - echo "./fsck-tests.sh" > $PWD/cmd
+     - docker run --cap-add SYS_PTRACE --cap-add sys_admin --privileged --device=/dev/kvm -v $PWD:/repo $IMAGE_TAG /repo/ci/gitlab/run_tests.sh
+     - test -e "result" || exit 1
+  artifacts:
+    when: always
+    paths:
+      - "*tests-results.txt"
+      - error.log
+
+fuzz tests:
+  stage: test
+  script:
+     - echo "./fuzz-tests.sh" > $PWD/cmd
+     - docker run --cap-add SYS_PTRACE --cap-add sys_admin --privileged --device=/dev/kvm -v $PWD:/repo $IMAGE_TAG /repo/ci/gitlab/run_tests.sh
+     - test -e "result" || exit 1
+  artifacts:
+    when: always
+    paths:
+      - "*tests-results.txt"
+
+misc tests:
+  stage: test
+  script:
+     - echo "./misc-tests.sh" > $PWD/cmd
+     - docker run --cap-add SYS_PTRACE --cap-add sys_admin --privileged --device=/dev/kvm -v $PWD:/repo $IMAGE_TAG /repo/ci/gitlab/run_tests.sh
+     - test -e "result" || exit 1
+  artifacts:
+    when: always
+    paths:
+      - "*tests-results.txt"
+
+mkfs tests:
+  stage: test
+  script:
+     - echo "./mkfs-tests.sh" > $PWD/cmd
+     - docker run --cap-add SYS_PTRACE --cap-add sys_admin --privileged --device=/dev/kvm -v $PWD:/repo $IMAGE_TAG /repo/ci/gitlab/run_tests.sh
+     - test -e "result" || exit 1
+  artifacts:
+    when: always
+    paths:
+      - "*tests-results.txt"
