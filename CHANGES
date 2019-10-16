@@ -1,3 +1,17 @@
+btrfs-progs-5.3 (2019-10-21)
+  * mkfs:
+    * new option to specify checksum algorithm (only crc32c)
+    * fix xattr enumeration
+  * dump-tree: BFS (breadth-first) traversal now default
+  * libbtrfsutil: remove stale BTRFS_DEV_REPLACE_ITEM_STATE_x defines
+  * ci: add support for gitlab
+  * other:
+    * preparatory work for more checksum algorithms
+    * docs update
+    * switch to docbook5 backend for asciidoc
+    * fix build on uClibc due to missing backtrace()
+    * lots of printf format fixups
+
 btrfs-progs-5.2.2 (2019-09-05)
   * check:
     * fix false report of wrong byte count for orphan inodes
