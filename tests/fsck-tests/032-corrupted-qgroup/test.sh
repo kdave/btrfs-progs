@@ -13,7 +13,7 @@ check_image() {
 		     "$TOP/btrfs" check "$1"
 	# Above command can fail due to other bugs, so add extra check to
 	# ensure we can fix qgroup without problems.
-	run_check "$TOP/btrfs" check --repair "$1"
+	run_check "$TOP/btrfs" check --repair --force "$1"
 }
 
 check_all_images

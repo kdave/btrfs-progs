@@ -35,7 +35,7 @@ test_extent_tree_rebuild()
 
 	$SUDO_HELPER "$TOP/btrfs" check "$TEST_DEV" >& /dev/null && \
 			_fail "btrfs check should detect failure"
-	run_check $SUDO_HELPER "$TOP/btrfs" check --repair --init-extent-tree "$TEST_DEV"
+	run_check $SUDO_HELPER "$TOP/btrfs" check --repair --force --init-extent-tree "$TEST_DEV"
 	run_check $SUDO_HELPER "$TOP/btrfs" check "$TEST_DEV"
 }
 
