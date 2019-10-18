@@ -27,17 +27,17 @@ mkfs.btrfs uses the entire device space for the filesystem.
 
 *-d|--data <profile>*::
 Specify the profile for the data block groups.  Valid values are 'raid0',
-'raid1', 'raid5', 'raid6', 'raid10' or 'single' or dup (case does not matter).
+'raid1', 'raid5', 'raid6', 'raid10' or 'single' or 'dup' (case does not matter).
 +
-See 'DUP PROFILES ON A SINGLE DEVICE' for more.
+See 'DUP PROFILES ON A SINGLE DEVICE' for more details.
 
 *-m|--metadata <profile>*::
 Specify the profile for the metadata block groups.
 Valid values are 'raid0', 'raid1', 'raid5', 'raid6', 'raid10', 'single' or
-'dup', (case does not matter).
+'dup' (case does not matter).
 +
-A single device filesystem will default to 'DUP', unless a SSD is detected. Then
-it will default to 'single'. The detection is based on the value of
+A single device filesystem will default to 'DUP', unless an SSD is detected, in which
+case it will default to 'single'. The detection is based on the value of
 `/sys/block/DEV/queue/rotational`, where 'DEV' is the short name of the device.
 +
 Note that the rotational status can be arbitrarily set by the underlying block

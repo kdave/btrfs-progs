@@ -231,12 +231,6 @@ during a period of low system activity will prevent latent interference with
 the performance of other operations. Also, a device may ignore the TRIM command
 if the range is too small, so running a batch discard has a greater probability
 of actually discarding the blocks.
-+
-If discarding is not necessary to be done at the block freeing time, there's
-`fstrim`(8) tool that lets the filesystem discard all free blocks in a batch,
-possibly not much interfering with other operations. Also, the device may
-ignore the TRIM command if the range is too small, so running the batch discard
-can actually discard the blocks.
 
 *enospc_debug*::
 *noenospc_debug*::
@@ -666,7 +660,7 @@ swapfile extents or may fail:
 * resize shrink - works as long as the extents are outside of the shrunk range
 * device add - a new device does not interfere with existing swapfile and this operation will work, though no new swapfile can be activated afterwards
 * device delete - if the device has been added as above, it can be also deleted
-* device replace - dtto
+* device replace - ditto
  
 When there are no active swapfiles and a whole-filesystem exclusive operation
 is running (ie. balance, device delete, shrink), the swapfiles cannot be
