@@ -78,6 +78,9 @@ TOPDIR := .
 DISABLE_WARNING_FLAGS := $(call cc-disable-warning, format-truncation) \
 	$(call cc-disable-warning, address-of-packed-member)
 
+# Warnings that we want by default
+ENABLE_WARNING_FLAGS := $(call cc-option, -Wimplicit-fallthrough)
+
 # Common build flags
 CFLAGS = $(SUBST_CFLAGS) \
 	 $(CSTD) \
@@ -89,6 +92,7 @@ CFLAGS = $(SUBST_CFLAGS) \
 	 -I$(TOPDIR) \
 	 -I$(TOPDIR)/libbtrfsutil \
 	 $(DISABLE_WARNING_FLAGS) \
+	 $(ENABLE_WARNING_FLAGS) \
 	 $(EXTRAWARN_CFLAGS) \
 	 $(DEBUG_CFLAGS_INTERNAL) \
 	 $(EXTRA_CFLAGS)
