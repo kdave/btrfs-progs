@@ -32,7 +32,7 @@ cache:
 git:
   depth: 1
 
-dist: xenial
+dist: bionic
 group: unstable
 
 branches:
