@@ -1,0 +1,58 @@
+LIBBTRFS_0.1 {
+global:
+	/* ctree.h */
+	btrfs_get_subvol;
+	btrfs_list_get_path_rootid;
+	btrfs_lookup_uuid_received_subvol_item;
+	btrfs_lookup_uuid_subvol_item;
+
+	/* btrfs-list.h */
+	btrfs_subvolid_resolve;
+
+	/* radix-tree.h */
+	radix_tree_delete;
+	radix_tree_gang_lookup;
+	radix_tree_gang_lookup_tag;
+	radix_tree_init;
+	radix_tree_insert;
+	radix_tree_lookup;
+	radix_tree_lookup_slot;
+	radix_tree_preload;
+	radix_tree_tag_clear;
+	radix_tree_tagged;
+	radix_tree_tag_get;
+	radix_tree_tag_set;
+
+	/* raid56.h */
+	raid56_recov;
+	raid5_gen_result;
+	raid6_gen_syndrome;
+	raid6_recov_data2;
+	raid6_recov_datap;
+
+	/* rbtree.h */
+	rb_erase;
+	rb_first;
+	rb_first_postorder;
+	rb_insert_color;
+	rb_last;
+	rb_next;
+	rb_next_postorder;
+	rb_prev;
+	rb_replace_node;
+
+	/* send-stream.h */
+	btrfs_read_and_process_send_stream;
+
+	/* send-utils.h */
+	subvol_uuid_search;
+	subvol_uuid_search2;
+	subvol_uuid_search_add;
+	subvol_uuid_search_finit;
+	subvol_uuid_search_init;
+	btrfs_subvolid_resolve;
+	path_cat_out;
+	path_cat3_out;
+local:
+	*;
+};
