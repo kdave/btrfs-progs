@@ -475,10 +475,11 @@ libbtrfsutil/%.o: libbtrfsutil/%.c
 	@echo "    [CC]     $@"
 	$(Q)$(CC) $(LIBBTRFSUTIL_CFLAGS) -o $@ -c $< -o $@
 
-libbtrfsutil.so.$(libbtrfsutil_version): $(libbtrfsutil_objects)
+libbtrfsutil.so.$(libbtrfsutil_version): $(libbtrfsutil_objects) libbtrfsutil.sym
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(LIBBTRFSUTIL_CFLAGS) $(libbtrfsutil_objects) $(LIBBTRFSUTIL_LDFLAGS) \
-		-shared -Wl,-soname,libbtrfsutil.so.$(libbtrfsutil_major) -o $@
+		-shared -Wl,-soname,libbtrfsutil.so.$(libbtrfsutil_major) \
+		-Wl,--version-script=libbtrfsutil.sym -o $@
 
 libbtrfsutil.a: $(libbtrfsutil_objects)
 	@echo "    [AR]     $@"

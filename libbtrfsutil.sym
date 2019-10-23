@@ -1,0 +1,47 @@
+LIBBTRFSUTIL_1.1 {
+global:
+	btrfs_util_create_qgroup_inherit;
+	btrfs_util_create_snapshot;
+	btrfs_util_create_snapshot_fd;
+	btrfs_util_create_snapshot_fd2;
+	btrfs_util_create_subvolume;
+	btrfs_util_create_subvolume_fd;
+	btrfs_util_create_subvolume_iterator;
+	btrfs_util_create_subvolume_iterator_fd;
+	btrfs_util_deleted_subvolumes;
+	btrfs_util_deleted_subvolumes_fd;
+	btrfs_util_delete_subvolume;
+	btrfs_util_delete_subvolume_fd;
+	btrfs_util_destroy_qgroup_inherit;
+	btrfs_util_destroy_subvolume_iterator;
+	btrfs_util_get_default_subvolume;
+	btrfs_util_get_default_subvolume_fd;
+	btrfs_util_get_subvolume_read_only;
+	btrfs_util_get_subvolume_read_only_fd;
+	btrfs_util_is_subvolume;
+	btrfs_util_is_subvolume_fd;
+	btrfs_util_qgroup_inherit_add_group;
+	btrfs_util_qgroup_inherit_get_groups;
+	btrfs_util_set_default_subvolume;
+	btrfs_util_set_default_subvolume_fd;
+	btrfs_util_set_subvolume_read_only;
+	btrfs_util_set_subvolume_read_only_fd;
+	btrfs_util_start_sync;
+	btrfs_util_start_sync_fd;
+	btrfs_util_strerror;
+	btrfs_util_subvolume_id;
+	btrfs_util_subvolume_id_fd;
+	btrfs_util_subvolume_info;
+	btrfs_util_subvolume_info_fd;
+	btrfs_util_subvolume_iterator_fd;
+	btrfs_util_subvolume_iterator_next;
+	btrfs_util_subvolume_iterator_next_info;
+	btrfs_util_subvolume_path;
+	btrfs_util_subvolume_path_fd;
+	btrfs_util_sync;
+	btrfs_util_sync_fd;
+	btrfs_util_wait_sync;
+	btrfs_util_wait_sync_fd;
+local:
+	*;
+};
