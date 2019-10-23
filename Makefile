@@ -150,13 +150,18 @@ cmds_objects = cmds/subvolume.o cmds/filesystem.o cmds/device.o cmds/scrub.o \
 	       cmds/inspect-dump-super.o cmds/inspect-tree-stats.o cmds/filesystem-du.o \
 	       mkfs/common.o check/mode-common.o check/mode-lowmem.o
 libbtrfs_objects = send-stream.o send-utils.o kernel-lib/rbtree.o btrfs-list.o \
-		   kernel-lib/radix-tree.o extent-cache.o extent_io.o \
+		   kernel-lib/radix-tree.o extent-cache.o extent_io.o ctree.o volumes.o \
+			 disk-io.o extent-tree.o delayed-ref.o print-tree.o common/device-scan.o \
+			 common/utils.o free-space-cache.o common/path-utils.o root-tree.o \
+			 transaction.o file-item.o kernel-lib/raid56.o kernel-lib/tables.o \
 		   kernel-lib/crc32c.o common/messages.o \
 		   uuid-tree.o utils-lib.o common/rbtree-utils.o
 libbtrfs_headers = send-stream.h send-utils.h send.h kernel-lib/rbtree.h btrfs-list.h \
 	       kernel-lib/crc32c.h kernel-lib/list.h kerncompat.h \
 	       kernel-lib/radix-tree.h kernel-lib/sizes.h kernel-lib/raid56.h \
-	       extent-cache.h extent_io.h ioctl.h ctree.h btrfsck.h version.h
+	       extent-cache.h extent_io.h ioctl.h ctree.h btrfsck.h version.h \
+				 volumes.h disk-io.h delayed-ref.h print-tree.h free-space-cache.h \
+				 common/device-scan.h common/utils.h common/path-utils.h transaction.h 
 libbtrfsutil_major := $(shell sed -rn 's/^\#define BTRFS_UTIL_VERSION_MAJOR ([0-9])+$$/\1/p' libbtrfsutil/btrfsutil.h)
 libbtrfsutil_minor := $(shell sed -rn 's/^\#define BTRFS_UTIL_VERSION_MINOR ([0-9])+$$/\1/p' libbtrfsutil/btrfsutil.h)
 libbtrfsutil_patch := $(shell sed -rn 's/^\#define BTRFS_UTIL_VERSION_PATCH ([0-9])+$$/\1/p' libbtrfsutil/btrfsutil.h)
