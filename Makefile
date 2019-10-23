@@ -131,16 +131,14 @@ CHECKER_FLAGS := -include $(check_defs) -D__CHECKER__ \
 	-D__CHECK_ENDIAN__ -Wbitwise -Wuninitialized -Wshadow -Wundef \
 	-U_FORTIFY_SOURCE -Wdeclaration-after-statement -Wdefault-bitfield-sign
 
-objects = ctree.o disk-io.o extent-tree.o print-tree.o \
-	  root-tree.o dir-item.o file-item.o inode-item.o inode-map.o \
-	  volumes.o common/utils.o repair.o \
-	  qgroup.o free-space-cache.o kernel-lib/list_sort.o props.o \
+objects = dir-item.o inode-map.o \
+	  qgroup.o kernel-lib/list_sort.o props.o \
 	  kernel-shared/ulist.o check/qgroup-verify.o backref.o common/string-table.o \
 	  common/task-utils.o \
-	  inode.o file.o find-root.o free-space-tree.o common/help.o send-dump.o \
-	  common/fsfeatures.o kernel-lib/tables.o kernel-lib/raid56.o transaction.o \
-	  delayed-ref.o common/format-output.o common/path-utils.o \
-	  common/device-utils.o common/device-scan.o
+	  inode.o file.o find-root.o common/help.o send-dump.o \
+	  common/fsfeatures.o \
+	  common/format-output.o \
+	  common/device-utils.o
 cmds_objects = cmds/subvolume.o cmds/filesystem.o cmds/device.o cmds/scrub.o \
 	       cmds/inspect.o cmds/balance.o cmds/send.o cmds/receive.o \
 	       cmds/quota.o cmds/qgroup.o cmds/replace.o check/main.o \
@@ -152,7 +150,13 @@ cmds_objects = cmds/subvolume.o cmds/filesystem.o cmds/device.o cmds/scrub.o \
 libbtrfs_objects = send-stream.o send-utils.o kernel-lib/rbtree.o btrfs-list.o \
 		   kernel-lib/radix-tree.o extent-cache.o extent_io.o \
 		   kernel-lib/crc32c.o common/messages.o \
-		   uuid-tree.o utils-lib.o common/rbtree-utils.o
+		   uuid-tree.o utils-lib.o common/rbtree-utils.o \
+		   ctree.o disk-io.o extent-tree.o delayed-ref.o print-tree.o \
+		   free-space-cache.o root-tree.o volumes.o transaction.o \
+		   free-space-tree.o repair.o inode-item.o file-item.o \
+		   kernel-lib/raid56.o kernel-lib/tables.o \
+		   common/device-scan.o common/path-utils.o \
+		   common/utils.o libbtrfsutil/subvolume.o libbtrfsutil/stubs.o
 libbtrfs_headers = send-stream.h send-utils.h send.h kernel-lib/rbtree.h btrfs-list.h \
 	       kernel-lib/crc32c.h kernel-lib/list.h kerncompat.h \
 	       kernel-lib/radix-tree.h kernel-lib/sizes.h kernel-lib/raid56.h \
