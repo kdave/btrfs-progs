@@ -63,6 +63,45 @@ Print status and progress information of a running device replace operation.
 print once instead of print continuously until the replace
 operation finishes (or is cancelled)
 
+
+EXAMPLES
+--------
+
+Replacing an online drive with a bigger one
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Given the filesystem:
+
+----
+Label: 'MyVault'  uuid: ae20903e-b72d-49ba-b944-901fc6d888a1
+	Total devices 2 FS bytes used 1TiB
+	devid    1 size 1TiB used 500.00GiB path /dev/sda
+	devid    2 size 1TiB used 500.00GiB path /dev/sdb
+----
+
+In order to replace '/dev/sda' ('devid 1') with a bigger drive located at
+'/dev/sdc' you would run the following:
+
+[source,shell]
+----
+btrfs replace start 1 /dev/sdc /mnt/my-vault/
+----
+
+You can monitor progress by:
+
+[source,shell]
+----
+btrfs replace status /mnt/my-vault/
+----
+
+After the replacement is complete, as per the docs at `btrfs-filesystem`(8) in
+order to use the entire storage space of the new drive you need to run:
+
+[source,shell]
+----
+btrfs filesystem resize 1:max /mnt/my-vault/
+----
+
 EXIT STATUS
 -----------
 *btrfs replace* returns a zero exit status if it succeeds. Non zero is
@@ -78,3 +117,4 @@ SEE ALSO
 --------
 `mkfs.btrfs`(8),
 `btrfs-device`(8),
+`btrfs-filesystem`(8),
