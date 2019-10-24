@@ -624,9 +624,10 @@ library-test: library-test.c libbtrfs.so
 	@echo "    [TEST PREP]  $@"$(eval TMPD=$(shell mktemp -d))
 	$(Q)mkdir -p $(TMPD)/include/btrfs && \
 	cp $(libbtrfs_headers) $(TMPD)/include/btrfs && \
+	cp libbtrfs.so.0.1 $(TMPD) && \
 	cd $(TMPD) && $(CC) -I$(TMPD)/include -o $@ $(addprefix $(ABSTOPDIR)/,$^) -Wl,-rpath=$(ABSTOPDIR) -lbtrfs
 	@echo "    [TEST RUN]   $@"
-	$(Q)cd $(TMPD) && ./$@
+	$(Q)cd $(TMPD) && LD_PRELOAD=libbtrfs.so.0.1 ./$@
 	@echo "    [TEST CLEAN] $@"
 	$(Q)$(RM) -rf -- $(TMPD)
 
