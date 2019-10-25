@@ -1,4 +1,4 @@
-Btrfs-progs [![build status](https://travis-ci.org/kdave/btrfs-progs.svg?branch=devel)](https://travis-ci.org/kdave/btrfs-progs) [![coverity status](https://scan.coverity.com/projects/617/badge.svg)](https://scan.coverity.com/projects/btrfs-progs)
+Btrfs-progs [![build status](https://travis-ci.org/kdave/btrfs-progs.svg?branch=devel)](https://travis-ci.org/kdave/btrfs-progs) [![coverity status](https://scan.coverity.com/projects/617/badge.svg)](https://scan.coverity.com/projects/btrfs-progs) [![gitlab CI/CD](https://gitlab.com/kdave/btrfs-progs)](https://gitlab.com/kdave/btrfs-progs/badges/devel/build.svg)
 ===========
 
 Userspace utilities to manage btrfs filesystems.
