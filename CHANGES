@@ -1,3 +1,6 @@
+btrfs-progs-5.3.1 (2019-10-25)
+  * libbtrfs: fix link breakage due to missing symbols
+
 btrfs-progs-5.3 (2019-10-21)
   * mkfs:
     * new option to specify checksum algorithm (only crc32c)
