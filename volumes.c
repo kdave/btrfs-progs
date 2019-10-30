@@ -1238,14 +1238,11 @@ out_chunk:
 /*
  * Alloc a DATA chunk with SINGLE profile.
  *
- * If 'convert' is set, it will alloc a chunk with 1:1 mapping
- * (btrfs logical bytenr == on-disk bytenr)
- * For that case, caller must make sure the chunk and dev_extent are not
- * occupied.
+ * It allocates a chunk with 1:1 mapping (btrfs logical bytenr == on-disk bytenr)
+ * Caller must make sure the chunk and dev_extent are not occupied.
  */
 int btrfs_alloc_data_chunk(struct btrfs_trans_handle *trans,
-			   struct btrfs_fs_info *info, u64 *start,
-			   u64 num_bytes, int convert)
+			   struct btrfs_fs_info *info, u64 *start, u64 num_bytes)
 {
 	u64 dev_offset;
 	struct btrfs_root *extent_root = info->extent_root;
@@ -1264,24 +1261,17 @@ int btrfs_alloc_data_chunk(struct btrfs_trans_handle *trans,
 	int stripe_len = BTRFS_STRIPE_LEN;
 	struct btrfs_key key;
 
+
+	if (*start != round_down(*start, info->sectorsize)) {
+		error("DATA chunk start not sectorsize aligned: %llu",
+				(unsigned long long)*start);
+		return -EINVAL;
+	}
+
 	key.objectid = BTRFS_FIRST_CHUNK_TREE_OBJECTID;
 	key.type = BTRFS_CHUNK_ITEM_KEY;
-	if (convert) {
-		if (*start != round_down(*start, info->sectorsize)) {
-			error("DATA chunk start not sectorsize aligned: %llu",
-					(unsigned long long)*start);
-			return -EINVAL;
-		}
-		key.offset = *start;
-		dev_offset = *start;
-	} else {
-		u64 tmp;
-
-		ret = find_next_chunk(info, &tmp);
-		key.offset = tmp;
-		if (ret)
-			return ret;
-	}
+	key.offset = *start;
+	dev_offset = *start;
 
 	chunk = kmalloc(btrfs_chunk_item_size(num_stripes), GFP_NOFS);
 	if (!chunk)
@@ -1303,12 +1293,8 @@ int btrfs_alloc_data_chunk(struct btrfs_trans_handle *trans,
 	while (index < num_stripes) {
 		struct btrfs_stripe *stripe;
 
-		if (convert)
-			ret = btrfs_insert_dev_extent(trans, device, key.offset,
-					calc_size, dev_offset);
-		else
-			ret = btrfs_alloc_dev_extent(trans, device, key.offset,
-					calc_size, &dev_offset);
+		ret = btrfs_insert_dev_extent(trans, device, key.offset, calc_size,
+				dev_offset);
 		BUG_ON(ret);
 
 		device->bytes_used += calc_size;
@@ -1345,8 +1331,6 @@ int btrfs_alloc_data_chunk(struct btrfs_trans_handle *trans,
 	ret = btrfs_insert_item(trans, chunk_root, &key, chunk,
 				btrfs_chunk_item_size(num_stripes));
 	BUG_ON(ret);
-	if (!convert)
-		*start = key.offset;
 
 	map->ce.start = key.offset;
 	map->ce.size = num_bytes;
