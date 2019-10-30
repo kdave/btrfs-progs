@@ -822,7 +822,7 @@ static const char * const cmd_balance_status_usage[] = {
 	"btrfs balance status [-v] <path>",
 	"Show status of running or paused balance",
 	"",
-	"-v     be verbose",
+	"-v|--verbose     be verbose",
 	NULL
 };
 
