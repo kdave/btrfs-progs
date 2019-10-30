@@ -993,7 +993,7 @@ int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 	int num_stripes = 1;
 	int max_stripes = 0;
 	int min_stripes = 1;
-	int sub_stripes = 0;
+	int sub_stripes = 1;
 	int looped = 0;
 	int ret;
 	int index;
@@ -1258,7 +1258,7 @@ int btrfs_alloc_data_chunk(struct btrfs_trans_handle *trans,
 	struct map_lookup *map;
 	u64 calc_size = SZ_8M;
 	int num_stripes = 1;
-	int sub_stripes = 0;
+	int sub_stripes = 1;
 	int ret;
 	int index;
 	int stripe_len = BTRFS_STRIPE_LEN;
