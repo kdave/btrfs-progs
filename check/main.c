@@ -9091,15 +9091,19 @@ again:
 	 * pinned all of it above.
 	 */
 	while (1) {
+		struct btrfs_block_group_item bgi;
 		struct btrfs_block_group_cache *cache;
 
 		cache = btrfs_lookup_first_block_group(fs_info, start);
 		if (!cache)
 			break;
 		start = cache->key.objectid + cache->key.offset;
+		btrfs_set_block_group_used(&bgi, cache->used);
+		btrfs_set_block_group_chunk_objectid(&bgi,
+					BTRFS_FIRST_CHUNK_TREE_OBJECTID);
+		btrfs_set_block_group_flags(&bgi, cache->flags);
 		ret = btrfs_insert_item(trans, fs_info->extent_root,
-					&cache->key, &cache->item,
-					sizeof(cache->item));
+					&cache->key, &bgi, sizeof(bgi));
 		if (ret) {
 			fprintf(stderr, "Error adding block group\n");
 			return ret;

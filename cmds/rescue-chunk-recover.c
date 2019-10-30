@@ -1104,7 +1104,7 @@ static int block_group_free_all_extent(struct btrfs_root *root,
 			BLOCK_GROUP_DIRTY);
 	set_extent_dirty(&info->free_space_cache, start, end);
 
-	btrfs_set_block_group_used(&cache->item, 0);
+	cache->used = 0;
 
 	return 0;
 }

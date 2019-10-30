@@ -2364,7 +2364,6 @@ static void fixup_block_groups(struct btrfs_fs_info *fs_info)
 
 		/* Update the block group item and mark the bg dirty */
 		bg->flags = map->type;
-		btrfs_set_block_group_flags(&bg->item, bg->flags);
 		set_extent_bits(&fs_info->block_group_cache, ce->start,
 				ce->start + ce->size - 1, BLOCK_GROUP_DIRTY);
 

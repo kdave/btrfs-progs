@@ -436,7 +436,7 @@ int load_free_space_cache(struct btrfs_fs_info *fs_info,
 {
 	struct btrfs_free_space_ctl *ctl = block_group->free_space_ctl;
 	struct btrfs_path *path;
-	u64 used = btrfs_block_group_used(&block_group->item);
+	u64 used = block_group->used;
 	int ret = 0;
 	u64 bg_free;
 	s64 diff;
