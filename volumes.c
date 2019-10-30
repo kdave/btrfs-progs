@@ -1245,7 +1245,7 @@ out_chunk:
  */
 int btrfs_alloc_data_chunk(struct btrfs_trans_handle *trans,
 			   struct btrfs_fs_info *info, u64 *start,
-			   u64 num_bytes, u64 type, int convert)
+			   u64 num_bytes, int convert)
 {
 	u64 dev_offset;
 	struct btrfs_root *extent_root = info->extent_root;
@@ -1328,7 +1328,7 @@ int btrfs_alloc_data_chunk(struct btrfs_trans_handle *trans,
 	btrfs_set_stack_chunk_length(chunk, num_bytes);
 	btrfs_set_stack_chunk_owner(chunk, extent_root->root_key.objectid);
 	btrfs_set_stack_chunk_stripe_len(chunk, stripe_len);
-	btrfs_set_stack_chunk_type(chunk, type);
+	btrfs_set_stack_chunk_type(chunk, BTRFS_BLOCK_GROUP_DATA);
 	btrfs_set_stack_chunk_num_stripes(chunk, num_stripes);
 	btrfs_set_stack_chunk_io_align(chunk, stripe_len);
 	btrfs_set_stack_chunk_io_width(chunk, stripe_len);
@@ -1338,7 +1338,7 @@ int btrfs_alloc_data_chunk(struct btrfs_trans_handle *trans,
 	map->stripe_len = stripe_len;
 	map->io_align = stripe_len;
 	map->io_width = stripe_len;
-	map->type = type;
+	map->type = BTRFS_BLOCK_GROUP_DATA;
 	map->num_stripes = num_stripes;
 	map->sub_stripes = sub_stripes;
 
