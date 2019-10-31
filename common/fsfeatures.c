@@ -86,6 +86,12 @@ static const struct btrfs_fs_feature {
 		VERSION_TO_STRING2(4,0),
 		NULL, 0,
 		"no explicit hole extents for files" },
+	{ "raid1c34", BTRFS_FEATURE_INCOMPAT_RAID1C34,
+		"raid1c34",
+		VERSION_TO_STRING2(5,5),
+		NULL, 0,
+		NULL, 0,
+		"RAID1 with 3 or 4 copies" },
 	/* Keep this one last */
 	{ "list-all", BTRFS_FEATURE_LIST_ALL, NULL }
 };

@@ -337,7 +337,7 @@ static void print_usage(int ret)
 	printf("Usage: mkfs.btrfs [options] dev [ dev ... ]\n");
 	printf("Options:\n");
 	printf("  allocation profiles:\n");
-	printf("\t-d|--data PROFILE       data profile, raid0, raid1, raid5, raid6, raid10, dup or single\n");
+	printf("\t-d|--data PROFILE       data profile, raid0, raid1, raid1c3, raid1c4, raid5, raid6, raid10, dup or single\n");
 	printf("\t-m|--metadata PROFILE   metadata profile, values like for data profile\n");
 	printf("\t-M|--mixed              mix metadata and data together\n");
 	printf("  features:\n");
@@ -370,6 +370,10 @@ static u64 parse_profile(const char *s)
 		return BTRFS_BLOCK_GROUP_RAID0;
 	} else if (strcasecmp(s, "raid1") == 0) {
 		return BTRFS_BLOCK_GROUP_RAID1;
+	} else if (strcasecmp(s, "raid1c3") == 0) {
+		return BTRFS_BLOCK_GROUP_RAID1C3;
+	} else if (strcasecmp(s, "raid1c4") == 0) {
+		return BTRFS_BLOCK_GROUP_RAID1C4;
 	} else if (strcasecmp(s, "raid5") == 0) {
 		return BTRFS_BLOCK_GROUP_RAID5;
 	} else if (strcasecmp(s, "raid6") == 0) {
@@ -1051,6 +1055,11 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	if ((data_profile | metadata_profile) &
 	    (BTRFS_BLOCK_GROUP_RAID5 | BTRFS_BLOCK_GROUP_RAID6)) {
 		features |= BTRFS_FEATURE_INCOMPAT_RAID56;
+	}
+
+	if ((data_profile | metadata_profile) &
+	    (BTRFS_BLOCK_GROUP_RAID1C3 | BTRFS_BLOCK_GROUP_RAID1C4)) {
+		features |= BTRFS_FEATURE_INCOMPAT_RAID1C34;
 	}
 
 	if (btrfs_check_nodesize(nodesize, sectorsize,

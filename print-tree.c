@@ -162,6 +162,12 @@ static void bg_flags_to_str(u64 flags, char *ret)
 	case BTRFS_BLOCK_GROUP_RAID1:
 		strcat(ret, "|RAID1");
 		break;
+	case BTRFS_BLOCK_GROUP_RAID1C3:
+		strcat(ret, "|RAID1C3");
+		break;
+	case BTRFS_BLOCK_GROUP_RAID1C4:
+		strcat(ret, "|RAID1C4");
+		break;
 	case BTRFS_BLOCK_GROUP_DUP:
 		strcat(ret, "|DUP");
 		break;

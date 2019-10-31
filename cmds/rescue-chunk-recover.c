@@ -1582,6 +1582,10 @@ static int calc_num_stripes(u64 type)
 	else if (type & (BTRFS_BLOCK_GROUP_RAID1 |
 			 BTRFS_BLOCK_GROUP_DUP))
 		return 2;
+	else if (type & (BTRFS_BLOCK_GROUP_RAID1C3))
+		return 3;
+	else if (type & (BTRFS_BLOCK_GROUP_RAID1C4))
+		return 4;
 	else
 		return 1;
 }

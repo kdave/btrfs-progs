@@ -1673,6 +1673,8 @@ static void set_avail_alloc_bits(struct btrfs_fs_info *fs_info, u64 flags)
 {
 	u64 extra_flags = flags & (BTRFS_BLOCK_GROUP_RAID0 |
 				   BTRFS_BLOCK_GROUP_RAID1 |
+				   BTRFS_BLOCK_GROUP_RAID1C3 |
+				   BTRFS_BLOCK_GROUP_RAID1C4 |
 				   BTRFS_BLOCK_GROUP_RAID10 |
 				   BTRFS_BLOCK_GROUP_RAID5 |
 				   BTRFS_BLOCK_GROUP_RAID6 |
@@ -3128,6 +3130,8 @@ static u64 get_dev_extent_len(struct map_lookup *map)
 	case 0: /* Single */
 	case BTRFS_BLOCK_GROUP_DUP:
 	case BTRFS_BLOCK_GROUP_RAID1:
+	case BTRFS_BLOCK_GROUP_RAID1C3:
+	case BTRFS_BLOCK_GROUP_RAID1C4:
 		div = 1;
 		break;
 	case BTRFS_BLOCK_GROUP_RAID5:
