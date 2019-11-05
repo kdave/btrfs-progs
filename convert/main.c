@@ -1109,7 +1109,7 @@ static int convert_open_fs(const char *devname,
 }
 
 static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
-		const char *fslabel, int progress, u64 features)
+		const char *fslabel, int progress, u64 features, u16 csum_type)
 {
 	int ret;
 	int fd = -1;
@@ -1157,9 +1157,10 @@ static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
 	printf("\tblocksize: %u\n", blocksize);
 	printf("\tnodesize:  %u\n", nodesize);
 	printf("\tfeatures:  %s\n", features_buf);
+	printf("\tchecksum:  %s\n", btrfs_super_csum_name(csum_type));
 
 	memset(&mkfs_cfg, 0, sizeof(mkfs_cfg));
-	mkfs_cfg.csum_type = BTRFS_CSUM_TYPE_CRC32;
+	mkfs_cfg.csum_type = csum_type;
 	mkfs_cfg.label = cctx.volume_name;
 	mkfs_cfg.num_bytes = total_bytes;
 	mkfs_cfg.nodesize = nodesize;
@@ -1703,6 +1704,8 @@ static void print_usage(void)
 	printf("\t-d|--no-datasum        disable data checksum, sets NODATASUM\n");
 	printf("\t-i|--no-xattr          ignore xattrs and ACLs\n");
 	printf("\t-n|--no-inline         disable inlining of small files to metadata\n");
+	printf("\t--csum TYPE\n");
+	printf("\t--checksum TYPE        checksum algorithm to use (default: crc32c)\n");
 	printf("\t-N|--nodesize SIZE     set filesystem metadata nodesize\n");
 	printf("\t-r|--rollback          roll back to the original filesystem\n");
 	printf("\t-l|--label LABEL       set filesystem label\n");
@@ -1731,17 +1734,22 @@ int BOX_MAIN(convert)(int argc, char *argv[])
 	char *file;
 	char fslabel[BTRFS_LABEL_SIZE];
 	u64 features = BTRFS_MKFS_DEFAULT_FEATURES;
+	u16 csum_type = BTRFS_CSUM_TYPE_CRC32;
 
 	crc32c_optimization_init();
 
 	while(1) {
-		enum { GETOPT_VAL_NO_PROGRESS = 256 };
+		enum { GETOPT_VAL_NO_PROGRESS = 256, GETOPT_VAL_CHECKSUM };
 		static const struct option long_options[] = {
 			{ "no-progress", no_argument, NULL,
 				GETOPT_VAL_NO_PROGRESS },
 			{ "no-datasum", no_argument, NULL, 'd' },
 			{ "no-inline", no_argument, NULL, 'n' },
 			{ "no-xattr", no_argument, NULL, 'i' },
+			{ "checksum", required_argument, NULL,
+				GETOPT_VAL_CHECKSUM },
+			{ "csum", required_argument, NULL,
+				GETOPT_VAL_CHECKSUM },
 			{ "rollback", no_argument, NULL, 'r' },
 			{ "features", required_argument, NULL, 'O' },
 			{ "progress", no_argument, NULL, 'p' },
@@ -1818,6 +1826,9 @@ int BOX_MAIN(convert)(int argc, char *argv[])
 			case GETOPT_VAL_NO_PROGRESS:
 				progress = 0;
 				break;
+			case GETOPT_VAL_CHECKSUM:
+				csum_type = parse_csum_type(optarg);
+				break;
 			case GETOPT_VAL_HELP:
 			default:
 				print_usage();
@@ -1861,7 +1872,8 @@ int BOX_MAIN(convert)(int argc, char *argv[])
 		cf |= packing ? CONVERT_FLAG_INLINE_DATA : 0;
 		cf |= noxattr ? 0 : CONVERT_FLAG_XATTR;
 		cf |= copylabel;
-		ret = do_convert(file, cf, nodesize, fslabel, progress, features);
+		ret = do_convert(file, cf, nodesize, fslabel, progress, features,
+				 csum_type);
 	}
 	if (ret)
 		return 1;
