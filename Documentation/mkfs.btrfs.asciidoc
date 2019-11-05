@@ -25,6 +25,12 @@ OPTIONS
 Specify the size of the filesystem. If this option is not used, then
 mkfs.btrfs uses the entire device space for the filesystem.
 
+*--csum <type>*::
+*--checksum <type>*::
+Specify the checksum algorithm. Default is 'crc32c'. Valid values are 'crc32c',
+'xxhash', 'sha256' or 'blake2'. To mount such filesystem kernel must support the 
+checksums as well.
+
 *-d|--data <profile>*::
 Specify the profile for the data block groups.  Valid values are 'raid0',
 'raid1', 'raid5', 'raid6', 'raid10' or 'single' or 'dup' (case does not matter).

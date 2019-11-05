@@ -83,6 +83,11 @@ Note that balance operation takes a lot of time, please see also
 
 OPTIONS
 -------
+--csum <type>::
+--checksum <type>::
+Specify the checksum algorithm. Default is 'crc32c'. Valid values are 'crc32c',
+'xxhash', 'sha256' or 'blake2'. To mount such filesystem kernel must support the 
+checksums as well.
 -d|--no-datasum::
 disable data checksum calculations and set the NODATASUM file flag, this can speed
 up the conversion
