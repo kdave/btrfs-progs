@@ -10,17 +10,12 @@ DESCRIPTION
 This document describes topics related to BTRFS that are not specific to the
 tools.  Currently covers:
 
-1. mount options
-
-2. filesystem features
-
-3. filesystem limits
-
-4. bootloader support
-
-5. file attributes
-
-6. control device
+. mount options
+. filesystem features
+. filesystem limits
+. bootloader support
+. file attributes
+. control device
 
 
 MOUNT OPTIONS
