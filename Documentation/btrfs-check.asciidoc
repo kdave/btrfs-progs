@@ -36,7 +36,8 @@ extents, backreferences, missing extents of inodes, directory and inode
 connectivity etc.
 
 The amount of memory required can be high, depending on the size of the
-filesystem, similarly the run time.
+filesystem, similarly the run time. Check the modes that can also affect that.
+
 
 SAFE OR ADVISORY OPTIONS
 ------------------------
@@ -113,16 +114,20 @@ build the extent tree from scratch
 +
 NOTE: Do not use unless you know what you're doing.
 
---mode=MODE::
+--mode <MODE>::
 select mode of operation regarding memory and IO
 +
-The 'MODE' can be one of 'original' and 'lowmem'. The original mode is mostly
-unoptimized regarding memory consumption and can lead to out-of-memory
-conditions on large filesystems. The possible workaround is to export the block
-device over network to a machine with enough memory. The low memory mode is
-supposed to address the memory consumption, at the cost of increased IO when it
-needs to re-read blocks when needed. This may increase run time.
-
+The 'MODE' can be one of:
++
+'original'::::
+The metadata are read into memory and verified, thus the requirements are high
+on large filesystems and can even lead to out-of-memory conditions.  The
+possible workaround is to export the block device over network to a machine
+with enough memory.
+'lowmem'::::
+This mode is supposed to address the high memory consumption at the cost of
+increased IO when it needs to re-read blocks.  This may increase run time.
++
 NOTE: 'lowmem' mode does not work with '--repair' yet, and is still considered
 experimental.
 
@@ -132,7 +137,8 @@ quiescent or read-only mounted filesystem but may crash if the device is
 changed externally, eg. by the kernel module.  Repair without mount checks is
 not supported right now.
 +
-This option skips the delay and warning in the repair mode (see '--repair')
+This option also skips the delay and warning in the repair mode (see
+'--repair').
 
 EXIT STATUS
 -----------
