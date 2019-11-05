@@ -95,12 +95,20 @@ _get_spec_ins()
 			echo -n 3
 			return
 		fi
+		if [[ $2 =~ /btrfs-convert$ ]]; then
+			echo -n 3
+			return
+		fi
 	else
 		if [[ $1 =~ /btrfs$ ]]; then
 			echo -n 3
 			return
 		fi
 		if [[ $1 =~ /mkfs.btrfs$ ]]; then
+			echo -n 2
+			return
+		fi
+		if [[ $1 =~ /btrfs-convert$ ]]; then
 			echo -n 2
 			return
 		fi
@@ -122,6 +130,7 @@ _cmd_spec()
 		case "$1" in
 	  		check) echo -n "$TEST_ARGS_CHECK" ;;
 			*/mkfs.btrfs) echo -n "$TEST_ARGS_MKFS" ;;
+			*/btrfs-convert) echo -n "$TEST_ARGS_CONVERT" ;;
 		esac
 	fi
 }
@@ -723,6 +732,7 @@ init_env()
 		echo "INCLUDE common.local" >> "$RESULTS"
 		echo "  check: $TEST_ARGS_CHECK" >> "$RESULTS"
 		echo "  mkfs: $TEST_ARGS_MKFS" >> "$RESULTS"
+		echo "  convert: $TEST_ARGS_CONVERT" >> "$RESULTS"
 	fi
 }
 init_env
