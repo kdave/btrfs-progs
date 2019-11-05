@@ -91,9 +91,17 @@ _get_spec_ins()
 			echo -n 4
 			return
 		fi
+		if [[ $2 =~ /mkfs.btrfs$ ]]; then
+			echo -n 3
+			return
+		fi
 	else
 		if [[ $1 =~ /btrfs$ ]]; then
 			echo -n 3
+			return
+		fi
+		if [[ $1 =~ /mkfs.btrfs$ ]]; then
+			echo -n 2
 			return
 		fi
 	fi
@@ -113,6 +121,7 @@ _cmd_spec()
 		fi
 		case "$1" in
 	  		check) echo -n "$TEST_ARGS_CHECK" ;;
+			*/mkfs.btrfs) echo -n "$TEST_ARGS_MKFS" ;;
 		esac
 	fi
 }
@@ -713,6 +722,7 @@ init_env()
 	if [ "$TEST_ENABLE_OVERRIDE" = 'true' -a -n "$RESULTS" ]; then
 		echo "INCLUDE common.local" >> "$RESULTS"
 		echo "  check: $TEST_ARGS_CHECK" >> "$RESULTS"
+		echo "  mkfs: $TEST_ARGS_MKFS" >> "$RESULTS"
 	fi
 }
 init_env
