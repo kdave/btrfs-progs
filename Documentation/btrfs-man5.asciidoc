@@ -12,6 +12,7 @@ tools.  Currently covers:
 
 . mount options
 . filesystem features
+. checksum algorithms
 . filesystem limits
 . bootloader support
 . file attributes
@@ -532,8 +533,8 @@ explicitly asked for so accidental use will not create incompatibilities.
 There are several classes and the respective tools to manage the features:
 
 at mkfs time only::
-This is namely for core structures, like the b-tree nodesize, see
-`mkfs.btrfs`(8) for more details.
+This is namely for core structures, like the b-tree nodesize or checksum
+algorithm, see `mkfs.btrfs`(8) for more details.
 
 after mkfs, on an unmounted filesystem::
 Features that may optimize internal structures or add new structures to support
@@ -669,6 +670,52 @@ temporarily activated. The operation must finish first.
 # mkswap swapfile
 # swapon swapfile
 --------------------
+
+
+CHECKSUM ALGORITHMS
+-------------------
+
+There are several checksum algorithms supported. The default and backward
+compatible is 'crc32c'. Since kernel 5.5 there are three more with different
+characteristics and trade-offs regarding speed and strength. The following
+list may help you to decide which one to select.
+
+*CRC32C* (32bit digest)::
+default, best backward compatibility, very fast, modern CPUs have
+instruction-level support, not collision-resistant but still good error
+detection capabilities
+
+*XXHASH* (64bit digest)::
+can be used as CRC32C successor, very fast, optimized for modern CPUs utilizing
+instruction pipelining, good collision resistance and error detection
+
+*SHA256* (256bit digest)::
+a cryptographic-strength hash, relatively slow but with possible CPU
+instruction acceleration or specialized hardware cards, FIPS certified and
+in wide use
+
+*BLAKE2b* (256bit digest)::
+a cryptographic-strength hash, relatively fast with possible CPU acceleration
+using SIMD extensions, not standardized but based on BLAKE which was a SHA3
+finalist, in wide use, the algorithm used is BLAKE2b-256 that's optimized for
+64bit platforms
+
+The 'digest size' affects overall size of data block checksums stored in the
+filesystem.  The metadata blocks have a fixed area up to 256bits (32 bytes), so
+there's no increase. Each data block has a separate checksum stored, with
+additional overhead of the b-tree leaves.
+
+Approximate relative performance of the algorithms, measured against CRC32C
+using reference software implementations on a 3.5GHz intel CPU:
+
+[ cols="^,>,>",width="50%" ]
+|================================
+h| Digest h| Cycles/4KiB h| Ratio
+| CRC32C   |   1700       |  1.00
+| XXHASH   |   2500       |  1.44
+| SHA256   | 105000       |    61
+| BLAKE2b  |  22000       |    13
+|================================
 
 
 FILESYSTEM LIMITS
