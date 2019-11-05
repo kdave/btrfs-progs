@@ -388,26 +388,6 @@ static u64 parse_profile(const char *s)
 	return 0;
 }
 
-static enum btrfs_csum_type parse_csum_type(const char *s)
-{
-	if (strcasecmp(s, "crc32c") == 0) {
-		return BTRFS_CSUM_TYPE_CRC32;
-	} else if (strcasecmp(s, "xxhash64") == 0 ||
-		   strcasecmp(s, "xxhash") == 0) {
-		return BTRFS_CSUM_TYPE_XXHASH;
-	} else if (strcasecmp(s, "sha256") == 0) {
-		return BTRFS_CSUM_TYPE_SHA256;
-	} else if (strcasecmp(s, "blake2b") == 0 ||
-		   strcasecmp(s, "blake2") == 0) {
-		return BTRFS_CSUM_TYPE_BLAKE2;
-	} else {
-		error("unknown csum type %s", s);
-		exit(1);
-	}
-	/* not reached */
-	return 0;
-}
-
 static char *parse_label(const char *input)
 {
 	int len = strlen(input);

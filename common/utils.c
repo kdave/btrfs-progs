@@ -762,6 +762,26 @@ err:
 	exit(-1);
 }
 
+enum btrfs_csum_type parse_csum_type(const char *s)
+{
+	if (strcasecmp(s, "crc32c") == 0) {
+		return BTRFS_CSUM_TYPE_CRC32;
+	} else if (strcasecmp(s, "xxhash64") == 0 ||
+		   strcasecmp(s, "xxhash") == 0) {
+		return BTRFS_CSUM_TYPE_XXHASH;
+	} else if (strcasecmp(s, "sha256") == 0) {
+		return BTRFS_CSUM_TYPE_SHA256;
+	} else if (strcasecmp(s, "blake2b") == 0 ||
+		   strcasecmp(s, "blake2") == 0) {
+		return BTRFS_CSUM_TYPE_BLAKE2;
+	} else {
+		error("unknown csum type %s", s);
+		exit(1);
+	}
+	/* not reached */
+	return 0;
+}
+
 int open_file_or_dir3(const char *fname, DIR **dirstream, int open_flags)
 {
 	int ret;

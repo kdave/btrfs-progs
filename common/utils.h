@@ -65,6 +65,7 @@ int pretty_size_snprintf(u64 size, char *str, size_t str_bytes, unsigned unit_mo
 #define pretty_size(size) 	pretty_size_mode(size, UNITS_DEFAULT)
 const char *pretty_size_mode(u64 size, unsigned mode);
 
+enum btrfs_csum_type parse_csum_type(const char *s);
 u64 parse_size(const char *s);
 u64 parse_qgroupid(const char *p);
 u64 arg_strtou64(const char *str);
