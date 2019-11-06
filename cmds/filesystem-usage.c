@@ -502,8 +502,15 @@ exit:
  */
 static int cmp_device_info(const void *a, const void *b)
 {
-	return strcmp(((struct device_info *)a)->path,
-			((struct device_info *)b)->path);
+	const struct device_info *deva = a;
+	const struct device_info *devb = b;
+
+	if (deva->devid < devb->devid)
+		return -1;
+	if (deva->devid > devb->devid)
+		return 1;
+
+	return 0;
 }
 
 int dev_to_fsid(const char *dev, u8 *fsid)
