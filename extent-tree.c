@@ -164,6 +164,10 @@ err:
 	return 0;
 }
 
+/*
+ * Return the block group that contains @bytenr, otherwise return the next one
+ * that starts after @bytenr
+ */
 struct btrfs_block_group_cache *btrfs_lookup_first_block_group(struct
 						       btrfs_fs_info *info,
 						       u64 bytenr)
@@ -193,6 +197,9 @@ struct btrfs_block_group_cache *btrfs_lookup_first_block_group(struct
 	return block_group;
 }
 
+/*
+ * Return the block group that contains the given @bytenr
+ */
 struct btrfs_block_group_cache *btrfs_lookup_block_group(struct
 							 btrfs_fs_info *info,
 							 u64 bytenr)
