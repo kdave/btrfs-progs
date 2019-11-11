@@ -889,9 +889,11 @@ static int setup_root_or_create_block(struct btrfs_fs_info *fs_info,
 
 	ret = find_and_setup_root(root, fs_info, objectid, info_root);
 	if (ret) {
-		printk("Couldn't setup %s tree\n", str);
-		if (!(flags & OPEN_CTREE_PARTIAL))
+		if (!(flags & OPEN_CTREE_PARTIAL)) {
+			error("could not setup %s tree", str);
 			return -EIO;
+		}
+		warning("could not setup %s tree, skipping it", str);
 		/*
 		 * Need a blank node here just so we don't screw up in the
 		 * million of places that assume a root has a valid ->node
