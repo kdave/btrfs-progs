@@ -165,7 +165,6 @@ static int cmd_rescue_zero_log(const struct cmd_struct *cmd,
 			       int argc, char **argv)
 {
 	struct btrfs_root *root;
-	struct btrfs_trans_handle *trans;
 	struct btrfs_super_block *sb;
 	char *devname;
 	int ret;
@@ -187,7 +186,8 @@ static int cmd_rescue_zero_log(const struct cmd_struct *cmd,
 		goto out;
 	}
 
-	root = open_ctree(devname, 0, OPEN_CTREE_WRITES | OPEN_CTREE_PARTIAL);
+	root = open_ctree(devname, 0, OPEN_CTREE_WRITES | OPEN_CTREE_PARTIAL |
+			  OPEN_CTREE_NO_BLOCK_GROUPS);
 	if (!root) {
 		error("could not open ctree");
 		return 1;
@@ -198,13 +198,14 @@ static int cmd_rescue_zero_log(const struct cmd_struct *cmd,
 			devname,
 			(unsigned long long)btrfs_super_log_root(sb),
 			(unsigned)btrfs_super_log_root_level(sb));
-	trans = btrfs_start_transaction(root, 1);
-	BUG_ON(IS_ERR(trans));
 	btrfs_set_super_log_root(sb, 0);
 	btrfs_set_super_log_root_level(sb, 0);
-	btrfs_commit_transaction(trans, root);
+	ret = write_all_supers(root->fs_info);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to write dev supers: %m");
+	}
 	close_ctree(root);
-
 out:
 	return !!ret;
 }
