@@ -85,6 +85,9 @@ enum btrfs_open_ctree_flags {
 	 * compat_ro bit).
 	 */
 	OPEN_CTREE_INVALIDATE_FST = (1U << 13),
+
+	/* For print-tree only, skip filename output */
+	OPEN_CTREE_DONT_PRINT_FILENAME = (1U << 14),
 };
 
 /*

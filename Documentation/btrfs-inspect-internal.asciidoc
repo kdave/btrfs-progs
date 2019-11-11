@@ -100,6 +100,9 @@ intermixed in the output
 +
 use breadth-first search to print trees, the nodes are printed before all
 leaves
+--nofilename::::
+do not print any filename of the filesystem. Useful for developer to inspect
+the filesystem while keep confidential info hiden.
 --noscan::::
 do not automatically scan the system for other devices from the same
 filesystem, only use the devices provided as the arguments

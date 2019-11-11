@@ -330,7 +330,7 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 	while (1) {
 		int c;
 		enum { GETOPT_VAL_FOLLOW = 256, GETOPT_VAL_DFS, GETOPT_VAL_BFS,
-		       GETOPT_VAL_NOSCAN};
+		       GETOPT_VAL_NOSCAN, GETOPT_VAL_NOFILENAME };
 		static const struct option long_options[] = {
 			{ "extents", no_argument, NULL, 'e'},
 			{ "device", no_argument, NULL, 'd'},
@@ -343,6 +343,8 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 			{ "bfs", no_argument, NULL, GETOPT_VAL_BFS },
 			{ "dfs", no_argument, NULL, GETOPT_VAL_DFS },
 			{ "noscan", no_argument, NULL, GETOPT_VAL_NOSCAN },
+			{ "nofilename", no_argument, NULL,
+				GETOPT_VAL_NOFILENAME },
 			{ NULL, 0, NULL, 0 }
 		};
 
@@ -409,6 +411,9 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 			break;
 		case GETOPT_VAL_NOSCAN:
 			open_ctree_flags |= OPEN_CTREE_NO_DEVICES;
+			break;
+		case GETOPT_VAL_NOFILENAME:
+			open_ctree_flags |= OPEN_CTREE_DONT_PRINT_FILENAME;
 			break;
 		default:
 			usage_unknown_option(cmd, argv);
