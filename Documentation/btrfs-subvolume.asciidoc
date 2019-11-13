@@ -144,6 +144,7 @@ Other;;
 print the result as a table.
 
 Sorting;;
+By default the subvolumes will be sorted by subvolume ID ascending.
 -G [+|-]<value>::::
 list subvolumes in the filesystem that its generation is
 >=, \<= or = value. \'\+' means >= value, \'-' means \<= value, If there is
