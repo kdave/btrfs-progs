@@ -28,8 +28,8 @@ mkfs.btrfs uses the entire device space for the filesystem.
 *--csum <type>*::
 *--checksum <type>*::
 Specify the checksum algorithm. Default is 'crc32c'. Valid values are 'crc32c',
-'xxhash', 'sha256' or 'blake2'. To mount such filesystem kernel must support the 
-checksums as well.
+'xxhash', 'sha256' or 'blake2'. To mount such filesystem kernel must support the
+checksums as well. See 'CHECKSUM ALGORITHMS' in `btrfs`(5).
 
 *-d|--data <profile>*::
 Specify the profile for the data block groups.  Valid values are 'raid0',
@@ -266,26 +266,28 @@ PROFILES
 
 There are the following block group types available:
 
-[ cols="^,^,^,^,^",width="60%" ]
+[ cols="<,^,^,^,>,^",width="60%" ]
 |=============================================================
-.2+^.<h| Profile   3+^.^h| Redundancy           .2+^.<h| Min/max devices
+.2+^.<h| Profile   3+^.^h| Redundancy           .2+^.<h| Space utilization .2+^.<h| Min/max devices
       ^.^h| Copies   ^.^h| Parity     ^.<h| Striping
-| single  | 1            |                |            | 1/any
-| DUP     | 2 / 1 device |                |            | 1/any ^(see note 1)^
-| RAID0   |              |                | 1 to N     | 2/any
-| RAID1   | 2            |                |            | 2/any
-| RAID10  | 2            |                | 1 to N     | 4/any
-| RAID5   | 1            | 1              | 2 to N - 1 | 2/any ^(see note 2)^
-| RAID6   | 1            | 2              | 3 to N - 2 | 3/any ^(see note 3)^
+| single  | 1            |                |            |        100% | 1/any
+| DUP     | 2 / 1 device |                |            |         50% | 1/any ^(see note 1)^
+| RAID0   |              |                | 1 to N     |        100% | 2/any
+| RAID1   | 2            |                |            |         50% | 2/any
+| RAID1C3 | 3            |                |            |         33% | 3/any
+| RAID1C4 | 4            |                |            |         25% | 4/any
+| RAID10  | 2            |                | 1 to N     |         50% | 4/any
+| RAID5   | 1            | 1              | 2 to N-1   |     (N-1)/N | 2/any ^(see note 2)^
+| RAID6   | 1            | 2              | 3 to N-2   |     (N-2)/N | 3/any ^(see note 3)^
 |=============================================================
 
-WARNING: It's not recommended to build btrfs with RAID0/1/10/5/6 profiles on
-partitions from the same device.  Neither redundancy nor performance will be
-improved.
+WARNING: It's not recommended to create filesystems with RAID0/1/10/5/6
+profiles on partitions from the same device.  Neither redundancy nor
+performance will be improved.
 
 'Note 1:' DUP may exist on more than 1 device if it starts on a single device and
 another one is added. Since version 4.5.1, *mkfs.btrfs* will let you create DUP
-on multiple devices.
+on multiple devices without restrictions.
 
 'Note 2:' It's not recommended to use 2 devices with RAID5. In that case,
 parity stripe will contain the same data as the data stripe, making RAID5
@@ -293,7 +295,75 @@ degraded to RAID1 with more overhead.
 
 'Note 3:' It's also not recommended to use 3 devices with RAID6, unless you
 want to get effectively 3 copies in a RAID1-like manner (but not exactly that).
-N-copies RAID1 is not implemented.
+
+'Note 4:' Since kernel 5.5 it's possible to use RAID1C3 as replacement for
+RAID6, higher space cost but reliable.
+
+PROFILE LAYOUT
+~~~~~~~~~~~~~~
+
+For the following examples, assume devices numbered by 1, 2, 3 and 4, data or
+metadata blocks A, B, C, D, with possible stripes eg. A1, A2 that would be
+logically A, etc. For parity profiles PA and QA are parity and syndrom,
+associated with the given stripe.  The simple layouts single or DUP are left
+out.  Actual physical block placement on devices depends on current state of
+the free/allocated space and may appear random. All devices are assumed to be
+present at the time of the blocks would have been written.
+
+RAID1
+
+[ cols="^,^,^,^",width="50%", options="header" ]
+|===
+| device 1 | device 2 | device 3 | device 4
+| A        | D        |          |
+| B        |          |          | C
+| C        |          |          |
+| D        | A        | B        |
+|===
+
+RAID1C3
+
+[ cols="^,^,^,^",width="50%", options="header" ]
+|===
+| device 1 | device 2 | device 3 | device 4
+| A        | A        | D        |
+| B        |          | B        |
+| C        |          | A        | C
+| D        | D        | C        | B
+|===
+
+RAID0
+
+[ cols="^,^,^,^",width="50%", options="header" ]
+|===
+| device 1 | device 2 | device 3 | device 4
+| A2       | C3       | A3       | C2
+| B1       | A1       | D2       | B3
+| C1       | D3       | B4       | D1
+| D4       | B2       | C4       | A4
+|===
+
+RAID5
+
+[ cols="^,^,^,^",width="50%", options="header" ]
+|===
+| device 1 | device 2 | device 3 | device 4
+| A2       | C3       | A3       | C2
+| B1       | A1       | D2       | B3
+| C1       | D3       | PB       | D1
+| PD       | B2       | PC       | PA
+|===
+
+RAID6
+
+[ cols="^,^,^,^",width="50%", options="header" ]
+|===
+| device 1 | device 2 | device 3 | device 4
+| A2       | QC       | QA       | C2
+| B1       | A1       | D2       | QB
+| C1       | QD       | PB       | D1
+| PD       | B2       | PC       | PA
+|===
 
 DUP PROFILES ON A SINGLE DEVICE
 -------------------------------
