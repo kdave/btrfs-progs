@@ -63,4 +63,15 @@ test_mkfs_multi   -d  raid6   -m  raid6   --mixed
 test_mkfs_multi   -d  dup     -m  dup
 test_mkfs_multi   -d  dup     -m  dup     --mixed
 
+if [ -f "/sys/fs/btrfs/features/raid1c34" ]; then
+	test_mkfs_multi   -d  raid1c3 -m  raid1c3
+	test_mkfs_multi   -d  raid1c3 -m  raid1c3 --mixed
+	test_mkfs_multi   -d  raid1c4 -m  raid1c4
+	test_mkfs_multi   -d  raid1c4 -m  raid1c4 --mixed
+else
+	_log "skip mount test, missing support for raid1c34"
+	test_do_mkfs -d raid1c3 -m raid1c3 ${loopdevs[@]}
+	test_do_mkfs -d raid1c4 -m raid1c4 ${loopdevs[@]}
+fi
+
 cleanup_loopdevs
