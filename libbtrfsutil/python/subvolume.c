@@ -629,39 +629,13 @@ static PyMethodDef SubvolumeIterator_methods[] = {
 
 PyTypeObject SubvolumeIterator_type = {
 	PyVarObject_HEAD_INIT(NULL, 0)
-	"btrfsutil.SubvolumeIterator",		/* tp_name */
-	sizeof(SubvolumeIterator),		/* tp_basicsize */
-	0,					/* tp_itemsize */
-	(destructor)SubvolumeIterator_dealloc,	/* tp_dealloc */
-	NULL,					/* tp_print */
-	NULL,					/* tp_getattr */
-	NULL,					/* tp_setattr */
-	NULL,					/* tp_as_async */
-	NULL,					/* tp_repr */
-	NULL,					/* tp_as_number */
-	NULL,					/* tp_as_sequence */
-	NULL,					/* tp_as_mapping */
-	NULL,					/* tp_hash  */
-	NULL,					/* tp_call */
-	NULL,					/* tp_str */
-	NULL,					/* tp_getattro */
-	NULL,					/* tp_setattro */
-	NULL,					/* tp_as_buffer */
-	Py_TPFLAGS_DEFAULT,			/* tp_flags */
-	SubvolumeIterator_DOC,			/* tp_doc */
-	NULL,					/* tp_traverse */
-	NULL,					/* tp_clear */
-	NULL,					/* tp_richcompare */
-	0,					/* tp_weaklistoffset */
-	PyObject_SelfIter,			/* tp_iter */
-	(iternextfunc)SubvolumeIterator_next,	/* tp_iternext */
-	SubvolumeIterator_methods,		/* tp_methods */
-	NULL,					/* tp_members */
-	NULL,					/* tp_getset */
-	NULL,					/* tp_base */
-	NULL,					/* tp_dict */
-	NULL,					/* tp_descr_get */
-	NULL,					/* tp_descr_set */
-	0,					/* tp_dictoffset */
-	(initproc)SubvolumeIterator_init,	/* tp_init */
+	.tp_name		= "btrfsutil.SubvolumeIterator",
+	.tp_basicsize		= sizeof(SubvolumeIterator),
+	.tp_dealloc		= (destructor)SubvolumeIterator_dealloc,
+	.tp_flags		= Py_TPFLAGS_DEFAULT,
+	.tp_doc			= SubvolumeIterator_DOC,
+	.tp_iter		= PyObject_SelfIter,
+	.tp_iternext		= (iternextfunc)SubvolumeIterator_next,
+	.tp_methods		= SubvolumeIterator_methods,
+	.tp_init		= (initproc)SubvolumeIterator_init,
 };
