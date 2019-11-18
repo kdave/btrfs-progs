@@ -972,7 +972,7 @@ int detect_imode(struct btrfs_root *root, struct btrfs_path *path,
 	struct btrfs_inode_item iitem;
 	bool found = false;
 	u64 ino;
-	u32 imode;
+	u32 imode = 0;
 	int ret = 0;
 
 	btrfs_item_key_to_cpu(path->nodes[0], &key, path->slots[0]);
