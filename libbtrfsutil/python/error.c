@@ -162,41 +162,16 @@ static PyMemberDef BtrfsUtilError_members[] = {
 
 PyTypeObject BtrfsUtilError_type = {
 	PyVarObject_HEAD_INIT(NULL, 0)
-	"btrfsutil.BtrfsUtilError",			/* tp_name */
-	sizeof(BtrfsUtilError),				/* tp_basicsize */
-	0,						/* tp_itemsize */
-	(destructor)BtrfsUtilError_dealloc,		/* tp_dealloc */
-	NULL,						/* tp_print */
-	NULL,						/* tp_getattr */
-	NULL,						/* tp_setattr */
-	NULL,						/* tp_as_async */
-	NULL,						/* tp_repr */
-	NULL,						/* tp_as_number */
-	NULL,						/* tp_as_sequence */
-	NULL,						/* tp_as_mapping */
-	NULL,						/* tp_hash  */
-	NULL,						/* tp_call */
-	(reprfunc)BtrfsUtilError_str,			/* tp_str */
-	NULL,						/* tp_getattro */
-	NULL,						/* tp_setattro */
-	NULL,						/* tp_as_buffer */
-	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,	/* tp_flags */
-	BtrfsUtilError_DOC,				/* tp_doc */
-	(traverseproc)BtrfsUtilError_traverse,		/* tp_traverse */
-	(inquiry)BtrfsUtilError_clear,			/* tp_clear */
-	NULL,						/* tp_richcompare */
-	0,						/* tp_weaklistoffset */
-	NULL,						/* tp_iter */
-	NULL,						/* tp_iternext */
-	NULL,						/* tp_methods */
-	BtrfsUtilError_members,				/* tp_members */
-	NULL,						/* tp_getset */
-	NULL,						/* tp_base */
-	NULL,						/* tp_dict */
-	NULL,						/* tp_descr_get */
-	NULL,						/* tp_descr_set */
-	offsetof(BtrfsUtilError, os_error.dict),	/* tp_dictoffset */
-	NULL,						/* tp_init */
-	NULL,						/* tp_alloc */
-	BtrfsUtilError_new,				/* tp_new */
+	.tp_name		= "btrfsutil.BtrfsUtilError",
+	.tp_basicsize		= sizeof(BtrfsUtilError),
+	.tp_dealloc		= (destructor)BtrfsUtilError_dealloc,
+	.tp_str			= (reprfunc)BtrfsUtilError_str,
+	.tp_flags		=  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE |
+				   Py_TPFLAGS_HAVE_GC,
+	.tp_doc			= BtrfsUtilError_DOC,
+	.tp_traverse		= (traverseproc)BtrfsUtilError_traverse,
+	.tp_clear		= (inquiry)BtrfsUtilError_clear,
+	.tp_members		= BtrfsUtilError_members,
+	.tp_dictoffset		= offsetof(BtrfsUtilError, os_error.dict),
+	.tp_new			= BtrfsUtilError_new,
 };
