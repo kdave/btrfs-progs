@@ -103,39 +103,12 @@ static PyMethodDef QgroupInherit_methods[] = {
 
 PyTypeObject QgroupInherit_type = {
 	PyVarObject_HEAD_INIT(NULL, 0)
-	"btrfsutil.QgroupInherit",		/* tp_name */
-	sizeof(QgroupInherit),			/* tp_basicsize */
-	0,					/* tp_itemsize */
-	(destructor)QgroupInherit_dealloc,	/* tp_dealloc */
-	NULL,					/* tp_print */
-	NULL,					/* tp_getattr */
-	NULL,					/* tp_setattr */
-	NULL,					/* tp_as_async */
-	NULL,					/* tp_repr */
-	NULL,					/* tp_as_number */
-	NULL,					/* tp_as_sequence */
-	NULL,					/* tp_as_mapping */
-	NULL,					/* tp_hash  */
-	NULL,					/* tp_call */
-	NULL,					/* tp_str */
-	(getattrofunc)QgroupInherit_getattro,	/* tp_getattro */
-	NULL,					/* tp_setattro */
-	NULL,					/* tp_as_buffer */
-	Py_TPFLAGS_DEFAULT,			/* tp_flags */
-	QgroupInherit_DOC,			/* tp_doc */
-	NULL,					/* tp_traverse */
-	NULL,					/* tp_clear */
-	NULL,					/* tp_richcompare */
-	0,					/* tp_weaklistoffset */
-	NULL,					/* tp_iter */
-	NULL,					/* tp_iternext */
-	QgroupInherit_methods,			/* tp_methods */
-	NULL,					/* tp_members */
-	NULL,					/* tp_getset */
-	NULL,					/* tp_base */
-	NULL,					/* tp_dict */
-	NULL,					/* tp_descr_get */
-	NULL,					/* tp_descr_set */
-	0,					/* tp_dictoffset */
-	(initproc)QgroupInherit_init,		/* tp_init */
+	.tp_name		= "btrfsutil.QgroupInherit",
+	.tp_basicsize		= sizeof(QgroupInherit),
+	.tp_dealloc		= (destructor)QgroupInherit_dealloc,
+	.tp_getattro		= (getattrofunc)QgroupInherit_getattro,
+	.tp_flags		= Py_TPFLAGS_DEFAULT,
+	.tp_doc			= QgroupInherit_DOC,
+	.tp_methods		= QgroupInherit_methods,
+	.tp_init		= (initproc)QgroupInherit_init,
 };
