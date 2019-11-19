@@ -932,8 +932,10 @@ static void _cmd_filesystem_usage_linear(unsigned unit_mode,
 			r_mode,
 			pretty_size_mode(sargs->spaces[i].total_bytes,
 				unit_mode));
-		printf("Used:%s\n",
-			pretty_size_mode(sargs->spaces[i].used_bytes, unit_mode));
+		printf("Used:%s (%.2f%%)\n",
+			pretty_size_mode(sargs->spaces[i].used_bytes, unit_mode),
+			100.0f * sargs->spaces[i].used_bytes /
+			(sargs->spaces[i].total_bytes + 1));
 		print_chunk_device(flags, info_ptr, info_count,
 				device_info_ptr, device_info_count, unit_mode);
 		printf("\n");
