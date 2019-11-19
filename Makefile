@@ -3,7 +3,11 @@
 #   all		all main tools and the shared library
 #   static      build static binaries, requires static version of the libraries
 #   test        run the full testsuite
-#   install     install to default location (/usr/local)
+#   install     install binaries, shared libraries and header files to default
+#               location (/usr/local)
+#   install-static
+#               install the static binaries, static libraries and header files
+#               to default locationh (/usr/local)
 #   clean       clean built binaries (not the documentation)
 #   clean-all   clean as above, clean docs and generated files
 #
