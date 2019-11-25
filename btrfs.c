@@ -27,7 +27,7 @@
 #include "common/box.h"
 
 static const char * const btrfs_cmd_group_usage[] = {
-	"btrfs [--help] [--version] [--format <format>] <group> [<group>...] <command> [<args>]",
+	"btrfs [--help] [--version] [--format <format>] [-v|--verbose] [-q|--quiet] <group> [<group>...] <command> [<args>]",
 	NULL
 };
 
@@ -248,6 +248,8 @@ static int handle_global_options(int argc, char **argv)
 		{ "version", no_argument, NULL, OPT_VERSION },
 		{ "format", required_argument, NULL, OPT_FORMAT },
 		{ "full", no_argument, NULL, OPT_FULL },
+		{ "verbose", no_argument, NULL, 'v' },
+		{ "quiet", no_argument, NULL, 'q' },
 		{ NULL, 0, NULL, 0}
 	};
 	int shift;
@@ -259,7 +261,7 @@ static int handle_global_options(int argc, char **argv)
 	while (1) {
 		int c;
 
-		c = getopt_long(argc, argv, "+", long_options, NULL);
+		c = getopt_long(argc, argv, "+vq", long_options, NULL);
 		if (c < 0)
 			break;
 
@@ -269,6 +271,12 @@ static int handle_global_options(int argc, char **argv)
 		case OPT_FULL: break;
 		case OPT_FORMAT:
 			handle_output_format(optarg);
+			break;
+		case 'v':
+			bconf_be_verbose();
+			break;
+		case 'q':
+			bconf_be_quiet();
 			break;
 		default:
 			fprintf(stderr, "Unknown global option: %s\n",
@@ -310,6 +318,14 @@ static void handle_special_globals(int shift, int argc, char **argv)
 			cmd_execute(&cmd_struct_version, argc, argv);
 			exit(0);
 		}
+
+	for (i = 0; i < shift; i++)
+		if (strcmp(argv[i], "--verbose") == 0)
+			bconf_be_verbose();
+
+	for (i = 0; i < shift; i++)
+		if (strcmp(argv[i], "--quiet") == 0)
+			bconf_be_quiet();
 }
 
 static const struct cmd_group btrfs_cmd_group = {

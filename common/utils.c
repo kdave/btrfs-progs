@@ -1679,6 +1679,20 @@ u8 rand_u8(void)
 void btrfs_config_init(void)
 {
 	bconf.output_format = CMD_FORMAT_TEXT;
+	bconf.verbose = BTRFS_BCONF_UNSET;
+}
+
+void bconf_be_verbose(void)
+{
+	if (bconf.verbose == BTRFS_BCONF_UNSET)
+		bconf.verbose = 1;
+	else
+		bconf.verbose++;
+}
+
+void bconf_be_quiet(void)
+{
+	bconf.verbose = BTRFS_BCONF_QUIET;
 }
 
 /* Returns total size of main memory in bytes, -1UL if error. */

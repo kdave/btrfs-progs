@@ -95,4 +95,7 @@ int __btrfs_warning_on(int condition, const char *fmt, ...);
 __attribute__ ((format (printf, 2, 3)))
 int __btrfs_error_on(int condition, const char *fmt, ...);
 
+__attribute__ ((format (printf, 2, 3)))
+void pr_verbose(int level, const char *fmt, ...);
+
 #endif

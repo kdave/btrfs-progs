@@ -117,16 +117,28 @@ unsigned long total_memory(void);
 void print_device_info(struct btrfs_device *device, char *prefix);
 void print_all_devices(struct list_head *devices);
 
+#define BTRFS_BCONF_UNSET	-1
+#define BTRFS_BCONF_QUIET	 0
 /*
  * Global program state, configurable by command line and available to
  * functions without extra context passing.
  */
 struct btrfs_config {
 	unsigned int output_format;
+
+	/*
+	 * Values:
+	 *   BTRFS_BCONF_QUIET
+	 *   BTRFS_BCONF_UNSET
+	 *   > 0: verbose level
+	 */
+	int verbose;
 };
 extern struct btrfs_config bconf;
 
 void btrfs_config_init(void);
+void bconf_be_verbose(void);
+void bconf_be_quiet(void);
 
 /* Pseudo random number generator wrappers */
 int rand_int(void);

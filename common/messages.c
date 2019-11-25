@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include "common/messages.h"
+#include "common/utils.h"
 
 __attribute__ ((format (printf, 1, 2)))
 void __btrfs_warning(const char *fmt, ...)
@@ -74,4 +75,25 @@ int __btrfs_error_on(int condition, const char *fmt, ...)
 	fputc('\n', stderr);
 
 	return 1;
+}
+
+/*
+ * Print a message according to the global verbosity level.
+ *
+ * level: minimum verbose level at which the message will be printed
+ */
+__attribute__ ((format (printf, 2, 3)))
+void pr_verbose(int level, const char *fmt, ...)
+{
+	va_list args;
+
+	if (bconf.verbose == BTRFS_BCONF_QUIET || level == BTRFS_BCONF_QUIET)
+		return;
+
+	if (bconf.verbose < level)
+		return;
+
+	va_start(args, fmt);
+	vfprintf(stdout, fmt, args);
+	va_end(args);
 }
