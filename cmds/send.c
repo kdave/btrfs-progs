@@ -48,11 +48,6 @@
 
 #define SEND_BUFFER_SIZE	SZ_64K
 
-/*
- * Default is 1 for historical reasons, changing may break scripts that expect
- * the 'At subvol' message.
- */
-static int g_verbose = 1;
 
 struct btrfs_send {
 	int send_fd;
@@ -292,10 +287,10 @@ static int do_send(struct btrfs_send *send, u64 parent_root_id,
 				"Try upgrading your kernel or don't use -e.\n");
 		goto out;
 	}
-	if (g_verbose > 1)
+	if (bconf.verbose > 1)
 		fprintf(stderr, "BTRFS_IOC_SEND returned %d\n", ret);
 
-	if (g_verbose > 1)
+	if (bconf.verbose > 1)
 		fprintf(stderr, "joining genl thread\n");
 
 	close(pipefd[1]);
@@ -460,6 +455,9 @@ static const char * const cmd_send_usage[] = {
 	"-v|--verbose     enable verbose output to stderr, each occurrence of",
 	"                 this option increases verbosity",
 	"-q|--quiet       suppress all messages, except errors",
+	HELPINFO_INSERT_GLOBALS,
+	HELPINFO_INSERT_VERBOSE,
+	HELPINFO_INSERT_QUIET,
 	NULL
 };
 
@@ -482,6 +480,17 @@ static int cmd_send(const struct cmd_struct *cmd, int argc, char **argv)
 	send.dump_fd = fileno(stdout);
 	outname[0] = 0;
 
+	/*
+	 * For send, verbose default is 1 (insteasd of 0) for historical reasons,
+	 * changing may break scripts that expect the 'At subvol' message. But do
+	 * it only when bconf.verbose is unset (-1) and also adjust the value,
+	 * if global verbose is already set.
+	 */
+	if (bconf.verbose == BTRFS_BCONF_UNSET)
+		bconf.verbose = 1;
+	else if (bconf.verbose > BTRFS_BCONF_QUIET)
+		bconf.verbose++;
+
 	optind = 0;
 	while (1) {
 		enum { GETOPT_VAL_SEND_NO_DATA = 256 };
@@ -497,10 +506,10 @@ static int cmd_send(const struct cmd_struct *cmd, int argc, char **argv)
 
 		switch (c) {
 		case 'v':
-			g_verbose++;
+			bconf_be_verbose();
 			break;
 		case 'q':
-			g_verbose = 0;
+			bconf_be_quiet();
 			break;
 		case 'e':
 			new_end_cmd_semantic = 1;
@@ -680,8 +689,8 @@ static int cmd_send(const struct cmd_struct *cmd, int argc, char **argv)
 		}
 	}
 
-	if ((send_flags & BTRFS_SEND_FLAG_NO_FILE_DATA) && g_verbose > 1)
-		if (g_verbose > 1)
+	if ((send_flags & BTRFS_SEND_FLAG_NO_FILE_DATA) && bconf.verbose > 1)
+		if (bconf.verbose > 1)
 			fprintf(stderr, "Mode NO_FILE_DATA enabled\n");
 
 	for (i = optind; i < argc; i++) {
@@ -691,7 +700,7 @@ static int cmd_send(const struct cmd_struct *cmd, int argc, char **argv)
 		free(subvol);
 		subvol = argv[i];
 
-		if (g_verbose > 0)
+		if (bconf.verbose > BTRFS_BCONF_QUIET)
 			fprintf(stderr, "At subvol %s\n", subvol);
 
 		subvol = realpath(subvol, NULL);
