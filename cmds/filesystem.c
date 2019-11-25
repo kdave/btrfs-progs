@@ -747,7 +747,7 @@ devs_only:
 		else
 			ret = 1;
 	} else {
-		ret = btrfs_scan_devices();
+		ret = btrfs_scan_devices(0);
 	}
 
 	if (ret) {
