@@ -305,6 +305,8 @@ static const char * const cmd_device_scan_usage[] = {
 	" -d|--all-devices            enumerate and register all devices, use as a fallback",
 	"                             if blkid is not available",
 	" -u|--forget [<device>...]   unregister a given device or all stale devices if no path ",
+	HELPINFO_INSERT_GLOBALS,
+	HELPINFO_INSERT_VERBOSE,
 	NULL
 };
 
@@ -356,7 +358,7 @@ static int cmd_device_scan(const struct cmd_struct *cmd, int argc, char **argv)
 			}
 		} else {
 			printf("Scanning for Btrfs filesystems\n");
-			ret = btrfs_scan_devices(0);
+			ret = btrfs_scan_devices(1);
 			error_on(ret, "error %d while scanning", ret);
 			ret = btrfs_register_all_devices();
 			error_on(ret,
