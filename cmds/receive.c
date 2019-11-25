@@ -53,12 +53,6 @@
 #include "common/help.h"
 #include "common/path-utils.h"
 
-/*
- * Default is 1 for historical reasons, changing may break scripts that expect
- * the 'At subvol' message.
- */
-static int g_verbose = 1;
-
 struct btrfs_receive
 {
 	int mnt_fd;
@@ -116,7 +110,7 @@ static int finish_subvol(struct btrfs_receive *rctx)
 	memcpy(rs_args.uuid, rctx->cur_subvol.received_uuid, BTRFS_UUID_SIZE);
 	rs_args.stransid = rctx->cur_subvol.stransid;
 
-	if (g_verbose >= 2) {
+	if (bconf.verbose >= 2) {
 		uuid_unparse((u8*)rs_args.uuid, uuid_str);
 		fprintf(stderr, "BTRFS_IOC_SET_RECEIVED_SUBVOL uuid=%s, "
 				"stransid=%llu\n", uuid_str, rs_args.stransid);
@@ -199,13 +193,13 @@ static int process_subvol(const char *path, const u8 *uuid, u64 ctransid,
 		goto out;
 	}
 
-	if (g_verbose)
+	if (bconf.verbose > BTRFS_BCONF_QUIET)
 		fprintf(stderr, "At subvol %s\n", path);
 
 	memcpy(rctx->cur_subvol.received_uuid, uuid, BTRFS_UUID_SIZE);
 	rctx->cur_subvol.stransid = ctransid;
 
-	if (g_verbose >= 2) {
+	if (bconf.verbose >= 2) {
 		uuid_unparse((u8*)rctx->cur_subvol.received_uuid, uuid_str);
 		fprintf(stderr, "receiving subvol %s uuid=%s, stransid=%llu\n",
 				path, uuid_str,
@@ -269,13 +263,12 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 		goto out;
 	}
 
-	if (g_verbose)
-		fprintf(stdout, "At snapshot %s\n", path);
+	pr_verbose(1, "At snapshot %s\n", path);
 
 	memcpy(rctx->cur_subvol.received_uuid, uuid, BTRFS_UUID_SIZE);
 	rctx->cur_subvol.stransid = ctransid;
 
-	if (g_verbose >= 2) {
+	if (bconf.verbose >= 2) {
 		uuid_unparse((u8*)rctx->cur_subvol.received_uuid, uuid_str);
 		fprintf(stderr, "receiving snapshot %s uuid=%s, "
 				"ctransid=%llu ", path, uuid_str,
@@ -393,7 +386,7 @@ static int process_mkfile(const char *path, void *user)
 		goto out;
 	}
 
-	if (g_verbose >= 3)
+	if (bconf.verbose >= 3)
 		fprintf(stderr, "mkfile %s\n", path);
 
 	ret = creat(full_path, 0600);
@@ -421,7 +414,7 @@ static int process_mkdir(const char *path, void *user)
 		goto out;
 	}
 
-	if (g_verbose >= 3)
+	if (bconf.verbose >= 3)
 		fprintf(stderr, "mkdir %s\n", path);
 
 	ret = mkdir(full_path, 0700);
@@ -446,7 +439,7 @@ static int process_mknod(const char *path, u64 mode, u64 dev, void *user)
 		goto out;
 	}
 
-	if (g_verbose >= 3)
+	if (bconf.verbose >= 3)
 		fprintf(stderr, "mknod %s mode=%llu, dev=%llu\n",
 				path, mode, dev);
 
@@ -472,7 +465,7 @@ static int process_mkfifo(const char *path, void *user)
 		goto out;
 	}
 
-	if (g_verbose >= 3)
+	if (bconf.verbose >= 3)
 		fprintf(stderr, "mkfifo %s\n", path);
 
 	ret = mkfifo(full_path, 0600);
@@ -497,7 +490,7 @@ static int process_mksock(const char *path, void *user)
 		goto out;
 	}
 
-	if (g_verbose >= 3)
+	if (bconf.verbose >= 3)
 		fprintf(stderr, "mksock %s\n", path);
 
 	ret = mknod(full_path, 0600 | S_IFSOCK, 0);
@@ -522,7 +515,7 @@ static int process_symlink(const char *path, const char *lnk, void *user)
 		goto out;
 	}
 
-	if (g_verbose >= 3)
+	if (bconf.verbose >= 3)
 		fprintf(stderr, "symlink %s -> %s\n", path, lnk);
 
 	ret = symlink(lnk, full_path);
@@ -554,7 +547,7 @@ static int process_rename(const char *from, const char *to, void *user)
 		goto out;
 	}
 
-	if (g_verbose >= 3)
+	if (bconf.verbose >= 3)
 		fprintf(stderr, "rename %s -> %s\n", from, to);
 
 	ret = rename(full_from, full_to);
@@ -586,7 +579,7 @@ static int process_link(const char *path, const char *lnk, void *user)
 		goto out;
 	}
 
-	if (g_verbose >= 3)
+	if (bconf.verbose >= 3)
 		fprintf(stderr, "link %s -> %s\n", path, lnk);
 
 	ret = link(full_link_path, full_path);
@@ -612,7 +605,7 @@ static int process_unlink(const char *path, void *user)
 		goto out;
 	}
 
-	if (g_verbose >= 3)
+	if (bconf.verbose >= 3)
 		fprintf(stderr, "unlink %s\n", path);
 
 	ret = unlink(full_path);
@@ -637,7 +630,7 @@ static int process_rmdir(const char *path, void *user)
 		goto out;
 	}
 
-	if (g_verbose >= 3)
+	if (bconf.verbose >= 3)
 		fprintf(stderr, "rmdir %s\n", path);
 
 	ret = rmdir(full_path);
@@ -702,7 +695,7 @@ static int process_write(const char *path, const void *data, u64 offset,
 	if (ret < 0)
 		goto out;
 
-	if (g_verbose >= 2)
+	if (bconf.verbose >= 2)
 		fprintf(stderr, "write %s - offset=%llu length=%llu\n",
 			path, offset, len);
 
@@ -792,7 +785,7 @@ static int process_clone(const char *path, u64 offset, u64 len,
 		goto out;
 	}
 
-	if (g_verbose >= 2)
+	if (bconf.verbose >= 2)
 		fprintf(stderr,
 			"clone %s - source=%s source offset=%llu offset=%llu length=%llu\n",
 			path, clone_path, clone_offset, offset, len);
@@ -833,7 +826,7 @@ static int process_set_xattr(const char *path, const char *name,
 	}
 
 	if (strcmp("security.capability", name) == 0) {
-		if (g_verbose >= 4)
+		if (bconf.verbose >= 4)
 			fprintf(stderr, "set_xattr: cache capabilities\n");
 		if (rctx->cached_capabilities_len)
 			warning("capabilities set multiple times per file: %s",
@@ -848,7 +841,7 @@ static int process_set_xattr(const char *path, const char *name,
 		memcpy(rctx->cached_capabilities, data, len);
 	}
 
-	if (g_verbose >= 3) {
+	if (bconf.verbose >= 3) {
 		fprintf(stderr, "set_xattr %s - name=%s data_len=%d "
 				"data=%.*s\n", path, name, len,
 				len, (char*)data);
@@ -878,7 +871,7 @@ static int process_remove_xattr(const char *path, const char *name, void *user)
 		goto out;
 	}
 
-	if (g_verbose >= 3) {
+	if (bconf.verbose >= 3) {
 		fprintf(stderr, "remove_xattr %s - name=%s\n",
 				path, name);
 	}
@@ -906,7 +899,7 @@ static int process_truncate(const char *path, u64 size, void *user)
 		goto out;
 	}
 
-	if (g_verbose >= 3)
+	if (bconf.verbose >= 3)
 		fprintf(stderr, "truncate %s size=%llu\n", path, size);
 
 	ret = truncate(full_path, size);
@@ -932,7 +925,7 @@ static int process_chmod(const char *path, u64 mode, void *user)
 		goto out;
 	}
 
-	if (g_verbose >= 3)
+	if (bconf.verbose >= 3)
 		fprintf(stderr, "chmod %s - mode=0%o\n", path, (int)mode);
 
 	ret = chmod(full_path, mode);
@@ -958,7 +951,7 @@ static int process_chown(const char *path, u64 uid, u64 gid, void *user)
 		goto out;
 	}
 
-	if (g_verbose >= 3)
+	if (bconf.verbose >= 3)
 		fprintf(stderr, "chown %s - uid=%llu, gid=%llu\n", path,
 				uid, gid);
 
@@ -970,7 +963,7 @@ static int process_chown(const char *path, u64 uid, u64 gid, void *user)
 	}
 
 	if (rctx->cached_capabilities_len) {
-		if (g_verbose >= 3)
+		if (bconf.verbose >= 3)
 			fprintf(stderr, "chown: restore capabilities\n");
 		ret = lsetxattr(full_path, "security.capability",
 				rctx->cached_capabilities,
@@ -1004,7 +997,7 @@ static int process_utimes(const char *path, struct timespec *at,
 		goto out;
 	}
 
-	if (g_verbose >= 3)
+	if (bconf.verbose >= 3)
 		fprintf(stderr, "utimes %s\n", path);
 
 	tv[0] = *at;
@@ -1023,7 +1016,7 @@ out:
 static int process_update_extent(const char *path, u64 offset, u64 len,
 		void *user)
 {
-	if (g_verbose >= 3)
+	if (bconf.verbose >= 3)
 		fprintf(stderr, "update_extent %s: offset=%llu, len=%llu\n",
 				path, (unsigned long long)offset,
 				(unsigned long long)len);
@@ -1163,7 +1156,7 @@ static int do_receive(struct btrfs_receive *rctx, const char *tomnt,
 
 	while (!end) {
 		if (rctx->cached_capabilities_len) {
-			if (g_verbose >= 4)
+			if (bconf.verbose >= 4)
 				fprintf(stderr, "clear cached capabilities\n");
 			memset(rctx->cached_capabilities, 0,
 					sizeof(rctx->cached_capabilities));
@@ -1252,6 +1245,9 @@ static const char * const cmd_receive_usage[] = {
 	"                 this file system is mounted.",
 	"--dump           dump stream metadata, one line per operation,",
 	"                 does not require the MOUNT parameter",
+	HELPINFO_INSERT_GLOBALS,
+	HELPINFO_INSERT_VERBOSE,
+	HELPINFO_INSERT_QUIET,
 	NULL
 };
 
@@ -1274,6 +1270,18 @@ static int cmd_receive(const struct cmd_struct *cmd, int argc, char **argv)
 	realmnt[0] = 0;
 	fromfile[0] = 0;
 
+	/*
+	 * Init global verbose to default, if it is unset.
+	 * Default is 1 for historical reasons, changing may break scripts that
+	 * expect the 'At subvol' message.
+	 * As default is 1, which means the effective verbose for receive is 2
+	 * which global verbose is unaware. So adjust global verbose value here.
+	 */
+	if (bconf.verbose == BTRFS_BCONF_UNSET)
+		bconf.verbose = 1;
+	else if (bconf.verbose > BTRFS_BCONF_QUIET)
+		bconf.verbose++;
+
 	optind = 0;
 	while (1) {
 		int c;
@@ -1292,10 +1300,10 @@ static int cmd_receive(const struct cmd_struct *cmd, int argc, char **argv)
 
 		switch (c) {
 		case 'v':
-			g_verbose++;
+			bconf_be_verbose();
 			break;
 		case 'q':
-			g_verbose = 0;
+			bconf_be_quiet();
 			break;
 		case 'f':
 			if (arg_copy_path(fromfile, optarg, sizeof(fromfile))) {
