@@ -194,8 +194,7 @@ static struct btrfs_chunk *create_chunk_item(struct chunk_record *record)
 	return ret;
 }
 
-static void init_recover_control(struct recover_control *rc, int verbose,
-		int yes)
+static void init_recover_control(struct recover_control *rc, int yes)
 {
 	memset(rc, 0, sizeof(struct recover_control));
 	cache_tree_init(&rc->chunk);
@@ -208,7 +207,7 @@ static void init_recover_control(struct recover_control *rc, int verbose,
 	INIT_LIST_HEAD(&rc->rebuild_chunks);
 	INIT_LIST_HEAD(&rc->unrepaired_chunks);
 
-	rc->verbose = verbose;
+	rc->verbose = bconf.verbose;
 	rc->yes = yes;
 	pthread_mutex_init(&rc->rc_lock, NULL);
 }
@@ -2319,14 +2318,14 @@ static void validate_rebuild_chunks(struct recover_control *rc)
 /*
  * Return 0 when successful, < 0 on error and > 0 if aborted by user
  */
-int btrfs_recover_chunk_tree(const char *path, int verbose, int yes)
+int btrfs_recover_chunk_tree(const char *path, int yes)
 {
 	int ret = 0;
 	struct btrfs_root *root = NULL;
 	struct btrfs_trans_handle *trans;
 	struct recover_control rc;
 
-	init_recover_control(&rc, verbose, yes);
+	init_recover_control(&rc, yes);
 
 	ret = recover_prepare(&rc, path);
 	if (ret) {
