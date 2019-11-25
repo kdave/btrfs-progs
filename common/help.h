@@ -57,7 +57,9 @@
  * options and then continue with the following text that possibly follows
  * after the regular options
  */
-#define HELPINFO_INSERT_GLOBALS		"INSERT_GLOBALS"
+#define HELPINFO_INSERT_GLOBALS		"",					\
+					"Global options:"
+#define HELPINFO_INSERT_FORMAT		"--format TYPE"
 
 struct cmd_struct;
 struct cmd_group;

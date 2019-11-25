@@ -209,15 +209,13 @@ static int do_usage_one_command(const char * const *usagestr,
 	fputc('\n', outf);
 
 	while (*usagestr) {
-		if (strcmp(*usagestr, HELPINFO_INSERT_GLOBALS) == 0) {
+		if (strcmp(*usagestr, HELPINFO_INSERT_FORMAT) == 0) {
 			int i;
 
-			fputc('\n', outf);
 			/*
 			 * We always support text, that's on by default for all
 			 * commands
 			 */
-			fprintf(outf, "%*sGlobal options:\n", pad, "");
 			fprintf(outf, "%*s--format TYPE      where TYPE is: %s",
 					pad, "", output_formats[0].name);
 			for (i = 1; i < ARRAY_SIZE(output_formats); i++) {
