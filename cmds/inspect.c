@@ -56,12 +56,11 @@ static int __ino_to_path_fd(u64 inum, int fd, int verbose, const char *prepend)
 		goto out;
 	}
 
-	if (verbose)
-		printf("ioctl ret=%d, bytes_left=%lu, bytes_missing=%lu, "
-			"cnt=%d, missed=%d\n", ret,
-			(unsigned long)fspath->bytes_left,
-			(unsigned long)fspath->bytes_missing,
-			fspath->elem_cnt, fspath->elem_missed);
+	pr_verbose(1,
+	"ioctl ret=%d, bytes_left=%lu, bytes_missing=%lu cnt=%d, missed=%d\n",
+		   ret, (unsigned long)fspath->bytes_left,
+		   (unsigned long)fspath->bytes_missing, fspath->elem_cnt,
+		   fspath->elem_missed);
 
 	for (i = 0; i < fspath->elem_cnt; ++i) {
 		u64 ptr;
@@ -84,6 +83,8 @@ static const char * const cmd_inspect_inode_resolve_usage[] = {
 	"Get file system paths for the given inode",
 	"",
 	"-v   verbose mode",
+	HELPINFO_INSERT_GLOBALS,
+	HELPINFO_INSERT_VERBOSE,
 	NULL
 };
 
@@ -91,7 +92,6 @@ static int cmd_inspect_inode_resolve(const struct cmd_struct *cmd,
 				     int argc, char **argv)
 {
 	int fd;
-	int verbose = 0;
 	int ret;
 	DIR *dirstream = NULL;
 
@@ -103,7 +103,7 @@ static int cmd_inspect_inode_resolve(const struct cmd_struct *cmd,
 
 		switch (c) {
 		case 'v':
-			verbose = 1;
+			bconf_be_verbose();
 			break;
 		default:
 			usage_unknown_option(cmd, argv);
@@ -117,8 +117,8 @@ static int cmd_inspect_inode_resolve(const struct cmd_struct *cmd,
 	if (fd < 0)
 		return 1;
 
-	ret = __ino_to_path_fd(arg_strtou64(argv[optind]), fd, verbose,
-			       argv[optind+1]);
+	ret = __ino_to_path_fd(arg_strtou64(argv[optind]), fd,
+			       bconf.verbose, argv[optind+1]);
 	close_file_or_dir(fd, dirstream);
 	return !!ret;
 
