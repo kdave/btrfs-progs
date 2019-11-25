@@ -226,8 +226,7 @@ static void recover_err_str(int ret)
 	}
 }
 
-int btrfs_recover_superblocks(const char *dname,
-			int verbose, int yes)
+int btrfs_recover_superblocks(const char *dname, int yes)
 {
 	int fd, ret;
 	struct btrfs_recover_superblock recover;
@@ -249,7 +248,7 @@ int btrfs_recover_superblocks(const char *dname,
 		goto no_recover;
 	}
 
-	if (verbose)
+	if (bconf.verbose > BTRFS_BCONF_QUIET)
 		print_all_devices(&recover.fs_devices->devices);
 
 	ret = read_fs_supers(&recover);
@@ -257,7 +256,7 @@ int btrfs_recover_superblocks(const char *dname,
 		ret = 1;
 		goto no_recover;
 	}
-	if (verbose) {
+	if (bconf.verbose > BTRFS_BCONF_QUIET) {
 		printf("Before Recovering:\n");
 		print_all_supers(&recover);
 	}
