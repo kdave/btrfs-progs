@@ -82,7 +82,8 @@
 	ONE(BTRFS_IOC_GET_FEATURES)		\
 	ONE(BTRFS_IOC_SET_FEATURES)		\
 	ONE(BTRFS_IOC_GET_SUPPORTED_FEATURES)	\
-	ONE(BTRFS_IOC_RM_DEV_V2)
+	ONE(BTRFS_IOC_RM_DEV_V2)		\
+	ONE(BTRFS_IOC_LOGICAL_INO_V2)
 
 #define LIST					\
 	LIST_BASE				\
@@ -160,6 +161,7 @@ static struct ioctl_number expected_list[] = {
 	{ BTRFS_IOC_SET_FEATURES,                   0x0040309439 },
 	{ BTRFS_IOC_GET_SUPPORTED_FEATURES,         0x0080489439 },
 	{ BTRFS_IOC_RM_DEV_V2,                      0x005000943a },
+	{ BTRFS_IOC_LOGICAL_INO_V2,                 0x00c038943b },
 };
 
 static struct btrfs_ioctl_vol_args used_vol_args __attribute__((used));
