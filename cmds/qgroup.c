@@ -98,7 +98,9 @@ static int _cmd_qgroup_assign(const struct cmd_struct *cmd, int assign,
 
 	ret = ioctl(fd, BTRFS_IOC_QGROUP_ASSIGN, &args);
 	if (ret < 0) {
-		error("unable to assign quota group: %m");
+		error("unable to assign quota group: %s",
+				errno == ENOTCONN ? "quota not enabled"
+						: strerror(errno));
 		close_file_or_dir(fd, dirstream);
 		return 1;
 	}
@@ -152,8 +154,10 @@ static int _cmd_qgroup_create(int create, int argc, char **argv)
 	ret = ioctl(fd, BTRFS_IOC_QGROUP_CREATE, &args);
 	close_file_or_dir(fd, dirstream);
 	if (ret < 0) {
-		error("unable to %s quota group: %m",
-			create ? "create":"destroy");
+		error("unable to %s quota group: %s",
+			create ? "create":"destroy",
+				errno == ENOTCONN ? "quota not enabled"
+						: strerror(errno));
 		return 1;
 	}
 	return 0;
@@ -447,7 +451,10 @@ static int cmd_qgroup_limit(const struct cmd_struct *cmd, int argc, char **argv)
 	ret = ioctl(fd, BTRFS_IOC_QGROUP_LIMIT, &args);
 	close_file_or_dir(fd, dirstream);
 	if (ret < 0) {
-		error("unable to limit requested quota group: %m");
+		error("unable to limit requested quota group: %s",
+				errno == ENOTCONN ? "quota not enabled"
+						: strerror(errno));
+
 		return 1;
 	}
 	return 0;
