@@ -125,7 +125,7 @@ at 'path', ie. all hardlinks
 -v::::
 verbose mode, print count of returned paths and ioctl() return value
 
-*logical-resolve* [-Pv] [-s <bufsize>] <logical> <path>::
+*logical-resolve* [-Pvo] [-s <bufsize>] <logical> <path>::
 (needs root privileges)
 +
 resolve paths to all files at given 'logical' address in the linear filesystem space
@@ -136,8 +136,15 @@ resolve paths to all files at given 'logical' address in the linear filesystem s
 skip the path resolving and print the inodes instead
 -v::::
 verbose mode, print count of returned paths and all ioctl() return values
+-o::::
+ignore offsets, find all references to an extent instead of a single block.
+Requires kernel support for the V2 ioctl (added in 4.15). The results might need
+further processing to filter out unwanted extents by the offset that is supposed
+to be obtained by other means.
 -s <bufsize>::::
-set internal buffer for storing the file names to 'bufsize', default is 4096, maximum 64k
+set internal buffer for storing the file names to 'bufsize', default is 64k,
+maximum 16m.  Buffer sizes over 64K require kernel support for the V2 ioctl
+(added in 4.15).
 
 *min-dev-size* [options] <path>::
 (needs root privileges)
