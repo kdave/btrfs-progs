@@ -126,14 +126,17 @@ static int cmd_inspect_inode_resolve(const struct cmd_struct *cmd,
 static DEFINE_SIMPLE_COMMAND(inspect_inode_resolve, "inode-resolve");
 
 static const char * const cmd_inspect_logical_resolve_usage[] = {
-	"btrfs inspect-internal logical-resolve [-Pv] [-s bufsize] <logical> <path>",
+	"btrfs inspect-internal logical-resolve [-Pvo] [-s bufsize] <logical> <path>",
 	"Get file system paths for the given logical address",
 	"",
 	"-P          skip the path resolving and print the inodes instead",
 	"-v          verbose mode",
+	"-o          ignore offsets when matching references (requires v2 ioctl",
+	"            support in the kernel 4.15+)",
 	"-s bufsize  set inode container's size. This is used to increase inode",
 	"            container's size in case it is not enough to read all the ",
-	"            resolved results. The max value one can set is 64k",
+	"            resolved results. The max value one can set is 64k with the",
+	"            v1 ioctl. Sizes over 64k will use the v2 ioctl (kernel 4.15+)",
 	NULL
 };
 
@@ -152,10 +155,12 @@ static int cmd_inspect_logical_resolve(const struct cmd_struct *cmd,
 	char full_path[PATH_MAX];
 	char *path_ptr;
 	DIR *dirstream = NULL;
+	u64 flags = 0;
+	unsigned long request = BTRFS_IOC_LOGICAL_INO;
 
 	optind = 0;
 	while (1) {
-		int c = getopt(argc, argv, "Pvs:");
+		int c = getopt(argc, argv, "Pvos:");
 		if (c < 0)
 			break;
 
@@ -165,6 +170,9 @@ static int cmd_inspect_logical_resolve(const struct cmd_struct *cmd,
 			break;
 		case 'v':
 			verbose = 1;
+			break;
+		case 'o':
+			flags |= BTRFS_LOGICAL_INO_ARGS_IGNORE_OFFSET;
 			break;
 		case 's':
 			size = arg_strtou64(optarg);
@@ -177,14 +185,18 @@ static int cmd_inspect_logical_resolve(const struct cmd_struct *cmd,
 	if (check_argc_exact(argc - optind, 2))
 		return 1;
 
-	size = min(size, (u64)SZ_64K);
+	size = min(size, (u64)SZ_16M);
 	inodes = malloc(size);
 	if (!inodes)
 		return 1;
 
+	if (size > SZ_64K || flags != 0)
+		request = BTRFS_IOC_LOGICAL_INO_V2;
+
 	memset(inodes, 0, sizeof(*inodes));
 	loi.logical = arg_strtou64(argv[optind]);
 	loi.size = size;
+	loi.flags = flags;
 	loi.inodes = ptr_to_u64(inodes);
 
 	fd = btrfs_open_dir(argv[optind + 1], &dirstream, 1);
@@ -193,7 +205,7 @@ static int cmd_inspect_logical_resolve(const struct cmd_struct *cmd,
 		goto out;
 	}
 
-	ret = ioctl(fd, BTRFS_IOC_LOGICAL_INO, &loi);
+	ret = ioctl(fd, request, &loi);
 	if (ret < 0) {
 		error("logical ino ioctl: %m");
 		goto out;
