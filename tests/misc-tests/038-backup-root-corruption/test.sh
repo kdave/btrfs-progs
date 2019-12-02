@@ -23,7 +23,7 @@ dump_super() {
 # Ensure currently active backup slot is the expected one (slot 3)
 backup2_root_ptr=$(dump_super | grep -A1 "backup 2" | grep backup_tree_root | awk '{print $2}')
 
-main_root_ptr=$(dump_super | grep root | head -n1 | awk '{print $2}')
+main_root_ptr=$(dump_super | awk '/^root\t/{print $2}')
 
 [ "$backup2_root_ptr" -eq "$main_root_ptr" ] || _fail "Backup slot 2 is not in use"
 
