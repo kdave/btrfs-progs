@@ -1,3 +1,9 @@
+btrfs-progs-5.4.1 (2020-01-09)
+  * build: fix docbook5 build
+  * check: do extra verification of extent items, inode items and chunks
+  * qgroup: return ENOTCONN if quotas not running (needs updated kernel)
+  * other: various test fixups
+
 btrfs-progs-5.4 (2019-12-03)
   * support new hash algorithms (kernel 5.5):
     * mkfs.btrfs and btrfs-convert with --csum, crc32c, xxhash, sha256, blake2
