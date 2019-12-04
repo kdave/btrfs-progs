@@ -346,8 +346,6 @@ static int copy_one_extent(struct btrfs_root *root, int fd,
 			   struct extent_buffer *leaf,
 			   struct btrfs_file_extent_item *fi, u64 pos)
 {
-	struct btrfs_multi_bio *multi = NULL;
-	struct btrfs_device *device;
 	char *inbuf, *outbuf = NULL;
 	ssize_t done, total = 0;
 	u64 bytenr;
@@ -356,12 +354,10 @@ static int copy_one_extent(struct btrfs_root *root, int fd,
 	u64 num_bytes;
 	u64 length;
 	u64 size_left;
-	u64 dev_bytenr;
 	u64 offset;
-	u64 count = 0;
+	u64 cur;
 	int compress;
 	int ret;
-	int dev_fd;
 	int mirror_num = 1;
 	int num_copies;
 
@@ -372,14 +368,26 @@ static int copy_one_extent(struct btrfs_root *root, int fd,
 	offset = btrfs_file_extent_offset(leaf, fi);
 	num_bytes = btrfs_file_extent_num_bytes(leaf, fi);
 	size_left = disk_size;
-	if (compress == BTRFS_COMPRESS_NONE)
+	/* Hole, early exit */
+	if (disk_size == 0)
+		return 0;
+
+	/* Invalid file extent */
+	if ((compress == BTRFS_COMPRESS_NONE && offset >= disk_size) ||
+	    offset > ram_size) {
+		error(
+	"invalid data extent offset, offset %llu disk_size %llu ram_size %llu",
+		      offset, disk_size, ram_size);
+		return -EUCLEAN;
+	}
+
+	if (compress == BTRFS_COMPRESS_NONE && offset < disk_size) {
 		bytenr += offset;
+		size_left -= offset;
+	}
 
 	if (verbose && offset)
 		printf("offset is %Lu\n", offset);
-	/* we found a hole */
-	if (disk_size == 0)
-		return 0;
 
 	inbuf = malloc(size_left);
 	if (!inbuf) {
@@ -395,47 +403,27 @@ static int copy_one_extent(struct btrfs_root *root, int fd,
 			return -ENOMEM;
 		}
 	}
+
+	num_copies = btrfs_num_copies(root->fs_info, bytenr, disk_size - offset);
 again:
-	length = size_left;
-	ret = btrfs_map_block(root->fs_info, READ, bytenr, &length, &multi,
-			      mirror_num, NULL);
-	if (ret) {
-		error("cannot map block logical %llu length %llu: %d",
-				(unsigned long long)bytenr,
-				(unsigned long long)length, ret);
-		goto out;
-	}
-	device = multi->stripes[0].dev;
-	dev_fd = device->fd;
-	device->total_ios++;
-	dev_bytenr = multi->stripes[0].physical;
-	free(multi);
-
-	if (size_left < length)
-		length = size_left;
-
-	done = pread(dev_fd, inbuf+count, length, dev_bytenr);
-	/* Need both checks, or we miss negative values due to u64 conversion */
-	if (done < 0 || done < length) {
-		num_copies = btrfs_num_copies(root->fs_info, bytenr, length);
-		mirror_num++;
-		/* mirror_num is 1-indexed, so num_copies is a valid mirror. */
-		if (mirror_num > num_copies) {
-			ret = -1;
-			error("exhausted mirrors trying to read (%d > %d)",
+	cur = bytenr;
+	while (cur < bytenr + size_left) {
+		length = bytenr + size_left - cur;
+		ret = read_extent_data(root->fs_info, inbuf + cur - bytenr, cur,
+				       &length, mirror_num);
+		if (ret < 0) {
+			mirror_num++;
+			if (mirror_num > num_copies) {
+				ret = -1;
+				error("exhausted mirros trying to read (%d > %d)",
 					mirror_num, num_copies);
-			goto out;
+				goto out;
+			}
+			fprintf(stderr, "trying another mirror\n");
+			continue;
 		}
-		fprintf(stderr, "Trying another mirror\n");
-		goto again;
+		cur += length;
 	}
-
-	mirror_num = 1;
-	size_left -= length;
-	count += length;
-	bytenr += length;
-	if (size_left)
-		goto again;
 
 	if (compress == BTRFS_COMPRESS_NONE) {
 		while (total < num_bytes) {
@@ -454,13 +442,13 @@ again:
 
 	ret = decompress(root, inbuf, outbuf, disk_size, &ram_size, compress);
 	if (ret) {
-		num_copies = btrfs_num_copies(root->fs_info, bytenr, length);
 		mirror_num++;
-		if (mirror_num >= num_copies) {
+		if (mirror_num > num_copies) {
 			ret = -1;
 			goto out;
 		}
-		fprintf(stderr, "Trying another mirror\n");
+		fprintf(stderr,
+			"trying another mirror due to decompression error\n");
 		goto again;
 	}
 
