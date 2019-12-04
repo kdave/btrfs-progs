@@ -66,7 +66,6 @@ ASCIIDOC_DEPS =
 endif
 
 MANPAGE_XSL = manpage-normal.xsl
-XMLTO_EXTRA =
 INSTALL = @INSTALL@
 RM = @RM@
 RMDIR = @RMDIR@
