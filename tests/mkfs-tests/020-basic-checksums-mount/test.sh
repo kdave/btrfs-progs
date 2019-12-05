@@ -12,6 +12,9 @@ prepare_test_dev
 
 test_mkfs_mount_checksum()
 {
+	local csum
+
+	csum="$1"
 	run_check_stdout $SUDO_HELPER "$TOP/mkfs.btrfs" -f --csum "$csum" "$TEST_DEV" | grep -q "Checksum:.*$csum"
 	run_check $SUDO_HELPER "$TOP/btrfs" inspect-internal dump-super "$TEST_DEV"
 	run_check $SUDO_HELPER "$TOP/btrfs" check "$TEST_DEV"
