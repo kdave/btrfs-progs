@@ -1249,7 +1249,6 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 	}
 
 	ASSERT(!memcmp(disk_super->fsid, fs_devices->fsid, BTRFS_FSID_SIZE));
-	ASSERT(!memcmp(disk_super->fsid, fs_devices->fsid, BTRFS_FSID_SIZE));
 	if (btrfs_fs_incompat(fs_info, METADATA_UUID))
 		ASSERT(!memcmp(disk_super->metadata_uuid,
 			       fs_devices->metadata_uuid, BTRFS_FSID_SIZE));
