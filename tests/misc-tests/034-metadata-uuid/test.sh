@@ -230,11 +230,10 @@ failure_recovery "./disk1.raw.xz" "./disk2.raw.xz" check_inprogress_flag
 reload_btrfs
 failure_recovery "./disk2.raw.xz" "./disk1.raw.xz" check_inprogress_flag
 
-reload_btrfs
-
 # disk4 contains an image in with the in-progress flag set and disk 3 is part
 # of the same filesystem but has both METADATA_UUID incompat and a new
 # metadata uuid set. So disk 3 must always take precedence
+reload_btrfs
 failure_recovery "./disk3.raw.xz" "./disk4.raw.xz" check_completed
 reload_btrfs
 failure_recovery "./disk4.raw.xz" "./disk3.raw.xz" check_completed
@@ -243,6 +242,7 @@ failure_recovery "./disk4.raw.xz" "./disk3.raw.xz" check_completed
 # than once, disk6 on the other hand is member of the same filesystem but
 # hasn't completed its last change. Thus it has both the FSID_CHANGING flag set
 # and METADATA_UUID flag set.
+reload_btrfs
 failure_recovery "./disk5.raw.xz" "./disk6.raw.xz" check_multi_fsid_change
 reload_btrfs
 failure_recovery "./disk6.raw.xz" "./disk5.raw.xz" check_multi_fsid_change
