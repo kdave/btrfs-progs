@@ -10,6 +10,6 @@ check_prereq mkfs.btrfs
 tmp=$(mktemp -d --tmpdir btrfs-progs-mkfs.rootdirXXXXXXX)
 # we can't use TEST_DEV, a file is needed
 img=$(mktemp btrfs-progs-mkfs.rootdirXXXXXXX)
-run_check "$TOP/mkfs.btrfs" -f --rootdir "$TOP/Documentation/" "$img"
+run_check "$TOP/mkfs.btrfs" -f --rootdir "$INTERNAL_BIN/Documentation/" "$img"
 
 rm -rf -- "$img"
