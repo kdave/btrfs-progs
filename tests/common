@@ -328,6 +328,20 @@ check_global_prereq()
 	fi
 }
 
+# Check if the targets passed as arguments are available, and if not just skip
+# the test
+check_dm_target_support()
+{
+	setup_root_helper
+	for target in "$@"; do
+		$SUDO_HELPER modprobe "dm-$target" >/dev/null 2>&1
+		$SUDO_HELPER dmsetup targets 2>&1 | grep -q "^$target"
+		if [ $? -ne 0 ]; then
+			_not_run "This test requires dm-$target support"
+		fi
+	done
+}
+
 check_image()
 {
 	local image
