@@ -328,11 +328,17 @@ check_global_prereq()
 	fi
 }
 
-# Check if the targets passed as arguments are available, and if not just skip
-# the test
+# Check if dmsetup and targets passed as arguments are available, and skip the
+# test if they aren't
 check_dm_target_support()
 {
 	setup_root_helper
+
+	which dmsetup &> /dev/null
+	if [ $? -ne 0 ]; then
+		_not_run "This test requires dmsetup tool";
+	fi
+
 	for target in "$@"; do
 		$SUDO_HELPER modprobe "dm-$target" >/dev/null 2>&1
 		$SUDO_HELPER dmsetup targets 2>&1 | grep -q "^$target"
