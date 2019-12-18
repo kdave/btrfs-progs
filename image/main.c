@@ -2365,9 +2365,8 @@ static void fixup_block_groups(struct btrfs_trans_handle *trans)
 
 		/* Update the block group item and mark the bg dirty */
 		bg->flags = map->type;
-		set_extent_bits(&fs_info->block_group_cache, ce->start,
-				ce->start + ce->size - 1, BLOCK_GROUP_DIRTY);
-
+		if (list_empty(&bg->dirty_list))
+			list_add_tail(&bg->dirty_list, &trans->dirty_bgs);
 		/*
 		 * Chunk and bg flags can be different, changing bg flags
 		 * without update avail_data/meta_alloc_bits will lead to

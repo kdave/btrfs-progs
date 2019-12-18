@@ -1100,8 +1100,8 @@ static int block_group_free_all_extent(struct btrfs_trans_handle *trans,
 	start = cache->key.objectid;
 	end = start + cache->key.offset - 1;
 
-	set_extent_bits(&info->block_group_cache, start, end,
-			BLOCK_GROUP_DIRTY);
+	if (list_empty(&cache->dirty_list))
+		list_add_tail(&cache->dirty_list, &trans->dirty_bgs);
 	set_extent_dirty(&info->free_space_cache, start, end);
 
 	cache->used = 0;

@@ -203,8 +203,7 @@ commit_tree:
 	 * again, we need to exhause both dirty blocks and delayed refs
 	 */
 	while (!RB_EMPTY_ROOT(&trans->delayed_refs.href_root) ||
-	       test_range_bit(&fs_info->block_group_cache, 0, (u64)-1,
-			      BLOCK_GROUP_DIRTY, 0)) {
+	       !list_empty(&trans->dirty_bgs)) {
 		ret = btrfs_write_dirty_block_groups(trans);
 		if (ret < 0)
 			goto error;
