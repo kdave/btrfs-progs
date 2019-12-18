@@ -2144,7 +2144,8 @@ int btrfs_read_sys_array(struct btrfs_fs_info *fs_info)
 				fs_info->nodesize);
 		return -EINVAL;
 	}
-	sb = btrfs_find_create_tree_block(fs_info, BTRFS_SUPER_INFO_OFFSET);
+	sb = alloc_dummy_extent_buffer(fs_info, BTRFS_SUPER_INFO_OFFSET,
+				       BTRFS_SUPER_INFO_SIZE);
 	if (!sb)
 		return -ENOMEM;
 	btrfs_set_buffer_uptodate(sb);
