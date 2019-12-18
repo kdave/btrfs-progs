@@ -77,7 +77,9 @@ static int update_cowonly_root(struct btrfs_trans_handle *trans,
 					&root->root_item);
 		if (ret < 0)
 			return ret;
-		btrfs_write_dirty_block_groups(trans);
+		ret = btrfs_write_dirty_block_groups(trans);
+		if (ret)
+			return ret;
 	}
 	return 0;
 }

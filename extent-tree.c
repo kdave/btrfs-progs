@@ -1596,9 +1596,11 @@ int btrfs_write_dirty_block_groups(struct btrfs_trans_handle *trans)
 
 		cache = (struct btrfs_block_group_cache *)(unsigned long)ptr;
 		ret = write_one_cache_group(trans, path, cache);
+		if (ret)
+			break;
 	}
 	btrfs_free_path(path);
-	return 0;
+	return ret;
 }
 
 static struct btrfs_space_info *__find_space_info(struct btrfs_fs_info *info,
