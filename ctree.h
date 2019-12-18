@@ -1111,16 +1111,18 @@ struct btrfs_block_group_cache {
 	int cached;
 	int ro;
 	/*
-         * If the free space extent count exceeds this number, convert the block
-         * group to bitmaps.
-         */
-        u32 bitmap_high_thresh;
-        /*
-         * If the free space extent count drops below this number, convert the
-         * block group back to extents.
-         */
-        u32 bitmap_low_thresh;
+	 * If the free space extent count exceeds this number, convert the block
+	 * group to bitmaps.
+	 */
+	u32 bitmap_high_thresh;
+	/*
+	 * If the free space extent count drops below this number, convert the
+	 * block group back to extents.
+	 */
+	u32 bitmap_low_thresh;
 
+	/* Block group cache stuff */
+	struct rb_node cache_node;
 };
 
 struct btrfs_device;
@@ -1150,6 +1152,7 @@ struct btrfs_fs_info {
 	struct extent_io_tree extent_ins;
 	struct extent_io_tree *excluded_extents;
 
+	struct rb_root block_group_cache_tree;
 	/* logical->physical extent mapping */
 	struct btrfs_mapping_tree mapping_tree;
 
