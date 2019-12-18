@@ -6268,7 +6268,10 @@ static int run_next_block(struct btrfs_root *root,
 		btree_space_waste += btrfs_leaf_free_space(buf);
 		for (i = 0; i < nritems; i++) {
 			struct btrfs_file_extent_item *fi;
+			unsigned long inline_offset;
 
+			inline_offset = offsetof(struct btrfs_file_extent_item,
+						 disk_bytenr);
 			btrfs_item_key_to_cpu(buf, &key, i);
 			/*
 			 * Check key type against the leaf owner.
@@ -6384,18 +6387,45 @@ static int run_next_block(struct btrfs_root *root,
 			}
 			if (key.type != BTRFS_EXTENT_DATA_KEY)
 				continue;
+			/* Check itemsize before we continue */
+			if (btrfs_item_size_nr(buf, i) < inline_offset) {
+				ret = -EUCLEAN;
+				error(
+		"invalid file extent item size, have %u expect (%lu, %lu]",
+					btrfs_item_size_nr(buf, i),
+					inline_offset,
+					BTRFS_LEAF_DATA_SIZE(fs_info));
+				continue;
+			}
 			fi = btrfs_item_ptr(buf, i,
 					    struct btrfs_file_extent_item);
 			if (btrfs_file_extent_type(buf, fi) ==
 			    BTRFS_FILE_EXTENT_INLINE)
 				continue;
+
+			/* Prealloc/regular extent must have fixed item size */
+			if (btrfs_item_size_nr(buf, i) !=
+			    sizeof(struct btrfs_file_extent_item)) {
+				ret = -EUCLEAN;
+				error(
+			"invalid file extent item size, have %u expect %zu",
+					btrfs_item_size_nr(buf, i),
+					sizeof(struct btrfs_file_extent_item));
+				continue;
+			}
+			/* key.offset (file offset) must be aligned */
+			if (!IS_ALIGNED(key.offset, fs_info->sectorsize)) {
+				ret = -EUCLEAN;
+				error(
+			"invalid file offset, have %llu expect aligned to %u",
+					key.offset, fs_info->sectorsize);
+				continue;
+			}
 			if (btrfs_file_extent_disk_bytenr(buf, fi) == 0)
 				continue;
 
 			data_bytes_allocated +=
 				btrfs_file_extent_disk_num_bytes(buf, fi);
-			if (data_bytes_allocated < root->fs_info->sectorsize)
-				abort();
 
 			data_bytes_referenced +=
 				btrfs_file_extent_num_bytes(buf, fi);
