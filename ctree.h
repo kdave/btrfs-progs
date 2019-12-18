@@ -1123,6 +1123,9 @@ struct btrfs_block_group_cache {
 
 	/* Block group cache stuff */
 	struct rb_node cache_node;
+
+	/* For dirty block groups */
+	struct list_head dirty_list;
 };
 
 struct btrfs_device;

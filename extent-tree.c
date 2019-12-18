@@ -2814,6 +2814,8 @@ static int read_one_block_group(struct btrfs_fs_info *fs_info,
 	cache->pinned = 0;
 	cache->flags = btrfs_block_group_flags(&bgi);
 	cache->used = btrfs_block_group_used(&bgi);
+	INIT_LIST_HEAD(&cache->dirty_list);
+
 	if (cache->flags & BTRFS_BLOCK_GROUP_DATA) {
 		bit = BLOCK_GROUP_DATA;
 	} else if (cache->flags & BTRFS_BLOCK_GROUP_SYSTEM) {
@@ -2900,6 +2902,7 @@ btrfs_add_block_group(struct btrfs_fs_info *fs_info, u64 bytes_used, u64 type,
 	cache->key.type = BTRFS_BLOCK_GROUP_ITEM_KEY;
 	cache->used = bytes_used;
 	cache->flags = type;
+	INIT_LIST_HEAD(&cache->dirty_list);
 
 	exclude_super_stripes(fs_info, cache);
 	ret = update_space_info(fs_info, cache->flags, size, bytes_used,
@@ -2997,6 +3000,7 @@ int btrfs_make_block_groups(struct btrfs_trans_handle *trans,
 		cache->key.type = BTRFS_BLOCK_GROUP_ITEM_KEY;
 		cache->used = 0;
 		cache->flags = group_type;
+		INIT_LIST_HEAD(&cache->dirty_list);
 
 		ret = update_space_info(fs_info, group_type, group_size,
 					0, &cache->space_info);

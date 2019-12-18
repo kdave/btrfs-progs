@@ -52,6 +52,7 @@ struct btrfs_trans_handle* btrfs_start_transaction(struct btrfs_root *root,
 	root->last_trans = h->transid;
 	root->commit_root = root->node;
 	extent_buffer_get(root->node);
+	INIT_LIST_HEAD(&h->dirty_bgs);
 
 	return h;
 }

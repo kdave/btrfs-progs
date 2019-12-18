@@ -22,6 +22,7 @@
 #include "kerncompat.h"
 #include "ctree.h"
 #include "delayed-ref.h"
+#include "kernel-lib/list.h"
 
 struct btrfs_trans_handle {
 	struct btrfs_fs_info *fs_info;
@@ -35,7 +36,7 @@ struct btrfs_trans_handle {
 	unsigned long blocks_used;
 	struct btrfs_block_group_cache *block_group;
 	struct btrfs_delayed_ref_root delayed_refs;
-
+	struct list_head dirty_bgs;
 };
 
 struct btrfs_trans_handle* btrfs_start_transaction(struct btrfs_root *root,
