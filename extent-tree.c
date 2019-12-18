@@ -2708,7 +2708,12 @@ static int read_one_block_group(struct btrfs_fs_info *fs_info,
 		bit = BLOCK_GROUP_METADATA;
 	}
 	set_avail_alloc_bits(fs_info, cache->flags);
-	if (btrfs_chunk_readonly(fs_info, cache->key.objectid))
+	ret = btrfs_chunk_readonly(fs_info, cache->key.objectid);
+	if (ret < 0) {
+		free(cache);
+		return ret;
+	}
+	if (ret)
 		cache->ro = 1;
 	exclude_super_stripes(fs_info, cache);
 
@@ -2753,7 +2758,7 @@ int btrfs_read_block_groups(struct btrfs_fs_info *fs_info)
 		btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
 
 		ret = read_one_block_group(fs_info, &path);
-		if (ret < 0)
+		if (ret < 0 && ret != -ENOENT)
 			goto error;
 
 		if (key.offset == 0)

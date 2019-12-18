@@ -1802,6 +1802,11 @@ btrfs_find_device_by_devid(struct btrfs_fs_devices *fs_devices,
 	return NULL;
 }
 
+/*
+ * Return 0 if the chunk at @chunk_offset exists and is not read-only.
+ * Return 1 if the chunk at @chunk_offset exists and is read-only.
+ * Return <0 if we can't find chunk at @chunk_offset.
+ */
 int btrfs_chunk_readonly(struct btrfs_fs_info *fs_info, u64 chunk_offset)
 {
 	struct cache_extent *ce;
@@ -1814,11 +1819,12 @@ int btrfs_chunk_readonly(struct btrfs_fs_info *fs_info, u64 chunk_offset)
 	 * During chunk recovering, we may fail to find block group's
 	 * corresponding chunk, we will rebuild it later
 	 */
-	ce = search_cache_extent(&map_tree->cache_tree, chunk_offset);
-	if (!fs_info->is_chunk_recover)
-		BUG_ON(!ce);
-	else
+	if (fs_info->is_chunk_recover)
 		return 0;
+
+	ce = search_cache_extent(&map_tree->cache_tree, chunk_offset);
+	if (!ce)
+		return -ENOENT;
 
 	map = container_of(ce, struct map_lookup, ce);
 	for (i = 0; i < map->num_stripes; i++) {
