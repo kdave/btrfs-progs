@@ -1872,9 +1872,10 @@ static int do_chunk_alloc(struct btrfs_trans_handle *trans,
 	return 0;
 }
 
-static int update_block_group(struct btrfs_fs_info *info, u64 bytenr,
+static int update_block_group(struct btrfs_trans_handle *trans, u64 bytenr,
 			      u64 num_bytes, int alloc, int mark_free)
 {
+	struct btrfs_fs_info *info = trans->fs_info;
 	struct btrfs_block_group_cache *cache;
 	u64 total = num_bytes;
 	u64 old_val;
@@ -2237,8 +2238,7 @@ static int __free_extent(struct btrfs_trans_handle *trans,
 			goto fail;
 		}
 
-		update_block_group(trans->fs_info, bytenr, num_bytes, 0,
-				   mark_free);
+		update_block_group(trans, bytenr, num_bytes, 0, mark_free);
 	}
 fail:
 	btrfs_free_path(path);
@@ -2570,8 +2570,7 @@ static int alloc_reserved_tree_block(struct btrfs_trans_handle *trans,
 	if (ret)
 		return ret;
 
-	ret = update_block_group(fs_info, ins.objectid, fs_info->nodesize, 1,
-				 0);
+	ret = update_block_group(trans, ins.objectid, fs_info->nodesize, 1, 0);
 	if (sinfo) {
 		if (fs_info->nodesize > sinfo->bytes_reserved) {
 			WARN_ON(1);
@@ -3031,12 +3030,11 @@ int btrfs_make_block_groups(struct btrfs_trans_handle *trans,
 	return 0;
 }
 
-int btrfs_update_block_group(struct btrfs_root *root,
+int btrfs_update_block_group(struct btrfs_trans_handle *trans,
 			     u64 bytenr, u64 num_bytes, int alloc,
 			     int mark_free)
 {
-	return update_block_group(root->fs_info, bytenr, num_bytes,
-				  alloc, mark_free);
+	return update_block_group(trans, bytenr, num_bytes, alloc, mark_free);
 }
 
 /*
@@ -3449,12 +3447,12 @@ int btrfs_fix_block_accounting(struct btrfs_trans_handle *trans)
 		btrfs_item_key_to_cpu(leaf, &key, slot);
 		if (key.type == BTRFS_EXTENT_ITEM_KEY) {
 			bytes_used += key.offset;
-			ret = btrfs_update_block_group(root,
+			ret = btrfs_update_block_group(trans,
 				  key.objectid, key.offset, 1, 0);
 			BUG_ON(ret);
 		} else if (key.type == BTRFS_METADATA_ITEM_KEY) {
 			bytes_used += fs_info->nodesize;
-			ret = btrfs_update_block_group(root,
+			ret = btrfs_update_block_group(trans,
 				  key.objectid, fs_info->nodesize, 1, 0);
 			if (ret)
 				goto out;
@@ -3609,7 +3607,7 @@ static int __btrfs_record_file_extent(struct btrfs_trans_handle *trans,
 					       BTRFS_EXTENT_FLAG_DATA);
 			btrfs_mark_buffer_dirty(leaf);
 
-			ret = btrfs_update_block_group(root, disk_bytenr,
+			ret = btrfs_update_block_group(trans, disk_bytenr,
 						       num_bytes, 1, 0);
 			if (ret)
 				goto fail;

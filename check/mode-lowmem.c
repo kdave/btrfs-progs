@@ -735,7 +735,7 @@ static int repair_tree_block_ref(struct btrfs_root *root,
 		}
 		btrfs_mark_buffer_dirty(eb);
 		printf("Added an extent item [%llu %u]\n", bytenr, node_size);
-		btrfs_update_block_group(extent_root, bytenr, node_size, 1, 0);
+		btrfs_update_block_group(trans, bytenr, node_size, 1, 0);
 
 		nrefs->refs[level] = 0;
 		nrefs->full_backref[level] =
@@ -3303,8 +3303,8 @@ static int repair_extent_data_item(struct btrfs_root *root,
 		btrfs_set_extent_flags(eb, ei, BTRFS_EXTENT_FLAG_DATA);
 
 		btrfs_mark_buffer_dirty(eb);
-		ret = btrfs_update_block_group(extent_root, disk_bytenr,
-					       num_bytes, 1, 0);
+		ret = btrfs_update_block_group(trans, disk_bytenr, num_bytes,
+					       1, 0);
 		btrfs_release_path(&path);
 	}
 

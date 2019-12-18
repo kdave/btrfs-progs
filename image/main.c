@@ -2338,8 +2338,9 @@ again:
 	return 0;
 }
 
-static void fixup_block_groups(struct btrfs_fs_info *fs_info)
+static void fixup_block_groups(struct btrfs_trans_handle *trans)
 {
+	struct btrfs_fs_info *fs_info = trans->fs_info;
 	struct btrfs_block_group_cache *bg;
 	struct btrfs_mapping_tree *map_tree = &fs_info->mapping_tree;
 	struct cache_extent *ce;
@@ -2499,7 +2500,7 @@ static int fixup_chunks_and_devices(struct btrfs_fs_info *fs_info,
 		return PTR_ERR(trans);
 	}
 
-	fixup_block_groups(fs_info);
+	fixup_block_groups(trans);
 	ret = fixup_dev_extents(trans);
 	if (ret < 0)
 		goto error;

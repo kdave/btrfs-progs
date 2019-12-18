@@ -1084,7 +1084,7 @@ err:
 	return ret;
 }
 
-static int block_group_free_all_extent(struct btrfs_root *root,
+static int block_group_free_all_extent(struct btrfs_trans_handle *trans,
 				       struct block_group_record *bg)
 {
 	struct btrfs_block_group_cache *cache;
@@ -1092,7 +1092,7 @@ static int block_group_free_all_extent(struct btrfs_root *root,
 	u64 start;
 	u64 end;
 
-	info = root->fs_info;
+	info = trans->fs_info;
 	cache = btrfs_lookup_block_group(info, bg->objectid);
 	if (!cache)
 		return -ENOENT;
@@ -1124,7 +1124,7 @@ static int remove_chunk_extent_item(struct btrfs_trans_handle *trans,
 		if (ret)
 			return ret;
 
-		ret = block_group_free_all_extent(root, chunk->bg_rec);
+		ret = block_group_free_all_extent(trans, chunk->bg_rec);
 		if (ret)
 			return ret;
 	}
