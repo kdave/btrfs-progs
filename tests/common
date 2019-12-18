@@ -331,7 +331,7 @@ check_image()
 	"$TOP/btrfs" check "$image" >> "$RESULTS" 2>&1
 	[ $? -eq 0 ] && _fail "btrfs check should have detected corruption"
 
-	run_check "$TOP/btrfs" check --repair "$image"
+	run_check "$TOP/btrfs" check --repair --force "$image"
 	run_check "$TOP/btrfs" check "$image"
 }
 
