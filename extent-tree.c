@@ -165,6 +165,92 @@ err:
 }
 
 /*
+ * This adds the block group to the fs_info rb tree for the block group cache
+ */
+static int btrfs_add_block_group_cache(struct btrfs_fs_info *info,
+				struct btrfs_block_group_cache *block_group)
+{
+	struct rb_node **p;
+	struct rb_node *parent = NULL;
+	struct btrfs_block_group_cache *cache;
+
+	p = &info->block_group_cache_tree.rb_node;
+
+	while (*p) {
+		parent = *p;
+		cache = rb_entry(parent, struct btrfs_block_group_cache,
+				 cache_node);
+		if (block_group->key.objectid < cache->key.objectid)
+			p = &(*p)->rb_left;
+		else if (block_group->key.objectid > cache->key.objectid)
+			p = &(*p)->rb_right;
+		else
+			return -EEXIST;
+	}
+
+	rb_link_node(&block_group->cache_node, parent, p);
+	rb_insert_color(&block_group->cache_node,
+			&info->block_group_cache_tree);
+
+	return 0;
+}
+
+/*
+ * This will return the block group at or after bytenr if contains is 0, else
+ * it will return the block group that contains the bytenr
+ */
+static struct btrfs_block_group_cache *block_group_cache_tree_search(
+		struct btrfs_fs_info *info, u64 bytenr, int contains)
+{
+	struct btrfs_block_group_cache *cache, *ret = NULL;
+	struct rb_node *n;
+	u64 end, start;
+
+	n = info->block_group_cache_tree.rb_node;
+
+	while (n) {
+		cache = rb_entry(n, struct btrfs_block_group_cache,
+				 cache_node);
+		end = cache->key.objectid + cache->key.offset - 1;
+		start = cache->key.objectid;
+
+		if (bytenr < start) {
+			if (!contains && (!ret || start < ret->key.objectid))
+				ret = cache;
+			n = n->rb_left;
+		} else if (bytenr > start) {
+			if (contains && bytenr <= end) {
+				ret = cache;
+				break;
+			}
+			n = n->rb_right;
+		} else {
+			ret = cache;
+			break;
+		}
+	}
+	return ret;
+}
+
+/*
+ * Return the block group that starts at or after bytenr
+ */
+struct btrfs_block_group_cache *btrfs_lookup_first_block_group_kernel(
+		struct btrfs_fs_info *info, u64 bytenr)
+{
+	return block_group_cache_tree_search(info, bytenr, 0);
+}
+
+/*
+ * Return the block group that contains the given bytenr
+ */
+struct btrfs_block_group_cache *btrfs_lookup_block_group_kernel(
+		struct btrfs_fs_info *info, u64 bytenr)
+{
+	return block_group_cache_tree_search(info, bytenr, 1);
+}
+
+/*
  * Return the block group that contains @bytenr, otherwise return the next one
  * that starts after @bytenr
  */
