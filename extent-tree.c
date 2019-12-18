@@ -164,10 +164,31 @@ err:
 	return 0;
 }
 
+static int btrfs_add_block_group_cache(struct btrfs_fs_info *info,
+				       struct btrfs_block_group_cache *cache,
+				       int bits)
+{
+	int ret;
+
+	ret = set_extent_bits(&info->block_group_cache, cache->key.objectid,
+			      cache->key.objectid + cache->key.offset - 1,
+			      bits);
+	if (ret)
+		return ret;
+
+	ret = set_state_private(&info->block_group_cache, cache->key.objectid,
+				(unsigned long)cache);
+	if (ret)
+		clear_extent_bits(&info->block_group_cache, cache->key.objectid,
+				  cache->key.objectid + cache->key.offset - 1,
+				  bits);
+	return ret;
+}
+
 /*
  * This adds the block group to the fs_info rb tree for the block group cache
  */
-static int btrfs_add_block_group_cache(struct btrfs_fs_info *info,
+static int btrfs_add_block_group_cache_kernel(struct btrfs_fs_info *info,
 				struct btrfs_block_group_cache *block_group)
 {
 	struct rb_node **p;
@@ -2764,7 +2785,6 @@ error:
 static int read_one_block_group(struct btrfs_fs_info *fs_info,
 				 struct btrfs_path *path)
 {
-	struct extent_io_tree *block_group_cache = &fs_info->block_group_cache;
 	struct extent_buffer *leaf = path->nodes[0];
 	struct btrfs_space_info *space_info;
 	struct btrfs_block_group_cache *cache;
@@ -2819,11 +2839,7 @@ static int read_one_block_group(struct btrfs_fs_info *fs_info,
 	}
 	cache->space_info = space_info;
 
-	set_extent_bits(block_group_cache, cache->key.objectid,
-			cache->key.objectid + cache->key.offset - 1,
-			bit | EXTENT_LOCKED);
-	set_state_private(block_group_cache, cache->key.objectid,
-			  (unsigned long)cache);
+	btrfs_add_block_group_cache(fs_info, cache, bit | EXTENT_LOCKED);
 	return 0;
 }
 
@@ -2875,9 +2891,6 @@ btrfs_add_block_group(struct btrfs_fs_info *fs_info, u64 bytes_used, u64 type,
 	int ret;
 	int bit = 0;
 	struct btrfs_block_group_cache *cache;
-	struct extent_io_tree *block_group_cache;
-
-	block_group_cache = &fs_info->block_group_cache;
 
 	cache = kzalloc(sizeof(*cache), GFP_NOFS);
 	BUG_ON(!cache);
@@ -2894,13 +2907,8 @@ btrfs_add_block_group(struct btrfs_fs_info *fs_info, u64 bytes_used, u64 type,
 	BUG_ON(ret);
 
 	bit = block_group_state_bits(type);
-	ret = set_extent_bits(block_group_cache, chunk_offset,
-			      chunk_offset + size - 1,
-			      bit | EXTENT_LOCKED);
-	BUG_ON(ret);
 
-	ret = set_state_private(block_group_cache, chunk_offset,
-				(unsigned long)cache);
+	ret = btrfs_add_block_group_cache(fs_info, cache, bit | EXTENT_LOCKED);
 	BUG_ON(ret);
 	set_avail_alloc_bits(fs_info, type);
 
@@ -2950,9 +2958,7 @@ int btrfs_make_block_groups(struct btrfs_trans_handle *trans,
 	int bit;
 	struct btrfs_root *extent_root = fs_info->extent_root;
 	struct btrfs_block_group_cache *cache;
-	struct extent_io_tree *block_group_cache;
 
-	block_group_cache = &fs_info->block_group_cache;
 	total_bytes = btrfs_super_total_bytes(fs_info->super_copy);
 	group_align = 64 * fs_info->sectorsize;
 
@@ -2996,12 +3002,8 @@ int btrfs_make_block_groups(struct btrfs_trans_handle *trans,
 					0, &cache->space_info);
 		BUG_ON(ret);
 		set_avail_alloc_bits(fs_info, group_type);
-
-		set_extent_bits(block_group_cache, cur_start,
-				cur_start + group_size - 1,
-				bit | EXTENT_LOCKED);
-		set_state_private(block_group_cache, cur_start,
-				  (unsigned long)cache);
+		btrfs_add_block_group_cache(fs_info, cache,
+					    bit | EXTENT_LOCKED);
 		cur_start += group_size;
 	}
 	/* then insert all the items */
