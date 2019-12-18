@@ -3640,7 +3640,7 @@ int exclude_super_stripes(struct btrfs_fs_info *fs_info,
 		while (nr--) {
 			u64 start, len;
 
-			if (logical[nr] > cache->key.objectid +
+			if (logical[nr] >= cache->key.objectid +
 			    cache->key.offset)
 				continue;
 
