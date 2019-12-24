@@ -183,7 +183,7 @@ const struct prop_handler prop_handlers[] = {
 	},
 	{
 		.name = "compression",
-		.desc = "compression algorighm for the file or directory",
+		.desc = "compression algorithm for the file or directory",
 		.read_only = 0,
 	 	.types = prop_object_inode, prop_compression
 	},
