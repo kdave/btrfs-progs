@@ -4810,7 +4810,7 @@ static int add_tree_backref(struct cache_tree *extent_cache, u64 bytenr,
 
 static int add_data_backref(struct cache_tree *extent_cache, u64 bytenr,
 			    u64 parent, u64 root, u64 owner, u64 offset,
-			    u32 num_refs, int found_ref, u64 max_size)
+			    u32 num_refs, u64 gen, int found_ref, u64 max_size)
 {
 	struct extent_record *rec;
 	struct data_backref *back;
@@ -4826,6 +4826,7 @@ static int add_data_backref(struct cache_tree *extent_cache, u64 bytenr,
 		tmpl.start = bytenr;
 		tmpl.nr = 1;
 		tmpl.max_size = max_size;
+		tmpl.generation = gen;
 
 		ret = add_extent_rec_nolookup(extent_cache, &tmpl);
 		if (ret)
@@ -4840,6 +4841,8 @@ static int add_data_backref(struct cache_tree *extent_cache, u64 bytenr,
 	if (rec->max_size < max_size)
 		rec->max_size = max_size;
 
+	if (rec->generation < gen)
+		rec->generation = gen;
 	/*
 	 * If found_ref is set then max_size is the real size and must match the
 	 * existing refs.  So if we have already found a ref then we need to
@@ -5315,6 +5318,7 @@ static int process_extent_item(struct btrfs_root *root,
 	u64 refs = 0;
 	u64 offset;
 	u64 num_bytes;
+	u64 gen;
 	int metadata = 0;
 
 	btrfs_item_key_to_cpu(eb, &key, slot);
@@ -5340,6 +5344,7 @@ static int process_extent_item(struct btrfs_root *root,
 
 	ei = btrfs_item_ptr(eb, slot, struct btrfs_extent_item);
 	refs = btrfs_extent_refs(eb, ei);
+	gen = btrfs_extent_generation(eb, ei);
 	if (btrfs_extent_flags(eb, ei) & BTRFS_EXTENT_FLAG_TREE_BLOCK)
 		metadata = 1;
 	else
@@ -5362,6 +5367,7 @@ static int process_extent_item(struct btrfs_root *root,
 	tmpl.metadata = metadata;
 	tmpl.found_rec = 1;
 	tmpl.max_size = num_bytes;
+	tmpl.generation = gen;
 	add_extent_rec(extent_cache, &tmpl);
 
 	ptr = (unsigned long)(ei + 1);
@@ -5401,14 +5407,14 @@ static int process_extent_item(struct btrfs_root *root,
 								       dref),
 					btrfs_extent_data_ref_offset(eb, dref),
 					btrfs_extent_data_ref_count(eb, dref),
-					0, num_bytes);
+					gen, 0, num_bytes);
 			break;
 		case BTRFS_SHARED_DATA_REF_KEY:
 			sref = (struct btrfs_shared_data_ref *)(iref + 1);
 			add_data_backref(extent_cache, key.objectid, offset,
 					0, 0, 0,
 					btrfs_shared_data_ref_count(eb, sref),
-					0, num_bytes);
+					gen, 0, num_bytes);
 			break;
 		default:
 			fprintf(stderr,
@@ -6355,7 +6361,7 @@ static int run_next_block(struct btrfs_root *root,
 								       ref),
 					btrfs_extent_data_ref_offset(buf, ref),
 					btrfs_extent_data_ref_count(buf, ref),
-					0, root->fs_info->sectorsize);
+					0, 0, root->fs_info->sectorsize);
 				continue;
 			}
 			if (key.type == BTRFS_SHARED_DATA_REF_KEY) {
@@ -6366,7 +6372,7 @@ static int run_next_block(struct btrfs_root *root,
 				add_data_backref(extent_cache,
 					key.objectid, key.offset, 0, 0, 0,
 					btrfs_shared_data_ref_count(buf, ref),
-					0, root->fs_info->sectorsize);
+					0, 0, root->fs_info->sectorsize);
 				continue;
 			}
 			if (key.type == BTRFS_ORPHAN_ITEM_KEY) {
@@ -6433,7 +6439,8 @@ static int run_next_block(struct btrfs_root *root,
 			add_data_backref(extent_cache,
 				btrfs_file_extent_disk_bytenr(buf, fi),
 				parent, owner, key.objectid, key.offset -
-				btrfs_file_extent_offset(buf, fi), 1, 1,
+				btrfs_file_extent_offset(buf, fi), 1,
+				btrfs_file_extent_generation(buf, fi), 1,
 				btrfs_file_extent_disk_num_bytes(buf, fi));
 		}
 	} else {
@@ -6736,7 +6743,10 @@ static int record_extent(struct btrfs_trans_handle *trans,
 				    struct btrfs_extent_item);
 
 		btrfs_set_extent_refs(leaf, ei, 0);
-		btrfs_set_extent_generation(leaf, ei, rec->generation);
+		if (rec->generation)
+			btrfs_set_extent_generation(leaf, ei, rec->generation);
+		else
+			btrfs_set_extent_generation(leaf, ei, trans->transid);
 
 		if (back->is_data) {
 			btrfs_set_extent_flags(leaf, ei,
