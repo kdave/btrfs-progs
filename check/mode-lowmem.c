@@ -2041,6 +2041,8 @@ static int check_file_extent(struct btrfs_root *root, struct btrfs_path *path,
 	u64 csum_found;		/* In byte size, sectorsize aligned */
 	u64 search_start;	/* Logical range start we search for csum */
 	u64 search_len;		/* Logical range len we search for csum */
+	u64 gen;
+	u64 super_gen;
 	unsigned int extent_type;
 	unsigned int is_hole;
 	int slot = path->slots[0];
@@ -2067,12 +2069,21 @@ static int check_file_extent(struct btrfs_root *root, struct btrfs_path *path,
 		return check_file_extent_inline(root, path, size, end);
 
 	/* Check REG_EXTENT/PREALLOC_EXTENT */
+	gen = btrfs_file_extent_generation(node, fi);
 	disk_bytenr = btrfs_file_extent_disk_bytenr(node, fi);
 	disk_num_bytes = btrfs_file_extent_disk_num_bytes(node, fi);
 	extent_num_bytes = btrfs_file_extent_num_bytes(node, fi);
 	extent_offset = btrfs_file_extent_offset(node, fi);
 	compressed = btrfs_file_extent_compression(node, fi);
 	is_hole = (disk_bytenr == 0) && (disk_num_bytes == 0);
+	super_gen = btrfs_super_generation(root->fs_info->super_copy);
+
+	if (gen > super_gen + 1) {
+		error(
+		"invalid file extent generation, have %llu expect (0, %llu]",
+			gen, super_gen + 1);
+		err |= INVALID_GENERATION;
+	}
 
 	/*
 	 * Check EXTENT_DATA csum
@@ -4152,8 +4163,10 @@ static int check_extent_item(struct btrfs_fs_info *fs_info,
 	u64 parent;
 	u64 num_bytes;
 	u64 root_objectid;
+	u64 gen;
 	u64 owner;
 	u64 owner_offset;
+	u64 super_gen;
 	int metadata = 0;
 	int level;
 	struct btrfs_key key;
@@ -4183,6 +4196,14 @@ static int check_extent_item(struct btrfs_fs_info *fs_info,
 
 	ei = btrfs_item_ptr(eb, slot, struct btrfs_extent_item);
 	flags = btrfs_extent_flags(eb, ei);
+	gen = btrfs_extent_generation(eb, ei);
+	super_gen = btrfs_super_generation(fs_info->super_copy);
+	if (gen > super_gen + 1) {
+		error(
+		"invalid generation for extent %llu, have %llu expect (0, %llu]",
+			key.objectid, gen, super_gen + 1);
+		err |= INVALID_GENERATION;
+	}
 
 	if (flags & BTRFS_EXTENT_FLAG_TREE_BLOCK)
 		metadata = 1;
