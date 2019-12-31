@@ -4605,6 +4605,7 @@ static int add_extent_rec_nolookup(struct cache_tree *extent_cache,
 	rec->refs = tmpl->refs;
 	rec->extent_item_refs = tmpl->extent_item_refs;
 	rec->parent_generation = tmpl->parent_generation;
+	rec->generation = tmpl->generation;
 	INIT_LIST_HEAD(&rec->backrefs);
 	INIT_LIST_HEAD(&rec->dups);
 	INIT_LIST_HEAD(&rec->list);
