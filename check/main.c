@@ -4021,10 +4021,13 @@ static void free_extent_record_cache(struct cache_tree *extent_cache)
 static int maybe_free_extent_rec(struct cache_tree *extent_cache,
 				 struct extent_record *rec)
 {
+	u64 super_gen = btrfs_super_generation(global_info->super_copy);
+
 	if (rec->content_checked && rec->owner_ref_checked &&
 	    rec->extent_item_refs == rec->refs && rec->refs > 0 &&
 	    rec->num_duplicates == 0 && !all_backpointers_checked(rec, 0) &&
 	    !rec->bad_full_backref && !rec->crossing_stripes &&
+	    rec->generation <= super_gen + 1 &&
 	    !rec->wrong_chunk_type) {
 		remove_cache_extent(extent_cache, &rec->cache);
 		free_all_extent_backrefs(rec);
@@ -7887,6 +7890,7 @@ static int check_extent_refs(struct btrfs_root *root,
 {
 	struct extent_record *rec;
 	struct cache_extent *cache;
+	u64 super_gen;
 	int ret = 0;
 	int had_dups = 0;
 	int err = 0;
@@ -7954,6 +7958,7 @@ static int check_extent_refs(struct btrfs_root *root,
 	if (had_dups)
 		return -EAGAIN;
 
+	super_gen = btrfs_super_generation(root->fs_info->super_copy);
 	while (1) {
 		int cur_err = 0;
 		int fix = 0;
@@ -7969,6 +7974,13 @@ static int check_extent_refs(struct btrfs_root *root,
 			cur_err = 1;
 		}
 
+		if (rec->generation > super_gen + 1) {
+			error(
+	"invalid generation for extent %llu, have %llu expect (0, %llu]",
+				rec->start, rec->generation,
+				super_gen + 1);
+			cur_err = 1;
+		}
 		if (rec->refs != rec->extent_item_refs) {
 			fprintf(stderr, "ref mismatch on [%llu %llu] ",
 				(unsigned long long)rec->start,
