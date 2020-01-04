@@ -44,6 +44,11 @@
 #include "common/path-utils.h"
 #include "common/device-scan.h"
 
+#define BTRFS_ZSTD_DEFAULT_LEVEL 3
+#define BTRFS_ZLIB_DEFAULT_LEVEL 3
+#define BTRFS_LZO_DEFAULT_LEVEL 3
+
+
 /*
  * for btrfs fi show, we maintain a hash of fsids we've already printed.
  * This way we don't print dups if a given FS is mounted more than once.
@@ -816,11 +821,11 @@ static DEFINE_SIMPLE_COMMAND(filesystem_sync, "sync");
 
 static int parse_compress_type(char *s)
 {
-	if (strcmp(optarg, "zlib") == 0)
+	if (strncmp(optarg, "zlib", 4) == 0)
 		return BTRFS_COMPRESS_ZLIB;
-	else if (strcmp(optarg, "lzo") == 0)
+	else if (strncmp(optarg, "lzo", 3) == 0)
 		return BTRFS_COMPRESS_LZO;
-	else if (strcmp(optarg, "zstd") == 0)
+	else if (strncmp(optarg, "zstd", 4) == 0)
 		return BTRFS_COMPRESS_ZSTD;
 	else {
 		error("unknown compression type %s", s);
@@ -828,17 +833,44 @@ static int parse_compress_type(char *s)
 	};
 }
 
+static unsigned int parse_compress_level(char *s, btrfs_compression_type compress_type){
+	unsigned long compress_level;
+	if (s[0] == 0 || s[0] != ':') {
+		compress_level = 0;
+	} else {
+		compress_level = strtoul(s + 1, NULL, 10);
+	}
+	switch (compress_type)
+	{
+	case BTRFS_COMPRESS_ZLIB:
+		if (compress_level < 1 || compress_level > 9)
+			return BTRFS_ZLIB_DEFAULT_LEVEL;
+		break;
+	case BTRFS_COMPRESS_LZO:
+		if (compress_level < 1 || compress_level > 9)
+			return BTRFS_LZO_DEFAULT_LEVEL;
+		break;
+	case BTRFS_COMPRESS_ZSTD:
+		if (compress_level < 1 || compress_level > 15)
+			return BTRFS_ZSTD_DEFAULT_LEVEL;
+		break;
+	default:
+		break;
+	}
+	return (int) compress_level;
+}
+
 static const char * const cmd_filesystem_defrag_usage[] = {
 	"btrfs filesystem defragment [options] <file>|<dir> [<file>|<dir>...]",
 	"Defragment a file or a directory",
 	"",
-	"-v                  be verbose",
-	"-r                  defragment files recursively",
-	"-c[zlib,lzo,zstd]   compress the file while defragmenting",
-	"-f                  flush data to disk immediately after defragmenting",
-	"-s start            defragment only from byte onward",
-	"-l len              defragment only up to len bytes",
-	"-t size             target extent size hint (default: 32M)",
+	"-v                  		be verbose",
+	"-r                  		defragment files recursively",
+	"-c[zlib,lzo,zstd][:<level>]   	compress the file while defragmenting",
+	"-f                  		flush data to disk immediately after defragmenting",
+	"-s start           		defragment only from byte onward",
+	"-l len              		defragment only up to len bytes",
+	"-t size             		target extent size hint (default: 32M)",
 	"",
 	"Warning: most Linux kernels will break up the ref-links of COW data",
 	"(e.g., files copied with 'cp --reflink', snapshots) which may cause",
@@ -895,6 +927,7 @@ static int cmd_filesystem_defrag(const struct cmd_struct *cmd,
 	int recursive = 0;
 	int ret = 0;
 	int compress_type = BTRFS_COMPRESS_NONE;
+	int compress_level = 0;
 	DIR *dirstream;
 
 	/*
@@ -924,8 +957,14 @@ static int cmd_filesystem_defrag(const struct cmd_struct *cmd,
 		switch(c) {
 		case 'c':
 			compress_type = BTRFS_COMPRESS_ZLIB;
-			if (optarg)
+			if (optarg) {
 				compress_type = parse_compress_type(optarg);
+				if (compress_type == BTRFS_COMPRESS_LZO)
+					compress_level = parse_compress_level(optarg + 3, compress_type);
+				else if (compress_type == BTRFS_COMPRESS_ZLIB ||
+						compress_type == BTRFS_COMPRESS_ZSTD)
+				compress_level = parse_compress_level(optarg + 4, compress_type);
+			}
 			break;
 		case 'f':
 			flush = 1;
@@ -965,7 +1004,7 @@ static int cmd_filesystem_defrag(const struct cmd_struct *cmd,
 	defrag_global_range.extent_thresh = (u32)thresh;
 	if (compress_type) {
 		defrag_global_range.flags |= BTRFS_DEFRAG_RANGE_COMPRESS;
-		defrag_global_range.compress_type = compress_type;
+		defrag_global_range.compress_type = compress_type | compress_level << 4;
 	}
 	if (flush)
 		defrag_global_range.flags |= BTRFS_DEFRAG_RANGE_START_IO;
