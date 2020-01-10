@@ -155,9 +155,25 @@ check_completed() {
 	[ $? -eq 0 ] || _fail "metadata_uuid not set on $2"
 }
 
+check_flag_cleared() {
+	# Ensure METADATA_UUID is not set
+	run_check_stdout $SUDO_HELPER "$TOP/btrfs" inspect-internal dump-super \
+		"$1" | grep -q METADATA_UUID
+	[ $? -eq 1 ] || _fail "metadata_uuid not set on $1"
+
+	run_check_stdout $SUDO_HELPER "$TOP/btrfs" inspect-internal dump-super \
+		"$2" | grep -q METADATA_UUID
+	[ $? -eq 1 ] || _fail "metadata_uuid not set on $2"
+}
+
 check_multi_fsid_change() {
 	check_inprogress_flag "$1" "$2"
 	check_completed "$1" "$2"
+}
+
+check_multi_fsid_unchanged() {
+	check_inprogress_flag "$1" "$2"
+	check_flag_cleared "$1" "$2"
 }
 
 failure_recovery() {
@@ -227,3 +243,12 @@ failure_recovery "./disk4.raw.xz" "./disk3.raw.xz" check_completed
 failure_recovery "./disk5.raw.xz" "./disk6.raw.xz" check_multi_fsid_change
 reload_btrfs
 failure_recovery "./disk6.raw.xz" "./disk5.raw.xz" check_multi_fsid_change
+
+# disk7 contains an image which has undergone a successful fsid change once to
+# a different value and once back to the original one, disk8 is part of the
+# same filesystem but in this case it has missed the second transaction commit
+# during the process change. So disk 7 looks as if it never underwent fsid change
+# and disk 8 has FSID_CHANGING_FLAG and METADATA_UUID but is stale.
+failure_recovery "./disk7.raw.xz" "./disk8.raw.xz" check_multi_fsid_unchanged
+reload_btrfs
+failure_recovery "./disk8.raw.xz" "./disk7.raw.xz" check_multi_fsid_unchanged
