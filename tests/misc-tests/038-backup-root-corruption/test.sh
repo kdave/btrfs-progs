@@ -27,7 +27,7 @@ main_root_ptr=$(dump_super | awk '/^root\t/{print $2}')
 
 [ "$backup2_root_ptr" -eq "$main_root_ptr" ] || _fail "Backup slot 2 is not in use"
 
-run_check "$TOP/btrfs-corrupt-block" -m $main_root_ptr -f generation "$TEST_DEV"
+run_check "$INTERNAL_BIN/btrfs-corrupt-block" -m $main_root_ptr -f generation "$TEST_DEV"
 
 # Should fail because the root is corrupted
 run_mustfail "Unexpected successful mount" \

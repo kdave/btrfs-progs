@@ -46,7 +46,7 @@ corrupt_fst_item()
 		_fail "Unknown item type for corruption"
 	fi
 
-	run_check "$TOP/btrfs-corrupt-block" -r 10 -K "$objectid,$type,$offset" \
+	run_check "$INTERNAL_BIN/btrfs-corrupt-block" -r 10 -K "$objectid,$type,$offset" \
 		-f offset "$TEST_DEV"
 }
 

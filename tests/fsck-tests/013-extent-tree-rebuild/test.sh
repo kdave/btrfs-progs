@@ -30,7 +30,7 @@ test_extent_tree_rebuild()
 	fi
 
 	# corrupt extent root node block
-	run_check $SUDO_HELPER "$TOP/btrfs-corrupt-block" -l "$extent_root_bytenr" \
+	run_check $SUDO_HELPER "$INTERNAL_BIN/btrfs-corrupt-block" -l "$extent_root_bytenr" \
 		-b 4096 "$TEST_DEV"
 
 	$SUDO_HELPER "$TOP/btrfs" check "$TEST_DEV" >& /dev/null && \
