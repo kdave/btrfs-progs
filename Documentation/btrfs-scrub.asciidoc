@@ -25,7 +25,8 @@ The user is supposed to run it manually or via a periodic system service. The
 recommended period is a month but could be less. The estimated device bandwidth
 utilization is about 80% on an idle filesystem. The IO priority class is by
 default 'idle' so background scrub should not significantly interfere with
-normal filesystem operation.
+normal filesystem operation. The IO scheduler set for the device(s) might not
+support the priority classes though.
 
 The scrubbing status is recorded in '/var/lib/btrfs/' in textual files named
 'scrub.status.UUID' for a filesystem identified by the given UUID. (Progress
@@ -36,16 +37,20 @@ will continue from the last saved position.
 SUBCOMMAND
 ----------
 *cancel* <path>|<device>::
-If a scrub is running on the filesystem identified by 'path' cancel it.
+If a scrub is running on the filesystem identified by 'path' or 'device',
+cancel it.
 +
 If a 'device' is specified, the corresponding filesystem is found and
 *btrfs scrub cancel* behaves as if it was called on that filesystem.
+The progress is saved in the status file so *btrfs scrub resume* can continue
+from the last position.
 
 *resume* [-BdqrR] [-c <ioprio_class> -n <ioprio_classdata>] <path>|<device>::
 Resume a cancelled or interrupted scrub on the filesystem identified by
-'path' or on a given 'device'.
+'path' or on a given 'device'. The starting point is read from the status file
+if it exists.
 +
-Does not start a new scrub if the last scrub finished successfully.
+This does not start a new scrub if the last scrub finished successfully.
 +
 `Options`
 +
@@ -53,12 +58,15 @@ see *scrub start*.
 
 *start* [-BdqrRf] [-c <ioprio_class> -n <ioprio_classdata>] <path>|<device>::
 Start a scrub on all devices of the filesystem identified by 'path' or on
-a single 'device'. If a scrub is already running, the new one fails.
+a single 'device'. If a scrub is already running, the new one will not start.
 +
-Without options, scrub is started as a background process.
+Without options, scrub is started as a background process. The automatic
+repairs of damaged copies is performed by default for block group profiles with
+redundancy.
 +
 The default IO priority of scrub is the idle class. The priority can be
 configured similar to the `ionice`(1) syntax using '-c' and '-n' options.
+Note that not all IO schedulers honor the ionice settings.
 +
 `Options`
 +
