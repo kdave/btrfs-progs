@@ -31,7 +31,7 @@ otherwise prints a message about btrfs check.
 
 EXIT STATUS
 -----------
-There are two possible exit code returned:
+There are two possible exit codes returned:
 
 0::
 No error
@@ -47,4 +47,4 @@ SEE ALSO
 --------
 `btrfs`(8),
 `fsck`(8),
-`fstab`(5),
+`fstab`(5)
