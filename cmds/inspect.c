@@ -149,7 +149,7 @@ static int cmd_inspect_logical_resolve(const struct cmd_struct *cmd,
 	int verbose = 0;
 	int getpath = 1;
 	int bytes_left;
-	struct btrfs_ioctl_logical_ino_args loi;
+	struct btrfs_ioctl_logical_ino_args loi = { 0 };
 	struct btrfs_data_container *inodes;
 	u64 size = SZ_64K;
 	char full_path[PATH_MAX];
