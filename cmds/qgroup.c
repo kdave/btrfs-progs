@@ -45,34 +45,30 @@ static int _cmd_qgroup_assign(const struct cmd_struct *cmd, int assign,
 	struct btrfs_ioctl_qgroup_assign_args args;
 	DIR *dirstream = NULL;
 
-	if (assign) {
-		optind = 0;
-		while (1) {
-			enum { GETOPT_VAL_RESCAN = 256, GETOPT_VAL_NO_RESCAN };
-			static const struct option long_options[] = {
-				{ "rescan", no_argument, NULL,
-					GETOPT_VAL_RESCAN },
-				{ "no-rescan", no_argument, NULL,
-					GETOPT_VAL_NO_RESCAN },
-				{ NULL, 0, NULL, 0 }
-			};
-			int c = getopt_long(argc, argv, "", long_options, NULL);
+	optind = 0;
+	while (1) {
+		enum { GETOPT_VAL_RESCAN = 256, GETOPT_VAL_NO_RESCAN };
+		static const struct option long_options[] = {
+			{ "rescan", no_argument, NULL, GETOPT_VAL_RESCAN },
+			{ "no-rescan", no_argument, NULL, GETOPT_VAL_NO_RESCAN },
+			{ NULL, 0, NULL, 0 }
+		};
+		int c;
 
-			if (c < 0)
-				break;
-			switch (c) {
-			case GETOPT_VAL_RESCAN:
-				rescan = true;
-				break;
-			case GETOPT_VAL_NO_RESCAN:
-				rescan = false;
-				break;
-			default:
-				usage_unknown_option(cmd, argv);
-			}
+		c = getopt_long(argc, argv, "", long_options, NULL);
+		if (c < 0)
+			break;
+
+		switch (c) {
+		case GETOPT_VAL_RESCAN:
+			rescan = true;
+			break;
+		case GETOPT_VAL_NO_RESCAN:
+			rescan = false;
+			break;
+		default:
+			usage_unknown_option(cmd, argv);
 		}
-	} else {
-		clean_args_no_options(cmd, argc, argv);
 	}
 
 	if (check_argc_exact(argc - optind, 3))
@@ -180,8 +176,11 @@ static int cmd_qgroup_assign(const struct cmd_struct *cmd,
 static DEFINE_SIMPLE_COMMAND(qgroup_assign, "assign");
 
 static const char * const cmd_qgroup_remove_usage[] = {
-	"btrfs qgroup remove <src> <dst> <path>",
+	"btrfs qgroup remove [options] <src> <dst> <path>",
 	"Remove a child qgroup SRC from DST.",
+	"",
+	"--rescan       schedule qutoa rescan if needed",
+	"--no-rescan    don't schedule quota rescan",
 	NULL
 };
 

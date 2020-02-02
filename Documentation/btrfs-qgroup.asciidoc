@@ -89,7 +89,14 @@ the btrfs filesystem identified by <path>.
 +
 `Options`
 +
-The same as *assign* subcommand.
+--rescan::::
+(default since: 4.19) Automatically schedule quota rescan if the removed qgroup
+relation would lead to quota inconsistency. See 'QUOTA RESCAN' for more
+information.
+--no-rescan::::
+Explicitly ask not to do a rescan, even if the removal will make the quotas
+inconsistent. This may be useful for repeated calls where the rescan would add
+unnecessary overhead.
 
 *show* [options] <path>::
 Show all qgroups in the btrfs filesystem identified by <path>.
