@@ -638,10 +638,20 @@ static void print_inode_error(struct btrfs_root *root, struct inode_record *rec)
 				hole->start, hole->len);
 			node = rb_next(node);
 		}
-		if (!found)
-			fprintf(stderr, "\tstart: 0, len: %llu\n",
-				round_up(rec->isize,
-					 root->fs_info->sectorsize));
+		if (!found) {
+			u64 start, len;
+			if (rec->extent_end < rec->isize) {
+				start = rec->extent_end;
+				len = round_up(rec->isize,
+					       root->fs_info->sectorsize) -
+					start;
+			} else {
+				start = 0;
+				len = rec->extent_start;
+			}
+			fprintf(stderr, "\tstart: %llu, len: %llu\n", start,
+				len);
+		}
 	}
 
 	/* Print dir item with mismatch hash */
