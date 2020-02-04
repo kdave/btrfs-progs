@@ -2028,7 +2028,8 @@ static int check_file_extent_inline(struct btrfs_root *root,
  * Return 0 if no error occurred.
  */
 static int check_file_extent(struct btrfs_root *root, struct btrfs_path *path,
-			     unsigned int nodatasum, u64 *size, u64 *end)
+			     unsigned int nodatasum, u64 isize, u64 *size,
+			     u64 *end)
 {
 	struct btrfs_file_extent_item *fi;
 	struct btrfs_key fkey;
@@ -2151,7 +2152,7 @@ static int check_file_extent(struct btrfs_root *root, struct btrfs_path *path,
 	}
 
 	/* Check EXTENT_DATA hole */
-	if (!no_holes && *end != fkey.offset) {
+	if (!no_holes && (fkey.offset < isize) && (*end != fkey.offset)) {
 		if (repair)
 			ret = punch_extent_hole(root, path, fkey.objectid,
 						*end, fkey.offset - *end);
@@ -2164,7 +2165,12 @@ static int check_file_extent(struct btrfs_root *root, struct btrfs_path *path,
 		}
 	}
 
-	*end = fkey.offset + extent_num_bytes;
+	/*
+	 * Don't update extent end beyond rounded up isize. As holes
+	 * after isize is not considered as missing holes.
+	 */
+	*end = min(round_up(isize, root->fs_info->sectorsize),
+		   fkey.offset + extent_num_bytes);
 	if (!is_hole)
 		*size += extent_num_bytes;
 
@@ -2725,7 +2731,7 @@ static int check_inode_item(struct btrfs_root *root, struct btrfs_path *path)
 					root->objectid, inode_id, key.objectid,
 					key.offset);
 			}
-			ret = check_file_extent(root, path, nodatasum,
+			ret = check_file_extent(root, path, nodatasum, isize,
 						&extent_size, &extent_end);
 			err |= ret;
 			break;
