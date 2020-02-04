@@ -826,8 +826,9 @@ static void maybe_free_inode_rec(struct cache_tree *inode_cache,
 		/* Orphan inodes don't have correct nbytes */
 		if (rec->nlink > 0 && rec->found_size != rec->nbytes)
 			rec->errors |= I_ERR_FILE_NBYTES_WRONG;
-		if (rec->nlink > 0 && !no_holes &&
+		if (rec->nlink > 0 && !no_holes && rec->isize &&
 		    (rec->extent_end < rec->isize ||
+		     rec->extent_start != 0 ||
 		     first_extent_gap(&rec->holes) < rec->isize))
 			rec->errors |= I_ERR_FILE_EXTENT_DISCOUNT;
 	}
