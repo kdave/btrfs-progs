@@ -222,10 +222,12 @@ static int wait_for_commit(int fd)
 }
 
 static const char * const cmd_subvol_delete_usage[] = {
-	"btrfs subvolume delete [options] <subvolume> [<subvolume>...]",
+	"btrfs subvolume delete [options] <subvolume> [<subvolume>...]\n"
+	"btrfs subvolume delete [options] -i|--subvolid <subvolid> <path>",
 	"Delete subvolume(s)",
-	"Delete subvolumes from the filesystem. The corresponding directory",
-	"is removed instantly but the data blocks are removed later.",
+	"Delete subvolumes from the filesystem, specified by a path or id. The",
+	"corresponding directory is removed instantly but the data blocks are",
+	"removed later.",
 	"The deletion does not involve full commit by default due to",
 	"performance reasons (as a consequence, the subvolume may appear again",
 	"after a crash). Use one of the --commit options to wait until the",
@@ -233,6 +235,7 @@ static const char * const cmd_subvol_delete_usage[] = {
 	"",
 	"-c|--commit-after      wait for transaction commit at the end of the operation",
 	"-C|--commit-each       wait for transaction commit after deleting each subvolume",
+	"-i|--subvolid          subvolume id of the to be removed subvolume",
 	"-v|--verbose           verbose output of operations",
 	NULL
 };
@@ -246,12 +249,14 @@ static int cmd_subvol_delete(const struct cmd_struct *cmd,
 	char	*dname, *vname, *cpath;
 	char	*dupdname = NULL;
 	char	*dupvname = NULL;
-	char	*path;
+	char	*path = NULL;
 	DIR	*dirstream = NULL;
 	int verbose = 0;
 	int commit_mode = 0;
 	u8 fsid[BTRFS_FSID_SIZE];
+	u64 subvolid = 0;
 	char uuidbuf[BTRFS_UUID_UNPARSED_SIZE];
+	char full_subvolpath[BTRFS_SUBVOL_NAME_MAX];
 	struct seen_fsid *seen_fsid_hash[SEEN_FSID_HASH_SIZE] = { NULL, };
 	enum { COMMIT_AFTER = 1, COMMIT_EACH = 2 };
 	enum btrfs_util_error err;
@@ -262,11 +267,12 @@ static int cmd_subvol_delete(const struct cmd_struct *cmd,
 		static const struct option long_options[] = {
 			{"commit-after", no_argument, NULL, 'c'},
 			{"commit-each", no_argument, NULL, 'C'},
+			{"subvolid", required_argument, NULL, 'i'},
 			{"verbose", no_argument, NULL, 'v'},
 			{NULL, 0, NULL, 0}
 		};
 
-		c = getopt_long(argc, argv, "cCv", long_options, NULL);
+		c = getopt_long(argc, argv, "cCi:v", long_options, NULL);
 		if (c < 0)
 			break;
 
@@ -276,6 +282,9 @@ static int cmd_subvol_delete(const struct cmd_struct *cmd,
 			break;
 		case 'C':
 			commit_mode = COMMIT_EACH;
+			break;
+		case 'i':
+			subvolid = arg_strtou64(optarg);
 			break;
 		case 'v':
 			verbose++;
@@ -288,6 +297,10 @@ static int cmd_subvol_delete(const struct cmd_struct *cmd,
 	if (check_argc_min(argc - optind, 1))
 		return 1;
 
+	/* When using --subvolid, ensure that we have only one argument */
+	if (subvolid > 0 && check_argc_exact(argc - optind, 1))
+		return 1;
+
 	if (verbose > 0) {
 		printf("Transaction commit: %s\n",
 			!commit_mode ? "none (default)" :
@@ -295,6 +308,23 @@ static int cmd_subvol_delete(const struct cmd_struct *cmd,
 	}
 
 	cnt = optind;
+
+	/* Check the following syntax: subvolume delete --subvolid <subvolid> <path> */
+	if (subvolid > 0) {
+		char *subvol;
+
+		path = argv[cnt];
+		err = btrfs_util_subvolume_path(path, subvolid, &subvol);
+		if (err) {
+			error_btrfs_util(err);
+			ret = 1;
+			goto out;
+		}
+
+		/* Build new path using the volume name found */
+		sprintf(full_subvolpath, "%s/%s", path, subvol);
+		free(subvol);
+	}
 
 again:
 	path = argv[cnt];
@@ -318,17 +348,29 @@ again:
 	vname = basename(dupvname);
 	free(cpath);
 
+	/* When subvolid is passed, <path> will point to the mount point */
+	if (subvolid > 0)
+		dname = dupvname;
+
 	fd = btrfs_open_dir(dname, &dirstream, 1);
 	if (fd < 0) {
 		ret = 1;
 		goto out;
 	}
 
-	printf("Delete subvolume (%s): '%s/%s'\n",
+	printf("Delete subvolume (%s): ",
 		commit_mode == COMMIT_EACH || (commit_mode == COMMIT_AFTER && cnt + 1 == argc)
-		? "commit" : "no-commit", dname, vname);
+		? "commit" : "no-commit");
 
-	err = btrfs_util_delete_subvolume_fd(fd, vname, 0);
+	if (subvolid == 0)
+		printf("'%s/%s'\n", dname, vname);
+	else
+		printf("'%s'\n", full_subvolpath);
+
+	if (subvolid == 0)
+		err = btrfs_util_delete_subvolume_fd(fd, vname, 0);
+	else
+		err = btrfs_util_delete_subvolume_by_id_fd(fd, subvolid);
 	if (err) {
 		error_btrfs_util(err);
 		ret = 1;
