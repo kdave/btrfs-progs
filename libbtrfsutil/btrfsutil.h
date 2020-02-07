@@ -488,6 +488,17 @@ enum btrfs_util_error btrfs_util_delete_subvolume_fd(int parent_fd,
 						     const char *name,
 						     int flags);
 
+/**
+ * btrfs_util_delete_subvolume_by_id_fd() - Delete a subvolume or snapshot using
+ * subvolume id.
+ * @fd: File descriptor of the subvolume's parent directory.
+ * @subvolid: Subvolume id of the subvolume or snapshot to be deleted.
+ *
+ * Return: %BTRFS_UTIL_OK on success, non-zero error code on failure.
+ */
+enum btrfs_util_error btrfs_util_delete_subvolume_by_id_fd(int fd,
+							   uint64_t subvolid);
+
 struct btrfs_util_subvolume_iterator;
 
 /**
