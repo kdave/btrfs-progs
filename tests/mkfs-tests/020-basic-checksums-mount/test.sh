@@ -10,6 +10,10 @@ check_prereq btrfs
 setup_root_helper
 prepare_test_dev
 
+if ! [ -f "/sys/fs/btrfs/features/supported_checksums" ]; then
+	_not_run "kernel support for checksums missing"
+fi
+
 test_mkfs_mount_checksum()
 {
 	local csum
@@ -26,11 +30,6 @@ test_mkfs_mount_checksum()
 	run_check_umount_test_dev
 }
 
-if ! [ -f "/sys/fs/btrfs/features/supported_checksums" ]; then
-	_not_run "kernel support for checksums missing"
-fi
-
-test_mkfs_mount_checksum crc32c
-test_mkfs_mount_checksum xxhash
-test_mkfs_mount_checksum sha256
-test_mkfs_mount_checksum blake2
+for csum in $(cat /sys/fs/btrfs/features/supported_checksums); do
+	test_mkfs_mount_checksum "$csum"
+done
