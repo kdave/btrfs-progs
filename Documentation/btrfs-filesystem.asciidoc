@@ -253,9 +253,9 @@ show sizes in GiB, or GB with --si
 show sizes in TiB, or TB with --si
 
 *sync* <path>::
-Force a sync of the filesystem at 'path'. This is done via a special ioctl and
-will also trigger cleaning of deleted subvolumes. Besides that it's equivalent
-to the `sync`(1) command.
+Force a sync of the filesystem at 'path', similar to the `sync`(1) command. In
+addition, it starts cleaning of deleted subvolumes. To wait for the subvolume
+deletion to complete use the *btrfs subvolume sync* command.
 
 *usage* [options] <path> [<path>...]::
 Show detailed information about internal filesystem usage. This is supposed to
@@ -383,4 +383,5 @@ further details.
 
 SEE ALSO
 --------
+`btrfs-subvolume`(8),
 `mkfs.btrfs`(8),
