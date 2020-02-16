@@ -6,6 +6,7 @@ check_prereq mkfs.btrfs
 check_prereq btrfs
 check_prereq btrfstune
 check_prereq btrfs-image
+check_global_prereq udevadm
 
 setup_root_helper
 prepare_test_dev
@@ -187,6 +188,8 @@ failure_recovery() {
 	image2=$(extract_image "$2")
 	loop1=$(run_check_stdout $SUDO_HELPER losetup --find --show "$image1")
 	loop2=$(run_check_stdout $SUDO_HELPER losetup --find --show "$image2")
+
+	run_check $SUDO_HELPER udevadm settle
 
 	# Mount and unmount, on trans commit all disks should be consistent
 	run_check $SUDO_HELPER mount "$loop1" "$TEST_MNT"
