@@ -14,7 +14,17 @@ prepare_test_dev
 run_check_mkfs_test_dev
 run_check_mount_test_dev
 
-run_check $SUDO_HELPER truncate -s 6E "$TEST_MNT/img1"
+# truncate can fail with EFBIG if the OS cannot create a 6EiB file
+run_mayfail $SUDO_HELPER truncate -s 6E "$TEST_MNT/img1"
+ret=$?
+if [ $ret == 27 ]; then
+	_not_run "Current kernel could not create a 6E file"
+fi
+
+if [ $ret -gt 0 ]; then
+	_fail "truncate -s 6E failed: $ret"
+fi
+
 run_check $SUDO_HELPER truncate -s 6E "$TEST_MNT/img2"
 run_check $SUDO_HELPER truncate -s 6E "$TEST_MNT/img3"
 
