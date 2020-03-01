@@ -25,7 +25,7 @@ test_superblock_restore()
 		_fail "btrfs check should detect corruption"
 
 	# Copy backup superblock to primary
-	run_check "$TOP/btrfs-select-super" -s 1 "$TEST_DEV"
+	run_check "$INTERNAL_BIN/btrfs-select-super" -s 1 "$TEST_DEV"
 
 	# Perform btrfs check
 	run_check "$TOP/btrfs" check "$TEST_DEV"

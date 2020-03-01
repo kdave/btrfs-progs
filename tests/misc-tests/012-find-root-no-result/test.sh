@@ -11,7 +11,7 @@ check_prereq btrfs-image
 run_check "$TOP/btrfs-image" -r first_meta_chunk.btrfs-image test.img || \
 	_fail "failed to extract first_meta_chunk.btrfs-image"
 
-result=$(run_check_stdout "$TOP/btrfs-find-root" test.img | sed '/^Superblock/d')
+result=$(run_check_stdout "$INTERNAL_BIN/btrfs-find-root" test.img | sed '/^Superblock/d')
 
 if [ -z "$result" ]; then
 	_fail "btrfs-find-root failed to find tree root"
