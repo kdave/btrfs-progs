@@ -424,7 +424,7 @@ test-inst: all
 
 test: test-fsck test-mkfs test-misc test-cli test-convert test-fuzz
 
-testsuite: btrfs-corrupt-block fssum
+testsuite: btrfs-corrupt-block btrfs-find-root btrfs-select-super fssum
 	@echo "Export tests as a package"
 	$(Q)cd tests && ./export-testsuite.sh
 

@@ -3,6 +3,8 @@ G Documentation/
 F testsuite-id
 F ../fssum
 F ../btrfs-corrupt-block
+F ../btrfs-find-root
+F ../btrfs-select-super
 F common
 F common.convert
 F common.local
