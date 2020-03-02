@@ -487,20 +487,40 @@ int write_and_map_eb(struct btrfs_fs_info *fs_info, struct extent_buffer *eb)
 	length = eb->len;
 	ret = btrfs_map_block(fs_info, WRITE, eb->start, &length,
 			      &multi, 0, &raid_map);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to map bytenr %llu length %u: %m",
+			eb->start, eb->len);
+		goto out;
+	}
 
 	if (raid_map) {
 		ret = write_raid56_with_parity(fs_info, eb, multi,
 					       length, raid_map);
-		BUG_ON(ret);
+		if (ret < 0) {
+			errno = -ret;
+			error(
+		"failed to write raid56 stripe for bytenr %llu length %llu: %m",
+				eb->start, length);
+			goto out;
+		}
 	} else while (dev_nr < multi->num_stripes) {
-		BUG_ON(ret);
 		eb->fd = multi->stripes[dev_nr].dev->fd;
 		eb->dev_bytenr = multi->stripes[dev_nr].physical;
 		multi->stripes[dev_nr].dev->total_ios++;
 		dev_nr++;
 		ret = write_extent_to_disk(eb);
-		BUG_ON(ret);
+		if (ret < 0) {
+			errno = -ret;
+			error(
+"failed to write bytenr %llu length %u devid %llu dev_bytenr %llu: %m",
+				eb->start, eb->len,
+				multi->stripes[dev_nr].dev->devid,
+				eb->dev_bytenr);
+			goto out;
+		}
 	}
+out:
 	kfree(raid_map);
 	kfree(multi);
 	return 0;

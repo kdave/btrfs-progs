@@ -771,8 +771,15 @@ static int corrupt_metadata_block(struct btrfs_fs_info *fs_info, u64 block,
 		u64 bogus = generate_u64(orig);
 
 		btrfs_set_header_generation(eb, bogus);
-		write_and_map_eb(fs_info, eb);
+		ret = write_and_map_eb(fs_info, eb);
 		free_extent_buffer(eb);
+		if (ret < 0) {
+			errno = -ret;
+			fprintf(stderr,
+				"failed to write extent buffer at %llu: %m",
+				eb->start);
+			return ret;
+		}
 		break;
 		}
 	case BTRFS_METADATA_BLOCK_SHIFT_ITEMS:
