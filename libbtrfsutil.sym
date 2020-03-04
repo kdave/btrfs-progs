@@ -45,3 +45,8 @@ global:
 local:
 	*;
 };
+
+LIBBTRFSUTIL_1.2 {
+global:
+	btrfs_util_delete_subvolume_by_id_fd;
+} LIBBTRFSUTIL_1.1;
