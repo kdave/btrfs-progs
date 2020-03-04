@@ -94,6 +94,7 @@ use with '-b', print all children tree blocks of '<block_num>'
 +
 use depth-first search to print trees, the nodes and leaves are
 intermixed in the output
++
 --bfs::::
 (default since 5.3)
 +
