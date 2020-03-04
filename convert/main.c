@@ -1140,6 +1140,11 @@ static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
 		error("block size is too small: %u < 4096", blocksize);
 		goto fail;
 	}
+	if (blocksize != getpagesize())
+		warning(
+"blocksize %u is not equal to the page size %u, converted filesystem won't mount on this system",
+			blocksize, getpagesize());
+
 	if (btrfs_check_nodesize(nodesize, blocksize, features))
 		goto fail;
 	fd = open(devname, O_RDWR);
