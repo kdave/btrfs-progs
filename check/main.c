@@ -5912,6 +5912,7 @@ static int check_csums(struct btrfs_root *root)
 	struct btrfs_path path;
 	struct extent_buffer *leaf;
 	struct btrfs_key key;
+	u64 last_data_end = 0;
 	u64 offset = 0, num_bytes = 0;
 	u16 csum_size = btrfs_super_csum_size(root->fs_info->super_copy);
 	int errors = 0;
@@ -5971,6 +5972,13 @@ static int check_csums(struct btrfs_root *root)
 			continue;
 		}
 
+		if (key.offset < last_data_end) {
+			error(
+	"csum overlap, current bytenr=%llu prev_end=%llu, eb=%llu slot=%u",
+				key.offset, last_data_end, leaf->start,
+				path.slots[0]);
+			errors++;
+		}
 		data_len = (btrfs_item_size_nr(leaf, path.slots[0]) /
 			      csum_size) * root->fs_info->sectorsize;
 		if (!verify_csum)
@@ -6001,6 +6009,7 @@ skip_csum_check:
 			num_bytes = 0;
 		}
 		num_bytes += data_len;
+		last_data_end = key.offset + data_len;
 		path.slots[0]++;
 	}
 
