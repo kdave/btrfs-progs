@@ -36,7 +36,7 @@
 #include "common/utils.h"
 #include "cmds/commands.h"
 #include "free-space-cache.h"
-#include "free-space-tree.h"
+#include "kernel-shared/free-space-tree.h"
 #include "common/rbtree-utils.h"
 #include "backref.h"
 #include "kernel-shared/ulist.h"

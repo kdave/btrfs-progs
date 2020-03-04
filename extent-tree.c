@@ -30,7 +30,7 @@
 #include "crypto/crc32c.h"
 #include "volumes.h"
 #include "free-space-cache.h"
-#include "free-space-tree.h"
+#include "kernel-shared/free-space-tree.h"
 #include "common/utils.h"
 
 #define PENDING_EXTENT_INSERT 0

@@ -19,7 +19,7 @@
 #include "ctree.h"
 #include "disk-io.h"
 #include "free-space-cache.h"
-#include "free-space-tree.h"
+#include "kernel-shared/free-space-tree.h"
 #include "volumes.h"
 #include "transaction.h"
 #include "kernel-lib/bitops.h"
