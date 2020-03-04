@@ -94,7 +94,7 @@ int main(int ac, char **av) {
 			fprintf(stderr, "search %d:%d\n", num, i);
 		ret = btrfs_search_slot(NULL, root, &ins, &path, 0, 0);
 		if (ret) {
-			btrfs_print_tree(root->node, 1);
+			btrfs_print_tree(root->node, 1, BTRFS_PRINT_TREE_BFS);
 			printf("unable to find %d\n", num);
 			exit(1);
 		}
@@ -171,7 +171,7 @@ int main(int ac, char **av) {
 			fprintf(stderr, "search %d:%d\n", num, i);
 		ret = btrfs_search_slot(NULL, root, &ins, &path, 0, 0);
 		if (ret) {
-			btrfs_print_tree(root->node, 1);
+			btrfs_print_tree(root->node, 1, BTRFS_PRINT_TREE_BFS);
 			printf("unable to find %d\n", num);
 			exit(1);
 		}
@@ -220,7 +220,7 @@ int main(int ac, char **av) {
 	btrfs_commit_transaction(trans, root);
 	printf("tree size is now %d\n", tree_size);
 	printf("root %p commit root %p\n", root->node, root->commit_root);
-	btrfs_print_tree(root->node, 1);
+	btrfs_print_tree(root->node, 1, BTRFS_PRINT_TREE_BFS);
 	close_ctree(root);
 	return 0;
 }
