@@ -1218,8 +1218,8 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 		fs_info->ignore_fsid_mismatch = 1;
 	if (flags & OPEN_CTREE_IGNORE_CHUNK_TREE_ERROR)
 		fs_info->ignore_chunk_tree_error = 1;
-	if (flags & OPEN_CTREE_DONT_PRINT_FILENAME)
-		fs_info->dont_print_filename = 1;
+	if (flags & OPEN_CTREE_HIDE_NAMES)
+		fs_info->hide_names = 1;
 
 	if ((flags & OPEN_CTREE_RECOVER_SUPER)
 	     && (flags & OPEN_CTREE_TEMPORARY_SUPER)) {

@@ -100,9 +100,20 @@ intermixed in the output
 +
 use breadth-first search to print trees, the nodes are printed before all
 leaves
---nofilename::::
-do not print any filename of the filesystem. Useful for developer to inspect
-the filesystem while keep confidential info hiden.
++
+--hide-names::::
+print a placeholder 'HIDDEN' instead of various names, useful for developers to
+inspect the dump while keeping potentially sensitive information hidden
++
+This is:
+[options="compact"]
+* directory entries (files, directories, subvolumes)
+* default subvolume
+* extended attributes (name, value)
+* hardlink names (if stored inside another item or as extended references in standalone items)
++
+NOTE: lengths are not hidden because they can be calculated from the item size anyway.
++
 --noscan::::
 do not automatically scan the system for other devices from the same
 filesystem, only use the devices provided as the arguments

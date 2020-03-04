@@ -86,8 +86,8 @@ enum btrfs_open_ctree_flags {
 	 */
 	OPEN_CTREE_INVALIDATE_FST = (1U << 13),
 
-	/* For print-tree only, skip filename output */
-	OPEN_CTREE_DONT_PRINT_FILENAME = (1U << 14),
+	/* For print-tree, print HIDDEN instead of filenames/xattrs/refs */
+	OPEN_CTREE_HIDE_NAMES = (1U << 14),
 };
 
 /*
