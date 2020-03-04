@@ -594,15 +594,15 @@ quick-test: quick-test.o $(objects) $(libs)
 	@echo "    [LD]     $@"
 	$(Q)$(CC) -o $@ $^ $(LDFLAGS) $(LIBS)
 
-ioctl-test.o: ioctl-test.c ioctl.h kerncompat.h ctree.h
+ioctl-test.o: tests/ioctl-test.c ioctl.h kerncompat.h ctree.h
 	@echo "    [CC]   $@"
 	$(Q)$(CC) $(CFLAGS) -c $< -o $@
 
-ioctl-test-32.o: ioctl-test.c ioctl.h kerncompat.h ctree.h
+ioctl-test-32.o: tests/ioctl-test.c ioctl.h kerncompat.h ctree.h
 	@echo "    [CC32]   $@"
 	$(Q)$(CC) $(CFLAGS) -m32 -c $< -o $@
 
-ioctl-test-64.o: ioctl-test.c ioctl.h kerncompat.h ctree.h
+ioctl-test-64.o: tests/ioctl-test.c ioctl.h kerncompat.h ctree.h
 	@echo "    [CC64]   $@"
 	$(Q)$(CC) $(CFLAGS) -m64 -c $< -o $@
 
