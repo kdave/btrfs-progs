@@ -38,7 +38,7 @@
 #include "free-space-cache.h"
 #include "kernel-shared/free-space-tree.h"
 #include "common/rbtree-utils.h"
-#include "backref.h"
+#include "kernel-shared/backref.h"
 #include "kernel-shared/ulist.h"
 #include "common/help.h"
 #include "check/common.h"

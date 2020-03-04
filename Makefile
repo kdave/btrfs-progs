@@ -141,8 +141,8 @@ CHECKER_FLAGS := -include $(check_defs) -D__CHECKER__ \
 
 objects = dir-item.o inode-map.o \
 	  qgroup.o kernel-lib/list_sort.o props.o \
-	  kernel-shared/ulist.o check/qgroup-verify.o backref.o common/string-table.o \
-	  common/task-utils.o \
+	  kernel-shared/ulist.o check/qgroup-verify.o kernel-shared/backref.o \
+	  common/string-table.o common/task-utils.o \
 	  inode.o file.o find-root.o common/help.o send-dump.o \
 	  common/fsfeatures.o \
 	  common/format-output.o \

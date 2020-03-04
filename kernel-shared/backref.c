@@ -19,7 +19,7 @@
 #include "kerncompat.h"
 #include "ctree.h"
 #include "disk-io.h"
-#include "backref.h"
+#include "kernel-shared/backref.h"
 #include "kernel-shared/ulist.h"
 #include "transaction.h"
 #include "common/internal.h"

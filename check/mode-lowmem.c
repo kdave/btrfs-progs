@@ -20,7 +20,7 @@
 #include "transaction.h"
 #include "common/messages.h"
 #include "disk-io.h"
-#include "backref.h"
+#include "kernel-shared/backref.h"
 #include "common/internal.h"
 #include "common/utils.h"
 #include "volumes.h"
