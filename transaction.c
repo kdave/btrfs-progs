@@ -17,8 +17,7 @@
 #include "kerncompat.h"
 #include "disk-io.h"
 #include "transaction.h"
-#include "delayed-ref.h"
-
+#include "kernel-shared/delayed-ref.h"
 #include "common/messages.h"
 
 struct btrfs_trans_handle* btrfs_start_transaction(struct btrfs_root *root,

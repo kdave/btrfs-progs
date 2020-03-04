@@ -5,7 +5,7 @@
 
 #include "ctree.h"
 #include "btrfs-list.h"
-#include "delayed-ref.h"
+#include "kernel-shared/delayed-ref.h"
 #include "transaction.h"
 
 /*

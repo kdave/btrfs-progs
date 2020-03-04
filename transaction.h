@@ -21,8 +21,8 @@
 
 #include "kerncompat.h"
 #include "ctree.h"
-#include "delayed-ref.h"
 #include "kernel-lib/list.h"
+#include "kernel-shared/delayed-ref.h"
 
 struct btrfs_trans_handle {
 	struct btrfs_fs_info *fs_info;
