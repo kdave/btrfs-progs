@@ -40,7 +40,6 @@
 #include "common/rbtree-utils.h"
 #include "backref.h"
 #include "kernel-shared/ulist.h"
-#include "hash.h"
 #include "common/help.h"
 #include "check/common.h"
 #include "check/mode-common.h"

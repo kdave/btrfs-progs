@@ -21,7 +21,6 @@
 #include "common/messages.h"
 #include "disk-io.h"
 #include "backref.h"
-#include "hash.h"
 #include "common/internal.h"
 #include "common/utils.h"
 #include "volumes.h"

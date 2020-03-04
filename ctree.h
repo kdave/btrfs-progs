@@ -29,6 +29,7 @@
 #include "extent_io.h"
 #include "ioctl.h"
 #include "kernel-lib/sizes.h"
+#include "crypto/crc32c.h"
 #else
 #include <btrfs/list.h>
 #include <btrfs/kerncompat.h>
@@ -37,6 +38,7 @@
 #include <btrfs/extent_io.h>
 #include <btrfs/ioctl.h>
 #include <btrfs/sizes.h>
+#include "btrfs/crc32c.h"
 #endif /* BTRFS_FLAT_INCLUDES */
 
 struct btrfs_root;
@@ -2509,6 +2511,20 @@ static inline int __btrfs_fs_compat_ro(struct btrfs_fs_info *fs_info, u64 flag)
 #define btrfs_item_ptr_offset(leaf, slot) \
 	((unsigned long)(btrfs_leaf_data(leaf) + \
 	btrfs_item_offset_nr(leaf, slot)))
+
+static inline u64 btrfs_name_hash(const char *name, int len)
+{
+	return crc32c((u32)~1, name, len);
+}
+
+/*
+ * Figure the key offset of an extended inode ref
+ */
+static inline u64 btrfs_extref_hash(u64 parent_objectid, const char *name,
+				    int len)
+{
+	return (u64)btrfs_crc32c(parent_objectid, name, len);
+}
 
 /* extent-tree.c */
 int btrfs_reserve_extent(struct btrfs_trans_handle *trans,
