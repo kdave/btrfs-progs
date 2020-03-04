@@ -17,7 +17,7 @@
 #include "kerncompat.h"
 #include <stdio.h>
 #include <uuid/uuid.h>
-#include "common-defs.h"
+#include "common/defs.h"
 #include "common/format-output.h"
 #include "common/utils.h"
 #include "cmds/commands.h"

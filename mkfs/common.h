@@ -23,7 +23,7 @@
 #define __BTRFS_MKFS_COMMON_H__
 
 #include "kerncompat.h"
-#include "common-defs.h"
+#include "common/defs.h"
 
 #define BTRFS_MKFS_SYSTEM_GROUP_SIZE SZ_4M
 #define BTRFS_MKFS_SMALL_VOLUME_SIZE SZ_1G

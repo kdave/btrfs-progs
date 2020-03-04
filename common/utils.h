@@ -23,7 +23,7 @@
 #include "ctree.h"
 #include <dirent.h>
 #include <stdarg.h>
-#include "common-defs.h"
+#include "common/defs.h"
 #include "common/internal.h"
 #include "btrfs-list.h"
 #include "kernel-lib/sizes.h"

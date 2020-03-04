@@ -31,7 +31,7 @@
 #include "common/device-scan.h"
 #include "common/messages.h"
 #include "common/utils.h"
-#include "common-defs.h"
+#include "common/defs.h"
 #include "ctree.h"
 #include "volumes.h"
 #include "disk-io.h"
