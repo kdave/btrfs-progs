@@ -745,15 +745,14 @@ static int process_clone(const char *path, u64 offset, u64 len,
 	if (ret < 0)
 		goto out;
 
-	si = subvol_uuid_search(&rctx->sus, 0, clone_uuid, clone_ctransid,
-				NULL,
-				subvol_search_by_received_uuid);
-	if (IS_ERR_OR_NULL(si)) {
-		if (memcmp(clone_uuid, rctx->cur_subvol.received_uuid,
-				BTRFS_UUID_SIZE) == 0) {
-			/* TODO check generation of extent */
-			subvol_path = rctx->cur_subvol_path;
-		} else {
+	if (memcmp(clone_uuid, rctx->cur_subvol.received_uuid,
+		   BTRFS_UUID_SIZE) == 0) {
+		subvol_path = rctx->cur_subvol_path;
+	} else {
+		si = subvol_uuid_search(&rctx->sus, 0, clone_uuid, clone_ctransid,
+					NULL,
+					subvol_search_by_received_uuid);
+		if (IS_ERR_OR_NULL(si)) {
 			if (!si)
 				ret = -ENOENT;
 			else
@@ -761,7 +760,6 @@ static int process_clone(const char *path, u64 offset, u64 len,
 			error("clone: did not find source subvol");
 			goto out;
 		}
-	} else {
 		/* strip the subvolume that we are receiving to from the start of subvol_path */
 		if (rctx->full_root_path) {
 			size_t root_len = strlen(rctx->full_root_path);
