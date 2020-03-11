@@ -345,15 +345,6 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 			parent_subvol->path[sub_len - root_len - 1] = '\0';
 		}
 	}
-	/*if (rs_args.ctransid > rs_args.rtransid) {
-		if (!r->force) {
-			ret = -EINVAL;
-			fprintf(stderr, "ERROR: subvolume %s was modified after it was received.\n", r->subvol_parent_name);
-			goto out;
-		} else {
-			fprintf(stderr, "WARNING: subvolume %s was modified after it was received.\n", r->subvol_parent_name);
-		}
-	}*/
 
 	if (*parent_subvol->path == 0)
 		args_v2.fd = dup(rctx->mnt_fd);
@@ -771,22 +762,6 @@ static int process_clone(const char *path, u64 offset, u64 len,
 			goto out;
 		}
 	} else {
-		/*if (rs_args.ctransid > rs_args.rtransid) {
-			if (!r->force) {
-				ret = -EINVAL;
-				fprintf(stderr, "ERROR: subvolume %s was "
-						"modified after it was "
-						"received.\n",
-						r->subvol_parent_name);
-				goto out;
-			} else {
-				fprintf(stderr, "WARNING: subvolume %s was "
-						"modified after it was "
-						"received.\n",
-						r->subvol_parent_name);
-			}
-		}*/
-
 		/* strip the subvolume that we are receiving to from the start of subvol_path */
 		if (rctx->full_root_path) {
 			size_t root_len = strlen(rctx->full_root_path);
