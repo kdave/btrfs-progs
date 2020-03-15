@@ -1336,14 +1336,11 @@ int report_qgroups(int all)
 	/*
 	 * It's possible that rescan hasn't been initialized yet.
 	 */
-	if (counts.qgroup_inconsist && !counts.rescan_running &&
-	    counts.rescan_running == 0) {
+	if (counts.qgroup_inconsist && !counts.rescan_running) {
 		printf(
 "Rescan hasn't been initialized, a difference in qgroup accounting is expected\n");
 		skip_err = true;
 	}
-	if (counts.qgroup_inconsist && !counts.rescan_running)
-		fprintf(stderr, "Qgroup are marked as inconsistent.\n");
 	node = rb_first(&counts.root);
 	while (node) {
 		c = rb_entry(node, struct qgroup_count, rb_node);
