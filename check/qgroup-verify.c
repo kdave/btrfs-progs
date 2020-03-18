@@ -1311,18 +1311,13 @@ static int report_qgroup_difference(struct qgroup_count *count, int verbose)
 
 /*
  * Report qgroups errors
- * Return 0 if nothing wrong.
- * Return <0 if any qgroup is inconsistent.
- *
  * @all:	if set, all qgroup will be checked and reported even already
  * 		inconsistent or under rescan.
  */
-int report_qgroups(int all)
+void report_qgroups(int all)
 {
 	struct rb_node *node;
 	struct qgroup_count *c;
-	bool found_err = false;
-	bool skip_err = false;
 
 	if (!repair && counts.rescan_running) {
 		if (all) {
@@ -1331,31 +1326,23 @@ int report_qgroups(int all)
 		} else {
 			printf(
 	"Qgroup rescan is running, qgroups will not be printed.\n");
-			return 0;
+			return;
 		}
 	}
 	/*
 	 * It's possible that rescan hasn't been initialized yet.
 	 */
-	if (counts.qgroup_inconsist && !counts.rescan_running) {
+	if (counts.qgroup_inconsist && !counts.rescan_running)
 		printf(
-"Rescan hasn't been initialized, a difference in qgroup accounting is expected\n");
-		skip_err = true;
-	}
+"Rescan hasn't been initialzied, a difference in qgroup accounting is expected\n");
 	node = rb_first(&counts.root);
 	while (node) {
 		c = rb_entry(node, struct qgroup_count, rb_node);
 
-		if (report_qgroup_difference(c, all)) {
-			list_add_tail(&c->bad_list, &bad_qgroups);
-			found_err = true;
-		}
+		report_qgroup_difference(c, all);
 
 		node = rb_next(node);
 	}
-	if (found_err && !skip_err)
-		return -EUCLEAN;
-	return 0;
 }
 
 void free_qgroup_counts(void)
@@ -1390,9 +1377,29 @@ void free_qgroup_counts(void)
 	}
 }
 
+static bool is_bad_qgroup(struct qgroup_count *count)
+{
+	struct qgroup_info *info = &count->info;
+	struct qgroup_info *disk = &count->diskinfo;
+	s64 excl_diff = info->exclusive - disk->exclusive;
+	s64 ref_diff = info->referenced - disk->referenced;
+
+	return (excl_diff || ref_diff);
+}
+
+/*
+ * Verify all qgroup numbers.
+ *
+ * Return <0 for fatal errors (e.g. ENOMEM or failed to read quota tree)
+ * Return 0 if all qgroup numbers are correct or no need to check (under rescan)
+ * Return >0 if qgroup numbers are inconsistent.
+ */
 int qgroup_verify_all(struct btrfs_fs_info *info)
 {
 	int ret;
+	bool found_err = false;
+	bool skip_err = false;
+	struct rb_node *node;
 
 	if (!info->quota_enabled)
 		return 0;
@@ -1409,6 +1416,12 @@ int qgroup_verify_all(struct btrfs_fs_info *info)
 		fprintf(stderr, "ERROR: Loading qgroups from disk: %d\n", ret);
 		goto out;
 	}
+
+	if (counts.rescan_running)
+		skip_err = true;
+	if (counts.qgroup_inconsist && !counts.rescan_running &&
+	    counts.rescan_running == 0)
+		skip_err = true;
 
 	/*
 	 * Put all extent refs into our rbtree
@@ -1427,6 +1440,22 @@ int qgroup_verify_all(struct btrfs_fs_info *info)
 
 	ret = account_all_refs(1, 0);
 
+	/*
+	 * Do the correctness check here, so for callers who don't want
+	 * verbose report can skip calling report_qgroups()
+	 */
+	node = rb_first(&counts.root);
+	while (node) {
+		struct qgroup_count *c;
+
+		c = rb_entry(node, struct qgroup_count, rb_node);
+		if (is_bad_qgroup(c)) {
+			list_add_tail(&c->bad_list, &bad_qgroups);
+			found_err = true;
+		}
+		node = rb_next(node);
+	}
+
 out:
 	/*
 	 * Don't free the qgroup count records as they will be walked
@@ -1434,6 +1463,8 @@ out:
 	 */
 	free_tree_blocks();
 	free_ref_tree(&by_bytenr);
+	if (!ret && !skip_err && found_err)
+		ret = 1;
 	return ret;
 }
 
