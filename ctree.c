@@ -21,8 +21,9 @@
 #include "print-tree.h"
 #include "repair.h"
 #include "common/internal.h"
-#include "kernel-lib/sizes.h"
 #include "common/messages.h"
+#include "common/utils.h"
+#include "kernel-lib/sizes.h"
 #include "volumes.h"
 
 static int split_node(struct btrfs_trans_handle *trans, struct btrfs_root
@@ -180,6 +181,111 @@ int btrfs_copy_root(struct btrfs_trans_handle *trans,
 	btrfs_mark_buffer_dirty(cow);
 	*cow_ret = cow;
 	return 0;
+}
+
+/*
+ * Create a new tree root, with root objectid set to @objectid.
+ *
+ * NOTE: Doesn't support tree with non-zero offset, like data reloc tree.
+ */
+int btrfs_create_root(struct btrfs_trans_handle *trans,
+		      struct btrfs_fs_info *fs_info, u64 objectid)
+{
+	struct extent_buffer *node;
+	struct btrfs_root *new_root;
+	struct btrfs_disk_key disk_key;
+	struct btrfs_key location;
+	struct btrfs_root_item root_item = { 0 };
+	int ret;
+
+	new_root = malloc(sizeof(*new_root));
+	if (!new_root)
+		return -ENOMEM;
+
+	btrfs_setup_root(new_root, fs_info, objectid);
+	if (!is_fstree(objectid))
+		new_root->track_dirty = 1;
+	add_root_to_dirty_list(new_root);
+
+	new_root->objectid = objectid;
+	new_root->root_key.objectid = objectid;
+	new_root->root_key.type = BTRFS_ROOT_ITEM_KEY;
+	new_root->root_key.offset = 0;
+
+	node = btrfs_alloc_free_block(trans, new_root, fs_info->nodesize,
+				      objectid, &disk_key, 0, 0, 0);
+	if (IS_ERR(node)) {
+		ret = PTR_ERR(node);
+		error("failed to create root node for tree %llu: %d (%m)",
+		      objectid, ret);
+		return ret;
+	}
+	new_root->node = node;
+
+	btrfs_set_header_generation(node, trans->transid);
+	btrfs_set_header_backref_rev(node, BTRFS_MIXED_BACKREF_REV);
+	btrfs_clear_header_flag(node,
+			BTRFS_HEADER_FLAG_RELOC | BTRFS_HEADER_FLAG_WRITTEN);
+	btrfs_set_header_owner(node, objectid);
+	btrfs_set_header_nritems(node, 0);
+	btrfs_set_header_level(node, 0);
+	ret = btrfs_inc_ref(trans, new_root, node, 0);
+	if (ret < 0)
+		goto free;
+
+	/*
+	 * Special tree roots may need to modify pointers in @fs_info
+	 * Only quota is supported yet.
+	 */
+	switch (objectid) {
+	case BTRFS_QUOTA_TREE_OBJECTID:
+		if (fs_info->quota_root) {
+			error("quota root already exists");
+			ret = -EEXIST;
+			goto free;
+		}
+		fs_info->quota_root = new_root;
+		fs_info->quota_enabled = 1;
+		break;
+	/*
+	 * Essential trees can't be created by this function, yet.
+	 * As we expect such skeleton exists, or a lot of functions like
+	 * btrfs_alloc_free_block() doesn't work at all
+	 */
+	case BTRFS_ROOT_TREE_OBJECTID:
+	case BTRFS_EXTENT_TREE_OBJECTID:
+	case BTRFS_CHUNK_TREE_OBJECTID:
+	case BTRFS_FS_TREE_OBJECTID:
+		ret = -EEXIST;
+		goto free;
+	default:
+		/* Subvolume trees don't need special handling */
+		if (is_fstree(objectid))
+			break;
+		/* Other special trees are not supported yet */
+		ret = -ENOTTY;
+		goto free;
+	}
+	btrfs_mark_buffer_dirty(node);
+	btrfs_set_root_bytenr(&root_item, btrfs_header_bytenr(node));
+	btrfs_set_root_level(&root_item, 0);
+	btrfs_set_root_generation(&root_item, trans->transid);
+	btrfs_set_root_dirid(&root_item, 0);
+	btrfs_set_root_refs(&root_item, 1);
+	btrfs_set_root_used(&root_item, fs_info->nodesize);
+	location.objectid = objectid;
+	location.type = BTRFS_ROOT_ITEM_KEY;
+	location.offset = 0;
+
+	ret = btrfs_insert_root(trans, fs_info->tree_root, &location, &root_item);
+	if (ret < 0)
+		goto free;
+	return ret;
+
+free:
+	free_extent_buffer(node);
+	free(new_root);
+	return ret;
 }
 
 /*
