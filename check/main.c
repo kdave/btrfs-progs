@@ -9974,7 +9974,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 	int clear_space_cache = 0;
 	int qgroup_report = 0;
 	int qgroups_repaired = 0;
-	int qgroup_report_ret;
+	int qgroup_verify_ret;
 	unsigned ctree_flags = OPEN_CTREE_EXCLUSIVE;
 	int force = 0;
 
@@ -10231,8 +10231,8 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 		       uuidbuf);
 		ret = qgroup_verify_all(info);
 		err |= !!ret;
-		if (ret == 0)
-			err |= !!report_qgroups(1);
+		if (ret >= 0)
+			report_qgroups(1);
 		goto close_out;
 	}
 	if (subvolid) {
@@ -10473,21 +10473,21 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 			ctx.tp = TASK_QGROUPS;
 			task_start(ctx.info, &ctx.start_time, &ctx.item_count);
 		}
-		ret = qgroup_verify_all(info);
+		qgroup_verify_ret = qgroup_verify_all(info);
 		task_stop(ctx.info);
-		err |= !!ret;
-		if (ret) {
+		if (qgroup_verify_ret < 0) {
 			error("failed to check quota groups");
+			err |= !!qgroup_verify_ret;
 			goto out;
 		}
-		qgroup_report_ret = report_qgroups(0);
+		report_qgroups(0);
 		ret = repair_qgroups(info, &qgroups_repaired);
 		if (ret) {
 			error("failed to repair quota groups");
 			goto out;
 		}
-		if (qgroup_report_ret && (!qgroups_repaired || ret))
-			err |= !!qgroup_report_ret;
+		if (qgroup_verify_ret && (!qgroups_repaired || ret))
+			err |= !!qgroup_verify_ret;
 		ret = 0;
 	} else {
 		fprintf(stderr,
