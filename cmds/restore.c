@@ -898,7 +898,9 @@ static int copy_symlink(struct btrfs_root *root, struct btrfs_key *key,
 			goto out;
 		}
 	}
-	printf("SYMLINK: '%s' => '%s'\n", path_name, symlink_target);
+
+	if (verbose >= 2)
+		printf("SYMLINK: '%s' => '%s'\n", path_name, symlink_target);
 
 	ret = 0;
 	if (!restore_metadata)
