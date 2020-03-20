@@ -27,9 +27,17 @@ run_mustfail "subvolume delete --subvolid expects only one extra argument, the m
 	$SUDO_HELPER "$TOP/btrfs" subvolume delete --subvolid 256 "$TEST_MNT" "$TEST_MNT"
 
 # Delete the recently created subvol using the subvolid
-run_check $SUDO_HELPER "$TOP/btrfs" subvolume delete --subvolid 256 "$TEST_MNT"
-
+# (First run is conditional to check for kernel support)
+out=$(run_mayfail_stdout $SUDO_HELPER "$TOP/btrfs" subvolume delete --subvolid 256 "$TEST_MNT")
+ret="$?"
 run_check_umount_test_dev
+
+if [ "$ret" != 0 ]; then
+	if echo "$out" | grep -q 'Inappropriate ioctl for device'; then
+		_not_run "subvolume delete --subvolid not supported"
+	fi
+	_fail "$out"
+fi
 
 run_check_mount_test_dev -o subvol=subvol2
 # When the subvolume subvol3 is mounted, subvol2 is not reachable by the
