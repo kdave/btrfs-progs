@@ -216,6 +216,52 @@ run_mayfail()
 	fi
 }
 
+# Same as run_mayfail but does not fail the test if it's handled gracefully by
+# the caller, unexpected failure like segfault or abort will exit forcibly,
+# output is logged
+#
+# NOTE: we don't use pipefail to avoid disturbing the rest of the caller
+# script, so here we use a temporary output file.  Pipes are not supported,
+# store the output to a variable for further processing.
+run_mayfail_stdout()
+{
+	local spec
+	local ins
+	local ret
+
+	tmp_output=$(mktemp --tmpdir btrfs-progs-test--mayfail-stdtout.XXXXXX)
+
+	ins=$(_get_spec_ins "$@")
+	spec=$(($ins-1))
+	spec=$(_cmd_spec "${@:$spec}")
+	set -- "${@:1:$(($ins-1))}" $spec "${@: $ins}"
+	echo "====== RUN MAYFAIL $@" >> "$RESULTS" 2>&1
+	if [[ $TEST_LOG =~ tty ]]; then echo "CMD(mayfail): $@" > /dev/tty; fi
+	if [ "$1" = 'root_helper' ]; then
+		"$@" 2>&1 > "$tmp_output"
+	else
+		$INSTRUMENT "$@" 2>&1 > "$tmp_output"
+	fi
+	ret=$?
+
+	cat "$tmp_output" >> "$RESULTS"
+	cat "$tmp_output"
+	rm -- "$tmp_output"
+
+	if [ "$ret" != 0 ]; then
+		echo "failed (ignored, ret=$ret): $@" >> "$RESULTS"
+		if [ "$ret" == 139 ]; then
+			_fail "mayfail: returned code 139 (SEGFAULT), not ignored"
+		elif [ "$ret" == 134 ]; then
+			_fail "mayfail: returned code 134 (SIGABRT), not ignored"
+		fi
+		return "$ret"
+	fi
+	# return the command code and let the caller decide what to do based
+	# on the stdout
+	return "$ret"
+}
+
 # first argument is error message to print if it fails, otherwise
 # same as run_check but expects the command to fail, output is logged
 run_mustfail()
