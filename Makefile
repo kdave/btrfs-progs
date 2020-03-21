@@ -391,9 +391,15 @@ test-convert: btrfs btrfs-convert
 	$(Q)bash tests/convert-tests.sh
 
 test-check: test-fsck
+test-check-lowmem: test-fsck
 test-fsck: btrfs btrfs-image btrfs-corrupt-block mkfs.btrfs btrfstune
+ifneq ($(MAKECMDGOALS),test-check-lowmem)
 	@echo "    [TEST]   fsck-tests.sh"
 	$(Q)bash tests/fsck-tests.sh
+else
+	@echo "    [TEST]   fsck-tests.sh (mode=lowmem)"
+	$(Q)TEST_ENABLE_OVERRIDE=true TEST_ARGS_CHECK=--mode=lowmem bash tests/fsck-tests.sh
+endif
 
 test-misc: btrfs btrfs-image btrfs-corrupt-block mkfs.btrfs btrfstune fssum \
 		btrfs-find-root btrfs-select-super btrfs-convert
@@ -422,7 +428,7 @@ test-inst: all
 		$(MAKE) $(MAKEOPTS) DESTDIR=$$tmpdest install && \
 		$(RM) -rf -- $$tmpdest
 
-test: test-fsck test-mkfs test-misc test-cli test-convert test-fuzz
+test: test-check test-check-lowmem test-mkfs test-misc test-cli test-convert test-fuzz
 
 testsuite: btrfs-corrupt-block btrfs-find-root btrfs-select-super fssum
 	@echo "Export tests as a package"
