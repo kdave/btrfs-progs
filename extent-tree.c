@@ -1564,7 +1564,7 @@ int btrfs_write_dirty_block_groups(struct btrfs_trans_handle *trans)
 {
 	struct btrfs_block_group_cache *cache;
 	struct btrfs_path *path;
-	int ret;
+	int ret = 0;
 
 	path = btrfs_alloc_path();
 	if (!path)
