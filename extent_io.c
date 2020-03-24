@@ -622,6 +622,7 @@ static struct extent_buffer *__alloc_extent_buffer(struct btrfs_fs_info *info,
 	eb->tree = &info->extent_cache;
 	INIT_LIST_HEAD(&eb->recow);
 	INIT_LIST_HEAD(&eb->lru);
+	memset_extent_buffer(eb, 0, 0, blocksize);
 
 	return eb;
 }
