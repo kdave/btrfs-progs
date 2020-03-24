@@ -3257,7 +3257,7 @@ static int repair_extent_data_item(struct btrfs_root *root,
 		ret = delete_item(root, pathp);
 		if (!ret)
 			err = 0;
-		goto out;
+		goto out_no_release;
 	}
 
 	/* now repair only adds backref */
@@ -3332,6 +3332,7 @@ out:
 	if (trans)
 		btrfs_commit_transaction(trans, root);
 	btrfs_release_path(&path);
+out_no_release:
 	if (ret)
 		error("can't repair root %llu extent data item[%llu %llu]",
 		      root->objectid, disk_bytenr, num_bytes);
