@@ -2560,7 +2560,6 @@ int btrfs_free_block_groups(struct btrfs_fs_info *info)
 			     &info->block_group_cache_tree, cache_node) {
 		if (!list_empty(&cache->dirty_list))
 			list_del_init(&cache->dirty_list);
-		rb_erase(&cache->cache_node, &info->block_group_cache_tree);
 		RB_CLEAR_NODE(&cache->cache_node);
 		if (cache->free_space_ctl) {
 			btrfs_remove_free_space_cache(cache);
