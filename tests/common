@@ -154,7 +154,13 @@ run_check()
 	set -- "${@:1:$(($ins-1))}" $spec "${@: $ins}"
 	echo "====== RUN CHECK $@" >> "$RESULTS" 2>&1
 	if [[ $TEST_LOG =~ tty ]]; then echo "CMD: $@" > /dev/tty; fi
-	if [ "$1" = 'root_helper' ]; then
+
+	# If the command is `root_helper` or mount/umount, don't call INSTRUMENT
+	# as most profiling tool like valgrind can't handle setuid/setgid/setcap
+	# which mount normally has.
+	# And since mount/umount is only called with run_check(), we don't need
+	# to do the same check on other run_*() functions.
+	if [ "$1" = 'root_helper' -o "$1" = 'mount' -o "$1" = 'umount' ]; then
 		"$@" >> "$RESULTS" 2>&1 || _fail "failed: $@"
 	else
 		$INSTRUMENT "$@" >> "$RESULTS" 2>&1 || _fail "failed: $@"
