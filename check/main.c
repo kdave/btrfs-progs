@@ -8442,7 +8442,7 @@ static int deal_root_from_list(struct list_head *list,
 			       struct device_extent_tree *dev_extent_cache)
 {
 	int ret = 0;
-	u64 last;
+	u64 last = 0;
 
 	while (!list_empty(list)) {
 		struct root_item_record *rec;
