@@ -10,7 +10,7 @@ btrfs-progs-5.4 (2019-12-03)
   * mkfs: support new raid1c3 and raid1c4 block group profiles (kernel 5.5)
   * check:
     * --repair delays start with a warning, can be skipped using --force
-    * enhanced detetion of inode types from partial data, more options for
+    * enhanced detection of inode types from partial data, more options for
       repair
   * receive: fix quiet option
   * image: speed up chunk loading

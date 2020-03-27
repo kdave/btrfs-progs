@@ -12,7 +12,7 @@ wget https://github.com/kdave/btrfs-devel/archive/misc-next.zip
 unzip -qq  misc-next.zip
 cd btrfs-devel-misc-next/ && make x86_64_defconfig && make kvmconfig
 
-# BTRFS specific entires
+# BTRFS specific entries
 cat <<EOF >> .config
 CONFIG_BTRFS_FS=y
 CONFIG_BTRFS_FS_POSIX_ACL=y

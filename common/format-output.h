@@ -64,7 +64,7 @@ struct format_ctx {
 	/* Nesting of groups like lists or maps (format: json) */
 	int depth;
 
-	/* Array of named output fileds as defined by the command */
+	/* Array of named output fields as defined by the command */
 	const struct rowspec *rowspec;
 
 	char jtype[JSON_NESTING_LIMIT];

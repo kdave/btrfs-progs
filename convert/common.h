@@ -16,7 +16,7 @@
 
 /*
  * Defines and function declarations for users of the mkfs API, no internal
- * defintions.
+ * definitions.
  */
 
 #ifndef __BTRFS_CONVERT_COMMON_H__

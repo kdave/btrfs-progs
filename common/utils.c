@@ -949,7 +949,7 @@ again:
 		goto again;
 	}
 
-	/* get the lastest max_id to stay consistent with the num_devices */
+	/* Get the latest max_id to stay consistent with the num_devices */
 	if (search_key->nr_items == 0)
 		/*
 		 * last tree_search returns an empty buf, use the devid of

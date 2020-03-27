@@ -571,7 +571,7 @@ struct btrfs_path {
 	struct extent_buffer *nodes[BTRFS_MAX_LEVEL];
 	int slots[BTRFS_MAX_LEVEL];
 #if 0
-	/* The kernel locking sheme is not done in userspace. */
+	/* The kernel locking scheme is not done in userspace. */
 	int locks[BTRFS_MAX_LEVEL];
 #endif
 	signed char reada;

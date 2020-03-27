@@ -2593,7 +2593,7 @@ int btrfs_free_block_groups(struct btrfs_fs_info *info)
  * Find a block group which starts >= @key->objectid in extent tree.
  *
  * Return 0 for found
- * Retrun >0 for not found
+ * Return >0 for not found
  * Return <0 for error
  */
 static int find_first_block_group(struct btrfs_root *root,

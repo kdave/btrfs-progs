@@ -210,7 +210,7 @@ static U32 XXH_read32(const void* memPtr)
 #endif   /* XXH_FORCE_DIRECT_MEMORY_ACCESS */
 
 
-/* ===   Endianess   === */
+/* ===   Endianness   === */
 typedef enum { XXH_bigEndian=0, XXH_littleEndian=1 } XXH_endianess;
 
 /* XXH_CPU_LITTLE_ENDIAN can be defined externally, for example on the compiler command line */

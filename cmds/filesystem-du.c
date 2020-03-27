@@ -134,7 +134,7 @@ static u64 count_unique_bytes(struct rb_root *root, struct shared_extent *n)
 
 	do {
 		/*
-		 * Expand our search window based on the lastest
+		 * Expand our search window based on the latest
 		 * overlapping extent. Doing this will allow us to
 		 * find all possible overlaps
 		 */

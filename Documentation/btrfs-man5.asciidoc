@@ -136,8 +136,8 @@ Both 'zlib' and 'zstd' (since version 5.1) expose the compression level as a
 tunable knob with higher levels trading speed and memory ('zstd') for higher
 compression ratios. This can be set by appending a colon and the desired level.
 Zlib accepts the range [1, 9] and zstd accepts [1, 15]. If no level is set,
-both currently use a default level of 3. The value 0 is an alias for the defaul
-level.
+both currently use a default level of 3. The value 0 is an alias for the
+default level.
 +
 Otherwise some simple heuristics are applied to detect an incompressible file.
 If the first blocks written to a file are not compressible, the whole file is
@@ -635,7 +635,7 @@ SWAPFILE SUPPORT
 
 The swapfile is supported since kernel 5.0. Use `swapon`(8) to activate the
 swapfile. There are some limitations of the implementation in btrfs and linux
-swap subystem:
+swap subsystem:
  
 * filesystem - must be only single device
 * swapfile - the containing subvolume cannot be snapshotted

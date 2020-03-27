@@ -2455,7 +2455,7 @@ static int fixup_dev_extents(struct btrfs_trans_handle *trans)
 
 	dev = btrfs_find_device(fs_info, devid, NULL, NULL);
 	if (!dev) {
-		error("faild to find devid %llu", devid);
+		error("failed to find devid %llu", devid);
 		return -ENODEV;
 	}
 

@@ -19,7 +19,7 @@ done
 # mount the image file
 mount -o loop $IMG $DIR
 
-# Install required pacakges
+# Install required packages
 debootstrap --arch=amd64  --include=git,autoconf,automake,gcc,make,pkg-config,e2fslibs-dev,libblkid-dev,zlib1g-dev,liblzo2-dev,asciidoc,xmlto,libzstd-dev,python3.5,python3.5-dev,python3-dev,python3-setuptools,python-setuptools,xz-utils,acl,attr stretch $DIR http://ftp.de.debian.org/debian/
 
 ## Setup 9p mount

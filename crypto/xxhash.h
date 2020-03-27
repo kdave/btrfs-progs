@@ -343,7 +343,7 @@ struct XXH64_state_s {
  *
  * - 128-bits output type : currently defined as a structure of two 64-bits fields.
  *                          That's because 128-bit values do not exist in C standard.
- *                          Note that it means that, at byte level, result is not identical depending on endianess.
+ *                          Note that it means that, at byte level, result is not identical depending on endianness.
  *                          However, at field level, they are identical on all platforms.
  *                          The canonical representation solves the issue of identical byte-level representation across platforms,
  *                          which is necessary for serialization.

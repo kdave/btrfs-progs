@@ -521,7 +521,7 @@ static int avoid_extents_overwrite(struct btrfs_fs_info *fs_info)
 	}
 
 	printf(
-	"Try to exclude all metadata blcoks and extents, it may be slow\n");
+	"Try to exclude all metadata blocks and extents, it may be slow\n");
 	ret = exclude_metadata_blocks(fs_info);
 out:
 	if (ret) {
@@ -2570,7 +2570,7 @@ static int repair_inode_gen_lowmem(struct btrfs_root *root,
 		error("failed to commit transaction: %m");
 		goto error;
 	}
-	printf("reseting inode generation to %llu for ino %llu\n",
+	printf("resetting inode generation to %llu for ino %llu\n",
 		transid, key.objectid);
 	return ret;
 
@@ -2815,7 +2815,7 @@ out:
 		}
 
 		/*
-		 * For orhpan inode, updating nbytes/size is just a waste of
+		 * For orphan inode, updating nbytes/size is just a waste of
 		 * time, so skip such repair and don't report them as error.
 		 */
 		if (nbytes != extent_size && !is_orphan) {

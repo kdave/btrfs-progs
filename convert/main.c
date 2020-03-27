@@ -52,7 +52,7 @@
  *      We can a map used space of old fs
  *
  * 1.2) Calculate data chunk layout - this is the hard part
- *      New data chunks must meet 3 conditions using result fomr 1.1
+ *      New data chunks must meet 3 conditions using result from 1.1
  *      a. Large enough to be a chunk
  *      b. Doesn't intersect reserved ranges
  *      c. Covers all the remaining old fs used space

@@ -51,7 +51,7 @@ check_btrfstune() {
 	# test that having -m|-M on seed device is forbidden
 	run_check_mkfs_test_dev
 	run_check $SUDO_HELPER "$TOP/btrfstune" -S 1 "$TEST_DEV"
-	run_mustfail "Succeded changing fsid on a seed device" \
+	run_mustfail "Succeeded changing fsid on a seed device" \
 		$SUDO_HELPER "$TOP/btrfstune" -m "$TEST_DEV"
 
 	# test that using -U|-u on an fs with METADATA_UUID flag is forbidden

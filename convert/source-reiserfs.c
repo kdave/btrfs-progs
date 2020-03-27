@@ -495,7 +495,7 @@ static int reiserfs_copy_dirent(reiserfs_filsys_t fs,
 	if (ret) {
 		errno = -ret;
 		error(
-	"an error occured while converting \"%.*s\", reiserfs key [%u %u]: %m",
+	"an error occurred while converting \"%.*s\", reiserfs key [%u %u]: %m",
 			(int)len, name, deh_dirid, deh_objectid);
 		return ret;
 	}
@@ -564,7 +564,7 @@ static int reiserfs_copy_meta(reiserfs_filsys_t fs, struct btrfs_root *root,
 	};
 
 	/* The root directory's dirid in reiserfs points to an object
-	 * that doens't exist.  In btrfs it's self-referential.
+	 * that doesn't exist.  In btrfs it's self-referential.
 	 */
 	if (deh_dirid == REISERFS_ROOT_PARENT_OBJECTID)
 		parent = objectid;

@@ -3,7 +3,7 @@ URL: https://bugzilla.kernel.org/show_bug.cgi?id=96971
 
 I've identified some problems in the btrfs code and attached a btrfs-image
 which causes the userland tools to crash and the kernel to immediately freeze
-once the filesystem get's mounted and one of the files is accessed. Putting
+once the filesystem gets mounted and one of the files is accessed. Putting
 the image onto a usb-drive gives you a freeze-on-a-stick :-)
 
 "btrfs check" crashes due to a SIGFPE in count_csum_range(). The culprit is
