@@ -8650,7 +8650,7 @@ static int check_dev_extents(struct btrfs_fs_info *fs_info)
 		}
 		if (physical_offset + physical_len > dev->total_bytes) {
 			error(
-"dev extent devid %llu physical offset %llu len %llu is beyond device boudnary %llu",
+"dev extent devid %llu physical offset %llu len %llu is beyond device boundary %llu",
 			      devid, physical_offset, physical_len,
 			      dev->total_bytes);
 			ret = -EUCLEAN;
