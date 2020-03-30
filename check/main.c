@@ -10458,7 +10458,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 			goto out;
 		}
 		if (qgroup_report_ret && (!qgroups_repaired || ret))
-			err |= qgroup_report_ret;
+			err |= !!qgroup_report_ret;
 		ret = 0;
 	} else {
 		fprintf(stderr,
