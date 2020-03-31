@@ -1,3 +1,33 @@
+btrfs-progs-5.6 (2020-04-05)
+  * inspect logical-resolve: support LOGICAL_INO_V2 as new option '-o',
+    helps advanced dedupe tools
+  * inspect: user larger buffer (64K) for results
+  * subvol delete: support deletion by id (requires kernel 5.7+)
+  * libbtrfsutil:
+    * support subvolume deletion by id
+    * bump version to 1.2
+    * library symbols are now versioned
+  * dump-tree: new option --hide-names, replace any names (file, directory,
+    subvolume, xattr) in the output with stubs
+  * convert: warn if the filesystem is not mountable on the machine
+  * fixes:
+    * restore: proper mirror iteration on decompression error
+    * restore: make symlink messages less noisy
+    * check: handle holes at the begining or end of file
+    * fix xxhash output on big endian machines
+    * receive: fix lookup of subvolume by uuid in case it was already
+      received before
+  * other:
+    * new and updated tests
+    * add missing binaries in exported testsuite
+    * docs updates
+    * remove obsolete files
+    * move files to more appropriate directories
+    * fixes reported by valgrind
+    * many typos fixed
+
+btrfs-progs-5.5 (skipped)
+
 btrfs-progs-5.4.1 (2020-01-09)
   * build: fix docbook5 build
   * check: do extra verification of extent items, inode items and chunks
@@ -196,6 +226,8 @@ btrfs-progs-4.19 (2018-11-03)
     * improved error handling
     * docs
     * new tests
+
+btrfs-progs-4.18 (skipped)
 
 btrfs-progs-4.17.1 (2018-08-06)
   * check:
