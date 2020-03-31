@@ -1,3 +1,42 @@
+btrfs-progs-5.9 (2020-10-23)
+  * mkfs:
+    * switch default to single profile for multi-device filesystem, up to
+      now it was raid0 that may not be simple to convert to some other profile
+      as raid0 needs a workspace on all device for that
+    * new option -R for run-time options (eg. mount time enabled), now
+      understands free-space-tree
+  * subvolume delete:
+    * refuse to delete the default subvolume (kernel will not allow that but
+      the error reason is not obvious)
+    * warn on EPERM, eg. if send is on progress on the subvolume
+  * convert:
+    * fix 32bit overflows on large filesystems
+    * improved error handling and error messages
+    * check free space taking fragmentation into account
+  * check:
+    * detect and repair wrong inode generation
+    * minor improvement in error reporting on roots
+  * libbtrfsutils: follow main package versioning (5.9)
+    * add pkg-config file definitions
+  * python-btrfsutil: follow main package versioning (5.9)
+  * inspect tree-stats: print node counts for each level, fanout
+  * other:
+    * docs:
+      * remove obsolete mount options (alloc_start, subvolrootid)
+      * deleting default subvolume is not permitted
+    * updated or fixed tests
+    * .editorconfig updates
+    * move files to kernel-shared/
+    * CI:
+      * updated to use zstd 1.4.5
+      * fix reiserfs build
+      * more builds with asan, ubsan
+    * sb-mod updates
+    * build:
+      * print .so versions of libraries in configure summary
+
+btrfs-progs-5.8 (skipped)
+
 btrfs-progs-5.7 (2020-07-02)
   * mkfs:
     * new option to enable features otherwise enabled at runtime, now
