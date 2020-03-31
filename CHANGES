@@ -1,3 +1,26 @@
+btrfs-progs-5.7 (2020-07-02)
+  * mkfs:
+    * new option to enable features otherwise enabled at runtime, now
+      implemented for quotas, 'mkfs.btrfs -R quota'
+    * fix space accounting for small image, DUP and --rootdir
+    * option -A removed
+  * check: detect ranges with overlapping csum items
+  * fi usage: report correct numbers when plain RAID56 profiles are used
+  * convert: ensure the data chunks size never exceed device size
+  * libbtrfsutil: update documentation regarding subvolume deletion
+  * build: support libkcapi as implementation backend for cryptographic
+    primitives
+  * core: global options for verbosity (-v, -q), subcommands -v or -q are
+    aliases and will continue to work but are considered deprecated,
+    current command output is preserved to keep scripts working
+  * other:
+    * block group code cleanups
+    * build warning fixes
+    * more files moved to kernel-shared
+    * btrfs-debugfs ported to python 3
+    * documentation updates
+    * new tests
+
 btrfs-progs-5.6.1 (2020-05-07)
   * print warning when multiple block group profiles exist, update 'fi usage'
     summary, add docs to maual page explaining the situation
