@@ -137,4 +137,14 @@ u64 rand_u64(void);
 unsigned int rand_range(unsigned int upper);
 void init_rand_seed(u64 seed);
 
+int btrfs_string_check_for_mixed_profiles_by_fd(int fd, char **data_ret,
+		char **metadata_ret, char **mixed_ret, char **system_ret);
+static inline int btrfs_test_for_mixed_profiles_by_fd(int fd)
+{
+	return btrfs_string_check_for_mixed_profiles_by_fd(fd, NULL, NULL,
+			NULL, NULL);
+}
+int btrfs_check_for_mixed_profiles_by_path(const char *path);
+int btrfs_check_for_mixed_profiles_by_fd(int fd);
+
 #endif
