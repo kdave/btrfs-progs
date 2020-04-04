@@ -661,6 +661,7 @@ static int cmd_device_usage(const struct cmd_struct *cmd, int argc, char **argv)
 		}
 
 		ret = _cmd_device_usage(fd, argv[i], unit_mode);
+		btrfs_check_for_mixed_profiles_by_fd(fd);
 		close_file_or_dir(fd, dirstream);
 
 		if (ret)
