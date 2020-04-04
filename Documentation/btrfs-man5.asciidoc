@@ -846,6 +846,37 @@ work and a workaround would need to be used to mount a multi-device filesystem.
 The mount option 'device' can trigger the device scanning during mount.
 
 
+FILESYSTEM WITH MULTIPLE PROFILES
+---------------------------------
+
+It is possible that a btrfs filesystem features block group of the same
+type (e.g. data) with different profiles.
+This could happen when a profile conversion is interrupted (see
+`btrfs-balance(8)`).
+Some 'btrfs' commands perform a test to detect this kind of condition. In such
+case a warning like this is showed:
+
+--------------------
+WARNING: Multiple profiles detected.  See 'man btrfs(5)'.
+WARNING: data -> [raid1, single], metadata -> [raid1, single]
+--------------------
+
+In a case like this, it is suggested to complete the conversion running
+`btrfs balance`. This because the next block group allocation
+is performed on the basis of the set of the profiles present on the disks,
+according to the following priorities:
+
+* RAID6
+* RAID5
+* RAID10
+* RAID1
+* RAID0
+
+For example if both the profile RAID6 and RAID1 are present on the disks,
+the next block group allocation will be RAID6, regardeless of the last
+`btrfs balance`.
+
+
 SEE ALSO
 --------
 `acl`(5),
