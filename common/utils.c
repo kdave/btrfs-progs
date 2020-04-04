@@ -1710,3 +1710,191 @@ void print_all_devices(struct list_head *devices)
 		print_device_info(dev, "\t");
 	printf("\n");
 }
+
+static int bit_count(u64 x)
+{
+	int ret = 0;
+
+	while (x) {
+		if (x & 1)
+			ret++;
+		x >>= 1;
+	}
+	return ret;
+}
+
+static void sprint_profiles(char **ptr, u64 profiles)
+{
+	int i;
+	bool first = true;
+	int l = 1;
+
+	*ptr = NULL;
+
+	for (i = 0; i < BTRFS_NR_RAID_TYPES; i++)
+		l += strlen(btrfs_raid_array[i].raid_name) + 2;
+
+	*ptr = malloc(l);
+	if (!*ptr)
+		return;
+	**ptr = 0;
+
+	for (i = 0; i < BTRFS_NR_RAID_TYPES; i++) {
+		if (!(btrfs_raid_array[i].bg_flag & profiles))
+			continue;
+
+		if (!first)
+			strcat(*ptr, ", ");
+		strcat(*ptr, btrfs_raid_array[i].raid_name);
+		first = false;
+	}
+	if (profiles & BTRFS_AVAIL_ALLOC_BIT_SINGLE) {
+		if (!first)
+			strcat(*ptr, ", ");
+		strcat(*ptr, btrfs_raid_array[BTRFS_RAID_SINGLE].raid_name);
+	}
+}
+
+int btrfs_string_check_for_mixed_profiles_by_fd(int fd, char **data_ret,
+							char **metadata_ret,
+							char **mixed_ret,
+							char **system_ret)
+{
+	int ret;
+	int i;
+	struct btrfs_ioctl_space_args *sargs;
+	u64 data_profiles = 0;
+	u64 metadata_profiles = 0;
+	u64 system_profiles = 0;
+	u64 mixed_profiles = 0;
+	const u64 mixed_profile_fl = BTRFS_BLOCK_GROUP_METADATA |
+		BTRFS_BLOCK_GROUP_DATA;
+
+	ret = get_df(fd, &sargs);
+	if (ret < 0)
+		return -1;
+
+	for (i = 0; i < sargs->total_spaces; i++) {
+		u64 flags = sargs->spaces[i].flags;
+
+		if (!(flags & BTRFS_BLOCK_GROUP_PROFILE_MASK))
+			flags |= BTRFS_AVAIL_ALLOC_BIT_SINGLE;
+
+		if ((flags & mixed_profile_fl) == mixed_profile_fl)
+			mixed_profiles |= flags;
+		else if (flags & BTRFS_BLOCK_GROUP_DATA)
+			data_profiles |= flags;
+		else if (flags & BTRFS_BLOCK_GROUP_METADATA)
+			metadata_profiles |= flags;
+		else if (flags & BTRFS_BLOCK_GROUP_SYSTEM)
+			system_profiles |= flags;
+	}
+	free(sargs);
+
+	data_profiles &= BTRFS_EXTENDED_PROFILE_MASK;
+	system_profiles &= BTRFS_EXTENDED_PROFILE_MASK;
+	mixed_profiles &= BTRFS_EXTENDED_PROFILE_MASK;
+	metadata_profiles &= BTRFS_EXTENDED_PROFILE_MASK;
+
+	if ((bit_count(data_profiles) == 0) &&
+	    (bit_count(metadata_profiles) == 0) &&
+	    (bit_count(system_profiles) == 0) &&
+	    (bit_count(mixed_profiles) == 0))
+		return 0;
+
+	if (data_ret) {
+		if (bit_count(data_profiles) > 1)
+			sprint_profiles(data_ret, data_profiles);
+		else
+			*data_ret = NULL;
+	}
+	if (metadata_ret) {
+		if (bit_count(metadata_profiles) > 1)
+			sprint_profiles(metadata_ret, metadata_profiles);
+		else
+			*metadata_ret = NULL;
+	}
+	if (mixed_ret) {
+		if (bit_count(mixed_profiles) > 1)
+			sprint_profiles(mixed_ret, mixed_profiles);
+		else
+			*mixed_ret = NULL;
+	}
+	if (system_ret) {
+		if (bit_count(system_profiles) > 1)
+			sprint_profiles(system_ret, system_profiles);
+		else
+			*system_ret = NULL;
+	}
+
+	return 1;
+}
+
+int btrfs_check_for_mixed_profiles_by_path(const char *path)
+{
+	int fd;
+	int ret;
+	DIR *dirstream = NULL;
+
+	fd = btrfs_open_dir(path, &dirstream, 0);
+	if (fd < 0)
+		return -1;
+	closedir(dirstream);
+
+	ret = btrfs_check_for_mixed_profiles_by_fd(fd);
+	close(fd);
+
+	return ret;
+}
+
+int btrfs_check_for_mixed_profiles_by_fd(int fd)
+{
+	int ret;
+	int first = true;
+	char *data_prof, *mixed_prof, *metadata_prof, *system_prof;
+
+	ret = btrfs_string_check_for_mixed_profiles_by_fd(fd, &data_prof,
+			&metadata_prof, &mixed_prof, &system_prof);
+
+	if (ret != 1)
+		return ret;
+
+	fprintf(stderr,
+		"WARNING: Multiple profiles detected.  See 'man btrfs(5)'.\n");
+	fprintf(stderr, "WARNING: ");
+	if (data_prof) {
+		fprintf(stderr, "data -> [%s]", data_prof);
+		first = false;
+	}
+	if (metadata_prof) {
+		if (!first)
+			fprintf(stderr, ", ");
+		fprintf(stderr, "metadata -> [%s]", metadata_prof);
+		first = false;
+	}
+	if (mixed_prof) {
+		if (!first)
+			fprintf(stderr, ", ");
+		fprintf(stderr, "data+metadata -> [%s]", mixed_prof);
+		first = false;
+	}
+	if (system_prof) {
+		if (!first)
+			fprintf(stderr, ", ");
+		fprintf(stderr, "system -> [%s]", system_prof);
+		first = false;
+	}
+
+	fprintf(stderr, "\n");
+
+	if (data_prof)
+		free(data_prof);
+	if (metadata_prof)
+		free(metadata_prof);
+	if (mixed_prof)
+		free(mixed_prof);
+	if (system_prof)
+		free(system_prof);
+
+	return 1;
+}
