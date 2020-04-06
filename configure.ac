@@ -195,6 +195,34 @@ if test "$DISABLE_BTRFSCONVERT" = 0 && test "x$convertfs" = "x"; then
 	AC_MSG_ERROR([no filesystems for convert, use --disable-convert instead])
 fi
 
+AC_ARG_WITH([crypto],
+	    AS_HELP_STRING([[[]--with-crypto[[=builtin]]]], [provider of cryptographic primtives: builtin, libgcrypt, libsodium]),
+  [], [with_crypto=builtin]
+)
+
+cryptoprovider=
+cryptoproviderversion=
+CRYPTOPROVIDER_BUILTIN=0
+if test "$with_crypto" = "builtin"; then
+	cryptoprovider="builtin"
+	CRYPTOPROVIDER_BUILTIN=1
+	AC_DEFINE([CRYPTOPROVIDER_BUILTIN],[1],[Use builtin implementation])
+elif test "$with_crypto" = "libgcrypt"; then
+	cryptoprovider="libgcrypt"
+	PKG_CHECK_MODULES(GCRYPT, [libgcrypt >= 1.8.0])
+	AC_DEFINE([CRYPTOPROVIDER_LIBGCRYPT],[1],[Use libcrypt])
+	cryptoproviderversion=`pkg-config libgcrypt --version`
+elif test "$with_crypto" = "libsodium"; then
+	cryptoprovider="libsodium"
+	PKG_CHECK_MODULES(SODIUM, [libsodium >= 1.0.4])
+	AC_DEFINE([CRYPTOPROVIDER_LIBSODIUM],[1],[Use libsodium])
+	cryptoproviderversion=`pkg-config libsodium --version`
+else
+	AC_MSG_ERROR([unrecognized crypto provider: $with_crypto])
+fi
+AC_SUBST([CRYPTOPROVIDER_BUILTIN])
+AC_DEFINE_UNQUOTED([CRYPTOPROVIDER],["$cryptoprovider"],[Crypto implementation source name])
+
 HAVE_OWN_FIEMAP_EXTENT_SHARED_DEFINE=0
 AX_CHECK_DEFINE([linux/fiemap.h], [FIEMAP_EXTENT_SHARED], [],
 		[HAVE_OWN_FIEMAP_EXTENT_SHARED_DEFINE=1
@@ -307,6 +335,7 @@ AC_MSG_RESULT([
 	btrfs-restore zstd: ${enable_zstd}
 	Python bindings:    ${enable_python}
 	Python interpreter: ${PYTHON}
+	crypto provider:    ${cryptoprovider} ${cryptoproviderversion}
 
 	Type 'make' to compile.
 ])

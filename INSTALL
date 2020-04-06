@@ -14,6 +14,13 @@ For the btrfs-convert utility:
 - e2fsprogs - ext2/ext3/ext4 file system libraries, or called e2fslibs
 - libreiserfscore - reiserfs file system library version >= 3.6.27
 
+Optionally, the checksums based on cryptographic hashes can be implemeted by
+external libraries. Builtin implementations are provided in case the library
+dependencies are not desired.
+
+- libgcrypt
+- libsodium
+
 Generating documentation:
 
 - asciidoc - text document format tool
