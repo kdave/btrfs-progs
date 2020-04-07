@@ -11,11 +11,18 @@ check_prereq btrfs
 
 setup_root_helper
 
+_get_min_dev_size()
+{
+	size=$(run_check_stdout $SUDO_HELPER "$TOP/btrfs" inspect-internal \
+		min-dev-size ${1:+--id "$1"} "$TEST_MNT" |		   \
+		grep -e "^[[:digit:]]\+.*)$" | cut -d ' ' -f 1)
+	echo "$size"
+}
+
 # Optionally take id of the device to shrink
 shrink_test()
 {
-	min_size=$(run_check_stdout $SUDO_HELPER "$TOP/btrfs" inspect-internal min-dev-size ${1:+--id "$1"}  "$TEST_MNT")
-	min_size=$(echo "$min_size" | cut -d ' ' -f 1)
+	min_size=$(_get_min_dev_size "$1")
 	_log "min size = ${min_size}"
 	if [ -z "$min_size" ]; then
 		_fail "Failed to parse minimum size"

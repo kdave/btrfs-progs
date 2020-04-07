@@ -32,7 +32,7 @@ done
 run_check $SUDO_HELPER "$TOP/btrfs" subvolume list .
 run_check $SUDO_HELPER "$TOP/btrfs" subvolume list -d .
 
-idtodel=`run_check_stdout $SUDO_HELPER "$TOP/btrfs" inspect-internal rootid snap3`
+idtodel=`$SUDO_HELPER "$TOP/btrfs" inspect-internal rootid snap3`
 
 # delete, sync after some time
 run_check $SUDO_HELPER "$TOP/btrfs" subvolume delete -c snap*

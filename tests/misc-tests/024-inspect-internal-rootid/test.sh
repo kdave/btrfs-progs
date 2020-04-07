@@ -21,20 +21,13 @@ run_check touch file1
 run_check touch dir/file2
 run_check touch sub/file3
 
-id1=$(run_check_stdout "$TOP/btrfs" inspect-internal rootid .) \
-	|| { echo $id1; exit 1; }
-id2=$(run_check_stdout "$TOP/btrfs" inspect-internal rootid sub) \
-	|| { echo $id2; exit 1; }
-id3=$(run_check_stdout "$TOP/btrfs" inspect-internal rootid sub/subsub) \
-	|| { echo $id3; exit 1; }
-id4=$(run_check_stdout "$TOP/btrfs" inspect-internal rootid dir) \
-	|| { echo $id4; exit 1; }
-id5=$(run_check_stdout "$TOP/btrfs" inspect-internal rootid file1) \
-	|| { echo $id5; exit 1; }
-id6=$(run_check_stdout "$TOP/btrfs" inspect-internal rootid dir/file2) \
-	|| { echo $id6; exit 1; }
-id7=$(run_check_stdout "$TOP/btrfs" inspect-internal rootid sub/file3) \
-	|| { echo $id7; exit 1; }
+id1=$(_get_subvolid .) || { echo $id1; exit 1; }
+id2=$(_get_subvolid sub) || { echo $id2; exit 1; }
+id3=$(_get_subvolid sub/subsub) || { echo $id3; exit 1; }
+id4=$(_get_subvolid dir) || { echo $id4; exit 1; }
+id5=$(_get_subvolid file1) || { echo $id5; exit 1; }
+id6=$(_get_subvolid dir/file2) || { echo $id6; exit 1; }
+id7=$(_get_subvolid sub/file3) || { echo $id7; exit 1; }
 
 if ! ([ "$id1" -ne "$id2" ] && [ "$id1" -ne "$id3" ] && [ "$id2" -ne "$id3" ]); then
 	_fail "inspect-internal rootid: each subvolume must have different id"

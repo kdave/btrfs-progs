@@ -18,10 +18,10 @@ run_check $SUDO_HELPER "$TOP/btrfs" qgroup assign 0/5 1/0 "$TEST_MNT"
 run_check $SUDO_HELPER "$TOP/btrfs" quota rescan -w "$TEST_MNT"
 
 run_check_stdout $SUDO_HELPER "$TOP/btrfs" qgroup show --sort=-qgroupid \
-	-p "$TEST_MNT" | tail -n 1 | grep -q "1/0" \
+	-p "$TEST_MNT" | grep -q "1/0" \
 	|| _fail "parent qgroup check failed, please check the log"
 run_check_stdout $SUDO_HELPER "$TOP/btrfs" qgroup show --sort=qgroupid \
-	-c "$TEST_MNT" | tail -n 1 | grep -q "0/5" \
+	-c "$TEST_MNT" | grep -q "0/5" \
 	|| _fail "child qgroup check failed, please check the log"
 
 run_check_umount_test_dev "$TEST_MNT"

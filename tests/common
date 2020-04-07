@@ -169,6 +169,9 @@ run_check()
 
 # same as run_check but the stderr+stdout output is duplicated on stdout and
 # can be processed further
+#
+# NOTE: If this function is called on btrfs related commands, caller should
+#	filter the output, as INSTRUMENT can easily pollute the output.
 run_check_stdout()
 {
 	local spec
@@ -634,6 +637,16 @@ check_min_kernel_version()
 	[ "$unamemajor" -lt "$argmajor" ] || return 1
 	[ "$unameminor" -lt "$argminor" ] || return 1
 	return 0
+}
+
+# Get subvolume id for specified path
+_get_subvolid()
+{
+	# run_check_stdout may have INSTRUMENT polluting the output, we need to
+	# filter the output
+	run_check_stdout "$TOP/btrfs" inspect-internal rootid "$1" | \
+		grep -e "^[[:digit:]]\+$"
+
 }
 
 # compare running kernel version to the given parameter, return success
