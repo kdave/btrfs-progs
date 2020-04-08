@@ -38,7 +38,7 @@
 #include <btrfs/extent_io.h>
 #include <btrfs/ioctl.h>
 #include <btrfs/sizes.h>
-#include "btrfs/crc32c.h"
+#include <btrfs/crc32c.h>
 #endif /* BTRFS_FLAT_INCLUDES */
 
 struct btrfs_root;
