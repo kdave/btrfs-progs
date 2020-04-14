@@ -4924,7 +4924,17 @@ static int add_pending(struct cache_tree *pending,
 	ret = add_cache_extent(seen, bytenr, size);
 	if (ret)
 		return ret;
-	add_cache_extent(pending, bytenr, size);
+	ret = add_cache_extent(pending, bytenr, size);
+	if (ret) {
+		struct cache_extent *entry;
+
+		entry = lookup_cache_extent(seen, bytenr, size);
+		if (entry && entry->start == bytenr && entry->size == size) {
+			remove_cache_extent(seen, entry);
+			free(entry);
+		}
+		return ret;
+	}
 	return 0;
 }
 

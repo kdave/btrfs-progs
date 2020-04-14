@@ -111,10 +111,8 @@ int add_cache_extent(struct cache_tree *tree, u64 start, u64 size)
 	struct cache_extent *pe = alloc_cache_extent(start, size);
 	int ret;
 
-	if (!pe) {
-		fprintf(stderr, "memory allocation failed\n");
-		exit(1);
-	}
+	if (!pe)
+		return -ENOMEM;
 
 	ret = insert_cache_extent(tree, pe);
 	if (ret)
