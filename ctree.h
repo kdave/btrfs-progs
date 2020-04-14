@@ -1176,7 +1176,6 @@ struct btrfs_fs_info {
 
 	struct btrfs_trans_handle *running_transaction;
 	struct btrfs_super_block *super_copy;
-	struct mutex fs_mutex;
 
 	u64 super_bytenr;
 	u64 total_pinned;
