@@ -619,7 +619,6 @@ static struct extent_buffer *__alloc_extent_buffer(struct btrfs_fs_info *info,
 	eb->cache_node.start = bytenr;
 	eb->cache_node.size = blocksize;
 	eb->fs_info = info;
-	eb->tree = &info->extent_cache;
 	INIT_LIST_HEAD(&eb->recow);
 	INIT_LIST_HEAD(&eb->lru);
 	memset_extent_buffer(eb, 0, 0, blocksize);
@@ -634,8 +633,6 @@ struct extent_buffer *btrfs_clone_extent_buffer(struct extent_buffer *src)
 	new = __alloc_extent_buffer(src->fs_info, src->start, src->len);
 	if (!new)
 		return NULL;
-	/* cloned eb is not linked into fs_info->extent_cache */
-	new->tree = NULL;
 
 	copy_extent_buffer(new, src, 0, 0, src->len);
 	new->flags |= EXTENT_BUFFER_DUMMY;
@@ -645,13 +642,13 @@ struct extent_buffer *btrfs_clone_extent_buffer(struct extent_buffer *src)
 
 static void free_extent_buffer_final(struct extent_buffer *eb)
 {
-	struct extent_io_tree *tree = eb->tree;
-
 	BUG_ON(eb->refs);
-	BUG_ON(tree && tree->cache_size < eb->len);
 	list_del_init(&eb->lru);
 	if (!(eb->flags & EXTENT_BUFFER_DUMMY)) {
+		struct extent_io_tree *tree = &eb->fs_info->extent_cache;
+
 		remove_cache_extent(&tree->cache, &eb->cache_node);
+		BUG_ON(tree->cache_size < eb->len);
 		tree->cache_size -= eb->len;
 	}
 	free(eb);
@@ -786,7 +783,6 @@ struct extent_buffer *alloc_dummy_extent_buffer(struct btrfs_fs_info *fs_info,
 	if (!ret)
 		return NULL;
 
-	ret->tree = NULL;
 	ret->flags |= EXTENT_BUFFER_DUMMY;
 
 	return ret;
@@ -970,7 +966,7 @@ out:
 
 int set_extent_buffer_dirty(struct extent_buffer *eb)
 {
-	struct extent_io_tree *tree = eb->tree;
+	struct extent_io_tree *tree = &eb->fs_info->extent_cache;
 	if (!(eb->flags & EXTENT_DIRTY)) {
 		eb->flags |= EXTENT_DIRTY;
 		set_extent_dirty(tree, eb->start, eb->start + eb->len - 1);
@@ -981,7 +977,7 @@ int set_extent_buffer_dirty(struct extent_buffer *eb)
 
 int clear_extent_buffer_dirty(struct extent_buffer *eb)
 {
-	struct extent_io_tree *tree = eb->tree;
+	struct extent_io_tree *tree = &eb->fs_info->extent_cache;
 	if (eb->flags & EXTENT_DIRTY) {
 		eb->flags &= ~EXTENT_DIRTY;
 		clear_extent_dirty(tree, eb->start, eb->start + eb->len - 1);
