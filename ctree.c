@@ -1172,9 +1172,6 @@ int btrfs_search_slot(struct btrfs_trans_handle *trans,
 	lowest_level = p->lowest_level;
 	WARN_ON(lowest_level && ins_len > 0);
 	WARN_ON(p->nodes[0] != NULL);
-	/*
-	WARN_ON(!mutex_is_locked(&root->fs_info->fs_mutex));
-	*/
 again:
 	b = root->node;
 	extent_buffer_get(b);
