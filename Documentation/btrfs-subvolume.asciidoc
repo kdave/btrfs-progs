@@ -233,6 +233,20 @@ are completed, but do not wait for subvolumes deleted in the meantime.
 -s <N>::::
 sleep N seconds between checks (default: 1)
 
+EXAMPLES
+--------
+
+.Deleting a subvolume
+====
+If we want to delete a subvolume called `foo` from a btrfs volume mounted at
+`/mnt/bar` we could run the following:
+
+[source,bash]
+----
+btrfs subvolume delete /mnt/bar/foo
+----
+====
+
 EXIT STATUS
 -----------
 *btrfs subvolume* returns a zero exit status if it succeeds. A non-zero value is
