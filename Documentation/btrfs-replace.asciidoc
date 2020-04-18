@@ -67,10 +67,10 @@ operation finishes (or is cancelled)
 EXAMPLES
 --------
 
-Replacing an online drive with a bigger one
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.Replacing an online drive with a bigger one
+====
 
-Given the filesystem:
+Given the following filesystem mounted at `/mnt/my-vault`
 
 ----
 Label: 'MyVault'  uuid: ae20903e-b72d-49ba-b944-901fc6d888a1
@@ -82,14 +82,14 @@ Label: 'MyVault'  uuid: ae20903e-b72d-49ba-b944-901fc6d888a1
 In order to replace '/dev/sda' ('devid 1') with a bigger drive located at
 '/dev/sdc' you would run the following:
 
-[source,shell]
+[source,bash]
 ----
 btrfs replace start 1 /dev/sdc /mnt/my-vault/
 ----
 
-You can monitor progress by:
+You can monitor progress via:
 
-[source,shell]
+[source,bash]
 ----
 btrfs replace status /mnt/my-vault/
 ----
@@ -97,10 +97,11 @@ btrfs replace status /mnt/my-vault/
 After the replacement is complete, as per the docs at `btrfs-filesystem`(8) in
 order to use the entire storage space of the new drive you need to run:
 
-[source,shell]
+[source,bash]
 ----
 btrfs filesystem resize 1:max /mnt/my-vault/
 ----
+====
 
 EXIT STATUS
 -----------
