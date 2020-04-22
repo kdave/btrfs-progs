@@ -33,6 +33,11 @@ per-subvolume 'nodatacow', 'nodatasum', or 'compress' using mount options. This
 should eventually be fixed, but it has proved to be difficult to implement
 correctly within the Linux VFS framework.
 
+Mount options are processed in order, only the last occurence of an option
+takes effect and may disable other options due to constraints (see eg.
+'nodatacow' and 'compress'). The output of 'mount' command shows which options
+have been applied.
+
 *acl*::
 *noacl*::
 (default: on)
