@@ -41,16 +41,16 @@ where `MASK` is a glob expression that will execute only tests
 that match the MASK. Here the test number comes handy:
 
 ```shell
-$ make TEST=001\* test-fsck
-$ TEST=001\* ./fsck-tests.sh
+$ make TEST=001\* test-fsck      # in tests/
+$ TEST=001\* ./fsck-tests.sh     # in the top directory
 ```
 
 will run the first test in fsck-tests subdirectory. If the test directories
 follow a good naming scheme, it's possible to select a subset eg. like the
-convert tests for ext[234] filesystems.
+convert tests for ext[234] filesystems using mask 'TEST='*ext[234]*'.
 
 
-## Test structure
+## Test directory structure
 
 *tests/fsck-tests/*
 
@@ -72,7 +72,7 @@ convert tests for ext[234] filesystems.
 
   * tests for command line interface, option coverage, weird option combinations that should not work
   * not necessary to do any functional testing, could be rather lightweight
-  * functional tests should go to to other test dirs
+  * functional tests should go to other test directories
   * the driver script will only execute `./test.sh` in the test directory
 
 *tests/misc-tests/*
@@ -101,15 +101,28 @@ checking or catch failures at runtime. This can be done by setting the
 `INSTRUMENT` environment variable:
 
 ```shell
-INSTRUMENT=valgrind ./fuzz-tests.sh    # in tests/
 make INSTRUMENT=valgrind test-fuzz     # in the top directory
+INSTRUMENT=valgrind ./fuzz-tests.sh    # in tests/
 ```
 
 The variable is prepended to the command *unquoted*, all sorts of shell tricks
 are possible.
 
 Note: instrumentation is not applied to privileged commands (anything that uses
-the root helper).
+the root helper), with exception of all commands built from git that will
+be instrumented even if run with the sudo helper.
+
+```shell
+run_check $SUDO_HELPER mount /dev/sdx /mnt           # no instrumentation
+run_check $SUDO_HELPER "$TOP/btrfs" check /dev/sdx   # with instrumentation
+```
+
+Instrumented commands: btrfs, btrfs-image, btrfs-convert, btrfs-tune, mkfs.btrfs,
+btrfs-select-super, btrfs-find-root, btrfs-corrupt-block.
+
+As mentioned above, instrumentation tools are like `valgrind` or potentially
+`gdb` with some init script that will let the commands run until an exception
+occurs, possibly allowing to continue interactively debugging.
 
 ### Verbosity, test tuning
 
@@ -134,12 +147,25 @@ the root helper).
 
 Multiple values can be separated by `,`.
 
+For example, running all fsck tests with the `--mode=lowmem` option can be done
+as
+
+```shell
+$ make TEST_ENABLE_OVERRIDE=true TEST_ARGS_CHECK=--mode=lowmem test-check
+```
+
+Specifically, fsck-tests that are known to be able to repair images in the
+lowmem mode shoulde be marked using a file `.lowmem_repairable` in the test
+directory. Then the fsck-tests with the 'mode=lowmem' will continue when image
+repair is requested.
+
 ### Permissions
 
 Some commands require root privileges (to mount/umount, access loop devices or
 call privileged ioctls).  It is assumed that `sudo` will work in some way (no
 password, password asked and cached). Note that instrumentation is not applied
-in this case, for safety reasons. You need to modify the test script instead.
+in this case, for safety reasons or because the tools refuse to run under root.
+You need to modify the test script instead.
 
 ### Cleanup
 
@@ -149,7 +175,9 @@ loop devices are kept. This should help to investigate the test failure but at
 least the mounts and loop devices need to be cleaned before the next run.
 
 This is partially done by the script `clean-tests.sh`, you may want to check
-the loop devices as they are managed on a per-test basis.
+the loop devices as they are managed on a per-test basis, see the output of
+command `losetup` and eventually delete all existing loop devices with `losetup
+-D`.
 
 ### Prototyping tests, quick tests
 
@@ -287,3 +315,100 @@ The tests assume write access to their directories.
   debugging
   * this might change in the future so the tests cover as much as possible, but
     this would require to enhance all tests with a cleanup phase
+
+## Simple test template
+
+The file `tests/common` provides shell functions to ease writing common things
+like setting up the test devices, making or mounting a filesystem, setting up
+loop devices.
+
+
+```shell
+#!/bin/bash
+# Simple test to create a new filesystem and test that it can be mounted
+
+source "$TEST_TOP/common"
+
+setup_root_helper
+prepare_test_dev
+
+run_check_mkfs_test_dev
+run_check_mount_test_dev
+run_check $SUDO_HELPER dd if=/dev/zero of="$TEST_MNT"/file bs=1M count=1
+run_check_umount_test_dev
+```
+
+Each test should be briefly described, source the helpers like `run_check`. The
+root helper is the `sudo` wrapper that can be used as `$SUDO_HELPER` variable.
+The implicit variables for testing device is `$TEST_DEV` mounted at `$TEST_MNT`.
+The mkfs and mount helpers take arguments that are then injected into the right
+place in the respective command.
+
+Besides the setup and cleanup code, the main test in this example is `dd` that
+writes 1MiB to a file in the newly created filesystem.
+
+## Multiple device test template
+
+Tests that need more devices can utilize the loop devices, an example test of
+the above:
+
+```shell
+# Create a new multi-device filesystem and test that it can be mounted
+
+source "$TEST_TOP/common"
+
+setup_root_helper
+setup_loopdevs 4
+prepare_loopdevs
+TEST_DEV=${loopdevs[1]}
+
+run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f -d raid1 -m raid1 "${loopdevs[@]}"
+run_check_mount_test_dev
+run_check $SUDO_HELPER dd if=/dev/zero of="$TEST_MNT"/file bs=1M count=1
+run_check_umount_test_dev
+
+cleanup_loopdevs
+```
+
+## A 'btrfs check' test template
+
+The easiest way to test an image is to put it to the test directory, without
+the `test.sh` script. All images found are simply processed by the shell
+function `check_image` with default parameters.
+
+Any tweaks to the 'check' subcommand can be done by redefining the function:
+
+```shell
+source "$TEST_TOP/common"
+
+check_image() {
+	run_check "$TOP/btrfs" check --readonly "$1"
+}
+
+check_all_images
+```
+
+The images can be stored in various formats, see section 'Test images'.
+
+
+## Misc hints
+
+There are several helpers in `tests/common`, it's recommended to read through
+that file or other tests to get the idea how easy writing a test really is.
+
+* result
+  * `_fail` - a failure condition has been found
+  * `_not_run` - some prerequisite condition is not met, eg. missing kernel functionality
+* messages
+  * `_log` - message printed to the result file (eg.
+    `tests/mkfs-tests-results.txt`), and not printed to the terminal
+  * `_log_stdout` - dtto but it is printed to the terminal
+* execution helpers
+  * `run_check` - should be used for basically all commadns, the command and arguments
+  are stored to the results log for debugging and the return value is checked so there
+  are no silent failures even for the "unimportant" commands
+  * `run_check_stdout` - like the above but the output can be processed further, eg. filtering
+  out some data or looking for some specific string
+  * `run_mayfail` - the command is allowed to fail in a non-fatal way (eg. no segfault),
+  there's also the `run_mayfail_stdout` variant
+  * `run_mustfail` - expected failure, note that the first argument is mandatory message describing unexpected pass condition
