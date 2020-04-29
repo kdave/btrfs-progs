@@ -10306,20 +10306,27 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 			err = !!ret;
 			errno = -ret;
 			error("failed to repair root items: %m");
-			goto close_out;
-		}
-		if (repair) {
-			fprintf(stderr, "Fixed %d roots.\n", ret);
-			ret = 0;
-		} else if (ret > 0) {
-			fprintf(stderr,
+			/*
+			 * For repair, if we can't repair root items, it's
+			 * fatal.  But for non-repair, it's pretty rare to hit
+			 * such v3.17 era bug, we want to continue check.
+			 */
+			if (repair)
+				goto close_out;
+			err |= 1;
+		} else {
+			if (repair) {
+				fprintf(stderr, "Fixed %d roots.\n", ret);
+				ret = 0;
+			} else if (ret > 0) {
+				fprintf(stderr,
 				"Found %d roots with an outdated root item.\n",
-				ret);
-			fprintf(stderr,
+					ret);
+				fprintf(stderr,
 	"Please run a filesystem check with the option --repair to fix them.\n");
-			ret = 1;
-			err |= ret;
-			goto close_out;
+				ret = 1;
+				err |= ret;
+			}
 		}
 	} else {
 		fprintf(stderr, "[1/7] checking root items... skipped\n");
