@@ -1541,9 +1541,10 @@ static int write_one_cache_group(struct btrfs_trans_handle *trans,
 
 	leaf = path->nodes[0];
 	bi = btrfs_item_ptr_offset(leaf, path->slots[0]);
-	btrfs_set_block_group_used(&bgi, cache->used);
-	btrfs_set_block_group_flags(&bgi, cache->flags);
-	btrfs_set_block_group_chunk_objectid(&bgi, BTRFS_FIRST_CHUNK_TREE_OBJECTID);
+	btrfs_set_stack_block_group_used(&bgi, cache->used);
+	btrfs_set_stack_block_group_flags(&bgi, cache->flags);
+	btrfs_set_stack_block_group_chunk_objectid(&bgi,
+			BTRFS_FIRST_CHUNK_TREE_OBJECTID);
 	write_extent_buffer(leaf, &bgi, bi, sizeof(bgi));
 	btrfs_mark_buffer_dirty(leaf);
 	btrfs_release_path(path);
@@ -2657,8 +2658,8 @@ static int read_one_block_group(struct btrfs_fs_info *fs_info,
 	memcpy(&cache->key, &key, sizeof(key));
 	cache->cached = 0;
 	cache->pinned = 0;
-	cache->flags = btrfs_block_group_flags(&bgi);
-	cache->used = btrfs_block_group_used(&bgi);
+	cache->flags = btrfs_stack_block_group_flags(&bgi);
+	cache->used = btrfs_stack_block_group_used(&bgi);
 	INIT_LIST_HEAD(&cache->dirty_list);
 
 	set_avail_alloc_bits(fs_info, cache->flags);
@@ -2764,9 +2765,9 @@ int btrfs_make_block_group(struct btrfs_trans_handle *trans,
 
 	cache = btrfs_add_block_group(fs_info, bytes_used, type, chunk_offset,
 				      size);
-	btrfs_set_block_group_used(&bgi, cache->used);
-	btrfs_set_block_group_flags(&bgi, cache->flags);
-	btrfs_set_block_group_chunk_objectid(&bgi,
+	btrfs_set_stack_block_group_used(&bgi, cache->used);
+	btrfs_set_stack_block_group_flags(&bgi, cache->flags);
+	btrfs_set_stack_block_group_chunk_objectid(&bgi,
 			BTRFS_FIRST_CHUNK_TREE_OBJECTID);
 	ret = btrfs_insert_item(trans, extent_root, &cache->key, &bgi,
 				sizeof(bgi));
@@ -2850,9 +2851,9 @@ int btrfs_make_block_groups(struct btrfs_trans_handle *trans,
 		cache = btrfs_lookup_block_group(fs_info, cur_start);
 		BUG_ON(!cache);
 
-		btrfs_set_block_group_used(&bgi, cache->used);
-		btrfs_set_block_group_flags(&bgi, cache->flags);
-		btrfs_set_block_group_chunk_objectid(&bgi,
+		btrfs_set_stack_block_group_used(&bgi, cache->used);
+		btrfs_set_stack_block_group_flags(&bgi, cache->flags);
+		btrfs_set_stack_block_group_chunk_objectid(&bgi,
 				BTRFS_FIRST_CHUNK_TREE_OBJECTID);
 		ret = btrfs_insert_item(trans, extent_root, &cache->key, &bgi,
 					sizeof(bgi));
@@ -3172,7 +3173,7 @@ int btrfs_free_block_group(struct btrfs_trans_handle *trans,
 
 	bgi = btrfs_item_ptr(path->nodes[0], path->slots[0],
 			     struct btrfs_block_group_item);
-	if (btrfs_disk_block_group_used(path->nodes[0], bgi)) {
+	if (btrfs_block_group_used(path->nodes[0], bgi)) {
 		fprintf(stderr,
 			"WARNING: block group [%llu,%llu) is not empty\n",
 			bytenr, bytenr + len);

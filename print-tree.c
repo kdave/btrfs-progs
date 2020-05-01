@@ -1019,10 +1019,10 @@ static void print_block_group_item(struct extent_buffer *eb,
 
 	read_extent_buffer(eb, &bg_item, (unsigned long)bgi, sizeof(bg_item));
 	memset(flags_str, 0, sizeof(flags_str));
-	bg_flags_to_str(btrfs_block_group_flags(&bg_item), flags_str);
+	bg_flags_to_str(btrfs_stack_block_group_flags(&bg_item), flags_str);
 	printf("\t\tblock group used %llu chunk_objectid %llu flags %s\n",
-		(unsigned long long)btrfs_block_group_used(&bg_item),
-		(unsigned long long)btrfs_block_group_chunk_objectid(&bg_item),
+		btrfs_stack_block_group_used(&bg_item),
+		btrfs_stack_block_group_chunk_objectid(&bg_item),
 		flags_str);
 }
 

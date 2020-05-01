@@ -5242,7 +5242,7 @@ btrfs_new_block_group_record(struct extent_buffer *leaf, struct btrfs_key *key,
 	rec->offset = key->offset;
 
 	ptr = btrfs_item_ptr(leaf, slot, struct btrfs_block_group_item);
-	rec->flags = btrfs_disk_block_group_flags(leaf, ptr);
+	rec->flags = btrfs_block_group_flags(leaf, ptr);
 
 	INIT_LIST_HEAD(&rec->list);
 
@@ -9171,10 +9171,10 @@ again:
 		if (!cache)
 			break;
 		start = cache->key.objectid + cache->key.offset;
-		btrfs_set_block_group_used(&bgi, cache->used);
-		btrfs_set_block_group_chunk_objectid(&bgi,
+		btrfs_set_stack_block_group_used(&bgi, cache->used);
+		btrfs_set_stack_block_group_chunk_objectid(&bgi,
 					BTRFS_FIRST_CHUNK_TREE_OBJECTID);
-		btrfs_set_block_group_flags(&bgi, cache->flags);
+		btrfs_set_stack_block_group_flags(&bgi, cache->flags);
 		ret = btrfs_insert_item(trans, fs_info->extent_root,
 					&cache->key, &bgi, sizeof(bgi));
 		if (ret) {

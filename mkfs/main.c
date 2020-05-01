@@ -520,10 +520,10 @@ static int is_temp_block_group(struct extent_buffer *node,
 			       u64 data_profile, u64 meta_profile,
 			       u64 sys_profile)
 {
-	u64 flag = btrfs_disk_block_group_flags(node, bgi);
+	u64 flag = btrfs_block_group_flags(node, bgi);
 	u64 flag_type = flag & BTRFS_BLOCK_GROUP_TYPE_MASK;
 	u64 flag_profile = flag & BTRFS_BLOCK_GROUP_PROFILE_MASK;
-	u64 used = btrfs_disk_block_group_used(node, bgi);
+	u64 used = btrfs_block_group_used(node, bgi);
 
 	/*
 	 * Chunks meets all the following conditions is a temp chunk
@@ -642,8 +642,7 @@ static int cleanup_temp_chunks(struct btrfs_fs_info *fs_info,
 		if (is_temp_block_group(path.nodes[0], bgi,
 					data_profile, meta_profile,
 					sys_profile)) {
-			u64 flags = btrfs_disk_block_group_flags(path.nodes[0],
-							     bgi);
+			u64 flags = btrfs_block_group_flags(path.nodes[0], bgi);
 
 			ret = btrfs_free_block_group(trans, fs_info,
 					found_key.objectid, found_key.offset);

@@ -635,12 +635,12 @@ bg_check:
 	l = path.nodes[0];
 	slot = path.slots[0];
 	bg_ptr = btrfs_item_ptr(l, slot, struct btrfs_block_group_item);
-	if (chunk->type_flags != btrfs_disk_block_group_flags(l, bg_ptr)) {
+	if (chunk->type_flags != btrfs_block_group_flags(l, bg_ptr)) {
 		if (rc->verbose)
 			fprintf(stderr,
 				"Chunk[%llu, %llu]'s type(%llu) is different with Block Group's type(%llu)\n",
 				chunk->offset, chunk->length, chunk->type_flags,
-				btrfs_disk_block_group_flags(l, bg_ptr));
+				btrfs_block_group_flags(l, bg_ptr));
 		btrfs_release_path(&path);
 		return -ENOENT;
 	}
@@ -1358,9 +1358,9 @@ static int __insert_block_group(struct btrfs_trans_handle *trans,
 	struct btrfs_key key;
 	int ret = 0;
 
-	btrfs_set_block_group_used(&bg_item, used);
-	btrfs_set_block_group_chunk_objectid(&bg_item, used);
-	btrfs_set_block_group_flags(&bg_item, chunk_rec->type_flags);
+	btrfs_set_stack_block_group_used(&bg_item, used);
+	btrfs_set_stack_block_group_chunk_objectid(&bg_item, used);
+	btrfs_set_stack_block_group_flags(&bg_item, chunk_rec->type_flags);
 	key.objectid = chunk_rec->offset;
 	key.type = BTRFS_BLOCK_GROUP_ITEM_KEY;
 	key.offset = chunk_rec->length;
