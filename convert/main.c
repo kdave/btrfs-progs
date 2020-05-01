@@ -300,13 +300,13 @@ static int create_image_file_range(struct btrfs_trans_handle *trans,
 		if (!(bg_cache->flags & BTRFS_BLOCK_GROUP_DATA)) {
 			error(
 	"data bytenr %llu is covered by non-data block group %llu flags 0x%llu",
-			      bytenr, bg_cache->key.objectid, bg_cache->flags);
+			      bytenr, bg_cache->start, bg_cache->flags);
 			return -EINVAL;
 		}
 
 		/* The extent should never cross block group boundary */
-		len = min_t(u64, len, bg_cache->key.objectid +
-			    bg_cache->key.offset - bytenr);
+		len = min_t(u64, len, bg_cache->start + bg_cache->length -
+				bytenr);
 	}
 
 	if (len != round_down(len, root->fs_info->sectorsize)) {

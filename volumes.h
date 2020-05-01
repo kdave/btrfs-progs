@@ -216,7 +216,7 @@ static inline int check_crossing_stripes(struct btrfs_fs_info *fs_info,
 	 */
 	if (!bg_cache)
 		return 0;
-	bg_offset = start - bg_cache->key.objectid;
+	bg_offset = start - bg_cache->start;
 
 	return (bg_offset / BTRFS_STRIPE_LEN !=
 		(bg_offset + len - 1) / BTRFS_STRIPE_LEN);

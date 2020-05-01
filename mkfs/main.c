@@ -694,14 +694,14 @@ static void update_chunk_allocation(struct btrfs_fs_info *fs_info,
 		if (!bg_cache)
 			break;
 		if ((bg_cache->flags & mixed_flag) == mixed_flag)
-			allocation->mixed += bg_cache->key.offset;
+			allocation->mixed += bg_cache->length;
 		else if (bg_cache->flags & BTRFS_BLOCK_GROUP_DATA)
-			allocation->data += bg_cache->key.offset;
+			allocation->data += bg_cache->length;
 		else if (bg_cache->flags & BTRFS_BLOCK_GROUP_METADATA)
-			allocation->metadata += bg_cache->key.offset;
+			allocation->metadata += bg_cache->length;
 		else
-			allocation->system += bg_cache->key.offset;
-		search_start = bg_cache->key.objectid + bg_cache->key.offset;
+			allocation->system += bg_cache->length;
+		search_start = bg_cache->start + bg_cache->length;
 	}
 }
 

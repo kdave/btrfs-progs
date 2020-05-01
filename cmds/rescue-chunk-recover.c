@@ -1097,8 +1097,8 @@ static int block_group_free_all_extent(struct btrfs_trans_handle *trans,
 	if (!cache)
 		return -ENOENT;
 
-	start = cache->key.objectid;
-	end = start + cache->key.offset - 1;
+	start = cache->start;
+	end = start + cache->length - 1;
 
 	if (list_empty(&cache->dirty_list))
 		list_add_tail(&cache->dirty_list, &trans->dirty_bgs);

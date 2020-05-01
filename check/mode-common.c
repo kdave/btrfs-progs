@@ -601,7 +601,7 @@ void reset_cached_block_groups(struct btrfs_fs_info *fs_info)
 			break;
 		if (cache->cached)
 			cache->cached = 0;
-		start = cache->key.objectid + cache->key.offset;
+		start = cache->start + cache->length;
 	}
 }
 

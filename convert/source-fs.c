@@ -120,7 +120,7 @@ int block_iterate_proc(u64 disk_block, u64 file_block,
 		} else {
 			cache = btrfs_lookup_block_group(root->fs_info, bytenr);
 			BUG_ON(!cache);
-			bytenr = cache->key.objectid + cache->key.offset;
+			bytenr = cache->start + cache->length;
 		}
 
 		idata->first_block = file_block;

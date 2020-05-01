@@ -242,8 +242,8 @@ static int modify_block_group_cache(struct btrfs_fs_info *fs_info,
 		    struct btrfs_block_group_cache *block_group, int cache)
 {
 	struct extent_io_tree *free_space_cache = &fs_info->free_space_cache;
-	u64 start = block_group->key.objectid;
-	u64 end = start + block_group->key.offset;
+	u64 start = block_group->start;
+	u64 end = start + block_group->length;
 
 	if (cache && !block_group->cached) {
 		block_group->cached = 1;
