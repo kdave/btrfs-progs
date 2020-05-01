@@ -28,7 +28,7 @@
 static struct btrfs_free_space_info *
 search_free_space_info(struct btrfs_trans_handle *trans,
 		       struct btrfs_fs_info *fs_info,
-		       struct btrfs_block_group_cache *block_group,
+		       struct btrfs_block_group *block_group,
 		       struct btrfs_path *path, int cow)
 {
 	struct btrfs_root *root = fs_info->free_space_root;
@@ -49,7 +49,7 @@ search_free_space_info(struct btrfs_trans_handle *trans,
 			      struct btrfs_free_space_info);
 }
 
-static int free_space_test_bit(struct btrfs_block_group_cache *block_group,
+static int free_space_test_bit(struct btrfs_block_group *block_group,
 			       struct btrfs_path *path, u64 offset)
 {
 	struct extent_buffer *leaf;
@@ -100,7 +100,7 @@ static int btrfs_search_prev_slot(struct btrfs_trans_handle *trans,
 }
 
 static int add_new_free_space_info(struct btrfs_trans_handle *trans,
-				   struct btrfs_block_group_cache *block_group,
+				   struct btrfs_block_group *block_group,
 				   struct btrfs_path *path)
 {
 	struct btrfs_root *root = trans->fs_info->free_space_root;
@@ -175,7 +175,7 @@ static void le_bitmap_set(unsigned long *map, unsigned int start, int len)
 }
 
 static int convert_free_space_to_bitmaps(struct btrfs_trans_handle *trans,
-				  struct btrfs_block_group_cache *block_group,
+				  struct btrfs_block_group *block_group,
 				  struct btrfs_path *path)
 {
 	struct btrfs_fs_info *fs_info = trans->fs_info;
@@ -314,7 +314,7 @@ out:
 }
 
 static int convert_free_space_to_extents(struct btrfs_trans_handle *trans,
-				  struct btrfs_block_group_cache *block_group,
+				  struct btrfs_block_group *block_group,
 				  struct btrfs_path *path)
 {
 	struct btrfs_fs_info *fs_info = trans->fs_info;
@@ -447,7 +447,7 @@ out:
 }
 
 static int update_free_space_extent_count(struct btrfs_trans_handle *trans,
-					  struct btrfs_block_group_cache *block_group,
+					  struct btrfs_block_group *block_group,
 					  struct btrfs_path *path,
 					  int new_extents)
 {
@@ -487,7 +487,7 @@ out:
 }
 
 
-static void free_space_set_bits(struct btrfs_block_group_cache *block_group,
+static void free_space_set_bits(struct btrfs_block_group *block_group,
 				struct btrfs_path *path, u64 *start, u64 *size,
 				int bit)
 {
@@ -554,7 +554,7 @@ static int free_space_next_bitmap(struct btrfs_trans_handle *trans,
  * the bitmap.
  */
 static int modify_free_space_bitmap(struct btrfs_trans_handle *trans,
-				    struct btrfs_block_group_cache *block_group,
+				    struct btrfs_block_group *block_group,
 				    struct btrfs_path *path,
 				    u64 start, u64 size, int remove)
 {
@@ -667,7 +667,7 @@ out:
 }
 
 static int remove_free_space_extent(struct btrfs_trans_handle *trans,
-				    struct btrfs_block_group_cache *block_group,
+				    struct btrfs_block_group *block_group,
 				    struct btrfs_path *path,
 				    u64 start, u64 size)
 {
@@ -753,7 +753,7 @@ out:
 }
 
 static int __remove_from_free_space_tree(struct btrfs_trans_handle *trans,
-				  struct btrfs_block_group_cache *block_group,
+				  struct btrfs_block_group *block_group,
 				  struct btrfs_path *path, u64 start, u64 size)
 {
 	struct btrfs_free_space_info *info;
@@ -777,7 +777,7 @@ static int __remove_from_free_space_tree(struct btrfs_trans_handle *trans,
 int remove_from_free_space_tree(struct btrfs_trans_handle *trans, u64 start,
 		u64 size)
 {
-	struct btrfs_block_group_cache *block_group;
+	struct btrfs_block_group *block_group;
 	struct btrfs_path *path;
 	int ret;
 
@@ -807,7 +807,7 @@ out:
 }
 
 static int add_free_space_extent(struct btrfs_trans_handle *trans,
-				 struct btrfs_block_group_cache *block_group,
+				 struct btrfs_block_group *block_group,
 				 struct btrfs_path *path,
 				 u64 start, u64 size)
 {
@@ -933,7 +933,7 @@ out:
 }
 
 static int __add_to_free_space_tree(struct btrfs_trans_handle *trans,
-			     struct btrfs_block_group_cache *block_group,
+			     struct btrfs_block_group *block_group,
 			     struct btrfs_path *path, u64 start, u64 size)
 {
 	struct btrfs_fs_info *fs_info = trans->fs_info;
@@ -958,7 +958,7 @@ static int __add_to_free_space_tree(struct btrfs_trans_handle *trans,
 int add_to_free_space_tree(struct btrfs_trans_handle *trans, u64 start,
 		u64 size)
 {
-	struct btrfs_block_group_cache *block_group;
+	struct btrfs_block_group *block_group;
 	struct btrfs_path *path;
 	int ret;
 
@@ -987,7 +987,7 @@ out:
 }
 
 int populate_free_space_tree(struct btrfs_trans_handle *trans,
-			     struct btrfs_block_group_cache *block_group)
+			     struct btrfs_block_group *block_group)
 {
 	struct btrfs_root *extent_root = trans->fs_info->extent_root;
 	struct btrfs_path *path, *path2;
@@ -1074,7 +1074,7 @@ out:
 }
 
 int remove_block_group_free_space(struct btrfs_trans_handle *trans,
-				  struct btrfs_block_group_cache *block_group)
+				  struct btrfs_block_group *block_group)
 {
 	struct btrfs_root *root = trans->fs_info->free_space_root;
 	struct btrfs_path *path;
@@ -1227,7 +1227,7 @@ abort:
 }
 
 static int load_free_space_bitmaps(struct btrfs_fs_info *fs_info,
-				   struct btrfs_block_group_cache *block_group,
+				   struct btrfs_block_group *block_group,
 				   struct btrfs_path *path,
 				   u32 expected_extent_count,
 				   int *errors)
@@ -1307,7 +1307,7 @@ out:
 }
 
 static int load_free_space_extents(struct btrfs_fs_info *fs_info,
-				   struct btrfs_block_group_cache *block_group,
+				   struct btrfs_block_group *block_group,
 				   struct btrfs_path *path,
 				   u32 expected_extent_count,
 				   int *errors)
@@ -1418,7 +1418,7 @@ int btrfs_create_free_space_tree(struct btrfs_fs_info *fs_info)
 	struct btrfs_trans_handle *trans;
 	struct btrfs_root *tree_root = fs_info->tree_root;
 	struct btrfs_root *free_space_root;
-	struct btrfs_block_group_cache *block_group;
+	struct btrfs_block_group *block_group;
 	u64 start = BTRFS_SUPER_INFO_OFFSET + BTRFS_SUPER_INFO_SIZE;
 	int ret;
 
@@ -1459,7 +1459,7 @@ abort:
 }
 
 int load_free_space_tree(struct btrfs_fs_info *fs_info,
-			 struct btrfs_block_group_cache *block_group)
+			 struct btrfs_block_group *block_group)
 {
 	struct btrfs_free_space_info *info;
 	struct btrfs_path *path;

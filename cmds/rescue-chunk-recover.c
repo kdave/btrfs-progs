@@ -1087,7 +1087,7 @@ err:
 static int block_group_free_all_extent(struct btrfs_trans_handle *trans,
 				       struct block_group_record *bg)
 {
-	struct btrfs_block_group_cache *cache;
+	struct btrfs_block_group *cache;
 	struct btrfs_fs_info *info;
 	u64 start;
 	u64 end;

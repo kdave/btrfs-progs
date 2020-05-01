@@ -206,7 +206,7 @@ static inline enum btrfs_raid_types btrfs_bg_flags_to_raid_index(u64 flags)
 static inline int check_crossing_stripes(struct btrfs_fs_info *fs_info,
 					 u64 start, u64 len)
 {
-	struct btrfs_block_group_cache *bg_cache;
+	struct btrfs_block_group *bg_cache;
 	u64 bg_offset;
 
 	bg_cache = btrfs_lookup_block_group(fs_info, start);

@@ -202,7 +202,7 @@ static int create_image_file_range(struct btrfs_trans_handle *trans,
 				      u32 convert_flags)
 {
 	struct cache_extent *cache;
-	struct btrfs_block_group_cache *bg_cache;
+	struct btrfs_block_group *bg_cache;
 	u64 len = *ret_len;
 	u64 disk_bytenr;
 	int i;

@@ -4541,7 +4541,7 @@ static struct data_backref *alloc_data_backref(struct extent_record *rec,
 /* Check if the type of extent matches with its chunk */
 static void check_extent_type(struct extent_record *rec)
 {
-	struct btrfs_block_group_cache *bg_cache;
+	struct btrfs_block_group *bg_cache;
 
 	bg_cache = btrfs_lookup_first_block_group(global_info, rec->start);
 	if (!bg_cache)
@@ -5453,7 +5453,7 @@ out:
 }
 
 static int check_cache_range(struct btrfs_root *root,
-			     struct btrfs_block_group_cache *cache,
+			     struct btrfs_block_group *cache,
 			     u64 offset, u64 bytes)
 {
 	struct btrfs_free_space *entry;
@@ -5547,7 +5547,7 @@ static int check_cache_range(struct btrfs_root *root,
 }
 
 static int verify_space_cache(struct btrfs_root *root,
-			      struct btrfs_block_group_cache *cache)
+			      struct btrfs_block_group *cache)
 {
 	struct btrfs_path path;
 	struct extent_buffer *leaf;
@@ -5626,7 +5626,7 @@ out:
 
 static int check_space_cache(struct btrfs_root *root)
 {
-	struct btrfs_block_group_cache *cache;
+	struct btrfs_block_group *cache;
 	u64 start = BTRFS_SUPER_INFO_OFFSET + BTRFS_SUPER_INFO_SIZE;
 	int ret;
 	int error = 0;
@@ -8918,7 +8918,7 @@ static int btrfs_fsck_reinit_root(struct btrfs_trans_handle *trans,
 
 static int reset_block_groups(struct btrfs_fs_info *fs_info)
 {
-	struct btrfs_block_group_cache *cache;
+	struct btrfs_block_group *cache;
 	struct btrfs_path path;
 	struct extent_buffer *leaf;
 	struct btrfs_chunk *chunk;
@@ -9164,7 +9164,7 @@ again:
 	 */
 	while (1) {
 		struct btrfs_block_group_item bgi;
-		struct btrfs_block_group_cache *cache;
+		struct btrfs_block_group *cache;
 		struct btrfs_key key;
 
 		cache = btrfs_lookup_first_block_group(fs_info, start);
@@ -9816,7 +9816,7 @@ out:
 static int clear_free_space_cache(struct btrfs_fs_info *fs_info)
 {
 	struct btrfs_trans_handle *trans;
-	struct btrfs_block_group_cache *bg_cache;
+	struct btrfs_block_group *bg_cache;
 	u64 current = 0;
 	int ret = 0;
 

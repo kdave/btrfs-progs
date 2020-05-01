@@ -44,21 +44,19 @@ struct btrfs_free_space_ctl {
 };
 
 int load_free_space_cache(struct btrfs_fs_info *fs_info,
-			  struct btrfs_block_group_cache *block_group);
+			  struct btrfs_block_group *block_group);
 
 void __btrfs_remove_free_space_cache(struct btrfs_free_space_ctl *ctl);
-void btrfs_remove_free_space_cache(struct btrfs_block_group_cache
-				     *block_group);
-void btrfs_dump_free_space(struct btrfs_block_group_cache *block_group,
-			   u64 bytes);
+void btrfs_remove_free_space_cache(struct btrfs_block_group *block_group);
+void btrfs_dump_free_space(struct btrfs_block_group *block_group, u64 bytes);
 struct btrfs_free_space *
 btrfs_find_free_space(struct btrfs_free_space_ctl *ctl, u64 offset, u64 bytes);
-int btrfs_init_free_space_ctl(struct btrfs_block_group_cache *block_group,
+int btrfs_init_free_space_ctl(struct btrfs_block_group *block_group,
 			      int sectorsize);
 void unlink_free_space(struct btrfs_free_space_ctl *ctl,
 		       struct btrfs_free_space *info);
 int btrfs_add_free_space(struct btrfs_free_space_ctl *ctl, u64 offset,
 			 u64 bytes);
 int btrfs_clear_free_space_cache(struct btrfs_fs_info *fs_info,
-				 struct btrfs_block_group_cache *bg);
+				 struct btrfs_block_group *bg);
 #endif

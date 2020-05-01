@@ -34,7 +34,7 @@ struct btrfs_trans_handle {
 	u64 delayed_ref_updates;
 	unsigned long blocks_reserved;
 	unsigned long blocks_used;
-	struct btrfs_block_group_cache *block_group;
+	struct btrfs_block_group *block_group;
 	struct btrfs_delayed_ref_root delayed_refs;
 	struct list_head dirty_bgs;
 };

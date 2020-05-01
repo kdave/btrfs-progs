@@ -432,7 +432,7 @@ free_cache:
 }
 
 int load_free_space_cache(struct btrfs_fs_info *fs_info,
-			  struct btrfs_block_group_cache *block_group)
+			  struct btrfs_block_group *block_group)
 {
 	struct btrfs_free_space_ctl *ctl = block_group->free_space_ctl;
 	struct btrfs_path *path;
@@ -766,7 +766,7 @@ static void try_merge_free_space(struct btrfs_free_space_ctl *ctl,
 	}
 }
 
-void btrfs_dump_free_space(struct btrfs_block_group_cache *block_group,
+void btrfs_dump_free_space(struct btrfs_block_group *block_group,
 			   u64 bytes)
 {
 	struct btrfs_free_space_ctl *ctl = block_group->free_space_ctl;
@@ -786,7 +786,7 @@ void btrfs_dump_free_space(struct btrfs_block_group_cache *block_group,
 	printk("%d blocks of free space at or bigger than bytes is \n", count);
 }
 
-int btrfs_init_free_space_ctl(struct btrfs_block_group_cache *block_group,
+int btrfs_init_free_space_ctl(struct btrfs_block_group *block_group,
 			      int sectorsize)
 {
 	struct btrfs_free_space_ctl *ctl;
@@ -817,7 +817,7 @@ void __btrfs_remove_free_space_cache(struct btrfs_free_space_ctl *ctl)
 	}
 }
 
-void btrfs_remove_free_space_cache(struct btrfs_block_group_cache *block_group)
+void btrfs_remove_free_space_cache(struct btrfs_block_group *block_group)
 {
 	__btrfs_remove_free_space_cache(block_group->free_space_ctl);
 }
@@ -896,7 +896,7 @@ next:
 }
 
 int btrfs_clear_free_space_cache(struct btrfs_fs_info *fs_info,
-				 struct btrfs_block_group_cache *bg)
+				 struct btrfs_block_group *bg)
 {
 	struct btrfs_trans_handle *trans;
 	struct btrfs_root *tree_root = fs_info->tree_root;

@@ -680,7 +680,7 @@ out:
 static void update_chunk_allocation(struct btrfs_fs_info *fs_info,
 				    struct mkfs_allocation *allocation)
 {
-	struct btrfs_block_group_cache *bg_cache;
+	struct btrfs_block_group *bg_cache;
 	const u64 mixed_flag = BTRFS_BLOCK_GROUP_DATA | BTRFS_BLOCK_GROUP_METADATA;
 	u64 search_start = 0;
 

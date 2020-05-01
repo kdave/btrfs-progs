@@ -1104,7 +1104,7 @@ struct btrfs_space_info {
 	struct list_head list;
 };
 
-struct btrfs_block_group_cache {
+struct btrfs_block_group {
 	struct btrfs_space_info *space_info;
 	struct btrfs_free_space_ctl *free_space_ctl;
 	u64 start;
@@ -2538,10 +2538,9 @@ int btrfs_fix_block_accounting(struct btrfs_trans_handle *trans);
 void btrfs_pin_extent(struct btrfs_fs_info *fs_info, u64 bytenr, u64 num_bytes);
 void btrfs_unpin_extent(struct btrfs_fs_info *fs_info,
 			u64 bytenr, u64 num_bytes);
-struct btrfs_block_group_cache *btrfs_lookup_block_group(struct
-							 btrfs_fs_info *info,
-							 u64 bytenr);
-struct btrfs_block_group_cache *btrfs_lookup_first_block_group(struct
+struct btrfs_block_group *btrfs_lookup_block_group(struct btrfs_fs_info *info,
+						   u64 bytenr);
+struct btrfs_block_group *btrfs_lookup_first_block_group(struct
 						       btrfs_fs_info *info,
 						       u64 bytenr);
 struct extent_buffer *btrfs_alloc_free_block(struct btrfs_trans_handle *trans,
@@ -2582,7 +2581,7 @@ int update_space_info(struct btrfs_fs_info *info, u64 flags,
 		      struct btrfs_space_info **space_info);
 int btrfs_free_block_groups(struct btrfs_fs_info *info);
 int btrfs_read_block_groups(struct btrfs_fs_info *info);
-struct btrfs_block_group_cache *
+struct btrfs_block_group *
 btrfs_add_block_group(struct btrfs_fs_info *fs_info, u64 bytes_used, u64 type,
 		      u64 chunk_offset, u64 size);
 int btrfs_make_block_group(struct btrfs_trans_handle *trans,
@@ -2600,10 +2599,10 @@ int btrfs_record_file_extent(struct btrfs_trans_handle *trans,
 int btrfs_free_block_group(struct btrfs_trans_handle *trans,
 			   struct btrfs_fs_info *fs_info, u64 bytenr, u64 len);
 void free_excluded_extents(struct btrfs_fs_info *fs_info,
-			   struct btrfs_block_group_cache *cache);
+			   struct btrfs_block_group *cache);
 int exclude_super_stripes(struct btrfs_fs_info *fs_info,
-			  struct btrfs_block_group_cache *cache);
-u64 add_new_free_space(struct btrfs_block_group_cache *block_group,
+			  struct btrfs_block_group *cache);
+u64 add_new_free_space(struct btrfs_block_group *block_group,
 		       struct btrfs_fs_info *info, u64 start, u64 end);
 u64 hash_extent_data_ref(u64 root_objectid, u64 owner, u64 offset);
 

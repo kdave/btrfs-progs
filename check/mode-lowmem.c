@@ -239,7 +239,7 @@ static int update_nodes_refs(struct btrfs_root *root, u64 bytenr,
  * according to @cache.
  */
 static int modify_block_group_cache(struct btrfs_fs_info *fs_info,
-		    struct btrfs_block_group_cache *block_group, int cache)
+		    struct btrfs_block_group *block_group, int cache)
 {
 	struct extent_io_tree *free_space_cache = &fs_info->free_space_cache;
 	u64 start = block_group->start;
@@ -269,7 +269,7 @@ static int modify_block_groups_cache(struct btrfs_fs_info *fs_info, u64 flags,
 	struct btrfs_root *root = fs_info->extent_root;
 	struct btrfs_key key;
 	struct btrfs_path path;
-	struct btrfs_block_group_cache *bg_cache;
+	struct btrfs_block_group *bg_cache;
 	struct btrfs_block_group_item *bi;
 	struct btrfs_block_group_item bg_item;
 	struct extent_buffer *eb;
@@ -367,7 +367,7 @@ out:
 static int force_cow_in_new_chunk(struct btrfs_fs_info *fs_info,
 				  u64 *start_ret)
 {
-	struct btrfs_block_group_cache *bg;
+	struct btrfs_block_group *bg;
 	u64 start;
 	u64 nbytes;
 	u64 alloc_profile;
