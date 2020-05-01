@@ -1247,8 +1247,6 @@ int btrfs_inc_extent_ref(struct btrfs_trans_handle *trans,
 	if (!path)
 		return -ENOMEM;
 
-	path->reada = READA_BACK;
-
 	ret = insert_inline_extent_backref(trans, root->fs_info->extent_root,
 					   path, bytenr, num_bytes, parent,
 					   root_objectid, owner, offset, 1);
@@ -1267,8 +1265,6 @@ int btrfs_inc_extent_ref(struct btrfs_trans_handle *trans,
 
 	btrfs_mark_buffer_dirty(leaf);
 	btrfs_release_path(path);
-
-	path->reada = READA_BACK;
 
 	/* now insert the actual backref */
 	ret = insert_extent_backref(trans, root->fs_info->extent_root,
@@ -1303,7 +1299,6 @@ int btrfs_lookup_extent_info(struct btrfs_trans_handle *trans,
 	path = btrfs_alloc_path();
 	if (!path)
 		return -ENOMEM;
-	path->reada = READA_BACK;
 
 	key.objectid = bytenr;
 	key.offset = offset;
@@ -1383,7 +1378,6 @@ int btrfs_set_block_flags(struct btrfs_trans_handle *trans, u64 bytenr,
 	path = btrfs_alloc_path();
 	if (!path)
 		return -ENOMEM;
-	path->reada = READA_BACK;
 
 	key.objectid = bytenr;
 	if (skinny_metadata) {
@@ -1927,8 +1921,6 @@ static int __free_extent(struct btrfs_trans_handle *trans,
 	path = btrfs_alloc_path();
 	if (!path)
 		return -ENOMEM;
-
-	path->reada = READA_BACK;
 
 	is_data = owner_objectid >= BTRFS_FIRST_FREE_OBJECTID;
 	if (is_data)
