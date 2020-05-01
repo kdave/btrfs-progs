@@ -1105,7 +1105,6 @@ struct btrfs_space_info {
 };
 
 struct btrfs_block_group_cache {
-	struct cache_extent cache;
 	struct btrfs_space_info *space_info;
 	struct btrfs_free_space_ctl *free_space_ctl;
 	u64 start;
