@@ -1830,23 +1830,6 @@ int btrfs_string_check_for_mixed_profiles_by_fd(int fd, char **data_ret,
 	return 1;
 }
 
-int btrfs_check_for_mixed_profiles_by_path(const char *path)
-{
-	int fd;
-	int ret;
-	DIR *dirstream = NULL;
-
-	fd = btrfs_open_dir(path, &dirstream, 0);
-	if (fd < 0)
-		return -1;
-	closedir(dirstream);
-
-	ret = btrfs_check_for_mixed_profiles_by_fd(fd);
-	close(fd);
-
-	return ret;
-}
-
 int btrfs_check_for_mixed_profiles_by_fd(int fd)
 {
 	int ret;

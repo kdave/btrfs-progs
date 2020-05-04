@@ -144,7 +144,6 @@ static inline int btrfs_test_for_mixed_profiles_by_fd(int fd)
 	return btrfs_string_check_for_mixed_profiles_by_fd(fd, NULL, NULL,
 			NULL, NULL);
 }
-int btrfs_check_for_mixed_profiles_by_path(const char *path);
 int btrfs_check_for_mixed_profiles_by_fd(int fd);
 
 #endif
