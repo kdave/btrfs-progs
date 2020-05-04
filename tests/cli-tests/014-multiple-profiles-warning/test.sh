@@ -57,7 +57,7 @@ setup_loopdevs 4
 prepare_loopdevs
 dev1=${loopdevs[1]}
 TEST_DEV=$dev1
-msg="Multiple profiles detected"
+msg="Multiple block group profiles detected"
 
 # Data and metadata
 run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f -d single -m single "${loopdevs[@]}"

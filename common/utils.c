@@ -1825,7 +1825,6 @@ int btrfs_test_for_multiple_profiles_by_fd(int fd)
 int btrfs_warn_multiple_profiles(int fd)
 {
 	int ret;
-	int first = true;
 	char *data_prof, *mixed_prof, *metadata_prof, *system_prof;
 
 	ret = btrfs_get_string_for_multiple_profiles(fd, &data_prof,
@@ -1835,41 +1834,23 @@ int btrfs_warn_multiple_profiles(int fd)
 		return ret;
 
 	fprintf(stderr,
-		"WARNING: Multiple profiles detected.  See 'man btrfs(5)'.\n");
-	fprintf(stderr, "WARNING: ");
-	if (data_prof) {
-		fprintf(stderr, "data -> [%s]", data_prof);
-		first = false;
-	}
-	if (metadata_prof) {
-		if (!first)
-			fprintf(stderr, ", ");
-		fprintf(stderr, "metadata -> [%s]", metadata_prof);
-		first = false;
-	}
-	if (mixed_prof) {
-		if (!first)
-			fprintf(stderr, ", ");
-		fprintf(stderr, "data+metadata -> [%s]", mixed_prof);
-		first = false;
-	}
-	if (system_prof) {
-		if (!first)
-			fprintf(stderr, ", ");
-		fprintf(stderr, "system -> [%s]", system_prof);
-		first = false;
-	}
-
-	fprintf(stderr, "\n");
-
+		"WARNING: Multiple block group profiles detected, see 'man btrfs(5)'.\n");
 	if (data_prof)
-		free(data_prof);
+		fprintf(stderr, "WARNING:   Data: %s\n", data_prof);
+
 	if (metadata_prof)
-		free(metadata_prof);
+		fprintf(stderr, "WARNING:   Metadata: %s\n", metadata_prof);
+
 	if (mixed_prof)
-		free(mixed_prof);
+		fprintf(stderr, "WARNING:   Data+Metadata: %s\n", mixed_prof);
+
 	if (system_prof)
-		free(system_prof);
+		fprintf(stderr, "WARNING:   System: %s\n", system_prof);
+
+	free(data_prof);
+	free(metadata_prof);
+	free(mixed_prof);
+	free(system_prof);
 
 	return 1;
 }
