@@ -1755,7 +1755,8 @@ static char *sprint_profiles(u64 profiles)
 }
 
 static int btrfs_get_string_for_multiple_profiles(int fd, char **data_ret,
-		char **metadata_ret, char **mixed_ret, char **system_ret)
+		char **metadata_ret, char **mixed_ret, char **system_ret,
+		char **types_ret)
 {
 	int ret;
 	int i;
@@ -1798,22 +1799,49 @@ static int btrfs_get_string_for_multiple_profiles(int fd, char **data_ret,
 	*mixed_ret = sprint_profiles(mixed_profiles);
 	*system_ret = sprint_profiles(system_profiles);
 
+	if (types_ret) {
+		*types_ret = calloc(1, 64);
+		if (!*types_ret)
+			goto out;
+		if (*data_ret)
+			strcat(*types_ret, "data");
+		if (*metadata_ret) {
+			if ((*types_ret)[0])
+				strcat(*types_ret, ", ");
+			strcat(*types_ret, "metadata");
+		}
+		if (*mixed_ret) {
+			if ((*types_ret)[0])
+				strcat(*types_ret, ", ");
+			strcat(*types_ret, "data+metadata");
+		}
+		if (*system_ret) {
+			if ((*types_ret)[0])
+				strcat(*types_ret, ", ");
+			strcat(*types_ret, "system");
+		}
+	}
+
+out:
 	return *data_ret || *metadata_ret || *mixed_ret || *system_ret;
 }
 
-int btrfs_test_for_multiple_profiles_by_fd(int fd)
+/*
+ * Return string containing coma separated list of block group types that
+ * contain multiple profiles. The return value must be freed by the caller.
+ */
+char *btrfs_test_for_multiple_profiles(int fd)
 {
-	char *data, *metadata, *system, *mixed;
-	int ret;
+	char *data, *metadata, *system, *mixed, *types;
 
-	ret = btrfs_get_string_for_multiple_profiles(fd, &data, &metadata,
-			&mixed, &system);
+	btrfs_get_string_for_multiple_profiles(fd, &data, &metadata, &mixed,
+			&system, &types);
 	free(data);
 	free(metadata);
 	free(mixed);
 	free(system);
 
-	return ret;
+	return types;
 }
 
 int btrfs_warn_multiple_profiles(int fd)
@@ -1822,7 +1850,7 @@ int btrfs_warn_multiple_profiles(int fd)
 	char *data_prof, *mixed_prof, *metadata_prof, *system_prof;
 
 	ret = btrfs_get_string_for_multiple_profiles(fd, &data_prof,
-			&metadata_prof, &mixed_prof, &system_prof);
+			&metadata_prof, &mixed_prof, &system_prof, NULL);
 
 	if (ret != 1)
 		return ret;

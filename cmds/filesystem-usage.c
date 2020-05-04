@@ -309,6 +309,7 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 		const char *path, unsigned unit_mode)
 {
 	struct btrfs_ioctl_space_args *sargs = NULL;
+	char *tmp;
 	int i;
 	int ret = 0;
 	int width = 10;		/* default 10 for human units */
@@ -492,11 +493,12 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 	printf("    Global reserve:\t\t%*s\t(used: %s)\n", width,
 		pretty_size_mode(l_global_reserve, unit_mode),
 		pretty_size_mode(l_global_reserve_used, unit_mode));
-	if (btrfs_test_for_multiple_profiles_by_fd(fd) > 0)
-		printf("    Multiple profiles:\t\t%*s\n", width, "YES");
+	tmp = btrfs_test_for_multiple_profiles(fd);
+	if (tmp[0])
+		printf("    Multiple profiles:\t\t%*s\t(%s)\n", width, "yes", tmp);
 	else
 		printf("    Multiple profiles:\t\t%*s\n", width, "no");
-
+	free(tmp);
 
 exit:
 
