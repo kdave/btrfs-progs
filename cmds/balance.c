@@ -716,7 +716,7 @@ static int cmd_balance_pause(const struct cmd_struct *cmd,
 			ret = 1;
 	}
 
-	btrfs_check_for_mixed_profiles_by_fd(fd);
+	btrfs_warn_multiple_profiles(fd);
 	close_file_or_dir(fd, dirstream);
 	return ret;
 }
@@ -757,7 +757,7 @@ static int cmd_balance_cancel(const struct cmd_struct *cmd,
 			ret = 1;
 	}
 
-	btrfs_check_for_mixed_profiles_by_fd(fd);
+	btrfs_warn_multiple_profiles(fd);
 	close_file_or_dir(fd, dirstream);
 	return ret;
 }

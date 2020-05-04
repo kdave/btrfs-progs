@@ -1755,10 +1755,8 @@ static void sprint_profiles(char **ptr, u64 profiles)
 	}
 }
 
-int btrfs_string_check_for_mixed_profiles_by_fd(int fd, char **data_ret,
-							char **metadata_ret,
-							char **mixed_ret,
-							char **system_ret)
+int btrfs_get_string_for_multiple_profiles(int fd, char **data_ret,
+		char **metadata_ret, char **mixed_ret, char **system_ret)
 {
 	int ret;
 	int i;
@@ -1830,13 +1828,13 @@ int btrfs_string_check_for_mixed_profiles_by_fd(int fd, char **data_ret,
 	return 1;
 }
 
-int btrfs_check_for_mixed_profiles_by_fd(int fd)
+int btrfs_warn_multiple_profiles(int fd)
 {
 	int ret;
 	int first = true;
 	char *data_prof, *mixed_prof, *metadata_prof, *system_prof;
 
-	ret = btrfs_string_check_for_mixed_profiles_by_fd(fd, &data_prof,
+	ret = btrfs_get_string_for_multiple_profiles(fd, &data_prof,
 			&metadata_prof, &mixed_prof, &system_prof);
 
 	if (ret != 1)

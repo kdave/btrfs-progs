@@ -492,7 +492,7 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 	printf("    Global reserve:\t\t%*s\t(used: %s)\n", width,
 		pretty_size_mode(l_global_reserve, unit_mode),
 		pretty_size_mode(l_global_reserve_used, unit_mode));
-	if (btrfs_test_for_mixed_profiles_by_fd(fd) > 0)
+	if (btrfs_test_for_multiple_profiles_by_fd(fd) > 0)
 		printf("    Multiple profiles:\t\t%*s\n", width, "YES");
 	else
 		printf("    Multiple profiles:\t\t%*s\n", width, "no");
