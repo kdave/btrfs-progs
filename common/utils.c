@@ -1739,6 +1739,9 @@ static char *sprint_profiles(u64 profiles)
 	if (!ptr)
 		return NULL;
 
+	if (profiles & BTRFS_AVAIL_ALLOC_BIT_SINGLE)
+		strcat(ptr, btrfs_raid_array[BTRFS_RAID_SINGLE].raid_name);
+
 	for (i = 0; i < BTRFS_NR_RAID_TYPES; i++) {
 		if (!(btrfs_raid_array[i].bg_flag & profiles))
 			continue;
@@ -1746,11 +1749,6 @@ static char *sprint_profiles(u64 profiles)
 		if (ptr[0])
 			strcat(ptr, ", ");
 		strcat(ptr, btrfs_raid_array[i].raid_name);
-	}
-	if (profiles & BTRFS_AVAIL_ALLOC_BIT_SINGLE) {
-		if (ptr[0])
-			strcat(ptr, ", ");
-		strcat(ptr, btrfs_raid_array[BTRFS_RAID_SINGLE].raid_name);
 	}
 
 	return ptr;
