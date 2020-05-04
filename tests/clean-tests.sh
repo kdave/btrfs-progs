@@ -35,6 +35,7 @@ if [ "$BUILD_VERBOSE" = 1 ]; then
 	verbose=-print
 fi
 
+[ "$BUILD_VERBOSE" = 1 ] && echo "Umount $TEST_MNT"
 $SUDO_HELPER umount -R "$TEST_MNT" &>/dev/null
 
 if ! cd "$TEST_TOP"; then
@@ -42,7 +43,19 @@ if ! cd "$TEST_TOP"; then
 	exit 1
 fi
 
+[ "$BUILD_VERBOSE" = 1 ] && echo "Delete temporary fsck images $TEST_MNT"
 find fsck-tests -type f -name '*.restored' $verbose -delete
+
+for dev in $(losetup --noheadings --output NAME,BACK-FILE | grep "$SCRIPT_DIR"); do
+	# Accept only /dev/loop0
+	# And skip $SCRIPT_DIR/cli-tests/001-test/img1
+	if [[ $dev =~ ^/dev/loop ]]; then
+		lfile=$(losetup --noheadings --output BACK-FILE "$dev")
+		[ "$BUILD_VERBOSE"  = 1 ] &&
+			echo "Detach loop device/file $dev ($lfile)"
+		$SUDO_HELPER losetup --detach "$dev"
+	fi
+done
 
 # do not remove, the file could have special permissions set
 echo -n > test.img
