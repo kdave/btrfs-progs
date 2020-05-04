@@ -1723,36 +1723,39 @@ static int bit_count(u64 x)
 	return ret;
 }
 
-static void sprint_profiles(char **ptr, u64 profiles)
+static char *sprint_profiles(u64 profiles)
 {
 	int i;
 	bool first = true;
-	int l = 1;
+	int maxlen = 1;
+	char *ptr;
 
-	*ptr = NULL;
+	if (bit_count(profiles) <= 1)
+		return NULL;
 
 	for (i = 0; i < BTRFS_NR_RAID_TYPES; i++)
-		l += strlen(btrfs_raid_array[i].raid_name) + 2;
+		maxlen += strlen(btrfs_raid_array[i].raid_name) + 2;
 
-	*ptr = malloc(l);
-	if (!*ptr)
-		return;
-	**ptr = 0;
+	ptr = calloc(1, maxlen);
+	if (!ptr)
+		return NULL;
 
 	for (i = 0; i < BTRFS_NR_RAID_TYPES; i++) {
 		if (!(btrfs_raid_array[i].bg_flag & profiles))
 			continue;
 
 		if (!first)
-			strcat(*ptr, ", ");
-		strcat(*ptr, btrfs_raid_array[i].raid_name);
+			strcat(ptr, ", ");
+		strcat(ptr, btrfs_raid_array[i].raid_name);
 		first = false;
 	}
 	if (profiles & BTRFS_AVAIL_ALLOC_BIT_SINGLE) {
 		if (!first)
-			strcat(*ptr, ", ");
-		strcat(*ptr, btrfs_raid_array[BTRFS_RAID_SINGLE].raid_name);
+			strcat(ptr, ", ");
+		strcat(ptr, btrfs_raid_array[BTRFS_RAID_SINGLE].raid_name);
 	}
+
+	return ptr;
 }
 
 static int btrfs_get_string_for_multiple_profiles(int fd, char **data_ret,
@@ -1800,37 +1803,27 @@ static int btrfs_get_string_for_multiple_profiles(int fd, char **data_ret,
 	    (bit_count(mixed_profiles) == 0))
 		return 0;
 
-	if (data_ret) {
-		if (bit_count(data_profiles) > 1)
-			sprint_profiles(data_ret, data_profiles);
-		else
-			*data_ret = NULL;
-	}
-	if (metadata_ret) {
-		if (bit_count(metadata_profiles) > 1)
-			sprint_profiles(metadata_ret, metadata_profiles);
-		else
-			*metadata_ret = NULL;
-	}
-	if (mixed_ret) {
-		if (bit_count(mixed_profiles) > 1)
-			sprint_profiles(mixed_ret, mixed_profiles);
-		else
-			*mixed_ret = NULL;
-	}
-	if (system_ret) {
-		if (bit_count(system_profiles) > 1)
-			sprint_profiles(system_ret, system_profiles);
-		else
-			*system_ret = NULL;
-	}
+	*data_ret = sprint_profiles(data_profiles);
+	*metadata_ret = sprint_profiles(metadata_profiles);
+	*mixed_ret = sprint_profiles(mixed_profiles);
+	*system_ret = sprint_profiles(system_profiles);
 
 	return 1;
 }
 
 int btrfs_test_for_multiple_profiles_by_fd(int fd)
 {
-	return btrfs_get_string_for_multiple_profiles(fd, NULL, NULL, NULL, NULL);
+	char *data, *metadata, *system, *mixed;
+	int ret;
+
+	ret = btrfs_get_string_for_multiple_profiles(fd, &data, &metadata,
+			&mixed, &system);
+	free(data);
+	free(metadata);
+	free(mixed);
+	free(system);
+
+	return ret;
 }
 
 int btrfs_warn_multiple_profiles(int fd)
