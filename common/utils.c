@@ -1726,7 +1726,6 @@ static int bit_count(u64 x)
 static char *sprint_profiles(u64 profiles)
 {
 	int i;
-	bool first = true;
 	int maxlen = 1;
 	char *ptr;
 
@@ -1744,13 +1743,12 @@ static char *sprint_profiles(u64 profiles)
 		if (!(btrfs_raid_array[i].bg_flag & profiles))
 			continue;
 
-		if (!first)
+		if (ptr[0])
 			strcat(ptr, ", ");
 		strcat(ptr, btrfs_raid_array[i].raid_name);
-		first = false;
 	}
 	if (profiles & BTRFS_AVAIL_ALLOC_BIT_SINGLE) {
-		if (!first)
+		if (ptr[0])
 			strcat(ptr, ", ");
 		strcat(ptr, btrfs_raid_array[BTRFS_RAID_SINGLE].raid_name);
 	}
