@@ -1793,18 +1793,12 @@ static int btrfs_get_string_for_multiple_profiles(int fd, char **data_ret,
 	mixed_profiles &= BTRFS_EXTENDED_PROFILE_MASK;
 	metadata_profiles &= BTRFS_EXTENDED_PROFILE_MASK;
 
-	if ((bit_count(data_profiles) == 0) &&
-	    (bit_count(metadata_profiles) == 0) &&
-	    (bit_count(system_profiles) == 0) &&
-	    (bit_count(mixed_profiles) == 0))
-		return 0;
-
 	*data_ret = sprint_profiles(data_profiles);
 	*metadata_ret = sprint_profiles(metadata_profiles);
 	*mixed_ret = sprint_profiles(mixed_profiles);
 	*system_ret = sprint_profiles(system_profiles);
 
-	return 1;
+	return *data_ret || *metadata_ret || *mixed_ret || *system_ret;
 }
 
 int btrfs_test_for_multiple_profiles_by_fd(int fd)
