@@ -2796,6 +2796,26 @@ int btrfs_make_block_group(struct btrfs_trans_handle *trans,
 	return 0;
 }
 
+static int insert_block_group_item(struct btrfs_trans_handle *trans,
+				   struct btrfs_block_group *block_group)
+{
+	struct btrfs_fs_info *fs_info = trans->fs_info;
+	struct btrfs_block_group_item bgi;
+	struct btrfs_root *root;
+	struct btrfs_key key;
+
+	btrfs_set_stack_block_group_used(&bgi, block_group->used);
+	btrfs_set_stack_block_group_chunk_objectid(&bgi,
+				BTRFS_FIRST_CHUNK_TREE_OBJECTID);
+	btrfs_set_stack_block_group_flags(&bgi, block_group->flags);
+	key.objectid = block_group->start;
+	key.type = BTRFS_BLOCK_GROUP_ITEM_KEY;
+	key.offset = block_group->length;
+
+	root = fs_info->extent_root;
+	return btrfs_insert_item(trans, root, &key, &bgi, sizeof(bgi));
+}
+
 /*
  * This is for converter use only.
  *
@@ -2814,7 +2834,6 @@ int btrfs_make_block_groups(struct btrfs_trans_handle *trans,
 	u64 total_data = 0;
 	u64 total_metadata = 0;
 	int ret;
-	struct btrfs_root *extent_root = fs_info->extent_root;
 	struct btrfs_block_group *cache;
 
 	total_bytes = btrfs_super_total_bytes(fs_info->super_copy);
@@ -2865,21 +2884,10 @@ int btrfs_make_block_groups(struct btrfs_trans_handle *trans,
 	/* then insert all the items */
 	cur_start = 0;
 	while(cur_start < total_bytes) {
-		struct btrfs_block_group_item bgi;
-		struct btrfs_key key;
-
 		cache = btrfs_lookup_block_group(fs_info, cur_start);
 		BUG_ON(!cache);
 
-		btrfs_set_stack_block_group_used(&bgi, cache->used);
-		btrfs_set_stack_block_group_flags(&bgi, cache->flags);
-		btrfs_set_stack_block_group_chunk_objectid(&bgi,
-				BTRFS_FIRST_CHUNK_TREE_OBJECTID);
-		key.objectid = cache->start;
-		key.type = BTRFS_BLOCK_GROUP_ITEM_KEY;
-		key.offset = cache->length;
-		ret = btrfs_insert_item(trans, extent_root, &key, &bgi,
-					sizeof(bgi));
+		ret = insert_block_group_item(trans, cache);
 		BUG_ON(ret);
 
 		cur_start = cache->start + cache->length;
