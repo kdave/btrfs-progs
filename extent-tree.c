@@ -1521,12 +1521,13 @@ int btrfs_dec_ref(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 	return __btrfs_mod_ref(trans, root, buf, record_parent, 0);
 }
 
-static int write_one_cache_group(struct btrfs_trans_handle *trans,
-				 struct btrfs_path *path,
-				 struct btrfs_block_group *cache)
+static int update_block_group_item(struct btrfs_trans_handle *trans,
+				   struct btrfs_path *path,
+				   struct btrfs_block_group *cache)
 {
 	int ret;
-	struct btrfs_root *extent_root = trans->fs_info->extent_root;
+	struct btrfs_fs_info *fs_info = trans->fs_info;
+	struct btrfs_root *root = fs_info->extent_root;
 	unsigned long bi;
 	struct btrfs_block_group_item bgi;
 	struct extent_buffer *leaf;
@@ -1536,10 +1537,11 @@ static int write_one_cache_group(struct btrfs_trans_handle *trans,
 	key.type = BTRFS_BLOCK_GROUP_ITEM_KEY;
 	key.offset = cache->length;
 
-	ret = btrfs_search_slot(trans, extent_root, &key, path, 0, 1);
+	ret = btrfs_search_slot(trans, root, &key, path, 0, 1);
+	if (ret > 0)
+		ret = -ENOENT;
 	if (ret < 0)
 		goto fail;
-	BUG_ON(ret);
 
 	leaf = path->nodes[0];
 	bi = btrfs_item_ptr_offset(leaf, path->slots[0]);
@@ -1549,11 +1551,9 @@ static int write_one_cache_group(struct btrfs_trans_handle *trans,
 			BTRFS_FIRST_CHUNK_TREE_OBJECTID);
 	write_extent_buffer(leaf, &bgi, bi, sizeof(bgi));
 	btrfs_mark_buffer_dirty(leaf);
-	btrfs_release_path(path);
 fail:
-	if (ret)
-		return ret;
-	return 0;
+	btrfs_release_path(path);
+	return ret;
 
 }
 
@@ -1571,7 +1571,7 @@ int btrfs_write_dirty_block_groups(struct btrfs_trans_handle *trans)
 		cache = list_first_entry(&trans->dirty_bgs,
 				 struct btrfs_block_group, dirty_list);
 		list_del_init(&cache->dirty_list);
-		ret = write_one_cache_group(trans, path, cache);
+		ret = update_block_group_item(trans, path, cache);
 		if (ret)
 			break;
 	}
