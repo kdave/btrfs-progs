@@ -172,6 +172,7 @@ static int btrfs_add_block_group_cache(struct btrfs_fs_info *info,
 	struct rb_node *parent = NULL;
 	struct btrfs_block_group *cache;
 
+	ASSERT(block_group->length != 0);
 	p = &info->block_group_cache_tree.rb_node;
 
 	while (*p) {
@@ -2622,6 +2623,27 @@ error:
 	return ret;
 }
 
+static int read_block_group_item(struct btrfs_block_group *cache,
+				 struct btrfs_path *path,
+				 const struct btrfs_key *key)
+{
+	struct extent_buffer *leaf = path->nodes[0];
+	struct btrfs_block_group_item bgi;
+	int slot = path->slots[0];
+
+	ASSERT(key->type == BTRFS_BLOCK_GROUP_ITEM_KEY);
+
+	cache->start = key->objectid;
+	cache->length = key->offset;
+
+	read_extent_buffer(leaf, &bgi, btrfs_item_ptr_offset(leaf, slot),
+			   sizeof(bgi));
+	cache->used = btrfs_stack_block_group_used(&bgi);
+	cache->flags = btrfs_stack_block_group_flags(&bgi);
+
+	return 0;
+}
+
 /*
  * Read out one BLOCK_GROUP_ITEM and insert it into block group cache.
  *
@@ -2634,7 +2656,6 @@ static int read_one_block_group(struct btrfs_fs_info *fs_info,
 	struct extent_buffer *leaf = path->nodes[0];
 	struct btrfs_space_info *space_info;
 	struct btrfs_block_group *cache;
-	struct btrfs_block_group_item bgi;
 	struct btrfs_key key;
 	int slot = path->slots[0];
 	int ret;
@@ -2652,14 +2673,11 @@ static int read_one_block_group(struct btrfs_fs_info *fs_info,
 	cache = kzalloc(sizeof(*cache), GFP_NOFS);
 	if (!cache)
 		return -ENOMEM;
-	read_extent_buffer(leaf, &bgi, btrfs_item_ptr_offset(leaf, slot),
-			   sizeof(bgi));
-	cache->start = key.objectid;
-	cache->length = key.offset;
-	cache->cached = 0;
-	cache->pinned = 0;
-	cache->flags = btrfs_stack_block_group_flags(&bgi);
-	cache->used = btrfs_stack_block_group_used(&bgi);
+	ret = read_block_group_item(cache, path, &key);
+	if (ret < 0) {
+		free(cache);
+		return ret;
+	}
 	INIT_LIST_HEAD(&cache->dirty_list);
 
 	set_avail_alloc_bits(fs_info, cache->flags);
