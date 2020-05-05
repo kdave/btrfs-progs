@@ -2899,35 +2899,26 @@ int btrfs_update_block_group(struct btrfs_trans_handle *trans,
  * Caller should ensure the block group is empty and all space is pinned.
  * Or new tree block/data may be allocated into it.
  */
-static int free_block_group_item(struct btrfs_trans_handle *trans,
-				 struct btrfs_fs_info *fs_info,
-				 u64 bytenr, u64 len)
+static int remove_block_group_item(struct btrfs_trans_handle *trans,
+				   struct btrfs_path *path,
+				   struct btrfs_block_group *block_group)
 {
-	struct btrfs_path *path;
+	struct btrfs_fs_info *fs_info = trans->fs_info;
 	struct btrfs_key key;
 	struct btrfs_root *root = fs_info->extent_root;
 	int ret = 0;
 
-	key.objectid = bytenr;
-	key.offset = len;
+	key.objectid = block_group->start;
+	key.offset = block_group->length;
 	key.type = BTRFS_BLOCK_GROUP_ITEM_KEY;
 
-	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
-
 	ret = btrfs_search_slot(trans, root, &key, path, -1, 1);
-	if (ret > 0) {
+	if (ret > 0)
 		ret = -ENOENT;
-		goto out;
-	}
 	if (ret < 0)
-		goto out;
+		return ret;
 
-	ret = btrfs_del_item(trans, root, path);
-out:
-	btrfs_free_path(path);
-	return ret;
+	return btrfs_del_item(trans, root, path);
 }
 
 static int free_dev_extent_item(struct btrfs_trans_handle *trans,
@@ -3168,42 +3159,25 @@ out:
 	return ret;
 }
 
-int btrfs_free_block_group(struct btrfs_trans_handle *trans,
-			   struct btrfs_fs_info *fs_info, u64 bytenr, u64 len)
+int btrfs_remove_block_group(struct btrfs_trans_handle *trans,
+			     u64 bytenr, u64 len)
 {
-	struct btrfs_root *extent_root = fs_info->extent_root;
-	struct btrfs_path *path;
-	struct btrfs_block_group_item *bgi;
-	struct btrfs_key key;
+	struct btrfs_fs_info *fs_info = trans->fs_info;
+	struct btrfs_block_group *block_group;
+	struct btrfs_path path;
 	int ret = 0;
 
-	path = btrfs_alloc_path();
-	if (!path)
-		return -ENOMEM;
-
-	key.objectid = bytenr;
-	key.type = BTRFS_BLOCK_GROUP_ITEM_KEY;
-	key.offset = len;
-
+	block_group = btrfs_lookup_block_group(fs_info, bytenr);
+	if (!block_group || block_group->start != bytenr ||
+	    block_group->length != len)
+		return -ENOENT;
 	/* Double check the block group to ensure it's empty */
-	ret = btrfs_search_slot(trans, extent_root, &key, path, 0, 0);
-	if (ret > 0) {
-		ret = -ENONET;
-		goto out;
-	}
-	if (ret < 0)
-		goto out;
-
-	bgi = btrfs_item_ptr(path->nodes[0], path->slots[0],
-			     struct btrfs_block_group_item);
-	if (btrfs_block_group_used(path->nodes[0], bgi)) {
+	if (block_group->used) {
 		fprintf(stderr,
 			"WARNING: block group [%llu,%llu) is not empty\n",
 			bytenr, bytenr + len);
-		ret = -EINVAL;
-		goto out;
+		return -EUCLEAN;
 	}
-	btrfs_release_path(path);
 
 	/*
 	 * Now pin all space in the block group, to prevent further transaction
@@ -3212,14 +3186,16 @@ int btrfs_free_block_group(struct btrfs_trans_handle *trans,
 	 */
 	btrfs_pin_extent(fs_info, bytenr, len);
 
+	btrfs_init_path(&path);
 	/* delete block group item and chunk item */
-	ret = free_block_group_item(trans, fs_info, bytenr, len);
+	ret = remove_block_group_item(trans, &path, block_group);
+	btrfs_release_path(&path);
 	if (ret < 0) {
 		fprintf(stderr,
 			"failed to free block group item for [%llu,%llu)\n",
 			bytenr, bytenr + len);
 		btrfs_unpin_extent(fs_info, bytenr, len);
-		goto out;
+		return ret;
 	}
 
 	ret = free_chunk_dev_extent_items(trans, fs_info, bytenr);
@@ -3228,7 +3204,7 @@ int btrfs_free_block_group(struct btrfs_trans_handle *trans,
 			"failed to dev extents belongs to [%llu,%llu)\n",
 			bytenr, bytenr + len);
 		btrfs_unpin_extent(fs_info, bytenr, len);
-		goto out;
+		return ret;
 	}
 	ret = free_chunk_item(trans, fs_info, bytenr);
 	if (ret < 0) {
@@ -3236,15 +3212,13 @@ int btrfs_free_block_group(struct btrfs_trans_handle *trans,
 			"failed to free chunk for [%llu,%llu)\n",
 			bytenr, bytenr + len);
 		btrfs_unpin_extent(fs_info, bytenr, len);
-		goto out;
+		return ret;
 	}
 
 	/* Now release the block_group_cache */
 	ret = free_block_group_cache(trans, fs_info, bytenr, len);
 	btrfs_unpin_extent(fs_info, bytenr, len);
 
-out:
-	btrfs_free_path(path);
 	return ret;
 }
 

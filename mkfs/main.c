@@ -644,7 +644,7 @@ static int cleanup_temp_chunks(struct btrfs_fs_info *fs_info,
 					sys_profile)) {
 			u64 flags = btrfs_block_group_flags(path.nodes[0], bgi);
 
-			ret = btrfs_free_block_group(trans, fs_info,
+			ret = btrfs_remove_block_group(trans,
 					found_key.objectid, found_key.offset);
 			if (ret < 0)
 				goto out;

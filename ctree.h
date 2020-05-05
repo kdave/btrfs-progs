@@ -2596,8 +2596,8 @@ int btrfs_record_file_extent(struct btrfs_trans_handle *trans,
 			      struct btrfs_inode_item *inode,
 			      u64 file_pos, u64 disk_bytenr,
 			      u64 num_bytes);
-int btrfs_free_block_group(struct btrfs_trans_handle *trans,
-			   struct btrfs_fs_info *fs_info, u64 bytenr, u64 len);
+int btrfs_remove_block_group(struct btrfs_trans_handle *trans,
+			     u64 bytenr, u64 len);
 void free_excluded_extents(struct btrfs_fs_info *fs_info,
 			   struct btrfs_block_group *cache);
 int exclude_super_stripes(struct btrfs_fs_info *fs_info,
