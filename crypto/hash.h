@@ -9,5 +9,7 @@ int hash_crc32c(const u8 *buf, size_t length, u8 *out);
 int hash_xxhash(const u8 *buf, size_t length, u8 *out);
 int hash_sha256(const u8 *buf, size_t length, u8 *out);
 int hash_blake2b(const u8 *buf, size_t length, u8 *out);
+int hash_hmac_sha256(struct btrfs_fs_info *fs_info, const u8 *buf,
+		     size_t length, u8 *out);
 
 #endif

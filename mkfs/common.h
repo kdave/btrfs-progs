@@ -65,6 +65,9 @@ struct btrfs_mkfs_config {
 
 	/* Superblock offset after make_btrfs */
 	u64 super_bytenr;
+
+	/* authentication key */
+	char *auth_key;
 };
 
 int make_btrfs(int fd, struct btrfs_mkfs_config *cfg);

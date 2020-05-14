@@ -160,6 +160,13 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 	if (!buf)
 		return -ENOMEM;
 
+	buf->fs_info = calloc(1, sizeof(struct btrfs_fs_info));
+	if (!buf->fs_info) {
+		free(buf);
+		return -ENOMEM;
+	}
+
+
 	first_free = BTRFS_SUPER_INFO_OFFSET + cfg->sectorsize * 2 - 1;
 	first_free &= ~((u64)cfg->sectorsize - 1);
 
@@ -223,6 +230,8 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 	write_extent_buffer(buf, chunk_tree_uuid,
 			    btrfs_header_chunk_tree_uuid(buf),
 			    BTRFS_UUID_SIZE);
+
+	buf->fs_info->auth_key = cfg->auth_key;
 
 	ret = btrfs_create_tree_root(fd, cfg, buf);
 	if (ret < 0)
@@ -474,6 +483,7 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 	ret = 0;
 
 out:
+	free(buf->fs_info);
 	free(buf);
 	return ret;
 }

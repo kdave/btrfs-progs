@@ -1,3 +1,7 @@
+#include <gcrypt.h>
+
+#include "ctree.h"
+
 #include "crypto/hash.h"
 #include "crypto/crc32c.h"
 #include "crypto/xxhash.h"
@@ -72,12 +76,25 @@ int hash_blake2b(const u8 *buf, size_t len, u8 *out)
 	return 0;
 }
 
+int hash_hmac_sha256(struct btrfs_fs_info *fs_info, const u8 *buf,
+		     size_t length, u8 *out)
+{
+	gcry_mac_hd_t mac;
+	gcry_mac_open(&mac, GCRY_MAC_HMAC_SHA256, 0, NULL);
+	gcry_mac_setkey(mac, fs_info->auth_key, strlen(fs_info->auth_key));
+	gcry_mac_write(mac, buf, length);
+	gcry_mac_read(mac, out, &length);
+
+	return 0;
+}
+
 #endif
 
 #if CRYPTOPROVIDER_LIBSODIUM == 1
 
 #include <sodium/crypto_hash_sha256.h>
 #include <sodium/crypto_generichash_blake2b.h>
+#include <sodium/crypto_auth_hmacsha256.h>
 
 int hash_sha256(const u8 *buf, size_t len, u8 *out)
 {
@@ -88,6 +105,19 @@ int hash_blake2b(const u8 *buf, size_t len, u8 *out)
 {
 	return crypto_generichash_blake2b(out, CRYPTO_HASH_SIZE_MAX, buf, len,
 			NULL, 0);
+}
+
+int hash_hmac_sha256(struct btrfs_fs_info *fs_info, const u8 *buf,
+		     size_t length, u8 *out)
+{
+	crypto_auth_hmacsha256_state state;
+
+	crypto_auth_hmacsha256_init(&state, (unsigned char *)fs_info->auth_key,
+				    strlen(fs_info->auth_key));
+	crypto_auth_hmacsha256_update(&state, buf, length);
+	crypto_auth_hmacsha256_final(&state, out);
+
+	return 0;
 }
 
 #endif
