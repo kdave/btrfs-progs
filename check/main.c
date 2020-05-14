@@ -5740,7 +5740,7 @@ static int check_extent_csums(struct btrfs_root *root, u64 bytenr,
 			while (data_checked < read_len) {
 				tmp = offset + data_checked;
 
-				btrfs_csum_data(csum_type, data + tmp,
+				btrfs_csum_data(fs_info, csum_type, data + tmp,
 						result, fs_info->sectorsize);
 
 				csum_offset = leaf_offset +
