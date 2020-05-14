@@ -143,7 +143,8 @@ void btrfs_setup_root(struct btrfs_root *root, struct btrfs_fs_info *fs_info,
 int clean_tree_block(struct extent_buffer *buf);
 
 void btrfs_free_fs_info(struct btrfs_fs_info *fs_info);
-struct btrfs_fs_info *btrfs_new_fs_info(int writable, u64 sb_bytenr);
+struct btrfs_fs_info *btrfs_new_fs_info(int writable, u64 sb_bytenr,
+					char *auth_key);
 int btrfs_check_fs_compatibility(struct btrfs_super_block *sb,
 				 unsigned int flags);
 int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info, u64 root_tree_bytenr,
@@ -163,7 +164,7 @@ struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
 struct btrfs_fs_info *open_ctree_fs_info(const char *filename,
 					 u64 sb_bytenr, u64 root_tree_bytenr,
 					 u64 chunk_root_bytenr,
-					 unsigned flags);
+					 unsigned flags, char *auth_key);
 int close_ctree_fs_info(struct btrfs_fs_info *fs_info);
 static inline int close_ctree(struct btrfs_root *root)
 {

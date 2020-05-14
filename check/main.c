@@ -10174,7 +10174,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 		ctree_flags |= OPEN_CTREE_PARTIAL;
 
 	info = open_ctree_fs_info(argv[optind], bytenr, tree_root_bytenr,
-				  chunk_root_bytenr, ctree_flags);
+				  chunk_root_bytenr, ctree_flags, NULL);
 	if (!info) {
 		error("cannot open file system");
 		ret = -EIO;

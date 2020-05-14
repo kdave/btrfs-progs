@@ -242,7 +242,7 @@ static int cmd_rescue_fix_device_size(const struct cmd_struct *cmd,
 	}
 
 	fs_info = open_ctree_fs_info(devname, 0, 0, 0, OPEN_CTREE_WRITES |
-				     OPEN_CTREE_PARTIAL);
+				     OPEN_CTREE_PARTIAL, NULL);
 	if (!fs_info) {
 		error("could not open btrfs");
 		ret = -EIO;

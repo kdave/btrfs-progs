@@ -1318,7 +1318,8 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	}
 
 	fs_info = open_ctree_fs_info(file, 0, 0, 0,
-			OPEN_CTREE_WRITES | OPEN_CTREE_TEMPORARY_SUPER);
+			OPEN_CTREE_WRITES | OPEN_CTREE_TEMPORARY_SUPER,
+			auth_key);
 	if (!fs_info) {
 		error("open ctree failed");
 		goto error;

@@ -2549,7 +2549,8 @@ static int restore_metadump(const char *input, FILE *out, int old_restore,
 		info = open_ctree_fs_info(target, 0, 0, 0,
 					  OPEN_CTREE_WRITES |
 					  OPEN_CTREE_RESTORE |
-					  OPEN_CTREE_PARTIAL);
+					  OPEN_CTREE_PARTIAL,
+					  NULL);
 		if (!info) {
 			error("open ctree failed");
 			ret = -EIO;
@@ -2913,7 +2914,7 @@ int BOX_MAIN(image)(int argc, char *argv[])
 
 		info = open_ctree_fs_info(target, 0, 0, 0,
 					  OPEN_CTREE_PARTIAL |
-					  OPEN_CTREE_RESTORE);
+					  OPEN_CTREE_RESTORE, NULL);
 		if (!info) {
 			error("open ctree failed at %s", target);
 			return 1;

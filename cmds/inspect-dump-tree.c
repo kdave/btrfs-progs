@@ -459,7 +459,7 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 
 	printf("%s\n", PACKAGE_STRING);
 
-	info = open_ctree_fs_info(argv[optind], 0, 0, 0, open_ctree_flags);
+	info = open_ctree_fs_info(argv[optind], 0, 0, 0, open_ctree_flags, NULL);
 	if (!info) {
 		error("unable to open %s", argv[optind]);
 		goto out;

@@ -1439,7 +1439,7 @@ open_ctree_with_broken_chunk(struct recover_control *rc)
 	u64 features;
 	int ret;
 
-	fs_info = btrfs_new_fs_info(1, BTRFS_SUPER_INFO_OFFSET);
+	fs_info = btrfs_new_fs_info(1, BTRFS_SUPER_INFO_OFFSET, NULL);
 	if (!fs_info) {
 		fprintf(stderr, "Failed to allocate memory for fs_info\n");
 		return ERR_PTR(-ENOMEM);

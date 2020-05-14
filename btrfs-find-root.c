@@ -202,7 +202,7 @@ int main(int argc, char **argv)
 
 	fs_info = open_ctree_fs_info(argv[optind], 0, 0, 0,
 			OPEN_CTREE_CHUNK_ROOT_ONLY |
-			OPEN_CTREE_IGNORE_CHUNK_TREE_ERROR);
+			OPEN_CTREE_IGNORE_CHUNK_TREE_ERROR, NULL);
 	if (!fs_info) {
 		error("open ctree failed");
 		return 1;

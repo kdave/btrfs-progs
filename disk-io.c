@@ -789,7 +789,8 @@ void btrfs_free_fs_info(struct btrfs_fs_info *fs_info)
 	free(fs_info);
 }
 
-struct btrfs_fs_info *btrfs_new_fs_info(int writable, u64 sb_bytenr)
+struct btrfs_fs_info *btrfs_new_fs_info(int writable, u64 sb_bytenr,
+					char *auth_key)
 {
 	struct btrfs_fs_info *fs_info;
 
@@ -1189,7 +1190,7 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 					     u64 sb_bytenr,
 					     u64 root_tree_bytenr,
 					     u64 chunk_root_bytenr,
-					     unsigned flags)
+					     unsigned flags, char *auth_key)
 {
 	struct btrfs_fs_info *fs_info;
 	struct btrfs_super_block *disk_super;
@@ -1206,7 +1207,8 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, const char *path,
 	if (posix_fadvise(fp, 0, 0, POSIX_FADV_DONTNEED))
 		fprintf(stderr, "Warning, could not drop caches\n");
 
-	fs_info = btrfs_new_fs_info(flags & OPEN_CTREE_WRITES, sb_bytenr);
+	fs_info = btrfs_new_fs_info(flags & OPEN_CTREE_WRITES, sb_bytenr,
+				    auth_key);
 	if (!fs_info) {
 		fprintf(stderr, "Failed to allocate memory for fs_info\n");
 		return NULL;
@@ -1317,7 +1319,7 @@ out:
 struct btrfs_fs_info *open_ctree_fs_info(const char *filename,
 					 u64 sb_bytenr, u64 root_tree_bytenr,
 					 u64 chunk_root_bytenr,
-					 unsigned flags)
+					 unsigned flags, char *auth_key)
 {
 	int fp;
 	int ret;
@@ -1344,7 +1346,7 @@ struct btrfs_fs_info *open_ctree_fs_info(const char *filename,
 		return NULL;
 	}
 	info = __open_ctree_fd(fp, filename, sb_bytenr, root_tree_bytenr,
-			       chunk_root_bytenr, flags);
+			       chunk_root_bytenr, flags, auth_key);
 	close(fp);
 	return info;
 }
@@ -1356,7 +1358,7 @@ struct btrfs_root *open_ctree(const char *filename, u64 sb_bytenr,
 
 	/* This flags may not return fs_info with any valid root */
 	BUG_ON(flags & OPEN_CTREE_IGNORE_CHUNK_TREE_ERROR);
-	info = open_ctree_fs_info(filename, sb_bytenr, 0, 0, flags);
+	info = open_ctree_fs_info(filename, sb_bytenr, 0, 0, flags, NULL);
 	if (!info)
 		return NULL;
 	if (flags & __OPEN_CTREE_RETURN_CHUNK_ROOT)
@@ -1375,7 +1377,7 @@ struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
 				(unsigned long long)flags);
 		return NULL;
 	}
-	info = __open_ctree_fd(fp, path, sb_bytenr, 0, 0, flags);
+	info = __open_ctree_fd(fp, path, sb_bytenr, 0, 0, flags, NULL);
 	if (!info)
 		return NULL;
 	if (flags & __OPEN_CTREE_RETURN_CHUNK_ROOT)
