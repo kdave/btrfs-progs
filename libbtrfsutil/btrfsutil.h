@@ -471,6 +471,13 @@ enum btrfs_util_error btrfs_util_create_snapshot_fd2(int fd, int parent_fd,
  * @path: Path of the subvolume to delete.
  * @flags: Bitmask of BTRFS_UTIL_DELETE_SUBVOLUME_* flags.
  *
+ * This requires appropriate privilege (CAP_SYS_ADMIN), unless the filesystem is
+ * mounted with 'user_subvol_rm_allowed'.
+ *
+ * NOTE: Since kernel 4.18 it is possible to delete an empty subvolume using
+ * rmdir.  The sysfs file /sys/fs/btrfs/features/rmdir_subvol indicates whether
+ * this feature is enabled or not.
+ *
  * Return: %BTRFS_UTIL_OK on success, non-zero error code on failure.
  */
 enum btrfs_util_error btrfs_util_delete_subvolume(const char *path, int flags);
