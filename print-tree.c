@@ -1201,7 +1201,7 @@ void btrfs_print_leaf(struct extent_buffer *eb)
 	struct btrfs_item *item;
 	struct btrfs_disk_key disk_key;
 	char flags_str[128];
-	u32 leaf_data_size = BTRFS_LEAF_DATA_SIZE(fs_info);
+	u32 leaf_data_size = __BTRFS_LEAF_DATA_SIZE(eb->len);
 	u32 i;
 	u32 nr;
 	u64 flags;
