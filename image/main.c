@@ -2500,6 +2500,66 @@ out:
 	return ret;
 }
 
+static int iter_tree_blocks(struct btrfs_fs_info *fs_info,
+			    struct extent_buffer *eb, bool pin)
+{
+	void (*func)(struct btrfs_fs_info *fs_info, u64 bytenr, u64 num_bytes);
+	int nritems;
+	int level;
+	int i;
+	int ret;
+
+	if (pin)
+		func = btrfs_pin_extent;
+	else
+		func = btrfs_unpin_extent;
+
+	func(fs_info, eb->start, eb->len);
+
+	level = btrfs_header_level(eb);
+	nritems = btrfs_header_nritems(eb);
+	if (level == 0)
+		return 0;
+
+	for (i = 0; i < nritems; i++) {
+		u64 bytenr;
+		struct extent_buffer *tmp;
+
+		if (level == 0) {
+			struct btrfs_root_item *ri;
+			struct btrfs_key key;
+
+			btrfs_item_key_to_cpu(eb, &key, i);
+			if (key.type != BTRFS_ROOT_ITEM_KEY)
+				continue;
+			ri = btrfs_item_ptr(eb, i, struct btrfs_root_item);
+			bytenr = btrfs_disk_root_bytenr(eb, ri);
+			tmp = read_tree_block(fs_info, bytenr, 0);
+			if (!extent_buffer_uptodate(tmp)) {
+				error("unable to read log root block");
+				return -EIO;
+			}
+			ret = iter_tree_blocks(fs_info, tmp, pin);
+			free_extent_buffer(tmp);
+			if (ret)
+				return ret;
+		} else {
+			bytenr = btrfs_node_blockptr(eb, i);
+			tmp = read_tree_block(fs_info, bytenr, 0);
+			if (!extent_buffer_uptodate(tmp)) {
+				error("unable to read log root block");
+				return -EIO;
+			}
+			ret = iter_tree_blocks(fs_info, tmp, pin);
+			free_extent_buffer(tmp);
+			if (ret)
+				return ret;
+		}
+	}
+
+	return 0;
+}
+
 static int fixup_chunks_and_devices(struct btrfs_fs_info *fs_info,
 			 struct mdrestore_struct *mdres, int out_fd)
 {
@@ -2516,6 +2576,8 @@ static int fixup_chunks_and_devices(struct btrfs_fs_info *fs_info,
 		return PTR_ERR(trans);
 	}
 
+	if (btrfs_super_log_root(fs_info->super_copy) && fs_info->log_root_tree)
+		iter_tree_blocks(fs_info, fs_info->log_root_tree->node, true);
 	fixup_block_groups(trans);
 	ret = fixup_dev_extents(trans);
 	if (ret < 0)
@@ -2530,6 +2592,8 @@ static int fixup_chunks_and_devices(struct btrfs_fs_info *fs_info,
 		error("unable to commit transaction: %d", ret);
 		return ret;
 	}
+	if (btrfs_super_log_root(fs_info->super_copy) && fs_info->log_root_tree)
+		iter_tree_blocks(fs_info, fs_info->log_root_tree->node, false);
 	return 0;
 error:
 	errno = -ret;
