@@ -282,24 +282,113 @@ static struct btrfs_ioctl_space_args *load_space_info(int fd, const char *path)
 }
 
 /*
- * This function computes the space occupied by a *single* RAID5/RAID6 chunk.
- * The computation is performed on the basis of the number of stripes
- * which compose the chunk, which could be different from the number of devices
- * if a disk is added later.
+ * Compute the ratio between logical space used over logical space allocated
+ * by profile basis
  */
-static void get_raid56_used(struct chunk_info *chunks, int chunkcount,
-		u64 *raid5_used, u64 *raid6_used)
+static void get_raid56_logical_ratio(struct btrfs_ioctl_space_args *sargs,
+				     u64 type, double *data_ratio,
+				     double *metadata_ratio,
+				     double *system_ratio)
 {
-	struct chunk_info *info_ptr = chunks;
-	*raid5_used = 0;
-	*raid6_used = 0;
+	u64 l_data_chunk = 0, l_data_used = 0;
+	u64 l_metadata_chunk = 0, l_metadata_used = 0;
+	u64 l_system_chunk = 0, l_system_used = 0;
+	int i;
 
-	while (chunkcount-- > 0) {
-		if (info_ptr->type & BTRFS_BLOCK_GROUP_RAID5)
-			(*raid5_used) += info_ptr->size / (info_ptr->num_stripes - 1);
-		if (info_ptr->type & BTRFS_BLOCK_GROUP_RAID6)
-			(*raid6_used) += info_ptr->size / (info_ptr->num_stripes - 2);
-		info_ptr++;
+	for (i = 0; i < sargs->total_spaces; i++) {
+		u64 flags = sargs->spaces[i].flags;
+
+		if (!(flags & type))
+			continue;
+
+		if (flags & BTRFS_BLOCK_GROUP_DATA) {
+			l_data_used += sargs->spaces[i].used_bytes;
+			l_data_chunk += sargs->spaces[i].total_bytes;
+		} else if (flags & BTRFS_BLOCK_GROUP_METADATA) {
+			l_metadata_used += sargs->spaces[i].used_bytes;
+			l_metadata_chunk += sargs->spaces[i].total_bytes;
+		} else if (flags & BTRFS_BLOCK_GROUP_SYSTEM) {
+			l_system_used += sargs->spaces[i].used_bytes;
+			l_system_chunk += sargs->spaces[i].total_bytes;
+		}
+	}
+
+	*data_ratio = -1.0;
+	*metadata_ratio = -1.0;
+	*system_ratio = -1.0;
+
+	if (l_data_chunk)
+		*data_ratio = (double)l_data_used / l_data_chunk;
+	if (l_metadata_chunk)
+		*metadata_ratio = (double)l_metadata_used / l_metadata_chunk;
+	if (l_system_chunk)
+		*system_ratio = (double)l_system_used / l_system_chunk;
+}
+
+/*
+ * Compute the "raw" space allocated for a chunk (r_*_chunks)
+ * and the "raw" space used by a chunk (r_*_used)
+ */
+static void get_raid56_space_info(struct btrfs_ioctl_space_args *sargs,
+				  struct chunk_info *chunks, int chunkcount,
+				  double *max_data_ratio,
+				  u64 *r_data_chunks, u64 *r_data_used,
+				  u64 *r_metadata_chunks, u64 *r_metadata_used,
+				  u64 *r_system_chunks, u64 *r_system_used)
+{
+	struct chunk_info *info_ptr;
+	double l_data_ratio_r5, l_metadata_ratio_r5, l_system_ratio_r5;
+	double l_data_ratio_r6, l_metadata_ratio_r6, l_system_ratio_r6;
+
+	get_raid56_logical_ratio(sargs, BTRFS_BLOCK_GROUP_RAID5,
+		 &l_data_ratio_r5, &l_metadata_ratio_r5, &l_system_ratio_r5);
+	get_raid56_logical_ratio(sargs, BTRFS_BLOCK_GROUP_RAID6,
+		 &l_data_ratio_r6, &l_metadata_ratio_r6, &l_system_ratio_r6);
+
+	for(info_ptr = chunks; chunkcount > 0; chunkcount--, info_ptr++) {
+		int parities_count;
+		u64 size;
+		double l_data_ratio, l_metadata_ratio, l_system_ratio, rt;
+
+		if (info_ptr->type & BTRFS_BLOCK_GROUP_RAID5) {
+			parities_count = 1;
+			l_data_ratio = l_data_ratio_r5;
+			l_metadata_ratio = l_metadata_ratio_r5;
+			l_system_ratio = l_system_ratio_r5;
+		} else if (info_ptr->type & BTRFS_BLOCK_GROUP_RAID6) {
+			parities_count = 2;
+			l_data_ratio = l_data_ratio_r6;
+			l_metadata_ratio = l_metadata_ratio_r6;
+			l_system_ratio = l_system_ratio_r6;
+		} else {
+			continue;
+		}
+
+		rt = (double)info_ptr->num_stripes /
+			(info_ptr->num_stripes - parities_count);
+		if (rt > *max_data_ratio)
+			*max_data_ratio = rt;
+
+		/*
+		 * size is the total disk(s) space occuped by a chunk
+		 * the product of 'size' and  '*_ratio' is "in average"
+		 * the disk(s) space used by the data
+		 */
+		size = info_ptr->size / (info_ptr->num_stripes - parities_count);
+
+		if (info_ptr->type & BTRFS_BLOCK_GROUP_DATA) {
+			assert(l_data_ratio >= 0);
+			*r_data_chunks += size;
+			*r_data_used += size * l_data_ratio;
+		} else if (info_ptr->type & BTRFS_BLOCK_GROUP_METADATA) {
+			assert(l_metadata_ratio >= 0);
+			*r_metadata_chunks += size;
+			*r_metadata_used += size * l_metadata_ratio;
+		} else if (info_ptr->type & BTRFS_BLOCK_GROUP_SYSTEM) {
+			assert(l_system_ratio >= 0);
+			*r_system_chunks += size;
+			*r_system_used += size * l_system_ratio;
+		}
 	}
 }
 
@@ -315,7 +404,9 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 	int width = 10;		/* default 10 for human units */
 	/*
 	 * r_* prefix is for raw data
-	 * l_* is for logical
+	 * l_* prefix is for logical
+	 * *_used suffix is for space used for data or metadata
+	 * *_chunks suffix is for total space used by the chunk
 	 */
 	u64 r_total_size = 0;	/* filesystem size, sum of device sizes */
 	u64 r_total_chunks = 0;	/* sum of chunks sizes on disk(s) */
@@ -333,13 +424,11 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 	double data_ratio;
 	double metadata_ratio;
 	/* logical */
-	u64 raid5_used = 0;
-	u64 raid6_used = 0;
 	u64 l_global_reserve = 0;
 	u64 l_global_reserve_used = 0;
 	u64 free_estimated = 0;
 	u64 free_min = 0;
-	int max_data_ratio = 1;
+	double max_data_ratio = 1.0;
 	int mixed = 0;
 
 	sargs = load_space_info(fd, path);
@@ -361,15 +450,20 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 		ret = 1;
 		goto exit;
 	}
-	get_raid56_used(chunkinfo, chunkcount, &raid5_used, &raid6_used);
+
+	get_raid56_space_info(sargs, chunkinfo, chunkcount, &max_data_ratio,
+			      &r_data_chunks, &r_data_used,
+			      &r_metadata_chunks, &r_metadata_used,
+			      &r_system_chunks, &r_system_used);
 
 	for (i = 0; i < sargs->total_spaces; i++) {
 		int ratio;
 		u64 flags = sargs->spaces[i].flags;
 
 		/*
-		 * The raid5/raid6 ratio depends by the stripes number
-		 * used by every chunk. It is computed separately
+		 * The RAID5/6 ratio depends on the number of stripes and is
+		 * computed separately. Setting ratio to 0 will not account
+		 * the chunks in this loop.
 		 */
 		if (flags & BTRFS_BLOCK_GROUP_RAID0)
 			ratio = 1;
@@ -389,9 +483,6 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 			ratio = 2;
 		else
 			ratio = 1;
-
-		if (!ratio)
-			warning("RAID56 detected, not implemented");
 
 		if (ratio > max_data_ratio)
 			max_data_ratio = ratio;
@@ -434,11 +525,6 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 		metadata_ratio = data_ratio;
 	else
 		metadata_ratio = (double)r_metadata_chunks / l_metadata_chunks;
-
-#if 0
-	/* add the raid5/6 allocated space */
-	total_chunks += raid5_used + raid6_used;
-#endif
 
 	/*
 	 * We're able to fill at least DATA for the unused space
