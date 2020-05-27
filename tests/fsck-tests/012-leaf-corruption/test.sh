@@ -37,11 +37,6 @@ leaf_no_data_ext_list=(
 generate_leaf_corrupt_no_data_ext()
 {
 	dest=$1
-	_log "generating leaf_corrupt_no_data_ext.btrfs-image"
-	tar --no-same-owner -xJf ./no_data_extent.tar.xz || \
-		_fail "failed to extract leaf_corrupt_no_data_ext.btrfs-image"
-	"$TOP/btrfs-image" -r test.img.btrfs-image "$dest" || \
-		_fail "failed to extract leaf_corrupt_no_data_ext.btrfs-image"
 
 	# leaf at 4206592 and 20905984 contains no regular data
 	# extent, clear its csum to corrupt the leaf.
@@ -107,11 +102,9 @@ check_leaf_corrupt_no_data_ext()
 
 setup_root_helper
 
-generate_leaf_corrupt_no_data_ext test.img
-check_image test.img
-check_leaf_corrupt_no_data_ext test.img
+image=$(extract_image ./good.img.xz)
+generate_leaf_corrupt_no_data_ext "$image"
+check_image "$image"
+check_leaf_corrupt_no_data_ext "$image"
 
-rm test.img
-rm test.img.btrfs-image
-# Not used, its function is the same as generate_leaf_corrupt_no_data_ext()
-rm generate_image.sh
+rm -- "$image"
