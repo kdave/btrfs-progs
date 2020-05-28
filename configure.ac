@@ -196,7 +196,7 @@ if test "$DISABLE_BTRFSCONVERT" = 0 && test "x$convertfs" = "x"; then
 fi
 
 AC_ARG_WITH([crypto],
-	    AS_HELP_STRING([[[]--with-crypto[[=builtin]]]], [provider of cryptographic primtives: builtin, libgcrypt, libsodium]),
+	    AS_HELP_STRING([[[]--with-crypto[[=builtin]]]], [provider of cryptographic primitives: builtin, libgcrypt, libsodium, libkcapi]),
   [], [with_crypto=builtin]
 )
 
@@ -217,6 +217,11 @@ elif test "$with_crypto" = "libsodium"; then
 	PKG_CHECK_MODULES(SODIUM, [libsodium >= 1.0.4])
 	AC_DEFINE([CRYPTOPROVIDER_LIBSODIUM],[1],[Use libsodium])
 	cryptoproviderversion=`pkg-config libsodium --version`
+elif test "$with_crypto" = "libkcapi"; then
+	cryptoprovider="libkcapi"
+	PKG_CHECK_MODULES(KCAPI, [libkcapi >= 1.0.0])
+	AC_DEFINE([CRYPTOPROVIDER_LIBKCAPI],[1],[Use libkcapi])
+	cryptoproviderversion=`pkg-config libkcapi --version`
 else
 	AC_MSG_ERROR([unrecognized crypto provider: $with_crypto])
 fi

@@ -91,3 +91,49 @@ int hash_blake2b(const u8 *buf, size_t len, u8 *out)
 }
 
 #endif
+
+#if CRYPTOPROVIDER_LIBKCAPI == 1
+
+#include <kcapi.h>
+
+int hash_sha256(const u8 *buf, size_t len, u8 *out)
+{
+	static struct kcapi_handle *handle = NULL;
+	int ret;
+
+	if (!handle) {
+		ret = kcapi_md_init(&handle, "sha256", 0);
+		if (ret < 0) {
+			fprintf(stderr,
+				"HASH: cannot instantiate sha256, error %d\n",
+				ret);
+			exit(1);
+		}
+	}
+	ret = kcapi_md_digest(handle, buf, len, out, CRYPTO_HASH_SIZE_MAX);
+	/* kcapi_md_destroy(handle); */
+
+	return ret;
+}
+
+int hash_blake2b(const u8 *buf, size_t len, u8 *out)
+{
+	static struct kcapi_handle *handle = NULL;
+	int ret;
+
+	if (!handle) {
+		ret = kcapi_md_init(&handle, "blake2b-256", 0);
+		if (ret < 0) {
+			fprintf(stderr,
+				"HASH: cannot instantiate blake2b-256, error %d\n",
+				ret);
+			exit(1);
+		}
+	}
+	ret = kcapi_md_digest(handle, buf, len, out, CRYPTO_HASH_SIZE_MAX);
+	/* kcapi_md_destroy(handle); */
+
+	return ret;
+}
+
+#endif
