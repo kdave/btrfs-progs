@@ -2778,11 +2778,6 @@ struct btrfs_dir_item *btrfs_match_dir_item_name(struct btrfs_root *root,
 			      struct btrfs_path *path,
 			      const char *name, int name_len);
 
-/* inode-map.c */
-int btrfs_find_free_objectid(struct btrfs_trans_handle *trans,
-			     struct btrfs_root *fs_root,
-			     u64 dirid, u64 *objectid);
-
 /* inode-item.c */
 int btrfs_insert_inode_ref(struct btrfs_trans_handle *trans,
 			   struct btrfs_root *root,
@@ -2871,6 +2866,9 @@ int btrfs_mkdir(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 		char *name, int namelen, u64 parent_ino, u64 *ino, int mode);
 struct btrfs_root *btrfs_mksubvol(struct btrfs_root *root, const char *base,
 				  u64 root_objectid, bool convert);
+int btrfs_find_free_objectid(struct btrfs_trans_handle *trans,
+			     struct btrfs_root *fs_root,
+			     u64 dirid, u64 *objectid);
 
 /* file.c */
 int btrfs_get_extent(struct btrfs_trans_handle *trans,
