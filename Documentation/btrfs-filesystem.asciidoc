@@ -278,23 +278,52 @@ Overall:
     Data ratio:                       1.00
     Metadata ratio:                   1.00
     Global reserve:              512.00MiB      (used: 0.00B)
+    Multiple profiles:                  no
 -------------------------
++
+--
+* 'Device size' -- sum of raw device capacity available to the filesystem
+* 'Device allocated' -- sum of total space allocated for data/metadata/system
+profiles, this also accounts space reserved but not yet used for extents
+* 'Device unallocated' -- the remaining unallocated space for future
+allocations (difference of the above two numbers)
+* 'Device missing' -- sum of capacity of all missing devices
+* 'Used' -- sum of the used space of data/metadata/system profiles, not
+including the reserved space
+* 'Free (estimated)' -- approximate size of the remaining free space usable for
+data, including currently allocated space and estimating the usage of the
+unallocated space based on the block group profiles, the 'min' is the lower bound
+of the estimate in case multiple profiles are present
+* 'Data ratio' -- ratio of total space for data including redundancy or parity to
+the effectively usable data space, eg. single is 1.0, RAID1 is 2.0 and for RAID5/6
+it depends on the number of devices
+* 'Metadata ratio' -- dtto, for metadata
+* 'Global reserve' -- portion of metadata currently used for global block
+reserve, used for emergency purposes (like deletion on a full filesystem)
+* 'Multiple profiles' -- what block group types (data, metadata) have more than
+one profile (single, raid1, ...), see `btrfs`(5)
+section 'FILESYSTEMS WITH MULTIPLE BLOCK GROUP PROFILES'.
+--
 +
 The root user will also see stats broken down by block group types:
 +
 -------------------------
-Data,single: Size:1.15TiB, Used:1.13TiB
+Data,single: Size:1.15TiB, Used:1.13TiB (98.26%)
    /dev/sdb        1.15TiB
 
-Metadata,single: Size:12.00GiB, Used:6.45GiB
+Metadata,single: Size:12.00GiB, Used:6.45GiB (53.75%)
    /dev/sdb       12.00GiB
 
-System,single: Size:32.00MiB, Used:144.00KiB
+System,single: Size:32.00MiB, Used:144.00KiB (0.44%)
    /dev/sdb       32.00MiB
 
 Unallocated:
    /dev/sdb      669.99GiB
 -------------------------
++
+'Data' is block group type, 'single' is block group profile, 'Size' is total
+size occupied by this type, 'Used' is the actually used space, the percent is
+ratio of 'Used/Size'. The 'Unallocated' is remaining space.
 +
 `Options`
 +
