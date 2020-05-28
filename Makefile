@@ -162,7 +162,7 @@ cmds_objects = cmds/subvolume.o cmds/filesystem.o cmds/device.o cmds/scrub.o \
 libbtrfs_objects = send-stream.o send-utils.o kernel-lib/rbtree.o btrfs-list.o \
 		   kernel-lib/radix-tree.o extent-cache.o extent_io.o \
 		   crypto/crc32c.o common/messages.o \
-		   uuid-tree.o utils-lib.o common/rbtree-utils.o \
+		   kernel-shared/uuid-tree.o utils-lib.o common/rbtree-utils.o \
 		   ctree.o disk-io.o extent-tree.o kernel-shared/delayed-ref.o print-tree.o \
 		   free-space-cache.o kernel-shared/root-tree.o volumes.o transaction.o \
 		   kernel-shared/free-space-tree.o repair.o kernel-shared/inode-item.o \
