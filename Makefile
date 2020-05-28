@@ -164,7 +164,7 @@ libbtrfs_objects = send-stream.o send-utils.o kernel-lib/rbtree.o btrfs-list.o \
 		   crypto/crc32c.o common/messages.o \
 		   uuid-tree.o utils-lib.o common/rbtree-utils.o \
 		   ctree.o disk-io.o extent-tree.o kernel-shared/delayed-ref.o print-tree.o \
-		   free-space-cache.o root-tree.o volumes.o transaction.o \
+		   free-space-cache.o kernel-shared/root-tree.o volumes.o transaction.o \
 		   kernel-shared/free-space-tree.o repair.o kernel-shared/inode-item.o \
 		   kernel-shared/file-item.o \
 		   kernel-lib/raid56.o kernel-lib/tables.o \
