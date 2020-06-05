@@ -34,7 +34,12 @@ The filters can be used to perform following actions:
 - perform actions only on a given device (filters 'devid', 'drange')
 
 The filters can be applied to a combination of block group types (data,
-metadata, system). Note that changing 'system' needs the force option.
+metadata, system). Note that changing only the 'system' type needs the force
+option. Otherwise 'system' gets automatically converted whenver 'metadata'
+profile is converted.
+
+When metadata redundancy is reduced (eg. from RAID1 to single) the force option
+is also required and it is noted in system log.
 
 NOTE: the balance operation needs enough work space, ie. space that is
 completely unused in the filesystem, otherwise this may lead to ENOSPC reports.
@@ -66,6 +71,10 @@ SUBCOMMAND
 *cancel* <path>::
 cancels a running or paused balance, the command will block and wait until the
 current blockgroup being processed completes
++
+Since kernel 5.7 the response time of the cancellation is significantly
+improved, on older kernels it might take a long time until currently
+processed chunk is completely finished.
 
 *pause* <path>::
 pause running balance operation, this will store the state of the balance
@@ -73,8 +82,8 @@ progress and used filters to the filesystem
 
 *resume* <path>::
 resume interrupted balance, the balance status must be stored on the filesystem
-from previous run, eg. after it was forcibly interrupted and mounted again with
-'skip_balance'
+from previous run, eg. after it was paused or forcibly interrupted and mounted
+again with 'skip_balance'
 
 *start* [options] <path>::
 start the balance operation according to the specified filters, no filters
