@@ -1,3 +1,6 @@
+Convention and style used for manual pages
+------------------------------------------
+
 Manual pages structure:
 
 - add references to all external commands mentioned anywhere in the text to the
@@ -13,14 +16,14 @@ Manual pages structure:
 - subcommands are in alphabetical order
 
 - long command output or shell examples: verbatim output
-  - a new paragraph, 2 spaces at the beginning of the line
-
+  - a new paragraph, 2 spaces at the beginning of the line, or the comment block
 
 Quotation in subcommands:
 
 - exact syntax: monotype `usage=0`
 - reference to arguments etc: 'italics'
-- command reference: bold *btrfs fi show*
+- command reference: bold *btrfs filesystem show*
+  - subcommand names should be spelled in full, ie. 'filesystem' instead of 'fi'
 - section references: italics 'EXAMPLES'
 
 - argument name in option description: caps in angle brackets <NAME>
@@ -32,6 +35,16 @@ Quotation in subcommands:
   - optional unspecified: brackets [options]
   - mandatory argument: angle brackets <path>
   - optional parameter with argument: [-p <path>]
+
+Other:
+
+- NOTE: at the beginning of the line, is rendered as a separate paragraph and
+  should be used only for important information
+
+- WARNING: at the beginning of the line, is rendered as a separate paragraph
+  and most likely more visible than NOTE, use for critical information that
+  may cause harm, irreversible state or performance problems
+  - should point reader to other part of documentation to seek more details
 
 
 References:
