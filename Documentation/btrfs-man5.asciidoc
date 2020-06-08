@@ -217,15 +217,24 @@ paths are provided as the actual device nodes may not be discovered by the
 system at that point.
 
 *discard*::
+*discard=sync*::
+*discard=async*::
 *nodiscard*::
-(default: off)
+(default: off, async support since: 5.6)
 +
 Enable discarding of freed file blocks.  This is useful for SSD devices, thinly
 provisioned LUNs, or virtual machine images; however, every storage layer must
-support discard for it to work. if the backing device does not support
-asynchronous queued TRIM, then this operation can severely degrade performance,
+support discard for it to work.
++
+In the synchronous mode ('sync' or without option value), lack of asynchronous
+queued TRIM on the backing device TRIM can severely degrade performance,
 because a synchronous TRIM operation will be attempted instead. Queued TRIM
 requires newer than SATA revision 3.1 chipsets and devices.
++
+The asynchronous mode ('async') gathers extents in larger chunks before sending
+them to the devices for TRIM. The overhead and performance impact should be
+negligible compared to the previous mode and it's supposed to be the preferred
+mode if needed.
 +
 If it is not necessary to immediately discard freed blocks, then the `fstrim`
 tool can be used to discard all free blocks in a batch. Scheduling a TRIM
