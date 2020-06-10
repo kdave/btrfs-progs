@@ -311,12 +311,12 @@ it possible to reach it. In such case, this mount option will help.
 Alternatively, files with high inode numbers can be copied to a new subvolume
 which will effectively start the inode numbers from the beginning again.
 
-*logreplay*::
 *nologreplay*::
-(default: on, even read-only)
+(default: off, even read-only)
 +
-Enable/disable log replay at mount time. See also 'treelog'.
-Note that 'nologreplay' is the same as 'norecovery'.
+The tree-log contains pending updates to the filesystem until the full commit.
+The log is replayed on next mount, this can be disabled by this option.  See
+also 'treelog'.  Note that 'nologreplay' is the same as 'norecovery'.
 +
 WARNING: currently, the tree log is replayed even with a read-only mount! To
 disable that behaviour, mount also with 'nologreplay'.
