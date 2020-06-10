@@ -1100,7 +1100,7 @@ int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 	}
 
 	ctl.type = btrfs_bg_flags_to_raid_index(type);
-	ctl.num_stripes = 1;
+	ctl.num_stripes = btrfs_raid_profile_table[ctl.type].num_stripes;
 	ctl.max_stripes = 0;
 	ctl.min_stripes = btrfs_raid_profile_table[ctl.type].min_stripes;
 	ctl.sub_stripes = btrfs_raid_profile_table[ctl.type].sub_stripes;
@@ -1135,9 +1135,6 @@ int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 		ctl.num_stripes = min(ctl.min_stripes, ctl.total_devs);
 		if (ctl.num_stripes < ctl.min_stripes)
 			return -ENOSPC;
-	}
-	if (ctl.type == BTRFS_RAID_DUP) {
-		ctl.num_stripes = 2;
 	}
 	if (ctl.type == BTRFS_RAID_RAID0) {
 		ctl.num_stripes = min(ctl.max_stripes, ctl.total_devs);
