@@ -1129,28 +1129,31 @@ int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 			ctl.max_stripes = BTRFS_MAX_DEVS(info);
 		}
 	}
-	if (ctl.type == BTRFS_RAID_RAID1 ||
-	    ctl.type == BTRFS_RAID_RAID1C3 ||
-	    ctl.type == BTRFS_RAID_RAID1C4) {
+	switch (ctl.type) {
+	case BTRFS_RAID_RAID1:
+	case BTRFS_RAID_RAID1C3:
+	case BTRFS_RAID_RAID1C4:
 		ctl.num_stripes = min(ctl.min_stripes, ctl.total_devs);
-	}
-	if (ctl.type == BTRFS_RAID_RAID0) {
+		break;
+	case BTRFS_RAID_RAID0:
 		ctl.num_stripes = min(ctl.max_stripes, ctl.total_devs);
-		ctl.min_stripes = btrfs_raid_profile_table[ctl.type].min_stripes;
-	}
-	if (ctl.type == BTRFS_RAID_RAID10) {
+		break;
+	case BTRFS_RAID_RAID10:
 		ctl.num_stripes = min(ctl.max_stripes, ctl.total_devs);
 		ctl.num_stripes &= ~(u32)1;
-	}
-	if (ctl.type == BTRFS_RAID_RAID5) {
+		break;
+	case BTRFS_RAID_RAID5:
 		ctl.num_stripes = min(ctl.max_stripes, ctl.total_devs);
 		ctl.stripe_len = find_raid56_stripe_len(ctl.num_stripes - 1,
 				    btrfs_super_stripesize(info->super_copy));
-	}
-	if (ctl.type == BTRFS_RAID_RAID6) {
+		break;
+	case BTRFS_RAID_RAID6:
 		ctl.num_stripes = min(ctl.max_stripes, ctl.total_devs);
 		ctl.stripe_len = find_raid56_stripe_len(ctl.num_stripes - 2,
 				    btrfs_super_stripesize(info->super_copy));
+		break;
+	default:
+		break;
 	}
 	if (ctl.num_stripes < ctl.min_stripes)
 		return -ENOSPC;
