@@ -1133,36 +1133,27 @@ int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 	    ctl.type == BTRFS_RAID_RAID1C3 ||
 	    ctl.type == BTRFS_RAID_RAID1C4) {
 		ctl.num_stripes = min(ctl.min_stripes, ctl.total_devs);
-		if (ctl.num_stripes < ctl.min_stripes)
-			return -ENOSPC;
 	}
 	if (ctl.type == BTRFS_RAID_RAID0) {
 		ctl.num_stripes = min(ctl.max_stripes, ctl.total_devs);
 		ctl.min_stripes = btrfs_raid_profile_table[ctl.type].min_stripes;
 	}
 	if (ctl.type == BTRFS_RAID_RAID10) {
-		ctl.min_stripes = btrfs_raid_profile_table[ctl.type].min_stripes;
 		ctl.num_stripes = min(ctl.max_stripes, ctl.total_devs);
-		if (ctl.num_stripes < ctl.min_stripes)
-			return -ENOSPC;
 		ctl.num_stripes &= ~(u32)1;
 	}
 	if (ctl.type == BTRFS_RAID_RAID5) {
-		ctl.min_stripes = btrfs_raid_profile_table[ctl.type].min_stripes;
 		ctl.num_stripes = min(ctl.max_stripes, ctl.total_devs);
-		if (ctl.num_stripes < ctl.min_stripes)
-			return -ENOSPC;
 		ctl.stripe_len = find_raid56_stripe_len(ctl.num_stripes - 1,
 				    btrfs_super_stripesize(info->super_copy));
 	}
 	if (ctl.type == BTRFS_RAID_RAID6) {
-		ctl.min_stripes = btrfs_raid_profile_table[ctl.type].min_stripes;
 		ctl.num_stripes = min(ctl.max_stripes, ctl.total_devs);
-		if (ctl.num_stripes < ctl.min_stripes)
-			return -ENOSPC;
 		ctl.stripe_len = find_raid56_stripe_len(ctl.num_stripes - 2,
 				    btrfs_super_stripesize(info->super_copy));
 	}
+	if (ctl.num_stripes < ctl.min_stripes)
+		return -ENOSPC;
 
 	/* we don't want a chunk larger than 10% of the FS */
 	percent_max = div_factor(btrfs_super_total_bytes(info->super_copy), 1);
