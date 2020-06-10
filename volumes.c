@@ -1077,17 +1077,12 @@ static void init_alloc_chunk_ctl(struct btrfs_fs_info *info,
 		ctl->num_stripes = min(ctl->min_stripes, ctl->total_devs);
 		break;
 	case BTRFS_RAID_RAID0:
-		ctl->num_stripes = min(ctl->max_stripes, ctl->total_devs);
-		break;
 	case BTRFS_RAID_RAID10:
-		ctl->num_stripes = min(ctl->max_stripes, ctl->total_devs);
-		ctl->num_stripes &= ~(u32)1;
-		break;
 	case BTRFS_RAID_RAID5:
-		ctl->num_stripes = min(ctl->max_stripes, ctl->total_devs);
-		break;
 	case BTRFS_RAID_RAID6:
 		ctl->num_stripes = min(ctl->max_stripes, ctl->total_devs);
+		if (type == BTRFS_RAID_RAID10)
+			ctl->num_stripes &= ~(u32)1;
 		break;
 	default:
 		break;
