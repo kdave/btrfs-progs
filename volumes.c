@@ -1129,20 +1129,9 @@ int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 			ctl.max_stripes = BTRFS_MAX_DEVS(info);
 		}
 	}
-	if (ctl.type == BTRFS_RAID_RAID1) {
-		ctl.min_stripes = btrfs_raid_profile_table[ctl.type].min_stripes;
-		ctl.num_stripes = min(ctl.min_stripes, ctl.total_devs);
-		if (ctl.num_stripes < ctl.min_stripes)
-			return -ENOSPC;
-	}
-	if (ctl.type == BTRFS_RAID_RAID1C3) {
-		ctl.min_stripes = btrfs_raid_profile_table[ctl.type].min_stripes;
-		ctl.num_stripes = min(ctl.min_stripes, ctl.total_devs);
-		if (ctl.num_stripes < ctl.min_stripes)
-			return -ENOSPC;
-	}
-	if (ctl.type == BTRFS_RAID_RAID1C4) {
-		ctl.min_stripes = btrfs_raid_profile_table[ctl.type].min_stripes;
+	if (ctl.type == BTRFS_RAID_RAID1 ||
+	    ctl.type == BTRFS_RAID_RAID1C3 ||
+	    ctl.type == BTRFS_RAID_RAID1C4) {
 		ctl.num_stripes = min(ctl.min_stripes, ctl.total_devs);
 		if (ctl.num_stripes < ctl.min_stripes)
 			return -ENOSPC;
