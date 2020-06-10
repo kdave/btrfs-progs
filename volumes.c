@@ -1005,6 +1005,68 @@ error:
 				- 2 * sizeof(struct btrfs_chunk))	\
 				/ sizeof(struct btrfs_stripe) + 1)
 
+static const struct btrfs_raid_profile {
+	int	num_stripes;
+	int	max_stripes;
+	int	min_stripes;
+	int	sub_stripes;
+} btrfs_raid_profile_table[BTRFS_NR_RAID_TYPES] = {
+	[BTRFS_RAID_RAID10] = {
+		.num_stripes = 0,
+		.max_stripes = 0,
+		.min_stripes = 4,
+		.sub_stripes = 2,
+	},
+	[BTRFS_RAID_RAID1] = {
+		.num_stripes = 0,
+		.max_stripes = 0,
+		.min_stripes = 2,
+		.sub_stripes = 1,
+	},
+	[BTRFS_RAID_RAID1C3] = {
+		.num_stripes = 0,
+		.max_stripes = 0,
+		.min_stripes = 3,
+		.sub_stripes = 1,
+	},
+	[BTRFS_RAID_RAID1C4] = {
+		.num_stripes = 0,
+		.max_stripes = 0,
+		.min_stripes = 4,
+		.sub_stripes = 1,
+	},
+	[BTRFS_RAID_DUP] = {
+		.num_stripes = 2,
+		.max_stripes = 0,
+		.min_stripes = 2,
+		.sub_stripes = 1,
+	},
+	[BTRFS_RAID_RAID0] = {
+		.num_stripes = 0,
+		.max_stripes = 0,
+		.min_stripes = 2,
+		.sub_stripes = 1,
+	},
+	[BTRFS_RAID_SINGLE] = {
+		.num_stripes = 1,
+		.max_stripes = 0,
+		.min_stripes = 1,
+		.sub_stripes = 1,
+	},
+	[BTRFS_RAID_RAID5] = {
+		.num_stripes = 0,
+		.max_stripes = 0,
+		.min_stripes = 2,
+		.sub_stripes = 1,
+	},
+	[BTRFS_RAID_RAID6] = {
+		.num_stripes = 0,
+		.max_stripes = 0,
+		.min_stripes = 3,
+		.sub_stripes = 1,
+	},
+};
+
 int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 		      struct btrfs_fs_info *info, u64 *start,
 		      u64 *num_bytes, u64 type)
@@ -1037,6 +1099,7 @@ int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 		return -ENOSPC;
 	}
 
+	ctl.type = btrfs_bg_flags_to_raid_index(type);
 	ctl.num_stripes = 1;
 	ctl.max_stripes = 0;
 	ctl.min_stripes = 1;
@@ -1066,50 +1129,50 @@ int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 			ctl.max_stripes = BTRFS_MAX_DEVS(info);
 		}
 	}
-	if (type & BTRFS_BLOCK_GROUP_RAID1) {
-		ctl.min_stripes = 2;
+	if (ctl.type == BTRFS_RAID_RAID1) {
+		ctl.min_stripes = btrfs_raid_profile_table[ctl.type].min_stripes;
 		ctl.num_stripes = min(ctl.min_stripes, ctl.total_devs);
 		if (ctl.num_stripes < ctl.min_stripes)
 			return -ENOSPC;
 	}
-	if (type & BTRFS_BLOCK_GROUP_RAID1C3) {
-		ctl.min_stripes = 3;
+	if (ctl.type == BTRFS_RAID_RAID1C3) {
+		ctl.min_stripes = btrfs_raid_profile_table[ctl.type].min_stripes;
 		ctl.num_stripes = min(ctl.min_stripes, ctl.total_devs);
 		if (ctl.num_stripes < ctl.min_stripes)
 			return -ENOSPC;
 	}
-	if (type & BTRFS_BLOCK_GROUP_RAID1C4) {
-		ctl.min_stripes = 4;
+	if (ctl.type == BTRFS_RAID_RAID1C4) {
+		ctl.min_stripes = btrfs_raid_profile_table[ctl.type].min_stripes;
 		ctl.num_stripes = min(ctl.min_stripes, ctl.total_devs);
 		if (ctl.num_stripes < ctl.min_stripes)
 			return -ENOSPC;
 	}
-	if (type & BTRFS_BLOCK_GROUP_DUP) {
+	if (ctl.type == BTRFS_RAID_DUP) {
 		ctl.num_stripes = 2;
-		ctl.min_stripes = 2;
+		ctl.min_stripes = btrfs_raid_profile_table[ctl.type].min_stripes;
 	}
-	if (type & (BTRFS_BLOCK_GROUP_RAID0)) {
+	if (ctl.type == BTRFS_RAID_RAID0) {
 		ctl.num_stripes = min(ctl.max_stripes, ctl.total_devs);
-		ctl.min_stripes = 2;
+		ctl.min_stripes = btrfs_raid_profile_table[ctl.type].min_stripes;
 	}
-	if (type & (BTRFS_BLOCK_GROUP_RAID10)) {
-		ctl.min_stripes = 4;
+	if (ctl.type == BTRFS_RAID_RAID10) {
+		ctl.min_stripes = btrfs_raid_profile_table[ctl.type].min_stripes;
 		ctl.num_stripes = min(ctl.max_stripes, ctl.total_devs);
 		if (ctl.num_stripes < ctl.min_stripes)
 			return -ENOSPC;
 		ctl.num_stripes &= ~(u32)1;
 		ctl.sub_stripes = 2;
 	}
-	if (type & (BTRFS_BLOCK_GROUP_RAID5)) {
-		ctl.min_stripes = 2;
+	if (ctl.type == BTRFS_RAID_RAID5) {
+		ctl.min_stripes = btrfs_raid_profile_table[ctl.type].min_stripes;
 		ctl.num_stripes = min(ctl.max_stripes, ctl.total_devs);
 		if (ctl.num_stripes < ctl.min_stripes)
 			return -ENOSPC;
 		ctl.stripe_len = find_raid56_stripe_len(ctl.num_stripes - 1,
 				    btrfs_super_stripesize(info->super_copy));
 	}
-	if (type & (BTRFS_BLOCK_GROUP_RAID6)) {
-		ctl.min_stripes = 3;
+	if (ctl.type == BTRFS_RAID_RAID6) {
+		ctl.min_stripes = btrfs_raid_profile_table[ctl.type].min_stripes;
 		ctl.num_stripes = min(ctl.max_stripes, ctl.total_devs);
 		if (ctl.num_stripes < ctl.min_stripes)
 			return -ENOSPC;
