@@ -900,13 +900,6 @@ static u64 chunk_bytes_by_type(u64 type, u64 calc_size,
 		return calc_size * ctl->num_stripes;
 }
 
-
-static u32 find_raid56_stripe_len(u32 data_devices, u32 dev_stripe_target)
-{
-	/* TODO, add a way to store the preferred stripe size */
-	return BTRFS_STRIPE_LEN;
-}
-
 /*
  * btrfs_device_avail_bytes - count bytes available for alloc_chunk
  *
@@ -1092,13 +1085,9 @@ static void init_alloc_chunk_ctl(struct btrfs_fs_info *info,
 		break;
 	case BTRFS_RAID_RAID5:
 		ctl->num_stripes = min(ctl->max_stripes, ctl->total_devs);
-		ctl->stripe_len = find_raid56_stripe_len(ctl->num_stripes - 1,
-				    btrfs_super_stripesize(info->super_copy));
 		break;
 	case BTRFS_RAID_RAID6:
 		ctl->num_stripes = min(ctl->max_stripes, ctl->total_devs);
-		ctl->stripe_len = find_raid56_stripe_len(ctl->num_stripes - 2,
-				    btrfs_super_stripesize(info->super_copy));
 		break;
 	default:
 		break;
