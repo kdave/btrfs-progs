@@ -1079,16 +1079,14 @@ int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 		min_stripes = 2;
 	}
 	if (type & (BTRFS_BLOCK_GROUP_RAID0)) {
-		num_stripes = btrfs_super_num_devices(info->super_copy);
-		if (num_stripes > max_stripes)
-			num_stripes = max_stripes;
+		num_stripes = min_t(u64, max_stripes,
+				    btrfs_super_num_devices(info->super_copy));
 		min_stripes = 2;
 	}
 	if (type & (BTRFS_BLOCK_GROUP_RAID10)) {
 		min_stripes = 4;
-		num_stripes = btrfs_super_num_devices(info->super_copy);
-		if (num_stripes > max_stripes)
-			num_stripes = max_stripes;
+		num_stripes = min_t(u64, max_stripes,
+				    btrfs_super_num_devices(info->super_copy));
 		if (num_stripes < min_stripes)
 			return -ENOSPC;
 		num_stripes &= ~(u32)1;
@@ -1096,9 +1094,8 @@ int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 	}
 	if (type & (BTRFS_BLOCK_GROUP_RAID5)) {
 		min_stripes = 2;
-		num_stripes = btrfs_super_num_devices(info->super_copy);
-		if (num_stripes > max_stripes)
-			num_stripes = max_stripes;
+		num_stripes = min_t(u64, max_stripes,
+				    btrfs_super_num_devices(info->super_copy));
 		if (num_stripes < min_stripes)
 			return -ENOSPC;
 		stripe_len = find_raid56_stripe_len(num_stripes - 1,
@@ -1106,9 +1103,8 @@ int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 	}
 	if (type & (BTRFS_BLOCK_GROUP_RAID6)) {
 		min_stripes = 3;
-		num_stripes = btrfs_super_num_devices(info->super_copy);
-		if (num_stripes > max_stripes)
-			num_stripes = max_stripes;
+		num_stripes = min_t(u64, max_stripes,
+				    btrfs_super_num_devices(info->super_copy));
 		if (num_stripes < min_stripes)
 			return -ENOSPC;
 		stripe_len = find_raid56_stripe_len(num_stripes - 2,
