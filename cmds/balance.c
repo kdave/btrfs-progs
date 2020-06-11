@@ -769,6 +769,8 @@ static DEFINE_SIMPLE_COMMAND(balance_cancel, "cancel");
 static const char * const cmd_balance_resume_usage[] = {
 	"btrfs balance resume <path>",
 	"Resume interrupted balance",
+	HELPINFO_INSERT_GLOBALS,
+	HELPINFO_INSERT_QUIET,
 	NULL
 };
 
@@ -817,9 +819,10 @@ static int cmd_balance_resume(const struct cmd_struct *cmd,
 			ret = 1;
 		}
 	} else {
-		printf("Done, had to relocate %llu out of %llu chunks\n",
-		       (unsigned long long)args.stat.completed,
-		       (unsigned long long)args.stat.considered);
+		pr_verbose(MUST_LOG,
+			   "Done, had to relocate %llu out of %llu chunks\n",
+			   (unsigned long long)args.stat.completed,
+			   (unsigned long long)args.stat.considered);
 	}
 
 	close_file_or_dir(fd, dirstream);
