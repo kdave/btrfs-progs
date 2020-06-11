@@ -1626,6 +1626,8 @@ static DEFINE_SIMPLE_COMMAND(scrub_start, "start");
 static const char * const cmd_scrub_cancel_usage[] = {
 	"btrfs scrub cancel <path>|<device>",
 	"Cancel a running scrub",
+	HELPINFO_INSERT_GLOBALS,
+	HELPINFO_INSERT_QUIET,
 	NULL
 };
 
@@ -1662,7 +1664,7 @@ static int cmd_scrub_cancel(const struct cmd_struct *cmd, int argc, char **argv)
 	}
 
 	ret = 0;
-	printf("scrub cancelled\n");
+	pr_verbose(MUST_LOG, "scrub cancelled\n");
 
 out:
 	close_file_or_dir(fdmnt, dirstream);
