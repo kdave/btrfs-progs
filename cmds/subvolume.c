@@ -671,6 +671,8 @@ static const char * const cmd_subvol_snapshot_usage[] = {
 	"-r             create a readonly snapshot",
 	"-i <qgroupid>  add the newly created snapshot to a qgroup. This",
 	"               option can be given multiple times.",
+	HELPINFO_INSERT_GLOBALS,
+	HELPINFO_INSERT_QUIET,
 	NULL
 };
 
@@ -785,11 +787,13 @@ static int cmd_subvol_snapshot(const struct cmd_struct *cmd,
 
 	if (readonly) {
 		args.flags |= BTRFS_SUBVOL_RDONLY;
-		printf("Create a readonly snapshot of '%s' in '%s/%s'\n",
-		       subvol, dstdir, newname);
+		pr_verbose(MUST_LOG,
+			   "Create a readonly snapshot of '%s' in '%s/%s'\n",
+			   subvol, dstdir, newname);
 	} else {
-		printf("Create a snapshot of '%s' in '%s/%s'\n",
-		       subvol, dstdir, newname);
+		pr_verbose(MUST_LOG,
+			   "Create a snapshot of '%s' in '%s/%s'\n",
+			   subvol, dstdir, newname);
 	}
 
 	args.fd = fd;
