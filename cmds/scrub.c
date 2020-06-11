@@ -1141,7 +1141,7 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 	int do_background = 1;
 	int do_wait = 0;
 	int do_print = 0;
-	int do_quiet = 0;
+	int do_quiet = !bconf.verbose; /*Read the global quiet option if set*/
 	int do_record = 1;
 	int readonly = 0;
 	int do_stats_per_dev = 0;
@@ -1184,7 +1184,8 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 			do_stats_per_dev = 1;
 			break;
 		case 'q':
-			do_quiet = 1;
+			bconf_be_quiet();
+			do_quiet = !bconf.verbose;
 			break;
 		case 'r':
 			readonly = 1;
@@ -1330,9 +1331,9 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 	}
 
 	if (!n_start && !n_resume) {
-		if (!do_quiet)
-			printf("scrub: nothing to resume for %s, fsid %s\n",
-			       path, fsid);
+		pr_verbose(MUST_LOG,
+			   "scrub: nothing to resume for %s, fsid %s\n",
+			   path, fsid);
 		nothing_to_resume = 1;
 		goto out;
 	}
@@ -1403,10 +1404,10 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 		if (pid) {
 			int stat;
 			scrub_handle_sigint_parent();
-			if (!do_quiet)
-				printf("scrub %s on %s, fsid %s (pid=%d)\n",
-				       n_start ? "started" : "resumed",
-				       path, fsid, pid);
+			pr_verbose(MUST_LOG,
+				   "scrub %s on %s, fsid %s (pid=%d)\n",
+				   n_start ? "started" : "resumed",
+				   path, fsid, pid);
 			if (!do_wait) {
 				err = 0;
 				goto out;
@@ -1611,6 +1612,8 @@ static const char * const cmd_scrub_start_usage[] = {
 	"-n     set ioprio classdata (see ionice(1) manpage)",
 	"-f     force starting new scrub even if a scrub is already running",
 	"       this is useful when scrub stats record file is damaged",
+	HELPINFO_INSERT_GLOBALS,
+	HELPINFO_INSERT_QUIET,
 	NULL
 };
 
@@ -1678,6 +1681,8 @@ static const char * const cmd_scrub_resume_usage[] = {
 	"-R     raw print mode, print full data instead of summary",
 	"-c     set ioprio class (see ionice(1) manpage)",
 	"-n     set ioprio classdata (see ionice(1) manpage)",
+	HELPINFO_INSERT_GLOBALS,
+	HELPINFO_INSERT_QUIET,
 	NULL
 };
 
