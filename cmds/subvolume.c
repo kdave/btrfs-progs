@@ -88,6 +88,8 @@ static const char * const cmd_subvol_create_usage[] = {
 	"",
 	"-i <qgroupid>  add the newly created subvolume to a qgroup. This",
 	"               option can be given multiple times.",
+	HELPINFO_INSERT_GLOBALS,
+	HELPINFO_INSERT_QUIET,
 	NULL
 };
 
@@ -169,7 +171,7 @@ static int cmd_subvol_create(const struct cmd_struct *cmd,
 	if (fddst < 0)
 		goto out;
 
-	printf("Create subvolume '%s/%s'\n", dstdir, newname);
+	pr_verbose(MUST_LOG, "Create subvolume '%s/%s'\n", dstdir, newname);
 	if (inherit) {
 		struct btrfs_ioctl_vol_args_v2	args;
 
