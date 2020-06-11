@@ -241,6 +241,7 @@ static const char * const cmd_subvol_delete_usage[] = {
 	"-v|--verbose           verbose output of operations",
 	HELPINFO_INSERT_GLOBALS,
 	HELPINFO_INSERT_VERBOSE,
+	HELPINFO_INSERT_QUIET,
 	NULL
 };
 
@@ -359,14 +360,15 @@ again:
 		goto out;
 	}
 
-	printf("Delete subvolume (%s): ",
-		commit_mode == COMMIT_EACH || (commit_mode == COMMIT_AFTER && cnt + 1 == argc)
-		? "commit" : "no-commit");
+	pr_verbose(MUST_LOG, "Delete subvolume (%s): ",
+		commit_mode == COMMIT_EACH ||
+		(commit_mode == COMMIT_AFTER && cnt + 1 == argc) ?
+		"commit" : "no-commit");
 
 	if (subvolid == 0)
-		printf("'%s/%s'\n", dname, vname);
+		pr_verbose(MUST_LOG, "'%s/%s'\n", dname, vname);
 	else
-		printf("'%s'\n", full_subvolpath);
+		pr_verbose(MUST_LOG, "'%s'\n", full_subvolpath);
 
 	if (subvolid == 0)
 		err = btrfs_util_delete_subvolume_fd(fd, vname, 0);
