@@ -470,9 +470,10 @@ static int do_balance(const char *path, struct btrfs_ioctl_balance_args *args,
 	} else if (ret > 0) {
 		error("balance: %s", btrfs_err_str(ret));
 	} else {
-		printf("Done, had to relocate %llu out of %llu chunks\n",
-		       (unsigned long long)args->stat.completed,
-		       (unsigned long long)args->stat.considered);
+		pr_verbose(MUST_LOG,
+			   "Done, had to relocate %llu out of %llu chunks\n",
+			   (unsigned long long)args->stat.completed,
+			   (unsigned long long)args->stat.considered);
 	}
 
 out:
@@ -501,6 +502,7 @@ static const char * const cmd_balance_start_usage[] = {
 	"               run the balance as a background process",
 	HELPINFO_INSERT_GLOBALS,
 	HELPINFO_INSERT_VERBOSE,
+	HELPINFO_INSERT_QUIET,
 	NULL
 };
 
