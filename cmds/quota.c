@@ -108,6 +108,8 @@ static const char * const cmd_quota_rescan_usage[] = {
 	"",
 	"-s   show status of a running rescan operation",
 	"-w   wait for rescan operation to finish (can be already in progress)",
+	HELPINFO_INSERT_GLOBALS,
+	HELPINFO_INSERT_QUIET,
 	NULL
 };
 
@@ -172,7 +174,7 @@ static int cmd_quota_rescan(const struct cmd_struct *cmd, int argc, char **argv)
 	}
 
 	if (ret == 0) {
-		printf("quota rescan started\n");
+		pr_verbose(MUST_LOG, "quota rescan started\n");
 		fflush(stdout);
 	} else if (ret < 0 && (!wait_for_completion || e != EINPROGRESS)) {
 		error("quota rescan failed: %m");
