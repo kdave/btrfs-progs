@@ -95,6 +95,13 @@ int __btrfs_warning_on(int condition, const char *fmt, ...);
 __attribute__ ((format (printf, 2, 3)))
 int __btrfs_error_on(int condition, const char *fmt, ...);
 
+/*
+ * Level of messages that must be printed by default (in case the verbosity
+ * options haven't been set by the user) due to backward compatibility reasons
+ * where applications may expect the output.
+ */
+#define	MUST_LOG						-1
+
 __attribute__ ((format (printf, 2, 3)))
 void pr_verbose(int level, const char *fmt, ...);
 
