@@ -1718,8 +1718,14 @@ static int do_chunk_alloc(struct btrfs_trans_handle *trans,
 		return 0;
 	trans->allocating_chunk = 1;
 
-	ret = btrfs_alloc_chunk(trans, fs_info, &start, &num_bytes,
-	                        space_info->flags);
+	/*
+	 * The space_info only has block group type (data/meta/sys), doesn't
+	 * have the proper profile.
+	 * While we still want to handle mixed block groups properly.
+	 * So here add the extra bits for mixed profile.
+	 */
+	flags |= space_info->flags;
+	ret = btrfs_alloc_chunk(trans, fs_info, &start, &num_bytes, flags);
 	if (ret == -ENOSPC) {
 		space_info->full = 1;
 		trans->allocating_chunk = 0;
@@ -1728,8 +1734,8 @@ static int do_chunk_alloc(struct btrfs_trans_handle *trans,
 
 	BUG_ON(ret);
 
-	ret = btrfs_make_block_group(trans, fs_info, 0, space_info->flags,
-				     start, num_bytes);
+	ret = btrfs_make_block_group(trans, fs_info, 0, flags, start,
+				     num_bytes);
 	BUG_ON(ret);
 	trans->allocating_chunk = 0;
 	return 0;
