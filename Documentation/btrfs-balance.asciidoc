@@ -16,7 +16,9 @@ all devices so they match constraints defined by the respective profiles. See
 `mkfs.btrfs`(8) section 'PROFILES' for more details.
 The scope of the balancing process can be further tuned by use of filters that
 can select the block groups to process. Balance works only on a mounted
-filesystem.
+filesystem.  Extent sharing is preserved and reflinks are not broken.
+Files are not defragmented nor recompressed, file extents are preserved
+but the physical location on devices will change.
 
 The balance operation is cancellable by the user. The on-disk state of the
 filesystem is always consistent so an unexpected interruption (eg. system crash,
@@ -25,7 +27,7 @@ is temporarily stored as an internal state and will be resumed upon mount,
 unless the mount option 'skip_balance' is specified.
 
 WARNING: running balance without filters will take a lot of time as it basically
-rewrites the entire filesystem and needs to update all block pointers.
+move data/metadata from the whol filesystem and needs to update all block pointers.
 
 The filters can be used to perform following actions:
 
@@ -86,18 +88,21 @@ from previous run, eg. after it was paused or forcibly interrupted and mounted
 again with 'skip_balance'
 
 *start* [options] <path>::
-start the balance operation according to the specified filters, no filters
-will rewrite the entire filesystem. The process runs in the foreground.
+start the balance operation according to the specified filters, without any filters
+the data and metadata from the whole filesystem are moved. The process runs in
+the foreground.
 +
-NOTE: the balance command without filters will basically rewrite everything
-in the filesystem. The run time is potentially very long, depending on the
-filesystem size. To prevent starting a full balance by accident, the user is
-warned and has a few seconds to cancel the operation before it starts. The
-warning and delay can be skipped with '--full-balance' option.
+NOTE: the balance command without filters will basically move everything in the
+filesystem to a new physical location on devices (ie. it does not affect the
+logical properties of file extents like offsets within files and extent
+sharing).  The run time is potentially very long, depending on the filesystem
+size. To prevent starting a full balance by accident, the user is warned and
+has a few seconds to cancel the operation before it starts.  The warning and
+delay can be skipped with '--full-balance' option.
 +
 Please note that the filters must be written together with the '-d', '-m' and
-'-s' options, because they're optional and bare '-d' etc also work and mean no
-filters.
+'-s' options, because they're optional and bare '-d' and '-m' also work and
+mean no filters.
 +
 `Options`
 +
