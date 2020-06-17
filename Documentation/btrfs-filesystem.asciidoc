@@ -84,7 +84,7 @@ If conflicting options are passed, the last one takes precedence.
 Defragment file data on a mounted filesystem. Requires kernel 2.6.33 and newer.
 +
 If '-r' is passed, files in dir will be defragmented recursively (not
-descending to subvolumes and mount points).
+descending to subvolumes, mount points and directory symlinks).
 The start position and the number of bytes to defragment can be specified by
 start and length using '-s' and '-l' options below.
 Extents bigger than value given by '-t' will be skipped, otherwise this value
