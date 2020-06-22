@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 #
 # Simple python program to print out all the extents of a single file
 # LGPLv2 license
@@ -7,8 +7,8 @@
 import sys, os, fcntl, ctypes, stat, argparse
 
 # helpers for max ints
-maxu64 = (1L << 64) - 1
-maxu32 = (1L << 32) - 1
+maxu64 = (1 << 64) - 1
+maxu32 = (1 << 32) - 1
 
 # the inode (like form stat)
 BTRFS_INODE_ITEM_KEY = 1
@@ -149,7 +149,7 @@ class btrfs_ioctl_search():
         self.args.buf_size = args_buffer_size
 
         # magic encoded for x86_64 this is the v2 search ioctl
-        self.ioctl_num = 3228603409L
+        self.ioctl_num = 3228603409
 
     # the results of the search get stored into args.buf
     def search(self, fd, nritems=65536):
@@ -195,8 +195,8 @@ def print_one_extent(header, fi, extent_hash):
             ram_bytes = fi.ram_bytes
         else:
             ram_bytes = inline_len
-        print "(%Lu %Lu): ram %Lu disk 0 disk_size %Lu -- inline" % \
-               (header.objectid, header.offset, ram_bytes, inline_len)
+        print("(%Lu %Lu): ram %Lu disk 0 disk_size %Lu -- inline" % \
+               (header.objectid, header.offset, ram_bytes, inline_len))
         extent_hash[-1] = inline_len
         return
 
@@ -204,8 +204,8 @@ def print_one_extent(header, fi, extent_hash):
         tag = " -- hole"
     else:
         tag = ""
-    print "(%Lu %Lu): ram %Lu disk %Lu disk_size %Lu%s" % (header.objectid,
-           header.offset, fi.num_bytes, fi.disk_bytenr, fi.disk_num_bytes, tag)
+    print("(%Lu %Lu): ram %Lu disk %Lu disk_size %Lu%s" % (header.objectid,
+           header.offset, fi.num_bytes, fi.disk_bytenr, fi.disk_num_bytes, tag))
 
     if fi.disk_bytenr:
         extent_hash[fi.disk_bytenr] = fi.disk_num_bytes
@@ -222,7 +222,7 @@ def print_file_extents(filename):
     try:
         fd = os.open(filename, os.O_RDONLY)
         st = os.fstat(fd)
-    except Exception, e:
+    except Exception as e:
         sys.stderr.write("Failed to open %s (%s)\n" % (filename, e))
         return -1
 
@@ -237,7 +237,7 @@ def print_file_extents(filename):
     while True:
         try:
             s.search(fd)
-        except Exception, e:
+        except Exception as e:
             sys.stderr.write("Search ioctl failed for %s (%s)\n" % (filename, e))
             return -1
 
@@ -251,7 +251,7 @@ def print_file_extents(filename):
         h = ctypes.addressof(header)
         p_left = args_buffer_size
 
-        for x in xrange(0, s.args.nr_items):
+        for x in range(0, s.args.nr_items):
             # for each item, copy the header from the buffer into
             # our header struct.
             ctypes.memmove(h, p, header_size)
@@ -286,7 +286,7 @@ def print_file_extents(filename):
 
     total_on_disk = 0
     total_extents = 0
-    for x in extent_hash.itervalues():
+    for x in extent_hash.values():
         total_on_disk += x
         total_extents += 1
 
@@ -294,9 +294,9 @@ def print_file_extents(filename):
     if total_on_disk == 0:
         total_on_disk = 1
 
-    print "file: %s extents %Lu disk size %Lu logical size %Lu ratio %.2f" % \
+    print("file: %s extents %Lu disk size %Lu logical size %Lu ratio %.2f" % \
           (filename, total_extents, total_on_disk, st.st_size,
-          float(st.st_size) / float(total_on_disk))
+          float(st.st_size) / float(total_on_disk)))
     return 0
 
 def print_block_groups(mountpoint):
@@ -314,14 +314,14 @@ def print_block_groups(mountpoint):
     try:
         fd = os.open(mountpoint, os.O_RDONLY)
         os.fstat(fd)
-    except Exception, e:
+    except Exception as e:
         sys.stderr.write("Failed to open %s (%s)\n" % (mountpoint, e))
         return -1
 
     while True:
         try:
             s.search(fd)
-        except Exception, e:
+        except Exception as e:
             sys.stderr.write("Search ioctl failed for %s (%s)\n" % (mountpoint, e))
             return -1
 
@@ -335,7 +335,7 @@ def print_block_groups(mountpoint):
         h = ctypes.addressof(header)
         p_left = args_buffer_size
 
-        for _ in xrange(0, s.args.nr_items):
+        for _ in range(0, s.args.nr_items):
             # for each itme, copy the header from the buffer into
             # our header struct
             ctypes.memmove(h, p, header_size)
@@ -356,13 +356,13 @@ def print_block_groups(mountpoint):
 
                 ctypes.memmove(ctypes.addressof(bg), p, ctypes.sizeof(bg))
                 if bg.flags & BTRFS_BLOCK_GROUP_DATA:
-                    print "block group offset %s len %s used %s chunk_objectid %Lu flags %Lu usage %.2f" %\
+                    print("block group offset %s len %s used %s chunk_objectid %Lu flags %Lu usage %.2f" %\
                      ('{:>14}'.format(header.objectid),
                       '{:>10}'.format(header.offset),
                       '{:>10}'.format(bg.used),
                       bg.chunk_objectid,
                       bg.flags,
-                      float(bg.used) / float(header.offset))
+                      float(bg.used) / float(header.offset)))
 
                     total_free += (header.offset - bg.used)
                     if min_used >= bg.used:
@@ -382,10 +382,10 @@ def print_block_groups(mountpoint):
         if s.args.min_objectid > s.args.max_objectid:
             break
 
-    print "total_free %Lu min_used %Lu free_of_min_used %Lu block_group_of_min_used %Lu" %\
-     (total_free, min_used, free_of_min_used, bg_of_min_used)
+    print("total_free %Lu min_used %Lu free_of_min_used %Lu block_group_of_min_used %Lu" %\
+     (total_free, min_used, free_of_min_used, bg_of_min_used))
     if (total_free - free_of_min_used) >= min_used:
-        print "balance block group (%Lu) can reduce the number of data block group" % bg_of_min_used
+        print("balance block group (%Lu) can reduce the number of data block group" % bg_of_min_used)
 
     return 0
 
