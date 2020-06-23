@@ -1001,52 +1001,42 @@ error:
 static const struct btrfs_raid_profile {
 	int	num_stripes;
 	int	max_stripes;
-	int	min_stripes;
 } btrfs_raid_profile_table[BTRFS_NR_RAID_TYPES] = {
 	[BTRFS_RAID_RAID10] = {
 		.num_stripes = 0,
 		.max_stripes = 0,
-		.min_stripes = 4,
 	},
 	[BTRFS_RAID_RAID1] = {
 		.num_stripes = 0,
 		.max_stripes = 0,
-		.min_stripes = 2,
 	},
 	[BTRFS_RAID_RAID1C3] = {
 		.num_stripes = 0,
 		.max_stripes = 0,
-		.min_stripes = 3,
 	},
 	[BTRFS_RAID_RAID1C4] = {
 		.num_stripes = 0,
 		.max_stripes = 0,
-		.min_stripes = 4,
 	},
 	[BTRFS_RAID_DUP] = {
 		.num_stripes = 2,
 		.max_stripes = 0,
-		.min_stripes = 2,
 	},
 	[BTRFS_RAID_RAID0] = {
 		.num_stripes = 0,
 		.max_stripes = 0,
-		.min_stripes = 2,
 	},
 	[BTRFS_RAID_SINGLE] = {
 		.num_stripes = 1,
 		.max_stripes = 0,
-		.min_stripes = 1,
 	},
 	[BTRFS_RAID_RAID5] = {
 		.num_stripes = 0,
 		.max_stripes = 0,
-		.min_stripes = 2,
 	},
 	[BTRFS_RAID_RAID6] = {
 		.num_stripes = 0,
 		.max_stripes = 0,
-		.min_stripes = 3,
 	},
 };
 
@@ -1056,11 +1046,14 @@ static void init_alloc_chunk_ctl(struct btrfs_fs_info *info,
 	int type = ctl->type;
 
 	ctl->num_stripes = btrfs_raid_profile_table[type].num_stripes;
-	ctl->min_stripes = btrfs_raid_profile_table[type].min_stripes;
+	ctl->min_stripes = btrfs_raid_array[type].devs_min;
 	ctl->sub_stripes = btrfs_raid_array[type].sub_stripes;
 	ctl->stripe_len = BTRFS_STRIPE_LEN;
 
 	switch (type) {
+	case BTRFS_RAID_DUP:
+		ctl->min_stripes = 2;
+		break;
 	case BTRFS_RAID_RAID1:
 	case BTRFS_RAID_RAID1C3:
 	case BTRFS_RAID_RAID1C4:
