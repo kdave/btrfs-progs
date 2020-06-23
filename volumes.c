@@ -998,44 +998,12 @@ error:
 				- 2 * sizeof(struct btrfs_chunk))	\
 				/ sizeof(struct btrfs_stripe) + 1)
 
-static const struct btrfs_raid_profile {
-	int	num_stripes;
-} btrfs_raid_profile_table[BTRFS_NR_RAID_TYPES] = {
-	[BTRFS_RAID_RAID10] = {
-		.num_stripes = 0,
-	},
-	[BTRFS_RAID_RAID1] = {
-		.num_stripes = 0,
-	},
-	[BTRFS_RAID_RAID1C3] = {
-		.num_stripes = 0,
-	},
-	[BTRFS_RAID_RAID1C4] = {
-		.num_stripes = 0,
-	},
-	[BTRFS_RAID_DUP] = {
-		.num_stripes = 2,
-	},
-	[BTRFS_RAID_RAID0] = {
-		.num_stripes = 0,
-	},
-	[BTRFS_RAID_SINGLE] = {
-		.num_stripes = 1,
-	},
-	[BTRFS_RAID_RAID5] = {
-		.num_stripes = 0,
-	},
-	[BTRFS_RAID_RAID6] = {
-		.num_stripes = 0,
-	},
-};
-
 static void init_alloc_chunk_ctl(struct btrfs_fs_info *info,
 				 struct alloc_chunk_ctl *ctl)
 {
 	int type = ctl->type;
 
-	ctl->num_stripes = btrfs_raid_profile_table[type].num_stripes;
+	ctl->num_stripes = btrfs_raid_array[type].dev_stripes;
 	ctl->min_stripes = btrfs_raid_array[type].devs_min;
 	ctl->sub_stripes = btrfs_raid_array[type].sub_stripes;
 	ctl->stripe_len = BTRFS_STRIPE_LEN;
