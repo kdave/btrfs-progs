@@ -188,7 +188,7 @@ static void process_features(u64 flags, enum feature_source source)
 	for (i = 0; i < array_size; i++) {
 		const struct btrfs_feature *feat = get_feature(i, source);
 
-		if (flags & feat->flag) {
+		if (flags & feat->flag && feat->name && feat->desc) {
 			printf("Turning ON incompat feature '%s': %s\n",
 				feat->name, feat->desc);
 		}
