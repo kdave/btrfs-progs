@@ -1000,43 +1000,33 @@ error:
 
 static const struct btrfs_raid_profile {
 	int	num_stripes;
-	int	max_stripes;
 } btrfs_raid_profile_table[BTRFS_NR_RAID_TYPES] = {
 	[BTRFS_RAID_RAID10] = {
 		.num_stripes = 0,
-		.max_stripes = 0,
 	},
 	[BTRFS_RAID_RAID1] = {
 		.num_stripes = 0,
-		.max_stripes = 0,
 	},
 	[BTRFS_RAID_RAID1C3] = {
 		.num_stripes = 0,
-		.max_stripes = 0,
 	},
 	[BTRFS_RAID_RAID1C4] = {
 		.num_stripes = 0,
-		.max_stripes = 0,
 	},
 	[BTRFS_RAID_DUP] = {
 		.num_stripes = 2,
-		.max_stripes = 0,
 	},
 	[BTRFS_RAID_RAID0] = {
 		.num_stripes = 0,
-		.max_stripes = 0,
 	},
 	[BTRFS_RAID_SINGLE] = {
 		.num_stripes = 1,
-		.max_stripes = 0,
 	},
 	[BTRFS_RAID_RAID5] = {
 		.num_stripes = 0,
-		.max_stripes = 0,
 	},
 	[BTRFS_RAID_RAID6] = {
 		.num_stripes = 0,
-		.max_stripes = 0,
 	},
 };
 
