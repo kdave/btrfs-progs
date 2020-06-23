@@ -88,7 +88,7 @@ static int ext2_open_fs(struct btrfs_convert_context *cctx, const char *name)
 	cctx->blocksize = ext2_fs->blocksize;
 	cctx->block_count = ext2_fs->super->s_blocks_count;
 	cctx->total_bytes = ext2_fs->blocksize * ext2_fs->super->s_blocks_count;
-	cctx->volume_name = strndup(ext2_fs->super->s_volume_name, 16);
+	cctx->volume_name = strndup((char *)ext2_fs->super->s_volume_name, 16);
 	cctx->first_data_block = ext2_fs->super->s_first_data_block;
 	cctx->inodes_count = ext2_fs->super->s_inodes_count;
 	cctx->free_inodes_count = ext2_fs->super->s_free_inodes_count;
