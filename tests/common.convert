@@ -61,14 +61,20 @@ convert_test_prep_fs() {
 	local fstype
 	local force
 	local mountopts
+	local oldsize
 
 	fstype="$1"
 	shift
+	# Use device size that was set before, or the default 512M
+	oldsize=$(stat --format=%s "$TEST_DEV")
+	if [ -z "$oldsize" ]; then
+		oldssize=512M
+	fi
 	# TEST_DEV not removed as the file might have special permissions, eg.
 	# when test image is on NFS and would not be writable for root
 	run_check truncate -s 0 "$TEST_DEV"
 	# 256MB is the smallest acceptable btrfs image.
-	run_check truncate -s 512M "$TEST_DEV"
+	run_check truncate -s "$oldsize" "$TEST_DEV"
 	force=
 	mountopts=
 	case "$fstype" in
