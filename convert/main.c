@@ -669,6 +669,8 @@ static int calculate_available_space(struct btrfs_convert_context *cctx)
 			cur_off = cache->start;
 		cur_len = max(cache->start + cache->size - cur_off,
 			      min_stripe_size);
+		/* data chunks should never exceed device boundary */
+		cur_len = min(cctx->total_bytes - cur_off, cur_len);
 		ret = add_merge_cache_extent(data_chunks, cur_off, cur_len);
 		if (ret < 0)
 			goto out;
