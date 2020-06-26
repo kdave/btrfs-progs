@@ -82,7 +82,7 @@ static const char * const cmd_inspect_inode_resolve_usage[] = {
 	"btrfs inspect-internal inode-resolve [-v] <inode> <path>",
 	"Get file system paths for the given inode",
 	"",
-	"-v   verbose mode",
+	"-v   deprecated, alias for global -v option",
 	HELPINFO_INSERT_GLOBALS,
 	HELPINFO_INSERT_VERBOSE,
 	NULL
@@ -129,13 +129,13 @@ static const char * const cmd_inspect_logical_resolve_usage[] = {
 	"Get file system paths for the given logical address",
 	"",
 	"-P          skip the path resolving and print the inodes instead",
-	"-v          verbose mode",
 	"-o          ignore offsets when matching references (requires v2 ioctl",
 	"            support in the kernel 4.15+)",
 	"-s bufsize  set inode container's size. This is used to increase inode",
 	"            container's size in case it is not enough to read all the ",
 	"            resolved results. The max value one can set is 64k with the",
 	"            v1 ioctl. Sizes over 64k will use the v2 ioctl (kernel 4.15+)",
+	"-v          deprecated, alias for global -v option",
 	HELPINFO_INSERT_GLOBALS,
 	HELPINFO_INSERT_VERBOSE,
 	NULL

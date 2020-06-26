@@ -55,12 +55,17 @@ send in 'NO_FILE_DATA' mode
 The output stream does not contain any file
 data and thus cannot be used to transfer changes. This mode is faster and
 is useful to show the differences in metadata.
-
+-q|--quiet::::
+(deprecated) alias for global '-q' option
 -v|--verbose::
-enable verbose output, print generated commands in a readable form, (each
-occurrence of this option increases the verbosity level)
+(deprecated) alias for global '-v' option
+
+`Global options`
+
 -q|--quiet::
 suppress all messages except errors
+-v|--verbose::
+increase output verbosity, print generated commands in a readable form
 
 EXIT STATUS
 -----------

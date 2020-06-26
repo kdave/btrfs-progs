@@ -86,12 +86,11 @@ wait for transaction commit at the end of the operation.
 -C|--commit-each::::
 wait for transaction commit after deleting each subvolume.
 +
--v|--verbose::::
-verbose output of operations.
-+
 -i|--subvolid <subvolid>::::
 subvolume id to be removed instead of the <path> that should point to the
 filesystem with the subvolume
+-v|--verbose::::
+(deprecated) alias for global '-v' option
 
 *find-new* <subvolume> <last_gen>::
 List the recently modified files in a subvolume, after <last_gen> generation.

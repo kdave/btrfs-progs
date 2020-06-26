@@ -47,9 +47,6 @@ restore owner, mode and times for files and directories
 -S|--symlinks::
 restore symbolic links as well as normal files
 
--v|--verbose::
-be verbose and print what is being restored
-
 -i|--ignore-errors::
 ignore errors during restoration and continue
 
@@ -89,6 +86,14 @@ hierarchy.
 
 -c::
 ignore case (--path-regex only)
+
+-v|--verbose::
+(deprecated) alias for global '-v' option
+
+`Global options`
+
+-v|--verbose::
+be verbose and print what is being restored
 
 EXIT STATUS
 -----------

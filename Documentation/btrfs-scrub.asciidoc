@@ -74,8 +74,6 @@ Note that not all IO schedulers honor the ionice settings.
 do not background and print scrub statistics when finished
 -d::::
 print separate statistics for each device of the filesystem ('-B' only) at the end
--q::::
-be quiet, omit error messages and statistics
 -r::::
 run in read-only mode, do not attempt to correct anything, can be run on a read-only
 filesystem
@@ -89,6 +87,8 @@ set IO priority classdata (see `ionice`(1) manpage)
 force starting new scrub even if a scrub is already running,
 this can useful when scrub status file is damaged and reports a running
 scrub although it is not, but should not normally be necessary
+-q::::
+(deprecated) alias for global '-q' option
 
 *status* [-d] <path>|<device>::
 Show status of a running scrub for the filesystem identified by 'path' or

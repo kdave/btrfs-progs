@@ -23,10 +23,10 @@ Recover the chunk tree by scanning the devices
 +
 -y::::
 assume an answer of 'yes' to all questions.
--v::::
-verbose mode.
 -h::::
 help.
+-v::::
+(deprecated) alias for global '-v' option
 
 NOTE: Since *chunk-recover* will scan the whole device, it will be *VERY* slow
 especially executed on a large device.
@@ -58,7 +58,7 @@ Recover bad superblocks from good copies.
 -y::::
 assume an answer of 'yes' to all questions.
 -v::::
-verbose mode.
+(deprecated) alias for global '-v' option
 
 *zero-log* <device>::
 clear the filesystem log tree

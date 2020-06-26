@@ -38,8 +38,8 @@ static const char * const cmd_rescue_chunk_recover_usage[] = {
 	"Recover the chunk tree by scanning the devices one by one.",
 	"",
 	"-y	Assume an answer of `yes' to all questions",
-	"-v	Verbose mode",
 	"-h	Help",
+	"-v     deprecated, alias for global -v option",
 	HELPINFO_INSERT_GLOBALS,
 	HELPINFO_INSERT_VERBOSE,
 	NULL
@@ -106,7 +106,7 @@ static const char * const cmd_rescue_super_recover_usage[] = {
 	"Recover bad superblocks from good copies",
 	"",
 	"-y	Assume an answer of `yes' to all questions",
-	"-v	Verbose mode",
+	"-v     deprecated, alias for global -v option",
 	HELPINFO_INSERT_GLOBALS,
 	HELPINFO_INSERT_VERBOSE,
 	NULL

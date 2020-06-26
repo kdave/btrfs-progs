@@ -110,8 +110,6 @@ KiB, MiB, GiB, TiB, PiB, or EiB, respectively (case does not matter).
 +
 `Options`
 +
--v::::
-be verbose, print file names as they're submitted for defragmentation
 -c[<algo>]::::
 compress file contents while defragmenting. Optional argument selects the compression
 algorithm, 'zlib' (default), 'lzo' or 'zstd'. Currently it's not possible to select no
@@ -137,6 +135,9 @@ target extent size, do not touch extents bigger than 'size', default: 32M
 The value is only advisory and the final size of the extents may differ,
 depending on the state of the free space and fragmentation or other internal
 logic. Reasonable values are from tens to hundreds of megabytes.
++
+-v::::
+(deprecated) alias for global '-v' option
 
 *du* [options] <path> [<path>..]::
 Calculate disk usage of the target files using FIEMAP. For individual

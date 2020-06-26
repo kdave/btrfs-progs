@@ -1386,7 +1386,6 @@ static const char * const cmd_restore_usage[] = {
 	"-x|--xattr           restore extended attributes",
 	"-m|--metadata        restore owner, mode and times",
 	"-S|--symlink         restore symbolic links",
-	"-v|--verbose         verbose",
 	"-i|--ignore-errors   ignore errors",
 	"-o|--overwrite       overwrite",
 	"-t <bytenr>          tree location",
@@ -1401,6 +1400,7 @@ static const char * const cmd_restore_usage[] = {
 	"                     you have to use following syntax (possibly quoted):",
 	"                     ^/(|home(|/username(|/Desktop(|/.*))))$",
 	"-c                   ignore case (--path-regex only)",
+	"-v|--verbose         deprecated, alias for global -v option",
 	HELPINFO_INSERT_GLOBALS,
 	HELPINFO_INSERT_VERBOSE,
 	NULL

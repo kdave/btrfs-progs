@@ -1612,6 +1612,7 @@ static const char * const cmd_scrub_start_usage[] = {
 	"-n     set ioprio classdata (see ionice(1) manpage)",
 	"-f     force starting new scrub even if a scrub is already running",
 	"       this is useful when scrub stats record file is damaged",
+	"-q     deprecated, alias for global -q option",
 	HELPINFO_INSERT_GLOBALS,
 	HELPINFO_INSERT_QUIET,
 	NULL
@@ -1678,11 +1679,11 @@ static const char * const cmd_scrub_resume_usage[] = {
 	"",
 	"-B     do not background",
 	"-d     stats per device (-B only)",
-	"-q     be quiet",
 	"-r     read only mode",
 	"-R     raw print mode, print full data instead of summary",
 	"-c     set ioprio class (see ionice(1) manpage)",
 	"-n     set ioprio classdata (see ionice(1) manpage)",
+	"-q     deprecated, alias for global -q option",
 	HELPINFO_INSERT_GLOBALS,
 	HELPINFO_INSERT_QUIET,
 	NULL
