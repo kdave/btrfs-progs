@@ -211,7 +211,7 @@ show details about subvolume with root <ID>, looked up in <path>
 -u|--uuid UUID::::
 show details about subvolume with the given <UUID>, looked up in <path>
 
-*snapshot* [-r|-i <qgroupid>] <source> <dest>|[<dest>/]<name>::
+*snapshot* [-r] [-i <qgroupid>] <source> <dest>|[<dest>/]<name>::
 Create a snapshot of the subvolume <source> with the
 name <name> in the <dest> directory.
 +
