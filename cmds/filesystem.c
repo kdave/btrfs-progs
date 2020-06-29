@@ -631,6 +631,7 @@ static const char * const cmd_filesystem_show_usage[] = {
 	"-d|--all-devices   show only disks under /dev containing btrfs filesystem",
 	"-m|--mounted       show only mounted btrfs",
 	HELPINFO_UNITS_LONG,
+	"",
 	"If no argument is given, structure of all present filesystems is shown.",
 	NULL
 };
@@ -840,9 +841,9 @@ static const char * const cmd_filesystem_defrag_usage[] = {
 	"-l len              defragment only up to len bytes",
 	"-t size             target extent size hint (default: 32M)",
 	"-v                  deprecated, alias for global -v option",
-	"",
 	HELPINFO_INSERT_GLOBALS,
 	HELPINFO_INSERT_VERBOSE,
+	"",
 	"Warning: most Linux kernels will break up the ref-links of COW data",
 	"(e.g., files copied with 'cp --reflink', snapshots) which may cause",
 	"considerable increase of space usage. See btrfs-filesystem(8) for",

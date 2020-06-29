@@ -325,8 +325,7 @@ static DEFINE_SIMPLE_COMMAND(replace_start, "start");
 
 static const char *const cmd_replace_status_usage[] = {
 	"btrfs replace status [-1] <mount_point>",
-	"Print status and progress information of a running device replace",
-	"operation",
+	"Print status and progress information of a running device replace operation",
 	"",
 	"-1     print once instead of print continuously until the replace",
 	"       operation finishes (or is canceled)",
