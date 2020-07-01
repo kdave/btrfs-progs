@@ -361,7 +361,6 @@ static void print_usage(int ret)
 	printf("\t-V|--version                print the mkfs.btrfs version and exit\n");
 	printf("\t--help                      print this help and exit\n");
 	printf("  deprecated:\n");
-	printf("\t-A|--alloc-start START      the offset to start the filesystem\n");
 	printf("\t-l|--leafsize SIZE          deprecated, alias for nodesize\n");
 	exit(ret);
 }
@@ -920,7 +919,6 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	char *label = NULL;
 	u64 block_count = 0;
 	u64 dev_block_count = 0;
-	u64 alloc_start = 0;
 	u64 metadata_profile = 0;
 	u64 data_profile = 0;
 	u32 nodesize = max_t(u32, sysconf(_SC_PAGESIZE),
@@ -960,7 +958,6 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		int c;
 		enum { GETOPT_VAL_SHRINK = 257, GETOPT_VAL_CHECKSUM };
 		static const struct option long_options[] = {
-			{ "alloc-start", required_argument, NULL, 'A'},
 			{ "byte-count", required_argument, NULL, 'b' },
 			{ "csum", required_argument, NULL,
 				GETOPT_VAL_CHECKSUM },
@@ -991,9 +988,6 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		if (c < 0)
 			break;
 		switch(c) {
-			case 'A':
-				alloc_start = parse_size(optarg);
-				break;
 			case 'f':
 				force_overwrite = 1;
 				break;
@@ -1348,7 +1342,6 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	close(fd);
 	fd = -1;
 	root = fs_info->fs_root;
-	fs_info->alloc_start = alloc_start;
 
 	ret = create_metadata_block_groups(root, mixed, &allocation);
 	if (ret) {

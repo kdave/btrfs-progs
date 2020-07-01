@@ -487,7 +487,7 @@ static int find_free_dev_extent_start(struct btrfs_device *device,
 	 * used by the boot loader (grub for example), so we make sure to start
 	 * at an offset of at least 1MB.
 	 */
-	min_search_start = max(root->fs_info->alloc_start, (u64)SZ_1M);
+	min_search_start = BTRFS_BLOCK_RESERVED_1M_FOR_SUPER;
 	search_start = max(search_start, min_search_start);
 
 	path = btrfs_alloc_path();
@@ -906,7 +906,7 @@ static u64 chunk_bytes_by_type(u64 type, u64 calc_size,
  * It is not equal to "device->total_bytes - device->bytes_used".
  * We do not allocate any chunk in 1M at beginning of device, and not
  * allowed to allocate any chunk before alloc_start if it is specified.
- * So search holes from max(1M, alloc_start) to device->total_bytes.
+ * So search holes from 1M to device->total_bytes.
  */
 static int btrfs_device_avail_bytes(struct btrfs_trans_handle *trans,
 				    struct btrfs_device *device,
@@ -917,21 +917,19 @@ static int btrfs_device_avail_bytes(struct btrfs_trans_handle *trans,
 	struct btrfs_key key;
 	struct btrfs_dev_extent *dev_extent = NULL;
 	struct extent_buffer *l;
-	u64 search_start = root->fs_info->alloc_start;
+	u64 search_start = BTRFS_BLOCK_RESERVED_1M_FOR_SUPER;;
 	u64 search_end = device->total_bytes;
 	u64 extent_end = 0;
 	u64 free_bytes = 0;
 	int ret;
 	int slot = 0;
 
-	search_start = max(BTRFS_BLOCK_RESERVED_1M_FOR_SUPER, search_start);
-
 	path = btrfs_alloc_path();
 	if (!path)
 		return -ENOMEM;
 
 	key.objectid = device->devid;
-	key.offset = root->fs_info->alloc_start;
+	key.offset = search_start;
 	key.type = BTRFS_DEV_EXTENT_KEY;
 
 	path->reada = READA_FORWARD;
