@@ -499,24 +499,11 @@ DEPRECATED MOUNT OPTIONS
 
 List of mount options that have been removed, kept for backward compatibility.
 
-*alloc_start='bytes'*::
-(default: 1M, minimum: 1M, deprecated since: 4.13)
-+
-Debugging option to force all block allocations above a certain
-byte threshold on each block device.  The value is specified in
-bytes, optionally with a K, M, or G suffix (case insensitive).
-
 *recovery*::
 (since: 3.2, default: off, deprecated since: 4.5)
 +
 NOTE: this option has been replaced by 'usebackuproot' and should not be used
 but will work on 4.5+ kernels.
-
-*subvolrootid='objectid'*::
-(irrelevant since: 3.2, formally deprecated since: 3.10)
-+
-A workaround option from times (pre 3.2) when it was not possible to mount a
-subvolume that did not reside directly under the toplevel subvolume.
 
 NOTES ON GENERIC MOUNT OPTIONS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
