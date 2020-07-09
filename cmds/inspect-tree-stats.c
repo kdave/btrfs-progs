@@ -48,7 +48,6 @@ struct seek {
 
 struct root_stats {
 	u64 total_nodes;
-	u64 total_leaves;
 	u64 total_bytes;
 	u64 total_inline;
 	u64 total_seeks;
@@ -62,6 +61,7 @@ struct root_stats {
 	u64 max_cluster_size;
 	u64 lowest_bytenr;
 	u64 highest_bytenr;
+	u64 node_counts[BTRFS_MAX_LEVEL];
 	struct rb_root seek_root;
 	int total_levels;
 };
@@ -105,7 +105,8 @@ static int walk_leaf(struct btrfs_root *root, struct btrfs_path *path,
 	int i;
 
 	stat->total_bytes += root->fs_info->nodesize;
-	stat->total_leaves++;
+	stat->total_nodes++;
+	stat->node_counts[0]++;
 
 	if (!find_inline)
 		return 0;
@@ -144,6 +145,7 @@ static int walk_nodes(struct btrfs_root *root, struct btrfs_path *path,
 
 	stat->total_bytes += nodesize;
 	stat->total_nodes++;
+	stat->node_counts[level]++;
 
 	last_block = btrfs_header_bytenr(b);
 	for (i = 0; i < btrfs_header_nritems(b); i++) {
@@ -320,6 +322,7 @@ static int calc_root_size(struct btrfs_root *tree_root, struct btrfs_key *key,
 	int level;
 	int ret = 0;
 	int size_fail = 0;
+	int i;
 
 	root = btrfs_read_fs_root(tree_root->fs_info, key);
 	if (IS_ERR(root)) {
@@ -378,7 +381,6 @@ out_print:
 		       stat.lowest_bytenr);
 		printf("\tTotal read time: %d s %d us\n", (int)diff.tv_sec,
 		       (int)diff.tv_usec);
-		printf("\tLevels: %d\n", level + 1);
 	} else {
 		printf("\tTotal size: %s\n", pretty_size(stat.total_bytes));
 		printf("\t\tInline data: %s\n", pretty_size(stat.total_inline));
@@ -402,8 +404,11 @@ out_print:
 					stat.lowest_bytenr));
 		printf("\tTotal read time: %d s %d us\n", (int)diff.tv_sec,
 		       (int)diff.tv_usec);
-		printf("\tLevels: %d\n", level + 1);
 	}
+	printf("\tLevels: %d\n", level + 1);
+	printf("\tTotal nodes: %llu\n", stat.total_nodes);
+	for (i = 0; i < level + 1; i++)
+		printf("\t\tOn level %d: %llu\n", i, stat.node_counts[i]);
 out:
 	while ((n = rb_first(&stat.seek_root)) != NULL) {
 		struct seek *seek = rb_entry(n, struct seek, n);
