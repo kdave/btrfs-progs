@@ -78,6 +78,11 @@ performance reasons.  As a consequence, the subvolume may appear again after a
 crash.  Use one of the '--commit' options to wait until the operation is
 safely stored on the device.
 +
+The default subvolume (see *btrfs subvolume set-default*) cannot be deleted and
+returns error (EPERM) and this is logged to the system log. A subvolume that's
+currently involved in send (see *btrfs send*) also cannot be deleted until the
+send is finished. This is also logged in the system log.
++
 `Options`
 +
 -c|--commit-after::::
