@@ -1144,19 +1144,30 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	* For mixed groups defaults are single/single.
 	*/
 	if (!mixed) {
+		u64 tmp;
+
 		if (!metadata_profile_opt) {
 			if (dev_cnt == 1 && ssd && verbose)
 				printf("Detected a SSD, turning off metadata "
 				"duplication.  Mkfs with -m dup if you want to "
 				"force metadata duplication.\n");
 
-			metadata_profile = (dev_cnt > 1) ?
-					BTRFS_BLOCK_GROUP_RAID1 : (ssd) ?
-					0: BTRFS_BLOCK_GROUP_DUP;
+			if (dev_cnt > 1) {
+				tmp = BTRFS_MKFS_DEFAULT_META_MULTI_DEVICE;
+			} else {
+				if (ssd)
+					tmp = BTRFS_MKFS_DEFAULT_META_ONE_DEVICE_SSD;
+				else
+					tmp = BTRFS_MKFS_DEFAULT_META_ONE_DEVICE;
+			}
+			metadata_profile = tmp;
 		}
 		if (!data_profile_opt) {
-			data_profile = (dev_cnt > 1) ?
-				BTRFS_BLOCK_GROUP_RAID0 : 0; /* raid0 or single */
+			if (dev_cnt > 1)
+				tmp = BTRFS_MKFS_DEFAULT_DATA_MULTI_DEVICE;
+			else
+				tmp = BTRFS_MKFS_DEFAULT_DATA_ONE_DEVICE;
+			data_profile = tmp;
 		}
 	} else {
 		u32 best_nodesize = max_t(u32, sysconf(_SC_PAGESIZE), sectorsize);

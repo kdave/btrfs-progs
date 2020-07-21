@@ -29,6 +29,16 @@
 #define BTRFS_MKFS_SMALL_VOLUME_SIZE SZ_1G
 
 /*
+ * Default settings for block group types
+ */
+#define BTRFS_MKFS_DEFAULT_DATA_ONE_DEVICE	0	/* SINGLE */
+#define BTRFS_MKFS_DEFAULT_META_ONE_DEVICE	BTRFS_BLOCK_GROUP_DUP
+#define BTRFS_MKFS_DEFAULT_META_ONE_DEVICE_SSD	0	/* SINGLE */
+
+#define BTRFS_MKFS_DEFAULT_DATA_MULTI_DEVICE	BTRFS_BLOCK_GROUP_RAID0
+#define BTRFS_MKFS_DEFAULT_META_MULTI_DEVICE	BTRFS_BLOCK_GROUP_RAID1
+
+/*
  * Tree root blocks created during mkfs
  */
 enum btrfs_mkfs_block {
