@@ -19,6 +19,12 @@ Before mounting such filesystem, the kernel module must know all the devices
 either via preceding execution of *btrfs device scan* or using the *device*
 mount option. See section *MULTIPLE DEVICES* for more details.
 
+The default block group profiles for data and metadata depend on number of
+devices and possibly other factors. It's recommended to use specific profiles
+but the defaults should be OK and allowing future conversions to other profiles.
+Please see options '-d' and '-m' for further detals and `btrfs-balance`(8) for
+the profile conversion post mkfs.
+
 OPTIONS
 -------
 *-b|--byte-count <size>*::
@@ -33,24 +39,31 @@ checksums as well. See 'CHECKSUM ALGORITHMS' in `btrfs`(5).
 
 *-d|--data <profile>*::
 Specify the profile for the data block groups.  Valid values are 'raid0',
-'raid1', 'raid5', 'raid6', 'raid10' or 'single' or 'dup' (case does not matter).
+'raid1', 'raid1c3', 'raid1c4', 'raid5', 'raid6', 'raid10' or 'single' or 'dup'
+(case does not matter).
 +
 See 'DUP PROFILES ON A SINGLE DEVICE' for more details.
++
+On multiple devices, the default was 'raid0' until version 5.7, while it is
+'single' since version 5.8. You can still select raid0 manually, but it was not
+suitable as default.
 
 *-m|--metadata <profile>*::
 Specify the profile for the metadata block groups.
-Valid values are 'raid0', 'raid1', 'raid5', 'raid6', 'raid10', 'single' or
-'dup' (case does not matter).
+Valid values are 'raid0', 'raid1', 'raid1c3', 'raid1c4', 'raid5', 'raid6',
+'gaid10', 'single' or 'dup' (case does not matter).
 +
-A single device filesystem will default to 'DUP', unless an SSD is detected, in which
+Default on a single device filesystem is 'DUP', unless an SSD is detected, in which
 case it will default to 'single'. The detection is based on the value of
 `/sys/block/DEV/queue/rotational`, where 'DEV' is the short name of the device.
 +
 Note that the rotational status can be arbitrarily set by the underlying block
 device driver and may not reflect the true status (network block device, memory-backed
-SCSI devices etc). Use the options '--data/--metadata' to avoid confusion.
+SCSI devices etc). It's recommended to options '--data/--metadata' to avoid confusion.
 +
 See 'DUP PROFILES ON A SINGLE DEVICE' for more details.
++
+On multiple devices the default is 'raid1'.
 
 *-M|--mixed*::
 Normally the data and metadata block groups are isolated. The 'mixed' mode
@@ -92,8 +105,8 @@ Specify the sectorsize, the minimum data block allocation unit.
 +
 The default value is the page size and is autodetected. If the sectorsize
 differs from the page size, the created filesystem may not be mountable by the
-kernel. Therefore it is not recommended to use this option unless you are going
-to mount it on a system with the appropriate page size.
+running kernel. Therefore it is not recommended to use this option unless you
+are going to mount it on a system with the appropriate page size.
 
 *-L|--label <string>*::
 Specify a label for the filesystem. The 'string' should be less than 256
@@ -115,10 +128,10 @@ not minimized. Please see option '--shrink' if you need that functionality.
 *--shrink*::
 Shrink the filesystem to its minimal size, only works with '--rootdir' option.
 +
-If the destination is a regular file, this option will also truncate the
-file to the minimal size. Otherwise it will reduce the filesystem available
-space.  Extra space will not be usable unless the filesystem is mounted and
-resized using 'btrfs filesystem resize'.
+If the destination block device is a regular file, this option will also
+truncate the file to the minimal size. Otherwise it will reduce the filesystem
+available space.  Extra space will not be usable unless the filesystem is
+mounted and resized using 'btrfs filesystem resize'.
 +
 NOTE: prior to version 4.14.1, the shrinking was done automatically.
 
@@ -471,4 +484,5 @@ SEE ALSO
 --------
 `btrfs`(5),
 `btrfs`(8),
+`btrfs-balance`(8),
 `wipefs`(8)
