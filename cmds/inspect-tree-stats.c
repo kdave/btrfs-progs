@@ -407,8 +407,17 @@ out_print:
 	}
 	printf("\tLevels: %d\n", level + 1);
 	printf("\tTotal nodes: %llu\n", stat.total_nodes);
-	for (i = 0; i < level + 1; i++)
-		printf("\t\tOn level %d: %llu\n", i, stat.node_counts[i]);
+	for (i = 0; i < level + 1; i++) {
+		printf("\t\tOn level %d: %8llu", i, stat.node_counts[i]);
+		if (i > 0) {
+			u64 fanout;
+
+			fanout = stat.node_counts[i - 1];
+			fanout /= stat.node_counts[i];
+			printf("  (avg fanout %llu)", fanout);
+		}
+		printf("\n");
+	}
 out:
 	while ((n = rb_first(&stat.seek_root)) != NULL) {
 		struct seek *seek = rb_entry(n, struct seek, n);
