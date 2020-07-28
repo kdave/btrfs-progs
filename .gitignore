@@ -65,6 +65,7 @@
 /cscope.in.out
 /cscope.po.out
 .*
+!.editorconfig
 
 /Documentation/Makefile
 /Documentation/*.html
