@@ -35,6 +35,7 @@ struct btrfs_convert_context {
 	u64 inodes_count;
 	u64 free_inodes_count;
 	u64 total_bytes;
+	u64 free_bytes_initial;
 	char *volume_name;
 	const struct btrfs_convert_operations *convert_ops;
 
@@ -47,6 +48,13 @@ struct btrfs_convert_context {
 	/* Free space which is not covered by data_chunks */
 	struct cache_tree free_space;
 
+	/*
+	 * Free space reserved for ENOSPC report, it's just a copy free_space.
+	 * But after initial calculation, free_space_initial is no longer
+	 * updated, so we have a good idea on how much free space we really
+	 * have for btrfs.
+	 */
+	struct cache_tree free_space_initial;
 	void *fs_data;
 };
 
