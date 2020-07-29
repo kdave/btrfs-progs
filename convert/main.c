@@ -1123,6 +1123,7 @@ static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
 	struct task_ctx ctx;
 	char features_buf[64];
 	struct btrfs_mkfs_config mkfs_cfg;
+	bool btrfs_sb_committed = false;
 
 	init_convert_context(&cctx);
 	ret = convert_open_fs(devname, &cctx);
@@ -1270,6 +1271,7 @@ static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
 		error("unable to migrate super block: %d", ret);
 		goto fail;
 	}
+	btrfs_sb_committed = true;
 
 	root = open_ctree_fd(fd, devname, 0,
 			     OPEN_CTREE_WRITES | OPEN_CTREE_TEMPORARY_SUPER);
@@ -1287,8 +1289,12 @@ fail:
 	clean_convert_context(&cctx);
 	if (fd != -1)
 		close(fd);
-	warning(
-"an error occurred during conversion, filesystem is partially created but not finalized and not mountable");
+	if (btrfs_sb_committed)
+		warning(
+"error during conversion, filesystem is partially created but not finalized and not mountable");
+	else
+		warning(
+"error during conversion, the original filesystem is not modified");
 	return -1;
 }
 
