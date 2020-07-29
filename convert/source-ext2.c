@@ -797,7 +797,7 @@ static int ext2_copy_inodes(struct btrfs_convert_context *cctx,
 			    u32 convert_flags, struct task_ctx *p)
 {
 	ext2_filsys ext2_fs = cctx->fs_data;
-	int ret;
+	int ret = 0;
 	errcode_t err;
 	ext2_inode_scan ext2_scan;
 	struct ext2_inode ext2_inode;
@@ -810,8 +810,9 @@ static int ext2_copy_inodes(struct btrfs_convert_context *cctx,
 		return PTR_ERR(trans);
 	err = ext2fs_open_inode_scan(ext2_fs, 0, &ext2_scan);
 	if (err) {
-		fprintf(stderr, "ext2fs_open_inode_scan: %s\n", error_message(err));
-		return -1;
+		error("ext2fs_open_inode_scan failed: %s", error_message(err));
+		btrfs_commit_transaction(trans, root);
+		return -EIO;
 	}
 	while (!(err = ext2fs_get_next_inode(ext2_scan, &ext2_ino,
 					     &ext2_inode))) {
@@ -827,8 +828,11 @@ static int ext2_copy_inodes(struct btrfs_convert_context *cctx,
 		pthread_mutex_lock(&p->mutex);
 		p->cur_copy_inodes++;
 		pthread_mutex_unlock(&p->mutex);
-		if (ret)
-			return ret;
+		if (ret) {
+			error("failed to copy ext2 inode %llu: %d",
+					(unsigned long long)ext2_ino, ret);
+			goto out;
+		}
 		/*
 		 * blocks_used is the number of new tree blocks allocated in
 		 * current transaction.
@@ -842,17 +846,33 @@ static int ext2_copy_inodes(struct btrfs_convert_context *cctx,
 		 */
 		if (trans->blocks_used >= SZ_2M / root->fs_info->nodesize) {
 			ret = btrfs_commit_transaction(trans, root);
-			BUG_ON(ret);
+			if (ret < 0) {
+				error("failed to commit transaction: %d", ret);
+				goto out;
+			}
 			trans = btrfs_start_transaction(root, 1);
-			BUG_ON(IS_ERR(trans));
+			if (IS_ERR(trans)) {
+				ret = PTR_ERR(trans);
+				error("failed to start transaction: %d", ret);
+				trans = NULL;
+				goto out;
+			}
 		}
 	}
 	if (err) {
-		fprintf(stderr, "ext2fs_get_next_inode: %s\n", error_message(err));
-		return -1;
+		error("ext2fs_get_next_inode failed: %s", error_message(err));
+		ret = -EIO;
+		goto out;
 	}
-	ret = btrfs_commit_transaction(trans, root);
-	BUG_ON(ret);
+out:
+	if (ret < 0) {
+		if (trans)
+			btrfs_abort_transaction(trans, ret);
+	} else {
+		ret = btrfs_commit_transaction(trans, root);
+		if (ret < 0)
+			error("failed to commit transaction: %d", ret);
+	}
 	ext2fs_close_inode_scan(ext2_scan);
 
 	return ret;
