@@ -727,6 +727,24 @@ out:
 	return ret;
 }
 
+static int copy_free_space_tree(struct btrfs_convert_context *cctx)
+{
+	struct cache_tree *src = &cctx->free_space;
+	struct cache_tree *dst = &cctx->free_space_initial;
+	struct cache_extent *cache;
+	int ret = 0;
+
+	for (cache = search_cache_extent(src, 0);
+	     cache;
+	     cache = next_cache_extent(cache)) {
+		ret = add_merge_cache_extent(dst, cache->start, cache->size);
+		if (ret < 0)
+			return ret;
+		cctx->free_bytes_initial += cache->size;
+	}
+	return ret;
+}
+
 /*
  * Read used space, and since we have the used space,
  * calculate data_chunks and free for later mkfs
@@ -740,7 +758,10 @@ static int convert_read_used_space(struct btrfs_convert_context *cctx)
 		return ret;
 
 	ret = calculate_available_space(cctx);
-	return ret;
+	if (ret < 0)
+		return ret;
+
+	return copy_free_space_tree(cctx);
 }
 
 /*
@@ -1165,7 +1186,10 @@ static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
 	printf("\tnodesize:  %u\n", nodesize);
 	printf("\tfeatures:  %s\n", features_buf);
 	printf("\tchecksum:  %s\n", btrfs_super_csum_name(csum_type));
-
+	printf("free space report:\n");
+	printf("\ttotal:     %llu\n",cctx.total_bytes);
+	printf("\tfree:      %llu (%.2f%%)\n", cctx.free_bytes_initial,
+			100.0 * cctx.free_bytes_initial / cctx.total_bytes);
 	memset(&mkfs_cfg, 0, sizeof(mkfs_cfg));
 	mkfs_cfg.csum_type = csum_type;
 	mkfs_cfg.label = cctx.volume_name;
