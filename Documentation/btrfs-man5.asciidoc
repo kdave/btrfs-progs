@@ -471,7 +471,6 @@ The tree log could contain new files/directories, these would not exist on
 a mounted filesystem if the log is not replayed.
 
 *usebackuproot*::
-*nousebackuproot*::
 (since: 4.6, default: off)
 +
 Enable autorecovery attempts if a bad tree root is found at mount time.
