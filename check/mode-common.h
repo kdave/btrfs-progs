@@ -171,4 +171,7 @@ static inline u32 btrfs_type_to_imode(u8 type)
 
 	return imode_by_btrfs_type[(type)];
 }
+
+int get_extent_item_generation(u64 bytenr, u64 *gen_ret);
+
 #endif

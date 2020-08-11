@@ -4135,6 +4135,64 @@ out:
 }
 
 /*
+ * Reset generation for extent item specified by @path.
+ * Will try to grab the proper generation number from other sources, but if
+ * it fails, then use current transid as fallback.
+ *
+ * Returns < 0 for error.
+ * Return 0 if the generation is reset.
+ */
+static int repair_extent_item_generation(struct btrfs_path *path)
+{
+	struct btrfs_trans_handle *trans;
+	struct btrfs_key key;
+	struct btrfs_extent_item *ei;
+	struct btrfs_root *extent_root = gfs_info->extent_root;
+	u64 new_gen = 0;;
+	int ret;
+
+	btrfs_item_key_to_cpu(path->nodes[0], &key, path->slots[0]);
+	ASSERT(key.type == BTRFS_METADATA_ITEM_KEY ||
+	       key.type == BTRFS_EXTENT_ITEM_KEY);
+
+	get_extent_item_generation(key.objectid, &new_gen);
+	ret = avoid_extents_overwrite();
+	if (ret)
+		return ret;
+	btrfs_release_path(path);
+	trans = btrfs_start_transaction(extent_root, 1);
+	if (IS_ERR(trans)) {
+		ret = PTR_ERR(trans);
+		errno = -ret;
+		error("failed to start transaction: %m");
+		return ret;
+	}
+	ret = btrfs_search_slot(trans, extent_root, &key, path, 0, 1);
+	if (ret > 0)
+		ret = -ENOENT;
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to locate extent item for %llu: %m", key.objectid);
+		btrfs_abort_transaction(trans, ret);
+		return ret;
+	}
+	if (!new_gen)
+		new_gen = trans->transid;
+	ei = btrfs_item_ptr(path->nodes[0], path->slots[0], struct btrfs_extent_item);
+	btrfs_set_extent_generation(path->nodes[0], ei, new_gen);
+	ret = btrfs_commit_transaction(trans, extent_root);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to commit transaction: %m");
+		btrfs_abort_transaction(trans, ret);
+		return ret;
+	}
+	printf("Reset extent item (%llu) generation to %llu\n",
+		key.objectid, new_gen);
+	return ret;
+}
+
+/*
  * This function will check a given extent item, including its backref and
  * itself (like crossing stripe boundary and type)
  *
@@ -4165,7 +4223,7 @@ static int check_extent_item(struct btrfs_path *path)
 	struct btrfs_key key;
 	int ret;
 	int err = 0;
-	int tmp_err;
+	int tmp_err = 0;
 	u32 ptr_offset;
 
 	btrfs_item_key_to_cpu(eb, &key, slot);
@@ -4195,7 +4253,7 @@ static int check_extent_item(struct btrfs_path *path)
 		error(
 		"invalid generation for extent %llu, have %llu expect (0, %llu]",
 			key.objectid, gen, super_gen + 1);
-		err |= INVALID_GENERATION;
+		tmp_err |= INVALID_GENERATION;
 	}
 
 	if (flags & BTRFS_EXTENT_FLAG_TREE_BLOCK)
@@ -4248,24 +4306,24 @@ next:
 	case BTRFS_TREE_BLOCK_REF_KEY:
 		root_objectid = offset;
 		owner = level;
-		tmp_err = check_tree_block_backref(offset, key.objectid, level);
+		tmp_err |= check_tree_block_backref(offset, key.objectid, level);
 		break;
 	case BTRFS_SHARED_BLOCK_REF_KEY:
 		parent = offset;
-		tmp_err = check_shared_block_backref(offset, key.objectid, level);
+		tmp_err |= check_shared_block_backref(offset, key.objectid, level);
 		break;
 	case BTRFS_EXTENT_DATA_REF_KEY:
 		dref = (struct btrfs_extent_data_ref *)(&iref->offset);
 		root_objectid = btrfs_extent_data_ref_root(eb, dref);
 		owner = btrfs_extent_data_ref_objectid(eb, dref);
 		owner_offset = btrfs_extent_data_ref_offset(eb, dref);
-		tmp_err = check_extent_data_backref(root_objectid,
+		tmp_err |= check_extent_data_backref(root_objectid,
 			    owner, owner_offset, key.objectid, key.offset,
 			    btrfs_extent_data_ref_count(eb, dref));
 		break;
 	case BTRFS_SHARED_DATA_REF_KEY:
 		parent = offset;
-		tmp_err = check_shared_data_backref(offset, key.objectid);
+		tmp_err |= check_shared_data_backref(offset, key.objectid);
 		break;
 	default:
 		error("extent[%llu %d %llu] has unknown ref type: %d",
@@ -4302,8 +4360,23 @@ next:
 			item_size = btrfs_item_size_nr(eb, slot);
 			goto next;
 		}
-	} else {
+	}
+	if ((tmp_err & INVALID_GENERATION) && repair){
+		ret = repair_extent_item_generation(path);
+		if (ret < 0) {
+			err |= tmp_err;
+			err |= FATAL_ERROR;
+			goto out;
+		}
+		/* Error has been repaired */
+		tmp_err &= ~INVALID_GENERATION;
 		err |= tmp_err;
+		eb = path->nodes[0];
+		slot = path->slots[0];
+		ei = btrfs_item_ptr(eb, slot, struct btrfs_extent_item);
+		item_size = btrfs_item_size_nr(eb, slot);
+		ptr_offset += btrfs_extent_inline_ref_size(type);
+		goto next;
 	}
 
 	ptr_offset += btrfs_extent_inline_ref_size(type);
