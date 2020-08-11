@@ -1181,3 +1181,61 @@ int recow_extent_buffer(struct btrfs_root *root, struct extent_buffer *eb)
 	btrfs_release_path(&path);
 	return ret;
 }
+
+/*
+ * Try to get correct extent item generation.
+ *
+ * Return 0 if we get a correct generation.
+ * Return <0 if we failed to get one.
+ */
+int get_extent_item_generation(u64 bytenr, u64 *gen_ret)
+{
+	struct btrfs_root *root = gfs_info->extent_root;
+	struct btrfs_extent_item *ei;
+	struct btrfs_path path;
+	struct btrfs_key key;
+	int ret;
+
+	key.objectid = bytenr;
+	key.type = BTRFS_METADATA_ITEM_KEY;
+	key.offset = (u64)-1;
+
+	btrfs_init_path(&path);
+	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
+	/* Not possible */
+	if (ret == 0)
+		ret = -EUCLEAN;
+	if (ret < 0)
+		goto out;
+	ret = btrfs_previous_extent_item(root, &path, bytenr);
+	if (ret > 0)
+		ret = -ENOENT;
+	if (ret < 0)
+		goto out;
+
+	ei = btrfs_item_ptr(path.nodes[0], path.slots[0], struct btrfs_extent_item);
+
+	if (btrfs_extent_flags(path.nodes[0], ei) &
+	    BTRFS_EXTENT_FLAG_TREE_BLOCK) {
+		struct extent_buffer *eb;
+
+		eb = read_tree_block(gfs_info, bytenr, 0);
+		if (extent_buffer_uptodate(eb)) {
+			*gen_ret = btrfs_header_generation(eb);
+			ret = 0;
+		} else {
+			ret = -EIO;
+		}
+		free_extent_buffer(eb);
+	} else {
+		/*
+		 * TODO: Grab proper data generation for data extents.
+		 * But this is not an urgent objective, as we can still
+		 * use transaction id as fall back
+		 */
+		ret = -ENOTSUP;
+	}
+out:
+	btrfs_release_path(&path);
+	return ret;
+}
