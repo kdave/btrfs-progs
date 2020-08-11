@@ -4455,7 +4455,8 @@ static int check_block(struct btrfs_root *root,
 	if (!cache)
 		return 1;
 	rec = container_of(cache, struct extent_record, cache);
-	rec->generation = btrfs_header_generation(buf);
+	if (rec->generation < btrfs_header_generation(buf))
+		rec->generation = btrfs_header_generation(buf);
 
 	level = btrfs_header_level(buf);
 	if (btrfs_header_nritems(buf) > 0) {
