@@ -413,7 +413,7 @@ again:
 			mirror_num++;
 			if (mirror_num > num_copies) {
 				ret = -1;
-				error("exhausted mirros trying to read (%d > %d)",
+				error("exhausted mirrors trying to read (%d > %d)",
 					mirror_num, num_copies);
 				goto out;
 			}
