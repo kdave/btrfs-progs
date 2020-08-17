@@ -1921,7 +1921,7 @@ static int __free_extent(struct btrfs_trans_handle *trans,
 		btrfs_fs_incompat(extent_root->fs_info, SKINNY_METADATA);
 
 	if (trans->fs_info->free_extent_hook) {
-		trans->fs_info->free_extent_hook(trans->fs_info, bytenr, num_bytes,
+		trans->fs_info->free_extent_hook(bytenr, num_bytes,
 						parent, root_objectid, owner_objectid,
 						owner_offset, refs_to_drop);
 

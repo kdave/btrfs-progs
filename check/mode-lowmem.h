@@ -66,9 +66,7 @@
 #define ACCOUNTING_MISMATCH	(1 << 7) /* Used space accounting error */
 #define CHUNK_TYPE_MISMATCH	(1 << 8)
 
-int check_fs_roots_lowmem(struct btrfs_fs_info *fs_info);
-int check_chunks_and_extents_lowmem(struct btrfs_fs_info *fs_info);
-int check_repair_free_space_inode(struct btrfs_fs_info *fs_info,
-				  struct btrfs_path *path);
+int check_fs_roots_lowmem(void);
+int check_chunks_and_extents_lowmem(void);
 
 #endif

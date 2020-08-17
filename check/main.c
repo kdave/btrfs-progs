@@ -1640,8 +1640,7 @@ static int process_file_extent(struct btrfs_root *root,
 		else
 			disk_bytenr += extent_offset;
 
-		ret = count_csum_range(gfs_info, disk_bytenr, num_bytes,
-				       &found);
+		ret = count_csum_range(disk_bytenr, num_bytes, &found);
 		if (ret < 0)
 			return ret;
 		if (extent_type == BTRFS_FILE_EXTENT_REG) {
@@ -1653,8 +1652,7 @@ static int process_file_extent(struct btrfs_root *root,
 				rec->errors |= I_ERR_SOME_CSUM_MISSING;
 		} else if (extent_type == BTRFS_FILE_EXTENT_PREALLOC) {
 			if (found > 0) {
-				ret = check_prealloc_extent_written(gfs_info,
-								    disk_bytenr,
+				ret = check_prealloc_extent_written(disk_bytenr,
 								    num_bytes);
 				if (ret < 0)
 					return ret;
@@ -3696,8 +3694,7 @@ skip_walking:
 	return ret;
 }
 
-static int check_fs_roots(struct btrfs_fs_info *fs_info,
-			  struct cache_tree *root_cache)
+static int check_fs_roots(struct cache_tree *root_cache)
 {
 	struct btrfs_path path;
 	struct btrfs_key key;
@@ -3714,7 +3711,7 @@ static int check_fs_roots(struct btrfs_fs_info *fs_info,
 	 * reflected into the free space cache yet.
 	 */
 	if (repair)
-		reset_cached_block_groups(gfs_info);
+		reset_cached_block_groups();
 	memset(&wc, 0, sizeof(wc));
 	cache_tree_init(&wc.shared);
 	btrfs_init_path(&path);
@@ -3790,7 +3787,7 @@ again:
 					 root_cache);
 		} else if (key.type == BTRFS_INODE_ITEM_KEY &&
 			   is_fstree(key.objectid)) {
-			ret = check_repair_free_space_inode(gfs_info, &path);
+			ret = check_repair_free_space_inode(&path);
 			if (ret < 0 && !path.nodes[0]) {
 				err = 1;
 				goto out;
@@ -3873,15 +3870,14 @@ static struct data_backref *find_data_backref(struct extent_record *rec,
 	return back;
 }
 
-static int do_check_fs_roots(struct btrfs_fs_info *fs_info,
-			  struct cache_tree *root_cache)
+static int do_check_fs_roots(struct cache_tree *root_cache)
 {
 	int ret;
 
 	if (check_mode == CHECK_MODE_LOWMEM)
-		ret = check_fs_roots_lowmem(gfs_info);
+		ret = check_fs_roots_lowmem();
 	else
-		ret = check_fs_roots(gfs_info, root_cache);
+		ret = check_fs_roots(root_cache);
 
 	return ret;
 }
@@ -4126,8 +4122,7 @@ static int is_extent_tree_record(struct extent_record *rec)
 }
 
 
-static int record_bad_block_io(struct btrfs_fs_info *info,
-			       struct cache_tree *extent_cache,
+static int record_bad_block_io(struct cache_tree *extent_cache,
 			       u64 start, u64 len)
 {
 	struct extent_record *rec;
@@ -6228,7 +6223,7 @@ static int run_next_block(struct btrfs_root *root,
 	/* fixme, get the real parent transid */
 	buf = read_tree_block(gfs_info, bytenr, gen);
 	if (!extent_buffer_uptodate(buf)) {
-		record_bad_block_io(gfs_info, extent_cache, bytenr, size);
+		record_bad_block_io(extent_cache, bytenr, size);
 		goto out;
 	}
 
@@ -6575,8 +6570,7 @@ static int add_root_to_pending(struct extent_buffer *buf,
  * we're tracking for repair.  This hook makes sure we
  * remove any backrefs for blocks as we are fixing them.
  */
-static int free_extent_hook(struct btrfs_fs_info *fs_info,
-			    u64 bytenr, u64 num_bytes, u64 parent,
+static int free_extent_hook(u64 bytenr, u64 num_bytes, u64 parent,
 			    u64 root_objectid, u64 owner, u64 offset,
 			    int refs_to_drop)
 {
@@ -6728,7 +6722,6 @@ static int delete_extent_records(struct btrfs_trans_handle *trans,
  * and add the backref to it.
  */
 static int record_extent(struct btrfs_trans_handle *trans,
-			 struct btrfs_fs_info *info,
 			 struct btrfs_path *path,
 			 struct extent_record *rec,
 			 struct extent_backref *back,
@@ -6916,8 +6909,8 @@ static struct extent_entry *find_most_right_entry(struct list_head *entries)
 	return best;
 }
 
-static int repair_ref(struct btrfs_fs_info *info, struct btrfs_path *path,
-		      struct data_backref *dback, struct extent_entry *entry)
+static int repair_ref(struct btrfs_path *path, struct data_backref *dback,
+		      struct extent_entry *entry)
 {
 	struct btrfs_trans_handle *trans;
 	struct btrfs_root *root;
@@ -7066,8 +7059,7 @@ out:
 	return ret ? ret : err;
 }
 
-static int verify_backrefs(struct btrfs_fs_info *info, struct btrfs_path *path,
-			   struct extent_record *rec)
+static int verify_backrefs(struct btrfs_path *path, struct extent_record *rec)
 {
 	struct extent_backref *back, *tmp;
 	struct data_backref *dback;
@@ -7227,7 +7219,7 @@ static int verify_backrefs(struct btrfs_fs_info *info, struct btrfs_path *path,
 		    dback->disk_bytenr == best->bytenr)
 			continue;
 
-		ret = repair_ref(gfs_info, path, dback, best);
+		ret = repair_ref(path, dback, best);
 		if (ret)
 			goto out;
 	}
@@ -7509,8 +7501,7 @@ static int __find_possible_backrefs(struct btrfs_root *root,
 	return ret;
 }
 
-static int find_possible_backrefs(struct btrfs_fs_info *info,
-				  struct btrfs_path *path,
+static int find_possible_backrefs(struct btrfs_path *path,
 				  struct cache_tree *extent_cache,
 				  struct extent_record *rec)
 {
@@ -7594,8 +7585,7 @@ static int find_possible_backrefs(struct btrfs_fs_info *info,
  * all of the existing entries for it and recreate them
  * based on what the tree scan found.
  */
-static int fixup_extent_refs(struct btrfs_fs_info *info,
-			     struct cache_tree *extent_cache,
+static int fixup_extent_refs(struct cache_tree *extent_cache,
 			     struct extent_record *rec)
 {
 	struct btrfs_trans_handle *trans = NULL;
@@ -7618,13 +7608,13 @@ static int fixup_extent_refs(struct btrfs_fs_info *info,
 		 * them into the list if we find the backref so that
 		 * verify_backrefs can figure out what to do.
 		 */
-		ret = find_possible_backrefs(gfs_info, &path, extent_cache, rec);
+		ret = find_possible_backrefs(&path, extent_cache, rec);
 		if (ret < 0)
 			goto out;
 	}
 
 	/* step one, make sure all of the backrefs agree */
-	ret = verify_backrefs(gfs_info, &path, rec);
+	ret = verify_backrefs(&path, rec);
 	if (ret < 0)
 		goto out;
 
@@ -7659,8 +7649,7 @@ static int fixup_extent_refs(struct btrfs_fs_info *info,
 			continue;
 
 		rec->bad_full_backref = 0;
-		ret = record_extent(trans, gfs_info, &path, rec, back, allocated,
-				    flags);
+		ret = record_extent(trans, &path, rec, back, allocated, flags);
 		allocated = 1;
 
 		if (ret)
@@ -7682,8 +7671,7 @@ out:
 	return ret;
 }
 
-static int fixup_extent_flags(struct btrfs_fs_info *fs_info,
-			      struct extent_record *rec)
+static int fixup_extent_flags(struct extent_record *rec)
 {
 	struct btrfs_trans_handle *trans;
 	struct btrfs_root *root = gfs_info->extent_root;
@@ -7753,7 +7741,6 @@ retry:
 
 /* right now we only prune from the extent allocation tree */
 static int prune_one_block(struct btrfs_trans_handle *trans,
-			   struct btrfs_fs_info *info,
 			   struct btrfs_corrupt_block *corrupt)
 {
 	int ret;
@@ -7820,7 +7807,7 @@ out:
 	return ret;
 }
 
-static int prune_corrupt_blocks(struct btrfs_fs_info *info)
+static int prune_corrupt_blocks(void)
 {
 	struct btrfs_trans_handle *trans = NULL;
 	struct cache_extent *cache;
@@ -7836,7 +7823,7 @@ static int prune_corrupt_blocks(struct btrfs_fs_info *info)
 				return PTR_ERR(trans);
 		}
 		corrupt = container_of(cache, struct btrfs_corrupt_block, cache);
-		prune_one_block(trans, gfs_info, corrupt);
+		prune_one_block(trans, corrupt);
 		remove_cache_extent(gfs_info->corrupt_blocks, cache);
 	}
 	if (trans)
@@ -7844,8 +7831,7 @@ static int prune_corrupt_blocks(struct btrfs_fs_info *info)
 	return 0;
 }
 
-static int record_unaligned_extent_rec(struct btrfs_fs_info *fs_info,
-					struct extent_record *rec)
+static int record_unaligned_extent_rec(struct extent_record *rec)
 {
 
 	struct extent_backref *back, *tmp;
@@ -7938,11 +7924,11 @@ static int check_extent_refs(struct btrfs_root *root,
 					 cache->start + cache->size - 1);
 			cache = next_cache_extent(cache);
 		}
-		prune_corrupt_blocks(gfs_info);
-		reset_cached_block_groups(gfs_info);
+		prune_corrupt_blocks();
+		reset_cached_block_groups();
 	}
 
-	reset_cached_block_groups(gfs_info);
+	reset_cached_block_groups();
 
 	/*
 	 * We need to delete any duplicate entries we find first otherwise we
@@ -8015,7 +8001,7 @@ static int check_extent_refs(struct btrfs_root *root,
 			fprintf(stderr, "unaligned extent rec on [%llu %llu]\n",
 				(unsigned long long)rec->start,
 				(unsigned long long)rec->nr);
-			ret = record_unaligned_extent_rec(gfs_info, rec);
+			ret = record_unaligned_extent_rec(rec);
 			if (ret)
 				goto repair_abort;
 
@@ -8039,7 +8025,7 @@ static int check_extent_refs(struct btrfs_root *root,
 		}
 
 		if (repair && fix) {
-			ret = fixup_extent_refs(gfs_info, extent_cache, rec);
+			ret = fixup_extent_refs(extent_cache, rec);
 			if (ret)
 				goto repair_abort;
 		}
@@ -8049,7 +8035,7 @@ static int check_extent_refs(struct btrfs_root *root,
 			fprintf(stderr, "bad full backref, on [%llu]\n",
 				(unsigned long long)rec->start);
 			if (repair) {
-				ret = fixup_extent_flags(gfs_info, rec);
+				ret = fixup_extent_flags(rec);
 				if (ret)
 					goto repair_abort;
 				fix = 1;
@@ -8331,7 +8317,7 @@ static int check_device_used(struct device_record *dev_rec,
  *
  * So this function will return the error for a fatal super total_bytes problem.
  */
-static bool is_super_size_valid(struct btrfs_fs_info *fs_info)
+static bool is_super_size_valid(void)
 {
 	struct btrfs_device *dev;
 	struct list_head *dev_list = &gfs_info->fs_devices->devices;
@@ -8508,8 +8494,6 @@ static int deal_root_from_list(struct list_head *list,
  * parse_tree_roots - Go over all roots in the tree root and add each one to
  *		      a list.
  *
- * @fs_info        - pointer to fs_info struct of the file system.
- *
  * @normal_trees   - list to contains all roots which don't have a drop
  *		     operation in progress
  *
@@ -8518,9 +8502,8 @@ static int deal_root_from_list(struct list_head *list,
  *
  * Returns 0 on success or a negative value indicating an error.
  */
-static int parse_tree_roots(struct btrfs_fs_info *fs_info,
-			   struct list_head *normal_trees,
-			   struct list_head *dropping_trees)
+static int parse_tree_roots(struct list_head *normal_trees,
+			    struct list_head *dropping_trees)
 {
 	struct btrfs_path path;
 	struct btrfs_key key;
@@ -8593,7 +8576,7 @@ out:
  *
  * Dev extents <-> chunk cross checking is already done in check_chunks().
  */
-static int check_dev_extents(struct btrfs_fs_info *fs_info)
+static int check_dev_extents(void)
 {
 	struct btrfs_path path;
 	struct btrfs_key key;
@@ -8683,7 +8666,7 @@ out:
 	return ret;
 }
 
-static int check_chunks_and_extents(struct btrfs_fs_info *fs_info)
+static int check_chunks_and_extents(void)
 {
 	struct rb_root dev_cache;
 	struct cache_tree chunk_cache;
@@ -8749,7 +8732,7 @@ again:
 	if (ret < 0)
 		goto out;
 
-	ret = parse_tree_roots(gfs_info, &normal_trees, &dropping_trees);
+	ret = parse_tree_roots(&normal_trees, &dropping_trees);
 	if (ret < 0)
 		goto out;
 
@@ -8777,7 +8760,7 @@ again:
 		goto out;
 	}
 
-	ret = check_dev_extents(gfs_info);
+	ret = check_dev_extents();
 	if (ret < 0) {
 		err = ret;
 		goto out;
@@ -8840,14 +8823,14 @@ loop:
 	goto again;
 }
 
-static int do_check_chunks_and_extents(struct btrfs_fs_info *fs_info)
+static int do_check_chunks_and_extents(void)
 {
 	int ret;
 
 	if (check_mode == CHECK_MODE_LOWMEM)
-		ret = check_chunks_and_extents_lowmem(gfs_info);
+		ret = check_chunks_and_extents_lowmem();
 	else
-		ret = check_chunks_and_extents(gfs_info);
+		ret = check_chunks_and_extents();
 
 	/* Also repair device size related problems */
 	if (repair && !ret) {
@@ -8914,7 +8897,7 @@ static int btrfs_fsck_reinit_root(struct btrfs_trans_handle *trans,
 	return 0;
 }
 
-static int reset_block_groups(struct btrfs_fs_info *fs_info)
+static int reset_block_groups(void)
 {
 	struct btrfs_block_group *cache;
 	struct btrfs_path path;
@@ -8984,8 +8967,7 @@ static int reset_block_groups(struct btrfs_fs_info *fs_info)
 	return 0;
 }
 
-static int reset_balance(struct btrfs_trans_handle *trans,
-			 struct btrfs_fs_info *fs_info)
+static int reset_balance(struct btrfs_trans_handle *trans)
 {
 	struct btrfs_root *root = gfs_info->tree_root;
 	struct btrfs_path path;
@@ -9087,8 +9069,7 @@ out:
 	return ret;
 }
 
-static int reinit_extent_tree(struct btrfs_trans_handle *trans,
-		       struct btrfs_fs_info *fs_info, bool pin)
+static int reinit_extent_tree(struct btrfs_trans_handle *trans, bool pin)
 {
 	u64 start = 0;
 	int ret;
@@ -9117,13 +9098,13 @@ static int reinit_extent_tree(struct btrfs_trans_handle *trans,
 	 */
 again:
 	if (pin) {
-		ret = pin_metadata_blocks(gfs_info);
+		ret = pin_metadata_blocks();
 		if (ret) {
 			fprintf(stderr, "error pinning down used bytes\n");
 			return ret;
 		}
 	} else {
-		ret = exclude_metadata_blocks(gfs_info);
+		ret = exclude_metadata_blocks();
 		if (ret) {
 			fprintf(stderr, "error excluding used bytes\n");
 			printf("try to pin down used bytes\n");
@@ -9137,7 +9118,7 @@ again:
 	 * of them again.
 	 */
 	btrfs_free_block_groups(gfs_info);
-	ret = reset_block_groups(gfs_info);
+	ret = reset_block_groups();
 	if (ret) {
 		fprintf(stderr, "error resetting the block groups\n");
 		return ret;
@@ -9185,7 +9166,7 @@ again:
 		btrfs_run_delayed_refs(trans, -1);
 	}
 
-	ret = reset_balance(trans, gfs_info);
+	ret = reset_balance(trans);
 	if (ret)
 		fprintf(stderr, "error resetting the pending balance\n");
 
@@ -9496,7 +9477,7 @@ static void free_roots_info_cache(void)
 	roots_info_cache = NULL;
 }
 
-static int build_roots_info_cache(struct btrfs_fs_info *info)
+static int build_roots_info_cache(void)
 {
 	int ret = 0;
 	struct btrfs_key key;
@@ -9715,7 +9696,7 @@ static int maybe_repair_root_item(struct btrfs_path *path,
  * repair code delete or modify backrefs in the extent tree for example, which
  * will result in an inconsistent fs after repairing the root items.
  */
-static int repair_root_items(struct btrfs_fs_info *info)
+static int repair_root_items(void)
 {
 	struct btrfs_path path;
 	struct btrfs_key key;
@@ -9727,7 +9708,7 @@ static int repair_root_items(struct btrfs_fs_info *info)
 
 	btrfs_init_path(&path);
 
-	ret = build_roots_info_cache(gfs_info);
+	ret = build_roots_info_cache();
 	if (ret)
 		goto out;
 
@@ -9809,7 +9790,7 @@ out:
 	return bad_roots;
 }
 
-static int clear_free_space_cache(struct btrfs_fs_info *fs_info)
+static int clear_free_space_cache(void)
 {
 	struct btrfs_trans_handle *trans;
 	struct btrfs_block_group *bg_cache;
@@ -9839,8 +9820,7 @@ static int clear_free_space_cache(struct btrfs_fs_info *fs_info)
 	return ret;
 }
 
-static int do_clear_free_space_cache(struct btrfs_fs_info *fs_info,
-		int clear_version)
+static int do_clear_free_space_cache(int clear_version)
 {
 	int ret = 0;
 
@@ -9851,7 +9831,7 @@ static int do_clear_free_space_cache(struct btrfs_fs_info *fs_info,
 			ret = 1;
 			goto close_out;
 		}
-		ret = clear_free_space_cache(gfs_info);
+		ret = clear_free_space_cache();
 		if (ret) {
 			error("failed to clear free space cache");
 			ret = 1;
@@ -9892,7 +9872,7 @@ static int validate_free_space_cache(struct btrfs_root *root)
 	ret = check_space_cache(root);
 	if (ret && btrfs_fs_compat_ro(gfs_info, FREE_SPACE_TREE) &&
 	    repair) {
-		ret = do_clear_free_space_cache(gfs_info, 2);
+		ret = do_clear_free_space_cache(2);
 		if (ret)
 			goto out;
 
@@ -10187,7 +10167,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 	}
 
 	if (clear_space_cache) {
-		ret = do_clear_free_space_cache(gfs_info, clear_space_cache);
+		ret = do_clear_free_space_cache(clear_space_cache);
 		err |= !!ret;
 		goto close_out;
 	}
@@ -10242,7 +10222,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 		trans->reinit_extent_tree = true;
 		if (init_extent_tree) {
 			printf("Creating a new extent tree\n");
-			ret = reinit_extent_tree(trans, gfs_info,
+			ret = reinit_extent_tree(trans,
 					 check_mode == CHECK_MODE_ORIGINAL);
 			err |= !!ret;
 			if (ret)
@@ -10297,7 +10277,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 			ctx.tp = TASK_ROOT_ITEMS;
 			task_start(ctx.info, &ctx.start_time, &ctx.item_count);
 		}
-		ret = repair_root_items(gfs_info);
+		ret = repair_root_items();
 		task_stop(ctx.info);
 		if (ret < 0) {
 			err = !!ret;
@@ -10335,7 +10315,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 		ctx.tp = TASK_EXTENTS;
 		task_start(ctx.info, &ctx.start_time, &ctx.item_count);
 	}
-	ret = do_check_chunks_and_extents(gfs_info);
+	ret = do_check_chunks_and_extents();
 	task_stop(ctx.info);
 	err |= !!ret;
 	if (ret)
@@ -10343,7 +10323,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 		"errors found in extent allocation tree or chunk allocation");
 
 	/* Only re-check super size after we checked and repaired the fs */
-	err |= !is_super_size_valid(gfs_info);
+	err |= !is_super_size_valid();
 
 	is_free_space_tree = btrfs_fs_compat_ro(gfs_info, FREE_SPACE_TREE);
 
@@ -10375,7 +10355,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 		task_start(ctx.info, &ctx.start_time, &ctx.item_count);
 	}
 
-	ret = do_check_fs_roots(gfs_info, &root_cache);
+	ret = do_check_fs_roots(&root_cache);
 	task_stop(ctx.info);
 	err |= !!ret;
 	if (ret) {

@@ -101,10 +101,8 @@ static inline int fs_root_objectid(u64 objectid)
 	return is_fstree(objectid);
 }
 
-int check_prealloc_extent_written(struct btrfs_fs_info *fs_info,
-				  u64 disk_bytenr, u64 num_bytes);
-int count_csum_range(struct btrfs_fs_info *fs_info, u64 start,
-		     u64 len, u64 *found);
+int check_prealloc_extent_written(u64 disk_bytenr, u64 num_bytes);
+int count_csum_range(u64 start, u64 len, u64 *found);
 int insert_inode_item(struct btrfs_trans_handle *trans,
 		      struct btrfs_root *root, u64 ino, u64 size,
 		      u64 nbytes, u64 nlink, u32 mode);
@@ -118,10 +116,10 @@ void reada_walk_down(struct btrfs_root *root, struct extent_buffer *node,
 		     int slot);
 int check_child_node(struct extent_buffer *parent, int slot,
 		     struct extent_buffer *child);
-void reset_cached_block_groups(struct btrfs_fs_info *fs_info);
-int pin_metadata_blocks(struct btrfs_fs_info *fs_info);
-int exclude_metadata_blocks(struct btrfs_fs_info *fs_info);
-void cleanup_excluded_extents(struct btrfs_fs_info *fs_info);
+void reset_cached_block_groups(void);
+int pin_metadata_blocks(void);
+int exclude_metadata_blocks(void);
+void cleanup_excluded_extents(void);
 int delete_corrupted_dir_item(struct btrfs_trans_handle *trans,
 			      struct btrfs_root *root,
 			      struct btrfs_key *di_key, char *namebuf,
@@ -131,8 +129,8 @@ int detect_imode(struct btrfs_root *root, struct btrfs_path *path,
 int reset_imode(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 		struct btrfs_path *path, u64 ino, u32 mode);
 int repair_imode_common(struct btrfs_root *root, struct btrfs_path *path);
-int check_repair_free_space_inode(struct btrfs_fs_info *fs_info,
-				  struct btrfs_path *path);
+int check_repair_free_space_inode(struct btrfs_path *path);
+
 /*
  * Check if the inode mode @imode is valid
  *
