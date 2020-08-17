@@ -61,7 +61,7 @@ int no_holes = 0;
 static int is_free_space_tree = 0;
 int init_extent_tree = 0;
 int check_data_csum = 0;
-struct btrfs_fs_info *global_info;
+struct btrfs_fs_info *gfs_info;
 struct task_ctx ctx = { 0 };
 struct cache_tree *roots_info_cache = NULL;
 
@@ -912,7 +912,7 @@ static int process_inode_item(struct extent_buffer *eb,
 	 * We don't have accurate root info to determine the correct
 	 * inode generation uplimit, use super_generation + 1 anyway
 	 */
-	gen_uplimit = btrfs_super_generation(global_info->super_copy) + 1;
+	gen_uplimit = btrfs_super_generation(gfs_info->super_copy) + 1;
 	if (btrfs_inode_generation(eb, item) > gen_uplimit)
 		rec->errors |= I_ERR_INVALID_GEN;
 	maybe_free_inode_rec(&active_node->inode_cache, rec);
@@ -4031,7 +4031,7 @@ static void free_extent_record_cache(struct cache_tree *extent_cache)
 static int maybe_free_extent_rec(struct cache_tree *extent_cache,
 				 struct extent_record *rec)
 {
-	u64 super_gen = btrfs_super_generation(global_info->super_copy);
+	u64 super_gen = btrfs_super_generation(gfs_info->super_copy);
 
 	if (rec->content_checked && rec->owner_ref_checked &&
 	    rec->extent_item_refs == rec->refs && rec->refs > 0 &&
@@ -4543,7 +4543,7 @@ static void check_extent_type(struct extent_record *rec)
 {
 	struct btrfs_block_group *bg_cache;
 
-	bg_cache = btrfs_lookup_first_block_group(global_info, rec->start);
+	bg_cache = btrfs_lookup_first_block_group(gfs_info, rec->start);
 	if (!bg_cache)
 		return;
 
@@ -4634,8 +4634,8 @@ static int add_extent_rec_nolookup(struct cache_tree *extent_cache,
 	bytes_used += rec->nr;
 
 	if (tmpl->metadata)
-		rec->crossing_stripes = check_crossing_stripes(global_info,
-				rec->start, global_info->nodesize);
+		rec->crossing_stripes = check_crossing_stripes(gfs_info,
+				rec->start, gfs_info->nodesize);
 	check_extent_type(rec);
 	return ret;
 }
@@ -4737,8 +4737,8 @@ static int add_extent_rec(struct cache_tree *extent_cache,
 		 */
 		if (tmpl->metadata)
 			rec->crossing_stripes = check_crossing_stripes(
-					global_info, rec->start,
-					global_info->nodesize);
+					gfs_info, rec->start,
+					gfs_info->nodesize);
 		check_extent_type(rec);
 		maybe_free_extent_rec(extent_cache, rec);
 		return ret;
@@ -5165,7 +5165,7 @@ static int process_chunk_item(struct cache_tree *chunk_cache,
 	 * wrong onwer(3) out of chunk tree, to pass both chunk tree check
 	 * and owner<->key_type check.
 	 */
-	ret = btrfs_check_chunk_valid(global_info, eb, chunk, slot,
+	ret = btrfs_check_chunk_valid(gfs_info, eb, chunk, slot,
 				      key->offset);
 	if (ret < 0) {
 		error("chunk(%llu, %llu) is not valid, ignore it",
@@ -8397,7 +8397,7 @@ static int check_devices(struct rb_root *dev_cache,
 			ret = err;
 
 		check_dev_size_alignment(dev_rec->devid, dev_rec->total_byte,
-					 global_info->sectorsize);
+					 gfs_info->sectorsize);
 		dev_node = rb_next(dev_node);
 	}
 	list_for_each_entry(dext_rec, &dev_extent_cache->no_device_orphans,
@@ -9903,13 +9903,13 @@ static int validate_free_space_cache(struct btrfs_root *root)
 	}
 
 	ret = check_space_cache(root);
-	if (ret && btrfs_fs_compat_ro(global_info, FREE_SPACE_TREE) &&
+	if (ret && btrfs_fs_compat_ro(gfs_info, FREE_SPACE_TREE) &&
 	    repair) {
-		ret = do_clear_free_space_cache(global_info, 2);
+		ret = do_clear_free_space_cache(gfs_info, 2);
 		if (ret)
 			goto out;
 
-		ret = btrfs_create_free_space_tree(global_info);
+		ret = btrfs_create_free_space_tree(gfs_info);
 		if (ret)
 			error("couldn't repair freespace tree");
 	}
@@ -10182,7 +10182,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 		goto err_out;
 	}
 
-	global_info = info;
+	gfs_info = info;
 	root = info->fs_root;
 	uuid_unparse(info->super_copy->fsid, uuidbuf);
 

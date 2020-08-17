@@ -72,7 +72,7 @@ extern struct list_head delete_items;
 extern int no_holes;
 extern int init_extent_tree;
 extern int check_data_csum;
-extern struct btrfs_fs_info *global_info;
+extern struct btrfs_fs_info *gfs_info;
 extern struct task_ctx ctx;
 extern struct cache_tree *roots_info_cache;
 

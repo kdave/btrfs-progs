@@ -4213,7 +4213,7 @@ static int check_extent_item(struct btrfs_fs_info *fs_info,
 
 	if (flags & BTRFS_EXTENT_FLAG_TREE_BLOCK)
 		metadata = 1;
-	if (metadata && check_crossing_stripes(global_info, key.objectid,
+	if (metadata && check_crossing_stripes(gfs_info, key.objectid,
 					       eb->len)) {
 		error("bad metadata [%llu, %llu) crossing stripe boundary",
 		      key.objectid, key.objectid + nodesize);
