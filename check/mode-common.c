@@ -47,7 +47,7 @@ static int check_prealloc_data_ref(struct btrfs_fs_info *fs_info,
 	key.objectid = rootid;
 	key.type = BTRFS_ROOT_ITEM_KEY;
 	key.offset = (u64)-1;
-	root = btrfs_read_fs_root(fs_info, &key);
+	root = btrfs_read_fs_root(gfs_info, &key);
 	if (IS_ERR(root)) {
 		ret = PTR_ERR(root);
 		goto out;
@@ -121,7 +121,7 @@ static int check_prealloc_shared_data_ref(struct btrfs_fs_info *fs_info,
 	int i;
 	int ret = 0;
 
-	eb = read_tree_block(fs_info, parent, 0);
+	eb = read_tree_block(gfs_info, parent, 0);
 	if (!extent_buffer_uptodate(eb)) {
 		ret = -EIO;
 		goto out;
@@ -191,7 +191,7 @@ int check_prealloc_extent_written(struct btrfs_fs_info *fs_info,
 	key.offset = num_bytes;
 
 	btrfs_init_path(&path);
-	ret = btrfs_search_slot(NULL, fs_info->extent_root, &key, &path, 0, 0);
+	ret = btrfs_search_slot(NULL, gfs_info->extent_root, &key, &path, 0, 0);
 	if (ret > 0) {
 		fprintf(stderr,
 	"Missing extent item in extent tree for disk_bytenr %llu, num_bytes %llu\n",
@@ -220,7 +220,7 @@ int check_prealloc_extent_written(struct btrfs_fs_info *fs_info,
 			struct btrfs_extent_data_ref *dref;
 
 			dref = (struct btrfs_extent_data_ref *)(&iref->offset);
-			ret = check_prealloc_data_ref(fs_info, disk_bytenr,
+			ret = check_prealloc_data_ref(gfs_info, disk_bytenr,
 						      dref, path.nodes[0]);
 			if (ret != 0)
 				goto out;
@@ -229,7 +229,7 @@ int check_prealloc_extent_written(struct btrfs_fs_info *fs_info,
 
 			parent = btrfs_extent_inline_ref_offset(path.nodes[0],
 								iref);
-			ret = check_prealloc_shared_data_ref(fs_info,
+			ret = check_prealloc_shared_data_ref(gfs_info,
 							     parent,
 							     disk_bytenr);
 			if (ret != 0)
@@ -243,7 +243,7 @@ int check_prealloc_extent_written(struct btrfs_fs_info *fs_info,
 	path.slots[0]++;
 	while (true) {
 		if (path.slots[0] >= btrfs_header_nritems(path.nodes[0])) {
-			ret = btrfs_next_leaf(fs_info->extent_root, &path);
+			ret = btrfs_next_leaf(gfs_info->extent_root, &path);
 			if (ret < 0)
 				goto out;
 			if (ret > 0) {
@@ -261,12 +261,12 @@ int check_prealloc_extent_written(struct btrfs_fs_info *fs_info,
 
 			dref = btrfs_item_ptr(path.nodes[0], path.slots[0],
 					      struct btrfs_extent_data_ref);
-			ret = check_prealloc_data_ref(fs_info, disk_bytenr,
+			ret = check_prealloc_data_ref(gfs_info, disk_bytenr,
 						      dref, path.nodes[0]);
 			if (ret != 0)
 				goto out;
 		} else if (key.type == BTRFS_SHARED_DATA_REF_KEY) {
-			ret = check_prealloc_shared_data_ref(fs_info,
+			ret = check_prealloc_shared_data_ref(gfs_info,
 							     key.offset,
 							     disk_bytenr);
 			if (ret != 0)
@@ -299,7 +299,7 @@ int count_csum_range(struct btrfs_fs_info *fs_info, u64 start,
 	size_t size;
 	*found = 0;
 	u64 csum_end;
-	u16 csum_size = btrfs_super_csum_size(fs_info->super_copy);
+	u16 csum_size = btrfs_super_csum_size(gfs_info->super_copy);
 
 	btrfs_init_path(&path);
 
@@ -307,7 +307,7 @@ int count_csum_range(struct btrfs_fs_info *fs_info, u64 start,
 	key.offset = start;
 	key.type = BTRFS_EXTENT_CSUM_KEY;
 
-	ret = btrfs_search_slot(NULL, fs_info->csum_root,
+	ret = btrfs_search_slot(NULL, gfs_info->csum_root,
 				&key, &path, 0, 0);
 	if (ret < 0)
 		goto out;
@@ -322,7 +322,7 @@ int count_csum_range(struct btrfs_fs_info *fs_info, u64 start,
 	while (len > 0) {
 		leaf = path.nodes[0];
 		if (path.slots[0] >= btrfs_header_nritems(leaf)) {
-			ret = btrfs_next_leaf(fs_info->csum_root, &path);
+			ret = btrfs_next_leaf(gfs_info->csum_root, &path);
 			if (ret > 0)
 				break;
 			else if (ret < 0)
@@ -344,7 +344,7 @@ int count_csum_range(struct btrfs_fs_info *fs_info, u64 start,
 
 		size = btrfs_item_size_nr(leaf, path.slots[0]);
 		csum_end = key.offset + (size / csum_size) *
-			   fs_info->sectorsize;
+			   gfs_info->sectorsize;
 		if (csum_end > start) {
 			size = min(csum_end - start, len);
 			len -= size;
@@ -512,7 +512,6 @@ void check_dev_size_alignment(u64 devid, u64 total_bytes, u32 sectorsize)
 void reada_walk_down(struct btrfs_root *root, struct extent_buffer *node,
 		     int slot)
 {
-	struct btrfs_fs_info *fs_info = root->fs_info;
 	u64 bytenr;
 	u64 ptr_gen;
 	u32 nritems;
@@ -527,7 +526,7 @@ void reada_walk_down(struct btrfs_root *root, struct extent_buffer *node,
 	for (i = slot; i < nritems; i++) {
 		bytenr = btrfs_node_blockptr(node, i);
 		ptr_gen = btrfs_node_ptr_generation(node, i);
-		readahead_tree_block(fs_info, bytenr, ptr_gen);
+		readahead_tree_block(gfs_info, bytenr, ptr_gen);
 	}
 }
 
@@ -587,16 +586,16 @@ void reset_cached_block_groups(struct btrfs_fs_info *fs_info)
 	int ret;
 
 	while (1) {
-		ret = find_first_extent_bit(&fs_info->free_space_cache, 0,
+		ret = find_first_extent_bit(&gfs_info->free_space_cache, 0,
 					    &start, &end, EXTENT_DIRTY);
 		if (ret)
 			break;
-		clear_extent_dirty(&fs_info->free_space_cache, start, end);
+		clear_extent_dirty(&gfs_info->free_space_cache, start, end);
 	}
 
 	start = 0;
 	while (1) {
-		cache = btrfs_lookup_first_block_group(fs_info, start);
+		cache = btrfs_lookup_first_block_group(gfs_info, start);
 		if (!cache)
 			break;
 		if (cache->cached)
@@ -621,9 +620,9 @@ static int traverse_tree_blocks(struct btrfs_fs_info *fs_info,
 	u64 end = eb->start + eb->len;
 
 	if (pin)
-		tree = &fs_info->pinned_extents;
+		tree = &gfs_info->pinned_extents;
 	else
-		tree = fs_info->excluded_extents;
+		tree = gfs_info->excluded_extents;
 	/*
 	 * If we have pinned/excluded this block before, don't do it again.
 	 * This can not only avoid forever loop with broken filesystem
@@ -633,7 +632,7 @@ static int traverse_tree_blocks(struct btrfs_fs_info *fs_info,
 		return 0;
 
 	if (pin)
-		btrfs_pin_extent(fs_info, eb->start, eb->len);
+		btrfs_pin_extent(gfs_info, eb->start, eb->len);
 	else
 		set_extent_dirty(tree, eb->start, end - 1);
 
@@ -662,12 +661,12 @@ static int traverse_tree_blocks(struct btrfs_fs_info *fs_info,
 			 * in, but for now this doesn't actually use the root so
 			 * just pass in extent_root.
 			 */
-			tmp = read_tree_block(fs_info, bytenr, 0);
+			tmp = read_tree_block(gfs_info, bytenr, 0);
 			if (!extent_buffer_uptodate(tmp)) {
 				fprintf(stderr, "Error reading root block\n");
 				return -EIO;
 			}
-			ret = traverse_tree_blocks(fs_info, tmp, 0, pin);
+			ret = traverse_tree_blocks(gfs_info, tmp, 0, pin);
 			free_extent_buffer(tmp);
 			if (ret)
 				return ret;
@@ -676,17 +675,17 @@ static int traverse_tree_blocks(struct btrfs_fs_info *fs_info,
 
 			/* If we aren't the tree root don't read the block */
 			if (level == 1 && !tree_root) {
-				btrfs_pin_extent(fs_info, bytenr,
-						fs_info->nodesize);
+				btrfs_pin_extent(gfs_info, bytenr,
+						 gfs_info->nodesize);
 				continue;
 			}
 
-			tmp = read_tree_block(fs_info, bytenr, 0);
+			tmp = read_tree_block(gfs_info, bytenr, 0);
 			if (!extent_buffer_uptodate(tmp)) {
 				fprintf(stderr, "Error reading tree block\n");
 				return -EIO;
 			}
-			ret = traverse_tree_blocks(fs_info, tmp, tree_root,
+			ret = traverse_tree_blocks(gfs_info, tmp, tree_root,
 						   pin);
 			free_extent_buffer(tmp);
 			if (ret)
@@ -700,24 +699,24 @@ static int traverse_tree_blocks(struct btrfs_fs_info *fs_info,
 static int pin_down_tree_blocks(struct btrfs_fs_info *fs_info,
 				struct extent_buffer *eb, int tree_root)
 {
-	return traverse_tree_blocks(fs_info, eb, tree_root, 1);
+	return traverse_tree_blocks(gfs_info, eb, tree_root, 1);
 }
 
 int pin_metadata_blocks(struct btrfs_fs_info *fs_info)
 {
 	int ret;
 
-	ret = pin_down_tree_blocks(fs_info, fs_info->chunk_root->node, 0);
+	ret = pin_down_tree_blocks(gfs_info, gfs_info->chunk_root->node, 0);
 	if (ret)
 		return ret;
 
-	return pin_down_tree_blocks(fs_info, fs_info->tree_root->node, 1);
+	return pin_down_tree_blocks(gfs_info, gfs_info->tree_root->node, 1);
 }
 
 static int exclude_tree_blocks(struct btrfs_fs_info *fs_info,
 				struct extent_buffer *eb, int tree_root)
 {
-	return traverse_tree_blocks(fs_info, eb, tree_root, 0);
+	return traverse_tree_blocks(gfs_info, eb, tree_root, 0);
 }
 
 int exclude_metadata_blocks(struct btrfs_fs_info *fs_info)
@@ -729,21 +728,21 @@ int exclude_metadata_blocks(struct btrfs_fs_info *fs_info)
 	if (!excluded_extents)
 		return -ENOMEM;
 	extent_io_tree_init(excluded_extents);
-	fs_info->excluded_extents = excluded_extents;
+	gfs_info->excluded_extents = excluded_extents;
 
-	ret = exclude_tree_blocks(fs_info, fs_info->chunk_root->node, 0);
+	ret = exclude_tree_blocks(gfs_info, gfs_info->chunk_root->node, 0);
 	if (ret)
 		return ret;
-	return exclude_tree_blocks(fs_info, fs_info->tree_root->node, 1);
+	return exclude_tree_blocks(gfs_info, gfs_info->tree_root->node, 1);
 }
 
 void cleanup_excluded_extents(struct btrfs_fs_info *fs_info)
 {
-	if (fs_info->excluded_extents) {
-		extent_io_tree_cleanup(fs_info->excluded_extents);
-		free(fs_info->excluded_extents);
+	if (gfs_info->excluded_extents) {
+		extent_io_tree_cleanup(gfs_info->excluded_extents);
+		free(gfs_info->excluded_extents);
 	}
-	fs_info->excluded_extents = NULL;
+	gfs_info->excluded_extents = NULL;
 }
 
 /*
@@ -1150,8 +1149,7 @@ int check_repair_free_space_inode(struct btrfs_fs_info *fs_info,
 			key.objectid, mode, FREE_SPACE_CACHE_INODE_MODE);
 		ret = -EUCLEAN;
 		if (repair) {
-			ret = repair_imode_common(fs_info->tree_root,
-						  path);
+			ret = repair_imode_common(gfs_info->tree_root, path);
 			if (ret < 0)
 				return ret;
 			return ret;
@@ -1172,7 +1170,7 @@ int recow_extent_buffer(struct btrfs_root *root, struct extent_buffer *eb)
 	key.type = BTRFS_ROOT_ITEM_KEY;
 	key.offset = (u64)-1;
 
-	root = btrfs_read_fs_root(root->fs_info, &key);
+	root = btrfs_read_fs_root(gfs_info, &key);
 	if (IS_ERR(root)) {
 		fprintf(stderr, "Couldn't find owner root %llu\n",
 			key.objectid);
