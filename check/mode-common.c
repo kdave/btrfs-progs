@@ -30,8 +30,7 @@
  *
  * Returns 1 if true, 0 if false and < 0 on error.
  */
-static int check_prealloc_data_ref(struct btrfs_fs_info *fs_info,
-				   u64 disk_bytenr,
+static int check_prealloc_data_ref(u64 disk_bytenr,
 				   struct btrfs_extent_data_ref *dref,
 				   struct extent_buffer *eb)
 {
@@ -113,8 +112,7 @@ next:
  *
  * Returns 1 if true, 0 if false and < 0 on error.
  */
-static int check_prealloc_shared_data_ref(struct btrfs_fs_info *fs_info,
-					  u64 parent, u64 disk_bytenr)
+static int check_prealloc_shared_data_ref(u64 parent, u64 disk_bytenr)
 {
 	struct extent_buffer *eb;
 	u32 nr;
@@ -175,8 +173,7 @@ static int check_prealloc_shared_data_ref(struct btrfs_fs_info *fs_info,
  * Returns 0 if the prealloc extent was not written yet by any inode, 1 if
  * at least one other inode has written to it, and < 0 on error.
  */
-int check_prealloc_extent_written(struct btrfs_fs_info *fs_info,
-				  u64 disk_bytenr, u64 num_bytes)
+int check_prealloc_extent_written(u64 disk_bytenr, u64 num_bytes)
 {
 	struct btrfs_path path;
 	struct btrfs_key key;
@@ -220,7 +217,7 @@ int check_prealloc_extent_written(struct btrfs_fs_info *fs_info,
 			struct btrfs_extent_data_ref *dref;
 
 			dref = (struct btrfs_extent_data_ref *)(&iref->offset);
-			ret = check_prealloc_data_ref(gfs_info, disk_bytenr,
+			ret = check_prealloc_data_ref(disk_bytenr,
 						      dref, path.nodes[0]);
 			if (ret != 0)
 				goto out;
@@ -229,8 +226,7 @@ int check_prealloc_extent_written(struct btrfs_fs_info *fs_info,
 
 			parent = btrfs_extent_inline_ref_offset(path.nodes[0],
 								iref);
-			ret = check_prealloc_shared_data_ref(gfs_info,
-							     parent,
+			ret = check_prealloc_shared_data_ref(parent,
 							     disk_bytenr);
 			if (ret != 0)
 				goto out;
@@ -261,13 +257,12 @@ int check_prealloc_extent_written(struct btrfs_fs_info *fs_info,
 
 			dref = btrfs_item_ptr(path.nodes[0], path.slots[0],
 					      struct btrfs_extent_data_ref);
-			ret = check_prealloc_data_ref(gfs_info, disk_bytenr,
+			ret = check_prealloc_data_ref(disk_bytenr,
 						      dref, path.nodes[0]);
 			if (ret != 0)
 				goto out;
 		} else if (key.type == BTRFS_SHARED_DATA_REF_KEY) {
-			ret = check_prealloc_shared_data_ref(gfs_info,
-							     key.offset,
+			ret = check_prealloc_shared_data_ref(key.offset,
 							     disk_bytenr);
 			if (ret != 0)
 				goto out;
@@ -289,8 +284,7 @@ out:
  * @found:	return value of found csum bytes
  *		unit is BYTE.
  */
-int count_csum_range(struct btrfs_fs_info *fs_info, u64 start,
-		     u64 len, u64 *found)
+int count_csum_range(u64 start, u64 len, u64 *found)
 {
 	struct btrfs_key key;
 	struct btrfs_path path;
@@ -579,7 +573,7 @@ int check_child_node(struct extent_buffer *parent, int slot,
 	return ret;
 }
 
-void reset_cached_block_groups(struct btrfs_fs_info *fs_info)
+void reset_cached_block_groups()
 {
 	struct btrfs_block_group *cache;
 	u64 start, end;
@@ -604,9 +598,7 @@ void reset_cached_block_groups(struct btrfs_fs_info *fs_info)
 	}
 }
 
-static int traverse_tree_blocks(struct btrfs_fs_info *fs_info,
-				struct extent_buffer *eb, int tree_root,
-				int pin)
+static int traverse_tree_blocks(struct extent_buffer *eb, int tree_root, int pin)
 {
 	struct extent_buffer *tmp;
 	struct btrfs_root_item *ri;
@@ -666,7 +658,7 @@ static int traverse_tree_blocks(struct btrfs_fs_info *fs_info,
 				fprintf(stderr, "Error reading root block\n");
 				return -EIO;
 			}
-			ret = traverse_tree_blocks(gfs_info, tmp, 0, pin);
+			ret = traverse_tree_blocks(tmp, 0, pin);
 			free_extent_buffer(tmp);
 			if (ret)
 				return ret;
@@ -685,8 +677,7 @@ static int traverse_tree_blocks(struct btrfs_fs_info *fs_info,
 				fprintf(stderr, "Error reading tree block\n");
 				return -EIO;
 			}
-			ret = traverse_tree_blocks(gfs_info, tmp, tree_root,
-						   pin);
+			ret = traverse_tree_blocks(tmp, tree_root, pin);
 			free_extent_buffer(tmp);
 			if (ret)
 				return ret;
@@ -696,30 +687,28 @@ static int traverse_tree_blocks(struct btrfs_fs_info *fs_info,
 	return 0;
 }
 
-static int pin_down_tree_blocks(struct btrfs_fs_info *fs_info,
-				struct extent_buffer *eb, int tree_root)
+static int pin_down_tree_blocks(struct extent_buffer *eb, int tree_root)
 {
-	return traverse_tree_blocks(gfs_info, eb, tree_root, 1);
+	return traverse_tree_blocks(eb, tree_root, 1);
 }
 
-int pin_metadata_blocks(struct btrfs_fs_info *fs_info)
+int pin_metadata_blocks(void)
 {
 	int ret;
 
-	ret = pin_down_tree_blocks(gfs_info, gfs_info->chunk_root->node, 0);
+	ret = pin_down_tree_blocks(gfs_info->chunk_root->node, 0);
 	if (ret)
 		return ret;
 
-	return pin_down_tree_blocks(gfs_info, gfs_info->tree_root->node, 1);
+	return pin_down_tree_blocks(gfs_info->tree_root->node, 1);
 }
 
-static int exclude_tree_blocks(struct btrfs_fs_info *fs_info,
-				struct extent_buffer *eb, int tree_root)
+static int exclude_tree_blocks(struct extent_buffer *eb, int tree_root)
 {
-	return traverse_tree_blocks(gfs_info, eb, tree_root, 0);
+	return traverse_tree_blocks(eb, tree_root, 0);
 }
 
-int exclude_metadata_blocks(struct btrfs_fs_info *fs_info)
+int exclude_metadata_blocks(void)
 {
 	int ret;
 	struct extent_io_tree *excluded_extents;
@@ -730,13 +719,13 @@ int exclude_metadata_blocks(struct btrfs_fs_info *fs_info)
 	extent_io_tree_init(excluded_extents);
 	gfs_info->excluded_extents = excluded_extents;
 
-	ret = exclude_tree_blocks(gfs_info, gfs_info->chunk_root->node, 0);
+	ret = exclude_tree_blocks(gfs_info->chunk_root->node, 0);
 	if (ret)
 		return ret;
-	return exclude_tree_blocks(gfs_info, gfs_info->tree_root->node, 1);
+	return exclude_tree_blocks(gfs_info->tree_root->node, 1);
 }
 
-void cleanup_excluded_extents(struct btrfs_fs_info *fs_info)
+void cleanup_excluded_extents(void)
 {
 	if (gfs_info->excluded_extents) {
 		extent_io_tree_cleanup(gfs_info->excluded_extents);
@@ -1130,8 +1119,7 @@ abort:
  * cache inode doesn't have INODE_REF.
  * We just check its inode mode.
  */
-int check_repair_free_space_inode(struct btrfs_fs_info *fs_info,
-				  struct btrfs_path *path)
+int check_repair_free_space_inode(struct btrfs_path *path)
 {
 	struct btrfs_inode_item *iitem;
 	struct btrfs_key key;
