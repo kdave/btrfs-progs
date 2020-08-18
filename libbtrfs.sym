@@ -41,7 +41,7 @@ global:
 	rb_prev;
 	rb_replace_node;
 
-	/* send-stream.h */
+	/* common/send-stream.h */
 	btrfs_read_and_process_send_stream;
 
 	/* send-utils.h */

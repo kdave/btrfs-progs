@@ -34,7 +34,7 @@
 #include "common/utils.h"
 #include "cmds/commands.h"
 #include "send-utils.h"
-#include "send-stream.h"
+#include "common/send-stream.h"
 #include "cmds/receive-dump.h"
 
 #define PATH_CAT_OR_RET(function_name, outpath, path1, path2, ret)	\
