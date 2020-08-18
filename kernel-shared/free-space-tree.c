@@ -17,7 +17,7 @@
  */
 
 #include "ctree.h"
-#include "disk-io.h"
+#include "kernel-shared/disk-io.h"
 #include "kernel-shared/free-space-cache.h"
 #include "kernel-shared/free-space-tree.h"
 #include "volumes.h"

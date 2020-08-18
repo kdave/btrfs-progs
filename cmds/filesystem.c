@@ -38,7 +38,7 @@
 #include "cmds/commands.h"
 #include "cmds/filesystem-usage.h"
 #include "kernel-lib/list_sort.h"
-#include "disk-io.h"
+#include "kernel-shared/disk-io.h"
 #include "common/help.h"
 #include "common/fsfeatures.h"
 #include "common/path-utils.h"

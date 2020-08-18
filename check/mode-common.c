@@ -20,7 +20,7 @@
 #include "common/messages.h"
 #include "transaction.h"
 #include "common/utils.h"
-#include "disk-io.h"
+#include "kernel-shared/disk-io.h"
 #include "repair.h"
 #include "check/mode-common.h"
 

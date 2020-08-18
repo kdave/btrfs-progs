@@ -17,7 +17,7 @@ STATIC_LIBS := -luuid   -lblkid -luuid -lz   -llzo2 -L. -pthread
 btrfs_shared_libraries := libext2_uuid \
 			libext2_blkid
 
-objects := ctree.c disk-io.c kernel-lib/radix-tree.c kernel-shared/extent-tree.c \
+objects := ctree.c kernel-shared/disk-io.c kernel-lib/radix-tree.c kernel-shared/extent-tree.c \
 	  kernel-shared/print-tree.c \
           root-tree.c dir-item.c file-item.c inode-item.c inode-map.c \
           common/extent-cache.c kernel-shared/extent_io.c volumes.c utils.c repair.c \

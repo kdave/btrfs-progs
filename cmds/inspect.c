@@ -28,7 +28,7 @@
 #include "common/utils.h"
 #include "ctree.h"
 #include "common/send-utils.h"
-#include "disk-io.h"
+#include "kernel-shared/disk-io.h"
 #include "cmds/commands.h"
 #include "btrfs-list.h"
 #include "common/help.h"

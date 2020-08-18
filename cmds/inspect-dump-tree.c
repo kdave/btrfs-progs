@@ -26,7 +26,7 @@
 #include "kerncompat.h"
 #include "kernel-lib/radix-tree.h"
 #include "ctree.h"
-#include "disk-io.h"
+#include "kernel-shared/disk-io.h"
 #include "kernel-shared/print-tree.h"
 #include "transaction.h"
 #include "volumes.h"

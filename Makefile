@@ -163,7 +163,7 @@ libbtrfs_objects = common/send-stream.o common/send-utils.o kernel-lib/rbtree.o 
 		   kernel-lib/radix-tree.o common/extent-cache.o kernel-shared/extent_io.o \
 		   crypto/crc32c.o common/messages.o \
 		   kernel-shared/uuid-tree.o common/utils-lib.o common/rbtree-utils.o \
-		   ctree.o disk-io.o kernel-shared/extent-tree.o kernel-shared/delayed-ref.o \
+		   ctree.o kernel-shared/disk-io.o kernel-shared/extent-tree.o kernel-shared/delayed-ref.o \
 		   kernel-shared/print-tree.o \
 		   kernel-shared/free-space-cache.o kernel-shared/root-tree.o volumes.o transaction.o \
 		   kernel-shared/free-space-tree.o repair.o kernel-shared/inode-item.o \

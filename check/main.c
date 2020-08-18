@@ -29,7 +29,7 @@
 #include "ctree.h"
 #include "volumes.h"
 #include "repair.h"
-#include "disk-io.h"
+#include "kernel-shared/disk-io.h"
 #include "kernel-shared/print-tree.h"
 #include "common/task-utils.h"
 #include "transaction.h"

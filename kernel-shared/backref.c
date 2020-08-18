@@ -18,7 +18,7 @@
 
 #include "kerncompat.h"
 #include "ctree.h"
-#include "disk-io.h"
+#include "kernel-shared/disk-io.h"
 #include "kernel-shared/backref.h"
 #include "kernel-shared/ulist.h"
 #include "transaction.h"

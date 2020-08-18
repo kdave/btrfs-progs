@@ -20,7 +20,7 @@
 #include <fcntl.h>
 #include <limits.h>
 #include "ctree.h"
-#include "disk-io.h"
+#include "kernel-shared/disk-io.h"
 #include "volumes.h"
 #include "common/utils.h"
 #include "common/path-utils.h"

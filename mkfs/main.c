@@ -33,7 +33,7 @@
 #include <ctype.h>
 #include <blkid/blkid.h>
 #include "ctree.h"
-#include "disk-io.h"
+#include "kernel-shared/disk-io.h"
 #include "volumes.h"
 #include "transaction.h"
 #include "common/utils.h"
