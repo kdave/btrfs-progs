@@ -26,7 +26,7 @@
 #include "kerncompat.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
-#include "volumes.h"
+#include "kernel-shared/volumes.h"
 #include "common/utils.h"
 #include "kernel-lib/raid56.h"
 

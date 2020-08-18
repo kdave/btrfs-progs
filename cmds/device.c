@@ -28,7 +28,7 @@
 #include "kernel-shared/ctree.h"
 #include "ioctl.h"
 #include "common/utils.h"
-#include "volumes.h"
+#include "kernel-shared/volumes.h"
 #include "cmds/filesystem-usage.h"
 
 #include "cmds/commands.h"

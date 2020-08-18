@@ -20,7 +20,7 @@ btrfs_shared_libraries := libext2_uuid \
 objects := kernel-shared/ctree.c kernel-shared/disk-io.c kernel-lib/radix-tree.c \
 	  kernel-shared/extent-tree.c kernel-shared/print-tree.c \
           root-tree.c dir-item.c file-item.c inode-item.c inode-map.c \
-          common/extent-cache.c kernel-shared/extent_io.c volumes.c utils.c repair.c \
+          common/extent-cache.c kernel-shared/extent_io.c kernel-shared/volumes.c utils.c repair.c \
           qgroup.c kernel-shared/free-space-cache.c kernel-lib/list_sort.c props.c \
           kernel-shared/ulist.c qgroup-verify.c backref.c common/string-table.c task-utils.c \
           kernel-shared/inode.c kernel-shared/file.c find-root.c \

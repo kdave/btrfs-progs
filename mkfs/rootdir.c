@@ -26,7 +26,7 @@
 #include <fcntl.h>
 #include <ftw.h>
 #include "kernel-shared/ctree.h"
-#include "volumes.h"
+#include "kernel-shared/volumes.h"
 #include "common/internal.h"
 #include "kernel-shared/disk-io.h"
 #include "common/messages.h"

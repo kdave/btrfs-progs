@@ -28,7 +28,7 @@
 #include "kerncompat.h"
 #include "kernel-shared/ctree.h"
 #include "ioctl.h"
-#include "volumes.h"
+#include "kernel-shared/volumes.h"
 
 #include "cmds/commands.h"
 #include "common/utils.h"

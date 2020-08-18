@@ -40,7 +40,7 @@
 #include "kernel-shared/ctree.h"
 #include "ioctl.h"
 #include "common/utils.h"
-#include "volumes.h"
+#include "kernel-shared/volumes.h"
 #include "kernel-shared/disk-io.h"
 
 #include "cmds/commands.h"

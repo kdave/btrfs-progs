@@ -23,7 +23,7 @@
 #include "kernel-shared/backref.h"
 #include "common/internal.h"
 #include "common/utils.h"
-#include "volumes.h"
+#include "kernel-shared/volumes.h"
 #include "check/mode-common.h"
 #include "check/mode-lowmem.h"
 

@@ -34,7 +34,7 @@
 #include <blkid/blkid.h>
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
-#include "volumes.h"
+#include "kernel-shared/volumes.h"
 #include "kernel-shared/transaction.h"
 #include "common/utils.h"
 #include "common/path-utils.h"

@@ -30,7 +30,7 @@
 #include "kernel-shared/print-tree.h"
 #include "kernel-shared/transaction.h"
 #include "kernel-lib/list.h"
-#include "volumes.h"
+#include "kernel-shared/volumes.h"
 #include "common/utils.h"
 #include "crypto/crc32c.h"
 #include "common/extent-cache.h"
