@@ -19,7 +19,7 @@
 #include "kerncompat.h"
 #include <linux/limits.h>
 #include <pthread.h>
-#include "disk-io.h"
+#include "kernel-shared/disk-io.h"
 #include "transaction.h"
 #include "common/utils.h"
 #include "convert/common.h"

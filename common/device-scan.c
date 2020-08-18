@@ -34,7 +34,7 @@
 #include "common/defs.h"
 #include "ctree.h"
 #include "volumes.h"
-#include "disk-io.h"
+#include "kernel-shared/disk-io.h"
 #include "ioctl.h"
 
 static int btrfs_scan_done = 0;

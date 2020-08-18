@@ -25,7 +25,7 @@
 #include <limits.h>
 #include <byteswap.h>
 #include "crypto/crc32c.h"
-#include "disk-io.h"
+#include "kernel-shared/disk-io.h"
 
 #define BLOCKSIZE (4096)
 static char buf[BLOCKSIZE];

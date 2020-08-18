@@ -26,7 +26,7 @@
 
 #include "ctree.h"
 #include "transaction.h"
-#include "disk-io.h"
+#include "kernel-shared/disk-io.h"
 #include "time.h"
 #include "common/messages.h"
 #include "common/internal.h"

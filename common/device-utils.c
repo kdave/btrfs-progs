@@ -24,7 +24,7 @@
 #include <fcntl.h>
 #include <blkid/blkid.h>
 #include "kernel-lib/sizes.h"
-#include "disk-io.h"
+#include "kernel-shared/disk-io.h"
 #include "common/device-utils.h"
 #include "common/internal.h"
 #include "common/messages.h"

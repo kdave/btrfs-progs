@@ -28,7 +28,7 @@
 #include "ctree.h"
 #include "volumes.h"
 #include "common/internal.h"
-#include "disk-io.h"
+#include "kernel-shared/disk-io.h"
 #include "common/messages.h"
 #include "transaction.h"
 #include "common/utils.h"

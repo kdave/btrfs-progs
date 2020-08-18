@@ -22,7 +22,7 @@
 #include <limits.h>
 #include <sys/stat.h>
 #include <stdbool.h>
-#include "disk-io.h"
+#include "kernel-shared/disk-io.h"
 #include "transaction.h"
 #include "common/utils.h"
 #include "kernel-lib/bitops.h"

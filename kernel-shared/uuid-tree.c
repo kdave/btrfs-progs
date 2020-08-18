@@ -21,7 +21,7 @@
 #include <sys/ioctl.h>
 #include "ctree.h"
 #include "transaction.h"
-#include "disk-io.h"
+#include "kernel-shared/disk-io.h"
 #include "kernel-shared/print-tree.h"
 #include "common/utils.h"
 

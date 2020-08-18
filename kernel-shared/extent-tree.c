@@ -24,7 +24,7 @@
 #include "kernel-lib/radix-tree.h"
 #include "kernel-lib/rbtree.h"
 #include "ctree.h"
-#include "disk-io.h"
+#include "kernel-shared/disk-io.h"
 #include "kernel-shared/print-tree.h"
 #include "transaction.h"
 #include "crypto/crc32c.h"

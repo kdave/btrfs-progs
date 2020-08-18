@@ -17,7 +17,7 @@
 #include "kerncompat.h"
 #include <unistd.h>
 #include "common/internal.h"
-#include "disk-io.h"
+#include "kernel-shared/disk-io.h"
 #include "volumes.h"
 #include "convert/common.h"
 #include "convert/source-fs.h"

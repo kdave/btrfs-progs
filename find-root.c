@@ -24,7 +24,7 @@
 #include "common/utils.h"
 #include "find-root.h"
 #include "volumes.h"
-#include "disk-io.h"
+#include "kernel-shared/disk-io.h"
 #include "common/extent-cache.h"
 
 /* Return value is the same as btrfs_find_root_search(). */

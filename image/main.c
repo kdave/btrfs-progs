@@ -30,7 +30,7 @@
 #include "kerncompat.h"
 #include "crypto/crc32c.h"
 #include "ctree.h"
-#include "disk-io.h"
+#include "kernel-shared/disk-io.h"
 #include "transaction.h"
 #include "common/utils.h"
 #include "volumes.h"

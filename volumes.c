@@ -23,7 +23,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include "ctree.h"
-#include "disk-io.h"
+#include "kernel-shared/disk-io.h"
 #include "transaction.h"
 #include "kernel-shared/print-tree.h"
 #include "volumes.h"
