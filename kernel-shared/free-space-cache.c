@@ -18,7 +18,7 @@
 
 #include "kerncompat.h"
 #include "ctree.h"
-#include "free-space-cache.h"
+#include "kernel-shared/free-space-cache.h"
 #include "transaction.h"
 #include "disk-io.h"
 #include "extent_io.h"

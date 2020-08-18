@@ -35,7 +35,7 @@
 #include "transaction.h"
 #include "common/utils.h"
 #include "cmds/commands.h"
-#include "free-space-cache.h"
+#include "kernel-shared/free-space-cache.h"
 #include "kernel-shared/free-space-tree.h"
 #include "common/rbtree-utils.h"
 #include "kernel-shared/backref.h"
