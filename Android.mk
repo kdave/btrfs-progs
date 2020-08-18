@@ -33,7 +33,7 @@ cmds_objects := cmds-subvolume.c cmds-filesystem.c cmds-device.c cmds-scrub.c \
                mkfs/common.c
 libbtrfs_objects := send-stream.c send-utils.c kernel-lib/rbtree.c btrfs-list.c \
                    crypto/crc32c.c messages.c \
-                   uuid-tree.c utils-lib.c rbtree-utils.c
+                   uuid-tree.c common/utils-lib.c rbtree-utils.c
 libbtrfs_headers := send-stream.h send-utils.h send.h kernel-lib/rbtree.h btrfs-list.h \
                    crypto/crc32c.h kernel-lib/list.h kerncompat.h \
                    kernel-lib/radix-tree.h kernel-lib/sizes.h kernel-lib/raid56.h \
