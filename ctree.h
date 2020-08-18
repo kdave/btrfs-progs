@@ -25,7 +25,7 @@
 #include "kernel-lib/list.h"
 #include "kerncompat.h"
 #include "kernel-lib/radix-tree.h"
-#include "extent-cache.h"
+#include "common/extent-cache.h"
 #include "extent_io.h"
 #include "ioctl.h"
 #include "kernel-lib/sizes.h"

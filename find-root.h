@@ -23,7 +23,7 @@
 
 #include "ctree.h"
 #include "kernel-lib/list.h"
-#include "extent-cache.h"
+#include "common/extent-cache.h"
 
 /*
  * Find-root will restore the search result in a 2-level trees.
