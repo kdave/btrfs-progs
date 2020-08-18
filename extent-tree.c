@@ -29,7 +29,7 @@
 #include "transaction.h"
 #include "crypto/crc32c.h"
 #include "volumes.h"
-#include "free-space-cache.h"
+#include "kernel-shared/free-space-cache.h"
 #include "kernel-shared/free-space-tree.h"
 #include "common/utils.h"
 
