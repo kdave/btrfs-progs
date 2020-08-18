@@ -25,7 +25,7 @@
 #include "kernel-lib/list.h"
 #include "kernel-lib/sizes.h"
 #include "ctree.h"
-#include "extent_io.h"
+#include "kernel-shared/extent_io.h"
 #include "ioctl.h"
 #include "btrfs-list.h"
 #include "check/btrfsck.h"

@@ -34,7 +34,7 @@
 #include "transaction.h"
 #include "common/utils.h"
 #include "volumes.h"
-#include "extent_io.h"
+#include "kernel-shared/extent_io.h"
 #include "common/extent-cache.h"
 #include "common/help.h"
 #include "common/device-utils.h"
