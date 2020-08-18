@@ -19,7 +19,7 @@ btrfs_shared_libraries := libext2_uuid \
 
 objects := ctree.c disk-io.c kernel-lib/radix-tree.c extent-tree.c print-tree.c \
           root-tree.c dir-item.c file-item.c inode-item.c inode-map.c \
-          extent-cache.c extent_io.c volumes.c utils.c repair.c \
+          common/extent-cache.c extent_io.c volumes.c utils.c repair.c \
           qgroup.c free-space-cache.c kernel-lib/list_sort.c props.c \
           kernel-shared/ulist.c qgroup-verify.c backref.c common/string-table.c task-utils.c \
           inode.c file.c find-root.c free-space-tree.c help.c send-dump.c \
@@ -37,7 +37,7 @@ libbtrfs_objects := send-stream.c send-utils.c kernel-lib/rbtree.c btrfs-list.c 
 libbtrfs_headers := send-stream.h send-utils.h send.h kernel-lib/rbtree.h btrfs-list.h \
                    crypto/crc32c.h kernel-lib/list.h kerncompat.h \
                    kernel-lib/radix-tree.h kernel-lib/sizes.h kernel-lib/raid56.h \
-                   extent-cache.h extent_io.h ioctl.h ctree.h btrfsck.h version.h
+                   common/extent-cache.h extent_io.h ioctl.h ctree.h btrfsck.h version.h
 blkid_objects := partition/ superblocks/ topology/
 
 

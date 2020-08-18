@@ -24,7 +24,7 @@
 
 #include "kerncompat.h"
 #include "common/defs.h"
-#include "extent-cache.h"
+#include "common/extent-cache.h"
 
 struct btrfs_mkfs_config;
 

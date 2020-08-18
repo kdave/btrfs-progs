@@ -25,7 +25,7 @@
 #include "find-root.h"
 #include "volumes.h"
 #include "disk-io.h"
-#include "extent-cache.h"
+#include "common/extent-cache.h"
 
 /* Return value is the same as btrfs_find_root_search(). */
 static int add_eb_to_result(struct extent_buffer *eb,

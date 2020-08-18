@@ -33,7 +33,7 @@
 #include "volumes.h"
 #include "common/utils.h"
 #include "crypto/crc32c.h"
-#include "extent-cache.h"
+#include "common/extent-cache.h"
 #include "find-root.h"
 #include "common/help.h"
 #include "cmds/commands.h"

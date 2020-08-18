@@ -35,7 +35,7 @@
 #include "common/utils.h"
 #include "volumes.h"
 #include "extent_io.h"
-#include "extent-cache.h"
+#include "common/extent-cache.h"
 #include "common/help.h"
 #include "common/device-utils.h"
 #include "image/metadump.h"
