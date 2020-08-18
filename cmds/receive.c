@@ -49,7 +49,7 @@
 #include "send.h"
 #include "send-stream.h"
 #include "send-utils.h"
-#include "send-dump.h"
+#include "cmds/receive-dump.h"
 #include "common/help.h"
 #include "common/path-utils.h"
 
