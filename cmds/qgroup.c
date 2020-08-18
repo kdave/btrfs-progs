@@ -22,7 +22,7 @@
 
 #include <btrfsutil.h>
 
-#include "ctree.h"
+#include "kernel-shared/ctree.h"
 #include "ioctl.h"
 
 #include "cmds/commands.h"

@@ -19,7 +19,7 @@
 #ifndef __BTRFS_REPAIR_H__
 #define __BTRFS_REPAIR_H__
 
-#include "ctree.h"
+#include "kernel-shared/ctree.h"
 
 extern int repair; /* repair mode */
 

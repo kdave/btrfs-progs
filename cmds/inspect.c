@@ -26,7 +26,7 @@
 #include "kerncompat.h"
 #include "ioctl.h"
 #include "common/utils.h"
-#include "ctree.h"
+#include "kernel-shared/ctree.h"
 #include "common/send-utils.h"
 #include "kernel-shared/disk-io.h"
 #include "cmds/commands.h"

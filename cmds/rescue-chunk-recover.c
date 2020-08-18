@@ -31,7 +31,7 @@
 
 #include "kernel-lib/list.h"
 #include "kernel-lib/radix-tree.h"
-#include "ctree.h"
+#include "kernel-shared/ctree.h"
 #include "common/extent-cache.h"
 #include "kernel-shared/disk-io.h"
 #include "volumes.h"

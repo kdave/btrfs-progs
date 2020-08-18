@@ -15,7 +15,7 @@
  */
 
 #include <time.h>
-#include "ctree.h"
+#include "kernel-shared/ctree.h"
 #include "repair.h"
 #include "transaction.h"
 #include "common/messages.h"

@@ -35,7 +35,7 @@
 #include <uuid/uuid.h>
 #include <limits.h>
 
-#include "ctree.h"
+#include "kernel-shared/ctree.h"
 #include "ioctl.h"
 #include "cmds/commands.h"
 #include "kernel-lib/list.h"

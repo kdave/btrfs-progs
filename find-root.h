@@ -21,7 +21,7 @@
 
 #include "kerncompat.h"
 
-#include "ctree.h"
+#include "kernel-shared/ctree.h"
 #include "kernel-lib/list.h"
 #include "common/extent-cache.h"
 

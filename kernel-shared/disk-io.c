@@ -25,7 +25,7 @@
 #include <uuid/uuid.h>
 #include "kerncompat.h"
 #include "kernel-lib/radix-tree.h"
-#include "ctree.h"
+#include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "volumes.h"
 #include "transaction.h"

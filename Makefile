@@ -163,7 +163,8 @@ libbtrfs_objects = common/send-stream.o common/send-utils.o kernel-lib/rbtree.o 
 		   kernel-lib/radix-tree.o common/extent-cache.o kernel-shared/extent_io.o \
 		   crypto/crc32c.o common/messages.o \
 		   kernel-shared/uuid-tree.o common/utils-lib.o common/rbtree-utils.o \
-		   ctree.o kernel-shared/disk-io.o kernel-shared/extent-tree.o kernel-shared/delayed-ref.o \
+		   kernel-shared/ctree.o kernel-shared/disk-io.o \
+		   kernel-shared/extent-tree.o kernel-shared/delayed-ref.o \
 		   kernel-shared/print-tree.o \
 		   kernel-shared/free-space-cache.o kernel-shared/root-tree.o volumes.o transaction.o \
 		   kernel-shared/free-space-tree.o repair.o kernel-shared/inode-item.o \
@@ -175,7 +176,8 @@ libbtrfs_objects = common/send-stream.o common/send-utils.o kernel-lib/rbtree.o 
 libbtrfs_headers = common/send-stream.h common/send-utils.h send.h kernel-lib/rbtree.h btrfs-list.h \
 	       crypto/crc32c.h kernel-lib/list.h kerncompat.h \
 	       kernel-lib/radix-tree.h kernel-lib/sizes.h kernel-lib/raid56.h \
-	       common/extent-cache.h kernel-shared/extent_io.h ioctl.h ctree.h btrfsck.h version.h
+	       common/extent-cache.h kernel-shared/extent_io.h ioctl.h \
+	       kernel-shared/ctree.h btrfsck.h version.h
 libbtrfsutil_major := $(shell sed -rn 's/^\#define BTRFS_UTIL_VERSION_MAJOR ([0-9])+$$/\1/p' libbtrfsutil/btrfsutil.h)
 libbtrfsutil_minor := $(shell sed -rn 's/^\#define BTRFS_UTIL_VERSION_MINOR ([0-9])+$$/\1/p' libbtrfsutil/btrfsutil.h)
 libbtrfsutil_patch := $(shell sed -rn 's/^\#define BTRFS_UTIL_VERSION_PATCH ([0-9])+$$/\1/p' libbtrfsutil/btrfsutil.h)
@@ -611,15 +613,15 @@ quick-test: quick-test.o $(objects) $(libs)
 	@echo "    [LD]     $@"
 	$(Q)$(CC) -o $@ $^ $(LDFLAGS) $(LIBS)
 
-ioctl-test.o: tests/ioctl-test.c ioctl.h kerncompat.h ctree.h
+ioctl-test.o: tests/ioctl-test.c ioctl.h kerncompat.h kernel-shared/ctree.h
 	@echo "    [CC]   $@"
 	$(Q)$(CC) $(CFLAGS) -c $< -o $@
 
-ioctl-test-32.o: tests/ioctl-test.c ioctl.h kerncompat.h ctree.h
+ioctl-test-32.o: tests/ioctl-test.c ioctl.h kerncompat.h kernel-shared/ctree.h
 	@echo "    [CC32]   $@"
 	$(Q)$(CC) $(CFLAGS) -m32 -c $< -o $@
 
-ioctl-test-64.o: tests/ioctl-test.c ioctl.h kerncompat.h ctree.h
+ioctl-test-64.o: tests/ioctl-test.c ioctl.h kerncompat.h kernel-shared/ctree.h
 	@echo "    [CC64]   $@"
 	$(Q)$(CC) $(CFLAGS) -m64 -c $< -o $@
 

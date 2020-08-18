@@ -32,7 +32,7 @@
 #include <btrfsutil.h>
 
 #include "kerncompat.h"
-#include "ctree.h"
+#include "kernel-shared/ctree.h"
 #include "common/utils.h"
 #include "volumes.h"
 #include "cmds/commands.h"

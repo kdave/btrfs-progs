@@ -17,7 +17,7 @@
  */
 
 #include <linux/limits.h>
-#include "ctree.h"
+#include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "transaction.h"
 

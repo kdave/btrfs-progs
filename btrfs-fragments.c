@@ -33,7 +33,7 @@
 #undef ULONG_MAX
 
 #include "kerncompat.h"
-#include "ctree.h"
+#include "kernel-shared/ctree.h"
 #include "ioctl.h"
 #include "common/utils.h"
 

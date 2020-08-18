@@ -18,7 +18,7 @@
 #include <sys/utsname.h>
 #include <linux/version.h>
 #include "common/fsfeatures.h"
-#include "ctree.h"
+#include "kernel-shared/ctree.h"
 #include "common/utils.h"
 
 /*

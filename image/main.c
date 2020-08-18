@@ -29,7 +29,7 @@
 
 #include "kerncompat.h"
 #include "crypto/crc32c.h"
-#include "ctree.h"
+#include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "transaction.h"
 #include "common/utils.h"

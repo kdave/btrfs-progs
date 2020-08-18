@@ -25,7 +25,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <ftw.h>
-#include "ctree.h"
+#include "kernel-shared/ctree.h"
 #include "volumes.h"
 #include "common/internal.h"
 #include "kernel-shared/disk-io.h"

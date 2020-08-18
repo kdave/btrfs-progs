@@ -35,7 +35,7 @@
 #include "ioctl.h"
 #include "qgroup.h"
 
-#include "ctree.h"
+#include "kernel-shared/ctree.h"
 #include "cmds/commands.h"
 #include "common/utils.h"
 #include "btrfs-list.h"

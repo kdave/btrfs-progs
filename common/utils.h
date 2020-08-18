@@ -20,7 +20,7 @@
 #define __BTRFS_UTILS_H__
 
 #include <sys/stat.h>
-#include "ctree.h"
+#include "kernel-shared/ctree.h"
 #include <dirent.h>
 #include <stdarg.h>
 #include "common/defs.h"

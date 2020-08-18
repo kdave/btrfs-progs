@@ -16,7 +16,7 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#include "ctree.h"
+#include "kernel-shared/ctree.h"
 #include "transaction.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/print-tree.h"

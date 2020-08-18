@@ -20,7 +20,7 @@
 #define __BTRFS_TRANSACTION_H__
 
 #include "kerncompat.h"
-#include "ctree.h"
+#include "kernel-shared/ctree.h"
 #include "kernel-lib/list.h"
 #include "kernel-shared/delayed-ref.h"
 

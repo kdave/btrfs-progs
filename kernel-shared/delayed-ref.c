@@ -3,7 +3,7 @@
  * Copyright (C) 2009 Oracle.  All rights reserved.
  */
 
-#include "ctree.h"
+#include "kernel-shared/ctree.h"
 #include "btrfs-list.h"
 #include "kernel-shared/delayed-ref.h"
 #include "transaction.h"

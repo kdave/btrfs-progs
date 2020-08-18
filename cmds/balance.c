@@ -26,7 +26,7 @@
 #include <errno.h>
 
 #include "kerncompat.h"
-#include "ctree.h"
+#include "kernel-shared/ctree.h"
 #include "ioctl.h"
 #include "volumes.h"
 
