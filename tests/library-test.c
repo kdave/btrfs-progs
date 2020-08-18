@@ -32,7 +32,7 @@
 #include "common/extent-cache.h"
 #include "send.h"
 #include "common/send-stream.h"
-#include "send-utils.h"
+#include "common/send-utils.h"
 #else
 /*
  * This needs to include headers the same way as an external program but must

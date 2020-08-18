@@ -48,7 +48,7 @@
 
 #include "send.h"
 #include "common/send-stream.h"
-#include "send-utils.h"
+#include "common/send-utils.h"
 #include "cmds/receive-dump.h"
 #include "common/help.h"
 #include "common/path-utils.h"
