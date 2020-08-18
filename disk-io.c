@@ -31,7 +31,7 @@
 #include "transaction.h"
 #include "crypto/crc32c.h"
 #include "common/utils.h"
-#include "print-tree.h"
+#include "kernel-shared/print-tree.h"
 #include "common/rbtree-utils.h"
 #include "common/device-scan.h"
 #include "crypto/hash.h"
