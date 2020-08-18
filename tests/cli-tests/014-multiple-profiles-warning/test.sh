@@ -12,6 +12,11 @@
 
 source "$TEST_TOP/common"
 
+# Travis environment is not reliable for this test
+if [ -n "$TRAVIS_BRANCH" ]; then
+	_not_run "test unreliable in Travis, skipped"
+fi
+
 check_prereq mkfs.btrfs
 check_prereq btrfs
 
