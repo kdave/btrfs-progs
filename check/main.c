@@ -30,7 +30,7 @@
 #include "volumes.h"
 #include "repair.h"
 #include "disk-io.h"
-#include "print-tree.h"
+#include "kernel-shared/print-tree.h"
 #include "common/task-utils.h"
 #include "transaction.h"
 #include "common/utils.h"

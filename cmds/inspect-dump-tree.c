@@ -27,7 +27,7 @@
 #include "kernel-lib/radix-tree.h"
 #include "ctree.h"
 #include "disk-io.h"
-#include "print-tree.h"
+#include "kernel-shared/print-tree.h"
 #include "transaction.h"
 #include "volumes.h"
 #include "cmds/commands.h"

@@ -24,7 +24,7 @@
 #include "kernel-lib/radix-tree.h"
 #include "ctree.h"
 #include "disk-io.h"
-#include "print-tree.h"
+#include "kernel-shared/print-tree.h"
 #include "common/utils.h"
 
 static void print_dir_item_type(struct extent_buffer *eb,

@@ -18,7 +18,7 @@
 #include "ctree.h"
 #include "disk-io.h"
 #include "transaction.h"
-#include "print-tree.h"
+#include "kernel-shared/print-tree.h"
 #include "repair.h"
 #include "common/internal.h"
 #include "common/messages.h"
