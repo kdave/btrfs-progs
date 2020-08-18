@@ -147,7 +147,7 @@ objects = kernel-shared/dir-item.o \
 	  qgroup.o kernel-lib/list_sort.o props.o \
 	  kernel-shared/ulist.o check/qgroup-verify.o kernel-shared/backref.o \
 	  common/string-table.o common/task-utils.o \
-	  inode.o file.o find-root.o common/help.o send-dump.o \
+	  inode.o file.o find-root.o common/help.o cmds/receive-dump.o \
 	  common/fsfeatures.o \
 	  common/format-output.o \
 	  common/device-utils.o
