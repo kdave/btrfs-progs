@@ -23,6 +23,9 @@ cd "$dir"
 wget https://www.kernel.org/pub/linux/kernel/people/jeffm/reiserfsprogs/v${version}/reiserfsprogs-${version}.tar.xz
 tar xf reiserfsprogs-${version}.tar.xz
 cd reiserfsprogs-${version}
+# Compilation fails as loff_t is not defined without the define
+export CFLAGS
+CFLAGS=-D_GNU_SOURCE
 ./configure --prefix=/usr
 make all
 sudo make install
