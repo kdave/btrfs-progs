@@ -19,7 +19,7 @@
 #include "kerncompat.h"
 
 #include <getopt.h>
-#include "ctree.h"
+#include "kernel-shared/ctree.h"
 #include "volumes.h"
 #include "transaction.h"
 #include "kernel-shared/disk-io.h"

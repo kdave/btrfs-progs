@@ -39,7 +39,7 @@
 #include <sys/xattr.h>
 #include <uuid/uuid.h>
 
-#include "ctree.h"
+#include "kernel-shared/ctree.h"
 #include "ioctl.h"
 #include "cmds/commands.h"
 #include "common/utils.h"

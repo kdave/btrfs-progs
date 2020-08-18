@@ -20,7 +20,7 @@
 #define __BTRFS_VOLUMES_H__
 
 #include "kerncompat.h"
-#include "ctree.h"
+#include "kernel-shared/ctree.h"
 
 #define BTRFS_STRIPE_LEN	SZ_64K
 

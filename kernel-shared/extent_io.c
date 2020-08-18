@@ -26,7 +26,7 @@
 #include "kerncompat.h"
 #include "kernel-shared/extent_io.h"
 #include "kernel-lib/list.h"
-#include "ctree.h"
+#include "kernel-shared/ctree.h"
 #include "volumes.h"
 #include "common/utils.h"
 #include "common/internal.h"

@@ -17,8 +17,8 @@ STATIC_LIBS := -luuid   -lblkid -luuid -lz   -llzo2 -L. -pthread
 btrfs_shared_libraries := libext2_uuid \
 			libext2_blkid
 
-objects := ctree.c kernel-shared/disk-io.c kernel-lib/radix-tree.c kernel-shared/extent-tree.c \
-	  kernel-shared/print-tree.c \
+objects := kernel-shared/ctree.c kernel-shared/disk-io.c kernel-lib/radix-tree.c \
+	  kernel-shared/extent-tree.c kernel-shared/print-tree.c \
           root-tree.c dir-item.c file-item.c inode-item.c inode-map.c \
           common/extent-cache.c kernel-shared/extent_io.c volumes.c utils.c repair.c \
           qgroup.c kernel-shared/free-space-cache.c kernel-lib/list_sort.c props.c \
@@ -38,7 +38,8 @@ libbtrfs_objects := common/send-stream.c common/send-utils.c kernel-lib/rbtree.c
 libbtrfs_headers := common/send-stream.h common/send-utils.h send.h kernel-lib/rbtree.h btrfs-list.h \
                    crypto/crc32c.h kernel-lib/list.h kerncompat.h \
                    kernel-lib/radix-tree.h kernel-lib/sizes.h kernel-lib/raid56.h \
-                   common/extent-cache.h kernel-shared/extent_io.h ioctl.h ctree.h btrfsck.h version.h
+                   common/extent-cache.h kernel-shared/extent_io.h ioctl.h \
+		   kernel-shared/ctree.h btrfsck.h version.h
 blkid_objects := partition/ superblocks/ topology/
 
 

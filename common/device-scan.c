@@ -32,7 +32,7 @@
 #include "common/messages.h"
 #include "common/utils.h"
 #include "common/defs.h"
-#include "ctree.h"
+#include "kernel-shared/ctree.h"
 #include "volumes.h"
 #include "kernel-shared/disk-io.h"
 #include "ioctl.h"

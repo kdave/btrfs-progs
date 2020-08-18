@@ -37,7 +37,7 @@
 #include <stdarg.h>
 #include <limits.h>
 
-#include "ctree.h"
+#include "kernel-shared/ctree.h"
 #include "ioctl.h"
 #include "common/utils.h"
 #include "volumes.h"

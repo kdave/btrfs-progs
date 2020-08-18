@@ -22,7 +22,7 @@
 
 #if BTRFS_FLAT_INCLUDES
 #include "kerncompat.h"
-#include "ctree.h"
+#include "kernel-shared/ctree.h"
 #include "common/extent-cache.h"
 #include "kernel-lib/list.h"
 #else

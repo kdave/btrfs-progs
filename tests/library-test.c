@@ -24,7 +24,7 @@
 #include "crypto/crc32c.h"
 #include "kernel-lib/list.h"
 #include "kernel-lib/sizes.h"
-#include "ctree.h"
+#include "kernel-shared/ctree.h"
 #include "kernel-shared/extent_io.h"
 #include "ioctl.h"
 #include "btrfs-list.h"

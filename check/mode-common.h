@@ -22,7 +22,7 @@
 #define __BTRFS_CHECK_MODE_COMMON_H__
 
 #include <sys/stat.h>
-#include "ctree.h"
+#include "kernel-shared/ctree.h"
 
 #define FREE_SPACE_CACHE_INODE_MODE	(0100600)
 /*

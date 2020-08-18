@@ -20,7 +20,7 @@
 #include "kerncompat.h"
 #include "kernel-lib/rbtree.h"
 #include "kernel-lib/list.h"
-#include "ctree.h"
+#include "kernel-shared/ctree.h"
 
 #define HEADER_MAGIC		0xbd5c25e27295668bULL
 #define MAX_PENDING_SIZE	SZ_256K

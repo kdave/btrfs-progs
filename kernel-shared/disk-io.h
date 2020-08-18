@@ -20,7 +20,7 @@
 #define __BTRFS_DISK_IO_H__
 
 #include "kerncompat.h"
-#include "ctree.h"
+#include "kernel-shared/ctree.h"
 #include "kernel-lib/sizes.h"
 
 #define BTRFS_SUPER_INFO_OFFSET SZ_64K

@@ -18,7 +18,7 @@
 
 #include "qgroup.h"
 #include <sys/ioctl.h>
-#include "ctree.h"
+#include "kernel-shared/ctree.h"
 #include "ioctl.h"
 #include "common/utils.h"
 #include <errno.h>

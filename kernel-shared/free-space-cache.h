@@ -20,7 +20,7 @@
 #define __BTRFS_FREE_SPACE_CACHE_H__
 
 #include "kerncompat.h"
-#include "ctree.h"
+#include "kernel-shared/ctree.h"
 #include "kernel-lib/rbtree.h"
 
 struct btrfs_free_space {

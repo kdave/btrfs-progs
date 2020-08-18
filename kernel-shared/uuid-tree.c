@@ -19,7 +19,7 @@
 #include <stdlib.h>
 #include <uuid/uuid.h>
 #include <sys/ioctl.h>
-#include "ctree.h"
+#include "kernel-shared/ctree.h"
 #include "transaction.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/print-tree.h"

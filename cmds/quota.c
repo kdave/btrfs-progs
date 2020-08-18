@@ -19,7 +19,7 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 
-#include "ctree.h"
+#include "kernel-shared/ctree.h"
 #include "ioctl.h"
 
 #include "cmds/commands.h"

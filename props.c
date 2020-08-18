@@ -23,7 +23,7 @@
 
 #include <btrfsutil.h>
 
-#include "ctree.h"
+#include "kernel-shared/ctree.h"
 #include "cmds/commands.h"
 #include "common/utils.h"
 #include "props.h"

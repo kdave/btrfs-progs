@@ -26,7 +26,7 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <libgen.h>
-#include "ctree.h"
+#include "kernel-shared/ctree.h"
 #include "transaction.h"
 #include "common/utils.h"
 #include "ioctl.h"

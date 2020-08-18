@@ -24,7 +24,7 @@
 #include <stdint.h>
 #include <unistd.h>
 #include "kerncompat.h"
-#include "ctree.h"
+#include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "volumes.h"
 #include "common/utils.h"

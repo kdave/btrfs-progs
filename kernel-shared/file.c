@@ -17,7 +17,7 @@
  */
 
 #include <sys/stat.h>
-#include "ctree.h"
+#include "kernel-shared/ctree.h"
 #include "common/utils.h"
 #include "kernel-shared/disk-io.h"
 #include "transaction.h"

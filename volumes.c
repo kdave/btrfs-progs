@@ -22,7 +22,7 @@
 #include <uuid/uuid.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include "ctree.h"
+#include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "transaction.h"
 #include "kernel-shared/print-tree.h"

@@ -21,7 +21,7 @@
 #define __BTRFS_SEND_H__
 
 #if BTRFS_FLAT_INCLUDES
-#include "ctree.h"
+#include "kernel-shared/ctree.h"
 #else
 #include <btrfs/ctree.h>
 #endif /* BTRFS_FLAT_INCLUDES */
