@@ -31,10 +31,10 @@ cmds_objects := cmds-subvolume.c cmds-filesystem.c cmds-device.c cmds-scrub.c \
                cmds-property.c cmds-fi-usage.c cmds-inspect-dump-tree.c \
                cmds-inspect-dump-super.c cmds-inspect-tree-stats.c cmds-fi-du.c \
                mkfs/common.c
-libbtrfs_objects := common/send-stream.c send-utils.c kernel-lib/rbtree.c btrfs-list.c \
+libbtrfs_objects := common/send-stream.c common/send-utils.c kernel-lib/rbtree.c btrfs-list.c \
                    crypto/crc32c.c messages.c \
                    uuid-tree.c common/utils-lib.c rbtree-utils.c
-libbtrfs_headers := common/send-stream.h send-utils.h send.h kernel-lib/rbtree.h btrfs-list.h \
+libbtrfs_headers := common/send-stream.h common/send-utils.h send.h kernel-lib/rbtree.h btrfs-list.h \
                    crypto/crc32c.h kernel-lib/list.h kerncompat.h \
                    kernel-lib/radix-tree.h kernel-lib/sizes.h kernel-lib/raid56.h \
                    common/extent-cache.h extent_io.h ioctl.h ctree.h btrfsck.h version.h

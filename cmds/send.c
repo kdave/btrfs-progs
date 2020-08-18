@@ -42,7 +42,7 @@
 #include "common/utils.h"
 
 #include "send.h"
-#include "send-utils.h"
+#include "common/send-utils.h"
 #include "common/help.h"
 #include "common/path-utils.h"
 

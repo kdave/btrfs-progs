@@ -34,7 +34,7 @@
 #include "common/utils.h"
 #include "mkfs/rootdir.h"
 #include "mkfs/common.h"
-#include "send-utils.h"
+#include "common/send-utils.h"
 
 static u32 fs_block_size;
 

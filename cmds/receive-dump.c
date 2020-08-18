@@ -33,7 +33,7 @@
 #include <uuid/uuid.h>
 #include "common/utils.h"
 #include "cmds/commands.h"
-#include "send-utils.h"
+#include "common/send-utils.h"
 #include "common/send-stream.h"
 #include "cmds/receive-dump.h"
 
