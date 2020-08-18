@@ -23,7 +23,7 @@ objects := kernel-shared/ctree.c kernel-shared/disk-io.c kernel-lib/radix-tree.c
           common/extent-cache.c kernel-shared/extent_io.c kernel-shared/volumes.c utils.c repair.c \
           qgroup.c kernel-shared/free-space-cache.c kernel-lib/list_sort.c props.c \
           kernel-shared/ulist.c qgroup-verify.c backref.c common/string-table.c task-utils.c \
-          kernel-shared/inode.c kernel-shared/file.c find-root.c \
+          kernel-shared/inode.c kernel-shared/file.c \
 	  free-space-tree.c help.c cmds/receive-dump.c \
           common/fsfeatures.c kernel-lib/tables.c kernel-lib/raid56.c kernel-shared/transaction.c
 cmds_objects := cmds-subvolume.c cmds-filesystem.c cmds-device.c cmds-scrub.c \
