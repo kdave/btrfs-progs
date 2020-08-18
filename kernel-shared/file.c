@@ -20,7 +20,7 @@
 #include "kernel-shared/ctree.h"
 #include "common/utils.h"
 #include "kernel-shared/disk-io.h"
-#include "transaction.h"
+#include "kernel-shared/transaction.h"
 #include "kerncompat.h"
 
 /*

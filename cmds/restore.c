@@ -40,7 +40,7 @@
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/print-tree.h"
-#include "transaction.h"
+#include "kernel-shared/transaction.h"
 #include "kernel-lib/list.h"
 #include "volumes.h"
 #include "common/utils.h"

@@ -35,7 +35,7 @@
 #include "common/extent-cache.h"
 #include "kernel-shared/disk-io.h"
 #include "volumes.h"
-#include "transaction.h"
+#include "kernel-shared/transaction.h"
 #include "crypto/crc32c.h"
 #include "common/utils.h"
 #include "check/common.h"

@@ -19,7 +19,7 @@
 #include "kerncompat.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/free-space-cache.h"
-#include "transaction.h"
+#include "kernel-shared/transaction.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/extent_io.h"
 #include "crypto/crc32c.h"

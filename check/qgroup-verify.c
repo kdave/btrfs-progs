@@ -29,7 +29,7 @@
 #include "common/utils.h"
 #include "kernel-shared/ulist.h"
 #include "common/rbtree-utils.h"
-#include "transaction.h"
+#include "kernel-shared/transaction.h"
 #include "repair.h"
 
 #include "qgroup-verify.h"

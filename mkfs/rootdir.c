@@ -30,7 +30,7 @@
 #include "common/internal.h"
 #include "kernel-shared/disk-io.h"
 #include "common/messages.h"
-#include "transaction.h"
+#include "kernel-shared/transaction.h"
 #include "common/utils.h"
 #include "mkfs/rootdir.h"
 #include "mkfs/common.h"

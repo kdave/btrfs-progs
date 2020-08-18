@@ -32,7 +32,7 @@
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/print-tree.h"
 #include "common/task-utils.h"
-#include "transaction.h"
+#include "kernel-shared/transaction.h"
 #include "common/utils.h"
 #include "cmds/commands.h"
 #include "kernel-shared/free-space-cache.h"
