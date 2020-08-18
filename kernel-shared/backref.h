@@ -20,7 +20,7 @@
 #define __BTRFS_BACKREF_H__
 
 #include "kernel-shared/ulist.h"
-#include "extent_io.h"
+#include "kernel-shared/extent_io.h"
 
 struct inode_fs_paths {
 	struct btrfs_path		*btrfs_path;

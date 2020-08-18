@@ -20,7 +20,7 @@
 #include "common/utils.h"
 #include "crypto/crc32c.h"
 #include "image/sanitize.h"
-#include "extent_io.h"
+#include "kernel-shared/extent_io.h"
 
 /*
  * Reverse CRC-32C table

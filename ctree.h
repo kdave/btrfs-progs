@@ -26,7 +26,7 @@
 #include "kerncompat.h"
 #include "kernel-lib/radix-tree.h"
 #include "common/extent-cache.h"
-#include "extent_io.h"
+#include "kernel-shared/extent_io.h"
 #include "ioctl.h"
 #include "kernel-lib/sizes.h"
 #include "crypto/crc32c.h"
