@@ -18,7 +18,7 @@
 
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
-#include "transaction.h"
+#include "kernel-shared/transaction.h"
 
 static int find_name_in_backref(struct btrfs_path *path, const char * name,
 			 int name_len, struct btrfs_inode_ref **ref_ret)

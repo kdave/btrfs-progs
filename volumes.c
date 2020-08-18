@@ -24,7 +24,7 @@
 #include <unistd.h>
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
-#include "transaction.h"
+#include "kernel-shared/transaction.h"
 #include "kernel-shared/print-tree.h"
 #include "volumes.h"
 #include "common/utils.h"

@@ -31,7 +31,7 @@
 #include "crypto/crc32c.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
-#include "transaction.h"
+#include "kernel-shared/transaction.h"
 #include "common/utils.h"
 #include "volumes.h"
 #include "kernel-shared/extent_io.h"

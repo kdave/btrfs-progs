@@ -19,7 +19,7 @@
 #include <linux/limits.h>
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
-#include "transaction.h"
+#include "kernel-shared/transaction.h"
 
 static struct btrfs_dir_item *insert_with_overflow(struct btrfs_trans_handle
 						   *trans,

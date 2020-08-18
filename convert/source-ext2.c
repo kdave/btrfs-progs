@@ -20,7 +20,7 @@
 #include <linux/limits.h>
 #include <pthread.h>
 #include "kernel-shared/disk-io.h"
-#include "transaction.h"
+#include "kernel-shared/transaction.h"
 #include "common/utils.h"
 #include "convert/common.h"
 #include "convert/source-ext2.h"

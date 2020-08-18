@@ -16,7 +16,7 @@
 
 #include "kerncompat.h"
 #include "kernel-shared/disk-io.h"
-#include "transaction.h"
+#include "kernel-shared/transaction.h"
 #include "kernel-shared/delayed-ref.h"
 #include "common/messages.h"
 

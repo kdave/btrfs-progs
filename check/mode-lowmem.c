@@ -17,7 +17,7 @@
 #include <time.h>
 #include "kernel-shared/ctree.h"
 #include "repair.h"
-#include "transaction.h"
+#include "kernel-shared/transaction.h"
 #include "common/messages.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/backref.h"

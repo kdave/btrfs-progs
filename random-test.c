@@ -24,7 +24,7 @@
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/print-tree.h"
-#include "transaction.h"
+#include "kernel-shared/transaction.h"
 
 int keep_running = 1;
 struct btrfs_super_block super;

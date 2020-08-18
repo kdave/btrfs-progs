@@ -166,7 +166,8 @@ libbtrfs_objects = common/send-stream.o common/send-utils.o kernel-lib/rbtree.o 
 		   kernel-shared/ctree.o kernel-shared/disk-io.o \
 		   kernel-shared/extent-tree.o kernel-shared/delayed-ref.o \
 		   kernel-shared/print-tree.o \
-		   kernel-shared/free-space-cache.o kernel-shared/root-tree.o volumes.o transaction.o \
+		   kernel-shared/free-space-cache.o kernel-shared/root-tree.o \
+		   volumes.o kernel-shared/transaction.o \
 		   kernel-shared/free-space-tree.o repair.o kernel-shared/inode-item.o \
 		   kernel-shared/file-item.o \
 		   kernel-lib/raid56.o kernel-lib/tables.o \

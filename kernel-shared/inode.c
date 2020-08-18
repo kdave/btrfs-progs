@@ -25,7 +25,7 @@
 #include <sys/stat.h>
 
 #include "kernel-shared/ctree.h"
-#include "transaction.h"
+#include "kernel-shared/transaction.h"
 #include "kernel-shared/disk-io.h"
 #include "time.h"
 #include "common/messages.h"
