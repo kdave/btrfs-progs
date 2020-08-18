@@ -27,7 +27,7 @@
 #include "kernel-shared/extent_io.h"
 #include "kernel-lib/list.h"
 #include "kernel-shared/ctree.h"
-#include "volumes.h"
+#include "kernel-shared/volumes.h"
 #include "common/utils.h"
 #include "common/internal.h"
 

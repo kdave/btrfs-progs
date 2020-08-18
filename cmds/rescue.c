@@ -20,7 +20,7 @@
 
 #include <getopt.h>
 #include "kernel-shared/ctree.h"
-#include "volumes.h"
+#include "kernel-shared/volumes.h"
 #include "kernel-shared/transaction.h"
 #include "kernel-shared/disk-io.h"
 #include "cmds/commands.h"

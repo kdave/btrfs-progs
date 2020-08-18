@@ -23,7 +23,7 @@
 #include "kernel-shared/ctree.h"
 #include "common/utils.h"
 #include "find-root.h"
-#include "volumes.h"
+#include "kernel-shared/volumes.h"
 #include "kernel-shared/disk-io.h"
 #include "common/extent-cache.h"
 

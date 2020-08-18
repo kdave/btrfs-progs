@@ -17,7 +17,7 @@
 #include <unistd.h>
 #include <uuid/uuid.h>
 #include "kernel-shared/disk-io.h"
-#include "volumes.h"
+#include "kernel-shared/volumes.h"
 #include "common/utils.h"
 #include "common/path-utils.h"
 #include "mkfs/common.h"

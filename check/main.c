@@ -27,7 +27,7 @@
 #include <uuid/uuid.h>
 #include <time.h>
 #include "kernel-shared/ctree.h"
-#include "volumes.h"
+#include "kernel-shared/volumes.h"
 #include "repair.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/print-tree.h"

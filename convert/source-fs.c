@@ -18,7 +18,7 @@
 #include <unistd.h>
 #include "common/internal.h"
 #include "kernel-shared/disk-io.h"
-#include "volumes.h"
+#include "kernel-shared/volumes.h"
 #include "convert/common.h"
 #include "convert/source-fs.h"
 

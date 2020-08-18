@@ -28,7 +28,7 @@
 #include "kernel-shared/print-tree.h"
 #include "kernel-shared/transaction.h"
 #include "crypto/crc32c.h"
-#include "volumes.h"
+#include "kernel-shared/volumes.h"
 #include "kernel-shared/free-space-cache.h"
 #include "kernel-shared/free-space-tree.h"
 #include "common/utils.h"

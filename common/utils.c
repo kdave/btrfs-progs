@@ -51,7 +51,7 @@
 #include "common/utils.h"
 #include "common/path-utils.h"
 #include "common/device-scan.h"
-#include "volumes.h"
+#include "kernel-shared/volumes.h"
 #include "ioctl.h"
 #include "cmds/commands.h"
 #include "mkfs/common.h"

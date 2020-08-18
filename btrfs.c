@@ -19,7 +19,7 @@
 #include <string.h>
 #include <getopt.h>
 
-#include "volumes.h"
+#include "kernel-shared/volumes.h"
 #include "crypto/crc32c.h"
 #include "cmds/commands.h"
 #include "common/utils.h"

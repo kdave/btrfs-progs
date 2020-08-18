@@ -20,7 +20,7 @@
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/free-space-cache.h"
 #include "kernel-shared/free-space-tree.h"
-#include "volumes.h"
+#include "kernel-shared/volumes.h"
 #include "kernel-shared/transaction.h"
 #include "kernel-lib/bitops.h"
 #include "common/internal.h"
