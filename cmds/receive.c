@@ -47,7 +47,7 @@
 #include "btrfs-list.h"
 
 #include "send.h"
-#include "send-stream.h"
+#include "common/send-stream.h"
 #include "send-utils.h"
 #include "cmds/receive-dump.h"
 #include "common/help.h"

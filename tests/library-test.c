@@ -31,7 +31,7 @@
 #include "check/btrfsck.h"
 #include "common/extent-cache.h"
 #include "send.h"
-#include "send-stream.h"
+#include "common/send-stream.h"
 #include "send-utils.h"
 #else
 /*
