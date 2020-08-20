@@ -12,6 +12,10 @@ LIBBTRFS_MAJOR=0
 LIBBTRFS_MINOR=1
 LIBBTRFS_PATCHLEVEL=2
 
+BTRFS_UTIL_VERSION_MAJOR=`sed -rn 's/^\#define BTRFS_UTIL_VERSION_MAJOR ([0-9])+$/\1/p' libbtrfsutil/btrfsutil.h`
+BTRFS_UTIL_VERSION_MINOR=`sed -rn 's/^\#define BTRFS_UTIL_VERSION_MINOR ([0-9])+$/\1/p' libbtrfsutil/btrfsutil.h`
+BTRFS_UTIL_VERSION_PATCH=`sed -rn 's/^\#define BTRFS_UTIL_VERSION_PATCH ([0-9])+$/\1/p' libbtrfsutil/btrfsutil.h`
+
 CFLAGS=${CFLAGS:-"-g -O1 -Wall -D_FORTIFY_SOURCE=2"}
 AC_SUBST([CFLAGS])
 
@@ -300,11 +304,17 @@ AC_SUBST([LZO2_LIBS])
 AC_SUBST([LZO2_LIBS_STATIC])
 AC_SUBST([LZO2_CFLAGS])
 
+dnl call PKG_INSTALLDIR from pkg.m4 to set pkgconfigdir
+m4_ifdef([PKG_INSTALLDIR], [PKG_INSTALLDIR], [AC_MSG_ERROR([please install pkgconf])])
 
 dnl library stuff
 AC_SUBST([LIBBTRFS_MAJOR])
 AC_SUBST([LIBBTRFS_MINOR])
 AC_SUBST([LIBBTRFS_PATCHLEVEL])
+
+AC_SUBST([BTRFS_UTIL_VERSION_MAJOR])
+AC_SUBST([BTRFS_UTIL_VERSION_MINOR])
+AC_SUBST([BTRFS_UTIL_VERSION_PATCH])
 
 AC_CONFIG_HEADERS([config.h])
 
@@ -312,6 +322,7 @@ AC_CONFIG_FILES([
 Makefile.inc
 Documentation/Makefile
 version.h
+libbtrfsutil/libbtrfsutil.pc
 ])
 
 AC_OUTPUT
@@ -327,6 +338,7 @@ AC_MSG_RESULT([
 	bindir:             ${bindir}
 	libdir:             ${libdir}
 	includedir:         ${includedir}
+	pkgconfigdir:       ${pkgconfigdir}
 
 	compiler:           ${CC}
 	cflags:             ${CFLAGS}

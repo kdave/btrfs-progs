@@ -1,0 +1,11 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: libbtrfsutil
+Description: libbtrfsutil library
+Version: @BTRFS_UTIL_VERSION_MAJOR@.@BTRFS_UTIL_VERSION_MINOR@.@BTRFS_UTIL_VERSION_PATCH@
+URL: http://btrfs.wiki.kernel.org
+Cflags: -I${includedir}
+Libs: -L${libdir} -lbtrfsutil

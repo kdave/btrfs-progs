@@ -779,6 +779,8 @@ endif
 	$(INSTALL) -m755 -d $(DESTDIR)$(incdir)/btrfs
 	$(INSTALL) -m644 $(libbtrfs_headers) $(DESTDIR)$(incdir)/btrfs
 	$(INSTALL) -m644 libbtrfsutil/btrfsutil.h $(DESTDIR)$(incdir)
+	$(INSTALL) -m755 -d $(DESTDIR)$(pkgconfigdir)
+	$(INSTALL) -m644 libbtrfsutil/libbtrfsutil.pc $(DESTDIR)$(pkgconfigdir)
 endif
 
 ifeq ($(PYTHON_BINDINGS),1)

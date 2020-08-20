@@ -41,6 +41,7 @@ libdir ?= @libdir@
 incdir = @includedir@
 udevdir = @UDEVDIR@
 udevruledir = ${udevdir}/rules.d
+pkgconfigdir = @pkgconfigdir@
 
 # external libs required by various binaries; for btrfs-foo,
 # specify btrfs_foo_libs = <list of libs>; see $($(subst...)) rules in Makefile

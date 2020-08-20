@@ -35,6 +35,8 @@
 /libbtrfsutil.so*
 /libbtrfsutil.a
 
+/libbtrfsutil/libbtrfsutil.pc
+
 /fssum
 /testsuite-id
 /tests/*-tests-results.txt
