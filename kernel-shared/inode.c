@@ -136,8 +136,8 @@ int check_dir_conflict(struct btrfs_root *root, char *name, int namelen,
 	btrfs_release_path(path);
 
 	/* Index conflicting? */
-	dir_item = btrfs_lookup_dir_index(NULL, root, path, dir, name,
-					  namelen, index, 0);
+	dir_item = btrfs_lookup_dir_index_item(NULL, root, path, dir, index,
+					  name, namelen, 0);
 	if (IS_ERR(dir_item) && PTR_ERR(dir_item) == -ENOENT)
 		dir_item = NULL;
 	if (IS_ERR(dir_item)) {
@@ -311,8 +311,8 @@ int btrfs_unlink(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 		del_dir_item = 1;
 	btrfs_release_path(path);
 
-	dir_item = btrfs_lookup_dir_index(NULL, root, path, parent_ino,
-					  name, namelen, index, 0);
+	dir_item = btrfs_lookup_dir_index_item(NULL, root, path, parent_ino,
+					       index, name, namelen, 0);
 	/*
 	 * Since lookup_dir_index() will return -ENOENT when not found,
 	 * we need to do extra check.
@@ -369,9 +369,9 @@ int btrfs_unlink(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 	}
 
 	if (del_dir_index) {
-		dir_item = btrfs_lookup_dir_index(trans, root, path,
-						  parent_ino, name, namelen,
-						  index, -1);
+		dir_item = btrfs_lookup_dir_index_item(trans, root, path,
+						       parent_ino, index, name,
+						       namelen, -1);
 		if (IS_ERR(dir_item)) {
 			ret = PTR_ERR(dir_item);
 			goto out;

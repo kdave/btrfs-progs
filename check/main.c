@@ -2068,9 +2068,9 @@ static int delete_dir_index(struct btrfs_root *root,
 		(unsigned long long)root->objectid);
 
 	btrfs_init_path(&path);
-	di = btrfs_lookup_dir_index(trans, root, &path, backref->dir,
-				    backref->name, backref->namelen,
-				    backref->index, -1);
+	di = btrfs_lookup_dir_index_item(trans, root, &path, backref->dir,
+					 backref->index, backref->name,
+					 backref->namelen, -1);
 	if (IS_ERR(di)) {
 		ret = PTR_ERR(di);
 		btrfs_release_path(&path);
