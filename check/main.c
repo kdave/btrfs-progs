@@ -1882,20 +1882,45 @@ static int check_root_dir(struct inode_record *rec)
 	struct inode_backref *backref;
 	int ret = -1;
 
-	if (!rec->found_inode_item || rec->errors)
+	if (rec->errors)
 		goto out;
-	if (rec->nlink != 1 || rec->found_link != 0)
+
+	if (!rec->found_inode_item) {
+		rec->errors |= I_ERR_NO_INODE_ITEM;
 		goto out;
-	if (list_empty(&rec->backrefs))
+	}
+
+	if (rec->nlink != 1 || rec->found_link != 0) {
+		rec->errors |= I_ERR_LINK_COUNT_WRONG;
 		goto out;
+	}
+
+	if (list_empty(&rec->backrefs)) {
+		rec->errors |= REF_ERR_NO_ROOT_BACKREF;
+		goto out;
+	}
+
 	backref = to_inode_backref(rec->backrefs.next);
-	if (!backref->found_inode_ref)
+	if (!backref->found_inode_ref) {
+		rec->errors |= REF_ERR_NO_INODE_REF;
 		goto out;
+	}
+
 	if (backref->index != 0 || backref->namelen != 2 ||
-	    memcmp(backref->name, "..", 2))
+	    memcmp(backref->name, "..", 2)) {
+		rec->errors |= I_ERR_ODD_DIR_ITEM;
 		goto out;
-	if (backref->found_dir_index || backref->found_dir_item)
+	}
+
+	if (backref->found_dir_index) {
+		rec->errors |= REF_ERR_DUP_DIR_INDEX;
 		goto out;
+	}
+
+	if (backref->found_dir_item) {
+		rec->errors |= REF_ERR_DUP_DIR_ITEM;
+		goto out;
+	}
 	ret = 0;
 out:
 	return ret;
@@ -2989,9 +3014,6 @@ static int check_inode_recs(struct btrfs_root *root,
 		}
 		ret = check_root_dir(rec);
 		if (ret) {
-			fprintf(stderr, "root %llu root dir %llu error\n",
-				(unsigned long long)root->root_key.objectid,
-				(unsigned long long)root_dirid);
 			print_inode_error(root, rec);
 			error++;
 		}
