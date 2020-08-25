@@ -1079,6 +1079,7 @@ static int cmd_filesystem_resize(const struct cmd_struct *cmd,
 	char	*amount, *path;
 	DIR	*dirstream = NULL;
 	struct stat st;
+	int exclop;
 
 	clean_args_no_options_relaxed(cmd, argc, argv);
 
@@ -1109,6 +1110,15 @@ static int cmd_filesystem_resize(const struct cmd_struct *cmd,
 	fd = btrfs_open_dir(path, &dirstream, 1);
 	if (fd < 0)
 		return 1;
+
+	exclop = get_fs_exclop(fd);
+	if (exclop > 0) {
+		error(
+"unable to start filesystem resize, nother exclusive operation '%s' in progress",
+			get_fs_exclop_name(exclop));
+		close_file_or_dir(fd, dirstream);
+		return 1;
+	}
 
 	printf("Resize '%s' of '%s'\n", path, amount);
 	memset(&args, 0, sizeof(args));
