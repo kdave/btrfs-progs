@@ -1201,6 +1201,8 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	if ((data_profile | metadata_profile) &
 	    (BTRFS_BLOCK_GROUP_RAID5 | BTRFS_BLOCK_GROUP_RAID6)) {
 		features |= BTRFS_FEATURE_INCOMPAT_RAID56;
+		warning("RAID5/6 support has known problems is strongly discouraged\n"
+			"\t to be used besides testing or evaluation.\n");
 	}
 
 	if ((data_profile | metadata_profile) &
