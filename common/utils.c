@@ -1892,3 +1892,36 @@ int btrfs_warn_multiple_profiles(int fd)
 
 	return 1;
 }
+
+/*
+ * Open a file in fsid directory in sysfs and return the file descriptor or
+ * error
+ */
+int sysfs_open_fsid_file(int fd, const char *filename)
+{
+	u8 fsid[BTRFS_UUID_SIZE];
+	char fsid_str[BTRFS_UUID_UNPARSED_SIZE];
+	char sysfs_file[PATH_MAX];
+	int ret;
+
+	ret = get_fsid_fd(fd, fsid);
+	if (ret < 0)
+		return ret;
+	uuid_unparse(fsid, fsid_str);
+
+	ret = path_cat3_out(sysfs_file, "/sys/fs/btrfs", fsid_str, filename);
+	if (ret < 0)
+		return ret;
+
+	return open(sysfs_file, O_RDONLY);
+}
+
+/*
+ * Read up to @size bytes to @buf from @fd
+ */
+int sysfs_read_file(int fd, char *buf, size_t size)
+{
+	lseek(fd, 0, SEEK_SET);
+	memset(buf, 0, size);
+	return read(fd, buf, size);
+}
