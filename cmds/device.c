@@ -61,6 +61,7 @@ static int cmd_device_add(const struct cmd_struct *cmd,
 	int discard = 1;
 	int force = 0;
 	int last_dev;
+	int exclop;
 
 	optind = 0;
 	while (1) {
@@ -95,6 +96,15 @@ static int cmd_device_add(const struct cmd_struct *cmd,
 	fdmnt = btrfs_open_dir(mntpnt, &dirstream, 1);
 	if (fdmnt < 0)
 		return 1;
+
+	exclop = get_fs_exclop(fdmnt);
+	if (exclop > 0) {
+		error(
+	"unable to start device add, another exclusive operation '%s' in progress",
+			get_fs_exclop_name(exclop));
+		close_file_or_dir(fdmnt, dirstream);
+		return 1;
+	}
 
 	for (i = optind; i < last_dev; i++){
 		struct btrfs_ioctl_vol_args ioctl_args;
@@ -155,6 +165,7 @@ static int _cmd_device_remove(const struct cmd_struct *cmd,
 	char	*mntpnt;
 	int i, fdmnt, ret = 0;
 	DIR	*dirstream = NULL;
+	int exclop;
 
 	clean_args_no_options(cmd, argc, argv);
 
@@ -166,6 +177,15 @@ static int _cmd_device_remove(const struct cmd_struct *cmd,
 	fdmnt = btrfs_open_dir(mntpnt, &dirstream, 1);
 	if (fdmnt < 0)
 		return 1;
+
+	exclop = get_fs_exclop(fdmnt);
+	if (exclop > 0 ) {
+		error(
+	"unable to start device remove, another exclusive operation '%s' in progress",
+			get_fs_exclop_name(exclop));
+		close_file_or_dir(fdmnt, dirstream);
+		return 1;
+	}
 
 	for(i = optind; i < argc - 1; i++) {
 		struct	btrfs_ioctl_vol_args arg;

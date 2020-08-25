@@ -136,6 +136,7 @@ static int cmd_replace_start(const struct cmd_struct *cmd,
 	DIR *dirstream = NULL;
 	u64 srcdev_size;
 	u64 dstdev_size;
+	int exclop;
 
 	optind = 0;
 	while ((c = getopt(argc, argv, "Brf")) != -1) {
@@ -257,6 +258,17 @@ static int cmd_replace_start(const struct cmd_struct *cmd,
 		error("unable to open %s: %m", dstdev);
 		goto leave_with_error;
 	}
+
+	/* Check status before any potentially destructive operation */
+	exclop = get_fs_exclop(fdmnt);
+	if (exclop > 0) {
+		error(
+	"unable to start device replace, another exclusive operation '%s' in progress",
+			get_fs_exclop_name(exclop));
+		close_file_or_dir(fdmnt, dirstream);
+		goto leave_with_error;
+	}
+
 	strncpy((char *)start_args.start.tgtdev_name, dstdev,
 		BTRFS_DEVICE_PATH_NAME_MAX);
 	ret = btrfs_prepare_device(fddstdev, dstdev, &dstdev_block_count, 0,

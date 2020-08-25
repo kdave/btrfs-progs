@@ -436,10 +436,20 @@ static int do_balance(const char *path, struct btrfs_ioctl_balance_args *args,
 	int fd;
 	int ret;
 	DIR *dirstream = NULL;
+	int exclop;
 
 	fd = btrfs_open_dir(path, &dirstream, 1);
 	if (fd < 0)
 		return 1;
+
+	exclop = get_fs_exclop(fd);
+	if (exclop > 0 ) {
+		error(
+	"unable to start balance, another exclusive operation '%s' in progress",
+			get_fs_exclop_name(exclop));
+		close_file_or_dir(fd, dirstream);
+		return 1;
+	}
 
 	ret = ioctl(fd, BTRFS_IOC_BALANCE_V2, args);
 	if (ret < 0) {
