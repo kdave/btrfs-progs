@@ -1136,7 +1136,7 @@ static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
 	if (ret)
 		goto fail;
 
-	ASSERT(cctx.total_bytes);
+	ASSERT(cctx.total_bytes != 0);
 	blocksize = cctx.blocksize;
 	total_bytes = (u64)blocksize * (u64)cctx.block_count;
 	if (blocksize < 4096) {
