@@ -5399,20 +5399,17 @@ int check_chunks_and_extents_lowmem(void)
 	struct btrfs_path path;
 	struct btrfs_key old_key;
 	struct btrfs_key key;
-	struct btrfs_root *root1;
 	struct btrfs_root *root;
 	struct btrfs_root *cur_root;
 	int err = 0;
 	int ret;
 
-	root = gfs_info->fs_root;
-
-	root1 = gfs_info->chunk_root;
-	ret = check_btrfs_root(root1, 1);
+	root = gfs_info->chunk_root;
+	ret = check_btrfs_root(root, 1);
 	err |= ret;
 
-	root1 = gfs_info->tree_root;
-	ret = check_btrfs_root(root1, 1);
+	root = gfs_info->tree_root;
+	ret = check_btrfs_root(root, 1);
 	err |= ret;
 
 	btrfs_init_path(&path);
@@ -5420,7 +5417,7 @@ int check_chunks_and_extents_lowmem(void)
 	key.offset = 0;
 	key.type = BTRFS_ROOT_ITEM_KEY;
 
-	ret = btrfs_search_slot(NULL, root1, &key, &path, 0, 0);
+	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
 	if (ret) {
 		error("cannot find extent tree in tree_root");
 		goto out;
@@ -5455,7 +5452,7 @@ int check_chunks_and_extents_lowmem(void)
 		if (ret)
 			goto out;
 next:
-		ret = btrfs_next_item(root1, &path);
+		ret = btrfs_next_item(root, &path);
 		if (ret)
 			goto out;
 	}
