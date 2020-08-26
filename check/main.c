@@ -620,7 +620,7 @@ static void print_inode_error(struct btrfs_root *root, struct inode_record *rec)
 		fprintf(stderr, ", invalid inode mode bit 0%o",
 			rec->imode & ~07777);
 	if (errors & I_ERR_INVALID_GEN)
-		fprintf(stderr, ", invalid inode generation");
+		fprintf(stderr, ", invalid inode generation or transid");
 	fprintf(stderr, "\n");
 
 	/* Print the holes if needed */
@@ -912,7 +912,8 @@ static int process_inode_item(struct extent_buffer *eb,
 	 * inode generation uplimit, use super_generation + 1 anyway
 	 */
 	gen_uplimit = btrfs_super_generation(gfs_info->super_copy) + 1;
-	if (btrfs_inode_generation(eb, item) > gen_uplimit)
+	if (btrfs_inode_generation(eb, item) > gen_uplimit ||
+	    btrfs_inode_transid(eb, item) > gen_uplimit)
 		rec->errors |= I_ERR_INVALID_GEN;
 	maybe_free_inode_rec(&active_node->inode_cache, rec);
 	return 0;
@@ -2835,9 +2836,10 @@ static int repair_inode_gen_original(struct btrfs_trans_handle *trans,
 	ii = btrfs_item_ptr(path->nodes[0], path->slots[0],
 			    struct btrfs_inode_item);
 	btrfs_set_inode_generation(path->nodes[0], ii, trans->transid);
+	btrfs_set_inode_transid(path->nodes[0], ii, trans->transid);
 	btrfs_mark_buffer_dirty(path->nodes[0]);
 	btrfs_release_path(path);
-	printf("resetting inode generation to %llu for ino %llu\n",
+	printf("resetting inode generation/transid to %llu for ino %llu\n",
 		trans->transid, rec->ino);
 	rec->errors &= ~I_ERR_INVALID_GEN;
 	return 0;
