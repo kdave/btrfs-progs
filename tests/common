@@ -64,6 +64,13 @@ _log_stdout()
 	tee -a "$RESULTS"
 }
 
+# print a message to stdout and to log that something was skipped
+_log_skipped()
+{
+	echo "    [SKIPPED] $*" | tee -a "$RESULTS"
+	exit 0
+}
+
 _not_run()
 {
 	echo "    [NOTRUN] $*"
