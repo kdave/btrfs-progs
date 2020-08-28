@@ -3,6 +3,9 @@
 # btrfs check is able to repair it. This tests correct detection/repair of
 # both a FREE_SPACE_EXTENT based FST and a FREE_SPACE_BITMAP based FST.
 
+# Note: this needs a patched kernel to exercise extents and bitmaps
+# ff51bf02d107 ("btrfs: block-group: fix free-space bitmap threshold")
+
 source "$TEST_TOP/common"
 
 setup_root_helper
@@ -32,6 +35,10 @@ corrupt_fst_item()
 		offset=$("$TOP/btrfs" inspect-internal dump-tree -t 10 "$TEST_DEV" | \
 			grep -o "[[:digit:]]* FREE_SPACE_BITMAP [[:digit:]]*" | \
 			cut -d' ' -f3 | tail -2 | head -1)
+		if [ -z "$objectid" -o -z "$offset" ]; then
+			_log_skipped "No bitmap to corrupt found, needs kernel patch"
+			return 1
+		fi
 		_log "Corrupting $objectid,FREE_SPACE_BITMAP,$offset"
 	elif [[ $type == "extent" ]]; then
 		type=199
@@ -41,6 +48,10 @@ corrupt_fst_item()
 		offset=$("$TOP/btrfs" inspect-internal dump-tree -t 10 "$TEST_DEV" | \
 			grep -o "[[:digit:]]* FREE_SPACE_EXTENT [[:digit:]]*" | \
 			cut -d' ' -f3 | tail -2 | head -1)
+		if [ -z "$objectid" -o -z "$offset" ]; then
+			_log_skipped "No extent to corrupt found, needs kernel patch"
+			return 1
+		fi
 		_log "Corrupting $objectid,FREE_SPACE_EXTENT,$offset"
 	else
 		_fail "Unknown item type for corruption"
@@ -69,8 +80,9 @@ done
 run_check_umount_test_dev
 
 # now corrupt one of the bitmap items
-corrupt_fst_item "bitmap"
-check_image "$TEST_DEV"
+if corrupt_fst_item "bitmap"; then
+	check_image "$TEST_DEV"
+fi
 
 # change the freespace such that we now have at least one free_space_extent
 # object
@@ -80,5 +92,6 @@ run_check $SUDO_HELPER fallocate -l 50m "$TEST_MNT/file"
 run_check_umount_test_dev
 
 # now corrupt an extent
-corrupt_fst_item "extent"
-check_image "$TEST_DEV"
+if corrupt_fst_item "extent"; then
+	check_image "$TEST_DEV"
+fi
