@@ -39,7 +39,8 @@
 
 #define BTRFS_FEATURE_LIST_ALL		(1ULL << 63)
 
-#define BTRFS_RUNTIME_FEATURE_QUOTA	(1ULL << 0)
+#define BTRFS_RUNTIME_FEATURE_QUOTA		(1ULL << 0)
+#define BTRFS_RUNTIME_FEATURE_FREE_SPACE_TREE	(1ULL << 1)
 
 void btrfs_list_all_fs_features(u64 mask_disallowed);
 void btrfs_list_all_runtime_features(u64 mask_disallowed);

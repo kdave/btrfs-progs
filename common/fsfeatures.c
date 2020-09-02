@@ -107,6 +107,12 @@ static const struct btrfs_feature runtime_features[] = {
 	{ "quota", BTRFS_RUNTIME_FEATURE_QUOTA, NULL,
 		VERSION_TO_STRING2(3, 4), NULL, 0, NULL, 0,
 		"quota support (qgroups)" },
+	{ "free-space-tree", BTRFS_RUNTIME_FEATURE_FREE_SPACE_TREE,
+		"free_space_tree",
+		VERSION_TO_STRING2(4, 5),
+		VERSION_TO_STRING2(4, 9),
+		NULL, 0,
+		"free space tree (space_cache=v2)" },
 	/* Keep this one last */
 	{ "list-all", BTRFS_FEATURE_LIST_ALL, NULL }
 };

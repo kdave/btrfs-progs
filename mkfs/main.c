@@ -34,6 +34,7 @@
 #include <blkid/blkid.h>
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
+#include "kernel-shared/free-space-tree.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/transaction.h"
 #include "common/utils.h"
@@ -1492,6 +1493,13 @@ raid_groups:
 		ret = setup_quota_root(fs_info);
 		if (ret < 0) {
 			error("failed to initialize quota: %d (%m)", ret);
+			goto out;
+		}
+	}
+	if (runtime_features & BTRFS_RUNTIME_FEATURE_FREE_SPACE_TREE) {
+		ret = btrfs_create_free_space_tree(fs_info);
+		if (ret < 0) {
+			error("failed to create free space tree: %d (%m)", ret);
 			goto out;
 		}
 	}
