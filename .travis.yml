@@ -79,6 +79,7 @@ script:
   - "if ci/should-run-test; then make TEST_LOG=dump test-mkfs; fi"
   - "if ci/should-run-test; then make TEST_LOG=dump test-check; fi"
   - "if ci/should-run-test; then make TEST_LOG=dump TEST_ENABLE_OVERRIDE=true TEST_ARGS_CHECK=--mode=lowmem test-check; fi"
+  - "if [ ci/should-run-test -a -f /sys/fs/btrfs/features/free_space_tree ]; then make TEST_LOG=dump TEST_ENABLE_OVERRIDE=true TEST_ARGS_MKFS=--runtime-features=free-space-tree test-mkfs; fi"
   - "if ci/should-run-test; then make TEST_LOG=dump test-misc; fi"
   - "if ci/should-run-test; then make TEST_LOG=dump test-fuzz; fi"
   # long running tests
