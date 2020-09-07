@@ -770,7 +770,8 @@ maximum number of hardlinks of a file in a directory::
 100 otherwise.
 
 minimum filesystem size::
-minimum size for each btrfs device is 16 MiB.
+minimum size for each btrfs device is 109 MiB (114294784 bytes). Using 
+mixed data and metadata mode lowers the limit to 16MiB.
 
 
 BOOTLOADER SUPPORT
