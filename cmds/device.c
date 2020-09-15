@@ -467,6 +467,7 @@ static const char * const cmd_device_stats_usage[] = {
 	"",
 	"-c|--check             return non-zero if any stat counter is not zero",
 	"-z|--reset             show current stats and reset values to zero",
+	"-j|--json              show stats in json format",
 	NULL
 };
 
@@ -482,6 +483,7 @@ static int cmd_device_stats(const struct cmd_struct *cmd, int argc, char **argv)
 	int check = 0;
 	__u64 flags = 0;
 	DIR *dirstream = NULL;
+	bool json = 0;
 
 	optind = 0;
 	while (1) {
@@ -489,6 +491,7 @@ static int cmd_device_stats(const struct cmd_struct *cmd, int argc, char **argv)
 		static const struct option long_options[] = {
 			{"check", no_argument, NULL, 'c'},
 			{"reset", no_argument, NULL, 'z'},
+			{"json", no_argument, NULL, 'j'},
 			{NULL, 0, NULL, 0}
 		};
 
@@ -502,6 +505,9 @@ static int cmd_device_stats(const struct cmd_struct *cmd, int argc, char **argv)
 			break;
 		case 'z':
 			flags = BTRFS_DEV_STATS_RESET;
+			break;
+		case 'j':
+			json = 1;
 			break;
 		default:
 			usage_unknown_option(cmd, argv);
@@ -574,18 +580,34 @@ static int cmd_device_stats(const struct cmd_struct *cmd, int argc, char **argv)
 				snprintf(canonical_path, 32,
 					 "devid:%llu", args.devid);
 			}
-
-			for (j = 0; j < ARRAY_SIZE(dev_stats); j++) {
-				/* We got fewer items than we know */
-				if (args.nr_items < dev_stats[j].num + 1)
-					continue;
-				printf("[%s].%-16s %llu\n", canonical_path,
-					dev_stats[j].name,
-					(unsigned long long)
-					 args.values[dev_stats[j].num]);
-				if ((check == 1)
-				    && (args.values[dev_stats[j].num] > 0))
-					err |= 64;
+			if (json) {
+				printf("{\n\t\"device\" : \"%s\",\n", canonical_path);
+				for (j = 0; j < ARRAY_SIZE(dev_stats); j++) {
+					/* We got fewer items than we know */
+					if (args.nr_items < dev_stats[j].num + 1)
+						continue;
+					printf("\t\"%s\" : %llu,\n",
+						dev_stats[j].name,
+						(unsigned long long)
+						 args.values[dev_stats[j].num]);
+					if ((check == 1)
+					    && (args.values[dev_stats[j].num] > 0))
+						err |= 64;
+				}
+				printf("}\n");
+			} else {
+				for (j = 0; j < ARRAY_SIZE(dev_stats); j++) {
+					/* We got fewer items than we know */
+					if (args.nr_items < dev_stats[j].num + 1)
+						continue;
+					printf("[%s].%-16s %llu\n", canonical_path,
+						dev_stats[j].name,
+						(unsigned long long)
+						 args.values[dev_stats[j].num]);
+					if ((check == 1)
+					    && (args.values[dev_stats[j].num] > 0))
+						err |= 64;
+				}
 			}
 
 			free(canonical_path);
