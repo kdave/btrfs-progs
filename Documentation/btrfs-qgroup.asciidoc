@@ -160,6 +160,61 @@ However there are cases where we can avoid a full rescan, if a subvolume whose
 owned, then assigning/removing this subvolume only needs to add/subtract 'rfer'
 number from its parent qgroup. This can speed up the rescan.
 
+EXAMPLES
+--------
+
+.Make a parent group that has two quota group children
+====
+
+Given the following filesystem mounted at `/mnt/my-vault`
+
+----
+Label: none  uuid: 60d2ab3b-941a-4f22-8d1a-315f329797b2
+       Total devices 1 FS bytes used 128.00KiB
+       devid    1 size 5.00GiB used 536.00MiB path /dev/vdb
+----
+
+Enable quota and create subvolumes.  Check subvolume ids.
+
+[source,bash]
+----
+$ cd /mnt/my-vault
+$ btrfs quota enable .
+$ btrfs subvolume create a
+$ btrfs subvolume create b
+$ btrfs subvolume list .
+
+ID 261 gen 61 top level 5 path a
+ID 262 gen 62 top level 5 path b
+----
+
+Create qgroup and set limit to 10MiB.
+
+[source,bash]
+----
+$ btrfs qgroup create 1/100 .
+$ btrfs qgroup limit 10M 1/100 .
+$ btrfs qgroup assign 0/261 1/100 .
+$ btrfs qgroup assign 0/262 1/100 .
+----
+
+And check qgroups.
+
+[source,bash]
+----
+$ btrfs qgroup show .
+
+qgroupid         rfer         excl
+--------         ----         ----
+0/5          16.00KiB     16.00KiB
+0/261        16.00KiB     16.00KiB
+0/262        16.00KiB     16.00KiB
+1/100        32.00KiB     32.00KiB
+----
+
+
+====
+
 EXIT STATUS
 -----------
 *btrfs qgroup* returns a zero exit status if it succeeds. Non zero is
