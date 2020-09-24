@@ -774,6 +774,20 @@ out:
 	return ret;
 }
 
+static u64 largest_free_space(struct cache_tree *free_space)
+{
+	struct cache_extent *cache;
+	u64 largest_free_space = 0;
+
+	for (cache = first_cache_extent(free_space); cache;
+	     cache = next_cache_extent(cache)) {
+		if (cache->size > largest_free_space)
+			largest_free_space = cache->size;
+	}
+
+	return largest_free_space;
+}
+
 /*
  * Improved version of make_btrfs().
  *
@@ -812,8 +826,12 @@ int make_convert_btrfs(int fd, struct btrfs_mkfs_config *cfg,
 	 */
 	ret = reserve_free_space(free_space, BTRFS_STRIPE_LEN,
 				 &cfg->super_bytenr);
-	if (ret < 0)
+	if (ret < 0) {
+		error(
+"failed to reserve %d bytes for temporary superblock, largest available: %llu bytes",
+			BTRFS_STRIPE_LEN, largest_free_space(free_space));
 		goto out;
+	}
 
 	/*
 	 * Then reserve system chunk space
@@ -823,12 +841,20 @@ int make_convert_btrfs(int fd, struct btrfs_mkfs_config *cfg,
 	 */
 	ret = reserve_free_space(free_space, BTRFS_MKFS_SYSTEM_GROUP_SIZE,
 				 &sys_chunk_start);
-	if (ret < 0)
+	if (ret < 0) {
+		error(
+"failed to reserve %d bytes for system chunk, largest available: %llu bytes",
+			BTRFS_MKFS_SYSTEM_GROUP_SIZE, largest_free_space(free_space));
 		goto out;
+	}
 	ret = reserve_free_space(free_space, BTRFS_CONVERT_META_GROUP_SIZE,
 				 &meta_chunk_start);
-	if (ret < 0)
+	if (ret < 0) {
+		error(
+"failed to reserve %d bytes for metadata chunk, largest available: %llu bytes",
+			BTRFS_CONVERT_META_GROUP_SIZE, largest_free_space(free_space));
 		goto out;
+	}
 
 	/*
 	 * Allocated meta/sys chunks will be mapped 1:1 with device offset.
