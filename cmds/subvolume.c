@@ -402,7 +402,11 @@ again:
 	else
 		err = btrfs_util_delete_subvolume_by_id_fd(fd, subvolid);
 	if (err) {
+		int saved_errno = errno;
+
 		error_btrfs_util(err);
+		if (saved_errno == EPERM)
+			warning("deletion failed with EPERM, send may be in progress");
 		ret = 1;
 		goto out;
 	}
