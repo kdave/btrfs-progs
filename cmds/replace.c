@@ -323,9 +323,11 @@ static int cmd_replace_start(const struct cmd_struct *cmd,
 			goto leave_with_error;
 		}
 
-		if (ret > 0)
+		if (ret > 0) {
 			error("ioctl(DEV_REPLACE_START) '%s': %s", path,
 			      btrfs_err_str(ret));
+			goto leave_with_error;
+		}
 
 		if (start_args.result != BTRFS_IOCTL_DEV_REPLACE_RESULT_NO_RESULT &&
 		    start_args.result != BTRFS_IOCTL_DEV_REPLACE_RESULT_NO_ERROR) {
