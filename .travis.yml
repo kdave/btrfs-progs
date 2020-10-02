@@ -19,9 +19,19 @@
 sudo: required
 
 language: c
-compiler:
-  - gcc
-  - clang
+
+matrix:
+  include:
+    - os: linux
+      compiler: gcc
+    - os: linux
+      compiler: gcc
+      env: D=asan
+    - os: linux
+      compiler: gcc
+      env: D=ubsan
+    - os: linux
+      compiler: clang
 
 cache:
   ccache: true
@@ -73,7 +83,7 @@ addons:
 script:
   # quick build tests
   - "if ci/should-run-test; then docker run -it --env CC=$CC kdave/ci-musl-x86_64 ./test-build $TRAVIS_BRANCH --disable-documentation --disable-backtrace; fi"
-  - "if ci/should-run-test; then make TEST_LOG=dump library-test; fi"
+  - "if ci/should-run-test && ci/not-asan-build; then make TEST_LOG=dump library-test; fi"
   # real tests
   - "if ci/should-run-test; then make TEST_LOG=dump test-cli; fi"
   - "if ci/should-run-test; then make TEST_LOG=dump test-mkfs; fi"
