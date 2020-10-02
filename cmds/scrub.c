@@ -294,7 +294,7 @@ static void print_scrub_dev(struct btrfs_ioctl_dev_info_args *di,
 				struct btrfs_scrub_progress *p, int raw,
 				const char *append, struct scrub_stats *ss)
 {
-	printf("scrub device %s (id %llu) %s\n", di->path, di->devid,
+	printf("\nScrub device %s (id %llu) %s\n", di->path, di->devid,
 	       append ? append : "");
 
 	_print_scrub_ss(ss);
