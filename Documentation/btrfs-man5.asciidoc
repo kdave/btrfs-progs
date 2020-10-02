@@ -769,6 +769,10 @@ maximum number of hardlinks of a file in a directory::
 65536 when the `extref` feature is turned on during mkfs (default), roughly
 100 otherwise
 
+minimum filesystem size::
+the minimal size of each device depends on the 'mixed-bg' feature, without that
+(the default) it's about 109MiB, with mixed-bg it's is 16MiB
+
 
 BOOTLOADER SUPPORT
 ------------------
