@@ -922,9 +922,8 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	u64 dev_block_count = 0;
 	u64 metadata_profile = 0;
 	u64 data_profile = 0;
-	u32 nodesize = max_t(u32, sysconf(_SC_PAGESIZE),
-			BTRFS_MKFS_DEFAULT_NODE_SIZE);
-	u32 sectorsize = 4096;
+	u32 nodesize = 0;
+	u32 sectorsize = 0;
 	u32 stripesize = 4096;
 	int zero_end = 1;
 	int fd = -1;
@@ -1092,7 +1091,14 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		printf("See %s for more information.\n\n", PACKAGE_URL);
 	}
 
-	sectorsize = max(sectorsize, (u32)sysconf(_SC_PAGESIZE));
+	if (!sectorsize)
+		sectorsize = (u32)sysconf(_SC_PAGESIZE);
+	if (btrfs_check_sectorsize(sectorsize))
+		goto error;
+
+	if (!nodesize)
+		nodesize = max_t(u32, sectorsize, BTRFS_MKFS_DEFAULT_NODE_SIZE);
+
 	stripesize = sectorsize;
 	saved_optind = optind;
 	dev_cnt = argc - optind;
