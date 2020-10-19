@@ -139,7 +139,8 @@ struct sb_field {
 	{ .name = "log_root_level",		.type = TYPE_U8 },
 	{ .name = "cache_generation",		.type = TYPE_U64 },
 	{ .name = "uuid_tree_generation",	.type = TYPE_U64 },
-	{ .name = "devid",			.type = TYPE_U64 },
+	/* Device item members  */
+	{ .name = "dev_item.devid",		.type = TYPE_U64 },
 };
 
 #define MOD_FIELD_XX(fname, set, val, bits, f_dec, f_hex, f_type)	\
@@ -156,14 +157,14 @@ struct sb_field {
 	}
 
 #define MOD_DEV_FIELD_XX(fname, set, val, bits, f_dec, f_hex, f_type)	\
-	else if (strcmp(name, #fname) == 0) {				\
+	else if (strcmp(name, "dev_item." #fname) == 0) {		\
 		if (set) {						\
-			printf("SET: "#fname" "f_dec" (0x"f_hex")\n",	\
+			printf("SET: dev_item."#fname" "f_dec" (0x"f_hex")\n",	\
 			(f_type)*val, (f_type)*val);			\
 			sb->dev_item.fname = cpu_to_le##bits(*val);	\
 		} else {						\
 			*val = le##bits##_to_cpu(sb->dev_item.fname);	\
-			printf("GET: "#fname" "f_dec" (0x"f_hex")\n", 	\
+			printf("GET: dev_item."#fname" "f_dec" (0x"f_hex")\n", 	\
 			(f_type)*val, (f_type)*val);			\
 		}							\
 	}
