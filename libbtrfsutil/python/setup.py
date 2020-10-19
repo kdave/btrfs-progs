@@ -26,15 +26,10 @@ import subprocess
 
 
 def get_version():
-    with open('../btrfsutil.h', 'r') as f:
-        btrfsutil_h = f.read()
-    major = re.search(r'^#define BTRFS_UTIL_VERSION_MAJOR ([0-9]+)$',
-                      btrfsutil_h, flags=re.MULTILINE).group(1)
-    minor = re.search(r'^#define BTRFS_UTIL_VERSION_MINOR ([0-9]+)$',
-                      btrfsutil_h, flags=re.MULTILINE).group(1)
-    patch = re.search(r'^#define BTRFS_UTIL_VERSION_PATCH ([0-9]+)$',
-                      btrfsutil_h, flags=re.MULTILINE).group(1)
-    return major + '.' + minor + '.' + patch
+    f = open('../../VERSION', 'r')
+    version = f.readline().strip()
+    f.close()
+    return ".".join(version[1:].split('.'))
 
 
 def out_of_date(dependencies, target):
