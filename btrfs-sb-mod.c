@@ -326,6 +326,16 @@ int main(int argc, char **argv)
 	memset(spec, 0, sizeof(spec));
 	if (argc <= 2) {
 		printf("Usage: %s image [fieldspec...]\n", argv[0]);
+		printf("Where fileldspec is: member op\n");
+		printf("  member: name of the superblock member\n");
+		printf("  op: single character optionally followed by a value\n");
+		printf("    . read the member value (no value)\n");
+		printf("    ? read the member value (no value)\n");
+		printf("    = set member to the exact value (value required)\n");
+		printf("    + add this value to member (value required)\n");
+		printf("    - subtract this value from member (value required)\n");
+		printf("    ^ xor member with this value (value required)\n");
+		printf("    @ byteswap of the member (no value)\n");
 		exit(1);
 	}
 	fd = open(argv[1], O_RDWR | O_EXCL);
