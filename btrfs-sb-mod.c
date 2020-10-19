@@ -141,6 +141,17 @@ struct sb_field {
 	{ .name = "uuid_tree_generation",	.type = TYPE_U64 },
 	/* Device item members  */
 	{ .name = "dev_item.devid",		.type = TYPE_U64 },
+	{ .name = "dev_item.total_bytes",	.type = TYPE_U64 },
+	{ .name = "dev_item.bytes_used",	.type = TYPE_U64 },
+	{ .name = "dev_item.io_align",		.type = TYPE_U32 },
+	{ .name = "dev_item.io_width",		.type = TYPE_U32 },
+	{ .name = "dev_item.sector_size",	.type = TYPE_U32 },
+	{ .name = "dev_item.type",		.type = TYPE_U64 },
+	{ .name = "dev_item.generation",	.type = TYPE_U64 },
+	{ .name = "dev_item.start_offset",	.type = TYPE_U64 },
+	{ .name = "dev_item.dev_group",		.type = TYPE_U32 },
+	{ .name = "dev_item.seek_speed",	.type = TYPE_U8 },
+	{ .name = "dev_item.bandwidth",		.type = TYPE_U8 },
 };
 
 #define MOD_FIELD_XX(fname, set, val, bits, f_dec, f_hex, f_type)	\
@@ -191,6 +202,15 @@ struct sb_field {
 #define MOD_FIELD8(fname, set, val)					\
 	MOD_FIELD_XX(fname, set, val, 8, "%hhu", "%hhx", unsigned char)
 
+#define MOD_DEV_FIELD32(fname, set, val)				\
+	MOD_DEV_FIELD_XX(fname, set, val, 32, "%u", "%x", unsigned int)
+
+#define MOD_DEV_FIELD16(fname, set, val)				\
+	MOD_DEV_FIELD_XX(fname, set, val, 16, "%hu", "%hx", unsigned short int)
+
+#define MOD_DEV_FIELD8(fname, set, val)					\
+	MOD_DEV_FIELD_XX(fname, set, val, 8, "%hhu", "%hhx", unsigned char)
+
 static void mod_field_by_name(struct btrfs_super_block *sb, int set, const char *name,
 		u64 *val)
 {
@@ -222,6 +242,17 @@ static void mod_field_by_name(struct btrfs_super_block *sb, int set, const char 
 		MOD_FIELD(cache_generation, set, val)
 		MOD_FIELD(uuid_tree_generation, set, val)
 		MOD_DEV_FIELD(devid, set, val)
+		MOD_DEV_FIELD(total_bytes, set, val)
+		MOD_DEV_FIELD(bytes_used, set, val)
+		MOD_DEV_FIELD32(io_align, set, val)
+		MOD_DEV_FIELD32(io_width, set, val)
+		MOD_DEV_FIELD32(sector_size, set, val)
+		MOD_DEV_FIELD(type, set, val)
+		MOD_DEV_FIELD(generation, set, val)
+		MOD_DEV_FIELD(start_offset, set, val)
+		MOD_DEV_FIELD32(dev_group, set, val)
+		MOD_DEV_FIELD8(seek_speed, set, val)
+		MOD_DEV_FIELD8(bandwidth, set, val)
 	else {
 		printf("ERROR: unhandled field: %s\n", name);
 		exit(1);
