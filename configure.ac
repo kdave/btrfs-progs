@@ -7,11 +7,19 @@ if test "x$PACKAGE_URL" = "x"; then
 	AC_DEFINE([PACKAGE_URL], ["http://btrfs.wiki.kernel.org"], [URL])
 fi
 
-dnl library version
+dnl Package version
+BTRFS_VERSION_PLAIN=`cat VERSION`
+BTRFS_VERSION_PLAIN="${BTRFS_VERSION_PLAIN#v*}"
+BTRFS_VERSION_MAJOR=`echo "${BTRFS_VERSION_PLAIN#v*}" | awk -F. '{print $1}'`
+BTRFS_VERSION_MINOR=`echo "${BTRFS_VERSION_PLAIN#v*}" | awk -F. '{print $2}'`
+BTRFS_VERSION_PATCHLEVEL=`echo "${BTRFS_VERSION_PLAIN#v*}" | awk -F. '{print $3}'`
+
+dnl libbtrfs .so version
 LIBBTRFS_MAJOR=0
 LIBBTRFS_MINOR=1
 LIBBTRFS_PATCHLEVEL=2
 
+dnl libbtrfsutil .so version
 BTRFS_UTIL_VERSION_MAJOR=`sed -rn 's/^\#define BTRFS_UTIL_VERSION_MAJOR ([0-9])+$/\1/p' libbtrfsutil/btrfsutil.h`
 BTRFS_UTIL_VERSION_MINOR=`sed -rn 's/^\#define BTRFS_UTIL_VERSION_MINOR ([0-9])+$/\1/p' libbtrfsutil/btrfsutil.h`
 BTRFS_UTIL_VERSION_PATCH=`sed -rn 's/^\#define BTRFS_UTIL_VERSION_PATCH ([0-9])+$/\1/p' libbtrfsutil/btrfsutil.h`
@@ -307,7 +315,12 @@ AC_SUBST([LZO2_CFLAGS])
 dnl call PKG_INSTALLDIR from pkg.m4 to set pkgconfigdir
 m4_ifdef([PKG_INSTALLDIR], [PKG_INSTALLDIR], [AC_MSG_ERROR([please install pkgconf])])
 
-dnl library stuff
+dnl Versions
+AC_SUBST([BTRFS_VERSION_PLAIN])
+AC_SUBST([BTRFS_VERSION_MAJOR])
+AC_SUBST([BTRFS_VERSION_MINOR])
+AC_SUBST([BTRFS_VERSION_PATCHLEVEL])
+
 AC_SUBST([LIBBTRFS_MAJOR])
 AC_SUBST([LIBBTRFS_MINOR])
 AC_SUBST([LIBBTRFS_PATCHLEVEL])
