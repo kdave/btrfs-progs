@@ -28,7 +28,7 @@ _btrfs()
 	commands_balance='start pause cancel resume status'
 	commands_device='scan add delete remove ready stats usage'
 	commands_scrub='start cancel resume status'
-	commands_rescue='chunk-recover super-recover zero-log'
+	commands_rescue='chunk-recover super-recover zero-log create-control-device'
 	commands_inspect_internal='inode-resolve logical-resolve subvolid-resolve rootid min-dev-size dump-tree dump-super tree-stats'
 	commands_property='get set list'
 	commands_quota='enable disable rescan'

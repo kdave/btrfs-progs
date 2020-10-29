@@ -18,6 +18,7 @@
 
 #include "kerncompat.h"
 
+#include <sys/sysmacros.h>
 #include <getopt.h>
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/volumes.h"
@@ -264,6 +265,34 @@ out:
 }
 static DEFINE_SIMPLE_COMMAND(rescue_fix_device_size, "fix-device-size");
 
+static const char * const cmd_rescue_create_control_device_usage[] = {
+	"btrfs rescue create-control-device",
+	"Create /dev/btrfs-control (see 'CONTROL DEVICE' in btrfs(5))",
+	NULL
+};
+
+static int cmd_rescue_create_control_device(const struct cmd_struct *cmd,
+					    int argc, char **argv)
+{
+	dev_t device;
+	int ret;
+
+	if (check_argc_exact(argc, 1))
+		return 1;
+
+	device = makedev(10, 234);
+
+	ret = mknod("/dev/btrfs-control", S_IFCHR | S_IRUSR | S_IWUSR, device);
+	if (ret) {
+		error("could not create /dev/btrfs-control: %m");
+		return 1;
+	}
+
+	return 0;
+
+}
+static DEFINE_SIMPLE_COMMAND(rescue_create_control_device, "create-control-device");
+
 static const char rescue_cmd_group_info[] =
 "toolbox for specific rescue operations";
 
@@ -273,6 +302,7 @@ static const struct cmd_group rescue_cmd_group = {
 		&cmd_struct_rescue_super_recover,
 		&cmd_struct_rescue_zero_log,
 		&cmd_struct_rescue_fix_device_size,
+		&cmd_struct_rescue_create_control_device,
 		NULL
 	}
 };

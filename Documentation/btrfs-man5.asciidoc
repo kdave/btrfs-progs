@@ -920,16 +920,28 @@ filesystem module:
   for a given filesystem
 * get the supported features (can be also found under '/sys/fs/btrfs/features')
 
-The device is usually created by a system device node manager (eg. udev), but
-can be created manually:
+The device is created when btrfs is initialized, either as a module or a
+built-in functionality and makes sense only in connection with that. Running
+eg. mkfs without the module loaded will not register the device and will
+probably warn about that.
+
+In rare cases when the module is loaded but the device is not present (most
+likely accidentally deleted), it's possible to recreate it by
 
 --------------------
 # mknod --mode=600 /dev/btrfs-control c 10 234
 --------------------
 
+or (since 5.11) by a convenience command
+
+--------------------
+# btrfs rescue create-control-device
+--------------------
+
 The control device is not strictly required but the device scanning will not
 work and a workaround would need to be used to mount a multi-device filesystem.
-The mount option 'device' can trigger the device scanning during mount.
+The mount option 'device' can trigger the device scanning during mount, see
+also *btrfs device scan*.
 
 
 FILESYSTEM WITH MULTIPLE PROFILES
