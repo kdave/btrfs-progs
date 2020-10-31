@@ -330,21 +330,24 @@ static void handle_special_globals(int shift, int argc, char **argv)
 
 static const struct cmd_group btrfs_cmd_group = {
 	btrfs_cmd_group_usage, btrfs_cmd_group_info, {
-		&cmd_struct_subvolume,
-		&cmd_struct_filesystem,
+		/* Keep subcommands alphabetically sorted */
 		&cmd_struct_balance,
-		&cmd_struct_device,
-		&cmd_struct_scrub,
 		&cmd_struct_check,
-		&cmd_struct_rescue,
-		&cmd_struct_restore,
+		&cmd_struct_device,
+		&cmd_struct_filesystem,
 		&cmd_struct_inspect,
 		&cmd_struct_property,
-		&cmd_struct_send,
-		&cmd_struct_receive,
-		&cmd_struct_quota,
 		&cmd_struct_qgroup,
+		&cmd_struct_quota,
+		&cmd_struct_receive,
 		&cmd_struct_replace,
+		&cmd_struct_rescue,
+		&cmd_struct_restore,
+		&cmd_struct_scrub,
+		&cmd_struct_send,
+		&cmd_struct_subvolume,
+
+		/* Help and version stay last */
 		&cmd_struct_help,
 		&cmd_struct_version,
 		NULL
