@@ -393,6 +393,43 @@ int arg_copy_path(char *dest, const char *src, int destlen)
 	return 0;
 }
 
+int path_cat_out(char *out, const char *p1, const char *p2)
+{
+	int p1_len = strlen(p1);
+	int p2_len = strlen(p2);
+
+	if (p1_len + p2_len + 2 >= PATH_MAX)
+		return -ENAMETOOLONG;
+
+	if (p1_len && p1[p1_len - 1] == '/')
+		p1_len--;
+	if (p2_len && p2[p2_len - 1] == '/')
+		p2_len--;
+	sprintf(out, "%.*s/%.*s", p1_len, p1, p2_len, p2);
+
+	return 0;
+}
+
+int path_cat3_out(char *out, const char *p1, const char *p2, const char *p3)
+{
+	int p1_len = strlen(p1);
+	int p2_len = strlen(p2);
+	int p3_len = strlen(p3);
+
+	if (p1_len + p2_len + p3_len + 3 >= PATH_MAX)
+		return -ENAMETOOLONG;
+
+	if (p1_len && p1[p1_len - 1] == '/')
+		p1_len--;
+	if (p2_len && p2[p2_len - 1] == '/')
+		p2_len--;
+	if (p3_len && p3[p3_len - 1] == '/')
+		p3_len--;
+	sprintf(out, "%.*s/%.*s/%.*s", p1_len, p1, p2_len, p2, p3_len, p3);
+
+	return 0;
+}
+
 /* Subvolume helper functions */
 /*
  * test if name is a correct subvolume name

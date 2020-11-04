@@ -23,6 +23,8 @@ char *canonicalize_dm_name(const char *ptname);
 char *canonicalize_path(const char *path);
 
 int arg_copy_path(char *dest, const char *src, int destlen);
+int path_cat_out(char *out, const char *p1, const char *p2);
+int path_cat3_out(char *out, const char *p1, const char *p2, const char *p3);
 
 char *__strncpy_null(char *dest, const char *src, size_t n);
 /* Helper to always get proper size of the destination string */
