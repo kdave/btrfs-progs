@@ -174,7 +174,9 @@ static void print_scrub_summary(struct btrfs_scrub_progress *p, struct scrub_sta
 			sec_left / 3600, (sec_left / 60) % 60, sec_left % 60);
 		printf("ETA:              %s\n", t);
 		printf("Total to scrub:   %s\n", pretty_size(bytes_total));
-		printf("Bytes scrubbed:   %s\n", pretty_size(bytes_scrubbed));
+		printf("Bytes scrubbed:   %s  (%.2f%%)\n",
+				pretty_size(bytes_scrubbed),
+				100.0 * bytes_scrubbed / bytes_total);
 		printf("Rate:             %s/s\n", pretty_size(bytes_per_sec));
 	} else {
 		printf("Total to scrub:   %s\n", pretty_size(bytes_total));
