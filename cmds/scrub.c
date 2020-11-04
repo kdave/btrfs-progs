@@ -46,6 +46,8 @@
 #include "cmds/commands.h"
 #include "common/help.h"
 
+static unsigned unit_mode = UNITS_DEFAULT;
+
 static const char * const scrub_cmd_group_usage[] = {
 	"btrfs scrub <command> [options] <path>|<device>",
 	NULL
@@ -134,7 +136,8 @@ static void print_scrub_full(struct btrfs_scrub_progress *sp)
 		printf(" %s=%llu", desc, test);	\
 } while (0)
 
-static void print_scrub_summary(struct btrfs_scrub_progress *p, struct scrub_stats *s, u64 bytes_total)
+static void print_scrub_summary(struct btrfs_scrub_progress *p, struct scrub_stats *s,
+		u64 bytes_total)
 {
 	u64 err_cnt;
 	u64 err_cnt2;
@@ -173,14 +176,25 @@ static void print_scrub_summary(struct btrfs_scrub_progress *p, struct scrub_sta
 		printf("Time left:        %llu:%02llu:%02llu\n",
 			sec_left / 3600, (sec_left / 60) % 60, sec_left % 60);
 		printf("ETA:              %s\n", t);
-		printf("Total to scrub:   %s\n", pretty_size(bytes_total));
+		printf("Total to scrub:   %s\n",
+			pretty_size_mode(bytes_total, unit_mode));
 		printf("Bytes scrubbed:   %s  (%.2f%%)\n",
-				pretty_size(bytes_scrubbed),
-				100.0 * bytes_scrubbed / bytes_total);
-		printf("Rate:             %s/s\n", pretty_size(bytes_per_sec));
+			pretty_size_mode(bytes_scrubbed, unit_mode),
+			100.0 * bytes_scrubbed / bytes_total);
 	} else {
-		printf("Total to scrub:   %s\n", pretty_size(bytes_total));
-		printf("Rate:             %s/s\n", pretty_size(bytes_per_sec));
+		printf("Total to scrub:   %s\n",
+			pretty_size_mode(bytes_total, unit_mode));
+	}
+	/*
+	 * Rate and size units are disproportionate so they are affected only
+	 * by --raw, otherwise it's human readable
+	 */
+	if (unit_mode == UNITS_RAW) {
+		printf("Rate:             %s/s\n",
+			pretty_size_mode(bytes_per_sec, UNITS_RAW));
+	} else {
+		printf("Rate:             %s/s\n",
+			pretty_size(bytes_per_sec));
 	}
 
 	printf("Error summary:   ");
@@ -1701,8 +1715,9 @@ static const char * const cmd_scrub_status_usage[] = {
 	"btrfs scrub status [-dR] <path>|<device>",
 	"Show status of running or finished scrub",
 	"",
-	"-d     stats per device",
-	"-R     print raw stats",
+	"-d                 stats per device",
+	"-R                 print raw stats",
+	HELPINFO_UNITS_LONG,
 	NULL
 };
 
@@ -1730,6 +1745,9 @@ static int cmd_scrub_status(const struct cmd_struct *cmd, int argc, char **argv)
 	int err = 0;
 	DIR *dirstream = NULL;
 
+	unit_mode = get_unit_mode_from_arg(&argc, argv, 1);
+
+	optind = 0;
 	while ((c = getopt(argc, argv, "dR")) != -1) {
 		switch (c) {
 		case 'd':
