@@ -90,7 +90,7 @@ scrub although it is not, but should not normally be necessary
 -q::::
 (deprecated) alias for global '-q' option
 
-*status* [-d] <path>|<device>::
+*status* [options] <path>|<device>::
 Show status of a running scrub for the filesystem identified by 'path' or
 for the specified 'device'.
 +
@@ -101,6 +101,8 @@ for that filesystem or device.
 +
 -d::::
 print separate statistics for each device of the filesystem
+-R::::
+print all raw statistics without postprocessing as returned by the status ioctl
 --raw::::
 print all numbers raw values in bytes without the 'B' suffix
 --human-readable::::
