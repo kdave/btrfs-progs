@@ -88,6 +88,7 @@ int get_fs_info(const char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 int get_fsid(const char *path, u8 *fsid, int silent);
 int get_fsid_fd(int fd, u8 *fsid);
 int get_fs_exclop(int fd);
+int check_running_fs_exclop(int fd, const char *desc, bool enqueue);
 const char *get_fs_exclop_name(int op);
 
 int get_label(const char *btrfs_dev, char *label);

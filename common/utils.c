@@ -1975,3 +1975,72 @@ const char *get_fs_exclop_name(int op)
 		return exclop_def[op];
 	return "UNKNOWN";
 }
+
+/*
+ * Check if there's another exclusive operation running and either return error
+ * or wait until there's none in case @enqueue is true. The timeout between
+ * checks is 1 minute as we get notification on the sysfs file when the
+ * operation finishes.
+ *
+ * Return:
+ * 0  - caller can continue, nothing running or the status is not available
+ * 1  - another operation running
+ * <0 - there was another error
+ */
+int check_running_fs_exclop(int fd, const char *desc, bool enqueue)
+{
+	int sysfs_fd;
+	int exclop;
+	int ret;
+
+	sysfs_fd = sysfs_open_fsid_file(fd, "exclusive_operation");
+	if (sysfs_fd < 0) {
+		if (errno == ENOENT)
+			return 0;
+		return -errno;
+	}
+
+	exclop = get_fs_exclop(fd);
+	if (exclop <= 0) {
+		ret = 0;
+		goto out;
+	}
+
+	if (!enqueue) {
+		error(
+	"unable to start %s, another exclusive operation '%s' in progress",
+			desc, get_fs_exclop_name(exclop));
+		ret = 1;
+		goto out;
+	}
+
+	while (exclop > 0) {
+		fd_set fds;
+		struct timeval tv = { .tv_sec = 60, .tv_usec = 0 };
+
+		FD_ZERO(&fds);
+		FD_SET(sysfs_fd, &fds);
+
+		ret = select(sysfs_fd + 1, NULL, NULL, &fds, &tv);
+		if (ret < 0) {
+			ret = -errno;
+			break;
+		}
+		if (ret > 0) {
+			/*
+			 * Notified before the timeout, check again before
+			 * returning. In case there are more operations
+			 * waiting, we want to reduce the chances to race so
+			 * reuse the remaining time to randomize the order.
+			 */
+			tv.tv_sec /= 2;
+			ret = select(sysfs_fd + 1, NULL, NULL, &fds, &tv);
+			exclop = get_fs_exclop(fd);
+			continue;
+		}
+	}
+out:
+	close(sysfs_fd);
+
+	return ret;
+}
