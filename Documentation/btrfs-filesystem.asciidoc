@@ -186,7 +186,7 @@ NOTE: the maximum allowable length shall be less than 256 chars and must not con
 a newline. The trailing newline is stripped automatically.
 
 // Some wording are extracted by the resize2fs man page
-*resize* [<devid>:][+/-]<size>[kKmMgGtTpPeE]|[<devid>:]max <path>::
+*resize* [options] [<devid>:][+/-]<size>[kKmMgGtTpPeE]|[<devid>:]max <path>::
 Resize a mounted filesystem identified by 'path'. A particular device
 can be resized by specifying a 'devid'.
 +
@@ -220,6 +220,11 @@ take a long time if there are data in the device area that's beyond the new
 end. Relocation of the data takes time.
 +
 See also section 'EXAMPLES'.
++
+`Options`
++
+--enqueue::::
+wait if there's another exclusive operation running, otherwise continue
 
 *show* [options] [<path>|<uuid>|<device>|<label>]::
 Show the btrfs filesystem with some additional info about devices and space

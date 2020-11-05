@@ -49,6 +49,8 @@ static const char * const cmd_device_add_usage[] = {
 	"",
 	"-K|--nodiscard    do not perform whole device TRIM on devices that report such capability",
 	"-f|--force        force overwrite existing filesystem on the disk",
+	"--enqueue         wait if there's another exclusive operation running,",
+	"                  otherwise continue",
 	NULL
 };
 
@@ -61,14 +63,16 @@ static int cmd_device_add(const struct cmd_struct *cmd,
 	int discard = 1;
 	int force = 0;
 	int last_dev;
-	int exclop;
+	bool enqueue = false;
 
 	optind = 0;
 	while (1) {
 		int c;
+		enum { GETOPT_VAL_ENQUEUE = 256 };
 		static const struct option long_options[] = {
 			{ "nodiscard", optional_argument, NULL, 'K'},
 			{ "force", no_argument, NULL, 'f'},
+			{ "enqueue", no_argument, NULL, GETOPT_VAL_ENQUEUE},
 			{ NULL, 0, NULL, 0}
 		};
 
@@ -81,6 +85,9 @@ static int cmd_device_add(const struct cmd_struct *cmd,
 			break;
 		case 'f':
 			force = 1;
+			break;
+		case GETOPT_VAL_ENQUEUE:
+			enqueue = true;
 			break;
 		default:
 			usage_unknown_option(cmd, argv);
@@ -97,11 +104,10 @@ static int cmd_device_add(const struct cmd_struct *cmd,
 	if (fdmnt < 0)
 		return 1;
 
-	exclop = get_fs_exclop(fdmnt);
-	if (exclop > 0) {
-		error(
-	"unable to start device add, another exclusive operation '%s' in progress",
-			get_fs_exclop_name(exclop));
+	ret = check_running_fs_exclop(fdmnt, BTRFS_EXCLOP_DEV_ADD, enqueue);
+	if (ret != 0) {
+		if (ret < 0)
+			error("unable to check status of exclusive operation: %m");
 		close_file_or_dir(fdmnt, dirstream);
 		return 1;
 	}
@@ -165,9 +171,28 @@ static int _cmd_device_remove(const struct cmd_struct *cmd,
 	char	*mntpnt;
 	int i, fdmnt, ret = 0;
 	DIR	*dirstream = NULL;
-	int exclop;
+	bool enqueue = false;
 
-	clean_args_no_options(cmd, argc, argv);
+	optind = 0;
+	while (1) {
+		int c;
+		enum { GETOPT_VAL_ENQUEUE = 256 };
+		static const struct option long_options[] = {
+			{ "enqueue", no_argument, NULL, GETOPT_VAL_ENQUEUE},
+			{ NULL, 0, NULL, 0}
+		};
+
+		c = getopt_long(argc, argv, "", long_options, NULL);
+		if (c < 0)
+			break;
+		switch (c) {
+		case GETOPT_VAL_ENQUEUE:
+			enqueue = true;
+			break;
+		default:
+			usage_unknown_option(cmd, argv);
+		}
+	}
 
 	if (check_argc_min(argc - optind, 2))
 		return 1;
@@ -178,11 +203,10 @@ static int _cmd_device_remove(const struct cmd_struct *cmd,
 	if (fdmnt < 0)
 		return 1;
 
-	exclop = get_fs_exclop(fdmnt);
-	if (exclop > 0 ) {
-		error(
-	"unable to start device remove, another exclusive operation '%s' in progress",
-			get_fs_exclop_name(exclop));
+	ret = check_running_fs_exclop(fdmnt, BTRFS_EXCLOP_DEV_REMOVE, enqueue);
+	if (ret != 0) {
+		if (ret < 0)
+			error("unable to check status of exclusive operation: %m");
 		close_file_or_dir(fdmnt, dirstream);
 		return 1;
 	}
@@ -264,6 +288,8 @@ static const char * const cmd_device_remove_usage[] = {
 	"Remove a device from a filesystem",
 	COMMON_USAGE_REMOVE_DELETE,
 	"",
+	"--enqueue         wait if there's another exclusive operation running,",
+	"                  otherwise continue",
 	NULL
 };
 
@@ -279,6 +305,8 @@ static const char * const cmd_device_delete_usage[] = {
 	"Remove a device from a filesystem (alias of \"btrfs device remove\")",
 	COMMON_USAGE_REMOVE_DELETE,
 	"",
+	"--enqueue         wait if there's another exclusive operation running,",
+	"                  otherwise continue",
 	NULL
 };
 

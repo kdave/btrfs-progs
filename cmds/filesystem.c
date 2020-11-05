@@ -1063,11 +1063,14 @@ next:
 static DEFINE_SIMPLE_COMMAND(filesystem_defrag, "defragment");
 
 static const char * const cmd_filesystem_resize_usage[] = {
-	"btrfs filesystem resize [devid:][+/-]<newsize>[kKmMgGtTpPeE]|[devid:]max <path>",
+	"btrfs filesystem resize [options] [devid:][+/-]<newsize>[kKmMgGtTpPeE]|[devid:]max <path>",
 	"Resize a filesystem",
 	"If 'max' is passed, the filesystem will occupy all available space",
 	"on the device 'devid'.",
 	"[kK] means KiB, which denotes 1KiB = 1024B, 1MiB = 1024KiB, etc.",
+	"",
+	"--enqueue         wait if there's another exclusive operation running,",
+	"                  otherwise continue",
 	NULL
 };
 
@@ -1078,10 +1081,27 @@ static int cmd_filesystem_resize(const struct cmd_struct *cmd,
 	int	fd, res, len, e;
 	char	*amount, *path;
 	DIR	*dirstream = NULL;
+	int ret;
 	struct stat st;
-	int exclop;
+	bool enqueue = false;
 
-	clean_args_no_options_relaxed(cmd, argc, argv);
+	/*
+	 * Simplified option parser, accept only long options, the resize value
+	 * could be negative and is recognized as short options by getopt
+	 */
+	for (optind = 1; optind < argc; optind++) {
+		if (strcmp(argv[optind], "--enqueue") == 0) {
+			enqueue = true;
+		} else if (strcmp(argv[optind], "--") == 0) {
+			/* Separator: options -- non-options */
+		} else if (strncmp(argv[optind], "--", 2) == 0) {
+			/* Emulate what getopt does on unkonwn option */
+			optind++;
+			usage_unknown_option(cmd, argv);
+		} else {
+			break;
+		}
+	}
 
 	if (check_argc_exact(argc - optind, 2))
 		return 1;
@@ -1111,11 +1131,10 @@ static int cmd_filesystem_resize(const struct cmd_struct *cmd,
 	if (fd < 0)
 		return 1;
 
-	exclop = get_fs_exclop(fd);
-	if (exclop > 0) {
-		error(
-"unable to start filesystem resize, nother exclusive operation '%s' in progress",
-			get_fs_exclop_name(exclop));
+	ret = check_running_fs_exclop(fd, BTRFS_EXCLOP_RESIZE, enqueue);
+	if (ret != 0) {
+		if (ret < 0)
+			error("unable to check status of exclusive operation: %m");
 		close_file_or_dir(fd, dirstream);
 		return 1;
 	}

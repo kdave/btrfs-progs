@@ -1987,7 +1987,7 @@ const char *get_fs_exclop_name(int op)
  * 1  - another operation running
  * <0 - there was another error
  */
-int check_running_fs_exclop(int fd, const char *desc, bool enqueue)
+int check_running_fs_exclop(int fd, enum exclusive_operation start, bool enqueue)
 {
 	int sysfs_fd;
 	int exclop;
@@ -2009,7 +2009,8 @@ int check_running_fs_exclop(int fd, const char *desc, bool enqueue)
 	if (!enqueue) {
 		error(
 	"unable to start %s, another exclusive operation '%s' in progress",
-			desc, get_fs_exclop_name(exclop));
+			get_fs_exclop_name(start),
+			get_fs_exclop_name(exclop));
 		ret = 1;
 		goto out;
 	}

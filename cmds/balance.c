@@ -431,22 +431,20 @@ enum {
 };
 
 static int do_balance(const char *path, struct btrfs_ioctl_balance_args *args,
-		      unsigned flags)
+		      unsigned flags, bool enqueue)
 {
 	int fd;
 	int ret;
 	DIR *dirstream = NULL;
-	int exclop;
 
 	fd = btrfs_open_dir(path, &dirstream, 1);
 	if (fd < 0)
 		return 1;
 
-	exclop = get_fs_exclop(fd);
-	if (exclop > 0 ) {
-		error(
-	"unable to start balance, another exclusive operation '%s' in progress",
-			get_fs_exclop_name(exclop));
+	ret = check_running_fs_exclop(fd, BTRFS_EXCLOP_BALANCE, enqueue);
+	if (ret != 0) {
+		if (ret < 0)
+			error("unable to check status of exclusive operation: %m");
 		close_file_or_dir(fd, dirstream);
 		return 1;
 	}
@@ -509,6 +507,8 @@ static const char * const cmd_balance_start_usage[] = {
 	"--full-balance do not print warning and do not delay start",
 	"--background|--bg",
 	"               run the balance as a background process",
+	"--enqueue      wait if there's another exclusive operation running,",
+	"               otherwise continue",
 	"-v|--verbose   deprecated, alias for global -v option",
 	HELPINFO_INSERT_GLOBALS,
 	HELPINFO_INSERT_VERBOSE,
@@ -524,6 +524,7 @@ static int cmd_balance_start(const struct cmd_struct *cmd,
 						&args.meta, NULL };
 	int force = 0;
 	int background = 0;
+	bool enqueue = false;
 	unsigned start_flags = 0;
 	int i;
 
@@ -532,7 +533,8 @@ static int cmd_balance_start(const struct cmd_struct *cmd,
 	optind = 0;
 	while (1) {
 		enum { GETOPT_VAL_FULL_BALANCE = 256,
-			GETOPT_VAL_BACKGROUND = 257 };
+			GETOPT_VAL_BACKGROUND = 257,
+			GETOPT_VAL_ENQUEUE };
 		static const struct option longopts[] = {
 			{ "data", optional_argument, NULL, 'd'},
 			{ "metadata", optional_argument, NULL, 'm' },
@@ -544,6 +546,7 @@ static int cmd_balance_start(const struct cmd_struct *cmd,
 			{ "background", no_argument, NULL,
 				GETOPT_VAL_BACKGROUND },
 			{ "bg", no_argument, NULL, GETOPT_VAL_BACKGROUND },
+			{ "enqueue", no_argument, NULL, GETOPT_VAL_ENQUEUE},
 			{ NULL, 0, NULL, 0 }
 		};
 
@@ -584,6 +587,9 @@ static int cmd_balance_start(const struct cmd_struct *cmd,
 			break;
 		case GETOPT_VAL_BACKGROUND:
 			background = 1;
+			break;
+		case GETOPT_VAL_ENQUEUE:
+			enqueue = true;
 			break;
 		default:
 			usage_unknown_option(cmd, argv);
@@ -690,7 +696,7 @@ static int cmd_balance_start(const struct cmd_struct *cmd,
 		}
 	}
 
-	return do_balance(argv[optind], &args, start_flags);
+	return do_balance(argv[optind], &args, start_flags, enqueue);
 }
 static DEFINE_SIMPLE_COMMAND(balance_start, "start");
 
@@ -942,7 +948,8 @@ static int cmd_balance_full(const struct cmd_struct *cmd, int argc, char **argv)
 	memset(&args, 0, sizeof(args));
 	args.flags |= BTRFS_BALANCE_TYPE_MASK;
 
-	return do_balance(argv[1], &args, BALANCE_START_NOWARN);
+	/* No enqueueing supported for the obsolete syntax */
+	return do_balance(argv[1], &args, BALANCE_START_NOWARN, false);
 }
 static DEFINE_COMMAND(balance_full, "--full-balance", cmd_balance_full,
 		      NULL, NULL, CMD_HIDDEN);
@@ -971,7 +978,8 @@ static int cmd_balance(const struct cmd_struct *cmd, int argc, char **argv)
 		memset(&args, 0, sizeof(args));
 		args.flags |= BTRFS_BALANCE_TYPE_MASK;
 
-		return do_balance(argv[1], &args, 0);
+		/* No enqueueing supported for the obsolete syntax */
+		return do_balance(argv[1], &args, 0, false);
 	}
 
 	return handle_command_group(cmd, argc, argv);

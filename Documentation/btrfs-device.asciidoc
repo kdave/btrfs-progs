@@ -61,8 +61,10 @@ headers.
 do not perform discard (TRIM) by default
 -f|--force::::
 force overwrite of existing filesystem on the given disk(s)
+--enqueue::::
+wait if there's another exclusive operation running, otherwise continue
 
-*remove* <device>|<devid> [<device>|<devid>...] <path>::
+*remove* [options] <device>|<devid> [<device>|<devid>...] <path>::
 Remove device(s) from a filesystem identified by <path>
 +
 Device removal must satisfy the profile constraints, otherwise the command
@@ -85,6 +87,11 @@ NOTE: In most cases, there is only one missing device in degraded mode,
 otherwise mount fails. If there are two or more devices missing (e.g. possible
 in RAID6), you need specify 'missing' as many times as the number of missing
 devices to remove all of them.
++
+`Options`
++
+--enqueue::::
+wait if there's another exclusive operation running, otherwise continue
 
 *delete* <device>|<devid> [<device>|<devid>...] <path>::
 Alias of remove kept for backward compatibility

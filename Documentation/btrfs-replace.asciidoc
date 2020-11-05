@@ -18,7 +18,7 @@ SUBCOMMAND
 *cancel* <mount_point>::
 Cancel a running device replace operation.
 
-*start* [-Bfr] <srcdev>|<devid> <targetdev> <path>::
+*start* [options] <srcdev>|<devid> <targetdev> <path>::
 Replace device of a btrfs filesystem.
 +
 On a live filesystem, duplicate the data to the target device which
@@ -53,6 +53,8 @@ never allowed to be used as the <targetdev>.
 +
 -B::::
 no background replace.
+--enqueue::::
+wait if there's another exclusive operation running, otherwise continue
 
 *status* [-1] <mount_point>::
 Print status and progress information of a running device replace operation.

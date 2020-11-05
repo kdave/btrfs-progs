@@ -28,6 +28,7 @@
 #include <assert.h>
 #include <inttypes.h>
 #include <sys/wait.h>
+#include <getopt.h>
 
 #include "kerncompat.h"
 #include "kernel-shared/ctree.h"
@@ -113,6 +114,8 @@ static const char *const cmd_replace_start_usage[] = {
 	"       correct checksum. Devices which are currently mounted are",
 	"       never allowed to be used as the <targetdev>",
 	"-B     do not background",
+	"--enqueue    wait if there's another exclusive operation running,",
+	"             otherwise continue",
 	NULL
 };
 
@@ -123,7 +126,6 @@ static int cmd_replace_start(const struct cmd_struct *cmd,
 	struct btrfs_ioctl_dev_replace_args status_args = {0};
 	int ret;
 	int i;
-	int c;
 	int fdmnt = -1;
 	int fddstdev = -1;
 	char *path;
@@ -136,10 +138,20 @@ static int cmd_replace_start(const struct cmd_struct *cmd,
 	DIR *dirstream = NULL;
 	u64 srcdev_size;
 	u64 dstdev_size;
-	int exclop;
+	bool enqueue = false;
 
 	optind = 0;
-	while ((c = getopt(argc, argv, "Brf")) != -1) {
+	while (1) {
+		int c;
+		enum { GETOPT_VAL_ENQUEUE = 256 };
+		static const struct option long_options[] = {
+			{ "enqueue", no_argument, NULL, GETOPT_VAL_ENQUEUE},
+			{ NULL, 0, NULL, 0}
+		};
+
+		c = getopt_long(argc, argv, "Brf", long_options, NULL);
+		if (c < 0)
+			break;
 		switch (c) {
 		case 'B':
 			do_not_background = 1;
@@ -149,6 +161,9 @@ static int cmd_replace_start(const struct cmd_struct *cmd,
 			break;
 		case 'f':
 			force_using_targetdev = 1;
+			break;
+		case GETOPT_VAL_ENQUEUE:
+			enqueue = true;
 			break;
 		default:
 			usage_unknown_option(cmd, argv);
@@ -260,11 +275,10 @@ static int cmd_replace_start(const struct cmd_struct *cmd,
 	}
 
 	/* Check status before any potentially destructive operation */
-	exclop = get_fs_exclop(fdmnt);
-	if (exclop > 0) {
-		error(
-	"unable to start device replace, another exclusive operation '%s' in progress",
-			get_fs_exclop_name(exclop));
+	ret = check_running_fs_exclop(fdmnt, BTRFS_EXCLOP_DEV_REPLACE, enqueue);
+	if (ret != 0) {
+		if (ret < 0)
+			error("unable to check status of exclusive operation: %m");
 		close_file_or_dir(fdmnt, dirstream);
 		goto leave_with_error;
 	}
