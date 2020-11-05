@@ -1925,3 +1925,53 @@ int sysfs_read_file(int fd, char *buf, size_t size)
 	memset(buf, 0, size);
 	return read(fd, buf, size);
 }
+
+static const char exclop_def[][16] = {
+	[BTRFS_EXCLOP_NONE]		"none",
+	[BTRFS_EXCLOP_BALANCE]		"balance",
+	[BTRFS_EXCLOP_DEV_ADD]		"device add",
+	[BTRFS_EXCLOP_DEV_REMOVE]	"device remove",
+	[BTRFS_EXCLOP_DEV_REPLACE]	"device replace",
+	[BTRFS_EXCLOP_RESIZE]		"resize",
+	[BTRFS_EXCLOP_SWAP_ACTIVATE]	"swap activate",
+};
+
+/*
+ * Read currently running exclusive operation from sysfs. If this is not
+ * available, return BTRFS_EXCLOP_UNKNOWN
+ */
+int get_fs_exclop(int fd)
+{
+	int sysfs_fd;
+	char buf[32];
+	int ret;
+	int i;
+
+	sysfs_fd = sysfs_open_fsid_file(fd, "exclusive_operation");
+	if (sysfs_fd < 0)
+		return BTRFS_EXCLOP_UNKNOWN;
+
+	memset(buf, 0, sizeof(buf));
+	ret = sysfs_read_file(sysfs_fd, buf, sizeof(buf));
+	close(sysfs_fd);
+	if (ret <= 0)
+		return BTRFS_EXCLOP_UNKNOWN;
+
+	i = strlen(buf) - 1;
+	while (i > 0 && isspace(buf[i])) i--;
+	if (i > 0)
+		buf[i + 1] = 0;
+	for (i = 0; i < ARRAY_SIZE(exclop_def); i++) {
+		if (strcmp(exclop_def[i], buf) == 0)
+			return i;
+	}
+
+	return BTRFS_EXCLOP_UNKNOWN;
+}
+
+const char *get_fs_exclop_name(int op)
+{
+	if (0 <= op && op <= ARRAY_SIZE(exclop_def))
+		return exclop_def[op];
+	return "UNKNOWN";
+}
