@@ -901,7 +901,7 @@ The device is usually created by a system device node manager (eg. udev), but
 can be created manually:
 
 --------------------
-# mknod --mode=600 c 10 234 /dev/btrfs-control
+# mknod --mode=600 /dev/btrfs-control c 10 234
 --------------------
 
 The control device is not strictly required but the device scanning will not
