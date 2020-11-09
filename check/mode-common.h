@@ -174,4 +174,22 @@ static inline u32 btrfs_type_to_imode(u8 type)
 
 int get_extent_item_generation(u64 bytenr, u64 *gen_ret);
 
+/*
+ * Check tree block alignement for future subpage support on 64K page system.
+ *
+ * Subpage support on 64K page size require one eb to be completely contained
+ * by a page. Not allowing a tree block to cross 64K page boudanry.
+ *
+ * Since subpage support is still under development, this check only provides
+ * warning.
+ */
+static inline void btrfs_check_subpage_eb_alignment(u64 start, u32 len)
+{
+	if (start / BTRFS_MAX_METADATA_BLOCKSIZE !=
+	    (start + len) / BTRFS_MAX_METADATA_BLOCKSIZE)
+		warning(
+"tree block [%llu, %llu) crosses 64K page boudnary, may cause problem for 64K page system",
+			start, start + len);
+}
+
 #endif
