@@ -64,6 +64,7 @@ run_one_test() {
 			fi
 			_fail "test failed for case $(basename $testname)"
 		fi
+		check_test_results "$RESULTS" "$testname"
 	else
 		# Type 1
 		check_all_images

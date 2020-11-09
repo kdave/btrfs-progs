@@ -70,6 +70,7 @@ run_one_test() {
 			fi
 			_fail "test failed for case $testname"
 		fi
+		check_test_results "$RESULTS" "$testname"
 	else
 		_fail "custom test script not found"
 	fi

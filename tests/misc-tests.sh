@@ -66,6 +66,7 @@ do
 			fi
 			_fail "test failed for case $(basename $i)"
 		fi
+		check_test_results "$RESULTS" "$(basename $i)"
 	fi
 	cd "$TEST_TOP"
 done

@@ -832,4 +832,17 @@ init_env()
 		echo "  convert: $TEST_ARGS_CONVERT" >> "$RESULTS"
 	fi
 }
+
+# Catch critical warning messages in test results
+check_test_results()
+{
+	local results="$1"
+	local testname="$2"
+
+	# Check subpage related warning
+	if grep -q "crrosses 64K page boundary" "$results"; then
+		_fail "found subpage related warning for case $testname"
+	fi
+}
+
 init_env
