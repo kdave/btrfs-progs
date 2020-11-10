@@ -276,6 +276,7 @@ Overall:
     Device missing:                  0.00B
     Used:                          1.14TiB
     Free (estimated):            692.57GiB      (min: 692.57GiB)
+    Free (statfs, df)            692.57GiB
     Data ratio:                       1.00
     Metadata ratio:                   1.00
     Global reserve:              512.00MiB      (used: 0.00B)
@@ -295,6 +296,10 @@ including the reserved space
 data, including currently allocated space and estimating the usage of the
 unallocated space based on the block group profiles, the 'min' is the lower bound
 of the estimate in case multiple profiles are present
+* 'Free (statfs, df)' -- the amount of space available for data as reported by the
+`statfs` syscall, also returned as 'Avail' in the output of 'df'. The value is
+calculated in a different way and may not match the estimate in some cases (eg.
+multiple profiles).
 * 'Data ratio' -- ratio of total space for data including redundancy or parity to
 the effectively usable data space, eg. single is 1.0, RAID1 is 2.0 and for RAID5/6
 it depends on the number of devices

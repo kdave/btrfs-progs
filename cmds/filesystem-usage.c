@@ -19,6 +19,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
+#include <sys/vfs.h>
 #include <errno.h>
 #include <stdarg.h>
 #include <getopt.h>
@@ -430,6 +431,7 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 	u64 free_min = 0;
 	double max_data_ratio = 1.0;
 	int mixed = 0;
+	struct statfs statfs_buf;
 
 	sargs = load_space_info(fd, path);
 	if (!sargs) {
@@ -556,6 +558,13 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 	if (unit_mode != UNITS_HUMAN)
 		width = 18;
 
+	ret = statfs(path, &statfs_buf);
+	if (ret) {
+		warning("cannot get space info with statfs() on '%s': %m", path);
+		memset(&statfs_buf, 0, sizeof(statfs_buf));
+		ret = 0;
+	}
+
 	printf("Overall:\n");
 
 	printf("    Device size:\t\t%*s\n", width,
@@ -572,6 +581,8 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 		width,
 		pretty_size_mode(free_estimated, unit_mode));
 	printf("min: %s)\n", pretty_size_mode(free_min, unit_mode));
+	printf("    Free (statfs, df):\t\t%*s\n", width,
+		pretty_size_mode(statfs_buf.f_bavail * statfs_buf.f_bsize, unit_mode));
 	printf("    Data ratio:\t\t\t%*.2f\n",
 		width, data_ratio);
 	printf("    Metadata ratio:\t\t%*.2f\n",
