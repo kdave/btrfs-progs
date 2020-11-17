@@ -29,6 +29,7 @@
 #include <string.h>
 #include <errno.h>
 #include <ctype.h>
+#include <libgen.h>
 #include "common/path-utils.h"
 
 /*
@@ -372,6 +373,39 @@ int path_is_dir(const char *path)
 		return -errno;
 
 	return !!S_ISDIR(st.st_mode);
+}
+
+/*
+ * Test if a path is recursively contained in parent.  Assumes parent and path
+ * are null terminated absolute paths.
+ *
+ * Returns:
+ *   0 - path not contained in parent
+ *   1 - path contained in parent
+ * < 0 - error
+ *
+ * e.g. (/, /foo) -> 1
+ *      (/foo, /) -> 0
+ *      (/foo, /foo/bar/baz) -> 1
+ */
+int path_is_in_dir(const char *parent, const char *path)
+{
+	char *tmp = strdup(path);
+	char *curr_dir = tmp;
+	int ret;
+
+	while (strcmp(parent, curr_dir) != 0) {
+		if (strcmp(curr_dir, "/") == 0) {
+			ret = 0;
+			goto out;
+		}
+		curr_dir = dirname(curr_dir);
+	}
+	ret = 1;
+
+out:
+	free(tmp);
+	return ret;
 }
 
 /*
