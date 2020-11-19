@@ -933,7 +933,7 @@ static int copy_from_extent_tree(struct metadump_struct *metadump,
 			break;
 		}
 
-		if (btrfs_item_size_nr(leaf, path->slots[0]) > sizeof(*ei)) {
+		if (btrfs_item_size_nr(leaf, path->slots[0]) >= sizeof(*ei)) {
 			ei = btrfs_item_ptr(leaf, path->slots[0],
 					    struct btrfs_extent_item);
 			if (btrfs_extent_flags(leaf, ei) &
