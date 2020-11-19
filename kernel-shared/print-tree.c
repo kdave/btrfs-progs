@@ -1196,16 +1196,11 @@ static void header_flags_to_str(u64 flags, char *ret)
 	}
 }
 
-void btrfs_print_leaf(struct extent_buffer *eb)
+static void print_header_info(struct extent_buffer *eb)
 {
-	struct btrfs_fs_info *fs_info = eb->fs_info;
-	struct btrfs_item *item;
-	struct btrfs_disk_key disk_key;
 	char flags_str[128];
-	u32 leaf_data_size = __BTRFS_LEAF_DATA_SIZE(eb->len);
-	u32 i;
-	u32 nr;
 	u64 flags;
+	u32 nr;
 	u8 backref_rev;
 
 	flags = btrfs_header_flags(eb) & ~BTRFS_BACKREF_REV_MASK;
@@ -1213,17 +1208,38 @@ void btrfs_print_leaf(struct extent_buffer *eb)
 	header_flags_to_str(flags, flags_str);
 	nr = btrfs_header_nritems(eb);
 
-	printf("leaf %llu items %u free space %d generation %llu owner ",
-		(unsigned long long)btrfs_header_bytenr(eb), nr,
-		btrfs_leaf_free_space(eb),
-		(unsigned long long)btrfs_header_generation(eb));
+	if (btrfs_header_level(eb))
+		printf(
+	"node %llu level %d items %u free space %u generation %llu owner ",
+		       (unsigned long long)eb->start, btrfs_header_level(eb),
+		       nr, (u32)BTRFS_NODEPTRS_PER_EXTENT_BUFFER(eb) - nr,
+		       (unsigned long long)btrfs_header_generation(eb));
+	else
+		printf(
+	"leaf %llu items %u free space %d generation %llu owner ",
+		       (unsigned long long)btrfs_header_bytenr(eb), nr,
+		       btrfs_leaf_free_space(eb),
+		       (unsigned long long)btrfs_header_generation(eb));
 	print_objectid(stdout, btrfs_header_owner(eb), 0);
 	printf("\n");
-	printf("leaf %llu flags 0x%llx(%s) backref revision %d\n",
-		btrfs_header_bytenr(eb), flags, flags_str, backref_rev);
+	printf("%s %llu flags 0x%llx(%s) backref revision %d\n",
+	       btrfs_header_level(eb) ? "node" : "leaf",
+	       btrfs_header_bytenr(eb), flags, flags_str, backref_rev);
 	print_uuids(eb);
 	fflush(stdout);
+}
 
+void btrfs_print_leaf(struct extent_buffer *eb)
+{
+	struct btrfs_fs_info *fs_info = eb->fs_info;
+	struct btrfs_item *item;
+	struct btrfs_disk_key disk_key;
+	u32 leaf_data_size = __BTRFS_LEAF_DATA_SIZE(eb->len);
+	u32 i;
+	u32 nr;
+
+	print_header_info(eb);
+	nr = btrfs_header_nritems(eb);
 	for (i = 0; i < nr; i++) {
 		u32 item_size;
 		void *ptr;
@@ -1517,15 +1533,7 @@ void btrfs_print_tree(struct extent_buffer *eb, bool follow, int traverse)
 		warning(
 		"node nr_items corrupted, has %u limit %u, continue anyway",
 			nr, BTRFS_NODEPTRS_PER_EXTENT_BUFFER(eb));
-	printf("node %llu level %d items %u free %u generation %llu owner ",
-	       (unsigned long long)eb->start,
-	        btrfs_header_level(eb), nr,
-		(u32)BTRFS_NODEPTRS_PER_EXTENT_BUFFER(eb) - nr,
-		(unsigned long long)btrfs_header_generation(eb));
-	print_objectid(stdout, btrfs_header_owner(eb), 0);
-	printf("\n");
-	print_uuids(eb);
-	fflush(stdout);
+	print_header_info(eb);
 	ptr_num = BTRFS_NODEPTRS_PER_EXTENT_BUFFER(eb);
 	for (i = 0; i < nr && i < ptr_num; i++) {
 		u64 blocknr = btrfs_node_blockptr(eb, i);
