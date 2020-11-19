@@ -3936,9 +3936,11 @@ static int all_backpointers_checked(struct extent_record *rec, int print_errs)
 			} else {
 				tback = to_tree_backref(back);
 				fprintf(stderr,
-"tree backref %llu parent %llu root %llu not found in extent tree\n",
+"tree backref %llu %s %llu not found in extent tree\n",
 					(unsigned long long)rec->start,
-					(unsigned long long)tback->parent,
+					back->full_backref ? "parent" : "root",
+					back->full_backref ?
+					(unsigned long long)tback->parent :
 					(unsigned long long)tback->root);
 			}
 		}
