@@ -656,6 +656,7 @@ swapfile. There are some limitations of the implementation in btrfs and linux
 swap subsystem:
  
 * filesystem - must be only single device
+* filesystem - must have only 'single' data profile
 * swapfile - the containing subvolume cannot be snapshotted
 * swapfile - must be preallocated
 * swapfile - must be nodatacow (ie. also nodatasum)
