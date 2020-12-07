@@ -1117,6 +1117,7 @@ static int cmd_subvol_show(const struct cmd_struct *cmd, int argc, char **argv)
 				break;
 
 			free(subvol_path);
+			subvol_path = NULL;
 		}
 		btrfs_util_destroy_subvolume_iterator(iter);
 	} else {
