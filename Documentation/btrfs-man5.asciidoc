@@ -13,6 +13,7 @@ tools.  Currently covers:
 . mount options
 . filesystem features
 . checksum algorithms
+. filesystem exclusive operations
 . filesystem limits
 . bootloader support
 . file attributes
@@ -735,6 +736,27 @@ h| Digest h| Cycles/4KiB h| Ratio
 | SHA256   | 105000       |    61
 | BLAKE2b  |  22000       |    13
 |================================
+
+
+FILESYSTEM EXCLUSIVE OPERATIONS
+-------------------------------
+
+There are several operations that affect the whole filesystem and cannot be run
+in parallel. Attempt to start one while another is running will fail.
+
+Since kernel 5.10 the currently running operation can be obtained from
+`/sys/fs/UUID/exclusive_operation` with following values and operations:
+
+- balance
+- device add
+- device delete
+- device replace
+- resize
+- swapfile activate
+- none
+
+Enqueuing is supported for several btrfs subcommands so they can be started
+at once and then serialized.
 
 
 FILESYSTEM LIMITS
