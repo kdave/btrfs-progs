@@ -185,8 +185,8 @@ The id can be obtained from *btrfs subvolume list*, *btrfs subvolume show* or
 *btrfs inspect-internal rootid*.
 
 *show* [options] <path>::
-Show more information about subvolume <path> regarding UUIDs, times,
-generations, flags and related snapshots.
+Show more information about a subvolume (UUIDs, generations, times, flags,
+related snapshots).
 +
 ----------
 /mnt/btrfs/subvolume
@@ -206,10 +206,10 @@ generations, flags and related snapshots.
 +
 `Options`
 +
--r|--rootid::::
-rootid of the subvolume.
--u|--uuid::::
-UUID of the subvolume.
+-r|--rootid <ID>::::
+show details about subvolume with root <ID>, looked up in <path>
+-u|--uuid UUID::::
+show details about subvolume with the given <UUID>, looked up in <path>
 
 *snapshot* [-r|-i <qgroupid>] <source> <dest>|[<dest>/]<name>::
 Create a snapshot of the subvolume <source> with the

@@ -1009,13 +1009,13 @@ static DEFINE_SIMPLE_COMMAND(subvol_find_new, "find-new");
 static const char * const cmd_subvol_show_usage[] = {
 	"btrfs subvolume show [options] <path>",
 	"Show more information about the subvolume (UUIDs, generations, times, snapshots)",
+	"Show more information about the subvolume (UUIDs, generations, times, snapshots).",
+	"The subvolume can be specified by path, or by root id or UUID that are",
+	"looked up relative to the given path",
 	"",
-	"-r|--rootid        rootid of the subvolume",
-	"-u|--uuid          uuid of the subvolume",
+	"-r|--rootid ID       root id of the subvolume",
+	"-u|--uuid UUID       UUID of the subvolum",
 	HELPINFO_UNITS_SHORT_LONG,
-	"",
-	"If no option is specified, subvolume at <path> will be shown, otherwise",
-	"the rootid or uuid are resolved relative to the <path>.",
 	NULL
 };
 
