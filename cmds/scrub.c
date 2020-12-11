@@ -1745,7 +1745,7 @@ static int cmd_scrub_status(const struct cmd_struct *cmd, int argc, char **argv)
 	int err = 0;
 	DIR *dirstream = NULL;
 
-	unit_mode = get_unit_mode_from_arg(&argc, argv, 1);
+	unit_mode = get_unit_mode_from_arg(&argc, argv, 0);
 
 	optind = 0;
 	while ((c = getopt(argc, argv, "dR")) != -1) {

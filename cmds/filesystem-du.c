@@ -566,7 +566,7 @@ static int cmd_filesystem_du(const struct cmd_struct *cmd,
 	int i;
 	u32 kernel_version;
 
-	unit_mode = get_unit_mode_from_arg(&argc, argv, 1);
+	unit_mode = get_unit_mode_from_arg(&argc, argv, 0);
 
 	optind = 0;
 	while (1) {
