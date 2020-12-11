@@ -36,6 +36,7 @@
 #include "common/path-utils.h"
 #include "common/device-utils.h"
 #include "common/device-scan.h"
+#include "common/format-output.h"
 #include "mkfs/common.h"
 
 static const char * const device_cmd_group_usage[] = {
@@ -507,6 +508,17 @@ out:
 }
 static DEFINE_SIMPLE_COMMAND(device_ready, "ready");
 
+static const struct rowspec device_stats_rowspec[] = {
+	{ .key = "device", .fmt = "%s", .out_text = "device", .out_json = "device" },
+	{ .key = "devid", .fmt = "%u", .out_text = "devid", .out_json = "devid" },
+	{ .key = "write_io_errs", .fmt = "%llu", .out_text = "write_io_errs", .out_json = "write_io_errs" },
+	{ .key = "read_io_errs", .fmt = "%llu", .out_text = "read_io_errs", .out_json = "read_io_errs" },
+	{ .key = "flush_io_errs", .fmt = "%llu", .out_text = "flush_io_errs", .out_json = "flush_io_errs" },
+	{ .key = "corruption_errs", .fmt = "%llu", .out_text = "corruption_errs", .out_json = "corruption_errs" },
+	{ .key = "generation_errs", .fmt = "%llu", .out_text = "generation_errs", .out_json = "generation_errs" },
+	ROWSPEC_END
+};
+
 static const char * const cmd_device_stats_usage[] = {
 	"btrfs device stats [options] <path>|<device>",
 	"Show device IO error statistics",
@@ -515,6 +527,8 @@ static const char * const cmd_device_stats_usage[] = {
 	"",
 	"-c|--check             return non-zero if any stat counter is not zero",
 	"-z|--reset             show current stats and reset values to zero",
+	HELPINFO_INSERT_GLOBALS,
+	HELPINFO_INSERT_FORMAT,
 	NULL
 };
 
@@ -530,6 +544,7 @@ static int cmd_device_stats(const struct cmd_struct *cmd, int argc, char **argv)
 	int check = 0;
 	__u64 flags = 0;
 	DIR *dirstream = NULL;
+	struct format_ctx fctx;
 
 	optind = 0;
 	while (1) {
@@ -578,6 +593,8 @@ static int cmd_device_stats(const struct cmd_struct *cmd, int argc, char **argv)
 		goto out;
 	}
 
+	fmt_start(&fctx, device_stats_rowspec, 24, 0);
+	fmt_print_start_group(&fctx, "device-stats", JSON_TYPE_ARRAY);
 	for (i = 0; i < fi_args.num_devices; i++) {
 		struct btrfs_ioctl_get_dev_stats args = {0};
 		char path[BTRFS_DEVICE_PATH_NAME_MAX + 1];
@@ -596,6 +613,7 @@ static int cmd_device_stats(const struct cmd_struct *cmd, int argc, char **argv)
 			err |= 1;
 		} else {
 			char *canonical_path;
+			char devid_str[32];
 			int j;
 			static const struct {
 				const char name[32];
@@ -609,6 +627,11 @@ static int cmd_device_stats(const struct cmd_struct *cmd, int argc, char **argv)
 				{ "generation_errs",
 					BTRFS_DEV_STAT_GENERATION_ERRS },
 			};
+			/*
+			 * The plain text and json formats cannot be
+			 * mapped directly in all cases and we have to switch
+			 */
+			const bool json = (bconf.output_format == CMD_FORMAT_JSON);
 
 			canonical_path = canonicalize_path(path);
 
@@ -622,23 +645,41 @@ static int cmd_device_stats(const struct cmd_struct *cmd, int argc, char **argv)
 				snprintf(canonical_path, 32,
 					 "devid:%llu", args.devid);
 			}
+			snprintf(devid_str, 32, "%llu", args.devid);
+			fmt_print_start_group(&fctx, NULL, JSON_TYPE_MAP);
+			/* Plain text does not print device info */
+			if (json) {
+				fmt_print(&fctx, "device", canonical_path);
+				fmt_print(&fctx, "devid", di_args[i].devid);
+			}
 
 			for (j = 0; j < ARRAY_SIZE(dev_stats); j++) {
 				/* We got fewer items than we know */
 				if (args.nr_items < dev_stats[j].num + 1)
 					continue;
-				printf("[%s].%-16s %llu\n", canonical_path,
-					dev_stats[j].name,
-					(unsigned long long)
-					 args.values[dev_stats[j].num]);
+
+				/* Own format due to [/dev/name].value */
+				if (json) {
+					fmt_print(&fctx, dev_stats[j].name,
+						args.values[dev_stats[j].num]);
+				} else {
+					printf("[%s].%-16s %llu\n",
+						canonical_path,
+						dev_stats[j].name,
+						(unsigned long long)
+						args.values[dev_stats[j].num]);
+				}
 				if ((check == 1)
 				    && (args.values[dev_stats[j].num] > 0))
 					err |= 64;
 			}
-
+			fmt_print_end_group(&fctx, NULL);
 			free(canonical_path);
 		}
 	}
+
+	fmt_print_end_group(&fctx, "device-stats");
+	fmt_end(&fctx);
 
 out:
 	free(di_args);
@@ -646,7 +687,7 @@ out:
 
 	return err;
 }
-static DEFINE_SIMPLE_COMMAND(device_stats, "stats");
+static DEFINE_COMMAND_WITH_FLAGS(device_stats, "stats", CMD_FORMAT_JSON);
 
 static const char * const cmd_device_usage_usage[] = {
 	"btrfs device usage [options] <path> [<path>..]",
