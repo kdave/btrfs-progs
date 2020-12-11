@@ -186,10 +186,12 @@ void fmt_print_start_group(struct format_ctx *fctx, const char *name,
 		fmt_inc_depth(fctx);
 		fctx->jtype[fctx->depth] = jtype;
 		fctx->memb[fctx->depth] = 0;
+		if (name)
+			printf("\"%s\": ", name);
 		if (jtype == JSON_TYPE_MAP)
-			printf("\"%s\": {", name);
+			putchar('{');
 		else if (jtype == JSON_TYPE_ARRAY)
-			printf("\"%s\": [", name);
+			putchar('[');
 		else
 			fmt_error(fctx);
 	}
