@@ -93,6 +93,9 @@ the entire free space cache. This option, with 'v2' provides an alternative
 method of clearing the free space cache that doesn't require mounting the
 filesystem.
 
+--clear-ino-cache::
+remove leftover items pertaining to the deprecated inode map feature
+
 
 DANGEROUS OPTIONS
 -----------------

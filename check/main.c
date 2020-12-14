@@ -9977,6 +9977,168 @@ out:
 	return ret ? -EINVAL : 0;
 }
 
+int truncate_free_ino_items(struct btrfs_root *root)
+{
+	struct btrfs_path path;
+	struct btrfs_key key = { .objectid = BTRFS_FREE_INO_OBJECTID,
+				 .type = (u8)-1,
+				 .offset = (u64)-1 };
+	struct btrfs_trans_handle *trans;
+	int ret;
+
+	trans = btrfs_start_transaction(root, 0);
+	if (IS_ERR(trans)) {
+		error("Unable to start ino removal transaction");
+		return PTR_ERR(trans);
+	}
+
+	while (1) {
+		struct extent_buffer *leaf;
+		struct btrfs_file_extent_item *fi;
+		struct btrfs_key found_key;
+		u8 found_type;
+
+		btrfs_init_path(&path);
+		ret = btrfs_search_slot(trans, root, &key, &path, -1, 1);
+		if (ret < 0) {
+			btrfs_abort_transaction(trans, ret);
+			goto out;
+		} else if (ret > 0) {
+			ret = 0;
+			/* No more items, finished truncating */
+			if (path.slots[0] == 0) {
+				btrfs_release_path(&path);
+				goto out;
+			}
+			path.slots[0]--;
+		}
+		fi = NULL;
+		leaf = path.nodes[0];
+		btrfs_item_key_to_cpu(leaf, &found_key, path.slots[0]);
+		found_type = found_key.type;
+
+		/* Ino cache also has free space bitmaps in the fs stree */
+		if (found_key.objectid != BTRFS_FREE_INO_OBJECTID &&
+		    found_key.objectid != BTRFS_FREE_SPACE_OBJECTID) {
+			btrfs_release_path(&path);
+			/* Now delete the FREE_SPACE_OBJECTID */
+			if (key.objectid == BTRFS_FREE_INO_OBJECTID) {
+				key.objectid = BTRFS_FREE_SPACE_OBJECTID;
+				continue;
+			}
+			break;
+		}
+
+		if (found_type == BTRFS_EXTENT_DATA_KEY) {
+			int extent_type;
+			u64 extent_disk_bytenr;
+			u64 extent_num_bytes;
+			u64 extent_offset;
+
+			fi = btrfs_item_ptr(leaf, path.slots[0],
+					    struct btrfs_file_extent_item);
+			extent_type = btrfs_file_extent_type(leaf, fi);
+			ASSERT(extent_type == BTRFS_FILE_EXTENT_REG);
+			extent_disk_bytenr = btrfs_file_extent_disk_bytenr(leaf, fi);
+			extent_num_bytes = btrfs_file_extent_disk_num_bytes (leaf, fi);
+			extent_offset = found_key.offset -
+					btrfs_file_extent_offset(leaf, fi);
+			ASSERT(extent_offset == 0);
+			ret = btrfs_free_extent(trans, root, extent_disk_bytenr,
+						extent_num_bytes, 0, root->objectid,
+						BTRFS_FREE_INO_OBJECTID, 0);
+			if (ret < 0) {
+				btrfs_abort_transaction(trans, ret);
+				btrfs_release_path(&path);
+				goto out;
+			}
+
+			ret = btrfs_del_csums(trans, extent_disk_bytenr,
+					      extent_num_bytes);
+			if (ret < 0) {
+				btrfs_abort_transaction(trans, ret);
+				btrfs_release_path(&path);
+				goto out;
+			}
+		}
+
+		ret = btrfs_del_item(trans, root, &path);
+		BUG_ON(ret);
+		btrfs_release_path(&path);
+	}
+
+	btrfs_commit_transaction(trans, root);
+out:
+	return ret;
+}
+
+int clear_ino_cache_items(void)
+{
+	int ret;
+	struct btrfs_path path;
+	struct btrfs_key key;
+
+	key.objectid = BTRFS_FS_TREE_OBJECTID;
+	key.type = BTRFS_ROOT_ITEM_KEY;
+	key.offset = 0;
+
+	btrfs_init_path(&path);
+	ret = btrfs_search_slot(NULL, gfs_info->tree_root, &key, &path,	0, 0);
+	if (ret < 0)
+		return ret;
+
+	while(1) {
+		struct btrfs_key found_key;
+
+		btrfs_item_key_to_cpu(path.nodes[0], &found_key, path.slots[0]);
+		if (found_key.type == BTRFS_ROOT_ITEM_KEY &&
+		    is_fstree(found_key.objectid)) {
+			struct btrfs_root *root;
+
+			found_key.offset = (u64)-1;
+			root = btrfs_read_fs_root(gfs_info, &found_key);
+			if (IS_ERR(root))
+				goto next;
+			ret = truncate_free_ino_items(root);
+			if (ret)
+				goto out;
+			printf("Successfully cleaned up ino cache for root id: %lld\n",
+					root->objectid);
+		} else {
+			/* If we get a negative tree this means it's the last one */
+			if ((s64)found_key.objectid < 0 &&
+			    found_key.type == BTRFS_ROOT_ITEM_KEY)
+				goto out;
+		}
+
+		/*
+		 * Only fs roots contain an ino cache information - either
+		 * FS_TREE_OBJECTID or subvol id >= BTRFS_FIRST_FREE_OBJECTID
+		 */
+next:
+		if (key.objectid == BTRFS_FS_TREE_OBJECTID) {
+			key.objectid = BTRFS_FIRST_FREE_OBJECTID;
+			btrfs_release_path(&path);
+			ret = btrfs_search_slot(NULL, gfs_info->tree_root, &key,
+						&path,	0, 0);
+			if (ret < 0)
+				return ret;
+		} else {
+			ret = btrfs_next_item(gfs_info->tree_root, &path);
+			if (ret < 0) {
+				goto out;
+			} else if (ret > 0) {
+				ret = 0;
+				goto out;
+			}
+		}
+	}
+
+out:
+	btrfs_release_path(&path);
+	return ret;
+}
+
 static const char * const cmd_check_usage[] = {
 	"btrfs check [options] <device>",
 	"Check structural integrity of a filesystem (unmounted).",
@@ -10006,6 +10168,7 @@ static const char * const cmd_check_usage[] = {
 	"       --init-csum-tree            create a new CRC tree",
 	"       --init-extent-tree          create a new extent tree",
 	"       --clear-space-cache v1|v2   clear space cache for v1 or v2",
+	"       --clear-ino-cache 	    clear ino cache leftover items",
 	"  check and reporting options:",
 	"       --check-data-csum           verify checksums of data blocks",
 	"       -Q|--qgroup-report          print a report on qgroup consistency",
@@ -10030,6 +10193,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 	int init_csum_tree = 0;
 	int readonly = 0;
 	int clear_space_cache = 0;
+	int clear_ino_cache = 0;
 	int qgroup_report = 0;
 	int qgroups_repaired = 0;
 	int qgroup_verify_ret;
@@ -10042,7 +10206,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 			GETOPT_VAL_INIT_EXTENT, GETOPT_VAL_CHECK_CSUM,
 			GETOPT_VAL_READONLY, GETOPT_VAL_CHUNK_TREE,
 			GETOPT_VAL_MODE, GETOPT_VAL_CLEAR_SPACE_CACHE,
-			GETOPT_VAL_FORCE };
+			GETOPT_VAL_CLEAR_INO_CACHE, GETOPT_VAL_FORCE };
 		static const struct option long_options[] = {
 			{ "super", required_argument, NULL, 's' },
 			{ "repair", no_argument, NULL, GETOPT_VAL_REPAIR },
@@ -10064,6 +10228,8 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 				GETOPT_VAL_MODE },
 			{ "clear-space-cache", required_argument, NULL,
 				GETOPT_VAL_CLEAR_SPACE_CACHE},
+			{ "clear-ino-cache", no_argument , NULL,
+				GETOPT_VAL_CLEAR_INO_CACHE},
 			{ "force", no_argument, NULL, GETOPT_VAL_FORCE },
 			{ NULL, 0, NULL, 0}
 		};
@@ -10147,6 +10313,10 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 		"invalid argument to --clear-space-cache, must be v1 or v2");
 					exit(1);
 				}
+				ctree_flags |= OPEN_CTREE_WRITES;
+				break;
+			case GETOPT_VAL_CLEAR_INO_CACHE:
+				clear_ino_cache = 1;
 				ctree_flags |= OPEN_CTREE_WRITES;
 				break;
 			case GETOPT_VAL_FORCE:
@@ -10261,6 +10431,12 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 	if (clear_space_cache) {
 		ret = do_clear_free_space_cache(clear_space_cache);
 		err |= !!ret;
+		goto close_out;
+	}
+
+	if (clear_ino_cache) {
+		ret = clear_ino_cache_items();
+		err = ret;
 		goto close_out;
 	}
 
