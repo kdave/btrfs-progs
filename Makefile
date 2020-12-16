@@ -442,6 +442,17 @@ test-inst: all
 		$(MAKE) $(MAKEOPTS) DESTDIR=$$tmpdest install && \
 		$(RM) -rf -- $$tmpdest
 
+test-json: json-formatter-test
+	@echo "    [TEST]   json formatting"
+	@echo | jq
+	@{								\
+		max=`./json-formatter-test`;				\
+		for testno in `seq 1 $$max`; do				\
+			echo "    [TEST/json]  $$testno";		\
+			./json-formatter-test $$testno | jq >& /dev/null; \
+		done							\
+	}
+
 test: test-check test-check-lowmem test-mkfs test-misc test-cli test-convert test-fuzz
 
 testsuite: btrfs-corrupt-block btrfs-find-root btrfs-select-super fssum
@@ -679,6 +690,10 @@ hash-speedtest: crypto/hash-speedtest.c $(objects) $(libs_static)
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
 
+json-formatter-test: tests/json-formatter-test.c $(objects) $(libs_static)
+	@echo "    [LD]     $@"
+	$(Q)$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
+
 test-build: test-build-pre test-build-real
 
 test-build-pre:
@@ -731,7 +746,7 @@ clean: $(CLEANDIRS)
 		crypto/*.o crypto/*.o.d \
 	      ioctl-test quick-test library-test library-test-static \
               mktables btrfs.static mkfs.btrfs.static fssum \
-	      btrfs.box btrfs.box.static \
+	      btrfs.box btrfs.box.static json-formatter-test \
 	      $(check_defs) \
 	      $(libs) $(lib_links) \
 	      $(progs_static) \
