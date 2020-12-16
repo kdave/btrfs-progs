@@ -98,6 +98,7 @@ static void fmt_separator(struct format_ctx *fctx)
 void fmt_start(struct format_ctx *fctx, const struct rowspec *spec, int width,
 		int indent)
 {
+	memset(fctx, 0, sizeof(*fctx));
 	fctx->width = width;
 	fctx->indent = indent;
 	fctx->rowspec = spec;
