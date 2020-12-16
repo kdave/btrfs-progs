@@ -23,3 +23,4 @@ F mkfs-tests.sh
 F scan-results.sh
 F test-console.sh
 F clean-tests.sh
+F Makefile
