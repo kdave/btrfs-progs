@@ -277,7 +277,7 @@ progs_build = $(progs_install) btrfsck btrfs-corrupt-block
 
 # All programs. Use := instead of = so that this is expanded before we reassign
 # progs_build below.
-progs := $(progs_build) btrfs-convert btrfs-fragments
+progs := $(progs_build) btrfs-convert btrfs-fragments btrfs-sb-mod
 
 ifneq ($(DISABLE_BTRFSCONVERT),1)
 progs_install += btrfs-convert
@@ -747,6 +747,7 @@ clean: $(CLEANDIRS)
 	      ioctl-test quick-test library-test library-test-static \
               mktables btrfs.static mkfs.btrfs.static fssum \
 	      btrfs.box btrfs.box.static json-formatter-test \
+	      hash-speedtest \
 	      $(check_defs) \
 	      $(libs) $(lib_links) \
 	      $(progs_static) \
