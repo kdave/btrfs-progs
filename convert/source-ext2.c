@@ -691,6 +691,76 @@ static void ext2_copy_inode_item(struct btrfs_inode_item *dst,
 	}
 	memset(&dst->reserved, 0, sizeof(dst->reserved));
 }
+
+/*
+ * Copied and modified from fs/ext4/ext4.h
+ */
+static inline void ext4_decode_extra_time(__le32 * tv_sec, __le32 * tv_nsec,
+                                          __le32 extra)
+{
+        if (extra & cpu_to_le32(EXT4_EPOCH_MASK))
+                *tv_sec += (u64)(le32_to_cpu(extra) & EXT4_EPOCH_MASK) << 32;
+        *tv_nsec = (le32_to_cpu(extra) & EXT4_NSEC_MASK) >> EXT4_EPOCH_BITS;
+}
+
+#define EXT4_COPY_XTIME(xtime, dst, tv_sec, tv_nsec)					\
+do {											\
+	tv_sec = src->i_ ## xtime ;							\
+	if (inode_includes(inode_size, i_ ## xtime ## _extra)) {			\
+		tv_sec = src->i_ ## xtime ;						\
+		ext4_decode_extra_time(&tv_sec, &tv_nsec, src->i_ ## xtime ## _extra);	\
+		btrfs_set_stack_timespec_sec(&dst->xtime , tv_sec);			\
+		btrfs_set_stack_timespec_nsec(&dst->xtime , tv_nsec);			\
+	} else {									\
+		btrfs_set_stack_timespec_sec(&dst->xtime , tv_sec);			\
+		btrfs_set_stack_timespec_nsec(&dst->xtime , 0);				\
+	}										\
+} while (0);
+
+/*
+ * Decode and copy i_[cma]time_extra and i_crtime{,_extra} field
+ */
+static int ext4_copy_inode_timespec_extra(struct btrfs_inode_item *dst,
+				ext2_ino_t ext2_ino, u32 s_inode_size,
+				ext2_filsys ext2_fs)
+{
+	struct ext2_inode_large *src;
+	u32 inode_size, tv_sec, tv_nsec;
+	int ret, err;
+	ret = 0;
+
+	src = (struct ext2_inode_large *)malloc(s_inode_size);
+	if (!src)
+		return -ENOMEM;
+	err = ext2fs_read_inode_full(ext2_fs, ext2_ino, (void *)src,
+				     s_inode_size);
+	if (err) {
+		fprintf(stderr, "ext2fs_read_inode_full: %s\n", error_message(err));
+		ret = -1;
+		goto out;
+	}
+
+	inode_size = EXT2_GOOD_OLD_INODE_SIZE + src->i_extra_isize;
+
+	EXT4_COPY_XTIME(atime, dst, tv_sec, tv_nsec);
+	EXT4_COPY_XTIME(mtime, dst, tv_sec, tv_nsec);
+	EXT4_COPY_XTIME(ctime, dst, tv_sec, tv_nsec);
+
+	tv_sec = src->i_crtime;
+	if (inode_includes(inode_size, i_crtime_extra)) {
+		tv_sec = src->i_crtime;
+		ext4_decode_extra_time(&tv_sec, &tv_nsec, src->i_crtime_extra);
+		btrfs_set_stack_timespec_sec(&dst->otime, tv_sec);
+		btrfs_set_stack_timespec_nsec(&dst->otime, tv_nsec);
+	} else {
+		btrfs_set_stack_timespec_sec(&dst->otime, tv_sec);
+		btrfs_set_stack_timespec_nsec(&dst->otime, 0);
+	}
+out:
+	free(src);
+	return ret;
+}
+
 static int ext2_check_state(struct btrfs_convert_context *cctx)
 {
 	ext2_filsys fs = cctx->fs_data;
@@ -739,12 +809,21 @@ static int ext2_copy_single_inode(struct btrfs_trans_handle *trans,
 			     u32 convert_flags)
 {
 	int ret;
+	int s_inode_size;
 	struct btrfs_inode_item btrfs_inode;
 
 	if (ext2_inode->i_links_count == 0)
 		return 0;
 
 	ext2_copy_inode_item(&btrfs_inode, ext2_inode, ext2_fs->blocksize);
+	s_inode_size = EXT2_INODE_SIZE(ext2_fs->super);
+	if (s_inode_size > EXT2_GOOD_OLD_INODE_SIZE) {
+		ret = ext4_copy_inode_timespec_extra(&btrfs_inode, ext2_ino,
+				s_inode_size, ext2_fs);
+		if (ret)
+			return ret;
+	}
+
 	if (!(convert_flags & CONVERT_FLAG_DATACSUM)
 	    && S_ISREG(ext2_inode->i_mode)) {
 		u32 flags = btrfs_stack_inode_flags(&btrfs_inode) |
