@@ -35,7 +35,7 @@ per-subvolume 'nodatacow', 'nodatasum', or 'compress' using mount options. This
 should eventually be fixed, but it has proved to be difficult to implement
 correctly within the Linux VFS framework.
 
-Mount options are processed in order, only the last occurence of an option
+Mount options are processed in order, only the last occurrence of an option
 takes effect and may disable other options due to constraints (see eg.
 'nodatacow' and 'compress'). The output of 'mount' command shows which options
 have been applied.
@@ -891,7 +891,7 @@ refers to what `xfs_io`(8) provides:
 'append only', same as the attribute
 
 *s*::
-'synchronous updates', same as the atribute 'S'
+'synchronous updates', same as the attribute 'S'
 
 *A*::
 'no atime updates', same as the attribute

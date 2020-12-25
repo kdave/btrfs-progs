@@ -85,7 +85,7 @@ btrfs-progs-5.6 (2020-04-05)
   * fixes:
     * restore: proper mirror iteration on decompression error
     * restore: make symlink messages less noisy
-    * check: handle holes at the begining or end of file
+    * check: handle holes at the beginning or end of file
     * fix xxhash output on big endian machines
     * receive: fix lookup of subvolume by uuid in case it was already
       received before

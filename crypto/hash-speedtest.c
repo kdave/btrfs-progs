@@ -75,9 +75,9 @@ int main(int argc, char **argv) {
 	crc32c_optimization_init();
 	memset(buf, 0, 4096);
 
-	printf("Block size:    %d\n", blocksize);
-	printf("Iterations:    %d\n", iterations);
-	printf("Implementaion: %s\n", CRYPTOPROVIDER);
+	printf("Block size:     %d\n", blocksize);
+	printf("Iterations:     %d\n", iterations);
+	printf("Implementation: %s\n", CRYPTOPROVIDER);
 	printf("\n");
 
 	for (idx = 0; idx < ARRAY_SIZE(contestants); idx++) {

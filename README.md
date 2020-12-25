@@ -84,7 +84,7 @@ the patches meet some criteria (often lacking in github contributions):
 
 Source code coding style and preferences follow the
 [kernel coding style](https://www.kernel.org/doc/html/latest/process/coding-style.html).
-You can find the editor settins in `.editorconfig` and use the
+You can find the editor settings in `.editorconfig` and use the
 [EditorConfig](https://editorconfig.org/) plugin to let your editor use that,
 or update your editor settings manually.
 

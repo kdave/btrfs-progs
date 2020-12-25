@@ -404,7 +404,7 @@ that file or other tests to get the idea how easy writing a test really is.
     `tests/mkfs-tests-results.txt`), and not printed to the terminal
   * `_log_stdout` - dtto but it is printed to the terminal
 * execution helpers
-  * `run_check` - should be used for basically all commadns, the command and arguments
+  * `run_check` - should be used for basically all commands, the command and arguments
   are stored to the results log for debugging and the return value is checked so there
   are no silent failures even for the "unimportant" commands
   * `run_check_stdout` - like the above but the output can be processed further, eg. filtering

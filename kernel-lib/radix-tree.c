@@ -506,7 +506,7 @@ int radix_tree_tag_get(struct radix_tree_root *root,
 		offset = (index >> shift) & RADIX_TREE_MAP_MASK;
 
 		/*
-		 * This is just a debug check.  Later, we can bale as soon as
+		 * This is just a debug check.  Later, we can bail as soon as
 		 * we see an unset tag.
 		 */
 		if (!tag_get(slot, tag, offset))

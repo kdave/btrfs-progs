@@ -37,7 +37,7 @@ The filters can be used to perform following actions:
 
 The filters can be applied to a combination of block group types (data,
 metadata, system). Note that changing only the 'system' type needs the force
-option. Otherwise 'system' gets automatically converted whenver 'metadata'
+option. Otherwise 'system' gets automatically converted whenever 'metadata'
 profile is converted.
 
 When metadata redundancy is reduced (eg. from RAID1 to single) the force option

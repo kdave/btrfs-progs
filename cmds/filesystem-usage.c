@@ -371,7 +371,7 @@ static void get_raid56_space_info(struct btrfs_ioctl_space_args *sargs,
 			*max_data_ratio = rt;
 
 		/*
-		 * size is the total disk(s) space occuped by a chunk
+		 * size is the total disk(s) space occupied by a chunk
 		 * the product of 'size' and  '*_ratio' is "in average"
 		 * the disk(s) space used by the data
 		 */
