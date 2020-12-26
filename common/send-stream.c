@@ -25,8 +25,8 @@
 #include "common/utils.h"
 
 struct btrfs_send_stream {
-	int fd;
 	char read_buf[BTRFS_SEND_BUF_SIZE];
+	int fd;
 
 	int cmd;
 	struct btrfs_cmd_header *cmd_hdr;
@@ -41,7 +41,7 @@ struct btrfs_send_stream {
 
 	struct btrfs_send_ops *ops;
 	void *user;
-};
+} __attribute__((aligned(64)));
 
 /*
  * Read len bytes to buf.
