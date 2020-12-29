@@ -9917,12 +9917,10 @@ static int do_clear_free_space_cache(int clear_version)
 	int ret = 0;
 
 	if (clear_version == 1) {
-		if (btrfs_fs_compat_ro(gfs_info, FREE_SPACE_TREE)) {
-			error(
-		"free space cache v2 detected, use --clear-space-cache v2");
-			ret = 1;
-			goto close_out;
-		}
+		if (btrfs_fs_compat_ro(gfs_info, FREE_SPACE_TREE))
+			warning(
+"free space cache v2 detected, use --clear-space-cache v2, proceeding with clearing v1");
+
 		ret = clear_free_space_cache();
 		if (ret) {
 			error("failed to clear free space cache");
