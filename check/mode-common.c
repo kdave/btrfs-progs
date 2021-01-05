@@ -667,8 +667,12 @@ static int traverse_tree_blocks(struct extent_buffer *eb, int tree_root, int pin
 
 			/* If we aren't the tree root don't read the block */
 			if (level == 1 && !tree_root) {
-				btrfs_pin_extent(gfs_info, bytenr,
-						 gfs_info->nodesize);
+				if (pin)
+					btrfs_pin_extent(gfs_info, bytenr,
+							 gfs_info->nodesize);
+				else
+					set_extent_dirty(tree, bytenr,
+							 gfs_info->nodesize);
 				continue;
 			}
 
