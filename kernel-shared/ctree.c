@@ -809,9 +809,9 @@ struct extent_buffer *read_node_slot(struct btrfs_fs_info *fs_info,
 
 	if (btrfs_header_level(ret) != level - 1) {
 		error(
-"child eb corrupted: parent bytenr=%llu item=%d parent level=%d child level=%d",
-		      btrfs_header_bytenr(parent), slot,
-		      btrfs_header_level(parent), btrfs_header_level(ret));
+"child eb corrupted: parent bytenr=%llu item=%d parent level=%d child bytenr=%llu child level=%d",
+		      btrfs_header_bytenr(parent), slot, btrfs_header_level(parent),
+		      btrfs_header_bytenr(ret), btrfs_header_level(ret));
 		free_extent_buffer(ret);
 		return ERR_PTR(-EIO);
 	}
