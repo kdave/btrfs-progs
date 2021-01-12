@@ -63,7 +63,7 @@ env:
 
 before_install:
   - sudo apt-get update -qq
-  - sudo apt-get install -qq e2fslibs-dev gcc clang libacl1-dev libblkid-dev liblzo2-dev make pkg-config udev zlib1g-dev acl attr reiserfsprogs python3-setuptools
+  - sudo apt-get install -qq e2fslibs-dev gcc clang libacl1-dev libblkid-dev libmount-dev liblzo2-dev make pkg-config udev zlib1g-dev acl attr reiserfsprogs python3-setuptools
   - echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
   - docker pull kdave/ci-musl-x86_64
   - ci/build-dep-reiserfs
