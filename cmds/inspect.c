@@ -236,6 +236,7 @@ static int cmd_inspect_logical_resolve(const struct cmd_struct *cmd,
 		DIR *dirs = NULL;
 
 		if (getpath) {
+			char mount_path[PATH_MAX];
 			name = btrfs_list_path_for_root(fd, root);
 			if (IS_ERR(name)) {
 				ret = PTR_ERR(name);
@@ -244,23 +245,49 @@ static int cmd_inspect_logical_resolve(const struct cmd_struct *cmd,
 			if (!name) {
 				path_ptr[-1] = '\0';
 				path_fd = fd;
+				strncpy(mount_path, full_path, PATH_MAX);
 			} else {
-				path_ptr[-1] = '/';
-				ret = snprintf(path_ptr, bytes_left, "%s",
-						name);
-				free(name);
-				if (ret >= bytes_left) {
-					error("path buffer too small: %d bytes",
-							bytes_left - ret);
+				char *mounted = NULL;
+				char subvol[PATH_MAX];
+				char subvolid[PATH_MAX];
+
+				/*
+				 * btrfs_list_path_for_root returns the full
+				 * path to the subvolume pointed by root, but the
+				 * subvolume can be mounted in a directory name
+				 * different from the subvolume name. In this
+				 * case we need to find the correct mount point
+				 * using same subvolume path and subvol id found
+				 * before.
+				 */
+
+				snprintf(subvol, PATH_MAX, "/%s", name);
+				snprintf(subvolid, PATH_MAX, "%llu", root);
+
+				ret = find_mount_fsroot(subvol, subvolid, &mounted);
+
+				if (ret) {
+					error("failed to parse mountinfo");
 					goto out;
 				}
-				path_fd = btrfs_open_dir(full_path, &dirs, 1);
+
+				if (!mounted) {
+					printf(
+			"inode %llu subvol %s could not be accessed: not mounted\n",
+						inum, name);
+					continue;
+				}
+
+				strncpy(mount_path, mounted, PATH_MAX);
+				free(mounted);
+
+				path_fd = btrfs_open_dir(mount_path, &dirs, 1);
 				if (path_fd < 0) {
 					ret = -ENOENT;
 					goto out;
 				}
 			}
-			ret = __ino_to_path_fd(inum, path_fd, full_path);
+			ret = __ino_to_path_fd(inum, path_fd, mount_path);
 			if (path_fd != fd)
 				close_file_or_dir(path_fd, dirs);
 		} else {
