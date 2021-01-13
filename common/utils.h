@@ -107,6 +107,7 @@ int csum_tree_block(struct btrfs_fs_info *root, struct extent_buffer *buf,
 int ask_user(const char *question);
 int lookup_path_rootid(int fd, u64 *rootid);
 int get_btrfs_mount(const char *dev, char *mp, size_t mp_size);
+int find_mount_fsroot(const char *subvol, const char *subvolid, char **mount);
 int find_mount_root(const char *path, char **mount_root);
 int get_device_info(int fd, u64 devid,
 		struct btrfs_ioctl_dev_info_args *di_args);
