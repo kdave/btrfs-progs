@@ -35,6 +35,7 @@
 #include <linux/kdev_t.h>
 #include <limits.h>
 #include <blkid/blkid.h>
+#include <libmount/libmount.h>
 #include <sys/vfs.h>
 #include <sys/statfs.h>
 #include <linux/magic.h>
@@ -1241,6 +1242,107 @@ int ask_user(const char *question)
 	return fgets(buf, sizeof(buf) - 1, stdin) &&
 	       (answer = strtok_r(buf, " \t\n\r", &saveptr)) &&
 	       (!strcasecmp(answer, "yes") || !strcasecmp(answer, "y"));
+}
+
+/*
+ * Use libmount to compare the subvol passed with the pathname of the directory
+ * mounted in btrfs. The pathname inside btrfs is different from getmnt and
+ * friends, since it can detect bind mounts to content from the inside of the
+ * original mount.
+ *
+ * Example:
+ *   # mount -o subvol=/vol /dev/sda2 /mnt
+ *   # mount --bind /mnt/dir2 /othermnt
+ *
+ *   # mounts
+ *   ...
+ *   /dev/sda2 on /mnt type btrfs (ro,relatime,ssd,space_cache,subvolid=256,subvol=/vol)
+ *   /dev/sda2 on /othermnt type btrfs (ro,relatime,ssd,space_cache,subvolid=256,subvol=/vol)
+ *
+ *   # cat /proc/self/mountinfo
+ *
+ *   38 30 0:32 /vol /mnt ro,relatime - btrfs /dev/sda2 ro,ssd,space_cache,subvolid=256,subvol=/vol
+ *   37 29 0:32 /vol/dir2 /othermnt ro,relatime - btrfs /dev/sda2 ro,ssd,space_cache,subvolid=256,subvol=/vol
+ *
+ * If we try to find a mounpoint only using subvol and subvolid from mount
+ * options we would get mislead to belive that /othermnt has the same content
+ * from /mnt.
+ *
+ * But, using mountinfo, we have the pathaname _inside_ the filesystem, so we
+ * can filter out the mount points with bind mounts which has different content
+ * from the original mounts, in this case the mount point with id 37.
+ */
+int find_mount_fsroot(const char *subvol, const char *subvolid, char **mount)
+{
+	struct libmnt_cache *cache;
+	struct libmnt_iter *iter;
+	struct libmnt_fs *fs;
+	struct libmnt_table *tb;
+
+	tb = mnt_new_table_from_file("/proc/self/mountinfo");
+	if (!tb)
+		return -1;
+
+	iter = mnt_new_iter(MNT_ITER_FORWARD);
+	if (!iter)
+		goto out_table;
+
+	cache = mnt_new_cache();
+	if (!cache)
+		goto out_iter;
+
+	if (mnt_table_set_cache(tb, cache))
+		goto out_cache;
+
+	while (mnt_table_next_fs(tb, iter, &fs) == 0) {
+		const char *mnt_root = mnt_fs_get_root(fs);
+		bool found = true;
+		char *subid = NULL;
+		size_t id_siz;
+
+		/*
+		 * Check any combination that would lead to an undesired mount
+		 * point and remove from the table.
+		 */
+		if (strcmp(mnt_fs_get_fstype(fs), "btrfs") != 0)
+			found = false;
+		else if (strlen(mnt_root) != strlen(subvol))
+			found = false;
+		else if (strcmp(mnt_root, subvol) != 0)
+			found = false;
+		else if (mnt_fs_get_option(fs, "subvolid", &subid, &id_siz))
+			found = false;
+		else if (strncmp(subid, subvolid, id_siz) != 0)
+			found = false;
+
+		if (!found)
+			mnt_table_remove_fs(tb, fs);
+	}
+
+	/* Rewind the iterator to make second pass */
+	mnt_reset_iter(iter, MNT_ITER_FORWARD);
+
+	/*
+	 * What remains in the list are the mount itself and possible bind mounts
+	 * referring to the same pathname mounted by the original mount. As in
+	 * this case the mount point would have the same content of the original
+	 * mount, we can safely return the first entry.
+	 */
+	if (!mnt_table_is_empty(tb)) {
+		mnt_table_next_fs(tb, iter, &fs);
+		*mount = strdup(mnt_fs_get_target(fs));
+	}
+
+	return 0;
+
+out_cache:
+	mnt_unref_cache(cache);
+out_iter:
+	mnt_free_iter(iter);
+out_table:
+	mnt_unref_table(tb);
+
+	return -1;
 }
 
 /*
