@@ -947,6 +947,13 @@ static int cmd_subvol_set_default(const struct cmd_struct *cmd,
 	} else {
 		/* subvol id and path to the filesystem are specified */
 		objectid = arg_strtou64(argv[optind]);
+		/*
+		 * To avoid confusion with the case above inside libbtrfsutil,
+		 * we must set the toplevel as default manually, same what
+		 * would kernel do.
+		 */
+		if (objectid == 0)
+			objectid = BTRFS_FS_TREE_OBJECTID;
 		path = argv[optind + 1];
 	}
 
