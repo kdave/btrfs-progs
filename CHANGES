@@ -1,3 +1,26 @@
+btrfs-progs-5.10 (2021-01-18)
+  * scrub status:
+    * print percentage of progress
+    * add size unit options
+  * fi usage: also print free space from statfs
+  * convert: copy full 64 bit timestamp from ext4 if availalble
+  * check:
+    * add ability to repair extent item generation
+    * new option to remove leftovers from inode number cache (-o inode_cache)
+  * check for already running exclusive operation (balance, device add/...)
+    when starting one
+  * preliminary json output support for 'device stats'
+  * fixes:
+    * subvolume set-default: id 0 correctly falls back to toplevel
+    * receive: align internal buffer to allow fast CRC calculation
+    * logical-resolve: distinguish -o subvol and bind mounts
+  * build: new dependency libmount
+  * other
+    * doc fixes and updates
+    * new tests
+    * ci on gitlab temporarily disabled
+    * debugging output enhancements
+
 btrfs-progs-5.9 (2020-10-23)
   * mkfs:
     * switch default to single profile for multi-device filesystem, up to
