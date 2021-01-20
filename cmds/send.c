@@ -19,6 +19,7 @@
 
 #include "kerncompat.h"
 
+#include <inttypes.h>
 #include <unistd.h>
 #include <stdint.h>
 #include <dirent.h>
@@ -717,7 +718,7 @@ static int cmd_send(const struct cmd_struct *cmd, int argc, char **argv)
 
 			ret = find_good_parent(&send, root_id, &parent_root_id);
 			if (ret < 0) {
-				error("parent determination failed for %lld",
+				error("parent determination failed for %" PRIu64,
 					root_id);
 				goto out;
 			}

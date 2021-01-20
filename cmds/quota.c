@@ -16,6 +16,7 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include <inttypes.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
 
@@ -168,7 +169,7 @@ static int cmd_quota_rescan(const struct cmd_struct *cmd, int argc, char **argv)
 		if (!args.flags)
 			printf("no rescan operation in progress\n");
 		else
-			printf("rescan operation running (current key %lld)\n",
+			printf("rescan operation running (current key %" PRIu64 ")\n",
 				args.progress);
 		return 0;
 	}

@@ -22,6 +22,7 @@
 #include "ioctl.h"
 #include "common/utils.h"
 #include <errno.h>
+#include <inttypes.h>
 
 #define BTRFS_QGROUP_NFILTERS_INCREASE (2 * BTRFS_QGROUP_FILTER_MAX)
 #define BTRFS_QGROUP_NCOMPS_INCREASE (2 * BTRFS_QGROUP_COMP_MAX)
@@ -164,7 +165,7 @@ static int print_parent_column(struct btrfs_qgroup *qgroup)
 	int len = 0;
 
 	list_for_each_entry(list, &qgroup->qgroups, next_qgroup) {
-		len += printf("%llu/%llu",
+		len += printf("%" PRIu64 "/%" PRIu64,
 			      btrfs_qgroup_level(list->qgroup->qgroupid),
 			      btrfs_qgroup_subvid(list->qgroup->qgroupid));
 		if (!list_is_last(&list->next_qgroup, &qgroup->qgroups))
@@ -182,7 +183,7 @@ static int print_child_column(struct btrfs_qgroup *qgroup)
 	int len = 0;
 
 	list_for_each_entry(list, &qgroup->members, next_member) {
-		len += printf("%llu/%llu",
+		len += printf("%" PRIu64 "/%" PRIu64,
 			      btrfs_qgroup_level(list->member->qgroupid),
 			      btrfs_qgroup_subvid(list->member->qgroupid));
 		if (!list_is_last(&list->next_member, &qgroup->members))
@@ -219,7 +220,7 @@ static void print_qgroup_column(struct btrfs_qgroup *qgroup,
 	switch (column) {
 
 	case BTRFS_QGROUP_QGROUPID:
-		len = printf("%llu/%llu",
+		len = printf("%" PRIu64 "/%" PRIu64,
 			     btrfs_qgroup_level(qgroup->qgroupid),
 			     btrfs_qgroup_subvid(qgroup->qgroupid));
 		print_qgroup_column_add_blank(BTRFS_QGROUP_QGROUPID, len);
@@ -669,7 +670,7 @@ static int update_qgroup_relation(struct qgroup_lookup *qgroup_lookup,
 
 	child = qgroup_tree_search(qgroup_lookup, child_id);
 	if (!child) {
-		error("cannot find the qgroup %llu/%llu",
+		error("cannot find the qgroup %" PRIu64 "/%" PRIu64,
 		      btrfs_qgroup_level(child_id),
 		      btrfs_qgroup_subvid(child_id));
 		return -ENOENT;
@@ -677,7 +678,7 @@ static int update_qgroup_relation(struct qgroup_lookup *qgroup_lookup,
 
 	parent = qgroup_tree_search(qgroup_lookup, parent_id);
 	if (!parent) {
-		error("cannot find the qgroup %llu/%llu",
+		error("cannot find the qgroup %" PRIu64 "/%" PRIu64,
 		      btrfs_qgroup_level(parent_id),
 		      btrfs_qgroup_subvid(parent_id));
 		return -ENOENT;
@@ -938,7 +939,7 @@ static void __update_columns_max_len(struct btrfs_qgroup *bq,
 	switch (column) {
 
 	case BTRFS_QGROUP_QGROUPID:
-		sprintf(tmp, "%llu/%llu",
+		sprintf(tmp, "%" PRIu64 "/%" PRIu64,
 			btrfs_qgroup_level(bq->qgroupid),
 			btrfs_qgroup_subvid(bq->qgroupid));
 		len = strlen(tmp);
@@ -970,7 +971,7 @@ static void __update_columns_max_len(struct btrfs_qgroup *bq,
 	case BTRFS_QGROUP_PARENT:
 		len = 0;
 		list_for_each_entry(list, &bq->qgroups, next_qgroup) {
-			len += sprintf(tmp, "%llu/%llu",
+			len += sprintf(tmp, "%" PRIu64 "/%" PRIu64,
 				btrfs_qgroup_level(list->qgroup->qgroupid),
 				btrfs_qgroup_subvid(list->qgroup->qgroupid));
 			if (!list_is_last(&list->next_qgroup, &bq->qgroups))
@@ -982,7 +983,7 @@ static void __update_columns_max_len(struct btrfs_qgroup *bq,
 	case BTRFS_QGROUP_CHILD:
 		len = 0;
 		list_for_each_entry(list, &bq->members, next_member) {
-			len += sprintf(tmp, "%llu/%llu",
+			len += sprintf(tmp, "%" PRIu64 "/%" PRIu64,
 				btrfs_qgroup_level(list->member->qgroupid),
 				btrfs_qgroup_subvid(list->member->qgroupid));
 			if (!list_is_last(&list->next_member, &bq->members))

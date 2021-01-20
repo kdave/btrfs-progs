@@ -14,6 +14,7 @@
  * License along with this program.
  */
 
+#include <inttypes.h>
 #include <unistd.h>
 #include <stdint.h>
 #include <dirent.h>
@@ -143,7 +144,7 @@ static int print_subvol(const char *path, const u8 *uuid, u64 ctransid,
 
 	uuid_unparse(uuid, uuid_str);
 
-	return PRINT_DUMP_SUBVOL(user, path, "subvol", "uuid=%s transid=%llu",
+	return PRINT_DUMP_SUBVOL(user, path, "subvol", "uuid=%s transid=%" PRIu64,
 				 uuid_str, ctransid);
 }
 
@@ -159,7 +160,7 @@ static int print_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 	uuid_unparse(parent_uuid, parent_uuid_str);
 
 	ret = PRINT_DUMP_SUBVOL(user, path, "snapshot",
-		"uuid=%s transid=%llu parent_uuid=%s parent_transid=%llu",
+		"uuid=%s transid=%" PRIu64 " parent_uuid=%s parent_transid=%" PRIu64,
 				uuid_str, ctransid, parent_uuid_str,
 				parent_ctransid);
 	return ret;
@@ -177,7 +178,7 @@ static int print_mkdir(const char *path, void *user)
 
 static int print_mknod(const char *path, u64 mode, u64 dev, void *user)
 {
-	return PRINT_DUMP(user, path, "mknod", "mode=%llo dev=0x%llx", mode,
+	return PRINT_DUMP(user, path, "mknod", "mode=%" PRIu64 " dev=0x%" PRIx64, mode,
 			  dev);
 }
 
@@ -224,7 +225,7 @@ static int print_rmdir(const char *path, void *user)
 static int print_write(const char *path, const void *data, u64 offset,
 		       u64 len, void *user)
 {
-	return PRINT_DUMP(user, path, "write", "offset=%llu len=%llu",
+	return PRINT_DUMP(user, path, "write", "offset=%" PRIu64 " len=%" PRIu64,
 			  offset, len);
 }
 
@@ -240,7 +241,7 @@ static int print_clone(const char *path, u64 offset, u64 len,
 	PATH_CAT_OR_RET("clone", full_path, r->full_subvol_path, clone_path,
 			ret);
 	return PRINT_DUMP(user, path, "clone",
-			  "offset=%llu len=%llu from=%s clone_offset=%llu",
+			  "offset=%" PRIu64 " len=%" PRIu64 " from=%s clone_offset=%" PRIu64,
 			  offset, len, full_path, clone_offset);
 }
 
@@ -259,17 +260,17 @@ static int print_remove_xattr(const char *path, const char *name, void *user)
 
 static int print_truncate(const char *path, u64 size, void *user)
 {
-	return PRINT_DUMP(user, path, "truncate", "size=%llu", size);
+	return PRINT_DUMP(user, path, "truncate", "size=%" PRIu64, size);
 }
 
 static int print_chmod(const char *path, u64 mode, void *user)
 {
-	return PRINT_DUMP(user, path, "chmod", "mode=%llo", mode);
+	return PRINT_DUMP(user, path, "chmod", "mode=%" PRIu64, mode);
 }
 
 static int print_chown(const char *path, u64 uid, u64 gid, void *user)
 {
-	return PRINT_DUMP(user, path, "chown", "gid=%llu uid=%llu", gid, uid);
+	return PRINT_DUMP(user, path, "chown", "gid=%" PRIu64 " uid=%" PRIu64, gid, uid);
 }
 
 static int sprintf_timespec(struct timespec *ts, char *dest, int max_size)
@@ -312,7 +313,7 @@ static int print_utimes(const char *path, struct timespec *at,
 static int print_update_extent(const char *path, u64 offset, u64 len,
 			       void *user)
 {
-	return PRINT_DUMP(user, path, "update_extent", "offset=%llu len=%llu",
+	return PRINT_DUMP(user, path, "update_extent", "offset=%" PRIu64 " len=%" PRIu64,
 			  offset, len);
 }
 

@@ -16,6 +16,7 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include <inttypes.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
@@ -276,15 +277,15 @@ static int btrfs_subvolid_resolve_sub(int fd, char *path, size_t *path_len,
 	ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &search_arg);
 	if (ret < 0) {
 		fprintf(stderr,
-			"ioctl(BTRFS_IOC_TREE_SEARCH, subvol_id %llu) ret=%d, error: %m\n",
-			(unsigned long long)subvol_id, ret);
+			"ioctl(BTRFS_IOC_TREE_SEARCH, subvol_id %" PRIu64 ") ret=%d, error: %m\n",
+			subvol_id, ret);
 		return ret;
 	}
 
 	if (search_arg.key.nr_items < 1) {
 		fprintf(stderr,
-			"failed to lookup subvol_id %llu!\n",
-			(unsigned long long)subvol_id);
+			"failed to lookup subvol_id %" PRIu64 "!\n",
+			subvol_id);
 		return -ENOENT;
 	}
 	search_header = (struct btrfs_ioctl_search_header *)search_arg.buf;
@@ -664,7 +665,7 @@ int subvol_uuid_search_init(int mnt_fd, struct subvol_uuid_search *s)
 					ret = PTR_ERR(path);
 					fprintf(stderr, "ERROR: unable to "
 							"resolve path "
-							"for root %llu\n",
+							"for root %" PRIu64 "\n",
 						btrfs_search_header_objectid(sh));
 					goto out;
 				}

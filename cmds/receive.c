@@ -19,6 +19,7 @@
 #include "kerncompat.h"
 #include "androidcompat.h"
 
+#include <inttypes.h>
 #include <unistd.h>
 #include <stdint.h>
 #include <dirent.h>
@@ -113,7 +114,7 @@ static int finish_subvol(struct btrfs_receive *rctx)
 	if (bconf.verbose >= 2) {
 		uuid_unparse((u8*)rs_args.uuid, uuid_str);
 		fprintf(stderr, "BTRFS_IOC_SET_RECEIVED_SUBVOL uuid=%s, "
-				"stransid=%llu\n", uuid_str, rs_args.stransid);
+				"stransid=%" PRIu64 "\n", uuid_str, rs_args.stransid);
 	}
 
 	ret = ioctl(subvol_fd, BTRFS_IOC_SET_RECEIVED_SUBVOL, &rs_args);
@@ -201,7 +202,7 @@ static int process_subvol(const char *path, const u8 *uuid, u64 ctransid,
 
 	if (bconf.verbose >= 2) {
 		uuid_unparse((u8*)rctx->cur_subvol.received_uuid, uuid_str);
-		fprintf(stderr, "receiving subvol %s uuid=%s, stransid=%llu\n",
+		fprintf(stderr, "receiving subvol %s uuid=%s, stransid=%" PRIu64 "\n",
 				path, uuid_str,
 				rctx->cur_subvol.stransid);
 	}
@@ -271,10 +272,10 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 	if (bconf.verbose >= 2) {
 		uuid_unparse((u8*)rctx->cur_subvol.received_uuid, uuid_str);
 		fprintf(stderr, "receiving snapshot %s uuid=%s, "
-				"ctransid=%llu ", path, uuid_str,
+				"ctransid=%" PRIu64 " ", path, uuid_str,
 				rctx->cur_subvol.stransid);
 		uuid_unparse(parent_uuid, uuid_str);
-		fprintf(stderr, "parent_uuid=%s, parent_ctransid=%llu\n",
+		fprintf(stderr, "parent_uuid=%s, parent_ctransid=%" PRIu64 "\n",
 				uuid_str, parent_ctransid);
 	}
 
@@ -440,7 +441,7 @@ static int process_mknod(const char *path, u64 mode, u64 dev, void *user)
 	}
 
 	if (bconf.verbose >= 3)
-		fprintf(stderr, "mknod %s mode=%llu, dev=%llu\n",
+		fprintf(stderr, "mknod %s mode=%" PRIu64 ", dev=%" PRIu64 "\n",
 				path, mode, dev);
 
 	ret = mknod(full_path, mode & S_IFMT, dev);
@@ -696,7 +697,7 @@ static int process_write(const char *path, const void *data, u64 offset,
 		goto out;
 
 	if (bconf.verbose >= 2)
-		fprintf(stderr, "write %s - offset=%llu length=%llu\n",
+		fprintf(stderr, "write %s - offset=%" PRIu64 " length=%" PRIu64 "\n",
 			path, offset, len);
 
 	while (pos < len) {
@@ -787,7 +788,7 @@ static int process_clone(const char *path, u64 offset, u64 len,
 
 	if (bconf.verbose >= 2)
 		fprintf(stderr,
-			"clone %s - source=%s source offset=%llu offset=%llu length=%llu\n",
+			"clone %s - source=%s source offset=%" PRIu64 " offset=%" PRIu64 " length=%" PRIu64 "\n",
 			path, clone_path, clone_offset, offset, len);
 
 	clone_args.src_fd = clone_fd;
@@ -900,7 +901,7 @@ static int process_truncate(const char *path, u64 size, void *user)
 	}
 
 	if (bconf.verbose >= 3)
-		fprintf(stderr, "truncate %s size=%llu\n", path, size);
+		fprintf(stderr, "truncate %s size=%" PRIu64 "\n", path, size);
 
 	ret = truncate(full_path, size);
 	if (ret < 0) {
@@ -952,7 +953,7 @@ static int process_chown(const char *path, u64 uid, u64 gid, void *user)
 	}
 
 	if (bconf.verbose >= 3)
-		fprintf(stderr, "chown %s - uid=%llu, gid=%llu\n", path,
+		fprintf(stderr, "chown %s - uid=%" PRIu64 ", gid=%" PRIu64 "\n", path,
 				uid, gid);
 
 	ret = lchown(full_path, uid, gid);
@@ -1017,9 +1018,8 @@ static int process_update_extent(const char *path, u64 offset, u64 len,
 		void *user)
 {
 	if (bconf.verbose >= 3)
-		fprintf(stderr, "update_extent %s: offset=%llu, len=%llu\n",
-				path, (unsigned long long)offset,
-				(unsigned long long)len);
+		fprintf(stderr, "update_extent %s: offset=%" PRIu64 ", len=%" PRIu64 "\n",
+				path, offset, len);
 
 	/*
 	 * Sent with BTRFS_SEND_FLAG_NO_FILE_DATA, nothing to do.

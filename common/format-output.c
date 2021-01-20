@@ -15,6 +15,7 @@
  */
 
 #include "kerncompat.h"
+#include <inttypes.h>
 #include <stdio.h>
 #include <uuid/uuid.h>
 #include "common/defs.h"
@@ -293,7 +294,7 @@ void fmt_print(struct format_ctx *fctx, const char* key, ...)
 		const u64 level = va_arg(args, u64);
 		const u64 id = va_arg(args, u64);
 
-		printf("%llu/%llu", level, id);
+		printf("%" PRIu64 "/%" PRIu64, level, id);
 	} else if (strcmp(row->fmt, "size-or-none") == 0) {
 		const u64 size = va_arg(args, u64);
 		const unsigned int unit_mode = va_arg(args, unsigned int);

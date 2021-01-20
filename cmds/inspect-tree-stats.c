@@ -16,6 +16,7 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include <inttypes.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -157,7 +158,7 @@ static int walk_nodes(struct btrfs_root *root, struct btrfs_path *path,
 			tmp = read_tree_block(root->fs_info, cur_blocknr,
 					      btrfs_node_ptr_generation(b, i));
 			if (!extent_buffer_uptodate(tmp)) {
-				error("failed to read blocknr %llu",
+				error("failed to read blocknr %" PRIu64 "",
 					btrfs_node_blockptr(b, i));
 				continue;
 			}
@@ -177,8 +178,8 @@ static int walk_nodes(struct btrfs_root *root, struct btrfs_path *path,
 			if (stat->max_seek_len < distance)
 				stat->max_seek_len = distance;
 			if (add_seek(&stat->seek_root, distance)) {
-				error("cannot add new seek at distance %llu",
-						(unsigned long long)distance);
+				error("cannot add new seek at distance %" PRIu64,
+						distance);
 				ret = -ENOMEM;
 				break;
 			}
@@ -254,7 +255,7 @@ static void print_seek_histogram(struct root_stats *stat)
 		if (group_count) {
 
 			gticks = group_count / tick_interval;
-			printf("\t\t%*Lu - %*Lu: %*Lu ", digits, group_start,
+			printf("\t\t%*" PRIu64 " - %*" PRIu64 ": %*" PRIu64 " ", digits, group_start,
 			       digits, group_end, digits, group_count);
 			if (gticks) {
 				for (i = 0; i < gticks; i++)
@@ -269,7 +270,7 @@ static void print_seek_histogram(struct root_stats *stat)
 		if (ticks <= 2)
 			continue;
 
-		printf("\t\t%*Lu - %*Lu: %*Lu ", digits, seek->distance,
+		printf("\t\t%*" PRIu64 " - %*" PRIu64 ": %*" PRIu64 " ", digits, seek->distance,
 		       digits, seek->distance, digits, seek->count);
 		for (i = 0; i < ticks; i++)
 			printf("#");
@@ -279,7 +280,7 @@ static void print_seek_histogram(struct root_stats *stat)
 		u64 gticks;
 
 		gticks = group_count / tick_interval;
-		printf("\t\t%*Lu - %*Lu: %*Lu ", digits, group_start,
+		printf("\t\t%*" PRIu64 " - %*" PRIu64 ": %*" PRIu64 " ", digits, group_start,
 		       digits, group_end, digits, group_count);
 		if (gticks) {
 			for (i = 0; i < gticks; i++)
@@ -326,7 +327,7 @@ static int calc_root_size(struct btrfs_root *tree_root, struct btrfs_key *key,
 
 	root = btrfs_read_fs_root(tree_root->fs_info, key);
 	if (IS_ERR(root)) {
-		error("failed to read root %llu", key->objectid);
+		error("failed to read root %" PRIu64 "", key->objectid);
 		return 1;
 	}
 
@@ -364,34 +365,34 @@ out_print:
 	}
 
 	if (no_pretty || size_fail) {
-		printf("\tTotal size: %llu\n", stat.total_bytes);
-		printf("\t\tInline data: %llu\n", stat.total_inline);
-		printf("\tTotal seeks: %llu\n", stat.total_seeks);
-		printf("\t\tForward seeks: %llu\n", stat.forward_seeks);
-		printf("\t\tBackward seeks: %llu\n", stat.backward_seeks);
-		printf("\t\tAvg seek len: %llu\n", stat.total_seeks ?
+		printf("\tTotal size: %" PRIu64 "\n", stat.total_bytes);
+		printf("\t\tInline data: %" PRIu64 "\n", stat.total_inline);
+		printf("\tTotal seeks: %" PRIu64 "\n", stat.total_seeks);
+		printf("\t\tForward seeks: %" PRIu64 "\n", stat.forward_seeks);
+		printf("\t\tBackward seeks: %" PRIu64 "\n", stat.backward_seeks);
+		printf("\t\tAvg seek len: %" PRIu64 "\n", stat.total_seeks ?
 			stat.total_seek_len / stat.total_seeks : 0);
 		print_seek_histogram(&stat);
-		printf("\tTotal clusters: %llu\n", stat.total_clusters);
-		printf("\t\tAvg cluster size: %llu\n", stat.total_cluster_size /
+		printf("\tTotal clusters: %" PRIu64 "\n", stat.total_clusters);
+		printf("\t\tAvg cluster size: %" PRIu64 "\n", stat.total_cluster_size /
 		       stat.total_clusters);
-		printf("\t\tMin cluster size: %llu\n", stat.min_cluster_size);
-		printf("\t\tMax cluster size: %llu\n", stat.max_cluster_size);
-		printf("\tTotal disk spread: %llu\n", stat.highest_bytenr -
+		printf("\t\tMin cluster size: %" PRIu64 "\n", stat.min_cluster_size);
+		printf("\t\tMax cluster size: %" PRIu64 "\n", stat.max_cluster_size);
+		printf("\tTotal disk spread: %" PRIu64 "\n", stat.highest_bytenr -
 		       stat.lowest_bytenr);
 		printf("\tTotal read time: %d s %d us\n", (int)diff.tv_sec,
 		       (int)diff.tv_usec);
 	} else {
 		printf("\tTotal size: %s\n", pretty_size(stat.total_bytes));
 		printf("\t\tInline data: %s\n", pretty_size(stat.total_inline));
-		printf("\tTotal seeks: %llu\n", stat.total_seeks);
-		printf("\t\tForward seeks: %llu\n", stat.forward_seeks);
-		printf("\t\tBackward seeks: %llu\n", stat.backward_seeks);
+		printf("\tTotal seeks: %" PRIu64 "\n", stat.total_seeks);
+		printf("\t\tForward seeks: %" PRIu64 "\n", stat.forward_seeks);
+		printf("\t\tBackward seeks: %" PRIu64 "\n", stat.backward_seeks);
 		printf("\t\tAvg seek len: %s\n", stat.total_seeks ?
 			pretty_size(stat.total_seek_len / stat.total_seeks) :
 			pretty_size(0));
 		print_seek_histogram(&stat);
-		printf("\tTotal clusters: %llu\n", stat.total_clusters);
+		printf("\tTotal clusters: %" PRIu64 "\n", stat.total_clusters);
 		printf("\t\tAvg cluster size: %s\n",
 				pretty_size((stat.total_cluster_size /
 						stat.total_clusters)));
@@ -406,15 +407,15 @@ out_print:
 		       (int)diff.tv_usec);
 	}
 	printf("\tLevels: %d\n", level + 1);
-	printf("\tTotal nodes: %llu\n", stat.total_nodes);
+	printf("\tTotal nodes: %" PRIu64 "\n", stat.total_nodes);
 	for (i = 0; i < level + 1; i++) {
-		printf("\t\tOn level %d: %8llu", i, stat.node_counts[i]);
+		printf("\t\tOn level %d: %8" PRIu64 "", i, stat.node_counts[i]);
 		if (i > 0) {
 			u64 fanout;
 
 			fanout = stat.node_counts[i - 1];
 			fanout /= stat.node_counts[i];
-			printf("  (avg fanout %llu)", fanout);
+			printf("  (avg fanout %" PRIu64 ")", fanout);
 		}
 		printf("\n");
 	}

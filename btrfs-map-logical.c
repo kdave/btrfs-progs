@@ -16,6 +16,7 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -115,14 +116,14 @@ static int __print_mapping_info(struct btrfs_fs_info *fs_info, u64 logical,
 		if (ret) {
 			errno = -ret;
 			fprintf(info_file,
-				"Error: fails to map mirror%d logical %llu: %m\n",
+				"Error: fails to map mirror%d logical %" PRIu64 ": %m\n",
 				mirror_num, logical);
 			return ret;
 		}
 		for (i = 0; i < multi->num_stripes; i++) {
 			device = multi->stripes[i].dev;
 			fprintf(info_file,
-				"mirror %d logical %Lu physical %Lu device %s\n",
+				"mirror %d logical %" PRIu64 " physical %" PRIu64 " device %s\n",
 				mirror_num, logical + cur_offset,
 				multi->stripes[0].physical,
 				device->name);
@@ -176,7 +177,7 @@ static int write_extent_content(struct btrfs_fs_info *fs_info, int out_fd,
 		if (ret < 0) {
 			errno = -ret;
 			fprintf(stderr,
-				"Failed to read extent at [%llu, %llu]: %m\n",
+				"Failed to read extent at [%" PRIu64 ", %" PRIu64 "]: %m\n",
 				logical, logical + length);
 			return ret;
 		}
@@ -296,7 +297,7 @@ int main(int argc, char **argv)
 	ret = map_one_extent(root->fs_info, &cur_logical, &cur_len, 0);
 	if (ret < 0) {
 		errno = -ret;
-		fprintf(stderr, "Failed to find extent at [%llu,%llu): %m\n",
+		fprintf(stderr, "Failed to find extent at [%" PRIu64 ",%" PRIu64 "): %m\n",
 			cur_logical, cur_logical + cur_len);
 		goto out_close_fd;
 	}
@@ -310,13 +311,13 @@ int main(int argc, char **argv)
 		if (ret < 0) {
 			errno = -ret;
 			fprintf(stderr,
-				"Failed to find extent at [%llu,%llu): %m\n",
+				"Failed to find extent at [%" PRIu64 ",%" PRIu64 "): %m\n",
 				cur_logical, cur_logical + cur_len);
 			goto out_close_fd;
 		}
 		if (ret > 0) {
 			fprintf(stderr,
-				"Failed to find any extent at [%llu,%llu)\n",
+				"Failed to find any extent at [%" PRIu64 ",%" PRIu64 ")\n",
 				cur_logical, cur_logical + cur_len);
 			goto out_close_fd;
 		}
@@ -356,7 +357,7 @@ int main(int argc, char **argv)
 	}
 
 	if (!found) {
-		fprintf(stderr, "No extent found at range [%llu,%llu)\n",
+		fprintf(stderr, "No extent found at range [%" PRIu64 ",%" PRIu64 ")\n",
 			logical, logical + bytes);
 	}
 out_close_fd:

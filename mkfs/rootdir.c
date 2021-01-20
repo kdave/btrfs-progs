@@ -17,6 +17,7 @@
 #include "kerncompat.h"
 #include "androidcompat.h"
 
+#include <inttypes.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/xattr.h>
@@ -943,14 +944,14 @@ int btrfs_mkfs_shrink_fs(struct btrfs_fs_info *fs_info, u64 *new_size_ret,
 	if (shrink_file_size) {
 		ret = fstat64(device->fd, &file_stat);
 		if (ret < 0) {
-			error("failed to stat devid %llu: %m", device->devid);
+			error("failed to stat devid %" PRIu64 ": %m", device->devid);
 			return ret;
 		}
 		if (!S_ISREG(file_stat.st_mode))
 			return ret;
 		ret = ftruncate64(device->fd, new_size);
 		if (ret < 0) {
-			error("failed to truncate device file of devid %llu: %m",
+			error("failed to truncate device file of devid %" PRIu64 ": %m",
 				device->devid);
 			return ret;
 		}

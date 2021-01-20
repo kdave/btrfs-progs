@@ -378,7 +378,7 @@ again:
 	}
 
 	if (target_subvol_id == default_subvol_id) {
-		warning("not deleting default subvolume id %llu '%s%s%s'",
+		warning("not deleting default subvolume id %" PRIu64 " '%s%s%s'",
 				(u64)default_subvol_id,
 				(subvolid == 0 ? dname	: ""),
 				(subvolid == 0 ? "/"	: ""),

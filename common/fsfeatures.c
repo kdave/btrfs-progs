@@ -17,6 +17,7 @@
 #include "kerncompat.h"
 #include <sys/utsname.h>
 #include <linux/version.h>
+#include <inttypes.h>
 #include <unistd.h>
 #include "common/fsfeatures.h"
 #include "kernel-shared/ctree.h"
@@ -231,7 +232,7 @@ static void list_all_features(u64 mask_disallowed, enum feature_source source)
 
 		if (feat->flag & mask_disallowed)
 			continue;
-		fprintf(stderr, "%-20s- %s (0x%llx", feat->name, feat->desc,
+		fprintf(stderr, "%-20s- %s (0x%" PRIx64, feat->name, feat->desc,
 				feat->flag);
 		if (feat->compat_ver)
 			fprintf(stderr, ", compat=%s", feat->compat_str);

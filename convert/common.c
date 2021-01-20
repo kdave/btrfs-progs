@@ -14,6 +14,7 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include <inttypes.h>
 #include <unistd.h>
 #include <uuid/uuid.h>
 #include "kernel-shared/disk-io.h"
@@ -252,18 +253,18 @@ static int setup_temp_root_tree(int fd, struct btrfs_mkfs_config *cfg,
 	if (!(root_bytenr < extent_bytenr && extent_bytenr < dev_bytenr &&
 	      dev_bytenr < fs_bytenr && fs_bytenr < csum_bytenr)) {
 		error("bad tree bytenr order: "
-				"root < extent %llu < %llu, "
-				"extent < dev %llu < %llu, "
-				"dev < fs %llu < %llu, "
-				"fs < csum %llu < %llu",
-				(unsigned long long)root_bytenr,
-				(unsigned long long)extent_bytenr,
-				(unsigned long long)extent_bytenr,
-				(unsigned long long)dev_bytenr,
-				(unsigned long long)dev_bytenr,
-				(unsigned long long)fs_bytenr,
-				(unsigned long long)fs_bytenr,
-				(unsigned long long)csum_bytenr);
+				"root < extent %" PRIu64 " < %" PRIu64 ", "
+				"extent < dev %" PRIu64 " < %" PRIu64 ", "
+				"dev < fs %" PRIu64 " < %" PRIu64 ", "
+				"fs < csum %" PRIu64 " < %" PRIu64 "",
+				root_bytenr,
+				extent_bytenr,
+				extent_bytenr,
+				dev_bytenr,
+				dev_bytenr,
+				fs_bytenr,
+				fs_bytenr,
+				csum_bytenr);
 		return -EINVAL;
 	}
 	buf = malloc(sizeof(*buf) + cfg->nodesize);
@@ -431,9 +432,9 @@ static int setup_temp_chunk_tree(int fd, struct btrfs_mkfs_config *cfg,
 
 	/* Must ensure SYS chunk starts before META chunk */
 	if (meta_chunk_start < sys_chunk_start) {
-		error("wrong chunk order: meta < system %llu < %llu",
-				(unsigned long long)meta_chunk_start,
-				(unsigned long long)sys_chunk_start);
+		error("wrong chunk order: meta < system %" PRIu64 " < %" PRIu64 "",
+				meta_chunk_start,
+				sys_chunk_start);
 		return -EINVAL;
 	}
 	buf = malloc(sizeof(*buf) + cfg->nodesize);
@@ -502,9 +503,9 @@ static int setup_temp_dev_tree(int fd, struct btrfs_mkfs_config *cfg,
 
 	/* Must ensure SYS chunk starts before META chunk */
 	if (meta_chunk_start < sys_chunk_start) {
-		error("wrong chunk order: meta < system %llu < %llu",
-				(unsigned long long)meta_chunk_start,
-				(unsigned long long)sys_chunk_start);
+		error("wrong chunk order: meta < system %" PRIu64 " < %" PRIu64 "",
+				meta_chunk_start,
+				sys_chunk_start);
 		return -EINVAL;
 	}
 	buf = malloc(sizeof(*buf) + cfg->nodesize);
@@ -706,21 +707,21 @@ static int setup_temp_extent_tree(int fd, struct btrfs_mkfs_config *cfg,
 	      extent_bytenr < dev_bytenr && dev_bytenr < fs_bytenr &&
 	      fs_bytenr < csum_bytenr)) {
 		error("bad tree bytenr order: "
-				"chunk < root %llu < %llu, "
-				"root < extent %llu < %llu, "
-				"extent < dev %llu < %llu, "
-				"dev < fs %llu < %llu, "
-				"fs < csum %llu < %llu",
-				(unsigned long long)chunk_bytenr,
-				(unsigned long long)root_bytenr,
-				(unsigned long long)root_bytenr,
-				(unsigned long long)extent_bytenr,
-				(unsigned long long)extent_bytenr,
-				(unsigned long long)dev_bytenr,
-				(unsigned long long)dev_bytenr,
-				(unsigned long long)fs_bytenr,
-				(unsigned long long)fs_bytenr,
-				(unsigned long long)csum_bytenr);
+				"chunk < root %" PRIu64 " < %" PRIu64 ", "
+				"root < extent %" PRIu64 " < %" PRIu64 ", "
+				"extent < dev %" PRIu64 " < %" PRIu64 ", "
+				"dev < fs %" PRIu64 " < %" PRIu64 ", "
+				"fs < csum %" PRIu64 " < %" PRIu64 "",
+				chunk_bytenr,
+				root_bytenr,
+				root_bytenr,
+				extent_bytenr,
+				extent_bytenr,
+				dev_bytenr,
+				dev_bytenr,
+				fs_bytenr,
+				fs_bytenr,
+				csum_bytenr);
 		return -EINVAL;
 	}
 	buf = malloc(sizeof(*buf) + cfg->nodesize);
@@ -828,7 +829,7 @@ int make_convert_btrfs(int fd, struct btrfs_mkfs_config *cfg,
 				 &cfg->super_bytenr);
 	if (ret < 0) {
 		error(
-"failed to reserve %d bytes for temporary superblock, largest available: %llu bytes",
+"failed to reserve %d bytes for temporary superblock, largest available: %" PRIu64 " bytes",
 			BTRFS_STRIPE_LEN, largest_free_space(free_space));
 		goto out;
 	}
@@ -843,7 +844,7 @@ int make_convert_btrfs(int fd, struct btrfs_mkfs_config *cfg,
 				 &sys_chunk_start);
 	if (ret < 0) {
 		error(
-"failed to reserve %d bytes for system chunk, largest available: %llu bytes",
+"failed to reserve %d bytes for system chunk, largest available: %" PRIu64 " bytes",
 			BTRFS_MKFS_SYSTEM_GROUP_SIZE, largest_free_space(free_space));
 		goto out;
 	}
@@ -851,7 +852,7 @@ int make_convert_btrfs(int fd, struct btrfs_mkfs_config *cfg,
 				 &meta_chunk_start);
 	if (ret < 0) {
 		error(
-"failed to reserve %d bytes for metadata chunk, largest available: %llu bytes",
+"failed to reserve %d bytes for metadata chunk, largest available: %" PRIu64 " bytes",
 			BTRFS_CONVERT_META_GROUP_SIZE, largest_free_space(free_space));
 		goto out;
 	}

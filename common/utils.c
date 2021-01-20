@@ -17,6 +17,7 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -372,9 +373,9 @@ int pretty_size_snprintf(u64 size, char *str, size_t str_size, unsigned unit_mod
 
 	if ((unit_mode & ~UNITS_MODE_MASK) == UNITS_RAW) {
 		if (negative)
-			snprintf(str, str_size, "%lld", size);
+			snprintf(str, str_size, "%" PRId64, size);
 		else
-			snprintf(str, str_size, "%llu", size);
+			snprintf(str, str_size, "%" PRIu64, size);
 		return 0;
 	}
 
@@ -885,7 +886,7 @@ int get_df(int fd, struct btrfs_ioctl_space_args **sargs_ret)
 	sargs->total_spaces = 0;
 	ret = ioctl(fd, BTRFS_IOC_SPACE_INFO, sargs);
 	if (ret < 0) {
-		error("cannot get space info with %llu slots: %m",
+		error("cannot get space info with %" PRIu64 " slots: %m",
 				count);
 		free(sargs);
 		return -errno;
@@ -1179,7 +1180,7 @@ int test_num_disk_vs_raid(u64 metadata_profile, u64 data_profile,
 	if (metadata_profile & ~allowed) {
 		fprintf(stderr,
 			"ERROR: unable to create FS with metadata profile %s "
-			"(have %llu devices but %d devices are required)\n",
+			"(have %" PRIu64 " devices but %d devices are required)\n",
 			btrfs_group_profile_str(metadata_profile), dev_cnt,
 			group_profile_devs_min(metadata_profile));
 		return 1;
@@ -1187,7 +1188,7 @@ int test_num_disk_vs_raid(u64 metadata_profile, u64 data_profile,
 	if (data_profile & ~allowed) {
 		fprintf(stderr,
 			"ERROR: unable to create FS with data profile %s "
-			"(have %llu devices but %d devices are required)\n",
+			"(have %" PRIu64 " devices but %d devices are required)\n",
 			btrfs_group_profile_str(data_profile), dev_cnt,
 			group_profile_devs_min(data_profile));
 		return 1;
@@ -1815,7 +1816,7 @@ void print_device_info(struct btrfs_device *device, char *prefix)
 {
 	if (prefix)
 		printf("%s", prefix);
-	printf("Device: id = %llu, name = %s\n",
+	printf("Device: id = %" PRIu64 ", name = %s\n",
 	       device->devid, device->name);
 }
 

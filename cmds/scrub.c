@@ -19,6 +19,7 @@
 #include "kerncompat.h"
 #include "androidcompat.h"
 
+#include <inttypes.h>
 #include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
@@ -114,26 +115,26 @@ struct scrub_fs_stat {
 
 static void print_scrub_full(struct btrfs_scrub_progress *sp)
 {
-	printf("\tdata_extents_scrubbed: %lld\n", sp->data_extents_scrubbed);
-	printf("\ttree_extents_scrubbed: %lld\n", sp->tree_extents_scrubbed);
-	printf("\tdata_bytes_scrubbed: %lld\n", sp->data_bytes_scrubbed);
-	printf("\ttree_bytes_scrubbed: %lld\n", sp->tree_bytes_scrubbed);
-	printf("\tread_errors: %lld\n", sp->read_errors);
-	printf("\tcsum_errors: %lld\n", sp->csum_errors);
-	printf("\tverify_errors: %lld\n", sp->verify_errors);
-	printf("\tno_csum: %lld\n", sp->no_csum);
-	printf("\tcsum_discards: %lld\n", sp->csum_discards);
-	printf("\tsuper_errors: %lld\n", sp->super_errors);
-	printf("\tmalloc_errors: %lld\n", sp->malloc_errors);
-	printf("\tuncorrectable_errors: %lld\n", sp->uncorrectable_errors);
-	printf("\tunverified_errors: %lld\n", sp->unverified_errors);
-	printf("\tcorrected_errors: %lld\n", sp->corrected_errors);
-	printf("\tlast_physical: %lld\n", sp->last_physical);
+	printf("\tdata_extents_scrubbed: %" PRIu64 "\n", sp->data_extents_scrubbed);
+	printf("\ttree_extents_scrubbed: %" PRIu64 "\n", sp->tree_extents_scrubbed);
+	printf("\tdata_bytes_scrubbed: %" PRIu64 "\n", sp->data_bytes_scrubbed);
+	printf("\ttree_bytes_scrubbed: %" PRIu64 "\n", sp->tree_bytes_scrubbed);
+	printf("\tread_errors: %" PRIu64 "\n", sp->read_errors);
+	printf("\tcsum_errors: %" PRIu64 "\n", sp->csum_errors);
+	printf("\tverify_errors: %" PRIu64 "\n", sp->verify_errors);
+	printf("\tno_csum: %" PRIu64 "\n", sp->no_csum);
+	printf("\tcsum_discards: %" PRIu64 "\n", sp->csum_discards);
+	printf("\tsuper_errors: %" PRIu64 "\n", sp->super_errors);
+	printf("\tmalloc_errors: %" PRIu64 "\n", sp->malloc_errors);
+	printf("\tuncorrectable_errors: %" PRIu64 "\n", sp->uncorrectable_errors);
+	printf("\tunverified_errors: %" PRIu64 "\n", sp->unverified_errors);
+	printf("\tcorrected_errors: %" PRIu64 "\n", sp->corrected_errors);
+	printf("\tlast_physical: %" PRIu64 "\n", sp->last_physical);
 }
 
 #define PRINT_SCRUB_ERROR(test, desc) do {	\
 	if (test)				\
-		printf(" %s=%llu", desc, test);	\
+		printf(" %s=%" PRIu64, desc, test);	\
 } while (0)
 
 static void print_scrub_summary(struct btrfs_scrub_progress *p, struct scrub_stats *s,
@@ -173,7 +174,7 @@ static void print_scrub_summary(struct btrfs_scrub_progress *p, struct scrub_sta
 		t[sizeof(t) - 1] = '\0';
 		strftime(t, sizeof(t), "%c", &tm);
 
-		printf("Time left:        %llu:%02llu:%02llu\n",
+		printf("Time left:        %" PRIu64 ":%02" PRIu64 ":%02" PRIu64 "\n",
 			sec_left / 3600, (sec_left / 60) % 60, sec_left % 60);
 		printf("ETA:              %s\n", t);
 		printf("Total to scrub:   %s\n",
@@ -204,9 +205,9 @@ static void print_scrub_summary(struct btrfs_scrub_progress *p, struct scrub_sta
 		PRINT_SCRUB_ERROR(p->verify_errors, "verify");
 		PRINT_SCRUB_ERROR(p->csum_errors, "csum");
 		printf("\n");
-		printf("  Corrected:      %llu\n", p->corrected_errors);
-		printf("  Uncorrectable:  %llu\n", p->uncorrectable_errors);
-		printf("  Unverified:     %llu\n", p->unverified_errors);
+		printf("  Corrected:      %" PRIu64 "\n", p->corrected_errors);
+		printf("  Uncorrectable:  %" PRIu64 "\n", p->uncorrectable_errors);
+		printf("  Unverified:     %" PRIu64 "\n", p->unverified_errors);
 	} else {
 		printf(" no errors found\n");
 	}
@@ -310,7 +311,7 @@ static void print_scrub_dev(struct btrfs_ioctl_dev_info_args *di,
 				struct btrfs_scrub_progress *p, int raw,
 				const char *append, struct scrub_stats *ss)
 {
-	printf("\nScrub device %s (id %llu) %s\n", di->path, di->devid,
+	printf("\nScrub device %s (id %" PRIu64 ") %s\n", di->path, di->devid,
 	       append ? append : "");
 
 	_print_scrub_ss(ss);
@@ -771,7 +772,7 @@ static struct scrub_progress *scrub_resumed_stats(struct scrub_progress *data,
 
 static int scrub_kvwrite(int fd, char *buf, int max, const char *key, u64 val)
 {
-	return scrub_writev(fd, buf, max, "|%s:%lld", key, val);
+	return scrub_writev(fd, buf, max, "|%s:%" PRIu64, key, val);
 }
 
 static int scrub_write_file(int fd, const char *fsid,
@@ -798,7 +799,7 @@ static int scrub_write_file(int fd, const char *fsid,
 		use = scrub_resumed_stats(&data[i], &local);
 		if (scrub_write_buf(fd, fsid, strlen(fsid)) ||
 		    scrub_write_buf(fd, ":", 1) ||
-		    scrub_writev(fd, buf, sizeof(buf), "%lld",
+		    scrub_writev(fd, buf, sizeof(buf), "%" PRIu64,
 					use->scrub_args.devid) ||
 		    scrub_write_buf(fd, buf, ret) ||
 		    _SCRUB_KVWRITE(fd, buf, data_extents_scrubbed, use) ||
@@ -1464,7 +1465,7 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 			if (do_print) {
 				errno = ret;
 				error(
-				"creating scrub_one_dev[%llu] thread failed: %m",
+				"creating scrub_one_dev[%" PRIu64 "] thread failed: %m",
 					devid);
 			}
 			err = 1;
@@ -1498,7 +1499,7 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 			if (do_print) {
 				errno = ret;
 				error(
-				"pthread_join failed for scrub_one_dev[%llu]: %m",
+				"pthread_join failed for scrub_one_dev[%" PRIu64 "]: %m",
 					devid);
 			}
 			++err;
@@ -1508,7 +1509,7 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 			switch (sp[i].ioctl_errno) {
 			case ENODEV:
 				if (do_print)
-					warning("device %lld not present",
+					warning("device %" PRIu64 " not present",
 						devid);
 				continue;
 			case ECANCELED:
@@ -1518,7 +1519,7 @@ static int scrub_start(const struct cmd_struct *cmd, int argc, char **argv,
 				if (do_print) {
 					errno = sp[i].ioctl_errno;
 					error(
-		"scrubbing %s failed for device id %lld: ret=%d, errno=%d (%m)",
+		"scrubbing %s failed for device id %" PRIu64 ": ret=%d, errno=%d (%m)",
 						path, devid, sp[i].ret,
 						sp[i].ioctl_errno);
 				}

@@ -18,6 +18,7 @@
  * Authors: Mark Fasheh <mfasheh@suse.de>
  */
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <uuid/uuid.h>
@@ -1285,7 +1286,7 @@ static int report_qgroup_difference(struct qgroup_count *count, int verbose)
 	is_different = excl_diff || ref_diff;
 
 	if (verbose || (is_different && qgroup_printable(count))) {
-		printf("Counts for qgroup id: %llu/%llu %s\n",
+		printf("Counts for qgroup id: %" PRIu64 " /%" PRIu64 " %s\n",
 		       btrfs_qgroup_level(count->qgroupid),
 		       btrfs_qgroup_subvid(count->qgroupid),
 		       is_different ? "are different" : "");
@@ -1474,11 +1475,11 @@ static void __print_subvol_info(u64 bytenr, u64 num_bytes, struct ulist *roots)
 	struct ulist_iterator uiter;
 	struct ulist_node *unode;
 
-	printf("%llu\t%llu\t%d\t", bytenr, num_bytes, n);
+	printf("%" PRIu64 "\t%" PRIu64 "\t%d\t", bytenr, num_bytes, n);
 
 	ULIST_ITER_INIT(&uiter);
 	while ((unode = ulist_next(roots, &uiter))) {
-		printf("%llu ", unode->val);
+		printf("%" PRIu64 " ", unode->val);
 	}
 	printf("\n");
 }
@@ -1547,7 +1548,7 @@ static int repair_qgroup_info(struct btrfs_fs_info *info,
 	struct btrfs_key key;
 
 	if (!silent)
-		printf("Repair qgroup %llu/%llu\n",
+		printf("Repair qgroup %" PRIu64 "/%" PRIu64 "\n",
 			btrfs_qgroup_level(count->qgroupid),
 			btrfs_qgroup_subvid(count->qgroupid));
 
@@ -1561,7 +1562,7 @@ static int repair_qgroup_info(struct btrfs_fs_info *info,
 	key.offset = count->qgroupid;
 	ret = btrfs_search_slot(trans, root, &key, &path, 0, 1);
 	if (ret) {
-		error("could not find disk item for qgroup %llu/%llu",
+		error("could not find disk item for qgroup %" PRIu64 "/%" PRIu64,
 		      btrfs_qgroup_level(count->qgroupid),
 		      btrfs_qgroup_subvid(count->qgroupid));
 		if (ret > 0)

@@ -22,6 +22,7 @@
 #include <sys/ioctl.h>
 #include <sys/mount.h>
 #include "ioctl.h"
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 /* #include <sys/dir.h> included via androidcompat.h */
@@ -289,8 +290,7 @@ static int create_one_raid_group(struct btrfs_trans_handle *trans,
 			(BTRFS_BLOCK_GROUP_METADATA | BTRFS_BLOCK_GROUP_DATA)) {
 		allocation->mixed += chunk_size;
 	} else {
-		error("unrecognized profile type: 0x%llx",
-				(unsigned long long)type);
+		error("unrecognized profile type: 0x%" PRIx64, type);
 		ret = -EINVAL;
 	}
 
@@ -507,7 +507,7 @@ static void list_all_devices(struct btrfs_root *root)
 	printf("Devices:\n");
 	printf("   ID        SIZE  PATH\n");
 	list_for_each_entry(device, &fs_devices->devices, dev_list) {
-		printf("  %3llu  %10s  %s\n",
+		printf("  %3" PRIu64 "  %10s  %s\n",
 			device->devid,
 			pretty_size(device->total_bytes),
 			device->name);
@@ -619,7 +619,7 @@ static int cleanup_temp_chunks(struct btrfs_fs_info *fs_info,
 		ret = btrfs_search_slot(trans, root, &key, &path, 0, 0);
 		if (ret < 0)
 			goto out;
-		/* Don't pollute ret for >0 case */
+		/* Don't po" PRIu64 "te ret for >0 case */
 		if (ret > 0)
 			ret = 0;
 
@@ -1269,9 +1269,9 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	}
 	/* Check device/block_count after the nodesize is determined */
 	if (block_count && block_count < min_dev_size) {
-		error("size %llu is too small to make a usable filesystem",
+		error("size %" PRIu64 " is too small to make a usable filesystem",
 			block_count);
-		error("minimum size for btrfs filesystem is %llu",
+		error("minimum size for btrfs filesystem is %" PRIu64 "",
 			min_dev_size);
 		goto error;
 	}
@@ -1287,7 +1287,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		if (ret > 0) {
 			error("'%s' is too small to make a usable filesystem",
 				path);
-			error("minimum size for each btrfs device is %llu",
+			error("minimum size for each btrfs device is %" PRIu64 "",
 				min_dev_size);
 			goto error;
 		}
@@ -1316,16 +1316,16 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	if (ret)
 		goto error;
 	if (block_count && block_count > dev_block_count) {
-		error("%s is smaller than requested size, expected %llu, found %llu",
-		      file, (unsigned long long)block_count,
-		      (unsigned long long)dev_block_count);
+		error("%s is smaller than requested size, expected %" PRIu64 ", found %" PRIu64 "",
+		      file, block_count,
+		      dev_block_count);
 		goto error;
 	}
 
 	/* To create the first block group and chunk 0 in make_btrfs */
 	if (dev_block_count < BTRFS_MKFS_SYSTEM_GROUP_SIZE) {
-		error("device is too small to make filesystem, must be at least %llu",
-				(unsigned long long)BTRFS_MKFS_SYSTEM_GROUP_SIZE);
+		error("device is too small to make filesystem, must be at least %d",
+				BTRFS_MKFS_SYSTEM_GROUP_SIZE);
 		goto error;
 	}
 
@@ -1441,8 +1441,8 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 
 			device = container_of(fs_info->fs_devices->devices.next,
 					struct btrfs_device, dev_list);
-			printf("adding device %s id %llu\n", file,
-				(unsigned long long)device->devid);
+			printf("adding device %s id %" PRIu64 "\n", file,
+				device->devid);
 		}
 	}
 

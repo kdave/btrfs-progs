@@ -19,6 +19,7 @@
 
 #include "kerncompat.h"
 
+#include <inttypes.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -333,7 +334,7 @@ static int copy_one_inline(struct btrfs_root *root, int fd,
 	done = pwrite(fd, outbuf, ram_size, pos);
 	free(outbuf);
 	if (done < ram_size) {
-		fprintf(stderr, "Short compressed inline write, wanted %Lu, "
+		fprintf(stderr, "Short compressed inline write, wanted %"  PRIu64 ", "
 			"did %zd: %d\n", ram_size, done, errno);
 		return -1;
 	}
@@ -375,7 +376,7 @@ static int copy_one_extent(struct btrfs_root *root, int fd,
 	if ((compress == BTRFS_COMPRESS_NONE && offset >= disk_size) ||
 	    offset > ram_size) {
 		error(
-	"invalid data extent offset, offset %llu disk_size %llu ram_size %llu",
+	"invalid data extent offset, offset %" PRIu64 " disk_size %" PRIu64 " ram_size %" PRIu64 "",
 		      offset, disk_size, ram_size);
 		return -EUCLEAN;
 	}
@@ -385,7 +386,7 @@ static int copy_one_extent(struct btrfs_root *root, int fd,
 		size_left -= offset;
 	}
 
-	pr_verbose(offset ? 1 : 0, "offset is %llu\n", offset);
+	pr_verbose(offset ? 1 : 0, "offset is %" PRIu64 "\n", offset);
 
 	inbuf = malloc(size_left);
 	if (!inbuf) {
@@ -1022,7 +1023,7 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 		}
 		btrfs_item_key_to_cpu(leaf, &found_key, path.slots[0]);
 		if (found_key.objectid != key->objectid) {
-			pr_verbose(2, "Found objectid=%Lu, key=%llu\n",
+			pr_verbose(2, "Found objectid=%" PRIu64 ", key=%" PRIu64 "\n",
 				   found_key.objectid, key->objectid);
 			break;
 		}
@@ -1244,7 +1245,7 @@ static int do_list_roots(struct btrfs_root *root)
 		read_extent_buffer(leaf, &ri, offset, sizeof(ri));
 		printf(" tree ");
 		btrfs_print_key(&disk_key);
-		printf(" %Lu level %d\n", btrfs_root_bytenr(&ri),
+		printf(" %" PRIu64 " level %d\n", btrfs_root_bytenr(&ri),
 		       btrfs_root_level(&ri));
 		path.slots[0]++;
 	}
@@ -1353,7 +1354,7 @@ again:
 		if (found_key.type != key.type)
 			continue;
 
-		printf("Using objectid %Lu for first dir\n",
+		printf("Using objectid %" PRIu64 " for first dir\n",
 		       found_key.objectid);
 		*objectid = found_key.objectid;
 		ret = 0;
@@ -1483,7 +1484,7 @@ static int cmd_restore(const struct cmd_struct *cmd, int argc, char **argv)
 			case 'r':
 				root_objectid = arg_strtou64(optarg);
 				if (!is_fstree(root_objectid)) {
-					fprintf(stderr, "objectid %llu is not a valid fs/file tree\n",
+					fprintf(stderr, "objectid %" PRIu64 " is not a valid fs/file tree\n",
 							root_objectid);
 					exit(1);
 				}
@@ -1575,7 +1576,7 @@ static int cmd_restore(const struct cmd_struct *cmd, int argc, char **argv)
 		root = btrfs_read_fs_root(orig_root->fs_info, &key);
 		if (IS_ERR(root)) {
 			errno = -PTR_ERR(root);
-			fprintf(stderr, "fail to read root %llu: %m\n",
+			fprintf(stderr, "fail to read root %" PRIu64 ": %m\n",
 					root_objectid);
 			root = orig_root;
 			ret = 1;

@@ -16,6 +16,7 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include <inttypes.h>
 #include <sys/ioctl.h>
 #include <sys/mount.h>
 #include <stdio.h>
@@ -516,8 +517,8 @@ static int add_root(struct root_lookup *root_lookup,
 	ret = root_tree_insert(root_lookup, ri);
 	if (ret < 0) {
 		errno = -ret;
-		error("failed to insert subvolume %llu to tree: %m",
-				(unsigned long long)root_id);
+		error("failed to insert subvolume %" PRIu64 " to tree: %m",
+				root_id);
 		exit(1);
 	}
 	return 0;
@@ -655,8 +656,8 @@ static int lookup_ino_path(int fd, struct root_info *ri)
 			ri->ref_tree = 0;
 			return -ENOENT;
 		}
-		error("failed to lookup path for root %llu: %m",
-			(unsigned long long)ri->ref_tree);
+		error("failed to lookup path for root %" PRIu64 ": %m",
+			ri->ref_tree);
 		return ret;
 	}
 
@@ -707,7 +708,7 @@ static u64 find_root_gen(int fd)
 	ret = ioctl(fd, BTRFS_IOC_INO_LOOKUP, &ino_args);
 	if (ret < 0) {
 		error("failed to lookup path for dirid %llu: %m",
-			(unsigned long long)BTRFS_FIRST_FREE_OBJECTID);
+			BTRFS_FIRST_FREE_OBJECTID);
 		return 0;
 	}
 
@@ -791,8 +792,8 @@ static char *__ino_resolve(int fd, u64 dirid)
 
 	ret = ioctl(fd, BTRFS_IOC_INO_LOOKUP, &args);
 	if (ret < 0) {
-		error("failed to lookup path for dirid %llu: %m",
-			(unsigned long long)dirid);
+		error("failed to lookup path for dirid %" PRIu64 ": %m",
+			dirid);
 		return ERR_PTR(ret);
 	}
 
@@ -1331,19 +1332,19 @@ static void print_subvolume_column(struct root_info *subv,
 
 	switch (column) {
 	case BTRFS_LIST_OBJECTID:
-		printf("%llu", subv->root_id);
+		printf("%" PRIu64 "", subv->root_id);
 		break;
 	case BTRFS_LIST_GENERATION:
-		printf("%llu", subv->gen);
+		printf("%" PRIu64 "", subv->gen);
 		break;
 	case BTRFS_LIST_OGENERATION:
-		printf("%llu", subv->ogen);
+		printf("%" PRIu64 "", subv->ogen);
 		break;
 	case BTRFS_LIST_PARENT:
-		printf("%llu", subv->ref_tree);
+		printf("%" PRIu64 "", subv->ref_tree);
 		break;
 	case BTRFS_LIST_TOP_LEVEL:
-		printf("%llu", subv->top_id);
+		printf("%" PRIu64 "", subv->top_id);
 		break;
 	case BTRFS_LIST_OTIME:
 		if (subv->otime) {
@@ -1668,22 +1669,22 @@ static int print_one_extent(int fd, struct btrfs_ioctl_search_header *sh,
 		len = btrfs_stack_file_extent_ram_bytes(item);
 	} else {
 		error(
-	"unhandled extent type %d for inode %llu file offset %llu gen %llu",
+	"unhandled extent type %d for inode %" PRIu64 " file offset %" PRIu64 " gen %" PRIu64 "",
 			type,
-			(unsigned long long)btrfs_search_header_objectid(sh),
-			(unsigned long long)btrfs_search_header_offset(sh),
-			(unsigned long long)found_gen);
+			btrfs_search_header_objectid(sh),
+			btrfs_search_header_offset(sh),
+			found_gen);
 
 		return -EIO;
 	}
-	printf("inode %llu file offset %llu len %llu disk start %llu "
-	       "offset %llu gen %llu flags ",
-	       (unsigned long long)btrfs_search_header_objectid(sh),
-	       (unsigned long long)btrfs_search_header_offset(sh),
-	       (unsigned long long)len,
-	       (unsigned long long)disk_start,
-	       (unsigned long long)disk_offset,
-	       (unsigned long long)found_gen);
+	printf("inode %" PRIu64 " file offset %" PRIu64 " len %" PRIu64 " disk start %" PRIu64 " "
+	       "offset %" PRIu64 " gen %" PRIu64 " flags ",
+	       btrfs_search_header_objectid(sh),
+	       btrfs_search_header_offset(sh),
+	       len,
+	       disk_start,
+	       disk_offset,
+	       found_gen);
 
 	if (compressed) {
 		printf("COMPRESS");
@@ -1797,7 +1798,7 @@ int btrfs_list_find_updated_files(int fd, u64 root_id, u64 oldest_gen)
 	}
 	free(cache_dir_name);
 	free(cache_full_name);
-	printf("transid marker was %llu\n", (unsigned long long)max_found);
+	printf("transid marker was %" PRIu64 "\n", max_found);
 	return ret;
 }
 

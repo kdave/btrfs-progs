@@ -14,6 +14,7 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -302,7 +303,7 @@ static int print_one_fs(struct btrfs_ioctl_fs_info_args *fs_info,
 	else
 		printf("Label: none ");
 
-	printf(" uuid: %s\n\tTotal devices %llu FS bytes used %s\n", uuidbuf,
+	printf(" uuid: %s\n\tTotal devices %" PRIu64 " FS bytes used %s\n", uuidbuf,
 			fs_info->num_devices,
 			pretty_size_mode(calc_used_bytes(space_info),
 					 unit_mode));
@@ -320,7 +321,7 @@ static int print_one_fs(struct btrfs_ioctl_fs_info_args *fs_info,
 		}
 		close(fd);
 		canonical_path = canonicalize_path((char *)tmp_dev_info->path);
-		printf("\tdevid %4llu size %s used %s path %s\n",
+		printf("\tdevid %4" PRIu64 " size %s used %s path %s\n",
 			tmp_dev_info->devid,
 			pretty_size_mode(tmp_dev_info->total_bytes, unit_mode),
 			pretty_size_mode(tmp_dev_info->bytes_used, unit_mode),
@@ -944,7 +945,7 @@ static int cmd_filesystem_defrag(const struct cmd_struct *cmd,
 			thresh = parse_size(optarg);
 			if (thresh > (u32)-1) {
 				warning(
-			    "target extent size %llu too big, trimmed to %u",
+			    "target extent size %" PRIu64 " too big, trimmed to %u",
 					thresh, (u32)-1);
 				thresh = (u32)-1;
 			}

@@ -16,6 +16,7 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -89,34 +90,34 @@ static void print_old_roots(struct btrfs_super_block *super)
 	for (i = 0; i < BTRFS_NUM_BACKUP_ROOTS; i++) {
 		backup = super->super_roots + i;
 		printf("btrfs root backup slot %d\n", i);
-		printf("\ttree root gen %llu block %llu\n",
-		       (unsigned long long)btrfs_backup_tree_root_gen(backup),
-		       (unsigned long long)btrfs_backup_tree_root(backup));
+		printf("\ttree root gen %" PRIu64 " block %" PRIu64 "\n",
+		       btrfs_backup_tree_root_gen(backup),
+		       btrfs_backup_tree_root(backup));
 
-		printf("\t\textent root gen %llu block %llu\n",
-		       (unsigned long long)btrfs_backup_extent_root_gen(backup),
-		       (unsigned long long)btrfs_backup_extent_root(backup));
+		printf("\t\textent root gen %" PRIu64 " block %" PRIu64 "\n",
+		       btrfs_backup_extent_root_gen(backup),
+		       btrfs_backup_extent_root(backup));
 
-		printf("\t\tchunk root gen %llu block %llu\n",
-		       (unsigned long long)btrfs_backup_chunk_root_gen(backup),
-		       (unsigned long long)btrfs_backup_chunk_root(backup));
+		printf("\t\tchunk root gen %" PRIu64 " block %" PRIu64 "\n",
+		       btrfs_backup_chunk_root_gen(backup),
+		       btrfs_backup_chunk_root(backup));
 
-		printf("\t\tdevice root gen %llu block %llu\n",
-		       (unsigned long long)btrfs_backup_dev_root_gen(backup),
-		       (unsigned long long)btrfs_backup_dev_root(backup));
+		printf("\t\tdevice root gen %" PRIu64 " block %" PRIu64 "\n",
+		       btrfs_backup_dev_root_gen(backup),
+		       btrfs_backup_dev_root(backup));
 
-		printf("\t\tcsum root gen %llu block %llu\n",
-		       (unsigned long long)btrfs_backup_csum_root_gen(backup),
-		       (unsigned long long)btrfs_backup_csum_root(backup));
+		printf("\t\tcsum root gen %" PRIu64 " block %" PRIu64 "\n",
+		       btrfs_backup_csum_root_gen(backup),
+		       btrfs_backup_csum_root(backup));
 
-		printf("\t\tfs root gen %llu block %llu\n",
-		       (unsigned long long)btrfs_backup_fs_root_gen(backup),
-		       (unsigned long long)btrfs_backup_fs_root(backup));
+		printf("\t\tfs root gen %" PRIu64 " block %" PRIu64 "\n",
+		       btrfs_backup_fs_root_gen(backup),
+		       btrfs_backup_fs_root(backup));
 
-		printf("\t\t%llu used %llu total %llu devices\n",
-		       (unsigned long long)btrfs_backup_bytes_used(backup),
-		       (unsigned long long)btrfs_backup_total_bytes(backup),
-		       (unsigned long long)btrfs_backup_num_devices(backup));
+		printf("\t\t%" PRIu64 " used %" PRIu64 " total %" PRIu64 " devices\n",
+		       btrfs_backup_bytes_used(backup),
+		       btrfs_backup_total_bytes(backup),
+		       btrfs_backup_num_devices(backup));
 	}
 }
 
@@ -230,11 +231,11 @@ static int dump_add_tree_block(struct cache_tree *tree, u64 bytenr)
 	 */
 	ret = add_cache_extent(tree, bytenr, 1);
 	if (ret == -EEXIST) {
-		warning("tree block bytenr %llu is duplicated", bytenr);
+		warning("tree block bytenr %" PRIu64 " is duplicated", bytenr);
 		return 1;
 	}
 	if (ret < 0) {
-		error("failed to record tree block bytenr %llu: %d(%s)",
+		error("failed to record tree block bytenr %" PRIu64 ": %d(%s)",
 			bytenr, ret, strerror(-ret));
 		return ret;
 	}
@@ -268,7 +269,7 @@ static int dump_print_tree_blocks(struct btrfs_fs_info *fs_info,
 		 */
 		if (!IS_ALIGNED(bytenr, fs_info->sectorsize)) {
 			error(
-		"tree block bytenr %llu is not aligned to sectorsize %u",
+		"tree block bytenr %" PRIu64 " is not aligned to sectorsize %u",
 			      bytenr, fs_info->sectorsize);
 			ret = -EINVAL;
 			goto next;
@@ -276,7 +277,7 @@ static int dump_print_tree_blocks(struct btrfs_fs_info *fs_info,
 
 		eb = read_tree_block(fs_info, bytenr, 0);
 		if (!extent_buffer_uptodate(eb)) {
-			error("failed to read tree block %llu", bytenr);
+			error("failed to read tree block %" PRIu64 "", bytenr);
 			ret = -EIO;
 			goto next;
 		}
@@ -479,14 +480,14 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 
 	if (!(extent_only || uuid_tree_only || tree_id)) {
 		if (roots_only) {
-			printf("root tree: %llu level %d\n",
-			     (unsigned long long)info->tree_root->node->start,
+			printf("root tree: %" PRIu64 " level %d\n",
+			     info->tree_root->node->start,
 			     btrfs_header_level(info->tree_root->node));
-			printf("chunk tree: %llu level %d\n",
-			     (unsigned long long)info->chunk_root->node->start,
+			printf("chunk tree: %" PRIu64 " level %d\n",
+			     info->chunk_root->node->start,
 			     btrfs_header_level(info->chunk_root->node));
 			if (info->log_root_tree)
-				printf("log root tree: %llu level %d\n",
+				printf("log root tree: %" PRIu64 " level %d\n",
 				       info->log_root_tree->node->start,
 					btrfs_header_level(
 						info->log_root_tree->node));
@@ -556,8 +557,8 @@ again:
 	ret = btrfs_search_slot(NULL, tree_root_scan, &key, &path, 0, 0);
 	if (ret < 0) {
 		errno = -ret;
-		error("cannot read ROOT_ITEM from tree %llu: %m",
-			(unsigned long long)tree_root_scan->root_key.objectid);
+		error("cannot read ROOT_ITEM from tree %" PRIu64 ": %m",
+			tree_root_scan->root_key.objectid);
 		goto close_root;
 	}
 	while (1) {
@@ -687,8 +688,8 @@ again:
 				printf(" tree ");
 				btrfs_print_key(&disk_key);
 				if (roots_only) {
-					printf(" %llu level %d\n",
-					       (unsigned long long)buf->start,
+					printf(" %" PRIu64 " level %d\n",
+					       buf->start,
 					       btrfs_header_level(buf));
 				} else {
 					printf(" \n");
@@ -714,10 +715,10 @@ no_node:
 	if (root_backups)
 		print_old_roots(info->super_copy);
 
-	printf("total bytes %llu\n",
-	       (unsigned long long)btrfs_super_total_bytes(info->super_copy));
-	printf("bytes used %llu\n",
-	       (unsigned long long)btrfs_super_bytes_used(info->super_copy));
+	printf("total bytes %" PRIu64 "\n",
+	       btrfs_super_total_bytes(info->super_copy));
+	printf("bytes used %" PRIu64 "\n",
+	       btrfs_super_bytes_used(info->super_copy));
 	uuidbuf[BTRFS_UUID_UNPARSED_SIZE - 1] = '\0';
 	uuid_unparse(info->super_copy->fsid, uuidbuf);
 	printf("uuid %s\n", uuidbuf);

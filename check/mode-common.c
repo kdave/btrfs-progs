@@ -14,6 +14,7 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include <inttypes.h>
 #include <time.h>
 #include "kernel-shared/ctree.h"
 #include "common/internal.h"
@@ -58,7 +59,7 @@ static int check_prealloc_data_ref(u64 disk_bytenr,
 	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
 	if (ret > 0) {
 		fprintf(stderr,
-		"Missing file extent item for inode %llu, root %llu, offset %llu",
+		"Missing file extent item for inode %" PRIu64 ", root %" PRIu64 ", offset %" PRIu64 "",
 			objectid, rootid, offset);
 		ret = -ENOENT;
 	}
@@ -191,7 +192,7 @@ int check_prealloc_extent_written(u64 disk_bytenr, u64 num_bytes)
 	ret = btrfs_search_slot(NULL, gfs_info->extent_root, &key, &path, 0, 0);
 	if (ret > 0) {
 		fprintf(stderr,
-	"Missing extent item in extent tree for disk_bytenr %llu, num_bytes %llu\n",
+	"Missing extent item in extent tree for disk_bytenr %" PRIu64 ", num_bytes %" PRIu64 "\n",
 			disk_bytenr, num_bytes);
 		ret = -ENOENT;
 	}
@@ -386,10 +387,9 @@ int insert_inode_item(struct btrfs_trans_handle *trans,
 	ret = btrfs_insert_inode(trans, root, ino, &ii);
 	ASSERT(!ret);
 
-	warning("root %llu inode %llu recreating inode item, this may "
+	warning("root %" PRIu64 " inode %" PRIu64 " recreating inode item, this may "
 		"be incomplete, please check permissions and content after "
-		"the fsck completes.\n", (unsigned long long)root->objectid,
-		(unsigned long long)ino);
+		"the fsck completes.\n", root->objectid, ino);
 
 	return 0;
 }
@@ -464,14 +464,14 @@ int link_inode_to_lostfound(struct btrfs_trans_handle *trans,
 			goto out;
 		}
 		snprintf(namebuf + name_len, BTRFS_NAME_LEN - name_len,
-			 ".%llu", ino);
+			 ".%" PRIu64 "", ino);
 		name_len += count_digits(ino) + 1;
 		ret = btrfs_add_link(trans, root, ino, lost_found_ino, namebuf,
 				     name_len, filetype, NULL, 1, 0);
 	}
 	if (ret < 0) {
 		errno = -ret;
-		error("failed to link the inode %llu to %s dir: %m",
+		error("failed to link the inode %" PRIu64 " to %s dir: %m",
 		      ino, dir_name);
 		goto out;
 	}
@@ -495,7 +495,7 @@ void check_dev_size_alignment(u64 devid, u64 total_bytes, u32 sectorsize)
 {
 	if (!IS_ALIGNED(total_bytes, sectorsize)) {
 		warning(
-"unaligned total_bytes detected for devid %llu, have %llu should be aligned to %u",
+"unaligned total_bytes detected for devid %" PRIu64 ", have %" PRIu64 " should be aligned to %u",
 			devid, total_bytes, sectorsize);
 		warning(
 "this is OK for older kernel, but may cause kernel warning for newer kernels");
@@ -553,20 +553,20 @@ int check_child_node(struct extent_buffer *parent, int slot,
 	if (memcmp(&parent_key, &child_key, sizeof(parent_key))) {
 		ret = -EINVAL;
 		fprintf(stderr,
-			"Wrong key of child node/leaf, wanted: (%llu, %u, %llu), have: (%llu, %u, %llu)\n",
+			"Wrong key of child node/leaf, wanted: (%" PRIu64 ", %u, %" PRIu64 "), have: (%" PRIu64 ", %u, %" PRIu64 ")\n",
 			parent_key.objectid, parent_key.type, parent_key.offset,
 			child_key.objectid, child_key.type, child_key.offset);
 	}
 	if (btrfs_header_bytenr(child) != btrfs_node_blockptr(parent, slot)) {
 		ret = -EINVAL;
-		fprintf(stderr, "Wrong block of child node/leaf, wanted: %llu, have: %llu\n",
+		fprintf(stderr, "Wrong block of child node/leaf, wanted: %" PRIu64 ", have: %" PRIu64 "\n",
 			btrfs_node_blockptr(parent, slot),
 			btrfs_header_bytenr(child));
 	}
 	if (btrfs_node_ptr_generation(parent, slot) !=
 	    btrfs_header_generation(child)) {
 		ret = -EINVAL;
-		fprintf(stderr, "Wrong generation of child node/leaf, wanted: %llu, have: %llu\n",
+		fprintf(stderr, "Wrong generation of child node/leaf, wanted: %" PRIu64 ", have: %" PRIu64 "\n",
 			btrfs_header_generation(child),
 			btrfs_node_ptr_generation(parent, slot));
 	}
@@ -756,14 +756,14 @@ int delete_corrupted_dir_item(struct btrfs_trans_handle *trans,
 	btrfs_init_path(&path);
 	ret = btrfs_search_slot(trans, root, di_key, &path, 0, 1);
 	if (ret > 0) {
-		error("key (%llu %u %llu) doesn't exist in root %llu",
+		error("key (%" PRIu64 " %u %" PRIu64 ") doesn't exist in root %" PRIu64 "",
 			di_key->objectid, di_key->type, di_key->offset,
 			root->root_key.objectid);
 		ret = -ENOENT;
 		goto out;
 	}
 	if (ret < 0) {
-		error("failed to search root %llu: %d",
+		error("failed to search root %" PRIu64 ": %d",
 			root->root_key.objectid, ret);
 		goto out;
 	}
@@ -774,7 +774,7 @@ int delete_corrupted_dir_item(struct btrfs_trans_handle *trans,
 		 * This is possible if the dir_item has incorrect namelen.
 		 * But in that case, we shouldn't reach repair path here.
 		 */
-		error("no dir item named '%s' found with key (%llu %u %llu)",
+		error("no dir item named '%s' found with key (%" PRIu64 " %u %" PRIu64 ")",
 			namebuf, di_key->objectid, di_key->type,
 			di_key->offset);
 		ret = -ENOENT;
@@ -816,7 +816,7 @@ int reset_imode(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 		ret = -ENOENT;
 	if (ret < 0) {
 		errno = -ret;
-		error("failed to search tree %llu: %m",
+		error("failed to search tree %" PRIu64 ": %m",
 		      root->root_key.objectid);
 		return ret;
 	}
@@ -1110,7 +1110,7 @@ int repair_imode_common(struct btrfs_root *root, struct btrfs_path *path)
 		goto abort;
 	ret = btrfs_commit_transaction(trans, root);
 	if (!ret)
-		printf("reset mode for inode %llu root %llu\n",
+		printf("reset mode for inode %" PRIu64 " root %" PRIu64 "\n",
 			key.objectid, root->root_key.objectid);
 	return ret;
 abort:
@@ -1137,7 +1137,7 @@ int check_repair_free_space_inode(struct btrfs_path *path)
 	mode = btrfs_inode_mode(path->nodes[0], iitem);
 	if (mode != FREE_SPACE_CACHE_INODE_MODE) {
 		error(
-	"free space cache inode %llu has invalid mode: has 0%o expect 0%o",
+	"free space cache inode %" PRIu64 " has invalid mode: has 0%o expect 0%o",
 			key.objectid, mode, FREE_SPACE_CACHE_INODE_MODE);
 		ret = -EUCLEAN;
 		if (repair) {
@@ -1157,14 +1157,14 @@ int recow_extent_buffer(struct btrfs_root *root, struct extent_buffer *eb)
 	struct btrfs_key key;
 	int ret;
 
-	printf("Recowing metadata block %llu\n", eb->start);
+	printf("Recowing metadata block %" PRIu64 "\n", eb->start);
 	key.objectid = btrfs_header_owner(eb);
 	key.type = BTRFS_ROOT_ITEM_KEY;
 	key.offset = (u64)-1;
 
 	root = btrfs_read_fs_root(gfs_info, &key);
 	if (IS_ERR(root)) {
-		fprintf(stderr, "Couldn't find owner root %llu\n",
+		fprintf(stderr, "Couldn't find owner root %" PRIu64 "\n",
 			key.objectid);
 		return PTR_ERR(root);
 	}

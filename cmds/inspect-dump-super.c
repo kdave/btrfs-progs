@@ -15,6 +15,7 @@
  */
 
 #include "kerncompat.h"
+#include <inttypes.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -44,16 +45,16 @@ static int load_and_dump_sb(char *filename, int fd, u64 sb_bytenr, int full,
 		if (ret == 0 && errno == 0)
 			return 0;
 
-		error("failed to read the superblock on %s at %llu",
-				filename, (unsigned long long)sb_bytenr);
+		error("failed to read the superblock on %s at %" PRIu64,
+				filename, sb_bytenr);
 		error("error = '%m', errno = %d", errno);
 		return 1;
 	}
-	printf("superblock: bytenr=%llu, device=%s\n", sb_bytenr, filename);
+	printf("superblock: bytenr=%" PRIu64 ", device=%s\n", sb_bytenr, filename);
 	printf("---------------------------------------------------------\n");
 	if (btrfs_super_magic(sb) != BTRFS_MAGIC && !force) {
-		error("bad magic on superblock on %s at %llu",
-				filename, (unsigned long long)sb_bytenr);
+		error("bad magic on superblock on %s at %" PRIu64,
+				filename, sb_bytenr);
 	} else {
 		btrfs_print_superblock(sb, full);
 	}
@@ -114,7 +115,7 @@ static int cmd_inspect_dump_super(const struct cmd_struct *cmd,
 			    "option -i is deprecated, please use -s or --super");
 			arg = arg_strtou64(optarg);
 			if (arg >= BTRFS_SUPER_MIRROR_MAX) {
-				error("super mirror too big: %llu >= %d",
+				error("super mirror too big: %" PRIu64 " >= %d",
 					arg, BTRFS_SUPER_MIRROR_MAX);
 				return 1;
 			}
@@ -134,8 +135,8 @@ static int cmd_inspect_dump_super(const struct cmd_struct *cmd,
 			arg = arg_strtou64(optarg);
 			if (BTRFS_SUPER_MIRROR_MAX <= arg) {
 				warning(
-		"deprecated use of -s <bytenr> with %llu, assuming --bytenr",
-						(unsigned long long)arg);
+		"deprecated use of -s <bytenr> with %" PRIu64 ", assuming --bytenr",
+						arg);
 				sb_bytenr = arg;
 			} else {
 				sb_bytenr = btrfs_sb_offset(arg);

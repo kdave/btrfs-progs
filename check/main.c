@@ -16,6 +16,7 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -207,7 +208,7 @@ static void print_status_check_line(void *p)
 	printf("%s (%d:%02d:%02d elapsed", task_position_string[priv->tp],
 			hours, minutes, seconds);
 	if (priv->item_count > 0)
-		printf(", %llu items checked)\r", priv->item_count);
+		printf(", %" PRIu64 " items checked)\r", priv->item_count);
 	else
 		printf(")\r");
 	fflush(stdout);
@@ -578,9 +579,9 @@ static void print_inode_error(struct btrfs_root *root, struct inode_record *rec)
 		root_objectid = root->root_key.offset;
 		fprintf(stderr, "reloc");
 	}
-	fprintf(stderr, "root %llu inode %llu errors %x",
-		(unsigned long long) root_objectid,
-		(unsigned long long) rec->ino, rec->errors);
+	fprintf(stderr, "root %" PRIu64 " inode %" PRIu64 " errors %x",
+		 root_objectid,
+		 rec->ino, rec->errors);
 
 	if (errors & I_ERR_NO_INODE_ITEM)
 		fprintf(stderr, ", no inode item");
@@ -634,7 +635,7 @@ static void print_inode_error(struct btrfs_root *root, struct inode_record *rec)
 		while (node) {
 			found = 1;
 			hole = rb_entry(node, struct file_extent_hole, node);
-			fprintf(stderr, "\tstart: %llu, len: %llu\n",
+			fprintf(stderr, "\tstart: %" PRIu64 ", len: %" PRIu64 "\n",
 				hole->start, hole->len);
 			node = rb_next(node);
 		}
@@ -648,7 +649,7 @@ static void print_inode_error(struct btrfs_root *root, struct inode_record *rec)
 				start = 0;
 				len = rec->extent_start;
 			}
-			fprintf(stderr, "\tstart: %llu, len: %llu\n", start,
+			fprintf(stderr, "\tstart: %" PRIu64 ", len: %" PRIu64 "\n", start,
 				len);
 		}
 	}
@@ -665,7 +666,7 @@ static void print_inode_error(struct btrfs_root *root, struct inode_record *rec)
 
 			crc = btrfs_name_hash(namebuf, hash_record->namelen);
 			fprintf(stderr,
-			"\tname: %.*s namelen: %u wanted 0x%08x has 0x%08llx\n",
+			"\tname: %.*s namelen: %u wanted 0x%08x has 0x%08" PRIx64 "\n",
 				hash_record->namelen, namebuf,
 				hash_record->namelen, crc,
 				hash_record->key.offset);
@@ -1432,7 +1433,7 @@ static int process_dir_item(struct extent_buffer *eb,
 					  key->type, error);
 		} else {
 			fprintf(stderr,
-				"unknown location type %d in DIR_ITEM[%llu %llu]\n",
+				"unknown location type %d in DIR_ITEM[%" PRIu64 " %" PRIu64 "]\n",
 				location.type, key->objectid, key->offset);
 			add_inode_backref(inode_cache, BTRFS_MULTIPLE_OBJECTIDS,
 					  key->objectid, key->offset, namebuf,
@@ -1960,7 +1961,7 @@ static int repair_inode_isize(struct btrfs_trans_handle *trans,
 	btrfs_set_inode_size(path->nodes[0], ei, rec->found_size);
 	btrfs_mark_buffer_dirty(path->nodes[0]);
 	rec->errors &= ~I_ERR_DIR_ISIZE_WRONG;
-	printf("reset isize for dir %llu root %llu\n", rec->ino,
+	printf("reset isize for dir %" PRIu64 " root %" PRIu64 "\n", rec->ino,
 	       root->root_key.objectid);
 out:
 	btrfs_release_path(path);
@@ -2007,7 +2008,7 @@ static int repair_inode_nbytes(struct btrfs_trans_handle *trans,
 	btrfs_set_inode_nbytes(path->nodes[0], ei, rec->found_size);
 	btrfs_mark_buffer_dirty(path->nodes[0]);
 	rec->errors &= ~I_ERR_FILE_NBYTES_WRONG;
-	printf("reset nbytes for ino %llu root %llu\n",
+	printf("reset nbytes for ino %" PRIu64 " root %" PRIu64 "\n",
 	       rec->ino, root->root_key.objectid);
 out:
 	btrfs_release_path(path);
@@ -2034,8 +2035,8 @@ static int add_missing_dir_index(struct btrfs_root *root,
 	if (IS_ERR(trans))
 		return PTR_ERR(trans);
 
-	fprintf(stderr, "repairing missing dir index item for inode %llu\n",
-		(unsigned long long)rec->ino);
+	fprintf(stderr, "repairing missing dir index item for inode %" PRIu64 "\n",
+		rec->ino);
 
 	btrfs_init_path(&path);
 	key.objectid = backref->dir;
@@ -2088,10 +2089,10 @@ static int delete_dir_index(struct btrfs_root *root,
 	if (IS_ERR(trans))
 		return PTR_ERR(trans);
 
-	fprintf(stderr, "Deleting bad dir index [%llu,%u,%llu] root %llu\n",
-		(unsigned long long)backref->dir,
-		BTRFS_DIR_INDEX_KEY, (unsigned long long)backref->index,
-		(unsigned long long)root->objectid);
+	fprintf(stderr, "Deleting bad dir index [%" PRIu64 ",%u,%" PRIu64 "] root %" PRIu64 "\n",
+		backref->dir,
+		BTRFS_DIR_INDEX_KEY, backref->index,
+		root->objectid);
 
 	btrfs_init_path(&path);
 	di = btrfs_lookup_dir_index_item(trans, root, &path, backref->dir,
@@ -2134,11 +2135,11 @@ static int create_inode_item(struct btrfs_root *root,
 	nlink = root_dir ? 1 : rec->found_link;
 	if (rec->found_dir_item) {
 		if (rec->found_file_extent)
-			fprintf(stderr, "root %llu inode %llu has both a dir "
+			fprintf(stderr, "root %" PRIu64 " inode %" PRIu64 " has both a dir "
 				"item and extents, unsure if it is a dir or a "
 				"regular file so setting it as a directory\n",
-				(unsigned long long)root->objectid,
-				(unsigned long long)rec->ino);
+				root->objectid,
+				rec->ino);
 		mode = S_IFDIR | 0755;
 		size = rec->found_size;
 	} else if (!rec->found_dir_item) {
@@ -2235,8 +2236,8 @@ static int repair_inode_backrefs(struct btrfs_root *root,
 				break;
 			}
 			fprintf(stderr, "adding missing dir index/item pair "
-				"for inode %llu\n",
-				(unsigned long long)rec->ino);
+				"for inode %" PRIu64 "\n",
+				rec->ino);
 			ret = btrfs_insert_dir_item(trans, root, backref->name,
 						    backref->namelen,
 						    backref->dir, &location,
@@ -2396,14 +2397,14 @@ static int repair_inode_nlinks(struct btrfs_trans_handle *trans,
 	type_recovered = !find_file_type(rec, &type);
 
 	if (!name_recovered) {
-		printf("Can't get file name for inode %llu, using '%llu' as fallback\n",
+		printf("Can't get file name for inode %" PRIu64 ", using '%" PRIu64 "' as fallback\n",
 		       rec->ino, rec->ino);
 		namelen = count_digits(rec->ino);
-		sprintf(namebuf, "%llu", rec->ino);
+		sprintf(namebuf, "%" PRIu64, rec->ino);
 		name_recovered = 1;
 	}
 	if (!type_recovered) {
-		printf("Can't get file type for inode %llu, using FILE as fallback\n",
+		printf("Can't get file type for inode %" PRIu64 ", using FILE as fallback\n",
 		       rec->ino);
 		type = BTRFS_FT_REG_FILE;
 		type_recovered = 1;
@@ -2413,7 +2414,7 @@ static int repair_inode_nlinks(struct btrfs_trans_handle *trans,
 	if (ret < 0) {
 		errno = -ret;
 		fprintf(stderr,
-			"Failed to reset nlink for inode %llu: %m\n", rec->ino);
+			"Failed to reset nlink for inode %" PRIu64 ": %m\n", rec->ino);
 		goto out;
 	}
 
@@ -2424,7 +2425,7 @@ static int repair_inode_nlinks(struct btrfs_trans_handle *trans,
 		if (ret)
 			goto out;
 	}
-	printf("Fixed the nlink of inode %llu\n", rec->ino);
+	printf("Fixed the nlink of inode %" PRIu64 "\n", rec->ino);
 out:
 	/*
 	 * Clear the flag anyway, or we will loop forever for the same inode
@@ -2500,7 +2501,7 @@ static int repair_inode_no_item(struct btrfs_trans_handle *trans,
 	int type_recovered = 0;
 	int ret = 0;
 
-	printf("Trying to rebuild inode:%llu\n", rec->ino);
+	printf("Trying to rebuild inode:%" PRIu64 "\n", rec->ino);
 
 	type_recovered = !find_file_type(rec, &filetype);
 
@@ -2526,7 +2527,7 @@ static int repair_inode_no_item(struct btrfs_trans_handle *trans,
 			type_recovered = 1;
 			filetype = BTRFS_FT_DIR;
 		} else{
-			printf("Can't determine the filetype for inode %llu, assume it is a normal file\n",
+			printf("Can't determine the filetype for inode %" PRIu64 ", assume it is a normal file\n",
 			       rec->ino);
 			type_recovered = 1;
 			filetype = BTRFS_FT_REG_FILE;
@@ -2589,7 +2590,7 @@ static int repair_inode_discount_extent(struct btrfs_trans_handle *trans,
 		if (ret < 0)
 			goto out;
 	}
-	printf("Fixed discount file extents for inode: %llu in root: %llu\n",
+	printf("Fixed discount file extents for inode: %" PRIu64 " in root: %" PRIu64 "\n",
 	       rec->ino, root->objectid);
 out:
 	return ret;
@@ -2622,7 +2623,7 @@ static int repair_inline_ram_bytes(struct btrfs_trans_handle *trans,
 			    struct btrfs_file_extent_item);
 	btrfs_set_file_extent_ram_bytes(path->nodes[0], fi, on_disk_item_len);
 	btrfs_mark_buffer_dirty(path->nodes[0]);
-	printf("Repaired inline ram_bytes for root %llu ino %llu\n",
+	printf("Repaired inline ram_bytes for root %" PRIu64 " ino %" PRIu64 "\n",
 		root->objectid, rec->ino);
 	rec->errors &= ~I_ERR_INLINE_RAM_BYTES_WRONG;
 out:
@@ -2638,7 +2639,7 @@ static int repair_mismatch_dir_hash(struct btrfs_trans_handle *trans,
 	int ret = -EUCLEAN;
 
 	printf(
-	"Deleting bad dir items with invalid hash for root %llu ino %llu\n",
+	"Deleting bad dir items with invalid hash for root %" PRIu64 " ino %" PRIu64 "\n",
 		root->root_key.objectid, rec->ino);
 	while (!list_empty(&rec->mismatch_dir_hash)) {
 		char *namebuf;
@@ -2778,7 +2779,7 @@ static int repair_unaligned_extent_recs(struct btrfs_trans_handle *trans,
 		key.objectid = urec->owner;
 		key.type = BTRFS_EXTENT_DATA_KEY;
 		key.offset = urec->offset;
-		fprintf(stderr, "delete file extent item [%llu,%llu]\n",
+		fprintf(stderr, "delete file extent item [%" PRIu64 ",%" PRIu64 "]\n",
 					urec->owner, urec->offset);
 		ret = btrfs_delete_item(trans, root, &key);
 		if (ret)
@@ -2850,12 +2851,12 @@ static int repair_inode_gen_original(struct btrfs_trans_handle *trans,
 	ret = btrfs_search_slot(trans, root, &key, path, 0, 1);
 	if (ret > 0) {
 		ret = -ENOENT;
-		error("no inode item found for ino %llu", rec->ino);
+		error("no inode item found for ino %" PRIu64, rec->ino);
 		return ret;
 	}
 	if (ret < 0) {
 		errno = -ret;
-		error("failed to search inode item for ino %llu: %m", rec->ino);
+		error("failed to search inode item for ino %" PRIu64 ": %m", rec->ino);
 		return ret;
 	}
 	ii = btrfs_item_ptr(path->nodes[0], path->slots[0],
@@ -2864,7 +2865,7 @@ static int repair_inode_gen_original(struct btrfs_trans_handle *trans,
 	btrfs_set_inode_transid(path->nodes[0], ii, trans->transid);
 	btrfs_mark_buffer_dirty(path->nodes[0]);
 	btrfs_release_path(path);
-	printf("resetting inode generation/transid to %llu for ino %llu\n",
+	printf("resetting inode generation/transid to %" PRIu64 " for ino %" PRIu64 "\n",
 		trans->transid, rec->ino);
 	rec->errors &= ~I_ERR_INVALID_GEN;
 	return 0;
@@ -3028,8 +3029,8 @@ static int check_inode_recs(struct btrfs_root *root,
 			}
 
 			fprintf(stderr,
-				"root %llu missing its root dir, recreating\n",
-				(unsigned long long)root->objectid);
+				"root %" PRIu64 " missing its root dir, recreating\n",
+				root->objectid);
 
 			ret = btrfs_make_root_dir(trans, root, root_dirid);
 			if (ret < 0) {
@@ -3041,9 +3042,9 @@ static int check_inode_recs(struct btrfs_root *root,
 			return -EAGAIN;
 		}
 
-		fprintf(stderr, "root %llu root dir %llu not found\n",
-			(unsigned long long)root->root_key.objectid,
-			(unsigned long long)root_dirid);
+		fprintf(stderr, "root %" PRIu64 " root dir %" PRIu64 " not found\n",
+			root->root_key.objectid,
+			root_dirid);
 	}
 
 	while (1) {
@@ -3092,10 +3093,10 @@ static int check_inode_recs(struct btrfs_root *root,
 				backref->errors |= REF_ERR_NO_DIR_INDEX;
 			if (!backref->found_inode_ref)
 				backref->errors |= REF_ERR_NO_INODE_REF;
-			fprintf(stderr, "\tunresolved ref dir %llu index %llu"
+			fprintf(stderr, "\tunresolved ref dir %" PRIu64 " index %" PRIu64 ""
 				" namelen %u name %s filetype %d errors %x",
-				(unsigned long long)backref->dir,
-				(unsigned long long)backref->index,
+				backref->dir,
+				backref->index,
 				backref->namelen, backref->name,
 				backref->filetype, backref->errors);
 			print_ref_error(backref->errors);
@@ -3349,8 +3350,8 @@ static int check_root_refs(struct btrfs_root *root,
 			if (!rec->found_root_item)
 				continue;
 			errors++;
-			fprintf(stderr, "fs tree %llu not referenced\n",
-				(unsigned long long)rec->objectid);
+			fprintf(stderr, "fs tree %" PRIu64 " not referenced\n",
+				rec->objectid);
 		}
 
 		error = 0;
@@ -3372,8 +3373,8 @@ static int check_root_refs(struct btrfs_root *root,
 			continue;
 
 		errors++;
-		fprintf(stderr, "fs tree %llu refs %u %s\n",
-			(unsigned long long)rec->objectid, rec->found_ref,
+		fprintf(stderr, "fs tree %" PRIu64 " refs %u %s\n",
+			rec->objectid, rec->found_ref,
 			 rec->found_root_item ? "" : "not found");
 
 		list_for_each_entry(backref, &rec->backrefs, list) {
@@ -3381,11 +3382,11 @@ static int check_root_refs(struct btrfs_root *root,
 				continue;
 			if (!backref->errors && rec->found_root_item)
 				continue;
-			fprintf(stderr, "\tunresolved ref root %llu dir %llu"
-				" index %llu namelen %u name %s errors %x\n",
-				(unsigned long long)backref->ref_root,
-				(unsigned long long)backref->dir,
-				(unsigned long long)backref->index,
+			fprintf(stderr, "\tunresolved ref root %" PRIu64 " dir %" PRIu64 ""
+				" index %" PRIu64 " namelen %u name %s errors %x\n",
+				backref->ref_root,
+				backref->dir,
+				backref->index,
 				backref->namelen, backref->name,
 				backref->errors);
 			print_ref_error(backref->errors);
@@ -3551,7 +3552,7 @@ static int check_fs_root(struct btrfs_root *root,
 	super_generation = btrfs_super_generation(gfs_info->super_copy);
 	if (btrfs_root_generation(root_item) > super_generation + 1) {
 		error(
-	"invalid generation for root %llu, have %llu expect (0, %llu]",
+	"invalid generation for root %" PRIu64 ", have %" PRIu64 " expect (0, %" PRIu64 "]",
 		      root->root_key.objectid, btrfs_root_generation(root_item),
 		      super_generation + 1);
 		generation_err = true;
@@ -3559,7 +3560,7 @@ static int check_fs_root(struct btrfs_root *root,
 			root->node->flags |= EXTENT_BAD_TRANSID;
 			ret = recow_extent_buffer(root, root->node);
 			if (!ret) {
-				printf("Reset generation for root %llu\n",
+				printf("Reset generation for root %" PRIu64 "\n",
 					root->root_key.objectid);
 				generation_err = false;
 			}
@@ -3596,7 +3597,7 @@ static int check_fs_root(struct btrfs_root *root,
 
 		if (IS_ERR_OR_NULL(inode)) {
 			fprintf(stderr,
-				"fail to get inode rec on [%llu,%llu]\n",
+				"fail to get inode rec on [%" PRIu64 ",%" PRIu64"]\n",
 				urec->objectid, urec->owner);
 
 			list_del(&urec->list);
@@ -3670,21 +3671,21 @@ skip_walking:
 		struct cache_extent *cache;
 		struct btrfs_corrupt_block *corrupt;
 
-		printf("The following tree block(s) is corrupted in tree %llu:\n",
+		printf("The following tree block(s) is corrupted in tree %" PRIu64 ":\n",
 		       root->root_key.objectid);
 		cache = first_cache_extent(&corrupt_blocks);
 		while (cache) {
 			corrupt = container_of(cache,
 					       struct btrfs_corrupt_block,
 					       cache);
-			printf("\ttree block bytenr: %llu, level: %d, node key: (%llu, %u, %llu)\n",
+			printf("\ttree block bytenr: %" PRIu64 ", level: %d, node key: (%" PRIu64 ", %u, %" PRIu64 ")\n",
 			       cache->start, corrupt->level,
 			       corrupt->key.objectid, corrupt->key.type,
 			       corrupt->key.offset);
 			cache = next_cache_extent(cache);
 		}
 		if (repair) {
-			printf("Try to repair the btree for root %llu\n",
+			printf("Try to repair the btree for root %" PRIu64 "\n",
 			       root->root_key.objectid);
 			ret = repair_btree(root, &corrupt_blocks);
 			if (ret < 0) {
@@ -3692,7 +3693,7 @@ skip_walking:
 				fprintf(stderr, "Failed to repair btree: %m\n");
 			}
 			if (!ret)
-				printf("Btree for root %llu is fixed\n",
+				printf("Btree for root %" PRIu64 " is fixed\n",
 				       root->root_key.objectid);
 		}
 	}
@@ -3923,25 +3924,25 @@ static int all_backpointers_checked(struct extent_record *rec, int print_errs)
 			if (back->is_data) {
 				dback = to_data_backref(back);
 				fprintf(stderr,
-"data backref %llu %s %llu owner %llu offset %llu num_refs %lu not found in extent tree\n",
-					(unsigned long long)rec->start,
+"data backref %" PRIu64 " %s %" PRIu64 " owner %" PRIu64 " offset %" PRIu64 " num_refs %lu not found in extent tree\n",
+					rec->start,
 					back->full_backref ?
 					"parent" : "root",
 					back->full_backref ?
-					(unsigned long long)dback->parent :
-					(unsigned long long)dback->root,
-					(unsigned long long)dback->owner,
-					(unsigned long long)dback->offset,
+					dback->parent :
+					dback->root,
+					dback->owner,
+					dback->offset,
 					(unsigned long)dback->num_refs);
 			} else {
 				tback = to_tree_backref(back);
 				fprintf(stderr,
-"tree backref %llu %s %llu not found in extent tree\n",
-					(unsigned long long)rec->start,
+"tree backref %" PRIu64 " %s %" PRIu64 " not found in extent tree\n",
+					rec->start,
 					back->full_backref ? "parent" : "root",
 					back->full_backref ?
-					(unsigned long long)tback->parent :
-					(unsigned long long)tback->root);
+					tback->parent :
+					tback->root);
 			}
 		}
 		if (!back->is_data && !back->found_ref) {
@@ -3950,12 +3951,12 @@ static int all_backpointers_checked(struct extent_record *rec, int print_errs)
 				goto out;
 			tback = to_tree_backref(back);
 			fprintf(stderr,
-				"backref %llu %s %llu not referenced back %p\n",
-				(unsigned long long)rec->start,
+				"backref %" PRIu64 " %s %" PRIu64 " not referenced back %p\n",
+				rec->start,
 				back->full_backref ? "parent" : "root",
 				back->full_backref ?
-				(unsigned long long)tback->parent :
-				(unsigned long long)tback->root, back);
+				tback->parent :
+				tback->root, back);
 		}
 		if (back->is_data) {
 			dback = to_data_backref(back);
@@ -3964,15 +3965,15 @@ static int all_backpointers_checked(struct extent_record *rec, int print_errs)
 				if (!print_errs)
 					goto out;
 				fprintf(stderr,
-"incorrect local backref count on %llu %s %llu owner %llu offset %llu found %u wanted %u back %p\n",
-					(unsigned long long)rec->start,
+"incorrect local backref count on %" PRIu64 " %s %" PRIu64 " owner %" PRIu64 " offset %" PRIu64 " found %u wanted %u back %p\n",
+					rec->start,
 					back->full_backref ?
 					"parent" : "root",
 					back->full_backref ?
-					(unsigned long long)dback->parent :
-					(unsigned long long)dback->root,
-					(unsigned long long)dback->owner,
-					(unsigned long long)dback->offset,
+					dback->parent :
+					dback->root,
+					dback->owner,
+					dback->offset,
 					dback->found_ref, dback->num_refs,
 					back);
 			}
@@ -3981,9 +3982,9 @@ static int all_backpointers_checked(struct extent_record *rec, int print_errs)
 				if (!print_errs)
 					goto out;
 				fprintf(stderr,
-"backref disk bytenr does not match extent record, bytenr=%llu, ref bytenr=%llu\n",
-					(unsigned long long)rec->start,
-					(unsigned long long)dback->disk_bytenr);
+"backref disk bytenr does not match extent record, bytenr=%" PRIu64 ", ref bytenr=%" PRIu64 "\n",
+					rec->start,
+					dback->disk_bytenr);
 			}
 
 			if (dback->bytes != rec->nr) {
@@ -3991,10 +3992,10 @@ static int all_backpointers_checked(struct extent_record *rec, int print_errs)
 				if (!print_errs)
 					goto out;
 				fprintf(stderr,
-"backref bytes do not match extent backref, bytenr=%llu, ref bytes=%llu, backref bytes=%llu\n",
-					(unsigned long long)rec->start,
-					(unsigned long long)rec->nr,
-					(unsigned long long)dback->bytes);
+"backref bytes do not match extent backref, bytenr=%" PRIu64 ", ref bytes=%" PRIu64 ", backref bytes=%" PRIu64 "\n",
+					rec->start,
+					rec->nr,
+					dback->bytes);
 			}
 		}
 		if (!back->is_data) {
@@ -4009,10 +4010,10 @@ static int all_backpointers_checked(struct extent_record *rec, int print_errs)
 		if (!print_errs)
 			goto out;
 		fprintf(stderr,
-	"incorrect global backref count on %llu found %llu wanted %llu\n",
-			(unsigned long long)rec->start,
-			(unsigned long long)found,
-			(unsigned long long)rec->refs);
+	"incorrect global backref count on %" PRIu64 " found %" PRIu64 " wanted %" PRIu64 "\n",
+			rec->start,
+			found,
+			rec->refs);
 	}
 out:
 	return err;
@@ -4281,9 +4282,9 @@ static int delete_bogus_item(struct btrfs_root *root,
 	    key.type != BTRFS_EXTENT_DATA_REF_KEY)
 		return -1;
 
-	printf("Deleting bogus item [%llu,%u,%llu] at slot %d on block %llu\n",
-	       (unsigned long long)key.objectid, key.type,
-	       (unsigned long long)key.offset, slot, buf->start);
+	printf("Deleting bogus item [%" PRIu64 ",%u,%" PRIu64 "] at slot %d on block %" PRIu64 "\n",
+	       key.objectid, key.type,
+	       key.offset, slot, buf->start);
 	memmove_extent_buffer(buf, btrfs_item_nr_offset(slot),
 			      btrfs_item_nr_offset(slot + 1),
 			      sizeof(struct btrfs_item) *
@@ -4343,8 +4344,8 @@ again:
 		if (!shift)
 			continue;
 
-		printf("Shifting item nr %d by %u bytes in block %llu\n",
-		       i, shift, (unsigned long long)buf->start);
+		printf("Shifting item nr %d by %u bytes in block %" PRIu64 "\n",
+		       i, shift, buf->start);
 		offset = btrfs_item_offset_nr(buf, i);
 		memmove_extent_buffer(buf,
 				      btrfs_leaf_data(buf) + offset + shift,
@@ -4482,8 +4483,8 @@ static int check_block(struct btrfs_root *root,
 			status = try_to_fix_bad_block(root, buf, status);
 		if (status != BTRFS_TREE_BLOCK_CLEAN) {
 			ret = -EIO;
-			fprintf(stderr, "bad block %llu\n",
-				(unsigned long long)buf->start);
+			fprintf(stderr, "bad block %" PRIu64 "\n",
+				buf->start);
 		} else {
 			/*
 			 * Signal to callers we need to start the scan over
@@ -4725,11 +4726,11 @@ static int add_extent_rec(struct cache_tree *extent_cache,
 		if (tmpl->extent_item_refs && !dup) {
 			if (rec->extent_item_refs) {
 				fprintf(stderr,
-			"block %llu rec extent_item_refs %llu, passed %llu\n",
-					(unsigned long long)tmpl->start,
-					(unsigned long long)
+			"block %" PRIu64 " rec extent_item_refs %" PRIu64 ", passed %" PRIu64 "\n",
+					tmpl->start,
+					
 							rec->extent_item_refs,
-					(unsigned long long)
+					
 							tmpl->extent_item_refs);
 			}
 			rec->extent_item_refs = tmpl->extent_item_refs;
@@ -4815,19 +4816,19 @@ static int add_tree_backref(struct cache_tree *extent_cache, u64 bytenr,
 	if (found_ref) {
 		if (back->node.found_ref) {
 			fprintf(stderr,
-	"Extent back ref already exists for %llu parent %llu root %llu\n",
-				(unsigned long long)bytenr,
-				(unsigned long long)parent,
-				(unsigned long long)root);
+	"Extent back ref already exists for %" PRIu64 " parent %" PRIu64 " root %" PRIu64 "\n",
+				bytenr,
+				parent,
+				root);
 		}
 		back->node.found_ref = 1;
 	} else {
 		if (back->node.found_extent_tree) {
 			fprintf(stderr,
-	"extent back ref already exists for %llu parent %llu root %llu\n",
-				(unsigned long long)bytenr,
-				(unsigned long long)parent,
-				(unsigned long long)root);
+	"extent back ref already exists for %" PRIu64 " parent %" PRIu64 " root %" PRIu64 "\n",
+				bytenr,
+				parent,
+				root);
 		}
 		back->node.found_extent_tree = 1;
 	}
@@ -4915,12 +4916,12 @@ static int add_data_backref(struct cache_tree *extent_cache, u64 bytenr,
 	} else {
 		if (back->node.found_extent_tree) {
 			fprintf(stderr,
-"Extent back ref already exists for %llu parent %llu root %llu owner %llu offset %llu num_refs %lu\n",
-				(unsigned long long)bytenr,
-				(unsigned long long)parent,
-				(unsigned long long)root,
-				(unsigned long long)owner,
-				(unsigned long long)offset,
+"Extent back ref already exists for %" PRIu64 " parent %" PRIu64 " root %" PRIu64 " owner %" PRIu64 " offset %" PRIu64 " num_refs %lu\n",
+				bytenr,
+				parent,
+				root,
+				owner,
+				offset,
 				(unsigned long)num_refs);
 		}
 		back->num_refs = num_refs;
@@ -5186,14 +5187,14 @@ static int process_chunk_item(struct cache_tree *chunk_cache,
 	ret = btrfs_check_chunk_valid(gfs_info, eb, chunk, slot,
 				      key->offset);
 	if (ret < 0) {
-		error("chunk(%llu, %llu) is not valid, ignore it",
+		error("chunk(%" PRIu64 ", %" PRIu64 ") is not valid, ignore it",
 		      key->offset, btrfs_chunk_length(eb, chunk));
 		return 0;
 	}
 	rec = btrfs_new_chunk_record(eb, key, slot);
 	ret = insert_cache_extent(chunk_cache, &rec->cache);
 	if (ret) {
-		fprintf(stderr, "Chunk[%llu, %llu] existed.\n",
+		fprintf(stderr, "Chunk[%" PRIu64 ", %" PRIu64 "] existed.\n",
 			rec->offset, rec->length);
 		free(rec);
 	}
@@ -5230,7 +5231,7 @@ static int process_device_item(struct rb_root *dev_cache,
 
 	ret = rb_insert(dev_cache, &rec->node, device_record_compare);
 	if (ret) {
-		fprintf(stderr, "Device[%llu] existed.\n", rec->devid);
+		fprintf(stderr, "Device[%" PRIu64 "] existed.\n", rec->devid);
 		free(rec);
 	}
 
@@ -5277,7 +5278,7 @@ static int process_block_group_item(struct block_group_tree *block_group_cache,
 	rec = btrfs_new_block_group_record(eb, key, slot);
 	ret = insert_block_group_record(block_group_cache, rec);
 	if (ret) {
-		fprintf(stderr, "Block Group[%llu, %llu] existed.\n",
+		fprintf(stderr, "Block Group[%" PRIu64 ", %" PRIu64 "] existed.\n",
 			rec->objectid, rec->offset);
 		free(rec);
 	}
@@ -5333,7 +5334,7 @@ process_device_extent_item(struct device_extent_tree *dev_extent_cache,
 	ret = insert_device_extent_record(dev_extent_cache, rec);
 	if (ret) {
 		fprintf(stderr,
-			"Device extent[%llu, %llu, %llu] existed.\n",
+			"Device extent[%" PRIu64 ", %" PRIu64 ", %" PRIu64 "] existed.\n",
 			rec->objectid, rec->offset, rec->length);
 		free(rec);
 	}
@@ -5372,7 +5373,7 @@ static int process_extent_item(struct btrfs_root *root,
 	}
 
 	if (!IS_ALIGNED(key.objectid, gfs_info->sectorsize)) {
-		error("ignoring invalid extent, bytenr %llu is not aligned to %u",
+		error("ignoring invalid extent, bytenr %" PRIu64 " is not aligned to %u",
 		      key.objectid, gfs_info->sectorsize);
 		return -EIO;
 	}
@@ -5391,12 +5392,12 @@ static int process_extent_item(struct btrfs_root *root,
 	else
 		metadata = 0;
 	if (metadata && num_bytes != gfs_info->nodesize) {
-		error("ignore invalid metadata extent, length %llu does not equal to %u",
+		error("ignore invalid metadata extent, length %" PRIu64 " does not equal to %u",
 		      num_bytes, gfs_info->nodesize);
 		return -EIO;
 	}
 	if (!metadata && !IS_ALIGNED(num_bytes, gfs_info->sectorsize)) {
-		error("ignore invalid data extent, length %llu is not aligned to %u",
+		error("ignore invalid data extent, length %" PRIu64 " is not aligned to %u",
 		      num_bytes, gfs_info->sectorsize);
 		return -EIO;
 	}
@@ -5459,7 +5460,7 @@ static int process_extent_item(struct btrfs_root *root,
 			break;
 		default:
 			fprintf(stderr,
-				"corrupt extent record: key [%llu,%u,%llu]\n",
+				"corrupt extent record: key [%" PRIu64 ",%u,%" PRIu64 "]\n",
 				key.objectid, key.type, num_bytes);
 			goto out;
 		}
@@ -5542,19 +5543,19 @@ static int check_cache_range(struct btrfs_root *root,
 
 	entry = btrfs_find_free_space(cache->free_space_ctl, offset, bytes);
 	if (!entry) {
-		fprintf(stderr, "there is no free space entry for %llu-%llu\n",
+		fprintf(stderr, "there is no free space entry for %" PRIu64 "-%" PRIu64 "\n",
 			offset, offset+bytes);
 		return -EINVAL;
 	}
 
 	if (entry->offset != offset) {
-		fprintf(stderr, "wanted offset %llu, found %llu\n", offset,
+		fprintf(stderr, "wanted offset %" PRIu64 ", found %" PRIu64 "\n", offset,
 			entry->offset);
 		return -EINVAL;
 	}
 
 	if (entry->bytes != bytes) {
-		fprintf(stderr, "wanted bytes %llu, found %llu for off %llu\n",
+		fprintf(stderr, "wanted bytes %" PRIu64 ", found %" PRIu64 " for off %" PRIu64 "\n",
 			bytes, entry->bytes, offset);
 		return -EINVAL;
 	}
@@ -5695,7 +5696,7 @@ static int check_space_cache(struct btrfs_root *root)
 
 		ret = verify_space_cache(root, cache);
 		if (ret) {
-			fprintf(stderr, "cache appears valid but isn't %llu\n",
+			fprintf(stderr, "cache appears valid but isn't %" PRIu64 "\n",
 				cache->start);
 			error++;
 		}
@@ -5768,7 +5769,7 @@ static int check_extent_csums(struct btrfs_root *root, u64 bytenr,
 					csum_mismatch = true;
 					/* FIXME: format of the checksum value */
 					fprintf(stderr,
-			"mirror %d bytenr %llu csum %u expected csum %u\n",
+			"mirror %d bytenr %" PRIu64 " csum %u expected csum %u\n",
 						mirror, bytenr + tmp,
 						result[0], csum_expected[0]);
 				}
@@ -5915,7 +5916,7 @@ again:
 out:
 	if (num_bytes && !ret) {
 		fprintf(stderr,
-			"there are no extents for csum range %llu-%llu\n",
+			"there are no extents for csum range %" PRIu64 "-%" PRIu64 "\n",
 			bytenr, bytenr+num_bytes);
 		ret = 1;
 	}
@@ -5991,7 +5992,7 @@ static int check_csums(struct btrfs_root *root)
 
 		if (key.offset < last_data_end) {
 			error(
-	"csum overlap, current bytenr=%llu prev_end=%llu, eb=%llu slot=%u",
+	"csum overlap, current bytenr=%" PRIu64 " prev_end=%" PRIu64 ", eb=%" PRIu64 " slot=%u",
 				key.offset, last_data_end, leaf->start,
 				path.slots[0]);
 			errors++;
@@ -6018,7 +6019,7 @@ skip_csum_check:
 			ret = check_extent_exists(root, offset, num_bytes);
 			if (ret) {
 				fprintf(stderr,
-		"csum exists for %llu-%llu but there is no extent record\n",
+		"csum exists for %" PRIu64 "-%" PRIu64 " but there is no extent record\n",
 					offset, offset+num_bytes);
 				errors++;
 			}
@@ -6444,7 +6445,7 @@ static int run_next_block(struct btrfs_root *root,
 			if (btrfs_item_size_nr(buf, i) < inline_offset) {
 				ret = -EUCLEAN;
 				error(
-		"invalid file extent item size, have %u expect (%lu, %lu]",
+		"invalid file extent item size, have %u expect (%lu, %zu]",
 					btrfs_item_size_nr(buf, i),
 					inline_offset,
 					BTRFS_LEAF_DATA_SIZE(gfs_info));
@@ -6470,7 +6471,7 @@ static int run_next_block(struct btrfs_root *root,
 			if (!IS_ALIGNED(key.offset, gfs_info->sectorsize)) {
 				ret = -EUCLEAN;
 				error(
-			"invalid file offset, have %llu expect aligned to %u",
+			"invalid file offset, have %" PRIu64 " expect aligned to %u",
 					key.offset, gfs_info->sectorsize);
 				continue;
 			}
@@ -6720,7 +6721,7 @@ static int delete_extent_records(struct btrfs_trans_handle *trans,
 		}
 
 		fprintf(stderr,
-			"repair deleting extent record: key [%llu,%u,%llu]\n",
+			"repair deleting extent record: key [%" PRIu64 ",%u,%" PRIu64 "]\n",
 			found_key.objectid, found_key.type, found_key.offset);
 
 		ret = btrfs_del_item(trans, gfs_info->extent_root, path);
@@ -6848,13 +6849,13 @@ static int record_extent(struct btrfs_trans_handle *trans,
 				break;
 		}
 		fprintf(stderr,
-"adding new data backref on %llu %s %llu owner %llu offset %llu found %d\n",
-			(unsigned long long)rec->start,
+"adding new data backref on %" PRIu64 " %s %" PRIu64 " owner %" PRIu64 " offset %" PRIu64 " found %d\n",
+			rec->start,
 			back->full_backref ? "parent" : "root",
-			back->full_backref ? (unsigned long long)parent :
-					     (unsigned long long)dback->root,
-			(unsigned long long)dback->owner,
-			(unsigned long long)dback->offset, dback->found_ref);
+			back->full_backref ? parent :
+					     dback->root,
+			dback->owner,
+			dback->offset, dback->found_ref);
 	} else {
 		u64 parent;
 		struct tree_backref *tback;
@@ -6869,7 +6870,7 @@ static int record_extent(struct btrfs_trans_handle *trans,
 					   rec->start, rec->max_size,
 					   parent, tback->root, 0, 0);
 		fprintf(stderr,
-"adding new tree backref on start %llu len %llu parent %llu root %llu\n",
+"adding new tree backref on start %" PRIu64 " len %" PRIu64 " parent %" PRIu64 " root %" PRIu64 "\n",
 			rec->start, rec->max_size, parent, tback->root);
 	}
 fail:
@@ -7007,13 +7008,13 @@ static int repair_ref(struct btrfs_path *path, struct data_backref *dback,
 	 */
 	ret = btrfs_search_slot(trans, root, &key, path, 0, 1);
 	if (ret < 0) {
-		fprintf(stderr, "error cowing down to ref [%llu,%u,%llu]: %d\n",
+		fprintf(stderr, "error cowing down to ref [%" PRIu64 ",%u,%" PRIu64 "]: %d\n",
 			key.objectid, key.type, key.offset, ret);
 		goto out;
 	}
 	if (ret > 0) {
 		fprintf(stderr,
-		"well that's odd, we just found this key [%llu,%u,%llu]\n",
+		"well that's odd, we just found this key [%" PRIu64 ",%u,%" PRIu64 "]\n",
 			key.objectid, key.type, key.offset);
 		ret = -EINVAL;
 		goto out;
@@ -7025,7 +7026,7 @@ static int repair_ref(struct btrfs_path *path, struct data_backref *dback,
 	if (btrfs_file_extent_compression(leaf, fi) &&
 	    dback->disk_bytenr != entry->bytenr) {
 		fprintf(stderr,
-"ref doesn't match the record start and is compressed, please take a btrfs-image of this file system and send it to a btrfs developer so they can complete this functionality for bytenr %llu\n",
+"ref doesn't match the record start and is compressed, please take a btrfs-image of this file system and send it to a btrfs developer so they can complete this functionality for bytenr %" PRIu64 "\n",
 			dback->disk_bytenr);
 		ret = -EINVAL;
 		goto out;
@@ -7042,7 +7043,7 @@ static int repair_ref(struct btrfs_path *path, struct data_backref *dback,
 		    btrfs_file_extent_num_bytes(leaf, fi) >
 		    entry->bytenr + entry->bytes) {
 			fprintf(stderr,
-"ref is past the entry end, please take a btrfs-image of this file system and send it to a btrfs developer, ref %llu\n",
+"ref is past the entry end, please take a btrfs-image of this file system and send it to a btrfs developer, ref %" PRIu64 "\n",
 				dback->disk_bytenr);
 			ret = -EINVAL;
 			goto out;
@@ -7056,7 +7057,7 @@ static int repair_ref(struct btrfs_path *path, struct data_backref *dback,
 		offset = btrfs_file_extent_offset(leaf, fi);
 		if (dback->disk_bytenr + offset < entry->bytenr) {
 			fprintf(stderr,
-"ref is before the entry start, please take a btrfs-image of this file system and send it to a btrfs developer, ref %llu\n",
+"ref is before the entry start, please take a btrfs-image of this file system and send it to a btrfs developer, ref %" PRIu64 "\n",
 				dback->disk_bytenr);
 			ret = -EINVAL;
 			goto out;
@@ -7162,7 +7163,7 @@ static int verify_backrefs(struct btrfs_path *path, struct extent_record *rec)
 		goto out;
 
 	fprintf(stderr,
-		"attempting to repair backref discrepancy for bytenr %llu\n",
+		"attempting to repair backref discrepancy for bytenr %" PRIu64 "\n",
 		rec->start);
 
 	/*
@@ -7180,7 +7181,7 @@ static int verify_backrefs(struct btrfs_path *path, struct extent_record *rec)
 		entry = find_entry(&entries, rec->start, rec->nr);
 		if (!entry && (!broken_entries || !rec->found_rec)) {
 			fprintf(stderr,
-"backrefs don't agree with each other and extent record doesn't agree with anybody, so we can't fix bytenr %llu bytes %llu\n",
+"backrefs don't agree with each other and extent record doesn't agree with anybody, so we can't fix bytenr %" PRIu64 " bytes %" PRIu64 "\n",
 				rec->start, rec->nr);
 			ret = -EINVAL;
 			goto out;
@@ -7204,7 +7205,7 @@ static int verify_backrefs(struct btrfs_path *path, struct extent_record *rec)
 		best = find_most_right_entry(&entries);
 		if (!best) {
 			fprintf(stderr,
-"backrefs and extent record evenly split on who is right, this is going to require user input to fix bytenr %llu bytes %llu\n",
+"backrefs and extent record evenly split on who is right, this is going to require user input to fix bytenr %" PRIu64 " bytes %" PRIu64 "\n",
 				rec->start, rec->nr);
 			ret = -EINVAL;
 			goto out;
@@ -7218,7 +7219,7 @@ static int verify_backrefs(struct btrfs_path *path, struct extent_record *rec)
 	 */
 	if (best->bytenr != rec->start) {
 		fprintf(stderr,
-"extent start and backref starts don't match, please use btrfs-image on this file system and send it to a btrfs developer so they can make fsck fix this particular case.  bytenr is %llu, bytes is %llu\n",
+"extent start and backref starts don't match, please use btrfs-image on this file system and send it to a btrfs developer so they can make fsck fix this particular case.  bytenr is %" PRIu64 ", bytes is %" PRIu64 "\n",
 			rec->start, rec->nr);
 		ret = -EINVAL;
 		goto out;
@@ -7369,7 +7370,7 @@ static int delete_duplicate_records(struct btrfs_root *root,
 
 		if (tmp->start + tmp->nr < good->start + good->nr) {
 			fprintf(stderr,
-"Ok we have overlapping extents that aren't completely covered by each other, this is going to require more careful thought. The extents are [%llu-%llu] and [%llu-%llu]\n",
+"Ok we have overlapping extents that aren't completely covered by each other, this is going to require more careful thought. The extents are [%" PRIu64 "-%" PRIu64 "] and [%" PRIu64 "-%" PRIu64 "]\n",
 				tmp->start, tmp->nr, good->start, good->nr);
 			abort();
 		}
@@ -7402,7 +7403,7 @@ static int delete_duplicate_records(struct btrfs_root *root,
 		/* Shouldn't happen but just in case */
 		if (tmp->metadata) {
 			fprintf(stderr,
-"well this shouldn't happen, extent record overlaps but is metadata? [%llu, %llu]\n",
+"well this shouldn't happen, extent record overlaps but is metadata? [%" PRIu64 ", %" PRIu64 "]\n",
 				tmp->start, tmp->nr);
 			abort();
 		}
@@ -7691,8 +7692,8 @@ out:
 	}
 
 	if (!ret)
-		fprintf(stderr, "Repaired extent references for %llu\n",
-				(unsigned long long)rec->start);
+		fprintf(stderr, "Repaired extent references for %" PRIu64 "\n",
+				rec->start);
 
 	btrfs_release_path(&path);
 	return ret;
@@ -7736,8 +7737,8 @@ retry:
 			metadata_item = false;
 			goto retry;
 		}
-		fprintf(stderr, "Didn't find extent for %llu\n",
-			(unsigned long long)rec->start);
+		fprintf(stderr, "Didn't find extent for %" PRIu64 "\n",
+			rec->start);
 		btrfs_release_path(&path);
 		btrfs_commit_transaction(trans, root);
 		return -ENOENT;
@@ -7747,12 +7748,12 @@ retry:
 			    struct btrfs_extent_item);
 	flags = btrfs_extent_flags(path.nodes[0], ei);
 	if (rec->flag_block_full_backref) {
-		fprintf(stderr, "setting full backref on %llu\n",
-			(unsigned long long)key.objectid);
+		fprintf(stderr, "setting full backref on %" PRIu64 "\n",
+			key.objectid);
 		flags |= BTRFS_BLOCK_FLAG_FULL_BACKREF;
 	} else {
-		fprintf(stderr, "clearing full backref on %llu\n",
-			(unsigned long long)key.objectid);
+		fprintf(stderr, "clearing full backref on %" PRIu64 "\n",
+			key.objectid);
 		flags &= ~BTRFS_BLOCK_FLAG_FULL_BACKREF;
 	}
 	btrfs_set_extent_flags(path.nodes[0], ei, flags);
@@ -7760,8 +7761,8 @@ retry:
 	btrfs_release_path(&path);
 	ret = btrfs_commit_transaction(trans, root);
 	if (!ret)
-		fprintf(stderr, "Repaired extent flags for %llu\n",
-				(unsigned long long)rec->start);
+		fprintf(stderr, "Repaired extent flags for %" PRIu64 "\n",
+				rec->start);
 
 	return ret;
 }
@@ -7826,7 +7827,7 @@ again:
 	}
 
 del_ptr:
-	printk("deleting pointer to block %llu\n", corrupt->cache.start);
+	printk("deleting pointer to block %" PRIu64 "\n", corrupt->cache.start);
 	ret = btrfs_del_ptr(gfs_info->extent_root, &path, level, slot);
 
 out:
@@ -7869,7 +7870,7 @@ static int record_unaligned_extent_rec(struct extent_record *rec)
 	LIST_HEAD(entries);
 	int ret = 0;
 
-	fprintf(stderr, "record unaligned extent record on %llu %llu\n",
+	fprintf(stderr, "record unaligned extent record on %" PRIu64 " %" PRIu64 "\n",
 			rec->start, rec->nr);
 
 	/*
@@ -7963,7 +7964,7 @@ static int repair_extent_item_generation(struct extent_record *rec)
 		error("failed to commit transaction: %m");
 		goto out;
 	}
-	printf("Reset extent item (%llu) generation to %llu\n",
+	printf("Reset extent item (%" PRIu64 ") generation to %" PRIu64 "\n",
 		key.objectid, new_gen);
 	rec->generation = new_gen;
 out:
@@ -8057,8 +8058,8 @@ static int check_extent_refs(struct btrfs_root *root,
 		rec = container_of(cache, struct extent_record, cache);
 		if (rec->num_duplicates) {
 			fprintf(stderr,
-				"extent item %llu has multiple extent items\n",
-				(unsigned long long)rec->start);
+				"extent item %" PRIu64 " has multiple extent items\n",
+				rec->start);
 			cur_err = 1;
 		}
 
@@ -8072,27 +8073,27 @@ static int check_extent_refs(struct btrfs_root *root,
 			}
 			if (!repaired) {
 				error(
-	"invalid generation for extent %llu, have %llu expect (0, %llu]",
+	"invalid generation for extent %" PRIu64 ", have %" PRIu64 " expect (0, %" PRIu64 "]",
 					rec->start, rec->generation,
 					super_gen + 1);
 				cur_err = 1;
 			}
 		}
 		if (rec->refs != rec->extent_item_refs) {
-			fprintf(stderr, "ref mismatch on [%llu %llu] ",
-				(unsigned long long)rec->start,
-				(unsigned long long)rec->nr);
-			fprintf(stderr, "extent item %llu, found %llu\n",
-				(unsigned long long)rec->extent_item_refs,
-				(unsigned long long)rec->refs);
+			fprintf(stderr, "ref mismatch on [%" PRIu64 " %" PRIu64 "] ",
+				rec->start,
+				rec->nr);
+			fprintf(stderr, "extent item %" PRIu64 ", found %" PRIu64 "\n",
+				rec->extent_item_refs,
+				rec->refs);
 			fix = 1;
 			cur_err = 1;
 		}
 
 		if (!IS_ALIGNED(rec->start, gfs_info->sectorsize)) {
-			fprintf(stderr, "unaligned extent rec on [%llu %llu]\n",
-				(unsigned long long)rec->start,
-				(unsigned long long)rec->nr);
+			fprintf(stderr, "unaligned extent rec on [%" PRIu64 " %" PRIu64 "]\n",
+				rec->start,
+				rec->nr);
 			ret = record_unaligned_extent_rec(rec);
 			if (ret)
 				goto repair_abort;
@@ -8102,16 +8103,16 @@ static int check_extent_refs(struct btrfs_root *root,
 		}
 
 		if (all_backpointers_checked(rec, 1)) {
-			fprintf(stderr, "backpointer mismatch on [%llu %llu]\n",
-				(unsigned long long)rec->start,
-				(unsigned long long)rec->nr);
+			fprintf(stderr, "backpointer mismatch on [%" PRIu64 " %" PRIu64 "]\n",
+				rec->start,
+				rec->nr);
 			fix = 1;
 			cur_err = 1;
 		}
 		if (!rec->owner_ref_checked) {
-			fprintf(stderr, "owner ref check failed [%llu %llu]\n",
-				(unsigned long long)rec->start,
-				(unsigned long long)rec->nr);
+			fprintf(stderr, "owner ref check failed [%" PRIu64 " %" PRIu64 "]\n",
+				rec->start,
+				rec->nr);
 			fix = 1;
 			cur_err = 1;
 		}
@@ -8124,8 +8125,8 @@ static int check_extent_refs(struct btrfs_root *root,
 
 
 		if (rec->bad_full_backref) {
-			fprintf(stderr, "bad full backref, on [%llu]\n",
-				(unsigned long long)rec->start);
+			fprintf(stderr, "bad full backref, on [%" PRIu64 "]\n",
+				rec->start);
 			if (repair) {
 				ret = fixup_extent_flags(rec);
 				if (ret)
@@ -8141,14 +8142,14 @@ static int check_extent_refs(struct btrfs_root *root,
 		 */
 		if (rec->crossing_stripes) {
 			fprintf(stderr,
-				"bad metadata [%llu, %llu) crossing stripe boundary\n",
+				"bad metadata [%" PRIu64 ", %" PRIu64 ") crossing stripe boundary\n",
 				rec->start, rec->start + rec->max_size);
 			cur_err = 1;
 		}
 
 		if (rec->wrong_chunk_type) {
 			fprintf(stderr,
-				"bad extent [%llu, %llu), type mismatch with chunk\n",
+				"bad extent [%" PRIu64 ", %" PRIu64 "), type mismatch with chunk\n",
 				rec->start, rec->start + rec->max_size);
 			cur_err = 1;
 		}
@@ -8228,7 +8229,7 @@ static int check_chunk_refs(struct chunk_record *chunk_rec,
 		     chunk_rec->type_flags != block_group_rec->flags)) {
 			if (!silent)
 				fprintf(stderr,
-					"Chunk[%llu, %u, %llu]: length(%llu), offset(%llu), type(%llu) mismatch with block group[%llu, %u, %llu]: offset(%llu), objectid(%llu), flags(%llu)\n",
+					"Chunk[%" PRIu64 ", %u, %" PRIu64 "]: length(%" PRIu64 "), offset(%" PRIu64 "), type(%" PRIu64 ") mismatch with block group[%" PRIu64 ", %u, %" PRIu64 "]: offset(%" PRIu64 "), objectid(%" PRIu64 "), flags(%" PRIu64 ")\n",
 					chunk_rec->objectid,
 					chunk_rec->type,
 					chunk_rec->offset,
@@ -8249,7 +8250,7 @@ static int check_chunk_refs(struct chunk_record *chunk_rec,
 	} else {
 		if (!silent)
 			fprintf(stderr,
-				"Chunk[%llu, %u, %llu]: length(%llu), offset(%llu), type(%llu) is not found in block group\n",
+				"Chunk[%" PRIu64 ", %u, %" PRIu64 "]: length(%" PRIu64 "), offset(%" PRIu64 "), type(%" PRIu64 ") is not found in block group\n",
 				chunk_rec->objectid,
 				chunk_rec->type,
 				chunk_rec->offset,
@@ -8279,7 +8280,7 @@ static int check_chunk_refs(struct chunk_record *chunk_rec,
 			    dev_extent_rec->length != length) {
 				if (!silent)
 					fprintf(stderr,
-"Chunk[%llu, %u, %llu] stripe[%llu, %llu] mismatch dev extent[%llu, %llu, %llu]\n",
+"Chunk[%" PRIu64 ", %u, %" PRIu64 "] stripe[%" PRIu64 ", %" PRIu64 "] mismatch dev extent[%" PRIu64 ", %" PRIu64 ", %" PRIu64 "]\n",
 						chunk_rec->objectid,
 						chunk_rec->type,
 						chunk_rec->offset,
@@ -8296,7 +8297,7 @@ static int check_chunk_refs(struct chunk_record *chunk_rec,
 		} else {
 			if (!silent)
 				fprintf(stderr,
-					"Chunk[%llu, %u, %llu] stripe[%llu, %llu] is not found in dev extent\n",
+					"Chunk[%" PRIu64 ", %u, %" PRIu64 "] stripe[%" PRIu64 ", %" PRIu64 "] is not found in dev extent\n",
 					chunk_rec->objectid,
 					chunk_rec->type,
 					chunk_rec->offset,
@@ -8342,7 +8343,7 @@ int check_chunks(struct cache_tree *chunk_cache,
 	list_for_each_entry(bg_rec, &block_group_cache->block_groups, list) {
 		if (!silent)
 			fprintf(stderr,
-				"Block group[%llu, %llu] (flags = %llu) didn't find the relative chunk.\n",
+				"Block group[%" PRIu64 ", %" PRIu64 "] (flags = %" PRIu64 ") didn't find the relative chunk.\n",
 				bg_rec->objectid,
 				bg_rec->offset,
 				bg_rec->flags);
@@ -8354,7 +8355,7 @@ int check_chunks(struct cache_tree *chunk_cache,
 			    chunk_list) {
 		if (!silent)
 			fprintf(stderr,
-				"Device extent[%llu, %llu, %llu] didn't find the relative chunk.\n",
+				"Device extent[%" PRIu64 ", %" PRIu64 ", %" PRIu64 "] didn't find the relative chunk.\n",
 				dext_rec->objectid,
 				dext_rec->offset,
 				dext_rec->length);
@@ -8374,7 +8375,7 @@ static int check_device_used(struct device_record *dev_rec,
 
 	if (dev_rec->byte_used > dev_rec->total_byte) {
 		error(
-		"device %llu has incorrect used bytes %llu > total bytes %llu",
+		"device %" PRIu64 " has incorrect used bytes %" PRIu64 " > total bytes %" PRIu64 "",
 		      dev_rec->devid, dev_rec->byte_used, dev_rec->total_byte);
 		return -EUCLEAN;
 	}
@@ -8394,7 +8395,7 @@ static int check_device_used(struct device_record *dev_rec,
 
 	if (total_byte != dev_rec->byte_used) {
 		fprintf(stderr,
-			"Dev extent's total-byte(%llu) is not equal to byte-used(%llu) in dev[%llu, %u, %llu]\n",
+			"Dev extent's total-byte(%" PRIu64 ") is not equal to byte-used(%" PRIu64 ") in dev[%" PRIu64 ", %u, %" PRIu64 "]\n",
 			total_byte, dev_rec->byte_used,	dev_rec->objectid,
 			dev_rec->type, dev_rec->offset);
 		return -1;
@@ -8421,7 +8422,7 @@ static bool is_super_size_valid(void)
 
 	/* Important check, which can cause unmountable fs */
 	if (super_bytes < total_bytes) {
-		error("super total bytes %llu smaller than real device(s) size %llu",
+		error("super total bytes %" PRIu64 " smaller than real device(s) size %" PRIu64 "",
 			super_bytes, total_bytes);
 		error("mounting this fs may fail for newer kernels");
 		error("this can be fixed by 'btrfs rescue fix-device-size'");
@@ -8471,7 +8472,7 @@ static int check_devices(struct rb_root *dev_cache,
 	list_for_each_entry(dext_rec, &dev_extent_cache->no_device_orphans,
 			    device_list) {
 		fprintf(stderr,
-			"Device extent[%llu, %llu, %llu] didn't find its device.\n",
+			"Device extent[%" PRIu64 ", %" PRIu64 ", %" PRIu64 "] didn't find its device.\n",
 			dext_rec->objectid, dext_rec->offset, dext_rec->length);
 		if (!ret)
 			ret = 1;
@@ -8720,20 +8721,20 @@ static int check_dev_extents(void)
 
 		dev = btrfs_find_device(gfs_info, devid, NULL, NULL);
 		if (!dev) {
-			error("failed to find device with devid %llu", devid);
+			error("failed to find device with devid %" PRIu64 "", devid);
 			ret = -EUCLEAN;
 			goto out;
 		}
 		if (prev_devid == devid && prev_dev_ext_end > physical_offset) {
 			error(
-"dev extent devid %llu physical offset %llu overlap with previous dev extent end %llu",
+"dev extent devid %" PRIu64 " physical offset %" PRIu64 " overlap with previous dev extent end %" PRIu64 "",
 			      devid, physical_offset, prev_dev_ext_end);
 			ret = -EUCLEAN;
 			goto out;
 		}
 		if (physical_offset + physical_len > dev->total_bytes) {
 			error(
-"dev extent devid %llu physical offset %llu len %llu is beyond device boundary %llu",
+"dev extent devid %" PRIu64 " physical offset %" PRIu64 " len %" PRIu64 " is beyond device boundary %" PRIu64 "",
 			      devid, physical_offset, physical_len,
 			      dev->total_bytes);
 			ret = -EUCLEAN;
@@ -9272,7 +9273,7 @@ static int delete_bad_item(struct btrfs_root *root, struct bad_item *bad)
 	struct btrfs_key key;
 	int ret;
 
-	printf("Deleting bad item [%llu,%u,%llu]\n", bad->key.objectid,
+	printf("Deleting bad item [%" PRIu64 ",%u,%" PRIu64 "]\n", bad->key.objectid,
 	       bad->key.type, bad->key.offset);
 	key.objectid = bad->root_id;
 	key.type = BTRFS_ROOT_ITEM_KEY;
@@ -9280,7 +9281,7 @@ static int delete_bad_item(struct btrfs_root *root, struct bad_item *bad)
 
 	root = btrfs_read_fs_root(gfs_info, &key);
 	if (IS_ERR(root)) {
-		fprintf(stderr, "Couldn't find owner root %llu\n",
+		fprintf(stderr, "Couldn't find owner root %" PRIu64 "\n",
 			key.objectid);
 		return PTR_ERR(root);
 	}
@@ -9443,7 +9444,7 @@ static int fill_csum_tree_from_fs(struct btrfs_trans_handle *trans,
 
 		cur_root = btrfs_read_fs_root(gfs_info, &key);
 		if (IS_ERR(cur_root) || !cur_root) {
-			fprintf(stderr, "Fail to read fs/subvol tree: %lld\n",
+			fprintf(stderr, "Fail to read fs/subvol tree: %" PRIu64 "\n",
 				key.objectid);
 			goto out;
 		}
@@ -9713,7 +9714,7 @@ static int maybe_repair_root_item(struct btrfs_path *path,
 	entry = lookup_cache_extent(roots_info_cache, root_id, 1);
 	if (!entry) {
 		fprintf(stderr,
-			"Error: could not find extent items for root %llu\n",
+			"Error: could not find extent items for root %" PRIu64 "\n",
 			root_key->objectid);
 		return -ENOENT;
 	}
@@ -9724,7 +9725,7 @@ static int maybe_repair_root_item(struct btrfs_path *path,
 
 	if (rii->node_count != 1) {
 		fprintf(stderr,
-			"Error: could not find btree root extent for root %llu\n",
+			"Error: could not find btree root extent for root %" PRIu64 "\n",
 			root_id);
 		return -ENOENT;
 	}
@@ -9745,9 +9746,9 @@ static int maybe_repair_root_item(struct btrfs_path *path,
 		 */
 		if (!(read_only_mode && repair))
 			fprintf(stderr,
-				"%sroot item for root %llu,"
-				" current bytenr %llu, current gen %llu, current level %u,"
-				" new bytenr %llu, new gen %llu, new level %u\n",
+				"%sroot item for root %" PRIu64 ","
+				" current bytenr %" PRIu64 ", current gen %" PRIu64 ", current level %u,"
+				" new bytenr %" PRIu64 ", new gen %" PRIu64 ", new level %u\n",
 				(read_only_mode ? "" : "fixing "),
 				root_id,
 				btrfs_root_bytenr(&ri), btrfs_root_generation(&ri),
@@ -9756,7 +9757,7 @@ static int maybe_repair_root_item(struct btrfs_path *path,
 
 		if (btrfs_root_generation(&ri) > rii->gen) {
 			fprintf(stderr,
-				"root %llu has a root item with a more recent gen (%llu) compared to the found root node (%llu)\n",
+				"root %" PRIu64 " has a root item with a more recent gen (%" PRIu64 ") compared to the found root node (%" PRIu64 ")\n",
 				root_id, btrfs_root_generation(&ri), rii->gen);
 			return -EINVAL;
 		}
@@ -10100,7 +10101,7 @@ int clear_ino_cache_items(void)
 			ret = truncate_free_ino_items(root);
 			if (ret)
 				goto out;
-			printf("Successfully cleaned up ino cache for root id: %lld\n",
+			printf("Successfully cleaned up ino cache for root id: %" PRIu64 "\n",
 					root->objectid);
 		} else {
 			/* If we get a negative tree this means it's the last one */
@@ -10249,8 +10250,8 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 					exit(1);
 				}
 				bytenr = btrfs_sb_offset(((int)num));
-				printf("using SB copy %llu, bytenr %llu\n", num,
-				       (unsigned long long)bytenr);
+				printf("using SB copy %" PRIu64 ", bytenr %" PRIu64 "\n", num,
+				       bytenr);
 				break;
 			case 'Q':
 				qgroup_report = 1;
@@ -10467,7 +10468,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 		goto close_out;
 	}
 	if (subvolid) {
-		printf("Print extent state for subvolume %llu on %s\nUUID: %s\n",
+		printf("Print extent state for subvolume %" PRIu64 " on %s\nUUID: %s\n",
 		       subvolid, argv[optind], uuidbuf);
 		ret = print_extent_state(gfs_info, subvolid);
 		err |= !!ret;
@@ -10731,24 +10732,24 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 		err |= !!ret;
 	}
 out:
-	printf("found %llu bytes used, ",
-	       (unsigned long long)bytes_used);
+	printf("found %" PRIu64 " bytes used, ",
+	       bytes_used);
 	if (err)
 		printf("error(s) found\n");
 	else
 		printf("no error found\n");
-	printf("total csum bytes: %llu\n",(unsigned long long)total_csum_bytes);
-	printf("total tree bytes: %llu\n",
-	       (unsigned long long)total_btree_bytes);
-	printf("total fs tree bytes: %llu\n",
-	       (unsigned long long)total_fs_tree_bytes);
-	printf("total extent tree bytes: %llu\n",
-	       (unsigned long long)total_extent_tree_bytes);
-	printf("btree space waste bytes: %llu\n",
-	       (unsigned long long)btree_space_waste);
-	printf("file data blocks allocated: %llu\n referenced %llu\n",
-		(unsigned long long)data_bytes_allocated,
-		(unsigned long long)data_bytes_referenced);
+	printf("total csum bytes: %" PRIu64 "\n",total_csum_bytes);
+	printf("total tree bytes: %" PRIu64 "\n",
+	       total_btree_bytes);
+	printf("total fs tree bytes: %" PRIu64 "\n",
+	       total_fs_tree_bytes);
+	printf("total extent tree bytes: %" PRIu64 "\n",
+	       total_extent_tree_bytes);
+	printf("btree space waste bytes: %" PRIu64 "\n",
+	       btree_space_waste);
+	printf("file data blocks allocated: %" PRIu64 "\n referenced %" PRIu64 "\n",
+		data_bytes_allocated,
+		data_bytes_referenced);
 
 	free_qgroup_counts();
 	free_root_recs_tree(&root_cache);

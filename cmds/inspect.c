@@ -14,6 +14,7 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -212,9 +213,9 @@ static int cmd_inspect_logical_resolve(const struct cmd_struct *cmd,
 	}
 
 	pr_verbose(1,
-"ioctl ret=%d, total_size=%llu, bytes_left=%lu, bytes_missing=%lu, cnt=%d, missed=%d\n",
-		   ret, size, (unsigned long)inodes->bytes_left,
-		   (unsigned long)inodes->bytes_missing, inodes->elem_cnt,
+"ioctl ret=%d, total_size=%" PRIu64 ", bytes_left=%d, bytes_missing=%d, cnt=%d, missed=%d\n",
+		   ret, size, inodes->bytes_left,
+		   inodes->bytes_missing, inodes->elem_cnt,
 		   inodes->elem_missed);
 
 	bytes_left = sizeof(full_path);
@@ -262,7 +263,7 @@ static int cmd_inspect_logical_resolve(const struct cmd_struct *cmd,
 				 */
 
 				snprintf(subvol, PATH_MAX, "/%s", name);
-				snprintf(subvolid, PATH_MAX, "%llu", root);
+				snprintf(subvolid, PATH_MAX, "%" PRIu64, root);
 
 				ret = find_mount_fsroot(subvol, subvolid, &mounted);
 
@@ -273,7 +274,7 @@ static int cmd_inspect_logical_resolve(const struct cmd_struct *cmd,
 
 				if (!mounted) {
 					printf(
-			"inode %llu subvol %s could not be accessed: not mounted\n",
+			"inode %" PRIu64 " subvol %s could not be accessed: not mounted\n",
 						inum, name);
 					continue;
 				}
@@ -291,7 +292,7 @@ static int cmd_inspect_logical_resolve(const struct cmd_struct *cmd,
 			if (path_fd != fd)
 				close_file_or_dir(path_fd, dirs);
 		} else {
-			printf("inode %llu offset %llu root %llu\n", inum,
+			printf("inode %" PRIu64 " offset %" PRIu64 " root %" PRIu64 " \n", inum,
 				offset, root);
 		}
 	}
@@ -627,7 +628,7 @@ static int print_min_dev_size(int fd, u64 devid)
 	}
 
 	adjust_dev_min_size(&extents, &holes, &min_size);
-	printf("%llu bytes (%s)\n", min_size, pretty_size(min_size));
+	printf("%" PRIu64 " bytes (%s)\n", min_size, pretty_size(min_size));
 	ret = 0;
 out:
 	free_dev_extent_list(&extents);

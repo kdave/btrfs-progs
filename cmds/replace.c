@@ -16,6 +16,7 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -263,7 +264,7 @@ static int cmd_replace_start(const struct cmd_struct *cmd,
 
 	dstdev_size = get_partition_size(dstdev);
 	if (srcdev_size > dstdev_size) {
-		error("target device smaller than source device (required %llu bytes)",
+		error("target device smaller than source device (required %" PRIu64 " bytes)",
 			srcdev_size);
 		goto leave_with_error;
 	}
@@ -473,7 +474,7 @@ static int print_replace_status(int fd, const char *path, int once)
 			printf("Never started");
 			break;
 		default:
-			error("unknown status from ioctl DEV_REPLACE_STATUS on '%s': %llu",
+			error("unknown status from ioctl DEV_REPLACE_STATUS on '%s': %" PRIu64,
 					path, status->replace_state);
 			return -EINVAL;
 		}

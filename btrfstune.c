@@ -16,6 +16,7 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -264,14 +265,14 @@ static int change_extents_uuid(struct btrfs_fs_info *fs_info, uuid_t new_fsid)
 		bytenr = key.objectid;
 		eb = read_tree_block(fs_info, bytenr, 0);
 		if (IS_ERR(eb)) {
-			error("failed to read tree block: %llu", bytenr);
+			error("failed to read tree block: %" PRIu64, bytenr);
 			ret = PTR_ERR(eb);
 			goto out;
 		}
 		ret = change_buffer_header_uuid(eb, new_fsid);
 		free_extent_buffer(eb);
 		if (ret < 0) {
-			error("failed to change uuid of tree block: %llu",
+			error("failed to change uuid of tree block: %" PRIu64,
 				bytenr);
 			goto out;
 		}

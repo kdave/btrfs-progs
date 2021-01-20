@@ -16,6 +16,7 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include <inttypes.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -655,8 +656,8 @@ static int flush_pending(struct metadump_struct *md, int done)
 			if (ret < size) {
 				free(async->buffer);
 				free(async);
-				error("unable to read superblock at %llu: %m",
-						(unsigned long long)start);
+				error("unable to read superblock at %" PRIu64 ": %m",
+						start);
 				return -errno;
 			}
 			size = 0;
@@ -671,8 +672,8 @@ static int flush_pending(struct metadump_struct *md, int done)
 			if (!extent_buffer_uptodate(eb)) {
 				free(async->buffer);
 				free(async);
-				error("unable to read metadata block %llu",
-					(unsigned long long)start);
+				error("unable to read metadata block %" PRIu64 "",
+					start);
 				return -EIO;
 			}
 			copy_buffer(md, async->buffer + offset, eb);
@@ -746,7 +747,7 @@ static int copy_tree_blocks(struct btrfs_root *root, struct extent_buffer *eb,
 	ret = add_extent(btrfs_header_bytenr(eb), fs_info->nodesize,
 			 metadump, 0);
 	if (ret) {
-		error("unable to add metadata block %llu: %d",
+		error("unable to add metadata block %" PRIu64 ": %d",
 				btrfs_header_bytenr(eb), ret);
 		return ret;
 	}
@@ -927,8 +928,8 @@ static int copy_from_extent_tree(struct metadump_struct *metadump,
 		}
 
 		if (num_bytes == 0) {
-			error("extent length 0 at bytenr %llu key type %d",
-					(unsigned long long)bytenr, key.type);
+			error("extent length 0 at bytenr %" PRIu64 " key type %d",
+					bytenr, key.type);
 			ret = -EIO;
 			break;
 		}
@@ -941,8 +942,8 @@ static int copy_from_extent_tree(struct metadump_struct *metadump,
 				ret = add_extent(bytenr, num_bytes, metadump,
 						 0);
 				if (ret) {
-					error("unable to add block %llu: %d",
-						(unsigned long long)bytenr, ret);
+					error("unable to add block %" PRIu64 ": %d",
+						bytenr, ret);
 					break;
 				}
 			}
@@ -1798,9 +1799,9 @@ static int read_chunk_block(struct mdrestore_struct *mdres, u8 *buffer,
 		memcpy(eb->data, buffer + cur_offset, nodesize);
 		if (btrfs_header_bytenr(eb) != bytenr) {
 			error(
-			"eb bytenr does not match found bytenr: %llu != %llu",
-				(unsigned long long)btrfs_header_bytenr(eb),
-				(unsigned long long)bytenr);
+			"eb bytenr does not match found bytenr: %" PRIu64 " != %" PRIu64 "",
+				btrfs_header_bytenr(eb),
+				bytenr);
 			ret = -EUCLEAN;
 			break;
 		}
@@ -1808,15 +1809,15 @@ static int read_chunk_block(struct mdrestore_struct *mdres, u8 *buffer,
 			   offsetof(struct btrfs_header, fsid),
 			   BTRFS_FSID_SIZE)) {
 			error(
-			"filesystem metadata UUID of eb %llu does not match",
+			"filesystem metadata UUID of eb %" PRIu64 " does not match",
 				bytenr);
 			ret = -EUCLEAN;
 			break;
 		}
 		if (btrfs_header_owner(eb) != BTRFS_CHUNK_TREE_OBJECTID) {
-			error("wrong eb %llu owner %llu",
-				(unsigned long long)bytenr,
-				(unsigned long long)btrfs_header_owner(eb));
+			error("wrong eb %" PRIu64 " owner %" PRIu64 "",
+				bytenr,
+				btrfs_header_owner(eb));
 			ret = -EUCLEAN;
 			break;
 		}
@@ -1890,12 +1891,12 @@ static int search_for_chunk_blocks(struct mdrestore_struct *mdres)
 			if (feof(mdres->in))
 				goto out;
 			error(
-	"unknown state after reading cluster at %llu, probably corrupted data",
+	"unknown state after reading cluster at %" PRIu64 ", probably corrupted data",
 					current_cluster);
 			ret = -EIO;
 			goto out;
 		} else if (ret < 0) {
-			error("unable to read image at %llu: %m",
+			error("unable to read image at %" PRIu64 ": %m",
 					current_cluster);
 			goto out;
 		}
@@ -1975,7 +1976,7 @@ static int search_for_chunk_blocks(struct mdrestore_struct *mdres)
 					       current_cluster);
 			if (ret < 0) {
 				error(
-			"failed to search tree blocks in item bytenr %llu size %lu",
+			"failed to search tree blocks in item bytenr %" PRIu64 " size %zu",
 					item_bytenr, size);
 				goto out;
 			}
@@ -2123,7 +2124,7 @@ static int build_chunk_tree(struct mdrestore_struct *mdres,
 	}
 
 	if (!item || le64_to_cpu(item->bytenr) != BTRFS_SUPER_INFO_OFFSET) {
-		error("did not find superblock at %llu",
+		error("did not find superblock at %" PRIu64 "",
 				le64_to_cpu(item->bytenr));
 		return -EINVAL;
 	}
@@ -2253,13 +2254,13 @@ static int fixup_device_size(struct btrfs_trans_handle *trans,
 	ret = btrfs_search_slot(NULL, fs_info->dev_root, &key, &path, 0, 0);
 	if (ret < 0) {
 		errno = -ret;
-		error("failed to locate last dev extent of devid %llu: %m",
+		error("failed to locate last dev extent of devid %" PRIu64 ": %m",
 			devid);
 		btrfs_release_path(&path);
 		return ret;
 	}
 	if (ret == 0) {
-		error("found invalid dev extent devid %llu offset -1", devid);
+		error("found invalid dev extent devid %" PRIu64 " offset -1", devid);
 		btrfs_release_path(&path);
 		return -EUCLEAN;
 	}
@@ -2269,7 +2270,7 @@ static int fixup_device_size(struct btrfs_trans_handle *trans,
 		ret = -ENOENT;
 	if (ret < 0) {
 		errno = -ret;
-		error("failed to locate last dev extent of devid %llu: %m",
+		error("failed to locate last dev extent of devid %" PRIu64 ": %m",
 			devid);
 		btrfs_release_path(&path);
 		return ret;
@@ -2371,7 +2372,7 @@ static void fixup_block_groups(struct btrfs_trans_handle *trans)
 		bg = btrfs_lookup_block_group(fs_info, ce->start);
 		if (!bg) {
 			warning(
-		"cannot find block group %llu, filesystem may not be mountable",
+		"cannot find block group %" PRIu64 ", filesystem may not be mountable",
 				ce->start);
 			continue;
 		}
@@ -2443,7 +2444,7 @@ static int remove_all_dev_extents(struct btrfs_trans_handle *trans)
 		ret = btrfs_del_item(trans, root, &path);
 		if (ret < 0) {
 			errno = -ret;
-			error("failed to delete dev extent %llu, %llu: %m",
+			error("failed to delete dev extent %" PRIu64 ", %" PRIu64 ": %m",
 				key.objectid, key.offset);
 			goto out;
 		}
@@ -2472,7 +2473,7 @@ static int fixup_dev_extents(struct btrfs_trans_handle *trans)
 
 	dev = btrfs_find_device(fs_info, devid, NULL, NULL);
 	if (!dev) {
-		error("failed to find devid %llu", devid);
+		error("failed to find devid %" PRIu64 "", devid);
 		return -ENODEV;
 	}
 
@@ -2490,7 +2491,7 @@ static int fixup_dev_extents(struct btrfs_trans_handle *trans)
 			if (ret < 0) {
 				errno = -ret;
 				error(
-				"failed to insert dev extent %llu %llu: %m",
+				"failed to insert dev extent %" PRIu64 " %" PRIu64 ": %m",
 					devid, map->stripes[i].physical);
 				goto out;
 			}
@@ -2762,9 +2763,9 @@ static int update_disk_super_on_device(struct btrfs_fs_info *info,
 
 	devid = btrfs_device_id(leaf, dev_item);
 	if (devid != cur_devid) {
-		error("devid mismatch: %llu != %llu",
-				(unsigned long long)devid,
-				(unsigned long long)cur_devid);
+		error("devid mismatch: %" PRIu64 " != %" PRIu64 "",
+				devid,
+				cur_devid);
 		ret = -EIO;
 		goto out;
 	}
@@ -2780,7 +2781,7 @@ static int update_disk_super_on_device(struct btrfs_fs_info *info,
 
 	btrfs_release_path(&path);
 
-	printf("update disk super on %s devid=%llu\n", other_dev, devid);
+	printf("update disk super on %s devid=%" PRIu64 "\n", other_dev, devid);
 
 	/* update other devices' super block */
 	fp = open(other_dev, O_CREAT | O_RDWR, 0600);
@@ -2873,8 +2874,8 @@ int BOX_MAIN(image)(int argc, char *argv[])
 		case 't':
 			num_threads = arg_strtou64(optarg);
 			if (num_threads > MAX_WORKER_THREADS) {
-				error("number of threads out of range: %llu > %d",
-					(unsigned long long)num_threads,
+				error("number of threads out of range: %" PRIu64 " > %d",
+					num_threads,
 					MAX_WORKER_THREADS);
 				return 1;
 			}
@@ -2882,8 +2883,8 @@ int BOX_MAIN(image)(int argc, char *argv[])
 		case 'c':
 			compress_level = arg_strtou64(optarg);
 			if (compress_level > 9) {
-				error("compression level out of range: %llu",
-					(unsigned long long)compress_level);
+				error("compression level out of range: %" PRIu64 "",
+					compress_level);
 				return 1;
 			}
 			break;
@@ -3003,7 +3004,7 @@ int BOX_MAIN(image)(int argc, char *argv[])
 
 		total_devs = btrfs_super_num_devices(info->super_copy);
 		if (total_devs != dev_cnt) {
-			error("it needs %llu devices but has only %d",
+			error("it needs %" PRIu64 " devices but has only %d",
 				total_devs, dev_cnt);
 			close_ctree(info->chunk_root);
 			goto out;

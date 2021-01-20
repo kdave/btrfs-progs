@@ -16,6 +16,7 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -181,7 +182,7 @@ static int read_fs_supers(struct btrfs_recover_superblock *recover)
 static void print_super_info(struct super_block_record *record)
 {
 	printf("\t\tdevice name = %s\n", record->device_name);
-	printf("\t\tsuperblock bytenr = %llu\n", record->bytenr);
+	printf("\t\tsuperblock bytenr = %" PRIu64 "\n", record->bytenr);
 }
 
 static void print_all_supers(struct btrfs_recover_superblock *recover)

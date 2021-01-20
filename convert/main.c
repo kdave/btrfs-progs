@@ -82,6 +82,7 @@
 
 #include "kerncompat.h"
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -128,10 +129,10 @@ static void *print_copied_inodes(void *p)
 	while (1) {
 		count++;
 		pthread_mutex_lock(&priv->mutex);
-		printf("copy inodes [%c] [%10llu/%10llu]\r",
+		printf("copy inodes [%c] [%10" PRIu64 "/%10" PRIu64 "]\r",
 		       work_indicator[count % 4],
-		       (unsigned long long)priv->cur_copy_inodes,
-		       (unsigned long long)priv->max_copy_inodes);
+		       priv->cur_copy_inodes,
+		       priv->max_copy_inodes);
 		pthread_mutex_unlock(&priv->mutex);
 		fflush(stdout);
 		task_period_wait(priv->info);
@@ -210,13 +211,13 @@ static int create_image_file_range(struct btrfs_trans_handle *trans,
 	u32 datacsum = convert_flags & CONVERT_FLAG_DATACSUM;
 
 	if (bytenr != round_down(bytenr, root->fs_info->sectorsize)) {
-		error("bytenr not sectorsize aligned: %llu",
-				(unsigned long long)bytenr);
+		error("bytenr not sectorsize aligned: %" PRIu64 "",
+				bytenr);
 		return -EINVAL;
 	}
 	if (len != round_down(len, root->fs_info->sectorsize)) {
-		error("length not sectorsize aligned: %llu",
-				(unsigned long long)len);
+		error("length not sectorsize aligned: %" PRIu64 "",
+				len);
 		return -EINVAL;
 	}
 	len = min_t(u64, len, BTRFS_MAX_EXTENT_SIZE);
@@ -294,12 +295,12 @@ static int create_image_file_range(struct btrfs_trans_handle *trans,
 		/* Check if the range is in a data block group */
 		bg_cache = btrfs_lookup_block_group(root->fs_info, bytenr);
 		if (!bg_cache) {
-			error("missing data block for bytenr %llu", bytenr);
+			error("missing data block for bytenr %" PRIu64 "", bytenr);
 			return -ENOENT;
 		}
 		if (!(bg_cache->flags & BTRFS_BLOCK_GROUP_DATA)) {
 			error(
-	"data bytenr %llu is covered by non-data block group %llu flags 0x%llu",
+	"data bytenr %" PRIu64 " is covered by non-data block group %" PRIu64 " flags 0x%" PRIu64 "",
 			      bytenr, bg_cache->start, bg_cache->flags);
 			return -EINVAL;
 		}
@@ -310,8 +311,8 @@ static int create_image_file_range(struct btrfs_trans_handle *trans,
 	}
 
 	if (len != round_down(len, root->fs_info->sectorsize)) {
-		error("remaining length not sectorsize aligned: %llu",
-				(unsigned long long)len);
+		error("remaining length not sectorsize aligned: %" PRIu64 "",
+				len);
 		return -EINVAL;
 	}
 	ret = btrfs_record_file_extent(trans, root, ino, inode, bytenr,
@@ -324,7 +325,7 @@ static int create_image_file_range(struct btrfs_trans_handle *trans,
 		if (ret < 0) {
 			errno = -ret;
 			error(
-		"failed to calculate csum for bytenr %llu len %llu: %m",
+		"failed to calculate csum for bytenr %" PRIu64 " len %" PRIu64 ": %m",
 			      bytenr, len);
 		}
 	}
@@ -800,21 +801,21 @@ static int create_image(struct btrfs_root *root,
 				       &ino);
 	if (ret < 0) {
 		errno = -ret;
-		error("failed to find free objectid for root %llu: %m",
+		error("failed to find free objectid for root %" PRIu64 ": %m",
 			root->root_key.objectid);
 		goto out;
 	}
 	ret = btrfs_new_inode(trans, root, ino, 0400 | S_IFREG);
 	if (ret < 0) {
 		errno = -ret;
-		error("failed to create new inode for root %llu: %m",
+		error("failed to create new inode for root %" PRIu64 ": %m",
 			root->root_key.objectid);
 		goto out;
 	}
 	ret = btrfs_change_inode_flags(trans, root, ino, flags);
 	if (ret < 0) {
 		errno = -ret;
-		error("failed to change inode flag for ino %llu root %llu: %m",
+		error("failed to change inode flag for ino %" PRIu64 " root %" PRIu64 ": %m",
 			ino, root->root_key.objectid);
 		goto out;
 	}
@@ -822,7 +823,7 @@ static int create_image(struct btrfs_root *root,
 			     strlen(name), BTRFS_FT_REG_FILE, NULL, 1, 0);
 	if (ret < 0) {
 		errno = -ret;
-		error("failed to link ino %llu to '/%s' in root %llu: %m",
+		error("failed to link ino %" PRIu64 " to '/%s' in root %" PRIu64 ": %m",
 			ino, name, root->root_key.objectid);
 		goto out;
 	}
@@ -1187,8 +1188,8 @@ static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
 	printf("\tfeatures:  %s\n", features_buf);
 	printf("\tchecksum:  %s\n", btrfs_super_csum_name(csum_type));
 	printf("free space report:\n");
-	printf("\ttotal:     %llu\n",cctx.total_bytes);
-	printf("\tfree:      %llu (%.2f%%)\n", cctx.free_bytes_initial,
+	printf("\ttotal:     %" PRIu64 "\n",cctx.total_bytes);
+	printf("\tfree:      %" PRIu64 " (%.2f%%)\n", cctx.free_bytes_initial,
 			100.0 * cctx.free_bytes_initial / cctx.total_bytes);
 	memset(&mkfs_cfg, 0, sizeof(mkfs_cfg));
 	mkfs_cfg.csum_type = csum_type;
@@ -1341,7 +1342,7 @@ static int read_reserved_ranges(struct btrfs_root *root, u64 ino,
 				      reserved_ranges[i]);
 		if (ret < range->len) {
 			error(
-	"failed to read data of convert image, offset=%llu len=%llu ret=%d",
+	"failed to read data of convert image, offset=%" PRIu64 " len=%" PRIu64 " ret=%d",
 			      range->start, range->len, ret);
 			if (ret >= 0)
 				ret = -EIO;
@@ -1457,7 +1458,7 @@ static int check_convert_image(struct btrfs_root *image_root, u64 ino,
 		if (btrfs_file_extent_type(leaf, fi) != BTRFS_FILE_EXTENT_REG) {
 			ret = -EINVAL;
 			error(
-		"ino %llu offset %llu doesn't have a regular file extent",
+		"ino %" PRIu64 " offset %" PRIu64 " doesn't have a regular file extent",
 				ino, file_offset);
 			break;
 		}
@@ -1466,7 +1467,7 @@ static int check_convert_image(struct btrfs_root *image_root, u64 ino,
 		    btrfs_file_extent_other_encoding(leaf, fi)) {
 			ret = -EINVAL;
 			error(
-			"ino %llu offset %llu doesn't have a plain file extent",
+			"ino %" PRIu64 " offset %" PRIu64 " doesn't have a plain file extent",
 				ino, file_offset);
 			break;
 		}
@@ -1499,7 +1500,7 @@ static int check_convert_image(struct btrfs_root *image_root, u64 ino,
 							ram_bytes)) {
 				ret = -EINVAL;
 				error(
-		"ino %llu offset %llu file extent should not be relocated",
+		"ino %" PRIu64 " offset %" PRIu64 " file extent should not be relocated",
 					ino, file_offset);
 				break;
 			}
@@ -1522,7 +1523,7 @@ next:
 	if (!ret && !btrfs_fs_incompat(fs_info, NO_HOLES)) {
 		if (checked_bytes != total_size) {
 			ret = -EINVAL;
-			error("inode %llu has some file extents not checked",
+			error("inode %" PRIu64 " has some file extents not checked",
 				ino);
 			return ret;
 		}
@@ -1673,7 +1674,7 @@ static int do_rollback(const char *devname)
 	if (ret < 0) {
 		btrfs_release_path(&path);
 		errno = -ret;
-		error("unable to find inode %llu: %m", ino);
+		error("unable to find inode %" PRIu64 ": %m", ino);
 		goto close_fs;
 	}
 	inode_item = btrfs_item_ptr(path.nodes[0], path.slots[0],
@@ -1716,7 +1717,7 @@ close_fs:
 			else
 				ret = -EIO;
 			errno = -ret;
-			error("failed to recover range [%llu, %llu): %m",
+			error("failed to recover range [%" PRIu64 ", %" PRIu64 "): %m",
 			      range->start, real_size);
 			goto free_mem;
 		}

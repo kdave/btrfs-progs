@@ -19,6 +19,7 @@
 #include "kerncompat.h"
 #include "androidcompat.h"
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdio_ext.h>
 #include <stdlib.h>
@@ -371,7 +372,7 @@ static void print_block_group_info(struct block_group_record *rec, char *prefix)
 {
 	if (prefix)
 		printf("%s", prefix);
-	printf("Block Group: start = %llu, len = %llu, flag = %llx\n",
+	printf("Block Group: start = %" PRIu64 ", len = %" PRIu64 ", flag = %" PRIx64 "\n",
 	       rec->objectid, rec->offset, rec->flags);
 }
 
@@ -396,7 +397,7 @@ static void print_stripe_info(struct stripe *data, char *prefix1, char *prefix2,
 		printf("%s", prefix1);
 	if (prefix2)
 		printf("%s", prefix2);
-	printf("[%2d] Stripe: devid = %llu, offset = %llu\n",
+	printf("[%2d] Stripe: devid = %" PRIu64 ", offset = %" PRIu64 "\n",
 	       index, data->devid, data->offset);
 }
 
@@ -406,7 +407,7 @@ static void print_chunk_self_info(struct chunk_record *rec, char *prefix)
 
 	if (prefix)
 		printf("%s", prefix);
-	printf("Chunk: start = %llu, len = %llu, type = %llx, num_stripes = %u\n",
+	printf("Chunk: start = %" PRIu64 ", len = %" PRIu64 ", type = %" PRIx64 ", num_stripes = %u\n",
 	       rec->offset, rec->length, rec->type_flags, rec->num_stripes);
 	if (prefix)
 		printf("%s", prefix);
@@ -434,7 +435,7 @@ static void print_device_extent_info(struct device_extent_record *rec,
 {
 	if (prefix)
 		printf("%s", prefix);
-	printf("Device extent: devid = %llu, start = %llu, len = %llu, chunk offset = %llu\n",
+	printf("Device extent: devid = %" PRIu64 ", start = %" PRIu64 ", len = %" PRIu64 ", chunk offset = %" PRIu64 "\n",
 	       rec->objectid, rec->offset, rec->length, rec->chunk_offset);
 }
 
@@ -461,8 +462,8 @@ static void print_scan_result(struct recover_control *rc)
 	printf("Filesystem Information:\n");
 	printf("\tsectorsize: %d\n", rc->sectorsize);
 	printf("\tnodesize: %d\n", rc->nodesize);
-	printf("\ttree root generation: %llu\n", rc->generation);
-	printf("\tchunk root generation: %llu\n", rc->chunk_root_generation);
+	printf("\ttree root generation: %" PRIu64 "\n", rc->generation);
+	printf("\tchunk root generation: %" PRIu64 "\n", rc->chunk_root_generation);
 	printf("\n");
 
 	print_all_devices(&rc->fs_devices->devices);
@@ -589,7 +590,7 @@ static int check_chunk_by_metadata(struct recover_control *rc,
 		} else if (ret > 0) {
 			if (rc->verbose)
 				fprintf(stderr,
-					"No device extent[%llu, %llu]\n",
+					"No device extent[%" PRIu64 ", %" PRIu64 "]\n",
 					stripe->devid, stripe->offset);
 			btrfs_release_path(&path);
 			return -ENOENT;
@@ -601,7 +602,7 @@ static int check_chunk_by_metadata(struct recover_control *rc,
 		    btrfs_dev_extent_chunk_offset(l, dev_extent)) {
 			if (rc->verbose)
 				fprintf(stderr,
-					"Device tree mismatch with chunks dev_extent[%llu, %llu], chunk[%llu, %llu]\n",
+					"Device tree mismatch with chunks dev_extent[%" PRIu64 ", %" PRIu64 "], chunk[%" PRIu64 ", %" PRIu64 "]\n",
 					btrfs_dev_extent_chunk_offset(l,
 								dev_extent),
 					btrfs_dev_extent_length(l, dev_extent),
@@ -625,7 +626,7 @@ bg_check:
 		return ret;
 	} else if (ret > 0) {
 		if (rc->verbose)
-			fprintf(stderr, "No block group[%llu, %llu]\n",
+			fprintf(stderr, "No block group[%" PRIu64 ", %" PRIu64 "]\n",
 				key.objectid, key.offset);
 		btrfs_release_path(&path);
 		return -ENOENT;
@@ -637,7 +638,7 @@ bg_check:
 	if (chunk->type_flags != btrfs_block_group_flags(l, bg_ptr)) {
 		if (rc->verbose)
 			fprintf(stderr,
-				"Chunk[%llu, %llu]'s type(%llu) is different with Block Group's type(%llu)\n",
+				"Chunk[%" PRIu64 ", %" PRIu64 "]'s type(%" PRIu64 ") is different with Block Group's type(%" PRIu64 ")\n",
 				chunk->offset, chunk->length, chunk->type_flags,
 				btrfs_block_group_flags(l, bg_ptr));
 		btrfs_release_path(&path);
@@ -890,7 +891,7 @@ static int scan_devices(struct recover_control *rc)
 				printf("%sDONE in dev%d",
 				       i ? ", " : "", i);
 			else
-				printf("%s%llu in dev%d",
+				printf("%s%" PRIu64 " in dev%d",
 				       i ? ", " : "", dev_scans[i].bytenr, i);
 		}
 		/* clear chars if exist in tail */
@@ -1410,7 +1411,7 @@ static int rebuild_block_group(struct btrfs_trans_handle *trans,
 		 */
 		if (ret < 0) {
 			fprintf(stderr,
-				"Fail to search extent tree for block group: [%llu,%llu]\n",
+				"Fail to search extent tree for block group: [%" PRIu64 ",%" PRIu64 "]\n",
 				chunk_rec->offset,
 				chunk_rec->offset + chunk_rec->length);
 			fprintf(stderr,
@@ -1946,8 +1947,8 @@ static int insert_stripe(struct list_head *devexts,
 	if (!dev)
 		return -ENOENT;
 	if (btrfs_find_device_by_devid(rc->fs_devices, devext->objectid, 1)) {
-		error("unexpected: found another device with id %llu",
-				(unsigned long long)devext->objectid);
+		error("unexpected: found another device with id %" PRIu64 "",
+				devext->objectid);
 		return -EINVAL;
 	}
 
@@ -2201,7 +2202,7 @@ static int btrfs_rebuild_ordered_data_chunk_stripes(struct recover_control *rc,
 				list_move(&chunk->list, &rc->bad_chunks);
 				if (flags & EQUAL_STRIPE)
 					fprintf(stderr,
-			"Failure: too many equal stripes in chunk[%llu %llu]\n",
+			"Failure: too many equal stripes in chunk[%" PRIu64 " %" PRIu64 "]\n",
 						chunk->offset, chunk->length);
 				if (!ret)
 					ret = err;
@@ -2249,9 +2250,9 @@ static int btrfs_recover_chunks(struct recover_control *rc)
 
 		ret = insert_cache_extent(&rc->chunk, &chunk->cache);
 		if (ret == -EEXIST) {
-			error("duplicate entry in cache start %llu size %llu",
-					(unsigned long long)chunk->cache.start,
-					(unsigned long long)chunk->cache.size);
+			error("duplicate entry in cache start %" PRIu64 " size %" PRIu64 "",
+					chunk->cache.start,
+					chunk->cache.size);
 			free(chunk);
 			return ret;
 		}

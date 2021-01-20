@@ -14,6 +14,7 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -643,9 +644,9 @@ static int cmd_device_stats(const struct cmd_struct *cmd, int argc, char **argv)
 					goto out;
 				}
 				snprintf(canonical_path, 32,
-					 "devid:%llu", args.devid);
+					 "devid:%" PRIu64, args.devid);
 			}
-			snprintf(devid_str, 32, "%llu", args.devid);
+			snprintf(devid_str, 32, "%" PRIu64, args.devid);
 			fmt_print_start_group(&fctx, NULL, JSON_TYPE_MAP);
 			/* Plain text does not print device info */
 			if (json) {
@@ -712,7 +713,7 @@ static int _cmd_device_usage(int fd, const char *path, unsigned unit_mode)
 		goto out;
 
 	for (i = 0; i < devcount; i++) {
-		printf("%s, ID: %llu\n", devinfo[i].path, devinfo[i].devid);
+		printf("%s, ID: %" PRIu64 "\n", devinfo[i].path, devinfo[i].devid);
 		print_device_sizes(&devinfo[i], unit_mode);
 		print_device_chunks(&devinfo[i], chunkinfo, chunkcount,
 				unit_mode);
