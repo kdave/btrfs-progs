@@ -19,8 +19,8 @@
 
 #include <sys/types.h>
 
-char *canonicalize_dm_name(const char *ptname);
-char *canonicalize_path(const char *path);
+char *path_canonicalize_dm_name(const char *ptname);
+char *path_canonicalize(const char *path);
 
 int arg_copy_path(char *dest, const char *src, int destlen);
 int path_cat_out(char *out, const char *p1, const char *p2);

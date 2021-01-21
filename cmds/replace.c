@@ -211,7 +211,7 @@ static int cmd_replace_start(const struct cmd_struct *cmd,
 	}
 
 	srcdev = argv[optind];
-	dstdev = canonicalize_path(argv[optind + 1]);
+	dstdev = path_canonicalize(argv[optind + 1]);
 	if (!dstdev) {
 		error("cannot canonicalize path '%s': %m",
 			argv[optind + 1]);

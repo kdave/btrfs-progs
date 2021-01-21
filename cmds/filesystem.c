@@ -319,7 +319,7 @@ static int print_one_fs(struct btrfs_ioctl_fs_info_args *fs_info,
 			continue;
 		}
 		close(fd);
-		canonical_path = canonicalize_path((char *)tmp_dev_info->path);
+		canonical_path = path_canonicalize((char *)tmp_dev_info->path);
 		printf("\tdevid %4llu size %s used %s path %s\n",
 			tmp_dev_info->devid,
 			pretty_size_mode(tmp_dev_info->total_bytes, unit_mode),
@@ -935,13 +935,13 @@ static int cmd_filesystem_defrag(const struct cmd_struct *cmd,
 			bconf_be_verbose();
 			break;
 		case 's':
-			start = parse_size(optarg);
+			start = parse_size_from_string(optarg);
 			break;
 		case 'l':
-			len = parse_size(optarg);
+			len = parse_size_from_string(optarg);
 			break;
 		case 't':
-			thresh = parse_size(optarg);
+			thresh = parse_size_from_string(optarg);
 			if (thresh > (u32)-1) {
 				warning(
 			    "target extent size %llu too big, trimmed to %u",

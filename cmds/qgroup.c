@@ -411,7 +411,7 @@ static int cmd_qgroup_limit(const struct cmd_struct *cmd, int argc, char **argv)
 	if (!strcasecmp(argv[optind], "none"))
 		size = -1ULL;
 	else
-		size = parse_size(argv[optind]);
+		size = parse_size_from_string(argv[optind]);
 
 	memset(&args, 0, sizeof(args));
 	if (compressed)

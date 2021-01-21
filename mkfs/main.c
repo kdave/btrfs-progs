@@ -999,7 +999,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 				warning("--leafsize is deprecated, use --nodesize");
 				/* fall through */
 			case 'n':
-				nodesize = parse_size(optarg);
+				nodesize = parse_size_from_string(optarg);
 				nodesize_forced = 1;
 				break;
 			case 'L':
@@ -1050,10 +1050,10 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 				break;
 				}
 			case 's':
-				sectorsize = parse_size(optarg);
+				sectorsize = parse_size_from_string(optarg);
 				break;
 			case 'b':
-				block_count = parse_size(optarg);
+				block_count = parse_size_from_string(optarg);
 				zero_end = 0;
 				break;
 			case 'V':

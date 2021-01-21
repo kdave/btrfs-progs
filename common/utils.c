@@ -627,7 +627,7 @@ int set_label(const char *btrfs_dev, const char *label)
 
 /*
  * A not-so-good version fls64. No fascinating optimization since
- * no one except parse_size use it
+ * no one except parse_size_from_string uses it
  */
 static int fls64(u64 x)
 {
@@ -639,7 +639,7 @@ static int fls64(u64 x)
 	return 64 - i;
 }
 
-u64 parse_size(const char *s)
+u64 parse_size_from_string(const char *s)
 {
 	char c;
 	char *endptr;
@@ -2147,3 +2147,22 @@ out:
 
 	return ret;
 }
+
+#ifdef STATICBUILD
+
+/*
+ * libmount links with selinux that we don't use, the following symbols are
+ * missing. Weak aliases allow to link.
+ */
+
+__attribute__((weak)) int selinux_trans_to_raw_context(const char * trans, char ** rawp)
+{
+	return -1;
+}
+
+typedef void *security_context_t;
+__attribute__((weak)) void freecon(security_context_t con)
+{
+}
+
+#endif

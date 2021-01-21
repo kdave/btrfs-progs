@@ -1810,7 +1810,7 @@ int BOX_MAIN(convert)(int argc, char *argv[])
 				packing = 0;
 				break;
 			case 'N':
-				nodesize = parse_size(optarg);
+				nodesize = parse_size_from_string(optarg);
 				break;
 			case 'r':
 				rollback = 1;

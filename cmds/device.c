@@ -141,7 +141,7 @@ static int cmd_device_add(const struct cmd_struct *cmd,
 			goto error_out;
 		}
 
-		path = canonicalize_path(argv[i]);
+		path = path_canonicalize(argv[i]);
 		if (!path) {
 			error("could not canonicalize pathname '%s': %m",
 				argv[i]);
@@ -426,7 +426,7 @@ static int cmd_device_scan(const struct cmd_struct *cmd, int argc, char **argv)
 			ret = 1;
 			goto out;
 		}
-		path = canonicalize_path(argv[i]);
+		path = path_canonicalize(argv[i]);
 		if (!path) {
 			error("could not canonicalize path '%s': %m", argv[i]);
 			ret = 1;
@@ -478,7 +478,7 @@ static int cmd_device_ready(const struct cmd_struct *cmd, int argc, char **argv)
 		return 1;
 	}
 
-	path = canonicalize_path(argv[optind]);
+	path = path_canonicalize(argv[optind]);
 	if (!path) {
 		error("could not canonicalize pathname '%s': %m",
 			argv[optind]);
@@ -633,7 +633,7 @@ static int cmd_device_stats(const struct cmd_struct *cmd, int argc, char **argv)
 			 */
 			const bool json = (bconf.output_format == CMD_FORMAT_JSON);
 
-			canonical_path = canonicalize_path(path);
+			canonical_path = path_canonicalize(path);
 
 			/* No path when device is missing. */
 			if (!canonical_path) {

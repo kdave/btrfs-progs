@@ -282,7 +282,7 @@ int path_is_reg_or_block_device(const char *filename)
  * Returns NULL on invalid input or malloc failure; Other failures
  * will be handled by the caller using the input pathname.
  */
-char *canonicalize_dm_name(const char *ptname)
+char *path_canonicalize_dm_name(const char *ptname)
 {
 	FILE *f;
 	size_t sz;
@@ -313,7 +313,7 @@ char *canonicalize_dm_name(const char *ptname)
  * Returns NULL on invalid input or malloc failure; Other failures
  * will be handled by the caller using the input pathname.
  */
-char *canonicalize_path(const char *path)
+char *path_canonicalize(const char *path)
 {
 	char *canonical, *p;
 
@@ -325,7 +325,7 @@ char *canonicalize_path(const char *path)
 		return strdup(path);
 	p = strrchr(canonical, '/');
 	if (p && strncmp(p, "/dm-", 4) == 0 && isdigit(*(p + 4))) {
-		char *dm = canonicalize_dm_name(p + 1);
+		char *dm = path_canonicalize(p + 1);
 
 		if (dm) {
 			free(canonical);
