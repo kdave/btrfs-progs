@@ -184,16 +184,6 @@ int btrfs_open(const char *path, DIR **dirstream, int verbose, int dir_only)
 	struct stat st;
 	int ret;
 
-	if (statfs(path, &stfs) != 0) {
-		error_on(verbose, "cannot access '%s': %m", path);
-		return -1;
-	}
-
-	if (stfs.f_type != BTRFS_SUPER_MAGIC) {
-		error_on(verbose, "not a btrfs filesystem: %s", path);
-		return -2;
-	}
-
 	if (stat(path, &st) != 0) {
 		error_on(verbose, "cannot access '%s': %m", path);
 		return -1;
@@ -202,6 +192,16 @@ int btrfs_open(const char *path, DIR **dirstream, int verbose, int dir_only)
 	if (dir_only && !S_ISDIR(st.st_mode)) {
 		error_on(verbose, "not a directory: %s", path);
 		return -3;
+	}
+
+	if (statfs(path, &stfs) != 0) {
+		error_on(verbose, "cannot access '%s': %m", path);
+		return -1;
+	}
+
+	if (stfs.f_type != BTRFS_SUPER_MAGIC) {
+		error_on(verbose, "not a btrfs filesystem: %s", path);
+		return -2;
 	}
 
 	ret = open_file_or_dir(path, dirstream);

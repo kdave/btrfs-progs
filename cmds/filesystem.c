@@ -1082,7 +1082,6 @@ static int cmd_filesystem_resize(const struct cmd_struct *cmd,
 	char	*amount, *path;
 	DIR	*dirstream = NULL;
 	int ret;
-	struct stat st;
 	bool enqueue = false;
 
 	/*
@@ -1115,21 +1114,17 @@ static int cmd_filesystem_resize(const struct cmd_struct *cmd,
 		return 1;
 	}
 
-	res = stat(path, &st);
-	if (res < 0) {
-		error("resize: cannot stat %s: %m", path);
-		return 1;
-	}
-	if (!S_ISDIR(st.st_mode)) {
-		error("resize works on mounted filesystems and accepts only\n"
-			"directories as argument. Passing file containing a btrfs image\n"
-			"would resize the underlying filesystem instead of the image.\n");
-		return 1;
-	}
-
 	fd = btrfs_open_dir(path, &dirstream, 1);
-	if (fd < 0)
+	if (fd < 0) {
+		/* The path is a directory */
+		if (fd == -3) {
+			error(
+		"resize works on mounted filesystems and accepts only\n"
+		"directories as argument. Passing file containing a btrfs image\n"
+		"would resize the underlying filesystem instead of the image.\n");
+		}
 		return 1;
+	}
 
 	ret = check_running_fs_exclop(fd, BTRFS_EXCLOP_RESIZE, enqueue);
 	if (ret != 0) {
