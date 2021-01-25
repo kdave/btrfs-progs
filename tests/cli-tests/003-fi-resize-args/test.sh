@@ -54,4 +54,11 @@ for sep in '' '--'; do
 	run_check $SUDO_HELPER "$TOP/btrfs" filesystem resize $sep 1:max "$TEST_MNT"
 done
 
+# Test passing a file instead of a directory
+run_mustfail_stdout "should fail for image" \
+	"$TOP/btrfs" filesystem resize 1:-128M "$TEST_DEV" |
+	_log_stdout |
+	grep -q "ERROR: resize works on mounted filesystems and accepts only" ||
+	_fail "no expected error message in the output 2"
+
 run_check_umount_test_dev
