@@ -11,9 +11,9 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-*btrfs scrub* is used to scrub a btrfs filesystem, which will read all data
-and metadata blocks from all devices and verify checksums. Automatically repair
-corrupted blocks if there's a correct copy available.
+*btrfs scrub* is used to scrub a mounted btrfs filesystem, which will read all
+data and metadata blocks from all devices and verify checksums. Automatically
+repair corrupted blocks if there's a correct copy available.
 
 NOTE: Scrub is not a filesystem checker (fsck) and does not verify nor repair
 structural damage in the filesystem. It really only checks checksums of data
@@ -33,6 +33,9 @@ The scrubbing status is recorded in '/var/lib/btrfs/' in textual files named
 state is communicated through a named pipe in file 'scrub.progress.UUID' in the
 same directory.) The status file is updated every 5 seconds. A resumed scrub
 will continue from the last saved position.
+
+Scrub can be started only on a mounted filesystem, though it's possible to
+scrub only a selected device. See *scrub start* for more.
 
 SUBCOMMAND
 ----------
@@ -57,8 +60,9 @@ This does not start a new scrub if the last scrub finished successfully.
 see *scrub start*.
 
 *start* [-BdqrRf] [-c <ioprio_class> -n <ioprio_classdata>] <path>|<device>::
-Start a scrub on all devices of the filesystem identified by 'path' or on
-a single 'device'. If a scrub is already running, the new one will not start.
+Start a scrub on all devices of the mounted filesystem identified by 'path' or
+on a single 'device'. If a scrub is already running, the new one will not
+start. A device of an unmounted filesystem cannot be scrubbed this way.
 +
 Without options, scrub is started as a background process. The automatic
 repairs of damaged copies is performed by default for block group profiles with
