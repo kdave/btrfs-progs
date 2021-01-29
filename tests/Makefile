@@ -3,6 +3,7 @@
 #   TEST=GLOB      run test(s) from directories matching GLOB
 #   TEST_LOG=tty   print name of a command run via the execution helpers
 #   TEST_LOG=dump  dump testing log file when a test fails
+#   TEST_FLAVOR    test build flavor: dynamic (default), static
 #
 #   TOP=path       test binaries from the given path
 

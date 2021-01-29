@@ -198,7 +198,11 @@ expand_command()
 		if [ $i -eq $ins -a ! -z "$spec" ]; then
 			cmd_array+=("$spec")
 		fi
-		cmd_array+=("${!i}")
+		if [ $i -eq $command_index -a "$TEST_FLAVOR" = 'static' ]; then
+			cmd_array+=("${!i}".static)
+		else
+			cmd_array+=("${!i}")
+		fi
 	done
 }
 
@@ -376,8 +380,12 @@ check_prereq()
 		fi
 		;;
 	*)
-		if ! [ -f "$TOP/$1" ]; then
-			_fail "Failed prerequisites: $TOP/$1";
+		bin="$TOP/$1"
+		if [ "$TEST_FLAVOR" = 'static' ]; then
+			bin="${bin}.static"
+		fi
+		if ! [ -f "$bin"  ]; then
+			_fail "Failed prerequisites: $bin";
 		fi
 		;;
 	esac

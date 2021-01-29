@@ -132,6 +132,9 @@ occurs, possibly allowing to continue interactively debugging.
 
 * `TEST_LOG=dump` -- dump the entire testing log when a test fails
 
+* `TEST_FLAVOR` -- run binaries of specified flavor, which is dynamic build by
+  default, or *static* using all the build binaries with *.static* suffix
+
 * `TEST_ENABLE_OVERRIDE` -- defined either as make arguments or via
   `tests/common.local` to enable additional arguments to some commands, using
   the variable(s) below (default: false, enable by setting to 'true')
