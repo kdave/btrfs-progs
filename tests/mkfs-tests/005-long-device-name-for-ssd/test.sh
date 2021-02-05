@@ -25,6 +25,12 @@ run_check truncate -s2g img
 loopdev=`run_check_stdout $SUDO_HELPER losetup --find --show img`
 run_check $SUDO_HELPER dmsetup create "$dmname" --table "0 1048576 linear $loopdev 0"
 
+# Setting up the device may need some time to appear
+sleep 5
+if ! [ -b "$dmdev" ]; then
+	_not_run "dm device created but not visible in /dev/mapper"
+fi
+
 dmbase=`readlink -f "$dmdev"`
 base=`basename "$dmbase"`
 rot="/sys/class/block/$base/queue/rotational"
