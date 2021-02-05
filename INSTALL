@@ -3,9 +3,10 @@ Installation instructions
 
 The Btrfs utility programs require the following libraries/tools to build:
 
+- util-linux (>= 2.24)
+  - libblkid - block device id library
+  - libmount - access /proc information about mount points
 - libuuid - provided by util-linux, e2fsprogs/e2fslibs or libuuid
-- libblkid - block device id library
-- libmount - provided by util-linux, access /proc information about mount points
 - liblzo2 - LZO data compression library
 - zlib - ZLIB data compression library
 - libzstd - ZSTD data compression library version >= 1.0.0
