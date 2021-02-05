@@ -393,7 +393,7 @@ check_prereq()
 
 check_global_prereq()
 {
-	which "$1" &> /dev/null
+	type -p "$1" &> /dev/null
 	if [ $? -ne 0 ]; then
 		_fail "Failed system wide prerequisities: $1";
 	fi
@@ -405,7 +405,7 @@ check_dm_target_support()
 {
 	setup_root_helper
 
-	which dmsetup &> /dev/null
+	type -p dmsetup &> /dev/null
 	if [ $? -ne 0 ]; then
 		_not_run "This test requires dmsetup tool";
 	fi
