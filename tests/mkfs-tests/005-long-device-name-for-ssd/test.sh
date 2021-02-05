@@ -9,9 +9,13 @@ check_dm_target_support linear
 setup_root_helper
 prepare_test_dev
 
+# Randomize last 4 characters to prevent clashes of device name on the same system
+chars=( {0..9} {a..z} {A..Z} )
+rand=${chars[$RANDOM % 62]}${chars[$RANDOM % 62]}${chars[$RANDOM % 62]}${chars[$RANDOM % 62]}
+
 # prep device
 dmname=\
-btrfs-test-with-very-long-name-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+btrfs-test-with-very-long-name-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA$rand
 dmdev="/dev/mapper/$dmname"
 
 run_check truncate -s0 img
