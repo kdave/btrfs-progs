@@ -1,3 +1,11 @@
+btrfs-progs-5.10.1 (2021-02-05)
+  * static build works again
+  * other:
+    * add a way to test static binaries with the testsuite
+    * clarify scrub docs
+    * update dependencies, minimum version for libmount is 2.24, this may
+      change in the future
+
 btrfs-progs-5.10 (2021-01-18)
   * scrub status:
     * print percentage of progress
