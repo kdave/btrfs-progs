@@ -1217,6 +1217,7 @@ static void print_header_info(struct extent_buffer *eb, unsigned int mode)
 {
 	struct btrfs_fs_info *fs_info = eb->fs_info;
 	char flags_str[128];
+	u8 csum[BTRFS_CSUM_SIZE];
 	u64 flags;
 	u32 nr;
 	u8 backref_rev;
@@ -1263,6 +1264,22 @@ static void print_header_info(struct extent_buffer *eb, unsigned int mode)
 	       btrfs_header_level(eb) ? "node" : "leaf",
 	       btrfs_header_bytenr(eb), flags, flags_str, backref_rev,
 	       csum_str);
+
+#ifdef EXPERIMENTAL
+	printf("checksum stored ");
+	for (i = 0; i < BTRFS_CSUM_SIZE; i++)
+		printf("%02hhx", (int)(eb->data[i]));
+	printf("\n");
+	memset(csum, 0, sizeof(csum));
+	btrfs_csum_data(fs_info, btrfs_super_csum_type(fs_info->super_copy),
+			(u8 *)eb->data + BTRFS_CSUM_SIZE,
+			csum, fs_info->nodesize - BTRFS_CSUM_SIZE);
+	printf("checksum calced ");
+	for (i = 0; i < BTRFS_CSUM_SIZE; i++)
+		printf("%02hhx", (int)(csum[i]));
+	printf("\n");
+#endif
+
 	print_uuids(eb);
 	fflush(stdout);
 }
