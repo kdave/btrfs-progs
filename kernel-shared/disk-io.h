@@ -91,6 +91,13 @@ enum btrfs_open_ctree_flags {
 	 * mismatch.
 	 */
 	OPEN_CTREE_ALLOW_TRANSID_MISMATCH = (1U << 15),
+
+	/*
+	 * Do not check checksums at all for data and metadata, eg. when the
+	 * superblock type of checksum does not match the actual checksum items
+	 * stored in the csum tree during conversion.
+	 */
+	OPEN_CTREE_SKIP_CSUM_CHECK	= (1U << 16),
 };
 
 /*

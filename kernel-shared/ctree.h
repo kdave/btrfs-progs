@@ -330,6 +330,7 @@ static inline unsigned long btrfs_chunk_item_size(int num_stripes)
 #define BTRFS_SUPER_FLAG_METADUMP_V2		(1ULL << 34)
 #define BTRFS_SUPER_FLAG_CHANGING_FSID		(1ULL << 35)
 #define BTRFS_SUPER_FLAG_CHANGING_FSID_V2	(1ULL << 36)
+#define BTRFS_SUPER_FLAG_CHANGING_CSUM		(1ULL << 37)
 
 #define BTRFS_BACKREF_REV_MAX		256
 #define BTRFS_BACKREF_REV_SHIFT		56
@@ -1248,6 +1249,8 @@ struct btrfs_fs_info {
 	unsigned int quota_enabled:1;
 	unsigned int suppress_check_block_errors:1;
 	unsigned int ignore_fsid_mismatch:1;
+	/* Don't verify checksums at all */
+	unsigned int skip_csum_check:1;
 	unsigned int ignore_chunk_tree_error:1;
 	unsigned int avoid_meta_chunk_alloc:1;
 	unsigned int avoid_sys_chunk_alloc:1;
@@ -1256,6 +1259,7 @@ struct btrfs_fs_info {
 	unsigned int allow_transid_mismatch:1;
 
 	int transaction_aborted;
+	int force_csum_type;
 
 	int (*free_extent_hook)(u64 bytenr, u64 num_bytes, u64 parent,
 				u64 root_objectid, u64 owner, u64 offset,

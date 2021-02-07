@@ -174,7 +174,9 @@ static int __csum_tree_block_size(struct extent_buffer *buf, u16 csum_size,
 			result, len);
 
 	if (verify) {
-		if (memcmp_extent_buffer(buf, result, 0, csum_size)) {
+		if (buf->fs_info->skip_csum_check) {
+			/* printf("skip csum check for block %llu\n", buf->start); */
+		} else if (memcmp_extent_buffer(buf, result, 0, csum_size)) {
 			if (!silent) {
 				char found[BTRFS_CSUM_STRING_LEN];
 				char wanted[BTRFS_CSUM_STRING_LEN];
@@ -211,6 +213,12 @@ int csum_tree_block(struct btrfs_fs_info *fs_info,
 {
 	u16 csum_size = fs_info->csum_size;
 	u16 csum_type = fs_info->csum_type;
+
+	if (fs_info->force_csum_type != -1) {
+		/* printf("CSUM TREE: offset %llu\n", buf->start); */
+		csum_type = fs_info->force_csum_type;
+		csum_size = btrfs_csum_type_size(csum_type);
+	}
 
 	if (verify && fs_info->suppress_check_block_errors)
 		return verify_tree_block_csum_silent(buf, csum_size, csum_type);
@@ -934,6 +942,8 @@ struct btrfs_fs_info *btrfs_new_fs_info(int writable, u64 sb_bytenr)
 	fs_info->metadata_alloc_profile = (u64)-1;
 	fs_info->system_alloc_profile = fs_info->metadata_alloc_profile;
 	fs_info->nr_global_roots = 1;
+	fs_info->force_csum_type = -1;
+
 	return fs_info;
 
 free_all:
@@ -1427,6 +1437,8 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, struct open_ctree_flags *oc
 		fs_info->suppress_check_block_errors = 1;
 	if (flags & OPEN_CTREE_IGNORE_FSID_MISMATCH)
 		fs_info->ignore_fsid_mismatch = 1;
+	if (flags & OPEN_CTREE_SKIP_CSUM_CHECK)
+		fs_info->skip_csum_check = 1;
 	if (flags & OPEN_CTREE_IGNORE_CHUNK_TREE_ERROR)
 		fs_info->ignore_chunk_tree_error = 1;
 	if (flags & OPEN_CTREE_HIDE_NAMES)
@@ -1482,6 +1494,8 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, struct open_ctree_flags *oc
 		fprintf(stderr, "ERROR: Filesystem UUID change in progress\n");
 		goto out_devices;
 	}
+
+	/* CHECK: ignore_csum_mismatch */
 
 	ASSERT(!memcmp(disk_super->fsid, fs_devices->fsid, BTRFS_FSID_SIZE));
 	if (btrfs_fs_incompat(fs_info, METADATA_UUID))
