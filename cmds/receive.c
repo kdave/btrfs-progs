@@ -77,14 +77,6 @@ struct btrfs_receive
 	struct subvol_uuid_search sus;
 
 	int honor_end_cmd;
-
-	/*
-	 * Buffer to store capabilities from security.capabilities xattr,
-	 * usually 20 bytes, but make same room for potentially larger
-	 * encodings. Must be set only once per file, denoted by length > 0.
-	 */
-	char cached_capabilities[64];
-	int cached_capabilities_len;
 };
 
 static int finish_subvol(struct btrfs_receive *rctx)
@@ -825,22 +817,6 @@ static int process_set_xattr(const char *path, const char *name,
 		goto out;
 	}
 
-	if (strcmp("security.capability", name) == 0) {
-		if (bconf.verbose >= 4)
-			fprintf(stderr, "set_xattr: cache capabilities\n");
-		if (rctx->cached_capabilities_len)
-			warning("capabilities set multiple times per file: %s",
-				full_path);
-		if (len > sizeof(rctx->cached_capabilities)) {
-			error("capabilities encoded to %d bytes, buffer too small",
-				len);
-			ret = -E2BIG;
-			goto out;
-		}
-		rctx->cached_capabilities_len = len;
-		memcpy(rctx->cached_capabilities, data, len);
-	}
-
 	if (bconf.verbose >= 3) {
 		fprintf(stderr, "set_xattr %s - name=%s data_len=%d "
 				"data=%.*s\n", path, name, len,
@@ -961,23 +937,6 @@ static int process_chown(const char *path, u64 uid, u64 gid, void *user)
 		error("chown %s failed: %m", path);
 		goto out;
 	}
-
-	if (rctx->cached_capabilities_len) {
-		if (bconf.verbose >= 3)
-			fprintf(stderr, "chown: restore capabilities\n");
-		ret = lsetxattr(full_path, "security.capability",
-				rctx->cached_capabilities,
-				rctx->cached_capabilities_len, 0);
-		memset(rctx->cached_capabilities, 0,
-				sizeof(rctx->cached_capabilities));
-		rctx->cached_capabilities_len = 0;
-		if (ret < 0) {
-			ret = -errno;
-			error("restoring capabilities %s: %m", path);
-			goto out;
-		}
-	}
-
 out:
 	return ret;
 }
@@ -1155,14 +1114,6 @@ static int do_receive(struct btrfs_receive *rctx, const char *tomnt,
 		goto out;
 
 	while (!end) {
-		if (rctx->cached_capabilities_len) {
-			if (bconf.verbose >= 4)
-				fprintf(stderr, "clear cached capabilities\n");
-			memset(rctx->cached_capabilities, 0,
-					sizeof(rctx->cached_capabilities));
-			rctx->cached_capabilities_len = 0;
-		}
-
 		ret = btrfs_read_and_process_send_stream(r_fd, &send_ops,
 							 rctx,
 							 rctx->honor_end_cmd,
