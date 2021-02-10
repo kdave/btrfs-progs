@@ -35,7 +35,6 @@
 #include <linux/kdev_t.h>
 #include <limits.h>
 #include <blkid/blkid.h>
-#include <libmount/libmount.h>
 #include <sys/vfs.h>
 #include <sys/statfs.h>
 #include <linux/magic.h>
@@ -1245,10 +1244,175 @@ int ask_user(const char *question)
 }
 
 /*
- * Use libmount to compare the subvol passed with the pathname of the directory
- * mounted in btrfs. The pathname inside btrfs is different from getmnt and
- * friends, since it can detect bind mounts to content from the inside of the
- * original mount.
+ * Partial representation of a line in /proc/pid/mountinfo
+ */
+struct mnt_entry {
+	const char *root;
+	const char *path;
+	const char *options1;
+	const char *fstype;
+	const char *device;
+	const char *options2;
+};
+
+/*
+ * Find first occurence of up an option string (as "option=") in @options,
+ * separated by comma. Return allocated string as "option=value"
+ */
+static char *find_option(const char *options, const char *option)
+{
+	char *tmp, *ret;
+
+	tmp = strstr(options, option);
+	if (!tmp)
+		return NULL;
+	ret = strdup(tmp);
+	tmp = ret;
+	while (*tmp && *tmp != ',')
+		tmp++;
+	*tmp = 0;
+	return ret;
+}
+
+/* Match whitespace separator */
+static bool is_sep(char c)
+{
+	return c == ' ' || c == '\t';
+}
+
+/* Advance @line skipping over all non-separator chars */
+static void skip_nonsep(char **line)
+{
+	while (**line && !is_sep(**line))
+		(*line)++;
+}
+
+/* Advance @line skipping over all separator chars, setting them to nul char */
+static void skip_sep(char **line)
+{
+	while (**line && is_sep(**line)) {
+		**line = 0;
+		(*line)++;
+	}
+}
+
+static bool isoctal(char c)
+{
+	return '0' <= c && c <= '7';
+}
+
+/*
+ * Validate complete escape sequence used for mangling special chars in paths,
+ * eg.  \012 == 10 == 0xa == '\n'.
+ * Mandatory format: backslash and 3 octal digits.
+ */
+static bool valid_escape(const char *str)
+{
+	if (*str == 0 || *str != '\\')
+		return false;
+	str++;
+	if (*str == 0 || is_sep(*str) || !isoctal(*str))
+		return false;
+	str++;
+	if (*str == 0 || is_sep(*str) || !isoctal(*str))
+		return false;
+	str++;
+	if (*str == 0 || is_sep(*str) || !isoctal(*str))
+		return false;
+	return true;
+}
+
+/*
+ * Read a path from @line, with potentially mangled special characters.
+ * - the input is changed in-place when unmangling is done
+ * - end of path is a space character (a valid space in the path is mangled)
+ * - line is advanced to the final separator or nul character
+ * - returned path is a valid string terminated by zero or whitespace separator
+ */
+char *read_path(char **line)
+{
+	char *ret = *line;
+	char *out = *line;
+
+	while (**line) {
+		if (is_sep(**line))
+			break;
+		if (valid_escape(*line)) {
+			char c;
+
+			(*line)++;
+			c  = ((*(*line)++) & 0b111) << 6;
+			c |= ((*(*line)++) & 0b111) << 3;
+			c |= ((*(*line)++) & 0b111);
+			*out++ = c;
+		} else {
+			*out++ = *(*line)++;
+		}
+	}
+	/*
+	 * Unmangled characters make the final string shorter, add the null
+	 * terminator.  Otherwise keep the line at the space separator so
+	 * followup parsing can continue.
+	 */
+	if (out < *line)
+		*out = 0;
+	return ret;
+}
+
+/*
+ * Parse a line from /proc/pid/mountinfo
+ * Example:
+
+272 265 0:49 /subvol /mnt/path rw,noatime shared:145 - btrfs /dev/sda1 rw,subvolid=5598,subvol=/subvol
+0   1   2    3      4          5          6          7 8     9         10
+
+ * Fields related to paths and options are parsed, @line is changed in place,
+ * separators are replaced by nul char, paths could be unmangled.
+ */
+static void parse_mntinfo_line(char *line, struct mnt_entry *ent)
+{
+	/* Skip 0 */
+	skip_nonsep(&line);
+	skip_sep(&line);
+	/* Skip 1 */
+	skip_nonsep(&line);
+	skip_sep(&line);
+	/* Skip 2 */
+	skip_nonsep(&line);
+	skip_sep(&line);
+	/* Read 3 */
+	ent->root = read_path(&line);
+	skip_sep(&line);
+	/* Read 4 */
+	ent->path = read_path(&line);
+	skip_sep(&line);
+	/* Read 5 */
+	ent->options1 = line;
+	skip_nonsep(&line);
+	skip_sep(&line);
+	/* Skip 6 */
+	skip_nonsep(&line);
+	skip_sep(&line);
+	/* Skip 7 */
+	skip_nonsep(&line);
+	skip_sep(&line);
+	/* Read 8 */
+	ent->fstype = line;
+	skip_nonsep(&line);
+	skip_sep(&line);
+	/* Read 9 */
+	ent->device = read_path(&line);
+	skip_sep(&line);
+	/* Read 10 */
+	ent->options2 = line;
+	skip_nonsep(&line);
+	skip_sep(&line);
+}
+
+/*
+ * Compare the subvolume passed with the pathname of the directory mounted in
+ * btrfs. The pathname inside btrfs is different from getmnt and friends, since
+ * it can detect bind mounts to content from the inside of the original mount.
  *
  * Example:
  *   # mount -o subvol=/vol /dev/sda2 /mnt
@@ -1264,85 +1428,109 @@ int ask_user(const char *question)
  *   38 30 0:32 /vol /mnt ro,relatime - btrfs /dev/sda2 ro,ssd,space_cache,subvolid=256,subvol=/vol
  *   37 29 0:32 /vol/dir2 /othermnt ro,relatime - btrfs /dev/sda2 ro,ssd,space_cache,subvolid=256,subvol=/vol
  *
- * If we try to find a mounpoint only using subvol and subvolid from mount
+ * If we try to find a mount point only using subvol and subvolid from mount
  * options we would get mislead to belive that /othermnt has the same content
- * from /mnt.
+ * as /mnt.
  *
  * But, using mountinfo, we have the pathaname _inside_ the filesystem, so we
- * can filter out the mount points with bind mounts which has different content
+ * can filter out the mount points with bind mounts which have different content
  * from the original mounts, in this case the mount point with id 37.
  */
 int find_mount_fsroot(const char *subvol, const char *subvolid, char **mount)
 {
-	struct libmnt_cache *cache;
-	struct libmnt_iter *iter;
-	struct libmnt_fs *fs;
-	struct libmnt_table *tb;
+	FILE *mnt;
+	char *buf = NULL;
+	int bs = 4096;
+	int line = 0;
+	int ret = 0;
+	bool found = false;
 
-	tb = mnt_new_table_from_file("/proc/self/mountinfo");
-	if (!tb)
+	mnt = fopen("/proc/self/mountinfo", "r");
+	if (!mnt)
 		return -1;
 
-	iter = mnt_new_iter(MNT_ITER_FORWARD);
-	if (!iter)
-		goto out_table;
+	buf = malloc(bs);
+	if (!buf) {
+		ret = -ENOMEM;
+		goto out;
+	}
 
-	cache = mnt_new_cache();
-	if (!cache)
-		goto out_iter;
+	do {
+		int ch;
 
-	if (mnt_table_set_cache(tb, cache))
-		goto out_cache;
+		ch = fgetc(mnt);
+		if (ch == -1)
+			break;
 
-	while (mnt_table_next_fs(tb, iter, &fs) == 0) {
-		const char *mnt_root = mnt_fs_get_root(fs);
-		bool found = true;
-		char *subid = NULL;
-		size_t id_siz;
+		if (ch == '\n') {
+			struct mnt_entry ent;
+			char *opt;
+			const char *value;
 
+			buf[line] = 0;
+			parse_mntinfo_line(buf, &ent);
+
+			/* Skip unrelated mounts */
+			if (strcmp(ent.fstype, "btrfs") != 0)
+				goto nextline;
+			if (strlen(ent.root) != strlen(subvol))
+				goto nextline;
+			if (strcmp(ent.root, subvol) != 0)
+				goto nextline;
+
+			/*
+			 * Match subvolume by id found in mountinfo and
+			 * requested by the caller
+			 */
+			opt = find_option(ent.options2, "subvolid=");
+			if (!opt)
+				goto nextline;
+			value = opt + strlen("subvolid=");
+			if (strcmp(value, subvolid) != 0) {
+				free(opt);
+				goto nextline;
+			}
+			free(opt);
+
+			/*
+			 * First match is in most cases the original mount, not
+			 * a bind mount. In case there are no further bind
+			 * mounts, return what we found in @mount.  Any
+			 * following mount that matches by path and subvolume
+			 * id is a bind mount and we return the original mount.
+			 */
+			if (found)
+				goto out;
+			found = true;
+			*mount = strdup(ent.path);
+			ret = 0;
+			goto nextline;
+		}
 		/*
-		 * Check any combination that would lead to an undesired mount
-		 * point and remove from the table.
+		 * Grow buffer if needed, there are 3 paths up to PATH_MAX and
+		 * mount options are limited by page size. Often the overall
+		 * line length does not exceed 256.
 		 */
-		if (strcmp(mnt_fs_get_fstype(fs), "btrfs") != 0)
-			found = false;
-		else if (strlen(mnt_root) != strlen(subvol))
-			found = false;
-		else if (strcmp(mnt_root, subvol) != 0)
-			found = false;
-		else if (mnt_fs_get_option(fs, "subvolid", &subid, &id_siz))
-			found = false;
-		else if (strncmp(subid, subvolid, id_siz) != 0)
-			found = false;
+		if (line >= bs) {
+			char *tmp;
 
-		if (!found)
-			mnt_table_remove_fs(tb, fs);
-	}
-
-	/* Rewind the iterator to make second pass */
-	mnt_reset_iter(iter, MNT_ITER_FORWARD);
-
-	/*
-	 * What remains in the list are the mount itself and possible bind mounts
-	 * referring to the same pathname mounted by the original mount. As in
-	 * this case the mount point would have the same content of the original
-	 * mount, we can safely return the first entry.
-	 */
-	if (!mnt_table_is_empty(tb)) {
-		mnt_table_next_fs(tb, iter, &fs);
-		*mount = strdup(mnt_fs_get_target(fs));
-	}
-
-	return 0;
-
-out_cache:
-	mnt_unref_cache(cache);
-out_iter:
-	mnt_free_iter(iter);
-out_table:
-	mnt_unref_table(tb);
-
-	return -1;
+			bs += 4096;
+			tmp = realloc(buf, bs);
+			if (!tmp) {
+				ret = -ENOMEM;
+				goto out;
+			}
+			buf = tmp;
+		}
+		buf[line++] = ch;
+		continue;
+nextline:
+		line = 0;
+	} while (1);
+out:
+	free(buf);
+	fclose(mnt);
+	return ret;
 }
 
 /*
