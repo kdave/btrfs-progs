@@ -325,7 +325,7 @@ char *path_canonicalize(const char *path)
 		return strdup(path);
 	p = strrchr(canonical, '/');
 	if (p && strncmp(p, "/dm-", 4) == 0 && isdigit(*(p + 4))) {
-		char *dm = path_canonicalize(p + 1);
+		char *dm = path_canonicalize_dm_name(p + 1);
 
 		if (dm) {
 			free(canonical);
