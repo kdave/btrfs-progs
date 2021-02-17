@@ -7,12 +7,12 @@ CFLAGS := -g -O1 -Wall -D_FORTIFY_SOURCE=2 -include config.h \
 
 LDFLAGS := -static -rdynamic
 
-LIBS := -luuid   -lblkid   -lmount  -lz   -llzo2 -L. -lpthread
+LIBS := -luuid   -lblkid   -lz   -llzo2 -L. -lpthread
 LIBBTRFS_LIBS := $(LIBS)
 
 STATIC_CFLAGS := $(CFLAGS) -ffunction-sections -fdata-sections
 STATIC_LDFLAGS := -static -Wl,--gc-sections
-STATIC_LIBS := -luuid   -lblkid -luuid  -lmount  -lz   -llzo2 -L. -pthread
+STATIC_LIBS := -luuid   -lblkid -luuid -lz   -llzo2 -L. -pthread
 
 btrfs_shared_libraries := libext2_uuid \
 			libext2_blkid
