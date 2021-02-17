@@ -129,17 +129,9 @@ LIBS = $(LIBS_BASE) $(LIBS_CRYPTO)
 LIBBTRFS_LIBS = $(LIBS_BASE) $(LIBS_CRYPTO)
 
 # Static compilation flags
-STATIC_CFLAGS = $(CFLAGS) -ffunction-sections -fdata-sections -DSTATICBUILD=1
+STATIC_CFLAGS = $(CFLAGS) -ffunction-sections -fdata-sections
 STATIC_LDFLAGS = -static -Wl,--gc-sections
 STATIC_LIBS = $(STATIC_LIBS_BASE)
-
-# Static build with libmount print some warnings due to usage of UID/GID
-# functions that require some glibc dynamic functionality at runtime.
-# The following can be ignored:
-# - mnt_get_gid using getgrnam_r
-# - mnt_get_uid using getpwnam_r
-# - mnt_get_username using getpwuid_r
-STATICWARNING = @echo "    NOTE: warnings about getgrnam_r/mnt_get_uid/... are harmless, building"
 
 # don't use FORTIFY with sparse because glibc with FORTIFY can
 # generate so many sparse errors that sparse stops parsing,
@@ -549,7 +541,6 @@ endif
 
 btrfs-%.static: btrfs-%.static.o $(static_objects) $(patsubst %.o,%.static.o,$(standalone_deps)) $(static_libbtrfs_objects)
 	@echo "    [LD]     $@"
-	$(STATICWARNING) $@
 	$(Q)$(CC) -o $@ $@.o $(static_objects) \
 		$(patsubst %.o, %.static.o, $($(subst -,_,$(subst .static,,$@)-objects))) \
 		$(static_libbtrfs_objects) $(STATIC_LDFLAGS) \
@@ -568,7 +559,6 @@ btrfs: btrfs.o $(objects) $(cmds_objects) $(libs_static)
 
 btrfs.static: btrfs.static.o $(static_objects) $(static_cmds_objects) $(static_libbtrfs_objects) $(static_libbtrfsutil_objects)
 	@echo "    [LD]     $@"
-	$(STATICWARNING) $@
 	$(Q)$(CC) -o $@ $^ $(STATIC_LDFLAGS) $(STATIC_LIBS) $(STATIC_LIBS_COMP)
 
 btrfs.box: btrfs.box.o $(objects) $(cmds_objects) $(progs_box_objects) $(libs_static)
@@ -577,7 +567,6 @@ btrfs.box: btrfs.box.o $(objects) $(cmds_objects) $(progs_box_objects) $(libs_st
 
 btrfs.box.static: btrfs.box.static.o $(static_objects) $(static_cmds_objects) $(progs_box_static_objects) $(static_libbtrfs_objects) $(static_libbtrfsutil_objects)
 	@echo "    [LD]     $@"
-	$(STATICWARNING) $@
 	$(Q)$(CC) $(STATIC_CFLAGS) -o $@ $^ $(btrfs_convert_libs) \
 		$(STATIC_LDFLAGS) $(STATIC_LIBS) $(STATIC_LIBS_COMP)
 
@@ -598,7 +587,6 @@ btrfsck: btrfs
 
 btrfsck.static: btrfs.static
 	@echo "    [LN]     $@"
-	$(STATICWARNING) $@
 	$(Q)$(LN_S) -f $^ $@
 
 mkfs.btrfs: $(mkfs_objects) $(objects) $(libs_static)
@@ -607,7 +595,6 @@ mkfs.btrfs: $(mkfs_objects) $(objects) $(libs_static)
 
 mkfs.btrfs.static: $(static_mkfs_objects) $(static_objects) $(static_libbtrfs_objects)
 	@echo "    [LD]     $@"
-	$(STATICWARNING) $@
 	$(Q)$(CC) -o $@ $^ $(STATIC_LDFLAGS) $(STATIC_LIBS)
 
 btrfstune: btrfstune.o $(objects) $(libs_static)
@@ -616,7 +603,6 @@ btrfstune: btrfstune.o $(objects) $(libs_static)
 
 btrfstune.static: btrfstune.static.o $(static_objects) $(static_libbtrfs_objects)
 	@echo "    [LD]     $@"
-	$(STATICWARNING) $@
 	$(Q)$(CC) -o $@ $^ $(STATIC_LDFLAGS) $(STATIC_LIBS)
 
 btrfs-image: $(image_objects) $(objects) $(libs_static)
@@ -625,7 +611,6 @@ btrfs-image: $(image_objects) $(objects) $(libs_static)
 
 btrfs-image.static: $(static_image_objects) $(static_objects) $(static_libbtrfs_objects)
 	@echo "    [LD]     $@"
-	$(STATICWARNING) $@
 	$(Q)$(CC) -o $@ $^ $(STATIC_LDFLAGS) $(STATIC_LIBS) $(STATIC_LIBS_COMP)
 
 btrfs-convert: $(convert_objects) $(objects) $(libs_static)
@@ -634,7 +619,6 @@ btrfs-convert: $(convert_objects) $(objects) $(libs_static)
 
 btrfs-convert.static: $(static_convert_objects) $(static_objects) $(static_libbtrfs_objects)
 	@echo "    [LD]     $@"
-	$(STATICWARNING) $@
 	$(Q)$(CC) -o $@ $^ $(STATIC_LDFLAGS) $(btrfs_convert_libs) $(STATIC_LIBS)
 
 quick-test: quick-test.o $(objects) $(libs)

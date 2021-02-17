@@ -2335,22 +2335,3 @@ out:
 
 	return ret;
 }
-
-#ifdef STATICBUILD
-
-/*
- * libmount links with selinux that we don't use, the following symbols are
- * missing. Weak aliases allow to link.
- */
-
-__attribute__((weak)) int selinux_trans_to_raw_context(const char * trans, char ** rawp)
-{
-	return -1;
-}
-
-typedef void *security_context_t;
-__attribute__((weak)) void freecon(security_context_t con)
-{
-}
-
-#endif
