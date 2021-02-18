@@ -36,7 +36,7 @@ static int check_csum_superblock(void *sb)
 	u8 result[BTRFS_CSUM_SIZE];
 	u16 csum_type = btrfs_super_csum_type(sb);
 
-	btrfs_csum_data(csum_type, (unsigned char *)sb + BTRFS_CSUM_SIZE,
+	btrfs_csum_data(NULL, csum_type, (unsigned char *)sb + BTRFS_CSUM_SIZE,
 			result, BTRFS_SUPER_INFO_SIZE - BTRFS_CSUM_SIZE);
 
 	return !memcmp(sb, result, csum_size);
@@ -48,7 +48,7 @@ static void update_block_csum(void *block)
 	struct btrfs_header *hdr;
 	u16 csum_type = btrfs_super_csum_type(block);
 
-	btrfs_csum_data(csum_type, (unsigned char *)block + BTRFS_CSUM_SIZE,
+	btrfs_csum_data(NULL, csum_type, (unsigned char *)block + BTRFS_CSUM_SIZE,
 			result, BTRFS_SUPER_INFO_SIZE - BTRFS_CSUM_SIZE);
 
 	memset(block, 0, BTRFS_CSUM_SIZE);
