@@ -302,6 +302,7 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 	struct btrfs_disk_key disk_key;
 	struct btrfs_key found_key;
 	struct cache_tree block_root;	/* for multiple --block parameters */
+	struct open_ctree_flags ocf = { 0 };
 	char uuidbuf[BTRFS_UUID_UNPARSED_SIZE];
 	int ret = 0;
 	int slot;
@@ -459,7 +460,9 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 
 	printf("%s\n", PACKAGE_STRING);
 
-	info = open_ctree_fs_info(argv[optind], 0, 0, 0, open_ctree_flags);
+	ocf.filename = argv[optind];
+	ocf.flags = open_ctree_flags;
+	info = open_ctree_fs_info(&ocf);
 	if (!info) {
 		error("unable to open %s", argv[optind]);
 		goto out;

@@ -2627,10 +2627,11 @@ static int restore_metadump(const char *input, FILE *out, int old_restore,
 
 	/* NOTE: open with write mode */
 	if (fixup_offset) {
-		info = open_ctree_fs_info(target, 0, 0, 0,
-					  OPEN_CTREE_WRITES |
-					  OPEN_CTREE_RESTORE |
-					  OPEN_CTREE_PARTIAL);
+		struct open_ctree_flags ocf = { 0 };
+
+		ocf.filename = target;
+		ocf.flags = OPEN_CTREE_WRITES | OPEN_CTREE_RESTORE | OPEN_CTREE_PARTIAL;
+		info = open_ctree_fs_info(&ocf);
 		if (!info) {
 			error("open ctree failed");
 			ret = -EIO;
@@ -2989,13 +2990,14 @@ int BOX_MAIN(image)(int argc, char *argv[])
 
 	 /* extended support for multiple devices */
 	if (!create && multi_devices) {
+		struct open_ctree_flags ocf = { 0 };
 		struct btrfs_fs_info *info;
 		u64 total_devs;
 		int i;
 
-		info = open_ctree_fs_info(target, 0, 0, 0,
-					  OPEN_CTREE_PARTIAL |
-					  OPEN_CTREE_RESTORE);
+		ocf.filename = target;
+		ocf.flags = OPEN_CTREE_PARTIAL | OPEN_CTREE_RESTORE;
+		info = open_ctree_fs_info(&ocf);
 		if (!info) {
 			error("open ctree failed at %s", target);
 			return 1;

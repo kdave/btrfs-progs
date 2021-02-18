@@ -339,6 +339,7 @@ int main(int argc, char **argv)
 	struct btrfs_find_root_filter filter = {0};
 	struct cache_tree result;
 	struct cache_extent *found;
+	struct open_ctree_flags ocf = { 0 };
 	int ret;
 
 	/* Default to search root tree */
@@ -381,9 +382,9 @@ int main(int argc, char **argv)
 	if (check_argc_min(argc - optind, 1))
 		return 1;
 
-	fs_info = open_ctree_fs_info(argv[optind], 0, 0, 0,
-			OPEN_CTREE_CHUNK_ROOT_ONLY |
-			OPEN_CTREE_IGNORE_CHUNK_TREE_ERROR);
+	ocf.filename = argv[optind];
+	ocf.flags = OPEN_CTREE_CHUNK_ROOT_ONLY | OPEN_CTREE_IGNORE_CHUNK_TREE_ERROR;
+	fs_info = open_ctree_fs_info(&ocf);
 	if (!fs_info) {
 		error("open ctree failed");
 		return 1;

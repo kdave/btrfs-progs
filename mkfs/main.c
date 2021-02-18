@@ -917,6 +917,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	struct btrfs_root *root;
 	struct btrfs_fs_info *fs_info;
 	struct btrfs_trans_handle *trans;
+	struct open_ctree_flags ocf = { 0 };
 	char *label = NULL;
 	u64 block_count = 0;
 	u64 dev_block_count = 0;
@@ -1353,8 +1354,9 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		goto error;
 	}
 
-	fs_info = open_ctree_fs_info(file, 0, 0, 0,
-			OPEN_CTREE_WRITES | OPEN_CTREE_TEMPORARY_SUPER);
+	ocf.filename = file;
+	ocf.flags = OPEN_CTREE_WRITES | OPEN_CTREE_TEMPORARY_SUPER;
+	fs_info = open_ctree_fs_info(&ocf);
 	if (!fs_info) {
 		error("open ctree failed");
 		goto error;

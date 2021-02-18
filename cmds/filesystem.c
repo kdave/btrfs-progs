@@ -574,6 +574,8 @@ static int map_seed_devices(struct list_head *all_uuids)
 	fs_uuids = btrfs_scanned_uuids();
 
 	list_for_each_entry(cur_fs, all_uuids, list) {
+		struct open_ctree_flags ocf = { 0 };
+
 		device = list_first_entry(&cur_fs->devices,
 						struct btrfs_device, dev_list);
 		if (!device)
@@ -586,8 +588,9 @@ static int map_seed_devices(struct list_head *all_uuids)
 		/*
 		 * open_ctree_* detects seed/sprout mapping
 		 */
-		fs_info = open_ctree_fs_info(device->name, 0, 0, 0,
-						OPEN_CTREE_PARTIAL);
+		ocf.filename = device->name;
+		ocf.flags = OPEN_CTREE_PARTIAL;
+		fs_info = open_ctree_fs_info(&ocf);
 		if (!fs_info)
 			continue;
 

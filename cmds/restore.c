@@ -1258,6 +1258,7 @@ static struct btrfs_root *open_fs(const char *dev, u64 root_location,
 {
 	struct btrfs_fs_info *fs_info = NULL;
 	struct btrfs_root *root = NULL;
+	struct open_ctree_flags ocf = { 0 };
 	u64 bytenr;
 	int i;
 
@@ -1269,9 +1270,11 @@ static struct btrfs_root *open_fs(const char *dev, u64 root_location,
 		 * in extent tree. Skip block group item search will allow
 		 * restore to be executed on heavily damaged fs.
 		 */
-		fs_info = open_ctree_fs_info(dev, bytenr, root_location, 0,
-					     OPEN_CTREE_PARTIAL |
-					     OPEN_CTREE_NO_BLOCK_GROUPS);
+		ocf.filename = dev;
+		ocf.sb_bytenr = bytenr;
+		ocf.root_tree_bytenr = root_location;
+		ocf.flags = OPEN_CTREE_PARTIAL | OPEN_CTREE_NO_BLOCK_GROUPS;
+		fs_info = open_ctree_fs_info(&ocf);
 		if (fs_info)
 			break;
 		fprintf(stderr, "Could not open root, trying backup super\n");

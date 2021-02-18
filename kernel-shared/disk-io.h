@@ -160,10 +160,15 @@ struct btrfs_root *open_ctree(const char *filename, u64 sb_bytenr,
 			      unsigned flags);
 struct btrfs_root *open_ctree_fd(int fp, const char *path, u64 sb_bytenr,
 				 unsigned flags);
-struct btrfs_fs_info *open_ctree_fs_info(const char *filename,
-					 u64 sb_bytenr, u64 root_tree_bytenr,
-					 u64 chunk_root_bytenr,
-					 unsigned flags);
+struct open_ctree_flags {
+	const char *filename;
+	u64 sb_bytenr;
+	u64 root_tree_bytenr;
+	u64 chunk_tree_bytenr;
+	unsigned flags;
+};
+
+struct btrfs_fs_info *open_ctree_fs_info(struct open_ctree_flags *ocf);
 int close_ctree_fs_info(struct btrfs_fs_info *fs_info);
 static inline int close_ctree(struct btrfs_root *root)
 {
