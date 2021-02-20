@@ -28,6 +28,7 @@
 #include <linux/limits.h>
 #include <linux/version.h>
 #include <getopt.h>
+#include <limits.h>
 
 #include <btrfsutil.h>
 
@@ -1074,6 +1075,118 @@ static const char * const cmd_filesystem_resize_usage[] = {
 	NULL
 };
 
+static int check_resize_args(const char *amount, const char *path) {
+	struct btrfs_ioctl_fs_info_args fi_args;
+	struct btrfs_ioctl_dev_info_args *di_args = NULL;
+	int ret, i, dev_idx = -1;
+	u64 devid = 1;
+	const char *res_str = NULL;
+	char *devstr = NULL, *sizestr = NULL;
+	u64 new_size = 0, old_size = 0, diff = 0;
+	int mod = 0;
+	char amount_dup[BTRFS_VOL_NAME_MAX];
+
+	ret = get_fs_info(path, &fi_args, &di_args);
+
+	if (ret) {
+		error("unable to retrieve fs info");
+		return 1;
+	}
+
+	if (!fi_args.num_devices) {
+		error("no devices found");
+		ret = 1;
+		goto out;
+	}
+
+	ret = snprintf(amount_dup, BTRFS_VOL_NAME_MAX, "%s", amount);
+	if (strlen(amount) != ret) {
+		error("newsize argument is too long");
+		ret = 1;
+		goto out;
+	}
+
+	sizestr = amount_dup;
+	devstr = strchr(sizestr, ':');
+	if (devstr) {
+		sizestr = devstr + 1;
+		*devstr = 0;
+		devstr = amount_dup;
+
+		errno = 0;
+		devid = strtoull(devstr, NULL, 10);
+
+		if (errno) {
+			error("failed to parse devid %s: %m", devstr);
+			ret = 1;
+			goto out;
+		}
+	}
+
+	dev_idx = -1;
+	for(i = 0; i < fi_args.num_devices; i++) {
+		if (di_args[i].devid == devid) {
+			dev_idx = i;
+			break;
+		}
+	}
+
+	if (dev_idx < 0) {
+		error("cannot find devid: %lld", devid);
+		ret = 1;
+		goto out;
+	}
+
+	if (strcmp(sizestr, "max") == 0) {
+		res_str = "max";
+	} else {
+		if (sizestr[0] == '-') {
+			mod = -1;
+			sizestr++;
+		} else if (sizestr[0] == '+') {
+			mod = 1;
+			sizestr++;
+		}
+		diff = parse_size_from_string(sizestr);
+		if (!diff) {
+			error("failed to parse size %s", sizestr);
+			ret = 1;
+			goto out;
+		}
+		old_size = di_args[dev_idx].total_bytes;
+
+		if (mod < 0) {
+			if (diff > old_size) {
+				error("current size is %s which is smaller than %s",
+				      pretty_size_mode(old_size, UNITS_DEFAULT),
+				      pretty_size_mode(diff, UNITS_DEFAULT));
+				ret = 1;
+				goto out;
+			}
+			new_size = old_size - diff;
+		} else if (mod > 0) {
+			if (diff > ULLONG_MAX - old_size) {
+				error("increasing %s is out of range",
+				      pretty_size_mode(diff, UNITS_DEFAULT));
+				ret = 1;
+				goto out;
+			}
+			new_size = old_size + diff;
+		}
+		new_size = round_down(new_size, fi_args.sectorsize);
+		res_str = pretty_size_mode(new_size, UNITS_DEFAULT);
+	}
+
+	printf("Resize device id %lld (%s) from %s to %s\n", devid,
+		di_args[dev_idx].path,
+		pretty_size_mode(di_args[dev_idx].total_bytes, UNITS_DEFAULT),
+		res_str);
+
+out:
+	free(di_args);
+	return 0;
+}
+
 static int cmd_filesystem_resize(const struct cmd_struct *cmd,
 				 int argc, char **argv)
 {
@@ -1134,7 +1247,12 @@ static int cmd_filesystem_resize(const struct cmd_struct *cmd,
 		return 1;
 	}
 
-	printf("Resize '%s' of '%s'\n", path, amount);
+	ret = check_resize_args(amount, path);
+	if (ret != 0) {
+		close_file_or_dir(fd, dirstream);
+		return 1;
+	}
+
 	memset(&args, 0, sizeof(args));
 	strncpy_null(args.name, amount);
 	res = ioctl(fd, BTRFS_IOC_RESIZE, &args);
