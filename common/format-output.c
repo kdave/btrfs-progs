@@ -123,10 +123,7 @@ void fmt_end(struct format_ctx *fctx)
 		fprintf(stderr, "WARNING: wrong nesting\n");
 
 	/* Close, no continuation to print */
-
-	if (bconf.output_format & CMD_FORMAT_TEXT)
-		putchar('\n');
-	else if (bconf.output_format & CMD_FORMAT_JSON) {
+	if (bconf.output_format & CMD_FORMAT_JSON) {
 		fmt_dec_depth(fctx);
 		fmt_separator(fctx);
 		printf("}\n");
@@ -168,8 +165,15 @@ void fmt_start_value(struct format_ctx *fctx, const struct rowspec *row)
 	}
 }
 
+/*
+ * Newline depends on format type:
+ * - json does delayed continuation "," in case there's a following object
+ * - plain text always ends with a newline
+ */
 void fmt_end_value(struct format_ctx *fctx, const struct rowspec *row)
 {
+	if (bconf.output_format == CMD_FORMAT_TEXT)
+		putchar('\n');
 	if (bconf.output_format == CMD_FORMAT_JSON) {
 		if (strcmp(row->fmt, "list") == 0) {
 		} else if (strcmp(row->fmt, "map") == 0) {
@@ -242,7 +246,7 @@ void fmt_print(struct format_ctx *fctx, const char* key, ...)
 		const bool print_colon = row->out_text[0];
 		int len;
 
-		putchar('\n');
+		/* Print indented key name */
 		fmt_indent1(fctx->indent);
 		len = strlen(row->out_text);
 
@@ -251,6 +255,7 @@ void fmt_print(struct format_ctx *fctx, const char* key, ...)
 			putchar(':');
 			len++;
 		}
+		/* Align start for the value */
 		fmt_indent1(fctx->width - len);
 	} else if (bconf.output_format == CMD_FORMAT_JSON) {
 		if (strcmp(row->fmt, "list") == 0) {
@@ -312,6 +317,5 @@ void fmt_print(struct format_ctx *fctx, const char* key, ...)
 	}
 
 	fmt_end_value(fctx, row);
-	/* No newline here, the line is closed by next value or group end */
 	va_end(args);
 }
