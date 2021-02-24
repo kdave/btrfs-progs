@@ -1,0 +1,23 @@
+#!/bin/bash
+# Run the container
+# $0 [docker arguments] [--] [command and arguments]
+
+prefix=kdave
+image=$(basename `pwd` | tr '[A-Z]' '[a-z]')
+
+declare -a ARGS
+while :; do
+	case "$1" in
+		--) shift; break;;
+		--*) ARGS+="$1"; shift;;
+		*) break;;
+	esac
+done
+
+echo "ARGS: ${ARGS[@]}"
+echo "RUN : $@"
+
+# Device mapper devices are not visible inside the environment if the /dev mount
+# is the default one (tmpfs instead of devtmpfs)
+# Mounts and loop device manipulation is required
+docker run --mount type=bind,source=/dev,target=/dev -it --privileged "${ARGS[@]}" "$prefix/$image" "$@"

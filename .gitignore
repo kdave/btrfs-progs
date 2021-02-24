@@ -72,6 +72,8 @@
 .*
 !.editorconfig
 
+/ci/images/*/devel.tar.gz
+
 /Documentation/Makefile
 /Documentation/*.html
 /Documentation/btrfs-balance.8

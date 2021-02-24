@@ -1,0 +1,11 @@
+#!/bin/sh
+# Run from the directory with Dockerfile, directory name should match the image
+# name
+
+prefix=kdave
+image=$(basename `pwd` | tr '[A-Z]' '[a-z]')
+
+# Make sure the file exists as it's required but can be empty. In that case
+# it's downloaded when ./test-build is executed
+touch devel.tar.gz
+docker build -t "$prefix/$image" .
