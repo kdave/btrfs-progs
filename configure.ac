@@ -251,6 +251,11 @@ else
 AC_DEFINE([HAVE_OWN_FIEMAP_EXTENT_SHARED_DEFINE], [0], [We did not define FIEMAP_EXTENT_SHARED])
 fi
 
+HAVE_OWN_EXT4_EPOCH_MASK_DEFINE=0
+AX_CHECK_DEFINE([ext2fs/ext2_fs.h], [EXT4_EPOCH_MASK], [],
+		[HAVE_OWN_EXT4_EPOCH_MASK_DEFINE=1
+		 AC_MSG_WARN([no definition of EXT4_EPOCH_MASK found, probably old e2fsprogs, will use own definition, no 64bit time precision of converted images])])
+
 dnl Define <NAME>_LIBS= and <NAME>_CFLAGS= by pkg-config
 dnl
 dnl The default PKG_CHECK_MODULES() action-if-not-found is end the

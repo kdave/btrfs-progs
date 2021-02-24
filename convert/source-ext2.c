@@ -692,6 +692,8 @@ static void ext2_copy_inode_item(struct btrfs_inode_item *dst,
 	memset(&dst->reserved, 0, sizeof(dst->reserved));
 }
 
+#if HAVE_OWN_EXT4_EPOCH_MASK_DEFINE
+
 /*
  * Copied and modified from fs/ext4/ext4.h
  */
@@ -760,6 +762,25 @@ out:
 	free(src);
 	return ret;
 }
+
+#else /* HAVE_OWN_EXT4_EPOCH_MASK_DEFINE */
+
+static int ext4_copy_inode_timespec_extra(struct btrfs_inode_item *dst,
+				ext2_ino_t ext2_ino, u32 s_inode_size,
+				ext2_filsys ext2_fs)
+{
+	static int warn = 0;
+
+	if (!warn) {
+		warning(
+"extended inode (size %u) found but e2fsprogs don't support reading extra timespec",
+			s_inode_size);
+		warn = 1;
+	}
+	return 0;
+}
+
+#endif /* !HAVE_OWN_EXT4_EPOCH_MASK_DEFINE */
 
 static int ext2_check_state(struct btrfs_convert_context *cctx)
 {
