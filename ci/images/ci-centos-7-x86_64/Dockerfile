@@ -1,0 +1,35 @@
+FROM centos:7
+
+WORKDIR /tmp
+
+RUN rpm --import https://www.elrepo.org/RPM-GPG-KEY-elrepo.org
+RUN yum -y install https://www.elrepo.org/elrepo-release-7.el7.elrepo.noarch.rpm
+RUN yum -y install epel-release
+
+RUN yum -y install autoconf automake pkg-config
+RUN yum -y install libattr-devel libblkid-devel libuuid-devel
+RUN yum -y install e2fsprogs-libs e2fsprogs-devel reiserfs-utils
+RUN yum -y install zlib-devel lzo-devel libzstd-devel zstd-devel zstd
+RUN yum -y install make gcc tar gzip
+RUN yum -y install python3 python3-devel python3-setuptools
+
+# For downloading fresh sources
+RUN yum -y install wget
+
+# For running tests
+RUN yum -y install coreutils util-linux e2fsprogs findutils grep
+RUN yum -y install udev device-mapper acl attr xz
+
+# For debugging
+RUN yum -y install less vim
+
+COPY ./test-build .
+COPY ./run-tests .
+COPY ./devel.tar.gz .
+
+CMD ./test-build devel --disable-documentation
+
+# Continue with:
+# cd /tmp
+# (see CMD above)
+# ./run-tests /tmp/btrfs-progs-devel
