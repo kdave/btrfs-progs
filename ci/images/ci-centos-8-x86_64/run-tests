@@ -1,0 +1,12 @@
+#!/bin/sh -x
+
+where="$1"
+
+cd "$where" || { echo "ERROR: $1 not found"; exit 1; }
+
+make TEST_LOG=dump test-cli
+make TEST_LOG=dump test-mkfs
+make TEST_LOG=dump test-check
+make TEST_LOG=dump test-misc
+make TEST_LOG=dump test-convert
+make TEST_LOG=dump test-fuzz
