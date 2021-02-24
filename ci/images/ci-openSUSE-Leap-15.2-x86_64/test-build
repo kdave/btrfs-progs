@@ -1,0 +1,22 @@
+#!/bin/sh
+# usage: $0 [branch name] [configure parameters]
+
+urlbase="https://github.com/kdave/btrfs-progs/archive"
+branch=${1:-devel}
+fname="${branch}.tar.gz"
+url="$urlbase/$fname"
+
+shift
+
+echo "btrfs-progs build test of branch ${branch}"
+cd /tmp
+if [ -f "$fname" -a -s "$fname" ]; then
+	echo "Found local file $fname, not downloading"
+else
+	echo "Missing or empty tar, downloading devel branch from git"
+	rm -- "$fname"
+	wget "$url" -O "$fname"
+fi
+tar xf "$fname"
+cd "btrfs-progs-$branch"
+ci/build-default "$@"
