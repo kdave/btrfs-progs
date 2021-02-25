@@ -65,6 +65,7 @@ enabled by mkfs feature 'extref'.
 Enable seeding on a given device. Value 1 will enable seeding, 0 will disable it. +
 A seeding filesystem is forced to be mounted read-only. A new device can be added
 to the filesystem and will capture all writes keeping the seeding device intact.
+See also section 'SEEDING DEVICE' in `btrfs`(5).
 +
 WARNING: Clearing the seeding flag on a device may be dangerous.
 If a previously-seeding device is changed, all filesystems that used that
