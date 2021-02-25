@@ -51,7 +51,7 @@ suitable as default.
 *-m|--metadata <profile>*::
 Specify the profile for the metadata block groups.
 Valid values are 'raid0', 'raid1', 'raid1c3', 'raid1c4', 'raid5', 'raid6',
-'gaid10', 'single' or 'dup' (case does not matter).
+'raid10', 'single' or 'dup' (case does not matter).
 +
 Default on a single device filesystem is 'DUP', unless an SSD is detected, in which
 case it will default to 'single'. The detection is based on the value of
