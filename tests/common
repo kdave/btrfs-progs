@@ -449,23 +449,23 @@ extract_image()
 		rm -f "$image.restored"
 		;;
 	*.img.xz)
-		xz --decompress --keep "$image" || \
+		xz --decompress --keep --force "$image" || \
 			_fail "failed to decompress image $image" >&2
 		image=${image%%.xz}
 		rm -f "$image.restored"
 		cleanme=$image
 		;;
 	*.raw)
-		cp --sparse=auto "$image" "$image.restored"
+		cp --sparse=auto --force "$image" "$image.restored"
 		;;
 	*.raw.xz)
-		xz --decompress --keep "$image" || \
+		xz --decompress --keep --force "$image" || \
 			_fail "failed to decompress image $image" >&2
 		image=${image%%.xz}
 		mv "$image" "$image.restored"
 		;;
 	*.stream.xz)
-		xz --decompress --keep "$image" || \
+		xz --decompress --keep --force "$image" || \
 			_fail "failed to decompress file $image" >&2
 		image=${image%%.xz}
 		mv "$image" "$image.restored"
