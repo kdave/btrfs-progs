@@ -88,6 +88,12 @@ You can find the editor settings in `.editorconfig` and use the
 [EditorConfig](https://editorconfig.org/) plugin to let your editor use that,
 or update your editor settings manually.
 
+Testing
+-------
+
+The testing documentation can be found in [tests/](tests/README.md) and
+continuous integration/container images in [ci/](ci/README.md).
+
 Documentation updates
 ---------------------
 
