@@ -104,6 +104,9 @@ Please note that the filters must be written together with the '-d', '-m' and
 '-s' options, because they're optional and bare '-d' and '-m' also work and
 mean no filters.
 +
+NOTE: when the target profile for conversion filter is 'raid5' or 'raid6',
+there's a safety timeout of 10 seconds to warn users about the status of the feature
++
 `Options`
 +
 -d[<filters>]::::
@@ -113,7 +116,9 @@ act on metadata chunks, see `FILTERS` section for details about 'filters'
 -s[<filters>]::::
 act on system chunks (requires '-f'), see `FILTERS` section for details about 'filters'.
 -f::::
-force a reduction of metadata integrity, eg. when going from 'raid1' to 'single'
+force a reduction of metadata integrity, eg. when going from 'raid1' to
+'single', or skip safety timeout when the target conversion profile is 'raid5'
+or 'raid6'
 --background|--bg::::
 run the balance operation asynchronously in the background, uses `fork`(2) to
 start the process that calls the kernel ioctl
