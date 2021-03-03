@@ -160,6 +160,20 @@ int btrfs_csum_data(u16 csum_type, const u8 *data, u8 *out, size_t len)
 	return -1;
 }
 
+int btrfs_format_csum(u16 csum_type, const u8 *data, char *output)
+{
+	int i;
+	const int csum_size = btrfs_csum_type_size(csum_type);
+
+	sprintf(output, "0x");
+	for (i = 0; i < csum_size; i++) {
+		output += 2;
+		sprintf(output, "%02x", data[i]);
+	}
+
+	return csum_size;
+}
+
 static int __csum_tree_block_size(struct extent_buffer *buf, u16 csum_size,
 				  int verify, int silent, u16 csum_type)
 {
@@ -172,12 +186,18 @@ static int __csum_tree_block_size(struct extent_buffer *buf, u16 csum_size,
 
 	if (verify) {
 		if (memcmp_extent_buffer(buf, result, 0, csum_size)) {
-			/* FIXME: format */
-			if (!silent)
-				printk("checksum verify failed on %llu found %08X wanted %08X\n",
+			if (!silent) {
+				/* "0x" plus 2 hex chars for each byte plus nul */
+				char found[2 + BTRFS_CSUM_SIZE * 2 + 1];
+				char wanted[2 + BTRFS_CSUM_SIZE * 2 + 1];
+
+				btrfs_format_csum(csum_type, result, found);
+				btrfs_format_csum(csum_type, (u8 *)buf->data, wanted);
+				printk(
+			"checksum verify failed on %llu wanted %s found %s\n",
 				       (unsigned long long)buf->start,
-				       result[0],
-				       buf->data[0]);
+				       wanted, found);
+			}
 			return 1;
 		}
 	} else {
