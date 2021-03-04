@@ -1,3 +1,22 @@
+btrfs-progs-5.11 (2021-03-05)
+  * fix device path canonicalization for device mapper devices
+  * receive: remove workaround for setting capabilities, all stable kernels
+    have been patched
+  * receive: fix duplicate mount path detection
+  * rescue: new subcommand create-control-device
+  * device stats: minor fix for plain text format output
+  * build: detect if e2fsprogs support 64bit timestamps
+  * build: drop libmount, required functionality has been reimplemented
+  * mkfs: warn when raid56 is used
+  * balance convert: warn when raid56 is used
+  * other
+    * new and updated tests
+    * documentation updates
+      * seeding device
+      * raid56 status
+    * CI updates
+      * docker images for various distros
+
 btrfs-progs-5.10.1 (2021-02-05)
   * static build works again
   * other:
