@@ -20,6 +20,7 @@ tools.  Currently covers:
 . control device
 . filesystems with multiple block group profiles
 . seeding device
+. raid56 status and recommended practices
 
 
 MOUNT OPTIONS
@@ -1087,6 +1088,51 @@ A few things to note:
 * block group profiles 'single' and 'dup' support the usecases above
 * the label is copied from the seeding device and can be changed by *btrfs filesystem label*
 * each new mount of the seeding device gets a new random UUID
+
+
+RAID56 STATUS AND RECOMMENDED PRACTICES
+---------------------------------------
+
+The RAID56 feature provides striping and parity over several devices, same as
+the traditional RAID5/6. There are some implementation and design deficiencies
+that make it unreliable for some corner cases and the feature **should not be
+used in production, only for evaluation or testing**.  The power failure safety
+for metadata with RAID56 is not 100%.
+
+Metadata
+~~~~~~~~
+
+Do not use 'raid5' nor 'raid6' for metadata. Use 'raid1' or 'raid1c3'
+respectively.
+
+The substitute profiles provide the same guarantees against loss of 1 or 2
+devices, and in some respect can be an improvement.  Recovering from one
+missing device will only need to access the remaining 1st or 2nd copy, that in
+general may be stored on some other devices due to the way RAID1 works on
+btrfs, unlike on a striped profile (similar to 'raid0') that would need all
+devices all the time.
+
+The space allocation pattern and consumption is different (eg. on N devices):
+for 'raid5' as an example, a 1GiB chunk is reserved on each device, while with
+'raid1' there's each 1GiB chunk stored on 2 devices. The consumption of each
+1GiB of used metadata is then 'N * 1GiB' for vs '2 * 1GiB'. Using 'raid1'
+is also more convenient for balancing/converting to other profile due to lower
+requirement on the available chunk space.
+
+Missing/incomplete support
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When RAID56 is on the same filesystem with different raid profiles, the space
+reporting is inaccurate, eg. 'df', 'btrfs filesystem df' or 'btrfs filesystem
+usge'. When there's only a one profile per block group type (eg. raid5 for data)
+the reporting is accurate.
+
+When scrub is started on a RAID56 filesystem, it's started on all devices that
+degrade the performance. The workaround is to start it on each device
+separately. Due to that the device stats may not match the actual state and
+some errors might get reported multiple times.
+
+The 'write hole' problem.
 
 
 SEE ALSO
