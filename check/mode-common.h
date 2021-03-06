@@ -186,7 +186,7 @@ int get_extent_item_generation(u64 bytenr, u64 *gen_ret);
 static inline void btrfs_check_subpage_eb_alignment(u64 start, u32 len)
 {
 	if (start / BTRFS_MAX_METADATA_BLOCKSIZE !=
-	    (start + len) / BTRFS_MAX_METADATA_BLOCKSIZE)
+	    (start + len - 1) / BTRFS_MAX_METADATA_BLOCKSIZE)
 		warning(
 "tree block [%llu, %llu) crosses 64K page boudnary, may cause problem for 64K page system",
 			start, start + len);
