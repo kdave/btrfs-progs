@@ -22,7 +22,7 @@ run_check_mkfs_test_dev -L BTRFS-TESTS-SEED
 run_check_mount_test_dev
 
 for i in `seq 6`; do
-	run_check "$SUDO_HELPER" dd if=/dev/zero of="$TEST_MNT/file${i}" bs=1M count=1 status=none
+	run_check $SUDO_HELPER dd if=/dev/zero of="$TEST_MNT/file${i}" bs=1M count=1 status=none
 	# Something to distinguish the contents
 	run_check md5sum "$TEST_MNT/file${i}"
 done
@@ -44,11 +44,11 @@ nextdevice() {
 	run_check_mount_test_dev
 	run_check $SUDO_HELPER "$TOP/btrfs" device add ${loopdevs[$nextdev]} "$TEST_MNT"
 	run_mustfail "writable file despite read-only mount" \
-		"$SUDO_HELPER" dd if=/dev/zero of="$TEST_MNT/file$nextdevice" bs=1M count=1 status=none
+		$SUDO_HELPER dd if=/dev/zero of="$TEST_MNT/file$nextdevice" bs=1M count=1 status=none
 	run_check $SUDO_HELPER mount -o remount,rw "$TEST_MNT"
 	# Rewrite the file
 	md5sum=$(run_check_stdout md5sum "$TEST_MNT/file$nextdev" | awk '{print $1}')
-	yes "$nextdev" | run_check "$SUDO_HELPER" dd of="$TEST_MNT/file$nextdev" bs=1M count=1 status=none
+	yes "$nextdev" | run_check $SUDO_HELPER dd of="$TEST_MNT/file$nextdev" bs=1M count=1 status=none
 	md5sum2=$(run_check_stdout md5sum "$TEST_MNT/file$nextdev" | awk '{print $1}')
 	if [ "$md5sum" == "$md5sum2" ]; then
 		_fail "file contents mismatch after rewrite"
