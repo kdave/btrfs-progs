@@ -223,17 +223,17 @@ elif test "$with_crypto" = "libgcrypt"; then
 	cryptoprovider="libgcrypt"
 	PKG_CHECK_MODULES(GCRYPT, [libgcrypt >= 1.8.0])
 	AC_DEFINE([CRYPTOPROVIDER_LIBGCRYPT],[1],[Use libcrypt])
-	cryptoproviderversion=`pkg-config libgcrypt --version`
+	cryptoproviderversion=`${PKG_CONFIG} libgcrypt --version`
 elif test "$with_crypto" = "libsodium"; then
 	cryptoprovider="libsodium"
 	PKG_CHECK_MODULES(SODIUM, [libsodium >= 1.0.4])
 	AC_DEFINE([CRYPTOPROVIDER_LIBSODIUM],[1],[Use libsodium])
-	cryptoproviderversion=`pkg-config libsodium --version`
+	cryptoproviderversion=`${PKG_CONFIG} libsodium --version`
 elif test "$with_crypto" = "libkcapi"; then
 	cryptoprovider="libkcapi"
 	PKG_CHECK_MODULES(KCAPI, [libkcapi >= 1.0.0])
 	AC_DEFINE([CRYPTOPROVIDER_LIBKCAPI],[1],[Use libkcapi])
-	cryptoproviderversion=`pkg-config libkcapi --version`
+	cryptoproviderversion=`${PKG_CONFIG} libkcapi --version`
 else
 	AC_MSG_ERROR([unrecognized crypto provider: $with_crypto])
 fi
