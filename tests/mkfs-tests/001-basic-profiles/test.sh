@@ -22,6 +22,9 @@ test_get_info()
 test_do_mkfs()
 {
 	run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f "$@"
+	if run_check_stdout "$TOP/btrfs" check "$dev1" | grep -iq warning; then
+		_fail "warnings found in check output"
+	fi
 }
 
 test_mkfs_single()
