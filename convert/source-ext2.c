@@ -43,6 +43,12 @@ static int ext2_open_fs(struct btrfs_convert_context *cctx, const char *name)
 			fprintf(stderr, "ext2fs_open: %s\n", error_message(ret));
 		return -1;
 	}
+
+	if (ext2_fs->super->s_feature_incompat & EXT3_FEATURE_INCOMPAT_RECOVER) {
+		error("source filesystem requires recovery, run e2fsck first");
+		goto fail;
+	}
+
 	/*
 	 * We need to know exactly the used space, some RO compat flags like
 	 * BIGALLOC will affect how used space is present.
