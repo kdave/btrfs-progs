@@ -108,5 +108,14 @@ The list of built-ins can be obtained by
 The basic set will always contain: mkfs.btrfs, btrfs-image, btrfs-convert.
 
 
+32bit build on 64bit host
+-------------------------
+
+The combination of 32bit build on 64bit host could work but depends on the
+libraries that must provide the 32bit versions, or even 32bit static versions.
+This is fairly uncommon on contemporary distributions and building 32bit
+versions on a 32bit host is recommended.
+
+
 References:
 * https://btrfs.wiki.kernel.org
