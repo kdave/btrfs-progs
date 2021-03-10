@@ -46,7 +46,6 @@
 #include "common/rbtree-utils.h"
 #include "mkfs/common.h"
 #include "mkfs/rootdir.h"
-#include "crypto/crc32c.h"
 #include "common/fsfeatures.h"
 #include "common/box.h"
 #include "check/qgroup-verify.h"
@@ -1337,7 +1336,6 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		warning("metadata has lower redundancy than data!\n");
 	}
 
-	mkfs_cfg.csum_type = BTRFS_CSUM_TYPE_CRC32;
 	mkfs_cfg.label = label;
 	memcpy(mkfs_cfg.fs_uuid, fs_uuid, sizeof(mkfs_cfg.fs_uuid));
 	mkfs_cfg.num_bytes = dev_block_count;
