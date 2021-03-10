@@ -344,7 +344,7 @@ static void print_usage(int ret)
 	printf("\t-M|--mixed                  mix metadata and data together\n");
 	printf("  features:\n");
 	printf("\t--csum TYPE\n");
-	printf("\t--checksum TYPE             checksum algorithm to use (default: crc32c)\n");
+	printf("\t--checksum TYPE             checksum algorithm to use, crc32c (default), xxhash, sha256, blake2\n");
 	printf("\t-n|--nodesize SIZE          size of btree nodes\n");
 	printf("\t-s|--sectorsize SIZE        data block size (may not be mountable by current kernel)\n");
 	printf("\t-O|--features LIST          comma separated list of filesystem features (use '-O list-all' to list features)\n");
