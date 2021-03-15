@@ -645,8 +645,8 @@ static int cmd_balance_start(const struct cmd_struct *cmd,
 		if (!(ptrs[i]->flags & BTRFS_BALANCE_ARGS_CONVERT))
 			continue;
 
-		if (!(ptrs[i]->flags & (BTRFS_BLOCK_GROUP_RAID6 |
-					BTRFS_BLOCK_GROUP_RAID5)))
+		if (!(ptrs[i]->target & (BTRFS_BLOCK_GROUP_RAID6 |
+					   BTRFS_BLOCK_GROUP_RAID5)))
 			continue;
 
 		if (raid56_warned)
