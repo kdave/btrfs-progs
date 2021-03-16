@@ -6,6 +6,18 @@ NAME
 
 btrfs-ioctl - documentation for the ioctl interface to btrfs
 
+DESCRIPTION
+-----------
+
+The ioctl() system call is a way how to request custom actions performed on a
+filesystem beyond the standard interfaces (like syscalls).  An ioctl is
+specified by a number and an associated data structure that implement a
+feature, usually not available in other filesystems. The number of ioctls grows
+over time and in some cases get promoted to a VFS-level ioctl once other
+filesystems adopt the functionality. Backward compatibility is maintained
+and a formerly private ioctl number could become available on the VFS level.
+
+
 DATA STRUCTURES AND DEFINITIONS
 -------------------------------
 
@@ -33,6 +45,44 @@ struct btrfs_ioctl_vol_args_v2 {
 [verse]
 BTRFS_SUBVOL_NAME_MAX = 4039
 BTRFS_PATH_NAME_MAX = 4087
+
+OVERVIEW
+--------
+
+The ioctls are defined by a number and associated with a data structure that
+contains further information. All ioctls use file descriptor (fd) as a reference
+point, it could be the filesystem or a directory inside the filesystem.
+
+An ioctl can be used in the following schematic way:
+
+----------------
+struct btrfs_ioctl_args args;
+
+memset(&args, 0, sizeof(args));
+args.key = value;
+ret = ioctl(fd, BTRFS_IOC_NUMBER, &args);
+----------------
+
+The 'fd' is the entry point to the filesystem and for most ioctls it does not
+matter which file or directory is that. Where it matters it's explicitly
+mentioned. The 'args' is the associated data structure for the request. It's
+strongly recommended to initialize the whole structure to zeros as this is
+future-proof when the ioctl gets further extensions. Not doing that could lead
+to mismatch of old userspace and new kernel versions, or vice versa.
+The 'BTRFS_IOC_NUMBER' is says which operation should be done on the given
+arguments. Some ioctls take a specific data structure, some of them share a
+common one, no argument structure ioctls exist too.
+
+The library 'libbtrfsutil' wraps a few ioctls for convenience. Using raw ioctls
+is not discouraged but may be cumbersome though it does not need additional
+library dependency. Backward compatibility is guaranteed and incompatible
+changes usually lead to a new version of the ioctl. Enhancements of existing
+ioctls can happen and depend on additional flags to be set. Zeroed unused
+space is commonly understood as a mechanism to communicate the compatibility
+between kernel and userspace and thus zeroing is really important. In exceptional
+cases this is not enough and further flags need to be passed to distinguish
+between zero as implicit unused initialization and a valid zero value. Such
+cases are documented.
 
 LIST OF IOCTLS
 --------------
@@ -102,8 +152,9 @@ NOTE: obsoleted by BTRFS_IOC_SUBVOL_CREATE_V2
 
 _(since: 3.0, obsoleted: 4.0)_ Create a subvolume.
 
+[horizontal]
 ioctl fd:: file descriptor of the parent directory of the new subvolume
-argument:: struct btrfs_ioctl_vol_args
+argument type:: struct btrfs_ioctl_vol_args
 fd:: ignored
 name:: name of the subvolume, although the buffer can be almost 4k, the file
 size is limited by linux VFS to 255 characters and must not contain a slash
@@ -116,8 +167,9 @@ NOTE: obsoletes BTRFS_IOC_SUBVOL_CREATE
 
 _(since: 3.6)_ Create a subvolume, qgroup inheritance can be specified.
 
+[horizontal]
 ioctl fd:: file descriptor of the parent directory of the new subvolume
-argument:: struct btrfs_ioctl_vol_args_v2
+argument type:: struct btrfs_ioctl_vol_args_v2
 fd:: ignored
 transid:: ignored
 flags:: ignored
