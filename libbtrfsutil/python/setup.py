@@ -6,7 +6,7 @@
 #
 # libbtrfsutil is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
+# the Free Software Foundation, either version 2.1 of the License, or
 # (at your option) any later version.
 #
 # libbtrfsutil is distributed in the hope that it will be useful,
@@ -100,7 +100,7 @@ setup(
     version=get_version(),
     description='Library for managing Btrfs filesystems',
     url='https://github.com/kdave/btrfs-progs',
-    license='LGPLv3',
+    license='LGPLv2+',
     cmdclass={'build_ext': my_build_ext},
     ext_modules=[module],
 )
