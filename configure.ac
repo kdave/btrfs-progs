@@ -240,16 +240,10 @@ fi
 AC_SUBST([CRYPTOPROVIDER_BUILTIN])
 AC_DEFINE_UNQUOTED([CRYPTOPROVIDER],["$cryptoprovider"],[Crypto implementation source name])
 
-HAVE_OWN_FIEMAP_EXTENT_SHARED_DEFINE=0
 AX_CHECK_DEFINE([linux/fiemap.h], [FIEMAP_EXTENT_SHARED], [],
-		[HAVE_OWN_FIEMAP_EXTENT_SHARED_DEFINE=1
+		[AC_DEFINE([HAVE_OWN_FIEMAP_EXTENT_SHARED_DEFINE], [1],
+                           [Define to 1 if kernel headers do not define FIEMAP_EXTENT_SHARED])
 		 AC_MSG_WARN([no definition of FIEMAP_EXTENT_SHARED found, probably old kernel, will use own definition, 'btrfs fi du' might report wrong numbers])])
-
-if test "x$HAVE_OWN_FIEMAP_EXTENT_SHARED_DEFINE" == "x1"; then
-AC_DEFINE([HAVE_OWN_FIEMAP_EXTENT_SHARED_DEFINE], [1], [We defined FIEMAP_EXTENT_SHARED])
-else
-AC_DEFINE([HAVE_OWN_FIEMAP_EXTENT_SHARED_DEFINE], [0], [We did not define FIEMAP_EXTENT_SHARED])
-fi
 
 AX_CHECK_DEFINE([ext2fs/ext2_fs.h], [EXT4_EPOCH_MASK],
 		[AC_DEFINE([HAVE_EXT4_EPOCH_MASK_DEFINE], [1],
