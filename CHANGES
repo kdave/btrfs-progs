@@ -1,3 +1,16 @@
+btrfs-progs-5.11.1 (2021-03-24)
+  * properly format checksums when a mismatch is reported
+  * check: fix false alert on tree block crossing 64K page boundary
+  * convert:
+    * refuse to convert filesystem with 'needs_recovery'
+    * update documentation to require fsck before conversion
+  * balance convert: fix raid56 warning when converting other profiles
+  * fi resize: improved summary
+  * other
+    * build: fix checks and autoconf defines
+    * fix symlink paths for CI support scripts
+    * updated tests
+
 btrfs-progs-5.11 (2021-03-05)
   * fix device path canonicalization for device mapper devices
   * receive: remove workaround for setting capabilities, all stable kernels
