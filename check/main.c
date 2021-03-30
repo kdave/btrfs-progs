@@ -9955,7 +9955,12 @@ static int validate_free_space_cache(struct btrfs_root *root)
 {
 	int ret;
 
+	/*
+	 * If cache generation is between 0 and -1ULL, sb generation must be
+	 * equal to sb cache generation or the v1 space caches are outdated.
+	 */
 	if (btrfs_super_cache_generation(gfs_info->super_copy) != -1ULL &&
+	    btrfs_super_cache_generation(gfs_info->super_copy) != 0 &&
 	    btrfs_super_generation(gfs_info->super_copy) !=
 	    btrfs_super_cache_generation(gfs_info->super_copy)) {
 		printf(
