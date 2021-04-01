@@ -333,7 +333,11 @@ static inline void assert_trace(const char *assertion, const char *filename,
 #endif
 
 #define BUG_ON(c) bugon_trace(#c, __FILE__, __func__, __LINE__, (long)(c))
-#define BUG() BUG_ON(1)
+#define BUG()				\
+do {					\
+	BUG_ON(1);			\
+	__builtin_unreachable();	\
+} while (0)
 #define WARN_ON(c) warning_trace(#c, __FILE__, __func__, __LINE__, (long)(c))
 
 #define container_of(ptr, type, member) ({                      \
