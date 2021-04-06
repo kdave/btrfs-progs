@@ -1098,15 +1098,13 @@ static int decide_stripe_size_regular(struct alloc_chunk_ctl *ctl)
 	if (chunk_size > ctl->max_chunk_size) {
 		ctl->calc_size = ctl->max_chunk_size;
 		ctl->calc_size /= ctl->num_stripes;
-		ctl->calc_size /= ctl->stripe_len;
-		ctl->calc_size *= ctl->stripe_len;
+		ctl->calc_size = round_down(ctl->calc_size, ctl->stripe_len);
 	}
 	/* We don't want tiny stripes */
 	ctl->calc_size = max_t(u64, ctl->calc_size, ctl->min_stripe_size);
 
 	/* Align to the stripe length */
-	ctl->calc_size /= ctl->stripe_len;
-	ctl->calc_size *= ctl->stripe_len;
+	ctl->calc_size = round_down(ctl->calc_size, ctl->stripe_len);
 
 	return 0;
 }
@@ -1315,8 +1313,10 @@ again:
 		if (index >= ctl.min_stripes) {
 			ctl.num_stripes = index;
 			if (type & (BTRFS_BLOCK_GROUP_RAID10)) {
-				ctl.num_stripes /= ctl.sub_stripes;
-				ctl.num_stripes *= ctl.sub_stripes;
+				/* We know this should be 2, but just in case */
+				ASSERT(is_power_of_2(ctl.sub_stripes));
+				ctl.num_stripes = round_down(ctl.num_stripes,
+							     ctl.sub_stripes);
 			}
 			looped = 1;
 			goto again;
