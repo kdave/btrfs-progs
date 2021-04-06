@@ -149,7 +149,7 @@ const struct btrfs_raid_attr btrfs_raid_array[BTRFS_NR_RAID_TYPES] = {
 };
 
 struct alloc_chunk_ctl {
-	enum btrfs_raid_types type;
+	u64 type;
 	int num_stripes;
 	int max_stripes;
 	int min_stripes;
@@ -1008,7 +1008,7 @@ error:
 static void init_alloc_chunk_ctl(struct btrfs_fs_info *info,
 				 struct alloc_chunk_ctl *ctl)
 {
-	int type = ctl->type;
+	enum btrfs_raid_types type = btrfs_bg_flags_to_raid_index(ctl->type);
 
 	ctl->num_stripes = btrfs_raid_array[type].dev_stripes;
 	ctl->min_stripes = btrfs_raid_array[type].devs_min;
@@ -1069,7 +1069,7 @@ int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 		return -ENOSPC;
 	}
 
-	ctl.type = btrfs_bg_flags_to_raid_index(type);
+	ctl.type = type;
 	ctl.max_stripes = 0;
 	ctl.total_devs = btrfs_super_num_devices(info->super_copy);
 
