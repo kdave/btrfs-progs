@@ -1087,6 +1087,37 @@ static void init_alloc_chunk_ctl(struct btrfs_fs_info *info,
 	}
 }
 
+static int decide_stripe_size_regular(struct alloc_chunk_ctl *ctl)
+{
+	u64 chunk_size = chunk_bytes_by_type(ctl->type, ctl->calc_size, ctl);
+
+	if (chunk_size > ctl->max_chunk_size) {
+		ctl->calc_size = ctl->max_chunk_size;
+		ctl->calc_size /= ctl->num_stripes;
+		ctl->calc_size /= ctl->stripe_len;
+		ctl->calc_size *= ctl->stripe_len;
+	}
+	/* We don't want tiny stripes */
+	ctl->calc_size = max_t(u64, ctl->calc_size, ctl->min_stripe_size);
+
+	/* Align to the stripe length */
+	ctl->calc_size /= ctl->stripe_len;
+	ctl->calc_size *= ctl->stripe_len;
+
+	return 0;
+}
+
+static int decide_stripe_size(struct btrfs_fs_info *info,
+			      struct alloc_chunk_ctl *ctl)
+{
+	switch (info->fs_devices->chunk_alloc_policy) {
+	case BTRFS_CHUNK_ALLOC_REGULAR:
+		return decide_stripe_size_regular(ctl);
+	default:
+		BUG();
+	}
+}
+
 int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 		      struct btrfs_fs_info *info, u64 *start,
 		      u64 *num_bytes, u64 type)
@@ -1121,17 +1152,10 @@ int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 		return -ENOSPC;
 
 again:
-	if (chunk_bytes_by_type(type, ctl.calc_size, &ctl) > ctl.max_chunk_size) {
-		ctl.calc_size = ctl.max_chunk_size;
-		ctl.calc_size /= ctl.num_stripes;
-		ctl.calc_size /= ctl.stripe_len;
-		ctl.calc_size *= ctl.stripe_len;
-	}
-	/* we don't want tiny stripes */
-	ctl.calc_size = max_t(u64, ctl.calc_size, ctl.min_stripe_size);
+	ret = decide_stripe_size(info, &ctl);
+	if (ret < 0)
+		return ret;
 
-	ctl.calc_size /= ctl.stripe_len;
-	ctl.calc_size *= ctl.stripe_len;
 	INIT_LIST_HEAD(&private_devs);
 	cur = dev_list->next;
 	index = 0;
