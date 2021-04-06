@@ -154,6 +154,9 @@ struct alloc_chunk_ctl {
 	int max_stripes;
 	int min_stripes;
 	int sub_stripes;
+	u64 calc_size;
+	u64 min_stripe_size;
+	u64 max_chunk_size;
 	int stripe_len;
 	int total_devs;
 };
@@ -1005,6 +1008,40 @@ error:
 				- 2 * sizeof(struct btrfs_chunk))	\
 				/ sizeof(struct btrfs_stripe) + 1)
 
+static void init_alloc_chunk_ctl_policy_regular(struct btrfs_fs_info *info,
+						struct alloc_chunk_ctl *ctl)
+{
+	u64 type = ctl->type;
+	u64 percent_max;
+
+	if (type & BTRFS_BLOCK_GROUP_PROFILE_MASK) {
+		if (type & BTRFS_BLOCK_GROUP_SYSTEM) {
+			ctl->calc_size = SZ_8M;
+			ctl->max_chunk_size = ctl->calc_size * 2;
+			ctl->min_stripe_size = SZ_1M;
+			ctl->max_stripes = BTRFS_MAX_DEVS_SYS_CHUNK;
+		} else if (type & BTRFS_BLOCK_GROUP_DATA) {
+			ctl->calc_size = SZ_1G;
+			ctl->max_chunk_size = 10 * ctl->calc_size;
+			ctl->min_stripe_size = SZ_64M;
+			ctl->max_stripes = BTRFS_MAX_DEVS(info);
+		} else if (type & BTRFS_BLOCK_GROUP_METADATA) {
+			/* For larger filesystems, use larger metadata chunks */
+			if (info->fs_devices->total_rw_bytes > 50ULL * SZ_1G)
+				ctl->max_chunk_size = SZ_1G;
+			else
+				ctl->max_chunk_size = SZ_256M;
+			ctl->calc_size = ctl->max_chunk_size;
+			ctl->min_stripe_size = SZ_32M;
+			ctl->max_stripes = BTRFS_MAX_DEVS(info);
+		}
+	}
+
+	/* We don't want a chunk larger than 10% of the FS */
+	percent_max = div_factor(btrfs_super_total_bytes(info->super_copy), 1);
+	ctl->max_chunk_size = min(percent_max, ctl->max_chunk_size);
+}
+
 static void init_alloc_chunk_ctl(struct btrfs_fs_info *info,
 				 struct alloc_chunk_ctl *ctl)
 {
@@ -1012,8 +1049,21 @@ static void init_alloc_chunk_ctl(struct btrfs_fs_info *info,
 
 	ctl->num_stripes = btrfs_raid_array[type].dev_stripes;
 	ctl->min_stripes = btrfs_raid_array[type].devs_min;
+	ctl->max_stripes = 0;
 	ctl->sub_stripes = btrfs_raid_array[type].sub_stripes;
+	ctl->calc_size = SZ_8M;
+	ctl->min_stripe_size = SZ_1M;
+	ctl->max_chunk_size = 4 * ctl->calc_size;
 	ctl->stripe_len = BTRFS_STRIPE_LEN;
+	ctl->total_devs = btrfs_super_num_devices(info->super_copy);
+
+	switch (info->fs_devices->chunk_alloc_policy) {
+	case BTRFS_CHUNK_ALLOC_REGULAR:
+		init_alloc_chunk_ctl_policy_regular(info, ctl);
+		break;
+	default:
+		BUG();
+	}
 
 	switch (type) {
 	case BTRFS_RAID_DUP:
@@ -1051,13 +1101,9 @@ int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 	struct list_head *dev_list = &info->fs_devices->devices;
 	struct list_head *cur;
 	struct map_lookup *map;
-	int min_stripe_size = SZ_1M;
-	u64 calc_size = SZ_8M;
 	u64 min_free;
-	u64 max_chunk_size = 4 * calc_size;
 	u64 avail = 0;
 	u64 max_avail = 0;
-	u64 percent_max;
 	struct alloc_chunk_ctl ctl;
 	int looped = 0;
 	int ret;
@@ -1070,60 +1116,30 @@ int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 	}
 
 	ctl.type = type;
-	ctl.max_stripes = 0;
-	ctl.total_devs = btrfs_super_num_devices(info->super_copy);
-
-	if (type & BTRFS_BLOCK_GROUP_PROFILE_MASK) {
-		if (type & BTRFS_BLOCK_GROUP_SYSTEM) {
-			calc_size = SZ_8M;
-			max_chunk_size = calc_size * 2;
-			min_stripe_size = SZ_1M;
-			ctl.max_stripes = BTRFS_MAX_DEVS_SYS_CHUNK;
-		} else if (type & BTRFS_BLOCK_GROUP_DATA) {
-			calc_size = SZ_1G;
-			max_chunk_size = 10 * calc_size;
-			min_stripe_size = SZ_64M;
-			ctl.max_stripes = BTRFS_MAX_DEVS(info);
-		} else if (type & BTRFS_BLOCK_GROUP_METADATA) {
-			/* for larger filesystems, use larger metadata chunks */
-			if (info->fs_devices->total_rw_bytes > 50ULL * SZ_1G)
-				max_chunk_size = SZ_1G;
-			else
-				max_chunk_size = SZ_256M;
-			calc_size = max_chunk_size;
-			min_stripe_size = SZ_32M;
-			ctl.max_stripes = BTRFS_MAX_DEVS(info);
-		}
-	}
-
 	init_alloc_chunk_ctl(info, &ctl);
 	if (ctl.num_stripes < ctl.min_stripes)
 		return -ENOSPC;
 
-	/* we don't want a chunk larger than 10% of the FS */
-	percent_max = div_factor(btrfs_super_total_bytes(info->super_copy), 1);
-	max_chunk_size = min(percent_max, max_chunk_size);
-
 again:
-	if (chunk_bytes_by_type(type, calc_size, &ctl) > max_chunk_size) {
-		calc_size = max_chunk_size;
-		calc_size /= ctl.num_stripes;
-		calc_size /= ctl.stripe_len;
-		calc_size *= ctl.stripe_len;
+	if (chunk_bytes_by_type(type, ctl.calc_size, &ctl) > ctl.max_chunk_size) {
+		ctl.calc_size = ctl.max_chunk_size;
+		ctl.calc_size /= ctl.num_stripes;
+		ctl.calc_size /= ctl.stripe_len;
+		ctl.calc_size *= ctl.stripe_len;
 	}
 	/* we don't want tiny stripes */
-	calc_size = max_t(u64, calc_size, min_stripe_size);
+	ctl.calc_size = max_t(u64, ctl.calc_size, ctl.min_stripe_size);
 
-	calc_size /= ctl.stripe_len;
-	calc_size *= ctl.stripe_len;
+	ctl.calc_size /= ctl.stripe_len;
+	ctl.calc_size *= ctl.stripe_len;
 	INIT_LIST_HEAD(&private_devs);
 	cur = dev_list->next;
 	index = 0;
 
 	if (type & BTRFS_BLOCK_GROUP_DUP)
-		min_free = calc_size * 2;
+		min_free = ctl.calc_size * 2;
 	else
-		min_free = calc_size;
+		min_free = ctl.calc_size;
 
 	/* build a private list of devices we will allocate from */
 	while(index < ctl.num_stripes) {
@@ -1155,7 +1171,7 @@ again:
 		}
 		if (!looped && max_avail > 0) {
 			looped = 1;
-			calc_size = max_avail;
+			ctl.calc_size = max_avail;
 			goto again;
 		}
 		return -ENOSPC;
@@ -1178,7 +1194,7 @@ again:
 	}
 
 	stripes = &chunk->stripe;
-	*num_bytes = chunk_bytes_by_type(type, calc_size, &ctl);
+	*num_bytes = chunk_bytes_by_type(type, ctl.calc_size, &ctl);
 	index = 0;
 	while(index < ctl.num_stripes) {
 		struct btrfs_stripe *stripe;
@@ -1192,11 +1208,11 @@ again:
 			list_move(&device->dev_list, dev_list);
 
 		ret = btrfs_alloc_dev_extent(trans, device, key.offset,
-			     calc_size, &dev_offset);
+			     ctl.calc_size, &dev_offset);
 		if (ret < 0)
 			goto out_chunk_map;
 
-		device->bytes_used += calc_size;
+		device->bytes_used += ctl.calc_size;
 		ret = btrfs_update_device(trans, device);
 		if (ret < 0)
 			goto out_chunk_map;
