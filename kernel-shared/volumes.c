@@ -444,6 +444,21 @@ int btrfs_scan_one_device(int fd, const char *path,
 	return ret;
 }
 
+static u64 dev_extent_search_start(struct btrfs_device *device, u64 start)
+{
+	switch (device->fs_devices->chunk_alloc_policy) {
+	case BTRFS_CHUNK_ALLOC_REGULAR:
+		/*
+		 * We don't want to overwrite the superblock on the drive nor
+		 * any area used by the boot loader (grub for example), so we
+		 * make sure to start at an offset of at least 1MB.
+		 */
+		return max(start, BTRFS_BLOCK_RESERVED_1M_FOR_SUPER);
+	default:
+		BUG();
+	}
+}
+
 /*
  * find_free_dev_extent_start - find free space in the specified device
  * @device:	  the device which we search the free space in
@@ -481,15 +496,8 @@ static int find_free_dev_extent_start(struct btrfs_device *device,
 	int ret;
 	int slot;
 	struct extent_buffer *l;
-	u64 min_search_start;
 
-	/*
-	 * We don't want to overwrite the superblock on the drive nor any area
-	 * used by the boot loader (grub for example), so we make sure to start
-	 * at an offset of at least 1MB.
-	 */
-	min_search_start = BTRFS_BLOCK_RESERVED_1M_FOR_SUPER;
-	search_start = max(search_start, min_search_start);
+	search_start = dev_extent_search_start(device, search_start);
 
 	path = btrfs_alloc_path();
 	if (!path)
