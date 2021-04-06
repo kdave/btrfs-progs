@@ -69,6 +69,10 @@ struct btrfs_device {
 	u8 uuid[BTRFS_UUID_SIZE];
 };
 
+enum btrfs_chunk_allocation_policy {
+	BTRFS_CHUNK_ALLOC_REGULAR,
+};
+
 struct btrfs_fs_devices {
 	u8 fsid[BTRFS_FSID_SIZE]; /* FS specific uuid */
 	u8 metadata_uuid[BTRFS_FSID_SIZE]; /* FS specific uuid */
@@ -87,6 +91,8 @@ struct btrfs_fs_devices {
 
 	int seeding;
 	struct btrfs_fs_devices *seed;
+
+	enum btrfs_chunk_allocation_policy chunk_alloc_policy;
 };
 
 struct btrfs_bio_stripe {
