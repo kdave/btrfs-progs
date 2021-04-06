@@ -1323,7 +1323,10 @@ again:
 		}
 		if (!looped && max_avail > 0) {
 			looped = 1;
-			ctl.calc_size = max_avail;
+			if (ctl.type & BTRFS_BLOCK_GROUP_DUP)
+				ctl.calc_size = max_avail / 2;
+			else
+				ctl.calc_size = max_avail;
 			goto again;
 		}
 		return -ENOSPC;
