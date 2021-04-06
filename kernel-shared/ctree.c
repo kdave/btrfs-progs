@@ -927,7 +927,7 @@ static int balance_level(struct btrfs_trans_handle *trans,
 			if (wret)
 				ret = wret;
 
-			root_sub_used(root, right->len);
+			root_sub_used(root, blocksize);
 			wret = btrfs_free_extent(trans, root, bytenr,
 						 blocksize, 0,
 						 root->root_key.objectid,
