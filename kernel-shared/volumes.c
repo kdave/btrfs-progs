@@ -897,9 +897,11 @@ int btrfs_add_system_chunk(struct btrfs_fs_info *fs_info, struct btrfs_key *key,
 	return 0;
 }
 
-static u64 chunk_bytes_by_type(u64 type, u64 calc_size,
-			       struct alloc_chunk_ctl *ctl)
+static u64 chunk_bytes_by_type(struct alloc_chunk_ctl *ctl)
 {
+	u64 type = ctl->type;
+	u64 calc_size = ctl->calc_size;
+
 	if (type & (BTRFS_BLOCK_GROUP_RAID1 | BTRFS_BLOCK_GROUP_DUP))
 		return calc_size;
 	else if (type & (BTRFS_BLOCK_GROUP_RAID1C3 | BTRFS_BLOCK_GROUP_RAID1C4))
@@ -1091,9 +1093,7 @@ static void init_alloc_chunk_ctl(struct btrfs_fs_info *info,
 
 static int decide_stripe_size_regular(struct alloc_chunk_ctl *ctl)
 {
-	u64 chunk_size = chunk_bytes_by_type(ctl->type, ctl->calc_size, ctl);
-
-	if (chunk_size > ctl->max_chunk_size) {
+	if (chunk_bytes_by_type(ctl) > ctl->max_chunk_size) {
 		ctl->calc_size = ctl->max_chunk_size;
 		ctl->calc_size /= ctl->num_stripes;
 		ctl->calc_size = round_down(ctl->calc_size, BTRFS_STRIPE_LEN);
@@ -1158,7 +1158,7 @@ static int create_chunk(struct btrfs_trans_handle *trans,
 	}
 
 	stripes = &chunk->stripe;
-	ctl->num_bytes = chunk_bytes_by_type(ctl->type, ctl->calc_size, ctl);
+	ctl->num_bytes = chunk_bytes_by_type(ctl);
 	index = 0;
 	while (index < ctl->num_stripes) {
 		u64 dev_offset;
