@@ -159,7 +159,6 @@ struct alloc_chunk_ctl {
 	u64 min_stripe_size;
 	u64 num_bytes;
 	u64 max_chunk_size;
-	int stripe_len;
 	int total_devs;
 	u64 dev_offset;
 };
@@ -1057,7 +1056,6 @@ static void init_alloc_chunk_ctl(struct btrfs_fs_info *info,
 	ctl->calc_size = SZ_8M;
 	ctl->min_stripe_size = SZ_1M;
 	ctl->max_chunk_size = 4 * ctl->calc_size;
-	ctl->stripe_len = BTRFS_STRIPE_LEN;
 	ctl->total_devs = btrfs_super_num_devices(info->super_copy);
 	ctl->dev_offset = 0;
 
@@ -1098,13 +1096,13 @@ static int decide_stripe_size_regular(struct alloc_chunk_ctl *ctl)
 	if (chunk_size > ctl->max_chunk_size) {
 		ctl->calc_size = ctl->max_chunk_size;
 		ctl->calc_size /= ctl->num_stripes;
-		ctl->calc_size = round_down(ctl->calc_size, ctl->stripe_len);
+		ctl->calc_size = round_down(ctl->calc_size, BTRFS_STRIPE_LEN);
 	}
 	/* We don't want tiny stripes */
 	ctl->calc_size = max_t(u64, ctl->calc_size, ctl->min_stripe_size);
 
 	/* Align to the stripe length */
-	ctl->calc_size = round_down(ctl->calc_size, ctl->stripe_len);
+	ctl->calc_size = round_down(ctl->calc_size, BTRFS_STRIPE_LEN);
 
 	return 0;
 }
@@ -1206,17 +1204,17 @@ static int create_chunk(struct btrfs_trans_handle *trans,
 	/* key was set above */
 	btrfs_set_stack_chunk_length(chunk, ctl->num_bytes);
 	btrfs_set_stack_chunk_owner(chunk, extent_root->root_key.objectid);
-	btrfs_set_stack_chunk_stripe_len(chunk, ctl->stripe_len);
+	btrfs_set_stack_chunk_stripe_len(chunk, BTRFS_STRIPE_LEN);
 	btrfs_set_stack_chunk_type(chunk, ctl->type);
 	btrfs_set_stack_chunk_num_stripes(chunk, ctl->num_stripes);
-	btrfs_set_stack_chunk_io_align(chunk, ctl->stripe_len);
-	btrfs_set_stack_chunk_io_width(chunk, ctl->stripe_len);
+	btrfs_set_stack_chunk_io_align(chunk, BTRFS_STRIPE_LEN);
+	btrfs_set_stack_chunk_io_width(chunk, BTRFS_STRIPE_LEN);
 	btrfs_set_stack_chunk_sector_size(chunk, info->sectorsize);
 	btrfs_set_stack_chunk_sub_stripes(chunk, ctl->sub_stripes);
 	map->sector_size = info->sectorsize;
-	map->stripe_len = ctl->stripe_len;
-	map->io_align = ctl->stripe_len;
-	map->io_width = ctl->stripe_len;
+	map->stripe_len = BTRFS_STRIPE_LEN;
+	map->io_align = BTRFS_STRIPE_LEN;
+	map->io_width = BTRFS_STRIPE_LEN;
 	map->type = ctl->type;
 	map->num_stripes = ctl->num_stripes;
 	map->sub_stripes = ctl->sub_stripes;
@@ -1369,7 +1367,6 @@ int btrfs_alloc_data_chunk(struct btrfs_trans_handle *trans,
 	ctl.min_stripe_size = num_bytes;
 	ctl.num_bytes = num_bytes;
 	ctl.max_chunk_size = num_bytes;
-	ctl.stripe_len = BTRFS_STRIPE_LEN;
 	ctl.total_devs = btrfs_super_num_devices(info->super_copy);
 	ctl.dev_offset = *start;
 
