@@ -2206,6 +2206,21 @@ int sysfs_open_fsid_file(int fd, const char *filename)
 }
 
 /*
+ * Open a file in the toplevel sysfs directory and return the file descriptor
+ * or error.
+ */
+int sysfs_open_file(const char *name)
+{
+	char path[PATH_MAX];
+	int ret;
+
+	ret = path_cat_out(path, "/sys/fs/btrfs", name);
+	if (ret < 0)
+		return ret;
+	return open(path, O_RDONLY);
+}
+
+/*
  * Read up to @size bytes to @buf from @fd
  */
 int sysfs_read_file(int fd, char *buf, size_t size)
