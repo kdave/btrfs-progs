@@ -16,6 +16,8 @@
 
 #include "kerncompat.h"
 #include <sys/utsname.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <linux/version.h>
 #include <unistd.h>
 #include "common/fsfeatures.h"
@@ -327,8 +329,15 @@ u32 get_running_kernel_version(void)
 
 	return version;
 }
+
+/*
+ * The buffer size is strlen of "4096 8192 16384 32768 65536", which is 28,
+ * then round up to 32.
+ */
+#define SUPPORTED_SECTORSIZE_BUF_SIZE	32
 int btrfs_check_sectorsize(u32 sectorsize)
 {
+	bool sectorsize_checked = false;
 	u32 page_size = (u32)sysconf(_SC_PAGESIZE);
 
 	if (!is_power_of_2(sectorsize)) {
@@ -340,7 +349,29 @@ int btrfs_check_sectorsize(u32 sectorsize)
 		      sectorsize);
 		return -EINVAL;
 	}
-	if (page_size != sectorsize)
+	if (page_size == sectorsize) {
+		sectorsize_checked = true;
+	} else {
+		/* Check if the sector size is supported */
+		char supported_buf[SUPPORTED_SECTORSIZE_BUF_SIZE] = { 0 };
+		char sectorsize_buf[SUPPORTED_SECTORSIZE_BUF_SIZE] = { 0 };
+		int fd;
+		int ret;
+
+		fd = open("/sys/fs/btrfs/features/supported_sectorsizes",
+			  O_RDONLY);
+		if (fd < 0)
+			goto out;
+		ret = read(fd, supported_buf, sizeof(supported_buf));
+		close(fd);
+		if (ret < 0)
+			goto out;
+		snprintf(sectorsize_buf, sizeof(sectorsize_buf), "%u", page_size);
+		if (strstr(supported_buf, sectorsize_buf))
+			sectorsize_checked = true;
+	}
+out:
+	if (!sectorsize_checked)
 		warning(
 "the filesystem may not be mountable, sectorsize %u doesn't match page size %u",
 			sectorsize, page_size);
