@@ -1158,6 +1158,16 @@ static int check_resize_args(const char *amount, const char *path) {
 		}
 		old_size = di_args[dev_idx].total_bytes;
 
+		/* For target sizes without +/- sign prefix (e.g. 1:150g) */
+		if (mod == 0) {
+			new_size = diff;
+			diff = max(old_size, new_size) - min(old_size, new_size);
+			if (new_size > old_size)
+				mod = 1;
+			else if (new_size < old_size)
+				mod = -1;
+		}
+
 		if (mod < 0) {
 			if (diff > old_size) {
 				error("current size is %s which is smaller than %s",
