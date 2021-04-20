@@ -846,6 +846,7 @@ Please note that compression is also affected by the mount options or the parent
 directory attributes.
 +
 When set on a directory, all newly created files will inherit this attribute.
+This attribute cannot be set with 'm' at the same time.
 
 *C*::
 'no copy-on-write', file data modifications are done in-place
@@ -867,15 +868,17 @@ and 'O_DSYNC'
 'immutable', no file data and metadata changes allowed even to the root user as
 long as this attribute is set (obviously the exception is unsetting the attribute)
 
+*m*::
+'no compression', permanently turn off compression on the given file. Any
+compression mount options will not affect this file. (`chattr` support added in
+1.46.2)
++
+When set on a directory, all newly created files will inherit this attribute.
+This attribute cannot be set with 'c' at the same time.
+
 *S*::
 'synchronous updates', for more details search `open`(2) for 'O_SYNC' and
 'O_DSYNC'
-
-*X*::
-'no compression', permanently turn off compression on the given file. Any
-compression mount options will not affect this file.
-+
-When set on a directory, all newly created files will inherit this attribute.
 
 No other attributes are supported.  For the complete list please refer to the
 `chattr`(1) manual page.
