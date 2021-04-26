@@ -357,6 +357,38 @@ static int report_zones(int fd, const char *file,
 	return 0;
 }
 
+/*
+ * Discard blocks in the zones of a zoned block device. Process this with zone
+ * size granularity so that blocks in conventional zones are discarded using
+ * discard_range and blocks in sequential zones are reset though a zone reset.
+ */
+int btrfs_reset_all_zones(int fd, struct btrfs_zoned_device_info *zinfo)
+{
+	unsigned int i;
+	int ret = 0;
+
+	ASSERT(zinfo);
+
+	/* Zone size granularity */
+	for (i = 0; i < zinfo->nr_zones; i++) {
+		if (zinfo->zones[i].type == BLK_ZONE_TYPE_CONVENTIONAL) {
+			ret = discard_blocks(fd,
+					     zinfo->zones[i].start << SECTOR_SHIFT,
+					     zinfo->zone_size);
+			if (ret == EOPNOTSUPP)
+				ret = 0;
+		} else if (zinfo->zones[i].cond != BLK_ZONE_COND_EMPTY) {
+			ret = btrfs_reset_dev_zone(fd, &zinfo->zones[i]);
+		} else {
+			ret = 0;
+		}
+
+		if (ret)
+			return ret;
+	}
+	return fsync(fd);
+}
+
 static int sb_log_location(int fd, struct blk_zone *zones, int rw, u64 *bytenr_ret)
 {
 	u64 wp;

@@ -25,6 +25,7 @@
 #include <blkid/blkid.h>
 #include "kernel-lib/sizes.h"
 #include "kernel-shared/disk-io.h"
+#include "kernel-shared/zoned.h"
 #include "common/device-utils.h"
 #include "common/internal.h"
 #include "common/messages.h"
@@ -49,7 +50,7 @@ static int discard_range(int fd, u64 start, u64 len)
 /*
  * Discard blocks in the given range in 1G chunks, the process is interruptible
  */
-static int discard_blocks(int fd, u64 start, u64 len)
+int discard_blocks(int fd, u64 start, u64 len)
 {
 	while (len > 0) {
 		/* 1G granularity */
@@ -155,6 +156,7 @@ out:
 int btrfs_prepare_device(int fd, const char *file, u64 *block_count_ret,
 		u64 max_block_count, unsigned opflags)
 {
+	struct btrfs_zoned_device_info *zinfo = NULL;
 	u64 block_count;
 	struct stat st;
 	int i, ret;
@@ -173,7 +175,27 @@ int btrfs_prepare_device(int fd, const char *file, u64 *block_count_ret,
 	if (max_block_count)
 		block_count = min(block_count, max_block_count);
 
-	if (opflags & PREP_DEVICE_DISCARD) {
+	if (opflags & PREP_DEVICE_ZONED) {
+		ret = btrfs_get_zone_info(fd, file, &zinfo);
+		if (ret < 0 || !zinfo) {
+			error("zoned: unable to load zone information of %s",
+			      file);
+			return 1;
+		}
+		if (opflags & PREP_DEVICE_VERBOSE)
+			printf("Resetting device zones %s (%u zones) ...\n",
+			       file, zinfo->nr_zones);
+		/*
+		 * We cannot ignore zone reset errors for a zoned block
+		 * device as this could result in the inability to write to
+		 * non-empty sequential zones of the device.
+		 */
+		if (btrfs_reset_all_zones(fd, zinfo)) {
+			error("zoned: failed to reset device '%s' zones: %m",
+			      file);
+			goto err;
+		}
+	} else if (opflags & PREP_DEVICE_DISCARD) {
 		/*
 		 * We intentionally ignore errors from the discard ioctl.  It
 		 * is not necessary for the mkfs functionality but just an
@@ -198,17 +220,22 @@ int btrfs_prepare_device(int fd, const char *file, u64 *block_count_ret,
 	if (ret < 0) {
 		errno = -ret;
 		error("failed to zero device '%s': %m", file);
-		return 1;
+		goto err;
 	}
 
 	ret = btrfs_wipe_existing_sb(fd);
 	if (ret < 0) {
 		error("cannot wipe superblocks on %s", file);
-		return 1;
+		goto err;
 	}
 
+	free(zinfo);
 	*block_count_ret = block_count;
 	return 0;
+
+err:
+	free(zinfo);
+	return 1;
 }
 
 u64 btrfs_device_size(int fd, struct stat *st)

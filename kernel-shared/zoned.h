@@ -94,6 +94,7 @@ bool btrfs_redirty_extent_buffer_for_zoned(struct btrfs_fs_info *fs_info,
 					   u64 start, u64 end);
 int btrfs_reset_chunk_zones(struct btrfs_fs_info *fs_info, u64 devid,
 			    u64 offset, u64 length);
+int btrfs_reset_all_zones(int fd, struct btrfs_zoned_device_info *zinfo);
 
 #else
 
@@ -141,6 +142,12 @@ static inline int btrfs_reset_chunk_zones(struct btrfs_fs_info *fs_info,
 					  u64 devid, u64 offset, u64 length)
 {
 	return 0;
+}
+
+static inline int btrfs_reset_all_zones(int fd,
+					struct btrfs_zoned_device_info *zinfo)
+{
+	return -EOPNOTSUPP;
 }
 
 #endif /* BTRFS_ZONED */
