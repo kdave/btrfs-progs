@@ -166,6 +166,7 @@ typedef long long s64;
 typedef int s32;
 #endif
 
+typedef u64 sector_t;
 
 struct vma_shared { int prio_tree_node; };
 struct vm_area_struct {

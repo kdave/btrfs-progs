@@ -14,6 +14,8 @@
 /* Maximum number of zones to report per ioctl(BLKREPORTZONE) call */
 #define BTRFS_REPORT_NR_ZONES  		4096
 
+#define EMULATED_ZONE_SIZE		SZ_256M
+
 static int btrfs_get_dev_zone_info(struct btrfs_device *device);
 
 enum btrfs_zoned_model zoned_model(const char *file)
@@ -51,6 +53,10 @@ u64 zone_size(const char *file)
 	char chunk[32];
 	int ret;
 
+	/* Zoned emulation on regular device */
+	if (zoned_model(file) == ZONED_NONE)
+		return EMULATED_ZONE_SIZE;
+
 	ret = queue_param(file, "chunk_sectors", chunk, sizeof(chunk));
 	if (ret <= 0)
 		return 0;
@@ -71,6 +77,46 @@ u64 max_zone_append_size(const char *file)
 }
 
 #ifdef BTRFS_ZONED
+/*
+ * Emulate blkdev_report_zones() for a non-zoned device. It slices up the block
+ * device into fixed-sized chunks and emulate a conventional zone on each of
+ * them.
+ */
+static int emulate_report_zones(const char *file, int fd, u64 pos,
+				struct blk_zone *zones, unsigned int nr_zones)
+{
+	const sector_t zone_sectors = EMULATED_ZONE_SIZE >> SECTOR_SHIFT;
+	struct stat st;
+	sector_t bdev_size;
+	unsigned int i;
+	int ret;
+
+	ret = fstat(fd, &st);
+	if (ret < 0) {
+		error("unable to stat %s: %m", file);
+		return -EIO;
+	}
+
+	bdev_size = btrfs_device_size(fd, &st) >> SECTOR_SHIFT;
+
+	pos >>= SECTOR_SHIFT;
+	for (i = 0; i < nr_zones; i++) {
+		zones[i].start = i * zone_sectors + pos;
+		zones[i].len = zone_sectors;
+		zones[i].capacity = zone_sectors;
+		zones[i].wp = zones[i].start + zone_sectors;
+		zones[i].type = BLK_ZONE_TYPE_CONVENTIONAL;
+		zones[i].cond = BLK_ZONE_COND_NOT_WP;
+
+		if (zones[i].wp >= bdev_size) {
+			i++;
+			break;
+		}
+	}
+
+	return i;
+}
+
 static int report_zones(int fd, const char *file,
 			struct btrfs_zoned_device_info *zinfo)
 {
@@ -147,10 +193,20 @@ static int report_zones(int fd, const char *file,
 		rep->sector = sector;
 		rep->nr_zones = BTRFS_REPORT_NR_ZONES;
 
-		ret = ioctl(fd, BLKREPORTZONE, rep);
-		if (ret != 0) {
-			error("zoned: ioctl BLKREPORTZONE failed (%m)");
-			exit(1);
+		if (zinfo->model != ZONED_NONE) {
+			ret = ioctl(fd, BLKREPORTZONE, rep);
+			if (ret != 0) {
+				error("zoned: ioctl BLKREPORTZONE failed (%m)");
+				exit(1);
+			}
+		} else {
+			ret = emulate_report_zones(file, fd,
+						   sector << SECTOR_SHIFT,
+						   zone, BTRFS_REPORT_NR_ZONES);
+			if (ret < 0) {
+				error("zoned: failed to emulate BLKREPORTZONE");
+				exit(1);
+			}
 		}
 
 		if (!rep->nr_zones)
@@ -228,8 +284,6 @@ int btrfs_get_zone_info(int fd, const char *file,
 
 	/* Check zone model */
 	model = zoned_model(file);
-	if (model == ZONED_NONE)
-		return 0;
 
 #ifdef BTRFS_ZONED
 	zinfo = calloc(1, sizeof(*zinfo));
