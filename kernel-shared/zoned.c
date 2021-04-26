@@ -881,6 +881,33 @@ bool btrfs_redirty_extent_buffer_for_zoned(struct btrfs_fs_info *fs_info,
 	return false;
 }
 
+int btrfs_reset_chunk_zones(struct btrfs_fs_info *fs_info, u64 devid,
+			    u64 offset, u64 length)
+{
+	struct btrfs_device *device;
+
+	list_for_each_entry(device, &fs_info->fs_devices->devices, dev_list) {
+		struct btrfs_zoned_device_info *zinfo;
+		struct blk_zone *reset;
+
+		if (device->devid != devid)
+			continue;
+
+		zinfo = device->zone_info;
+		if (!zone_is_sequential(zinfo, offset))
+			continue;
+
+		reset = &zinfo->zones[offset / zinfo->zone_size];
+		if (btrfs_reset_dev_zone(device->fd, reset)) {
+			error("zoned: failed to reset zone %llu: %m",
+			      offset / zinfo->zone_size);
+			return -EIO;
+		}
+	}
+
+	return 0;
+}
+
 #endif
 
 int btrfs_get_dev_zone_info_all_devices(struct btrfs_fs_info *fs_info)
