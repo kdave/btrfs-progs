@@ -472,12 +472,15 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 	buf->len = BTRFS_SUPER_INFO_SIZE;
 	csum_tree_block_size(buf, btrfs_csum_type_size(cfg->csum_type), 0,
 			     cfg->csum_type);
-	ret = pwrite(fd, buf->data, BTRFS_SUPER_INFO_SIZE,
-			cfg->blocks[MKFS_SUPER_BLOCK]);
+	ret = sbwrite(fd, buf->data, cfg->blocks[MKFS_SUPER_BLOCK]);
 	if (ret != BTRFS_SUPER_INFO_SIZE) {
 		ret = (ret < 0 ? -errno : -EIO);
 		goto out;
 	}
+
+	ret = fsync(fd);
+	if (ret)
+		goto out;
 
 	ret = 0;
 
