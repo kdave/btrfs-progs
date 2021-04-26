@@ -28,6 +28,7 @@ struct btrfs_device {
 	struct list_head dev_list;
 	struct btrfs_root *dev_root;
 	struct btrfs_fs_devices *fs_devices;
+	struct btrfs_fs_info *fs_info;
 
 	u64 total_ios;
 
@@ -282,8 +283,8 @@ int btrfs_alloc_chunk(struct btrfs_trans_handle *trans,
 		      u64 *num_bytes, u64 type);
 int btrfs_alloc_data_chunk(struct btrfs_trans_handle *trans,
 			   struct btrfs_fs_info *fs_info, u64 *start, u64 num_bytes);
-int btrfs_open_devices(struct btrfs_fs_devices *fs_devices,
-		       int flags);
+int btrfs_open_devices(struct btrfs_fs_info *fs_info,
+		       struct btrfs_fs_devices *fs_devices, int flags);
 int btrfs_close_devices(struct btrfs_fs_devices *fs_devices);
 void btrfs_close_all_devices(void);
 int btrfs_insert_dev_extent(struct btrfs_trans_handle *trans,

@@ -141,6 +141,7 @@ int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 	dev_item = &disk_super->dev_item;
 
 	uuid_generate(device->uuid);
+	device->fs_info = fs_info;
 	device->devid = 0;
 	device->type = 0;
 	device->io_width = io_width;
