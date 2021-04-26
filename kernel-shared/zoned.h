@@ -96,6 +96,9 @@ int btrfs_reset_chunk_zones(struct btrfs_fs_info *fs_info, u64 devid,
 			    u64 offset, u64 length);
 int btrfs_reset_all_zones(int fd, struct btrfs_zoned_device_info *zinfo);
 
+int zero_zone_blocks(int fd, struct btrfs_zoned_device_info *zinfo, off_t start,
+		     size_t len);
+
 #else
 
 #define sbread(fd, buf, offset) \
@@ -146,6 +149,13 @@ static inline int btrfs_reset_chunk_zones(struct btrfs_fs_info *fs_info,
 
 static inline int btrfs_reset_all_zones(int fd,
 					struct btrfs_zoned_device_info *zinfo)
+{
+	return -EOPNOTSUPP;
+}
+
+static inline int zero_zone_blocks(int fd,
+				   struct btrfs_zoned_device_info *zinfo,
+				   off_t start, size_t len)
 {
 	return -EOPNOTSUPP;
 }
