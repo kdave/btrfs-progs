@@ -37,6 +37,7 @@
 #include "kernel-shared/free-space-tree.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/transaction.h"
+#include "kernel-shared/zoned.h"
 #include "common/utils.h"
 #include "common/path-utils.h"
 #include "common/device-utils.h"
@@ -900,6 +901,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	int metadata_profile_opt = 0;
 	int discard = 1;
 	int ssd = 0;
+	int zoned = 0;
 	int force_overwrite = 0;
 	char *source_dir = NULL;
 	bool source_dir_set = false;
@@ -1069,6 +1071,8 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	if (dev_cnt == 0)
 		print_usage(1);
 
+	zoned = (features & BTRFS_FEATURE_INCOMPAT_ZONED);
+
 	if (source_dir_set && dev_cnt > 1) {
 		error("the option -r is limited to a single device");
 		goto error;
@@ -1109,6 +1113,19 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 
 	file = argv[optind++];
 	ssd = is_ssd(file);
+	if (zoned) {
+		if (!zone_size(file)) {
+			error("zoned: %s: zone size undefined", file);
+			exit(1);
+		}
+	} else if (zoned_model(file) == ZONED_HOST_MANAGED) {
+		if (verbose)
+			printf(
+	"Zoned: %s: host-managed device detected, setting zoned feature\n",
+			       file);
+		zoned = 1;
+		features |= BTRFS_FEATURE_INCOMPAT_ZONED;
+	}
 
 	/*
 	* Set default profiles according to number of added devices.
@@ -1278,7 +1295,8 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	ret = btrfs_prepare_device(fd, file, &dev_block_count, block_count,
 			(zero_end ? PREP_DEVICE_ZERO_END : 0) |
 			(discard ? PREP_DEVICE_DISCARD : 0) |
-			(verbose ? PREP_DEVICE_VERBOSE : 0));
+			(verbose ? PREP_DEVICE_VERBOSE : 0) |
+			(zoned ? PREP_DEVICE_ZONED : 0));
 	if (ret)
 		goto error;
 	if (block_count && block_count > dev_block_count) {
@@ -1308,6 +1326,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	mkfs_cfg.stripesize = stripesize;
 	mkfs_cfg.features = features;
 	mkfs_cfg.csum_type = csum_type;
+	mkfs_cfg.zone_size = zone_size(file);
 
 	ret = make_btrfs(fd, &mkfs_cfg);
 	if (ret) {
@@ -1391,7 +1410,8 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 				block_count,
 				(verbose ? PREP_DEVICE_VERBOSE : 0) |
 				(zero_end ? PREP_DEVICE_ZERO_END : 0) |
-				(discard ? PREP_DEVICE_DISCARD : 0));
+				(discard ? PREP_DEVICE_DISCARD : 0) |
+				(zoned ? PREP_DEVICE_ZONED : 0));
 		if (ret) {
 			goto error;
 		}
@@ -1502,6 +1522,10 @@ raid_groups:
 			btrfs_group_profile_str(metadata_profile),
 			pretty_size(allocation.system));
 		printf("SSD detected:       %s\n", ssd ? "yes" : "no");
+		printf("Zoned device:       %s\n", zoned ? "yes" : "no");
+		if (zoned)
+			printf("Zone size:          %s\n",
+			       pretty_size(fs_info->zone_size));
 		btrfs_parse_fs_features_to_string(features_buf, features);
 		printf("Incompat features:  %s\n", features_buf);
 		btrfs_parse_runtime_features_to_string(features_buf,
