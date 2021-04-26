@@ -190,7 +190,7 @@ int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 	btrfs_set_stack_device_bytes_used(dev_item, device->bytes_used);
 	memcpy(&dev_item->uuid, device->uuid, BTRFS_UUID_SIZE);
 
-	ret = pwrite(fd, buf, sectorsize, BTRFS_SUPER_INFO_OFFSET);
+	ret = sbwrite(fd, buf, BTRFS_SUPER_INFO_OFFSET);
 	BUG_ON(ret != sectorsize);
 
 	free(buf);
@@ -267,7 +267,7 @@ int btrfs_device_already_in_root(struct btrfs_root *root, int fd,
 		ret = -ENOMEM;
 		goto out;
 	}
-	ret = pread(fd, buf, BTRFS_SUPER_INFO_SIZE, super_offset);
+	ret = sbread(fd, buf, super_offset);
 	if (ret != BTRFS_SUPER_INFO_SIZE)
 		goto brelse;
 

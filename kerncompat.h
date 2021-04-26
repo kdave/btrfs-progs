@@ -364,12 +364,28 @@ static inline int is_power_of_2(unsigned long n)
 	return (n != 0 && ((n & (n - 1)) == 0));
 }
 
+static inline int ilog2(u64 num)
+{
+	int l = 0;
+
+	num >>= 1;
+	while (num) {
+		l++;
+		num >>= 1;
+	}
+
+	return l;
+}
+
 typedef u16 __bitwise __le16;
 typedef u16 __bitwise __be16;
 typedef u32 __bitwise __le32;
 typedef u32 __bitwise __be32;
 typedef u64 __bitwise __le64;
 typedef u64 __bitwise __be64;
+
+#define U64_MAX			UINT64_MAX
+#define U32_MAX			UINT32_MAX
 
 /* Macros to generate set/get funcs for the struct fields
  * assume there is a lefoo_to_cpu for every type, so lets make a simple

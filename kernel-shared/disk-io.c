@@ -1618,7 +1618,7 @@ int btrfs_read_dev_super(int fd, struct btrfs_super_block *sb, u64 sb_bytenr,
 	u64 bytenr;
 
 	if (sb_bytenr != BTRFS_SUPER_INFO_OFFSET) {
-		ret = pread64(fd, buf, BTRFS_SUPER_INFO_SIZE, sb_bytenr);
+		ret = sbread(fd, buf, sb_bytenr);
 		/* real error */
 		if (ret < 0)
 			return -errno;
@@ -1646,7 +1646,8 @@ int btrfs_read_dev_super(int fd, struct btrfs_super_block *sb, u64 sb_bytenr,
 
 	for (i = 0; i < max_super; i++) {
 		bytenr = btrfs_sb_offset(i);
-		ret = pread64(fd, buf, BTRFS_SUPER_INFO_SIZE, bytenr);
+		ret = sbread(fd, buf, bytenr);
+
 		if (ret < BTRFS_SUPER_INFO_SIZE)
 			break;
 
@@ -1718,9 +1719,7 @@ static int write_dev_supers(struct btrfs_fs_info *fs_info,
 		 * super_copy is BTRFS_SUPER_INFO_SIZE bytes and is
 		 * zero filled, we can use it directly
 		 */
-		ret = pwrite64(device->fd, fs_info->super_copy,
-				BTRFS_SUPER_INFO_SIZE,
-				fs_info->super_bytenr);
+		ret = sbwrite(device->fd, fs_info->super_copy, fs_info->super_bytenr);
 		if (ret != BTRFS_SUPER_INFO_SIZE) {
 			errno = EIO;
 			error(
@@ -1753,8 +1752,7 @@ static int write_dev_supers(struct btrfs_fs_info *fs_info,
 		 * super_copy is BTRFS_SUPER_INFO_SIZE bytes and is
 		 * zero filled, we can use it directly
 		 */
-		ret = pwrite64(device->fd, fs_info->super_copy,
-				BTRFS_SUPER_INFO_SIZE, bytenr);
+		ret = sbwrite(device->fd, fs_info->super_copy, bytenr);
 		if (ret != BTRFS_SUPER_INFO_SIZE) {
 			errno = EIO;
 			error(
