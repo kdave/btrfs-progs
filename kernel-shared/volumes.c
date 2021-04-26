@@ -27,6 +27,7 @@
 #include "kernel-shared/transaction.h"
 #include "kernel-shared/print-tree.h"
 #include "kernel-shared/volumes.h"
+#include "zoned.h"
 #include "common/utils.h"
 #include "kernel-lib/raid56.h"
 
@@ -357,6 +358,7 @@ again:
 		/* free the memory */
 		free(device->name);
 		free(device->label);
+		free(device->zone_info);
 		free(device);
 	}
 
