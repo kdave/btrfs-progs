@@ -122,12 +122,14 @@ static const char *const cmd_replace_start_usage[] = {
 static int cmd_replace_start(const struct cmd_struct *cmd,
 			     int argc, char **argv)
 {
+	struct btrfs_ioctl_feature_flags feature_flags;
 	struct btrfs_ioctl_dev_replace_args start_args = {0};
 	struct btrfs_ioctl_dev_replace_args status_args = {0};
 	int ret;
 	int i;
 	int fdmnt = -1;
 	int fddstdev = -1;
+	int zoned;
 	char *path;
 	char *srcdev;
 	char *dstdev = NULL;
@@ -181,6 +183,14 @@ static int cmd_replace_start(const struct cmd_struct *cmd,
 	fdmnt = open_path_or_dev_mnt(path, &dirstream, 1);
 	if (fdmnt < 0)
 		goto leave_with_error;
+
+	ret = ioctl(fdmnt, BTRFS_IOC_GET_FEATURES, &feature_flags);
+	if (ret) {
+		error("zoned: ioctl(GET_FEATURES) on '%s' returns error: %m",
+		      path);
+		goto leave_with_error;
+	}
+	zoned = (feature_flags.incompat_flags & BTRFS_FEATURE_INCOMPAT_ZONED);
 
 	/* check for possible errors before backgrounding */
 	status_args.cmd = BTRFS_IOCTL_DEV_REPLACE_CMD_STATUS;
@@ -286,7 +296,8 @@ static int cmd_replace_start(const struct cmd_struct *cmd,
 	strncpy((char *)start_args.start.tgtdev_name, dstdev,
 		BTRFS_DEVICE_PATH_NAME_MAX);
 	ret = btrfs_prepare_device(fddstdev, dstdev, &dstdev_block_count, 0,
-			PREP_DEVICE_ZERO_END | PREP_DEVICE_VERBOSE);
+			PREP_DEVICE_ZERO_END | PREP_DEVICE_VERBOSE |
+			(zoned ? PREP_DEVICE_ZONED : 0));
 	if (ret)
 		goto leave_with_error;
 
