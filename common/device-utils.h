@@ -29,5 +29,6 @@ u64 disk_size(const char *path);
 u64 btrfs_device_size(int fd, struct stat *st);
 int btrfs_prepare_device(int fd, const char *file, u64 *block_count_ret,
 		u64 max_block_count, unsigned opflags);
+int queue_param(const char *file, const char *param, char *buf, size_t len);
 
 #endif
