@@ -1953,6 +1953,12 @@ int close_ctree_fs_info(struct btrfs_fs_info *fs_info)
 	}
 
 	if (fs_info->finalize_on_close) {
+		ret = btrfs_wipe_temporary_sb(fs_info->fs_devices);
+		if (ret) {
+			error("zoned: failed to wipe temporary super blocks: %m");
+			goto skip_commit;
+		}
+
 		btrfs_set_super_magic(fs_info->super_copy, BTRFS_MAGIC);
 		root->fs_info->finalize_on_close = 0;
 		ret = write_all_supers(fs_info);
