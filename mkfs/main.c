@@ -1191,6 +1191,23 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		features |= BTRFS_FEATURE_INCOMPAT_RAID1C34;
 	}
 
+	if (zoned) {
+		if (source_dir_set) {
+			error("the option -r and zoned mode are incompatible");
+			exit(1);
+		}
+
+		if (features & BTRFS_FEATURE_INCOMPAT_MIXED_GROUPS) {
+			error("cannot enable mixed-bg in zoned mode");
+			exit(1);
+		}
+
+		if (features & BTRFS_FEATURE_INCOMPAT_RAID56) {
+			error("cannot enable RAID5/6 in zoned mode");
+			exit(1);
+		}
+	}
+
 	if (btrfs_check_nodesize(nodesize, sectorsize,
 				 features))
 		goto error;
@@ -1279,6 +1296,12 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			dev_cnt, mixed, ssd);
 	if (ret)
 		goto error;
+
+	if (zoned && ((metadata_profile | data_profile) &
+		      BTRFS_BLOCK_GROUP_PROFILE_MASK)) {
+		error("cannot use RAID/DUP profile in zoned mode");
+		goto error;
+	}
 
 	dev_cnt--;
 
