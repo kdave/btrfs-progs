@@ -107,7 +107,7 @@ static int zero_dev_clamped(int fd, struct btrfs_zoned_device_info *zinfo,
 	return zero_blocks(fd, start, end - start);
 }
 
-static int btrfs_wipe_existing_sb(int fd)
+static int btrfs_wipe_existing_sb(int fd, struct btrfs_zoned_device_info *zinfo)
 {
 	const char *off = NULL;
 	size_t len = 0;
@@ -142,14 +142,26 @@ static int btrfs_wipe_existing_sb(int fd)
 	if (len > sizeof(buf))
 		len = sizeof(buf);
 
-	memset(buf, 0, len);
-	ret = pwrite(fd, buf, len, offset);
-	if (ret < 0) {
-		error("cannot wipe existing superblock: %m");
-		ret = -1;
-	} else if (ret != len) {
-		error("cannot wipe existing superblock: wrote %d of %zd", ret, len);
-		ret = -1;
+	if (!zone_is_sequential(zinfo, offset)) {
+		memset(buf, 0, len);
+		ret = pwrite(fd, buf, len, offset);
+		if (ret < 0) {
+			error("cannot wipe existing superblock: %m");
+			ret = -1;
+		} else if (ret != len) {
+			error("cannot wipe existing superblock: wrote %d of %zd",
+			      ret, len);
+			ret = -1;
+		}
+	} else {
+		struct blk_zone *zone = &zinfo->zones[offset / zinfo->zone_size];
+
+		ret = btrfs_reset_dev_zone(fd, zone);
+		if (ret < 0) {
+			error(
+		"zoned: failed to wipe zones containing superblock: %m");
+			ret = -1;
+		}
 	}
 	fsync(fd);
 
@@ -228,7 +240,7 @@ int btrfs_prepare_device(int fd, const char *file, u64 *block_count_ret,
 		goto err;
 	}
 
-	ret = btrfs_wipe_existing_sb(fd);
+	ret = btrfs_wipe_existing_sb(fd, zinfo);
 	if (ret < 0) {
 		error("cannot wipe superblocks on %s", file);
 		goto err;
