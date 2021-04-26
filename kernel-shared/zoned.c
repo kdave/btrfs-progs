@@ -968,6 +968,26 @@ int btrfs_reset_chunk_zones(struct btrfs_fs_info *fs_info, u64 devid,
 	return 0;
 }
 
+int btrfs_wipe_temporary_sb(struct btrfs_fs_devices *fs_devices)
+{
+	struct list_head *head = &fs_devices->devices;
+	struct btrfs_device *dev;
+	int ret = 0;
+
+	list_for_each_entry(dev, head, dev_list) {
+		struct btrfs_zoned_device_info *zinfo = dev->zone_info;
+
+		if (!zinfo)
+			continue;
+
+		ret = btrfs_reset_dev_zone(dev->fd, &zinfo->zones[0]);
+		if (ret)
+			break;
+	}
+
+	return ret;
+}
+
 #endif
 
 int btrfs_get_dev_zone_info_all_devices(struct btrfs_fs_info *fs_info)
