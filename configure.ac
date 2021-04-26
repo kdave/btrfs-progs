@@ -250,6 +250,18 @@ AX_CHECK_DEFINE([ext2fs/ext2_fs.h], [EXT4_EPOCH_MASK],
 			   [Define to 1 if e2fsprogs defines EXT4_EPOCH_MASK])],
 		[AC_MSG_WARN([no definition of EXT4_EPOCH_MASK found, probably old e2fsprogs, no 64bit time precision of converted images])])
 
+AC_CHECK_HEADER(linux/blkzoned.h, [blkzoned_found=yes], [blkzoned_found=no])
+AC_ARG_ENABLE([zoned],
+	      AS_HELP_STRING([--disable-zoned], [disable zoned block device support]),
+	      [], [enable_zoned=$blkzoned_found]
+)
+
+AS_IF([test "x$enable_zoned" = xyes], [
+	AC_CHECK_HEADER(linux/blkzoned.h, [],
+		[AC_MSG_ERROR([Couldn't find linux/blkzoned.h])])
+	AC_DEFINE([BTRFS_ZONED], [1], [enable zoned block device support])
+])
+
 dnl Define <NAME>_LIBS= and <NAME>_CFLAGS= by pkg-config
 dnl
 dnl The default PKG_CHECK_MODULES() action-if-not-found is end the
@@ -367,6 +379,7 @@ AC_MSG_RESULT([
 	Python bindings:    ${enable_python}
 	Python interpreter: ${PYTHON}
 	crypto provider:    ${cryptoprovider} ${cryptoproviderversion}
+	zoned device:       ${enable_zoned}
 
 	Type 'make' to compile.
 ])
