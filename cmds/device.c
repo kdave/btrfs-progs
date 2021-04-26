@@ -29,6 +29,7 @@
 #include "ioctl.h"
 #include "common/utils.h"
 #include "kernel-shared/volumes.h"
+#include "kernel-shared/zoned.h"
 #include "cmds/filesystem-usage.h"
 
 #include "cmds/commands.h"
@@ -65,6 +66,8 @@ static int cmd_device_add(const struct cmd_struct *cmd,
 	int force = 0;
 	int last_dev;
 	bool enqueue = false;
+	int zoned;
+	struct btrfs_ioctl_feature_flags feature_flags;
 
 	optind = 0;
 	while (1) {
@@ -113,11 +116,26 @@ static int cmd_device_add(const struct cmd_struct *cmd,
 		return 1;
 	}
 
+	ret = ioctl(fdmnt, BTRFS_IOC_GET_FEATURES, &feature_flags);
+	if (ret) {
+		error("error getting feature flags '%s': %m", mntpnt);
+		return 1;
+	}
+	zoned = (feature_flags.incompat_flags & BTRFS_FEATURE_INCOMPAT_ZONED);
+
 	for (i = optind; i < last_dev; i++){
 		struct btrfs_ioctl_vol_args ioctl_args;
 		int	devfd, res;
 		u64 dev_block_count = 0;
 		char *path;
+
+		if (!zoned && zoned_model(argv[i]) == ZONED_HOST_MANAGED) {
+			error(
+"zoned: cannot add host-managed zoned device to non-zoned filesystem '%s'",
+			      argv[i]);
+			ret++;
+			continue;
+		}
 
 		res = test_dev_for_mkfs(argv[i], force);
 		if (res) {
@@ -134,7 +152,8 @@ static int cmd_device_add(const struct cmd_struct *cmd,
 
 		res = btrfs_prepare_device(devfd, argv[i], &dev_block_count, 0,
 				PREP_DEVICE_ZERO_END | PREP_DEVICE_VERBOSE |
-				(discard ? PREP_DEVICE_DISCARD : 0));
+				(discard ? PREP_DEVICE_DISCARD : 0) |
+				(zoned ? PREP_DEVICE_ZONED : 0));
 		close(devfd);
 		if (res) {
 			ret++;
