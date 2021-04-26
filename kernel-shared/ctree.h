@@ -1222,6 +1222,9 @@ struct btrfs_fs_info {
 		u64 zone_size;
 		u64 zoned;
 	};
+
+	/* Max size to emit ZONE_APPEND write command */
+	u64 max_zone_append_size;
 };
 
 static inline bool btrfs_is_zoned(const struct btrfs_fs_info *fs_info)

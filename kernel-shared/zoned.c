@@ -58,6 +58,18 @@ u64 zone_size(const char *file)
 	return strtoull((const char *)chunk, NULL, 10) << SECTOR_SHIFT;
 }
 
+u64 max_zone_append_size(const char *file)
+{
+	char chunk[32];
+	int ret;
+
+	ret = queue_param(file, "zone_append_max_bytes", chunk, sizeof(chunk));
+	if (ret <= 0)
+		return 0;
+
+	return strtoull((const char *)chunk, NULL, 10);
+}
+
 #ifdef BTRFS_ZONED
 static int report_zones(int fd, const char *file,
 			struct btrfs_zoned_device_info *zinfo)
@@ -101,9 +113,18 @@ static int report_zones(int fd, const char *file,
 
 	/* Allocate the zone information array */
 	zinfo->zone_size = zone_bytes;
+	zinfo->max_zone_append_size = max_zone_append_size(file);
 	zinfo->nr_zones = device_size / zone_bytes;
 	if (device_size & (zone_bytes - 1))
 		zinfo->nr_zones++;
+
+	if (zoned_model(file) != ZONED_NONE &&
+	    zinfo->max_zone_append_size == 0) {
+		error(
+		"zoned: device %s does not support ZONE_APPEND command", file);
+		exit(1);
+	}
+
 	zinfo->zones = calloc(zinfo->nr_zones, sizeof(struct blk_zone));
 	if (!zinfo->zones) {
 		error("zoned: no memory for zone information");
@@ -246,6 +267,7 @@ int btrfs_check_zoned_mode(struct btrfs_fs_info *fs_info)
 	u64 zoned_devices = 0;
 	u64 nr_devices = 0;
 	u64 zone_size = 0;
+	u64 max_zone_append_size = 0;
 	const bool incompat_zoned = btrfs_fs_incompat(fs_info, ZONED);
 	int ret = 0;
 
@@ -280,6 +302,11 @@ int btrfs_check_zoned_mode(struct btrfs_fs_info *fs_info)
 				ret = -EINVAL;
 				goto out;
 			}
+			if (!max_zone_append_size ||
+			    (zone_info->max_zone_append_size &&
+			     zone_info->max_zone_append_size < max_zone_append_size))
+				max_zone_append_size =
+					zone_info->max_zone_append_size;
 		}
 		nr_devices++;
 	}
@@ -319,6 +346,7 @@ int btrfs_check_zoned_mode(struct btrfs_fs_info *fs_info)
 	}
 
 	fs_info->zone_size = zone_size;
+	fs_info->max_zone_append_size = max_zone_append_size;
 
 out:
 	return ret;
