@@ -169,7 +169,7 @@ libbtrfs_objects = common/send-stream.o common/send-utils.o kernel-lib/rbtree.o 
 		   kernel-shared/free-space-cache.o kernel-shared/root-tree.o \
 		   kernel-shared/volumes.o kernel-shared/transaction.o \
 		   kernel-shared/free-space-tree.o repair.o kernel-shared/inode-item.o \
-		   kernel-shared/file-item.o \
+		   kernel-shared/file-item.o kernel-shared/zoned.o \
 		   kernel-lib/raid56.o kernel-lib/tables.o \
 		   common/device-scan.o common/path-utils.o \
 		   common/utils.o libbtrfsutil/subvolume.o libbtrfsutil/stubs.o \

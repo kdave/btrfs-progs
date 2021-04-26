@@ -35,6 +35,7 @@
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/disk-io.h"
+#include "kernel-shared/zoned.h"
 #include "ioctl.h"
 
 static int btrfs_scan_done = 0;
@@ -198,6 +199,7 @@ int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 	return 0;
 
 out:
+	free(device->zone_info);
 	free(device);
 	free(buf);
 	return ret;

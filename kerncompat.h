@@ -76,6 +76,10 @@
 #define ULONG_MAX       (~0UL)
 #endif
 
+#ifndef SECTOR_SHIFT
+#define SECTOR_SHIFT	(9)
+#endif
+
 #define __token_glue(a,b,c)	___token_glue(a,b,c)
 #define ___token_glue(a,b,c)	a ## b ## c
 #ifdef DEBUG_BUILD_CHECKS

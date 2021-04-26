@@ -45,6 +45,8 @@ struct btrfs_device {
 
 	u64 generation;
 
+	struct btrfs_zoned_device_info *zone_info;
+
 	/* the internal btrfs device id */
 	u64 devid;
 
