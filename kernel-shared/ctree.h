@@ -1213,7 +1213,21 @@ struct btrfs_fs_info {
 	u32 nodesize;
 	u32 sectorsize;
 	u32 stripesize;
+
+	/*
+	 * Zone size > 0 when in ZONED mode, otherwise it's used for a check
+	 * if the mode is enabled
+	 */
+	union {
+		u64 zone_size;
+		u64 zoned;
+	};
 };
+
+static inline bool btrfs_is_zoned(const struct btrfs_fs_info *fs_info)
+{
+	return fs_info->zoned != 0;
+}
 
 /*
  * in ram representation of the tree.  extent_root is used for all allocations

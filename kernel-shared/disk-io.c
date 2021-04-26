@@ -1325,6 +1325,12 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, struct open_ctree_flags *oc
 		goto out_chunk;
 	}
 
+	ret = btrfs_check_zoned_mode(fs_info);
+	if (ret) {
+		error("zoned: failed to initialize zoned mode: %d", ret);
+		goto out_chunk;
+	}
+
 	eb = fs_info->chunk_root->node;
 	read_extent_buffer(eb, fs_info->chunk_tree_uuid,
 			   btrfs_header_chunk_tree_uuid(eb),

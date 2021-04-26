@@ -40,5 +40,6 @@ u64 zone_size(const char *file);
 int btrfs_get_zone_info(int fd, const char *file,
 			struct btrfs_zoned_device_info **zinfo);
 int btrfs_get_dev_zone_info_all_devices(struct btrfs_fs_info *fs_info);
+int btrfs_check_zoned_mode(struct btrfs_fs_info *fs_info);
 
 #endif /* __BTRFS_ZONED_H__ */
