@@ -25,6 +25,7 @@
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/print-tree.h"
+#include "kernel-shared/zoned.h"
 #include "common/utils.h"
 #include "cmds/commands.h"
 #include "common/help.h"
@@ -38,7 +39,7 @@ static int load_and_dump_sb(char *filename, int fd, u64 sb_bytenr, int full,
 
 	sb = (struct btrfs_super_block *)super_block_data;
 
-	ret = pread64(fd, super_block_data, BTRFS_SUPER_INFO_SIZE, sb_bytenr);
+	ret = sbread(fd, super_block_data, sb_bytenr);
 	if (ret != BTRFS_SUPER_INFO_SIZE) {
 		/* check if the disk if too short for further superblock */
 		if (ret == 0 && errno == 0)

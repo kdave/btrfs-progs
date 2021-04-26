@@ -2,6 +2,7 @@
 
 #include <sys/ioctl.h>
 #include <linux/fs.h>
+#include <unistd.h>
 
 #include "kernel-lib/list.h"
 #include "kernel-shared/volumes.h"
@@ -13,6 +14,20 @@
 
 /* Maximum number of zones to report per ioctl(BLKREPORTZONE) call */
 #define BTRFS_REPORT_NR_ZONES  		4096
+
+/*
+ * Location of the first zone of superblock logging zone pairs.
+ *
+ * - primary superblock:    0B (zone 0)
+ * - first copy:          512G (zone starting at that offset)
+ * - second copy:           4T (zone starting at that offset)
+ */
+#define BTRFS_SB_LOG_PRIMARY_OFFSET	(0ULL)
+#define BTRFS_SB_LOG_FIRST_OFFSET	(512ULL * SZ_1G)
+#define BTRFS_SB_LOG_SECOND_OFFSET	(4096ULL * SZ_1G)
+
+#define BTRFS_SB_LOG_FIRST_SHIFT	ilog2(BTRFS_SB_LOG_FIRST_OFFSET)
+#define BTRFS_SB_LOG_SECOND_SHIFT	ilog2(BTRFS_SB_LOG_SECOND_OFFSET)
 
 #define EMULATED_ZONE_SIZE		SZ_256M
 
@@ -115,6 +130,115 @@ static int emulate_report_zones(const char *file, int fd, u64 pos,
 	}
 
 	return i;
+}
+
+static int sb_write_pointer(int fd, struct blk_zone *zones, u64 *wp_ret)
+{
+	bool empty[BTRFS_NR_SB_LOG_ZONES];
+	bool full[BTRFS_NR_SB_LOG_ZONES];
+	sector_t sector;
+
+	ASSERT(zones[0].type != BLK_ZONE_TYPE_CONVENTIONAL &&
+	       zones[1].type != BLK_ZONE_TYPE_CONVENTIONAL);
+
+	empty[0] = (zones[0].cond == BLK_ZONE_COND_EMPTY);
+	empty[1] = (zones[1].cond == BLK_ZONE_COND_EMPTY);
+	full[0] = (zones[0].cond == BLK_ZONE_COND_FULL);
+	full[1] = (zones[1].cond == BLK_ZONE_COND_FULL);
+
+	/*
+	 * Possible states of log buffer zones
+	 *
+	 *           Empty[0]  In use[0]  Full[0]
+	 * Empty[1]         *          x        0
+	 * In use[1]        0          x        0
+	 * Full[1]          1          1        C
+	 *
+	 * Log position:
+	 *   *: Special case, no superblock is written
+	 *   0: Use write pointer of zones[0]
+	 *   1: Use write pointer of zones[1]
+	 *   C: Compare super blocks from zones[0] and zones[1], use the latest
+	 *      one determined by generation
+	 *   x: Invalid state
+	 */
+
+	if (empty[0] && empty[1]) {
+		/* Special case to distinguish no superblock to read */
+		*wp_ret = (zones[0].start << SECTOR_SHIFT);
+		return -ENOENT;
+	} else if (full[0] && full[1]) {
+		/* Compare two super blocks */
+		u8 buf[BTRFS_NR_SB_LOG_ZONES][BTRFS_SUPER_INFO_SIZE];
+		struct btrfs_super_block *super[BTRFS_NR_SB_LOG_ZONES];
+		int i;
+		int ret;
+
+		for (i = 0; i < BTRFS_NR_SB_LOG_ZONES; i++) {
+			u64 bytenr;
+
+			bytenr = ((zones[i].start + zones[i].len)
+				   << SECTOR_SHIFT) - BTRFS_SUPER_INFO_SIZE;
+
+			ret = pread64(fd, buf[i], BTRFS_SUPER_INFO_SIZE, bytenr);
+			if (ret != BTRFS_SUPER_INFO_SIZE)
+				return -EIO;
+			super[i] = (struct btrfs_super_block *)&buf[i];
+		}
+
+		if (super[0]->generation > super[1]->generation)
+			sector = zones[1].start;
+		else
+			sector = zones[0].start;
+	} else if (!full[0] && (empty[1] || full[1])) {
+		sector = zones[0].wp;
+	} else if (full[0]) {
+		sector = zones[1].wp;
+	} else {
+		return -EUCLEAN;
+	}
+	*wp_ret = sector << SECTOR_SHIFT;
+	return 0;
+}
+
+/*
+ * Get the first zone number of the superblock mirror
+ */
+static inline u32 sb_zone_number(int shift, int mirror)
+{
+	u64 zone = 0;
+
+	ASSERT(0 <= mirror && mirror < BTRFS_SUPER_MIRROR_MAX);
+	switch (mirror) {
+	case 0: zone = 0; break;
+	case 1: zone = 1ULL << (BTRFS_SB_LOG_FIRST_SHIFT - shift); break;
+	case 2: zone = 1ULL << (BTRFS_SB_LOG_SECOND_SHIFT - shift); break;
+	}
+
+	ASSERT(zone <= U32_MAX);
+
+	return (u32)zone;
+}
+
+int btrfs_reset_dev_zone(int fd, struct blk_zone *zone)
+{
+	struct blk_zone_range range;
+
+	/* Nothing to do if it is already empty */
+	if (zone->type == BLK_ZONE_TYPE_CONVENTIONAL ||
+	    zone->cond == BLK_ZONE_COND_EMPTY)
+		return 0;
+
+	range.sector = zone->start;
+	range.nr_sectors = zone->len;
+
+	if (ioctl(fd, BLKRESETZONE, &range) < 0)
+		return -errno;
+
+	zone->cond = BLK_ZONE_COND_EMPTY;
+	zone->wp = zone->start;
+
+	return 0;
 }
 
 static int report_zones(int fd, const char *file,
@@ -227,6 +351,159 @@ static int report_zones(int fd, const char *file,
 	free(rep);
 
 	return 0;
+}
+
+static int sb_log_location(int fd, struct blk_zone *zones, int rw, u64 *bytenr_ret)
+{
+	u64 wp;
+	int ret;
+
+	/* Use the head of the zones if either zone is conventional */
+	if (zones[0].type == BLK_ZONE_TYPE_CONVENTIONAL) {
+		*bytenr_ret = zones[0].start << SECTOR_SHIFT;
+		return 0;
+	} else if (zones[1].type == BLK_ZONE_TYPE_CONVENTIONAL) {
+		*bytenr_ret = zones[1].start << SECTOR_SHIFT;
+		return 0;
+	}
+
+	ret = sb_write_pointer(fd, zones, &wp);
+	if (ret != -ENOENT && ret < 0)
+		return ret;
+
+	if (rw == WRITE) {
+		struct blk_zone *reset = NULL;
+
+		if (wp == zones[0].start << SECTOR_SHIFT)
+			reset = &zones[0];
+		else if (wp == zones[1].start << SECTOR_SHIFT)
+			reset = &zones[1];
+
+		if (reset && reset->cond != BLK_ZONE_COND_EMPTY) {
+			ASSERT(reset->cond == BLK_ZONE_COND_FULL);
+
+			ret = btrfs_reset_dev_zone(fd, reset);
+			if (ret)
+				return ret;
+		}
+	} else if (ret != -ENOENT) {
+		/* For READ, we want the previous one */
+		if (wp == zones[0].start << SECTOR_SHIFT)
+			wp = (zones[1].start + zones[1].len) << SECTOR_SHIFT;
+		wp -= BTRFS_SUPER_INFO_SIZE;
+	}
+
+	*bytenr_ret = wp;
+	return 0;
+}
+
+size_t btrfs_sb_io(int fd, void *buf, off_t offset, int rw)
+{
+	size_t count = BTRFS_SUPER_INFO_SIZE;
+	struct stat stat_buf;
+	struct blk_zone_report *rep;
+	struct blk_zone *zones;
+	const u64 sb_size_sector = (BTRFS_SUPER_INFO_SIZE >> SECTOR_SHIFT);
+	u64 mapped = U64_MAX;
+	u32 zone_num;
+	unsigned int zone_size_sector;
+	size_t rep_size;
+	int mirror = -1;
+	int i;
+	int ret;
+	size_t ret_sz;
+
+	ASSERT(rw == READ || rw == WRITE);
+
+	if (fstat(fd, &stat_buf) == -1) {
+		error("fstat failed (%s)", strerror(errno));
+		exit(1);
+	}
+
+	/* Do not call ioctl(BLKGETZONESZ) on a regular file. */
+	if ((stat_buf.st_mode & S_IFMT) == S_IFBLK) {
+		ret = ioctl(fd, BLKGETZONESZ, &zone_size_sector);
+		if (ret) {
+			error("zoned: ioctl BLKGETZONESZ failed (%m)");
+			exit(1);
+		}
+	} else {
+		zone_size_sector = 0;
+	}
+
+	/* We can call pread/pwrite if 'fd' is non-zoned device/file */
+	if (zone_size_sector == 0) {
+		if (rw == READ)
+			return pread64(fd, buf, count, offset);
+		return pwrite64(fd, buf, count, offset);
+	}
+
+	ASSERT(IS_ALIGNED(zone_size_sector, sb_size_sector));
+
+	for (i = 0; i < BTRFS_SUPER_MIRROR_MAX; i++) {
+		if (offset == btrfs_sb_offset(i)) {
+			mirror = i;
+			break;
+		}
+	}
+	ASSERT(mirror != -1);
+
+	zone_num = sb_zone_number(ilog2(zone_size_sector) + SECTOR_SHIFT,
+				  mirror);
+
+	rep_size = sizeof(struct blk_zone_report) + sizeof(struct blk_zone) * 2;
+	rep = calloc(1, rep_size);
+	if (!rep) {
+		error("zoned: no memory for zones report");
+		exit(1);
+	}
+
+	rep->sector = zone_num * (sector_t)zone_size_sector;
+	rep->nr_zones = 2;
+
+	ret = ioctl(fd, BLKREPORTZONE, rep);
+	if (ret) {
+		error("zoned: ioctl BLKREPORTZONE failed (%m)");
+		exit(1);
+	}
+	if (rep->nr_zones != 2) {
+		if (errno == ENOENT || errno == 0)
+			return (rw == WRITE ? count : 0);
+		error("zoned: failed to read zone info of %u and %u: %m",
+		      zone_num, zone_num + 1);
+		free(rep);
+		return 0;
+	}
+
+	zones = (struct blk_zone *)(rep + 1);
+
+	ret = sb_log_location(fd, zones, rw, &mapped);
+	/*
+	 * Special case: no superblock found in the zones. This case happens
+	 * when initializing a file-system.
+	 */
+	if (rw == READ && ret == -ENOENT) {
+		memset(buf, 0, count);
+		return count;
+	}
+	if (ret)
+		return ret;
+
+	if (rw == READ)
+		ret_sz = pread64(fd, buf, count, mapped);
+	else
+		ret_sz = pwrite64(fd, buf, count, mapped);
+
+	if (ret_sz != count)
+		return ret_sz;
+
+	/* Call fsync() to force the write order */
+	if (rw == WRITE && fsync(fd)) {
+		error("failed to synchronize superblock: %s", strerror(errno));
+		exit(1);
+	}
+
+	return ret_sz;
 }
 
 #endif
