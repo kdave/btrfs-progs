@@ -284,6 +284,14 @@ again:
 	if (cache->ro || !block_group_bits(cache, data))
 		goto new_group;
 
+	if (btrfs_is_zoned(root->fs_info)) {
+		if (cache->length - cache->alloc_offset < num)
+			goto new_group;
+		*start_ret = cache->start + cache->alloc_offset;
+		cache->alloc_offset += num;
+		return 0;
+	}
+
 	while(1) {
 		ret = find_first_extent_bit(&root->fs_info->free_space_cache,
 					    last, &start, &end, EXTENT_DIRTY);
