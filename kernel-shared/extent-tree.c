@@ -21,6 +21,7 @@
 #include <stdint.h>
 #include <math.h>
 #include "kerncompat.h"
+#include "kernel-lib/list.h"
 #include "kernel-lib/radix-tree.h"
 #include "kernel-lib/rbtree.h"
 #include "kernel-shared/ctree.h"
@@ -3013,6 +3014,14 @@ static int free_chunk_dev_extent_items(struct btrfs_trans_handle *trans,
 			       struct btrfs_chunk);
 	num_stripes = btrfs_chunk_num_stripes(path->nodes[0], chunk);
 	for (i = 0; i < num_stripes; i++) {
+		u64 devid = btrfs_stripe_devid_nr(path->nodes[0], chunk, i);
+		u64 offset = btrfs_stripe_offset_nr(path->nodes[0], chunk, i);
+		u64 length = btrfs_stripe_length(fs_info, path->nodes[0], chunk);
+
+		ret = btrfs_reset_chunk_zones(fs_info, devid, offset, length);
+		if (ret < 0)
+			goto out;
+
 		ret = free_dev_extent_item(trans, fs_info,
 			btrfs_stripe_devid_nr(path->nodes[0], chunk, i),
 			btrfs_stripe_offset_nr(path->nodes[0], chunk, i));

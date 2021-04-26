@@ -92,6 +92,8 @@ int btrfs_load_block_group_zone_info(struct btrfs_fs_info *fs_info,
 				     struct btrfs_block_group *cache);
 bool btrfs_redirty_extent_buffer_for_zoned(struct btrfs_fs_info *fs_info,
 					   u64 start, u64 end);
+int btrfs_reset_chunk_zones(struct btrfs_fs_info *fs_info, u64 devid,
+			    u64 offset, u64 length);
 
 #else
 
@@ -133,6 +135,12 @@ static inline bool btrfs_redirty_extent_buffer_for_zoned(
 	struct btrfs_fs_info *fs_info, u64 start, u64 end)
 {
 	return false;
+}
+
+static inline int btrfs_reset_chunk_zones(struct btrfs_fs_info *fs_info,
+					  u64 devid, u64 offset, u64 length)
+{
+	return 0;
 }
 
 #endif /* BTRFS_ZONED */
