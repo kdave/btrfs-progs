@@ -238,3 +238,88 @@ int btrfs_get_zone_info(int fd, const char *file,
 
 	return 0;
 }
+
+int btrfs_check_zoned_mode(struct btrfs_fs_info *fs_info)
+{
+	struct btrfs_fs_devices *fs_devices = fs_info->fs_devices;
+	struct btrfs_device *device;
+	u64 zoned_devices = 0;
+	u64 nr_devices = 0;
+	u64 zone_size = 0;
+	const bool incompat_zoned = btrfs_fs_incompat(fs_info, ZONED);
+	int ret = 0;
+
+	/* Count zoned devices */
+	list_for_each_entry(device, &fs_devices->devices, dev_list) {
+		enum btrfs_zoned_model model;
+
+		if (device->fd == -1)
+			continue;
+
+		model = zoned_model(device->name);
+		/*
+		 * A Host-Managed zoned device must be used as a zoned device.
+		 * A Host-Aware zoned device and a non-zoned devices can be
+		 * treated as a zoned device, if ZONED flag is enabled in the
+		 * superblock.
+		 */
+		if (model == ZONED_HOST_MANAGED ||
+		    (model == ZONED_HOST_AWARE && incompat_zoned) ||
+		    (model == ZONED_NONE && incompat_zoned)) {
+			struct btrfs_zoned_device_info *zone_info =
+				device->zone_info;
+
+			zoned_devices++;
+			if (!zone_size) {
+				zone_size = zone_info->zone_size;
+			} else if (zone_info->zone_size != zone_size) {
+				error(
+		"zoned: unequal block device zone sizes: have %llu found %llu",
+				      device->zone_info->zone_size,
+				      zone_size);
+				ret = -EINVAL;
+				goto out;
+			}
+		}
+		nr_devices++;
+	}
+
+	if (!zoned_devices && !incompat_zoned)
+		goto out;
+
+	if (!zoned_devices && incompat_zoned) {
+		/* No zoned block device found on ZONED filesystem */
+		error("zoned: no zoned devices found on a zoned filesystem");
+		ret = -EINVAL;
+		goto out;
+	}
+
+	if (zoned_devices && !incompat_zoned) {
+		error("zoned: mode not enabled but zoned device found");
+		ret = -EINVAL;
+		goto out;
+	}
+
+	if (zoned_devices != nr_devices) {
+		error("zoned: cannot mix zoned and regular devices");
+		ret = -EINVAL;
+		goto out;
+	}
+
+	/*
+	 * stripe_size is always aligned to BTRFS_STRIPE_LEN in
+	 * __btrfs_alloc_chunk(). Since we want stripe_len == zone_size,
+	 * check the alignment here.
+	 */
+	if (!IS_ALIGNED(zone_size, BTRFS_STRIPE_LEN)) {
+		error("zoned: zone size %llu not aligned to stripe %u",
+		      zone_size, BTRFS_STRIPE_LEN);
+		ret = -EINVAL;
+		goto out;
+	}
+
+	fs_info->zone_size = zone_size;
+
+out:
+	return ret;
+}
