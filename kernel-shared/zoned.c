@@ -847,8 +847,38 @@ out:
 		ret = -EIO;
 	}
 
+	if (!ret)
+		cache->write_offset = cache->alloc_offset;
+
 	free(alloc_offsets);
 	return ret;
+}
+
+bool btrfs_redirty_extent_buffer_for_zoned(struct btrfs_fs_info *fs_info,
+					   u64 start, u64 end)
+{
+	u64 next;
+	struct btrfs_block_group *cache;
+	struct extent_buffer *eb;
+
+	if (!btrfs_is_zoned(fs_info))
+		return false;
+
+	cache = btrfs_lookup_first_block_group(fs_info, start);
+	BUG_ON(!cache);
+
+	if (cache->start + cache->write_offset < start) {
+		next = cache->start + cache->write_offset;
+		BUG_ON(next + fs_info->nodesize > start);
+		eb = btrfs_find_create_tree_block(fs_info, next);
+		btrfs_mark_buffer_dirty(eb);
+		free_extent_buffer(eb);
+		return true;
+	}
+
+	cache->write_offset += (end + 1 - start);
+
+	return false;
 }
 
 #endif
