@@ -88,6 +88,8 @@ static inline bool btrfs_dev_is_empty_zone(struct btrfs_device *device, u64 pos)
 int btrfs_reset_dev_zone(int fd, struct blk_zone *zone);
 u64 btrfs_find_allocatable_zones(struct btrfs_device *device, u64 hole_start,
 				 u64 hole_end, u64 num_bytes);
+int btrfs_load_block_group_zone_info(struct btrfs_fs_info *fs_info,
+				     struct btrfs_block_group *cache);
 
 #else
 
@@ -117,6 +119,12 @@ static inline u64 btrfs_find_allocatable_zones(struct btrfs_device *device,
 static inline bool btrfs_dev_is_empty_zone(struct btrfs_device *device, u64 pos)
 {
 	return true;
+}
+
+static inline int btrfs_load_block_group_zone_info(
+	struct btrfs_fs_info *fs_info, struct btrfs_block_group *cache)
+{
+	return 0;
 }
 
 #endif /* BTRFS_ZONED */
