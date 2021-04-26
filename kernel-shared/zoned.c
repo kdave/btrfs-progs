@@ -506,6 +506,144 @@ size_t btrfs_sb_io(int fd, void *buf, off_t offset, int rw)
 	return ret_sz;
 }
 
+/*
+ * Check if spcecifeid region is suitable for allocation
+ *
+ * @device:	the device to allocate a region
+ * @pos:	the position of the region
+ * @num_bytes:	the size of the region
+ *
+ * In non-ZONED device, anywhere is suitable for allocation. In ZONED
+ * device, check if:
+ * 1) the region is not on non-empty sequential zones,
+ * 2) all zones in the region have the same zone type,
+ * 3) it does not contain super block location
+ */
+bool btrfs_check_allocatable_zones(struct btrfs_device *device, u64 pos,
+				   u64 num_bytes)
+{
+	struct btrfs_zoned_device_info *zinfo = device->zone_info;
+	u64 nzones, begin, end;
+	u64 sb_pos;
+	bool is_sequential;
+	int shift;
+	int i;
+
+	if (!zinfo || zinfo->model == ZONED_NONE)
+		return true;
+
+	nzones = num_bytes / zinfo->zone_size;
+	begin = pos / zinfo->zone_size;
+	end = begin + nzones;
+
+	ASSERT(IS_ALIGNED(pos, zinfo->zone_size));
+	ASSERT(IS_ALIGNED(num_bytes, zinfo->zone_size));
+
+	if (end > zinfo->nr_zones)
+		return false;
+
+	shift = ilog2(zinfo->zone_size);
+	for (i = 0; i < BTRFS_SUPER_MIRROR_MAX; i++) {
+		sb_pos = sb_zone_number(shift, i);
+		if (!(end < sb_pos || sb_pos + 1 < begin))
+			return false;
+	}
+
+	is_sequential = btrfs_dev_is_sequential(device, pos);
+
+	while (num_bytes) {
+		if (is_sequential && !btrfs_dev_is_empty_zone(device, pos))
+			return false;
+		if (is_sequential != btrfs_dev_is_sequential(device, pos))
+			return false;
+
+		pos += zinfo->zone_size;
+		num_bytes -= zinfo->zone_size;
+	}
+
+	return true;
+}
+
+/**
+ * btrfs_find_allocatable_zones - find allocatable zones within a given region
+ *
+ * @device:	the device to allocate a region on
+ * @hole_start: the position of the hole to allocate the region
+ * @num_bytes:	size of wanted region
+ * @hole_end:	the end of the hole
+ * @return:	position of allocatable zones
+ *
+ * Allocatable region should not contain any superblock locations.
+ */
+u64 btrfs_find_allocatable_zones(struct btrfs_device *device, u64 hole_start,
+				 u64 hole_end, u64 num_bytes)
+{
+	struct btrfs_zoned_device_info *zinfo = device->zone_info;
+	int shift = ilog2(zinfo->zone_size);
+	u64 nzones = num_bytes >> shift;
+	u64 pos = hole_start;
+	u64 begin, end;
+	bool is_sequential;
+	bool have_sb;
+	int i;
+
+	ASSERT(IS_ALIGNED(hole_start, zinfo->zone_size));
+	ASSERT(IS_ALIGNED(num_bytes, zinfo->zone_size));
+
+	while (pos < hole_end) {
+		begin = pos >> shift;
+		end = begin + nzones;
+
+		if (end > zinfo->nr_zones)
+			return hole_end;
+
+		/*
+		 * The zones must be all sequential (and empty), or
+		 * conventional
+		 */
+		is_sequential = btrfs_dev_is_sequential(device, pos);
+		for (i = 0; i < end - begin; i++) {
+			u64 zone_offset = pos + ((u64)i << shift);
+
+			if ((is_sequential &&
+			     !btrfs_dev_is_empty_zone(device, zone_offset)) ||
+			    (is_sequential !=
+			     btrfs_dev_is_sequential(device, zone_offset))) {
+				pos += zinfo->zone_size;
+				continue;
+			}
+		}
+
+		have_sb = false;
+		for (i = 0; i < BTRFS_SUPER_MIRROR_MAX; i++) {
+			u32 sb_zone;
+			u64 sb_pos;
+
+			sb_zone = sb_zone_number(shift, i);
+			if (!(end <= sb_zone ||
+			      sb_zone + BTRFS_NR_SB_LOG_ZONES <= begin)) {
+				have_sb = true;
+				pos = ((u64)sb_zone + BTRFS_NR_SB_LOG_ZONES) << shift;
+				break;
+			}
+
+			/* We also need to exclude regular superblock positions */
+			sb_pos = btrfs_sb_offset(i);
+			if (!(pos + num_bytes <= sb_pos ||
+			      sb_pos + BTRFS_SUPER_INFO_SIZE <= pos)) {
+				have_sb = true;
+				pos = ALIGN(sb_pos + BTRFS_SUPER_INFO_SIZE,
+					    zinfo->zone_size);
+				break;
+			}
+		}
+		if (!have_sb)
+			break;
+	}
+
+	return pos;
+}
+
 #endif
 
 int btrfs_get_dev_zone_info_all_devices(struct btrfs_fs_info *fs_info)
@@ -684,6 +822,7 @@ int btrfs_check_zoned_mode(struct btrfs_fs_info *fs_info)
 
 	fs_info->zone_size = zone_size;
 	fs_info->max_zone_append_size = max_zone_append_size;
+	fs_info->fs_devices->chunk_alloc_policy = BTRFS_CHUNK_ALLOC_ZONED;
 
 out:
 	return ret;

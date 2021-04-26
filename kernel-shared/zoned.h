@@ -6,6 +6,7 @@
 #include "kerncompat.h"
 #include <stdbool.h>
 #include "kernel-shared/disk-io.h"
+#include "kernel-shared/volumes.h"
 
 #ifdef BTRFS_ZONED
 #include <linux/blkzoned.h>
@@ -60,7 +61,33 @@ static inline size_t sbwrite(int fd, void *buf, off_t offset)
 	return btrfs_sb_io(fd, buf, offset, WRITE);
 }
 
+static inline bool zone_is_sequential(struct btrfs_zoned_device_info *zinfo,
+				      u64 bytenr)
+{
+	unsigned int zno;
+
+	if (!zinfo || zinfo->model == ZONED_NONE)
+		return false;
+
+	zno = bytenr / zinfo->zone_size;
+	return zinfo->zones[zno].type == BLK_ZONE_TYPE_SEQWRITE_REQ;
+}
+
+static inline bool btrfs_dev_is_empty_zone(struct btrfs_device *device, u64 pos)
+{
+	struct btrfs_zoned_device_info *zinfo = device->zone_info;
+	unsigned int zno;
+
+	if (!zone_is_sequential(zinfo, pos))
+		return true;
+
+	zno = pos / zinfo->zone_size;
+	return zinfo->zones[zno].cond == BLK_ZONE_COND_EMPTY;
+}
+
 int btrfs_reset_dev_zone(int fd, struct blk_zone *zone);
+u64 btrfs_find_allocatable_zones(struct btrfs_device *device, u64 hole_start,
+				 u64 hole_end, u64 num_bytes);
 
 #else
 
@@ -74,6 +101,29 @@ static inline int btrfs_reset_dev_zone(int fd, struct blk_zone *zone)
 	return 0;
 }
 
+static inline bool zone_is_sequential(struct btrfs_zoned_device_info *zinfo,
+				      u64 bytenr)
+{
+	return false;
+}
+
+static inline u64 btrfs_find_allocatable_zones(struct btrfs_device *device,
+					       u64 hole_start, u64 hole_end,
+					       u64 num_bytes)
+{
+	return hole_start;
+}
+
+static inline bool btrfs_dev_is_empty_zone(struct btrfs_device *device, u64 pos)
+{
+	return true;
+}
+
 #endif /* BTRFS_ZONED */
+
+static inline bool btrfs_dev_is_sequential(struct btrfs_device *device, u64 pos)
+{
+	return zone_is_sequential(device->zone_info, pos);
+}
 
 #endif /* __BTRFS_ZONED_H__ */

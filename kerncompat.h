@@ -28,6 +28,7 @@
 #include <assert.h>
 #include <stddef.h>
 #include <linux/types.h>
+#include <linux/kernel.h>
 #include <stdint.h>
 
 #include <features.h>
@@ -358,6 +359,7 @@ do {					\
 
 /* Alignment check */
 #define IS_ALIGNED(x, a)                (((x) & ((typeof(x))(a) - 1)) == 0)
+#define ALIGN(x, a)		__ALIGN_KERNEL((x), (a))
 
 static inline int is_power_of_2(unsigned long n)
 {

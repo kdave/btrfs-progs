@@ -162,6 +162,8 @@ struct alloc_chunk_ctl {
 	u64 max_chunk_size;
 	int total_devs;
 	u64 dev_offset;
+	int nparity;
+	int ncopies;
 };
 
 struct stripe {
@@ -457,6 +459,8 @@ int btrfs_scan_one_device(int fd, const char *path,
 
 static u64 dev_extent_search_start(struct btrfs_device *device, u64 start)
 {
+	u64 zone_size;
+
 	switch (device->fs_devices->chunk_alloc_policy) {
 	case BTRFS_CHUNK_ALLOC_REGULAR:
 		/*
@@ -465,9 +469,71 @@ static u64 dev_extent_search_start(struct btrfs_device *device, u64 start)
 		 * make sure to start at an offset of at least 1MB.
 		 */
 		return max(start, BTRFS_BLOCK_RESERVED_1M_FOR_SUPER);
+	case BTRFS_CHUNK_ALLOC_ZONED:
+		zone_size = device->zone_info->zone_size;
+		return ALIGN(max_t(u64, start, zone_size), zone_size);
 	default:
 		BUG();
 	}
+}
+
+static bool dev_extent_hole_check_zoned(struct btrfs_device *device,
+					u64 *hole_start, u64 *hole_size,
+					u64 num_bytes)
+{
+	u64 zone_size = device->zone_info->zone_size;
+	u64 pos;
+	bool changed = false;
+
+	ASSERT(IS_ALIGNED(*hole_start, zone_size));
+
+	while (*hole_size > 0) {
+		pos = btrfs_find_allocatable_zones(device, *hole_start,
+						   *hole_start + *hole_size,
+						   num_bytes);
+		if (pos != *hole_start) {
+			*hole_size = *hole_start + *hole_size - pos;
+			*hole_start = pos;
+			changed = true;
+			if (*hole_size < num_bytes)
+				break;
+		}
+
+		*hole_start += zone_size;
+		*hole_size -= zone_size;
+		changed = true;
+	}
+
+	return changed;
+}
+
+/**
+ * Check if specified hole is suitable for allocation
+ *
+ * @device:	the device which we have the hole
+ * @hole_start: starting position of the hole
+ * @hole_size:	the size of the hole
+ * @num_bytes:	the size of the free space that we need
+ *
+ * This function may modify @hole_start and @hole_size to reflect the suitable
+ * position for allocation. Returns true if hole position is updated, false
+ * otherwise.
+ */
+static bool dev_extent_hole_check(struct btrfs_device *device, u64 *hole_start,
+				  u64 *hole_size, u64 num_bytes)
+{
+	switch (device->fs_devices->chunk_alloc_policy) {
+	case BTRFS_CHUNK_ALLOC_REGULAR:
+		/* No check */
+		break;
+	case BTRFS_CHUNK_ALLOC_ZONED:
+		return dev_extent_hole_check_zoned(device, hole_start,
+						   hole_size, num_bytes);
+	default:
+		BUG();
+	}
+
+	return false;
 }
 
 /*
@@ -507,6 +573,10 @@ static int find_free_dev_extent_start(struct btrfs_device *device,
 	int ret;
 	int slot;
 	struct extent_buffer *l;
+	u64 zone_size = 0;
+
+	if (device->zone_info)
+		zone_size = device->zone_info->zone_size;
 
 	search_start = dev_extent_search_start(device, search_start);
 
@@ -517,6 +587,7 @@ static int find_free_dev_extent_start(struct btrfs_device *device,
 	max_hole_start = search_start;
 	max_hole_size = 0;
 
+again:
 	if (search_start >= search_end) {
 		ret = -ENOSPC;
 		goto out;
@@ -562,11 +633,9 @@ static int find_free_dev_extent_start(struct btrfs_device *device,
 
 		if (key.offset > search_start) {
 			hole_size = key.offset - search_start;
+			dev_extent_hole_check(device, &search_start, &hole_size,
+					      num_bytes);
 
-			/*
-			 * Have to check before we set max_hole_start, otherwise
-			 * we could end up sending back this offset anyway.
-			 */
 			if (hole_size > max_hole_size) {
 				max_hole_start = search_start;
 				max_hole_size = hole_size;
@@ -603,6 +672,12 @@ next:
 	 * search_end may be smaller than search_start.
 	 */
 	if (search_end > search_start) {
+		if (dev_extent_hole_check(device, &search_start, &hole_size,
+					  num_bytes)) {
+			btrfs_release_path(path);
+			goto again;
+		}
+
 		hole_size = search_end - search_start;
 
 		if (hole_size > max_hole_size) {
@@ -618,6 +693,7 @@ next:
 		ret = 0;
 
 out:
+	ASSERT(zone_size == 0 || IS_ALIGNED(max_hole_start, zone_size));
 	btrfs_free_path(path);
 	*start = max_hole_start;
 	if (len)
@@ -645,6 +721,11 @@ int btrfs_insert_dev_extent(struct btrfs_trans_handle *trans,
 	struct btrfs_dev_extent *extent;
 	struct extent_buffer *leaf;
 	struct btrfs_key key;
+
+	/* Check alignment to zone for a zoned block device */
+	ASSERT(!device->zone_info ||
+	       device->zone_info->model != ZONED_HOST_MANAGED ||
+	       IS_ALIGNED(start, device->zone_info->zone_size));
 
 	path = btrfs_alloc_path();
 	if (!path)
@@ -1052,6 +1133,38 @@ static void init_alloc_chunk_ctl_policy_regular(struct btrfs_fs_info *info,
 	ctl->max_chunk_size = min(percent_max, ctl->max_chunk_size);
 }
 
+static void init_alloc_chunk_ctl_policy_zoned(struct btrfs_fs_info *info,
+					      struct alloc_chunk_ctl *ctl)
+{
+	u64 type = ctl->type;
+	u64 zone_size = info->zone_size;
+	int min_num_stripes = ctl->min_stripes * ctl->num_stripes;
+	int min_data_stripes = (min_num_stripes - ctl->nparity) / ctl->ncopies;
+	u64 min_chunk_size = min_data_stripes * zone_size;
+
+	ctl->stripe_size = zone_size;
+	ctl->min_stripe_size = zone_size;
+	if (type & BTRFS_BLOCK_GROUP_PROFILE_MASK) {
+		if (type & BTRFS_BLOCK_GROUP_SYSTEM) {
+			ctl->max_chunk_size = SZ_16M;
+			ctl->max_stripes = BTRFS_MAX_DEVS_SYS_CHUNK;
+		} else if (type & BTRFS_BLOCK_GROUP_DATA) {
+			ctl->max_chunk_size = 10ULL * SZ_1G;
+			ctl->max_stripes = BTRFS_MAX_DEVS(info);
+		} else if (type & BTRFS_BLOCK_GROUP_METADATA) {
+			/* For larger filesystems, use larger metadata chunks */
+			if (info->fs_devices->total_rw_bytes > 50ULL * SZ_1G)
+				ctl->max_chunk_size = SZ_1G;
+			else
+				ctl->max_chunk_size = SZ_256M;
+			ctl->max_stripes = BTRFS_MAX_DEVS(info);
+		}
+	}
+
+	ctl->max_chunk_size = round_down(ctl->max_chunk_size, zone_size);
+	ctl->max_chunk_size = max(ctl->max_chunk_size, min_chunk_size);
+}
+
 static void init_alloc_chunk_ctl(struct btrfs_fs_info *info,
 				 struct alloc_chunk_ctl *ctl)
 {
@@ -1066,10 +1179,15 @@ static void init_alloc_chunk_ctl(struct btrfs_fs_info *info,
 	ctl->max_chunk_size = 4 * ctl->stripe_size;
 	ctl->total_devs = btrfs_super_num_devices(info->super_copy);
 	ctl->dev_offset = 0;
+	ctl->nparity = btrfs_raid_array[type].nparity;
+	ctl->ncopies = btrfs_raid_array[type].ncopies;
 
 	switch (info->fs_devices->chunk_alloc_policy) {
 	case BTRFS_CHUNK_ALLOC_REGULAR:
 		init_alloc_chunk_ctl_policy_regular(info, ctl);
+		break;
+	case BTRFS_CHUNK_ALLOC_ZONED:
+		init_alloc_chunk_ctl_policy_zoned(info, ctl);
 		break;
 	default:
 		BUG();
@@ -1113,12 +1231,27 @@ static int decide_stripe_size_regular(struct alloc_chunk_ctl *ctl)
 	return 0;
 }
 
+static int decide_stripe_size_zoned(struct alloc_chunk_ctl *ctl)
+{
+	if (chunk_bytes_by_type(ctl) > ctl->max_chunk_size) {
+		/* stripe_size is fixed in ZONED, reduce num_stripes instead */
+		ctl->num_stripes = ctl->max_chunk_size * ctl->ncopies /
+			ctl->stripe_size;
+		if (ctl->num_stripes < ctl->min_stripes)
+			return -ENOSPC;
+	}
+
+	return 0;
+}
+
 static int decide_stripe_size(struct btrfs_fs_info *info,
 			      struct alloc_chunk_ctl *ctl)
 {
 	switch (info->fs_devices->chunk_alloc_policy) {
 	case BTRFS_CHUNK_ALLOC_REGULAR:
 		return decide_stripe_size_regular(ctl);
+	case BTRFS_CHUNK_ALLOC_ZONED:
+		return decide_stripe_size_zoned(ctl);
 	default:
 		BUG();
 	}
@@ -1140,6 +1273,7 @@ static int create_chunk(struct btrfs_trans_handle *trans,
 	int index;
 	struct btrfs_key key;
 	u64 offset;
+	u64 zone_size = info->zone_size;
 
 	if (!ctl->start) {
 		ret = find_next_chunk(info, &offset);
@@ -1191,6 +1325,8 @@ static int create_chunk(struct btrfs_trans_handle *trans,
 						      ctl->dev_offset);
 			BUG_ON(ret);
 		}
+
+		ASSERT(!zone_size || IS_ALIGNED(dev_offset, zone_size));
 
 		device->bytes_used += ctl->stripe_size;
 		ret = btrfs_update_device(trans, device);
