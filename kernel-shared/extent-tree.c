@@ -31,6 +31,7 @@
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/free-space-cache.h"
 #include "kernel-shared/free-space-tree.h"
+#include "kernel-shared/zoned.h"
 #include "common/utils.h"
 
 #define PENDING_EXTENT_INSERT 0
@@ -2704,6 +2705,10 @@ static int read_one_block_group(struct btrfs_fs_info *fs_info,
 	}
 	cache->space_info = space_info;
 
+	ret = btrfs_load_block_group_zone_info(fs_info, cache);
+	if (ret)
+		return ret;
+
 	btrfs_add_block_group_cache(fs_info, cache);
 	return 0;
 }
@@ -2760,6 +2765,9 @@ btrfs_add_block_group(struct btrfs_fs_info *fs_info, u64 bytes_used, u64 type,
 	BUG_ON(!cache);
 	cache->start = chunk_offset;
 	cache->length = size;
+
+	ret = btrfs_load_block_group_zone_info(fs_info, cache);
+	BUG_ON(ret);
 
 	cache->used = bytes_used;
 	cache->flags = type;

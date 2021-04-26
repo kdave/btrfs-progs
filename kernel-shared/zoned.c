@@ -14,6 +14,10 @@
 
 /* Maximum number of zones to report per ioctl(BLKREPORTZONE) call */
 #define BTRFS_REPORT_NR_ZONES  		4096
+/* Invalid allocation pointer value for missing devices */
+#define WP_MISSING_DEV			((u64)-1)
+/* Pseudo write pointer value for conventional zone */
+#define WP_CONVENTIONAL			((u64)-2)
 
 /*
  * Location of the first zone of superblock logging zone pairs.
@@ -642,6 +646,135 @@ u64 btrfs_find_allocatable_zones(struct btrfs_device *device, u64 hole_start,
 	}
 
 	return pos;
+}
+
+int btrfs_load_block_group_zone_info(struct btrfs_fs_info *fs_info,
+				     struct btrfs_block_group *cache)
+{
+	struct btrfs_device *device;
+	struct btrfs_mapping_tree *map_tree = &fs_info->mapping_tree;
+	struct cache_extent *ce;
+	struct map_lookup *map;
+	u64 logical = cache->start;
+	u64 length = cache->length;
+	u64 physical = 0;
+	int ret = 0;
+	int i;
+	u64 *alloc_offsets = NULL;
+	u32 num_sequential = 0, num_conventional = 0;
+
+	if (!btrfs_is_zoned(fs_info))
+		return 0;
+
+	/* Sanity check */
+	if (logical == BTRFS_BLOCK_RESERVED_1M_FOR_SUPER) {
+		if (length + SZ_1M != fs_info->zone_size) {
+			error("zoned: unaligned initial system block group");
+			return -EIO;
+		}
+	} else if (!IS_ALIGNED(length, fs_info->zone_size)) {
+		error("zoned: unaligned block group at %llu + %llu", logical,
+		      length);
+		return -EIO;
+	}
+
+	/* Get the chunk mapping */
+	ce = search_cache_extent(&map_tree->cache_tree, logical);
+	if (!ce) {
+		error("zoned: failed to find block group at %llu", logical);
+		return -ENOENT;
+	}
+	map = container_of(ce, struct map_lookup, ce);
+
+	alloc_offsets = calloc(map->num_stripes, sizeof(*alloc_offsets));
+	if (!alloc_offsets) {
+		error("zoned: failed to allocate alloc_offsets");
+		return -ENOMEM;
+	}
+
+	for (i = 0; i < map->num_stripes; i++) {
+		bool is_sequential;
+		struct blk_zone zone;
+
+		device = map->stripes[i].dev;
+		physical = map->stripes[i].physical;
+
+		if (device->fd == -1) {
+			alloc_offsets[i] = WP_MISSING_DEV;
+			continue;
+		}
+
+		is_sequential = btrfs_dev_is_sequential(device, physical);
+		if (is_sequential)
+			num_sequential++;
+		else
+			num_conventional++;
+
+		if (!is_sequential) {
+			alloc_offsets[i] = WP_CONVENTIONAL;
+			continue;
+		}
+
+		/*
+		 * The group is mapped to a sequential zone. Get the zone write
+		 * pointer to determine the allocation offset within the zone.
+		 */
+		WARN_ON(!IS_ALIGNED(physical, fs_info->zone_size));
+		zone = device->zone_info->zones[physical / fs_info->zone_size];
+
+		switch (zone.cond) {
+		case BLK_ZONE_COND_OFFLINE:
+		case BLK_ZONE_COND_READONLY:
+			error(
+		"zoned: offline/readonly zone %llu on device %s (devid %llu)",
+			      physical / fs_info->zone_size, device->name,
+			      device->devid);
+			alloc_offsets[i] = WP_MISSING_DEV;
+			break;
+		case BLK_ZONE_COND_EMPTY:
+			alloc_offsets[i] = 0;
+			break;
+		case BLK_ZONE_COND_FULL:
+			alloc_offsets[i] = fs_info->zone_size;
+			break;
+		default:
+			/* Partially used zone */
+			alloc_offsets[i] =
+					((zone.wp - zone.start) << SECTOR_SHIFT);
+			break;
+		}
+	}
+
+	if (num_conventional > 0) {
+		/*
+		 * Since conventional zones do not have a write pointer, we
+		 * cannot determine alloc_offset from the pointer
+		 */
+		ret = -EINVAL;
+		goto out;
+	}
+
+	switch (map->type & BTRFS_BLOCK_GROUP_PROFILE_MASK) {
+	case 0: /* single */
+		cache->alloc_offset = alloc_offsets[0];
+		break;
+	case BTRFS_BLOCK_GROUP_DUP:
+	case BTRFS_BLOCK_GROUP_RAID1:
+	case BTRFS_BLOCK_GROUP_RAID0:
+	case BTRFS_BLOCK_GROUP_RAID10:
+	case BTRFS_BLOCK_GROUP_RAID5:
+	case BTRFS_BLOCK_GROUP_RAID6:
+		/* non-single profiles are not supported yet */
+	default:
+		error("zoned: profile %s not yet supported",
+		      btrfs_group_profile_str(map->type));
+		ret = -EINVAL;
+		goto out;
+	}
+
+out:
+	free(alloc_offsets);
+	return ret;
 }
 
 #endif
