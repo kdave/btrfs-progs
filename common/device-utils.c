@@ -67,7 +67,7 @@ int discard_blocks(int fd, u64 start, u64 len)
 	return 0;
 }
 
-static int zero_blocks(int fd, off_t start, size_t len)
+int zero_blocks(int fd, off_t start, size_t len)
 {
 	char *buf = malloc(len);
 	int ret = 0;
@@ -86,7 +86,8 @@ static int zero_blocks(int fd, off_t start, size_t len)
 #define ZERO_DEV_BYTES SZ_2M
 
 /* don't write outside the device by clamping the region to the device size */
-static int zero_dev_clamped(int fd, off_t start, ssize_t len, u64 dev_size)
+static int zero_dev_clamped(int fd, struct btrfs_zoned_device_info *zinfo,
+			    off_t start, ssize_t len, u64 dev_size)
 {
 	off_t end = max(start, start + len);
 
@@ -98,6 +99,9 @@ static int zero_dev_clamped(int fd, off_t start, ssize_t len, u64 dev_size)
 
 	start = min_t(u64, start, dev_size);
 	end = min_t(u64, end, dev_size);
+
+	if (zinfo && zinfo->model == ZONED_HOST_MANAGED)
+		return zero_zone_blocks(fd, zinfo, start, end - start);
 
 	return zero_blocks(fd, start, end - start);
 }
@@ -209,12 +213,12 @@ int btrfs_prepare_device(int fd, const char *file, u64 *block_count_ret,
 		}
 	}
 
-	ret = zero_dev_clamped(fd, 0, ZERO_DEV_BYTES, block_count);
+	ret = zero_dev_clamped(fd, zinfo, 0, ZERO_DEV_BYTES, block_count);
 	for (i = 0 ; !ret && i < BTRFS_SUPER_MIRROR_MAX; i++)
-		ret = zero_dev_clamped(fd, btrfs_sb_offset(i),
+		ret = zero_dev_clamped(fd, zinfo, btrfs_sb_offset(i),
 				       BTRFS_SUPER_INFO_SIZE, block_count);
 	if (!ret && (opflags & PREP_DEVICE_ZERO_END))
-		ret = zero_dev_clamped(fd, block_count - ZERO_DEV_BYTES,
+		ret = zero_dev_clamped(fd, zinfo, block_count - ZERO_DEV_BYTES,
 				       ZERO_DEV_BYTES, block_count);
 
 	if (ret < 0) {

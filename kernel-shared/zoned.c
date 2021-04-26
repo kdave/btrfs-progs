@@ -389,6 +389,34 @@ int btrfs_reset_all_zones(int fd, struct btrfs_zoned_device_info *zinfo)
 	return fsync(fd);
 }
 
+int zero_zone_blocks(int fd, struct btrfs_zoned_device_info *zinfo, off_t start,
+		     size_t len)
+{
+	size_t zone_len = zinfo->zone_size;
+	off_t ofst = start;
+	size_t count;
+	int ret;
+
+	/* Make sure that zero_blocks does not write sequential zones */
+	while (len > 0) {
+		/* Limit zero_blocks to a single zone */
+		count = min_t(size_t, len, zone_len);
+		if (count > zone_len - (ofst & (zone_len - 1)))
+			count = zone_len - (ofst & (zone_len - 1));
+
+		if (!zone_is_sequential(zinfo, ofst)) {
+			ret = zero_blocks(fd, ofst, count);
+			if (ret != 0)
+				return ret;
+		}
+
+		len -= count;
+		ofst += count;
+	}
+
+	return 0;
+}
+
 static int sb_log_location(int fd, struct blk_zone *zones, int rw, u64 *bytenr_ret)
 {
 	u64 wp;
