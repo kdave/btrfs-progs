@@ -389,13 +389,17 @@ void btrfs_close_all_devices(void)
 	}
 }
 
-int btrfs_open_devices(struct btrfs_fs_devices *fs_devices, int flags)
+int btrfs_open_devices(struct btrfs_fs_info *fs_info,
+		       struct btrfs_fs_devices *fs_devices, int flags)
 {
 	int fd;
 	struct btrfs_device *device;
 	int ret;
 
 	list_for_each_entry(device, &fs_devices->devices, dev_list) {
+		if (!device->fs_info)
+			device->fs_info = fs_info;
+
 		if (!device->name) {
 			printk("no name for device %llu, skip it now\n", device->devid);
 			continue;
@@ -2106,7 +2110,7 @@ static int open_seed_devices(struct btrfs_fs_info *fs_info, u8 *fsid)
 		memcpy(fs_devices->fsid, fsid, BTRFS_FSID_SIZE);
 	}
 
-	ret = btrfs_open_devices(fs_devices, O_RDONLY);
+	ret = btrfs_open_devices(fs_info, fs_devices, O_RDONLY);
 	if (ret)
 		goto out;
 

@@ -1270,7 +1270,7 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, struct open_ctree_flags *oc
 	if (flags & OPEN_CTREE_EXCLUSIVE)
 		oflags |= O_EXCL;
 
-	ret = btrfs_open_devices(fs_devices, oflags);
+	ret = btrfs_open_devices(fs_info, fs_devices, oflags);
 	if (ret)
 		goto out;
 
