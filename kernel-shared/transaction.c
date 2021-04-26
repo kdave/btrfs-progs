@@ -18,6 +18,7 @@
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/transaction.h"
 #include "kernel-shared/delayed-ref.h"
+#include "kernel-shared/zoned.h"
 #include "common/messages.h"
 
 struct btrfs_trans_handle* btrfs_start_transaction(struct btrfs_root *root,
@@ -138,10 +139,15 @@ int __commit_transaction(struct btrfs_trans_handle *trans,
 	int ret;
 
 	while(1) {
+again:
 		ret = find_first_extent_bit(tree, 0, &start, &end,
 					    EXTENT_DIRTY);
 		if (ret)
 			break;
+
+		if (btrfs_redirty_extent_buffer_for_zoned(fs_info, start, end))
+			goto again;
+
 		while(start <= end) {
 			eb = find_first_extent_buffer(tree, start);
 			BUG_ON(!eb || eb->start != start);
