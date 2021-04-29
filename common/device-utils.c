@@ -299,7 +299,7 @@ u64 get_partition_size(const char *dev)
 /*
  * Get a device request queue parameter from sysfs.
  */
-int queue_param(const char *file, const char *param, char *buf, size_t len)
+int device_get_queue_param(const char *file, const char *param, char *buf, size_t len)
 {
 	blkid_probe probe;
 	char wholedisk[PATH_MAX];

@@ -444,7 +444,7 @@ static int is_ssd(const char *file)
 	char rotational;
 	int ret;
 
-	ret = queue_param(file, "rotational", &rotational, 1);
+	ret = device_get_queue_param(file, "rotational", &rotational, 1);
 	if (ret < 1)
 		return 0;
 
