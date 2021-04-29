@@ -51,7 +51,7 @@ static int discard_range(int fd, u64 start, u64 len)
 /*
  * Discard blocks in the given range in 1G chunks, the process is interruptible
  */
-int discard_blocks(int fd, u64 start, u64 len)
+int device_discard_blocks(int fd, u64 start, u64 len)
 {
 	while (len > 0) {
 		/* 1G granularity */
@@ -222,7 +222,7 @@ int btrfs_prepare_device(int fd, const char *file, u64 *block_count_ret,
 			if (opflags & PREP_DEVICE_VERBOSE)
 				printf("Performing full device TRIM %s (%s) ...\n",
 						file, pretty_size(block_count));
-			discard_blocks(fd, 0, block_count);
+			device_discard_blocks(fd, 0, block_count);
 		}
 	}
 

@@ -25,7 +25,7 @@
 #define	PREP_DEVICE_VERBOSE	(1U << 2)
 #define	PREP_DEVICE_ZONED	(1U << 3)
 
-int discard_blocks(int fd, u64 start, u64 len);
+int device_discard_blocks(int fd, u64 start, u64 len);
 int zero_blocks(int fd, off_t start, size_t len);
 u64 get_partition_size(const char *dev);
 u64 disk_size(const char *path);
