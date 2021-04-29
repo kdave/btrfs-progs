@@ -67,7 +67,10 @@ int device_discard_blocks(int fd, u64 start, u64 len)
 	return 0;
 }
 
-int zero_blocks(int fd, off_t start, size_t len)
+/*
+ * Write zeros to the given range [start, start + len)
+ */
+int device_zero_blocks(int fd, off_t start, size_t len)
 {
 	char *buf = malloc(len);
 	int ret = 0;
@@ -103,7 +106,7 @@ static int zero_dev_clamped(int fd, struct btrfs_zoned_device_info *zinfo,
 	if (zinfo && zinfo->model == ZONED_HOST_MANAGED)
 		return zero_zone_blocks(fd, zinfo, start, end - start);
 
-	return zero_blocks(fd, start, end - start);
+	return device_zero_blocks(fd, start, end - start);
 }
 
 static int btrfs_wipe_existing_sb(int fd, struct btrfs_zoned_device_info *zinfo)

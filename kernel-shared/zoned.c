@@ -398,15 +398,15 @@ int zero_zone_blocks(int fd, struct btrfs_zoned_device_info *zinfo, off_t start,
 	size_t count;
 	int ret;
 
-	/* Make sure that zero_blocks does not write sequential zones */
+	/* Make sure that device_zero_blocks does not write sequential zones */
 	while (len > 0) {
-		/* Limit zero_blocks to a single zone */
+		/* Limit device_zero_blocks to a single zone */
 		count = min_t(size_t, len, zone_len);
 		if (count > zone_len - (ofst & (zone_len - 1)))
 			count = zone_len - (ofst & (zone_len - 1));
 
 		if (!zone_is_sequential(zinfo, ofst)) {
-			ret = zero_blocks(fd, ofst, count);
+			ret = device_zero_blocks(fd, ofst, count);
 			if (ret != 0)
 				return ret;
 		}
