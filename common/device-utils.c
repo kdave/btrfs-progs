@@ -282,7 +282,10 @@ u64 disk_size(const char *path)
 		return sfs.f_bsize * sfs.f_blocks;
 }
 
-u64 get_partition_size(const char *dev)
+/*
+ * Read partition size using the low-level ioctl
+ */
+u64 device_get_partition_size(const char *dev)
 {
 	u64 result;
 	int fd = open(dev, O_RDONLY);

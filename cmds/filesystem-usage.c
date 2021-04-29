@@ -712,7 +712,7 @@ static int load_device_info(int fd, struct device_info **device_info_ptr,
 		} else {
 			strcpy(info[ndevs].path, (char *)dev_info.path);
 			info[ndevs].device_size =
-				get_partition_size((char *)dev_info.path);
+				device_get_partition_size((const char *)dev_info.path);
 		}
 		info[ndevs].size = dev_info.total_bytes;
 		++ndevs;
@@ -893,7 +893,7 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 			col++;
 		}
 
-		unused = get_partition_size(device_info_ptr[i].path)
+		unused = device_get_partition_size(device_info_ptr[i].path)
 				- total_allocated;
 
 		table_printf(matrix, unallocated_col, vhdr_skip + i, ">%s",
