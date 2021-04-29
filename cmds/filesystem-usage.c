@@ -32,10 +32,11 @@
 #include "cmds/filesystem-usage.h"
 #include "cmds/commands.h"
 #include "kernel-shared/disk-io.h"
-
+#include "common/open-utils.h"
 #include "version.h"
 #include "common/help.h"
 #include "common/device-utils.h"
+#include "common/open-utils.h"
 
 /*
  * Add the chunk info to the chunk_info list

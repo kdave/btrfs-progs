@@ -32,6 +32,7 @@
 #include "cmds/commands.h"
 #include "btrfs-list.h"
 #include "common/help.h"
+#include "common/open-utils.h"
 
 static const char * const inspect_cmd_group_usage[] = {
 	"btrfs inspect-internal <command> <args>",

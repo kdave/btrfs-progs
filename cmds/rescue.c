@@ -28,6 +28,7 @@
 #include "common/utils.h"
 #include "common/help.h"
 #include "cmds/rescue.h"
+#include "common/open-utils.h"
 
 static const char * const rescue_cmd_group_usage[] = {
 	"btrfs rescue <command> [options] <path>",

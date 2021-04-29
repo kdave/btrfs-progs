@@ -2,6 +2,7 @@
 #define __DEVICE_SCAN_H__
 
 #include "kerncompat.h"
+#include <dirent.h>
 #include "ioctl.h"
 
 #define BTRFS_SCAN_MOUNTED	(1ULL << 0)

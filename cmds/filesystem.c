@@ -43,6 +43,7 @@
 #include "common/fsfeatures.h"
 #include "common/path-utils.h"
 #include "common/device-scan.h"
+#include "common/open-utils.h"
 
 /*
  * for btrfs fi show, we maintain a hash of fsids we've already printed.

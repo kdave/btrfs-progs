@@ -41,6 +41,7 @@
 #include "common/help.h"
 #include "common/path-utils.h"
 #include "common/device-scan.h"
+#include "common/open-utils.h"
 
 static int wait_for_subvolume_cleaning(int fd, size_t count, uint64_t *ids,
 				       int sleep_interval)

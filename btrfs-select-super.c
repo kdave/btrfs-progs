@@ -30,6 +30,7 @@
 #include "kernel-lib/list.h"
 #include "common/utils.h"
 #include "common/help.h"
+#include "common/open-utils.h"
 
 static void print_usage(void)
 {

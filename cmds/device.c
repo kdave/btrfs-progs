@@ -38,6 +38,7 @@
 #include "common/device-utils.h"
 #include "common/device-scan.h"
 #include "common/format-output.h"
+#include "common/open-utils.h"
 #include "mkfs/common.h"
 
 static const char * const device_cmd_group_usage[] = {

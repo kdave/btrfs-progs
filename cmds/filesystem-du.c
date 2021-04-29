@@ -38,8 +38,8 @@
 #include "cmds/commands.h"
 #include "kerncompat.h"
 #include "kernel-lib/rbtree.h"
-
 #include "kernel-lib/interval_tree_generic.h"
+#include "common/open-utils.h"
 #include "common/help.h"
 #include "common/fsfeatures.h"
 
