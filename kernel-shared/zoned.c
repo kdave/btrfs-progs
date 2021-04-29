@@ -373,7 +373,7 @@ int btrfs_reset_all_zones(int fd, struct btrfs_zoned_device_info *zinfo)
 	/* Zone size granularity */
 	for (i = 0; i < zinfo->nr_zones; i++) {
 		if (zinfo->zones[i].type == BLK_ZONE_TYPE_CONVENTIONAL) {
-			ret = discard_blocks(fd,
+			ret = device_discard_blocks(fd,
 					     zinfo->zones[i].start << SECTOR_SHIFT,
 					     zinfo->zone_size);
 			if (ret == EOPNOTSUPP)
