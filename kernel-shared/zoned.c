@@ -55,7 +55,7 @@ enum btrfs_zoned_model zoned_model(const char *file)
 	if (!S_ISBLK(st.st_mode))
 		return ZONED_NONE;
 
-	ret = queue_param(file, "zoned", model, sizeof(model));
+	ret = device_get_queue_param(file, "zoned", model, sizeof(model));
 	if (ret <= 0)
 		return ZONED_NONE;
 
@@ -76,7 +76,7 @@ u64 zone_size(const char *file)
 	if (zoned_model(file) == ZONED_NONE)
 		return EMULATED_ZONE_SIZE;
 
-	ret = queue_param(file, "chunk_sectors", chunk, sizeof(chunk));
+	ret = device_get_queue_param(file, "chunk_sectors", chunk, sizeof(chunk));
 	if (ret <= 0)
 		return 0;
 
@@ -88,7 +88,8 @@ u64 max_zone_append_size(const char *file)
 	char chunk[32];
 	int ret;
 
-	ret = queue_param(file, "zone_append_max_bytes", chunk, sizeof(chunk));
+	ret = device_get_queue_param(file, "zone_append_max_bytes", chunk,
+				     sizeof(chunk));
 	if (ret <= 0)
 		return 0;
 
