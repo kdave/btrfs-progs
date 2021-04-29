@@ -285,16 +285,6 @@ u64 btrfs_device_size(int fd, struct stat *st)
 	return 0;
 }
 
-u64 disk_size(const char *path)
-{
-	struct statfs sfs;
-
-	if (statfs(path, &sfs) < 0)
-		return 0;
-	else
-		return sfs.f_bsize * sfs.f_blocks;
-}
-
 /*
  * Read partition size using the low-level ioctl
  */
