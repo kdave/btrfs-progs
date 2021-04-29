@@ -23,7 +23,6 @@
 #include <unistd.h>
 #include <errno.h>
 #include <dirent.h>
-#include <linux/limits.h>
 #include <blkid/blkid.h>
 #include <uuid/uuid.h>
 #include "kernel-lib/overflow.h"

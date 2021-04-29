@@ -27,7 +27,6 @@
 #include <limits.h>
 #include <getopt.h>
 #include <uuid/uuid.h>
-#include <linux/magic.h>
 
 #include <btrfsutil.h>
 
