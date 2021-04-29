@@ -18,8 +18,6 @@
 #define __BTRFS_CONVERT_SOURCE_FS_H__
 
 #include "kerncompat.h"
-#include <linux/kdev_t.h>
-#include <sys/types.h>
 #include <pthread.h>
 #include <sys/types.h>
 

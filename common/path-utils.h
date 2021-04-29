@@ -18,6 +18,7 @@
 #define __BTRFS_PATH_UTILS_H__
 
 #include <sys/types.h>
+#include <linux/limits.h>
 
 char *path_canonicalize_dm_name(const char *ptname);
 char *path_canonicalize(const char *path);

@@ -25,7 +25,6 @@
 #include <fcntl.h>
 #include <ftw.h>
 #include <mntent.h>
-#include <linux/limits.h>
 #include <linux/version.h>
 #include <getopt.h>
 #include <limits.h>

@@ -30,9 +30,6 @@
 #include <unistd.h>
 #include <mntent.h>
 #include <ctype.h>
-#include <linux/loop.h>
-#include <linux/major.h>
-#include <linux/kdev_t.h>
 #include <limits.h>
 #include <blkid/blkid.h>
 #include <sys/vfs.h>

@@ -17,7 +17,6 @@
 #if BTRFSCONVERT_REISERFS
 
 #include "kerncompat.h"
-#include <linux/limits.h>
 #include <linux/fs.h>
 #include <limits.h>
 #include <sys/stat.h>

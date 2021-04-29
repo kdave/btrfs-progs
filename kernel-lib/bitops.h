@@ -1,7 +1,6 @@
 #ifndef _PERF_LINUX_BITOPS_H_
 #define _PERF_LINUX_BITOPS_H_
 
-#include <linux/kernel.h>
 #include <endian.h>
 #include "common/internal.h"
 
