@@ -281,8 +281,9 @@ static int report_zones(int fd, const char *file,
 	 * No need to use btrfs_device_size() here, since it is ensured
 	 * that the file is block device.
 	 */
-	if (ioctl(fd, BLKGETSIZE64, &device_size) < 0) {
-		error("zoned: ioctl(BLKGETSIZE64) failed on %s (%m)", file);
+	device_size = device_get_partition_size_fd(fd);
+	if (device_size == 0) {
+		error("zoned: failed to read size of %s: %m", file);
 		exit(1);
 	}
 
