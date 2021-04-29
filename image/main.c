@@ -2708,6 +2708,51 @@ static int restore_metadump(const char *input, FILE *out, int old_restore,
 		close_ctree(info->chunk_root);
 		if (ret)
 			goto out;
+	} else {
+		struct btrfs_root *root;
+		struct stat st;
+		u64 dev_size;
+
+		if (!info) {
+			root = open_ctree_fd(fileno(out), target, 0, 0);
+			if (!root) {
+				error("open ctree failed in %s", target);
+				ret = -EIO;
+				goto out;
+			}
+
+			info = root->fs_info;
+
+			dev_size = btrfs_stack_device_total_bytes(
+					&info->super_copy->dev_item);
+			close_ctree(root);
+			info = NULL;
+		} else {
+			dev_size = btrfs_stack_device_total_bytes(
+					&info->super_copy->dev_item);
+		}
+
+		/*
+		 * We don't need extra tree modification, but if the output is
+		 * a file, we need to enlarge the output file so that 5.11+
+		 * kernel won't report an error.
+		 */
+		ret = fstat(fileno(out), &st);
+		if (ret < 0) {
+			error("failed to stat result image: %m");
+			ret = -errno;
+			goto out;
+		}
+		if (S_ISREG(st.st_mode) && st.st_size < dev_size) {
+			ret = ftruncate64(fileno(out), dev_size);
+			if (ret < 0) {
+				error(
+		"failed to enlarge result image file from %llu to %llu: %m",
+					(unsigned long long)st.st_size, dev_size);
+				ret = -errno;
+				goto out;
+			}
+		}
 	}
 out:
 	mdrestore_destroy(&mdrestore, num_threads);
