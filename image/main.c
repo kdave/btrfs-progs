@@ -2692,7 +2692,6 @@ static int restore_metadump(const char *input, FILE *out, int old_restore,
 	if (!ret && !multi_devices && !old_restore &&
 	    btrfs_super_num_devices(mdrestore.original_super) != 1) {
 		struct btrfs_root *root;
-		struct stat st;
 
 		root = open_ctree_fd(fileno(out), target, 0,
 					  OPEN_CTREE_PARTIAL |
@@ -2704,13 +2703,6 @@ static int restore_metadump(const char *input, FILE *out, int old_restore,
 			goto out;
 		}
 		info = root->fs_info;
-
-		if (stat(target, &st)) {
-			error("stat %s failed: %m", target);
-			close_ctree(info->chunk_root);
-			free(cluster);
-			return 1;
-		}
 
 		ret = fixup_chunks_and_devices(info, &mdrestore, fileno(out));
 		close_ctree(info->chunk_root);
