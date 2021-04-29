@@ -48,6 +48,7 @@
 #include "mkfs/rootdir.h"
 #include "common/fsfeatures.h"
 #include "common/box.h"
+#include "common/units.h"
 #include "check/qgroup-verify.h"
 
 static int verbose = 1;

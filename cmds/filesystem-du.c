@@ -40,6 +40,7 @@
 #include "kernel-lib/rbtree.h"
 #include "kernel-lib/interval_tree_generic.h"
 #include "common/open-utils.h"
+#include "common/units.h"
 #include "common/help.h"
 #include "common/fsfeatures.h"
 

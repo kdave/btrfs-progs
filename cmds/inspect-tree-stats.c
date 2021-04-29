@@ -37,6 +37,7 @@
 #include "cmds/commands.h"
 #include "common/help.h"
 #include "common/open-utils.h"
+#include "common/units.h"
 
 static int verbose = 0;
 static int no_pretty = 0;

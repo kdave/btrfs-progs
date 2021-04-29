@@ -40,6 +40,7 @@
 #include "kernel-lib/list_sort.h"
 #include "kernel-shared/disk-io.h"
 #include "common/help.h"
+#include "common/units.h"
 #include "common/fsfeatures.h"
 #include "common/path-utils.h"
 #include "common/device-scan.h"
