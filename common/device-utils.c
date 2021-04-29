@@ -288,6 +288,16 @@ u64 btrfs_device_size(int fd, struct stat *st)
 /*
  * Read partition size using the low-level ioctl
  */
+u64 device_get_partition_size_fd(int fd)
+{
+	u64 result;
+
+	if (ioctl(fd, BLKGETSIZE64, &result) < 0)
+		return 0;
+
+	return result;
+}
+
 u64 device_get_partition_size(const char *dev)
 {
 	u64 result;

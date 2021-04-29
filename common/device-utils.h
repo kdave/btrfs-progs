@@ -34,6 +34,7 @@
 int device_discard_blocks(int fd, u64 start, u64 len);
 int device_zero_blocks(int fd, off_t start, size_t len);
 u64 device_get_partition_size(const char *dev);
+u64 device_get_partition_size_fd(int fd);
 int device_get_queue_param(const char *file, const char *param, char *buf, size_t len);
 
 /*
