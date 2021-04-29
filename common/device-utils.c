@@ -89,7 +89,10 @@ int device_zero_blocks(int fd, off_t start, size_t len)
 
 #define ZERO_DEV_BYTES SZ_2M
 
-/* don't write outside the device by clamping the region to the device size */
+/*
+ * Zero blocks in the range from start but not after the given device size.
+ * (On SPARC the disk labels are preserved too.)
+ */
 static int zero_dev_clamped(int fd, struct btrfs_zoned_device_info *zinfo,
 			    off_t start, ssize_t len, u64 dev_size)
 {
@@ -110,6 +113,9 @@ static int zero_dev_clamped(int fd, struct btrfs_zoned_device_info *zinfo,
 	return device_zero_blocks(fd, start, end - start);
 }
 
+/*
+ * Find all magic signatures known to blkid and remove them
+ */
 static int btrfs_wipe_existing_sb(int fd, struct btrfs_zoned_device_info *zinfo)
 {
 	const char *off = NULL;
@@ -173,6 +179,13 @@ out:
 	return ret;
 }
 
+/*
+ * Prepare a device before it's added to the filesystem. Optionally:
+ * - remove old superblocks
+ * - discard
+ * - reset zones
+ * - delete end of the device
+ */
 int btrfs_prepare_device(int fd, const char *file, u64 *block_count_ret,
 		u64 max_block_count, unsigned opflags)
 {
