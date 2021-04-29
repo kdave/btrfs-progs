@@ -17,7 +17,6 @@
  */
 
 #include "kerncompat.h"
-#include "androidcompat.h"
 
 #include <sys/ioctl.h>
 #include <sys/wait.h>

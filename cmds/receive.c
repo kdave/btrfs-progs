@@ -17,7 +17,6 @@
  */
 
 #include "kerncompat.h"
-#include "androidcompat.h"
 
 #include <unistd.h>
 #include <stdint.h>
