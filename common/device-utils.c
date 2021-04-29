@@ -30,6 +30,7 @@
 #include "common/internal.h"
 #include "common/messages.h"
 #include "common/utils.h"
+#include "common/units.h"
 
 #ifndef BLKDISCARD
 #define BLKDISCARD	_IO(0x12,119)

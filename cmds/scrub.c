@@ -42,6 +42,7 @@
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/disk-io.h"
 #include "common/open-utils.h"
+#include "common/units.h"
 #include "cmds/commands.h"
 #include "common/help.h"
 

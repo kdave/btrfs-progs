@@ -20,6 +20,7 @@
 #include "common/defs.h"
 #include "common/format-output.h"
 #include "common/utils.h"
+#include "common/units.h"
 #include "cmds/commands.h"
 
 static void print_uuid(const u8 *uuid)

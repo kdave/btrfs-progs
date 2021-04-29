@@ -32,6 +32,7 @@
 #include "common/utils.h"
 #include "common/defs.h"
 #include "common/open-utils.h"
+#include "common/units.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/disk-io.h"

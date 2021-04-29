@@ -31,27 +31,6 @@
 #include "ioctl.h"
 #include "common/fsfeatures.h"
 
-/*
- * Output modes of size
- */
-#define UNITS_RESERVED			(0)
-#define UNITS_BYTES			(1)
-#define UNITS_KBYTES			(2)
-#define UNITS_MBYTES			(3)
-#define UNITS_GBYTES			(4)
-#define UNITS_TBYTES			(5)
-#define UNITS_RAW			(1U << UNITS_MODE_SHIFT)
-#define UNITS_BINARY			(2U << UNITS_MODE_SHIFT)
-#define UNITS_DECIMAL			(3U << UNITS_MODE_SHIFT)
-/* Interpret the u64 value as s64 */
-#define UNITS_NEGATIVE			(4U << UNITS_MODE_SHIFT)
-#define UNITS_MODE_MASK			((1U << UNITS_MODE_SHIFT) - 1)
-#define UNITS_MODE_SHIFT		(8)
-#define UNITS_HUMAN_BINARY		(UNITS_BINARY)
-#define UNITS_HUMAN_DECIMAL		(UNITS_DECIMAL)
-#define UNITS_HUMAN			(UNITS_HUMAN_BINARY)
-#define UNITS_DEFAULT			(UNITS_HUMAN)
-
 enum exclusive_operation {
 	BTRFS_EXCLOP_NONE,
 	BTRFS_EXCLOP_BALANCE,
@@ -63,14 +42,8 @@ enum exclusive_operation {
 	BTRFS_EXCLOP_UNKNOWN = -1,
 };
 
-void units_set_mode(unsigned *units, unsigned mode);
-void units_set_base(unsigned *units, unsigned base);
-
 int btrfs_make_root_dir(struct btrfs_trans_handle *trans,
 			struct btrfs_root *root, u64 objectid);
-int pretty_size_snprintf(u64 size, char *str, size_t str_bytes, unsigned unit_mode);
-#define pretty_size(size) 	pretty_size_mode(size, UNITS_DEFAULT)
-const char *pretty_size_mode(u64 size, unsigned mode);
 
 enum btrfs_csum_type parse_csum_type(const char *s);
 u64 parse_size_from_string(const char *s);
@@ -112,7 +85,6 @@ u64 div_factor(u64 num, int factor);
 
 int btrfs_tree_search2_ioctl_supported(int fd);
 
-unsigned int get_unit_mode_from_arg(int *argc, char *argv[], int df_mode);
 int string_is_numerical(const char *str);
 int prefixcmp(const char *str, const char *prefix);
 
