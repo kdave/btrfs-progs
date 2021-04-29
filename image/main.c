@@ -38,6 +38,7 @@
 #include "common/extent-cache.h"
 #include "common/help.h"
 #include "common/device-utils.h"
+#include "common/open-utils.h"
 #include "image/metadump.h"
 #include "image/sanitize.h"
 #include "common/box.h"

@@ -32,6 +32,7 @@
 #include "kernel-shared/transaction.h"
 #include "common/utils.h"
 #include "kernel-shared/volumes.h"
+#include "common/open-utils.h"
 #include "common/help.h"
 #include "common/box.h"
 

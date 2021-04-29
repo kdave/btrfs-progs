@@ -29,7 +29,7 @@
 #include "kernel-shared/ctree.h"
 #include "ioctl.h"
 #include "kernel-shared/volumes.h"
-
+#include "common/open-utils.h"
 #include "cmds/commands.h"
 #include "common/utils.h"
 #include "common/help.h"

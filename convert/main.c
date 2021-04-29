@@ -105,6 +105,7 @@
 #include "crypto/crc32c.h"
 #include "common/fsfeatures.h"
 #include "common/box.h"
+#include "common/open-utils.h"
 
 extern const struct btrfs_convert_operations ext2_convert_ops;
 extern const struct btrfs_convert_operations reiserfs_convert_ops;

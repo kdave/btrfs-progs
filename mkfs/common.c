@@ -26,6 +26,7 @@
 #include "common/utils.h"
 #include "common/path-utils.h"
 #include "common/device-utils.h"
+#include "common/open-utils.h"
 #include "mkfs/common.h"
 
 static u64 reference_root_table[] = {

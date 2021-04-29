@@ -68,10 +68,6 @@ void units_set_base(unsigned *units, unsigned base);
 
 int btrfs_make_root_dir(struct btrfs_trans_handle *trans,
 			struct btrfs_root *root, u64 objectid);
-int check_mounted(const char *devicename);
-int check_mounted_where(int fd, const char *file, char *where, int size,
-		struct btrfs_fs_devices **fs_devices_mnt, unsigned sbflags);
-
 int pretty_size_snprintf(u64 size, char *str, size_t str_bytes, unsigned unit_mode);
 #define pretty_size(size) 	pretty_size_mode(size, UNITS_DEFAULT)
 const char *pretty_size_mode(u64 size, unsigned mode);
@@ -80,9 +76,6 @@ enum btrfs_csum_type parse_csum_type(const char *s);
 u64 parse_size_from_string(const char *s);
 u64 parse_qgroupid(const char *p);
 u64 arg_strtou64(const char *str);
-int open_file_or_dir(const char *fname, DIR **dirstream);
-int open_file_or_dir3(const char *fname, DIR **dirstream, int open_flags);
-void close_file_or_dir(int fd, DIR *dirstream);
 int get_fs_info(const char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 		struct btrfs_ioctl_dev_info_args **di_ret);
 int get_fsid(const char *path, u8 *fsid, int silent);
@@ -95,10 +88,6 @@ int get_label(const char *btrfs_dev, char *label);
 int set_label(const char *btrfs_dev, const char *label);
 
 int check_arg_type(const char *input);
-int open_path_or_dev_mnt(const char *path, DIR **dirstream, int verbose);
-int btrfs_open(const char *path, DIR **dirstream, int verbose, int dir_only);
-int btrfs_open_dir(const char *path, DIR **dirstream, int verbose);
-int btrfs_open_file_or_dir(const char *path, DIR **dirstream, int verbose);
 int get_label_mounted(const char *mount_path, char *labelp);
 int get_label_unmounted(const char *dev, char *label);
 int group_profile_max_safe_loss(u64 flags);
@@ -106,7 +95,6 @@ int csum_tree_block(struct btrfs_fs_info *root, struct extent_buffer *buf,
 		    int verify);
 int ask_user(const char *question);
 int lookup_path_rootid(int fd, u64 *rootid);
-int get_btrfs_mount(const char *dev, char *mp, size_t mp_size);
 int find_mount_fsroot(const char *subvol, const char *subvolid, char **mount);
 int find_mount_root(const char *path, char **mount_root);
 int get_device_info(int fd, u64 devid,
