@@ -59,45 +59,6 @@ static unsigned short rand_seed[3];
 
 struct btrfs_config bconf;
 
-int btrfs_make_root_dir(struct btrfs_trans_handle *trans,
-			struct btrfs_root *root, u64 objectid)
-{
-	int ret;
-	struct btrfs_inode_item inode_item;
-	time_t now = time(NULL);
-
-	memset(&inode_item, 0, sizeof(inode_item));
-	btrfs_set_stack_inode_generation(&inode_item, trans->transid);
-	btrfs_set_stack_inode_size(&inode_item, 0);
-	btrfs_set_stack_inode_nlink(&inode_item, 1);
-	btrfs_set_stack_inode_nbytes(&inode_item, root->fs_info->nodesize);
-	btrfs_set_stack_inode_mode(&inode_item, S_IFDIR | 0755);
-	btrfs_set_stack_timespec_sec(&inode_item.atime, now);
-	btrfs_set_stack_timespec_nsec(&inode_item.atime, 0);
-	btrfs_set_stack_timespec_sec(&inode_item.ctime, now);
-	btrfs_set_stack_timespec_nsec(&inode_item.ctime, 0);
-	btrfs_set_stack_timespec_sec(&inode_item.mtime, now);
-	btrfs_set_stack_timespec_nsec(&inode_item.mtime, 0);
-	btrfs_set_stack_timespec_sec(&inode_item.otime, now);
-	btrfs_set_stack_timespec_nsec(&inode_item.otime, 0);
-
-	if (root->fs_info->tree_root == root)
-		btrfs_set_super_root_dir(root->fs_info->super_copy, objectid);
-
-	ret = btrfs_insert_inode(trans, root, objectid, &inode_item);
-	if (ret)
-		goto error;
-
-	ret = btrfs_insert_inode_ref(trans, root, "..", 2, objectid, objectid, 0);
-	if (ret)
-		goto error;
-
-	btrfs_set_root_dirid(&root->root_item, objectid);
-	ret = 0;
-error:
-	return ret;
-}
-
 struct pending_dir {
 	struct list_head list;
 	char name[PATH_MAX];

@@ -42,9 +42,6 @@ enum exclusive_operation {
 	BTRFS_EXCLOP_UNKNOWN = -1,
 };
 
-int btrfs_make_root_dir(struct btrfs_trans_handle *trans,
-			struct btrfs_root *root, u64 objectid);
-
 enum btrfs_csum_type parse_csum_type(const char *s);
 u64 parse_size_from_string(const char *s);
 u64 parse_qgroupid(const char *p);

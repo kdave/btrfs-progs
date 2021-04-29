@@ -38,6 +38,9 @@
 #define BTRFS_MKFS_DEFAULT_DATA_MULTI_DEVICE	0	/* SINGLE */
 #define BTRFS_MKFS_DEFAULT_META_MULTI_DEVICE	BTRFS_BLOCK_GROUP_RAID1
 
+struct btrfs_trans_handle;
+struct btrfs_root;
+
 /*
  * Tree root blocks created during mkfs
  */
@@ -79,6 +82,8 @@ struct btrfs_mkfs_config {
 };
 
 int make_btrfs(int fd, struct btrfs_mkfs_config *cfg);
+int btrfs_make_root_dir(struct btrfs_trans_handle *trans,
+			struct btrfs_root *root, u64 objectid);
 u64 btrfs_min_dev_size(u32 nodesize, int mixed, u64 meta_profile,
 		       u64 data_profile);
 int test_minimum_size(const char *file, u64 min_dev_size);

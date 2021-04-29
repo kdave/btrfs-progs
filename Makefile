@@ -188,7 +188,8 @@ libbtrfsutil_objects = libbtrfsutil/errors.o libbtrfsutil/filesystem.o \
 		       libbtrfsutil/subvolume.o libbtrfsutil/qgroup.o \
 		       libbtrfsutil/stubs.o
 convert_objects = convert/main.o convert/common.o convert/source-fs.o \
-		  convert/source-ext2.o convert/source-reiserfs.o
+		  convert/source-ext2.o convert/source-reiserfs.o \
+		  mkfs/common.o
 mkfs_objects = mkfs/main.o mkfs/common.o mkfs/rootdir.o
 image_objects = image/main.o image/sanitize.o
 all_objects = $(objects) $(cmds_objects) $(libbtrfs_objects) $(convert_objects) \

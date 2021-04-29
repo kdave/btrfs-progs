@@ -47,6 +47,7 @@
 #include "check/mode-lowmem.h"
 #include "check/qgroup-verify.h"
 #include "common/open-utils.h"
+#include "mkfs/common.h"
 
 u64 bytes_used = 0;
 u64 total_csum_bytes = 0;
