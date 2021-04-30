@@ -176,6 +176,12 @@ static PyMethodDef btrfsutil_methods[] = {
 	 "path -- string, bytes, path-like object, or open file descriptor\n"
 	 "transid -- int transaction ID to wait for, or zero for the current\n"
 	 "transaction"},
+	{"filesystem_get_label", (PyCFunction)filesystem_get_label,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "filesystem_get_label(path) -> str\n\n"
+	 "Get filesystem label.\n\n"
+	 "Arguments:\n"
+	 "path -- string, bytes, path-like object, or open file descriptor"},
 	{"is_subvolume", (PyCFunction)is_subvolume,
 	 METH_VARARGS | METH_KEYWORDS,
 	 "is_subvolume(path) -> bool\n\n"

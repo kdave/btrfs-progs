@@ -50,3 +50,11 @@ LIBBTRFSUTIL_1.2 {
 global:
 	btrfs_util_delete_subvolume_by_id_fd;
 } LIBBTRFSUTIL_1.1;
+
+LIBBTRFSUTIL_1.3 {
+global:
+	btrfs_util_filesystem_get_label;
+	btrfs_util_filesystem_get_label_fd;
+	btrfs_util_filesystem_set_label;
+	btrfs_util_filesystem_set_label_fd;
+} LIBBTRFSUTIL_1.2;

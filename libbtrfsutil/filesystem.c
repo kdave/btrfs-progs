@@ -100,3 +100,66 @@ PUBLIC enum btrfs_util_error btrfs_util_wait_sync_fd(int fd, uint64_t transid)
 
 	return BTRFS_UTIL_OK;
 }
+
+PUBLIC enum btrfs_util_error btrfs_util_filesystem_set_label_fd(int fd,
+								const char *label)
+{
+	int ret;
+	char buf[BTRFS_UTIL_LABEL_SIZE];
+
+	if (strlen(label) >= BTRFS_UTIL_LABEL_SIZE) {
+		errno = EINVAL;
+		return BTRFS_UTIL_ERROR_INVALID_ARGUMENT;
+	}
+	memset(buf, 0, sizeof(buf));
+	strncpy(buf, label, BTRFS_UTIL_LABEL_SIZE - 1);
+
+	ret = ioctl(fd, BTRFS_IOC_SET_FSLABEL, buf);
+	if (ret == -1)
+		return BTRFS_UTIL_ERROR_GET_LABEL_FAILED;
+
+	return BTRFS_UTIL_OK;
+}
+
+PUBLIC enum btrfs_util_error btrfs_util_filesystem_set_label(const char *path,
+							     const char *label)
+{
+	enum btrfs_util_error err;
+	int fd;
+
+	fd = open(path, O_RDONLY);
+	if (fd == -1)
+		return BTRFS_UTIL_ERROR_OPEN_FAILED;
+
+	err = btrfs_util_filesystem_set_label_fd(fd, label);
+	SAVE_ERRNO_AND_CLOSE(fd);
+	return err;
+}
+
+PUBLIC enum btrfs_util_error btrfs_util_filesystem_get_label_fd(int fd,
+								char *label)
+{
+	int ret;
+
+	/* Kernel does not return more than BTRFS_LABEL_SIZE/BTRFS_UTIL_LABEL_SIZE */
+	ret = ioctl(fd, BTRFS_IOC_GET_FSLABEL, label);
+	if (ret == -1)
+		return BTRFS_UTIL_ERROR_GET_LABEL_FAILED;
+
+	return BTRFS_UTIL_OK;
+}
+
+PUBLIC enum btrfs_util_error btrfs_util_filesystem_get_label(const char *path,
+							     char *label)
+{
+	enum btrfs_util_error err;
+	int fd;
+
+	fd = open(path, O_RDONLY);
+	if (fd == -1)
+		return BTRFS_UTIL_ERROR_OPEN_FAILED;
+
+	err = btrfs_util_filesystem_get_label_fd(fd, label);
+	SAVE_ERRNO_AND_CLOSE(fd);
+	return err;
+}

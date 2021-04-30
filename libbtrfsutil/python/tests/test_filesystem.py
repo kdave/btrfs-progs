@@ -71,3 +71,9 @@ class TestSubvolume(BtrfsTestCase):
                 new_generation = self.super_generation()
                 self.assertGreater(new_generation, old_generation)
                 old_generation = new_generation
+
+    def test_filesystem_get_label(self):
+        for arg in self.path_or_fd(self.mountpoint):
+            with self.subTest(type=type(arg)):
+                label = btrfsutil.filesystem_get_label(arg)
+                self.assertEqual(label, 'BTRFS-PROGS-PYTEST')

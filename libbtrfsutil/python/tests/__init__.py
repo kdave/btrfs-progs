@@ -76,7 +76,7 @@ class BtrfsTestCase(unittest.TestCase):
         else:
             mkfs = 'mkfs.btrfs'
         try:
-            subprocess.check_call([mkfs, '-q', image])
+            subprocess.check_call([mkfs, '-q', '-L', 'BTRFS-PROGS-PYTEST', image])
             subprocess.check_call(['mount', '-o', 'loop', '--', image, mountpoint])
         except Exception as e:
             os.rmdir(mountpoint)

@@ -67,6 +67,8 @@ enum btrfs_util_error {
 	BTRFS_UTIL_ERROR_GET_SUBVOL_ROOTREF_FAILED,
 	BTRFS_UTIL_ERROR_INO_LOOKUP_USER_FAILED,
 	BTRFS_UTIL_ERROR_FS_INFO_FAILED,
+	BTRFS_UTIL_ERROR_GET_LABEL_FAILED,
+	BTRFS_UTIL_ERROR_SET_LABEL_FAILED,
 };
 
 /**
@@ -122,6 +124,39 @@ enum btrfs_util_error btrfs_util_wait_sync(const char *path, uint64_t transid);
  */
 enum btrfs_util_error btrfs_util_wait_sync_fd(int fd, uint64_t transid);
 
+#define BTRFS_UTIL_LABEL_SIZE		256
+
+/**
+ * btrfs_util_filesystem_set_label() - Set label of the filesystem under path
+ * @path: Path on a Btrfs filesystem.
+ * @label: New label as string, maximum length must be less than %BTRFS_LABEL_SIZE.
+ *
+ * Return: %BTRFS_UTIL_OK on success, non-zero error code on failure.
+ */
+enum btrfs_util_error btrfs_util_filesystem_set_label(const char *path,
+						      const char *label);
+
+/**
+ * btrfs_util_filesystem_get_label_fd() - See btrfs_util_filesystem_get_label().
+ */
+enum btrfs_util_error btrfs_util_filesystem_set_label_fd(int fd,
+							 const char *label);
+
+/**
+ * btrfs_util_filesystem_get_label - Get labelf of the filesystem under path
+ * @path: Path on a Btrfs filesystem.
+ * @label: Buffer where to store the label, must be at least %BTRFS_LABEL_SIZE.
+ *
+ * Return: %BTRFS_UTIL_OK on success, non-zero error code on failure.
+ */
+enum btrfs_util_error btrfs_util_filesystem_get_label(const char *path,
+						      char *label);
+
+/**
+ * btrfs_util_filesystem_get_label_fd() - See btrfs_util_filesystem_get_label().
+ */
+enum btrfs_util_error btrfs_util_filesystem_get_label_fd(int fd,
+							 char *label);
 /**
  * btrfs_util_is_subvolume() - Return whether a given path is a Btrfs subvolume.
  * @path: Path to check.

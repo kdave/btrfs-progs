@@ -92,3 +92,53 @@ PyObject *wait_sync(PyObject *self, PyObject *args, PyObject *kwds)
 	path_cleanup(&path);
 	Py_RETURN_NONE;
 }
+
+PyObject *filesystem_get_label(PyObject *self, PyObject *args, PyObject *kwds)
+{
+	static char *keywords[] = {"path", NULL};
+	struct path_arg path = {.allow_fd = true};
+	enum btrfs_util_error err;
+	char label[BTRFS_UTIL_LABEL_SIZE];
+
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&:filesystem_get_label",
+					 keywords, &path_converter, &path))
+		return NULL;
+
+	if (path.path)
+		err = btrfs_util_filesystem_get_label(path.path, label);
+	else
+		err = btrfs_util_filesystem_get_label_fd(path.fd, label);
+	if (err) {
+		SetFromBtrfsUtilErrorWithPath(err, &path);
+		path_cleanup(&path);
+		return NULL;
+	}
+
+	path_cleanup(&path);
+	return PyUnicode_DecodeFSDefault(label);
+}
+
+PyObject *filesystem_set_label(PyObject *self, PyObject *args, PyObject *kwds)
+{
+	static char *keywords[] = {"path", "label", NULL};
+	struct path_arg path = {.allow_fd = true};
+	enum btrfs_util_error err;
+	char *label;
+
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&s:filesystem_set_label",
+					 keywords, &path_converter, &path, &label))
+		return NULL;
+
+	if (path.path)
+		err = btrfs_util_filesystem_set_label(path.path, label);
+	else
+		err = btrfs_util_filesystem_set_label_fd(path.fd, label);
+	if (err) {
+		SetFromBtrfsUtilErrorWithPath(err, &path);
+		path_cleanup(&path);
+		return NULL;
+	}
+
+	path_cleanup(&path);
+	Py_RETURN_NONE;
+}
