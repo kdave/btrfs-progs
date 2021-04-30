@@ -19,7 +19,7 @@
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/transaction.h"
 #include "kernel-shared/print-tree.h"
-#include "repair.h"
+#include "common/repair.h"
 #include "common/internal.h"
 #include "common/messages.h"
 #include "common/utils.h"

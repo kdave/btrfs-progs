@@ -30,7 +30,7 @@
 #include "kernel-shared/ulist.h"
 #include "common/rbtree-utils.h"
 #include "kernel-shared/transaction.h"
-#include "repair.h"
+#include "common/repair.h"
 
 #include "qgroup-verify.h"
 

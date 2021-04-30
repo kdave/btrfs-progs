@@ -28,7 +28,7 @@
 #include <time.h>
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/volumes.h"
-#include "repair.h"
+#include "common/repair.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/print-tree.h"
 #include "common/task-utils.h"

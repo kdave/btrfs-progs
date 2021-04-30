@@ -21,7 +21,7 @@
 #include "kernel-shared/transaction.h"
 #include "common/utils.h"
 #include "kernel-shared/disk-io.h"
-#include "repair.h"
+#include "common/repair.h"
 #include "check/mode-common.h"
 
 /*

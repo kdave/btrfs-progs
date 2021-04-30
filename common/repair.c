@@ -19,7 +19,7 @@
 #include "kernel-shared/ctree.h"
 #include "common/extent-cache.h"
 #include "common/utils.h"
-#include "repair.h"
+#include "common/repair.h"
 
 int repair = 0;
 
