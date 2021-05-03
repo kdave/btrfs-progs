@@ -456,3 +456,30 @@ A few guidelines:
   the library major version if we don't have to)
 * Include Python bindings for all interfaces
 * Write tests for all interfaces
+
+### Extending API
+
+Adding a new function to the API requires updating several locations scattered
+everywhere. The following checklist should help to make sure nothing is missing:
+
+* `libbtrfsutil/btrfsutil.h` add exported functions, with proper documentation
+  following examples of the others (documented parameters, behaviour, return
+  values, other relevant information/quirks)
+* `libbtrfsutil/btrfsutil.h` add any new error 'btrfs\_util\_error' enums
+  specific to the added functions and in `libbtrfsutil/errors.c` write text
+  descriptions
+* `libbtrfsutil/btrfsutil.h` add new constants if necessary, new values must be
+  defined even if there's already an existing one in another 'btrfs-progs' header,
+  prefix them with 'BTRFS\_UTIL\_'
+* implementation goes to `*.c`, existing one if the class of the API already
+  exists or create a new one, in that case update `Makefile` and variable
+  'libbtrfsutil\_objects'
+* `libbtrfsutil.sym` add new exported symbols, add a new versioned section if
+  necessary, bump minor version
+* `python/btrfsutilpy.h` declare C functions implementing the binding
+* `python/*.c` add the implementation, filenames follow the library '\*.c',
+  follow examples of other functions how the bindings are done, this can be the
+  hard part in case there are non-trivial return values
+* `python/module.c` add binding description entry for the new functions
+* `python/tests/test_*.py` write test for the new functionality
+* `README.md` add documentation for the new functions
