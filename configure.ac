@@ -251,15 +251,24 @@ AX_CHECK_DEFINE([ext2fs/ext2_fs.h], [EXT4_EPOCH_MASK],
 		[AC_MSG_WARN([no definition of EXT4_EPOCH_MASK found, probably old e2fsprogs, no 64bit time precision of converted images])])
 
 AC_CHECK_HEADER(linux/blkzoned.h, [blkzoned_found=yes], [blkzoned_found=no])
+AC_CHECK_MEMBER([struct blk_zone.capacity], [blkzoned_capacity=yes], [blkzoned_capacity=no], [[#include <linux/blkzoned.h>]])
+AX_CHECK_DEFINE([linux/blkzoned.h], [BLKGETZONESZ], [blkzoned_getzonesz=yes], [blkzoned_getzonesz=no])
 AC_ARG_ENABLE([zoned],
 	      AS_HELP_STRING([--disable-zoned], [disable zoned block device support]),
 	      [], [enable_zoned=$blkzoned_found]
 )
 
 AS_IF([test "x$enable_zoned" = xyes], [
-	AC_CHECK_HEADER(linux/blkzoned.h, [],
-		[AC_MSG_ERROR([Couldn't find linux/blkzoned.h])])
-	AC_DEFINE([BTRFS_ZONED], [1], [enable zoned block device support])
+       if test "x$blkzoned_found" = xno; then
+	       AC_MSG_ERROR([Couldn't find linux/blkzoned.h])
+       fi
+       if test "x$blkzoned_capacity" = xno; then
+	       AC_MSG_ERROR([linux/blkzoned.h does not provide blk_zone.capacity])
+       fi
+       if test "x$blkzoned_getzonesz" = xno; then
+	       AC_MSG_ERROR([linux/blkzoned.h does not define BLKGETZONESZ])
+       fi
+       AC_DEFINE([BTRFS_ZONED], [1], [Define to 1 if zoned device support is available])
 ])
 
 dnl Define <NAME>_LIBS= and <NAME>_CFLAGS= by pkg-config
