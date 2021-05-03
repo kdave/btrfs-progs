@@ -27,7 +27,7 @@ def touch(path):
     os.utime(path, (now, now))
 
 
-class TestSubvolume(BtrfsTestCase):
+class TestFilesystem(BtrfsTestCase):
     def super_generation(self):
         with open(self.image, 'rb') as f:
             # csum is 32 bytes, fsid is 16 bytes, bytenr is 8 bytes, flags is 8
