@@ -7,12 +7,7 @@ eventually.
 
 ## Hosted
 
-**Travis CI**
-
-The Travis service is set up to run tests on development and release branches,
-triggered by a push to the repository. Pull requests are not set up to run.
-
-[Branch overview](https://travis-ci.org/kdave/btrfs-progs)
+No active hosted CI is currently set up.
 
 **Gitlab**
 
@@ -20,6 +15,10 @@ The integration with gitlab.org has been disabled but is possible to revive. We
 were experimenting with nested virtualization to run the tests on a current
 kernel not some old version provided by the hosted image. The tests took to
 long to fit in the free plan quota.
+
+**Travis CI**
+
+Disabled since version v5.12 (05/2021).
 
 ## Local
 
