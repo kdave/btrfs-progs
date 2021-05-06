@@ -66,17 +66,58 @@ static const char * const cmd_filesystem_df_usage[] = {
 	NULL
 };
 
-static void print_df(struct btrfs_ioctl_space_args *sargs, unsigned unit_mode)
+#define ZONE_UNUSABLE_UNKNOWN		((u64)-1)
+
+/*
+ * Read value of zone_unusable from sysfs for given block group type in flags
+ */
+static u64 get_zone_unusable(int fd, u64 flags)
+{
+	char buf[64];
+	int sys_fd;
+	u64 unusable = ZONE_UNUSABLE_UNKNOWN;
+
+	/* Don't report it for a regular fs */
+	sys_fd = sysfs_open_fsid_file(fd, "features/zoned");
+	if (sys_fd < 0)
+		return ZONE_UNUSABLE_UNKNOWN;
+	close(sys_fd);
+	sys_fd = -1;
+
+	if ((flags & BTRFS_BLOCK_GROUP_DATA) == BTRFS_BLOCK_GROUP_DATA)
+		sys_fd = sysfs_open_fsid_file(fd, "allocation/data/bytes_zone_unusable");
+	else if ((flags & BTRFS_BLOCK_GROUP_METADATA) == BTRFS_BLOCK_GROUP_METADATA)
+		sys_fd = sysfs_open_fsid_file(fd, "allocation/metadata/bytes_zone_unusable");
+	else if ((flags & BTRFS_BLOCK_GROUP_SYSTEM) == BTRFS_BLOCK_GROUP_SYSTEM)
+		sys_fd = sysfs_open_fsid_file(fd, "allocation/system/bytes_zone_unusable");
+
+	if (sys_fd < 0)
+		return ZONE_UNUSABLE_UNKNOWN;
+	sysfs_read_file(sys_fd, buf, sizeof(buf));
+	unusable = strtoull(buf, NULL, 10);
+	close(sys_fd);
+
+	return unusable;
+}
+
+static void print_df(int fd, struct btrfs_ioctl_space_args *sargs, unsigned unit_mode)
 {
 	u64 i;
 	struct btrfs_ioctl_space_info *sp = sargs->spaces;
+	u64 unusable;
+	bool ok;
 
 	for (i = 0; i < sargs->total_spaces; i++, sp++) {
-		printf("%s, %s: total=%s, used=%s\n",
+		unusable = get_zone_unusable(fd, sp->flags);
+		ok = (unusable != ZONE_UNUSABLE_UNKNOWN);
+
+		printf("%s, %s: total=%s, used=%s%s%s\n",
 			btrfs_group_type_str(sp->flags),
 			btrfs_group_profile_str(sp->flags),
 			pretty_size_mode(sp->total_bytes, unit_mode),
-			pretty_size_mode(sp->used_bytes, unit_mode));
+			pretty_size_mode(sp->used_bytes, unit_mode),
+			(ok ? ", zone_unusable=" : ""),
+			(ok ? pretty_size_mode(unusable, unit_mode) : ""));
 	}
 }
 
@@ -106,7 +147,7 @@ static int cmd_filesystem_df(const struct cmd_struct *cmd,
 	ret = get_df(fd, &sargs);
 
 	if (ret == 0) {
-		print_df(sargs, unit_mode);
+		print_df(fd, sargs, unit_mode);
 		free(sargs);
 	} else {
 		errno = -ret;
