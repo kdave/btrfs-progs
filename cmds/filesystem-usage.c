@@ -431,9 +431,11 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 	u64 l_global_reserve_used = 0;
 	u64 free_estimated = 0;
 	u64 free_min = 0;
+	u64 zone_unusable = 0;
 	double max_data_ratio = 1.0;
 	int mixed = 0;
 	struct statfs statfs_buf;
+	struct btrfs_ioctl_feature_flags feature_flags;
 
 	sargs = load_space_info(fd, path);
 	if (!sargs) {
@@ -498,6 +500,16 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 		if ((flags & (BTRFS_BLOCK_GROUP_DATA | BTRFS_BLOCK_GROUP_METADATA))
 		    == (BTRFS_BLOCK_GROUP_DATA | BTRFS_BLOCK_GROUP_METADATA)) {
 			mixed = 1;
+		} else {
+			/*
+			 * As mixed mode is not supported in zoned mode, this
+			 * will account for all profile types
+			 */
+			u64 tmp;
+
+			tmp = device_get_zone_unusable(fd, flags);
+			if (tmp != DEVICE_ZONE_UNUSABLE_UNKNOWN)
+				zone_unusable += tmp;
 		}
 		if (flags & BTRFS_BLOCK_GROUP_DATA) {
 			r_data_used += sargs->spaces[i].used_bytes * ratio;
@@ -579,6 +591,11 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 		pretty_size_mode(r_total_missing, unit_mode));
 	printf("    Used:\t\t\t%*s\n", width,
 		pretty_size_mode(r_total_used, unit_mode));
+	ret = ioctl(fd, BTRFS_IOC_GET_FEATURES, &feature_flags);
+	if (ret == 0 && (feature_flags.incompat_flags & BTRFS_FEATURE_INCOMPAT_ZONED)) {
+		printf("    Device zone unusable:\t%*s\n", width,
+			pretty_size_mode(zone_unusable, unit_mode));
+	}
 	printf("    Free (estimated):\t\t%*s\t(",
 		width,
 		pretty_size_mode(free_estimated, unit_mode));
