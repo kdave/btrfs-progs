@@ -1,16 +1,15 @@
 #!/bin/bash
 # Run the container
-# $0 [docker arguments] [--] [command and arguments]
+# $0 [docker arguments] [-- command and arguments]
 
 prefix=kdave
 image=$(basename `pwd` | tr '[A-Z]' '[a-z]')
 
 declare -a ARGS
-while :; do
+while [ $# -gt 0 ]; do
 	case "$1" in
 		--) shift; break;;
-		--*) ARGS+="$1"; shift;;
-		*) break;;
+		*) ARGS+=("$1"); shift;;
 	esac
 done
 
