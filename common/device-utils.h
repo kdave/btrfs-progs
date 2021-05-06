@@ -28,6 +28,9 @@
 #define	PREP_DEVICE_VERBOSE	(1U << 2)
 #define	PREP_DEVICE_ZONED	(1U << 3)
 
+/* Placeholder to denote no results for the zone_unusable sysfs value */
+#define DEVICE_ZONE_UNUSABLE_UNKNOWN		((u64)-1)
+
 /*
  * Generic block device helpers
  */
@@ -36,7 +39,7 @@ int device_zero_blocks(int fd, off_t start, size_t len);
 u64 device_get_partition_size(const char *dev);
 u64 device_get_partition_size_fd(int fd);
 int device_get_queue_param(const char *file, const char *param, char *buf, size_t len);
-
+u64 device_get_zone_unusable(int fd, u64 flags);
 /*
  * Updates to devices with btrfs-specific changs
  */

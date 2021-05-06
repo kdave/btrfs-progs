@@ -44,6 +44,7 @@
 #include "common/fsfeatures.h"
 #include "common/path-utils.h"
 #include "common/device-scan.h"
+#include "common/device-utils.h"
 #include "common/open-utils.h"
 
 /*
@@ -66,40 +67,6 @@ static const char * const cmd_filesystem_df_usage[] = {
 	NULL
 };
 
-#define ZONE_UNUSABLE_UNKNOWN		((u64)-1)
-
-/*
- * Read value of zone_unusable from sysfs for given block group type in flags
- */
-static u64 get_zone_unusable(int fd, u64 flags)
-{
-	char buf[64];
-	int sys_fd;
-	u64 unusable = ZONE_UNUSABLE_UNKNOWN;
-
-	/* Don't report it for a regular fs */
-	sys_fd = sysfs_open_fsid_file(fd, "features/zoned");
-	if (sys_fd < 0)
-		return ZONE_UNUSABLE_UNKNOWN;
-	close(sys_fd);
-	sys_fd = -1;
-
-	if ((flags & BTRFS_BLOCK_GROUP_DATA) == BTRFS_BLOCK_GROUP_DATA)
-		sys_fd = sysfs_open_fsid_file(fd, "allocation/data/bytes_zone_unusable");
-	else if ((flags & BTRFS_BLOCK_GROUP_METADATA) == BTRFS_BLOCK_GROUP_METADATA)
-		sys_fd = sysfs_open_fsid_file(fd, "allocation/metadata/bytes_zone_unusable");
-	else if ((flags & BTRFS_BLOCK_GROUP_SYSTEM) == BTRFS_BLOCK_GROUP_SYSTEM)
-		sys_fd = sysfs_open_fsid_file(fd, "allocation/system/bytes_zone_unusable");
-
-	if (sys_fd < 0)
-		return ZONE_UNUSABLE_UNKNOWN;
-	sysfs_read_file(sys_fd, buf, sizeof(buf));
-	unusable = strtoull(buf, NULL, 10);
-	close(sys_fd);
-
-	return unusable;
-}
-
 static void print_df(int fd, struct btrfs_ioctl_space_args *sargs, unsigned unit_mode)
 {
 	u64 i;
@@ -108,8 +75,8 @@ static void print_df(int fd, struct btrfs_ioctl_space_args *sargs, unsigned unit
 	bool ok;
 
 	for (i = 0; i < sargs->total_spaces; i++, sp++) {
-		unusable = get_zone_unusable(fd, sp->flags);
-		ok = (unusable != ZONE_UNUSABLE_UNKNOWN);
+		unusable = device_get_zone_unusable(fd, sp->flags);
+		ok = (unusable != DEVICE_ZONE_UNUSABLE_UNKNOWN);
 
 		printf("%s, %s: total=%s, used=%s%s%s\n",
 			btrfs_group_type_str(sp->flags),
