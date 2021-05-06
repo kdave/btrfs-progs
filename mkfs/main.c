@@ -1556,7 +1556,7 @@ raid_groups:
 		printf("SSD detected:       %s\n", ssd ? "yes" : "no");
 		printf("Zoned device:       %s\n", zoned ? "yes" : "no");
 		if (zoned)
-			printf("Zone size:          %s\n",
+			printf("  Zone size:        %s\n",
 			       pretty_size(fs_info->zone_size));
 		btrfs_parse_fs_features_to_string(features_buf, features);
 		printf("Incompat features:  %s\n", features_buf);
