@@ -685,6 +685,36 @@ out:
 }
 
 /*
+ * Check for signature at the offset 0 that would be present in case of zoned
+ * device. Workaround for old blkid that do not recognize the format to avoid
+ * accidental overwrites.
+ */
+static int check_btrfs_signature_zoned(const char *device)
+{
+	int fd;
+	int ret;
+	char buf[BTRFS_SUPER_INFO_SIZE];
+	struct btrfs_super_block *sb;
+
+	fd = open(device, O_RDONLY);
+	if (fd < 0)
+		return -1;
+	ret = pread(fd, buf, BTRFS_SUPER_INFO_SIZE, 0);
+	if (ret < 0) {
+		ret = -1;
+		goto out;
+	}
+	sb = (struct btrfs_super_block *)buf;
+	if (btrfs_super_magic(sb) == BTRFS_MAGIC)
+		ret = 1;
+	else
+		ret = 0;
+out:
+	close(fd);
+	return ret;
+}
+
+/*
  * Check for existing filesystem or partition table on device.
  * Returns:
  *	 1 for existing fs or partition
@@ -759,6 +789,23 @@ out:
 		fprintf(stderr,
 			"probe of %s failed, cannot detect "
 			  "existing filesystem.\n", device);
+
+	/* Either nothing found or there was an error is a reason to double check */
+	if (ret == 0 || ret == -1) {
+		ret = check_btrfs_signature_zoned(device);
+		if (ret > 0) {
+			warning(
+"%s contains zoned btrfs signature but was not detected by blkid, please update",
+				device);
+			ret = 1;
+		} else if (ret < 0) {
+			warning(
+			"cannot read superblock on %s, please check manually\n",
+				device);
+			ret = -1;
+		}
+	}
+
 	return ret;
 }
 
