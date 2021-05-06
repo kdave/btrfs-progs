@@ -126,8 +126,6 @@ To do:
 - 32bit coverage -- while this architecture is fading out, it may be useful to
   still have some coverage, however running 32bit docker in 64bit is not
   considered experimental does not work out of the box
-- static build -- when all build dependencies provide the static library
-  versions, it's possible to to build the static binaries of all the tools
 - add some kind of templates, there's a lot of repeated stuff in the
   *Dockerfile*s and the scripts need to be inside the directories in order to
   allow copying them to the image

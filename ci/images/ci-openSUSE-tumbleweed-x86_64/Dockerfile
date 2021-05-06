@@ -20,6 +20,11 @@ RUN zypper install -y --no-recommends udev device-mapper acl attr xz
 # For debugging
 RUN zypper install -y --no-recommends less vim
 
+# Static build
+RUN zypper install -y --no-recommends glibc-devel-static libblkid-devel-static \
+	    libcom_err-devel-static libext2fs-devel-static libuuid-devel-static \
+	    libzstd-devel-static lzo-devel-static zlib-devel-static
+
 COPY ./test-build .
 COPY ./run-tests .
 COPY ./devel.tar.gz .
@@ -30,3 +35,7 @@ CMD ./test-build devel --disable-documentation
 # cd /tmp
 # (see CMD above)
 # ./run-tests /tmp/btrfs-progs-devel
+#
+# To test static build:
+# cd btrfs-progs-devel
+# make static
