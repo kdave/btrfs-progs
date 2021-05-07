@@ -346,6 +346,17 @@ write operations.
 Force check and rebuild procedure of the UUID tree. This should not
 normally be needed.
 
+*rescue*::
+(since: 5.9)
++
+Modes allowing mount with damaged filesystem structures.
++
+* 'usebackuproot' (since: 5.9, replaces standalone option 'usebackuproot')
+* 'nologreplay' (since: 5.9, replaces standalone option 'nologreplay')
+* 'ignorebadroots', 'ibadroots' (since: 5.11)
+* 'ignoredatacsums', 'idatacsums' (since: 5.11)
+* 'all' (since: 5.9)
+
 *skip_balance*::
 (since: 3.3, default: off)
 +
@@ -629,12 +640,35 @@ ordinary directory. Note that this feature only depends on the kernel version.
 +
 reduced-size metadata for extent references, saves a few percent of metadata
 
+*send_stream_version*::
+(since: 5.10)
++
+number of the highest supported send stream version
+
 *supported_checksums*::
 (since: 5.5)
 +
 list of checksum algorithms supported by the kernel module, the respective
 modules or built-in implementing the algorithms need to be present to mount
-the filesystem
+the filesystem, see 'CHECKSUM ALGORITHMS'
+
+*supported_sectorsizes*::
+(since: 5.13)
++
+list of values that are accepted as sector sizes (*mkfs.btrfs --sectorsize*) by
+the running kernel
+
+*supported_rescue_options*::
+(since: 5.11)
++
+list of values for the mount option 'rescue' that are supported by the running
+kernel, see `btrfs`(5)
+
+*zoned*::
+(since: 5.12)
++
+zoned mode is allocation/write friendly to host-managed devices, allocation
+space is split into fixed-size zones that must be updated sequentially
 
 SWAPFILE SUPPORT
 ~~~~~~~~~~~~~~~~
