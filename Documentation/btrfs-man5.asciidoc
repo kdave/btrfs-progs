@@ -290,30 +290,6 @@ type can be 'data', 'metadata' or 'all'. This mount option should not be used
 outside of debugging environments and is not recognized if the kernel config
 option 'BTRFS_DEBUG' is not enabled.
 
-*inode_cache*::
-*noinode_cache*::
-(since: 3.0, default: off)
-+
-Enable free inode number caching. Not recommended to use unless files on your
-filesystem get assigned inode numbers that are approaching 2^64^. Normally, new
-files in each subvolume get assigned incrementally (plus one from the last
-time) and are not reused. The mount option turns on caching of the existing
-inode numbers and reuse of inode numbers of deleted files.
-+
-This option may slow down your system at first run, or after mounting without
-the option.
-+
-NOTE: Defaults to off due to a potential overflow problem when the free space
-checksums don't fit inside a single page.
-+
-Don't use this option unless you really need it. The inode number limit
-on 64bit system is 2^64^, which is practically enough for the whole filesystem
-lifetime. Due to implementation of linux VFS layer, the inode numbers on 32bit
-systems are only 32 bits wide. This lowers the limit significantly and makes
-it possible to reach it. In such case, this mount option will help.
-Alternatively, files with high inode numbers can be copied to a new subvolume
-which will effectively start the inode numbers from the beginning again.
-
 *nologreplay*::
 (default: off, even read-only)
 +
@@ -506,6 +482,15 @@ List of mount options that have been removed, kept for backward compatibility.
 +
 NOTE: this option has been replaced by 'usebackuproot' and should not be used
 but will work on 4.5+ kernels.
+
+*inode_cache*::
+*noinode_cache*::
+(removed in: 5.11, since: 3.0, default: off)
++
+NOTE: the functionality has been removed in 5.11, any stale data created by
+previous use of the 'inode_cache' option can be removed by *btrfs check
+--clear-ino-cache*.
+
 
 NOTES ON GENERIC MOUNT OPTIONS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
