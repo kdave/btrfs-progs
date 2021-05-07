@@ -1661,13 +1661,13 @@ int sysfs_read_file(int fd, char *buf, size_t size)
 }
 
 static const char exclop_def[][16] = {
-	[BTRFS_EXCLOP_NONE]		"none",
-	[BTRFS_EXCLOP_BALANCE]		"balance",
-	[BTRFS_EXCLOP_DEV_ADD]		"device add",
-	[BTRFS_EXCLOP_DEV_REMOVE]	"device remove",
-	[BTRFS_EXCLOP_DEV_REPLACE]	"device replace",
-	[BTRFS_EXCLOP_RESIZE]		"resize",
-	[BTRFS_EXCLOP_SWAP_ACTIVATE]	"swap activate",
+	[BTRFS_EXCLOP_NONE]		= "none",
+	[BTRFS_EXCLOP_BALANCE]		= "balance",
+	[BTRFS_EXCLOP_DEV_ADD]		= "device add",
+	[BTRFS_EXCLOP_DEV_REMOVE]	= "device remove",
+	[BTRFS_EXCLOP_DEV_REPLACE]	= "device replace",
+	[BTRFS_EXCLOP_RESIZE]		= "resize",
+	[BTRFS_EXCLOP_SWAP_ACTIVATE]	= "swap activate",
 };
 
 /*
