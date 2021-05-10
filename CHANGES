@@ -1,3 +1,27 @@
+btrfs-progs-5.12 (2021-05-10)
+  * libbtrfsutil: relicensed to LGPL v2.1+
+  * mkfs: zoned mode support (kernel 5.12+)
+  * fi df: show zone_unusable per profile type in zoned mode
+  * fi usage: show total amount of zone_unusable
+  * fi resize: fix message for exact size
+  * image: fix warning and enlarge output file if necessary
+  * core
+    * refactor chunk allocator for more modes
+    * implement zoned mode support: allocation and writes, sb log
+    * crypto/hash refactoring and cleanups
+    * refactoring and cleanups
+  * other
+    * test updates
+    * CI updates
+      * travis-ci integration disabled
+      * docker images updated, more coverage
+    * incomplete build support for Android removed
+  * doc updates
+    * chattr mode m for 'NOCOMPRESS"
+    * swapfile used from fstab
+    * how to add a new export to libbtrfsutil
+    * update status of mount options since 5.9
+
 btrfs-progs-5.11.1 (2021-03-24)
   * properly format checksums when a mismatch is reported
   * check: fix false alert on tree block crossing 64K page boundary
