@@ -149,8 +149,7 @@ objects = kernel-shared/dir-item.o \
 	  common/string-table.o common/task-utils.o \
 	  kernel-shared/inode.o kernel-shared/file.o common/help.o cmds/receive-dump.o \
 	  common/fsfeatures.o \
-	  common/format-output.o \
-	  common/device-utils.o
+	  common/format-output.o
 cmds_objects = cmds/subvolume.o cmds/filesystem.o cmds/device.o cmds/scrub.o \
 	       cmds/inspect.o cmds/balance.o cmds/send.o cmds/receive.o \
 	       cmds/quota.o cmds/qgroup.o cmds/replace.o check/main.o \
@@ -174,7 +173,7 @@ libbtrfs_objects = common/send-stream.o common/send-utils.o kernel-lib/rbtree.o 
 		   common/device-scan.o common/path-utils.o \
 		   common/utils.o libbtrfsutil/subvolume.o libbtrfsutil/stubs.o \
 		   crypto/hash.o crypto/xxhash.o $(CRYPTO_OBJECTS) \
-		   common/open-utils.o common/units.o
+		   common/open-utils.o common/units.o common/device-utils.o
 libbtrfs_headers = common/send-stream.h common/send-utils.h send.h kernel-lib/rbtree.h btrfs-list.h \
 	       crypto/crc32c.h kernel-lib/list.h kerncompat.h \
 	       kernel-lib/radix-tree.h kernel-lib/sizes.h kernel-lib/raid56.h \
