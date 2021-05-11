@@ -192,8 +192,8 @@ int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 	memcpy(&dev_item->uuid, device->uuid, BTRFS_UUID_SIZE);
 
 	ret = sbwrite(fd, buf, BTRFS_SUPER_INFO_OFFSET);
-	BUG_ON(ret != sectorsize);
-
+	/* Ensure super block was written to the device */
+	BUG_ON(ret != BTRFS_SUPER_INFO_SIZE);
 	free(buf);
 	list_add(&device->dev_list, &fs_info->fs_devices->devices);
 	device->fs_devices = fs_info->fs_devices;

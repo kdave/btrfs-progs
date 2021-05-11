@@ -51,11 +51,29 @@ int btrfs_check_zoned_mode(struct btrfs_fs_info *fs_info);
 #ifdef BTRFS_ZONED
 size_t btrfs_sb_io(int fd, void *buf, off_t offset, int rw);
 
+/*
+ * Read BTRFS_SUPER_INFO_SIZE bytes from fd to buf
+ *
+ * @fd		fd of the device to be read from
+ * @buf:	buffer contains a super block
+ * @offset:	offset of the superblock
+ *
+ * Return count of bytes successfully read.
+ */
 static inline size_t sbread(int fd, void *buf, off_t offset)
 {
 	return btrfs_sb_io(fd, buf, offset, READ);
 }
 
+/*
+ * Write BTRFS_SUPER_INFO_SIZE bytes from buf to fd
+ *
+ * @fd		fd of the device to be written to
+ * @buf:	buffer contains a super block
+ * @offset:	offset of the superblock
+ *
+ * Return count of bytes successfully written.
+ */
 static inline size_t sbwrite(int fd, void *buf, off_t offset)
 {
 	return btrfs_sb_io(fd, buf, offset, WRITE);
