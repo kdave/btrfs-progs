@@ -7,7 +7,18 @@ eventually.
 
 ## Hosted
 
-No active hosted CI is currently set up.
+No active hosted CI is currently set up, we're looking for one.
+
+Reuirements:
+
+* recent kernel, latest stable if possible, 5.10 is minimum
+* ability to run commands as root
+* ability to create loop devices (losetup)
+* ability to mount and unmount filesystems
+* integration with github/gitlab repository to watch for updates
+* enough granted run time to finish the testsuite
+* (optional) run docker images
+* (nice to have) web gui with results, email notifications
 
 **Gitlab**
 
