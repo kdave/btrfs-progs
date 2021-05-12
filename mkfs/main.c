@@ -1283,6 +1283,20 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			min_dev_size);
 		goto error;
 	}
+	/*
+	 * 2 zones for the primary superblock
+	 * 1 zone for the system block group
+	 * 1 zone for a metadata block group
+	 * 1 zone for a data block group
+	 */
+	if (zoned && block_count && block_count < 5 * zone_size(file)) {
+		error("size %llu is too small to make a usable filesystem",
+			block_count);
+		error("minimum size for a zoned btrfs filesystem is %llu",
+			min_dev_size);
+		goto error;
+	}
+
 	for (i = saved_optind; i < saved_optind + dev_cnt; i++) {
 		char *path;
 
