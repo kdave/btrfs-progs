@@ -22,6 +22,9 @@ dependencies are not desired.
 - libsodium
 - libkcapi
 
+For zoned device support, the system headers installed in /usr/include/linux
+must be 5.10 or newer.
+
 Generating documentation:
 
 - asciidoc - text document format tool
