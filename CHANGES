@@ -1,3 +1,9 @@
+btrfs-progs-5.12.1 (2021-05-13)
+  * build: fix missing symbols in libbtrfs
+  * mkfs: check for minimal number of zones
+  * check: fix warning about cache generation when free space tree is enabled
+  * fix superblock write in zoned mode on 16K pages
+
 btrfs-progs-5.12 (2021-05-10)
   * libbtrfsutil: relicensed to LGPL v2.1+
   * mkfs: zoned mode support (kernel 5.12+)
