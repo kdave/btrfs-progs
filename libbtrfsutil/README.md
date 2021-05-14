@@ -483,3 +483,24 @@ everywhere. The following checklist should help to make sure nothing is missing:
 * `python/module.c` add binding description entry for the new functions
 * `python/tests/test_*.py` write test for the new functionality
 * `README.md` add documentation for the new functions
+
+### API summary
+
+* filesystem
+  * sync
+  * wait for sync
+* subvolume
+  * create
+  * delete
+  * is subvolume
+  * get containing subvolume id
+  * get path of id
+  * get info
+  * set/get default
+  * set/get read-only flag
+  * list (live and deleted)
+* qgroups
+  * create
+  * inherit
+  * add relation
+  * destroy
