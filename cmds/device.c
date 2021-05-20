@@ -194,6 +194,7 @@ static int _cmd_device_remove(const struct cmd_struct *cmd,
 	int i, fdmnt, ret = 0;
 	DIR	*dirstream = NULL;
 	bool enqueue = false;
+	bool cancel = false;
 
 	optind = 0;
 	while (1) {
@@ -225,12 +226,30 @@ static int _cmd_device_remove(const struct cmd_struct *cmd,
 	if (fdmnt < 0)
 		return 1;
 
-	ret = check_running_fs_exclop(fdmnt, BTRFS_EXCLOP_DEV_REMOVE, enqueue);
-	if (ret != 0) {
-		if (ret < 0)
-			error("unable to check status of exclusive operation: %m");
-		close_file_or_dir(fdmnt, dirstream);
-		return 1;
+	/* Scan device arguments for 'cancel', that must be the only "device" */
+	for (i = optind; i < argc - 1; i++) {
+		if (cancel) {
+			error("cancel requested but another device specified: %s\n",
+				argv[i]);
+			close_file_or_dir(fdmnt, dirstream);
+			return 1;
+		}
+		if (strcmp("cancel", argv[i]) == 0) {
+			cancel = true;
+			printf("Request to cancel running device deletion\n");
+		}
+	}
+
+	if (!cancel) {
+		ret = check_running_fs_exclop(fdmnt, BTRFS_EXCLOP_DEV_REMOVE,
+					      enqueue);
+		if (ret != 0) {
+			if (ret < 0)
+				error(
+			"unable to check status of exclusive operation: %m");
+			close_file_or_dir(fdmnt, dirstream);
+			return 1;
+		}
 	}
 
 	for(i = optind; i < argc - 1; i++) {
@@ -243,8 +262,9 @@ static int _cmd_device_remove(const struct cmd_struct *cmd,
 			argv2.devid = arg_strtou64(argv[i]);
 			argv2.flags = BTRFS_DEVICE_SPEC_BY_ID;
 			is_devid = 1;
-		} else if (path_is_block_device(argv[i]) == 1 ||
-				strcmp(argv[i], "missing") == 0) {
+		} else if (strcmp(argv[i], "missing") == 0 ||
+			   cancel ||
+			   path_is_block_device(argv[i]) == 1) {
 			strncpy_null(argv2.name, argv[i]);
 		} else {
 			error("not a block device: %s", argv[i]);
@@ -303,7 +323,11 @@ static int _cmd_device_remove(const struct cmd_struct *cmd,
 	"the device.",								\
 	"If 'missing' is specified for <device>, the first device that is",	\
 	"described by the filesystem metadata, but not present at the mount",	\
-	"time will be removed. (only in degraded mode)"
+	"time will be removed. (only in degraded mode)",			\
+	"If 'cancel' is specified as the only device to delete, request cancelation", \
+	"of a previously started device deletion and wait until kernel finishes", \
+	"any pending work. This will not delete the device and the size will be", \
+	"restored to previous state. When deletion is not running, this will fail."
 
 static const char * const cmd_device_remove_usage[] = {
 	"btrfs device remove <device>|<devid> [<device>|<devid>...] <path>",
