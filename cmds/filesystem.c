@@ -1151,6 +1151,10 @@ static int check_resize_args(const char *amount, const char *path) {
 
 	if (strcmp(sizestr, "max") == 0) {
 		res_str = "max";
+	} else if (strcmp(sizestr, "cancel") == 0) {
+		/* Different format, print and exit */
+		printf("Request to cancel resize\n");
+		goto out;
 	} else {
 		if (sizestr[0] == '-') {
 			mod = -1;
@@ -1211,6 +1215,7 @@ static int cmd_filesystem_resize(const struct cmd_struct *cmd,
 	DIR	*dirstream = NULL;
 	int ret;
 	bool enqueue = false;
+	bool cancel = false;
 
 	/*
 	 * Simplified option parser, accept only long options, the resize value
@@ -1242,6 +1247,8 @@ static int cmd_filesystem_resize(const struct cmd_struct *cmd,
 		return 1;
 	}
 
+	cancel = (strcmp("cancel", amount) == 0);
+
 	fd = btrfs_open_dir(path, &dirstream, 1);
 	if (fd < 0) {
 		/* The path is a directory */
@@ -1254,12 +1261,20 @@ static int cmd_filesystem_resize(const struct cmd_struct *cmd,
 		return 1;
 	}
 
-	ret = check_running_fs_exclop(fd, BTRFS_EXCLOP_RESIZE, enqueue);
-	if (ret != 0) {
-		if (ret < 0)
-			error("unable to check status of exclusive operation: %m");
-		close_file_or_dir(fd, dirstream);
-		return 1;
+	/*
+	 * Check if there's an exclusive operation running if possible, otherwise
+	 * let kernel handle it. Cancel request is completely handled in kernel
+	 * so make it pass.
+	 */
+	if (!cancel) {
+		ret = check_running_fs_exclop(fd, BTRFS_EXCLOP_RESIZE, enqueue);
+		if (ret != 0) {
+			if (ret < 0)
+				error(
+			"unable to check status of exclusive operation: %m");
+			close_file_or_dir(fd, dirstream);
+			return 1;
+		}
 	}
 
 	ret = check_resize_args(amount, path);
