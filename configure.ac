@@ -58,6 +58,8 @@ AC_CHECK_FUNCS([openat], [],
 
 AC_CHECK_FUNCS([reallocarray])
 
+AC_CHECK_FUNCS([clock_gettime])
+
 m4_ifndef([PKG_PROG_PKG_CONFIG],
   [m4_fatal([Could not locate the pkg-config autoconf
     macros. These are usually located in /usr/share/aclocal/pkg.m4.
