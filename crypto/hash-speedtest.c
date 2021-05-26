@@ -87,6 +87,7 @@ int main(int argc, char **argv) {
 		int (*digest)(const u8 *buf, size_t length, u8 *out);
 		int digest_size;
 		u64 cycles;
+		u64 time;
 	} contestants[] = {
 		{ .name = "NULL-NOP", .digest = hash_null_nop, .digest_size = 32 },
 		{ .name = "NULL-MEMCPY", .digest = hash_null_memcpy, .digest_size = 32 },
@@ -145,24 +146,41 @@ int main(int argc, char **argv) {
 	for (idx = 0; idx < ARRAY_SIZE(contestants); idx++) {
 		struct contestant *c = &contestants[idx];
 		u64 start, end;
+		u64 tstart, tend;
+		u64 total;
 
 		printf("% 12s: ", c->name);
 		fflush(stdout);
 
-		start = (units ? get_time() : get_cycles());
+		tstart = get_time();
+		start = get_cycles();
 		for (iter = 0; iter < iterations; iter++) {
 			memset(buf, iter & 0xFF, blocksize);
 			memset(hash, 0, 32);
 			c->digest(buf, blocksize, hash);
 		}
-		end = (units ? get_time() : get_cycles());
+		end = get_cycles();
+		tend = get_time();
 		c->cycles = end - start;
+		c->time = tend - tstart;
 
-		printf("%: % 12llu, %s/i % 8llu\n",
-				units_to_str(units),
-				(unsigned long long)c->cycles,
-				units_to_str(units),
-				(unsigned long long)c->cycles / iterations);
+		if (units == 0)
+			total = c->cycles;
+		if (units == 1)
+			total = c->time;
+
+		printf("%s: % 12llu, %s/i % 8llu",
+				units_to_str(units), total,
+				units_to_str(units), total / iterations);
+		if (idx > 0) {
+			float t;
+			float mb;
+
+			t = (float)c->time / 1000 / 1000 / 1000;
+			mb = blocksize * iterations / 1024 / 1024;
+			printf(", % 12.3f MiB/s", mb / t);
+		}
+		putchar('\n');
 	}
 
 	return 0;
