@@ -149,7 +149,7 @@ int main(int argc, char **argv) {
 		u64 tstart, tend;
 		u64 total;
 
-		printf("% 12s: ", c->name);
+		printf("%12s: ", c->name);
 		fflush(stdout);
 
 		tstart = get_time();
@@ -169,7 +169,7 @@ int main(int argc, char **argv) {
 		if (units == 1)
 			total = c->time;
 
-		printf("%s: % 12llu, %s/i % 8llu",
+		printf("%s: %12llu, %s/i %8llu",
 				units_to_str(units), total,
 				units_to_str(units), total / iterations);
 		if (idx > 0) {
@@ -178,7 +178,7 @@ int main(int argc, char **argv) {
 
 			t = (float)c->time / 1000 / 1000 / 1000;
 			mb = blocksize * iterations / 1024 / 1024;
-			printf(", % 12.3f MiB/s", mb / t);
+			printf(", %12.3f MiB/s", mb / t);
 		}
 		putchar('\n');
 	}
