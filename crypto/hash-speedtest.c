@@ -94,7 +94,7 @@ int main(int argc, char **argv) {
 		{ .name = "CRC32C", .digest = hash_crc32c, .digest_size = 4 },
 		{ .name = "XXHASH", .digest = hash_xxhash, .digest_size = 8 },
 		{ .name = "SHA256", .digest = hash_sha256, .digest_size = 32 },
-		{ .name = "BLAKE2b", .digest = hash_blake2b, .digest_size = 32 },
+		{ .name = "BLAKE2", .digest = hash_blake2b, .digest_size = 32 },
 	};
 	int units = 0;
 
