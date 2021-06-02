@@ -19,8 +19,6 @@
 #ifndef __PRINT_TREE_H__
 #define __PRINT_TREE_H__
 
-void btrfs_print_leaf(struct extent_buffer *l);
-
 enum {
 	/* Depth-first search, nodes and leaves can be interleaved */
 	BTRFS_PRINT_TREE_DFS		= (1 << 0),
@@ -28,10 +26,15 @@ enum {
 	BTRFS_PRINT_TREE_BFS		= (1 << 1),
 	/* Follow to child nodes */
 	BTRFS_PRINT_TREE_FOLLOW		= (1 << 2),
+	/* Print checksum of node/leaf */
+	BTRFS_PRINT_TREE_CSUM_HEADERS	= (1 << 3),
+	/* Print checksums in checksum items */
+	BTRFS_PRINT_TREE_CSUM_ITEMS	= (1 << 4),
 	BTRFS_PRINT_TREE_DEFAULT = BTRFS_PRINT_TREE_BFS,
 };
 
 void btrfs_print_tree(struct extent_buffer *eb, unsigned int mode);
+void btrfs_print_leaf(struct extent_buffer *eb, unsigned int mode);
 
 void btrfs_print_key(struct btrfs_disk_key *disk_key);
 void print_chunk_item(struct extent_buffer *eb, struct btrfs_chunk *chunk);

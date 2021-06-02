@@ -46,7 +46,7 @@ static void print_extents(struct extent_buffer *eb)
 		return;
 
 	if (btrfs_is_leaf(eb)) {
-		btrfs_print_leaf(eb);
+		btrfs_print_leaf(eb, BTRFS_PRINT_TREE_DEFAULT);
 		return;
 	}
 
@@ -207,6 +207,8 @@ static const char * const cmd_inspect_dump_tree_usage[] = {
 	"--bfs                  breadth-first traversal of the trees, print nodes, then leaves (default)",
 	"--dfs                  depth-first traversal of the trees",
 	"--hide-names           hide filenames/subvolume/xattrs and other name references",
+	"--csum-headers         print node checksums stored in headers (metadata)",
+	"--csum-items           print checksums stored in checksum items (data)",
 	NULL
 };
 
@@ -318,6 +320,8 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 	struct btrfs_root *tree_root_scan;
 	u64 tree_id = 0;
 	unsigned int follow = 0;
+	unsigned int csum_mode = 0;
+	unsigned int print_mode;
 
 	/*
 	 * For debug-tree, we care nothing about extent tree (it's just backref
@@ -332,7 +336,9 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 	while (1) {
 		int c;
 		enum { GETOPT_VAL_FOLLOW = 256, GETOPT_VAL_DFS, GETOPT_VAL_BFS,
-		       GETOPT_VAL_NOSCAN, GETOPT_VAL_HIDE_NAMES };
+		       GETOPT_VAL_NOSCAN, GETOPT_VAL_HIDE_NAMES,
+		       GETOPT_VAL_CSUM_HEADERS, GETOPT_VAL_CSUM_ITEMS,
+		};
 		static const struct option long_options[] = {
 			{ "extents", no_argument, NULL, 'e'},
 			{ "device", no_argument, NULL, 'd'},
@@ -346,6 +352,8 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 			{ "dfs", no_argument, NULL, GETOPT_VAL_DFS },
 			{ "noscan", no_argument, NULL, GETOPT_VAL_NOSCAN },
 			{ "hide-names", no_argument, NULL, GETOPT_VAL_HIDE_NAMES },
+			{ "csum-headers", no_argument, NULL, GETOPT_VAL_CSUM_HEADERS },
+			{ "csum-items", no_argument, NULL, GETOPT_VAL_CSUM_ITEMS },
 			{ NULL, 0, NULL, 0 }
 		};
 
@@ -416,6 +424,12 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 		case GETOPT_VAL_HIDE_NAMES:
 			open_ctree_flags |= OPEN_CTREE_HIDE_NAMES;
 			break;
+		case GETOPT_VAL_CSUM_HEADERS:
+			csum_mode |= BTRFS_PRINT_TREE_CSUM_HEADERS;
+			break;
+		case GETOPT_VAL_CSUM_ITEMS:
+			csum_mode |= BTRFS_PRINT_TREE_CSUM_ITEMS;
+			break;
 		default:
 			usage_unknown_option(cmd, argv);
 		}
@@ -468,9 +482,11 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 		goto out;
 	}
 
+	print_mode = follow | traverse | csum_mode;
+
 	if (!cache_tree_empty(&block_root)) {
 		root = info->chunk_root;
-		ret = dump_print_tree_blocks(info, &block_root, follow | traverse);
+		ret = dump_print_tree_blocks(info, &block_root, print_mode);
 		goto close_root;
 	}
 
@@ -497,19 +513,19 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 			if (info->tree_root->node) {
 				printf("root tree\n");
 				btrfs_print_tree(info->tree_root->node,
-					BTRFS_PRINT_TREE_FOLLOW | traverse);
+					BTRFS_PRINT_TREE_FOLLOW | print_mode);
 			}
 
 			if (info->chunk_root->node) {
 				printf("chunk tree\n");
 				btrfs_print_tree(info->chunk_root->node,
-					BTRFS_PRINT_TREE_FOLLOW | traverse);
+					BTRFS_PRINT_TREE_FOLLOW | print_mode);
 			}
 
 			if (info->log_root_tree) {
 				printf("log root tree\n");
 				btrfs_print_tree(info->log_root_tree->node,
-					BTRFS_PRINT_TREE_FOLLOW | traverse);
+					BTRFS_PRINT_TREE_FOLLOW | print_mode);
 			}
 		}
 	}
@@ -530,7 +546,7 @@ again:
 		}
 		printf("root tree\n");
 		btrfs_print_tree(info->tree_root->node,
-				 BTRFS_PRINT_TREE_FOLLOW | traverse);
+					BTRFS_PRINT_TREE_FOLLOW | print_mode);
 		goto close_root;
 	}
 
@@ -541,7 +557,7 @@ again:
 		}
 		printf("chunk tree\n");
 		btrfs_print_tree(info->chunk_root->node,
-				 BTRFS_PRINT_TREE_FOLLOW | traverse);
+					BTRFS_PRINT_TREE_FOLLOW | print_mode);
 		goto close_root;
 	}
 
@@ -552,7 +568,7 @@ again:
 		}
 		printf("log root tree\n");
 		btrfs_print_tree(info->log_root_tree->node,
-				 BTRFS_PRINT_TREE_FOLLOW | traverse);
+					BTRFS_PRINT_TREE_FOLLOW | print_mode);
 		goto close_root;
 	}
 
@@ -699,7 +715,7 @@ again:
 				} else {
 					printf(" \n");
 					btrfs_print_tree(buf,
-						BTRFS_PRINT_TREE_FOLLOW | traverse);
+						BTRFS_PRINT_TREE_FOLLOW | print_mode);
 				}
 			}
 			free_extent_buffer(buf);

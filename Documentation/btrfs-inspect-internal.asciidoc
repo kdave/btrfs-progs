@@ -114,6 +114,10 @@ This is:
 +
 NOTE: lengths are not hidden because they can be calculated from the item size anyway.
 +
+--csum-headers::::
+print b-tree node checksums stored in headers (metadata)
+--csum-items::::
+print checksums stored in checksum items (data)
 --noscan::::
 do not automatically scan the system for other devices from the same
 filesystem, only use the devices provided as the arguments
