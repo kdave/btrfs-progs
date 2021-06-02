@@ -250,7 +250,7 @@ static int dump_add_tree_block(struct cache_tree *tree, u64 bytenr)
  * error.
  */
 static int dump_print_tree_blocks(struct btrfs_fs_info *fs_info,
-				  struct cache_tree *tree, bool follow)
+				  struct cache_tree *tree, unsigned int mode)
 {
 	struct cache_extent *ce;
 	struct extent_buffer *eb;
@@ -280,7 +280,7 @@ static int dump_print_tree_blocks(struct btrfs_fs_info *fs_info,
 			ret = -EIO;
 			goto next;
 		}
-		btrfs_print_tree(eb, follow, BTRFS_PRINT_TREE_DEFAULT);
+		btrfs_print_tree(eb, mode);
 		free_extent_buffer(eb);
 next:
 		remove_cache_extent(tree, ce);
@@ -317,7 +317,7 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 	u64 block_bytenr;
 	struct btrfs_root *tree_root_scan;
 	u64 tree_id = 0;
-	bool follow = false;
+	unsigned int follow = 0;
 
 	/*
 	 * For debug-tree, we care nothing about extent tree (it's just backref
@@ -402,7 +402,7 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 			break;
 			}
 		case GETOPT_VAL_FOLLOW:
-			follow = true;
+			follow = BTRFS_PRINT_TREE_FOLLOW;
 			break;
 		case GETOPT_VAL_DFS:
 			traverse = BTRFS_PRINT_TREE_DFS;
@@ -470,7 +470,7 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 
 	if (!cache_tree_empty(&block_root)) {
 		root = info->chunk_root;
-		ret = dump_print_tree_blocks(info, &block_root, follow);
+		ret = dump_print_tree_blocks(info, &block_root, follow | traverse);
 		goto close_root;
 	}
 
@@ -496,20 +496,20 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 		} else {
 			if (info->tree_root->node) {
 				printf("root tree\n");
-				btrfs_print_tree(info->tree_root->node, true,
-						 traverse);
+				btrfs_print_tree(info->tree_root->node,
+					BTRFS_PRINT_TREE_FOLLOW | traverse);
 			}
 
 			if (info->chunk_root->node) {
 				printf("chunk tree\n");
-				btrfs_print_tree(info->chunk_root->node, true,
-						 traverse);
+				btrfs_print_tree(info->chunk_root->node,
+					BTRFS_PRINT_TREE_FOLLOW | traverse);
 			}
 
 			if (info->log_root_tree) {
 				printf("log root tree\n");
 				btrfs_print_tree(info->log_root_tree->node,
-						 true, traverse);
+					BTRFS_PRINT_TREE_FOLLOW | traverse);
 			}
 		}
 	}
@@ -529,7 +529,8 @@ again:
 			goto close_root;
 		}
 		printf("root tree\n");
-		btrfs_print_tree(info->tree_root->node, true, traverse);
+		btrfs_print_tree(info->tree_root->node,
+				 BTRFS_PRINT_TREE_FOLLOW | traverse);
 		goto close_root;
 	}
 
@@ -539,7 +540,8 @@ again:
 			goto close_root;
 		}
 		printf("chunk tree\n");
-		btrfs_print_tree(info->chunk_root->node, true, traverse);
+		btrfs_print_tree(info->chunk_root->node,
+				 BTRFS_PRINT_TREE_FOLLOW | traverse);
 		goto close_root;
 	}
 
@@ -549,7 +551,8 @@ again:
 			goto close_root;
 		}
 		printf("log root tree\n");
-		btrfs_print_tree(info->log_root_tree->node, true, traverse);
+		btrfs_print_tree(info->log_root_tree->node,
+				 BTRFS_PRINT_TREE_FOLLOW | traverse);
 		goto close_root;
 	}
 
@@ -695,7 +698,8 @@ again:
 					       btrfs_header_level(buf));
 				} else {
 					printf(" \n");
-					btrfs_print_tree(buf, true, traverse);
+					btrfs_print_tree(buf,
+						BTRFS_PRINT_TREE_FOLLOW | traverse);
 				}
 			}
 			free_extent_buffer(buf);

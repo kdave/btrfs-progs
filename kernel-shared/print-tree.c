@@ -1462,8 +1462,7 @@ static void bfs_print_children(struct extent_buffer *root_eb)
 
 		/* Print all sibling tree blocks */
 		while (1) {
-			btrfs_print_tree(path.nodes[cur_level], 0,
-					 BTRFS_PRINT_TREE_BFS);
+			btrfs_print_tree(path.nodes[cur_level], BTRFS_PRINT_TREE_BFS);
 			ret = btrfs_next_sibling_tree_block(fs_info, &path);
 			if (ret < 0)
 				goto out;
@@ -1504,12 +1503,18 @@ static void dfs_print_children(struct extent_buffer *root_eb)
 			free_extent_buffer(next);
 			continue;
 		}
-		btrfs_print_tree(next, 1, BTRFS_PRINT_TREE_DFS);
+		btrfs_print_tree(next, BTRFS_PRINT_TREE_FOLLOW | BTRFS_PRINT_TREE_DFS);
 		free_extent_buffer(next);
 	}
 }
 
-void btrfs_print_tree(struct extent_buffer *eb, bool follow, int traverse)
+/*
+ * Print a tree block (applies to both node and leaf).
+ *
+ * @eb:		tree block where to start
+ * @mode:	bits setting mode of operation, see BTRFS_PRINT_TREE_*
+ */
+void btrfs_print_tree(struct extent_buffer *eb, unsigned int mode)
 {
 	u32 i;
 	u32 nr;
@@ -1517,11 +1522,16 @@ void btrfs_print_tree(struct extent_buffer *eb, bool follow, int traverse)
 	struct btrfs_fs_info *fs_info = eb->fs_info;
 	struct btrfs_disk_key disk_key;
 	struct btrfs_key key;
+	const bool follow = (mode & BTRFS_PRINT_TREE_FOLLOW);
+	unsigned int traverse = BTRFS_PRINT_TREE_DEFAULT;
 
 	if (!eb)
 		return;
-	if (traverse != BTRFS_PRINT_TREE_DFS && traverse != BTRFS_PRINT_TREE_BFS)
-		traverse = BTRFS_PRINT_TREE_DEFAULT;
+	/* BFS is default and takes precedence if both are set */
+	if (mode & BTRFS_PRINT_TREE_DFS)
+		traverse = BTRFS_PRINT_TREE_DFS;
+	if (mode & BTRFS_PRINT_TREE_BFS)
+		traverse = BTRFS_PRINT_TREE_BFS;
 
 	nr = btrfs_header_nritems(eb);
 	if (btrfs_is_leaf(eb)) {
@@ -1557,7 +1567,6 @@ void btrfs_print_tree(struct extent_buffer *eb, bool follow, int traverse)
 		dfs_print_children(eb);
 	else
 		bfs_print_children(eb);
-	return;
 }
 
 static bool is_valid_csum_type(u16 csum_type)
