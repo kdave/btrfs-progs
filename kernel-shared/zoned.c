@@ -488,9 +488,14 @@ size_t btrfs_sb_io(int fd, void *buf, off_t offset, int rw)
 	/* Do not call ioctl(BLKGETZONESZ) on a regular file. */
 	if ((stat_buf.st_mode & S_IFMT) == S_IFBLK) {
 		ret = ioctl(fd, BLKGETZONESZ, &zone_size_sector);
-		if (ret) {
-			error("zoned: ioctl BLKGETZONESZ failed (%m)");
-			exit(1);
+		if (ret < 0) {
+			if (errno == ENOTTY) {
+				/* No kernel support, assuming non-zoned device */
+				zone_size_sector = 0;
+			} else {
+				error("zoned: ioctl BLKGETZONESZ failed: %m");
+				exit(1);
+			}
 		}
 	} else {
 		zone_size_sector = 0;
@@ -528,7 +533,11 @@ size_t btrfs_sb_io(int fd, void *buf, off_t offset, int rw)
 
 	ret = ioctl(fd, BLKREPORTZONE, rep);
 	if (ret) {
-		error("zoned: ioctl BLKREPORTZONE failed (%m)");
+		if (errno == ENOTTY) {
+			error("zoned: BLKREPORTZONE failed but BLKGETZONESZ works: %m");
+			exit(1);
+		}
+		error("zoned: ioctl BLKREPORTZONE failed: %m");
 		exit(1);
 	}
 	if (rep->nr_zones != 2) {
