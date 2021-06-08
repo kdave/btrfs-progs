@@ -1192,20 +1192,41 @@ void print_device_chunks(struct device_info *devinfo,
 		const char *r_mode;
 		u64 flags;
 		u64 size;
+		u64 num_stripes;
+		u64 profile;
 
 		if (chunks_info_ptr[i].devid != devinfo->devid)
 			continue;
 
 		flags = chunks_info_ptr[i].type;
+		profile = (flags & BTRFS_BLOCK_GROUP_PROFILE_MASK);
 
 		description = btrfs_group_type_str(flags);
 		r_mode = btrfs_group_profile_str(flags);
 		size = calc_chunk_size(chunks_info_ptr+i);
-		printf("   %s,%s:%*s%10s\n",
-			description,
-			r_mode,
-			(int)(20 - strlen(description) - strlen(r_mode)), "",
-			pretty_size_mode(size, unit_mode));
+		num_stripes = chunks_info_ptr[i].num_stripes;
+
+		switch (profile) {
+		case BTRFS_BLOCK_GROUP_RAID0:
+		case BTRFS_BLOCK_GROUP_RAID5:
+		case BTRFS_BLOCK_GROUP_RAID6:
+		case BTRFS_BLOCK_GROUP_RAID10:
+			printf("   %s,%s/%llu:%*s%10s\n",
+				   description,
+				   r_mode,
+				   num_stripes,
+				   (int)(20 - strlen(description) - strlen(r_mode)
+						 - count_digits(num_stripes) - 1), "",
+				   pretty_size_mode(size, unit_mode));
+			break;
+		default:
+			printf("   %s,%s:%*s%10s\n",
+				   description,
+				   r_mode,
+				   (int)(20 - strlen(description) - strlen(r_mode)), "",
+				   pretty_size_mode(size, unit_mode));
+			break;
+		}
 
 		allocated += size;
 
