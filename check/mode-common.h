@@ -192,4 +192,7 @@ static inline void btrfs_check_subpage_eb_alignment(u64 start, u32 len)
 			start, start + len);
 }
 
+int repair_dev_item_bytes_used(struct btrfs_fs_info *fs_info,
+			       u64 devid, u64 bytes_used_expected);
+
 #endif

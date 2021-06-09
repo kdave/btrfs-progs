@@ -4454,7 +4454,8 @@ out:
 /*
  * Check if the used space is correct with the dev item
  */
-static int check_dev_item(struct extent_buffer *eb, int slot)
+static int check_dev_item(struct extent_buffer *eb, int slot,
+			  u64 *bytes_used_expected)
 {
 	struct btrfs_root *dev_root = gfs_info->dev_root;
 	struct btrfs_dev_item *dev_item;
@@ -4543,6 +4544,7 @@ next:
 	}
 	btrfs_release_path(&path);
 
+	*bytes_used_expected = total;
 	if (used != total) {
 		btrfs_item_key_to_cpu(eb, &key, slot);
 		error(
@@ -4744,6 +4746,7 @@ static int repair_chunk_item(struct btrfs_root *chunk_root,
 static int check_leaf_items(struct btrfs_root *root, struct btrfs_path *path,
 			    struct node_refs *nrefs, int account_bytes)
 {
+	u64 bytes_used_expected = (u64)-1;
 	struct btrfs_key key;
 	struct extent_buffer *eb;
 	int slot;
@@ -4782,7 +4785,14 @@ again:
 		err |= ret;
 		break;
 	case BTRFS_DEV_ITEM_KEY:
-		ret = check_dev_item(eb, slot);
+		ret = check_dev_item(eb, slot, &bytes_used_expected);
+		if (repair && (ret & ACCOUNTING_MISMATCH) &&
+		    bytes_used_expected != (u64)-1) {
+			ret = repair_dev_item_bytes_used(root->fs_info,
+					key.offset, bytes_used_expected);
+			if (ret < 0)
+				ret = ACCOUNTING_MISMATCH;
+		}
 		err |= ret;
 		break;
 	case BTRFS_CHUNK_ITEM_KEY:

@@ -8397,11 +8397,17 @@ static int check_device_used(struct device_record *dev_rec,
 	}
 
 	if (total_byte != dev_rec->byte_used) {
+		int ret = -1;
+
 		fprintf(stderr,
 			"Dev extent's total-byte(%llu) is not equal to byte-used(%llu) in dev[%llu, %u, %llu]\n",
 			total_byte, dev_rec->byte_used,	dev_rec->objectid,
 			dev_rec->type, dev_rec->offset);
-		return -1;
+		if (repair) {
+			ret = repair_dev_item_bytes_used(gfs_info,
+					dev_rec->devid, total_byte);
+		}
+		return ret;
 	} else {
 		return 0;
 	}

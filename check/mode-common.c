@@ -21,6 +21,7 @@
 #include "kernel-shared/transaction.h"
 #include "common/utils.h"
 #include "kernel-shared/disk-io.h"
+#include "kernel-shared/volumes.h"
 #include "common/repair.h"
 #include "check/mode-common.h"
 
@@ -1241,5 +1242,62 @@ int get_extent_item_generation(u64 bytenr, u64 *gen_ret)
 	}
 out:
 	btrfs_release_path(&path);
+	return ret;
+}
+
+int repair_dev_item_bytes_used(struct btrfs_fs_info *fs_info,
+			       u64 devid, u64 bytes_used_expected)
+{
+	struct btrfs_trans_handle *trans;
+	struct btrfs_device *device;
+	int ret;
+
+	device = btrfs_find_device_by_devid(fs_info->fs_devices, devid, 0);
+	if (!device) {
+		error("failed to find device with devid %llu", devid);
+		return -ENOENT;
+	}
+
+	/* Bytes_used matches, not what we can repair */
+	if (device->bytes_used == bytes_used_expected)
+		return -ENOTSUP;
+
+	/*
+	 * We have to set the device bytes_used right now, before starting a
+	 * new transaction, as it may allocate a new chunk and modify
+	 * device->bytes_used.
+	 */
+	device->bytes_used = bytes_used_expected;
+	trans = btrfs_start_transaction(fs_info->chunk_root, 1);
+	if (IS_ERR(trans)) {
+		ret = PTR_ERR(trans);
+		errno = -ret;
+		error("failed to start transaction: %m");
+		return ret;
+	}
+
+	/* Manually update the device item in chunk tree */
+	ret = btrfs_update_device(trans, device);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to update device item for devid %llu: %m", devid);
+		goto error;
+	}
+
+	/*
+	 * Commit transaction not only to save the above change but also update
+	 * the device item in super block.
+	 */
+	ret = btrfs_commit_transaction(trans, fs_info->chunk_root);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to commit transaction: %m");
+	} else {
+		printf("reset devid %llu bytes_used to %llu\n", devid,
+		       device->bytes_used);
+	}
+	return ret;
+error:
+	btrfs_abort_transaction(trans, ret);
 	return ret;
 }
