@@ -296,7 +296,7 @@ static void print_dev_item(struct extent_buffer *eb,
 			   (unsigned long)btrfs_device_fsid(dev_item),
 			   BTRFS_UUID_SIZE);
 	uuid_unparse(fsid, fsid_str);
-	printf("\t\tdevid %llu total_bytes %llu bytes_used %Lu\n"
+	printf("\t\tdevid %llu total_bytes %llu bytes_used %llu\n"
 	       "\t\tio_align %u io_width %u sector_size %u type %llu\n"
 	       "\t\tgeneration %llu start_offset %llu dev_group %u\n"
 	       "\t\tseek_speed %hhu bandwidth %hhu\n"
@@ -1359,7 +1359,7 @@ void btrfs_print_leaf(struct extent_buffer *eb, unsigned int mode)
 			struct btrfs_dir_log_item *dlog;
 
 			dlog = btrfs_item_ptr(eb, i, struct btrfs_dir_log_item);
-			printf("\t\tdir log end %Lu\n",
+			printf("\t\tdir log end %llu\n",
 			       (unsigned long long)btrfs_dir_log_end(eb, dlog));
 			break;
 			}

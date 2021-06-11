@@ -836,7 +836,7 @@ int read_data_from_disk(struct btrfs_fs_info *info, void *buf, u64 offset,
 		ret = btrfs_map_block(info, READ, offset, &read_len, &multi,
 				      mirror, NULL);
 		if (ret) {
-			fprintf(stderr, "Couldn't map the block %Lu\n",
+			fprintf(stderr, "Couldn't map the block %llu\n",
 				offset);
 			return -EIO;
 		}
@@ -852,13 +852,13 @@ int read_data_from_disk(struct btrfs_fs_info *info, void *buf, u64 offset,
 			    multi->stripes[0].physical);
 		kfree(multi);
 		if (ret < 0) {
-			fprintf(stderr, "Error reading %Lu, %d\n", offset,
+			fprintf(stderr, "Error reading %llu, %d\n", offset,
 				ret);
 			return ret;
 		}
 		if (ret != read_len) {
-			fprintf(stderr, "Short read for %Lu, read %d, "
-				"read_len %Lu\n", offset, ret, read_len);
+			fprintf(stderr, "Short read for %llu, read %d, "
+				"read_len %llu\n", offset, ret, read_len);
 			return -EIO;
 		}
 
@@ -890,7 +890,7 @@ int write_data_to_disk(struct btrfs_fs_info *info, void *buf, u64 offset,
 		ret = btrfs_map_block(info, WRITE, offset, &this_len, &multi,
 				      mirror, &raid_map);
 		if (ret) {
-			fprintf(stderr, "Couldn't map the block %Lu\n",
+			fprintf(stderr, "Couldn't map the block %llu\n",
 				offset);
 			return -EIO;
 		}

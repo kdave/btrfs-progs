@@ -122,7 +122,7 @@ static int __print_mapping_info(struct btrfs_fs_info *fs_info, u64 logical,
 		for (i = 0; i < multi->num_stripes; i++) {
 			device = multi->stripes[i].dev;
 			fprintf(info_file,
-				"mirror %d logical %Lu physical %Lu device %s\n",
+				"mirror %d logical %llu physical %llu device %s\n",
 				mirror_num, logical + cur_offset,
 				multi->stripes[0].physical,
 				device->name);

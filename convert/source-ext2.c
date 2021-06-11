@@ -529,7 +529,7 @@ static int ext2_copy_single_xattr(struct btrfs_trans_handle *trans,
 	strncat(namebuf, EXT2_EXT_ATTR_NAME(entry), entry->e_name_len);
 	if (name_len + datalen > BTRFS_LEAF_DATA_SIZE(root->fs_info) -
 	    sizeof(struct btrfs_item) - sizeof(struct btrfs_dir_item)) {
-		fprintf(stderr, "skip large xattr on inode %Lu name %.*s\n",
+		fprintf(stderr, "skip large xattr on inode %llu name %.*s\n",
 			objectid - INO_OFFSET, name_len, namebuf);
 		goto out;
 	}

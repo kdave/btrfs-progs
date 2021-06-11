@@ -256,7 +256,7 @@ static void print_seek_histogram(struct root_stats *stat)
 		if (group_count) {
 
 			gticks = group_count / tick_interval;
-			printf("\t\t%*Lu - %*Lu: %*Lu ", digits, group_start,
+			printf("\t\t%*llu - %*llu: %*llu ", digits, group_start,
 			       digits, group_end, digits, group_count);
 			if (gticks) {
 				for (i = 0; i < gticks; i++)
@@ -271,7 +271,7 @@ static void print_seek_histogram(struct root_stats *stat)
 		if (ticks <= 2)
 			continue;
 
-		printf("\t\t%*Lu - %*Lu: %*Lu ", digits, seek->distance,
+		printf("\t\t%*llu - %*llu: %*llu ", digits, seek->distance,
 		       digits, seek->distance, digits, seek->count);
 		for (i = 0; i < ticks; i++)
 			printf("#");
@@ -281,7 +281,7 @@ static void print_seek_histogram(struct root_stats *stat)
 		u64 gticks;
 
 		gticks = group_count / tick_interval;
-		printf("\t\t%*Lu - %*Lu: %*Lu ", digits, group_start,
+		printf("\t\t%*llu - %*llu: %*llu ", digits, group_start,
 		       digits, group_end, digits, group_count);
 		if (gticks) {
 			for (i = 0; i < gticks; i++)

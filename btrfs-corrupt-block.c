@@ -596,7 +596,7 @@ static int corrupt_inode(struct btrfs_trans_handle *trans,
 		goto out;
 	if (ret) {
 		if (!path->slots[0]) {
-			fprintf(stderr, "Couldn't find inode %Lu\n", inode);
+			fprintf(stderr, "Couldn't find inode %llu\n", inode);
 			ret = -ENOENT;
 			goto out;
 		}
@@ -606,7 +606,7 @@ static int corrupt_inode(struct btrfs_trans_handle *trans,
 
 	btrfs_item_key_to_cpu(path->nodes[0], &key, path->slots[0]);
 	if (key.objectid != inode) {
-		fprintf(stderr, "Couldn't find inode %Lu\n", inode);
+		fprintf(stderr, "Couldn't find inode %llu\n", inode);
 		ret = -ENOENT;
 		goto out;
 	}

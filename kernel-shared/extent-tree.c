@@ -1421,7 +1421,7 @@ again:
 
 	if (ret != 0) {
 		btrfs_print_leaf(path->nodes[0], BTRFS_PRINT_TREE_DEFAULT);
-		printk("failed to find block number %Lu\n",
+		printk("failed to find block number %llu\n",
 			(unsigned long long)bytenr);
 		BUG();
 	}

@@ -316,7 +316,7 @@ int read_whole_eb(struct btrfs_fs_info *info, struct extent_buffer *eb, int mirr
 			ret = btrfs_map_block(info, READ, eb->start + offset,
 					      &read_len, &multi, mirror, NULL);
 			if (ret) {
-				printk("Couldn't map the block %Lu\n", eb->start + offset);
+				printk("Couldn't map the block %llu\n", eb->start + offset);
 				kfree(multi);
 				return -EIO;
 			}

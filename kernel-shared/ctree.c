@@ -501,7 +501,7 @@ int btrfs_cow_block(struct btrfs_trans_handle *trans,
 	int ret;
 	/*
 	if (trans->transaction != root->fs_info->running_transaction) {
-		printk(KERN_CRIT "trans %Lu running %Lu\n", trans->transid,
+		printk(KERN_CRIT "trans %llu running %llu\n", trans->transid,
 		       root->fs_info->running_transaction->transid);
 		WARN_ON(1);
 	}

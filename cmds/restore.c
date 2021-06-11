@@ -334,7 +334,7 @@ static int copy_one_inline(struct btrfs_root *root, int fd,
 	done = pwrite(fd, outbuf, ram_size, pos);
 	free(outbuf);
 	if (done < ram_size) {
-		fprintf(stderr, "Short compressed inline write, wanted %Lu, "
+		fprintf(stderr, "Short compressed inline write, wanted %llu, "
 			"did %zd: %d\n", ram_size, done, errno);
 		return -1;
 	}
@@ -1023,7 +1023,7 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 		}
 		btrfs_item_key_to_cpu(leaf, &found_key, path.slots[0]);
 		if (found_key.objectid != key->objectid) {
-			pr_verbose(2, "Found objectid=%Lu, key=%llu\n",
+			pr_verbose(2, "Found objectid=%llu, key=%llu\n",
 				   found_key.objectid, key->objectid);
 			break;
 		}
@@ -1245,7 +1245,7 @@ static int do_list_roots(struct btrfs_root *root)
 		read_extent_buffer(leaf, &ri, offset, sizeof(ri));
 		printf(" tree ");
 		btrfs_print_key(&disk_key);
-		printf(" %Lu level %d\n", btrfs_root_bytenr(&ri),
+		printf(" %llu level %d\n", btrfs_root_bytenr(&ri),
 		       btrfs_root_level(&ri));
 		path.slots[0]++;
 	}
@@ -1357,7 +1357,7 @@ again:
 		if (found_key.type != key.type)
 			continue;
 
-		printf("Using objectid %Lu for first dir\n",
+		printf("Using objectid %llu for first dir\n",
 		       found_key.objectid);
 		*objectid = found_key.objectid;
 		ret = 0;

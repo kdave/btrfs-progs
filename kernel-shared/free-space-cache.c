@@ -112,7 +112,7 @@ static int io_ctl_prepare_pages(struct io_ctl *io_ctl, struct btrfs_root *root,
 	if (ret) {
 		fprintf(stderr,
 		       "Couldn't find file extent item for free space inode"
-		       " %Lu\n", ino);
+		       " %llu\n", ino);
 		btrfs_release_path(path);
 		return -EINVAL;
 	}
@@ -183,7 +183,7 @@ static int io_ctl_check_generation(struct io_ctl *io_ctl, u64 generation)
 	gen = io_ctl->cur;
 	if (le64_to_cpu(*gen) != generation) {
 		printk("btrfs: space cache generation "
-		       "(%Lu) does not match inode (%Lu)\n", *gen,
+		       "(%llu) does not match inode (%llu)\n", *gen,
 		       generation);
 		io_ctl_unmap_page(io_ctl);
 		return -EIO;
