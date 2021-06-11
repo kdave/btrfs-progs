@@ -310,8 +310,8 @@ static int copy_one_inline(struct btrfs_root *root, int fd,
 	if (compress == BTRFS_COMPRESS_NONE) {
 		done = pwrite(fd, buf, len, pos);
 		if (done < len) {
-			fprintf(stderr, "Short inline write, wanted %d, did "
-				"%zd: %d\n", len, done, errno);
+			error("short inline write, wanted %d, did %zd: %m",
+					len, done);
 			return -1;
 		}
 		return 0;
@@ -334,8 +334,8 @@ static int copy_one_inline(struct btrfs_root *root, int fd,
 	done = pwrite(fd, outbuf, ram_size, pos);
 	free(outbuf);
 	if (done < ram_size) {
-		fprintf(stderr, "Short compressed inline write, wanted %llu, "
-			"did %zd: %d\n", ram_size, done, errno);
+		error("short compressed inline write, wanted %llu, did %zd: %m",
+				ram_size, done);
 		return -1;
 	}
 
@@ -731,7 +731,7 @@ static int copy_file(struct btrfs_root *root, int fd, struct btrfs_key *key,
 			do {
 				ret = next_leaf(root, &path);
 				if (ret < 0) {
-					fprintf(stderr, "Error searching %d\n", ret);
+					error("search to next leaf failed: %d", ret);
 					goto out;
 				} else if (ret) {
 					/* No more leaves to search */
@@ -853,8 +853,7 @@ static int copy_symlink(struct btrfs_root *root, struct btrfs_key *key,
 	if (ret == 2) {
 		ret = unlink(path_name);
 		if (ret) {
-			fprintf(stderr, "failed to unlink '%s' for overwrite\n",
-					path_name);
+			error("failed to unlink '%s' for overwrite: %m", path_name);
 			return ret;
 		}
 	}
@@ -868,7 +867,7 @@ static int copy_symlink(struct btrfs_root *root, struct btrfs_key *key,
 
 	leaf = path.nodes[0];
 	if (!leaf) {
-		fprintf(stderr, "Error getting leaf for symlink '%s'\n", file);
+		error("failed to get leaf for symlink '%s'", file);
 		ret = -1;
 		goto out;
 	}
@@ -879,7 +878,7 @@ static int copy_symlink(struct btrfs_root *root, struct btrfs_key *key,
 	len = btrfs_file_extent_inline_item_len(leaf,
 			btrfs_item_nr(path.slots[0]));
 	if (len >= PATH_MAX) {
-		fprintf(stderr, "Symlink '%s' target length %d is longer than PATH_MAX\n",
+		error("symlink '%s' target length %d is longer than PATH_MAX",
 				fs_name, len);
 		ret = -1;
 		goto out;
@@ -894,8 +893,7 @@ static int copy_symlink(struct btrfs_root *root, struct btrfs_key *key,
 	if (!dry_run) {
 		ret = symlink(symlink_target, path_name);
 		if (ret < 0) {
-			fprintf(stderr, "Failed to restore symlink '%s': %m\n",
-					path_name);
+			error("failed to restore symlink '%s': %m", path_name);
 			goto out;
 		}
 	}
@@ -918,7 +916,7 @@ static int copy_symlink(struct btrfs_root *root, struct btrfs_key *key,
 
 	ret = btrfs_lookup_inode(NULL, root, &path, key, 0);
 	if (ret) {
-		fprintf(stderr, "Failed to lookup inode for '%s'\n", file);
+		error("failed to lookup inode for '%s'", file);
 		goto out;
 	}
 
@@ -929,7 +927,7 @@ static int copy_symlink(struct btrfs_root *root, struct btrfs_key *key,
 				   btrfs_inode_gid(path.nodes[0], inode_item),
 				   AT_SYMLINK_NOFOLLOW);
 	if (ret) {
-		fprintf(stderr, "Failed to change owner: %m\n");
+		error("failed to change owner of '%s': %m", file);
 		goto out;
 	}
 
@@ -943,7 +941,7 @@ static int copy_symlink(struct btrfs_root *root, struct btrfs_key *key,
 
 	ret = utimensat(AT_FDCWD, file, times, AT_SYMLINK_NOFOLLOW);
 	if (ret)
-		fprintf(stderr, "Failed to set times: %m\n");
+		error("failed to set times for '%s': %m", file);
 out:
 	btrfs_release_path(&path);
 	return ret;
@@ -970,7 +968,7 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 	key->type = BTRFS_DIR_INDEX_KEY;
 	ret = btrfs_search_slot(NULL, root, key, &path, 0, 0);
 	if (ret < 0) {
-		fprintf(stderr, "Error searching %d\n", ret);
+		error("search for next directory entry failed: %d", ret);
 		goto out;
 	}
 
@@ -982,8 +980,7 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 			   "No leaf after search, looking for the next leaf\n");
 		ret = next_leaf(root, &path);
 		if (ret < 0) {
-			fprintf(stderr, "Error getting next leaf %d\n",
-				ret);
+			error("search for next leaf failed: %d", ret);
 			goto out;
 		} else if (ret > 0) {
 			/* No more leaves to search */
@@ -1007,8 +1004,7 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 			do {
 				ret = next_leaf(root, &path);
 				if (ret < 0) {
-					fprintf(stderr, "Error searching %d\n",
-						ret);
+					error("search for next leaf faile: %d", ret);
 					goto out;
 				} else if (ret > 0) {
 					/* No more leaves to search */
@@ -1062,8 +1058,7 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 				goto next;
 			fd = open(path_name, O_CREAT|O_WRONLY, 0644);
 			if (fd < 0) {
-				fprintf(stderr, "Error creating %s: %d\n",
-					path_name, errno);
+				error("creating '%s' failed: %m", path_name);
 				if (ignore_errors)
 					goto next;
 				ret = -1;
@@ -1073,8 +1068,7 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 			ret = copy_file(root, fd, &location, path_name);
 			close(fd);
 			if (ret) {
-				fprintf(stderr, "Error copying data for %s\n",
-					path_name);
+				error("copying data for %s failed", path_name);
 				if (ignore_errors)
 					goto next;
 				goto out;
@@ -1084,7 +1078,7 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 			char *dir = strdup(fs_name);
 
 			if (!dir) {
-				fprintf(stderr, "Ran out of memory\n");
+				error("ran out of memory");
 				ret = -ENOMEM;
 				goto out;
 			}
@@ -1105,10 +1099,8 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 								 &location);
 				if (IS_ERR(search_root)) {
 					free(dir);
-					fprintf(stderr, "Error reading "
-						"subvolume %s: %lu\n",
-						path_name,
-						PTR_ERR(search_root));
+					error("reading subvolume %s failed: %lu",
+						path_name, PTR_ERR(search_root));
 					if (ignore_errors)
 						goto next;
 					ret = PTR_ERR(search_root);
@@ -1122,8 +1114,7 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 				if (search_root->root_key.offset != 0 &&
 				    get_snaps == 0) {
 					free(dir);
-					printf("Skipping snapshot %s\n",
-					       filename);
+					printf("Skipping snapshot %s\n", filename);
 					goto next;
 				}
 				location.objectid = BTRFS_FIRST_FREE_OBJECTID;
@@ -1138,8 +1129,7 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 				ret = mkdir(path_name, 0755);
 			if (ret && errno != EEXIST) {
 				free(dir);
-				fprintf(stderr, "Error mkdiring %s: %d\n",
-					path_name, errno);
+				error("failed mkdir %s: %m", path_name);
 				if (ignore_errors)
 					goto next;
 				ret = -1;
@@ -1150,8 +1140,8 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 					 output_rootdir, dir, mreg);
 			free(dir);
 			if (ret) {
-				fprintf(stderr, "Error searching %s\n",
-					path_name);
+				error("searching directory %s failed: %d",
+					path_name, ret);
 				if (ignore_errors)
 					goto next;
 				goto out;
@@ -1174,7 +1164,7 @@ next:
 		snprintf(path_name, PATH_MAX, "%s%s", output_rootdir, in_dir);
 		fd = open(path_name, O_RDONLY);
 		if (fd < 0) {
-			fprintf(stderr, "ERROR: Failed to access %s to restore metadata\n",
+			error("failed to access '%s' to restore metadata: %m",
 					path_name);
 			if (!ignore_errors) {
 				ret = -1;
@@ -1218,7 +1208,7 @@ static int do_list_roots(struct btrfs_root *root)
 	key.type = BTRFS_ROOT_ITEM_KEY;
 	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
 	if (ret < 0) {
-		fprintf(stderr, "Failed to do search %d\n", ret);
+		error("failed search next root item: %d", ret);
 		btrfs_release_path(&path);
 		return -1;
 	}
@@ -1299,7 +1289,7 @@ static struct btrfs_root *open_fs(const char *dev, u64 root_location,
 		root->node = read_tree_block(fs_info, root_location,
 					     generation);
 		if (!extent_buffer_uptodate(root->node)) {
-			fprintf(stderr, "Error opening tree root\n");
+			error("opening tree root failed");
 			close_ctree(root);
 			return NULL;
 		}
@@ -1313,8 +1303,7 @@ static struct btrfs_root *open_fs(const char *dev, u64 root_location,
 		key.offset = (u64)-1;
 		fs_info->fs_root = btrfs_read_fs_root_no_cache(fs_info, &key);
 		if (IS_ERR(fs_info->fs_root)) {
-			fprintf(stderr, "Couldn't read fs root: %ld\n",
-				PTR_ERR(fs_info->fs_root));
+			error("could not read fs root: %ld", PTR_ERR(fs_info->fs_root));
 			close_ctree(fs_info->tree_root);
 			return NULL;
 		}
@@ -1342,12 +1331,12 @@ static int find_first_dir(struct btrfs_root *root, u64 *objectid)
 	key.offset = 0;
 	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
 	if (ret < 0) {
-		fprintf(stderr, "Error searching %d\n", ret);
+		error("searching next directory entry failed: %d", ret);
 		goto out;
 	}
 
 	if (!path.nodes[0]) {
-		fprintf(stderr, "No leaf!\n");
+		error("no leaf when looking for directory");
 		goto out;
 	}
 again:
@@ -1366,11 +1355,10 @@ again:
 	do {
 		ret = next_leaf(root, &path);
 		if (ret < 0) {
-			fprintf(stderr, "Error getting next leaf %d\n",
-				ret);
+			error("search for next leaf failed: %d", ret);
 			goto out;
 		} else if (ret > 0) {
-			fprintf(stderr, "No more leaves\n");
+			error("no more leaves to search");
 			goto out;
 		}
 	} while (!path.nodes[0]);
@@ -1476,8 +1464,8 @@ static int cmd_restore(const struct cmd_struct *cmd, int argc, char **argv)
 			case 'u':
 				super_mirror = arg_strtou64(optarg);
 				if (super_mirror >= BTRFS_SUPER_MIRROR_MAX) {
-					fprintf(stderr, "Super mirror not "
-						"valid\n");
+					error("super mirror %d not valid",
+							super_mirror);
 					exit(1);
 				}
 				break;
@@ -1487,7 +1475,7 @@ static int cmd_restore(const struct cmd_struct *cmd, int argc, char **argv)
 			case 'r':
 				root_objectid = arg_strtou64(optarg);
 				if (!is_fstree(root_objectid)) {
-					fprintf(stderr, "objectid %llu is not a valid fs/file tree\n",
+					error("objectid %llu is not a valid fs/file tree",
 							root_objectid);
 					exit(1);
 				}
@@ -1524,16 +1512,16 @@ static int cmd_restore(const struct cmd_struct *cmd, int argc, char **argv)
 		usage(cmd);
 
 	if (fs_location && root_objectid) {
-		fprintf(stderr, "don't use -f and -r at the same time.\n");
+		error("can't use -f and -r at the same time");
 		return 1;
 	}
 
 	if ((ret = check_mounted(argv[optind])) < 0) {
 		errno = -ret;
-		fprintf(stderr, "Could not check mount status: %m\n");
+		error("could not check mount status: %m");
 		return 1;
 	} else if (ret) {
-		fprintf(stderr, "%s is currently mounted.  Aborting.\n", argv[optind]);
+		error("%s is currently mounted, cannot continue", argv[optind]);
 		return 1;
 	}
 
@@ -1548,7 +1536,7 @@ static int cmd_restore(const struct cmd_struct *cmd, int argc, char **argv)
 		free_extent_buffer(root->node);
 		root->node = read_tree_block(root->fs_info, fs_location, 0);
 		if (!extent_buffer_uptodate(root->node)) {
-			fprintf(stderr, "Failed to read fs location\n");
+			error("failed to read fs location");
 			ret = 1;
 			goto out;
 		}
@@ -1557,7 +1545,7 @@ static int cmd_restore(const struct cmd_struct *cmd, int argc, char **argv)
 	memset(path_name, 0, PATH_MAX);
 
 	if (strlen(argv[optind + 1]) >= PATH_MAX) {
-		fprintf(stderr, "ERROR: path too long\n");
+		error("path '%s' too long", argv[optind + 1]);
 		ret = 1;
 		goto out;
 	}
@@ -1579,8 +1567,7 @@ static int cmd_restore(const struct cmd_struct *cmd, int argc, char **argv)
 		root = btrfs_read_fs_root(orig_root->fs_info, &key);
 		if (IS_ERR(root)) {
 			errno = -PTR_ERR(root);
-			fprintf(stderr, "fail to read root %llu: %m\n",
-					root_objectid);
+			error("failed to read root %llu: %m", root_objectid);
 			root = orig_root;
 			ret = 1;
 			goto out;
@@ -1601,7 +1588,7 @@ static int cmd_restore(const struct cmd_struct *cmd, int argc, char **argv)
 		ret = regcomp(&match_reg, match_regstr, match_cflags);
 		if (ret) {
 			regerror(ret, &match_reg, reg_err, sizeof(reg_err));
-			fprintf(stderr, "Regex compile failed: %s\n", reg_err);
+			error("regex compilation failed: %s", reg_err);
 			goto out;
 		}
 		mreg = &match_reg;
