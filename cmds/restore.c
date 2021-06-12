@@ -920,7 +920,6 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 	int name_len;
 	int ret = 0;
 	int fd;
-	int loops = 0;
 	u8 type;
 
 	btrfs_init_path(&path);
@@ -953,13 +952,6 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 	}
 
 	while (leaf) {
-		if (loops++ >= 1024) {
-			printf("We have looped trying to restore files in %s "
-			       "too many times to be making progress, "
-			       "stopping\n", in_dir);
-			break;
-		}
-
 		if (path.slots[0] >= btrfs_header_nritems(leaf)) {
 			do {
 				ret = next_leaf(root, &path);
@@ -1024,7 +1016,6 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 				ret = -1;
 				goto out;
 			}
-			loops = 0;
 			ret = copy_file(root, fd, &location, path_name);
 			close(fd);
 			if (ret) {
@@ -1095,7 +1086,6 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 				ret = -1;
 				goto out;
 			}
-			loops = 0;
 			ret = search_dir(search_root, &location,
 					 output_rootdir, dir, mreg);
 			free(dir);
