@@ -467,34 +467,6 @@ out:
 	return ret;
 }
 
-enum loop_response {
-	LOOP_STOP,
-	LOOP_CONTINUE,
-	LOOP_DONTASK
-};
-
-static enum loop_response ask_to_continue(const char *file)
-{
-	char buf[16];
-	char *ret;
-
-	printf("We seem to be looping a lot on %s, do you want to keep going "
-	       "on ? (y/N/a): ", file);
-again:
-	ret = fgets(buf, 16, stdin);
-	if (!ret || *ret == '\n' || tolower(*ret) == 'n')
-		return LOOP_STOP;
-	if (tolower(*ret) == 'a')
-		return LOOP_DONTASK;
-	if (tolower(*ret) != 'y') {
-		printf("Please enter one of 'y', 'n', or 'a': ");
-		goto again;
-	}
-
-	return LOOP_CONTINUE;
-}
-
-
 static int set_file_xattrs(struct btrfs_root *root, u64 inode,
 			   int fd, const char *file_name)
 {
@@ -653,7 +625,6 @@ static int copy_file(struct btrfs_root *root, int fd, struct btrfs_key *key,
 	int ret;
 	int extent_type;
 	int compression;
-	int loops = 0;
 	u64 found_size = 0;
 	struct timespec times[2];
 	int times_ok = 0;
@@ -716,17 +687,6 @@ static int copy_file(struct btrfs_root *root, int fd, struct btrfs_key *key,
 	}
 
 	while (1) {
-		if (loops >= 0 && loops++ >= 1024) {
-			enum loop_response resp;
-
-			resp = ask_to_continue(file);
-			if (resp == LOOP_STOP)
-				break;
-			else if (resp == LOOP_CONTINUE)
-				loops = 0;
-			else if (resp == LOOP_DONTASK)
-				loops = -1;
-		}
 		if (path.slots[0] >= btrfs_header_nritems(leaf)) {
 			do {
 				ret = next_leaf(root, &path);
