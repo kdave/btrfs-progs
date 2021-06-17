@@ -13,6 +13,7 @@ tools.  Currently covers:
 . mount options
 . filesystem features
 . checksum algorithms
+. compression
 . filesystem exclusive operations
 . filesystem limits
 . bootloader support
@@ -781,6 +782,95 @@ h| Digest h| Cycles/4KiB h| Ratio
 | SHA256   | 105000       |    61
 | BLAKE2b  |  22000       |    13
 |================================
+
+
+COMPRESSION
+-----------
+
+Btrfs supports transparent file compression. There are three algorithms
+available: ZLIB, LZO and ZSTD (since v4.14). Basically, compression is on a file
+by file basis. You can have a single btrfs mount point that has some files that
+are uncompressed, some that are compressed with LZO, some with ZLIB, for
+instance (though you may not want it that way, it is supported).
+
+To enable compression, mount the filesystem with options 'compress' or
+'compress-force'. Please refer to section 'MOUNT OPTIONS'. Once compression is
+enabled, all new writes will be subject to compression. Some files may not
+compress very well, and these are typically not recompressed but still written
+uncompressed.
+
+Each compression algorithm has different speed/ratio trade offs. The levels
+can be selected by a mount option and affect only the resulting size (ie.
+no compatibility issues).
+
+Basic characteristics:
+
+* ZLIB - slower, higher compression ratio
+  * levels: 1 to 9, mapped directly, default level is 3
+  * good backward compatibility
+* LZO - faster compression and decompression than zlib, worse compression
+  ratio, designed to be fast
+  * no levels
+  * good backward compatibility
+* ZSTD - compression comparable to zlib with higher compression/decompression
+  speeds and different ratio
+  * levels: 1 to 15
+  * since 4.14, levels since 5.1
+
+The differences depend on the actual data set and cannot be expressed by a
+single number or recommendation. Higher levels consume more CPU time and may
+not bring a significant improvement, lower levels are close to real time.
+
+The algorithms could be mixed in one file as they're stored per extent. The
+compression can be changed on a file by *btrfs filesystem defrag* command,
+using the '-c' option, or by *btrfs property set* using the 'compression'
+property. Setting compression by 'chattr +c' utility will set it to zlib.
+
+INCOMPRESSIBLE DATA
+~~~~~~~~~~~~~~~~~~~
+
+Files with already compressed data or with data that won't compress well with
+the CPU and memory constraints of the kernel implementations are using a simple
+decision logic. If the first portion of data being compressed is not smaller
+than the original, the compression of the file is disabled -- unless the
+filesystem is mounted with 'compress-force'. In that case compression will
+always be attempted on the file only to be later discarded. This is not optimal
+and subject to optimizations and further development.
+
+If a file is identified as incompressible, a flag is set (NOCOMPRESS) and it's
+sticky. On that file compression won't be performed unless forced. The flag
+can be also set by 'chattr +m' (since e2fsprogs 1.46.2) or by properties with
+value 'no' or 'none'. Empty value will reset it to the default that's currently
+applicable on the mounted filesystem.
+
+There are two ways to detect incompressible data:
+
+* actual compression attempt - data are compressed, if the result is not smaller,
+  it's discarded, so this depends on the algorithm and level
+* pre-compression heuristics - a quick statistical evaluation on the data is
+  peformed and based on the result either compression is performed or skipped,
+  the NOCOMPRESS bit is not set just by the heuristic, only if the compression
+  algorithm does not make an improvent
+
+PRE-COMPRESSION HEURISTICS
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The heuristics aim to do a few quick statistical tests on the compressed data
+in order to avoid probably costly compression that would turn out to be
+inefficient. Compression algorithms could have internal detection of
+incompressible data too but this leads to more overhead as the compression is
+done in another thread and has to write the data anyway. The heuristic is
+read-only and can utilize cached memory.
+
+The tests performed based on the following: data sampling, long repated
+pattern detection, byte frequency, Shannon entropy.
+
+COMPATIBILITY WITH OTHER FEATURES
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Compression is done using the COW mechanism so it's incompatible with
+'nodatacow'. Direct IO works on compressed files but will fall back to buffered
+writes. Currently 'nodatasum' and compression don't work together.
 
 
 FILESYSTEM EXCLUSIVE OPERATIONS
