@@ -774,14 +774,18 @@ additional overhead of the b-tree leaves.
 Approximate relative performance of the algorithms, measured against CRC32C
 using reference software implementations on a 3.5GHz intel CPU:
 
-[ cols="^,>,>",width="50%" ]
-|================================
-h| Digest h| Cycles/4KiB h| Ratio
-| CRC32C   |   1700       |  1.00
-| XXHASH   |   2500       |  1.44
-| SHA256   | 105000       |    61
-| BLAKE2b  |  22000       |    13
-|================================
+[ cols="^,>,>,>",width="50%" ]
+|==================================================
+h| Digest h| Cycles/4KiB h| Ratio h| Implementation
+| CRC32C   |   1700       |   1.00 | CPU instruction
+| XXHASH   |   2500       |   1.44 | reference impl.
+| SHA256   | 105000       |     61 | reference impl.
+| SHA256   |  36000       |     21 | libgcrypt/AVX2
+| SHA256   |  63000       |     37 | libsodium/AVX2
+| BLAKE2b  |  22000       |     13 | reference impl.
+| BLAKE2b  |  19000       |     11 | libgcrypt/AVX2
+| BLAKE2b  |  19000       |     11 | libsodium/AVX2
+|==================================================
 
 
 COMPRESSION
