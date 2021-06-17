@@ -242,6 +242,14 @@ reduced-size metadata for extent references, saves a few percent of metadata
 improved representation of file extents where holes are not explicitly
 stored as an extent, saves a few percent of metadata if sparse files are used
 
+*zoned*::
+(kernel support since 5.12)
++
+zoned mode, data allocation and write friendly to zoned/SMR/ZBC/ZNS devices,
+see 'ZONED MODE' in `btrfs`(5), the mode is automatically selected when
+a zoned device is detected
+
+
 RUNTIME FEATURES
 ----------------
 
