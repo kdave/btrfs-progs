@@ -29,10 +29,15 @@ removed or replaced, by commands provided by *btrfs device* and *btrfs replace*.
 The profiles can be also changed, provided there's enough workspace to do the
 conversion, using the *btrfs balance* command and namely the filter 'convert'.
 
+Type::
+The block group profile type is the main distinction of the information stored
+on the block device. User data are called 'Data', the internal data structures
+managed by filesystem are 'Metadata' and 'System'.
+
 Profile::
 A profile describes an allocation policy based on the redundancy/replication
 constraints in connection with the number of devices. The profile applies to
-data and metadata block groups separately.
+data and metadata block groups separately. Eg. 'single', 'RAID1'.
 
 RAID level::
 Where applicable, the level refers to a profile that matches constraints of the
@@ -145,7 +150,47 @@ return code if any of the statistics is no-zero. The error values is 65 if
 reading stats from at least one device failed, otherwise it's 64.
 
 *usage* [options] <path> [<path>...]::
-Show detailed information about internal allocations in devices.
+Show detailed information about internal allocations on devices.
++
+The level of detail can differ if the command is run under a regular or the
+root user (due to use of restricted ioctls). The first example below is for
+normal user (warning included) and the next one with root on the same
+filesystem:
++
+-------------------------
+WARNING: cannot read detailed chunk info, per-device usage will not be shown, run as root
+/dev/sdc1, ID: 1
+   Device size:           931.51GiB
+   Device slack:              0.00B
+   Unallocated:           931.51GiB
+-------------------------
++
+-------------------------
+/dev/sdc1, ID: 1
+   Device size:           931.51GiB
+   Device slack:              0.00B
+   Data,single:           641.00GiB
+   Data,RAID0/3:            1.00GiB
+   Metadata,single:        19.00GiB
+   System,single:          32.00MiB
+   Unallocated:           271.48GiB
+-------------------------
++
+--
+* 'Device size' -- size of the device as seen by the filesystem (may be
+different than actual device size)
+* 'Device slack' -- portion of device not used by the filesystem but still
+available in the physical space provided by the device, eg. after a device shrink
+* 'Data,single', 'Metadata,single', 'System,single' -- in general, list of block
+group type (Data, Metadata, System) and profile (single, RAID1, ...) allocated
+on the device
+* 'Data,RAID0/3' -- in particular, striped profiles RAID0/RAID10/RAID5/RAID6 with
+the number of devices on which the stripes are allocated, multiple occurences
+of the same profile can appear in case a new device has been added and all new
+available stripes have been used for writes
+* 'Unallocated' -- remaining space that the filesystem can still use for new
+block groups
+--
 +
 `Options`
 +
@@ -274,6 +319,9 @@ A block checksum mismatched or a corrupted metadata header was found.
 generation_errs::
 The block generation does not match the expected value (eg. stored in the
 parent node).
+
+Since kernel 5.14 the device stats are also available in textual form in
+'/sys/fs/btrfs/FSID/devinfo/DEVID/error_stats'.
 
 EXIT STATUS
 -----------
