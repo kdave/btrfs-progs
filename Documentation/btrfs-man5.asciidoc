@@ -1440,6 +1440,88 @@ such block the data inside would not be consistent with the rest. To rule that
 out there's embedded block number in the metadata block. It's the logical
 block number because this is what the logical structure expects and verifies.
 
+HARDWARE CONSIDERATIONS
+~~~~~~~~~~~~~~~~~~~~~~~
+
+The following is based on information publicly available, user feedback,
+community discussions or bug report analyses. It's not complete and further
+research is encouraged when in doubt.
+
+HARDWARE CONSIDERATIONS - MEMORY
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The data structures and raw data blocks are temporarily stored in computer
+memory before they get written to the device. It is critical that memory is
+reliable because even simple bit flips can have vast consquences and lead
+damaged structures. Not only in the filesystem but in the whole operating
+system.
+
+Based on experience in the community, memory bitflips are more common than one
+would think. When it happens, it's reported by tree-checker or by a checksum
+mismatch after reading blocks. There are some very obvious instances of bit
+flips that happen eg. in an ordered sequence of keys in metadata blocks. We can
+easily infer from the other data what values get damaged and how. Fixing that
+however is not straightforward and would require cross-referencig data from the
+entire filesystem to see the scope.
+
+If possible using ECC memory should lower the chances of bit flips, but this
+type of memory is not available in all cases. A memory test should be performed
+in case there's a visible bitflip pattern, though this may not detect a faulty
+memory module because the actual load of the system could be the factor making
+the problems appear. In recent years attacks on how the memory modules operate
+have been demonstrated ('rowhammer') achieving specific bits to be flipped.
+While these were targeted, this shows that a series of reads or writes can
+affect unrelated parts of memory.
+
+Another class of errors is related to DMA (direct memory access) performed
+by device drivers. While this could be considered a software error too, the
+data transfers that happen without CPU assistance may accidentally corrupt
+other pages. Storage devices utilize DMA for performance reasons, the
+filesystem structures and data pages are passed back and forth, making
+the errors possible to happen.
+
+HARDWARE CONSIDERATIONS - ROTATIONAL DISKS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The HDDs typically fail at the level of individual sectors or small clusters.
+Read failures are caught on the levels below the filesystem and are returned to
+the user as 'EIO - Input/output error'. Reading the blocks repeatedly may
+return the data eventually, but this is better done by specialized tools and
+filesystem takes the result of the lower layers. Rewriting the sectors may
+trigger internal remapping but this inevitably leads to data loss.
+
+Disk firmware is technically software but from the filesystem perspective is
+part of the hardware. The IO requests are processed and caching or various
+other optimizations are performed, which may lead to bugs under high load or
+unexpected physical conditions or unsupported use case.
+
+Disks are connected by cables, that have two ends, that both can cause problems
+when not attached properly. Data transfers are protected by checksums and the
+lower layers try hard to transfer the data correctly or not at all. The errors
+may manifest as large amount of failed read or write requests, or as short
+error bursts depending on physcial conditions.
+
+HARDWARE CONSIDERATIONS - SD FLASH CARDS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+There's a lot of devices with low power consumption and thus using storage
+media based on low power consumption as well, typically flash memory stored on
+a chip enclosed in a detachable card package. Improperly inserted card may be
+damaged by electrical spikes when the device is turned on or off. The chips
+storing data in turn may be damaged permanently. Some types of flash memory
+have a limited number of number of rewrites, so the data are internally
+translated by FTL (flash translation layer). This is firmware (software) and
+prone to bugs, that manifest as hadrware errors.
+
+Adding redundancy like using DUP profiles for both data and metadata can help
+in some cases.
+
+HARDWARE AS THE MAIN SOURCE OF FILESYSTEM CORRUPTIONS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**If you use unreliable hardware and don't know about that, don't blame the
+filesystem when it tells you.**
+
 
 SEE ALSO
 --------
