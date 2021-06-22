@@ -790,6 +790,32 @@ h| Digest h| Cycles/4KiB h| Ratio h| Implementation
 | BLAKE2b  |  19000       |     11 | libsodium/AVX2
 |==================================================
 
+Many kernels are configured with SHA256 as built-in and not as a module.
+The accelerated versions are however provided by the modules and must be loaded
+explicitly (*modprobe sha256*) before mounting the filesystem to make use of
+them. You can check in '/sys/fs/btrfs/FSID/checksum' which one is used. If you
+see 'sha256-generic', then you may want to unmount and mount the filesystem
+again, changing that on a mounted filesystem is not possible.
+Check the file '/proc/crypto', when the implementation is built-in, you'd find
+
+--------------------
+name         : sha256
+driver       : sha256-generic
+module       : kernel
+priority     : 100
+...
+--------------------
+
+while accelerated implementation is e.g.
+
+--------------------
+name         : sha256
+driver       : sha256-avx2
+module       : sha256_ssse3
+priority     : 170
+...
+--------------------
+
 
 COMPRESSION
 -----------
