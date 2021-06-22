@@ -1452,19 +1452,19 @@ HARDWARE CONSIDERATIONS - MEMORY
 
 The data structures and raw data blocks are temporarily stored in computer
 memory before they get written to the device. It is critical that memory is
-reliable because even simple bit flips can have vast consquences and lead
-damaged structures. Not only in the filesystem but in the whole operating
+reliable because even simple bit flips can have vast consquences and lead to
+damaged structures, not only in the filesystem but in the whole operating
 system.
 
 Based on experience in the community, memory bitflips are more common than one
-would think. When it happens, it's reported by tree-checker or by a checksum
+would think. When it happens, it's reported by the tree-checker or by a checksum
 mismatch after reading blocks. There are some very obvious instances of bit
-flips that happen eg. in an ordered sequence of keys in metadata blocks. We can
-easily infer from the other data what values get damaged and how. Fixing that
-however is not straightforward and would require cross-referencig data from the
+flips that happen, e.g. in an ordered sequence of keys in metadata blocks. We can
+easily infer from the other data what values get damaged and how. However, fixing
+that is not straightforward and would require cross-referencing data from the
 entire filesystem to see the scope.
 
-If possible using ECC memory should lower the chances of bit flips, but this
+If available, ECC memory should lower the chances of bit flips, but this
 type of memory is not available in all cases. A memory test should be performed
 in case there's a visible bitflip pattern, though this may not detect a faulty
 memory module because the actual load of the system could be the factor making
@@ -1474,16 +1474,16 @@ While these were targeted, this shows that a series of reads or writes can
 affect unrelated parts of memory.
 
 Another class of errors is related to DMA (direct memory access) performed
-by device drivers. While this could be considered a software error too, the
+by device drivers. While this could be considered a software error, the
 data transfers that happen without CPU assistance may accidentally corrupt
 other pages. Storage devices utilize DMA for performance reasons, the
 filesystem structures and data pages are passed back and forth, making
-the errors possible to happen.
+errors possible.
 
 HARDWARE CONSIDERATIONS - ROTATIONAL DISKS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The HDDs typically fail at the level of individual sectors or small clusters.
+Rotational HDDs typically fail at the level of individual sectors or small clusters.
 Read failures are caught on the levels below the filesystem and are returned to
 the user as 'EIO - Input/output error'. Reading the blocks repeatedly may
 return the data eventually, but this is better done by specialized tools and
@@ -1491,27 +1491,28 @@ filesystem takes the result of the lower layers. Rewriting the sectors may
 trigger internal remapping but this inevitably leads to data loss.
 
 Disk firmware is technically software but from the filesystem perspective is
-part of the hardware. The IO requests are processed and caching or various
+part of the hardware. IO requests are processed, and caching or various
 other optimizations are performed, which may lead to bugs under high load or
-unexpected physical conditions or unsupported use case.
+unexpected physical conditions or unsupported use cases.
 
-Disks are connected by cables, that have two ends, that both can cause problems
+Disks are connected by cables with two ends, both of which can cause problems
 when not attached properly. Data transfers are protected by checksums and the
 lower layers try hard to transfer the data correctly or not at all. The errors
+from badly-connecting cables
 may manifest as large amount of failed read or write requests, or as short
-error bursts depending on physcial conditions.
+error bursts depending on physical conditions.
 
 HARDWARE CONSIDERATIONS - SD FLASH CARDS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-There's a lot of devices with low power consumption and thus using storage
-media based on low power consumption as well, typically flash memory stored on
-a chip enclosed in a detachable card package. Improperly inserted card may be
+There are a lot of devices with low power consumption and thus using storage
+media based on low power consumption, typically flash memory stored on
+a chip enclosed in a detachable card package. An improperly inserted card may be
 damaged by electrical spikes when the device is turned on or off. The chips
-storing data in turn may be damaged permanently. Some types of flash memory
+storing data in turn may be damaged permanently. All types of flash memory
 have a limited number of number of rewrites, so the data are internally
-translated by FTL (flash translation layer). This is firmware (software) and
-prone to bugs, that manifest as hadrware errors.
+translated by FTL (flash translation layer). This is implemented in firmware (software) and
+prone to bugs that manifest as hadrware errors.
 
 Adding redundancy like using DUP profiles for both data and metadata can help
 in some cases.
