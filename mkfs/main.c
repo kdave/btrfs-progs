@@ -1582,6 +1582,13 @@ raid_groups:
 		printf("\n");
 
 		list_all_devices(root);
+
+		if (mkfs_cfg.csum_type == BTRFS_CSUM_TYPE_SHA256) {
+			printf(
+"NOTE: you may need to manually load kernel module implementing accelerated SHA256 in case\n"
+"      the generic implementation is built-in, before mount. Check lsmod or /proc/crypto\n\n"
+);
+		}
 	}
 
 	/*
