@@ -17,17 +17,20 @@
 #include <sys/ioctl.h>
 #include <sys/mount.h>
 #include <sys/statfs.h>
+#include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <dirent.h>
 #include <blkid/blkid.h>
 #include <linux/limits.h>
 #include "kernel-lib/sizes.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/zoned.h"
 #include "common/device-utils.h"
+#include "common/path-utils.h"
 #include "common/internal.h"
 #include "common/messages.h"
 #include "common/utils.h"
@@ -391,4 +394,59 @@ u64 device_get_zone_unusable(int fd, u64 flags)
 	close(sys_fd);
 
 	return unusable;
+}
+
+/*
+ * Read information about zone size of the given device (short @name) from a
+ * given filesystem fd
+ */
+u64 device_get_zone_size(int fd, const char *name)
+{
+	DIR *dir;
+	struct dirent *de;
+	int sysfs_fd;
+	u64 ret = 0;
+
+	sysfs_fd = sysfs_open_fsid_dir(fd, "devices");
+	if (sysfs_fd < 0)
+		return 0;
+
+	dir = fdopendir(sysfs_fd);
+	if (!dir) {
+		ret = 0;
+		goto out;
+	}
+	while (1) {
+		int queue_fd;
+		char queue[PATH_MAX];
+		char buf[128] = {0};
+
+		de = readdir(dir);
+		if (!de) {
+			ret = 0;
+			break;
+		}
+
+		if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0)
+			continue;
+		if (strcmp(name, de->d_name) != 0)
+			continue;
+
+		path_cat3_out(queue, "devices", de->d_name, "queue/chunk_sectors");
+		/* /sys/fs/btrfs/FSID/devices/NAME/queue/chunk_sectors */
+		queue_fd = sysfs_open_fsid_file(fd, queue);
+		if (queue_fd < 0) {
+			ret = 0;
+			break;
+		}
+		sysfs_read_file(queue_fd, buf, sizeof(buf));
+		ret = atoll(buf);
+		close(queue_fd);
+		break;
+	}
+	closedir(dir);
+
+out:
+	close(sysfs_fd);
+	return ret;
 }
