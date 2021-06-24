@@ -471,7 +471,7 @@ size_t btrfs_sb_io(int fd, void *buf, off_t offset, int rw)
 	const u64 sb_size_sector = (BTRFS_SUPER_INFO_SIZE >> SECTOR_SHIFT);
 	u64 mapped = U64_MAX;
 	u32 zone_num;
-	unsigned int zone_size_sector;
+	u32 zone_size_sector;
 	size_t rep_size;
 	int mirror = -1;
 	int i;
