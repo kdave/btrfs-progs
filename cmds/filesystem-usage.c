@@ -621,8 +621,6 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 		pretty_size_mode(r_total_unused, unit_mode | UNITS_NEGATIVE));
 	printf("    Device missing:\t\t%*s\n", width,
 		pretty_size_mode(r_total_missing, unit_mode));
-	printf("    Used:\t\t\t%*s\n", width,
-		pretty_size_mode(r_total_used, unit_mode));
 	ret = ioctl(fd, BTRFS_IOC_GET_FEATURES, &feature_flags);
 	if (ret == 0 && (feature_flags.incompat_flags & BTRFS_FEATURE_INCOMPAT_ZONED)) {
 		u64 zone_size;
@@ -633,6 +631,8 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 		printf("    Device zone size:\t\t%*s\n", width,
 			pretty_size_mode(zone_size, unit_mode));
 	}
+	printf("    Used:\t\t\t%*s\n", width,
+		pretty_size_mode(r_total_used, unit_mode));
 	printf("    Free (estimated):\t\t%*s\t(",
 		width,
 		pretty_size_mode(free_estimated, unit_mode));
