@@ -395,6 +395,38 @@ static void get_raid56_space_info(struct btrfs_ioctl_space_args *sargs,
 	}
 }
 
+static u64 get_first_device_zone_size(int fd)
+{
+	int dirfd;
+	DIR *dir;
+	struct dirent *de;
+	char name[NAME_MAX] = {0};
+	u64 ret;
+
+	dirfd = sysfs_open_fsid_dir(fd, "devices");
+	if (dirfd < 0)
+		return 0;
+	dir = fdopendir(dirfd);
+	if (!dir) {
+		ret = 0;
+		goto out;
+	}
+	while (1) {
+		de = readdir(dir);
+		if (strcmp(".", de->d_name) == 0 || strcmp("..", de->d_name) == 0)
+			continue;
+		strcpy(name, de->d_name);
+		name[NAME_MAX - 1] = 0;
+		break;
+	}
+	ret = device_get_zone_size(fd, name);
+	ret *= 512;
+
+out:
+	closedir(dir);
+	return ret;
+}
+
 #define	MIN_UNALOCATED_THRESH	SZ_16M
 static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 		int chunkcount, struct device_info *devinfo, int devcount,
@@ -593,8 +625,13 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 		pretty_size_mode(r_total_used, unit_mode));
 	ret = ioctl(fd, BTRFS_IOC_GET_FEATURES, &feature_flags);
 	if (ret == 0 && (feature_flags.incompat_flags & BTRFS_FEATURE_INCOMPAT_ZONED)) {
+		u64 zone_size;
+
 		printf("    Device zone unusable:\t%*s\n", width,
 			pretty_size_mode(zone_unusable, unit_mode));
+		zone_size = get_first_device_zone_size(fd);
+		printf("    Device zone size:\t\t%*s\n", width,
+			pretty_size_mode(zone_size, unit_mode));
 	}
 	printf("    Free (estimated):\t\t%*s\t(",
 		width,
