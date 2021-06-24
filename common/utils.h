@@ -128,5 +128,6 @@ int btrfs_warn_multiple_profiles(int fd);
 int sysfs_open_file(const char *name);
 int sysfs_open_fsid_file(int fd, const char *filename);
 int sysfs_read_file(int fd, char *buf, size_t size);
+int sysfs_open_fsid_dir(int fd, const char *dirname);
 
 #endif
