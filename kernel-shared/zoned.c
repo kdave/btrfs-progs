@@ -552,6 +552,7 @@ size_t btrfs_sb_io(int fd, void *buf, off_t offset, int rw)
 	zones = (struct blk_zone *)(rep + 1);
 
 	ret = sb_log_location(fd, zones, rw, &mapped);
+	free(rep);
 	/*
 	 * Special case: no superblock found in the zones. This case happens
 	 * when initializing a file-system.
