@@ -316,6 +316,21 @@ one profile (single, raid1, ...), see `btrfs`(5)
 section 'FILESYSTEMS WITH MULTIPLE BLOCK GROUP PROFILES'.
 --
 +
+And on a zoned filesystem there are two more lines in the 'Device' section:
++
+-------------------------
+    Device zone unusable:          5.13GiB
+    Device zone size:            256.00MiB
+-------------------------
++
+--
+* 'Device zone unusable' -- sum of of space that's been used in the past
+but now is not due to COW and not referenced anymory, the chunks have to
+be reclaimed and zones reset to make it usable again
+* 'Device zone size' -- the reported zone size of the host-managed device, same
+for all devices
+--
++
 The root user will also see stats broken down by block group types:
 +
 -------------------------
