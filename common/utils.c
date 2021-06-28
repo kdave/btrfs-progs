@@ -1795,7 +1795,8 @@ int check_running_fs_exclop(int fd, enum exclusive_operation start, bool enqueue
 			tv.tv_sec /= 2;
 			ret = select(sysfs_fd + 1, NULL, NULL, &fds, &tv);
 			exclop = get_fs_exclop(fd);
-			continue;
+			if (exclop <= 0)
+				ret = 0;
 		}
 	}
 out:
