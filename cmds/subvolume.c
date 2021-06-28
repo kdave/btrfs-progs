@@ -258,6 +258,7 @@ static int cmd_subvol_delete(const struct cmd_struct *cmd,
 	char	*path = NULL;
 	DIR	*dirstream = NULL;
 	int commit_mode = 0;
+	bool subvol_path_not_found = false;
 	u8 fsid[BTRFS_FSID_SIZE];
 	u64 subvolid = 0;
 	char uuidbuf[BTRFS_UUID_UNPARSED_SIZE];
@@ -319,6 +320,18 @@ static int cmd_subvol_delete(const struct cmd_struct *cmd,
 
 		path = argv[cnt];
 		err = btrfs_util_subvolume_path(path, subvolid, &subvol);
+		/*
+		 * If the subvolume is really not referred by anyone, and refs
+		 * is 0, newer kernel can handle it by just adding an orphan
+		 * item and queue it for cleanup.
+		 *
+		 * In this case, just let kernel to handle it, we do no extra
+		 * handling.
+		 */
+		if (err == BTRFS_UTIL_ERROR_SUBVOLUME_NOT_FOUND) {
+			subvol_path_not_found = true;
+			goto again;
+		}
 		if (err) {
 			error_btrfs_util(err);
 			ret = 1;
@@ -395,8 +408,10 @@ again:
 
 	if (subvolid == 0)
 		pr_verbose(MUST_LOG, "'%s/%s'\n", dname, vname);
-	else
+	else if (!subvol_path_not_found)
 		pr_verbose(MUST_LOG, "'%s'\n", full_subvolpath);
+	else
+		pr_verbose(MUST_LOG, "subvolid=%llu\n", subvolid);
 
 	if (subvolid == 0)
 		err = btrfs_util_delete_subvolume_fd(fd, vname, 0);
