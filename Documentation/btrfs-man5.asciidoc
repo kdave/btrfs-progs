@@ -1480,11 +1480,11 @@ MAIN MEMORY
 
 The data structures and raw data blocks are temporarily stored in computer
 memory before they get written to the device. It is critical that memory is
-reliable because even simple bit flips can have vast consquences and lead to
+reliable because even simple bit flips can have vast consequences and lead to
 damaged structures, not only in the filesystem but in the whole operating
 system.
 
-Based on experience in the community, memory bitflips are more common than one
+Based on experience in the community, memory bit flips are more common than one
 would think. When it happens, it's reported by the tree-checker or by a checksum
 mismatch after reading blocks. There are some very obvious instances of bit
 flips that happen, e.g. in an ordered sequence of keys in metadata blocks. We can
@@ -1494,7 +1494,7 @@ entire filesystem to see the scope.
 
 If available, ECC memory should lower the chances of bit flips, but this
 type of memory is not available in all cases. A memory test should be performed
-in case there's a visible bitflip pattern, though this may not detect a faulty
+in case there's a visible bit flip pattern, though this may not detect a faulty
 memory module because the actual load of the system could be the factor making
 the problems appear. In recent years attacks on how the memory modules operate
 have been demonstrated ('rowhammer') achieving specific bits to be flipped.
@@ -1504,6 +1504,14 @@ affect unrelated parts of memory.
 Further reading:
 
 - https://en.wikipedia.org/wiki/Row_hammer
+
+What to do:
+
+- run 'memtest', note that sometimes memory errors happen only when the system
+  is under heavy load that the default memtest cannot trigger
+- memory errors may appear as filesystem going read-only due to "pre write"
+  check, that verify meta data before they get written but fail some basic
+  consistency checks
 
 DIRECT MEMORY ACCESS (DMA)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1515,8 +1523,14 @@ other pages. Storage devices utilize DMA for performance reasons, the
 filesystem structures and data pages are passed back and forth, making
 errors possible in case page life time is not properly tracked.
 
-There are lots of quirks (device-specific workarounds) in linux kernel
-drivers (regarding not only DMA) that are added when found.
+There are lots of quirks (device-specific workarounds) in Linux kernel
+drivers (regarding not only DMA) that are added when found. The quirks
+may avoid specific errors or disable some features to avoid worse problems.
+
+What to do:
+
+- use up-to-date kernel (recent releases or maintained long term support versions)
+- as this may be caused by faulty drivers, keep the systems up-to-date
 
 ROTATIONAL DISKS (HDD)
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -1538,6 +1552,10 @@ when not attached properly. Data transfers are protected by checksums and the
 lower layers try hard to transfer the data correctly or not at all. The errors
 from badly-connecting cables may manifest as large amount of failed read or
 write requests, or as short error bursts depending on physical conditions.
+
+What to do:
+
+- check 'smartctl' for potential issues
 
 SOLID STATE DRIVES (SSD)
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1602,6 +1620,34 @@ Further reading:
 - https://www.snia.org/educational-library/ssd-performance-primer-2013
 - https://www.snia.org/educational-library/how-controllers-maximize-ssd-life-2013
 
+What to do:
+
+- run 'smartctl' or self-tests to look for potential issues
+- keep the firmware up-to-date
+
+NVM EXPRESS, NON-VOLATILE MEMORY (NVMe)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+NVMe is a type of persistent memory usually connected over a system bus (PCIe)
+or similar interface and the speeds are an order of magnitude faster than SSD.
+It is also a non-rotating type of storage, and is not typically connected by a
+cable. It's not a SCSI type device either but rather a complete specification
+for logical device interface.
+
+In a way the errors could be compared to a combination of SSD class and regular
+memory. Errors may exhibit as random bit flips or IO failures. There are tools
+to access the internal log ('nvme log' and 'nvme-cli') for a more detailed
+analysis.
+
+There are separate error detection and correction steps performed e.g. on the
+bus level and in most cases never making in to the filesystem level. Once this
+happens it could mean there's some systematic error like overheating or bad
+physical connection of the device. You may want to run self-tests (using
+'smartctl').
+
+* https://en.wikipedia.org/wiki/NVM_Express
+* https://www.smartmontools.org/wiki/NVMe_Support
+
 DRIVE FIRMWARE
 ~~~~~~~~~~~~~~
 
@@ -1610,20 +1656,30 @@ software has bugs, so does firmware. Storage devices can update the firmware
 and fix known bugs. In some cases the it's possible to avoid certain bugs by
 quirks (device-specific workarounds) in Linux kernel.
 
+A faulty firmware can cause wide range of corruptions from small and localized
+to large affecting lots of data. Self-repair capabilities may not be sufficient.
+
+What to do:
+
+- check for firmware updates in case there are known problems, note that
+  updating firmware can be risky on itself
+- use up-to-date kernel (recent releases or maintained long term support versions)
+
 SD FLASH CARDS
 ~~~~~~~~~~~~~~
 
 There are a lot of devices with low power consumption and thus using storage
-media based on low power consumption, typically flash memory stored on
+media based on low power consumption too, typically flash memory stored on
 a chip enclosed in a detachable card package. An improperly inserted card may be
 damaged by electrical spikes when the device is turned on or off. The chips
 storing data in turn may be damaged permanently. All types of flash memory
-have a limited number of number of rewrites, so the data are internally
-translated by FTL (flash translation layer). This is implemented in firmware
-(software) and prone to bugs that manifest as hardware errors.
+have a limited number of rewrites, so the data are internally translated by FTL
+(flash translation layer). This is implemented in firmware (technically a
+software) and prone to bugs that manifest as hardware errors.
 
 Adding redundancy like using DUP profiles for both data and metadata can help
-in some cases.
+in some cases but a full backup might be the best option once problems appear
+and replacing the card could be required as well.
 
 HARDWARE AS THE MAIN SOURCE OF FILESYSTEM CORRUPTIONS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
