@@ -1,4 +1,4 @@
-Btrfs-progs [![build status](https://travis-ci.org/kdave/btrfs-progs.svg?branch=devel)](https://travis-ci.org/kdave/btrfs-progs) [![coverity status](https://scan.coverity.com/projects/617/badge.svg)](https://scan.coverity.com/projects/btrfs-progs)
+Btrfs-progs [![coverity status](https://scan.coverity.com/projects/617/badge.svg)](https://scan.coverity.com/projects/btrfs-progs)
 ===========
 
 Userspace utilities to manage btrfs filesystems.
@@ -14,9 +14,7 @@ This repository hosts following utilities:
 * **btrfs** &mdash; the main administration tool ([manual page](https://btrfs.wiki.kernel.org/index.php/Manpage/btrfs))
 * **mkfs.btrfs** &mdash; utility to create the filesystem ([manual page](https://btrfs.wiki.kernel.org/index.php/Manpage/mkfs.btrfs))
 * all-in-one binary in the busybox style with mkfs.btrfs, btrfs-image and other tools built-in ([standalone tools](https://github.com/kdave/btrfs-progs/blob/master/Documentation/btrfs.asciidoc#standalone-tools))
-
-The C and python 3 bindings are provided by a LGPL library **libbtrfsutil** see
-[libbtrfsutil/README.md](libbtrfsutil/README.md) for more.
+* **libbtrfsutil** (LGPL v2.1) &mdash; C and python 3 bindings, see [libbtrfsutil/README.md](libbtrfsutil/README.md) for more
 
 See [INSTALL](INSTALL) for build instructions and [tests/README.md](tests/README.md) for
 testing information.
