@@ -1,3 +1,27 @@
+btrfs-progs-5.13 (2021-07-13)
+* restore: remove loop checks for extent count and directory scan
+* inspect dump-tree: new options to print node (--csum-headers) and data
+  checksums (--csum-items)
+* fi usage:
+  * print stripe count for striped profiles
+  * print zoned information: size, total unusable
+* mkfs: print note about sha256 accelerated module loading issue
+* check: ability to reset dev_item::bytes_used
+* fixes
+  * detect zoned kernel support at run time too
+  * exclusive op running check return value
+* fi resize: support cancel (kernel 5.14)
+* device remove: support cancel (kernel 5.14)
+* documentation about general topics
+  * compression
+  * zoned mode
+  * storage model
+  * hardware considerations
+* other
+  * libbtrfsutil API overview
+  * help text fixes and updates
+  * hash speedtest measure time, cycles using perf and print throughput
+
 btrfs-progs-5.12.1 (2021-05-13)
   * build: fix missing symbols in libbtrfs
   * mkfs: check for minimal number of zones
