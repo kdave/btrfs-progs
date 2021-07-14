@@ -389,10 +389,10 @@ implementation, which adds a new B-tree called the free space tree, addresses
 this issue. Once enabled, the 'v2' space cache will always be used and cannot
 be disabled unless it is cleared. Use 'clear_cache,space_cache=v1' or
 'clear_cache,nospace_cache' to do so. If 'v2' is enabled, kernels without 'v2'
-support will only be able to mount the filesystem in read-only mode. The
-`btrfs`(8) command currently only has read-only support for 'v2'. A read-write
-command may be run on a 'v2' filesystem by clearing the cache, running the
-command, and then remounting with 'space_cache=v2'.
+support will only be able to mount the filesystem in read-only mode.
++
+The `btrfs-check`(8) and `mkfs.btrfs`(8) commands have full 'v2' free space
+cache support since v4.19.
 +
 If a version is not explicitly specified, the default implementation will be
 chosen, which is 'v1'.
