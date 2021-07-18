@@ -623,6 +623,9 @@ static void print_inode_error(struct btrfs_root *root, struct inode_record *rec)
 			rec->imode & ~07777);
 	if (errors & I_ERR_INVALID_GEN)
 		fprintf(stderr, ", invalid inode generation or transid");
+	if (errors & I_ERR_INVALID_NLINK)
+		fprintf(stderr, ", directory has invalid nlink %d",
+			rec->nlink);
 	fprintf(stderr, "\n");
 
 	/* Print the holes if needed */
@@ -909,6 +912,10 @@ static int process_inode_item(struct extent_buffer *eb,
 	if (S_ISLNK(rec->imode) &&
 	    flags & (BTRFS_INODE_IMMUTABLE | BTRFS_INODE_APPEND))
 		rec->errors |= I_ERR_ODD_INODE_FLAGS;
+
+	/* Directory should never have hard link */
+	if (S_ISDIR(rec->imode) && rec->nlink >= 2)
+		rec->errors |= I_ERR_INVALID_NLINK;
 	/*
 	 * We don't have accurate root info to determine the correct
 	 * inode generation uplimit, use super_generation + 1 anyway
