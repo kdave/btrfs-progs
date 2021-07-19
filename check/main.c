@@ -9892,33 +9892,65 @@ out:
 	return bad_roots;
 }
 
+/*
+ * Number of free space cache inodes to delete in one transaction.
+ *
+ * This is to speedup the v1 space cache deletion for large fs.
+ */
+#define NR_BLOCK_GROUP_CLUSTER		(16)
+
 static int clear_free_space_cache(void)
 {
 	struct btrfs_trans_handle *trans;
 	struct btrfs_block_group *bg_cache;
+	int nr_handled = 0;
 	u64 current = 0;
 	int ret = 0;
+
+	trans = btrfs_start_transaction(gfs_info->tree_root, 0);
+	if (IS_ERR(trans)) {
+		ret = PTR_ERR(trans);
+		errno = -ret;
+		error("failed to start a transaction: %m");
+		return ret;
+	}
 
 	/* Clear all free space cache inodes and its extent data */
 	while (1) {
 		bg_cache = btrfs_lookup_first_block_group(gfs_info, current);
 		if (!bg_cache)
 			break;
-		ret = btrfs_clear_free_space_cache(gfs_info, bg_cache);
-		if (ret < 0)
+		ret = btrfs_clear_free_space_cache(trans, bg_cache);
+		if (ret < 0) {
+			btrfs_abort_transaction(trans, ret);
 			return ret;
+		}
+		nr_handled++;
+
+		if (nr_handled == NR_BLOCK_GROUP_CLUSTER) {
+			ret = btrfs_commit_transaction(trans, gfs_info->tree_root);
+			if (ret < 0) {
+				errno = -ret;
+				error("failed to start a transaction: %m");
+				return ret;
+			}
+			trans = btrfs_start_transaction(gfs_info->tree_root, 0);
+			if (IS_ERR(trans)) {
+				ret = PTR_ERR(trans);
+				errno = -ret;
+				error("failed to start a transaction: %m");
+				return ret;
+			}
+		}
 		current = bg_cache->start + bg_cache->length;
 	}
 
-	/* Don't forget to set cache_generation to -1 */
-	trans = btrfs_start_transaction(gfs_info->tree_root, 0);
-	if (IS_ERR(trans)) {
-		error("failed to update super block cache generation");
-		return PTR_ERR(trans);
-	}
 	btrfs_set_super_cache_generation(gfs_info->super_copy, (u64)-1);
-	btrfs_commit_transaction(trans, gfs_info->tree_root);
-
+	ret = btrfs_commit_transaction(trans, gfs_info->tree_root);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to start a transaction: %m");
+	}
 	return ret;
 }
 

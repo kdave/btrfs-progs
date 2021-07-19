@@ -895,10 +895,10 @@ next:
 	}
 }
 
-int btrfs_clear_free_space_cache(struct btrfs_fs_info *fs_info,
+int btrfs_clear_free_space_cache(struct btrfs_trans_handle *trans,
 				 struct btrfs_block_group *bg)
 {
-	struct btrfs_trans_handle *trans;
+	struct btrfs_fs_info *fs_info = trans->fs_info;
 	struct btrfs_root *tree_root = fs_info->tree_root;
 	struct btrfs_path path;
 	struct btrfs_key key;
@@ -908,10 +908,6 @@ int btrfs_clear_free_space_cache(struct btrfs_fs_info *fs_info,
 	u64 ino;
 	int slot;
 	int ret;
-
-	trans = btrfs_start_transaction(tree_root, 1);
-	if (IS_ERR(trans))
-		return PTR_ERR(trans);
 
 	btrfs_init_path(&path);
 
@@ -1016,7 +1012,5 @@ int btrfs_clear_free_space_cache(struct btrfs_fs_info *fs_info,
 	}
 out:
 	btrfs_release_path(&path);
-	if (!ret)
-		btrfs_commit_transaction(trans, tree_root);
 	return ret;
 }

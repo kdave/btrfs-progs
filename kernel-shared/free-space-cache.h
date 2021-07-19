@@ -57,6 +57,6 @@ void unlink_free_space(struct btrfs_free_space_ctl *ctl,
 		       struct btrfs_free_space *info);
 int btrfs_add_free_space(struct btrfs_free_space_ctl *ctl, u64 offset,
 			 u64 bytes);
-int btrfs_clear_free_space_cache(struct btrfs_fs_info *fs_info,
+int btrfs_clear_free_space_cache(struct btrfs_trans_handle *trans,
 				 struct btrfs_block_group *bg);
 #endif
