@@ -39,7 +39,7 @@ enum btrfs_util_err err;
 
 err = btrfs_util_sync("/");
 if (err)
-	fprintf("stderr, %s: %m\n", btrfs_util_strerror(err));
+	fprintf(stderr, "%s: %m\n", btrfs_util_strerror(err));
 ```
 
 In the Python bindings, functions may raise a `BtrfsUtilError`, which is a
