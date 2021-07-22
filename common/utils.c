@@ -731,10 +731,10 @@ int test_num_disk_vs_raid(u64 metadata_profile, u64 data_profile,
 		/* fallthrough */
 	case 2:
 		allowed |= BTRFS_BLOCK_GROUP_RAID0 | BTRFS_BLOCK_GROUP_RAID1 |
-			BTRFS_BLOCK_GROUP_RAID5;
+			BTRFS_BLOCK_GROUP_RAID5 | BTRFS_BLOCK_GROUP_RAID10;
 		/* fallthrough */
 	case 1:
-		allowed |= BTRFS_BLOCK_GROUP_DUP;
+		allowed |= BTRFS_BLOCK_GROUP_DUP | BTRFS_BLOCK_GROUP_RAID0;
 	}
 
 	if (dev_cnt > 1 && profile & BTRFS_BLOCK_GROUP_DUP) {

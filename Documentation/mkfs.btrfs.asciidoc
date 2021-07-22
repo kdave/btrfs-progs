@@ -317,11 +317,11 @@ There are the following block group types available:
       ^.^h| Copies   ^.^h| Parity     ^.<h| Striping
 | single  | 1            |                |            |        100% | 1/any
 | DUP     | 2 / 1 device |                |            |         50% | 1/any ^(see note 1)^
-| RAID0   |              |                | 1 to N     |        100% | 2/any
+| RAID0   |              |                | 1 to N     |        100% | 1/any ^(see note 5)^
 | RAID1   | 2            |                |            |         50% | 2/any
 | RAID1C3 | 3            |                |            |         33% | 3/any
 | RAID1C4 | 4            |                |            |         25% | 4/any
-| RAID10  | 2            |                | 1 to N     |         50% | 4/any
+| RAID10  | 2            |                | 1 to N     |         50% | 2/any ^(see note 5)^
 | RAID5   | 1            | 1              | 2 to N-1   |     (N-1)/N | 2/any ^(see note 2)^
 | RAID6   | 1            | 2              | 3 to N-2   |     (N-2)/N | 3/any ^(see note 3)^
 |=============================================================
@@ -343,6 +343,9 @@ want to get effectively 3 copies in a RAID1-like manner (but not exactly that).
 
 'Note 4:' Since kernel 5.5 it's possible to use RAID1C3 as replacement for
 RAID6, higher space cost but reliable.
+
+'Note 5:' Since kernel 5.15 it's possible to use (mount, convert profiles)
+RAID0 on one device and RAID10 on two devices.
 
 PROFILE LAYOUT
 ~~~~~~~~~~~~~~
