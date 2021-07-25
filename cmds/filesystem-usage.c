@@ -24,6 +24,7 @@
 #include <stdarg.h>
 #include <getopt.h>
 #include <fcntl.h>
+#include <linux/limits.h>
 
 #include "common/utils.h"
 #include "kerncompat.h"
