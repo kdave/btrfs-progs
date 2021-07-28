@@ -1469,8 +1469,16 @@ static enum btrfs_util_error subvolume_iterator_next_tree_search(struct btrfs_ut
 		name = (const char *)(ref + 1);
 		err = build_subvol_path_privileged(iter, header, ref, name,
 						   &path_len);
-		if (err)
+		if (err) {
+			/*
+			 * If the subvolume's parent directory doesn't exist,
+			 * then the subvolume was either moved or deleted. Skip
+			 * it.
+			 */
+			if (errno == ENOENT)
+				continue;
 			return err;
+		}
 
 		err = append_to_search_stack(iter,
 				btrfs_search_header_offset(header), path_len);
@@ -1539,8 +1547,12 @@ static enum btrfs_util_error subvolume_iterator_next_unprivileged(struct btrfs_u
 		err = build_subvol_path_unprivileged(iter, treeid, dirid,
 						     &path_len);
 		if (err) {
-			/* Skip the subvolume if we can't access it. */
-			if (errno == EACCES)
+			/*
+			 * If the subvolume's parent directory doesn't exist,
+			 * then the subvolume was either moved or deleted. Skip
+			 * it. Also skip it if we can't access it.
+			 */
+			if (errno == ENOENT || errno == EACCES)
 				continue;
 			return err;
 		}

@@ -77,7 +77,16 @@ class BtrfsTestCase(unittest.TestCase):
             mkfs = 'mkfs.btrfs'
         try:
             subprocess.check_call([mkfs, '-q', image])
-            subprocess.check_call(['mount', '-o', 'loop', '--', image, mountpoint])
+            subprocess.check_call(
+                [
+                    'mount',
+                    '-o',
+                    'loop,user_subvol_rm_allowed',
+                    '--',
+                    image,
+                    mountpoint,
+                ]
+            )
         except Exception as e:
             os.rmdir(mountpoint)
             os.remove(image)

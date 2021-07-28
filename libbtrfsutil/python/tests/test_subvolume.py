@@ -17,6 +17,7 @@
 
 import fcntl
 import errno
+import multiprocessing
 import os
 import os.path
 from pathlib import PurePath
@@ -493,20 +494,78 @@ class TestSubvolume(BtrfsTestCase):
         finally:
             os.chdir(pwd)
 
+    def _skip_unless_have_unprivileged_subvolume_iterator(self, path):
+        with drop_privs():
+            try:
+                for _ in btrfsutil.SubvolumeIterator(path):
+                    break
+            except OSError as e:
+                if e.errno == errno.ENOTTY:
+                    self.skipTest('BTRFS_IOC_GET_SUBVOL_ROOTREF is not available')
+                else:
+                    raise
+
     @skipUnlessHaveNobody
     def test_subvolume_iterator_unprivileged(self):
         os.chown(self.mountpoint, NOBODY_UID, -1)
         pwd = os.getcwd()
         try:
             os.chdir(self.mountpoint)
+            self._skip_unless_have_unprivileged_subvolume_iterator('.')
             with drop_privs():
-                try:
-                    list(btrfsutil.SubvolumeIterator('.'))
-                except OSError as e:
-                    if e.errno == errno.ENOTTY:
-                        self.skipTest('BTRFS_IOC_GET_SUBVOL_ROOTREF is not available')
-                    else:
-                        raise
                 self._test_subvolume_iterator()
+        finally:
+            os.chdir(pwd)
+
+    @staticmethod
+    def _create_and_delete_subvolume(i):
+        dir_name = f'dir{i}'
+        subvol_name = dir_name + '/subvol'
+        while True:
+            os.mkdir(dir_name)
+            btrfsutil.create_subvolume(subvol_name)
+            btrfsutil.delete_subvolume(subvol_name)
+            os.rmdir(dir_name)
+
+    def _test_subvolume_iterator_race(self):
+        procs = []
+        fd = os.open('.', os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            for i in range(10):
+                procs.append(
+                    multiprocessing.Process(
+                        target=self._create_and_delete_subvolume,
+                        args=(i,),
+                        daemon=True,
+                    )
+                )
+            for proc in procs:
+                proc.start()
+            for i in range(1000):
+                with btrfsutil.SubvolumeIterator(fd) as it:
+                    for _ in it:
+                        pass
+        finally:
+            for proc in procs:
+                proc.terminate()
+                proc.join()
+            os.close(fd)
+
+    def test_subvolume_iterator_race(self):
+        pwd = os.getcwd()
+        try:
+            os.chdir(self.mountpoint)
+            self._test_subvolume_iterator_race()
+        finally:
+            os.chdir(pwd)
+
+    def test_subvolume_iterator_race_unprivileged(self):
+        os.chown(self.mountpoint, NOBODY_UID, -1)
+        pwd = os.getcwd()
+        try:
+            os.chdir(self.mountpoint)
+            self._skip_unless_have_unprivileged_subvolume_iterator('.')
+            with drop_privs():
+                self._test_subvolume_iterator_race()
         finally:
             os.chdir(pwd)
