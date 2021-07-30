@@ -1,3 +1,13 @@
+btrfs-progs-5.13.1 (2021-07-30)
+* build: fix build on musl libc due to missing definition of NAME_MAX
+* check:
+  * batch more work into one transaction when clearing v1 free space inodes
+  * detect directoris with wrong number of links
+* libbtrfsutil: fix race between subvolume iterator and deletion
+* mkfs: be more specific about supported profiles for zoned device
+* other:
+  * documentation updates
+
 btrfs-progs-5.13 (2021-07-13)
 * restore: remove loop checks for extent count and directory scan
 * inspect dump-tree: new options to print node (--csum-headers) and data
