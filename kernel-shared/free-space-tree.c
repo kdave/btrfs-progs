@@ -1447,6 +1447,7 @@ int btrfs_create_free_space_tree(struct btrfs_fs_info *fs_info)
 
 	btrfs_set_fs_compat_ro(fs_info, FREE_SPACE_TREE);
 	btrfs_set_fs_compat_ro(fs_info, FREE_SPACE_TREE_VALID);
+	btrfs_set_super_cache_generation(fs_info->super_copy, 0);
 
 	ret = btrfs_commit_transaction(trans, tree_root);
 	if (ret)
