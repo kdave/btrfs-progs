@@ -54,6 +54,7 @@ struct btrfs_convert_context;
 #define CONVERT_FLAG_XATTR		(1U << 2)
 #define CONVERT_FLAG_COPY_LABEL		(1U << 3)
 #define CONVERT_FLAG_SET_LABEL		(1U << 4)
+#define CONVERT_FLAG_COPY_FSID		(1U << 5)
 
 /* 23.2.5 acl_tag_t values */
 

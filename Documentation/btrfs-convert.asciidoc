@@ -136,6 +136,12 @@ show progress of conversion (a heartbeat indicator and number of inodes
 processed), on by default
 --no-progress::
 disable progress and show only the main phases of conversion
+--uuid <SPEC>::
+set the FSID of the new filesystem based on 'SPEC':
++
+- 'new' - (default) generate UUID for the FSID of btrfs
+- 'copy' - copy UUID from the source filesystem
+- 'UUID' - a conforming UUID value, the 36 byte string representation
 
 EXIT STATUS
 -----------

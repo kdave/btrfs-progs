@@ -98,6 +98,7 @@ static int ext2_open_fs(struct btrfs_convert_context *cctx, const char *name)
 	cctx->first_data_block = ext2_fs->super->s_first_data_block;
 	cctx->inodes_count = ext2_fs->super->s_inodes_count;
 	cctx->free_inodes_count = ext2_fs->super->s_free_inodes_count;
+	memcpy(cctx->fs_uuid, ext2_fs->super->s_uuid, SOURCE_FS_UUID_SIZE);
 	return 0;
 fail:
 	ext2fs_close(ext2_fs);

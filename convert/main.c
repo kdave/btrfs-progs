@@ -90,6 +90,7 @@
 #include <getopt.h>
 #include <pthread.h>
 #include <stdbool.h>
+#include <uuid/uuid.h>
 
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
@@ -1131,7 +1132,8 @@ static int convert_open_fs(const char *devname,
 }
 
 static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
-		const char *fslabel, int progress, u64 features, u16 csum_type)
+		const char *fslabel, int progress, u64 features, u16 csum_type,
+		char fsid[BTRFS_UUID_UNPARSED_SIZE])
 {
 	int ret;
 	int fd = -1;
@@ -1144,9 +1146,11 @@ static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
 	char subvol_name[SOURCE_FS_NAME_LEN + 8];
 	struct task_ctx ctx;
 	char features_buf[64];
+	char fsid_str[BTRFS_UUID_UNPARSED_SIZE];
 	struct btrfs_mkfs_config mkfs_cfg;
 	bool btrfs_sb_committed = false;
 
+	memset(&mkfs_cfg, 0, sizeof(mkfs_cfg));
 	init_convert_context(&cctx);
 	ret = convert_open_fs(devname, &cctx);
 	if (ret)
@@ -1182,16 +1186,29 @@ static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
 	if (features == BTRFS_MKFS_DEFAULT_FEATURES)
 		strcat(features_buf, " (default)");
 
+	if (convert_flags & CONVERT_FLAG_COPY_FSID) {
+		uuid_unparse(cctx.fs_uuid, mkfs_cfg.fs_uuid);
+	} else if (fsid[0] == 0) {
+		uuid_t uuid;
+
+		uuid_generate(uuid);
+		uuid_unparse(uuid, mkfs_cfg.fs_uuid);
+	} else {
+		memcpy(mkfs_cfg.fs_uuid, fsid, BTRFS_UUID_UNPARSED_SIZE);
+	}
+
 	printf("create btrfs filesystem:\n");
 	printf("\tblocksize: %u\n", blocksize);
 	printf("\tnodesize:  %u\n", nodesize);
 	printf("\tfeatures:  %s\n", features_buf);
 	printf("\tchecksum:  %s\n", btrfs_super_csum_name(csum_type));
+	uuid_unparse(cctx.fs_uuid, fsid_str);
+	printf("\told UUID:  %s\n", fsid_str);
+	printf("\tnew UUID:  %s\n", mkfs_cfg.fs_uuid);
 	printf("free space report:\n");
 	printf("\ttotal:     %llu\n",cctx.total_bytes);
 	printf("\tfree:      %llu (%.2f%%)\n", cctx.free_bytes_initial,
 			100.0 * cctx.free_bytes_initial / cctx.total_bytes);
-	memset(&mkfs_cfg, 0, sizeof(mkfs_cfg));
 	mkfs_cfg.csum_type = csum_type;
 	mkfs_cfg.label = cctx.volume_name;
 	mkfs_cfg.num_bytes = total_bytes;
@@ -1747,6 +1764,7 @@ static void print_usage(void)
 	printf("\t-r|--rollback          roll back to the original filesystem\n");
 	printf("\t-l|--label LABEL       set filesystem label\n");
 	printf("\t-L|--copy-label        use label from converted filesystem\n");
+	printf("\t--uuid SPEC            new, copy or user-defined conforming UUID\n");
 	printf("\t-p|--progress          show converting progress (default)\n");
 	printf("\t-O|--features LIST     comma separated list of filesystem features\n");
 	printf("\t--no-progress          show only overview, not the detailed progress\n");
@@ -1772,11 +1790,14 @@ int BOX_MAIN(convert)(int argc, char *argv[])
 	char fslabel[BTRFS_LABEL_SIZE];
 	u64 features = BTRFS_MKFS_DEFAULT_FEATURES;
 	u16 csum_type = BTRFS_CSUM_TYPE_CRC32;
+	u32 copy_fsid = 0;
+	char fsid[BTRFS_UUID_UNPARSED_SIZE] = {0};
 
 	crc32c_optimization_init();
 
 	while(1) {
-		enum { GETOPT_VAL_NO_PROGRESS = 256, GETOPT_VAL_CHECKSUM };
+		enum { GETOPT_VAL_NO_PROGRESS = 256, GETOPT_VAL_CHECKSUM,
+			GETOPT_VAL_UUID };
 		static const struct option long_options[] = {
 			{ "no-progress", no_argument, NULL,
 				GETOPT_VAL_NO_PROGRESS },
@@ -1792,6 +1813,7 @@ int BOX_MAIN(convert)(int argc, char *argv[])
 			{ "progress", no_argument, NULL, 'p' },
 			{ "label", required_argument, NULL, 'l' },
 			{ "copy-label", no_argument, NULL, 'L' },
+			{ "uuid", required_argument, NULL, GETOPT_VAL_UUID },
 			{ "nodesize", required_argument, NULL, 'N' },
 			{ "help", no_argument, NULL, GETOPT_VAL_HELP},
 			{ NULL, 0, NULL, 0 }
@@ -1866,6 +1888,23 @@ int BOX_MAIN(convert)(int argc, char *argv[])
 			case GETOPT_VAL_CHECKSUM:
 				csum_type = parse_csum_type(optarg);
 				break;
+			case GETOPT_VAL_UUID:
+				copy_fsid = 0;
+				fsid[0] = 0;
+				if (strcmp(optarg, "copy") == 0) {
+					copy_fsid = CONVERT_FLAG_COPY_FSID;
+				} else if (strcmp(optarg, "new") == 0) {
+					/* Generated later */
+				} else {
+					uuid_t uuid;
+
+					if (uuid_parse(optarg, uuid) != 0) {
+						error("invalid UUID: %s\n", optarg);
+						return 1;
+					}
+					strncpy(fsid, optarg, sizeof(fsid));
+				}
+				break;
 			case GETOPT_VAL_HELP:
 			default:
 				print_usage();
@@ -1908,9 +1947,10 @@ int BOX_MAIN(convert)(int argc, char *argv[])
 		cf |= datacsum ? CONVERT_FLAG_DATACSUM : 0;
 		cf |= packing ? CONVERT_FLAG_INLINE_DATA : 0;
 		cf |= noxattr ? 0 : CONVERT_FLAG_XATTR;
+		cf |= copy_fsid;
 		cf |= copylabel;
 		ret = do_convert(file, cf, nodesize, fslabel, progress, features,
-				 csum_type);
+				 csum_type, fsid);
 	}
 	if (ret)
 		return 1;

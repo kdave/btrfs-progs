@@ -86,6 +86,7 @@ static int reiserfs_open_fs(struct btrfs_convert_context *cxt, const char *name)
 	cxt->first_data_block = 0;
 	cxt->inodes_count = reiserfs_count_objectids(fs);
 	cxt->free_inodes_count = 0;
+	memcpy(cxt->fs_uuid, fs->fs_ondisk_sb->s_uuid, SOURCE_FS_UUID_SIZE);
 	info = calloc(1, sizeof(*info));
 	if (!info) {
 		reiserfs_close(fs);
