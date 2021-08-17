@@ -1210,7 +1210,7 @@ static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
 	printf("\tfree:      %llu (%.2f%%)\n", cctx.free_bytes_initial,
 			100.0 * cctx.free_bytes_initial / cctx.total_bytes);
 	mkfs_cfg.csum_type = csum_type;
-	mkfs_cfg.label = cctx.volume_name;
+	mkfs_cfg.label = cctx.label;
 	mkfs_cfg.num_bytes = total_bytes;
 	mkfs_cfg.nodesize = nodesize;
 	mkfs_cfg.sectorsize = blocksize;
@@ -1289,7 +1289,7 @@ static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
 	memset(root->fs_info->super_copy->label, 0, BTRFS_LABEL_SIZE);
 	if (convert_flags & CONVERT_FLAG_COPY_LABEL) {
 		__strncpy_null(root->fs_info->super_copy->label,
-				cctx.volume_name, BTRFS_LABEL_SIZE - 1);
+				cctx.label, BTRFS_LABEL_SIZE - 1);
 		printf("copy label '%s'\n", root->fs_info->super_copy->label);
 	} else if (convert_flags & CONVERT_FLAG_SET_LABEL) {
 		strcpy(root->fs_info->super_copy->label, fslabel);

@@ -94,7 +94,7 @@ static int ext2_open_fs(struct btrfs_convert_context *cctx, const char *name)
 	cctx->blocksize = ext2_fs->blocksize;
 	cctx->block_count = ext2_fs->super->s_blocks_count;
 	cctx->total_bytes = (u64)ext2_fs->super->s_blocks_count * ext2_fs->blocksize;
-	cctx->volume_name = strndup((char *)ext2_fs->super->s_volume_name, 16);
+	cctx->label = strndup((char *)ext2_fs->super->s_volume_name, 16);
 	cctx->first_data_block = ext2_fs->super->s_first_data_block;
 	cctx->inodes_count = ext2_fs->super->s_inodes_count;
 	cctx->free_inodes_count = ext2_fs->super->s_free_inodes_count;
@@ -182,9 +182,9 @@ static int ext2_read_used_space(struct btrfs_convert_context *cctx)
 
 static void ext2_close_fs(struct btrfs_convert_context *cctx)
 {
-	if (cctx->volume_name) {
-		free(cctx->volume_name);
-		cctx->volume_name = NULL;
+	if (cctx->label) {
+		free(cctx->label);
+		cctx->label = NULL;
 	}
 	ext2fs_close(cctx->fs_data);
 	ext2fs_free(cctx->fs_data);
