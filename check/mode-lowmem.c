@@ -4265,7 +4265,7 @@ static int check_extent_item(struct btrfs_path *path)
 		err |= CROSSING_STRIPE_BOUNDARY;
 	}
 	if (metadata)
-		btrfs_check_subpage_eb_alignment(key.objectid, nodesize);
+		btrfs_check_subpage_eb_alignment(gfs_info, key.objectid, nodesize);
 
 	ptr = (unsigned long)(ei + 1);
 

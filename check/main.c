@@ -5410,7 +5410,7 @@ static int process_extent_item(struct btrfs_root *root,
 		return -EIO;
 	}
 	if (metadata)
-		btrfs_check_subpage_eb_alignment(key.objectid, num_bytes);
+		btrfs_check_subpage_eb_alignment(gfs_info, key.objectid, num_bytes);
 
 	memset(&tmpl, 0, sizeof(tmpl));
 	tmpl.start = key.objectid;

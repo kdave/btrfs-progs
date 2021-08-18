@@ -852,7 +852,7 @@ check_test_results()
 	local testname="$2"
 
 	# Check subpage related warning
-	if grep -q "crrosses 64K page boundary" "$results"; then
+	if grep -q "not nodesize aligned" "$results"; then
 		_fail "found subpage related warning for case $testname"
 	fi
 }

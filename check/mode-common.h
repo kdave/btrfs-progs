@@ -175,20 +175,24 @@ static inline u32 btrfs_type_to_imode(u8 type)
 int get_extent_item_generation(u64 bytenr, u64 *gen_ret);
 
 /*
- * Check tree block alignment for future subpage support on 64K page system.
+ * Check tree block alignment for future subpage support.
  *
- * Subpage support on 64K page size require one eb to be completely contained
- * by a page. Not allowing a tree block to cross 64K page boundary.
+ * For subpage support, either nodesize is smaller than PAGE_SIZE, then tree
+ * block should not cross page boundary. (A)
+ * Or nodesize >= PAGE_SIZE, then it should be page aligned. (B)
  *
- * Since subpage support is still under development, this check only provides
- * warning.
+ * But here we have no idea the PAGE_SIZE could be, so here we play safe by
+ * requiring all tree blocks to be nodesize aligned.
+ *
+ * For 4K page size system, it always meets condition (B), thus we don't need
+ * to bother that much.
  */
-static inline void btrfs_check_subpage_eb_alignment(u64 start, u32 len)
+static inline void btrfs_check_subpage_eb_alignment(struct btrfs_fs_info *info,
+						    u64 start, u32 len)
 {
-	if (start / BTRFS_MAX_METADATA_BLOCKSIZE !=
-	    (start + len - 1) / BTRFS_MAX_METADATA_BLOCKSIZE)
+	if (!IS_ALIGNED(start, info->nodesize))
 		warning(
-"tree block [%llu, %llu) crosses 64K page boundary, may cause problem for 64K page system",
+"tree block [%llu, %llu) is not nodesize aligned, may cause problem for 64K page system",
 			start, start + len);
 }
 
