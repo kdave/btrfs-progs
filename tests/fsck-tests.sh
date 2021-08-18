@@ -64,7 +64,14 @@ run_one_test() {
 			fi
 			_fail "test failed for case $(basename $testname)"
 		fi
-		check_test_results "$RESULTS" "$testname"
+		# These tests have overriden check_image() and their images may
+		# have intentional unaligned metadata to trigger subpage
+		# warnings (like fsck/018), skip the check for their subpage
+		# warnings.
+		#
+		# We care about subpage related warnings for write operations
+		# (mkfs/convert/repair), not those read-only checks on crafted
+		# images.
 	else
 		# Type 1
 		check_all_images
