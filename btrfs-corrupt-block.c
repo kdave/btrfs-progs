@@ -348,6 +348,24 @@ enum btrfs_key_field {
 	BTRFS_KEY_BAD,
 };
 
+enum btrfs_block_group_field {
+	BTRFS_BLOCK_GROUP_ITEM_USED,
+	BTRFS_BLOCK_GROUP_ITEM_FLAGS,
+	BTRFS_BLOCK_GROUP_ITEM_CHUNK_OBJECTID,
+	BTRFS_BLOCK_GROUP_ITEM_BAD,
+};
+
+static enum btrfs_block_group_field convert_block_group_field(char *field)
+{
+	if (!strncmp(field, "used", FIELD_BUF_LEN))
+		return BTRFS_BLOCK_GROUP_ITEM_USED;
+	if (!strncmp(field, "flags", FIELD_BUF_LEN))
+		return BTRFS_BLOCK_GROUP_ITEM_FLAGS;
+	if (!strncmp(field, "chunk_objectid", FIELD_BUF_LEN))
+		return BTRFS_BLOCK_GROUP_ITEM_CHUNK_OBJECTID;
+	return BTRFS_BLOCK_GROUP_ITEM_BAD;
+}
+
 static enum btrfs_inode_field convert_inode_field(char *field)
 {
 	if (!strncmp(field, "isize", FIELD_BUF_LEN))
@@ -439,6 +457,83 @@ static u8 generate_u8(u8 orig)
 	do {
 		ret = rand_u8();
 	} while (ret == orig);
+	return ret;
+}
+
+static int corrupt_block_group(struct btrfs_root *root, u64 bg, char *field)
+{
+	struct btrfs_trans_handle *trans;
+	struct btrfs_path *path;
+	struct btrfs_block_group_item *bgi;
+	struct btrfs_key key;
+	enum btrfs_block_group_field corrupt_field;
+	u64 orig, bogus;
+	int ret = 0;
+
+	root = root->fs_info->extent_root;
+
+	corrupt_field = convert_block_group_field(field);
+	if (corrupt_field == BTRFS_BLOCK_GROUP_ITEM_BAD) {
+		fprintf(stderr, "Invalid field %s\n", field);
+		return -EINVAL;
+	}
+
+	path = btrfs_alloc_path();
+	if (!path)
+		return -ENOMEM;
+
+	trans = btrfs_start_transaction(root, 1);
+	if (IS_ERR(trans)) {
+		btrfs_free_path(path);
+		fprintf(stderr, "Couldn't start transaction %ld\n",
+			PTR_ERR(trans));
+		return PTR_ERR(trans);
+	}
+
+	key.objectid = bg;
+	key.type = BTRFS_BLOCK_GROUP_ITEM_KEY;
+	key.offset = 0;
+
+	ret = btrfs_search_slot(trans, root, &key, path, 0, 1);
+	if (ret < 0) {
+		fprintf(stderr, "Error searching for bg %llu %d\n", bg, ret);
+		goto out;
+	}
+
+	ret = 0;
+	btrfs_item_key_to_cpu(path->nodes[0], &key, path->slots[0]);
+	if (key.type != BTRFS_BLOCK_GROUP_ITEM_KEY) {
+		fprintf(stderr, "Couldn't find the bg %llu\n", bg);
+		goto out;
+	}
+
+	bgi = btrfs_item_ptr(path->nodes[0], path->slots[0],
+			     struct btrfs_block_group_item);
+	switch (corrupt_field) {
+	case BTRFS_BLOCK_GROUP_ITEM_USED:
+		orig = btrfs_block_group_used(path->nodes[0], bgi);
+		bogus = generate_u64(orig);
+		btrfs_set_block_group_used(path->nodes[0], bgi, bogus);
+		break;
+	case BTRFS_BLOCK_GROUP_ITEM_CHUNK_OBJECTID:
+		orig = btrfs_block_group_chunk_objectid(path->nodes[0], bgi);
+		bogus = generate_u64(orig);
+		btrfs_set_block_group_chunk_objectid(path->nodes[0], bgi,
+						     bogus);
+		break;
+	case BTRFS_BLOCK_GROUP_ITEM_FLAGS:
+		orig = btrfs_block_group_flags(path->nodes[0], bgi);
+		bogus = generate_u64(orig);
+		btrfs_set_block_group_flags(path->nodes[0], bgi, bogus);
+		break;
+	default:
+		ret = -EINVAL;
+		goto out;
+	}
+	btrfs_mark_buffer_dirty(path->nodes[0]);
+out:
+	btrfs_commit_transaction(trans, root);
+	btrfs_free_path(path);
 	return ret;
 }
 
@@ -1150,6 +1245,7 @@ int main(int argc, char **argv)
 	u64 file_extent = (u64)-1;
 	u64 root_objectid = 0;
 	u64 csum_bytenr = 0;
+	u64 block_group = 0;
 	char field[FIELD_BUF_LEN];
 
 	field[0] = '\0';
@@ -1177,11 +1273,12 @@ int main(int argc, char **argv)
 			{ "delete", no_argument, NULL, 'd'},
 			{ "root", no_argument, NULL, 'r'},
 			{ "csum", required_argument, NULL, 'C'},
+			{ "block-group", required_argument, NULL, 'B'},
 			{ "help", no_argument, NULL, GETOPT_VAL_HELP},
 			{ NULL, 0, NULL, 0 }
 		};
 
-		c = getopt_long(argc, argv, "l:c:b:eEkuUi:f:x:m:K:I:D:d:r:C:",
+		c = getopt_long(argc, argv, "l:c:b:eEkuUi:f:x:m:K:I:D:d:r:C:B:",
 				long_options, NULL);
 		if (c < 0)
 			break;
@@ -1243,6 +1340,9 @@ int main(int argc, char **argv)
 				break;
 			case 'C':
 				csum_bytenr = arg_strtou64(optarg);
+				break;
+			case 'B':
+				block_group = arg_strtou64(optarg);
 				break;
 			case GETOPT_VAL_HELP:
 			default:
@@ -1383,6 +1483,12 @@ int main(int argc, char **argv)
 			print_usage(1);
 
 		ret = corrupt_key(target_root, &key, field);
+		goto out_close;
+	}
+	if (block_group) {
+		if (*field == 0)
+			print_usage(1);
+		ret = corrupt_block_group(root, block_group, field);
 		goto out_close;
 	}
 	/*
