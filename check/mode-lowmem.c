@@ -5195,7 +5195,7 @@ static int check_btrfs_root(struct btrfs_root *root, int check_all)
 		 * missing we will skip it forever.
 		 */
 		ret = check_fs_first_inode(root);
-		if (ret < 0)
+		if (ret)
 			return FATAL_ERROR;
 	}
 
