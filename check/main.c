@@ -5083,7 +5083,24 @@ static void free_block_group_record(struct cache_extent *cache)
 
 void free_block_group_tree(struct block_group_tree *tree)
 {
+	extent_io_tree_cleanup(&tree->pending_extents);
 	cache_tree_free_extents(&tree->tree, free_block_group_record);
+}
+
+static void update_block_group_used(struct block_group_tree *tree,
+				    u64 bytenr, u64 num_bytes)
+{
+	struct cache_extent *bg_item;
+	struct block_group_record *bg_rec;
+
+	bg_item = lookup_cache_extent(&tree->tree, bytenr, num_bytes);
+	if (!bg_item) {
+		set_extent_dirty(&tree->pending_extents, bytenr,
+				 bytenr + num_bytes - 1);
+		return;
+	}
+	bg_rec = container_of(bg_item, struct block_group_record, cache);
+	bg_rec->actual_used += num_bytes;
 }
 
 int insert_device_extent_record(struct device_extent_tree *tree,
@@ -5270,6 +5287,7 @@ btrfs_new_block_group_record(struct extent_buffer *leaf, struct btrfs_key *key,
 
 	ptr = btrfs_item_ptr(leaf, slot, struct btrfs_block_group_item);
 	rec->flags = btrfs_block_group_flags(leaf, ptr);
+	rec->disk_used = btrfs_block_group_used(leaf, ptr);
 
 	INIT_LIST_HEAD(&rec->list);
 
@@ -5281,6 +5299,7 @@ static int process_block_group_item(struct block_group_tree *block_group_cache,
 				    struct extent_buffer *eb, int slot)
 {
 	struct block_group_record *rec;
+	u64 start, end;
 	int ret = 0;
 
 	rec = btrfs_new_block_group_record(eb, key, slot);
@@ -5289,6 +5308,20 @@ static int process_block_group_item(struct block_group_tree *block_group_cache,
 		fprintf(stderr, "Block Group[%llu, %llu] existed.\n",
 			rec->objectid, rec->offset);
 		free(rec);
+		return ret;
+	}
+
+	while (!find_first_extent_bit(&block_group_cache->pending_extents,
+				      rec->objectid, &start, &end, EXTENT_DIRTY)) {
+		u64 len;
+
+		if (start >= rec->objectid + rec->offset)
+			break;
+		start = max(start, rec->objectid);
+		len = min(end - start + 1, rec->objectid + rec->offset - start);
+		rec->actual_used += len;
+		clear_extent_dirty(&block_group_cache->pending_extents, start,
+				   start + len - 1);
 	}
 
 	return ret;
@@ -5352,6 +5385,7 @@ process_device_extent_item(struct device_extent_tree *dev_extent_cache,
 
 static int process_extent_item(struct btrfs_root *root,
 			       struct cache_tree *extent_cache,
+			       struct block_group_tree *block_group_cache,
 			       struct extent_buffer *eb, int slot)
 {
 	struct btrfs_extent_item *ei;
@@ -5379,6 +5413,8 @@ static int process_extent_item(struct btrfs_root *root,
 	} else {
 		num_bytes = key.offset;
 	}
+
+	update_block_group_used(block_group_cache, key.objectid, num_bytes);
 
 	if (!IS_ALIGNED(key.objectid, gfs_info->sectorsize)) {
 		error("ignoring invalid extent, bytenr %llu is not aligned to %u",
@@ -6348,13 +6384,13 @@ static int run_next_block(struct btrfs_root *root,
 				continue;
 			}
 			if (key.type == BTRFS_EXTENT_ITEM_KEY) {
-				process_extent_item(root, extent_cache, buf,
-						    i);
+				process_extent_item(root, extent_cache,
+						    block_group_cache, buf, i);
 				continue;
 			}
 			if (key.type == BTRFS_METADATA_ITEM_KEY) {
-				process_extent_item(root, extent_cache, buf,
-						    i);
+				process_extent_item(root, extent_cache,
+						    block_group_cache, buf, i);
 				continue;
 			}
 			if (key.type == BTRFS_EXTENT_CSUM_KEY) {
@@ -8599,6 +8635,41 @@ static int deal_root_from_list(struct list_head *list,
 	return ret;
 }
 
+static int check_block_groups(struct block_group_tree *bg_cache)
+{
+	struct btrfs_trans_handle *trans;
+	struct cache_extent *item;
+	struct block_group_record *bg_rec;
+	int ret = 0;
+
+	for (item = first_cache_extent(&bg_cache->tree);
+	     item;
+	     item = next_cache_extent(item)) {
+		bg_rec = container_of(item, struct block_group_record, cache);
+		if (bg_rec->disk_used == bg_rec->actual_used)
+			continue;
+		fprintf(stderr,
+			"block group [%llu %llu] used %llu but extent items used %llu\n",
+			bg_rec->objectid, bg_rec->offset, bg_rec->disk_used,
+			bg_rec->actual_used);
+		ret = -1;
+	}
+
+	if (!repair || !ret)
+		return ret;
+
+	trans = btrfs_start_transaction(gfs_info->extent_root, 1);
+	if (IS_ERR(trans)) {
+		ret = PTR_ERR(trans);
+		fprintf(stderr, "Failed to start a transaction\n");
+		return ret;
+	}
+
+	ret = btrfs_fix_block_accounting(trans);
+	btrfs_commit_transaction(trans, gfs_info->extent_root);
+	return ret ? ret : -EAGAIN;
+}
+
 /**
  * parse_tree_roots - Go over all roots in the tree root and add each one to
  *		      a list.
@@ -8885,6 +8956,13 @@ again:
 
 	ret = check_extent_refs(root, &extent_cache);
 	if (ret < 0) {
+		if (ret == -EAGAIN)
+			goto loop;
+		goto out;
+	}
+
+	ret = check_block_groups(&block_group_cache);
+	if (ret) {
 		if (ret == -EAGAIN)
 			goto loop;
 		goto out;

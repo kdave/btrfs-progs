@@ -37,10 +37,14 @@ struct block_group_record {
 	u64 offset;
 
 	u64 flags;
+
+	u64 disk_used;
+	u64 actual_used;
 };
 
 struct block_group_tree {
 	struct cache_tree tree;
+	struct extent_io_tree pending_extents;
 	struct list_head block_groups;
 };
 
@@ -141,6 +145,7 @@ u64 calc_stripe_length(u64 type, u64 length, int num_stripes);
 static inline void block_group_tree_init(struct block_group_tree *tree)
 {
 	cache_tree_init(&tree->tree);
+	extent_io_tree_init(&tree->pending_extents);
 	INIT_LIST_HEAD(&tree->block_groups);
 }
 
