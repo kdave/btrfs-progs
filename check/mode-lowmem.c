@@ -4381,6 +4381,7 @@ next:
 		goto next;
 	}
 
+	err |= tmp_err;
 	ptr_offset += btrfs_extent_inline_ref_size(type);
 	goto next;
 
