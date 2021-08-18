@@ -2676,6 +2676,15 @@ static int check_inode_item(struct btrfs_root *root, struct btrfs_path *path)
 	while (1) {
 		btrfs_item_key_to_cpu(path->nodes[0], &last_key, path->slots[0]);
 		ret = btrfs_next_item(root, path);
+
+		/*
+		 * New leaf, we need to check it and see if it's valid, if not
+		 * we need to bail otherwise we could end up stuck.
+		 */
+		if (path->slots[0] == 0 &&
+		    btrfs_check_leaf(gfs_info, NULL, path->nodes[0]))
+			ret = -EIO;
+
 		if (ret < 0) {
 			/* out will fill 'err' rusing current statistics */
 			goto out;
