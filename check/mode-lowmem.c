@@ -28,6 +28,7 @@
 #include "check/mode-lowmem.h"
 
 static u64 last_allocated_chunk;
+static u64 total_used = 0;
 
 static int calc_extent_flag(struct btrfs_root *root, struct extent_buffer *eb,
 			    u64 *flags_ret)
@@ -3645,6 +3646,8 @@ next:
 out:
 	btrfs_release_path(&path);
 
+	total_used += used;
+
 	if (total != used) {
 		error(
 		"block group[%llu %llu] used %llu but extent items used %llu",
@@ -5547,6 +5550,14 @@ next:
 	}
 out:
 
+	if (total_used != btrfs_super_bytes_used(gfs_info->super_copy)) {
+		fprintf(stderr,
+			"super bytes_used %llu mismatches actual used %llu\n",
+			btrfs_super_bytes_used(gfs_info->super_copy),
+			total_used);
+		err |= SUPER_BYTES_USED_ERROR;
+	}
+
 	if (repair) {
 		ret = end_avoid_extents_overwrite();
 		if (ret < 0)
@@ -5559,7 +5570,7 @@ out:
 		if (ret)
 			err |= ret;
 		else
-			err &= ~BG_ACCOUNTING_ERROR;
+			err &= ~(BG_ACCOUNTING_ERROR | SUPER_BYTES_USED_ERROR);
 	}
 
 	btrfs_release_path(&path);

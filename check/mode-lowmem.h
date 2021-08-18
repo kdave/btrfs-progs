@@ -48,6 +48,7 @@
 #define DIR_ITEM_HASH_MISMATCH	(1<<24) /* Dir item hash mismatch */
 #define INODE_MODE_ERROR	(1<<25) /* Bad inode mode */
 #define INVALID_GENERATION	(1<<26)	/* Generation is too new */
+#define SUPER_BYTES_USED_ERROR	(1<<27)	/* Super bytes_used is invalid */
 
 /*
  * Error bit for low memory mode check.
