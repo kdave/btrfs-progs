@@ -137,8 +137,6 @@ DECLARE_COMMAND(balance);
 DECLARE_COMMAND(device);
 DECLARE_COMMAND(scrub);
 DECLARE_COMMAND(check);
-DECLARE_COMMAND(chunk_recover);
-DECLARE_COMMAND(super_recover);
 DECLARE_COMMAND(inspect);
 DECLARE_COMMAND(inspect_dump_super);
 DECLARE_COMMAND(inspect_dump_tree);
@@ -150,9 +148,6 @@ DECLARE_COMMAND(quota);
 DECLARE_COMMAND(qgroup);
 DECLARE_COMMAND(replace);
 DECLARE_COMMAND(restore);
-DECLARE_COMMAND(select_super);
-DECLARE_COMMAND(dump_super);
-DECLARE_COMMAND(debug_tree);
 DECLARE_COMMAND(rescue);
 
 #endif
