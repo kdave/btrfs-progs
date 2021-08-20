@@ -121,6 +121,7 @@ static void print_usage(int ret)
 	printf("\t-d <u64,u8,u64> Delete item corresponding to passed key triplet\n");
 	printf("\t-r   Operate on this root\n");
 	printf("\t-C   Delete a csum for the specified bytenr.  When used with -b it'll delete that many bytes, otherwise it's just sectorsize\n");
+	printf("\t--block-group OFFSET  corrupt the given block group\n");
 	exit(ret);
 }
 
@@ -1253,6 +1254,7 @@ int main(int argc, char **argv)
 
 	while(1) {
 		int c;
+		enum { GETOPT_VAL_BLOCK_GROUP = 256 };
 		static const struct option long_options[] = {
 			/* { "byte-count", 1, NULL, 'b' }, */
 			{ "logical", required_argument, NULL, 'l' },
@@ -1273,12 +1275,12 @@ int main(int argc, char **argv)
 			{ "delete", no_argument, NULL, 'd'},
 			{ "root", no_argument, NULL, 'r'},
 			{ "csum", required_argument, NULL, 'C'},
-			{ "block-group", required_argument, NULL, 'B'},
+			{ "block-group", required_argument, NULL, GETOPT_VAL_BLOCK_GROUP},
 			{ "help", no_argument, NULL, GETOPT_VAL_HELP},
 			{ NULL, 0, NULL, 0 }
 		};
 
-		c = getopt_long(argc, argv, "l:c:b:eEkuUi:f:x:m:K:I:D:d:r:C:B:",
+		c = getopt_long(argc, argv, "l:c:b:eEkuUi:f:x:m:K:I:D:d:r:C:",
 				long_options, NULL);
 		if (c < 0)
 			break;
@@ -1341,7 +1343,7 @@ int main(int argc, char **argv)
 			case 'C':
 				csum_bytenr = arg_strtou64(optarg);
 				break;
-			case 'B':
+			case GETOPT_VAL_BLOCK_GROUP:
 				block_group = arg_strtou64(optarg);
 				break;
 			case GETOPT_VAL_HELP:
