@@ -705,7 +705,10 @@ out:
 		return ERR_PTR(-EIO);
 	}
 insert:
-	root->ref_cows = 1;
+	if (root->root_key.objectid != BTRFS_TREE_LOG_OBJECTID)
+		root->track_dirty = 1;
+	if (is_fstree(root->root_key.objectid))
+		root->ref_cows = 1;
 	return root;
 }
 
