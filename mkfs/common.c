@@ -188,6 +188,7 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 	u64 num_bytes;
 	u64 system_group_offset = BTRFS_BLOCK_RESERVED_1M_FOR_SUPER;
 	u64 system_group_size = BTRFS_MKFS_SYSTEM_GROUP_SIZE;
+	bool add_block_group = true;
 
 	if ((cfg->features & BTRFS_FEATURE_INCOMPAT_ZONED)) {
 		system_group_offset = cfg->zone_size * BTRFS_NR_SB_LOG_ZONES;
@@ -275,6 +276,30 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 	itemoff = __BTRFS_LEAF_DATA_SIZE(cfg->nodesize);
 	for (i = 0; i < blocks_nr; i++) {
 		blk = blocks[i];
+
+		/* Add the block group item for our temporary chunk. */
+		if (cfg->blocks[blk] > system_group_offset && add_block_group) {
+			struct btrfs_block_group_item *bg_item;
+
+			add_block_group = false;
+
+			itemoff -= sizeof(*bg_item);
+			btrfs_set_disk_key_objectid(&disk_key, system_group_offset);
+			btrfs_set_disk_key_offset(&disk_key, system_group_size);
+			btrfs_set_disk_key_type(&disk_key, BTRFS_BLOCK_GROUP_ITEM_KEY);
+			btrfs_set_item_key(buf, &disk_key, nritems);
+			btrfs_set_item_offset(buf, btrfs_item_nr(nritems), itemoff);
+			btrfs_set_item_size(buf, btrfs_item_nr(nritems), sizeof(*bg_item));
+
+			bg_item = btrfs_item_ptr(buf, nritems,
+						 struct btrfs_block_group_item);
+			btrfs_set_block_group_used(buf, bg_item, total_used);
+			btrfs_set_block_group_flags(buf, bg_item,
+						    BTRFS_BLOCK_GROUP_SYSTEM);
+			btrfs_set_block_group_chunk_objectid(buf, bg_item,
+					BTRFS_FIRST_CHUNK_TREE_OBJECTID);
+			nritems++;
+		}
 
 		item_size = sizeof(struct btrfs_extent_item);
 		if (!skinny_metadata)

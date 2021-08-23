@@ -67,16 +67,13 @@ static int create_metadata_block_groups(struct btrfs_root *root, int mixed,
 	struct btrfs_trans_handle *trans;
 	struct btrfs_space_info *sinfo;
 	u64 flags = BTRFS_BLOCK_GROUP_METADATA;
-	u64 bytes_used;
 	u64 chunk_start = 0;
 	u64 chunk_size = 0;
-	u64 system_group_offset = BTRFS_BLOCK_RESERVED_1M_FOR_SUPER;
 	u64 system_group_size = BTRFS_MKFS_SYSTEM_GROUP_SIZE;
 	int ret;
 
 	if (btrfs_is_zoned(fs_info)) {
 		/* Two zones are reserved for superblock */
-		system_group_offset = fs_info->zone_size * BTRFS_NR_SB_LOG_ZONES;
 		system_group_size = fs_info->zone_size;
 	}
 
@@ -90,16 +87,12 @@ static int create_metadata_block_groups(struct btrfs_root *root, int mixed,
 
 	trans = btrfs_start_transaction(root, 1);
 	BUG_ON(IS_ERR(trans));
-	bytes_used = btrfs_super_bytes_used(fs_info->super_copy);
 
 	root->fs_info->system_allocs = 1;
 	/*
-	 * First temporary system chunk must match the chunk layout
-	 * created in make_btrfs().
+	 * We already created the block group item for our temporary system
+	 * chunk in make_btrfs(), so account for the size here.
 	 */
-	ret = btrfs_make_block_group(trans, fs_info, bytes_used,
-				     BTRFS_BLOCK_GROUP_SYSTEM,
-				     system_group_offset, system_group_size);
 	allocation->system += system_group_size;
 	if (ret)
 		return ret;
