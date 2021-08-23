@@ -2816,6 +2816,8 @@ int btrfs_make_block_group(struct btrfs_trans_handle *trans,
 	ret = btrfs_insert_item(trans, extent_root, &key, &bgi, sizeof(bgi));
 	BUG_ON(ret);
 
+	add_block_group_free_space(trans, cache);
+
 	return 0;
 }
 

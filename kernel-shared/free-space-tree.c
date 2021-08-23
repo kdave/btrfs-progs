@@ -986,6 +986,31 @@ out:
 	return ret;
 }
 
+int add_block_group_free_space(struct btrfs_trans_handle *trans,
+			       struct btrfs_block_group *block_group)
+{
+	struct btrfs_path *path;
+	int ret;
+
+	if (!btrfs_fs_compat_ro(trans->fs_info, FREE_SPACE_TREE))
+		return 0;
+
+	path = btrfs_alloc_path();
+	if (!path)
+		return -ENOMEM;
+
+	ret = add_new_free_space_info(trans, block_group, path);
+	if (ret)
+		goto out;
+	ret = __add_to_free_space_tree(trans, block_group, path,
+				       block_group->start, block_group->length);
+out:
+	btrfs_free_path(path);
+	if (ret)
+		btrfs_abort_transaction(trans, ret);
+	return ret;
+}
+
 int populate_free_space_tree(struct btrfs_trans_handle *trans,
 			     struct btrfs_block_group *block_group)
 {

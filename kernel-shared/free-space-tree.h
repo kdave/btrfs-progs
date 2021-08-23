@@ -34,5 +34,7 @@ int add_to_free_space_tree(struct btrfs_trans_handle *trans, u64 start,
 int remove_from_free_space_tree(struct btrfs_trans_handle *trans, u64 start,
 				u64 size);
 int btrfs_create_free_space_tree(struct btrfs_fs_info *info);
+int add_block_group_free_space(struct btrfs_trans_handle *trans,
+			       struct btrfs_block_group *block_group);
 
 #endif
