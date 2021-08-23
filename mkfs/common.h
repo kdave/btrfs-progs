@@ -51,6 +51,7 @@ enum btrfs_mkfs_block {
 	MKFS_DEV_TREE,
 	MKFS_FS_TREE,
 	MKFS_CSUM_TREE,
+	MKFS_FREE_SPACE_TREE,
 	MKFS_BLOCK_COUNT
 };
 
@@ -61,6 +62,12 @@ static const enum btrfs_mkfs_block extent_tree_v1_blocks[] = {
 	MKFS_DEV_TREE,
 	MKFS_FS_TREE,
 	MKFS_CSUM_TREE,
+
+	/*
+	 * Since the free space tree is optional with v1 it must always be last
+	 * in this array.
+	 */
+	MKFS_FREE_SPACE_TREE,
 };
 
 struct btrfs_mkfs_config {
@@ -72,6 +79,8 @@ struct btrfs_mkfs_config {
 	u32 stripesize;
 	/* Bitfield of incompat features, BTRFS_FEATURE_INCOMPAT_* */
 	u64 features;
+	/* Bitfield of BTRFS_RUNTIME_FEATURE_* */
+	u64 runtime_features;
 	/* Size of the filesystem in bytes */
 	u64 num_bytes;
 	/* checksum algorithm to use */

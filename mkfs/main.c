@@ -135,7 +135,6 @@ static int create_metadata_block_groups(struct btrfs_root *root, int mixed,
 
 	root->fs_info->system_allocs = 0;
 	ret = btrfs_commit_transaction(trans, root);
-
 err:
 	return ret;
 }
@@ -252,7 +251,9 @@ static int recow_roots(struct btrfs_trans_handle *trans,
 	ret = __recow_root(trans, info->csum_root);
 	if (ret)
 		return ret;
-
+	ret = __recow_root(trans, info->free_space_root);
+	if (ret)
+		return ret;
 	return 0;
 }
 
@@ -1364,6 +1365,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	mkfs_cfg.sectorsize = sectorsize;
 	mkfs_cfg.stripesize = stripesize;
 	mkfs_cfg.features = features;
+	mkfs_cfg.runtime_features = runtime_features;
 	mkfs_cfg.csum_type = csum_type;
 	mkfs_cfg.zone_size = zone_size(file);
 
@@ -1524,13 +1526,6 @@ raid_groups:
 		ret = setup_quota_root(fs_info);
 		if (ret < 0) {
 			error("failed to initialize quota: %d (%m)", ret);
-			goto out;
-		}
-	}
-	if (runtime_features & BTRFS_RUNTIME_FEATURE_FREE_SPACE_TREE) {
-		ret = btrfs_create_free_space_tree(fs_info);
-		if (ret < 0) {
-			error("failed to create free space tree: %d (%m)", ret);
 			goto out;
 		}
 	}

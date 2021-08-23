@@ -37,6 +37,7 @@ static u64 reference_root_table[] = {
 	[MKFS_DEV_TREE]		=	BTRFS_DEV_TREE_OBJECTID,
 	[MKFS_FS_TREE]		=	BTRFS_FS_TREE_OBJECTID,
 	[MKFS_CSUM_TREE]	=	BTRFS_CSUM_TREE_OBJECTID,
+	[MKFS_FREE_SPACE_TREE]	=	BTRFS_FREE_SPACE_TREE_OBJECTID,
 };
 
 static int btrfs_write_empty_tree(int fd, struct btrfs_mkfs_config *cfg,
@@ -139,6 +140,52 @@ static int btrfs_create_tree_root(int fd, struct btrfs_mkfs_config *cfg,
 	return ret;
 }
 
+static int create_free_space_tree(int fd, struct btrfs_mkfs_config *cfg,
+				  struct extent_buffer *buf, u64 group_start,
+				  u64 group_size, u64 free_start)
+{
+	struct btrfs_free_space_info *info;
+	struct btrfs_disk_key disk_key;
+	int itemoff = __BTRFS_LEAF_DATA_SIZE(cfg->nodesize);
+	int nritems = 0;
+	int ret;
+
+	memset(buf->data + sizeof(struct btrfs_header), 0,
+	       cfg->nodesize - sizeof(struct btrfs_header));
+	itemoff -= sizeof(*info);
+
+	btrfs_set_disk_key_objectid(&disk_key, group_start);
+	btrfs_set_disk_key_offset(&disk_key, group_size);
+	btrfs_set_disk_key_type(&disk_key, BTRFS_FREE_SPACE_INFO_KEY);
+	btrfs_set_item_key(buf, &disk_key, nritems);
+	btrfs_set_item_offset(buf, btrfs_item_nr(nritems), itemoff);
+	btrfs_set_item_size(buf, btrfs_item_nr(nritems), sizeof(*info));
+
+	info = btrfs_item_ptr(buf, nritems, struct btrfs_free_space_info);
+	btrfs_set_free_space_extent_count(buf, info, 1);
+	btrfs_set_free_space_flags(buf, info, 0);
+
+	nritems++;
+	btrfs_set_disk_key_objectid(&disk_key, free_start);
+	btrfs_set_disk_key_offset(&disk_key, group_start + group_size - free_start);
+	btrfs_set_disk_key_type(&disk_key, BTRFS_FREE_SPACE_EXTENT_KEY);
+	btrfs_set_item_key(buf, &disk_key, nritems);
+	btrfs_set_item_offset(buf, btrfs_item_nr(nritems), itemoff);
+	btrfs_set_item_size(buf, btrfs_item_nr(nritems), 0);
+
+	nritems++;
+	btrfs_set_header_bytenr(buf, cfg->blocks[MKFS_FREE_SPACE_TREE]);
+	btrfs_set_header_owner(buf, BTRFS_FREE_SPACE_TREE_OBJECTID);
+	btrfs_set_header_nritems(buf, nritems);
+	csum_tree_block_size(buf, btrfs_csum_type_size(cfg->csum_type), 0,
+			     cfg->csum_type);
+	ret = pwrite(fd, buf->data, cfg->nodesize,
+		     cfg->blocks[MKFS_FREE_SPACE_TREE]);
+	if (ret != cfg->nodesize)
+		return ret < 0 ? -errno : -EIO;
+	return 0;
+}
+
 /*
  * @fs_uuid - if NULL, generates a UUID, returns back the new filesystem UUID
  *
@@ -189,6 +236,12 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 	u64 system_group_offset = BTRFS_BLOCK_RESERVED_1M_FOR_SUPER;
 	u64 system_group_size = BTRFS_MKFS_SYSTEM_GROUP_SIZE;
 	bool add_block_group = true;
+	bool free_space_tree = !!(cfg->runtime_features &
+				  BTRFS_RUNTIME_FEATURE_FREE_SPACE_TREE);
+
+	/* Don't include the free space tree in the blocks to process. */
+	if (!free_space_tree)
+		blocks_nr--;
 
 	if ((cfg->features & BTRFS_FEATURE_INCOMPAT_ZONED)) {
 		system_group_offset = cfg->zone_size * BTRFS_NR_SB_LOG_ZONES;
@@ -248,6 +301,12 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 	else
 		btrfs_set_super_cache_generation(&super, -1);
 	btrfs_set_super_incompat_flags(&super, cfg->features);
+	if (free_space_tree) {
+		u64 ro_flags = BTRFS_FEATURE_COMPAT_RO_FREE_SPACE_TREE |
+			BTRFS_FEATURE_COMPAT_RO_FREE_SPACE_TREE_VALID;
+
+		btrfs_set_super_compat_ro_flags(&super, ro_flags);
+	}
 	if (cfg->label)
 		__strncpy_null(super.label, cfg->label, BTRFS_LABEL_SIZE - 1);
 
@@ -506,6 +565,14 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 				     cfg->blocks[MKFS_CSUM_TREE]);
 	if (ret)
 		goto out;
+
+	if (free_space_tree) {
+		ret = create_free_space_tree(fd, cfg, buf, system_group_offset,
+					     system_group_size,
+					     system_group_offset + total_used);
+		if (ret)
+			goto out;
+	}
 
 	/* and write out the super block */
 	memset(buf->data, 0, BTRFS_SUPER_INFO_SIZE);
