@@ -39,6 +39,25 @@ static u64 reference_root_table[] = {
 	[MKFS_CSUM_TREE]	=	BTRFS_CSUM_TREE_OBJECTID,
 };
 
+static int btrfs_write_empty_tree(int fd, struct btrfs_mkfs_config *cfg,
+				  struct extent_buffer *buf, u64 objectid,
+				  u64 block)
+{
+	int ret;
+
+	memset(buf->data + sizeof(struct btrfs_header), 0,
+	       cfg->nodesize - sizeof(struct btrfs_header));
+	btrfs_set_header_bytenr(buf, block);
+	btrfs_set_header_owner(buf, objectid);
+	btrfs_set_header_nritems(buf, 0);
+	csum_tree_block_size(buf, btrfs_csum_type_size(cfg->csum_type), 0,
+			     cfg->csum_type);
+	ret = pwrite(fd, buf->data, cfg->nodesize, block);
+	if (ret != cfg->nodesize)
+		return ret < 0 ? -errno : -EIO;
+	return 0;
+}
+
 static int btrfs_create_tree_root(int fd, struct btrfs_mkfs_config *cfg,
 				  struct extent_buffer *buf,
 				  const enum btrfs_mkfs_block *blocks,
@@ -453,31 +472,15 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 	}
 
 	/* create the FS root */
-	memset(buf->data + sizeof(struct btrfs_header), 0,
-		cfg->nodesize - sizeof(struct btrfs_header));
-	btrfs_set_header_bytenr(buf, cfg->blocks[MKFS_FS_TREE]);
-	btrfs_set_header_owner(buf, BTRFS_FS_TREE_OBJECTID);
-	btrfs_set_header_nritems(buf, 0);
-	csum_tree_block_size(buf, btrfs_csum_type_size(cfg->csum_type), 0,
-			     cfg->csum_type);
-	ret = pwrite(fd, buf->data, cfg->nodesize, cfg->blocks[MKFS_FS_TREE]);
-	if (ret != cfg->nodesize) {
-		ret = (ret < 0 ? -errno : -EIO);
+	ret = btrfs_write_empty_tree(fd, cfg, buf, BTRFS_FS_TREE_OBJECTID,
+				     cfg->blocks[MKFS_FS_TREE]);
+	if (ret)
 		goto out;
-	}
 	/* finally create the csum root */
-	memset(buf->data + sizeof(struct btrfs_header), 0,
-		cfg->nodesize - sizeof(struct btrfs_header));
-	btrfs_set_header_bytenr(buf, cfg->blocks[MKFS_CSUM_TREE]);
-	btrfs_set_header_owner(buf, BTRFS_CSUM_TREE_OBJECTID);
-	btrfs_set_header_nritems(buf, 0);
-	csum_tree_block_size(buf, btrfs_csum_type_size(cfg->csum_type), 0,
-			     cfg->csum_type);
-	ret = pwrite(fd, buf->data, cfg->nodesize, cfg->blocks[MKFS_CSUM_TREE]);
-	if (ret != cfg->nodesize) {
-		ret = (ret < 0 ? -errno : -EIO);
+	ret = btrfs_write_empty_tree(fd, cfg, buf, BTRFS_CSUM_TREE_OBJECTID,
+				     cfg->blocks[MKFS_CSUM_TREE]);
+	if (ret)
 		goto out;
-	}
 
 	/* and write out the super block */
 	memset(buf->data, 0, BTRFS_SUPER_INFO_SIZE);
