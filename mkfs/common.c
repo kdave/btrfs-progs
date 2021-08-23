@@ -76,8 +76,7 @@ static int btrfs_create_tree_root(int fd, struct btrfs_mkfs_config *cfg,
 
 	for (i = 0; i < blocks_nr; i++) {
 		blk = blocks[i];
-		if (blk == MKFS_SUPER_BLOCK || blk == MKFS_ROOT_TREE
-		    || blk == MKFS_CHUNK_TREE)
+		if (blk == MKFS_ROOT_TREE || blk == MKFS_CHUNK_TREE)
 			continue;
 
 		btrfs_set_root_bytenr(&root_item, cfg->blocks[blk]);
@@ -201,15 +200,12 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 	uuid_generate(super.dev_item.uuid);
 	uuid_generate(chunk_tree_uuid);
 
-	cfg->blocks[MKFS_SUPER_BLOCK] = BTRFS_SUPER_INFO_OFFSET;
 	for (i = 0; i < blocks_nr; i++) {
 		blk = blocks[i];
-		if (blk == MKFS_SUPER_BLOCK)
-			continue;
-		cfg->blocks[i] = system_group_offset + cfg->nodesize * (i - 1);
+		cfg->blocks[blk] = system_group_offset + cfg->nodesize * i;
 	}
 
-	btrfs_set_super_bytenr(&super, cfg->blocks[MKFS_SUPER_BLOCK]);
+	btrfs_set_super_bytenr(&super, BTRFS_SUPER_INFO_OFFSET);
 	btrfs_set_super_num_devices(&super, 1);
 	btrfs_set_super_magic(&super, BTRFS_MAGIC_TEMPORARY);
 	btrfs_set_super_generation(&super, 1);
@@ -257,8 +253,7 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 	itemoff = __BTRFS_LEAF_DATA_SIZE(cfg->nodesize);
 	for (i = 0; i < blocks_nr; i++) {
 		blk = blocks[i];
-		if (blk == MKFS_SUPER_BLOCK)
-			continue;
+
 		item_size = sizeof(struct btrfs_extent_item);
 		if (!skinny_metadata)
 			item_size += sizeof(struct btrfs_tree_block_info);
@@ -270,7 +265,7 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 			ret = -EINVAL;
 			goto out;
 		}
-		if (cfg->blocks[blk] < cfg->blocks[blocks[i - 1]]) {
+		if (i > 0 && cfg->blocks[blk] < cfg->blocks[blocks[i - 1]]) {
 			error("blocks %d and %d in reverse order: %llu < %llu",
 				blk, blocks[i - 1],
 				(unsigned long long)cfg->blocks[blk],
@@ -487,7 +482,7 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 	buf->len = BTRFS_SUPER_INFO_SIZE;
 	csum_tree_block_size(buf, btrfs_csum_type_size(cfg->csum_type), 0,
 			     cfg->csum_type);
-	ret = sbwrite(fd, buf->data, cfg->blocks[MKFS_SUPER_BLOCK]);
+	ret = sbwrite(fd, buf->data, BTRFS_SUPER_INFO_OFFSET);
 	if (ret != BTRFS_SUPER_INFO_SIZE) {
 		ret = (ret < 0 ? -errno : -EIO);
 		goto out;

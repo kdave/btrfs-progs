@@ -45,7 +45,6 @@ struct btrfs_root;
  * Tree root blocks created during mkfs
  */
 enum btrfs_mkfs_block {
-	MKFS_SUPER_BLOCK = 0,
 	MKFS_ROOT_TREE,
 	MKFS_EXTENT_TREE,
 	MKFS_CHUNK_TREE,
@@ -56,7 +55,6 @@ enum btrfs_mkfs_block {
 };
 
 static const enum btrfs_mkfs_block extent_tree_v1_blocks[] = {
-	MKFS_SUPER_BLOCK,
 	MKFS_ROOT_TREE,
 	MKFS_EXTENT_TREE,
 	MKFS_CHUNK_TREE,
