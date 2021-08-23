@@ -8659,18 +8659,33 @@ static int check_block_groups(struct block_group_tree *bg_cache)
 	struct btrfs_trans_handle *trans;
 	struct cache_extent *item;
 	struct block_group_record *bg_rec;
+	u64 used = 0;
 	int ret = 0;
 
 	for (item = first_cache_extent(&bg_cache->tree);
 	     item;
 	     item = next_cache_extent(item)) {
 		bg_rec = container_of(item, struct block_group_record, cache);
+		used += bg_rec->actual_used;
 		if (bg_rec->disk_used == bg_rec->actual_used)
 			continue;
 		fprintf(stderr,
 			"block group [%llu %llu] used %llu but extent items used %llu\n",
 			bg_rec->objectid, bg_rec->offset, bg_rec->disk_used,
 			bg_rec->actual_used);
+		ret = -1;
+	}
+
+	/*
+	 * We check the super bytes_used here because it's the sum of all block
+	 * groups used, and the repair actually happens in
+	 * btrfs_fix_block_accounting, so we can kill both birds with the same
+	 * stone here.
+	 */
+	if (used != btrfs_super_bytes_used(gfs_info->super_copy)) {
+		fprintf(stderr,
+			"super bytes used %llu mismatches actual used %llu\n",
+			btrfs_super_bytes_used(gfs_info->super_copy), used);
 		ret = -1;
 	}
 
