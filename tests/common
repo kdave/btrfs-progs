@@ -428,10 +428,8 @@ check_image()
 
 	image=$1
 	echo "testing image $(basename $image)" >> "$RESULTS"
-	"$TOP/btrfs" check "$image" &> "$tmp_output"
-	ret=$?
-	cat "$tmp_output" >> "$RESULTS"
-	[ "$ret" -eq 0 ] && _fail "btrfs check should have detected corruption"
+	run_mustfail_stdout "btrfs check should have detected corruption"	\
+		"$TOP/btrfs" check "$image" &> "$tmp_output"
 
 	# Also make sure no subpage related warnings
 	check_test_results "$tmp_output" "$testname"
