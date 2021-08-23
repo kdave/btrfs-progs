@@ -161,6 +161,7 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 	u64 ref_root;
 	u32 array_size;
 	u32 item_size;
+	u64 total_used = 0;
 	int skinny_metadata = !!(cfg->features &
 				 BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA);
 	u64 num_bytes;
@@ -203,6 +204,7 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 	for (i = 0; i < blocks_nr; i++) {
 		blk = blocks[i];
 		cfg->blocks[blk] = system_group_offset + cfg->nodesize * i;
+		total_used += cfg->nodesize;
 	}
 
 	btrfs_set_super_bytenr(&super, BTRFS_SUPER_INFO_OFFSET);
@@ -212,7 +214,7 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 	btrfs_set_super_root(&super, cfg->blocks[MKFS_ROOT_TREE]);
 	btrfs_set_super_chunk_root(&super, cfg->blocks[MKFS_CHUNK_TREE]);
 	btrfs_set_super_total_bytes(&super, num_bytes);
-	btrfs_set_super_bytes_used(&super, 6 * cfg->nodesize);
+	btrfs_set_super_bytes_used(&super, total_used);
 	btrfs_set_super_sectorsize(&super, cfg->sectorsize);
 	super.__unused_leafsize = cpu_to_le32(cfg->nodesize);
 	btrfs_set_super_nodesize(&super, cfg->nodesize);
