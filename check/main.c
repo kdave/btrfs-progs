@@ -7928,6 +7928,8 @@ static int record_unaligned_extent_rec(struct extent_record *rec)
 
 	rbtree_postorder_for_each_entry_safe(back, tmp,
 					     &rec->backref_tree, node) {
+		bool skip = false;
+
 		if (back->full_backref || !back->is_data)
 			continue;
 
@@ -7941,6 +7943,23 @@ static int record_unaligned_extent_rec(struct extent_record *rec)
 
 		/* For non-exist root we just skip it */
 		if (IS_ERR_OR_NULL(dest_root))
+			continue;
+
+		/*
+		 * If we repaired something and restarted we could potentially
+		 * try to add this unaligned record multiple times, so check
+		 * before we add a new one.
+		 */
+		list_for_each_entry(urec, &dest_root->unaligned_extent_recs, list) {
+			if (urec->objectid == dest_root->objectid &&
+			    urec->owner == dback->owner &&
+			    urec->bytenr == rec->start) {
+				skip = true;
+				break;
+			}
+		}
+
+		if (skip)
 			continue;
 
 		urec = malloc(sizeof(struct unaligned_extent_rec_t));
