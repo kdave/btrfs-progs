@@ -3125,6 +3125,13 @@ int btrfs_next_sibling_tree_block(struct btrfs_fs_info *fs_info,
 		free_extent_buffer(c);
 		path->nodes[level] = next;
 		path->slots[level] = 0;
+		/*
+		 * Fsck will happily load corrupt blocks in order to fix them,
+		 * so we need an extra check just to make sure this block isn't
+		 * marked uptodate but invalid.
+		 */
+		if (check_block(fs_info, path, level))
+			return -EIO;
 		if (level == path->lowest_level)
 			break;
 		if (path->reada)
