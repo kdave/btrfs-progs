@@ -106,6 +106,8 @@ static int btrfs_create_tree_root(int fd, struct btrfs_mkfs_config *cfg,
 		itemoff -= sizeof(root_item);
 	}
 
+	btrfs_set_header_nritems(buf, nritems);
+
 	/* generate checksum */
 	csum_tree_block_size(buf, btrfs_csum_type_size(cfg->csum_type), 0,
 			     cfg->csum_type);
@@ -233,7 +235,6 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 	memset(buf->data, 0, cfg->nodesize);
 	buf->len = cfg->nodesize;
 	btrfs_set_header_bytenr(buf, cfg->blocks[MKFS_ROOT_TREE]);
-	btrfs_set_header_nritems(buf, 4);
 	btrfs_set_header_generation(buf, 1);
 	btrfs_set_header_backref_rev(buf, BTRFS_MIXED_BACKREF_REV);
 	btrfs_set_header_owner(buf, BTRFS_ROOT_TREE_OBJECTID);
