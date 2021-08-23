@@ -31,16 +31,18 @@
 #include "mkfs/common.h"
 
 static u64 reference_root_table[] = {
-	[1] =	BTRFS_ROOT_TREE_OBJECTID,
-	[2] =	BTRFS_EXTENT_TREE_OBJECTID,
-	[3] =	BTRFS_CHUNK_TREE_OBJECTID,
-	[4] =	BTRFS_DEV_TREE_OBJECTID,
-	[5] =	BTRFS_FS_TREE_OBJECTID,
-	[6] =	BTRFS_CSUM_TREE_OBJECTID,
+	[MKFS_ROOT_TREE]	=	BTRFS_ROOT_TREE_OBJECTID,
+	[MKFS_EXTENT_TREE]	=	BTRFS_EXTENT_TREE_OBJECTID,
+	[MKFS_CHUNK_TREE]	=	BTRFS_CHUNK_TREE_OBJECTID,
+	[MKFS_DEV_TREE]		=	BTRFS_DEV_TREE_OBJECTID,
+	[MKFS_FS_TREE]		=	BTRFS_FS_TREE_OBJECTID,
+	[MKFS_CSUM_TREE]	=	BTRFS_CSUM_TREE_OBJECTID,
 };
 
 static int btrfs_create_tree_root(int fd, struct btrfs_mkfs_config *cfg,
-			struct extent_buffer *buf)
+				  struct extent_buffer *buf,
+				  const enum btrfs_mkfs_block *blocks,
+				  int blocks_nr)
 {
 	struct btrfs_root_item root_item;
 	struct btrfs_inode_item *inode_item;
@@ -49,6 +51,7 @@ static int btrfs_create_tree_root(int fd, struct btrfs_mkfs_config *cfg,
 	u32 itemoff;
 	int ret = 0;
 	int blk;
+	int i;
 	u8 uuid[BTRFS_UUID_SIZE];
 
 	memset(buf->data + sizeof(struct btrfs_header), 0,
@@ -71,7 +74,8 @@ static int btrfs_create_tree_root(int fd, struct btrfs_mkfs_config *cfg,
 	btrfs_set_disk_key_offset(&disk_key, 0);
 	itemoff = __BTRFS_LEAF_DATA_SIZE(cfg->nodesize) - sizeof(root_item);
 
-	for (blk = 0; blk < MKFS_BLOCK_COUNT; blk++) {
+	for (i = 0; i < blocks_nr; i++) {
+		blk = blocks[i];
 		if (blk == MKFS_SUPER_BLOCK || blk == MKFS_ROOT_TREE
 		    || blk == MKFS_CHUNK_TREE)
 			continue;
@@ -145,10 +149,13 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 	struct btrfs_chunk *chunk;
 	struct btrfs_dev_item *dev_item;
 	struct btrfs_dev_extent *dev_extent;
+	const enum btrfs_mkfs_block *blocks = extent_tree_v1_blocks;
 	u8 chunk_tree_uuid[BTRFS_UUID_SIZE];
 	u8 *ptr;
 	int i;
 	int ret;
+	int blocks_nr = ARRAY_SIZE(extent_tree_v1_blocks);
+	int blk;
 	u32 itemoff;
 	u32 nritems = 0;
 	u64 first_free;
@@ -195,7 +202,10 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 	uuid_generate(chunk_tree_uuid);
 
 	cfg->blocks[MKFS_SUPER_BLOCK] = BTRFS_SUPER_INFO_OFFSET;
-	for (i = 1; i < MKFS_BLOCK_COUNT; i++) {
+	for (i = 0; i < blocks_nr; i++) {
+		blk = blocks[i];
+		if (blk == MKFS_SUPER_BLOCK)
+			continue;
 		cfg->blocks[i] = system_group_offset + cfg->nodesize * (i - 1);
 	}
 
@@ -236,7 +246,7 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 			    btrfs_header_chunk_tree_uuid(buf),
 			    BTRFS_UUID_SIZE);
 
-	ret = btrfs_create_tree_root(fd, cfg, buf);
+	ret = btrfs_create_tree_root(fd, cfg, buf, blocks, blocks_nr);
 	if (ret < 0)
 		goto out;
 
@@ -245,30 +255,33 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 		cfg->nodesize - sizeof(struct btrfs_header));
 	nritems = 0;
 	itemoff = __BTRFS_LEAF_DATA_SIZE(cfg->nodesize);
-	for (i = 1; i < MKFS_BLOCK_COUNT; i++) {
+	for (i = 0; i < blocks_nr; i++) {
+		blk = blocks[i];
+		if (blk == MKFS_SUPER_BLOCK)
+			continue;
 		item_size = sizeof(struct btrfs_extent_item);
 		if (!skinny_metadata)
 			item_size += sizeof(struct btrfs_tree_block_info);
 
-		if (cfg->blocks[i] < first_free) {
+		if (cfg->blocks[blk] < first_free) {
 			error("block[%d] below first free: %llu < %llu",
-					i, (unsigned long long)cfg->blocks[i],
+					i, (unsigned long long)cfg->blocks[blk],
 					(unsigned long long)first_free);
 			ret = -EINVAL;
 			goto out;
 		}
-		if (cfg->blocks[i] < cfg->blocks[i - 1]) {
+		if (cfg->blocks[blk] < cfg->blocks[blocks[i - 1]]) {
 			error("blocks %d and %d in reverse order: %llu < %llu",
-				i, i - 1,
-				(unsigned long long)cfg->blocks[i],
-				(unsigned long long)cfg->blocks[i - 1]);
+				blk, blocks[i - 1],
+				(unsigned long long)cfg->blocks[blk],
+				(unsigned long long)cfg->blocks[blocks[i - 1]]);
 			ret = -EINVAL;
 			goto out;
 		}
 
 		/* create extent item */
 		itemoff -= item_size;
-		btrfs_set_disk_key_objectid(&disk_key, cfg->blocks[i]);
+		btrfs_set_disk_key_objectid(&disk_key, cfg->blocks[blk]);
 		if (skinny_metadata) {
 			btrfs_set_disk_key_type(&disk_key,
 						BTRFS_METADATA_ITEM_KEY);
@@ -292,8 +305,8 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 		nritems++;
 
 		/* create extent ref */
-		ref_root = reference_root_table[i];
-		btrfs_set_disk_key_objectid(&disk_key, cfg->blocks[i]);
+		ref_root = reference_root_table[blk];
+		btrfs_set_disk_key_objectid(&disk_key, cfg->blocks[blk]);
 		btrfs_set_disk_key_offset(&disk_key, ref_root);
 		btrfs_set_disk_key_type(&disk_key, BTRFS_TREE_BLOCK_REF_KEY);
 		btrfs_set_item_key(buf, &disk_key, nritems);

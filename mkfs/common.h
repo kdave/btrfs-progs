@@ -55,6 +55,16 @@ enum btrfs_mkfs_block {
 	MKFS_BLOCK_COUNT
 };
 
+static const enum btrfs_mkfs_block extent_tree_v1_blocks[] = {
+	MKFS_SUPER_BLOCK,
+	MKFS_ROOT_TREE,
+	MKFS_EXTENT_TREE,
+	MKFS_CHUNK_TREE,
+	MKFS_DEV_TREE,
+	MKFS_FS_TREE,
+	MKFS_CSUM_TREE,
+};
+
 struct btrfs_mkfs_config {
 	/* Label of the new filesystem */
 	const char *label;
