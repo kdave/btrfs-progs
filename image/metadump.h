@@ -22,8 +22,6 @@
 #include "kernel-lib/list.h"
 #include "kernel-shared/ctree.h"
 
-#define HEADER_MAGIC		0xbd5c25e27295668bULL
-#define MAX_PENDING_SIZE	SZ_256K
 #define BLOCK_SIZE		SZ_1K
 #define BLOCK_MASK		(BLOCK_SIZE - 1)
 
@@ -32,6 +30,16 @@
 
 #define COMPRESS_NONE		0
 #define COMPRESS_ZLIB		1
+
+struct dump_version {
+	u64 magic_cpu;
+	int version;
+	int max_pending_size;
+	unsigned int extra_sb_flags:1;
+};
+
+extern const struct dump_version dump_versions[];
+const extern struct dump_version *current_version;
 
 struct meta_cluster_item {
 	__le64 bytenr;
