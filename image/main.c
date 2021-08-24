@@ -2377,6 +2377,7 @@ static int fixup_device_size(struct btrfs_trans_handle *trans,
 	struct btrfs_fs_info *fs_info = trans->fs_info;
 	struct btrfs_dev_item *dev_item;
 	struct btrfs_dev_extent *dev_ext;
+	struct btrfs_device *dev;
 	struct btrfs_path path;
 	struct extent_buffer *leaf;
 	struct btrfs_root *root = fs_info->chunk_root;
@@ -2395,6 +2396,8 @@ static int fixup_device_size(struct btrfs_trans_handle *trans,
 	key.type = BTRFS_DEV_EXTENT_KEY;
 	key.offset = (u64)-1;
 
+	dev = list_first_entry(&fs_info->fs_devices->devices,
+				struct btrfs_device, dev_list);
 	ret = btrfs_search_slot(NULL, fs_info->dev_root, &key, &path, 0, 0);
 	if (ret < 0) {
 		errno = -ret;
@@ -2428,6 +2431,9 @@ static int fixup_device_size(struct btrfs_trans_handle *trans,
 
 	btrfs_set_stack_device_total_bytes(dev_item, dev_size);
 	btrfs_set_stack_device_bytes_used(dev_item, mdres->alloced_chunks);
+	dev->total_bytes = dev_size;
+	dev->bytes_used = mdres->alloced_chunks;
+	btrfs_set_super_total_bytes(fs_info->super_copy, dev_size);
 	ret = fstat(out_fd, &buf);
 	if (ret < 0) {
 		error("failed to stat result image: %m");
