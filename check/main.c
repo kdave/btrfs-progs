@@ -5812,12 +5812,16 @@ static int check_extent_csums(struct btrfs_root *root, u64 bytenr,
 				read_extent_buffer(eb, (char *)&csum_expected,
 						   csum_offset, csum_size);
 				if (memcmp(result, csum_expected, csum_size) != 0) {
+					char found[BTRFS_CSUM_STRING_LEN];
+					char want[BTRFS_CSUM_STRING_LEN];
+
 					csum_mismatch = true;
-					/* FIXME: format of the checksum value */
+					btrfs_format_csum(csum_type, result, found);
+					btrfs_format_csum(csum_type,
+							  csum_expected, want);
 					fprintf(stderr,
-			"mirror %d bytenr %llu csum %u expected csum %u\n",
-						mirror, bytenr + tmp,
-						result[0], csum_expected[0]);
+				"mirror %d bytenr %llu csum %s expected csum %s\n",
+						mirror, bytenr + tmp, found, want);
 				}
 				data_checked += gfs_info->sectorsize;
 			}
