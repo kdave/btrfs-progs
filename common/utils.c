@@ -385,6 +385,20 @@ enum btrfs_csum_type parse_csum_type(const char *s)
 	return 0;
 }
 
+int btrfs_format_csum(u16 csum_type, const u8 *data, char *output)
+{
+	int i;
+	const int csum_size = btrfs_csum_type_size(csum_type);
+
+	sprintf(output, "0x");
+	for (i = 0; i < csum_size; i++) {
+		output += 2;
+		sprintf(output, "%02x", data[i]);
+	}
+
+	return csum_size;
+}
+
 int get_device_info(int fd, u64 devid,
 		struct btrfs_ioctl_dev_info_args *di_args)
 {
