@@ -385,18 +385,20 @@ enum btrfs_csum_type parse_csum_type(const char *s)
 	return 0;
 }
 
-int btrfs_format_csum(u16 csum_type, const u8 *data, char *output)
+void btrfs_format_csum(u16 csum_type, const u8 *data, char *output)
 {
 	int i;
+	int cur = 0;
 	const int csum_size = btrfs_csum_type_size(csum_type);
 
-	sprintf(output, "0x");
+	output[0] = '\0';
+	snprintf(output, BTRFS_CSUM_STRING_LEN, "0x");
+	cur += strlen("0x");
 	for (i = 0; i < csum_size; i++) {
-		output += 2;
-		sprintf(output, "%02x", data[i]);
+		snprintf(output + cur, BTRFS_CSUM_STRING_LEN - cur, "%02x",
+			 data[i]);
+		cur += 2;
 	}
-
-	return csum_size;
 }
 
 int get_device_info(int fd, u64 devid,

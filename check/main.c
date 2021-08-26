@@ -7962,6 +7962,23 @@ static int record_unaligned_extent_rec(struct extent_record *rec)
 		if (skip)
 			continue;
 
+		/*
+		 * If we repaired something and restarted we could potentially
+		 * try to add this unaligned record multiple times, so check
+		 * before we add a new one.
+		 */
+		list_for_each_entry(urec, &dest_root->unaligned_extent_recs, list) {
+			if (urec->objectid == dest_root->objectid &&
+			    urec->owner == dback->owner &&
+			    urec->bytenr == rec->start) {
+				skip = true;
+				break;
+			}
+		}
+
+		if (skip)
+			continue;
+
 		urec = malloc(sizeof(struct unaligned_extent_rec_t));
 		if (!urec)
 			return -ENOMEM;

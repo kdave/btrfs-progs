@@ -46,7 +46,7 @@ enum btrfs_csum_type parse_csum_type(const char *s);
 
 /* 2 for "0x", 2 for each byte, plus nul */
 #define BTRFS_CSUM_STRING_LEN		(2 + 2 * BTRFS_CSUM_SIZE + 1)
-int btrfs_format_csum(u16 csum_type, const u8 *data, char *output);
+void btrfs_format_csum(u16 csum_type, const u8 *data, char *output);
 u64 parse_size_from_string(const char *s);
 u64 parse_qgroupid(const char *p);
 u64 arg_strtou64(const char *str);
