@@ -77,4 +77,14 @@ else
 	test_do_mkfs -d raid1c4 -m raid1c4 ${loopdevs[@]}
 fi
 
+# Non-standard profile/device combinations
+
+# Single device raid0, two device raid10 (simple mount works on older kernels too)
+if check_min_kernel_version 5.13; then
+	test_do_mkfs -d raid0 -m raid0 "$dev1"
+	test_get_info
+	test_do_mkfs -d raid10 -m raid10 "${loopdevs[1]}" "${loopdevs[2]}"
+	test_get_info
+fi
+
 cleanup_loopdevs
