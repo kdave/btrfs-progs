@@ -47,6 +47,34 @@ const struct btrfs_raid_attr btrfs_raid_array[BTRFS_NR_RAID_TYPES] = {
 		.bg_flag	= BTRFS_BLOCK_GROUP_RAID10,
 		.mindev_error	= BTRFS_ERROR_DEV_RAID10_MIN_NOT_MET,
 	},
+	[BTRFS_RAID_RAID10C3] = {
+		.sub_stripes	= 3,
+		.dev_stripes	= 1,
+		.devs_max	= 0,	/* 0 == as many as possible */
+		.devs_min	= 3,
+		.tolerated_failures = 2,
+		.devs_increment	= 3,
+		.ncopies	= 3,
+		.nparity        = 0,
+		.lower_name	= "raid10c3",
+		.upper_name	= "RAID10C3",
+		.bg_flag	= BTRFS_BLOCK_GROUP_RAID10C3,
+		.mindev_error	= BTRFS_ERROR_DEV_RAID10C3_MIN_NOT_MET,
+	},
+	[BTRFS_RAID_RAID10C4] = {
+		.sub_stripes	= 4,
+		.dev_stripes	= 1,
+		.devs_max	= 0,	/* 0 == as many as possible */
+		.devs_min	= 4,
+		.tolerated_failures = 3,
+		.devs_increment	= 4,
+		.ncopies	= 4,
+		.nparity        = 0,
+		.lower_name	= "raid10c4",
+		.upper_name	= "RAID10C4",
+		.bg_flag	= BTRFS_BLOCK_GROUP_RAID10C4,
+		.mindev_error	= BTRFS_ERROR_DEV_RAID10C4_MIN_NOT_MET,
+	},
 	[BTRFS_RAID_RAID1] = {
 		.sub_stripes	= 1,
 		.dev_stripes	= 1,
@@ -195,6 +223,10 @@ enum btrfs_raid_types btrfs_bg_flags_to_raid_index(u64 flags)
 {
 	if (flags & BTRFS_BLOCK_GROUP_RAID10)
 		return BTRFS_RAID_RAID10;
+	else if (flags & BTRFS_BLOCK_GROUP_RAID10C3)
+		return BTRFS_RAID_RAID10C3;
+	else if (flags & BTRFS_BLOCK_GROUP_RAID10C4)
+		return BTRFS_RAID_RAID10C4;
 	else if (flags & BTRFS_BLOCK_GROUP_RAID1)
 		return BTRFS_RAID_RAID1;
 	else if (flags & BTRFS_BLOCK_GROUP_RAID1C3)
@@ -1093,7 +1125,7 @@ static u64 chunk_bytes_by_type(struct alloc_chunk_ctl *ctl)
 
 	if (type & (BTRFS_BLOCK_GROUP_RAID1_MASK | BTRFS_BLOCK_GROUP_DUP))
 		return stripe_size;
-	else if (type & BTRFS_BLOCK_GROUP_RAID10)
+	else if (type & (BTRFS_BLOCK_GROUP_RAID10_MASK))
 		return stripe_size * (ctl->num_stripes / ctl->sub_stripes);
 	else if (type & BTRFS_BLOCK_GROUP_RAID56_MASK)
 		return stripe_size * (ctl->num_stripes - btrfs_bg_type_to_nparity(type));
@@ -1302,6 +1334,8 @@ static void init_alloc_chunk_ctl(struct btrfs_fs_info *info,
 		break;
 	case BTRFS_RAID_RAID0:
 	case BTRFS_RAID_RAID10:
+	case BTRFS_RAID_RAID10C3:
+	case BTRFS_RAID_RAID10C4:
 	case BTRFS_RAID_RAID5:
 	case BTRFS_RAID_RAID6:
 		ctl->num_stripes = min(ctl->max_stripes, ctl->total_devs);
@@ -1549,11 +1583,9 @@ again:
 		list_splice(&private_devs, dev_list);
 		if (index >= ctl.min_stripes) {
 			ctl.num_stripes = index;
-			if (type & (BTRFS_BLOCK_GROUP_RAID10)) {
-				/* We know this should be 2, but just in case */
-				ASSERT(is_power_of_2(ctl.sub_stripes));
-				ctl.num_stripes = round_down(ctl.num_stripes,
-							     ctl.sub_stripes);
+			if (type & (BTRFS_BLOCK_GROUP_RAID10_MASK)) {
+				ctl.num_stripes /= ctl.sub_stripes;
+				ctl.num_stripes *= ctl.sub_stripes;
 			}
 			looped = 1;
 			goto again;
@@ -1643,7 +1675,7 @@ int btrfs_num_copies(struct btrfs_fs_info *fs_info, u64 logical, u64 len)
 
 	if (map->type & (BTRFS_BLOCK_GROUP_DUP | BTRFS_BLOCK_GROUP_RAID1_MASK))
 		ret = map->num_stripes;
-	else if (map->type & BTRFS_BLOCK_GROUP_RAID10)
+	else if (map->type & (BTRFS_BLOCK_GROUP_RAID10_MASK))
 		ret = map->sub_stripes;
 	else if (map->type & BTRFS_BLOCK_GROUP_RAID5)
 		ret = 2;
@@ -1709,7 +1741,7 @@ int btrfs_rmap_block(struct btrfs_fs_info *fs_info, u64 chunk_start,
 
 	length = ce->size;
 	rmap_len = map->stripe_len;
-	if (map->type & BTRFS_BLOCK_GROUP_RAID10)
+	if (map->type & BTRFS_BLOCK_GROUP_RAID10_MASK)
 		length = ce->size / (map->num_stripes / map->sub_stripes);
 	else if (map->type & BTRFS_BLOCK_GROUP_RAID0)
 		length = ce->size / map->num_stripes;
@@ -1728,7 +1760,7 @@ int btrfs_rmap_block(struct btrfs_fs_info *fs_info, u64 chunk_start,
 		stripe_nr = (physical - map->stripes[i].physical) /
 			    map->stripe_len;
 
-		if (map->type & BTRFS_BLOCK_GROUP_RAID10) {
+		if (map->type & BTRFS_BLOCK_GROUP_RAID10_MASK) {
 			stripe_nr = (stripe_nr * map->num_stripes + i) /
 				    map->sub_stripes;
 		} else if (map->type & BTRFS_BLOCK_GROUP_RAID0) {
@@ -1838,7 +1870,7 @@ again:
 		if (map->type & (BTRFS_BLOCK_GROUP_RAID1_MASK |
 				 BTRFS_BLOCK_GROUP_DUP)) {
 			stripes_required = map->num_stripes;
-		} else if (map->type & BTRFS_BLOCK_GROUP_RAID10) {
+		} else if (map->type & (BTRFS_BLOCK_GROUP_RAID10_MASK)) {
 			stripes_required = map->sub_stripes;
 		}
 	}
@@ -1879,7 +1911,7 @@ again:
 
 	if (map->type & (BTRFS_BLOCK_GROUP_RAID0 | BTRFS_BLOCK_GROUP_RAID1_MASK |
 			 BTRFS_BLOCK_GROUP_RAID56_MASK |
-			 BTRFS_BLOCK_GROUP_RAID10 |
+			 BTRFS_BLOCK_GROUP_RAID10_MASK |
 			 BTRFS_BLOCK_GROUP_DUP)) {
 		/* we limit the length of each bio to what fits in a stripe */
 		*length = min_t(u64, ce->size - offset,
@@ -1900,7 +1932,7 @@ again:
 			stripe_index = mirror_num - 1;
 		else
 			stripe_index = stripe_nr % map->num_stripes;
-	} else if (map->type & BTRFS_BLOCK_GROUP_RAID10) {
+	} else if (map->type & BTRFS_BLOCK_GROUP_RAID10_MASK) {
 		int factor = map->num_stripes / map->sub_stripes;
 
 		stripe_index = stripe_nr % factor;
@@ -2193,8 +2225,14 @@ int btrfs_check_chunk_valid(struct btrfs_fs_info *fs_info,
 	 */
 	min_devs = btrfs_bg_type_to_devs_min(type);
 	table_sub_stripes = btrfs_bg_type_to_sub_stripes(type);
-	if ((type & BTRFS_BLOCK_GROUP_RAID10 && (sub_stripes != table_sub_stripes ||
+	printf("sub_stripes %d\ntable_sub_stripes %d\nnum_stripes %d\n",
+			sub_stripes, table_sub_stripes, num_stripes);
+#if 0
+	/* FIXME: kernel does not check the alignment */
+	if ((type & BTRFS_BLOCK_GROUP_RAID10_MASK && (sub_stripes != table_sub_stripes ||
 		  !IS_ALIGNED(num_stripes, sub_stripes))) ||
+#endif
+	if ((type & BTRFS_BLOCK_GROUP_RAID10_MASK && (sub_stripes != table_sub_stripes)) ||
 	    (type & BTRFS_BLOCK_GROUP_RAID1 && num_stripes < min_devs) ||
 	    (type & BTRFS_BLOCK_GROUP_RAID1C3 && num_stripes < min_devs) ||
 	    (type & BTRFS_BLOCK_GROUP_RAID1C4 && num_stripes < min_devs) ||
@@ -2773,6 +2811,8 @@ u64 btrfs_stripe_length(struct btrfs_fs_info *fs_info,
 		stripe_len = chunk_len / (num_stripes - btrfs_bg_type_to_nparity(profile));
 		break;
 	case BTRFS_BLOCK_GROUP_RAID10:
+	case BTRFS_BLOCK_GROUP_RAID10C3:
+	case BTRFS_BLOCK_GROUP_RAID10C4:
 		stripe_len = chunk_len / (num_stripes /
 				btrfs_chunk_sub_stripes(leaf, chunk));
 		break;

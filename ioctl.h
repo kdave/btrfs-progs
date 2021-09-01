@@ -790,6 +790,8 @@ enum btrfs_err_code {
 	BTRFS_ERROR_DEV_EXCL_RUN_IN_PROGRESS,
 	BTRFS_ERROR_DEV_RAID1C3_MIN_NOT_MET,
 	BTRFS_ERROR_DEV_RAID1C4_MIN_NOT_MET,
+	BTRFS_ERROR_DEV_RAID10C3_MIN_NOT_MET,
+	BTRFS_ERROR_DEV_RAID10C4_MIN_NOT_MET,
 };
 
 /* An error code to error string mapping for the kernel
@@ -806,6 +808,10 @@ static inline char *btrfs_err_str(enum btrfs_err_code err_code)
 			return "unable to go below four devices on raid1c4";
 		case BTRFS_ERROR_DEV_RAID10_MIN_NOT_MET:
 			return "unable to go below four/two devices on raid10";
+		case BTRFS_ERROR_DEV_RAID10C3_MIN_NOT_MET:
+			return "unable to go below three devices on raid10c3";
+		case BTRFS_ERROR_DEV_RAID10C4_MIN_NOT_MET:
+			return "unable to go below four devices on raid10c4";
 		case BTRFS_ERROR_DEV_RAID5_MIN_NOT_MET:
 			return "unable to go below two devices on raid5";
 		case BTRFS_ERROR_DEV_RAID6_MIN_NOT_MET:

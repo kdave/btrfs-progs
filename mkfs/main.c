@@ -1229,6 +1229,11 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		runtime_features |= BTRFS_RUNTIME_FEATURE_FREE_SPACE_TREE;
 	}
 
+	if ((data_profile | metadata_profile) &
+	    (BTRFS_BLOCK_GROUP_RAID10C3 | BTRFS_BLOCK_GROUP_RAID10C4)) {
+		features |= BTRFS_FEATURE_INCOMPAT_RAID10C34;
+	}
+
 	if (zoned) {
 		if (source_dir_set) {
 			error("the option -r and zoned mode are incompatible");

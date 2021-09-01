@@ -1642,7 +1642,7 @@ static int btrfs_calc_stripe_index(struct chunk_record *chunk, u64 logical)
 	stripe_nr = offset / chunk->stripe_len;
 	if (chunk->type_flags & BTRFS_BLOCK_GROUP_RAID0) {
 		index = stripe_nr % chunk->num_stripes;
-	} else if (chunk->type_flags & BTRFS_BLOCK_GROUP_RAID10) {
+	} else if (chunk->type_flags & BTRFS_BLOCK_GROUP_RAID10_MASK) {
 		index = stripe_nr % (chunk->num_stripes / chunk->sub_stripes);
 		index *= chunk->sub_stripes;
 	} else if (chunk->type_flags & BTRFS_BLOCK_GROUP_RAID56_MASK) {

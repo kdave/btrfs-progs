@@ -213,6 +213,8 @@ static inline int check_crossing_stripes(struct btrfs_fs_info *fs_info,
 		(bg_offset + len - 1) / BTRFS_STRIPE_LEN);
 }
 
+/* FIXME */
+int btrfs_bg_type_to_sub_stripes(u64 flags);
 static inline u64 calc_stripe_length(u64 type, u64 length, int num_stripes)
 {
 	u64 stripe_size;
@@ -220,8 +222,8 @@ static inline u64 calc_stripe_length(u64 type, u64 length, int num_stripes)
 	if (type & BTRFS_BLOCK_GROUP_RAID0) {
 		stripe_size = length;
 		stripe_size /= num_stripes;
-	} else if (type & BTRFS_BLOCK_GROUP_RAID10) {
-		stripe_size = length * 2;
+	} else if (type & BTRFS_BLOCK_GROUP_RAID10_MASK) {
+		stripe_size = length * btrfs_bg_type_to_sub_stripes(type);
 		stripe_size /= num_stripes;
 	} else if (type & BTRFS_BLOCK_GROUP_RAID56_MASK) {
 		stripe_size = length;
