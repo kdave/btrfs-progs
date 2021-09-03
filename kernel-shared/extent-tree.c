@@ -1667,12 +1667,9 @@ int update_space_info(struct btrfs_fs_info *info, u64 flags,
 static void set_avail_alloc_bits(struct btrfs_fs_info *fs_info, u64 flags)
 {
 	u64 extra_flags = flags & (BTRFS_BLOCK_GROUP_RAID0 |
-				   BTRFS_BLOCK_GROUP_RAID1 |
-				   BTRFS_BLOCK_GROUP_RAID1C3 |
-				   BTRFS_BLOCK_GROUP_RAID1C4 |
+				   BTRFS_BLOCK_GROUP_RAID1_MASK |
 				   BTRFS_BLOCK_GROUP_RAID10 |
-				   BTRFS_BLOCK_GROUP_RAID5 |
-				   BTRFS_BLOCK_GROUP_RAID6 |
+				   BTRFS_BLOCK_GROUP_RAID56_MASK |
 				   BTRFS_BLOCK_GROUP_DUP);
 	if (extra_flags) {
 		if (flags & BTRFS_BLOCK_GROUP_DATA)

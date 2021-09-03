@@ -1574,8 +1574,7 @@ static int calc_num_stripes(u64 type)
 {
 	if (type & (BTRFS_BLOCK_GROUP_RAID0 |
 		    BTRFS_BLOCK_GROUP_RAID10 |
-		    BTRFS_BLOCK_GROUP_RAID5 |
-		    BTRFS_BLOCK_GROUP_RAID6))
+		    BTRFS_BLOCK_GROUP_RAID56_MASK))
 		return 0;
 	else if (type & (BTRFS_BLOCK_GROUP_RAID1 |
 			 BTRFS_BLOCK_GROUP_DUP))
@@ -1758,8 +1757,7 @@ no_extent_record:
 	if (list_empty(&devexts))
 		return 0;
 
-	if (chunk->type_flags & (BTRFS_BLOCK_GROUP_RAID5 |
-				 BTRFS_BLOCK_GROUP_RAID6)) {
+	if (chunk->type_flags & BTRFS_BLOCK_GROUP_RAID56_MASK) {
 		/* Fixme: try to recover the order by the parity block. */
 		list_splice_tail(&devexts, &chunk->dextents);
 		return -EINVAL;

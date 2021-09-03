@@ -1027,9 +1027,7 @@ static u64 chunk_bytes_by_type(struct alloc_chunk_ctl *ctl)
 	u64 type = ctl->type;
 	u64 stripe_size = ctl->stripe_size;
 
-	if (type & (BTRFS_BLOCK_GROUP_RAID1 | BTRFS_BLOCK_GROUP_DUP))
-		return stripe_size;
-	else if (type & (BTRFS_BLOCK_GROUP_RAID1C3 | BTRFS_BLOCK_GROUP_RAID1C4))
+	if (type & (BTRFS_BLOCK_GROUP_RAID1_MASK | BTRFS_BLOCK_GROUP_DUP))
 		return stripe_size;
 	else if (type & BTRFS_BLOCK_GROUP_RAID10)
 		return stripe_size * (ctl->num_stripes / ctl->sub_stripes);
@@ -1582,8 +1580,7 @@ int btrfs_num_copies(struct btrfs_fs_info *fs_info, u64 logical, u64 len)
 	}
 	map = container_of(ce, struct map_lookup, ce);
 
-	if (map->type & (BTRFS_BLOCK_GROUP_DUP | BTRFS_BLOCK_GROUP_RAID1 |
-			 BTRFS_BLOCK_GROUP_RAID1C3 | BTRFS_BLOCK_GROUP_RAID1C4))
+	if (map->type & (BTRFS_BLOCK_GROUP_DUP | BTRFS_BLOCK_GROUP_RAID1_MASK))
 		ret = map->num_stripes;
 	else if (map->type & BTRFS_BLOCK_GROUP_RAID10)
 		ret = map->sub_stripes;
@@ -1655,8 +1652,7 @@ int btrfs_rmap_block(struct btrfs_fs_info *fs_info, u64 chunk_start,
 		length = ce->size / (map->num_stripes / map->sub_stripes);
 	else if (map->type & BTRFS_BLOCK_GROUP_RAID0)
 		length = ce->size / map->num_stripes;
-	else if (map->type & (BTRFS_BLOCK_GROUP_RAID5 |
-			      BTRFS_BLOCK_GROUP_RAID6)) {
+	else if (map->type & BTRFS_BLOCK_GROUP_RAID56_MASK) {
 		length = ce->size / nr_data_stripes(map);
 		rmap_len = map->stripe_len * nr_data_stripes(map);
 	}
@@ -1778,16 +1774,14 @@ again:
 	offset = logical - ce->start;
 
 	if (rw == WRITE) {
-		if (map->type & (BTRFS_BLOCK_GROUP_RAID1 |
-				 BTRFS_BLOCK_GROUP_RAID1C3 |
-				 BTRFS_BLOCK_GROUP_RAID1C4 |
+		if (map->type & (BTRFS_BLOCK_GROUP_RAID1_MASK |
 				 BTRFS_BLOCK_GROUP_DUP)) {
 			stripes_required = map->num_stripes;
 		} else if (map->type & BTRFS_BLOCK_GROUP_RAID10) {
 			stripes_required = map->sub_stripes;
 		}
 	}
-	if (map->type & (BTRFS_BLOCK_GROUP_RAID5 | BTRFS_BLOCK_GROUP_RAID6)
+	if (map->type & BTRFS_BLOCK_GROUP_RAID56_MASK
 	    && multi_ret && ((rw & WRITE) || mirror_num > 1) && raid_map_ret) {
 		    /* RAID[56] write or recovery. Return all stripes */
 		    stripes_required = map->num_stripes;
@@ -1822,9 +1816,8 @@ again:
 	/* stripe_offset is the offset of this block in its stripe*/
 	stripe_offset = offset - stripe_offset;
 
-	if (map->type & (BTRFS_BLOCK_GROUP_RAID0 | BTRFS_BLOCK_GROUP_RAID1 |
-			 BTRFS_BLOCK_GROUP_RAID1C3 | BTRFS_BLOCK_GROUP_RAID1C4 |
-			 BTRFS_BLOCK_GROUP_RAID5 | BTRFS_BLOCK_GROUP_RAID6 |
+	if (map->type & (BTRFS_BLOCK_GROUP_RAID0 | BTRFS_BLOCK_GROUP_RAID1_MASK |
+			 BTRFS_BLOCK_GROUP_RAID56_MASK |
 			 BTRFS_BLOCK_GROUP_RAID10 |
 			 BTRFS_BLOCK_GROUP_DUP)) {
 		/* we limit the length of each bio to what fits in a stripe */
@@ -1839,9 +1832,7 @@ again:
 
 	multi->num_stripes = 1;
 	stripe_index = 0;
-	if (map->type & (BTRFS_BLOCK_GROUP_RAID1 |
-			 BTRFS_BLOCK_GROUP_RAID1C3 |
-			 BTRFS_BLOCK_GROUP_RAID1C4)) {
+	if (map->type & BTRFS_BLOCK_GROUP_RAID1_MASK) {
 		if (rw == WRITE)
 			multi->num_stripes = map->num_stripes;
 		else if (mirror_num)
@@ -1865,9 +1856,7 @@ again:
 			multi->num_stripes = map->num_stripes;
 		else if (mirror_num)
 			stripe_index = mirror_num - 1;
-	} else if (map->type & (BTRFS_BLOCK_GROUP_RAID5 |
-				BTRFS_BLOCK_GROUP_RAID6)) {
-
+	} else if (map->type & BTRFS_BLOCK_GROUP_RAID56_MASK) {
 		if (raid_map) {
 			int rot;
 			u64 tmp;

@@ -824,12 +824,8 @@ static u64 calc_chunk_size(struct chunk_info *ci)
 {
 	if (ci->type & BTRFS_BLOCK_GROUP_RAID0)
 		return ci->size / ci->num_stripes;
-	else if (ci->type & BTRFS_BLOCK_GROUP_RAID1)
+	else if (ci->type & BTRFS_BLOCK_GROUP_RAID1_MASK)
 		return ci->size ;
-	else if (ci->type & BTRFS_BLOCK_GROUP_RAID1C3)
-		return ci->size;
-	else if (ci->type & BTRFS_BLOCK_GROUP_RAID1C4)
-		return ci->size;
 	else if (ci->type & BTRFS_BLOCK_GROUP_DUP)
 		return ci->size ;
 	else if (ci->type & BTRFS_BLOCK_GROUP_RAID5)
