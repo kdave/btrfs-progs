@@ -30,6 +30,7 @@
 #include "common/utils.h"
 #include "common/help.h"
 #include "common/units.h"
+#include "common/parse-utils.h"
 
 static const char * const qgroup_cmd_group_usage[] = {
 	"btrfs qgroup <command> [options] <path>",

@@ -44,6 +44,7 @@
 #include "kernel-lib/list_sort.h"
 #include "common/help.h"
 #include "common/rbtree-utils.h"
+#include "common/parse-utils.h"
 #include "mkfs/common.h"
 #include "mkfs/rootdir.h"
 #include "common/fsfeatures.h"
