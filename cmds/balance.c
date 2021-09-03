@@ -42,30 +42,21 @@ static const char * const balance_cmd_group_usage[] = {
 
 static int parse_one_profile(const char *profile, u64 *flags)
 {
-	if (!strcmp(profile, "raid0")) {
-		*flags |= BTRFS_BLOCK_GROUP_RAID0;
-	} else if (!strcmp(profile, "raid1")) {
-		*flags |= BTRFS_BLOCK_GROUP_RAID1;
-	} else if (!strcmp(profile, "raid1c3")) {
-		*flags |= BTRFS_BLOCK_GROUP_RAID1C3;
-	} else if (!strcmp(profile, "raid1c4")) {
-		*flags |= BTRFS_BLOCK_GROUP_RAID1C4;
-	} else if (!strcmp(profile, "raid10")) {
-		*flags |= BTRFS_BLOCK_GROUP_RAID10;
-	} else if (!strcmp(profile, "raid5")) {
-		*flags |= BTRFS_BLOCK_GROUP_RAID5;
-	} else if (!strcmp(profile, "raid6")) {
-		*flags |= BTRFS_BLOCK_GROUP_RAID6;
-	} else if (!strcmp(profile, "dup")) {
-		*flags |= BTRFS_BLOCK_GROUP_DUP;
-	} else if (!strcmp(profile, "single")) {
-		*flags |= BTRFS_AVAIL_ALLOC_BIT_SINGLE;
-	} else {
-		error("unknown profile: %s", profile);
-		return 1;
-	}
+	int i;
 
-	return 0;
+	for (i = 0; i < BTRFS_NR_RAID_TYPES; i++) {
+		if (strcasecmp(btrfs_raid_array[i].raid_name, profile) == 0) {
+			u64 tmp;
+
+			tmp = btrfs_raid_array[i].bg_flag;
+			if (tmp == 0)
+				tmp = BTRFS_AVAIL_ALLOC_BIT_SINGLE;
+			*flags |= tmp;
+			return 0;
+		}
+	}
+	error("unknown profile: %s", profile);
+	return 1;
 }
 
 static int parse_profiles(char *profiles, u64 *flags)
