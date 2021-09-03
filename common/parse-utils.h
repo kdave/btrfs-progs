@@ -23,6 +23,10 @@
 u64 parse_size_from_string(const char *s);
 enum btrfs_csum_type parse_csum_type(const char *s);
 
+int parse_u64(const char *str, u64 *result);
+int parse_range_u32(const char *range, u32 *start, u32 *end);
+int parse_range(const char *range, u64 *start, u64 *end);
+int parse_range_strict(const char *range, u64 *start, u64 *end);
 int fls64(u64 x);
 
 #endif
