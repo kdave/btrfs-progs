@@ -583,41 +583,71 @@ static void generic_err(const struct extent_buffer *buf, int slot,
 
 enum btrfs_tree_block_status
 btrfs_check_node(struct btrfs_fs_info *fs_info,
-		 struct btrfs_key *parent_key, struct extent_buffer *buf)
+		 struct btrfs_key *parent_key, struct extent_buffer *node)
 {
-	int i;
-	struct btrfs_key key;
-	u32 nritems = btrfs_header_nritems(buf);
+	unsigned long nr = btrfs_header_nritems(node);
+	struct btrfs_key key, next_key;
+	int slot;
+	int level = btrfs_header_level(node);
+	u64 bytenr;
 	enum btrfs_tree_block_status ret = BTRFS_TREE_BLOCK_INVALID_NRITEMS;
 
-	if (nritems == 0 || nritems > BTRFS_NODEPTRS_PER_BLOCK(fs_info))
+	if (level <= 0 || level >= BTRFS_MAX_LEVEL) {
+		generic_err(node, 0,
+			"invalid level for node, have %d expect [1, %d]",
+			level, BTRFS_MAX_LEVEL - 1);
+		ret = BTRFS_TREE_BLOCK_INVALID_LEVEL;
 		goto fail;
-
-	ret = BTRFS_TREE_BLOCK_INVALID_PARENT_KEY;
-	if (parent_key && parent_key->type) {
-		btrfs_node_key_to_cpu(buf, &key, 0);
-		if (memcmp(parent_key, &key, sizeof(key)))
-			goto fail;
 	}
-	ret = BTRFS_TREE_BLOCK_BAD_KEY_ORDER;
-	for (i = 0; nritems > 1 && i < nritems - 2; i++) {
-		struct btrfs_key next_key;
+	if (nr == 0 || nr > BTRFS_NODEPTRS_PER_BLOCK(fs_info)) {
+		generic_err(node, 0,
+"corrupt node: root=%llu block=%llu, nritems too %s, have %lu expect range [1,%u]",
+			   btrfs_header_owner(node), node->start,
+			   nr == 0 ? "small" : "large", nr,
+			   BTRFS_NODEPTRS_PER_BLOCK(fs_info));
+		ret = BTRFS_TREE_BLOCK_INVALID_NRITEMS;
+		goto fail;
+	}
 
-		btrfs_node_key_to_cpu(buf, &key, i);
-		btrfs_node_key_to_cpu(buf, &next_key, i + 1);
-		if (btrfs_comp_cpu_keys(&key, &next_key) >= 0)
+	for (slot = 0; slot < nr - 1; slot++) {
+		bytenr = btrfs_node_blockptr(node, slot);
+		btrfs_node_key_to_cpu(node, &key, slot);
+		btrfs_node_key_to_cpu(node, &next_key, slot + 1);
+
+		if (!bytenr) {
+			generic_err(node, slot,
+				"invalid NULL node pointer");
+			ret = BTRFS_TREE_BLOCK_INVALID_BLOCKPTR;
 			goto fail;
+		}
+		if (!IS_ALIGNED(bytenr, fs_info->sectorsize)) {
+			generic_err(node, slot,
+			"unaligned pointer, have %llu should be aligned to %u",
+				bytenr, fs_info->sectorsize);
+			ret = BTRFS_TREE_BLOCK_INVALID_BLOCKPTR;
+			goto fail;
+		}
+
+		if (btrfs_comp_cpu_keys(&key, &next_key) >= 0) {
+			generic_err(node, slot,
+	"bad key order, current (%llu %u %llu) next (%llu %u %llu)",
+				key.objectid, key.type, key.offset,
+				next_key.objectid, next_key.type,
+				next_key.offset);
+			ret = BTRFS_TREE_BLOCK_BAD_KEY_ORDER;
+			goto fail;
+		}
 	}
 	return BTRFS_TREE_BLOCK_CLEAN;
 fail:
-	if (btrfs_header_owner(buf) == BTRFS_EXTENT_TREE_OBJECTID) {
+	if (btrfs_header_owner(node) == BTRFS_EXTENT_TREE_OBJECTID) {
 		if (parent_key)
 			memcpy(&key, parent_key, sizeof(struct btrfs_key));
 		else
-			btrfs_node_key_to_cpu(buf, &key, 0);
+			btrfs_node_key_to_cpu(node, &key, 0);
 		btrfs_add_corrupt_extent_record(fs_info, &key,
-						buf->start, buf->len,
-						btrfs_header_level(buf));
+						node->start, node->len,
+						btrfs_header_level(node));
 	}
 	return ret;
 }
