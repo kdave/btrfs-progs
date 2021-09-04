@@ -79,7 +79,7 @@ struct extent_record {
 	struct rb_root backref_tree;
 	struct list_head list;
 	struct cache_extent cache;
-	struct btrfs_disk_key parent_key;
+	struct btrfs_key parent_key;
 	u64 start;
 	u64 max_size;
 	u64 nr;

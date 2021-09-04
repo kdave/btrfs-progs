@@ -2645,10 +2645,10 @@ int btrfs_del_ptr(struct btrfs_root *root, struct btrfs_path *path,
 		int level, int slot);
 enum btrfs_tree_block_status
 btrfs_check_node(struct btrfs_fs_info *fs_info,
-		 struct btrfs_disk_key *parent_key, struct extent_buffer *buf);
+		 struct btrfs_key *parent_key, struct extent_buffer *buf);
 enum btrfs_tree_block_status
 btrfs_check_leaf(struct btrfs_fs_info *fs_info,
-		 struct btrfs_disk_key *parent_key, struct extent_buffer *buf);
+		 struct btrfs_key *parent_key, struct extent_buffer *buf);
 void reada_for_search(struct btrfs_fs_info *fs_info, struct btrfs_path *path,
 		      int level, int slot, u64 objectid);
 struct extent_buffer *read_node_slot(struct btrfs_fs_info *fs_info,

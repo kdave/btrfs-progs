@@ -4162,7 +4162,6 @@ static int record_bad_block_io(struct cache_tree *extent_cache,
 {
 	struct extent_record *rec;
 	struct cache_extent *cache;
-	struct btrfs_key key;
 
 	cache = lookup_cache_extent(extent_cache, start, len);
 	if (!cache)
@@ -4172,8 +4171,8 @@ static int record_bad_block_io(struct cache_tree *extent_cache,
 	if (!is_extent_tree_record(rec))
 		return 0;
 
-	btrfs_disk_key_to_cpu(&key, &rec->parent_key);
-	return btrfs_add_corrupt_extent_record(gfs_info, &key, start, len, 0);
+	return btrfs_add_corrupt_extent_record(gfs_info, &rec->parent_key,
+					       start, len, 0);
 }
 
 static int swap_values(struct btrfs_root *root, struct btrfs_path *path,
@@ -6571,7 +6570,9 @@ static int run_next_block(struct btrfs_root *root,
 			}
 
 			memset(&tmpl, 0, sizeof(tmpl));
-			btrfs_cpu_key_to_disk(&tmpl.parent_key, &key);
+			tmpl.parent_key.objectid = key.objectid;
+			tmpl.parent_key.type = key.type;
+			tmpl.parent_key.offset = key.offset;
 			tmpl.parent_generation =
 				btrfs_node_ptr_generation(buf, i);
 			tmpl.start = ptr;
