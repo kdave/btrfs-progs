@@ -1,4 +1,3 @@
-
 /*
  * Copyright (C) 2007 Oracle.  All rights reserved.
  *
@@ -16,6 +15,7 @@
  * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
  * Boston, MA 021110-1307, USA.
  */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
