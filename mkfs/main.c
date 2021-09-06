@@ -372,30 +372,16 @@ static void print_usage(int ret)
 
 static u64 parse_profile(const char *s)
 {
-	if (strcasecmp(s, "raid0") == 0) {
-		return BTRFS_BLOCK_GROUP_RAID0;
-	} else if (strcasecmp(s, "raid1") == 0) {
-		return BTRFS_BLOCK_GROUP_RAID1;
-	} else if (strcasecmp(s, "raid1c3") == 0) {
-		return BTRFS_BLOCK_GROUP_RAID1C3;
-	} else if (strcasecmp(s, "raid1c4") == 0) {
-		return BTRFS_BLOCK_GROUP_RAID1C4;
-	} else if (strcasecmp(s, "raid5") == 0) {
-		return BTRFS_BLOCK_GROUP_RAID5;
-	} else if (strcasecmp(s, "raid6") == 0) {
-		return BTRFS_BLOCK_GROUP_RAID6;
-	} else if (strcasecmp(s, "raid10") == 0) {
-		return BTRFS_BLOCK_GROUP_RAID10;
-	} else if (strcasecmp(s, "dup") == 0) {
-		return BTRFS_BLOCK_GROUP_DUP;
-	} else if (strcasecmp(s, "single") == 0) {
-		return 0;
-	} else {
+	int ret;
+	u64 flags = 0;
+
+	ret = parse_bg_profile(s, &flags);
+	if (ret) {
 		error("unknown profile %s", s);
 		exit(1);
 	}
-	/* not reached */
-	return 0;
+
+	return flags;
 }
 
 static char *parse_label(const char *input)
