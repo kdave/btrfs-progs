@@ -227,36 +227,53 @@ int set_label(const char *btrfs_dev, const char *label)
 	return ret;
 }
 
-u64 parse_qgroupid_or_path(const char *p)
+/*
+ * Parse qgroupid of format LEVEL/ID, level and id are numerical, nothing must
+ * follow after the last character of ID.
+ */
+int parse_qgroupid(const char *str, u64 *qgroupid)
 {
-	char *s = strchr(p, '/');
-	const char *ptr_src_end = p + strlen(p);
-	char *ptr_parse_end = NULL;
-	enum btrfs_util_error err;
+	char *end = NULL;
 	u64 level;
 	u64 id;
+
+	level = strtoull(str, &end, 10);
+	if (str == end)
+		return -EINVAL;
+	if (end[0] != '/')
+		return -EINVAL;
+	str = end + 1;
+	end = NULL;
+	id = strtoull(str, &end, 10);
+	if (str == end)
+		return -EINVAL;
+	if (end[0])
+		return -EINVAL;
+	if (id >= (1ULL << BTRFS_QGROUP_LEVEL_SHIFT))
+		return -ERANGE;
+	if (level >= (1ULL << (64 - BTRFS_QGROUP_LEVEL_SHIFT)))
+		return -ERANGE;
+
+	*qgroupid = (level << BTRFS_QGROUP_LEVEL_SHIFT) | id;
+	return 0;
+}
+
+u64 parse_qgroupid_or_path(const char *p)
+{
+	enum btrfs_util_error err;
+	u64 id;
+	u64 qgroupid;
 	int fd;
 	int ret = 0;
 
 	if (p[0] == '/')
 		goto path;
 
-	/* Numeric format like '0/257' is the primary case */
-	if (!s) {
-		id = strtoull(p, &ptr_parse_end, 10);
-		if (ptr_parse_end != ptr_src_end)
-			goto path;
-		return id;
-	}
-	level = strtoull(p, &ptr_parse_end, 10);
-	if (ptr_parse_end != s)
-		goto path;
+	ret = parse_qgroupid(p, &qgroupid);
+	if (ret < 0)
+		goto err;
 
-	id = strtoull(s + 1, &ptr_parse_end, 10);
-	if (ptr_parse_end != ptr_src_end)
-		goto  path;
-
-	return (level << BTRFS_QGROUP_LEVEL_SHIFT) | id;
+	return qgroupid;
 
 path:
 	/* Path format like subv at 'my_subvol' is the fallback case */
