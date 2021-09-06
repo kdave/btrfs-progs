@@ -78,8 +78,8 @@ static int _cmd_qgroup_assign(const struct cmd_struct *cmd, int assign,
 
 	memset(&args, 0, sizeof(args));
 	args.assign = assign;
-	args.src = parse_qgroupid(argv[optind]);
-	args.dst = parse_qgroupid(argv[optind + 1]);
+	args.src = parse_qgroupid_or_path(argv[optind]);
+	args.dst = parse_qgroupid_or_path(argv[optind + 1]);
 
 	path = argv[optind + 2];
 
@@ -142,7 +142,7 @@ static int _cmd_qgroup_create(int create, int argc, char **argv)
 
 	memset(&args, 0, sizeof(args));
 	args.create = create;
-	args.qgroupid = parse_qgroupid(argv[optind]);
+	args.qgroupid = parse_qgroupid_or_path(argv[optind]);
 	path = argv[optind + 1];
 
 	fd = btrfs_open_dir(path, &dirstream, 1);
@@ -440,7 +440,7 @@ static int cmd_qgroup_limit(const struct cmd_struct *cmd, int argc, char **argv)
 		 * fd refers to is to be limited
 		 */
 	} else if (argc - optind == 3) {
-		args.qgroupid = parse_qgroupid(argv[optind + 1]);
+		args.qgroupid = parse_qgroupid_or_path(argv[optind + 1]);
 		path = argv[optind + 2];
 	} else
 		usage(cmd);

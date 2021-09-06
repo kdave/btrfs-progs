@@ -227,7 +227,7 @@ int set_label(const char *btrfs_dev, const char *label)
 	return ret;
 }
 
-u64 parse_qgroupid(const char *p)
+u64 parse_qgroupid_or_path(const char *p)
 {
 	char *s = strchr(p, '/');
 	const char *ptr_src_end = p + strlen(p);

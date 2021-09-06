@@ -45,7 +45,7 @@ enum exclusive_operation {
 /* 2 for "0x", 2 for each byte, plus nul */
 #define BTRFS_CSUM_STRING_LEN		(2 + 2 * BTRFS_CSUM_SIZE + 1)
 void btrfs_format_csum(u16 csum_type, const u8 *data, char *output);
-u64 parse_qgroupid(const char *p);
+u64 parse_qgroupid_or_path(const char *p);
 u64 arg_strtou64(const char *str);
 int get_fs_info(const char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 		struct btrfs_ioctl_dev_info_args **di_ret);

@@ -1398,7 +1398,7 @@ qgroup_inherit_realloc(struct btrfs_qgroup_inherit **inherit, int n, int pos)
 int qgroup_inherit_add_group(struct btrfs_qgroup_inherit **inherit, char *arg)
 {
 	int ret;
-	u64 qgroupid = parse_qgroupid(arg);
+	u64 qgroupid = parse_qgroupid_or_path(arg);
 	int pos = 0;
 
 	if (qgroupid == 0) {
@@ -1433,8 +1433,8 @@ bad:
 		return -EINVAL;
 	}
 	*p = 0;
-	qgroup_src = parse_qgroupid(arg);
-	qgroup_dst = parse_qgroupid(p + 1);
+	qgroup_src = parse_qgroupid_or_path(arg);
+	qgroup_dst = parse_qgroupid_or_path(p + 1);
 	*p = ':';
 
 	if (!qgroup_src || !qgroup_dst)
