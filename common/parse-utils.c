@@ -19,6 +19,7 @@
 #include <ctype.h>
 #include "common/parse-utils.h"
 #include "common/messages.h"
+#include "kernel-shared/volumes.h"
 
 int parse_u64(const char *str, u64 *result)
 {
@@ -241,3 +242,21 @@ int fls64(u64 x)
 	return 64 - i;
 }
 
+/*
+ * Parse string description of block group profile and set that bit in @flags.
+ * Return 1 if the profile is not valid, otherwise 0.
+ *
+ * String matched against btrfs_raid_array, case insensitive.
+ */
+int parse_bg_profile(const char *profile, u64 *flags)
+{
+	int i;
+
+	for (i = 0; i < BTRFS_NR_RAID_TYPES; i++) {
+		if (strcasecmp(btrfs_raid_array[i].raid_name, profile) == 0) {
+			*flags |= btrfs_raid_array[i].bg_flag;
+			return 0;
+		}
+	}
+	return 1;
+}

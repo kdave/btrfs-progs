@@ -32,6 +32,7 @@
 #include "common/open-utils.h"
 #include "cmds/commands.h"
 #include "common/utils.h"
+#include "common/parse-utils.h"
 #include "common/help.h"
 
 static const char * const balance_cmd_group_usage[] = {
@@ -42,21 +43,18 @@ static const char * const balance_cmd_group_usage[] = {
 
 static int parse_one_profile(const char *profile, u64 *flags)
 {
-	int i;
+	int ret;
+	u64 tmp = 0;
 
-	for (i = 0; i < BTRFS_NR_RAID_TYPES; i++) {
-		if (strcasecmp(btrfs_raid_array[i].raid_name, profile) == 0) {
-			u64 tmp;
-
-			tmp = btrfs_raid_array[i].bg_flag;
-			if (tmp == 0)
-				tmp = BTRFS_AVAIL_ALLOC_BIT_SINGLE;
-			*flags |= tmp;
-			return 0;
-		}
+	ret = parse_bg_profile(profile, &tmp);
+	if (ret) {
+		error("unknown profile: %s", profile);
+		return 1;
 	}
-	error("unknown profile: %s", profile);
-	return 1;
+	if (tmp == 0)
+		tmp = BTRFS_AVAIL_ALLOC_BIT_SINGLE;
+	*flags |= tmp;
+	return ret;
 }
 
 static int parse_profiles(char *profiles, u64 *flags)
