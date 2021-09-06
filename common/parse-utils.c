@@ -228,6 +228,22 @@ enum btrfs_csum_type parse_csum_type(const char *s)
 }
 
 /*
+ * Parse name of the supported compression algorithm, without level, case
+ * insensitive
+ */
+int parse_compress_type(const char *type)
+{
+	if (strcasecmp(type, "zlib") == 0)
+		return BTRFS_COMPRESS_ZLIB;
+	else if (strcasecmp(type, "lzo") == 0)
+		return BTRFS_COMPRESS_LZO;
+	else if (strcasecmp(type, "zstd") == 0)
+		return BTRFS_COMPRESS_ZSTD;
+	else
+		return -EINVAL;
+}
+
+/*
  * Find last set bit in a 64-bit word. Returns 0 if value is 0 or the position
  * of the last set bit if value is nonzero. The last (most significant) bit is
  * at position 64.

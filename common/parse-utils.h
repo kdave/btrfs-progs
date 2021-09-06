@@ -28,6 +28,7 @@ int parse_range_u32(const char *range, u32 *start, u32 *end);
 int parse_range(const char *range, u64 *start, u64 *end);
 int parse_range_strict(const char *range, u64 *start, u64 *end);
 int parse_bg_profile(const char *profile, u64 *flags);
+int parse_compress_type(const char *type);
 int fls64(u64 x);
 
 #endif
