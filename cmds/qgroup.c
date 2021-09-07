@@ -146,7 +146,7 @@ static struct {
 static btrfs_qgroup_filter_func all_filter_funcs[];
 static btrfs_qgroup_comp_func all_comp_funcs[];
 
-static void btrfs_qgroup_setup_print_column(enum btrfs_qgroup_column_enum column)
+static void qgroup_setup_print_column(enum btrfs_qgroup_column_enum column)
 {
 	int i;
 
@@ -160,7 +160,7 @@ static void btrfs_qgroup_setup_print_column(enum btrfs_qgroup_column_enum column
 		btrfs_qgroup_columns[i].need_print = 1;
 }
 
-static void btrfs_qgroup_setup_units(unsigned unit_mode)
+static void qgroup_setup_units(unsigned unit_mode)
 {
 	btrfs_qgroup_columns[BTRFS_QGROUP_RFER].unit_mode = unit_mode;
 	btrfs_qgroup_columns[BTRFS_QGROUP_EXCL].unit_mode = unit_mode;
@@ -428,7 +428,7 @@ static char *all_sort_items[] = {
 	[BTRFS_QGROUP_COMP_MAX]		= NULL,
 };
 
-static int  btrfs_qgroup_get_sort_item(char *sort_name)
+static int qgroup_get_sort_item(char *sort_name)
 {
 	int i;
 
@@ -439,7 +439,7 @@ static int  btrfs_qgroup_get_sort_item(char *sort_name)
 	return -1;
 }
 
-static struct btrfs_qgroup_comparer_set *btrfs_qgroup_alloc_comparer_set(void)
+static struct btrfs_qgroup_comparer_set *qgroup_alloc_comparer_set(void)
 {
 	struct btrfs_qgroup_comparer_set *set;
 	int size;
@@ -457,7 +457,7 @@ static struct btrfs_qgroup_comparer_set *btrfs_qgroup_alloc_comparer_set(void)
 	return set;
 }
 
-static int btrfs_qgroup_setup_comparer(struct btrfs_qgroup_comparer_set **comp_set,
+static int qgroup_setup_comparer(struct btrfs_qgroup_comparer_set **comp_set,
 				enum btrfs_qgroup_comp_enum comparer,
 				int is_descending)
 {
@@ -819,7 +819,7 @@ static btrfs_qgroup_filter_func all_filter_funcs[] = {
 	[BTRFS_QGROUP_FILTER_ALL_PARENT]	= filter_by_all_parent,
 };
 
-static struct btrfs_qgroup_filter_set *btrfs_qgroup_alloc_filter_set(void)
+static struct btrfs_qgroup_filter_set *qgroup_alloc_filter_set(void)
 {
 	struct btrfs_qgroup_filter_set *set;
 	int size;
@@ -837,7 +837,7 @@ static struct btrfs_qgroup_filter_set *btrfs_qgroup_alloc_filter_set(void)
 	return set;
 }
 
-static int btrfs_qgroup_setup_filter(struct btrfs_qgroup_filter_set **filter_set,
+static int qgroup_setup_filter(struct btrfs_qgroup_filter_set **filter_set,
 			      enum btrfs_qgroup_filter_enum filter, u64 data)
 {
 	struct btrfs_qgroup_filter_set *set = *filter_set;
@@ -1266,7 +1266,7 @@ static void print_all_qgroups(struct qgroup_lookup *qgroup_lookup)
 	}
 }
 
-static int btrfs_show_qgroups(int fd,
+static int show_qgroups(int fd,
 		       struct btrfs_qgroup_filter_set *filter_set,
 		       struct btrfs_qgroup_comparer_set *comp_set)
 {
@@ -1293,7 +1293,7 @@ static int btrfs_show_qgroups(int fd,
  *         1 parse error
  *        <0 other errors
  */
-static int btrfs_qgroup_parse_sort_string(const char *opt_arg,
+static int qgroup_parse_sort_string(const char *opt_arg,
 				   struct btrfs_qgroup_comparer_set **comps)
 {
 	int order;
@@ -1342,13 +1342,12 @@ static int btrfs_qgroup_parse_sort_string(const char *opt_arg,
 			} else
 				order = 0;
 
-			what_to_sort = btrfs_qgroup_get_sort_item(p);
+			what_to_sort = qgroup_get_sort_item(p);
 			if (what_to_sort < 0) {
 				ret = 1;
 				goto out;
 			}
-			ret2 = btrfs_qgroup_setup_comparer(comps, what_to_sort,
-					order);
+			ret2 = qgroup_setup_comparer(comps, what_to_sort, order);
 			if (ret2 < 0) {
 				ret = ret2;
 				goto out;
@@ -1369,8 +1368,8 @@ int btrfs_qgroup_inherit_size(struct btrfs_qgroup_inherit *p)
 			     2 * p->num_excl_copies);
 }
 
-static int
-qgroup_inherit_realloc(struct btrfs_qgroup_inherit **inherit, int n, int pos)
+static int qgroup_inherit_realloc(struct btrfs_qgroup_inherit **inherit, int n,
+		int pos)
 {
 	struct btrfs_qgroup_inherit *out;
 	int nitems = 0;
@@ -1697,8 +1696,8 @@ static int cmd_qgroup_show(const struct cmd_struct *cmd, int argc, char **argv)
 
 	struct btrfs_qgroup_comparer_set *comparer_set;
 	struct btrfs_qgroup_filter_set *filter_set;
-	filter_set = btrfs_qgroup_alloc_filter_set();
-	comparer_set = btrfs_qgroup_alloc_comparer_set();
+	filter_set = qgroup_alloc_filter_set();
+	comparer_set = qgroup_alloc_comparer_set();
 
 	unit_mode = get_unit_mode_from_arg(&argc, argv, 0);
 
@@ -1720,20 +1719,16 @@ static int cmd_qgroup_show(const struct cmd_struct *cmd, int argc, char **argv)
 			break;
 		switch (c) {
 		case 'p':
-			btrfs_qgroup_setup_print_column(
-				BTRFS_QGROUP_PARENT);
+			qgroup_setup_print_column(BTRFS_QGROUP_PARENT);
 			break;
 		case 'c':
-			btrfs_qgroup_setup_print_column(
-				BTRFS_QGROUP_CHILD);
+			qgroup_setup_print_column(BTRFS_QGROUP_CHILD);
 			break;
 		case 'r':
-			btrfs_qgroup_setup_print_column(
-				BTRFS_QGROUP_MAX_RFER);
+			qgroup_setup_print_column(BTRFS_QGROUP_MAX_RFER);
 			break;
 		case 'e':
-			btrfs_qgroup_setup_print_column(
-				BTRFS_QGROUP_MAX_EXCL);
+			qgroup_setup_print_column(BTRFS_QGROUP_MAX_EXCL);
 			break;
 		case 'F':
 			filter_flag |= 0x1;
@@ -1742,8 +1737,7 @@ static int cmd_qgroup_show(const struct cmd_struct *cmd, int argc, char **argv)
 			filter_flag |= 0x2;
 			break;
 		case GETOPT_VAL_SORT:
-			ret = btrfs_qgroup_parse_sort_string(optarg,
-							     &comparer_set);
+			ret = qgroup_parse_sort_string(optarg, &comparer_set);
 			if (ret < 0) {
 				errno = -ret;
 				error("cannot parse sort string: %m");
@@ -1761,7 +1755,7 @@ static int cmd_qgroup_show(const struct cmd_struct *cmd, int argc, char **argv)
 			usage_unknown_option(cmd, argv);
 		}
 	}
-	btrfs_qgroup_setup_units(unit_mode);
+	qgroup_setup_units(unit_mode);
 
 	if (check_argc_exact(argc - optind, 1))
 		return 1;
@@ -1789,15 +1783,15 @@ static int cmd_qgroup_show(const struct cmd_struct *cmd, int argc, char **argv)
 			goto out;
 		}
 		if (filter_flag & 0x1)
-			btrfs_qgroup_setup_filter(&filter_set,
+			qgroup_setup_filter(&filter_set,
 					BTRFS_QGROUP_FILTER_ALL_PARENT,
 					qgroupid);
 		if (filter_flag & 0x2)
-			btrfs_qgroup_setup_filter(&filter_set,
+			qgroup_setup_filter(&filter_set,
 					BTRFS_QGROUP_FILTER_PARENT,
 					qgroupid);
 	}
-	ret = btrfs_show_qgroups(fd, filter_set, comparer_set);
+	ret = show_qgroups(fd, filter_set, comparer_set);
 	close_file_or_dir(fd, dirstream);
 	free(filter_set);
 	free(comparer_set);
