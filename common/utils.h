@@ -81,8 +81,6 @@ const char* btrfs_group_profile_str(u64 flag);
 int count_digits(u64 num);
 u64 div_factor(u64 num, int factor);
 
-int btrfs_tree_search2_ioctl_supported(int fd);
-
 int string_is_numerical(const char *str);
 int prefixcmp(const char *str, const char *prefix);
 

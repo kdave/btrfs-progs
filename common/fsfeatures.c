@@ -16,6 +16,7 @@
 
 #include "kerncompat.h"
 #include <sys/utsname.h>
+#include <sys/ioctl.h>
 #include <linux/version.h>
 #include <unistd.h>
 #include "common/fsfeatures.h"
@@ -425,3 +426,41 @@ int btrfs_check_nodesize(u32 nodesize, u32 sectorsize, u64 features)
 	}
 	return 0;
 }
+
+/*
+ * Check if the BTRFS_IOC_TREE_SEARCH_V2 ioctl is supported on a given
+ * filesystem, opened at fd
+ */
+int btrfs_tree_search2_ioctl_supported(int fd)
+{
+	struct btrfs_ioctl_search_args_v2 *args2;
+	struct btrfs_ioctl_search_key *sk;
+	int args2_size = 1024;
+	char args2_buf[args2_size];
+	int ret;
+
+	args2 = (struct btrfs_ioctl_search_args_v2 *)args2_buf;
+	sk = &(args2->key);
+
+	/*
+	 * Search for the extent tree item in the root tree.
+	 */
+	sk->tree_id = BTRFS_ROOT_TREE_OBJECTID;
+	sk->min_objectid = BTRFS_EXTENT_TREE_OBJECTID;
+	sk->max_objectid = BTRFS_EXTENT_TREE_OBJECTID;
+	sk->min_type = BTRFS_ROOT_ITEM_KEY;
+	sk->max_type = BTRFS_ROOT_ITEM_KEY;
+	sk->min_offset = 0;
+	sk->max_offset = (u64)-1;
+	sk->min_transid = 0;
+	sk->max_transid = (u64)-1;
+	sk->nr_items = 1;
+	args2->buf_size = args2_size - sizeof(struct btrfs_ioctl_search_args_v2);
+	ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH_V2, args2);
+	if (ret == -EOPNOTSUPP)
+		return 0;
+	else if (ret == 0)
+		return 1;
+	return ret;
+}
+

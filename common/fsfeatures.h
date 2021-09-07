@@ -55,5 +55,6 @@ void print_kernel_version(FILE *stream, u32 version);
 u32 get_running_kernel_version(void);
 int btrfs_check_nodesize(u32 nodesize, u32 sectorsize, u64 features);
 int btrfs_check_sectorsize(u32 sectorsize);
+int btrfs_tree_search2_ioctl_supported(int fd);
 
 #endif
