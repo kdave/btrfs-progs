@@ -146,7 +146,7 @@ static struct {
 static btrfs_qgroup_filter_func all_filter_funcs[];
 static btrfs_qgroup_comp_func all_comp_funcs[];
 
-void btrfs_qgroup_setup_print_column(enum btrfs_qgroup_column_enum column)
+static void btrfs_qgroup_setup_print_column(enum btrfs_qgroup_column_enum column)
 {
 	int i;
 
@@ -160,7 +160,7 @@ void btrfs_qgroup_setup_print_column(enum btrfs_qgroup_column_enum column)
 		btrfs_qgroup_columns[i].need_print = 1;
 }
 
-void btrfs_qgroup_setup_units(unsigned unit_mode)
+static void btrfs_qgroup_setup_units(unsigned unit_mode)
 {
 	btrfs_qgroup_columns[BTRFS_QGROUP_RFER].unit_mode = unit_mode;
 	btrfs_qgroup_columns[BTRFS_QGROUP_EXCL].unit_mode = unit_mode;
@@ -439,7 +439,7 @@ static int  btrfs_qgroup_get_sort_item(char *sort_name)
 	return -1;
 }
 
-struct btrfs_qgroup_comparer_set *btrfs_qgroup_alloc_comparer_set(void)
+static struct btrfs_qgroup_comparer_set *btrfs_qgroup_alloc_comparer_set(void)
 {
 	struct btrfs_qgroup_comparer_set *set;
 	int size;
@@ -457,7 +457,7 @@ struct btrfs_qgroup_comparer_set *btrfs_qgroup_alloc_comparer_set(void)
 	return set;
 }
 
-int btrfs_qgroup_setup_comparer(struct btrfs_qgroup_comparer_set  **comp_set,
+static int btrfs_qgroup_setup_comparer(struct btrfs_qgroup_comparer_set **comp_set,
 				enum btrfs_qgroup_comp_enum comparer,
 				int is_descending)
 {
@@ -819,7 +819,7 @@ static btrfs_qgroup_filter_func all_filter_funcs[] = {
 	[BTRFS_QGROUP_FILTER_ALL_PARENT]	= filter_by_all_parent,
 };
 
-struct btrfs_qgroup_filter_set *btrfs_qgroup_alloc_filter_set(void)
+static struct btrfs_qgroup_filter_set *btrfs_qgroup_alloc_filter_set(void)
 {
 	struct btrfs_qgroup_filter_set *set;
 	int size;
@@ -837,7 +837,7 @@ struct btrfs_qgroup_filter_set *btrfs_qgroup_alloc_filter_set(void)
 	return set;
 }
 
-int btrfs_qgroup_setup_filter(struct btrfs_qgroup_filter_set **filter_set,
+static int btrfs_qgroup_setup_filter(struct btrfs_qgroup_filter_set **filter_set,
 			      enum btrfs_qgroup_filter_enum filter, u64 data)
 {
 	struct btrfs_qgroup_filter_set *set = *filter_set;
@@ -1266,7 +1266,7 @@ static void print_all_qgroups(struct qgroup_lookup *qgroup_lookup)
 	}
 }
 
-int btrfs_show_qgroups(int fd,
+static int btrfs_show_qgroups(int fd,
 		       struct btrfs_qgroup_filter_set *filter_set,
 		       struct btrfs_qgroup_comparer_set *comp_set)
 {
@@ -1293,7 +1293,7 @@ int btrfs_show_qgroups(int fd,
  *         1 parse error
  *        <0 other errors
  */
-int btrfs_qgroup_parse_sort_string(const char *opt_arg,
+static int btrfs_qgroup_parse_sort_string(const char *opt_arg,
 				   struct btrfs_qgroup_comparer_set **comps)
 {
 	int order;

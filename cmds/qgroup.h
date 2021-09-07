@@ -91,24 +91,10 @@ struct btrfs_qgroup_stats {
 	struct btrfs_qgroup_limit limit;
 };
 
-int btrfs_qgroup_parse_sort_string(const char *opt_arg,
-				struct btrfs_qgroup_comparer_set **comps);
-int btrfs_show_qgroups(int fd, struct btrfs_qgroup_filter_set *,
-		       struct btrfs_qgroup_comparer_set *);
-void btrfs_qgroup_setup_print_column(enum btrfs_qgroup_column_enum column);
-void btrfs_qgroup_setup_units(unsigned unit_mode);
-struct btrfs_qgroup_filter_set *btrfs_qgroup_alloc_filter_set(void);
-int btrfs_qgroup_setup_filter(struct btrfs_qgroup_filter_set **filter_set,
-			      enum btrfs_qgroup_filter_enum, u64 data);
-struct btrfs_qgroup_comparer_set *btrfs_qgroup_alloc_comparer_set(void);
-int btrfs_qgroup_setup_comparer(struct btrfs_qgroup_comparer_set **comp_set,
-				enum btrfs_qgroup_comp_enum comparer,
-				int is_descending);
 int qgroup_inherit_size(struct btrfs_qgroup_inherit *p);
 int qgroup_inherit_add_group(struct btrfs_qgroup_inherit **inherit, char *arg);
 int qgroup_inherit_add_copy(struct btrfs_qgroup_inherit **inherit, char *arg,
 			    int type);
-
 int btrfs_qgroup_query(int fd, u64 qgroupid, struct btrfs_qgroup_stats *stats);
 
 #endif
