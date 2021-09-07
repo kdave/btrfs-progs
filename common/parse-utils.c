@@ -276,3 +276,34 @@ int parse_bg_profile(const char *profile, u64 *flags)
 	}
 	return 1;
 }
+
+/*
+ * Parse qgroupid of format LEVEL/ID, level and id are numerical, nothing must
+ * follow after the last character of ID.
+ */
+int parse_qgroupid(const char *str, u64 *qgroupid)
+{
+	char *end = NULL;
+	u64 level;
+	u64 id;
+
+	level = strtoull(str, &end, 10);
+	if (str == end)
+		return -EINVAL;
+	if (end[0] != '/')
+		return -EINVAL;
+	str = end + 1;
+	end = NULL;
+	id = strtoull(str, &end, 10);
+	if (str == end)
+		return -EINVAL;
+	if (end[0])
+		return -EINVAL;
+	if (id >= (1ULL << BTRFS_QGROUP_LEVEL_SHIFT))
+		return -ERANGE;
+	if (level >= (1ULL << (64 - BTRFS_QGROUP_LEVEL_SHIFT)))
+		return -ERANGE;
+
+	*qgroupid = (level << BTRFS_QGROUP_LEVEL_SHIFT) | id;
+	return 0;
+}

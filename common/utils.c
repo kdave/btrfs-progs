@@ -48,6 +48,7 @@
 #include "common/utils.h"
 #include "common/path-utils.h"
 #include "common/device-scan.h"
+#include "common/parse-utils.h"
 #include "kernel-shared/volumes.h"
 #include "ioctl.h"
 #include "cmds/commands.h"
@@ -225,37 +226,6 @@ int set_label(const char *btrfs_dev, const char *label)
 		ret = set_label_unmounted(btrfs_dev, label);
 
 	return ret;
-}
-
-/*
- * Parse qgroupid of format LEVEL/ID, level and id are numerical, nothing must
- * follow after the last character of ID.
- */
-int parse_qgroupid(const char *str, u64 *qgroupid)
-{
-	char *end = NULL;
-	u64 level;
-	u64 id;
-
-	level = strtoull(str, &end, 10);
-	if (str == end)
-		return -EINVAL;
-	if (end[0] != '/')
-		return -EINVAL;
-	str = end + 1;
-	end = NULL;
-	id = strtoull(str, &end, 10);
-	if (str == end)
-		return -EINVAL;
-	if (end[0])
-		return -EINVAL;
-	if (id >= (1ULL << BTRFS_QGROUP_LEVEL_SHIFT))
-		return -ERANGE;
-	if (level >= (1ULL << (64 - BTRFS_QGROUP_LEVEL_SHIFT)))
-		return -ERANGE;
-
-	*qgroupid = (level << BTRFS_QGROUP_LEVEL_SHIFT) | id;
-	return 0;
 }
 
 u64 parse_qgroupid_or_path(const char *p)
