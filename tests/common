@@ -400,11 +400,15 @@ check_global_prereq()
 }
 
 # Check if dmsetup and the target passed as argument is available, and skip the
-# test if they aren't
+# test if they aren't. Some targets may be loaded by different module name, in
+# that case the 2nd parameter is used as well if specified.
+#
 # $1: the target name, expectind module dm-$1
+# $2: optional name or alias, if specified, fail
 check_dm_target_support()
 {
 	local target="$1"
+	local secondary="$2"
 
 	setup_root_helper
 
@@ -416,6 +420,14 @@ check_dm_target_support()
 	$SUDO_HELPER modprobe "dm-$target" >/dev/null 2>&1
 	$SUDO_HELPER dmsetup targets 2>&1 | grep -q "^$target"
 	if [ $? -ne 0 ]; then
+		# Try the other name
+		if ! [ -z "$secondary" ]; then
+			$SUDO_HELPER modprobe "dm-$secondary" >/dev/null 2>&1
+			$SUDO_HELPER dmsetup targets 2>&1 | grep -q "^$secondary"
+			if [ $? -eq 0 ]; then
+				return 0
+			fi
+		fi
 		_not_run "This test requires dm-$target support"
 	fi
 }
