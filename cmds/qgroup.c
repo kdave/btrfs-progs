@@ -77,6 +77,58 @@ struct btrfs_qgroup {
 	struct list_head members;
 };
 
+typedef int (*btrfs_qgroup_filter_func)(struct btrfs_qgroup *, u64);
+typedef int (*btrfs_qgroup_comp_func)(struct btrfs_qgroup *,
+				      struct btrfs_qgroup *, int);
+
+struct btrfs_qgroup_filter {
+	btrfs_qgroup_filter_func filter_func;
+	u64 data;
+};
+
+struct btrfs_qgroup_comparer {
+	btrfs_qgroup_comp_func comp_func;
+	int is_descending;
+};
+
+struct btrfs_qgroup_filter_set {
+	int total;
+	int nfilters;
+	struct btrfs_qgroup_filter filters[0];
+};
+
+struct btrfs_qgroup_comparer_set {
+	int total;
+	int ncomps;
+	struct btrfs_qgroup_comparer comps[0];
+};
+
+enum btrfs_qgroup_column_enum {
+	BTRFS_QGROUP_QGROUPID,
+	BTRFS_QGROUP_RFER,
+	BTRFS_QGROUP_EXCL,
+	BTRFS_QGROUP_MAX_RFER,
+	BTRFS_QGROUP_MAX_EXCL,
+	BTRFS_QGROUP_PARENT,
+	BTRFS_QGROUP_CHILD,
+	BTRFS_QGROUP_ALL,
+};
+
+enum btrfs_qgroup_comp_enum {
+	BTRFS_QGROUP_COMP_QGROUPID,
+	BTRFS_QGROUP_COMP_RFER,
+	BTRFS_QGROUP_COMP_EXCL,
+	BTRFS_QGROUP_COMP_MAX_RFER,
+	BTRFS_QGROUP_COMP_MAX_EXCL,
+	BTRFS_QGROUP_COMP_MAX
+};
+
+enum btrfs_qgroup_filter_enum {
+	BTRFS_QGROUP_FILTER_PARENT,
+	BTRFS_QGROUP_FILTER_ALL_PARENT,
+	BTRFS_QGROUP_FILTER_MAX,
+};
+
 /*
  * qgroupid,rfer,excl default to set
  */
