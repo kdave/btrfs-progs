@@ -140,10 +140,6 @@ enum {
 };
 #define BTRFS_SEND_A_MAX (__BTRFS_SEND_A_MAX - 1)
 
-#ifdef __KERNEL__
-long btrfs_ioctl_send(struct file *mnt_file, void __user *arg);
-#endif
-
 #ifdef __cplusplus
 }
 #endif
