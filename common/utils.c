@@ -654,23 +654,9 @@ int test_num_disk_vs_raid(u64 metadata_profile, u64 data_profile,
 
 int group_profile_max_safe_loss(u64 flags)
 {
-	switch (flags & BTRFS_BLOCK_GROUP_PROFILE_MASK) {
-	case 0: /* single */
-	case BTRFS_BLOCK_GROUP_DUP:
-	case BTRFS_BLOCK_GROUP_RAID0:
-		return 0;
-	case BTRFS_BLOCK_GROUP_RAID1:
-	case BTRFS_BLOCK_GROUP_RAID5:
-	case BTRFS_BLOCK_GROUP_RAID10:
-		return 1;
-	case BTRFS_BLOCK_GROUP_RAID6:
-	case BTRFS_BLOCK_GROUP_RAID1C3:
-		return 2;
-	case BTRFS_BLOCK_GROUP_RAID1C4:
-		return 3;
-	default:
-		return -1;
-	}
+	const int index = btrfs_bg_flags_to_raid_index(flags);
+
+	return btrfs_raid_array[index].tolerated_failures;
 }
 
 /*
