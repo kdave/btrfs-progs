@@ -142,7 +142,11 @@ static int _cmd_qgroup_create(int create, int argc, char **argv)
 
 	memset(&args, 0, sizeof(args));
 	args.create = create;
-	args.qgroupid = parse_qgroupid_or_path(argv[optind]);
+	ret = parse_qgroupid(argv[optind], &args.qgroupid);
+	if (ret < 0) {
+		error("invalid qgroupid %s", argv[optind]);
+		return 1;
+	}
 	path = argv[optind + 1];
 
 	fd = btrfs_open_dir(path, &dirstream, 1);
