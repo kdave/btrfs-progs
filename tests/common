@@ -399,10 +399,13 @@ check_global_prereq()
 	fi
 }
 
-# Check if dmsetup and targets passed as arguments are available, and skip the
+# Check if dmsetup and the target passed as argument is available, and skip the
 # test if they aren't
+# $1: the target name, expectind module dm-$1
 check_dm_target_support()
 {
+	local target="$1"
+
 	setup_root_helper
 
 	type -p dmsetup &> /dev/null
@@ -410,13 +413,11 @@ check_dm_target_support()
 		_not_run "This test requires dmsetup tool";
 	fi
 
-	for target in "$@"; do
-		$SUDO_HELPER modprobe "dm-$target" >/dev/null 2>&1
-		$SUDO_HELPER dmsetup targets 2>&1 | grep -q "^$target"
-		if [ $? -ne 0 ]; then
-			_not_run "This test requires dm-$target support"
-		fi
-	done
+	$SUDO_HELPER modprobe "dm-$target" >/dev/null 2>&1
+	$SUDO_HELPER dmsetup targets 2>&1 | grep -q "^$target"
+	if [ $? -ne 0 ]; then
+		_not_run "This test requires dm-$target support"
+	fi
 }
 
 check_image()

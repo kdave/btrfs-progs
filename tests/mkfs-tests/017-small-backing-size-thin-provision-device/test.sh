@@ -6,7 +6,8 @@ source "$TEST_TOP/common"
 
 check_prereq mkfs.btrfs
 check_global_prereq udevadm
-check_dm_target_support linear thin
+check_dm_target_support linear
+check_dm_target_support thin
 
 setup_root_helper
 prepare_test_dev
