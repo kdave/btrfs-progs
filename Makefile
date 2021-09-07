@@ -144,7 +144,7 @@ CHECKER_FLAGS := -include $(check_defs) -D__CHECKER__ \
 	-U_FORTIFY_SOURCE -Wdeclaration-after-statement -Wdefault-bitfield-sign
 
 objects = kernel-shared/dir-item.o \
-	  kernel-lib/list_sort.o props.o \
+	  kernel-lib/list_sort.o \
 	  kernel-shared/ulist.o check/qgroup-verify.o kernel-shared/backref.o \
 	  common/string-table.o common/task-utils.o \
 	  kernel-shared/inode.o kernel-shared/file.o common/help.o cmds/receive-dump.o \
