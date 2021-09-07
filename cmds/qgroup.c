@@ -1362,7 +1362,7 @@ out:
 	return ret;
 }
 
-int qgroup_inherit_size(struct btrfs_qgroup_inherit *p)
+int btrfs_qgroup_inherit_size(struct btrfs_qgroup_inherit *p)
 {
 	return sizeof(*p) + sizeof(p->qgroups[0]) *
 			    (p->num_qgroups + 2 * p->num_ref_copies +
@@ -1404,7 +1404,7 @@ qgroup_inherit_realloc(struct btrfs_qgroup_inherit **inherit, int n, int pos)
 	return 0;
 }
 
-int qgroup_inherit_add_group(struct btrfs_qgroup_inherit **inherit, char *arg)
+int btrfs_qgroup_inherit_add_group(struct btrfs_qgroup_inherit **inherit, char *arg)
 {
 	int ret;
 	u64 qgroupid = parse_qgroupid_or_path(arg);
@@ -1426,7 +1426,7 @@ int qgroup_inherit_add_group(struct btrfs_qgroup_inherit **inherit, char *arg)
 	return 0;
 }
 
-int qgroup_inherit_add_copy(struct btrfs_qgroup_inherit **inherit, char *arg,
+int btrfs_qgroup_inherit_add_copy(struct btrfs_qgroup_inherit **inherit, char *arg,
 			    int type)
 {
 	int ret;

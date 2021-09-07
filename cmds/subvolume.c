@@ -115,14 +115,14 @@ static int cmd_subvol_create(const struct cmd_struct *cmd,
 
 		switch (c) {
 		case 'c':
-			res = qgroup_inherit_add_copy(&inherit, optarg, 0);
+			res = btrfs_qgroup_inherit_add_copy(&inherit, optarg, 0);
 			if (res) {
 				retval = res;
 				goto out;
 			}
 			break;
 		case 'i':
-			res = qgroup_inherit_add_group(&inherit, optarg);
+			res = btrfs_qgroup_inherit_add_group(&inherit, optarg);
 			if (res) {
 				retval = res;
 				goto out;
@@ -179,7 +179,7 @@ static int cmd_subvol_create(const struct cmd_struct *cmd,
 		memset(&args, 0, sizeof(args));
 		strncpy_null(args.name, newname);
 		args.flags |= BTRFS_SUBVOL_QGROUP_INHERIT;
-		args.size = qgroup_inherit_size(inherit);
+		args.size = btrfs_qgroup_inherit_size(inherit);
 		args.qgroup_inherit = inherit;
 
 		res = ioctl(fddst, BTRFS_IOC_SUBVOL_CREATE_V2, &args);
@@ -748,14 +748,14 @@ static int cmd_subvol_snapshot(const struct cmd_struct *cmd,
 
 		switch (c) {
 		case 'c':
-			res = qgroup_inherit_add_copy(&inherit, optarg, 0);
+			res = btrfs_qgroup_inherit_add_copy(&inherit, optarg, 0);
 			if (res) {
 				retval = res;
 				goto out;
 			}
 			break;
 		case 'i':
-			res = qgroup_inherit_add_group(&inherit, optarg);
+			res = btrfs_qgroup_inherit_add_group(&inherit, optarg);
 			if (res) {
 				retval = res;
 				goto out;
@@ -765,7 +765,7 @@ static int cmd_subvol_snapshot(const struct cmd_struct *cmd,
 			readonly = 1;
 			break;
 		case 'x':
-			res = qgroup_inherit_add_copy(&inherit, optarg, 1);
+			res = btrfs_qgroup_inherit_add_copy(&inherit, optarg, 1);
 			if (res) {
 				retval = res;
 				goto out;
@@ -846,7 +846,7 @@ static int cmd_subvol_snapshot(const struct cmd_struct *cmd,
 	args.fd = fd;
 	if (inherit) {
 		args.flags |= BTRFS_SUBVOL_QGROUP_INHERIT;
-		args.size = qgroup_inherit_size(inherit);
+		args.size = btrfs_qgroup_inherit_size(inherit);
 		args.qgroup_inherit = inherit;
 	}
 	strncpy_null(args.name, newname);
