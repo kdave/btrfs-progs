@@ -27,7 +27,7 @@
 #include "cmds/commands.h"
 #include "common/utils.h"
 #include "common/open-utils.h"
-#include "props.h"
+#include "cmds/props.h"
 
 #define XATTR_BTRFS_PREFIX     "btrfs."
 #define XATTR_BTRFS_PREFIX_LEN (sizeof(XATTR_BTRFS_PREFIX) - 1)

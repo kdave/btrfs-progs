@@ -23,7 +23,7 @@
 #include <sys/stat.h>
 
 #include "cmds/commands.h"
-#include "props.h"
+#include "cmds/props.h"
 #include "kernel-shared/ctree.h"
 #include "common/utils.h"
 #include "common/help.h"
