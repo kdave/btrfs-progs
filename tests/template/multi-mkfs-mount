@@ -1,0 +1,16 @@
+#!/bin/bash
+# Create a new multi-device filesystem and test that it can be mounted
+
+source "$TEST_TOP/common"
+
+setup_root_helper
+setup_loopdevs 4
+prepare_loopdevs
+TEST_DEV=${loopdevs[1]}
+
+run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f -d raid1 -m raid1 "${loopdevs[@]}"
+run_check_mount_test_dev
+run_check $SUDO_HELPER dd if=/dev/zero of="$TEST_MNT"/file bs=1M count=1
+run_check_umount_test_dev
+
+cleanup_loopdevs

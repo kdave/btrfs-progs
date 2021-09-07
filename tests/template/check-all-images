@@ -1,0 +1,10 @@
+#!/bin/bash
+# Run check on all images 
+
+source "$TEST_TOP/common"
+
+check_image() {
+	run_check "$TOP/btrfs" check --readonly "$1"
+}
+
+check_all_images
