@@ -19,7 +19,7 @@
 #include <uuid/uuid.h>
 #include <unistd.h>
 
-#include "send.h"
+#include "kernel-shared/send.h"
 #include "common/send-stream.h"
 #include "crypto/crc32c.h"
 #include "common/utils.h"

@@ -40,7 +40,7 @@
 #include "kernel-lib/list.h"
 #include "common/utils.h"
 
-#include "send.h"
+#include "kernel-shared/send.h"
 #include "common/send-utils.h"
 #include "common/help.h"
 #include "common/path-utils.h"

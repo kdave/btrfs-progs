@@ -45,7 +45,7 @@
 #include "kernel-lib/list.h"
 #include "btrfs-list.h"
 
-#include "send.h"
+#include "kernel-shared/send.h"
 #include "common/send-stream.h"
 #include "common/send-utils.h"
 #include "cmds/receive-dump.h"
