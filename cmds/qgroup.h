@@ -16,8 +16,8 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#ifndef __BTRFS_QGROUP_H__
-#define __BTRFS_QGROUP_H__
+#ifndef __CMDS_QGROUP_H__
+#define __CMDS_QGROUP_H__
 
 #include "kerncompat.h"
 #include "ioctl.h"
@@ -110,4 +110,5 @@ int qgroup_inherit_add_copy(struct btrfs_qgroup_inherit **inherit, char *arg,
 			    int type);
 
 int btrfs_qgroup_query(int fd, u64 qgroupid, struct btrfs_qgroup_stats *stats);
+
 #endif

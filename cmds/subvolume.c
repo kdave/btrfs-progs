@@ -32,7 +32,7 @@
 
 #include "kerncompat.h"
 #include "ioctl.h"
-#include "qgroup.h"
+#include "cmds/qgroup.h"
 
 #include "kernel-shared/ctree.h"
 #include "cmds/commands.h"
