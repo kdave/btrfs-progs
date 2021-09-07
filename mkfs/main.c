@@ -1341,10 +1341,9 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		goto error;
 	}
 
-	if (group_profile_max_safe_loss(metadata_profile) <
-		group_profile_max_safe_loss(data_profile)){
+	if (btrfs_bg_type_to_tolerated_failures(metadata_profile) <
+	    btrfs_bg_type_to_tolerated_failures(data_profile))
 		warning("metadata has lower redundancy than data!\n");
-	}
 
 	mkfs_cfg.label = label;
 	memcpy(mkfs_cfg.fs_uuid, fs_uuid, sizeof(mkfs_cfg.fs_uuid));

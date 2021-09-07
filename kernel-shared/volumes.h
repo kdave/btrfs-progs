@@ -308,5 +308,6 @@ int btrfs_fix_device_and_super_size(struct btrfs_fs_info *fs_info);
 enum btrfs_raid_types btrfs_bg_flags_to_raid_index(u64 flags);
 int btrfs_bg_type_to_factor(u64 flags);
 const char *btrfs_bg_type_to_raid_name(u64 flags);
+int btrfs_bg_type_to_tolerated_failures(u64 flags);
 
 #endif

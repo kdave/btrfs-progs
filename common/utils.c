@@ -652,13 +652,6 @@ int test_num_disk_vs_raid(u64 metadata_profile, u64 data_profile,
 	return 0;
 }
 
-int group_profile_max_safe_loss(u64 flags)
-{
-	const int index = btrfs_bg_flags_to_raid_index(flags);
-
-	return btrfs_raid_array[index].tolerated_failures;
-}
-
 /*
  * This reads a line from the stdin and only returns non-zero if the
  * first whitespace delimited token is a case insensitive match with yes
