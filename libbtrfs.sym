@@ -1,13 +1,12 @@
 LIBBTRFS_0.1 {
 global:
 	/* ctree.h */
-	btrfs_get_subvol;
-	btrfs_list_get_path_rootid;
 	btrfs_lookup_uuid_received_subvol_item;
 	btrfs_lookup_uuid_subvol_item;
 
 	/* btrfs-list.h -- not distributed anymore */
-	btrfs_subvolid_resolve;
+	btrfs_get_subvol;
+	btrfs_list_get_path_rootid;
 
 	/* radix-tree.h */
 	radix_tree_delete;
