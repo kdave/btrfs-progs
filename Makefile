@@ -175,11 +175,11 @@ libbtrfs_objects = common/send-stream.o common/send-utils.o kernel-lib/rbtree.o 
 		   crypto/hash.o crypto/xxhash.o $(CRYPTO_OBJECTS) \
 		   common/open-utils.o common/units.o common/device-utils.o \
 		   common/parse-utils.o
-libbtrfs_headers = common/send-stream.h common/send-utils.h kernel-shared/send.h kernel-lib/rbtree.h btrfs-list.h \
+libbtrfs_headers = common/send-stream.h common/send-utils.h kernel-shared/send.h kernel-lib/rbtree.h \
 	       crypto/crc32c.h kernel-lib/list.h kerncompat.h \
-	       kernel-lib/radix-tree.h kernel-lib/sizes.h kernel-lib/raid56.h \
+	       kernel-lib/radix-tree.h kernel-lib/sizes.h \
 	       common/extent-cache.h kernel-shared/extent_io.h ioctl.h \
-	       kernel-shared/ctree.h check/btrfsck.h version.h
+	       kernel-shared/ctree.h version.h
 libbtrfsutil_major := $(shell sed -rn 's/^\#define BTRFS_UTIL_VERSION_MAJOR ([0-9])+$$/\1/p' libbtrfsutil/btrfsutil.h)
 libbtrfsutil_minor := $(shell sed -rn 's/^\#define BTRFS_UTIL_VERSION_MINOR ([0-9])+$$/\1/p' libbtrfsutil/btrfsutil.h)
 libbtrfsutil_patch := $(shell sed -rn 's/^\#define BTRFS_UTIL_VERSION_PATCH ([0-9])+$$/\1/p' libbtrfsutil/btrfsutil.h)

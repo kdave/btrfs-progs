@@ -6,7 +6,7 @@ global:
 	btrfs_lookup_uuid_received_subvol_item;
 	btrfs_lookup_uuid_subvol_item;
 
-	/* btrfs-list.h */
+	/* btrfs-list.h -- not distributed anymore */
 	btrfs_subvolid_resolve;
 
 	/* radix-tree.h */
@@ -23,7 +23,7 @@ global:
 	radix_tree_tag_get;
 	radix_tree_tag_set;
 
-	/* raid56.h */
+	/* raid56.h -- not distributed anymore */
 	raid56_recov;
 	raid5_gen_result;
 	raid6_gen_syndrome;
