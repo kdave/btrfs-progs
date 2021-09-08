@@ -674,9 +674,12 @@ static int cmd_subvol_list(const struct cmd_struct *cmd, int argc, char **argv)
 		btrfs_list_setup_filter(&filter_set, BTRFS_LIST_FILTER_FLAGS,
 					flags);
 
-	ret = btrfs_list_get_path_rootid(fd, &top_id);
-	if (ret)
+	ret = lookup_path_rootid(fd, &top_id);
+	if (ret) {
+		errno = -ret;
+		error("cannot resolve rootid for path: %m");
 		goto out;
+	}
 
 	if (is_list_all)
 		btrfs_list_setup_filter(&filter_set,

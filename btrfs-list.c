@@ -1528,10 +1528,14 @@ int btrfs_list_subvols_print(int fd, struct btrfs_list_filter_set *filter_set,
 	int ret = 0;
 	u64 top_id = 0;
 
-	if (full_path)
-		ret = btrfs_list_get_path_rootid(fd, &top_id);
-	if (ret)
-		return ret;
+	if (full_path) {
+		ret = lookup_path_rootid(fd, &top_id);
+		if (ret) {
+			errno = -ret;
+			error("cannot resolve rootid for path: %m");
+			return ret;
+		}
+	}
 
 	ret = btrfs_list_subvols(fd, &root_lookup);
 	if (ret)
@@ -1560,9 +1564,12 @@ int btrfs_get_toplevel_subvol(int fd, struct root_info *the_ri)
 	struct root_info *ri;
 	u64 root_id;
 
-	ret = btrfs_list_get_path_rootid(fd, &root_id);
-	if (ret)
+	ret = lookup_path_rootid(fd, &root_id);
+	if (ret) {
+		errno = -ret;
+		error("cannot resolve rootid for path: %m");
 		return ret;
+	}
 
 	ret = btrfs_list_subvols(fd, &rl);
 	if (ret)
@@ -1591,9 +1598,12 @@ int btrfs_get_subvol(int fd, struct root_info *the_ri)
 	struct root_info *ri;
 	u64 root_id;
 
-	ret = btrfs_list_get_path_rootid(fd, &root_id);
-	if (ret)
+	ret = lookup_path_rootid(fd, &root_id);
+	if (ret) {
+		errno = -ret;
+		error("cannot resolve rootid for path: %m");
 		return ret;
+	}
 
 	ret = btrfs_list_subvols(fd, &rl);
 	if (ret)
@@ -1809,9 +1819,12 @@ char *btrfs_list_path_for_root(int fd, u64 root)
 	int ret;
 	u64 top_id;
 
-	ret = btrfs_list_get_path_rootid(fd, &top_id);
-	if (ret)
+	ret = lookup_path_rootid(fd, &top_id);
+	if (ret) {
+		errno = -ret;
+		error("cannot resolve rootid for path: %m");
 		return ERR_PTR(ret);
+	}
 
 	ret = list_subvol_search(fd, &root_lookup);
 	if (ret < 0)

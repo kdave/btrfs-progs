@@ -25,6 +25,8 @@
 
 #include "kernel-shared/ctree.h"
 #include "common/send-utils.h"
+#include "common/messages.h"
+#include "common/utils.h"
 #include "ioctl.h"
 #include "btrfs-list.h"
 
@@ -44,7 +46,11 @@ static int btrfs_get_root_id_by_sub_path(int mnt_fd, const char *sub_path,
 		return ret;
 	}
 
-	ret = btrfs_list_get_path_rootid(subvol_fd, root_id);
+	ret = lookup_path_rootid(subvol_fd, root_id);
+	if (ret) {
+		errno = -ret;
+		error("cannot resolve rootid for path: %m");
+	}
 	close(subvol_fd);
 	return ret;
 }
