@@ -98,15 +98,26 @@ static int test_send_stream_api() {
 	return ret;
 }
 
-static int test_list_rootid() {
-	u64 treeid;
+static int test_uuid_search() {
+	struct subvol_uuid_search sus = {};
+	u8 uuid[BTRFS_FSID_SIZE] = {};
 
-	return btrfs_list_get_path_rootid(-1, &treeid);
+	subvol_uuid_search_init(-1, &sus);
+	subvol_uuid_search(&sus, 0, uuid, -1, "/", subvol_search_by_path);
+	return 0;
+}
+
+static int test_subvolid_resolve() {
+	char path[4096] = "/";
+
+	btrfs_subvolid_resolve(-1, path, strlen(path), 0);
+	return 0;
 }
 
 int main() {
 	test_send_stream_api();
-	test_list_rootid();
+	test_uuid_search();
+	test_subvolid_resolve();
 
 	return 0;
 }
