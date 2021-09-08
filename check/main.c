@@ -10384,7 +10384,8 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 	int qgroup_report = 0;
 	int qgroups_repaired = 0;
 	int qgroup_verify_ret;
-	unsigned ctree_flags = OPEN_CTREE_EXCLUSIVE;
+	unsigned ctree_flags = OPEN_CTREE_EXCLUSIVE |
+			       OPEN_CTREE_ALLOW_TRANSID_MISMATCH;
 	int force = 0;
 
 	while(1) {

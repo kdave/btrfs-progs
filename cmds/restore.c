@@ -1213,7 +1213,8 @@ static struct btrfs_root *open_fs(const char *dev, u64 root_location,
 		ocf.filename = dev;
 		ocf.sb_bytenr = bytenr;
 		ocf.root_tree_bytenr = root_location;
-		ocf.flags = OPEN_CTREE_PARTIAL | OPEN_CTREE_NO_BLOCK_GROUPS;
+		ocf.flags = OPEN_CTREE_PARTIAL | OPEN_CTREE_NO_BLOCK_GROUPS |
+			    OPEN_CTREE_ALLOW_TRANSID_MISMATCH;
 		fs_info = open_ctree_fs_info(&ocf);
 		if (fs_info)
 			break;

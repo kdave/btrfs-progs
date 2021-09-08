@@ -421,7 +421,7 @@ struct extent_buffer* read_tree_block(struct btrfs_fs_info *fs_info, u64 bytenr,
 			ret = -EIO;
 			break;
 		}
-		if (num_copies == 1) {
+		if (num_copies == 1 && fs_info->allow_transid_mismatch) {
 			ignore = 1;
 			continue;
 		}
@@ -431,6 +431,10 @@ struct extent_buffer* read_tree_block(struct btrfs_fs_info *fs_info, u64 bytenr,
 		}
 		mirror_num++;
 		if (mirror_num > num_copies) {
+			if (!fs_info->allow_transid_mismatch) {
+				ret = -EIO;
+				break;
+			}
 			if (candidate_mirror > 0)
 				mirror_num = candidate_mirror;
 			else
@@ -1231,6 +1235,8 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, struct open_ctree_flags *oc
 		fs_info->ignore_chunk_tree_error = 1;
 	if (flags & OPEN_CTREE_HIDE_NAMES)
 		fs_info->hide_names = 1;
+	if (flags & OPEN_CTREE_ALLOW_TRANSID_MISMATCH)
+		fs_info->allow_transid_mismatch = 1;
 
 	if ((flags & OPEN_CTREE_RECOVER_SUPER)
 	     && (flags & OPEN_CTREE_TEMPORARY_SUPER)) {
@@ -1988,7 +1994,8 @@ int btrfs_buffer_uptodate(struct extent_buffer *buf, u64 parent_transid)
 		return ret;
 
 	ret = verify_parent_transid(&buf->fs_info->extent_cache, buf,
-				    parent_transid, 1);
+				    parent_transid,
+				    buf->fs_info->allow_transid_mismatch);
 	return !ret;
 }
 

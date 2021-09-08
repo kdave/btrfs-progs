@@ -1004,7 +1004,7 @@ static int create_metadump(const char *input, FILE *out, int num_threads,
 	int ret;
 	int err = 0;
 
-	root = open_ctree(input, 0, 0);
+	root = open_ctree(input, 0, OPEN_CTREE_ALLOW_TRANSID_MISMATCH);
 	if (!root) {
 		error("open ctree failed");
 		return -EIO;
@@ -2781,7 +2781,8 @@ static int restore_metadump(const char *input, FILE *out, int old_restore,
 		struct open_ctree_flags ocf = { 0 };
 
 		ocf.filename = target;
-		ocf.flags = OPEN_CTREE_WRITES | OPEN_CTREE_RESTORE | OPEN_CTREE_PARTIAL;
+		ocf.flags = OPEN_CTREE_WRITES | OPEN_CTREE_RESTORE |
+			    OPEN_CTREE_PARTIAL;
 		info = open_ctree_fs_info(&ocf);
 		if (!info) {
 			error("open ctree failed");
@@ -2846,7 +2847,8 @@ static int restore_metadump(const char *input, FILE *out, int old_restore,
 		root = open_ctree_fd(fileno(out), target, 0,
 					  OPEN_CTREE_PARTIAL |
 					  OPEN_CTREE_WRITES |
-					  OPEN_CTREE_NO_DEVICES);
+					  OPEN_CTREE_NO_DEVICES |
+					  OPEN_CTREE_ALLOW_TRANSID_MISMATCH);
 		if (!root) {
 			error("open ctree failed in %s", target);
 			ret = -EIO;
@@ -2864,7 +2866,8 @@ static int restore_metadump(const char *input, FILE *out, int old_restore,
 		u64 dev_size;
 
 		if (!info) {
-			root = open_ctree_fd(fileno(out), target, 0, 0);
+			root = open_ctree_fd(fileno(out), target, 0,
+					     OPEN_CTREE_ALLOW_TRANSID_MISMATCH);
 			if (!root) {
 				error("open ctree failed in %s", target);
 				ret = -EIO;

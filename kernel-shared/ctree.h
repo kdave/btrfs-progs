@@ -1216,6 +1216,7 @@ struct btrfs_fs_info {
 	unsigned int avoid_sys_chunk_alloc:1;
 	unsigned int finalize_on_close:1;
 	unsigned int hide_names:1;
+	unsigned int allow_transid_mismatch:1;
 
 	int transaction_aborted;
 
