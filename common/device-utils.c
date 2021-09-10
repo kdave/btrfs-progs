@@ -26,6 +26,7 @@
 #include <dirent.h>
 #include <blkid/blkid.h>
 #include <linux/limits.h>
+#include <limits.h>
 #include "kernel-lib/sizes.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/zoned.h"
@@ -303,13 +304,50 @@ u64 device_get_partition_size_fd(int fd)
 	return result;
 }
 
+u64 device_get_partition_size_sysfs(const char *dev)
+{
+	int ret;
+	char path[PATH_MAX] = {};
+	char sysfs[PATH_MAX] = {};
+	char sizebuf[128] = {};
+	char *name = NULL;
+	int sysfd;
+	unsigned long long size = 0;
+
+	name = realpath(dev, path);
+	if (!name)
+		return 0;
+	name = basename(path);
+
+	ret = path_cat3_out(sysfs, "/sys/class/block", name, "size");
+	if (ret < 0)
+		return 0;
+	sysfd = open(sysfs, O_RDONLY);
+	if (sysfd < 0)
+		return 0;
+	ret = sysfs_read_file(sysfd, sizebuf, sizeof(sizebuf));
+	if (ret < 0) {
+		close(sysfd);
+		return 0;
+	}
+	errno = 0;
+	size = strtoull(sizebuf, NULL, 10);
+	if (size == ULLONG_MAX && errno == ERANGE) {
+		close(sysfd);
+		return 0;
+	}
+	close(sysfd);
+	return size;
+}
+
 u64 device_get_partition_size(const char *dev)
 {
 	u64 result;
 	int fd = open(dev, O_RDONLY);
 
 	if (fd < 0)
-		return 0;
+		return device_get_partition_size_sysfs(dev);
+
 	if (ioctl(fd, BLKGETSIZE64, &result) < 0) {
 		close(fd);
 		return 0;
