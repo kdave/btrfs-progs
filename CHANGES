@@ -1,3 +1,32 @@
+btrfs-progs-5.14 (2021-09-10)
+* convert:
+  * new option --uuid to copy, generate or set a given uuid
+  * improve output
+* mkfs:
+  * allow to create degenerate raid0 (on 1 device) and raid10 (on 2 devices)
+* image:
+  * improved error messages
+  * fix some alignment of restored image
+* subvol delete: allow to delete by id when path is not resolvable
+* check:
+  * require alignment of nodesize for 64k page systems
+  * detect and fix invalid block groups
+* libbtrfs (deprecated):
+  * remove most exported symbols, leave only a few that are used by snapper
+  * no version change (still 0.1)
+  * remove btrfs-list.h, btrfsck.h
+* fixes:
+  * reset generation of space v1 if v2 is used
+  * fi us: don't wrongly report missing device size when partition is not readable
+* other:
+  * build: experimental features
+  * build: better detection of 64bit timestamp support for ext4
+  * corrupt-block: block group items
+  * new and updated tests
+  * refactoring
+* experimental features:
+  * new image dump format, with data
+
 btrfs-progs-5.13.1 (2021-07-30)
 * build: fix build on musl libc due to missing definition of NAME_MAX
 * check:
