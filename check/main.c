@@ -4196,8 +4196,7 @@ static int swap_values(struct btrfs_root *root, struct btrfs_path *path,
 			struct btrfs_disk_key key;
 
 			btrfs_node_key(buf, &key, 0);
-			btrfs_fixup_low_keys(root, path, &key,
-					     btrfs_header_level(buf) + 1);
+			btrfs_fixup_low_keys(path, &key, btrfs_header_level(buf) + 1);
 		}
 	} else {
 		struct btrfs_item *item1, *item2;
@@ -4301,7 +4300,7 @@ static int delete_bogus_item(struct btrfs_root *root,
 		struct btrfs_disk_key disk_key;
 
 		btrfs_item_key(buf, &disk_key, 0);
-		btrfs_fixup_low_keys(root, path, &disk_key, 1);
+		btrfs_fixup_low_keys(path, &disk_key, 1);
 	}
 	btrfs_mark_buffer_dirty(buf);
 	return 0;
