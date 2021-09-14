@@ -5987,6 +5987,10 @@ static int check_csums(struct btrfs_root *root)
 	u64 data_len;
 	unsigned long leaf_offset;
 	bool verify_csum = !!check_data_csum;
+	u16 num_entries, max_entries;
+
+	max_entries = ((BTRFS_LEAF_DATA_SIZE(gfs_info) -
+			(sizeof(struct btrfs_item) * 2)) / csum_size) - 1;
 
 	root = gfs_info->csum_root;
 	if (!extent_buffer_uptodate(root->node)) {
@@ -6046,8 +6050,17 @@ static int check_csums(struct btrfs_root *root)
 				path.slots[0]);
 			errors++;
 		}
-		data_len = (btrfs_item_size_nr(leaf, path.slots[0]) /
-			      csum_size) * gfs_info->sectorsize;
+		num_entries = btrfs_item_size_nr(leaf, path.slots[0]) / csum_size;
+		data_len = num_entries * gfs_info->sectorsize;
+
+		if (num_entries > max_entries) {
+			error(
+	"csum too large, current bytenr=%llu eb=%llu slot=%u (%u entries, max %u)",
+				key.offset, leaf->start, path.slots[0],
+				num_entries, max_entries);
+			errors++;
+		}
+
 		if (!verify_csum)
 			goto skip_csum_check;
 		leaf_offset = btrfs_item_ptr_offset(leaf, path.slots[0]);
