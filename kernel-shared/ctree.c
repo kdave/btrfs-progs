@@ -2613,8 +2613,7 @@ split:
 	return ret;
 }
 
-int btrfs_truncate_item(struct btrfs_root *root, struct btrfs_path *path,
-			u32 new_size, int from_end)
+int btrfs_truncate_item(struct btrfs_path *path, u32 new_size, int from_end)
 {
 	int ret = 0;
 	int slot;

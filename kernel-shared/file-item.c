@@ -362,7 +362,7 @@ static noinline int truncate_one_csum(struct btrfs_root *root,
 		 */
 		u32 new_size = (bytenr - key->offset) / blocksize;
 		new_size *= csum_size;
-		ret = btrfs_truncate_item(root, path, new_size, 1);
+		ret = btrfs_truncate_item(path, new_size, 1);
 		BUG_ON(ret);
 	} else if (key->offset >= bytenr && csum_end > end_byte &&
 		   end_byte > key->offset) {
@@ -375,7 +375,7 @@ static noinline int truncate_one_csum(struct btrfs_root *root,
 		u32 new_size = (csum_end - end_byte) / blocksize;
 		new_size *= csum_size;
 
-		ret = btrfs_truncate_item(root, path, new_size, 0);
+		ret = btrfs_truncate_item(path, new_size, 0);
 		BUG_ON(ret);
 
 		key->offset = end_byte;
