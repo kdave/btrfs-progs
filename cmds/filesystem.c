@@ -835,7 +835,7 @@ static int parse_compress_type_arg(char *s)
 	int ret;
 
 	ret = parse_compress_type(s);
-	if (ret) {
+	if (ret < 0) {
 		error("unknown compression type: %s", s);
 		exit(1);
 	}
