@@ -1,3 +1,11 @@
+btrfs-progs-5.14.1 (2021-09-20)
+* fixes:
+  * defrag: fix parsing of compression (option -c)
+  * add workaround for old kernels when reading zone sizes
+  * let only check and restore open the fs with transid failures, namely
+    preventing btrfstune to do so
+  * convert: --uuid copy does not fail on duplicate uuids
+
 btrfs-progs-5.14 (2021-09-10)
 * convert:
   * new option --uuid to copy, generate or set a given uuid
