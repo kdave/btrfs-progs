@@ -504,8 +504,14 @@ size_t btrfs_sb_io(int fd, void *buf, off_t offset, int rw)
 	if ((stat_buf.st_mode & S_IFMT) == S_IFBLK) {
 		ret = ioctl(fd, BLKGETZONESZ, &zone_size_sector);
 		if (ret < 0) {
-			if (errno == ENOTTY) {
-				/* No kernel support, assuming non-zoned device */
+			if (errno == ENOTTY || errno == EINVAL) {
+				/*
+				 * No kernel support, assuming non-zoned device.
+				 *
+				 * Note: older kernels before 5.11 could return
+				 * EINVAL in case the ioctl is not available,
+				 * which is wrong.
+				 */
 				zone_size_sector = 0;
 			} else {
 				error("zoned: ioctl BLKGETZONESZ failed: %m");
@@ -548,7 +554,11 @@ size_t btrfs_sb_io(int fd, void *buf, off_t offset, int rw)
 
 	ret = ioctl(fd, BLKREPORTZONE, rep);
 	if (ret) {
-		if (errno == ENOTTY) {
+		if (errno == ENOTTY || errno == EINVAL) {
+			/*
+			 * Note: older kernels before 5.11 could return EINVAL
+			 * in case the ioctl is not available, which is wrong.
+			 */
 			error("zoned: BLKREPORTZONE failed but BLKGETZONESZ works: %m");
 			exit(1);
 		}
