@@ -104,11 +104,10 @@ static int setup_temp_super(int fd, struct btrfs_mkfs_config *cfg,
 			ret = -EINVAL;
 			goto out;
 		}
-		if (!test_uuid_unique(cfg->fs_uuid)) {
-			error("non-unique UUID: %s", cfg->fs_uuid);
-			ret = -EINVAL;
-			goto out;
-		}
+		/*
+		 * Caller should make sure the uuid is either unique or OK to
+		 * be duplicate in case it's copied from the source filesystem.
+		 */
 		uuid_copy(super->metadata_uuid, super->fsid);
 	} else {
 		uuid_generate(super->fsid);

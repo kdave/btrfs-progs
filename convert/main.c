@@ -1189,6 +1189,8 @@ static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
 
 	if (convert_flags & CONVERT_FLAG_COPY_FSID) {
 		uuid_unparse(cctx.fs_uuid, mkfs_cfg.fs_uuid);
+		if (!test_uuid_unique(mkfs_cfg.fs_uuid))
+			warning("non-unique UUID (copy): %s", mkfs_cfg.fs_uuid);
 	} else if (fsid[0] == 0) {
 		uuid_t uuid;
 
@@ -1196,6 +1198,8 @@ static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
 		uuid_unparse(uuid, mkfs_cfg.fs_uuid);
 	} else {
 		memcpy(mkfs_cfg.fs_uuid, fsid, BTRFS_UUID_UNPARSED_SIZE);
+		if (!test_uuid_unique(mkfs_cfg.fs_uuid))
+			warning("non-unique UUID (user set): %s", mkfs_cfg.fs_uuid);
 	}
 
 	printf("Source filesystem:\n");
