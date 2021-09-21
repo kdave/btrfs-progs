@@ -106,6 +106,7 @@
 #include "convert/source-fs.h"
 #include "crypto/crc32c.h"
 #include "common/fsfeatures.h"
+#include "common/device-scan.h"
 #include "common/box.h"
 #include "common/open-utils.h"
 

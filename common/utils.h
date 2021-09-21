@@ -70,7 +70,6 @@ int find_mount_root(const char *path, char **mount_root);
 int get_device_info(int fd, u64 devid,
 		struct btrfs_ioctl_dev_info_args *di_args);
 int get_df(int fd, struct btrfs_ioctl_space_args **sargs_ret);
-int test_uuid_unique(char *fs_uuid);
 
 const char *subvol_strip_mountpoint(const char *mnt, const char *full_path);
 int find_next_key(struct btrfs_path *path, struct btrfs_key *key);

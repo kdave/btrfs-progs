@@ -90,7 +90,8 @@ int check_arg_type(const char *input)
 	return BTRFS_ARG_UNKNOWN;
 }
 
-int test_uuid_unique(char *fs_uuid)
+/* Check if the UUID (as string) appears among devices cached by blkid */
+int test_uuid_unique(const char *uuid_str)
 {
 	int unique = 1;
 	blkid_dev_iterate iter = NULL;
@@ -98,12 +99,12 @@ int test_uuid_unique(char *fs_uuid)
 	blkid_cache cache = NULL;
 
 	if (blkid_get_cache(&cache, NULL) < 0) {
-		printf("ERROR: lblkid cache get failed\n");
+		error("blkid cache open failed, cannot check uuid uniqueness");
 		return 1;
 	}
 	blkid_probe_all(cache);
 	iter = blkid_dev_iterate_begin(cache);
-	blkid_dev_set_search(iter, "UUID", fs_uuid);
+	blkid_dev_set_search(iter, "UUID", uuid_str);
 
 	while (blkid_dev_next(iter, &dev) == 0) {
 		dev = blkid_verify(cache, dev);

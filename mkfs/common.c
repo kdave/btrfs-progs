@@ -27,6 +27,7 @@
 #include "common/utils.h"
 #include "common/path-utils.h"
 #include "common/device-utils.h"
+#include "common/device-scan.h"
 #include "common/open-utils.h"
 #include "mkfs/common.h"
 
