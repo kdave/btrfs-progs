@@ -1064,28 +1064,14 @@ const char* btrfs_group_type_str(u64 flag)
 
 const char* btrfs_group_profile_str(u64 flag)
 {
-	switch (flag & BTRFS_BLOCK_GROUP_PROFILE_MASK) {
-	case 0:
-		return "single";
-	case BTRFS_BLOCK_GROUP_RAID0:
-		return "RAID0";
-	case BTRFS_BLOCK_GROUP_RAID1:
-		return "RAID1";
-	case BTRFS_BLOCK_GROUP_RAID1C3:
-		return "RAID1C3";
-	case BTRFS_BLOCK_GROUP_RAID1C4:
-		return "RAID1C4";
-	case BTRFS_BLOCK_GROUP_RAID5:
-		return "RAID5";
-	case BTRFS_BLOCK_GROUP_RAID6:
-		return "RAID6";
-	case BTRFS_BLOCK_GROUP_DUP:
-		return "DUP";
-	case BTRFS_BLOCK_GROUP_RAID10:
-		return "RAID10";
-	default:
+	int index;
+
+	flag &= ~BTRFS_BLOCK_GROUP_TYPE_MASK;
+	if (flag & ~BTRFS_BLOCK_GROUP_PROFILE_MASK)
 		return "unknown";
-	}
+
+	index = btrfs_bg_flags_to_raid_index(flag);
+	return btrfs_raid_array[index].raid_name;
 }
 
 u64 div_factor(u64 num, int factor)
