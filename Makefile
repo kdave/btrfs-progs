@@ -214,7 +214,7 @@ libbtrfs_objects = \
 		crypto/crc32c.o
 
 libbtrfs_headers = libbtrfs/send-stream.h libbtrfs/send-utils.h kernel-shared/send.h kernel-lib/rbtree.h \
-	       crypto/crc32c.h kernel-lib/list.h kerncompat.h \
+	       kernel-lib/list.h kerncompat.h \
 	       common/extent-cache.h kernel-shared/extent_io.h ioctl.h \
 	       kernel-shared/ctree.h version.h
 libbtrfsutil_major := $(shell sed -rn 's/^\#define BTRFS_UTIL_VERSION_MAJOR ([0-9])+$$/\1/p' libbtrfsutil/btrfsutil.h)
