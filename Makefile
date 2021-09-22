@@ -175,7 +175,46 @@ shared_objects = common/send-stream.o common/send-utils.o kernel-lib/rbtree.o bt
 		   crypto/hash.o crypto/xxhash.o $(CRYPTO_OBJECTS) \
 		   common/open-utils.o common/units.o common/device-utils.o \
 		   common/parse-utils.o
-libbtrfs_objects = $(shared_objects)
+
+libbtrfs_objects = \
+		kernel-lib/raid56.o	\
+		kernel-lib/rbtree.o	\
+		kernel-lib/tables.o	\
+		kernel-shared/ctree.o	\
+		kernel-shared/delayed-ref.o	\
+		kernel-shared/disk-io.o	\
+		kernel-shared/extent-tree.o	\
+		kernel-shared/extent_io.o	\
+		kernel-shared/file-item.o	\
+		kernel-shared/free-space-cache.o	\
+		kernel-shared/free-space-tree.o	\
+		kernel-shared/print-tree.o	\
+		kernel-shared/root-tree.o	\
+		kernel-shared/transaction.o	\
+		kernel-shared/uuid-tree.o	\
+		kernel-shared/volumes.o	\
+		kernel-shared/zoned.o	\
+		common/device-scan.o	\
+		common/device-utils.o	\
+		common/extent-cache.o	\
+		common/messages.o	\
+		common/open-utils.o	\
+		common/parse-utils.o	\
+		common/path-utils.o	\
+		common/rbtree-utils.o	\
+		common/repair.o	\
+		common/send-stream.o	\
+		common/send-utils.o	\
+		common/units.o	\
+		common/utils-lib.o	\
+		common/utils.o	\
+		btrfs-list.o	\
+		libbtrfsutil/subvolume.o	\
+		crypto/hash.o	\
+		crypto/crc32c.o	\
+		crypto/xxhash.o	\
+		$(CRYPTO_OBJECTS)	\
+
 libbtrfs_headers = common/send-stream.h common/send-utils.h kernel-shared/send.h kernel-lib/rbtree.h \
 	       crypto/crc32c.h kernel-lib/list.h kerncompat.h \
 	       kernel-lib/radix-tree.h kernel-lib/sizes.h \
@@ -333,7 +372,7 @@ endif
 # Create all the static targets
 static_objects = $(patsubst %.o, %.static.o, $(objects))
 static_cmds_objects = $(patsubst %.o, %.static.o, $(cmds_objects))
-static_libbtrfs_objects = $(patsubst %.o, %.static.o, $(libbtrfs_objects))
+static_libbtrfs_objects = $(patsubst %.o, %.static.o, $(shared_objects))
 static_libbtrfsutil_objects = $(patsubst %.o, %.static.o, $(libbtrfsutil_objects))
 static_convert_objects = $(patsubst %.o, %.static.o, $(convert_objects))
 static_mkfs_objects = $(patsubst %.o, %.static.o, $(mkfs_objects))
