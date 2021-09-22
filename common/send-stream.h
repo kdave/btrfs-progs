@@ -19,20 +19,7 @@
 #ifndef __BTRFS_SEND_STREAM_H__
 #define __BTRFS_SEND_STREAM_H__
 
-/*
- * NOTE: this file is public API, any incompatible change has to update
- * library version
- */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#if BTRFS_FLAT_INCLUDES
 #include "kerncompat.h"
-#else
-#include <btrfs/kerncompat.h>
-#endif /* BTRFS_FLAT_INCLUDES */
 
 struct btrfs_send_ops {
 	int (*subvol)(const char *path, const u8 *uuid, u64 ctransid,
@@ -72,9 +59,5 @@ int btrfs_read_and_process_send_stream(int fd,
 				       struct btrfs_send_ops *ops, void *user,
 				       int honor_end_cmd,
 				       u64 max_errors);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

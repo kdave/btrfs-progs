@@ -19,19 +19,9 @@
 #ifndef __BTRFS_SEND_UTILS_H__
 #define __BTRFS_SEND_UTILS_H__
 
-#if BTRFS_FLAT_INCLUDES
 #include "kerncompat.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-lib/rbtree.h"
-#else
-#include <btrfs/kerncompat.h>
-#include <btrfs/ctree.h>
-#include <btrfs/rbtree.h>
-#endif /* BTRFS_FLAT_INCLUDES */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /*
  * Compatibility code for kernels < 3.12; the UUID tree is not available there
@@ -106,9 +96,5 @@ int btrfs_subvolid_resolve(int fd, char *path, size_t path_len, u64 subvol_id);
 
 int path_cat_out(char *out, const char *p1, const char *p2);
 int path_cat3_out(char *out, const char *p1, const char *p2, const char *p3);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

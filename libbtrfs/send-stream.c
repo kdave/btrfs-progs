@@ -20,7 +20,7 @@
 #include <unistd.h>
 
 #include "kernel-shared/send.h"
-#include "common/send-stream.h"
+#include "libbtrfs/send-stream.h"
 #include "crypto/crc32c.h"
 #include "common/utils.h"
 

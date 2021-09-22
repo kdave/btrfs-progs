@@ -24,7 +24,7 @@
 #include <errno.h>
 
 #include "kernel-shared/ctree.h"
-#include "common/send-utils.h"
+#include "libbtrfs/send-utils.h"
 #include "common/messages.h"
 #include "common/utils.h"
 #include "ioctl.h"
