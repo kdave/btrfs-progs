@@ -239,7 +239,6 @@ libbtrfs_objects = \
 		common/units.o	\
 		common/utils-lib.o	\
 		common/utils.o	\
-		btrfs-list.o	\
 		libbtrfsutil/subvolume.o	\
 		crypto/hash.o	\
 		crypto/crc32c.o	\
