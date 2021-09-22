@@ -26,6 +26,7 @@
 #include <getopt.h>
 #include <uuid/uuid.h>
 #include <time.h>
+#include "kernel-lib/radix-tree.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/volumes.h"
 #include "common/repair.h"

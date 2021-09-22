@@ -28,6 +28,7 @@
 #include "kernel-shared/print-tree.h"
 #include "kernel-shared/transaction.h"
 #include "kernel-lib/list.h"
+#include "kernel-lib/radix-tree.h"
 #include "common/utils.h"
 #include "common/help.h"
 #include "common/open-utils.h"

@@ -24,7 +24,6 @@
 #if BTRFS_FLAT_INCLUDES
 #include "kernel-lib/list.h"
 #include "kerncompat.h"
-#include "kernel-lib/radix-tree.h"
 #include "common/extent-cache.h"
 #include "kernel-shared/extent_io.h"
 #include "ioctl.h"
@@ -33,7 +32,6 @@
 #else
 #include <btrfs/list.h>
 #include <btrfs/kerncompat.h>
-#include <btrfs/radix-tree.h>
 #include <btrfs/extent-cache.h>
 #include <btrfs/extent_io.h>
 #include <btrfs/ioctl.h>
