@@ -234,8 +234,8 @@ libbtrfs_objects = \
 		common/path-utils.o	\
 		common/rbtree-utils.o	\
 		common/repair.o	\
-		common/send-stream.o	\
-		common/send-utils.o	\
+		libbtrfs/send-stream.o	\
+		libbtrfs/send-utils.o	\
 		common/units.o	\
 		common/utils-lib.o	\
 		common/utils.o	\
@@ -246,7 +246,7 @@ libbtrfs_objects = \
 		crypto/xxhash.o	\
 		$(CRYPTO_OBJECTS)	\
 
-libbtrfs_headers = common/send-stream.h common/send-utils.h kernel-shared/send.h kernel-lib/rbtree.h \
+libbtrfs_headers = libbtrfs/send-stream.h libbtrfs/send-utils.h kernel-shared/send.h kernel-lib/rbtree.h \
 	       crypto/crc32c.h kernel-lib/list.h kerncompat.h \
 	       kernel-lib/radix-tree.h kernel-lib/sizes.h \
 	       common/extent-cache.h kernel-shared/extent_io.h ioctl.h \
