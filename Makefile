@@ -158,7 +158,7 @@ cmds_objects = cmds/subvolume.o cmds/filesystem.o cmds/device.o cmds/scrub.o \
 	       cmds/property.o cmds/filesystem-usage.o cmds/inspect-dump-tree.o \
 	       cmds/inspect-dump-super.o cmds/inspect-tree-stats.o cmds/filesystem-du.o \
 	       mkfs/common.o check/mode-common.o check/mode-lowmem.o
-libbtrfs_objects = common/send-stream.o common/send-utils.o kernel-lib/rbtree.o btrfs-list.o \
+shared_objects = common/send-stream.o common/send-utils.o kernel-lib/rbtree.o btrfs-list.o \
 		   kernel-lib/radix-tree.o common/extent-cache.o kernel-shared/extent_io.o \
 		   crypto/crc32c.o common/messages.o \
 		   kernel-shared/uuid-tree.o common/utils-lib.o common/rbtree-utils.o \
@@ -175,6 +175,7 @@ libbtrfs_objects = common/send-stream.o common/send-utils.o kernel-lib/rbtree.o 
 		   crypto/hash.o crypto/xxhash.o $(CRYPTO_OBJECTS) \
 		   common/open-utils.o common/units.o common/device-utils.o \
 		   common/parse-utils.o
+libbtrfs_objects = $(shared_objects)
 libbtrfs_headers = common/send-stream.h common/send-utils.h kernel-shared/send.h kernel-lib/rbtree.h \
 	       crypto/crc32c.h kernel-lib/list.h kerncompat.h \
 	       kernel-lib/radix-tree.h kernel-lib/sizes.h \
@@ -546,14 +547,14 @@ btrfs-%.static: btrfs-%.static.o $(static_objects) $(patsubst %.o,%.static.o,$(s
 		$(static_libbtrfs_objects) $(STATIC_LDFLAGS) \
 		$($(subst -,_,$(subst .static,,$@)-libs)) $(STATIC_LIBS)
 
-btrfs-%: btrfs-%.o $(objects) $(standalone_deps) libbtrfs.a libbtrfsutil.a
+btrfs-%: btrfs-%.o $(objects) $(shared_objects) $(standalone_deps) libbtrfsutil.a
 	@echo "    [LD]     $@"
 	$(Q)$(CC) -o $@ $(objects) $@.o \
 		$($(subst -,_,$@-objects)) \
-		libbtrfs.a libbtrfsutil.a \
+		$(shared_objects) libbtrfsutil.a \
 		$(LDFLAGS) $(LIBS) $($(subst -,_,$@-libs))
 
-btrfs: btrfs.o $(objects) $(cmds_objects) libbtrfs.a libbtrfsutil.a
+btrfs: btrfs.o $(objects) $(cmds_objects) $(shared_objects) libbtrfsutil.a
 	@echo "    [LD]     $@"
 	$(Q)$(CC) -o $@ $^ $(LDFLAGS) $(LIBS) $(LIBS_COMP)
 
@@ -561,7 +562,7 @@ btrfs.static: btrfs.static.o $(static_objects) $(static_cmds_objects) $(static_l
 	@echo "    [LD]     $@"
 	$(Q)$(CC) -o $@ $^ $(STATIC_LDFLAGS) $(STATIC_LIBS) $(STATIC_LIBS_COMP)
 
-btrfs.box: btrfs.box.o $(objects) $(cmds_objects) $(progs_box_objects) libbtrfs.a libbtrfsutil.a
+btrfs.box: btrfs.box.o $(objects) $(cmds_objects) $(progs_box_objects) $(shared_objects) libbtrfsutil.a
 	@echo "    [LD]     $@"
 	$(Q)$(CC) -o $@ $^ $(btrfs_convert_libs) $(LDFLAGS) $(LIBS) $(LIBS_COMP)
 
@@ -589,7 +590,7 @@ btrfsck.static: btrfs.static
 	@echo "    [LN]     $@"
 	$(Q)$(LN_S) -f $^ $@
 
-mkfs.btrfs: $(mkfs_objects) $(objects) libbtrfs.a libbtrfsutil.a
+mkfs.btrfs: $(mkfs_objects) $(objects) $(shared_objects) libbtrfsutil.a
 	@echo "    [LD]     $@"
 	$(Q)$(CC) -o $@ $^ $(LDFLAGS) $(LIBS)
 
@@ -597,7 +598,7 @@ mkfs.btrfs.static: $(static_mkfs_objects) $(static_objects) $(static_libbtrfs_ob
 	@echo "    [LD]     $@"
 	$(Q)$(CC) -o $@ $^ $(STATIC_LDFLAGS) $(STATIC_LIBS)
 
-btrfstune: btrfstune.o $(objects) libbtrfs.a libbtrfsutil.a
+btrfstune: btrfstune.o $(objects) $(shared_objects) libbtrfsutil.a
 	@echo "    [LD]     $@"
 	$(Q)$(CC) -o $@ $^ $(LDFLAGS) $(LIBS)
 
@@ -605,7 +606,7 @@ btrfstune.static: btrfstune.static.o $(static_objects) $(static_libbtrfs_objects
 	@echo "    [LD]     $@"
 	$(Q)$(CC) -o $@ $^ $(STATIC_LDFLAGS) $(STATIC_LIBS)
 
-btrfs-image: $(image_objects) $(objects) libbtrfs.a libbtrfsutil.a
+btrfs-image: $(image_objects) $(objects) $(shared_objects) libbtrfsutil.a
 	@echo "    [LD]     $@"
 	$(Q)$(CC) -o $@ $^ $(LDFLAGS) $(LIBS) $(LIBS_COMP)
 
@@ -613,7 +614,7 @@ btrfs-image.static: $(static_image_objects) $(static_objects) $(static_libbtrfs_
 	@echo "    [LD]     $@"
 	$(Q)$(CC) -o $@ $^ $(STATIC_LDFLAGS) $(STATIC_LIBS) $(STATIC_LIBS_COMP)
 
-btrfs-convert: $(convert_objects) $(objects) libbtrfs.a libbtrfsutil.a
+btrfs-convert: $(convert_objects) $(objects) $(shared_objects) libbtrfsutil.a
 	@echo "    [LD]     $@"
 	$(Q)$(CC) -o $@ $^ $(LDFLAGS) $(btrfs_convert_libs) $(LIBS)
 
@@ -621,7 +622,7 @@ btrfs-convert.static: $(static_convert_objects) $(static_objects) $(static_libbt
 	@echo "    [LD]     $@"
 	$(Q)$(CC) -o $@ $^ $(STATIC_LDFLAGS) $(btrfs_convert_libs) $(STATIC_LIBS)
 
-quick-test: quick-test.o $(objects) libbtrfs.a libbtrfsutil.a $(libs_shared)
+quick-test: quick-test.o $(objects) $(shared_objects) libbtrfsutil.a $(libs_shared)
 	@echo "    [LD]     $@"
 	$(Q)$(CC) -o $@ $^ $(LDFLAGS) $(LIBS)
 
@@ -686,15 +687,15 @@ fssum: tests/fssum.c crypto/sha224-256.c
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
-hash-speedtest: crypto/hash-speedtest.c $(objects) libbtrfs.a libbtrfsutil.a
+hash-speedtest: crypto/hash-speedtest.c $(objects) $(shared_objects) libbtrfsutil.a
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
 
-hash-vectest: crypto/hash-vectest.c $(objects) libbtrfs.a libbtrfsutil.a
+hash-vectest: crypto/hash-vectest.c $(objects) $(shared_objects) libbtrfsutil.a
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
 
-json-formatter-test: tests/json-formatter-test.c $(objects) libbtrfs.a libbtrfsutil.a
+json-formatter-test: tests/json-formatter-test.c $(objects) $(shared_objects) libbtrfsutil.a
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
 
