@@ -25,7 +25,6 @@
 #include "kernel-shared/ctree.h"
 #include "libbtrfs/send-utils.h"
 #include "ioctl.h"
-#include "btrfs-list.h"
 
 static int btrfs_subvolid_resolve_sub(int fd, char *path, size_t *path_len,
 				      u64 subvol_id);
@@ -610,7 +609,6 @@ int subvol_uuid_search_init(int mnt_fd, struct subvol_uuid_search *s)
 	int root_item_valid = 0;
 	unsigned long off = 0;
 	int i;
-	char *path;
 
 	s->mnt_fd = mnt_fd;
 
@@ -680,21 +678,24 @@ int subvol_uuid_search_init(int mnt_fd, struct subvol_uuid_search *s)
 			} else if (btrfs_search_header_type(sh)
 				   == BTRFS_ROOT_BACKREF_KEY ||
 				   root_item_valid) {
+				char path_buf[PATH_MAX];
+				char *path;
+
 				if (!root_item_valid)
 					goto skip;
 
-				path = btrfs_list_path_for_root(mnt_fd,
-					btrfs_search_header_objectid(sh));
-				if (!path)
-					path = strdup("");
-				if (IS_ERR(path)) {
-					ret = PTR_ERR(path);
+				ret = btrfs_subvolid_resolve(mnt_fd, path_buf,
+						sizeof(path_buf),
+						btrfs_search_header_objectid(sh));
+				if (ret < 0) {
+					errno = -ret;
 					fprintf(stderr, "ERROR: unable to "
 							"resolve path "
-							"for root %llu\n",
+							"for root %llu: %m\n",
 						btrfs_search_header_objectid(sh));
 					goto out;
 				}
+				path = strdup(path_buf);
 
 				si = calloc(1, sizeof(*si));
 				si->root_id = btrfs_search_header_objectid(sh);
