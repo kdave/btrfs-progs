@@ -339,15 +339,13 @@ static_mkfs_objects = $(patsubst %.o, %.static.o, $(mkfs_objects))
 static_image_objects = $(patsubst %.o, %.static.o, $(image_objects))
 
 libs_shared = libbtrfs.so.0.1 libbtrfsutil.so.$(libbtrfsutil_version)
-libs_static = libbtrfs.a libbtrfsutil.a
-libs = $(libs_shared) $(libs_static)
 lib_links = libbtrfs.so.0 libbtrfs.so libbtrfsutil.so.$(libbtrfsutil_major) libbtrfsutil.so
 libs_build =
 ifeq ($(BUILD_SHARED_LIBRARIES),1)
 libs_build += $(libs_shared) $(lib_links)
 endif
 ifeq ($(BUILD_STATIC_LIBRARIES),1)
-libs_build += $(libs_static)
+libs_build += libbtrfs.a libbtrfsutil.a
 endif
 
 # make C=1 to enable sparse
@@ -475,7 +473,7 @@ endif
 # NOTE: For static compiles, you need to have all the required libs
 # 	static equivalent available
 #
-static: $(progs_static) $(libs_static)
+static: $(progs_static) libbtrfs.a libbtrfsutil.a
 
 version.h: version.h.in configure.ac
 	@echo "    [SH]     $@"
@@ -548,14 +546,14 @@ btrfs-%.static: btrfs-%.static.o $(static_objects) $(patsubst %.o,%.static.o,$(s
 		$(static_libbtrfs_objects) $(STATIC_LDFLAGS) \
 		$($(subst -,_,$(subst .static,,$@)-libs)) $(STATIC_LIBS)
 
-btrfs-%: btrfs-%.o $(objects) $(standalone_deps) $(libs_static)
+btrfs-%: btrfs-%.o $(objects) $(standalone_deps) libbtrfs.a libbtrfsutil.a
 	@echo "    [LD]     $@"
 	$(Q)$(CC) -o $@ $(objects) $@.o \
 		$($(subst -,_,$@-objects)) \
-		$(libs_static) \
+		libbtrfs.a libbtrfsutil.a \
 		$(LDFLAGS) $(LIBS) $($(subst -,_,$@-libs))
 
-btrfs: btrfs.o $(objects) $(cmds_objects) $(libs_static)
+btrfs: btrfs.o $(objects) $(cmds_objects) libbtrfs.a libbtrfsutil.a
 	@echo "    [LD]     $@"
 	$(Q)$(CC) -o $@ $^ $(LDFLAGS) $(LIBS) $(LIBS_COMP)
 
@@ -563,7 +561,7 @@ btrfs.static: btrfs.static.o $(static_objects) $(static_cmds_objects) $(static_l
 	@echo "    [LD]     $@"
 	$(Q)$(CC) -o $@ $^ $(STATIC_LDFLAGS) $(STATIC_LIBS) $(STATIC_LIBS_COMP)
 
-btrfs.box: btrfs.box.o $(objects) $(cmds_objects) $(progs_box_objects) $(libs_static)
+btrfs.box: btrfs.box.o $(objects) $(cmds_objects) $(progs_box_objects) libbtrfs.a libbtrfsutil.a
 	@echo "    [LD]     $@"
 	$(Q)$(CC) -o $@ $^ $(btrfs_convert_libs) $(LDFLAGS) $(LIBS) $(LIBS_COMP)
 
@@ -591,7 +589,7 @@ btrfsck.static: btrfs.static
 	@echo "    [LN]     $@"
 	$(Q)$(LN_S) -f $^ $@
 
-mkfs.btrfs: $(mkfs_objects) $(objects) $(libs_static)
+mkfs.btrfs: $(mkfs_objects) $(objects) libbtrfs.a libbtrfsutil.a
 	@echo "    [LD]     $@"
 	$(Q)$(CC) -o $@ $^ $(LDFLAGS) $(LIBS)
 
@@ -599,7 +597,7 @@ mkfs.btrfs.static: $(static_mkfs_objects) $(static_objects) $(static_libbtrfs_ob
 	@echo "    [LD]     $@"
 	$(Q)$(CC) -o $@ $^ $(STATIC_LDFLAGS) $(STATIC_LIBS)
 
-btrfstune: btrfstune.o $(objects) $(libs_static)
+btrfstune: btrfstune.o $(objects) libbtrfs.a libbtrfsutil.a
 	@echo "    [LD]     $@"
 	$(Q)$(CC) -o $@ $^ $(LDFLAGS) $(LIBS)
 
@@ -607,7 +605,7 @@ btrfstune.static: btrfstune.static.o $(static_objects) $(static_libbtrfs_objects
 	@echo "    [LD]     $@"
 	$(Q)$(CC) -o $@ $^ $(STATIC_LDFLAGS) $(STATIC_LIBS)
 
-btrfs-image: $(image_objects) $(objects) $(libs_static)
+btrfs-image: $(image_objects) $(objects) libbtrfs.a libbtrfsutil.a
 	@echo "    [LD]     $@"
 	$(Q)$(CC) -o $@ $^ $(LDFLAGS) $(LIBS) $(LIBS_COMP)
 
@@ -615,7 +613,7 @@ btrfs-image.static: $(static_image_objects) $(static_objects) $(static_libbtrfs_
 	@echo "    [LD]     $@"
 	$(Q)$(CC) -o $@ $^ $(STATIC_LDFLAGS) $(STATIC_LIBS) $(STATIC_LIBS_COMP)
 
-btrfs-convert: $(convert_objects) $(objects) $(libs_static)
+btrfs-convert: $(convert_objects) $(objects) libbtrfs.a libbtrfsutil.a
 	@echo "    [LD]     $@"
 	$(Q)$(CC) -o $@ $^ $(LDFLAGS) $(btrfs_convert_libs) $(LIBS)
 
@@ -623,7 +621,7 @@ btrfs-convert.static: $(static_convert_objects) $(static_objects) $(static_libbt
 	@echo "    [LD]     $@"
 	$(Q)$(CC) -o $@ $^ $(STATIC_LDFLAGS) $(btrfs_convert_libs) $(STATIC_LIBS)
 
-quick-test: quick-test.o $(objects) $(libs)
+quick-test: quick-test.o $(objects) libbtrfs.a libbtrfsutil.a $(libs_shared)
 	@echo "    [LD]     $@"
 	$(Q)$(CC) -o $@ $^ $(LDFLAGS) $(LIBS)
 
@@ -674,7 +672,7 @@ library-test: tests/library-test.c libbtrfs.so
 	@echo "    [TEST CLEAN] $@"
 	$(Q)$(RM) -rf -- $(TMPD)
 
-library-test.static: tests/library-test.c $(libs_static)
+library-test.static: tests/library-test.c libbtrfs.a libbtrfsutil.a
 	@echo "    [TEST PREP]  $@"$(eval TMPD=$(shell mktemp -d))
 	$(Q)mkdir -p $(TMPD)/include/btrfs && \
 	cp $(libbtrfs_headers) $(TMPD)/include/btrfs && \
@@ -688,15 +686,15 @@ fssum: tests/fssum.c crypto/sha224-256.c
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
-hash-speedtest: crypto/hash-speedtest.c $(objects) $(libs_static)
+hash-speedtest: crypto/hash-speedtest.c $(objects) libbtrfs.a libbtrfsutil.a
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
 
-hash-vectest: crypto/hash-vectest.c $(objects) $(libs_static)
+hash-vectest: crypto/hash-vectest.c $(objects) libbtrfs.a libbtrfsutil.a
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
 
-json-formatter-test: tests/json-formatter-test.c $(objects) $(libs_static)
+json-formatter-test: tests/json-formatter-test.c $(objects) libbtrfs.a libbtrfsutil.a
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
 
@@ -710,7 +708,7 @@ test-build-pre:
 test-build-real:
 	$(MAKE) $(MAKEOPTS) library-test
 	-$(MAKE) $(MAKEOPTS) library-test.static
-	$(MAKE) $(MAKEOPTS) -j 8 $(progs) $(libs) $(lib_links) $(BUILDDIRS)
+	$(MAKE) $(MAKEOPTS) -j 8 $(progs) libbtrfs.a libbtrfsutil.a $(libs_shared) $(lib_links) $(BUILDDIRS)
 	-$(MAKE) $(MAKEOPTS) -j 8 static
 
 manpages:
@@ -755,7 +753,7 @@ clean: $(CLEANDIRS)
 	      btrfs.box btrfs.box.static json-formatter-test \
 	      hash-speedtest \
 	      $(check_defs) \
-	      $(libs) $(lib_links) \
+	      libbtrfs.a libbtrfsutil.a $(libs_shared) $(lib_links) \
 	      $(progs_static) \
 	      libbtrfsutil/*.o libbtrfsutil/*.o.d
 ifeq ($(PYTHON_BINDINGS),1)
@@ -819,7 +817,7 @@ install-static: $(progs_static) $(INSTALLDIRS)
 	# btrfsck is a link to btrfs in the src tree, make it so for installed file as well
 	$(LN_S) -f btrfs.static $(DESTDIR)$(bindir)/btrfsck.static
 	$(INSTALL) -m755 -d $(DESTDIR)$(libdir)
-	$(INSTALL) $(libs_static) $(DESTDIR)$(libdir)
+	$(INSTALL) libbtrfs.a libbtrfsutil.a $(DESTDIR)$(libdir)
 	$(INSTALL) -m755 -d $(DESTDIR)$(incdir)/btrfs
 	$(INSTALL) -m644 $(libbtrfs_headers) $(DESTDIR)$(incdir)/btrfs
 
@@ -832,7 +830,7 @@ uninstall:
 	cd $(DESTDIR)$(incdir)/btrfs; $(RM) -f -- $(libbtrfs_headers)
 	$(RMDIR) -p --ignore-fail-on-non-empty -- $(DESTDIR)$(incdir)/btrfs
 	cd $(DESTDIR)$(incdir); $(RM) -f -- btrfsutil.h
-	cd $(DESTDIR)$(libdir); $(RM) -f -- $(lib_links) $(libs)
+	cd $(DESTDIR)$(libdir); $(RM) -f -- $(lib_links) libbtrfs.a libbtrfsutil.a $(libs_shared)
 	cd $(DESTDIR)$(bindir); $(RM) -f -- btrfsck fsck.btrfs $(progs_install)
 
 ifneq ($(MAKECMDGOALS),clean)
