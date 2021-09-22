@@ -20,7 +20,6 @@
 #include "kernel-shared/send.h"
 #include "libbtrfs/send-stream.h"
 #include "crypto/crc32c.h"
-#include "common/utils.h"
 
 struct btrfs_send_stream {
 	char read_buf[BTRFS_SEND_BUF_SIZE];

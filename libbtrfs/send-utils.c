@@ -24,12 +24,35 @@
 
 #include "kernel-shared/ctree.h"
 #include "libbtrfs/send-utils.h"
-#include "common/utils.h"
 #include "ioctl.h"
 #include "btrfs-list.h"
 
 static int btrfs_subvolid_resolve_sub(int fd, char *path, size_t *path_len,
 				      u64 subvol_id);
+/*
+ * For a given:
+ * - file or directory return the containing tree root id
+ * - subvolume return its own tree id
+ * - BTRFS_EMPTY_SUBVOL_DIR_OBJECTID (directory with ino == 2) the result is
+ *   undefined and function returns -1
+ */
+static int lookup_path_rootid(int fd, u64 *rootid)
+{
+	struct btrfs_ioctl_ino_lookup_args args;
+	int ret;
+
+	memset(&args, 0, sizeof(args));
+	args.treeid = 0;
+	args.objectid = BTRFS_FIRST_FREE_OBJECTID;
+
+	ret = ioctl(fd, BTRFS_IOC_INO_LOOKUP, &args);
+	if (ret < 0)
+		return -errno;
+
+	*rootid = args.treeid;
+
+	return 0;
+}
 
 static int btrfs_get_root_id_by_sub_path(int mnt_fd, const char *sub_path,
 					 u64 *root_id)
