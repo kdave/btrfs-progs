@@ -19,7 +19,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
-#include <uuid/uuid.h>
 #include <limits.h>
 #include <errno.h>
 
