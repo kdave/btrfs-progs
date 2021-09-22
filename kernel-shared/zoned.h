@@ -54,6 +54,7 @@ struct btrfs_zoned_device_info {
 	u64		        max_zone_append_size;
 	u32			nr_zones;
 	struct blk_zone		*zones;
+	bool			emulated;
 };
 
 enum btrfs_zoned_model zoned_model(const char *file);

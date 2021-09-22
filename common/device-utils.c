@@ -220,18 +220,21 @@ int btrfs_prepare_device(int fd, const char *file, u64 *block_count_ret,
 			      file);
 			return 1;
 		}
-		if (opflags & PREP_DEVICE_VERBOSE)
-			printf("Resetting device zones %s (%u zones) ...\n",
-			       file, zinfo->nr_zones);
-		/*
-		 * We cannot ignore zone reset errors for a zoned block
-		 * device as this could result in the inability to write to
-		 * non-empty sequential zones of the device.
-		 */
-		if (btrfs_reset_all_zones(fd, zinfo)) {
-			error("zoned: failed to reset device '%s' zones: %m",
-			      file);
-			goto err;
+
+		if (!zinfo->emulated) {
+			if (opflags & PREP_DEVICE_VERBOSE)
+				printf("Resetting device zones %s (%u zones) ...\n",
+				       file, zinfo->nr_zones);
+			/*
+			 * We cannot ignore zone reset errors for a zoned block
+			 * device as this could result in the inability to write
+			 * to non-empty sequential zones of the device.
+			 */
+			if (btrfs_reset_all_zones(fd, zinfo)) {
+				error("zoned: failed to reset device '%s' zones: %m",
+				      file);
+				goto err;
+			}
 		}
 	} else if (opflags & PREP_DEVICE_DISCARD) {
 		/*
