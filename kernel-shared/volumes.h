@@ -21,6 +21,7 @@
 
 #include "kerncompat.h"
 #include "kernel-shared/ctree.h"
+#include "kernel-lib/sizes.h"
 
 #define BTRFS_STRIPE_LEN	SZ_64K
 

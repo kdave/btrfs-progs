@@ -27,7 +27,6 @@
 #include "common/extent-cache.h"
 #include "kernel-shared/extent_io.h"
 #include "ioctl.h"
-#include "kernel-lib/sizes.h"
 #include "crypto/crc32c.h"
 #else
 #include <btrfs/list.h>
@@ -35,7 +34,6 @@
 #include <btrfs/extent-cache.h>
 #include <btrfs/extent_io.h>
 #include <btrfs/ioctl.h>
-#include <btrfs/sizes.h>
 #include <btrfs/crc32c.h>
 #endif /* BTRFS_FLAT_INCLUDES */
 
@@ -605,7 +603,7 @@ struct btrfs_extent_item_v0 {
 #define BTRFS_MAX_EXTENT_ITEM_SIZE(r) \
 			((BTRFS_LEAF_DATA_SIZE(r->fs_info) >> 4) - \
 					sizeof(struct btrfs_item))
-#define BTRFS_MAX_EXTENT_SIZE		SZ_128M
+#define BTRFS_MAX_EXTENT_SIZE		128UL * 1024 * 1024
 
 #define BTRFS_EXTENT_FLAG_DATA		(1ULL << 0)
 #define BTRFS_EXTENT_FLAG_TREE_BLOCK	(1ULL << 1)
@@ -962,7 +960,7 @@ struct btrfs_csum_item {
  *  - the first 64k blank is useful for some boot loader/manager
  *  - the first 1M could be scratched by buggy partitioner or somesuch
  */
-#define BTRFS_BLOCK_RESERVED_1M_FOR_SUPER	((u64)SZ_1M)
+#define BTRFS_BLOCK_RESERVED_1M_FOR_SUPER	((u64)1 * 1024 * 1024)
 
 /* tag for the radix tree of block groups in ram */
 #define BTRFS_BLOCK_GROUP_DATA		(1ULL << 0)
