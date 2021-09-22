@@ -267,6 +267,7 @@ static int report_zones(int fd, const char *file,
 	u64 zone_bytes = zone_size(file);
 	size_t rep_size;
 	u64 sector = 0;
+	struct stat st;
 	struct blk_zone_report *rep;
 	struct blk_zone *zone;
 	unsigned int i, n = 0;
@@ -291,11 +292,13 @@ static int report_zones(int fd, const char *file,
 		exit(1);
 	}
 
-	/*
-	 * No need to use btrfs_device_size() here, since it is ensured
-	 * that the file is block device.
-	 */
-	device_size = device_get_partition_size_fd(fd);
+	ret = fstat(fd, &st);
+	if (ret < 0) {
+		error("error when reading zone info on %s: %m", file);
+		return -EIO;
+	}
+
+	device_size = btrfs_device_size(fd, &st);
 	if (device_size == 0) {
 		error("zoned: failed to read size of %s: %m", file);
 		exit(1);
