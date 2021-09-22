@@ -2553,7 +2553,7 @@ static inline u64 btrfs_name_hash(const char *name, int len)
 static inline u64 btrfs_extref_hash(u64 parent_objectid, const char *name,
 				    int len)
 {
-	return (u64)btrfs_crc32c(parent_objectid, name, len);
+	return (u64)crc32c(parent_objectid, name, len);
 }
 
 /* extent-tree.c */
