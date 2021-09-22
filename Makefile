@@ -208,42 +208,10 @@ cmds_objects = cmds/subvolume.o cmds/filesystem.o cmds/device.o cmds/scrub.o \
 	       mkfs/common.o check/mode-common.o check/mode-lowmem.o
 
 libbtrfs_objects = \
-		kernel-lib/raid56.o	\
 		kernel-lib/rbtree.o	\
-		kernel-lib/tables.o	\
-		kernel-shared/ctree.o	\
-		kernel-shared/delayed-ref.o	\
-		kernel-shared/disk-io.o	\
-		kernel-shared/extent-tree.o	\
-		kernel-shared/extent_io.o	\
-		kernel-shared/file-item.o	\
-		kernel-shared/free-space-cache.o	\
-		kernel-shared/free-space-tree.o	\
-		kernel-shared/print-tree.o	\
-		kernel-shared/root-tree.o	\
-		kernel-shared/transaction.o	\
-		kernel-shared/uuid-tree.o	\
-		kernel-shared/volumes.o	\
-		kernel-shared/zoned.o	\
-		common/device-scan.o	\
-		common/device-utils.o	\
-		common/extent-cache.o	\
-		common/messages.o	\
-		common/open-utils.o	\
-		common/parse-utils.o	\
-		common/path-utils.o	\
-		common/rbtree-utils.o	\
-		common/repair.o	\
 		libbtrfs/send-stream.o	\
 		libbtrfs/send-utils.o	\
-		common/units.o	\
-		common/utils-lib.o	\
-		common/utils.o	\
-		libbtrfsutil/subvolume.o	\
-		crypto/hash.o	\
-		crypto/crc32c.o	\
-		crypto/xxhash.o	\
-		$(CRYPTO_OBJECTS)	\
+		crypto/crc32c.o
 
 libbtrfs_headers = libbtrfs/send-stream.h libbtrfs/send-utils.h kernel-shared/send.h kernel-lib/rbtree.h \
 	       crypto/crc32c.h kernel-lib/list.h kerncompat.h \
