@@ -61,7 +61,7 @@ static int read_buf(struct btrfs_send_stream *sctx, char *buf, size_t len)
 		rbytes = read(sctx->fd, buf + pos, len - pos);
 		if (rbytes < 0) {
 			ret = -errno;
-			error("read from stream failed: %m");
+			fprintf(stderr, "ERROR: read from stream failed: %m\n");
 			goto out;
 		}
 		if (rbytes == 0) {
@@ -74,7 +74,8 @@ static int read_buf(struct btrfs_send_stream *sctx, char *buf, size_t len)
 
 out_eof:
 	if (0 < pos && pos < len) {
-		error("short read from stream: expected %zu read %zu", len, pos);
+		fprintf(stderr, "ERROR: short read from stream: expected %zu read %zu\n",
+				len, pos);
 		ret = -EIO;
 	} else {
 		sctx->stream_pos += pos;
@@ -110,7 +111,7 @@ static int read_cmd(struct btrfs_send_stream *sctx)
 		goto out;
 	if (ret) {
 		ret = -EINVAL;
-		error("unexpected EOF in stream");
+		fprintf(stderr, "ERROR: unexpected EOF in stream\n");
 		goto out;
 	}
 
@@ -120,7 +121,7 @@ static int read_cmd(struct btrfs_send_stream *sctx)
 
 	if (cmd_len + sizeof(*sctx->cmd_hdr) >= sizeof(sctx->read_buf)) {
 		ret = -EINVAL;
-		error("command length %u too big for buffer %zu",
+		fprintf(stderr, "ERROR: command length %u too big for buffer %zu\n",
 				cmd_len, sizeof(sctx->read_buf));
 		goto out;
 	}
@@ -131,7 +132,7 @@ static int read_cmd(struct btrfs_send_stream *sctx)
 		goto out;
 	if (ret) {
 		ret = -EINVAL;
-		error("unexpected EOF in stream");
+		fprintf(stderr, "ERROR: unexpected EOF in stream\n");
 		goto out;
 	}
 
@@ -143,7 +144,7 @@ static int read_cmd(struct btrfs_send_stream *sctx)
 
 	if (crc != crc2) {
 		ret = -EINVAL;
-		error("crc32 mismatch in command");
+		fprintf(stderr, "ERROR: crc32 mismatch in command\n");
 		goto out;
 	}
 
@@ -158,8 +159,9 @@ static int read_cmd(struct btrfs_send_stream *sctx)
 		tlv_len = le16_to_cpu(tlv_hdr->tlv_len);
 
 		if (tlv_type == 0 || tlv_type > BTRFS_SEND_A_MAX) {
-			error("invalid tlv in cmd tlv_type = %hu, tlv_len = %hu",
-					tlv_type, tlv_len);
+			fprintf(stderr,
+				"ERROR: invalid tlv in cmd tlv_type = %hu, tlv_len = %hu\n",
+				tlv_type, tlv_len);
 			ret = -EINVAL;
 			goto out;
 		}
@@ -183,14 +185,16 @@ static int tlv_get(struct btrfs_send_stream *sctx, int attr, void **data, int *l
 	struct btrfs_tlv_header *hdr;
 
 	if (attr <= 0 || attr > BTRFS_SEND_A_MAX) {
-		error("invalid attribute requested, attr = %d", attr);
+		fprintf(stderr, "ERROR: invalid attribute requested, attr = %d\n",
+				attr);
 		ret = -EINVAL;
 		goto out;
 	}
 
 	hdr = sctx->cmd_attrs[attr];
 	if (!hdr) {
-		error("attribute %d requested but not present", attr);
+		fprintf(stderr, "ERROR: attribute %d requested but not present\n",
+				attr);
 		ret = -ENOENT;
 		goto out;
 	}
@@ -220,8 +224,8 @@ out:
 #define TLV_CHECK_LEN(expected, got) \
 	do { \
 		if (expected != got) { \
-			error("invalid size for attribute, " \
-					"expected = %d, got = %d", \
+			fprintf(stderr, "ERROR: invalid size for attribute, " \
+					"expected = %d, got = %d\n", \
 					(int)expected, (int)got); \
 			ret = -EINVAL; \
 			goto tlv_get_failed; \
@@ -496,15 +500,16 @@ int btrfs_read_and_process_send_stream(int fd,
 
 	if (strcmp(hdr.magic, BTRFS_SEND_STREAM_MAGIC)) {
 		ret = -EINVAL;
-		error("unexpected header");
+		fprintf(stderr, "ERROR: unexpected header\n");
 		goto out;
 	}
 
 	sctx.version = le32_to_cpu(hdr.version);
 	if (sctx.version > BTRFS_SEND_STREAM_VERSION) {
 		ret = -EINVAL;
-		error("stream version %d not supported, please use newer version",
-				sctx.version);
+		fprintf(stderr,
+			"ERROR: stream version %d not supported, please use newer version\n",
+			sctx.version);
 		goto out;
 	}
 
