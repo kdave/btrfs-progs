@@ -37,6 +37,7 @@
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/transaction.h"
 #include "kernel-shared/zoned.h"
+#include "crypto/crc32c.h"
 #include "common/utils.h"
 #include "common/path-utils.h"
 #include "common/device-utils.h"

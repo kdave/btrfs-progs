@@ -20,6 +20,7 @@
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/transaction.h"
 #include "kernel-shared/print-tree.h"
+#include "crypto/crc32c.h"
 #include "common/repair.h"
 #include "common/internal.h"
 #include "common/messages.h"
@@ -70,6 +71,19 @@ size_t btrfs_super_num_csums(void)
 u16 btrfs_csum_type_size(u16 csum_type)
 {
 	return btrfs_csums[csum_type].size;
+}
+
+u64 btrfs_name_hash(const char *name, int len)
+{
+	return crc32c((u32)~1, name, len);
+}
+
+/*
+ * Figure the key offset of an extended inode ref
+ */
+u64 btrfs_extref_hash(u64 parent_objectid, const char *name, int len)
+{
+	return (u64)crc32c(parent_objectid, name, len);
 }
 
 inline void btrfs_init_path(struct btrfs_path *p)
