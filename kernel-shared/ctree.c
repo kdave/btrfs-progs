@@ -223,11 +223,16 @@ int btrfs_create_root(struct btrfs_trans_handle *trans,
 	}
 	new_root->node = node;
 
+	memset_extent_buffer(node, 0, 0, sizeof(struct btrfs_header));
+	btrfs_set_header_bytenr(node, node->start);
 	btrfs_set_header_generation(node, trans->transid);
 	btrfs_set_header_backref_rev(node, BTRFS_MIXED_BACKREF_REV);
-	btrfs_clear_header_flag(node,
-			BTRFS_HEADER_FLAG_RELOC | BTRFS_HEADER_FLAG_WRITTEN);
 	btrfs_set_header_owner(node, objectid);
+	write_extent_buffer(node, fs_info->fs_devices->metadata_uuid,
+			    btrfs_header_fsid(), BTRFS_FSID_SIZE);
+	write_extent_buffer(node, fs_info->chunk_tree_uuid,
+			    btrfs_header_chunk_tree_uuid(node),
+			    BTRFS_UUID_SIZE);
 	btrfs_set_header_nritems(node, 0);
 	btrfs_set_header_level(node, 0);
 	ret = btrfs_inc_ref(trans, new_root, node, 0);
