@@ -366,16 +366,13 @@ struct btrfs_util_qgroup_inherit;
  * btrfs_util_create_subvolume() - Create a new subvolume.
  * @path: Where to create the subvolume.
  * @flags: Must be zero.
- * @async_transid: If not NULL, create the subvolume asynchronously (i.e.,
- * without waiting for it to commit it to disk) and return the transaction ID
- * that it was created in. This transaction ID can be waited on with
- * btrfs_util_wait_sync().
+ * @unused: No longer used (since 5.15)
  * @qgroup_inherit: Qgroups to inherit from, or NULL.
  *
  * Return: %BTRFS_UTIL_OK on success, non-zero error code on failure.
  */
 enum btrfs_util_error btrfs_util_create_subvolume(const char *path, int flags,
-						  uint64_t *async_transid,
+						  uint64_t *unused,
 						  struct btrfs_util_qgroup_inherit *qgroup_inherit);
 
 /**
@@ -385,7 +382,7 @@ enum btrfs_util_error btrfs_util_create_subvolume(const char *path, int flags,
  * should be created.
  * @name: Name of the subvolume to create.
  * @flags: See btrfs_util_create_subvolume().
- * @async_transid: See btrfs_util_create_subvolume().
+ * @unused: See btrfs_util_create_subvolume().
  * @qgroup_inherit: See btrfs_util_create_subvolume().
  *
  * Return: %BTRFS_UTIL_OK on success, non-zero error code on failure.
@@ -393,7 +390,7 @@ enum btrfs_util_error btrfs_util_create_subvolume(const char *path, int flags,
 enum btrfs_util_error btrfs_util_create_subvolume_fd(int parent_fd,
 						     const char *name,
 						     int flags,
-						     uint64_t *async_transid,
+						     uint64_t *unused,
 						     struct btrfs_util_qgroup_inherit *qgroup_inherit);
 
 /**
@@ -418,16 +415,14 @@ enum btrfs_util_error btrfs_util_create_subvolume_fd(int parent_fd,
  * @source: Path of the existing subvolume to snapshot.
  * @path: Where to create the snapshot.
  * @flags: Bitmask of BTRFS_UTIL_CREATE_SNAPSHOT_* flags.
- * @async_transid: See btrfs_util_create_subvolume(). If
- * %BTRFS_UTIL_CREATE_SNAPSHOT_RECURSIVE was in @flags, then this will contain
- * the largest transaction ID of all created subvolumes.
+ * @unused: See btrfs_util_create_subvolume().
  * @qgroup_inherit: See btrfs_util_create_subvolume().
  *
  * Return: %BTRFS_UTIL_OK on success, non-zero error code on failure.
  */
 enum btrfs_util_error btrfs_util_create_snapshot(const char *source,
 						 const char *path, int flags,
-						 uint64_t *async_transid,
+						 uint64_t *unused,
 						 struct btrfs_util_qgroup_inherit *qgroup_inherit);
 
 /**
@@ -435,7 +430,7 @@ enum btrfs_util_error btrfs_util_create_snapshot(const char *source,
  */
 enum btrfs_util_error btrfs_util_create_snapshot_fd(int fd, const char *path,
 						    int flags,
-						    uint64_t *async_transid,
+						    uint64_t *unused,
 						    struct btrfs_util_qgroup_inherit *qgroup_inherit);
 
 /**
@@ -446,13 +441,13 @@ enum btrfs_util_error btrfs_util_create_snapshot_fd(int fd, const char *path,
  * be created.
  * @name: Name of the snapshot to create.
  * @flags: See btrfs_util_create_snapshot().
- * @async_transid: See btrfs_util_create_snapshot().
+ * @unused: See btrfs_util_create_snapshot().
  * @qgroup_inherit: See btrfs_util_create_snapshot().
  */
 enum btrfs_util_error btrfs_util_create_snapshot_fd2(int fd, int parent_fd,
 						     const char *name,
 						     int flags,
-						     uint64_t *async_transid,
+						     uint64_t *unused,
 						     struct btrfs_util_qgroup_inherit *qgroup_inherit);
 
 /**

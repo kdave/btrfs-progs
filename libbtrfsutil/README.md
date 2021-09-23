@@ -245,8 +245,7 @@ The equivalent `btrfs-progs` command is `btrfs subvolume list`.
 #### Creation
 
 `btrfs_util_create_subvolume()` creates a new subvolume at the given path. The
-subvolume can be created asynchronously and inherit from quota groups
-(qgroups).
+subvolume can inherit from quota groups (qgroups).
 
 Qgroups to inherit are specified with a `struct btrfs_util_qgroup_inherit`,
 which is created by `btrfs_util_create_qgroup_inherit()` and freed by
@@ -262,10 +261,6 @@ method and a `groups` member, which is a list of ints.
 ```c
 btrfs_util_create_subvolume("/subvol2", 0, NULL, NULL);
 
-uint64_t async_transid;
-btrfs_util_create_subvolume("/subvol2", 0, &async_transid, NULL);
-btrfs_util_wait_sync("/", async_transid);
-
 struct btrfs_util_qgroup_inherit *qgroups;
 btrfs_util_create_qgroup_inherit(0, &qgroups);
 btrfs_util_qgroup_inherit_add_group(&qgroups, 256);
@@ -275,9 +270,6 @@ btrfs_util_destroy_qgroup_inherit(qgroups);
 
 ```python
 btrfsutil.create_subvolume('/subvol2')
-
-async_transid = btrfsutil.create_subvolume('/subvol2', async_=True)
-btrfsutil.wait_sync('/', async_transid)
 
 qgroups = btrfsutil.QgroupInherit()
 qgroups.add_group(256)
@@ -292,8 +284,8 @@ The equivalent `btrfs-progs` command is `btrfs subvolume create`.
 #### Snapshotting
 
 Snapshots are created with `btrfs_util_create_snapshot()`, which takes a source
-path, a destination path, and flags. It can also be asynchronous and inherit
-from quota groups; see [subvolume creation](#Creation).
+path, a destination path, and flags. It can also inherit from quota groups;
+see [subvolume creation](#Creation).
 
 Snapshot creation can be recursive, in which case subvolumes underneath the
 subvolume being snapshotted will also be snapshotted onto the same location in

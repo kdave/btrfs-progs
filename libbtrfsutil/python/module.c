@@ -237,8 +237,7 @@ static PyMethodDef btrfsutil_methods[] = {
 	 "Create a new subvolume.\n\n"
 	 "Arguments:\n"
 	 "path -- string, bytes, or path-like object\n"
-	 "async_ -- create the subvolume without waiting for it to commit to\n"
-	 "disk and return the transaction ID\n"
+	 "async_ -- no longer used\n"
 	 "qgroup_inherit -- optional QgroupInherit object of qgroups to\n"
 	 "inherit from"},
 	{"create_snapshot", (PyCFunction)create_snapshot,
@@ -251,8 +250,7 @@ static PyMethodDef btrfsutil_methods[] = {
 	 "path -- string, bytes, or path-like object\n"
 	 "recursive -- also snapshot child subvolumes\n"
 	 "read_only -- create a read-only snapshot\n"
-	 "async_ -- create the subvolume without waiting for it to commit to\n"
-	 "disk and return the transaction ID\n"
+	 "async_ -- no longer used\n"
 	 "qgroup_inherit -- optional QgroupInherit object of qgroups to\n"
 	 "inherit from"},
 	{"delete_subvolume", (PyCFunction)delete_subvolume,

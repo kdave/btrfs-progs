@@ -245,10 +245,6 @@ class TestSubvolume(BtrfsTestCase):
         btrfsutil.create_subvolume(subvol + '6//')
         self.assertTrue(btrfsutil.is_subvolume(subvol + '6'))
 
-        transid = btrfsutil.create_subvolume(subvol + '7', async_=True)
-        self.assertTrue(btrfsutil.is_subvolume(subvol + '7'))
-        self.assertGreater(transid, 0)
-
         # Test creating subvolumes under '/' in a chroot.
         pid = os.fork()
         if pid == 0:
@@ -308,12 +304,8 @@ class TestSubvolume(BtrfsTestCase):
         btrfsutil.create_snapshot(subvol, snapshot + '2', recursive=True)
         self.assertTrue(os.path.exists(os.path.join(snapshot + '2', 'nested/more_nested/nested_dir')))
 
-        transid = btrfsutil.create_snapshot(subvol, snapshot + '3', recursive=True, async_=True)
-        self.assertTrue(os.path.exists(os.path.join(snapshot + '3', 'nested/more_nested/nested_dir')))
-        self.assertGreater(transid, 0)
-
-        btrfsutil.create_snapshot(subvol, snapshot + '4', read_only=True)
-        self.assertTrue(btrfsutil.get_subvolume_read_only(snapshot + '4'))
+        btrfsutil.create_snapshot(subvol, snapshot + '3', read_only=True)
+        self.assertTrue(btrfsutil.get_subvolume_read_only(snapshot + '3'))
 
     def test_delete_subvolume(self):
         subvol = os.path.join(self.mountpoint, 'subvol')

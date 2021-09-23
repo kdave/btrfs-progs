@@ -49,15 +49,17 @@ BUILD_ASSERT(sizeof(struct btrfs_ioctl_vol_args) == 4096);
 
 #define BTRFS_DEVICE_PATH_NAME_MAX 1024
 
-#define BTRFS_SUBVOL_CREATE_ASYNC	(1ULL << 0)
+/*
+ * Obsolete since 5.15, functionality removed in kernel 5.7:
+ * BTRFS_SUBVOL_CREATE_ASYNC		(1ULL << 0)
+ */
 #define BTRFS_SUBVOL_RDONLY		(1ULL << 1)
 #define BTRFS_SUBVOL_QGROUP_INHERIT	(1ULL << 2)
 #define BTRFS_DEVICE_SPEC_BY_ID		(1ULL << 3)
 #define BTRFS_SUBVOL_SPEC_BY_ID		(1ULL << 4)
 
 #define BTRFS_VOL_ARG_V2_FLAGS_SUPPORTED		\
-			(BTRFS_SUBVOL_CREATE_ASYNC |	\
-			BTRFS_SUBVOL_RDONLY |		\
+			(BTRFS_SUBVOL_RDONLY |		\
 			BTRFS_SUBVOL_QGROUP_INHERIT |	\
 			BTRFS_DEVICE_SPEC_BY_ID |	\
 			BTRFS_SUBVOL_SPEC_BY_ID)
