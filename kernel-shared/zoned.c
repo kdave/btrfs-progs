@@ -303,13 +303,11 @@ static int report_zones(int fd, const char *file,
 
 	/* Allocate the zone information array */
 	zinfo->zone_size = zone_bytes;
-	zinfo->max_zone_append_size = max_zone_append_size(file);
 	zinfo->nr_zones = device_size / zone_bytes;
 	if (device_size & (zone_bytes - 1))
 		zinfo->nr_zones++;
 
-	if (zoned_model(file) != ZONED_NONE &&
-	    zinfo->max_zone_append_size == 0) {
+	if (zoned_model(file) != ZONED_NONE && max_zone_append_size(file) == 0) {
 		error(
 		"zoned: device %s does not support ZONE_APPEND command", file);
 		exit(1);
@@ -1118,7 +1116,6 @@ int btrfs_check_zoned_mode(struct btrfs_fs_info *fs_info)
 	u64 zoned_devices = 0;
 	u64 nr_devices = 0;
 	u64 zone_size = 0;
-	u64 max_zone_append_size = 0;
 	const bool incompat_zoned = btrfs_fs_incompat(fs_info, ZONED);
 	int ret = 0;
 
@@ -1153,11 +1150,6 @@ int btrfs_check_zoned_mode(struct btrfs_fs_info *fs_info)
 				ret = -EINVAL;
 				goto out;
 			}
-			if (!max_zone_append_size ||
-			    (zone_info->max_zone_append_size &&
-			     zone_info->max_zone_append_size < max_zone_append_size))
-				max_zone_append_size =
-					zone_info->max_zone_append_size;
 		}
 		nr_devices++;
 	}
@@ -1203,7 +1195,6 @@ int btrfs_check_zoned_mode(struct btrfs_fs_info *fs_info)
 	}
 
 	fs_info->zone_size = zone_size;
-	fs_info->max_zone_append_size = max_zone_append_size;
 	fs_info->fs_devices->chunk_alloc_policy = BTRFS_CHUNK_ALLOC_ZONED;
 
 out:
