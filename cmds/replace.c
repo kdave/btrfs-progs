@@ -114,8 +114,9 @@ static const char *const cmd_replace_start_usage[] = {
 	"       correct checksum. Devices which are currently mounted are",
 	"       never allowed to be used as the <targetdev>",
 	"-B     do not background",
-	"--enqueue    wait if there's another exclusive operation running,",
-	"             otherwise continue",
+	"--enqueue       wait if there's another exclusive operation running,",
+	"                otherwise continue",
+	"-K|--nodiscard  do not perform whole device TRIM",
 	NULL
 };
 
@@ -141,6 +142,7 @@ static int cmd_replace_start(const struct cmd_struct *cmd,
 	u64 srcdev_size;
 	u64 dstdev_size;
 	bool enqueue = false;
+	bool discard = true;
 
 	optind = 0;
 	while (1) {
@@ -148,15 +150,19 @@ static int cmd_replace_start(const struct cmd_struct *cmd,
 		enum { GETOPT_VAL_ENQUEUE = 256 };
 		static const struct option long_options[] = {
 			{ "enqueue", no_argument, NULL, GETOPT_VAL_ENQUEUE},
+			{ "nodiscard", no_argument, NULL, 'K' },
 			{ NULL, 0, NULL, 0}
 		};
 
-		c = getopt_long(argc, argv, "Brf", long_options, NULL);
+		c = getopt_long(argc, argv, "BKrf", long_options, NULL);
 		if (c < 0)
 			break;
 		switch (c) {
 		case 'B':
 			do_not_background = 1;
+			break;
+		case 'K':
+			discard = false;
 			break;
 		case 'r':
 			avoid_reading_from_srcdev = 1;
@@ -297,6 +303,7 @@ static int cmd_replace_start(const struct cmd_struct *cmd,
 		BTRFS_DEVICE_PATH_NAME_MAX);
 	ret = btrfs_prepare_device(fddstdev, dstdev, &dstdev_block_count, 0,
 			PREP_DEVICE_ZERO_END | PREP_DEVICE_VERBOSE |
+			(discard ? PREP_DEVICE_DISCARD : 0) |
 			(zoned ? PREP_DEVICE_ZONED : 0));
 	if (ret)
 		goto leave_with_error;

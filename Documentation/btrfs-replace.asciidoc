@@ -55,6 +55,10 @@ never allowed to be used as the <targetdev>.
 no background replace.
 --enqueue::::
 wait if there's another exclusive operation running, otherwise continue
+-K|--nodiscard::::
+Do not perform whole device TRIM operation on devices that are capable of that.
+This does not affect discard/trim operation when the filesystem is mounted.
+Please see the mount option 'discard' for that in `btrfs`(5).
 
 *status* [-1] <mount_point>::
 Print status and progress information of a running device replace operation.
