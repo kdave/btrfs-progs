@@ -1131,19 +1131,10 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		u64 tmp;
 
 		if (!metadata_profile_opt) {
-			if (dev_cnt == 1 && ssd && bconf.verbose)
-				printf("Detected a SSD, turning off metadata "
-				"duplication.  Mkfs with -m dup if you want to "
-				"force metadata duplication.\n");
-
-			if (dev_cnt > 1) {
+			if (dev_cnt > 1)
 				tmp = BTRFS_MKFS_DEFAULT_META_MULTI_DEVICE;
-			} else {
-				if (ssd)
-					tmp = BTRFS_MKFS_DEFAULT_META_ONE_DEVICE_SSD;
-				else
-					tmp = BTRFS_MKFS_DEFAULT_META_ONE_DEVICE;
-			}
+			else
+				tmp = BTRFS_MKFS_DEFAULT_META_ONE_DEVICE;
 			metadata_profile = tmp;
 		}
 		if (!data_profile_opt) {

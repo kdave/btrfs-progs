@@ -53,15 +53,28 @@ Specify the profile for the metadata block groups.
 Valid values are 'raid0', 'raid1', 'raid1c3', 'raid1c4', 'raid5', 'raid6',
 'raid10', 'single' or 'dup' (case does not matter).
 +
-Default on a single device filesystem is 'DUP', unless an SSD is detected, in which
-case it will default to 'single'. The detection is based on the value of
-`/sys/block/DEV/queue/rotational`, where 'DEV' is the short name of the device.
+Default on a single device filesystem is 'DUP' and is recommended for metadata
+in general. The duplication might not be necessary in some use cases and it's
+up to the user to changed that at mkfs time or later. This depends on hardware
+that could potentially deduplicate the blocks again but this cannot be detected
+at mkfs time.
 +
+[NOTE]
+.NOTE
+====
+Up to version 5.14 there was a detection of a SSD device (more precisely
+if it's a rotational device, determined by the contents of file
+`/sys/block/DEV/queue/rotational`) that used to select 'single'. This has
+changed in version 5.15 to be always 'dup'.
+
 Note that the rotational status can be arbitrarily set by the underlying block
 device driver and may not reflect the true status (network block device, memory-backed
-SCSI devices etc). It's recommended to options '--data/--metadata' to avoid confusion.
-+
+SCSI devices, real block device behind some additonal device mapper layer,
+etc). It's recommended to always set the options '--data/--metadata' to avoid
+confusion and unexpected results.
+
 See 'DUP PROFILES ON A SINGLE DEVICE' for more details.
+====
 +
 On multiple devices the default is 'raid1'.
 
