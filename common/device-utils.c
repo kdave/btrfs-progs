@@ -53,6 +53,25 @@ static int discard_range(int fd, u64 start, u64 len)
 	return 0;
 }
 
+static int discard_supported(const char *device)
+{
+	int ret;
+	char buf[128] = {};
+
+	ret = device_get_queue_param(device, "discard_granularity", buf, sizeof(buf));
+	if (ret == 0) {
+		pr_verbose(3, "cannot read discard_granularity for %s\n", device);
+		return 0;
+	} else {
+		if (buf[0] == '0' && buf[1] == 0) {
+			pr_verbose(3, "%s: discard_granularity %s\n", device, buf);
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
 /*
  * Discard blocks in the given range in 1G chunks, the process is interruptible
  */
@@ -242,7 +261,7 @@ int btrfs_prepare_device(int fd, const char *file, u64 *block_count_ret,
 		 * is not necessary for the mkfs functionality but just an
 		 * optimization.
 		 */
-		if (discard_range(fd, 0, 0) == 0) {
+		if (discard_supported(file)) {
 			if (opflags & PREP_DEVICE_VERBOSE)
 				printf("Performing full device TRIM %s (%s) ...\n",
 						file, pretty_size(block_count));
