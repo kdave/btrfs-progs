@@ -60,7 +60,7 @@ struct mkfs_allocation {
 	u64 system;
 };
 
-static int create_metadata_block_groups(struct btrfs_root *root, int mixed,
+static int create_metadata_block_groups(struct btrfs_root *root, bool mixed,
 				struct mkfs_allocation *allocation)
 {
 	struct btrfs_fs_info *fs_info = root->fs_info;
@@ -140,7 +140,7 @@ err:
 }
 
 static int create_data_block_groups(struct btrfs_trans_handle *trans,
-		struct btrfs_root *root, int mixed,
+		struct btrfs_root *root, bool mixed,
 		struct mkfs_allocation *allocation)
 {
 	struct btrfs_fs_info *fs_info = root->fs_info;
@@ -302,7 +302,7 @@ static int create_one_raid_group(struct btrfs_trans_handle *trans,
 
 static int create_raid_groups(struct btrfs_trans_handle *trans,
 			      struct btrfs_root *root, u64 data_profile,
-			      u64 metadata_profile, int mixed,
+			      u64 metadata_profile, bool mixed,
 			      struct mkfs_allocation *allocation)
 {
 	int ret;
@@ -422,14 +422,14 @@ static int zero_output_file(int out_fd, u64 size)
 	return ret;
 }
 
-static int is_ssd(const char *file)
+static bool is_ssd(const char *file)
 {
 	char rotational;
 	int ret;
 
 	ret = device_get_queue_param(file, "rotational", &rotational, 1);
 	if (ret < 1)
-		return 0;
+		return false;
 
 	return rotational == '0';
 }
@@ -880,19 +880,19 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	u32 nodesize = 0;
 	u32 sectorsize = 0;
 	u32 stripesize = 4096;
-	int zero_end = 1;
+	bool zero_end = true;
 	int fd = -1;
 	int ret = 0;
 	int close_ret;
 	int i;
-	int mixed = 0;
-	int nodesize_forced = 0;
-	int data_profile_opt = 0;
-	int metadata_profile_opt = 0;
-	int discard = 1;
-	int ssd = 0;
-	int zoned = 0;
-	int force_overwrite = 0;
+	bool mixed = false;
+	bool nodesize_forced = false;
+	bool data_profile_opt = false;
+	bool metadata_profile_opt = false;
+	bool discard = true;
+	bool ssd = false;
+	bool zoned = false;
+	bool force_overwrite = false;
 	char *source_dir = NULL;
 	bool source_dir_set = false;
 	bool shrink_rootdir = false;
@@ -948,28 +948,28 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			break;
 		switch(c) {
 			case 'f':
-				force_overwrite = 1;
+				force_overwrite = true;
 				break;
 			case 'd':
 				data_profile = parse_profile(optarg);
-				data_profile_opt = 1;
+				data_profile_opt = true;
 				break;
 			case 'l':
 				warning("--leafsize is deprecated, use --nodesize");
 				/* fall through */
 			case 'n':
 				nodesize = parse_size_from_string(optarg);
-				nodesize_forced = 1;
+				nodesize_forced = true;
 				break;
 			case 'L':
 				label = parse_label(optarg);
 				break;
 			case 'm':
 				metadata_profile = parse_profile(optarg);
-				metadata_profile_opt = 1;
+				metadata_profile_opt = true;
 				break;
 			case 'M':
-				mixed = 1;
+				mixed = true;
 				break;
 			case 'O': {
 				char *orig = strdup(optarg);
@@ -1013,7 +1013,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 				break;
 			case 'b':
 				block_count = parse_size_from_string(optarg);
-				zero_end = 0;
+				zero_end = false;
 				break;
 			case 'v':
 				bconf_be_verbose();
@@ -1031,7 +1031,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 					BTRFS_UUID_UNPARSED_SIZE - 1);
 				break;
 			case 'K':
-				discard = 0;
+				discard = false;
 				break;
 			case 'q':
 				bconf_be_quiet();
@@ -1067,7 +1067,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	if (dev_cnt == 0)
 		print_usage(1);
 
-	zoned = (features & BTRFS_FEATURE_INCOMPAT_ZONED);
+	zoned = !!(features & BTRFS_FEATURE_INCOMPAT_ZONED);
 
 	if (source_dir_set && dev_cnt > 1) {
 		error("the option -r is limited to a single device");
@@ -1119,7 +1119,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			printf(
 	"Zoned: %s: host-managed device detected, setting zoned feature\n",
 			       file);
-		zoned = 1;
+		zoned = true;
 		features |= BTRFS_FEATURE_INCOMPAT_ZONED;
 	}
 
