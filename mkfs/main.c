@@ -363,6 +363,7 @@ static void print_usage(int ret)
 	printf("\t-f|--force                  force overwrite of existing filesystem\n");
 	printf("  general:\n");
 	printf("\t-q|--quiet                  no messages except errors\n");
+	printf("\t-v|--verbose                increase verbosity level, default is 1\n");
 	printf("\t-V|--version                print the mkfs.btrfs version and exit\n");
 	printf("\t--help                      print this help and exit\n");
 	printf("  deprecated:\n");
@@ -935,12 +936,13 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			{ "runtime-features", required_argument, NULL, 'R' },
 			{ "uuid", required_argument, NULL, 'U' },
 			{ "quiet", 0, NULL, 'q' },
+			{ "verbose", 0, NULL, 'v' },
 			{ "shrink", no_argument, NULL, GETOPT_VAL_SHRINK },
 			{ "help", no_argument, NULL, GETOPT_VAL_HELP },
 			{ NULL, 0, NULL, 0}
 		};
 
-		c = getopt_long(argc, argv, "A:b:fl:n:s:m:d:L:R:O:r:U:VMKq",
+		c = getopt_long(argc, argv, "A:b:fl:n:s:m:d:L:R:O:r:U:VvMKq",
 				long_options, NULL);
 		if (c < 0)
 			break;
@@ -1012,6 +1014,9 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			case 'b':
 				block_count = parse_size_from_string(optarg);
 				zero_end = 0;
+				break;
+			case 'v':
+				verbose++;
 				break;
 			case 'V':
 				printf("mkfs.btrfs, part of %s\n",

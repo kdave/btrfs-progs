@@ -163,10 +163,14 @@ to clear the devices.
 
 *-q|--quiet*::
 Print only error or warning messages. Options --features or --help are unaffected.
+Resets any previous effects of '--verbose'.
 
 *-U|--uuid <UUID>*::
 Create the filesystem with the given 'UUID'. The UUID must not exist on any
 filesystem currently present.
+
+*-v|--verbose*::
+Increase verbosity level, default is 1.
 
 *-V|--version*::
 Print the *mkfs.btrfs* version and exit.
