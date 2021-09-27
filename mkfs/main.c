@@ -52,8 +52,6 @@
 #include "common/units.h"
 #include "check/qgroup-verify.h"
 
-static int verbose = 1;
-
 struct mkfs_allocation {
 	u64 data;
 	u64 metadata;
@@ -911,6 +909,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	u64 system_group_size;
 
 	crc32c_optimization_init();
+	btrfs_config_init();
 
 	while(1) {
 		int c;
@@ -1016,7 +1015,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 				zero_end = 0;
 				break;
 			case 'v':
-				verbose++;
+				bconf_be_verbose();
 				break;
 			case 'V':
 				printf("mkfs.btrfs, part of %s\n",
@@ -1034,7 +1033,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 				discard = 0;
 				break;
 			case 'q':
-				verbose = 0;
+				bconf_be_quiet();
 				break;
 			case GETOPT_VAL_SHRINK:
 				shrink_rootdir = true;
@@ -1048,7 +1047,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		}
 	}
 
-	if (verbose) {
+	if (bconf.verbose) {
 		printf("%s\n", PACKAGE_STRING);
 		printf("See %s for more information.\n\n", PACKAGE_URL);
 	}
@@ -1115,7 +1114,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			exit(1);
 		}
 	} else if (zoned_model(file) == ZONED_HOST_MANAGED) {
-		if (verbose)
+		if (bconf.verbose)
 			printf(
 	"Zoned: %s: host-managed device detected, setting zoned feature\n",
 			       file);
@@ -1131,7 +1130,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		u64 tmp;
 
 		if (!metadata_profile_opt) {
-			if (dev_cnt == 1 && ssd && verbose)
+			if (dev_cnt == 1 && ssd && bconf.verbose)
 				printf("Detected a SSD, turning off metadata "
 				"duplication.  Mkfs with -m dup if you want to "
 				"force metadata duplication.\n");
@@ -1327,7 +1326,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	ret = btrfs_prepare_device(fd, file, &dev_block_count, block_count,
 			(zero_end ? PREP_DEVICE_ZERO_END : 0) |
 			(discard ? PREP_DEVICE_DISCARD : 0) |
-			(verbose ? PREP_DEVICE_VERBOSE : 0) |
+			(bconf.verbose ? PREP_DEVICE_VERBOSE : 0) |
 			(zoned ? PREP_DEVICE_ZONED : 0));
 	if (ret)
 		goto error;
@@ -1441,7 +1440,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		}
 		ret = btrfs_prepare_device(fd, file, &dev_block_count,
 				block_count,
-				(verbose ? PREP_DEVICE_VERBOSE : 0) |
+				(bconf.verbose ? PREP_DEVICE_VERBOSE : 0) |
 				(zero_end ? PREP_DEVICE_ZERO_END : 0) |
 				(discard ? PREP_DEVICE_DISCARD : 0) |
 				(zoned ? PREP_DEVICE_ZONED : 0));
@@ -1455,7 +1454,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 			error("unable to add %s to filesystem: %d", file, ret);
 			goto error;
 		}
-		if (verbose >= 2) {
+		if (bconf.verbose >= 2) {
 			struct btrfs_device *device;
 
 			device = container_of(fs_info->fs_devices->devices.next,
@@ -1498,7 +1497,7 @@ raid_groups:
 	}
 
 	if (source_dir_set) {
-		ret = btrfs_mkfs_fill_dir(source_dir, root, verbose);
+		ret = btrfs_mkfs_fill_dir(source_dir, root, bconf.verbose);
 		if (ret) {
 			error("error while filling filesystem: %d", ret);
 			goto out;
@@ -1521,7 +1520,7 @@ raid_groups:
 			goto out;
 		}
 	}
-	if (verbose) {
+	if (bconf.verbose) {
 		char features_buf[64];
 
 		update_chunk_allocation(fs_info, &allocation);
