@@ -25,6 +25,9 @@
 		| BTRFS_FEATURE_INCOMPAT_NO_HOLES		\
 		| BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA)
 
+#define BTRFS_MKFS_DEFAULT_RUNTIME_FEATURES			\
+	(BTRFS_RUNTIME_FEATURE_FREE_SPACE_TREE)
+
 /*
  * Avoid multi-device features (RAID56), mixed block groups, and zoned mode
  */

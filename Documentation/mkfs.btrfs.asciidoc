@@ -269,7 +269,7 @@ Enable quota support (qgroups). The qgroup accounting will be consistent,
 can be used together with '--rootdir'.  See also `btrfs-quota`(8).
 
 *free-space-tree*::
-(kernel support since 4.5)
+(default since btrfs-progs 5.15, kernel support since 4.5)
 +
 Enable the free space tree (mount option space_cache=v2) for persisting the
 free space cache.

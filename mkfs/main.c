@@ -903,7 +903,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	int saved_optind;
 	char fs_uuid[BTRFS_UUID_UNPARSED_SIZE] = { 0 };
 	u64 features = BTRFS_MKFS_DEFAULT_FEATURES;
-	u64 runtime_features = 0;
+	u64 runtime_features = BTRFS_MKFS_DEFAULT_RUNTIME_FEATURES;
 	struct mkfs_allocation allocation = { 0 };
 	struct btrfs_mkfs_config mkfs_cfg;
 	enum btrfs_csum_type csum_type = BTRFS_CSUM_TYPE_CRC32;
