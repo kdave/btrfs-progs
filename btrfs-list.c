@@ -1942,14 +1942,3 @@ int btrfs_list_parse_filter_string(char *opt_arg,
 
 	return 0;
 }
-
-int btrfs_list_get_path_rootid(int fd, u64 *treeid)
-{
-	int ret;
-
-	ret = lookup_path_rootid(fd, treeid);
-	if (ret < 0)
-		error("cannot resolve rootid for path: %m");
-
-	return ret;
-}
