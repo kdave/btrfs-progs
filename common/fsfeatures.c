@@ -110,7 +110,7 @@ static const struct btrfs_feature mkfs_features[] = {
 		.sysfs_name	= "no_holes",
 		VERSION_TO_STRING2(compat, 3,14),
 		VERSION_TO_STRING2(safe, 4,0),
-		VERSION_NULL(default),
+		VERSION_TO_STRING2(default, 5,15),
 		.desc		= "no explicit hole extents for files"
 	}, {
 		.name		= "raid1c34",

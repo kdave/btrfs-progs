@@ -241,7 +241,7 @@ are selected
 reduced-size metadata for extent references, saves a few percent of metadata
 
 *no-holes*::
-(kernel support since 3.14)
+(default since btrfs-progs 5.15, kernel support since 3.14)
 +
 improved representation of file extents where holes are not explicitly
 stored as an extent, saves a few percent of metadata if sparse files are used
