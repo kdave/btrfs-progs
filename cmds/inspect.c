@@ -233,17 +233,17 @@ static int cmd_inspect_logical_resolve(const struct cmd_struct *cmd,
 		u64 offset = inodes->val[i+1];
 		u64 root = inodes->val[i+2];
 		int path_fd;
-		char *name;
 		DIR *dirs = NULL;
 
 		if (getpath) {
 			char mount_path[PATH_MAX];
-			name = btrfs_list_path_for_root(fd, root);
-			if (IS_ERR(name)) {
-				ret = PTR_ERR(name);
+			char name[PATH_MAX];
+
+			ret = btrfs_subvolid_resolve(fd, name, sizeof(name), root);
+			if (ret < 0)
 				goto out;
-			}
-			if (!name) {
+
+			if (name[0] == 0) {
 				path_ptr[-1] = '\0';
 				path_fd = fd;
 				strncpy(mount_path, full_path, PATH_MAX);
@@ -253,7 +253,7 @@ static int cmd_inspect_logical_resolve(const struct cmd_struct *cmd,
 				char subvolid[PATH_MAX];
 
 				/*
-				 * btrfs_list_path_for_root returns the full
+				 * btrfs_subvolid_resolve returns the full
 				 * path to the subvolume pointed by root, but the
 				 * subvolume can be mounted in a directory name
 				 * different from the subvolume name. In this
