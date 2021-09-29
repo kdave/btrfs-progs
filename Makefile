@@ -186,7 +186,6 @@ objects = \
 	common/string-table.o	\
 	common/task-utils.o \
 	common/units.o	\
-	common/utils-lib.o	\
 	common/utils.o	\
 	check/qgroup-verify.o	\
 	cmds/receive-dump.o	\
