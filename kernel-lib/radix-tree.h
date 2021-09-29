@@ -37,11 +37,7 @@
 #ifndef _LINUX_RADIX_TREE_H
 #define _LINUX_RADIX_TREE_H
 
-#if BTRFS_FLAT_INCLUDES
 #include "kerncompat.h"
-#else
-#include <btrfs/kerncompat.h>
-#endif /* BTRFS_FLAT_INCLUDES */
 
 #define RADIX_TREE_MAX_TAGS 2
 

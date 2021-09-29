@@ -21,12 +21,7 @@
 #include <limits.h>
 #include <sys/ioctl.h>
 #include <ioctl.h>
-
-#if BTRFS_FLAT_INCLUDES
 #include "kernel-shared/ctree.h"
-#else
-#include <btrfs/ctree.h>
-#endif /* BTRFS_FLAT_INCLUDES */
 
 /*
  * This function should be only used when parsing command arg, it won't return

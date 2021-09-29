@@ -19,16 +19,9 @@
 #ifndef __BTRFS_LIST_H__
 #define __BTRFS_LIST_H__
 
-#if BTRFS_FLAT_INCLUDES
 #include "kerncompat.h"
 #include "kernel-lib/rbtree.h"
 #include "ioctl.h"
-#else
-#include <btrfs/kerncompat.h>
-#include <btrfs/rbtree.h>
-#include <btrfs/ioctl.h>
-#endif /* BTRFS_FLAT_INCLUDES */
-
 #include <time.h>
 
 enum btrfs_list_layout {
