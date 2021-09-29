@@ -135,8 +135,7 @@ struct root_info {
 
 typedef int (*btrfs_list_filter_func)(struct root_info *, u64);
 typedef int (*btrfs_list_comp_func)(const struct root_info *a,
-				    const struct root_info *b,
-				    int is_descending);
+				    const struct root_info *b);
 
 struct btrfs_list_filter {
 	btrfs_list_filter_func filter_func;
@@ -293,67 +292,43 @@ void btrfs_list_setup_print_column(enum btrfs_list_column_enum column)
 }
 
 static int comp_entry_with_rootid(const struct root_info *entry1,
-				  const struct root_info *entry2,
-				  int is_descending)
+				  const struct root_info *entry2)
 {
-	int ret;
-
 	if (entry1->root_id > entry2->root_id)
-		ret = 1;
+		return 1;
 	else if (entry1->root_id < entry2->root_id)
-		ret = -1;
-	else
-		ret = 0;
-
-	return is_descending ? -ret : ret;
+		return -1;
+	return 0;
 }
 
 static int comp_entry_with_gen(const struct root_info *entry1,
-			       const struct root_info *entry2,
-			       int is_descending)
+			       const struct root_info *entry2)
 {
-	int ret;
-
 	if (entry1->gen > entry2->gen)
-		ret = 1;
+		return 1;
 	else if (entry1->gen < entry2->gen)
-		ret = -1;
-	else
-		ret = 0;
-
-	return is_descending ? -ret : ret;
+		return -1;
+	return 0;
 }
 
 static int comp_entry_with_ogen(const struct root_info *entry1,
-				const struct root_info *entry2,
-				int is_descending)
+				const struct root_info *entry2)
 {
-	int ret;
-
 	if (entry1->ogen > entry2->ogen)
-		ret = 1;
+		return 1;
 	else if (entry1->ogen < entry2->ogen)
-		ret = -1;
-	else
-		ret = 0;
-
-	return is_descending ? -ret : ret;
+		return -1;
+	return 0;
 }
 
 static int comp_entry_with_path(const struct root_info *entry1,
-				const struct root_info *entry2,
-				int is_descending)
+				const struct root_info *entry2)
 {
-	int ret;
-
 	if (strcmp(entry1->full_path, entry2->full_path) > 0)
-		ret = 1;
+		return 1;
 	else if (strcmp(entry1->full_path, entry2->full_path) < 0)
-		ret = -1;
-	else
-		ret = 0;
-
-	return is_descending ? -ret : ret;
+		return -1;
+	return 0;
 }
 
 static btrfs_list_comp_func all_comp_funcs[] = {
@@ -427,14 +402,15 @@ static int sort_comp(const struct root_info *entry1, const struct root_info *ent
 	int i, ret = 0;
 
 	if (!set || !set->ncomps)
-		return comp_entry_with_rootid(entry1, entry2, 0);
+		return comp_entry_with_rootid(entry1, entry2);
 
 	for (i = 0; i < set->ncomps; i++) {
 		if (!set->comps[i].comp_func)
 			break;
 
-		ret = set->comps[i].comp_func(entry1, entry2,
-					      set->comps[i].is_descending);
+		ret = set->comps[i].comp_func(entry1, entry2);
+		if (set->comps[i].is_descending)
+			ret = -ret;
 		if (ret)
 			return ret;
 
@@ -443,7 +419,7 @@ static int sort_comp(const struct root_info *entry1, const struct root_info *ent
 	}
 
 	if (!rootid_compared)
-		ret = comp_entry_with_rootid(entry1, entry2, 0);
+		ret = comp_entry_with_rootid(entry1, entry2);
 
 	return ret;
 }
@@ -492,7 +468,7 @@ static int root_tree_insert(struct rb_root *root_tree,
 		parent = *p;
 		curr = to_root_info(parent);
 
-		ret = comp_entry_with_rootid(ins, curr, 0);
+		ret = comp_entry_with_rootid(ins, curr);
 		if (ret < 0)
 			p = &(*p)->rb_left;
 		else if (ret > 0)
@@ -523,7 +499,7 @@ static struct root_info *root_tree_search(struct rb_root *root_tree,
 	while(n) {
 		entry = to_root_info(n);
 
-		ret = comp_entry_with_rootid(&tmp, entry, 0);
+		ret = comp_entry_with_rootid(&tmp, entry);
 		if (ret < 0)
 			n = n->rb_left;
 		else if (ret > 0)
