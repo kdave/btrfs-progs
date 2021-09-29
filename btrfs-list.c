@@ -915,60 +915,6 @@ build:
 	return full;
 }
 
-int btrfs_list_get_default_subvolume(int fd, u64 *default_id)
-{
-	struct btrfs_ioctl_search_args args;
-	struct btrfs_ioctl_search_key *sk = &args.key;
-	struct btrfs_ioctl_search_header *sh;
-	u64 found = 0;
-	int ret;
-
-	memset(&args, 0, sizeof(args));
-
-	/*
-	 * search for a dir item with a name 'default' in the tree of
-	 * tree roots, it should point us to a default root
-	 */
-	sk->tree_id = BTRFS_ROOT_TREE_OBJECTID;
-
-	/* don't worry about ancient format and request only one item */
-	sk->nr_items = 1;
-
-	sk->max_objectid = BTRFS_ROOT_TREE_DIR_OBJECTID;
-	sk->min_objectid = BTRFS_ROOT_TREE_DIR_OBJECTID;
-	sk->max_type = BTRFS_DIR_ITEM_KEY;
-	sk->min_type = BTRFS_DIR_ITEM_KEY;
-	sk->max_offset = (u64)-1;
-	sk->max_transid = (u64)-1;
-
-	ret = ioctl(fd, BTRFS_IOC_TREE_SEARCH, &args);
-	if (ret < 0)
-		return ret;
-
-	/* the ioctl returns the number of items it found in nr_items */
-	if (sk->nr_items == 0)
-		goto out;
-
-	sh = (struct btrfs_ioctl_search_header *)args.buf;
-
-	if (btrfs_search_header_type(sh) == BTRFS_DIR_ITEM_KEY) {
-		struct btrfs_dir_item *di;
-		int name_len;
-		char *name;
-
-		di = (struct btrfs_dir_item *)(sh + 1);
-		name_len = btrfs_stack_dir_name_len(di);
-		name = (char *)(di + 1);
-
-		if (!strncmp("default", name, name_len))
-			found = btrfs_disk_key_objectid(&di->location);
-	}
-
-out:
-	*default_id = found;
-	return 0;
-}
-
 static int list_subvol_search(int fd, struct root_lookup *root_lookup)
 {
 	int ret;
