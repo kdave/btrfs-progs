@@ -43,8 +43,6 @@
 #include "cmds/commands.h"
 #include "common/utils.h"
 #include "kernel-lib/list.h"
-#include "btrfs-list.h"
-
 #include "kernel-shared/send.h"
 #include "common/send-stream.h"
 #include "common/send-utils.h"

@@ -28,7 +28,6 @@
 #include "common/messages.h"
 #include "common/utils.h"
 #include "ioctl.h"
-#include "btrfs-list.h"
 
 static int btrfs_subvolid_resolve_sub(int fd, char *path, size_t *path_len,
 				      u64 subvol_id);

@@ -18,7 +18,6 @@
  */
 
 #include "kernel-shared/ctree.h"
-#include "btrfs-list.h"
 #include "kernel-shared/delayed-ref.h"
 #include "kernel-shared/transaction.h"
 

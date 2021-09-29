@@ -30,7 +30,6 @@
 #include "common/send-utils.h"
 #include "kernel-shared/disk-io.h"
 #include "cmds/commands.h"
-#include "btrfs-list.h"
 #include "common/help.h"
 #include "common/open-utils.h"
 #include "common/units.h"
