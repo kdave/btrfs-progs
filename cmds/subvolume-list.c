@@ -134,8 +134,9 @@ struct root_info {
 };
 
 typedef int (*btrfs_list_filter_func)(struct root_info *, u64);
-typedef int (*btrfs_list_comp_func)(struct root_info *, struct root_info *,
-				    int);
+typedef int (*btrfs_list_comp_func)(const struct root_info *a,
+				    const struct root_info *b,
+				    int is_descending);
 
 struct btrfs_list_filter {
 	btrfs_list_filter_func filter_func;
@@ -291,8 +292,8 @@ void btrfs_list_setup_print_column(enum btrfs_list_column_enum column)
 		btrfs_list_columns[i].need_print = 1;
 }
 
-static int comp_entry_with_rootid(struct root_info *entry1,
-				  struct root_info *entry2,
+static int comp_entry_with_rootid(const struct root_info *entry1,
+				  const struct root_info *entry2,
 				  int is_descending)
 {
 	int ret;
@@ -307,8 +308,8 @@ static int comp_entry_with_rootid(struct root_info *entry1,
 	return is_descending ? -ret : ret;
 }
 
-static int comp_entry_with_gen(struct root_info *entry1,
-			       struct root_info *entry2,
+static int comp_entry_with_gen(const struct root_info *entry1,
+			       const struct root_info *entry2,
 			       int is_descending)
 {
 	int ret;
@@ -323,8 +324,8 @@ static int comp_entry_with_gen(struct root_info *entry1,
 	return is_descending ? -ret : ret;
 }
 
-static int comp_entry_with_ogen(struct root_info *entry1,
-				struct root_info *entry2,
+static int comp_entry_with_ogen(const struct root_info *entry1,
+				const struct root_info *entry2,
 				int is_descending)
 {
 	int ret;
@@ -339,8 +340,8 @@ static int comp_entry_with_ogen(struct root_info *entry1,
 	return is_descending ? -ret : ret;
 }
 
-static int comp_entry_with_path(struct root_info *entry1,
-				struct root_info *entry2,
+static int comp_entry_with_path(const struct root_info *entry1,
+				const struct root_info *entry2,
 				int is_descending)
 {
 	int ret;
@@ -419,7 +420,7 @@ static int btrfs_list_setup_comparer(struct btrfs_list_comparer_set **comp_set,
 	return 0;
 }
 
-static int sort_comp(struct root_info *entry1, struct root_info *entry2,
+static int sort_comp(const struct root_info *entry1, const struct root_info *entry2,
 		     struct btrfs_list_comparer_set *set)
 {
 	int rootid_compared = 0;
