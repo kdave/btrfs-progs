@@ -1114,24 +1114,6 @@ static void filter_and_sort_subvol(struct rb_root *all_subvols,
 	}
 }
 
-static int list_subvol_fill_paths(int fd, struct rb_root *root_lookup)
-{
-	struct rb_node *n;
-
-	n = rb_first(root_lookup);
-	while (n) {
-		struct root_info *entry;
-		int ret;
-		entry = to_root_info(n);
-		ret = lookup_ino_path(fd, entry);
-		if (ret && ret != -ENOENT)
-			return ret;
-		n = rb_next(n);
-	}
-
-	return 0;
-}
-
 static void print_subvolume_column(struct root_info *subv,
 				   enum btrfs_list_column_enum column)
 {
@@ -1314,6 +1296,7 @@ next:
 static int btrfs_list_subvols(int fd, struct rb_root *root_lookup)
 {
 	int ret;
+	struct rb_node *n;
 
 	ret = list_subvol_search(fd, root_lookup);
 	if (ret) {
@@ -1325,8 +1308,18 @@ static int btrfs_list_subvols(int fd, struct rb_root *root_lookup)
 	 * now we have an rbtree full of root_info objects, but we need to fill
 	 * in their path names within the subvol that is referencing each one.
 	 */
-	ret = list_subvol_fill_paths(fd, root_lookup);
-	return ret;
+	n = rb_first(root_lookup);
+	while (n) {
+		struct root_info *entry;
+		int ret;
+		entry = to_root_info(n);
+		ret = lookup_ino_path(fd, entry);
+		if (ret && ret != -ENOENT)
+			return ret;
+		n = rb_next(n);
+	}
+
+	return 0;
 }
 
 static int btrfs_list_subvols_print(int fd, struct btrfs_list_filter_set *filter_set,
