@@ -165,6 +165,5 @@ int btrfs_list_subvols_print(int fd, struct btrfs_list_filter_set *filter_set,
 		       const char *raw_prefix);
 int btrfs_list_find_updated_files(int fd, u64 root_id, u64 oldest_gen);
 int btrfs_list_get_default_subvolume(int fd, u64 *default_id);
-char *btrfs_list_path_for_root(int fd, u64 root);
 
 #endif

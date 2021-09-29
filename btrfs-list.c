@@ -1726,51 +1726,6 @@ int btrfs_list_find_updated_files(int fd, u64 root_id, u64 oldest_gen)
 	return ret;
 }
 
-char *btrfs_list_path_for_root(int fd, u64 root)
-{
-	struct root_lookup root_lookup;
-	struct rb_node *n;
-	char *ret_path = NULL;
-	int ret;
-	u64 top_id;
-
-	ret = lookup_path_rootid(fd, &top_id);
-	if (ret) {
-		errno = -ret;
-		error("cannot resolve rootid for path: %m");
-		return ERR_PTR(ret);
-	}
-
-	ret = list_subvol_search(fd, &root_lookup);
-	if (ret < 0)
-		return ERR_PTR(ret);
-
-	ret = list_subvol_fill_paths(fd, &root_lookup);
-	if (ret < 0)
-		return ERR_PTR(ret);
-
-	n = rb_last(&root_lookup.root);
-	while (n) {
-		struct root_info *entry;
-
-		entry = to_root_info(n);
-		ret = resolve_root(&root_lookup, entry, top_id);
-		if (ret == -ENOENT && entry->root_id == root) {
-			ret_path = NULL;
-			break;
-		}
-		if (entry->root_id == root) {
-			ret_path = entry->full_path;
-			entry->full_path = NULL;
-		}
-
-		n = rb_prev(n);
-	}
-	rb_free_nodes(&root_lookup.root, free_root_info);
-
-	return ret_path;
-}
-
 int btrfs_list_parse_sort_string(char *opt_arg,
 				 struct btrfs_list_comparer_set **comps)
 {
