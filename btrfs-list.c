@@ -1549,57 +1549,6 @@ int btrfs_list_subvols_print(int fd, struct btrfs_list_filter_set *filter_set,
 	return 0;
 }
 
-static char *strdup_or_null(const char *s)
-{
-	if (!s)
-		return NULL;
-	return strdup(s);
-}
-
-int btrfs_get_subvol(int fd, struct root_info *the_ri)
-{
-	int ret, rr;
-	struct root_lookup rl;
-	struct rb_node *rbn;
-	struct root_info *ri;
-	u64 root_id;
-
-	ret = lookup_path_rootid(fd, &root_id);
-	if (ret) {
-		errno = -ret;
-		error("cannot resolve rootid for path: %m");
-		return ret;
-	}
-
-	ret = btrfs_list_subvols(fd, &rl);
-	if (ret)
-		return ret;
-
-	rbn = rb_first(&rl.root);
-	while(rbn) {
-		ri = to_root_info(rbn);
-		rr = resolve_root(&rl, ri, root_id);
-		if (rr == -ENOENT) {
-			ret = -ENOENT;
-			rbn = rb_next(rbn);
-			continue;
-		}
-
-		if (!comp_entry_with_rootid(the_ri, ri, 0) ||
-			!uuid_compare(the_ri->uuid, ri->uuid)) {
-			memcpy(the_ri, ri, offsetof(struct root_info, path));
-			the_ri->path = strdup_or_null(ri->path);
-			the_ri->name = strdup_or_null(ri->name);
-			the_ri->full_path = strdup_or_null(ri->full_path);
-			ret = 0;
-			break;
-		}
-		rbn = rb_next(rbn);
-	}
-	rb_free_nodes(&rl.root, free_root_info);
-	return ret;
-}
-
 static int print_one_extent(int fd, struct btrfs_ioctl_search_header *sh,
 			    struct btrfs_file_extent_item *item,
 			    u64 found_gen, u64 *cache_dirid,
