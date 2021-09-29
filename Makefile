@@ -189,7 +189,6 @@ objects = \
 	common/utils.o	\
 	check/qgroup-verify.o	\
 	cmds/receive-dump.o	\
-	btrfs-list.o	\
 	crypto/crc32c.o	\
 	crypto/hash.o	\
 	crypto/xxhash.o	\
