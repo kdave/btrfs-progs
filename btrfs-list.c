@@ -1556,40 +1556,6 @@ static char *strdup_or_null(const char *s)
 	return strdup(s);
 }
 
-int btrfs_get_toplevel_subvol(int fd, struct root_info *the_ri)
-{
-	int ret;
-	struct root_lookup rl;
-	struct rb_node *rbn;
-	struct root_info *ri;
-	u64 root_id;
-
-	ret = lookup_path_rootid(fd, &root_id);
-	if (ret) {
-		errno = -ret;
-		error("cannot resolve rootid for path: %m");
-		return ret;
-	}
-
-	ret = btrfs_list_subvols(fd, &rl);
-	if (ret)
-		return ret;
-
-	rbn = rb_first(&rl.root);
-	ri = to_root_info(rbn);
-
-	if (ri->root_id != BTRFS_FS_TREE_OBJECTID)
-		return -ENOENT;
-
-	memcpy(the_ri, ri, offsetof(struct root_info, path));
-	the_ri->path = strdup_or_null("/");
-	the_ri->name = strdup_or_null("<FS_TREE>");
-	the_ri->full_path = strdup_or_null("/");
-	rb_free_nodes(&rl.root, free_root_info);
-
-	return ret;
-}
-
 int btrfs_get_subvol(int fd, struct root_info *the_ri)
 {
 	int ret, rr;
