@@ -130,6 +130,7 @@ int handle_command_group(const struct cmd_struct *cmd, int argc, char **argv);
 extern const char * const generic_cmd_help_usage[];
 
 DECLARE_COMMAND(subvolume);
+DECLARE_COMMAND(subvol_list);
 DECLARE_COMMAND(filesystem);
 DECLARE_COMMAND(filesystem_du);
 DECLARE_COMMAND(filesystem_usage);
