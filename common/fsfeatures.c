@@ -28,8 +28,15 @@
  *
  * Only used in make_btrfs_v2().
  */
-#define VERSION_TO_STRING3(a,b,c)	#a "." #b "." #c, KERNEL_VERSION(a,b,c)
-#define VERSION_TO_STRING2(a,b)		#a "." #b, KERNEL_VERSION(a,b,0)
+#define VERSION_TO_STRING3(name, a,b,c)				\
+	.name ## _str = #a "." #b "." #c,			\
+	.name ## _ver = KERNEL_VERSION(a,b,c)
+#define VERSION_TO_STRING2(name, a,b)				\
+	.name ## _str = #a "." #b,				\
+	.name ## _ver = KERNEL_VERSION(a,b,0)
+#define VERSION_NULL(name)					\
+	.name ## _str = NULL,					\
+	.name ## _ver = 0
 
 enum feature_source {
 	FS_FEATURES,
@@ -65,66 +72,106 @@ struct btrfs_feature {
 };
 
 static const struct btrfs_feature mkfs_features[] = {
-	{ "mixed-bg", BTRFS_FEATURE_INCOMPAT_MIXED_GROUPS,
-		"mixed_groups",
-		VERSION_TO_STRING3(2,6,37),
-		VERSION_TO_STRING3(2,6,37),
-		NULL, 0,
-		"mixed data and metadata block groups" },
-	{ "extref", BTRFS_FEATURE_INCOMPAT_EXTENDED_IREF,
-		"extended_iref",
-		VERSION_TO_STRING2(3,7),
-		VERSION_TO_STRING2(3,12),
-		VERSION_TO_STRING2(3,12),
-		"increased hardlink limit per file to 65536" },
-	{ "raid56", BTRFS_FEATURE_INCOMPAT_RAID56,
-		"raid56",
-		VERSION_TO_STRING2(3,9),
-		NULL, 0,
-		NULL, 0,
-		"raid56 extended format" },
-	{ "skinny-metadata", BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA,
-		"skinny_metadata",
-		VERSION_TO_STRING2(3,10),
-		VERSION_TO_STRING2(3,18),
-		VERSION_TO_STRING2(3,18),
-		"reduced-size metadata extent refs" },
-	{ "no-holes", BTRFS_FEATURE_INCOMPAT_NO_HOLES,
-		"no_holes",
-		VERSION_TO_STRING2(3,14),
-		VERSION_TO_STRING2(4,0),
-		NULL, 0,
-		"no explicit hole extents for files" },
-	{ "raid1c34", BTRFS_FEATURE_INCOMPAT_RAID1C34,
-		"raid1c34",
-		VERSION_TO_STRING2(5,5),
-		NULL, 0,
-		NULL, 0,
-		"RAID1 with 3 or 4 copies" },
+	{
+		.name		= "mixed-bg",
+		.flag		= BTRFS_FEATURE_INCOMPAT_MIXED_GROUPS,
+		.sysfs_name	= "mixed_groups",
+		VERSION_TO_STRING3(compat, 2,6,37),
+		VERSION_TO_STRING3(safe, 2,6,37),
+		VERSION_NULL(default),
+		.desc		= "mixed data and metadata block groups"
+	}, {
+		.name		= "extref",
+		.flag		= BTRFS_FEATURE_INCOMPAT_EXTENDED_IREF,
+		.sysfs_name	= "extended_iref",
+		VERSION_TO_STRING2(compat, 3,7),
+		VERSION_TO_STRING2(safe, 3,12),
+		VERSION_TO_STRING2(default, 3,12),
+		.desc		= "increased hardlink limit per file to 65536"
+	}, {
+		.name		= "raid56",
+		.flag		= BTRFS_FEATURE_INCOMPAT_RAID56,
+		.sysfs_name	= "raid56",
+		VERSION_TO_STRING2(compat, 3,9),
+		VERSION_NULL(safe),
+		VERSION_NULL(default),
+		.desc		= "raid56 extended format"
+	}, {
+		.name		= "skinny-metadata",
+		.flag		= BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA,
+		.sysfs_name	= "skinny_metadata",
+		VERSION_TO_STRING2(compat, 3,10),
+		VERSION_TO_STRING2(safe, 3,18),
+		VERSION_TO_STRING2(default, 3,18),
+		.desc		= "reduced-size metadata extent refs"
+	}, {
+		.name		= "no-holes",
+		.flag		= BTRFS_FEATURE_INCOMPAT_NO_HOLES,
+		.sysfs_name	= "no_holes",
+		VERSION_TO_STRING2(compat, 3,14),
+		VERSION_TO_STRING2(safe, 4,0),
+		VERSION_NULL(default),
+		.desc		= "no explicit hole extents for files"
+	}, {
+		.name		= "raid1c34",
+		.flag		= BTRFS_FEATURE_INCOMPAT_RAID1C34,
+		.sysfs_name	= "raid1c34",
+		VERSION_TO_STRING2(compat, 5,5),
+		VERSION_NULL(safe),
+		VERSION_NULL(default),
+		.desc		= "RAID1 with 3 or 4 copies"
+	},
 #ifdef BTRFS_ZONED
-	{ "zoned", BTRFS_FEATURE_INCOMPAT_ZONED,
-		"zoned",
-		VERSION_TO_STRING2(5,12),
-		NULL, 0,
-		NULL, 0,
-		"support zoned devices" },
+	{
+		.name		= "zoned",
+		.flag		= BTRFS_FEATURE_INCOMPAT_ZONED,
+		.sysfs_name	= "zoned",
+		VERSION_TO_STRING2(compat, 5,12),
+		VERSION_NULL(safe),
+		VERSION_NULL(default),
+		.desc		= "support zoned devices"
+	},
 #endif
 	/* Keep this one last */
-	{ "list-all", BTRFS_FEATURE_LIST_ALL, NULL }
+	{
+		.name = "list-all",
+		.flag = BTRFS_FEATURE_LIST_ALL,
+		.sysfs_name = NULL,
+		VERSION_NULL(compat),
+		VERSION_NULL(safe),
+		VERSION_NULL(default),
+		.desc = NULL
+	}
 };
 
 static const struct btrfs_feature runtime_features[] = {
-	{ "quota", BTRFS_RUNTIME_FEATURE_QUOTA, NULL,
-		VERSION_TO_STRING2(3, 4), NULL, 0, NULL, 0,
-		"quota support (qgroups)" },
-	{ "free-space-tree", BTRFS_RUNTIME_FEATURE_FREE_SPACE_TREE,
-		"free_space_tree",
-		VERSION_TO_STRING2(4, 5),
-		VERSION_TO_STRING2(4, 9),
-		NULL, 0,
-		"free space tree (space_cache=v2)" },
+	{
+		.name		= "quota",
+		.flag		= BTRFS_RUNTIME_FEATURE_QUOTA,
+		.sysfs_name	= NULL,
+		VERSION_TO_STRING2(compat, 3,4),
+		VERSION_NULL(safe),
+		VERSION_NULL(default),
+		.desc		= "quota support (qgroups)"
+	}, {
+		.name		= "free-space-tree",
+		.flag		= BTRFS_RUNTIME_FEATURE_FREE_SPACE_TREE,
+		.sysfs_name = "free_space_tree",
+		VERSION_TO_STRING2(compat, 4,5),
+		VERSION_TO_STRING2(safe, 4,9),
+		VERSION_NULL(default),
+		.desc		= "free space tree (space_cache=v2)"
+	},
 	/* Keep this one last */
-	{ "list-all", BTRFS_FEATURE_LIST_ALL, NULL }
+	{
+		.name = "list-all",
+		.flag = BTRFS_FEATURE_LIST_ALL,
+		.sysfs_name = NULL,
+		VERSION_NULL(compat),
+		VERSION_NULL(safe),
+		VERSION_NULL(default),
+		.desc = NULL
+	}
 };
 
 static size_t get_feature_array_size(enum feature_source source)
