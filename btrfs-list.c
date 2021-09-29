@@ -872,24 +872,6 @@ static btrfs_list_filter_func all_filter_funcs[] = {
 	[BTRFS_LIST_FILTER_DELETED]		= filter_deleted,
 };
 
-struct btrfs_list_filter_set *btrfs_list_alloc_filter_set(void)
-{
-	struct btrfs_list_filter_set *set;
-	int size;
-
-	size = sizeof(struct btrfs_list_filter_set) +
-	       BTRFS_LIST_NFILTERS_INCREASE * sizeof(struct btrfs_list_filter);
-	set = calloc(1, size);
-	if (!set) {
-		fprintf(stderr, "memory allocation failed\n");
-		exit(1);
-	}
-
-	set->total = BTRFS_LIST_NFILTERS_INCREASE;
-
-	return set;
-}
-
 /*
  * Setup list filters. Exit if there's not enough memory, as we can't continue
  * without the structures set up properly.
