@@ -34,9 +34,6 @@
 #include "btrfs-list.h"
 #include "common/rbtree-utils.h"
 
-#define BTRFS_LIST_NFILTERS_INCREASE	(2 * BTRFS_LIST_FILTER_MAX)
-#define BTRFS_LIST_NCOMPS_INCREASE	(2 * BTRFS_LIST_COMP_MAX)
-
 /* we store all the roots we find in an rbtree so that we can
  * search for them later.
  */
@@ -222,24 +219,6 @@ static int  btrfs_list_get_sort_item(char *sort_name)
 			return i;
 	}
 	return -1;
-}
-
-struct btrfs_list_comparer_set *btrfs_list_alloc_comparer_set(void)
-{
-	struct btrfs_list_comparer_set *set;
-	int size;
-
-	size = sizeof(struct btrfs_list_comparer_set) +
-	       BTRFS_LIST_NCOMPS_INCREASE * sizeof(struct btrfs_list_comparer);
-	set = calloc(1, size);
-	if (!set) {
-		fprintf(stderr, "memory allocation failed\n");
-		exit(1);
-	}
-
-	set->total = BTRFS_LIST_NCOMPS_INCREASE;
-
-	return set;
 }
 
 static int btrfs_list_setup_comparer(struct btrfs_list_comparer_set **comp_set,

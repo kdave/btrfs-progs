@@ -69,6 +69,24 @@ static const char * const cmd_subvol_list_usage[] = {
 	NULL,
 };
 
+static struct btrfs_list_comparer_set *btrfs_list_alloc_comparer_set(void)
+{
+	struct btrfs_list_comparer_set *set;
+	int size;
+
+	size = sizeof(struct btrfs_list_comparer_set) +
+	       BTRFS_LIST_NCOMPS_INCREASE * sizeof(struct btrfs_list_comparer);
+	set = calloc(1, size);
+	if (!set) {
+		fprintf(stderr, "memory allocation failed\n");
+		exit(1);
+	}
+
+	set->total = BTRFS_LIST_NCOMPS_INCREASE;
+
+	return set;
+}
+
 static int cmd_subvol_list(const struct cmd_struct *cmd, int argc, char **argv)
 {
 	struct btrfs_list_filter_set *filter_set;

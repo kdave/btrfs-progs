@@ -24,6 +24,9 @@
 #include "ioctl.h"
 #include <time.h>
 
+#define BTRFS_LIST_NFILTERS_INCREASE	(2 * BTRFS_LIST_FILTER_MAX)
+#define BTRFS_LIST_NCOMPS_INCREASE	(2 * BTRFS_LIST_COMP_MAX)
+
 enum btrfs_list_layout {
 	BTRFS_LIST_LAYOUT_DEFAULT = 0,
 	BTRFS_LIST_LAYOUT_TABLE,
@@ -157,7 +160,6 @@ void btrfs_list_setup_print_column(enum btrfs_list_column_enum column);
 struct btrfs_list_filter_set *btrfs_list_alloc_filter_set(void);
 void btrfs_list_setup_filter(struct btrfs_list_filter_set **filter_set,
 			    enum btrfs_list_filter_enum filter, u64 data);
-struct btrfs_list_comparer_set *btrfs_list_alloc_comparer_set(void);
 
 int btrfs_list_subvols_print(int fd, struct btrfs_list_filter_set *filter_set,
 		       struct btrfs_list_comparer_set *comp_set,
