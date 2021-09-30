@@ -317,6 +317,15 @@ fi
 AS_IF([test "x$enable_zstd" = xyes], [BTRFSRESTORE_ZSTD=1], [BTRFSRESTORE_ZSTD=0])
 AC_SUBST(BTRFSRESTORE_ZSTD)
 
+PKG_CHECK_EXISTS([libudev], [pkg_config_libudev=yes], [pkg_config_libudev=no])
+if test "x$pkg_config_libudev" = xyes; then
+	PKG_CHECK_MODULES([LIBUDEV], [libudev])
+	AC_DEFINE([HAVE_LIBUDEV], [1], [Define to 1 if libudev is available])
+else
+	AC_MSG_CHECKING([for LIBUDEV])
+	AC_MSG_RESULT([no])
+fi
+
 AC_ARG_ENABLE([python],
 	AS_HELP_STRING([--disable-python], [do not build libbtrfsutil Python bindings]),
 	[], [enable_python=$enable_shared]

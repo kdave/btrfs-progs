@@ -129,7 +129,7 @@ LIBS = $(LIBS_BASE) $(LIBS_CRYPTO)
 LIBBTRFS_LIBS = $(LIBS_BASE) $(LIBS_CRYPTO)
 
 # Static compilation flags
-STATIC_CFLAGS = $(CFLAGS) -ffunction-sections -fdata-sections
+STATIC_CFLAGS = $(CFLAGS) -ffunction-sections -fdata-sections -DSTATIC_BUILD
 STATIC_LDFLAGS = -static -Wl,--gc-sections
 STATIC_LIBS = $(STATIC_LIBS_BASE)
 
