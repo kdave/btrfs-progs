@@ -348,7 +348,7 @@ static int init_root_path(struct btrfs_send *sctx, const char *subvol)
 		goto out;
 	}
 
-	ret = subvol_uuid_search_init(sctx->mnt_fd, &sctx->sus);
+	sctx->sus.mnt_fd = sctx->mnt_fd;
 	if (ret < 0) {
 		errno = -ret;
 		error("failed to initialize subvol search: %m");

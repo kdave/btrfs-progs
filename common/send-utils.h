@@ -47,7 +47,6 @@ struct subvol_uuid_search {
 	int mnt_fd;
 };
 
-int subvol_uuid_search_init(int mnt_fd, struct subvol_uuid_search *s);
 /*
  * Search for a subvolume by given type (received uuid, root id, path), returns
  * pointer to newly allocated struct subvol_info or NULL in case it's not found

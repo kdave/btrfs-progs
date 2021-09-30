@@ -369,10 +369,3 @@ out:
 
 	return info;
 }
-
-int subvol_uuid_search_init(int mnt_fd, struct subvol_uuid_search *s)
-{
-	s->mnt_fd = mnt_fd;
-
-	return 0;
-}

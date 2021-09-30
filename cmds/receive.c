@@ -1109,10 +1109,7 @@ static int do_receive(struct btrfs_receive *rctx, const char *tomnt,
 			rctx->dest_dir_path++;
 	}
 
-	ret = subvol_uuid_search_init(rctx->mnt_fd, &rctx->sus);
-	if (ret < 0)
-		goto out;
-
+	rctx->sus.mnt_fd = rctx->mnt_fd;
 	while (!end) {
 		ret = btrfs_read_and_process_send_stream(r_fd, &send_ops,
 							 rctx,
