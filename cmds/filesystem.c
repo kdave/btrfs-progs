@@ -754,6 +754,7 @@ static int cmd_filesystem_show(const struct cmd_struct *cmd,
 devs_only:
 	if (type == BTRFS_ARG_REG) {
 		/*
+		 * Given input (search) is regular file.
 		 * We don't close the fs_info because it will free the device,
 		 * this is not a long-running process so it's fine
 		 */
@@ -770,16 +771,17 @@ devs_only:
 		return 1;
 	}
 
+	/*
+	 * The seed/sprout mappings are not detected yet, do mapping build for
+	 * all umounted filesystems. But first, copy all unmounted UUIDs only
+	 * to all_uuids.
+	 */
 	ret = search_umounted_fs_uuids(&all_uuids, search, &found);
 	if (ret < 0) {
 		error("searching target device returned error %d", ret);
 		return 1;
 	}
 
-	/*
-	 * The seed/sprout mapping are not detected yet,
-	 * do mapping build for all umounted fs
-	 */
 	ret = map_seed_devices(&all_uuids);
 	if (ret) {
 		error("mapping seed devices returned error %d", ret);
