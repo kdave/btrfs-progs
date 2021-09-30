@@ -286,19 +286,6 @@ struct subvol_info *subvol_uuid_search(int mnt_fd,
 				       const char *path,
 				       enum subvol_search_type type)
 {
-	struct subvol_info *si;
-
-	si = subvol_uuid_search2(mnt_fd, root_id, uuid, transid, path, type);
-	if (IS_ERR(si))
-		return NULL;
-	return si;
-}
-
-struct subvol_info *subvol_uuid_search2(int mnt_fd,
-				       u64 root_id, const u8 *uuid, u64 transid,
-				       const char *path,
-				       enum subvol_search_type type)
-{
 	int ret = 0;
 	struct btrfs_root_item root_item;
 	struct subvol_info *info = NULL;

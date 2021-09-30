@@ -46,19 +46,9 @@ struct subvol_info {
 /*
  * Search for a subvolume by given type (received uuid, root id, path), returns
  * pointer to newly allocated struct subvol_info or NULL in case it's not found
- * or there was another error. This ambiguity of error value is fixed by
- * subvol_uuid_search2 that returns a negative errno in case of an error, of a
- * valid pointer otherwise.
- *
- * This function will be deprecated in the future, please consider using v2 in
- * new code unless you need to keep backward compatibility with older
- * btrfs-progs.
+ * or there was another error.
  */
 struct subvol_info *subvol_uuid_search(int mnt_fd,
-				       u64 root_id, const u8 *uuid, u64 transid,
-				       const char *path,
-				       enum subvol_search_type type);
-struct subvol_info *subvol_uuid_search2(int mnt_fd,
 				       u64 root_id, const u8 *uuid, u64 transid,
 				       const char *path,
 				       enum subvol_search_type type);
