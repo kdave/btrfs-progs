@@ -73,7 +73,4 @@ void subvol_uuid_search_add(struct subvol_uuid_search *s,
 
 int btrfs_subvolid_resolve(int fd, char *path, size_t path_len, u64 subvol_id);
 
-int path_cat_out(char *out, const char *p1, const char *p2);
-int path_cat3_out(char *out, const char *p1, const char *p2, const char *p3);
-
 #endif

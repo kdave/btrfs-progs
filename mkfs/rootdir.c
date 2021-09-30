@@ -36,6 +36,7 @@
 #include "mkfs/rootdir.h"
 #include "mkfs/common.h"
 #include "common/send-utils.h"
+#include "common/path-utils.h"
 
 static u32 fs_block_size;
 
