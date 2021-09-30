@@ -29,6 +29,7 @@
 #include <dirent.h>
 #include <blkid/blkid.h>
 #include <uuid/uuid.h>
+#include <sys/sysmacros.h>
 #ifdef HAVE_LIBUDEV
 #include <sys/stat.h>
 #include <libudev.h>
@@ -372,23 +373,54 @@ void free_seen_fsid(struct seen_fsid *seen_fsid_hash[])
 	}
 }
 
-#ifdef HAVE_LIBUDEV
-static bool is_path_device(char *device_path)
+#ifdef STATIC_BUILD
+static bool is_path_device(dev_t device)
+{
+	FILE *file;
+	char *line = NULL;
+	size_t len = 0;
+	ssize_t nread;
+	bool ret = false;
+	int ret2;
+	char path[PATH_MAX];
+
+	ret2 = snprintf(path, sizeof(path), "/run/udev/data/b%u:%u", major(device),
+			minor(device));
+
+	if (ret2 < 0)
+		return false;
+
+	file = fopen(path, "r");
+	if (file == NULL)
+		return false;
+
+	while ((nread = getline(&line, &len, file)) != -1) {
+		if (strstr(line, "DM_MULTIPATH_DEVICE_PATH=1")) {
+			ret = true;
+			break;
+		}
+	}
+
+	if (line)
+		free(line);
+
+	fclose(file);
+
+	return ret;
+}
+#elif defined(HAVE_LIBUDEV)
+static bool is_path_device(dev_t device)
 {
 	struct udev *udev = NULL;
 	struct udev_device *dev = NULL;
-	struct stat dev_stat;
 	const char *val;
 	bool ret = false;
-
-	if (stat(device_path, &dev_stat) < 0)
-		return false;
 
 	udev = udev_new();
 	if (!udev)
 		goto out;
 
-	dev = udev_device_new_from_devnum(udev, 'b', dev_stat.st_rdev);
+	dev = udev_device_new_from_devnum(udev, 'b', device);
 	if (!dev)
 		goto out;
 
@@ -402,7 +434,7 @@ out:
 	return ret;
 }
 #else
-static bool is_path_device(char *device_path)
+static bool is_path_device(dev_t device)
 {
 	return false;
 }
@@ -432,13 +464,18 @@ int btrfs_scan_devices(int verbose)
 	iter = blkid_dev_iterate_begin(cache);
 	blkid_dev_set_search(iter, "TYPE", "btrfs");
 	while (blkid_dev_next(iter, &dev) == 0) {
+		struct stat dev_stat;
+
 		dev = blkid_verify(cache, dev);
 		if (!dev)
 			continue;
 		/* if we are here its definitely a btrfs disk*/
 		strncpy_null(path, blkid_dev_devname(dev));
 
-		if (is_path_device(path))
+		if (stat(path, &dev_stat) < 0)
+			continue;
+
+		if (is_path_device(dev_stat.st_rdev))
 			continue;
 
 		fd = open(path, O_RDONLY);
