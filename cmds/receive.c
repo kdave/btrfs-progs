@@ -71,8 +71,6 @@ struct btrfs_receive
 	 */
 	char cur_subvol_path[PATH_MAX];
 
-	struct subvol_uuid_search sus;
-
 	int honor_end_cmd;
 };
 
@@ -270,11 +268,11 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 	memset(&args_v2, 0, sizeof(args_v2));
 	strncpy_null(args_v2.name, path);
 
-	parent_subvol = subvol_uuid_search(&rctx->sus, 0, parent_uuid,
+	parent_subvol = subvol_uuid_search(rctx->mnt_fd, 0, parent_uuid,
 					   parent_ctransid, NULL,
 					   subvol_search_by_received_uuid);
 	if (IS_ERR_OR_NULL(parent_subvol)) {
-		parent_subvol = subvol_uuid_search(&rctx->sus, 0, parent_uuid,
+		parent_subvol = subvol_uuid_search(rctx->mnt_fd, 0, parent_uuid,
 						   parent_ctransid, NULL,
 						   subvol_search_by_uuid);
 	}
@@ -731,7 +729,7 @@ static int process_clone(const char *path, u64 offset, u64 len,
 		   BTRFS_UUID_SIZE) == 0) {
 		subvol_path = rctx->cur_subvol_path;
 	} else {
-		si = subvol_uuid_search(&rctx->sus, 0, clone_uuid, clone_ctransid,
+		si = subvol_uuid_search(rctx->mnt_fd, 0, clone_uuid, clone_ctransid,
 					NULL,
 					subvol_search_by_received_uuid);
 		if (IS_ERR_OR_NULL(si)) {
@@ -1109,7 +1107,6 @@ static int do_receive(struct btrfs_receive *rctx, const char *tomnt,
 			rctx->dest_dir_path++;
 	}
 
-	rctx->sus.mnt_fd = rctx->mnt_fd;
 	while (!end) {
 		ret = btrfs_read_and_process_send_stream(r_fd, &send_ops,
 							 rctx,

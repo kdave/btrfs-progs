@@ -57,15 +57,13 @@ struct btrfs_send {
 	u64 clone_sources_count;
 
 	char *root_path;
-	struct subvol_uuid_search sus;
 };
 
 static int get_root_id(struct btrfs_send *sctx, const char *path, u64 *root_id)
 {
 	struct subvol_info *si;
 
-	si = subvol_uuid_search(&sctx->sus, 0, NULL, 0, path,
-			subvol_search_by_path);
+	si = subvol_uuid_search(sctx->mnt_fd, 0, NULL, 0, path, subvol_search_by_path);
 	if (IS_ERR_OR_NULL(si)) {
 		if (!si)
 			return -ENOENT;
@@ -83,12 +81,12 @@ static struct subvol_info *get_parent(struct btrfs_send *sctx, u64 root_id)
 	struct subvol_info *si_tmp;
 	struct subvol_info *si;
 
-	si_tmp = subvol_uuid_search(&sctx->sus, root_id, NULL, 0, NULL,
+	si_tmp = subvol_uuid_search(sctx->mnt_fd, root_id, NULL, 0, NULL,
 			subvol_search_by_root_id);
 	if (IS_ERR_OR_NULL(si_tmp))
 		return si_tmp;
 
-	si = subvol_uuid_search(&sctx->sus, 0, si_tmp->parent_uuid, 0, NULL,
+	si = subvol_uuid_search(sctx->mnt_fd, 0, si_tmp->parent_uuid, 0, NULL,
 			subvol_search_by_uuid);
 	free(si_tmp->path);
 	free(si_tmp);
@@ -136,7 +134,7 @@ static int find_good_parent(struct btrfs_send *sctx, u64 root_id, u64 *found)
 
 		free(parent2->path);
 		free(parent2);
-		parent2 = subvol_uuid_search(&sctx->sus,
+		parent2 = subvol_uuid_search(sctx->mnt_fd,
 				sctx->clone_sources[i], NULL, 0, NULL,
 				subvol_search_by_root_id);
 		if (IS_ERR_OR_NULL(parent2)) {
@@ -348,7 +346,6 @@ static int init_root_path(struct btrfs_send *sctx, const char *subvol)
 		goto out;
 	}
 
-	sctx->sus.mnt_fd = sctx->mnt_fd;
 	if (ret < 0) {
 		errno = -ret;
 		error("failed to initialize subvol search: %m");

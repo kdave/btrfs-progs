@@ -43,10 +43,6 @@ struct subvol_info {
 	char *path;
 };
 
-struct subvol_uuid_search {
-	int mnt_fd;
-};
-
 /*
  * Search for a subvolume by given type (received uuid, root id, path), returns
  * pointer to newly allocated struct subvol_info or NULL in case it's not found
@@ -58,16 +54,15 @@ struct subvol_uuid_search {
  * new code unless you need to keep backward compatibility with older
  * btrfs-progs.
  */
-struct subvol_info *subvol_uuid_search(struct subvol_uuid_search *s,
+struct subvol_info *subvol_uuid_search(int mnt_fd,
 				       u64 root_id, const u8 *uuid, u64 transid,
 				       const char *path,
 				       enum subvol_search_type type);
-struct subvol_info *subvol_uuid_search2(struct subvol_uuid_search *s,
+struct subvol_info *subvol_uuid_search2(int mnt_fd,
 				       u64 root_id, const u8 *uuid, u64 transid,
 				       const char *path,
 				       enum subvol_search_type type);
-void subvol_uuid_search_add(struct subvol_uuid_search *s,
-			    struct subvol_info *si);
+void subvol_uuid_search_add(int mnt_fd, struct subvol_info *si);
 
 int btrfs_subvolid_resolve(int fd, char *path, size_t path_len, u64 subvol_id);
 

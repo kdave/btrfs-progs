@@ -273,8 +273,7 @@ static int btrfs_subvolid_resolve_sub(int fd, char *path, size_t *path_len,
 	return 0;
 }
 
-void subvol_uuid_search_add(struct subvol_uuid_search *s,
-			    struct subvol_info *si)
+void subvol_uuid_search_add(int mnt_fd, struct subvol_info *si)
 {
 	if (si) {
 		free(si->path);
@@ -282,20 +281,20 @@ void subvol_uuid_search_add(struct subvol_uuid_search *s,
 	}
 }
 
-struct subvol_info *subvol_uuid_search(struct subvol_uuid_search *s,
+struct subvol_info *subvol_uuid_search(int mnt_fd,
 				       u64 root_id, const u8 *uuid, u64 transid,
 				       const char *path,
 				       enum subvol_search_type type)
 {
 	struct subvol_info *si;
 
-	si = subvol_uuid_search2(s, root_id, uuid, transid, path, type);
+	si = subvol_uuid_search2(mnt_fd, root_id, uuid, transid, path, type);
 	if (IS_ERR(si))
 		return NULL;
 	return si;
 }
 
-struct subvol_info *subvol_uuid_search2(struct subvol_uuid_search *s,
+struct subvol_info *subvol_uuid_search2(int mnt_fd,
 				       u64 root_id, const u8 *uuid, u64 transid,
 				       const char *path,
 				       enum subvol_search_type type)
@@ -306,16 +305,16 @@ struct subvol_info *subvol_uuid_search2(struct subvol_uuid_search *s,
 
 	switch (type) {
 	case subvol_search_by_received_uuid:
-		ret = btrfs_lookup_uuid_received_subvol_item(s->mnt_fd, uuid,
+		ret = btrfs_lookup_uuid_received_subvol_item(mnt_fd, uuid,
 							     &root_id);
 		break;
 	case subvol_search_by_uuid:
-		ret = btrfs_lookup_uuid_subvol_item(s->mnt_fd, uuid, &root_id);
+		ret = btrfs_lookup_uuid_subvol_item(mnt_fd, uuid, &root_id);
 		break;
 	case subvol_search_by_root_id:
 		break;
 	case subvol_search_by_path:
-		ret = btrfs_get_root_id_by_sub_path(s->mnt_fd, path, &root_id);
+		ret = btrfs_get_root_id_by_sub_path(mnt_fd, path, &root_id);
 		break;
 	default:
 		ret = -EINVAL;
@@ -325,7 +324,7 @@ struct subvol_info *subvol_uuid_search2(struct subvol_uuid_search *s,
 	if (ret)
 		goto out;
 
-	ret = btrfs_read_root_item(s->mnt_fd, root_id, &root_item);
+	ret = btrfs_read_root_item(mnt_fd, root_id, &root_item);
 	if (ret)
 		goto out;
 
@@ -354,7 +353,7 @@ struct subvol_info *subvol_uuid_search2(struct subvol_uuid_search *s,
 			ret = -ENOMEM;
 			goto out;
 		}
-		ret = btrfs_subvolid_resolve(s->mnt_fd, info->path,
+		ret = btrfs_subvolid_resolve(mnt_fd, info->path,
 					     PATH_MAX, root_id);
 	}
 
