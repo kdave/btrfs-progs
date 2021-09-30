@@ -273,14 +273,6 @@ static int btrfs_subvolid_resolve_sub(int fd, char *path, size_t *path_len,
 	return 0;
 }
 
-void subvol_uuid_search_add(int mnt_fd, struct subvol_info *si)
-{
-	if (si) {
-		free(si->path);
-		free(si);
-	}
-}
-
 struct subvol_info *subvol_uuid_search(int mnt_fd,
 				       u64 root_id, const u8 *uuid, u64 transid,
 				       const char *path,

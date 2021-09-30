@@ -52,7 +52,6 @@ struct subvol_info *subvol_uuid_search(int mnt_fd,
 				       u64 root_id, const u8 *uuid, u64 transid,
 				       const char *path,
 				       enum subvol_search_type type);
-void subvol_uuid_search_add(int mnt_fd, struct subvol_info *si);
 
 int btrfs_subvolid_resolve(int fd, char *path, size_t path_len, u64 subvol_id);
 
