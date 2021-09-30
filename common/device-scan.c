@@ -14,6 +14,10 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#ifdef STATIC_BUILD
+#undef HAVE_LIBUDEV
+#endif
+
 #include "kerncompat.h"
 #include <sys/ioctl.h>
 #include <stdlib.h>
@@ -25,6 +29,10 @@
 #include <dirent.h>
 #include <blkid/blkid.h>
 #include <uuid/uuid.h>
+#ifdef HAVE_LIBUDEV
+#include <sys/stat.h>
+#include <libudev.h>
+#endif
 #include "kernel-lib/overflow.h"
 #include "common/path-utils.h"
 #include "common/device-scan.h"
@@ -364,6 +372,42 @@ void free_seen_fsid(struct seen_fsid *seen_fsid_hash[])
 	}
 }
 
+#ifdef HAVE_LIBUDEV
+static bool is_path_device(char *device_path)
+{
+	struct udev *udev = NULL;
+	struct udev_device *dev = NULL;
+	struct stat dev_stat;
+	const char *val;
+	bool ret = false;
+
+	if (stat(device_path, &dev_stat) < 0)
+		return false;
+
+	udev = udev_new();
+	if (!udev)
+		goto out;
+
+	dev = udev_device_new_from_devnum(udev, 'b', dev_stat.st_rdev);
+	if (!dev)
+		goto out;
+
+	val = udev_device_get_property_value(dev, "DM_MULTIPATH_DEVICE_PATH");
+	if (val && atoi(val) > 0)
+		ret = true;
+out:
+	udev_device_unref(dev);
+	udev_unref(udev);
+
+	return ret;
+}
+#else
+static bool is_path_device(char *device_path)
+{
+	return false;
+}
+#endif
+
 int btrfs_scan_devices(int verbose)
 {
 	int fd = -1;
@@ -393,6 +437,9 @@ int btrfs_scan_devices(int verbose)
 			continue;
 		/* if we are here its definitely a btrfs disk*/
 		strncpy_null(path, blkid_dev_devname(dev));
+
+		if (is_path_device(path))
+			continue;
 
 		fd = open(path, O_RDONLY);
 		if (fd < 0) {
