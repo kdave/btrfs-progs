@@ -420,7 +420,6 @@ static void free_send_info(struct btrfs_send *sctx)
 	}
 	free(sctx->root_path);
 	sctx->root_path = NULL;
-	subvol_uuid_search_finit(&sctx->sus);
 }
 
 static const char * const cmd_send_usage[] = {

@@ -376,7 +376,3 @@ int subvol_uuid_search_init(int mnt_fd, struct subvol_uuid_search *s)
 
 	return 0;
 }
-
-void subvol_uuid_search_finit(struct subvol_uuid_search *s)
-{
-}

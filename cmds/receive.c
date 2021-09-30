@@ -1154,7 +1154,6 @@ out:
 	rctx->root_path = NULL;
 	rctx->dest_dir_path = NULL;
 	free(dest_dir_full_path);
-	subvol_uuid_search_finit(&rctx->sus);
 	if (rctx->mnt_fd != -1) {
 		close(rctx->mnt_fd);
 		rctx->mnt_fd = -1;
