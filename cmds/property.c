@@ -22,6 +22,7 @@
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/xattr.h>
+#include <uuid/uuid.h>
 #include <btrfsutil.h>
 #include "cmds/commands.h"
 #include "cmds/props.h"
@@ -40,6 +41,26 @@
 #define ENOATTR ENODATA
 #endif
 
+static int subvolume_clear_received_uuid(const char *path)
+{
+	struct btrfs_ioctl_received_subvol_args args = {};
+	int ret;
+	int fd;
+
+	fd = open(path, O_RDONLY | O_NOATIME);
+	if (fd == -1)
+		return -errno;
+
+	ret = ioctl(fd, BTRFS_IOC_SET_RECEIVED_SUBVOL, &args);
+	if (ret == -1) {
+		close(fd);
+		return -errno;
+	}
+	close(fd);
+
+	return 0;
+}
+
 static int prop_read_only(enum prop_object_type type,
 			  const char *object,
 			  const char *name,
@@ -50,6 +71,10 @@ static int prop_read_only(enum prop_object_type type,
 	bool read_only;
 
 	if (value) {
+		struct btrfs_util_subvolume_info info = {};
+		bool is_ro = false;
+		bool do_clear_received_uuid = false;
+
 		if (!strcmp(value, "true")) {
 			read_only = true;
 		} else if (!strcmp(value, "false")) {
@@ -58,11 +83,47 @@ static int prop_read_only(enum prop_object_type type,
 			error("invalid value for property: %s", value);
 			return -EINVAL;
 		}
+		err = btrfs_util_get_subvolume_read_only(object, &is_ro);
+		if (err) {
+			error_btrfs_util(err);
+			return -errno;
+		}
+		/* No change if already read-only */
+		if (is_ro && read_only)
+			return 0;
+
+		err = btrfs_util_subvolume_info(object, 0, &info);
+		if (err)
+			warning("cannot read subvolume info");
+		if (is_ro && !uuid_is_null(info.received_uuid)) {
+			pr_verbose(2, "ro->rw switch but has set receive_uuid");
+
+			if (force) {
+				do_clear_received_uuid = true;
+			} else {
+				error(
+"cannot flip ro->rw with received_uuid set, use force if you really want that");
+				return -EPERM;
+			}
+		}
+		if (!is_ro && !uuid_is_null(info.received_uuid))
+			warning("read-write subvolume with received_uuid, this is bad");
 
 		err = btrfs_util_set_subvolume_read_only(object, read_only);
 		if (err) {
 			error_btrfs_util(err);
 			return -errno;
+		}
+		if (do_clear_received_uuid) {
+			int ret;
+			char uuid_str[BTRFS_UUID_UNPARSED_SIZE];
+
+			uuid_unparse(info.received_uuid, uuid_str);
+			pr_verbose(2, "force used, clearing received_uuid, previously %s",
+					uuid_str);
+			ret = subvolume_clear_received_uuid(object);
+			if (ret < 0)
+				warning("failed to clear received_uuid: %m");
 		}
 	} else {
 		err = btrfs_util_get_subvolume_read_only(object, &read_only);
