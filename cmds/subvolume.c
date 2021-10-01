@@ -1209,6 +1209,27 @@ static int cmd_subvol_show(const struct cmd_struct *cmd, int argc, char **argv)
 	else
 		printf("\tFlags: \t\t\t-\n");
 
+	printf("\tSend transid: \t\t%" PRIu64 "\n", subvol.stransid);
+	printf("\tSend time: \t\t%s\n", tstr);
+	if (subvol.stime.tv_sec) {
+		struct tm tm;
+
+		localtime_r(&subvol.stime.tv_sec, &tm);
+		strftime(tstr, 256, "%Y-%m-%d %X %z", &tm);
+	} else {
+		strcpy(tstr, "-");
+	}
+	printf("\tReceive transid: \t%" PRIu64 "\n", subvol.rtransid);
+	if (subvol.rtime.tv_sec) {
+		struct tm tm;
+
+		localtime_r(&subvol.rtime.tv_sec, &tm);
+		strftime(tstr, 256, "%Y-%m-%d %X %z", &tm);
+	} else {
+		strcpy(tstr, "-");
+	}
+	printf("\tReceive time: \t\t%s\n", tstr);
+
 	/* print the snapshots of the given subvol if any*/
 	printf("\tSnapshot(s):\n");
 
