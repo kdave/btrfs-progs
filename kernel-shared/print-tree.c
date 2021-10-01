@@ -534,16 +534,6 @@ static void print_root_ref(struct extent_buffer *leaf, int slot, const char *tag
 	       namelen, namebuf);
 }
 
-static int empty_uuid(const u8 *uuid)
-{
-	int i;
-
-	for (i = 0; i < BTRFS_UUID_SIZE; i++)
-		if (uuid[i])
-			return 0;
-	return 1;
-}
-
 /*
  * Caller must ensure sizeof(*ret) >= 7 "RDONLY"
  */
@@ -591,55 +581,46 @@ static void print_root_item(struct extent_buffer *leaf, int slot)
 	read_extent_buffer(leaf, &root_item, (unsigned long)ri, len);
 	root_flags_to_str(btrfs_root_flags(&root_item), flags_str);
 
-	printf("\t\tgeneration %llu root_dirid %llu bytenr %llu level %hhu refs %u\n",
+	printf("\t\tgeneration %llu root_dirid %llu bytenr %llu byte_limit %llu bytes_used %llu\n",
 		(unsigned long long)btrfs_root_generation(&root_item),
 		(unsigned long long)btrfs_root_dirid(&root_item),
 		(unsigned long long)btrfs_root_bytenr(&root_item),
-		btrfs_root_level(&root_item),
-		btrfs_root_refs(&root_item));
-	printf("\t\tlastsnap %llu byte_limit %llu bytes_used %llu flags 0x%llx(%s)\n",
-		(unsigned long long)btrfs_root_last_snapshot(&root_item),
 		(unsigned long long)btrfs_root_limit(&root_item),
-		(unsigned long long)btrfs_root_used(&root_item),
+		(unsigned long long)btrfs_root_used(&root_item));
+	printf("\t\tlast_snapshot %llu flags 0x%llx(%s) refs %u\n",
+		(unsigned long long)btrfs_root_last_snapshot(&root_item),
 		(unsigned long long)btrfs_root_flags(&root_item),
-		flags_str);
+		flags_str,
+		btrfs_root_refs(&root_item));
+	btrfs_disk_key_to_cpu(&drop_key, &root_item.drop_progress);
+	printf("\t\tdrop_progress ");
+	btrfs_print_key(&root_item.drop_progress);
+	printf(" drop_level %hhu\n", root_item.drop_level);
+
+	printf("\t\tlevel %hhu generation_v2 %llu\n",
+		btrfs_root_level(&root_item), root_item.generation_v2);
 
 	if (root_item.generation == root_item.generation_v2) {
 		uuid_unparse(root_item.uuid, uuid_str);
 		printf("\t\tuuid %s\n", uuid_str);
-		if (!empty_uuid(root_item.parent_uuid)) {
-			uuid_unparse(root_item.parent_uuid, uuid_str);
-			printf("\t\tparent_uuid %s\n", uuid_str);
-		}
-		if (!empty_uuid(root_item.received_uuid)) {
-			uuid_unparse(root_item.received_uuid, uuid_str);
-			printf("\t\treceived_uuid %s\n", uuid_str);
-		}
-		if (root_item.ctransid) {
-			printf("\t\tctransid %llu otransid %llu stransid %llu rtransid %llu\n",
+		uuid_unparse(root_item.parent_uuid, uuid_str);
+		printf("\t\tparent_uuid %s\n", uuid_str);
+		uuid_unparse(root_item.received_uuid, uuid_str);
+		printf("\t\treceived_uuid %s\n", uuid_str);
+		printf("\t\tctransid %llu otransid %llu stransid %llu rtransid %llu\n",
 				btrfs_root_ctransid(&root_item),
 				btrfs_root_otransid(&root_item),
 				btrfs_root_stransid(&root_item),
 				btrfs_root_rtransid(&root_item));
-		}
-		if (btrfs_timespec_sec(leaf, btrfs_root_ctime(ri)))
-			print_timespec(leaf, btrfs_root_ctime(ri),
+		print_timespec(leaf, btrfs_root_ctime(ri),
 					"\t\tctime ", "\n");
-		if (btrfs_timespec_sec(leaf, btrfs_root_otime(ri)))
-			print_timespec(leaf, btrfs_root_otime(ri),
+		print_timespec(leaf, btrfs_root_otime(ri),
 					"\t\totime ", "\n");
-		if (btrfs_timespec_sec(leaf, btrfs_root_stime(ri)))
-			print_timespec(leaf, btrfs_root_stime(ri),
+		print_timespec(leaf, btrfs_root_stime(ri),
 					"\t\tstime ", "\n");
-		if (btrfs_timespec_sec(leaf, btrfs_root_rtime(ri)))
-			print_timespec(leaf, btrfs_root_rtime(ri),
+		print_timespec(leaf, btrfs_root_rtime(ri),
 					"\t\trtime ", "\n");
 	}
-
-	btrfs_disk_key_to_cpu(&drop_key, &root_item.drop_progress);
-	printf("\t\tdrop ");
-	btrfs_print_key(&root_item.drop_progress);
-	printf(" level %hhu\n", root_item.drop_level);
 }
 
 static void print_free_space_header(struct extent_buffer *leaf, int slot)
