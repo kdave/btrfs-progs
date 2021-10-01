@@ -28,7 +28,8 @@ enum prop_object_type {
 typedef int (*prop_handler_t)(enum prop_object_type type,
 			      const char *object,
 			      const char *name,
-			      const char *value);
+			      const char *value,
+			      bool force);
 
 struct prop_handler {
 	const char *name;

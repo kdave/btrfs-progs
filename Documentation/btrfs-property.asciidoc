@@ -54,10 +54,16 @@ Lists available properties with their descriptions for the given object.
 +
 See the description of *get* subcommand for the meaning of each option.
 
-*set* [-t <type>] <object> <name> <value>::
+*set* [-f] [-t <type>] <object> <name> <value>::
 Sets a property on a btrfs object.
 +
 See the description of *get* subcommand for the meaning of each option.
++
+`Options`
++
+-f::::
+Force the change. Changing some properties may involve safety checks or
+additional changes that depend on the properties semantics.
 
 EXIT STATUS
 -----------
