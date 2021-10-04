@@ -84,7 +84,6 @@ static u64 arg_strtou64(const char *str)
         return value;
 }
 
-
 enum field_op {
 	OP_GET,
 	OP_SET,
@@ -210,6 +209,11 @@ struct sb_field {
 
 #define MOD_DEV_FIELD8(fname, set, val)					\
 	MOD_DEV_FIELD_XX(fname, set, val, 8, "%hhu", "%hhx", unsigned char)
+
+static bool op_is_write(enum field_op op)
+{
+	return op != OP_GET;
+}
 
 static void mod_field_by_name(struct btrfs_super_block *sb, int set, const char *name,
 		u64 *val)
@@ -362,13 +366,12 @@ int main(int argc, char **argv)
 	hdr = (struct btrfs_header *)buf;
 	/* verify checksum */
 	if (!check_csum_superblock(&hdr->csum)) {
-		printf("super block checksum does not match at offset %llu, will be corrected\n",
+		printf("super block checksum does not match at offset %llu, will be corrected after write\n",
 				(unsigned long long)off);
 	} else {
 		printf("super block checksum is ok\n");
 	}
 	sb = (struct btrfs_super_block *)buf;
-	changed = 0;
 
 	specidx = 0;
 	for (i = 2; i < argc; i++) {
@@ -395,9 +398,11 @@ int main(int argc, char **argv)
 		}
 	}
 
+	changed = 0;
 	for (i = 0; i < specidx; i++) {
 		sb_edit(sb, &spec[i]);
-		changed = 1;
+		if (op_is_write(spec[i].fop))
+			changed = 1;
 	}
 
 	if (changed) {
