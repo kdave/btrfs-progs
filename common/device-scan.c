@@ -374,7 +374,7 @@ void free_seen_fsid(struct seen_fsid *seen_fsid_hash[])
 }
 
 #ifdef STATIC_BUILD
-static bool is_path_device(dev_t device)
+static bool is_multipath_path_device(dev_t device)
 {
 	FILE *file;
 	char *line = NULL;
@@ -409,7 +409,7 @@ static bool is_path_device(dev_t device)
 	return ret;
 }
 #elif defined(HAVE_LIBUDEV)
-static bool is_path_device(dev_t device)
+static bool is_multipath_path_device(dev_t device)
 {
 	struct udev *udev = NULL;
 	struct udev_device *dev = NULL;
@@ -434,7 +434,7 @@ out:
 	return ret;
 }
 #else
-static bool is_path_device(dev_t device)
+static bool is_multipath_path_device(dev_t device)
 {
 	return false;
 }
@@ -475,7 +475,7 @@ int btrfs_scan_devices(int verbose)
 		if (stat(path, &dev_stat) < 0)
 			continue;
 
-		if (is_path_device(dev_stat.st_rdev))
+		if (is_multipath_path_device(dev_stat.st_rdev))
 			continue;
 
 		fd = open(path, O_RDONLY);
