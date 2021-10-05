@@ -15,4 +15,4 @@ RUN apk add wget
 COPY ./test-build .
 COPY ./devel.tar.gz .
 
-CMD ./test-build devel --disable-documentation --disable-backtrace
+CMD ./test-build devel --disable-documentation --disable-backtrace --disable-libudev

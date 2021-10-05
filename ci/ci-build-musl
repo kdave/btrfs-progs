@@ -28,4 +28,4 @@ gzip --force --best devel.tar
 cd "$CIIMAGEDIR"
 cp "$SOURCEDIR/devel.tar.gz" .
 ./docker-build
-./docker-run -- ./test-build devel --disable-documentation --disable-backtrace
+./docker-run -- ./test-build devel --disable-documentation --disable-backtrace --disable-libudev
