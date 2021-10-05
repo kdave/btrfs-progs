@@ -22,6 +22,12 @@ dependencies are not desired.
 - libsodium
 - libkcapi
 
+Optionally, multipath device detection requires libudev and running udev
+daemon, as it's the only source of the path information. Static build has a
+fallback and does not need static version of libudev.
+
+- libudev
+
 For zoned device support, the system headers installed in /usr/include/linux
 must be 5.10 or newer.
 

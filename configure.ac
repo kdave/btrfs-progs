@@ -317,13 +317,14 @@ fi
 AS_IF([test "x$enable_zstd" = xyes], [BTRFSRESTORE_ZSTD=1], [BTRFSRESTORE_ZSTD=0])
 AC_SUBST(BTRFSRESTORE_ZSTD)
 
-PKG_CHECK_EXISTS([libudev], [pkg_config_libudev=yes], [pkg_config_libudev=no])
-if test "x$pkg_config_libudev" = xyes; then
+AC_ARG_ENABLE([libudev],
+      AS_HELP_STRING([--disable-libudev], [build without libudev support (for multipath)]),
+      [], [enable_libudev=yes]
+)
+
+if test "x$enable_libudev" = xyes; then
 	PKG_CHECK_MODULES([LIBUDEV], [libudev])
 	AC_DEFINE([HAVE_LIBUDEV], [1], [Define to 1 if libudev is available])
-else
-	AC_MSG_CHECKING([for LIBUDEV])
-	AC_MSG_RESULT([no])
 fi
 
 AC_ARG_ENABLE([python],
@@ -430,6 +431,7 @@ AC_MSG_RESULT([
 	Python bindings:    ${enable_python}
 	Python interpreter: ${PYTHON}
 	crypto provider:    ${cryptoprovider} ${cryptoproviderversion}
+	libudev:            ${enable_libudev}
 	zoned device:       ${enable_zoned}
 	${experimental_msg}
 	Type 'make' to compile.
