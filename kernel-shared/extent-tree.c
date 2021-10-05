@@ -3483,6 +3483,11 @@ static int __btrfs_record_file_extent(struct btrfs_trans_handle *trans,
 		} else if (ret != -EEXIST) {
 			goto fail;
 		}
+
+		ret = remove_from_free_space_tree(trans, disk_bytenr, num_bytes);
+		if (ret)
+			goto fail;
+
 		btrfs_run_delayed_refs(trans, -1);
 		extent_bytenr = disk_bytenr;
 		extent_num_bytes = num_bytes;
