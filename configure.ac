@@ -417,8 +417,8 @@ AC_MSG_RESULT([
 	pkgconfigdir:       ${pkgconfigdir}
 
 	compiler:           ${CC}
-	cflags:             ${CFLAGS}
-	ldflags:            ${LDFLAGS}
+	CFLAGS:             ${CFLAGS}
+	LDFLAGS:            ${LDFLAGS}
 
 	programs:           ${enable_programs}
 	shared libraries:   ${enable_shared}
