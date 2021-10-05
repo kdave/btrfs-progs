@@ -1357,7 +1357,10 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	mkfs_cfg.features = features;
 	mkfs_cfg.runtime_features = runtime_features;
 	mkfs_cfg.csum_type = csum_type;
-	mkfs_cfg.zone_size = zone_size(file);
+	if (zoned)
+		mkfs_cfg.zone_size = zone_size(file);
+	else
+		mkfs_cfg.zone_size = 0;
 
 	ret = make_btrfs(fd, &mkfs_cfg);
 	if (ret) {
