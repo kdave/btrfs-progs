@@ -60,9 +60,19 @@ static inline ssize_t btrfs_pwrite(int fd, void *buf, size_t count,
 
 	return btrfs_direct_pio(WRITE, fd, buf, count, offset);
 }
+static inline ssize_t btrfs_pread(int fd, void *buf, size_t count, off_t offset,
+				  bool direct)
+{
+	if (!direct)
+		return pread(fd, buf, count, offset);
+
+	return btrfs_direct_pio(READ, fd, buf, count, offset);
+}
 #else
 #define btrfs_pwrite(fd, buf, count, offset, direct) \
 	({ (void)(direct); pwrite(fd, buf, count, offset); })
+#define btrfs_pread(fd, buf, count, offset, direct) \
+	({ (void)(direct); pread(fd, buf, count, offset); })
 #endif
 
 #endif

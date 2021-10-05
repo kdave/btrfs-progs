@@ -35,6 +35,7 @@
 #include "kernel-shared/print-tree.h"
 #include "common/rbtree-utils.h"
 #include "common/device-scan.h"
+#include "common/device-utils.h"
 #include "crypto/hash.h"
 
 /* specified errno for check_tree_block */
@@ -476,7 +477,8 @@ int read_extent_data(struct btrfs_fs_info *fs_info, char *data, u64 logical,
 		goto err;
 	}
 
-	ret = pread64(device->fd, data, *len, multi->stripes[0].physical);
+	ret = btrfs_pread(device->fd, data, *len, multi->stripes[0].physical,
+			  fs_info->zoned);
 	if (ret != *len)
 		ret = -EIO;
 	else

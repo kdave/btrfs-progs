@@ -793,7 +793,8 @@ int read_extent_from_disk(struct extent_buffer *eb,
 			  unsigned long offset, unsigned long len)
 {
 	int ret;
-	ret = pread(eb->fd, eb->data + offset, len, eb->dev_bytenr);
+	ret = btrfs_pread(eb->fd, eb->data + offset, len, eb->dev_bytenr,
+			  eb->fs_info->zoned);
 	if (ret < 0) {
 		ret = -errno;
 		goto out;
@@ -850,8 +851,8 @@ int read_data_from_disk(struct btrfs_fs_info *info, void *buf, u64 offset,
 			return -EIO;
 		}
 
-		ret = pread(device->fd, buf + total_read, read_len,
-			    multi->stripes[0].physical);
+		ret = btrfs_pread(device->fd, buf + total_read, read_len,
+				  multi->stripes[0].physical, info->zoned);
 		kfree(multi);
 		if (ret < 0) {
 			fprintf(stderr, "Error reading %llu, %d\n", offset,

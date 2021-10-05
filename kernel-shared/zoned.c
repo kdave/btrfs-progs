@@ -593,7 +593,7 @@ size_t btrfs_sb_io(int fd, void *buf, off_t offset, int rw)
 		return ret;
 
 	if (rw == READ)
-		ret_sz = pread64(fd, buf, count, mapped);
+		ret_sz = btrfs_pread(fd, buf, count, mapped, true);
 	else
 		ret_sz = btrfs_pwrite(fd, buf, count, mapped, true);
 
