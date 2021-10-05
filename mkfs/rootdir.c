@@ -397,6 +397,7 @@ again:
 
 		eb->start = first_block + bytes_read;
 		eb->len = sectorsize;
+		eb->fs_info = root->fs_info;
 
 		/*
 		 * we're doing the csum before we record the extent, but

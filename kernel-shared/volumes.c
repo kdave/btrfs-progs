@@ -2567,6 +2567,7 @@ static int split_eb_for_raid56(struct btrfs_fs_info *info,
 		eb->flags = 0;
 		eb->fd = -1;
 		eb->dev_bytenr = (u64)-1;
+		eb->fs_info = info;
 
 		this_eb_start = raid_map[i];
 
@@ -2638,6 +2639,7 @@ int write_raid56_with_parity(struct btrfs_fs_info *info,
 		new_eb->fd = multi->stripes[i].dev->fd;
 		multi->stripes[i].dev->total_ios++;
 		new_eb->len = stripe_len;
+		new_eb->fs_info = info;
 
 		if (raid_map[i] == BTRFS_RAID5_P_STRIPE)
 			p_eb = new_eb;

@@ -397,6 +397,7 @@ static int migrate_one_reserved_range(struct btrfs_trans_handle *trans,
 		}
 		eb->start = key.objectid;
 		eb->len = key.offset;
+		eb->fs_info = root->fs_info;
 
 		/* Write the data */
 		ret = write_and_map_eb(root->fs_info, eb);
