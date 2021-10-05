@@ -1302,9 +1302,21 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, struct open_ctree_flags *oc
 	if (ret)
 		goto out_devices;
 
+	/*
+	 * fs_info->zone_size (and zoned) are not known before reading the
+	 * chunk tree, so it's 0 at this point. But, fs_info->zoned == 0
+	 * will cause btrfs_pread() not to use an aligned bounce buffer,
+	 * causing EINVAL when the file is opened with O_DIRECT. Temporarily
+	 * set zoned = 1 in that case.
+	 */
+	if (fcntl(fp, F_GETFL) & O_DIRECT)
+		fs_info->zoned = 1;
+
 	ret = btrfs_setup_chunk_tree_and_device_map(fs_info, ocf->chunk_tree_bytenr);
 	if (ret)
 		goto out_chunk;
+
+	fs_info->zoned = 0;
 
 	/* Chunk tree root is unable to read, return directly */
 	if (!fs_info->chunk_root)
