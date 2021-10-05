@@ -1382,6 +1382,9 @@ struct btrfs_fs_info *open_ctree_fs_info(struct open_ctree_flags *ocf)
 	if (!(ocf->flags & OPEN_CTREE_WRITES))
 		oflags = O_RDONLY;
 
+	if ((oflags & O_RDWR) && zoned_model(ocf->filename) == ZONED_HOST_MANAGED)
+		oflags |= O_DIRECT;
+
 	fp = open(ocf->filename, oflags);
 	if (fp < 0) {
 		error("cannot open '%s': %m", ocf->filename);

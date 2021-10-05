@@ -455,6 +455,9 @@ int btrfs_open_devices(struct btrfs_fs_info *fs_info,
 			continue;
 		}
 
+		if ((flags & O_RDWR) && zoned_model(device->name) == ZONED_HOST_MANAGED)
+			flags |= O_DIRECT;
+
 		fd = open(device->name, flags);
 		if (fd < 0) {
 			ret = -errno;

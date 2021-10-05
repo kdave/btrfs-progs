@@ -893,6 +893,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	bool ssd = false;
 	bool zoned = false;
 	bool force_overwrite = false;
+	int oflags;
 	char *source_dir = NULL;
 	bool source_dir_set = false;
 	bool shrink_rootdir = false;
@@ -1305,12 +1306,16 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 
 	dev_cnt--;
 
+	oflags = O_RDWR;
+	if (zoned && zoned_model(file) == ZONED_HOST_MANAGED)
+		oflags |= O_DIRECT;
+
 	/*
 	 * Open without O_EXCL so that the problem should not occur by the
 	 * following operation in kernel:
 	 * (btrfs_register_one_device() fails if O_EXCL is on)
 	 */
-	fd = open(file, O_RDWR);
+	fd = open(file, oflags);
 	if (fd < 0) {
 		error("unable to open %s: %m", file);
 		goto error;
