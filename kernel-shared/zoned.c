@@ -424,7 +424,7 @@ int zero_zone_blocks(int fd, struct btrfs_zoned_device_info *zinfo, off_t start,
 			count = zone_len - (ofst & (zone_len - 1));
 
 		if (!zone_is_sequential(zinfo, ofst)) {
-			ret = device_zero_blocks(fd, ofst, count);
+			ret = device_zero_blocks(fd, ofst, count, true);
 			if (ret != 0)
 				return ret;
 		}
@@ -595,7 +595,7 @@ size_t btrfs_sb_io(int fd, void *buf, off_t offset, int rw)
 	if (rw == READ)
 		ret_sz = pread64(fd, buf, count, mapped);
 	else
-		ret_sz = pwrite64(fd, buf, count, mapped);
+		ret_sz = btrfs_pwrite(fd, buf, count, mapped, true);
 
 	if (ret_sz != count)
 		return ret_sz;

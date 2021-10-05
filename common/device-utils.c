@@ -26,6 +26,7 @@
 #include <dirent.h>
 #include <blkid/blkid.h>
 #include <linux/limits.h>
+#include <linux/fs.h>
 #include <limits.h>
 #include "kernel-lib/sizes.h"
 #include "kernel-shared/disk-io.h"
@@ -95,7 +96,7 @@ int device_discard_blocks(int fd, u64 start, u64 len)
 /*
  * Write zeros to the given range [start, start + len)
  */
-int device_zero_blocks(int fd, off_t start, size_t len)
+int device_zero_blocks(int fd, off_t start, size_t len, bool direct)
 {
 	char *buf = malloc(len);
 	int ret = 0;
@@ -104,7 +105,7 @@ int device_zero_blocks(int fd, off_t start, size_t len)
 	if (!buf)
 		return -ENOMEM;
 	memset(buf, 0, len);
-	written = pwrite(fd, buf, len, start);
+	written = btrfs_pwrite(fd, buf, len, start, direct);
 	if (written != len)
 		ret = -EIO;
 	free(buf);
@@ -134,7 +135,7 @@ static int zero_dev_clamped(int fd, struct btrfs_zoned_device_info *zinfo,
 	if (zinfo && zinfo->model == ZONED_HOST_MANAGED)
 		return zero_zone_blocks(fd, zinfo, start, end - start);
 
-	return device_zero_blocks(fd, start, end - start);
+	return device_zero_blocks(fd, start, end - start, false);
 }
 
 /*
@@ -176,8 +177,10 @@ static int btrfs_wipe_existing_sb(int fd, struct btrfs_zoned_device_info *zinfo)
 		len = sizeof(buf);
 
 	if (!zone_is_sequential(zinfo, offset)) {
+		const bool direct = zinfo && zinfo->model == ZONED_HOST_MANAGED;
+
 		memset(buf, 0, len);
-		ret = pwrite(fd, buf, len, offset);
+		ret = btrfs_pwrite(fd, buf, len, offset, direct);
 		if (ret < 0) {
 			error("cannot wipe existing superblock: %m");
 			ret = -1;
@@ -509,4 +512,69 @@ u64 device_get_zone_size(int fd, const char *name)
 out:
 	close(sysfs_fd);
 	return ret;
+}
+
+ssize_t btrfs_direct_pio(int rw, int fd, void *buf, size_t count, off_t offset)
+{
+	int alignment;
+	size_t iosize;
+	void *bounce_buf = NULL;
+	struct stat stat_buf;
+	unsigned long req;
+	int ret;
+	ssize_t ret_rw;
+
+	ASSERT(rw == READ || rw == WRITE);
+
+	if (fstat(fd, &stat_buf) == -1) {
+		error("fstat failed: %m");
+		return 0;
+	}
+
+	if ((stat_buf.st_mode & S_IFMT) == S_IFBLK)
+		req = BLKSSZGET;
+	else
+		req = FIGETBSZ;
+
+	if (ioctl(fd, req, &alignment)) {
+		error("failed to get block size: %m");
+		return 0;
+	}
+
+	if (IS_ALIGNED((size_t)buf, alignment) && IS_ALIGNED(count, alignment)) {
+		if (rw == WRITE)
+			return pwrite(fd, buf, count, offset);
+		else
+			return pread(fd, buf, count, offset);
+	}
+
+	/* Cannot do anything if the write size is not aligned */
+	if (rw == WRITE && !IS_ALIGNED(count, alignment)) {
+		error("%zu is not aligned to %d", count, alignment);
+		return 0;
+	}
+
+	iosize = round_up(count, alignment);
+
+	ret = posix_memalign(&bounce_buf, alignment, iosize);
+	if (ret) {
+		error("failed to allocate bounce buffer: %m");
+		errno = ret;
+		return 0;
+	}
+
+	if (rw == WRITE) {
+		ASSERT(iosize == count);
+		memcpy(bounce_buf, buf, count);
+		ret_rw = pwrite(fd, bounce_buf, iosize, offset);
+	} else {
+		ret_rw = pread(fd, bounce_buf, iosize, offset);
+		if (ret_rw >= count) {
+			ret_rw = count;
+			memcpy(buf, bounce_buf, count);
+		}
+	}
+
+	free(bounce_buf);
+	return ret_rw;
 }

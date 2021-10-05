@@ -54,7 +54,7 @@ static int btrfs_write_empty_tree(int fd, struct btrfs_mkfs_config *cfg,
 	btrfs_set_header_nritems(buf, 0);
 	csum_tree_block_size(buf, btrfs_csum_type_size(cfg->csum_type), 0,
 			     cfg->csum_type);
-	ret = pwrite(fd, buf->data, cfg->nodesize, block);
+	ret = btrfs_pwrite(fd, buf->data, cfg->nodesize, block, cfg->zone_size);
 	if (ret != cfg->nodesize)
 		return ret < 0 ? -errno : -EIO;
 	return 0;
@@ -134,7 +134,8 @@ static int btrfs_create_tree_root(int fd, struct btrfs_mkfs_config *cfg,
 			     cfg->csum_type);
 
 	/* write back root tree */
-	ret = pwrite(fd, buf->data, cfg->nodesize, cfg->blocks[MKFS_ROOT_TREE]);
+	ret = btrfs_pwrite(fd, buf->data, cfg->nodesize,
+			   cfg->blocks[MKFS_ROOT_TREE], cfg->zone_size);
 	if (ret != cfg->nodesize)
 		return (ret < 0 ? -errno : -EIO);
 
@@ -180,8 +181,8 @@ static int create_free_space_tree(int fd, struct btrfs_mkfs_config *cfg,
 	btrfs_set_header_nritems(buf, nritems);
 	csum_tree_block_size(buf, btrfs_csum_type_size(cfg->csum_type), 0,
 			     cfg->csum_type);
-	ret = pwrite(fd, buf->data, cfg->nodesize,
-		     cfg->blocks[MKFS_FREE_SPACE_TREE]);
+	ret = btrfs_pwrite(fd, buf->data, cfg->nodesize,
+			   cfg->blocks[MKFS_FREE_SPACE_TREE], cfg->zone_size);
 	if (ret != cfg->nodesize)
 		return ret < 0 ? -errno : -EIO;
 	return 0;
@@ -422,7 +423,8 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 	btrfs_set_header_nritems(buf, nritems);
 	csum_tree_block_size(buf, btrfs_csum_type_size(cfg->csum_type), 0,
 			     cfg->csum_type);
-	ret = pwrite(fd, buf->data, cfg->nodesize, cfg->blocks[MKFS_EXTENT_TREE]);
+	ret = btrfs_pwrite(fd, buf->data, cfg->nodesize,
+			   cfg->blocks[MKFS_EXTENT_TREE], cfg->zone_size);
 	if (ret != cfg->nodesize) {
 		ret = (ret < 0 ? -errno : -EIO);
 		goto out;
@@ -510,7 +512,8 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 	btrfs_set_header_nritems(buf, nritems);
 	csum_tree_block_size(buf, btrfs_csum_type_size(cfg->csum_type), 0,
 			     cfg->csum_type);
-	ret = pwrite(fd, buf->data, cfg->nodesize, cfg->blocks[MKFS_CHUNK_TREE]);
+	ret = btrfs_pwrite(fd, buf->data, cfg->nodesize,
+			   cfg->blocks[MKFS_CHUNK_TREE], cfg->zone_size);
 	if (ret != cfg->nodesize) {
 		ret = (ret < 0 ? -errno : -EIO);
 		goto out;
@@ -550,7 +553,8 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 	btrfs_set_header_nritems(buf, nritems);
 	csum_tree_block_size(buf, btrfs_csum_type_size(cfg->csum_type), 0,
 			     cfg->csum_type);
-	ret = pwrite(fd, buf->data, cfg->nodesize, cfg->blocks[MKFS_DEV_TREE]);
+	ret = btrfs_pwrite(fd, buf->data, cfg->nodesize,
+			   cfg->blocks[MKFS_DEV_TREE], cfg->zone_size);
 	if (ret != cfg->nodesize) {
 		ret = (ret < 0 ? -errno : -EIO);
 		goto out;
