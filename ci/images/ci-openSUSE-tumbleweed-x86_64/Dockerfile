@@ -9,6 +9,7 @@ RUN zypper install -y --no-recommends libext2fs-devel libreiserfscore-devel
 RUN zypper install -y --no-recommends zlib-devel lzo-devel libzstd-devel
 RUN zypper install -y --no-recommends autoconf automake pkg-config
 RUN zypper install -y --no-recommends python3 python3-devel python3-setuptools
+RUN zypper install -y --no-recommends libudev-devel
 
 # For downloading fresh sources
 RUN zypper install -y --no-recommends wget
