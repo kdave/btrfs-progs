@@ -1226,11 +1226,7 @@ void print_device_chunks(struct device_info *devinfo,
 		size = calc_chunk_size(chunks_info_ptr+i);
 		num_stripes = chunks_info_ptr[i].num_stripes;
 
-		switch (profile) {
-		case BTRFS_BLOCK_GROUP_RAID0:
-		case BTRFS_BLOCK_GROUP_RAID5:
-		case BTRFS_BLOCK_GROUP_RAID6:
-		case BTRFS_BLOCK_GROUP_RAID10:
+		if (btrfs_bg_type_is_stripey(profile)) {
 			printf("   %s,%s/%llu:%*s%10s\n",
 				   description,
 				   r_mode,
@@ -1238,14 +1234,12 @@ void print_device_chunks(struct device_info *devinfo,
 				   (int)(20 - strlen(description) - strlen(r_mode)
 						 - count_digits(num_stripes) - 1), "",
 				   pretty_size_mode(size, unit_mode));
-			break;
-		default:
+		} else {
 			printf("   %s,%s:%*s%10s\n",
 				   description,
 				   r_mode,
 				   (int)(20 - strlen(description) - strlen(r_mode)), "",
 				   pretty_size_mode(size, unit_mode));
-			break;
 		}
 
 		allocated += size;

@@ -1572,9 +1572,7 @@ static int btrfs_get_device_extents(u64 chunk_object,
 
 static int calc_num_stripes(u64 type)
 {
-	if (type & (BTRFS_BLOCK_GROUP_RAID0 |
-		    BTRFS_BLOCK_GROUP_RAID10 |
-		    BTRFS_BLOCK_GROUP_RAID56_MASK))
+	if (btrfs_bg_type_is_stripey(type))
 		return 0;
 	else if (type & (BTRFS_BLOCK_GROUP_RAID1 |
 			 BTRFS_BLOCK_GROUP_DUP))
@@ -1789,11 +1787,6 @@ no_extent_record:
 	return 0;
 }
 
-#define BTRFS_ORDERED_RAID	(BTRFS_BLOCK_GROUP_RAID0 |	\
-				 BTRFS_BLOCK_GROUP_RAID10 |	\
-				 BTRFS_BLOCK_GROUP_RAID5 |	\
-				 BTRFS_BLOCK_GROUP_RAID6)
-
 static int btrfs_rebuild_chunk_stripes(struct recover_control *rc,
 				       struct chunk_record *chunk)
 {
@@ -1805,10 +1798,10 @@ static int btrfs_rebuild_chunk_stripes(struct recover_control *rc,
 	 * is we can reorder the stripes in the system metadata chunk.
 	 */
 	if ((chunk->type_flags & BTRFS_BLOCK_GROUP_METADATA) &&
-	    (chunk->type_flags & BTRFS_ORDERED_RAID))
+	    btrfs_bg_type_is_stripey(chunk->type_flags))
 		ret =btrfs_rebuild_ordered_meta_chunk_stripes(rc, chunk);
 	else if ((chunk->type_flags & BTRFS_BLOCK_GROUP_DATA) &&
-		 (chunk->type_flags & BTRFS_ORDERED_RAID))
+		 btrfs_bg_type_is_stripey(chunk->type_flags))
 		ret = 1;	/* Be handled after the fs is opened. */
 	else
 		ret = btrfs_rebuild_unordered_chunk_stripes(rc, chunk);
@@ -2183,8 +2176,8 @@ static int btrfs_rebuild_ordered_data_chunk_stripes(struct recover_control *rc,
 	u8 flags;
 
 	list_for_each_entry_safe(chunk, next, &rc->unrepaired_chunks, list) {
-		if ((chunk->type_flags & BTRFS_BLOCK_GROUP_DATA)
-		 && (chunk->type_flags & BTRFS_ORDERED_RAID)) {
+		if ((chunk->type_flags & BTRFS_BLOCK_GROUP_DATA) &&
+		    btrfs_bg_type_is_stripey(chunk->type_flags)) {
 			flags = 0;
 			err = rebuild_raid_data_chunk_stripes(rc, root, chunk,
 							      &flags);
