@@ -222,12 +222,9 @@ static inline u64 calc_stripe_length(u64 type, u64 length, int num_stripes)
 	} else if (type & BTRFS_BLOCK_GROUP_RAID10) {
 		stripe_size = length * 2;
 		stripe_size /= num_stripes;
-	} else if (type & BTRFS_BLOCK_GROUP_RAID5) {
+	} else if (type & BTRFS_BLOCK_GROUP_RAID56_MASK) {
 		stripe_size = length;
-		stripe_size /= (num_stripes - 1);
-	} else if (type & BTRFS_BLOCK_GROUP_RAID6) {
-		stripe_size = length;
-		stripe_size /= (num_stripes - 2);
+		stripe_size /= (num_stripes - btrfs_bg_type_to_nparity(type));
 	} else {
 		stripe_size = length;
 	}
