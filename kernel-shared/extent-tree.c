@@ -3131,10 +3131,8 @@ static u64 get_dev_extent_len(struct map_lookup *map)
 		div = 1;
 		break;
 	case BTRFS_BLOCK_GROUP_RAID5:
-		div = (map->num_stripes - 1);
-		break;
 	case BTRFS_BLOCK_GROUP_RAID6:
-		div = (map->num_stripes - 2);
+		div = map->num_stripes - btrfs_bg_type_to_nparity(map->type);
 		break;
 	case BTRFS_BLOCK_GROUP_RAID10:
 		div = (map->num_stripes / map->sub_stripes);
