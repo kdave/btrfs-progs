@@ -217,6 +217,13 @@ int btrfs_bg_type_to_tolerated_failures(u64 flags)
 	return btrfs_raid_array[index].tolerated_failures;
 }
 
+int btrfs_bg_type_to_devs_min(u64 flags)
+{
+	const int index = btrfs_bg_flags_to_raid_index(flags);
+
+	return btrfs_raid_array[index].devs_min;
+}
+
 static inline int nr_parity_stripes(struct map_lookup *map)
 {
 	if (map->type & BTRFS_BLOCK_GROUP_RAID5)

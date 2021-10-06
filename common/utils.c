@@ -576,27 +576,6 @@ int get_fsid(const char *path, u8 *fsid, int silent)
 	return ret;
 }
 
-static int group_profile_devs_min(u64 flag)
-{
-	switch (flag & BTRFS_BLOCK_GROUP_PROFILE_MASK) {
-	case 0: /* single */
-	case BTRFS_BLOCK_GROUP_DUP:
-		return 1;
-	case BTRFS_BLOCK_GROUP_RAID0:
-	case BTRFS_BLOCK_GROUP_RAID1:
-	case BTRFS_BLOCK_GROUP_RAID5:
-		return 2;
-	case BTRFS_BLOCK_GROUP_RAID6:
-	case BTRFS_BLOCK_GROUP_RAID1C3:
-		return 3;
-	case BTRFS_BLOCK_GROUP_RAID10:
-	case BTRFS_BLOCK_GROUP_RAID1C4:
-		return 4;
-	default:
-		return -1;
-	}
-}
-
 int test_num_disk_vs_raid(u64 metadata_profile, u64 data_profile,
 	u64 dev_cnt, int mixed, int ssd)
 {
@@ -628,7 +607,7 @@ int test_num_disk_vs_raid(u64 metadata_profile, u64 data_profile,
 			"ERROR: unable to create FS with metadata profile %s "
 			"(have %llu devices but %d devices are required)\n",
 			btrfs_group_profile_str(metadata_profile), dev_cnt,
-			group_profile_devs_min(metadata_profile));
+			btrfs_bg_type_to_devs_min(metadata_profile));
 		return 1;
 	}
 	if (data_profile & ~allowed) {
@@ -636,7 +615,7 @@ int test_num_disk_vs_raid(u64 metadata_profile, u64 data_profile,
 			"ERROR: unable to create FS with data profile %s "
 			"(have %llu devices but %d devices are required)\n",
 			btrfs_group_profile_str(data_profile), dev_cnt,
-			group_profile_devs_min(data_profile));
+			btrfs_bg_type_to_devs_min(data_profile));
 		return 1;
 	}
 
