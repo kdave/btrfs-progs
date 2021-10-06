@@ -245,6 +245,17 @@ int btrfs_bg_type_to_sub_stripes(u64 flags)
 	return btrfs_raid_array[index].sub_stripes;
 }
 
+/*
+ * Number of stripes is not fixed and depends on the number of devices,
+ * utilizing as many as possible (RAID0/RAID10/RAID5/RAID6/...).
+ */
+bool btrfs_bg_type_is_stripey(u64 flags)
+{
+	const int index = btrfs_bg_flags_to_raid_index(flags);
+
+	return btrfs_raid_array[index].devs_max == 0;
+}
+
 u64 btrfs_bg_flags_for_device_num(int number)
 {
 	int i;
