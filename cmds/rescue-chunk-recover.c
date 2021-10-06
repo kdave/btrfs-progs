@@ -1657,13 +1657,11 @@ static int btrfs_calc_stripe_index(struct chunk_record *chunk, u64 logical)
 	} else if (chunk->type_flags & BTRFS_BLOCK_GROUP_RAID10) {
 		index = stripe_nr % (chunk->num_stripes / chunk->sub_stripes);
 		index *= chunk->sub_stripes;
-	} else if (chunk->type_flags & BTRFS_BLOCK_GROUP_RAID5) {
-		nr_data_stripes = chunk->num_stripes - 1;
-		index = stripe_nr % nr_data_stripes;
-		stripe_nr /= nr_data_stripes;
-		index = (index + stripe_nr) % chunk->num_stripes;
-	} else if (chunk->type_flags & BTRFS_BLOCK_GROUP_RAID6) {
-		nr_data_stripes = chunk->num_stripes - 2;
+	} else if (chunk->type_flags & BTRFS_BLOCK_GROUP_RAID56_MASK) {
+		int parity;
+
+		parity = btrfs_bg_type_to_nparity(chunk->type_flags);
+		nr_data_stripes = chunk->num_stripes - parity;
 		index = stripe_nr % nr_data_stripes;
 		stripe_nr /= nr_data_stripes;
 		index = (index + stripe_nr) % chunk->num_stripes;
