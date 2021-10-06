@@ -238,6 +238,13 @@ int btrfs_bg_type_to_nparity(u64 flags)
 	return btrfs_raid_array[index].nparity;
 }
 
+int btrfs_bg_type_to_sub_stripes(u64 flags)
+{
+	const int index = btrfs_bg_flags_to_raid_index(flags);
+
+	return btrfs_raid_array[index].sub_stripes;
+}
+
 static inline int nr_data_stripes(struct map_lookup *map)
 {
 	return map->num_stripes - btrfs_bg_type_to_nparity(map->type);
