@@ -2748,10 +2748,8 @@ u64 btrfs_stripe_length(struct btrfs_fs_info *fs_info,
 		stripe_len = chunk_len / num_stripes;
 		break;
 	case BTRFS_BLOCK_GROUP_RAID5:
-		stripe_len = chunk_len / (num_stripes - 1);
-		break;
 	case BTRFS_BLOCK_GROUP_RAID6:
-		stripe_len = chunk_len / (num_stripes - 2);
+		stripe_len = chunk_len / (num_stripes - btrfs_bg_type_to_nparity(profile));
 		break;
 	case BTRFS_BLOCK_GROUP_RAID10:
 		stripe_len = chunk_len / (num_stripes /
