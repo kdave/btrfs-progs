@@ -25,6 +25,7 @@
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/print-tree.h"
+#include "kernel-shared/volumes.h"
 #include "common/utils.h"
 
 static void print_dir_item_type(struct extent_buffer *eb,
@@ -162,6 +163,7 @@ static void print_inode_ref_item(struct extent_buffer *eb, u32 size,
 static void bg_flags_to_str(u64 flags, char *ret)
 {
 	int empty = 1;
+	const char *name;
 
 	if (flags & BTRFS_BLOCK_GROUP_DATA) {
 		empty = 0;
@@ -177,33 +179,20 @@ static void bg_flags_to_str(u64 flags, char *ret)
 			strcat(ret, "|");
 		strcat(ret, "SYSTEM");
 	}
-	switch (flags & BTRFS_BLOCK_GROUP_PROFILE_MASK) {
-	case BTRFS_BLOCK_GROUP_RAID0:
-		strcat(ret, "|RAID0");
-		break;
-	case BTRFS_BLOCK_GROUP_RAID1:
-		strcat(ret, "|RAID1");
-		break;
-	case BTRFS_BLOCK_GROUP_RAID1C3:
-		strcat(ret, "|RAID1C3");
-		break;
-	case BTRFS_BLOCK_GROUP_RAID1C4:
-		strcat(ret, "|RAID1C4");
-		break;
-	case BTRFS_BLOCK_GROUP_DUP:
-		strcat(ret, "|DUP");
-		break;
-	case BTRFS_BLOCK_GROUP_RAID10:
-		strcat(ret, "|RAID10");
-		break;
-	case BTRFS_BLOCK_GROUP_RAID5:
-		strcat(ret, "|RAID5");
-		break;
-	case BTRFS_BLOCK_GROUP_RAID6:
-		strcat(ret, "|RAID6");
-		break;
-	default:
-		break;
+	strcat(ret, "|");
+	name = btrfs_bg_type_to_raid_name(flags);
+	if (!name) {
+		strcat(ret, "UNKNOWN");
+	} else {
+		char buf[32];
+		char *tmp = buf;
+
+		strcpy(buf, name);
+		while (*tmp) {
+			*tmp = toupper(*tmp);
+			tmp++;
+		}
+		strcpy(ret, buf);
 	}
 }
 
