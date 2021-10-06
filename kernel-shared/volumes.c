@@ -245,6 +245,19 @@ int btrfs_bg_type_to_sub_stripes(u64 flags)
 	return btrfs_raid_array[index].sub_stripes;
 }
 
+u64 btrfs_bg_flags_for_device_num(int number)
+{
+	int i;
+	u64 ret = 0;
+
+	for (i = 0; i < ARRAY_SIZE(btrfs_raid_array); i++) {
+		if (number >= btrfs_raid_array[i].devs_min)
+			ret |= btrfs_raid_array[i].bg_flag;
+	}
+
+	return ret;
+}
+
 static inline int nr_data_stripes(struct map_lookup *map)
 {
 	return map->num_stripes - btrfs_bg_type_to_nparity(map->type);

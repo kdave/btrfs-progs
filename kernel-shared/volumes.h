@@ -312,5 +312,6 @@ int btrfs_bg_type_to_devs_min(u64 flags);
 int btrfs_bg_type_to_ncopies(u64 flags);
 int btrfs_bg_type_to_nparity(u64 flags);
 int btrfs_bg_type_to_sub_stripes(u64 flags);
+u64 btrfs_bg_flags_for_device_num(int number);
 
 #endif

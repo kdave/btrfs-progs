@@ -579,25 +579,10 @@ int get_fsid(const char *path, u8 *fsid, int silent)
 int test_num_disk_vs_raid(u64 metadata_profile, u64 data_profile,
 	u64 dev_cnt, int mixed, int ssd)
 {
-	u64 allowed = 0;
+	u64 allowed;
 	u64 profile = metadata_profile | data_profile;
 
-	switch (dev_cnt) {
-	default:
-	case 4:
-		allowed |= BTRFS_BLOCK_GROUP_RAID10;
-		allowed |= BTRFS_BLOCK_GROUP_RAID10 | BTRFS_BLOCK_GROUP_RAID1C4;
-		/* fallthrough */
-	case 3:
-		allowed |= BTRFS_BLOCK_GROUP_RAID6 | BTRFS_BLOCK_GROUP_RAID1C3;
-		/* fallthrough */
-	case 2:
-		allowed |= BTRFS_BLOCK_GROUP_RAID0 | BTRFS_BLOCK_GROUP_RAID1 |
-			BTRFS_BLOCK_GROUP_RAID5 | BTRFS_BLOCK_GROUP_RAID10;
-		/* fallthrough */
-	case 1:
-		allowed |= BTRFS_BLOCK_GROUP_DUP | BTRFS_BLOCK_GROUP_RAID0;
-	}
+	allowed = btrfs_bg_flags_for_device_num(dev_cnt);
 
 	if (dev_cnt > 1 && profile & BTRFS_BLOCK_GROUP_DUP) {
 		warning("DUP is not recommended on filesystem with multiple devices");
