@@ -1871,11 +1871,7 @@ static u64 calc_data_offset(struct btrfs_key *key,
 	data_offset = key->offset + csum_offset * blocksize - chunk->offset;
 	nr_data_stripes = chunk->num_stripes;
 
-	if (chunk->type_flags & BTRFS_BLOCK_GROUP_RAID5)
-		nr_data_stripes -= 1;
-	else if (chunk->type_flags & BTRFS_BLOCK_GROUP_RAID6)
-		nr_data_stripes -= 2;
-
+	nr_data_stripes -= btrfs_bg_type_to_nparity(chunk->type_flags);
 	logical_stripe_nr = data_offset / chunk->stripe_len;
 	dev_stripe_nr = logical_stripe_nr / nr_data_stripes;
 
