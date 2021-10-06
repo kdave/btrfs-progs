@@ -808,6 +808,17 @@ out:
 	return ret;
 }
 
+static bool profile_supported(u64 flags)
+{
+	flags &= BTRFS_BLOCK_GROUP_PROFILE_MASK;
+
+	/* SINGLE */
+	if (flags == 0)
+		return true;
+	/* non-single profiles are not supported yet */
+	return false;
+}
+
 int btrfs_load_block_group_zone_info(struct btrfs_fs_info *fs_info,
 				     struct btrfs_block_group *cache)
 {
@@ -919,25 +930,13 @@ int btrfs_load_block_group_zone_info(struct btrfs_fs_info *fs_info,
 		}
 	}
 
-	switch (map->type & BTRFS_BLOCK_GROUP_PROFILE_MASK) {
-	case 0: /* single */
-		cache->alloc_offset = alloc_offsets[0];
-		break;
-	case BTRFS_BLOCK_GROUP_DUP:
-	case BTRFS_BLOCK_GROUP_RAID1:
-	case BTRFS_BLOCK_GROUP_RAID1C3:
-	case BTRFS_BLOCK_GROUP_RAID1C4:
-	case BTRFS_BLOCK_GROUP_RAID0:
-	case BTRFS_BLOCK_GROUP_RAID10:
-	case BTRFS_BLOCK_GROUP_RAID5:
-	case BTRFS_BLOCK_GROUP_RAID6:
-		/* non-single profiles are not supported yet */
-	default:
+	if (!profile_supported(map->type)) {
 		error("zoned: profile %s not yet supported",
 		      btrfs_group_profile_str(map->type));
 		ret = -EINVAL;
 		goto out;
 	}
+	cache->alloc_offset = alloc_offsets[0];
 
 out:
 	/* An extent is allocated after the write pointer */
