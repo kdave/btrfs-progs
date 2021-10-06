@@ -33,6 +33,7 @@
 #include "cmds/filesystem-usage.h"
 #include "cmds/commands.h"
 #include "kernel-shared/disk-io.h"
+#include "kernel-shared/volumes.h"
 #include "common/open-utils.h"
 #include "common/units.h"
 #include "version.h"
@@ -499,27 +500,15 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 		int ratio;
 		u64 flags = sargs->spaces[i].flags;
 
+		ratio = btrfs_bg_type_to_ncopies(flags);
+
 		/*
 		 * The RAID5/6 ratio depends on the number of stripes and is
 		 * computed separately. Setting ratio to 0 will not account
 		 * the chunks in this loop.
 		 */
-		if (flags & BTRFS_BLOCK_GROUP_RAID0)
-			ratio = 1;
-		else if (flags & BTRFS_BLOCK_GROUP_RAID1)
-			ratio = 2;
-		else if (flags & BTRFS_BLOCK_GROUP_RAID1C3)
-			ratio = 3;
-		else if (flags & BTRFS_BLOCK_GROUP_RAID1C4)
-			ratio = 4;
-		else if (flags & BTRFS_BLOCK_GROUP_RAID5)
+		if (flags & BTRFS_BLOCK_GROUP_RAID56_MASK)
 			ratio = 0;
-		else if (flags & BTRFS_BLOCK_GROUP_RAID6)
-			ratio = 0;
-		else if (flags & BTRFS_BLOCK_GROUP_DUP)
-			ratio = 2;
-		else if (flags & BTRFS_BLOCK_GROUP_RAID10)
-			ratio = 2;
 		else
 			ratio = 1;
 
