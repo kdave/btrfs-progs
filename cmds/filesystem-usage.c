@@ -355,13 +355,12 @@ static void get_raid56_space_info(struct btrfs_ioctl_space_args *sargs,
 		u64 size;
 		double l_data_ratio, l_metadata_ratio, l_system_ratio, rt;
 
+		parities_count = btrfs_bg_type_to_nparity(info_ptr->type);
 		if (info_ptr->type & BTRFS_BLOCK_GROUP_RAID5) {
-			parities_count = 1;
 			l_data_ratio = l_data_ratio_r5;
 			l_metadata_ratio = l_metadata_ratio_r5;
 			l_system_ratio = l_system_ratio_r5;
 		} else if (info_ptr->type & BTRFS_BLOCK_GROUP_RAID6) {
-			parities_count = 2;
 			l_data_ratio = l_data_ratio_r6;
 			l_metadata_ratio = l_metadata_ratio_r6;
 			l_system_ratio = l_system_ratio_r6;
