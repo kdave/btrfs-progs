@@ -1053,10 +1053,8 @@ static u64 chunk_bytes_by_type(struct alloc_chunk_ctl *ctl)
 		return stripe_size;
 	else if (type & BTRFS_BLOCK_GROUP_RAID10)
 		return stripe_size * (ctl->num_stripes / ctl->sub_stripes);
-	else if (type & BTRFS_BLOCK_GROUP_RAID5)
-		return stripe_size * (ctl->num_stripes - 1);
-	else if (type & BTRFS_BLOCK_GROUP_RAID6)
-		return stripe_size * (ctl->num_stripes - 2);
+	else if (type & BTRFS_BLOCK_GROUP_RAID56_MASK)
+		return stripe_size * (ctl->num_stripes - btrfs_bg_type_to_nparity(type));
 	else
 		return stripe_size * ctl->num_stripes;
 }
