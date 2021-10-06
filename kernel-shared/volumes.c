@@ -231,19 +231,16 @@ int btrfs_bg_type_to_ncopies(u64 flags)
 	return btrfs_raid_array[index].ncopies;
 }
 
-static inline int nr_parity_stripes(struct map_lookup *map)
+int btrfs_bg_type_to_nparity(u64 flags)
 {
-	if (map->type & BTRFS_BLOCK_GROUP_RAID5)
-		return 1;
-	else if (map->type & BTRFS_BLOCK_GROUP_RAID6)
-		return 2;
-	else
-		return 0;
+	const int index = btrfs_bg_flags_to_raid_index(flags);
+
+	return btrfs_raid_array[index].nparity;
 }
 
 static inline int nr_data_stripes(struct map_lookup *map)
 {
-	return map->num_stripes - nr_parity_stripes(map);
+	return map->num_stripes - btrfs_bg_type_to_nparity(map->type);
 }
 
 #define is_parity_stripe(x) ( ((x) == BTRFS_RAID5_P_STRIPE) || ((x) == BTRFS_RAID6_Q_STRIPE) )

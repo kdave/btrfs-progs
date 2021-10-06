@@ -139,6 +139,7 @@ struct btrfs_raid_attr {
 };
 
 extern const struct btrfs_raid_attr btrfs_raid_array[BTRFS_NR_RAID_TYPES];
+int btrfs_bg_type_to_nparity(u64 flags);
 
 #define btrfs_multi_bio_size(n) (sizeof(struct btrfs_multi_bio) + \
 			    (sizeof(struct btrfs_bio_stripe) * (n)))
@@ -312,5 +313,6 @@ const char *btrfs_bg_type_to_raid_name(u64 flags);
 int btrfs_bg_type_to_tolerated_failures(u64 flags);
 int btrfs_bg_type_to_devs_min(u64 flags);
 int btrfs_bg_type_to_ncopies(u64 flags);
+int btrfs_bg_type_to_nparity(u64 flags);
 
 #endif
