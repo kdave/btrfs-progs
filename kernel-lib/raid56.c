@@ -288,10 +288,8 @@ int raid56_recov(int nr_devs, size_t stripe_len, u64 profile, int dest1,
 	int min_devs;
 	int ret;
 
-	if (profile & BTRFS_BLOCK_GROUP_RAID5)
-		min_devs = 2;
-	else if (profile & BTRFS_BLOCK_GROUP_RAID6)
-		min_devs = 3;
+	if (profile & BTRFS_BLOCK_GROUP_RAID56_MASK)
+		min_devs = btrfs_bg_type_to_devs_min(profile);
 	else
 		return -EINVAL;
 	if (nr_devs < min_devs)
