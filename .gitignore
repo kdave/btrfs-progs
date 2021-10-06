@@ -76,31 +76,11 @@
 
 /Documentation/Makefile
 /Documentation/*.html
-/Documentation/btrfs-balance.8
-/Documentation/btrfs-check.8
-/Documentation/btrfs-convert.8
-/Documentation/btrfs-device.8
-/Documentation/btrfs-filesystem.8
-/Documentation/btrfs-find-root.8
-/Documentation/btrfs-image.8
-/Documentation/btrfs-inspect-internal.8
-/Documentation/btrfs-ioctl.3
-/Documentation/btrfs-man5.5
-/Documentation/btrfs-map-logical.8
-/Documentation/btrfs-property.8
-/Documentation/btrfs-qgroup.8
-/Documentation/btrfs-quota.8
-/Documentation/btrfs-receive.8
-/Documentation/btrfs-replace.8
-/Documentation/btrfs-rescue.8
-/Documentation/btrfs-restore.8
-/Documentation/btrfs-scrub.8
-/Documentation/btrfs-select-super.8
-/Documentation/btrfs-send.8
-/Documentation/btrfs-subvolume.8
-/Documentation/btrfs.8
-/Documentation/btrfstune.8
-/Documentation/fsck.btrfs.8
-/Documentation/mkfs.btrfs.8
+/Documentation/*.8
+/Documentation/*.5
+/Documentation/*.3
+/Documentation/*.8.gz
+/Documentation/*.5.gz
+/Documentation/*.3.gz
 
 *.patch
