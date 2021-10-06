@@ -2062,6 +2062,7 @@ int btrfs_check_chunk_valid(struct btrfs_fs_info *fs_info,
 	u32 chunk_ondisk_size;
 	u32 sectorsize = fs_info->sectorsize;
 	int min_devs;
+	int table_sub_stripes;
 
 	/*
 	 * Basic chunk item size check.  Note that btrfs_chunk already contains
@@ -2157,7 +2158,8 @@ int btrfs_check_chunk_valid(struct btrfs_fs_info *fs_info,
 	 * Device number check against profile
 	 */
 	min_devs = btrfs_bg_type_to_devs_min(type);
-	if ((type & BTRFS_BLOCK_GROUP_RAID10 && (sub_stripes != 2 ||
+	table_sub_stripes = btrfs_bg_type_to_sub_stripes(type);
+	if ((type & BTRFS_BLOCK_GROUP_RAID10 && (sub_stripes != table_sub_stripes ||
 		  !IS_ALIGNED(num_stripes, sub_stripes))) ||
 	    (type & BTRFS_BLOCK_GROUP_RAID1 && num_stripes < min_devs) ||
 	    (type & BTRFS_BLOCK_GROUP_RAID1C3 && num_stripes < min_devs) ||
