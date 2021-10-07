@@ -1,3 +1,31 @@
+btrfs-progs-5.14.2 (2021-10-08)
+* fixes
+  * zoned mode
+    * properly detect non-zoned devices in emulation mode
+    * properly create quota tree
+    * raid1c3/4 also excluded from unsupported profiles
+  * use sysfs-based detection of device discard capability, fix mkfs-time trim
+    for non-standard devices
+  * mkfs: fix creation of populated filesystem with free space tree
+  * detect multipath devices (needs libudev)
+* replace start: add option -K/--nodiscard, similar to what mkfs or device add has
+* dump-tree: print complete root_item
+* mkfs: add option --verbose
+* sb-mod: better help, no checksum calculation on read-only actions
+* subvol show:
+  * print more information (regarding send and receive)
+  * print warning if read-write subvolume has received_uuid set
+* property set:
+  * add parameter -f to force changes
+  * changing ro->rw switch now needs -f if subvolume has received_uuid set,
+    (see documentation)
+* build
+  * optional libudev (on by default)
+* other
+  * remove deprecated support for CREATE_ASYNC bit for subvolume ioctl
+  * CI updates
+  * new and updated tests
+
 btrfs-progs-5.14.1 (2021-09-20)
 * fixes:
   * defrag: fix parsing of compression (option -c)
