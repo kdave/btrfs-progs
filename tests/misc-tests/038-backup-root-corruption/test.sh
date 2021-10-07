@@ -25,7 +25,15 @@ backup2_root_ptr=$(dump_super | grep -A1 "backup 2" | grep backup_tree_root | aw
 
 main_root_ptr=$(dump_super | awk '/^root\t/{print $2}')
 
-[ "$backup2_root_ptr" -eq "$main_root_ptr" ] || _fail "Backup slot 2 is not in use"
+if [ "$backup2_root_ptr" -ne "$main_root_ptr" ]; then
+	_log "Backup slot 2 not in use, trying slot 3"
+	# Or use the next slot in case of free-space-tree
+	backup3_root_ptr=$(dump_super | grep -A1 "backup 3" | grep backup_tree_root | awk '{print $2}')
+	if [ "$backup3_root_ptr" -ne "$main_root_ptr" ]; then
+		_fail "Neither backup slot 2 nor slot 3 are in use"
+	fi
+	_log "Backup slot 3 in use"
+fi
 
 run_check "$INTERNAL_BIN/btrfs-corrupt-block" -m $main_root_ptr -f generation "$TEST_DEV"
 
