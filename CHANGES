@@ -1,3 +1,21 @@
+btrfs-progs-5.15 (2021-11-05)
+* mkfs: new defaults!
+  * no-holes
+  * free-space-tree
+  * DUP for metadata unconditionally
+* libbtrfsutil
+  * add missing profile defines
+* libbtrfs
+  * minimize its impact on the other code, refactor and separate implementation
+    where needed, cleanup afterwards, reduced header exports
+* documentation
+  * introduce sphinx build and RST versions of manual pages, will become the
+    new format and replace asciidoc
+* other
+  * lots of cleanups and refactoring
+  * zoned mode uses direct io for file backed images
+  * new and updated tests
+
 btrfs-progs-5.14.2 (2021-10-08)
 * fixes
   * zoned mode
