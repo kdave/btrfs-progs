@@ -54,7 +54,7 @@ static int __free_extent(struct btrfs_trans_handle *trans,
 			 u64 owner_offset, int refs_to_drop);
 static struct btrfs_block_group *
 btrfs_find_block_group(struct btrfs_root *root, struct btrfs_block_group
-		       *hint, u64 search_start, int data, int owner);
+		       *hint, u64 search_start, u64 profile, int owner);
 
 static int remove_sb_from_cache(struct btrfs_root *root,
 				struct btrfs_block_group *cache)
@@ -264,7 +264,7 @@ static int block_group_bits(struct btrfs_block_group *cache, u64 bits)
 
 static int noinline find_search_start(struct btrfs_root *root,
 			      struct btrfs_block_group **cache_ret,
-			      u64 *start_ret, int num, int data)
+			      u64 *start_ret, int num, u64 profile)
 {
 	int ret;
 	struct btrfs_block_group *cache = *cache_ret;
@@ -282,7 +282,7 @@ again:
 		goto out;
 
 	last = max(search_start, cache->start);
-	if (cache->ro || !block_group_bits(cache, data))
+	if (cache->ro || !block_group_bits(cache, profile))
 		goto new_group;
 
 	if (btrfs_is_zoned(root->fs_info)) {
@@ -339,7 +339,7 @@ wrapped:
 
 static struct btrfs_block_group *
 btrfs_find_block_group(struct btrfs_root *root, struct btrfs_block_group
-		       *hint, u64 search_start, int data, int owner)
+		       *hint, u64 search_start, u64 profile, int owner)
 {
 	struct btrfs_block_group *cache;
 	struct btrfs_block_group *found_group = NULL;
@@ -357,7 +357,7 @@ btrfs_find_block_group(struct btrfs_root *root, struct btrfs_block_group
 	if (search_start) {
 		struct btrfs_block_group *shint;
 		shint = btrfs_lookup_block_group(info, search_start);
-		if (shint && !shint->ro && block_group_bits(shint, data)) {
+		if (shint && !shint->ro && block_group_bits(shint, profile)) {
 			used = shint->used;
 			if (used + shint->pinned <
 			    div_factor(shint->length, factor)) {
@@ -365,7 +365,7 @@ btrfs_find_block_group(struct btrfs_root *root, struct btrfs_block_group
 			}
 		}
 	}
-	if (hint && !hint->ro && block_group_bits(hint, data)) {
+	if (hint && !hint->ro && block_group_bits(hint, profile)) {
 		used = hint->used;
 		if (used + hint->pinned <
 		    div_factor(hint->length, factor)) {
@@ -390,7 +390,7 @@ again:
 		last = cache->start + cache->length;
 		used = cache->used;
 
-		if (!cache->ro && block_group_bits(cache, data)) {
+		if (!cache->ro && block_group_bits(cache, profile)) {
 			if (full_search)
 				free_check = cache->length;
 			else
@@ -2177,7 +2177,7 @@ static int noinline find_free_extent(struct btrfs_trans_handle *trans,
 				     u64 search_start, u64 search_end,
 				     u64 hint_byte, struct btrfs_key *ins,
 				     u64 exclude_start, u64 exclude_nr,
-				     int data)
+				     u64 profile)
 {
 	int ret;
 	u64 orig_search_start = search_start;
@@ -2198,11 +2198,11 @@ static int noinline find_free_extent(struct btrfs_trans_handle *trans,
 		if (!block_group)
 			hint_byte = search_start;
 		block_group = btrfs_find_block_group(root, block_group,
-						     hint_byte, data, 1);
+						     hint_byte, profile, 1);
 	} else {
 		block_group = btrfs_find_block_group(root,
 						     trans->block_group,
-						     search_start, data, 1);
+						     search_start, profile, 1);
 	}
 
 	total_needed += empty_size;
@@ -2217,7 +2217,7 @@ check_failed:
 						       orig_search_start);
 	}
 	ret = find_search_start(root, &block_group, &search_start,
-				total_needed, data);
+				total_needed, profile);
 	if (ret)
 		goto new_group;
 
@@ -2255,7 +2255,7 @@ check_failed:
 		goto new_group;
 	}
 
-	if (!(data & BTRFS_BLOCK_GROUP_DATA)) {
+	if (!(profile & BTRFS_BLOCK_GROUP_DATA)) {
 		if (check_crossing_stripes(info, ins->objectid, num_bytes)) {
 			struct btrfs_block_group *bg_cache;
 			u64 bg_offset;
@@ -2295,7 +2295,7 @@ new_group:
 	}
 	cond_resched();
 	block_group = btrfs_find_block_group(root, block_group,
-					     search_start, data, 0);
+					     search_start, profile, 0);
 	goto check_failed;
 
 error:
