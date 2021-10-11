@@ -209,22 +209,59 @@ err:
 	return ret;
 }
 
-static int __recow_root(struct btrfs_trans_handle *trans,
-			 struct btrfs_root *root)
+static int __recow_root(struct btrfs_trans_handle *trans, struct btrfs_root *root)
 {
-	struct extent_buffer *tmp;
+	struct btrfs_path path;
+	struct btrfs_key key;
 	int ret;
 
-	if (trans->transid != btrfs_root_generation(&root->root_item)) {
-		extent_buffer_get(root->node);
-		ret = __btrfs_cow_block(trans, root, root->node,
-					NULL, 0, &tmp, 0, 0);
-		if (ret)
-			return ret;
-		free_extent_buffer(tmp);
-	}
+	btrfs_init_path(&path);
+	key.objectid = 0;
+	key.type = 0;
+	key.offset = 0;
 
-	return 0;
+	/* Get a path to the left-most leaves */
+	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
+	if (ret < 0)
+		return ret;
+
+	while (true) {
+		struct btrfs_key found_key;
+
+		/*
+		 * Our parent nodes must not be newer than the leaf, thus if
+		 * the leaf is as new as the transaction, no need to re-COW.
+		 */
+		if (btrfs_header_generation(path.nodes[0]) == trans->transid)
+			goto next;
+
+		/*
+		 * Grab the key of current tree block and do a COW search to
+		 * the current tree block.
+		 */
+		btrfs_item_key_to_cpu(path.nodes[0], &key, 0);
+		btrfs_release_path(&path);
+
+		/* This will ensure this leaf and all its parent get COWed */
+		ret = btrfs_search_slot(trans, root, &key, &path, 0, 1);
+		if (ret < 0)
+			goto out;
+		ret = 0;
+		btrfs_item_key_to_cpu(path.nodes[0], &found_key, 0);
+		ASSERT(btrfs_comp_cpu_keys(&key, &found_key) == 0);
+
+next:
+		ret = btrfs_next_leaf(root, &path);
+		if (ret < 0)
+			goto out;
+		if (ret > 0) {
+			ret = 0;
+			goto out;
+		}
+	}
+out:
+	btrfs_release_path(&path);
+	return ret;
 }
 
 static int recow_roots(struct btrfs_trans_handle *trans,
@@ -305,7 +342,7 @@ static int create_raid_groups(struct btrfs_trans_handle *trans,
 			      u64 metadata_profile, bool mixed,
 			      struct mkfs_allocation *allocation)
 {
-	int ret;
+	int ret = 0;
 
 	if (metadata_profile) {
 		u64 meta_flags = BTRFS_BLOCK_GROUP_METADATA;
@@ -332,7 +369,6 @@ static int create_raid_groups(struct btrfs_trans_handle *trans,
 		if (ret)
 			return ret;
 	}
-	ret = recow_roots(trans, root);
 
 	return ret;
 }
@@ -1476,6 +1512,33 @@ raid_groups:
 			 metadata_profile, mixed, &allocation);
 	if (ret) {
 		error("unable to create raid groups: %d", ret);
+		goto out;
+	}
+
+	/*
+	 * Commit current transaction so we can COW all existing tree blocks
+	 * to newly created raid groups.
+	 * As currently we use btrfs_search_slot() to COW tree blocks in
+	 * recow_roots(), if a tree block is already modified in current trans,
+	 * it won't be re-COWed, thus it will stay in temporary chunks.
+	 */
+	ret = btrfs_commit_transaction(trans, root);
+	if (ret) {
+		errno = -ret;
+		error("unable to commit transaction before recowing trees: %m");
+		goto out;
+	}
+	trans = btrfs_start_transaction(root, 1);
+	if (IS_ERR(trans)) {
+		errno = -PTR_ERR(trans);
+		error("failed to start transaction: %m");
+		goto error;
+	}
+	/* COW all tree blocks to newly created chunks */
+	ret = recow_roots(trans, root);
+	if (ret) {
+		errno = -ret;
+		error("unable to COW tree blocks to new profiles: %m");
 		goto out;
 	}
 
