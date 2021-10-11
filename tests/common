@@ -868,4 +868,28 @@ check_test_results()
 	fi
 }
 
+# Create at temporary file in $TMPDIR
+# $1: optional identifier that'll be part of the name
+_mktemp() {
+	local tmp
+	local name
+
+	name="btrfs-progs${1:+-$1}.XXXXXX"
+	_log "Create temporary file $name"
+	tmp=$(mktemp --tmpdir "$name")
+	echo -n "$tmp"
+}
+
+# Create at temporary directory in $TMPDIR
+# $1: optional identifier that'll be part of the name
+_mktemp_dir() {
+	local tmp
+	local name
+
+	name="btrfs-progs${1:+-$1}.XXXXXX"
+	_log "Create temporary file $name"
+	tmp=$(mktemp -d --tmpdir "$name")
+	echo -n "$tmp"
+}
+
 init_env
