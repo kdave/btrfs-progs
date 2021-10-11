@@ -9,7 +9,7 @@ setup_root_helper
 
 fs_size=$((512 * 1024 * 1024))
 bs=$((1024 * 1024))
-tmp=$(mktemp -d --tmpdir btrfs-progs-mkfs.rootdirXXXXXXX)
+tmp=$(mktemp -d --tmpdir btrfs-progs-mkfs-rootdir.XXXXXX)
 
 prepare_test_dev "$fs_size"
 

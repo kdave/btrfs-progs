@@ -473,7 +473,7 @@ test-clean:
 	$(Q)bash tests/clean-tests.sh
 
 test-inst: all
-	@tmpdest=`mktemp --tmpdir -d btrfs-inst.XXXXXX` && \
+	@tmpdest=`mktemp --tmpdir -d btrfs-progs-inst.XXXXXX` && \
 		echo "Test installation to $$tmpdest" && \
 		$(MAKE) $(MAKEOPTS) DESTDIR=$$tmpdest install && \
 		$(RM) -rf -- $$tmpdest

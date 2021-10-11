@@ -113,7 +113,7 @@ convert_test_perm() {
 
 	_assert_path "$1"
 	PERMTMP="$1"
-	FILES_LIST=$(mktemp --tmpdir btrfs-progs-convert.fileslistXXXXXX)
+	FILES_LIST=$(mktemp --tmpdir btrfs-progs-convert-filelist.XXXXXX)
 
 	run_check $SUDO_HELPER dd if=/dev/zero of="$TEST_MNT/test" "bs=$nodesize" \
 		count=1 status=noxfer >/dev/null 2>&1
@@ -130,7 +130,7 @@ convert_test_perm() {
 convert_test_acl() {
 	local ACLSTMP
 	ACLTMP="$1"
-	FILES_LIST=$(mktemp --tmpdir btrfs-progs-convert.fileslistXXXXXX)
+	FILES_LIST=$(mktemp --tmpdir btrfs-progs-convert-filelist.XXXXXX)
 
 	run_check_stdout $SUDO_HELPER find "$TEST_MNT/acls" -type f -fprint "$FILES_LIST"
 	# Fix directory entries order
@@ -158,7 +158,7 @@ convert_test_post_check_permissions() {
 
 	_assert_path "$1"
 	EXT_PERMTMP="$1"
-	BTRFS_PERMTMP=$(mktemp --tmpdir btrfs-progs-convert.permXXXXXX)
+	BTRFS_PERMTMP=$(mktemp --tmpdir btrfs-progs-convert-perms.XXXXXX)
 	convert_test_perm "$BTRFS_PERMTMP"
 
 	btrfs_perm=`md5sum "$BTRFS_PERMTMP" | cut -f1 -d' '`
@@ -181,7 +181,7 @@ convert_test_post_check_acl() {
 
 	_assert_path "$1"
 	EXT_ACLTMP="$1"
-	BTRFS_ACLTMP=$(mktemp --tmpdir btrfs-progs-convert.aclsXXXXXXX)
+	BTRFS_ACLTMP=$(mktemp --tmpdir btrfs-progs-convert-acls.XXXXXXX)
 	convert_test_acl "$BTRFS_ACLTMP"
 
 	btrfs_acl=`md5sum "$BTRFS_ACLTMP" | cut -f1 -d' '`
@@ -264,9 +264,9 @@ convert_test() {
 	convert_test_preamble "$features" "$msg" "$nodesize" "$@"
 	convert_test_prep_fs "$fstype" "$@"
 	populate_fs
-	CHECKSUMTMP=$(mktemp --tmpdir btrfs-progs-convert.XXXXXXXXXX)
-	EXT_PERMTMP=$(mktemp --tmpdir btrfs-progs-convert.permXXXXXX)
-	EXT_ACLTMP=$(mktemp --tmpdir btrfs-progs-convert.aclsXXXXXXX)
+	CHECKSUMTMP=$(mktemp --tmpdir btrfs-progs-convert-csums.XXXXXX)
+	EXT_PERMTMP=$(mktemp --tmpdir btrfs-progs-convert-perms.XXXXXX)
+	EXT_ACLTMP=$(mktemp --tmpdir btrfs-progs-convert-acls.XXXXXX)
 	convert_test_gen_checksums "$CHECKSUMTMP"
 	convert_test_perm "$EXT_PERMTMP"
 	convert_test_acl "$EXT_ACLTMP"

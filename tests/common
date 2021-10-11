@@ -271,7 +271,7 @@ run_mayfail()
 # store the output to a variable for further processing.
 run_mayfail_stdout()
 {
-	tmp_output=$(mktemp --tmpdir btrfs-progs-test--mayfail-stdtout.XXXXXX)
+	tmp_output=$(mktemp --tmpdir btrfs-progs-mayfail-stdout.XXXXXX)
 
 	expand_command "$@"
 	echo "====== RUN MAYFAIL ${cmd_array[@]}" >> "$RESULTS" 2>&1
@@ -339,7 +339,7 @@ run_mustfail_stdout()
 	local ret
 	local tmp_output
 
-	tmp_output=$(mktemp --tmpdir btrfs-progs-test--mustfail-stdtout.XXXXXX)
+	tmp_output=$(mktemp --tmpdir btrfs-progs-mustfail-stdout.XXXXXX)
 
 	msg="$1"
 	shift
@@ -437,7 +437,7 @@ check_image()
 	local image
 	local tmp_output
 
-	tmp_output=$(mktemp --tmpdir btrfs-progs-test-check-image.XXXXXX)
+	tmp_output=$(mktemp --tmpdir btrfs-progs-check-image.XXXXXX)
 
 	image=$1
 	echo "testing image $(basename $image)" >> "$RESULTS"

@@ -10,7 +10,7 @@ source "$TEST_TOP/common"
 check_prereq mkfs.btrfs
 prepare_test_dev
 
-tmp=$(mktemp -d --tmpdir btrfs-progs-mkfs.rootdirXXXXXXX)
+tmp=$(mktemp -d --tmpdir btrfs-progs-mkfs-rootdir.XXXXXX)
 
 non_existing="/no/such/file$RANDOM$RANDOM"
 

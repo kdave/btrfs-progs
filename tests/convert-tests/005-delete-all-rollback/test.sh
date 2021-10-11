@@ -29,7 +29,7 @@ do_test() {
 	convert_test_preamble "$features" "$msg" "$nodesize" "$@"
 	convert_test_prep_fs ext4 "$@"
 	populate_fs
-	CHECKSUMTMP=$(mktemp --tmpdir btrfs-progs-convert.XXXXXXXXXX)
+	CHECKSUMTMP=$(mktemp --tmpdir btrfs-progs-convert.XXXXXX)
 	convert_test_gen_checksums "$CHECKSUMTMP"
 
 	run_check_umount_test_dev
