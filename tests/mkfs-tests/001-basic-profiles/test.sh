@@ -11,10 +11,23 @@ setup_root_helper
 
 test_get_info()
 {
+	local tmp_out
+
+	tmp_out=$(mktemp --tmpdir btrfs-progs-mkfs-tests-get-info.XXXXXX)
 	run_check $SUDO_HELPER "$TOP/btrfs" inspect-internal dump-super "$dev1"
 	run_check $SUDO_HELPER "$TOP/btrfs" check "$dev1"
-	run_check $SUDO_HELPER mount "$dev1" "$TEST_MNT"
-	run_check "$TOP/btrfs" filesystem df "$TEST_MNT"
+
+	# Work around for kernel bug that will treat SINGLE and single
+	# device RAID0 as the same.
+	# Thus kernel may create new SINGLE chunks, causing extra warning
+	# when testing single device RAID0.
+	run_check $SUDO_HELPER mount -o ro "$dev1" "$TEST_MNT"
+	run_check_stdout "$TOP/btrfs" filesystem df "$TEST_MNT" > "$tmp_out"
+	if grep -q "Multiple block group profiles detected" "$tmp_out"; then
+		rm -- "$tmp_out"
+		_fail "temporary chunks are not properly cleaned up"
+	fi
+	rm -- "$tmp_out"
 	run_check $SUDO_HELPER "$TOP/btrfs" filesystem usage "$TEST_MNT"
 	run_check $SUDO_HELPER "$TOP/btrfs" device usage "$TEST_MNT"
 	run_check $SUDO_HELPER umount "$TEST_MNT"
