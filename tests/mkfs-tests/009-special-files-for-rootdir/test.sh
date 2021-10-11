@@ -20,7 +20,7 @@ prepare_test_dev
 check_global_prereq mknod
 check_global_prereq dd
 
-tmp=$(mktemp -d --tmpdir btrfs-progs-mkfs-rootdir.XXXXXX)
+tmp=$(_mktemp_dir mkfs-rootdir)
 
 run_check mkdir "$tmp/dir"
 run_check mkdir -p "$tmp/dir/in/dir"

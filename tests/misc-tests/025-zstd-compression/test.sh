@@ -29,7 +29,7 @@ run_check_stdout "$TOP/btrfs" inspect-internal dump-super -f "$image" \
 	|| _fail "btrfs inspect-internal dump-super no incompat COMPRESS_ZSTD"
 
 # Create a temporary directory and restore the filesystem
-restore_tmp=$(mktemp --tmpdir -d btrfs-progs-restore.XXXXXX)
+restore_tmp=$(_mktemp_dir restore)
 run_check "$TOP/btrfs" restore "$image" "$restore_tmp"
 
 # Expect 3 files

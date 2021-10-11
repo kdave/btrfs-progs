@@ -32,7 +32,7 @@ do_test() {
 	convert_test_preamble "$features" "$msg" "$nodesize" "$@"
 	convert_test_prep_fs reiserfs "$@"
 	populate_fs
-	CHECKSUMTMP=$(mktemp --tmpdir btrfs-progs-convert.XXXXXX)
+	CHECKSUMTMP=$(_mktemp convert)
 	convert_test_gen_checksums "$CHECKSUMTMP"
 
 	run_check_umount_test_dev

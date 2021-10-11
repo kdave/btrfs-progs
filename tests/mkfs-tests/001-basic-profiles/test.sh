@@ -13,7 +13,7 @@ test_get_info()
 {
 	local tmp_out
 
-	tmp_out=$(mktemp --tmpdir btrfs-progs-mkfs-get-info.XXXXXX)
+	tmp_out=$(_mktemp mkfs-get-info)
 	run_check $SUDO_HELPER "$TOP/btrfs" inspect-internal dump-super "$dev1"
 	run_check $SUDO_HELPER "$TOP/btrfs" check "$dev1"
 

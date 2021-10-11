@@ -10,7 +10,7 @@ check_prereq btrfs
 
 prepare_test_dev
 
-tmp=$(mktemp -d --tmpdir btrfs-progs-image.XXXXXX)
+tmp=$(_mktemp_dir image)
 
 run_check_mkfs_test_dev
 run_check "$TOP/btrfs-image" "$TEST_DEV" "$tmp/dump"

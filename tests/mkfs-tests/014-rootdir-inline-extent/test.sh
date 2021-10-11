@@ -8,7 +8,7 @@ check_prereq mkfs.btrfs
 
 prepare_test_dev
 
-tmp=$(mktemp -d --tmpdir btrfs-progs-mkfs-rootdir.XXXXXX)
+tmp=$(_mktemp_dir mkfs-rootdir)
 
 pagesize=$(getconf PAGESIZE)
 create_file()
