@@ -1585,14 +1585,6 @@ static int calc_num_stripes(u64 type)
 		return 1;
 }
 
-static inline int calc_sub_nstripes(u64 type)
-{
-	if (type & BTRFS_BLOCK_GROUP_RAID10)
-		return 2;
-	else
-		return 1;
-}
-
 static int btrfs_verify_device_extents(struct block_group_record *bg,
 				       struct list_head *devexts, int ndevexts)
 {
@@ -2229,7 +2221,7 @@ static int btrfs_recover_chunks(struct recover_control *rc)
 		chunk->io_width = BTRFS_STRIPE_LEN;
 		chunk->io_align = BTRFS_STRIPE_LEN;
 		chunk->sector_size = rc->sectorsize;
-		chunk->sub_stripes = calc_sub_nstripes(bg->flags);
+		chunk->sub_stripes = btrfs_bg_type_to_sub_stripes(bg->flags);
 
 		ret = insert_cache_extent(&rc->chunk, &chunk->cache);
 		if (ret == -EEXIST) {
