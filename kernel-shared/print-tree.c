@@ -159,40 +159,51 @@ static void print_inode_ref_item(struct extent_buffer *eb, u32 size,
 	}
 }
 
-/* Caller should ensure sizeof(*ret)>=21 "DATA|METADATA|RAID10" */
+/* The minimal length for the string buffer of block group/chunk flags */
+#define BG_FLAG_STRING_LEN	64
+
 static void bg_flags_to_str(u64 flags, char *ret)
 {
 	int empty = 1;
+	char profile[BG_FLAG_STRING_LEN] = {};
 	const char *name;
 
+	ret[0] = '\0';
 	if (flags & BTRFS_BLOCK_GROUP_DATA) {
 		empty = 0;
-		strcpy(ret, "DATA");
+		strncpy(ret, "DATA", BG_FLAG_STRING_LEN);
 	}
 	if (flags & BTRFS_BLOCK_GROUP_METADATA) {
 		if (!empty)
-			strcat(ret, "|");
-		strcat(ret, "METADATA");
+			strncat(ret, "|", BG_FLAG_STRING_LEN);
+		strncat(ret, "METADATA", BG_FLAG_STRING_LEN);
 	}
 	if (flags & BTRFS_BLOCK_GROUP_SYSTEM) {
 		if (!empty)
-			strcat(ret, "|");
-		strcat(ret, "SYSTEM");
+			strncat(ret, "|", BG_FLAG_STRING_LEN);
+		strncat(ret, "SYSTEM", BG_FLAG_STRING_LEN);
 	}
-	strcat(ret, "|");
 	name = btrfs_bg_type_to_raid_name(flags);
 	if (!name) {
-		strcat(ret, "UNKNOWN");
+		snprintf(profile, BG_FLAG_STRING_LEN, "UNKNOWN.0x%llx",
+			 flags & BTRFS_BLOCK_GROUP_PROFILE_MASK);
 	} else {
-		char buf[32];
-		char *tmp = buf;
+		int i;
 
-		strcpy(buf, name);
-		while (*tmp) {
-			*tmp = toupper(*tmp);
-			tmp++;
-		}
-		strcpy(ret, buf);
+		/*
+		 * Special handing for SINGLE profile, we don't output "SINGLE"
+		 * for SINGLE profile, since there is no such bit for it.
+		 * Thus here we only fill @profile if it's not single.
+		 */
+		if (strncmp(name, "single", strlen("single")) != 0)
+			strncpy(profile, name, BG_FLAG_STRING_LEN);
+
+		for (i = 0; i < BG_FLAG_STRING_LEN && profile[i]; i++)
+			profile[i] = toupper(profile[i]);
+	}
+	if (profile[0]) {
+		strncat(ret, "|", BG_FLAG_STRING_LEN);
+		strncat(ret, profile, BG_FLAG_STRING_LEN);
 	}
 }
 
@@ -215,7 +226,7 @@ void print_chunk_item(struct extent_buffer *eb, struct btrfs_chunk *chunk)
 	u16 num_stripes = btrfs_chunk_num_stripes(eb, chunk);
 	int i;
 	u32 chunk_item_size;
-	char chunk_flags_str[32] = {0};
+	char chunk_flags_str[BG_FLAG_STRING_LEN] = {};
 
 	/* The chunk must contain at least one stripe */
 	if (num_stripes < 1) {
@@ -986,7 +997,7 @@ static void print_block_group_item(struct extent_buffer *eb,
 		struct btrfs_block_group_item *bgi)
 {
 	struct btrfs_block_group_item bg_item;
-	char flags_str[256];
+	char flags_str[BG_FLAG_STRING_LEN] = {};
 
 	read_extent_buffer(eb, &bg_item, (unsigned long)bgi, sizeof(bg_item));
 	memset(flags_str, 0, sizeof(flags_str));
