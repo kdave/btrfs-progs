@@ -17,25 +17,35 @@ run_check $SUDO_HELPER touch "$TEST_MNT/file"
 run_check_umount_test_dev
 
 dump_super() {
-	run_check_stdout $SUDO_HELPER "$TOP/btrfs" inspect-internal dump-super -f "$TEST_DEV"
+	# In this test, we will dump super block multiple times, while the
+	# existing run_check*() helpers will always dump all the output into
+	# the log, flooding the log and hiding the important info.
+	# Thus here we call "btrfs" directly.
+	$SUDO_HELPER "$TOP/btrfs" inspect-internal dump-super -f "$TEST_DEV"
 }
 
-# Ensure currently active backup slot is the expected one (slot 3)
-backup2_root_ptr=$(dump_super | grep -A1 "backup 2" | grep backup_tree_root | awk '{print $2}')
-
 main_root_ptr=$(dump_super | awk '/^root\t/{print $2}')
+# Grab current fs generation, and it will be used to determine which backup
+# slot to use
+cur_gen=$(dump_super | grep ^generation | awk '{print $2}')
+backup_gen=$(($cur_gen - 1))
 
-if [ "$backup2_root_ptr" -ne "$main_root_ptr" ]; then
-	_log "Backup slot 2 not in use, trying slot 3"
-	# Or use the next slot in case of free-space-tree
-	backup3_root_ptr=$(dump_super | grep -A1 "backup 3" | grep backup_tree_root | awk '{print $2}')
-	if [ "$backup3_root_ptr" -ne "$main_root_ptr" ]; then
-		_fail "Neither backup slot 2 nor slot 3 are in use"
-	fi
-	_log "Backup slot 3 in use"
+# Grab the slot which matches @backup_gen
+found=$(dump_super | grep backup_tree_root | grep -n "gen: $backup_gen")
+
+if [ -z "$found" ]; then
+	_fail "Unable to find a backup slot with generation $backup_gen"
 fi
 
-run_check "$INTERNAL_BIN/btrfs-corrupt-block" -m $main_root_ptr -f generation "$TEST_DEV"
+slot_num=$(echo $found | cut -f1 -d:)
+# To follow the dump-super output, where backup slot starts at 0.
+slot_num=$(($slot_num - 1))
+
+# Save the backup slot info into the log
+_log "Backup slot $slot_num will be utilized"
+dump_super | run_check grep -A9 "backup $slot_num:"
+
+run_check "$INTERNAL_BIN/btrfs-corrupt-block" -m "$main_root_ptr" -f generation "$TEST_DEV"
 
 # Should fail because the root is corrupted
 run_mustfail "Unexpected successful mount" \
@@ -45,9 +55,10 @@ run_mustfail "Unexpected successful mount" \
 run_check_mount_test_dev -o usebackuproot
 run_check_umount_test_dev
 
-# Since we've used backup 1 as the usable root, then backup 2 should have been
-# overwritten
-main_root_ptr=$(dump_super | grep root | head -n1 | awk '{print $2}')
-backup2_new_root_ptr=$(dump_super | grep -A1 "backup 2" | grep backup_tree_root | awk '{print $2}')
+main_root_ptr=$(dump_super | awk '/^root\t/{print $2}')
 
-[ "$backup2_root_ptr" -ne "$backup2_new_root_ptr" ] || _fail "Backup 2 not overwritten"
+# The next slot should be overwritten
+slot_num=$(( ($slot_num + 1) % 4 ))
+backup_new_root_ptr=$(dump_super | grep -A1 "backup $slot_num" | grep backup_tree_root | awk '{print $2}')
+
+[ "$main_root_ptr" -ne "$backup_new_root_ptr" ] || _fail "Backup 2 not overwritten"
