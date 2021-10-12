@@ -810,17 +810,13 @@ int load_chunk_and_device_info(int fd, struct chunk_info **chunkinfo,
  */
 static u64 calc_chunk_size(struct chunk_info *ci)
 {
-	if (ci->type & BTRFS_BLOCK_GROUP_RAID0)
-		return ci->size / ci->num_stripes;
-	else if (ci->type & BTRFS_BLOCK_GROUP_RAID1_MASK)
-		return ci->size ;
-	else if (ci->type & BTRFS_BLOCK_GROUP_DUP)
-		return ci->size ;
-	else if (ci->type & BTRFS_BLOCK_GROUP_RAID56_MASK)
-		return ci->size / (ci->num_stripes - btrfs_bg_type_to_nparity(ci->type));
-	else if (ci->type & BTRFS_BLOCK_GROUP_RAID10)
-		return ci->size / (ci->num_stripes / btrfs_bg_type_to_sub_stripes(ci->type));
-	return ci->size;
+	u32 div;
+
+	/* No parity + sub_stripes, so order of "-" and "/" does not matter */
+	div = (ci->num_stripes - btrfs_bg_type_to_nparity(ci->type)) /
+	      btrfs_bg_type_to_sub_stripes(ci->type);
+
+	return ci->size / div;
 }
 
 /*
