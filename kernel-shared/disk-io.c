@@ -209,8 +209,8 @@ int verify_tree_block_csum_silent(struct extent_buffer *buf, u16 csum_size,
 int csum_tree_block(struct btrfs_fs_info *fs_info,
 		    struct extent_buffer *buf, int verify)
 {
-	u16 csum_size = btrfs_super_csum_size(fs_info->super_copy);
-	u16 csum_type = btrfs_super_csum_type(fs_info->super_copy);
+	u16 csum_size = fs_info->csum_size;
+	u16 csum_type = fs_info->csum_type;
 
 	if (verify && fs_info->suppress_check_block_errors)
 		return verify_tree_block_csum_silent(buf, csum_size, csum_type);
@@ -1297,6 +1297,8 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, struct open_ctree_flags *oc
 	fs_info->sectorsize = btrfs_super_sectorsize(disk_super);
 	fs_info->nodesize = btrfs_super_nodesize(disk_super);
 	fs_info->stripesize = btrfs_super_stripesize(disk_super);
+	fs_info->csum_type = btrfs_super_csum_type(disk_super);
+	fs_info->csum_size = btrfs_super_csum_size(disk_super);
 
 	ret = btrfs_check_fs_compatibility(fs_info->super_copy, flags);
 	if (ret)

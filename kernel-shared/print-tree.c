@@ -1153,7 +1153,7 @@ static void print_extent_csum(struct extent_buffer *eb,
 		printf("\t\trange start %llu\n", (unsigned long long)offset);
 		return;
 	}
-	csum_size = btrfs_super_csum_size(fs_info->super_copy);
+	csum_size = fs_info->csum_size;
 	size = (item_size / csum_size) * fs_info->sectorsize;
 	printf("\t\trange start %llu end %llu length %u\n",
 			(unsigned long long)offset,
@@ -1244,7 +1244,7 @@ static void print_header_info(struct extent_buffer *eb, unsigned int mode)
 		char *tmp = csum_str;
 		u8 *csum = (u8 *)(eb->data + offsetof(struct btrfs_header, csum));
 
-		csum_size = btrfs_super_csum_size(fs_info->super_copy);
+		csum_size = fs_info->csum_size;
 		strcpy(csum_str, " csum 0x");
 		tmp = csum_str + strlen(csum_str);
 		for (i = 0; i < csum_size; i++) {

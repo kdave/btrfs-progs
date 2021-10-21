@@ -294,7 +294,7 @@ int count_csum_range(u64 start, u64 len, u64 *found)
 	size_t size;
 	*found = 0;
 	u64 csum_end;
-	u16 csum_size = btrfs_super_csum_size(gfs_info->super_copy);
+	u16 csum_size = gfs_info->csum_size;
 
 	btrfs_init_path(&path);
 

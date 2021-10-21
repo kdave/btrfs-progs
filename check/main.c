@@ -5762,8 +5762,8 @@ static int check_extent_csums(struct btrfs_root *root, u64 bytenr,
 			struct extent_buffer *eb)
 {
 	u64 offset = 0;
-	u16 csum_size = btrfs_super_csum_size(gfs_info->super_copy);
-	u16 csum_type = btrfs_super_csum_type(gfs_info->super_copy);
+	u16 csum_size = gfs_info->csum_size;
+	u16 csum_type = gfs_info->csum_type;
 	u8 *data;
 	unsigned long csum_offset;
 	u8 result[BTRFS_CSUM_SIZE];
@@ -5981,7 +5981,7 @@ static int check_csums(struct btrfs_root *root)
 	struct btrfs_key key;
 	u64 last_data_end = 0;
 	u64 offset = 0, num_bytes = 0;
-	u16 csum_size = btrfs_super_csum_size(gfs_info->super_copy);
+	u16 csum_size = gfs_info->csum_size;
 	int errors = 0;
 	int ret;
 	u64 data_len;

@@ -1235,6 +1235,8 @@ struct btrfs_fs_info {
 	u32 nodesize;
 	u32 sectorsize;
 	u32 stripesize;
+	u16 csum_type;
+	u16 csum_size;
 
 	/*
 	 * Zone size > 0 when in ZONED mode, otherwise it's used for a check
