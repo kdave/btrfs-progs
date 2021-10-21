@@ -805,19 +805,17 @@ static int check_btrfs_signature_zoned(const char *device)
 {
 	int fd;
 	int ret;
-	char buf[BTRFS_SUPER_INFO_SIZE];
-	struct btrfs_super_block *sb;
+	struct btrfs_super_block sb;
 
 	fd = open(device, O_RDONLY);
 	if (fd < 0)
 		return -1;
-	ret = pread(fd, buf, BTRFS_SUPER_INFO_SIZE, 0);
+	ret = pread(fd, &sb, BTRFS_SUPER_INFO_SIZE, 0);
 	if (ret < 0) {
 		ret = -1;
 		goto out;
 	}
-	sb = (struct btrfs_super_block *)buf;
-	if (btrfs_super_magic(sb) == BTRFS_MAGIC)
+	if (btrfs_super_magic(&sb) == BTRFS_MAGIC)
 		ret = 1;
 	else
 		ret = 0;

@@ -541,22 +541,20 @@ int btrfs_scan_one_device(int fd, const char *path,
 			  struct btrfs_fs_devices **fs_devices_ret,
 			  u64 *total_devs, u64 super_offset, unsigned sbflags)
 {
-	struct btrfs_super_block *disk_super;
-	char buf[BTRFS_SUPER_INFO_SIZE];
+	struct btrfs_super_block disk_super;
 	int ret;
 	u64 devid;
 
-	disk_super = (struct btrfs_super_block *)buf;
-	ret = btrfs_read_dev_super(fd, disk_super, super_offset, sbflags);
+	ret = btrfs_read_dev_super(fd, &disk_super, super_offset, sbflags);
 	if (ret < 0)
 		return -EIO;
-	devid = btrfs_stack_device_id(&disk_super->dev_item);
-	if (btrfs_super_flags(disk_super) & BTRFS_SUPER_FLAG_METADUMP)
+	devid = btrfs_stack_device_id(&disk_super.dev_item);
+	if (btrfs_super_flags(&disk_super) & BTRFS_SUPER_FLAG_METADUMP)
 		*total_devs = 1;
 	else
-		*total_devs = btrfs_super_num_devices(disk_super);
+		*total_devs = btrfs_super_num_devices(&disk_super);
 
-	ret = device_list_add(path, disk_super, devid, fs_devices_ret);
+	ret = device_list_add(path, &disk_super, devid, fs_devices_ret);
 
 	return ret;
 }

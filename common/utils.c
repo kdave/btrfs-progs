@@ -438,8 +438,7 @@ int get_fs_info(const char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 	memset(fi_args, 0, sizeof(*fi_args));
 
 	if (path_is_block_device(path) == 1) {
-		struct btrfs_super_block *disk_super;
-		char buf[BTRFS_SUPER_INFO_SIZE];
+		struct btrfs_super_block disk_super;
 
 		/* Ensure it's mounted, then set path to the mountpoint */
 		fd = open(path, O_RDONLY);
@@ -460,14 +459,13 @@ int get_fs_info(const char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 		/* Only fill in this one device */
 		fi_args->num_devices = 1;
 
-		disk_super = (struct btrfs_super_block *)buf;
-		ret = btrfs_read_dev_super(fd, disk_super,
+		ret = btrfs_read_dev_super(fd, &disk_super,
 					   BTRFS_SUPER_INFO_OFFSET, 0);
 		if (ret < 0) {
 			ret = -EIO;
 			goto out;
 		}
-		last_devid = btrfs_stack_device_id(&disk_super->dev_item);
+		last_devid = btrfs_stack_device_id(&disk_super.dev_item);
 		fi_args->max_id = last_devid;
 
 		memcpy(fi_args->fsid, fs_devices_mnt->fsid, BTRFS_FSID_SIZE);

@@ -668,8 +668,7 @@ static int cmp_device_info(const void *a, const void *b)
 
 int dev_to_fsid(const char *dev, u8 *fsid)
 {
-	struct btrfs_super_block *disk_super;
-	char buf[BTRFS_SUPER_INFO_SIZE];
+	struct btrfs_super_block disk_super;
 	int ret;
 	int fd;
 
@@ -679,13 +678,12 @@ int dev_to_fsid(const char *dev, u8 *fsid)
 		return ret;
 	}
 
-	disk_super = (struct btrfs_super_block *)buf;
-	ret = btrfs_read_dev_super(fd, disk_super,
+	ret = btrfs_read_dev_super(fd, &disk_super,
 				   BTRFS_SUPER_INFO_OFFSET, SBREAD_DEFAULT);
 	if (ret)
 		goto out;
 
-	memcpy(fsid, disk_super->fsid, BTRFS_FSID_SIZE);
+	memcpy(fsid, disk_super.fsid, BTRFS_FSID_SIZE);
 	ret = 0;
 
 out:

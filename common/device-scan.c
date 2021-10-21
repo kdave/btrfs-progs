@@ -269,34 +269,25 @@ int btrfs_register_all_devices(void)
 int btrfs_device_already_in_root(struct btrfs_root *root, int fd,
 				 int super_offset)
 {
-	struct btrfs_super_block *disk_super;
-	char *buf;
+	struct btrfs_super_block disk_super;
 	int ret = 0;
 
-	buf = malloc(BTRFS_SUPER_INFO_SIZE);
-	if (!buf) {
-		ret = -ENOMEM;
-		goto out;
-	}
-	ret = sbread(fd, buf, super_offset);
+	ret = sbread(fd, &disk_super, super_offset);
 	if (ret != BTRFS_SUPER_INFO_SIZE)
-		goto brelse;
+		goto out;
 
 	ret = 0;
-	disk_super = (struct btrfs_super_block *)buf;
 	/*
 	 * Accept devices from the same filesystem, allow partially created
 	 * structures.
 	 */
-	if (btrfs_super_magic(disk_super) != BTRFS_MAGIC &&
-			btrfs_super_magic(disk_super) != BTRFS_MAGIC_TEMPORARY)
-		goto brelse;
+	if (btrfs_super_magic(&disk_super) != BTRFS_MAGIC &&
+			btrfs_super_magic(&disk_super) != BTRFS_MAGIC_TEMPORARY)
+		goto out;
 
-	if (!memcmp(disk_super->fsid, root->fs_info->super_copy->fsid,
+	if (!memcmp(disk_super.fsid, root->fs_info->super_copy->fsid,
 		    BTRFS_FSID_SIZE))
 		ret = 1;
-brelse:
-	free(buf);
 out:
 	return ret;
 }

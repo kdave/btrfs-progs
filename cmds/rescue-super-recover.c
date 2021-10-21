@@ -114,9 +114,8 @@ static int
 read_dev_supers(char *filename, struct btrfs_recover_superblock *recover)
 {
 	int i, ret, fd;
-	u8 buf[BTRFS_SUPER_INFO_SIZE];
 	u64 max_gen, bytenr;
-	struct btrfs_super_block *sb = (struct btrfs_super_block *)buf;
+	struct btrfs_super_block sb;
 
 	/* just ignore errno that were set in btrfs_scan_fs_devices() */
 	errno = 0;
@@ -128,13 +127,13 @@ read_dev_supers(char *filename, struct btrfs_recover_superblock *recover)
 	for (i = 0; i < BTRFS_SUPER_MIRROR_MAX; i++) {
 		bytenr = btrfs_sb_offset(i);
 
-		ret = btrfs_read_dev_super(fd, sb, bytenr, SBREAD_DEFAULT);
+		ret = btrfs_read_dev_super(fd, &sb, bytenr, SBREAD_DEFAULT);
 		if (!ret) {
-			ret = add_superblock_record(sb, filename, bytenr,
+			ret = add_superblock_record(&sb, filename, bytenr,
 							&recover->good_supers);
 			if (ret)
 				goto out;
-			max_gen = btrfs_super_generation(sb);
+			max_gen = btrfs_super_generation(&sb);
 			if (max_gen > recover->max_generation)
 				recover->max_generation = max_gen;
 		} else if (ret != -ENOENT){
@@ -142,7 +141,7 @@ read_dev_supers(char *filename, struct btrfs_recover_superblock *recover)
 			 * Skip superblock which doesn't exist, only adds
 			 * really corrupted superblock
 			 */
-			ret = add_superblock_record(sb, filename, bytenr,
+			ret = add_superblock_record(&sb, filename, bytenr,
 						&recover->bad_supers);
 			if (ret)
 				goto out;

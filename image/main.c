@@ -2927,12 +2927,11 @@ static int update_disk_super_on_device(struct btrfs_fs_info *info,
 	struct extent_buffer *leaf;
 	struct btrfs_path path;
 	struct btrfs_dev_item *dev_item;
-	struct btrfs_super_block *disk_super;
+	struct btrfs_super_block disk_super;
 	char dev_uuid[BTRFS_UUID_SIZE];
 	char fs_uuid[BTRFS_UUID_SIZE];
 	u64 devid, type, io_align, io_width;
 	u64 sector_size, total_bytes, bytes_used;
-	char buf[BTRFS_SUPER_INFO_SIZE];
 	int fp = -1;
 	int ret;
 
@@ -2982,10 +2981,9 @@ static int update_disk_super_on_device(struct btrfs_fs_info *info,
 		goto out;
 	}
 
-	memcpy(buf, info->super_copy, BTRFS_SUPER_INFO_SIZE);
+	memcpy(&disk_super, info->super_copy, BTRFS_SUPER_INFO_SIZE);
 
-	disk_super = (struct btrfs_super_block *)buf;
-	dev_item = &disk_super->dev_item;
+	dev_item = &disk_super.dev_item;
 
 	btrfs_set_stack_device_type(dev_item, type);
 	btrfs_set_stack_device_id(dev_item, devid);
@@ -2996,9 +2994,9 @@ static int update_disk_super_on_device(struct btrfs_fs_info *info,
 	btrfs_set_stack_device_sector_size(dev_item, sector_size);
 	memcpy(dev_item->uuid, dev_uuid, BTRFS_UUID_SIZE);
 	memcpy(dev_item->fsid, fs_uuid, BTRFS_UUID_SIZE);
-	csum_block((u8 *)buf, BTRFS_SUPER_INFO_SIZE);
+	csum_block((u8 *)&disk_super, BTRFS_SUPER_INFO_SIZE);
 
-	ret = pwrite64(fp, buf, BTRFS_SUPER_INFO_SIZE, BTRFS_SUPER_INFO_OFFSET);
+	ret = pwrite64(fp, &disk_super, BTRFS_SUPER_INFO_SIZE, BTRFS_SUPER_INFO_OFFSET);
 	if (ret != BTRFS_SUPER_INFO_SIZE) {
 		if (ret < 0) {
 			errno = ret;
@@ -3010,7 +3008,7 @@ static int update_disk_super_on_device(struct btrfs_fs_info *info,
 		goto out;
 	}
 
-	write_backup_supers(fp, (u8 *)buf);
+	write_backup_supers(fp, (u8 *)&disk_super);
 
 out:
 	if (fp != -1)

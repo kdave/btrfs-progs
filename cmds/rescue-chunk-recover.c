@@ -1506,8 +1506,7 @@ static int recover_prepare(struct recover_control *rc, const char *path)
 {
 	int ret;
 	int fd;
-	struct btrfs_super_block *sb;
-	char buf[BTRFS_SUPER_INFO_SIZE];
+	struct btrfs_super_block sb;
 	struct btrfs_fs_devices *fs_devices;
 
 	ret = 0;
@@ -1517,23 +1516,22 @@ static int recover_prepare(struct recover_control *rc, const char *path)
 		return -1;
 	}
 
-	sb = (struct btrfs_super_block*)buf;
-	ret = btrfs_read_dev_super(fd, sb, BTRFS_SUPER_INFO_OFFSET,
+	ret = btrfs_read_dev_super(fd, &sb, BTRFS_SUPER_INFO_OFFSET,
 			SBREAD_RECOVER);
 	if (ret) {
 		fprintf(stderr, "read super block error\n");
 		goto out_close_fd;
 	}
 
-	rc->sectorsize = btrfs_super_sectorsize(sb);
-	rc->nodesize = btrfs_super_nodesize(sb);
-	rc->generation = btrfs_super_generation(sb);
-	rc->chunk_root_generation = btrfs_super_chunk_root_generation(sb);
-	rc->csum_size = btrfs_super_csum_size(sb);
-	rc->csum_type = btrfs_super_csum_type(sb);
+	rc->sectorsize = btrfs_super_sectorsize(&sb);
+	rc->nodesize = btrfs_super_nodesize(&sb);
+	rc->generation = btrfs_super_generation(&sb);
+	rc->chunk_root_generation = btrfs_super_chunk_root_generation(&sb);
+	rc->csum_size = btrfs_super_csum_size(&sb);
+	rc->csum_type = btrfs_super_csum_type(&sb);
 
 	/* if seed, the result of scanning below will be partial */
-	if (btrfs_super_flags(sb) & BTRFS_SUPER_FLAG_SEEDING) {
+	if (btrfs_super_flags(&sb) & BTRFS_SUPER_FLAG_SEEDING) {
 		fprintf(stderr, "this device is seed device\n");
 		ret = -1;
 		goto out_close_fd;

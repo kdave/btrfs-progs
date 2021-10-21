@@ -33,13 +33,10 @@
 static int load_and_dump_sb(char *filename, int fd, u64 sb_bytenr, int full,
 		int force)
 {
-	u8 super_block_data[BTRFS_SUPER_INFO_SIZE];
-	struct btrfs_super_block *sb;
+	struct btrfs_super_block sb;
 	u64 ret;
 
-	sb = (struct btrfs_super_block *)super_block_data;
-
-	ret = sbread(fd, super_block_data, sb_bytenr);
+	ret = sbread(fd, &sb, sb_bytenr);
 	if (ret != BTRFS_SUPER_INFO_SIZE) {
 		/* check if the disk if too short for further superblock */
 		if (ret == 0 && errno == 0)
@@ -52,11 +49,11 @@ static int load_and_dump_sb(char *filename, int fd, u64 sb_bytenr, int full,
 	}
 	printf("superblock: bytenr=%llu, device=%s\n", sb_bytenr, filename);
 	printf("---------------------------------------------------------\n");
-	if (btrfs_super_magic(sb) != BTRFS_MAGIC && !force) {
+	if (btrfs_super_magic(&sb) != BTRFS_MAGIC && !force) {
 		error("bad magic on superblock on %s at %llu",
 				filename, (unsigned long long)sb_bytenr);
 	} else {
-		btrfs_print_superblock(sb, full);
+		btrfs_print_superblock(&sb, full);
 	}
 	return 0;
 }

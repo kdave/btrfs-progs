@@ -1066,27 +1066,23 @@ err:
 static int migrate_super_block(int fd, u64 old_bytenr)
 {
 	int ret;
-	struct extent_buffer *buf;
-	struct btrfs_super_block *super;
+	struct btrfs_super_block super;
+	u8 result[BTRFS_CSUM_SIZE] = {};
 	u32 len;
 	u32 bytenr;
 
-	buf = malloc(sizeof(*buf) + BTRFS_SUPER_INFO_SIZE);
-	if (!buf)
-		return -ENOMEM;
-
-	buf->len = BTRFS_SUPER_INFO_SIZE;
-	ret = pread(fd, buf->data, BTRFS_SUPER_INFO_SIZE, old_bytenr);
+	ret = pread(fd, &super, BTRFS_SUPER_INFO_SIZE, old_bytenr);
 	if (ret != BTRFS_SUPER_INFO_SIZE)
 		goto fail;
 
-	super = (struct btrfs_super_block *)buf->data;
-	BUG_ON(btrfs_super_bytenr(super) != old_bytenr);
-	btrfs_set_super_bytenr(super, BTRFS_SUPER_INFO_OFFSET);
+	BUG_ON(btrfs_super_bytenr(&super) != old_bytenr);
+	btrfs_set_super_bytenr(&super, BTRFS_SUPER_INFO_OFFSET);
 
-	csum_tree_block_size(buf, btrfs_super_csum_size(super),
-			     0, btrfs_super_csum_type(super));
-	ret = pwrite(fd, buf->data, BTRFS_SUPER_INFO_SIZE,
+	btrfs_csum_data(NULL, btrfs_super_csum_type(&super),
+			(u8 *)&super + BTRFS_CSUM_SIZE, result,
+			BTRFS_SUPER_INFO_SIZE - BTRFS_CSUM_SIZE);
+	memcpy(&super.csum[0], result, BTRFS_CSUM_SIZE);
+	ret = pwrite(fd, &super , BTRFS_SUPER_INFO_SIZE,
 		BTRFS_SUPER_INFO_OFFSET);
 	if (ret != BTRFS_SUPER_INFO_SIZE)
 		goto fail;
@@ -1095,12 +1091,12 @@ static int migrate_super_block(int fd, u64 old_bytenr)
 	if (ret)
 		goto fail;
 
-	memset(buf->data, 0, BTRFS_SUPER_INFO_SIZE);
+	memset(&super, 0, BTRFS_SUPER_INFO_SIZE);
 	for (bytenr = 0; bytenr < BTRFS_SUPER_INFO_OFFSET; ) {
 		len = BTRFS_SUPER_INFO_OFFSET - bytenr;
 		if (len > BTRFS_SUPER_INFO_SIZE)
 			len = BTRFS_SUPER_INFO_SIZE;
-		ret = pwrite(fd, buf->data, len, bytenr);
+		ret = pwrite(fd, &super, len, bytenr);
 		if (ret != len) {
 			fprintf(stderr, "unable to zero fill device\n");
 			break;
@@ -1110,7 +1106,6 @@ static int migrate_super_block(int fd, u64 old_bytenr)
 	ret = 0;
 	fsync(fd);
 fail:
-	free(buf);
 	if (ret > 0)
 		ret = -1;
 	return ret;

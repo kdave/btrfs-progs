@@ -1619,8 +1619,7 @@ int btrfs_read_dev_super(int fd, struct btrfs_super_block *sb, u64 sb_bytenr,
 	u8 fsid[BTRFS_FSID_SIZE];
 	u8 metadata_uuid[BTRFS_FSID_SIZE];
 	int fsid_is_initialized = 0;
-	char tmp[BTRFS_SUPER_INFO_SIZE];
-	struct btrfs_super_block *buf = (struct btrfs_super_block *)tmp;
+	struct btrfs_super_block buf;
 	int i;
 	int ret;
 	int max_super = sbflags & SBREAD_RECOVER ? BTRFS_SUPER_MIRROR_MAX : 1;
@@ -1629,7 +1628,7 @@ int btrfs_read_dev_super(int fd, struct btrfs_super_block *sb, u64 sb_bytenr,
 	u64 bytenr;
 
 	if (sb_bytenr != BTRFS_SUPER_INFO_OFFSET) {
-		ret = sbread(fd, buf, sb_bytenr);
+		ret = sbread(fd, &buf, sb_bytenr);
 		/* real error */
 		if (ret < 0)
 			return -errno;
@@ -1638,13 +1637,13 @@ int btrfs_read_dev_super(int fd, struct btrfs_super_block *sb, u64 sb_bytenr,
 		if (ret < BTRFS_SUPER_INFO_SIZE)
 			return -ENOENT;
 
-		if (btrfs_super_bytenr(buf) != sb_bytenr)
+		if (btrfs_super_bytenr(&buf) != sb_bytenr)
 			return -EIO;
 
-		ret = btrfs_check_super(buf, sbflags);
+		ret = btrfs_check_super(&buf, sbflags);
 		if (ret < 0)
 			return ret;
-		memcpy(sb, buf, BTRFS_SUPER_INFO_SIZE);
+		memcpy(sb, &buf, BTRFS_SUPER_INFO_SIZE);
 		return 0;
 	}
 
@@ -1657,31 +1656,31 @@ int btrfs_read_dev_super(int fd, struct btrfs_super_block *sb, u64 sb_bytenr,
 
 	for (i = 0; i < max_super; i++) {
 		bytenr = btrfs_sb_offset(i);
-		ret = sbread(fd, buf, bytenr);
+		ret = sbread(fd, &buf, bytenr);
 
 		if (ret < BTRFS_SUPER_INFO_SIZE)
 			break;
 
-		if (btrfs_super_bytenr(buf) != bytenr )
+		if (btrfs_super_bytenr(&buf) != bytenr )
 			continue;
 		/* if magic is NULL, the device was removed */
-		if (btrfs_super_magic(buf) == 0 && i == 0)
+		if (btrfs_super_magic(&buf) == 0 && i == 0)
 			break;
-		if (btrfs_check_super(buf, sbflags))
+		if (btrfs_check_super(&buf, sbflags))
 			continue;
 
 		if (!fsid_is_initialized) {
-			if (btrfs_super_incompat_flags(buf) &
+			if (btrfs_super_incompat_flags(&buf) &
 			    BTRFS_FEATURE_INCOMPAT_METADATA_UUID) {
 				metadata_uuid_set = true;
-				memcpy(metadata_uuid, buf->metadata_uuid,
+				memcpy(metadata_uuid, buf.metadata_uuid,
 				       sizeof(metadata_uuid));
 			}
-			memcpy(fsid, buf->fsid, sizeof(fsid));
+			memcpy(fsid, buf.fsid, sizeof(fsid));
 			fsid_is_initialized = 1;
-		} else if (memcmp(fsid, buf->fsid, sizeof(fsid)) ||
+		} else if (memcmp(fsid, buf.fsid, sizeof(fsid)) ||
 			   (metadata_uuid_set && memcmp(metadata_uuid,
-							buf->metadata_uuid,
+							buf.metadata_uuid,
 							sizeof(metadata_uuid)))) {
 			/*
 			 * the superblocks (the original one and
@@ -1691,9 +1690,9 @@ int btrfs_read_dev_super(int fd, struct btrfs_super_block *sb, u64 sb_bytenr,
 			continue;
 		}
 
-		if (btrfs_super_generation(buf) > transid) {
-			memcpy(sb, buf, BTRFS_SUPER_INFO_SIZE);
-			transid = btrfs_super_generation(buf);
+		if (btrfs_super_generation(&buf) > transid) {
+			memcpy(sb, &buf, BTRFS_SUPER_INFO_SIZE);
+			transid = btrfs_super_generation(&buf);
 		}
 	}
 
