@@ -23,9 +23,6 @@
 #include "kernel-shared/ctree.h"
 #include "kernel-lib/sizes.h"
 
-#define BTRFS_SUPER_INFO_OFFSET SZ_64K
-#define BTRFS_SUPER_INFO_SIZE 4096
-
 #define BTRFS_SUPER_MIRROR_MAX	 3
 #define BTRFS_SUPER_MIRROR_SHIFT 12
 
