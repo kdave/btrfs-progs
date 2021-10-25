@@ -324,6 +324,7 @@ static int read_and_process_cmd(struct btrfs_send_stream *sctx)
 	u64 dev;
 	u64 clone_offset;
 	u64 offset;
+	u64 ino;
 	int len;
 	int xattr_len;
 
@@ -349,28 +350,40 @@ static int read_and_process_cmd(struct btrfs_send_stream *sctx)
 		break;
 	case BTRFS_SEND_C_MKFILE:
 		TLV_GET_STRING(sctx, BTRFS_SEND_A_PATH, &path);
+		/* ino is not passed to the callbacks in v1 */
+		TLV_GET_U64(sctx, BTRFS_SEND_A_INO, &ino);
 		ret = sctx->ops->mkfile(path, sctx->user);
 		break;
 	case BTRFS_SEND_C_MKDIR:
 		TLV_GET_STRING(sctx, BTRFS_SEND_A_PATH, &path);
+		/* ino is not passed to the callbacks in v1 */
+		TLV_GET_U64(sctx, BTRFS_SEND_A_INO, &ino);
 		ret = sctx->ops->mkdir(path, sctx->user);
 		break;
 	case BTRFS_SEND_C_MKNOD:
 		TLV_GET_STRING(sctx, BTRFS_SEND_A_PATH, &path);
+		/* ino is not passed to the callbacks in v1 */
+		TLV_GET_U64(sctx, BTRFS_SEND_A_INO, &ino);
 		TLV_GET_U64(sctx, BTRFS_SEND_A_MODE, &mode);
 		TLV_GET_U64(sctx, BTRFS_SEND_A_RDEV, &dev);
 		ret = sctx->ops->mknod(path, mode, dev, sctx->user);
 		break;
 	case BTRFS_SEND_C_MKFIFO:
 		TLV_GET_STRING(sctx, BTRFS_SEND_A_PATH, &path);
+		/* ino is not passed to the callbacks in v1 */
+		TLV_GET_U64(sctx, BTRFS_SEND_A_INO, &ino);
 		ret = sctx->ops->mkfifo(path, sctx->user);
 		break;
 	case BTRFS_SEND_C_MKSOCK:
 		TLV_GET_STRING(sctx, BTRFS_SEND_A_PATH, &path);
+		/* ino is not passed to the callbacks in v1 */
+		TLV_GET_U64(sctx, BTRFS_SEND_A_INO, &ino);
 		ret = sctx->ops->mksock(path, sctx->user);
 		break;
 	case BTRFS_SEND_C_SYMLINK:
 		TLV_GET_STRING(sctx, BTRFS_SEND_A_PATH, &path);
+		/* ino is not passed to the callbacks in v1 */
+		TLV_GET_U64(sctx, BTRFS_SEND_A_INO, &ino);
 		TLV_GET_STRING(sctx, BTRFS_SEND_A_PATH_LINK, &path_to);
 		ret = sctx->ops->symlink(path, path_to, sctx->user);
 		break;
