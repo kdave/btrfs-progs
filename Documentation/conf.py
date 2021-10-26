@@ -49,4 +49,5 @@ man_pages = [
     ('btrfs-rescue', 'btrfs-rescue', 'recover a damaged btrfs filesystem', '', 8),
     ('btrfs-replace', 'btrfs-replace', 'replace devices managed by btrfs with other device', '', 8),
     ('btrfs-receive', 'btrfs-receive', 'receive subvolumes from send stream', '', 8),
+    ('btrfs-quota', 'btrfs-quota', 'control the global quota status of a btrfs filesystem', '', 8),
 ]
