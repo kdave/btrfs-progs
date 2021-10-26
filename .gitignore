@@ -82,5 +82,6 @@
 /Documentation/*.8.gz
 /Documentation/*.5.gz
 /Documentation/*.3.gz
+/Documentation/_build
 
 *.patch
