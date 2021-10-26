@@ -7,6 +7,7 @@ Manual pages
    :maxdepth: 1
 
    btrfs
+   btrfs-man5
    btrfs-balance
    btrfs-check
    btrfs-convert
