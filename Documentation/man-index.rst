@@ -6,6 +6,7 @@ Manual pages
 .. toctree::
    :maxdepth: 1
 
+   btrfs-balance
    btrfs-check
    btrfs-convert
    btrfs-device
