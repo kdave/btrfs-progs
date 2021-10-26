@@ -57,4 +57,5 @@ man_pages = [
     ('btrfs-find-root', 'btrfs-find-root', 'filter to find btrfs root', '', 8),
     ('btrfs-filesystem', 'btrfs-filesystem', 'command group that primarily does work on the whole filesystems', '', 8),
     ('btrfs-device', 'btrfs-device', 'manage devices of btrfs filesystems', '', 8),
+    ('btrfs-convert', 'btrfs-convert', 'convert from ext2/3/4 or reiserfs filesystem to btrfs in-place', '', 8),
 ]
