@@ -51,4 +51,5 @@ man_pages = [
     ('btrfs-receive', 'btrfs-receive', 'receive subvolumes from send stream', '', 8),
     ('btrfs-quota', 'btrfs-quota', 'control the global quota status of a btrfs filesystem', '', 8),
     ('btrfs-qgroup', 'btrfs-qgroup', 'control the quota group of a btrfs filesystem', '', 8),
+    ('btrfs-property', 'btrfs-property', 'get/set/list properties for given filesystem object', '', 8),
 ]
