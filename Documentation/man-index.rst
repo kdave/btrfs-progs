@@ -29,6 +29,7 @@ Manual pages
    btrfs-subvolume
    btrfstune
    fsck.btrfs
+   mkfs.btrfs
 
 Indices
 =======
