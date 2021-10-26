@@ -7,6 +7,7 @@ Manual pages
    :maxdepth: 1
 
    btrfs-select-super
+   btrfstune
 
 Indices
 =======
