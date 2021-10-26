@@ -6,6 +6,7 @@ Manual pages
 .. toctree::
    :maxdepth: 1
 
+   btrfs-inspect-internal
    btrfs-property
    btrfs-qgroup
    btrfs-quota

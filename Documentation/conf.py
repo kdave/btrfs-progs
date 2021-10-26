@@ -52,4 +52,5 @@ man_pages = [
     ('btrfs-quota', 'btrfs-quota', 'control the global quota status of a btrfs filesystem', '', 8),
     ('btrfs-qgroup', 'btrfs-qgroup', 'control the quota group of a btrfs filesystem', '', 8),
     ('btrfs-property', 'btrfs-property', 'get/set/list properties for given filesystem object', '', 8),
+    ('btrfs-inspect-internal', 'btrfs-inspect-internal', 'query various internal information', '', 8),
 ]
