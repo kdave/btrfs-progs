@@ -6,6 +6,7 @@ Manual pages
 .. toctree::
    :maxdepth: 1
 
+   btrfs-qgroup
    btrfs-quota
    btrfs-receive
    btrfs-replace
