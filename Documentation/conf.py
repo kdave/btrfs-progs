@@ -54,4 +54,5 @@ man_pages = [
     ('btrfs-property', 'btrfs-property', 'get/set/list properties for given filesystem object', '', 8),
     ('btrfs-inspect-internal', 'btrfs-inspect-internal', 'query various internal information', '', 8),
     ('btrfs-image', 'btrfs-image', 'create/restore an image of the filesystem', '', 8),
+    ('btrfs-find-root', 'btrfs-find-root', 'filter to find btrfs root', '', 8),
 ]
