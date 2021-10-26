@@ -42,4 +42,5 @@ html_static_path = ['_static']
 man_pages = [
     ('btrfs-select-super', 'btrfs-select-super', 'overwrite primary superblock with a backup copy', '', '8'),
     ('btrfstune', 'btrfstune', 'tune various filesystem parameters', '', 8),
+    ('fsck.btrfs', 'fsck.btrfs', 'do nothing, successfully', '', 8),
 ]

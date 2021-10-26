@@ -8,6 +8,7 @@ Manual pages
 
    btrfs-select-super
    btrfstune
+   fsck.btrfs
 
 Indices
 =======
