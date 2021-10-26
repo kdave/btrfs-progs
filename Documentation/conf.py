@@ -62,4 +62,5 @@ man_pages = [
     ('btrfs-balance', 'btrfs-balance', 'balance block groups on a btrfs filesystem', '', 8),
     ('btrfs-subvolume', 'btrfs-subvolume', 'manage btrfs subvolumes', '', 8),
     ('btrfs-map-logical', 'btrfs-map-logical', 'map btrfs logical extent to physical extent', '', 8),
+    ('btrfs', 'btrfs', 'a toolbox to manage btrfs filesystems', '', 8),
 ]
