@@ -48,4 +48,5 @@ man_pages = [
     ('btrfs-restore', 'btrfs-restore', 'try to restore files from a damaged filesystem image', '', 8),
     ('btrfs-rescue', 'btrfs-rescue', 'recover a damaged btrfs filesystem', '', 8),
     ('btrfs-replace', 'btrfs-replace', 'replace devices managed by btrfs with other device', '', 8),
+    ('btrfs-receive', 'btrfs-receive', 'receive subvolumes from send stream', '', 8),
 ]
