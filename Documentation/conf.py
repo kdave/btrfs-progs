@@ -45,4 +45,5 @@ man_pages = [
     ('fsck.btrfs', 'fsck.btrfs', 'do nothing, successfully', '', 8),
     ('btrfs-send', 'btrfs-send', 'generate a stream of changes between two subvolume snapshots', '', 8),
     ('btrfs-scrub', 'btrfs-scrub', 'scrub btrfs filesystem, verify block checksums', '', 8),
+    ('btrfs-restore', 'btrfs-restore', 'try to restore files from a damaged filesystem image', '', 8),
 ]
