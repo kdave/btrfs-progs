@@ -56,4 +56,5 @@ man_pages = [
     ('btrfs-image', 'btrfs-image', 'create/restore an image of the filesystem', '', 8),
     ('btrfs-find-root', 'btrfs-find-root', 'filter to find btrfs root', '', 8),
     ('btrfs-filesystem', 'btrfs-filesystem', 'command group that primarily does work on the whole filesystems', '', 8),
+    ('btrfs-device', 'btrfs-device', 'manage devices of btrfs filesystems', '', 8),
 ]
