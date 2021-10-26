@@ -60,4 +60,5 @@ man_pages = [
     ('btrfs-convert', 'btrfs-convert', 'convert from ext2/3/4 or reiserfs filesystem to btrfs in-place', '', 8),
     ('btrfs-check', 'btrfs-check', 'check or repair a btrfs filesystem', '', 8),
     ('btrfs-balance', 'btrfs-balance', 'balance block groups on a btrfs filesystem', '', 8),
+    ('btrfs-subvolume', 'btrfs-subvolume', 'manage btrfs subvolumes', '', 8),
 ]

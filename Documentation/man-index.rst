@@ -24,6 +24,7 @@ Manual pages
    btrfs-scrub
    btrfs-select-super
    btrfs-send
+   btrfs-subvolume
    btrfstune
    fsck.btrfs
 
