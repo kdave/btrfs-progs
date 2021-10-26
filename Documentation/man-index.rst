@@ -6,6 +6,7 @@ Manual pages
 .. toctree::
    :maxdepth: 1
 
+   btrfs-filesystem
    btrfs-find-root
    btrfs-image
    btrfs-inspect-internal
