@@ -2094,7 +2094,7 @@ int btrfs_check_chunk_valid(struct btrfs_fs_info *fs_info,
 	 */
 	if (slot >= 0 &&
 	    btrfs_item_size_nr(leaf, slot) < sizeof(struct btrfs_chunk)) {
-		error("invalid chunk item size, have %u expect [%zu, %lu)",
+		error("invalid chunk item size, have %u expect [%zu, %u)",
 			btrfs_item_size_nr(leaf, slot),
 			sizeof(struct btrfs_chunk),
 			BTRFS_LEAF_DATA_SIZE(fs_info));

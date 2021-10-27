@@ -6494,7 +6494,7 @@ static int run_next_block(struct btrfs_root *root,
 			if (btrfs_item_size_nr(buf, i) < inline_offset) {
 				ret = -EUCLEAN;
 				error(
-		"invalid file extent item size, have %u expect (%lu, %lu]",
+		"invalid file extent item size, have %u expect (%lu, %u]",
 					btrfs_item_size_nr(buf, i),
 					inline_offset,
 					BTRFS_LEAF_DATA_SIZE(gfs_info));

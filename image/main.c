@@ -2120,7 +2120,7 @@ static int search_for_chunk_blocks(struct mdrestore_struct *mdres)
 					       current_cluster);
 			if (ret < 0) {
 				error(
-			"failed to search tree blocks in item bytenr %llu size %lu",
+			"failed to search tree blocks in item bytenr %llu size %zu",
 					item_bytenr, size);
 				goto out;
 			}

@@ -354,7 +354,11 @@ struct btrfs_header {
 	u8 level;
 } __attribute__ ((__packed__));
 
-#define __BTRFS_LEAF_DATA_SIZE(bs) ((bs) - sizeof(struct btrfs_header))
+static inline u32 __BTRFS_LEAF_DATA_SIZE(u32 nodesize)
+{
+	return nodesize - sizeof(struct btrfs_header);
+}
+
 #define BTRFS_LEAF_DATA_SIZE(fs_info) \
 				(__BTRFS_LEAF_DATA_SIZE(fs_info->nodesize))
 
