@@ -1030,7 +1030,7 @@ const char* btrfs_group_profile_str(u64 flag)
 {
 	int index;
 
-	flag &= ~BTRFS_BLOCK_GROUP_TYPE_MASK;
+	flag &= ~(BTRFS_BLOCK_GROUP_TYPE_MASK | BTRFS_BLOCK_GROUP_RESERVED);
 	if (flag & ~BTRFS_BLOCK_GROUP_PROFILE_MASK)
 		return "unknown";
 
