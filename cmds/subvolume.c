@@ -1369,7 +1369,7 @@ static int cmd_subvol_show(const struct cmd_struct *cmd, int argc, char **argv)
 
 	/* Warn if it's a read-write subvolume with received_uuid */
 	if (!uuid_is_null(subvol.received_uuid) &&
-	    !(subvol.flags & BTRFS_SUBVOL_RDONLY)) {
+	    !(subvol.flags & BTRFS_ROOT_SUBVOL_RDONLY)) {
 		warning("the subvolume is read-write and has received_uuid set,\n"
 			"\t don't use it for incremental send. Please see section\n"
 			"\t 'SUBVOLUME FLAGS' in manual page btrfs-subvolume for\n"
