@@ -2729,8 +2729,17 @@ static inline int btrfs_next_item(struct btrfs_root *root,
 				  struct btrfs_path *p)
 {
 	++p->slots[0];
-	if (p->slots[0] >= btrfs_header_nritems(p->nodes[0]))
-		return btrfs_next_leaf(root, p);
+	if (p->slots[0] >= btrfs_header_nritems(p->nodes[0])) {
+		int ret;
+		ret = btrfs_next_leaf(root, p);
+		/*
+		 * Revert the increased slot, or the path may point to
+		 * an invalid item.
+		 */
+		if (ret)
+			p->slots[0]--;
+		return ret;
+	}
 	return 0;
 }
 

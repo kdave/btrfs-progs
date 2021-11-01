@@ -2686,7 +2686,7 @@ static int check_inode_item(struct btrfs_root *root, struct btrfs_path *path)
 			ret = -EIO;
 
 		if (ret < 0) {
-			/* out will fill 'err' rusing current statistics */
+			err |= FATAL_ERROR;
 			goto out;
 		} else if (ret > 0) {
 			err |= LAST_ITEM;
@@ -2898,7 +2898,7 @@ again:
 	/* modify cur since check_inode_item may change path */
 	cur = path->nodes[0];
 
-	if (err & LAST_ITEM)
+	if (err & LAST_ITEM || err & FATAL_ERROR)
 		goto out;
 
 	/* still have inode items in this leaf */
