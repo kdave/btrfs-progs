@@ -205,6 +205,7 @@ static void bg_flags_to_str(u64 flags, char *ret)
 /* Caller should ensure sizeof(*ret)>= 26 "OFF|SCANNING|INCONSISTENT" */
 static void qgroup_flags_to_str(u64 flags, char *ret)
 {
+	ret[0] = 0;
 	if (flags & BTRFS_QGROUP_STATUS_FLAG_ON)
 		strcpy(ret, "ON");
 	else
@@ -412,6 +413,7 @@ static void extent_flags_to_str(u64 flags, char *ret)
 {
 	int empty = 1;
 
+	ret[0] = 0;
 	if (flags & BTRFS_EXTENT_FLAG_DATA) {
 		empty = 0;
 		strcpy(ret, "DATA");
@@ -1196,6 +1198,7 @@ static void header_flags_to_str(u64 flags, char *ret)
 {
 	int empty = 1;
 
+	ret[0] = 0;
 	if (flags & BTRFS_HEADER_FLAG_WRITTEN) {
 		empty = 0;
 		strcpy(ret, "WRITTEN");
