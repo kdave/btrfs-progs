@@ -308,6 +308,7 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 			BTRFS_FEATURE_COMPAT_RO_FREE_SPACE_TREE_VALID;
 
 		btrfs_set_super_compat_ro_flags(&super, ro_flags);
+		btrfs_set_super_cache_generation(&super, 0);
 	}
 	if (cfg->label)
 		__strncpy_null(super.label, cfg->label, BTRFS_LABEL_SIZE - 1);
