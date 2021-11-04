@@ -7773,7 +7773,7 @@ static int fixup_extent_refs(struct cache_tree *extent_cache,
 			goto out;
 	}
 out:
-	if (trans) {
+	if (!ret && !IS_ERR(trans)) {
 		int err = btrfs_commit_transaction(trans, gfs_info->tree_root);
 
 		if (!ret)
