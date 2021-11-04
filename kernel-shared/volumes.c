@@ -127,7 +127,11 @@ const struct btrfs_raid_attr btrfs_raid_array[BTRFS_NR_RAID_TYPES] = {
 		.ncopies	= 1,
 		.nparity        = 0,
 		.lower_name	= "single",
-		.upper_name	= "SINGLE",
+		/*
+		 * For historical reasons the single profile is lower case, this
+		 * may change some day.
+		 */
+		.upper_name	= "single",
 		.bg_flag	= 0,
 		.mindev_error	= 0,
 	},
