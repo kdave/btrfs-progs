@@ -269,7 +269,7 @@ int parse_bg_profile(const char *profile, u64 *flags)
 	int i;
 
 	for (i = 0; i < BTRFS_NR_RAID_TYPES; i++) {
-		if (strcasecmp(btrfs_raid_array[i].raid_name, profile) == 0) {
+		if (strcasecmp(btrfs_raid_array[i].upper_name, profile) == 0) {
 			*flags |= btrfs_raid_array[i].bg_flag;
 			return 0;
 		}

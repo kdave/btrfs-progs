@@ -134,7 +134,8 @@ struct btrfs_raid_attr {
 	int nparity;		/* number of stripes worth of bytes to store
 				 * parity information */
 	int mindev_error;	/* error code if min devs requisite is unmet */
-	const char raid_name[8]; /* name of the raid */
+	const char lower_name[8]; /* name of the profile in lower case*/
+	const char upper_name[8]; /* name of the profile in upper case*/
 	u64 bg_flag;		/* block group flag of the raid */
 };
 

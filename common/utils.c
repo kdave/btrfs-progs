@@ -1032,10 +1032,10 @@ const char* btrfs_group_profile_str(u64 flag)
 
 	flag &= ~(BTRFS_BLOCK_GROUP_TYPE_MASK | BTRFS_BLOCK_GROUP_RESERVED);
 	if (flag & ~BTRFS_BLOCK_GROUP_PROFILE_MASK)
-		return "unknown";
+		return "UNKNOWN";
 
 	index = btrfs_bg_flags_to_raid_index(flag);
-	return btrfs_raid_array[index].raid_name;
+	return btrfs_raid_array[index].upper_name;
 }
 
 u64 div_factor(u64 num, int factor)
@@ -1260,14 +1260,14 @@ static char *sprint_profiles(u64 profiles)
 		return NULL;
 
 	for (i = 0; i < BTRFS_NR_RAID_TYPES; i++)
-		maxlen += strlen(btrfs_raid_array[i].raid_name) + 2;
+		maxlen += strlen(btrfs_raid_array[i].lower_name) + 2;
 
 	ptr = calloc(1, maxlen);
 	if (!ptr)
 		return NULL;
 
 	if (profiles & BTRFS_AVAIL_ALLOC_BIT_SINGLE)
-		strcat(ptr, btrfs_raid_array[BTRFS_RAID_SINGLE].raid_name);
+		strcat(ptr, btrfs_raid_array[BTRFS_RAID_SINGLE].lower_name);
 
 	for (i = 0; i < BTRFS_NR_RAID_TYPES; i++) {
 		if (!(btrfs_raid_array[i].bg_flag & profiles))
@@ -1275,7 +1275,7 @@ static char *sprint_profiles(u64 profiles)
 
 		if (ptr[0])
 			strcat(ptr, ", ");
-		strcat(ptr, btrfs_raid_array[i].raid_name);
+		strcat(ptr, btrfs_raid_array[i].lower_name);
 	}
 
 	return ptr;

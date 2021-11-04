@@ -188,18 +188,13 @@ static void bg_flags_to_str(u64 flags, char *ret)
 		snprintf(profile, BG_FLAG_STRING_LEN, "UNKNOWN.0x%llx",
 			 flags & BTRFS_BLOCK_GROUP_PROFILE_MASK);
 	} else {
-		int i;
-
 		/*
 		 * Special handing for SINGLE profile, we don't output "SINGLE"
 		 * for SINGLE profile, since there is no such bit for it.
 		 * Thus here we only fill @profile if it's not single.
 		 */
-		if (strncmp(name, "single", strlen("single")) != 0)
+		if (strncmp(name, "SINGLE", strlen("SINGLE")) != 0)
 			strncpy(profile, name, BG_FLAG_STRING_LEN);
-
-		for (i = 0; i < BG_FLAG_STRING_LEN && profile[i]; i++)
-			profile[i] = toupper(profile[i]);
 	}
 	if (profile[0]) {
 		strncat(ret, "|", BG_FLAG_STRING_LEN);
