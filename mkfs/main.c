@@ -1223,6 +1223,12 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		features |= BTRFS_FEATURE_INCOMPAT_RAID1C34;
 	}
 
+	/* Extent tree v2 comes with a set of mandatory features. */
+	if (features & BTRFS_FEATURE_INCOMPAT_EXTENT_TREE_V2) {
+		features |= BTRFS_FEATURE_INCOMPAT_NO_HOLES;
+		runtime_features |= BTRFS_RUNTIME_FEATURE_FREE_SPACE_TREE;
+	}
+
 	if (zoned) {
 		if (source_dir_set) {
 			error("the option -r and zoned mode are incompatible");

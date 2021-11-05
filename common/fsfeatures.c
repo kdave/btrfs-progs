@@ -132,6 +132,17 @@ static const struct btrfs_feature mkfs_features[] = {
 		.desc		= "support zoned devices"
 	},
 #endif
+#if EXPERIMENTAL
+	{
+		.name		= "extent-tree-v2",
+		.flag		= BTRFS_FEATURE_INCOMPAT_EXTENT_TREE_V2,
+		.sysfs_name	= "extent_tree_v2",
+		VERSION_TO_STRING2(compat, 5,15),
+		VERSION_NULL(safe),
+		VERSION_NULL(default),
+		.desc		= "new extent tree format"
+	},
+#endif
 	/* Keep this one last */
 	{
 		.name = "list-all",
