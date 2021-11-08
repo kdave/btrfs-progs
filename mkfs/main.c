@@ -289,8 +289,8 @@ static int recow_roots(struct btrfs_trans_handle *trans,
 	ret = __recow_root(trans, csum_root);
 	if (ret)
 		return ret;
-	if (info->free_space_root) {
-		ret = __recow_root(trans, info->free_space_root);
+	if (info->_free_space_root) {
+		ret = __recow_root(trans, info->_free_space_root);
 		if (ret)
 			return ret;
 	}
