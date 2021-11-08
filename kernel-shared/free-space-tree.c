@@ -28,7 +28,13 @@
 static struct btrfs_root *btrfs_free_space_root(struct btrfs_fs_info *fs_info,
 						struct btrfs_block_group *block_group)
 {
-	return fs_info->_free_space_root;
+	struct btrfs_key key = {
+		.objectid = BTRFS_FREE_SPACE_TREE_OBJECTID,
+		.type = BTRFS_ROOT_ITEM_KEY,
+		.offset = 0,
+	};
+
+	return btrfs_global_root(fs_info, &key);
 }
 
 static struct btrfs_free_space_info *
@@ -1238,7 +1244,6 @@ int btrfs_clear_free_space_tree(struct btrfs_fs_info *fs_info)
 	features &= ~(BTRFS_FEATURE_COMPAT_RO_FREE_SPACE_TREE_VALID |
 		      BTRFS_FEATURE_COMPAT_RO_FREE_SPACE_TREE);
 	btrfs_set_super_compat_ro_flags(fs_info->super_copy, features);
-	fs_info->_free_space_root = NULL;
 
 	ret = clear_free_space_tree(trans, free_space_root);
 	if (ret)
@@ -1258,6 +1263,7 @@ int btrfs_clear_free_space_tree(struct btrfs_fs_info *fs_info)
 	if (ret)
 		goto abort;
 
+	rb_erase(&free_space_root->rb_node, &fs_info->global_roots_tree);
 	free_extent_buffer(free_space_root->node);
 	free_extent_buffer(free_space_root->commit_root);
 	kfree(free_space_root);
@@ -1474,7 +1480,10 @@ int btrfs_create_free_space_tree(struct btrfs_fs_info *fs_info)
 		ret = PTR_ERR(free_space_root);
 		goto abort;
 	}
-	fs_info->_free_space_root = free_space_root;
+
+	ret = btrfs_global_root_insert(fs_info, free_space_root);
+	if (ret)
+		goto abort;
 	add_root_to_dirty_list(free_space_root);
 
 	do {

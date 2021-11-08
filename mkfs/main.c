@@ -264,11 +264,27 @@ out:
 	return ret;
 }
 
+static int recow_global_roots(struct btrfs_trans_handle *trans)
+{
+	struct btrfs_fs_info *fs_info = trans->fs_info;
+	struct btrfs_root *root;
+	struct rb_node *n;
+	int ret = 0;
+
+	for (n = rb_first(&fs_info->global_roots_tree); n; n = rb_next(n)) {
+		root = rb_entry(n, struct btrfs_root, rb_node);
+		ret = __recow_root(trans, root);
+		if (ret)
+			return ret;
+	}
+
+	return ret;
+}
+
 static int recow_roots(struct btrfs_trans_handle *trans,
 		       struct btrfs_root *root)
 {
 	struct btrfs_fs_info *info = root->fs_info;
-	struct btrfs_root *csum_root = btrfs_csum_root(info, 0);
 	int ret;
 
 	ret = __recow_root(trans, info->fs_root);
@@ -277,23 +293,15 @@ static int recow_roots(struct btrfs_trans_handle *trans,
 	ret = __recow_root(trans, info->tree_root);
 	if (ret)
 		return ret;
-	ret = __recow_root(trans, info->_extent_root);
-	if (ret)
-		return ret;
 	ret = __recow_root(trans, info->chunk_root);
 	if (ret)
 		return ret;
 	ret = __recow_root(trans, info->dev_root);
 	if (ret)
 		return ret;
-	ret = __recow_root(trans, csum_root);
+	ret = recow_global_roots(trans);
 	if (ret)
 		return ret;
-	if (info->_free_space_root) {
-		ret = __recow_root(trans, info->_free_space_root);
-		if (ret)
-			return ret;
-	}
 	return 0;
 }
 
