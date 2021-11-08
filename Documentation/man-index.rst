@@ -31,8 +31,3 @@ Manual pages
    btrfstune
    fsck.btrfs
    mkfs.btrfs
-
-Indices
-=======
-
-* :ref:`genindex`

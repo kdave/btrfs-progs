@@ -7,8 +7,3 @@ Wiki pages
    :maxdepth: 1
 
    Glossary
-
-Indices
-=======
-
-* :ref:`genindex`
