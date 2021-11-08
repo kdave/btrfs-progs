@@ -1359,7 +1359,6 @@ static int create_chunk(struct btrfs_trans_handle *trans,
 			struct btrfs_fs_info *info, struct alloc_chunk_ctl *ctl,
 			struct list_head *private_devs)
 {
-	struct btrfs_root *extent_root = info->extent_root;
 	struct btrfs_root *chunk_root = info->chunk_root;
 	struct btrfs_stripe *stripes;
 	struct btrfs_device *device = NULL;
@@ -1443,7 +1442,7 @@ static int create_chunk(struct btrfs_trans_handle *trans,
 
 	/* key was set above */
 	btrfs_set_stack_chunk_length(chunk, ctl->num_bytes);
-	btrfs_set_stack_chunk_owner(chunk, extent_root->root_key.objectid);
+	btrfs_set_stack_chunk_owner(chunk, BTRFS_EXTENT_TREE_OBJECTID);
 	btrfs_set_stack_chunk_stripe_len(chunk, BTRFS_STRIPE_LEN);
 	btrfs_set_stack_chunk_type(chunk, ctl->type);
 	btrfs_set_stack_chunk_num_stripes(chunk, ctl->num_stripes);

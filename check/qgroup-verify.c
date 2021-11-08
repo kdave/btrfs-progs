@@ -1157,7 +1157,7 @@ static int scan_extents(struct btrfs_fs_info *info,
 			u64 start, u64 end)
 {
 	int ret, i, nr, level;
-	struct btrfs_root *root = info->extent_root;
+	struct btrfs_root *root = btrfs_extent_root(info, start);
 	struct btrfs_key key;
 	struct btrfs_path path;
 	struct btrfs_disk_key disk_key;

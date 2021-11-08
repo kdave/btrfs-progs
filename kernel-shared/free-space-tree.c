@@ -1014,11 +1014,17 @@ out:
 int populate_free_space_tree(struct btrfs_trans_handle *trans,
 			     struct btrfs_block_group *block_group)
 {
-	struct btrfs_root *extent_root = trans->fs_info->extent_root;
+	struct btrfs_fs_info *fs_info = trans->fs_info;
+	struct btrfs_root *extent_root;
 	struct btrfs_path *path, *path2;
 	struct btrfs_key key;
 	u64 start, end;
 	int ret;
+
+	if (btrfs_fs_incompat(fs_info, EXTENT_TREE_V2))
+		return -EINVAL;
+
+	extent_root = btrfs_extent_root(fs_info, 0);
 
 	path = btrfs_alloc_path();
 	if (!path)

@@ -167,7 +167,7 @@ int btrfs_fix_block_accounting(struct btrfs_trans_handle *trans)
 	struct extent_buffer *leaf;
 	struct btrfs_block_group *cache;
 	struct btrfs_fs_info *fs_info = trans->fs_info;
-	struct btrfs_root *root = fs_info->extent_root;
+	struct btrfs_root *root = btrfs_extent_root(fs_info, 0);
 
 	ret = btrfs_run_delayed_refs(trans, -1);
 	if (ret)
@@ -189,8 +189,7 @@ int btrfs_fix_block_accounting(struct btrfs_trans_handle *trans)
 	key.offset = 0;
 	key.objectid = 0;
 	key.type = BTRFS_EXTENT_ITEM_KEY;
-	ret = btrfs_search_slot(trans, root->fs_info->extent_root,
-				&key, &path, 0, 0);
+	ret = btrfs_search_slot(trans, root, &key, &path, 0, 0);
 	if (ret < 0)
 		return ret;
 	while(1) {

@@ -233,7 +233,7 @@ static int change_buffer_header_uuid(struct extent_buffer *eb, uuid_t new_fsid)
 
 static int change_extents_uuid(struct btrfs_fs_info *fs_info, uuid_t new_fsid)
 {
-	struct btrfs_root *root = fs_info->extent_root;
+	struct btrfs_root *root = btrfs_extent_root(fs_info, 0);
 	struct btrfs_path path;
 	struct btrfs_key key = {0, 0, 0};
 	int ret = 0;

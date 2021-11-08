@@ -757,7 +757,7 @@ static int calculate_alloc_pointer(struct btrfs_fs_info *fs_info,
 				   struct btrfs_block_group *cache,
 				   u64 *offset_ret)
 {
-	struct btrfs_root *root = fs_info->extent_root;
+	struct btrfs_root *root = btrfs_extent_root(fs_info, cache->start);
 	struct btrfs_path *path;
 	struct btrfs_key key;
 	struct btrfs_key found_key;

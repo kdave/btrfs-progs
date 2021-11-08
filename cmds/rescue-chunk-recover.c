@@ -555,6 +555,7 @@ static int check_chunk_by_metadata(struct recover_control *rc,
 				   struct btrfs_root *root,
 				   struct chunk_record *chunk, int bg_only)
 {
+	struct btrfs_fs_info *fs_info = root->fs_info;
 	int ret;
 	int i;
 	int slot;
@@ -616,7 +617,8 @@ bg_check:
 	key.type = BTRFS_BLOCK_GROUP_ITEM_KEY;
 	key.offset = chunk->length;
 
-	ret = btrfs_search_slot(NULL, root->fs_info->extent_root, &key, &path,
+	root = btrfs_extent_root(fs_info, key.objectid);
+	ret = btrfs_search_slot(NULL, root, &key, &path,
 				0, 0);
 	if (ret < 0) {
 		fprintf(stderr, "Search block group failed(%d)\n", ret);
@@ -997,7 +999,7 @@ static int block_group_remove_all_extent_items(struct btrfs_trans_handle *trans,
 	int del_s, del_nr;
 
 	btrfs_init_path(&path);
-	root = root->fs_info->extent_root;
+	root = btrfs_extent_root(fs_info, start);
 
 	key.objectid = start;
 	key.offset = 0;
@@ -1382,6 +1384,7 @@ static int rebuild_block_group(struct btrfs_trans_handle *trans,
 			       struct recover_control *rc,
 			       struct btrfs_root *root)
 {
+	struct btrfs_fs_info *fs_info = root->fs_info;
 	struct chunk_record *chunk_rec;
 	struct btrfs_key search_key;
 	struct btrfs_path path;
@@ -1396,12 +1399,11 @@ static int rebuild_block_group(struct btrfs_trans_handle *trans,
 		search_key.objectid = chunk_rec->offset;
 		search_key.type = BTRFS_EXTENT_ITEM_KEY;
 		search_key.offset = 0;
-		ret = btrfs_search_slot(NULL, root->fs_info->extent_root,
-					&search_key, &path, 0, 0);
+		root = btrfs_extent_root(fs_info, chunk_rec->offset);
+		ret = btrfs_search_slot(NULL, root, &search_key, &path, 0, 0);
 		if (ret < 0)
 			goto out;
-		ret = calculate_bg_used(root->fs_info->extent_root,
-					chunk_rec, &path, &used);
+		ret = calculate_bg_used(root, chunk_rec, &path, &used);
 		/*
 		 * Extent tree is damaged, better to rebuild the whole extent
 		 * tree. Currently, change the used to chunk's len to prevent
@@ -1417,9 +1419,7 @@ static int rebuild_block_group(struct btrfs_trans_handle *trans,
 			used = chunk_rec->length;
 		}
 		btrfs_release_path(&path);
-		ret = __insert_block_group(trans, chunk_rec,
-					   root->fs_info->extent_root,
-					   used);
+		ret = __insert_block_group(trans, chunk_rec, root, used);
 		if (ret < 0)
 			goto out;
 	}

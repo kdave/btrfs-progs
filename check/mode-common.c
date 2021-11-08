@@ -176,6 +176,8 @@ static int check_prealloc_shared_data_ref(u64 parent, u64 disk_bytenr)
  */
 int check_prealloc_extent_written(u64 disk_bytenr, u64 num_bytes)
 {
+	struct btrfs_root *extent_root = btrfs_extent_root(gfs_info,
+							   disk_bytenr);
 	struct btrfs_path path;
 	struct btrfs_key key;
 	int ret;
@@ -189,7 +191,7 @@ int check_prealloc_extent_written(u64 disk_bytenr, u64 num_bytes)
 	key.offset = num_bytes;
 
 	btrfs_init_path(&path);
-	ret = btrfs_search_slot(NULL, gfs_info->extent_root, &key, &path, 0, 0);
+	ret = btrfs_search_slot(NULL, extent_root, &key, &path, 0, 0);
 	if (ret > 0) {
 		fprintf(stderr,
 	"Missing extent item in extent tree for disk_bytenr %llu, num_bytes %llu\n",
@@ -240,7 +242,7 @@ int check_prealloc_extent_written(u64 disk_bytenr, u64 num_bytes)
 	path.slots[0]++;
 	while (true) {
 		if (path.slots[0] >= btrfs_header_nritems(path.nodes[0])) {
-			ret = btrfs_next_leaf(gfs_info->extent_root, &path);
+			ret = btrfs_next_leaf(extent_root, &path);
 			if (ret < 0)
 				goto out;
 			if (ret > 0) {
@@ -1083,7 +1085,7 @@ int recow_extent_buffer(struct btrfs_root *root, struct extent_buffer *eb)
  */
 int get_extent_item_generation(u64 bytenr, u64 *gen_ret)
 {
-	struct btrfs_root *root = gfs_info->extent_root;
+	struct btrfs_root *root = btrfs_extent_root(gfs_info, bytenr);
 	struct btrfs_extent_item *ei;
 	struct btrfs_path path;
 	struct btrfs_key key;

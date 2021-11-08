@@ -183,6 +183,7 @@ static int corrupt_keys_in_block(struct btrfs_fs_info *fs_info, u64 bytenr)
 static int corrupt_extent(struct btrfs_trans_handle *trans,
 			  struct btrfs_root *root, u64 bytenr)
 {
+	struct btrfs_root *extent_root;
 	struct btrfs_key key;
 	struct extent_buffer *leaf;
 	u32 item_size;
@@ -200,9 +201,9 @@ static int corrupt_extent(struct btrfs_trans_handle *trans,
 	key.type = (u8)-1;
 	key.offset = (u64)-1;
 
+	extent_root = btrfs_extent_root(trans->fs_info, bytenr);
 	while(1) {
-		ret = btrfs_search_slot(trans, root->fs_info->extent_root,
-					&key, path, -1, 1);
+		ret = btrfs_search_slot(trans, extent_root, &key, path, -1, 1);
 		if (ret < 0)
 			break;
 
@@ -472,7 +473,7 @@ static int corrupt_block_group(struct btrfs_root *root, u64 bg, char *field)
 	u64 orig, bogus;
 	int ret = 0;
 
-	root = root->fs_info->extent_root;
+	root = btrfs_extent_root(root->fs_info, 0);
 
 	corrupt_field = convert_block_group_field(field);
 	if (corrupt_field == BTRFS_BLOCK_GROUP_ITEM_BAD) {
@@ -1382,11 +1383,13 @@ int main(int argc, char **argv)
 	}
 	if (extent_tree) {
 		struct btrfs_trans_handle *trans;
+		struct btrfs_root *extent_root;
 
+		extent_root = btrfs_extent_root(root->fs_info, 0);
 		trans = btrfs_start_transaction(root, 1);
 		BUG_ON(IS_ERR(trans));
-		btrfs_corrupt_extent_tree(trans, root->fs_info->extent_root,
-					  root->fs_info->extent_root->node);
+		btrfs_corrupt_extent_tree(trans, extent_root,
+					  extent_root->node);
 		btrfs_commit_transaction(trans, root);
 		goto out_close;
 	}

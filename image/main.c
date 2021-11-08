@@ -922,7 +922,7 @@ static int copy_from_extent_tree(struct metadump_struct *metadump,
 	u64 num_bytes;
 	int ret;
 
-	extent_root = metadump->root->fs_info->extent_root;
+	extent_root = btrfs_extent_root(metadump->root->fs_info, 0);
 	bytenr = BTRFS_SUPER_INFO_OFFSET + BTRFS_SUPER_INFO_SIZE;
 	key.objectid = bytenr;
 	key.type = BTRFS_EXTENT_ITEM_KEY;
