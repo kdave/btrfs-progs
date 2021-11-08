@@ -8,6 +8,7 @@ Welcome to BTRFS documentation!
    :caption: Contents:
 
    man-index
+   wiki-index
 
 
 Indices and tables
