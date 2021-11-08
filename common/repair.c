@@ -152,47 +152,27 @@ int btrfs_mark_used_tree_blocks(struct btrfs_fs_info *fs_info,
 	return ret;
 }
 
-/*
- * Fixup block accounting. The initial block accounting created by
- * make_block_groups isn't accuracy in this case.
- */
-int btrfs_fix_block_accounting(struct btrfs_trans_handle *trans)
+static int populate_used_from_extent_root(struct btrfs_root *root,
+					  struct extent_io_tree *io_tree)
 {
-	int ret = 0;
-	int slot;
-	u64 start = 0;
-	u64 bytes_used = 0;
+	struct btrfs_fs_info *fs_info = root->fs_info;
+	struct extent_buffer *leaf;
 	struct btrfs_path path;
 	struct btrfs_key key;
-	struct extent_buffer *leaf;
-	struct btrfs_block_group *cache;
-	struct btrfs_fs_info *fs_info = trans->fs_info;
-	struct btrfs_root *root = btrfs_extent_root(fs_info, 0);
-
-	ret = btrfs_run_delayed_refs(trans, -1);
-	if (ret)
-		return ret;
-
-	while(1) {
-		cache = btrfs_lookup_first_block_group(fs_info, start);
-		if (!cache)
-			break;
-
-		start = cache->start + cache->length;
-		cache->used = 0;
-		cache->space_info->bytes_used = 0;
-		if (list_empty(&cache->dirty_list))
-			list_add_tail(&cache->dirty_list, &trans->dirty_bgs);
-	}
+	int slot;
+	int ret;
 
 	btrfs_init_path(&path);
 	key.offset = 0;
 	key.objectid = 0;
 	key.type = BTRFS_EXTENT_ITEM_KEY;
-	ret = btrfs_search_slot(trans, root, &key, &path, 0, 0);
+	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
 	if (ret < 0)
 		return ret;
+
 	while(1) {
+		u64 start, end;
+
 		leaf = path.nodes[0];
 		slot = path.slots[0];
 		if (slot >= btrfs_header_nritems(leaf)) {
@@ -205,23 +185,97 @@ int btrfs_fix_block_accounting(struct btrfs_trans_handle *trans)
 			slot = path.slots[0];
 		}
 		btrfs_item_key_to_cpu(leaf, &key, slot);
-		if (key.type == BTRFS_EXTENT_ITEM_KEY) {
-			bytes_used += key.offset;
-			ret = btrfs_update_block_group(trans,
-				  key.objectid, key.offset, 1, 0);
-			BUG_ON(ret);
-		} else if (key.type == BTRFS_METADATA_ITEM_KEY) {
-			bytes_used += fs_info->nodesize;
-			ret = btrfs_update_block_group(trans,
-				  key.objectid, fs_info->nodesize, 1, 0);
-			if (ret)
-				goto out;
-		}
+		start = end = key.objectid;
+		if (key.type == BTRFS_EXTENT_ITEM_KEY)
+			end = start + key.offset - 1;
+		else if (key.type == BTRFS_METADATA_ITEM_KEY)
+			end = start + fs_info->nodesize - 1;
+
+		if (start != end)
+			set_extent_dirty(io_tree, start, end);
+
 		path.slots[0]++;
 	}
-	btrfs_set_super_bytes_used(root->fs_info->super_copy, bytes_used);
+	btrfs_release_path(&path);
+	return 0;
+}
+
+int btrfs_mark_used_blocks(struct btrfs_fs_info *fs_info,
+			   struct extent_io_tree *tree)
+{
+	struct btrfs_root *root;
+	struct rb_node *n;
+	int ret;
+
+	root = btrfs_extent_root(fs_info, 0);
+	while (1) {
+		ret = populate_used_from_extent_root(root, tree);
+		if (ret)
+			break;
+		n = rb_next(&root->rb_node);
+		if (!n)
+			break;
+		root = rb_entry(n, struct btrfs_root, rb_node);
+		if (root->root_key.objectid != BTRFS_EXTENT_TREE_OBJECTID)
+			break;
+	}
+
+	return ret;
+}
+
+/*
+ * Fixup block accounting. The initial block accounting created by
+ * make_block_groups isn't accuracy in this case.
+ */
+int btrfs_fix_block_accounting(struct btrfs_trans_handle *trans)
+{
+	struct extent_io_tree used;
+	struct btrfs_fs_info *fs_info = trans->fs_info;
+	struct btrfs_block_group *cache;
+	u64 start, end;
+	u64 bytes_used = 0;
+	int ret = 0;
+
+	ret = btrfs_run_delayed_refs(trans, -1);
+	if (ret)
+		return ret;
+
+	extent_io_tree_init(&used);
+
+	ret = btrfs_mark_used_blocks(fs_info, &used);
+	if (ret)
+		goto out;
+
+	start = 0;
+	while(1) {
+		cache = btrfs_lookup_first_block_group(fs_info, start);
+		if (!cache)
+			break;
+
+		start = cache->start + cache->length;
+		cache->used = 0;
+		cache->space_info->bytes_used = 0;
+		if (list_empty(&cache->dirty_list))
+			list_add_tail(&cache->dirty_list, &trans->dirty_bgs);
+	}
+
+	start = 0;
+	while (1) {
+		ret = find_first_extent_bit(&used, 0, &start, &end,
+					    EXTENT_DIRTY);
+		if (ret)
+			break;
+
+		bytes_used += end - start + 1;
+		ret = btrfs_update_block_group(trans, start, end - start + 1,
+					       1, 0);
+		if (ret)
+			goto out;
+		clear_extent_dirty(&used, start, end);
+	}
+	btrfs_set_super_bytes_used(fs_info->super_copy, bytes_used);
 	ret = 0;
 out:
-	btrfs_release_path(&path);
+	extent_io_tree_cleanup(&used);
 	return ret;
 }

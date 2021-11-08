@@ -35,5 +35,7 @@ int btrfs_add_corrupt_extent_record(struct btrfs_fs_info *info,
 int btrfs_fix_block_accounting(struct btrfs_trans_handle *trans);
 int btrfs_mark_used_tree_blocks(struct btrfs_fs_info *fs_info,
 				struct extent_io_tree *tree);
+int btrfs_mark_used_blocks(struct btrfs_fs_info *fs_info,
+			   struct extent_io_tree *tree);
 
 #endif
