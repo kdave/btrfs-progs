@@ -39,6 +39,11 @@ html_theme = 'sphinx_rtd_theme'
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
+# Disable em-dash translation to a single character as we use that for long
+# command line options and this does not render in a copy & paste friendly way
+# in html
+smartquotes_action = 'qe'
+
 man_pages = [
     ('btrfs-select-super', 'btrfs-select-super', 'overwrite primary superblock with a backup copy', '', '8'),
     ('btrfstune', 'btrfstune', 'tune various filesystem parameters', '', 8),
