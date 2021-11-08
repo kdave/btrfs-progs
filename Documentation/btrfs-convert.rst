@@ -111,6 +111,7 @@ OPTIONS
         Specify the checksum algorithm. Default is *crc32c*. Valid values are *crc32c*,
         *xxhash*, *sha256* or *blake2*. To mount such filesystem kernel must support the
         checksums as well.
+
 -d|--no-datasum
         disable data checksum calculations and set the NODATASUM file flag, this can speed
         up the conversion
@@ -141,9 +142,11 @@ OPTIONS
         .. code-block:: bash
 
                 btrfs-convert -O list-all+
+
 -p|--progress
         show progress of conversion (a heartbeat indicator and number of inodes
         processed), on by default
+
 --no-progress
         disable progress and show only the main phases of conversion
 --uuid <SPEC>

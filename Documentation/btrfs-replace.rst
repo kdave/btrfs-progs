@@ -35,29 +35,30 @@ start [options] <srcdev>|<devid> <targetdev> <path>
         .. note::
                 The filesystem has to be resized to fully take advantage of a
                 larger target device; this can be achieved with
-                `btrfs filesystem resize <devid>:max /path`
+                ``btrfs filesystem resize <devid>:max /path``
 
         ``Options``
 
         -r
-                only read from <srcdev> if no other zero-defect mirror exists.
+                only read from *srcdev* if no other zero-defect mirror exists.
                 (enable this if your drive has lots of read errors, the access would be very
                 slow)
         -f
-                force using and overwriting <targetdev> even if it looks like
+                force using and overwriting *targetdev* even if it looks like
                 it contains a valid btrfs filesystem.
 
                 A valid filesystem is assumed if a btrfs superblock is found which contains a
                 correct checksum. Devices that are currently mounted are
-                never allowed to be used as the <targetdev>.
+                never allowed to be used as the *targetdev*.
         -B
                 no background replace.
         --enqueue
                 wait if there's another exclusive operation running, otherwise continue
+
         -K|--nodiscard
                 Do not perform whole device TRIM operation on devices that are capable of that.
                 This does not affect discard/trim operation when the filesystem is mounted.
-                Please see the mount option 'discard' for that in `btrfs`(5).
+                Please see the mount option *discard* for that in ``btrfs(5)``.
 
 status [-1] <mount_point>
         Print status and progress information of a running device replace operation.
@@ -79,6 +80,7 @@ Given the following filesystem mounted at `/mnt/my-vault`
 
 
 .. code-block:: none
+
         Label: 'MyVault'  uuid: ae20903e-b72d-49ba-b944-901fc6d888a1
                 Total devices 2 FS bytes used 1TiB
                 devid    1 size 1TiB used 500.00GiB path /dev/sda
@@ -88,17 +90,20 @@ In order to replace */dev/sda* (*devid 1*) with a bigger drive located at
 */dev/sdc* you would run the following:
 
 .. code-block:: bash
+
         btrfs replace start 1 /dev/sdc /mnt/my-vault/
 
 You can monitor progress via:
 
 .. code-block:: bash
+
         btrfs replace status /mnt/my-vault/
 
 After the replacement is complete, as per the docs at ``btrfs-filesystem(8)`` in
 order to use the entire storage space of the new drive you need to run:
 
 .. code-block:: bash
+
         btrfs filesystem resize 1:max /mnt/my-vault/
 
 EXIT STATUS
