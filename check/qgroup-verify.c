@@ -765,6 +765,10 @@ static int add_refs_for_implied(struct btrfs_fs_info *info, u64 bytenr,
 	struct btrfs_root *root;
 	struct btrfs_key key;
 
+	/* If this is a global tree skip it. */
+	if (!is_fstree(root_id))
+		return 0;
+
 	/* Tree reloc tree doesn't contribute qgroup, skip it */
 	if (root_id == BTRFS_TREE_RELOC_OBJECTID)
 		return 0;
