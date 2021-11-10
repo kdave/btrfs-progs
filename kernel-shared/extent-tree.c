@@ -2791,33 +2791,6 @@ btrfs_add_block_group(struct btrfs_fs_info *fs_info, u64 bytes_used, u64 type,
 	return cache;
 }
 
-int btrfs_make_block_group(struct btrfs_trans_handle *trans,
-			   struct btrfs_fs_info *fs_info, u64 bytes_used,
-			   u64 type, u64 chunk_offset, u64 size)
-{
-	int ret;
-	struct btrfs_root *extent_root = fs_info->extent_root;
-	struct btrfs_block_group *cache;
-	struct btrfs_block_group_item bgi;
-	struct btrfs_key key;
-
-	cache = btrfs_add_block_group(fs_info, bytes_used, type, chunk_offset,
-				      size);
-	btrfs_set_stack_block_group_used(&bgi, cache->used);
-	btrfs_set_stack_block_group_flags(&bgi, cache->flags);
-	btrfs_set_stack_block_group_chunk_objectid(&bgi,
-			BTRFS_FIRST_CHUNK_TREE_OBJECTID);
-	key.objectid = cache->start;
-	key.type = BTRFS_BLOCK_GROUP_ITEM_KEY;
-	key.offset = cache->length;
-	ret = btrfs_insert_item(trans, extent_root, &key, &bgi, sizeof(bgi));
-	BUG_ON(ret);
-
-	add_block_group_free_space(trans, cache);
-
-	return 0;
-}
-
 static int insert_block_group_item(struct btrfs_trans_handle *trans,
 				   struct btrfs_block_group *block_group)
 {
@@ -2836,6 +2809,22 @@ static int insert_block_group_item(struct btrfs_trans_handle *trans,
 
 	root = fs_info->extent_root;
 	return btrfs_insert_item(trans, root, &key, &bgi, sizeof(bgi));
+}
+
+int btrfs_make_block_group(struct btrfs_trans_handle *trans,
+			   struct btrfs_fs_info *fs_info, u64 bytes_used,
+			   u64 type, u64 chunk_offset, u64 size)
+{
+	struct btrfs_block_group *cache;
+	int ret;
+
+	cache = btrfs_add_block_group(fs_info, bytes_used, type, chunk_offset,
+				      size);
+	ret = insert_block_group_item(trans, cache);
+	if (ret)
+		return ret;
+	add_block_group_free_space(trans, cache);
+	return 0;
 }
 
 /*
