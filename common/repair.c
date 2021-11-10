@@ -87,10 +87,6 @@ static int traverse_tree_blocks(struct extent_io_tree *tree,
 			btrfs_item_key_to_cpu(eb, &key, i);
 			if (key.type != BTRFS_ROOT_ITEM_KEY)
 				continue;
-			/* Skip the extent root and reloc roots */
-			if (key.objectid == BTRFS_TREE_RELOC_OBJECTID ||
-			    key.objectid == BTRFS_DATA_RELOC_TREE_OBJECTID)
-				continue;
 			is_extent_root =
 				key.objectid == BTRFS_EXTENT_TREE_OBJECTID;
 			/* If pin, skip the extent root */
