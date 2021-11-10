@@ -32,5 +32,6 @@ struct btrfs_corrupt_block {
 int btrfs_add_corrupt_extent_record(struct btrfs_fs_info *info,
 				    struct btrfs_key *first_key,
 				    u64 start, u64 len, int level);
+int btrfs_fix_block_accounting(struct btrfs_trans_handle *trans);
 
 #endif
