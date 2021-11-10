@@ -187,7 +187,6 @@ static int csum_disk_extent(struct btrfs_trans_handle *trans,
 		if (ret)
 			break;
 		ret = btrfs_csum_file_block(trans,
-					    root->fs_info->csum_root,
 					    disk_bytenr + num_bytes,
 					    disk_bytenr + offset,
 					    buffer, blocksize);

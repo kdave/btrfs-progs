@@ -403,7 +403,7 @@ again:
 		 * we're doing the csum before we record the extent, but
 		 * that's ok
 		 */
-		ret = btrfs_csum_file_block(trans, root->fs_info->csum_root,
+		ret = btrfs_csum_file_block(trans,
 				first_block + bytes_read + sectorsize,
 				first_block + bytes_read,
 				eb->data, sectorsize);

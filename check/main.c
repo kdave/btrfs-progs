@@ -9497,8 +9497,8 @@ static int populate_csum(struct btrfs_trans_handle *trans,
 				       &sectorsize, 0);
 		if (ret)
 			break;
-		ret = btrfs_csum_file_block(trans, csum_root, start + len,
-					    start + offset, buf, sectorsize);
+		ret = btrfs_csum_file_block(trans, start + len, start + offset,
+					    buf, sectorsize);
 		if (ret)
 			break;
 		offset += sectorsize;
