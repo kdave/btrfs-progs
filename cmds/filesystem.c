@@ -655,6 +655,7 @@ static int cmd_filesystem_show(const struct cmd_struct *cmd,
 {
 	LIST_HEAD(all_uuids);
 	struct btrfs_fs_devices *fs_devices;
+	struct btrfs_root *root = NULL;
 	char *search = NULL;
 	int ret;
 	/* default, search both kernel and udev */
@@ -753,12 +754,8 @@ static int cmd_filesystem_show(const struct cmd_struct *cmd,
 
 devs_only:
 	if (type == BTRFS_ARG_REG) {
-		/*
-		 * Given input (search) is regular file.
-		 * We don't close the fs_info because it will free the device,
-		 * this is not a long-running process so it's fine
-		 */
-		if (open_ctree(search, btrfs_sb_offset(0), 0))
+		root = open_ctree(search, btrfs_sb_offset(0), 0);
+		if (root)
 			ret = 0;
 		else
 			ret = 1;
@@ -768,7 +765,7 @@ devs_only:
 
 	if (ret) {
 		error("blkid device scan returned %d", ret);
-		return 1;
+		goto out;
 	}
 
 	/*
@@ -779,13 +776,13 @@ devs_only:
 	ret = search_umounted_fs_uuids(&all_uuids, search, &found);
 	if (ret < 0) {
 		error("searching target device returned error %d", ret);
-		return 1;
+		goto out;
 	}
 
 	ret = map_seed_devices(&all_uuids);
 	if (ret) {
 		error("mapping seed devices returned error %d", ret);
-		return 1;
+		goto out;
 	}
 
 	list_for_each_entry(fs_devices, &all_uuids, list)
@@ -801,8 +798,10 @@ devs_only:
 		free_fs_devices(fs_devices);
 	}
 out:
+	if (root)
+		close_ctree(root);
 	free_seen_fsid(seen_fsid_hash);
-	return ret;
+	return !!ret;
 }
 static DEFINE_SIMPLE_COMMAND(filesystem_show, "show");
 
