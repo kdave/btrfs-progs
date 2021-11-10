@@ -599,23 +599,21 @@ void reset_cached_block_groups()
 	}
 }
 
-static int traverse_tree_blocks(struct extent_buffer *eb, int tree_root, int pin)
+static int traverse_tree_blocks(struct extent_io_tree *tree,
+				struct extent_buffer *eb, int tree_root)
 {
+	struct btrfs_fs_info *fs_info = eb->fs_info;
 	struct extent_buffer *tmp;
 	struct btrfs_root_item *ri;
 	struct btrfs_key key;
-	struct extent_io_tree *tree;
 	u64 bytenr;
 	int level = btrfs_header_level(eb);
 	int nritems;
 	int ret;
 	int i;
 	u64 end = eb->start + eb->len;
+	bool pin = tree == &fs_info->pinned_extents;
 
-	if (pin)
-		tree = &gfs_info->pinned_extents;
-	else
-		tree = gfs_info->excluded_extents;
 	/*
 	 * If we have pinned/excluded this block before, don't do it again.
 	 * This can not only avoid forever loop with broken filesystem
@@ -625,7 +623,7 @@ static int traverse_tree_blocks(struct extent_buffer *eb, int tree_root, int pin
 		return 0;
 
 	if (pin)
-		btrfs_pin_extent(gfs_info, eb->start, eb->len);
+		btrfs_pin_extent(fs_info, eb->start, eb->len);
 	else
 		set_extent_dirty(tree, eb->start, end - 1);
 
@@ -654,12 +652,12 @@ static int traverse_tree_blocks(struct extent_buffer *eb, int tree_root, int pin
 			 * in, but for now this doesn't actually use the root so
 			 * just pass in extent_root.
 			 */
-			tmp = read_tree_block(gfs_info, bytenr, 0);
+			tmp = read_tree_block(fs_info, bytenr, 0);
 			if (!extent_buffer_uptodate(tmp)) {
 				fprintf(stderr, "Error reading root block\n");
 				return -EIO;
 			}
-			ret = traverse_tree_blocks(tmp, 0, pin);
+			ret = traverse_tree_blocks(tree, tmp, 0);
 			free_extent_buffer(tmp);
 			if (ret)
 				return ret;
@@ -667,24 +665,24 @@ static int traverse_tree_blocks(struct extent_buffer *eb, int tree_root, int pin
 			u64 end;
 
 			bytenr = btrfs_node_blockptr(eb, i);
-			end = bytenr + gfs_info->nodesize - 1;
+			end = bytenr + fs_info->nodesize - 1;
 
 			/* If we aren't the tree root don't read the block */
 			if (level == 1 && !tree_root) {
 				if (pin)
-					btrfs_pin_extent(gfs_info, bytenr,
-							 gfs_info->nodesize);
+					btrfs_pin_extent(fs_info, bytenr,
+							 fs_info->nodesize);
 				else
 					set_extent_dirty(tree, bytenr, end);
 				continue;
 			}
 
-			tmp = read_tree_block(gfs_info, bytenr, 0);
+			tmp = read_tree_block(fs_info, bytenr, 0);
 			if (!extent_buffer_uptodate(tmp)) {
 				fprintf(stderr, "Error reading tree block\n");
 				return -EIO;
 			}
-			ret = traverse_tree_blocks(tmp, tree_root, pin);
+			ret = traverse_tree_blocks(tree, tmp, tree_root);
 			free_extent_buffer(tmp);
 			if (ret)
 				return ret;
@@ -694,30 +692,25 @@ static int traverse_tree_blocks(struct extent_buffer *eb, int tree_root, int pin
 	return 0;
 }
 
-static int pin_down_tree_blocks(struct extent_buffer *eb, int tree_root)
+int btrfs_mark_used_tree_blocks(struct btrfs_fs_info *fs_info,
+				struct extent_io_tree *tree)
 {
-	return traverse_tree_blocks(eb, tree_root, 1);
+	int ret;
+
+	ret = traverse_tree_blocks(tree, fs_info->chunk_root->node, 0);
+	if (!ret)
+		ret = traverse_tree_blocks(tree, fs_info->tree_root->node, 1);
+	return ret;
 }
 
 int pin_metadata_blocks(void)
 {
-	int ret;
-
-	ret = pin_down_tree_blocks(gfs_info->chunk_root->node, 0);
-	if (ret)
-		return ret;
-
-	return pin_down_tree_blocks(gfs_info->tree_root->node, 1);
-}
-
-static int exclude_tree_blocks(struct extent_buffer *eb, int tree_root)
-{
-	return traverse_tree_blocks(eb, tree_root, 0);
+	return btrfs_mark_used_tree_blocks(gfs_info,
+					   &gfs_info->pinned_extents);
 }
 
 int exclude_metadata_blocks(void)
 {
-	int ret;
 	struct extent_io_tree *excluded_extents;
 
 	excluded_extents = malloc(sizeof(*excluded_extents));
@@ -726,10 +719,7 @@ int exclude_metadata_blocks(void)
 	extent_io_tree_init(excluded_extents);
 	gfs_info->excluded_extents = excluded_extents;
 
-	ret = exclude_tree_blocks(gfs_info->chunk_root->node, 0);
-	if (ret)
-		return ret;
-	return exclude_tree_blocks(gfs_info->tree_root->node, 1);
+	return btrfs_mark_used_tree_blocks(gfs_info, excluded_extents);
 }
 
 void cleanup_excluded_extents(void)
