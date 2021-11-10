@@ -184,7 +184,7 @@ fail:
 int btrfs_csum_file_block(struct btrfs_trans_handle *trans,
 			  u64 alloc_end, u64 bytenr, char *data, size_t len)
 {
-	struct btrfs_root *root = trans->fs_info->csum_root;
+	struct btrfs_root *root = btrfs_csum_root(trans->fs_info, bytenr);
 	int ret = 0;
 	struct btrfs_key file_key;
 	struct btrfs_key found_key;
@@ -396,8 +396,7 @@ int btrfs_del_csums(struct btrfs_trans_handle *trans, u64 bytenr, u64 len)
 	int ret;
 	u16 csum_size = trans->fs_info->csum_size;
 	int blocksize = trans->fs_info->sectorsize;
-	struct btrfs_root *csum_root = trans->fs_info->csum_root;
-
+	struct btrfs_root *csum_root = btrfs_csum_root(trans->fs_info, bytenr);
 
 	path = btrfs_alloc_path();
 	if (!path)

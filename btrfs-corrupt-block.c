@@ -1031,7 +1031,7 @@ static int delete_csum(struct btrfs_root *root, u64 bytenr, u64 bytes)
 	struct btrfs_trans_handle *trans;
 	int ret;
 
-	root = root->fs_info->csum_root;
+	root = btrfs_csum_root(root->fs_info, bytenr);
 	trans = btrfs_start_transaction(root, 1);
 	if (IS_ERR(trans)) {
 		fprintf(stderr, "Couldn't start transaction %ld\n",

@@ -5992,7 +5992,7 @@ static int check_csums(struct btrfs_root *root)
 	max_entries = ((BTRFS_LEAF_DATA_SIZE(gfs_info) -
 			(sizeof(struct btrfs_item) * 2)) / csum_size) - 1;
 
-	root = gfs_info->csum_root;
+	root = btrfs_csum_root(gfs_info, 0);
 	if (!extent_buffer_uptodate(root->node)) {
 		fprintf(stderr, "No valid csum tree found\n");
 		return -ENOENT;
@@ -9509,7 +9509,7 @@ static int populate_csum(struct btrfs_trans_handle *trans,
 static int fill_csum_tree_from_one_fs_root(struct btrfs_trans_handle *trans,
 					   struct btrfs_root *cur_root)
 {
-	struct btrfs_root *csum_root = gfs_info->csum_root;
+	struct btrfs_root *csum_root;
 	struct btrfs_path path;
 	struct btrfs_key key;
 	struct extent_buffer *node;
@@ -9545,6 +9545,7 @@ static int fill_csum_tree_from_one_fs_root(struct btrfs_trans_handle *trans,
 		start = btrfs_file_extent_disk_bytenr(node, fi);
 		len = btrfs_file_extent_disk_num_bytes(node, fi);
 
+		csum_root = btrfs_csum_root(gfs_info, start);
 		ret = populate_csum(trans, csum_root, buf, start, len);
 		if (ret == -EEXIST)
 			ret = 0;
@@ -9631,7 +9632,7 @@ out:
 static int fill_csum_tree_from_extent(struct btrfs_trans_handle *trans)
 {
 	struct btrfs_root *extent_root = gfs_info->extent_root;
-	struct btrfs_root *csum_root = gfs_info->csum_root;
+	struct btrfs_root *csum_root;
 	struct btrfs_path path;
 	struct btrfs_extent_item *ei;
 	struct extent_buffer *leaf;
@@ -9681,6 +9682,7 @@ static int fill_csum_tree_from_extent(struct btrfs_trans_handle *trans)
 			continue;
 		}
 
+		csum_root = btrfs_csum_root(gfs_info, key.objectid);
 		ret = populate_csum(trans, csum_root, buf, key.objectid,
 				    key.offset);
 		if (ret)
@@ -10701,7 +10703,8 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 
 		if (init_csum_tree) {
 			printf("Reinitialize checksum tree\n");
-			ret = btrfs_fsck_reinit_root(trans, gfs_info->csum_root);
+			ret = btrfs_fsck_reinit_root(trans,
+						btrfs_csum_root(gfs_info, 0));
 			if (ret) {
 				error("checksum tree initialization failed: %d",
 						ret);
@@ -10732,7 +10735,9 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 		err |= !!ret;
 		goto close_out;
 	}
-	if (!extent_buffer_uptodate(gfs_info->csum_root->node)) {
+
+	root = btrfs_csum_root(gfs_info, 0);
+	if (!extent_buffer_uptodate(root->node)) {
 		error("critical: csum_root, unable to check the filesystem");
 		ret = -EIO;
 		err |= !!ret;

@@ -287,6 +287,7 @@ out:
  */
 int count_csum_range(u64 start, u64 len, u64 *found)
 {
+	struct btrfs_root *csum_root = btrfs_csum_root(gfs_info, start);
 	struct btrfs_key key;
 	struct btrfs_path path;
 	struct extent_buffer *leaf;
@@ -302,8 +303,7 @@ int count_csum_range(u64 start, u64 len, u64 *found)
 	key.offset = start;
 	key.type = BTRFS_EXTENT_CSUM_KEY;
 
-	ret = btrfs_search_slot(NULL, gfs_info->csum_root,
-				&key, &path, 0, 0);
+	ret = btrfs_search_slot(NULL, csum_root, &key, &path, 0, 0);
 	if (ret < 0)
 		goto out;
 	if (ret > 0 && path.slots[0] > 0) {
@@ -317,7 +317,7 @@ int count_csum_range(u64 start, u64 len, u64 *found)
 	while (len > 0) {
 		leaf = path.nodes[0];
 		if (path.slots[0] >= btrfs_header_nritems(leaf)) {
-			ret = btrfs_next_leaf(gfs_info->csum_root, &path);
+			ret = btrfs_next_leaf(csum_root, &path);
 			if (ret > 0)
 				break;
 			else if (ret < 0)
