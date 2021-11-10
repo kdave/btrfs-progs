@@ -578,12 +578,31 @@ void btrfs_setup_root(struct btrfs_root *root, struct btrfs_fs_info *fs_info,
 	root->root_key.objectid = objectid;
 }
 
+static int read_root_node(struct btrfs_fs_info *fs_info,
+			  struct btrfs_root *root, u64 bytenr, u64 gen,
+			  int level)
+{
+	root->node = read_tree_block(fs_info, bytenr, gen);
+	if (!extent_buffer_uptodate(root->node))
+		goto err;
+	if (btrfs_header_level(root->node) != level) {
+		error("root [%llu %llu] level %d does not match %d\n",
+		      root->root_key.objectid, root->root_key.offset,
+		      btrfs_header_level(root->node), level);
+		goto err;
+	}
+	return 0;
+err:
+	free_extent_buffer(root->node);
+	root->node = NULL;
+	return -EIO;
+}
+
 static int find_and_setup_root(struct btrfs_root *tree_root,
 			       struct btrfs_fs_info *fs_info,
 			       u64 objectid, struct btrfs_root *root)
 {
 	int ret;
-	u64 generation;
 
 	btrfs_setup_root(root, fs_info, objectid);
 	ret = btrfs_find_last_root(tree_root, objectid,
@@ -591,13 +610,10 @@ static int find_and_setup_root(struct btrfs_root *tree_root,
 	if (ret)
 		return ret;
 
-	generation = btrfs_root_generation(&root->root_item);
-	root->node = read_tree_block(fs_info,
-			btrfs_root_bytenr(&root->root_item), generation);
-	if (!extent_buffer_uptodate(root->node))
-		return -EIO;
-
-	return 0;
+	return read_root_node(fs_info, root,
+			      btrfs_root_bytenr(&root->root_item),
+			      btrfs_root_generation(&root->root_item),
+			      btrfs_root_level(&root->root_item));
 }
 
 static int find_and_setup_log_root(struct btrfs_root *tree_root,
@@ -606,6 +622,7 @@ static int find_and_setup_log_root(struct btrfs_root *tree_root,
 {
 	u64 blocknr = btrfs_super_log_root(disk_super);
 	struct btrfs_root *log_root = malloc(sizeof(struct btrfs_root));
+	int ret;
 
 	if (!log_root)
 		return -ENOMEM;
@@ -615,20 +632,16 @@ static int find_and_setup_log_root(struct btrfs_root *tree_root,
 		return 0;
 	}
 
-	btrfs_setup_root(log_root, fs_info,
-			 BTRFS_TREE_LOG_OBJECTID);
-
-	log_root->node = read_tree_block(fs_info, blocknr,
-				     btrfs_super_generation(disk_super) + 1);
-
-	fs_info->log_root_tree = log_root;
-
-	if (!extent_buffer_uptodate(log_root->node)) {
-		free_extent_buffer(log_root->node);
+	btrfs_setup_root(log_root, fs_info, BTRFS_TREE_LOG_OBJECTID);
+	ret = read_root_node(fs_info, log_root, blocknr,
+			     btrfs_super_generation(disk_super) + 1,
+			     btrfs_super_log_root_level(disk_super));
+	if (ret) {
 		free(log_root);
 		fs_info->log_root_tree = NULL;
-		return -EIO;
+		return ret;
 	}
+	fs_info->log_root_tree = log_root;
 
 	return 0;
 }
@@ -704,9 +717,10 @@ out:
 		return ERR_PTR(ret);
 	}
 	generation = btrfs_root_generation(&root->root_item);
-	root->node = read_tree_block(fs_info,
-			btrfs_root_bytenr(&root->root_item), generation);
-	if (!extent_buffer_uptodate(root->node)) {
+	ret = read_root_node(fs_info, root,
+			     btrfs_root_bytenr(&root->root_item), generation,
+			     btrfs_root_level(&root->root_item));
+	if (ret) {
 		free(root);
 		return ERR_PTR(-EIO);
 	}
@@ -950,11 +964,13 @@ int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info, u64 root_tree_bytenr,
 	struct btrfs_root *root;
 	struct btrfs_key key;
 	u64 generation;
+	int level;
 	int ret;
 
 	root = fs_info->tree_root;
 	btrfs_setup_root(root, fs_info, BTRFS_ROOT_TREE_OBJECTID);
 	generation = btrfs_super_generation(sb);
+	level = btrfs_super_root_level(sb);
 
 	if (!root_tree_bytenr && !(flags & OPEN_CTREE_BACKUP_ROOT)) {
 		root_tree_bytenr = btrfs_super_root(sb);
@@ -968,10 +984,12 @@ int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info, u64 root_tree_bytenr,
 		backup = fs_info->super_copy->super_roots + index;
 		root_tree_bytenr = btrfs_backup_tree_root(backup);
 		generation = btrfs_backup_tree_root_gen(backup);
+		level = btrfs_backup_tree_root_level(backup);
 	}
 
-	root->node = read_tree_block(fs_info, root_tree_bytenr, generation);
-	if (!extent_buffer_uptodate(root->node)) {
+	ret = read_root_node(fs_info, root, root_tree_bytenr, generation,
+			     level);
+	if (ret) {
 		fprintf(stderr, "Couldn't read tree root\n");
 		return -EIO;
 	}
@@ -1179,10 +1197,9 @@ int btrfs_setup_chunk_tree_and_device_map(struct btrfs_fs_info *fs_info,
 	else
 		generation = 0;
 
-	fs_info->chunk_root->node = read_tree_block(fs_info,
-						    chunk_root_bytenr,
-						    generation);
-	if (!extent_buffer_uptodate(fs_info->chunk_root->node)) {
+	ret = read_root_node(fs_info, fs_info->chunk_root, chunk_root_bytenr,
+			     generation, btrfs_super_chunk_root_level(sb));
+	if (ret) {
 		if (fs_info->ignore_chunk_tree_error) {
 			warning("cannot read chunk root, continue anyway");
 			fs_info->chunk_root = NULL;
