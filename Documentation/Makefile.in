@@ -1,3 +1,29 @@
+ifeq (@ASCIIDOC_TOOL@,sphinx)
+$(info "sphinx build, rst")
+
+# Minimal makefile for Sphinx documentation
+#
+
+# You can set these variables from the command line, and also
+# from the environment for the first two.
+SPHINXOPTS    ?=
+SPHINXBUILD   ?= sphinx-build
+SOURCEDIR     = .
+BUILDDIR      = _build
+
+# Put it first so that "make" without argument is like "make help".
+help:
+	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+
+.PHONY: help Makefile Makefile.in
+
+# Catch-all target: route all unknown targets to Sphinx using the new
+# "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
+%: Makefile Makefile.in
+	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+
+else
+
 # Guard against environment variables
 MAN8_TXT =
 
@@ -130,3 +156,5 @@ clean:
 	$(QUIET_ASCIIDOC)$(RM) -f $@+ $@ && \
 	$(ASCIIDOC) $(ASCIIDOC_ARGS) -b $(ASCIIDOC_HTML) -d article -o $@+ $< && \
 	$(MV) $@+ $@
+
+endif

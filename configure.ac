@@ -108,6 +108,14 @@ AC_ARG_ENABLE([documentation],
 AS_IF([test "x$enable_documentation" = xyes], [DISABLE_DOCUMENTATION=0], [DISABLE_DOCUMENTATION=1])
 AC_SUBST([DISABLE_DOCUMENTATION])
 
+dnl Workaround to allow to select sphinx and build the RST documentation until
+dnl it's default and without introducing temporary --with option
+dnl Use as: $ ASCIIDOC_TOOL ./configure
+if test "x$ASCIIDOC_TOOL" = "xsphinx"; then
+	ASCIIDOC_TOOL='sphinx'
+	AC_PATH_PROG([SPHINX], [sphinx-build])
+else
+
 dnl detect tools to build documentation
 ASCIIDOC_TOOL="none"
 if test "x$enable_documentation" = xyes; then
@@ -131,6 +139,7 @@ if test "x$enable_documentation" = xyes; then
 			AC_MSG_ERROR([cannot find asciidoc or asciidoctor, cannot build documentation])
 		fi
 	fi
+fi
 fi
 AC_SUBST([ASCIIDOC_TOOL])
 
