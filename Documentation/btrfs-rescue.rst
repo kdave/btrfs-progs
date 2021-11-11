@@ -50,6 +50,15 @@ fix-device-size <device>
 
                 WARNING: CPU: 3 PID: 439 at fs/btrfs/ctree.h:1559 btrfs_update_device+0x1c5/0x1d0 [btrfs]
 
+clear-uuid-tree <device>
+        Clear uuid tree, so that kernel can re-generate it at next read-write
+        mount.
+
+        Since kernel v4.16 there are more sanity check performed, and sometimes
+        non-critical trees like uuid tree can cause problems and reject the mount.
+        In such case, clearing uuid tree may make the filesystem to be mountable again
+        without much risk as it's built from other trees.
+
 super-recover [options] <device>
         Recover bad superblocks from good copies.
 

@@ -296,6 +296,108 @@ static int cmd_rescue_create_control_device(const struct cmd_struct *cmd,
 }
 static DEFINE_SIMPLE_COMMAND(rescue_create_control_device, "create-control-device");
 
+static int clear_uuid_tree(struct btrfs_fs_info *fs_info)
+{
+	struct btrfs_root *uuid_root = fs_info->uuid_root;
+	struct btrfs_trans_handle *trans;
+	struct btrfs_path path = {};
+	struct btrfs_key key = {};
+	int ret;
+
+	if (!uuid_root)
+		return 0;
+
+	fs_info->uuid_root = NULL;
+	trans = btrfs_start_transaction(fs_info->tree_root, 0);
+	if (IS_ERR(trans))
+		return PTR_ERR(trans);
+
+	while (1) {
+		int nr;
+
+		ret = btrfs_search_slot(trans, uuid_root, &key, &path, -1, 1);
+		if (ret < 0)
+			goto out;
+		ASSERT(ret > 0);
+		ASSERT(path.slots[0] == 0);
+
+		nr = btrfs_header_nritems(path.nodes[0]);
+		if (nr == 0) {
+			btrfs_release_path(&path);
+			break;
+		}
+
+		ret = btrfs_del_items(trans, uuid_root, &path, 0, nr);
+		btrfs_release_path(&path);
+		if (ret < 0)
+			goto out;
+	}
+	ret = btrfs_del_root(trans, fs_info->tree_root, &uuid_root->root_key);
+	if (ret < 0)
+		goto out;
+	list_del(&uuid_root->dirty_list);
+	ret = clean_tree_block(uuid_root->node);
+	if (ret < 0)
+		goto out;
+	ret = btrfs_free_tree_block(trans, uuid_root, uuid_root->node, 0, 1);
+	if (ret < 0)
+		goto out;
+	free_extent_buffer(uuid_root->node);
+	free_extent_buffer(uuid_root->commit_root);
+	kfree(uuid_root);
+out:
+	if (ret < 0)
+		btrfs_abort_transaction(trans, ret);
+	else
+		ret = btrfs_commit_transaction(trans, fs_info->tree_root);
+	return ret;
+}
+
+static const char * const cmd_rescue_clear_uuid_tree_usage[] = {
+	"btrfs rescue clear-uuid-tree",
+	"Delete uuid tree so that kernel can rebuild it at mount time",
+	NULL,
+};
+
+static int cmd_rescue_clear_uuid_tree(const struct cmd_struct *cmd,
+				      int argc, char **argv)
+{
+	struct btrfs_fs_info *fs_info;
+	struct open_ctree_flags ocf = {};
+	char *devname;
+	int ret;
+
+	clean_args_no_options(cmd, argc, argv);
+	if (check_argc_exact(argc, 2))
+		return -EINVAL;
+
+	devname = argv[optind];
+	ret = check_mounted(devname);
+	if (ret < 0) {
+		errno = -ret;
+		error("could not check mount status: %m");
+		goto out;
+	} else if (ret) {
+		error("%s is currently mounted", devname);
+		ret = -EBUSY;
+		goto out;
+	}
+	ocf.filename = devname;
+	ocf.flags = OPEN_CTREE_WRITES | OPEN_CTREE_PARTIAL;
+	fs_info = open_ctree_fs_info(&ocf);
+	if (!fs_info) {
+		error("could not open btrfs");
+		ret = -EIO;
+		goto out;
+	}
+
+	ret = clear_uuid_tree(fs_info);
+	close_ctree(fs_info->tree_root);
+out:
+	return !!ret;
+}
+static DEFINE_SIMPLE_COMMAND(rescue_clear_uuid_tree, "clear-uuid-tree");
+
 static const char rescue_cmd_group_info[] =
 "toolbox for specific rescue operations";
 
@@ -306,6 +408,7 @@ static const struct cmd_group rescue_cmd_group = {
 		&cmd_struct_rescue_zero_log,
 		&cmd_struct_rescue_fix_device_size,
 		&cmd_struct_rescue_create_control_device,
+		&cmd_struct_rescue_clear_uuid_tree,
 		NULL
 	}
 };
