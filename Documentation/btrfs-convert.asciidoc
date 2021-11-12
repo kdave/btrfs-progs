@@ -21,6 +21,8 @@ Supported filesystems:
 
 * reiserfs -- since version 4.13, optionally built, requires libreiserfscore 3.6.27
 
+* ntfs -- external tool https://github.com/maharmstone/ntfs2btrfs
+
 The list of supported source filesystem by a given binary is listed at the end
 of help (option '--help').
 
