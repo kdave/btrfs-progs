@@ -64,8 +64,8 @@ static int discard_supported(const char *device)
 		pr_verbose(3, "cannot read discard_granularity for %s\n", device);
 		return 0;
 	} else {
-		if (buf[0] == '0' && buf[1] == 0) {
-			pr_verbose(3, "%s: discard_granularity %s\n", device, buf);
+		if (atoi(buf) == 0) {
+			pr_verbose(3, "%s: discard_granularity %s", device, buf);
 			return 0;
 		}
 	}
