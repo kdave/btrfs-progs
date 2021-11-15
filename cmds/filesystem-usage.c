@@ -508,8 +508,6 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 		 */
 		if (flags & BTRFS_BLOCK_GROUP_RAID56_MASK)
 			ratio = 0;
-		else
-			ratio = 1;
 
 		if (ratio > max_data_ratio)
 			max_data_ratio = ratio;
