@@ -343,7 +343,7 @@ int raid56_recov(int nr_devs, size_t stripe_len, u64 profile, int dest1,
 		return raid6_recov_data2(nr_devs, stripe_len, dest1, dest2,
 					 data);
 	/* Data and P*/
-	if (dest2 == nr_devs - 1)
+	if (dest2 == nr_devs - 2)
 		return raid6_recov_datap(nr_devs, stripe_len, dest1, data);
 
 	/*
