@@ -806,11 +806,17 @@ int load_chunk_and_device_info(int fd, struct chunk_info **chunkinfo,
  */
 static u64 calc_chunk_size(struct chunk_info *ci)
 {
-	u32 div;
+	u32 div = 1;
 
-	/* No parity + sub_stripes, so order of "-" and "/" does not matter */
-	div = (ci->num_stripes - btrfs_bg_type_to_nparity(ci->type)) /
-	      btrfs_bg_type_to_sub_stripes(ci->type);
+	/*
+	 * The formula doesn't work for RAID1/DUP types, we should just return the
+	 * chunk size
+	 */
+	if (!(ci->type & (BTRFS_BLOCK_GROUP_RAID1_MASK|BTRFS_BLOCK_GROUP_DUP))) {
+		/* No parity + sub_stripes, so order of "-" and "/" does not matter */
+		div = (ci->num_stripes - btrfs_bg_type_to_nparity(ci->type)) /
+			btrfs_bg_type_to_sub_stripes(ci->type);
+	}
 
 	return ci->size / div;
 }
