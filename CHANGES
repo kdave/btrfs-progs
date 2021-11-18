@@ -1,3 +1,10 @@
+btrfs-progs-5.15.1 (2021-11-22)
+* fixes:
+  * fi usage: fix wrongly reported space of used or unallocated space
+  * fix detection of block device discard capability
+* check: add more sanity checks for checksum items
+* build: make sphinx optional backend for documentation
+
 btrfs-progs-5.15 (2021-11-05)
 * mkfs: new defaults!
   * no-holes
