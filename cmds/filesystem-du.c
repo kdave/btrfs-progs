@@ -403,14 +403,14 @@ static int du_walk_dir(struct du_dir_ctxt *ctxt, struct rb_root *shared_extents)
 						  dirfd(dirstream),
 						  shared_extents, &tot, &shr,
 						  0);
-				if (ret == -ENOTTY) {
-					ret = 0;
-					continue;
-				} else if (ret) {
+				if (ret) {
 					errno = -ret;
-					fprintf(stderr,
-					"failed to walk dir/file: %s : %m\n",
-						entry->d_name);
+					fprintf(stderr, "cannot access: '%s:' %m\n",
+							entry->d_name);
+					if (ret == -ENOTTY || ret == -EACCES) {
+						ret = 0;
+						continue;
+					}
 					break;
 				}
 
