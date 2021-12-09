@@ -16,3 +16,5 @@ Anything that's standard and also supported
 - FIEMAP
 
 - O_TMPFILE
+
+- XFLAGS, fileattr

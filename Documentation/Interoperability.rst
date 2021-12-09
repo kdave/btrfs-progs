@@ -26,3 +26,6 @@ overlayfs
 
 SELinux
 -------
+
+io_uring
+--------
