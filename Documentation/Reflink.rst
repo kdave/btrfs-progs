@@ -14,7 +14,7 @@ also copied, though there are no ready-made tools for that.
 
    cp --reflink=always source target
 
-There are some constaints:
+There are some constraints:
 
 - cross-filesystem reflink is not possible, there's nothing in common between
   so the block sharing can't work

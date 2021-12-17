@@ -10,7 +10,7 @@ CRC32C (32bit digest)
         instruction-level support, not collision-resistant but still good error
         detection capabilities
 
-XXHASH* (64bit digest)
+XXHASH (64bit digest)
         can be used as CRC32C successor, very fast, optimized for modern CPUs utilizing
         instruction pipelining, good collision resistance and error detection
 
@@ -32,7 +32,6 @@ additional overhead of the b-tree leaves.
 
 Approximate relative performance of the algorithms, measured against CRC32C
 using reference software implementations on a 3.5GHz intel CPU:
-
 
 ========  ============   =======  ================
 Digest    Cycles/4KiB    Ratio    Implementation
@@ -72,5 +71,4 @@ while accelerated implementation is e.g.
         module       : sha256_ssse3
         priority     : 170
         ...
-
 

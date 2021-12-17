@@ -42,7 +42,7 @@ exclusive
         is the amount of data where all references to this data can be reached
         from within this qgroup.
 
-SUBVOLUME QUOTA GROUPS
+Subvolume quota groups
 ^^^^^^^^^^^^^^^^^^^^^^
 
 The basic notion of the Subvolume Quota feature is the quota group, short
@@ -75,7 +75,7 @@ of qgroups. Figure 1 shows an example qgroup tree.
                       |        /         \   /         \
         extents       1       2            3            4
 
-        Figure1: Sample qgroup hierarchy
+        Figure 1: Sample qgroup hierarchy
 
 At the bottom, some extents are depicted showing which qgroups reference which
 extents.  It is important to understand the notion of *referenced* vs
@@ -101,7 +101,7 @@ allocation information are not accounted.
 In turn, the referenced count of a qgroup can be limited.  All writes beyond
 this limit will lead to a 'Quota Exceeded' error.
 
-INHERITANCE
+Inheritance
 ^^^^^^^^^^^
 
 Things get a bit more complicated when new subvolumes or snapshots are created.
@@ -133,13 +133,13 @@ exclusive count from the second qgroup needs to be copied to the first qgroup,
 as it represents the correct value.  The second qgroup is called a tracking
 qgroup.  It is only there in case a snapshot is needed.
 
-USE CASES
+Use cases
 ^^^^^^^^^
 
-Below are some usecases that do not mean to be extensive. You can find your
+Below are some use cases that do not mean to be extensive. You can find your
 own way how to integrate qgroups.
 
-SINGLE-USER MACHINE
+Single-user machine
 """""""""""""""""""
 
 ``Replacement for partitions``
@@ -156,7 +156,7 @@ the correct values.  'Referenced' will show how much is in it, possibly shared
 with other subvolumes.  'Exclusive' will be the amount of space that gets freed
 when the subvolume is deleted.
 
-MULTI-USER MACHINE
+Multi-user machine
 """"""""""""""""""
 
 ``Restricting homes``
@@ -194,5 +194,3 @@ but some snapshots for backup purposes are being created by the system.  The
 user's snapshots should be accounted to the user, not the system.  The solution
 is similar to the one from section 'Accounting snapshots to the user', but do
 not assign system snapshots to user's qgroup.
-
-

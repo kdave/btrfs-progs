@@ -56,7 +56,7 @@ cause performance drops.
 
 The command above will start defragmentation of the whole *file* and apply
 the compression, regardless of the mount option. (Note: specifying level is not
-yet implemented). The compression algorithm is not persisent and applies only
+yet implemented). The compression algorithm is not persistent and applies only
 to the defragmentation command, for any other writes other compression settings
 apply.
 
@@ -114,9 +114,9 @@ There are two ways to detect incompressible data:
 * actual compression attempt - data are compressed, if the result is not smaller,
   it's discarded, so this depends on the algorithm and level
 * pre-compression heuristics - a quick statistical evaluation on the data is
-  peformed and based on the result either compression is performed or skipped,
+  performed and based on the result either compression is performed or skipped,
   the NOCOMPRESS bit is not set just by the heuristic, only if the compression
-  algorithm does not make an improvent
+  algorithm does not make an improvement
 
 .. code-block:: shell
 
@@ -137,7 +137,7 @@ incompressible data too but this leads to more overhead as the compression is
 done in another thread and has to write the data anyway. The heuristic is
 read-only and can utilize cached memory.
 
-The tests performed based on the following: data sampling, long repated
+The tests performed based on the following: data sampling, long repeated
 pattern detection, byte frequency, Shannon entropy.
 
 Compatibility

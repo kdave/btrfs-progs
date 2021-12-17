@@ -19,7 +19,7 @@ UUID on each mount.
 
 Once the seeding device is mounted, it needs the writable device. After adding
 it, something like **remount -o remount,rw /path** makes the filesystem at
-*/path* ready for use. The simplest usecase is to throw away all changes by
+*/path* ready for use. The simplest use case is to throw away all changes by
 unmounting the filesystem when convenient.
 
 Alternatively, deleting the seeding device from the filesystem can turn it into
@@ -29,7 +29,7 @@ data from the seeding device.
 The seeding device flag can be cleared again by **btrfstune -f -s 0**, eg.
 allowing to update with newer data but please note that this will invalidate
 all existing filesystems that use this particular seeding device. This works
-for some usecases, not for others, and a forcing flag to the command is
+for some use cases, not for others, and a forcing flag to the command is
 mandatory to avoid accidental mistakes.
 
 Example how to create and use one seeding device:
@@ -71,8 +71,6 @@ A few things to note:
 * it's recommended to use only single device for the seeding device, it works
   for multiple devices but the *single* profile must be used in order to make
   the seeding device deletion work
-* block group profiles *single* and *dup* support the usecases above
+* block group profiles *single* and *dup* support the use cases above
 * the label is copied from the seeding device and can be changed by **btrfs filesystem label**
 * each new mount of the seeding device gets a new random UUID
-
-

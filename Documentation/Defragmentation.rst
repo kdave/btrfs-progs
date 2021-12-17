@@ -18,5 +18,5 @@ happens inside the page cache, that is the central point caching the file data
 and takes care of synchronization. Once a filesystem sync or flush is started
 (either manually or automatically) all the dirty data get written to the
 devices. This however reduces the chances to find optimal layout as the writes
-happen together with other data and the result depens on the remaining free
+happen together with other data and the result depends on the remaining free
 space layout and fragmentation.

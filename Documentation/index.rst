@@ -8,7 +8,6 @@ Welcome to BTRFS documentation!
    :caption: Overview
 
    Introduction
-   Quick-start
    man-index
 
 .. toctree::
@@ -41,6 +40,7 @@ Welcome to BTRFS documentation!
    :maxdepth: 1
    :caption: TODO
 
+   Quick-start
    Interoperability
    Glossary
    Flexibility
