@@ -354,7 +354,7 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 	}
 
 out:
-	if (parent_subvol) {
+	if (!IS_ERR_OR_NULL(parent_subvol)) {
 		free(parent_subvol->path);
 		free(parent_subvol);
 	}
