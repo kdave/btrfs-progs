@@ -20,3 +20,11 @@ and takes care of synchronization. Once a filesystem sync or flush is started
 devices. This however reduces the chances to find optimal layout as the writes
 happen together with other data and the result depends on the remaining free
 space layout and fragmentation.
+
+.. warning::
+   Defragmentation does not preserve extent sharing, eg. files created by **cp
+   --reflink** or existing on multiple snapshots. Due to that the data space
+   consumption may increase.
+
+Defragmentation can be started together with compression on the given range,
+and takes precedence over per-file compression property or mount options.

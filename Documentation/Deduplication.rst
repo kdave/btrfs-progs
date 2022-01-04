@@ -10,7 +10,7 @@ There are two main deduplication types:
 
 * **in-band** *(sometimes also called on-line)* -- all newly written data are
   considered for deduplication before writing
-* **out-of-band** *(sometimes alco called offline)* -- data for deduplication
+* **out-of-band** *(sometimes also called offline)* -- data for deduplication
   have to be actively looked for and deduplicated by the user application
 
 Both have their pros and cons. BTRFS implements **only out-of-band** type.
@@ -37,8 +37,41 @@ be up-to-date, maintained and widely used.
      - No
      - Yes
 
-Legend:
+File based deduplication
+------------------------
 
-- *File based*: the tool takes a list of files and deduplicates blocks only from that set
-- *Block based*: the tool enumerates blocks and looks for duplicates
-- *Incremental*: repeated runs of the tool utilizes information gathered from previous runs
+The tool takes a list of files and tries to find duplicates among data only
+from that files. This is suitable eg. for files that originated from the same
+base image, source of a reflinked file. Optionally the tools could track a
+database of hashes and allow to deduplicate blocks from more files, or use that
+for repeated runs and update the database incrementally.
+
+Block based deduplication
+-------------------------
+
+The tool typically scans the filesystem and builds a database of file block
+hashes, then finds candidate files and deduplicates the ranges. The hash
+database is kept as an ordinary file and can be scaled according to the needs.
+
+As the file changes, the hash database may get out of sync and the scan has to
+be done repeatedly.
+
+Safety of block comparison
+--------------------------
+
+The deduplication inside the filesystem is implemented as an ``ioctl`` that takes
+a source file, destination file and the range. The blocks from both files are
+compared for exact match before merging to the same range (ie. there's no
+hash based comparison). Pages representing the extents in memory are locked
+prior to deduplication and prevent concurrent modification by buffered writes
+or mmaped writes.
+
+Limitations, compatibility
+--------------------------
+
+Files that are subject do deduplication must have the same status regarding
+COW, ie. both regular COW files with checksums, or both NOCOW, or files that
+are COW but don't have checksums (NODATASUM attribute is set).
+
+If the deduplication is in progress on any file in the filesystem, the *send*
+operation cannot be started as it relies on the extent layout being unchanged.
