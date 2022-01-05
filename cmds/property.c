@@ -373,7 +373,7 @@ static int autodetect_object_types(const char *object, int *types_out)
 
 	is_btrfs_object = check_btrfs_object(object);
 
-	ret = lstat(object, &st);
+	ret = stat(object, &st);
 	if (ret < 0) {
 		ret = -errno;
 		goto out;
