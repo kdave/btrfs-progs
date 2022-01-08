@@ -28,7 +28,6 @@
 #include <assert.h>
 #include <stddef.h>
 #include <linux/types.h>
-#include <linux/kernel.h>
 #include <linux/const.h>
 #include <stdint.h>
 
