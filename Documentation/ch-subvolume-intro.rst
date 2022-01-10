@@ -1,6 +1,7 @@
 A BTRFS subvolume is a part of filesystem with its own independent
-file/directory hierarchy. Subvolumes can share file extents. A snapshot is also
-subvolume, but with a given initial content of the original subvolume.
+file/directory hierarchy and inode number namespace. Subvolumes can share file
+extents. A snapshot is also subvolume, but with a given initial content of the
+original subvolume.
 
 .. note::
    A subvolume in BTRFS is not like an LVM logical volume, which is block-level
@@ -8,7 +9,9 @@ subvolume, but with a given initial content of the original subvolume.
 
 A subvolume looks like a normal directory, with some additional operations
 described below. Subvolumes can be renamed or moved, nesting subvolumes is not
-restricted but has some implications regarding snapshotting.
+restricted but has some implications regarding snapshotting. The numeric id
+(called *subvolid* or *rootid*) of the subvolume is persistent and cannot be
+changed.
 
 A subvolume in BTRFS can be accessed in two ways:
 
@@ -30,10 +33,10 @@ do not affect the files in the original subvolume.
 Subvolume flags
 ---------------
 
-The subvolume flag currently implemented is the *ro* property. Read-write
-subvolumes have that set to *false*, snapshots as *true*. In addition to that,
-a plain snapshot will also have last change generation and creation generation
-equal.
+The subvolume flag currently implemented is the *ro* property (read-only
+status). Read-write subvolumes have that set to *false*, snapshots as *true*.
+In addition to that, a plain snapshot will also have last change generation and
+creation generation equal.
 
 Read-only snapshots are building blocks of incremental send (see
 ``btrfs-send(8)``) and the whole use case relies on unmodified snapshots where
@@ -56,3 +59,36 @@ it by **btrfs property set** requires force if that is really desired by user.
    show** to identify them. Flipping the flags to read-only and back to
    read-write will reset the *received_uuid* manually.  There may exist a
    convenience tool in the future.
+
+Nested subvolumes
+-----------------
+
+There are no restrictions for subvolume creation, so it's up to the user how to
+organize them, whether to have a flat layout (all subvolumes are direct
+descendants of the toplevel one), or nested.
+
+What should be mentioned early is that a snapshotting is not recursive, so a
+subvolume or a snapshot is effectively a barrier. This can be used
+intentionally but could be confusing in case of nested layouts.
+
+Case study: system root layouts
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+There are two ways how the system root directory and subvolume layout could be
+organized. The interesting usecase for root is to allow rollbacks to previous
+version, as one atomic step. If the entire filesystem hierarchy starting in "/"
+is in one subvolume, taking snapshot will encompass all files. This is easy for
+the snapshotting part but has undesirable consequences for rollback. For example,
+log files would get rolled back too, or any data that are stored on the root
+filesystem but are not meant to be rolled back either (database files, VM
+images, ...).
+
+Here we could utilize the snapshotting barrier mentioned above, each directory
+that stores data to be preserved accross rollbacks is it's own subvolume. This
+could be eg. ``/var``. Further more-fine grained partitioning could be done, eg.
+adding separate subvolumes for ``/var/log``, ``/var/cache`` etc.
+
+That there are separate subvolumes requrires separate actions to take the
+snapshots (here it gets disconnected from the system root snapshots). This needs
+to be taken care of by system tools, installers together with selection of which
+directories are highly recommended to be separate subvolumes.

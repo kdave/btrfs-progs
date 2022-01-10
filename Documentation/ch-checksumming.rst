@@ -1,9 +1,12 @@
 Data and metadata are checksummed by default, the checksum is calculated before
-write and verifed after reading the blocks from devices.  There are several
-checksum algorithms supported. The default and backward compatible is *crc32c*.
-Since kernel 5.5 there are three more with different characteristics and
-trade-offs regarding speed and strength. The following list may help you to
-decide which one to select.
+write and verifed after reading the blocks from devices. The whole metadata
+block has a checksum stored inline in the b-tree node header, each data block
+has a detached checksum stored in the checksum tree.
+
+There are several checksum algorithms supported. The default and backward
+compatible is *crc32c*.  Since kernel 5.5 there are three more with different
+characteristics and trade-offs regarding speed and strength. The following list
+may help you to decide which one to select.
 
 CRC32C (32bit digest)
         default, best backward compatibility, very fast, modern CPUs have
