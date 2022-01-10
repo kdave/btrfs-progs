@@ -260,20 +260,11 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 	memset(&super, 0, sizeof(super));
 
 	num_bytes = (cfg->num_bytes / cfg->sectorsize) * cfg->sectorsize;
-	if (*cfg->fs_uuid) {
-		if (uuid_parse(cfg->fs_uuid, super.fsid) != 0) {
-			error("cannot not parse UUID: %s", cfg->fs_uuid);
-			ret = -EINVAL;
-			goto out;
-		}
-		if (!test_uuid_unique(cfg->fs_uuid)) {
-			error("non-unique UUID: %s", cfg->fs_uuid);
-			ret = -EBUSY;
-			goto out;
-		}
-	} else {
+	if (!*cfg->fs_uuid) {
 		uuid_generate(super.fsid);
 		uuid_unparse(super.fsid, cfg->fs_uuid);
+	} else {
+		uuid_parse(cfg->fs_uuid, super.fsid);
 	}
 	uuid_generate(super.dev_item.uuid);
 	uuid_generate(chunk_tree_uuid);
