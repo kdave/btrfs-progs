@@ -9,12 +9,13 @@ advanced features while focusing on fault tolerance, repair and easy
 administration.
 
 
-This repository hosts following utilities:
+This repository hosts following utilities and also documentation:
 
 * **btrfs** &mdash; the main administration tool ([manual page](https://btrfs.wiki.kernel.org/index.php/Manpage/btrfs))
 * **mkfs.btrfs** &mdash; utility to create the filesystem ([manual page](https://btrfs.wiki.kernel.org/index.php/Manpage/mkfs.btrfs))
 * all-in-one binary in the busybox style with mkfs.btrfs, btrfs-image and other tools built-in ([standalone tools](https://github.com/kdave/btrfs-progs/blob/master/Documentation/btrfs.asciidoc#standalone-tools))
 * **libbtrfsutil** (LGPL v2.1) &mdash; C and python 3 bindings, see [libbtrfsutil/README.md](libbtrfsutil/README.md) for more
+* manual pages and documentation source published at [btrfs.readthedocs.io](https://btrfs.rtfd.io)
 
 See [INSTALL](INSTALL) for build instructions and [tests/README.md](tests/README.md) for
 testing information.
@@ -41,7 +42,7 @@ preference:
 * [github issue tracker](https://github.com/kdave/btrfs-progs/issues)
 * to the mailing list *linux-btrfs@vger.kernel.org* -- (not required to
   subscribe), beware that the mail might get overlooked in other traffic
-* IRC (irc.freenode.net #btrfs) -- good for discussions eg. if a bug is already
+* IRC (irc.libera.chat #btrfs) -- good for discussions eg. if a bug is already
   known, but reports could miss developers' attention
 * [bugzilla.kernel.org](https://bugzilla.kernel.org) -- (requires
   registration), set the product to Filesystems and component Btrfs, please put
@@ -101,6 +102,9 @@ OK, patches could be sent to me directly and not required to be also in the
 mailinglist. Pointing out typos via IRC also works, although might get
 accidentally lost in the noise.
 
+Documents are written in [RST](https://en.wikipedia.org/wiki/ReStructuredText)
+and built by sphinx.
+
 Third-party sources
 -------------------
 
@@ -115,6 +119,9 @@ implementations.
 * XXHASH: https://github.com/Cyan4973/xxHash
 * SHA256: https://tools.ietf.org/html/rfc4634
 * BLAKE2: https://github.com/BLAKE2/BLAKE2
+
+Some other code is borrowed from kernel, eg. the raid5 tables or data structure
+implementation.
 
 References
 ----------
