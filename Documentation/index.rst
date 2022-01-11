@@ -9,6 +9,7 @@ Welcome to BTRFS documentation!
 
    Introduction
    man-index
+   Administration
 
 .. toctree::
    :maxdepth: 1
