@@ -31,6 +31,7 @@ Welcome to BTRFS documentation!
    Seeding-device
    Send-receive
    Subvolumes
+   Swapfile
    Tree-checker
    Trim
    Volume-management
