@@ -108,6 +108,7 @@ static int find_good_parent(struct btrfs_send *sctx, u64 root_id, u64 *found)
 			ret = -ENOENT;
 		else
 			ret = PTR_ERR(parent);
+		parent = NULL;
 		goto out;
 	}
 
@@ -142,6 +143,7 @@ static int find_good_parent(struct btrfs_send *sctx, u64 root_id, u64 *found)
 				ret = -ENOENT;
 			else
 				ret = PTR_ERR(parent2);
+			parent2 = NULL;
 			goto out;
 		}
 		tmp = parent2->ctransid - parent->ctransid;
