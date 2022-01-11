@@ -1,7 +1,7 @@
 A BTRFS subvolume is a part of filesystem with its own independent
 file/directory hierarchy and inode number namespace. Subvolumes can share file
 extents. A snapshot is also subvolume, but with a given initial content of the
-original subvolume.
+original subvolume. A subvolume has always inode number 256.
 
 .. note::
    A subvolume in BTRFS is not like an LVM logical volume, which is block-level
@@ -29,6 +29,21 @@ the default subvolume has been changed (see ``btrfs subvolume set-default``).
 A snapshot is a subvolume like any other, with given initial content. By
 default, snapshots are created read-write. File modifications in a snapshot
 do not affect the files in the original subvolume.
+
+Subvolumes can be given capacity limits, through the qgroups/quota facility, but
+otherwise share the single storage pool of the whole btrfs filesystem. They may
+even share data between themselves (through deduplication or snapshotting).
+
+.. note::
+    A snapshot is not a backup: snapshots work by use of BTRFS' copy-on-write
+    behaviour. A snapshot and the original it was taken from initially share all
+    of the same data blocks. If that data is damaged in some way (cosmic rays,
+    bad disk sector, accident with dd to the disk), then the snapshot and the
+    original will both be damaged. Snapshots are useful to have local online
+    "copies" of the filesystem that can be referred back to, or to implement a
+    form of deduplication, or to fix the state of a filesystem for making a full
+    backup without anything changing underneath it. They do not in themselves
+    make your data any safer.
 
 Subvolume flags
 ---------------
@@ -68,8 +83,11 @@ organize them, whether to have a flat layout (all subvolumes are direct
 descendants of the toplevel one), or nested.
 
 What should be mentioned early is that a snapshotting is not recursive, so a
-subvolume or a snapshot is effectively a barrier. This can be used
-intentionally but could be confusing in case of nested layouts.
+subvolume or a snapshot is effectively a barrier and no files in the nested
+appear in the snapshot. Instead there's a stub subvolume (also sometimes
+**empty subvolume** with the same name as original subvolume, with inode number
+2).  This can be used intentionally but could be confusing in case of nested
+layouts.
 
 Case study: system root layouts
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -92,3 +110,59 @@ That there are separate subvolumes requrires separate actions to take the
 snapshots (here it gets disconnected from the system root snapshots). This needs
 to be taken care of by system tools, installers together with selection of which
 directories are highly recommended to be separate subvolumes.
+
+Mount options
+-------------
+
+Mount options are of two kinds, generic (that are handled by VFS layer) and
+specific, handled by the filesystem. The following list shows which are
+applicable to individual subvolume mounts, while there are more options that
+always affect the whole filesystem:
+
+- generic: noatime/relatime/..., nodev, nosuid, ro, rw, dirsync
+- fs-specific: compress, autodefrag, nodatacow, nodatasum
+
+An example of whole filesystem options is eg. *space_cache*, *rescue*, *device*,
+*skip_balance*, etc. The exceptional options are *subvol* and *subvolid* that
+are actually used for mounting a given subvolume and can be specified only once
+for the mount.
+
+Subvolumes belong to a single filesystem and as implemented now all share the
+same specific mount options, changes done by remount have immediate effect. This
+may change in the future.
+
+Mounting a read-write snapshot as read-only is possible and will not chnange the
+*ro* property and flag of the subvolume.
+
+The name of the mounted subvolume is stored in file ``/proc/self/mounts`` in the
+4th column:
+
+.. code-block::
+
+   27 21 0:19 /subv1 /mnt rw,relatime - btrfs /dev/sda rw,space_cache
+              ^^^^^^
+
+Inode numbers
+-------------
+
+A proper subvolume has always inode number 256. If a subvolume is nested and
+then a snapshot is taken, then the cloned directory entry representing the
+subvolume becomes empty and the inode has number 2. All other files and
+directories in the target snapshot preserve their original inode numbers.
+
+.. note::
+   Inode number is not a filesystem-wide unique identifier, some applications
+   assume that. Please user pair *subvolumeid:inodenumber* for that purpose.
+
+Performance
+-----------
+
+Subvolume creation needs to flush dirty data that belong to the subvolume, this
+step may take some time, otherwise once there's nothing else to do, the snapshot
+is instant and in the metadata it only creates a new tree root copy.
+
+Snapshot deletion has two phases: first its directory is deleted and the
+subvolume is added to a list, then the list is processed one by one and the
+data related to the subvolume get deleted. This is usually called *cleaning* and
+can take some time depending on the amount of shared blocks (can be a lot of
+metadata updates), and the number of currently queued deleted subvolumes.
