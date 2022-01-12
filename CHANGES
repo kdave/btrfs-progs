@@ -1,3 +1,18 @@
+btrfs-progs-5.16 (2022-01-12)
+* rescue: new subcommand clear-uuid-tree to fix failed mount due to bad uuid
+  subvolume keys, caught by tree-checker
+* fi du: skip inaccessible files
+* prop: properly resolve to symlink targets
+* send, receive: fix crash after parent subvolume lookup errors
+* build:
+  * fix build on 5.12+ kernels due to changes in linux/kernel.h
+  * fix build on musl with old kernel headers
+* other:
+  * error handling fixes, cleanups, refactoring
+  * extent tree v2 preparatory work
+  * lots of RST documentation updates (last release with asciidoc sources),
+    https://btrfs.readthedocs.io
+
 btrfs-progs-5.15.1 (2021-11-22)
 * fixes:
   * fi usage: fix wrongly reported space of used or unallocated space
