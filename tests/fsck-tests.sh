@@ -64,7 +64,7 @@ run_one_test() {
 			fi
 			_fail "test failed for case $(basename $testname)"
 		fi
-		# These tests have overriden check_image() and their images may
+		# These tests have overridden check_image() and their images may
 		# have intentional unaligned metadata to trigger subpage
 		# warnings (like fsck/018), skip the check for their subpage
 		# warnings.

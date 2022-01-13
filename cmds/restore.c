@@ -955,7 +955,7 @@ static int search_dir(struct btrfs_root *root, struct btrfs_key *key,
 			do {
 				ret = next_leaf(root, &path);
 				if (ret < 0) {
-					error("search for next leaf faile: %d", ret);
+					error("search for next leaf failed: %d", ret);
 					goto out;
 				} else if (ret > 0) {
 					/* No more leaves to search */

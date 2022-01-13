@@ -41,7 +41,7 @@
 * unix commands do one thing and say nothing, we may diverge a bit from that
 * default output is one line shortly describing the action
  * why: running commands from scripts or among many other commands should be
-   noticeable due to progres tracking or for analysis if something goes wrong
+   noticeable due to progress tracking or for analysis if something goes wrong
  * there's a global option to make the commands silent `btrfs -q subcommand`,
    this can be easily scripted eg. storing the global verbosity option in a
    variable, `btrfs $quiet subcommand` and then enabling or disabling as needed

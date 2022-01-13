@@ -48,7 +48,7 @@ machines).
 **BEFORE YOU START**
 
 The source filesystem must be clean, eg. no journal to replay or no repairs
-needed. The respective 'fsck' utility must be run on the source filesytem prior
+needed. The respective 'fsck' utility must be run on the source filesystem prior
 to conversion. Please refer to the manual pages in case you encounter problems.
 
 For ext2/3/4:

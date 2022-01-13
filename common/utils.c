@@ -645,7 +645,7 @@ struct mnt_entry {
 };
 
 /*
- * Find first occurence of up an option string (as "option=") in @options,
+ * Find first occurrence of up an option string (as "option=") in @options,
  * separated by comma. Return allocated string as "option=value"
  */
 static char *find_option(const char *options, const char *option)
@@ -818,7 +818,7 @@ static void parse_mntinfo_line(char *line, struct mnt_entry *ent)
  *   37 29 0:32 /vol/dir2 /othermnt ro,relatime - btrfs /dev/sda2 ro,ssd,space_cache,subvolid=256,subvol=/vol
  *
  * If we try to find a mount point only using subvol and subvolid from mount
- * options we would get mislead to belive that /othermnt has the same content
+ * options we would get mislead to believe that /othermnt has the same content
  * as /mnt.
  *
  * But, using mountinfo, we have the pathaname _inside_ the filesystem, so we
