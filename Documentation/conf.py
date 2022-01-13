@@ -69,5 +69,5 @@ man_pages = [
     ('btrfs-map-logical', 'btrfs-map-logical', 'map btrfs logical extent to physical extent', '', 8),
     ('btrfs', 'btrfs', 'a toolbox to manage btrfs filesystems', '', 8),
     ('mkfs.btrfs', 'mkfs.btrfs', 'create a btrfs filesystem', '', 8),
-    ('btrfs-man5', 'btrfs-man5', 'topics about the BTRFS filesystem (mount options, supported file attributes and other)', '', 8),
+    ('btrfs-man5', 'btrfs-man5', 'topics about the BTRFS filesystem (mount options, supported file attributes and other)', '', 5),
 ]
