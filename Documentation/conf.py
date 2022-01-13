@@ -14,13 +14,14 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
+import pathlib
+
 # -- Project information -----------------------------------------------------
 project = 'BTRFS'
 # TODO: get from date
-copyright = '2021'
+copyright = '2022'
 
-# TODO: copy from ../VERSION
-release = '5.14.2'
+version = pathlib.Path("../VERSION").read_text().strip('v\n')
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
