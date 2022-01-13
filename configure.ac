@@ -114,6 +114,8 @@ dnl Use as: $ ASCIIDOC_TOOL ./configure
 if test "x$ASCIIDOC_TOOL" = "xsphinx"; then
 	ASCIIDOC_TOOL='sphinx'
 	AC_PATH_PROG([SPHINX], [sphinx-build])
+	AC_PATH_PROG([MV], [mv], [mv])
+	AC_PROG_SED
 else
 
 dnl detect tools to build documentation

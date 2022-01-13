@@ -1,26 +1,69 @@
 ifeq (@ASCIIDOC_TOOL@,sphinx)
-$(info "sphinx build, rst")
 
-# Minimal makefile for Sphinx documentation
-#
+# Source files for manual pages are listed in conf.py in variable man_pages
 
-# You can set these variables from the command line, and also
-# from the environment for the first two.
-SPHINXOPTS    ?=
+# You can set these variables from the command line, and also from the
+# environment for the first two.
+SPHINXOPTS    ?= -N
 SPHINXBUILD   ?= sphinx-build
 SOURCEDIR     = .
 BUILDDIR      = _build
 
-# Put it first so that "make" without argument is like "make help".
+INSTALL = @INSTALL@
+RM = @RM@
+RMDIR = @RMDIR@
+LN_S = @LN_S@
+MV = @MV@
+SED = @SED@
+BTRFS_VERSION = $(shell $(SED) -n 's/.*PACKAGE_VERSION "\(.*\)"/\1/p' ../config.h)
+
+ifneq ($(findstring $(MAKEFLAGS),s),s)
+ifndef V
+	QUIET_RM	= @
+	QUIET_SPHINX	= @echo "    [SPHINX] $@";
+	SPHINXOPTS     += -q
+endif
+endif
+
+mandir ?= $(prefix)/share/man
+man3dir = $(mandir)/man3
+man5dir = $(mandir)/man5
+man8dir = $(mandir)/man8
+
+.PHONY: all man help
+
+# Build manual pages by default
+
+all: man
+
+man:
+	$(QUIET_SPHINX)$(SPHINXBUILD) -M man "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+
 help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
-.PHONY: help Makefile Makefile.in
+install: man
+	$(INSTALL) -d -m 755 $(DESTDIR)$(man5dir)
+	$(INSTALL) -d -m 755 $(DESTDIR)$(man8dir)
+	$(INSTALL) -m 644 $(BUILDDIR)/man/*.5 $(DESTDIR)$(man5dir)
+	# the source file name of btrfs.5 clashes with section 8 page, but we
+	# want to keep the code generic
+	$(MV) $(DESTDIR)$(man5dir)/btrfs-man5.5 $(DESTDIR)$(man5dir)/btrfs.5
+	$(INSTALL) -m 644 $(BUILDDIR)/man/*.8 $(DESTDIR)$(man8dir)
+	$(INSTALL) -m 644 btrfsck.8 $(DESTDIR)$(man8dir)
+
+uninstall:
+	cd $(DESTDIR)$(man8dir); rm -f btrfs-check.8 $(MAN8)
+	$(RMDIR) -p --ignore-fail-on-non-empty $(DESTDIR)$(man8dir)
+
+clean:
+	$(QUIET_RM)$(RM) -rf $(BUILDDIR)/*
+	$(QUIET_RM)$(RMDIR) -- $(BUILDDIR)
 
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
-%: Makefile Makefile.in
-	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+%:
+	$(QUIET_SPHINX)$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 else
 
