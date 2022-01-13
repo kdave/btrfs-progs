@@ -12,7 +12,6 @@ INSTALL = @INSTALL@
 RM = @RM@
 RMDIR = @RMDIR@
 LN_S = @LN_S@
-MV = @MV@
 SED = @SED@
 BTRFS_VERSION = $(shell $(SED) -n 's/.*PACKAGE_VERSION "\(.*\)"/\1/p' ../config.h)
 
@@ -45,9 +44,6 @@ install: man
 	$(INSTALL) -d -m 755 $(DESTDIR)$(man5dir)
 	$(INSTALL) -d -m 755 $(DESTDIR)$(man8dir)
 	$(INSTALL) -m 644 $(BUILDDIR)/man/*.5 $(DESTDIR)$(man5dir)
-	# the source file name of btrfs.5 clashes with section 8 page, but we
-	# want to keep the code generic
-	$(MV) $(DESTDIR)$(man5dir)/btrfs-man5.5 $(DESTDIR)$(man5dir)/btrfs.5
 	$(INSTALL) -m 644 $(BUILDDIR)/man/*.8 $(DESTDIR)$(man8dir)
 	$(INSTALL) -m 644 btrfsck.8 $(DESTDIR)$(man8dir)
 

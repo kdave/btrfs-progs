@@ -45,7 +45,8 @@ html_static_path = ['_static']
 smartquotes_action = 'qe'
 
 man_pages = [
-    ('btrfs-select-super', 'btrfs-select-super', 'overwrite primary superblock with a backup copy', '', '8'),
+    # Source file, page name, description, authors, section
+    ('btrfs-select-super', 'btrfs-select-super', 'overwrite primary superblock with a backup copy', '', 8),
     ('btrfstune', 'btrfstune', 'tune various filesystem parameters', '', 8),
     ('fsck.btrfs', 'fsck.btrfs', 'do nothing, successfully', '', 8),
     ('btrfs-send', 'btrfs-send', 'generate a stream of changes between two subvolume snapshots', '', 8),
@@ -69,5 +70,5 @@ man_pages = [
     ('btrfs-map-logical', 'btrfs-map-logical', 'map btrfs logical extent to physical extent', '', 8),
     ('btrfs', 'btrfs', 'a toolbox to manage btrfs filesystems', '', 8),
     ('mkfs.btrfs', 'mkfs.btrfs', 'create a btrfs filesystem', '', 8),
-    ('btrfs-man5', 'btrfs-man5', 'topics about the BTRFS filesystem (mount options, supported file attributes and other)', '', 5),
+    ('btrfs-man5', 'btrfs', 'topics about the BTRFS filesystem (mount options, supported file attributes and other)', '', 5),
 ]

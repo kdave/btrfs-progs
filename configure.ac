@@ -113,7 +113,6 @@ DOC_TOOL="none"
 if test "x$enable_documentation" = xyes; then
 	DOC_TOOL='sphinx'
 	AC_PATH_PROG([SPHINX], [sphinx-build])
-	AC_PATH_PROG([MV], [mv], [mv])
 	AC_PROG_SED
 
 	if test -z "$SPHINX"; then
