@@ -1227,7 +1227,7 @@ static int cmd_filesystem_resize(const struct cmd_struct *cmd,
 		} else if (strcmp(argv[optind], "--") == 0) {
 			/* Separator: options -- non-options */
 		} else if (strncmp(argv[optind], "--", 2) == 0) {
-			/* Emulate what getopt does on unkonwn option */
+			/* Emulate what getopt does on unknown option */
 			optind++;
 			usage_unknown_option(cmd, argv);
 		} else {

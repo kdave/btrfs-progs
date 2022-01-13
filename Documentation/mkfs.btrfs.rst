@@ -65,7 +65,7 @@ OPTIONS
 
                 Note that the rotational status can be arbitrarily set by the underlying block
                 device driver and may not reflect the true status (network block device, memory-backed
-                SCSI devices, real block device behind some additonal device mapper layer,
+                SCSI devices, real block device behind some additional device mapper layer,
                 etc). It's recommended to always set the options *--data/--metadata* to avoid
                 confusion and unexpected results.
 

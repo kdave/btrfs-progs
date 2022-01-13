@@ -324,7 +324,7 @@ static int _cmd_device_remove(const struct cmd_struct *cmd,
 	"If 'missing' is specified for <device>, the first device that is",	\
 	"described by the filesystem metadata, but not present at the mount",	\
 	"time will be removed. (only in degraded mode)",			\
-	"If 'cancel' is specified as the only device to delete, request cancelation", \
+	"If 'cancel' is specified as the only device to delete, request cancellation", \
 	"of a previously started device deletion and wait until kernel finishes", \
 	"any pending work. This will not delete the device and the size will be", \
 	"restored to previous state. When deletion is not running, this will fail."

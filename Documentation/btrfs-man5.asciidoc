@@ -201,7 +201,7 @@ require.  A read-write mount (or remount) may fail when there are too many devic
 missing, for example if a stripe member is completely missing from RAID0.
 +
 Since 4.14, the constraint checks have been improved and are verified on the
-chunk level, not an the device level. This allows degraded mounts of
+chunk level, not at the device level. This allows degraded mounts of
 filesystems with mixed RAID profiles for data and metadata, even if the
 device number constraints would not be satisfied for some of the profiles.
 +
@@ -884,9 +884,9 @@ There are two ways to detect incompressible data:
 * actual compression attempt - data are compressed, if the result is not smaller,
   it's discarded, so this depends on the algorithm and level
 * pre-compression heuristics - a quick statistical evaluation on the data is
-  peformed and based on the result either compression is performed or skipped,
+  performed and based on the result either compression is performed or skipped,
   the NOCOMPRESS bit is not set just by the heuristic, only if the compression
-  algorithm does not make an improvent
+  algorithm does not make an improvement
 
 PRE-COMPRESSION HEURISTICS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -898,7 +898,7 @@ incompressible data too but this leads to more overhead as the compression is
 done in another thread and has to write the data anyway. The heuristic is
 read-only and can utilize cached memory.
 
-The tests performed based on the following: data sampling, long repated
+The tests performed based on the following: data sampling, long repeated
 pattern detection, byte frequency, Shannon entropy.
 
 COMPATIBILITY WITH OTHER FEATURES

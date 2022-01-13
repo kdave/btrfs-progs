@@ -110,7 +110,7 @@ btrfs-progs-5.13.1 (2021-07-30)
 * build: fix build on musl libc due to missing definition of NAME_MAX
 * check:
   * batch more work into one transaction when clearing v1 free space inodes
-  * detect directoris with wrong number of links
+  * detect directories with wrong number of links
 * libbtrfsutil: fix race between subvolume iterator and deletion
 * mkfs: be more specific about supported profiles for zoned device
 * other:
@@ -215,7 +215,7 @@ btrfs-progs-5.10 (2021-01-18)
     * print percentage of progress
     * add size unit options
   * fi usage: also print free space from statfs
-  * convert: copy full 64 bit timestamp from ext4 if availalble
+  * convert: copy full 64 bit timestamp from ext4 if available
   * check:
     * add ability to repair extent item generation
     * new option to remove leftovers from inode number cache (-o inode_cache)
