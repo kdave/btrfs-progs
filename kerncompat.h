@@ -359,7 +359,14 @@ do {					\
 
 /* Alignment check */
 #define IS_ALIGNED(x, a)                (((x) & ((typeof(x))(a) - 1)) == 0)
-#define ALIGN(x, a)		__ALIGN_KERNEL((x), (a))
+
+/*
+ * Alignment, copied and renamed from /usr/include/linux/const.h to work around
+ * issues caused by moving the definition in 5.12
+ */
+#define __ALIGN_KERNEL__(x, a)		__ALIGN_KERNEL_MASK__(x, (typeof(x))(a) - 1)
+#define __ALIGN_KERNEL_MASK__(x, mask)	(((x) + (mask)) & ~(mask))
+#define ALIGN(x, a)		__ALIGN_KERNEL__((x), (a))
 
 static inline int is_power_of_2(unsigned long n)
 {
