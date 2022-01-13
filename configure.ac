@@ -108,42 +108,19 @@ AC_ARG_ENABLE([documentation],
 AS_IF([test "x$enable_documentation" = xyes], [DISABLE_DOCUMENTATION=0], [DISABLE_DOCUMENTATION=1])
 AC_SUBST([DISABLE_DOCUMENTATION])
 
-dnl Workaround to allow to select sphinx and build the RST documentation until
-dnl it's default and without introducing temporary --with option
-dnl Use as: $ ASCIIDOC_TOOL ./configure
-if test "x$ASCIIDOC_TOOL" = "xsphinx"; then
-	ASCIIDOC_TOOL='sphinx'
+dnl detect tools to build documentation
+DOC_TOOL="none"
+if test "x$enable_documentation" = xyes; then
+	DOC_TOOL='sphinx'
 	AC_PATH_PROG([SPHINX], [sphinx-build])
 	AC_PATH_PROG([MV], [mv], [mv])
 	AC_PROG_SED
-else
 
-dnl detect tools to build documentation
-ASCIIDOC_TOOL="none"
-if test "x$enable_documentation" = xyes; then
-	AC_PATH_PROG([XMLTO], [xmlto])
-	if test -z "$XMLTO"; then
-		AC_MSG_ERROR([cannot find xmlto, cannot build documentation])
-	fi
-
-	AC_PATH_PROG([MV], [mv], [mv])
-	AC_PROG_SED
-	AC_PATH_PROG([ASCIIDOC], [asciidoc])
-	AC_PATH_PROG([ASCIIDOCTOR], [asciidoctor])
-
-	dnl asciidoc is preferred
-	if test -n "$ASCIIDOC"; then
-		ASCIIDOC_TOOL="asciidoc"
-	else
-		if test -n "$ASCIIDOCTOR"; then
-			ASCIIDOC_TOOL="asciidoctor"
-		else
-			AC_MSG_ERROR([cannot find asciidoc or asciidoctor, cannot build documentation])
-		fi
+	if test -z "$SPHINX"; then
+		AC_MSG_ERROR([cannot find sphinx-build, cannot build documentation])
 	fi
 fi
-fi
-AC_SUBST([ASCIIDOC_TOOL])
+AC_SUBST([DOC_TOOL])
 
 AC_ARG_ENABLE([programs],
 	      AS_HELP_STRING([--disable-programs], [do not build utility programs]),
@@ -435,7 +412,7 @@ AC_MSG_RESULT([
 	shared libraries:   ${enable_shared}
 	static libraries:   ${enable_static}
 	documentation:      ${enable_documentation}
-	doc generator:      ${ASCIIDOC_TOOL}
+	doc generator:      ${DOC_TOOL}
 	backtrace support:  ${enable_backtrace}
 	btrfs-convert:      ${enable_convert} ${convertfs:+($convertfs)}
 	btrfs-restore zstd: ${enable_zstd}

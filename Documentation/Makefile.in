@@ -1,4 +1,4 @@
-ifeq (@ASCIIDOC_TOOL@,sphinx)
+ifeq (@DOC_TOOL@,sphinx)
 
 # Source files for manual pages are listed in conf.py in variable man_pages
 
@@ -118,14 +118,14 @@ man8dir = $(mandir)/man8
 XMLTO = @XMLTO@
 XMLTO_EXTRA = -m manpage-bold-literal.xsl
 
-ifeq (@ASCIIDOC_TOOL@,asciidoc)
+ifeq (@DOC_TOOL@,asciidoc)
 ASCIIDOC = @ASCIIDOC@
 ASCIIDOC_ARGS = -abtrfs_version=$(BTRFS_VERSION) -f asciidoc.conf
 ASCIIDOC_HTML = html
 ASCIIDOC_DOCBOOK = docbook
 ASCIIDOC_DEPS = asciidoc.conf
 endif
-ifeq (@ASCIIDOC_TOOL@,asciidoctor)
+ifeq (@DOC_TOOL@,asciidoctor)
 ASCIIDOC = @ASCIIDOCTOR@
 ASCIIDOC_ARGS = -abtrfs_version=$(BTRFS_VERSION)
 ASCIIDOC_HTML = xhtml5
