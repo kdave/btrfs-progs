@@ -192,7 +192,10 @@ static int __add_prelim_ref(struct pref_state *prefstate, u64 root_id,
 	ref->root_id = root_id;
 	if (key) {
 		ref->key_for_search = *key;
-		head = &prefstate->pending;
+		if (parent)
+			head = &prefstate->pending;
+		else
+			head = &prefstate->pending_indirect_refs;
 	} else if (parent) {
 		memset(&ref->key_for_search, 0, sizeof(ref->key_for_search));
 		head = &prefstate->pending;
@@ -467,7 +470,10 @@ static int __add_missing_keys(struct btrfs_fs_info *fs_info,
 		else
 			btrfs_node_key_to_cpu(eb, &ref->key_for_search, 0);
 		free_extent_buffer(eb);
-		list_move(&ref->list, &prefstate->pending);
+		if (ref->parent)
+			list_move(&ref->list, &prefstate->pending);
+		else
+			list_move(&ref->list, &prefstate->pending_indirect_refs);
 	}
 	return 0;
 }
