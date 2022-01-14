@@ -22,6 +22,7 @@
 #include "common/utils.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/volumes.h"
+#include "kernel-shared/backref.h"
 #include "common/repair.h"
 #include "check/mode-common.h"
 
@@ -1338,6 +1339,92 @@ out:
 	return ret;
 }
 
+static int remove_csum_for_file_extent(u64 ino, u64 offset, u64 rootid, void *ctx)
+{
+	struct btrfs_trans_handle *trans = (struct btrfs_trans_handle *)ctx;
+	struct btrfs_fs_info *fs_info = trans->fs_info;
+	struct btrfs_file_extent_item *fi;
+	struct btrfs_inode_item *ii;
+	struct btrfs_path path = {};
+	struct btrfs_key key;
+	struct btrfs_root *root;
+	bool nocsum = false;
+	u8 type;
+	u64 disk_bytenr;
+	u64 disk_len;
+	int ret = 0;
+
+	key.objectid = rootid;
+	key.type = BTRFS_ROOT_ITEM_KEY;
+	key.offset = (u64)-1;
+	root = btrfs_read_fs_root(fs_info, &key);
+	if (IS_ERR(root)) {
+		ret = PTR_ERR(root);
+		goto out;
+	}
+
+	/* Check if the inode has NODATASUM flag */
+	key.objectid = ino;
+	key.type = BTRFS_INODE_ITEM_KEY;
+	key.offset = 0;
+	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
+	if (ret > 0)
+		ret = -ENOENT;
+	if (ret < 0)
+		goto out;
+
+	ii = btrfs_item_ptr(path.nodes[0], path.slots[0],
+			    struct btrfs_inode_item);
+	if (btrfs_inode_flags(path.nodes[0], ii) & BTRFS_INODE_NODATASUM)
+		nocsum = true;
+
+	btrfs_release_path(&path);
+
+	/* Check the file extent item and delete csum if needed */
+	key.objectid = ino;
+	key.type = BTRFS_EXTENT_DATA_KEY;
+	key.offset = offset;
+	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
+	if (ret > 0)
+		ret = -ENOENT;
+	if (ret < 0)
+		goto out;
+	fi = btrfs_item_ptr(path.nodes[0], path.slots[0],
+			    struct btrfs_file_extent_item);
+	type = btrfs_file_extent_type(path.nodes[0], fi);
+
+	if (btrfs_file_extent_disk_bytenr(path.nodes[0], fi) == 0)
+		goto out;
+
+	/* Compressed extent should have csum, skip it */
+	if (btrfs_file_extent_compression(path.nodes[0], fi) !=
+	    BTRFS_COMPRESS_NONE)
+		goto out;
+	/*
+	 * We only want to delete the csum range if the inode has NODATASUM
+	 * flag or it's a preallocated extent.
+	 */
+	if (!(nocsum || type == BTRFS_FILE_EXTENT_PREALLOC))
+		goto out;
+
+	/* If NODATASUM, we need to remove all csum for the extent */
+	if (nocsum) {
+		disk_bytenr = btrfs_file_extent_disk_bytenr(path.nodes[0], fi);
+		disk_len = btrfs_file_extent_disk_num_bytes(path.nodes[0], fi);
+	} else {
+		disk_bytenr = btrfs_file_extent_disk_bytenr(path.nodes[0], fi) +
+			      btrfs_file_extent_offset(path.nodes[0], fi);
+		disk_len = btrfs_file_extent_num_bytes(path.nodes[0], fi);
+	}
+	btrfs_release_path(&path);
+
+	/* Now delete the csum for the preallocated or nodatasum range */
+	ret = btrfs_del_csums(trans, disk_bytenr, disk_len);
+out:
+	btrfs_release_path(&path);
+	return ret;
+}
+
 static int fill_csum_tree_from_extent(struct btrfs_trans_handle *trans,
 				      struct btrfs_root *extent_root)
 {
@@ -1390,10 +1477,27 @@ static int fill_csum_tree_from_extent(struct btrfs_trans_handle *trans,
 			path.slots[0]++;
 			continue;
 		}
-
+		/*
+		 * Generate the datasum unconditionally first.
+		 *
+		 * This will generate csum for preallocated extents, but that
+		 * will be later deleted.
+		 *
+		 * This is to address cases like this:
+		 *  fallocate 0 8K
+		 *  pwrite 0 4k
+		 *  sync
+		 *  punch 0 4k
+		 *
+		 * Above case we will have csum for [0, 4K) and that's valid.
+		 */
 		csum_root = btrfs_csum_root(gfs_info, key.objectid);
 		ret = populate_csum(trans, csum_root, buf, key.objectid,
 				    key.offset);
+		if (ret < 0)
+			break;
+		ret = iterate_extent_inodes(trans->fs_info, key.objectid, 0, 0,
+					    remove_csum_for_file_extent, trans);
 		if (ret)
 			break;
 		path.slots[0]++;
