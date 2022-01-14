@@ -199,4 +199,6 @@ static inline void btrfs_check_subpage_eb_alignment(struct btrfs_fs_info *info,
 int repair_dev_item_bytes_used(struct btrfs_fs_info *fs_info,
 			       u64 devid, u64 bytes_used_expected);
 
+int fill_csum_tree(struct btrfs_trans_handle *trans, bool search_fs_tree);
+
 #endif
