@@ -1225,6 +1225,7 @@ static int fill_csum_tree_from_one_fs_root(struct btrfs_trans_handle *trans,
 	struct extent_buffer *node;
 	struct btrfs_file_extent_item *fi;
 	char *buf = NULL;
+	u64 skip_ino = 0;
 	u64 start = 0;
 	u64 len = 0;
 	int slot = 0;
@@ -1243,24 +1244,67 @@ static int fill_csum_tree_from_one_fs_root(struct btrfs_trans_handle *trans,
 		goto out;
 	/* Iterate all regular file extents and fill its csum */
 	while (1) {
+		u8 type;
+
 		btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
 
-		if (key.type != BTRFS_EXTENT_DATA_KEY)
+		if (key.type != BTRFS_EXTENT_DATA_KEY &&
+		    key.type != BTRFS_INODE_ITEM_KEY)
 			goto next;
+
+		/* This item belongs to an inode with NODATASUM, skip it */
+		if (key.objectid == skip_ino)
+			goto next;
+
+		if (key.type == BTRFS_INODE_ITEM_KEY) {
+			struct btrfs_inode_item *ii;
+
+			ii = btrfs_item_ptr(path.nodes[0], path.slots[0],
+					    struct btrfs_inode_item);
+			/* Check if the inode has NODATASUM flag */
+			if (btrfs_inode_flags(path.nodes[0], ii) & BTRFS_INODE_NODATASUM)
+				skip_ino = key.objectid;
+			goto next;
+		}
 		node = path.nodes[0];
 		slot = path.slots[0];
 		fi = btrfs_item_ptr(node, slot, struct btrfs_file_extent_item);
-		if (btrfs_file_extent_type(node, fi) != BTRFS_FILE_EXTENT_REG)
-			goto next;
-		start = btrfs_file_extent_disk_bytenr(node, fi);
-		len = btrfs_file_extent_disk_num_bytes(node, fi);
+		type = btrfs_file_extent_type(node, fi);
 
+		/* Skip inline extents */
+		if (type == BTRFS_FILE_EXTENT_INLINE)
+			goto next;
+
+		start = btrfs_file_extent_disk_bytenr(node, fi);
+		/* Skip holes */
+		if (start == 0)
+			goto next;
+		/*
+		 * Always generate the csum for the whole preallocated/regular
+		 * first, then remove the csum for preallocated range.
+		 *
+		 * This is to handle holes on regular extents like:
+		 * xfs_io -f -c "pwrite 0 8k" -c "sync" -c "punch 0 4k".
+		 *
+		 * This behavior will cost extra IO/CPU time, but there is
+		 * not other way to ensure the correctness.
+		 */
 		csum_root = btrfs_csum_root(gfs_info, start);
+		len = btrfs_file_extent_disk_num_bytes(node, fi);
 		ret = populate_csum(trans, csum_root, buf, start, len);
 		if (ret == -EEXIST)
 			ret = 0;
 		if (ret < 0)
 			goto out;
+
+		/* Delete the csum for the preallocated range */
+		if (type == BTRFS_FILE_EXTENT_PREALLOC) {
+			start += btrfs_file_extent_offset(node, fi);
+			len = btrfs_file_extent_num_bytes(node, fi);
+			ret = btrfs_del_csums(trans, start, len);
+			if (ret < 0)
+				goto out;
+		}
 next:
 		/*
 		 * TODO: if next leaf is corrupted, jump to nearest next valid
