@@ -47,7 +47,11 @@ get [-t <type>] <object> [<name>]
                 device as object. For a mounted filesystem, specify a mount point.
         compression
                 compression algorithm set for an inode, possible values: *lzo*, *zlib*, *zstd*.
-                To disable compression use "" (empty string), *no* or *none*.
+                To disable compression use *no* or *none*. Empty value resets the
+                property and sets a default value.
+                .. note::
+                        This has changed in version 5.18 of btrfs-progs and
+                        requires kernel 5.14 or newer to work.
 
 list [-t <type>] <object>
         Lists available properties with their descriptions for the given object.
