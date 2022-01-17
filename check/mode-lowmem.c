@@ -4242,7 +4242,8 @@ static int check_extent_item(struct btrfs_path *path)
 	u64 owner_offset;
 	u64 super_gen;
 	int metadata = 0;
-	int level;
+	/* To handle corrupted values in skinny backref */
+	u64 level;
 	struct btrfs_key key;
 	int ret;
 	int err = 0;
@@ -4303,6 +4304,16 @@ static int check_extent_item(struct btrfs_path *path)
 		/* New METADATA_ITEM */
 		level = key.offset;
 	}
+
+	if (metadata && level >= BTRFS_MAX_LEVEL) {
+		error(
+		"tree block %llu has bad backref level, has %llu expect [0, %u]",
+		      key.objectid, level, BTRFS_MAX_LEVEL - 1);
+		err |= BACKREF_MISMATCH;
+		/* This is a critical error, exit right now */
+		goto out;
+	}
+
 	ptr_offset = ptr - (unsigned long)ei;
 
 next:
