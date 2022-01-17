@@ -451,7 +451,7 @@ else
 	$(Q)TEST_ENABLE_OVERRIDE=true TEST_ARGS_CHECK=--mode=lowmem bash tests/fsck-tests.sh
 endif
 
-test-misc: btrfs btrfs-image btrfs-corrupt-block mkfs.btrfs btrfstune fssum \
+test-misc: btrfs btrfs-image btrfs-corrupt-block mkfs.btrfs btrfstune fssum fsstress \
 		btrfs-find-root btrfs-select-super btrfs-convert
 	@echo "    [TEST]   misc-tests.sh"
 	$(Q)bash tests/misc-tests.sh
@@ -491,7 +491,7 @@ test-json: json-formatter-test
 
 test: test-check test-check-lowmem test-mkfs test-misc test-cli test-convert test-fuzz
 
-testsuite: btrfs-corrupt-block btrfs-find-root btrfs-select-super fssum
+testsuite: btrfs-corrupt-block btrfs-find-root btrfs-select-super fssum fsstress
 	@echo "Export tests as a package"
 	$(Q)cd tests && ./export-testsuite.sh
 
@@ -721,6 +721,10 @@ library-test.static: tests/library-test.c libbtrfs.a libbtrfsutil.a
 fssum: tests/fssum.c crypto/sha224-256.c
 	@echo "    [LD]     $@"
 	$(Q)$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+
+fsstress: tests/fsstress.c
+	@echo "    [LD]     $@"
+	$(Q)$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) -luring -laio
 
 hash-speedtest: crypto/hash-speedtest.c $(objects) libbtrfsutil.a
 	@echo "    [LD]     $@"
