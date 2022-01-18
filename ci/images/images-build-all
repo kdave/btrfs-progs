@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# Rebuild all docker images
+for dir in ci-*; do
+	echo "Build $dir"
+	cd "$dir"
+	./docker-build
+	cd ..
+done
