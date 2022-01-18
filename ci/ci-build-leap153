@@ -1,0 +1,31 @@
+#!/bin/sh
+# Usage: $0 [branch]
+# Create source tarball from HEAD or given branch and build it in musl CI
+# environment
+
+HERE=`pwd`
+if [ -f "configure.ac" ]; then
+	SOURCEDIR=`pwd`
+elif [ -f "../configure.ac" ]; then
+	cd ..
+	SOURCEDIR=`pwd`
+else
+	echo "ERROR: cannot determine source directory from `pwd`"
+	exit 1
+fi
+
+CIIMAGEDIR=ci/images/ci-openSUSE-Leap-15.3-x86_64
+BRANCH=${1:-HEAD}
+HASH=$(git log -1 --format='%h %s' "$BRANCH")
+
+echo "CI: Generate archive from $BRANCH ($HASH)"
+git archive --prefix=btrfs-progs-devel/ -o devel.tar "$BRANCH"
+echo "$BRANCH $HASH" > GITCOMMIT
+tar uvf devel.tar GITCOMMIT
+#rm GITCOMMIT
+gzip --force --best devel.tar
+
+cd "$CIIMAGEDIR"
+cp "$SOURCEDIR/devel.tar.gz" .
+./docker-build
+./docker-run -- ./test-build devel --disable-documentation --disable-backtrace --disable-libudev
