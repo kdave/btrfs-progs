@@ -39,6 +39,12 @@ xattr, acl
         access control list in particular (ACL) or properties (``btrfs
         property``)
 
-- XFLAGS, fileattr
+cross-rename
+        mode of *renameat2* syscall that can atomically swap 2 directory
+        entries (files/directories/subvolumes)
 
-- cross-rename
+
+File attributes, XFLAGS
+-----------------------
+
+.. include:: ch-file-attributes.rst
