@@ -590,9 +590,10 @@ static void generic_err(const struct extent_buffer *buf, int slot,
 {
 	va_list args;
 
-	fprintf(stderr, "corrupt %s: root=%lld block=%llu slot=%d, ",
+	fprintf(stderr, "corrupt %s: root=%lld block=%llu physical=%llu slot=%d, ",
 		btrfs_header_level(buf) == 0 ? "leaf": "node",
-		btrfs_header_owner(buf), btrfs_header_bytenr(buf), slot);
+		btrfs_header_owner(buf), btrfs_header_bytenr(buf),
+		buf->dev_bytenr, slot);
 	va_start(args, fmt);
 	vfprintf(stderr, fmt, args);
 	va_end(args);
