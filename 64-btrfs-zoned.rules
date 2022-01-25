@@ -1,0 +1,9 @@
+SUBSYSTEM!="block", GOTO="btrfs_end"
+ACTION!="add|change", GOTO="btrfs_end"
+ENV{ID_FS_TYPE}!="btrfs", GOTO="btrfs_end"
+
+# Zoned btrfs needs an IO scheduler that supports zone write locking and
+# currently mq-deadline is the only scheduler capable of this.
+ATTR{queue/zoned}=="host-managed", ATTR{queue/scheduler}="mq-deadline"
+
+LABEL="btrfs_end"

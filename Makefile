@@ -231,7 +231,7 @@ image_objects = image/main.o image/sanitize.o
 all_objects = $(objects) $(cmds_objects) $(libbtrfs_objects) $(convert_objects) \
 	      $(mkfs_objects) $(image_objects) $(libbtrfsutil_objects)
 
-udev_rules = 64-btrfs-dm.rules
+udev_rules = 64-btrfs-dm.rules 64-btrfs-zoned.rules
 
 ifeq ("$(origin V)", "command line")
   BUILD_VERBOSE = $(V)
