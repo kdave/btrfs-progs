@@ -1349,8 +1349,8 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	if (ret)
 		goto error;
 
-	if (zoned && ((metadata_profile | data_profile) &
-		      BTRFS_BLOCK_GROUP_PROFILE_MASK)) {
+	if (zoned && (!zoned_profile_supported(metadata_profile) ||
+		      !zoned_profile_supported(data_profile))) {
 		error("zoned mode does not yet support RAID/DUP profiles, please specify '-d single -m single' manually");
 		goto error;
 	}

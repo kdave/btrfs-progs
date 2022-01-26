@@ -808,7 +808,7 @@ out:
 	return ret;
 }
 
-static bool profile_supported(u64 flags)
+bool zoned_profile_supported(u64 flags)
 {
 	flags &= BTRFS_BLOCK_GROUP_PROFILE_MASK;
 
@@ -930,7 +930,7 @@ int btrfs_load_block_group_zone_info(struct btrfs_fs_info *fs_info,
 		}
 	}
 
-	if (!profile_supported(map->type)) {
+	if (!zoned_profile_supported(map->type)) {
 		error("zoned: profile %s not yet supported",
 		      btrfs_group_profile_str(map->type));
 		ret = -EINVAL;
