@@ -808,14 +808,20 @@ out:
 	return ret;
 }
 
-bool zoned_profile_supported(u64 flags)
+bool zoned_profile_supported(u64 map_type)
 {
-	flags &= BTRFS_BLOCK_GROUP_PROFILE_MASK;
+	bool data = (map_type & BTRFS_BLOCK_GROUP_DATA);
+	u64 flags = (map_type & BTRFS_BLOCK_GROUP_PROFILE_MASK);
 
 	/* SINGLE */
 	if (flags == 0)
 		return true;
-	/* non-single profiles are not supported yet */
+
+	/* We can support DUP on metadata */
+	if (!data && (flags & BTRFS_BLOCK_GROUP_DUP))
+		return true;
+
+	/* All other profiles are not supported yet */
 	return false;
 }
 
