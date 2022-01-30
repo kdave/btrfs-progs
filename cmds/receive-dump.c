@@ -31,7 +31,6 @@
 #include <stdlib.h>
 #include <time.h>
 #include <ctype.h>
-#include <asm/types.h>
 #include <uuid/uuid.h>
 #include "common/utils.h"
 #include "cmds/commands.h"

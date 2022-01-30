@@ -19,6 +19,11 @@
 #ifndef __KERNCOMPAT_H__
 #define __KERNCOMPAT_H__
 
+#ifndef __SANE_USERSPACE_TYPES__
+/* For PPC64 to get LL64 types */
+#define __SANE_USERSPACE_TYPES__
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
