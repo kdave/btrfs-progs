@@ -265,7 +265,7 @@ static int cmd_subvol_delete(const struct cmd_struct *cmd,
 	struct seen_fsid *seen_fsid_hash[SEEN_FSID_HASH_SIZE] = { NULL, };
 	enum { COMMIT_AFTER = 1, COMMIT_EACH = 2 };
 	enum btrfs_util_error err;
-	uint64_t default_subvol_id = 0, target_subvol_id = 0;
+	uint64_t default_subvol_id, target_subvol_id = 0;
 
 	optind = 0;
 	while (1) {
@@ -374,11 +374,11 @@ again:
 		goto out;
 	}
 
+	default_subvol_id = 0;
 	err = btrfs_util_get_default_subvolume_fd(fd, &default_subvol_id);
-	if (err) {
+	if (err == BTRFS_UTIL_ERROR_SEARCH_FAILED) {
 		if (geteuid() != 0)
 			warning("cannot read default subvolume id: %m");
-		default_subvol_id = 0;
 	}
 
 	if (subvolid > 0) {
