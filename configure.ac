@@ -282,10 +282,31 @@ AC_CHECK_HEADER(linux/blkzoned.h, [blkzoned_found=yes], [blkzoned_found=no])
 AC_CHECK_MEMBER([struct blk_zone.capacity], [blkzoned_capacity=yes], [blkzoned_capacity=no], [[#include <linux/blkzoned.h>]])
 AX_CHECK_DEFINE([linux/blkzoned.h], [BLKGETZONESZ], [blkzoned_getzonesz=yes], [blkzoned_getzonesz=no])
 AC_ARG_ENABLE([zoned],
-	      AS_HELP_STRING([--disable-zoned], [disable zoned block device support]),
-	      [], [enable_zoned=$blkzoned_found]
+	      AS_HELP_STRING([--disable-zoned], [disable zoned block device support (default: detect)]),
+	      [], [enable_zoned=$blkzoned_capacity]
 )
 
+# Autodetect zoned support
+AS_IF([test "x$enableval" = "x"], [
+       cansupportzoned=yes
+       if test "x$blkzoned_found" = xno; then
+	       cansupportzoned=no
+       fi
+       if test "x$blkzoned_capacity" = xno; then
+	       cansupportzoned=no
+       fi
+       if test "x$blkzoned_getzonesz" = xno; then
+	       cansupportzoned=no
+       fi
+       if test "x$cansupportzoned" = xno; then
+	       AC_MSG_NOTICE([insufficient support for zoned mode, cannot enable])
+	       enable_zoned=no
+       else
+	       enable_zoned=yes
+       fi
+])
+
+# Explicitly requested by --enable-zoned
 AS_IF([test "x$enable_zoned" = xyes], [
        if test "x$blkzoned_found" = xno; then
 	       AC_MSG_ERROR([Couldn't find linux/blkzoned.h])
