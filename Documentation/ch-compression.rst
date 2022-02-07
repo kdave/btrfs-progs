@@ -25,7 +25,7 @@ LZO
         * good backward compatibility
 ZSTD
         * compression comparable to zlib with higher compression/decompression speeds and different ratio
-        * levels: 1 to 15
+        * levels: 1 to 15, mapped directly (higher levels are not available)
         * since 4.14, levels since 5.1
 
 The differences depend on the actual data set and cannot be expressed by a
