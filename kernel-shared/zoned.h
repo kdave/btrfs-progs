@@ -199,6 +199,11 @@ static inline int btrfs_wipe_temporary_sb(struct btrfs_fs_devices *fs_devices)
 	return 0;
 }
 
+static inline bool zoned_profile_supported(u64 map_type)
+{
+	return false;
+}
+
 #endif /* BTRFS_ZONED */
 
 static inline bool btrfs_dev_is_sequential(struct btrfs_device *device, u64 pos)
