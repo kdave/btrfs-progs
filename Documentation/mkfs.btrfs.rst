@@ -161,8 +161,7 @@ OPTIONS
 -R|--runtime-features <feature1>[,<feature2>...]
         A list of features that be can enabled at mkfs time, otherwise would have
         to be turned on on a mounted filesystem.
-        Although no runtime feature is enabled by default,
-        to disable a feature, prefix it with *^*.
+        To disable a feature, prefix it with *^*.
 
         See section *RUNTIME FEATURES* for more details.  To see all available
         runtime features that **mkfs.btrfs** supports run:
