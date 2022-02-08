@@ -1233,6 +1233,7 @@ struct btrfs_fs_info {
 
 	u64 super_bytenr;
 	u64 total_pinned;
+	u64 nr_global_roots;
 
 	struct list_head dirty_cowonly_roots;
 	struct list_head recow_ebs;

@@ -933,7 +933,9 @@ struct btrfs_fs_info *btrfs_new_fs_info(int writable, u64 sb_bytenr)
 	fs_info->data_alloc_profile = (u64)-1;
 	fs_info->metadata_alloc_profile = (u64)-1;
 	fs_info->system_alloc_profile = fs_info->metadata_alloc_profile;
+	fs_info->nr_global_roots = 1;
 	return fs_info;
+
 free_all:
 	btrfs_free_fs_info(fs_info);
 	return NULL;
@@ -1074,6 +1076,13 @@ static int load_global_roots_objectid(struct btrfs_fs_info *fs_info,
 				      path->slots[0]);
 		if (key.objectid != objectid)
 			break;
+
+		if (key.offset >= fs_info->nr_global_roots) {
+			warning("global root with too large of an offset [%llu %llu]",
+				key.objectid, key.offset);
+			ret = -EINVAL;
+			break;
+		}
 
 		root = calloc(1, sizeof(*root));
 		if (!root) {
