@@ -90,6 +90,15 @@ build_make_targets
 conf='--disable-convert'
 build_make_targets
 
+conf='--disable-zoned'
+build_make_targets
+
+conf='--disable-udev'
+build_make_targets
+
+conf='--disable-python'
+build_make_targets
+
 conf='--with-convert=ext2'
 build_make_targets
 
