@@ -19,6 +19,7 @@ Requirements, limitations
 
 * all devices must have the same zone size
 * maximum zone size is 8GiB
+* minimum zone size is 4MiB
 * mixing zoned and non-zoned devices is possible, the zone writes are emulated,
   but this is namely for testing
 * the super block is handled in a special way and is at different locations than on a non-zoned filesystem:

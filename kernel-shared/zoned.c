@@ -35,6 +35,15 @@
 
 #define EMULATED_ZONE_SIZE		SZ_256M
 
+/*
+ * Minimum / maximum supported zone size. Currently, SMR disks have a zone size
+ * of 256MiB, and we are expecting ZNS drives to be in the 1-4GiB range.  We do
+ * not expect the zone size to become larger than 8GiB or smaller than 4MiB in
+ * the near future.
+ */
+#define BTRFS_MAX_ZONE_SIZE		(8ULL * SZ_1G)
+#define BTRFS_MIN_ZONE_SIZE		(SZ_4M)
+
 static int btrfs_get_dev_zone_info(struct btrfs_device *device);
 
 enum btrfs_zoned_model zoned_model(const char *file)
@@ -274,6 +283,17 @@ static int report_zones(int fd, const char *file,
 	/* Allocate the zone information array */
 	zinfo->zone_size = zone_bytes;
 	zinfo->nr_zones = device_size / zone_bytes;
+
+	if (zinfo->zone_size > BTRFS_MAX_ZONE_SIZE) {
+		error("zoned: zone size %llu larger than supported maximum %llu",
+		      zinfo->zone_size, BTRFS_MAX_ZONE_SIZE);
+		exit(1);
+	} else if (zinfo->zone_size < BTRFS_MIN_ZONE_SIZE) {
+		error("zoned: zone size %llu smaller than supported minimum %u",
+		      zinfo->zone_size, BTRFS_MIN_ZONE_SIZE);
+		exit(1);
+	}
+
 	if (device_size & (zone_bytes - 1))
 		zinfo->nr_zones++;
 
