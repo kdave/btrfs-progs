@@ -1,3 +1,14 @@
+btrfs-progs-5.16.2 (2022-02-16)
+* mkfs: fix detection of profile type for zoned mode when creating DUP
+* build:
+  * add missing stub for zoned mode helper when zoned mode not enabled
+  * fix 64bit types on MIPS and PowerPC
+  * improved zoned mode support autodetection, for systems with existing
+    blkzone.h header but missing support for zone capacity
+* other:
+  * doc updates
+  * test updates
+
 btrfs-progs-5.16.1 (2022-02-04)
 * mkfs: support DUP on metadata on zoned devices
 * subvol delete: drop warning for root when search ioctl fails
