@@ -705,6 +705,7 @@ btrfs_check_leaf(struct btrfs_fs_info *fs_info,
 	 */
 	for (slot = 0; slot < nritems; slot++) {
 		u32 item_end_expected;
+		u64 item_data_end;
 
 		btrfs_item_key_to_cpu(leaf, &key, slot);
 
@@ -719,6 +720,8 @@ btrfs_check_leaf(struct btrfs_fs_info *fs_info,
 			goto fail;
 		}
 
+		item_data_end = (u64)btrfs_item_offset(leaf, slot) +
+				btrfs_item_size(leaf, slot);
 		/*
 		 * Make sure the offset and ends are right, remember that the
 		 * item data starts at the end of the leaf and grows towards the
@@ -729,11 +732,10 @@ btrfs_check_leaf(struct btrfs_fs_info *fs_info,
 		else
 			item_end_expected = btrfs_item_offset(leaf,
 								 slot - 1);
-		if (btrfs_item_end(leaf, slot) != item_end_expected) {
+		if (item_data_end != item_end_expected) {
 			generic_err(leaf, slot,
-				"unexpected item end, have %u expect %u",
-				btrfs_item_end(leaf, slot),
-				item_end_expected);
+				"unexpected item end, have %llu expect %u",
+				item_data_end, item_end_expected);
 			ret = BTRFS_TREE_BLOCK_INVALID_OFFSETS;
 			goto fail;
 		}
@@ -743,12 +745,10 @@ btrfs_check_leaf(struct btrfs_fs_info *fs_info,
 		 * just in case all the items are consistent to each other, but
 		 * all point outside of the leaf.
 		 */
-		if (btrfs_item_end(leaf, slot) >
-		    BTRFS_LEAF_DATA_SIZE(fs_info)) {
+		if (item_data_end > BTRFS_LEAF_DATA_SIZE(fs_info)) {
 			generic_err(leaf, slot,
-			"slot end outside of leaf, have %u expect range [0, %u]",
-				btrfs_item_end(leaf, slot),
-				BTRFS_LEAF_DATA_SIZE(fs_info));
+			"slot end outside of leaf, have %llu expect range [0, %u]",
+				item_data_end, BTRFS_LEAF_DATA_SIZE(fs_info));
 			ret = BTRFS_TREE_BLOCK_INVALID_OFFSETS;
 			goto fail;
 		}
