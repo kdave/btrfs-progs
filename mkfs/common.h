@@ -76,6 +76,7 @@ struct btrfs_mkfs_config {
 	u32 nodesize;
 	u32 sectorsize;
 	u32 stripesize;
+	u32 leaf_data_size;
 	/* Bitfield of incompat features, BTRFS_FEATURE_INCOMPAT_* */
 	u64 features;
 	/* Bitfield of BTRFS_RUNTIME_FEATURE_* */

@@ -93,7 +93,7 @@ static int btrfs_create_tree_root(int fd, struct btrfs_mkfs_config *cfg,
 
 	btrfs_set_disk_key_type(&disk_key, BTRFS_ROOT_ITEM_KEY);
 	btrfs_set_disk_key_offset(&disk_key, 0);
-	itemoff = __BTRFS_LEAF_DATA_SIZE(cfg->nodesize) - sizeof(root_item);
+	itemoff = cfg->leaf_data_size - sizeof(root_item);
 
 	for (i = 0; i < blocks_nr; i++) {
 		blk = blocks[i];
@@ -148,7 +148,7 @@ static int create_free_space_tree(int fd, struct btrfs_mkfs_config *cfg,
 {
 	struct btrfs_free_space_info *info;
 	struct btrfs_disk_key disk_key;
-	int itemoff = __BTRFS_LEAF_DATA_SIZE(cfg->nodesize);
+	int itemoff = cfg->leaf_data_size;
 	int nritems = 0;
 	int ret;
 
@@ -427,7 +427,7 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 		cfg->nodesize - sizeof(struct btrfs_header));
 	nritems = 0;
 	item_size = sizeof(*dev_item);
-	itemoff = __BTRFS_LEAF_DATA_SIZE(cfg->nodesize) - item_size;
+	itemoff = cfg->leaf_data_size - item_size;
 
 	/* first device 1 (there is no device 0) */
 	btrfs_set_disk_key_objectid(&disk_key, BTRFS_DEV_ITEMS_OBJECTID);
@@ -515,8 +515,7 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 	memset(buf->data + sizeof(struct btrfs_header), 0,
 		cfg->nodesize - sizeof(struct btrfs_header));
 	nritems = 0;
-	itemoff = __BTRFS_LEAF_DATA_SIZE(cfg->nodesize) -
-		sizeof(struct btrfs_dev_extent);
+	itemoff = cfg->leaf_data_size - sizeof(struct btrfs_dev_extent);
 
 	btrfs_set_disk_key_objectid(&disk_key, 1);
 	btrfs_set_disk_key_offset(&disk_key, system_group_offset);
