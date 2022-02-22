@@ -10207,6 +10207,8 @@ static int check_global_roots_uptodate(void)
 {
 	struct btrfs_root *root;
 	struct rb_node *n;
+	int found_csum = 0, found_extent = 0, found_fst = 0;
+	int ret = 0;
 
 	for (n = rb_first(&gfs_info->global_roots_tree); n; n = rb_next(n)) {
 		root = rb_entry(n, struct btrfs_root, rb_node);
@@ -10215,9 +10217,39 @@ static int check_global_roots_uptodate(void)
 			      root->root_key.objectid, root->root_key.offset);
 			return -EIO;
 		}
+		switch(root->root_key.objectid) {
+		case BTRFS_EXTENT_TREE_OBJECTID:
+			found_extent++;
+			break;
+		case BTRFS_CSUM_TREE_OBJECTID:
+			found_csum++;
+			break;
+		case BTRFS_FREE_SPACE_TREE_OBJECTID:
+			found_fst++;
+			break;
+		default:
+			break;
+		}
 	}
 
-	return 0;
+	if (found_extent != gfs_info->nr_global_roots) {
+		error("found %d extent roots, expected %llu", found_extent,
+		      gfs_info->nr_global_roots);
+		ret = -EIO;
+	}
+	if (found_csum != gfs_info->nr_global_roots) {
+		error("found %d csum roots, expected %llu", found_csum,
+		      gfs_info->nr_global_roots);
+		ret = -EIO;
+	}
+	if (!btrfs_fs_compat_ro(gfs_info, FREE_SPACE_TREE))
+		return ret;
+	if (found_fst != gfs_info->nr_global_roots) {
+		error("found %d free space roots, expected %llu", found_fst,
+		      gfs_info->nr_global_roots);
+		ret = -EIO;
+	}
+	return ret;
 }
 
 static const char * const cmd_check_usage[] = {
