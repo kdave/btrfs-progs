@@ -14,7 +14,7 @@ check_image() {
 
 	image=$1
 	run_mayfail $TOP/btrfs check -s 1 "$image"
-	run_mayfail $TOP/btrfs check --init-csum-tree "$image"
+	run_mayfail $TOP/btrfs check --force --init-csum-tree "$image"
 	run_mayfail $TOP/btrfs check --repair --force --init-extent-tree "$image"
 	run_mayfail $TOP/btrfs check --repair --force --check-data-csum "$image"
 	run_mayfail $TOP/btrfs check --subvol-extents "$image"
