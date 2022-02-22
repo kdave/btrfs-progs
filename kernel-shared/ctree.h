@@ -1921,77 +1921,77 @@ BTRFS_SETGET_FUNCS(ref_count_v0, struct btrfs_extent_ref_v0, count, 32);
 BTRFS_SETGET_FUNCS(key_blockptr, struct btrfs_key_ptr, blockptr, 64);
 BTRFS_SETGET_FUNCS(key_generation, struct btrfs_key_ptr, generation, 64);
 
-static inline unsigned long btrfs_node_key_ptr_offset(int nr)
+static inline unsigned long btrfs_node_key_ptr_offset(const struct extent_buffer *eb, int nr)
 {
 	return offsetof(struct btrfs_node, ptrs) +
 		sizeof(struct btrfs_key_ptr) * nr;
 }
 
-static inline struct btrfs_key_ptr *btrfs_node_key_ptr(int nr)
+static inline struct btrfs_key_ptr *btrfs_node_key_ptr(const struct extent_buffer *eb, int nr)
 {
-	return (struct btrfs_key_ptr *)btrfs_node_key_ptr_offset(nr);
+	return (struct btrfs_key_ptr *)btrfs_node_key_ptr_offset(eb, nr);
 }
 
 static inline u64 btrfs_node_blockptr(struct extent_buffer *eb, int nr)
 {
-	return btrfs_key_blockptr(eb, btrfs_node_key_ptr(nr));
+	return btrfs_key_blockptr(eb, btrfs_node_key_ptr(eb, nr));
 }
 
 static inline void btrfs_set_node_blockptr(struct extent_buffer *eb,
 					   int nr, u64 val)
 {
-	btrfs_set_key_blockptr(eb, btrfs_node_key_ptr(nr), val);
+	btrfs_set_key_blockptr(eb, btrfs_node_key_ptr(eb, nr), val);
 }
 
 static inline u64 btrfs_node_ptr_generation(struct extent_buffer *eb, int nr)
 {
-	return btrfs_key_generation(eb, btrfs_node_key_ptr(nr));
+	return btrfs_key_generation(eb, btrfs_node_key_ptr(eb, nr));
 }
 
 static inline void btrfs_set_node_ptr_generation(struct extent_buffer *eb,
 						 int nr, u64 val)
 {
-	btrfs_set_key_generation(eb, btrfs_node_key_ptr(nr), val);
+	btrfs_set_key_generation(eb, btrfs_node_key_ptr(eb, nr), val);
 }
 
 static inline void btrfs_node_key(struct extent_buffer *eb,
 				  struct btrfs_disk_key *disk_key, int nr)
 {
-	read_eb_member(eb, btrfs_node_key_ptr(nr), struct btrfs_key_ptr, key,
-		       disk_key);
+	read_eb_member(eb, btrfs_node_key_ptr(eb, nr), struct btrfs_key_ptr,
+		       key, disk_key);
 }
 
 static inline void btrfs_set_node_key(struct extent_buffer *eb,
 				      struct btrfs_disk_key *disk_key, int nr)
 {
-	write_eb_member(eb, btrfs_node_key_ptr(nr), struct btrfs_key_ptr, key,
-			disk_key);
+	write_eb_member(eb, btrfs_node_key_ptr(eb, nr), struct btrfs_key_ptr,
+			key, disk_key);
 }
 
 /* struct btrfs_item */
 BTRFS_SETGET_FUNCS(raw_item_offset, struct btrfs_item, offset, 32);
 BTRFS_SETGET_FUNCS(raw_item_size, struct btrfs_item, size, 32);
 
-static inline unsigned long btrfs_item_nr_offset(int nr)
+static inline unsigned long btrfs_item_nr_offset(const struct extent_buffer *eb, int nr)
 {
 	return offsetof(struct btrfs_leaf, items) +
 		sizeof(struct btrfs_item) * nr;
 }
 
-static inline struct btrfs_item *btrfs_item_nr(int nr)
+static inline struct btrfs_item *btrfs_item_nr(const struct extent_buffer *eb, int nr)
 {
-	return (struct btrfs_item *)btrfs_item_nr_offset(nr);
+	return (struct btrfs_item *)btrfs_item_nr_offset(eb, nr);
 }
 
 #define BTRFS_ITEM_SETGET_FUNCS(member)						\
 static inline u32 btrfs_item_##member(const struct extent_buffer *eb, int slot)	\
 {										\
-	return btrfs_raw_item_##member(eb, btrfs_item_nr(slot));		\
+	return btrfs_raw_item_##member(eb, btrfs_item_nr(eb, slot));		\
 }										\
 static inline void btrfs_set_item_##member(struct extent_buffer *eb,		\
 					   int slot, u32 val)			\
 {										\
-	btrfs_set_raw_item_##member(eb, btrfs_item_nr(slot), val);		\
+	btrfs_set_raw_item_##member(eb, btrfs_item_nr(eb, slot), val);		\
 }
 
 BTRFS_ITEM_SETGET_FUNCS(size)
@@ -2005,14 +2005,14 @@ static inline u32 btrfs_item_end(struct extent_buffer *eb, int nr)
 static inline void btrfs_item_key(struct extent_buffer *eb,
 			   struct btrfs_disk_key *disk_key, int nr)
 {
-	struct btrfs_item *item = btrfs_item_nr(nr);
+	struct btrfs_item *item = btrfs_item_nr(eb, nr);
 	read_eb_member(eb, item, struct btrfs_item, key, disk_key);
 }
 
 static inline void btrfs_set_item_key(struct extent_buffer *eb,
 			       struct btrfs_disk_key *disk_key, int nr)
 {
-	struct btrfs_item *item = btrfs_item_nr(nr);
+	struct btrfs_item *item = btrfs_item_nr(eb, nr);
 	write_eb_member(eb, item, struct btrfs_item, key, disk_key);
 }
 

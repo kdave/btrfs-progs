@@ -360,8 +360,8 @@ static void copy_buffer(struct metadump_struct *md, u8 *dst,
 	} else if (level == 0) {
 		size = btrfs_leaf_data(src) +
 			btrfs_item_offset(src, nritems - 1) -
-			btrfs_item_nr_offset(nritems);
-		memset(dst + btrfs_item_nr_offset(nritems), 0, size);
+			btrfs_item_nr_offset(src, nritems);
+		memset(dst + btrfs_item_nr_offset(src, nritems), 0, size);
 		zero_items(md, dst, src);
 	} else {
 		size = offsetof(struct btrfs_node, ptrs) +

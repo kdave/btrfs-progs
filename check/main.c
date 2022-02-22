@@ -4192,16 +4192,17 @@ static int swap_values(struct btrfs_root *root, struct btrfs_path *path,
 	if (btrfs_header_level(buf)) {
 		struct btrfs_key_ptr ptr1, ptr2;
 
-		read_extent_buffer(buf, &ptr1, btrfs_node_key_ptr_offset(slot),
+		read_extent_buffer(buf, &ptr1,
+				   btrfs_node_key_ptr_offset(buf, slot),
 				   sizeof(struct btrfs_key_ptr));
 		read_extent_buffer(buf, &ptr2,
-				   btrfs_node_key_ptr_offset(slot + 1),
+				   btrfs_node_key_ptr_offset(buf, slot + 1),
 				   sizeof(struct btrfs_key_ptr));
 		write_extent_buffer(buf, &ptr1,
-				    btrfs_node_key_ptr_offset(slot + 1),
+				    btrfs_node_key_ptr_offset(buf, slot + 1),
 				    sizeof(struct btrfs_key_ptr));
 		write_extent_buffer(buf, &ptr2,
-				    btrfs_node_key_ptr_offset(slot),
+				    btrfs_node_key_ptr_offset(buf, slot),
 				    sizeof(struct btrfs_key_ptr));
 		if (slot == 0) {
 			struct btrfs_disk_key key;
@@ -4299,8 +4300,8 @@ static int delete_bogus_item(struct btrfs_root *root,
 	printf("Deleting bogus item [%llu,%u,%llu] at slot %d on block %llu\n",
 	       (unsigned long long)key.objectid, key.type,
 	       (unsigned long long)key.offset, slot, buf->start);
-	memmove_extent_buffer(buf, btrfs_item_nr_offset(slot),
-			      btrfs_item_nr_offset(slot + 1),
+	memmove_extent_buffer(buf, btrfs_item_nr_offset(buf, slot),
+			      btrfs_item_nr_offset(buf, slot + 1),
 			      sizeof(struct btrfs_item) *
 			      (nritems - slot - 1));
 	btrfs_set_header_nritems(buf, nritems - 1);
