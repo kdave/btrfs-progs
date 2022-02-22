@@ -238,7 +238,7 @@ static int setup_temp_root_tree(int fd, struct btrfs_mkfs_config *cfg,
 				u64 dev_bytenr, u64 fs_bytenr, u64 csum_bytenr)
 {
 	struct extent_buffer *buf = NULL;
-	u32 itemoff = __BTRFS_LEAF_DATA_SIZE(cfg->nodesize);
+	u32 itemoff = cfg->leaf_data_size;
 	int slot = 0;
 	int ret;
 
@@ -419,7 +419,7 @@ static int setup_temp_chunk_tree(int fd, struct btrfs_mkfs_config *cfg,
 				 u64 chunk_bytenr)
 {
 	struct extent_buffer *buf = NULL;
-	u32 itemoff = __BTRFS_LEAF_DATA_SIZE(cfg->nodesize);
+	u32 itemoff = cfg->leaf_data_size;
 	int slot = 0;
 	int ret;
 
@@ -490,7 +490,7 @@ static int setup_temp_dev_tree(int fd, struct btrfs_mkfs_config *cfg,
 			       u64 dev_bytenr)
 {
 	struct extent_buffer *buf = NULL;
-	u32 itemoff = __BTRFS_LEAF_DATA_SIZE(cfg->nodesize);
+	u32 itemoff = cfg->leaf_data_size;
 	int slot = 0;
 	int ret;
 
@@ -688,7 +688,7 @@ static int setup_temp_extent_tree(int fd, struct btrfs_mkfs_config *cfg,
 				  u64 fs_bytenr, u64 csum_bytenr)
 {
 	struct extent_buffer *buf = NULL;
-	u32 itemoff = __BTRFS_LEAF_DATA_SIZE(cfg->nodesize);
+	u32 itemoff = cfg->leaf_data_size;
 	int slot = 0;
 	int ret;
 
