@@ -302,7 +302,6 @@ static void zero_items(struct metadump_struct *md, u8 *dst,
 		       struct extent_buffer *src)
 {
 	struct btrfs_file_extent_item *fi;
-	struct btrfs_item *item;
 	struct btrfs_key key;
 	u32 nritems = btrfs_header_nritems(src);
 	size_t size;
@@ -310,7 +309,6 @@ static void zero_items(struct metadump_struct *md, u8 *dst,
 	int i, extent_type;
 
 	for (i = 0; i < nritems; i++) {
-		item = btrfs_item_nr(i);
 		btrfs_item_key_to_cpu(src, &key, i);
 		if (key.type == BTRFS_CSUM_ITEM_KEY) {
 			size = btrfs_item_size_nr(src, i);
@@ -334,7 +332,7 @@ static void zero_items(struct metadump_struct *md, u8 *dst,
 			continue;
 
 		ptr = btrfs_file_extent_inline_start(fi);
-		size = btrfs_file_extent_inline_item_len(src, item);
+		size = btrfs_file_extent_inline_item_len(src, i);
 		memset(dst + ptr, 0, size);
 	}
 }

@@ -1604,20 +1604,18 @@ static int process_file_extent(struct btrfs_root *root,
 	compression = btrfs_file_extent_compression(eb, fi);
 
 	if (extent_type == BTRFS_FILE_EXTENT_INLINE) {
-		struct btrfs_item *item = btrfs_item_nr(slot);
-
 		num_bytes = btrfs_file_extent_ram_bytes(eb, fi);
 		if (num_bytes == 0)
 			rec->errors |= I_ERR_BAD_FILE_EXTENT;
 		if (compression) {
-			if (btrfs_file_extent_inline_item_len(eb, item) >
+			if (btrfs_file_extent_inline_item_len(eb, slot) >
 			    max_inline_size ||
 			    num_bytes > gfs_info->sectorsize)
 				rec->errors |= I_ERR_FILE_EXTENT_TOO_LARGE;
 		} else {
 			if (num_bytes > max_inline_size)
 				rec->errors |= I_ERR_FILE_EXTENT_TOO_LARGE;
-			if (btrfs_file_extent_inline_item_len(eb, item) !=
+			if (btrfs_file_extent_inline_item_len(eb, slot) !=
 			    num_bytes)
 				rec->errors |= I_ERR_INLINE_RAM_BYTES_WRONG;
 		}
@@ -2625,7 +2623,6 @@ static int repair_inline_ram_bytes(struct btrfs_trans_handle *trans,
 {
 	struct btrfs_key key;
 	struct btrfs_file_extent_item *fi;
-	struct btrfs_item *i;
 	u64 on_disk_item_len;
 	int ret;
 
@@ -2639,8 +2636,8 @@ static int repair_inline_ram_bytes(struct btrfs_trans_handle *trans,
 	if (ret < 0)
 		goto out;
 
-	i = btrfs_item_nr(path->slots[0]);
-	on_disk_item_len = btrfs_file_extent_inline_item_len(path->nodes[0], i);
+	on_disk_item_len = btrfs_file_extent_inline_item_len(path->nodes[0],
+							     path->slots[0]);
 	fi = btrfs_item_ptr(path->nodes[0], path->slots[0],
 			    struct btrfs_file_extent_item);
 	btrfs_set_file_extent_ram_bytes(path->nodes[0], fi, on_disk_item_len);

@@ -1877,7 +1877,6 @@ static int repair_inline_ram_bytes(struct btrfs_root *root,
 	struct btrfs_trans_handle *trans;
 	struct btrfs_key key;
 	struct btrfs_file_extent_item *fi;
-	struct btrfs_item *item;
 	u32 on_disk_data_len;
 	int ret;
 	int recover_ret;
@@ -1899,9 +1898,8 @@ static int repair_inline_ram_bytes(struct btrfs_root *root,
 	if (ret < 0)
 		goto recover;
 
-	item = btrfs_item_nr(path->slots[0]);
 	on_disk_data_len = btrfs_file_extent_inline_item_len(path->nodes[0],
-			item);
+							     path->slots[0]);
 
 	fi = btrfs_item_ptr(path->nodes[0], path->slots[0],
 			    struct btrfs_file_extent_item);
@@ -1943,7 +1941,6 @@ static int check_file_extent_inline(struct btrfs_root *root,
 	u32 max_inline_extent_size = min_t(u32, gfs_info->sectorsize - 1,
 				BTRFS_MAX_INLINE_DATA_SIZE(gfs_info));
 	struct extent_buffer *node = path->nodes[0];
-	struct btrfs_item *e = btrfs_item_nr(path->slots[0]);
 	struct btrfs_file_extent_item *fi;
 	struct btrfs_key fkey;
 	u64 extent_num_bytes;
@@ -1953,7 +1950,7 @@ static int check_file_extent_inline(struct btrfs_root *root,
 	int err = 0;
 
 	fi = btrfs_item_ptr(node, path->slots[0], struct btrfs_file_extent_item);
-	item_inline_len = btrfs_file_extent_inline_item_len(node, e);
+	item_inline_len = btrfs_file_extent_inline_item_len(node, path->slots[0]);
 	extent_num_bytes = btrfs_file_extent_ram_bytes(node, fi);
 	compressed = btrfs_file_extent_compression(node, fi);
 	btrfs_item_key_to_cpu(node, &fkey, path->slots[0]);

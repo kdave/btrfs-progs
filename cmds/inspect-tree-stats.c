@@ -121,8 +121,7 @@ static int walk_leaf(struct btrfs_root *root, struct btrfs_path *path,
 		fi = btrfs_item_ptr(b, i, struct btrfs_file_extent_item);
 		if (btrfs_file_extent_type(b, fi) == BTRFS_FILE_EXTENT_INLINE)
 			stat->total_inline +=
-				btrfs_file_extent_inline_item_len(b,
-							btrfs_item_nr(i));
+				btrfs_file_extent_inline_item_len(b, i);
 	}
 
 	return 0;

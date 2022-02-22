@@ -2564,11 +2564,9 @@ static inline u64 btrfs_dev_stats_value(const struct extent_buffer *eb,
  * the compressed size
  */
 static inline u32 btrfs_file_extent_inline_item_len(struct extent_buffer *eb,
-						    struct btrfs_item *e)
+						    int nr)
 {
-       unsigned long offset;
-       offset = offsetof(struct btrfs_file_extent_item, disk_bytenr);
-       return btrfs_item_size(eb, e) - offset;
+	return btrfs_item_size_nr(eb, nr) - BTRFS_FILE_EXTENT_INLINE_DATA_START;
 }
 
 /* struct btrfs_ioctl_search_header */

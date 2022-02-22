@@ -365,7 +365,6 @@ static const char* file_extent_type_to_str(u8 type)
 }
 
 static void print_file_extent_item(struct extent_buffer *eb,
-				   struct btrfs_item *item,
 				   int slot,
 				   struct btrfs_file_extent_item *fi)
 {
@@ -381,7 +380,7 @@ static void print_file_extent_item(struct extent_buffer *eb,
 
 	if (extent_type == BTRFS_FILE_EXTENT_INLINE) {
 		printf("\t\tinline extent data size %u ram_bytes %llu compression %hhu (%s)\n",
-				btrfs_file_extent_inline_item_len(eb, item),
+				btrfs_file_extent_inline_item_len(eb, slot),
 				btrfs_file_extent_ram_bytes(eb, fi),
 				btrfs_file_extent_compression(eb, fi),
 				compress_str);
@@ -1286,7 +1285,6 @@ static void print_header_info(struct extent_buffer *eb, unsigned int mode)
 
 void btrfs_print_leaf(struct extent_buffer *eb, unsigned int mode)
 {
-	struct btrfs_item *item;
 	struct btrfs_disk_key disk_key;
 	u32 leaf_data_size = BTRFS_LEAF_DATA_SIZE(eb->fs_info);
 	u32 i;
@@ -1319,7 +1317,6 @@ void btrfs_print_leaf(struct extent_buffer *eb, unsigned int mode)
 			error("skip remaining slots");
 			break;
 		}
-		item = btrfs_item_nr(i);
 		item_size = btrfs_item_size_nr(eb, i);
 		/* Untyped extraction of slot from btrfs_item_ptr */
 		ptr = btrfs_item_ptr(eb, i, void*);
@@ -1402,7 +1399,7 @@ void btrfs_print_leaf(struct extent_buffer *eb, unsigned int mode)
 			print_extent_csum(eb, item_size, offset, ptr, print_csum_items);
 			break;
 		case BTRFS_EXTENT_DATA_KEY:
-			print_file_extent_item(eb, item, i, ptr);
+			print_file_extent_item(eb, i, ptr);
 			break;
 		case BTRFS_BLOCK_GROUP_ITEM_KEY:
 			print_block_group_item(eb, ptr);
