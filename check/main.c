@@ -1408,7 +1408,7 @@ static int process_dir_item(struct extent_buffer *eb,
 		return 0;
 
 	di = btrfs_item_ptr(eb, slot, struct btrfs_dir_item);
-	total = btrfs_item_size_nr(eb, slot);
+	total = btrfs_item_size(eb, slot);
 	while (cur < total) {
 		int ret;
 
@@ -1490,7 +1490,7 @@ static int process_inode_ref(struct extent_buffer *eb,
 	inode_cache = &active_node->inode_cache;
 
 	ref = btrfs_item_ptr(eb, slot, struct btrfs_inode_ref);
-	total = btrfs_item_size_nr(eb, slot);
+	total = btrfs_item_size(eb, slot);
 	while (cur < total) {
 		name_len = btrfs_inode_ref_name_len(eb, ref);
 		index = btrfs_inode_ref_index(eb, ref);
@@ -1539,7 +1539,7 @@ static int process_inode_extref(struct extent_buffer *eb,
 	inode_cache = &active_node->inode_cache;
 
 	extref = btrfs_item_ptr(eb, slot, struct btrfs_inode_extref);
-	total = btrfs_item_size_nr(eb, slot);
+	total = btrfs_item_size(eb, slot);
 	while (cur < total) {
 		name_len = btrfs_inode_extref_name_len(eb, extref);
 		index = btrfs_inode_extref_index(eb, extref);
@@ -4216,10 +4216,10 @@ static int swap_values(struct btrfs_root *root, struct btrfs_path *path,
 
 		btrfs_item_key_to_cpu(buf, &k1, slot);
 		btrfs_item_key_to_cpu(buf, &k2, slot + 1);
-		item1_offset = btrfs_item_offset_nr(buf, slot);
-		item2_offset = btrfs_item_offset_nr(buf, slot + 1);
-		item1_size = btrfs_item_size_nr(buf, slot);
-		item2_size = btrfs_item_size_nr(buf, slot + 1);
+		item1_offset = btrfs_item_offset(buf, slot);
+		item2_offset = btrfs_item_offset(buf, slot + 1);
+		item1_size = btrfs_item_size(buf, slot);
+		item2_size = btrfs_item_size(buf, slot + 1);
 
 		item1_data = malloc(item1_size);
 		if (!item1_data)
@@ -4238,10 +4238,10 @@ static int swap_values(struct btrfs_root *root, struct btrfs_path *path,
 		free(item1_data);
 		free(item2_data);
 
-		btrfs_set_item_offset_nr(buf, slot, item2_offset);
-		btrfs_set_item_offset_nr(buf, slot + 1, item1_offset);
-		btrfs_set_item_size_nr(buf, slot, item2_size);
-		btrfs_set_item_size_nr(buf, slot + 1, item1_size);
+		btrfs_set_item_offset(buf, slot, item2_offset);
+		btrfs_set_item_offset(buf, slot + 1, item1_offset);
+		btrfs_set_item_size(buf, slot, item2_size);
+		btrfs_set_item_size(buf, slot + 1, item1_size);
 
 		path->slots[0] = slot;
 		btrfs_set_item_key_unsafe(root, path, &k2);
@@ -4342,9 +4342,9 @@ again:
 			shift = BTRFS_LEAF_DATA_SIZE(gfs_info) -
 				btrfs_item_end(buf, i);
 		} else if (i > 0 && btrfs_item_end(buf, i) !=
-			   btrfs_item_offset_nr(buf, i - 1)) {
+			   btrfs_item_offset(buf, i - 1)) {
 			if (btrfs_item_end(buf, i) >
-			    btrfs_item_offset_nr(buf, i - 1)) {
+			    btrfs_item_offset(buf, i - 1)) {
 				ret = delete_bogus_item(root, path, buf, i);
 				if (!ret)
 					goto again;
@@ -4352,7 +4352,7 @@ again:
 				ret = -EIO;
 				break;
 			}
-			shift = btrfs_item_offset_nr(buf, i - 1) -
+			shift = btrfs_item_offset(buf, i - 1) -
 				btrfs_item_end(buf, i);
 		}
 		if (!shift)
@@ -4360,12 +4360,12 @@ again:
 
 		printf("Shifting item nr %d by %u bytes in block %llu\n",
 		       i, shift, (unsigned long long)buf->start);
-		offset = btrfs_item_offset_nr(buf, i);
+		offset = btrfs_item_offset(buf, i);
 		memmove_extent_buffer(buf,
 				      btrfs_leaf_data(buf) + offset + shift,
 				      btrfs_leaf_data(buf) + offset,
-				      btrfs_item_size_nr(buf, i));
-		btrfs_set_item_offset_nr(buf, i, offset + shift);
+				      btrfs_item_size(buf, i));
+		btrfs_set_item_offset(buf, i, offset + shift);
 		btrfs_mark_buffer_dirty(buf);
 	}
 
@@ -5403,7 +5403,7 @@ static int process_extent_item(struct btrfs_root *root,
 	unsigned long ptr;
 	int ret;
 	int type;
-	u32 item_size = btrfs_item_size_nr(eb, slot);
+	u32 item_size = btrfs_item_size(eb, slot);
 	u64 refs = 0;
 	u64 offset;
 	u64 num_bytes;
@@ -6077,7 +6077,7 @@ static int check_csum_root(struct btrfs_root *root)
 				path.slots[0]);
 			errors++;
 		}
-		num_entries = btrfs_item_size_nr(leaf, path.slots[0]) / csum_size;
+		num_entries = btrfs_item_size(leaf, path.slots[0]) / csum_size;
 		data_len = num_entries * gfs_info->sectorsize;
 
 		if (num_entries > max_entries) {
@@ -6459,7 +6459,7 @@ static int run_next_block(struct btrfs_root *root,
 			}
 			if (key.type == BTRFS_EXTENT_CSUM_KEY) {
 				total_csum_bytes +=
-					btrfs_item_size_nr(buf, i);
+					btrfs_item_size(buf, i);
 				continue;
 			}
 			if (key.type == BTRFS_CHUNK_ITEM_KEY) {
@@ -6552,11 +6552,11 @@ static int run_next_block(struct btrfs_root *root,
 			if (key.type != BTRFS_EXTENT_DATA_KEY)
 				continue;
 			/* Check itemsize before we continue */
-			if (btrfs_item_size_nr(buf, i) < inline_offset) {
+			if (btrfs_item_size(buf, i) < inline_offset) {
 				ret = -EUCLEAN;
 				error(
 		"invalid file extent item size, have %u expect (%lu, %u]",
-					btrfs_item_size_nr(buf, i),
+					btrfs_item_size(buf, i),
 					inline_offset,
 					BTRFS_LEAF_DATA_SIZE(gfs_info));
 				continue;
@@ -6568,12 +6568,12 @@ static int run_next_block(struct btrfs_root *root,
 				continue;
 
 			/* Prealloc/regular extent must have fixed item size */
-			if (btrfs_item_size_nr(buf, i) !=
+			if (btrfs_item_size(buf, i) !=
 			    sizeof(struct btrfs_file_extent_item)) {
 				ret = -EUCLEAN;
 				error(
 			"invalid file extent item size, have %u expect %zu",
-					btrfs_item_size_nr(buf, i),
+					btrfs_item_size(buf, i),
 					sizeof(struct btrfs_file_extent_item));
 				continue;
 			}
@@ -9661,7 +9661,7 @@ static int build_roots_info_cache(void)
 
 		ei = btrfs_item_ptr(leaf, slot, struct btrfs_extent_item);
 		flags = btrfs_extent_flags(leaf, ei);
-		item_end = (unsigned long)ei + btrfs_item_size_nr(leaf, slot);
+		item_end = (unsigned long)ei + btrfs_item_size(leaf, slot);
 
 		if (found_key.type == BTRFS_EXTENT_ITEM_KEY &&
 		    !(flags & BTRFS_EXTENT_FLAG_TREE_BLOCK))

@@ -1812,7 +1812,7 @@ static int next_csum(struct btrfs_root *csum_root,
 	struct btrfs_csum_item *csum_item;
 	u32 blocksize = csum_root->fs_info->sectorsize;
 	u16 csum_size = csum_root->fs_info->csum_size;
-	int csums_in_item = btrfs_item_size_nr(*leaf, *slot) / csum_size;
+	int csums_in_item = btrfs_item_size(*leaf, *slot) / csum_size;
 
 	if (*csum_offset >= csums_in_item) {
 		++(*slot);
@@ -1897,7 +1897,7 @@ static u64 item_end_offset(struct btrfs_root *root, struct btrfs_key *key,
 	u32 blocksize = root->fs_info->sectorsize;
 	u16 csum_size = root->fs_info->csum_size;
 
-	u64 offset = btrfs_item_size_nr(leaf, slot);
+	u64 offset = btrfs_item_size(leaf, slot);
 	offset /= csum_size;
 	offset *= blocksize;
 	offset += key->offset;

@@ -98,7 +98,7 @@ static int calc_extent_flag(struct btrfs_root *root, struct extent_buffer *eb,
 		goto full_backref;
 
 	ptr = (unsigned long)(ei + 1);
-	end = (unsigned long)ei + btrfs_item_size_nr(eb, slot);
+	end = (unsigned long)ei + btrfs_item_size(eb, slot);
 
 	if (key.type == BTRFS_EXTENT_ITEM_KEY)
 		ptr += sizeof(struct btrfs_tree_block_info);
@@ -844,7 +844,7 @@ loop:
 	node = path.nodes[0];
 	slot = path.slots[0];
 	di = btrfs_item_ptr(node, slot, struct btrfs_dir_item);
-	total = btrfs_item_size_nr(node, slot);
+	total = btrfs_item_size(node, slot);
 	while (cur < total) {
 		ret = -ENOENT;
 		len = btrfs_dir_name_len(node, di);
@@ -940,7 +940,7 @@ static int find_dir_item(struct btrfs_root *root, struct btrfs_key *key,
 	node = path.nodes[0];
 	slot = path.slots[0];
 	di = btrfs_item_ptr(node, slot, struct btrfs_dir_item);
-	total = btrfs_item_size_nr(node, slot);
+	total = btrfs_item_size(node, slot);
 	while (cur < total) {
 		ret = key->type == BTRFS_DIR_ITEM_KEY ?
 			DIR_ITEM_MISMATCH : DIR_INDEX_MISMATCH;
@@ -1147,7 +1147,7 @@ begin:
 
 	memset(namebuf, 0, sizeof(namebuf) / sizeof(*namebuf));
 	ref = btrfs_item_ptr(node, slot, struct btrfs_inode_ref);
-	total = btrfs_item_size_nr(node, slot);
+	total = btrfs_item_size(node, slot);
 
 next:
 	/* Update inode ref count */
@@ -1256,7 +1256,7 @@ static int check_inode_extref(struct btrfs_root *root,
 	location.offset = 0;
 
 	extref = btrfs_item_ptr(node, slot, struct btrfs_inode_extref);
-	total = btrfs_item_size_nr(node, slot);
+	total = btrfs_item_size(node, slot);
 
 next:
 	/* update inode ref count */
@@ -1352,7 +1352,7 @@ static int find_inode_ref(struct btrfs_root *root, struct btrfs_key *key,
 	slot = path.slots[0];
 
 	ref = btrfs_item_ptr(node, slot, struct btrfs_inode_ref);
-	total = btrfs_item_size_nr(node, slot);
+	total = btrfs_item_size(node, slot);
 
 	/* Iterate all entry of INODE_REF */
 	while (cur < total) {
@@ -1418,7 +1418,7 @@ extref:
 
 	extref = btrfs_item_ptr(node, slot, struct btrfs_inode_extref);
 	cur = 0;
-	total = btrfs_item_size_nr(node, slot);
+	total = btrfs_item_size(node, slot);
 
 	/* Iterate all entry of INODE_EXTREF */
 	while (cur < total) {
@@ -1710,7 +1710,7 @@ begin:
 	slot = path->slots[0];
 
 	di = btrfs_item_ptr(node, slot, struct btrfs_dir_item);
-	total = btrfs_item_size_nr(node, slot);
+	total = btrfs_item_size(node, slot);
 	memset(namebuf, 0, sizeof(namebuf) / sizeof(*namebuf));
 
 	while (cur < total) {
@@ -2206,7 +2206,7 @@ loop:
 special_case:
 	di = btrfs_item_ptr(path.nodes[0], path.slots[0], struct btrfs_dir_item);
 	cur = 0;
-	total = btrfs_item_size_nr(path.nodes[0], path.slots[0]);
+	total = btrfs_item_size(path.nodes[0], path.slots[0]);
 
 	while (cur < total) {
 		len = btrfs_dir_name_len(path.nodes[0], di);
@@ -3106,7 +3106,7 @@ static int check_tree_block_ref(struct btrfs_root *root,
 	/*
 	 * Iterate the extent/metadata item to find the exact backref
 	 */
-	item_size = btrfs_item_size_nr(leaf, slot);
+	item_size = btrfs_item_size(leaf, slot);
 	ptr = (unsigned long)iref;
 	end = (unsigned long)ei + item_size;
 
@@ -3448,7 +3448,7 @@ static int check_extent_data_item(struct btrfs_root *root,
 	}
 
 	/* Check data backref inside that extent item */
-	item_size = btrfs_item_size_nr(leaf, path.slots[0]);
+	item_size = btrfs_item_size(leaf, path.slots[0]);
 	iref = (struct btrfs_extent_inline_ref *)(ei + 1);
 	ptr = (unsigned long)iref;
 	end = (unsigned long)ei + item_size;
@@ -4230,7 +4230,7 @@ static int check_extent_item(struct btrfs_path *path)
 	int slot = path->slots[0];
 	int type;
 	u32 nodesize = btrfs_super_nodesize(gfs_info->super_copy);
-	u32 item_size = btrfs_item_size_nr(eb, slot);
+	u32 item_size = btrfs_item_size(eb, slot);
 	u64 flags;
 	u64 offset;
 	u64 parent;
@@ -4391,7 +4391,7 @@ next:
 			eb = path->nodes[0];
 			slot = path->slots[0];
 			ei = btrfs_item_ptr(eb, slot, struct btrfs_extent_item);
-			item_size = btrfs_item_size_nr(eb, slot);
+			item_size = btrfs_item_size(eb, slot);
 			goto next;
 		}
 	}
@@ -4408,7 +4408,7 @@ next:
 		eb = path->nodes[0];
 		slot = path->slots[0];
 		ei = btrfs_item_ptr(eb, slot, struct btrfs_extent_item);
-		item_size = btrfs_item_size_nr(eb, slot);
+		item_size = btrfs_item_size(eb, slot);
 		ptr_offset += btrfs_extent_inline_ref_size(type);
 		goto next;
 	}
@@ -4846,7 +4846,7 @@ again:
 		err |= ret;
 		break;
 	case BTRFS_EXTENT_CSUM_KEY:
-		total_csum_bytes += btrfs_item_size_nr(eb, slot);
+		total_csum_bytes += btrfs_item_size(eb, slot);
 		err |= ret;
 		break;
 	case BTRFS_TREE_BLOCK_REF_KEY:

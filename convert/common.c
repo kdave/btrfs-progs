@@ -204,8 +204,8 @@ static void insert_temp_root_item(struct extent_buffer *buf,
 	btrfs_set_disk_key_offset(&disk_key, 0);
 
 	btrfs_set_item_key(buf, &disk_key, *slot);
-	btrfs_set_item_offset_nr(buf, *slot, *itemoff);
-	btrfs_set_item_size_nr(buf, *slot, sizeof(root_item));
+	btrfs_set_item_offset(buf, *slot, *itemoff);
+	btrfs_set_item_size(buf, *slot, sizeof(root_item));
 	write_extent_buffer(buf, &root_item,
 			    btrfs_item_ptr_offset(buf, *slot),
 			    sizeof(root_item));
@@ -311,8 +311,8 @@ static int insert_temp_dev_item(int fd, struct extent_buffer *buf,
 	btrfs_set_disk_key_objectid(&disk_key, BTRFS_DEV_ITEMS_OBJECTID);
 	btrfs_set_disk_key_offset(&disk_key, 1);
 	btrfs_set_item_key(buf, &disk_key, *slot);
-	btrfs_set_item_offset_nr(buf, *slot, *itemoff);
-	btrfs_set_item_size_nr(buf, *slot, sizeof(*dev_item));
+	btrfs_set_item_offset(buf, *slot, *itemoff);
+	btrfs_set_item_size(buf, *slot, sizeof(*dev_item));
 
 	dev_item = btrfs_item_ptr(buf, *slot, struct btrfs_dev_item);
 	/* Generate device uuid */
@@ -369,8 +369,8 @@ static int insert_temp_chunk_item(int fd, struct extent_buffer *buf,
 	btrfs_set_disk_key_objectid(&disk_key, BTRFS_FIRST_CHUNK_TREE_OBJECTID);
 	btrfs_set_disk_key_offset(&disk_key, start);
 	btrfs_set_item_key(buf, &disk_key, *slot);
-	btrfs_set_item_offset_nr(buf, *slot, *itemoff);
-	btrfs_set_item_size_nr(buf, *slot, btrfs_chunk_item_size(1));
+	btrfs_set_item_offset(buf, *slot, *itemoff);
+	btrfs_set_item_size(buf, *slot, btrfs_chunk_item_size(1));
 
 	chunk = btrfs_item_ptr(buf, *slot, struct btrfs_chunk);
 	btrfs_set_chunk_length(buf, chunk, len);
@@ -471,8 +471,8 @@ static void insert_temp_dev_extent(struct extent_buffer *buf,
 	btrfs_set_disk_key_objectid(&disk_key, 1);
 	btrfs_set_disk_key_offset(&disk_key, start);
 	btrfs_set_item_key(buf, &disk_key, *slot);
-	btrfs_set_item_offset_nr(buf, *slot, *itemoff);
-	btrfs_set_item_size_nr(buf, *slot, sizeof(*dev_extent));
+	btrfs_set_item_offset(buf, *slot, *itemoff);
+	btrfs_set_item_size(buf, *slot, sizeof(*dev_extent));
 
 	dev_extent = btrfs_item_ptr(buf, *slot, struct btrfs_dev_extent);
 	btrfs_set_dev_extent_chunk_objectid(buf, dev_extent,
@@ -603,8 +603,8 @@ static int insert_temp_extent_item(int fd, struct extent_buffer *buf,
 	btrfs_set_disk_key_objectid(&disk_key, bytenr);
 
 	btrfs_set_item_key(buf, &disk_key, *slot);
-	btrfs_set_item_offset_nr(buf, *slot, *itemoff);
-	btrfs_set_item_size_nr(buf, *slot, itemsize);
+	btrfs_set_item_offset(buf, *slot, *itemoff);
+	btrfs_set_item_size(buf, *slot, itemsize);
 
 	ei = btrfs_item_ptr(buf, *slot, struct btrfs_extent_item);
 	btrfs_set_extent_refs(buf, ei, 1);
@@ -669,8 +669,8 @@ static void insert_temp_block_group(struct extent_buffer *buf,
 	btrfs_set_disk_key_objectid(&disk_key, bytenr);
 	btrfs_set_disk_key_offset(&disk_key, len);
 	btrfs_set_item_key(buf, &disk_key, *slot);
-	btrfs_set_item_offset_nr(buf, *slot, *itemoff);
-	btrfs_set_item_size_nr(buf, *slot, sizeof(bgi));
+	btrfs_set_item_offset(buf, *slot, *itemoff);
+	btrfs_set_item_size(buf, *slot, sizeof(bgi));
 
 	btrfs_set_stack_block_group_flags(&bgi, flag);
 	btrfs_set_stack_block_group_used(&bgi, used);

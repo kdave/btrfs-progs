@@ -48,8 +48,8 @@ static struct btrfs_dir_item *insert_with_overflow(struct btrfs_trans_handle
 	WARN_ON(ret > 0);
 	leaf = path->nodes[0];
 	ptr = btrfs_item_ptr(leaf, path->slots[0], char);
-	BUG_ON(data_size > btrfs_item_size_nr(leaf, path->slots[0]));
-	ptr += btrfs_item_size_nr(leaf, path->slots[0]) - data_size;
+	BUG_ON(data_size > btrfs_item_size(leaf, path->slots[0]));
+	ptr += btrfs_item_size(leaf, path->slots[0]) - data_size;
 	return (struct btrfs_dir_item *)ptr;
 }
 
@@ -264,7 +264,7 @@ int btrfs_delete_one_dir_name(struct btrfs_trans_handle *trans,
 	leaf = path->nodes[0];
 	sub_item_len = sizeof(*di) + btrfs_dir_name_len(leaf, di) +
 		btrfs_dir_data_len(leaf, di);
-	item_len = btrfs_item_size_nr(leaf, path->slots[0]);
+	item_len = btrfs_item_size(leaf, path->slots[0]);
 
 	/*
 	 * If @sub_item_len is longer than @item_len, then it means the
@@ -329,7 +329,7 @@ struct btrfs_dir_item *btrfs_match_dir_item_name(struct btrfs_root *root,
 
 	leaf = path->nodes[0];
 	dir_item = btrfs_item_ptr(leaf, path->slots[0], struct btrfs_dir_item);
-	total_len = btrfs_item_size_nr(leaf, path->slots[0]);
+	total_len = btrfs_item_size(leaf, path->slots[0]);
 	if (verify_dir_item(root, leaf, dir_item))
 		return NULL;
 

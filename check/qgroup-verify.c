@@ -1041,7 +1041,7 @@ static int add_inline_refs(struct btrfs_fs_info *info,
 	struct btrfs_extent_inline_ref *iref;
 	struct btrfs_extent_data_ref *dref;
 	u64 flags, root_obj, offset, parent;
-	u32 item_size = btrfs_item_size_nr(ei_leaf, slot);
+	u32 item_size = btrfs_item_size(ei_leaf, slot);
 	int type;
 	unsigned long end;
 	unsigned long ptr;

@@ -512,7 +512,7 @@ static int set_file_xattrs(struct btrfs_root *root, u64 inode,
 		if (key.type != BTRFS_XATTR_ITEM_KEY || key.objectid != inode)
 			break;
 		cur = 0;
-		total_len = btrfs_item_size_nr(leaf, path.slots[0]);
+		total_len = btrfs_item_size(leaf, path.slots[0]);
 		di = btrfs_item_ptr(leaf, path.slots[0],
 				    struct btrfs_dir_item);
 

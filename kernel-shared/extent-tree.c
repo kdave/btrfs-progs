@@ -929,7 +929,7 @@ again:
 	BUG_ON(ret);
 
 	leaf = path->nodes[0];
-	item_size = btrfs_item_size_nr(leaf, path->slots[0]);
+	item_size = btrfs_item_size(leaf, path->slots[0]);
 	if (item_size < sizeof(*ei)) {
 		printf("Size is %u, needs to be %u, slot %d\n",
 		       (unsigned)item_size,
@@ -1055,7 +1055,7 @@ static int setup_inline_extent_backref(struct btrfs_root *root,
 	btrfs_set_extent_refs(leaf, ei, refs);
 
 	ptr = (unsigned long)ei + item_offset;
-	end = (unsigned long)ei + btrfs_item_size_nr(leaf, path->slots[0]);
+	end = (unsigned long)ei + btrfs_item_size(leaf, path->slots[0]);
 	if (ptr < end - size)
 		memmove_extent_buffer(leaf, ptr + size, ptr,
 				      end - size - ptr);
@@ -1159,7 +1159,7 @@ static int update_inline_extent_backref(struct btrfs_trans_handle *trans,
 			btrfs_set_shared_data_ref_count(leaf, sref, refs);
 	} else {
 		size =  btrfs_extent_inline_ref_size(type);
-		item_size = btrfs_item_size_nr(leaf, path->slots[0]);
+		item_size = btrfs_item_size(leaf, path->slots[0]);
 		ptr = (unsigned long)iref;
 		end = (unsigned long)ei + item_size;
 		if (ptr + size < end)
@@ -1353,7 +1353,7 @@ again:
 	}
 
 	l = path->nodes[0];
-	item_size = btrfs_item_size_nr(l, path->slots[0]);
+	item_size = btrfs_item_size(l, path->slots[0]);
 	if (item_size >= sizeof(*item)) {
 		item = btrfs_item_ptr(l, path->slots[0],
 				      struct btrfs_extent_item);
@@ -1429,7 +1429,7 @@ again:
 		BUG();
 	}
 	l = path->nodes[0];
-	item_size = btrfs_item_size_nr(l, path->slots[0]);
+	item_size = btrfs_item_size(l, path->slots[0]);
 	if (item_size < sizeof(*item)) {
 		error(
 "unsupported or corrupted extent item, item size=%u expect minimal size=%zu",
@@ -2035,7 +2035,7 @@ static int __free_extent(struct btrfs_trans_handle *trans,
 	}
 
 	leaf = path->nodes[0];
-	item_size = btrfs_item_size_nr(leaf, extent_slot);
+	item_size = btrfs_item_size(leaf, extent_slot);
 	if (item_size < sizeof(*ei)) {
 		error(
 "unsupported or corrupted extent item, item size=%u expect minimal size=%zu",

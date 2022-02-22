@@ -440,7 +440,7 @@ void print_extent_item(struct extent_buffer *eb, int slot, int metadata)
 	unsigned long end;
 	unsigned long ptr;
 	int type;
-	u32 item_size = btrfs_item_size_nr(eb, slot);
+	u32 item_size = btrfs_item_size(eb, slot);
 	u64 flags;
 	u64 offset;
 	char flags_str[32] = {0};
@@ -571,7 +571,7 @@ static void print_root_item(struct extent_buffer *leaf, int slot)
 	struct btrfs_key drop_key;
 
 	ri = btrfs_item_ptr(leaf, slot, struct btrfs_root_item);
-	len = btrfs_item_size_nr(leaf, slot);
+	len = btrfs_item_size(leaf, slot);
 
 	memset(&root_item, 0, sizeof(root_item));
 	read_extent_buffer(leaf, &root_item, (unsigned long)ri, len);
@@ -1306,18 +1306,18 @@ void btrfs_print_leaf(struct extent_buffer *eb, unsigned int mode)
 		 * Only need to ensure all pointers are pointing range inside
 		 * the leaf, thus no segfault.
 		 */
-		if (btrfs_item_offset_nr(eb, i) > leaf_data_size ||
-		    btrfs_item_size_nr(eb, i) + btrfs_item_offset_nr(eb, i) >
+		if (btrfs_item_offset(eb, i) > leaf_data_size ||
+		    btrfs_item_size(eb, i) + btrfs_item_offset(eb, i) >
 		    leaf_data_size) {
 			error(
 "leaf %llu slot %u pointer invalid, offset %u size %u leaf data limit %u",
 			      btrfs_header_bytenr(eb), i,
-			      btrfs_item_offset_nr(eb, i),
-			      btrfs_item_size_nr(eb, i), leaf_data_size);
+			      btrfs_item_offset(eb, i),
+			      btrfs_item_size(eb, i), leaf_data_size);
 			error("skip remaining slots");
 			break;
 		}
-		item_size = btrfs_item_size_nr(eb, i);
+		item_size = btrfs_item_size(eb, i);
 		/* Untyped extraction of slot from btrfs_item_ptr */
 		ptr = btrfs_item_ptr(eb, i, void*);
 
@@ -1329,8 +1329,8 @@ void btrfs_print_leaf(struct extent_buffer *eb, unsigned int mode)
 		printf("\titem %u ", i);
 		btrfs_print_key(&disk_key);
 		printf(" itemoff %u itemsize %u\n",
-			btrfs_item_offset_nr(eb, i),
-			btrfs_item_size_nr(eb, i));
+			btrfs_item_offset(eb, i),
+			btrfs_item_size(eb, i));
 
 		if (type == 0 && objectid == BTRFS_FREE_SPACE_OBJECTID)
 			print_free_space_header(eb, i);
@@ -1436,7 +1436,7 @@ void btrfs_print_leaf(struct extent_buffer *eb, unsigned int mode)
 		case BTRFS_UUID_KEY_SUBVOL:
 		case BTRFS_UUID_KEY_RECEIVED_SUBVOL:
 			print_uuid_item(eb, btrfs_item_ptr_offset(eb, i),
-					btrfs_item_size_nr(eb, i));
+					btrfs_item_size(eb, i));
 			break;
 		case BTRFS_STRING_ITEM_KEY: {
 			const char *str = eb->data + btrfs_item_ptr_offset(eb, i);

@@ -246,7 +246,7 @@ static int corrupt_extent(struct btrfs_trans_handle *trans,
 				"corrupting extent record: key %llu %u %llu\n",
 				key.objectid, key.type, key.offset);
 			ptr = btrfs_item_ptr_offset(leaf, slot);
-			item_size = btrfs_item_size_nr(leaf, slot);
+			item_size = btrfs_item_size(leaf, slot);
 			memset_extent_buffer(leaf, 0, ptr, item_size);
 			btrfs_mark_buffer_dirty(leaf);
 		}
@@ -827,18 +827,18 @@ static void shift_items(struct btrfs_root *root, struct extent_buffer *eb)
 	int shift_space = btrfs_leaf_free_space(eb) / 2;
 	int slot = nritems / 2;
 	int i = 0;
-	unsigned int data_end = btrfs_item_offset_nr(eb, nritems - 1);
+	unsigned int data_end = btrfs_item_offset(eb, nritems - 1);
 
 	/* Shift the item data up to and including slot back by shift space */
 	memmove_extent_buffer(eb, btrfs_leaf_data(eb) + data_end - shift_space,
 			      btrfs_leaf_data(eb) + data_end,
-			      btrfs_item_offset_nr(eb, slot - 1) - data_end);
+			      btrfs_item_offset(eb, slot - 1) - data_end);
 
 	/* Now update the item pointers. */
 	for (i = nritems - 1; i >= slot; i--) {
-		u32 offset = btrfs_item_offset_nr(eb, i);
+		u32 offset = btrfs_item_offset(eb, i);
 		offset -= shift_space;
-		btrfs_set_item_offset_nr(eb, i, offset);
+		btrfs_set_item_offset(eb, i, offset);
 	}
 }
 
@@ -978,9 +978,9 @@ static int corrupt_btrfs_item(struct btrfs_root *root, struct btrfs_key *key,
 	ret = 0;
 	switch (corrupt_field) {
 	case BTRFS_ITEM_OFFSET:
-		orig = btrfs_item_offset_nr(path->nodes[0], path->slots[0]);
+		orig = btrfs_item_offset(path->nodes[0], path->slots[0]);
 		bogus = generate_u32(orig);
-		btrfs_set_item_offset_nr(path->nodes[0], path->slots[0], bogus);
+		btrfs_set_item_offset(path->nodes[0], path->slots[0], bogus);
 		break;
 	default:
 		ret = -EINVAL;
@@ -1082,7 +1082,7 @@ static int corrupt_item_nocow(struct btrfs_trans_handle *trans,
 		fprintf(stdout, "Corrupting key and data [%llu, %u, %llu].\n",
 			key.objectid, key.type, key.offset);
 		ptr = btrfs_item_ptr_offset(leaf, slot);
-		item_size = btrfs_item_size_nr(leaf, slot);
+		item_size = btrfs_item_size(leaf, slot);
 		memset_extent_buffer(leaf, 0, ptr, item_size);
 		btrfs_mark_buffer_dirty(leaf);
 	}

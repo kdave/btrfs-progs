@@ -205,7 +205,7 @@ int check_prealloc_extent_written(u64 disk_bytenr, u64 num_bytes)
 	/* First check all inline refs. */
 	ei = btrfs_item_ptr(path.nodes[0], path.slots[0],
 			    struct btrfs_extent_item);
-	item_size = btrfs_item_size_nr(path.nodes[0], path.slots[0]);
+	item_size = btrfs_item_size(path.nodes[0], path.slots[0]);
 	ptr = (unsigned long)(ei + 1);
 	end = (unsigned long)ei + item_size;
 	while (ptr < end) {
@@ -340,7 +340,7 @@ int count_csum_range(u64 start, u64 len, u64 *found)
 		if (key.offset > start)
 			start = key.offset;
 
-		size = btrfs_item_size_nr(leaf, path.slots[0]);
+		size = btrfs_item_size(leaf, path.slots[0]);
 		csum_end = key.offset + (size / csum_size) *
 			   gfs_info->sectorsize;
 		if (csum_end > start) {
@@ -758,7 +758,7 @@ static int find_file_type_dir_index(struct btrfs_root *root, u64 ino, u64 dirid,
 	if (filetype >= BTRFS_FT_MAX || filetype == BTRFS_FT_UNKNOWN)
 		goto out;
 	len = min_t(u32, BTRFS_NAME_LEN,
-		btrfs_item_size_nr(path.nodes[0], path.slots[0]) - sizeof(*di));
+		btrfs_item_size(path.nodes[0], path.slots[0]) - sizeof(*di));
 	len = min_t(u32, len, btrfs_dir_name_len(path.nodes[0], di));
 	read_extent_buffer(path.nodes[0], namebuf, (unsigned long)(di + 1), len);
 	if (name_len != len || memcmp(namebuf, name, len))
@@ -802,7 +802,7 @@ static int find_file_type_dir_item(struct btrfs_root *root, u64 ino, u64 dirid,
 		goto out;
 
 	cur = btrfs_item_ptr_offset(path.nodes[0], path.slots[0]);
-	end = cur + btrfs_item_size_nr(path.nodes[0], path.slots[0]);
+	end = cur + btrfs_item_size(path.nodes[0], path.slots[0]);
 	while (cur < end) {
 		di = (struct btrfs_dir_item *)cur;
 		cur += btrfs_dir_name_len(path.nodes[0], di) + sizeof(*di);
@@ -817,7 +817,7 @@ static int find_file_type_dir_item(struct btrfs_root *root, u64 ino, u64 dirid,
 		if (filetype >= BTRFS_FT_MAX || filetype == BTRFS_FT_UNKNOWN)
 			continue;
 		len = min_t(u32, BTRFS_NAME_LEN,
-			    btrfs_item_size_nr(path.nodes[0], path.slots[0]) -
+			    btrfs_item_size(path.nodes[0], path.slots[0]) -
 			    sizeof(*di));
 		len = min_t(u32, len, btrfs_dir_name_len(path.nodes[0], di));
 		read_extent_buffer(path.nodes[0], namebuf,
@@ -903,7 +903,7 @@ int detect_imode(struct btrfs_root *root, struct btrfs_path *path,
 		case BTRFS_INODE_REF_KEY:
 			/* The most accurate way to determine filetype */
 			cur = btrfs_item_ptr_offset(leaf, slot);
-			end = cur + btrfs_item_size_nr(leaf, slot);
+			end = cur + btrfs_item_size(leaf, slot);
 			while (cur < end) {
 				iref = (struct btrfs_inode_ref *)cur;
 				namelen = min_t(u32, end - cur - sizeof(&iref),

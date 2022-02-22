@@ -325,7 +325,7 @@ static void sanitize_dir_item(enum sanitize_mode sanitize,
 	int free_garbage = (sanitize == SANITIZE_NAMES);
 
 	dir_item = btrfs_item_ptr(eb, slot, struct btrfs_dir_item);
-	total_len = btrfs_item_size_nr(eb, slot);
+	total_len = btrfs_item_size(eb, slot);
 	while (cur < total_len) {
 		this_len = sizeof(*dir_item) +
 			btrfs_dir_name_len(eb, dir_item) +
@@ -371,7 +371,7 @@ static void sanitize_inode_ref(enum sanitize_mode sanitize,
 	int len;
 	int free_garbage = (sanitize == SANITIZE_NAMES);
 
-	item_size = btrfs_item_size_nr(eb, slot);
+	item_size = btrfs_item_size(eb, slot);
 	ptr = btrfs_item_ptr_offset(eb, slot);
 	while (cur_offset < item_size) {
 		if (ext) {

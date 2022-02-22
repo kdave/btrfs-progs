@@ -2103,9 +2103,9 @@ int btrfs_check_chunk_valid(struct btrfs_fs_info *fs_info,
 	 * one stripe, so no "==" check.
 	 */
 	if (slot >= 0 &&
-	    btrfs_item_size_nr(leaf, slot) < sizeof(struct btrfs_chunk)) {
+	    btrfs_item_size(leaf, slot) < sizeof(struct btrfs_chunk)) {
 		error("invalid chunk item size, have %u expect [%zu, %u)",
-			btrfs_item_size_nr(leaf, slot),
+			btrfs_item_size(leaf, slot),
 			sizeof(struct btrfs_chunk),
 			BTRFS_LEAF_DATA_SIZE(fs_info));
 		return -EUCLEAN;
@@ -2122,9 +2122,9 @@ int btrfs_check_chunk_valid(struct btrfs_fs_info *fs_info,
 		return -EUCLEAN;
 	}
 	if (slot >= 0 && btrfs_chunk_item_size(num_stripes) !=
-	    btrfs_item_size_nr(leaf, slot)) {
+	    btrfs_item_size(leaf, slot)) {
 		error("invalid chunk item size, have %u expect %lu",
-			btrfs_item_size_nr(leaf, slot),
+			btrfs_item_size(leaf, slot),
 			btrfs_chunk_item_size(num_stripes));
 		return -EUCLEAN;
 	}
@@ -2184,7 +2184,7 @@ int btrfs_check_chunk_valid(struct btrfs_fs_info *fs_info,
 	 */
 	if (num_stripes < 1 ||
 	    (slot == -1 && chunk_ondisk_size > BTRFS_SYSTEM_CHUNK_ARRAY_SIZE) ||
-	    (slot >= 0 && chunk_ondisk_size > btrfs_item_size_nr(leaf, slot))) {
+	    (slot >= 0 && chunk_ondisk_size > btrfs_item_size(leaf, slot))) {
 		error("invalid num_stripes: %u", num_stripes);
 		return -EIO;
 	}
