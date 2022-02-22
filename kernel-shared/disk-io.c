@@ -1059,6 +1059,7 @@ static int load_global_roots_objectid(struct btrfs_fs_info *fs_info,
 	struct btrfs_root *tree_root = fs_info->tree_root;
 	struct btrfs_root *root;
 	int ret;
+	int found = 0;
 	struct btrfs_key key = {
 		.objectid = objectid,
 		.type = BTRFS_ROOT_ITEM_KEY,
@@ -1124,9 +1125,51 @@ static int load_global_roots_objectid(struct btrfs_fs_info *fs_info,
 			break;
 		}
 
+		found++;
 		path->slots[0]++;
 	}
 	btrfs_release_path(path);
+
+	/*
+	 * We didn't find all of our roots, create empty ones if we have PARTIAL
+	 * set.
+	 */
+	if (!ret && found < fs_info->nr_global_roots) {
+		int i;
+
+		if (!(flags & OPEN_CTREE_PARTIAL)) {
+			error("could not setup %s tree", str);
+			return -EIO;
+		}
+
+		warning("could not setup %s tree, skipping it", str);
+		for (i = found; i < fs_info->nr_global_roots; i++) {
+			root = calloc(1, sizeof(*root));
+			if (!root) {
+				ret = -ENOMEM;
+				break;
+			}
+			btrfs_setup_root(root, fs_info, objectid);
+			root->root_key.objectid = objectid;
+			root->root_key.type = BTRFS_ROOT_ITEM_KEY;
+			root->root_key.offset = i;
+			root->track_dirty = 1;
+			root->node = btrfs_find_create_tree_block(fs_info, 0);
+			if (!root->node) {
+				free(root);
+				ret = -ENOMEM;
+				break;
+			}
+			clear_extent_buffer_uptodate(root->node);
+			ret = btrfs_global_root_insert(fs_info, root);
+			if (ret) {
+				free_extent_buffer(root->node);
+				free(root);
+				break;
+			}
+		}
+	}
+
 	return ret;
 }
 
