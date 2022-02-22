@@ -178,9 +178,11 @@ static int populate_used_from_extent_root(struct btrfs_root *root,
 		if (slot >= btrfs_header_nritems(leaf)) {
 			ret = btrfs_next_leaf(root, &path);
 			if (ret < 0)
-				return ret;
-			if (ret > 0)
 				break;
+			if (ret > 0) {
+				ret = 0;
+				break;
+			}
 			leaf = path.nodes[0];
 			slot = path.slots[0];
 		}
@@ -191,13 +193,21 @@ static int populate_used_from_extent_root(struct btrfs_root *root,
 		else if (key.type == BTRFS_METADATA_ITEM_KEY)
 			end = start + fs_info->nodesize - 1;
 
-		if (start != end)
+		if (start != end) {
+			if (!IS_ALIGNED(start, fs_info->sectorsize) ||
+			    !IS_ALIGNED(end + 1, fs_info->sectorsize)) {
+				fprintf(stderr, "unaligned value in the extent tree start %llu end %llu\n",
+						start, end + 1);
+				ret = -EINVAL;
+				break;
+			}
 			set_extent_dirty(io_tree, start, end);
+		}
 
 		path.slots[0]++;
 	}
 	btrfs_release_path(&path);
-	return 0;
+	return ret;
 }
 
 int btrfs_mark_used_blocks(struct btrfs_fs_info *fs_info,
