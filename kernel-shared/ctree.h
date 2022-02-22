@@ -363,8 +363,7 @@ static inline u32 __BTRFS_LEAF_DATA_SIZE(u32 nodesize)
 	return nodesize - sizeof(struct btrfs_header);
 }
 
-#define BTRFS_LEAF_DATA_SIZE(fs_info) \
-				(__BTRFS_LEAF_DATA_SIZE(fs_info->nodesize))
+#define BTRFS_LEAF_DATA_SIZE(fs_info) (fs_info->leaf_data_size)
 
 /*
  * this is a very generous portion of the super block, giving us
@@ -1271,6 +1270,7 @@ struct btrfs_fs_info {
 	u32 nodesize;
 	u32 sectorsize;
 	u32 stripesize;
+	u32 leaf_data_size;
 	u16 csum_type;
 	u16 csum_size;
 
