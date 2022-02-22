@@ -2075,11 +2075,11 @@ static int push_leaf_right(struct btrfs_trans_handle *trans, struct btrfs_root
 		     btrfs_leaf_data(left) + leaf_data_end(left), push_space);
 
 	memmove_extent_buffer(right, btrfs_item_nr_offset(push_items),
-			      btrfs_item_nr_offset(0),
+			      btrfs_leaf_data(right),
 			      right_nritems * sizeof(struct btrfs_item));
 
 	/* copy the items from left to right */
-	copy_extent_buffer(right, left, btrfs_item_nr_offset(0),
+	copy_extent_buffer(right, left, btrfs_leaf_data(right),
 		   btrfs_item_nr_offset(left_nritems - push_items),
 		   push_items * sizeof(struct btrfs_item));
 
@@ -2198,7 +2198,7 @@ static int push_leaf_left(struct btrfs_trans_handle *trans, struct btrfs_root
 	/* push data from right to left */
 	copy_extent_buffer(left, right,
 			   btrfs_item_nr_offset(btrfs_header_nritems(left)),
-			   btrfs_item_nr_offset(0),
+			   btrfs_leaf_data(right),
 			   push_items * sizeof(struct btrfs_item));
 
 	push_space = BTRFS_LEAF_DATA_SIZE(root->fs_info) -
@@ -2238,7 +2238,7 @@ static int push_leaf_left(struct btrfs_trans_handle *trans, struct btrfs_root
 				      btrfs_leaf_data(right) +
 				      leaf_data_end(right), push_space);
 
-		memmove_extent_buffer(right, btrfs_item_nr_offset(0),
+		memmove_extent_buffer(right, btrfs_leaf_data(right),
 			      btrfs_item_nr_offset(push_items),
 			     (btrfs_header_nritems(right) - push_items) *
 			     sizeof(struct btrfs_item));
@@ -2296,7 +2296,7 @@ static noinline int copy_for_split(struct btrfs_trans_handle *trans,
 	btrfs_set_header_nritems(right, nritems);
 	data_copy_size = btrfs_item_end(l, mid) - leaf_data_end(l);
 
-	copy_extent_buffer(right, l, btrfs_item_nr_offset(0),
+	copy_extent_buffer(right, l, btrfs_leaf_data(right),
 			   btrfs_item_nr_offset(mid),
 			   nritems * sizeof(struct btrfs_item));
 
