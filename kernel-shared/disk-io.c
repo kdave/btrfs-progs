@@ -1149,6 +1149,8 @@ static int load_global_roots(struct btrfs_fs_info *fs_info, unsigned flags)
 					 "csum");
 	if (ret)
 		goto out;
+	if (!btrfs_fs_compat_ro(fs_info, FREE_SPACE_TREE))
+		goto out;
 	ret = load_global_roots_objectid(fs_info, path,
 					 BTRFS_FREE_SPACE_TREE_OBJECTID, flags,
 					 "free space");
