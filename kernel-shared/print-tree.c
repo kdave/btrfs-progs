@@ -1288,7 +1288,7 @@ void btrfs_print_leaf(struct extent_buffer *eb, unsigned int mode)
 {
 	struct btrfs_item *item;
 	struct btrfs_disk_key disk_key;
-	u32 leaf_data_size = __BTRFS_LEAF_DATA_SIZE(eb->len);
+	u32 leaf_data_size = BTRFS_LEAF_DATA_SIZE(eb->fs_info);
 	u32 i;
 	u32 nr;
 	const bool print_csum_items = (mode & BTRFS_PRINT_TREE_CSUM_ITEMS);

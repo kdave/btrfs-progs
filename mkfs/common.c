@@ -326,7 +326,7 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 	memset(buf->data + sizeof(struct btrfs_header), 0,
 		cfg->nodesize - sizeof(struct btrfs_header));
 	nritems = 0;
-	itemoff = __BTRFS_LEAF_DATA_SIZE(cfg->nodesize);
+	itemoff = cfg->leaf_data_size;
 	for (i = 0; i < blocks_nr; i++) {
 		blk = blocks[i];
 

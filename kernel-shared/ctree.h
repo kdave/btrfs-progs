@@ -1328,8 +1328,9 @@ static inline u32 BTRFS_NODEPTRS_PER_BLOCK(const struct btrfs_fs_info *info)
 
 static inline u32 BTRFS_NODEPTRS_PER_EXTENT_BUFFER(const struct extent_buffer *eb)
 {
-	BUG_ON(eb->fs_info && eb->fs_info->nodesize != eb->len);
-	return __BTRFS_LEAF_DATA_SIZE(eb->len) / sizeof(struct btrfs_key_ptr);
+	BUG_ON(!eb->fs_info);
+	BUG_ON(eb->fs_info->nodesize != eb->len);
+	return BTRFS_LEAF_DATA_SIZE(eb->fs_info) / sizeof(struct btrfs_key_ptr);
 }
 
 #define BTRFS_FILE_EXTENT_INLINE_DATA_START		\
