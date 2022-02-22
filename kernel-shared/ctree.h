@@ -2005,6 +2005,18 @@ static inline u32 btrfs_item_end_nr(struct extent_buffer *eb, int nr)
 	return btrfs_item_end(eb, btrfs_item_nr(nr));
 }
 
+static inline void btrfs_set_item_size_nr(struct extent_buffer *eb, int nr,
+					  u32 size)
+{
+	btrfs_set_item_size(eb, btrfs_item_nr(nr), size);
+}
+
+static inline void btrfs_set_item_offset_nr(struct extent_buffer *eb, int nr,
+					    u32 offset)
+{
+	btrfs_set_item_offset(eb, btrfs_item_nr(nr), offset);
+}
+
 static inline u32 btrfs_item_offset_nr(const struct extent_buffer *eb, int nr)
 {
 	return btrfs_item_offset(eb, btrfs_item_nr(nr));

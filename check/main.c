@@ -4213,13 +4213,10 @@ static int swap_values(struct btrfs_root *root, struct btrfs_path *path,
 			btrfs_fixup_low_keys(path, &key, btrfs_header_level(buf) + 1);
 		}
 	} else {
-		struct btrfs_item *item1, *item2;
 		struct btrfs_key k1, k2;
 		char *item1_data, *item2_data;
 		u32 item1_offset, item2_offset, item1_size, item2_size;
 
-		item1 = btrfs_item_nr(slot);
-		item2 = btrfs_item_nr(slot + 1);
 		btrfs_item_key_to_cpu(buf, &k1, slot);
 		btrfs_item_key_to_cpu(buf, &k2, slot + 1);
 		item1_offset = btrfs_item_offset_nr(buf, slot);
@@ -4244,10 +4241,10 @@ static int swap_values(struct btrfs_root *root, struct btrfs_path *path,
 		free(item1_data);
 		free(item2_data);
 
-		btrfs_set_item_offset(buf, item1, item2_offset);
-		btrfs_set_item_offset(buf, item2, item1_offset);
-		btrfs_set_item_size(buf, item1, item2_size);
-		btrfs_set_item_size(buf, item2, item1_size);
+		btrfs_set_item_offset_nr(buf, slot, item2_offset);
+		btrfs_set_item_offset_nr(buf, slot + 1, item1_offset);
+		btrfs_set_item_size_nr(buf, slot, item2_size);
+		btrfs_set_item_size_nr(buf, slot + 1, item1_size);
 
 		path->slots[0] = slot;
 		btrfs_set_item_key_unsafe(root, path, &k2);
@@ -4371,8 +4368,7 @@ again:
 				      btrfs_leaf_data(buf) + offset + shift,
 				      btrfs_leaf_data(buf) + offset,
 				      btrfs_item_size_nr(buf, i));
-		btrfs_set_item_offset(buf, btrfs_item_nr(i),
-				      offset + shift);
+		btrfs_set_item_offset_nr(buf, i, offset + shift);
 		btrfs_mark_buffer_dirty(buf);
 	}
 

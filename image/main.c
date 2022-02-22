@@ -1218,7 +1218,6 @@ static struct extent_buffer *alloc_dummy_eb(u64 bytenr, u32 size)
 
 static void truncate_item(struct extent_buffer *eb, int slot, u32 new_size)
 {
-	struct btrfs_item *item;
 	u32 nritems;
 	u32 old_size;
 	u32 old_data_start;
@@ -1238,16 +1237,14 @@ static void truncate_item(struct extent_buffer *eb, int slot, u32 new_size)
 
 	for (i = slot; i < nritems; i++) {
 		u32 ioff;
-		item = btrfs_item_nr(i);
 		ioff = btrfs_item_offset_nr(eb, i);
-		btrfs_set_item_offset(eb, item, ioff + size_diff);
+		btrfs_set_item_offset_nr(eb, i, ioff + size_diff);
 	}
 
 	memmove_extent_buffer(eb, btrfs_leaf_data(eb) + data_end + size_diff,
 			      btrfs_leaf_data(eb) + data_end,
 			      old_data_start + new_size - data_end);
-	item = btrfs_item_nr(slot);
-	btrfs_set_item_size(eb, item, new_size);
+	btrfs_set_item_size_nr(eb, slot, new_size);
 }
 
 static int fixup_chunk_tree_block(struct mdrestore_struct *mdres,

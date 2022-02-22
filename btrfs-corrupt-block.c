@@ -838,7 +838,7 @@ static void shift_items(struct btrfs_root *root, struct extent_buffer *eb)
 	for (i = nritems - 1; i >= slot; i--) {
 		u32 offset = btrfs_item_offset_nr(eb, i);
 		offset -= shift_space;
-		btrfs_set_item_offset(eb, btrfs_item_nr(i), offset);
+		btrfs_set_item_offset_nr(eb, i, offset);
 	}
 }
 
@@ -980,8 +980,7 @@ static int corrupt_btrfs_item(struct btrfs_root *root, struct btrfs_key *key,
 	case BTRFS_ITEM_OFFSET:
 		orig = btrfs_item_offset_nr(path->nodes[0], path->slots[0]);
 		bogus = generate_u32(orig);
-		btrfs_set_item_offset(path->nodes[0],
-				      btrfs_item_nr(path->slots[0]), bogus);
+		btrfs_set_item_offset_nr(path->nodes[0], path->slots[0], bogus);
 		break;
 	default:
 		ret = -EINVAL;
