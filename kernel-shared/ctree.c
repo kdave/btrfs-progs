@@ -730,10 +730,10 @@ btrfs_check_leaf(struct btrfs_fs_info *fs_info,
 		else
 			item_end_expected = btrfs_item_offset_nr(leaf,
 								 slot - 1);
-		if (btrfs_item_end_nr(leaf, slot) != item_end_expected) {
+		if (btrfs_item_end(leaf, slot) != item_end_expected) {
 			generic_err(leaf, slot,
 				"unexpected item end, have %u expect %u",
-				btrfs_item_end_nr(leaf, slot),
+				btrfs_item_end(leaf, slot),
 				item_end_expected);
 			ret = BTRFS_TREE_BLOCK_INVALID_OFFSETS;
 			goto fail;
@@ -744,11 +744,11 @@ btrfs_check_leaf(struct btrfs_fs_info *fs_info,
 		 * just in case all the items are consistent to each other, but
 		 * all point outside of the leaf.
 		 */
-		if (btrfs_item_end_nr(leaf, slot) >
+		if (btrfs_item_end(leaf, slot) >
 		    BTRFS_LEAF_DATA_SIZE(fs_info)) {
 			generic_err(leaf, slot,
 			"slot end outside of leaf, have %u expect range [0, %u]",
-				btrfs_item_end_nr(leaf, slot),
+				btrfs_item_end(leaf, slot),
 				BTRFS_LEAF_DATA_SIZE(fs_info));
 			ret = BTRFS_TREE_BLOCK_INVALID_OFFSETS;
 			goto fail;
@@ -1931,7 +1931,7 @@ static int leaf_space_used(struct extent_buffer *l, int start, int nr)
 
 	if (!nr)
 		return 0;
-	data_len = btrfs_item_end_nr(l, start);
+	data_len = btrfs_item_end(l, start);
 	data_len = data_len - btrfs_item_offset_nr(l, end);
 	data_len += sizeof(struct btrfs_item) * nr;
 	WARN_ON(data_len < 0);
@@ -2059,7 +2059,7 @@ static int push_leaf_right(struct btrfs_trans_handle *trans, struct btrfs_root
 	/* push left to right */
 	right_nritems = btrfs_header_nritems(right);
 
-	push_space = btrfs_item_end_nr(left, left_nritems - push_items);
+	push_space = btrfs_item_end(left, left_nritems - push_items);
 	push_space -= leaf_data_end(left);
 
 	/* make room in the right data area */
@@ -2294,7 +2294,7 @@ static noinline int copy_for_split(struct btrfs_trans_handle *trans,
 
 	nritems = nritems - mid;
 	btrfs_set_header_nritems(right, nritems);
-	data_copy_size = btrfs_item_end_nr(l, mid) - leaf_data_end(l);
+	data_copy_size = btrfs_item_end(l, mid) - leaf_data_end(l);
 
 	copy_extent_buffer(right, l, btrfs_item_nr_offset(0),
 			   btrfs_item_nr_offset(mid),
@@ -2306,7 +2306,7 @@ static noinline int copy_for_split(struct btrfs_trans_handle *trans,
 			 btrfs_leaf_data(l) + leaf_data_end(l), data_copy_size);
 
 	rt_data_off = BTRFS_LEAF_DATA_SIZE(root->fs_info) -
-		      btrfs_item_end_nr(l, mid);
+		      btrfs_item_end(l, mid);
 
 	for (i = 0; i < nritems; i++) {
 		u32 ioff = btrfs_item_offset_nr(right, i);
@@ -2727,7 +2727,7 @@ int btrfs_extend_item(struct btrfs_root *root, struct btrfs_path *path,
 		BUG();
 	}
 	slot = path->slots[0];
-	old_data = btrfs_item_end_nr(leaf, slot);
+	old_data = btrfs_item_end(leaf, slot);
 
 	BUG_ON(slot < 0);
 	if (slot >= nritems) {
@@ -2816,7 +2816,7 @@ int btrfs_insert_empty_items(struct btrfs_trans_handle *trans,
 	BUG_ON(slot < 0);
 
 	if (slot < nritems) {
-		unsigned int old_data = btrfs_item_end_nr(leaf, slot);
+		unsigned int old_data = btrfs_item_end(leaf, slot);
 
 		if (old_data < data_end) {
 			btrfs_print_leaf(leaf, BTRFS_PRINT_TREE_DEFAULT);
