@@ -447,7 +447,7 @@ static const char * const cmd_inspect_tree_stats_usage[] = {
 static int cmd_inspect_tree_stats(const struct cmd_struct *cmd,
 				  int argc, char **argv)
 {
-	struct btrfs_key key;
+	struct btrfs_key key = { .type = BTRFS_ROOT_ITEM_KEY };
 	struct btrfs_root *root;
 	int opt;
 	int ret = 0;
