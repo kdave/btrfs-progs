@@ -4222,10 +4222,10 @@ static int swap_values(struct btrfs_root *root, struct btrfs_path *path,
 		item2 = btrfs_item_nr(slot + 1);
 		btrfs_item_key_to_cpu(buf, &k1, slot);
 		btrfs_item_key_to_cpu(buf, &k2, slot + 1);
-		item1_offset = btrfs_item_offset(buf, item1);
-		item2_offset = btrfs_item_offset(buf, item2);
-		item1_size = btrfs_item_size(buf, item1);
-		item2_size = btrfs_item_size(buf, item2);
+		item1_offset = btrfs_item_offset_nr(buf, slot);
+		item2_offset = btrfs_item_offset_nr(buf, slot + 1);
+		item1_size = btrfs_item_size_nr(buf, slot);
+		item2_size = btrfs_item_size_nr(buf, slot + 1);
 
 		item1_data = malloc(item1_size);
 		if (!item1_data)

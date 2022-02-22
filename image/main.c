@@ -1239,7 +1239,7 @@ static void truncate_item(struct extent_buffer *eb, int slot, u32 new_size)
 	for (i = slot; i < nritems; i++) {
 		u32 ioff;
 		item = btrfs_item_nr(i);
-		ioff = btrfs_item_offset(eb, item);
+		ioff = btrfs_item_offset_nr(eb, i);
 		btrfs_set_item_offset(eb, item, ioff + size_diff);
 	}
 

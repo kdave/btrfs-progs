@@ -1320,7 +1320,7 @@ void btrfs_print_leaf(struct extent_buffer *eb, unsigned int mode)
 			break;
 		}
 		item = btrfs_item_nr(i);
-		item_size = btrfs_item_size(eb, item);
+		item_size = btrfs_item_size_nr(eb, i);
 		/* Untyped extraction of slot from btrfs_item_ptr */
 		ptr = btrfs_item_ptr(eb, i, void*);
 
@@ -1332,8 +1332,8 @@ void btrfs_print_leaf(struct extent_buffer *eb, unsigned int mode)
 		printf("\titem %u ", i);
 		btrfs_print_key(&disk_key);
 		printf(" itemoff %u itemsize %u\n",
-			btrfs_item_offset(eb, item),
-			btrfs_item_size(eb, item));
+			btrfs_item_offset_nr(eb, i),
+			btrfs_item_size_nr(eb, i));
 
 		if (type == 0 && objectid == BTRFS_FREE_SPACE_OBJECTID)
 			print_free_space_header(eb, i);
