@@ -1018,6 +1018,16 @@ static int merge_inode_recs(struct inode_record *src, struct inode_record *dst,
 	int ret = 0;
 
 	dst->merging = 1;
+
+	/*
+	 * If we wandered into a shared node while we were processing an inode
+	 * we may have added backrefs for a directory that had nlink == 0, so
+	 * skip adding these backrefs to our src inode if we have nlink == 0 and
+	 * we actually found the inode item.
+	 */
+	if (src->found_inode_item && src->nlink == 0)
+		goto skip_backrefs;
+
 	list_for_each_entry(backref, &src->backrefs, list) {
 		if (backref->found_dir_index) {
 			add_inode_backref(dst_cache, dst->ino, backref->dir,
@@ -1039,7 +1049,7 @@ static int merge_inode_recs(struct inode_record *src, struct inode_record *dst,
 					backref->ref_type, backref->errors);
 		}
 	}
-
+skip_backrefs:
 	if (src->found_dir_item)
 		dst->found_dir_item = 1;
 	if (src->found_file_extent)
@@ -1393,6 +1403,9 @@ static int process_dir_item(struct extent_buffer *eb,
 	inode_cache = &active_node->inode_cache;
 	rec = active_node->current;
 	rec->found_dir_item = 1;
+
+	if (rec->found_inode_item && rec->nlink == 0)
+		return 0;
 
 	di = btrfs_item_ptr(eb, slot, struct btrfs_dir_item);
 	total = btrfs_item_size_nr(eb, slot);

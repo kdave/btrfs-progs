@@ -2727,6 +2727,8 @@ static int check_inode_item(struct btrfs_root *root, struct btrfs_path *path)
 					imode_to_type(mode), key.objectid,
 					key.offset);
 			}
+			if (is_orphan && key.type == BTRFS_DIR_INDEX_KEY)
+				break;
 			ret = check_dir_item(root, &key, path, &size);
 			err |= ret;
 			break;
@@ -2769,7 +2771,7 @@ out:
 				&nlink);
 		}
 
-		if (nlink != 1) {
+		if (nlink > 1) {
 			err |= LINK_COUNT_ERROR;
 			error("root %llu DIR INODE[%llu] shouldn't have more than one link(%llu)",
 			      root->objectid, inode_id, nlink);
@@ -2785,7 +2787,7 @@ out:
 				gfs_info->nodesize);
 		}
 
-		if (isize != size) {
+		if (isize != size && !is_orphan) {
 			if (repair)
 				ret = repair_dir_isize_lowmem(root, path,
 							      inode_id, size);
