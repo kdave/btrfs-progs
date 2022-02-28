@@ -9133,6 +9133,15 @@ static int do_check_chunks_and_extents(void)
 		if (ret > 0)
 			ret = 0;
 	}
+
+	/*
+	 * If we have error unfixed, exit right now, as super num is
+	 * really a minor problem compared to any problems found above.
+	 */
+	if (ret)
+		return ret;
+
+	ret = check_and_repair_super_num_devs(gfs_info);
 	return ret;
 }
 

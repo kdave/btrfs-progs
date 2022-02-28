@@ -201,4 +201,6 @@ int repair_dev_item_bytes_used(struct btrfs_fs_info *fs_info,
 
 int fill_csum_tree(struct btrfs_trans_handle *trans, bool search_fs_tree);
 
+int check_and_repair_super_num_devs(struct btrfs_fs_info *fs_info);
+
 #endif

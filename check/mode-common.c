@@ -1583,3 +1583,92 @@ int fill_csum_tree(struct btrfs_trans_handle *trans, bool search_fs_tree)
 	}
 	return ret;
 }
+
+static int get_num_devs_in_chunk_tree(struct btrfs_fs_info *fs_info)
+{
+	struct btrfs_root *chunk_root = fs_info->chunk_root;
+	struct btrfs_path path = { 0 };
+	struct btrfs_key key = { 0 };
+	int found_devs = 0;
+	int ret;
+
+	ret = btrfs_search_slot(NULL, chunk_root, &key, &path, 0, 0);
+	if (ret < 0)
+		return ret;
+
+	/* We should be the first slot, and chunk tree should not be empty*/
+	ASSERT(path.slots[0] == 0 && btrfs_header_nritems(path.nodes[0]));
+
+	btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
+
+	while (key.objectid == BTRFS_DEV_ITEMS_OBJECTID &&
+	       key.type == BTRFS_DEV_ITEM_KEY) {
+		found_devs++;
+
+		ret = btrfs_next_item(chunk_root, &path);
+		if (ret < 0)
+			break;
+
+		/*
+		 * This should not happen, as we should have CHUNK items after
+		 * DEV items, but since we're only to get the num devices, no
+		 * need to bother that problem.
+		 */
+		if (ret > 0) {
+			ret = 0;
+			break;
+		}
+		btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
+	}
+	btrfs_release_path(&path);
+	if (ret < 0)
+		return ret;
+	return found_devs;
+}
+
+int check_and_repair_super_num_devs(struct btrfs_fs_info *fs_info)
+{
+	struct btrfs_trans_handle *trans;
+	int found_devs;
+	int ret;
+
+	ret = get_num_devs_in_chunk_tree(fs_info);
+	if (ret < 0)
+		return ret;
+
+	found_devs = ret;
+
+	if (found_devs == btrfs_super_num_devices(fs_info->super_copy))
+		return 0;
+
+	/* Now the found devs in chunk tree mismatch with super block */
+	error("super num devices mismatch, have %llu expect %u",
+	      btrfs_super_num_devices(fs_info->super_copy),
+	      found_devs);
+
+	if (!repair)
+		return -EUCLEAN;
+
+	/*
+	 * Repair is pretty simple, just reset the super block value and
+	 * commit a new transaction.
+	 */
+	trans = btrfs_start_transaction(fs_info->tree_root, 0);
+	if (IS_ERR(trans)) {
+		ret = PTR_ERR(trans);
+		errno = -ret;
+		error("failed to start trans: %m");
+		return ret;
+	}
+
+	btrfs_set_super_num_devices(fs_info->super_copy, found_devs);
+	ret = btrfs_commit_transaction(trans, fs_info->tree_root);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to commit trans: %m");
+		btrfs_abort_transaction(trans, ret);
+		return ret;
+	}
+	printf("Successfully reset super num devices to %u\n", found_devs);
+	return 0;
+}
