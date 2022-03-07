@@ -149,6 +149,9 @@ int btrfs_mark_used_tree_blocks(struct btrfs_fs_info *fs_info,
 	ret = traverse_tree_blocks(tree, fs_info->chunk_root->node, 0);
 	if (!ret)
 		ret = traverse_tree_blocks(tree, fs_info->tree_root->node, 1);
+	if (!ret && fs_info->block_group_root)
+		ret = traverse_tree_blocks(tree,
+					   fs_info->block_group_root->node, 0);
 	return ret;
 }
 
