@@ -266,7 +266,7 @@ static int modify_block_group_cache(struct btrfs_block_group *block_group, int c
  */
 static int modify_block_groups_cache(u64 flags, int cache)
 {
-	struct btrfs_root *root = btrfs_extent_root(gfs_info, 0);
+	struct btrfs_root *root = btrfs_block_group_root(gfs_info);
 	struct btrfs_key key;
 	struct btrfs_path path;
 	struct btrfs_block_group *bg_cache;
@@ -331,7 +331,7 @@ static int clear_block_groups_full(u64 flags)
 static int create_chunk_and_block_group(u64 flags, u64 *start, u64 *nbytes)
 {
 	struct btrfs_trans_handle *trans;
-	struct btrfs_root *root = btrfs_extent_root(gfs_info, 0);
+	struct btrfs_root *root = btrfs_block_group_root(gfs_info);
 	int ret;
 
 	if ((flags & BTRFS_BLOCK_GROUP_TYPE_MASK) == 0)
@@ -419,7 +419,7 @@ static int is_chunk_almost_full(u64 start)
 {
 	struct btrfs_path path;
 	struct btrfs_key key;
-	struct btrfs_root *root = btrfs_extent_root(gfs_info, 0);
+	struct btrfs_root *root = btrfs_block_group_root(gfs_info);
 	struct btrfs_block_group_item *bi;
 	struct btrfs_block_group_item bg_item;
 	struct extent_buffer *eb;
@@ -4601,7 +4601,7 @@ next:
 static int find_block_group_item(struct btrfs_path *path, u64 bytenr, u64 len,
 				 u64 type)
 {
-	struct btrfs_root *root = btrfs_extent_root(gfs_info, 0);
+	struct btrfs_root *root = btrfs_block_group_root(gfs_info);
 	struct btrfs_block_group_item bgi;
 	struct btrfs_key key;
 	int ret;
