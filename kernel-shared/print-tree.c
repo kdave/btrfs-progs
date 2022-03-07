@@ -1872,8 +1872,14 @@ static int empty_backup(struct btrfs_root_backup *backup)
 	return 0;
 }
 
-static void print_root_backup(struct btrfs_root_backup *backup)
+static void print_root_backup(struct btrfs_root_backup *backup,
+			      bool extent_tree_v2)
 {
+	const char *extent_tree_str = "backup_extent_root";
+
+	if (extent_tree_v2)
+		extent_tree_str = "backup_block_group_root";
+
 	printf("\t\tbackup_tree_root:\t%llu\tgen: %llu\tlevel: %d\n",
 			btrfs_backup_tree_root(backup),
 			btrfs_backup_tree_root_gen(backup),
@@ -1882,7 +1888,8 @@ static void print_root_backup(struct btrfs_root_backup *backup)
 			btrfs_backup_chunk_root(backup),
 			btrfs_backup_chunk_root_gen(backup),
 			btrfs_backup_chunk_root_level(backup));
-	printf("\t\tbackup_extent_root:\t%llu\tgen: %llu\tlevel: %d\n",
+	printf("\t\t%s:\t%llu\tgen: %llu\tlevel: %d\n",
+			extent_tree_str,
 			btrfs_backup_extent_root(backup),
 			btrfs_backup_extent_root_gen(backup),
 			btrfs_backup_extent_root_level(backup));
@@ -1894,7 +1901,7 @@ static void print_root_backup(struct btrfs_root_backup *backup)
 			btrfs_backup_dev_root(backup),
 			btrfs_backup_dev_root_gen(backup),
 			btrfs_backup_dev_root_level(backup));
-	printf("\t\tbackup_csum_root:\t%llu\tgen: %llu\tlevel: %d\n",
+	printf("\t\tcsum_root:\t%llu\tgen: %llu\tlevel: %d\n",
 			btrfs_backup_csum_root(backup),
 			btrfs_backup_csum_root_gen(backup),
 			btrfs_backup_csum_root_level(backup));
@@ -1912,12 +1919,14 @@ static void print_backup_roots(struct btrfs_super_block *sb)
 {
 	struct btrfs_root_backup *backup;
 	int i;
+	bool extent_tree_v2 = (btrfs_super_incompat_flags(sb) &
+		BTRFS_FEATURE_INCOMPAT_EXTENT_TREE_V2);
 
 	for (i = 0; i < BTRFS_NUM_BACKUP_ROOTS; i++) {
 		backup = sb->super_roots + i;
 		if (!empty_backup(backup)) {
 			printf("\tbackup %d:\n", i);
-			print_root_backup(backup);
+			print_root_backup(backup, extent_tree_v2);
 		}
 	}
 }
@@ -2034,6 +2043,12 @@ void btrfs_print_superblock(struct btrfs_super_block *sb, int full)
 	       (unsigned long long)btrfs_super_cache_generation(sb));
 	printf("uuid_tree_generation\t%llu\n",
 	       (unsigned long long)btrfs_super_uuid_tree_generation(sb));
+	printf("block_group_root\t%llu\n",
+	       (unsigned long long)btrfs_super_block_group_root(sb));
+	printf("block_group_root_generation\t%llu\n",
+	       (unsigned long long)btrfs_super_block_group_root_generation(sb));
+	printf("block_group_root_level\t%llu\n",
+	       (unsigned long long)btrfs_super_block_group_root_level(sb));
 
 	uuid_unparse(sb->dev_item.uuid, buf);
 	printf("dev_item.uuid\t\t%s\n", buf);
