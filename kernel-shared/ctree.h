@@ -463,13 +463,15 @@ struct btrfs_super_block {
 
 	u8 metadata_uuid[BTRFS_FSID_SIZE];
 
+	__le64 nr_global_roots;
+
 	__le64 block_group_root;
 	__le64 block_group_root_generation;
 	u8 block_group_root_level;
 
 	/* future expansion */
 	u8 reserved8[7];
-	__le64 reserved[25];
+	__le64 reserved[24];
 	u8 sys_chunk_array[BTRFS_SYSTEM_CHUNK_ARRAY_SIZE];
 	struct btrfs_root_backup super_roots[BTRFS_NUM_BACKUP_ROOTS];
 	/* Padded to 4096 bytes */
@@ -2372,6 +2374,8 @@ BTRFS_SETGET_STACK_FUNCS(super_block_group_root_generation,
 			 block_group_root_generation, 64);
 BTRFS_SETGET_STACK_FUNCS(super_block_group_root_level,
 			 struct btrfs_super_block, block_group_root_level, 8);
+BTRFS_SETGET_STACK_FUNCS(super_nr_global_roots, struct btrfs_super_block,
+			 nr_global_roots, 64);
 
 static inline unsigned long btrfs_leaf_data(struct extent_buffer *l)
 {

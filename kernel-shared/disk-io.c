@@ -1620,6 +1620,10 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, struct open_ctree_flags *oc
 	if (ret)
 		goto out_devices;
 
+	if (btrfs_fs_incompat(fs_info, EXTENT_TREE_V2))
+		fs_info->nr_global_roots =
+			btrfs_super_nr_global_roots(fs_info->super_copy);
+
 	/*
 	 * fs_info->zone_size (and zoned) are not known before reading the
 	 * chunk tree, so it's 0 at this point. But, fs_info->zoned == 0

@@ -355,6 +355,7 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 		btrfs_set_super_cache_generation(&super, 0);
 	}
 	if (extent_tree_v2) {
+		btrfs_set_super_nr_global_roots(&super, 1);
 		btrfs_set_super_block_group_root(&super,
 						 cfg->blocks[MKFS_BLOCK_GROUP_TREE]);
 		btrfs_set_super_block_group_root_generation(&super, 1);
