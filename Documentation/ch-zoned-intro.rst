@@ -21,11 +21,10 @@ Requirements, limitations
 * maximum zone size is 8GiB
 * mixing zoned and non-zoned devices is possible, the zone writes are emulated,
   but this is namely for testing
-* the super block is handled in a special way and is at different locations
-  than on a non-zoned filesystem:
-    * primary: 0B (and the next two zones)
-    * secondary: 512GiB (and the next two zones)
-    * tertiary: 4TiB (4096GiB, and the next two zones)
+* the super block is handled in a special way and is at different locations than on a non-zoned filesystem:
+   * primary: 0B (and the next two zones)
+   * secondary: 512GiB (and the next two zones)
+   * tertiary: 4TiB (4096GiB, and the next two zones)
 
 Incompatible features
 ^^^^^^^^^^^^^^^^^^^^^

@@ -94,6 +94,68 @@ device that's available for the filesystem but without any other existing block
 groups. Before balance starts a check is performed to verify the requested
 action is possible. If not, ENOSPC is returned.
 
+Generic errors, errno
+---------------------
+
+Note there's a established text message for the errors, though they are used in
+a broader sense (eg. error mentions a file but it can be relevant for another
+structure). The title of each section uses the nonstandard meaning that is
+perhaps more suitable for a filesystem.
+
+ENOENT (No such entry)
+^^^^^^^^^^^^^^^^^^^^^^
+
+Common error "no such entry", in general it may mean that some structure hasn't
+been found, eg. an entry in some in-memory tree.  This becomes a critical
+problem when the entry is expected to exist because of consistency of the
+structures.
+
+ENOMEM (Not enough memory)
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Memory allocation error. In many cases the error is recoverable and the
+operation restartable after it's reported to userspace. In critical contexts,
+like when a transaction needs to be committed, the error is not recoverable and
+leads to flipping the filesystem to read-only. Such cases are rare under normal
+conditions. Memory can be artificially limited eg. by cgroups, which may
+trigger the condition, which is useful for testing but any real workload should
+have resources scaled accordingly.
+
+EINVAL (Invalid argument)
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This is typically returned from ioctl when a parameter is invalid, ie. unexpected
+range, a bit flag not recognized, or a combination of input parameters that
+does not make sense. Errors are typically recoverable.
+
+EUCLEAN (Filesystem corrupted)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The text of the message is confusing "Structure needs cleaning", in reality this
+is used to describe a severe corruption condition. The reason of the corruption
+is unknown at this point, but some constraint or condition has been violated
+and the filesystem driver can't do much. In practice such errors can be observed
+on fuzzed images, faulty hardware or misinteraction with other parts of the
+operating system.
+
+EIO (Input/output error)
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+"Input output error", typically returned as an error from a device that was
+unable to read data, or finish a write. Checksum errors also lead to EIO, there
+isn't an established error for checksum validation errors, although some
+filesystems use EBADMSG for that.
+
+EEXIST (Object already exists)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+ENOSPC (No space left)
+^^^^^^^^^^^^^^^^^^^^^^
+
+EOPNOTSUPP (Operation not supported)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
 TODO
 ----
 
