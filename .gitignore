@@ -75,13 +75,6 @@
 /ci/images/*/devel.tar.gz
 
 /Documentation/Makefile
-/Documentation/*.html
-/Documentation/*.8
-/Documentation/*.5
-/Documentation/*.3
-/Documentation/*.8.gz
-/Documentation/*.5.gz
-/Documentation/*.3.gz
 /Documentation/_build
 
 *.patch
