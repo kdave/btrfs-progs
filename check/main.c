@@ -627,6 +627,8 @@ static void print_inode_error(struct btrfs_root *root, struct inode_record *rec)
 	if (errors & I_ERR_INVALID_NLINK)
 		fprintf(stderr, ", directory has invalid nlink %d",
 			rec->nlink);
+	if (errors & I_ERR_INVALID_XATTR)
+		fprintf(stderr, ", invalid xattr");
 	fprintf(stderr, "\n");
 
 	/* Print the holes if needed */
@@ -1460,6 +1462,50 @@ next:
 	return 0;
 }
 
+static int process_xattr_item(struct extent_buffer *eb,
+			      int slot, struct btrfs_key *key,
+			      struct shared_node *active_node)
+{
+	u32 total;
+	u32 cur = 0;
+	struct btrfs_dir_item *di;
+	struct inode_record *rec;
+
+	rec = active_node->current;
+
+	di = btrfs_item_ptr(eb, slot, struct btrfs_dir_item);
+	total = btrfs_item_size_nr(eb, slot);
+	while (cur < total) {
+		u32 name_len = btrfs_dir_name_len(eb, di);
+		u32 data_len = btrfs_dir_data_len(eb, di);
+		u32 len;
+
+		if (name_len > BTRFS_NAME_LEN) {
+			char *name = malloc(name_len);
+
+			if (!name)
+				return -ENOMEM;
+
+			read_extent_buffer(eb, name,
+					   (unsigned long)(di + 1), name_len);
+
+			fprintf(stderr,
+				"inode %llu has overlong xattr name %.*s\n",
+				key->objectid, name_len, name);
+
+			free(name);
+
+			rec->errors |= I_ERR_INVALID_XATTR;
+		}
+
+		len = sizeof(*di) + name_len + data_len;
+		di = (struct btrfs_dir_item *)((char *)di + len);
+		cur += len;
+	}
+
+	return 0;
+}
+
 static int process_inode_ref(struct extent_buffer *eb,
 			     int slot, struct btrfs_key *key,
 			     struct shared_node *active_node)
@@ -1728,6 +1774,9 @@ static int process_one_leaf(struct btrfs_root *root, struct extent_buffer *eb,
 		case BTRFS_EXTENT_DATA_KEY:
 			ret = process_file_extent(root, eb, i, &key,
 						  active_node);
+			break;
+		case BTRFS_XATTR_ITEM_KEY:
+			ret = process_xattr_item(eb, i, &key, active_node);
 			break;
 		default:
 			break;
