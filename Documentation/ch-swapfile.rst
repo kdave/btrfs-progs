@@ -36,7 +36,7 @@ To create and activate a swapfile run the following commands:
 .. code-block:: bash
 
         # truncate -s 0 swapfile
-        # chattr +C swapfile
+        # btrfs property set swapfile datacow no
         # fallocate -l 2G swapfile
         # chmod 0600 swapfile
         # mkswap swapfile

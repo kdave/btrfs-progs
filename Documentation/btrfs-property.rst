@@ -48,6 +48,9 @@ get [-t <type>] <object> [<name>]
         compression
                 compression algorithm set for an inode, possible values: *lzo*, *zlib*, *zstd*.
                 To disable compression use "" (empty string), *no* or *none*.
+        datacow
+                copy on write flag for an inode: *no* or *yes*.
+                This is the same as ``chattr``/``lsattr`` *+C* flag.
 
 list [-t <type>] <object>
         Lists available properties with their descriptions for the given object.

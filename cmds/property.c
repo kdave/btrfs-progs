@@ -24,6 +24,7 @@
 #include <sys/xattr.h>
 #include <uuid/uuid.h>
 #include <btrfsutil.h>
+#include <linux/fs.h>
 #include "cmds/commands.h"
 #include "cmds/props.h"
 #include "kernel-shared/ctree.h"
@@ -232,6 +233,65 @@ out:
 	return ret;
 }
 
+static int prop_datacow(enum prop_object_type type,
+			const char *object,
+			const char *name,
+			const char *value,
+			bool force)
+{
+	int ret;
+	ssize_t sret;
+	int fd = -1;
+	DIR *dirstream = NULL;
+	//int open_flags = value ? O_RDWR : O_RDONLY;
+	int open_flags = O_RDONLY;
+	int attr;
+
+	fd = open_file_or_dir3(object, &dirstream, open_flags);
+	if (fd == -1) {
+		ret = -errno;
+		error("failed to open %s: %m", object);
+		goto out;
+	}
+
+	sret = ioctl(fd, FS_IOC_GETFLAGS, &attr);
+	if (sret < 0) {
+		ret = -errno;
+		error("failed to get attr flags on %s: %m", object);
+		goto out;
+	}
+
+	if (value) {
+		if (strcmp(value, "no") == 0) {
+			attr |= FS_NOCOW_FL;
+		} else if (strcmp(value, "yes") == 0) {
+			attr &= ~FS_NOCOW_FL;
+		} else {
+			ret = -EINVAL;
+			error("datacow value must be yes or no");
+			goto out;
+		}
+
+		sret = ioctl(fd, FS_IOC_SETFLAGS, &attr);
+		if (sret < 0) {
+			ret = -errno;
+			error("failed to set nocow flag on %s: %m",
+			      object);
+			goto out;
+		}
+	} else {
+		fprintf(stdout, "datacow=%s\n",
+			attr & FS_NOCOW_FL ? "no" : "yes");
+	}
+
+	ret = 0;
+out:
+	if (fd >= 0)
+		close_file_or_dir(fd, dirstream);
+
+	return ret;
+}
+
 const struct prop_handler prop_handlers[] = {
 	{
 		.name ="ro",
@@ -253,6 +313,13 @@ const struct prop_handler prop_handlers[] = {
 		.read_only = 0,
 		.types = prop_object_inode,
 		.handler = prop_compression
+	},
+	{
+		.name = "datacow",
+		.desc = "copy on write status of a file",
+		.read_only = 0,
+		.types = prop_object_inode,
+		.handler = prop_datacow
 	},
 	{NULL, NULL, 0, 0, NULL}
 };
