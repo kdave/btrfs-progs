@@ -57,6 +57,11 @@ A subvolume is made read-only after the receiving process finishes successfully 
         If */proc* is not accessible, eg. in a chroot environment, use this option to
         tell us where this filesystem is mounted.
 
+--force-decompress
+        if the stream contains compressed data (see *--compressed-data* in
+        ``btrfs-send(8)``), always decompress it instead of writing it with
+        encoded I/O
+
 --dump
         dump the stream metadata, one line per operation
 
