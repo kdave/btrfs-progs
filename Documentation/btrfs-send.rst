@@ -60,6 +60,28 @@ please see section *SUBVOLUME FLAGS* in ``btrfs-subvolume(8)``.
         used to transfer changes. This mode is faster and is useful to show the
         differences in metadata.
 
+--proto <N>
+        use send protocol version N
+
+        The default is 1, which was the original protocol version. Version 2
+        encodes file data slightly more efficiently; it is also required for
+        sending compressed data directly (see *--compressed-data*). Version 2
+        requires at least btrfs-progs 5.18 on both the sender and receiver and
+        at least Linux 5.18 on the sender. Passing 0 means to use the highest
+        version supported by the running kernel.
+
+--compressed-data
+        send data that is compressed on the filesystem directly without
+        decompressing it
+
+        If the receiver supports the *BTRFS_IOC_ENCODED_WRITE* ioctl (added in
+        Linux 5.18), it can also write it directly without decompressing it.
+        Otherwise, the receiver will fall back to decompressing it and writing
+        it normally.
+
+        This requires protocol version 2 or higher. If *--proto* was not used,
+        then *--compressed-data* implies *--proto 2*.
+
 -q|--quiet
         (deprecated) alias for global *-q* option
 
