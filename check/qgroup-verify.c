@@ -977,7 +977,10 @@ loop:
 					ret = add_qgroup_relation(key.objectid,
 								  key.offset);
 					if (ret) {
-						error("out of memory");
+						errno = -ret;
+						error(
+		"failed to add qgroup relation, member=%llu parent=%llu: %m",
+						      key.objectid, key.offset);
 						goto out;
 					}
 				}
