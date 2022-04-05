@@ -808,22 +808,6 @@ out:
 	return ret;
 }
 
-int write_extent_to_disk(struct extent_buffer *eb)
-{
-	int ret;
-	ret = btrfs_pwrite(eb->fd, eb->data, eb->len, eb->dev_bytenr,
-			   eb->fs_info->zoned);
-	if (ret < 0)
-		goto out;
-	if (ret != eb->len) {
-		ret = -EIO;
-		goto out;
-	}
-	ret = 0;
-out:
-	return ret;
-}
-
 int read_data_from_disk(struct btrfs_fs_info *info, void *buf, u64 offset,
 			u64 bytes, int mirror)
 {
@@ -934,6 +918,7 @@ int write_data_to_disk(struct btrfs_fs_info *info, void *buf, u64 offset,
 			dev_bytenr = multi->stripes[dev_nr].physical;
 			this_len = min(this_len, bytes_left);
 			dev_nr++;
+			device->total_ios++;
 
 			ret = btrfs_pwrite(device->fd, buf + total_write,
 					   this_len, dev_bytenr, info->zoned);
