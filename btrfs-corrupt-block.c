@@ -79,7 +79,7 @@ static int debug_corrupt_block(struct extent_buffer *eb,
 			printf("corrupting %llu copy %d\n", eb->start,
 			       mirror_num);
 			memset(eb->data, 0, eb->len);
-			ret = write_extent_to_disk(eb);
+			ret = write_and_map_eb(eb->fs_info, eb);
 			if (ret < 0) {
 				errno = -ret;
 				error("cannot write eb bytenr %llu: %m",
@@ -162,7 +162,7 @@ static void corrupt_keys(struct btrfs_trans_handle *trans,
 		u16 csum_type = fs_info->csum_type;
 
 		csum_tree_block_size(eb, csum_size, 0, csum_type);
-		write_extent_to_disk(eb);
+		write_and_map_eb(eb->fs_info, eb);
 	}
 }
 
