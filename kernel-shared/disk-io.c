@@ -291,6 +291,30 @@ out:
 
 }
 
+static int read_on_restore(struct extent_buffer *eb)
+{
+	struct btrfs_fs_info *fs_info = eb->fs_info;
+	struct btrfs_device *device;
+	int ret;
+
+	/*
+	 * For on_restoring mode, there should be only one device, and logical
+	 * address is mapped 1:1 to device physical offset.
+	 */
+	list_for_each_entry(device, &fs_info->fs_devices->devices, dev_list) {
+		if (device->devid == 1)
+			break;
+	}
+	device->total_ios++;
+
+	ret = btrfs_pread(device->fd, eb->data, eb->len, eb->start,
+			  eb->fs_info->zoned);
+	if (ret != eb->len)
+		ret = -EIO;
+	else
+		ret = 0;
+	return ret;
+}
 
 int read_whole_eb(struct btrfs_fs_info *info, struct extent_buffer *eb, int mirror)
 {
@@ -305,37 +329,28 @@ int read_whole_eb(struct btrfs_fs_info *info, struct extent_buffer *eb, int mirr
 		read_len = bytes_left;
 		device = NULL;
 
-		if (!info->on_restoring) {
-			ret = btrfs_map_block(info, READ, eb->start + offset,
-					      &read_len, &multi, mirror, NULL);
-			if (ret) {
-				printk("Couldn't map the block %llu\n", eb->start + offset);
-				kfree(multi);
-				return -EIO;
-			}
-			device = multi->stripes[0].dev;
+		if (info->on_restoring)
+			return read_on_restore(eb);
 
-			if (device->fd <= 0) {
-				kfree(multi);
-				return -EIO;
-			}
-
-			eb->fd = device->fd;
-			device->total_ios++;
-			eb->dev_bytenr = multi->stripes[0].physical;
+		ret = btrfs_map_block(info, READ, eb->start + offset,
+				      &read_len, &multi, mirror, NULL);
+		if (ret) {
+			printk("Couldn't map the block %llu\n", eb->start + offset);
 			kfree(multi);
-			multi = NULL;
-		} else {
-			/* special case for restore metadump */
-			list_for_each_entry(device, &info->fs_devices->devices, dev_list) {
-				if (device->devid == 1)
-					break;
-			}
-
-			eb->fd = device->fd;
-			eb->dev_bytenr = eb->start;
-			device->total_ios++;
+			return -EIO;
 		}
+		device = multi->stripes[0].dev;
+
+		if (device->fd <= 0) {
+			kfree(multi);
+			return -EIO;
+		}
+
+		eb->fd = device->fd;
+		device->total_ios++;
+		eb->dev_bytenr = multi->stripes[0].physical;
+		kfree(multi);
+		multi = NULL;
 
 		if (read_len > bytes_left)
 			read_len = bytes_left;
