@@ -1811,6 +1811,7 @@ int __btrfs_map_block(struct btrfs_fs_info *fs_info, int rw,
 	int stripes_required = 1;
 	int stripe_index;
 	int i;
+	bool need_raid_map = false;
 	struct btrfs_multi_bio *multi = NULL;
 
 	if (multi_ret && rw == READ) {
@@ -1848,17 +1849,18 @@ again:
 	}
 	if (map->type & BTRFS_BLOCK_GROUP_RAID56_MASK
 	    && multi_ret && ((rw & WRITE) || mirror_num > 1) && raid_map_ret) {
-		    /* RAID[56] write or recovery. Return all stripes */
-		    stripes_required = map->num_stripes;
+		need_raid_map = true;
+		/* RAID[56] write or recovery. Return all stripes */
+		stripes_required = map->num_stripes;
 
-		    /* Only allocate the map if we've already got a large enough multi_ret */
-		    if (stripes_allocated >= stripes_required) {
-			    raid_map = kmalloc(sizeof(u64) * map->num_stripes, GFP_NOFS);
-			    if (!raid_map) {
-				    kfree(multi);
-				    return -ENOMEM;
-			    }
-		    }
+		/* Only allocate the map if we've already got a large enough multi_ret */
+		if (stripes_allocated >= stripes_required) {
+			raid_map = kmalloc(sizeof(u64) * map->num_stripes, GFP_NOFS);
+			if (!raid_map) {
+				kfree(multi);
+				return -ENOMEM;
+			}
+		}
 	}
 
 	/* if our multi bio struct is too small, back off and try again */
@@ -1896,6 +1898,7 @@ again:
 		goto out;
 
 	multi->num_stripes = 1;
+	multi->type = map->type;
 	stripe_index = 0;
 	if (map->type & BTRFS_BLOCK_GROUP_RAID1_MASK) {
 		if (rw == WRITE)
@@ -1922,7 +1925,7 @@ again:
 		else if (mirror_num)
 			stripe_index = mirror_num - 1;
 	} else if (map->type & BTRFS_BLOCK_GROUP_RAID56_MASK) {
-		if (raid_map) {
+		if (need_raid_map && raid_map) {
 			int rot;
 			u64 tmp;
 			u64 raid56_full_stripe_start;
