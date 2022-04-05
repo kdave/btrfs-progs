@@ -106,6 +106,7 @@ struct btrfs_bio_stripe {
 };
 
 struct btrfs_multi_bio {
+	u64 type;
 	int error;
 	int num_stripes;
 	struct btrfs_bio_stripe stripes[];

@@ -26,6 +26,7 @@
 #include "kerncompat.h"
 #include "kernel-shared/extent_io.h"
 #include "kernel-lib/list.h"
+#include "kernel-lib/raid56.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/disk-io.h"
@@ -788,23 +789,131 @@ struct extent_buffer *alloc_dummy_extent_buffer(struct btrfs_fs_info *fs_info,
 	return ret;
 }
 
+static int read_raid56(struct btrfs_fs_info *fs_info, void *buf, u64 logical,
+		       u64 len, int mirror, struct btrfs_multi_bio *multi,
+		       u64 *raid_map)
+{
+	const int num_stripes = multi->num_stripes;
+	const u64 full_stripe_start = raid_map[0];
+	void **pointers = NULL;
+	int failed_a = -1;
+	int failed_b = -1;
+	int i;
+	int ret;
+
+	/* Only read repair should go this path */
+	ASSERT(mirror > 1);
+	ASSERT(raid_map);
+
+	/* The read length should be inside one stripe */
+	ASSERT(len <= BTRFS_STRIPE_LEN);
+
+	pointers = calloc(num_stripes, sizeof(void *));
+	if (!pointers) {
+		ret = -ENOMEM;
+		goto out;
+	}
+	/* Allocate memory for the full stripe */
+	for (i = 0; i < num_stripes; i++) {
+		pointers[i] = malloc(BTRFS_STRIPE_LEN);
+		if (!pointers[i]) {
+			ret = -ENOMEM;
+			goto out;
+		}
+	}
+
+	/*
+	 * Read the full stripe.
+	 *
+	 * The stripes in @multi is not rotated, thus can be used to read from
+	 * disk directly.
+	 */
+	for (i = 0; i < num_stripes; i++) {
+		ret = btrfs_pread(multi->stripes[i].dev->fd, pointers[i],
+				  BTRFS_STRIPE_LEN, multi->stripes[i].physical,
+				  fs_info->zoned);
+		if (ret < BTRFS_STRIPE_LEN) {
+			ret = -EIO;
+			goto out;
+		}
+	}
+
+	/*
+	 * Get the failed index.
+	 *
+	 * Since we're reading using mirror_num > 1 already, it means the data
+	 * stripe where @logical lies in is definitely corrupted.
+	 */
+	failed_a = (logical - full_stripe_start) / BTRFS_STRIPE_LEN;
+
+	/*
+	 * For RAID6, we don't have good way to exhaust all the combinations,
+	 * so here we can only go through the map to see if we have missing devices.
+	 */
+	if (multi->type & BTRFS_BLOCK_GROUP_RAID6) {
+		for (i = 0; i < num_stripes; i++) {
+			/* Skip failed_a, as it's already marked failed */
+			if (i == failed_a)
+				continue;
+			/* Missing dev */
+			if (multi->stripes[i].dev->fd == -1) {
+				failed_b = i;
+				break;
+			}
+		}
+		/*
+		 * No missing device, we have no better idea, default to P
+		 * corruption
+		 */
+		if (failed_b < 0)
+			failed_b = num_stripes - 2;
+	}
+
+	/* Rebuild the full stripe */
+	ret = raid56_recov(num_stripes, BTRFS_STRIPE_LEN, multi->type,
+			   failed_a, failed_b, pointers);
+	ASSERT(ret == 0);
+
+	/* Now copy the data back to original buf */
+	memcpy(buf, pointers[failed_a] + (logical - full_stripe_start) %
+			BTRFS_STRIPE_LEN, len);
+	ret = 0;
+out:
+	for (i = 0; i < num_stripes; i++)
+		free(pointers[i]);
+	free(pointers);
+	return ret;
+}
+
 int read_data_from_disk(struct btrfs_fs_info *info, void *buf, u64 logical,
 			u64 *len, int mirror)
 {
 	struct btrfs_multi_bio *multi = NULL;
 	struct btrfs_device *device;
 	u64 read_len = *len;
+	u64 *raid_map = NULL;
 	int ret;
 
 	ret = btrfs_map_block(info, READ, logical, &read_len, &multi, mirror,
-			      NULL);
+			      &raid_map);
 	if (ret) {
 		fprintf(stderr, "Couldn't map the block %llu\n", logical);
 		return -EIO;
 	}
+	read_len = min(*len, read_len);
+
+	/* We need to rebuild from P/Q */
+	if (mirror > 1 && multi->type & BTRFS_BLOCK_GROUP_RAID56_MASK) {
+		ret = read_raid56(info, buf, logical, read_len, mirror, multi,
+				  raid_map);
+		free(multi);
+		free(raid_map);
+		*len = read_len;
+		return ret;
+	}
+	free(raid_map);
 	device = multi->stripes[0].dev;
 
-	read_len = min(*len, read_len);
 	if (device->fd <= 0) {
 		kfree(multi);
 		return -EIO;
@@ -824,6 +933,7 @@ int read_data_from_disk(struct btrfs_fs_info *info, void *buf, u64 logical,
 			logical, ret, read_len);
 		return -EIO;
 	}
+	*len = read_len;
 
 	return 0;
 }
