@@ -30,6 +30,7 @@
 #include "kernel-shared/volumes.h"
 #include "zoned.h"
 #include "common/utils.h"
+#include "common/device-utils.h"
 #include "kernel-lib/raid56.h"
 
 const struct btrfs_raid_attr btrfs_raid_array[BTRFS_NR_RAID_TYPES] = {
@@ -2710,7 +2711,8 @@ int write_raid56_with_parity(struct btrfs_fs_info *info,
 	}
 
 	for (i = 0; i < multi->num_stripes; i++) {
-		ret = write_extent_to_disk(ebs[i]);
+		ret = btrfs_pwrite(ebs[i]->fd, ebs[i]->data, ebs[i]->len,
+				   ebs[i]->dev_bytenr, info->zoned);
 		if (ret < 0)
 			goto out_free_split;
 	}
