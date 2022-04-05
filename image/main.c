@@ -615,7 +615,7 @@ static int read_data_extent(struct metadump_struct *md,
 	for (cur_mirror = 1; cur_mirror <= num_copies; cur_mirror++) {
 		while (bytes_left) {
 			read_len = bytes_left;
-			ret = read_extent_data(fs_info,
+			ret = read_data_from_disk(fs_info,
 					(char *)(async->buffer + offset),
 					logical, &read_len, cur_mirror);
 			if (ret < 0)

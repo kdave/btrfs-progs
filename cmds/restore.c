@@ -407,8 +407,8 @@ again:
 	cur = bytenr;
 	while (cur < bytenr + size_left) {
 		length = bytenr + size_left - cur;
-		ret = read_extent_data(root->fs_info, inbuf + cur - bytenr, cur,
-				       &length, mirror_num);
+		ret = read_data_from_disk(root->fs_info, inbuf + cur - bytenr, cur,
+					  &length, mirror_num);
 		if (ret < 0) {
 			mirror_num++;
 			if (mirror_num > num_copies) {

@@ -5791,7 +5791,7 @@ static int check_extent_csums(struct btrfs_root *root, u64 bytenr,
 		for (mirror = 1; mirror <= num_copies; mirror++) {
 			read_len = num_bytes - offset;
 			/* read as much space once a time */
-			ret = read_extent_data(gfs_info, (char *)data + offset,
+			ret = read_data_from_disk(gfs_info, (char *)data + offset,
 					bytenr + offset, &read_len, mirror);
 			if (ret)
 				goto out;

@@ -40,36 +40,18 @@ static int debug_corrupt_block(struct extent_buffer *eb,
 		struct btrfs_root *root, u64 bytenr, u32 blocksize, u64 copy)
 {
 	int ret;
-	u64 length;
-	struct btrfs_multi_bio *multi = NULL;
-	struct btrfs_device *device;
 	int num_copies;
 	int mirror_num = 1;
 
-	length = blocksize;
 	while (1) {
-		ret = btrfs_map_block(root->fs_info, READ, eb->start, &length,
-				      &multi, mirror_num, NULL);
-		if (ret) {
-			error("cannot map block %llu length %llu mirror %d: %d",
-					(unsigned long long)eb->start,
-					(unsigned long long)length,
-					mirror_num, ret);
-			return ret;
-		}
-		device = multi->stripes[0].dev;
-		eb->fd = device->fd;
-		device->total_ios++;
-		eb->dev_bytenr = multi->stripes[0].physical;
-
-		fprintf(stdout,
-			"mirror %d logical %llu physical %llu device %s\n",
-			mirror_num, (unsigned long long)bytenr,
-			(unsigned long long)eb->dev_bytenr, device->name);
-		free(multi);
-
 		if (!copy || mirror_num == copy) {
-			ret = read_extent_from_disk(eb, 0, eb->len);
+			u64 read_len = eb->len;
+
+			ret = read_data_from_disk(eb->fs_info, eb->data,
+						  eb->start, &read_len,
+						  mirror_num);
+			if (read_len < eb->len)
+				ret = -EIO;
 			if (ret < 0) {
 				errno = -ret;
 				error("cannot read eb bytenr %llu: %m",

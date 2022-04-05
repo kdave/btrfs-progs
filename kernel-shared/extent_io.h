@@ -150,8 +150,6 @@ struct extent_buffer *alloc_dummy_extent_buffer(struct btrfs_fs_info *fs_info,
 						u64 bytenr, u32 blocksize);
 void free_extent_buffer(struct extent_buffer *eb);
 void free_extent_buffer_nocache(struct extent_buffer *eb);
-int read_extent_from_disk(struct extent_buffer *eb,
-			  unsigned long offset, unsigned long len);
 int memcmp_extent_buffer(const struct extent_buffer *eb, const void *ptrv,
 			 unsigned long start, unsigned long len);
 void read_extent_buffer(const struct extent_buffer *eb, void *dst,
@@ -169,8 +167,8 @@ int extent_buffer_test_bit(struct extent_buffer *eb, unsigned long start,
 			   unsigned long nr);
 int set_extent_buffer_dirty(struct extent_buffer *eb);
 int clear_extent_buffer_dirty(struct extent_buffer *eb);
-int read_data_from_disk(struct btrfs_fs_info *info, void *buf, u64 offset,
-			u64 bytes, int mirror);
+int read_data_from_disk(struct btrfs_fs_info *info, void *buf, u64 logical,
+			u64 *len, int mirror);
 int write_data_to_disk(struct btrfs_fs_info *info, void *buf, u64 offset,
 		       u64 bytes, int mirror);
 void extent_buffer_bitmap_clear(struct extent_buffer *eb, unsigned long start,
