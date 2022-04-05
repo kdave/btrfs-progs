@@ -305,8 +305,7 @@ int read_whole_eb(struct btrfs_fs_info *info, struct extent_buffer *eb, int mirr
 		read_len = bytes_left;
 		device = NULL;
 
-		if (!info->on_restoring &&
-		    eb->start != BTRFS_SUPER_INFO_OFFSET) {
+		if (!info->on_restoring) {
 			ret = btrfs_map_block(info, READ, eb->start + offset,
 					      &read_len, &multi, mirror, NULL);
 			if (ret) {
