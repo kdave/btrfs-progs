@@ -2611,8 +2611,6 @@ static int split_eb_for_raid56(struct btrfs_fs_info *info,
 		eb->len = stripe_len;
 		eb->refs = 1;
 		eb->flags = 0;
-		eb->fd = -1;
-		eb->dev_bytenr = (u64)-1;
 		eb->fs_info = info;
 
 		this_eb_start = raid_map[i];
@@ -2667,9 +2665,6 @@ int write_raid56_with_parity(struct btrfs_fs_info *info,
 	for (i = 0; i < multi->num_stripes; i++) {
 		struct extent_buffer *new_eb;
 		if (raid_map[i] < BTRFS_RAID5_P_STRIPE) {
-			ebs[i]->dev_bytenr = multi->stripes[i].physical;
-			ebs[i]->fd = multi->stripes[i].dev->fd;
-			multi->stripes[i].dev->total_ios++;
 			if (ebs[i]->start != raid_map[i]) {
 				ret = -EINVAL;
 				goto out_free_split;
@@ -2681,8 +2676,6 @@ int write_raid56_with_parity(struct btrfs_fs_info *info,
 			ret = -ENOMEM;
 			goto out_free_split;
 		}
-		new_eb->dev_bytenr = multi->stripes[i].physical;
-		new_eb->fd = multi->stripes[i].dev->fd;
 		multi->stripes[i].dev->total_ios++;
 		new_eb->len = stripe_len;
 		new_eb->fs_info = info;
@@ -2711,8 +2704,9 @@ int write_raid56_with_parity(struct btrfs_fs_info *info,
 	}
 
 	for (i = 0; i < multi->num_stripes; i++) {
-		ret = btrfs_pwrite(ebs[i]->fd, ebs[i]->data, ebs[i]->len,
-				   ebs[i]->dev_bytenr, info->zoned);
+		multi->stripes[i].dev->total_ios++;
+		ret = btrfs_pwrite(multi->stripes[i].dev->fd, ebs[i]->data, ebs[i]->len,
+				   multi->stripes[i].physical, info->zoned);
 		if (ret < 0)
 			goto out_free_split;
 	}
