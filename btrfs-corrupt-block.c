@@ -55,7 +55,7 @@ static int debug_corrupt_block(struct extent_buffer *eb,
 			if (ret < 0) {
 				errno = -ret;
 				error("cannot read eb bytenr %llu: %m",
-					(unsigned long long)eb->dev_bytenr);
+					(unsigned long long)eb->start);
 				return ret;
 			}
 			printf("corrupting %llu copy %d\n", eb->start,
@@ -65,10 +65,9 @@ static int debug_corrupt_block(struct extent_buffer *eb,
 			if (ret < 0) {
 				errno = -ret;
 				error("cannot write eb bytenr %llu: %m",
-					(unsigned long long)eb->dev_bytenr);
+					(unsigned long long)eb->start);
 				return ret;
 			}
-			fsync(eb->fd);
 		}
 
 		num_copies = btrfs_num_copies(root->fs_info, eb->start,

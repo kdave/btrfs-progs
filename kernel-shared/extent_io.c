@@ -616,8 +616,6 @@ static struct extent_buffer *__alloc_extent_buffer(struct btrfs_fs_info *info,
 	eb->len = blocksize;
 	eb->refs = 1;
 	eb->flags = 0;
-	eb->fd = -1;
-	eb->dev_bytenr = (u64)-1;
 	eb->cache_node.start = bytenr;
 	eb->cache_node.size = blocksize;
 	eb->fs_info = info;
