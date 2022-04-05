@@ -319,45 +319,20 @@ static int read_on_restore(struct extent_buffer *eb)
 int read_whole_eb(struct btrfs_fs_info *info, struct extent_buffer *eb, int mirror)
 {
 	unsigned long offset = 0;
-	struct btrfs_multi_bio *multi = NULL;
-	struct btrfs_device *device;
 	int ret = 0;
-	u64 read_len;
 	unsigned long bytes_left = eb->len;
 
 	while (bytes_left) {
-		read_len = bytes_left;
-		device = NULL;
+		u64 read_len = bytes_left;
 
 		if (info->on_restoring)
 			return read_on_restore(eb);
 
-		ret = btrfs_map_block(info, READ, eb->start + offset,
-				      &read_len, &multi, mirror, NULL);
-		if (ret) {
-			printk("Couldn't map the block %llu\n", eb->start + offset);
-			kfree(multi);
-			return -EIO;
-		}
-		device = multi->stripes[0].dev;
-
-		if (device->fd <= 0) {
-			kfree(multi);
-			return -EIO;
-		}
-
-		eb->fd = device->fd;
-		device->total_ios++;
-		eb->dev_bytenr = multi->stripes[0].physical;
-		kfree(multi);
-		multi = NULL;
-
-		if (read_len > bytes_left)
-			read_len = bytes_left;
-
-		ret = read_extent_from_disk(eb, offset, read_len);
-		if (ret)
-			return -EIO;
+		ret = read_data_from_disk(info, eb->data + offset,
+					  eb->start + offset, &read_len,
+					  mirror);
+		if (ret < 0)
+			return ret;
 		offset += read_len;
 		bytes_left -= read_len;
 	}
@@ -472,42 +447,6 @@ struct extent_buffer* read_tree_block(struct btrfs_fs_info *fs_info, u64 bytenr,
 	 */
 	free_extent_buffer_nocache(eb);
 	return ERR_PTR(ret);
-}
-
-int read_extent_data(struct btrfs_fs_info *fs_info, char *data, u64 logical,
-		     u64 *len, int mirror)
-{
-	u64 offset = 0;
-	struct btrfs_multi_bio *multi = NULL;
-	struct btrfs_device *device;
-	int ret = 0;
-	u64 max_len = *len;
-
-	ret = btrfs_map_block(fs_info, READ, logical, len, &multi, mirror,
-			      NULL);
-	if (ret) {
-		fprintf(stderr, "Couldn't map the block %llu\n",
-				logical + offset);
-		goto err;
-	}
-	device = multi->stripes[0].dev;
-
-	if (*len > max_len)
-		*len = max_len;
-	if (device->fd < 0) {
-		ret = -EIO;
-		goto err;
-	}
-
-	ret = btrfs_pread(device->fd, data, *len, multi->stripes[0].physical,
-			  fs_info->zoned);
-	if (ret != *len)
-		ret = -EIO;
-	else
-		ret = 0;
-err:
-	kfree(multi);
-	return ret;
 }
 
 int write_and_map_eb(struct btrfs_fs_info *fs_info, struct extent_buffer *eb)

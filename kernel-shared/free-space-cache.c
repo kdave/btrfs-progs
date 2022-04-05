@@ -118,6 +118,8 @@ static int io_ctl_prepare_pages(struct io_ctl *io_ctl, struct btrfs_root *root,
 	}
 
 	while (total_read < io_ctl->total_size) {
+		u64 offset = 0;
+
 		if (path->slots[0] >= btrfs_header_nritems(path->nodes[0])) {
 			ret = btrfs_next_leaf(root, path);
 			if (ret) {
@@ -150,11 +152,19 @@ static int io_ctl_prepare_pages(struct io_ctl *io_ctl, struct btrfs_root *root,
 		bytenr = btrfs_file_extent_disk_bytenr(leaf, fi) +
 			btrfs_file_extent_offset(leaf, fi);
 		len = btrfs_file_extent_num_bytes(leaf, fi);
-		ret = read_data_from_disk(root->fs_info,
-					  io_ctl->buffer + key.offset, bytenr,
-					  len, 0);
-		if (ret)
-			break;
+		while (offset < len) {
+			u64 read_len = len - offset;
+
+			ret = read_data_from_disk(root->fs_info,
+					  io_ctl->buffer + key.offset + offset,
+					  bytenr + offset,
+					  &read_len, 0);
+			if (ret < 0) {
+				btrfs_release_path(path);
+				return ret;
+			}
+			offset += read_len;
+		}
 		total_read += len;
 		path->slots[0]++;
 	}

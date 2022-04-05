@@ -337,7 +337,8 @@ static int populate_csum(struct btrfs_trans_handle *trans,
 
 	while (offset < len) {
 		sectorsize = fs_info->sectorsize;
-		ret = read_extent_data(fs_info, buf, start + offset, &sectorsize, 0);
+		ret = read_data_from_disk(fs_info, buf, start + offset,
+					  &sectorsize, 0);
 		if (ret)
 			break;
 		ret = btrfs_csum_file_block(trans, start + len, start + offset,

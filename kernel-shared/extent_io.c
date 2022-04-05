@@ -28,6 +28,7 @@
 #include "kernel-lib/list.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/volumes.h"
+#include "kernel-shared/disk-io.h"
 #include "common/utils.h"
 #include "common/device-utils.h"
 #include "common/internal.h"
@@ -789,69 +790,41 @@ struct extent_buffer *alloc_dummy_extent_buffer(struct btrfs_fs_info *fs_info,
 	return ret;
 }
 
-int read_extent_from_disk(struct extent_buffer *eb,
-			  unsigned long offset, unsigned long len)
-{
-	int ret;
-	ret = btrfs_pread(eb->fd, eb->data + offset, len, eb->dev_bytenr,
-			  eb->fs_info->zoned);
-	if (ret < 0) {
-		ret = -errno;
-		goto out;
-	}
-	if (ret != len) {
-		ret = -EIO;
-		goto out;
-	}
-	ret = 0;
-out:
-	return ret;
-}
-
-int read_data_from_disk(struct btrfs_fs_info *info, void *buf, u64 offset,
-			u64 bytes, int mirror)
+int read_data_from_disk(struct btrfs_fs_info *info, void *buf, u64 logical,
+			u64 *len, int mirror)
 {
 	struct btrfs_multi_bio *multi = NULL;
 	struct btrfs_device *device;
-	u64 bytes_left = bytes;
-	u64 read_len;
-	u64 total_read = 0;
+	u64 read_len = *len;
 	int ret;
 
-	while (bytes_left) {
-		read_len = bytes_left;
-		ret = btrfs_map_block(info, READ, offset, &read_len, &multi,
-				      mirror, NULL);
-		if (ret) {
-			fprintf(stderr, "Couldn't map the block %llu\n",
-				offset);
-			return -EIO;
-		}
-		device = multi->stripes[0].dev;
+	ret = btrfs_map_block(info, READ, logical, &read_len, &multi, mirror,
+			      NULL);
+	if (ret) {
+		fprintf(stderr, "Couldn't map the block %llu\n", logical);
+		return -EIO;
+	}
+	device = multi->stripes[0].dev;
 
-		read_len = min(bytes_left, read_len);
-		if (device->fd <= 0) {
-			kfree(multi);
-			return -EIO;
-		}
-
-		ret = btrfs_pread(device->fd, buf + total_read, read_len,
-				  multi->stripes[0].physical, info->zoned);
+	read_len = min(*len, read_len);
+	if (device->fd <= 0) {
 		kfree(multi);
-		if (ret < 0) {
-			fprintf(stderr, "Error reading %llu, %d\n", offset,
-				ret);
-			return ret;
-		}
-		if (ret != read_len) {
-			fprintf(stderr, "Short read for %llu, read %d, "
-				"read_len %llu\n", offset, ret, read_len);
-			return -EIO;
-		}
+		return -EIO;
+	}
 
-		bytes_left -= read_len;
-		offset += read_len;
-		total_read += read_len;
+	ret = btrfs_pread(device->fd, buf, read_len,
+			  multi->stripes[0].physical, info->zoned);
+	kfree(multi);
+	if (ret < 0) {
+		fprintf(stderr, "Error reading %llu, %d\n", logical,
+			ret);
+		return ret;
+	}
+	if (ret != read_len) {
+		fprintf(stderr,
+			"Short read for %llu, read %d, read_len %llu\n",
+			logical, ret, read_len);
+		return -EIO;
 	}
 
 	return 0;

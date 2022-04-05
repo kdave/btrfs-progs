@@ -173,8 +173,9 @@ static int write_extent_content(struct btrfs_fs_info *fs_info, int out_fd,
 
 	while (cur_offset < length) {
 		cur_len = min_t(u64, length - cur_offset, BUFFER_SIZE);
-		ret = read_extent_data(fs_info, buffer,
-				       logical + cur_offset, &cur_len, mirror);
+		ret = read_data_from_disk(fs_info, buffer,
+					  logical + cur_offset, &cur_len,
+					  mirror);
 		if (ret < 0) {
 			errno = -ret;
 			fprintf(stderr,
