@@ -774,13 +774,12 @@ next:
 	 * search_end may be smaller than search_start.
 	 */
 	if (search_end > search_start) {
+		hole_size = search_end - search_start;
 		if (dev_extent_hole_check(device, &search_start, &hole_size,
 					  num_bytes)) {
 			btrfs_release_path(path);
 			goto again;
 		}
-
-		hole_size = search_end - search_start;
 
 		if (hole_size > max_hole_size) {
 			max_hole_start = search_start;
