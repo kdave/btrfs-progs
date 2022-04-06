@@ -232,6 +232,34 @@ static int create_block_group_tree(int fd, struct btrfs_mkfs_config *cfg,
 	return 0;
 }
 
+static u64 zoned_system_group_offset(u64 zone_size)
+{
+	const int zone_shift = ilog2(zone_size);
+	u32 zone_num = BTRFS_NR_SB_LOG_ZONES;
+	u64 start = (u64)zone_num * zone_size;
+	u32 sb_zones[BTRFS_SUPER_MIRROR_MAX];
+	int i;
+
+	for (i = 0; i < BTRFS_SUPER_MIRROR_MAX; i++)
+		sb_zones[i] = sb_zone_number(zone_shift, i);
+
+	for (;;) {
+		for (i = 0; i < BTRFS_SUPER_MIRROR_MAX; i++) {
+			if (zone_num == sb_zones[i] ||
+			    !(btrfs_sb_offset(i) + BTRFS_SUPER_INFO_SIZE <= start ||
+			      start + zone_size <= btrfs_sb_offset(i)))
+				goto next;
+		}
+
+		return start;
+next:
+		zone_num++;
+		start += zone_size;
+	}
+
+	__builtin_unreachable();
+}
+
 /*
  * @fs_uuid - if NULL, generates a UUID, returns back the new filesystem UUID
  *
@@ -298,7 +326,7 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 	}
 
 	if ((cfg->features & BTRFS_FEATURE_INCOMPAT_ZONED)) {
-		system_group_offset = cfg->zone_size * BTRFS_NR_SB_LOG_ZONES;
+		system_group_offset = zoned_system_group_offset(cfg->zone_size);
 		system_group_size = cfg->zone_size;
 	}
 
