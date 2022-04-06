@@ -33,20 +33,6 @@
 /* Pseudo write pointer value for conventional zone */
 #define WP_CONVENTIONAL			((u64)-2)
 
-/*
- * Location of the first zone of superblock logging zone pairs.
- *
- * - primary superblock:    0B (zone 0)
- * - first copy:          512G (zone starting at that offset)
- * - second copy:           4T (zone starting at that offset)
- */
-#define BTRFS_SB_LOG_PRIMARY_OFFSET	(0ULL)
-#define BTRFS_SB_LOG_FIRST_OFFSET	(512ULL * SZ_1G)
-#define BTRFS_SB_LOG_SECOND_OFFSET	(4096ULL * SZ_1G)
-
-#define BTRFS_SB_LOG_FIRST_SHIFT	const_ilog2(BTRFS_SB_LOG_FIRST_OFFSET)
-#define BTRFS_SB_LOG_SECOND_SHIFT	const_ilog2(BTRFS_SB_LOG_SECOND_OFFSET)
-
 #define EMULATED_ZONE_SIZE		SZ_256M
 
 static int btrfs_get_dev_zone_info(struct btrfs_device *device);
@@ -218,25 +204,6 @@ static int sb_write_pointer(int fd, struct blk_zone *zones, u64 *wp_ret)
 	}
 	*wp_ret = sector << SECTOR_SHIFT;
 	return 0;
-}
-
-/*
- * Get the first zone number of the superblock mirror
- */
-static inline u32 sb_zone_number(int shift, int mirror)
-{
-	u64 zone = 0;
-
-	ASSERT(0 <= mirror && mirror < BTRFS_SUPER_MIRROR_MAX);
-	switch (mirror) {
-	case 0: zone = 0; break;
-	case 1: zone = 1ULL << (BTRFS_SB_LOG_FIRST_SHIFT - shift); break;
-	case 2: zone = 1ULL << (BTRFS_SB_LOG_SECOND_SHIFT - shift); break;
-	}
-
-	ASSERT(zone <= U32_MAX);
-
-	return (u32)zone;
 }
 
 int btrfs_reset_dev_zone(int fd, struct blk_zone *zone)
