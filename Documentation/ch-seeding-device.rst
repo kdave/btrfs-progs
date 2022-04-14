@@ -18,11 +18,18 @@ same time. The UUID that is normally attached to a device is automatically
 changed to a random UUID on each mount.
 
 Once the seeding device is mounted, it needs the writable device. After adding
-it, something like :command:`remount -o remount,rw /path` makes the filesystem at
-*/path* ready for use. The simplest use case is to throw away all changes by
-unmounting the filesystem when convenient.
+it, unmounting and mounting with :command:`umount /path; mount /dev/writable
+/path` or remounting read-write with :command:`remount -o remount,rw` makes the
+filesystem at :file:`/path` ready for use.
 
-Alternatively, deleting the seeding device from the filesystem can turn it into
+.. note::
+
+        There is a known bug with using remount to make the mount writeable:
+        remount will leave the filesystem in a state where it is unable to
+        clean deleted snapshots, so it will leak space until it is unmounted
+        and mounted properly.
+
+Furthermore, deleting the seeding device from the filesystem can turn it into
 a normal filesystem, provided that the writable device can also contain all the
 data from the seeding device.
 
@@ -45,7 +52,8 @@ Example how to create and use one seeding device:
 
         # mount /dev/sda /mnt/mnt1
         # btrfs device add /dev/sdb /mnt/mnt1
-        # mount -o remount,rw /mnt/mnt1
+        # umount /mnt/mnt1
+        # mount /dev/sdb /mnt/mnt1
         ... /mnt/mnt1 is now writable
 
 Now */mnt/mnt1* can be used normally. The device */dev/sda* can be mounted
@@ -55,7 +63,8 @@ again with a another writable device:
 
         # mount /dev/sda /mnt/mnt2
         # btrfs device add /dev/sdc /mnt/mnt2
-        # mount -o remount,rw /mnt/mnt2
+        # umount /mnt/mnt2
+        # mount /dev/sdc /mnt/mnt2
         ... /mnt/mnt2 is now writable
 
 The writable device (*/dev/sdb*) can be decoupled from the seeding device and
@@ -76,6 +85,10 @@ A few things to note:
 * block group profiles *single* and *dup* support the use cases above
 * the label is copied from the seeding device and can be changed by :command:`btrfs filesystem label`
 * each new mount of the seeding device gets a new random UUID
+* :command:`umount /path; mount /dev/writable /path` can be replaced with
+  :command:`mount -o remount,rw /path`
+  but it won't reclaim space of deleted subvolumes until the seeding device
+  is mounted read-write again before making it seeding again
 
 Chained seeding devices
 ^^^^^^^^^^^^^^^^^^^^^^^
