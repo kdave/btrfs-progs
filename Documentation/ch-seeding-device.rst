@@ -18,11 +18,14 @@ UUID that is normally attached to a device is automatically changed to a random
 UUID on each mount.
 
 Once the seeding device is mounted, it needs the writable device. After adding
-it, something like **remount -o remount,rw /path** makes the filesystem at
-*/path* ready for use. The simplest use case is to throw away all changes by
-unmounting the filesystem when convenient.
+it, unmounting and mounting with **umount /path; mount <wr-dev> /path** or
+remounting read-write with **remount -o remount,rw** makes the filesystem at
+*/path* ready for use. N.B., there is a known bug with using remount to make
+the mount writeable: remount will leave the filesystem in a state where it is
+unable to clean deleted snapshots, so it will leak space until it is unmounted
+and mounted properly.
 
-Alternatively, deleting the seeding device from the filesystem can turn it into
+Furthermore, deleting the seeding device from the filesystem can turn it into
 a normal filesystem, provided that the writable device can also contain all the
 data from the seeding device.
 
@@ -42,8 +45,9 @@ Example how to create and use one seeding device:
         # umount /mnt/mnt1
         # btrfstune -S 1 /dev/sda
         # mount /dev/sda /mnt/mnt1
-        # btrfs device add /dev/sdb /mnt
-        # mount -o remount,rw /mnt/mnt1
+        # btrfs device add /dev/sdb /mnt/mnt1
+	# umount /mnt/mnt1
+	# mount /dev/sdb /mnt/mnt1
         # ... /mnt/mnt1 is now writable
 
 Now */mnt/mnt1* can be used normally. The device */dev/sda* can be mounted
@@ -53,7 +57,8 @@ again with a another writable device:
 
         # mount /dev/sda /mnt/mnt2
         # btrfs device add /dev/sdc /mnt/mnt2
-        # mount -o remount,rw /mnt/mnt2
+        # umount /mnt/mnt2
+	# mount /dev/sdc /mnt/mnt2
         ... /mnt/mnt2 is now writable
 
 The writable device (*/dev/sdb*) can be decoupled from the seeding device and
@@ -74,3 +79,5 @@ A few things to note:
 * block group profiles *single* and *dup* support the use cases above
 * the label is copied from the seeding device and can be changed by **btrfs filesystem label**
 * each new mount of the seeding device gets a new random UUID
+* **umount /path; mount wr-dev /path** can be replaced with **mount -o remount,rw /path**
+  but it has bugs in kernels older than <fix-kernel-version>
