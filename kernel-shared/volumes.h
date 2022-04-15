@@ -94,7 +94,6 @@ struct btrfs_fs_devices {
 	struct list_head devices;
 	struct list_head list;
 
-	int seeding;
 	struct btrfs_fs_devices *seed;
 
 	enum btrfs_chunk_allocation_policy chunk_alloc_policy;
