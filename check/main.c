@@ -8599,13 +8599,17 @@ static int check_device_used(struct device_record *dev_rec,
  */
 static bool is_super_size_valid(void)
 {
-	struct btrfs_device *dev;
-	struct list_head *dev_list = &gfs_info->fs_devices->devices;
+	struct btrfs_fs_devices *fs_devices = gfs_info->fs_devices;
+	const u64 super_bytes = btrfs_super_total_bytes(gfs_info->super_copy);
 	u64 total_bytes = 0;
-	u64 super_bytes = btrfs_super_total_bytes(gfs_info->super_copy);
 
-	list_for_each_entry(dev, dev_list, dev_list)
-		total_bytes += dev->total_bytes;
+	while (fs_devices) {
+		struct btrfs_device *dev;
+
+		list_for_each_entry(dev, &fs_devices->devices, dev_list)
+			total_bytes += dev->total_bytes;
+		fs_devices = fs_devices->seed;
+	}
 
 	/* Important check, which can cause unmountable fs */
 	if (super_bytes < total_bytes) {
@@ -8628,7 +8632,9 @@ static bool is_super_size_valid(void)
 	if (!IS_ALIGNED(super_bytes, gfs_info->sectorsize) ||
 	    !IS_ALIGNED(total_bytes, gfs_info->sectorsize) ||
 	    super_bytes != total_bytes) {
-		warning("minor unaligned/mismatch device size detected");
+		warning("minor unaligned/mismatch device size detected:"
+			"\tsuper block total bytes=%llu found total bytes=%llu",
+			super_bytes, total_bytes);
 		warning(
 		"recommended to use 'btrfs rescue fix-device-size' to fix it");
 	}
