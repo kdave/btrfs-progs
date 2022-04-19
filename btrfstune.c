@@ -59,6 +59,10 @@ static int update_seeding_flag(struct btrfs_root *root, int set_flag)
 						device);
 			return 1;
 		}
+		if (btrfs_super_log_root(disk_super)) {
+			error("filesystem with dirty log detected, not setting seed flag");
+			return 1;
+		}
 		super_flags |= BTRFS_SUPER_FLAG_SEEDING;
 	} else {
 		if (!(super_flags & BTRFS_SUPER_FLAG_SEEDING)) {
