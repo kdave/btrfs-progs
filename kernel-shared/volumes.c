@@ -1558,6 +1558,21 @@ again:
 	}
 
 	ret = create_chunk(trans, info, &ctl, &private_devs);
+
+	/*
+	 * This can happen if above create_chunk() failed, we need to move all
+	 * devices back to dev_list.
+	 */
+	while (!list_empty(&private_devs)) {
+		device = list_entry(private_devs.next, struct btrfs_device,
+				    dev_list);
+		list_move(&device->dev_list, dev_list);
+	}
+	/*
+	 * All private devs moved back to @dev_list, now dev_list should not be
+	 * empty.
+	 */
+	ASSERT(!list_empty(dev_list));
 	*start = ctl.start;
 	*num_bytes = ctl.num_bytes;
 
