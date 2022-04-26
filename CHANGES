@@ -1,3 +1,28 @@
+btrfs-progs-5.17 (2022-04-26)
+* check:
+  * repair wrong num_devices in superblock
+  * recognize overly long xattr names
+  * fix wrong total bytes check for seed device
+* auto-repair on read on RAID56
+* property set: unify handling of empty value to mean default, changed meaning
+  for property 'compression' to allow reset to default and to set NOCOMPRESS,
+  since kernel 5.14
+* fixes:
+  * dump-tree: print fs-verity items
+  * fix location of system chunk on zoned filesystem
+  * do not allow setting seeding flag on a filesystem with dirty log
+  * mkfs and subpage support: use sectorsize as nodesize fallback for mixed
+    profiles
+* preparatory work for extent tree v2, global roots
+* experimental feature (unstable interface, not built by default,
+  do not use for production):
+  * btrfstune: option --csum to switch checksum algorithm
+* other:
+  * cleanups, refactoring
+  * update documentation build, remove asciidocs leftovers
+  * update fssum to consider xattrs
+  * add fsstress
+
 btrfs-progs-5.16.2 (2022-02-16)
 * mkfs: fix detection of profile type for zoned mode when creating DUP
 * build:
