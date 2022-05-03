@@ -1477,6 +1477,7 @@ int sysfs_read_file(int fd, char *buf, size_t size)
 static const char exclop_def[][16] = {
 	[BTRFS_EXCLOP_NONE]		= "none",
 	[BTRFS_EXCLOP_BALANCE]		= "balance",
+	[BTRFS_EXCLOP_BALANCE_PAUSED]	= "balance paused",
 	[BTRFS_EXCLOP_DEV_ADD]		= "device add",
 	[BTRFS_EXCLOP_DEV_REMOVE]	= "device remove",
 	[BTRFS_EXCLOP_DEV_REPLACE]	= "device replace",
@@ -1550,6 +1551,15 @@ int check_running_fs_exclop(int fd, enum exclusive_operation start, bool enqueue
 
 	exclop = get_fs_exclop(fd);
 	if (exclop <= 0) {
+		ret = 0;
+		goto out;
+	}
+
+	/*
+	 * Some combinations are compatible:
+	 * - start device add when balance is paused (kernel 5.17)
+	 */
+	if (start == BTRFS_EXCLOP_DEV_ADD && exclop == BTRFS_EXCLOP_BALANCE_PAUSED) {
 		ret = 0;
 		goto out;
 	}
