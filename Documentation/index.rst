@@ -11,6 +11,7 @@ Welcome to BTRFS documentation!
    man-index
    Administration
    CHANGES
+   Glossary
 
 .. toctree::
    :maxdepth: 1
@@ -45,7 +46,6 @@ Welcome to BTRFS documentation!
 
    Quick-start
    Interoperability
-   Glossary
    Flexibility
    project-index
    trouble-index
