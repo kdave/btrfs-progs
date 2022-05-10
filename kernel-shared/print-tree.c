@@ -1218,7 +1218,9 @@ static void print_header_info(struct extent_buffer *eb, unsigned int mode)
 {
 	struct btrfs_fs_info *fs_info = eb->fs_info;
 	char flags_str[128];
+#if EXPERIMENTAL
 	u8 csum[BTRFS_CSUM_SIZE];
+#endif
 	u64 flags;
 	u32 nr;
 	u8 backref_rev;
@@ -1265,7 +1267,7 @@ static void print_header_info(struct extent_buffer *eb, unsigned int mode)
 	       btrfs_header_bytenr(eb), flags, flags_str, backref_rev,
 	       csum_str);
 
-#ifdef EXPERIMENTAL
+#if EXPERIMENTAL
 	printf("checksum stored ");
 	for (i = 0; i < csum_size; i++)
 		printf("%02hhx", (int)(eb->data[i]));
