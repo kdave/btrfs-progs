@@ -8,3 +8,8 @@ Mount options
 -------------
 
 .. include:: ch-mount-options.rst
+
+Bootloaders
+-----------
+
+.. include:: ch-bootloaders.rst
