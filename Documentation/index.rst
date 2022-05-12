@@ -12,6 +12,7 @@ Welcome to BTRFS documentation!
    Administration
    CHANGES
    Glossary
+   INSTALL
 
 .. toctree::
    :maxdepth: 1
