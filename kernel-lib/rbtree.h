@@ -28,31 +28,21 @@
 
 #ifndef	_LINUX_RBTREE_H
 #define	_LINUX_RBTREE_H
+
 #if BTRFS_FLAT_INCLUDES
 #include "kerncompat.h"
+#include "kernel-lib/rbtree_types.h"
 #else
 #include <btrfs/kerncompat.h>
+#include <btrfs/rbtree_types.h>
 #endif /* BTRFS_FLAT_INCLUDES */
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-struct rb_node {
-	unsigned long  __rb_parent_color;
-	struct rb_node *rb_right;
-	struct rb_node *rb_left;
-} __attribute__((aligned(sizeof(long))));
-    /* The alignment might seem pointless, but allegedly CRIS needs it */
-
-struct rb_root {
-	struct rb_node *rb_node;
-};
-
-
 #define rb_parent(r)   ((struct rb_node *)((r)->__rb_parent_color & ~3))
 
-#define RB_ROOT	(struct rb_root) { NULL, }
 #define	rb_entry(ptr, type, member) container_of(ptr, type, member)
 
 #define RB_EMPTY_ROOT(root)  ((root)->rb_node == NULL)
