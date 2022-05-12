@@ -20,8 +20,7 @@ tools.  Currently covers:
 #. filesystems with multiple block group profiles
 #. seeding device
 #. raid56 status and recommended practices
-#. storage model
-#. hardware considerations
+#. storage model, hardware considerations
 
 
 MOUNT OPTIONS
@@ -397,99 +396,8 @@ some errors might get reported multiple times.
 The *write hole* problem.
 
 
-STORAGE MODEL
--------------
-
-*A storage model is a model that captures key physical aspects of data
-structure in a data store. A filesystem is the logical structure organizing
-data on top of the storage device.*
-
-The filesystem assumes several features or limitations of the storage device
-and utilizes them or applies measures to guarantee reliability. BTRFS in
-particular is based on a COW (copy on write) mode of writing, ie. not updating
-data in place but rather writing a new copy to a different location and then
-atomically switching the pointers.
-
-In an ideal world, the device does what it promises. The filesystem assumes
-that this may not be true so additional mechanisms are applied to either detect
-misbehaving hardware or get valid data by other means. The devices may (and do)
-apply their own detection and repair mechanisms but we won't assume any.
-
-The following assumptions about storage devices are considered (sorted by
-importance, numbers are for further reference):
-
-1. atomicity of reads and writes of blocks/sectors (the smallest unit of data
-   the device presents to the upper layers)
-2. there's a flush command that instructs the device to forcibly order writes
-   before and after the command; alternatively there's a barrier command that
-   facilitates the ordering but may not flush the data
-3. data sent to write to a given device offset will be written without further
-   changes to the data and to the offset
-4. writes can be reordered by the device, unless explicitly serialized by the
-   flush command
-5. reads and writes can be freely reordered and interleaved
-
-The consistency model of BTRFS builds on these assumptions. The logical data
-updates are grouped, into a generation, written on the device, serialized by
-the flush command and then the super block is written ending the generation.
-All logical links among metadata comprising a consistent view of the data may
-not cross the generation boundary.
-
-WHEN THINGS GO WRONG
-^^^^^^^^^^^^^^^^^^^^
-
-**No or partial atomicity of block reads/writes (1)**
-
-- *Problem*: a partial block contents is written (*torn write*), eg. due to a
-  power glitch or other electronics failure during the read/write
-- *Detection*: checksum mismatch on read
-- *Repair*: use another copy or rebuild from multiple blocks using some encoding
-  scheme
-
-**The flush command does not flush (2)**
-
-This is perhaps the most serious problem and impossible to mitigate by
-filesystem without limitations and design restrictions. What could happen in
-the worst case is that writes from one generation bleed to another one, while
-still letting the filesystem consider the generations isolated. Crash at any
-point would leave data on the device in an inconsistent state without any hint
-what exactly got written, what is missing and leading to stale metadata link
-information.
-
-Devices usually honor the flush command, but for performance reasons may do
-internal caching, where the flushed data are not yet persistently stored. A
-power failure could lead to a similar scenario as above, although it's less
-likely that later writes would be written before the cached ones. This is
-beyond what a filesystem can take into account. Devices or controllers are
-usually equipped with batteries or capacitors to write the cache contents even
-after power is cut. (*Battery backed write cache*)
-
-**Data get silently changed on write (3)**
-
-Such thing should not happen frequently, but still can happen spuriously due
-the complex internal workings of devices or physical effects of the storage
-media itself.
-
-* *Problem*: while the data are written atomically, the contents get changed
-* *Detection*: checksum mismatch on read
-* 'Repair*: use another copy or rebuild from multiple blocks using some
-  encoding scheme
-
-**Data get silently written to another offset (3)**
-
-This would be another serious problem as the filesystem has no information
-when it happens. For that reason the measures have to be done ahead of time.
-This problem is also commonly called 'ghost write'.
-
-The metadata blocks have the checksum embedded in the blocks, so a correct
-atomic write would not corrupt the checksum. It's likely that after reading
-such block the data inside would not be consistent with the rest. To rule that
-out there's embedded block number in the metadata block. It's the logical
-block number because this is what the logical structure expects and verifies.
-
-
-HARDWARE CONSIDERATIONS
------------------------
+STORAGE MODEL, HARDWARE CONSIDERATIONS
+--------------------------------------
 
 .. include:: ch-hardware-considerations.rst
 
