@@ -33,9 +33,7 @@ must be 5.10 or newer.
 
 Generating documentation:
 
-- asciidoc - text document format tool
-- xmlto - text document format tool
-- source-highlight - optional, only for generating HTML output
+- sphinx
 
 XATTR library should be provided by the standard C library or by
 
