@@ -196,12 +196,14 @@ FILESYSTEM EXCLUSIVE OPERATIONS
 -------------------------------
 
 There are several operations that affect the whole filesystem and cannot be run
-in parallel. Attempt to start one while another is running will fail.
+in parallel. Attempt to start one while another is running will fail (see
+exceptions below).
 
 Since kernel 5.10 the currently running operation can be obtained from
 */sys/fs/UUID/exclusive_operation* with following values and operations:
 
 * balance
+* balance paused (since 5.17)
 * device add
 * device delete
 * device replace
@@ -212,6 +214,9 @@ Since kernel 5.10 the currently running operation can be obtained from
 Enqueuing is supported for several btrfs subcommands so they can be started
 at once and then serialized.
 
+There's an exception when a paused balance allows to start a device add
+operation as they don't really collide and this can be used to add more space
+for the balance to finish.
 
 FILESYSTEM LIMITS
 -----------------
