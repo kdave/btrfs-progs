@@ -13,3 +13,8 @@ Bootloaders
 -----------
 
 .. include:: ch-bootloaders.rst
+
+Filesystem limits
+-----------------
+
+.. include:: ch-fs-limits.rst
