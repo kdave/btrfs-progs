@@ -1,6 +1,3 @@
-Flexibility
-===========
-
 The underlying design of BTRFS data structures allows a lot of flexibility and
 making changes after filesystem creation, like resizing, adding/removing space
 or enabling some features on-the-fly.

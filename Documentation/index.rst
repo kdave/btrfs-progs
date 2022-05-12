@@ -47,6 +47,5 @@ Welcome to BTRFS documentation!
 
    Quick-start
    Interoperability
-   Flexibility
    project-index
    trouble-index

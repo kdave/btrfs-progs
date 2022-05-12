@@ -18,3 +18,8 @@ Filesystem limits
 -----------------
 
 .. include:: ch-fs-limits.rst
+
+Flexibility
+-----------
+
+.. include:: ch-flexibility.rst
