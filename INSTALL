@@ -35,10 +35,6 @@ Generating documentation:
 
 - sphinx
 
-XATTR library should be provided by the standard C library or by
-
-- libattr - extended attribute library
-
 Please note that the package names may differ according to the distribution.
 See https://btrfs.wiki.kernel.org/index.php/Btrfs_source_repositories#Dependencies .
 
