@@ -15,7 +15,7 @@ In the code use it like:
         ...
     }
 
-in case it does not interfere with other code or does not depend on an `#ifdef`
+in case it does not interfere with other code or does not depend on an `#if`
 where it would break default build.
 
 Or:
@@ -25,6 +25,9 @@ Or:
     #endif
 
 for larger code blocks.
+
+Do not use `#ifdef` as the macro is always defined so this would not work as
+expected.
 
 Each feature should be tracked in an issue with label
 [experimental](https://github.com/kdave/btrfs-progs/labels/experimental), with
