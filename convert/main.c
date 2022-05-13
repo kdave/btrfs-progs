@@ -1822,7 +1822,7 @@ int BOX_MAIN(convert)(int argc, char *argv[])
 	int usage_error = 0;
 	int progress = 1;
 	char *file;
-	char fslabel[BTRFS_LABEL_SIZE];
+	char fslabel[BTRFS_LABEL_SIZE] = { 0 };
 	u64 features = BTRFS_MKFS_DEFAULT_FEATURES;
 	u16 csum_type = BTRFS_CSUM_TYPE_CRC32;
 	u32 copy_fsid = 0;
