@@ -74,3 +74,12 @@ detector of faulty RAM).
 The capabilities of tree checker have been improved over time and it's possible
 that a filesystem created on an older kernel may trigger warnings or fail some
 checks on a new one.
+
+Reporting problems
+------------------
+
+In many cases the bug is caused by hardware and cannot be automatically fixed
+by *btrfs check --repair*, so do not try that without being adviced to. Even if
+the error is unfixable it's useful to report it, either to validate the cause
+but also to give more ideas how to improve the tree checker.  Please consider
+reporting it to the mailing list *linux-btrfs@vger.kernel.org*.

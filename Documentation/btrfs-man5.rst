@@ -393,7 +393,17 @@ degrade the performance. The workaround is to start it on each device
 separately. Due to that the device stats may not match the actual state and
 some errors might get reported multiple times.
 
-The *write hole* problem.
+The *write hole* problem. An unclean shutdown could leave a partially written
+stripe in a state where the some stripe ranges and the parity are from the old
+writes and some are new. The information which is which is not tracked. Write
+journal is not implemented. Alternatively a full read-modify-write would make
+sure that a full stripe is always written, avoiding the write hole completely,
+but performance in that case turned out to be too bad for use.
+
+The striping happens on all available devices (at the time the chunks were
+allocated), so in case a new device is added it may not be utilized
+immediately and would require a rebalance. A fixed configured stripe width is
+not implemented.
 
 
 STORAGE MODEL, HARDWARE CONSIDERATIONS
