@@ -35,6 +35,7 @@ Welcome to BTRFS documentation!
    Scrub
    Seeding-device
    Send-receive
+   Subpage
    Subvolumes
    Swapfile
    Tree-checker
