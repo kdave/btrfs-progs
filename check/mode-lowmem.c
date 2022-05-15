@@ -4558,6 +4558,7 @@ static int check_dev_item(struct extent_buffer *eb, int slot,
 "dev extent devid %llu offset %llu len %llu overlap with previous dev extent end %llu",
 			      devid, physical_offset, physical_len,
 			      prev_dev_ext_end);
+			btrfs_release_path(&path);
 			return ACCOUNTING_MISMATCH;
 		}
 		if (physical_offset + physical_len > total_bytes) {
@@ -4565,6 +4566,7 @@ static int check_dev_item(struct extent_buffer *eb, int slot,
 "dev extent devid %llu offset %llu len %llu is beyond device boundary %llu",
 			      devid, physical_offset, physical_len,
 			      total_bytes);
+			btrfs_release_path(&path);
 			return ACCOUNTING_MISMATCH;
 		}
 		prev_devid = devid;
