@@ -51,3 +51,4 @@ Welcome to BTRFS documentation!
    Interoperability
    project-index
    trouble-index
+   Experimental
