@@ -1,5 +1,4 @@
 # Source files for manual pages are listed in conf.py in variable man_pages
-# To convert: btrfs-ioctl.asciidoc
 
 # You can set these variables from the command line, and also from the
 # environment for the first two.

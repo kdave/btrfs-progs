@@ -52,3 +52,4 @@ Welcome to BTRFS documentation!
    project-index
    trouble-index
    Experimental
+   btrfs-ioctl
