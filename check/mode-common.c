@@ -1628,7 +1628,6 @@ static int get_num_devs_in_chunk_tree(struct btrfs_fs_info *fs_info)
 
 int check_and_repair_super_num_devs(struct btrfs_fs_info *fs_info)
 {
-	struct btrfs_trans_handle *trans;
 	int found_devs;
 	int ret;
 
@@ -1650,23 +1649,14 @@ int check_and_repair_super_num_devs(struct btrfs_fs_info *fs_info)
 		return -EUCLEAN;
 
 	/*
-	 * Repair is pretty simple, just reset the super block value and
-	 * commit a new transaction.
+	 * Repair is simple, reset the super block value and write back all the
+	 * super blocks. Do not use transaction for that.
 	 */
-	trans = btrfs_start_transaction(fs_info->tree_root, 0);
-	if (IS_ERR(trans)) {
-		ret = PTR_ERR(trans);
-		errno = -ret;
-		error("failed to start trans: %m");
-		return ret;
-	}
-
 	btrfs_set_super_num_devices(fs_info->super_copy, found_devs);
-	ret = btrfs_commit_transaction(trans, fs_info->tree_root);
+	ret = write_all_supers(fs_info);
 	if (ret < 0) {
 		errno = -ret;
-		error("failed to commit trans: %m");
-		btrfs_abort_transaction(trans, ret);
+		error("failed to write super blocks: %m");
 		return ret;
 	}
 	printf("Successfully reset super num devices to %u\n", found_devs);

@@ -9659,17 +9659,12 @@ out:
 
 static int zero_log_tree(struct btrfs_root *root)
 {
-	struct btrfs_trans_handle *trans;
 	int ret;
 
-	trans = btrfs_start_transaction(root, 1);
-	if (IS_ERR(trans)) {
-		ret = PTR_ERR(trans);
-		return ret;
-	}
 	btrfs_set_super_log_root(gfs_info->super_copy, 0);
 	btrfs_set_super_log_root_level(gfs_info->super_copy, 0);
-	ret = btrfs_commit_transaction(trans, root);
+	/* Don't use transaction for overwriting only the super block */
+	ret = write_all_supers(gfs_info);
 	return ret;
 }
 

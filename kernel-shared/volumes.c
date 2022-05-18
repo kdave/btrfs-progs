@@ -2861,7 +2861,6 @@ err:
  */
 int btrfs_fix_super_size(struct btrfs_fs_info *fs_info)
 {
-	struct btrfs_trans_handle *trans;
 	struct btrfs_device *device;
 	struct list_head *dev_list = &fs_info->fs_devices->devices;
 	u64 total_bytes = 0;
@@ -2886,19 +2885,11 @@ int btrfs_fix_super_size(struct btrfs_fs_info *fs_info)
 		return 0;
 
 	btrfs_set_super_total_bytes(fs_info->super_copy, total_bytes);
-
-	/* Commit transaction to update all super blocks */
-	trans = btrfs_start_transaction(fs_info->tree_root, 1);
-	if (IS_ERR(trans)) {
-		ret = PTR_ERR(trans);
-		errno = -ret;
-		error("error starting transaction: %d (%m)", ret);
-		return ret;
-	}
-	ret = btrfs_commit_transaction(trans, fs_info->tree_root);
+	/* Do not use transaction for overwriting only the super block */
+	ret = write_all_supers(fs_info);
 	if (ret < 0) {
 		errno = -ret;
-		error("failed to commit current transaction: %d (%m)", ret);
+		error("failed to write super blocks: %d (%m)", ret);
 		return ret;
 	}
 	printf("Fixed super total bytes, old size: %llu new size: %llu\n",
