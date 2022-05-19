@@ -93,6 +93,10 @@ OPTIONS
                 Versions up to 4.2.x forced the mixed mode for devices smaller than 1GiB.
                 This has been removed in 4.3+ as it caused some usability issues.
 
+                Mixed profile cannot be used together with other profiles. It can only
+                be set at creation time. Conversion to or from mixed profile is not
+                implemented.
+
 -l|--leafsize <size>
         Alias for *--nodesize*. Deprecated.
 
