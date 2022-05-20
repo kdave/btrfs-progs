@@ -15,7 +15,7 @@ allowing us to push 4KiB sectorsize as default sectorsize for all platforms in t
 near future.
 
 Requirements, limitations
-^^^^^^^^^^^^^^^^^^^^^^^^^
+-------------------------
 
 The initial subpage support has been added in v5.15, although it's still
 considered as experimental at the time of writing (v5.18), most features are

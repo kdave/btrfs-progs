@@ -1,4 +1,4 @@
-STORAGE MODEL
+Storage model
 ^^^^^^^^^^^^^
 
 *A storage model is a model that captures key physical aspects of data
@@ -36,7 +36,7 @@ the flush command and then the super block is written ending the generation.
 All logical links among metadata comprising a consistent view of the data may
 not cross the generation boundary.
 
-WHEN THINGS GO WRONG
+When things go wrong
 ^^^^^^^^^^^^^^^^^^^^
 
 **No or partial atomicity of block reads/writes (1)**
@@ -93,7 +93,7 @@ The following is based on information publicly available, user feedback,
 community discussions or bug report analyses. It's not complete and further
 research is encouraged when in doubt.
 
-MAIN MEMORY
+Main memory
 ^^^^^^^^^^^
 
 The data structures and raw data blocks are temporarily stored in computer
@@ -131,7 +131,7 @@ What to do:
   check, that verify meta data before they get written but fail some basic
   consistency checks
 
-DIRECT MEMORY ACCESS (DMA)
+Direct memory access (DMA)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Another class of errors is related to DMA (direct memory access) performed
@@ -150,7 +150,7 @@ What to do:
 * use up-to-date kernel (recent releases or maintained long term support versions)
 * as this may be caused by faulty drivers, keep the systems up-to-date
 
-ROTATIONAL DISKS (HDD)
+Rotational disks (HDD)
 ^^^^^^^^^^^^^^^^^^^^^^
 
 Rotational HDDs typically fail at the level of individual sectors or small clusters.
@@ -175,7 +175,7 @@ What to do:
 
 * check **smartctl** for potential issues
 
-SOLID STATE DRIVES (SSD)
+Solid state drives (SSD)
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 The mechanism of information storage is different from HDDs and this affects
@@ -243,7 +243,7 @@ What to do:
 * run **smartctl** or self-tests to look for potential issues
 * keep the firmware up-to-date
 
-NVM EXPRESS, NON-VOLATILE MEMORY (NVMe)
+NVM express, non-volatile memory (NVMe)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 NVMe is a type of persistent memory usually connected over a system bus (PCIe)
@@ -266,7 +266,7 @@ physical connection of the device. You may want to run self-tests (using
 * https://en.wikipedia.org/wiki/NVM_Express
 * https://www.smartmontools.org/wiki/NVMe_Support
 
-DRIVE FIRMWARE
+Drive firmware
 ^^^^^^^^^^^^^^
 
 Firmware is technically still software but embedded into the hardware. As all
@@ -283,7 +283,7 @@ What to do:
   updating firmware can be risky on itself
 * use up-to-date kernel (recent releases or maintained long term support versions)
 
-SD FLASH CARDS
+SD flash cards
 ^^^^^^^^^^^^^^
 
 There are a lot of devices with low power consumption and thus using storage
@@ -299,7 +299,7 @@ Adding redundancy like using DUP profiles for both data and metadata can help
 in some cases but a full backup might be the best option once problems appear
 and replacing the card could be required as well.
 
-HARDWARE AS THE MAIN SOURCE OF FILESYSTEM CORRUPTIONS
+Hardware as the main source of filesystem corruptions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **If you use unreliable hardware and don't know about that, don't blame the
