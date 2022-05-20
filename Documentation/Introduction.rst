@@ -12,7 +12,7 @@ and easy administration. Its main features and benefits are:
 Feature overview:
 
 * Extent based file storage
-* 2^64 byte == 16 EiB maximum file size (practical limit is 8 EiB due to Linux VFS)
+* 2\ :sup:`64` byte == 16 EiB maximum file size (practical limit is 8 EiB due to Linux VFS)
 * Space-efficient packing of small files
 * Space-efficient indexed directories
 * Dynamic inode allocation

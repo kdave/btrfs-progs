@@ -10,17 +10,17 @@ maximum symlink target length
         creation.
 
 maximum number of inodes
-        2^64^ but depends on the available metadata space as the inodes are created
+        2\ :sup:`64` but depends on the available metadata space as the inodes are created
         dynamically
 
 inode numbers
         minimum number: 256 (for subvolumes), regular files and directories: 257
 
 maximum file length
-        inherent limit of btrfs is 2^64^ (16 EiB) but the linux VFS limit is 2^63^ (8 EiB)
+        inherent limit of btrfs is 2\ :sup:`64` (16 EiB) but the linux VFS limit is 2\ :sup:`63` (8 EiB)
 
 maximum number of subvolumes
-        the subvolume ids can go up to 2^64^ but the number of actual subvolumes
+        the subvolume ids can go up to 2\ :sup:`64` but the number of actual subvolumes
         depends on the available metadata space, the space consumed by all subvolume
         metadata includes bookkeeping of shared extents can be large (MiB, GiB)
 
