@@ -40,6 +40,33 @@ static struct btrfs_root *btrfs_free_space_root(struct btrfs_fs_info *fs_info,
 	return btrfs_global_root(fs_info, &key);
 }
 
+void set_free_space_tree_thresholds(struct btrfs_fs_info *fs_info,
+				    struct btrfs_block_group *cache)
+{
+	u32 bitmap_range;
+	size_t bitmap_size;
+	u64 num_bitmaps, total_bitmap_size;
+
+	/*
+	 * We convert to bitmaps when the disk space required for using extents
+	 * exceeds that required for using bitmaps.
+	 */
+	bitmap_range = fs_info->sectorsize * BTRFS_FREE_SPACE_BITMAP_BITS;
+	num_bitmaps = div_u64(cache->start + bitmap_range - 1, bitmap_range);
+	bitmap_size = sizeof(struct btrfs_item) + BTRFS_FREE_SPACE_BITMAP_SIZE;
+	total_bitmap_size = num_bitmaps * bitmap_size;
+	cache->bitmap_high_thresh = div_u64(total_bitmap_size, sizeof(struct btrfs_item));
+
+	/*
+	 * We allow for a small buffer between the high threshold and low
+	 * threshold to avoid thrashing back and forth between the two formats.
+	 */
+	if (cache->bitmap_high_thresh > 100)
+		cache->bitmap_low_thresh = cache->bitmap_high_thresh - 100;
+	else
+		cache->bitmap_low_thresh = 0;
+}
+
 static struct btrfs_free_space_info *
 search_free_space_info(struct btrfs_trans_handle *trans,
 		       struct btrfs_fs_info *fs_info,

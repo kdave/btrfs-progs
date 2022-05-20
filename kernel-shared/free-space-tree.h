@@ -22,6 +22,8 @@
 #define BTRFS_FREE_SPACE_BITMAP_SIZE 256
 #define BTRFS_FREE_SPACE_BITMAP_BITS (BTRFS_FREE_SPACE_BITMAP_SIZE * BITS_PER_BYTE)
 
+void set_free_space_tree_thresholds(struct btrfs_fs_info *fs_info,
+				    struct btrfs_block_group *cache);
 int btrfs_clear_free_space_tree(struct btrfs_fs_info *fs_info);
 int load_free_space_tree(struct btrfs_fs_info *fs_info,
 			 struct btrfs_block_group *block_group);

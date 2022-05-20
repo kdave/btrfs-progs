@@ -2697,6 +2697,7 @@ static int read_one_block_group(struct btrfs_fs_info *fs_info,
 		free(cache);
 		return ret;
 	}
+	set_free_space_tree_thresholds(fs_info, cache);
 	INIT_LIST_HEAD(&cache->dirty_list);
 
 	set_avail_alloc_bits(fs_info, cache->flags);
@@ -2845,6 +2846,7 @@ int btrfs_make_block_group(struct btrfs_trans_handle *trans,
 
 	cache = btrfs_add_block_group(fs_info, bytes_used, type, chunk_offset,
 				      size);
+	set_free_space_tree_thresholds(fs_info, cache);
 	ret = insert_block_group_item(trans, cache);
 	if (ret)
 		return ret;
