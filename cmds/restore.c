@@ -25,8 +25,10 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#if BTRFSRESTORE_LZO
 #include <lzo/lzoconf.h>
 #include <lzo/lzo1x.h>
+#endif
 #include <zlib.h>
 #if BTRFSRESTORE_ZSTD
 #include <zstd.h>
@@ -98,6 +100,10 @@ static inline size_t read_compress_length(unsigned char *buf)
 static int decompress_lzo(struct btrfs_root *root, unsigned char *inbuf,
 			char *outbuf, u64 compress_len, u64 *decompress_len)
 {
+#if !BTRFSRESTORE_LZO
+	error("btrfs not compiled with lzo support");
+	return -1;
+#else
 	size_t new_len;
 	size_t in_len;
 	size_t out_len = 0;
@@ -156,6 +162,7 @@ static int decompress_lzo(struct btrfs_root *root, unsigned char *inbuf,
 	*decompress_len = out_len;
 
 	return 0;
+#endif
 }
 
 static int decompress_zstd(const char *inbuf, char *outbuf, u64 compress_len,
