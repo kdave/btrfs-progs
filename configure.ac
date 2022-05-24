@@ -372,16 +372,26 @@ if ${PKG_CONFIG} udev --atleast-version 190; then
 fi
 AC_SUBST(UDEVDIR)
 
-dnl lzo library does not provide pkg-config, let use classic way
-AC_CHECK_LIB([lzo2], [lzo_version], [
-	LZO2_LIBS="-llzo2"
-	LZO2_CFLAGS=""
-	LZO2_LIBS_STATIC="-llzo2"],[
-	AC_MSG_ERROR([cannot find lzo2 library])
-])
-AC_SUBST([LZO2_LIBS])
-AC_SUBST([LZO2_LIBS_STATIC])
-AC_SUBST([LZO2_CFLAGS])
+AC_ARG_ENABLE([lzo],
+	AS_HELP_STRING([--disable-lzo], [build without lzo support (default: enabled)]),
+	[], [enable_lzo=yes]
+)
+
+if test "x$enable_lzo" = xyes; then
+	dnl lzo library does not provide pkg-config, use classic way
+	AC_CHECK_LIB([lzo2], [lzo_version], [
+		LZO2_LIBS="-llzo2"
+		LZO2_CFLAGS=""
+		LZO2_LIBS_STATIC="-llzo2"],[
+		AC_MSG_ERROR([cannot find lzo2 library])
+	])
+	AC_SUBST([LZO2_LIBS])
+	AC_SUBST([LZO2_LIBS_STATIC])
+	AC_SUBST([LZO2_CFLAGS])
+fi
+
+AS_IF([test "x$enable_lzo" = xyes], [BTRFSRESTORE_LZO=1], [BTRFSRESTORE_LZO=0])
+AC_SUBST(BTRFSRESTORE_LZO)
 
 dnl call PKG_INSTALLDIR from pkg.m4 to set pkgconfigdir
 m4_ifdef([PKG_INSTALLDIR], [PKG_INSTALLDIR], [AC_MSG_ERROR([please install pkgconf])])

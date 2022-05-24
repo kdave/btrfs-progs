@@ -335,7 +335,7 @@ endif
 btrfs_convert_cflags = -DBTRFSCONVERT_EXT2=$(BTRFSCONVERT_EXT2)
 btrfs_convert_cflags += -DBTRFSCONVERT_REISERFS=$(BTRFSCONVERT_REISERFS)
 btrfs_fragments_libs = -lgd -lpng -ljpeg -lfreetype
-cmds_restore_cflags = -DBTRFSRESTORE_ZSTD=$(BTRFSRESTORE_ZSTD)
+cmds_restore_cflags = -DBTRFSRESTORE_LZO=$(BTRFSRESTORE_LZO) -DBTRFSRESTORE_ZSTD=$(BTRFSRESTORE_ZSTD)
 
 ifeq ($(CRYPTOPROVIDER_BUILTIN),1)
 CRYPTO_OBJECTS = crypto/sha224-256.o crypto/blake2b-ref.o
