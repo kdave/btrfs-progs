@@ -1358,6 +1358,15 @@ static const char * const cmd_restore_usage[] = {
 	"       -v|--verbose         deprecated, alias for global -v option",
 	HELPINFO_INSERT_GLOBALS,
 	HELPINFO_INSERT_VERBOSE,
+	"",
+	"Compression support: zlib"
+#if BTRFSRESTORE_LZO
+		", lzo"
+#endif
+#if BTRFSRESTORE_ZSTD
+		", zstd"
+#endif
+	,
 	NULL
 };
 
