@@ -1,3 +1,20 @@
+btrfs-progs-5.18 (2022-05-25)
+-----------------------------
+   * fixes:
+      * dump-tree: don't print traling zeros in checksums
+      * recognize paused balance as exclusive operation state, allow to start
+        device add
+      * convert: properly initialize target filesystem label
+      * mkfs: don't create free space bitmaps for empty filesystem
+   * restore: make lzo support build-time configurable, print supported
+     compression in help text
+   * update kernel-lib sources
+   * other:
+      * documentation updates, finish conversion to RST, CHANGES and INSTALL
+        could be included into RST
+      * fix build detection of experimental mode
+      * new tests
+
 btrfs-progs-5.17 (2022-04-26)
 -----------------------------
    * check:
