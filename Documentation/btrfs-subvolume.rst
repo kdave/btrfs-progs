@@ -111,11 +111,11 @@ list [options] [-G [\+|-]<value>] [-C [+|-]<value>] [--sort=rootid,gen,ogen,path
 
         For every subvolume the following information is shown by default:
 
-        ID *ID* gen *generation* top level *ID* path *path*
+        ID *ID* gen *generation* top level *parent_ID* path *path*
 
-        where ID is subvolume's id, gen is an internal counter which is updated
-        every transaction, top level is the same as parent subvolume's id, and
-        path is the relative path of the subvolume to the top level subvolume.
+        where *ID* is subvolume's (root)id, *generation* is an internal counter which is
+        updated every transaction, *parent_ID* is the same as the parent subvolume's id,
+        and *path* is the relative path of the subvolume to the top level subvolume.
         The subvolume's ID may be used by the subvolume set-default command,
         or at mount time via the *subvolid=* option.
 
