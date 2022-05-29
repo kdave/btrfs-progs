@@ -20,7 +20,7 @@ mount option. See section *MULTIPLE DEVICES* for more details.
 The default block group profiles for data and metadata depend on number of
 devices and possibly other factors. It's recommended to use specific profiles
 but the defaults should be OK and allowing future conversions to other profiles.
-Please see options *-d* and *-m* for further detals and ``btrfs-balance(8)`` for
+Please see options *-d* and *-m* for further details and ``btrfs-balance(8)`` for
 the profile conversion post mkfs.
 
 OPTIONS
