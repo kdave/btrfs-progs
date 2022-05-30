@@ -14,7 +14,7 @@ allocator
 
 balance
 	An operation that can be done to a btrfs filesystem, for example
-	through <code>btrfs fi balance /path</code> (see *btrfs-progs*). A
+	through ``btrfs fi balance /path``. A
 	balance passes all data in the filesystem through the *allocator*
 	again. It is primarily intended to rebalance the data in the filesystem
 	across the *devices* when a device is added or removed. A balance
@@ -43,22 +43,21 @@ B-tree
 	*superblocks*, all of btrfs *metadata* is stored in one of several
 	B-trees on disk. B-trees store key/item pairs. While the same code is
 	used to implement all of the B-trees, there are a few different
-	categories of B-tree. For reference, see [[Btrees]]. The name "btrfs"
+	categories of B-tree. The name *btrfs*
 	refers to its use of B-trees.
 
 btrfsck
 	Tool in *btrfs-progs* that checks a filesystem *offline* (ie.
 	unmounted), and reports on any errors in the filesystem structures it
-	finds. Does not ([[FAQ#When_will_Btrfs_have_a_fsck_like_tool.3F|yet]])
-	fix errors by default. Recently it got support to fix certain types of
-	corruption. See also *scrub*.
+	finds.  By default the tool runs in read-only mode as fixing errors is
+        potentially dangerous.  See also *scrub*.
 
 btrfs-progs
 	User mode tools to manage btrfs-specific features. Maintained at
-	[http://git.kernel.org/?p=linux/kernel/git/mason/btrfs-progs.git;a=summary|btrfs-progs
-	gitweb]. The main frontend to btrfs features is the
-	<code>[[Manpage/btrfs|btrfs]]</code> program, although other tools such
-	as *mkfs.btrfs* and *btrfsck* are also part of btrfs-progs.
+        http://github.com/kdave/btrfs-progs.git . The main frontend to btrfs
+        features is the standalone tool *btrfs*, although
+        other tools such as *mkfs.btrfs* and *btrfstune* are also part of
+        btrfs-progs.
 
 chunk
 	A part of a *block group*. Chunks are either 1 GiB in size (for data)
@@ -66,7 +65,7 @@ chunk
 
 chunk tree
 	A layer that keeps information about mapping between physical and
-	logical block addresses. It's stored within the *System* group.
+	logical block addresses. It's stored within the *system* group.
 
 cleaner
 	Usually referred to in context of deleted subvolumes. It's a background
@@ -84,7 +83,7 @@ copy-on-write
 	way. In COW filesystems, files tend to fragment as they are modified.
 	Copy-on-write is also used in the implementation of *snapshots* and
 	*reflink copies*. A copy-on-write filesystem is, in theory,
-	*'always*' consistent, provided the underlying hardware supports
+	'always' consistent, provided the underlying hardware supports
 	*barriers*.
 
 COW
@@ -92,8 +91,7 @@ COW
 
 default subvolume
 	The *subvolume* in a btrfs filesystem which is mounted when mounting
-	the filesystem without using the <code>subvol=</code> [[Mount
-	options|mount option]].
+	the filesystem without using the ``subvol=`` mount option.
 
 device
 	A Linux block device, e.g. a whole disk, partition, LVM logical volume,
@@ -103,8 +101,8 @@ device
 df
 	A standard Unix tool for reporting the amount of space used and free in
 	a filesystem. The standard tool does not give accurate results, but the
-	<code>[[Manpage/btrfs|btrfs]]</code> command from *btrfs-progs* has
-	an implementation of df which shows space available in more detail. See
+	*btrfs* command from *btrfs-progs* has
+	an implementation of *df* which shows space available in more detail. See
 	the
 	[[FAQ#Why_does_df_show_incorrect_free_space_for_my_RAID_volume.3F|FAQ]]
 	for a more detailed explanation of btrfs free space accounting.
@@ -113,10 +111,10 @@ DUP
 	A form of "*RAID*" which stores two copies of each piece of data on
 	the same *device*. This is similar to *RAID-1*, and protects
 	against *block*-level errors on the device, but does not provide any
-	guarantees if the entire device fails. By default, btrfs uses *'DUP*'
+	guarantees if the entire device fails. By default, btrfs uses *DUP*
 	profile for metadata on filesystems with one rotational device,
-	*'single*' profile on filesystems with one non-rotational device, and
-	*'RAID1*' profile on filesystems with more than one device.
+	*single* profile on filesystems with one non-rotational device, and
+	*RAID1* profile on filesystems with more than one device.
 
 ENOSPC
 	Error code returned by the OS to a user program when the filesystem
@@ -126,7 +124,7 @@ ENOSPC
 	*COW* behaviour, btrfs can sometimes return ENOSPC when there is
 	apparently (in terms of *df*) a large amount of space free. This is
 	effectively a bug in btrfs, and (if it is repeatable), using the mount
-	option <code>[[Mount options|enospc_debug]]</code> may give a report
+	option ``enospc_debug`` may give a report
 	that will help the btrfs developers. See the
 	[[FAQ#if_your_device_is_large_.28.3E16GiB.29|FAQ entry]] on free space.
 
@@ -151,25 +149,23 @@ filefrag
 	A tool to show the number of extents in a file, and hence the amount of
 	fragmentation in the file. It is usually part of the e2fsprogs package
 	on most Linux distributions. While initially developed for the ext2
-	filesystem, it works on Btrfs as well (but
-	[http://thread.gmane.org/gmane.comp.file-systems.ocfs2.devel/8894/focus=8902
-	not really with compressed files]). It uses the *FIEMAP* ioctl.
+	filesystem, it works on Btrfs as well. It uses the *FIEMAP* ioctl.
 
 free space cache
 	Btrfs doesn't track free space, it only tracks allocated space. Free
 	space is by definition any holes in the allocated space, but finding
 	these holes is actually fairly I/O intensive. The free space cache
-	stores a compressed representation of what is free. It is updated on
+	stores a condensed representation of what is free. It is updated on
 	every *transaction* commit.
 
 fsync
 	On Unix and Unix-like operating systems (of which Linux is the latter),
-	the <code>fsync()</code> system call causes all buffered file
+	the ``lfsync()`` system call causes all buffered file
 	descriptor related data changes to be flushed to the underlying block
 	device. When a file is modified on a modern operating system the
 	changes are generally not written to the disk immediately but rather
 	those changes are buffered in memory for reasons of performance,
-	calling <code>fsync()</code> causes any in-memory changes to be written
+	calling ``fsync()`` causes any in-memory changes to be written
 	to disk.
 
 generation
@@ -178,23 +174,21 @@ generation
 	generation is stored in the block, so that blocks which are too new
 	(and hence possibly inconsistent) can be identified.
 
-genid
-	See *generation*.
-
-Key
+key
 	A fixed sized tuple used to identify and sort items in a *B-tree*.
-	The key is broken up into 3 parts: *'objectid*', *'type*', and
-	*'offset*'. The *'type*' field indicates how each of the other two
-	fields should be used, and what to expect to find in the item. For
-	reference, see [[Btree Keys]].
+	The key is broken up into 3 parts: *objectid*, *type*, and
+	*offset*. The *type* field indicates how each of the other two
+	fields should be used, and what to expect to find in the item.
 
-Item
+item
 	A variable sized structure stored in B-tree leaves. Items hold
-	different types of data depending on key type. For reference, see
-	[[Btree Items]].
+	different types of data depending on key type.
 
 log tree
-
+        A b-tree that temporarily tracks ongoing metadata updates until a full
+        transaction commit is done. It's a performance optimization of
+        ``fsync``. The log tracked in the tree are replayed if the filesystem
+        is not unmounted cleanly.
 
 metadata
 	Data about data. In btrfs, this includes all of the internal data
@@ -203,8 +197,7 @@ metadata
 	*extents*. All btrfs metadata is stored in *B-trees*.
 
 mkfs.btrfs
-	The tool (from *btrfs-progs*) to create a btrfs filesystem, see
-	[[mkfs.btrfs]].
+	The tool (from *btrfs-progs*) to create a btrfs filesystem.
 
 offline
 	A filesystem which is not mounted is offline. Some tools (e.g.
@@ -215,7 +208,8 @@ online
 	work on online filesystems. Compare *offline*.
 
 orphan
-	(file)
+        A file that's still in use (opened by a running process) but all
+        directory entries of that file have been removed.
 
 RAID
 	A class of different methods for writing some additional redundant data
@@ -224,8 +218,7 @@ RAID
 	*RAID-1*, *RAID-5*, *RAID-6*, *RAID-10*, *DUP* and
 	*single*. Traditional RAID methods operate across multiple devices of
 	equal size, whereas btrfs's RAID implementation works inside *block
-	groups*. See the [[SysadminGuide#Data_usage_and_allocation|Sysadmin's
-	Guide]] for the details.
+	groups*.
 
 RAID-0
 	A form of *RAID* which provides no form of error recovery, but
@@ -241,14 +234,12 @@ RAID-1
 RAID-5
 	A form of *RAID* which stripes a single copy of data across multiple
 	*devices*, including one device's worth of additional parity data.
-	Can be used to recover from a single device failure. Not yet
-	implemented in btrfs.
+	Can be used to recover from a single device failure.
 
 RAID-6
 	A form of *RAID* which stripes a single copy of data across multiple
 	*devices*, including two device's worth of additional parity data. Can
-	be used to recover from the failure of two devices. Not yet implemented
-	in btrfs.
+	be used to recover from the failure of two devices.
 
 RAID-10
 	A form of *RAID* which stores two complete copies of each piece of
@@ -256,21 +247,16 @@ RAID-10
 	performance.
 
 reflink
-	Parameter to <code>cp</code>, allowing it to take advantage of the
+	Parameter to ``cp``, allowing it to take advantage of the
 	capabilities of *COW*-capable filesystems. Allows for files to be
 	copied and modified, with only the modifications taking up additional
 	storage space. May be considered as *snapshots* on a single file rather
-	than a *subvolume*. Example: <code>cp --reflink file1 file2</code>
+	than a *subvolume*. Example: ``cp --reflink file1 file2``
 
 relocation
 	The process of moving block groups within the filesystem while
 	maintaining full filesystem integrity and consistency. This
 	functionality is underlying *balance* and *device* removing features.
-
-restriper
-	A development name for the rewritten *balance* code implemented in the
-	v3.3 kernel. Allows to change RAID profiles of the filesystem,
-	*online*.
 
 scrub
 	An *online* filesystem checking tool. Reads all the data and metadata
@@ -284,8 +270,7 @@ seed device
 	devices are persistent across reboots. The original device remains
 	unchanged and can be removed at any time (after Btrfs has been
 	instructed to copy over all missing blocks). Multiple read/write file
-	systems can be built from the same seed. See [[Seed-device]] for an
-	example.
+	systems can be built from the same seed.
 
 single
 	A "*RAID*" level in btrfs, storing a single copy of each piece of data.
@@ -340,7 +325,7 @@ transaction
 	filesystem at any one time.
 
 transid
-	An alternative term for *genid*. See *generation*.
+	An alternative term for *generation*.
 
 writeback
 	*Writeback* in the context of the Linux kernel can be defined as the
