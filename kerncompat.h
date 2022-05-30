@@ -538,29 +538,14 @@ struct __una_u64 { __le64 x; } __attribute__((__packed__));
  * Changed:
  * - __unqual_scalar_typeof: volatile cast to typeof()
  * - compiletime_assert_rwonce_type: no word size compatibility checks
+ * - no const volatile cast
  */
 
-/*
- * Use __READ_ONCE() instead of READ_ONCE() if you do not require any
- * atomicity. Note that this may result in tears!
- */
-#ifndef __READ_ONCE
-#define __READ_ONCE(x)	(*(const volatile typeof(x) *)&(x))
-#endif
-
-#define READ_ONCE(x)							\
-({									\
-	__READ_ONCE(x);							\
-})
-
-#define __WRITE_ONCE(x, val)						\
-do {									\
-	*(volatile typeof(x) *)&(x) = (val);				\
-} while (0)
+#define READ_ONCE(x)		(x)
 
 #define WRITE_ONCE(x, val)						\
 do {									\
-	__WRITE_ONCE(x, val);						\
+	(x) = (val);							\
 } while (0)
 
 #endif

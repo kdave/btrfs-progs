@@ -28,6 +28,10 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define LIST_POISON1  ((void *) 0x00100100)
 #define LIST_POISON2  ((void *) 0x00200200)
 
@@ -187,8 +191,8 @@ static inline void __list_del_entry(struct list_head *entry)
 static inline void list_del(struct list_head *entry)
 {
 	__list_del_entry(entry);
-	entry->next = LIST_POISON1;
-	entry->prev = LIST_POISON2;
+	entry->next = (struct list_head *)LIST_POISON1;
+	entry->prev = (struct list_head *)LIST_POISON2;
 }
 
 /**
@@ -901,8 +905,8 @@ static inline void __hlist_del(struct hlist_node *n)
 static inline void hlist_del(struct hlist_node *n)
 {
 	__hlist_del(n);
-	n->next = LIST_POISON1;
-	n->pprev = LIST_POISON2;
+	n->next = (struct hlist_node *)LIST_POISON1;
+	n->pprev = (struct hlist_node **)LIST_POISON2;
 }
 
 /**
@@ -1012,11 +1016,11 @@ hlist_is_singular_node(struct hlist_node *n, struct hlist_head *h)
  * reference of the first entry if it exists.
  */
 static inline void hlist_move_list(struct hlist_head *old,
-				   struct hlist_head *new)
+				   struct hlist_head *xnew)
 {
-	new->first = old->first;
-	if (new->first)
-		new->first->pprev = &new->first;
+	xnew->first = old->first;
+	if (xnew->first)
+		xnew->first->pprev = &xnew->first;
 	old->first = NULL;
 }
 
@@ -1075,5 +1079,9 @@ static inline void hlist_move_list(struct hlist_head *old,
 	for (pos = hlist_entry_safe((head)->first, typeof(*pos), member);\
 	     pos && ({ n = pos->member.next; 1; });			\
 	     pos = hlist_entry_safe(n, typeof(*pos), member))
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
