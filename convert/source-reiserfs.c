@@ -634,8 +634,9 @@ static int reiserfs_copy_meta(reiserfs_filsys_t fs, struct btrfs_root *root,
 			goto fail;
 		}
 
-		ret = btrfs_insert_inode_ref(trans, root, "..", 2, parent,
-					     objectid, 0);
+		if (parent == objectid)
+			ret = btrfs_insert_inode_ref(trans, root, "..", 2, parent,
+						     objectid, 0);
 		break;
 	case S_IFLNK:
 		trans = btrfs_start_transaction(root, 1);
