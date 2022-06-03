@@ -21,19 +21,11 @@
 
 #include <stdbool.h>
 
-#if BTRFS_FLAT_INCLUDES
 #include "kernel-lib/list.h"
 #include "kerncompat.h"
 #include "common/extent-cache.h"
 #include "kernel-shared/extent_io.h"
 #include "ioctl.h"
-#else
-#include <btrfs/list.h>
-#include <btrfs/kerncompat.h>
-#include <btrfs/extent-cache.h>
-#include <btrfs/extent_io.h>
-#include <btrfs/ioctl.h>
-#endif /* BTRFS_FLAT_INCLUDES */
 
 struct btrfs_root;
 struct btrfs_trans_handle;

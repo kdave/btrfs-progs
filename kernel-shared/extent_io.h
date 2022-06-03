@@ -19,15 +19,9 @@
 #ifndef __BTRFS_EXTENT_IO_H__
 #define __BTRFS_EXTENT_IO_H__
 
-#if BTRFS_FLAT_INCLUDES
 #include "kerncompat.h"
 #include "common/extent-cache.h"
 #include "kernel-lib/list.h"
-#else
-#include <btrfs/kerncompat.h>
-#include <btrfs/extent-cache.h>
-#include <btrfs/list.h>
-#endif /* BTRFS_FLAT_INCLUDES */
 
 #define EXTENT_DIRTY		(1U << 0)
 #define EXTENT_WRITEBACK	(1U << 1)

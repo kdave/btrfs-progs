@@ -19,13 +19,8 @@
 #ifndef __BTRFS_EXTENT_CACHE_H__
 #define __BTRFS_EXTENT_CACHE_H__
 
-#if BTRFS_FLAT_INCLUDES
 #include "kerncompat.h"
 #include "kernel-lib/rbtree.h"
-#else
-#include <btrfs/kerncompat.h>
-#include <btrfs/rbtree.h>
-#endif /* BTRFS_FLAT_INCLUDES */
 
 struct cache_tree {
 	struct rb_root root;
