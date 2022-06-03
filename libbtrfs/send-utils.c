@@ -22,7 +22,7 @@
 #include <limits.h>
 #include <errno.h>
 
-#include "kernel-shared/ctree.h"
+#include "libbtrfs/ctree.h"
 #include "libbtrfs/send-utils.h"
 #include "ioctl.h"
 

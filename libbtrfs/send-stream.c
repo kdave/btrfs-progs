@@ -17,7 +17,7 @@
  */
 
 #include <unistd.h>
-#include "kernel-shared/send.h"
+#include "libbtrfs/send.h"
 #include "libbtrfs/send-stream.h"
 #include "crypto/crc32c.h"
 
