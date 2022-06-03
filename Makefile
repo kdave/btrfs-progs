@@ -788,6 +788,7 @@ clean: $(CLEANDIRS)
 		mkfs/*.o mkfs/*.o.d check/*.o check/*.o.d \
 		cmds/*.o cmds/*.o.d common/*.o common/*.o.d \
 		crypto/*.o crypto/*.o.d \
+		libbtrfs/*.o libbtrfs/*.o.d \
 	      ioctl-test quick-test library-test library-test-static \
               mktables btrfs.static mkfs.btrfs.static fssum \
 	      btrfs.box btrfs.box.static json-formatter-test \
