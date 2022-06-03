@@ -25,13 +25,11 @@
 #include "kernel-lib/list.h"
 #include "kerncompat.h"
 #include "libbtrfs/extent-cache.h"
-#include "libbtrfs/extent_io.h"
 #include "ioctl.h"
 #else
 #include <btrfs/list.h>
 #include <btrfs/kerncompat.h>
 #include <btrfs/extent-cache.h>
-#include <btrfs/extent_io.h>
 #include <btrfs/ioctl.h>
 #endif /* BTRFS_FLAT_INCLUDES */
 
@@ -211,6 +209,35 @@ struct btrfs_key {
 	u8 type;
 	u64 offset;
 } __attribute__ ((__packed__));
+
+struct extent_io_tree {
+	struct cache_tree state;
+	struct cache_tree cache;
+	struct list_head lru;
+	u64 cache_size;
+	u64 max_cache_size;
+};
+
+struct extent_state {
+	struct cache_extent cache_node;
+	u64 start;
+	u64 end;
+	int refs;
+	unsigned long state;
+	u64 xprivate;
+};
+
+struct extent_buffer {
+	struct cache_extent cache_node;
+	u64 start;
+	struct list_head lru;
+	struct list_head recow;
+	u32 len;
+	int refs;
+	u32 flags;
+	struct btrfs_fs_info *fs_info;
+	char data[] __attribute__((aligned(8)));
+};
 
 struct btrfs_mapping_tree {
 	struct cache_tree cache_tree;
@@ -1551,6 +1578,11 @@ static inline u32 BTRFS_MAX_XATTR_SIZE(const struct btrfs_fs_info *info)
 #define BTRFS_INODE_NOATIME		(1 << 9)
 #define BTRFS_INODE_DIRSYNC		(1 << 10)
 #define BTRFS_INODE_COMPRESS		(1 << 11)
+
+void read_extent_buffer(const struct extent_buffer *eb, void *dst,
+			unsigned long start, unsigned long len);
+void write_extent_buffer(struct extent_buffer *eb, const void *src,
+			 unsigned long start, unsigned long len);
 
 #define read_eb_member(eb, ptr, type, member, result) (			\
 	read_extent_buffer(eb, (char *)(result),			\
