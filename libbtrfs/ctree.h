@@ -23,13 +23,13 @@
 
 #if BTRFS_FLAT_INCLUDES
 #include "kernel-lib/list.h"
+#include "kernel-lib/rbtree.h"
 #include "kerncompat.h"
-#include "libbtrfs/extent-cache.h"
 #include "ioctl.h"
 #else
 #include <btrfs/list.h>
+#include <btrfs/rbtree.h>
 #include <btrfs/kerncompat.h>
-#include <btrfs/extent-cache.h>
 #include <btrfs/ioctl.h>
 #endif /* BTRFS_FLAT_INCLUDES */
 
@@ -209,6 +209,17 @@ struct btrfs_key {
 	u8 type;
 	u64 offset;
 } __attribute__ ((__packed__));
+
+struct cache_tree {
+	struct rb_root root;
+};
+
+struct cache_extent {
+	struct rb_node rb_node;
+	u64 objectid;
+	u64 start;
+	u64 size;
+};
 
 struct extent_io_tree {
 	struct cache_tree state;
