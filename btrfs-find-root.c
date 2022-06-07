@@ -249,7 +249,7 @@ static void get_root_gen_and_level(u64 objectid, struct btrfs_fs_info *fs_info,
 		break;
 	case BTRFS_TREE_LOG_OBJECTID:
 		level = btrfs_super_log_root_level(super);
-		gen = btrfs_super_log_root_transid(super);
+		gen = btrfs_super_generation(super) + 1;
 		break;
 	case BTRFS_UUID_TREE_OBJECTID:
 		gen = btrfs_super_uuid_tree_generation(super);
