@@ -1134,7 +1134,6 @@ static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
 	int ret;
 	int fd = -1;
 	u32 blocksize;
-	u64 total_bytes;
 	struct btrfs_root *root;
 	struct btrfs_root *image_root;
 	struct btrfs_convert_context cctx;
@@ -1161,7 +1160,6 @@ static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
 
 	ASSERT(cctx.total_bytes != 0);
 	blocksize = cctx.blocksize;
-	total_bytes = (u64)blocksize * (u64)cctx.block_count;
 	if (blocksize < 4096) {
 		error("block size is too small: %u < 4096", blocksize);
 		goto fail;
@@ -1223,7 +1221,7 @@ static int do_convert(const char *devname, u32 convert_flags, u32 nodesize,
 
 	mkfs_cfg.csum_type = csum_type;
 	mkfs_cfg.label = cctx.label;
-	mkfs_cfg.num_bytes = total_bytes;
+	mkfs_cfg.num_bytes = cctx.total_bytes;
 	mkfs_cfg.nodesize = nodesize;
 	mkfs_cfg.sectorsize = blocksize;
 	mkfs_cfg.stripesize = blocksize;
