@@ -28,7 +28,7 @@ Quotation in subcommands:
 
 - argument name in option description: caps in angle brackets <NAME>
   - reference in help text: caps NAME
-    also possible: caps italics *NAME*
+  - also possible: caps italics *NAME*
 
 - command short description:
   - command name: bold **command**
