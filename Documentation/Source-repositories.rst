@@ -40,17 +40,16 @@ Official repositories
 
 The sources of the userspace utilities can be obtained from these repositories:
 
-* git://git.kernel.org/pub/scm/linux/kernel/git/kdave/btrfs-progs.git (`gitweb
-  access
-  <http://git.kernel.org/?p=linux/kernel/git/kdave/btrfs-progs.git;a=summary>`_)
+* git://git.kernel.org/pub/scm/linux/kernel/git/kdave/btrfs-progs.git (
+  http://git.kernel.org/?p=linux/kernel/git/kdave/btrfs-progs.git;a=summary)
   -- release repository, not for development
 
 The **master** branch contains the latest released version and is never rebased.
 
 Development git repositories:
 
-* git://github.com/kdave/btrfs-progs.git (`web access <https://github.com/kdave/btrfs-progs>`_)
-* git://gitlab.com/kdave/btrfs-progs.git (`web access <https://gitlab.com/kdave/btrfs-progs>`_)
+* git://github.com/kdave/btrfs-progs.git (https://github.com/kdave/btrfs-progs)
+* git://gitlab.com/kdave/btrfs-progs.git (https://gitlab.com/kdave/btrfs-progs)
 
 For build dependencies and installation instructions please see
 https://github.com/kdave/btrfs-progs/blob/master/INSTALL

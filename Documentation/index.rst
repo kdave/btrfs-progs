@@ -53,3 +53,4 @@ Welcome to BTRFS documentation!
    trouble-index
    Experimental
    btrfs-ioctl
+   DocConventions

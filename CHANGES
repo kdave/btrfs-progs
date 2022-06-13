@@ -43,7 +43,7 @@ btrfs-progs-5.17 (2022-04-26)
 	 profiles
    * preparatory work for extent tree v2, global roots
    * experimental feature (unstable interface, not built by default,
-     do not use for production):
+       do not use for production)
        * btrfstune: option --csum to switch checksum algorithm
    * other:
        * cleanups, refactoring
@@ -1190,6 +1190,7 @@ btrfs-progs-4.4 (2016-01-18)
         * usage=min..max -- enhanced to take range
         * stripes=min..max -- new, filter by stripes for raid0/10/5/6
         * limit=min..max -- enhanced to take range
+
   Note: due to backward compatibility, the range maximum for 'usage' is not
   inclusive as for the others, to keep the same behaviour as usage=N .
 
