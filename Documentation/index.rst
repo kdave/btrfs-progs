@@ -45,11 +45,16 @@ Welcome to BTRFS documentation!
 
 .. toctree::
    :maxdepth: 1
+   :caption: Project information
+
+   Source-repositories
+
+.. toctree::
+   :maxdepth: 1
    :caption: TODO
 
    Quick-start
    Interoperability
-   project-index
    trouble-index
    Experimental
    btrfs-ioctl
