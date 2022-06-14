@@ -12,6 +12,7 @@ Welcome to BTRFS documentation!
    Administration
    Hardware
    CHANGES
+   Feature-by-version
    Glossary
    INSTALL
 
