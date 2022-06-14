@@ -48,6 +48,7 @@ Welcome to BTRFS documentation!
    :caption: Project information
 
    Source-repositories
+   Contributors
 
 .. toctree::
    :maxdepth: 1
