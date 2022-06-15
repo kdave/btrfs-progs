@@ -3,7 +3,8 @@
 Troubleshooting pages
 =====================
 
-Correctness related, permanent
+System messages printed to the log (dmesg, syslog, journal) have limited space
+for description and may need further explanation what needs to be done.
 
 Error: parent transid verify error
 ----------------------------------
@@ -93,6 +94,97 @@ Relocation of block groups requires a temporary work space, ie. area on the
 device that's available for the filesystem but without any other existing block
 groups. Before balance starts a check is performed to verify the requested
 action is possible. If not, ENOSPC is returned.
+
+Error: unable to start balance with target metadata profile
+-----------------------------------------------------------
+
+.. code-block::
+
+   unable to start balance with target metadata profile 32
+
+This means that a conversion has been attempted from profile *RAID1* to *dup*
+with btrfs-progs earlier than version 4.7. Update and you'll be able to do the
+conversion.
+
+Error: balance will reduce metadata integrity
+---------------------------------------------
+
+The full message in system log
+
+.. code-block::
+
+   balance will reduce metadata integrity, use force if you want this
+
+This means that conversion will remove a degree of metadata redundancy, for
+example when going from profile *RAID1* or *dup* to *single*. The force
+parameter to ``btrfs balance start -f`` is needed.
+
+How to clean old super block
+----------------------------
+
+The preferred way is to use the ``wipefs`` utility that is part of the
+*util-linux* package. Running the command with the device will not destroy
+the data, just list the detected filesystems:
+
+.. code-block::
+
+   # wipefs /dev/sda
+   offset               type
+   ----------------------------------------------------------------
+   0x10040              btrfs   [filesystem]
+                        UUID:  7760469b-1704-487e-9b96-7d7a57d218a5
+
+Remove the filesystem signature at a given offset or wipe all recognized
+signatures on the device:
+
+.. code-block::
+
+   # wipefs -o 0x10040 /dev/sda
+   8 bytes [5f 42 48 52 66 53 5f 4d] erased at offset 0x10040 (btrfs)
+
+   # wipefs -a /dev/sda
+   8 bytes [5f 42 48 52 66 53 5f 4d] erased at offset 0x10040 (btrfs)
+
+.. note::
+
+   The process is reversible, if the 8 bytes are written back, the device is
+   recognized again. See below.
+
+.. note::
+
+   *wipefs* clears only the first super block. If available, the second and
+   third copies can be used to resurrect the filesystem.
+
+Stale signature on device
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Related problem regarding partitioned and unpartitioned device: *Long time ago
+I created btrfs on /dev/sda. After some changes btrfs moved to /dev/sda1.*
+
+Use ``wipefs -o 0x10040`` (ie. with the offset of the btrfs signature), it
+won't touch the parition table.
+
+Manual deletion of super block signature
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+There are three superblocks: the first one is located at 64KiB, the second one
+at 64MiB, the third one at 256GiB. The following lines reset the signature
+on all the three copies:
+
+
+.. code-block::
+
+   # dd if=/dev/zero bs=1 count=8 of=/dev/sda seek=$((64*1024+64))
+   # dd if=/dev/zero bs=1 count=8 of=/dev/sda seek=$((64*1024*1024+64))
+   # dd if=/dev/zero bs=1 count=8 of=/dev/sda seek=$((256*1024*1024*1024+64))
+
+If you want to restore the super block signatures:
+
+.. code-block::
+
+   # echo "_BHRfS_M" | dd bs=1 count=8 of=/dev/sda seek=$((64*1024+64))
+   # echo "_BHRfS_M" | dd bs=1 count=8 of=/dev/sda seek=$((64*1024*1024+64))
+   # echo "_BHRfS_M" | dd bs=1 count=8 of=/dev/sda seek=$((256*1024*1024*1024+64))
 
 Generic errors, errno
 ---------------------
