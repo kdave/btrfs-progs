@@ -18,8 +18,12 @@ There are some constraints:
 
 - cross-filesystem reflink is not possible, there's nothing in common between
   so the block sharing can't work
-- reflink crossing two mount points of the same filesystem does not work due
-  to an artificial limitation in VFS (this may change in the future)
+- reflink crossing two mount points of the same filesystem support depends on
+  kernel version:
+
+  - until 5.17 it's not supported and fails with "Cross device link", can be
+    worked around by performing the operation on the toplevel subvolume
+  - works since 5.18
 - reflink requires source and target file that have the same status regarding
   NOCOW and checksums, for example if the source file is NOCOW (once created
   with the chattr +C attribute) then the above command won't work unless the

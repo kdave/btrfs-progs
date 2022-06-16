@@ -410,6 +410,10 @@ features see [[Status]] page.
         The support for ioctl BTRFS_IOC_BALANCE has been removed, superseded by
         BTRFS_IOC_BALANCE_V2m long time ago
 
+5.18 - *cross-mount reflink works*
+        the VFS limitation to reflink files on separate subvolume mounts of the
+        same filesystem has been removed
+
 5.19 - subpage support pages > 4KiB
         Metadata node size is supported regardless of the CPU page size
         (minimum size is 4KiB), data sectorsize is supported <= page size.
