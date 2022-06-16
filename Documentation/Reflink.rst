@@ -18,8 +18,6 @@ There are some constraints:
 
 - cross-filesystem reflink is not possible, there's nothing in common between
   so the block sharing can't work
-- reflink crossing two mount points of the same filesystem does not work due
-  to an artificial limitation in VFS (this may change in the future)
 - reflink requires source and target file that have the same status regarding
   NOCOW and checksums, for example if the source file is NOCOW (once created
   with the chattr +C attribute) then the above command won't work unless the
