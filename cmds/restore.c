@@ -25,12 +25,12 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#if BTRFSRESTORE_LZO
+#if COMPRESSION_LZO
 #include <lzo/lzoconf.h>
 #include <lzo/lzo1x.h>
 #endif
 #include <zlib.h>
-#if BTRFSRESTORE_ZSTD
+#if COMPRESSION_ZSTD
 #include <zstd.h>
 #endif
 #include <regex.h>
@@ -100,7 +100,7 @@ static inline size_t read_compress_length(unsigned char *buf)
 static int decompress_lzo(struct btrfs_root *root, unsigned char *inbuf,
 			char *outbuf, u64 compress_len, u64 *decompress_len)
 {
-#if !BTRFSRESTORE_LZO
+#if !COMPRESSION_LZO
 	error("btrfs-restore not compiled with lzo support");
 	return -1;
 #else
@@ -168,7 +168,7 @@ static int decompress_lzo(struct btrfs_root *root, unsigned char *inbuf,
 static int decompress_zstd(const char *inbuf, char *outbuf, u64 compress_len,
 			   u64 decompress_len)
 {
-#if !BTRFSRESTORE_ZSTD
+#if !COMPRESSION_ZSTD
 	error("btrfs not compiled with zstd support");
 	return -1;
 #else
@@ -1360,10 +1360,10 @@ static const char * const cmd_restore_usage[] = {
 	HELPINFO_INSERT_VERBOSE,
 	"",
 	"Compression support: zlib"
-#if BTRFSRESTORE_LZO
+#if COMPRESSION_LZO
 		", lzo"
 #endif
-#if BTRFSRESTORE_ZSTD
+#if COMPRESSION_ZSTD
 		", zstd"
 #endif
 	,

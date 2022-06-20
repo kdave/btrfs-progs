@@ -313,7 +313,7 @@ PKG_CHECK_MODULES(ZLIB, [zlib])
 PKG_STATIC(ZLIB_LIBS_STATIC, [zlib])
 
 AC_ARG_ENABLE([zstd],
-	AS_HELP_STRING([--disable-zstd], [build without zstd support]),
+	AS_HELP_STRING([--disable-zstd], [build without zstd support for restore and receive (default: enabled)]),
 	[], [enable_zstd=yes]
 )
 
@@ -322,8 +322,8 @@ if test "x$enable_zstd" = xyes; then
 	PKG_STATIC(ZSTD_LIBS_STATIC, [libzstd])
 fi
 
-AS_IF([test "x$enable_zstd" = xyes], [BTRFSRESTORE_ZSTD=1], [BTRFSRESTORE_ZSTD=0])
-AC_SUBST(BTRFSRESTORE_ZSTD)
+AS_IF([test "x$enable_zstd" = xyes], [COMPRESSION_ZSTD=1], [COMPRESSION_ZSTD=0])
+AC_SUBST(COMPRESSION_ZSTD)
 
 AC_ARG_ENABLE([libudev],
       AS_HELP_STRING([--disable-libudev], [build without libudev support (for multipath)]),
@@ -373,7 +373,7 @@ fi
 AC_SUBST(UDEVDIR)
 
 AC_ARG_ENABLE([lzo],
-	AS_HELP_STRING([--disable-lzo], [build without lzo support (default: enabled)]),
+	AS_HELP_STRING([--disable-lzo], [build without lzo support for restore and receive (default: enabled)]),
 	[], [enable_lzo=yes]
 )
 
@@ -390,8 +390,8 @@ if test "x$enable_lzo" = xyes; then
 	AC_SUBST([LZO2_CFLAGS])
 fi
 
-AS_IF([test "x$enable_lzo" = xyes], [BTRFSRESTORE_LZO=1], [BTRFSRESTORE_LZO=0])
-AC_SUBST(BTRFSRESTORE_LZO)
+AS_IF([test "x$enable_lzo" = xyes], [COMPRESSION_LZO=1], [COMPRESSION_LZO=0])
+AC_SUBST(COMPRESSION_LZO)
 
 dnl call PKG_INSTALLDIR from pkg.m4 to set pkgconfigdir
 m4_ifdef([PKG_INSTALLDIR], [PKG_INSTALLDIR], [AC_MSG_ERROR([please install pkgconf])])
@@ -445,7 +445,8 @@ AC_MSG_RESULT([
 	doc generator:      ${DOC_TOOL}
 	backtrace support:  ${enable_backtrace}
 	btrfs-convert:      ${enable_convert} ${convertfs:+($convertfs)}
-	btrfs-restore zstd: ${enable_zstd}
+	zstd support:       ${enable_zstd}
+	lzo support:        ${enable_lzo}
 	Python bindings:    ${enable_python}
 	Python interpreter: ${PYTHON}
 	crypto provider:    ${cryptoprovider} ${cryptoproviderversion}
