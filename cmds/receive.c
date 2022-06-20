@@ -41,9 +41,14 @@
 #include <linux/fs.h>
 #include <uuid/uuid.h>
 
-#include <lzo/lzo1x.h>
 #include <zlib.h>
+#if COMPRESSION_LZO
+#include <lzo/lzoconf.h>
+#include <lzo/lzo1x.h>
+#endif
+#if BTRFSRESTORE_ZSTD
 #include <zstd.h>
+#endif
 
 #include "kernel-shared/ctree.h"
 #include "ioctl.h"
@@ -83,8 +88,10 @@ struct btrfs_receive
 
 	bool force_decompress;
 
+#if BTRFSRESTORE_ZSTD
 	/* Reuse stream objects for encoded_write decompression fallback */
 	ZSTD_DStream *zstd_dstream;
+#endif
 	z_stream *zlib_stream;
 };
 
@@ -1042,6 +1049,7 @@ static int decompress_zlib(struct btrfs_receive *rctx, const char *encoded_data,
 	return 0;
 }
 
+#if BTRFSRESTORE_ZSTD
 static int decompress_zstd(struct btrfs_receive *rctx, const char *encoded_buf,
 			   u64 encoded_len, char *unencoded_buf,
 			   u64 unencoded_len)
@@ -1080,7 +1088,9 @@ static int decompress_zstd(struct btrfs_receive *rctx, const char *encoded_buf,
 	}
 	return 0;
 }
+#endif
 
+#if BTRFSRESTORE_LZO
 static int decompress_lzo(const char *encoded_data, u64 encoded_len,
 			  char *unencoded_data, u64 unencoded_len,
 			  unsigned int sector_size)
@@ -1142,6 +1152,7 @@ static int decompress_lzo(const char *encoded_data, u64 encoded_len,
 	}
 	return 0;
 }
+#endif
 
 static int decompress_and_write(struct btrfs_receive *rctx,
 				const char *encoded_data, u64 offset,
@@ -1153,7 +1164,7 @@ static int decompress_and_write(struct btrfs_receive *rctx,
 	size_t pos;
 	ssize_t w;
 	char *unencoded_data;
-	int sector_shift;
+	int sector_shift = 0;
 
 	unencoded_data = calloc(unencoded_len, 1);
 	if (!unencoded_data) {
@@ -1168,17 +1179,24 @@ static int decompress_and_write(struct btrfs_receive *rctx,
 		if (ret)
 			goto out;
 		break;
+#if BTRFSRESTORE_ZSTD
 	case BTRFS_ENCODED_IO_COMPRESSION_ZSTD:
 		ret = decompress_zstd(rctx, encoded_data, encoded_len,
 				      unencoded_data, unencoded_len);
 		if (ret)
 			goto out;
 		break;
+#else
+		error("ZSTD compression for stream not compiled in");
+		ret = -EOPNOTSUPP;
+		goto out;
+#endif
 	case BTRFS_ENCODED_IO_COMPRESSION_LZO_4K:
 	case BTRFS_ENCODED_IO_COMPRESSION_LZO_8K:
 	case BTRFS_ENCODED_IO_COMPRESSION_LZO_16K:
 	case BTRFS_ENCODED_IO_COMPRESSION_LZO_32K:
 	case BTRFS_ENCODED_IO_COMPRESSION_LZO_64K:
+#if BTRFSRESTORE_LZO
 		sector_shift =
 			compression - BTRFS_ENCODED_IO_COMPRESSION_LZO_4K + 12;
 		ret = decompress_lzo(encoded_data, encoded_len, unencoded_data,
@@ -1186,6 +1204,11 @@ static int decompress_and_write(struct btrfs_receive *rctx,
 		if (ret)
 			goto out;
 		break;
+#else
+		error("LZO compression for stream not compiled in");
+		ret = -EOPNOTSUPP;
+		goto out;
+#endif
 	default:
 		error("unknown compression: %d", compression);
 		ret = -EOPNOTSUPP;
@@ -1485,8 +1508,10 @@ out:
 		close(rctx->dest_dir_fd);
 		rctx->dest_dir_fd = -1;
 	}
+#if BTRFSRESTORE_ZSTD
 	if (rctx->zstd_dstream)
 		ZSTD_freeDStream(rctx->zstd_dstream);
+#endif
 	if (rctx->zlib_stream) {
 		inflateEnd(rctx->zlib_stream);
 		free(rctx->zlib_stream);
@@ -1530,6 +1555,15 @@ static const char * const cmd_receive_usage[] = {
 	HELPINFO_INSERT_GLOBALS,
 	HELPINFO_INSERT_VERBOSE,
 	HELPINFO_INSERT_QUIET,
+	"",
+	"Compression support: zlib"
+#if BTRFSRESTORE_LZO
+		", lzo"
+#endif
+#if BTRFSRESTORE_ZSTD
+		", zstd"
+#endif
+	,
 	NULL
 };
 
