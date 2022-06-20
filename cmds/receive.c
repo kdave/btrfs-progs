@@ -46,7 +46,7 @@
 #include <lzo/lzoconf.h>
 #include <lzo/lzo1x.h>
 #endif
-#if BTRFSRESTORE_ZSTD
+#if COMPRESSION_ZSTD
 #include <zstd.h>
 #endif
 
@@ -88,7 +88,7 @@ struct btrfs_receive
 
 	bool force_decompress;
 
-#if BTRFSRESTORE_ZSTD
+#if COMPRESSION_ZSTD
 	/* Reuse stream objects for encoded_write decompression fallback */
 	ZSTD_DStream *zstd_dstream;
 #endif
@@ -1049,7 +1049,7 @@ static int decompress_zlib(struct btrfs_receive *rctx, const char *encoded_data,
 	return 0;
 }
 
-#if BTRFSRESTORE_ZSTD
+#if COMPRESSION_ZSTD
 static int decompress_zstd(struct btrfs_receive *rctx, const char *encoded_buf,
 			   u64 encoded_len, char *unencoded_buf,
 			   u64 unencoded_len)
@@ -1090,7 +1090,7 @@ static int decompress_zstd(struct btrfs_receive *rctx, const char *encoded_buf,
 }
 #endif
 
-#if BTRFSRESTORE_LZO
+#if COMPRESSION_LZO
 static int decompress_lzo(const char *encoded_data, u64 encoded_len,
 			  char *unencoded_data, u64 unencoded_len,
 			  unsigned int sector_size)
@@ -1179,7 +1179,7 @@ static int decompress_and_write(struct btrfs_receive *rctx,
 		if (ret)
 			goto out;
 		break;
-#if BTRFSRESTORE_ZSTD
+#if COMPRESSION_ZSTD
 	case BTRFS_ENCODED_IO_COMPRESSION_ZSTD:
 		ret = decompress_zstd(rctx, encoded_data, encoded_len,
 				      unencoded_data, unencoded_len);
@@ -1196,7 +1196,7 @@ static int decompress_and_write(struct btrfs_receive *rctx,
 	case BTRFS_ENCODED_IO_COMPRESSION_LZO_16K:
 	case BTRFS_ENCODED_IO_COMPRESSION_LZO_32K:
 	case BTRFS_ENCODED_IO_COMPRESSION_LZO_64K:
-#if BTRFSRESTORE_LZO
+#if COMPRESSION_LZO
 		sector_shift =
 			compression - BTRFS_ENCODED_IO_COMPRESSION_LZO_4K + 12;
 		ret = decompress_lzo(encoded_data, encoded_len, unencoded_data,
@@ -1508,7 +1508,7 @@ out:
 		close(rctx->dest_dir_fd);
 		rctx->dest_dir_fd = -1;
 	}
-#if BTRFSRESTORE_ZSTD
+#if COMPRESSION_ZSTD
 	if (rctx->zstd_dstream)
 		ZSTD_freeDStream(rctx->zstd_dstream);
 #endif
@@ -1557,10 +1557,10 @@ static const char * const cmd_receive_usage[] = {
 	HELPINFO_INSERT_QUIET,
 	"",
 	"Compression support: zlib"
-#if BTRFSRESTORE_LZO
+#if COMPRESSION_LZO
 		", lzo"
 #endif
-#if BTRFSRESTORE_ZSTD
+#if COMPRESSION_ZSTD
 		", zstd"
 #endif
 	,
