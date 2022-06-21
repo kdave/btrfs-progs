@@ -1535,7 +1535,7 @@ static int _cmd_qgroup_assign(const struct cmd_struct *cmd, int assign,
 
 	optind = 0;
 	while (1) {
-		enum { GETOPT_VAL_RESCAN = 256, GETOPT_VAL_NO_RESCAN };
+		enum { GETOPT_VAL_RESCAN = GETOPT_VAL_FIRST, GETOPT_VAL_NO_RESCAN };
 		static const struct option long_options[] = {
 			{ "rescan", no_argument, NULL, GETOPT_VAL_RESCAN },
 			{ "no-rescan", no_argument, NULL, GETOPT_VAL_NO_RESCAN },
@@ -1757,7 +1757,7 @@ static int cmd_qgroup_show(const struct cmd_struct *cmd, int argc, char **argv)
 	while (1) {
 		int c;
 		enum {
-			GETOPT_VAL_SORT = 256,
+			GETOPT_VAL_SORT = GETOPT_VAL_FIRST,
 			GETOPT_VAL_SYNC
 		};
 		static const struct option long_options[] = {

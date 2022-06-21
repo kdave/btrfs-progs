@@ -74,7 +74,7 @@ static int cmd_device_add(const struct cmd_struct *cmd,
 	optind = 0;
 	while (1) {
 		int c;
-		enum { GETOPT_VAL_ENQUEUE = 256 };
+		enum { GETOPT_VAL_ENQUEUE = GETOPT_VAL_FIRST };
 		static const struct option long_options[] = {
 			{ "nodiscard", optional_argument, NULL, 'K'},
 			{ "force", no_argument, NULL, 'f'},
@@ -199,7 +199,7 @@ static int _cmd_device_remove(const struct cmd_struct *cmd,
 	optind = 0;
 	while (1) {
 		int c;
-		enum { GETOPT_VAL_ENQUEUE = 256 };
+		enum { GETOPT_VAL_ENQUEUE = GETOPT_VAL_FIRST };
 		static const struct option long_options[] = {
 			{ "enqueue", no_argument, NULL, GETOPT_VAL_ENQUEUE},
 			{ NULL, 0, NULL, 0}

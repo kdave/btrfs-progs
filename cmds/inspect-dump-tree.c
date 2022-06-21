@@ -342,7 +342,8 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 	optind = 0;
 	while (1) {
 		int c;
-		enum { GETOPT_VAL_FOLLOW = 256, GETOPT_VAL_DFS, GETOPT_VAL_BFS,
+		enum { GETOPT_VAL_FOLLOW = GETOPT_VAL_FIRST, GETOPT_VAL_DFS,
+			GETOPT_VAL_BFS,
 		       GETOPT_VAL_NOSCAN, GETOPT_VAL_HIDE_NAMES,
 		       GETOPT_VAL_CSUM_HEADERS, GETOPT_VAL_CSUM_ITEMS,
 		};

@@ -1832,7 +1832,7 @@ int BOX_MAIN(convert)(int argc, char *argv[])
 	printf("btrfs-convert from %s\n\n", PACKAGE_STRING);
 
 	while(1) {
-		enum { GETOPT_VAL_NO_PROGRESS = 256, GETOPT_VAL_CHECKSUM,
+		enum { GETOPT_VAL_NO_PROGRESS = GETOPT_VAL_FIRST, GETOPT_VAL_CHECKSUM,
 			GETOPT_VAL_UUID };
 		static const struct option long_options[] = {
 			{ "no-progress", no_argument, NULL,

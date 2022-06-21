@@ -538,7 +538,7 @@ static int cmd_send(const struct cmd_struct *cmd, int argc, char **argv)
 	optind = 0;
 	while (1) {
 		enum {
-			GETOPT_VAL_SEND_NO_DATA = 256,
+			GETOPT_VAL_SEND_NO_DATA = GETOPT_VAL_FIRST,
 			GETOPT_VAL_PROTO,
 			GETOPT_VAL_COMPRESSED_DATA,
 		};

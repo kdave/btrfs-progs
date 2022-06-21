@@ -1021,7 +1021,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	while(1) {
 		int c;
 		enum {
-			GETOPT_VAL_SHRINK = 257,
+			GETOPT_VAL_SHRINK = GETOPT_VAL_FIRST,
 			GETOPT_VAL_CHECKSUM,
 			GETOPT_VAL_GLOBAL_ROOTS,
 		};

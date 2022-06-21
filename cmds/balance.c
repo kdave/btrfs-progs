@@ -407,9 +407,8 @@ static int cmd_balance_start(const struct cmd_struct *cmd,
 
 	optind = 0;
 	while (1) {
-		enum { GETOPT_VAL_FULL_BALANCE = 256,
-			GETOPT_VAL_BACKGROUND = 257,
-			GETOPT_VAL_ENQUEUE };
+		enum { GETOPT_VAL_FULL_BALANCE = GETOPT_VAL_FIRST,
+			GETOPT_VAL_BACKGROUND, GETOPT_VAL_ENQUEUE };
 		static const struct option longopts[] = {
 			{ "data", optional_argument, NULL, 'd'},
 			{ "metadata", optional_argument, NULL, 'm' },

@@ -818,7 +818,7 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 	int fd = -1;
 
 	while(1) {
-		enum { GETOPT_VAL_CSUM = 256 };
+		enum { GETOPT_VAL_CSUM = GETOPT_VAL_FIRST };
 		static const struct option long_options[] = {
 			{ "help", no_argument, NULL, GETOPT_VAL_HELP},
 #if EXPERIMENTAL

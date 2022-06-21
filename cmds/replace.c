@@ -147,7 +147,7 @@ static int cmd_replace_start(const struct cmd_struct *cmd,
 	optind = 0;
 	while (1) {
 		int c;
-		enum { GETOPT_VAL_ENQUEUE = 256 };
+		enum { GETOPT_VAL_ENQUEUE = GETOPT_VAL_FIRST };
 		static const struct option long_options[] = {
 			{ "enqueue", no_argument, NULL, GETOPT_VAL_ENQUEUE},
 			{ "nodiscard", no_argument, NULL, 'K' },
