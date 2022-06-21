@@ -667,12 +667,23 @@ BUILD_ASSERT(sizeof(struct btrfs_ioctl_received_subvol_args_32) == 192);
  */
 #define BTRFS_SEND_FLAG_COMPRESSED		0x10
 
+/*
+ * Calculate the amount (in bytes) of new file data between the send and
+ * parent snapshots, or in case of a full send, the total amount of file data
+ * we will send.
+ * This corresponds to the sum of the data lengths of each write and clone
+ * commands that are sent through the send stream. The receiving end can use
+ * this information to estimate progress.
+ */
+#define BTRFS_SEND_FLAG_CALC_DATA_SIZE		0x20
+
 #define BTRFS_SEND_FLAG_MASK \
 	(BTRFS_SEND_FLAG_NO_FILE_DATA | \
 	 BTRFS_SEND_FLAG_OMIT_STREAM_HEADER | \
 	 BTRFS_SEND_FLAG_OMIT_END_CMD | \
 	 BTRFS_SEND_FLAG_VERSION | \
-	 BTRFS_SEND_FLAG_COMPRESSED)
+	 BTRFS_SEND_FLAG_COMPRESSED | \
+	 BTRFS_SEND_FLAG_CALC_DATA_SIZE)
 
 struct btrfs_ioctl_send_args {
 	__s64 send_fd;			/* in */

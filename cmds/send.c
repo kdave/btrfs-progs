@@ -541,6 +541,7 @@ static int cmd_send(const struct cmd_struct *cmd, int argc, char **argv)
 			GETOPT_VAL_SEND_NO_DATA = GETOPT_VAL_FIRST,
 			GETOPT_VAL_PROTO,
 			GETOPT_VAL_COMPRESSED_DATA,
+			GETOPT_VAL_CALC_DATA_SIZE,
 		};
 		static const struct option long_options[] = {
 			{ "verbose", no_argument, NULL, 'v' },
@@ -548,6 +549,7 @@ static int cmd_send(const struct cmd_struct *cmd, int argc, char **argv)
 			{ "no-data", no_argument, NULL, GETOPT_VAL_SEND_NO_DATA },
 			{ "proto", required_argument, NULL, GETOPT_VAL_PROTO },
 			{ "compressed-data", no_argument, NULL, GETOPT_VAL_COMPRESSED_DATA },
+			{ "calc-data-size", no_argument, NULL, GETOPT_VAL_CALC_DATA_SIZE },
 			{ NULL, 0, NULL, 0 }
 		};
 		int c = getopt_long(argc, argv, "vqec:f:i:p:", long_options, NULL);
@@ -647,6 +649,9 @@ static int cmd_send(const struct cmd_struct *cmd, int argc, char **argv)
 			break;
 		case GETOPT_VAL_COMPRESSED_DATA:
 			send_flags |= BTRFS_SEND_FLAG_COMPRESSED;
+			break;
+		case GETOPT_VAL_CALC_DATA_SIZE:
+			send_flags |= BTRFS_SEND_FLAG_CALC_DATA_SIZE;
 			break;
 		default:
 			usage_unknown_option(cmd, argv);
