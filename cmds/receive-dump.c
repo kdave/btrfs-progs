@@ -339,9 +339,9 @@ static int print_fallocate(const char *path, int mode, u64 offset, u64 len,
 			  mode, offset, len);
 }
 
-static int print_setflags(const char *path, int flags, void *user)
+static int print_fileattr(const char *path, u64 attr, void *user)
 {
-	return PRINT_DUMP(user, path, "setflags", "flags=%d", flags);
+	return PRINT_DUMP(user, path, "fileattr", "fileattr=0x%llu", attr);
 }
 
 struct btrfs_send_ops btrfs_print_send_ops = {
@@ -368,5 +368,5 @@ struct btrfs_send_ops btrfs_print_send_ops = {
 	.update_extent = print_update_extent,
 	.encoded_write = print_encoded_write,
 	.fallocate = print_fallocate,
-	.setflags = print_setflags,
+	.fileattr = print_fileattr,
 };

@@ -1309,7 +1309,7 @@ static int process_fallocate(const char *path, int mode, u64 offset, u64 len,
 	return 0;
 }
 
-static int process_setflags(const char *path, int flags, void *user)
+static int process_fileattr(const char *path, u64 attr, void *user)
 {
 	int ret;
 	struct btrfs_receive *rctx = user;
@@ -1317,16 +1317,17 @@ static int process_setflags(const char *path, int flags, void *user)
 
 	ret = path_cat_out(full_path, rctx->full_subvol_path, path);
 	if (ret < 0) {
-		error("setflags: path invalid: %s", path);
+		error("fileattr: path invalid: %s", path);
 		return ret;
 	}
 	ret = open_inode_for_write(rctx, full_path);
 	if (ret < 0)
 		return ret;
-	ret = ioctl(rctx->write_fd, FS_IOC_SETFLAGS, &flags);
+	ret = -EOPNOTSUPP;
+	/* ret = ioctl(rctx->write_fd, FS_IOC_SETFLAGS, &flags); */
 	if (ret < 0) {
 		ret = -errno;
-		error("setflags: setflags ioctl on %s failed: %m", path);
+		error("fileattr: set file attributes on %s failed: %m", path);
 		return ret;
 	}
 	return 0;
@@ -1356,7 +1357,7 @@ static struct btrfs_send_ops send_ops = {
 	.update_extent = process_update_extent,
 	.encoded_write = process_encoded_write,
 	.fallocate = process_fallocate,
-	.setflags = process_setflags,
+	.fileattr = process_fileattr,
 };
 
 static int do_receive(struct btrfs_receive *rctx, const char *tomnt,

@@ -372,10 +372,10 @@ static int read_and_process_cmd(struct btrfs_send_stream *sctx)
 	u64 unencoded_file_len;
 	u64 unencoded_len;
 	u64 unencoded_offset;
+	u64 fileattr;
 	int len;
 	int xattr_len;
 	int fallocate_mode;
-	int setflags_flags;
 
 	ret = read_cmd(sctx);
 	if (ret)
@@ -548,10 +548,10 @@ static int read_and_process_cmd(struct btrfs_send_stream *sctx)
 		ret = sctx->ops->fallocate(path, fallocate_mode, offset, tmp,
 					   sctx->user);
 		break;
-	case BTRFS_SEND_C_SETFLAGS:
+	case BTRFS_SEND_C_FILEATTR:
 		TLV_GET_STRING(sctx, BTRFS_SEND_A_PATH, &path);
-		TLV_GET_U32(sctx, BTRFS_SEND_A_SETFLAGS_FLAGS, &setflags_flags);
-		ret = sctx->ops->setflags(path, setflags_flags, sctx->user);
+		TLV_GET_U32(sctx, BTRFS_SEND_A_FILEATTR, &fileattr);
+		ret = sctx->ops->fileattr(path, fileattr, sctx->user);
 		break;
 	}
 
