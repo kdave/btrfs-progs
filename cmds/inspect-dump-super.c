@@ -92,7 +92,7 @@ static int cmd_inspect_dump_super(const struct cmd_struct *cmd,
 
 	while (1) {
 		int c;
-		enum { GETOPT_VAL_BYTENR = 257 };
+		enum { GETOPT_VAL_BYTENR = GETOPT_VAL_FIRST };
 		static const struct option long_options[] = {
 			{"all", no_argument, NULL, 'a'},
 			{"bytenr", required_argument, NULL, GETOPT_VAL_BYTENR },

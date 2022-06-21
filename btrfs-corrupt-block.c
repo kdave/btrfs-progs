@@ -1236,7 +1236,7 @@ int main(int argc, char **argv)
 
 	while(1) {
 		int c;
-		enum { GETOPT_VAL_BLOCK_GROUP = 256 };
+		enum { GETOPT_VAL_BLOCK_GROUP = GETOPT_VAL_FIRST };
 		static const struct option long_options[] = {
 			/* { "byte-count", 1, NULL, 'b' }, */
 			{ "logical", required_argument, NULL, 'l' },

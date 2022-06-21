@@ -648,7 +648,7 @@ static int cmd_inspect_min_dev_size(const struct cmd_struct *cmd,
 	optind = 0;
 	while (1) {
 		int c;
-		enum { GETOPT_VAL_DEVID = 256 };
+		enum { GETOPT_VAL_DEVID = GETOPT_VAL_FIRST };
 		static const struct option long_options[] = {
 			{ "id", required_argument, NULL, GETOPT_VAL_DEVID },
 			{NULL, 0, NULL, 0}

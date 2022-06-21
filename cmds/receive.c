@@ -1602,7 +1602,7 @@ static int cmd_receive(const struct cmd_struct *cmd, int argc, char **argv)
 	while (1) {
 		int c;
 		enum {
-			GETOPT_VAL_DUMP = 257,
+			GETOPT_VAL_DUMP = GETOPT_VAL_FIRST,
 			GETOPT_VAL_FORCE_DECOMPRESS,
 		};
 		static const struct option long_opts[] = {

@@ -1391,7 +1391,7 @@ static int cmd_restore(const struct cmd_struct *cmd, int argc, char **argv)
 	optind = 0;
 	while (1) {
 		int opt;
-		enum { GETOPT_VAL_PATH_REGEX = 256 };
+		enum { GETOPT_VAL_PATH_REGEX = GETOPT_VAL_FIRST };
 		static const struct option long_options[] = {
 			{ "path-regex", required_argument, NULL,
 				GETOPT_VAL_PATH_REGEX },
