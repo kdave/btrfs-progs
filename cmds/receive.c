@@ -75,7 +75,6 @@ struct btrfs_receive
 	char *dest_dir_path; /* relative to root_path */
 	char full_subvol_path[PATH_MAX];
 	char *full_root_path;
-	int dest_dir_chroot;
 
 	struct subvol_info cur_subvol;
 	/*
@@ -84,7 +83,9 @@ struct btrfs_receive
 	 */
 	char cur_subvol_path[PATH_MAX];
 
-	int honor_end_cmd;
+	bool dest_dir_chroot;
+
+	bool honor_end_cmd;
 
 	bool force_decompress;
 
@@ -1582,7 +1583,7 @@ static int cmd_receive(const struct cmd_struct *cmd, int argc, char **argv)
 	rctx.mnt_fd = -1;
 	rctx.write_fd = -1;
 	rctx.dest_dir_fd = -1;
-	rctx.dest_dir_chroot = 0;
+	rctx.dest_dir_chroot = false;
 	realmnt[0] = 0;
 	fromfile[0] = 0;
 
@@ -1634,10 +1635,10 @@ static int cmd_receive(const struct cmd_struct *cmd, int argc, char **argv)
 			}
 			break;
 		case 'e':
-			rctx.honor_end_cmd = 1;
+			rctx.honor_end_cmd = true;
 			break;
 		case 'C':
-			rctx.dest_dir_chroot = 1;
+			rctx.dest_dir_chroot = true;
 			break;
 		case 'E':
 			max_errors = arg_strtou64(optarg);
