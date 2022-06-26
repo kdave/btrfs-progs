@@ -248,7 +248,7 @@ This should lead to decrease in the *total* numbers in the **btrfs filesystem df
 EXIT STATUS
 -----------
 
-Unless indicated otherwise below, all **btrfs balance** subcommands
+Unless indicated otherwise below, all **btrfs balance** subcommands 
 return a zero exit status if they succeed, and non zero in case of
 failure.
 
