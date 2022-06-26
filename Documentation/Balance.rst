@@ -7,3 +7,8 @@ Filters
 -------
 
 .. include:: ch-balance-filters.rst
+
+Examples
+--------
+
+.. include:: ch-balance-examples.rst
