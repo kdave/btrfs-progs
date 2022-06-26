@@ -65,7 +65,7 @@ static u64 intersect_with_reserved(u64 bytenr, u64 num_bytes)
 		const struct simple_range *range = &btrfs_reserved_ranges[i];
 
 		if (bytenr < range_end(range) &&
-		    bytenr + num_bytes >= range->start)
+		    bytenr + num_bytes > range->start)
 			return range_end(range);
 	}
 	return 0;
