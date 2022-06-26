@@ -64,4 +64,25 @@ struct btrfs_convert_context {
 int make_convert_btrfs(int fd, struct btrfs_mkfs_config *cfg,
 			      struct btrfs_convert_context *cctx);
 
+/*
+ * Represents a simple contiguous range.
+ *
+ * For multiple or non-contiguous ranges, use extent_cache_tree from
+ * extent-cache.c
+ */
+struct simple_range {
+	u64 start;
+	u64 len;
+};
+
+/*
+ * Simple range functions
+ */
+
+/* Get range end (exclusive) */
+static inline u64 range_end(const struct simple_range *range)
+{
+	return (range->start + range->len);
+}
+
 #endif
