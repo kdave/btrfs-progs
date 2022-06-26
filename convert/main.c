@@ -213,9 +213,9 @@ static int create_image_file_range(struct btrfs_trans_handle *trans,
 {
 	struct cache_extent *cache;
 	struct btrfs_block_group *bg_cache;
+	const struct simple_range *reserved;
 	u64 len = *ret_len;
 	u64 disk_bytenr;
-	int i;
 	int ret;
 	u32 datacsum = convert_flags & CONVERT_FLAG_DATACSUM;
 
@@ -237,9 +237,8 @@ static int create_image_file_range(struct btrfs_trans_handle *trans,
 	 * Or we will insert a hole into current image file, and later
 	 * migrate block will fail as there is already a file extent.
 	 */
-	for (i = 0; i < ARRAY_SIZE(btrfs_reserved_ranges); i++) {
-		const struct simple_range *reserved = &btrfs_reserved_ranges[i];
-
+	reserved = intersect_with_reserved(bytenr, len);
+	if (reserved) {
 		/*
 		 * |-- reserved --|
 		 *         |-- range --|
@@ -248,7 +247,7 @@ static int create_image_file_range(struct btrfs_trans_handle *trans,
 		 *    |-- range --|
 		 * Skip to reserved range end
 		 */
-		if (bytenr >= reserved->start && bytenr < range_end(reserved)) {
+		if (bytenr >= reserved->start) {
 			*ret_len = range_end(reserved) - bytenr;
 			return 0;
 		}
@@ -261,11 +260,7 @@ static int create_image_file_range(struct btrfs_trans_handle *trans,
 		 * |------- range -------|
 		 * Leading part may still create a file extent
 		 */
-		if (bytenr < reserved->start &&
-		    bytenr + len > reserved->start) {
-			len = min_t(u64, len, reserved->start - bytenr);
-			break;
-		}
+		len = min_t(u64, len, reserved->start - bytenr);
 	}
 
 	/* Check if we are going to insert regular file extent, or hole */
