@@ -53,7 +53,7 @@ int ext2_acl_count(size_t size)
 	}
 }
 
-static u64 intersect_with_reserved(u64 bytenr, u64 num_bytes)
+const struct simple_range *intersect_with_reserved(u64 bytenr, u64 num_bytes)
 {
 	int i;
 
@@ -62,9 +62,9 @@ static u64 intersect_with_reserved(u64 bytenr, u64 num_bytes)
 
 		if (bytenr < range_end(range) &&
 		    bytenr + num_bytes > range->start)
-			return range_end(range);
+			return range;
 	}
-	return 0;
+	return NULL;
 }
 
 void init_convert_context(struct btrfs_convert_context *cctx)
@@ -89,15 +89,15 @@ int block_iterate_proc(u64 disk_block, u64 file_block,
 		              struct blk_iterate_data *idata)
 {
 	int ret = 0;
-	u64 reserved_boundary;
+	const struct simple_range *reserved;
 	int do_barrier;
 	struct btrfs_root *root = idata->root;
 	struct btrfs_block_group *cache;
 	u32 sectorsize = root->fs_info->sectorsize;
 	u64 bytenr = disk_block * sectorsize;
 
-	reserved_boundary = intersect_with_reserved(bytenr, sectorsize);
-	do_barrier = reserved_boundary || disk_block >= idata->boundary;
+	reserved = intersect_with_reserved(bytenr, sectorsize);
+	do_barrier = reserved || disk_block >= idata->boundary;
 	if ((idata->num_blocks > 0 && do_barrier) ||
 	    (file_block > idata->first_block + idata->num_blocks) ||
 	    (disk_block != idata->disk_block + idata->num_blocks)) {
@@ -117,8 +117,8 @@ int block_iterate_proc(u64 disk_block, u64 file_block,
 				goto fail;
 		}
 
-		if (reserved_boundary) {
-			bytenr = reserved_boundary;
+		if (reserved) {
+			bytenr = range_end(reserved);
 		} else {
 			cache = btrfs_lookup_block_group(root->fs_info, bytenr);
 			BUG_ON(!cache);

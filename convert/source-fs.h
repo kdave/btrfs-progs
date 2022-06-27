@@ -25,6 +25,8 @@
 
 extern const struct simple_range btrfs_reserved_ranges[3];
 
+const struct simple_range *intersect_with_reserved(u64 bytenr, u64 num_bytes);
+
 struct task_info;
 
 struct task_ctx {
