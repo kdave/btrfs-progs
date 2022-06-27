@@ -256,10 +256,13 @@ static int create_image_file_range(struct btrfs_trans_handle *trans,
 		/*
 		 *      |-- reserved --|
 		 * |-- range --|
+		 * or
+		 *      |-- reserved --|
+		 * |------- range -------|
 		 * Leading part may still create a file extent
 		 */
 		if (bytenr < reserved->start &&
-		    bytenr + len >= range_end(reserved)) {
+		    bytenr + len > reserved->start) {
 			len = min_t(u64, len, reserved->start - bytenr);
 			break;
 		}
