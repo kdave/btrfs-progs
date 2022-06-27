@@ -242,7 +242,7 @@ static int create_image_file_range(struct btrfs_trans_handle *trans,
 
 		/*
 		 * |-- reserved --|
-		 *         |--range---|
+		 *         |-- range --|
 		 * or
 		 * |---- reserved ----|
 		 *    |-- range --|
@@ -254,8 +254,8 @@ static int create_image_file_range(struct btrfs_trans_handle *trans,
 		}
 
 		/*
-		 *      |---reserved---|
-		 * |----range-------|
+		 *      |-- reserved --|
+		 * |-- range --|
 		 * Leading part may still create a file extent
 		 */
 		if (bytenr < reserved->start &&
