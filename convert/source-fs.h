@@ -31,6 +31,8 @@ struct task_info;
 
 extern const struct simple_range btrfs_reserved_ranges[3];
 
+const struct simple_range *intersect_with_reserved(u64 bytenr, u64 num_bytes);
+
 struct task_ctx {
 	pthread_mutex_t mutex;
 	u64 max_copy_inodes;
