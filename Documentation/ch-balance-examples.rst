@@ -30,7 +30,7 @@ devices or increasing the size of existing ones.
 .. code-block:: bash
 
         ## For going from 4 disk to 5 disks, in Raid 5
-        sudo btrfs balance start -v -dstripes=1..4,soft $BTRFS_MOUNT
+        sudo btrfs balance start -v -dstripes=1..4 $BTRFS_MOUNT
 
 If you are not using a striped profile now, but intend to convert to a
 striped profile in the future, always perform a full data balance after
