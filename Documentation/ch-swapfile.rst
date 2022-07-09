@@ -66,3 +66,26 @@ priority, not the BTRFS mount options).
 
         /path/swapfile        none        swap        defaults      0 0
 
+
+Troubleshooting
+---------------
+
+If the swapfile activation fails please verify that you followed all the steps
+above or check the system log (eg. ``dmesg`` or ``journalctl``) for more
+information.
+
+Notably, the *swapon* utility exits with a message that does not say what
+failed:
+
+.. code-block:: none
+
+        # swapon /path/swapfile
+	swapon: /path/swapfile: swapon failed: Invalid argument
+
+The specific reason is likely to be printed to the system log by the btrfs
+module:
+
+.. code-block:: none
+
+	# journalctl -t kernel | grep swapfile
+	kernel: BTRFS warning (device sda): swapfile must have single data profile
