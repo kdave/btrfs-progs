@@ -4,10 +4,10 @@ swapfile. There are some limitations of the implementation in BTRFS and linux
 swap subsystem:
 
 * filesystem - must be only single device
-* filesystem - must have only *single* data profile 
+* filesystem - must have only ``single`` data profile
 * swapfile - the containing subvolume cannot be snapshotted
 * swapfile - must be preallocated
-* swapfile - must be nodatacow (ie. also nodatasum)
+* swapfile - must be nodatacow (ie. also ``nodatasum``)
 * swapfile - must not be compressed
 
 The limitations come namely from the COW-based design and mapping layer of
@@ -67,20 +67,27 @@ priority, not the BTRFS mount options).
         /path/swapfile        none        swap        defaults      0 0
 	
 	
-Errors
-------
+Troubleshoot
+------------
 
-If the prerequisites  are present ``swapon(8)`` will fail:
+To Troubleshoot one can use:
+
+* List of prerequisites
+* Look in ``journalctl(1)``
+
+Look at the limitations of the implementation, list atop.
+________________________________________________________
+
+If the prerequisites  are not present ``swapon(8)`` will fail:
 
 .. code-block:: none
 
 	swapon: /path/swapfile: swapon failed: Invalid argument
 
+Look in ``journalctl(1)``
+______________________________
 
-To troubleshoot:
-
-1. Look at the limitations of the implementation, list atop.
-2. Look in the ``journalctl(1)``  and filter for type  ``kernel``
+One can look in  the ``journalctl(1)``  and filter for type  ``kernel``, to get more info.
 
 .. code-block:: none
 
