@@ -4,7 +4,7 @@ swapfile. There are some limitations of the implementation in BTRFS and linux
 swap subsystem:
 
 * filesystem - must be only single device
-* filesystem - must have only *single* data profile
+* filesystem - must have only *single* data profile 
 * swapfile - the containing subvolume cannot be snapshotted
 * swapfile - must be preallocated
 * swapfile - must be nodatacow (ie. also nodatasum)
@@ -65,4 +65,32 @@ priority, not the BTRFS mount options).
 .. code-block:: none
 
         /path/swapfile        none        swap        defaults      0 0
+	
+	
+Errors
+------
 
+If the prerequisites  are present ``swapon(8)`` will fail:
+
+.. code-block:: none
+
+	swapon: /path/swapfile: swapon failed: Invalid argument
+
+
+To troubleshoot:
+
+1. Look at the limitations of the implementation, list atop.
+2. Look in the ``journalctl(1)``  and filter for type  ``kernel``
+
+.. code-block:: none
+
+	journalctl  -t kernel | grep swapfile
+
+This will print something like:
+
+.. code-block:: none
+	
+	kernel: BTRFS warning (device sda): swapfile must have single data profile
+	
+full list of error message can be found her: https://github.com/torvalds/linux/blob/master/fs/btrfs/inode.c#L11082
+	
