@@ -61,3 +61,4 @@ Welcome to BTRFS documentation!
    Experimental
    btrfs-ioctl
    DocConventions
+   dev-send-stream
