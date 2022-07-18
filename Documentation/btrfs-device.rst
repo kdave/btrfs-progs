@@ -122,6 +122,9 @@ stats [options] <path>|<device>
                 return code if any of the statistics is no-zero. The error values is 65 if
                 reading stats from at least one device failed, otherwise it's 64.
 
+        -T
+                Print stats in a tabular form, devices as rows and stats as columns
+
 usage [options] <path> [<path>...]::
         Show detailed information about internal allocations on devices.
 

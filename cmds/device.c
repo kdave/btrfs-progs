@@ -27,6 +27,7 @@
 #include "kerncompat.h"
 #include "kernel-shared/ctree.h"
 #include "ioctl.h"
+#include "common/string-table.h"
 #include "common/utils.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/zoned.h"
@@ -572,6 +573,7 @@ static const char * const cmd_device_stats_usage[] = {
 	"",
 	"-c|--check             return non-zero if any stat counter is not zero",
 	"-z|--reset             show current stats and reset values to zero",
+	"-T                     show current stats in tabular format",
 	HELPINFO_INSERT_GLOBALS,
 	HELPINFO_INSERT_FORMAT,
 	NULL
@@ -643,16 +645,75 @@ static int print_device_stat_string(struct format_ctx *fctx,
 	return err;
 }
 
+
+static int print_device_stat_tabular(struct string_table *table, int row,
+		struct btrfs_ioctl_get_dev_stats *args, char *path, bool check)
+{
+	char *canonical_path = path_canonicalize(path);
+	int j;
+	int err = 0;
+	static const struct {
+		const char name[32];
+		enum btrfs_dev_stat_values stat_idx;
+	} dev_stats[] = {
+		{ "write_io_errs", BTRFS_DEV_STAT_WRITE_ERRS },
+		{ "read_io_errs", BTRFS_DEV_STAT_READ_ERRS },
+		{ "flush_io_errs", BTRFS_DEV_STAT_FLUSH_ERRS },
+		{ "corruption_errs", BTRFS_DEV_STAT_CORRUPTION_ERRS },
+		{ "generation_errs", BTRFS_DEV_STAT_GENERATION_ERRS },
+	};
+
+	/* Skip header + --- line */
+	row += 2;
+
+	/* No path when device is missing. */
+	if (!canonical_path) {
+		canonical_path = malloc(32);
+
+		if (!canonical_path) {
+			error("not enough memory for path buffer");
+			return -ENOMEM;
+		}
+
+		snprintf(canonical_path, 32, "devid:%llu", args->devid);
+	}
+	table_printf(table, 0, row, ">%llu", args->devid);
+	table_printf(table, 1, row, ">%s", canonical_path);
+	free(canonical_path);
+
+	for (j = 0; j < ARRAY_SIZE(dev_stats); j++) {
+		enum btrfs_dev_stat_values stat_idx = dev_stats[j].stat_idx;
+
+		/* We got fewer items than we know */
+		if (args->nr_items < stat_idx + 1)
+			continue;
+
+		table_printf(table, 2, row, ">%llu", args->values[stat_idx]);
+		table_printf(table, 3, row, ">%llu", args->values[stat_idx]);
+		table_printf(table, 4, row, ">%llu", args->values[stat_idx]);
+		table_printf(table, 5, row, ">%llu", args->values[stat_idx]);
+		table_printf(table, 6, row, ">%llu", args->values[stat_idx]);
+
+		if (check && (args->values[stat_idx] > 0))
+			err |= 64;
+	}
+
+	return err;
+}
+
 static int cmd_device_stats(const struct cmd_struct *cmd, int argc, char **argv)
 {
 	char *dev_path;
 	struct btrfs_ioctl_fs_info_args fi_args;
 	struct btrfs_ioctl_dev_info_args *di_args = NULL;
+	struct string_table *table = NULL;
 	int ret;
 	int fdmnt;
 	int i;
 	int err = 0;
 	bool check = false;
+	bool free_table = false;
+	bool tabular = false;
 	__u64 flags = 0;
 	DIR *dirstream = NULL;
 	struct format_ctx fctx;
@@ -666,7 +727,7 @@ static int cmd_device_stats(const struct cmd_struct *cmd, int argc, char **argv)
 			{NULL, 0, NULL, 0}
 		};
 
-		c = getopt_long(argc, argv, "cz", long_options, NULL);
+		c = getopt_long(argc, argv, "czT", long_options, NULL);
 		if (c < 0)
 			break;
 
@@ -676,6 +737,9 @@ static int cmd_device_stats(const struct cmd_struct *cmd, int argc, char **argv)
 			break;
 		case 'z':
 			flags = BTRFS_DEV_STATS_RESET;
+			break;
+		case 'T':
+			tabular = true;
 			break;
 		default:
 			usage_unknown_option(cmd, argv);
@@ -704,8 +768,31 @@ static int cmd_device_stats(const struct cmd_struct *cmd, int argc, char **argv)
 		goto out;
 	}
 
-	fmt_start(&fctx, device_stats_rowspec, 24, 0);
-	fmt_print_start_group(&fctx, "device-stats", JSON_TYPE_ARRAY);
+	if (tabular) {
+		/*
+		 * cols = Id/Path/write/read/flush/corruption/generation
+		 * rows = num devices + 2 (header and ---- line)
+		 */
+		table = table_create(7, fi_args.num_devices + 2);
+		if (!table) {
+			error("not enough memory");
+			goto out;
+		}
+		free_table = true;
+		table_printf(table, 0,0, "<Id");
+		table_printf(table, 1,0, "<Path");
+		table_printf(table, 2,0, "<Write errors");
+		table_printf(table, 3,0, "<Read errors");
+		table_printf(table, 4,0, "<Flush errors");
+		table_printf(table, 5,0, "<Corruption errors");
+		table_printf(table, 6,0, "<Generation errors");
+		for (i = 0; i < 7; i++)
+			table_printf(table, i, 1, "*-");
+	} else {
+		fmt_start(&fctx, device_stats_rowspec, 24, 0);
+		fmt_print_start_group(&fctx, "device-stats", JSON_TYPE_ARRAY);
+	}
+
 	for (i = 0; i < fi_args.num_devices; i++) {
 		struct btrfs_ioctl_get_dev_stats args = {0};
 		char path[BTRFS_DEVICE_PATH_NAME_MAX + 1];
@@ -726,7 +813,11 @@ static int cmd_device_stats(const struct cmd_struct *cmd, int argc, char **argv)
 			goto out;
 		}
 
-		err2 = print_device_stat_string(&fctx, &args, path, check);
+		if (tabular)
+			err2 = print_device_stat_tabular(table, i, &args, path, check);
+		else
+			err2 = print_device_stat_string(&fctx, &args, path, check);
+
 		if (err2) {
 			if (err2 < 0) {
 				err = err2;
@@ -737,12 +828,18 @@ static int cmd_device_stats(const struct cmd_struct *cmd, int argc, char **argv)
 		}
 	}
 
-	fmt_print_end_group(&fctx, "device-stats");
-	fmt_end(&fctx);
+	if (tabular) {
+		table_dump(table);
+	} else {
+		fmt_print_end_group(&fctx, "device-stats");
+		fmt_end(&fctx);
+	}
 
 out:
 	free(di_args);
 	close_file_or_dir(fdmnt, dirstream);
+	if (free_table)
+		table_free(table);
 
 	return err;
 }
