@@ -577,6 +577,72 @@ static const char * const cmd_device_stats_usage[] = {
 	NULL
 };
 
+static int print_device_stat_string(struct format_ctx *fctx,
+		struct btrfs_ioctl_get_dev_stats *args, char *path, bool check)
+{
+	char *canonical_path = path_canonicalize(path);
+	char devid_str[32];
+	int j;
+	int err = 0;
+	static const struct {
+		const char name[32];
+		enum btrfs_dev_stat_values stat_idx;
+	} dev_stats[] = {
+		{ "write_io_errs", BTRFS_DEV_STAT_WRITE_ERRS },
+		{ "read_io_errs", BTRFS_DEV_STAT_READ_ERRS },
+		{ "flush_io_errs", BTRFS_DEV_STAT_FLUSH_ERRS },
+		{ "corruption_errs", BTRFS_DEV_STAT_CORRUPTION_ERRS },
+		{ "generation_errs", BTRFS_DEV_STAT_GENERATION_ERRS },
+	};
+	/*
+	 * The plain text and json formats cannot be mapped directly in all
+	 * cases and we have to switch.
+	 */
+	const bool json = (bconf.output_format == CMD_FORMAT_JSON);
+
+	/* No path when device is missing. */
+	if (!canonical_path) {
+		canonical_path = malloc(32);
+
+		if (!canonical_path) {
+			error("not enough memory for path buffer");
+			return -ENOMEM;
+		}
+
+		snprintf(canonical_path, 32, "devid:%llu", args->devid);
+	}
+	snprintf(devid_str, 32, "%llu", args->devid);
+	fmt_print_start_group(fctx, NULL, JSON_TYPE_MAP);
+	/* Plain text does not print device info */
+	if (json) {
+		fmt_print(fctx, "device", canonical_path);
+		fmt_print(fctx, "devid", args->devid);
+	}
+
+	for (j = 0; j < ARRAY_SIZE(dev_stats); j++) {
+		enum btrfs_dev_stat_values stat_idx = dev_stats[j].stat_idx;
+
+		/* We got fewer items than we know */
+		if (args->nr_items < stat_idx + 1)
+			continue;
+
+		/* Own format due to [/dev/name].value */
+		if (json) {
+			fmt_print(fctx, dev_stats[j].name, args->values[stat_idx]);
+		} else {
+			printf("[%s].%-16s %llu\n", canonical_path, dev_stats[j].name,
+					(unsigned long long)args->values[stat_idx]);
+		}
+		if (check && (args->values[stat_idx] > 0))
+			err |= 64;
+	}
+
+	fmt_print_end_group(fctx, NULL);
+	free(canonical_path);
+
+	return err;
+}
+
 static int cmd_device_stats(const struct cmd_struct *cmd, int argc, char **argv)
 {
 	char *dev_path;
@@ -586,7 +652,7 @@ static int cmd_device_stats(const struct cmd_struct *cmd, int argc, char **argv)
 	int fdmnt;
 	int i;
 	int err = 0;
-	int check = 0;
+	bool check = false;
 	__u64 flags = 0;
 	DIR *dirstream = NULL;
 	struct format_ctx fctx;
@@ -606,7 +672,7 @@ static int cmd_device_stats(const struct cmd_struct *cmd, int argc, char **argv)
 
 		switch (c) {
 		case 'c':
-			check = 1;
+			check = true;
 			break;
 		case 'z':
 			flags = BTRFS_DEV_STATS_RESET;
@@ -643,6 +709,7 @@ static int cmd_device_stats(const struct cmd_struct *cmd, int argc, char **argv)
 	for (i = 0; i < fi_args.num_devices; i++) {
 		struct btrfs_ioctl_get_dev_stats args = {0};
 		char path[BTRFS_DEVICE_PATH_NAME_MAX + 1];
+		int err2;
 
 		strncpy(path, (char *)di_args[i].path,
 			BTRFS_DEVICE_PATH_NAME_MAX);
@@ -656,70 +723,17 @@ static int cmd_device_stats(const struct cmd_struct *cmd, int argc, char **argv)
 			error("device stats ioctl failed on %s: %m",
 			      path);
 			err |= 1;
-		} else {
-			char *canonical_path;
-			char devid_str[32];
-			int j;
-			static const struct {
-				const char name[32];
-				u64 num;
-			} dev_stats[] = {
-				{ "write_io_errs", BTRFS_DEV_STAT_WRITE_ERRS },
-				{ "read_io_errs", BTRFS_DEV_STAT_READ_ERRS },
-				{ "flush_io_errs", BTRFS_DEV_STAT_FLUSH_ERRS },
-				{ "corruption_errs",
-					BTRFS_DEV_STAT_CORRUPTION_ERRS },
-				{ "generation_errs",
-					BTRFS_DEV_STAT_GENERATION_ERRS },
-			};
-			/*
-			 * The plain text and json formats cannot be
-			 * mapped directly in all cases and we have to switch
-			 */
-			const bool json = (bconf.output_format == CMD_FORMAT_JSON);
+			goto out;
+		}
 
-			canonical_path = path_canonicalize(path);
-
-			/* No path when device is missing. */
-			if (!canonical_path) {
-				canonical_path = malloc(32);
-				if (!canonical_path) {
-					error("not enough memory for path buffer");
-					goto out;
-				}
-				snprintf(canonical_path, 32,
-					 "devid:%llu", args.devid);
+		err2 = print_device_stat_string(&fctx, &args, path, check);
+		if (err2) {
+			if (err2 < 0) {
+				err = err2;
+				goto out;
+			} else {
+				err |= err2;
 			}
-			snprintf(devid_str, 32, "%llu", args.devid);
-			fmt_print_start_group(&fctx, NULL, JSON_TYPE_MAP);
-			/* Plain text does not print device info */
-			if (json) {
-				fmt_print(&fctx, "device", canonical_path);
-				fmt_print(&fctx, "devid", di_args[i].devid);
-			}
-
-			for (j = 0; j < ARRAY_SIZE(dev_stats); j++) {
-				/* We got fewer items than we know */
-				if (args.nr_items < dev_stats[j].num + 1)
-					continue;
-
-				/* Own format due to [/dev/name].value */
-				if (json) {
-					fmt_print(&fctx, dev_stats[j].name,
-						args.values[dev_stats[j].num]);
-				} else {
-					printf("[%s].%-16s %llu\n",
-						canonical_path,
-						dev_stats[j].name,
-						(unsigned long long)
-						args.values[dev_stats[j].num]);
-				}
-				if ((check == 1)
-				    && (args.values[dev_stats[j].num] > 0))
-					err |= 64;
-			}
-			fmt_print_end_group(&fctx, NULL);
-			free(canonical_path);
 		}
 	}
 
