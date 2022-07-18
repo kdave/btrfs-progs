@@ -74,6 +74,9 @@ remove [options] <device>|<devid> [<device>|<devid>...] <path>
 delete <device>|<devid> [<device>|<devid>...] <path>
         Alias of remove kept for backward compatibility
 
+replace <command> [options] <path>
+        Alias of whole command group *btrfs replace* for convenience. See ``btrfs-replace(8)``.
+
 ready <device>
         Wait until all devices of a multiple-device filesystem are scanned and
         registered within the kernel module. This is to provide a way for automatic
