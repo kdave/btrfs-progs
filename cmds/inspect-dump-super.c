@@ -50,11 +50,11 @@ static int load_and_dump_sb(char *filename, int fd, u64 sb_bytenr, int full,
 	printf("superblock: bytenr=%llu, device=%s\n", sb_bytenr, filename);
 	printf("---------------------------------------------------------\n");
 	if (btrfs_super_magic(&sb) != BTRFS_MAGIC && !force) {
-		error("bad magic on superblock on %s at %llu",
+		error("bad magic on superblock on %s at %llu (use --force to dump it anyway)",
 				filename, (unsigned long long)sb_bytenr);
-	} else {
-		btrfs_print_superblock(&sb, full);
+		return 1;
 	}
+	btrfs_print_superblock(&sb, full);
 	return 0;
 }
 
@@ -177,7 +177,11 @@ static int cmd_inspect_dump_super(const struct cmd_struct *cmd,
 				putchar('\n');
 			}
 		} else {
-			load_and_dump_sb(filename, fd, sb_bytenr, full, force);
+			if (load_and_dump_sb(filename, fd, sb_bytenr, full, force)) {
+				close(fd);
+				ret = 1;
+				goto out;
+			}
 			putchar('\n');
 		}
 		close(fd);
