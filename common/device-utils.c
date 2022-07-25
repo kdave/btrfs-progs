@@ -15,7 +15,6 @@
  */
 
 #include <sys/ioctl.h>
-#include <sys/mount.h>
 #include <sys/statfs.h>
 #include <sys/types.h>
 #include <stdio.h>
