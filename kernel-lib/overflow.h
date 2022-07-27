@@ -58,6 +58,22 @@ static inline bool __must_check __must_check_overflow(bool overflow)
 }
 
 /*
+ * Stubs for compiler without the overflow builtin support, no actual checks
+ * are done.
+ */
+#if !HAVE___BUILTIN_ADD_OVERFLOW
+#define __builtin_add_overflow(__a, __b, __d) (*(__d) = (__a) + (__b), 0)
+#endif
+
+#if !HAVE___BUILTIN_MUL_OVERFLOW
+#define __builtin_mul_overflow(__a, __b, __d) (*(__d) = (__a) * (__b), 0)
+#endif
+
+#if !HAVE___BUILTIN_MUL_OVERFLOW
+#define __builtin_sub_overflow(__a, __b, __d) (*(__d) = (__a) - (__b), 0)
+#endif
+
+/*
  * For simplicity and code hygiene, the fallback code below insists on
  * a, b and *d having the same type (similar to the min() and max()
  * macros), whereas gcc's type-generic overflow checkers accept
