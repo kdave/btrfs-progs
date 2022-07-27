@@ -60,6 +60,10 @@ AC_CHECK_FUNCS([reallocarray])
 
 AC_CHECK_FUNCS([clock_gettime])
 
+AX_GCC_BUILTIN([__builtin_add_overflow])
+AX_GCC_BUILTIN([__builtin_sub_overflow])
+AX_GCC_BUILTIN([__builtin_mul_overflow])
+
 AC_CHECK_HEADERS([linux/perf_event.h])
 AC_CHECK_HEADERS([linux/hw_breakpoint.h])
 
