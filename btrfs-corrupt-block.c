@@ -104,8 +104,8 @@ static void print_usage(int ret)
 	printf("\t-r   Operate on this root\n");
 	printf("\t-C   Delete a csum for the specified bytenr.  When used with -b it'll delete that many bytes, otherwise it's just sectorsize\n");
 	printf("\t--block-group OFFSET  corrupt the given block group\n");
-	printf("\t-v   Value to use for corrupting item data\n");
-	printf("\t-o   Offset to use for corrupting item data\n");
+	printf("\t--value VALUE         Value to use for corrupting item data\n");
+	printf("\t--offset OFFSET       Offset to use for corrupting item data\n");
 	exit(ret);
 }
 
@@ -1300,7 +1300,9 @@ int main(int argc, char **argv)
 
 	while(1) {
 		int c;
-		enum { GETOPT_VAL_BLOCK_GROUP = GETOPT_VAL_FIRST };
+		enum { GETOPT_VAL_BLOCK_GROUP = GETOPT_VAL_FIRST,
+			GETOPT_VAL_VALUE, GETOPT_VAL_OFFSET,
+		};
 		static const struct option long_options[] = {
 			/* { "byte-count", 1, NULL, 'b' }, */
 			{ "logical", required_argument, NULL, 'l' },
@@ -1322,13 +1324,13 @@ int main(int argc, char **argv)
 			{ "root", no_argument, NULL, 'r'},
 			{ "csum", required_argument, NULL, 'C'},
 			{ "block-group", required_argument, NULL, GETOPT_VAL_BLOCK_GROUP},
-			{ "value", required_argument, NULL, 'v'},
-			{ "offset", required_argument, NULL, 'o'},
+			{ "value", required_argument, NULL, GETOPT_VAL_VALUE},
+			{ "offset", required_argument, NULL, GETOPT_VAL_OFFSET},
 			{ "help", no_argument, NULL, GETOPT_VAL_HELP},
 			{ NULL, 0, NULL, 0 }
 		};
 
-		c = getopt_long(argc, argv, "l:c:b:eEkuUi:f:x:m:K:I:D:d:r:C:v:o:",
+		c = getopt_long(argc, argv, "l:c:b:eEkuUi:f:x:m:K:I:D:d:r:C:",
 				long_options, NULL);
 		if (c < 0)
 			break;
@@ -1394,10 +1396,10 @@ int main(int argc, char **argv)
 			case GETOPT_VAL_BLOCK_GROUP:
 				block_group = arg_strtou64(optarg);
 				break;
-			case 'v':
+			case GETOPT_VAL_VALUE:
 				bogus_value = arg_strtou64(optarg);
 				break;
-			case 'o':
+			case GETOPT_VAL_OFFSET:
 				bogus_offset = arg_strtou64(optarg);
 				break;
 			case GETOPT_VAL_HELP:
