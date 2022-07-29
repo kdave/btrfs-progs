@@ -5729,6 +5729,82 @@ static int verify_space_cache(struct btrfs_root *root,
 	return ret;
 }
 
+static int check_free_space_tree(struct btrfs_root *root)
+{
+	struct btrfs_key key = { 0 };
+	struct btrfs_path path;
+	int ret = 0;
+
+	btrfs_init_path(&path);
+
+	while (1) {
+		struct btrfs_block_group *bg;
+		u64 cur_start = key.objectid;
+
+		ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
+		if (ret < 0)
+			goto out;
+
+		/*
+		 * We should be landing on an item, so if we're above the
+		 * nritems we know we hit the end of the tree.
+		 */
+		if (path.slots[0] >= btrfs_header_nritems(path.nodes[0]))
+			break;
+
+		btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
+
+		if (key.type != BTRFS_FREE_SPACE_INFO_KEY) {
+			fprintf(stderr,
+			"Failed to find a space info key at %llu [%llu %u %llu]\n",
+				cur_start, key.objectid, key.type, key.offset);
+			ret = -EINVAL;
+			goto out;
+		}
+
+		bg = btrfs_lookup_first_block_group(gfs_info, key.objectid);
+		if (!bg) {
+			fprintf(stderr,
+		"We have a space info key for a block group that doesn't exist\n");
+			ret = -EINVAL;
+			goto out;
+		}
+
+		btrfs_release_path(&path);
+		key.objectid += key.offset;
+		key.offset = 0;
+	}
+	ret = 0;
+out:
+	return ret;
+}
+
+static int check_free_space_trees(struct btrfs_root *root)
+{
+	struct btrfs_root *free_space_root;
+	struct rb_node *n;
+	struct btrfs_key key = {
+		.objectid = BTRFS_FREE_SPACE_TREE_OBJECTID,
+		.type = BTRFS_ROOT_ITEM_KEY,
+		.offset = 0,
+	};
+	int ret = 0;
+
+	free_space_root = btrfs_global_root(gfs_info, &key);
+	while (1) {
+		ret = check_free_space_tree(free_space_root);
+		if (ret)
+			break;
+		n = rb_next(&root->rb_node);
+		if (!n)
+			break;
+		free_space_root = rb_entry(n, struct btrfs_root, rb_node);
+		if (root->root_key.objectid != BTRFS_FREE_SPACE_TREE_OBJECTID)
+			break;
+	}
+	return ret;
+}
+
 static int check_space_cache(struct btrfs_root *root)
 {
 	struct extent_io_tree used;
@@ -10121,6 +10197,8 @@ static int validate_free_space_cache(struct btrfs_root *root)
 	}
 
 	ret = check_space_cache(root);
+	if (!ret && btrfs_fs_compat_ro(gfs_info, FREE_SPACE_TREE))
+		ret = check_free_space_trees(root);
 	if (ret && btrfs_fs_compat_ro(gfs_info, FREE_SPACE_TREE) &&
 	    repair) {
 		ret = do_clear_free_space_cache(2);
