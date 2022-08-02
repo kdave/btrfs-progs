@@ -688,28 +688,6 @@ _get_subvolid()
 
 }
 
-# compare running kernel version to the given parameter, return success
-# if running is newer than requested (let caller decide if to fail or skip)
-# $1: minimum version of running kernel in major.minor format (eg. 4.19)
-check_min_kernel_version()
-{
-	local unamemajor
-	local unameminor
-	local argmajor
-	local argminor
-
-	# 4.19.1-1-default
-	uname=$(uname -r)
-	# 4.19.1
-	uname=${uname%%-*}
-	IFS=. read unamemajor unameminor tmp <<< "$uname"
-	IFS=. read argmajor argminor tmp <<< "$1"
-	# "compare versions: ${unamemajor}.${unameminor} ? ${argmajor}.${argminor}"
-	[ "$unamemajor" -ge "$argmajor" ] || return 1
-	[ "$unameminor" -ge "$argminor" ] || return 1
-	return 0
-}
-
 # how many files to create.
 DATASET_SIZE=50
 
