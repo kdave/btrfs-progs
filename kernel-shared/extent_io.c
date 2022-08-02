@@ -990,7 +990,7 @@ int write_data_to_disk(struct btrfs_fs_info *info, void *buf, u64 offset,
 			memcpy(eb->data, buf + total_write, this_len);
 			ret = write_raid56_with_parity(info, eb, multi,
 						       stripe_len, raid_map);
-			BUG_ON(ret);
+			BUG_ON(ret < 0);
 
 			free(eb);
 			kfree(raid_map);
