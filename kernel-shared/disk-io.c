@@ -452,8 +452,6 @@ struct extent_buffer* read_tree_block(struct btrfs_fs_info *fs_info, u64 bytenr,
 int write_and_map_eb(struct btrfs_fs_info *fs_info, struct extent_buffer *eb)
 {
 	int ret;
-	int mirror_num;
-	int max_mirror;
 	u64 length;
 	u64 *raid_map = NULL;
 	struct btrfs_multi_bio *multi = NULL;
@@ -483,18 +481,16 @@ int write_and_map_eb(struct btrfs_fs_info *fs_info, struct extent_buffer *eb)
 		goto out;
 	}
 
-	/* For non-RAID56, we just writeback data to each mirror */
-	max_mirror = btrfs_num_copies(fs_info, eb->start, eb->len);
-	for (mirror_num = 1; mirror_num <= max_mirror; mirror_num++) {
-		ret = write_data_to_disk(fs_info, eb->data, eb->start, eb->len,
-				         mirror_num);
-		if (ret < 0) {
-			errno = -ret;
-			error(
-		"failed to write bytenr %llu length %u to mirror %d: %m",
-				eb->start, eb->len, mirror_num);
-			goto out;
-		}
+	/*
+	 * For non-RAID56, we just writeback data to all mirrors using
+	 * write_data_to_disk().
+	 */
+	ret = write_data_to_disk(fs_info, eb->data, eb->start, eb->len);
+	if (ret < 0) {
+		errno = -ret;
+		error("failed to write bytenr %llu length %u: %m",
+			eb->start, eb->len);
+		goto out;
 	}
 
 out:

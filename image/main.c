@@ -1495,7 +1495,7 @@ static int restore_one_work(struct mdrestore_struct *mdres,
 			}
 		} else if (async->start != BTRFS_SUPER_INFO_OFFSET) {
 			ret = write_data_to_disk(mdres->info, buffer,
-						 async->start, out_len, 0);
+						 async->start, out_len);
 			if (ret) {
 				error("failed to write data");
 				exit(1);

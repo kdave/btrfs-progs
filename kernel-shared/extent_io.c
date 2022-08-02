@@ -938,8 +938,14 @@ int read_data_from_disk(struct btrfs_fs_info *info, void *buf, u64 logical,
 	return 0;
 }
 
+/*
+ * Write the data in @buf to logical bytenr @offset.
+ *
+ * Such data will be written to all mirrors and RAID56 P/Q will also be
+ * properly handled.
+ */
 int write_data_to_disk(struct btrfs_fs_info *info, void *buf, u64 offset,
-		      u64 bytes, int mirror)
+		       u64 bytes)
 {
 	struct btrfs_multi_bio *multi = NULL;
 	struct btrfs_device *device;
@@ -956,7 +962,7 @@ int write_data_to_disk(struct btrfs_fs_info *info, void *buf, u64 offset,
 		dev_nr = 0;
 
 		ret = btrfs_map_block(info, WRITE, offset, &this_len, &multi,
-				      mirror, &raid_map);
+				      0, &raid_map);
 		if (ret) {
 			fprintf(stderr, "Couldn't map the block %llu\n",
 				offset);
