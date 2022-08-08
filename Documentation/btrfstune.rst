@@ -16,10 +16,10 @@ The common usecase is to enable features that were not enabled at mkfs time.
 Please make sure that you have kernel support for the features.  You can find a
 complete list of features and kernel version of their introduction at
 https://btrfs.wiki.kernel.org/index.php/Changelog#By_feature .  Also, the
-manual page ``mkfs.btrfs(8)`` contains more details about the features.
+manual page :doc:`mkfs.btrfs(8)<mkfs.btrfs>` contains more details about the features.
 
 Some of the features could be also enabled on a mounted filesystem by other
-means.  Please refer to the *FILESYSTEM FEATURES* in ``btrfs(5)``.
+means.  Please refer to the *FILESYSTEM FEATURES* in :doc:`btrfs(5)<btrfs-man5>`.
 
 OPTIONS
 -------
@@ -69,7 +69,7 @@ OPTIONS
         disable it.  A seeding filesystem is forced to be mounted read-only. A
         new device can be added to the filesystem and will capture all writes
         keeping the seeding device intact.  See also section *SEEDING DEVICE*
-        in ``btrfs(5)``.
+        in :doc:`btrfs(5)<btrfs-man5>`.
 
         .. warning::
                 Clearing the seeding flag on a device may be dangerous.  If a
@@ -110,7 +110,7 @@ OPTIONS
 
         All newly created extents will use the new representation. To
         completely switch the entire filesystem, run a full balance of the
-        metadata. Please refer to ``btrfs-balance(8)``.
+        metadata. Please refer to :doc:`btrfs-balance(8)<btrfs-balance>`.
 
 
 EXIT STATUS
@@ -128,6 +128,6 @@ will be declared obsolete and scheduled for removal.
 SEE ALSO
 --------
 
-``btrfs(5)``,
-``btrfs-balance(8)``,
-``mkfs.btrfs(8)``
+:doc:`btrfs(5)<btrfs-man5>`,
+:doc:`btrfs-balance(8)<btrfs-balance>`,
+:doc:`mkfs.btrfs(8)<mkfs.btrfs>`

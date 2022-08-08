@@ -18,7 +18,7 @@ There are also standalone tools for some tasks like **btrfs-convert** or
 main utility. See section *STANDALONE TOOLS* for more details.
 
 For other topics (mount options, etc) please refer to the separate manual
-page ``btrfs(5)``.
+page :doc:`btrfs(5)<btrfs-man5>`.
 
 COMMAND SYNTAX
 --------------
@@ -43,63 +43,63 @@ COMMANDS
 
 balance
 	Balance btrfs filesystem chunks across single or several devices.
-	See ``btrfs-balance(8)`` for details.
+	See :doc:`btrfs-balance(8)<btrfs-balance>` for details.
 
 check
 	Do off-line check on a btrfs filesystem.
-	See ``btrfs-check(8)`` for details.
+	See :doc:`btrfs-check(8)<btrfs-check>` for details.
 
 device
 	Manage devices managed by btrfs, including add/delete/scan and so
-	on.  See ``btrfs-device(8)`` for details.
+	on.  See :doc:`btrfs-device(8)<btrfs-device>` for details.
 
 filesystem
 	Manage a btrfs filesystem, including label setting/sync and so on.
-        See ``btrfs-filesystem(8)`` for details.
+        See :doc:`btrfs-filesystem(8)<btrfs-filesystem>` for details.
 
 inspect-internal
 	Debug tools for developers/hackers.
-	See ``btrfs-inspect-internal(8)`` for details.
+	See :doc:`btrfs-inspect-internal(8)<btrfs-inspect-internal>` for details.
 
 property
 	Get/set a property from/to a btrfs object.
-	See ``btrfs-property(8)`` for details.
+	See :doc:`btrfs-property(8)<btrfs-property>` for details.
 
 qgroup
 	Manage quota group(qgroup) for btrfs filesystem.
-	See ``btrfs-qgroup(8)`` for details.
+	See :doc:`btrfs-qgroup(8)<btrfs-qgroup>` for details.
 
 quota
 	Manage quota on btrfs filesystem like enabling/rescan and etc.
-	See ``btrfs-quota(8)`` and ``btrfs-qgroup(8)`` for details.
+	See :doc:`btrfs-quota(8)<btrfs-quota>` and :doc:`btrfs-qgroup(8)<btrfs-qgroup>` for details.
 
 receive
 	Receive subvolume data from stdin/file for restore and etc.
-	See ``btrfs-receive(8)`` for details.
+	See :doc:`btrfs-receive(8)<btrfs-receive>` for details.
 
 replace
 	Replace btrfs devices.
-	See ``btrfs-replace(8)`` for details.
+	See :doc:`btrfs-replace(8)<btrfs-replace>` for details.
 
 rescue
 	Try to rescue damaged btrfs filesystem.
-	See ``btrfs-rescue(8)`` for details.
+	See :doc:`btrfs-rescue(8)<btrfs-rescue>` for details.
 
 restore
 	Try to restore files from a damaged btrfs filesystem.
-	See ``btrfs-restore(8)`` for details.
+	See :doc:`btrfs-restore(8)<btrfs-restore>` for details.
 
 scrub
 	Scrub a btrfs filesystem.
-	See ``btrfs-scrub(8)`` for details.
+	See :doc:`btrfs-scrub(8)<btrfs-scrub>` for details.
 
 send
 	Send subvolume data to stdout/file for backup and etc.
-	See ``btrfs-send(8)`` for details.
+	See :doc:`btrfs-send(8)<btrfs-send>` for details.
 
 subvolume
 	Create/delete/list/manage btrfs subvolume.
-	See ``btrfs-subvolume(8)`` for details.
+	See :doc:`btrfs-subvolume(8)<btrfs-subvolume>` for details.
 
 STANDALONE TOOLS
 ----------------
@@ -152,22 +152,22 @@ further details.
 SEE ALSO
 --------
 
-``btrfs(5)``,
-``btrfs-balance(8)``,
-``btrfs-check(8)``,
-``btrfs-convert(8)``,
-``btrfs-device(8)``,
-``btrfs-filesystem(8)``,
-``btrfs-inspect-internal(8)``,
-``btrfs-property(8)``,
-``btrfs-qgroup(8)``,
-``btrfs-quota(8)``,
-``btrfs-receive(8)``,
-``btrfs-replace(8)``,
-``btrfs-rescue(8)``,
-``btrfs-restore(8)``,
-``btrfs-scrub(8)``,
-``btrfs-send(8)``,
-``btrfs-subvolume(8)``,
-``btrfstune(8)``,
-``mkfs.btrfs(8)``
+:doc:`btrfs(5)<btrfs-man5>`,
+:doc:`btrfs-balance(8)<btrfs-balance>`,
+:doc:`btrfs-check(8)<btrfs-check>`,
+:doc:`btrfs-convert(8)<btrfs-convert>`,
+:doc:`btrfs-device(8)<btrfs-device>`,
+:doc:`btrfs-filesystem(8)<btrfs-filesystem>`,
+:doc:`btrfs-inspect-internal(8)<btrfs-inspect-internal>`,
+:doc:`btrfs-property(8)<btrfs-property>`,
+:doc:`btrfs-qgroup(8)<btrfs-qgroup>`,
+:doc:`btrfs-quota(8)<btrfs-quota>`,
+:doc:`btrfs-receive(8)<btrfs-receive>`,
+:doc:`btrfs-replace(8)<btrfs-replace>`,
+:doc:`btrfs-rescue(8)<btrfs-rescue>`,
+:doc:`btrfs-restore(8)<btrfs-restore>`,
+:doc:`btrfs-scrub(8)<btrfs-scrub>`,
+:doc:`btrfs-send(8)<btrfs-send>`,
+:doc:`btrfs-subvolume(8)<btrfs-subvolume>`,
+:doc:`btrfstune(8)<btrfstune>`,
+:doc:`mkfs.btrfs(8)<mkfs.btrfs>`

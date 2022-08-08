@@ -127,5 +127,5 @@ further details.
 SEE ALSO
 --------
 
-``mkfs.btrfs(8)``,
+:doc:`mkfs.btrfs(8)<mkfs.btrfs>`,
 ``ionice(1)``

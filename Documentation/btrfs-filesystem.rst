@@ -323,7 +323,7 @@ usage [options] <path> [<path>...]
           block reserve, used for emergency purposes (like deletion on a full
           filesystem)
         * *Multiple profiles* -- what block group types (data, metadata) have
-          more than one profile (single, raid1, ...), see ``btrfs(5)`` section
+          more than one profile (single, raid1, ...), see :doc:`btrfs(5)<btrfs-man5>` section
           *FILESYSTEMS WITH MULTIPLE BLOCK GROUP PROFILES*.
 
         And on a zoned filesystem there are two more lines in the *Device* section:
@@ -453,5 +453,5 @@ further details.
 SEE ALSO
 --------
 
-``btrfs-subvolume(8)``,
-``mkfs.btrfs(8)``
+:doc:`btrfs-subvolume(8)<btrfs-subvolume>`,
+:doc:`mkfs.btrfs(8)<mkfs.btrfs>`

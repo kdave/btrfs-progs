@@ -351,7 +351,7 @@ space_cache, space_cache=<version>, nospace_cache
         *clear_cache,nospace_cache* to do so. If *v2* is enabled, kernels without *v2*
         support will only be able to mount the filesystem in read-only mode.
 
-        The ``btrfs-check(8)`` and ```mkfs.btrfs(8)`` commands have full *v2* free space
+        The :doc:`btrfs-check(8)<btrfs-check>` and `:doc:`mkfs.btrfs(8)<mkfs.btrfs>` commands have full *v2* free space
         cache support since v4.19.
 
         If a version is not explicitly specified, the default implementation will be

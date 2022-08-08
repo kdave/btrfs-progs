@@ -120,6 +120,6 @@ further details.
 SEE ALSO
 --------
 
-``mkfs.btrfs(8)``,
-``btrfs-scrub(8)``,
-``btrfs-check(8)``
+:doc:`btrfs-check(8)<btrfs-check>`,
+:doc:`btrfs-scrub(8)<btrfs-scrub>`,
+:doc:`mkfs.btrfs(8)<mkfs.btrfs>`

@@ -35,7 +35,7 @@ the clone sources.
 You must not specify clone sources unless you guarantee that these snapshots
 are exactly in the same state on both sides--both for the sender and the
 receiver. For implications of changed read-write status of a received snapshot
-please see section *SUBVOLUME FLAGS* in ``btrfs-subvolume(8)``.
+please see section *SUBVOLUME FLAGS* in :doc:`btrfs-subvolume(8)<btrfs-subvolume>`.
 
 ``Options``
 
@@ -114,6 +114,6 @@ further details.
 SEE ALSO
 --------
 
-``mkfs.btrfs(8)``,
-``btrfs-receive(8)``,
-``btrfs-subvolume(8)``
+:doc:`btrfs-receive(8)<btrfs-receive>`,
+:doc:`btrfs-subvolume(8)<btrfs-subvolume>`,
+:doc:`mkfs.btrfs(8)<mkfs.btrfs>`

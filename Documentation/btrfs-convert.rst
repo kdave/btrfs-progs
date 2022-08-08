@@ -31,7 +31,7 @@ OPTIONS
         set filesystem nodesize, the tree block size in which btrfs stores its metadata.
         The default value is 16KiB (16384) or the page size, whichever is bigger.
         Must be a multiple of the sectorsize, but not larger than 65536. See
-        ``mkfs.btrfs(8)`` for more details.
+        :doc:`mkfs.btrfs(8)<mkfs.btrfs>` for more details.
 -r|--rollback
         rollback to the original ext2/3/4 filesystem if possible
 -l|--label <LABEL>
@@ -42,7 +42,7 @@ OPTIONS
         A list of filesystem features enabled the at time of conversion. Not all features
         are supported by old kernels. To disable a feature, prefix it with *^*.
         Description of the features is in section *FILESYSTEM FEATURES* of
-        ``mkfs.btrfs(8)``.
+        :doc:`mkfs.btrfs(8)<mkfs.btrfs>`.
 
         To see all available features that btrfs-convert supports run:
 
@@ -72,4 +72,4 @@ If any problems happened, 1 will be returned.
 SEE ALSO
 --------
 
-``mkfs.btrfs(8)``
+:doc:`mkfs.btrfs(8)<mkfs.btrfs>`

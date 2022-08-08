@@ -55,7 +55,7 @@ Subvolume properties
 
 ro
         read-only flag of subvolume: true or false. Please also see section *SUBVOLUME FLAGS*
-        in ``btrfs-subvolume(8)`` for possible implications regarding incremental send.
+        in :doc:`btrfs-subvolume(8)<btrfs-subvolume>` for possible implications regarding incremental send.
 
 Filesystem properties
 ^^^^^^^^^^^^^^^^^^^^^
@@ -124,6 +124,6 @@ further details.
 SEE ALSO
 --------
 
-``mkfs.btrfs(8)``,
+:doc:`mkfs.btrfs(8)<mkfs.btrfs>`,
 ``lsattr(1)``,
 ``chattr(1)``

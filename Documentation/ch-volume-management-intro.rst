@@ -3,7 +3,7 @@ Devices can be then added, removed or replaced on demand.  Data and metadata are
 organized in allocation profiles with various redundancy policies.  There's some
 similarity with traditional RAID levels, but this could be confusing to users
 familiar with the traditional meaning. Due to the similarity, the RAID
-terminology is widely used in the documentation.  See ``mkfs.btrfs(8)`` for more
+terminology is widely used in the documentation.  See :doc:`mkfs.btrfs(8)<mkfs.btrfs>` for more
 details and the exact profile capabilities and constraints.
 
 The device management works on a mounted filesystem. Devices can be added,

@@ -127,7 +127,7 @@ EXAMPLES
 --------
 
 A more comprehensive example when going from one to multiple devices, and back,
-can be found in section *TYPICAL USECASES* of ``btrfs-device(8)``.
+can be found in section *TYPICAL USECASES* of :doc:`btrfs-device(8)<btrfs-device>`.
 
 MAKING BLOCK GROUP LAYOUT MORE COMPACT
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -269,5 +269,5 @@ further details.
 SEE ALSO
 --------
 
-``mkfs.btrfs(8)``,
-``btrfs-device(8)``
+:doc:`mkfs.btrfs(8)<mkfs.btrfs>`,
+:doc:`btrfs-device(8)<btrfs-device>`

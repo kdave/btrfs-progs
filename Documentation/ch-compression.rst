@@ -151,5 +151,3 @@ work together.
 The compression algorithms have been added over time so the version
 compatibility should be also considered, together with other tools that may
 access the compressed data like bootloaders.
-
-

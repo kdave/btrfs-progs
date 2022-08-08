@@ -161,6 +161,6 @@ further details.
 SEE ALSO
 --------
 
-``mkfs.btrfs(8)``,
-``btrfs-scrub(8)``,
-``btrfs-rescue(8)``
+:doc:`mkfs.btrfs(8)<mkfs.btrfs>`,
+:doc:`btrfs-scrub(8)<btrfs-scrub>`,
+:doc:`btrfs-rescue(8)<btrfs-rescue>`

@@ -20,7 +20,7 @@ mount option. See section *MULTIPLE DEVICES* for more details.
 The default block group profiles for data and metadata depend on number of
 devices and possibly other factors. It's recommended to use specific profiles
 but the defaults should be OK and allowing future conversions to other profiles.
-Please see options *-d* and *-m* for further details and ``btrfs-balance(8)`` for
+Please see options *-d* and *-m* for further details and :doc:`btrfs-balance(8)<btrfs-balance>` for
 the profile conversion post mkfs.
 
 OPTIONS
@@ -33,7 +33,7 @@ OPTIONS
 --csum <type>, --checksum <type>
         Specify the checksum algorithm. Default is *crc32c*. Valid values are *crc32c*,
         *xxhash*, *sha256* or *blake2*. To mount such filesystem kernel must support the
-        checksums as well. See *CHECKSUM ALGORITHMS* in ``btrfs(5)``.
+        checksums as well. See *CHECKSUM ALGORITHMS* in :doc:`btrfs(5)<btrfs-man5>`.
 
 -d|--data <profile>
         Specify the profile for the data block groups.  Valid values are *raid0*,
@@ -129,7 +129,7 @@ OPTIONS
 -K|--nodiscard
         Do not perform whole device TRIM operation on devices that are capable of that.
         This does not affect discard/trim operation when the filesystem is mounted.
-        Please see the mount option *discard* for that in ``btrfs(5)``.
+        Please see the mount option *discard* for that in :doc:`btrfs(5)<btrfs-man5>`.
 
 -r|--rootdir <rootdir>
         Populate the toplevel subvolume with files from *rootdir*.  This does not
@@ -238,7 +238,7 @@ devices to scan at the time of mount.
 FILESYSTEM FEATURES
 -------------------
 
-Features that can be enabled during creation time. See also ``btrfs(5)`` section
+Features that can be enabled during creation time. See also :doc:`btrfs(5)<btrfs-man5>` section
 *FILESYSTEM FEATURES*.
 
 mixed-bg
@@ -274,7 +274,7 @@ zoned
         (kernel support since 5.12)
 
         zoned mode, data allocation and write friendly to zoned/SMR/ZBC/ZNS devices,
-        see *ZONED MODE* in ``btrfs(5)``, the mode is automatically selected when
+        see *ZONED MODE* in :doc:`btrfs(5)<btrfs-man5>`, the mode is automatically selected when
         a zoned device is detected
 
 
@@ -290,7 +290,7 @@ quota
         (kernel support since 3.4)
 
         Enable quota support (qgroups). The qgroup accounting will be consistent,
-        can be used together with *--rootdir*.  See also ``btrfs-quota(8)``.
+        can be used together with *--rootdir*.  See also :doc:`btrfs-quota(8)<btrfs-quota>`.
 
 free-space-tree
         (default since btrfs-progs 5.15, kernel support since 4.5)
@@ -544,7 +544,7 @@ further details.
 SEE ALSO
 --------
 
-``btrfs(5)``,
-``btrfs(8)``,
-``btrfs-balance(8)``,
+:doc:`btrfs(5)<btrfs-man5>`,
+:doc:`btrfs(8)<btrfs>`,
+:doc:`btrfs-balance(8)<btrfs-balance>`,
 ``wipefs(8)``

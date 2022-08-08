@@ -230,6 +230,6 @@ further details.
 SEE ALSO
 --------
 
-``mkfs.btrfs(8)``,
-``btrfs-subvolume(8)``,
-``btrfs-quota(8)``,
+:doc:`btrfs-quota(8)<btrfs-quota>`,
+:doc:`btrfs-subvolume(8)<btrfs-subvolume>`,
+:doc:`mkfs.btrfs(8)<mkfs.btrfs>`,

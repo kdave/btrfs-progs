@@ -272,8 +272,8 @@ further details.
 SEE ALSO
 --------
 
-``mkfs.btrfs(8)``,
-``mount(8)``,
-``btrfs-quota(8)``,
-``btrfs-qgroup(8)``,
-``btrfs-send(8)``
+:doc:`btrfs-qgroup(8)<btrfs-qgroup>`,
+:doc:`btrfs-quota(8)<btrfs-quota>`,
+:doc:`btrfs-send(8)<btrfs-send>`,
+:doc:`mkfs.btrfs(8)<mkfs.btrfs>`,
+``mount(8)``

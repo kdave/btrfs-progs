@@ -89,7 +89,7 @@ lack of enough work space. This is a soft error leaving the filesystem usable
 but the block group layout may remain unchanged.
 
 Note that balance operation takes a lot of time, please see also
-``btrfs-balance(8)``.
+:doc:`btrfs-balance(8)<btrfs-balance>`.
 
 .. code-block:: bash
 

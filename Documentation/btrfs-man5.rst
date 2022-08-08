@@ -39,11 +39,11 @@ There are several classes and the respective tools to manage the features:
 
 at mkfs time only
         This is namely for core structures, like the b-tree nodesize or checksum
-        algorithm, see ``mkfs.btrfs(8)`` for more details.
+        algorithm, see :doc:`mkfs.btrfs(8)<mkfs.btrfs>` for more details.
 
 after mkfs, on an unmounted filesystem::
         Features that may optimize internal structures or add new structures to support
-        new functionality, see ``btrfstune(8)``. The command **btrfs inspect-internal
+        new functionality, see :doc:`btrfstune(8)<btrfstune>`. The command **btrfs inspect-internal
         dump-super /dev/sdx** will dump a superblock, you can map the value of
         *incompat_flags* to the features listed below
 
@@ -57,7 +57,7 @@ after mkfs, on a mounted filesystem
         in the directory */sys/fs/btrfs/features/*, one file per feature. The value *1*
         means the feature can be enabled.
 
-List of features (see also ``mkfs.btrfs(8)`` section *FILESYSTEM FEATURES*):
+List of features (see also :doc:`mkfs.btrfs(8)<mkfs.btrfs>` section *FILESYSTEM FEATURES*):
 
 big_metadata
         (since: 3.4)
@@ -99,7 +99,7 @@ metadata_uuid
 
         the main filesystem UUID is the metadata_uuid, which stores the new UUID only
         in the superblock while all metadata blocks still have the UUID set at mkfs
-        time, see ``btrfstune(8)`` for more
+        time, see :doc:`btrfstune(8)<btrfstune>` for more
 
 mixed_backref
         (since: 2.6.31)
@@ -167,7 +167,7 @@ supported_rescue_options
         (since: 5.11)
 
         list of values for the mount option *rescue* that are supported by the running
-        kernel, see ``btrfs(5)``
+        kernel, see :doc:`btrfs(5)<btrfs-man5>`
 
 zoned
         (since: 5.12)
@@ -287,7 +287,7 @@ FILESYSTEM WITH MULTIPLE PROFILES
 
 It is possible that a btrfs filesystem contains multiple block group profiles
 of the same type.  This could happen when a profile conversion using balance
-filters is interrupted (see ``btrfs-balance(8)``).  Some **btrfs** commands perform
+filters is interrupted (see :doc:`btrfs-balance(8)<btrfs-balance>`).  Some **btrfs** commands perform
 a test to detect this kind of condition and print a warning like this:
 
 .. code-block:: none
@@ -415,10 +415,10 @@ SEE ALSO
 --------
 
 ``acl(5)``,
-``btrfs(8)``,
+:doc:`btrfs(8)<btrfs>`,
 ``chattr(1)``,
 ``fstrim(8)``,
 ``ioctl(2)``,
-``mkfs.btrfs(8)``,
+:doc:`mkfs.btrfs(8)<mkfs.btrfs>`,
 ``mount(8)``,
 ``swapon(8)``

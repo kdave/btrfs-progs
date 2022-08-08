@@ -33,4 +33,4 @@ If any problems happened, 1 will be returned.
 SEE ALSO
 --------
 
-``mkfs.btrfs(8)``
+:doc:`mkfs.btrfs(8)<mkfs.btrfs>`

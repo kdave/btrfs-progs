@@ -75,7 +75,8 @@ delete <device>|<devid> [<device>|<devid>...] <path>
         Alias of remove kept for backward compatibility
 
 replace <command> [options] <path>
-        Alias of whole command group *btrfs replace* for convenience. See ``btrfs-replace(8)``.
+        Alias of whole command group *btrfs replace* for convenience. See
+        :doc:`btrfs-replace(8)<btrfs-replace>`.
 
 ready <device>
         Wait until all devices of a multiple-device filesystem are scanned and
@@ -248,6 +249,7 @@ further details.
 SEE ALSO
 --------
 
-``mkfs.btrfs(8)``,
-``btrfs-replace(8)``,
-``btrfs-balance(8)``
+:doc:`btrfs-balance(8)<btrfs-balance>`
+:doc:`btrfs-device(8)<btrfs-device>`,
+:doc:`btrfs-replace(8)<btrfs-replace>`,
+:doc:`mkfs.btrfs(8)<mkfs.btrfs>`,

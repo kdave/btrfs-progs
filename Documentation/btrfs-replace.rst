@@ -58,7 +58,7 @@ start [options] <srcdev>|<devid> <targetdev> <path>
         -K|--nodiscard
                 Do not perform whole device TRIM operation on devices that are capable of that.
                 This does not affect discard/trim operation when the filesystem is mounted.
-                Please see the mount option *discard* for that in ``btrfs(5)``.
+                Please see the mount option *discard* for that in :doc:`btrfs(5)<btrfs-man5>`.
 
 status [-1] <mount_point>
         Print status and progress information of a running device replace operation.
@@ -99,7 +99,7 @@ You can monitor progress via:
 
         btrfs replace status /mnt/my-vault/
 
-After the replacement is complete, as per the docs at ``btrfs-filesystem(8)`` in
+After the replacement is complete, as per the docs at :doc:`btrfs-filesystem(8)<btrfs-filesystem>` in
 order to use the entire storage space of the new drive you need to run:
 
 .. code-block:: bash
@@ -122,6 +122,6 @@ further details.
 SEE ALSO
 --------
 
-``mkfs.btrfs(8)``,
-``btrfs-device(8)``,
-``btrfs-filesystem(8)``,
+:doc:`btrfs-device(8)<btrfs-device>`,
+:doc:`btrfs-filesystem(8)<btrfs-filesystem>`,
+:doc:`mkfs.btrfs(8)<mkfs.btrfs>`
