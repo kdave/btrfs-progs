@@ -6396,7 +6396,7 @@ static int check_type_with_root(u64 rootid, u8 key_type)
 			goto err;
 		break;
 	case BTRFS_BLOCK_GROUP_ITEM_KEY:
-		if (btrfs_fs_incompat(gfs_info, EXTENT_TREE_V2)) {
+		if (btrfs_fs_compat_ro(gfs_info, BLOCK_GROUP_TREE)) {
 			if (rootid != BTRFS_BLOCK_GROUP_TREE_OBJECTID)
 				goto err;
 		} else if (rootid != BTRFS_EXTENT_TREE_OBJECTID) {
@@ -9176,10 +9176,6 @@ again:
 	ret = load_super_root(&normal_trees, gfs_info->chunk_root);
 	if (ret < 0)
 		goto out;
-	ret = load_super_root(&normal_trees, gfs_info->block_group_root);
-	if (ret < 0)
-		goto out;
-
 	ret = parse_tree_roots(&normal_trees, &dropping_trees);
 	if (ret < 0)
 		goto out;
@@ -9679,7 +9675,7 @@ again:
 	 * If we are extent tree v2 then we can reint the block group root as
 	 * well.
 	 */
-	if (btrfs_fs_incompat(gfs_info, EXTENT_TREE_V2)) {
+	if (btrfs_fs_compat_ro(gfs_info, BLOCK_GROUP_TREE)) {
 		ret = btrfs_fsck_reinit_root(trans, gfs_info->block_group_root);
 		if (ret) {
 			fprintf(stderr, "block group initialization failed\n");

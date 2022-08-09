@@ -299,7 +299,8 @@ static int recow_roots(struct btrfs_trans_handle *trans,
 	ret = __recow_root(trans, info->dev_root);
 	if (ret)
 		return ret;
-        if (btrfs_fs_incompat(info, EXTENT_TREE_V2)) {
+
+	if (btrfs_fs_compat_ro(info, BLOCK_GROUP_TREE)) {
 		ret = __recow_root(trans, info->block_group_root);
 		if (ret)
 			return ret;

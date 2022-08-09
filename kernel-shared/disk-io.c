@@ -1170,7 +1170,7 @@ static int load_important_roots(struct btrfs_fs_info *fs_info,
 		backup = sb->super_roots + index;
 	}
 
-	if (!btrfs_fs_incompat(fs_info, EXTENT_TREE_V2)) {
+	if (!btrfs_fs_compat_ro(fs_info, BLOCK_GROUP_TREE)) {
 		free(fs_info->block_group_root);
 		fs_info->block_group_root = NULL;
 		goto tree_root;
@@ -1223,7 +1223,7 @@ int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info, u64 root_tree_bytenr,
 	if (ret)
 		return ret;
 
-	if (btrfs_fs_incompat(fs_info, EXTENT_TREE_V2)) {
+	if (btrfs_fs_compat_ro(fs_info, BLOCK_GROUP_TREE)) {
 		ret = find_and_setup_root(root, fs_info,
 				BTRFS_BLOCK_GROUP_TREE_OBJECTID,
 				fs_info->block_group_root);
