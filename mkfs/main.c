@@ -1303,6 +1303,13 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		}
 	}
 
+	/* Block group tree feature requires no-holes and free-space-tree. */
+	if (runtime_features & BTRFS_RUNTIME_FEATURE_BLOCK_GROUP_TREE &&
+	    (!(features & BTRFS_FEATURE_INCOMPAT_NO_HOLES) ||
+	     !(runtime_features & BTRFS_RUNTIME_FEATURE_FREE_SPACE_TREE))) {
+		error("block group tree requires no-holes and free-space-tree features");
+		exit(1);
+	}
 	if (zoned) {
 		if (source_dir_set) {
 			error("the option -r and zoned mode are incompatible");
