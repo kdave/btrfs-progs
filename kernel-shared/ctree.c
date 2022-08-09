@@ -267,6 +267,14 @@ int btrfs_create_root(struct btrfs_trans_handle *trans,
 		fs_info->quota_root = new_root;
 		fs_info->quota_enabled = 1;
 		break;
+	case BTRFS_BLOCK_GROUP_TREE_OBJECTID:
+		if (fs_info->block_group_root) {
+			error("bg root already exists");
+			ret = -EEXIST;
+			goto free;
+		}
+		fs_info->block_group_root = new_root;
+		break;
 	/*
 	 * Essential trees can't be created by this function, yet.
 	 * As we expect such skeleton exists, or a lot of functions like

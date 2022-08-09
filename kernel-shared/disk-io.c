@@ -529,9 +529,9 @@ err:
 	return -EIO;
 }
 
-static int find_and_setup_root(struct btrfs_root *tree_root,
-			       struct btrfs_fs_info *fs_info,
-			       u64 objectid, struct btrfs_root *root)
+int btrfs_find_and_setup_root(struct btrfs_root *tree_root,
+			      struct btrfs_fs_info *fs_info,
+			      u64 objectid, struct btrfs_root *root)
 {
 	int ret;
 
@@ -611,7 +611,7 @@ struct btrfs_root *btrfs_read_fs_root_no_cache(struct btrfs_fs_info *fs_info,
 	if (!root)
 		return ERR_PTR(-ENOMEM);
 	if (location->offset == (u64)-1) {
-		ret = find_and_setup_root(tree_root, fs_info,
+		ret = btrfs_find_and_setup_root(tree_root, fs_info,
 					  location->objectid, root);
 		if (ret) {
 			free(root);
@@ -1170,7 +1170,9 @@ static int load_important_roots(struct btrfs_fs_info *fs_info,
 		backup = sb->super_roots + index;
 	}
 
-	if (!btrfs_fs_compat_ro(fs_info, BLOCK_GROUP_TREE)) {
+	if (!btrfs_fs_compat_ro(fs_info, BLOCK_GROUP_TREE) &&
+	    !(btrfs_super_flags(fs_info->super_copy) &
+	      BTRFS_SUPER_FLAG_CHANGING_BG_TREE)) {
 		free(fs_info->block_group_root);
 		fs_info->block_group_root = NULL;
 		goto tree_root;
@@ -1223,8 +1225,9 @@ int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info, u64 root_tree_bytenr,
 	if (ret)
 		return ret;
 
-	if (btrfs_fs_compat_ro(fs_info, BLOCK_GROUP_TREE)) {
-		ret = find_and_setup_root(root, fs_info,
+	if (btrfs_fs_compat_ro(fs_info, BLOCK_GROUP_TREE) ||
+	    btrfs_super_flags(sb) & BTRFS_SUPER_FLAG_CHANGING_BG_TREE) {
+		ret = btrfs_find_and_setup_root(root, fs_info,
 				BTRFS_BLOCK_GROUP_TREE_OBJECTID,
 				fs_info->block_group_root);
 		if (ret) {
@@ -1234,16 +1237,18 @@ int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info, u64 root_tree_bytenr,
 		fs_info->block_group_root->track_dirty = 1;
 	}
 
-	ret = find_and_setup_root(root, fs_info, BTRFS_DEV_TREE_OBJECTID,
-				  fs_info->dev_root);
+	ret = btrfs_find_and_setup_root(root, fs_info,
+					BTRFS_DEV_TREE_OBJECTID,
+					fs_info->dev_root);
 	if (ret) {
 		printk("Couldn't setup device tree\n");
 		return -EIO;
 	}
 	fs_info->dev_root->track_dirty = 1;
 
-	ret = find_and_setup_root(root, fs_info, BTRFS_UUID_TREE_OBJECTID,
-				  fs_info->uuid_root);
+	ret = btrfs_find_and_setup_root(root, fs_info,
+					BTRFS_UUID_TREE_OBJECTID,
+					fs_info->uuid_root);
 	if (ret) {
 		free(fs_info->uuid_root);
 		fs_info->uuid_root = NULL;
@@ -1251,8 +1256,9 @@ int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info, u64 root_tree_bytenr,
 		fs_info->uuid_root->track_dirty = 1;
 	}
 
-	ret = find_and_setup_root(root, fs_info, BTRFS_QUOTA_TREE_OBJECTID,
-				  fs_info->quota_root);
+	ret = btrfs_find_and_setup_root(root, fs_info,
+					BTRFS_QUOTA_TREE_OBJECTID,
+					fs_info->quota_root);
 	if (ret) {
 		free(fs_info->quota_root);
 		fs_info->quota_root = NULL;

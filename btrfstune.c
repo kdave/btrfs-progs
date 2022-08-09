@@ -775,12 +775,134 @@ out:
 	return ret;
 }
 
+/* After this many block groups we need to commit transaction. */
+#define BLOCK_GROUP_BATCH	64
+
+static int convert_to_bg_tree(struct btrfs_fs_info *fs_info)
+{
+	struct btrfs_super_block *sb = fs_info->super_copy;
+	struct btrfs_trans_handle *trans;
+	struct cache_extent *ce;
+	int converted_bgs = 0;
+	int ret;
+
+	trans = btrfs_start_transaction(fs_info->tree_root, 2);
+	if (IS_ERR(trans)) {
+		ret = PTR_ERR(trans);
+		error("failed to start transaction: %d", ret);
+		return ret;
+	}
+
+	/* Set NO_HOLES feature */
+	btrfs_set_super_incompat_flags(sb, btrfs_super_incompat_flags(sb) |
+				       BTRFS_FEATURE_INCOMPAT_NO_HOLES);
+
+	/* We're resuming from previous run. */
+	if (btrfs_super_flags(sb) & BTRFS_SUPER_FLAG_CHANGING_BG_TREE)
+		goto iterate_bgs;
+
+	ret = btrfs_create_root(trans, fs_info,
+				BTRFS_BLOCK_GROUP_TREE_OBJECTID);
+	if (ret < 0) {
+		error("failed to create block group root: %d", ret);
+		goto error;
+	}
+	btrfs_set_super_flags(sb,
+			btrfs_super_flags(sb) |
+			BTRFS_SUPER_FLAG_CHANGING_BG_TREE);
+	fs_info->last_converted_bg_bytenr = (u64)-1;
+
+	/* Now commit the transaction to make above changes to reach disks. */
+	ret = btrfs_commit_transaction(trans, fs_info->tree_root);
+	if (ret < 0) {
+		error("failed to commit transaction for the new bg root: %d",
+		      ret);
+		goto error;
+	}
+	trans = btrfs_start_transaction(fs_info->tree_root, 2);
+	if (IS_ERR(trans)) {
+		ret = PTR_ERR(trans);
+		error("failed to start transaction: %d", ret);
+		return ret;
+	}
+
+iterate_bgs:
+	if (fs_info->last_converted_bg_bytenr == (u64)-1) {
+		ce = last_cache_extent(&fs_info->mapping_tree.cache_tree);
+	} else {
+		ce = search_cache_extent(&fs_info->mapping_tree.cache_tree,
+					 fs_info->last_converted_bg_bytenr);
+		if (!ce) {
+			error("failed to find block group for bytenr %llu",
+			      fs_info->last_converted_bg_bytenr);
+			ret = -ENOENT;
+			goto error;
+		}
+		ce = prev_cache_extent(ce);
+		if (!ce) {
+			error("no more block group before bytenr %llu",
+			      fs_info->last_converted_bg_bytenr);
+			ret = -ENOENT;
+			goto error;
+		}
+	}
+
+	/* Now convert each block */
+	while (ce) {
+		struct cache_extent *prev = prev_cache_extent(ce);
+		u64 bytenr = ce->start;
+
+		ret = btrfs_convert_one_bg(trans, bytenr);
+		if (ret < 0)
+			goto error;
+		converted_bgs++;
+		ce = prev;
+
+		if (converted_bgs % BLOCK_GROUP_BATCH == 0) {
+			ret = btrfs_commit_transaction(trans,
+							fs_info->tree_root);
+			if (ret < 0) {
+				error("failed to commit transaction: %d", ret);
+				return ret;
+			}
+			trans = btrfs_start_transaction(fs_info->tree_root, 2);
+			if (IS_ERR(trans)) {
+				ret = PTR_ERR(trans);
+				error("failed to start transaction: %d", ret);
+				return ret;
+			}
+		}
+	}
+	/*
+	 * All bgs converted, remove the CHANGING_BG flag and set the compat ro
+	 * flag.
+	 */
+	fs_info->last_converted_bg_bytenr = 0;
+	btrfs_set_super_flags(sb,
+		btrfs_super_flags(sb) &
+		~BTRFS_SUPER_FLAG_CHANGING_BG_TREE);
+	btrfs_set_super_compat_ro_flags(sb,
+			btrfs_super_compat_ro_flags(sb) |
+			BTRFS_FEATURE_COMPAT_RO_BLOCK_GROUP_TREE);
+	ret = btrfs_commit_transaction(trans, fs_info->tree_root);
+	if (ret < 0) {
+		error("faield to commit the final transaction: %d", ret);
+		return ret;
+	}
+	printf("Converted the filesystem to block group tree feature\n");
+	return 0;
+error:
+	btrfs_abort_transaction(trans, ret);
+	return ret;
+}
+
 static void print_usage(void)
 {
 	printf("usage: btrfstune [options] device\n");
 	printf("Tune settings of filesystem features on an unmounted device\n\n");
 	printf("Options:\n");
 	printf("  change feature status:\n");
+	printf("\t-b          enable block group tree (mkfs: block-group-tree, for less mount time)\n");
 	printf("\t-r          enable extended inode refs (mkfs: extref, for hardlink limits)\n");
 	printf("\t-x          enable skinny metadata extent refs (mkfs: skinny-metadata)\n");
 	printf("\t-n          enable no-holes feature (mkfs: no-holes, more efficient sparse file representation)\n");
@@ -811,6 +933,7 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 	u64 seeding_value = 0;
 	int random_fsid = 0;
 	int change_metadata_uuid = 0;
+	bool to_bg_tree = false;
 	int csum_type = -1;
 	char *new_fsid_str = NULL;
 	int ret;
@@ -826,11 +949,14 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 #endif
 			{ NULL, 0, NULL, 0 }
 		};
-		int c = getopt_long(argc, argv, "S:rxfuU:nmM:", long_options, NULL);
+		int c = getopt_long(argc, argv, "S:rxfuU:nmM:b", long_options, NULL);
 
 		if (c < 0)
 			break;
 		switch(c) {
+		case 'b':
+			to_bg_tree = true;
+			break;
 		case 'S':
 			seeding_flag = 1;
 			seeding_value = arg_strtou64(optarg);
@@ -890,7 +1016,7 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 		return 1;
 	}
 	if (!super_flags && !seeding_flag && !(random_fsid || new_fsid_str) &&
-	    !change_metadata_uuid && csum_type == -1) {
+	    !change_metadata_uuid && csum_type == -1 && !to_bg_tree) {
 		error("at least one option should be specified");
 		print_usage();
 		return 1;
@@ -936,6 +1062,24 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 		return 1;
 	}
 
+	if (to_bg_tree) {
+		if (btrfs_fs_compat_ro(root->fs_info, BLOCK_GROUP_TREE)) {
+			error("the filesystem already has block group tree feature");
+			ret = 1;
+			goto out;
+		}
+		if (!btrfs_fs_compat_ro(root->fs_info, FREE_SPACE_TREE_VALID)) {
+			error("the filesystem doesn't have space cache v2, needs to be mounted with \"-o space_cache=v2\" first");
+			ret = 1;
+			goto out;
+		}
+		ret = convert_to_bg_tree(root->fs_info);
+		if (ret < 0) {
+			error("failed to convert the filesystem to block group tree feature");
+			goto out;
+		}
+		goto out;
+	}
 	if (seeding_flag) {
 		if (btrfs_fs_incompat(root->fs_info, METADATA_UUID)) {
 			fprintf(stderr, "SEED flag cannot be changed on a metadata-uuid changed fs\n");

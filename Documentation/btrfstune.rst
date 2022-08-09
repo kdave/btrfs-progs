@@ -24,6 +24,11 @@ means.  Please refer to the *FILESYSTEM FEATURES* in ``btrfs(5)``.
 OPTIONS
 -------
 
+-b
+        (since kernel 6.0)
+        Enable block group tree feature (greatly reduce mount time),
+        enabled by mkfs feature *block-group-tree*.
+
 -f
         Allow dangerous changes, e.g. clear the seeding flag or change fsid.
         Make sure that you are aware of the dangers.

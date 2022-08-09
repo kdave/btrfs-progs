@@ -324,6 +324,13 @@ static inline unsigned long btrfs_chunk_item_size(int num_stripes)
 #define BTRFS_SUPER_FLAG_CHANGING_FSID_V2	(1ULL << 36)
 #define BTRFS_SUPER_FLAG_CHANGING_CSUM		(1ULL << 37)
 
+/*
+ * The fs is undergoing block group tree feature change.
+ * If no BLOCK_GROUP_TREE compat ro flag, it's changing from regular
+ * bg item in extent tree to new bg tree.
+ */
+#define BTRFS_SUPER_FLAG_CHANGING_BG_TREE	(1ULL << 38)
+
 #define BTRFS_BACKREF_REV_MAX		256
 #define BTRFS_BACKREF_REV_SHIFT		56
 #define BTRFS_BACKREF_REV_MASK		(((u64)BTRFS_BACKREF_REV_MAX - 1) << \
@@ -1268,6 +1275,18 @@ struct btrfs_fs_info {
 				int refs_to_drop);
 	struct cache_tree *fsck_extent_cache;
 	struct cache_tree *corrupt_blocks;
+
+	/*
+	 * For converting to/from bg tree feature, this records the bytenr
+	 * of the last processed block group item.
+	 *
+	 * Any new block group item after this bytenr is using the target
+	 * block group item format. (e.g. if converting to bg tree, bg item
+	 * after this bytenr should go into block group tree).
+	 *
+	 * Thus the number should decrease as our convert progress goes.
+	 */
+	u64 last_converted_bg_bytenr;
 
 	/* Cached block sizes */
 	u32 nodesize;
@@ -2668,6 +2687,7 @@ int exclude_super_stripes(struct btrfs_fs_info *fs_info,
 u64 add_new_free_space(struct btrfs_block_group *block_group,
 		       struct btrfs_fs_info *info, u64 start, u64 end);
 u64 hash_extent_data_ref(u64 root_objectid, u64 owner, u64 offset);
+int btrfs_convert_one_bg(struct btrfs_trans_handle *trans, u64 bytenr);
 
 /* ctree.c */
 int btrfs_comp_cpu_keys(const struct btrfs_key *k1, const struct btrfs_key *k2);

@@ -1546,6 +1546,15 @@ static int update_block_group_item(struct btrfs_trans_handle *trans,
 	struct extent_buffer *leaf;
 	struct btrfs_key key;
 
+	/*
+	 * If we're doing convert and the bg is beyond our last converted bg,
+	 * it should go to the new root.
+	 */
+	if (btrfs_super_flags(fs_info->super_copy) &
+	    BTRFS_SUPER_FLAG_CHANGING_BG_TREE &&
+	    cache->start >= fs_info->last_converted_bg_bytenr)
+		root = fs_info->block_group_root;
+
 	key.objectid = cache->start;
 	key.type = BTRFS_BLOCK_GROUP_ITEM_KEY;
 	key.offset = cache->length;
@@ -2726,33 +2735,99 @@ static int read_one_block_group(struct btrfs_fs_info *fs_info,
 	return 0;
 }
 
-int btrfs_read_block_groups(struct btrfs_fs_info *fs_info)
+static int get_last_converted_bg(struct btrfs_fs_info *fs_info)
 {
-	struct btrfs_path path;
-	struct btrfs_root *root;
+	struct btrfs_root *bg_root = fs_info->block_group_root;
+	struct btrfs_path path = {0};
+	struct btrfs_key key = {0};
 	int ret;
+
+	/* Load the first bg in bg tree, that would be our last converted bg. */
+	ret = btrfs_search_slot(NULL, bg_root, &key, &path, 0, 0);
+	if (ret < 0)
+		return ret;
+	ASSERT(ret > 0);
+	/* We should always be at the slot 0 of the first leaf. */
+	ASSERT(path.slots[0] == 0);
+
+	/* Empty bg tree, no converted bg item at all. */
+	if (btrfs_header_nritems(path.nodes[0]) == 0) {
+		fs_info->last_converted_bg_bytenr = (u64)-1;
+		ret = 0;
+		goto out;
+	}
+	btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
+	ASSERT(key.type == BTRFS_BLOCK_GROUP_ITEM_KEY);
+	fs_info->last_converted_bg_bytenr = key.objectid;
+
+out:
+	btrfs_release_path(&path);
+	return ret;
+}
+
+/*
+ * Helper to read old block groups items from specified root.
+ *
+ * The difference between this and read_block_groups_from_root() is,
+ * we will exit if we have already read the last bg in the old root.
+ *
+ * This is to avoid wasting time finding bg items which should be in the
+ * new root.
+ */
+static int read_old_block_groups_from_root(struct btrfs_fs_info *fs_info,
+					   struct btrfs_root *root)
+{
+	struct btrfs_path path = {0};
 	struct btrfs_key key;
+	struct cache_extent *ce;
+	/* The last block group bytenr in the old root. */
+	u64 last_bg_in_old_root;
+	int ret;
 
-	root = btrfs_block_group_root(fs_info);
-	key.objectid = 0;
-	key.offset = 0;
+	if (fs_info->last_converted_bg_bytenr != (u64)-1) {
+		/*
+		 * We know the last converted bg in the other tree, load the chunk
+		 * before that last converted as our last bg in the tree.
+		 */
+		ce = search_cache_extent(&fs_info->mapping_tree.cache_tree,
+			         fs_info->last_converted_bg_bytenr);
+		if (!ce || ce->start != fs_info->last_converted_bg_bytenr) {
+			error("no chunk found for bytenr %llu",
+			      fs_info->last_converted_bg_bytenr);
+			return -ENOENT;
+		}
+		ce = prev_cache_extent(ce);
+		/*
+		 * We should have previous unconverted chunk, or we have
+		 * already finished the convert.
+		 */
+		ASSERT(ce);
+
+		last_bg_in_old_root = ce->start;
+	} else {
+		last_bg_in_old_root = (u64)-1;
+	}
+
 	key.type = BTRFS_BLOCK_GROUP_ITEM_KEY;
-	btrfs_init_path(&path);
 
-	while(1) {
+	while (true) {
 		ret = find_first_block_group(root, &path, &key);
 		if (ret > 0) {
 			ret = 0;
-			goto error;
+			goto out;
 		}
 		if (ret != 0) {
-			goto error;
+			goto out;
 		}
 		btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
 
 		ret = read_one_block_group(fs_info, &path);
 		if (ret < 0 && ret != -ENOENT)
-			goto error;
+			goto out;
+
+		/* We have reached last bg in the old root, no need to continue */
+		if (key.objectid >= last_bg_in_old_root)
+			break;
 
 		if (key.offset == 0)
 			key.objectid++;
@@ -2762,9 +2837,89 @@ int btrfs_read_block_groups(struct btrfs_fs_info *fs_info)
 		btrfs_release_path(&path);
 	}
 	ret = 0;
-error:
+out:
 	btrfs_release_path(&path);
 	return ret;
+}
+
+/* Helper to read all block groups items from specified root. */
+static int read_block_groups_from_root(struct btrfs_fs_info *fs_info,
+					   struct btrfs_root *root)
+{
+	struct btrfs_path path = {0};
+	struct btrfs_key key = {0};
+	int ret;
+
+	key.type = BTRFS_BLOCK_GROUP_ITEM_KEY;
+
+	while (true) {
+		ret = find_first_block_group(root, &path, &key);
+		if (ret > 0) {
+			ret = 0;
+			goto out;
+		}
+		if (ret != 0) {
+			goto out;
+		}
+		btrfs_item_key_to_cpu(path.nodes[0], &key, path.slots[0]);
+
+		ret = read_one_block_group(fs_info, &path);
+		if (ret < 0 && ret != -ENOENT)
+			goto out;
+
+		if (key.offset == 0)
+			key.objectid++;
+		else
+			key.objectid = key.objectid + key.offset;
+		key.offset = 0;
+		btrfs_release_path(&path);
+	}
+	ret = 0;
+out:
+	btrfs_release_path(&path);
+	return ret;
+}
+
+static int read_converting_block_groups(struct btrfs_fs_info *fs_info)
+{
+	struct btrfs_root *old_root = btrfs_extent_root(fs_info, 0);
+	struct btrfs_root *new_root = btrfs_block_group_root(fs_info);
+	int ret;
+
+	/* Currently we only support converting to bg tree feature. */
+	ASSERT(!btrfs_fs_compat_ro(fs_info, BLOCK_GROUP_TREE));
+
+	ret = get_last_converted_bg(fs_info);
+	if (ret < 0) {
+		error("failed to load the last converted bg: %d", ret);
+		return ret;
+	}
+
+	ret = read_old_block_groups_from_root(fs_info, old_root);
+	if (ret < 0) {
+		error("failed to load block groups from the old root: %d", ret);
+		return ret;
+	}
+
+	/* For block group items in the new tree, just read them all. */
+	ret = read_block_groups_from_root(fs_info, new_root);
+	if (ret < 0) {
+		error("failed to load block groups from the new root: %d", ret);
+		return ret;
+	}
+	return ret;
+}
+
+int btrfs_read_block_groups(struct btrfs_fs_info *fs_info)
+{
+	struct btrfs_root *root;
+
+	if (btrfs_super_flags(fs_info->super_copy) &
+	    BTRFS_SUPER_FLAG_CHANGING_BG_TREE)
+		return read_converting_block_groups(fs_info);
+
+	root = btrfs_block_group_root(fs_info);
+	return read_block_groups_from_root(fs_info, root);
 }
 
 /*
@@ -2834,6 +2989,15 @@ static int insert_block_group_item(struct btrfs_trans_handle *trans,
 	key.offset = block_group->length;
 
 	root = btrfs_block_group_root(fs_info);
+	/*
+	 * If we're doing convert and the bg is beyond our last converted bg,
+	 * it should go to the new root.
+	 */
+	if (btrfs_super_flags(fs_info->super_copy) &
+	    BTRFS_SUPER_FLAG_CHANGING_BG_TREE &&
+	    block_group->start >= fs_info->last_converted_bg_bytenr)
+		root = fs_info->block_group_root;
+
 	return btrfs_insert_item(trans, root, &key, &bgi, sizeof(bgi));
 }
 
@@ -2957,6 +3121,15 @@ static int remove_block_group_item(struct btrfs_trans_handle *trans,
 	key.objectid = block_group->start;
 	key.offset = block_group->length;
 	key.type = BTRFS_BLOCK_GROUP_ITEM_KEY;
+
+	/*
+	 * If we're doing convert and the bg is beyond our last converted bg,
+	 * it should go to the new root.
+	 */
+	if (btrfs_super_flags(fs_info->super_copy) &
+	    BTRFS_SUPER_FLAG_CHANGING_BG_TREE &&
+	    block_group->start >= fs_info->last_converted_bg_bytenr)
+		root = fs_info->block_group_root;
 
 	ret = btrfs_search_slot(trans, root, &key, path, -1, 1);
 	if (ret > 0)
@@ -3848,4 +4021,54 @@ int btrfs_run_delayed_refs(struct btrfs_trans_handle *trans, unsigned long nr)
 	}
 
 	return 0;
+}
+
+int btrfs_convert_one_bg(struct btrfs_trans_handle *trans, u64 bytenr)
+{
+	struct btrfs_fs_info *fs_info = trans->fs_info;
+	struct btrfs_root *new_root = fs_info->block_group_root;
+	struct btrfs_root *old_root = btrfs_extent_root(fs_info, 0);
+	struct btrfs_block_group *bg;
+	struct btrfs_path path = {0};
+	int ret;
+
+	ASSERT(new_root);
+	ASSERT(old_root);
+	ASSERT(btrfs_super_flags(fs_info->super_copy) &
+	       BTRFS_SUPER_FLAG_CHANGING_BG_TREE);
+	/*
+	 * Only support converting to bg tree yet, thus the feature should not
+	 * be set.
+	 */
+	ASSERT(!btrfs_fs_compat_ro(fs_info, BLOCK_GROUP_TREE));
+
+	bg = btrfs_lookup_block_group(fs_info, bytenr);
+	if (!bg) {
+		error("failed to find block group for bytenr %llu", bytenr);
+		return -ENOENT;
+	}
+	/*
+	 * Delete the block group item from the old tree first.
+	 * As we haven't yet update last_converted_bg_bytenr, the delete will
+	 * be done in the old tree.
+	 */
+	ret = remove_block_group_item(trans, &path, bg);
+	btrfs_release_path(&path);
+	if (ret < 0) {
+		error("failed to delete block group item from the old root: %d",
+		      ret);
+		return ret;
+	}
+	fs_info->last_converted_bg_bytenr = bytenr;
+	/*
+	 * Now last_converted_bg_bytenr is updated, the insert will happen for
+	 * the new root.
+	 */
+	ret = insert_block_group_item(trans, bg);
+	if (ret < 0) {
+		error("failed to insert block group item into the new root: %d",
+		      ret);
+		return ret;
+	}
+	return ret;
 }
