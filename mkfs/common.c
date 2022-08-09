@@ -261,6 +261,60 @@ next:
 }
 
 /*
+ * Add @block into the @blocks array.
+ *
+ * The @blocks should already be in ascending order and no duplicate.
+ */
+static void mkfs_blocks_add(enum btrfs_mkfs_block *blocks, int *blocks_nr,
+			    enum btrfs_mkfs_block to_add)
+{
+	int i;
+
+	for (i = 0; i < *blocks_nr; i++) {
+		/* The target is already in the array. */
+		if (blocks[i] == to_add)
+			return;
+
+		/*
+		 * We find the first one past @to_add, move the array one slot
+		 * right, insert a new one.
+		 */
+		if (blocks[i] > to_add) {
+			memmove(blocks + i + 1, blocks + i, *blocks_nr - i);
+			blocks[i] = to_add;
+			(*blocks_nr)++;
+			return;
+		}
+		/* Current one still smaller than @to_add, go to next slot. */
+	}
+	/* All slots iterated and not match, insert into the last slot. */
+	blocks[i] = to_add;
+	(*blocks_nr)++;
+	return;
+}
+
+/*
+ * Remove @block from the @blocks array.
+ *
+ * The @blocks should already be in ascending order and no duplicate.
+ */
+static void mkfs_blocks_remove(enum btrfs_mkfs_block *blocks, int *blocks_nr,
+			       enum btrfs_mkfs_block to_remove)
+{
+	int i;
+
+	for (i = 0; i < *blocks_nr; i++) {
+		/* Found the target, move the array one slot left. */
+		if (blocks[i] == to_remove) {
+			memmove(blocks + i, blocks + i + 1, *blocks_nr - i - 1);
+			(*blocks_nr)--;
+		}
+	}
+	/* Nothing found, exit directly. */
+	return;
+}
+
+/*
  * @fs_uuid - if NULL, generates a UUID, returns back the new filesystem UUID
  *
  * The superblock signature is not valid, denotes a partially created
@@ -290,12 +344,12 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 	struct btrfs_chunk *chunk;
 	struct btrfs_dev_item *dev_item;
 	struct btrfs_dev_extent *dev_extent;
-	const enum btrfs_mkfs_block *blocks = extent_tree_v1_blocks;
+	enum btrfs_mkfs_block blocks[MKFS_BLOCK_COUNT];
 	u8 chunk_tree_uuid[BTRFS_UUID_SIZE];
 	u8 *ptr;
 	int i;
 	int ret;
-	int blocks_nr = ARRAY_SIZE(extent_tree_v1_blocks);
+	int blocks_nr;
 	int blk;
 	u32 itemoff;
 	u32 nritems = 0;
@@ -315,15 +369,19 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 	bool extent_tree_v2 = !!(cfg->features &
 				 BTRFS_FEATURE_INCOMPAT_EXTENT_TREE_V2);
 
-	/* Don't include the free space tree in the blocks to process. */
-	if (!free_space_tree)
-		blocks_nr--;
+	memcpy(blocks, default_blocks,
+	       sizeof(enum btrfs_mkfs_block) * ARRAY_SIZE(default_blocks));
+	blocks_nr = ARRAY_SIZE(default_blocks);
 
+	/* Extent tree v2 needs an extra block for block group tree.*/
 	if (extent_tree_v2) {
-		blocks = extent_tree_v2_blocks;
-		blocks_nr = ARRAY_SIZE(extent_tree_v2_blocks);
+		mkfs_blocks_add(blocks, &blocks_nr, MKFS_BLOCK_GROUP_TREE);
 		add_block_group = false;
 	}
+
+	/* Don't include the free space tree in the blocks to process. */
+	if (!free_space_tree)
+		mkfs_blocks_remove(blocks, &blocks_nr, MKFS_FREE_SPACE_TREE);
 
 	if ((cfg->features & BTRFS_FEATURE_INCOMPAT_ZONED)) {
 		system_group_offset = zoned_system_group_offset(cfg->zone_size);
