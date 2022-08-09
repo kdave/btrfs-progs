@@ -517,11 +517,6 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 				       info->log_root_tree->node->start,
 					btrfs_header_level(
 						info->log_root_tree->node));
-			if (info->block_group_root)
-				printf("block group tree: %llu level %d\n",
-				       info->block_group_root->node->start,
-					btrfs_header_level(
-						info->block_group_root->node));
 		} else {
 			if (info->tree_root->node) {
 				printf("root tree\n");
@@ -538,12 +533,6 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 			if (info->log_root_tree) {
 				printf("log root tree\n");
 				btrfs_print_tree(info->log_root_tree->node,
-					BTRFS_PRINT_TREE_FOLLOW | print_mode);
-			}
-
-			if (info->block_group_root) {
-				printf("block group tree\n");
-				btrfs_print_tree(info->block_group_root->node,
 					BTRFS_PRINT_TREE_FOLLOW | print_mode);
 			}
 		}

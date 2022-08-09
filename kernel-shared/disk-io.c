@@ -1176,32 +1176,8 @@ static int load_important_roots(struct btrfs_fs_info *fs_info,
 		goto tree_root;
 	}
 
-	if (backup) {
-		bytenr = btrfs_backup_block_group_root(backup);
-		gen = btrfs_backup_block_group_root_gen(backup);
-		level = btrfs_backup_block_group_root_level(backup);
-	} else {
-		bytenr = btrfs_super_block_group_root(sb);
-		gen = btrfs_super_block_group_root_generation(sb);
-		level = btrfs_super_block_group_root_level(sb);
-	}
 	root = fs_info->block_group_root;
 	btrfs_setup_root(root, fs_info, BTRFS_BLOCK_GROUP_TREE_OBJECTID);
-
-	ret = read_root_node(fs_info, root, bytenr, gen, level);
-	if (ret) {
-		fprintf(stderr, "Couldn't read block group root\n");
-		return -EIO;
-	}
-
-	if (maybe_load_block_groups(fs_info, flags)) {
-		int ret = btrfs_read_block_groups(fs_info);
-		if (ret < 0 && ret != -ENOENT) {
-			errno = -ret;
-			error("failed to read block groups: %m");
-			return ret;
-		}
-	}
 
 tree_root:
 	if (backup) {
@@ -1247,6 +1223,17 @@ int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info, u64 root_tree_bytenr,
 	if (ret)
 		return ret;
 
+	if (btrfs_fs_incompat(fs_info, EXTENT_TREE_V2)) {
+		ret = find_and_setup_root(root, fs_info,
+				BTRFS_BLOCK_GROUP_TREE_OBJECTID,
+				fs_info->block_group_root);
+		if (ret) {
+			error("couldn't load block group tree");
+			return -EIO;
+		}
+		fs_info->block_group_root->track_dirty = 1;
+	}
+
 	ret = find_and_setup_root(root, fs_info, BTRFS_DEV_TREE_OBJECTID,
 				  fs_info->dev_root);
 	if (ret) {
@@ -1280,8 +1267,7 @@ int btrfs_setup_all_roots(struct btrfs_fs_info *fs_info, u64 root_tree_bytenr,
 			return -EIO;
 	}
 
-	if (!btrfs_fs_incompat(fs_info, EXTENT_TREE_V2) &&
-	    maybe_load_block_groups(fs_info, flags)) {
+	if (maybe_load_block_groups(fs_info, flags)) {
 		ret = btrfs_read_block_groups(fs_info);
 		/*
 		 * If we don't find any blockgroups (ENOENT) we're either
@@ -1801,20 +1787,6 @@ int btrfs_check_super(struct btrfs_super_block *sb, unsigned sbflags)
 		goto error_out;
 	}
 
-	if (btrfs_super_incompat_flags(sb) & BTRFS_FEATURE_INCOMPAT_EXTENT_TREE_V2) {
-		if (btrfs_super_block_group_root_level(sb) >= BTRFS_MAX_LEVEL) {
-			error("block_group_root level too big: %d >= %d",
-			      btrfs_super_block_group_root_level(sb),
-			      BTRFS_MAX_LEVEL);
-			goto error_out;
-		}
-		if (!IS_ALIGNED(btrfs_super_block_group_root(sb), 4096)) {
-			error("block_group_root block unaligned: %llu",
-			      btrfs_super_block_group_root(sb));
-			goto error_out;
-		}
-	}
-
 	if (btrfs_super_incompat_flags(sb) & BTRFS_FEATURE_INCOMPAT_METADATA_UUID)
 		metadata_uuid = sb->metadata_uuid;
 	else
@@ -2132,16 +2104,9 @@ static void backup_super_roots(struct btrfs_fs_info *info)
 	btrfs_set_backup_num_devices(root_backup,
 			     btrfs_super_num_devices(info->super_copy));
 
-	if (btrfs_fs_incompat(info, EXTENT_TREE_V2)) {
-		btrfs_set_backup_block_group_root(root_backup,
-				info->block_group_root->node->start);
-		btrfs_set_backup_block_group_root_gen(root_backup,
-			btrfs_header_generation(info->block_group_root->node));
-		btrfs_set_backup_block_group_root_level(root_backup,
-			btrfs_header_level(info->block_group_root->node));
-	} else {
-		struct btrfs_root *csum_root = btrfs_csum_root(info, 0);
+	if (!btrfs_fs_incompat(info, EXTENT_TREE_V2)) {
 		struct btrfs_root *extent_root = btrfs_extent_root(info, 0);
+		struct btrfs_root *csum_root = btrfs_csum_root(info, 0);
 
 		btrfs_set_backup_csum_root(root_backup, csum_root->node->start);
 		btrfs_set_backup_csum_root_gen(root_backup,
@@ -2202,7 +2167,7 @@ int write_ctree_super(struct btrfs_trans_handle *trans)
 	struct btrfs_fs_info *fs_info = trans->fs_info;
 	struct btrfs_root *tree_root = fs_info->tree_root;
 	struct btrfs_root *chunk_root = fs_info->chunk_root;
-	struct btrfs_root *block_group_root = fs_info->block_group_root;
+
 	if (fs_info->readonly)
 		return 0;
 
@@ -2218,15 +2183,6 @@ int write_ctree_super(struct btrfs_trans_handle *trans)
 					 btrfs_header_level(chunk_root->node));
 	btrfs_set_super_chunk_root_generation(fs_info->super_copy,
 				btrfs_header_generation(chunk_root->node));
-
-	if (btrfs_fs_incompat(fs_info, EXTENT_TREE_V2)) {
-		btrfs_set_super_block_group_root(fs_info->super_copy,
-						 block_group_root->node->start);
-		btrfs_set_super_block_group_root_generation(fs_info->super_copy,
-				btrfs_header_generation(block_group_root->node));
-		btrfs_set_super_block_group_root_level(fs_info->super_copy,
-				btrfs_header_level(block_group_root->node));
-	}
 
 	ret = write_all_supers(fs_info);
 	if (ret)
