@@ -60,6 +60,9 @@ struct btrfs_send_ops {
 	int (*fallocate)(const char *path, int mode, u64 offset, u64 len,
 			 void *user);
 	int (*fileattr)(const char *path, u64 attr, void *user);
+	int (*enable_verity)(const char *path, u8 algorithm, u32 block_size,
+			     int salt_len, char *salt,
+			     int sig_len, char *sig, void *user);
 };
 
 int btrfs_read_and_process_send_stream(int fd,

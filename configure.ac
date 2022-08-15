@@ -66,6 +66,13 @@ AX_GCC_BUILTIN([__builtin_mul_overflow])
 
 AC_CHECK_HEADERS([linux/perf_event.h])
 AC_CHECK_HEADERS([linux/hw_breakpoint.h])
+AC_CHECK_HEADERS([linux/fsverity.h])
+
+if grep -q 'HAVE_LINUX_FSVERITY_H.*1' confdefs.h; then
+	have_fsverity='yes'
+else
+	have_fsverity='no'
+fi
 
 m4_ifndef([PKG_PROG_PKG_CONFIG],
   [m4_fatal([Could not locate the pkg-config autoconf
@@ -451,6 +458,7 @@ AC_MSG_RESULT([
 	btrfs-convert:      ${enable_convert} ${convertfs:+($convertfs)}
 	zstd support:       ${enable_zstd}
 	lzo support:        ${enable_lzo}
+	fsverity support:   ${have_fsverity}
 	Python bindings:    ${enable_python}
 	Python interpreter: ${PYTHON}
 	crypto provider:    ${cryptoprovider} ${cryptoproviderversion}

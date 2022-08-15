@@ -356,6 +356,15 @@ static int print_fileattr(const char *path, u64 attr, void *user)
 	return PRINT_DUMP(user, path, "fileattr", "fileattr=0x%llu", attr);
 }
 
+static int print_enable_verity (const char *path, u8 algorithm, u32 block_size,
+				int salt_len, char *salt,
+				int sig_len, char *sig, void *user)
+{
+	return PRINT_DUMP(user, path, "enable_verity",
+			  "algorithm=%u block_size=%u salt_len=%d sig_len=%d",
+			  algorithm, block_size, salt_len, sig_len);
+}
+
 struct btrfs_send_ops btrfs_print_send_ops = {
 	.subvol = print_subvol,
 	.snapshot = print_snapshot,
@@ -381,4 +390,5 @@ struct btrfs_send_ops btrfs_print_send_ops = {
 	.encoded_write = print_encoded_write,
 	.fallocate = print_fallocate,
 	.fileattr = print_fileattr,
+	.enable_verity = print_enable_verity,
 };
