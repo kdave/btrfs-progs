@@ -139,7 +139,9 @@ static inline void bugon_trace(const char *assertion, const char *filename,
 #define __bitwise__ __attribute__((bitwise))
 #else
 #define __force
+#ifndef __bitwise__
 #define __bitwise__
+#endif
 #endif
 
 #ifndef __CHECKER__
