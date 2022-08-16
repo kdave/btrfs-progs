@@ -86,7 +86,7 @@ build_make_targets
 conf='--disable-zoned'
 build_make_targets
 
-conf='--disable-udev'
+conf='--disable-libudev'
 build_make_targets
 
 conf='--disable-python'
