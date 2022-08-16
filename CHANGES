@@ -1,3 +1,23 @@
+btrfs-progs-5.19 (2022-08-16)
+-----------------------------
+   * send: support protocol version 2
+   * fi show: print all missing devices
+   * device stats: add tabular output
+   * replace: add alias to device group (device replace)
+   * check: validate free space tree items
+   * fixes:
+      * convert: support large filesystems (block count > 32bit)
+      * recognize filesystems with verity enabled
+      * mkfs and DUP could write out of order, fix it for zoned mode
+   * build:
+      * optional support for LZO and ZSTD in receive
+      * compatibility with glibc 2.36 (mount.h)
+      * add fallbacks for new GCC builtins
+   * other:
+      * corrupt-block: target specific items, offsets
+      * documentation updates, new pages from wiki
+      * new tests
+
 btrfs-progs-5.18 (2022-05-25)
 -----------------------------
    * fixes:
