@@ -62,3 +62,4 @@ Welcome to BTRFS documentation!
    btrfs-ioctl
    DocConventions
    dev-send-stream
+   Kernel-by-version
