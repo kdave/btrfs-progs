@@ -409,3 +409,12 @@ features see [[Status]] page.
 5.18 - *removed balance ioctl v1*
         The support for ioctl BTRFS_IOC_BALANCE has been removed, superseded by
         BTRFS_IOC_BALANCE_V2m long time ago
+
+5.19 - subpage support pages > 4KiB
+        Metadata node size is supported regardless of the CPU page size
+        (minimum size is 4KiB), data sectorsize is supported <= page size.
+        Additionally subpage also supports RAID56.
+
+5.19 - per-type background threshold for reclaim
+        Add sysfs tunable for background reclaim threshold for all block group
+        types (data, metadata, system).
