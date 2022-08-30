@@ -33,6 +33,7 @@
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/print-tree.h"
 #include "common/task-utils.h"
+#include "common/device-utils.h"
 #include "kernel-shared/transaction.h"
 #include "common/utils.h"
 #include "cmds/commands.h"
@@ -91,6 +92,8 @@ struct device_record {
 	u64 byte_used;
 
 	u64 real_used;
+
+	bool bad_block_dev_size;
 };
 
 static int compare_data_backref(struct rb_node *node1, struct rb_node *node2)
@@ -5285,6 +5288,7 @@ static int process_chunk_item(struct cache_tree *chunk_cache,
 static int process_device_item(struct rb_root *dev_cache,
 		struct btrfs_key *key, struct extent_buffer *eb, int slot)
 {
+	struct btrfs_device *device;
 	struct btrfs_dev_item *ptr;
 	struct device_record *rec;
 	int ret = 0;
@@ -5308,7 +5312,29 @@ static int process_device_item(struct rb_root *dev_cache,
 	rec->devid = btrfs_device_id(eb, ptr);
 	rec->total_byte = btrfs_device_total_bytes(eb, ptr);
 	rec->byte_used = btrfs_device_bytes_used(eb, ptr);
+	rec->bad_block_dev_size = false;
 
+	device = btrfs_find_device_by_devid(gfs_info->fs_devices, rec->devid, 0);
+	if (device && device->fd >= 0) {
+		struct stat st;
+		u64 block_dev_size;
+
+		ret = fstat(device->fd, &st);
+		if (ret < 0) {
+			warning(
+		"unable to open devid %llu, skipping its block device size check",
+				device->devid);
+			goto skip;
+		}
+		block_dev_size = btrfs_device_size(device->fd, &st);
+		if (block_dev_size < rec->total_byte) {
+			error(
+"block device size is smaller than total_bytes in device item, has %llu expect >= %llu",
+			      block_dev_size, rec->total_byte);
+			rec->bad_block_dev_size = true;
+		}
+	}
+skip:
 	ret = rb_insert(dev_cache, &rec->node, device_record_compare);
 	if (ret) {
 		fprintf(stderr, "Device[%llu] existed.\n", rec->devid);
@@ -8737,6 +8763,8 @@ static int check_devices(struct rb_root *dev_cache,
 
 		check_dev_size_alignment(dev_rec->devid, dev_rec->total_byte,
 					 gfs_info->sectorsize);
+		if (dev_rec->bad_block_dev_size && !ret)
+			ret = 1;
 		dev_node = rb_next(dev_node);
 	}
 	list_for_each_entry(dext_rec, &dev_extent_cache->no_device_orphans,

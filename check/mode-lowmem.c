@@ -23,6 +23,7 @@
 #include "kernel-shared/backref.h"
 #include "common/internal.h"
 #include "common/utils.h"
+#include "common/device-utils.h"
 #include "kernel-shared/volumes.h"
 #include "check/mode-common.h"
 #include "check/mode-lowmem.h"
@@ -4495,6 +4496,9 @@ static int check_dev_item(struct extent_buffer *eb, int slot,
 	struct btrfs_path path;
 	struct btrfs_key key;
 	struct btrfs_dev_extent *ptr;
+	struct btrfs_device *dev;
+	struct stat st;
+	u64 block_dev_size;
 	u64 total_bytes;
 	u64 dev_id;
 	u64 used;
@@ -4590,6 +4594,24 @@ next:
 	}
 	check_dev_size_alignment(dev_id, total_bytes, gfs_info->sectorsize);
 
+	dev = btrfs_find_device_by_devid(gfs_info->fs_devices, dev_id, 0);
+	if (!dev || dev->fd < 0)
+		return 0;
+
+	ret = fstat(dev->fd, &st);
+	if (ret < 0) {
+		warning(
+		"unable to open devid %llu, skipping its block device size check",
+			dev->devid);
+		return 0;
+	}
+	block_dev_size = btrfs_device_size(dev->fd, &st);
+	if (block_dev_size < total_bytes) {
+		error(
+"block device size is smaller than total_bytes in device item, has %llu expect >= %llu",
+		      block_dev_size, total_bytes);
+		return ACCOUNTING_MISMATCH;
+	}
 	return 0;
 }
 
