@@ -14,6 +14,7 @@ for i in *.txt; do
 			*LeakSanitizer:*leak*) echo "SANITIZER REPORT: memory leak: $last" ;;
 			*Warning:\ assertion*failed*) echo "ASSERTION WARNING: $last" ;;
 			*command\ not\ found*) echo "COMMAND NOT FOUND: $last" ;;
+			*extent\ buffer\ leak*) echo "EXTENT BUFFER LEAK: $last" ;;
 			*) : ;;
 		esac
 	done < "$i"
