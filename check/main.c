@@ -10995,6 +10995,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 				      struct extent_buffer, recow);
 		list_del_init(&eb->recow);
 		ret = recow_extent_buffer(root, eb);
+		free_extent_buffer(eb);
 		err |= !!ret;
 		if (ret) {
 			error("fails to fix transid errors");
