@@ -5776,6 +5776,7 @@ static int check_free_space_tree(struct btrfs_root *root)
 	}
 	ret = 0;
 out:
+	btrfs_release_path(&path);
 	return ret;
 }
 
