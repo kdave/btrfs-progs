@@ -811,7 +811,7 @@ static int process_clone(const char *path, u64 offset, u64 len,
 	}
 
 out:
-	if (si) {
+	if (!IS_ERR_OR_NULL(si)) {
 		free(si->path);
 		free(si);
 	}
