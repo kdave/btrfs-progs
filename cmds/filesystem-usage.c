@@ -930,8 +930,7 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 			col++;
 		}
 
-		unused = device_get_partition_size(device_info_ptr[i].path)
-				- total_allocated;
+		unused = device_info_ptr[i].size - total_allocated;
 
 		table_printf(matrix, unallocated_col, vhdr_skip + i, ">%s",
 			pretty_size_mode(unused, unit_mode | UNITS_NEGATIVE));
