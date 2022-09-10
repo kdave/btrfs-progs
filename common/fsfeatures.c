@@ -303,17 +303,21 @@ static void list_all_features(u64 mask_disallowed, enum feature_source source)
 	fprintf(stderr, "%s features available:\n", prefix);
 	for (i = 0; i < array_size - 1; i++) {
 		const struct btrfs_feature *feat = get_feature(i, source);
+		const char *sep = "";
 
 		if (feat->flag & mask_disallowed)
 			continue;
-		fprintf(stderr, "%-20s- %s (0x%llx", feat->name, feat->desc,
-				feat->flag);
-		if (feat->compat_ver)
-			fprintf(stderr, ", compat=%s", feat->compat_str);
-		if (feat->safe_ver)
-			fprintf(stderr, ", safe=%s", feat->safe_str);
+		fprintf(stderr, "%-20s- %s (", feat->name, feat->desc);
+		if (feat->compat_ver) {
+			fprintf(stderr, "compat=%s", feat->compat_str);
+			sep = ", ";
+		}
+		if (feat->safe_ver) {
+			fprintf(stderr, "%ssafe=%s", sep, feat->safe_str);
+			sep = ", ";
+		}
 		if (feat->default_ver)
-			fprintf(stderr, ", default=%s", feat->default_str);
+			fprintf(stderr, "%sdefault=%s", sep, feat->default_str);
 		fprintf(stderr, ")\n");
 	}
 }
