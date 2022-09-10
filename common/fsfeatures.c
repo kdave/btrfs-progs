@@ -43,12 +43,22 @@ enum feature_source {
 	RUNTIME_FEATURES,
 };
 
+enum feature_compat {
+	/* Feature is backward compatible, read-write */
+	FEATURE_COMPAT,
+	/* Feature is backward compatible, read-only, filesystem can be mounted */
+	FEATURE_COMPAT_RO,
+	/* Feature is backward incompatible, filesystem cannot be mounted */
+	FEATURE_INCOMPAT
+};
+
 /*
  * Feature stability status and versions: compat <= safe <= default
  */
 struct btrfs_feature {
 	const char *name;
 	u64 flag;
+	enum feature_compat compat;
 	const char *sysfs_name;
 	/*
 	 * Compatibility with kernel of given version. Filesystem can be
@@ -75,14 +85,29 @@ static const struct btrfs_feature mkfs_features[] = {
 	{
 		.name		= "mixed-bg",
 		.flag		= BTRFS_FEATURE_INCOMPAT_MIXED_GROUPS,
+		.compat		= FEATURE_INCOMPAT,
 		.sysfs_name	= "mixed_groups",
 		VERSION_TO_STRING3(compat, 2,6,37),
 		VERSION_TO_STRING3(safe, 2,6,37),
 		VERSION_NULL(default),
 		.desc		= "mixed data and metadata block groups"
-	}, {
+	},
+#if EXPERIMENTAL
+	{
+		.name		= "quota",
+		.flag		= BTRFS_RUNTIME_FEATURE_QUOTA,
+		.compat		= FEATURE_COMPAT_RO,
+		.sysfs_name	= NULL,
+		VERSION_TO_STRING2(compat, 3,4),
+		VERSION_NULL(safe),
+		VERSION_NULL(default),
+		.desc		= "quota support (qgroups)"
+	},
+#endif
+	{
 		.name		= "extref",
 		.flag		= BTRFS_FEATURE_INCOMPAT_EXTENDED_IREF,
+		.compat		= FEATURE_INCOMPAT,
 		.sysfs_name	= "extended_iref",
 		VERSION_TO_STRING2(compat, 3,7),
 		VERSION_TO_STRING2(safe, 3,12),
@@ -91,6 +116,7 @@ static const struct btrfs_feature mkfs_features[] = {
 	}, {
 		.name		= "raid56",
 		.flag		= BTRFS_FEATURE_INCOMPAT_RAID56,
+		.compat		= FEATURE_INCOMPAT,
 		.sysfs_name	= "raid56",
 		VERSION_TO_STRING2(compat, 3,9),
 		VERSION_NULL(safe),
@@ -99,6 +125,7 @@ static const struct btrfs_feature mkfs_features[] = {
 	}, {
 		.name		= "skinny-metadata",
 		.flag		= BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA,
+		.compat		= FEATURE_INCOMPAT,
 		.sysfs_name	= "skinny_metadata",
 		VERSION_TO_STRING2(compat, 3,10),
 		VERSION_TO_STRING2(safe, 3,18),
@@ -107,14 +134,29 @@ static const struct btrfs_feature mkfs_features[] = {
 	}, {
 		.name		= "no-holes",
 		.flag		= BTRFS_FEATURE_INCOMPAT_NO_HOLES,
+		.compat		= FEATURE_INCOMPAT,
 		.sysfs_name	= "no_holes",
 		VERSION_TO_STRING2(compat, 3,14),
 		VERSION_TO_STRING2(safe, 4,0),
 		VERSION_TO_STRING2(default, 5,15),
 		.desc		= "no explicit hole extents for files"
-	}, {
+	},
+#if EXPERIMENTAL
+	{
+		.name		= "free-space-tree",
+		.flag		= BTRFS_RUNTIME_FEATURE_FREE_SPACE_TREE,
+		.compat		= FEATURE_COMPAT_RO,
+		.sysfs_name = "free_space_tree",
+		VERSION_TO_STRING2(compat, 4,5),
+		VERSION_TO_STRING2(safe, 4,9),
+		VERSION_TO_STRING2(default, 5,15),
+		.desc		= "free space tree (space_cache=v2)"
+	},
+#endif
+	{
 		.name		= "raid1c34",
 		.flag		= BTRFS_FEATURE_INCOMPAT_RAID1C34,
+		.compat		= FEATURE_INCOMPAT,
 		.sysfs_name	= "raid1c34",
 		VERSION_TO_STRING2(compat, 5,5),
 		VERSION_NULL(safe),
@@ -125,6 +167,7 @@ static const struct btrfs_feature mkfs_features[] = {
 	{
 		.name		= "zoned",
 		.flag		= BTRFS_FEATURE_INCOMPAT_ZONED,
+		.compat		= FEATURE_INCOMPAT,
 		.sysfs_name	= "zoned",
 		VERSION_TO_STRING2(compat, 5,12),
 		VERSION_NULL(safe),
@@ -134,8 +177,21 @@ static const struct btrfs_feature mkfs_features[] = {
 #endif
 #if EXPERIMENTAL
 	{
+		.name		= "block-group-tree",
+		.flag		= BTRFS_RUNTIME_FEATURE_BLOCK_GROUP_TREE,
+		.compat		= FEATURE_COMPAT_RO,
+		.sysfs_name = "block_group_tree",
+		VERSION_TO_STRING2(compat, 6,0),
+		VERSION_NULL(safe),
+		VERSION_NULL(default),
+		.desc		= "block group tree to reduce mount time"
+	},
+#endif
+#if EXPERIMENTAL
+	{
 		.name		= "extent-tree-v2",
 		.flag		= BTRFS_FEATURE_INCOMPAT_EXTENT_TREE_V2,
+		.compat		= FEATURE_INCOMPAT,
 		.sysfs_name	= "extent_tree_v2",
 		VERSION_TO_STRING2(compat, 5,15),
 		VERSION_NULL(safe),
@@ -147,6 +203,7 @@ static const struct btrfs_feature mkfs_features[] = {
 	{
 		.name = "list-all",
 		.flag = BTRFS_FEATURE_LIST_ALL,
+		.compat	= FEATURE_INCOMPAT,
 		.sysfs_name = NULL,
 		VERSION_NULL(compat),
 		VERSION_NULL(safe),
@@ -185,6 +242,7 @@ static const struct btrfs_feature runtime_features[] = {
 	{
 		.name = "list-all",
 		.flag = BTRFS_FEATURE_LIST_ALL,
+		.compat	= FEATURE_COMPAT_RO,
 		.sysfs_name = NULL,
 		VERSION_NULL(compat),
 		VERSION_NULL(safe),
