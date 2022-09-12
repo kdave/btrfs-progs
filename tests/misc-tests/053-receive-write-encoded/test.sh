@@ -22,7 +22,7 @@ send_one() {
 
 	algorithm="$1"
 	shift
-	str="$1"
+	file="$1"
 	shift
 
 	subv="subv-$algorithm"
@@ -31,11 +31,14 @@ send_one() {
 	run_check_mount_test_dev "-o" "compress-force=$algorithm"
 	cd "$TEST_MNT" || _fail "cannot chdir to TEST_MNT"
 
+	trucate -s0 "$file"
+	chmod a+w "$file"
+
 	run_check $SUDO_HELPER "$TOP/btrfs" subvolume create "$subv"
 	run_check $SUDO_HELPER dd if=/dev/zero of="$subv/file1" bs=1M count=1
 	run_check $SUDO_HELPER dd if=/dev/zero of="$subv/file2" bs=500K count=1
 	run_check $SUDO_HELPER "$TOP/btrfs" subvolume snapshot -r "$subv" "$snap"
-	run_check $SUDO_HELPER "$TOP/btrfs" send -f "$str" "$snap" "$@"
+	run_check $SUDO_HELPER "$TOP/btrfs" send -f "$file" "$snap" "$@"
 
 	cd "$here" || _fail "cannot chdir back to test directory"
 	run_check_umount_test_dev
@@ -43,6 +46,7 @@ send_one() {
 
 receive_one() {
 	local str
+
 	str="$1"
 	shift
 
@@ -56,6 +60,7 @@ receive_one() {
 test_one_write_encoded() {
 	local str
 	local algorithm
+
 	algorithm="$1"
 	shift
 	str="$here/stream-$algorithm.stream"
@@ -68,6 +73,7 @@ test_one_write_encoded() {
 test_one_stream_v1() {
 	local str
 	local algorithm
+
 	algorithm="$1"
 	shift
 	str="$here/stream-$algorithm.stream"
@@ -81,6 +87,7 @@ test_mix_write_encoded() {
 	local strzlib
 	local strlzo
 	local strzstd
+
 	strzlib="$here/stream-zlib.stream"
 	strlzo="$here/stream-lzo.stream"
 	strzstd="$here/stream-zstd.stream"
