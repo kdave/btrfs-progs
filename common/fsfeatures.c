@@ -237,15 +237,18 @@ static const struct btrfs_feature runtime_features[] = {
 		VERSION_TO_STRING2(safe, 4,9),
 		VERSION_TO_STRING2(default, 5,15),
 		.desc		= "free space tree (space_cache=v2)"
-	}, {
+	},
+#if EXPERIMENTAL
+	{
 		.name		= "block-group-tree",
 		.flag		= BTRFS_RUNTIME_FEATURE_BLOCK_GROUP_TREE,
-		.sysfs_name = "block_group_tree",
-		VERSION_TO_STRING2(compat, 6,0),
+		.sysfs_name	= "block_group_tree",
+		VERSION_TO_STRING2(compat, 6,1),
 		VERSION_NULL(safe),
 		VERSION_NULL(default),
 		.desc		= "block group tree to reduce mount time"
 	},
+#endif
 	/* Keep this one last */
 	{
 		.name = "list-all",

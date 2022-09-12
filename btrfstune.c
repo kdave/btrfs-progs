@@ -952,7 +952,11 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 #endif
 			{ NULL, 0, NULL, 0 }
 		};
+#if EXPERIMENTAL
 		int c = getopt_long(argc, argv, "S:rxfuU:nmM:b", long_options, NULL);
+#else
+		int c = getopt_long(argc, argv, "S:rxfuU:nmM:", long_options, NULL);
+#endif
 
 		if (c < 0)
 			break;
