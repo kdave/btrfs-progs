@@ -18,6 +18,17 @@ btrfs-progs-5.19 (2022-08-16)
       * documentation updates, new pages from wiki
       * new tests
 
+btrfs-progs-5.19.1 (2022-09-12)
+"""""""""""""""""""""""""""""""
+   * fix memory leaks (extent buffer, path)
+   * check: verify block device size vs item
+   * rescue fix-device-size: allow to shrink device item
+   * receive: fix crash on wrong pinter free()
+   * other:
+      * experimental: support for block-group-tree
+      * documentation updates
+      * new tests
+
 btrfs-progs-5.18 (2022-05-25)
 -----------------------------
    * fixes:
