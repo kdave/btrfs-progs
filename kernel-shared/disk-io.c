@@ -208,8 +208,8 @@ int verify_tree_block_csum_silent(struct extent_buffer *buf, u16 csum_size,
 	return __csum_tree_block_size(buf, csum_size, 1, 1, csum_type);
 }
 
-int csum_tree_block(struct btrfs_fs_info *fs_info,
-		    struct extent_buffer *buf, int verify)
+static int csum_tree_block(struct btrfs_fs_info *fs_info,
+			   struct extent_buffer *buf, int verify)
 {
 	u16 csum_size = fs_info->csum_size;
 	u16 csum_type = fs_info->csum_type;
