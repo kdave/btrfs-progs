@@ -61,8 +61,6 @@ int set_label(const char *btrfs_dev, const char *label);
 int check_arg_type(const char *input);
 int get_label_mounted(const char *mount_path, char *labelp);
 int get_label_unmounted(const char *dev, char *label);
-int csum_tree_block(struct btrfs_fs_info *root, struct extent_buffer *buf,
-		    int verify);
 int ask_user(const char *question);
 int lookup_path_rootid(int fd, u64 *rootid);
 int find_mount_fsroot(const char *subvol, const char *subvolid, char **mount);
