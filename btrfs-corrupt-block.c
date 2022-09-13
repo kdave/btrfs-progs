@@ -885,6 +885,8 @@ static int corrupt_metadata_block(struct btrfs_fs_info *fs_info, u64 block,
 		u64 bogus = generate_u64(orig);
 
 		btrfs_set_header_generation(eb, bogus);
+		csum_tree_block_size(eb, fs_info->csum_size, 0,
+				     fs_info->csum_type);
 		ret = write_and_map_eb(fs_info, eb);
 		free_extent_buffer(eb);
 		if (ret < 0) {
