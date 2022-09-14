@@ -865,8 +865,24 @@ static const struct cmd_group balance_cmd_group = {
 
 static int cmd_balance(const struct cmd_struct *cmd, int argc, char **argv)
 {
-	if (argc == 2 && strcmp("start", argv[1]) != 0) {
-		/* old 'btrfs filesystem balance <path>' syntax */
+	bool old_syntax = true;
+
+	/*
+	 * Exclude all valid subcommands from being potentially confused as path
+	 * for the obsolete syntax: btrfs balance <path>
+	 */
+	if (argc >= 2) {
+		for (int i = 0; balance_cmd_group.commands[i] != NULL; i++) {
+			if (strcmp(argv[1], balance_cmd_group.commands[i]->token) == 0) {
+				old_syntax = false;
+				break;
+			}
+		}
+	} else {
+		old_syntax = false;
+	}
+
+	if (old_syntax) {
 		struct btrfs_ioctl_balance_args args;
 
 		memset(&args, 0, sizeof(args));
