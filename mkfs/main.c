@@ -421,18 +421,6 @@ static void print_usage(int ret)
 	exit(ret);
 }
 
-static char *parse_label(const char *input)
-{
-	int len = strlen(input);
-
-	if (len >= BTRFS_LABEL_SIZE) {
-		error("label %s is too long (max %d)", input,
-			BTRFS_LABEL_SIZE - 1);
-		exit(1);
-	}
-	return strdup(input);
-}
-
 static int zero_output_file(int out_fd, u64 size)
 {
 	int loop_num;
@@ -1054,7 +1042,14 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 				nodesize_forced = true;
 				break;
 			case 'L':
-				label = parse_label(optarg);
+				free(label);
+				ret = strlen(optarg);
+				if (ret >= BTRFS_LABEL_SIZE) {
+					error("label %s is too long (max %d)",
+						optarg, BTRFS_LABEL_SIZE - 1);
+					exit(1);
+				}
+				label = strdup(optarg);
 				break;
 			case 'm':
 				ret = parse_bg_profile(optarg, &metadata_profile);
