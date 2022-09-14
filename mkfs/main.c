@@ -28,9 +28,10 @@
 #include <limits.h>
 #include <unistd.h>
 #include <getopt.h>
-#include <uuid/uuid.h>
 #include <ctype.h>
+#include <uuid/uuid.h>
 #include <blkid/blkid.h>
+#include "kernel-lib/list_sort.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/free-space-tree.h"
@@ -42,16 +43,15 @@
 #include "common/path-utils.h"
 #include "common/device-utils.h"
 #include "common/device-scan.h"
-#include "kernel-lib/list_sort.h"
 #include "common/help.h"
 #include "common/rbtree-utils.h"
 #include "common/parse-utils.h"
-#include "mkfs/common.h"
-#include "mkfs/rootdir.h"
 #include "common/fsfeatures.h"
 #include "common/box.h"
 #include "common/units.h"
 #include "check/qgroup-verify.h"
+#include "mkfs/common.h"
+#include "mkfs/rootdir.h"
 
 struct mkfs_allocation {
 	u64 data;
