@@ -16,32 +16,31 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include "kerncompat.h"
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <dirent.h>
-#include <zlib.h>
 #include <getopt.h>
-
-#include "kerncompat.h"
-#include "crypto/crc32c.h"
+#include <zlib.h>
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/transaction.h"
-#include "common/utils.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/extent_io.h"
+#include "crypto/crc32c.h"
+#include "common/box.h"
+#include "common/utils.h"
 #include "common/extent-cache.h"
 #include "common/help.h"
 #include "common/device-utils.h"
 #include "common/open-utils.h"
 #include "image/metadump.h"
 #include "image/sanitize.h"
-#include "common/box.h"
 
 #define MAX_WORKER_THREADS	(32)
 

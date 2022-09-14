@@ -15,12 +15,12 @@
  */
 
 #include "kerncompat.h"
+#include "kernel-shared/extent_io.h"
 #include "common/internal.h"
 #include "common/messages.h"
 #include "common/utils.h"
 #include "crypto/crc32c.h"
 #include "image/sanitize.h"
-#include "kernel-shared/extent_io.h"
 
 /*
  * Reverse CRC-32C table
