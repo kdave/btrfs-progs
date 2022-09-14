@@ -513,6 +513,18 @@ out:
 	return ret;
 }
 
+int device_get_rotational(const char *file)
+{
+	char rotational;
+	int ret;
+
+	ret = device_get_queue_param(file, "rotational", &rotational, 1);
+	if (ret < 1)
+		return 0;
+
+	return (rotational == '0');
+}
+
 ssize_t btrfs_direct_pio(int rw, int fd, void *buf, size_t count, off_t offset)
 {
 	int alignment;

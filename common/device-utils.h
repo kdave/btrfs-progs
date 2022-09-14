@@ -43,6 +43,7 @@ u64 device_get_partition_size_fd(int fd);
 int device_get_queue_param(const char *file, const char *param, char *buf, size_t len);
 u64 device_get_zone_unusable(int fd, u64 flags);
 u64 device_get_zone_size(int fd, const char *name);
+int device_get_rotational(const char *file);
 /*
  * Updates to devices with btrfs-specific changs
  */
