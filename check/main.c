@@ -16,40 +16,41 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include "kerncompat.h"
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <unistd.h>
 #include <getopt.h>
-#include <uuid/uuid.h>
 #include <time.h>
+#include <uuid/uuid.h>
 #include "kernel-lib/radix-tree.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/volumes.h"
-#include "common/repair.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/print-tree.h"
-#include "common/task-utils.h"
-#include "common/device-utils.h"
 #include "kernel-shared/transaction.h"
-#include "common/utils.h"
-#include "cmds/commands.h"
 #include "kernel-shared/free-space-cache.h"
 #include "kernel-shared/free-space-tree.h"
-#include "common/rbtree-utils.h"
 #include "kernel-shared/backref.h"
 #include "kernel-shared/ulist.h"
+#include "common/repair.h"
+#include "common/task-utils.h"
+#include "common/device-utils.h"
+#include "common/utils.h"
+#include "common/rbtree-utils.h"
 #include "common/help.h"
+#include "common/open-utils.h"
+#include "cmds/commands.h"
+#include "mkfs/common.h"
 #include "check/common.h"
 #include "check/mode-common.h"
 #include "check/mode-original.h"
 #include "check/mode-lowmem.h"
 #include "check/qgroup-verify.h"
-#include "common/open-utils.h"
-#include "mkfs/common.h"
 
 u64 bytes_used = 0;
 u64 total_csum_bytes = 0;
