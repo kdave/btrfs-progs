@@ -421,20 +421,6 @@ static void print_usage(int ret)
 	exit(ret);
 }
 
-static u64 parse_profile(const char *s)
-{
-	int ret;
-	u64 flags = 0;
-
-	ret = parse_bg_profile(s, &flags);
-	if (ret) {
-		error("unknown profile %s", s);
-		exit(1);
-	}
-
-	return flags;
-}
-
 static char *parse_label(const char *input)
 {
 	int len = strlen(input);
@@ -1053,7 +1039,11 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 				force_overwrite = true;
 				break;
 			case 'd':
-				data_profile = parse_profile(optarg);
+				ret = parse_bg_profile(optarg, &data_profile);
+				if (ret) {
+					error("unknown data profile %s", optarg);
+					exit(1);
+				}
 				data_profile_opt = true;
 				break;
 			case 'l':
@@ -1067,7 +1057,11 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 				label = parse_label(optarg);
 				break;
 			case 'm':
-				metadata_profile = parse_profile(optarg);
+				ret = parse_bg_profile(optarg, &metadata_profile);
+				if (ret) {
+					error("unknown metadata profile %s", optarg);
+					exit(1);
+				}
 				metadata_profile_opt = true;
 				break;
 			case 'M':
