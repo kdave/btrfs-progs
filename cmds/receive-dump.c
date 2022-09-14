@@ -89,12 +89,18 @@ static int print_path_escaped(const char *path)
 	return len;
 }
 
+enum print_mode {
+	PRINT_DUMP_NORMAL,
+	PRINT_DUMP_SUBVOLUME,
+	PRINT_DUMP_NONEWLINE
+};
+
 /*
  * Underlying PRINT_DUMP, the only difference is how we handle
  * the full path.
  */
 __attribute__ ((format (printf, 5, 6)))
-static int __print_dump(int subvol, void *user, const char *path,
+static int __print_dump(enum print_mode mode, void *user, const char *path,
 			const char *title, const char *fmt, ...)
 {
 	struct btrfs_dump_send_args *r = user;
@@ -103,7 +109,7 @@ static int __print_dump(int subvol, void *user, const char *path,
 	va_list args;
 	int ret;
 
-	if (subvol) {
+	if (mode == PRINT_DUMP_SUBVOLUME) {
 		PATH_CAT_OR_RET(title, r->full_subvol_path, r->root_path, path, ret);
 		out_path = r->full_subvol_path;
 	} else {
@@ -126,17 +132,22 @@ static int __print_dump(int subvol, void *user, const char *path,
 	/* Operation specified ones */
 	vprintf(fmt, args);
 	va_end(args);
-	putchar('\n');
+	if (mode != PRINT_DUMP_NONEWLINE)
+		putchar('\n');
 	return 0;
 }
 
 /* For subvolume/snapshot operation only */
 #define PRINT_DUMP_SUBVOL(user, path, title, fmt, ...) \
-	__print_dump(1, user, path, title, fmt, ##__VA_ARGS__)
+	__print_dump(PRINT_DUMP_SUBVOLUME, user, path, title, fmt, ##__VA_ARGS__)
 
 /* For other operations */
 #define PRINT_DUMP(user, path, title, fmt, ...) \
-	__print_dump(0, user, path, title, fmt, ##__VA_ARGS__)
+	__print_dump(PRINT_DUMP_NORMAL, user, path, title, fmt, ##__VA_ARGS__)
+
+/* For commands that may want to format parts of the line by themselves */
+#define PRINT_DUMP_NO_NEWLINE(user, path, title, fmt, ...) \
+	__print_dump(PRINT_DUMP_NONEWLINE, user, path, title, fmt, ##__VA_ARGS__)
 
 static int print_subvol(const char *path, const u8 *uuid, u64 ctransid,
 			void *user)
@@ -195,7 +206,10 @@ static int print_mksock(const char *path, void *user)
 
 static int print_symlink(const char *path, const char *lnk, void *user)
 {
-	return PRINT_DUMP(user, path, "symlink", "dest=%s", lnk);
+	PRINT_DUMP_NO_NEWLINE(user, path, "symlink", "dest=");
+	print_path_escaped(lnk);
+	putchar('\n');
+	return 0;
 }
 
 static int print_rename(const char *from, const char *to, void *user)
@@ -205,12 +219,18 @@ static int print_rename(const char *from, const char *to, void *user)
 	int ret;
 
 	PATH_CAT_OR_RET("rename", full_to, r->full_subvol_path, to, ret);
-	return PRINT_DUMP(user, from, "rename", "dest=%s", full_to);
+	PRINT_DUMP_NO_NEWLINE(user, from, "rename", "dest=");
+	print_path_escaped(full_to);
+	putchar('\n');
+	return 0;
 }
 
 static int print_link(const char *path, const char *lnk, void *user)
 {
-	return PRINT_DUMP(user, path, "link", "dest=%s", lnk);
+	PRINT_DUMP_NO_NEWLINE(user, path, "link", "dest=");
+	print_path_escaped(lnk);
+	putchar('\n');
+	return 0;
 }
 
 static int print_unlink(const char *path, void *user)
