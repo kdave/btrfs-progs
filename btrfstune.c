@@ -16,22 +16,21 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+#include "kerncompat.h"
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <dirent.h>
-#include <uuid/uuid.h>
 #include <getopt.h>
-
-#include "kerncompat.h"
+#include <uuid/uuid.h>
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/transaction.h"
-#include "common/utils.h"
 #include "kernel-shared/volumes.h"
+#include "common/utils.h"
 #include "common/open-utils.h"
 #include "common/parse-utils.h"
 #include "common/device-scan.h"
