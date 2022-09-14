@@ -14,8 +14,13 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include "kerncompat.h"
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/ioctl.h>
+#include <linux/fs.h>
+#include <linux/version.h>
+#include <linux/fiemap.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,25 +29,18 @@
 #include <getopt.h>
 #include <fcntl.h>
 #include <dirent.h>
-
-#include <sys/ioctl.h>
-#include <linux/fs.h>
-#include <linux/version.h>
-#include <linux/fiemap.h>
-
-#if !defined(FIEMAP_EXTENT_SHARED) && (HAVE_OWN_FIEMAP_EXTENT_SHARED_DEFINE == 1)
-#define FIEMAP_EXTENT_SHARED           0x00002000
-#endif
-
-#include "common/utils.h"
-#include "cmds/commands.h"
-#include "kerncompat.h"
 #include "kernel-lib/rbtree.h"
 #include "kernel-lib/interval_tree_generic.h"
+#include "common/utils.h"
 #include "common/open-utils.h"
 #include "common/units.h"
 #include "common/help.h"
 #include "common/fsfeatures.h"
+#include "cmds/commands.h"
+
+#if !defined(FIEMAP_EXTENT_SHARED) && (HAVE_OWN_FIEMAP_EXTENT_SHARED_DEFINE == 1)
+#define FIEMAP_EXTENT_SHARED           0x00002000
+#endif
 
 static int summarize = 0;
 static unsigned unit_mode = UNITS_RAW;

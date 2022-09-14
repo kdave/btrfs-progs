@@ -17,20 +17,7 @@
  */
 
 #include "kerncompat.h"
-
-#include <unistd.h>
-#include <stdint.h>
-#include <dirent.h>
-#include <fcntl.h>
-#include <pthread.h>
-#include <math.h>
-#include <ftw.h>
 #include <sys/wait.h>
-#include <assert.h>
-#include <getopt.h>
-#include <limits.h>
-#include <errno.h>
-
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -39,8 +26,18 @@
 #include <sys/uio.h>
 #include <sys/xattr.h>
 #include <linux/fs.h>
+#include <unistd.h>
+#include <stdint.h>
+#include <dirent.h>
+#include <fcntl.h>
+#include <pthread.h>
+#include <math.h>
+#include <ftw.h>
+#include <assert.h>
+#include <getopt.h>
+#include <limits.h>
+#include <errno.h>
 #include <uuid/uuid.h>
-
 #include <zlib.h>
 #if COMPRESSION_LZO
 #include <lzo/lzoconf.h>
@@ -49,19 +46,18 @@
 #if COMPRESSION_ZSTD
 #include <zstd.h>
 #endif
-
 #include "kernel-shared/ctree.h"
-#include "ioctl.h"
-#include "cmds/commands.h"
-#include "common/utils.h"
 #include "kernel-lib/list.h"
 #include "kernel-shared/send.h"
+#include "common/utils.h"
 #include "common/send-stream.h"
 #include "common/send-utils.h"
-#include "cmds/receive-dump.h"
 #include "common/help.h"
 #include "common/path-utils.h"
+#include "cmds/commands.h"
+#include "cmds/receive-dump.h"
 #include "stubs.h"
+#include "ioctl.h"
 
 struct btrfs_receive
 {

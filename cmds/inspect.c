@@ -14,25 +14,24 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include "kerncompat.h"
+#include <sys/ioctl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdint.h>
-#include <sys/ioctl.h>
 #include <errno.h>
 #include <getopt.h>
 #include <limits.h>
-
-#include "kerncompat.h"
-#include "ioctl.h"
-#include "common/utils.h"
 #include "kernel-shared/ctree.h"
-#include "common/send-utils.h"
 #include "kernel-shared/disk-io.h"
-#include "cmds/commands.h"
+#include "common/utils.h"
+#include "common/send-utils.h"
 #include "common/help.h"
 #include "common/open-utils.h"
 #include "common/units.h"
+#include "cmds/commands.h"
+#include "ioctl.h"
 
 static const char * const inspect_cmd_group_usage[] = {
 	"btrfs inspect-internal <command> <args>",

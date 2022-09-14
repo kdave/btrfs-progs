@@ -14,32 +14,31 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include "kerncompat.h"
+#include <sys/ioctl.h>
+#include <sys/vfs.h>
+#include <linux/limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/ioctl.h>
-#include <sys/vfs.h>
 #include <errno.h>
 #include <stdarg.h>
 #include <getopt.h>
 #include <fcntl.h>
-#include <linux/limits.h>
-
-#include "common/utils.h"
-#include "kerncompat.h"
 #include "kernel-shared/ctree.h"
-#include "common/string-table.h"
-#include "cmds/filesystem-usage.h"
-#include "cmds/commands.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/volumes.h"
+#include "common/utils.h"
+#include "common/string-table.h"
 #include "common/open-utils.h"
 #include "common/units.h"
-#include "version.h"
 #include "common/help.h"
 #include "common/device-utils.h"
 #include "common/open-utils.h"
+#include "cmds/filesystem-usage.h"
+#include "cmds/commands.h"
+#include "version.h"
 
 /*
  * Add the chunk info to the chunk_info list

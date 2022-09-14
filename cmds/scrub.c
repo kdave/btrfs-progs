@@ -17,7 +17,6 @@
  */
 
 #include "kerncompat.h"
-
 #include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
@@ -25,9 +24,8 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/syscall.h>
-#include <poll.h>
 #include <sys/file.h>
-#include <uuid/uuid.h>
+#include <poll.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <pthread.h>
@@ -35,16 +33,16 @@
 #include <signal.h>
 #include <stdarg.h>
 #include <limits.h>
-
+#include <uuid/uuid.h>
 #include "kernel-shared/ctree.h"
-#include "ioctl.h"
-#include "common/utils.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/disk-io.h"
+#include "common/utils.h"
 #include "common/open-utils.h"
 #include "common/units.h"
-#include "cmds/commands.h"
 #include "common/help.h"
+#include "cmds/commands.h"
+#include "ioctl.h"
 
 static unsigned unit_mode = UNITS_DEFAULT;
 

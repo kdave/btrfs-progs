@@ -14,26 +14,25 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include "kerncompat.h"
+#include <sys/ioctl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <getopt.h>
-#include <sys/ioctl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
-
-#include "kerncompat.h"
 #include "kernel-shared/ctree.h"
-#include "ioctl.h"
 #include "kernel-shared/volumes.h"
 #include "common/open-utils.h"
-#include "cmds/commands.h"
 #include "common/utils.h"
 #include "common/parse-utils.h"
 #include "common/help.h"
+#include "cmds/commands.h"
+#include "ioctl.h"
 
 static const char * const balance_cmd_group_usage[] = {
 	"btrfs balance <command> [options] <path>",

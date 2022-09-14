@@ -14,31 +14,27 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include "kerncompat.h"
+#include <sys/ioctl.h>
+#include <linux/version.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/ioctl.h>
 #include <errno.h>
-#include <uuid/uuid.h>
 #include <ctype.h>
 #include <fcntl.h>
 #include <ftw.h>
 #include <mntent.h>
-#include <linux/version.h>
 #include <getopt.h>
 #include <limits.h>
-
+#include <uuid/uuid.h>
 #include <btrfsutil.h>
-
-#include "kerncompat.h"
 #include "kernel-shared/ctree.h"
-#include "common/utils.h"
 #include "kernel-shared/volumes.h"
-#include "cmds/commands.h"
-#include "cmds/filesystem-usage.h"
 #include "kernel-lib/list_sort.h"
 #include "kernel-shared/disk-io.h"
+#include "common/utils.h"
 #include "common/help.h"
 #include "common/units.h"
 #include "common/fsfeatures.h"
@@ -47,6 +43,8 @@
 #include "common/device-utils.h"
 #include "common/open-utils.h"
 #include "common/parse-utils.h"
+#include "cmds/commands.h"
+#include "cmds/filesystem-usage.h"
 
 /*
  * for btrfs fi show, we maintain a hash of fsids we've already printed.

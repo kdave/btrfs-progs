@@ -17,14 +17,17 @@
  */
 
 #include "kerncompat.h"
-
+#include <sys/types.h>
+#include <sys/xattr.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <sys/stat.h>
-#include <sys/types.h>
+#include <regex.h>
+#include <getopt.h>
 #if COMPRESSION_LZO
 #include <lzo/lzoconf.h>
 #include <lzo/lzo1x.h>
@@ -33,21 +36,16 @@
 #if COMPRESSION_ZSTD
 #include <zstd.h>
 #endif
-#include <regex.h>
-#include <getopt.h>
-#include <sys/types.h>
-#include <sys/xattr.h>
-
+#include "kernel-lib/list.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/print-tree.h"
 #include "kernel-shared/transaction.h"
-#include "kernel-lib/list.h"
 #include "kernel-shared/volumes.h"
 #include "common/utils.h"
-#include "cmds/commands.h"
 #include "common/help.h"
 #include "common/open-utils.h"
+#include "cmds/commands.h"
 
 static char fs_name[PATH_MAX];
 static char path_name[PATH_MAX];

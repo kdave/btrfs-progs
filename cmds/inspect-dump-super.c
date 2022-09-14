@@ -15,20 +15,19 @@
  */
 
 #include "kerncompat.h"
+#include <sys/stat.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <sys/stat.h>
 #include <errno.h>
 #include <getopt.h>
-
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/print-tree.h"
 #include "kernel-shared/zoned.h"
 #include "common/utils.h"
-#include "cmds/commands.h"
 #include "common/help.h"
+#include "cmds/commands.h"
 
 static int load_and_dump_sb(char *filename, int fd, u64 sb_bytenr, int full,
 		int force)

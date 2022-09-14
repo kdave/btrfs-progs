@@ -17,18 +17,17 @@
  */
 
 #include "kerncompat.h"
-
 #include <sys/sysmacros.h>
 #include <getopt.h>
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/transaction.h"
 #include "kernel-shared/disk-io.h"
-#include "cmds/commands.h"
 #include "common/utils.h"
 #include "common/help.h"
-#include "cmds/rescue.h"
 #include "common/open-utils.h"
+#include "cmds/commands.h"
+#include "cmds/rescue.h"
 
 static const char * const rescue_cmd_group_usage[] = {
 	"btrfs rescue <command> [options] <path>",
