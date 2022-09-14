@@ -29,7 +29,7 @@
 #include <getopt.h>
 #include <limits.h>
 #include <uuid/uuid.h>
-#include <btrfsutil.h>
+#include "libbtrfsutil/btrfsutil.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-lib/list_sort.h"

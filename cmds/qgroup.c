@@ -20,7 +20,7 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <errno.h>
-#include <btrfsutil.h>
+#include "libbtrfsutil/btrfsutil.h"
 #include "kernel-shared/ctree.h"
 #include "common/open-utils.h"
 #include "common/utils.h"
