@@ -14,26 +14,21 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include "kerncompat.h"
+#include <sys/ioctl.h>
+#include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <sys/ioctl.h>
 #include <errno.h>
-#include <sys/stat.h>
 #include <getopt.h>
-
-#include "kerncompat.h"
 #include "kernel-shared/ctree.h"
-#include "ioctl.h"
-#include "common/string-table.h"
-#include "common/utils.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/zoned.h"
-#include "cmds/filesystem-usage.h"
-
-#include "cmds/commands.h"
+#include "common/string-table.h"
+#include "common/utils.h"
 #include "common/help.h"
 #include "common/path-utils.h"
 #include "common/device-utils.h"
@@ -41,7 +36,10 @@
 #include "common/format-output.h"
 #include "common/open-utils.h"
 #include "common/units.h"
+#include "cmds/commands.h"
+#include "cmds/filesystem-usage.h"
 #include "mkfs/common.h"
+#include "ioctl.h"
 
 static const char * const device_cmd_group_usage[] = {
 	"btrfs device <command> [<args>]",

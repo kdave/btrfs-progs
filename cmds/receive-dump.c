@@ -16,15 +16,15 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/ioctl.h>
 #include <unistd.h>
 #include <stdint.h>
 #include <dirent.h>
 #include <pthread.h>
 #include <math.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
-#include <sys/ioctl.h>
 #include <libgen.h>
 #include <mntent.h>
 #include <limits.h>
@@ -33,10 +33,10 @@
 #include <ctype.h>
 #include <uuid/uuid.h>
 #include "common/utils.h"
-#include "cmds/commands.h"
 #include "common/send-utils.h"
 #include "common/send-stream.h"
 #include "common/path-utils.h"
+#include "cmds/commands.h"
 #include "cmds/receive-dump.h"
 
 #define PATH_CAT_OR_RET(function_name, outpath, path1, path2, ret)	\

@@ -16,24 +16,23 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include "kerncompat.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <uuid/uuid.h>
 #include <getopt.h>
 #include <fcntl.h>
-
-#include "kerncompat.h"
+#include <uuid/uuid.h>
 #include "kernel-lib/radix-tree.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/print-tree.h"
 #include "kernel-shared/transaction.h"
 #include "kernel-shared/volumes.h"
-#include "cmds/commands.h"
 #include "common/utils.h"
 #include "common/help.h"
 #include "common/device-scan.h"
+#include "cmds/commands.h"
 
 static void print_extents(struct extent_buffer *eb)
 {
