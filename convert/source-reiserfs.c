@@ -18,13 +18,13 @@
 
 #include "kerncompat.h"
 #include <linux/fs.h>
-#include <limits.h>
 #include <sys/stat.h>
 #include <stdbool.h>
+#include <limits.h>
+#include "kernel-lib/bitops.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/transaction.h"
 #include "common/utils.h"
-#include "kernel-lib/bitops.h"
 #include "convert/common.h"
 #include "convert/source-reiserfs.h"
 

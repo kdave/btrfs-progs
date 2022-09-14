@@ -20,7 +20,6 @@
 #if BTRFSCONVERT_EXT2
 
 #include "kerncompat.h"
-
 #include <ext2fs/ext2_fs.h>
 #include <ext2fs/ext2fs.h>
 #include <ext2fs/ext2_ext_attr.h>
