@@ -20,8 +20,8 @@
 #define __BTRFS_SEND_UTILS_H__
 
 #include "kerncompat.h"
-#include "kernel-shared/ctree.h"
 #include "kernel-lib/rbtree.h"
+#include "kernel-shared/ctree.h"
 
 enum subvol_search_type {
 	subvol_search_by_root_id,

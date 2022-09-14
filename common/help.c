@@ -19,10 +19,9 @@
 #include <string.h>
 #include <limits.h>
 #include <getopt.h>
-
-#include "cmds/commands.h"
 #include "common/utils.h"
 #include "common/help.h"
+#include "cmds/commands.h"
 
 #define USAGE_SHORT		1U
 #define USAGE_LONG		2U

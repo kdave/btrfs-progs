@@ -16,13 +16,12 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include <sys/ioctl.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <sys/ioctl.h>
-#include <uuid/uuid.h>
 #include <limits.h>
 #include <errno.h>
-
+#include <uuid/uuid.h>
 #include "kernel-shared/ctree.h"
 #include "common/send-utils.h"
 #include "common/messages.h"

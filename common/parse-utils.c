@@ -17,9 +17,9 @@
 #include "kerncompat.h"
 #include <limits.h>
 #include <ctype.h>
+#include "kernel-shared/volumes.h"
 #include "common/parse-utils.h"
 #include "common/messages.h"
-#include "kernel-shared/volumes.h"
 
 int parse_u64(const char *str, u64 *result)
 {

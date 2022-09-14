@@ -20,15 +20,15 @@
 #define __BTRFS_UTILS_H__
 
 #include <sys/stat.h>
-#include "kernel-shared/ctree.h"
 #include <dirent.h>
 #include <stdarg.h>
+#include "kernel-lib/sizes.h"
+#include "kernel-shared/ctree.h"
 #include "common/defs.h"
 #include "common/internal.h"
-#include "kernel-lib/sizes.h"
 #include "common/messages.h"
-#include "ioctl.h"
 #include "common/fsfeatures.h"
+#include "ioctl.h"
 
 enum exclusive_operation {
 	BTRFS_EXCLOP_NONE,

@@ -16,12 +16,11 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#include <uuid/uuid.h>
 #include <unistd.h>
-
+#include <uuid/uuid.h>
 #include "kernel-shared/send.h"
-#include "common/send-stream.h"
 #include "crypto/crc32c.h"
+#include "common/send-stream.h"
 #include "common/utils.h"
 
 struct btrfs_send_attribute {

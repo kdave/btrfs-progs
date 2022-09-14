@@ -20,6 +20,7 @@
 
 #include "kerncompat.h"
 #include <sys/ioctl.h>
+#include <sys/sysmacros.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -29,12 +30,15 @@
 #include <dirent.h>
 #include <blkid/blkid.h>
 #include <uuid/uuid.h>
-#include <sys/sysmacros.h>
 #ifdef HAVE_LIBUDEV
 #include <sys/stat.h>
 #include <libudev.h>
 #endif
 #include "kernel-lib/overflow.h"
+#include "kernel-shared/ctree.h"
+#include "kernel-shared/volumes.h"
+#include "kernel-shared/disk-io.h"
+#include "kernel-shared/zoned.h"
 #include "common/path-utils.h"
 #include "common/device-scan.h"
 #include "common/messages.h"
@@ -42,10 +46,6 @@
 #include "common/defs.h"
 #include "common/open-utils.h"
 #include "common/units.h"
-#include "kernel-shared/ctree.h"
-#include "kernel-shared/volumes.h"
-#include "kernel-shared/disk-io.h"
-#include "kernel-shared/zoned.h"
 #include "ioctl.h"
 
 static int btrfs_scan_done = 0;

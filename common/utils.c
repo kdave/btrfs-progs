@@ -17,43 +17,41 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "kerncompat.h"
 #include <sys/ioctl.h>
 #include <sys/mount.h>
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <sys/sysinfo.h>
-#include <uuid/uuid.h>
+#include <sys/vfs.h>
+#include <sys/statfs.h>
+#include <sys/stat.h>
+#include <linux/magic.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <mntent.h>
 #include <ctype.h>
 #include <limits.h>
-#include <blkid/blkid.h>
-#include <sys/vfs.h>
-#include <sys/statfs.h>
-#include <linux/magic.h>
 #include <getopt.h>
-
+#include <blkid/blkid.h>
+#include <uuid/uuid.h>
 #include <btrfsutil.h>
-
-#include "kerncompat.h"
 #include "kernel-lib/radix-tree.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
+#include "kernel-shared/volumes.h"
 #include "kernel-shared/transaction.h"
 #include "crypto/crc32c.h"
 #include "common/utils.h"
 #include "common/path-utils.h"
 #include "common/device-scan.h"
 #include "common/parse-utils.h"
-#include "kernel-shared/volumes.h"
-#include "ioctl.h"
-#include "cmds/commands.h"
 #include "common/open-utils.h"
+#include "cmds/commands.h"
 #include "mkfs/common.h"
+#include "ioctl.h"
 
 static int rand_seed_initialized = 0;
 static unsigned short rand_seed[3];
