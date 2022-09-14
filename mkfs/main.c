@@ -1114,7 +1114,8 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 						PACKAGE_STRING);
 				goto success;
 			case 'r':
-				source_dir = optarg;
+				free(source_dir);
+				source_dir = strdup(optarg);
 				source_dir_set = true;
 				break;
 			case 'U':
@@ -1748,6 +1749,7 @@ out:
 
 	btrfs_close_all_devices();
 	free(label);
+	free(source_dir);
 
 	return !!ret;
 error:
@@ -1755,6 +1757,7 @@ error:
 		close(fd);
 
 	free(label);
+	free(source_dir);
 	exit(1);
 success:
 	exit(0);
