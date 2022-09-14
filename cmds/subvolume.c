@@ -28,7 +28,7 @@
 #include <limits.h>
 #include <getopt.h>
 #include <uuid/uuid.h>
-#include <btrfsutil.h>
+#include "libbtrfsutil/btrfsutil.h"
 #include "cmds/qgroup.h"
 #include "kernel-shared/ctree.h"
 #include "common/utils.h"

@@ -46,6 +46,7 @@
 #if COMPRESSION_ZSTD
 #include <zstd.h>
 #endif
+#include "libbtrfsutil/stubs.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-lib/list.h"
 #include "kernel-shared/send.h"
@@ -56,7 +57,6 @@
 #include "common/path-utils.h"
 #include "cmds/commands.h"
 #include "cmds/receive-dump.h"
-#include "stubs.h"
 #include "ioctl.h"
 
 struct btrfs_receive

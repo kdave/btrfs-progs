@@ -94,7 +94,6 @@ CFLAGS = $(SUBST_CFLAGS) \
 	 -fno-strict-aliasing \
 	 -fPIC \
 	 -I$(TOPDIR) \
-	 -I$(TOPDIR)/libbtrfsutil \
 	 $(CRYPTO_CFLAGS) \
 	 -DCOMPRESSION_LZO=$(COMPRESSION_LZO) \
 	 -DCOMPRESSION_ZSTD=$(COMPRESSION_ZSTD) \

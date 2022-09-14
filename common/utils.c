@@ -37,7 +37,7 @@
 #include <getopt.h>
 #include <blkid/blkid.h>
 #include <uuid/uuid.h>
-#include <btrfsutil.h>
+#include "libbtrfsutil/btrfsutil.h"
 #include "kernel-lib/radix-tree.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
