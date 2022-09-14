@@ -18,13 +18,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <getopt.h>
-
 #include "kernel-shared/volumes.h"
 #include "crypto/crc32c.h"
-#include "cmds/commands.h"
 #include "common/utils.h"
 #include "common/help.h"
 #include "common/box.h"
+#include "cmds/commands.h"
 
 static const char * const btrfs_cmd_group_usage[] = {
 	"btrfs [--help] [--version] [--format <format>] [-v|--verbose] [-q|--quiet] <group> [<group>...] <command> [<args>]",

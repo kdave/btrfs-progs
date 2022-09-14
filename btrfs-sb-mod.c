@@ -15,11 +15,11 @@
  */
 
 #include "kerncompat.h"
+#include <sys/fcntl.h>
+#include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <sys/fcntl.h>
-#include <sys/stat.h>
 #include <inttypes.h>
 #include <string.h>
 #include <limits.h>

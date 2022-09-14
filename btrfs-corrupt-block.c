@@ -16,14 +16,13 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include "kerncompat.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <getopt.h>
 #include <limits.h>
-
-#include "kerncompat.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/disk-io.h"
