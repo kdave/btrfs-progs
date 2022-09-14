@@ -428,6 +428,13 @@ out:
 	return ret;
 }
 
+static u64 calc_slack_size(const struct device_info *devinfo)
+{
+	if (devinfo->device_size > 0)
+		return devinfo->device_size - devinfo->size;
+	return 0;
+}
+
 #define	MIN_UNALOCATED_THRESH	SZ_16M
 static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 		int chunkcount, struct device_info *devinfo, int devcount,
@@ -449,6 +456,7 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 	u64 r_total_used = 0;
 	u64 r_total_unused = 0;
 	u64 r_total_missing = 0;	/* sum of missing devices size */
+	u64 r_total_slack = 0;
 	u64 r_data_used = 0;
 	u64 r_data_chunks = 0;
 	u64 l_data_chunks = 0;
@@ -479,6 +487,7 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 	r_total_size = 0;
 	for (i = 0; i < devcount; i++) {
 		r_total_size += devinfo[i].size;
+		r_total_slack += calc_slack_size(&devinfo[i]);
 		if (!devinfo[i].device_size)
 			r_total_missing += devinfo[i].size;
 	}
@@ -608,6 +617,8 @@ static int print_filesystem_usage_overall(int fd, struct chunk_info *chunkinfo,
 		pretty_size_mode(r_total_unused, unit_mode | UNITS_NEGATIVE));
 	printf("    Device missing:\t\t%*s\n", width,
 		pretty_size_mode(r_total_missing, unit_mode));
+	printf("    Device slack:\t\t%*s\n", width,
+		pretty_size_mode(r_total_slack, unit_mode));
 	ret = ioctl(fd, BTRFS_IOC_GET_FEATURES, &feature_flags);
 	if (ret == 0 && (feature_flags.incompat_flags & BTRFS_FEATURE_INCOMPAT_ZONED)) {
 		u64 zone_size;
@@ -834,15 +845,20 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 {
 	int i;
 	u64 total_unused = 0;
+	u64 total_total = 0;
+	u64 total_slack = 0;
 	struct string_table *matrix = NULL;
 	int  ncols, nrows;
 	int col;
 	int unallocated_col;
 	int spaceinfos_col;
+	int total_col;
+	int slack_col;
+	u64 slack;
 	const int vhdr_skip = 3;	/* amount of vertical header space */
 
-	/* id, path, unallocated */
-	ncols = 3;
+	/* id, path, unallocated, total, slack */
+	ncols = 5;
 	spaceinfos_col = 2;
 	/* Properly count the real space infos */
 	for (i = 0; i < sargs->total_spaces; i++) {
@@ -878,11 +894,15 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 				btrfs_group_profile_str(flags));
 		col++;
 	}
-	unallocated_col = col;
+	unallocated_col = col++;
+	total_col = col++;
+	slack_col = col++;
 
 	table_printf(matrix, 0, 1, "<Id");
 	table_printf(matrix, 1, 1, "<Path");
 	table_printf(matrix, unallocated_col, 1, "<Unallocated");
+	table_printf(matrix, total_col, 1, "<Total");
+	table_printf(matrix, slack_col, 1, "<Slack");
 
 	/* body */
 	for (i = 0; i < device_info_count; i++) {
@@ -932,10 +952,24 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 
 		unused = device_get_partition_size(device_info_ptr[i].path)
 				- total_allocated;
+		unused = device_info_ptr[i].size - total_allocated;
 
 		table_printf(matrix, unallocated_col, vhdr_skip + i, ">%s",
 			pretty_size_mode(unused, unit_mode | UNITS_NEGATIVE));
+		table_printf(matrix, total_col, vhdr_skip + i, ">%s",
+			pretty_size_mode(device_info_ptr[i].size,
+			unit_mode | UNITS_NEGATIVE));
+		slack = calc_slack_size(&device_info_ptr[i]);
+		if (slack > 0) {
+			table_printf(matrix, slack_col, vhdr_skip + i, ">%s",
+				pretty_size_mode(slack,
+				unit_mode | UNITS_NEGATIVE));
+		} else {
+			table_printf(matrix, slack_col, vhdr_skip + i, ">-");
+		}
 		total_unused += unused;
+		total_slack += slack;
+		total_total += device_info_ptr[i].size;
 
 	}
 
@@ -952,9 +986,13 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 		table_printf(matrix, col, vhdr_skip + device_info_count, "*-");
 		col++;
 	}
-	/* One for Unallocated */
+	/* Line under Unallocated, Total, Slack */
 	table_printf(matrix, col, vhdr_skip - 1, "*-");
 	table_printf(matrix, col, vhdr_skip + device_info_count, "*-");
+	table_printf(matrix, col + 1, vhdr_skip - 1, "*-");
+	table_printf(matrix, col + 1, vhdr_skip + device_info_count, "*-");
+	table_printf(matrix, col + 2, vhdr_skip - 1, "*-");
+	table_printf(matrix, col + 2, vhdr_skip + device_info_count, "*-");
 
 	/* footer */
 	table_printf(matrix, 1, vhdr_skip + device_info_count + 1, "<Total");
@@ -970,6 +1008,12 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 	table_printf(matrix, unallocated_col, vhdr_skip + device_info_count + 1,
 		">%s",
 		pretty_size_mode(total_unused, unit_mode | UNITS_NEGATIVE));
+	table_printf(matrix, total_col, vhdr_skip + device_info_count + 1,
+		">%s",
+		pretty_size_mode(total_total, unit_mode | UNITS_NEGATIVE));
+	table_printf(matrix, slack_col, vhdr_skip + device_info_count + 1,
+		">%s",
+		pretty_size_mode(total_slack, unit_mode | UNITS_NEGATIVE));
 
 	table_printf(matrix, 1, vhdr_skip + device_info_count + 2, "<Used");
 	for (i = 0, col = spaceinfos_col; i < sargs->total_spaces; i++) {
@@ -1256,7 +1300,5 @@ void print_device_sizes(struct device_info *devinfo, unsigned unit_mode)
 		pretty_size_mode(devinfo->device_size, unit_mode));
 	printf("   Device slack: %*s%10s\n",
 		(int)(20 - strlen("Device slack")), "",
-		pretty_size_mode(devinfo->device_size > 0 ?
-			devinfo->device_size - devinfo->size : 0,
-			unit_mode));
+		pretty_size_mode(calc_slack_size(devinfo), unit_mode));
 }
