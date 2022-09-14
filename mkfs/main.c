@@ -473,18 +473,6 @@ static int zero_output_file(int out_fd, u64 size)
 	return ret;
 }
 
-static bool is_ssd(const char *file)
-{
-	char rotational;
-	int ret;
-
-	ret = device_get_queue_param(file, "rotational", &rotational, 1);
-	if (ret < 1)
-		return false;
-
-	return rotational == '0';
-}
-
 static int _cmp_device_by_id(void *priv, struct list_head *a,
 			     struct list_head *b)
 {
@@ -1225,7 +1213,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	dev_cnt = argc - optind;
 
 	file = argv[optind++];
-	ssd = is_ssd(file);
+	ssd = device_get_rotational(file);
 	if (zoned) {
 		if (!zone_size(file)) {
 			error("zoned: %s: zone size undefined", file);
