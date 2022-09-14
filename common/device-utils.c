@@ -17,6 +17,9 @@
 #include <sys/ioctl.h>
 #include <sys/statfs.h>
 #include <sys/types.h>
+#include <linux/limits.h>
+#include <linux/fs.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -24,9 +27,6 @@
 #include <fcntl.h>
 #include <dirent.h>
 #include <blkid/blkid.h>
-#include <linux/limits.h>
-#include <linux/fs.h>
-#include <limits.h>
 #include "kernel-lib/sizes.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/zoned.h"

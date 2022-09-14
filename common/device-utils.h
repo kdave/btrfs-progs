@@ -17,10 +17,10 @@
 #ifndef __DEVICE_UTILS_H__
 #define __DEVICE_UTILS_H__
 
+#include "kerncompat.h"
+#include <sys/stat.h>
 #include <stdbool.h>
 #include <unistd.h>
-#include "kerncompat.h"
-#include "sys/stat.h"
 
 /*
  * Options for btrfs_prepare_device

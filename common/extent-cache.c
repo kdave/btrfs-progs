@@ -16,9 +16,9 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include "kerncompat.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "kerncompat.h"
 #include "common/extent-cache.h"
 #include "common/rbtree-utils.h"
 

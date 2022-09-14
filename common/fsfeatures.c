@@ -19,8 +19,8 @@
 #include <sys/ioctl.h>
 #include <linux/version.h>
 #include <unistd.h>
-#include "common/fsfeatures.h"
 #include "kernel-shared/ctree.h"
+#include "common/fsfeatures.h"
 #include "common/utils.h"
 
 /*

@@ -14,13 +14,12 @@
  * Boston, MA 021110-1307, USA.
  */
 
-#include <pthread.h>
 #include <sys/timerfd.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <time.h>
-
 #include "common/task-utils.h"
 
 struct task_info *task_init(void *(*threadfn)(void *), int (*postfn)(void *),
