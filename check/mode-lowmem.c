@@ -14,17 +14,18 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include "kerncompat.h"
 #include <time.h>
 #include "kernel-shared/ctree.h"
-#include "common/repair.h"
 #include "kernel-shared/transaction.h"
-#include "common/messages.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/backref.h"
+#include "kernel-shared/volumes.h"
+#include "common/repair.h"
+#include "common/messages.h"
 #include "common/internal.h"
 #include "common/utils.h"
 #include "common/device-utils.h"
-#include "kernel-shared/volumes.h"
 #include "check/mode-common.h"
 #include "check/mode-lowmem.h"
 
