@@ -185,6 +185,7 @@ objects = \
 	common/send-stream.o	\
 	common/send-utils.o	\
 	common/string-table.o	\
+	common/string-utils.o	\
 	common/task-utils.o \
 	common/units.o	\
 	common/utils.o	\

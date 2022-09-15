@@ -50,6 +50,7 @@
 #include "common/fsfeatures.h"
 #include "common/box.h"
 #include "common/units.h"
+#include "common/string-utils.h"
 #include "check/qgroup-verify.h"
 #include "mkfs/common.h"
 #include "mkfs/rootdir.h"

@@ -55,6 +55,7 @@
 #include "common/send-utils.h"
 #include "common/help.h"
 #include "common/path-utils.h"
+#include "common/string-utils.h"
 #include "cmds/commands.h"
 #include "cmds/receive-dump.h"
 #include "ioctl.h"

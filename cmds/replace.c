@@ -38,6 +38,7 @@
 #include "common/help.h"
 #include "common/path-utils.h"
 #include "common/device-utils.h"
+#include "common/string-utils.h"
 #include "cmds/commands.h"
 #include "mkfs/common.h"
 #include "ioctl.h"

@@ -46,7 +46,6 @@ enum exclusive_operation {
 #define BTRFS_CSUM_STRING_LEN		(2 + 2 * BTRFS_CSUM_SIZE + 1)
 void btrfs_format_csum(u16 csum_type, const u8 *data, char *output);
 u64 parse_qgroupid_or_path(const char *p);
-u64 arg_strtou64(const char *str);
 int get_fs_info(const char *path, struct btrfs_ioctl_fs_info_args *fi_args,
 		struct btrfs_ioctl_dev_info_args **di_ret);
 int get_fsid(const char *path, u8 *fsid, int silent);
@@ -76,9 +75,6 @@ const char* btrfs_group_profile_str(u64 flag);
 
 int count_digits(u64 num);
 u64 div_factor(u64 num, int factor);
-
-int string_is_numerical(const char *str);
-int prefixcmp(const char *str, const char *prefix);
 
 unsigned long total_memory(void);
 

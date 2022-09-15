@@ -24,6 +24,7 @@
 #include "kernel-shared/volumes.h"
 #include "crypto/crc32c.h"
 #include "common/utils.h"
+#include "common/string-utils.h"
 #include "common/help.h"
 #include "cmds/commands.h"
 

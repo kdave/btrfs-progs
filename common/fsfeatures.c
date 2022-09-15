@@ -21,6 +21,7 @@
 #include <unistd.h>
 #include "kernel-shared/ctree.h"
 #include "common/fsfeatures.h"
+#include "common/string-utils.h"
 #include "common/utils.h"
 
 /*

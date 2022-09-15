@@ -48,6 +48,7 @@
 #include "common/help.h"
 #include "common/device-utils.h"
 #include "common/open-utils.h"
+#include "common/string-utils.h"
 #include "image/metadump.h"
 #include "image/sanitize.h"
 #include "ioctl.h"

@@ -53,6 +53,7 @@
 #include "common/rbtree-utils.h"
 #include "common/help.h"
 #include "common/open-utils.h"
+#include "common/string-utils.h"
 #include "cmds/commands.h"
 #include "mkfs/common.h"
 #include "check/common.h"
