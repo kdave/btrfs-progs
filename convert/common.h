@@ -23,12 +23,11 @@
 #define __BTRFS_CONVERT_COMMON_H__
 
 #include "kerncompat.h"
-#include "common/defs.h"
 #include "common/extent-cache.h"
 
-#define SOURCE_FS_UUID_SIZE	(16)
-
 struct btrfs_mkfs_config;
+
+#define SOURCE_FS_UUID_SIZE	(16)
 
 struct btrfs_convert_context {
 	u32 blocksize;

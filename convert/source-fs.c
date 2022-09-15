@@ -15,10 +15,14 @@
  */
 
 #include "kerncompat.h"
+#include <errno.h>
+#include <string.h>
 #include <unistd.h>
+#include "kernel-lib/sizes.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/volumes.h"
 #include "common/internal.h"
+#include "common/extent-cache.h"
 #include "convert/common.h"
 #include "convert/source-fs.h"
 

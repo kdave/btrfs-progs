@@ -17,14 +17,23 @@
 #if BTRFSCONVERT_REISERFS
 
 #include "kerncompat.h"
-#include <linux/fs.h>
 #include <sys/stat.h>
+#include <linux/fs.h>
 #include <stdbool.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <fcntl.h>
 #include <limits.h>
+#include <reiserfs/reiserfs_lib.h>
 #include "kernel-lib/bitops.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/transaction.h"
-#include "common/utils.h"
+#include "kernel-shared/extent_io.h"
+#include "common/extent-cache.h"
+#include "common/internal.h"
+#include "common/messages.h"
 #include "convert/common.h"
 #include "convert/source-reiserfs.h"
 

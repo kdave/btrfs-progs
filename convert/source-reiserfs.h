@@ -20,11 +20,17 @@
 #if BTRFSCONVERT_REISERFS
 
 #include "kerncompat.h"
+#include <stdbool.h>
+#include <stddef.h>
 #include <reiserfs/misc.h>
 #include <reiserfs/io.h>
 #include <reiserfs/reiserfs_lib.h>
 #include <reiserfs/reiserfs_fs.h>
 #include "convert/source-fs.h"
+
+struct btrfs_inode_item;
+struct btrfs_root;
+struct btrfs_trans_handle;
 
 #define REISERFS_ACL_VERSION	0x0001
 
