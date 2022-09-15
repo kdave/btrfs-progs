@@ -45,6 +45,7 @@
 #include "common/utils.h"
 #include "common/help.h"
 #include "common/open-utils.h"
+#include "common/string-utils.h"
 #include "cmds/commands.h"
 
 static char fs_name[PATH_MAX];

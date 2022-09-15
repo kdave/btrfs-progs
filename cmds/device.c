@@ -36,6 +36,7 @@
 #include "common/format-output.h"
 #include "common/open-utils.h"
 #include "common/units.h"
+#include "common/string-utils.h"
 #include "cmds/commands.h"
 #include "cmds/filesystem-usage.h"
 #include "mkfs/common.h"

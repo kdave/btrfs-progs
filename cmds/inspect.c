@@ -30,6 +30,7 @@
 #include "common/help.h"
 #include "common/open-utils.h"
 #include "common/units.h"
+#include "common/string-utils.h"
 #include "cmds/commands.h"
 #include "ioctl.h"
 

@@ -33,6 +33,7 @@
 #include "common/help.h"
 #include "common/extent-cache.h"
 #include "common/messages.h"
+#include "common/string-utils.h"
 
 #define FIELD_BUF_LEN 80
 

@@ -36,6 +36,7 @@
 #include "common/path-utils.h"
 #include "common/device-scan.h"
 #include "common/open-utils.h"
+#include "common/string-utils.h"
 #include "common/units.h"
 #include "cmds/commands.h"
 #include "ioctl.h"

@@ -29,6 +29,7 @@
 #include "common/help.h"
 #include "common/open-utils.h"
 #include "common/messages.h"
+#include "common/string-utils.h"
 
 static void print_usage(void)
 {
