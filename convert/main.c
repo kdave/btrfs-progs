@@ -81,7 +81,7 @@
  */
 
 #include "kerncompat.h"
-#include <sys/types.h>
+#include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -89,13 +89,21 @@
 #include <getopt.h>
 #include <pthread.h>
 #include <stdbool.h>
+#include <errno.h>
+#include <limits.h>
+#include <string.h>
 #include <uuid/uuid.h>
+#include "kernel-lib/sizes.h"
+#include "kernel-shared/extent_io.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/transaction.h"
 #include "crypto/crc32c.h"
-#include "common/utils.h"
+#include "common/defs.h"
+#include "common/extent-cache.h"
+#include "common/internal.h"
+#include "common/messages.h"
 #include "common/task-utils.h"
 #include "common/path-utils.h"
 #include "common/help.h"

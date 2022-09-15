@@ -14,14 +14,22 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include <sys/stat.h>
 #include <unistd.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <string.h>
 #include <uuid/uuid.h>
+#include "kernel-lib/sizes.h"
+#include "kernel-shared/ctree.h"
+#include "kernel-shared/extent_io.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/volumes.h"
-#include "common/utils.h"
 #include "common/path-utils.h"
+#include "common/messages.h"
 #include "mkfs/common.h"
 #include "convert/common.h"
+#include "ioctl.h"
 
 #define BTRFS_CONVERT_META_GROUP_SIZE SZ_32M
 

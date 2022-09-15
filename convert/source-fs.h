@@ -21,6 +21,12 @@
 #include <sys/types.h>
 #include <pthread.h>
 
+struct btrfs_convert_context;
+struct btrfs_inode_item;
+struct btrfs_root;
+struct btrfs_trans_handle;
+struct task_info;
+
 #define CONV_IMAGE_SUBVOL_OBJECTID BTRFS_FIRST_FREE_OBJECTID
 
 /*
@@ -36,16 +42,12 @@ struct simple_range {
 
 extern const struct simple_range btrfs_reserved_ranges[3];
 
-struct task_info;
-
 struct task_ctx {
 	pthread_mutex_t mutex;
 	u64 max_copy_inodes;
 	u64 cur_copy_inodes;
 	struct task_info *info;
 };
-
-struct btrfs_convert_context;
 
 #define SOURCE_FS_NAME_LEN	(16)
 
@@ -122,10 +124,6 @@ struct btrfs_convert_operations {
 	void (*close_fs)(struct btrfs_convert_context *cctx);
 	int (*check_state)(struct btrfs_convert_context *cctx);
 };
-
-struct btrfs_trans_handle;
-struct btrfs_root;
-struct btrfs_inode_item;
 
 struct blk_iterate_data {
 	struct btrfs_trans_handle *trans;

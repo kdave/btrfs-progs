@@ -22,8 +22,11 @@
 #include "kerncompat.h"
 #include <ext2fs/ext2_fs.h>
 #include <ext2fs/ext2fs.h>
-#include <ext2fs/ext2_ext_attr.h>
 #include "convert/source-fs.h"
+
+struct btrfs_inode_item;
+struct btrfs_root;
+struct btrfs_trans_handle;
 
 #define INO_OFFSET (BTRFS_FIRST_FREE_OBJECTID - EXT2_ROOT_INO)
 

@@ -17,12 +17,20 @@
 #if BTRFSCONVERT_EXT2
 
 #include "kerncompat.h"
+#include <sys/stat.h>
 #include <linux/limits.h>
+#include <errno.h>
 #include <pthread.h>
-#include "kernel-shared/disk-io.h"
+#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "kernel-lib/sizes.h"
 #include "kernel-shared/transaction.h"
-#include "common/utils.h"
+#include "common/extent-cache.h"
+#include "common/messages.h"
 #include "convert/common.h"
+#include "convert/source-fs.h"
 #include "convert/source-ext2.h"
 
 /*
