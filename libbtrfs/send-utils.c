@@ -16,12 +16,15 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include <sys/ioctl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <sys/ioctl.h>
 #include <limits.h>
 #include <errno.h>
-
+#include "kernel-lib/rbtree.h"
 #include "libbtrfs/ctree.h"
 #include "libbtrfs/send-utils.h"
 #include "ioctl.h"

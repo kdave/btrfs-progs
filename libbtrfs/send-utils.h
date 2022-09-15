@@ -21,12 +21,14 @@
 
 #if BTRFS_FLAT_INCLUDES
 #include "kerncompat.h"
+#include <stddef.h>
 #include "libbtrfs/ctree.h"
-#include "kernel-lib/rbtree.h"
+#include "kernel-lib/rbtree_types.h"
 #else
 #include <btrfs/kerncompat.h>
+#include <stddef.h>
 #include <btrfs/ctree.h>
-#include <btrfs/rbtree.h>
+#include <btrfs/rbtree_types.h>
 #endif /* BTRFS_FLAT_INCLUDES */
 
 #ifdef __cplusplus
