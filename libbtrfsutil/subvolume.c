@@ -17,16 +17,17 @@
  * along with libbtrfsutil.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <sys/statfs.h>
+#include <sys/ioctl.h>
+#include <sys/stat.h>
+#include <linux/magic.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/ioctl.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <sys/vfs.h>
-#include <linux/magic.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include "stubs.h"
 
 #include "btrfsutil_internal.h"

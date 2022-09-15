@@ -22,6 +22,8 @@
 
 #include <asm/byteorder.h>
 #include <string.h>
+#include <errno.h>
+#include <unistd.h>
 
 #include "btrfsutil.h"
 #include "btrfs.h"

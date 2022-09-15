@@ -17,9 +17,9 @@
  * along with libbtrfsutil.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <errno.h>
+#include <stddef.h>
+#include <stdint.h>
 #include <fcntl.h>
-#include <unistd.h>
 #include <sys/ioctl.h>
 
 #include "btrfsutil_internal.h"

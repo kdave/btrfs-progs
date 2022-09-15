@@ -17,6 +17,8 @@
 
 #ifndef _LIBBTRFSUTIL_STUBS_H_
 
+#include <stddef.h>
+
 void *reallocarray(void *ptr, size_t nmemb, size_t size);
 
 #endif
