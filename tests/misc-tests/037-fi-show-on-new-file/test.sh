@@ -6,10 +6,8 @@ source "$TEST_TOP/common"
 check_prereq mkfs.btrfs
 check_prereq btrfs
 
-IMAGE=$(mktemp -u btrfs-progs-image.XXXXXX)
+_mktemp_local img 3g
+run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f img
+run_check $SUDO_HELPER "$TOP/btrfs" filesystem show img
 
-run_check truncate -s3g "$IMAGE"
-run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f "$IMAGE"
-run_check $SUDO_HELPER "$TOP/btrfs" filesystem show "$IMAGE"
-
-rm -f "$IMAGE"
+rm -f img

@@ -16,8 +16,7 @@ run_check_mount_test_dev
 run_check $SUDO_HELPER dd if=/dev/urandom of="$TEST_MNT/file" bs=4k count=16
 run_check_umount_test_dev
 
-touch restored_image
-chmod a+w restored_image
+_mktemp_local restored_image
 run_check $SUDO_HELPER "$TOP/btrfs-image" "$TEST_DEV" "restored_image"
 
 # use prepare_test_dev() to wipe all existing data on $TEST_DEV

@@ -34,9 +34,9 @@ if run_check_stdout $SUDO_HELPER "$TOP/btrfs" subvolume show "$TEST_MNT/snap1" |
      grep -q "WARNING.*received_uuid"; then
 	_fail "unexpected warning"
 fi
+
 run_check $SUDO_HELPER mkdir "$TEST_MNT/recv"
-touch send.stream
-chmod a+w send.stream
+_mktemp_local send.stream
 run_check $SUDO_HELPER "$TOP/btrfs" send -f send.stream "$TEST_MNT/snap1"
 run_check $SUDO_HELPER "$TOP/btrfs" receive -f send.stream -m "$TEST_MNT" "$TEST_MNT/recv"
 if run_check_stdout $SUDO_HELPER "$TOP/btrfs" subvolume show "$TEST_MNT/recv/snap1" |

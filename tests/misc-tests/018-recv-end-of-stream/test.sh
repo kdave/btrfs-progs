@@ -27,8 +27,7 @@ test_full_empty_stream() {
 	run_check $SUDO_HELPER "$TOP/btrfs" subvolume create subv1
 	run_check $SUDO_HELPER "$TOP/btrfs" subvolume snapshot -r subv1 subv1-snap
 
-	truncate -s0 "$str"
-	chmod a+w "$str"
+	_mktemp_local "$str"
 	run_check $SUDO_HELPER "$TOP/btrfs" send -f "$str" subv1-snap
 
 	cd "$here" || _fail "cannot chdir back to test directory"
@@ -58,8 +57,7 @@ test_full_simple_stream() {
 
 	run_check $SUDO_HELPER "$TOP/btrfs" subvolume snapshot -r subv1 subv1-snap
 
-	truncate -s0 "$str"
-	chmod a+w "$str"
+	_mktemp_local "$str"
 	run_check $SUDO_HELPER "$TOP/btrfs" send -f "$str" subv1-snap
 
 	cd "$here" || _fail "cannot chdir back to test directory"
@@ -88,8 +86,8 @@ test_incr_empty_stream() {
 	run_check $SUDO_HELPER "$TOP/btrfs" subvolume snapshot -r subv1 subv1-snap
 	run_check $SUDO_HELPER "$TOP/btrfs" subvolume snapshot -r subv1 subv2-snap
 
-	truncate -s0 "$fstr" "$istr"
-	chmod a+w "$fstr" "$istr"
+	_mktemp_local "$fstr"
+	_mktemp_local "$istr"
 	run_check $SUDO_HELPER "$TOP/btrfs" send -f "$fstr" subv1-snap
 	run_check $SUDO_HELPER "$TOP/btrfs" send -p subv1-snap -f "$istr" subv2-snap
 
@@ -128,8 +126,8 @@ test_incr_simple_stream() {
 
 	run_check $SUDO_HELPER "$TOP/btrfs" subvolume snapshot -r subv1 subv2-snap
 
-	truncate -s0 "$fstr" "$istr"
-	chmod a+w "$fstr" "$istr"
+	_mktemp_local "$fstr"
+	_mktemp_local "$istr"
 	run_check $SUDO_HELPER "$TOP/btrfs" send -f "$fstr" subv1-snap
 	run_check $SUDO_HELPER "$TOP/btrfs" send -p subv1-snap -f "$istr" subv2-snap
 

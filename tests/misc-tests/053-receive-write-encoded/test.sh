@@ -31,8 +31,7 @@ send_one() {
 	run_check_mount_test_dev "-o" "compress-force=$algorithm"
 	cd "$TEST_MNT" || _fail "cannot chdir to TEST_MNT"
 
-	trucate -s0 "$file"
-	chmod a+w "$file"
+	_mktemp_local "$file"
 
 	run_check $SUDO_HELPER "$TOP/btrfs" subvolume create "$subv"
 	run_check $SUDO_HELPER dd if=/dev/zero of="$subv/file1" bs=1M count=1
