@@ -18,7 +18,10 @@
 #define __BTRFS_IMAGE_SANITIZE_H__
 
 #include "kerncompat.h"
-#include "image/metadump.h"
+#include "kernel-lib/rbtree_types.h"
+
+struct btrfs_key;
+struct extent_buffer;
 
 struct name {
 	struct rb_node n;
