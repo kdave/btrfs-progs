@@ -21,7 +21,13 @@
 #ifndef __BTRFS_MKFS_ROOTDIR_H__
 #define __BTRFS_MKFS_ROOTDIR_H__
 
+#include "kerncompat.h"
+#include <sys/types.h>
+#include <stdbool.h>
 #include "kernel-lib/list.h"
+
+struct btrfs_fs_info;
+struct btrfs_root;
 
 struct directory_name_entry {
 	const char *dir_name;

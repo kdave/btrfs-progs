@@ -19,24 +19,26 @@
 #include "kerncompat.h"
 
 #include <sys/stat.h>
-#include <sys/types.h>
 #include <sys/xattr.h>
-#include <linux/limits.h>
 #include <dirent.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <ftw.h>
+#include <errno.h>
+#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "kernel-lib/sizes.h"
+#include "kernel-shared/extent_io.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/transaction.h"
 #include "common/internal.h"
 #include "common/messages.h"
-#include "common/utils.h"
-#include "common/send-utils.h"
 #include "common/path-utils.h"
 #include "mkfs/rootdir.h"
-#include "mkfs/common.h"
 
 static u32 fs_block_size;
 

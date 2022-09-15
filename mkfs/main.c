@@ -17,28 +17,29 @@
  */
 
 #include "kerncompat.h"
-
-#include <sys/ioctl.h>
-#include <sys/mount.h>
-#include "ioctl.h"
+#include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <dirent.h>
 #include <fcntl.h>
-#include <limits.h>
 #include <unistd.h>
 #include <getopt.h>
-#include <ctype.h>
+#include <errno.h>
+#include <stdbool.h>
+#include <string.h>
 #include <uuid/uuid.h>
-#include <blkid/blkid.h>
+#include "kernel-lib/list.h"
 #include "kernel-lib/list_sort.h"
+#include "kernel-lib/rbtree.h"
+#include "kernel-lib/sizes.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
-#include "kernel-shared/free-space-tree.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/transaction.h"
 #include "kernel-shared/zoned.h"
 #include "crypto/crc32c.h"
+#include "common/defs.h"
+#include "common/internal.h"
+#include "common/messages.h"
 #include "common/utils.h"
 #include "common/path-utils.h"
 #include "common/device-utils.h"

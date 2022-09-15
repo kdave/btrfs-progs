@@ -23,7 +23,13 @@
 #define __BTRFS_MKFS_COMMON_H__
 
 #include "kerncompat.h"
+#include <stdbool.h>
+#include "kernel-lib/sizes.h"
+#include "kernel-shared/ctree.h"
 #include "common/defs.h"
+
+struct btrfs_root;
+struct btrfs_trans_handle;
 
 #define BTRFS_MKFS_SYSTEM_GROUP_SIZE SZ_4M
 #define BTRFS_MKFS_SMALL_VOLUME_SIZE SZ_1G
@@ -36,9 +42,6 @@
 
 #define BTRFS_MKFS_DEFAULT_DATA_MULTI_DEVICE	0	/* SINGLE */
 #define BTRFS_MKFS_DEFAULT_META_MULTI_DEVICE	BTRFS_BLOCK_GROUP_RAID1
-
-struct btrfs_trans_handle;
-struct btrfs_root;
 
 /*
  * Tree root blocks created during mkfs
