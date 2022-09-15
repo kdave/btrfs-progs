@@ -11,6 +11,11 @@ check_prereq btrfs
 setup_root_helper
 prepare_test_dev
 
+if grep -q '1$'  "/sys/fs/btrfs/features/send_stream_version"; then
+	_not_run "kernel does not support send stream >1"
+	exit
+fi
+
 here=`pwd`
 
 # assumes the filesystem exists, and does mount, write, snapshot, send, unmount
