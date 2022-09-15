@@ -4,6 +4,6 @@
 for dir in ci-*; do
 	echo "Update $dir"
 	cd "$dir"
-	docker pull `awk '/^FROM/ {print $$2}' < Dockerfile`
+	docker pull `awk '/^FROM/ {print $2}' < Dockerfile`
 	cd ..
 done
