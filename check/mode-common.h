@@ -21,8 +21,15 @@
 #ifndef __BTRFS_CHECK_MODE_COMMON_H__
 #define __BTRFS_CHECK_MODE_COMMON_H__
 
+#include "kerncompat.h"
 #include <sys/stat.h>
+#include <stdbool.h>
+#include "kernel-lib/list.h"
 #include "kernel-shared/ctree.h"
+#include "common/messages.h"
+
+struct btrfs_trans_handle;
+struct extent_buffer;
 
 #define FREE_SPACE_CACHE_INODE_MODE	(0100600)
 /*

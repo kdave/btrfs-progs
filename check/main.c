@@ -17,17 +17,22 @@
  */
 
 #include "kerncompat.h"
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <fcntl.h>
-#include <unistd.h>
 #include <getopt.h>
+#include <errno.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <string.h>
 #include <time.h>
 #include <uuid/uuid.h>
 #include "kernel-lib/radix-tree.h"
+#include "kernel-lib/list.h"
+#include "kernel-lib/rbtree.h"
+#include "kernel-lib/rbtree_types.h"
+#include "kernel-shared/extent_io.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/disk-io.h"
@@ -37,6 +42,10 @@
 #include "kernel-shared/free-space-tree.h"
 #include "kernel-shared/backref.h"
 #include "kernel-shared/ulist.h"
+#include "common/defs.h"
+#include "common/extent-cache.h"
+#include "common/internal.h"
+#include "common/messages.h"
 #include "common/repair.h"
 #include "common/task-utils.h"
 #include "common/device-utils.h"
@@ -51,6 +60,7 @@
 #include "check/mode-original.h"
 #include "check/mode-lowmem.h"
 #include "check/qgroup-verify.h"
+#include "ioctl.h"
 
 u64 bytes_used = 0;
 u64 total_csum_bytes = 0;

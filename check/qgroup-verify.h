@@ -20,7 +20,9 @@
 #define __BTRFS_QGROUP_VERIFY_H__
 
 #include "kerncompat.h"
-#include "kernel-shared/ctree.h"
+#include <stdbool.h>
+
+struct btrfs_fs_info;
 
 int qgroup_verify_all(struct btrfs_fs_info *info);
 void report_qgroups(int all);
