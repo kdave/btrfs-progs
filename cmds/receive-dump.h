@@ -20,6 +20,8 @@
 #define __BTRFS_SEND_DUMP_H__
 
 #include <linux/limits.h>
+#include <limits.h>
+#include "common/send-stream.h"
 
 struct btrfs_dump_send_args {
 	char full_subvol_path[PATH_MAX];

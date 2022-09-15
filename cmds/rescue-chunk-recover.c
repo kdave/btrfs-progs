@@ -17,27 +17,27 @@
  */
 
 #include "kerncompat.h"
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <stdio.h>
-#include <stdio_ext.h>
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <pthread.h>
-#include <uuid/uuid.h>
+#include <errno.h>
+#include <stddef.h>
+#include <string.h>
 #include "kernel-lib/list.h"
-#include "kernel-lib/radix-tree.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/transaction.h"
-#include "crypto/crc32c.h"
+#include "kernel-shared/extent_io.h"
+#include "common/internal.h"
+#include "common/messages.h"
 #include "common/extent-cache.h"
 #include "common/utils.h"
-#include "cmds/commands.h"
 #include "cmds/rescue.h"
 #include "check/common.h"
+#include "ioctl.h"
 
 struct recover_control {
 	int verbose;

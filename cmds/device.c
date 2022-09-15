@@ -16,7 +16,6 @@
 
 #include "kerncompat.h"
 #include <sys/ioctl.h>
-#include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -24,8 +23,9 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <getopt.h>
+#include <dirent.h>
+#include <stdbool.h>
 #include "kernel-shared/ctree.h"
-#include "kernel-shared/volumes.h"
 #include "kernel-shared/zoned.h"
 #include "common/string-table.h"
 #include "common/utils.h"
@@ -37,6 +37,7 @@
 #include "common/open-utils.h"
 #include "common/units.h"
 #include "common/string-utils.h"
+#include "common/messages.h"
 #include "cmds/commands.h"
 #include "cmds/filesystem-usage.h"
 #include "mkfs/common.h"

@@ -17,11 +17,15 @@
  */
 
 #include <sys/ioctl.h>
-#include <unistd.h>
-#include "kernel-shared/ctree.h"
-#include "common/utils.h"
+#include <dirent.h>
+#include <errno.h>
+#include <getopt.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdbool.h>
 #include "common/help.h"
 #include "common/open-utils.h"
+#include "common/messages.h"
 #include "cmds/commands.h"
 #include "ioctl.h"
 

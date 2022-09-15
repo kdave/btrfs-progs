@@ -20,14 +20,16 @@
 #include <sys/types.h>
 #include <sys/xattr.h>
 #include <sys/stat.h>
-#include <sys/types.h>
-#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <regex.h>
 #include <getopt.h>
+#include <errno.h>
+#include <limits.h>
+#include <stddef.h>
+#include <string.h>
 #if COMPRESSION_LZO
 #include <lzo/lzoconf.h>
 #include <lzo/lzo1x.h>
@@ -36,16 +38,16 @@
 #if COMPRESSION_ZSTD
 #include <zstd.h>
 #endif
-#include "kernel-lib/list.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/print-tree.h"
-#include "kernel-shared/transaction.h"
 #include "kernel-shared/volumes.h"
+#include "kernel-shared/extent_io.h"
 #include "common/utils.h"
 #include "common/help.h"
 #include "common/open-utils.h"
 #include "common/string-utils.h"
+#include "common/messages.h"
 #include "cmds/commands.h"
 
 static char fs_name[PATH_MAX];

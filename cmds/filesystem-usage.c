@@ -16,16 +16,18 @@
 
 #include "kerncompat.h"
 #include <sys/ioctl.h>
-#include <sys/vfs.h>
+#include <sys/statfs.h>
 #include <linux/limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
-#include <stdarg.h>
 #include <getopt.h>
 #include <fcntl.h>
+#include <dirent.h>
+#include <limits.h>
+#include "kernel-lib/sizes.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/volumes.h"
@@ -35,10 +37,9 @@
 #include "common/units.h"
 #include "common/help.h"
 #include "common/device-utils.h"
-#include "common/open-utils.h"
+#include "common/messages.h"
 #include "cmds/filesystem-usage.h"
 #include "cmds/commands.h"
-#include "version.h"
 
 /*
  * Add the chunk info to the chunk_info list
