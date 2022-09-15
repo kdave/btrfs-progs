@@ -18,6 +18,8 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <errno.h>
+#include <string.h>
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/transaction.h"
@@ -25,7 +27,6 @@
 #include "common/messages.h"
 #include "common/open-utils.h"
 #include "common/path-utils.h"
-#include "ioctl.h"
 
 /*
  * For a given:

@@ -16,6 +16,10 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include <errno.h>
+#include <stddef.h>
+#include "kernel-lib/rbtree.h"
+#include "kernel-lib/rbtree_types.h"
 #include "common/rbtree-utils.h"
 
 int rb_insert(struct rb_root *root, struct rb_node *node,

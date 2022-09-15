@@ -21,7 +21,9 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <errno.h>
-#include <uuid/uuid.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "kernel-shared/ctree.h"
 #include "common/send-utils.h"
 #include "common/messages.h"

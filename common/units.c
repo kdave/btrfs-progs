@@ -14,6 +14,8 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include <stdio.h>
+#include <string.h>
 #include "common/units.h"
 
 /*

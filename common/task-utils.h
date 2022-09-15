@@ -18,6 +18,7 @@
 #define __TASK_UTILS_H__
 
 #include "kerncompat.h"
+#include <time.h>
 #include <pthread.h>
 
 struct periodic_info {

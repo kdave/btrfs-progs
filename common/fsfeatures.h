@@ -18,6 +18,8 @@
 #define __BTRFS_FSFEATURES_H__
 
 #include "kerncompat.h"
+#include <stdio.h>
+#include "kernel-lib/sizes.h"
 
 #define BTRFS_MKFS_DEFAULT_NODE_SIZE SZ_16K
 #define BTRFS_MKFS_DEFAULT_FEATURES 				\

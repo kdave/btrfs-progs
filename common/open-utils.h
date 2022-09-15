@@ -17,6 +17,7 @@
 #ifndef __OPEN_UTILS_H__
 #define __OPEN_UTILS_H__
 
+#include <stddef.h>
 #include <dirent.h>
 
 struct btrfs_fs_devices;

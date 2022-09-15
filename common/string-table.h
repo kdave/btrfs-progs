@@ -17,6 +17,8 @@
 #ifndef __STRING_TABLE_H__
 #define __STRING_TABLE_H__
 
+#include <stdarg.h>
+
 struct string_table {
 	int ncols;
 	int nrows;

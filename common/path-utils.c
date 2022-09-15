@@ -15,7 +15,6 @@
  */
 
 #include <sys/stat.h>
-#include <sys/sysmacros.h>
 #include <sys/ioctl.h>
 #include <linux/major.h>
 #include <linux/kdev_t.h>
@@ -30,6 +29,7 @@
 #include <errno.h>
 #include <ctype.h>
 #include <libgen.h>
+#include <limits.h>
 #include "common/path-utils.h"
 
 /*

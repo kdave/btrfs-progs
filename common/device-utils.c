@@ -15,9 +15,10 @@
  */
 
 #include <sys/ioctl.h>
-#include <sys/statfs.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <linux/limits.h>
+#include <linux/blkzoned.h>
 #include <linux/fs.h>
 #include <limits.h>
 #include <stdio.h>
@@ -26,9 +27,11 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <dirent.h>
+#include <errno.h>
 #include <blkid/blkid.h>
 #include "kernel-lib/sizes.h"
 #include "kernel-shared/disk-io.h"
+#include "kernel-shared/ctree.h"
 #include "kernel-shared/zoned.h"
 #include "common/device-utils.h"
 #include "common/path-utils.h"

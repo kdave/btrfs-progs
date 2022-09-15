@@ -16,6 +16,11 @@
 
 #include "kerncompat.h"
 #include <stdio.h>
+#include <stdarg.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
 #include <uuid/uuid.h>
 #include "common/defs.h"
 #include "common/format-output.h"

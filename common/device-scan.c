@@ -20,6 +20,7 @@
 
 #include "kerncompat.h"
 #include <sys/ioctl.h>
+#include <sys/stat.h>
 #include <sys/sysmacros.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -28,6 +29,8 @@
 #include <unistd.h>
 #include <errno.h>
 #include <dirent.h>
+#include <limits.h>
+#include <stdbool.h>
 #include <blkid/blkid.h>
 #include <uuid/uuid.h>
 #ifdef HAVE_LIBUDEV
@@ -35,6 +38,7 @@
 #include <libudev.h>
 #endif
 #include "kernel-lib/overflow.h"
+#include "kernel-lib/list.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/disk-io.h"

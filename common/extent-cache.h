@@ -21,6 +21,7 @@
 
 #include "kerncompat.h"
 #include "kernel-lib/rbtree.h"
+#include "kernel-lib/rbtree_types.h"
 
 struct cache_tree {
 	struct rb_root root;

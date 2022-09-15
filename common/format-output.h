@@ -17,6 +17,8 @@
 #ifndef __BTRFS_FORMAT_OUTPUT_H__
 #define __BTRFS_FORMAT_OUTPUT_H__
 
+#include <stddef.h>
+
 struct rowspec {
 	/* Identifier for the row */
 	const char *key;

@@ -16,11 +16,18 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include <errno.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "kernel-lib/list.h"
+#include "kernel-lib/rbtree.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/transaction.h"
+#include "kernel-shared/extent_io.h"
 #include "kernel-shared/disk-io.h"
 #include "common/extent-cache.h"
-#include "common/utils.h"
 #include "common/repair.h"
 
 int repair = 0;
