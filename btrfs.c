@@ -14,15 +14,17 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include "kerncompat.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <getopt.h>
+#include <stdbool.h>
+#include <strings.h>
 #include "kernel-shared/volumes.h"
 #include "crypto/crc32c.h"
 #include "common/utils.h"
 #include "common/help.h"
-#include "common/box.h"
 #include "cmds/commands.h"
 
 static const char * const btrfs_cmd_group_usage[] = {

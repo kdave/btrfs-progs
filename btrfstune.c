@@ -17,25 +17,30 @@
  */
 
 #include "kerncompat.h"
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <dirent.h>
 #include <getopt.h>
+#include <errno.h>
+#include <stdbool.h>
+#include <string.h>
 #include <uuid/uuid.h>
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/transaction.h"
 #include "kernel-shared/volumes.h"
+#include "kernel-shared/extent_io.h"
+#include "common/defs.h"
 #include "common/utils.h"
+#include "common/extent-cache.h"
 #include "common/open-utils.h"
 #include "common/parse-utils.h"
 #include "common/device-scan.h"
+#include "common/messages.h"
 #include "common/help.h"
 #include "common/box.h"
+#include "ioctl.h"
 
 static char *device;
 static int force = 0;
