@@ -28,8 +28,7 @@ failed link source" "$TEST_MNT/subv1/file
 failed link target"
 
 run_check $SUDO_HELPER "$TOP/btrfs" subvolume snapshot -r "$TEST_MNT/subv1" "$TEST_MNT/snap1"
-touch send.stream
-chmod a+w send.stream
+_mktemp_local send.stream
 run_check $SUDO_HELPER "$TOP/btrfs" send -f send.stream "$TEST_MNT/snap1"
 
 run_check_stdout "$TOP/btrfs" receive --dump -f send.stream |

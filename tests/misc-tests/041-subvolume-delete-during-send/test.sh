@@ -20,9 +20,7 @@ done
 run_check $SUDO_HELPER "$TOP/btrfs" subvolume snapshot -r "$TEST_MNT/subv1" "$TEST_MNT/snap1"
 
 stream="stream$RANDOM.out"
-rm -f -- "$stream"
-touch -- "$stream"
-chmod a+rw -- "$stream"
+_mktemp_local "$stream"
 run_check "$TOP/btrfs" filesystem sync "$TEST_MNT"
 # Output to file must be slow
 run_check $SUDO_HELPER "$TOP/btrfs" send -f "$stream" "$TEST_MNT/snap1" &

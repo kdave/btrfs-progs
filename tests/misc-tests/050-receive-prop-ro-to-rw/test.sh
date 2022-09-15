@@ -21,8 +21,8 @@ for i in `seq 10`; do
 done
 run_check $SUDO_HELPER "$TOP/btrfs" subvolume snapshot -r "$TEST_MNT/src/subvol1" "$TEST_MNT/src/snap2"
 
-touch send1.stream send2.stream
-chmod a+w send1.stream send2.stream
+_mktemp_local send1.stream
+_mktemp_local send2.stream
 run_check $SUDO_HELPER "$TOP/btrfs" send -f send1.stream "$TEST_MNT/src/snap1"
 run_check $SUDO_HELPER "$TOP/btrfs" send -f send2.stream -p "$TEST_MNT/src/snap1" "$TEST_MNT/src/snap2"
 

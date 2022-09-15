@@ -29,8 +29,7 @@ for i in 1 2 3; do
 	run_check $SUDO_HELPER "$TOP/btrfs" subvolume snapshot -r subv-parent2 subv-snap2_$i
 done
 
-truncate -s0 "$here"/send-stream.img
-chmod a+w "$here"/send-stream.img
+_mktemp_local "$here/send-stream.img"
 run_check $SUDO_HELPER "$TOP/btrfs" send -f "$here"/send-stream.img \
 	-c subv-snap1_1 -c subv-snap2_1 subv-snap1_[23] subv-snap2_[23]
 

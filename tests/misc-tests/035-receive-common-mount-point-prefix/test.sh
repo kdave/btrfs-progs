@@ -14,10 +14,8 @@ check_prereq mkfs.btrfs
 
 setup_root_helper
 
-rm -f dev1 dev2
-run_check truncate -s 1G dev1
-run_check truncate -s 1G dev2
-chmod a+w dev1 dev2
+_mktemp_local dev1 1G
+_mktemp_local dev2 1G
 
 loop1=$(run_check_stdout $SUDO_HELPER losetup --find --show dev1)
 loop2=$(run_check_stdout $SUDO_HELPER losetup --find --show dev2)
@@ -35,8 +33,7 @@ echo "some data" | $SUDO_HELPER tee "$TEST_MNT/ddis/file" > /dev/null
 run_check $SUDO_HELPER "$TOP/btrfs" subvolume snapshot -r \
 	  "$TEST_MNT/ddis" "$TEST_MNT/ddis/snap"
 
-run_check truncate -s 0 send.data
-chmod a+w send.data
+_mktemp_local send.data
 run_check $SUDO_HELPER "$TOP/btrfs" send -f send.data "$TEST_MNT/ddis/snap"
 
 # The following receive used to fail because it incorrectly determined the mount

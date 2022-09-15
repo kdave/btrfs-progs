@@ -12,8 +12,7 @@ check_prereq mkfs.btrfs
 
 setup_root_helper
 
-run_check truncate -s0 img
-chmod a+w img
+_mktemp_local img
 cp partition-1g-1g img
 run_check truncate -s2g img
 
@@ -28,5 +27,4 @@ done
 
 # cleanup
 run_check $SUDO_HELPER losetup -d "$loopdev"
-run_check truncate -s0 img
 rm img

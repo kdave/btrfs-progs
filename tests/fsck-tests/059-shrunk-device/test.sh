@@ -10,8 +10,7 @@ setup_root_helper
 
 file="img"
 # Allocate an initial 1G file for testing.
-truncate -s0 "$file"
-truncate -s1g "$file"
+_mktemp_local "$file" 1g
 
 dev=$(run_check_stdout $SUDO_HELPER losetup --find --show "$file")
 
