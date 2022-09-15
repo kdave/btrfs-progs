@@ -870,4 +870,21 @@ _mktemp_dir() {
 	echo -n "$tmp"
 }
 
+# Create temporary file of the given name in the local test directory (eg. when
+# it's a large image and not suitable for /tmp), this also supports NFS where
+# the file needs to be created by regular user and made available for roo
+# $1: file name
+# $2: optional size (argument suitable for truncate)
+_mktemp_local() {
+	local name
+	local size
+
+	name="$1"
+	size="${2:-0}"
+	_log "Create local temporary file $name"
+	rm -f -- "$name"
+	run_check truncate -s "$size" -- "$name"
+	run_check chmod a+w -- "$name"
+}
+
 init_env
