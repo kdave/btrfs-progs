@@ -16,8 +16,6 @@
 
 #include "kerncompat.h"
 #include <sys/ioctl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -25,11 +23,14 @@
 #include <getopt.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <dirent.h>
+#include <stdbool.h>
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/volumes.h"
 #include "common/open-utils.h"
 #include "common/utils.h"
 #include "common/parse-utils.h"
+#include "common/messages.h"
 #include "common/help.h"
 #include "cmds/commands.h"
 #include "ioctl.h"

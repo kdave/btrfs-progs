@@ -16,24 +16,31 @@
 
 #include "kerncompat.h"
 #include <sys/ioctl.h>
+#include <sys/stat.h>
 #include <linux/version.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
-#include <ctype.h>
 #include <fcntl.h>
 #include <ftw.h>
 #include <mntent.h>
 #include <getopt.h>
 #include <limits.h>
+#include <dirent.h>
+#include <stdbool.h>
 #include <uuid/uuid.h>
 #include "libbtrfsutil/btrfsutil.h"
+#include "kernel-lib/list.h"
+#include "kernel-lib/sizes.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-lib/list_sort.h"
 #include "kernel-shared/disk-io.h"
+#include "common/defs.h"
+#include "common/internal.h"
+#include "common/messages.h"
 #include "common/utils.h"
 #include "common/help.h"
 #include "common/units.h"
@@ -46,6 +53,7 @@
 #include "common/filesystem-utils.h"
 #include "cmds/commands.h"
 #include "cmds/filesystem-usage.h"
+#include "ioctl.h"
 
 /*
  * for btrfs fi show, we maintain a hash of fsids we've already printed.

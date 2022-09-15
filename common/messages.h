@@ -17,6 +17,11 @@
 #ifndef __BTRFS_MESSAGES_H__
 #define __BTRFS_MESSAGES_H__
 
+#include "kerncompat.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <errno.h>
+
 #ifdef DEBUG_VERBOSE_ERROR
 #define	PRINT_VERBOSE_ERROR	fprintf(stderr, "%s:%d:", __FILE__, __LINE__)
 #else

@@ -16,11 +16,18 @@
 
 #include "kerncompat.h"
 #include <sys/ioctl.h>
-#include <unistd.h>
 #include <getopt.h>
 #include <time.h>
+#include <dirent.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <uuid/uuid.h>
+#include "kernel-lib/rbtree.h"
+#include "kernel-lib/rbtree_types.h"
 #include "kernel-shared/ctree.h"
+#include "common/defs.h"
 #include "common/rbtree-utils.h"
 #include "common/help.h"
 #include "common/messages.h"

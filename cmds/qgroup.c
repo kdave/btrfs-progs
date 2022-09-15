@@ -17,16 +17,25 @@
  */
 
 #include <sys/ioctl.h>
-#include <unistd.h>
 #include <getopt.h>
 #include <errno.h>
+#include <dirent.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
 #include "libbtrfsutil/btrfsutil.h"
+#include "kernel-lib/list.h"
+#include "kernel-lib/rbtree.h"
+#include "kernel-lib/rbtree_types.h"
 #include "kernel-shared/ctree.h"
 #include "common/open-utils.h"
 #include "common/utils.h"
 #include "common/help.h"
 #include "common/units.h"
 #include "common/parse-utils.h"
+#include "common/messages.h"
 #include "cmds/commands.h"
 #include "cmds/qgroup.h"
 #include "ioctl.h"

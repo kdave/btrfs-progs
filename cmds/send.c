@@ -17,29 +17,23 @@
  */
 
 #include "kerncompat.h"
-#include <sys/stat.h>
-#include <sys/types.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
-#include <stdint.h>
-#include <dirent.h>
 #include <fcntl.h>
 #include <pthread.h>
-#include <math.h>
-#include <libgen.h>
-#include <mntent.h>
-#include <assert.h>
 #include <getopt.h>
 #include <limits.h>
-#include <uuid/uuid.h>
-#include "kernel-lib/list.h"
-#include "kernel-shared/ctree.h"
-#include "kernel-shared/send.h"
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "kernel-lib/sizes.h"
 #include "common/utils.h"
 #include "common/send-utils.h"
 #include "common/help.h"
 #include "common/path-utils.h"
 #include "common/string-utils.h"
+#include "common/messages.h"
 #include "cmds/commands.h"
 #include "ioctl.h"
 

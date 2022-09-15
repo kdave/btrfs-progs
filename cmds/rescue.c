@@ -17,12 +17,18 @@
  */
 
 #include "kerncompat.h"
+#include <sys/stat.h>
 #include <sys/sysmacros.h>
 #include <getopt.h>
+#include <errno.h>
+#include <stdio.h>
+#include "kernel-lib/list.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/transaction.h"
 #include "kernel-shared/disk-io.h"
+#include "kernel-shared/extent_io.h"
+#include "common/messages.h"
 #include "common/utils.h"
 #include "common/help.h"
 #include "common/open-utils.h"

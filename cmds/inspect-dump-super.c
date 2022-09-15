@@ -15,7 +15,6 @@
  */
 
 #include "kerncompat.h"
-#include <sys/stat.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -25,9 +24,9 @@
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/print-tree.h"
 #include "kernel-shared/zoned.h"
-#include "common/utils.h"
 #include "common/help.h"
 #include "common/string-utils.h"
+#include "common/messages.h"
 #include "cmds/commands.h"
 
 static int load_and_dump_sb(char *filename, int fd, u64 sb_bytenr, int full,

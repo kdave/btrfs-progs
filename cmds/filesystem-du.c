@@ -15,26 +15,28 @@
  */
 
 #include "kerncompat.h"
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <linux/fs.h>
 #include <linux/version.h>
 #include <linux/fiemap.h>
-#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdarg.h>
 #include <getopt.h>
 #include <fcntl.h>
 #include <dirent.h>
+#include <errno.h>
+#include <limits.h>
 #include "kernel-lib/rbtree.h"
+#include "kernel-lib/rbtree_types.h"
 #include "kernel-lib/interval_tree_generic.h"
+#include "kernel-shared/ctree.h"
 #include "common/utils.h"
 #include "common/open-utils.h"
 #include "common/units.h"
 #include "common/help.h"
+#include "common/messages.h"
 #include "common/fsfeatures.h"
 #include "cmds/commands.h"
 

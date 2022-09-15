@@ -14,6 +14,7 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include "kerncompat.h"
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/xattr.h>
@@ -22,15 +23,22 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <dirent.h>
+#include <errno.h>
+#include <getopt.h>
+#include <stdbool.h>
 #include <uuid/uuid.h>
 #include "libbtrfsutil/btrfsutil.h"
 #include "kernel-shared/ctree.h"
+#include "common/defs.h"
+#include "common/messages.h"
 #include "common/open-utils.h"
 #include "common/utils.h"
 #include "common/help.h"
 #include "common/filesystem-utils.h"
 #include "cmds/commands.h"
 #include "cmds/props.h"
+#include "ioctl.h"
 
 #define XATTR_BTRFS_PREFIX     "btrfs."
 #define XATTR_BTRFS_PREFIX_LEN (sizeof(XATTR_BTRFS_PREFIX) - 1)

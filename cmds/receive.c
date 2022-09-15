@@ -17,26 +17,21 @@
  */
 
 #include "kerncompat.h"
-#include <sys/wait.h>
 #include <sys/stat.h>
-#include <sys/types.h>
 #include <sys/ioctl.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <sys/uio.h>
 #include <sys/xattr.h>
 #include <linux/fs.h>
 #include <unistd.h>
 #include <stdint.h>
-#include <dirent.h>
 #include <fcntl.h>
-#include <pthread.h>
-#include <math.h>
-#include <ftw.h>
-#include <assert.h>
 #include <getopt.h>
 #include <limits.h>
 #include <errno.h>
+#include <endian.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <uuid/uuid.h>
 #include <zlib.h>
 #if COMPRESSION_LZO
@@ -46,10 +41,9 @@
 #if COMPRESSION_ZSTD
 #include <zstd.h>
 #endif
-#include "libbtrfsutil/stubs.h"
 #include "kernel-shared/ctree.h"
-#include "kernel-lib/list.h"
-#include "kernel-shared/send.h"
+#include "common/defs.h"
+#include "common/messages.h"
 #include "common/utils.h"
 #include "common/send-stream.h"
 #include "common/send-utils.h"
