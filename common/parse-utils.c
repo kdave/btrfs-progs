@@ -15,11 +15,16 @@
  */
 
 #include "kerncompat.h"
+#include <sys/stat.h>
 #include <limits.h>
 #include <ctype.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include "libbtrfsutil/btrfsutil.h"
 #include "kernel-shared/volumes.h"
 #include "common/parse-utils.h"
 #include "common/messages.h"
+#include "common/utils.h"
 
 int parse_u64(const char *str, u64 *result)
 {
@@ -307,3 +312,44 @@ int parse_qgroupid(const char *str, u64 *qgroupid)
 	*qgroupid = (level << BTRFS_QGROUP_LEVEL_SHIFT) | id;
 	return 0;
 }
+
+u64 parse_qgroupid_or_path(const char *p)
+{
+	enum btrfs_util_error err;
+	u64 id;
+	u64 qgroupid;
+	int fd;
+	int ret = 0;
+
+	if (p[0] == '/')
+		goto path;
+
+	ret = parse_qgroupid(p, &qgroupid);
+	if (ret < 0)
+		goto err;
+
+	return qgroupid;
+
+path:
+	/* Path format like subv at 'my_subvol' is the fallback case */
+	err = btrfs_util_is_subvolume(p);
+	if (err)
+		goto err;
+	fd = open(p, O_RDONLY);
+	if (fd < 0)
+		goto err;
+	ret = lookup_path_rootid(fd, &id);
+	if (ret) {
+		errno = -ret;
+		error("failed to lookup root id: %m");
+	}
+	close(fd);
+	if (ret < 0)
+		goto err;
+	return id;
+
+err:
+	error("invalid qgroupid or subvolume path: %s", p);
+	exit(-1);
+}
+
