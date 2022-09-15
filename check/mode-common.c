@@ -15,7 +15,13 @@
  */
 
 #include "kerncompat.h"
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <time.h>
+#include "kernel-lib/rbtree.h"
+#include "kernel-shared/extent_io.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/transaction.h"
 #include "kernel-shared/disk-io.h"
