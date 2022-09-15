@@ -19,19 +19,20 @@
 #include "kerncompat.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <fcntl.h>
-#include <unistd.h>
 #include <getopt.h>
 #include <limits.h>
+#include <errno.h>
+#include <string.h>
+#include "kernel-lib/radix-tree.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/disk-io.h"
-#include "kernel-shared/print-tree.h"
 #include "kernel-shared/transaction.h"
-#include "kernel-lib/list.h"
-#include "kernel-lib/radix-tree.h"
+#include "kernel-shared/extent_io.h"
 #include "common/utils.h"
 #include "common/help.h"
+#include "common/extent-cache.h"
+#include "common/messages.h"
 
 #define FIELD_BUF_LEN 80
 

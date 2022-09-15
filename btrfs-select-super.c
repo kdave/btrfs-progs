@@ -17,21 +17,18 @@
  */
 
 #include "kerncompat.h"
-#include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include "kernel-lib/list.h"
+#include <errno.h>
+#include <getopt.h>
 #include "kernel-lib/radix-tree.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/disk-io.h"
-#include "kernel-shared/print-tree.h"
-#include "kernel-shared/transaction.h"
 #include "common/utils.h"
 #include "common/help.h"
 #include "common/open-utils.h"
+#include "common/messages.h"
 
 static void print_usage(void)
 {
