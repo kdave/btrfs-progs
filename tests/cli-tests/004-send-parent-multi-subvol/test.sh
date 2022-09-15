@@ -24,11 +24,10 @@ run_check $SUDO_HELPER "$TOP/btrfs" subvolume snapshot -r subv-parent subv-snap2
 run_check $SUDO_HELPER dd if=/dev/urandom of=subv-parent/file bs=1M count=10
 run_check $SUDO_HELPER "$TOP/btrfs" subvolume snapshot -r subv-parent subv-snap3
 
-run_check truncate -s0 "$here"/send.stream
-run_check chmod a+w "$here"/send.stream
-run_check $SUDO_HELPER "$TOP/btrfs" send -f "$here"/send.stream -p subv-snap1 subv-snap2 subv-snap3
+stream=$(_mktemp)
+run_check $SUDO_HELPER "$TOP/btrfs" send -f "$stream" -p subv-snap1 subv-snap2 subv-snap3
 
 cd "$here" || _fail "cannot chdir back to test directory"
-rm send.stream
+rm "$stream"
 
 run_check_umount_test_dev
