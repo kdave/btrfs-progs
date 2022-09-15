@@ -53,12 +53,7 @@ int get_fs_exclop(int fd);
 int check_running_fs_exclop(int fd, enum exclusive_operation start, bool enqueue);
 const char *get_fs_exclop_name(int op);
 
-int get_label(const char *btrfs_dev, char *label);
-int set_label(const char *btrfs_dev, const char *label);
-
 int check_arg_type(const char *input);
-int get_label_mounted(const char *mount_path, char *labelp);
-int get_label_unmounted(const char *dev, char *label);
 int ask_user(const char *question);
 int lookup_path_rootid(int fd, u64 *rootid);
 int find_mount_fsroot(const char *subvol, const char *subvolid, char **mount);

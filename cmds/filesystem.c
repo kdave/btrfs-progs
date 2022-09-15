@@ -43,6 +43,7 @@
 #include "common/device-utils.h"
 #include "common/open-utils.h"
 #include "common/parse-utils.h"
+#include "common/filesystem-utils.h"
 #include "cmds/commands.h"
 #include "cmds/filesystem-usage.h"
 

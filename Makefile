@@ -174,6 +174,7 @@ objects = \
 	common/device-scan.o	\
 	common/device-utils.o	\
 	common/extent-cache.o	\
+	common/filesystem-utils.o	\
 	common/format-output.o	\
 	common/fsfeatures.o	\
 	common/help.o	\

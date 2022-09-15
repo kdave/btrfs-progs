@@ -28,6 +28,7 @@
 #include "common/open-utils.h"
 #include "common/utils.h"
 #include "common/help.h"
+#include "common/filesystem-utils.h"
 #include "cmds/commands.h"
 #include "cmds/props.h"
 
