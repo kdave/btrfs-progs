@@ -19,13 +19,7 @@
 
 #include "kerncompat.h"
 #include <sys/ioctl.h>
-#include <sys/mount.h>
-#include <sys/types.h>
 #include <sys/sysinfo.h>
-#include <sys/vfs.h>
-#include <sys/statfs.h>
-#include <sys/stat.h>
-#include <linux/magic.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -34,20 +28,12 @@
 #include <mntent.h>
 #include <ctype.h>
 #include <limits.h>
-#include <getopt.h>
-#include <blkid/blkid.h>
 #include <uuid/uuid.h>
-#include "libbtrfsutil/btrfsutil.h"
-#include "kernel-lib/radix-tree.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/volumes.h"
-#include "kernel-shared/transaction.h"
-#include "crypto/crc32c.h"
 #include "common/utils.h"
 #include "common/path-utils.h"
-#include "common/device-scan.h"
-#include "common/parse-utils.h"
 #include "common/open-utils.h"
 #include "cmds/commands.h"
 #include "mkfs/common.h"

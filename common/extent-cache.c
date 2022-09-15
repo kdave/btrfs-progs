@@ -19,6 +19,7 @@
 #include "kerncompat.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
 #include "common/extent-cache.h"
 #include "common/rbtree-utils.h"
 

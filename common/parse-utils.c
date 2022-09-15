@@ -15,11 +15,14 @@
  */
 
 #include "kerncompat.h"
-#include <sys/stat.h>
 #include <limits.h>
 #include <ctype.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
 #include "libbtrfsutil/btrfsutil.h"
 #include "kernel-shared/volumes.h"
 #include "common/parse-utils.h"

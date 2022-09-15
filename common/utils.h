@@ -19,9 +19,10 @@
 #ifndef __BTRFS_UTILS_H__
 #define __BTRFS_UTILS_H__
 
-#include <sys/stat.h>
-#include <dirent.h>
+#include "kerncompat.h"
 #include <stdarg.h>
+#include <stdbool.h>
+#include <stddef.h>
 #include "kernel-lib/sizes.h"
 #include "kernel-shared/ctree.h"
 #include "common/defs.h"

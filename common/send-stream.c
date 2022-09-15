@@ -17,11 +17,16 @@
  */
 
 #include <unistd.h>
-#include <uuid/uuid.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include "kernel-shared/ctree.h"
 #include "kernel-shared/send.h"
 #include "crypto/crc32c.h"
 #include "common/send-stream.h"
-#include "common/utils.h"
+#include "common/messages.h"
+#include "ioctl.h"
 
 struct btrfs_send_attribute {
 	u16 tlv_type;

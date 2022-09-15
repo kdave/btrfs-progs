@@ -17,6 +17,12 @@
 #ifndef __BTRFS_HELP_H__
 #define __BTRFS_HELP_H__
 
+#include <limits.h>
+#include <stdbool.h>
+
+struct cmd_struct;
+struct cmd_group;
+
 /* User defined long options first option */
 #define GETOPT_VAL_FIRST			256
 
@@ -67,9 +73,6 @@
 
 #define HELPINFO_INSERT_VERBOSE	"-v|--verbose       increase output verbosity"
 #define HELPINFO_INSERT_QUIET	"-q|--quiet         print only errors"
-
-struct cmd_struct;
-struct cmd_group;
 
 /*
  * Descriptor of output format

@@ -27,6 +27,7 @@
 #include "common/string-utils.h"
 #include "common/help.h"
 #include "common/box.h"
+#include "common/messages.h"
 #include "cmds/commands.h"
 
 static const char * const btrfs_cmd_group_usage[] = {
@@ -108,8 +109,7 @@ static void check_output_format(const struct cmd_struct *cmd)
 		return;
 
 	if (!(cmd->flags & bconf.output_format & CMD_FORMAT_MASK)) {
-		fprintf(stderr,
-			"ERROR: output format %s is unsupported for this command\n",
+		error("output format %s is unsupported for this command",
 			output_format_name(bconf.output_format));
 		exit(1);
 	}

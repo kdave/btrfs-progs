@@ -17,6 +17,8 @@
 #ifndef __BTRFS_STRING_UTILS_H__
 #define __BTRFS_STRING_UTILS_H__
 
+#include "kerncompat.h"
+
 int string_is_numerical(const char *str);
 int prefixcmp(const char *str, const char *prefix);
 u64 arg_strtou64(const char *str);

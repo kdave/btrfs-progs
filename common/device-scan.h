@@ -36,8 +36,6 @@
 
 struct btrfs_root;
 struct btrfs_trans_handle;
-struct seen_fsid;
-struct DIR;
 
 struct seen_fsid {
 	u8 fsid[BTRFS_FSID_SIZE];

@@ -19,10 +19,17 @@
 #include <sys/ioctl.h>
 #include <linux/version.h>
 #include <unistd.h>
+#include <errno.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
+#include "kernel-lib/sizes.h"
 #include "kernel-shared/ctree.h"
 #include "common/fsfeatures.h"
 #include "common/string-utils.h"
 #include "common/utils.h"
+#include "common/messages.h"
+#include "ioctl.h"
 
 /*
  * Insert a root item for temporary tree root

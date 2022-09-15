@@ -18,6 +18,7 @@
 #define __BTRFS_UNITS_H__
 
 #include "kerncompat.h"
+#include <stddef.h>
 
 /*
  * Output modes of size

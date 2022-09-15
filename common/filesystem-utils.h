@@ -17,6 +17,8 @@
 #ifndef __BTRFS_FILESYSTEM_UTILS_H__
 #define __BTRFS_FILESYSTEM_UTILS_H__
 
+#include "kerncompat.h"
+
 int lookup_path_rootid(int fd, u64 *rootid);
 int get_label(const char *btrfs_dev, char *label);
 int set_label(const char *btrfs_dev, const char *label);

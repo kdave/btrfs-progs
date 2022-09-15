@@ -961,7 +961,7 @@ loop:
 
 	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
 	if (ret < 0) {
-		fprintf(stderr, "ERROR: Couldn't search slot: %d\n", ret);
+		error("couldn't search slot: %d", ret);
 		goto out;
 	}
 
@@ -1006,7 +1006,7 @@ loop:
 			count = alloc_count(&disk_key, leaf, item);
 			if (!count) {
 				ret = ENOMEM;
-				fprintf(stderr, "ERROR: out of memory\n");
+				error("out of memory");
 				goto out;
 			}
 
@@ -1176,7 +1176,7 @@ static int scan_extents(struct btrfs_fs_info *info,
 
 	ret = btrfs_search_slot(NULL, root, &key, &path, 0, 0);
 	if (ret < 0) {
-		fprintf(stderr, "ERROR: Couldn't search slot: %d\n", ret);
+		error("couldn't search slot: %d", ret);
 		goto out;
 	}
 	path.reada = READA_BACK;
@@ -1246,8 +1246,7 @@ static int scan_extents(struct btrfs_fs_info *info,
 		ret = btrfs_next_leaf(root, &path);
 		if (ret != 0) {
 			if (ret < 0) {
-				fprintf(stderr,
-					"ERROR: Next leaf failed: %d\n", ret);
+				error("next leaf failed: %d", ret);
 				goto out;
 			}
 			break;
@@ -1415,14 +1414,13 @@ int qgroup_verify_all(struct btrfs_fs_info *info)
 
 	tree_blocks = ulist_alloc(0);
 	if (!tree_blocks) {
-		fprintf(stderr,
-			"ERROR: Out of memory while allocating ulist.\n");
+		error("out of memory while allocating ulist");
 		return ENOMEM;
 	}
 
 	ret = load_quota_info(info);
 	if (ret) {
-		fprintf(stderr, "ERROR: Loading qgroups from disk: %d\n", ret);
+		error("loading qgroups from disk: %d", ret);
 		goto out;
 	}
 
@@ -1442,15 +1440,14 @@ int qgroup_verify_all(struct btrfs_fs_info *info)
 		ret = scan_extents(info, bg->start,
 				   bg->start + bg->length - 1);
 		if (ret) {
-			fprintf(stderr, "ERROR: while scanning extent tree: %d\n",
-				ret);
+			error("while scanning extent tree: %d", ret);
 			goto out;
 		}
 	}
 
 	ret = map_implied_refs(info);
 	if (ret) {
-		fprintf(stderr, "ERROR: while mapping refs: %d\n", ret);
+		error("while mapping refs: %d", ret);
 		goto out;
 	}
 
