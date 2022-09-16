@@ -35,6 +35,7 @@
 #include "common/utils.h"
 #include "common/path-utils.h"
 #include "common/open-utils.h"
+#include "common/messages.h"
 #include "cmds/commands.h"
 #include "mkfs/common.h"
 #include "ioctl.h"
@@ -1137,19 +1138,11 @@ int btrfs_warn_multiple_profiles(int fd)
 	if (ret != 1)
 		return ret;
 
-	fprintf(stderr,
-		"WARNING: Multiple block group profiles detected, see 'man btrfs(5)'.\n");
-	if (data_prof)
-		fprintf(stderr, "WARNING:   Data: %s\n", data_prof);
-
-	if (metadata_prof)
-		fprintf(stderr, "WARNING:   Metadata: %s\n", metadata_prof);
-
-	if (mixed_prof)
-		fprintf(stderr, "WARNING:   Data+Metadata: %s\n", mixed_prof);
-
-	if (system_prof)
-		fprintf(stderr, "WARNING:   System: %s\n", system_prof);
+	warning("Multiple block group profiles detected, see 'man btrfs(5)'");
+	warning_on(!!data_prof,     "   Data: %s", data_prof);
+	warning_on(!!metadata_prof, "   Metadata: %s", metadata_prof);
+	warning_on(!!mixed_prof,    "   Data+Metadata: %s", mixed_prof);
+	warning_on(!!system_prof,   "   System: %s", system_prof);
 
 	free(data_prof);
 	free(metadata_prof);
