@@ -18,7 +18,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
-#include "string-utils.h"
+#include "common/string-utils.h"
+#include "common/messages.h"
 
 int string_is_numerical(const char *str)
 {
@@ -53,8 +54,7 @@ u64 arg_strtou64(const char *str)
 
 	value = strtoull(str, &ptr_parse_end, 0);
 	if (ptr_parse_end && *ptr_parse_end != '\0') {
-		fprintf(stderr, "ERROR: %s is not a valid numeric value.\n",
-			str);
+		error("%s is not a valid numeric value", str);
 		exit(1);
 	}
 
@@ -63,12 +63,11 @@ u64 arg_strtou64(const char *str)
 	 * unexpected number to us, so let's do the check ourselves.
 	 */
 	if (str[0] == '-') {
-		fprintf(stderr, "ERROR: %s: negative value is invalid.\n",
-			str);
+		error("%s: negative value is invalid", str);
 		exit(1);
 	}
 	if (value == ULLONG_MAX) {
-		fprintf(stderr, "ERROR: %s is too large.\n", str);
+		error("%s is too large", str);
 		exit(1);
 	}
 	return value;

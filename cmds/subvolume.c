@@ -1485,7 +1485,7 @@ static int cmd_subvol_show(const struct cmd_struct *cmd, int argc, char **argv)
 	}
 
 	if (ret) {
-		fprintf(stderr, "ERROR: quota query failed: %m");
+		error("quota query failed: %m");
 		goto out;
 	}
 

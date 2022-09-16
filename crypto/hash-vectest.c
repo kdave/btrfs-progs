@@ -19,6 +19,7 @@
 #include "crypto/crc32c.h"
 #include "crypto/sha.h"
 #include "crypto/blake2.h"
+#include "common/messages.h"
 
 struct hash_testvec {
 	const char *plaintext;
@@ -157,7 +158,7 @@ int test_hash(const struct hash_testspec *spec)
 
 		ret = spec->hash((const u8 *)vec->plaintext, vec->psize, csum);
 		if (ret < 0) {
-			printf("ERROR: hash %s = %d\n", spec->name, ret);
+			error("hash %s = %d", spec->name, ret);
 			return 1;
 		}
 		if (memcmp(csum, vec->digest, spec->digest_size) == 0) {
