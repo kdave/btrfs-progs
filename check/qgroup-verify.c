@@ -1521,8 +1521,7 @@ int print_extent_state(struct btrfs_fs_info *info, u64 subvol)
 
 	tree_blocks = ulist_alloc(0);
 	if (!tree_blocks) {
-		fprintf(stderr,
-			"ERROR: Out of memory while allocating ulist.\n");
+		error("out of memory while allocating ulist");
 		return ENOMEM;
 	}
 
@@ -1536,15 +1535,14 @@ int print_extent_state(struct btrfs_fs_info *info, u64 subvol)
 		ret = scan_extents(info, bg->start,
 				   bg->start + bg->length - 1);
 		if (ret) {
-			fprintf(stderr, "ERROR: while scanning extent tree: %d\n",
-				ret);
+			error("while scanning extent tree: %d", ret);
 			goto out;
 		}
 	}
 
 	ret = map_implied_refs(info);
 	if (ret) {
-		fprintf(stderr, "ERROR: while mapping refs: %d\n", ret);
+		error("while mapping refs: %d", ret);
 		goto out;
 	}
 

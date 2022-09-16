@@ -42,7 +42,7 @@ static int btrfs_get_root_id_by_sub_path(int mnt_fd, const char *sub_path,
 	subvol_fd = openat(mnt_fd, sub_path, O_RDONLY);
 	if (subvol_fd < 0) {
 		ret = -errno;
-		fprintf(stderr, "ERROR: open %s failed: %m\n", sub_path);
+		error("open %s failed: %m", sub_path);
 		return ret;
 	}
 
@@ -87,8 +87,7 @@ static int btrfs_read_root_item_raw(int mnt_fd, u64 root_id, size_t buf_len,
 	while (1) {
 		ret = ioctl(mnt_fd, BTRFS_IOC_TREE_SEARCH, &args);
 		if (ret < 0) {
-			fprintf(stderr,
-				"ERROR: can't perform the search - %m\n");
+			error("can't perform the search: %m");
 			return 0;
 		}
 		/* the ioctl returns the number of item it found in nr_items */
@@ -116,8 +115,8 @@ static int btrfs_read_root_item_raw(int mnt_fd, u64 root_id, size_t buf_len,
 			    btrfs_search_header_type(sh) == BTRFS_ROOT_ITEM_KEY) {
 				if (btrfs_search_header_len(sh) > buf_len) {
 					/* btrfs-progs is too old for kernel */
-					fprintf(stderr,
-						"ERROR: buf for read_root_item_raw() is too small, get newer btrfs tools!\n");
+					error(
+			"buf for read_root_item_raw() is too small, get newer btrfs tools");
 					return -EOVERFLOW;
 				}
 				memcpy(buf, item, btrfs_search_header_len(sh));

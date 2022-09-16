@@ -28,6 +28,7 @@
 #include "crypto/crc32c.h"
 #include "crypto/sha.h"
 #include "crypto/blake2.h"
+#include "common/messages.h"
 
 #ifdef __x86_64__
 static const int cycles_supported = 1;
@@ -206,8 +207,7 @@ int main(int argc, char **argv) {
 		switch (c) {
 		case 'c':
 			if (!cycles_supported) {
-				fprintf(stderr,
-		"ERROR: cannot measure cycles on this arch, use --time\n");
+				error("cannot measure cycles on this arch, use --time");
 				return 1;
 			}
 			units = UNITS_CYCLES;
@@ -217,14 +217,14 @@ int main(int argc, char **argv) {
 			break;
 		case 'p':
 			if (perf_init() == -1) {
-				fprintf(stderr,
-"ERROR: cannot initialize perf, please check sysctl kernel.perf_event_paranoid: %m\n");
+				error(
+"cannot initialize perf, please check sysctl kernel.perf_event_paranoid: %m");
 				return 1;
 			}
 			units = UNITS_PERF;
 			break;
 		default:
-			fprintf(stderr, "ERROR: unknown option\n");
+			error("unknown option");
 			return 1;
 		}
 	}

@@ -367,17 +367,15 @@ int test_num_disk_vs_raid(u64 metadata_profile, u64 data_profile,
 		warning("DUP is not recommended on filesystem with multiple devices");
 	}
 	if (metadata_profile & ~allowed) {
-		fprintf(stderr,
-			"ERROR: unable to create FS with metadata profile %s "
-			"(have %llu devices but %d devices are required)\n",
+		error("unable to create FS with metadata profile %s "
+			"(have %llu devices but %d devices are required)",
 			btrfs_group_profile_str(metadata_profile), dev_cnt,
 			btrfs_bg_type_to_devs_min(metadata_profile));
 		return 1;
 	}
 	if (data_profile & ~allowed) {
-		fprintf(stderr,
-			"ERROR: unable to create FS with data profile %s "
-			"(have %llu devices but %d devices are required)\n",
+		error("ERROR: unable to create FS with data profile %s "
+			"(have %llu devices but %d devices are required)",
 			btrfs_group_profile_str(data_profile), dev_cnt,
 			btrfs_bg_type_to_devs_min(data_profile));
 		return 1;
