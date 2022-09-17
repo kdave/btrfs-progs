@@ -131,7 +131,7 @@ Subvolumes belong to a single filesystem and as implemented now all share the
 same specific mount options, changes done by remount have immediate effect. This
 may change in the future.
 
-Mounting a read-write snapshot as read-only is possible and will not chnange the
+Mounting a read-write snapshot as read-only is possible and will not change the
 *ro* property and flag of the subvolume.
 
 The name of the mounted subvolume is stored in file ``/proc/self/mounts`` in the
