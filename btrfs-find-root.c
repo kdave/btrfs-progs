@@ -391,7 +391,7 @@ int main(int argc, char **argv)
 	ret = btrfs_find_root_search(fs_info, &filter, &result, &found);
 	if (ret < 0) {
 		errno = -ret;
-		fprintf(stderr, "Fail to search the tree root: %m\n");
+		error("fail to search the tree root: %m");
 		goto out;
 	}
 	if (ret > 0) {

@@ -182,8 +182,7 @@ static int write_extent_content(struct btrfs_fs_info *fs_info, int out_fd,
 					  mirror);
 		if (ret < 0) {
 			errno = -ret;
-			fprintf(stderr,
-				"Failed to read extent at [%llu, %llu]: %m\n",
+			error("failed to read extent at [%llu, %llu]: %m",
 				logical, logical + length);
 			return ret;
 		}
@@ -192,7 +191,7 @@ static int write_extent_content(struct btrfs_fs_info *fs_info, int out_fd,
 			if (ret > 0)
 				ret = -EINTR;
 			errno = -ret;
-			fprintf(stderr, "output file write failed: %m\n");
+			error("output file write failed: %m");
 			return ret;
 		}
 		cur_offset += cur_len;
@@ -270,7 +269,7 @@ int main(int argc, char **argv)
 
 	root = open_ctree(dev, 0, 0);
 	if (!root) {
-		fprintf(stderr, "Open ctree failed\n");
+		error("open ctree failed");
 		free(output_file);
 		exit(1);
 	}
@@ -303,7 +302,7 @@ int main(int argc, char **argv)
 	ret = map_one_extent(root->fs_info, &cur_logical, &cur_len, 0);
 	if (ret < 0) {
 		errno = -ret;
-		fprintf(stderr, "Failed to find extent at [%llu,%llu): %m\n",
+		error("failed to find extent at [%llu,%llu): %m",
 			cur_logical, cur_logical + cur_len);
 		goto out_close_fd;
 	}
@@ -316,14 +315,12 @@ int main(int argc, char **argv)
 		ret = map_one_extent(root->fs_info, &cur_logical, &cur_len, 1);
 		if (ret < 0) {
 			errno = -ret;
-			fprintf(stderr,
-				"Failed to find extent at [%llu,%llu): %m\n",
+			error("Failed to find extent at [%llu,%llu): %m",
 				cur_logical, cur_logical + cur_len);
 			goto out_close_fd;
 		}
 		if (ret > 0) {
-			fprintf(stderr,
-				"Failed to find any extent at [%llu,%llu)\n",
+			error("failed to find any extent at [%llu,%llu)",
 				cur_logical, cur_logical + cur_len);
 			goto out_close_fd;
 		}
@@ -363,7 +360,7 @@ int main(int argc, char **argv)
 	}
 
 	if (!found) {
-		fprintf(stderr, "No extent found at range [%llu,%llu)\n",
+		error("no extent found at range [%llu,%llu)",
 			logical, logical + bytes);
 	}
 out_close_fd:
