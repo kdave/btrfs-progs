@@ -1395,7 +1395,7 @@ static int load_free_space_extents(struct btrfs_fs_info *fs_info,
 				   int *errors)
 {
 	struct btrfs_root *root = btrfs_free_space_root(fs_info, block_group);
-	struct btrfs_key key, prev_key;
+	struct btrfs_key key, prev_key = { 0 };
 	int have_prev = 0;
 	u64 start, end;
 	u32 extent_count = 0;
