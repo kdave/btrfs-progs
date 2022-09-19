@@ -1026,17 +1026,11 @@ static int check_overwrite(const char *device)
 	}
 
 	if (!blkid_probe_lookup_value(pr, "TYPE", &type, NULL)) {
-		fprintf(stderr,
-			"%s appears to contain an existing "
-			"filesystem (%s).\n", device, type);
+		error("%s appears to contain an existing filesystem (%s)", device, type);
 	} else if (!blkid_probe_lookup_value(pr, "PTTYPE", &type, NULL)) {
-		fprintf(stderr,
-			"%s appears to contain a partition "
-			"table (%s).\n", device, type);
+		error("%s appears to contain a partition table (%s)", device, type);
 	} else {
-		fprintf(stderr,
-			"%s appears to contain something weird "
-			"according to blkid\n", device);
+		error("%s appears to contain something weird according to blkid", device);
 	}
 	ret = 1;
 
@@ -1044,9 +1038,7 @@ out:
 	if (pr)
 		blkid_free_probe(pr);
 	if (ret == -1)
-		fprintf(stderr,
-			"probe of %s failed, cannot detect "
-			  "existing filesystem.\n", device);
+		error("probe of %s failed, cannot detect existing filesystem", device);
 
 	/* Either nothing found or there was an error is a reason to double check */
 	if (ret == 0 || ret == -1) {
