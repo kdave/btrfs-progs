@@ -487,7 +487,7 @@ static int corrupt_block_group(struct btrfs_root *root, u64 bg, char *field)
 
 	corrupt_field = convert_block_group_field(field);
 	if (corrupt_field == BTRFS_BLOCK_GROUP_ITEM_BAD) {
-		fprintf(stderr, "Invalid field %s\n", field);
+		error("invalid field %s", field);
 		return -EINVAL;
 	}
 
@@ -498,8 +498,7 @@ static int corrupt_block_group(struct btrfs_root *root, u64 bg, char *field)
 	trans = btrfs_start_transaction(root, 1);
 	if (IS_ERR(trans)) {
 		btrfs_free_path(path);
-		fprintf(stderr, "Couldn't start transaction %ld\n",
-			PTR_ERR(trans));
+		error("couldn't start transaction %ld", PTR_ERR(trans));
 		return PTR_ERR(trans);
 	}
 
@@ -509,14 +508,14 @@ static int corrupt_block_group(struct btrfs_root *root, u64 bg, char *field)
 
 	ret = btrfs_search_slot(trans, root, &key, path, 0, 1);
 	if (ret < 0) {
-		fprintf(stderr, "Error searching for bg %llu %d\n", bg, ret);
+		error("error searching for bg %llu %d", bg, ret);
 		goto out;
 	}
 
 	ret = 0;
 	btrfs_item_key_to_cpu(path->nodes[0], &key, path->slots[0]);
 	if (key.type != BTRFS_BLOCK_GROUP_ITEM_KEY) {
-		fprintf(stderr, "Couldn't find the bg %llu\n", bg);
+		error("couldn't find the bg %llu", bg);
 		goto out;
 	}
 
@@ -559,7 +558,7 @@ static int corrupt_key(struct btrfs_root *root, struct btrfs_key *key,
 	int ret;
 
 	if (corrupt_field == BTRFS_KEY_BAD) {
-		fprintf(stderr, "Invalid field %s\n", field);
+		error("invalid field %s", field);
 		return -EINVAL;
 	}
 
@@ -577,7 +576,7 @@ static int corrupt_key(struct btrfs_root *root, struct btrfs_key *key,
 	if (ret < 0)
 		goto out;
 	if (ret > 0) {
-		fprintf(stderr, "Couldn't find the key to corrupt\n");
+		error("couldn't find the key to corrupt");
 		ret = -ENOENT;
 		goto out;
 	}
@@ -593,8 +592,7 @@ static int corrupt_key(struct btrfs_root *root, struct btrfs_key *key,
 		key->offset = generate_u64(key->objectid);
 		break;
 	default:
-		fprintf(stderr, "Invalid field %s, %d\n", field,
-			corrupt_field);
+		error("invalid field %s, %d", field, corrupt_field);
 		ret = -EINVAL;
 		goto out;
 	}
@@ -623,7 +621,7 @@ static int corrupt_dir_item(struct btrfs_root *root, struct btrfs_key *key,
 	int ret;
 
 	if (corrupt_field == BTRFS_DIR_ITEM_BAD) {
-		fprintf(stderr, "Invalid field %s\n", field);
+		error("invalid field %s", field);
 		return -EINVAL;
 	}
 
@@ -641,7 +639,7 @@ static int corrupt_dir_item(struct btrfs_root *root, struct btrfs_key *key,
 	if (ret) {
 		if (ret > 0)
 			ret = -ENOENT;
-		fprintf(stderr, "Error searching for dir item %d\n", ret);
+		error("error searching for dir item %d", ret);
 		goto out;
 	}
 
@@ -687,7 +685,7 @@ static int corrupt_inode(struct btrfs_trans_handle *trans,
 	int ret;
 
 	if (corrupt_field == BTRFS_INODE_FIELD_BAD) {
-		fprintf(stderr, "Invalid field %s\n", field);
+		error("invalid field %s", field);
 		return -EINVAL;
 	}
 
@@ -704,7 +702,7 @@ static int corrupt_inode(struct btrfs_trans_handle *trans,
 		goto out;
 	if (ret) {
 		if (!path->slots[0]) {
-			fprintf(stderr, "Couldn't find inode %llu\n", inode);
+			error("couldn't find inode %llu", inode);
 			ret = -ENOENT;
 			goto out;
 		}
@@ -714,7 +712,7 @@ static int corrupt_inode(struct btrfs_trans_handle *trans,
 
 	btrfs_item_key_to_cpu(path->nodes[0], &key, path->slots[0]);
 	if (key.objectid != inode) {
-		fprintf(stderr, "Couldn't find inode %llu\n", inode);
+		error("couldn't find inode %llu", inode);
 		ret = -ENOENT;
 		goto out;
 	}
@@ -790,7 +788,7 @@ static int corrupt_file_extent(struct btrfs_trans_handle *trans,
 
 	corrupt_field = convert_file_extent_field(field);
 	if (corrupt_field == BTRFS_FILE_EXTENT_BAD) {
-		fprintf(stderr, "Invalid field %s\n", field);
+		error("invalid field %s", field);
 		return -EINVAL;
 	}
 
@@ -806,7 +804,7 @@ static int corrupt_file_extent(struct btrfs_trans_handle *trans,
 	if (ret < 0)
 		goto out;
 	if (ret) {
-		fprintf(stderr, "Couldn't find extent %llu for inode %llu\n",
+		error("couldn't find extent %llu for inode %llu",
 			extent, inode);
 		ret = -ENOENT;
 		goto out;
@@ -822,7 +820,7 @@ static int corrupt_file_extent(struct btrfs_trans_handle *trans,
 		break;
 	case BTRFS_FILE_EXTENT_TYPE:
 		if (bogus == (u64)-1) {
-			fprintf(stderr, "Specify a new extent type value (-v)\n");
+			error("specify a new extent type value (-v)");
 			ret = -EINVAL;
 			goto out;
 		}
@@ -868,13 +866,13 @@ static int corrupt_metadata_block(struct btrfs_fs_info *fs_info, u64 block,
 
 	corrupt_field = convert_metadata_block_field(field);
 	if (corrupt_field == BTRFS_METADATA_BLOCK_BAD) {
-		fprintf(stderr, "Invalid field %s\n", field);
+		error("invalid field %s", field);
 		return -EINVAL;
 	}
 
 	eb = read_tree_block(fs_info, block, 0);
 	if (!extent_buffer_uptodate(eb)) {
-		fprintf(stderr, "Couldn't read in tree block %s\n", field);
+		error("couldn't read in tree block %s", field);
 		return -EINVAL;
 	}
 
@@ -892,8 +890,7 @@ static int corrupt_metadata_block(struct btrfs_fs_info *fs_info, u64 block,
 		free_extent_buffer(eb);
 		if (ret < 0) {
 			errno = -ret;
-			fprintf(stderr,
-				"failed to write extent buffer at %llu: %m",
+			error("failed to write extent buffer at %llu: %m",
 				eb->start);
 			return ret;
 		}
@@ -922,8 +919,7 @@ static int corrupt_metadata_block(struct btrfs_fs_info *fs_info, u64 block,
 
 		root = btrfs_read_fs_root(fs_info, &root_key);
 		if (IS_ERR(root)) {
-			fprintf(stderr, "Couldn't find owner root %llu\n",
-				key.objectid);
+			error("couldn't find owner root %llu", key.objectid);
 			return PTR_ERR(root);
 		}
 
@@ -934,7 +930,7 @@ static int corrupt_metadata_block(struct btrfs_fs_info *fs_info, u64 block,
 		trans = btrfs_start_transaction(root, 1);
 		if (IS_ERR(trans)) {
 			btrfs_free_path(path);
-			fprintf(stderr, "Couldn't start transaction %ld\n",
+			error("couldn't start transaction %ld",
 				PTR_ERR(trans));
 			return PTR_ERR(trans);
 		}
@@ -942,7 +938,7 @@ static int corrupt_metadata_block(struct btrfs_fs_info *fs_info, u64 block,
 		path->lowest_level = level;
 		ret = btrfs_search_slot(trans, root, &key, path, 0, 1);
 		if (ret < 0) {
-			fprintf(stderr, "Error searching to node %d\n", ret);
+			error("error searching to node %d", ret);
 			btrfs_free_path(path);
 			btrfs_abort_transaction(trans, ret);
 			return ret;
@@ -972,7 +968,7 @@ static int corrupt_btrfs_item(struct btrfs_root *root, struct btrfs_key *key,
 
 	corrupt_field = convert_item_field(field);
 	if (corrupt_field == BTRFS_ITEM_BAD) {
-		fprintf(stderr, "Invalid field %s\n", field);
+		error("invalid field %s", field);
 		return -EINVAL;
 	}
 
@@ -983,14 +979,13 @@ static int corrupt_btrfs_item(struct btrfs_root *root, struct btrfs_key *key,
 	trans = btrfs_start_transaction(root, 1);
 	if (IS_ERR(trans)) {
 		btrfs_free_path(path);
-		fprintf(stderr, "Couldn't start transaction %ld\n",
-			PTR_ERR(trans));
+		error("couldn't start transaction %ld", PTR_ERR(trans));
 		return PTR_ERR(trans);
 	}
 
 	ret = btrfs_search_slot(trans, root, key, path, 0, 1);
 	if (ret != 0) {
-		fprintf(stderr, "Error searching to node %d\n", ret);
+		error("error searching to node %d", ret);
 		goto out;
 	}
 
@@ -1031,15 +1026,14 @@ static int corrupt_btrfs_item_data(struct btrfs_root *root,
 
 	trans = btrfs_start_transaction(root, 1);
 	if (IS_ERR(trans)) {
-		fprintf(stderr, "Couldn't start transaction %ld\n",
-			PTR_ERR(trans));
+		error("couldn't start transaction %ld", PTR_ERR(trans));
 		ret = PTR_ERR(trans);
 		goto free_path;
 	}
 
 	ret = btrfs_search_slot(trans, root, key, path, 0, 1);
 	if (ret != 0) {
-		fprintf(stderr, "Error searching to node %d\n", ret);
+		error("error searching to node %d", ret);
 		goto commit_txn;
 	}
 	leaf = path->nodes[0];
@@ -1047,7 +1041,8 @@ static int corrupt_btrfs_item_data(struct btrfs_root *root,
 	data = btrfs_item_ptr(leaf, slot, void);
 	item_size = btrfs_item_size(leaf, slot);
 	if (bogus_offset + bogus_size > item_size) {
-		fprintf(stderr, "Item corruption past end of item: %llu > %u\n", bogus_offset + bogus_size, item_size);
+		error("item corruption past end of item: %llu > %u\n",
+			bogus_offset + bogus_size, item_size);
 		ret = -EINVAL;
 		goto commit_txn;
 	}
@@ -1075,8 +1070,7 @@ static int delete_item(struct btrfs_root *root, struct btrfs_key *key)
 	trans = btrfs_start_transaction(root, 1);
 	if (IS_ERR(trans)) {
 		btrfs_free_path(path);
-		fprintf(stderr, "Couldn't start transaction %ld\n",
-			PTR_ERR(trans));
+		error("couldn't start transaction %ld", PTR_ERR(trans));
 		return PTR_ERR(trans);
 	}
 
@@ -1084,7 +1078,7 @@ static int delete_item(struct btrfs_root *root, struct btrfs_key *key)
 	if (ret) {
 		if (ret > 0)
 			ret = -ENOENT;
-		fprintf(stderr, "Error searching to node %d\n", ret);
+		error("error searching to node %d", ret);
 		goto out;
 	}
 	ret = btrfs_del_item(trans, root, path);
@@ -1103,14 +1097,13 @@ static int delete_csum(struct btrfs_root *root, u64 bytenr, u64 bytes)
 	root = btrfs_csum_root(root->fs_info, bytenr);
 	trans = btrfs_start_transaction(root, 1);
 	if (IS_ERR(trans)) {
-		fprintf(stderr, "Couldn't start transaction %ld\n",
-			PTR_ERR(trans));
+		error("couldn't start transaction %ld", PTR_ERR(trans));
 		return PTR_ERR(trans);
 	}
 
 	ret = btrfs_del_csums(trans, bytenr, bytes);
 	if (ret)
-		fprintf(stderr, "Error deleting csums %d\n", ret);
+		error("error deleting csums %d", ret);
 	btrfs_commit_transaction(trans, root);
 	return ret;
 }
@@ -1144,11 +1137,11 @@ static int corrupt_item_nocow(struct btrfs_trans_handle *trans,
 	}
 	btrfs_item_key_to_cpu(leaf, &key, slot);
 	if (del) {
-		fprintf(stdout, "Deleting key and data [%llu, %u, %llu].\n",
+		fprintf(stdout, "Deleting key and data [%llu, %u, %llu]\n",
 			key.objectid, key.type, key.offset);
 		btrfs_del_item(trans, root, path);
 	} else {
-		fprintf(stdout, "Corrupting key and data [%llu, %u, %llu].\n",
+		fprintf(stdout, "Corrupting key and data [%llu, %u, %llu]\n",
 			key.objectid, key.type, key.offset);
 		ptr = btrfs_item_ptr_offset(leaf, slot);
 		item_size = btrfs_item_size(leaf, slot);
@@ -1186,7 +1179,7 @@ static int corrupt_chunk_tree(struct btrfs_trans_handle *trans,
 	ret = btrfs_search_slot(trans, root, &key, path, 0, 0);
 	BUG_ON(ret == 0);
 	if (ret < 0) {
-		fprintf(stderr, "Error searching tree\n");
+		error("error searching tree");
 		goto free_out;
 	}
 	/* corrupt/del dev_item first */
@@ -1213,7 +1206,7 @@ static int corrupt_chunk_tree(struct btrfs_trans_handle *trans,
 	ret = btrfs_search_slot(trans, root, &key, path, 0, 0);
 	BUG_ON(ret == 0);
 	if (ret < 0) {
-		fprintf(stderr, "Error searching tree\n");
+		error("error searching tree");
 		goto free_out;
 	}
 	/* corrupt/del chunk then*/
@@ -1249,12 +1242,11 @@ static int find_chunk_offset(struct btrfs_root *root,
 	 */
 	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
 	if (ret > 0) {
-		fprintf(stderr, "Can't find chunk with given offset %llu\n",
-			offset);
+		error("can't find chunk with given offset %llu", offset);
 		goto out;
 	}
 	if (ret < 0) {
-		fprintf(stderr, "Error searching chunk\n");
+		error("error searching chunk");
 		goto out;
 	}
 out:
@@ -1267,7 +1259,7 @@ static void parse_key(u64 *objectid, u8 *type, u64 *offset)
 
 	int ret = sscanf(optarg, "%llu,%hhu,%llu", objectid, type, offset);
 	if (ret != 3) {
-	        fprintf(stderr, "error parsing key '%s': %d\n", optarg, errno);
+	        error("error parsing key '%s': %d", optarg, errno);
 	        print_usage(1);
 	}
 }
@@ -1285,7 +1277,7 @@ static struct btrfs_root *open_root(struct btrfs_fs_info *fs_info,
 
 	root = btrfs_read_fs_root(fs_info, &root_key);
 	if (IS_ERR(root)) {
-		fprintf(stderr, "couldn't find root %llu\n", root_objectid);
+		error("couldn't find root %llu", root_objectid);
 		print_usage(1);
 	}
 
@@ -1443,7 +1435,7 @@ int main(int argc, char **argv)
 
 	root = open_ctree(dev, 0, OPEN_CTREE_WRITES);
 	if (!root) {
-		fprintf(stderr, "Open ctree failed\n");
+		error("open ctree failed");
 		exit(1);
 	}
 	target_root = root;
@@ -1483,7 +1475,7 @@ int main(int argc, char **argv)
 		del = rand_range(3);
 		path = btrfs_alloc_path();
 		if (!path) {
-			fprintf(stderr, "path allocation failed\n");
+			error("path allocation failed");
 			goto out_close;
 		}
 
@@ -1497,7 +1489,7 @@ int main(int argc, char **argv)
 		ret = corrupt_item_nocow(trans, root->fs_info->chunk_root,
 					 path, del);
 		if (ret < 0)
-			fprintf(stderr, "Failed to corrupt chunk record\n");
+			error("failed to corrupt chunk record");
 		btrfs_commit_transaction(trans, root);
 		goto out_close;
 	}
@@ -1508,7 +1500,7 @@ int main(int argc, char **argv)
 		BUG_ON(IS_ERR(trans));
 		ret = corrupt_chunk_tree(trans, root->fs_info->chunk_root);
 		if (ret < 0)
-			fprintf(stderr, "Failed to corrupt chunk tree\n");
+			error("failed to corrupt chunk tree");
 		btrfs_commit_transaction(trans, root);
 		goto out_close;
 	}
