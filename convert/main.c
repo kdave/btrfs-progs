@@ -1102,7 +1102,7 @@ static int migrate_super_block(int fd, u64 old_bytenr)
 			len = BTRFS_SUPER_INFO_SIZE;
 		ret = pwrite(fd, &super, len, bytenr);
 		if (ret != len) {
-			fprintf(stderr, "unable to zero fill device\n");
+			error("unable to zero fill device");
 			break;
 		}
 		bytenr += len;

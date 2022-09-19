@@ -688,7 +688,7 @@ static int reiserfs_xattr_indirect_fn(reiserfs_filsys_t fs, u64 position,
 
 	if (size > BTRFS_LEAF_DATA_SIZE(xa_data->root->fs_info) -
 	    sizeof(struct btrfs_item) - sizeof(struct btrfs_dir_item)) {
-		fprintf(stderr, "skip large xattr on objectid %llu name %.*s\n",
+		error("skip large xattr on objectid %llu name %.*s",
 			xa_data->target_oid, (int)xa_data->namelen,
 			xa_data->name);
 		return -E2BIG;
@@ -726,7 +726,7 @@ static int reiserfs_xattr_direct_fn(reiserfs_filsys_t fs, __u64 position,
 
 	if (size > BTRFS_LEAF_DATA_SIZE(xa_data->root->fs_info) -
 	    sizeof(struct btrfs_item) - sizeof(struct btrfs_dir_item)) {
-		fprintf(stderr, "skip large xattr on objectid %llu name %.*s\n",
+		error("skip large xattr on objectid %llu name %.*s",
 			xa_data->target_oid, (int)xa_data->namelen,
 			xa_data->name);
 		return -E2BIG;
@@ -819,8 +819,7 @@ static int reiserfs_copy_one_xattr(reiserfs_filsys_t fs,
 		goto out;
 
 	if (!reiserfs_check_xattr(xa_data->body, xa_data->len)) {
-		fprintf(stderr,
-			"skip corrupted xattr on objectid %u name %.*s\n",
+		error("skip corrupted xattr on objectid %u name %.*s",
 			deh_objectid, (int)xa_data->namelen,
 			xa_data->name);
 		goto out;
