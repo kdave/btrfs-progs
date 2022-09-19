@@ -125,13 +125,12 @@ static int set_metadata_uuid(struct btrfs_root *root, const char *uuid_string)
 	uuid_changed = incompat_flags & BTRFS_FEATURE_INCOMPAT_METADATA_UUID;
 
 	if (super_flags & BTRFS_SUPER_FLAG_SEEDING) {
-		fprintf(stderr, "cannot set metadata UUID on a seed device\n");
+		error("cannot set metadata UUID on a seed device");
 		return 1;
 	}
 
 	if (check_unfinished_fsid_change(root->fs_info, unused1, unused2)) {
-		fprintf(stderr,
-			"UUID rewrite in progress, cannot change fsid\n");
+		error("UUID rewrite in progress, cannot change fsid");
 		return 1;
 	}
 
@@ -447,8 +446,7 @@ static int rewrite_checksums(struct btrfs_root *root, int csum_type)
 
 	/* FIXME: Sanity checks */
 	if (0) {
-		fprintf(stderr,
-			"UUID rewrite in progress, cannot change fsid\n");
+		error("UUID rewrite in progress, cannot change fsid");
 		return 1;
 	}
 
@@ -1087,7 +1085,7 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 	}
 	if (seeding_flag) {
 		if (btrfs_fs_incompat(root->fs_info, METADATA_UUID)) {
-			fprintf(stderr, "SEED flag cannot be changed on a metadata-uuid changed fs\n");
+			error("SEED flag cannot be changed on a metadata-uuid changed fs");
 			ret = 1;
 			goto out;
 		}
@@ -1097,7 +1095,7 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 "this is dangerous, clearing the seeding flag may cause the derived device not to be mountable!");
 			ret = ask_user("We are going to clear the seeding flag, are you sure?");
 			if (!ret) {
-				fprintf(stderr, "Clear seeding flag canceled\n");
+				error("clear seeding flag canceled");
 				ret = 1;
 				goto out;
 			}
@@ -1124,8 +1122,7 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 
 	if (change_metadata_uuid) {
 		if (seeding_flag) {
-			fprintf(stderr,
-		"Not allowed to set both seeding flag and uuid metadata\n");
+			error("not allowed to set both seeding flag and uuid metadata");
 			ret = 1;
 			goto out;
 		}
@@ -1142,9 +1139,9 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 
 	if (random_fsid || (new_fsid_str && !change_metadata_uuid)) {
 		if (btrfs_fs_incompat(root->fs_info, METADATA_UUID)) {
-			fprintf(stderr,
+			error(
 		"Cannot rewrite fsid while METADATA_UUID flag is active. \n"
-		"Ensure fsid and metadata_uuid match before retrying.\n");
+		"Ensure fsid and metadata_uuid match before retrying.");
 			ret = 1;
 			goto out;
 		}
@@ -1156,7 +1153,7 @@ int BOX_MAIN(btrfstune)(int argc, char *argv[])
 "\tIf cancelled or interrupted, run 'btrfstune -u' to restart.");
 			ret = ask_user("We are going to change UUID, are your sure?");
 			if (!ret) {
-				fprintf(stderr, "UUID change canceled\n");
+				error("UUID change canceled");
 				ret = 1;
 				goto out;
 			}
