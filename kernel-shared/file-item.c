@@ -19,7 +19,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "kerncompat.h"
-#include "kernel-lib/radix-tree.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/transaction.h"

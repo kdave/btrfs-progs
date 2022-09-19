@@ -28,7 +28,6 @@
 #include <string.h>
 #include <time.h>
 #include <uuid/uuid.h>
-#include "kernel-lib/radix-tree.h"
 #include "kernel-lib/list.h"
 #include "kernel-lib/rbtree.h"
 #include "kernel-lib/rbtree_types.h"
@@ -10690,7 +10689,6 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 
 	printf("Opening filesystem to check...\n");
 
-	radix_tree_init();
 	cache_tree_init(&root_cache);
 	qgroup_set_item_count_ptr(&ctx.item_count);
 

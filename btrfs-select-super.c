@@ -21,7 +21,6 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <getopt.h>
-#include "kernel-lib/radix-tree.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/disk-io.h"
@@ -72,8 +71,6 @@ int main(int argc, char **argv)
 		error("please select the super copy with -s");
 		print_usage();
 	}
-
-	radix_tree_init();
 
 	if((ret = check_mounted(argv[optind])) < 0) {
 		errno = -ret;

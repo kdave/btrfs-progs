@@ -20,7 +20,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
-#include "kernel-lib/radix-tree.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"
 #include "kernel-shared/print-tree.h"
@@ -47,8 +46,6 @@ int main(int ac, char **av) {
 	struct btrfs_trans_handle *trans;
 
 	buf = calloc(1, 512);
-
-	radix_tree_init();
 
 	root = open_ctree(av[1], BTRFS_SUPER_INFO_OFFSET, OPEN_CTREE_WRITES);
 	if (!root) {

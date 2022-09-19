@@ -25,7 +25,6 @@
 #include <errno.h>
 #include <string.h>
 #include "kernel-lib/sizes.h"
-#include "kernel-lib/radix-tree.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/extent_io.h"
 #include "kernel-shared/volumes.h"
@@ -264,7 +263,6 @@ int main(int argc, char **argv)
 
 	dev = argv[optind];
 
-	radix_tree_init();
 	cache_tree_init(&root_cache);
 
 	root = open_ctree(dev, 0, 0);

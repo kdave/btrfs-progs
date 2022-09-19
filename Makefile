@@ -147,7 +147,6 @@ CHECKER_FLAGS := -include $(check_defs) -D__CHECKER__ \
 
 objects = \
 	kernel-lib/list_sort.o	\
-	kernel-lib/radix-tree.o	\
 	kernel-lib/raid56.o	\
 	kernel-lib/rbtree.o	\
 	kernel-lib/tables.o	\

@@ -22,7 +22,6 @@
 #include <math.h>
 #include "kerncompat.h"
 #include "kernel-lib/list.h"
-#include "kernel-lib/radix-tree.h"
 #include "kernel-lib/rbtree.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/disk-io.h"

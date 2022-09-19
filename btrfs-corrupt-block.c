@@ -23,7 +23,6 @@
 #include <limits.h>
 #include <errno.h>
 #include <string.h>
-#include "kernel-lib/radix-tree.h"
 #include "kernel-shared/ctree.h"
 #include "kernel-shared/volumes.h"
 #include "kernel-shared/disk-io.h"
@@ -1430,7 +1429,6 @@ int main(int argc, char **argv)
 		return 1;
 	dev = argv[optind];
 
-	radix_tree_init();
 	cache_tree_init(&root_cache);
 
 	root = open_ctree(dev, 0, OPEN_CTREE_WRITES);
