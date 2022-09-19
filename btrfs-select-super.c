@@ -54,8 +54,7 @@ int main(int argc, char **argv)
 			case 's':
 				num = arg_strtou64(optarg);
 				if (num >= BTRFS_SUPER_MIRROR_MAX) {
-					fprintf(stderr,
-						"ERROR: super mirror should be less than: %d\n",
+					error("super mirror should be less than: %d",
 						BTRFS_SUPER_MIRROR_MAX);
 					exit(1);
 				}
@@ -70,7 +69,7 @@ int main(int argc, char **argv)
 		return 1;
 
 	if (bytenr == 0) {
-		fprintf(stderr, "Please select the super copy with -s\n");
+		error("please select the super copy with -s");
 		print_usage();
 	}
 
@@ -88,7 +87,7 @@ int main(int argc, char **argv)
 	root = open_ctree(argv[optind], bytenr, 1);
 
 	if (!root) {
-		fprintf(stderr, "Open ctree failed\n");
+		error("open ctree failed");
 		return 1;
 	}
 
