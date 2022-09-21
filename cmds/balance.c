@@ -37,7 +37,7 @@
 
 static const char * const balance_cmd_group_usage[] = {
 	"btrfs balance <command> [options] <path>",
-	"btrfs balance <path>",
+	"btrfs balance <path>        (deprecated, use 'btrfs balance start')",
 	NULL
 };
 
@@ -885,6 +885,7 @@ static int cmd_balance(const struct cmd_struct *cmd, int argc, char **argv)
 	if (old_syntax) {
 		struct btrfs_ioctl_balance_args args;
 
+		warning("deprecated syntax, please use 'btrfs balance start'");
 		memset(&args, 0, sizeof(args));
 		args.flags |= BTRFS_BALANCE_TYPE_MASK;
 
