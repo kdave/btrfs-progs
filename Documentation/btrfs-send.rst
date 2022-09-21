@@ -16,7 +16,9 @@ The command operates in two modes: full and incremental.
 
 All snapshots involved in one send command must be read-only, and this status
 cannot be changed as long as there's a running send operation that uses the
-snapshot.
+snapshot. Read-only mount of the subvolume is not sufficient, there's no way to
+guarantee that there won't be any other writable mount of the same subvolume
+that would potentially write while send would be running.
 
 In the full mode, the entire snapshot data and metadata will end up in the
 stream.
