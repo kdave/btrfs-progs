@@ -1,0 +1,212 @@
+#!/bin/bash
+# Simple management of null_blk devices, useful for zoned device testing
+# Version: 0.1
+#
+# Commands:
+#
+# nullb setup
+# - load required modules and mount configfs
+#
+# nullb create [-s size] [-z zonesize]
+# - create a new device with given sizes, allocating the first free indes, #
+#   device is /dev/nullb$index
+#
+# nullb ls
+# nullb list
+# - show table of created null_blk devices, size and zone sizes
+#
+# nullb rm NAME
+# nullb delete NAME
+# - delete existing null_blk device by name, must match the device node name
+#   like 'nullb0'
+
+CMD="$1"
+DEBUG=false
+
+# Defaults
+SIZE='2048'
+ZONESIZE='256'
+SYSFS='/sys/kernel/config/nullb'
+
+# create
+# list
+# delete
+# setup
+
+function _error() {
+	echo "ERROR: $@"
+	exit 1
+}
+
+function _warn() {
+	echo "WARNING: $@"
+}
+
+function _msg() {
+	echo "INFO: $@"
+}
+
+function _dbg() {
+	$DEBUG && echo "DEBUG: $@" > /dev/tty
+}
+
+function _check_setup() {
+	if ! grep -q null_blk /proc/modules; then
+		_error "module not loaded"
+	fi
+	if ! grep -q configfs /proc/filesystems; then
+		_error "configfs not mounted"
+	fi
+	if ! grep -q zoned "$SYSFS/features"; then
+		_warn "null_blk module does not support zoned devices"
+	fi
+}
+
+function _check_cd() {
+	if ! [ -d "$1" ]; then
+		_error "$1 not accessible"
+	fi
+	cd "$1"
+}
+
+function _find_free_index() {
+	_check_cd "$SYSFS"
+	found=-1
+	for index in `seq 0 1 10`; do
+		_dbg "index $index"
+		ok=true
+		for dir in $(ls -df1 * 2>/dev/null); do
+			if ! [ -d "$dir" ]; then
+				continue
+			fi
+			_dbg "found $dir"
+			idx=$(cat "$dir/index")
+			if [ "$idx" = "$index" ]; then
+				ok=false
+				break
+			fi
+		done
+		if $ok; then
+			found=$index
+			break
+		fi
+	done
+	if [ "$found" = "-1" ]; then
+		_error "no free index found"
+	fi
+	_dbg "first free index: $found"
+	echo -n "$found"
+}
+
+function _parse_device_size() {
+	local size="$SIZE"
+	_dbg "parse size $@"
+	while [ $# -gt 0 ]; do
+		_dbg "ARG: $1"
+		if [ "$1" = '-s' ]; then
+			size="$2"
+			if [ -z "$size" ]; then
+				_error "-s requires size"
+			fi
+			shift
+		fi
+		shift
+	done
+
+	echo -en "$size"
+}
+
+function _parse_zone_size() {
+	local zonesize="$ZONESIZE"
+	_dbg "parse zone size $@"
+	while [ $# -gt 0 ]; do
+		_dbg "ARG: $1"
+		if [ "$1" = '-z' ]; then
+			zonesize="$2"
+			if [ -z "$size" ]; then
+				_error "-z requires size"
+			fi
+			shift
+		fi
+		shift
+	done
+
+	echo -en "$zonesize"
+}
+
+# main()
+
+if [ "$CMD" = 'setup' ]; then
+	_msg "setup module and mounts"
+	modprobe configfs
+	modprobe null_blk nr_devices=0
+	_check_setup
+fi
+
+if [ "$CMD" = 'create' ]; then
+	_check_setup
+	index=$(_find_free_index)
+	name="nullb$index"
+	# size in MB
+	size=$(_parse_device_size "$@")
+	# size in MB
+	zonesize=$(_parse_zone_size "$@")
+	_msg "Create nullb$index"
+	_check_cd "$SYSFS"
+	if mkdir "$name"; then
+		_check_cd "$name"
+		echo "$size" > size
+		echo 1 > zoned
+		echo 1 > memory_backed
+		echo "$zonesize" > zone_size
+		echo 1 > power
+		node=$(cat "$SYSFS/$name/index")
+		node="nullb${node}"
+		_msg "name=$node"
+		_msg "size=${size}M zone_size=${zonesize}M"
+		# last printed line is the exact name for later use
+		echo "/dev/$node"
+	else
+		_error "already exists"
+	fi
+fi
+
+if [ "$CMD" = 'ls' -o "$CMD" = 'list' ]; then
+	_msg "device nodes:"
+	ls /dev/nullb* 2>/dev/null
+	_msg "created devices:"
+	_check_cd "$SYSFS"
+	printf '%-2s  %-8s  %-16s  %11s  %11s  %-2s
+'	\
+		"No"				\
+		"Name"				\
+		"Device"			\
+		"Size"				\
+		"Zone size"			\
+		"On"
+	for dir in $(ls -df1 * 2>/dev/null); do
+		[ -d "$dir" ] || continue
+		printf '%2d  %-8s  %-16s  %10dM  %10dM  %2d
+'	\
+			$(cat "$dir/index")			\
+			"$dir"					\
+			"/dev/nullb"$(cat "$dir/index")		\
+			$(cat "$dir/size")			\
+			$(cat "$dir/zone_size")			\
+			$(cat "$dir/power")
+	done
+fi
+
+if [ "$CMD" = 'rm' -o "$CMD" = 'delete' ]; then
+	_check_cd "$SYSFS"
+	name="$2"
+	_dbg "deleting $name"
+	if [ -d "$name" ]; then
+		_msg "check mounts"
+		mount | grep -- "$name"
+		_msg "removing $name"
+		rmdir -- "$SYSFS/$name"
+	else
+		_error "no such device name: $name"
+	fi
+fi
