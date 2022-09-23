@@ -153,13 +153,41 @@ again:
 			eb = find_first_extent_buffer(tree, start);
 			BUG_ON(!eb || eb->start != start);
 			ret = write_tree_block(trans, fs_info, eb);
-			BUG_ON(ret);
+			if (ret < 0) {
+				free_extent_buffer(eb);
+				errno = -ret;
+				error("failed to write tree block %llu: %m",
+				      eb->start);
+				goto cleanup;
+			}
 			start += eb->len;
 			clear_extent_buffer_dirty(eb);
 			free_extent_buffer(eb);
 		}
 	}
 	return 0;
+cleanup:
+	/*
+	 * Mark all remaining dirty ebs clean, as they have no chance to be written
+	 * back anymore.
+	 */
+	while (1) {
+		int find_ret;
+
+		find_ret = find_first_extent_bit(tree, 0, &start, &end, EXTENT_DIRTY);
+
+		if (find_ret)
+			break;
+
+		while (start <= end) {
+			eb = find_first_extent_buffer(tree, start);
+			BUG_ON(!eb || eb->start != start);
+			start += eb->len;
+			clear_extent_buffer_dirty(eb);
+			free_extent_buffer(eb);
+		}
+	}
+	return ret;
 }
 
 int btrfs_commit_transaction(struct btrfs_trans_handle *trans,
@@ -219,7 +247,7 @@ commit_tree:
 		if (ret < 0)
 			goto error;
 	}
-	__commit_transaction(trans, root);
+	ret = __commit_transaction(trans, root);
 	if (ret < 0)
 		goto error;
 
@@ -244,6 +272,7 @@ commit_tree:
 	}
 	return ret;
 error:
+	btrfs_abort_transaction(trans, ret);
 	btrfs_destroy_delayed_refs(trans);
 	free(trans);
 	return ret;

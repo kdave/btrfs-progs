@@ -1011,7 +1011,7 @@ int write_data_to_disk(struct btrfs_fs_info *info, void *buf, u64 offset,
 				if (ret < 0) {
 					fprintf(stderr, "Error writing to "
 						"device %d\n", errno);
-					ret = errno;
+					ret = -errno;
 					kfree(multi);
 					return ret;
 				} else {
