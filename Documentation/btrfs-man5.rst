@@ -41,7 +41,7 @@ at mkfs time only
         This is namely for core structures, like the b-tree nodesize or checksum
         algorithm, see :doc:`mkfs.btrfs(8)<mkfs.btrfs>` for more details.
 
-after mkfs, on an unmounted filesystem::
+after mkfs, on an unmounted filesystem
         Features that may optimize internal structures or add new structures to support
         new functionality, see :doc:`btrfstune(8)<btrfstune>`. The command **btrfs inspect-internal
         dump-super /dev/sdx** will dump a superblock, you can map the value of

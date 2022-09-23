@@ -48,7 +48,7 @@ OPTIONS
 
         .. code-block:: bash
 
-                btrfs-convert -O list-all+
+                btrfs-convert -O list-all
 
 -p|--progress
         show progress of conversion (a heartbeat indicator and number of inodes

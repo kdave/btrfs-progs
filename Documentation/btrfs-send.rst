@@ -55,7 +55,7 @@ please see section *SUBVOLUME FLAGS* in :doc:`btrfs-subvolume(8)<btrfs-subvolume
         example, piped to btrfs receive. Use this option to write it to a file
         instead.
 
---no-data::
+--no-data
         send in *NO_FILE_DATA* mode
 
         The output stream does not contain any file data and thus cannot be

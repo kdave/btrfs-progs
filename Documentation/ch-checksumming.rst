@@ -17,7 +17,7 @@ XXHASH (64bit digest)
         can be used as CRC32C successor, very fast, optimized for modern CPUs utilizing
         instruction pipelining, good collision resistance and error detection
 
-SHA256 (256bit digest)::
+SHA256 (256bit digest)
         a cryptographic-strength hash, relatively slow but with possible CPU
         instruction acceleration or specialized hardware cards, FIPS certified and
         in wide use
