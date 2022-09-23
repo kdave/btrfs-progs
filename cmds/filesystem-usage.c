@@ -44,7 +44,7 @@
 /*
  * Add the chunk info to the chunk_info list
  */
-static int add_info_to_list(struct chunk_info **info_ptr,
+static int add_info_to_list(struct chunk_info **chunkinfo_ret,
 			int *info_count,
 			struct btrfs_chunk *chunk)
 {
@@ -64,24 +64,24 @@ static int add_info_to_list(struct chunk_info **info_ptr,
 		devid = btrfs_stack_stripe_devid(stripe);
 
 		for (i = 0 ; i < *info_count ; i++)
-			if ((*info_ptr)[i].type == type &&
-			    (*info_ptr)[i].devid == devid &&
-			    (*info_ptr)[i].num_stripes == num_stripes ) {
-				p = (*info_ptr) + i;
+			if ((*chunkinfo_ret)[i].type == type &&
+			    (*chunkinfo_ret)[i].devid == devid &&
+			    (*chunkinfo_ret)[i].num_stripes == num_stripes ) {
+				p = (*chunkinfo_ret) + i;
 				break;
 			}
 
 		if (!p) {
 			int tmp = sizeof(struct btrfs_chunk) * (*info_count + 1);
-			struct chunk_info *res = realloc(*info_ptr, tmp);
+			struct chunk_info *res = realloc(*chunkinfo_ret, tmp);
 
 			if (!res) {
-				free(*info_ptr);
+				free(*chunkinfo_ret);
 				error("not enough memory");
 				return -ENOMEM;
 			}
 
-			*info_ptr = res;
+			*chunkinfo_ret = res;
 			p = res + *info_count;
 			(*info_count)++;
 
@@ -96,7 +96,6 @@ static int add_info_to_list(struct chunk_info **info_ptr,
 	}
 
 	return 0;
-
 }
 
 /*
@@ -135,7 +134,8 @@ static int cmp_chunk_info(const void *a, const void *b)
 		((struct chunk_info *)b)->type);
 }
 
-static int load_chunk_info(int fd, struct chunk_info **info_ptr, int *info_count)
+static int load_chunk_info(int fd, struct chunk_info **chunkinfo_ret,
+		int *chunkcount_ret)
 {
 	int ret;
 	struct btrfs_ioctl_search_args args;
@@ -187,9 +187,9 @@ static int load_chunk_info(int fd, struct chunk_info **info_ptr, int *info_count
 			off += sizeof(*sh);
 			item = (struct btrfs_chunk *)(args.buf + off);
 
-			ret = add_info_to_list(info_ptr, info_count, item);
+			ret = add_info_to_list(chunkinfo_ret, chunkcount_ret, item);
 			if (ret) {
-				*info_ptr = NULL;
+				*chunkinfo_ret = NULL;
 				return 1;
 			}
 
@@ -214,7 +214,7 @@ static int load_chunk_info(int fd, struct chunk_info **info_ptr, int *info_count
 			break;
 	}
 
-	qsort(*info_ptr, *info_count, sizeof(struct chunk_info),
+	qsort(*chunkinfo_ret, *chunkcount_ret, sizeof(struct chunk_info),
 		cmp_chunk_info);
 
 	return 0;
@@ -335,7 +335,7 @@ static void get_raid56_logical_ratio(struct btrfs_ioctl_space_args *sargs,
  * and the "raw" space used by a chunk (r_*_used)
  */
 static void get_raid56_space_info(struct btrfs_ioctl_space_args *sargs,
-				  struct chunk_info *chunks, int chunkcount,
+				  struct chunk_info *chunkinfo, int chunkcount,
 				  double *max_data_ratio,
 				  u64 *r_data_chunks, u64 *r_data_used,
 				  u64 *r_metadata_chunks, u64 *r_metadata_used,
@@ -350,7 +350,7 @@ static void get_raid56_space_info(struct btrfs_ioctl_space_args *sargs,
 	get_raid56_logical_ratio(sargs, BTRFS_BLOCK_GROUP_RAID6,
 		 &l_data_ratio_r6, &l_metadata_ratio_r6, &l_system_ratio_r6);
 
-	for(info_ptr = chunks; chunkcount > 0; chunkcount--, info_ptr++) {
+	for(info_ptr = chunkinfo; chunkcount > 0; chunkcount--, info_ptr++) {
 		int parities_count;
 		u64 size;
 		double l_data_ratio, l_metadata_ratio, l_system_ratio, rt;
@@ -703,8 +703,8 @@ out:
 /*
  *  This function loads the device_info structure and put them in an array
  */
-static int load_device_info(int fd, struct device_info **device_info_ptr,
-			   int *device_info_count)
+static int load_device_info(int fd, struct device_info **devinfo_ret,
+			   int *devcount_ret)
 {
 	int ret, i, ndevs;
 	struct btrfs_ioctl_fs_info_args fi_args;
@@ -712,8 +712,8 @@ static int load_device_info(int fd, struct device_info **device_info_ptr,
 	struct device_info *info;
 	u8 fsid[BTRFS_UUID_SIZE];
 
-	*device_info_count = 0;
-	*device_info_ptr = NULL;
+	*devcount_ret = 0;
+	*devinfo_ret = NULL;
 
 	ret = ioctl(fd, BTRFS_IOC_FS_INFO, &fi_args);
 	if (ret < 0) {
@@ -779,8 +779,8 @@ static int load_device_info(int fd, struct device_info **device_info_ptr,
 	qsort(info, fi_args.num_devices,
 		sizeof(struct device_info), cmp_device_info);
 
-	*device_info_count = fi_args.num_devices;
-	*device_info_ptr = info;
+	*devcount_ret = fi_args.num_devices;
+	*devinfo_ret = info;
 
 	return 0;
 
@@ -789,12 +789,13 @@ out:
 	return ret;
 }
 
-int load_chunk_and_device_info(int fd, struct chunk_info **chunkinfo,
-		int *chunkcount, struct device_info **devinfo, int *devcount)
+int load_chunk_and_device_info(int fd, struct chunk_info **chunkinfo_ret,
+		int *chunkcount_ret, struct device_info **devinfo_ret,
+		int *devcount_ret)
 {
 	int ret;
 
-	ret = load_chunk_info(fd, chunkinfo, chunkcount);
+	ret = load_chunk_info(fd, chunkinfo_ret, chunkcount_ret);
 	if (ret == -EPERM) {
 		warning(
 "cannot read detailed chunk info, per-device usage will not be shown, run as root");
@@ -802,7 +803,7 @@ int load_chunk_and_device_info(int fd, struct chunk_info **chunkinfo,
 		return ret;
 	}
 
-	ret = load_device_info(fd, devinfo, devcount);
+	ret = load_device_info(fd, devinfo_ret, devcount_ret);
 	if (ret == -EPERM) {
 		warning(
 		"cannot get filesystem info from ioctl(FS_INFO), run as root");
@@ -840,8 +841,8 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 					struct btrfs_ioctl_space_args *sargs,
 					struct chunk_info *chunks_info_ptr,
 					int chunks_info_count,
-					struct device_info *device_info_ptr,
-					int device_info_count)
+					struct device_info *devinfo,
+					int devcount)
 {
 	int i;
 	u64 total_unused = 0;
@@ -868,7 +869,7 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 	}
 
 	/* 2 for header, empty line, devices, ===, total, used */
-	nrows = vhdr_skip + device_info_count + 1 + 2;
+	nrows = vhdr_skip + devcount + 1 + 2;
 
 	matrix = table_create(ncols, nrows);
 	if (!matrix) {
@@ -905,26 +906,26 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 	table_printf(matrix, slack_col, 1, "<Slack");
 
 	/* body */
-	for (i = 0; i < device_info_count; i++) {
+	for (i = 0; i < devcount; i++) {
 		int k;
 		char *p;
 
 		u64  total_allocated = 0, unused;
 
-		p = strrchr(device_info_ptr[i].path, '/');
+		p = strrchr(devinfo[i].path, '/');
 		if (!p)
-			p = device_info_ptr[i].path;
+			p = devinfo[i].path;
 		else
 			p++;
 
 		table_printf(matrix, 0, vhdr_skip + i, ">%llu",
-				device_info_ptr[i].devid);
+				devinfo[i].devid);
 		table_printf(matrix, 1, vhdr_skip + i, "<%s",
-				device_info_ptr[i].path);
+				devinfo[i].path);
 
 		for (col = spaceinfos_col, k = 0; k < sargs->total_spaces; k++) {
 			u64	flags = sargs->spaces[k].flags;
-			u64 devid = device_info_ptr[i].devid;
+			u64 devid = devinfo[i].devid;
 			int	j;
 			u64 size = 0;
 
@@ -950,16 +951,16 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 			col++;
 		}
 
-		unused = device_get_partition_size(device_info_ptr[i].path)
+		unused = device_get_partition_size(devinfo[i].path)
 				- total_allocated;
-		unused = device_info_ptr[i].size - total_allocated;
+		unused = devinfo[i].size - total_allocated;
 
 		table_printf(matrix, unallocated_col, vhdr_skip + i, ">%s",
 			pretty_size_mode(unused, unit_mode | UNITS_NEGATIVE));
 		table_printf(matrix, total_col, vhdr_skip + i, ">%s",
-			pretty_size_mode(device_info_ptr[i].size,
+			pretty_size_mode(devinfo[i].size,
 			unit_mode | UNITS_NEGATIVE));
-		slack = calc_slack_size(&device_info_ptr[i]);
+		slack = calc_slack_size(&devinfo[i]);
 		if (slack > 0) {
 			table_printf(matrix, slack_col, vhdr_skip + i, ">%s",
 				pretty_size_mode(slack,
@@ -969,13 +970,13 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 		}
 		total_unused += unused;
 		total_slack += slack;
-		total_total += device_info_ptr[i].size;
+		total_total += devinfo[i].size;
 
 	}
 
 	for (i = 0; i < spaceinfos_col; i++) {
 		table_printf(matrix, i, vhdr_skip - 1, "*-");
-		table_printf(matrix, i, vhdr_skip + device_info_count, "*-");
+		table_printf(matrix, i, vhdr_skip + devcount, "*-");
 	}
 
 	for (i = 0, col = spaceinfos_col; i < sargs->total_spaces; i++) {
@@ -983,44 +984,44 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 			continue;
 
 		table_printf(matrix, col, vhdr_skip - 1, "*-");
-		table_printf(matrix, col, vhdr_skip + device_info_count, "*-");
+		table_printf(matrix, col, vhdr_skip + devcount, "*-");
 		col++;
 	}
 	/* Line under Unallocated, Total, Slack */
 	table_printf(matrix, col, vhdr_skip - 1, "*-");
-	table_printf(matrix, col, vhdr_skip + device_info_count, "*-");
+	table_printf(matrix, col, vhdr_skip + devcount, "*-");
 	table_printf(matrix, col + 1, vhdr_skip - 1, "*-");
-	table_printf(matrix, col + 1, vhdr_skip + device_info_count, "*-");
+	table_printf(matrix, col + 1, vhdr_skip + devcount, "*-");
 	table_printf(matrix, col + 2, vhdr_skip - 1, "*-");
-	table_printf(matrix, col + 2, vhdr_skip + device_info_count, "*-");
+	table_printf(matrix, col + 2, vhdr_skip + devcount, "*-");
 
 	/* footer */
-	table_printf(matrix, 1, vhdr_skip + device_info_count + 1, "<Total");
+	table_printf(matrix, 1, vhdr_skip + devcount + 1, "<Total");
 	for (i = 0, col = spaceinfos_col; i < sargs->total_spaces; i++) {
 		if (sargs->spaces[i].flags & BTRFS_SPACE_INFO_GLOBAL_RSV)
 			continue;
 
-		table_printf(matrix, col++, vhdr_skip + device_info_count + 1,
+		table_printf(matrix, col++, vhdr_skip + devcount + 1,
 			">%s",
 			pretty_size_mode(sargs->spaces[i].total_bytes, unit_mode));
 	}
 
-	table_printf(matrix, unallocated_col, vhdr_skip + device_info_count + 1,
+	table_printf(matrix, unallocated_col, vhdr_skip + devcount + 1,
 		">%s",
 		pretty_size_mode(total_unused, unit_mode | UNITS_NEGATIVE));
-	table_printf(matrix, total_col, vhdr_skip + device_info_count + 1,
+	table_printf(matrix, total_col, vhdr_skip + devcount + 1,
 		">%s",
 		pretty_size_mode(total_total, unit_mode | UNITS_NEGATIVE));
-	table_printf(matrix, slack_col, vhdr_skip + device_info_count + 1,
+	table_printf(matrix, slack_col, vhdr_skip + devcount + 1,
 		">%s",
 		pretty_size_mode(total_slack, unit_mode | UNITS_NEGATIVE));
 
-	table_printf(matrix, 1, vhdr_skip + device_info_count + 2, "<Used");
+	table_printf(matrix, 1, vhdr_skip + devcount + 2, "<Used");
 	for (i = 0, col = spaceinfos_col; i < sargs->total_spaces; i++) {
 		if (sargs->spaces[i].flags & BTRFS_SPACE_INFO_GLOBAL_RSV)
 			continue;
 
-		table_printf(matrix, col++, vhdr_skip + device_info_count + 2,
+		table_printf(matrix, col++, vhdr_skip + devcount + 2,
 			">%s",
 			pretty_size_mode(sargs->spaces[i].used_bytes, unit_mode));
 	}
@@ -1034,23 +1035,22 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
  */
 static void print_unused(struct chunk_info *info_ptr,
 			  int info_count,
-			  struct device_info *device_info_ptr,
-			  int device_info_count,
+			  struct device_info *devinfo,
+			  int devcount,
 			  unsigned unit_mode)
 {
 	int i;
-	for (i = 0; i < device_info_count; i++) {
+	for (i = 0; i < devcount; i++) {
 		int	j;
 		u64	total = 0;
 
 		for (j = 0; j < info_count; j++)
-			if (info_ptr[j].devid == device_info_ptr[i].devid)
+			if (info_ptr[j].devid == devinfo[i].devid)
 				total += calc_chunk_size(info_ptr+j);
 
 		printf("   %s\t%10s\n",
-			device_info_ptr[i].path,
-			pretty_size_mode(device_info_ptr[i].size - total,
-				unit_mode));
+			devinfo[i].path,
+			pretty_size_mode(devinfo[i].size - total, unit_mode));
 	}
 }
 
@@ -1060,13 +1060,13 @@ static void print_unused(struct chunk_info *info_ptr,
 static void print_chunk_device(u64 chunk_type,
 				struct chunk_info *chunks_info_ptr,
 				int chunks_info_count,
-				struct device_info *device_info_ptr,
-				int device_info_count,
+				struct device_info *devinfo,
+				int devcount,
 				unsigned unit_mode)
 {
 	int i;
 
-	for (i = 0; i < device_info_count; i++) {
+	for (i = 0; i < devcount; i++) {
 		int	j;
 		u64	total = 0;
 
@@ -1074,7 +1074,7 @@ static void print_chunk_device(u64 chunk_type,
 
 			if (chunks_info_ptr[j].type != chunk_type)
 				continue;
-			if (chunks_info_ptr[j].devid != device_info_ptr[i].devid)
+			if (chunks_info_ptr[j].devid != devinfo[i].devid)
 				continue;
 
 			total += calc_chunk_size(&(chunks_info_ptr[j]));
@@ -1083,7 +1083,7 @@ static void print_chunk_device(u64 chunk_type,
 
 		if (total > 0)
 			printf("   %s\t%10s\n",
-				device_info_ptr[i].path,
+				devinfo[i].path,
 				pretty_size_mode(total, unit_mode));
 	}
 }
@@ -1096,8 +1096,8 @@ static void _cmd_filesystem_usage_linear(unsigned unit_mode,
 					struct btrfs_ioctl_space_args *sargs,
 					struct chunk_info *info_ptr,
 					int info_count,
-					struct device_info *device_info_ptr,
-					int device_info_count)
+					struct device_info *devinfo,
+					int devcount)
 {
 	int i;
 
@@ -1122,14 +1122,14 @@ static void _cmd_filesystem_usage_linear(unsigned unit_mode,
 			100.0f * sargs->spaces[i].used_bytes /
 			(sargs->spaces[i].total_bytes + 1));
 		print_chunk_device(flags, info_ptr, info_count,
-				device_info_ptr, device_info_count, unit_mode);
+				devinfo, devcount, unit_mode);
 		printf("\n");
 	}
 
 	if (info_count) {
 		printf("Unallocated:\n");
-		print_unused(info_ptr, info_count, device_info_ptr,
-				device_info_count, unit_mode | UNITS_NEGATIVE);
+		print_unused(info_ptr, info_count, devinfo,
+				devcount, unit_mode | UNITS_NEGATIVE);
 	}
 }
 
