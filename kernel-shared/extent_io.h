@@ -97,8 +97,6 @@ static inline void extent_buffer_get(struct extent_buffer *eb)
 }
 
 void extent_io_tree_init(struct extent_io_tree *tree);
-void extent_io_tree_init_cache_max(struct extent_io_tree *tree,
-				   u64 max_cache_size);
 void extent_io_tree_cleanup(struct extent_io_tree *tree);
 int set_extent_bits(struct extent_io_tree *tree, u64 start, u64 end, int bits);
 int clear_extent_bits(struct extent_io_tree *tree, u64 start, u64 end, int bits);

@@ -43,13 +43,6 @@ void extent_io_tree_init(struct extent_io_tree *tree)
 	tree->max_cache_size = (u64)total_memory() / 4;
 }
 
-void extent_io_tree_init_cache_max(struct extent_io_tree *tree,
-				   u64 max_cache_size)
-{
-	extent_io_tree_init(tree);
-	tree->max_cache_size = max_cache_size;
-}
-
 static struct extent_state *alloc_extent_state(void)
 {
 	struct extent_state *state;
