@@ -5305,7 +5305,7 @@ static int check_btrfs_root(struct btrfs_root *root, int check_all)
 	}
 
 	while (1) {
-		ctx.item_count++;
+		g_task_ctx.item_count++;
 		ret = walk_down_tree(root, &path, &level, &nrefs, check_all);
 
 		if (ret > 0)

@@ -25,6 +25,8 @@
 #include "kernel-shared/ctree.h"
 #include "common/extent-cache.h"
 
+extern struct btrfs_fs_info *gfs_info;
+
 struct block_group_record {
 	struct cache_extent cache;
 	/* Used to identify the orphan block groups */

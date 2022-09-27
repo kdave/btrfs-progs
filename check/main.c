@@ -62,6 +62,9 @@
 #include "check/qgroup-verify.h"
 #include "ioctl.h"
 
+/* Global context variables */
+struct btrfs_fs_info *gfs_info;
+
 u64 bytes_used = 0;
 u64 total_csum_bytes = 0;
 u64 total_btree_bytes = 0;
@@ -76,8 +79,6 @@ int no_holes = 0;
 static int is_free_space_tree = 0;
 int init_extent_tree = 0;
 int check_data_csum = 0;
-struct btrfs_fs_info *gfs_info;
-struct task_ctx ctx = { 0 };
 struct cache_tree *roots_info_cache = NULL;
 
 enum btrfs_check_mode {
@@ -3383,7 +3384,7 @@ static int check_root_refs(struct btrfs_root *root,
 		loop = 0;
 		cache = search_cache_extent(root_cache, 0);
 		while (1) {
-			ctx.item_count++;
+			g_task_ctx.item_count++;
 			if (!cache)
 				break;
 			rec = container_of(cache, struct root_record, cache);
@@ -3733,7 +3734,7 @@ static int check_fs_root(struct btrfs_root *root,
 	}
 
 	while (1) {
-		ctx.item_count++;
+		g_task_ctx.item_count++;
 		wret = walk_down_tree(root, &path, wc, &level, &nrefs);
 		if (wret < 0)
 			ret = wret;
@@ -5857,7 +5858,7 @@ static int check_space_cache(struct btrfs_root *root)
 		return ret;
 
 	while (1) {
-		ctx.item_count++;
+		g_task_ctx.item_count++;
 		cache = btrfs_lookup_first_block_group(gfs_info, start);
 		if (!cache)
 			break;
@@ -6187,7 +6188,7 @@ static int check_csum_root(struct btrfs_root *root)
 	}
 
 	while (1) {
-		ctx.item_count++;
+		g_task_ctx.item_count++;
 		if (path.slots[0] >= btrfs_header_nritems(path.nodes[0])) {
 			ret = btrfs_next_leaf(root, &path);
 			if (ret < 0) {
@@ -8863,7 +8864,7 @@ static int deal_root_from_list(struct list_head *list,
 		 * can maximize readahead.
 		 */
 		while (1) {
-			ctx.item_count++;
+			g_task_ctx.item_count++;
 			ret = run_next_block(root, bits, bits_nr, &last,
 					     pending, seen, reada, nodes,
 					     extent_cache, chunk_cache,
@@ -9838,7 +9839,7 @@ static int build_roots_info_cache(void)
 		struct cache_extent *entry;
 		struct root_item_info *rii;
 
-		ctx.item_count++;
+		g_task_ctx.item_count++;
 		if (slot >= btrfs_header_nritems(leaf)) {
 			ret = btrfs_next_leaf(extent_root, &path);
 			if (ret < 0) {
@@ -10591,7 +10592,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 				chunk_root_bytenr = arg_strtou64(optarg);
 				break;
 			case 'p':
-				ctx.progress_enabled = true;
+				g_task_ctx.progress_enabled = true;
 				break;
 			case '?':
 			case 'h':
@@ -10652,9 +10653,9 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 	if (check_argc_exact(argc - optind, 1))
 		usage(cmd);
 
-	if (ctx.progress_enabled) {
-		ctx.tp = TASK_NOTHING;
-		ctx.info = task_init(print_status_check, print_status_return, &ctx);
+	if (g_task_ctx.progress_enabled) {
+		g_task_ctx.tp = TASK_NOTHING;
+		g_task_ctx.info = task_init(print_status_check, print_status_return, &g_task_ctx);
 	}
 
 	/* This check is the only reason for --readonly to exist */
@@ -10690,7 +10691,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 	printf("Opening filesystem to check...\n");
 
 	cache_tree_init(&root_cache);
-	qgroup_set_item_count_ptr(&ctx.item_count);
+	qgroup_set_item_count_ptr(&g_task_ctx.item_count);
 
 	ret = check_mounted(argv[optind]);
 	if (!force) {
@@ -10860,14 +10861,15 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 	}
 
 	if (!init_extent_tree) {
-		if (!ctx.progress_enabled) {
+		if (!g_task_ctx.progress_enabled) {
 			fprintf(stderr, "[1/7] checking root items\n");
 		} else {
-			ctx.tp = TASK_ROOT_ITEMS;
-			task_start(ctx.info, &ctx.start_time, &ctx.item_count);
+			g_task_ctx.tp = TASK_ROOT_ITEMS;
+			task_start(g_task_ctx.info, &g_task_ctx.start_time,
+				   &g_task_ctx.item_count);
 		}
 		ret = repair_root_items();
-		task_stop(ctx.info);
+		task_stop(g_task_ctx.info);
 		if (ret < 0) {
 			err = !!ret;
 			errno = -ret;
@@ -10898,14 +10900,14 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 		fprintf(stderr, "[1/7] checking root items... skipped\n");
 	}
 
-	if (!ctx.progress_enabled) {
+	if (!g_task_ctx.progress_enabled) {
 		fprintf(stderr, "[2/7] checking extents\n");
 	} else {
-		ctx.tp = TASK_EXTENTS;
-		task_start(ctx.info, &ctx.start_time, &ctx.item_count);
+		g_task_ctx.tp = TASK_EXTENTS;
+		task_start(g_task_ctx.info, &g_task_ctx.start_time, &g_task_ctx.item_count);
 	}
 	ret = do_check_chunks_and_extents();
-	task_stop(ctx.info);
+	task_stop(g_task_ctx.info);
 	err |= !!ret;
 	if (ret)
 		error(
@@ -10916,18 +10918,18 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 
 	is_free_space_tree = btrfs_fs_compat_ro(gfs_info, FREE_SPACE_TREE);
 
-	if (!ctx.progress_enabled) {
+	if (!g_task_ctx.progress_enabled) {
 		if (is_free_space_tree)
 			fprintf(stderr, "[3/7] checking free space tree\n");
 		else
 			fprintf(stderr, "[3/7] checking free space cache\n");
 	} else {
-		ctx.tp = TASK_FREE_SPACE;
-		task_start(ctx.info, &ctx.start_time, &ctx.item_count);
+		g_task_ctx.tp = TASK_FREE_SPACE;
+		task_start(g_task_ctx.info, &g_task_ctx.start_time, &g_task_ctx.item_count);
 	}
 
 	ret = validate_free_space_cache(root);
-	task_stop(ctx.info);
+	task_stop(g_task_ctx.info);
 	err |= !!ret;
 
 	/*
@@ -10937,34 +10939,34 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 	 * ignore it when this happens.
 	 */
 	no_holes = btrfs_fs_incompat(gfs_info, NO_HOLES);
-	if (!ctx.progress_enabled) {
+	if (!g_task_ctx.progress_enabled) {
 		fprintf(stderr, "[4/7] checking fs roots\n");
 	} else {
-		ctx.tp = TASK_FS_ROOTS;
-		task_start(ctx.info, &ctx.start_time, &ctx.item_count);
+		g_task_ctx.tp = TASK_FS_ROOTS;
+		task_start(g_task_ctx.info, &g_task_ctx.start_time, &g_task_ctx.item_count);
 	}
 
 	ret = do_check_fs_roots(&root_cache);
-	task_stop(ctx.info);
+	task_stop(g_task_ctx.info);
 	err |= !!ret;
 	if (ret) {
 		error("errors found in fs roots");
 		goto out;
 	}
 
-	if (!ctx.progress_enabled) {
+	if (!g_task_ctx.progress_enabled) {
 		if (check_data_csum)
 			fprintf(stderr, "[5/7] checking csums against data\n");
 		else
 			fprintf(stderr,
 		"[5/7] checking only csums items (without verifying data)\n");
 	} else {
-		ctx.tp = TASK_CSUMS;
-		task_start(ctx.info, &ctx.start_time, &ctx.item_count);
+		g_task_ctx.tp = TASK_CSUMS;
+		task_start(g_task_ctx.info, &g_task_ctx.start_time, &g_task_ctx.item_count);
 	}
 
 	ret = check_csums();
-	task_stop(ctx.info);
+	task_stop(g_task_ctx.info);
 	/*
 	 * Data csum error is not fatal, and it may indicate more serious
 	 * corruption, continue checking.
@@ -10975,15 +10977,15 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 
 	/* For low memory mode, check_fs_roots_v2 handles root refs */
         if (check_mode != CHECK_MODE_LOWMEM) {
-		if (!ctx.progress_enabled) {
+		if (!g_task_ctx.progress_enabled) {
 			fprintf(stderr, "[6/7] checking root refs\n");
 		} else {
-			ctx.tp = TASK_ROOT_REFS;
-			task_start(ctx.info, &ctx.start_time, &ctx.item_count);
+			g_task_ctx.tp = TASK_ROOT_REFS;
+			task_start(g_task_ctx.info, &g_task_ctx.start_time, &g_task_ctx.item_count);
 		}
 
 		ret = check_root_refs(root, &root_cache);
-		task_stop(ctx.info);
+		task_stop(g_task_ctx.info);
 		err |= !!ret;
 		if (ret) {
 			error("errors found in root refs");
@@ -11022,14 +11024,14 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 	}
 
 	if (gfs_info->quota_enabled) {
-		if (!ctx.progress_enabled) {
+		if (!g_task_ctx.progress_enabled) {
 			fprintf(stderr, "[7/7] checking quota groups\n");
 		} else {
-			ctx.tp = TASK_QGROUPS;
-			task_start(ctx.info, &ctx.start_time, &ctx.item_count);
+			g_task_ctx.tp = TASK_QGROUPS;
+			task_start(g_task_ctx.info, &g_task_ctx.start_time, &g_task_ctx.item_count);
 		}
 		qgroup_verify_ret = qgroup_verify_all(gfs_info);
-		task_stop(ctx.info);
+		task_stop(g_task_ctx.info);
 		if (qgroup_verify_ret < 0) {
 			error("failed to check quota groups");
 			err |= !!qgroup_verify_ret;
@@ -11079,8 +11081,8 @@ out:
 close_out:
 	close_ctree(root);
 err_out:
-	if (ctx.progress_enabled)
-		task_deinit(ctx.info);
+	if (g_task_ctx.progress_enabled)
+		task_deinit(g_task_ctx.info);
 
 	return err;
 }

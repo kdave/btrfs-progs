@@ -33,6 +33,8 @@
 #include "common/repair.h"
 #include "check/mode-common.h"
 
+struct task_ctx g_task_ctx = { 0 };
+
 /*
  * Check if the inode referenced by the given data reference uses the extent
  * at disk_bytenr as a non-prealloc extent.
