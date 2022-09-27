@@ -1208,7 +1208,7 @@ next:
 	tmp_err |= find_dir_item(root, &key, &location, namebuf, len,
 			    imode_to_type(mode));
 end:
-	if (tmp_err && repair) {
+	if (tmp_err && opt_check_repair) {
 		ret = repair_ternary_lowmem(root, ref_key->offset,
 					    ref_key->objectid, index, namebuf,
 					    name_len, imode_to_type(mode),
@@ -1810,7 +1810,7 @@ begin:
 			index = key.offset;
 next:
 
-		if (tmp_err && repair) {
+		if (tmp_err && opt_check_repair) {
 			ret = repair_dir_item(root, di_key,
 					      location.objectid, index,
 					      imode_to_type(mode), namebuf,
@@ -2002,7 +2002,7 @@ static int check_file_extent_inline(struct btrfs_root *root,
 "root %llu EXTENT_DATA[%llu %llu] wrong inline size, have: %llu, expected: %u",
 				root->objectid, fkey.objectid, fkey.offset,
 				extent_num_bytes, item_inline_len);
-			if (repair) {
+			if (opt_check_repair) {
 				ret = repair_inline_ram_bytes(root, path,
 							      &extent_num_bytes);
 				if (ret)
@@ -2153,10 +2153,10 @@ static int check_file_extent(struct btrfs_root *root, struct btrfs_path *path,
 
 	/* Check EXTENT_DATA hole */
 	if (!no_holes && (fkey.offset < isize) && (*end != fkey.offset)) {
-		if (repair)
+		if (opt_check_repair)
 			ret = punch_extent_hole(root, path, fkey.objectid,
 						*end, fkey.offset - *end);
-		if (!repair || ret) {
+		if (!opt_check_repair || ret) {
 			err |= FILE_EXTENT_ERROR;
 			error(
 "root %llu EXTENT_DATA[%llu %llu] gap exists, expected: EXTENT_DATA[%llu %llu]",
@@ -2645,7 +2645,7 @@ static int check_inode_item(struct btrfs_root *root, struct btrfs_path *path)
 
 	if (!is_valid_imode(mode)) {
 		error("invalid imode mode bits: 0%o", mode);
-		if (repair) {
+		if (opt_check_repair) {
 			ret = repair_imode_common(root, path);
 			if (ret < 0)
 				err |= INODE_MODE_ERROR;
@@ -2664,7 +2664,7 @@ static int check_inode_item(struct btrfs_root *root, struct btrfs_path *path)
 		error(
 "invalid inode generation %llu or transid %llu for ino %llu, expect [0, %llu)",
 		      generation, transid, inode_id, gen_uplimit);
-		if (repair) {
+		if (opt_check_repair) {
 			ret = repair_inode_gen_lowmem(root, path);
 			if (ret < 0)
 				err |= INVALID_GENERATION;
@@ -2767,12 +2767,12 @@ out:
 
 	/* verify INODE_ITEM nlink/isize/nbytes */
 	if (dir) {
-		if (repair && (err & DIR_COUNT_AGAIN)) {
+		if (opt_check_repair && (err & DIR_COUNT_AGAIN)) {
 			err &= ~DIR_COUNT_AGAIN;
 			count_dir_isize(root, inode_id, &size);
 		}
 
-		if ((nlink != 1 || refs != 1) && repair) {
+		if ((nlink != 1 || refs != 1) && opt_check_repair) {
 			ret = repair_inode_nlinks_lowmem(root, path, inode_id,
 				namebuf, name_len, refs, imode_to_type(mode),
 				&nlink);
@@ -2795,10 +2795,10 @@ out:
 		}
 
 		if (isize != size && !is_orphan) {
-			if (repair)
+			if (opt_check_repair)
 				ret = repair_dir_isize_lowmem(root, path,
 							      inode_id, size);
-			if (!repair || ret) {
+			if (!opt_check_repair || ret) {
 				err |= ISIZE_ERROR;
 				error(
 		"root %llu DIR INODE [%llu] size %llu not equal to %llu",
@@ -2807,21 +2807,21 @@ out:
 		}
 	} else {
 		if (nlink != refs) {
-			if (repair)
+			if (opt_check_repair)
 				ret = repair_inode_nlinks_lowmem(root, path,
 					 inode_id, namebuf, name_len, refs,
 					 imode_to_type(mode), &nlink);
-			if (!repair || ret) {
+			if (!opt_check_repair || ret) {
 				err |= LINK_COUNT_ERROR;
 				error(
 		"root %llu INODE[%llu] nlink(%llu) not equal to inode_refs(%llu)",
 				      root->objectid, inode_id, nlink, refs);
 			}
 		} else if (!nlink && !is_orphan) {
-			if (repair)
+			if (opt_check_repair)
 				ret = repair_inode_orphan_item_lowmem(root,
 							      path, inode_id);
-			if (!repair || ret) {
+			if (!opt_check_repair || ret) {
 				err |= ORPHAN_ITEM;
 				error("root %llu INODE[%llu] is orphan item",
 				      root->objectid, inode_id);
@@ -2833,13 +2833,13 @@ out:
 		 * time, so skip such repair and don't report them as error.
 		 */
 		if (nbytes != extent_size && !is_orphan) {
-			if (repair) {
+			if (opt_check_repair) {
 				ret = repair_inode_nbytes_lowmem(root, path,
 							 inode_id, extent_size);
 				if (!ret)
 					nbytes = extent_size;
 			}
-			if (!repair || ret) {
+			if (!opt_check_repair || ret) {
 				err |= NBYTES_ERROR;
 				error(
 	"root %llu INODE[%llu] nbytes %llu not equal to extent_size %llu",
@@ -2849,10 +2849,10 @@ out:
 		}
 
 		if (!nbytes && !no_holes && extent_end < isize) {
-			if (repair)
+			if (opt_check_repair)
 				ret = punch_extent_hole(root, path, inode_id,
 						extent_end, isize - extent_end);
-			if (!repair || ret) {
+			if (!opt_check_repair || ret) {
 				err |= NBYTES_ERROR;
 				error(
 	"root %llu INODE[%llu] size %llu should have a file extent hole",
@@ -4379,7 +4379,7 @@ next:
 	}
 
 	if ((tmp_err & (REFERENCER_MISSING | REFERENCER_MISMATCH))
-	    && repair) {
+	    && opt_check_repair) {
 		ret = repair_extent_item(path, key.objectid, num_bytes, parent,
 					 root_objectid, owner, owner_offset);
 		if (ret < 0) {
@@ -4405,7 +4405,7 @@ next:
 			goto next;
 		}
 	}
-	if ((tmp_err & INVALID_GENERATION) && repair){
+	if ((tmp_err & INVALID_GENERATION) && opt_check_repair){
 		ret = repair_extent_item_generation(path);
 		if (ret < 0) {
 			err |= tmp_err;
@@ -4841,20 +4841,20 @@ again:
 	switch (type) {
 	case BTRFS_EXTENT_DATA_KEY:
 		ret = check_extent_data_item(root, path, nrefs, account_bytes);
-		if (repair && ret)
+		if (opt_check_repair && ret)
 			ret = repair_extent_data_item(root, path, nrefs, ret);
 		err |= ret;
 		break;
 	case BTRFS_BLOCK_GROUP_ITEM_KEY:
 		ret = check_block_group_item(eb, slot);
-		if (repair &&
+		if (opt_check_repair &&
 		    ret & REFERENCER_MISSING)
 			ret = delete_item(root, path);
 		err |= ret;
 		break;
 	case BTRFS_DEV_ITEM_KEY:
 		ret = check_dev_item(eb, slot, &bytes_used_expected);
-		if (repair && (ret & ACCOUNTING_MISMATCH) &&
+		if (opt_check_repair && (ret & ACCOUNTING_MISMATCH) &&
 		    bytes_used_expected != (u64)-1) {
 			ret = repair_dev_item_bytes_used(root->fs_info,
 					key.offset, bytes_used_expected);
@@ -4865,7 +4865,7 @@ again:
 		break;
 	case BTRFS_CHUNK_ITEM_KEY:
 		ret = check_chunk_item(eb, slot);
-		if (repair && ret)
+		if (opt_check_repair && ret)
 			ret = repair_chunk_item(root, path, ret);
 		err |= ret;
 		break;
@@ -4884,7 +4884,7 @@ again:
 		break;
 	case BTRFS_TREE_BLOCK_REF_KEY:
 		ret = check_tree_block_backref(key.offset, key.objectid, -1);
-		if (repair &&
+		if (opt_check_repair &&
 		    ret & (REFERENCER_MISMATCH | REFERENCER_MISSING))
 			ret = delete_item(root, path);
 		err |= ret;
@@ -4897,21 +4897,21 @@ again:
 				btrfs_extent_data_ref_offset(eb, dref),
 				key.objectid, 0,
 				btrfs_extent_data_ref_count(eb, dref));
-		if (repair &&
+		if (opt_check_repair &&
 		    ret & (REFERENCER_MISMATCH | REFERENCER_MISSING))
 			ret = delete_item(root, path);
 		err |= ret;
 		break;
 	case BTRFS_SHARED_BLOCK_REF_KEY:
 		ret = check_shared_block_backref(key.offset, key.objectid, -1);
-		if (repair &&
+		if (opt_check_repair &&
 		    ret & (REFERENCER_MISMATCH | REFERENCER_MISSING))
 			ret = delete_item(root, path);
 		err |= ret;
 		break;
 	case BTRFS_SHARED_DATA_REF_KEY:
 		ret = check_shared_data_backref(key.offset, key.objectid);
-		if (repair &&
+		if (opt_check_repair &&
 		    ret & (REFERENCER_MISMATCH | REFERENCER_MISSING))
 			ret = delete_item(root, path);
 		err |= ret;
@@ -4976,7 +4976,7 @@ static int walk_down_tree(struct btrfs_root *root, struct btrfs_path *path,
 			   btrfs_header_bytenr(cur), btrfs_header_level(cur),
 			   btrfs_header_owner(cur), nrefs);
 
-			if (repair && ret)
+			if (opt_check_repair && ret)
 				ret = repair_tree_block_ref(root,
 				    path->nodes[*level], nrefs, *level, ret);
 			err |= ret;
@@ -5221,7 +5221,7 @@ static int check_fs_first_inode(struct btrfs_root *root)
 out:
 	btrfs_release_path(&path);
 
-	if (err && repair)
+	if (err && opt_check_repair)
 		err = repair_fs_first_inode(root, err);
 
 	if (err & (INODE_ITEM_MISSING | INODE_ITEM_MISMATCH))
@@ -5277,7 +5277,7 @@ static int check_btrfs_root(struct btrfs_root *root, int check_all)
 		      root->root_key.objectid, btrfs_root_generation(root_item),
 		      super_generation + 1);
 		err |= INVALID_GENERATION;
-		if (repair) {
+		if (opt_check_repair) {
 			root->node->flags |= EXTENT_BAD_TRANSID;
 			ret = recow_extent_buffer(root, root->node);
 			if (!ret) {
@@ -5516,7 +5516,7 @@ next:
 		 * In repair mode, our path is no longer reliable as CoW can
 		 * happen.  We need to reset our path.
 		 */
-		if (repair) {
+		if (opt_check_repair) {
 			btrfs_release_path(&path);
 			ret = btrfs_search_slot(NULL, tree_root, &key, &path,
 						0, 0);
@@ -5622,7 +5622,7 @@ out:
 		err |= SUPER_BYTES_USED_ERROR;
 	}
 
-	if (repair) {
+	if (opt_check_repair) {
 		ret = end_avoid_extents_overwrite();
 		if (ret < 0)
 			ret = FATAL_ERROR;

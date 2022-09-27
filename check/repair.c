@@ -30,7 +30,7 @@
 #include "common/extent-cache.h"
 #include "check/repair.h"
 
-int repair = 0;
+int opt_check_repair = 0;
 
 int btrfs_add_corrupt_extent_record(struct btrfs_fs_info *info,
 				    struct btrfs_key *first_key,

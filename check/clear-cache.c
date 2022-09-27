@@ -430,7 +430,7 @@ int validate_free_space_cache(struct btrfs_root *root)
 	if (!ret && btrfs_fs_compat_ro(gfs_info, FREE_SPACE_TREE))
 		ret = check_free_space_trees(root);
 	if (ret && btrfs_fs_compat_ro(gfs_info, FREE_SPACE_TREE) &&
-	    repair) {
+	    opt_check_repair) {
 		ret = do_clear_free_space_cache(2);
 		if (ret)
 			goto out;

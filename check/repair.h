@@ -26,7 +26,8 @@
 struct btrfs_trans_handle;
 struct extent_io_tree;
 
-extern int repair; /* repair mode */
+/* Repair mode */
+extern int opt_check_repair;
 
 struct btrfs_corrupt_block {
 	struct cache_extent cache;

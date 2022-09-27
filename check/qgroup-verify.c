@@ -1326,7 +1326,7 @@ void report_qgroups(int all)
 	struct rb_node *node;
 	struct qgroup_count *c;
 
-	if (!repair && counts.rescan_running) {
+	if (!opt_check_repair && counts.rescan_running) {
 		if (all) {
 			printf(
 	"Qgroup rescan is running, a difference in qgroup counts is expected\n");

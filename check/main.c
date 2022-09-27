@@ -3059,7 +3059,7 @@ static int check_inode_recs(struct btrfs_root *root,
 			break;
 
 		cache = search_cache_extent(inode_cache, 0);
-		while (repair && cache) {
+		while (opt_check_repair && cache) {
 			node = container_of(cache, struct ptr_node, cache);
 			rec = node->data;
 			cache = next_cache_extent(cache);
@@ -3092,7 +3092,7 @@ static int check_inode_recs(struct btrfs_root *root,
 	rec = get_inode_rec(inode_cache, root_dirid, 0);
 	BUG_ON(IS_ERR(rec));
 	if (rec) {
-		if (repair) {
+		if (opt_check_repair) {
 			ret = try_repair_inode(root, rec);
 			if (ret < 0)
 				error++;
@@ -3103,7 +3103,7 @@ static int check_inode_recs(struct btrfs_root *root,
 			error++;
 		}
 	} else {
-		if (repair) {
+		if (opt_check_repair) {
 			struct btrfs_trans_handle *trans;
 
 			trans = btrfs_start_transaction(root, 1);
@@ -3159,7 +3159,7 @@ static int check_inode_recs(struct btrfs_root *root,
 			rec->errors |= I_ERR_NO_INODE_ITEM;
 		if (rec->found_link != rec->nlink)
 			rec->errors |= I_ERR_LINK_COUNT_WRONG;
-		if (repair) {
+		if (opt_check_repair) {
 			ret = try_repair_inode(root, rec);
 			if (ret == 0 && can_free_inode_rec(rec)) {
 				free_inode_rec(rec);
@@ -3167,7 +3167,7 @@ static int check_inode_recs(struct btrfs_root *root,
 			}
 		}
 
-		if (!(repair && ret == 0))
+		if (!(opt_check_repair && ret == 0))
 			error++;
 		print_inode_error(root, rec);
 		list_for_each_entry(backref, &rec->backrefs, list) {
@@ -3640,7 +3640,7 @@ static int check_fs_root(struct btrfs_root *root,
 		      root->root_key.objectid, btrfs_root_generation(root_item),
 		      super_generation + 1);
 		generation_err = true;
-		if (repair) {
+		if (opt_check_repair) {
 			root->node->flags |= EXTENT_BAD_TRANSID;
 			ret = recow_extent_buffer(root, root->node);
 			if (!ret) {
@@ -3768,7 +3768,7 @@ skip_walking:
 			       corrupt->key.offset);
 			cache = next_cache_extent(cache);
 		}
-		if (repair) {
+		if (opt_check_repair) {
 			printf("Try to repair the btree for root %llu\n",
 			       root->root_key.objectid);
 			ret = repair_btree(root, &corrupt_blocks);
@@ -3819,7 +3819,7 @@ static int check_fs_roots(struct cache_tree *root_cache)
 	 * Just in case we made any changes to the extent tree that weren't
 	 * reflected into the free space cache yet.
 	 */
-	if (repair)
+	if (opt_check_repair)
 		reset_cached_block_groups();
 	memset(&wc, 0, sizeof(wc));
 	cache_tree_init(&wc.shared);
@@ -3885,7 +3885,7 @@ again:
 				 * hit this root and fail to repair, so we must
 				 * skip it to avoid infinite loop.
 				 */
-				if (repair)
+				if (opt_check_repair)
 					skip_root = key.objectid;
 			}
 			if (key.objectid == BTRFS_TREE_RELOC_OBJECTID)
@@ -4558,7 +4558,7 @@ static int check_block(struct btrfs_root *root,
 		status = btrfs_check_node(gfs_info, &rec->parent_key, buf);
 
 	if (status != BTRFS_TREE_BLOCK_CLEAN) {
-		if (repair)
+		if (opt_check_repair)
 			status = try_to_fix_bad_block(root, buf, status);
 		if (status != BTRFS_TREE_BLOCK_CLEAN) {
 			ret = -EIO;
@@ -7999,7 +7999,7 @@ static int check_extent_refs(struct btrfs_root *root,
 	int had_dups = 0;
 	int err = 0;
 
-	if (repair) {
+	if (opt_check_repair) {
 		/*
 		 * if we're doing a repair, we have to make sure
 		 * we don't allocate from the problem extents.
@@ -8034,7 +8034,7 @@ static int check_extent_refs(struct btrfs_root *root,
 	 * could mess up the extent tree when we have backrefs that actually
 	 * belong to a different extent item and not the weird duplicate one.
 	 */
-	while (repair && !list_empty(&duplicate_extents)) {
+	while (opt_check_repair && !list_empty(&duplicate_extents)) {
 		rec = to_extent_record(duplicate_extents.next);
 		list_del_init(&rec->list);
 
@@ -8081,7 +8081,7 @@ static int check_extent_refs(struct btrfs_root *root,
 		if (rec->generation > super_gen + 1) {
 			bool repaired = false;
 
-			if (repair) {
+			if (opt_check_repair) {
 				ret = repair_extent_item_generation(rec);
 				if (ret == 0)
 					repaired = true;
@@ -8132,7 +8132,7 @@ static int check_extent_refs(struct btrfs_root *root,
 			cur_err = 1;
 		}
 
-		if (repair && fix) {
+		if (opt_check_repair && fix) {
 			ret = fixup_extent_refs(extent_cache, rec);
 			if (ret)
 				goto repair_abort;
@@ -8142,7 +8142,7 @@ static int check_extent_refs(struct btrfs_root *root,
 		if (rec->bad_full_backref) {
 			fprintf(stderr, "bad full backref, on [%llu]\n",
 				(unsigned long long)rec->start);
-			if (repair) {
+			if (opt_check_repair) {
 				ret = fixup_extent_flags(rec);
 				if (ret)
 					goto repair_abort;
@@ -8172,14 +8172,14 @@ next:
 		err = cur_err;
 		remove_cache_extent(extent_cache, cache);
 		free_all_extent_backrefs(rec);
-		if (!init_extent_tree && repair && (!cur_err || fix))
+		if (!init_extent_tree && opt_check_repair && (!cur_err || fix))
 			clear_extent_dirty(gfs_info->excluded_extents,
 					   rec->start,
 					   rec->start + rec->max_size - 1);
 		free(rec);
 	}
 repair_abort:
-	if (repair) {
+	if (opt_check_repair) {
 		if (ret && ret != -EAGAIN) {
 			fprintf(stderr, "failed to repair damaged filesystem, aborting\n");
 			exit(1);
@@ -8414,7 +8414,7 @@ static int check_device_used(struct device_record *dev_rec,
 			"Dev extent's total-byte(%llu) is not equal to byte-used(%llu) in dev[%llu, %u, %llu]\n",
 			total_byte, dev_rec->byte_used,	dev_rec->objectid,
 			dev_rec->type, dev_rec->offset);
-		if (repair) {
+		if (opt_check_repair) {
 			ret = repair_dev_item_bytes_used(gfs_info,
 					dev_rec->devid, total_byte);
 		}
@@ -8646,7 +8646,7 @@ static int check_block_groups(struct block_group_tree *bg_cache)
 		ret = -1;
 	}
 
-	if (!repair || !ret)
+	if (!opt_check_repair || !ret)
 		return ret;
 
 	trans = btrfs_start_transaction(gfs_info->tree_root, 1);
@@ -8885,7 +8885,7 @@ static int check_chunks_and_extents(void)
 	INIT_LIST_HEAD(&dropping_trees);
 	INIT_LIST_HEAD(&normal_trees);
 
-	if (repair) {
+	if (opt_check_repair) {
 		gfs_info->excluded_extents = &excluded_extents;
 		gfs_info->fsck_extent_cache = &extent_cache;
 		gfs_info->free_extent_hook = free_extent_hook;
@@ -8967,7 +8967,7 @@ again:
 		ret = err;
 
 out:
-	if (repair) {
+	if (opt_check_repair) {
 		free_corrupt_blocks_tree(gfs_info->corrupt_blocks);
 		extent_io_tree_cleanup(&excluded_extents);
 		gfs_info->fsck_extent_cache = NULL;
@@ -9014,7 +9014,7 @@ static int do_check_chunks_and_extents(void)
 		ret = check_chunks_and_extents();
 
 	/* Also repair device size related problems */
-	if (repair && !ret) {
+	if (opt_check_repair && !ret) {
 		ret = btrfs_fix_device_and_super_size(gfs_info);
 		if (ret > 0)
 			ret = 0;
@@ -9695,7 +9695,7 @@ static int maybe_repair_root_item(struct btrfs_path *path,
 		 * for the same root item without read only mode (the caller will
 		 * open a transaction first).
 		 */
-		if (!(read_only_mode && repair))
+		if (!(read_only_mode && opt_check_repair))
 			fprintf(stderr,
 				"%sroot item for root %llu,"
 				" current bytenr %llu, current gen %llu, current level %u,"
@@ -9814,7 +9814,7 @@ again:
 		if (ret < 0)
 			goto out;
 		if (ret) {
-			if (!trans && repair) {
+			if (!trans && opt_check_repair) {
 				need_trans = 1;
 				key = found_key;
 				btrfs_release_path(&path);
@@ -10023,7 +10023,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 				usage(cmd);
 			case GETOPT_VAL_REPAIR:
 				printf("enabling repair mode\n");
-				repair = 1;
+				opt_check_repair = 1;
 				ctree_flags |= OPEN_CTREE_WRITES;
 				break;
 			case GETOPT_VAL_READONLY:
@@ -10032,14 +10032,14 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 			case GETOPT_VAL_INIT_CSUM:
 				printf("Creating a new CRC tree\n");
 				init_csum_tree = 1;
-				repair = 1;
+				opt_check_repair = 1;
 				ctree_flags |= OPEN_CTREE_WRITES;
 				break;
 			case GETOPT_VAL_INIT_EXTENT:
 				init_extent_tree = 1;
 				ctree_flags |= (OPEN_CTREE_WRITES |
 						OPEN_CTREE_NO_BLOCK_GROUPS);
-				repair = 1;
+				opt_check_repair = 1;
 				break;
 			case GETOPT_VAL_CHECK_CSUM:
 				check_data_csum = 1;
@@ -10083,12 +10083,12 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 	}
 
 	/* This check is the only reason for --readonly to exist */
-	if (readonly && repair) {
+	if (readonly && opt_check_repair) {
 		error("repair options are not compatible with --readonly");
 		exit(1);
 	}
 
-	if (repair && !force) {
+	if (opt_check_repair && !force) {
 		int delay = 10;
 
 		printf("WARNING:\n\n");
@@ -10109,7 +10109,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 	/*
 	 * experimental and dangerous
 	 */
-	if (repair && check_mode == CHECK_MODE_LOWMEM)
+	if (opt_check_repair && check_mode == CHECK_MODE_LOWMEM)
 		warning("low-memory mode repair support is only partial");
 
 	printf("Opening filesystem to check...\n");
@@ -10146,7 +10146,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 	}
 
 	/* only allow partial opening under repair mode */
-	if (repair)
+	if (opt_check_repair)
 		ctree_flags |= OPEN_CTREE_PARTIAL;
 
 	ocf.filename = argv[optind];
@@ -10196,7 +10196,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 	 * repair mode will force us to commit transaction which
 	 * will make us fail to load log tree when mounting.
 	 */
-	if (repair && btrfs_super_log_root(gfs_info->super_copy)) {
+	if (opt_check_repair && btrfs_super_log_root(gfs_info->super_copy)) {
 		ret = ask_user("repair mode will force to clear out log tree, are you sure?");
 		if (!ret) {
 			ret = 1;
@@ -10303,11 +10303,11 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 			 * fatal.  But for non-repair, it's pretty rare to hit
 			 * such v3.17 era bug, we want to continue check.
 			 */
-			if (repair)
+			if (opt_check_repair)
 				goto close_out;
 			err |= 1;
 		} else {
-			if (repair) {
+			if (opt_check_repair) {
 				fprintf(stderr, "Fixed %d roots.\n", ret);
 				ret = 0;
 			} else if (ret > 0) {
@@ -10420,7 +10420,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 	"[6/7] checking root refs done with fs roots in lowmem mode, skipping\n");
 	}
 
-	while (repair && !list_empty(&gfs_info->recow_ebs)) {
+	while (opt_check_repair && !list_empty(&gfs_info->recow_ebs)) {
 		struct extent_buffer *eb;
 
 		eb = list_first_entry(&gfs_info->recow_ebs,
@@ -10440,7 +10440,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 
 		bad = list_first_entry(&delete_items, struct bad_item, list);
 		list_del_init(&bad->list);
-		if (repair) {
+		if (opt_check_repair) {
 			ret = delete_bad_item(root, bad);
 			err |= !!ret;
 		}

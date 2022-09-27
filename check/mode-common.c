@@ -1041,7 +1041,7 @@ int check_repair_free_space_inode(struct btrfs_path *path)
 	"free space cache inode %llu has invalid mode: has 0%o expect 0%o",
 			key.objectid, mode, FREE_SPACE_CACHE_INODE_MODE);
 		ret = -EUCLEAN;
-		if (repair) {
+		if (opt_check_repair) {
 			ret = repair_imode_common(gfs_info->tree_root, path);
 			if (ret < 0)
 				return ret;
@@ -1654,7 +1654,7 @@ int check_and_repair_super_num_devs(struct btrfs_fs_info *fs_info)
 	      btrfs_super_num_devices(fs_info->super_copy),
 	      found_devs);
 
-	if (!repair)
+	if (!opt_check_repair)
 		return -EUCLEAN;
 
 	/*
