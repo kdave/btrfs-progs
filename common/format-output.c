@@ -56,15 +56,14 @@ static void fmt_indent2(int indent)
 
 static void fmt_error(struct format_ctx *fctx)
 {
-	printf("INTERNAL ERROR: formatting json: depth=%d\n", fctx->depth);
+	internal_error("formatting json: depth=%d", fctx->depth);
 	exit(1);
 }
 
 static void fmt_inc_depth(struct format_ctx *fctx)
 {
 	if (fctx->depth >= JSON_NESTING_LIMIT - 1) {
-		printf("INTERNAL ERROR: nesting too deep, limit %d\n",
-				JSON_NESTING_LIMIT);
+		internal_error("nesting too deep, limit %d", JSON_NESTING_LIMIT);
 		exit(1);
 	}
 	fctx->depth++;
@@ -73,7 +72,7 @@ static void fmt_inc_depth(struct format_ctx *fctx)
 static void fmt_dec_depth(struct format_ctx *fctx)
 {
 	if (fctx->depth < 1) {
-		printf("INTERNAL ERROR: nesting below first level\n");
+		internal_error("nesting below first level");
 		exit(1);
 	}
 	fctx->depth--;
@@ -244,7 +243,7 @@ void fmt_print(struct format_ctx *fctx, const char* key, ...)
 		row++;
 	}
 	if (!found) {
-		printf("INTERNAL ERROR: unknown key: %s\n", key);
+		internal_error("unknown key: %s", key);
 		exit(1);
 	}
 
@@ -319,7 +318,7 @@ void fmt_print(struct format_ctx *fctx, const char* key, ...)
 
 		printf("%s", pretty_size_mode(size, unit_mode));
 	} else {
-		printf("INTERNAL ERROR: unknown format %s\n", row->fmt);
+		internal_error("unknown format %s", row->fmt);
 	}
 
 	fmt_end_value(fctx, row);

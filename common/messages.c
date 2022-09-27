@@ -77,6 +77,22 @@ int __btrfs_error_on(int condition, const char *fmt, ...)
 	return 1;
 }
 
+__attribute__ ((format (printf, 1, 2)))
+void internal_error(const char *fmt, ...)
+{
+	va_list vargs;
+
+	va_start(vargs, fmt);
+	fputs("INTERNAL ERROR: ", stderr);
+	vfprintf(stderr, fmt, vargs);
+	va_end(vargs);
+	fputc('\n', stderr);
+
+#ifndef BTRFS_DISABLE_BACKTRACE
+	print_trace();
+#endif
+}
+
 /*
  * Print a message according to the global verbosity level.
  *

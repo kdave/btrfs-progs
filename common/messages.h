@@ -100,6 +100,9 @@ int __btrfs_warning_on(int condition, const char *fmt, ...);
 __attribute__ ((format (printf, 2, 3)))
 int __btrfs_error_on(int condition, const char *fmt, ...);
 
+__attribute__ ((format (printf, 1, 2)))
+void internal_error(const char *fmt, ...);
+
 /*
  * Level of messages that must be printed by default (in case the verbosity
  * options haven't been set by the user) due to backward compatibility reasons
