@@ -32,7 +32,7 @@
 #include "kernel-shared/transaction.h"
 #include "common/messages.h"
 #include "common/rbtree-utils.h"
-#include "common/repair.h"
+#include "check/repair.h"
 #include "check/qgroup-verify.h"
 
 static u64 *qgroup_item_count;

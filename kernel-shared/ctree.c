@@ -21,12 +21,12 @@
 #include "kernel-shared/transaction.h"
 #include "kernel-shared/print-tree.h"
 #include "crypto/crc32c.h"
-#include "common/repair.h"
 #include "common/internal.h"
 #include "common/messages.h"
 #include "common/utils.h"
 #include "kernel-lib/sizes.h"
 #include "kernel-shared/volumes.h"
+#include "check/repair.h"
 
 static int split_node(struct btrfs_trans_handle *trans, struct btrfs_root
 		      *root, struct btrfs_path *path, int level);

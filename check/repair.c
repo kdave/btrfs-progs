@@ -28,7 +28,7 @@
 #include "kernel-shared/extent_io.h"
 #include "kernel-shared/disk-io.h"
 #include "common/extent-cache.h"
-#include "common/repair.h"
+#include "check/repair.h"
 
 int repair = 0;
 

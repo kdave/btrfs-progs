@@ -23,8 +23,8 @@
 #include "kernel-shared/transaction.h"
 #include "common/internal.h"
 #include "common/messages.h"
-#include "common/repair.h"
 #include "check/common.h"
+#include "check/repair.h"
 #include "check/mode-common.h"
 #include "check/clear-cache.h"
 

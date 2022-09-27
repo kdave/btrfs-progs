@@ -182,7 +182,6 @@ objects = \
 	common/parse-utils.o	\
 	common/path-utils.o	\
 	common/rbtree-utils.o	\
-	common/repair.o	\
 	common/send-stream.o	\
 	common/send-utils.o	\
 	common/string-table.o	\
@@ -191,6 +190,7 @@ objects = \
 	common/units.o	\
 	common/utils.o	\
 	check/qgroup-verify.o	\
+	check/repair.o	\
 	cmds/receive-dump.o	\
 	crypto/crc32c.o	\
 	crypto/hash.o	\

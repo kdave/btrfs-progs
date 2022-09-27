@@ -30,8 +30,8 @@
 #include "common/internal.h"
 #include "common/messages.h"
 #include "common/utils.h"
-#include "common/repair.h"
 #include "check/mode-common.h"
+#include "check/repair.h"
 
 struct task_ctx g_task_ctx = { 0 };
 
