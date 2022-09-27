@@ -54,8 +54,7 @@ static int debug_corrupt_block(struct extent_buffer *eb,
 				ret = -EIO;
 			if (ret < 0) {
 				errno = -ret;
-				error("cannot read eb bytenr %llu: %m",
-					(unsigned long long)eb->start);
+				error("cannot read eb bytenr %llu: %m", eb->start);
 				return ret;
 			}
 			printf("corrupting %llu copy %d\n", eb->start,
@@ -64,8 +63,7 @@ static int debug_corrupt_block(struct extent_buffer *eb,
 			ret = write_and_map_eb(eb->fs_info, eb);
 			if (ret < 0) {
 				errno = -ret;
-				error("cannot write eb bytenr %llu: %m",
-					(unsigned long long)eb->start);
+				error("cannot write eb bytenr %llu: %m", eb->start);
 				return ret;
 			}
 		}
@@ -153,7 +151,7 @@ static void corrupt_keys(struct btrfs_trans_handle *trans,
 
 	fprintf(stderr,
 		"corrupting keys in block %llu slot %d swapping with %d\n",
-		(unsigned long long)eb->start, slot, bad_slot);
+		eb->start, slot, bad_slot);
 
 	if (btrfs_header_level(eb) == 0) {
 		btrfs_item_key(eb, &bad_key, bad_slot);
@@ -1601,7 +1599,7 @@ int main(int argc, char **argv)
 			if (!eb) {
 				error(
 		"not enough memory to allocate extent buffer for bytenr %llu",
-					(unsigned long long)logical);
+					logical);
 				ret = 1;
 				goto out_close;
 			}

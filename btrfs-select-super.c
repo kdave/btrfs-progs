@@ -96,8 +96,7 @@ int main(int argc, char **argv)
 	 * transaction commit.  We just want the super copy we pulled off the
 	 * disk to overwrite all the other copies
 	 */
-	printf("using SB copy %llu, bytenr %llu\n", (unsigned long long)num,
-	       (unsigned long long)bytenr);
+	printf("using SB copy %llu, bytenr %llu\n", num, bytenr);
 	close_ctree(root);
 	btrfs_close_all_devices();
 	return ret;

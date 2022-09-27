@@ -695,8 +695,7 @@ static int flush_pending(struct metadump_struct *md, int done)
 			if (ret < size) {
 				free(async->buffer);
 				free(async);
-				error("unable to read superblock at %llu: %m",
-						(unsigned long long)start);
+				error("unable to read superblock at %llu: %m", start);
 				return -errno;
 			}
 			size = 0;
@@ -711,8 +710,7 @@ static int flush_pending(struct metadump_struct *md, int done)
 			if (!extent_buffer_uptodate(eb)) {
 				free(async->buffer);
 				free(async);
-				error("unable to read metadata block %llu",
-					(unsigned long long)start);
+				error("unable to read metadata block %llu", start);
 				return -EIO;
 			}
 			copy_buffer(md, async->buffer + offset, eb);
@@ -976,7 +974,7 @@ static int copy_from_extent_tree(struct metadump_struct *metadump,
 
 		if (num_bytes == 0) {
 			error("extent length 0 at bytenr %llu key type %d",
-					(unsigned long long)bytenr, key.type);
+					bytenr, key.type);
 			ret = -EIO;
 			break;
 		}
@@ -996,7 +994,7 @@ static int copy_from_extent_tree(struct metadump_struct *metadump,
 						 is_data);
 				if (ret) {
 					error("unable to add block %llu: %d",
-						(unsigned long long)bytenr, ret);
+						bytenr, ret);
 					break;
 				}
 			}
@@ -1961,8 +1959,7 @@ static int read_chunk_block(struct mdrestore_struct *mdres, u8 *buffer,
 		if (btrfs_header_bytenr(eb) != bytenr) {
 			error(
 			"eb bytenr does not match found bytenr: %llu != %llu",
-				(unsigned long long)btrfs_header_bytenr(eb),
-				(unsigned long long)bytenr);
+				btrfs_header_bytenr(eb), bytenr);
 			ret = -EUCLEAN;
 			break;
 		}
@@ -1977,8 +1974,7 @@ static int read_chunk_block(struct mdrestore_struct *mdres, u8 *buffer,
 		}
 		if (btrfs_header_owner(eb) != BTRFS_CHUNK_TREE_OBJECTID) {
 			error("wrong eb %llu owner %llu",
-				(unsigned long long)bytenr,
-				(unsigned long long)btrfs_header_owner(eb));
+				bytenr, btrfs_header_owner(eb));
 			ret = -EUCLEAN;
 			break;
 		}
@@ -2970,9 +2966,7 @@ static int update_disk_super_on_device(struct btrfs_fs_info *info,
 
 	devid = btrfs_device_id(leaf, dev_item);
 	if (devid != cur_devid) {
-		error("devid mismatch: %llu != %llu",
-				(unsigned long long)devid,
-				(unsigned long long)cur_devid);
+		error("devid mismatch: %llu != %llu", devid, cur_devid);
 		ret = -EIO;
 		goto out;
 	}
@@ -3083,8 +3077,7 @@ int BOX_MAIN(image)(int argc, char *argv[])
 			num_threads = arg_strtou64(optarg);
 			if (num_threads > MAX_WORKER_THREADS) {
 				error("number of threads out of range: %llu > %d",
-					(unsigned long long)num_threads,
-					MAX_WORKER_THREADS);
+					num_threads, MAX_WORKER_THREADS);
 				return 1;
 			}
 			break;
@@ -3092,7 +3085,7 @@ int BOX_MAIN(image)(int argc, char *argv[])
 			compress_level = arg_strtou64(optarg);
 			if (compress_level > 9) {
 				error("compression level out of range: %llu",
-					(unsigned long long)compress_level);
+					compress_level);
 				return 1;
 			}
 			break;

@@ -514,16 +514,14 @@ int make_btrfs(int fd, struct btrfs_mkfs_config *cfg)
 
 		if (cfg->blocks[blk] < first_free) {
 			error("block[%d] below first free: %llu < %llu",
-					i, (unsigned long long)cfg->blocks[blk],
-					(unsigned long long)first_free);
+					i, cfg->blocks[blk], first_free);
 			ret = -EINVAL;
 			goto out;
 		}
 		if (i > 0 && cfg->blocks[blk] < cfg->blocks[blocks[i - 1]]) {
 			error("blocks %d and %d in reverse order: %llu < %llu",
 				blk, blocks[i - 1],
-				(unsigned long long)cfg->blocks[blk],
-				(unsigned long long)cfg->blocks[blocks[i - 1]]);
+				cfg->blocks[blk], cfg->blocks[blocks[i - 1]]);
 			ret = -EINVAL;
 			goto out;
 		}

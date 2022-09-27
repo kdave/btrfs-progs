@@ -141,8 +141,7 @@ static void *print_copied_inodes(void *p)
 		pthread_mutex_lock(&priv->mutex);
 		printf("Copy inodes [%c] [%10llu/%10llu]\r",
 		       work_indicator[count % 4],
-		       (unsigned long long)priv->cur_copy_inodes,
-		       (unsigned long long)priv->max_copy_inodes);
+		       priv->cur_copy_inodes, priv->max_copy_inodes);
 		pthread_mutex_unlock(&priv->mutex);
 		fflush(stdout);
 		task_period_wait(priv->info);
@@ -220,13 +219,11 @@ static int create_image_file_range(struct btrfs_trans_handle *trans,
 	u32 datacsum = convert_flags & CONVERT_FLAG_DATACSUM;
 
 	if (bytenr != round_down(bytenr, root->fs_info->sectorsize)) {
-		error("bytenr not sectorsize aligned: %llu",
-				(unsigned long long)bytenr);
+		error("bytenr not sectorsize aligned: %llu", bytenr);
 		return -EINVAL;
 	}
 	if (len != round_down(len, root->fs_info->sectorsize)) {
-		error("length not sectorsize aligned: %llu",
-				(unsigned long long)len);
+		error("length not sectorsize aligned: %llu", len);
 		return -EINVAL;
 	}
 	len = min_t(u64, len, BTRFS_MAX_EXTENT_SIZE);
@@ -318,8 +315,7 @@ static int create_image_file_range(struct btrfs_trans_handle *trans,
 	}
 
 	if (len != round_down(len, root->fs_info->sectorsize)) {
-		error("remaining length not sectorsize aligned: %llu",
-				(unsigned long long)len);
+		error("remaining length not sectorsize aligned: %llu", len);
 		return -EINVAL;
 	}
 	ret = btrfs_record_file_extent(trans, root, ino, inode, bytenr,

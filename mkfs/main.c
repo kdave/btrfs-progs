@@ -359,8 +359,7 @@ static int create_one_raid_group(struct btrfs_trans_handle *trans,
 			(BTRFS_BLOCK_GROUP_METADATA | BTRFS_BLOCK_GROUP_DATA)) {
 		allocation->mixed += chunk_size;
 	} else {
-		error("unrecognized profile type: 0x%llx",
-				(unsigned long long)type);
+		error("unrecognized profile type: 0x%llx", type);
 		ret = -EINVAL;
 	}
 
@@ -1502,8 +1501,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	dev_block_count = prepare_ctx[0].dev_block_count;
 	if (block_count && block_count > dev_block_count) {
 		error("%s is smaller than requested size, expected %llu, found %llu",
-		      file, (unsigned long long)block_count,
-		      (unsigned long long)dev_block_count);
+		      file, block_count, dev_block_count);
 		goto error;
 	}
 
@@ -1511,7 +1509,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	system_group_size = (opt_zoned ? zone_size(file) : BTRFS_MKFS_SYSTEM_GROUP_SIZE);
 	if (dev_block_count < system_group_size) {
 		error("device is too small to make filesystem, must be at least %llu",
-				(unsigned long long)system_group_size);
+				system_group_size);
 		goto error;
 	}
 
@@ -1643,8 +1641,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 
 			device = container_of(fs_info->fs_devices->devices.next,
 					struct btrfs_device, dev_list);
-			printf("adding device %s id %llu\n", file,
-				(unsigned long long)device->devid);
+			printf("adding device %s id %llu\n", file, device->devid);
 		}
 	}
 
