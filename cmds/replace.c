@@ -494,9 +494,8 @@ static int print_replace_status(int fd, const char *path, int once)
 		if (!skip_stats)
 			num_chars += printf(
 				", %llu write errs, %llu uncorr. read errs",
-				(unsigned long long)status->num_write_errors,
-				(unsigned long long)
-				 status->num_uncorrectable_read_errors);
+				status->num_write_errors,
+				status->num_uncorrectable_read_errors);
 		if (once || prevent_loop) {
 			printf("\n");
 			break;

@@ -338,8 +338,7 @@ static int cmd_inspect_subvolid_resolve(const struct cmd_struct *cmd,
 	ret = btrfs_subvolid_resolve(fd, path, sizeof(path), subvol_id);
 
 	if (ret) {
-		error("resolving subvolid %llu error %d",
-			(unsigned long long)subvol_id, ret);
+		error("resolving subvolid %llu error %d", subvol_id, ret);
 		goto out;
 	}
 
@@ -384,7 +383,7 @@ static int cmd_inspect_rootid(const struct cmd_struct *cmd,
 		goto out;
 	}
 
-	pr_verbose(LOG_DEFAULT, "%llu\n", (unsigned long long)rootid);
+	pr_verbose(LOG_DEFAULT, "%llu\n", rootid);
 out:
 	close_file_or_dir(fd, dirstream);
 

@@ -640,8 +640,7 @@ static int add_root(struct rb_root *root_lookup,
 	ret = root_tree_insert(root_lookup, ri);
 	if (ret < 0) {
 		errno = -ret;
-		error("failed to insert subvolume %llu to tree: %m",
-				(unsigned long long)root_id);
+		error("failed to insert subvolume %llu to tree: %m", root_id);
 		exit(1);
 	}
 	return 0;
@@ -778,8 +777,7 @@ static int lookup_ino_path(int fd, struct root_info *ri)
 			ri->ref_tree = 0;
 			return -ENOENT;
 		}
-		error("failed to lookup path for root %llu: %m",
-			(unsigned long long)ri->ref_tree);
+		error("failed to lookup path for root %llu: %m", ri->ref_tree);
 		return ret;
 	}
 

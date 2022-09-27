@@ -208,8 +208,7 @@ static int cmd_rescue_zero_log(const struct cmd_struct *cmd,
 
 	sb = root->fs_info->super_copy;
 	pr_verbose(LOG_DEFAULT, "Clearing log on %s, previous log_root %llu, level %u\n",
-			devname,
-			(unsigned long long)btrfs_super_log_root(sb),
+			devname, btrfs_super_log_root(sb),
 			(unsigned)btrfs_super_log_root_level(sb));
 	btrfs_set_super_log_root(sb, 0);
 	btrfs_set_super_log_root_level(sb, 0);

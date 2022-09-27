@@ -304,7 +304,7 @@ static int _cmd_device_remove(const struct cmd_struct *cmd,
 				msg = strerror(errno);
 			if (is_devid) {
 				error("error removing devid %llu: %s",
-					(unsigned long long)argv2.devid, msg);
+					argv2.devid, msg);
 			} else {
 				error("error removing device '%s': %s",
 					argv[i], msg);
@@ -633,7 +633,7 @@ static int print_device_stat_string(struct format_ctx *fctx,
 			fmt_print(fctx, dev_stats[j].name, args->values[stat_idx]);
 		} else {
 			pr_verbose(LOG_DEFAULT, "[%s].%-16s %llu\n", canonical_path, dev_stats[j].name,
-					(unsigned long long)args->values[stat_idx]);
+					args->values[stat_idx]);
 		}
 		if (check && (args->values[stat_idx] > 0))
 			err |= 64;

@@ -174,8 +174,7 @@ static int walk_nodes(struct btrfs_root *root, struct btrfs_path *path,
 			if (stat->max_seek_len < distance)
 				stat->max_seek_len = distance;
 			if (add_seek(&stat->seek_root, distance)) {
-				error("cannot add new seek at distance %llu",
-						(unsigned long long)distance);
+				error("cannot add new seek at distance %llu", distance);
 				ret = -ENOMEM;
 				break;
 			}

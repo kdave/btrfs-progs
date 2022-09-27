@@ -334,7 +334,7 @@ static int du_calc_file_space(int fd, struct rb_root *shared_extents,
 
 			if (ext_len == 0) {
 				warning("extent %llu has length 0, skipping",
-					(unsigned long long)fm_ext[i].fe_physical);
+					fm_ext[i].fe_physical);
 				continue;
 			}
 

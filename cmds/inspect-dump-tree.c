@@ -102,33 +102,33 @@ static void print_old_roots(struct btrfs_super_block *super)
 		backup = super->super_roots + i;
 		pr_verbose(LOG_DEFAULT, "btrfs root backup slot %d\n", i);
 		pr_verbose(LOG_DEFAULT, "\ttree root gen %llu block %llu\n",
-		       (unsigned long long)btrfs_backup_tree_root_gen(backup),
-		       (unsigned long long)btrfs_backup_tree_root(backup));
+		       btrfs_backup_tree_root_gen(backup),
+		       btrfs_backup_tree_root(backup));
 
 		pr_verbose(LOG_DEFAULT, "\t\t%s gen %llu block %llu\n", extent_tree_str,
-		       (unsigned long long)btrfs_backup_extent_root_gen(backup),
-		       (unsigned long long)btrfs_backup_extent_root(backup));
+		       btrfs_backup_extent_root_gen(backup),
+		       btrfs_backup_extent_root(backup));
 
 		pr_verbose(LOG_DEFAULT, "\t\tchunk root gen %llu block %llu\n",
-		       (unsigned long long)btrfs_backup_chunk_root_gen(backup),
-		       (unsigned long long)btrfs_backup_chunk_root(backup));
+		       btrfs_backup_chunk_root_gen(backup),
+		       btrfs_backup_chunk_root(backup));
 
 		pr_verbose(LOG_DEFAULT, "\t\tdevice root gen %llu block %llu\n",
-		       (unsigned long long)btrfs_backup_dev_root_gen(backup),
-		       (unsigned long long)btrfs_backup_dev_root(backup));
+		       btrfs_backup_dev_root_gen(backup),
+		       btrfs_backup_dev_root(backup));
 
 		pr_verbose(LOG_DEFAULT, "\t\tcsum root gen %llu block %llu\n",
-		       (unsigned long long)btrfs_backup_csum_root_gen(backup),
-		       (unsigned long long)btrfs_backup_csum_root(backup));
+		       btrfs_backup_csum_root_gen(backup),
+		       btrfs_backup_csum_root(backup));
 
 		pr_verbose(LOG_DEFAULT, "\t\tfs root gen %llu block %llu\n",
-		       (unsigned long long)btrfs_backup_fs_root_gen(backup),
-		       (unsigned long long)btrfs_backup_fs_root(backup));
+		       btrfs_backup_fs_root_gen(backup),
+		       btrfs_backup_fs_root(backup));
 
 		pr_verbose(LOG_DEFAULT, "\t\t%llu used %llu total %llu devices\n",
-		       (unsigned long long)btrfs_backup_bytes_used(backup),
-		       (unsigned long long)btrfs_backup_total_bytes(backup),
-		       (unsigned long long)btrfs_backup_num_devices(backup));
+		       btrfs_backup_bytes_used(backup),
+		       btrfs_backup_total_bytes(backup),
+		       btrfs_backup_num_devices(backup));
 	}
 }
 
@@ -513,10 +513,10 @@ static int cmd_inspect_dump_tree(const struct cmd_struct *cmd,
 	if (!(extent_only || uuid_tree_only || tree_id)) {
 		if (roots_only) {
 			pr_verbose(LOG_DEFAULT, "root tree: %llu level %d\n",
-			     (unsigned long long)info->tree_root->node->start,
+			     info->tree_root->node->start,
 			     btrfs_header_level(info->tree_root->node));
 			pr_verbose(LOG_DEFAULT, "chunk tree: %llu level %d\n",
-			     (unsigned long long)info->chunk_root->node->start,
+			     info->chunk_root->node->start,
 			     btrfs_header_level(info->chunk_root->node));
 			if (info->log_root_tree)
 				pr_verbose(LOG_DEFAULT, "log root tree: %llu level %d\n",
@@ -604,7 +604,7 @@ again:
 	if (ret < 0) {
 		errno = -ret;
 		error("cannot read ROOT_ITEM from tree %llu: %m",
-			(unsigned long long)tree_root_scan->root_key.objectid);
+			tree_root_scan->root_key.objectid);
 		goto close_root;
 	}
 	while (1) {
@@ -739,8 +739,7 @@ again:
 				btrfs_print_key(&disk_key);
 				if (roots_only) {
 					pr_verbose(LOG_DEFAULT, " %llu level %d\n",
-					       (unsigned long long)buf->start,
-					       btrfs_header_level(buf));
+					       buf->start, btrfs_header_level(buf));
 				} else {
 					pr_verbose(LOG_DEFAULT, " \n");
 					btrfs_print_tree(buf,
@@ -767,9 +766,9 @@ no_node:
 		print_old_roots(info->super_copy);
 
 	pr_verbose(LOG_DEFAULT, "total bytes %llu\n",
-	       (unsigned long long)btrfs_super_total_bytes(info->super_copy));
+	       btrfs_super_total_bytes(info->super_copy));
 	pr_verbose(LOG_DEFAULT, "bytes used %llu\n",
-	       (unsigned long long)btrfs_super_bytes_used(info->super_copy));
+	       btrfs_super_bytes_used(info->super_copy));
 	uuidbuf[BTRFS_UUID_UNPARSED_SIZE - 1] = '\0';
 	uuid_unparse(info->super_copy->fsid, uuidbuf);
 	pr_verbose(LOG_DEFAULT, "uuid %s\n", uuidbuf);

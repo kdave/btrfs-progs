@@ -678,8 +678,7 @@ static struct btrfs_qgroup *get_or_add_qgroup(
 	ret = qgroup_tree_insert(qgroup_lookup, bq);
 	if (ret) {
 		errno = -ret;
-		error("failed to insert %llu into tree: %m",
-		       (unsigned long long)bq->qgroupid);
+		error("failed to insert %llu into tree: %m", bq->qgroupid);
 		free(bq);
 		return ERR_PTR(ret);
 	}

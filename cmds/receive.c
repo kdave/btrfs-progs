@@ -988,8 +988,7 @@ static int process_update_extent(const char *path, u64 offset, u64 len,
 {
 	if (bconf.verbose >= 3)
 		fprintf(stderr, "update_extent %s: offset=%llu, len=%llu\n",
-				path, (unsigned long long)offset,
-				(unsigned long long)len);
+				path, offset, len);
 
 	/*
 	 * Sent with BTRFS_SEND_FLAG_NO_FILE_DATA, nothing to do.

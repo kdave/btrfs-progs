@@ -41,8 +41,7 @@ static int load_and_dump_sb(char *filename, int fd, u64 sb_bytenr, int full,
 		if (ret == 0 && errno == 0)
 			return 0;
 
-		error("failed to read the superblock on %s at %llu",
-				filename, (unsigned long long)sb_bytenr);
+		error("failed to read the superblock on %s at %llu", filename, sb_bytenr);
 		error("error = '%m', errno = %d", errno);
 		return 1;
 	}
@@ -50,7 +49,7 @@ static int load_and_dump_sb(char *filename, int fd, u64 sb_bytenr, int full,
 	pr_verbose(LOG_DEFAULT, "---------------------------------------------------------\n");
 	if (btrfs_super_magic(&sb) != BTRFS_MAGIC && !force) {
 		error("bad magic on superblock on %s at %llu (use --force to dump it anyway)",
-				filename, (unsigned long long)sb_bytenr);
+				filename, sb_bytenr);
 		return 1;
 	}
 	btrfs_print_superblock(&sb, full);
@@ -132,7 +131,7 @@ static int cmd_inspect_dump_super(const struct cmd_struct *cmd,
 			if (BTRFS_SUPER_MIRROR_MAX <= arg) {
 				warning(
 		"deprecated use of -s <bytenr> with %llu, assuming --bytenr",
-						(unsigned long long)arg);
+						arg);
 				sb_bytenr = arg;
 			} else {
 				sb_bytenr = btrfs_sb_offset(arg);

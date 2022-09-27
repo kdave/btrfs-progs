@@ -76,10 +76,10 @@ __attribute__ ((unused))
 static void print_range(u64 start, u64 end)
 {
 	if (start)
-		printf("%llu", (unsigned long long)start);
+		printf("%llu", start);
 	printf("..");
 	if (end != (u64)-1)
-		printf("%llu", (unsigned long long)end);
+		printf("%llu", end);
 }
 
 __attribute__ ((unused))
@@ -228,32 +228,28 @@ static void dump_balance_args(struct btrfs_balance_args *args)
 {
 	if (args->flags & BTRFS_BALANCE_ARGS_CONVERT) {
 		printf("converting, target=%llu, soft is %s",
-		       (unsigned long long)args->target,
+		       args->target,
 		       (args->flags & BTRFS_BALANCE_ARGS_SOFT) ? "on" : "off");
 	} else {
 		printf("balancing");
 	}
 
 	if (args->flags & BTRFS_BALANCE_ARGS_PROFILES)
-		printf(", profiles=%llu", (unsigned long long)args->profiles);
+		printf(", profiles=%llu", args->profiles);
 	if (args->flags & BTRFS_BALANCE_ARGS_USAGE)
-		printf(", usage=%llu", (unsigned long long)args->usage);
+		printf(", usage=%llu", args->usage);
 	if (args->flags & BTRFS_BALANCE_ARGS_USAGE_RANGE) {
 		printf(", usage=");
 		print_range_u32(args->usage_min, args->usage_max);
 	}
 	if (args->flags & BTRFS_BALANCE_ARGS_DEVID)
-		printf(", devid=%llu", (unsigned long long)args->devid);
+		printf(", devid=%llu", args->devid);
 	if (args->flags & BTRFS_BALANCE_ARGS_DRANGE)
-		printf(", drange=%llu..%llu",
-		       (unsigned long long)args->pstart,
-		       (unsigned long long)args->pend);
+		printf(", drange=%llu..%llu", args->pstart, args->pend);
 	if (args->flags & BTRFS_BALANCE_ARGS_VRANGE)
-		printf(", vrange=%llu..%llu",
-		       (unsigned long long)args->vstart,
-		       (unsigned long long)args->vend);
+		printf(", vrange=%llu..%llu", args->vstart, args->vend);
 	if (args->flags & BTRFS_BALANCE_ARGS_LIMIT)
-		printf(", limit=%llu", (unsigned long long)args->limit);
+		printf(", limit=%llu", args->limit);
 	if (args->flags & BTRFS_BALANCE_ARGS_LIMIT_RANGE) {
 		printf(", limit=");
 		print_range_u32(args->limit_min, args->limit_max);
@@ -269,21 +265,18 @@ static void dump_balance_args(struct btrfs_balance_args *args)
 static void dump_ioctl_balance_args(struct btrfs_ioctl_balance_args *args)
 {
 	printf("Dumping filters: flags 0x%llx, state 0x%llx, force is %s\n",
-	       (unsigned long long)args->flags, (unsigned long long)args->state,
+	       args->flags, args->state,
 	       (args->flags & BTRFS_BALANCE_FORCE) ? "on" : "off");
 	if (args->flags & BTRFS_BALANCE_DATA) {
-		printf("  DATA (flags 0x%llx): ",
-		       (unsigned long long)args->data.flags);
+		printf("  DATA (flags 0x%llx): ", args->data.flags);
 		dump_balance_args(&args->data);
 	}
 	if (args->flags & BTRFS_BALANCE_METADATA) {
-		printf("  METADATA (flags 0x%llx): ",
-		       (unsigned long long)args->meta.flags);
+		printf("  METADATA (flags 0x%llx): ", args->meta.flags);
 		dump_balance_args(&args->meta);
 	}
 	if (args->flags & BTRFS_BALANCE_SYSTEM) {
-		printf("  SYSTEM (flags 0x%llx): ",
-		       (unsigned long long)args->sys.flags);
+		printf("  SYSTEM (flags 0x%llx): ", args->sys.flags);
 		dump_balance_args(&args->sys);
 	}
 }
@@ -353,8 +346,7 @@ static int do_balance(const char *path, struct btrfs_ioctl_balance_args *args,
 	} else {
 		pr_verbose(LOG_DEFAULT,
 			   "Done, had to relocate %llu out of %llu chunks\n",
-			   (unsigned long long)args->stat.completed,
-			   (unsigned long long)args->stat.considered);
+			   args->stat.completed, args->stat.considered);
 	}
 
 out:
@@ -744,8 +736,7 @@ static int cmd_balance_resume(const struct cmd_struct *cmd,
 	} else {
 		pr_verbose(LOG_DEFAULT,
 			   "Done, had to relocate %llu out of %llu chunks\n",
-			   (unsigned long long)args.stat.completed,
-			   (unsigned long long)args.stat.considered);
+			   args.stat.completed, args.stat.considered);
 	}
 
 	close_file_or_dir(fd, dirstream);
@@ -833,9 +824,8 @@ static int cmd_balance_status(const struct cmd_struct *cmd,
 	}
 
 	printf("%llu out of about %llu chunks balanced (%llu considered), "
-	       "%3.f%% left\n", (unsigned long long)args.stat.completed,
-	       (unsigned long long)args.stat.expected,
-	       (unsigned long long)args.stat.considered,
+	       "%3.f%% left\n", args.stat.completed,
+	       args.stat.expected, args.stat.considered,
 	       100 * (1 - (float)args.stat.completed/args.stat.expected));
 
 	if (bconf.verbose > BTRFS_BCONF_QUIET)

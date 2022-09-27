@@ -244,7 +244,7 @@ static void print_devices(struct btrfs_fs_devices *fs_devices,
 	list_sort(NULL, all_devices, cmp_device_id);
 	list_for_each_entry(device, all_devices, dev_list) {
 		pr_verbose(LOG_DEFAULT, "\tdevid %4llu size %s used %s path %s\n",
-		       (unsigned long long)device->devid,
+		       device->devid,
 		       pretty_size_mode(device->total_bytes, unit_mode),
 		       pretty_size_mode(device->bytes_used, unit_mode),
 		       device->name);
@@ -274,8 +274,7 @@ static void print_one_uuid(struct btrfs_fs_devices *fs_devices,
 
 	total = device->total_devs;
 	pr_verbose(LOG_DEFAULT, " uuid: %s\n\tTotal devices %llu FS bytes used %s\n", uuidbuf,
-	       (unsigned long long)total,
-	       pretty_size_mode(device->super_bytes_used, unit_mode));
+	       total, pretty_size_mode(device->super_bytes_used, unit_mode));
 
 	print_devices(fs_devices, &devs_found, unit_mode);
 

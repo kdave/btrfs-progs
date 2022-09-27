@@ -1918,7 +1918,7 @@ static int insert_stripe(struct list_head *devexts,
 		return -ENOENT;
 	if (btrfs_find_device_by_devid(rc->fs_devices, devext->objectid, 1)) {
 		error("unexpected: found another device with id %llu",
-				(unsigned long long)devext->objectid);
+				devext->objectid);
 		return -EINVAL;
 	}
 
@@ -2221,8 +2221,7 @@ static int btrfs_recover_chunks(struct recover_control *rc)
 		ret = insert_cache_extent(&rc->chunk, &chunk->cache);
 		if (ret == -EEXIST) {
 			error("duplicate entry in cache start %llu size %llu",
-					(unsigned long long)chunk->cache.start,
-					(unsigned long long)chunk->cache.size);
+					chunk->cache.start, chunk->cache.size);
 			free(chunk);
 			return ret;
 		}

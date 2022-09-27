@@ -732,7 +732,7 @@ static int load_device_info(int fd, struct device_info **devinfo_ret,
 	for (i = 0, ndevs = 0 ; i <= fi_args.max_id ; i++) {
 		if (ndevs >= fi_args.num_devices) {
 			error("unexpected number of devices: %d >= %llu", ndevs,
-				(unsigned long long)fi_args.num_devices);
+				fi_args.num_devices);
 			error(
 		"if seed device is used, try running this command as root");
 			goto out;
@@ -772,7 +772,7 @@ static int load_device_info(int fd, struct device_info **devinfo_ret,
 
 	if (ndevs != fi_args.num_devices) {
 		error("unexpected number of devices: %d != %llu", ndevs,
-				(unsigned long long)fi_args.num_devices);
+				fi_args.num_devices);
 		goto out;
 	}
 

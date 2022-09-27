@@ -896,8 +896,7 @@ static char *__ino_resolve(int fd, u64 dirid)
 
 	ret = ioctl(fd, BTRFS_IOC_INO_LOOKUP, &args);
 	if (ret < 0) {
-		error("failed to lookup path for dirid %llu: %m",
-			(unsigned long long)dirid);
+		error("failed to lookup path for dirid %llu: %m", dirid);
 		return ERR_PTR(ret);
 	}
 
@@ -1066,20 +1065,16 @@ static int print_one_extent(int fd, struct btrfs_ioctl_search_header *sh,
 		error(
 	"unhandled extent type %d for inode %llu file offset %llu gen %llu",
 			type,
-			(unsigned long long)btrfs_search_header_objectid(sh),
-			(unsigned long long)btrfs_search_header_offset(sh),
-			(unsigned long long)found_gen);
+			btrfs_search_header_objectid(sh),
+			btrfs_search_header_offset(sh),
+			found_gen);
 
 		return -EIO;
 	}
 	pr_verbose(LOG_DEFAULT, "inode %llu file offset %llu len %llu disk start %llu "
 	       "offset %llu gen %llu flags ",
-	       (unsigned long long)btrfs_search_header_objectid(sh),
-	       (unsigned long long)btrfs_search_header_offset(sh),
-	       (unsigned long long)len,
-	       (unsigned long long)disk_start,
-	       (unsigned long long)disk_offset,
-	       (unsigned long long)found_gen);
+	       btrfs_search_header_objectid(sh), btrfs_search_header_offset(sh),
+	       len, disk_start, disk_offset, found_gen);
 
 	if (compressed) {
 		pr_verbose(LOG_DEFAULT, "COMPRESS");
@@ -1193,7 +1188,7 @@ static int btrfs_list_find_updated_files(int fd, u64 root_id, u64 oldest_gen)
 	}
 	free(cache_dir_name);
 	free(cache_full_name);
-	pr_verbose(LOG_DEFAULT, "transid marker was %llu\n", (unsigned long long)max_found);
+	pr_verbose(LOG_DEFAULT, "transid marker was %llu\n", max_found);
 	return ret;
 }
 
