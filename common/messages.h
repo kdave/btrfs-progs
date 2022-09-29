@@ -108,7 +108,24 @@ void internal_error(const char *fmt, ...);
  * options haven't been set by the user) due to backward compatibility reasons
  * where applications may expect the output.
  */
-#define	LOG_ALWAYS						-1
+#define LOG_ALWAYS						(-1)
+/*
+ * Default level for any messages that should be printed by default, a one line
+ * summary or with more details. Applications should not rely on such messages.
+ */
+#define LOG_DEFAULT						(1)
+/*
+ * Information about the ongoing actions, high level description
+ */
+#define LOG_INFO						(2)
+/*
+ * Verbose description and individual steps of the previous level
+ */
+#define LOG_VERBOSE						(3)
+/*
+ * Anything that should not be normally printed but can be useful for debugging
+ */
+#define LOG_DEBUG						(4)
 
 __attribute__ ((format (printf, 2, 3)))
 void pr_verbose(int level, const char *fmt, ...);
