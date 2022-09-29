@@ -209,6 +209,7 @@ cmds_objects = cmds/subvolume.o cmds/subvolume-list.o \
 	       cmds/rescue-super-recover.o \
 	       cmds/property.o cmds/filesystem-usage.o cmds/inspect-dump-tree.o \
 	       cmds/inspect-dump-super.o cmds/inspect-tree-stats.o cmds/filesystem-du.o \
+	       cmds/reflink.o \
 	       mkfs/common.o check/mode-common.o check/mode-lowmem.o \
 	       check/clear-cache.o
 

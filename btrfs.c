@@ -343,6 +343,9 @@ static const struct cmd_group btrfs_cmd_group = {
 		&cmd_struct_qgroup,
 		&cmd_struct_quota,
 		&cmd_struct_receive,
+#if EXPERIMENTAL
+		&cmd_struct_reflink,
+#endif
 		&cmd_struct_replace,
 		&cmd_struct_rescue,
 		&cmd_struct_restore,

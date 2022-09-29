@@ -145,6 +145,7 @@ DECLARE_COMMAND(inspect_tree_stats);
 DECLARE_COMMAND(property);
 DECLARE_COMMAND(send);
 DECLARE_COMMAND(receive);
+DECLARE_COMMAND(reflink);
 DECLARE_COMMAND(quota);
 DECLARE_COMMAND(qgroup);
 DECLARE_COMMAND(replace);
