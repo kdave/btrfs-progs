@@ -177,7 +177,7 @@ static int cmd_quota_rescan(const struct cmd_struct *cmd, int argc, char **argv)
 	}
 
 	if (ret == 0) {
-		pr_verbose(MUST_LOG, "quota rescan started\n");
+		pr_verbose(LOG_ALWAYS, "quota rescan started\n");
 		fflush(stdout);
 	} else if (ret < 0 && (!wait_for_completion || e != EINPROGRESS)) {
 		error("quota rescan failed: %m");

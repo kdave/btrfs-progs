@@ -172,7 +172,7 @@ static int cmd_subvol_create(const struct cmd_struct *cmd,
 	if (fddst < 0)
 		goto out;
 
-	pr_verbose(MUST_LOG, "Create subvolume '%s/%s'\n", dstdir, newname);
+	pr_verbose(LOG_ALWAYS, "Create subvolume '%s/%s'\n", dstdir, newname);
 	if (inherit) {
 		struct btrfs_ioctl_vol_args_v2	args;
 
@@ -402,17 +402,17 @@ again:
 		goto out;
 	}
 
-	pr_verbose(MUST_LOG, "Delete subvolume (%s): ",
+	pr_verbose(LOG_ALWAYS, "Delete subvolume (%s): ",
 		commit_mode == COMMIT_EACH ||
 		(commit_mode == COMMIT_AFTER && cnt + 1 == argc) ?
 		"commit" : "no-commit");
 
 	if (subvolid == 0)
-		pr_verbose(MUST_LOG, "'%s/%s'\n", dname, vname);
+		pr_verbose(LOG_ALWAYS, "'%s/%s'\n", dname, vname);
 	else if (!subvol_path_not_found)
-		pr_verbose(MUST_LOG, "'%s'\n", full_subvolpath);
+		pr_verbose(LOG_ALWAYS, "'%s'\n", full_subvolpath);
 	else
-		pr_verbose(MUST_LOG, "subvolid=%llu\n", subvolid);
+		pr_verbose(LOG_ALWAYS, "subvolid=%llu\n", subvolid);
 
 	if (subvolid == 0)
 		err = btrfs_util_delete_subvolume_fd(fd, vname, 0);
@@ -634,11 +634,11 @@ static int cmd_subvol_snapshot(const struct cmd_struct *cmd,
 
 	if (readonly) {
 		args.flags |= BTRFS_SUBVOL_RDONLY;
-		pr_verbose(MUST_LOG,
+		pr_verbose(LOG_ALWAYS,
 			   "Create a readonly snapshot of '%s' in '%s/%s'\n",
 			   subvol, dstdir, newname);
 	} else {
-		pr_verbose(MUST_LOG,
+		pr_verbose(LOG_ALWAYS,
 			   "Create a snapshot of '%s' in '%s/%s'\n",
 			   subvol, dstdir, newname);
 	}

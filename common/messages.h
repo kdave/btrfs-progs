@@ -108,7 +108,7 @@ void internal_error(const char *fmt, ...);
  * options haven't been set by the user) due to backward compatibility reasons
  * where applications may expect the output.
  */
-#define	MUST_LOG						-1
+#define	LOG_ALWAYS						-1
 
 __attribute__ ((format (printf, 2, 3)))
 void pr_verbose(int level, const char *fmt, ...);
