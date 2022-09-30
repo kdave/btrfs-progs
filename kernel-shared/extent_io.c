@@ -976,7 +976,7 @@ int write_data_to_disk(struct btrfs_fs_info *info, void *buf, u64 offset,
 
 			eb = malloc(sizeof(struct extent_buffer) + this_len);
 			if (!eb) {
-				fprintf(stderr, "cannot allocate memory for eb\n");
+				error_msg(ERROR_MSG_MEMORY, "extent buffer");
 				ret = -ENOMEM;
 				goto out;
 			}

@@ -383,7 +383,7 @@ static int btrfs_list_setup_comparer(struct btrfs_list_comparer_set **comp_set,
 		tmp = set;
 		set = realloc(set, size);
 		if (!set) {
-			fprintf(stderr, "memory allocation failed\n");
+			error_msg(ERROR_MSG_MEMORY, NULL);
 			free(tmp);
 			exit(1);
 		}
@@ -533,7 +533,7 @@ static int update_root(struct rb_root *root_lookup,
 
 		ri->name = malloc(name_len + 1);
 		if (!ri->name) {
-			fprintf(stderr, "memory allocation failed\n");
+			error_msg(ERROR_MSG_MEMORY, NULL);
 			exit(1);
 		}
 		strncpy(ri->name, name, name_len);
@@ -597,7 +597,7 @@ static int add_root(struct rb_root *root_lookup,
 
 	ri = calloc(1, sizeof(*ri));
 	if (!ri) {
-		printf("memory allocation failed\n");
+		error_msg(ERROR_MSG_MEMORY, NULL);
 		exit(1);
 	}
 	ri->root_id = root_id;
@@ -605,7 +605,7 @@ static int add_root(struct rb_root *root_lookup,
 	if (name && name_len > 0) {
 		ri->name = malloc(name_len + 1);
 		if (!ri->name) {
-			fprintf(stderr, "memory allocation failed\n");
+			error_msg(ERROR_MSG_MEMORY, NULL);
 			exit(1);
 		}
 		strncpy(ri->name, name, name_len);
@@ -708,7 +708,7 @@ static int resolve_root(struct rb_root *rl, struct root_info *ri,
 			/* room for / and for null */
 			tmp = malloc(add_len + 2 + len);
 			if (!tmp) {
-				perror("malloc failed");
+				error_msg(ERROR_MSG_MEMORY, NULL);
 				exit(1);
 			}
 			memcpy(tmp + add_len + 1, full_path, len);
@@ -790,7 +790,7 @@ static int lookup_ino_path(int fd, struct root_info *ri)
 		 */
 		ri->path = malloc(strlen(ri->name) + strlen(args.name) + 1);
 		if (!ri->path) {
-			perror("malloc failed");
+			error_msg(ERROR_MSG_MEMORY, NULL);
 			exit(1);
 		}
 		strcpy(ri->path, args.name);
@@ -977,7 +977,7 @@ static int filter_full_path(struct root_info *ri, u64 data)
 
 		tmp = malloc(len + add_len + 2);
 		if (!tmp) {
-			fprintf(stderr, "memory allocation failed\n");
+			error_msg(ERROR_MSG_MEMORY, NULL);
 			exit(1);
 		}
 		memcpy(tmp + add_len + 1, ri->full_path, len);
@@ -1038,7 +1038,7 @@ static void btrfs_list_setup_filter(struct btrfs_list_filter_set **filter_set,
 		tmp = set;
 		set = realloc(set, size);
 		if (!set) {
-			fprintf(stderr, "memory allocation failed\n");
+			error_msg(ERROR_MSG_MEMORY, NULL);
 			free(tmp);
 			exit(1);
 		}
@@ -1457,7 +1457,7 @@ static struct btrfs_list_filter_set *btrfs_list_alloc_filter_set(void)
 	       BTRFS_LIST_NFILTERS_INCREASE * sizeof(struct btrfs_list_filter);
 	set = calloc(1, size);
 	if (!set) {
-		fprintf(stderr, "memory allocation failed\n");
+		error_msg(ERROR_MSG_MEMORY, NULL);
 		exit(1);
 	}
 
@@ -1475,7 +1475,7 @@ static struct btrfs_list_comparer_set *btrfs_list_alloc_comparer_set(void)
 	       BTRFS_LIST_NCOMPS_INCREASE * sizeof(struct btrfs_list_comparer);
 	set = calloc(1, size);
 	if (!set) {
-		fprintf(stderr, "memory allocation failed\n");
+		error_msg(ERROR_MSG_MEMORY, NULL);
 		exit(1);
 	}
 

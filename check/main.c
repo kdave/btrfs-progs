@@ -1387,7 +1387,7 @@ static int add_mismatch_dir_hash(struct inode_record *dir_rec,
 
 	hash_record = malloc(sizeof(*hash_record) + namelen);
 	if (!hash_record) {
-		error("failed to allocate memory for mismatch dir hash rec");
+		error_msg(ERROR_MSG_MEMORY, "mismatch dir hash record");
 		return -ENOMEM;
 	}
 	memcpy(&hash_record->key, key, sizeof(*key));
@@ -5224,7 +5224,7 @@ struct chunk_record *btrfs_new_chunk_record(struct extent_buffer *leaf,
 
 	rec = calloc(1, btrfs_chunk_record_size(num_stripes));
 	if (!rec) {
-		fprintf(stderr, "memory allocation failed\n");
+		error_msg(ERROR_MSG_MEMORY, NULL);
 		exit(-1);
 	}
 
@@ -5311,7 +5311,7 @@ static int process_device_item(struct rb_root *dev_cache,
 
 	rec = malloc(sizeof(*rec));
 	if (!rec) {
-		fprintf(stderr, "memory allocation failed\n");
+		error_msg(ERROR_MSG_MEMORY, NULL);
 		return -ENOMEM;
 	}
 
@@ -5366,7 +5366,7 @@ btrfs_new_block_group_record(struct extent_buffer *leaf, struct btrfs_key *key,
 
 	rec = calloc(1, sizeof(*rec));
 	if (!rec) {
-		fprintf(stderr, "memory allocation failed\n");
+		error_msg(ERROR_MSG_MEMORY, NULL);
 		exit(-1);
 	}
 
@@ -5430,7 +5430,7 @@ btrfs_new_device_extent_record(struct extent_buffer *leaf,
 
 	rec = calloc(1, sizeof(*rec));
 	if (!rec) {
-		fprintf(stderr, "memory allocation failed\n");
+		error_msg(ERROR_MSG_MEMORY, NULL);
 		exit(-1);
 	}
 
@@ -8895,7 +8895,7 @@ static int check_chunks_and_extents(void)
 	bits_nr = 1024;
 	bits = malloc(bits_nr * sizeof(struct block_info));
 	if (!bits) {
-		perror("malloc");
+		error_msg(ERROR_MSG_MEMORY, NULL);
 		exit(1);
 	}
 

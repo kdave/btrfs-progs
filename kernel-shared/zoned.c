@@ -305,7 +305,7 @@ static int report_zones(int fd, const char *file,
 
 	zinfo->zones = calloc(zinfo->nr_zones, sizeof(struct blk_zone));
 	if (!zinfo->zones) {
-		error("zoned: no memory for zone information");
+		error_msg(ERROR_MSG_MEMORY, "zone information");
 		exit(1);
 	}
 
@@ -314,7 +314,7 @@ static int report_zones(int fd, const char *file,
 		   sizeof(struct blk_zone) * BTRFS_REPORT_NR_ZONES;
 	rep = malloc(rep_size);
 	if (!rep) {
-		error("zoned: no memory for zones report");
+		error_msg(ERROR_MSG_MEMORY, "zone report");
 		exit(1);
 	}
 
@@ -535,7 +535,7 @@ size_t btrfs_sb_io(int fd, void *buf, off_t offset, int rw)
 	rep_size = sizeof(struct blk_zone_report) + sizeof(struct blk_zone) * 2;
 	rep = calloc(1, rep_size);
 	if (!rep) {
-		error("zoned: no memory for zones report");
+		error_msg(ERROR_MSG_MEMORY, "zone report");
 		exit(1);
 	}
 
@@ -853,7 +853,7 @@ int btrfs_load_block_group_zone_info(struct btrfs_fs_info *fs_info,
 
 	alloc_offsets = calloc(map->num_stripes, sizeof(*alloc_offsets));
 	if (!alloc_offsets) {
-		error("zoned: failed to allocate alloc_offsets");
+		error_msg(ERROR_MSG_MEMORY, "zone offsets");
 		return -ENOMEM;
 	}
 
@@ -1080,7 +1080,7 @@ int btrfs_get_zone_info(int fd, const char *file,
 #ifdef BTRFS_ZONED
 	zinfo = calloc(1, sizeof(*zinfo));
 	if (!zinfo) {
-		error("zoned: no memory for zone information");
+		error_msg(ERROR_MSG_MEMORY, "zone information");
 		exit(1);
 	}
 

@@ -1457,7 +1457,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	prepare_ctx = calloc(device_count, sizeof(*prepare_ctx));
 
 	if (!t_prepare || !prepare_ctx) {
-		error("unable to alloc thread for preparing devices");
+		error_msg(ERROR_MSG_MEMORY, "thread for preparing devices");
 		goto error;
 	}
 

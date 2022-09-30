@@ -406,7 +406,7 @@ static void *dump_worker(void *data)
 			async->bufsize = compressBound(async->size);
 			async->buffer = malloc(async->bufsize);
 			if (!async->buffer) {
-				error("not enough memory for async buffer");
+				error_msg(ERROR_MSG_MEMORY, "async buffer");
 				pthread_mutex_lock(&md->mutex);
 				if (!md->error)
 					md->error = -ENOMEM;
@@ -1546,7 +1546,7 @@ static void *restore_worker(void *data)
 
 	buffer = malloc(buffer_size);
 	if (!buffer) {
-		error("not enough memory for restore worker buffer");
+		error_msg(ERROR_MSG_MEMORY, "restore worker buffer");
 		pthread_mutex_lock(&mdres->mutex);
 		if (!mdres->error)
 			mdres->error = -ENOMEM;
@@ -1763,14 +1763,14 @@ static int add_cluster(struct meta_cluster *cluster,
 		item = &cluster->items[i];
 		async = calloc(1, sizeof(*async));
 		if (!async) {
-			error("not enough memory for async data");
+			error_msg(ERROR_MSG_MEMORY, "async data");
 			return -ENOMEM;
 		}
 		async->start = le64_to_cpu(item->bytenr);
 		async->bufsize = le32_to_cpu(item->size);
 		async->buffer = malloc(async->bufsize);
 		if (!async->buffer) {
-			error("not enough memory for async buffer");
+			error_msg(ERROR_MSG_MEMORY, "async buffer");
 			free(async);
 			return -ENOMEM;
 		}
@@ -1898,7 +1898,7 @@ static int read_chunk_tree_block(struct mdrestore_struct *mdres,
 
 		fs_chunk = malloc(sizeof(struct fs_chunk));
 		if (!fs_chunk) {
-			error("not enough memory to allocate chunk");
+			error_msg(ERROR_MSG_MEMORY, "allocate chunk");
 			return -ENOMEM;
 		}
 		memset(fs_chunk, 0, sizeof(*fs_chunk));
@@ -2013,13 +2013,13 @@ static int search_for_chunk_blocks(struct mdrestore_struct *mdres)
 
 	cluster = malloc(BLOCK_SIZE);
 	if (!cluster) {
-		error("not enough memory for cluster");
+		error_msg(ERROR_MSG_MEMORY, NULL);
 		return -ENOMEM;
 	}
 
 	buffer = malloc(max_size);
 	if (!buffer) {
-		error("not enough memory for buffer");
+		error_msg(ERROR_MSG_MEMORY, NULL);
 		free(cluster);
 		return -ENOMEM;
 	}
@@ -2027,7 +2027,7 @@ static int search_for_chunk_blocks(struct mdrestore_struct *mdres)
 	if (mdres->compress_method == COMPRESS_ZLIB) {
 		tmp = malloc(max_size);
 		if (!tmp) {
-			error("not enough memory for buffer");
+			error_msg(ERROR_MSG_MEMORY, NULL);
 			free(cluster);
 			free(buffer);
 			return -ENOMEM;
@@ -2288,7 +2288,7 @@ static int build_chunk_tree(struct mdrestore_struct *mdres,
 
 	buffer = malloc(le32_to_cpu(item->size));
 	if (!buffer) {
-		error("not enough memory to allocate buffer");
+		error_msg(ERROR_MSG_MEMORY, NULL);
 		return -ENOMEM;
 	}
 
@@ -2806,7 +2806,7 @@ static int restore_metadump(const char *input, FILE *out, int old_restore,
 
 	cluster = malloc(BLOCK_SIZE);
 	if (!cluster) {
-		error("not enough memory for cluster");
+		error_msg(ERROR_MSG_MEMORY, NULL);
 		ret = -ENOMEM;
 		goto failed_info;
 	}

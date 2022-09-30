@@ -589,7 +589,7 @@ static int traverse_directory(struct btrfs_trans_handle *trans,
 				}
 				dir_entry->path = strdup(tmp);
 				if (!dir_entry->path) {
-					error("not enough memory to store path");
+					error_msg(ERROR_MSG_MEMORY, NULL);
 					ret = -ENOMEM;
 					goto fail;
 				}

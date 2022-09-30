@@ -86,7 +86,7 @@ static struct extent_record *btrfs_new_extent_record(struct extent_buffer *eb)
 
 	rec = calloc(1, sizeof(*rec));
 	if (!rec) {
-		fprintf(stderr, "Fail to allocate memory for extent record.\n");
+		error_msg(ERROR_MSG_MEMORY, "extent record");
 		exit(1);
 	}
 
@@ -1437,7 +1437,7 @@ open_ctree_with_broken_chunk(struct recover_control *rc)
 
 	fs_info = btrfs_new_fs_info(1, BTRFS_SUPER_INFO_OFFSET);
 	if (!fs_info) {
-		fprintf(stderr, "Failed to allocate memory for fs_info\n");
+		error_msg(ERROR_MSG_MEMORY, "fs_info");
 		return ERR_PTR(-ENOMEM);
 	}
 	fs_info->is_chunk_recover = 1;

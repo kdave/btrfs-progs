@@ -1786,7 +1786,7 @@ static void print_sys_chunk_array(struct btrfs_super_block *sb)
 
 	buf = malloc(sizeof(*buf) + sizeof(*sb));
 	if (!buf) {
-		error("not enough memory");
+		error_msg(ERROR_MSG_MEMORY, NULL);
 		return;
 	}
 	write_extent_buffer(buf, sb, 0, sizeof(*sb));

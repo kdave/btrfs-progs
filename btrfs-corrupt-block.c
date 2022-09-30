@@ -1471,7 +1471,7 @@ int main(int argc, char **argv)
 		del = rand_range(3);
 		path = btrfs_alloc_path();
 		if (!path) {
-			error("path allocation failed");
+			error_msg(ERROR_MSG_MEMORY, NULL);
 			goto out_close;
 		}
 
@@ -1597,8 +1597,8 @@ int main(int argc, char **argv)
 			eb = btrfs_find_create_tree_block(root->fs_info,
 					logical);
 			if (!eb) {
-				error(
-		"not enough memory to allocate extent buffer for bytenr %llu",
+				error_msg(ERROR_MSG_MEMORY,
+					"allocating extent buffer for bytenr %llu",
 					logical);
 				ret = 1;
 				goto out_close;

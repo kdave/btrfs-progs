@@ -1469,7 +1469,7 @@ static struct btrfs_fs_info *__open_ctree_fd(int fp, struct open_ctree_flags *oc
 
 	fs_info = btrfs_new_fs_info(flags & OPEN_CTREE_WRITES, sb_bytenr);
 	if (!fs_info) {
-		fprintf(stderr, "Failed to allocate memory for fs_info\n");
+		error_msg(ERROR_MSG_MEMORY, "fs_info");
 		return NULL;
 	}
 	if (flags & OPEN_CTREE_RESTORE)

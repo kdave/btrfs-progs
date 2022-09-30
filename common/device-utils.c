@@ -574,7 +574,7 @@ ssize_t btrfs_direct_pio(int rw, int fd, void *buf, size_t count, off_t offset)
 
 	ret = posix_memalign(&bounce_buf, alignment, iosize);
 	if (ret) {
-		error("failed to allocate bounce buffer: %m");
+		error_msg(ERROR_MSG_MEMORY, "bounce buffer");
 		errno = ret;
 		return 0;
 	}

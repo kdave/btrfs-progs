@@ -77,7 +77,7 @@ static int add_info_to_list(struct chunk_info **chunkinfo_ret,
 
 			if (!res) {
 				free(*chunkinfo_ret);
-				error("not enough memory");
+				error_msg(ERROR_MSG_MEMORY, NULL);
 				return -ENOMEM;
 			}
 
@@ -240,7 +240,7 @@ static struct btrfs_ioctl_space_args *load_space_info(int fd, const char *path)
 
 	sargs_orig = sargs = calloc(1, sizeof(struct btrfs_ioctl_space_args));
 	if (!sargs) {
-		error("not enough memory");
+		error_msg(ERROR_MSG_MEMORY, NULL);
 		return NULL;
 	}
 
@@ -265,7 +265,7 @@ static struct btrfs_ioctl_space_args *load_space_info(int fd, const char *path)
 			(count * sizeof(struct btrfs_ioctl_space_info)));
 	if (!sargs) {
 		free(sargs_orig);
-		error("not enough memory");
+		error_msg(ERROR_MSG_MEMORY, NULL);
 		return NULL;
 	}
 
@@ -725,7 +725,7 @@ static int load_device_info(int fd, struct device_info **devinfo_ret,
 
 	info = calloc(fi_args.num_devices, sizeof(struct device_info));
 	if (!info) {
-		error("not enough memory");
+		error_msg(ERROR_MSG_MEMORY, NULL);
 		return 1;
 	}
 
@@ -873,7 +873,7 @@ static void _cmd_filesystem_usage_tabular(unsigned unit_mode,
 
 	matrix = table_create(ncols, nrows);
 	if (!matrix) {
-		error("not enough memory");
+		error_msg(ERROR_MSG_MEMORY, NULL);
 		return;
 	}
 

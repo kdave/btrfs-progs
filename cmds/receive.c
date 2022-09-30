@@ -1009,7 +1009,7 @@ static int decompress_zlib(struct btrfs_receive *rctx, const char *encoded_data,
 		init = true;
 		rctx->zlib_stream = malloc(sizeof(z_stream));
 		if (!rctx->zlib_stream) {
-			error("failed to allocate zlib stream %m");
+			error_msg(ERROR_MSG_MEMORY, "zlib stream: %m");
 			return -ENOMEM;
 		}
 	}
@@ -1163,7 +1163,7 @@ static int decompress_and_write(struct btrfs_receive *rctx,
 
 	unencoded_data = calloc(unencoded_len, 1);
 	if (!unencoded_data) {
-		error("allocating space for unencoded data failed: %m");
+		error_msg(ERROR_MSG_MEMORY, "unencoded data: %m");
 		return -errno;
 	}
 

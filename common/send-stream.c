@@ -140,7 +140,7 @@ static int read_cmd(struct btrfs_send_stream *sctx)
 		if (!new_read_buf) {
 			ret = -ENOMEM;
 			errno = -ret;
-			error("failed to reallocate read buffer for cmd: %m");
+			error_msg(ERROR_MSG_MEMORY, "read buffer for command");
 			goto out;
 		}
 		sctx->read_buf = new_read_buf;
@@ -631,8 +631,7 @@ int btrfs_read_and_process_send_stream(int fd,
 	sctx.read_buf = malloc(BTRFS_SEND_BUF_SIZE_V1);
 	if (!sctx.read_buf) {
 		ret = -ENOMEM;
-		errno = -ret;
-		error("unable to allocate send stream read buffer: %m");
+		error_msg(ERROR_MSG_MEMORY, "send stream read buffer");
 		goto out;
 	}
 	sctx.read_buf_size = BTRFS_SEND_BUF_SIZE_V1;

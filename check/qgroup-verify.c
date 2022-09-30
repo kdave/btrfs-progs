@@ -580,7 +580,7 @@ static int account_all_refs(int do_qgroups, u64 search_subvol)
 	ulist_free(roots);
 	return 0;
 enomem:
-	error("Out of memory while accounting refs for qgroups");
+	error_msg(ERROR_MSG_MEMORY, "accounting for refs for qgroups");
 	return -ENOMEM;
 }
 
@@ -1006,7 +1006,7 @@ loop:
 			count = alloc_count(&disk_key, leaf, item);
 			if (!count) {
 				ret = ENOMEM;
-				error("out of memory");
+				error_msg(ERROR_MSG_MEMORY, NULL);
 				goto out;
 			}
 
@@ -1414,7 +1414,7 @@ int qgroup_verify_all(struct btrfs_fs_info *info)
 
 	tree_blocks = ulist_alloc(0);
 	if (!tree_blocks) {
-		error("out of memory while allocating ulist");
+		error_msg(ERROR_MSG_MEMORY, "allocate ulist");
 		return ENOMEM;
 	}
 
@@ -1521,7 +1521,7 @@ int print_extent_state(struct btrfs_fs_info *info, u64 subvol)
 
 	tree_blocks = ulist_alloc(0);
 	if (!tree_blocks) {
-		error("out of memory while allocating ulist");
+		error_msg(ERROR_MSG_MEMORY, "allocate ulist");
 		return ENOMEM;
 	}
 

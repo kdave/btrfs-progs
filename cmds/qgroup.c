@@ -507,7 +507,7 @@ static struct btrfs_qgroup_comparer_set *qgroup_alloc_comparer_set(void)
 	       sizeof(struct btrfs_qgroup_comparer);
 	set = calloc(1, size);
 	if (!set) {
-		error("memory allocation failed");
+		error_msg(ERROR_MSG_MEMORY, NULL);
 		exit(1);
 	}
 
@@ -667,7 +667,7 @@ static struct btrfs_qgroup *get_or_add_qgroup(
 
 	bq = calloc(1, sizeof(*bq));
 	if (!bq) {
-		error("memory allocation failed");
+		error_msg(ERROR_MSG_MEMORY, NULL);
 		return ERR_PTR(-ENOMEM);
 	}
 
@@ -754,7 +754,7 @@ static int update_qgroup_relation(struct qgroup_lookup *qgroup_lookup,
 
 	list = malloc(sizeof(*list));
 	if (!list) {
-		error("memory allocation failed");
+		error_msg(ERROR_MSG_MEMORY, NULL);
 		return -ENOMEM;
 	}
 
@@ -888,7 +888,7 @@ static struct btrfs_qgroup_filter_set *qgroup_alloc_filter_set(void)
 	       sizeof(struct btrfs_qgroup_filter);
 	set = calloc(1, size);
 	if (!set) {
-		error("memory allocation failed");
+		error_msg(ERROR_MSG_MEMORY, NULL);
 		exit(1);
 	}
 	set->total = BTRFS_QGROUP_NFILTERS_INCREASE;
@@ -915,7 +915,7 @@ static int qgroup_setup_filter(struct btrfs_qgroup_filter_set **filter_set,
 		tmp = set;
 		set = realloc(set, size);
 		if (!set) {
-			error("memory allocation failed");
+			error_msg(ERROR_MSG_MEMORY, NULL);
 			free(tmp);
 			exit(1);
 		}
@@ -1441,7 +1441,7 @@ static int qgroup_inherit_realloc(struct btrfs_qgroup_inherit **inherit, int n,
 
 	out = calloc(sizeof(*out) + sizeof(out->qgroups[0]) * (nitems + n), 1);
 	if (out == NULL) {
-		error("not enough memory");
+		error_msg(ERROR_MSG_MEMORY, NULL);
 		return -ENOMEM;
 	}
 

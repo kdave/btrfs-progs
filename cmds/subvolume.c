@@ -908,7 +908,7 @@ static char *__ino_resolve(int fd, u64 dirid)
 		 */
 		full = strdup(args.name);
 		if (!full) {
-			perror("malloc failed");
+			error_msg(ERROR_MSG_MEMORY, NULL);
 			return ERR_PTR(-ENOMEM);
 		}
 	} else {
@@ -1580,7 +1580,7 @@ static int cmd_subvol_sync(const struct cmd_struct *cmd, int argc, char **argv)
 	} else {
 		ids = malloc(id_count * sizeof(uint64_t));
 		if (!ids) {
-			error("not enough memory");
+			error_msg(ERROR_MSG_MEMORY, NULL);
 			ret = 1;
 			goto out;
 		}
