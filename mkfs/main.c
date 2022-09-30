@@ -101,7 +101,12 @@ static int create_metadata_block_groups(struct btrfs_root *root, bool mixed,
 		return ret;
 
 	trans = btrfs_start_transaction(root, 1);
-	BUG_ON(IS_ERR(trans));
+	if (IS_ERR(trans)) {
+		ret = PTR_ERR(trans);
+		errno = -ret;
+		error_msg(ERROR_MSG_START_TRANS, "%m");
+		return ret;
+	}
 
 	root->fs_info->system_allocs = 1;
 	/*
@@ -586,7 +591,12 @@ static int cleanup_temp_chunks(struct btrfs_fs_info *fs_info,
 
 	btrfs_init_path(&path);
 	trans = btrfs_start_transaction(root, 1);
-	BUG_ON(IS_ERR(trans));
+	if (IS_ERR(trans)) {
+		ret = PTR_ERR(trans);
+		errno = -ret;
+		error_msg(ERROR_MSG_START_TRANS, "%m");
+		return ret;
+	}
 
 	key.objectid = 0;
 	key.type = BTRFS_BLOCK_GROUP_ITEM_KEY;

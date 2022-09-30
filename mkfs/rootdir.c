@@ -655,7 +655,13 @@ int btrfs_mkfs_fill_dir(const char *source_dir, struct btrfs_root *root,
 	INIT_LIST_HEAD(&dir_head.list);
 
 	trans = btrfs_start_transaction(root, 1);
-	BUG_ON(IS_ERR(trans));
+	if (IS_ERR(trans)) {
+		ret = PTR_ERR(trans);
+		errno = -ret;
+		error_msg(ERROR_MSG_START_TRANS, "%m");
+		goto fail;
+}
+
 	ret = traverse_directory(trans, root, source_dir, &dir_head);
 	if (ret) {
 		error("unable to traverse directory %s: %d", source_dir, ret);
@@ -807,8 +813,11 @@ static int get_device_extent_end(struct btrfs_fs_info *fs_info,
 
 	btrfs_init_path(&path);
 	ret = btrfs_search_slot(NULL, dev_root, &key, &path, 0, 0);
-	/* Not really possible */
-	BUG_ON(ret == 0);
+	if (ret == 0) {
+		error("DEV_EXTENT for devid %llu not found", devid);
+		ret = -EUCLEAN;
+		goto out;
+	}
 
 	ret = btrfs_previous_item(dev_root, &path, devid, BTRFS_DEV_EXTENT_KEY);
 	if (ret < 0)
@@ -933,7 +942,11 @@ int btrfs_mkfs_shrink_fs(struct btrfs_fs_info *fs_info, u64 *new_size_ret,
 		return ret;
 	}
 
-	BUG_ON(!IS_ALIGNED(new_size, fs_info->sectorsize));
+	if (!IS_ALIGNED(new_size, fs_info->sectorsize)) {
+		error("shrunk filesystem size %llu not aligned to %u",
+				new_size, fs_info->sectorsize);
+		return -EUCLEAN;
+	}
 
 	device = list_entry(fs_info->fs_devices->devices.next,
 			   struct btrfs_device, dev_list);
