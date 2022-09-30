@@ -19,6 +19,10 @@
 #include "common/messages.h"
 #include "common/utils.h"
 
+static const char *common_error_string[] = {
+	[ERROR_MSG_MEMORY]	= "not enough memory",
+};
+
 __attribute__ ((format (printf, 1, 2)))
 void __btrfs_warning(const char *fmt, ...)
 {
@@ -112,4 +116,23 @@ void pr_verbose(int level, const char *fmt, ...)
 	va_start(args, fmt);
 	vfprintf(stdout, fmt, args);
 	va_end(args);
+}
+
+/* Print common error message with optional data, appended after the generic text */
+__attribute__ ((format (printf, 2, 3)))
+void error_msg(enum common_error error, const char *msg, ...)
+{
+	const char *str = common_error_string[error];
+
+	if (msg) {
+		va_list args;
+
+		va_start(args, msg);
+		fprintf(stderr, "ERROR: %s: ", str);
+		vfprintf(stderr, msg, args);
+		va_end(args);
+		fputc('\n', stderr);
+	} else {
+		fprintf(stderr, "ERROR: %s\n", str);
+	}
 }

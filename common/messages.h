@@ -130,4 +130,14 @@ void internal_error(const char *fmt, ...);
 __attribute__ ((format (printf, 2, 3)))
 void pr_verbose(int level, const char *fmt, ...);
 
+/*
+ * Commonly used errors
+ */
+enum common_error {
+	ERROR_MSG_MEMORY,
+};
+
+__attribute__ ((format (printf, 2, 3)))
+void error_msg(enum common_error error, const char *msg, ...);
+
 #endif
