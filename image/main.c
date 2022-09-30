@@ -2755,7 +2755,8 @@ static int fixup_chunks_and_devices(struct btrfs_fs_info *fs_info,
 
 	ret = btrfs_commit_transaction(trans, fs_info->tree_root);
 	if (ret) {
-		error("unable to commit transaction: %d", ret);
+		errno = -ret;
+		error_msg(ERROR_MSG_COMMIT_TRANS, "%m");
 		return ret;
 	}
 	if (btrfs_super_log_root(fs_info->super_copy) && fs_info->log_root_tree)

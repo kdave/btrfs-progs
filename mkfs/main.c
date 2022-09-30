@@ -925,7 +925,8 @@ static int setup_quota_root(struct btrfs_fs_info *fs_info)
 
 	ret = btrfs_commit_transaction(trans, fs_info->tree_root);
 	if (ret < 0) {
-		error("failed to commit current transaction: %d (%m)", ret);
+		errno = -ret;
+		error_msg(ERROR_MSG_COMMIT_TRANS, "%m");
 		return ret;
 	}
 
@@ -1596,7 +1597,8 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 
 	ret = btrfs_commit_transaction(trans, root);
 	if (ret) {
-		error("unable to commit transaction: %d", ret);
+		errno = -ret;
+		error_msg(ERROR_MSG_COMMIT_TRANS, "%m");
 		goto out;
 	}
 
@@ -1669,7 +1671,7 @@ raid_groups:
 	ret = btrfs_commit_transaction(trans, root);
 	if (ret) {
 		errno = -ret;
-		error("unable to commit transaction before recowing trees: %m");
+		error_msg(ERROR_MSG_COMMIT_TRANS, "before recowing trees: %m");
 		goto out;
 	}
 	trans = btrfs_start_transaction(root, 1);
@@ -1699,7 +1701,8 @@ raid_groups:
 
 	ret = btrfs_commit_transaction(trans, root);
 	if (ret) {
-		error("unable to commit transaction: %d", ret);
+		errno = -ret;
+		error_msg(ERROR_MSG_START_TRANS, "%m");
 		goto out;
 	}
 

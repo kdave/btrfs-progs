@@ -1550,8 +1550,10 @@ static int lowmem_delete_corrupted_dir_item(struct btrfs_root *root,
 		btrfs_abort_transaction(trans, ret);
 	} else {
 		ret = btrfs_commit_transaction(trans, root);
-		if (ret < 0)
-			error("failed to commit transaction: %d", ret);
+		if (ret < 0) {
+			errno = -ret;
+			error_msg(ERROR_MSG_COMMIT_TRANS, "%m");
+		}
 	}
 	return ret;
 }
@@ -2570,7 +2572,7 @@ static int repair_inode_gen_lowmem(struct btrfs_root *root,
 	ret = btrfs_commit_transaction(trans, root);
 	if (ret < 0) {
 		errno = -ret;
-		error("failed to commit transaction: %m");
+		error_msg(ERROR_MSG_COMMIT_TRANS, "%m");
 		goto error;
 	}
 	printf("resetting inode generation/transid to %llu for ino %llu\n",
@@ -4217,7 +4219,7 @@ static int repair_extent_item_generation(struct btrfs_path *path)
 	ret = btrfs_commit_transaction(trans, extent_root);
 	if (ret < 0) {
 		errno = -ret;
-		error("failed to commit transaction: %m");
+		error_msg(ERROR_MSG_COMMIT_TRANS, "%m");
 		btrfs_abort_transaction(trans, ret);
 		return ret;
 	}

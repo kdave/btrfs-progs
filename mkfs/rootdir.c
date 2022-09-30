@@ -663,7 +663,8 @@ int btrfs_mkfs_fill_dir(const char *source_dir, struct btrfs_root *root,
 	}
 	ret = btrfs_commit_transaction(trans, root);
 	if (ret) {
-		error("transaction commit failed: %d", ret);
+		errno = -ret;
+		error_msg(ERROR_MSG_COMMIT_TRANS, "%m");
 		goto out;
 	}
 
@@ -891,7 +892,7 @@ static int set_device_size(struct btrfs_fs_info *fs_info,
 	ret = btrfs_commit_transaction(trans, chunk_root);
 	if (ret < 0) {
 		errno = -ret;
-		error("failed to commit current transaction: %d (%m)", ret);
+		error_msg(ERROR_MSG_COMMIT_TRANS, "%m");
 	}
 	btrfs_release_path(&path);
 	return ret;

@@ -694,7 +694,8 @@ struct btrfs_root *btrfs_mksubvol(struct btrfs_root *root,
 
 	ret = btrfs_commit_transaction(trans, root);
 	if (ret) {
-		error("transaction commit failed: %d", ret);
+		errno = -ret;
+		error_msg(ERROR_MSG_COMMIT_TRANS, "%m");
 		goto fail;
 	}
 

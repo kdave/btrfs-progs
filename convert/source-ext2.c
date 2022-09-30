@@ -958,7 +958,8 @@ static int ext2_copy_inodes(struct btrfs_convert_context *cctx,
 		if (trans->blocks_used >= SZ_2M / root->fs_info->nodesize) {
 			ret = btrfs_commit_transaction(trans, root);
 			if (ret < 0) {
-				error("failed to commit transaction: %d", ret);
+				errno = -ret;
+				error_msg(ERROR_MSG_COMMIT_TRANS, "%m");
 				goto out;
 			}
 			trans = btrfs_start_transaction(root, 1);
@@ -982,8 +983,10 @@ out:
 			btrfs_abort_transaction(trans, ret);
 	} else {
 		ret = btrfs_commit_transaction(trans, root);
-		if (ret < 0)
-			error("failed to commit transaction: %d", ret);
+		if (ret < 0) {
+			errno = -ret;
+			error_msg(ERROR_MSG_COMMIT_TRANS, "%m");
+		}
 	}
 	ext2fs_close_inode_scan(ext2_scan);
 

@@ -819,8 +819,7 @@ static int convert_to_bg_tree(struct btrfs_fs_info *fs_info)
 	/* Now commit the transaction to make above changes to reach disks. */
 	ret = btrfs_commit_transaction(trans, fs_info->tree_root);
 	if (ret < 0) {
-		error("failed to commit transaction for the new bg root: %d",
-		      ret);
+		error_msg(ERROR_MSG_COMMIT_TRANS, "new bg root: %d", ret);
 		goto error;
 	}
 	trans = btrfs_start_transaction(fs_info->tree_root, 2);
@@ -867,7 +866,8 @@ iterate_bgs:
 			ret = btrfs_commit_transaction(trans,
 							fs_info->tree_root);
 			if (ret < 0) {
-				error("failed to commit transaction: %d", ret);
+				errno = -ret;
+				error_msg(ERROR_MSG_COMMIT_TRANS, "%m");
 				return ret;
 			}
 			trans = btrfs_start_transaction(fs_info->tree_root, 2);
@@ -892,7 +892,8 @@ iterate_bgs:
 			BTRFS_FEATURE_COMPAT_RO_BLOCK_GROUP_TREE);
 	ret = btrfs_commit_transaction(trans, fs_info->tree_root);
 	if (ret < 0) {
-		error("faield to commit the final transaction: %d", ret);
+		errno = -ret;
+		error_msg(ERROR_MSG_COMMIT_TRANS, "final transaction: %m");
 		return ret;
 	}
 	printf("Converted the filesystem to block group tree feature\n");
