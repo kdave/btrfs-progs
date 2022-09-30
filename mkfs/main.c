@@ -431,7 +431,7 @@ static void print_usage(int ret)
 	printf("\t-V|--version                print the mkfs.btrfs version and exit\n");
 	printf("\t--help                      print this help and exit\n");
 	printf("  deprecated:\n");
-	printf("\t-l|--leafsize SIZE          deprecated, alias for nodesize\n");
+	printf("\t-l|--leafsize SIZE          removed in 6.0, use --nodesize\n");
 	exit(ret);
 }
 
@@ -1072,8 +1072,10 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 				data_profile_set = true;
 				break;
 			case 'l':
-				warning("--leafsize is deprecated, use --nodesize");
-				/* fall through */
+				/* Deprecated in 4.0 */
+				error("--leafsize has been removed in 6.0, use --nodesize");
+				ret = 1;
+				goto error;
 			case 'n':
 				nodesize = parse_size_from_string(optarg);
 				nodesize_forced = true;

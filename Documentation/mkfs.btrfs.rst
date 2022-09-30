@@ -99,9 +99,6 @@ OPTIONS
                 be set at creation time. Conversion to or from mixed profile is not
                 implemented.
 
--l|--leafsize <size>
-        Alias for *--nodesize*. Deprecated.
-
 -n|--nodesize <size>
         Specify the nodesize, the tree block size in which btrfs stores metadata. The
         default value is 16KiB (16384) or the page size, whichever is bigger. Must be a
@@ -198,6 +195,9 @@ OPTIONS
 
 --help
         Print help.
+
+-l|--leafsize <size>
+        Removed in 6.0, used to be alias for *--nodesize*.
 
 SIZE UNITS
 ----------
