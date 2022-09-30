@@ -126,7 +126,7 @@ static int emulate_report_zones(const char *file, int fd, u64 pos,
 		return -EIO;
 	}
 
-	bdev_size = btrfs_device_size(fd, &st) >> SECTOR_SHIFT;
+	bdev_size = device_get_partition_size_fd_stat(fd, &st) >> SECTOR_SHIFT;
 
 	pos >>= SECTOR_SHIFT;
 	for (i = 0; i < nr_zones; i++) {
@@ -274,7 +274,7 @@ static int report_zones(int fd, const char *file,
 		return -EIO;
 	}
 
-	device_size = btrfs_device_size(fd, &st);
+	device_size = device_get_partition_size_fd_stat(fd, &st);
 	if (device_size == 0) {
 		error("zoned: failed to read size of %s: %m", file);
 		exit(1);

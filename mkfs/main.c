@@ -1400,7 +1400,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		 * Or we will always use source_dir_size calculated for mkfs.
 		 */
 		if (!block_count)
-			block_count = btrfs_device_size(fd, &statbuf);
+			block_count = device_get_partition_size_fd_stat(fd, &statbuf);
 		source_dir_size = btrfs_mkfs_size_dir(source_dir, sectorsize,
 				min_dev_size, metadata_profile, data_profile);
 		if (block_count < source_dir_size)

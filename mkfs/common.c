@@ -1144,7 +1144,7 @@ int is_vol_small(const char *file)
 		close(fd);
 		return e;
 	}
-	size = btrfs_device_size(fd, &st);
+	size = device_get_partition_size_fd_stat(fd, &st);
 	if (size == 0) {
 		close(fd);
 		return -1;
@@ -1170,7 +1170,7 @@ int test_minimum_size(const char *file, u64 min_dev_size)
 		close(fd);
 		return -errno;
 	}
-	if (btrfs_device_size(fd, &statbuf) < min_dev_size) {
+	if (device_get_partition_size_fd_stat(fd, &statbuf) < min_dev_size) {
 		close(fd);
 		return 1;
 	}

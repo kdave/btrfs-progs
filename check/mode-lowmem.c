@@ -4618,7 +4618,7 @@ next:
 			dev->devid);
 		return 0;
 	}
-	block_dev_size = btrfs_device_size(dev->fd, &st);
+	block_dev_size = device_get_partition_size_fd_stat(dev->fd, &st);
 	if (block_dev_size < total_bytes) {
 		error(
 "block device size is smaller than total_bytes in device item, has %llu expect >= %llu",

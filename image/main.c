@@ -1358,7 +1358,7 @@ static void write_backup_supers(int fd, u8 *buf)
 		return;
 	}
 
-	size = btrfs_device_size(fd, &st);
+	size = device_get_partition_size_fd_stat(fd, &st);
 
 	for (i = 1; i < BTRFS_SUPER_MIRROR_MAX; i++) {
 		bytenr = btrfs_sb_offset(i);

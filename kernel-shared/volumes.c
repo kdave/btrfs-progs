@@ -2921,7 +2921,7 @@ static int btrfs_fix_block_device_size(struct btrfs_fs_info *fs_info,
 		return -errno;
 	}
 
-	block_dev_size = round_down(btrfs_device_size(device->fd, &st),
+	block_dev_size = round_down(device_get_partition_size_fd_stat(device->fd, &st),
 				    fs_info->sectorsize);
 
 	/*

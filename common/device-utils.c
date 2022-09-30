@@ -231,7 +231,7 @@ int btrfs_prepare_device(int fd, const char *file, u64 *block_count_ret,
 		return 1;
 	}
 
-	block_count = btrfs_device_size(fd, &st);
+	block_count = device_get_partition_size_fd_stat(fd, &st);
 	if (block_count == 0) {
 		error("unable to determine size of %s", file);
 		return 1;
@@ -305,18 +305,17 @@ err:
 	return 1;
 }
 
-u64 btrfs_device_size(int fd, struct stat *st)
+u64 device_get_partition_size_fd_stat(int fd, const struct stat *st)
 {
 	u64 size;
-	if (S_ISREG(st->st_mode)) {
+
+	if (S_ISREG(st->st_mode))
 		return st->st_size;
-	}
-	if (!S_ISBLK(st->st_mode)) {
+	if (!S_ISBLK(st->st_mode))
 		return 0;
-	}
-	if (ioctl(fd, BLKGETSIZE64, &size) >= 0) {
+	if (ioctl(fd, BLKGETSIZE64, &size) >= 0)
 		return size;
-	}
+
 	return 0;
 }
 
