@@ -986,7 +986,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	u64 source_dir_size = 0;
 	u64 min_dev_size;
 	u64 shrink_size;
-	int dev_cnt = 0;
+	int device_count = 0;
 	int saved_optind;
 	pthread_t *t_prepare = NULL;
 	struct prepare_device_progress *prepare_ctx = NULL;
@@ -1195,13 +1195,13 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 
 	stripesize = sectorsize;
 	saved_optind = optind;
-	dev_cnt = argc - optind;
-	if (dev_cnt == 0)
+	device_count = argc - optind;
+	if (device_count == 0)
 		print_usage(1);
 
 	opt_zoned = !!(features & BTRFS_FEATURE_INCOMPAT_ZONED);
 
-	if (source_dir_set && dev_cnt > 1) {
+	if (source_dir_set && device_count > 1) {
 		error("the option -r is limited to a single device");
 		goto error;
 	}
@@ -1223,7 +1223,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		}
 	}
 
-	while (dev_cnt-- > 0) {
+	while (device_count-- > 0) {
 		file = argv[optind++];
 		if (source_dir_set && path_exists(file) == 0)
 			ret = 0;
@@ -1237,7 +1237,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	}
 
 	optind = saved_optind;
-	dev_cnt = argc - optind;
+	device_count = argc - optind;
 
 	file = argv[optind++];
 	ssd = device_get_rotational(file);
@@ -1263,14 +1263,14 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		u64 tmp;
 
 		if (!metadata_profile_set) {
-			if (dev_cnt > 1)
+			if (device_count > 1)
 				tmp = BTRFS_MKFS_DEFAULT_META_MULTI_DEVICE;
 			else
 				tmp = BTRFS_MKFS_DEFAULT_META_ONE_DEVICE;
 			metadata_profile = tmp;
 		}
 		if (!data_profile_set) {
-			if (dev_cnt > 1)
+			if (device_count > 1)
 				tmp = BTRFS_MKFS_DEFAULT_DATA_MULTI_DEVICE;
 			else
 				tmp = BTRFS_MKFS_DEFAULT_DATA_ONE_DEVICE;
@@ -1423,7 +1423,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		goto error;
 	}
 
-	for (i = saved_optind; i < saved_optind + dev_cnt; i++) {
+	for (i = saved_optind; i < saved_optind + device_count; i++) {
 		char *path;
 
 		path = argv[i];
@@ -1441,7 +1441,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		}
 	}
 	ret = test_num_disk_vs_raid(metadata_profile, data_profile,
-			dev_cnt, mixed, ssd);
+			device_count, mixed, ssd);
 	if (ret)
 		goto error;
 
@@ -1451,8 +1451,8 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		goto error;
 	}
 
-	t_prepare = calloc(dev_cnt, sizeof(*t_prepare));
-	prepare_ctx = calloc(dev_cnt, sizeof(*prepare_ctx));
+	t_prepare = calloc(device_count, sizeof(*t_prepare));
+	prepare_ctx = calloc(device_count, sizeof(*prepare_ctx));
 
 	if (!t_prepare || !prepare_ctx) {
 		error("unable to alloc thread for preparing devices");
@@ -1460,7 +1460,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	}
 
 	opt_oflags = O_RDWR;
-	for (i = 0; i < dev_cnt; i++) {
+	for (i = 0; i < device_count; i++) {
 		if (opt_zoned &&
 		    zoned_model(argv[optind + i - 1]) == ZONED_HOST_MANAGED) {
 			opt_oflags |= O_DIRECT;
@@ -1469,7 +1469,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	}
 
 	/* Start threads */
-	for (i = 0; i < dev_cnt; i++) {
+	for (i = 0; i < device_count; i++) {
 		prepare_ctx[i].file = argv[optind + i - 1];
 		prepare_ctx[i].block_count = block_count;
 		prepare_ctx[i].dev_block_count = block_count;
@@ -1484,7 +1484,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 	}
 
 	/* Wait for threads */
-	for (i = 0; i < dev_cnt; i++)
+	for (i = 0; i < device_count; i++)
 		pthread_join(t_prepare[i], NULL);
 	ret = prepare_ctx[0].ret;
 
@@ -1493,7 +1493,7 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		goto error;
 	}
 
-	dev_cnt--;
+	device_count--;
 	fd = open(file, opt_oflags);
 	if (fd < 0) {
 		error("unable to open %s: %m", file);
@@ -1602,11 +1602,11 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 		goto error;
 	}
 
-	if (dev_cnt == 0)
+	if (device_count == 0)
 		goto raid_groups;
 
-	while (dev_cnt-- > 0) {
-		int dev_index = argc - saved_optind - dev_cnt - 1;
+	while (device_count-- > 0) {
+		int dev_index = argc - saved_optind - device_count - 1;
 		file = argv[optind++];
 
 		fd = open(file, opt_oflags);
@@ -1789,8 +1789,8 @@ out:
 
 	if (!close_ret) {
 		optind = saved_optind;
-		dev_cnt = argc - optind;
-		while (dev_cnt-- > 0) {
+		device_count = argc - optind;
+		while (device_count-- > 0) {
 			file = argv[optind++];
 			if (path_is_block_device(file) == 1)
 				btrfs_register_one_device(file);
