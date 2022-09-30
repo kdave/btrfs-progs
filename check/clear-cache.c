@@ -47,7 +47,7 @@ static int clear_free_space_cache(void)
 	if (IS_ERR(trans)) {
 		ret = PTR_ERR(trans);
 		errno = -ret;
-		error("failed to start a transaction: %m");
+		error_msg(ERROR_MSG_START_TRANS, "%m");
 		return ret;
 	}
 
@@ -67,14 +67,14 @@ static int clear_free_space_cache(void)
 			ret = btrfs_commit_transaction(trans, gfs_info->tree_root);
 			if (ret < 0) {
 				errno = -ret;
-				error("failed to start a transaction: %m");
+				error_msg(ERROR_MSG_START_TRANS, "%m");
 				return ret;
 			}
 			trans = btrfs_start_transaction(gfs_info->tree_root, 0);
 			if (IS_ERR(trans)) {
 				ret = PTR_ERR(trans);
 				errno = -ret;
-				error("failed to start a transaction: %m");
+				error_msg(ERROR_MSG_START_TRANS, "%m");
 				return ret;
 			}
 		}
@@ -85,7 +85,7 @@ static int clear_free_space_cache(void)
 	ret = btrfs_commit_transaction(trans, gfs_info->tree_root);
 	if (ret < 0) {
 		errno = -ret;
-		error("failed to start a transaction: %m");
+		error_msg(ERROR_MSG_START_TRANS, "%m");
 	}
 	return ret;
 }
@@ -455,7 +455,7 @@ int truncate_free_ino_items(struct btrfs_root *root)
 
 	trans = btrfs_start_transaction(root, 0);
 	if (IS_ERR(trans)) {
-		error("Unable to start ino removal transaction");
+		error_msg(ERROR_MSG_START_TRANS, "inode-cache removal");
 		return PTR_ERR(trans);
 	}
 

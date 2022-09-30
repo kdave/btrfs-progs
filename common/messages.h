@@ -135,6 +135,7 @@ void pr_verbose(int level, const char *fmt, ...);
  */
 enum common_error {
 	ERROR_MSG_MEMORY,
+	ERROR_MSG_START_TRANS,
 };
 
 __attribute__ ((format (printf, 2, 3)))

@@ -861,7 +861,7 @@ static int set_device_size(struct btrfs_fs_info *fs_info,
 	if (IS_ERR(trans)) {
 		ret = PTR_ERR(trans);
 		errno = -ret;
-		error("failed to start transaction: %d (%m)", ret);
+		error_msg(ERROR_MSG_START_TRANS, "%m");
 		return ret;
 	}
 	key.objectid = BTRFS_DEV_ITEMS_OBJECTID;

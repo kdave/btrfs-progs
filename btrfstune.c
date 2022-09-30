@@ -792,7 +792,8 @@ static int convert_to_bg_tree(struct btrfs_fs_info *fs_info)
 	trans = btrfs_start_transaction(fs_info->tree_root, 2);
 	if (IS_ERR(trans)) {
 		ret = PTR_ERR(trans);
-		error("failed to start transaction: %d", ret);
+		errno = -ret;
+		error_msg(ERROR_MSG_START_TRANS, "%m");
 		return ret;
 	}
 
@@ -825,7 +826,8 @@ static int convert_to_bg_tree(struct btrfs_fs_info *fs_info)
 	trans = btrfs_start_transaction(fs_info->tree_root, 2);
 	if (IS_ERR(trans)) {
 		ret = PTR_ERR(trans);
-		error("failed to start transaction: %d", ret);
+		errno = -ret;
+		error_msg(ERROR_MSG_START_TRANS, "%m");
 		return ret;
 	}
 
@@ -871,7 +873,8 @@ iterate_bgs:
 			trans = btrfs_start_transaction(fs_info->tree_root, 2);
 			if (IS_ERR(trans)) {
 				ret = PTR_ERR(trans);
-				error("failed to start transaction: %d", ret);
+				errno = -ret;
+				error_msg(ERROR_MSG_START_TRANS, "%m");
 				return ret;
 			}
 		}

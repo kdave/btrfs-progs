@@ -1001,7 +1001,7 @@ int repair_imode_common(struct btrfs_root *root, struct btrfs_path *path)
 	if (IS_ERR(trans)) {
 		ret = PTR_ERR(trans);
 		errno = -ret;
-		error("failed to start transaction: %m");
+		error_msg(ERROR_MSG_START_TRANS, "%m");
 		return ret;
 	}
 	btrfs_release_path(path);
@@ -1172,7 +1172,7 @@ int repair_dev_item_bytes_used(struct btrfs_fs_info *fs_info,
 	if (IS_ERR(trans)) {
 		ret = PTR_ERR(trans);
 		errno = -ret;
-		error("failed to start transaction: %m");
+		error_msg(ERROR_MSG_START_TRANS, "%m");
 		return ret;
 	}
 
@@ -1191,7 +1191,7 @@ int repair_dev_item_bytes_used(struct btrfs_fs_info *fs_info,
 	ret = btrfs_commit_transaction(trans, fs_info->chunk_root);
 	if (ret < 0) {
 		errno = -ret;
-		error("failed to commit transaction: %m");
+		error_msg(ERROR_MSG_START_TRANS, "%m");
 	} else {
 		printf("reset devid %llu bytes_used to %llu\n", devid,
 		       device->bytes_used);

@@ -1009,8 +1009,9 @@ static int init_btrfs(struct btrfs_mkfs_config *cfg, struct btrfs_root *root,
 	fs_info->avoid_meta_chunk_alloc = 1;
 	trans = btrfs_start_transaction(root, 1);
 	if (IS_ERR(trans)) {
-		error("unable to start transaction");
 		ret = PTR_ERR(trans);
+		errno = -ret;
+		error_msg(ERROR_MSG_START_TRANS, "%m");
 		goto err;
 	}
 	ret = btrfs_fix_block_accounting(trans);

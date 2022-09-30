@@ -882,7 +882,8 @@ static int setup_quota_root(struct btrfs_fs_info *fs_info)
 	trans = btrfs_start_transaction(fs_info->tree_root, 2);
 	if (IS_ERR(trans)) {
 		ret = PTR_ERR(trans);
-		error("failed to start transaction: %d (%m)", ret);
+		errno = -ret;
+		error_msg(ERROR_MSG_START_TRANS, "%m");
 		return ret;
 	}
 	ret = btrfs_create_root(trans, fs_info, BTRFS_QUOTA_TREE_OBJECTID);
@@ -1568,7 +1569,8 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 
 	trans = btrfs_start_transaction(root, 1);
 	if (IS_ERR(trans)) {
-		error("failed to start transaction");
+		errno = -PTR_ERR(trans);
+		error_msg(ERROR_MSG_START_TRANS, "%m");
 		goto error;
 	}
 
@@ -1600,7 +1602,8 @@ int BOX_MAIN(mkfs)(int argc, char **argv)
 
 	trans = btrfs_start_transaction(root, 1);
 	if (IS_ERR(trans)) {
-		error("failed to start transaction");
+		errno = -PTR_ERR(trans);
+		error_msg(ERROR_MSG_START_TRANS, "%m");
 		goto error;
 	}
 
@@ -1672,7 +1675,7 @@ raid_groups:
 	trans = btrfs_start_transaction(root, 1);
 	if (IS_ERR(trans)) {
 		errno = -PTR_ERR(trans);
-		error("failed to start transaction: %m");
+		error_msg(ERROR_MSG_START_TRANS, "%m");
 		goto error;
 	}
 	/* COW all tree blocks to newly created chunks */

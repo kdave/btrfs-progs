@@ -7952,7 +7952,7 @@ static int repair_extent_item_generation(struct extent_record *rec)
 	if (IS_ERR(trans)) {
 		ret = PTR_ERR(trans);
 		errno = -ret;
-		error("failed to start transaction: %m");
+		error_msg(ERROR_MSG_START_TRANS, "%m");
 		return ret;
 	}
 	btrfs_init_path(&path);
@@ -7976,7 +7976,7 @@ static int repair_extent_item_generation(struct extent_record *rec)
 	ret = btrfs_commit_transaction(trans, extent_root);
 	if (ret < 0) {
 		errno = -ret;
-		error("failed to commit transaction: %m");
+		error_msg(ERROR_MSG_START_TRANS, "%m");
 		goto out;
 	}
 	printf("Reset extent item (%llu) generation to %llu\n",
@@ -10233,8 +10233,9 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 
 		trans = btrfs_start_transaction(gfs_info->tree_root, 0);
 		if (IS_ERR(trans)) {
-			error("error starting transaction");
 			ret = PTR_ERR(trans);
+			errno = -ret;
+			error_msg(ERROR_MSG_START_TRANS, "%m");
 			err |= !!ret;
 			goto close_out;
 		}

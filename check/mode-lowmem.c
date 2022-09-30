@@ -351,7 +351,7 @@ static int create_chunk_and_block_group(u64 flags, u64 *start, u64 *nbytes)
 	if (IS_ERR(trans)) {
 		ret = PTR_ERR(trans);
 		errno = -ret;
-		error("error starting transaction %m");
+		error_msg(ERROR_MSG_START_TRANS, "%m");
 		return ret;
 	}
 	ret = btrfs_alloc_chunk(trans, gfs_info, start, nbytes, flags);
@@ -566,7 +566,8 @@ static int delete_item(struct btrfs_root *root, struct btrfs_path *path)
 	trans = btrfs_start_transaction(root, 1);
 	if (IS_ERR(trans)) {
 		ret = PTR_ERR(trans);
-		error("fail to start transaction %s", strerror(-ret));
+		errno = -ret;
+		error_msg(ERROR_MSG_START_TRANS, "%m");
 		goto out;
 	}
 	btrfs_item_key_to_cpu(path->nodes[0], &key, path->slots[0]);
@@ -611,7 +612,7 @@ static int repair_block_accounting(void)
 	if (IS_ERR(trans)) {
 		ret = PTR_ERR(trans);
 		errno = -ret;
-		error("fail to start transaction: %m");
+		error_msg(ERROR_MSG_START_TRANS, "%m");
 		return ret;
 	}
 
@@ -687,9 +688,9 @@ static int repair_tree_block_ref(struct btrfs_root *root,
 	trans = btrfs_start_transaction(extent_root, 1);
 	if (IS_ERR(trans)) {
 		ret = PTR_ERR(trans);
-		trans = NULL;
 		errno = -ret;
-		error("fail to start transaction: %m");
+		error_msg(ERROR_MSG_START_TRANS, "%m");
+		trans = NULL;
 		goto out;
 	}
 	/* insert an extent item */
@@ -1539,7 +1540,8 @@ static int lowmem_delete_corrupted_dir_item(struct btrfs_root *root,
 	trans = btrfs_start_transaction(root, 1);
 	if (IS_ERR(trans)) {
 		ret = PTR_ERR(trans);
-		error("failed to start transaction: %d", ret);
+		errno = -ret;
+		error_msg(ERROR_MSG_START_TRANS, "%m");
 		return ret;
 	}
 
@@ -2540,7 +2542,7 @@ static int repair_inode_gen_lowmem(struct btrfs_root *root,
 	if (IS_ERR(trans)) {
 		ret = PTR_ERR(trans);
 		errno = -ret;
-		error("failed to start transaction for inode gen repair: %m");
+		error_msg(ERROR_MSG_START_TRANS, "inode gen repair: %m");
 		return ret;
 	}
 	transid = trans->transid;
@@ -3299,9 +3301,9 @@ static int repair_extent_data_item(struct btrfs_root *root,
 	trans = btrfs_start_transaction(root, 1);
 	if (IS_ERR(trans)) {
 		ret = PTR_ERR(trans);
-		trans = NULL;
 		errno = -ret;
-		error("fail to start transaction: %m");
+		error_msg(ERROR_MSG_START_TRANS, "%m");
+		trans = NULL;
 		goto out;
 	}
 	/* insert an extent item */
@@ -4122,7 +4124,7 @@ static int repair_extent_item(struct btrfs_path *path, u64 bytenr, u64
 	if (IS_ERR(trans)) {
 		ret = PTR_ERR(trans);
 		errno = -ret;
-		error("fail to start transaction: %m");
+		error_msg(ERROR_MSG_START_TRANS, "%m");
 		goto out;
 	}
 	/* delete the backref */
@@ -4196,7 +4198,7 @@ static int repair_extent_item_generation(struct btrfs_path *path)
 	if (IS_ERR(trans)) {
 		ret = PTR_ERR(trans);
 		errno = -ret;
-		error("failed to start transaction: %m");
+		error_msg(ERROR_MSG_START_TRANS, "%m");
 		return ret;
 	}
 	ret = btrfs_search_slot(trans, extent_root, &key, path, 0, 1);
@@ -4786,7 +4788,7 @@ static int repair_chunk_item(struct btrfs_root *chunk_root,
 	if (IS_ERR(trans)) {
 		ret = PTR_ERR(trans);
 		errno = -ret;
-		error("fail to start transaction: %m");
+		error_msg(ERROR_MSG_START_TRANS, "%m");
 		return ret;
 	}
 

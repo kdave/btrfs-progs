@@ -964,7 +964,8 @@ static int ext2_copy_inodes(struct btrfs_convert_context *cctx,
 			trans = btrfs_start_transaction(root, 1);
 			if (IS_ERR(trans)) {
 				ret = PTR_ERR(trans);
-				error("failed to start transaction: %d", ret);
+				errno = -ret;
+				error_msg(ERROR_MSG_START_TRANS, "%m");
 				trans = NULL;
 				goto out;
 			}

@@ -21,6 +21,7 @@
 
 static const char *common_error_string[] = {
 	[ERROR_MSG_MEMORY]	= "not enough memory",
+	[ERROR_MSG_START_TRANS] = "failed to start transaction",
 };
 
 __attribute__ ((format (printf, 1, 2)))

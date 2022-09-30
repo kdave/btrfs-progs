@@ -2736,8 +2736,10 @@ static int fixup_chunks_and_devices(struct btrfs_fs_info *fs_info,
 	}
 	trans = btrfs_start_transaction(fs_info->tree_root, 1);
 	if (IS_ERR(trans)) {
-		error("cannot start transaction %ld", PTR_ERR(trans));
-		return PTR_ERR(trans);
+		ret = PTR_ERR(trans);
+		errno = -ret;
+		error_msg(ERROR_MSG_START_TRANS, "%m");
+		return ret;
 	}
 
 	if (btrfs_super_log_root(fs_info->super_copy) && fs_info->log_root_tree)

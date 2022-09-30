@@ -495,8 +495,10 @@ static int corrupt_block_group(struct btrfs_root *root, u64 bg, char *field)
 	trans = btrfs_start_transaction(root, 1);
 	if (IS_ERR(trans)) {
 		btrfs_free_path(path);
-		error("couldn't start transaction %ld", PTR_ERR(trans));
-		return PTR_ERR(trans);
+		ret = PTR_ERR(trans);
+		errno = -ret;
+		error_msg(ERROR_MSG_START_TRANS, "%m");
+		return ret;
 	}
 
 	key.objectid = bg;
@@ -927,9 +929,10 @@ static int corrupt_metadata_block(struct btrfs_fs_info *fs_info, u64 block,
 		trans = btrfs_start_transaction(root, 1);
 		if (IS_ERR(trans)) {
 			btrfs_free_path(path);
-			error("couldn't start transaction %ld",
-				PTR_ERR(trans));
-			return PTR_ERR(trans);
+			ret = PTR_ERR(trans);
+			errno = -ret;
+			error_msg(ERROR_MSG_START_TRANS, "%m");
+			return ret;
 		}
 
 		path->lowest_level = level;
@@ -976,8 +979,10 @@ static int corrupt_btrfs_item(struct btrfs_root *root, struct btrfs_key *key,
 	trans = btrfs_start_transaction(root, 1);
 	if (IS_ERR(trans)) {
 		btrfs_free_path(path);
-		error("couldn't start transaction %ld", PTR_ERR(trans));
-		return PTR_ERR(trans);
+		ret = PTR_ERR(trans);
+		errno = -ret;
+		error_msg(ERROR_MSG_START_TRANS, "%m");
+		return ret;
 	}
 
 	ret = btrfs_search_slot(trans, root, key, path, 0, 1);
@@ -1023,8 +1028,9 @@ static int corrupt_btrfs_item_data(struct btrfs_root *root,
 
 	trans = btrfs_start_transaction(root, 1);
 	if (IS_ERR(trans)) {
-		error("couldn't start transaction %ld", PTR_ERR(trans));
 		ret = PTR_ERR(trans);
+		errno = -ret;
+		error_msg(ERROR_MSG_START_TRANS, "%m");
 		goto free_path;
 	}
 
@@ -1067,8 +1073,10 @@ static int delete_item(struct btrfs_root *root, struct btrfs_key *key)
 	trans = btrfs_start_transaction(root, 1);
 	if (IS_ERR(trans)) {
 		btrfs_free_path(path);
-		error("couldn't start transaction %ld", PTR_ERR(trans));
-		return PTR_ERR(trans);
+		ret = PTR_ERR(trans);
+		errno = -ret;
+		error_msg(ERROR_MSG_START_TRANS, "%m");
+		return ret;
 	}
 
 	ret = btrfs_search_slot(trans, root, key, path, -1, 1);
@@ -1094,8 +1102,10 @@ static int delete_csum(struct btrfs_root *root, u64 bytenr, u64 bytes)
 	root = btrfs_csum_root(root->fs_info, bytenr);
 	trans = btrfs_start_transaction(root, 1);
 	if (IS_ERR(trans)) {
-		error("couldn't start transaction %ld", PTR_ERR(trans));
-		return PTR_ERR(trans);
+		ret = PTR_ERR(trans);
+		errno = -ret;
+		error_msg(ERROR_MSG_START_TRANS, "%m");
+		return ret;
 	}
 
 	ret = btrfs_del_csums(trans, bytenr, bytes);
